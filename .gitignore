@@ -1,0 +1,23 @@
+# Compiled Object files
+*.slo
+*.lo
+*.o
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.vtk
+*.dat
+*~
+*.vts
+*.vtu
+*tgz
+CMakeFiles*
+CMakeCache.txt
+Makefile
+cmake_install.cmake
