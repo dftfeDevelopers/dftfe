@@ -1,16 +1,16 @@
-#ifndef poisson_H_
-#define poisson_H_
+#ifndef eigen_H_
+#define eigen_H_
 #include "headers.h"
 
 //Initialize Namespace
 using namespace dealii;
 
-//Define poisson class
+//Define eigen class
 template <int dim>
-class poisson
+class eigen
 {
 public:
-  poisson(DoFHandler<dim>* _dofHandler);
+  eigen(DoFHandler<dim>* _dofHandler);
   void solve();
 private:
   void init ();

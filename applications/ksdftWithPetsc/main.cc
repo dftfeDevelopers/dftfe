@@ -6,6 +6,9 @@ unsigned int FEOrder=1;
 unsigned int n_refinement_steps=0;
 unsigned int noOfEigenValues=1;
 unsigned int quadratureRule=5;
+unsigned int numAtomTypes=1;
+double atomCharge=6.0;
+char rhoFileName[100]="rhoInitialGuess/rho_C";
 
 //solver paramteters
 unsigned int maxLinearSolverIterations=5000;

@@ -1,6 +1,9 @@
 #ifndef dft_H_
 #define dft_H_
 #include "headers.h"
+//iclude alglib
+#include "/nfs/mcfs_home/rudraa/Public/alglib/cpp/src/interpolation.h"
+#include "/nfs/mcfs_home/rudraa/Public/libxc/libxc-2.2.0/installDir/include/xc.h"
 
 //Initialize Namespace
 using namespace dealii;
@@ -16,7 +19,9 @@ class dft{
  private:
   void mesh();
   void init();
-  
+  void initRho();
+  double totalCharge();
+
   //FE data structres
   parallel::distributed::Triangulation<3> triangulation;
   FE_Q<3>            FE;
@@ -34,6 +39,11 @@ class dft{
   
   //compute-time logger
   TimerOutput computing_timer;
+
+  //dft related objects
+  std::vector<Table<2,double>*> rhoInVals, rhoOutVals;
+  std::vector<alglib::spline1dinterpolant> denSpline;
+  xc_func_type funcX, funcC;
 };
 
 #endif
