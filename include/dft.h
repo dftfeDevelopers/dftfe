@@ -21,6 +21,7 @@ class dft{
   void init();
   void initRho();
   double totalCharge();
+  void locateAtomCoreNodes();
 
   //FE data structres
   parallel::distributed::Triangulation<3> triangulation;
@@ -44,6 +45,7 @@ class dft{
   std::vector<Table<2,double>*> rhoInVals, rhoOutVals;
   std::vector<alglib::spline1dinterpolant> denSpline;
   xc_func_type funcX, funcC;
+  unsigned int originIDs[numAtomTypes];
 };
 
 #endif

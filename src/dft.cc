@@ -21,6 +21,31 @@ dft::dft():
   denSpline(numAtomTypes)
 {}
 
+void dft::locateAtomCoreNodes(){ 
+  QGauss<dim>  quadrature_formula(quadratureRule);
+  FEValues<dim> fe_values (FE, quadrature_formula, update_values);
+  //
+  unsigned int vertices_per_cell=GeometryInfo<dim>::vertices_per_cell;
+  DoFHandler<dim>::active_cell_iterator
+    cell = dofHandler.begin_active(),
+    endc = dofHandler.end();
+  unsigned int cellID=0;
+  for (; cell!=endc; ++cell) {
+    if (cell->is_locally_owned()){
+      fe_values.reinit (cell);
+      for (unsigned int i=0; i<vertices_per_cell; ++i){
+	Point<dim> feNodeGlobalCoord = cell->vertex(i);
+	if (sqrt(feNodeGlobalCoord.square())<1.0e-12){  
+	  originIDs[0]=cell->vertex_dof_index(i,0);
+	  std::cout << "Atom core located at ("<< cell->vertex(i) << ") with node id " << cell->vertex_dof_index(i,0) << " in processor " << this_mpi_process << std::endl;
+	  MPI_Bcast (originIDs, numAtomTypes, MPI_UNSIGNED, this_mpi_process, mpi_communicator);
+	  return;
+	}
+      }
+    }
+  }
+}
+
 //Compute total charge
 double dft::totalCharge(){
   double normValue=0.0;
@@ -34,13 +59,13 @@ double dft::totalCharge(){
     endc = dofHandler.end();
   unsigned int cellID=0;
   for (; cell!=endc; ++cell) {
-    if (cell->subdomain_id() == this_mpi_process){
+    if (cell->is_locally_owned()){
       fe_values.reinit (cell);
       for (unsigned int q_point=0; q_point<n_q_points; ++q_point){
         normValue+=(*rhoInVals[0])(cellID,q_point)*fe_values.JxW(q_point);
       }
-    }
     cellID++;
+    }
   }
   return Utilities::MPI::sum(normValue, mpi_communicator);
 }
@@ -48,6 +73,7 @@ double dft::totalCharge(){
 //initialize rho
 void dft::initRho(){
   //Initialize electron density table storage
+  //std::cout << triangulation.n_locally_owned_active_cells() << std::endl; 
   Table<2,double> *rhoInValues=new Table<2,double>(triangulation.n_locally_owned_active_cells(),std::pow(quadratureRule,dim));
   rhoInVals.push_back(rhoInValues);
   
@@ -99,10 +125,12 @@ void dft::initRho(){
   pcout << "initial charge: " << charge << std::endl;
   cellID=0;
   for (; cell!=endc; ++cell) {
-    for (unsigned int q=0; q<n_q_points; ++q){
-      (*rhoInValues)(cellID,q)*=1.0/charge;
+    if (cell->is_locally_owned()){
+      for (unsigned int q=0; q<n_q_points; ++q){
+	(*rhoInValues)(cellID,q)*=1.0/charge;
+      }
+      cellID++;
     }
-    cellID++;
   }
   
   //Initialize libxc
@@ -129,7 +157,7 @@ void dft::init(){
   pcout << "number of MPI processes: "
 	<< Utilities::MPI::n_mpi_processes(mpi_communicator)
 	<< std::endl;
-
+  
   //initialize FE objects
   dofHandler.distribute_dofs (FE);
   locally_owned_dofs = dofHandler.locally_owned_dofs ();
@@ -143,8 +171,7 @@ void dft::init(){
 }
 
 //Generate triangulation.
-void dft::mesh()
-{
+void dft::mesh(){
   //GridGenerator::hyper_cube (triangulation, -1, 1);
   //triangulation.refine_global (6);
   //Read mesh written out in UCD format
@@ -157,13 +184,14 @@ void dft::mesh()
   gridin.read_ucd(f);
   triangulation.set_boundary(0, boundary);
   triangulation.refine_global (n_refinement_steps);
-  pcout << "Number of active cells: "
+  /*pcout << "Number of active cells: "
 	<< triangulation.n_active_cells()
 	<< std::endl;
   // Output the total number of cells.
   pcout << "Total number of cells: "
 	<< triangulation.n_cells()
 	<< std::endl;
+  */
 }
 
 void dft::run ()
@@ -173,6 +201,7 @@ void dft::run ()
   //initialize
   init();
   initRho();
+  locateAtomCoreNodes();
 
   //initialize poisson, eigen objects
   poisson<3> poissonObject(&dofHandler);
