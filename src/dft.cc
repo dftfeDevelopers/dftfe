@@ -18,6 +18,7 @@ dft::dft():
   this_mpi_process (Utilities::MPI::this_mpi_process(mpi_communicator)),
   pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
   computing_timer (pcout, TimerOutput::summary, TimerOutput::wall_times),
+  poissonObject(&dofHandler),
   denSpline(numAtomTypes)
 {}
 
@@ -168,6 +169,9 @@ void dft::init(){
 	<< "number of degrees of freedom: " 
 	<< dofHandler.n_dofs() 
 	<< std::endl;
+  
+  //initialize poisson object
+  poissonObject.init();
 }
 
 //Generate triangulation.
@@ -204,7 +208,6 @@ void dft::run ()
   locateAtomCoreNodes();
 
   //initialize poisson, eigen objects
-  poisson<3> poissonObject(&dofHandler);
   poissonObject.solve();
   //eigenProblem eigen(this);
   //Initialize mesh, setup, locate origin.

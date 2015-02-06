@@ -1,6 +1,7 @@
 #ifndef poisson_H_
 #define poisson_H_
 #include "headers.h"
+#include "dft.h"
 
 //Initialize Namespace
 using namespace dealii;
@@ -9,14 +10,16 @@ using namespace dealii;
 template <int dim>
 class poisson
 {
+  friend class dft; 
 public:
   poisson(DoFHandler<dim>* _dofHandler);
   void solve();
 private:
   void init ();
   void assemble();
-  PETScWrappers::MPI::SparseMatrix jacobian;
-  PETScWrappers::MPI::Vector       solution, residual;
+  PETScWrappers::MPI::SparseMatrix jacobianPhiTot, jacobianPhiExt;
+  PETScWrappers::MPI::Vector       phiTotRhoIn, phiTotRhoOut, phiExtRhoOut;
+  PETScWrappers::MPI::Vector       rhsPhiTot, rhsPhiExt;
 
   //FE data structres
   FE_Q<dim>          FE;

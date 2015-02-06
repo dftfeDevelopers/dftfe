@@ -11,8 +11,6 @@ poisson<dim>::poisson(DoFHandler<dim>* _dofHandler):
   pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
   computing_timer (pcout, TimerOutput::summary, TimerOutput::wall_times)
 {
-  //initialize poisson object
-  init();
 }
 
 //initialize poisson object
@@ -29,15 +27,24 @@ void poisson<dim>::init(){
   constraints.close ();
 
   //initialize vectors and jacobian matrix using the sparsity pattern.
-  solution.reinit (locally_owned_dofs, mpi_communicator); solution=0;
-  residual.reinit (locally_owned_dofs, mpi_communicator); residual=0;
+ PETScWrappers::MPI::SparseMatrix jacobianPhiTot, jacobianPhiExt;
+  PETScWrappers::MPI::Vector       
+  PETScWrappers::MPI::Vector       
+
+  phiTotRhoIn.reinit (locally_owned_dofs, mpi_communicator);
+  phiTotRhoOut.reinit (locally_owned_dofs, mpi_communicator); 
+  phiExtRhoOut.reinit (locally_owned_dofs, mpi_communicator);
+  rhsPhiTot.reinit (locally_owned_dofs, mpi_communicator);
+  rhsPhiExt.reinit (locally_owned_dofs, mpi_communicator);
+  //
   CompressedSimpleSparsityPattern csp (locally_relevant_dofs);
   DoFTools::make_sparsity_pattern (*dofHandler, csp, constraints, false);
   SparsityTools::distribute_sparsity_pattern (csp,
 					      dofHandler->n_locally_owned_dofs_per_processor(),
 					      mpi_communicator,
 					      locally_relevant_dofs);
-  jacobian.reinit (locally_owned_dofs, locally_owned_dofs, csp, mpi_communicator);
+  jacobianPhiTot.reinit (locally_owned_dofs, locally_owned_dofs, csp, mpi_communicator);
+  jacobianPhiExt.reinit (locally_owned_dofs, locally_owned_dofs, csp, mpi_communicator);
   computing_timer.exit_section("poisson setup"); 
 }
 
@@ -46,17 +53,23 @@ template <int dim>
 void poisson<dim>::assemble(){
   computing_timer.enter_section("poisson assembly"); 
   //initialize global data structures
-  jacobian=0.0;
-  residual=0.0;
-  solution=0.0;
-  
+  jacobianPhiTot=0.0; rhsPhiTot=0.0;
+  if (rhoIn) {
+    phiTotRhoIn=0.0; 
+  }
+  else {
+    jacobianPhiExt=0.0;
+    phiTotRhoOut=0.0; phiExtRhoOut=0.0; 
+    rhsPhiExt=0.0;
+  }
+
   //local data structures
   QGauss<dim>  quadrature(quadratureRule);
   FEValues<dim> fe_values (FE, quadrature, update_values | update_gradients | update_JxW_values);
   const unsigned int   dofs_per_cell = FE.dofs_per_cell;
   const unsigned int   num_quad_points = quadrature.size();
   FullMatrix<double>   elementalJacobian (dofs_per_cell, dofs_per_cell);
-  Vector<double>       elementalResidual (dofs_per_cell);
+  Vector<double>       cell_rhsPhiTot (dofs_per_cell), cell_rhsPhiExt(dofs_per_cell);
   std::vector<types::global_dof_index> local_dof_indices (dofs_per_cell);
   
   //parallel loop over all elements
@@ -65,7 +78,8 @@ void poisson<dim>::assemble(){
   for (; cell!=endc; ++cell) {
     if (cell->is_locally_owned()){
       elementalJacobian = 0;
-      elementalResidual = 0;
+      cell_rhsPhiTot = 0;
+      cell_rhsPhiExt = 0;
       cell->set_user_index(cellID++);
 
       //compute values for the current element
@@ -85,17 +99,20 @@ void poisson<dim>::assemble(){
       //local rhs
       for (unsigned int i=0; i<dofs_per_cell; ++i){
 	for (unsigned int q_point=0; q_point<num_quad_points; ++q_point){
-	  elementalResidual(i) += 0.0; //fe_values.shape_value(i, q_point)*(*rhoInValues)(cellID, q_point)*fe_values.JxW (q_point);
+	  if (rhoIn) {
+	    cell_rhsPhiTot(i) += fe_values.shape_value(i, q_point)*(*rhoInValues)(cellID, q_point)*fe_values.JxW (q_point);
+	  }
+	  else {
+	    cell_rhsPhiTot(i) += fe_values.shape_value(i, q_point)*(*rhoOutValues)(cellID, q_point)*fe_values.JxW (q_point);
+	  }
 	}
       }
       
       //assemble to global data structures
       cell->get_dof_indices (local_dof_indices);
-      constraints.distribute_local_to_global(elementalJacobian, 
-					     elementalResidual,
-					     local_dof_indices,
-					     jacobian, 
-					     residual);
+      if (!rhoIn){
+	constraints.distribute_local_to_global(elementalJacobian,cell_rhsPhiTot, local_dof_indices, jacobianPhiExt, 
+					       residual);
       
     }
   }

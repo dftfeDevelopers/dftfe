@@ -1,6 +1,8 @@
 #ifndef dft_H_
 #define dft_H_
 #include "headers.h"
+#include "poisson.h"
+#include "eigen.h"
 //iclude alglib
 #include "/nfs/mcfs_home/rudraa/Public/alglib/cpp/src/interpolation.h"
 #include "/nfs/mcfs_home/rudraa/Public/libxc/libxc-2.2.0/installDir/include/xc.h"
@@ -10,8 +12,6 @@ using namespace dealii;
 
 //Define dft class
 class dft{
-  //  friend class poissonProblem;
-  //  friend class eigenProblem;
  public:
   dft();
   void run();
@@ -40,6 +40,9 @@ class dft{
   
   //compute-time logger
   TimerOutput computing_timer;
+
+  //other objects
+  poisson<3> poissonObject;
 
   //dft related objects
   std::vector<Table<2,double>*> rhoInVals, rhoOutVals;
