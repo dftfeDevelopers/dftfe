@@ -15,53 +15,19 @@ poisson<dim>::poisson(DoFHandler<dim>* _dofHandler):
 
 //initialize poisson object
 template <int dim>
-void poisson<dim>::init(){
-  computing_timer.enter_section("poisson setup"); 
-  locally_owned_dofs = dofHandler->locally_owned_dofs ();
-  DoFTools::extract_locally_relevant_dofs (*dofHandler, locally_relevant_dofs);
-
-  //constraints
-  constraints.clear ();
-  constraints.reinit (locally_relevant_dofs);
-  DoFTools::make_hanging_node_constraints (*dofHandler, constraints);
-  constraints.close ();
-
-  //initialize vectors and jacobian matrix using the sparsity pattern.
- PETScWrappers::MPI::SparseMatrix jacobianPhiTot, jacobianPhiExt;
-  PETScWrappers::MPI::Vector       
-  PETScWrappers::MPI::Vector       
-
-  phiTotRhoIn.reinit (locally_owned_dofs, mpi_communicator);
-  phiTotRhoOut.reinit (locally_owned_dofs, mpi_communicator); 
-  phiExtRhoOut.reinit (locally_owned_dofs, mpi_communicator);
-  rhsPhiTot.reinit (locally_owned_dofs, mpi_communicator);
-  rhsPhiExt.reinit (locally_owned_dofs, mpi_communicator);
-  //
-  CompressedSimpleSparsityPattern csp (locally_relevant_dofs);
-  DoFTools::make_sparsity_pattern (*dofHandler, csp, constraints, false);
-  SparsityTools::distribute_sparsity_pattern (csp,
-					      dofHandler->n_locally_owned_dofs_per_processor(),
-					      mpi_communicator,
-					      locally_relevant_dofs);
-  jacobianPhiTot.reinit (locally_owned_dofs, locally_owned_dofs, csp, mpi_communicator);
-  jacobianPhiExt.reinit (locally_owned_dofs, locally_owned_dofs, csp, mpi_communicator);
-  computing_timer.exit_section("poisson setup"); 
-}
+void poisson<dim>::init(){}
 
 //assemble poisson jacobian and residual
 template <int dim>
-void poisson<dim>::assemble(){
+void poisson<dim>::assemble(PETScWrappers::MPI::Vector& solution, 
+			    PETScWrappers::MPI::Vector& residual,
+			    PETScWrappers::MPI::SparseMatrix& jacobian,
+			    ConstraintMatrix& constraints,
+			    Table<2,double>* rhoValues
+			    ){
   computing_timer.enter_section("poisson assembly"); 
   //initialize global data structures
-  jacobianPhiTot=0.0; rhsPhiTot=0.0;
-  if (rhoIn) {
-    phiTotRhoIn=0.0; 
-  }
-  else {
-    jacobianPhiExt=0.0;
-    phiTotRhoOut=0.0; phiExtRhoOut=0.0; 
-    rhsPhiExt=0.0;
-  }
+  jacobian=0.0; residual=0.0; solution=0.0; 
 
   //local data structures
   QGauss<dim>  quadrature(quadratureRule);
@@ -69,7 +35,7 @@ void poisson<dim>::assemble(){
   const unsigned int   dofs_per_cell = FE.dofs_per_cell;
   const unsigned int   num_quad_points = quadrature.size();
   FullMatrix<double>   elementalJacobian (dofs_per_cell, dofs_per_cell);
-  Vector<double>       cell_rhsPhiTot (dofs_per_cell), cell_rhsPhiExt(dofs_per_cell);
+  Vector<double>       elementalResidual (dofs_per_cell);
   std::vector<types::global_dof_index> local_dof_indices (dofs_per_cell);
   
   //parallel loop over all elements
@@ -78,9 +44,8 @@ void poisson<dim>::assemble(){
   for (; cell!=endc; ++cell) {
     if (cell->is_locally_owned()){
       elementalJacobian = 0;
-      cell_rhsPhiTot = 0;
-      cell_rhsPhiExt = 0;
-      cell->set_user_index(cellID++);
+      elementalResidual = 0;
+      cell->set_user_index(cellID);
 
       //compute values for the current element
       fe_values.reinit (cell);
@@ -99,21 +64,15 @@ void poisson<dim>::assemble(){
       //local rhs
       for (unsigned int i=0; i<dofs_per_cell; ++i){
 	for (unsigned int q_point=0; q_point<num_quad_points; ++q_point){
-	  if (rhoIn) {
-	    cell_rhsPhiTot(i) += fe_values.shape_value(i, q_point)*(*rhoInValues)(cellID, q_point)*fe_values.JxW (q_point);
-	  }
-	  else {
-	    cell_rhsPhiTot(i) += fe_values.shape_value(i, q_point)*(*rhoOutValues)(cellID, q_point)*fe_values.JxW (q_point);
-	  }
+	  elementalResidual(i) += fe_values.shape_value(i, q_point)*(*rhoValues)(cellID, q_point)*fe_values.JxW (q_point);
 	}
       }
       
       //assemble to global data structures
       cell->get_dof_indices (local_dof_indices);
-      if (!rhoIn){
-	constraints.distribute_local_to_global(elementalJacobian,cell_rhsPhiTot, local_dof_indices, jacobianPhiExt, 
-					       residual);
+      constraints.distribute_local_to_global(elementalJacobian, elementalResidual, local_dof_indices, jacobian, residual);
       
+      cellID++;
     }
   }
   //MPI operation to sync data 
@@ -125,19 +84,23 @@ void poisson<dim>::assemble(){
 
 //solve linear system of equations AX=b using iterative solver
 template <int dim>
-void poisson<dim>::solve()
-{
+void poisson<dim>::solve(PETScWrappers::MPI::Vector& solution, 
+			 PETScWrappers::MPI::Vector& residual,
+			 PETScWrappers::MPI::SparseMatrix& jacobian,
+			 ConstraintMatrix& constraints,
+			 Table<2,double>* rhoValues
+			 ){
   //assemble
-  assemble();
+  assemble(solution, residual, jacobian, constraints, rhoValues);
   
   //solve
   computing_timer.enter_section("poisson solve"); 
-  PETScWrappers::MPI::Vector  completely_distributed_solutionInc (locally_owned_dofs, mpi_communicator);
   SolverControl solver_control(maxLinearSolverIterations, relLinearSolverTolerance*residual.l2_norm());
   PETScWrappers::SolverCG solver(solver_control, mpi_communicator);
   PETScWrappers::PreconditionJacobi preconditioner(jacobian);
+  PETScWrappers::MPI::Vector distributed_solution (solution);
   try{
-    solver.solve (jacobian, completely_distributed_solutionInc, residual, preconditioner);
+    solver.solve (jacobian, distributed_solution, residual, preconditioner);
     char buffer[200];
     sprintf(buffer, 
 	    "linear system solved in %3u iterations\n",
@@ -149,7 +112,7 @@ void poisson<dim>::solve()
 	  << solver_control.last_step()
 	  << " iterations as per set tolerances. consider increasing maxSolverIterations or decreasing relSolverTolerance.\n";     
   }
-  constraints.distribute (completely_distributed_solutionInc);
-  solution=completely_distributed_solutionInc; 
+  constraints.distribute (distributed_solution);
+  solution=distributed_solution; 
   computing_timer.exit_section("poisson solve"); 
 }

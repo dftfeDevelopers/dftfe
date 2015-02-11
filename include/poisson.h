@@ -13,17 +13,23 @@ class poisson
   friend class dft; 
 public:
   poisson(DoFHandler<dim>* _dofHandler);
-  void solve();
+  void solve(PETScWrappers::MPI::Vector& solution, 
+	     PETScWrappers::MPI::Vector& residual,
+	     PETScWrappers::MPI::SparseMatrix& jacobian,
+	     ConstraintMatrix& constraints,
+	     Table<2,double>* rhoValues
+	     );
 private:
   void init ();
-  void assemble();
-  PETScWrappers::MPI::SparseMatrix jacobianPhiTot, jacobianPhiExt;
-  PETScWrappers::MPI::Vector       phiTotRhoIn, phiTotRhoOut, phiExtRhoOut;
-  PETScWrappers::MPI::Vector       rhsPhiTot, rhsPhiExt;
+  void assemble(PETScWrappers::MPI::Vector& solution, 
+		PETScWrappers::MPI::Vector& residual,
+		PETScWrappers::MPI::SparseMatrix& jacobian,
+		ConstraintMatrix& constraints,
+		Table<2,double>* rhoValues
+		);
 
   //FE data structres
   FE_Q<dim>          FE;
-  ConstraintMatrix   constraints;
   DoFHandler<dim>*    dofHandler;
 
   //parallel objects

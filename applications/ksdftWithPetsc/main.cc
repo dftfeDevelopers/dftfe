@@ -22,11 +22,11 @@ double kb = 3.166811429e-06;
 
 int main (int argc, char *argv[])
 {
-    Utilities::MPI::MPI_InitFinalize mpi_initialization (argc, argv);
-    deallog.depth_console(0);
-    {
-      dft problem;
-      problem.run();
-    }
-    return 0;
+  Utilities::MPI::MPI_InitFinalize mpi_initialization (argc, argv);
+  deallog.depth_console(0);
+  {
+    dft problem;
+    problem.run();
+  }
+  return 0;
 }

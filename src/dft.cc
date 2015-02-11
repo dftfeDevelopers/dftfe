@@ -5,6 +5,16 @@
 //#include "eigen.cc"
 #include "../utils/fileReaders.cc"
 
+//boundary condition function
+template <int dim>
+class OnebyRBoundaryFunction : public Function<dim>{
+public:
+  OnebyRBoundaryFunction(): Function<dim>(){}
+  virtual double value (const Point<dim> &p, const unsigned int component = 0) const{
+    return -atomCharge/sqrt(p.square());
+  }
+};
+
 //dft constructor
 dft::dft():
   triangulation (MPI_COMM_WORLD,
@@ -63,7 +73,7 @@ double dft::totalCharge(){
     if (cell->is_locally_owned()){
       fe_values.reinit (cell);
       for (unsigned int q_point=0; q_point<n_q_points; ++q_point){
-        normValue+=(*rhoInVals[0])(cellID,q_point)*fe_values.JxW(q_point);
+        normValue+=(*rhoInValues)(cellID,q_point)*fe_values.JxW(q_point);
       }
     cellID++;
     }
@@ -74,8 +84,7 @@ double dft::totalCharge(){
 //initialize rho
 void dft::initRho(){
   //Initialize electron density table storage
-  //std::cout << triangulation.n_locally_owned_active_cells() << std::endl; 
-  Table<2,double> *rhoInValues=new Table<2,double>(triangulation.n_locally_owned_active_cells(),std::pow(quadratureRule,dim));
+  rhoInValues=new Table<2,double>(triangulation.n_locally_owned_active_cells(),std::pow(quadratureRule,dim));
   rhoInVals.push_back(rhoInValues);
   
   //Readin single atom rho initial guess
@@ -170,8 +179,38 @@ void dft::init(){
 	<< dofHandler.n_dofs() 
 	<< std::endl;
   
-  //initialize poisson object
+  //initialize poisson problem related objects
+  computing_timer.enter_section("poisson setup"); 
   poissonObject.init();
+
+  //constraints
+  //zero constraints
+  constraintsZero.clear ();
+  constraintsZero.reinit (locally_relevant_dofs);
+  DoFTools::make_hanging_node_constraints (dofHandler, constraintsZero);
+  VectorTools::interpolate_boundary_values (dofHandler, 0, ZeroFunction<dim>(),constraintsZero);
+  constraintsZero.close ();
+  //OnebyR constraints
+  constraints1byR.clear ();
+  constraints1byR.reinit (locally_relevant_dofs);
+  DoFTools::make_hanging_node_constraints (dofHandler, constraints1byR);
+  VectorTools::interpolate_boundary_values (dofHandler, 0, OnebyRBoundaryFunction<dim>(),constraints1byR);
+  constraints1byR.close ();
+  
+  //initialize vectors and jacobian matrix using the sparsity pattern.
+  phiTotRhoIn.reinit (locally_owned_dofs, mpi_communicator);
+  phiTotRhoOut.reinit (locally_owned_dofs, mpi_communicator); 
+  phiExtRhoOut.reinit (locally_owned_dofs, mpi_communicator);
+  residual.reinit (locally_owned_dofs, mpi_communicator);
+  //
+  CompressedSimpleSparsityPattern csp (locally_relevant_dofs);
+  DoFTools::make_sparsity_pattern (dofHandler, csp, constraintsZero, false);
+  SparsityTools::distribute_sparsity_pattern (csp,
+					      dofHandler.n_locally_owned_dofs_per_processor(),
+					      mpi_communicator,
+					      locally_relevant_dofs);
+  jacobian.reinit (locally_owned_dofs, locally_owned_dofs, csp, mpi_communicator);
+  computing_timer.exit_section("poisson setup"); 
 }
 
 //Generate triangulation.
@@ -208,7 +247,7 @@ void dft::run ()
   locateAtomCoreNodes();
 
   //initialize poisson, eigen objects
-  poissonObject.solve();
+  poissonObject.solve(phiTotRhoIn, residual, jacobian, constraintsZero, rhoInValues);
   //eigenProblem eigen(this);
   //Initialize mesh, setup, locate origin.
 }

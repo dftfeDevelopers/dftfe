@@ -41,10 +41,15 @@ class dft{
   //compute-time logger
   TimerOutput computing_timer;
 
-  //other objects
+  //poisson problem related objects
   poisson<3> poissonObject;
-
+  PETScWrappers::MPI::SparseMatrix jacobian;
+  PETScWrappers::MPI::Vector       residual;
+  PETScWrappers::MPI::Vector       phiTotRhoIn, phiTotRhoOut, phiExtRhoOut;
+  ConstraintMatrix   constraintsZero, constraints1byR;
+  
   //dft related objects
+  Table<2,double> *rhoInValues, *rhoOutValues;
   std::vector<Table<2,double>*> rhoInVals, rhoOutVals;
   std::vector<alglib::spline1dinterpolant> denSpline;
   xc_func_type funcX, funcC;
