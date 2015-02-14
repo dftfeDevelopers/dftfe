@@ -165,10 +165,6 @@ void dft::initRho(){
 }
 
 void dft::init(){
-  pcout << "number of MPI processes: "
-	<< Utilities::MPI::n_mpi_processes(mpi_communicator)
-	<< std::endl;
-  
   //initialize FE objects
   dofHandler.distribute_dofs (FE);
   locally_owned_dofs = dofHandler.locally_owned_dofs ();
@@ -181,7 +177,6 @@ void dft::init(){
 	<< std::endl;
   
   //initialize poisson problem related objects
-  computing_timer.enter_section("poisson setup"); 
   poissonObject.init();
 
   //constraints
@@ -211,10 +206,8 @@ void dft::init(){
 					      mpi_communicator,
 					      locally_relevant_dofs);
   jacobian.reinit (locally_owned_dofs, locally_owned_dofs, csp, mpi_communicator);
-  computing_timer.exit_section("poisson setup"); 
   
   //initialize eigen problem related objects
-  computing_timer.enter_section("eigen setup");
   eigenObject.init();
   locally_owned_dofs = dofHandler.locally_owned_dofs ();
   DoFTools::extract_locally_relevant_dofs (dofHandler, locally_relevant_dofs);
@@ -245,11 +238,11 @@ void dft::init(){
 					      locally_relevant_dofs);
   massMatrix.reinit (locally_owned_dofs, locally_owned_dofs, csp2, mpi_communicator);
   hamiltonianMatrix.reinit (locally_owned_dofs, locally_owned_dofs, csp2, mpi_communicator);
-  computing_timer.exit_section("eigen setup"); 
 }
 
 //Generate triangulation.
 void dft::mesh(){
+  computing_timer.enter_section("mesh"); 
   //GridGenerator::hyper_cube (triangulation, -1, 1);
   //triangulation.refine_global (6);
   //Read mesh written out in UCD format
@@ -262,27 +255,31 @@ void dft::mesh(){
   gridin.read_ucd(f);
   triangulation.set_boundary(0, boundary);
   triangulation.refine_global (n_refinement_steps);
-  /*pcout << "Number of active cells: "
-	<< triangulation.n_active_cells()
-	<< std::endl;
-  // Output the total number of cells.
-  pcout << "Total number of cells: "
-	<< triangulation.n_cells()
-	<< std::endl;
-  */
+  computing_timer.exit_section("mesh"); 
 }
 
 void dft::run ()
 {
+  computing_timer.enter_section("total time"); 
+  pcout << "number of MPI processes: "
+	<< Utilities::MPI::n_mpi_processes(mpi_communicator)
+	<< std::endl;
+
   //generate/read mesh
   mesh();
+  
   //initialize
+  computing_timer.enter_section("dft setup"); 
   init();
   initRho();
   locateAtomCoreNodes();
-
-  //initialize poisson, eigen objects
+  computing_timer.exit_section("dft setup"); 
+  
+  //solve
+  computing_timer.enter_section("dft solve"); 
   poissonObject.solve(phiTotRhoIn, residual, jacobian, constraintsZero, rhoInValues);
-  //eigenProblem eigen(this);
-  //Initialize mesh, setup, locate origin.
+  eigenObject.solve(phiTotRhoIn, massMatrix, hamiltonianMatrix, massVector, constraintsNone, rhoInValues, eigenValues, eigenVectors);
+  computing_timer.exit_section("dft solve"); 
+
+  computing_timer.exit_section("total time"); 
 }

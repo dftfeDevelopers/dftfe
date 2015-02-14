@@ -18,7 +18,9 @@ public:
 	     PETScWrappers::MPI::SparseMatrix& hamiltonianMatrix,
 	     PETScWrappers::MPI::Vector& massVector, 
 	     ConstraintMatrix& constraints,
-	     Table<2,double>* rhoValues);
+	     Table<2,double>* rhoValues,
+	     std::vector<double>& eigenValues,
+	     std::vector<PETScWrappers::MPI::Vector>& eigenVectors);
  private:
   void init ();
   void assemble(PETScWrappers::MPI::Vector& solution, 

@@ -10,6 +10,8 @@
 //Initialize Namespace
 using namespace dealii;
 
+xc_func_type funcX, funcC;
+
 //Define dft class
 class dft{
  public:
@@ -61,7 +63,6 @@ class dft{
   Table<2,double> *rhoInValues, *rhoOutValues;
   std::vector<Table<2,double>*> rhoInVals, rhoOutVals;
   std::vector<alglib::spline1dinterpolant> denSpline;
-  xc_func_type funcX, funcC;
   unsigned int originIDs[numAtomTypes];
 };
 

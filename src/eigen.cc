@@ -31,18 +31,18 @@ void eigen<dim>::assemble(PETScWrappers::MPI::Vector& solution,
   massMatrix=0.0; hamiltonianMatrix=0.0; massVector=0.0;
 
   //local data structures
-  QGaussLobatto<dim> quadrature_formulaM(quadratureRule);
-  QGauss<dim>  quadrature_formulaH(quadratureRule);
-   FEValues<dim> fe_valuesM (FE, quadrature_formulaM, update_values | update_gradients | update_JxW_values);
-   FEValues<dim> fe_valuesH (FE, quadrature_formulaH, update_values | update_gradients | update_JxW_values);
-   const unsigned int   dofs_per_cell = FE.dofs_per_cell;
-   const unsigned int   num_quad_points = quadrature.size();
-   FullMatrix<double>   elementalMassMatrix (dofs_per_cell, dofs_per_cell);
-   FullMatrix<double>   elementalHamiltonianMatrix (dofs_per_cell, dofs_per_cell);
-   Vector<double>       elementalMassVector (dofs_per_cell);
-   std::vector<types::global_dof_index> local_dof_indices (dofs_per_cell);
-   std::vector<double> cellPhiTotal(n_q_points);  
-   Vector<double>  localsolution(solution);
+  QGaussLobatto<dim> quadratureM(quadratureRule);
+  QGauss<dim>  quadratureH(quadratureRule);
+  FEValues<dim> fe_valuesM (FE, quadratureM, update_values | update_gradients | update_JxW_values);
+  FEValues<dim> fe_valuesH (FE, quadratureH, update_values | update_gradients | update_JxW_values);
+  const unsigned int   dofs_per_cell = FE.dofs_per_cell;
+  const unsigned int   num_quad_points = quadratureH.size();
+  FullMatrix<double>   elementalMassMatrix (dofs_per_cell, dofs_per_cell);
+  FullMatrix<double>   elementalHamiltonianMatrix (dofs_per_cell, dofs_per_cell);
+  Vector<double>       elementalMassVector (dofs_per_cell);
+  std::vector<types::global_dof_index> local_dof_indices (dofs_per_cell);
+  std::vector<double> cellPhiTotal(num_quad_points);  
+  Vector<double>  localsolution(solution);
 
   //parallel loop over all elements
   typename DoFHandler<dim>::active_cell_iterator cell = dofHandler->begin_active(), endc = dofHandler->end();
@@ -110,14 +110,16 @@ void eigen<dim>::solve(PETScWrappers::MPI::Vector& solution,
 		       PETScWrappers::MPI::SparseMatrix& hamiltonianMatrix,
 		       PETScWrappers::MPI::Vector& massVector, 
 		       ConstraintMatrix& constraints,
-		       Table<2,double>* rhoValues
+		       Table<2,double>* rhoValues,
+		       std::vector<double>& eigenValues,
+		       std::vector<PETScWrappers::MPI::Vector>& eigenVectors
 		       ){
   //assemble
   assemble(solution, massMatrix, hamiltonianMatrix, massVector, constraints, rhoValues);
   
   //solve
   computing_timer.enter_section("eigen solve"); 
-  SolverControl solver_control (dof_handler->n_dofs(), 1.0e-7); 
+  SolverControl solver_control (dofHandler->n_dofs(), 1.0e-7); 
   SLEPcWrappers::SolverJacobiDavidson eigensolver (solver_control,mpi_communicator);
   //SLEPcWrappers::SolverKrylovSchur eigensolver (solver_control,mpi_communicator);
   //SLEPcWrappers::SolverArnoldi  eigensolver (solver_control,mpi_communicator);
