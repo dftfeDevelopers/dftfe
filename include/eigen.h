@@ -1,6 +1,7 @@
 #ifndef eigen_H_
 #define eigen_H_
 #include "headers.h"
+#include "dft.h"
 
 //Initialize Namespace
 using namespace dealii;
@@ -9,18 +10,26 @@ using namespace dealii;
 template <int dim>
 class eigen
 {
+  friend class dft;
 public:
   eigen(DoFHandler<dim>* _dofHandler);
-  void solve();
-private:
+  void solve(PETScWrappers::MPI::Vector& solution, 
+	     PETScWrappers::MPI::SparseMatrix& massMatrix,
+	     PETScWrappers::MPI::SparseMatrix& hamiltonianMatrix,
+	     PETScWrappers::MPI::Vector& massVector, 
+	     ConstraintMatrix& constraints,
+	     Table<2,double>* rhoValues);
+ private:
   void init ();
-  void assemble();
-  PETScWrappers::MPI::SparseMatrix jacobian;
-  PETScWrappers::MPI::Vector       solution, residual;
+  void assemble(PETScWrappers::MPI::Vector& solution, 
+		PETScWrappers::MPI::SparseMatrix& massMatrix,
+		PETScWrappers::MPI::SparseMatrix& hamiltonianMatrix,
+		PETScWrappers::MPI::Vector& massVector, 
+		ConstraintMatrix& constraints,
+		Table<2,double>* rhoValues);
 
   //FE data structres
   FE_Q<dim>          FE;
-  ConstraintMatrix   constraints;
   DoFHandler<dim>*    dofHandler;
 
   //parallel objects

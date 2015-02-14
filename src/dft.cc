@@ -2,7 +2,7 @@
 #include "../include/headers.h"
 #include "../include/dft.h"
 #include "poisson.cc"
-//#include "eigen.cc"
+#include "eigen.cc"
 #include "../utils/fileReaders.cc"
 
 //boundary condition function
@@ -29,6 +29,7 @@ dft::dft():
   pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
   computing_timer (pcout, TimerOutput::summary, TimerOutput::wall_times),
   poissonObject(&dofHandler),
+  eigenObject(&dofHandler),
   denSpline(numAtomTypes)
 {}
 
@@ -211,6 +212,40 @@ void dft::init(){
 					      locally_relevant_dofs);
   jacobian.reinit (locally_owned_dofs, locally_owned_dofs, csp, mpi_communicator);
   computing_timer.exit_section("poisson setup"); 
+  
+  //initialize eigen problem related objects
+  computing_timer.enter_section("eigen setup");
+  eigenObject.init();
+  locally_owned_dofs = dofHandler.locally_owned_dofs ();
+  DoFTools::extract_locally_relevant_dofs (dofHandler, locally_relevant_dofs);
+  
+  //constraints
+  constraintsNone.clear ();
+  constraintsNone.reinit (locally_relevant_dofs);
+  DoFTools::make_hanging_node_constraints (dofHandler, constraintsNone);
+  DoFTools::make_zero_boundary_constraints(dofHandler, constraintsNone);
+  constraintsNone.close ();
+  
+  //intialize vectors
+  massVector.reinit(locally_owned_dofs, mpi_communicator);
+  eigenValues.resize(numEigenValues);
+  eigenVectors.resize(numEigenValues);
+  eigenVectorsProjected.resize(numEigenValues);
+  for (unsigned int i=0; i<numEigenValues; ++i){
+    eigenVectors[i].reinit(locally_owned_dofs, mpi_communicator);
+    eigenVectorsProjected[i].reinit(locally_owned_dofs, mpi_communicator);
+  }
+  
+  //initialize M, K matrices using the sparsity pattern.
+  CompressedSimpleSparsityPattern csp2 (locally_relevant_dofs);
+  DoFTools::make_sparsity_pattern (dofHandler, csp2, constraintsNone, false);
+  SparsityTools::distribute_sparsity_pattern (csp2,
+					      dofHandler.n_locally_owned_dofs_per_processor(),
+					      mpi_communicator,
+					      locally_relevant_dofs);
+  massMatrix.reinit (locally_owned_dofs, locally_owned_dofs, csp2, mpi_communicator);
+  hamiltonianMatrix.reinit (locally_owned_dofs, locally_owned_dofs, csp2, mpi_communicator);
+  computing_timer.exit_section("eigen setup"); 
 }
 
 //Generate triangulation.

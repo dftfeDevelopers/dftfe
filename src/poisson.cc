@@ -45,7 +45,6 @@ void poisson<dim>::assemble(PETScWrappers::MPI::Vector& solution,
     if (cell->is_locally_owned()){
       elementalJacobian = 0;
       elementalResidual = 0;
-      cell->set_user_index(cellID);
 
       //compute values for the current element
       fe_values.reinit (cell);

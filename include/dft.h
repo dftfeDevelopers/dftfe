@@ -48,6 +48,15 @@ class dft{
   PETScWrappers::MPI::Vector       phiTotRhoIn, phiTotRhoOut, phiExtRhoOut;
   ConstraintMatrix   constraintsZero, constraints1byR;
   
+  //eigen problem related objects
+  eigen<3> eigenObject;
+  PETScWrappers::MPI::Vector       massVector;
+  PETScWrappers::MPI::SparseMatrix massMatrix, hamiltonianMatrix;
+  std::vector<PETScWrappers::MPI::Vector> eigenVectors;
+  std::vector<PETScWrappers::MPI::Vector> eigenVectorsProjected;
+  std::vector<double> eigenValues;
+  ConstraintMatrix constraintsNone;
+  
   //dft related objects
   Table<2,double> *rhoInValues, *rhoOutValues;
   std::vector<Table<2,double>*> rhoInVals, rhoOutVals;
