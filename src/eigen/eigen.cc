@@ -1,4 +1,4 @@
-#include "../include/eigen.h"
+#include "../../include/eigen.h"
 
 //constructor
 template <int dim>

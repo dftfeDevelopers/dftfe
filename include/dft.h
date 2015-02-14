@@ -9,7 +9,10 @@
 
 //Initialize Namespace
 using namespace dealii;
-
+//lapack routine
+extern "C"{
+void dgesv_( int* n, int* nrhs, double* a, int* lda, int* ipiv, double* b, int* ldb, int* info );
+}
 xc_func_type funcX, funcC;
 
 //Define dft class
@@ -24,6 +27,11 @@ class dft{
   void initRho();
   double totalCharge();
   void locateAtomCoreNodes();
+  double mixing_simple();
+  double mixing_anderson();
+  void compute_energy();
+  void compute_fermienergy();
+  void compute_rhoOut();
 
   //FE data structres
   parallel::distributed::Triangulation<3> triangulation;
@@ -64,6 +72,7 @@ class dft{
   std::vector<Table<2,double>*> rhoInVals, rhoOutVals;
   std::vector<alglib::spline1dinterpolant> denSpline;
   unsigned int originIDs[numAtomTypes];
+  double fermiEnergy;
 };
 
 #endif

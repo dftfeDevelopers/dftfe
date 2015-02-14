@@ -1,91 +1,9 @@
-//Include header files
-#include "../include/headers.h"
-#include "../include/dft.h"
-#include "poisson.cc"
-#include "eigen.cc"
-#include "../utils/fileReaders.cc"
-
-//boundary condition function
-template <int dim>
-class OnebyRBoundaryFunction : public Function<dim>{
-public:
-  OnebyRBoundaryFunction(): Function<dim>(){}
-  virtual double value (const Point<dim> &p, const unsigned int component = 0) const{
-    return -atomCharge/sqrt(p.square());
-  }
-};
-
-//dft constructor
-dft::dft():
-  triangulation (MPI_COMM_WORLD,
-		 typename Triangulation<dim>::MeshSmoothing
-		 (Triangulation<dim>::smoothing_on_refinement |
-		  Triangulation<dim>::smoothing_on_coarsening)),
-  FE (QGaussLobatto<1>(FEOrder+1)),
-  dofHandler (triangulation),
-  mpi_communicator (MPI_COMM_WORLD),
-  n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_communicator)),
-  this_mpi_process (Utilities::MPI::this_mpi_process(mpi_communicator)),
-  pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
-  computing_timer (pcout, TimerOutput::summary, TimerOutput::wall_times),
-  poissonObject(&dofHandler),
-  eigenObject(&dofHandler),
-  denSpline(numAtomTypes)
-{}
-
-void dft::locateAtomCoreNodes(){ 
-  QGauss<dim>  quadrature_formula(quadratureRule);
-  FEValues<dim> fe_values (FE, quadrature_formula, update_values);
-  //
-  unsigned int vertices_per_cell=GeometryInfo<dim>::vertices_per_cell;
-  DoFHandler<dim>::active_cell_iterator
-    cell = dofHandler.begin_active(),
-    endc = dofHandler.end();
-  unsigned int cellID=0;
-  for (; cell!=endc; ++cell) {
-    if (cell->is_locally_owned()){
-      fe_values.reinit (cell);
-      for (unsigned int i=0; i<vertices_per_cell; ++i){
-	Point<dim> feNodeGlobalCoord = cell->vertex(i);
-	if (sqrt(feNodeGlobalCoord.square())<1.0e-12){  
-	  originIDs[0]=cell->vertex_dof_index(i,0);
-	  std::cout << "Atom core located at ("<< cell->vertex(i) << ") with node id " << cell->vertex_dof_index(i,0) << " in processor " << this_mpi_process << std::endl;
-	  MPI_Bcast (originIDs, numAtomTypes, MPI_UNSIGNED, this_mpi_process, mpi_communicator);
-	  return;
-	}
-      }
-    }
-  }
-}
-
-//Compute total charge
-double dft::totalCharge(){
-  double normValue=0.0;
-  QGauss<dim>  quadrature_formula(quadratureRule);
-  FEValues<dim> fe_values (FE, quadrature_formula, update_values | update_JxW_values | update_quadrature_points);
-  const unsigned int   dofs_per_cell = FE.dofs_per_cell;
-  const unsigned int   n_q_points    = quadrature_formula.size();
-  
-  DoFHandler<dim>::active_cell_iterator
-    cell = dofHandler.begin_active(),
-    endc = dofHandler.end();
-  unsigned int cellID=0;
-  for (; cell!=endc; ++cell) {
-    if (cell->is_locally_owned()){
-      fe_values.reinit (cell);
-      for (unsigned int q_point=0; q_point<n_q_points; ++q_point){
-        normValue+=(*rhoInValues)(cellID,q_point)*fe_values.JxW(q_point);
-      }
-    cellID++;
-    }
-  }
-  return Utilities::MPI::sum(normValue, mpi_communicator);
-}
+//source file for all dft level initializations
 
 //initialize rho
 void dft::initRho(){
   //Initialize electron density table storage
-  rhoInValues=new Table<2,double>(triangulation.n_locally_owned_active_cells(),std::pow(quadratureRule,dim));
+  rhoInValues=new Table<2,double>(triangulation.n_locally_owned_active_cells(),std::pow(quadratureRule,3));
   rhoInVals.push_back(rhoInValues);
   
   //Readin single atom rho initial guess
@@ -110,16 +28,16 @@ void dft::initRho(){
   std::vector<double> outerMostPointDen(numAtomTypes);
   outerMostPointDen[0]= xData[numRows-1];
   //Initialize rho
-  QGauss<dim>  quadrature_formula(quadratureRule);
-  FEValues<dim> fe_values (FE, quadrature_formula, update_values);
+  QGauss<3>  quadrature_formula(quadratureRule);
+  FEValues<3> fe_values (FE, quadrature_formula, update_values);
   const unsigned int n_q_points    = quadrature_formula.size();
-  typename DoFHandler<dim>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
+  typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
   unsigned int cellID=0;
   for (; cell!=endc; ++cell) {
     if (cell->is_locally_owned()){
       for (unsigned int q=0; q<n_q_points; ++q){
-	MappingQ<dim> test(1); 
-	Point<dim> quadPoint(test.transform_unit_to_real_cell(cell, fe_values.get_quadrature().point(q)));
+	MappingQ<3> test(1); 
+	Point<3> quadPoint(test.transform_unit_to_real_cell(cell, fe_values.get_quadrature().point(q)));
 	double distance=std::sqrt(quadPoint.square());
 	if(distance <= outerMostPointDen[0]){
 	  (*rhoInValues)(cellID,q)=std::abs(alglib::spline1dcalc(denSpline[0], distance));
@@ -184,13 +102,13 @@ void dft::init(){
   constraintsZero.clear ();
   constraintsZero.reinit (locally_relevant_dofs);
   DoFTools::make_hanging_node_constraints (dofHandler, constraintsZero);
-  VectorTools::interpolate_boundary_values (dofHandler, 0, ZeroFunction<dim>(),constraintsZero);
+  VectorTools::interpolate_boundary_values (dofHandler, 0, ZeroFunction<3>(),constraintsZero);
   constraintsZero.close ();
   //OnebyR constraints
   constraints1byR.clear ();
   constraints1byR.reinit (locally_relevant_dofs);
   DoFTools::make_hanging_node_constraints (dofHandler, constraints1byR);
-  VectorTools::interpolate_boundary_values (dofHandler, 0, OnebyRBoundaryFunction<dim>(),constraints1byR);
+  VectorTools::interpolate_boundary_values (dofHandler, 0, OnebyRBoundaryFunction<3>(),constraints1byR);
   constraints1byR.close ();
   
   //initialize vectors and jacobian matrix using the sparsity pattern.
@@ -238,48 +156,4 @@ void dft::init(){
 					      locally_relevant_dofs);
   massMatrix.reinit (locally_owned_dofs, locally_owned_dofs, csp2, mpi_communicator);
   hamiltonianMatrix.reinit (locally_owned_dofs, locally_owned_dofs, csp2, mpi_communicator);
-}
-
-//Generate triangulation.
-void dft::mesh(){
-  computing_timer.enter_section("mesh"); 
-  //GridGenerator::hyper_cube (triangulation, -1, 1);
-  //triangulation.refine_global (6);
-  //Read mesh written out in UCD format
-  static const Point<3> center = Point<3>();
-  static const HyperBallBoundary<3, 3> boundary(center,radius);
-  GridIn<3> gridin;
-  gridin.attach_triangulation(triangulation);
-  //Read mesh in UCD format generated from Cubit
-  std::ifstream f("meshFiles/ucd.inp");
-  gridin.read_ucd(f);
-  triangulation.set_boundary(0, boundary);
-  triangulation.refine_global (n_refinement_steps);
-  computing_timer.exit_section("mesh"); 
-}
-
-void dft::run ()
-{
-  computing_timer.enter_section("total time"); 
-  pcout << "number of MPI processes: "
-	<< Utilities::MPI::n_mpi_processes(mpi_communicator)
-	<< std::endl;
-
-  //generate/read mesh
-  mesh();
-  
-  //initialize
-  computing_timer.enter_section("dft setup"); 
-  init();
-  initRho();
-  locateAtomCoreNodes();
-  computing_timer.exit_section("dft setup"); 
-  
-  //solve
-  computing_timer.enter_section("dft solve"); 
-  poissonObject.solve(phiTotRhoIn, residual, jacobian, constraintsZero, rhoInValues);
-  eigenObject.solve(phiTotRhoIn, massMatrix, hamiltonianMatrix, massVector, constraintsNone, rhoInValues, eigenValues, eigenVectors);
-  computing_timer.exit_section("dft solve"); 
-
-  computing_timer.exit_section("total time"); 
 }

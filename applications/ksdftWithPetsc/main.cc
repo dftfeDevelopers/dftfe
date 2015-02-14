@@ -1,5 +1,4 @@
 //Define parameters
-const unsigned int dim=3;
 const double radius=20.0;
 unsigned int FEOrder=1;
 unsigned int n_refinement_steps=0;
@@ -10,7 +9,7 @@ const unsigned int numAtomTypes=1;
 double atomCharge=6.0;
 char rhoFileName[100]="rhoInitialGuess/rho_C";
 
-//solver paramteters
+//solver paramteters 
 unsigned int maxLinearSolverIterations=5000;
 double relLinearSolverTolerance=1.0e-12; 
 
@@ -18,7 +17,7 @@ double relLinearSolverTolerance=1.0e-12;
 double TVal=100.0;
 double kb = 3.166811429e-06;
 
-#include "../../src/dft.cc"
+#include "../../src/dft/dft.cc"
 
 int main (int argc, char *argv[])
 {

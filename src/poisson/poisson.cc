@@ -1,4 +1,4 @@
-#include "../include/poisson.h"
+#include "../../include/poisson.h"
 
 //constructor
 template <int dim>
