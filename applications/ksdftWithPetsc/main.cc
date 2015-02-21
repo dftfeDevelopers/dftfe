@@ -1,6 +1,6 @@
 //Define parameters
 const double radius=20.0;
-unsigned int FEOrder=1;
+unsigned int FEOrder=4;
 unsigned int n_refinement_steps=0;
 unsigned int numElectrons=6;
 unsigned int numEigenValues=numElectrons/2+2;

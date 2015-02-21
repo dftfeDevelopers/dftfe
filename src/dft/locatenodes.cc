@@ -8,7 +8,8 @@ void dft::locateAtomCoreNodes(){
   DoFHandler<3>::active_cell_iterator
     cell = dofHandler.begin_active(),
     endc = dofHandler.end();
-  unsigned int cellID=0;
+  bool located=false;
+  unsigned int cellID=0; 
   for (; cell!=endc; ++cell) {
     if (cell->is_locally_owned()){
       fe_values.reinit (cell);
@@ -17,10 +18,21 @@ void dft::locateAtomCoreNodes(){
 	if (sqrt(feNodeGlobalCoord.square())<1.0e-12){  
 	  originIDs[0]=cell->vertex_dof_index(i,0);
 	  std::cout << "Atom core located at ("<< cell->vertex(i) << ") with node id " << cell->vertex_dof_index(i,0) << " in processor " << this_mpi_process << std::endl;
-	  MPI_Bcast (originIDs, numAtomTypes, MPI_UNSIGNED, this_mpi_process, mpi_communicator);
-	  return;
+	  located=true;
 	}
       }
     }
+    if (located) break;
   }
+  //Sync originIDs with all other processors
+  if (located){
+    for (unsigned int i=0; i<n_mpi_processes; i++){
+      if (i!=this_mpi_process) MPI_Bsend(&originIDs[0], numAtomTypes, MPI_UNSIGNED,i, 0, mpi_communicator);
+    }
+  }
+  else{
+    MPI_Status status;
+    MPI_Recv(&originIDs[0], numAtomTypes, MPI_UNSIGNED, MPI_ANY_SOURCE, 0, mpi_communicator, &status);
+  }
+  MPI_Barrier(mpi_communicator);
 }

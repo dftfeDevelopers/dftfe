@@ -28,7 +28,8 @@ dft::dft():
   computing_timer (pcout, TimerOutput::summary, TimerOutput::wall_times),
   poissonObject(&dofHandler),
   eigenObject(&dofHandler),
-  denSpline(numAtomTypes)
+  denSpline(numAtomTypes),
+  originIDs(numAtomTypes)
 {}
 
 //dft run
@@ -48,14 +49,41 @@ void dft::run ()
   initRho();
   locateAtomCoreNodes();
   computing_timer.exit_section("dft setup"); 
-  
   //solve
   computing_timer.enter_section("dft solve"); 
-  poissonObject.solve(phiTotRhoIn, residual, jacobian, constraintsZero, rhoInValues);
-  eigenObject.solve(phiTotRhoIn, massMatrix, hamiltonianMatrix, massVector, constraintsNone, rhoInValues, eigenValues, eigenVectors);
-  //mixing_simple();
-  computing_timer.exit_section("dft solve"); 
+  //compute phiTot (**phiExt???)
+  poissonObject.solve(phiTotRhoIn, residual, jacobian, constraintsZero, originIDs, rhoInValues);
 
+  //Begin SCF iteration
+  unsigned int scfIter=0;
+  double norm=1.0;
+  while ((norm>1.0e-13) && (scfIter<11)){
+    if(this_mpi_process==0) printf("\n\nBegin SCF Iteration:%u\n", scfIter+1);
+    //Mixing scheme
+    if (scfIter>0){
+      if (scfIter==1) norm=mixing_simple();
+      else norm=mixing_anderson();
+      if(this_mpi_process==0) printf("Mixing Scheme: iter:%u, norm:%12.6e\n", scfIter+1, norm);
+    }
+    //phiTot with rhoIn
+    poissonObject.solve(phiTotRhoIn, residual, jacobian, constraintsZero, originIDs, rhoInValues);
+    //eigen solve
+    eigenObject.solve(phiTotRhoIn, massMatrix, hamiltonianMatrix, massVector, constraintsNone, rhoInValues, eigenValues, eigenVectors);
+    //fermi energy
+    compute_fermienergy();
+    //rhoOut
+    compute_rhoOut();
+    //phiTot with rhoOut
+    poissonObject.solve(phiTotRhoOut, residual, jacobian, constraintsZero, originIDs, rhoOutValues);
+    //phiExt with rhoOut
+    poissonObject.solve(phiExtRhoOut, residual, jacobian, constraints1byR, originIDs, rhoOutValues);
+    //energy
+    compute_energy();
+    pcout<<"SCF iteration: " << scfIter+1 << " complete\n";
+    scfIter++;
+  }
+  computing_timer.exit_section("dft solve"); 
+  //
   computing_timer.exit_section("total time"); 
 }
 

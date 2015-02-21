@@ -17,6 +17,7 @@ public:
 	     PETScWrappers::MPI::Vector& residual,
 	     PETScWrappers::MPI::SparseMatrix& jacobian,
 	     ConstraintMatrix& constraints,
+	     std::vector<unsigned int>& originIDs,
 	     Table<2,double>* rhoValues
 	     );
 private:
@@ -25,6 +26,7 @@ private:
 		PETScWrappers::MPI::Vector& residual,
 		PETScWrappers::MPI::SparseMatrix& jacobian,
 		ConstraintMatrix& constraints,
+		std::vector<unsigned int>& originIDs,
 		Table<2,double>* rhoValues
 		);
 

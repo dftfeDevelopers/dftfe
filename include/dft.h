@@ -71,7 +71,7 @@ class dft{
   Table<2,double> *rhoInValues, *rhoOutValues;
   std::vector<Table<2,double>*> rhoInVals, rhoOutVals;
   std::vector<alglib::spline1dinterpolant> denSpline;
-  unsigned int originIDs[numAtomTypes];
+  std::vector<unsigned int> originIDs;
   double fermiEnergy;
 };
 
