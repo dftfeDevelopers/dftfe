@@ -1,3 +1,4 @@
+
 #include "../../include/eigen.h"
 
 //constructor
@@ -99,7 +100,11 @@ void eigen<dim>::assemble(PETScWrappers::MPI::Vector& solution,
   hamiltonianMatrix.compress(VectorOperation::add);
   massMatrix.compress(VectorOperation::add);
   massVector.compress(VectorOperation::add);
-  
+  //
+  VecSqrtAbs(massVector);
+  VecReciprocal(massVector);
+  MatDiagonalScale(hamiltonianMatrix,massVector,massVector);
+  //
   computing_timer.exit_section("eigen assembly"); 
 }
 
@@ -124,7 +129,7 @@ void eigen<dim>::solve(PETScWrappers::MPI::Vector& solution,
   //SLEPcWrappers::SolverKrylovSchur eigensolver (solver_control,mpi_communicator);
   //SLEPcWrappers::SolverArnoldi  eigensolver (solver_control,mpi_communicator);
   eigensolver.set_which_eigenpairs (EPS_SMALLEST_REAL);
-  eigensolver.solve(hamiltonianMatrix, massMatrix, eigenValues, eigenVectors, numEigenValues);
+  eigensolver.solve(hamiltonianMatrix, eigenValues, eigenVectors, numEigenValues);
   //print rigen values to screen
   for (unsigned int i=0; i<numEigenValues; i++)
     if (this_mpi_process == 0) std::printf("Eigen value %u : %30.20e \n", i, eigenValues[i]);
