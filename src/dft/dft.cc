@@ -51,9 +51,9 @@ void dft::run ()
   computing_timer.exit_section("dft setup"); 
   //solve
   computing_timer.enter_section("dft solve"); 
-  //compute phiTot (**phiExt???)
-  poissonObject.solve(phiTotRhoIn, residual, jacobian, constraintsZero, originIDs, rhoInValues);
-
+  //phiExt with nuclear charge
+  poissonObject.solve(phiExt, residual, jacobian, constraints1byR, originIDs);
+  
   //Begin SCF iteration
   unsigned int scfIter=0;
   double norm=1.0;
@@ -75,8 +75,6 @@ void dft::run ()
     compute_rhoOut();
     //phiTot with rhoOut
     poissonObject.solve(phiTotRhoOut, residual, jacobian, constraintsZero, originIDs, rhoOutValues);
-    //phiExt with rhoOut
-    poissonObject.solve(phiExtRhoOut, residual, jacobian, constraints1byR, originIDs, rhoOutValues);
     //energy
     compute_energy();
     pcout<<"SCF iteration: " << scfIter+1 << " complete\n";

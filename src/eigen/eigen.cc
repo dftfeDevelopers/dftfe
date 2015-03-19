@@ -124,7 +124,7 @@ void eigen<dim>::solve(PETScWrappers::MPI::Vector& solution,
   
   //solve
   computing_timer.enter_section("eigen solve"); 
-  SolverControl solver_control (dofHandler->n_dofs(), 1.0e-7); 
+  SolverControl solver_control (dofHandler->n_dofs(), 1.0e-5); 
   SLEPcWrappers::SolverJacobiDavidson eigensolver (solver_control,mpi_communicator);
   //SLEPcWrappers::SolverKrylovSchur eigensolver (solver_control,mpi_communicator);
   //SLEPcWrappers::SolverArnoldi  eigensolver (solver_control,mpi_communicator);

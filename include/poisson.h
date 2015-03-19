@@ -18,7 +18,7 @@ public:
 	     PETScWrappers::MPI::SparseMatrix& jacobian,
 	     ConstraintMatrix& constraints,
 	     std::vector<unsigned int>& originIDs,
-	     Table<2,double>* rhoValues
+	     Table<2,double>* rhoValues=0
 	     );
 private:
   void init ();

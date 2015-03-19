@@ -114,7 +114,7 @@ void dft::init(){
   //initialize vectors and jacobian matrix using the sparsity pattern.
   phiTotRhoIn.reinit (locally_owned_dofs, mpi_communicator);
   phiTotRhoOut.reinit (locally_owned_dofs, mpi_communicator); 
-  phiExtRhoOut.reinit (locally_owned_dofs, mpi_communicator);
+  phiExt.reinit (locally_owned_dofs, mpi_communicator);
   residual.reinit (locally_owned_dofs, mpi_communicator);
   //
   CompressedSimpleSparsityPattern csp (locally_relevant_dofs);

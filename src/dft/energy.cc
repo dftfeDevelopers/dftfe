@@ -8,12 +8,12 @@ void dft::compute_energy(){
   const unsigned int   num_quad_points    = quadrature.size();
   std::vector<double> cellPhiTotRhoIn(num_quad_points);  
   std::vector<double> cellPhiTotRhoOut(num_quad_points);  
-  std::vector<double> cellPhiExtRhoOut(num_quad_points);
+  std::vector<double> cellPhiExt(num_quad_points);
   
   // Loop through all cells.
   Vector<double>  localPhiTotRhoIn(phiTotRhoIn);
   Vector<double>  localPhiTotRhoOut(phiTotRhoOut);
-  Vector<double>  localPhiExtRhoOut(phiExtRhoOut);
+  Vector<double>  localPhiExt(phiExt);
   //
   double bandEnergy=0.0;
   double partialOccupancy, temp;
@@ -34,7 +34,7 @@ void dft::compute_energy(){
       fe_values.reinit (cell);
       fe_values.get_function_values(localPhiTotRhoIn, cellPhiTotRhoIn);
       fe_values.get_function_values(localPhiTotRhoOut, cellPhiTotRhoOut);
-      fe_values.get_function_values(localPhiExtRhoOut, cellPhiExtRhoOut);
+      fe_values.get_function_values(localPhiExt, cellPhiExt);
       //Get Exc
       std::vector<double> densityValueIn(num_quad_points), densityValueOut(num_quad_points);
       std::vector<double> exchangeEnergyVal(num_quad_points), corrEnergyVal(num_quad_points);
@@ -52,7 +52,7 @@ void dft::compute_energy(){
 	double Veff=cellPhiTotRhoIn[q_point]+exchangePotentialVal[q_point]+corrPotentialVal[q_point];
 	//Vtot, Vext computet with rhoIn
 	double Vtot=cellPhiTotRhoOut[q_point];
-	double Vext=cellPhiExtRhoOut[q_point];
+	double Vext=cellPhiExt[q_point];
 	kineticEnergy+=Veff*(*rhoOutValues)(cellID, q_point)*fe_values.JxW (q_point);
 	exchangeEnergy+=(exchangeEnergyVal[q_point])*(*rhoOutValues)(cellID, q_point)*fe_values.JxW (q_point);
 	correlationEnergy+=(corrEnergyVal[q_point])*(*rhoOutValues)(cellID, q_point)*fe_values.JxW (q_point);

@@ -62,9 +62,11 @@ void poisson<dim>::assemble(PETScWrappers::MPI::Vector& solution,
       }
       
       //local rhs
-      for (unsigned int i=0; i<dofs_per_cell; ++i){
-	for (unsigned int q_point=0; q_point<num_quad_points; ++q_point){
-	  elementalResidual(i) += fe_values.shape_value(i, q_point)*(*rhoValues)(cellID, q_point)*fe_values.JxW (q_point);
+      if (rhoValues) {
+	for (unsigned int i=0; i<dofs_per_cell; ++i){
+	  for (unsigned int q_point=0; q_point<num_quad_points; ++q_point){ 
+	    elementalResidual(i) += fe_values.shape_value(i, q_point)*(*rhoValues)(cellID, q_point)*fe_values.JxW (q_point);
+	  }
 	}
       }
       

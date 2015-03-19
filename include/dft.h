@@ -55,7 +55,7 @@ class dft{
   poisson<3> poissonObject;
   PETScWrappers::MPI::SparseMatrix jacobian;
   PETScWrappers::MPI::Vector       residual;
-  PETScWrappers::MPI::Vector       phiTotRhoIn, phiTotRhoOut, phiExtRhoOut;
+  PETScWrappers::MPI::Vector       phiTotRhoIn, phiTotRhoOut, phiExt;
   ConstraintMatrix   constraintsZero, constraints1byR;
   
   //eigen problem related objects
