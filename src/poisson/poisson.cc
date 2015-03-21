@@ -23,7 +23,7 @@ void poisson<dim>::assemble(PETScWrappers::MPI::Vector& solution,
 			    PETScWrappers::MPI::Vector& residual,
 			    PETScWrappers::MPI::SparseMatrix& jacobian,
 			    ConstraintMatrix& constraints,
-			    std::vector<unsigned int>& originIDs,
+			    std::map<unsigned int, double>& atoms,
 			    Table<2,double>* rhoValues
 			    ){
   computing_timer.enter_section("poisson assembly"); 
@@ -78,10 +78,12 @@ void poisson<dim>::assemble(PETScWrappers::MPI::Vector& solution,
     }
   }
   //Add nodal force to the node at the origin
-  if (residual.in_local_range(originIDs[0])){
-    std::vector<unsigned int> local_dof_indices_origin; local_dof_indices_origin.push_back(originIDs[0]);
-    Vector<double> cell_rhs_origin (1); cell_rhs_origin(0)=-atomCharge;
+  for (std::map<unsigned int, double>::iterator it=atoms.begin(); it!=atoms.end(); ++it){
+    std::vector<unsigned int> local_dof_indices_origin(1, it->first); //atomic node
+    Vector<double> cell_rhs_origin (1); 
+    cell_rhs_origin(0)=-(it->second); //atomic chrage
     constraints.distribute_local_to_global(cell_rhs_origin,local_dof_indices_origin,residual);
+    pcout << " node: " << it->first << " charge: " << it->second << std::endl;
   }
   
   //MPI operation to sync data 
@@ -97,11 +99,11 @@ void poisson<dim>::solve(PETScWrappers::MPI::Vector& solution,
 			 PETScWrappers::MPI::Vector& residual,
 			 PETScWrappers::MPI::SparseMatrix& jacobian,
 			 ConstraintMatrix& constraints,
-			 std::vector<unsigned int>& originIDs,
+			 std::map<unsigned int, double>& atoms,
 			 Table<2,double>* rhoValues
 			 ){
   //assemble
-  assemble(solution, residual, jacobian, constraints, originIDs, rhoValues);
+  assemble(solution, residual, jacobian, constraints, atoms, rhoValues);
   
   //solve
   computing_timer.enter_section("poisson solve"); 

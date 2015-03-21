@@ -20,7 +20,7 @@ class dft{
  public:
   dft();
   void run();
-  Table<2,double> atoms;
+  Table<2,double> atomLocations;
  private:
   void mesh();
   void init();

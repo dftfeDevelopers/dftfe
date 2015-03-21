@@ -23,7 +23,7 @@ void dft::compute_energy(){
     bandEnergy+= 2*partialOccupancy*eigenValues[i];
     if (this_mpi_process == 0) std::printf("partialOccupancy %u: %30.20e \n", i, partialOccupancy);
   }
-  double kineticEnergy=0.0, exchangeEnergy=0.0, correlationEnergy=0.0, electrostaticEnergy=0.0; 
+  double potentialTimesRho=0.0, exchangeEnergy=0.0, correlationEnergy=0.0, electrostaticEnergy=0.0; 
   
   //parallel loop over all elements
   typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
@@ -53,7 +53,7 @@ void dft::compute_energy(){
 	//Vtot, Vext computet with rhoIn
 	double Vtot=cellPhiTotRhoOut[q_point];
 	double Vext=cellPhiExt[q_point];
-	kineticEnergy+=Veff*(*rhoOutValues)(cellID, q_point)*fe_values.JxW (q_point);
+	potentialTimesRho+=Veff*(*rhoOutValues)(cellID, q_point)*fe_values.JxW (q_point);
 	exchangeEnergy+=(exchangeEnergyVal[q_point])*(*rhoOutValues)(cellID, q_point)*fe_values.JxW (q_point);
 	correlationEnergy+=(corrEnergyVal[q_point])*(*rhoOutValues)(cellID, q_point)*fe_values.JxW (q_point);
 	electrostaticEnergy+=0.5*(Vtot+Vext)*(*rhoOutValues)(cellID, q_point)*fe_values.JxW (q_point);
@@ -62,11 +62,20 @@ void dft::compute_energy(){
     cellID++;
     }
   } 
-  kineticEnergy=bandEnergy-kineticEnergy;
-  double energy=kineticEnergy+exchangeEnergy+correlationEnergy+electrostaticEnergy;
+  double energy=-potentialTimesRho+exchangeEnergy+correlationEnergy+electrostaticEnergy;
+  //sum over all processors
   double totalEnergy= Utilities::MPI::sum(energy, mpi_communicator);
-  if (this_mpi_process == 0) std::printf("Total energy:%30.20e \n", totalEnergy);
-  if (this_mpi_process == 0) std::printf("Band energy:%30.20e \nKinetic energy:%30.20e \nExchange energy:%30.20e \nCorrelation energy:%30.20e \nElectrostatic energy:%30.20e \n", bandEnergy, kineticEnergy, exchangeEnergy, correlationEnergy, electrostaticEnergy);
+  double totalpotentialTimesRho= Utilities::MPI::sum(potentialTimesRho, mpi_communicator); 
+  double totalexchangeEnergy= Utilities::MPI::sum(exchangeEnergy, mpi_communicator); 
+  double totalcorrelationEnergy= Utilities::MPI::sum(correlationEnergy, mpi_communicator);
+  double totalelectrostaticEnergy= Utilities::MPI::sum(electrostaticEnergy, mpi_communicator); 
+  //total energy
+ totalEnergy+=bandEnergy;
+ double totalkineticEnergy=-totalpotentialTimesRho+bandEnergy;
+ if (this_mpi_process == 0) {
+   std::printf("Total energy:%30.20e \n", totalEnergy);
+   std::printf("Band energy:%30.20e \nKinetic energy:%30.20e \nExchange energy:%30.20e \nCorrelation energy:%30.20e \nElectrostatic energy:%30.20e \n", bandEnergy, totalkineticEnergy, totalexchangeEnergy, totalcorrelationEnergy, totalelectrostaticEnergy);
+ }
 }
 
 //compute fermi energy

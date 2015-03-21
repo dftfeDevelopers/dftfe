@@ -29,7 +29,7 @@ int main (int argc, char *argv[]){
   deallog.depth_console(0);
   {
     dft problem;
-    getAtomicLocations(problem.atoms);
+    getAtomicLocations(problem.atomLocations);
     problem.run();
   }
   return 0;

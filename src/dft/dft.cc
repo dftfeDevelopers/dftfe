@@ -28,8 +28,7 @@ dft::dft():
   computing_timer (pcout, TimerOutput::summary, TimerOutput::wall_times),
   poissonObject(&dofHandler),
   eigenObject(&dofHandler),
-  denSpline(numAtomTypes),
-  originIDs(numAtomTypes)
+  denSpline(numAtomTypes)
 {}
 
 //dft run
@@ -52,7 +51,7 @@ void dft::run ()
   //solve
   computing_timer.enter_section("dft solve"); 
   //phiExt with nuclear charge
-  poissonObject.solve(phiExt, residual, jacobian, constraints1byR, originIDs);
+  poissonObject.solve(phiExt, residual, jacobian, constraints1byR, atoms);
   
   //Begin SCF iteration
   unsigned int scfIter=0;
@@ -66,7 +65,7 @@ void dft::run ()
       if(this_mpi_process==0) printf("Mixing Scheme: iter:%u, norm:%12.6e\n", scfIter+1, norm);
     }
     //phiTot with rhoIn
-    poissonObject.solve(phiTotRhoIn, residual, jacobian, constraintsZero, originIDs, rhoInValues);
+    poissonObject.solve(phiTotRhoIn, residual, jacobian, constraintsZero, atoms, rhoInValues);
     //eigen solve
     eigenObject.solve(phiTotRhoIn, massMatrix, hamiltonianMatrix, massVector, constraintsNone, rhoInValues, eigenValues, eigenVectors);
     //fermi energy
@@ -74,7 +73,7 @@ void dft::run ()
     //rhoOut
     compute_rhoOut();
     //phiTot with rhoOut
-    poissonObject.solve(phiTotRhoOut, residual, jacobian, constraintsZero, originIDs, rhoOutValues);
+    poissonObject.solve(phiTotRhoOut, residual, jacobian, constraintsZero, atoms, rhoOutValues);
     //energy
     compute_energy();
     pcout<<"SCF iteration: " << scfIter+1 << " complete\n";
