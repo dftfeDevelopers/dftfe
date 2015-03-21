@@ -20,7 +20,7 @@ class dft{
  public:
   dft();
   void run();
-  
+  Table<2,double> atoms;
  private:
   void mesh();
   void init();
@@ -71,7 +71,7 @@ class dft{
   Table<2,double> *rhoInValues, *rhoOutValues;
   std::vector<Table<2,double>*> rhoInVals, rhoOutVals;
   std::vector<alglib::spline1dinterpolant> denSpline;
-  std::vector<unsigned int> originIDs;
+  std::map<unsigned int, double> atoms; //map of atom node number and atomic weight
   double fermiEnergy;
 };
 
