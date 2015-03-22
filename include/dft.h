@@ -31,6 +31,7 @@ class dft{
   double mixing_anderson();
   void compute_energy();
   void compute_fermienergy();
+  double repulsiveEnergy();
   void compute_rhoOut();
 
   //FE data structres

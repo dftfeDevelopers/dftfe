@@ -108,7 +108,7 @@ void dft::init(){
   constraints1byR.clear ();
   constraints1byR.reinit (locally_relevant_dofs);
   DoFTools::make_hanging_node_constraints (dofHandler, constraints1byR);
-  VectorTools::interpolate_boundary_values (dofHandler, 0, OnebyRBoundaryFunction<3>(),constraints1byR);
+  VectorTools::interpolate_boundary_values (dofHandler, 0, OnebyRBoundaryFunction<3>(atomLocations),constraints1byR);
   constraints1byR.close ();
   
   //initialize vectors and jacobian matrix using the sparsity pattern.

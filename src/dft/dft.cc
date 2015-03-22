@@ -67,7 +67,7 @@ void dft::run ()
     //phiTot with rhoIn
     poissonObject.solve(phiTotRhoIn, residual, jacobian, constraintsZero, atoms, rhoInValues);
     //eigen solve
-    eigenObject.solve(phiTotRhoIn, massMatrix, hamiltonianMatrix, massVector, constraintsNone, rhoInValues, eigenValues, eigenVectors);
+    eigenObject.solve(phiTotRhoIn, massMatrix, hamiltonianMatrix, massVector, constraintsNone, rhoInValues, eigenValues, eigenVectors, scfIter);
     //fermi energy
     compute_fermienergy();
     //rhoOut

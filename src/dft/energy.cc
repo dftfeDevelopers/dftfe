@@ -57,7 +57,6 @@ void dft::compute_energy(){
 	exchangeEnergy+=(exchangeEnergyVal[q_point])*(*rhoOutValues)(cellID, q_point)*fe_values.JxW (q_point);
 	correlationEnergy+=(corrEnergyVal[q_point])*(*rhoOutValues)(cellID, q_point)*fe_values.JxW (q_point);
 	electrostaticEnergy+=0.5*(Vtot+Vext)*(*rhoOutValues)(cellID, q_point)*fe_values.JxW (q_point);
-	//energy+= 0.0; //This should be the repulsion energy for multi-atom
       }
     cellID++;
     }
@@ -71,10 +70,11 @@ void dft::compute_energy(){
   double totalelectrostaticEnergy= Utilities::MPI::sum(electrostaticEnergy, mpi_communicator); 
   //total energy
  totalEnergy+=bandEnergy;
+ totalEnergy+=repulsiveEnergy();
  double totalkineticEnergy=-totalpotentialTimesRho+bandEnergy;
  if (this_mpi_process == 0) {
    std::printf("Total energy:%30.20e \n", totalEnergy);
-   std::printf("Band energy:%30.20e \nKinetic energy:%30.20e \nExchange energy:%30.20e \nCorrelation energy:%30.20e \nElectrostatic energy:%30.20e \n", bandEnergy, totalkineticEnergy, totalexchangeEnergy, totalcorrelationEnergy, totalelectrostaticEnergy);
+   std::printf("Band energy:%30.20e \nKinetic energy:%30.20e \nExchange energy:%30.20e \nCorrelation energy:%30.20e \nElectrostatic energy:%30.20e \nRepulsive energy:%30.20e \n", bandEnergy, totalkineticEnergy, totalexchangeEnergy, totalcorrelationEnergy, totalelectrostaticEnergy, repulsiveEnergy());
  }
 }
 
@@ -120,4 +120,17 @@ void dft::compute_fermienergy(){
   //set Fermi energy
   fermiEnergy=fe;
   if (this_mpi_process == 0) std::printf("Fermi energy:%30.20e \n", fermiEnergy);
+}
+
+double dft::repulsiveEnergy(){
+  double energy=0.0;
+  for (unsigned int n1=0; n1<atomLocations.size()[0]; n1++){
+    for (unsigned int n2=n1; n2<atomLocations.size()[0]; n2++){
+      double Z1=atomLocations[n1][0], Z2=atomLocations[n2][0];    
+      Point<3> atom1(atomLocations[n1][1],atomLocations[n1][2],atomLocations[n1][3]);
+      Point<3> atom2(atomLocations[n2][1],atomLocations[n2][2],atomLocations[n2][3]);
+      energy+=(Z1*Z2)/atom1.distance(atom2);
+    }
+  }
+  return energy;
 }

@@ -117,8 +117,8 @@ void eigen<dim>::solve(PETScWrappers::MPI::Vector& solution,
 		       ConstraintMatrix& constraints,
 		       Table<2,double>* rhoValues,
 		       std::vector<double>& eigenValues,
-		       std::vector<PETScWrappers::MPI::Vector>& eigenVectors
-		       ){
+		       std::vector<PETScWrappers::MPI::Vector>& eigenVectors, 
+		       unsigned int scfIter){
   //assemble
   assemble(solution, massMatrix, hamiltonianMatrix, massVector, constraints, rhoValues);
   
@@ -129,6 +129,17 @@ void eigen<dim>::solve(PETScWrappers::MPI::Vector& solution,
   //SLEPcWrappers::SolverKrylovSchur eigensolver (solver_control,mpi_communicator);
   //SLEPcWrappers::SolverArnoldi  eigensolver (solver_control,mpi_communicator);
   eigensolver.set_which_eigenpairs (EPS_SMALLEST_REAL);
+  //set initial guess
+  /*if(scfIter>0){
+    Vec* vecArray[numEigenValues];
+    for (unsigned int i=0; i<numEigenValues; i++) {
+      Vec this_vector=eigenVectors[i];
+      vecArray[i]=&this_vector;
+    }
+    EPSJDSetInitialSize(*eigensolver.get_eps(),numEigenValues);
+    EPSSetInitialSpace(*eigensolver.get_eps(),numEigenValues, *vecArray);
+  } 
+  */
   eigensolver.solve(hamiltonianMatrix, eigenValues, eigenVectors, numEigenValues);
   //print rigen values to screen
   for (unsigned int i=0; i<numEigenValues; i++)
