@@ -27,8 +27,7 @@ dft::dft():
   pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
   computing_timer (pcout, TimerOutput::summary, TimerOutput::wall_times),
   poissonObject(&dofHandler),
-  eigenObject(&dofHandler),
-  denSpline(numAtomTypes)
+  eigenObject(&dofHandler)
 {}
 
 //dft run

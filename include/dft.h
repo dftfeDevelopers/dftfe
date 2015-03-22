@@ -21,6 +21,8 @@ class dft{
   dft();
   void run();
   Table<2,double> atomLocations;
+  std::map<unsigned int, std::string> initialGuessFiles;
+
  private:
   void mesh();
   void init();
@@ -71,7 +73,6 @@ class dft{
   //dft related objects
   Table<2,double> *rhoInValues, *rhoOutValues;
   std::vector<Table<2,double>*> rhoInVals, rhoOutVals;
-  std::vector<alglib::spline1dinterpolant> denSpline;
   std::map<unsigned int, double> atoms; //map of atom node number and atomic weight
   double fermiEnergy;
 };
