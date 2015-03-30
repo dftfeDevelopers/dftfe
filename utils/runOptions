@@ -1,1 +1,1 @@
-mpirun -np 2 ./main -eps_monitor -st_pc_type jacobi -st_ksp_type cg -st_ksp_max_it 90 -st_ksp_atol 1e-10 -st_ksp_rtol 1e-4 -eps_hermitian
+mpirun -np 1 ./main -eps_monitor -st_pc_type jacobi -st_ksp_type bcgs -st_ksp_max_it 90 -st_ksp_atol 1e-10 -st_ksp_rtol 1e-4 -eps_hermitian -ksp_monitor

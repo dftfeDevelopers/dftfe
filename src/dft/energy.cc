@@ -77,7 +77,7 @@ void dft::compute_energy(){
    std::printf("Band energy:%30.20e \nKinetic energy:%30.20e \nExchange energy:%30.20e \nCorrelation energy:%30.20e \nElectrostatic energy:%30.20e \nRepulsive energy:%30.20e \n", bandEnergy, totalkineticEnergy, totalexchangeEnergy, totalcorrelationEnergy, totalelectrostaticEnergy, repulsiveEnergy());
  }
 }
-
+ 
 //compute fermi energy
 void dft::compute_fermienergy(){
   //initial guess for fe

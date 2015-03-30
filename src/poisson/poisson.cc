@@ -83,7 +83,7 @@ void poisson<dim>::assemble(PETScWrappers::MPI::Vector& solution,
     Vector<double> cell_rhs_origin (1); 
     cell_rhs_origin(0)=-(it->second); //atomic chrage
     constraints.distribute_local_to_global(cell_rhs_origin,local_dof_indices_origin,residual);
-    pcout << " node: " << it->first << " charge: " << it->second << std::endl;
+    //pcout << " node: " << it->first << " charge: " << it->second << std::endl;
   }
   
   //MPI operation to sync data 

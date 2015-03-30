@@ -1,0 +1,14 @@
+#!/bin/bash
+#PBS -A prismsproject_fluxoe
+#PBS -N CH4
+#PBS -l walltime=24:00:00
+#PBS -l nodes=1:ppn=16:prisms:sandybridge,pmem=3800mb,qos=flux
+#PBS -q fluxoe
+#PBS -n
+#PBS -V
+#PBS -m n
+module load intel-comp
+module load mkl
+cd /nfs/mcfs_home/rudraa/Private/dft/applications/ksdftWithPetsc
+
+mpirun -np 1 ./main -eps_monitor -st_pc_type jacobi -st_ksp_type bcgs -st_ksp_max_it 90 -st_ksp_atol 1e-10 -st_ksp_rtol 1e-4 -eps_hermitian -ksp_monitor
