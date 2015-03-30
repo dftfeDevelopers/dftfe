@@ -1,0 +1,116 @@
+//source file for all the mixing schemes
+
+//implement simple mixing scheme 
+double dft::mixing_simple()
+{
+  double normValue=0.0;
+  QGauss<3>  quadrature(quadratureRule);
+  FEValues<3> fe_values (FE, quadrature, update_values | update_JxW_values | update_quadrature_points);
+  const unsigned int num_quad_points = quadrature.size();
+  double alpha=0.8;
+  
+  //create new rhoValue tables
+  Table<2,double> *rhoInValuesOld=rhoInValues;
+  rhoInValues=new Table<2,double>(triangulation.n_locally_owned_active_cells(),std::pow(quadratureRule,3));
+  rhoInVals.push_back(rhoInValues); 
+
+  //parallel loop over all elements
+  typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
+  unsigned int cellID=0;
+  for (; cell!=endc; ++cell) {
+    if (cell->is_locally_owned()){
+      fe_values.reinit (cell); 
+      for (unsigned int q_point=0; q_point<num_quad_points; ++q_point){
+	//Compute (rhoIn-rhoOut)^2
+        normValue+=std::pow((*rhoInValuesOld)(cellID,q_point)-(*rhoOutValues)(cellID,q_point),2.0)*fe_values.JxW(q_point);
+	//Simple mixing scheme
+	(*rhoInValues)(cellID,q_point)=std::abs((1-alpha)*(*rhoInValuesOld)(cellID,q_point)+ alpha*(*rhoOutValues)(cellID,q_point));
+      }
+      cellID++;
+    }
+  }
+  return Utilities::MPI::sum(normValue, mpi_communicator);
+}
+
+//implement anderson mixing scheme 
+double dft::mixing_anderson(){
+  double normValue=0.0;
+  QGauss<3>  quadrature(quadratureRule);
+  FEValues<3> fe_values (FE, quadrature, update_values | update_JxW_values | update_quadrature_points);
+  const unsigned int num_quad_points = quadrature.size();
+  double alpha=0.5;
+  
+   //initialize data structures
+  int N=rhoOutVals.size()-1;
+  pcout << "\nN:" << N << "\n";
+  int NRHS=1, lda=N, ldb=N, info;
+  int ipiv[N];
+  double A[lda*N], c[ldb*NRHS]; 
+  for (int i=0; i<lda*N; i++) A[i]=0.0;
+  for (int i=0; i<ldb*NRHS; i++) c[i]=0.0;
+  
+  //parallel loop over all elements
+  typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
+  unsigned int cellID=0;
+  for (; cell!=endc; ++cell) {
+    if (cell->is_locally_owned()){
+      fe_values.reinit (cell); 
+      for (unsigned int q_point=0; q_point<num_quad_points; ++q_point){
+	//fill coefficient matrix, rhs
+	double Fn=(*rhoOutVals[N])(cellID,q_point)-(*rhoInVals[N])(cellID,q_point);
+	for (int m=0; m<N; m++){
+	  double Fnm=(*rhoOutVals[N-1-m])(cellID,q_point)-(*rhoInVals[N-1-m])(cellID,q_point);
+	  for (int k=0; k<N; k++){
+	    double Fnk=(*rhoOutVals[N-1-k])(cellID,q_point)-(*rhoInVals[N-1-k])(cellID,q_point);
+	    A[k*N+m] += (Fn-Fnm)*(Fn-Fnk)*fe_values.JxW(q_point); // (m,k)^th entry
+	  }	  
+	  c[m] += (Fn-Fnm)*(Fn)*fe_values.JxW(q_point); // (m)^th entry
+	}
+      }
+      cellID++;
+    }
+  }
+  std::cout << "A,c:" << A[0] << " " << c[0] << "\n";
+  //solve for coefficients
+  dgesv_(&N, &NRHS, A, &lda, ipiv, c, &ldb, &info);
+  if((info > 0) && (this_mpi_process==0)) {
+    printf( "Anderson Mixing: The diagonal element of the triangular factor of A,\n" );
+    printf( "U(%i,%i) is zero, so that A is singular.\nThe solution could not be computed.\n", info, info );
+    exit(1);
+  }
+  double cn=1.0;
+  for (int i=0; i<N; i++) cn-=c[i];
+  if(this_mpi_process==0) {
+    printf("\nAnderson mixing  c%u:%12.6e, ", N+1, cn);
+    for (int i=0; i<N; i++) printf("c%u:%12.6e, ", N-i, c[N-1-i]);
+    printf("\n");
+  }
+  
+  //create new rhoValue tables
+  Table<2,double> *rhoInValuesOld=rhoInValues;
+  rhoInValues=new Table<2,double>(triangulation.n_locally_owned_active_cells(),std::pow(quadratureRule,3));
+  rhoInVals.push_back(rhoInValues);
+
+  //implement anderson mixing
+  cell = dofHandler.begin_active();
+  cellID=0;
+  for (; cell!=endc; ++cell) {
+    if (cell->is_locally_owned()){
+      fe_values.reinit (cell); 
+      for (unsigned int q_point=0; q_point<num_quad_points; ++q_point){
+	//Compute (rhoIn-rhoOut)^2
+        normValue+=std::pow((*rhoInValuesOld)(cellID,q_point)-(*rhoOutValues)(cellID,q_point),2.0)*fe_values.JxW(q_point);
+	//Anderson mixing scheme
+	double rhoOutBar=cn*(*rhoOutVals[N])(cellID,q_point);
+	double rhoInBar=cn*(*rhoInVals[N])(cellID,q_point);
+	for (int i=0; i<N; i++){
+	  rhoOutBar+=c[i]*(*rhoOutVals[N-1-i])(cellID,q_point);
+	  rhoInBar+=c[i]*(*rhoInVals[N-1-i])(cellID,q_point);
+	}
+	(*rhoInValues)(cellID,q_point)=(1-alpha)*rhoInBar+alpha*rhoOutBar;
+      }
+    cellID++;
+    }
+  }
+  return Utilities::MPI::sum(normValue, mpi_communicator);
+}
