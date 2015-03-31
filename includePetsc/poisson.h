@@ -6,8 +6,6 @@
 //Initialize Namespace
 using namespace dealii;
 
-typedef parallel::distributed::Vector<double> vectorType;
-
 //Define poisson class
 template <int dim>
 class poisson
@@ -15,35 +13,26 @@ class poisson
   friend class dft; 
 public:
   poisson(DoFHandler<dim>* _dofHandler);
-
-  //operator operations
-  void vmult (vectorType &dst,
-	      const vectorType &src) const;
-  
-  //solve interface
-  void solve(vectorType& solution, 
-	     vectorType& residual,
+  void solve(PETScWrappers::MPI::Vector& solution, 
+	     PETScWrappers::MPI::Vector& residual,
+	     PETScWrappers::MPI::SparseMatrix& jacobian,
 	     ConstraintMatrix& constraints,
 	     std::map<unsigned int, double>& atoms,
 	     Table<2,double>* rhoValues=0
 	     );
-
 private:
-  void apply_dirichlet_bcs();
-  void setup_matrixfree ();
-  void updateRHS();
-  void computeRHS(const MatrixFree<dim,double> &data,
-		  vectorType &dst,
-		  const vectorType &src,
-		  const std::pair<unsigned int,unsigned int> &cell_range) const;
-  bool updateRHSValue;
-    
+  void init ();
+  void assemble(PETScWrappers::MPI::Vector& solution, 
+		PETScWrappers::MPI::Vector& residual,
+		PETScWrappers::MPI::SparseMatrix& jacobian,
+		ConstraintMatrix& constraints,
+		std::map<unsigned int, double>& atoms,
+		Table<2,double>* rhoValues
+		);
+
   //FE data structres
   FE_Q<dim>          FE;
   DoFHandler<dim>*    dofHandler;
-
-  //matrix free structure
-  MatrixFree<dim,number> data;
 
   //parallel objects
   MPI_Comm mpi_communicator;

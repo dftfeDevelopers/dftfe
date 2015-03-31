@@ -3,7 +3,6 @@
 //constructor
 template <int dim>
 poisson<dim>::poisson(DoFHandler<dim>* _dofHandler):
-  FE (QGaussLobatto<1>(FEOrder+1)),
   dofHandler(_dofHandler), 
   mpi_communicator (MPI_COMM_WORLD),
   n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_communicator)),
@@ -11,86 +10,6 @@ poisson<dim>::poisson(DoFHandler<dim>* _dofHandler):
   pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
   computing_timer (pcout, TimerOutput::summary, TimerOutput::wall_times)
 {
-}
-
-//initialize poisson object
-template <int dim>
-void poisson<dim>::init(){}
-
-//assemble poisson jacobian and residual
-template <int dim>
-void poisson<dim>::assemble(PETScWrappers::MPI::Vector& solution, 
-			    PETScWrappers::MPI::Vector& residual,
-			    PETScWrappers::MPI::SparseMatrix& jacobian,
-			    ConstraintMatrix& constraints,
-			    std::map<unsigned int, double>& atoms,
-			    Table<2,double>* rhoValues
-			    ){
-  computing_timer.enter_section("poisson assembly"); 
-  //initialize global data structures
-  jacobian=0.0; residual=0.0; solution=0.0; 
-
-  //local data structures
-  QGauss<dim>  quadrature(quadratureRule);
-  FEValues<dim> fe_values (FE, quadrature, update_values | update_gradients | update_JxW_values);
-  const unsigned int   dofs_per_cell = FE.dofs_per_cell;
-  const unsigned int   num_quad_points = quadrature.size();
-  FullMatrix<double>   elementalJacobian (dofs_per_cell, dofs_per_cell);
-  Vector<double>       elementalResidual (dofs_per_cell);
-  std::vector<types::global_dof_index> local_dof_indices (dofs_per_cell);
-  
-  //parallel loop over all elements
-  typename DoFHandler<dim>::active_cell_iterator cell = dofHandler->begin_active(), endc = dofHandler->end();
-  unsigned int cellID=0;
-  for (; cell!=endc; ++cell) {
-    if (cell->is_locally_owned()){
-      elementalJacobian = 0;
-      elementalResidual = 0;
-
-      //compute values for the current element
-      fe_values.reinit (cell);
-      
-      //local poisson operator
-      for (unsigned int i=0; i<dofs_per_cell; ++i){
-	for (unsigned int j=0; j<dofs_per_cell; ++j){
-	  for (unsigned int q_point=0; q_point<num_quad_points; ++q_point){
-	    elementalJacobian(i,j) += (1.0/(4.0*M_PI))*(fe_values.shape_grad (i, q_point) *
-							fe_values.shape_grad (j, q_point) *
-							fe_values.JxW (q_point));
-	  }
-	}
-      }
-      
-      //local rhs
-      if (rhoValues) {
-	for (unsigned int i=0; i<dofs_per_cell; ++i){
-	  for (unsigned int q_point=0; q_point<num_quad_points; ++q_point){ 
-	    elementalResidual(i) += fe_values.shape_value(i, q_point)*(*rhoValues)(cellID, q_point)*fe_values.JxW (q_point);
-	  }
-	}
-      }
-      
-      //assemble to global data structures
-      cell->get_dof_indices (local_dof_indices);
-      constraints.distribute_local_to_global(elementalJacobian, elementalResidual, local_dof_indices, jacobian, residual);
-      
-      cellID++;
-    }
-  }
-  //Add nodal force to the node at the origin
-  for (std::map<unsigned int, double>::iterator it=atoms.begin(); it!=atoms.end(); ++it){
-    std::vector<unsigned int> local_dof_indices_origin(1, it->first); //atomic node
-    Vector<double> cell_rhs_origin (1); 
-    cell_rhs_origin(0)=-(it->second); //atomic chrage
-    constraints.distribute_local_to_global(cell_rhs_origin,local_dof_indices_origin,residual);
-    //pcout << " node: " << it->first << " charge: " << it->second << std::endl;
-  }
-  
-  //MPI operation to sync data 
-  residual.compress(VectorOperation::add);
-  jacobian.compress(VectorOperation::add);
-  
-  computing_timer.exit_section("poisson assembly"); 
 }
 
 //solve linear system of equations AX=b using iterative solver
@@ -126,5 +45,112 @@ void poisson<dim>::solve(PETScWrappers::MPI::Vector& solution,
   }
   constraints.distribute (distributed_solution);
   solution=distributed_solution; 
+  computing_timer.exit_section("poisson solve"); 
+}
+
+//residual and matrix-vector product computation
+template <int dim>
+void poisson<dim>::computeRHS (const MatrixFree<dim,double> &data,
+			       vectorType &dst,
+			       const vectorType &src,
+			       const std::pair<unsigned int,unsigned int> &cell_range) const
+{
+  //initialize FE evaluation structure with finite elment order, quadrature rule and related data
+  FEEvaluation<dim,FEOrder,FEOrder+1,dim,double> vals(data);
+
+  //loop over all elements
+  for (unsigned int cell=cell_range.first; cell<cell_range.second; ++cell){
+    //read U values for this cell
+    vals.reinit (cell);
+
+    //residual and  jacobian
+    if (updateRHSValue){
+      //residual
+      vals.read_dof_values_plain(src);
+      vals.evaluate (false, false, false);
+      //loop over quadrature points
+      for (unsigned int q=0; q<vals.n_q_points; ++q){
+	vals.submit_value((*rhoValues)(cell, q));
+      }
+      vals.integrate(true, false);
+    }
+    else{
+      //jacobian
+      Tensor<1, dim, gradType> phix = vals.get_gradient(q);
+      vals.read_dof_values(src);
+      vals.evaluate (false,true,false);
+      //loop over quadrature points
+      for (unsigned int q=0; q<vals.n_q_points; ++q){
+	vals.submit_gradient((1.0/(4.0*M_PI))*phix,q);
+      }
+      vals.integrate(false, true);
+    }
+    vals.distribute_local_to_global(dst);
+  }
+}
+
+//update residual
+template <int dim>
+void poisson<dim>::updateRHS (vectorType& solution, 
+			      vectorType& residual){
+  updateRHSValue=true;
+  //initialize residuals to zero
+  residual=0.0;
+  //loop over all cells to compute residuals
+  data.cell_loop (&poisson<dim>::computeRHS, this, residual, solution);
+  updateRHSValue=false;
+
+  //Add nodal force to the node at the origin
+  for (std::map<unsigned int, double>::iterator it=atoms.begin(); it!=atoms.end(); ++it){
+    std::vector<unsigned int> local_dof_indices_origin(1, it->first); //atomic node
+    Vector<double> cell_rhs_origin (1); 
+    cell_rhs_origin(0)=-(it->second); //atomic chrage
+    constraints.distribute_local_to_global(cell_rhs_origin, local_dof_indices_origin, residual);
+    //pcout << " node: " << it->first << " charge: " << it->second << std::endl;
+  }
+
+}
+
+//matrix free data structure vmult operations.
+template <int dim>
+void poisson<dim>::vmult (vectorType &dst, const vectorType &src) const{
+  dst=0.0;
+  data.cell_loop (&poisson<dim>::computeRHS, this, dst, src);
+ 
+ //Account for dirichlet BC's
+  const std::vector<unsigned int>& constrained_dofs = data.get_constrained_dofs();
+  for (unsigned int i=0; i<constrained_dofs.size(); ++i){
+    unsigned int index=data.get_vector_partitioner()->local_to_global(constrained_dofs[i]);
+    dst(index) += src(index);
+  }
+}
+
+//solve linear system of equations AX=b using iterative solver
+template <int dim>
+void poisson<dim>::solve (vectorType& solution, 
+			  vectorType& residual,
+			  ConstraintMatrix& constraints,
+			  std::map<unsigned int, double>& atoms,
+			  Table<2,double>* rhoValues=0
+			  )
+{
+  //solve
+  computing_timer.enter_section("poisson solve"); 
+  
+  updateRHS(solution, residual);
+  //cgSolve(U,residualU);
+  SolverControl solver_control(maxSolverIterations, relSolverTolerance*residual.l2_norm());
+  solverType<vectorType> cg(solver_control);
+  try{
+    cg.solve(*this, solution, residual, IdentityMatrix(solution.size()));
+  }
+  catch (...) {
+    pcout << "\nWarning: solver did not converge as per set tolerances. consider increasing maxSolverIterations or decreasing relSolverTolerance.\n";
+  }
+  char buffer[200];
+  sprintf(buffer, "initial residual:%12.6e, current residual:%12.6e, nsteps:%u, tolerance criterion:%12.6e\n", solver_control.initial_value(), solver_control.last_value(), solver_control.last_step(), solver_control.tolerance());
+  pcout<<buffer;
+ 
+  //
   computing_timer.exit_section("poisson solve"); 
 }
