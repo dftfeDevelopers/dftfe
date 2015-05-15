@@ -1,0 +1,4 @@
+hardware locality profile: 
+>hwloc-ls --of console
+http://stackoverflow.com/questions/11749182/assign-two-mpi-processes-per-core
+
