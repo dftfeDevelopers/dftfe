@@ -15,28 +15,56 @@ poisson<dim>::poisson(DoFHandler<dim>* _dofHandler):
 
 //initialize poisson object
 template <int dim>
-void poisson<dim>::init(){}
+void poisson<dim>::init(){
+  localJacobians.reinit(n_locally_owned_active_cells, FE.dofs_per_cell, FE.dofs_per_cell);
+}
 
-//assemble poisson jacobian and residual
+//compute local jacobians
 template <int dim>
-void poisson<dim>::assemble(PETScWrappers::MPI::Vector& solution, 
-			    PETScWrappers::MPI::Vector& residual,
-			    PETScWrappers::MPI::SparseMatrix& jacobian,
-			    ConstraintMatrix& constraints,
-			    std::map<unsigned int, double>& atoms,
-			    Table<2,double>* rhoValues
-			    ){
-  computing_timer.enter_section("poisson assembly"); 
-  //initialize global data structures
-  jacobian=0.0; residual=0.0; solution=0.0; 
+void poisson<dim>::computeLocalJacobians(){
+  computing_timer.enter_section("poisson local assembly"); 
 
+  //local data structures
+  QGauss<dim>  quadrature(quadratureRule);
+  FEValues<dim> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values);
+  const unsigned int dofs_per_cell = FE.dofs_per_cell;
+  const unsigned int num_quad_points = quadrature.size();
+  
+  //parallel loop over all elements
+  typename DoFHandler<dim>::active_cell_iterator cell = dofHandler->begin_active(), endc = dofHandler->end();
+  unsigned int cellID=0;
+  for (; cell!=endc; ++cell) {
+    if (cell->is_locally_owned()){
+      //compute values for the current element
+      fe_values.reinit (cell);
+      
+      //local poisson operator
+      for (unsigned int i=0; i<dofs_per_cell; ++i){
+	for (unsigned int j=0; j<dofs_per_cell; ++j){
+	  localJacobians(cellID,i,j)=0.0;
+	  for (unsigned int q_point=0; q_point<num_quad_points; ++q_point){
+	    localJacobians(cellID,i,j) += (1.0/(4.0*M_PI))*(fe_values.shape_grad (i, q_point) *
+							fe_values.shape_grad (j, q_point) *
+							fe_values.JxW (q_point));
+	  }
+	}
+      }
+      //increment cellID
+      cellID++;
+    }
+  }
+  computing_timer.exit_section("poisson local assembly");
+}
+
+//compute RHS
+template <int dim>
+void poisson<dim>::computeRHS(){
+  residual=0.0;
   //local data structures
   QGauss<dim>  quadrature(quadratureRule);
   FEValues<dim> fe_values (FE, quadrature, update_values | update_gradients | update_JxW_values);
   const unsigned int   dofs_per_cell = FE.dofs_per_cell;
   const unsigned int   num_quad_points = quadrature.size();
-  FullMatrix<double>   elementalJacobian (dofs_per_cell, dofs_per_cell);
-  Vector<double>       elementalResidual (dofs_per_cell);
   std::vector<types::global_dof_index> local_dof_indices (dofs_per_cell);
   
   //parallel loop over all elements
@@ -44,22 +72,8 @@ void poisson<dim>::assemble(PETScWrappers::MPI::Vector& solution,
   unsigned int cellID=0;
   for (; cell!=endc; ++cell) {
     if (cell->is_locally_owned()){
-      elementalJacobian = 0;
-      elementalResidual = 0;
-
       //compute values for the current element
       fe_values.reinit (cell);
-      
-      //local poisson operator
-      for (unsigned int i=0; i<dofs_per_cell; ++i){
-	for (unsigned int j=0; j<dofs_per_cell; ++j){
-	  for (unsigned int q_point=0; q_point<num_quad_points; ++q_point){
-	    elementalJacobian(i,j) += (1.0/(4.0*M_PI))*(fe_values.shape_grad (i, q_point) *
-							fe_values.shape_grad (j, q_point) *
-							fe_values.JxW (q_point));
-	  }
-	}
-      }
       
       //local rhs
       if (rhoValues) {
@@ -69,11 +83,18 @@ void poisson<dim>::assemble(PETScWrappers::MPI::Vector& solution,
 	  }
 	}
       }
-      
+      else{
+	//Ax=b-Ax' for the 1/R dirichlet condition
+	for (unsigned int i=0; i<dofs_per_cell; ++i){
+	  for (unsigned int j=0; j<dofs_per_cell; ++j){
+	    elementalResidual(i) += -localJacobians(cellID,i,j)*X1byR(j);
+	  }
+	}
+      }
       //assemble to global data structures
       cell->get_dof_indices (local_dof_indices);
-      constraints.distribute_local_to_global(elementalJacobian, elementalResidual, local_dof_indices, jacobian, residual);
-      
+      constraints.distribute_local_to_global(elementalResidual, local_dof_indices, residual);
+      //increment cellID
       cellID++;
     }
   }
@@ -82,15 +103,47 @@ void poisson<dim>::assemble(PETScWrappers::MPI::Vector& solution,
     std::vector<unsigned int> local_dof_indices_origin(1, it->first); //atomic node
     Vector<double> cell_rhs_origin (1); 
     cell_rhs_origin(0)=-(it->second); //atomic chrage
-    constraints.distribute_local_to_global(cell_rhs_origin,local_dof_indices_origin,residual);
-    //pcout << " node: " << it->first << " charge: " << it->second << std::endl;
+    constraints.distribute_local_to_global(cell_rhs_origin, local_dof_indices_origin, residual);
   }
-  
   //MPI operation to sync data 
   residual.compress(VectorOperation::add);
-  jacobian.compress(VectorOperation::add);
+}
+
+
+//compute RHS
+template <int dim>
+void poisson<dim>::vmult(){
+  Ax=0.0;
+  //local data structures
+  QGauss<dim>  quadrature(quadratureRule);
+  FEValues<dim> fe_values (FE, quadrature, update_values | update_gradients | update_JxW_values);
+  const unsigned int   dofs_per_cell = FE.dofs_per_cell;
+  const unsigned int   num_quad_points = quadrature.size();
+  std::vector<types::global_dof_index> local_dof_indices (dofs_per_cell);
   
-  computing_timer.exit_section("poisson assembly"); 
+  //parallel loop over all elements
+  typename DoFHandler<dim>::active_cell_iterator cell = dofHandler->begin_active(), endc = dofHandler->end();
+  unsigned int cellID=0;
+  for (; cell!=endc; ++cell) {
+    if (cell->is_locally_owned()){
+      //compute values for the current element
+      fe_values.reinit (cell);
+      
+      //Ax=b-Ax' for the 1/R dirichlet condition
+      for (unsigned int i=0; i<dofs_per_cell; ++i){
+	for (unsigned int j=0; j<dofs_per_cell; ++j){
+	  elementalResidual(i) += -localJacobians(cellID,i,j)*X;
+	}
+      }
+      //assemble to global data structures
+      cell->get_dof_indices (local_dof_indices);
+      constraints.distribute_local_to_global(elementalResidual, local_dof_indices, Ax);
+      //increment cellID
+      cellID++;
+    }
+  }
+  //MPI operation to sync data 
+  Ax.compress(VectorOperation::add);
 }
 
 //solve linear system of equations AX=b using iterative solver

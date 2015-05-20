@@ -3,9 +3,12 @@
 #include "headers.h"
 #include "poisson.h"
 #include "eigen.h"
-//iclude alglib
+//include alglib
 #include "/nfs/mcfs_home/rudraa/Public/alglib/cpp/src/interpolation.h"
 #include "/nfs/mcfs_home/rudraa/Public/libxc/libxc-2.2.0/installDir/include/xc.h"
+
+typedef double dataType;
+typedef dealii::parallel::distributed::Vector<double> vectorType;
 
 //Initialize Namespace
 using namespace dealii;

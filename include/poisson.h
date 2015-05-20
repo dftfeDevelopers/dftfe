@@ -13,6 +13,7 @@ class poisson
   friend class dft; 
 public:
   poisson(DoFHandler<dim>* _dofHandler);
+  void computeLocalJacobians();
   void solve(PETScWrappers::MPI::Vector& solution, 
 	     PETScWrappers::MPI::Vector& residual,
 	     PETScWrappers::MPI::SparseMatrix& jacobian,
@@ -31,9 +32,11 @@ private:
 		);
 
   //FE data structres
-  FE_Q<dim>          FE;
+  FE_Q<dim>           FE;
   DoFHandler<dim>*    dofHandler;
-
+  Table<3,dataType>   localJacobians;
+  vectorType          residual;
+    
   //parallel objects
   MPI_Comm mpi_communicator;
   const unsigned int n_mpi_processes;
