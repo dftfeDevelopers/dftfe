@@ -81,6 +81,7 @@ void eigen<dim>::assemble(PETScWrappers::MPI::Vector& solution,
 	  }
 	}
       }
+
       //local mass vector
       for (unsigned int i=0; i<dofs_per_cell; ++i){
 	for (unsigned int q_point=0; q_point<num_quad_points; ++q_point){

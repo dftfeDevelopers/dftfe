@@ -16,6 +16,7 @@ poisson<dim>::poisson(DoFHandler<dim>* _dofHandler):
 //initialize poisson object
 template <int dim>
 void poisson<dim>::init(){
+  //intialize the size of Table storing element level jacobians
   localJacobians.reinit(n_locally_owned_active_cells, FE.dofs_per_cell, FE.dofs_per_cell);
 }
 
@@ -58,7 +59,7 @@ void poisson<dim>::computeLocalJacobians(){
 
 //compute RHS
 template <int dim>
-void poisson<dim>::computeRHS(){
+void poisson<dim>::computeRHS(Table<2,double>* rhoValues){
   residual=0.0;
   //local data structures
   QGauss<dim>  quadrature(quadratureRule);
@@ -83,14 +84,6 @@ void poisson<dim>::computeRHS(){
 	  }
 	}
       }
-      else{
-	//Ax=b-Ax' for the 1/R dirichlet condition
-	for (unsigned int i=0; i<dofs_per_cell; ++i){
-	  for (unsigned int j=0; j<dofs_per_cell; ++j){
-	    elementalResidual(i) += -localJacobians(cellID,i,j)*X1byR(j);
-	  }
-	}
-      }
       //assemble to global data structures
       cell->get_dof_indices (local_dof_indices);
       constraints.distribute_local_to_global(elementalResidual, local_dof_indices, residual);
@@ -102,48 +95,24 @@ void poisson<dim>::computeRHS(){
   for (std::map<unsigned int, double>::iterator it=atoms.begin(); it!=atoms.end(); ++it){
     std::vector<unsigned int> local_dof_indices_origin(1, it->first); //atomic node
     Vector<double> cell_rhs_origin (1); 
-    cell_rhs_origin(0)=-(it->second); //atomic chrage
+    cell_rhs_origin(0)=-(it->second); //atomic charge
     constraints.distribute_local_to_global(cell_rhs_origin, local_dof_indices_origin, residual);
   }
   //MPI operation to sync data 
   residual.compress(VectorOperation::add);
 }
 
-
 //compute RHS
 template <int dim>
-void poisson<dim>::vmult(){
-  Ax=0.0;
-  //local data structures
-  QGauss<dim>  quadrature(quadratureRule);
-  FEValues<dim> fe_values (FE, quadrature, update_values | update_gradients | update_JxW_values);
-  const unsigned int   dofs_per_cell = FE.dofs_per_cell;
-  const unsigned int   num_quad_points = quadrature.size();
-  std::vector<types::global_dof_index> local_dof_indices (dofs_per_cell);
-  
-  //parallel loop over all elements
-  typename DoFHandler<dim>::active_cell_iterator cell = dofHandler->begin_active(), endc = dofHandler->end();
-  unsigned int cellID=0;
-  for (; cell!=endc; ++cell) {
-    if (cell->is_locally_owned()){
-      //compute values for the current element
-      fe_values.reinit (cell);
-      
-      //Ax=b-Ax' for the 1/R dirichlet condition
-      for (unsigned int i=0; i<dofs_per_cell; ++i){
-	for (unsigned int j=0; j<dofs_per_cell; ++j){
-	  elementalResidual(i) += -localJacobians(cellID,i,j)*X;
-	}
-      }
-      //assemble to global data structures
-      cell->get_dof_indices (local_dof_indices);
-      constraints.distribute_local_to_global(elementalResidual, local_dof_indices, Ax);
-      //increment cellID
-      cellID++;
-    }
-  }
-  //MPI operation to sync data 
-  Ax.compress(VectorOperation::add);
+void poisson<dim>::vmult(Vector<double>       &dst,
+			 const Vector<double> &src){
+  dst=0.0;  
+  data.cell_loop (&LaplaceOperator::local_apply, this, dst, src);
+
+  const std::vector<unsigned int> &
+    constrained_dofs = data.get_constrained_dofs();
+  for (unsigned int i=0; i<constrained_dofs.size(); ++i)
+    dst(constrained_dofs[i]) += src(constrained_dofs[i]);
 }
 
 //solve linear system of equations AX=b using iterative solver

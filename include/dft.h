@@ -38,12 +38,14 @@ class dft{
   void compute_fermienergy();
   double repulsiveEnergy();
   void compute_rhoOut();
-
+  
   //FE data structres
   parallel::distributed::Triangulation<3> triangulation;
   FE_Q<3>            FE;
   DoFHandler<3>      dofHandler;
-
+  ConstraintMatrix   constraintsNone, constraintsZero, constraints1byR;
+  MatrixFree<3,double> matrix_free_data;
+  
   //parallel objects
   MPI_Comm   mpi_communicator;
   const unsigned int n_mpi_processes;
@@ -51,32 +53,30 @@ class dft{
   IndexSet   locally_owned_dofs;
   IndexSet   locally_relevant_dofs;
 
+  //data structures
+  //poisson problem
+  poisson<3> poissonObject;
+  parallel::distributed::Vector<double> rhs, Ax;
+  parallel::distributed::Vector<double> jacobianDiagonal;
+  parallel::distributed::Vector<double> phiTotRhoIn, phiTotRhoOut, phiExt;
+  //eigen value problem
+  eigen<3> eigenObject;
+  parallel::distributed::Vector<double> massVector;
+  std::vector<double> eigenValue;
+  std::vector<parallel::distributed::Vector<double> > eigenVectors;
+
   //parallel message stream
   ConditionalOStream  pcout;  
   
   //compute-time logger
   TimerOutput computing_timer;
-
-  //poisson problem related objects
-  poisson<3> poissonObject;
-  PETScWrappers::MPI::SparseMatrix jacobian;
-  PETScWrappers::MPI::Vector       residual;
-  PETScWrappers::MPI::Vector       phiTotRhoIn, phiTotRhoOut, phiExt;
-  ConstraintMatrix   constraintsZero, constraints1byR;
-  
-  //eigen problem related objects
-  eigen<3> eigenObject;
-  PETScWrappers::MPI::Vector       massVector;
-  PETScWrappers::MPI::SparseMatrix massMatrix, hamiltonianMatrix;
-  std::vector<PETScWrappers::MPI::Vector> eigenVectors;
-  std::vector<PETScWrappers::MPI::Vector> eigenVectorsProjected;
-  std::vector<double> eigenValues;
-  ConstraintMatrix constraintsNone;
   
   //dft related objects
   Table<2,double> *rhoInValues, *rhoOutValues;
   std::vector<Table<2,double>*> rhoInVals, rhoOutVals;
-  std::map<unsigned int, double> atoms; //map of atom node number and atomic weight
+  //map of atom node number and atomic weight
+  std::map<unsigned int, double> atoms; 
+  //fermi energy
   double fermiEnergy;
 };
 

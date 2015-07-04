@@ -1,4 +1,4 @@
-//source file for all dft level initializations
+//source file for dft class initializations
 
 //initialize rho
 void dft::initRho(){
@@ -103,7 +103,6 @@ void dft::initRho(){
 	 << std::endl<< funcX.info->refs << std::endl;
     pcout<<"-------------------------------------"<<std::endl;	  
   }
-  
 }
 
 void dft::init(){
@@ -122,6 +121,11 @@ void dft::init(){
   poissonObject.init();
 
   //constraints
+  //no constraints
+  constraintsNone.clear ();
+  constraintsNone.reinit (locally_relevant_dofs);
+  DoFTools::make_hanging_node_constraints (dofHandler, constraintsNone);
+  constraintsNone.close();
   //zero constraints
   constraintsZero.clear ();
   constraintsZero.reinit (locally_relevant_dofs);
@@ -134,50 +138,25 @@ void dft::init(){
   DoFTools::make_hanging_node_constraints (dofHandler, constraints1byR);
   VectorTools::interpolate_boundary_values (dofHandler, 0, OnebyRBoundaryFunction<3>(atomLocations),constraints1byR);
   constraints1byR.close ();
+
+  //matrix fee data structure
+  QGaussLobatto<1> quadrature (fe_degree+1);
+  typename MatrixFree<dim>::AdditionalData additional_data;
+  additional_data.mpi_communicator = MPI_COMM_WORLD;
+  additional_data.tasks_parallel_scheme = MatrixFree<dim>::AdditionalData::partition_partition;
+  matrix_free_data.reinit (dofHandler, constraintsNone, quadrature, additional_data);
   
-  //initialize vectors and jacobian matrix using the sparsity pattern.
-  phiTotRhoIn.reinit (locally_owned_dofs, mpi_communicator);
-  phiTotRhoOut.reinit (locally_owned_dofs, mpi_communicator); 
-  phiExt.reinit (locally_owned_dofs, mpi_communicator);
-  residual.reinit (locally_owned_dofs, mpi_communicator);
-  //
-  CompressedSimpleSparsityPattern csp (locally_relevant_dofs);
-  DoFTools::make_sparsity_pattern (dofHandler, csp, constraintsZero, false);
-  SparsityTools::distribute_sparsity_pattern (csp,
-					      dofHandler.n_locally_owned_dofs_per_processor(),
-					      mpi_communicator,
-					      locally_relevant_dofs);
-  jacobian.reinit (locally_owned_dofs, locally_owned_dofs, csp, mpi_communicator);
-  
-  //initialize eigen problem related objects
-  eigenObject.init();
-  locally_owned_dofs = dofHandler.locally_owned_dofs ();
-  DoFTools::extract_locally_relevant_dofs (dofHandler, locally_relevant_dofs);
-  
-  //constraints
-  constraintsNone.clear ();
-  constraintsNone.reinit (locally_relevant_dofs);
-  DoFTools::make_hanging_node_constraints (dofHandler, constraintsNone);
-  DoFTools::make_zero_boundary_constraints(dofHandler, constraintsNone);
-  constraintsNone.close ();
-  
-  //intialize vectors
-  massVector.reinit(locally_owned_dofs, mpi_communicator);
+  //initialize vectors
+  matrix_free_data.initialize_dof_vector (rhs);
+  rhs.reinit (Ax);
+  rhs.reinit (jacobianDiagonal);
+  rhs.reinit (phiTotRhoIn);
+  rhs.reinit (phiTotRhoOut);
+  rhs.reinit (phiExt);
+  rhs.reinit (massVector);
   eigenValues.resize(numEigenValues);
   eigenVectors.resize(numEigenValues);
-  eigenVectorsProjected.resize(numEigenValues);
   for (unsigned int i=0; i<numEigenValues; ++i){
-    eigenVectors[i].reinit(locally_owned_dofs, mpi_communicator);
-    eigenVectorsProjected[i].reinit(locally_owned_dofs, mpi_communicator);
-  }
-  
-  //initialize M, K matrices using the sparsity pattern.
-  CompressedSimpleSparsityPattern csp2 (locally_relevant_dofs);
-  DoFTools::make_sparsity_pattern (dofHandler, csp2, constraintsNone, false);
-  SparsityTools::distribute_sparsity_pattern (csp2,
-					      dofHandler.n_locally_owned_dofs_per_processor(),
-					      mpi_communicator,
-					      locally_relevant_dofs);
-  massMatrix.reinit (locally_owned_dofs, locally_owned_dofs, csp2, mpi_communicator);
-  hamiltonianMatrix.reinit (locally_owned_dofs, locally_owned_dofs, csp2, mpi_communicator);
+    rhs.reinit(eigenVectors[i]);
+  } 
 }

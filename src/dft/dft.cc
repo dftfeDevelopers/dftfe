@@ -15,10 +15,7 @@
  
 //dft constructor
 dft::dft():
-  triangulation (MPI_COMM_WORLD,
-		 typename Triangulation<3>::MeshSmoothing
-		 (Triangulation<3>::smoothing_on_refinement |
-		  Triangulation<3>::smoothing_on_coarsening)),
+  triangulation (MPI_COMM_WORLD),
   FE (QGaussLobatto<1>(FEOrder+1)),
   dofHandler (triangulation),
   mpi_communicator (MPI_COMM_WORLD),
