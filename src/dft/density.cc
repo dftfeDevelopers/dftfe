@@ -2,6 +2,7 @@
 
 //calculate electron density
 void dft::compute_rhoOut(){
+  /*
   QGauss<3>  quadrature(quadratureRule);
   FEValues<3> fe_values (FE, quadrature, update_values | update_JxW_values | update_quadrature_points);
   const unsigned int   dofs_per_cell = FE.dofs_per_cell;
@@ -44,4 +45,5 @@ void dft::compute_rhoOut(){
     cellID++;
     }
   }
+  */
 }

@@ -10,9 +10,6 @@
 #include <deal.II/lac/vector.h>
 #include <deal.II/lac/full_matrix.h>
 #include <deal.II/lac/constraint_matrix.h>
-#include <deal.II/lac/constraint_matrix.h>
-#include <deal.II/lac/compressed_simple_sparsity_pattern.h>
-#include <deal.II/lac/sparsity_tools.h>
 #include <deal.II/fe/fe_system.h>
 #include <deal.II/fe/fe_q.h>
 #include <deal.II/fe/fe_values.h>
@@ -39,14 +36,12 @@
 #include <deal.II/grid/grid_out.h>
 #include <deal.II/dofs/dof_renumbering.h>
 #include <deal.II/dofs/dof_accessor.h>
-#include <deal.II/lac/petsc_vector.h>
-#include <deal.II/lac/petsc_parallel_vector.h>
-#include <deal.II/lac/petsc_parallel_sparse_matrix.h>
-#include <deal.II/lac/petsc_solver.h>
-#include <deal.II/lac/slepc_solver.h>
-#include <deal.II/lac/petsc_precondition.h>
 #include <deal.II/lac/solver_cg.h>
 #include <deal.II/lac/solver_gmres.h>
+#include <deal.II/distributed/tria.h>
+#include <deal.II/lac/parallel_vector.h>
+#include <deal.II/matrix_free/matrix_free.h>
+#include <deal.II/matrix_free/fe_evaluation.h>
 
 //Include generic C++ headers
 #include <fstream>

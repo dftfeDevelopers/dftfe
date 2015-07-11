@@ -2,6 +2,7 @@
 
 //compute energies
 void dft::compute_energy(){
+  /*
   QGauss<3>  quadrature(quadratureRule);
   FEValues<3> fe_values (FE, quadrature, update_values | update_gradients | update_JxW_values);
   const unsigned int   dofs_per_cell = FE.dofs_per_cell;
@@ -76,10 +77,12 @@ void dft::compute_energy(){
    std::printf("Total energy:%30.20e \n", totalEnergy);
    std::printf("Band energy:%30.20e \nKinetic energy:%30.20e \nExchange energy:%30.20e \nCorrelation energy:%30.20e \nElectrostatic energy:%30.20e \nRepulsive energy:%30.20e \n", bandEnergy, totalkineticEnergy, totalexchangeEnergy, totalcorrelationEnergy, totalelectrostaticEnergy, repulsiveEnergy());
  }
+  */
 }
  
 //compute fermi energy
 void dft::compute_fermienergy(){
+  /*
   //initial guess for fe
   double fe;
   if (numElectrons%2==0)
@@ -120,10 +123,12 @@ void dft::compute_fermienergy(){
   //set Fermi energy
   fermiEnergy=fe;
   if (this_mpi_process == 0) std::printf("Fermi energy:%30.20e \n", fermiEnergy);
+  */
 }
 
 double dft::repulsiveEnergy(){
   double energy=0.0;
+  /*
   for (unsigned int n1=0; n1<atomLocations.size()[0]; n1++){
     for (unsigned int n2=n1+1; n2<atomLocations.size()[0]; n2++){
       double Z1=atomLocations[n1][0], Z2=atomLocations[n2][0];    
@@ -132,5 +137,6 @@ double dft::repulsiveEnergy(){
       energy+=(Z1*Z2)/atom1.distance(atom2);
     }
   }
+  */
   return energy;
 }

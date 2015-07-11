@@ -1,4 +1,4 @@
-#include "../../include/poisson.h"
+#ionclude "../../include/poisson.h"
 
 //constructor
 template <int dim>
@@ -12,7 +12,7 @@ poisson<dim>::poisson(DoFHandler<dim>* _dofHandler):
   computing_timer (pcout, TimerOutput::summary, TimerOutput::wall_times)
 {
 }
-
+0.
 //initialize poisson object
 template <int dim>
 void poisson<dim>::init(){}

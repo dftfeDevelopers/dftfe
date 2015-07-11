@@ -1,6 +1,7 @@
 //source file for locating core atom nodes
 
 void dft::locateAtomCoreNodes(){ 
+  /*
   QGauss<3>  quadrature_formula(quadratureRule);
   FEValues<3> fe_values (FE, quadrature_formula, update_values);
   //
@@ -40,4 +41,5 @@ void dft::locateAtomCoreNodes(){
     }
   }
   MPI_Barrier(mpi_communicator);
+  */
 }

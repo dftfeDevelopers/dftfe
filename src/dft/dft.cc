@@ -3,9 +3,8 @@
 #include "../../include/dft.h"
 #include "../../utils/fileReaders.cc"
 #include "../poisson/poisson.cc"
-#include "../eigen/eigen.cc"
+//#include "../eigen/eigen.cc"
 #include "mesh.cc"
-#include "boundary.cc"
 #include "init.cc"
 #include "energy.cc"
 #include "charge.cc"
@@ -23,8 +22,7 @@ dft::dft():
   this_mpi_process (Utilities::MPI::this_mpi_process(mpi_communicator)),
   pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
   computing_timer (pcout, TimerOutput::summary, TimerOutput::wall_times),
-  poissonObject(&dofHandler),
-  eigenObject(&dofHandler)
+  poissonObject(this)
 {}
 
 //dft run
@@ -43,6 +41,7 @@ void dft::run ()
   init();
   initRho();
   locateAtomCoreNodes();
+  /*
   computing_timer.exit_section("dft setup"); 
   //solve
   computing_timer.enter_section("dft solve"); 
@@ -78,5 +77,6 @@ void dft::run ()
   computing_timer.exit_section("dft solve"); 
   //
   computing_timer.exit_section("total time"); 
+  */
 }
 

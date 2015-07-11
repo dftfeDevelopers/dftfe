@@ -2,13 +2,10 @@
 #define dft_H_
 #include "headers.h"
 #include "poisson.h"
-#include "eigen.h"
+//#include "eigen.h"
 //include alglib
 #include "/nfs/mcfs_home/rudraa/Public/alglib/cpp/src/interpolation.h"
 #include "/nfs/mcfs_home/rudraa/Public/libxc/libxc-2.2.0/installDir/include/xc.h"
-
-typedef double dataType;
-typedef dealii::parallel::distributed::Vector<double> vectorType;
 
 //Initialize Namespace
 using namespace dealii;
@@ -20,6 +17,7 @@ xc_func_type funcX, funcC;
 
 //Define dft class
 class dft{
+  template <int dim> friend class poisson; 
  public:
   dft();
   void run();
@@ -43,7 +41,6 @@ class dft{
   parallel::distributed::Triangulation<3> triangulation;
   FE_Q<3>            FE;
   DoFHandler<3>      dofHandler;
-  ConstraintMatrix   constraintsNone, constraintsZero, constraints1byR;
   MatrixFree<3,double> matrix_free_data;
   
   //parallel objects
@@ -53,18 +50,14 @@ class dft{
   IndexSet   locally_owned_dofs;
   IndexSet   locally_relevant_dofs;
 
-  //data structures
-  //poisson problem
   poisson<3> poissonObject;
-  parallel::distributed::Vector<double> rhs, Ax;
-  parallel::distributed::Vector<double> jacobianDiagonal;
-  parallel::distributed::Vector<double> phiTotRhoIn, phiTotRhoOut, phiExt;
   //eigen value problem
+  /*
   eigen<3> eigenObject;
   parallel::distributed::Vector<double> massVector;
   std::vector<double> eigenValue;
   std::vector<parallel::distributed::Vector<double> > eigenVectors;
-
+  */
   //parallel message stream
   ConditionalOStream  pcout;  
   

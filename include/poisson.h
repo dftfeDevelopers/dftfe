@@ -1,10 +1,11 @@
 #ifndef poisson_H_
 #define poisson_H_
 #include "headers.h"
-#include "dft.h"
 
-//Initialize Namespace
-using namespace dealii;
+typedef double dataType;
+typedef dealii::parallel::distributed::Vector<double> vectorType;
+
+class dft;
 
 //Define poisson class
 template <int dim>
@@ -12,41 +13,34 @@ class poisson
 {
   friend class dft; 
 public:
-  poisson(DoFHandler<dim>* _dofHandler);
+  poisson(dft* _dftPtr);
   void computeLocalJacobians();
-  void solve(PETScWrappers::MPI::Vector& solution, 
-	     PETScWrappers::MPI::Vector& residual,
-	     PETScWrappers::MPI::SparseMatrix& jacobian,
-	     ConstraintMatrix& constraints,
-	     std::map<unsigned int, double>& atoms,
-	     Table<2,double>* rhoValues=0
-	     );
 private:
   void init ();
-  void assemble(PETScWrappers::MPI::Vector& solution, 
-		PETScWrappers::MPI::Vector& residual,
-		PETScWrappers::MPI::SparseMatrix& jacobian,
-		ConstraintMatrix& constraints,
-		std::map<unsigned int, double>& atoms,
-		Table<2,double>* rhoValues
-		);
+  
+  //pointer to dft class
+  dft* dftPtr;
 
   //FE data structres
-  FE_Q<dim>           FE;
-  DoFHandler<dim>*    dofHandler;
-  Table<3,dataType>   localJacobians;
-  vectorType          residual;
-    
+  dealii::FE_Q<dim>   FE;
+  dealii::Table<3,dataType>   localJacobians;
+
+  //constraints
+  dealii::ConstraintMatrix  constraintsNone, constraintsZero, constraints1byR;
+
+  //data structures
+  vectorType rhs, Ax;
+  vectorType jacobianDiagonal;
+  vectorType phiTotRhoIn, phiTotRhoOut, phiExt;
+ 
   //parallel objects
   MPI_Comm mpi_communicator;
   const unsigned int n_mpi_processes;
   const unsigned int this_mpi_process;
-  ConditionalOStream   pcout;
-  IndexSet   locally_owned_dofs;
-  IndexSet   locally_relevant_dofs;
+  dealii::ConditionalOStream   pcout;
 
   //compute-time logger
-  TimerOutput computing_timer;
+  dealii::TimerOutput computing_timer;
 };
 
 #endif
