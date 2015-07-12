@@ -1,7 +1,7 @@
 //source file for dft class initializations
 
 //initialize rho
-void dft::initRho(){
+void dftClass::initRho(){
   //Initialize electron density table storage
   rhoInValues=new Table<2,double>(triangulation.n_locally_owned_active_cells(),std::pow(quadratureRule,3));
   rhoInVals.push_back(rhoInValues);
@@ -105,7 +105,7 @@ void dft::initRho(){
   }
 }
 
-void dft::init(){
+void dftClass::init(){
   //initialize FE objects
   dofHandler.distribute_dofs (FE);
   locally_owned_dofs = dofHandler.locally_owned_dofs ();
@@ -116,18 +116,19 @@ void dft::init(){
 	<< "number of degrees of freedom: " 
 	<< dofHandler.n_dofs() 
 	<< std::endl;
-  
-  //initialize poisson problem related objects
-  poissonObject.init();
-
   //matrix fee data structure
-  /*
-    QGaussLobatto<1> quadrature (FEOrder+1);
-    typename MatrixFree<3>::AdditionalData additional_data;
-    additional_data.mpi_communicator = MPI_COMM_WORLD;
-    additional_data.tasks_parallel_scheme = MatrixFree<3>::AdditionalData::partition_partition;
-    matrix_free_data.reinit (dofHandler, constraintsNone, quadrature, additional_data);
-  */
+  QGaussLobatto<1> quadrature (FEOrder+1);
+  typename MatrixFree<3>::AdditionalData additional_data;
+  additional_data.mpi_communicator = MPI_COMM_WORLD;
+  additional_data.tasks_parallel_scheme = MatrixFree<3>::AdditionalData::partition_partition;
+  constraintsNone.clear ();
+  constraintsNone.reinit (locally_relevant_dofs);
+  DoFTools::make_hanging_node_constraints (dofHandler, constraintsNone);
+  constraintsNone.close();
+  matrix_free_data.reinit (dofHandler, constraintsNone, quadrature, additional_data);
+
+  //initialize poisson problem related objects
+  poisson.init();
   /*
     rhs.reinit (massVector);
     eigenValues.resize(numEigenValues);

@@ -1,7 +1,7 @@
 //source file for all energy computations 
 
 //compute energies
-void dft::compute_energy(){
+void dftClass::compute_energy(){
   /*
   QGauss<3>  quadrature(quadratureRule);
   FEValues<3> fe_values (FE, quadrature, update_values | update_gradients | update_JxW_values);
@@ -81,7 +81,7 @@ void dft::compute_energy(){
 }
  
 //compute fermi energy
-void dft::compute_fermienergy(){
+void dftClass::compute_fermienergy(){
   /*
   //initial guess for fe
   double fe;
@@ -126,7 +126,7 @@ void dft::compute_fermienergy(){
   */
 }
 
-double dft::repulsiveEnergy(){
+double dftClass::repulsiveEnergy(){
   double energy=0.0;
   /*
   for (unsigned int n1=0; n1<atomLocations.size()[0]; n1++){

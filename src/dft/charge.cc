@@ -1,7 +1,7 @@
 //source file for all charge calculations
 
 //compute total charge
-double dft::totalCharge(){
+double dftClass::totalCharge(){
   double normValue=0.0;
   QGauss<3>  quadrature_formula(quadratureRule);
   FEValues<3> fe_values (FE, quadrature_formula, update_values | update_JxW_values | update_quadrature_points);

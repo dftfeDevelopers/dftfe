@@ -16,10 +16,10 @@ void dgesv_( int* n, int* nrhs, double* a, int* lda, int* ipiv, double* b, int* 
 xc_func_type funcX, funcC;
 
 //Define dft class
-class dft{
-  template <int dim> friend class poisson; 
+class dftClass{
+  friend class poissonClass; 
  public:
-  dft();
+  dftClass();
   void run();
   Table<2,double> atomLocations;
   std::map<unsigned int, std::string> initialGuessFiles;
@@ -50,7 +50,8 @@ class dft{
   IndexSet   locally_owned_dofs;
   IndexSet   locally_relevant_dofs;
 
-  poisson<3> poissonObject;
+  poissonClass poisson;
+  ConstraintMatrix constraintsNone;
   //eigen value problem
   /*
   eigen<3> eigenObject;

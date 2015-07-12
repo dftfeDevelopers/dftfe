@@ -13,7 +13,7 @@
 #include "mixingschemes.cc"
  
 //dft constructor
-dft::dft():
+dftClass::dftClass():
   triangulation (MPI_COMM_WORLD),
   FE (QGaussLobatto<1>(FEOrder+1)),
   dofHandler (triangulation),
@@ -22,11 +22,11 @@ dft::dft():
   this_mpi_process (Utilities::MPI::this_mpi_process(mpi_communicator)),
   pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
   computing_timer (pcout, TimerOutput::summary, TimerOutput::wall_times),
-  poissonObject(this)
+  poisson(this)
 {}
 
 //dft run
-void dft::run ()
+void dftClass::run ()
 {
   computing_timer.enter_section("total time"); 
   pcout << "number of MPI processes: "
@@ -41,12 +41,13 @@ void dft::run ()
   init();
   initRho();
   locateAtomCoreNodes();
+  poisson.solve();
   /*
   computing_timer.exit_section("dft setup"); 
   //solve
   computing_timer.enter_section("dft solve"); 
   //phiExt with nuclear charge
-  poissonObject.solve(phiExt, residual, jacobian, constraints1byR, atoms);
+  poisson.solve(phiExt, residual, jacobian, constraints1byR, atoms);
   
   //Begin SCF iteration
   unsigned int scfIter=0;
@@ -60,7 +61,7 @@ void dft::run ()
       if(this_mpi_process==0) printf("Mixing Scheme: iter:%u, norm:%12.6e\n", scfIter+1, norm);
     }
     //phiTot with rhoIn
-    poissonObject.solve(phiTotRhoIn, residual, jacobian, constraintsZero, atoms, rhoInValues);
+    poisson.solve(phiTotRhoIn, residual, jacobian, constraintsZero, atoms, rhoInValues);
     //eigen solve
     eigenObject.solve(phiTotRhoIn, massMatrix, hamiltonianMatrix, massVector, constraintsNone, rhoInValues, eigenValues, eigenVectors, scfIter);
     //fermi energy
@@ -68,7 +69,7 @@ void dft::run ()
     //rhoOut
     compute_rhoOut();
     //phiTot with rhoOut
-    poissonObject.solve(phiTotRhoOut, residual, jacobian, constraintsZero, atoms, rhoOutValues);
+    poisson.solve(phiTotRhoOut, residual, jacobian, constraintsZero, atoms, rhoOutValues);
     //energy
     compute_energy();
     pcout<<"SCF iteration: " << scfIter+1 << " complete\n";

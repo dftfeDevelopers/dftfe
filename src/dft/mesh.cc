@@ -1,7 +1,7 @@
 //source file for all mesh reading/generation functions
 
 //Generate triangulation.
-void dft::mesh(){
+void dftClass::mesh(){
   computing_timer.enter_section("mesh"); 
   //GridGenerator::hyper_cube (triangulation, -1, 1);
   //triangulation.refine_global (6);

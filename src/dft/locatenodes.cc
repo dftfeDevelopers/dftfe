@@ -1,7 +1,6 @@
 //source file for locating core atom nodes
 
-void dft::locateAtomCoreNodes(){ 
-  /*
+void dftClass::locateAtomCoreNodes(){ 
   QGauss<3>  quadrature_formula(quadratureRule);
   FEValues<3> fe_values (FE, quadrature_formula, update_values);
   //
@@ -26,7 +25,7 @@ void dft::locateAtomCoreNodes(){
 	  Point<3> atomCoord(atomLocations(*it,1),atomLocations(*it,2),atomLocations(*it,3));
 	   if(feNodeGlobalCoord.distance(atomCoord)<1.0e-5){ 
 	     std::cout << "Atom core (" << atomLocations(*it,0) << ") located with node id " << nodeID << " in processor " << this_mpi_process;
-	     if (residual.locally_owned_elements().is_element(nodeID)){
+	     if (poisson.rhs.locally_owned_elements().is_element(nodeID)){
 	       atoms.insert (std::pair<unsigned int,double>(nodeID,atomLocations(*it,0)));
 	       std::cout << " and added \n";
 	     }
@@ -41,5 +40,4 @@ void dft::locateAtomCoreNodes(){
     }
   }
   MPI_Barrier(mpi_communicator);
-  */
 }

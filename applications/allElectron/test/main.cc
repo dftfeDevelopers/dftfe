@@ -1,6 +1,6 @@
 //Define parameters
 //const double radius=20.0;
-unsigned int FEOrder=4;
+unsigned int FEOrder=1;
 unsigned int n_refinement_steps=0;
 unsigned int numElectrons=10;
 unsigned int numEigenValues=numElectrons/2;
@@ -38,7 +38,7 @@ int main (int argc, char *argv[]){
   Utilities::MPI::MPI_InitFinalize mpi_initialization (argc, argv);
   deallog.depth_console(0);
   {
-    dft problem;
+    dftClass problem;
     getAtomicLocations(problem.atomLocations, problem.initialGuessFiles);
     problem.run();
   }

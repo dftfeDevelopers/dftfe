@@ -1,7 +1,7 @@
 //source file for electron density related computations
 
 //calculate electron density
-void dft::compute_rhoOut(){
+void dftClass::compute_rhoOut(){
   /*
   QGauss<3>  quadrature(quadratureRule);
   FEValues<3> fe_values (FE, quadrature, update_values | update_JxW_values | update_quadrature_points);

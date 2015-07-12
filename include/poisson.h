@@ -5,24 +5,25 @@
 typedef double dataType;
 typedef dealii::parallel::distributed::Vector<double> vectorType;
 
-class dft;
+class dftClass;
 
 //Define poisson class
-template <int dim>
-class poisson
+class poissonClass
 {
-  friend class dft; 
+  friend class dftClass; 
 public:
-  poisson(dft* _dftPtr);
+  poissonClass(dftClass* _dftPtr);
   void computeLocalJacobians();
 private:
   void init ();
-  
+  void computeRHS(const dealii::Table<2,double>* rhoValues);
+  void solve(const dealii::Table<2,double>* rhoValues=0);
+
   //pointer to dft class
-  dft* dftPtr;
+  dftClass* dftPtr;
 
   //FE data structres
-  dealii::FE_Q<dim>   FE;
+  dealii::FE_Q<3>   FE;
   dealii::Table<3,dataType>   localJacobians;
 
   //constraints

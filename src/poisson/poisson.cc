@@ -2,8 +2,7 @@
 #include "boundary.cc"
 
 //constructor
-template <int dim>
-poisson<dim>::poisson(dft* _dftPtr):
+poissonClass::poissonClass(dftClass* _dftPtr):
   dftPtr(_dftPtr),
   FE (QGaussLobatto<1>(FEOrder+1)),
   mpi_communicator (MPI_COMM_WORLD),
@@ -14,9 +13,8 @@ poisson<dim>::poisson(dft* _dftPtr):
 {
 }
 
-//initialize poisson object
-template <int dim>
-void poisson<dim>::init(){
+//initialize poissonClass 
+void poissonClass::init(){
   unsigned int numCells=dftPtr->triangulation.n_locally_owned_active_cells();
   dealii::IndexSet numDofs=dftPtr->locally_relevant_dofs;
   //intialize the size of Table storing element level jacobians
@@ -43,36 +41,34 @@ void poisson<dim>::init(){
 
   //initialize vectors
   dftPtr->matrix_free_data.initialize_dof_vector (rhs);
-  rhs.reinit (Ax);
-  rhs.reinit (jacobianDiagonal);
-  rhs.reinit (phiTotRhoIn);
-  rhs.reinit (phiTotRhoOut);
-  rhs.reinit (phiExt);
-
+  Ax.reinit (rhs);
+  jacobianDiagonal.reinit (rhs);
+  phiTotRhoIn.reinit (rhs);
+  phiTotRhoOut.reinit (rhs);
+  phiExt.reinit (rhs);
   //compute elemental jacobians
   computeLocalJacobians();
 }
 
 //compute local jacobians
-template <int dim>
-void poisson<dim>::computeLocalJacobians(){
-  computing_timer.enter_section("poisson local assembly"); 
+void poissonClass::computeLocalJacobians(){
+  computing_timer.enter_section("poissonClass jacobian assembly"); 
 
   //local data structures
-  QGauss<dim>  quadrature(quadratureRule);
-  FEValues<dim> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values);
+  QGauss<3>  quadrature(quadratureRule);
+  FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values);
   const unsigned int dofs_per_cell = FE.dofs_per_cell;
   const unsigned int num_quad_points = quadrature.size();
   
   //parallel loop over all elements
-  typename DoFHandler<dim>::active_cell_iterator cell = dftPtr->dofHandler.begin_active(), endc = dftPtr->dofHandler.end();
+  typename DoFHandler<3>::active_cell_iterator cell = dftPtr->dofHandler.begin_active(), endc = dftPtr->dofHandler.end();
   unsigned int cellID=0;
   for (; cell!=endc; ++cell) {
     if (cell->is_locally_owned()){
       //compute values for the current element
       fe_values.reinit (cell);
       
-      //local poisson operator
+      //local poissonClass operator
       for (unsigned int i=0; i<dofs_per_cell; ++i){
 	for (unsigned int j=0; j<dofs_per_cell; ++j){
 	  localJacobians(cellID,i,j)=0.0;
@@ -87,23 +83,23 @@ void poisson<dim>::computeLocalJacobians(){
       cellID++;
     }
   }
-  computing_timer.exit_section("poisson local assembly");
+  computing_timer.exit_section("poissonClass jacobian assembly");
 }
 
-/*
 //compute RHS
-template <int dim>
-void poisson<dim>::computeRHS(Table<2,double>* rhoValues){
+void poissonClass::computeRHS(const Table<2,double>* rhoValues){
+  computing_timer.enter_section("poissonClass rhs assembly");
   rhs=0.0;
   //local data structures
-  QGauss<dim>  quadrature(quadratureRule);
-  FEValues<dim> fe_values (FE, quadrature, update_values | update_gradients | update_JxW_values);
+  QGauss<3>  quadrature(quadratureRule);
+  FEValues<3> fe_values (FE, quadrature, update_values | update_JxW_values);
   const unsigned int   dofs_per_cell = FE.dofs_per_cell;
   const unsigned int   num_quad_points = quadrature.size();
+  Vector<double>       elementalResidual (dofs_per_cell);
   std::vector<types::global_dof_index> local_dof_indices (dofs_per_cell);
-  
+
   //parallel loop over all elements
-  typename DoFHandler<dim>::active_cell_iterator cell = dofHandler->begin_active(), endc = dofHandler->end();
+  typename DoFHandler<3>::active_cell_iterator cell = dftPtr->dofHandler.begin_active(), endc = dftPtr->dofHandler.end();
   unsigned int cellID=0;
   for (; cell!=endc; ++cell) {
     if (cell->is_locally_owned()){
@@ -120,7 +116,7 @@ void poisson<dim>::computeRHS(Table<2,double>* rhoValues){
       }
       //assemble to global data structures
       cell->get_dof_indices (local_dof_indices);
-      constraintsNone.distribute_local_to_global(elementalResidual, local_dof_indices, residual);
+      constraintsNone.distribute_local_to_global(elementalResidual, local_dof_indices, rhs);
       //increment cellID
       cellID++;
     }
@@ -130,16 +126,21 @@ void poisson<dim>::computeRHS(Table<2,double>* rhoValues){
     std::vector<unsigned int> local_dof_indices_origin(1, it->first); //atomic node
     Vector<double> cell_rhs_origin (1); 
     cell_rhs_origin(0)=-(it->second); //atomic charge
-    constraintsNone.distribute_local_to_global(cell_rhs_origin, local_dof_indices_origin, residual);
+    constraintsNone.distribute_local_to_global(cell_rhs_origin, local_dof_indices_origin, rhs);
   }
   //MPI operation to sync data 
   rhs.compress(VectorOperation::add);
+  computing_timer.exit_section("poissonClass rhs assembly");
 }
-*/
+
+//compute RHS
+void poissonClass::solve(const Table<2,double>* rhoValues){
+  computeRHS(rhoValues);
+}
 /*
 //compute RHS
 template <int dim>
-void poisson<dim>::vmult(Vector<double>       &dst,
+void poissonClass<dim>::vmult(Vector<double>       &dst,
 			 const Vector<double> &src){
   dst=0.0;  
   data.cell_loop (&LaplaceOperator::local_apply, this, dst, src);
