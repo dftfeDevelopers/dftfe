@@ -26,12 +26,14 @@ void poissonClass::init(){
   constraintsNone.reinit (numDofs);
   DoFTools::make_hanging_node_constraints (dftPtr->dofHandler, constraintsNone);
   constraintsNone.close();
+
   //zero constraints
   constraintsZero.clear ();
   constraintsZero.reinit (numDofs);
   DoFTools::make_hanging_node_constraints (dftPtr->dofHandler, constraintsZero);
   VectorTools::interpolate_boundary_values (dftPtr->dofHandler, 0, ZeroFunction<3>(), constraintsZero);
   constraintsZero.close ();
+
   //OnebyR constraints
   constraints1byR.clear ();
   constraints1byR.reinit (numDofs);
@@ -119,6 +121,7 @@ void poissonClass::computeRHS(const Table<2,double>* rhoValues){
       constraintsNone.distribute_local_to_global(elementalResidual, local_dof_indices, rhs);
       //increment cellID
       cellID++;
+      pcout << cell->id() << " ";
     }
   }
   //Add nodal force to the node at the origin
@@ -137,17 +140,46 @@ void poissonClass::computeRHS(const Table<2,double>* rhoValues){
 void poissonClass::solve(const Table<2,double>* rhoValues){
   computeRHS(rhoValues);
 }
-/*
-//compute RHS
-template <int dim>
-void poissonClass<dim>::vmult(Vector<double>       &dst,
-			 const Vector<double> &src){
-  dst=0.0;  
-  data.cell_loop (&LaplaceOperator::local_apply, this, dst, src);
 
-  const std::vector<unsigned int> &
-    constrained_dofs = data.get_constrained_dofs();
-  for (unsigned int i=0; i<constrained_dofs.size(); ++i)
-    dst(constrained_dofs[i]) += src(constrained_dofs[i]);
+//Ax
+void poissonClass::AX (const dealii::MatrixFree<3,double>  &data,
+		       vectorType &dst, 
+		       const vectorType &src,
+		       const std::pair<unsigned int,unsigned int> &cell_range) const{
+  const unsigned int   dofs_per_cell = FE.dofs_per_cell;
+  std::vector<types::global_dof_index> local_dof_indices (dofs_per_cell);
+  typename DoFHandler<3>::active_cell_iterator cell;
+
+  std::vector<double> x(dofs_per_cell), y(dofs_per_cell);
+  //loop over all "cells"  (cell blocks)
+  for (unsigned int cell_index=cell_range.first; cell_index<cell_range.second; ++cell_index){
+    //loop over cells
+    for (unsigned int v=0; v<data.n_components_filled(cell_index); ++v){
+      cell=data.get_cell_iterator(cell_index, v);
+      cell->get_dof_indices (local_dof_indices);
+      src.extract_subvector_to(local_dof_indices, x);
+      //elemental Ax
+      char trans= 'N';
+      int m= dofs_per_cell, n= dofs_per_cell, lda= dofs_per_cell, incx= 1, incy= 1;
+      double alpha= 1.0, beta= 0.0;
+      //dgemv_(&trans,&m,&n,&alpha,A,&lda,&x[0],&incx,&beta,&y[0],&incy);
+      constraintsNone.distribute_local_to_global(y, local_dof_indices, dst);
+    }
+  }
 }
-*/
+
+
+//vmult
+void poissonClass::vmult(vectorType &dst, const vectorType &src) const{
+  dst=0.0;  
+  dftPtr->matrix_free_data.cell_loop (&poissonClass::AX, this, dst, src);
+  dst.compress(VectorOperation::add);
+
+  //apply Dirichlet BC's
+  const std::vector<unsigned int>& 
+    constrained_dofs = dftPtr->matrix_free_data.get_constrained_dofs();
+  for (unsigned int i=0; i<constrained_dofs.size(); ++i){
+    dst(constrained_dofs[i]) += src(constrained_dofs[i]);
+  }
+}
+

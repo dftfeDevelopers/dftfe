@@ -9,9 +9,10 @@
 
 //Initialize Namespace
 using namespace dealii;
-//lapack routine
+//blas-lapack routines
 extern "C"{
-void dgesv_( int* n, int* nrhs, double* a, int* lda, int* ipiv, double* b, int* ldb, int* info );
+  void dgemv_(char* TRANS, const int* M, const int* N, double* alpha, double* A, const int* LDA, double* X, const int* INCX, double* beta, double* C, const int* INCY);
+  void dgesv_( int* n, int* nrhs, double* a, int* lda, int* ipiv, double* b, int* ldb, int* info );
 }
 xc_func_type funcX, funcC;
 

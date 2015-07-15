@@ -18,7 +18,11 @@ private:
   void init ();
   void computeRHS(const dealii::Table<2,double>* rhoValues);
   void solve(const dealii::Table<2,double>* rhoValues=0);
-
+  void AX(const dealii::MatrixFree<3,double>  &data,
+	  vectorType &dst, 
+	  const vectorType &src,
+	  const std::pair<unsigned int,unsigned int> &cell_range) const;
+  void vmult(vectorType &dst, const vectorType &src) const;
   //pointer to dft class
   dftClass* dftPtr;
 
