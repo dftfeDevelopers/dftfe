@@ -18,7 +18,12 @@ void poissonClass::init(){
   unsigned int numCells=dftPtr->triangulation.n_locally_owned_active_cells();
   dealii::IndexSet numDofs=dftPtr->locally_relevant_dofs;
   //intialize the size of Table storing element level jacobians
-  localJacobians.reinit(dealii::TableIndices<3>(numCells, FE.dofs_per_cell, FE.dofs_per_cell));
+  typename DoFHandler<3>::active_cell_iterator cell = dftPtr->dofHandler.begin_active(), endc = dftPtr->dofHandler.end();
+  for (; cell!=endc; ++cell) {
+    if (cell->is_locally_owned()){
+      localJacobians[cell->id()]=std::vector<double>(FE.dofs_per_cell*FE.dofs_per_cell);
+    }
+  }
   
   //constraints
   //no constraints
@@ -64,7 +69,6 @@ void poissonClass::computeLocalJacobians(){
   
   //parallel loop over all elements
   typename DoFHandler<3>::active_cell_iterator cell = dftPtr->dofHandler.begin_active(), endc = dftPtr->dofHandler.end();
-  unsigned int cellID=0;
   for (; cell!=endc; ++cell) {
     if (cell->is_locally_owned()){
       //compute values for the current element
@@ -73,23 +77,19 @@ void poissonClass::computeLocalJacobians(){
       //local poissonClass operator
       for (unsigned int i=0; i<dofs_per_cell; ++i){
 	for (unsigned int j=0; j<dofs_per_cell; ++j){
-	  localJacobians(cellID,i,j)=0.0;
+	  localJacobians[cell->id()][i*dofs_per_cell+j]=0.0;
 	  for (unsigned int q_point=0; q_point<num_quad_points; ++q_point){
-	    localJacobians(cellID,i,j) += (1.0/(4.0*M_PI))*(fe_values.shape_grad (i, q_point) *
-							fe_values.shape_grad (j, q_point) *
-							fe_values.JxW (q_point));
+	    localJacobians[cell->id()][i*dofs_per_cell+j] += (1.0/(4.0*M_PI))*(fe_values.shape_grad (i, q_point) *fe_values.shape_grad (j, q_point)*fe_values.JxW (q_point));
 	  }
 	}
       }
-      //increment cellID
-      cellID++;
     }
   }
   computing_timer.exit_section("poissonClass jacobian assembly");
 }
 
 //compute RHS
-void poissonClass::computeRHS(const Table<2,double>* rhoValues){
+void poissonClass::computeRHS(std::map<dealii::CellId,std::vector<double> >* rhoValues){
   computing_timer.enter_section("poissonClass rhs assembly");
   rhs=0.0;
   //local data structures
@@ -102,7 +102,6 @@ void poissonClass::computeRHS(const Table<2,double>* rhoValues){
 
   //parallel loop over all elements
   typename DoFHandler<3>::active_cell_iterator cell = dftPtr->dofHandler.begin_active(), endc = dftPtr->dofHandler.end();
-  unsigned int cellID=0;
   for (; cell!=endc; ++cell) {
     if (cell->is_locally_owned()){
       //compute values for the current element
@@ -112,16 +111,13 @@ void poissonClass::computeRHS(const Table<2,double>* rhoValues){
       if (rhoValues) {
 	for (unsigned int i=0; i<dofs_per_cell; ++i){
 	  for (unsigned int q_point=0; q_point<num_quad_points; ++q_point){ 
-	    elementalResidual(i) += fe_values.shape_value(i, q_point)*(*rhoValues)(cellID, q_point)*fe_values.JxW (q_point);
+	    elementalResidual(i) += fe_values.shape_value(i, q_point)*((*rhoValues)[cell->id()][q_point])*fe_values.JxW (q_point);
 	  }
 	}
       }
       //assemble to global data structures
       cell->get_dof_indices (local_dof_indices);
       constraintsNone.distribute_local_to_global(elementalResidual, local_dof_indices, rhs);
-      //increment cellID
-      cellID++;
-      pcout << cell->id() << " ";
     }
   }
   //Add nodal force to the node at the origin
@@ -137,7 +133,7 @@ void poissonClass::computeRHS(const Table<2,double>* rhoValues){
 }
 
 //compute RHS
-void poissonClass::solve(const Table<2,double>* rhoValues){
+  void poissonClass::solve(std::map<dealii::CellId,std::vector<double> >* rhoValues){
   computeRHS(rhoValues);
 }
 
@@ -167,7 +163,6 @@ void poissonClass::AX (const dealii::MatrixFree<3,double>  &data,
     }
   }
 }
-
 
 //vmult
 void poissonClass::vmult(vectorType &dst, const vectorType &src) const{

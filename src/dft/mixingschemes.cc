@@ -10,23 +10,22 @@ double dftClass::mixing_simple()
   double alpha=0.8;
   
   //create new rhoValue tables
-  Table<2,double> *rhoInValuesOld=rhoInValues;
-  rhoInValues=new Table<2,double>(triangulation.n_locally_owned_active_cells(),std::pow(quadratureRule,3));
+  std::map<dealii::CellId,std::vector<double> >* rhoInValuesOld=rhoInValues;
+  rhoInValues=new std::map<dealii::CellId,std::vector<double> >;
   rhoInVals.push_back(rhoInValues); 
 
   //parallel loop over all elements
   typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
-  unsigned int cellID=0;
   for (; cell!=endc; ++cell) {
     if (cell->is_locally_owned()){
       fe_values.reinit (cell); 
+      (*rhoInValues)[cell->id()]=std::vector<double>(num_quad_points*num_quad_points);
       for (unsigned int q_point=0; q_point<num_quad_points; ++q_point){
 	//Compute (rhoIn-rhoOut)^2
-        normValue+=std::pow((*rhoInValuesOld)(cellID,q_point)-(*rhoOutValues)(cellID,q_point),2.0)*fe_values.JxW(q_point);
+        normValue+=std::pow(((*rhoInValuesOld)[cell->id()][q_point])- ((*rhoOutValues)[cell->id()][q_point]),2.0)*fe_values.JxW(q_point);
 	//Simple mixing scheme
-	(*rhoInValues)(cellID,q_point)=std::abs((1-alpha)*(*rhoInValuesOld)(cellID,q_point)+ alpha*(*rhoOutValues)(cellID,q_point));
+	((*rhoInValues)[cell->id()][q_point])=std::abs((1-alpha)*(*rhoInValuesOld)[cell->id()][q_point]+ alpha*(*rhoOutValues)[cell->id()][q_point]);
       }
-      cellID++;
     }
   }
   return Utilities::MPI::sum(normValue, mpi_communicator);
@@ -51,23 +50,21 @@ double dftClass::mixing_anderson(){
   
   //parallel loop over all elements
   typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
-  unsigned int cellID=0;
   for (; cell!=endc; ++cell) {
     if (cell->is_locally_owned()){
       fe_values.reinit (cell); 
       for (unsigned int q_point=0; q_point<num_quad_points; ++q_point){
 	//fill coefficient matrix, rhs
-	double Fn=(*rhoOutVals[N])(cellID,q_point)-(*rhoInVals[N])(cellID,q_point);
+	double Fn=((*rhoOutVals[N])[cell->id()][q_point])- ((*rhoInVals[N])[cell->id()][q_point]);
 	for (int m=0; m<N; m++){
-	  double Fnm=(*rhoOutVals[N-1-m])(cellID,q_point)-(*rhoInVals[N-1-m])(cellID,q_point);
+	  double Fnm=((*rhoOutVals[N-1-m])[cell->id()][q_point])- ((*rhoInVals[N-1-m])[cell->id()][q_point]);
 	  for (int k=0; k<N; k++){
-	    double Fnk=(*rhoOutVals[N-1-k])(cellID,q_point)-(*rhoInVals[N-1-k])(cellID,q_point);
+	    double Fnk=((*rhoOutVals[N-1-k])[cell->id()][q_point])- ((*rhoInVals[N-1-k])[cell->id()][q_point]); 
 	    A[k*N+m] += (Fn-Fnm)*(Fn-Fnk)*fe_values.JxW(q_point); // (m,k)^th entry
 	  }	  
 	  c[m] += (Fn-Fnm)*(Fn)*fe_values.JxW(q_point); // (m)^th entry
 	}
       }
-      cellID++;
     }
   }
   std::cout << "A,c:" << A[0] << " " << c[0] << "\n";
@@ -87,29 +84,27 @@ double dftClass::mixing_anderson(){
   }
   
   //create new rhoValue tables
-  Table<2,double> *rhoInValuesOld=rhoInValues;
-  rhoInValues=new Table<2,double>(triangulation.n_locally_owned_active_cells(),std::pow(quadratureRule,3));
+  std::map<dealii::CellId,std::vector<double> >* rhoInValuesOld=rhoInValues;
+  rhoInValues=new std::map<dealii::CellId,std::vector<double> >;
   rhoInVals.push_back(rhoInValues);
 
   //implement anderson mixing
   cell = dofHandler.begin_active();
-  cellID=0;
   for (; cell!=endc; ++cell) {
     if (cell->is_locally_owned()){
       fe_values.reinit (cell); 
       for (unsigned int q_point=0; q_point<num_quad_points; ++q_point){
 	//Compute (rhoIn-rhoOut)^2
-        normValue+=std::pow((*rhoInValuesOld)(cellID,q_point)-(*rhoOutValues)(cellID,q_point),2.0)*fe_values.JxW(q_point);
+        normValue+=std::pow((*rhoInValuesOld)[cell->id()][q_point]-(*rhoOutValues)[cell->id()][q_point],2.0)*fe_values.JxW(q_point);
 	//Anderson mixing scheme
-	double rhoOutBar=cn*(*rhoOutVals[N])(cellID,q_point);
-	double rhoInBar=cn*(*rhoInVals[N])(cellID,q_point);
+	double rhoOutBar=cn*(*rhoOutVals[N])[cell->id()][q_point];
+	double rhoInBar=cn*(*rhoInVals[N])[cell->id()][q_point];
 	for (int i=0; i<N; i++){
-	  rhoOutBar+=c[i]*(*rhoOutVals[N-1-i])(cellID,q_point);
-	  rhoInBar+=c[i]*(*rhoInVals[N-1-i])(cellID,q_point);
+	  rhoOutBar+=c[i]*(*rhoOutVals[N-1-i])[cell->id()][q_point];
+	  rhoInBar+=c[i]*(*rhoInVals[N-1-i])[cell->id()][q_point];
 	}
-	(*rhoInValues)(cellID,q_point)=(1-alpha)*rhoInBar+alpha*rhoOutBar;
+	(*rhoInValues)[cell->id()][q_point]=(1-alpha)*rhoInBar+alpha*rhoOutBar;
       }
-    cellID++;
     }
   }
   return Utilities::MPI::sum(normValue, mpi_communicator);

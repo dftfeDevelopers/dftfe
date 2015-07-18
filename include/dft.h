@@ -67,8 +67,8 @@ class dftClass{
   TimerOutput computing_timer;
   
   //dft related objects
-  Table<2,double> *rhoInValues, *rhoOutValues;
-  std::vector<Table<2,double>*> rhoInVals, rhoOutVals;
+  std::map<dealii::CellId, std::vector<double> > *rhoInValues, *rhoOutValues;
+  std::vector<std::map<dealii::CellId,std::vector<double> >*> rhoInVals, rhoOutVals;
   //map of atom node number and atomic weight
   std::map<unsigned int, double> atoms; 
   //fermi energy

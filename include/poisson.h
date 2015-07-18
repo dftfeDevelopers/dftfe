@@ -16,8 +16,8 @@ public:
   void computeLocalJacobians();
 private:
   void init ();
-  void computeRHS(const dealii::Table<2,double>* rhoValues);
-  void solve(const dealii::Table<2,double>* rhoValues=0);
+  void computeRHS(std::map<dealii::CellId,std::vector<double> >* rhoValues);
+  void solve(std::map<dealii::CellId,std::vector<double> >* rhoValues=0);
   void AX(const dealii::MatrixFree<3,double>  &data,
 	  vectorType &dst, 
 	  const vectorType &src,
@@ -28,7 +28,7 @@ private:
 
   //FE data structres
   dealii::FE_Q<3>   FE;
-  dealii::Table<3,dataType>   localJacobians;
+  std::map<dealii::CellId,std::vector<double> >   localJacobians;
 
   //constraints
   dealii::ConstraintMatrix  constraintsNone, constraintsZero, constraints1byR;

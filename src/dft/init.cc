@@ -3,7 +3,7 @@
 //initialize rho
 void dftClass::initRho(){
   //Initialize electron density table storage
-  rhoInValues=new Table<2,double>(triangulation.n_locally_owned_active_cells(),std::pow(quadratureRule,3));
+  rhoInValues=new std::map<dealii::CellId,std::vector<double> >;
   rhoInVals.push_back(rhoInValues);
   
   //Readin single atom rho initial guess
@@ -53,9 +53,9 @@ void dftClass::initRho(){
   FEValues<3> fe_values (FE, quadrature_formula, update_values);
   const unsigned int n_q_points    = quadrature_formula.size();
   typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
-  unsigned int cellID=0;
   for (; cell!=endc; ++cell) {
     if (cell->is_locally_owned()){
+      (*rhoInValues)[cell->id()]=std::vector<double>(n_q_points*n_q_points);
       for (unsigned int q=0; q<n_q_points; ++q){
 	MappingQ<3> test(1); 
 	Point<3> quadPoint(test.transform_unit_to_real_cell(cell, fe_values.get_quadrature().point(q)));
@@ -68,21 +68,18 @@ void dftClass::initRho(){
 	      rhoValueAtQuadPt+=std::abs(alglib::spline1dcalc(denSpline[atomTypeMap[n]], distanceToAtom));
 	  }
 	}
-	(*rhoInValues)(cellID,q)=rhoValueAtQuadPt;
+	(*rhoInValues)[cell->id()][q]=rhoValueAtQuadPt;
       }
-      cellID++;
     }
   }
   //Normalize rho
   double charge=totalCharge();
   pcout << "initial charge: " << charge << std::endl;
-  cellID=0;
   for (; cell!=endc; ++cell) {
     if (cell->is_locally_owned()){
       for (unsigned int q=0; q<n_q_points; ++q){
-	(*rhoInValues)(cellID,q)*=1.0/charge;
+	(*rhoInValues)[cell->id()][q]*=1.0/charge;
       }
-      cellID++;
     }
   }
   
