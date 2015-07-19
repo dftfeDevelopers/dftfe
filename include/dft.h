@@ -13,6 +13,10 @@ using namespace dealii;
 extern "C"{
   void dgemv_(char* TRANS, const int* M, const int* N, double* alpha, double* A, const int* LDA, double* X, const int* INCX, double* beta, double* C, const int* INCY);
   void dgesv_( int* n, int* nrhs, double* a, int* lda, int* ipiv, double* b, int* ldb, int* info );
+  void dscal_(int *n, double *alpha, double *x, int *incx);
+  void daxpy_(int *n, double *alpha, double *x, int *incx, double *y, int *incy);
+  void dgemm_(char* transA, char* transB, int *m, int *n, int *k, double *alpha, double *A, int *lda, double *B, int *ldb, double *beta, double *C, int *ldc);
+  void dsyevd_(char* jobz, char* uplo, int* n, double* A, int *lda, double* w, double* work, int* lwork, int* iwork, int* liwork, int* info);
 }
 xc_func_type funcX, funcC;
 
@@ -73,6 +77,8 @@ class dftClass{
   std::map<unsigned int, double> atoms; 
   //fermi energy
   double fermiEnergy;
+  //spectrum bounds for chebyshev filter
+  double bUp, bLow, a0;
 };
 
 #endif

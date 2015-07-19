@@ -22,7 +22,9 @@ dftClass::dftClass():
   this_mpi_process (Utilities::MPI::this_mpi_process(mpi_communicator)),
   pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
   computing_timer (pcout, TimerOutput::summary, TimerOutput::wall_times),
-  poisson(this)
+  poisson(this),
+  bLow(0.0),
+  a0(lowerEndWantedSpectrum)
 {}
 
 //dft run
@@ -75,6 +77,9 @@ void dftClass::run ()
     compute_energy();
     pcout<<"SCF iteration: " << scfIter+1 << " complete\n";
     scfIter++;
+
+    //fill eigen spectrum bounds for chebyshev filter (bLow, a0)
+    a0=eigenValues[0]; bLow=*(--eigenValues.end());
   }
   computing_timer.exit_section("dft solve"); 
   //
