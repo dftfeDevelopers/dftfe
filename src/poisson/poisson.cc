@@ -55,6 +55,17 @@ void poissonClass::init(){
   phiExt.reinit (rhs);
   //compute elemental jacobians
   computeLocalJacobians();
+  localJacobiansPtr=&localJacobians;
+
+  //store constrianed DOF's
+  for (types::global_dof_index i=0; i<rhs.size(); i++){
+    if (rhs.locally_owned_elements().is_element(i)){
+      if (constraints1byR.is_constrained(i)){
+	values1byR[i] = constraints1byR.get_inhomogeneity(i);
+	valuesZero[i] = 0.0;
+      }
+    }
+  }
 }
 
 //compute local jacobians
@@ -132,11 +143,6 @@ void poissonClass::computeRHS(std::map<dealii::CellId,std::vector<double> >* rho
   computing_timer.exit_section("poissonClass rhs assembly");
 }
 
-//compute RHS
-  void poissonClass::solve(std::map<dealii::CellId,std::vector<double> >* rhoValues){
-  computeRHS(rhoValues);
-}
-
 //Ax
 void poissonClass::AX (const dealii::MatrixFree<3,double>  &data,
 		       vectorType &dst, 
@@ -158,8 +164,8 @@ void poissonClass::AX (const dealii::MatrixFree<3,double>  &data,
       char trans= 'N';
       int m= dofs_per_cell, n= dofs_per_cell, lda= dofs_per_cell, incx= 1, incy= 1;
       double alpha= 1.0, beta= 0.0;
-      //dgemv_(&trans,&m,&n,&alpha,A,&lda,&x[0],&incx,&beta,&y[0],&incy);
-      constraintsNone.distribute_local_to_global(y, local_dof_indices, dst);
+      dgemv_(&trans,&m,&n,&alpha,&((*localJacobiansPtr)[cell->id()][0]),&lda,&x[0],&incx,&beta,&y[0],&incy);
+      constraintsZero.distribute_local_to_global(y, local_dof_indices, dst);
     }
   }
 }
@@ -171,10 +177,29 @@ void poissonClass::vmult(vectorType &dst, const vectorType &src) const{
   dst.compress(VectorOperation::add);
 
   //apply Dirichlet BC's
-  const std::vector<unsigned int>& 
-    constrained_dofs = dftPtr->matrix_free_data.get_constrained_dofs();
-  for (unsigned int i=0; i<constrained_dofs.size(); ++i){
-    dst(constrained_dofs[i]) += src(constrained_dofs[i]);
+  for (std::map<types::global_dof_index, double>::const_iterator it=valuesZero.begin(); it!=valuesZero.end(); ++it){
+    dst(it->first) += src(it->first);
   }
 }
 
+//solve using CG
+void poissonClass::solve(std::map<dealii::CellId,std::vector<double> >* rhoValues){
+  //compute RHS
+  computeRHS(rhoValues);
+
+  SolverControl solver_control(maxLinearSolverIterations,relLinearSolverTolerance*rhs.l2_norm());
+  SolverCG<vectorType> solver(solver_control);
+  try{
+    solver.solve(*this, phiTotRhoOut, rhs, IdentityMatrix(rhs.size()));
+  }
+  catch (...) {
+    pcout << "\nWarning: solver did not converge as per set tolerances. consider increasing maxLinearSolverIterations or decreasing relLinearSolverTolerance.\n";
+  }
+  char buffer[200];
+  sprintf(buffer, "poisson solve: initial residual:%12.6e, current residual:%12.6e, nsteps:%u, tolerance criterion:%12.6e\n", \
+	  solver_control.initial_value(),				\
+	  solver_control.last_value(),					\
+	  solver_control.last_step(), solver_control.tolerance()); 
+  pcout<<buffer; 
+  
+}

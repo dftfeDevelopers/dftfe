@@ -42,6 +42,7 @@ void dftClass::run ()
   initRho();
   locateAtomCoreNodes();
   poisson.solve();
+ 
   /*
   computing_timer.exit_section("dft setup"); 
   //solve
