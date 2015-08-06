@@ -1,0 +1,2 @@
+otool -L main
+install_name_tool -change libalglib.so /opt/software/numerics/alglib/cpp/src/libalglib.so main

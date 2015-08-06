@@ -10,6 +10,9 @@
 //dft constructor
 dftClass::init_chebyshev(){};
 
+//PSI, X 
+//XHX, HX, 
+
 //chebyshev solver
 void dftClass::chebyshevSolver(){
   //compute upper bound of spectrum

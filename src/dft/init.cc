@@ -5,7 +5,7 @@ void dftClass::initRho(){
   //Initialize electron density table storage
   rhoInValues=new std::map<dealii::CellId,std::vector<double> >;
   rhoInVals.push_back(rhoInValues);
-  
+
   //Readin single atom rho initial guess
   pcout << "reading initial guess for rho\n";
   unsigned int numAtomTypes=initialGuessFiles.size();

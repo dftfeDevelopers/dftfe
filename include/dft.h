@@ -4,8 +4,10 @@
 #include "poisson.h"
 //#include "eigen.h"
 //include alglib
-#include "/nfs/mcfs_home/rudraa/Public/alglib/cpp/src/interpolation.h"
-#include "/nfs/mcfs_home/rudraa/Public/libxc/libxc-2.2.0/installDir/include/xc.h"
+//#include "/nfs/mcfs_home/rudraa/Public/alglib/cpp/src/interpolation.h"
+//#include "/nfs/mcfs_home/rudraa/Public/libxc/libxc-2.2.0/installDir/include/xc.h"
+#include "/opt/software/numerics/alglib/cpp/src/interpolation.h"
+#include "/opt/software/numerics/libxc-2.2.2/installDir/include/xc.h"
 
 //Initialize Namespace
 using namespace dealii;
