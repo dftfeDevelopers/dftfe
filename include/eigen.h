@@ -1,50 +1,49 @@
 #ifndef eigen_H_
 #define eigen_H_
 #include "headers.h"
-#include "dft.h"
 
-//Initialize Namespace
-using namespace dealii;
-
-//Define eigen class
-template <int dim>
-class eigen
+//Define eigenClass class
+class eigenClass
 {
-  friend class dft;
+  friend class dftClass;
 public:
-  eigen(DoFHandler<dim>* _dofHandler);
-  void solve(PETScWrappers::MPI::Vector& solution, 
-	     PETScWrappers::MPI::SparseMatrix& massMatrix,
-	     PETScWrappers::MPI::SparseMatrix& hamiltonianMatrix,
-	     PETScWrappers::MPI::Vector& massVector, 
-	     ConstraintMatrix& constraints,
-	     Table<2,double>* rhoValues,
-	     std::vector<double>& eigenValues,
-	     std::vector<PETScWrappers::MPI::Vector>& eigenVectors,
-	     unsigned int scfIter);
+  eigenClass(dftClass* _dftPtr);
+  void computeLocalHamiltonians(dealii::Table<2,double>* rhoValues);
+  void implementHX(const dealii::MatrixFree<3,double>  &data,
+		   vectorType &dst, 
+		   const vectorType &src,
+		   const std::pair<unsigned int,unsigned int> &cell_range) const;
+  void implementXHX(const dealii::MatrixFree<3,double>  &data,
+		    vectorType &dst, 
+		    const vectorType &src,
+		    const std::pair<unsigned int,unsigned int> &cell_range) const;
+  void HX(vectorType &dst, 
+	  const vectorType &src);
+  void XHX(vectorType &dst, 
+	   const vectorType &src);
  private:
   void init ();
-  void assemble(PETScWrappers::MPI::Vector& solution, 
-		PETScWrappers::MPI::SparseMatrix& massMatrix,
-		PETScWrappers::MPI::SparseMatrix& hamiltonianMatrix,
-		PETScWrappers::MPI::Vector& massVector, 
-		ConstraintMatrix& constraints,
-		Table<2,double>* rhoValues);
+  void computeMassVector();
+
+  //pointer to dft class
+  dftClass* dftPtr;
 
   //FE data structres
-  FE_Q<dim>          FE;
-  DoFHandler<dim>*    dofHandler;
-
+  dealii::FE_Q<3>   FE;
+  std::map<dealii::CellId,std::vector<double> >   localHamiltonians;
+  std::map<dealii::CellId,std::vector<double> >*   localHamiltoniansPtr; //this ptr created to circumvent problem with const definition of HX
+ 
+  //data structures
+  vectorType massVector;
+ 
   //parallel objects
   MPI_Comm mpi_communicator;
   const unsigned int n_mpi_processes;
   const unsigned int this_mpi_process;
-  ConditionalOStream   pcout;
-  IndexSet   locally_owned_dofs;
-  IndexSet   locally_relevant_dofs;
+  dealii::ConditionalOStream   pcout;
 
   //compute-time logger
-  TimerOutput computing_timer;
+  dealii::TimerOutput computing_timer;
 };
 
 #endif
