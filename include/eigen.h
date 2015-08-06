@@ -8,20 +8,18 @@ class eigenClass
   friend class dftClass;
 public:
   eigenClass(dftClass* _dftPtr);
-  void computeLocalHamiltonians(dealii::Table<2,double>* rhoValues);
+  void computeLocalHamiltonians(std::map<dealii::CellId,std::vector<double> >* rhoValues, const vectorType& phi);
+  void HX(std::vector<vectorType*> &dst, const std::vector<vectorType*> &src);
+  void XHX(std::vector<vectorType*> &src); 
+ private:
   void implementHX(const dealii::MatrixFree<3,double>  &data,
-		   vectorType &dst, 
-		   const vectorType &src,
+		   std::vector<vectorType*>  &dst, 
+		   const std::vector<vectorType*>  &src,
 		   const std::pair<unsigned int,unsigned int> &cell_range) const;
   void implementXHX(const dealii::MatrixFree<3,double>  &data,
-		    vectorType &dst, 
-		    const vectorType &src,
-		    const std::pair<unsigned int,unsigned int> &cell_range) const;
-  void HX(vectorType &dst, 
-	  const vectorType &src);
-  void XHX(vectorType &dst, 
-	   const vectorType &src);
- private:
+		   std::vector<vectorType*>  &dst, 
+		   const std::vector<vectorType*>  &src,
+		   const std::pair<unsigned int,unsigned int> &cell_range) const;
   void init ();
   void computeMassVector();
 
@@ -35,7 +33,9 @@ public:
  
   //data structures
   vectorType massVector;
- 
+  std::vector<double> XHXValue;
+  std::vector<double>* XHXValuePtr;
+
   //parallel objects
   MPI_Comm mpi_communicator;
   const unsigned int n_mpi_processes;

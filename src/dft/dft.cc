@@ -3,7 +3,7 @@
 #include "../../include/dft.h"
 #include "../../utils/fileReaders.cc"
 #include "../poisson/poisson.cc"
-//#include "../eigen/eigen.cc"
+#include "../eigen/eigen.cc"
 #include "mesh.cc"
 #include "init.cc"
 #include "energy.cc"
@@ -23,6 +23,7 @@ dftClass::dftClass():
   pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
   computing_timer (pcout, TimerOutput::summary, TimerOutput::wall_times),
   poisson(this),
+  eigen(this),
   bLow(0.0),
   a0(lowerEndWantedSpectrum)
 {}
@@ -44,7 +45,10 @@ void dftClass::run ()
   initRho();
   locateAtomCoreNodes();
   poisson.solve();
- 
+  eigen.computeLocalHamiltonians(rhoInValues, poisson.phiTotRhoOut);
+  eigen.HX(eigenVectors, eigenVectors);
+  eigen.XHX(eigenVectors);
+
   /*
   computing_timer.exit_section("dft setup"); 
   //solve

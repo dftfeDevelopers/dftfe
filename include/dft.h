@@ -2,7 +2,7 @@
 #define dft_H_
 #include "headers.h"
 #include "poisson.h"
-//#include "eigen.h"
+#include "eigen.h"
 //include alglib
 //#include "/nfs/mcfs_home/rudraa/Public/alglib/cpp/src/interpolation.h"
 //#include "/nfs/mcfs_home/rudraa/Public/libxc/libxc-2.2.0/installDir/include/xc.h"
@@ -24,7 +24,8 @@ xc_func_type funcX, funcC;
 
 //Define dft class
 class dftClass{
-  friend class poissonClass; 
+  friend class poissonClass;
+  friend class eigenClass;  
  public:
   dftClass();
   void run();
@@ -58,14 +59,11 @@ class dftClass{
   IndexSet   locally_relevant_dofs;
 
   poissonClass poisson;
+  eigenClass eigen;
   ConstraintMatrix constraintsNone;
-  //eigen value problem
-  /*
-  eigen<3> eigenObject;
-  parallel::distributed::Vector<double> massVector;
-  std::vector<double> eigenValue;
-  std::vector<parallel::distributed::Vector<double> > eigenVectors;
-  */
+  std::vector<double> eigenValues;
+  std::vector<parallel::distributed::Vector<double>*> eigenVectors;
+
   //parallel message stream
   ConditionalOStream  pcout;  
   

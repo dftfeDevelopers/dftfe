@@ -124,14 +124,13 @@ void dftClass::init(){
   constraintsNone.close();
   matrix_free_data.reinit (dofHandler, constraintsNone, quadrature, additional_data);
 
-  //initialize poisson problem related objects
+  //initialize poisson and eigen problem related objects
   poisson.init();
-  /*
-    rhs.reinit (massVector);
-    eigenValues.resize(numEigenValues);
-    eigenVectors.resize(numEigenValues);
-    for (unsigned int i=0; i<numEigenValues; ++i){
-    rhs.reinit(eigenVectors[i]);
-    } 
-  */
+  eigen.init();
+  eigenValues.resize(numEigenValues);
+  for (unsigned int i=0; i<numEigenValues; ++i){
+    vectorType* temp=new vectorType;
+    matrix_free_data.initialize_dof_vector(*temp);
+    eigenVectors.push_back(temp);
+  } 
 }
