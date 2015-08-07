@@ -127,10 +127,7 @@ void dftClass::init(){
   //initialize poisson and eigen problem related objects
   poisson.init();
   eigen.init();
-  eigenValues.resize(numEigenValues);
   for (unsigned int i=0; i<numEigenValues; ++i){
-    vectorType* temp=new vectorType;
-    matrix_free_data.initialize_dof_vector(*temp);
-    eigenVectors.push_back(temp);
+    matrix_free_data.initialize_dof_vector(*eigenVectors[i]);
   } 
 }

@@ -31,10 +31,14 @@ public:
   std::map<dealii::CellId,std::vector<double> >   localHamiltonians;
   std::map<dealii::CellId,std::vector<double> >*   localHamiltoniansPtr; //this ptr created to circumvent problem with const definition of HX
  
+  //constraints
+  dealii::ConstraintMatrix  constraintsNone;
+
   //data structures
   vectorType massVector;
   std::vector<double> XHXValue;
   std::vector<double>* XHXValuePtr;
+  std::vector<vectorType*> HXvalue;
 
   //parallel objects
   MPI_Comm mpi_communicator;

@@ -11,6 +11,10 @@ eigenClass::eigenClass(dftClass* _dftPtr):
   pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
   computing_timer (pcout, TimerOutput::summary, TimerOutput::wall_times)
 {
+  for (unsigned int i=0; i<numEigenValues; ++i){
+    vectorType* temp=new vectorType;
+    HXvalue.push_back(temp);
+  } 
 }
 
 //initialize eigenClass object
@@ -25,13 +29,24 @@ void eigenClass::init(){
     }
   }
   localHamiltoniansPtr=&localHamiltonians;
+  //constraints
+  //no constraints
+  constraintsNone.clear ();
+  constraintsNone.reinit (numDofs);
+  DoFTools::make_hanging_node_constraints (dftPtr->dofHandler, constraintsNone);
+  constraintsNone.close();
+
   //compute mass vector
   dftPtr->matrix_free_data.initialize_dof_vector (massVector);
   massVector=0.0;
   computeMassVector();
   massVector.compress(dealii::VectorOperation::add);
-  //XHX data structure
-  XHXValue.resize(dftPtr->eigenValues.size()*dftPtr->eigenValues.size());
+  //XHX size
+  XHXValue.resize(dftPtr->eigenVectors.size()*dftPtr->eigenVectors.size(),0.0);
+  //HX
+  for (unsigned int i=0; i<numEigenValues; ++i){
+    dftPtr->matrix_free_data.initialize_dof_vector(*HXvalue[i]);
+  } 
 } 
 
 void eigenClass::computeMassVector(){
@@ -120,7 +135,6 @@ void eigenClass::implementHX (const dealii::MatrixFree<3,double>  &data,
 			      const std::pair<unsigned int,unsigned int> &cell_range) const{
   const unsigned int   dofs_per_cell = FE.dofs_per_cell;
   std::vector<dealii::types::global_dof_index> local_dof_indices (dofs_per_cell);
-  std::vector<unsigned int> local_local_dof_indices (dofs_per_cell);
   typename dealii::DoFHandler<3>::active_cell_iterator cell;
 
   std::vector<double> x(dofs_per_cell*src.size()), y(dofs_per_cell*src.size());
@@ -141,16 +155,11 @@ void eigenClass::implementHX (const dealii::MatrixFree<3,double>  &data,
       //check lda, ldb, ldc values
       int m= dofs_per_cell, k=dofs_per_cell, n= src.size(), lda= dofs_per_cell, ldb=dofs_per_cell, ldc=dofs_per_cell;
       dgemm_(&transA, &transB, &m, &n, &k, &alpha, &((*localHamiltoniansPtr)[cell->id()][0]), &lda, &x[0], &ldb, &beta, &y[0], &ldc);
-      //get local_indices
-      const std_cxx1x::shared_ptr<const Utilities::MPI::Partitioner> partitioner=dftPtr->matrix_free_data.get_vector_partitioner();      
-      for (unsigned int i=0; i<dofs_per_cell; i++){
-	local_local_dof_indices[i]=partitioner->global_to_local(local_dof_indices[i]);
-      }
       //assemble back
+      std::vector<double>::iterator iter=y.begin();
       for (std::vector<vectorType*>::iterator it=dst.begin(); it!=dst.end(); it++){
-	for (unsigned int i=0; i<dofs_per_cell; i++){
-	  (*it)->local_element(local_local_dof_indices[i]);
-	}
+	constraintsNone.distribute_local_to_global(iter, iter+dofs_per_cell,local_dof_indices.begin(), **it);
+	iter+=dofs_per_cell*(it-dst.begin());
       }
     }
   }
@@ -187,7 +196,7 @@ void eigenClass::implementXHX (const dealii::MatrixFree<3,double>  &data,
       dgemm_(&transA, &transB, &m, &n, &k, &alpha, &((*localHamiltoniansPtr)[cell->id()][0]), &lda, &x[0], &ldb, &beta, &hx[0], &ldc);
       transA  = 'T', transB  = 'N';
       //XHX
-      dgemm_(&transA, &transB, &n, &n, &m, &alpha, &x[0], &lda, &hx[0], &ldb, &beta, &xhx[0], &ldc);
+      //dgemm_(&transA, &transB, &n, &n, &m, &alpha, &x[0], &lda, &hx[0], &ldb, &beta, &xhx[0], &ldc);
       //assemble back
       for (unsigned int i=0; i<xhx.size(); i++){
 	(*XHXValuePtr)[i]+=xhx[i]; //check for thread safety and need for thread locking
@@ -202,11 +211,11 @@ void eigenClass::HX(std::vector<vectorType*> &dst, const std::vector<vectorType*
     (**it)=0.0;  
   }
   computing_timer.enter_section("eigenClass HX");
-  //dftPtr->matrix_free_data.cell_loop (&eigenClass::implementHX, this, dst, src);
-  computing_timer.exit_section("eigenClass HX");
+  dftPtr->matrix_free_data.cell_loop (&eigenClass::implementHX, this, dst, src);
   for (std::vector<vectorType*>::iterator it=dst.begin(); it!=dst.end(); it++){
-    //(*it)->compress(VectorOperation::add);  //change later to non blocking compress
+    (*it)->compress(VectorOperation::add);  
   }
+  computing_timer.exit_section("eigenClass HX");
 }
 
 //XHX
@@ -215,7 +224,7 @@ void eigenClass::XHX(std::vector<vectorType*> &src){
     (*it)=0.0;  
   }
   computing_timer.enter_section("eigenClass XHX");
-  //dftPtr->matrix_free_data.cell_loop (&eigenClass::implementXHX, this, src, src);
+  dftPtr->matrix_free_data.cell_loop (&eigenClass::implementXHX, this, HXvalue, src);
   computing_timer.exit_section("eigenClass XHX");
   //all reduce XHXValuePtr
   Utilities::MPI::sum(*XHXValuePtr, mpi_communicator, *XHXValuePtr); 

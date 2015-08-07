@@ -26,7 +26,14 @@ dftClass::dftClass():
   eigen(this),
   bLow(0.0),
   a0(lowerEndWantedSpectrum)
-{}
+{
+  //set size of eigenvalues and eigenvectors data structures
+  eigenValues.resize(numEigenValues);
+  for (unsigned int i=0; i<numEigenValues; ++i){
+    vectorType* temp=new vectorType;
+    eigenVectors.push_back(temp);
+  } 
+}
 
 //dft run
 void dftClass::run ()
@@ -46,7 +53,7 @@ void dftClass::run ()
   locateAtomCoreNodes();
   poisson.solve();
   eigen.computeLocalHamiltonians(rhoInValues, poisson.phiTotRhoOut);
-  eigen.HX(eigenVectors, eigenVectors);
+  eigen.HX(eigen.HXvalue, eigenVectors);
   eigen.XHX(eigenVectors);
 
   /*
