@@ -1,22 +1,10 @@
-//Include header files
-#include "../../include/headers.h"
-#include "../../include/dft.h"
-#include "../../utils/fileReaders.cc"
-#include "../poisson/poisson.cc"
-//#include "../eigen/eigen.cc"
- 
-#define lanczosIterations 10
-
-//dft constructor
-dftClass::init_chebyshev(){};
-
-//PSI, X 
-//XHX, HX, 
 
 //chebyshev solver
 void dftClass::chebyshevSolver(){
+  computing_timer.enter_section("Chebyshev filtering"); 
   //compute upper bound of spectrum
   bUp=upperBound();
+  /*
   //filter
   chebyshevFilter(PSI, X, m, bLow, bUp, a0);
   //Gram Schmidt orthonormalization
@@ -39,31 +27,53 @@ void dftClass::chebyshevSolver(){
   char transA  = 'T', transB  = 'N';
   double alpha = 1.0, beta  = 0.0;
   dgemm_(&transA, &transB, m, n, k, &alpha, A, lda, B, ldb, &beta, C, ldc);
+  */
+  computing_timer.exit_section("Chebyshev filtering"); 
 }
 
 double dftClass::upperBound(){
+  unsigned int lanczosIterations=10;
   double alpha, beta;
-  double T[lanczosIterations][lanczosIterations];
-  //generate random vector v (complete this)
-  //
-  vectorType f, v0;
-  eigen.HX(v,f);
-  alpha=f*v;
-  f-=alpha*v;
-  T[0][0]=alpha;
-  for (unsigned int j=1; j<std::min(lanczosIterations,10); j++){
-    beta=f.norm();
-    v0=v; v/=beta;
-    eigen.HX(v,f); f-=beta*v0;
-    alpha=f*v; f-=alpha*v;
-    T[j][j-1]=beta; T[j-1][j]=beta; T[j][j]=alpha;  
+  //generate random vector v
+  vChebyshev=0.0;
+  std::srand(this_mpi_process);
+  for (unsigned int i=0; i<vChebyshev.local_size(); i++){
+    vChebyshev.local_element(i)=(double(std::rand())/RAND_MAX);
   }
-  //eigen decomposition to find max eigen value (complete this)
-  dsyevd_(&jobz, &uplo, &n, &H2[0], &lda, &eigenValues[0], &work[0], &lwork, &iwork[0], &liwork, &info);
-  return (eigenValues[lanczosIterations-1]+f.norm());
+  vChebyshev.compress(); 
+  vChebyshev.update_ghost_values();
+  vChebyshev/=vChebyshev.l2_norm();
+
+  //
+  std::vector<vectorType*> v,f; 
+  v.push_back(&vChebyshev);
+  f.push_back(&fChebyshev);
+  eigen.HX(v,f);
+  //
+  alpha=fChebyshev*vChebyshev;
+  fChebyshev.add(-1.0*alpha,vChebyshev);
+  std::vector<double> T((lanczosIterations*(lanczosIterations+1))/2,0.0);
+  T[0]=alpha;
+  unsigned index=1;
+  for (unsigned int j=1; j<lanczosIterations; j++){
+    beta=fChebyshev.l2_norm();
+    v0Chebyshev=vChebyshev; vChebyshev.equ(1.0/beta,fChebyshev);
+    eigen.HX(v,f); fChebyshev.add(-1.0*beta,v0Chebyshev);
+    alpha=fChebyshev*vChebyshev; fChebyshev.add(-1.0*alpha,vChebyshev);
+    T[index]=beta; T[index+lanczosIterations]=alpha;
+    index+=lanczosIterations+1;
+  }
+  //eigen decomposition to find max eigen value of T matrix
+  std::vector<double> eigenValuesT(lanczosIterations), work(2*lanczosIterations+1);
+  std::vector<int> iwork(1);
+  char jobz='N', uplo='L';
+  int n=lanczosIterations, lda=lanczosIterations, lwork=2*lanczosIterations+1, liwork=1, info;
+  dsyevd_(&jobz, &uplo, &n, &T[0], &lda, &eigenValuesT[0], &work[0], &lwork, &iwork[0], &liwork, &info);
+  return (eigenValuesT[lanczosIterations-1]+fChebyshev.l2_norm());
 }
 
-void dftClass::gramSchmidt(std::vector<vectorType>& X){
+/*
+void dftClass::gramSchmidt(std::vector<vectorType*>& X){
   std::vector<vectorType>::iterator qend=X.end();
   for (std::vector<vectorType>::iterator x=X.begin(); x<X.end(); ++x){
     for (std::vector<vectorType>::iterator q=X.begin(); q<x; ++q){
@@ -111,3 +121,4 @@ void dftClass::chebyshevFilter(std::vector<vectorType>& Y, const std::vector<vec
 //dgemm_(char* transA, char* transB, int *m, int *n, int *k, double *alpha, double *A, int *lda, double *B, int *ldb, double *beta, double *C, int *ldc);
 //dscal_(n, alpha1, y, inc);
 //daxpy_(n, alpha2, x2, inc, y, inc);
+*/

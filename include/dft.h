@@ -73,12 +73,22 @@ class dftClass{
   //dft related objects
   std::map<dealii::CellId, std::vector<double> > *rhoInValues, *rhoOutValues;
   std::vector<std::map<dealii::CellId,std::vector<double> >*> rhoInVals, rhoOutVals;
+
   //map of atom node number and atomic weight
   std::map<unsigned int, double> atoms; 
+
   //fermi energy
   double fermiEnergy;
-  //spectrum bounds for chebyshev filter
+
+  //chebyshev filter variables and functions
   double bUp, bLow, a0;
+  void chebyshevSolver();
+  double upperBound();
+  vectorType vChebyshev, v0Chebyshev, fChebyshev;
+  
+  //void gramSchmidt(std::vector<vectorType*>& X);
+  //void chebyshevFilter(std::vector<vectorType>& Y, const std::vector<vectorType>& X, double m, double a, double b, double a0);
+  
 };
 
 #endif

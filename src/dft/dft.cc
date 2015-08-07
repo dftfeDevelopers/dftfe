@@ -11,6 +11,7 @@
 #include "density.cc"
 #include "locatenodes.cc"
 #include "mixingschemes.cc"
+#include "chebyshev.cc"
  
 //dft constructor
 dftClass::dftClass():

@@ -212,7 +212,7 @@ void eigenClass::implementXHX (const dealii::MatrixFree<3,double>  &data,
 }
 
 //HX
-void eigenClass::HX(std::vector<vectorType*> &dst, const std::vector<vectorType*> &src) {
+void eigenClass::HX(const std::vector<vectorType*> &src, std::vector<vectorType*> &dst) {
   computing_timer.enter_section("eigenClass HX");
   for (std::vector<vectorType*>::iterator it=dst.begin(); it!=dst.end(); it++){
     (**it)=0.0;  
@@ -225,7 +225,7 @@ void eigenClass::HX(std::vector<vectorType*> &dst, const std::vector<vectorType*
 }
 
 //XHX
-void eigenClass::XHX(std::vector<vectorType*> &src){
+void eigenClass::XHX(const std::vector<vectorType*> &src){
   computing_timer.enter_section("eigenClass XHX");
   for (std::vector<double>::iterator it=XHXValuePtr->begin(); it!=XHXValuePtr->end(); it++){
     (*it)=0.0;  

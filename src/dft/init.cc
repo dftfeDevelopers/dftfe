@@ -128,6 +128,10 @@ void dftClass::init(){
   for (std::vector<parallel::distributed::Vector<double>*>::iterator it=eigenVectors.begin(); it!=eigenVectors.end(); ++it){
     matrix_free_data.initialize_dof_vector(**it);
   } 
+  matrix_free_data.initialize_dof_vector(vChebyshev);
+  matrix_free_data.initialize_dof_vector(v0Chebyshev);
+  matrix_free_data.initialize_dof_vector(fChebyshev);
+
   //initialize density and locate atome core nodes
   initRho();
   locateAtomCoreNodes();

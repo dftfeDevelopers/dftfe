@@ -9,8 +9,8 @@ class eigenClass
 public:
   eigenClass(dftClass* _dftPtr);
   void computeLocalHamiltonians(std::map<dealii::CellId,std::vector<double> >* rhoValues, const vectorType& phi);
-  void HX(std::vector<vectorType*> &dst, const std::vector<vectorType*> &src);
-  void XHX(std::vector<vectorType*> &src); 
+  void HX(const std::vector<vectorType*> &src, std::vector<vectorType*> &dst);
+  void XHX(const std::vector<vectorType*> &src); 
  private:
   void implementHX(const dealii::MatrixFree<3,double>  &data,
 		   std::vector<vectorType*>  &dst, 
