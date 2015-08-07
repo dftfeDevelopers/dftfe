@@ -15,6 +15,7 @@ poissonClass::poissonClass(dftClass* _dftPtr):
 
 //initialize poissonClass 
 void poissonClass::init(){
+  computing_timer.enter_section("poissonClass setup"); 
   unsigned int numCells=dftPtr->triangulation.n_locally_owned_active_cells();
   dealii::IndexSet numDofs=dftPtr->locally_relevant_dofs;
   //intialize the size of Table storing element level jacobians
@@ -66,6 +67,7 @@ void poissonClass::init(){
       }
     }
   }
+  computing_timer.exit_section("poissonClass setup"); 
 }
 
 //compute local jacobians

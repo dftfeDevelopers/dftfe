@@ -38,26 +38,20 @@ dftClass::dftClass():
 //dft run
 void dftClass::run ()
 {
-  computing_timer.enter_section("total time"); 
   pcout << "number of MPI processes: "
 	<< Utilities::MPI::n_mpi_processes(mpi_communicator)
 	<< std::endl;
-
   //generate/read mesh
   mesh();
-  
   //initialize
-  computing_timer.enter_section("dft setup"); 
   init();
-  initRho();
-  locateAtomCoreNodes();
   poisson.solve();
+  //
   eigen.computeLocalHamiltonians(rhoInValues, poisson.phiTotRhoOut);
   eigen.HX(eigen.HXvalue, eigenVectors);
   eigen.XHX(eigenVectors);
 
   /*
-  computing_timer.exit_section("dft setup"); 
   //solve
   computing_timer.enter_section("dft solve"); 
   //phiExt with nuclear charge
@@ -94,7 +88,6 @@ void dftClass::run ()
   }
   computing_timer.exit_section("dft solve"); 
   //
-  computing_timer.exit_section("total time"); 
   */
 }
 

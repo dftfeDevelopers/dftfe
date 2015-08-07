@@ -103,6 +103,7 @@ void dftClass::initRho(){
 }
 
 void dftClass::init(){
+  computing_timer.enter_section("dftClass setup"); 
   //initialize FE objects
   dofHandler.distribute_dofs (FE);
   locally_owned_dofs = dofHandler.locally_owned_dofs ();
@@ -123,11 +124,16 @@ void dftClass::init(){
   DoFTools::make_hanging_node_constraints (dofHandler, constraintsNone);
   constraintsNone.close();
   matrix_free_data.reinit (dofHandler, constraintsNone, quadrature, additional_data);
+  //initialize eigen vectors
+  for (std::vector<parallel::distributed::Vector<double>*>::iterator it=eigenVectors.begin(); it!=eigenVectors.end(); ++it){
+    matrix_free_data.initialize_dof_vector(**it);
+  } 
+  //initialize density and locate atome core nodes
+  initRho();
+  locateAtomCoreNodes();
+  computing_timer.exit_section("dftClass setup"); 
 
   //initialize poisson and eigen problem related objects
   poisson.init();
   eigen.init();
-  for (unsigned int i=0; i<numEigenValues; ++i){
-    matrix_free_data.initialize_dof_vector(*eigenVectors[i]);
-  } 
 }
