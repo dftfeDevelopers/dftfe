@@ -1,4 +1,3 @@
-
 //chebyshev solver
 void dftClass::chebyshevSolver(){
   //compute upper bound of spectrum

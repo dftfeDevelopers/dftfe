@@ -47,11 +47,9 @@ void dftClass::run ()
   mesh();
   //initialize
   init();
-  poisson.solve();
+  poisson.solve(poisson.phiExt);
   //
   eigen.computeLocalHamiltonians(rhoInValues, poisson.phiTotRhoOut);
-  eigen.HX(eigen.HXvalue, eigenVectors);
-  eigen.XHX(eigenVectors);
   chebyshevSolver();
   /*
   //solve

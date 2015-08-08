@@ -15,10 +15,13 @@ public:
   poissonClass(dftClass* _dftPtr);
   void computeLocalJacobians();
   void vmult(vectorType &dst, const vectorType &src) const;
+  void precondition_Jacobi(vectorType& dst, const vectorType& src, const double omega) const;
+  void unsubscribe (const char *identifier=0) const{}; //function needed to mimic SparseMatrix for Jacobi Preconditioning
+  bool operator!= (double val) const {return true;}; //function needed to mimic SparseMatrix
 private:
   void init ();
   void computeRHS(std::map<dealii::CellId,std::vector<double> >* rhoValues);
-  void solve(std::map<dealii::CellId,std::vector<double> >* rhoValues=0);
+  void solve(vectorType& phi, std::map<dealii::CellId,std::vector<double> >* rhoValues=0);
   void AX(const dealii::MatrixFree<3,double>  &data,
 	  vectorType &dst, 
 	  const vectorType &src,
@@ -38,7 +41,9 @@ private:
   vectorType rhs, Ax;
   vectorType jacobianDiagonal;
   vectorType phiTotRhoIn, phiTotRhoOut, phiExt;
- 
+  double jacobianDiagonalValue;
+  double relaxation; //relaxation parameter for Jacobi Preconditioning
+
   //parallel objects
   MPI_Comm mpi_communicator;
   const unsigned int n_mpi_processes;
