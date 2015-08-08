@@ -47,15 +47,11 @@ void dftClass::run ()
   mesh();
   //initialize
   init();
-  poisson.solve(poisson.phiExt);
-  //
-  eigen.computeLocalHamiltonians(rhoInValues, poisson.phiTotRhoOut);
-  chebyshevSolver();
-  /*
+  
   //solve
   computing_timer.enter_section("dft solve"); 
   //phiExt with nuclear charge
-  poisson.solve(phiExt, residual, jacobian, constraints1byR, atoms);
+  poisson.solve(poisson.phiExt);
   
   //Begin SCF iteration
   unsigned int scfIter=0;
@@ -69,25 +65,20 @@ void dftClass::run ()
       if(this_mpi_process==0) printf("Mixing Scheme: iter:%u, norm:%12.6e\n", scfIter+1, norm);
     }
     //phiTot with rhoIn
-    poisson.solve(phiTotRhoIn, residual, jacobian, constraintsZero, atoms, rhoInValues);
+    poisson.solve(poisson.phiTotRhoIn, rhoInValues);
     //eigen solve
-    eigenObject.solve(phiTotRhoIn, massMatrix, hamiltonianMatrix, massVector, constraintsNone, rhoInValues, eigenValues, eigenVectors, scfIter);
+    eigen.computeLocalHamiltonians(rhoInValues, poisson.phiTotRhoIn); chebyshevSolver();
     //fermi energy
     compute_fermienergy();
     //rhoOut
     compute_rhoOut();
     //phiTot with rhoOut
-    poisson.solve(phiTotRhoOut, residual, jacobian, constraintsZero, atoms, rhoOutValues);
+    poisson.solve(poisson.phiTotRhoOut, rhoOutValues);
     //energy
     compute_energy();
     pcout<<"SCF iteration: " << scfIter+1 << " complete\n";
     scfIter++;
-
-    //fill eigen spectrum bounds for chebyshev filter (bLow, a0)
-    a0=eigenValues[0]; bLow=*(--eigenValues.end());
   }
   computing_timer.exit_section("dft solve"); 
-  //
-  */
 }
 

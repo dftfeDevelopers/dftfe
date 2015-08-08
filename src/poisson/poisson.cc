@@ -51,15 +51,12 @@ void poissonClass::init(){
 
   //initialize vectors
   dftPtr->matrix_free_data.initialize_dof_vector (rhs);
+  rhs2.reinit (rhs);
   Ax.reinit (rhs);
   jacobianDiagonal.reinit (rhs);
   phiTotRhoIn.reinit (rhs);
   phiTotRhoOut.reinit (rhs);
   phiExt.reinit (rhs);
-  //compute elemental jacobians
-  computeLocalJacobians();
-  localJacobiansPtr=&localJacobians;
-
   //store constrianed DOF's
   for (types::global_dof_index i=0; i<rhs.size(); i++){
     if (rhs.locally_owned_elements().is_element(i)){
@@ -69,12 +66,17 @@ void poissonClass::init(){
       }
     }
   }
+
+  //compute elemental jacobians
+  computeLocalJacobians();
+  localJacobiansPtr=&localJacobians;
   computing_timer.exit_section("poissonClass setup"); 
 }
 
 //compute local jacobians
 void poissonClass::computeLocalJacobians(){
   computing_timer.enter_section("poissonClass jacobian assembly"); 
+  rhs2=0.0;
   jacobianDiagonal=0.0;
 
   //local data structures
@@ -83,6 +85,7 @@ void poissonClass::computeLocalJacobians(){
   const unsigned int dofs_per_cell = FE.dofs_per_cell;
   const unsigned int num_quad_points = quadrature.size();
   Vector<double>       elementalDiagonal (dofs_per_cell);
+  Vector<double>       elementalrhs (dofs_per_cell);
   std::vector<types::global_dof_index> local_dof_indices (dofs_per_cell);
   
   //parallel loop over all elements
@@ -91,7 +94,7 @@ void poissonClass::computeLocalJacobians(){
     if (cell->is_locally_owned()){
       //compute values for the current element
       fe_values.reinit (cell);
-      elementalDiagonal=0.0;
+      elementalDiagonal=0.0; elementalrhs=0.0;
       //local poissonClass operator
       for (unsigned int i=0; i<dofs_per_cell; ++i){
 	for (unsigned int j=0; j<dofs_per_cell; ++j){
@@ -111,13 +114,18 @@ void poissonClass::computeLocalJacobians(){
 	unsigned int rowID=local_dof_indices[i];
 	for (unsigned int j=0; j<dofs_per_cell; ++j){
 	  unsigned int columnID=local_dof_indices[j];
+	  if (values1byR.find(columnID)!=values1byR.end()){
+	    elementalrhs(i)+=values1byR.find(columnID)->second*localJacobians[cell->id()][i*dofs_per_cell+j];
+	  }
 	  if ((valuesZero.find(rowID)!= valuesZero.end()) || (valuesZero.find(columnID)!=valuesZero.end())){
 	    localJacobians[cell->id()][i*dofs_per_cell+j]=0.0;
 	  }
 	}
       }
+      constraintsNone.distribute_local_to_global(elementalrhs, local_dof_indices, rhs2);
     }
   }
+  rhs2.compress(VectorOperation::add);
   jacobianDiagonal.compress(VectorOperation::add);
   jacobianDiagonalValue=jacobianDiagonal.linfty_norm();
   //now store the jacobian inverse
@@ -176,6 +184,9 @@ void poissonClass::computeRHS(std::map<dealii::CellId,std::vector<double> >* rho
     rhs(it->first)=it->second*jacobianDiagonalValue;
   }
   rhs.update_ghost_values();
+  if (!rhoValues){
+    rhs.add(-1.0,rhs2);
+  }
   computing_timer.exit_section("poissonClass rhs assembly");
 }
 

@@ -41,9 +41,10 @@ private:
   vectorType rhs, Ax;
   vectorType jacobianDiagonal;
   vectorType phiTotRhoIn, phiTotRhoOut, phiExt;
+  vectorType rhs2;
   double jacobianDiagonalValue;
   double relaxation; //relaxation parameter for Jacobi Preconditioning
-
+  
   //parallel objects
   MPI_Comm mpi_communicator;
   const unsigned int n_mpi_processes;

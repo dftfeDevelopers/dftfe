@@ -82,10 +82,10 @@ void dftClass::rayleighRitz(std::vector<vectorType*>& X){
   //compute the eigen decomposition of Hbar
   int n=X.size(), lda=X.size(), info;
   int lwork = 1 + 6*n + 2*n*n, liwork = 3 + 5*n;
-  std::vector<double> eigenValuesH(n), work(lwork);
+  std::vector<double> work(lwork);
   std::vector<int> iwork(liwork,0);
   char jobz='V', uplo='U';
-  dsyevd_(&jobz, &uplo, &n, &eigen.XHXValue[0], &lda, &eigenValuesH[0], &work[0], &lwork, &iwork[0], &liwork, &info);
+  dsyevd_(&jobz, &uplo, &n, &eigen.XHXValue[0], &lda, &eigenValues[0], &work[0], &lwork, &iwork[0], &liwork, &info);
  
   //rotate the basis PSI=PSI*Q
   n=X[0]->local_size(); int m=X.size(); 
@@ -112,8 +112,8 @@ void dftClass::rayleighRitz(std::vector<vectorType*>& X){
   }
 
   //set a0 and bLow
-  a0=eigenValuesH[0]; 
-  bLow=eigenValuesH.back(); 
+  a0=eigenValues[0]; 
+  bLow=eigenValues.back(); 
   //
   computing_timer.exit_section("Chebyshev Rayleigh Ritz"); 
 }
