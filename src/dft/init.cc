@@ -55,7 +55,7 @@ void dftClass::initRho(){
   typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
   for (; cell!=endc; ++cell) {
     if (cell->is_locally_owned()){
-      (*rhoInValues)[cell->id()]=std::vector<double>(n_q_points*n_q_points);
+      (*rhoInValues)[cell->id()]=std::vector<double>(n_q_points);
       for (unsigned int q=0; q<n_q_points; ++q){
 	MappingQ<3> test(1); 
 	Point<3> quadPoint(test.transform_unit_to_real_cell(cell, fe_values.get_quadrature().point(q)));

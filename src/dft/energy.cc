@@ -2,7 +2,6 @@
 
 //compute energies
 void dftClass::compute_energy(){
-  /*
   QGauss<3>  quadrature(quadratureRule);
   FEValues<3> fe_values (FE, quadrature, update_values | update_gradients | update_JxW_values);
   const unsigned int   dofs_per_cell = FE.dofs_per_cell;
@@ -12,10 +11,6 @@ void dftClass::compute_energy(){
   std::vector<double> cellPhiExt(num_quad_points);
   
   // Loop through all cells.
-  Vector<double>  localPhiTotRhoIn(phiTotRhoIn);
-  Vector<double>  localPhiTotRhoOut(phiTotRhoOut);
-  Vector<double>  localPhiExt(phiExt);
-  //
   double bandEnergy=0.0;
   double partialOccupancy, temp;
   for (unsigned int i=0; i<numEigenValues; i++){
@@ -28,21 +23,20 @@ void dftClass::compute_energy(){
   
   //parallel loop over all elements
   typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
-  unsigned int cellID=0;
   for (; cell!=endc; ++cell) {
     if (cell->is_locally_owned()){
       // Compute values for current cell.
       fe_values.reinit (cell);
-      fe_values.get_function_values(localPhiTotRhoIn, cellPhiTotRhoIn);
-      fe_values.get_function_values(localPhiTotRhoOut, cellPhiTotRhoOut);
-      fe_values.get_function_values(localPhiExt, cellPhiExt);
+      fe_values.get_function_values(poisson.phiTotRhoIn, cellPhiTotRhoIn);
+      fe_values.get_function_values(poisson.phiTotRhoOut, cellPhiTotRhoOut);
+      fe_values.get_function_values(poisson.phiExt, cellPhiExt);
       //Get Exc
       std::vector<double> densityValueIn(num_quad_points), densityValueOut(num_quad_points);
       std::vector<double> exchangeEnergyVal(num_quad_points), corrEnergyVal(num_quad_points);
       std::vector<double> exchangePotentialVal(num_quad_points), corrPotentialVal(num_quad_points);
       for (unsigned int q_point=0; q_point<num_quad_points; ++q_point){
-	densityValueIn[q_point] = (*rhoInValues)(cellID, q_point);
-	densityValueOut[q_point] = (*rhoOutValues)(cellID, q_point);
+	densityValueIn[q_point] = (*rhoInValues)[cell->id()][q_point];
+	densityValueOut[q_point] = (*rhoOutValues)[cell->id()][q_point];
       }
       xc_lda_exc(&funcX,num_quad_points,&densityValueOut[0],&exchangeEnergyVal[0]);
       xc_lda_exc(&funcC,num_quad_points,&densityValueOut[0],&corrEnergyVal[0]);
@@ -54,12 +48,11 @@ void dftClass::compute_energy(){
 	//Vtot, Vext computet with rhoIn
 	double Vtot=cellPhiTotRhoOut[q_point];
 	double Vext=cellPhiExt[q_point];
-	potentialTimesRho+=Veff*(*rhoOutValues)(cellID, q_point)*fe_values.JxW (q_point);
-	exchangeEnergy+=(exchangeEnergyVal[q_point])*(*rhoOutValues)(cellID, q_point)*fe_values.JxW (q_point);
-	correlationEnergy+=(corrEnergyVal[q_point])*(*rhoOutValues)(cellID, q_point)*fe_values.JxW (q_point);
-	electrostaticEnergy+=0.5*(Vtot+Vext)*(*rhoOutValues)(cellID, q_point)*fe_values.JxW (q_point);
+	potentialTimesRho+=Veff*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW (q_point);
+	exchangeEnergy+=(exchangeEnergyVal[q_point])*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW (q_point);
+	correlationEnergy+=(corrEnergyVal[q_point])*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW (q_point);
+	electrostaticEnergy+=0.5*(Vtot+Vext)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW (q_point);
       }
-    cellID++;
     }
   } 
   double energy=-potentialTimesRho+exchangeEnergy+correlationEnergy+electrostaticEnergy;
@@ -77,12 +70,10 @@ void dftClass::compute_energy(){
    std::printf("Total energy:%30.20e \n", totalEnergy);
    std::printf("Band energy:%30.20e \nKinetic energy:%30.20e \nExchange energy:%30.20e \nCorrelation energy:%30.20e \nElectrostatic energy:%30.20e \nRepulsive energy:%30.20e \n", bandEnergy, totalkineticEnergy, totalexchangeEnergy, totalcorrelationEnergy, totalelectrostaticEnergy, repulsiveEnergy());
  }
-  */
 }
  
 //compute fermi energy
 void dftClass::compute_fermienergy(){
-  /*
   //initial guess for fe
   double fe;
   if (numElectrons%2==0)
@@ -123,12 +114,10 @@ void dftClass::compute_fermienergy(){
   //set Fermi energy
   fermiEnergy=fe;
   if (this_mpi_process == 0) std::printf("Fermi energy:%30.20e \n", fermiEnergy);
-  */
 }
 
 double dftClass::repulsiveEnergy(){
   double energy=0.0;
-  /*
   for (unsigned int n1=0; n1<atomLocations.size()[0]; n1++){
     for (unsigned int n2=n1+1; n2<atomLocations.size()[0]; n2++){
       double Z1=atomLocations[n1][0], Z2=atomLocations[n2][0];    
@@ -137,6 +126,5 @@ double dftClass::repulsiveEnergy(){
       energy+=(Z1*Z2)/atom1.distance(atom2);
     }
   }
-  */
   return energy;
 }

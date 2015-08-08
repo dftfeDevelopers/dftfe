@@ -92,6 +92,7 @@ double dftClass::mixing_anderson(){
   cell = dofHandler.begin_active();
   for (; cell!=endc; ++cell) {
     if (cell->is_locally_owned()){
+      (*rhoInValues)[cell->id()]=std::vector<double>(num_quad_points);
       fe_values.reinit (cell); 
       for (unsigned int q_point=0; q_point<num_quad_points; ++q_point){
 	//Compute (rhoIn-rhoOut)^2

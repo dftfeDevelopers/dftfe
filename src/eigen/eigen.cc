@@ -39,9 +39,7 @@ void eigenClass::init(){
 
   //compute mass vector
   dftPtr->matrix_free_data.initialize_dof_vector (massVector);
-  massVector=0.0;
   computeMassVector();
-  massVector.compress(dealii::VectorOperation::add);
   //XHX size
   XHXValue.resize(dftPtr->eigenVectors.size()*dftPtr->eigenVectors.size(),0.0);
   //HX
@@ -53,7 +51,7 @@ void eigenClass::init(){
 
 void eigenClass::computeMassVector(){
   computing_timer.enter_section("eigenClass Mass assembly"); 
-
+  massVector=0.0;
   //local data structures
   QGaussLobatto<3> quadratureM(quadratureRule);
   FEValues<3> fe_valuesM (FE, quadratureM, update_values | update_JxW_values);
@@ -79,6 +77,11 @@ void eigenClass::computeMassVector(){
       massVector.add(local_dof_indices, elementalMassVector);
     }
   }
+  massVector.compress(dealii::VectorOperation::add);
+  for (unsigned int i=0; i<massVector.size(); i++){
+    massVector(i)=1.0/std::sqrt(massVector(i));
+  }
+  massVector.update_ghost_values();
   computing_timer.exit_section("eigenClass Mass assembly");
 }
 
@@ -123,7 +126,7 @@ void eigenClass::computeLocalHamiltonians(std::map<dealii::CellId,std::vector<do
 								 (cellPhiTotal[q_point]+exchangePotentialVal[q_point]+corrPotentialVal[q_point]))*fe_valuesH.JxW (q_point);
 	  }
 	  //H'=M^(-0.5)*H*M^(-0.5)
-	  localHamiltonians[cell->id()][i*dofs_per_cell+j]*=1.0/std::sqrt(massVector(local_dof_indices[j])*massVector(local_dof_indices[i]));
+	  localHamiltonians[cell->id()][i*dofs_per_cell+j]*=massVector(local_dof_indices[j])*massVector(local_dof_indices[i]);
 	}
       }
     }
