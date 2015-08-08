@@ -49,7 +49,7 @@ public:
   //compute-time logger
   dealii::TimerOutput computing_timer;
   //mutex thread for managing multi-thread writing to XHXvalue
-  mutable dealii::Threads::ThreadMutex     assembler_lock;
+  mutable dealii::Threads::Mutex  assembler_lock;
 };
 
 #endif

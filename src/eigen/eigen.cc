@@ -227,7 +227,7 @@ void eigenClass::HX(const std::vector<vectorType*> &src, std::vector<vectorType*
 //XHX
 void eigenClass::XHX(const std::vector<vectorType*> &src){
   computing_timer.enter_section("eigenClass XHX");
-  for (std::vector<double>::iterator it=XHXValuePtr->begin(); it!=XHXValuePtr->end(); it++){
+  for (std::vector<double>::iterator it=XHXValue.begin(); it!=XHXValue.end(); it++){
     (*it)=0.0;  
   }
   dftPtr->matrix_free_data.cell_loop (&eigenClass::implementXHX, this, HXvalue, src);

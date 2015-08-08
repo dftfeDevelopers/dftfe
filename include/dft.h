@@ -82,13 +82,13 @@ class dftClass{
 
   //chebyshev filter variables and functions
   double bUp, bLow, a0;
+  vectorType vChebyshev, v0Chebyshev, fChebyshev;
+  std::vector<parallel::distributed::Vector<double>*> PSI, tempPSI;
   void chebyshevSolver();
   double upperBound();
-  vectorType vChebyshev, v0Chebyshev, fChebyshev;
-  
-  //void gramSchmidt(std::vector<vectorType*>& X);
-  //void chebyshevFilter(std::vector<vectorType>& Y, const std::vector<vectorType>& X, double m, double a, double b, double a0);
-  
+  void gramSchmidt(std::vector<vectorType*>& X);
+  void chebyshevFilter(std::vector<vectorType*>& X, unsigned int m, double a, double b, double a0);  
+  void rayleighRitz(std::vector<vectorType*>& X);
 };
 
 #endif

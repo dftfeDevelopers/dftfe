@@ -125,8 +125,10 @@ void dftClass::init(){
   constraintsNone.close();
   matrix_free_data.reinit (dofHandler, constraintsNone, quadrature, additional_data);
   //initialize eigen vectors
-  for (std::vector<parallel::distributed::Vector<double>*>::iterator it=eigenVectors.begin(); it!=eigenVectors.end(); ++it){
-    matrix_free_data.initialize_dof_vector(**it);
+  for (unsigned int i=0; i<eigenVectors.size(); ++i){  
+    matrix_free_data.initialize_dof_vector(*eigenVectors[i]);
+    matrix_free_data.initialize_dof_vector(*PSI[i]);
+    matrix_free_data.initialize_dof_vector(*tempPSI[i]);
   } 
   matrix_free_data.initialize_dof_vector(vChebyshev);
   matrix_free_data.initialize_dof_vector(v0Chebyshev);

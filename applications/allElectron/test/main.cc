@@ -6,6 +6,7 @@ unsigned int numElectrons=10;
 unsigned int numEigenValues=numElectrons/2;
 unsigned int quadratureRule=5;
 double lowerEndWantedSpectrum=-10.0;
+unsigned int chebyshevOrder=1000;
 
 //solver paramteters 
 unsigned int maxLinearSolverIterations=5000;
