@@ -6,6 +6,7 @@
 #include "../eigen/eigen.cc"
 #include "mesh.cc"
 #include "init.cc"
+#include "psiInitialGuess.cc"
 #include "energy.cc"
 #include "charge.cc"
 #include "density.cc"

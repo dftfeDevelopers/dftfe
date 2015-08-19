@@ -4,10 +4,10 @@
 #include "poisson.h"
 #include "eigen.h"
 //include alglib
-//#include "/nfs/mcfs_home/rudraa/Public/alglib/cpp/src/interpolation.h"
-//#include "/nfs/mcfs_home/rudraa/Public/libxc/libxc-2.2.0/installDir/include/xc.h"
-#include "/opt/software/numerics/alglib/cpp/src/interpolation.h"
-#include "/opt/software/numerics/libxc-2.2.2/installDir/include/xc.h"
+#include "/nfs/mcfs_home/rudraa/Public/alglib/cpp/src/interpolation.h"
+#include "/nfs/mcfs_home/rudraa/Public/libxc/libxc-2.2.0/installDir/include/xc.h"
+//#include "/opt/software/numerics/alglib/cpp/src/interpolation.h"
+//#include "/opt/software/numerics/libxc-2.2.2/installDir/include/xc.h"
 
 //Initialize Namespace
 using namespace dealii;
@@ -44,7 +44,9 @@ class dftClass{
   void compute_fermienergy();
   double repulsiveEnergy();
   void compute_rhoOut();
-  
+  void readPSIRadialValues(std::vector<std::vector<std::vector<double> > >& singleAtomPSI);
+  void readPSI();
+
   //FE data structres
   parallel::distributed::Triangulation<3> triangulation;
   FE_Q<3>            FE;
