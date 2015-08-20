@@ -3,7 +3,7 @@
 unsigned int FEOrder=1;
 unsigned int n_refinement_steps=0;
 unsigned int numElectrons=10;
-unsigned int numEigenValues=numElectrons/2;
+unsigned int numEigenValues=numElectrons/2+4;
 unsigned int quadratureRule=5;
 double lowerEndWantedSpectrum=-10.0;
 unsigned int chebyshevOrder=1000;

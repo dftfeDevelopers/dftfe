@@ -1,9 +1,6 @@
 //source file for locating core atom nodes
 
 void dftClass::locateAtomCoreNodes(){ 
-  QGauss<3>  quadrature_formula(quadratureRule);
-  FEValues<3> fe_values (FE, quadrature_formula, update_values);
-  //
   unsigned int vertices_per_cell=GeometryInfo<3>::vertices_per_cell;
   DoFHandler<3>::active_cell_iterator
     cell = dofHandler.begin_active(),
@@ -16,7 +13,6 @@ void dftClass::locateAtomCoreNodes(){
   //element loop
   for (; cell!=endc; ++cell) {
     if (cell->is_locally_owned()){
-      fe_values.reinit (cell);
       for (unsigned int i=0; i<vertices_per_cell; ++i){
 	unsigned int nodeID=cell->vertex_dof_index(i,0);
 	Point<3> feNodeGlobalCoord = cell->vertex(i);
