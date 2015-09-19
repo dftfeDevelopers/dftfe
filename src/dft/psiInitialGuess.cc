@@ -17,6 +17,7 @@ void dftClass::readPSIRadialValues(std::vector<std::vector<std::vector<double> >
     yData[irow] = singleAtomPSI[0][irow][1];
   }
   outerMostPointCarbon = xData[numRows-1];
+  pcout << "outerMostPointCarbon: " << outerMostPointCarbon << std::endl;
   alglib::real_1d_array x,yn1l0;
   x.setcontent(numRows,xData);
   yn1l0.setcontent(numRows,yData);
@@ -99,6 +100,7 @@ void dftClass::readPSIRadialValues(std::vector<std::vector<std::vector<double> >
 	  double r = sqrt(x*x + y*y + z*z);
 	  double theta = acos(z/r);
 	  double phi = atan2(y,x);
+	  pcout << "r:" << r << " t:" << theta << " p:" << phi << std::endl;
 	  if (r==0){theta=0; phi=0;}
 	  double R=0;
 	  if (atom==0){
@@ -129,6 +131,20 @@ void dftClass::readPSIRadialValues(std::vector<std::vector<std::vector<double> >
 	}
       }
     }
+  }
+  //update ghosts for eigenVectors
+  for (unsigned int i=0; i<eigenVectors.size(); ++i){  
+    eigenVectors[i]->update_ghost_values();
+  }
+  pcout << "before multiplying with M^0,5\n";
+  for (unsigned int i=0; i<eigenVectors.size(); i++){
+    pcout << i << " norm: " << eigenVectors[i]->l2_norm() << "  linf norm: " << eigenVectors[i]->linfty_norm()<< std::endl;
+  }
+  //multiply by M^0.5
+  for (unsigned int i=0; i<eigenVectors.size(); ++i){
+    for (unsigned int j=0; j<eigenVectors[i]->size(); j++){
+      (*eigenVectors[i])[j]/=eigen.massVector[j];
+    }  
   }
   //update ghosts for eigenVectors
   for (unsigned int i=0; i<eigenVectors.size(); ++i){  

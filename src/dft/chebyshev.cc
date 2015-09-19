@@ -2,13 +2,21 @@
 void dftClass::chebyshevSolver(){
   //compute upper bound of spectrum
   bUp=upperBound();
-  pcout << "upper bound: " << bUp << std::endl;
+  pcout << "bUp: " << bUp << std::endl;
+  pcout << "bLow: " << bLow << std::endl;
+  pcout << "a0: " << a0 << std::endl;
   //filter
+  for (unsigned int i=0; i<eigenVectors.size(); i++){
+    pcout << i << " norm: " << eigenVectors[i]->l2_norm() << "  linf norm: " << eigenVectors[i]->linfty_norm()<< std::endl;
+  }
   chebyshevFilter(eigenVectors, chebyshevOrder, bLow, bUp, a0);
+  pcout << "after  eigen1 norm: " << eigenVectors[1]->l2_norm() << " linf norm: " << eigenVectors[1] ->linfty_norm()<< std::endl;
   //Gram Schmidt orthonormalization
   gramSchmidt(eigenVectors);
+  pcout << "afterGS  eigen1 norm: " << eigenVectors[1]->l2_norm() << " linf norm: " << eigenVectors[1] ->linfty_norm()<< std::endl;
   //Rayleigh Ritz step
   rayleighRitz(eigenVectors);
+  pcout << "afterRR  eigen1 norm: " << eigenVectors[1]->l2_norm() << " linf norm: " << eigenVectors[1] ->linfty_norm()<< std::endl;
 }
 
 double dftClass::upperBound(){
@@ -18,7 +26,7 @@ double dftClass::upperBound(){
   vChebyshev=0.0;
   std::srand(this_mpi_process);
   for (unsigned int i=0; i<vChebyshev.local_size(); i++){
-    vChebyshev.local_element(i)=(double(std::rand())/RAND_MAX);
+    vChebyshev.local_element(i)=1.0; //(double(std::rand())/RAND_MAX);
   }
   vChebyshev.update_ghost_values();
   vChebyshev/=vChebyshev.l2_norm();

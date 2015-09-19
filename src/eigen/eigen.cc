@@ -38,8 +38,8 @@ void eigenClass::init(){
   constraintsNone.close();
 
   //compute mass vector
-  dftPtr->matrix_free_data.initialize_dof_vector (massVector);
   computeMassVector();
+
   //XHX size
   XHXValue.resize(dftPtr->eigenVectors.size()*dftPtr->eigenVectors.size(),0.0);
   //HX
@@ -51,6 +51,7 @@ void eigenClass::init(){
 
 void eigenClass::computeMassVector(){
   computing_timer.enter_section("eigenClass Mass assembly"); 
+  dftPtr->matrix_free_data.initialize_dof_vector (massVector);
   massVector=0.0;
   //local data structures
   QGaussLobatto<3> quadratureM(quadratureRule);

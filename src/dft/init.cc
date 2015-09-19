@@ -137,14 +137,14 @@ void dftClass::init(){
   //initialize density and locate atome core nodes
   initRho();
   locateAtomCoreNodes();
-
-  //initialize PSI
-  pcout << "reading initial guess for PSI\n";
-  readPSI();
   //
   computing_timer.exit_section("dftClass setup"); 
 
   //initialize poisson and eigen problem related objects
   poisson.init();
   eigen.init();
+
+  //initialize PSI
+  pcout << "reading initial guess for PSI\n";
+  readPSI();
 }
