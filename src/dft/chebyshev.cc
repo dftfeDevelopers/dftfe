@@ -2,10 +2,11 @@
 void dftClass::chebyshevSolver(){
   //compute upper bound of spectrum
   bUp=upperBound();
+  pcout << "upper bound: " << bUp << std::endl;
   //filter
   chebyshevFilter(eigenVectors, chebyshevOrder, bLow, bUp, a0);
   //Gram Schmidt orthonormalization
-  //gramSchmidt(eigenVectors);
+  gramSchmidt(eigenVectors);
   //Rayleigh Ritz step
   rayleighRitz(eigenVectors);
 }
@@ -65,9 +66,14 @@ double dftClass::upperBound(){
 void dftClass::gramSchmidt(std::vector<vectorType*>& X){
   computing_timer.enter_section("Chebyshev GS orthonormalization"); 
   for (std::vector<vectorType*>::iterator x=X.begin(); x<X.end(); ++x){
-    for (std::vector<vectorType*>::iterator q=X.begin(); q<x; ++q){
-      double rii=(**q)*(**x);
-      (**x).add(-rii,**q);
+    std::vector<double> r(x-X.begin(),0.0);
+    unsigned int i=0;
+    for (std::vector<vectorType*>::iterator q=X.begin(); q<x; ++q, ++i){
+      r[i]=(**q)*(**x);
+    }
+    i=0;
+    for (std::vector<vectorType*>::iterator q=X.begin(); q<x; ++q, ++i){
+      (**x).add(-r[i],**q);
     }
     (**x)/=(**x).l2_norm();
   }
@@ -86,7 +92,12 @@ void dftClass::rayleighRitz(std::vector<vectorType*>& X){
   std::vector<int> iwork(liwork,0);
   char jobz='V', uplo='U';
   dsyevd_(&jobz, &uplo, &n, &eigen.XHXValue[0], &lda, &eigenValues[0], &work[0], &lwork, &iwork[0], &liwork, &info);
- 
+
+  //print eigen values
+  for (unsigned int i=0; i<n; i++){
+    pcout << "eigen value " << i << ":" << eigenValues[i] << std::endl; 
+  }
+
   //rotate the basis PSI=PSI*Q
   n=X[0]->local_size(); int m=X.size(); 
   std::vector<double> Xbar(n*m), Xlocal(n*m); //Xbar=Xlocal*Q
