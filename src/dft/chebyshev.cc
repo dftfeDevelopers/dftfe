@@ -2,7 +2,9 @@
 void dftClass::chebyshevSolver(){
   //compute upper bound of spectrum
   bUp=upperBound();
-  pcout << "bUp: " << bUp << std::endl;
+  char buffer[100];
+  sprintf(buffer, "bUp: %18.10e\n", bUp);
+  pcout << buffer << std::endl;
   pcout << "bLow: " << bLow << std::endl;
   pcout << "a0: " << a0 << std::endl;
   //filter
@@ -10,7 +12,9 @@ void dftClass::chebyshevSolver(){
     pcout << i << " norm: " << eigenVectors[i]->l2_norm() << "  linf norm: " << eigenVectors[i]->linfty_norm()<< std::endl;
   }
   chebyshevFilter(eigenVectors, chebyshevOrder, bLow, bUp, a0);
-  pcout << "after  eigen1 norm: " << eigenVectors[1]->l2_norm() << " linf norm: " << eigenVectors[1] ->linfty_norm()<< std::endl;
+  for (unsigned int i=0; i<eigenVectors.size(); i++){
+    pcout << i << " norm: " << eigenVectors[i]->l2_norm() << "  linf norm: " << eigenVectors[i]->linfty_norm()<< std::endl;
+  }
   //Gram Schmidt orthonormalization
   gramSchmidt(eigenVectors);
   pcout << "afterGS  eigen1 norm: " << eigenVectors[1]->l2_norm() << " linf norm: " << eigenVectors[1] ->linfty_norm()<< std::endl;
@@ -52,15 +56,6 @@ double dftClass::upperBound(){
     index+=lanczosIterations;
     T[index]=alpha;
   }
-  /*
-  //print T to check
-  pcout << "\n";
-  for (unsigned int j=0; j<T.size(); j++){
-    pcout << " " << T[j];
-    if ((j>0) && ((j+1) % 10==0)) pcout << "\n";
-  }
-  pcout << "\n";
-  */
   //eigen decomposition to find max eigen value of T matrix
   std::vector<double> eigenValuesT(lanczosIterations), work(2*lanczosIterations+1);
   std::vector<int> iwork(10);
@@ -149,18 +144,17 @@ void dftClass::chebyshevFilter(std::vector<vectorType*>& X, unsigned int m, doub
   //Y=alpha1*(HX+alpha2*X)
   double alpha1=sigma1/e, alpha2=-c;
   eigen.HX(X, PSI);
-  for (std::vector<vectorType*>::iterator y=PSI.begin(), x=X.begin(); y<PSI.end() && x<X.end(); ++y, ++x){  
+  for (std::vector<vectorType*>::iterator y=PSI.begin(), x=X.begin(); y<PSI.end(); ++y, ++x){  
     (**y).add(alpha2,**x);
     (**y)*=alpha1;
   } 
-  
   //loop over polynomial order
-  for (unsigned int i=2; i<m; i++){
+  for (unsigned int i=2; i<m+1; i++){
     sigma2=1.0/(gamma-sigma);
     //Ynew=alpha1*(HY-cY)+alpha2*X
     alpha1=2.0*sigma2/e, alpha2=-(sigma*sigma2);
     eigen.HX(PSI, tempPSI);
-    for (std::vector<vectorType*>::iterator ynew=tempPSI.begin(), y=PSI.begin(), x=X.begin(); ynew<tempPSI.end() && y<PSI.end() && x<X.end(); ++ynew, ++y, ++x){  
+    for (std::vector<vectorType*>::iterator ynew=tempPSI.begin(), y=PSI.begin(), x=X.begin(); ynew<tempPSI.end(); ++ynew, ++y, ++x){  
       (**ynew).add(-c,**y);
       (**ynew)*=alpha1;
       (**ynew).add(alpha2,**x);
@@ -171,10 +165,10 @@ void dftClass::chebyshevFilter(std::vector<vectorType*>& X, unsigned int m, doub
   }
   
   //copy back PSI to eigenVectors
-  for (std::vector<vectorType*>::iterator y=PSI.begin(), x=X.begin(); y<PSI.end() && x<X.end(); ++y, ++x){  
-    **x==**y;
+  for (std::vector<vectorType*>::iterator y=PSI.begin(), x=X.begin(); y<PSI.end(); ++y, ++x){  
+    **x=**y;
   }   
   computing_timer.exit_section("Chebyshev filtering"); 
 }
-
+ 
 

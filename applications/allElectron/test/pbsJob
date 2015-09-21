@@ -1,0 +1,16 @@
+#!/bin/sh
+#PBS -A prismsproject_fluxoe
+#PBS -N DFT
+#PBS -l nodes=1:ppn=16,walltime=20:00:00,pmem=3800mb,qos=flux
+#PBS -q fluxoe
+#PBS -m abe
+#PBS -V
+#PBS -M rudraa@umich.edu
+echo "I ran on:"
+module load mkl
+export PETSC_DIR=/nfs/mcfs_home/rudraa/Public/petsc/petsc-3.6.0                                                                                                    export PETSC_ARCH=shared-optimized                                                                                                                                 export TRILINOS_DIR=/nfs/mcfs_home/rudraa/Public/trilinos/ver11.12.1/install                                                                                       export PETIGA_DIR=/nfs/mcfs_home/rudraa/Public/petiga/PetIGA                                                                                                       export LD_LIBRARY_PATH=$PETIGA_DIR/$PETSC_ARCH/lib:$PETSC_DIR/$PETSC_ARCH/lib:$TRILINOS_DIR/lib:$LD_LIBRARY_PATH                                                   export DEAL_II_DIR=/nfs/mcfs_home/rudraa/Public/deal.II/install/ver8.2.1
+# Create a local directory to run and copy your files to local.
+# Let PBS handle your output
+cd /nfs/mcfs_home/rudraa/Private/dft/applications/allElectron/test
+
+./main

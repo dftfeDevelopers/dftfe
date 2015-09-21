@@ -22,6 +22,7 @@ double kb = 3.166811429e-06;
 //dft header
 #include "../../../src/dft/dft.cc"
 
+
 //Atom locations
 void getAtomicLocations(dealii::Table<2,double>& atoms, std::map<unsigned int, std::string>& initialGuessFiles){
   atoms.reinit(5,4);

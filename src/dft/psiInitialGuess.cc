@@ -17,7 +17,7 @@ void dftClass::readPSIRadialValues(std::vector<std::vector<std::vector<double> >
     yData[irow] = singleAtomPSI[0][irow][1];
   }
   outerMostPointCarbon = xData[numRows-1];
-  pcout << "outerMostPointCarbon: " << outerMostPointCarbon << std::endl;
+ 
   alglib::real_1d_array x,yn1l0;
   x.setcontent(numRows,xData);
   yn1l0.setcontent(numRows,yData);
@@ -78,7 +78,11 @@ void dftClass::readPSIRadialValues(std::vector<std::vector<std::vector<double> >
 			     lEqualsZeroSplineHydrogen);
 
   //loop over nodes to set PSI initial guess
-  unsigned int vertices_per_cell=GeometryInfo<3>::vertices_per_cell;
+  unsigned int dofs_per_cell = matrix_free_data.get_dofs_per_cell();
+  //get support points
+  std::map<types::global_dof_index, Point<3> > support_points;
+  MappingQ<3> mapQ(1);
+  DoFTools::map_dofs_to_support_points(mapQ, dofHandler, support_points); 
   DoFHandler<3>::active_cell_iterator
     cell = dofHandler.begin_active(),
     endc = dofHandler.end();
@@ -86,10 +90,12 @@ void dftClass::readPSIRadialValues(std::vector<std::vector<std::vector<double> >
   for (; cell!=endc; ++cell) {
     if (cell->is_locally_owned()){
       //node loop
-      for (unsigned int i=0; i<vertices_per_cell; ++i){
-	unsigned int nodeID=cell->vertex_dof_index(i,0);
-	if (!eigenVectors[0]->in_local_range(nodeID)) continue;
-	Point<3> node = cell->vertex(i);
+      std::vector<types::global_dof_index> dofs_vector(dofs_per_cell);
+      cell->get_dof_indices(dofs_vector);
+      for (unsigned int i=0; i<dofs_per_cell; ++i){
+	unsigned int dofID=dofs_vector[i];
+	if (!eigenVectors[0]->in_local_range(dofID)) {continue;}
+	Point<3> node = support_points[dofID];
 	for(unsigned int atom=0; atom<atomLocations.size()[0]; atom++){
 	  Point<3> atomCoord(atomLocations(atom,1),atomLocations(atom,2),atomLocations(atom,3));
 	  //
@@ -100,38 +106,43 @@ void dftClass::readPSIRadialValues(std::vector<std::vector<std::vector<double> >
 	  double r = sqrt(x*x + y*y + z*z);
 	  double theta = acos(z/r);
 	  double phi = atan2(y,x);
-	  pcout << "r:" << r << " t:" << theta << " p:" << phi << std::endl;
+	  //pcout << "r:" << r << " t:" << theta << " p:" << phi << std::endl;
 	  if (r==0){theta=0; phi=0;}
-	  double R=0;
+	  double R;
 	  if (atom==0){
+	    R=0.0;
 	    //Carbon
-	    double *n1s,*n2s,*n2px,*n2py,*n2pz;
 	    if (r<=outerMostPointCarbon) R = alglib::spline1dcalc(nEqualOnelEqualsZeroSplineCarbon,r);
 	    //1s
-	    (*eigenVectors[0])[nodeID] =  R*boost::math::spherical_harmonic_r(0,0,theta,phi);
+	    (*eigenVectors[0])[dofID] =  R*boost::math::spherical_harmonic_r(0,0,theta,phi);
+	    /*	    if (dofID==0){
+	      pcout << " R:" <<  alglib::spline1dcalc(nEqualOnelEqualsZeroSplineCarbon,r) << std::endl;
+	      pcout << " spherical:" <<  boost::math::spherical_harmonic_r(0,0,theta,phi) << std::endl;
+	      pcout << " psi:" <<  R*boost::math::spherical_harmonic_r(0,0,theta,phi) << std::endl;
+	      }*/
 	    //2s
 	    if (r<=outerMostPointCarbon) R = alglib::spline1dcalc(nEqualTwolEqualsZeroSplineCarbon,r);
-	    (*eigenVectors[1])[nodeID] =  R*boost::math::spherical_harmonic_r(0,0,theta,phi);
+	    (*eigenVectors[1])[dofID] =  R*boost::math::spherical_harmonic_r(0,0,theta,phi);
 	    //2px
 	    if (r<=outerMostPointCarbon) R = alglib::spline1dcalc(nEqualTwolEqualsOneSplineCarbon,r);
-	    (*eigenVectors[2])[nodeID] = R*sqrt(2.0)*boost::math::spherical_harmonic_i(1,1,theta,phi);
+	    (*eigenVectors[2])[dofID] = R*sqrt(2.0)*boost::math::spherical_harmonic_i(1,1,theta,phi);
 	    //2py
-	    (*eigenVectors[3])[nodeID] = R*boost::math::spherical_harmonic_r(1,0,theta,phi);
+	    (*eigenVectors[3])[dofID] = R*boost::math::spherical_harmonic_r(1,0,theta,phi);
 	    //2pz
-	    (*eigenVectors[4])[nodeID] = R*sqrt(2.0)*boost::math::spherical_harmonic_r(1,1,theta,phi);
+	    (*eigenVectors[4])[dofID] = R*sqrt(2.0)*boost::math::spherical_harmonic_r(1,1,theta,phi);
 	  }
 	  else{
+	    R=0.0;
 	    //Hydrogen
-	    double *n1sH;
-	    R=0;
 	    if (r<=outerMostPointHydrogen) R = alglib::spline1dcalc(lEqualsZeroSplineHydrogen,r);
 	    //1s
-	    (*eigenVectors[4+atom])[nodeID] = R*boost::math::spherical_harmonic_r(0,0,theta,phi);
+	    (*eigenVectors[4+atom])[dofID] = R*boost::math::spherical_harmonic_r(0,0,theta,phi);
 	  }
 	}
       }
     }
   }
+
   //update ghosts for eigenVectors
   for (unsigned int i=0; i<eigenVectors.size(); ++i){  
     eigenVectors[i]->update_ghost_values();

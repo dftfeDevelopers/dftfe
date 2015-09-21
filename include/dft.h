@@ -1,5 +1,9 @@
 #ifndef dft_H_
 #define dft_H_
+#include <iostream>
+#include <iomanip> 
+#include <numeric>
+#include <sstream> 
 #include "headers.h"
 #include "poisson.h"
 #include "eigen.h"
@@ -8,6 +12,8 @@
 #include "/nfs/mcfs_home/rudraa/Public/libxc/libxc-2.2.0/installDir/include/xc.h"
 //#include "/opt/software/numerics/alglib/cpp/src/interpolation.h"
 //#include "/opt/software/numerics/libxc-2.2.2/installDir/include/xc.h"
+
+//std::cout << std::setprecision(18) << std::scientific;
 
 //Initialize Namespace
 using namespace dealii;
