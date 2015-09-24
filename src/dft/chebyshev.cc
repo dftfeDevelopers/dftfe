@@ -4,23 +4,23 @@ void dftClass::chebyshevSolver(){
   bUp=upperBound();
   char buffer[100];
   sprintf(buffer, "bUp: %18.10e\n", bUp);
-  pcout << buffer << std::endl;
+  pcout << buffer;
   pcout << "bLow: " << bLow << std::endl;
   pcout << "a0: " << a0 << std::endl;
   //filter
   for (unsigned int i=0; i<eigenVectors.size(); i++){
-    pcout << i << " norm: " << eigenVectors[i]->l2_norm() << "  linf norm: " << eigenVectors[i]->linfty_norm()<< std::endl;
+    sprintf(buffer, "%2u l2: %18.10e     linf: %18.10e \n", i, eigenVectors[i]->l2_norm(), eigenVectors[i]->linfty_norm());
+    pcout << buffer; 
   }
   chebyshevFilter(eigenVectors, chebyshevOrder, bLow, bUp, a0);
   for (unsigned int i=0; i<eigenVectors.size(); i++){
-    pcout << i << " norm: " << eigenVectors[i]->l2_norm() << "  linf norm: " << eigenVectors[i]->linfty_norm()<< std::endl;
+    sprintf(buffer, "%2u l2: %18.10e     linf: %18.10e \n", i, eigenVectors[i]->l2_norm(), eigenVectors[i]->linfty_norm());
+    pcout << buffer; 
   }
   //Gram Schmidt orthonormalization
   gramSchmidt(eigenVectors);
-  pcout << "afterGS  eigen1 norm: " << eigenVectors[1]->l2_norm() << " linf norm: " << eigenVectors[1] ->linfty_norm()<< std::endl;
   //Rayleigh Ritz step
   rayleighRitz(eigenVectors);
-  pcout << "afterRR  eigen1 norm: " << eigenVectors[1]->l2_norm() << " linf norm: " << eigenVectors[1] ->linfty_norm()<< std::endl;
 }
 
 double dftClass::upperBound(){
@@ -97,8 +97,10 @@ void dftClass::rayleighRitz(std::vector<vectorType*>& X){
   dsyevd_(&jobz, &uplo, &n, &eigen.XHXValue[0], &lda, &eigenValues[0], &work[0], &lwork, &iwork[0], &liwork, &info);
 
   //print eigen values
+  char buffer[100];
   for (unsigned int i=0; i<n; i++){
-    pcout << "eigen value " << i << ":" << eigenValues[i] << std::endl; 
+    sprintf(buffer, "eigen value %2u: %18.10e\n", i, eigenValues[i]);
+    pcout << buffer;
   }
 
   //rotate the basis PSI=PSI*Q

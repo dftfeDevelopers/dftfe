@@ -83,6 +83,8 @@ void eigenClass::computeMassVector(){
     massVector(i)=1.0/std::sqrt(massVector(i));
   }
   massVector.update_ghost_values();
+  char buffer[100];
+  sprintf(buffer, "massVector norm: %18.10e \n", massVector.l2_norm());
   computing_timer.exit_section("eigenClass Mass assembly");
 }
 
@@ -122,8 +124,8 @@ void eigenClass::computeLocalHamiltonians(std::map<dealii::CellId,std::vector<do
 	  for (unsigned int q_point=0; q_point<num_quad_points; ++q_point){
 	    //storing local Hamiltonian in Fortran column major format to help Lapack functions
 	    localHamiltonians[cell->id()][i*dofs_per_cell+j] += (0.5*fe_valuesH.shape_grad (j, q_point)*fe_valuesH.shape_grad (i, q_point)+
-					 fe_valuesH.shape_value(j, q_point)*
-					 fe_valuesH.shape_value(i, q_point)*
+								 fe_valuesH.shape_value(j, q_point)*
+								 fe_valuesH.shape_value(i, q_point)*
 								 (cellPhiTotal[q_point]+exchangePotentialVal[q_point]+corrPotentialVal[q_point]))*fe_valuesH.JxW (q_point);
 	  }
 	  //H'=M^(-0.5)*H*M^(-0.5)
@@ -166,7 +168,7 @@ void eigenClass::implementHX (const dealii::MatrixFree<3,double>  &data,
       std::vector<double>::iterator iter=y.begin();
       for (std::vector<vectorType*>::iterator it=dst.begin(); it!=dst.end(); it++){
 	constraintsNone.distribute_local_to_global(iter, iter+dofs_per_cell,local_dof_indices.begin(), **it);
-	iter+=dofs_per_cell*(it-dst.begin());
+	iter+=dofs_per_cell;
       }
     }
   }

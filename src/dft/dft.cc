@@ -57,7 +57,7 @@ void dftClass::run ()
   //Begin SCF iteration
   unsigned int scfIter=0;
   double norm=1.0;
-  while ((norm>1.0e-13) && (scfIter<11)){
+  while ((norm>1.0e-13) && (scfIter<30)){
     if(this_mpi_process==0) printf("\n\nBegin SCF Iteration:%u\n", scfIter+1);
     //Mixing scheme
     if (scfIter>0){

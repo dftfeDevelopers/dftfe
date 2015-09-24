@@ -74,7 +74,10 @@ void dftClass::initRho(){
   }
   //Normalize rho
   double charge=totalCharge();
-  pcout << "initial charge: " << charge << std::endl;
+  char buffer[100];
+  sprintf(buffer, "initial total charge: %18.10e \n", charge);
+  pcout << buffer;
+  /*
   for (; cell!=endc; ++cell) {
     if (cell->is_locally_owned()){
       for (unsigned int q=0; q<n_q_points; ++q){
@@ -82,7 +85,7 @@ void dftClass::initRho(){
       }
     }
   }
-  
+  */
   //Initialize libxc
   int exceptParamX, exceptParamC;
   exceptParamX = xc_func_init(&funcX,XC_LDA_X,XC_UNPOLARIZED);
