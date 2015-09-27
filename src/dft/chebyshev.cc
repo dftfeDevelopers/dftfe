@@ -13,7 +13,9 @@ void dftClass::chebyshevSolver(){
     sprintf(buffer, "%2u l2: %18.10e     linf: %18.10e \n", i, eigenVectors[i]->l2_norm(), eigenVectors[i]->linfty_norm());
     pcout << buffer; 
   }
+  double t=MPI_Wtime();
   chebyshevFilter(eigenVectors, chebyshevOrder, bLow, bUp, a0);
+  pcout << "Total time for only chebyshev filter: " << (MPI_Wtime()-t)/60.0 << "mins\n";
   for (unsigned int i=0; i<eigenVectors.size(); i++){
     sprintf(buffer, "%2u l2: %18.10e     linf: %18.10e \n", i, eigenVectors[i]->l2_norm(), eigenVectors[i]->linfty_norm());
     pcout << buffer; 
@@ -22,6 +24,7 @@ void dftClass::chebyshevSolver(){
   gramSchmidt(eigenVectors);
   //Rayleigh Ritz step
   rayleighRitz(eigenVectors);
+  pcout << "Total time for chebyshev filter: " << (MPI_Wtime()-t)/60.0 << "mins\n";
   computing_timer.exit_section("Chebyshev solve"); 
 }
 
