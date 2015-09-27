@@ -1,5 +1,6 @@
 //chebyshev solver
 void dftClass::chebyshevSolver(){
+  computing_timer.enter_section("Chebyshev solve"); 
   //compute upper bound of spectrum
   bUp=upperBound();
   char buffer[100];
@@ -21,9 +22,11 @@ void dftClass::chebyshevSolver(){
   gramSchmidt(eigenVectors);
   //Rayleigh Ritz step
   rayleighRitz(eigenVectors);
+  computing_timer.exit_section("Chebyshev solve"); 
 }
 
 double dftClass::upperBound(){
+  computing_timer.enter_section("Chebyshev upper bound"); 
   unsigned int lanczosIterations=10;
   double alpha, beta;
   //generate random vector v
@@ -62,6 +65,9 @@ double dftClass::upperBound(){
   char jobz='N', uplo='L';
   int n=lanczosIterations, lda=lanczosIterations, lwork=2*lanczosIterations+1, liwork=10, info;
   dsyevd_(&jobz, &uplo, &n, &T[0], &lda, &eigenValuesT[0], &work[0], &lwork, &iwork[0], &liwork, &info);
+
+  //
+  computing_timer.exit_section("Chebyshev upper bound"); 
   return (eigenValuesT[lanczosIterations-1]+fChebyshev.l2_norm());
 }
 

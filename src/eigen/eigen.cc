@@ -79,8 +79,8 @@ void eigenClass::computeMassVector(){
     }
   }
   massVector.compress(dealii::VectorOperation::add);
-  for (unsigned int i=0; i<massVector.size(); i++){
-    massVector(i)=1.0/std::sqrt(massVector(i));
+  for (unsigned int i=0; i<massVector.local_size(); i++){
+    massVector.local_element(i)=1.0/std::sqrt(massVector.local_element(i));
   }
   massVector.update_ghost_values();
   char buffer[100];

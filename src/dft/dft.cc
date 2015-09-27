@@ -57,7 +57,7 @@ void dftClass::run ()
   //Begin SCF iteration
   unsigned int scfIter=0;
   double norm=1.0;
-  while ((norm>1.0e-13) && (scfIter<30)){
+  while ((norm>1.0e-13) && (scfIter<numSCFIterations)){
     if(this_mpi_process==0) printf("\n\nBegin SCF Iteration:%u\n", scfIter+1);
     //Mixing scheme
     if (scfIter>0){
@@ -68,7 +68,8 @@ void dftClass::run ()
     //phiTot with rhoIn
     poisson.solve(poisson.phiTotRhoIn, rhoInValues);
     //eigen solve
-    eigen.computeLocalHamiltonians(rhoInValues, poisson.phiTotRhoIn); chebyshevSolver();
+    eigen.computeLocalHamiltonians(rhoInValues, poisson.phiTotRhoIn); 
+    chebyshevSolver();
     //fermi energy
     compute_fermienergy();
     //rhoOut

@@ -129,9 +129,10 @@ void poissonClass::computeLocalJacobians(){
   jacobianDiagonal.compress(VectorOperation::add);
   jacobianDiagonalValue=jacobianDiagonal.linfty_norm();
   //now store the jacobian inverse
-  for (unsigned int i=0; i<jacobianDiagonal.size(); i++){
-    jacobianDiagonal(i)=1.0/jacobianDiagonal(i);
+  for (unsigned int i=0; i<jacobianDiagonal.local_size(); i++){
+    jacobianDiagonal.local_element(i)=1.0/jacobianDiagonal.local_element(i);
   }
+  jacobianDiagonal.update_ghost_values();
   computing_timer.exit_section("poissonClass jacobian assembly");
 }
 
@@ -240,12 +241,14 @@ void poissonClass::solve(vectorType& phi, std::map<dealii::CellId,std::vector<do
   //compute RHS
   computeRHS(rhoValues);
   //solve
+  computing_timer.enter_section("poissonClass solve"); 
   SolverControl solver_control(maxLinearSolverIterations,relLinearSolverTolerance*rhs.l2_norm());
   SolverCG<vectorType> solver(solver_control);
   //PreconditionJacobi<poissonClass> preconditioner;
   //relaxation=0.6;
   try{
     solver.solve(*this, phi, rhs, IdentityMatrix(rhs.size()));
+    phi.update_ghost_values();
   }
   catch (...) {
     pcout << "\nWarning: solver did not converge as per set tolerances. consider increasing maxLinearSolverIterations or decreasing relLinearSolverTolerance.\n";
@@ -256,4 +259,5 @@ void poissonClass::solve(vectorType& phi, std::map<dealii::CellId,std::vector<do
 	  solver_control.last_value(),					\
 	  solver_control.last_step(), solver_control.tolerance()); 
   pcout<<buffer; 
+  computing_timer.exit_section("poissonClass solve"); 
 }

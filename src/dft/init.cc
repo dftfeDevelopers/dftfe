@@ -2,6 +2,7 @@
 
 //initialize rho
 void dftClass::initRho(){
+  computing_timer.enter_section("dftClass init density"); 
   //Initialize electron density table storage
   rhoInValues=new std::map<dealii::CellId,std::vector<double> >;
   rhoInVals.push_back(rhoInValues);
@@ -103,6 +104,7 @@ void dftClass::initRho(){
 	 << std::endl<< funcX.info->refs << std::endl;
     pcout<<"-------------------------------------"<<std::endl;	  
   }
+  computing_timer.exit_section("dftClass init density"); 
 }
 
 void dftClass::init(){

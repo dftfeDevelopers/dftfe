@@ -144,17 +144,15 @@ void dftClass::readPSIRadialValues(std::vector<std::vector<std::vector<double> >
   }
 
   //update ghosts for eigenVectors
-  for (unsigned int i=0; i<eigenVectors.size(); ++i){  
-    eigenVectors[i]->update_ghost_values();
-  }
-  pcout << "before multiplying with M^0,5\n";
-  for (unsigned int i=0; i<eigenVectors.size(); i++){
-    pcout << i << " norm: " << eigenVectors[i]->l2_norm() << "  linf norm: " << eigenVectors[i]->linfty_norm()<< std::endl;
-  }
+  //**may be not required as update ghosts called after M^0.5 multiplication
+  //for (unsigned int i=0; i<eigenVectors.size(); ++i){  
+  //  eigenVectors[i]->update_ghost_values();
+  //}
+
   //multiply by M^0.5
   for (unsigned int i=0; i<eigenVectors.size(); ++i){
-    for (unsigned int j=0; j<eigenVectors[i]->size(); j++){
-      (*eigenVectors[i])[j]/=eigen.massVector[j];
+    for (unsigned int j=0; j<eigenVectors[i]->local_size(); j++){
+      eigenVectors[i]->local_element(j)/=eigen.massVector.local_element(j);
     }  
   }
   //update ghosts for eigenVectors
@@ -165,6 +163,7 @@ void dftClass::readPSIRadialValues(std::vector<std::vector<std::vector<double> >
 
 //
 void dftClass::readPSI(){
+  computing_timer.enter_section("dftClass init PSI"); 
   const unsigned int numAtomTypes=2; //2 for CH4
   std::vector<std::vector<std::vector<double> > > singleAtomPSI (numAtomTypes); 
   for (unsigned int atom=0; atom<numAtomTypes; atom++){
@@ -193,4 +192,6 @@ void dftClass::readPSI(){
   }
   //
   readPSIRadialValues(singleAtomPSI);
+  //
+  computing_timer.exit_section("dftClass init PSI"); 
 }

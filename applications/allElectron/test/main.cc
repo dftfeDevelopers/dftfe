@@ -1,12 +1,13 @@
 //Define parameters
 //const double radius=20.0;
-unsigned int FEOrder=1;
+unsigned int FEOrder=4;
 unsigned int n_refinement_steps=0;
 unsigned int numElectrons=10;
 unsigned int numEigenValues=numElectrons/2+4;
 unsigned int quadratureRule=FEOrder+1;
 double lowerEndWantedSpectrum=-10.0;
-unsigned int chebyshevOrder=10; 
+unsigned int chebyshevOrder=100; 
+unsigned int numSCFIterations=50;
 
 //solver paramteters 
 unsigned int maxLinearSolverIterations=5000;
