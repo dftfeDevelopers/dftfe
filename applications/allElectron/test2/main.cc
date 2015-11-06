@@ -1,7 +1,7 @@
 //Define parameters
 //const double radius=20.0;
 unsigned int FEOrder=1;
-unsigned int n_refinement_steps=0;
+unsigned int n_refinement_steps=4;
 unsigned int numElectrons=10;
 unsigned int numEigenValues=numElectrons/2+4;
 unsigned int quadratureRule=FEOrder+1;
