@@ -1,13 +1,14 @@
 //Define parameters
 //const double radius=20.0;
-unsigned int FEOrder=1;
+//testing for one C atom
+unsigned int FEOrder=4;
 unsigned int n_refinement_steps=4;
-unsigned int numElectrons=10;
-unsigned int numEigenValues=numElectrons/2+4;
+unsigned int numElectrons=6;
+unsigned int numEigenValues=numElectrons/2+2;
 unsigned int quadratureRule=FEOrder+1;
 double lowerEndWantedSpectrum=-10.0;
-unsigned int chebyshevOrder=100; 
-unsigned int numSCFIterations=50;
+unsigned int chebyshevOrder=500; 
+unsigned int numSCFIterations=25;
 
 //solver paramteters 
 unsigned int maxLinearSolverIterations=5000;
@@ -25,16 +26,11 @@ double kb = 3.166811429e-06;
 
 //Atom locations
 void getAtomicLocations(dealii::Table<2,double>& atoms, std::map<unsigned int, std::string>& initialGuessFiles){
-  atoms.reinit(5,4);
+  atoms.reinit(1,4);
   atoms(0,0)=6.0; atoms(0,1)=0.0; atoms(0,2)=0.0; atoms(0,3)=0.0;  
-  atoms(1,0)=1.0; atoms(1,1)=1.2; atoms(1,2)=1.2; atoms(1,3)=1.2;  
-  atoms(2,0)=1.0; atoms(2,1)=-1.2; atoms(2,2)=-1.2; atoms(2,3)=1.2;  
-  atoms(3,0)=1.0; atoms(3,1)=1.2; atoms(3,2)=-1.2; atoms(3,3)=-1.2;  
-  atoms(4,0)=1.0; atoms(4,1)=-1.2; atoms(4,2)=1.2; atoms(4,3)=-1.2;  
   //initial guess for rho
   //initialGuessFiles.clear();
   initialGuessFiles[6]=std::string("../../../data/rhoInitialGuess/rho_C");
-  initialGuessFiles[1]=std::string("../../../data/rhoInitialGuess/rho_H");
 }
 
 int main (int argc, char *argv[]){
