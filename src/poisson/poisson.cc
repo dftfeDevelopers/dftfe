@@ -27,7 +27,7 @@ void poissonClass::init(){
       localJacobians[cell->id()]=std::vector<double>(FE.dofs_per_cell*FE.dofs_per_cell);
     }
   }
-  
+
   //constraints
   //no constraints
   constraintsNone.clear ();
@@ -87,24 +87,26 @@ void poissonClass::computeLocalJacobians(){
   Vector<double>       elementalDiagonal (dofs_per_cell);
   Vector<double>       elementalrhs (dofs_per_cell);
   std::vector<types::global_dof_index> local_dof_indices (dofs_per_cell);
-  
+
   //parallel loop over all elements
   typename DoFHandler<3>::active_cell_iterator cell = dftPtr->dofHandler.begin_active(), endc = dftPtr->dofHandler.end();
   for (; cell!=endc; ++cell) {
     if (cell->is_locally_owned()){
+      double* tt=&localJacobians[cell->id()][0];
       //compute values for the current element
       fe_values.reinit (cell);
       elementalDiagonal=0.0; elementalrhs=0.0;
       //local poissonClass operator
       for (unsigned int i=0; i<dofs_per_cell; ++i){
 	for (unsigned int j=0; j<dofs_per_cell; ++j){
-	  localJacobians[cell->id()][i*dofs_per_cell+j]=0.0;
+	  tt[i*dofs_per_cell+j]=0.0;
 	  for (unsigned int q_point=0; q_point<num_quad_points; ++q_point){
-	    localJacobians[cell->id()][i*dofs_per_cell+j] += (1.0/(4.0*M_PI))*(fe_values.shape_grad (i, q_point) *fe_values.shape_grad (j, q_point)*fe_values.JxW (q_point));
+	    tt[i*dofs_per_cell+j] += (1.0/(4.0*M_PI))*(fe_values.shape_grad (i, q_point) *fe_values.shape_grad (j, q_point)*fe_values.JxW (q_point));
 	  }
 	}
-	elementalDiagonal(i)=localJacobians[cell->id()][i*dofs_per_cell+i];
+	elementalDiagonal(i)=tt[i*dofs_per_cell+i];
       }
+      
       //assemble jacobianDiagonal which is used a jacobi preconditoner for the CG solve
       cell->get_dof_indices (local_dof_indices);
       constraintsNone.distribute_local_to_global(elementalDiagonal, local_dof_indices, jacobianDiagonal);
@@ -115,10 +117,10 @@ void poissonClass::computeLocalJacobians(){
 	for (unsigned int j=0; j<dofs_per_cell; ++j){
 	  unsigned int columnID=local_dof_indices[j];
 	  if (values1byR.find(columnID)!=values1byR.end()){
-	    elementalrhs(i)+=values1byR.find(columnID)->second*localJacobians[cell->id()][i*dofs_per_cell+j];
+	    elementalrhs(i)+=values1byR.find(columnID)->second*tt[i*dofs_per_cell+j];
 	  }
 	  if ((valuesZero.find(rowID)!= valuesZero.end()) || (valuesZero.find(columnID)!=valuesZero.end())){
-	    localJacobians[cell->id()][i*dofs_per_cell+j]=0.0;
+	    tt[i*dofs_per_cell+j]=0.0;
 	  }
 	}
       }

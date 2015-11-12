@@ -7,7 +7,7 @@ unsigned int numElectrons=6;
 unsigned int numEigenValues=numElectrons/2+2;
 unsigned int quadratureRule=FEOrder+1;
 double lowerEndWantedSpectrum=-10.0;
-unsigned int chebyshevOrder=500; 
+unsigned int chebyshevOrder=100; 
 unsigned int numSCFIterations=25;
 
 //solver paramteters 
@@ -19,7 +19,7 @@ double TVal=100.0;
 double kb = 3.166811429e-06;
 
 //Mesh information
-#define meshFileName "../../../data/mesh/CH4.inp"
+#define meshFileName "../../../data/mesh/singleAtom.inp"
 
 //dft header
 #include "../../../src/dft/dft.cc"

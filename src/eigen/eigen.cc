@@ -75,16 +75,23 @@ void eigenClass::computeMassVector(){
 	}
       }
       cell->get_dof_indices (local_dof_indices);
-      massVector.add(local_dof_indices, elementalMassVector);
+      //massVector.add(local_dof_indices, elementalMassVector);
+      constraintsNone.distribute_local_to_global(elementalMassVector, local_dof_indices, massVector);
     }
   }
   massVector.compress(dealii::VectorOperation::add);
   for (unsigned int i=0; i<massVector.local_size(); i++){
-    massVector.local_element(i)=1.0/std::sqrt(massVector.local_element(i));
+    if (std::abs(massVector.local_element(i)>1.0e-15)){
+      massVector.local_element(i)=1.0/std::sqrt(massVector.local_element(i));
+    }
+    else{
+      massVector.local_element(i)=0.0;
+    }
   }
   massVector.update_ghost_values();
   char buffer[100];
   sprintf(buffer, "massVector norm: %18.10e \n", massVector.l2_norm());
+  pcout << buffer ;
   computing_timer.exit_section("eigenClass Mass assembly");
 }
 
@@ -117,19 +124,20 @@ void eigenClass::computeLocalHamiltonians(std::map<dealii::CellId,std::vector<do
       xc_lda_vxc(&funcC,num_quad_points,&densityValue[0],&corrPotentialVal[0]);
 
       //local eigenClass operator
+      double* tt=&localHamiltonians[cell->id()][0];
       cell->get_dof_indices (local_dof_indices);
       for (unsigned int i=0; i<dofs_per_cell; ++i){
 	for (unsigned int j=0; j<dofs_per_cell; ++j){
-	  localHamiltonians[cell->id()][i*dofs_per_cell+j]=0.0;
+	  tt[i*dofs_per_cell+j]=0.0;
 	  for (unsigned int q_point=0; q_point<num_quad_points; ++q_point){
 	    //storing local Hamiltonian in Fortran column major format to help Lapack functions
-	    localHamiltonians[cell->id()][i*dofs_per_cell+j] += (0.5*fe_valuesH.shape_grad (j, q_point)*fe_valuesH.shape_grad (i, q_point)+
+	    tt[i*dofs_per_cell+j] += (0.5*fe_valuesH.shape_grad (j, q_point)*fe_valuesH.shape_grad (i, q_point)+
 								 fe_valuesH.shape_value(j, q_point)*
 								 fe_valuesH.shape_value(i, q_point)*
 								 (cellPhiTotal[q_point]+exchangePotentialVal[q_point]+corrPotentialVal[q_point]))*fe_valuesH.JxW (q_point);
 	  }
 	  //H'=M^(-0.5)*H*M^(-0.5)
-	  localHamiltonians[cell->id()][i*dofs_per_cell+j]*=massVector(local_dof_indices[j])*massVector(local_dof_indices[i]);
+	  tt[i*dofs_per_cell+j]*=massVector(local_dof_indices[j])*massVector(local_dof_indices[i]);
 	}
       }
     }
@@ -137,7 +145,7 @@ void eigenClass::computeLocalHamiltonians(std::map<dealii::CellId,std::vector<do
   computing_timer.exit_section("eigenClass Hamiltonian assembly");
 }
 
-//Hx
+//HX
 void eigenClass::implementHX (const dealii::MatrixFree<3,double>  &data,
 			      std::vector<vectorType*>  &dst, 
 			      const std::vector<vectorType*>  &src,
@@ -226,6 +234,7 @@ void eigenClass::HX(const std::vector<vectorType*> &src, std::vector<vectorType*
   dftPtr->matrix_free_data.cell_loop (&eigenClass::implementHX, this, dst, src);
   for (std::vector<vectorType*>::iterator it=dst.begin(); it!=dst.end(); it++){
     (*it)->compress(VectorOperation::add);  
+    constraintsNone.distribute(**it);
   }
   computing_timer.exit_section("eigenClass HX");
 }

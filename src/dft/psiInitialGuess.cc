@@ -53,30 +53,6 @@ void dftClass::readPSIRadialValues(std::vector<std::vector<std::vector<double> >
 			     0.0,
 			     nEqualTwolEqualsOneSplineCarbon);
   
-  //
-  //Build Splines for Hydrogen
-  //
-  alglib::spline1dinterpolant lEqualsZeroSplineHydrogen;
-  double outerMostPointHydrogen;
-  alglib::ae_int_t natural_bound_typeHydrogen = 0;
-  int numRowsHyd = singleAtomPSI[1].size()-1;
-  double xDataHyd[numRowsHyd];
-  double yDataHyd[numRowsHyd];
-  for(int irow = 0; irow < numRowsHyd; ++irow){
-    xDataHyd[irow] = singleAtomPSI[1][irow][0];
-    yDataHyd[irow] = singleAtomPSI[1][irow][1];
-  }
-  outerMostPointHydrogen = xDataHyd[numRows-1];
-  alglib::real_1d_array xH,y0H;
-  xH.setcontent(numRowsHyd,xDataHyd);
-  y0H.setcontent(numRowsHyd,yDataHyd);
-  alglib::spline1dbuildcubic(xH, y0H, numRowsHyd,
-			     natural_bound_typeHydrogen,
-			     0.0,
-			     natural_bound_typeHydrogen,
-			     0.0,
-			     lEqualsZeroSplineHydrogen);
-
   //loop over nodes to set PSI initial guess
   unsigned int dofs_per_cell = matrix_free_data.get_dofs_per_cell();
   //get support points
@@ -115,11 +91,6 @@ void dftClass::readPSIRadialValues(std::vector<std::vector<std::vector<double> >
 	    if (r<=outerMostPointCarbon) R = alglib::spline1dcalc(nEqualOnelEqualsZeroSplineCarbon,r);
 	    //1s
 	    (*eigenVectors[0])[dofID] =  R*boost::math::spherical_harmonic_r(0,0,theta,phi);
-	    /*	    if (dofID==0){
-	      pcout << " R:" <<  alglib::spline1dcalc(nEqualOnelEqualsZeroSplineCarbon,r) << std::endl;
-	      pcout << " spherical:" <<  boost::math::spherical_harmonic_r(0,0,theta,phi) << std::endl;
-	      pcout << " psi:" <<  R*boost::math::spherical_harmonic_r(0,0,theta,phi) << std::endl;
-	      }*/
 	    //2s
 	    if (r<=outerMostPointCarbon) R = alglib::spline1dcalc(nEqualTwolEqualsZeroSplineCarbon,r);
 	    (*eigenVectors[1])[dofID] =  R*boost::math::spherical_harmonic_r(0,0,theta,phi);
@@ -130,13 +101,6 @@ void dftClass::readPSIRadialValues(std::vector<std::vector<std::vector<double> >
 	    (*eigenVectors[3])[dofID] = R*boost::math::spherical_harmonic_r(1,0,theta,phi);
 	    //2pz
 	    (*eigenVectors[4])[dofID] = R*sqrt(2.0)*boost::math::spherical_harmonic_r(1,1,theta,phi);
-	  }
-	  else{
-	    R=0.0;
-	    //Hydrogen
-	    if (r<=outerMostPointHydrogen) R = alglib::spline1dcalc(lEqualsZeroSplineHydrogen,r);
-	    //1s
-	    (*eigenVectors[4+atom])[dofID] = R*boost::math::spherical_harmonic_r(0,0,theta,phi);
 	  }
 	}
       }
@@ -164,7 +128,7 @@ void dftClass::readPSIRadialValues(std::vector<std::vector<std::vector<double> >
 //
 void dftClass::readPSI(){
   computing_timer.enter_section("dftClass init PSI"); 
-  const unsigned int numAtomTypes=2; //2 for CH4
+  const unsigned int numAtomTypes=1; //1 for C atom
   std::vector<std::vector<std::vector<double> > > singleAtomPSI (numAtomTypes); 
   for (unsigned int atom=0; atom<numAtomTypes; atom++){
     char buffer[100];

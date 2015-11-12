@@ -46,7 +46,7 @@ void dftClass::run ()
 	<< std::endl;
   //generate/read mesh
   mesh();
-  return;
+
   //initialize
   init();
   

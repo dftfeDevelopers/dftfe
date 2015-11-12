@@ -7,10 +7,11 @@ void dftClass::mesh(){
   //define mesh parameters
   double L=20;
   double meshBias=0.7;
-  double numMeshSegments=10;
+  double numMeshSegments=15;
   //
   GridGenerator::hyper_cube (triangulation, -L, L);
   triangulation.refine_global(1);
+ 
   //compute h by geometric progression
   double sum=1.0;
   for (unsigned int i=1; i<numMeshSegments; i++){
@@ -72,24 +73,25 @@ void dftClass::mesh(){
   pcout << "   Number of global active cells: "
 	<< triangulation.n_global_active_cells()
 	<< std::endl;
-  
-  //dof_handle
-  dofHandler.distribute_dofs (FE);
-  locally_owned_dofs = dofHandler.locally_owned_dofs ();
-  DoFTools::extract_locally_relevant_dofs (dofHandler, locally_relevant_dofs);
-  pcout << "number of elements: "
-	<< triangulation.n_global_active_cells()
-	<< std::endl
-	<< "number of degrees of freedom: " 
-	<< dofHandler.n_dofs() 
-	<< std::endl;
-
-  DataOut<3> data_out;
-  data_out.attach_dof_handler (dofHandler);
-  //data_out.add_data_vector (solution, "solution");
-  data_out.build_patches ();
-  std::ofstream output("mesh.vtu");
-  data_out.write_vtu(output); 
   //
   computing_timer.exit_section("mesh"); 
 }
+
+/*
+//Generate triangulation.
+void dftClass::mesh(){
+  computing_timer.enter_section("mesh"); 
+  GridIn<3> gridin;
+  gridin.attach_triangulation(triangulation);
+  //Read mesh in UCD format generated from Cubit
+  std::ifstream f(meshFileName);
+  gridin.read_ucd(f);
+  static const Point<3> center = Point<3>();
+  static const HyperBallBoundary<3, 3> boundary(center,20.0);
+  triangulation.set_boundary(0, boundary);
+  //triangulation.set_boundary(0, boundaryClass);
+  //triangulation.set_boundary(0, StraightBoundary<3>());
+  //triangulation.refine_global (n_refinement_steps);
+  computing_timer.exit_section("mesh"); 
+}
+*/

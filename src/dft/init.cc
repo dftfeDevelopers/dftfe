@@ -119,6 +119,14 @@ void dftClass::init(){
 	<< "number of degrees of freedom: " 
 	<< dofHandler.n_dofs() 
 	<< std::endl;
+
+  //write mesh to vtk file
+  DataOut<3> data_out;
+  data_out.attach_dof_handler (dofHandler);
+  data_out.build_patches ();
+  std::ofstream output("mesh.vtu");
+  data_out.write_vtu(output); 
+
   //matrix fee data structure
   QGaussLobatto<1> quadrature (FEOrder+1);
   typename MatrixFree<3>::AdditionalData additional_data;
