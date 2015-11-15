@@ -35,6 +35,7 @@ dftClass::dftClass():
     eigenVectors.push_back(new vectorType);
     PSI.push_back(new vectorType);
     tempPSI.push_back(new vectorType);
+    tempPSI2.push_back(new vectorType);
   } 
 }
 

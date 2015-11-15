@@ -1,0 +1,1 @@
+ /opt/software/numerics/libxc-2.2.2/installDir/lib/libxc.a /opt/software/numerics/alglib/cpp/src/libalglib.so

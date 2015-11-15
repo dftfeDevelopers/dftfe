@@ -59,6 +59,8 @@ void dftClass::readPSIRadialValues(std::vector<std::vector<std::vector<double> >
   std::map<types::global_dof_index, Point<3> > support_points;
   MappingQ<3> mapQ(1);
   DoFTools::map_dofs_to_support_points(mapQ, dofHandler, support_points); 
+  std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
+  std::vector<std::vector<double> > local_dof_values(5, std::vector<double>(dofs_per_cell));
   DoFHandler<3>::active_cell_iterator
     cell = dofHandler.begin_active(),
     endc = dofHandler.end();
@@ -66,10 +68,9 @@ void dftClass::readPSIRadialValues(std::vector<std::vector<std::vector<double> >
   for (; cell!=endc; ++cell) {
     if (cell->is_locally_owned()){
       //node loop
-      std::vector<types::global_dof_index> dofs_vector(dofs_per_cell);
-      cell->get_dof_indices(dofs_vector);
+      cell->get_dof_indices(local_dof_indices);
       for (unsigned int i=0; i<dofs_per_cell; ++i){
-	unsigned int dofID=dofs_vector[i];
+	unsigned int dofID=local_dof_indices[i];
 	if (!eigenVectors[0]->in_local_range(dofID)) {continue;}
 	Point<3> node = support_points[dofID];
 	for(unsigned int atom=0; atom<atomLocations.size()[0]; atom++){
@@ -88,39 +89,35 @@ void dftClass::readPSIRadialValues(std::vector<std::vector<std::vector<double> >
 	  if (atom==0){
 	    R=0.0;
 	    //Carbon
-	    if (r<=outerMostPointCarbon) R = alglib::spline1dcalc(nEqualOnelEqualsZeroSplineCarbon,r);
 	    //1s
-	    (*eigenVectors[0])[dofID] =  R*boost::math::spherical_harmonic_r(0,0,theta,phi);
+	    if (r<=outerMostPointCarbon) R = alglib::spline1dcalc(nEqualOnelEqualsZeroSplineCarbon,r);
+	    local_dof_values[0][i] =  R*boost::math::spherical_harmonic_r(0,0,theta,phi);
 	    //2s
 	    if (r<=outerMostPointCarbon) R = alglib::spline1dcalc(nEqualTwolEqualsZeroSplineCarbon,r);
-	    (*eigenVectors[1])[dofID] =  R*boost::math::spherical_harmonic_r(0,0,theta,phi);
+	    local_dof_values[1][i] =  R*boost::math::spherical_harmonic_r(0,0,theta,phi);
 	    //2px
 	    if (r<=outerMostPointCarbon) R = alglib::spline1dcalc(nEqualTwolEqualsOneSplineCarbon,r);
-	    (*eigenVectors[2])[dofID] = R*sqrt(2.0)*boost::math::spherical_harmonic_i(1,1,theta,phi);
+	    local_dof_values[2][i] = R*sqrt(2.0)*boost::math::spherical_harmonic_i(1,1,theta,phi);
 	    //2py
-	    (*eigenVectors[3])[dofID] = R*boost::math::spherical_harmonic_r(1,0,theta,phi);
+	    local_dof_values[3][i] = R*boost::math::spherical_harmonic_r(1,0,theta,phi);
 	    //2pz
-	    (*eigenVectors[4])[dofID] = R*sqrt(2.0)*boost::math::spherical_harmonic_r(1,1,theta,phi);
+	    local_dof_values[4][i] = R*sqrt(2.0)*boost::math::spherical_harmonic_r(1,1,theta,phi);
 	  }
 	}
       }
+      for (unsigned int j=0; j<5; ++j){
+	constraintsNone.distribute_local_to_global(local_dof_values[j], local_dof_indices, *eigenVectors[j]);
+      }
     }
   }
-
-  //update ghosts for eigenVectors
-  //**may be not required as update ghosts called after M^0.5 multiplication
-  //for (unsigned int i=0; i<eigenVectors.size(); ++i){  
-  //  eigenVectors[i]->update_ghost_values();
-  //}
-
+  
   //multiply by M^0.5
   for (unsigned int i=0; i<eigenVectors.size(); ++i){
     for (unsigned int j=0; j<eigenVectors[i]->local_size(); j++){
-      eigenVectors[i]->local_element(j)/=eigen.massVector.local_element(j);
+      if (std::abs(eigen.massVector.local_element(j))>1.0e-15){
+	eigenVectors[i]->local_element(j)/=eigen.massVector.local_element(j);
+      }
     }  
-  }
-  //update ghosts for eigenVectors
-  for (unsigned int i=0; i<eigenVectors.size(); ++i){  
     eigenVectors[i]->update_ghost_values();
   }
 }

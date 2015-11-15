@@ -35,9 +35,11 @@ double dftClass::upperBound(){
   //generate random vector v
   vChebyshev=0.0;
   std::srand(this_mpi_process);
-  for (unsigned int i=0; i<vChebyshev.local_size(); i++){
-    vChebyshev.local_element(i)=1.0; //(double(std::rand())/RAND_MAX);
-  }
+  const unsigned int local_size=vChebyshev.local_size();
+  std::vector<unsigned int> local_dof_indices(local_size);
+  vChebyshev.locally_owned_elements().fill_index_vector(local_dof_indices);
+  constraintsNone.distribute_local_to_global(std::vector<double>(local_size,1.0), local_dof_indices, vChebyshev);
+  //(double(std::rand())/RAND_MAX);
   vChebyshev.update_ghost_values();
   vChebyshev/=vChebyshev.l2_norm();
   //

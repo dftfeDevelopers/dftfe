@@ -50,7 +50,7 @@ void dftClass::initRho(){
   }
 
   //Initialize rho
-  QGauss<3>  quadrature_formula(quadratureRule);
+  QGauss<3>  quadrature_formula(FEOrder+1);
   FEValues<3> fe_values (FE, quadrature_formula, update_values);
   const unsigned int n_q_points    = quadrature_formula.size();
   typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
@@ -142,6 +142,7 @@ void dftClass::init(){
     matrix_free_data.initialize_dof_vector(*eigenVectors[i]);
     matrix_free_data.initialize_dof_vector(*PSI[i]);
     matrix_free_data.initialize_dof_vector(*tempPSI[i]);
+    matrix_free_data.initialize_dof_vector(*tempPSI2[i]);
   } 
   matrix_free_data.initialize_dof_vector(vChebyshev);
   matrix_free_data.initialize_dof_vector(v0Chebyshev);

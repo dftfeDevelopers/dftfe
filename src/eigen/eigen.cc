@@ -52,43 +52,28 @@ void eigenClass::init(){
 void eigenClass::computeMassVector(){
   computing_timer.enter_section("eigenClass Mass assembly"); 
   dftPtr->matrix_free_data.initialize_dof_vector (massVector);
+  pcout << "mass vector size: " << massVector.size() << "\n";
   massVector=0.0;
-  //local data structures
-  QGaussLobatto<3> quadratureM(quadratureRule);
-  FEValues<3> fe_valuesM (FE, quadratureM, update_values | update_JxW_values);
-  const unsigned int dofs_per_cell = FE.dofs_per_cell;
-  const unsigned int num_quad_points = quadratureM.size();
-  Vector<double>       elementalMassVector (dofs_per_cell);
-  std::vector<types::global_dof_index> local_dof_indices (dofs_per_cell);
-
-  //parallel loop over all elements
-  typename DoFHandler<3>::active_cell_iterator cell = dftPtr->dofHandler.begin_active(), endc = dftPtr->dofHandler.end();
-  for (; cell!=endc; ++cell) {
-    if (cell->is_locally_owned()){
-      elementalMassVector=0;
-      //compute values for the current element
-      fe_valuesM.reinit (cell);
-      //local mass vector
-      for (unsigned int i=0; i<dofs_per_cell; ++i){
-	for (unsigned int q_point=0; q_point<num_quad_points; ++q_point){
-	  elementalMassVector(i)+=(fe_valuesM.shape_value(i, q_point)*fe_valuesM.shape_value(i, q_point))*fe_valuesM.JxW (q_point);
-	}
-      }
-      cell->get_dof_indices (local_dof_indices);
-      //massVector.add(local_dof_indices, elementalMassVector);
-      constraintsNone.distribute_local_to_global(elementalMassVector, local_dof_indices, massVector);
-    }
+  FEEvaluation<3,FEOrder> fe_eval(dftPtr->matrix_free_data);
+  const unsigned int      n_q_points = fe_eval.n_q_points;
+  VectorizedArray<double> one = make_vectorized_array (1.);
+  for (unsigned int cell=0; cell<dftPtr->matrix_free_data.n_macro_cells(); ++cell){
+    fe_eval.reinit(cell);
+    for (unsigned int q=0; q<n_q_points; ++q)
+      fe_eval.submit_value(one,q);
+    fe_eval.integrate (true,false);
+    fe_eval.distribute_local_to_global (massVector);
   }
-  massVector.compress(dealii::VectorOperation::add);
+  massVector.compress(VectorOperation::add);
+  //compute inverse
   for (unsigned int i=0; i<massVector.local_size(); i++){
-    if (std::abs(massVector.local_element(i)>1.0e-15)){
+    if (std::abs(massVector.local_element(i))>1.0e-15){
       massVector.local_element(i)=1.0/std::sqrt(massVector.local_element(i));
     }
     else{
       massVector.local_element(i)=0.0;
     }
   }
-  massVector.update_ghost_values();
   char buffer[100];
   sprintf(buffer, "massVector norm: %18.10e \n", massVector.l2_norm());
   pcout << buffer ;
@@ -99,7 +84,7 @@ void eigenClass::computeLocalHamiltonians(std::map<dealii::CellId,std::vector<do
   computing_timer.enter_section("eigenClass Hamiltonian assembly"); 
 
   //local data structures
-  QGauss<3>  quadratureH(quadratureRule);
+  QGauss<3>  quadratureH(FEOrder+1);
   FEValues<3> fe_valuesH (FE, quadratureH, update_values | update_gradients | update_JxW_values);
   const unsigned int dofs_per_cell = FE.dofs_per_cell;
   const unsigned int num_quad_points = quadratureH.size();
@@ -154,7 +139,7 @@ void eigenClass::implementHX (const dealii::MatrixFree<3,double>  &data,
   std::vector<dealii::types::global_dof_index> local_dof_indices (dofs_per_cell);
   typename dealii::DoFHandler<3>::active_cell_iterator cell;
 
-  std::vector<double> x(dofs_per_cell*src.size()), y(dofs_per_cell*src.size());
+  std::vector<double> x(dofs_per_cell*dst.size()), y(dofs_per_cell*dst.size());
   //loop over all "cells"  (cell blocks)
   for (unsigned int cell_index=cell_range.first; cell_index<cell_range.second; ++cell_index){
     //loop over cells
@@ -162,15 +147,15 @@ void eigenClass::implementHX (const dealii::MatrixFree<3,double>  &data,
       cell=data.get_cell_iterator(cell_index, v);
       cell->get_dof_indices (local_dof_indices);
       unsigned int index=0;
-      for (std::vector<vectorType*>::const_iterator it=src.begin(); it!=src.end(); it++){
-	(*it)->extract_subvector_to(local_dof_indices.begin(), local_dof_indices.end(), x.begin()+dofs_per_cell*index);
+      for (unsigned int i=0; i<dst.size(); i++){
+	src[i]->extract_subvector_to(local_dof_indices.begin(), local_dof_indices.end(), x.begin()+dofs_per_cell*index);
 	index++;
       }
       //elemental HX
       char transA  = 'T', transB  = 'N';
       double alpha = 1.0, beta  = 0.0;
       //check lda, ldb, ldc values
-      int m= dofs_per_cell, k=dofs_per_cell, n= src.size(), lda= dofs_per_cell, ldb=dofs_per_cell, ldc=dofs_per_cell;
+      int m= dofs_per_cell, k=dofs_per_cell, n= dst.size(), lda= dofs_per_cell, ldb=dofs_per_cell, ldc=dofs_per_cell;
       dgemm_(&transA, &transB, &m, &n, &k, &alpha, &((*localHamiltoniansPtr)[cell->id()][0]), &lda, &x[0], &ldb, &beta, &y[0], &ldc);
       //assemble back
       std::vector<double>::iterator iter=y.begin();
@@ -228,13 +213,14 @@ void eigenClass::implementXHX (const dealii::MatrixFree<3,double>  &data,
 //HX
 void eigenClass::HX(const std::vector<vectorType*> &src, std::vector<vectorType*> &dst) {
   computing_timer.enter_section("eigenClass HX");
-  for (std::vector<vectorType*>::iterator it=dst.begin(); it!=dst.end(); it++){
-    (**it)=0.0;  
+  for (unsigned int i=0; i<src.size(); i++){
+    *(dftPtr->tempPSI2[i])=*src[i];
+    constraintsNone.distribute(*(dftPtr->tempPSI2[i]));
+    *dst[i]=0.0;
   }
-  dftPtr->matrix_free_data.cell_loop (&eigenClass::implementHX, this, dst, src);
+  dftPtr->matrix_free_data.cell_loop (&eigenClass::implementHX, this, dst, dftPtr->tempPSI2);
   for (std::vector<vectorType*>::iterator it=dst.begin(); it!=dst.end(); it++){
     (*it)->compress(VectorOperation::add);  
-    constraintsNone.distribute(**it);
   }
   computing_timer.exit_section("eigenClass HX");
 }
@@ -242,10 +228,14 @@ void eigenClass::HX(const std::vector<vectorType*> &src, std::vector<vectorType*
 //XHX
 void eigenClass::XHX(const std::vector<vectorType*> &src){
   computing_timer.enter_section("eigenClass XHX");
+  for (unsigned int i=0; i<src.size(); i++){
+    *(dftPtr->tempPSI2[i])=*src[i];
+    constraintsNone.distribute(*(dftPtr->tempPSI2[i]));
+  }
   for (std::vector<double>::iterator it=XHXValue.begin(); it!=XHXValue.end(); it++){
     (*it)=0.0;  
   }
-  dftPtr->matrix_free_data.cell_loop (&eigenClass::implementXHX, this, HXvalue, src);
+  dftPtr->matrix_free_data.cell_loop (&eigenClass::implementXHX, this, HXvalue, dftPtr->tempPSI2);
   //all reduce XHXValue
   Utilities::MPI::sum(XHXValue, mpi_communicator, XHXValue); 
   computing_timer.exit_section("eigenClass XHX");

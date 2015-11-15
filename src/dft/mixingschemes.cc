@@ -4,7 +4,7 @@
 double dftClass::mixing_simple()
 {
   double normValue=0.0;
-  QGauss<3>  quadrature(quadratureRule);
+  QGauss<3>  quadrature(FEOrder+1);
   FEValues<3> fe_values (FE, quadrature, update_values | update_JxW_values | update_quadrature_points);
   const unsigned int num_quad_points = quadrature.size();
   double alpha=0.8;
@@ -34,7 +34,7 @@ double dftClass::mixing_simple()
 //implement anderson mixing scheme 
 double dftClass::mixing_anderson(){
   double normValue=0.0;
-  QGauss<3>  quadrature(quadratureRule);
+  QGauss<3>  quadrature(FEOrder+1);
   FEValues<3> fe_values (FE, quadrature, update_values | update_JxW_values | update_quadrature_points);
   const unsigned int num_quad_points = quadrature.size();
   double alpha=0.5;

@@ -3,11 +3,20 @@
 //Generate triangulation.
 void dftClass::mesh(){
   computing_timer.enter_section("mesh"); 
-
+#ifdef meshFileName
+  GridIn<3> gridin;
+  gridin.attach_triangulation(triangulation);
+  //Read mesh in UCD format generated from Cubit
+  std::ifstream f(meshFileName);
+  gridin.read_ucd(f);
+  static const Point<3> center = Point<3>();
+  static const HyperBallBoundary<3, 3> boundary(center,20.0);
+  triangulation.set_boundary(0, boundary);
+#else
   //define mesh parameters
   double L=20;
   double meshBias=0.7;
-  double numMeshSegments=15;
+  double numMeshSegments=10;
   //
   GridGenerator::hyper_cube (triangulation, -L, L);
   triangulation.refine_global(1);
@@ -73,6 +82,7 @@ void dftClass::mesh(){
   pcout << "   Number of global active cells: "
 	<< triangulation.n_global_active_cells()
 	<< std::endl;
+#endif
   //
   computing_timer.exit_section("mesh"); 
 }

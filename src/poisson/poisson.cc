@@ -80,7 +80,7 @@ void poissonClass::computeLocalJacobians(){
   jacobianDiagonal=0.0;
 
   //local data structures
-  QGauss<3>  quadrature(quadratureRule);
+  QGauss<3>  quadrature(FEOrder+1);
   FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values);
   const unsigned int dofs_per_cell = FE.dofs_per_cell;
   const unsigned int num_quad_points = quadrature.size();
@@ -143,7 +143,7 @@ void poissonClass::computeRHS(std::map<dealii::CellId,std::vector<double> >* rho
   computing_timer.enter_section("poissonClass rhs assembly");
   rhs=0.0;
   //local data structures
-  QGauss<3>  quadrature(quadratureRule);
+  QGauss<3>  quadrature(FEOrder+1);
   FEValues<3> fe_values (FE, quadrature, update_values | update_JxW_values);
   const unsigned int   dofs_per_cell = FE.dofs_per_cell;
   const unsigned int   num_quad_points = quadrature.size();

@@ -3,7 +3,7 @@
 //compute total charge
 double dftClass::totalCharge(){
   double normValue=0.0;
-  QGauss<3>  quadrature_formula(quadratureRule);
+  QGauss<3>  quadrature_formula(FEOrder+1);
   FEValues<3> fe_values (FE, quadrature_formula, update_values | update_JxW_values | update_quadrature_points);
   const unsigned int   dofs_per_cell = FE.dofs_per_cell;
   const unsigned int   n_q_points    = quadrature_formula.size();

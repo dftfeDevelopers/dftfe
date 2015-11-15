@@ -8,10 +8,10 @@
 #include "poisson.h"
 #include "eigen.h"
 //include alglib
-#include "/nfs/mcfs_home/rudraa/Public/alglib/cpp/src/interpolation.h"
-#include "/nfs/mcfs_home/rudraa/Public/libxc/libxc-2.2.0/installDir/include/xc.h"
-//#include "/opt/software/numerics/alglib/cpp/src/interpolation.h"
-//#include "/opt/software/numerics/libxc-2.2.2/installDir/include/xc.h"
+//#include "/nfs/mcfs_home/rudraa/Public/alglib/cpp/src/interpolation.h"
+//#include "/nfs/mcfs_home/rudraa/Public/libxc/libxc-2.2.0/installDir/include/xc.h"
+#include "/opt/software/numerics/alglib/cpp/src/interpolation.h"
+#include "/opt/software/numerics/libxc-2.2.2/installDir/include/xc.h"
 
 //std::cout << std::setprecision(18) << std::scientific;
 
@@ -91,7 +91,7 @@ class dftClass{
   //chebyshev filter variables and functions
   double bUp, bLow, a0;
   vectorType vChebyshev, v0Chebyshev, fChebyshev;
-  std::vector<parallel::distributed::Vector<double>*> PSI, tempPSI;
+  std::vector<parallel::distributed::Vector<double>*> PSI, tempPSI, tempPSI2;
   void chebyshevSolver();
   double upperBound();
   void gramSchmidt(std::vector<vectorType*>& X);
