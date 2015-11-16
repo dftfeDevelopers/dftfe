@@ -54,6 +54,34 @@ void eigenClass::computeMassVector(){
   dftPtr->matrix_free_data.initialize_dof_vector (massVector);
   pcout << "mass vector size: " << massVector.size() << "\n";
   massVector=0.0;
+
+//local data structures
+  QGaussLobatto<3> quadratureM(FEOrder+1);
+  FEValues<3> fe_valuesM (FE, quadratureM, update_values | update_JxW_values);
+  const unsigned int dofs_per_cell = FE.dofs_per_cell;
+  const unsigned int num_quad_points = quadratureM.size();
+  Vector<double>       elementalMassVector (dofs_per_cell);
+  std::vector<types::global_dof_index> local_dof_indices (dofs_per_cell);
+
+  //parallel loop over all elements
+  typename DoFHandler<3>::active_cell_iterator cell = dftPtr->dofHandler.begin_active(), endc = dftPtr->dofHandler.end();
+  for (; cell!=endc; ++cell) {
+    if (cell->is_locally_owned()){
+      elementalMassVector=0;
+      //compute values for the current element
+      fe_valuesM.reinit (cell);
+      //local mass vector
+      for (unsigned int i=0; i<dofs_per_cell; ++i){
+	for (unsigned int q_point=0; q_point<num_quad_points; ++q_point){
+	  elementalMassVector(i)+=(fe_valuesM.shape_value(i, q_point)*fe_valuesM.shape_value(i, q_point))*fe_valuesM.JxW (q_point);
+	}
+      }
+      cell->get_dof_indices (local_dof_indices);
+      massVector.add(local_dof_indices, elementalMassVector);
+      //constraintsNone.distribute_local_to_global(elementalMassVector, local_dof_indices, massVector);
+    }
+  }
+  /*
   FEEvaluation<3,FEOrder> fe_eval(dftPtr->matrix_free_data);
   const unsigned int      n_q_points = fe_eval.n_q_points;
   VectorizedArray<double> one = make_vectorized_array (1.);
@@ -64,6 +92,7 @@ void eigenClass::computeMassVector(){
     fe_eval.integrate (true,false);
     fe_eval.distribute_local_to_global (massVector);
   }
+  */
   massVector.compress(VectorOperation::add);
   //compute inverse
   for (unsigned int i=0; i<massVector.local_size(); i++){
@@ -71,6 +100,7 @@ void eigenClass::computeMassVector(){
       massVector.local_element(i)=1.0/std::sqrt(massVector.local_element(i));
     }
     else{
+      exit(-1);
       massVector.local_element(i)=0.0;
     }
   }
@@ -82,7 +112,7 @@ void eigenClass::computeMassVector(){
 
 void eigenClass::computeLocalHamiltonians(std::map<dealii::CellId,std::vector<double> >* rhoValues, const vectorType& phi){
   computing_timer.enter_section("eigenClass Hamiltonian assembly"); 
-
+  
   //local data structures
   QGauss<3>  quadratureH(FEOrder+1);
   FEValues<3> fe_valuesH (FE, quadratureH, update_values | update_gradients | update_JxW_values);
@@ -220,6 +250,7 @@ void eigenClass::HX(const std::vector<vectorType*> &src, std::vector<vectorType*
   }
   dftPtr->matrix_free_data.cell_loop (&eigenClass::implementHX, this, dst, dftPtr->tempPSI2);
   for (std::vector<vectorType*>::iterator it=dst.begin(); it!=dst.end(); it++){
+    constraintsNone.distribute(**it);
     (*it)->compress(VectorOperation::add);  
   }
   computing_timer.exit_section("eigenClass HX");

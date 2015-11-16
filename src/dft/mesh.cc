@@ -33,9 +33,9 @@ void dftClass::mesh(){
   for (unsigned int i=0; i<numMeshSegments; i++){
     li+=l*std::pow(1.0/meshBias, i);
     liVector.push_back(li);
-    //pcout<< "(" << l*std::pow(1.0/meshBias, i) << ", " << li << ") ";
+    pcout<< "(" << l*std::pow(1.0/meshBias, i) << ", " << li << ") ";
   } 
-  
+
   //refine mesh
   bool refineFlag=true;
   unsigned int numLevels=0;

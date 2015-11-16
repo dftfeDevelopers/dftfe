@@ -31,23 +31,23 @@ void poissonClass::init(){
   //constraints
   //no constraints
   constraintsNone.clear ();
-  constraintsNone.reinit (numDofs);
   DoFTools::make_hanging_node_constraints (dftPtr->dofHandler, constraintsNone);
   constraintsNone.close();
+  pcout << "constraintsNone size: " << constraintsNone.n_constraints() << "\n";
 
   //zero constraints
   constraintsZero.clear ();
-  constraintsZero.reinit (numDofs);
   DoFTools::make_hanging_node_constraints (dftPtr->dofHandler, constraintsZero);
   VectorTools::interpolate_boundary_values (dftPtr->dofHandler, 0, ZeroFunction<3>(), constraintsZero);
   constraintsZero.close ();
+  pcout << "constraintsZero size: " << constraintsZero.n_constraints() << "\n";
 
   //OnebyR constraints
   constraints1byR.clear ();
-  constraints1byR.reinit (numDofs);
   DoFTools::make_hanging_node_constraints (dftPtr->dofHandler, constraints1byR);
   VectorTools::interpolate_boundary_values (dftPtr->dofHandler, 0, OnebyRBoundaryFunction<3>(dftPtr->atomLocations),constraints1byR);
   constraints1byR.close ();
+  pcout << "constraints1byR size: " << constraints1byR.n_constraints() << "\n";
 
   //initialize vectors
   dftPtr->matrix_free_data.initialize_dof_vector (rhs);
@@ -159,9 +159,10 @@ void poissonClass::computeRHS(std::map<dealii::CellId,std::vector<double> >* rho
       elementalResidual=0.0;
       //local rhs
       if (rhoValues) {
+	double* tt=&((*rhoValues)[cell->id()][0]);
 	for (unsigned int i=0; i<dofs_per_cell; ++i){
 	  for (unsigned int q_point=0; q_point<num_quad_points; ++q_point){ 
-	    elementalResidual(i) += fe_values.shape_value(i, q_point)*((*rhoValues)[cell->id()][q_point])*fe_values.JxW (q_point);
+	    elementalResidual(i) += fe_values.shape_value(i, q_point)*tt[q_point]*fe_values.JxW (q_point);
 	  }
 	}
       }
@@ -250,6 +251,7 @@ void poissonClass::solve(vectorType& phi, std::map<dealii::CellId,std::vector<do
   //relaxation=0.6;
   try{
     solver.solve(*this, phi, rhs, IdentityMatrix(rhs.size()));
+    constraintsNone.distribute(phi);
     phi.update_ghost_values();
   }
   catch (...) {
