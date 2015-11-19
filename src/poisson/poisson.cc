@@ -5,8 +5,8 @@
 poissonClass::poissonClass(dftClass* _dftPtr):
   dftPtr(_dftPtr),
   FE (QGaussLobatto<1>(FEOrder+1)),
-  jacobianDiagonalValue(1.0),
   relaxation(1.0),
+  jacobianDiagonalValue(1.0),
   mpi_communicator (MPI_COMM_WORLD),
   n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_communicator)),
   this_mpi_process (Utilities::MPI::this_mpi_process(mpi_communicator)),
@@ -37,14 +37,14 @@ void poissonClass::init(){
 
   //zero constraints
   constraintsZero.clear ();
-  DoFTools::make_hanging_node_constraints (dftPtr->dofHandler, constraintsZero);
+  //DoFTools::make_hanging_node_constraints (dftPtr->dofHandler, constraintsZero);
   VectorTools::interpolate_boundary_values (dftPtr->dofHandler, 0, ZeroFunction<3>(), constraintsZero);
   constraintsZero.close ();
   pcout << "constraintsZero size: " << constraintsZero.n_constraints() << "\n";
 
   //OnebyR constraints
   constraints1byR.clear ();
-  DoFTools::make_hanging_node_constraints (dftPtr->dofHandler, constraints1byR);
+  //DoFTools::make_hanging_node_constraints (dftPtr->dofHandler, constraints1byR);
   VectorTools::interpolate_boundary_values (dftPtr->dofHandler, 0, OnebyRBoundaryFunction<3>(dftPtr->atomLocations),constraints1byR);
   constraints1byR.close ();
   pcout << "constraints1byR size: " << constraints1byR.n_constraints() << "\n";
@@ -53,7 +53,6 @@ void poissonClass::init(){
   dftPtr->matrix_free_data.initialize_dof_vector (rhs);
   rhs2.reinit (rhs);
   Ax.reinit (rhs);
-  jacobianDiagonal.reinit (rhs);
   phiTotRhoIn.reinit (rhs);
   phiTotRhoOut.reinit (rhs);
   phiExt.reinit (rhs);
@@ -66,7 +65,6 @@ void poissonClass::init(){
       }
     }
   }
-
   //compute elemental jacobians
   computeLocalJacobians();
   localJacobiansPtr=&localJacobians;
@@ -77,14 +75,12 @@ void poissonClass::init(){
 void poissonClass::computeLocalJacobians(){
   computing_timer.enter_section("poissonClass jacobian assembly"); 
   rhs2=0.0;
-  jacobianDiagonal=0.0;
 
   //local data structures
   QGauss<3>  quadrature(FEOrder+1);
   FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values);
   const unsigned int dofs_per_cell = FE.dofs_per_cell;
   const unsigned int num_quad_points = quadrature.size();
-  Vector<double>       elementalDiagonal (dofs_per_cell);
   Vector<double>       elementalrhs (dofs_per_cell);
   std::vector<types::global_dof_index> local_dof_indices (dofs_per_cell);
 
@@ -92,35 +88,31 @@ void poissonClass::computeLocalJacobians(){
   typename DoFHandler<3>::active_cell_iterator cell = dftPtr->dofHandler.begin_active(), endc = dftPtr->dofHandler.end();
   for (; cell!=endc; ++cell) {
     if (cell->is_locally_owned()){
-      double* tt=&localJacobians[cell->id()][0];
+      double* jacobianPtr=&localJacobians[cell->id()][0];
       //compute values for the current element
       fe_values.reinit (cell);
-      elementalDiagonal=0.0; elementalrhs=0.0;
+      elementalrhs=0.0;
       //local poissonClass operator
       for (unsigned int i=0; i<dofs_per_cell; ++i){
 	for (unsigned int j=0; j<dofs_per_cell; ++j){
-	  tt[i*dofs_per_cell+j]=0.0;
-	  for (unsigned int q_point=0; q_point<num_quad_points; ++q_point){
-	    tt[i*dofs_per_cell+j] += (1.0/(4.0*M_PI))*(fe_values.shape_grad (i, q_point) *fe_values.shape_grad (j, q_point)*fe_values.JxW (q_point));
-	  }
+	   jacobianPtr[i*dofs_per_cell+j]=0.0;
+	   for (unsigned int q_point=0; q_point<num_quad_points; ++q_point){
+	     jacobianPtr[i*dofs_per_cell+j] += (1.0/(4.0*M_PI))*(fe_values.shape_grad(i, q_point)*fe_values.shape_grad (j, q_point))*fe_values.JxW(q_point);
+	   }
 	}
-	elementalDiagonal(i)=tt[i*dofs_per_cell+i];
       }
-      
-      //assemble jacobianDiagonal which is used a jacobi preconditoner for the CG solve
+    
       cell->get_dof_indices (local_dof_indices);
-      constraintsNone.distribute_local_to_global(elementalDiagonal, local_dof_indices, jacobianDiagonal);
- 
       //zero out columns and rows corresponding to Dirchlet BC DOF
       for (unsigned int i=0; i<dofs_per_cell; ++i){
 	unsigned int rowID=local_dof_indices[i];
 	for (unsigned int j=0; j<dofs_per_cell; ++j){
 	  unsigned int columnID=local_dof_indices[j];
 	  if (values1byR.find(columnID)!=values1byR.end()){
-	    elementalrhs(i)+=values1byR.find(columnID)->second*tt[i*dofs_per_cell+j];
+	    elementalrhs(i)+=values1byR.find(columnID)->second*jacobianPtr[i*dofs_per_cell+j];
 	  }
 	  if ((valuesZero.find(rowID)!= valuesZero.end()) || (valuesZero.find(columnID)!=valuesZero.end())){
-	    tt[i*dofs_per_cell+j]=0.0;
+	    jacobianPtr[i*dofs_per_cell+j]=0.0;
 	  }
 	}
       }
@@ -128,13 +120,6 @@ void poissonClass::computeLocalJacobians(){
     }
   }
   rhs2.compress(VectorOperation::add);
-  jacobianDiagonal.compress(VectorOperation::add);
-  jacobianDiagonalValue=jacobianDiagonal.linfty_norm();
-  //now store the jacobian inverse
-  for (unsigned int i=0; i<jacobianDiagonal.local_size(); i++){
-    jacobianDiagonal.local_element(i)=1.0/jacobianDiagonal.local_element(i);
-  }
-  jacobianDiagonal.update_ghost_values();
   computing_timer.exit_section("poissonClass jacobian assembly");
 }
 
@@ -159,10 +144,10 @@ void poissonClass::computeRHS(std::map<dealii::CellId,std::vector<double> >* rho
       elementalResidual=0.0;
       //local rhs
       if (rhoValues) {
-	double* tt=&((*rhoValues)[cell->id()][0]);
+	double* rhoValuesPtr=&((*rhoValues)[cell->id()][0]);
 	for (unsigned int i=0; i<dofs_per_cell; ++i){
 	  for (unsigned int q_point=0; q_point<num_quad_points; ++q_point){ 
-	    elementalResidual(i) += fe_values.shape_value(i, q_point)*tt[q_point]*fe_values.JxW (q_point);
+	    elementalResidual(i) += fe_values.shape_value(i, q_point)*rhoValuesPtr[q_point]*fe_values.JxW (q_point);
 	  }
 	}
       }
@@ -223,8 +208,12 @@ void poissonClass::AX (const dealii::MatrixFree<3,double>  &data,
 
 //vmult
 void poissonClass::vmult(vectorType &dst, const vectorType &src) const{
-  dst=0.0;  
-  dftPtr->matrix_free_data.cell_loop (&poissonClass::AX, this, dst, src);
+  dst=0.0;
+  vectorType x2;
+  x2.reinit (rhs);
+  x2=src;
+  constraintsNone.distribute(x2);
+  dftPtr->matrix_free_data.cell_loop (&poissonClass::AX, this, dst, x2);
   dst.compress(VectorOperation::add);
 
   //apply Dirichlet BC's
@@ -235,8 +224,6 @@ void poissonClass::vmult(vectorType &dst, const vectorType &src) const{
 
 //joacibi preconditioning
 void poissonClass::precondition_Jacobi(vectorType& dst, const vectorType& src, const double omega) const{
-  dst.scale(jacobianDiagonal);
-  dst*=omega;
 }
 
 //solve using CG

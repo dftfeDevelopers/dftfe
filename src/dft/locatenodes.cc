@@ -5,6 +5,8 @@ void dftClass::locateAtomCoreNodes(){
   DoFHandler<3>::active_cell_iterator
     cell = dofHandler.begin_active(),
     endc = dofHandler.end();
+  //
+  IndexSet locally_owned_elements=eigenVectors[0]->locally_owned_elements();
   //locating atom nodes
   unsigned int numAtoms=atomLocations.size()[0];
   pcout << "numAtoms: " << numAtoms << "\n";
@@ -21,7 +23,7 @@ void dftClass::locateAtomCoreNodes(){
 	  Point<3> atomCoord(atomLocations(*it,1),atomLocations(*it,2),atomLocations(*it,3));
 	   if(feNodeGlobalCoord.distance(atomCoord)<1.0e-5){ 
 	     std::cout << "Atom core (" << atomLocations(*it,0) << ") located with node id " << nodeID << " in processor " << this_mpi_process;
-	     if (eigenVectors[0]->locally_owned_elements().is_element(nodeID)){
+	     if (locally_owned_elements.is_element(nodeID)){
 	       atoms.insert (std::pair<unsigned int,double>(nodeID,atomLocations(*it,0)));
 	       std::cout << " and added \n";
 	     }

@@ -3,9 +3,6 @@
 //initialize rho
 void dftClass::initRho(){
   computing_timer.enter_section("dftClass init density"); 
-  //Initialize electron density table storage
-  rhoInValues=new std::map<dealii::CellId,std::vector<double> >;
-  rhoInVals.push_back(rhoInValues);
 
   //Readin single atom rho initial guess
   pcout << "reading initial guess for rho\n";
@@ -53,10 +50,15 @@ void dftClass::initRho(){
   QGauss<3>  quadrature_formula(FEOrder+1);
   FEValues<3> fe_values (FE, quadrature_formula, update_values);
   const unsigned int n_q_points    = quadrature_formula.size();
+  //Initialize electron density table storage
+  rhoInValues=new std::map<dealii::CellId, std::vector<double> >;
+  rhoInVals.push_back(rhoInValues);
+  //loop over elements
   typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
   for (; cell!=endc; ++cell) {
     if (cell->is_locally_owned()){
       (*rhoInValues)[cell->id()]=std::vector<double>(n_q_points);
+      double *rhoInValuesPtr = &((*rhoInValues)[cell->id()][0]);
       for (unsigned int q=0; q<n_q_points; ++q){
 	MappingQ<3> test(1); 
 	Point<3> quadPoint(test.transform_unit_to_real_cell(cell, fe_values.get_quadrature().point(q)));
@@ -69,7 +71,7 @@ void dftClass::initRho(){
 	      rhoValueAtQuadPt+=std::abs(alglib::spline1dcalc(denSpline[atomTypeMap[n]], distanceToAtom));
 	  }
 	}
-	(*rhoInValues)[cell->id()][q]=rhoValueAtQuadPt;
+	rhoInValuesPtr[q]=rhoValueAtQuadPt;
       }
     }
   }
@@ -95,15 +97,9 @@ void dftClass::initRho(){
     pcout<<"-------------------------------------"<<std::endl;
     pcout<<"Exchange or Correlation Functional not found"<<std::endl;
     pcout<<"-------------------------------------"<<std::endl;
+    exit(-1);
   }
-  else{
-    pcout<<"-------------------------------------"<<std::endl;
-    pcout<<"The exchange functional "<<funcX.info->name<<" is defined in the references(s)"
-	 << std::endl<< funcX.info->refs << std::endl;
-    pcout<<"The exchange functional "<<funcX.info->name<<" is defined in the references(s)"
-	 << std::endl<< funcX.info->refs << std::endl;
-    pcout<<"-------------------------------------"<<std::endl;	  
-  }
+  //
   computing_timer.exit_section("dftClass init density"); 
 }
 
