@@ -30,10 +30,9 @@ void eigenClass::init(){
     }
   }
   localHamiltoniansPtr=&localHamiltonians;
+
   //constraints
-  //no constraints
   constraintsNone.clear ();
-  constraintsNone.reinit (numDofs);
   DoFTools::make_hanging_node_constraints (dftPtr->dofHandler, constraintsNone);
   constraintsNone.close();
 
@@ -52,10 +51,9 @@ void eigenClass::init(){
 void eigenClass::computeMassVector(){
   computing_timer.enter_section("eigenClass Mass assembly"); 
   dftPtr->matrix_free_data.initialize_dof_vector (massVector);
-  pcout << "mass vector size: " << massVector.size() << "\n";
   massVector=0.0;
 
-//local data structures
+  //local data structures
   QGaussLobatto<3> quadratureM(FEOrder+1);
   FEValues<3> fe_valuesM (FE, quadratureM, update_values | update_JxW_values);
   const unsigned int dofs_per_cell = FE.dofs_per_cell;
@@ -77,36 +75,21 @@ void eigenClass::computeMassVector(){
 	}
       }
       cell->get_dof_indices (local_dof_indices);
-      massVector.add(local_dof_indices, elementalMassVector);
-      //constraintsNone.distribute_local_to_global(elementalMassVector, local_dof_indices, massVector);
+      constraintsNone.distribute_local_to_global(elementalMassVector, local_dof_indices, massVector);
     }
   }
-  /*
-  FEEvaluation<3,FEOrder> fe_eval(dftPtr->matrix_free_data);
-  const unsigned int      n_q_points = fe_eval.n_q_points;
-  VectorizedArray<double> one = make_vectorized_array (1.);
-  for (unsigned int cell=0; cell<dftPtr->matrix_free_data.n_macro_cells(); ++cell){
-    fe_eval.reinit(cell);
-    for (unsigned int q=0; q<n_q_points; ++q)
-      fe_eval.submit_value(one,q);
-    fe_eval.integrate (true,false);
-    fe_eval.distribute_local_to_global (massVector);
-  }
-  */
   massVector.compress(VectorOperation::add);
+  constraintsNone.distribute(massVector);
   //compute inverse
   for (unsigned int i=0; i<massVector.local_size(); i++){
     if (std::abs(massVector.local_element(i))>1.0e-15){
       massVector.local_element(i)=1.0/std::sqrt(massVector.local_element(i));
     }
     else{
+      std::cout << "\nzero entry along the mass matrix diagonal. Quitting.\n";
       exit(-1);
-      massVector.local_element(i)=0.0;
     }
   }
-  char buffer[100];
-  sprintf(buffer, "massVector norm: %18.10e \n", massVector.l2_norm());
-  pcout << buffer ;
   computing_timer.exit_section("eigenClass Mass assembly");
 }
 
@@ -250,7 +233,6 @@ void eigenClass::HX(const std::vector<vectorType*> &src, std::vector<vectorType*
   }
   dftPtr->matrix_free_data.cell_loop (&eigenClass::implementHX, this, dst, dftPtr->tempPSI2);
   for (std::vector<vectorType*>::iterator it=dst.begin(); it!=dst.end(); it++){
-    constraintsNone.distribute(**it);
     (*it)->compress(VectorOperation::add);  
   }
   computing_timer.exit_section("eigenClass HX");

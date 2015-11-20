@@ -6,7 +6,7 @@ const unsigned int n_refinement_steps=4;
 const unsigned int numElectrons=6;
 const unsigned int numEigenValues=numElectrons/2+2;
 const double lowerEndWantedSpectrum=-10.0;
-const unsigned int chebyshevOrder=100; 
+const unsigned int chebyshevOrder=1000; 
 const unsigned int numSCFIterations=25;
 
 //solver paramteters 

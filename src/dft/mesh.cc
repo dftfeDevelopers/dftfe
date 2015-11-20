@@ -13,6 +13,58 @@ void dftClass::mesh(){
   static const HyperBallBoundary<3, 3> boundary(center,20.0);
   triangulation.set_boundary(0, boundary);
 #else
+  //generate mesh
+  double L=20;
+  double L0=0.075, h0=0.05;
+  unsigned int maxElements=10000;
+  GridGenerator::hyper_cube (triangulation, -L, L);
+  triangulation.refine_global(1);
+  dealii::Point<3> origin;
+  unsigned int numLevels=0;
+  bool refineFlag=true;  
+  while(refineFlag){
+    refineFlag=false;
+    typename Triangulation<3>::active_cell_iterator cell = triangulation.begin_active(),
+      end_cell = triangulation.end();
+    double hmin=L, Lmin=L;
+    for ( ; cell != end_cell; ++cell){
+      if (cell->is_locally_owned()){
+	dealii::Point<3> center(cell->center());  
+	double h=cell->minimum_vertex_distance();
+	double lmin=center.distance(origin);
+	if (h<hmin) {hmin=h;}
+	if (lmin<Lmin) {Lmin=lmin;}
+	if ((lmin<L0) && (h>h0)){
+	  cell->set_refine_flag();
+	  refineFlag=true; 
+	}
+      }
+    }
+    if ((!refineFlag) && (hmin>1.1*h0)){
+      cell = triangulation.begin_active(); 
+      for ( ; cell != end_cell; ++cell){
+	if (cell->is_locally_owned()){
+	  dealii::Point<3> center(cell->center());  
+	  double lmin=center.distance(origin);
+	  if (lmin<1.1*Lmin){
+	     cell->set_refine_flag();
+	     refineFlag=true; 
+	  }
+	}
+      }
+    }
+    if (refineFlag){
+      triangulation.execute_coarsening_and_refinement();
+      numLevels++;
+    }
+    if (numLevels>28) {
+      std::cout << "\n numLevels>28. Quitting\n"; break;
+    }
+    else if(triangulation.n_global_active_cells()>maxElements){
+      std::cout << "\n numElements : " << triangulation.n_global_active_cells() << ", > maxElements. Quitting\n"; break;      
+    }
+  }
+  /*
   //define mesh parameters
   double L=20;
   double meshBias=0.7;
@@ -64,7 +116,7 @@ void dftClass::mesh(){
       numLevels++;
     }
   }
-
+  */
   double minElemLength=L;
   typename Triangulation<3>::active_cell_iterator cell = triangulation.begin_active(),
     end_cell = triangulation.end();

@@ -107,7 +107,7 @@ void dftClass::compute_fermienergy(){
   }
   if(std::abs(R)>1.0e-12){
     pcout << "Fermi Energy computation: Newton iterations failed to converge\n";
-    exit(-1);
+    //exit(-1);
   }
   if (this_mpi_process == 0) std::printf("Fermi energy Residual:%30.20e \n", std::abs(R));
 

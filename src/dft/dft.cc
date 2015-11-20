@@ -56,6 +56,15 @@ void dftClass::run ()
   //phiExt with nuclear charge
   poisson.solve(poisson.phiExt);
   
+  /*
+  DataOut<3> data_out;
+  data_out.attach_dof_handler (dofHandler);
+  data_out.add_data_vector (poisson.phiExt, "solution");
+  data_out.build_patches ();
+  std::ofstream output ("poisson.vtu");
+  data_out.write_vtu (output);
+  */
+
   //Begin SCF iteration
   unsigned int scfIter=0;
   double norm=1.0;

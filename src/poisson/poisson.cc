@@ -33,21 +33,16 @@ void poissonClass::init(){
   constraintsNone.clear ();
   DoFTools::make_hanging_node_constraints (dftPtr->dofHandler, constraintsNone);
   constraintsNone.close();
-  pcout << "constraintsNone size: " << constraintsNone.n_constraints() << "\n";
 
   //zero constraints
   constraintsZero.clear ();
-  //DoFTools::make_hanging_node_constraints (dftPtr->dofHandler, constraintsZero);
   VectorTools::interpolate_boundary_values (dftPtr->dofHandler, 0, ZeroFunction<3>(), constraintsZero);
   constraintsZero.close ();
-  pcout << "constraintsZero size: " << constraintsZero.n_constraints() << "\n";
 
   //OnebyR constraints
   constraints1byR.clear ();
-  //DoFTools::make_hanging_node_constraints (dftPtr->dofHandler, constraints1byR);
   VectorTools::interpolate_boundary_values (dftPtr->dofHandler, 0, OnebyRBoundaryFunction<3>(dftPtr->atomLocations),constraints1byR);
   constraints1byR.close ();
-  pcout << "constraints1byR size: " << constraints1byR.n_constraints() << "\n";
 
   //initialize vectors
   dftPtr->matrix_free_data.initialize_dof_vector (rhs);
@@ -222,7 +217,7 @@ void poissonClass::vmult(vectorType &dst, const vectorType &src) const{
   }
 }
 
-//joacibi preconditioning
+//jacobi preconditioning
 void poissonClass::precondition_Jacobi(vectorType& dst, const vectorType& src, const double omega) const{
 }
 
