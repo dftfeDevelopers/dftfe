@@ -35,7 +35,8 @@ void eigenClass::init(){
   constraintsNone.clear ();
   DoFTools::make_hanging_node_constraints (dftPtr->dofHandler, constraintsNone);
   constraintsNone.close();
-
+  constraintsNone2.clear ();
+  constraintsNone2.close();
   //compute mass vector
   computeMassVector();
 
@@ -75,21 +76,18 @@ void eigenClass::computeMassVector(){
 	}
       }
       cell->get_dof_indices (local_dof_indices);
-      constraintsNone.distribute_local_to_global(elementalMassVector, local_dof_indices, massVector);
+      constraintsNone2.distribute_local_to_global(elementalMassVector, local_dof_indices, massVector);
     }
   }
   massVector.compress(VectorOperation::add);
-  constraintsNone.distribute(massVector);
   //compute inverse
   for (unsigned int i=0; i<massVector.local_size(); i++){
     if (std::abs(massVector.local_element(i))>1.0e-15){
       massVector.local_element(i)=1.0/std::sqrt(massVector.local_element(i));
     }
-    else{
-      std::cout << "\nzero entry along the mass matrix diagonal. Quitting.\n";
-      exit(-1);
-    }
   }
+  constraintsNone.distribute(massVector);
+
   computing_timer.exit_section("eigenClass Mass assembly");
 }
 

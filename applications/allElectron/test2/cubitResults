@@ -1,0 +1,274 @@
+number of MPI processes: 1
+number of elements: 272
+number of degrees of freedom: 17713
+reading initial guess for rho
+initial total charge:   5.9999970181e+00 
+numAtoms: 1
+Atom core (6) located with node id 17370 in processor 0 and added 
+reading initial guess for PSI
+poisson solve: initial residual:1.199401e+01, current residual:9.833735e-12, nsteps:1237, tolerance criterion:1.199401e-11
+
+
+Begin SCF Iteration:1
+poisson solve: initial residual:6.000482e+00, current residual:5.699417e-12, nsteps:1228, tolerance criterion:6.000482e-12
+bUp:   1.8459762570e+05
+bLow: 0
+a0: -10
+ 0 l2:   1.0000065102e+00     linf:   3.2624851405e-02 
+ 1 l2:   1.0000062363e+00     linf:   2.8786374871e-02 
+ 2 l2:   1.0000061991e+00     linf:   3.7366244034e-02 
+ 3 l2:   1.0000061991e+00     linf:   3.7366244034e-02 
+ 4 l2:   1.0000061991e+00     linf:   3.7366244034e-02 
+Total time for only chebyshev filter: 0.167682mins
+ 0 l2:   9.6194085379e-01     linf:   3.1377207810e-02 
+ 1 l2:   1.2927618208e-05     linf:   3.0969657911e-07 
+ 2 l2:   3.2779718621e-06     linf:   1.2244144006e-07 
+ 3 l2:   3.2779718621e-06     linf:   1.2244144006e-07 
+ 4 l2:   3.2779718621e-06     linf:   1.2244144006e-07 
+eigen value  0:  -9.9473398406e+00
+eigen value  1:  -5.0065271134e-01
+eigen value  2:  -1.9894791248e-01
+eigen value  3:  -1.9894791248e-01
+eigen value  4:  -1.9894791248e-01
+Total time for chebyshev filter: 0.16786mins
+Fermi energy Residual:    1.42108547152020037174e-14 
+Fermi energy:   -1.99167419119963912122e-01 
+poisson solve: initial residual:6.000482e+00, current residual:5.292438e-12, nsteps:1235, tolerance criterion:6.000482e-12
+partialOccupancy 0:     1.00000000000000000000e+00 
+partialOccupancy 1:     1.00000000000000000000e+00 
+partialOccupancy 2:     3.33333333334194570341e-01 
+partialOccupancy 3:     3.33333333333454440162e-01 
+partialOccupancy 4:     3.33333333332344272648e-01 
+Total energy:   -3.74249400655596815568e+01 
+Band energy:   -2.12938809288159518474e+01 
+Kinetic energy:    3.71874778314672482793e+01 
+Exchange energy:   -4.35497687641138764292e+00 
+Correlation energy:   -3.71313247923213685109e-01 
+Electrostatic energy:   -6.98861277726923333375e+01 
+Repulsive energy:    0.00000000000000000000e+00 
+SCF iteration: 1 complete
+
+
+Begin SCF Iteration:2
+Mixing Scheme: iter:2, norm:4.242789e-06
+poisson solve: initial residual:4.926314e-05, current residual:5.261747e-12, nsteps:980, tolerance criterion:6.000482e-12
+bUp:   1.8459762648e+05
+bLow: -0.198948
+a0: -9.94734
+ 0 l2:   1.0000000000e+00     linf:   3.2618645613e-02 
+ 1 l2:   1.0000000000e+00     linf:   2.8784134613e-02 
+ 2 l2:   1.0000000000e+00     linf:   4.0409758203e-02 
+ 3 l2:   1.0000000000e+00     linf:   3.9871001606e-02 
+ 4 l2:   1.0000000000e+00     linf:   4.0951603701e-02 
+Total time for only chebyshev filter: 0.172228mins
+ 0 l2:   1.0010115021e+00     linf:   3.2651703805e-02 
+ 1 l2:   8.4439011125e-06     linf:   2.1327086750e-07 
+ 2 l2:   9.8075177070e-07     linf:   3.9652804004e-08 
+ 3 l2:   9.8075177070e-07     linf:   3.9124118487e-08 
+ 4 l2:   9.8075177070e-07     linf:   4.0184520431e-08 
+eigen value  0:  -9.9486961338e+00
+eigen value  1:  -5.0121315028e-01
+eigen value  2:  -1.9947607839e-01
+eigen value  3:  -1.9947607839e-01
+eigen value  4:  -1.9947607839e-01
+Total time for chebyshev filter: 0.172419mins
+Fermi energy Residual:    2.57571741713036317378e-14 
+Fermi energy:   -1.99695585027340638540e-01 
+poisson solve: initial residual:6.137703e-05, current residual:5.683531e-12, nsteps:984, tolerance criterion:6.000482e-12
+partialOccupancy 0:     1.00000000000000000000e+00 
+partialOccupancy 1:     1.00000000000000000000e+00 
+partialOccupancy 2:     3.33333333353048044678e-01 
+partialOccupancy 3:     3.33333333331487291495e-01 
+partialOccupancy 4:     3.33333333315477431391e-01 
+Total energy:   -3.74249397701565200691e+01 
+Band energy:   -2.12987707249714404156e+01 
+Kinetic energy:    3.71941325185020943422e+01 
+Exchange energy:   -4.35603655860958660639e+00 
+Correlation energy:   -3.71384274642552747459e-01 
+Electrostatic energy:   -6.98916514554064747244e+01 
+Repulsive energy:    0.00000000000000000000e+00 
+SCF iteration: 2 complete
+
+
+Begin SCF Iteration:3
+
+N:1
+A,c:3.70971e-06 -4.65734e-08
+
+Anderson mixing  c2:1.012554e+00, c1:-1.255445e-02, 
+Mixing Scheme: iter:3, norm:4.399309e-07
+poisson solve: initial residual:2.522451e-05, current residual:5.847249e-12, nsteps:953, tolerance criterion:6.000482e-12
+bUp:   1.8459762707e+05
+bLow: -0.199476
+a0: -9.9487
+ 0 l2:   1.0000000000e+00     linf:   3.2618709913e-02 
+ 1 l2:   1.0000000000e+00     linf:   2.8786921530e-02 
+ 2 l2:   1.0000000000e+00     linf:   4.0974409040e-02 
+ 3 l2:   1.0000000000e+00     linf:   4.0340678890e-02 
+ 4 l2:   1.0000000000e+00     linf:   4.0698880807e-02 
+Total time for only chebyshev filter: 0.16742mins
+ 0 l2:   9.9944087562e-01     linf:   3.2600437319e-02 
+ 1 l2:   7.2666859543e-06     linf:   1.8412557102e-07 
+ 2 l2:   9.7146415856e-07     linf:   3.9777263014e-08 
+ 3 l2:   9.7146415857e-07     linf:   3.9162072525e-08 
+ 4 l2:   9.7146415857e-07     linf:   3.9509795667e-08 
+eigen value  0:  -9.9479458403e+00
+eigen value  1:  -5.0090090270e-01
+eigen value  2:  -1.9918221514e-01
+eigen value  3:  -1.9918221514e-01
+eigen value  4:  -1.9918221514e-01
+Total time for chebyshev filter: 0.167594mins
+Fermi energy Residual:    5.24025267623073887080e-14 
+Fermi energy:   -1.99401721780334384437e-01 
+poisson solve: initial residual:7.018497e-05, current residual:5.667939e-12, nsteps:986, tolerance criterion:6.000482e-12
+partialOccupancy 0:     1.00000000000000000000e+00 
+partialOccupancy 1:     1.00000000000000000000e+00 
+partialOccupancy 2:     3.33333333570213274921e-01 
+partialOccupancy 3:     3.33333333357741901093e-01 
+partialOccupancy 4:     3.33333333072018622723e-01 
+Total energy:   -3.74249396860461729375e+01 
+Band energy:   -2.12960579162965863986e+01 
+Kinetic energy:    3.71873266262294492890e+01 
+Exchange energy:   -4.35485737903404768190e+00 
+Correlation energy:   -3.71301373097378872856e-01 
+Electrostatic energy:   -6.98861075601441967819e+01 
+Repulsive energy:    0.00000000000000000000e+00 
+SCF iteration: 3 complete
+
+
+Begin SCF Iteration:4
+
+N:2
+A,c:9.45819e-07 3.64683e-07
+
+Anderson mixing  c3:7.378292e-01, c2:-1.587681e-01, c1:4.209389e-01, 
+Mixing Scheme: iter:4, norm:2.234791e-07
+poisson solve: initial residual:1.547812e-05, current residual:5.739060e-12, nsteps:941, tolerance criterion:6.000482e-12
+bUp:   1.8459762703e+05
+bLow: -0.199182
+a0: -9.94795
+ 0 l2:   1.0000000000e+00     linf:   3.2618675215e-02 
+ 1 l2:   1.0000000000e+00     linf:   2.8785083347e-02 
+ 2 l2:   1.0000000000e+00     linf:   4.0681344948e-02 
+ 3 l2:   1.0000000000e+00     linf:   4.0307322040e-02 
+ 4 l2:   1.0000000000e+00     linf:   4.0938703215e-02 
+Total time for only chebyshev filter: 0.176151mins
+ 0 l2:   1.0003257266e+00     linf:   3.2629319662e-02 
+ 1 l2:   6.5578359314e-06     linf:   1.8105661647e-07 
+ 2 l2:   9.7682852905e-07     linf:   3.9768431630e-08 
+ 3 l2:   9.7682852908e-07     linf:   3.9402791503e-08 
+ 4 l2:   9.7682852912e-07     linf:   4.0020022307e-08 
+eigen value  0:  -9.9483827452e+00
+eigen value  1:  -5.0109470042e-01
+eigen value  2:  -1.9936497876e-01
+eigen value  3:  -1.9936497876e-01
+eigen value  4:  -1.9936497876e-01
+Total time for chebyshev filter: 0.176327mins
+Fermi energy Residual:    5.32907051820075139403e-14 
+Fermi energy:   -1.99584485400170319469e-01 
+poisson solve: initial residual:7.200351e-05, current residual:5.499059e-12, nsteps:986, tolerance criterion:6.000482e-12
+partialOccupancy 0:     1.00000000000000000000e+00 
+partialOccupancy 1:     1.00000000000000000000e+00 
+partialOccupancy 2:     3.33333335737230618268e-01 
+partialOccupancy 3:     3.33333333108381646426e-01 
+partialOccupancy 4:     3.33333331154361589554e-01 
+Total energy:   -3.74249396135553382692e+01 
+Band energy:   -2.12976848486736578536e+01 
+Kinetic energy:    3.71938700649866120784e+01 
+Exchange energy:   -4.35604270371210500201e+00 
+Correlation energy:   -3.71386015400861746460e-01 
+Electrostatic energy:   -6.98913809594289858751e+01 
+Repulsive energy:    0.00000000000000000000e+00 
+SCF iteration: 4 complete
+
+
+Begin SCF Iteration:5
+
+N:3
+A,c:7.45302e-07 3.43916e-07
+
+Anderson mixing  c4:5.284836e-01, c3:-4.524083e-02, c2:-2.077535e-02, c1:5.375326e-01, 
+Mixing Scheme: iter:5, norm:1.660089e-07
+poisson solve: initial residual:6.586041e-06, current residual:5.444554e-12, nsteps:920, tolerance criterion:6.000482e-12
+bUp:   1.8459762712e+05
+bLow: -0.199365
+a0: -9.94838
+ 0 l2:   1.0000000000e+00     linf:   3.2618694887e-02 
+ 1 l2:   1.0000000000e+00     linf:   2.8786217103e-02 
+ 2 l2:   1.0000000000e+00     linf:   4.0967784014e-02 
+ 3 l2:   1.0000000000e+00     linf:   4.0342447950e-02 
+ 4 l2:   1.0000000000e+00     linf:   4.0715833938e-02 
+Total time for only chebyshev filter: 0.152035mins
+ 0 l2:   9.9985959259e-01     linf:   3.2614106185e-02 
+ 1 l2:   6.3717116577e-06     linf:   1.8248188444e-07 
+ 2 l2:   9.7390396899e-07     linf:   3.9870239730e-08 
+ 3 l2:   9.7390396923e-07     linf:   3.9261674693e-08 
+ 4 l2:   9.7390396941e-07     linf:   3.9625047039e-08 
+eigen value  0:  -9.9481943700e+00
+eigen value  1:  -5.0101341873e-01
+eigen value  2:  -1.9928837644e-01
+eigen value  3:  -1.9928837642e-01
+eigen value  4:  -1.9928837640e-01
+Total time for chebyshev filter: 0.152194mins
+Fermi energy Residual:    1.33226762955018784851e-14 
+Fermi energy:   -1.99507883061181501283e-01 
+poisson solve: initial residual:6.614434e-05, current residual:5.674234e-12, nsteps:984, tolerance criterion:6.000482e-12
+partialOccupancy 0:     1.00000000000000000000e+00 
+partialOccupancy 1:     1.00000000000000000000e+00 
+partialOccupancy 2:     3.33333346716425560352e-01 
+partialOccupancy 3:     3.33333334713437567931e-01 
+partialOccupancy 4:     3.33333318570130543446e-01 
+Total energy:   -3.74249398486027189392e+01 
+Band energy:   -2.12969923303054571306e+01 
+Kinetic energy:    3.71881678313322012741e+01 
+Exchange energy:   -4.35497705956147651563e+00 
+Correlation energy:   -3.71309173757090826840e-01 
+Electrostatic energy:   -6.98868214466163522047e+01 
+Repulsive energy:    0.00000000000000000000e+00 
+SCF iteration: 5 complete
+
+
+Begin SCF Iteration:6
+
+N:4
+A,c:4.69088e-07 1.90232e-07
+
+Anderson mixing  c5:1.416870e+00, c4:1.270124e-01, c3:-2.266306e-01, c2:-8.509861e-01, c1:5.337340e-01, 
+Mixing Scheme: iter:6, norm:7.738450e-08
+poisson solve: initial residual:4.742375e-06, current residual:5.623042e-12, nsteps:901, tolerance criterion:6.000482e-12
+bUp:   1.8459762708e+05
+bLow: -0.199288
+a0: -9.94819
+ 0 l2:   1.0000000000e+00     linf:   3.2618686090e-02 
+ 1 l2:   1.0000000000e+00     linf:   2.8785692871e-02 
+ 2 l2:   1.0000000000e+00     linf:   4.0687613680e-02 
+ 3 l2:   1.0000000000e+00     linf:   4.0314756643e-02 
+ 4 l2:   1.0000000000e+00     linf:   4.0939151351e-02 
+Total time for only chebyshev filter: 0.153922mins
+ 0 l2:   1.0000651549e+00     linf:   3.2620814709e-02 
+ 1 l2:   6.3287331559e-06     linf:   1.8191217081e-07 
+ 2 l2:   9.7525483058e-07     linf:   3.9706872237e-08 
+ 3 l2:   9.7525483368e-07     linf:   3.9342994483e-08 
+ 4 l2:   9.7525483785e-07     linf:   3.9952353074e-08 
+eigen value  0:  -9.9482817751e+00
+eigen value  1:  -5.0105951131e-01
+eigen value  2:  -1.9933202077e-01
+eigen value  3:  -1.9933202038e-01
+eigen value  4:  -1.9933202008e-01
+Total time for chebyshev filter: 0.154074mins
+Fermi energy Residual:    6.21724893790087662637e-15 
+Fermi energy:   -1.99551527051976873572e-01 
+poisson solve: initial residual:6.053604e-05, current residual:5.823336e-12, nsteps:983, tolerance criterion:6.000482e-12
+partialOccupancy 0:     1.00000000000000000000e+00 
+partialOccupancy 1:     1.00000000000000000000e+00 
+partialOccupancy 2:     3.33333586482268628970e-01 
+partialOccupancy 3:     3.33333309668594202080e-01 
+partialOccupancy 4:     3.33333103849140499619e-01 
+Total energy:   -3.74249398149846115302e+01 
+Band energy:   -2.12973466136379947500e+01 
+Kinetic energy:    3.71932443371864707160e+01 
+Exchange energy:   -4.35593866839671139957e+00 
+Correlation energy:   -3.71378513722141812003e-01 
+Electrostatic energy:   -6.98908669700522295898e+01 
+Repulsive energy:    0.00000000000000000000e+00 
+SCF iteration: 6 complete

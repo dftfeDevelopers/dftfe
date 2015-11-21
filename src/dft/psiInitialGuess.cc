@@ -105,8 +105,11 @@ void dftClass::readPSIRadialValues(std::vector<std::vector<std::vector<double> >
 	  }
 	}
       }
-      for (unsigned int j=0; j<5; ++j){
-	constraintsNone.distribute_local_to_global(local_dof_values[j], local_dof_indices, *eigenVectors[j]);
+      for (unsigned int i=0; i<eigenVectors.size(); ++i){
+	for (unsigned int j=0; j<local_dof_indices.size(); j++){
+	  (*eigenVectors[i])(local_dof_indices[j])=0.0;
+	}
+	constraintsNone.distribute_local_to_global(local_dof_values[i], local_dof_indices, *eigenVectors[i]);
       }
     }
   }

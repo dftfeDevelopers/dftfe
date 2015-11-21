@@ -22,10 +22,11 @@ void dftClass::mesh(){
   dealii::Point<3> origin;
   unsigned int numLevels=0;
   bool refineFlag=true;  
+  typename Triangulation<3>::active_cell_iterator cell, end_cell;
   while(refineFlag){
     refineFlag=false;
-    typename Triangulation<3>::active_cell_iterator cell = triangulation.begin_active(),
-      end_cell = triangulation.end();
+    cell = triangulation.begin_active();
+    end_cell = triangulation.end();
     double hmin=L, Lmin=L;
     for ( ; cell != end_cell; ++cell){
       if (cell->is_locally_owned()){
@@ -64,6 +65,22 @@ void dftClass::mesh(){
       std::cout << "\n numElements : " << triangulation.n_global_active_cells() << ", > maxElements. Quitting\n"; break;      
     }
   }
+  
+  /*
+  cell = triangulation.begin_active(), end_cell = triangulation.end();
+  double hmin=L, Lmin=L;
+  for ( ; cell != end_cell; ++cell){
+    if (cell->is_locally_owned()){
+      dealii::Point<3> center(cell->center());  
+      double h=cell->minimum_vertex_distance();
+      double lmin=center.distance(origin);
+      if ((lmin<10*L0) && (h>10*h0)){
+	cell->set_refine_flag();
+      }
+    }
+  }
+  triangulation.execute_coarsening_and_refinement();
+  */
   /*
   //define mesh parameters
   double L=20;
@@ -118,8 +135,8 @@ void dftClass::mesh(){
   }
   */
   double minElemLength=L;
-  typename Triangulation<3>::active_cell_iterator cell = triangulation.begin_active(),
-    end_cell = triangulation.end();
+  cell = triangulation.begin_active();
+  end_cell = triangulation.end();
   for ( ; cell != end_cell; ++cell){
     if (cell->is_locally_owned()){
       if (cell->minimum_vertex_distance()<minElemLength) minElemLength = cell->minimum_vertex_distance();
