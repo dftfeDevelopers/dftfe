@@ -59,61 +59,51 @@ void dftClass::readPSIRadialValues(std::vector<std::vector<std::vector<double> >
   std::map<types::global_dof_index, Point<3> > support_points;
   MappingQ<3> mapQ(1);
   DoFTools::map_dofs_to_support_points(mapQ, dofHandler, support_points); 
-  std::vector<types::global_dof_index> local_dof_indices(dofs_per_cell);
-  std::vector<std::vector<double> > local_dof_values(5, std::vector<double>(dofs_per_cell));
-  DoFHandler<3>::active_cell_iterator
-    cell = dofHandler.begin_active(),
-    endc = dofHandler.end();
-  //element loop
-  for (; cell!=endc; ++cell) {
-    if (cell->is_locally_owned()){
-      //node loop
-      cell->get_dof_indices(local_dof_indices);
-      for (unsigned int i=0; i<dofs_per_cell; ++i){
-	unsigned int dofID=local_dof_indices[i];
-	if (!eigenVectors[0]->in_local_range(dofID)) {continue;}
-	Point<3> node = support_points[dofID];
-	for(unsigned int atom=0; atom<atomLocations.size()[0]; atom++){
-	  Point<3> atomCoord(atomLocations(atom,1),atomLocations(atom,2),atomLocations(atom,3));
-	  //
-	  double x =node[0]-atomCoord[0];
-	  double y =node[1]-atomCoord[1];
-	  double z =node[2]-atomCoord[2];
-	  //
-	  double r = sqrt(x*x + y*y + z*z);
-	  double theta = acos(z/r);
-	  double phi = atan2(y,x);
-	  //pcout << "r:" << r << " t:" << theta << " p:" << phi << std::endl;
-	  if (r==0){theta=0; phi=0;}
-	  double R;
-	  if (atom==0){
-	    R=0.0;
-	    //Carbon
-	    //1s
-	    if (r<=outerMostPointCarbon) R = alglib::spline1dcalc(nEqualOnelEqualsZeroSplineCarbon,r);
-	    local_dof_values[0][i] =  R*boost::math::spherical_harmonic_r(0,0,theta,phi);
-	    //2s
-	    if (r<=outerMostPointCarbon) R = alglib::spline1dcalc(nEqualTwolEqualsZeroSplineCarbon,r);
-	    local_dof_values[1][i] =  R*boost::math::spherical_harmonic_r(0,0,theta,phi);
-	    //2px
-	    if (r<=outerMostPointCarbon) R = alglib::spline1dcalc(nEqualTwolEqualsOneSplineCarbon,r);
-	    local_dof_values[2][i] = R*sqrt(2.0)*boost::math::spherical_harmonic_i(1,1,theta,phi);
-	    //2py
-	    local_dof_values[3][i] = R*boost::math::spherical_harmonic_r(1,0,theta,phi);
-	    //2pz
-	    local_dof_values[4][i] = R*sqrt(2.0)*boost::math::spherical_harmonic_r(1,1,theta,phi);
-	  }
-	}
-      }
-      for (unsigned int i=0; i<eigenVectors.size(); ++i){
-	for (unsigned int j=0; j<local_dof_indices.size(); j++){
-	  (*eigenVectors[i])(local_dof_indices[j])=0.0;
-	}
-	constraintsNone.distribute_local_to_global(local_dof_values[i], local_dof_indices, *eigenVectors[i]);
+  IndexSet locallyOwnedSet;
+  DoFTools::extract_locally_owned_dofs(dofHandler, locallyOwnedSet);
+  std::vector<unsigned int> locallyOwnedDOFs;
+  locallyOwnedSet.fill_index_vector(locallyOwnedDOFs);
+  std::vector<std::vector<double> > local_dof_values(5, std::vector<double>(locallyOwnedDOFs.size()));
+  //loop over nodes
+  for(unsigned int dof=0; dof<locallyOwnedDOFs.size(); dof++){
+    unsigned int dofID= locallyOwnedDOFs[dof];
+     Point<3> node = support_points[dofID];
+    for(unsigned int atom=0; atom<atomLocations.size()[0]; atom++){
+      Point<3> atomCoord(atomLocations(atom,1),atomLocations(atom,2),atomLocations(atom,3));
+      //
+      double x =node[0]-atomCoord[0];
+      double y =node[1]-atomCoord[1];
+      double z =node[2]-atomCoord[2];
+      //
+      double r = sqrt(x*x + y*y + z*z);
+      double theta = acos(z/r);
+      double phi = atan2(y,x);
+      //pcout << "r:" << r << " t:" << theta << " p:" << phi << std::endl;
+      if (r==0){theta=0; phi=0;}
+      double R;
+      if (atom==0){
+	R=0.0;
+	//Carbon
+	//1s
+	if (r<=outerMostPointCarbon) R = alglib::spline1dcalc(nEqualOnelEqualsZeroSplineCarbon,r);
+	local_dof_values[0][dof] =  R*boost::math::spherical_harmonic_r(0,0,theta,phi);
+	//2s
+	if (r<=outerMostPointCarbon) R = alglib::spline1dcalc(nEqualTwolEqualsZeroSplineCarbon,r);
+	local_dof_values[1][dof] =  R*boost::math::spherical_harmonic_r(0,0,theta,phi);
+	//2px
+	if (r<=outerMostPointCarbon) R = alglib::spline1dcalc(nEqualTwolEqualsOneSplineCarbon,r);
+	local_dof_values[2][dof] = R*sqrt(2.0)*boost::math::spherical_harmonic_i(1,1,theta,phi);
+	//2py
+	local_dof_values[3][dof] = R*boost::math::spherical_harmonic_r(1,0,theta,phi);
+	//2pz
+	local_dof_values[4][dof] = R*sqrt(2.0)*boost::math::spherical_harmonic_r(1,1,theta,phi);
       }
     }
   }
-  
+  //
+  for (unsigned int i=0; i<eigenVectors.size(); ++i){
+    constraintsNone.distribute_local_to_global(local_dof_values[i], locallyOwnedDOFs, *eigenVectors[i]);
+  }
   //multiply by M^0.5
   for (unsigned int i=0; i<eigenVectors.size(); ++i){
     for (unsigned int j=0; j<eigenVectors[i]->local_size(); j++){

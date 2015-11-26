@@ -129,7 +129,6 @@ void dftClass::init(){
   additional_data.mpi_communicator = MPI_COMM_WORLD;
   additional_data.tasks_parallel_scheme = MatrixFree<3>::AdditionalData::partition_partition;
   constraintsNone.clear ();
-  constraintsNone.reinit (locally_relevant_dofs);
   DoFTools::make_hanging_node_constraints (dofHandler, constraintsNone);
   constraintsNone.close();
   matrix_free_data.reinit (dofHandler, constraintsNone, quadrature, additional_data);

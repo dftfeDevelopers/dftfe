@@ -232,6 +232,7 @@ void poissonClass::solve(vectorType& phi, std::map<dealii::CellId,std::vector<do
   //PreconditionJacobi<poissonClass> preconditioner;
   //relaxation=0.6;
   try{
+    phi=0.0;
     solver.solve(*this, phi, rhs, IdentityMatrix(rhs.size()));
     constraintsNone.distribute(phi);
     phi.update_ghost_values();

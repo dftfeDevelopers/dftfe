@@ -76,7 +76,7 @@ void eigenClass::computeMassVector(){
 	}
       }
       cell->get_dof_indices (local_dof_indices);
-      constraintsNone2.distribute_local_to_global(elementalMassVector, local_dof_indices, massVector);
+      constraintsNone.distribute_local_to_global(elementalMassVector, local_dof_indices, massVector);
     }
   }
   massVector.compress(VectorOperation::add);
@@ -86,7 +86,7 @@ void eigenClass::computeMassVector(){
       massVector.local_element(i)=1.0/std::sqrt(massVector.local_element(i));
     }
   }
-  constraintsNone.distribute(massVector);
+  //constraintsNone.distribute(massVector);
 
   computing_timer.exit_section("eigenClass Mass assembly");
 }
@@ -133,7 +133,7 @@ void eigenClass::computeLocalHamiltonians(std::map<dealii::CellId,std::vector<do
 								 (cellPhiTotal[q_point]+exchangePotentialVal[q_point]+corrPotentialVal[q_point]))*fe_valuesH.JxW (q_point);
 	  }
 	  //H'=M^(-0.5)*H*M^(-0.5)
-	  tt[i*dofs_per_cell+j]*=massVector(local_dof_indices[j])*massVector(local_dof_indices[i]);
+	  //tt[i*dofs_per_cell+j]*=massVector(local_dof_indices[j])*massVector(local_dof_indices[i]);
 	}
       }
     }
@@ -226,11 +226,13 @@ void eigenClass::HX(const std::vector<vectorType*> &src, std::vector<vectorType*
   computing_timer.enter_section("eigenClass HX");
   for (unsigned int i=0; i<src.size(); i++){
     *(dftPtr->tempPSI2[i])=*src[i];
+    dftPtr->tempPSI2[i]->scale(massVector); //MX
     constraintsNone.distribute(*(dftPtr->tempPSI2[i]));
     *dst[i]=0.0;
   }
-  dftPtr->matrix_free_data.cell_loop (&eigenClass::implementHX, this, dst, dftPtr->tempPSI2);
+  dftPtr->matrix_free_data.cell_loop (&eigenClass::implementHX, this, dst, dftPtr->tempPSI2); //HMX
   for (std::vector<vectorType*>::iterator it=dst.begin(); it!=dst.end(); it++){
+    (*it)->scale(massVector); //MHMX  
     (*it)->compress(VectorOperation::add);  
   }
   computing_timer.exit_section("eigenClass HX");
@@ -241,6 +243,7 @@ void eigenClass::XHX(const std::vector<vectorType*> &src){
   computing_timer.enter_section("eigenClass XHX");
   for (unsigned int i=0; i<src.size(); i++){
     *(dftPtr->tempPSI2[i])=*src[i];
+    dftPtr->tempPSI2[i]->scale(massVector); //MX
     constraintsNone.distribute(*(dftPtr->tempPSI2[i]));
   }
   for (std::vector<double>::iterator it=XHXValue.begin(); it!=XHXValue.end(); it++){

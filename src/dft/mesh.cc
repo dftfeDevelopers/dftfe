@@ -66,7 +66,7 @@ void dftClass::mesh(){
     }
   }
   
-  /*
+  
   cell = triangulation.begin_active(), end_cell = triangulation.end();
   double hmin=L, Lmin=L;
   for ( ; cell != end_cell; ++cell){
@@ -74,13 +74,13 @@ void dftClass::mesh(){
       dealii::Point<3> center(cell->center());  
       double h=cell->minimum_vertex_distance();
       double lmin=center.distance(origin);
-      if ((lmin<10*L0) && (h>10*h0)){
+      if ((lmin<10*L0) && (h>4*h0)){
 	cell->set_refine_flag();
       }
     }
   }
   triangulation.execute_coarsening_and_refinement();
-  */
+  
   /*
   //define mesh parameters
   double L=20;
