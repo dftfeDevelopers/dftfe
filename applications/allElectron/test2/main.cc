@@ -6,7 +6,7 @@ const unsigned int n_refinement_steps=4;
 const unsigned int numElectrons=6;
 const unsigned int numEigenValues=numElectrons/2+2;
 const double lowerEndWantedSpectrum=-10.0;
-const unsigned int chebyshevOrder=1000; 
+const unsigned int chebyshevOrder=2000; 
 const unsigned int numSCFIterations=25;
 
 //solver paramteters 
@@ -18,7 +18,7 @@ const double TVal=100.0;
 const double kb = 3.166811429e-06;
 
 //Mesh information
-//#define meshFileName "../../../data/mesh/singleAtom.inp"
+#define meshFileName "../../../data/mesh/singleAtom.inp"
 
 //dft header
 #include "../../../src/dft/dft.cc"
