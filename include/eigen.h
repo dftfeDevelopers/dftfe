@@ -32,7 +32,7 @@ public:
   std::map<dealii::CellId,std::vector<double> >*   localHamiltoniansPtr; //this ptr created to circumvent problem with const definition of HX
  
   //constraints
-  dealii::ConstraintMatrix  constraintsNone, constraintsNone2;
+  dealii::ConstraintMatrix  constraintsNone; 
 
   //data structures
   vectorType massVector;

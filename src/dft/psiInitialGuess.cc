@@ -67,7 +67,7 @@ void dftClass::readPSIRadialValues(std::vector<std::vector<std::vector<double> >
   //loop over nodes
   for(unsigned int dof=0; dof<locallyOwnedDOFs.size(); dof++){
     unsigned int dofID= locallyOwnedDOFs[dof];
-     Point<3> node = support_points[dofID];
+    Point<3> node = support_points[dofID];
     for(unsigned int atom=0; atom<atomLocations.size()[0]; atom++){
       Point<3> atomCoord(atomLocations(atom,1),atomLocations(atom,2),atomLocations(atom,3));
       //

@@ -35,8 +35,6 @@ void eigenClass::init(){
   constraintsNone.clear ();
   DoFTools::make_hanging_node_constraints (dftPtr->dofHandler, constraintsNone);
   constraintsNone.close();
-  constraintsNone2.clear ();
-  constraintsNone2.close();
   //compute mass vector
   computeMassVector();
 
