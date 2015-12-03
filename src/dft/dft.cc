@@ -36,12 +36,12 @@ dftClass::dftClass():
     PSI.push_back(new vectorType);
     tempPSI.push_back(new vectorType);
     tempPSI2.push_back(new vectorType);
+    tempPSI3.push_back(new vectorType);
   } 
 }
 
 //dft run
-void dftClass::run ()
-{
+void dftClass::run (){
   pcout << "number of MPI processes: "
 	<< Utilities::MPI::n_mpi_processes(mpi_communicator)
 	<< std::endl;

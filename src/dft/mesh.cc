@@ -94,11 +94,11 @@ void dftClass::mesh(){
       double h=cell->minimum_vertex_distance();
       double lmin=center.distance(origin);
       if ((lmin<10*L0) && (h>4*h0)){
-	cell->set_refine_flag();
+	//cell->set_refine_flag();
       }
     }
   }
-  triangulation.execute_coarsening_and_refinement();
+  //  triangulation.execute_coarsening_and_refinement();
   
   /*
   //define mesh parameters

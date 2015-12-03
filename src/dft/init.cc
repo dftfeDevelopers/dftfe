@@ -138,6 +138,7 @@ void dftClass::init(){
     matrix_free_data.initialize_dof_vector(*PSI[i]);
     matrix_free_data.initialize_dof_vector(*tempPSI[i]);
     matrix_free_data.initialize_dof_vector(*tempPSI2[i]);
+    matrix_free_data.initialize_dof_vector(*tempPSI3[i]);
   } 
   matrix_free_data.initialize_dof_vector(vChebyshev);
   matrix_free_data.initialize_dof_vector(v0Chebyshev);

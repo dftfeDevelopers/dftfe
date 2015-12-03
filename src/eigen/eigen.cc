@@ -240,14 +240,33 @@ void eigenClass::HX(const std::vector<vectorType*> &src, std::vector<vectorType*
 void eigenClass::XHX(const std::vector<vectorType*> &src){
   computing_timer.enter_section("eigenClass XHX");
   for (unsigned int i=0; i<src.size(); i++){
-    *(dftPtr->tempPSI2[i])=*src[i];
-    dftPtr->tempPSI2[i]->scale(massVector); //MX
-    constraintsNone.distribute(*(dftPtr->tempPSI2[i]));
+    *(dftPtr->tempPSI3[i])=0.0;
   }
   for (std::vector<double>::iterator it=XHXValue.begin(); it!=XHXValue.end(); it++){
     (*it)=0.0;  
   }
-  dftPtr->matrix_free_data.cell_loop (&eigenClass::implementXHX, this, HXvalue, dftPtr->tempPSI2);
+  //HX
+  HX(src, dftPtr->tempPSI3);
+  //XHX
+  unsigned int dofs_per_proc=src[0]->local_size();
+  std::vector<double> xhx(src.size()*src.size()), hx(dofs_per_proc*src.size()), x(dofs_per_proc*src.size());
+  char transA  = 'T', transB  = 'N';
+  double alpha = 1.0, beta  = 0.0;
+  int k=dofs_per_proc, n= src.size();
+  int lda= k, ldb=k, ldc=n;
+  //extract vectors at the processor level
+  std::vector<unsigned int> local_dof_indices(dofs_per_proc);
+  src[0]->locally_owned_elements().fill_index_vector(local_dof_indices);
+  unsigned int index=0;
+  for (std::vector<vectorType*>::const_iterator it=src.begin(); it!=src.end(); it++){
+    (*it)->extract_subvector_to(local_dof_indices.begin(), local_dof_indices.end(), x.begin()+dofs_per_proc*index);
+    dftPtr->tempPSI3[index]->extract_subvector_to(local_dof_indices.begin(), local_dof_indices.end(), hx.begin()+dofs_per_proc*index);
+    index++;
+  }
+  dgemm_(&transA, &transB, &n, &n, &k, &alpha, &x[0], &lda, &hx[0], &ldb, &beta, &xhx[0], &ldc);
+  for (unsigned int i=0; i<xhx.size(); i++){
+    (*XHXValuePtr)[i]+=xhx[i]; 
+  }
   //all reduce XHXValue
   Utilities::MPI::sum(XHXValue, mpi_communicator, XHXValue); 
   computing_timer.exit_section("eigenClass XHX");
