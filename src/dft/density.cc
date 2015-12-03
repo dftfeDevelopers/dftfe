@@ -11,6 +11,7 @@ void dftClass::compute_rhoOut(){
   for (unsigned int i=0; i<numEigenValues; ++i){
     *PSI[i]=*eigenVectors[i];
     (*PSI[i]).scale(eigen.massVector);
+    constraintsNone.distribute(*PSI[i]);
   }
   
   //create new rhoValue tables

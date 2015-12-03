@@ -40,7 +40,7 @@ void poissonClass::init(){
   constraintsZero.close ();
 
   //OnebyR constraints
-  constraints1byR.clear ();
+  constraints1byR.clear ();  
   VectorTools::interpolate_boundary_values (dftPtr->dofHandler, 0, OnebyRBoundaryFunction<3>(dftPtr->atomLocations),constraints1byR);
   constraints1byR.close ();
 
