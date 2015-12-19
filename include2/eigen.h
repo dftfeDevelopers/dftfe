@@ -10,7 +10,6 @@ public:
   eigenClass(dftClass* _dftPtr);
   void HX(const std::vector<vectorType*> &src, std::vector<vectorType*> &dst);
   void XHX(const std::vector<vectorType*> &src); 
-  void vmult (vectorType &dst, const vectorType &src) const;
  private:
   void implementHX(const dealii::MatrixFree<3,double>  &data,
 		   std::vector<vectorType*>  &dst, 
@@ -18,13 +17,8 @@ public:
 		   const std::pair<unsigned int,unsigned int> &cell_range) const;
   void init ();
   void computeMassVector();
-  void computeVEffectiveRHS(std::map<dealii::CellId,std::vector<double> >* rhoValues, const vectorType& phi);  
-  void MX (const dealii::MatrixFree<3,double>           &data,
-	   vectorType                &dst,
-	   const vectorType                &src,
-	   const std::pair<unsigned int,unsigned int> &cell_range) const;
-  void computeVEffective(std::map<dealii::CellId,std::vector<double> >* rhoValues, const vectorType& phi);
-
+  void computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoValues, const vectorType& phi);
+  
   //pointer to dft class
   dftClass* dftPtr;
 
@@ -35,10 +29,11 @@ public:
   dealii::ConstraintMatrix  constraintsNone; 
 
   //data structures
-  vectorType massVector, vEffective, rhsVeff;
+  vectorType massVector;
   std::vector<double> XHXValue;
   std::vector<double>* XHXValuePtr;
   std::vector<vectorType*> HXvalue;
+  dealii::Table<2, dealii::VectorizedArray<double> > vEff;
 
   //parallel objects
   MPI_Comm mpi_communicator;

@@ -79,7 +79,7 @@ void dftClass::run (){
     //phiTot with rhoIn
     poisson.solve(poisson.phiTotRhoIn, rhoInValues);
     //eigen solve
-    eigen.computeVEffective(rhoInValues, poisson.phiTotRhoIn); 
+    eigen.computeVEff(rhoInValues, poisson.phiTotRhoIn); 
     chebyshevSolver();
     //fermi energy
     compute_fermienergy();

@@ -7,10 +7,10 @@ const unsigned int numElectrons=6;
 const unsigned int numEigenValues=numElectrons/2+2;
 const double lowerEndWantedSpectrum=-10.0;
 const unsigned int chebyshevOrder=2000; 
-const unsigned int numSCFIterations=25;
+const unsigned int numSCFIterations=2;
 
 //solver paramteters 
-const unsigned int maxLinearSolverIterations=10000;
+const unsigned int maxLinearSolverIterations=5000;
 const double relLinearSolverTolerance=1.0e-12; 
 
 //Define constants
@@ -18,7 +18,7 @@ const double TVal=500.0;
 const double kb = 3.166811429e-06;
 
 //Mesh information
-//#define meshFileName "../../../data/mesh/singleAtom.inp"
+#define meshFileName "../../../data/mesh/singleAtom.inp"
 
 //dft header
 #include "../../../src2/dft/dft.cc"

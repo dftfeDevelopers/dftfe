@@ -12,6 +12,7 @@ void dftClass::mesh(){
   static const Point<3> center = Point<3>();
   static const HyperBallBoundary<3, 3> boundary(center,20.0);
   triangulation.set_boundary(0, boundary);
+  /*
   dealii::Point<3> origin;
   typename Triangulation<3>::active_cell_iterator cell, end_cell;
   cell = triangulation.begin_active(); end_cell = triangulation.end();
@@ -30,7 +31,7 @@ void dftClass::mesh(){
     }
   }
   triangulation.execute_coarsening_and_refinement();
-  
+  */
 #else
   //generate mesh
   double L=20;
