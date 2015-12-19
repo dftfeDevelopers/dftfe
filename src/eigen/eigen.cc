@@ -85,7 +85,7 @@ void eigenClass::computeMassVector(){
     }
   }
   //constraintsNone.distribute(massVector);
-
+  pcout << "massVector norm: " << massVector.l2_norm() << "\n";
   computing_timer.exit_section("eigenClass Mass assembly");
 }
 

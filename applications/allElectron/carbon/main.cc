@@ -21,7 +21,7 @@ const double kb = 3.166811429e-06;
 //#define meshFileName "../../../data/mesh/singleAtom.inp"
 
 //dft header
-#include "../../../src/dft/dft.cc"
+#include "../../../src2/dft/dft.cc"
 
 //Atom locations
 void getAtomicLocations(dealii::Table<2,double>& atoms, std::map<unsigned int, std::string>& initialGuessFiles){
