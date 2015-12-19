@@ -10,7 +10,7 @@ const unsigned int chebyshevOrder=2000;
 const unsigned int numSCFIterations=25;
 
 //solver paramteters 
-const unsigned int maxLinearSolverIterations=5000;
+const unsigned int maxLinearSolverIterations=10000;
 const double relLinearSolverTolerance=1.0e-12; 
 
 //Define constants

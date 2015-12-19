@@ -24,13 +24,13 @@ void eigenClass::init(){
   constraintsNone.clear ();
   DoFTools::make_hanging_node_constraints (dftPtr->dofHandler, constraintsNone);
   constraintsNone.close();
-  //compute mass vector
+  //init vectors
   dftPtr->matrix_free_data.initialize_dof_vector (massVector);
-  computeMassVector();
-  //vEffective
   rhsVeff.reinit(massVector);
   vEffective.reinit(massVector);
-    //XHX size
+  //compute mass vector
+  computeMassVector();
+  //XHX size
   XHXValue.resize(dftPtr->eigenVectors.size()*dftPtr->eigenVectors.size(),0.0);
   //HX
   for (unsigned int i=0; i<numEigenValues; ++i){
@@ -65,6 +65,52 @@ void eigenClass::computeMassVector(){
   computing_timer.exit_section("eigenClass Mass assembly");
 }
 
+void eigenClass::computeVeff(const vectorType& phi){
+  const unsigned int n_cells = dftPtr->matrix_free_dataGauss.n_macro_cells();
+  const unsigned int n_array_elements = VectorizedArray<double>::n_array_elements;
+  FEEvaluation<3,FEOrder> fe_eval (dftPtr->matrix_free_dataGauss);
+  vEffective.reinit (n_cells, fe_eval.n_q_points);
+  for (unsigned int cell=0; cell<n_cells; ++cell){
+    fe_eval.reinit (cell);
+    fe_eval.read_dof_values(phi);
+    fe_eval.evaluate (true, false, false);
+    for (unsigned int q=0; q<dftPtr->matrix_free_dataGauss.n_q_points; ++q){
+      //one quad point per cell in the cell block
+      std::vector<double> densityValue(num_quad_points);
+      std::vector<double> exchangePotentialVal(num_quad_points);
+      std::vector<double> corrPotentialVal(num_quad_points);
+      for (unsigned int q_point=0; q_point<num_quad_points; ++q_point){
+	densityValue[q_point] = ((*rhoValues)[cell->id()][q_point]);
+      }
+      
+    xc_lda_vxc(&funcX,num_quad_points,&densityValue[0],&exchangePotentialVal[0]);
+    xc_lda_vxc(&funcC,num_quad_points,&densityValue[0],&corrPotentialVal[0]);
+
+      
+      vEffective(cell,q)=fe_eval.get_value(q)+;
+
+
+    for (unsigned int v=0; v < dftPtr->matrix_free_dataGauss.n_components_filled(cell); ++v){
+      cellPtr=dftPtr->matrix_free_dataGauss.get_cell_iterator(cell, v);
+      
+  
+   
+   
+      
+   
+
+    //Get Exc
+    std::vector<double> densityValue(num_quad_points);
+    std::vector<double> exchangePotentialVal(num_quad_points);
+    std::vector<double> corrPotentialVal(num_quad_points);
+    for (unsigned int q_point=0; q_point<num_quad_points; ++q_point){
+      densityValue[q_point] = ((*rhoValues)[cell->id()][q_point]);
+    }
+    xc_lda_vxc(&funcX,num_quad_points,&densityValue[0],&exchangePotentialVal[0]);
+    xc_lda_vxc(&funcC,num_quad_points,&densityValue[0],&corrPotentialVal[0]);
+    
+  }
+}
 
 void eigenClass::computeVEffectiveRHS(std::map<dealii::CellId,std::vector<double> >* rhoValues, const vectorType& phi){
   rhsVeff=0.0; 
@@ -116,23 +162,24 @@ void eigenClass::MX (const dealii::MatrixFree<3,double>           &data,
 		     vectorType                      &dst,
 		     const vectorType                &src,
 		     const std::pair<unsigned int,unsigned int> &cell_range) const{
-  FEEvaluation<3,FEOrder>  fe_eval(dftPtr->matrix_free_dataGauss);
+  FEEvaluation<3,FEOrder>  fe_eval(data);
   for (unsigned int cell=cell_range.first; cell<cell_range.second; ++cell){
-      fe_eval.reinit (cell);
-      fe_eval.read_dof_values(src);
-      fe_eval.evaluate (true,false,false);
-      for (unsigned int q=0; q<fe_eval.n_q_points; ++q){
-	fe_eval.submit_value (fe_eval.get_value(q), q);
-      }
-      fe_eval.integrate (true, false);
-      fe_eval.distribute_local_to_global (dst);
+    fe_eval.reinit (cell);
+    fe_eval.read_dof_values(src);
+    fe_eval.evaluate (true,false,false);
+    for (unsigned int q=0; q<fe_eval.n_q_points; ++q){
+      fe_eval.submit_value (fe_eval.get_value(q), q);
     }
+    fe_eval.integrate (true, false);
+    fe_eval.distribute_local_to_global (dst);
+  }
 }
 
 void eigenClass::vmult (vectorType       &dst,
 			const vectorType &src) const{
   dst=0.0;
-  dftPtr->matrix_free_data.cell_loop (&eigenClass::MX, this, dst, src);
+  dftPtr->matrix_free_dataGauss.cell_loop (&eigenClass::MX, this, dst, src);
+  dst.compress(VectorOperation::add);
 }
 
 void eigenClass::computeVEffective(std::map<dealii::CellId,std::vector<double> >* rhoValues, const vectorType& phi){
@@ -165,12 +212,12 @@ void eigenClass::implementHX (const dealii::MatrixFree<3,double>  &data,
 			      const std::vector<vectorType*>  &src,
 			      const std::pair<unsigned int,unsigned int> &cell_range) const{
 
-  FEEvaluation<3,FEOrder>  fe_evalVeff(dftPtr->matrix_free_dataGauss);
-  FEEvaluation<3,FEOrder>  fe_eval(dftPtr->matrix_free_dataGauss);
+  FEEvaluation<3,FEOrder>  fe_evalVeff(data);
+  FEEvaluation<3,FEOrder>  fe_eval(data);
   for (unsigned int cell=cell_range.first; cell<cell_range.second; ++cell){
     fe_evalVeff.reinit (cell); fe_evalVeff.read_dof_values(vEffective); 
     fe_eval.reinit (cell); 
-    for (unsigned int i=0; i<src.size(); i++){
+    for (unsigned int i=0; i<dst.size(); i++){
       fe_eval.read_dof_values(*src[i]);
       fe_eval.evaluate (true,true,false);
       for (unsigned int q=0; q<fe_eval.n_q_points; ++q){
@@ -192,7 +239,7 @@ void eigenClass::HX(const std::vector<vectorType*> &src, std::vector<vectorType*
     constraintsNone.distribute(*(dftPtr->tempPSI2[i]));
     *dst[i]=0.0;
   }
-  dftPtr->matrix_free_data.cell_loop (&eigenClass::implementHX, this, dst, dftPtr->tempPSI2); //HMX
+  dftPtr->matrix_free_dataGauss.cell_loop (&eigenClass::implementHX, this, dst, dftPtr->tempPSI2); //HMX
   for (std::vector<vectorType*>::iterator it=dst.begin(); it!=dst.end(); it++){
     (*it)->scale(massVector); //MHMX  
     (*it)->compress(VectorOperation::add);  
