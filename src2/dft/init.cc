@@ -17,7 +17,7 @@ void dftClass::initRho(){
     atomTypeKeys.push_back(it->first);
     readFile(singleAtomElectronDensity[atomType],it->second);
     unsigned int numRows = singleAtomElectronDensity[atomType].size()-1;
-    double xData[numRows], yData[numRows];
+    std::vector<double> xData(numRows), yData(numRows);
     for(unsigned int irow = 0; irow < numRows; ++irow){
       xData[irow] = singleAtomElectronDensity[atomType][irow][0];
       yData[irow] = singleAtomElectronDensity[atomType][irow][1];
@@ -25,9 +25,9 @@ void dftClass::initRho(){
   
     //interpolate rho
     alglib::real_1d_array x;
-    x.setcontent(numRows,xData);
+    x.setcontent(numRows,&xData[0]);
     alglib::real_1d_array y;
-    y.setcontent(numRows,yData);
+    y.setcontent(numRows,&yData[0]);
     alglib::ae_int_t natural_bound_type = 1;
     spline1dbuildcubic(x, y, numRows, natural_bound_type, 0.0, natural_bound_type, 0.0, denSpline[atomType]);
     outerMostPointDen[atomType]= xData[numRows-1];
@@ -127,16 +127,21 @@ void dftClass::init(){
   typename MatrixFree<3>::AdditionalData additional_data;
   additional_data.mpi_communicator = MPI_COMM_WORLD;
   additional_data.tasks_parallel_scheme = MatrixFree<3>::AdditionalData::partition_partition;
-  //quadrature rules
-  QGaussLobatto<1> quadratureGL (FEOrder+1);
-  QGauss<1>        quadratureGauss (FEOrder+1);
   //constraints
+  //hanging node constraints
   constraintsNone.clear ();
   DoFTools::make_hanging_node_constraints (dofHandler, constraintsNone);
   constraintsNone.close();
-  //initialize matrix free data structure
-  matrix_free_data.reinit (dofHandler, constraintsNone, quadratureGL, additional_data);
-  matrix_free_dataGauss.reinit (dofHandler, constraintsNone, quadratureGauss, additional_data);
+ //Zero Dirichlet BC constraints
+  constraintsZero.clear ();  
+  DoFTools::make_hanging_node_constraints (dofHandler, constraintsZero);
+  VectorTools::interpolate_boundary_values (dofHandler, 0, ZeroFunction<3>(), constraintsZero);
+  constraintsZero.close ();
+  //create matrix free structure
+  std::vector<const DoFHandler<3> *> dofHandlerVector; dofHandlerVector.push_back(&dofHandler); dofHandlerVector.push_back(&dofHandler);
+  std::vector< const ConstraintMatrix * > constraintsVector; constraintsVector.push_back(&constraintsNone); constraintsVector.push_back(&constraintsZero);
+  std::vector<Quadrature<1> > quadratureVector; quadratureVector.push_back(QGauss<1>(FEOrder+1)); quadratureVector.push_back(QGaussLobatto<1>(FEOrder+1));  
+  matrix_free_data.reinit (dofHandlerVector, constraintsVector, quadratureVector, additional_data);
   //initialize eigen vectors
   matrix_free_data.initialize_dof_vector(vChebyshev);
   v0Chebyshev.reinit(vChebyshev);

@@ -123,7 +123,7 @@ void dftClass::init(){
   std::ofstream output("mesh.vtu");
   data_out.write_vtu(output); 
 
-  //matrix fee data structure
+ //matrix fee data structure
   QGaussLobatto<1> quadrature (FEOrder+1);
   typename MatrixFree<3>::AdditionalData additional_data;
   additional_data.mpi_communicator = MPI_COMM_WORLD;

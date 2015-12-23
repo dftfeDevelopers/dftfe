@@ -9,8 +9,7 @@ void dftClass::readPSIRadialValues(std::vector<std::vector<std::vector<double> >
     nEqualTwolEqualsOneSplineCarbon;
   double outerMostPointCarbon;
   int numRows = singleAtomPSI[0].size()-1;
-  double xData[numRows];
-  double yData[numRows];
+  std::vector<double> xData(numRows), yData(numRows);
   //1s
   for(int irow = 0; irow < numRows; ++irow){
     xData[irow] = singleAtomPSI[0][irow][0];
@@ -19,8 +18,8 @@ void dftClass::readPSIRadialValues(std::vector<std::vector<std::vector<double> >
   outerMostPointCarbon = xData[numRows-1];
  
   alglib::real_1d_array x,yn1l0;
-  x.setcontent(numRows,xData);
-  yn1l0.setcontent(numRows,yData);
+  x.setcontent(numRows,&xData[0]);
+  yn1l0.setcontent(numRows,&yData[0]);
   alglib::ae_int_t natural_bound_typeCarbon = 0;
   alglib::spline1dbuildcubic(x, yn1l0, numRows,
 			     natural_bound_typeCarbon,
@@ -33,7 +32,7 @@ void dftClass::readPSIRadialValues(std::vector<std::vector<std::vector<double> >
     yData[irow] = singleAtomPSI[0][irow][2];
   }
   alglib::real_1d_array yn2l0;
-  yn2l0.setcontent(numRows,yData);
+  yn2l0.setcontent(numRows,&yData[0]);
   alglib::spline1dbuildcubic(x, yn2l0, numRows,
 			     natural_bound_typeCarbon,
 			     0.0,
@@ -45,7 +44,7 @@ void dftClass::readPSIRadialValues(std::vector<std::vector<std::vector<double> >
     yData[irow] = singleAtomPSI[0][irow][3];
   }  
   alglib::real_1d_array yn2l1;
-  yn2l1.setcontent(numRows,yData);
+  yn2l1.setcontent(numRows,&yData[0]);
   alglib::spline1dbuildcubic(x, yn2l1, numRows,
 			     natural_bound_typeCarbon,
 			     0.0,

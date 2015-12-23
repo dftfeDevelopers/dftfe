@@ -57,7 +57,7 @@ class dftClass{
   parallel::distributed::Triangulation<3> triangulation;
   FE_Q<3>            FE;
   DoFHandler<3>      dofHandler;
-  MatrixFree<3,double> matrix_free_data, matrix_free_dataGauss;
+  MatrixFree<3,double> matrix_free_data;
   
   //parallel objects
   MPI_Comm   mpi_communicator;
@@ -68,7 +68,7 @@ class dftClass{
 
   poissonClass poisson;
   eigenClass eigen;
-  ConstraintMatrix constraintsNone;
+  ConstraintMatrix constraintsNone, constraintsZero;
   std::vector<double> eigenValues;
   std::vector<parallel::distributed::Vector<double>*> eigenVectors;
 

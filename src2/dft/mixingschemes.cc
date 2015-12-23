@@ -43,8 +43,8 @@ double dftClass::mixing_anderson(){
   int N=rhoOutVals.size()-1;
   pcout << "\nN:" << N << "\n";
   int NRHS=1, lda=N, ldb=N, info;
-  int ipiv[N];
-  double A[lda*N], c[ldb*NRHS]; 
+  std::vector<int> ipiv(N);
+  std::vector<double> A(lda*N), c(ldb*NRHS); 
   for (int i=0; i<lda*N; i++) A[i]=0.0;
   for (int i=0; i<ldb*NRHS; i++) c[i]=0.0;
   
@@ -69,7 +69,7 @@ double dftClass::mixing_anderson(){
   }
   std::cout << "A,c:" << A[0] << " " << c[0] << "\n";
   //solve for coefficients
-  dgesv_(&N, &NRHS, A, &lda, ipiv, c, &ldb, &info);
+  dgesv_(&N, &NRHS, &A[0], &lda, &ipiv[0], &c[0], &ldb, &info);
   if((info > 0) && (this_mpi_process==0)) {
     printf( "Anderson Mixing: The diagonal element of the triangular factor of A,\n" );
     printf( "U(%i,%i) is zero, so that A is singular.\nThe solution could not be computed.\n", info, info );

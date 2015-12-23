@@ -25,9 +25,6 @@ public:
   //FE data structres
   dealii::FE_Q<3>   FE;
  
-  //constraints
-  dealii::ConstraintMatrix  constraintsNone; 
-
   //data structures
   vectorType massVector;
   std::vector<double> XHXValue;
