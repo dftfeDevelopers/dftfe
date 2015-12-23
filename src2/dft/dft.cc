@@ -50,7 +50,7 @@ void dftClass::run (){
 
   //initialize
   init();
-  
+ 
   //solve
   computing_timer.enter_section("dft solve"); 
   //phiExt with nuclear charge
