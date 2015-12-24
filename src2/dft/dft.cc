@@ -45,7 +45,13 @@ void dftClass::run (){
   pcout << "number of MPI processes: "
 	<< Utilities::MPI::n_mpi_processes(mpi_communicator)
 	<< std::endl;
-  //generate/read mesh
+  //read coordinates file
+
+  //fill wavefunctions info (Z, n, l, m, pointID) vector and coordinate points vector
+  
+  
+  //generate mesh
+  //if meshFile provided, pass to mesh()
   mesh();
 
   //initialize
