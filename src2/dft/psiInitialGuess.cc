@@ -3,6 +3,9 @@
 
 //
 void dftClass::readPSIRadialValues(std::vector<std::vector<std::vector<double> > >& singleAtomPSI){
+  //split the number of wave functions between the atoms
+  
+  //loop over 
   //Build Splines for Carbon
   alglib::spline1dinterpolant nEqualOnelEqualsZeroSplineCarbon,
     nEqualTwolEqualsZeroSplineCarbon,
