@@ -18,7 +18,7 @@ const double TVal=500.0;
 const double kb = 3.166811429e-06;
 
 //Mesh information
-#define meshFileName "../../../data/mesh/singleAtom.inp"
+#define meshFileName "../../../data/meshes/carbon1Atom/mesh.inp"
 
 //dft header
 #include "../../../src2/dft/dft.cc"
