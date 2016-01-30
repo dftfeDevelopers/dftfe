@@ -1,3 +1,7 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+
 //Define parameters
 //const double radius=20.0;
 //testing for one C atom
@@ -19,17 +23,48 @@ const double kb = 3.166811429e-06;
 
 //Mesh information
 #define meshFileName "../../../data/meshes/carbon1Atom/mesh.inp"
+#define coordinatesFile "../../../data/meshes/carbon1Atom/coordinates.inp" 
 
 //dft header
 #include "../../../src2/dft/dft.cc"
 
 //Atom locations
 void getAtomicLocations(dealii::Table<2,double>& atoms, std::map<unsigned int, std::string>& initialGuessFiles){
-  atoms.reinit(1,4);
-  atoms(0,0)=6.0; atoms(0,1)=0.0; atoms(0,2)=0.0; atoms(0,3)=0.0;  
+  //open coordinates file
+  std::ifstream coordsFile(coordinatesFile);
+  if(coordsFile.fail()) {
+    std::cerr<<"Error opening coordinatesFile\n";
+    exit(-1);
+  }
+  //number of atoms
+  unsigned int numAtoms;
+  coordsFile >> numAtoms;
+  std::cout << numAtoms << "\n";
+  atoms.reinit(numAtoms,4);
+  //
+  unsigned int Z, atom=0;
+  double x,y,z;
+  while (!coordsFile.eof()) {
+    coordsFile >> Z;
+    coordsFile >> x; coordsFile >> y; coordsFile >> z;
+    if (atom<numAtoms){
+      atoms(atom,0)=(double) Z;
+      atoms(atom,1)= x; atoms(atom,2)= y; atoms(atom,3)= z;
+      atom++;
+    }
+    else{
+      std::cerr << "atoms>=numAtoms\n"; exit(-1);
+    }
+    std::cout << Z << ", " << x << ", " << y << ", " << z << "\n";
+  }
   //initial guess for rho
-  //initialGuessFiles.clear();
-  initialGuessFiles[6]=std::string("../../../data/rhoInitialGuess/rho_C");
+  for (unsigned int i=0; i<numAtoms; i++){
+    Z=atoms(i,0);
+    char densityFile[256];
+    sprintf(densityFile, "../../../data/electronicStructure/z%u/density.inp", Z);
+    initialGuessFiles[Z]=std::string(densityFile);
+    std::cout << "initial density: " << initialGuessFiles[Z] << "\n";
+  }
 }
 
 int main (int argc, char *argv[]){
