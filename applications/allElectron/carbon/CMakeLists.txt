@@ -2,6 +2,7 @@
 #  CMake script for the phaseField applications:
 ##
 
+# "/usr/local/Cellar/libxc/2.2.2_1/lib/libxc.a /usr/local/Cellar/libxc/2.2.2_1/lib/libxcf90.a /usr/local/lib/libalglib.so"
 
 # Set the name of the project and target:
 SET(TARGET "main")
