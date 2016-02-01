@@ -109,7 +109,7 @@ void dftClass::rayleighRitz(std::vector<vectorType*>& X){
 
   //print eigen values
   char buffer[100];
-  for (unsigned int i=0; i<n; i++){
+  for (unsigned int i=0; i< (unsigned int)n; i++){
     sprintf(buffer, "eigen value %2u: %18.10e\n", i, eigenValues[i]);
     pcout << buffer;
   }
@@ -119,7 +119,7 @@ void dftClass::rayleighRitz(std::vector<vectorType*>& X){
   std::vector<double> Xbar(n*m), Xlocal(n*m); //Xbar=Xlocal*Q
   std::vector<double>::iterator val=Xlocal.begin();
   for (std::vector<vectorType*>::iterator x=X.begin(); x<X.end(); ++x){
-    for (unsigned int i=0; i<n; i++){
+    for (unsigned int i=0; i<(unsigned int)n; i++){
       *val=(**x).local_element(i); val++;
     }
   }
@@ -132,7 +132,7 @@ void dftClass::rayleighRitz(std::vector<vectorType*>& X){
   val=Xbar.begin();
   for (std::vector<vectorType*>::iterator x=X.begin(); x<X.end(); ++x){
     **x=0.0;
-    for (unsigned int i=0; i<n; i++){
+    for (unsigned int i=0; i<(unsigned int)n; i++){
       (**x).local_element(i)=*val; val++;
     }
     (**x).update_ghost_values();

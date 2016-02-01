@@ -4,23 +4,22 @@
 void dftClass::initRho(){
   computing_timer.enter_section("dftClass init density"); 
 
-  //Readin single atom rho initial guess
+  //Reading single atom rho initial guess
   pcout << "reading initial guess for rho\n";
-  unsigned int numAtomTypes=initialGuessFiles.size();
-  std::vector<alglib::spline1dinterpolant> denSpline(numAtomTypes);
-  std::vector<std::vector<std::vector<double> > > singleAtomElectronDensity(numAtomTypes);
-  std::vector<double> outerMostPointDen(numAtomTypes);
-  unsigned int atomType=0;
-  std::vector<unsigned int> atomTypeKeys; 
+  std::map<unsigned int, alglib::spline1dinterpolant> denSpline;
+  std::map<unsigned int, std::vector<std::vector<double> > > singleAtomElectronDensity;
+  std::map<unsigned int, double> outerMostPointDen;
+    
   //loop over atom types
-  for (std::map<unsigned int, std::string >::iterator it=initialGuessFiles.begin(); it!=initialGuessFiles.end(); it++){
-    atomTypeKeys.push_back(it->first);
-    readFile(singleAtomElectronDensity[atomType],it->second);
-    unsigned int numRows = singleAtomElectronDensity[atomType].size()-1;
+  for (std::set<unsigned int>::iterator it=atomTypes.begin(); it!=atomTypes.end(); it++){
+    char densityFile[256];
+    sprintf(densityFile, "../../../data/electronicStructure/z%u/density.inp", *it);
+    readFile(2, singleAtomElectronDensity[*it], densityFile);
+    unsigned int numRows = singleAtomElectronDensity[*it].size()-1;
     std::vector<double> xData(numRows), yData(numRows);
     for(unsigned int irow = 0; irow < numRows; ++irow){
-      xData[irow] = singleAtomElectronDensity[atomType][irow][0];
-      yData[irow] = singleAtomElectronDensity[atomType][irow][1];
+      xData[irow] = singleAtomElectronDensity[*it][irow][0];
+      yData[irow] = singleAtomElectronDensity[*it][irow][1];
     }
   
     //interpolate rho
@@ -29,23 +28,10 @@ void dftClass::initRho(){
     alglib::real_1d_array y;
     y.setcontent(numRows,&yData[0]);
     alglib::ae_int_t natural_bound_type = 1;
-    spline1dbuildcubic(x, y, numRows, natural_bound_type, 0.0, natural_bound_type, 0.0, denSpline[atomType]);
-    outerMostPointDen[atomType]= xData[numRows-1];
-    atomType++;
+    spline1dbuildcubic(x, y, numRows, natural_bound_type, 0.0, natural_bound_type, 0.0, denSpline[*it]);
+    outerMostPointDen[*it]= xData[numRows-1];
   }
   
-  //create atom type map (atom number to atom type id)
-  unsigned int numAtoms=atomLocations.size()[0];
-  std::map<unsigned int, unsigned int> atomTypeMap;
-  for (unsigned int n=0; n<numAtoms; n++){
-    for (unsigned int z=0; z<atomTypeKeys.size(); z++){
-      if (atomTypeKeys[z] == (unsigned int) atomLocations[n][0]){
-	atomTypeMap[n]=z; 
-	break;
-      }
-    }
-  }
-
   //Initialize rho
   QGauss<3>  quadrature_formula(FEOrder+1);
   FEValues<3> fe_values (FE, quadrature_formula, update_values);
@@ -64,11 +50,11 @@ void dftClass::initRho(){
 	Point<3> quadPoint(test.transform_unit_to_real_cell(cell, fe_values.get_quadrature().point(q)));
 	double rhoValueAtQuadPt=0.0;
 	//loop over atoms
-	for (unsigned int n=0; n<numAtoms; n++){
+	for (unsigned int n=0; n<atomLocations.size(); n++){
 	  Point<3> atom(atomLocations[n][1],atomLocations[n][2],atomLocations[n][3]);
 	  double distanceToAtom=quadPoint.distance(atom);
-	  if(distanceToAtom <= outerMostPointDen[atomTypeMap[n]]){
-	      rhoValueAtQuadPt+=std::abs(alglib::spline1dcalc(denSpline[atomTypeMap[n]], distanceToAtom));
+	  if(distanceToAtom <= outerMostPointDen[atomLocations[n][0]]){
+	    rhoValueAtQuadPt+=std::abs(alglib::spline1dcalc(denSpline[atomLocations[n][0]], distanceToAtom));
 	  }
 	}
 	rhoInValuesPtr[q]=rhoValueAtQuadPt;
@@ -104,7 +90,8 @@ void dftClass::initRho(){
 }
 
 void dftClass::init(){
-  computing_timer.enter_section("dftClass setup"); 
+  computing_timer.enter_section("dftClass setup");
+    
   //initialize FE objects
   dofHandler.distribute_dofs (FE);
   locally_owned_dofs = dofHandler.locally_owned_dofs ();
@@ -154,9 +141,12 @@ void dftClass::init(){
     tempPSI3[i]->reinit(vChebyshev);
   } 
   
-  //initialize density and locate atome core nodes
-  initRho();
+  //locate atome core nodes
   locateAtomCoreNodes();
+  
+  //initialize density 
+  initRho();
+
   //
   computing_timer.exit_section("dftClass setup"); 
 

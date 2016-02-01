@@ -11,7 +11,7 @@ eigenClass::eigenClass(dftClass* _dftPtr):
   pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
   computing_timer (pcout, TimerOutput::summary, TimerOutput::wall_times)
 {
-  for (unsigned int i=0; i<numEigenValues; ++i){
+  for (unsigned int i=0; i<dftPtr->numEigenValues; ++i){
     vectorType* temp=new vectorType;
     HXvalue.push_back(temp);
   } 
@@ -27,7 +27,7 @@ void eigenClass::init(){
   //XHX size
   XHXValue.resize(dftPtr->eigenVectors.size()*dftPtr->eigenVectors.size(),0.0);
   //HX
-  for (unsigned int i=0; i<numEigenValues; ++i){
+  for (unsigned int i=0; i<dftPtr->numEigenValues; ++i){
     HXvalue[i]->reinit(massVector);
   }
   computing_timer.exit_section("eigenClass setup"); 

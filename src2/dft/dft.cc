@@ -29,6 +29,22 @@ dftClass::dftClass():
   bLow(0.0),
   a0(lowerEndWantedSpectrum)
 {
+}
+
+void dftClass::set(){
+  //read coordinates
+  readFile(4, atomLocations, coordinatesFile);
+  pcout << "number of atoms: " << atomLocations.size() << "\n";
+  //find unique atom types
+  for (std::vector<std::vector<double> >::iterator it=atomLocations.begin(); it<atomLocations.end(); it++){
+    atomTypes.insert((unsigned int)((*it)[0]));
+  }
+  pcout << "number of atoms types: " << atomTypes.size() << "\n";
+  
+  //estimate total number of wave functions
+  determineOrbitalFilling();  
+  numEigenValues=waveFunctionsVector.size();
+  pcout << "num of eigen values: " << numEigenValues << std::endl; 
   //set size of eigenvalues and eigenvectors data structures
   eigenValues.resize(numEigenValues);
   for (unsigned int i=0; i<numEigenValues; ++i){
@@ -46,9 +62,7 @@ void dftClass::run (){
 	<< Utilities::MPI::n_mpi_processes(mpi_communicator)
 	<< std::endl;
   //read coordinates file
-
-  //fill wavefunctions info (Z, n, l, m, pointID) vector and coordinate points vector
-  
+  set();
   
   //generate mesh
   //if meshFile provided, pass to mesh()
