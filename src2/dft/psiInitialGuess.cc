@@ -56,20 +56,22 @@ void dftClass::determineOrbitalFilling(){
       char psiFile[256];
       sprintf(psiFile, "../../../data/electronicStructure/z%u/psi.inp", Z);
       std::vector<std::vector<double> > values;
-      unsigned int numColumns=4;
-      readFile(numColumns, values, psiFile);
+      readFile(numPSIColumns, values, psiFile);
       //
-      int numRows = values[0].size()-1;
+      int numRows = values.size()-1;
+      pcout << "psiRows: " << numRows << std::endl;
+
       std::vector<double> xData(numRows), yData(numRows);
       //x
       for(int irow = 0; irow < numRows; ++irow){
 	xData[irow]= values[irow][0];
       }
       outerValues[Z] = xData[numRows-1];
+      pcout << outerValues[Z] << std::endl;
       alglib::real_1d_array x;
       x.setcontent(numRows,&xData[0]);	
       //y's
-      for (unsigned int i=0; i<numColumns-1; i++){
+      for (unsigned int i=0; i<numPSIColumns-1; i++){
 	for(int irow = 0; irow < numRows; ++irow){
 	  yData[irow] = values[irow][i+1];
 	}
@@ -77,13 +79,13 @@ void dftClass::determineOrbitalFilling(){
 	alglib::real_1d_array y;
 	y.setcontent(numRows,&yData[0]);
 	alglib::ae_int_t natural_bound_type = 0;
-	alglib::spline1dinterpolant spline;
+	alglib::spline1dinterpolant* spline=new alglib::spline1dinterpolant;
 	alglib::spline1dbuildcubic(x, y, numRows,
 				   natural_bound_type,
 				   0.0,
 				   natural_bound_type,
 				   0.0,
-				   spline);
+				   *spline);
 	radValues[Z].push_back(spline);
       }
     }
@@ -101,9 +103,12 @@ void dftClass::determineOrbitalFilling(){
       //m loop
       for (int m=-l; m<= (int) l; m++){
 	orbital temp;
-	temp.Z=Z; temp.n=n; temp.l=l; temp.m=m; temp.zID=levels;
+	temp.Z=Z; temp.n=n; temp.l=l; temp.m=m; temp.psiID=levels;
+	//NOTE: change
+	if (levels>2) temp.psiID=2;
+	//
 	waveFunctionsVector.push_back(temp); levels++;
-	pcout << " n:" << n + 1 << " l:" << l << " m:" << m << std::endl;
+	pcout << " n:" << n + 1 << " l:" << l << " m:" << m << " psi:" << temp.psiID << std::endl;
 	if (levels>=totalLevels) break;
       }
       if (levels>=totalLevels) break;
@@ -144,7 +149,8 @@ void dftClass::readPSIRadialValues(){
       unsigned int waveFunction=0;
       for (std::vector<orbital>::iterator it=waveFunctionsVector.begin(); it<waveFunctionsVector.end(); it++){
 	R=0.0;
-	if (r<=outerValues[it->Z]) R = alglib::spline1dcalc(radValues[it->Z][it->zID],r);
+	if (r<=outerValues[it->Z]) R = alglib::spline1dcalc(*radValues[it->Z][it->psiID],r);
+	//
 	if (it->m >= 0){
 	  local_dof_values[waveFunction][dof] =  R*boost::math::spherical_harmonic_r(it->l,it->m,theta,phi);
 	}
@@ -167,6 +173,7 @@ void dftClass::readPSIRadialValues(){
       }
     }  
     eigenVectors[i]->update_ghost_values();
+    pcout << "norm: " << eigenVectors[i]->l2_norm() << std::endl;
   }
 }
 

@@ -11,16 +11,16 @@ eigenClass::eigenClass(dftClass* _dftPtr):
   pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
   computing_timer (pcout, TimerOutput::summary, TimerOutput::wall_times)
 {
-  for (unsigned int i=0; i<dftPtr->numEigenValues; ++i){
-    vectorType* temp=new vectorType;
-    HXvalue.push_back(temp);
-  } 
 }
 
 //initialize eigenClass object
 void eigenClass::init(){
-  computing_timer.enter_section("eigenClass setup"); 
+  computing_timer.enter_section("eigenClass setup");
   //init vectors
+  for (unsigned int i=0; i<dftPtr->numEigenValues; ++i){
+    vectorType* temp=new vectorType;
+    HXvalue.push_back(temp);
+  } 
   dftPtr->matrix_free_data.initialize_dof_vector (massVector);
   //compute mass vector
   computeMassVector();

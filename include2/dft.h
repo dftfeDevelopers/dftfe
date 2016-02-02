@@ -34,7 +34,7 @@ xc_func_type funcX, funcC;
 struct orbital{
   unsigned int Z, n, l;
   int m;
-  unsigned int zID;
+  unsigned int psiID;
 };
 
 //Define dft class
@@ -49,7 +49,7 @@ class dftClass{
   std::vector<std::vector<double> > atomLocations;
   std::map<unsigned int, unsigned int> additionalWaveFunctions;
   std::vector<orbital> waveFunctionsVector;
-  std::map<unsigned int, std::vector<alglib::spline1dinterpolant> > radValues;
+  std::map<unsigned int, std::vector<alglib::spline1dinterpolant*> > radValues;
   std::map<unsigned int, double> outerValues;
     
  private:

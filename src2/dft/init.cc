@@ -153,7 +153,7 @@ void dftClass::init(){
   //initialize poisson and eigen problem related objects
   poisson.init();
   eigen.init();
-
+  
   //initialize PSI
   pcout << "reading initial guess for PSI\n";
   readPSI();
