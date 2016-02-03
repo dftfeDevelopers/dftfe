@@ -3,7 +3,6 @@
 //testing for one C atom
 const unsigned int FEOrder=4;
 const unsigned int n_refinement_steps=4;
-const unsigned int numElectrons=6;
 const unsigned int numPSIColumns=4;
 const double lowerEndWantedSpectrum=-10.0;
 const unsigned int chebyshevOrder=2000; 

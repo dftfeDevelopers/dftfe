@@ -44,15 +44,16 @@ class dftClass{
  public:
   dftClass();
   void run();
+  std::map<unsigned int, unsigned int> additionalWaveFunctions;
+ private:
   void set();
+  unsigned int numElectrons, numBaseLevels, numLevels;
   std::set<unsigned int> atomTypes;
   std::vector<std::vector<double> > atomLocations;
-  std::map<unsigned int, unsigned int> additionalWaveFunctions;
   std::vector<orbital> waveFunctionsVector;
   std::map<unsigned int, std::vector<alglib::spline1dinterpolant*> > radValues;
   std::map<unsigned int, double> outerValues;
-    
- private:
+
   void mesh();
   void init();
   void initRho();

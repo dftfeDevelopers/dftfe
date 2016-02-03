@@ -1,18 +1,42 @@
 //Define parameters
 //const double radius=20.0;
-unsigned int FEOrder=4;
-unsigned int n_refinement_steps=0;
-unsigned int numElectrons=10;
-unsigned int numEigenValues=numElectrons/2;
-unsigned int quadratureRule=5;
+//testing for one C atom
+const unsigned int FEOrder=4;
+const unsigned int n_refinement_steps=0;
+const unsigned int numPSIColumns=4;
+const double lowerEndWantedSpectrum=-10.0;
+const unsigned int chebyshevOrder=2000; 
+const unsigned int numSCFIterations=2;
 
 //solver paramteters 
-unsigned int maxLinearSolverIterations=5000;
-double relLinearSolverTolerance=1.0e-12; 
+const unsigned int maxLinearSolverIterations=5000;
+const double relLinearSolverTolerance=1.0e-12; 
 
 //Define constants
-double TVal=100.0;
-double kb = 3.166811429e-06;
+const double TVal=500.0;
+const double kb = 3.166811429e-06;
+
+//Mesh information
+#define meshFileName "../../../data/meshes/methane/mesh.inp"
+#define coordinatesFile "../../../data/meshes/methane/coordinates.inp" 
+
+//dft header
+#include "../../../src2/dft/dft.cc"
+
+
+int main (int argc, char *argv[]){
+  Utilities::MPI::MPI_InitFinalize mpi_initialization (argc, argv);
+  deallog.depth_console(0);
+  {
+    dftClass problem;
+    problem.additionalWaveFunctions[6]=2;
+    problem.run();
+  }
+  return 0;
+}
+
+
+
 
 //Mesh information
 #define meshFileName "../../../data/mesh/CH4.inp"

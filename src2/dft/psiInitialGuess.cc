@@ -59,15 +59,12 @@ void dftClass::determineOrbitalFilling(){
       readFile(numPSIColumns, values, psiFile);
       //
       int numRows = values.size()-1;
-      pcout << "psiRows: " << numRows << std::endl;
-
       std::vector<double> xData(numRows), yData(numRows);
       //x
       for(int irow = 0; irow < numRows; ++irow){
 	xData[irow]= values[irow][0];
       }
       outerValues[Z] = xData[numRows-1];
-      pcout << outerValues[Z] << std::endl;
       alglib::real_1d_array x;
       x.setcontent(numRows,&xData[0]);	
       //y's
@@ -95,7 +92,10 @@ void dftClass::determineOrbitalFilling(){
       additionalLevels=additionalWaveFunctions[Z];
     } 
     unsigned int totalLevels=((unsigned int)std::ceil(Z/2.0))+additionalLevels;
-    pcout << totalLevels << std::endl;
+    numElectrons+=Z;
+    numBaseLevels+=(unsigned int)std::ceil(Z/2.0);
+    numLevels+=totalLevels;
+    pcout << "totalLevels: " << totalLevels << std::endl;
     //fill levels
     unsigned int levels=0;
     for (std::vector<std::vector<unsigned int> >::iterator it=stencil.begin(); it <stencil.end(); it++){
@@ -114,6 +114,9 @@ void dftClass::determineOrbitalFilling(){
       if (levels>=totalLevels) break;
     }
   }
+  pcout << "total num electrons: " << numElectrons << std::endl;
+  pcout << "total num base levels: " << numBaseLevels << std::endl;
+  pcout << "total num levels: " << numLevels << std::endl;
 }
 
 //
@@ -173,7 +176,6 @@ void dftClass::readPSIRadialValues(){
       }
     }  
     eigenVectors[i]->update_ghost_values();
-    pcout << "norm: " << eigenVectors[i]->l2_norm() << std::endl;
   }
 }
 
