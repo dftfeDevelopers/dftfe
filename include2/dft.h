@@ -34,7 +34,7 @@ xc_func_type funcX, funcC;
 struct orbital{
   unsigned int Z, n, l;
   int m;
-  unsigned int psiID;
+  alglib::spline1dinterpolant* psi;
 };
 
 //Define dft class
@@ -51,7 +51,7 @@ class dftClass{
   std::set<unsigned int> atomTypes;
   std::vector<std::vector<double> > atomLocations;
   std::vector<orbital> waveFunctionsVector;
-  std::map<unsigned int, std::vector<alglib::spline1dinterpolant*> > radValues;
+  std::map<unsigned int, std::map<unsigned int, std::map<unsigned int, alglib::spline1dinterpolant*> > > radValues;
   std::map<unsigned int, double> outerValues;
 
   void mesh();
@@ -68,7 +68,7 @@ class dftClass{
   void readPSIRadialValues();
   void readPSI();
   void determineOrbitalFilling();
-  
+  void loadPSIFiles(unsigned int Z, unsigned int n, unsigned int l);
   //FE data structres
   parallel::distributed::Triangulation<3> triangulation;
   FE_Q<3>            FE;

@@ -1,6 +1,44 @@
 #include <fstream>
 #include <boost/math/special_functions/spherical_harmonic.hpp>
 
+//load PSI radial value files
+void dftClass::loadPSIFiles(unsigned int Z, unsigned int n, unsigned int l){
+  //
+  if (radValues[Z][n].count(l)>0) return;
+  //
+  char psiFile[256];
+  sprintf(psiFile, "../../../data/electronicStructure/z%u/psi%u%u.inp", Z, n, l);
+  std::vector<std::vector<double> > values;
+  readFile(2, values, psiFile);
+  //
+  int numRows = values.size()-1;
+  std::vector<double> xData(numRows), yData(numRows);
+  //x
+  for(int irow = 0; irow < numRows; ++irow){
+    xData[irow]= values[irow][0];
+  }
+  outerValues[Z] = xData[numRows-1];
+  alglib::real_1d_array x;
+  x.setcontent(numRows,&xData[0]);	
+  //y
+  for(int irow = 0; irow < numRows; ++irow){
+    yData[irow] = values[irow][1];
+  }
+  alglib::real_1d_array y;
+  y.setcontent(numRows,&yData[0]);
+  alglib::ae_int_t natural_bound_type = 0;
+  alglib::spline1dinterpolant* spline=new alglib::spline1dinterpolant;
+  alglib::spline1dbuildcubic(x, y, numRows,
+			     natural_bound_type,
+			     0.0,
+			     natural_bound_type,
+			     0.0,
+			     *spline);
+  pcout << "send: Z:" << Z << " n:" << n << " l:" << l << std::endl; 
+  radValues[Z][n][l]=spline;
+}
+
+//
 void dftClass::determineOrbitalFilling(){
   //create stencil following orbital filling order
   std::vector<unsigned int> level;
@@ -45,47 +83,13 @@ void dftClass::determineOrbitalFilling(){
   level.clear(); level.push_back(6); level.push_back(1); stencil.push_back(level);
   //8s
   level.clear(); level.push_back(7); level.push_back(0); stencil.push_back(level);
-
+  //
   
   //loop over atoms
   for (unsigned int z=0; z<atomLocations.size(); z++){
     unsigned int Z=atomLocations[z][0];
     pcout << "Z:" << Z << std::endl;
-    //load PSI radial value files
-    if (radValues.count(Z)==0){
-      char psiFile[256];
-      sprintf(psiFile, "../../../data/electronicStructure/z%u/psi.inp", Z);
-      std::vector<std::vector<double> > values;
-      readFile(numPSIColumns, values, psiFile);
-      //
-      int numRows = values.size()-1;
-      std::vector<double> xData(numRows), yData(numRows);
-      //x
-      for(int irow = 0; irow < numRows; ++irow){
-	xData[irow]= values[irow][0];
-      }
-      outerValues[Z] = xData[numRows-1];
-      alglib::real_1d_array x;
-      x.setcontent(numRows,&xData[0]);	
-      //y's
-      for (unsigned int i=0; i<numPSIColumns-1; i++){
-	for(int irow = 0; irow < numRows; ++irow){
-	  yData[irow] = values[irow][i+1];
-	}
-	//
-	alglib::real_1d_array y;
-	y.setcontent(numRows,&yData[0]);
-	alglib::ae_int_t natural_bound_type = 0;
-	alglib::spline1dinterpolant* spline=new alglib::spline1dinterpolant;
-	alglib::spline1dbuildcubic(x, y, numRows,
-				   natural_bound_type,
-				   0.0,
-				   natural_bound_type,
-				   0.0,
-				   *spline);
-	radValues[Z].push_back(spline);
-      }
-    }
+        
     //check if additional wave functions requested
     unsigned int additionalLevels=0;
     if (additionalWaveFunctions.count(Z)!=0) {
@@ -96,19 +100,19 @@ void dftClass::determineOrbitalFilling(){
     numBaseLevels+=(unsigned int)std::ceil(Z/2.0);
     numLevels+=totalLevels;
     pcout << "totalLevels: " << totalLevels << std::endl;
+    
     //fill levels
     unsigned int levels=0;
     for (std::vector<std::vector<unsigned int> >::iterator it=stencil.begin(); it <stencil.end(); it++){
       unsigned int n=(*it)[0], l=(*it)[1];
+      //load PSI files
+      loadPSIFiles(Z, n, l);
       //m loop
       for (int m=-l; m<= (int) l; m++){
 	orbital temp;
-	temp.Z=Z; temp.n=n; temp.l=l; temp.m=m; temp.psiID=levels;
-	//NOTE: change
-	if (levels>2) temp.psiID=2;
-	//
+	temp.Z=Z; temp.n=n; temp.l=l; temp.m=m; temp.psi=radValues[Z][n][l];
 	waveFunctionsVector.push_back(temp); levels++;
-	pcout << " n:" << n + 1 << " l:" << l << " m:" << m << " psi:" << temp.psiID << std::endl;
+	pcout << " n:" << n  << " l:" << l << " m:" << m << std::endl;
 	if (levels>=totalLevels) break;
       }
       if (levels>=totalLevels) break;
@@ -152,7 +156,7 @@ void dftClass::readPSIRadialValues(){
       unsigned int waveFunction=0;
       for (std::vector<orbital>::iterator it=waveFunctionsVector.begin(); it<waveFunctionsVector.end(); it++){
 	R=0.0;
-	if (r<=outerValues[it->Z]) R = alglib::spline1dcalc(*radValues[it->Z][it->psiID],r);
+	if (r<=outerValues[it->Z]) R = alglib::spline1dcalc(*(it->psi),r);
 	//
 	if (it->m >= 0){
 	  local_dof_values[waveFunction][dof] =  R*boost::math::spherical_harmonic_r(it->l,it->m,theta,phi);
