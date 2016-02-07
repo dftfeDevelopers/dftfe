@@ -28,7 +28,6 @@ public:
   //data structures
   vectorType massVector;
   std::vector<double> XHXValue;
-  std::vector<double>* XHXValuePtr;
   std::vector<vectorType*> HXvalue;
   dealii::Table<2, dealii::VectorizedArray<double> > vEff;
 

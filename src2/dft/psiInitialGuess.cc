@@ -34,7 +34,7 @@ void dftClass::loadPSIFiles(unsigned int Z, unsigned int n, unsigned int l){
 			     natural_bound_type,
 			     0.0,
 			     *spline);
-  pcout << "send: Z:" << Z << " n:" << n << " l:" << l << std::endl; 
+  //pcout << "send: Z:" << Z << " n:" << n << " l:" << l << std::endl; 
   radValues[Z][n][l]=spline;
 }
 
@@ -88,7 +88,6 @@ void dftClass::determineOrbitalFilling(){
   //loop over atoms
   for (unsigned int z=0; z<atomLocations.size(); z++){
     unsigned int Z=atomLocations[z][0];
-    pcout << "Z:" << Z << std::endl;
         
     //check if additional wave functions requested
     unsigned int additionalLevels=0;
@@ -99,9 +98,13 @@ void dftClass::determineOrbitalFilling(){
     numElectrons+=Z;
     numBaseLevels+=(unsigned int)std::ceil(Z/2.0);
     numLevels+=totalLevels;
-    pcout << "totalLevels: " << totalLevels << std::endl;
     
     //fill levels
+    bool printLevels=false;
+    if (radValues.count(Z)==0){
+      printLevels=true;
+      pcout << "Z:" << Z << std::endl;
+    }
     unsigned int levels=0;
     for (std::vector<std::vector<unsigned int> >::iterator it=stencil.begin(); it <stencil.end(); it++){
       unsigned int n=(*it)[0], l=(*it)[1];
@@ -112,7 +115,7 @@ void dftClass::determineOrbitalFilling(){
 	orbital temp;
 	temp.Z=Z; temp.n=n; temp.l=l; temp.m=m; temp.psi=radValues[Z][n][l];
 	waveFunctionsVector.push_back(temp); levels++;
-	pcout << " n:" << n  << " l:" << l << " m:" << m << std::endl;
+	if (printLevels) pcout << " n:" << n  << " l:" << l << " m:" << m << std::endl;
 	if (levels>=totalLevels) break;
       }
       if (levels>=totalLevels) break;
@@ -121,6 +124,7 @@ void dftClass::determineOrbitalFilling(){
   pcout << "total num electrons: " << numElectrons << std::endl;
   pcout << "total num base levels: " << numBaseLevels << std::endl;
   pcout << "total num levels: " << numLevels << std::endl;
+  pcout << "************************************" << std::endl;
 }
 
 //
@@ -178,7 +182,10 @@ void dftClass::readPSIRadialValues(){
       if (std::abs(eigen.massVector.local_element(j))>1.0e-15){
 	eigenVectors[i]->local_element(j)/=eigen.massVector.local_element(j);
       }
-    }  
+    }
+    //char buffer[100];
+    //sprintf(buffer, "norm %u: %14.8e\n",i,eigenVectors[i]->l2_norm());
+    //pcout << buffer;
     eigenVectors[i]->update_ghost_values();
   }
 }

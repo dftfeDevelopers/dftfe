@@ -32,7 +32,7 @@ void poissonClass::init(){
   phiExt.reinit (rhs);
   //store constrained DOF's
   for (types::global_dof_index i=0; i<rhs.size(); i++){
-    if (rhs.locally_owned_elements().is_element(i)){
+    if (dftPtr->locally_relevant_dofs.is_element(i)){
       if (constraints1byR.is_constrained(i)){
 	values1byR[i] = constraints1byR.get_inhomogeneity(i);
       }
@@ -102,6 +102,8 @@ void poissonClass::computeRHS2(){
       jacobianDiagonal.local_element(i)=1.0;
     }
   }
+  jacobianDiagonal.update_ghost_values();
+  //pcout << "jacobian: " << jacobianDiagonal.l2_norm() << std::endl;
   computing_timer.exit_section("poissonClass rhs2 assembly");
 }
 
@@ -149,13 +151,17 @@ void poissonClass::computeRHS(std::map<dealii::CellId,std::vector<double> >* rho
   rhs.compress(VectorOperation::add);
   //Set RHS values corresponding to Dirichlet BC's
   for (std::map<dealii::types::global_dof_index, double>::const_iterator it=values1byR.begin(); it!=values1byR.end(); ++it){
-    if (rhoValues) rhs(it->first)=0.0;
-    else rhs(it->first)=it->second*jacobianDiagonal(it->first);
+    if (rhs.in_local_range(it->first)){
+      if (rhoValues) rhs(it->first)=0.0;
+      else rhs(it->first)=it->second*jacobianDiagonal(it->first);
+    }
   }
   rhs.update_ghost_values();
+  //pcout << "rhs: " << rhs.l2_norm() << std::endl;
   if (!rhoValues){
     rhs.add(-1.0,rhs2);
   }
+  //pcout << "rhs2: " << rhs.l2_norm() << std::endl;
   computing_timer.exit_section("poissonClass rhs assembly");
 }
 
@@ -186,7 +192,9 @@ void poissonClass::vmult(vectorType &dst, const vectorType &src) const{
 
   //apply Dirichlet BC's
   for (std::map<types::global_dof_index, double>::const_iterator it=values1byR.begin(); it!=values1byR.end(); ++it){
-    dst(it->first) = src(it->first)*jacobianDiagonal(it->first);
+    if (dst.in_local_range(it->first)){
+      dst(it->first) = src(it->first)*jacobianDiagonal(it->first);
+    }
   }
 }
 
