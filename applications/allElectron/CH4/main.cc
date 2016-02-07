@@ -1,10 +1,8 @@
 //Define parameters
-//const double radius=20.0;
-//testing for one C atom
 const unsigned int FEOrder=4;
 const unsigned int n_refinement_steps=0;
 const double lowerEndWantedSpectrum=-10.0;
-const unsigned int chebyshevOrder=2000; 
+const unsigned int chebyshevOrder=1000; 
 const unsigned int numSCFIterations=12;
 
 //solver paramteters 
@@ -21,7 +19,6 @@ const double kb = 3.166811429e-06;
 
 //dft header
 #include "../../../src2/dft/dft.cc"
-
 
 int main (int argc, char *argv[]){
   Utilities::MPI::MPI_InitFinalize mpi_initialization (argc, argv);
