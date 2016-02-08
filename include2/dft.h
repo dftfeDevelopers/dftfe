@@ -31,6 +31,9 @@ extern "C"{
 xc_func_type funcX, funcC;
 
 //
+const double kb = 3.166811429e-06;
+
+//
 struct orbital{
   unsigned int Z, n, l;
   int m;

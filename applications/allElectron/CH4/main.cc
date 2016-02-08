@@ -11,7 +11,6 @@ const double relLinearSolverTolerance=1.0e-12;
 
 //Define constants
 const double TVal=500.0;
-const double kb = 3.166811429e-06;
 
 //Mesh information
 #define meshFileName "../../../data/meshes/methane/mesh.inp"

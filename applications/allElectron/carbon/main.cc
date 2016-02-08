@@ -3,7 +3,6 @@
 //testing for one C atom
 const unsigned int FEOrder=4;
 const unsigned int n_refinement_steps=4;
-const unsigned int numPSIColumns=4;
 const double lowerEndWantedSpectrum=-10.0;
 const unsigned int chebyshevOrder=2000; 
 const unsigned int numSCFIterations=2;
@@ -14,7 +13,6 @@ const double relLinearSolverTolerance=1.0e-12;
 
 //Define constants
 const double TVal=500.0;
-const double kb = 3.166811429e-06;
 
 //Mesh information
 #define meshFileName "../../../data/meshes/carbon1Atom/mesh.inp"
