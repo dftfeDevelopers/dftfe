@@ -2,8 +2,8 @@
 const unsigned int FEOrder=4;
 const unsigned int n_refinement_steps=0;
 const double lowerEndWantedSpectrum=-65.0;
-const unsigned int chebyshevOrder=1000; 
-const unsigned int numSCFIterations=12;
+const unsigned int chebyshevOrder=100; 
+const unsigned int numSCFIterations=1;
 
 //solver paramteters 
 const unsigned int maxLinearSolverIterations=5000;
