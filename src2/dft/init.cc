@@ -66,15 +66,19 @@ void dftClass::initRho(){
   char buffer[100];
   sprintf(buffer, "initial total charge: %18.10e \n", charge);
   pcout << buffer;
-  /*
+  //scaling rho
+  cell = dofHandler.begin_active();
   for (; cell!=endc; ++cell) {
     if (cell->is_locally_owned()){
       for (unsigned int q=0; q<n_q_points; ++q){
-	(*rhoInValues)[cell->id()][q]*=1.0/charge;
+	(*rhoInValues)[cell->id()][q]*=((double)numElectrons)/charge;
       }
     }
   }
-  */
+  double charge2=totalCharge();
+  sprintf(buffer, "initial total charge after scaling: %18.10e \n", charge2);
+  pcout << buffer;
+  
   //Initialize libxc
   int exceptParamX, exceptParamC;
   exceptParamX = xc_func_init(&funcX,XC_LDA_X,XC_UNPOLARIZED);
