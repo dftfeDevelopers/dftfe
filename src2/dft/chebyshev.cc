@@ -11,14 +11,14 @@ void dftClass::chebyshevSolver(){
   //filter
   for (unsigned int i=0; i<eigenVectors.size(); i++){
     sprintf(buffer, "%2u l2: %18.10e     linf: %18.10e \n", i, eigenVectors[i]->l2_norm(), eigenVectors[i]->linfty_norm());
-    pcout << buffer; 
+    //pcout << buffer; 
   }
   double t=MPI_Wtime();
   chebyshevFilter(eigenVectors, chebyshevOrder, bLow, bUp, a0);
   pcout << "Total time for only chebyshev filter: " << (MPI_Wtime()-t)/60.0 << "mins\n";
   for (unsigned int i=0; i<eigenVectors.size(); i++){
     sprintf(buffer, "%2u l2: %18.10e     linf: %18.10e \n", i, eigenVectors[i]->l2_norm(), eigenVectors[i]->linfty_norm());
-    pcout << buffer; 
+    //pcout << buffer; 
   }
   //Gram Schmidt orthonormalization
   gramSchmidt(eigenVectors);
@@ -82,25 +82,14 @@ void dftClass::gramSchmidt(std::vector<vectorType*>& X){
   for (std::vector<vectorType*>::iterator x=X.begin(); x<X.end(); ++x){
     std::vector<double> r(x-X.begin(),0.0);
     unsigned int i=0;
-    //char buffer[100];
     for (std::vector<vectorType*>::iterator q=X.begin(); q<x; ++q, ++i){
       r[i]=(**q)*(**x);
-      //sprintf(buffer, "X0norm %u:%14.8e, %14.8e, %14.8e\n", i, (**x).linfty_norm(), (**q).linfty_norm(), r[i]);
-      //pcout << buffer;
     }
     i=0;
-    //sprintf(buffer, "X1norm %u:%14.8e\n", i, (**x).linfty_norm());
-    //pcout << buffer;
     for (std::vector<vectorType*>::iterator q=X.begin(); q<x; ++q, ++i){
       (**x).add(-r[i],**q);
-      //sprintf(buffer, "X2norm %u:%14.8e, %14.8e, %14.8e\n", i, (**x).linfty_norm(), (**q).linfty_norm(), r[i]);
-      //pcout << buffer;
     }
-    //sprintf(buffer, "X3norm %u:%14.8e, %14.8e\n", i, (**x).linfty_norm(), (**x).l2_norm());
-    //pcout << buffer;
     (**x)/=(**x).l2_norm();
-    //sprintf(buffer, "X4norm %u:%14.8e\n", i, (**x).linfty_norm());
-    //pcout << buffer;
   }
   computing_timer.exit_section("Chebyshev GS orthonormalization"); 
 }

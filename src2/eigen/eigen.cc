@@ -136,9 +136,6 @@ void eigenClass::XHX(const std::vector<vectorType*> &src){
   HX(src, dftPtr->tempPSI3);
   for (unsigned int i=0; i<src.size(); i++){
     dftPtr->tempPSI3[i]->update_ghost_values();
-    //char buffer[100];
-    //sprintf(buffer, "HXnorm %u:%14.8e\n", i, dftPtr->tempPSI3[i]->l2_norm());
-    //pcout << buffer;
   }
   //XHX
   unsigned int dofs_per_proc=src[0]->local_size();

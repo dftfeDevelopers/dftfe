@@ -16,7 +16,7 @@ double dftClass::mixing_simple()
 
   //parallel loop over all elements
   typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
-  for (; cell!=endc; ++cell) {
+ for (; cell!=endc; ++cell) {
     if (cell->is_locally_owned()){
       fe_values.reinit (cell); 
       (*rhoInValues)[cell->id()]=std::vector<double>(num_quad_points*num_quad_points);
