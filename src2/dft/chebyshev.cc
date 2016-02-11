@@ -38,10 +38,12 @@ double dftClass::upperBound(){
   const unsigned int local_size=vChebyshev.local_size();
   std::vector<unsigned int> local_dof_indices(local_size);
   vChebyshev.locally_owned_elements().fill_index_vector(local_dof_indices);
-  constraintsNone.distribute_local_to_global(std::vector<double>(local_size,1.0), local_dof_indices, vChebyshev);
-  //(double(std::rand())/RAND_MAX);
-  vChebyshev.update_ghost_values();
+  std::vector<double> local_values(local_size, 0.0);
+  for (unsigned int i=0; i<local_size; i++) local_values[i]=((double)std::rand())/((double)RAND_MAX);
+  constraintsNone.distribute_local_to_global(local_values, local_dof_indices, vChebyshev);
+  //
   vChebyshev/=vChebyshev.l2_norm();
+  vChebyshev.update_ghost_values();
   //
   std::vector<vectorType*> v,f; 
   v.push_back(&vChebyshev);
@@ -65,10 +67,12 @@ double dftClass::upperBound(){
     T[index]=alpha;
   }
   //eigen decomposition to find max eigen value of T matrix
-  std::vector<double> eigenValuesT(lanczosIterations), work(2*lanczosIterations+1);
-  std::vector<int> iwork(10);
+  std::vector<double> eigenValuesT(lanczosIterations);
   char jobz='N', uplo='L';
-  int n=lanczosIterations, lda=lanczosIterations, lwork=2*lanczosIterations+1, liwork=10, info;
+  int n=lanczosIterations, lda=lanczosIterations, info;
+  int lwork = 1 + 6*n + 2*n*n, liwork = 3 + 5*n;
+  std::vector<int> iwork(liwork, 0);
+  std::vector<double> work(lwork, 0.0);
   dsyevd_(&jobz, &uplo, &n, &T[0], &lda, &eigenValuesT[0], &work[0], &lwork, &iwork[0], &liwork, &info);
 
   //
@@ -79,16 +83,21 @@ double dftClass::upperBound(){
 //Gram-Schmidt orthonormalization
 void dftClass::gramSchmidt(std::vector<vectorType*>& X){
   computing_timer.enter_section("Chebyshev GS orthonormalization"); 
+  //Classical GS with reorthonormalization
+  //Ref: The Loss of Orthogonality in the Gram-Schmidt Orthogonalization Process, Computers and Mathematics with Applications 50 (2005)
+  //j loop
   for (std::vector<vectorType*>::iterator x=X.begin(); x<X.end(); ++x){
-    std::vector<double> r(x-X.begin(),0.0);
-    unsigned int i=0;
-    for (std::vector<vectorType*>::iterator q=X.begin(); q<x; ++q, ++i){
-      r[i]=(**q)*(**x);
+    aj[0]=**x;
+    //i loop
+    for (unsigned int i=1; i<3; i++){
+      aj[i]=aj[i-1];
+      //k loop
+      for (std::vector<vectorType*>::iterator q=X.begin(); q<x; ++q){
+	double r=(**q)*aj[i-1];
+	aj[i].add(-r,**q);	
+      }
     }
-    i=0;
-    for (std::vector<vectorType*>::iterator q=X.begin(); q<x; ++q, ++i){
-      (**x).add(-r[i],**q);
-    }
+    (**x)=aj[2];
     (**x)/=(**x).l2_norm();
   }
   computing_timer.exit_section("Chebyshev GS orthonormalization"); 

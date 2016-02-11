@@ -17,7 +17,7 @@ void dftClass::loadPSIFiles(unsigned int Z, unsigned int n, unsigned int l){
   for(int irow = 0; irow < numRows; ++irow){
     xData[irow]= values[irow][0];
   }
-  outerValues[Z] = xData[numRows-1];
+  outerValues[Z][n][l] = xData[numRows-1];
   alglib::real_1d_array x;
   x.setcontent(numRows,&xData[0]);	
   //y
@@ -34,7 +34,7 @@ void dftClass::loadPSIFiles(unsigned int Z, unsigned int n, unsigned int l){
 			     natural_bound_type,
 			     0.0,
 			     *spline);
-  //pcout << "send: Z:" << Z << " n:" << n << " l:" << l << std::endl; 
+  //pcout << "send: Z:" << Z << " n:" << n << " l:" << l << " numRows:" << numRows << std::endl; 
   radValues[Z][n][l]=spline;
 }
 
@@ -113,6 +113,7 @@ void dftClass::determineOrbitalFilling(){
       //m loop
       for (int m=-l; m<= (int) l; m++){
 	orbital temp;
+	temp.atomID=z;
 	temp.Z=Z; temp.n=n; temp.l=l; temp.m=m; temp.psi=radValues[Z][n][l];
 	waveFunctionsVector.push_back(temp); levels++;
 	if (printLevels) pcout << " n:" << n  << " l:" << l << " m:" << m << std::endl;
@@ -130,7 +131,6 @@ void dftClass::determineOrbitalFilling(){
 //
 void dftClass::readPSIRadialValues(){
   //loop over nodes to set PSI initial guess
-  unsigned int dofs_per_cell = matrix_free_data.get_dofs_per_cell();
   //get support points
   std::map<types::global_dof_index, Point<3> > support_points;
   MappingQ<3> mapQ(1);
@@ -139,13 +139,18 @@ void dftClass::readPSIRadialValues(){
   DoFTools::extract_locally_owned_dofs(dofHandler, locallyOwnedSet);
   std::vector<unsigned int> locallyOwnedDOFs;
   locallyOwnedSet.fill_index_vector(locallyOwnedDOFs);
-  std::vector<std::vector<double> > local_dof_values(numEigenValues, std::vector<double>(locallyOwnedDOFs.size()));
+  std::vector<std::vector<double> > local_dof_values(numEigenValues, std::vector<double>(locallyOwnedDOFs.size(), 0.0));
   //loop over nodes
+  bool pp=false;
   for(unsigned int dof=0; dof<locallyOwnedDOFs.size(); dof++){
     unsigned int dofID= locallyOwnedDOFs[dof];
     Point<3> node = support_points[dofID];
-    for(unsigned int atom=0; atom<atomLocations.size(); atom++){
-      Point<3> atomCoord(atomLocations[atom][1],atomLocations[atom][2],atomLocations[atom][3]);
+    //loop over wave functions
+    unsigned int waveFunction=0;
+    for (std::vector<orbital>::iterator it=waveFunctionsVector.begin(); it<waveFunctionsVector.end(); it++){
+      //find coordinates of atom correspoding to this wave function
+
+      Point<3> atomCoord(atomLocations[it->atomID][1],atomLocations[it->atomID][2],atomLocations[it->atomID][3]);
       //
       double x =node[0]-atomCoord[0];
       double y =node[1]-atomCoord[1];
@@ -156,21 +161,25 @@ void dftClass::readPSIRadialValues(){
       double phi = atan2(y,x);
       //
       if (r==0){theta=0; phi=0;}
-      double R;
-      unsigned int waveFunction=0;
-      for (std::vector<orbital>::iterator it=waveFunctionsVector.begin(); it<waveFunctionsVector.end(); it++){
-	R=0.0;
-	if (r<=outerValues[it->Z]) R = alglib::spline1dcalc(*(it->psi),r);
-	//
-	if (it->m >= 0){
-	  local_dof_values[waveFunction][dof] =  R*boost::math::spherical_harmonic_r(it->l,it->m,theta,phi);
-	}
-	else{
-	  local_dof_values[waveFunction][dof] =  R*boost::math::spherical_harmonic_i(it->l,-(it->m),theta,phi);	  
-	}
-	waveFunction++;
+      //radial part
+      double R=0.0;
+      if (r<=outerValues[it->Z][it->n][it->l]) R = alglib::spline1dcalc(*(it->psi),r);
+      if (!pp){
+	//pcout << "atom: " << it->atomID << " Z:" << it->Z << " n:" << it->n << " l:" << it->l << " m:" << it->m << " x:" << atomCoord[0] << " y:" << atomCoord[1] << " z:" << atomCoord[2] << " Ro:" << outerValues[it->Z][it->n][it->l] << std::endl; 
       }
+      //spherical part
+      if (it->m > 0){
+	local_dof_values[waveFunction][dof] =  R*std::sqrt(2)*boost::math::spherical_harmonic_r(it->l,it->m,theta,phi);
+      }
+      else if (it->m == 0){
+	local_dof_values[waveFunction][dof] =  R*boost::math::spherical_harmonic_r(it->l,it->m,theta,phi);
+      }
+      else{
+	local_dof_values[waveFunction][dof] =  R*std::sqrt(2)*boost::math::spherical_harmonic_i(it->l,-(it->m),theta,phi);	  
+      }
+      waveFunction++;
     }
+    pp=true;
   }
   //
   for (unsigned int i=0; i<eigenVectors.size(); ++i){
@@ -183,9 +192,9 @@ void dftClass::readPSIRadialValues(){
 	eigenVectors[i]->local_element(j)/=eigen.massVector.local_element(j);
       }
     }
-    //char buffer[100];
-    //sprintf(buffer, "norm %u: %14.8e\n",i,eigenVectors[i]->l2_norm());
-    //pcout << buffer;
+    char buffer[100];
+    sprintf(buffer, "norm %u: l1: %14.8e  l2:%14.8e\n",i, eigenVectors[i]->l1_norm(), eigenVectors[i]->l2_norm());
+    pcout << buffer;
     eigenVectors[i]->update_ghost_values();
   }
 }

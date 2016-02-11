@@ -67,7 +67,7 @@ void dftClass::compute_energy(){
  totalEnergy+=repulsiveEnergy();
  double totalkineticEnergy=-totalpotentialTimesRho+bandEnergy;
  if (this_mpi_process == 0) {
-   std::printf("Total energy:%30.20e \n", totalEnergy);
+   std::printf("Total energy:%30.20e \nTotal energy per atom:%30.20e \n", totalEnergy, totalEnergy/((double) atomLocations.size()));
    std::printf("Band energy:%30.20e \nKinetic energy:%30.20e \nExchange energy:%30.20e \nCorrelation energy:%30.20e \nElectrostatic energy:%30.20e \nRepulsive energy:%30.20e \n", bandEnergy, totalkineticEnergy, totalexchangeEnergy, totalcorrelationEnergy, totalelectrostaticEnergy, repulsiveEnergy());
  }
 }

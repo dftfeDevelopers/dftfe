@@ -8,12 +8,12 @@
 #include "poisson.h"
 #include "eigen.h"
 //include alglib
-//#include "/nfs/mcfs_home/rudraa/Public/alglib/cpp/src/interpolation.h"
-//#include "/nfs/mcfs_home/rudraa/Public/libxc/libxc-2.2.0/installDir/include/xc.h"
+#include "/nfs/mcfs_home/rudraa/Public/alglib/cpp/src/interpolation.h"
+#include "/nfs/mcfs_home/rudraa/Public/libxc/libxc-2.2.0/installDir/include/xc.h"
 //#include "/opt/software/numerics/alglib/cpp/src/interpolation.h"
 //#include "/opt/software/numerics/libxc-2.2.2/installDir/include/xc.h"
-#include "/Users/rudraa/workspace/codes/alglib/cpp/src/interpolation.h"
-#include "/usr/local/Cellar/libxc/2.2.2_1/include/xc.h"
+//#include "/Users/rudraa/workspace/codes/alglib/cpp/src/interpolation.h"
+//#include "/usr/local/Cellar/libxc/2.2.2_1/include/xc.h"
 
 //std::cout << std::setprecision(18) << std::scientific;
 
@@ -35,6 +35,7 @@ const double kb = 3.166811429e-06;
 
 //
 struct orbital{
+  unsigned int atomID;
   unsigned int Z, n, l;
   int m;
   alglib::spline1dinterpolant* psi;
@@ -55,7 +56,7 @@ class dftClass{
   std::vector<std::vector<double> > atomLocations;
   std::vector<orbital> waveFunctionsVector;
   std::map<unsigned int, std::map<unsigned int, std::map<unsigned int, alglib::spline1dinterpolant*> > > radValues;
-  std::map<unsigned int, double> outerValues;
+  std::map<unsigned int, std::map<unsigned int, std::map <unsigned int, double> > >outerValues;
 
   void mesh();
   void init();
@@ -110,7 +111,7 @@ class dftClass{
 
   //chebyshev filter variables and functions
   double bUp, bLow, a0;
-  vectorType vChebyshev, v0Chebyshev, fChebyshev;
+  vectorType vChebyshev, v0Chebyshev, fChebyshev, aj[3];
   std::vector<parallel::distributed::Vector<double>*> PSI, tempPSI, tempPSI2, tempPSI3;
   void chebyshevSolver();
   double upperBound();
