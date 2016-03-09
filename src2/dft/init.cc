@@ -138,6 +138,7 @@ void dftClass::init(){
   v0Chebyshev.reinit(vChebyshev);
   fChebyshev.reinit(vChebyshev);
   aj[0].reinit(vChebyshev); aj[1].reinit(vChebyshev); aj[2].reinit(vChebyshev);
+  aj[3].reinit(vChebyshev); aj[4].reinit(vChebyshev);
   for (unsigned int i=0; i<eigenVectors.size(); ++i){  
     eigenVectors[i]->reinit(vChebyshev);
     PSI[i]->reinit(vChebyshev);

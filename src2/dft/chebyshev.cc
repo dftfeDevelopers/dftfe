@@ -83,23 +83,69 @@ double dftClass::upperBound(){
 //Gram-Schmidt orthonormalization
 void dftClass::gramSchmidt(std::vector<vectorType*>& X){
   computing_timer.enter_section("Chebyshev GS orthonormalization"); 
+  /*
   //Classical GS with reorthonormalization
   //Ref: The Loss of Orthogonality in the Gram-Schmidt Orthogonalization Process, Computers and Mathematics with Applications 50 (2005)
   //j loop
   for (std::vector<vectorType*>::iterator x=X.begin(); x<X.end(); ++x){
     aj[0]=**x;
     //i loop
-    for (unsigned int i=1; i<3; i++){
+    for (unsigned int i=1; i<5; i++){
       aj[i]=aj[i-1];
       //k loop
       for (std::vector<vectorType*>::iterator q=X.begin(); q<x; ++q){
-	double r=(**q)*aj[i-1];
+	double r=(**q)*aj[i]; //*aj[i-1];
 	aj[i].add(-r,**q);	
       }
     }
-    (**x)=aj[2];
+    (**x)=aj[4];
     (**x)/=(**x).l2_norm();
   }
+  */
+  //copy to petsc vectors
+  unsigned int localSize=vChebyshev.local_size(), numVectors=X.size();
+  Vec vec;
+  VecCreateMPI(PETSC_COMM_WORLD, localSize, PETSC_DETERMINE, &vec);
+  VecSetFromOptions(vec);
+  //
+  Vec *petscColumnSpace;
+  VecDuplicateVecs(vec, numVectors, &petscColumnSpace);
+  VecDestroy(&vec);
+  //
+  PetscScalar ** columnSpacePointer;
+  VecGetArrays(petscColumnSpace, numVectors, &columnSpacePointer);
+  for (int i = 0; i < numVectors; ++i){
+    std::vector<double> localData(localSize);
+    std::copy (X[i]->begin(),X[i]->end(),localData.begin());
+    std::copy (localData.begin(),localData.end(), &(columnSpacePointer[i][0])); 
+  }
+  VecRestoreArrays(petscColumnSpace, numVectors, &columnSpacePointer);
+  //
+  BV slepcColumnSpace;
+  BVCreate(PETSC_COMM_WORLD,&slepcColumnSpace);
+  BVSetFromOptions(slepcColumnSpace);
+  BVSetSizesFromVec(slepcColumnSpace,petscColumnSpace[0],numVectors);
+  BVSetType(slepcColumnSpace,"vecs");
+  int numVectors2=numVectors;
+  BVInsertVecs(slepcColumnSpace,0, &numVectors2,petscColumnSpace,PETSC_FALSE);
+  BVOrthogonalize(slepcColumnSpace,NULL);
+  //
+  for(int i = 0; i < numVectors; ++i){
+    BVCopyVec(slepcColumnSpace,i,petscColumnSpace[i]);
+  }
+  BVDestroy(&slepcColumnSpace);
+  //
+  VecGetArrays(petscColumnSpace, numVectors, &columnSpacePointer);
+  for (int i = 0; i < numVectors; ++i){
+    std::vector<double> localData(localSize);
+    std::copy (&(columnSpacePointer[i][0]),&(columnSpacePointer[i][localSize]), localData.begin()); 
+    std::copy (localData.begin(), localData.end(), X[i]->begin());
+    X[i]->update_ghost_values();
+  }
+  VecRestoreArrays(petscColumnSpace, numVectors, &columnSpacePointer);
+  //
+  VecDestroyVecs(numVectors, &petscColumnSpace);
+  //
   computing_timer.exit_section("Chebyshev GS orthonormalization"); 
 }
 
