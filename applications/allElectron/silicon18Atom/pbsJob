@@ -1,7 +1,7 @@
 #!/bin/sh
 #PBS -A prismsproject_fluxoe
-#PBS -N Phani
-#PBS -l nodes=2:ppn=16,walltime=06:00:00,pmem=3800mb,qos=flux
+#PBS -N SI
+#PBS -l nodes=2:ppn=16,walltime=03:00:00,pmem=3800mb,qos=flux
 #PBS -q fluxoe
 #PBS -m abe
 #PBS -V
