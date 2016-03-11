@@ -30,7 +30,7 @@ void dftClass::chebyshevSolver(){
 
 double dftClass::upperBound(){
   computing_timer.enter_section("Chebyshev upper bound"); 
-  unsigned int lanczosIterations=10;
+  unsigned int lanczosIterations=2;
   double alpha, beta;
   //generate random vector v
   vChebyshev=0.0;
@@ -39,7 +39,7 @@ double dftClass::upperBound(){
   std::vector<unsigned int> local_dof_indices(local_size);
   vChebyshev.locally_owned_elements().fill_index_vector(local_dof_indices);
   std::vector<double> local_values(local_size, 0.0);
-  for (unsigned int i=0; i<local_size; i++) local_values[i]=((double)std::rand())/((double)RAND_MAX);
+  for (unsigned int i=0; i<local_size; i++) local_values[i]= 1.0; //((double)std::rand())/((double)RAND_MAX);
   constraintsNone.distribute_local_to_global(local_values, local_dof_indices, vChebyshev);
   //
   vChebyshev/=vChebyshev.l2_norm();
@@ -49,6 +49,9 @@ double dftClass::upperBound(){
   v.push_back(&vChebyshev);
   f.push_back(&fChebyshev);
   eigen.HX(v,f);
+  char buffer2[100];
+  sprintf(buffer2, "v: %18.10e,  f: %18.10e\n", vChebyshev.l1_norm(), fChebyshev.l2_norm());
+  pcout << buffer2;
   //
   alpha=fChebyshev*vChebyshev;
   fChebyshev.add(-1.0*alpha,vChebyshev);
@@ -58,6 +61,9 @@ double dftClass::upperBound(){
   //filling only lower trangular part
   for (unsigned int j=1; j<lanczosIterations; j++){
     beta=fChebyshev.l2_norm();
+    char buffer1[100];
+    sprintf(buffer1, "alpha: %18.10e,  beta: %18.10e\n", alpha, beta);
+    pcout << buffer1;
     v0Chebyshev=vChebyshev; vChebyshev.equ(1.0/beta,fChebyshev);
     eigen.HX(v,f); fChebyshev.add(-1.0*beta,v0Chebyshev);
     alpha=fChebyshev*vChebyshev; fChebyshev.add(-1.0*alpha,vChebyshev);
@@ -65,6 +71,8 @@ double dftClass::upperBound(){
     T[index]=beta; 
     index+=lanczosIterations;
     T[index]=alpha;
+    sprintf(buffer1, "alpha: %18.10e,  beta: %18.10e\n", alpha, beta);
+    pcout << buffer1;
   }
   //eigen decomposition to find max eigen value of T matrix
   std::vector<double> eigenValuesT(lanczosIterations);
@@ -76,7 +84,14 @@ double dftClass::upperBound(){
   dsyevd_(&jobz, &uplo, &n, &T[0], &lda, &eigenValuesT[0], &work[0], &lwork, &iwork[0], &liwork, &info);
 
   //
-  computing_timer.exit_section("Chebyshev upper bound"); 
+  computing_timer.exit_section("Chebyshev upper bound");
+  for (unsigned int i=0; i<eigenValuesT.size(); i++){eigenValuesT[i]=std::abs(eigenValuesT[i]);}
+  std::sort(eigenValuesT.begin(),eigenValuesT.end()); 
+  //
+  char buffer[100];
+  sprintf(buffer, "bUp1: %18.10e,  bUp2: %18.10e\n", eigenValuesT[lanczosIterations-1], fChebyshev.l2_norm());
+  pcout << buffer;
+  //
   return (eigenValuesT[lanczosIterations-1]+fChebyshev.l2_norm());
 }
 

@@ -54,10 +54,10 @@ void dftClass::initRho(){
 	  Point<3> atom(atomLocations[n][1],atomLocations[n][2],atomLocations[n][3]);
 	  double distanceToAtom=quadPoint.distance(atom);
 	  if(distanceToAtom <= outerMostPointDen[atomLocations[n][0]]){
-	    rhoValueAtQuadPt+=std::abs(alglib::spline1dcalc(denSpline[atomLocations[n][0]], distanceToAtom));
+	    rhoValueAtQuadPt+=alglib::spline1dcalc(denSpline[atomLocations[n][0]], distanceToAtom);
 	  }
 	}
-	rhoInValuesPtr[q]=rhoValueAtQuadPt;
+	rhoInValuesPtr[q]=std::abs(rhoValueAtQuadPt);
       }
     }
   }

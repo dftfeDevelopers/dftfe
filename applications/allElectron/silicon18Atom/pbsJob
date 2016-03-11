@@ -1,5 +1,5 @@
 #!/bin/sh
-#PBS -A prismsproject_fluxoe
+#PBS -A prismsprojectdebug_fluxoe
 #PBS -N SI
 #PBS -l nodes=2:ppn=16,walltime=03:00:00,pmem=3800mb,qos=flux
 #PBS -q fluxoe

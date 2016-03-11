@@ -104,7 +104,7 @@ double dftClass::mixing_anderson(){
 	  rhoOutBar+=c[i]*(*rhoOutVals[N-1-i])[cell->id()][q_point];
 	  rhoInBar+=c[i]*(*rhoInVals[N-1-i])[cell->id()][q_point];
 	}
-	(*rhoInValues)[cell->id()][q_point]=(1-alpha)*rhoInBar+alpha*rhoOutBar;
+	(*rhoInValues)[cell->id()][q_point]=std::abs((1-alpha)*rhoInBar+alpha*rhoOutBar);
       }
     }
   }
