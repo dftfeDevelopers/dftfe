@@ -7,7 +7,7 @@ double dftClass::mixing_simple()
   QGauss<3>  quadrature(FEOrder+1);
   FEValues<3> fe_values (FE, quadrature, update_values | update_JxW_values | update_quadrature_points);
   const unsigned int num_quad_points = quadrature.size();
-  double alpha=0.8;
+  double alpha=0.5;
   
   //create new rhoValue tables
   std::map<dealii::CellId,std::vector<double> >* rhoInValuesOld=rhoInValues;
@@ -67,19 +67,24 @@ double dftClass::mixing_anderson(){
       }
     }
   }
-  std::cout << "A,c:" << A[0] << " " << c[0] << "\n";
+  //accumulate over all processors
+  std::vector<double> ATotal(lda*N), cTotal(ldb*NRHS); 
+  MPI_Allreduce(&A[0], &ATotal[0], lda*N, MPI_DOUBLE, MPI_SUM, mpi_communicator);
+  MPI_Allreduce(&c[0], &cTotal[0], ldb*NRHS, MPI_DOUBLE, MPI_SUM, mpi_communicator);
+  //
+  std::cout << "A,c:" << ATotal[0] << " " << cTotal[0] << "\n";
   //solve for coefficients
-  dgesv_(&N, &NRHS, &A[0], &lda, &ipiv[0], &c[0], &ldb, &info);
+  dgesv_(&N, &NRHS, &ATotal[0], &lda, &ipiv[0], &cTotal[0], &ldb, &info);
   if((info > 0) && (this_mpi_process==0)) {
     printf( "Anderson Mixing: The diagonal element of the triangular factor of A,\n" );
     printf( "U(%i,%i) is zero, so that A is singular.\nThe solution could not be computed.\n", info, info );
     exit(1);
   }
   double cn=1.0;
-  for (int i=0; i<N; i++) cn-=c[i];
+  for (int i=0; i<N; i++) cn-=cTotal[i];
   if(this_mpi_process==0) {
     printf("\nAnderson mixing  c%u:%12.6e, ", N+1, cn);
-    for (int i=0; i<N; i++) printf("c%u:%12.6e, ", N-i, c[N-1-i]);
+    for (int i=0; i<N; i++) printf("c%u:%12.6e, ", N-i, cTotal[N-1-i]);
     printf("\n");
   }
   
@@ -101,8 +106,8 @@ double dftClass::mixing_anderson(){
 	double rhoOutBar=cn*(*rhoOutVals[N])[cell->id()][q_point];
 	double rhoInBar=cn*(*rhoInVals[N])[cell->id()][q_point];
 	for (int i=0; i<N; i++){
-	  rhoOutBar+=c[i]*(*rhoOutVals[N-1-i])[cell->id()][q_point];
-	  rhoInBar+=c[i]*(*rhoInVals[N-1-i])[cell->id()][q_point];
+	  rhoOutBar+=cTotal[i]*(*rhoOutVals[N-1-i])[cell->id()][q_point];
+	  rhoInBar+=cTotal[i]*(*rhoInVals[N-1-i])[cell->id()][q_point];
 	}
 	(*rhoInValues)[cell->id()][q_point]=std::abs((1-alpha)*rhoInBar+alpha*rhoOutBar);
       }

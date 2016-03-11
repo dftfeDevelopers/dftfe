@@ -30,7 +30,7 @@ void dftClass::chebyshevSolver(){
 
 double dftClass::upperBound(){
   computing_timer.enter_section("Chebyshev upper bound"); 
-  unsigned int lanczosIterations=2;
+  unsigned int lanczosIterations=10;
   double alpha, beta;
   //generate random vector v
   vChebyshev=0.0;
@@ -51,7 +51,7 @@ double dftClass::upperBound(){
   eigen.HX(v,f);
   char buffer2[100];
   sprintf(buffer2, "v: %18.10e,  f: %18.10e\n", vChebyshev.l1_norm(), fChebyshev.l2_norm());
-  pcout << buffer2;
+  //pcout << buffer2;
   //
   alpha=fChebyshev*vChebyshev;
   fChebyshev.add(-1.0*alpha,vChebyshev);
@@ -63,7 +63,7 @@ double dftClass::upperBound(){
     beta=fChebyshev.l2_norm();
     char buffer1[100];
     sprintf(buffer1, "alpha: %18.10e,  beta: %18.10e\n", alpha, beta);
-    pcout << buffer1;
+    //pcout << buffer1;
     v0Chebyshev=vChebyshev; vChebyshev.equ(1.0/beta,fChebyshev);
     eigen.HX(v,f); fChebyshev.add(-1.0*beta,v0Chebyshev);
     alpha=fChebyshev*vChebyshev; fChebyshev.add(-1.0*alpha,vChebyshev);
@@ -72,7 +72,7 @@ double dftClass::upperBound(){
     index+=lanczosIterations;
     T[index]=alpha;
     sprintf(buffer1, "alpha: %18.10e,  beta: %18.10e\n", alpha, beta);
-    pcout << buffer1;
+    //pcout << buffer1;
   }
   //eigen decomposition to find max eigen value of T matrix
   std::vector<double> eigenValuesT(lanczosIterations);
@@ -90,7 +90,7 @@ double dftClass::upperBound(){
   //
   char buffer[100];
   sprintf(buffer, "bUp1: %18.10e,  bUp2: %18.10e\n", eigenValuesT[lanczosIterations-1], fChebyshev.l2_norm());
-  pcout << buffer;
+  //pcout << buffer;
   //
   return (eigenValuesT[lanczosIterations-1]+fChebyshev.l2_norm());
 }
