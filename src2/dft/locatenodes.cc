@@ -19,7 +19,7 @@ void dftClass::locateAtomCoreNodes(){
 	Point<3> feNodeGlobalCoord = cell->vertex(i);
 	//loop over all atoms to locate the corresponding nodes
 	for (std::set<unsigned int>::iterator it=atomsTolocate.begin(); it!=atomsTolocate.end(); ++it){
-	  Point<3> atomCoord(atomLocations[*it][1],atomLocations[*it][2],atomLocations[*it][3]);
+	  Point<3> atomCoord(atomLocations[*it][2],atomLocations[*it][3],atomLocations[*it][4]);
 	   if(feNodeGlobalCoord.distance(atomCoord)<1.0e-5){ 
 	     std::cout << "Atom core (" << atomLocations[*it][0] << ") located with node id " << nodeID << " in processor " << this_mpi_process;
 	     if (locally_owned_elements.is_element(nodeID)){

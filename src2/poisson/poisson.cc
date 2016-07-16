@@ -20,7 +20,7 @@ void poissonClass::init(){
   //OnebyR constraints (temporarily created to fill values1byR map)
   ConstraintMatrix constraints1byR;
   constraints1byR.clear ();  
-  VectorTools::interpolate_boundary_values (dftPtr->dofHandler, 0, OnebyRBoundaryFunction<3>(dftPtr->atomLocations),constraints1byR);
+  VectorTools::interpolate_boundary_values(dftPtr->dofHandler, 0, OnebyRBoundaryFunction<3>(dftPtr->atomLocations),constraints1byR);
   constraints1byR.close ();
 
   //initialize vectors

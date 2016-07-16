@@ -11,9 +11,17 @@ void dftClass::initRho(){
   std::map<unsigned int, double> outerMostPointDen;
     
   //loop over atom types
+
   for (std::set<unsigned int>::iterator it=atomTypes.begin(); it!=atomTypes.end(); it++){
     char densityFile[256];
-    sprintf(densityFile, "../../../data/electronicStructure/z%u/density.inp", *it);
+    if(isPseudopotential)
+      {
+	sprintf(densityFile, "../../../data/electronicStructure/pseudopotential/z%u/density.inp", *it);
+      }
+    else
+      {
+	sprintf(densityFile, "../../../data/electronicStructure/allElectron/z%u/density.inp", *it);
+      }
     readFile(2, singleAtomElectronDensity[*it], densityFile);
     unsigned int numRows = singleAtomElectronDensity[*it].size()-1;
     std::vector<double> xData(numRows), yData(numRows);
@@ -114,7 +122,7 @@ void dftClass::init(){
   std::ofstream output("mesh.vtu");
   data_out.write_vtu(output); 
 
-  //matrix fee data structure
+  //matrix free data structure
   typename MatrixFree<3>::AdditionalData additional_data;
   additional_data.mpi_communicator = MPI_COMM_WORLD;
   additional_data.tasks_parallel_scheme = MatrixFree<3>::AdditionalData::partition_partition;

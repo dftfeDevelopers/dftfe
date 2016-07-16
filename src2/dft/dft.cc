@@ -36,7 +36,8 @@ dftClass::dftClass():
 
 void dftClass::set(){
   //read coordinates
-  readFile(4, atomLocations, coordinatesFile);
+  int numberColumns = 5;
+  readFile(numberColumns, atomLocations, coordinatesFile);
   pcout << "number of atoms: " << atomLocations.size() << "\n";
   //find unique atom types
   for (std::vector<std::vector<double> >::iterator it=atomLocations.begin(); it<atomLocations.end(); it++){
