@@ -1,0 +1,36 @@
+Scanning dependencies of target main
+[ 50%] Building CXX object CMakeFiles/main.dir/main.cc.o
+In file included from /home/phanim/KohnShamCodes/DEALIICode/dftfe/applications/allElectron/carbon/../../../src2/dft/dft.cc(3),
+                 from /home/phanim/KohnShamCodes/DEALIICode/dftfe/applications/allElectron/carbon/main.cc(22):
+/home/phanim/KohnShamCodes/DEALIICode/dftfe/applications/allElectron/carbon/../../../src2/dft/../../include2/dft.h(62): error #303: explicit type is missing ("int" assumed)
+    void createAtomBins(std::vector<const *ConstraintMatrix> & constraintsVector);
+                                    ^
+
+In file included from /home/phanim/KohnShamCodes/DEALIICode/dftfe/applications/allElectron/carbon/../../../src2/dft/dft.cc(3),
+                 from /home/phanim/KohnShamCodes/DEALIICode/dftfe/applications/allElectron/carbon/main.cc(22):
+/home/phanim/KohnShamCodes/DEALIICode/dftfe/applications/allElectron/carbon/../../../src2/dft/../../include2/dft.h(62): error: expected a ">"
+    void createAtomBins(std::vector<const *ConstraintMatrix> & constraintsVector);
+                                           ^
+
+In file included from /home/phanim/KohnShamCodes/DEALIICode/dftfe/applications/allElectron/carbon/../../../src2/dft/dft.cc(14),
+                 from /home/phanim/KohnShamCodes/DEALIICode/dftfe/applications/allElectron/carbon/main.cc(22):
+/home/phanim/KohnShamCodes/DEALIICode/dftfe/applications/allElectron/carbon/../../../src2/dft/createBins.cc(3): error #303: explicit type is missing ("int" assumed)
+  void dftClass::createAtomBins(std::vector<const *ConstraintMatrix> & constraintsVector){ 
+                                            ^
+
+In file included from /home/phanim/KohnShamCodes/DEALIICode/dftfe/applications/allElectron/carbon/../../../src2/dft/dft.cc(14),
+                 from /home/phanim/KohnShamCodes/DEALIICode/dftfe/applications/allElectron/carbon/main.cc(22):
+/home/phanim/KohnShamCodes/DEALIICode/dftfe/applications/allElectron/carbon/../../../src2/dft/createBins.cc(3): error: expected a ">"
+  void dftClass::createAtomBins(std::vector<const *ConstraintMatrix> & constraintsVector){ 
+                                                   ^
+
+In file included from /home/phanim/KohnShamCodes/DEALIICode/dftfe/applications/allElectron/carbon/../../../src2/dft/dft.cc(14),
+                 from /home/phanim/KohnShamCodes/DEALIICode/dftfe/applications/allElectron/carbon/main.cc(22):
+/home/phanim/KohnShamCodes/DEALIICode/dftfe/applications/allElectron/carbon/../../../src2/dft/createBins.cc(52): error: expression must have class type
+  	      constraintsForVselfInBin.set_inhomogeneity(iterMap->first,potentialValue);
+  	      ^
+
+compilation aborted for /home/phanim/KohnShamCodes/DEALIICode/dftfe/applications/allElectron/carbon/main.cc (code 2)
+make[2]: *** [CMakeFiles/main.dir/main.cc.o] Error 2
+make[1]: *** [CMakeFiles/main.dir/all] Error 2
+make: *** [all] Error 2

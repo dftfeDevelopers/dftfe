@@ -7,7 +7,10 @@ void dftClass::loadPSIFiles(unsigned int Z, unsigned int n, unsigned int l){
   if (radValues[Z][n].count(l)>0) return;
   //
   char psiFile[256];
-  sprintf(psiFile, "../../../data/electronicStructure/z%u/psi%u%u.inp", Z, n, l);
+  if(isPseudopotential)
+    sprintf(psiFile, "../../../data/electronicStructure/pseudoPotential/z%u/psi%u%u.inp", Z, n, l);
+  else
+    sprintf(psiFile, "../../../data/electronicStructure/allElectron/z%u/psi%u%u.inp", Z, n, l);
   std::vector<std::vector<double> > values;
   readFile(2, values, psiFile);
   //
@@ -150,7 +153,7 @@ void dftClass::readPSIRadialValues(){
     for (std::vector<orbital>::iterator it=waveFunctionsVector.begin(); it<waveFunctionsVector.end(); it++){
       //find coordinates of atom correspoding to this wave function
 
-      Point<3> atomCoord(atomLocations[it->atomID][1],atomLocations[it->atomID][2],atomLocations[it->atomID][3]);
+      Point<3> atomCoord(atomLocations[it->atomID][2],atomLocations[it->atomID][3],atomLocations[it->atomID][4]);
       //
       double x =node[0]-atomCoord[0];
       double y =node[1]-atomCoord[1];

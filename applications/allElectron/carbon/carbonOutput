@@ -1,0 +1,135 @@
+number of MPI processes: 1
+number of atoms: 1
+number of atoms types: 1
+Z:6
+ n:0 l:0 m:0
+ n:1 l:0 m:0
+ n:1 l:1 m:-1
+ n:1 l:1 m:0
+ n:1 l:1 m:1
+total num electrons: 6
+total num base levels: 3
+total num levels: 5
+************************************
+num of eigen values: 5
+number of elements: 272
+number of degrees of freedom: 17713
+Atom core (6) located with node id 17370 in processor 0 and added 
+reading initial guess for rho
+initial total charge:   5.9999970181e+00 
+initial total charge after scaling:   6.0000000000e+00 
+reading initial guess for PSI
+norm 0: l1: 6.69655293e+01  l2:1.00000651e+00
+norm 1: l1: 8.35406676e+01  l2:1.00000624e+00
+norm 2: l1: 7.71922812e+01  l2:1.00000620e+00
+norm 3: l1: 7.71922812e+01  l2:1.00000620e+00
+norm 4: l1: 7.71922812e+01  l2:1.00000620e+00
+poisson solve: initial residual:1.108617e+01, current residual:9.202007e-12, nsteps:161, tolerance criterion:1.108617e-11
+
+
+Begin SCF Iteration:1
+poisson solve: initial residual:6.000482e+00, current residual:4.242554e-12, nsteps:162, tolerance criterion:6.000482e-12
+bUp:   1.8459762570e+05
+bLow: 0
+a0: -10
+Total time for only chebyshev filter: 0.0962424mins
+eigen value  0:  -9.9473353331e+00
+eigen value  1:  -5.0065103822e-01
+eigen value  2:  -1.9894636125e-01
+eigen value  3:  -1.9894636125e-01
+eigen value  4:  -1.9894636125e-01
+Total time for chebyshev filter: 0.0975372mins
+Fermi energy Residual:    1.06581410364015027881e-14 
+Fermi energy:   -2.00043894461305243881e-01 
+poisson solve: initial residual:6.000482e+00, current residual:3.376243e-12, nsteps:163, tolerance criterion:6.000482e-12
+partialOccupancy 0:     1.00000000000000000000e+00 
+partialOccupancy 1:     1.00000000000000000000e+00 
+partialOccupancy 2:     3.33333333333606374183e-01 
+partialOccupancy 3:     3.33333333333290848799e-01 
+partialOccupancy 4:     3.33333333333107773022e-01 
+Total energy:   -3.74249401707982940479e+01 
+Total energy per atom:   -3.74249401707982940479e+01 
+Band energy:   -2.12938654651320220523e+01 
+Kinetic energy:    3.71875364157642067653e+01 
+Exchange energy:   -4.35498590165949117647e+00 
+Correlation energy:   -3.71313458775268112610e-01 
+Electrostatic energy:   -6.98861772261277423013e+01 
+Repulsive energy:    0.00000000000000000000e+00 
+SCF iteration: 1 complete
+
+
+Begin SCF Iteration:2
+Mixing Scheme: iter:2, norm:4.229815e-06
+poisson solve: initial residual:6.000482e+00, current residual:4.240010e-12, nsteps:163, tolerance criterion:6.000482e-12
+bUp:   1.8459762619e+05
+bLow: -0.198946
+a0: -9.94734
+Total time for only chebyshev filter: 0.0961067mins
+eigen value  0:  -9.9481765322e+00
+eigen value  1:  -5.0099936344e-01
+eigen value  2:  -1.9927466780e-01
+eigen value  3:  -1.9927466780e-01
+eigen value  4:  -1.9927466780e-01
+Total time for chebyshev filter: 0.0962173mins
+Fermi energy Residual:    1.77635683940025046468e-15 
+Fermi energy:   -2.00372201002690791816e-01 
+poisson solve: initial residual:6.000482e+00, current residual:3.436593e-12, nsteps:163, tolerance criterion:6.000482e-12
+partialOccupancy 0:     1.00000000000000000000e+00 
+partialOccupancy 1:     1.00000000000000000000e+00 
+partialOccupancy 2:     3.33333333382726637595e-01 
+partialOccupancy 3:     3.33333333357356265125e-01 
+partialOccupancy 4:     3.33333333259918207503e-01 
+Total energy:   -3.74249405085361956935e+01 
+Total energy per atom:   -3.74249405085361956935e+01 
+Band energy:   -2.12969011268959640404e+01 
+Kinetic energy:    3.71902365362396523096e+01 
+Exchange energy:   -4.35535788581081817483e+00 
+Correlation energy:   -3.71336412594633624717e-01 
+Electrostatic energy:   -6.98884827463703857120e+01 
+Repulsive energy:    0.00000000000000000000e+00 
+SCF iteration: 2 complete
+
+
++---------------------------------------------+------------+------------+
+| Total wallclock time elapsed since start    |      14.2s |            |
+|                                             |            |            |
+| Section                         | no. calls |  wall time | % of total |
++---------------------------------+-----------+------------+------------+
+| Chebyshev GS orthonormalization |         2 |    0.0274s |      0.19% |
+| Chebyshev Rayleigh Ritz         |         2 |    0.0565s |       0.4% |
+| Chebyshev filtering             |         2 |      11.5s |        81% |
+| Chebyshev solve                 |         2 |      11.6s |        82% |
+| Chebyshev upper bound           |         2 |    0.0213s |      0.15% |
+| dft solve                       |         1 |      12.9s |        91% |
+| dftClass init PSI               |         1 |    0.0839s |      0.59% |
+| dftClass init density           |         1 |     0.859s |       6.1% |
+| dftClass setup                  |         1 |     0.971s |       6.9% |
+| mesh                            |         1 |    0.0146s |       0.1% |
++---------------------------------+-----------+------------+------------+
+
+
+
++---------------------------------------------+------------+------------+
+| Total wallclock time elapsed since start    |      14.2s |            |
+|                                             |            |            |
+| Section                         | no. calls |  wall time | % of total |
++---------------------------------+-----------+------------+------------+
+| eigenClass HX                   |      4022 |      10.1s |        71% |
+| eigenClass Mass assembly        |         1 |  0.000531s |    0.0037% |
+| eigenClass XHX                  |         2 |   0.00744s |     0.052% |
+| eigenClass setup                |         1 |  0.000705s |     0.005% |
++---------------------------------+-----------+------------+------------+
+
+
+
++---------------------------------------------+------------+------------+
+| Total wallclock time elapsed since start    |      14.2s |            |
+|                                             |            |            |
+| Section                         | no. calls |  wall time | % of total |
++---------------------------------+-----------+------------+------------+
+| poissonClass rhs assembly       |         5 |     0.109s |      0.77% |
+| poissonClass rhs2 assembly      |         1 |     0.142s |         1% |
+| poissonClass setup              |         1 |   0.00548s |     0.039% |
+| poissonClass solve              |         5 |     0.769s |       5.4% |
++---------------------------------+-----------+------------+------------+
+

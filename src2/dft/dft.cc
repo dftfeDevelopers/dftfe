@@ -11,6 +11,7 @@
 #include "charge.cc"
 #include "density.cc"
 #include "locatenodes.cc"
+#include "createBins.cc"
 #include "mixingschemes.cc"
 #include "chebyshev.cc"
  
@@ -36,7 +37,7 @@ dftClass::dftClass():
 
 void dftClass::set(){
   //read coordinates
-  int numberColumns = 5;
+  unsigned int numberColumns = 5;
   readFile(numberColumns, atomLocations, coordinatesFile);
   pcout << "number of atoms: " << atomLocations.size() << "\n";
   //find unique atom types
@@ -77,8 +78,14 @@ void dftClass::run (){
  
   //solve
   computing_timer.enter_section("dft solve"); 
+
+  //
   //phiExt with nuclear charge
-  poisson.solve(poisson.phiExt);
+  //
+  int binId = 0;
+  int constraintMatrixId = binId+2;
+  poisson.solve(poisson.phiExt,constraintMatrixId);
+  exit(0);
   
   /*
   DataOut<3> data_out;
@@ -92,7 +99,7 @@ void dftClass::run (){
   //Begin SCF iteration
   unsigned int scfIter=0;
   double norm=1.0;
-  while ((norm>1.0e-13) && (scfIter<numSCFIterations)){
+  while ((norm > 1.0e-13) && (scfIter < numSCFIterations)){
     if(this_mpi_process==0) printf("\n\nBegin SCF Iteration:%u\n", scfIter+1);
     //Mixing scheme
     if (scfIter>0){
@@ -101,7 +108,8 @@ void dftClass::run (){
       if(this_mpi_process==0) printf("Mixing Scheme: iter:%u, norm:%12.6e\n", scfIter+1, norm);
     }
     //phiTot with rhoIn
-    poisson.solve(poisson.phiTotRhoIn, rhoInValues);
+    int constraintMatrixId = 1;
+    poisson.solve(poisson.phiTotRhoIn,constraintMatrixId,rhoInValues);
     //eigen solve
     eigen.computeVEff(rhoInValues, poisson.phiTotRhoIn); 
     chebyshevSolver();
@@ -110,7 +118,7 @@ void dftClass::run (){
     //rhoOut
     compute_rhoOut();
     //phiTot with rhoOut
-    poisson.solve(poisson.phiTotRhoOut, rhoOutValues);
+    poisson.solve(poisson.phiTotRhoOut,constraintMatrixId, rhoOutValues);
     //energy
     compute_energy();
     pcout<<"SCF iteration: " << scfIter+1 << " complete\n";

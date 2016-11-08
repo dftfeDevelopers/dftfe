@@ -22,6 +22,7 @@ void dftClass::initRho(){
       {
 	sprintf(densityFile, "../../../data/electronicStructure/allElectron/z%u/density.inp", *it);
       }
+   
     readFile(2, singleAtomElectronDensity[*it], densityFile);
     unsigned int numRows = singleAtomElectronDensity[*it].size()-1;
     std::vector<double> xData(numRows), yData(numRows);
@@ -59,7 +60,7 @@ void dftClass::initRho(){
 	double rhoValueAtQuadPt=0.0;
 	//loop over atoms
 	for (unsigned int n=0; n<atomLocations.size(); n++){
-	  Point<3> atom(atomLocations[n][1],atomLocations[n][2],atomLocations[n][3]);
+	  Point<3> atom(atomLocations[n][2],atomLocations[n][3],atomLocations[n][4]);
 	  double distanceToAtom=quadPoint.distance(atom);
 	  if(distanceToAtom <= outerMostPointDen[atomLocations[n][0]]){
 	    rhoValueAtQuadPt+=alglib::spline1dcalc(denSpline[atomLocations[n][0]], distanceToAtom);
@@ -104,10 +105,14 @@ void dftClass::initRho(){
 void dftClass::init(){
   computing_timer.enter_section("dftClass setup");
     
+  //
   //initialize FE objects
+  //
   dofHandler.distribute_dofs (FE);
   locally_owned_dofs = dofHandler.locally_owned_dofs ();
   DoFTools::extract_locally_relevant_dofs (dofHandler, locally_relevant_dofs);
+  DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), dofHandler, d_supportPoints);
+  
   pcout << "number of elements: "
 	<< triangulation.n_global_active_cells()
 	<< std::endl
@@ -115,32 +120,72 @@ void dftClass::init(){
 	<< dofHandler.n_dofs() 
 	<< std::endl;
 
+  //
   //write mesh to vtk file
+  //
   DataOut<3> data_out;
   data_out.attach_dof_handler (dofHandler);
   data_out.build_patches ();
   std::ofstream output("mesh.vtu");
   data_out.write_vtu(output); 
 
+  //
   //matrix free data structure
+  //
   typename MatrixFree<3>::AdditionalData additional_data;
   additional_data.mpi_communicator = MPI_COMM_WORLD;
   additional_data.tasks_parallel_scheme = MatrixFree<3>::AdditionalData::partition_partition;
+
+  //
   //constraints
+  //
+
+  //
   //hanging node constraints
+  //
   constraintsNone.clear ();
   DoFTools::make_hanging_node_constraints (dofHandler, constraintsNone);
   constraintsNone.close();
- //Zero Dirichlet BC constraints
-  constraintsZero.clear ();  
-  DoFTools::make_hanging_node_constraints (dofHandler, constraintsZero);
-  VectorTools::interpolate_boundary_values (dofHandler, 0, ZeroFunction<3>(), constraintsZero);
-  constraintsZero.close ();
+
+  //
+  //Zero Dirichlet BC constraints on the boundary of the domain
+  //used for computing total electrostatic potential using Poisson problem
+  //with (rho+b) as the rhs
+  //
+  d_constraintsForTotalPotential.clear ();  
+  DoFTools::make_hanging_node_constraints (dofHandler, d_constraintsForTotalPotential);
+  VectorTools::interpolate_boundary_values (dofHandler, 0, ZeroFunction<3>(), d_constraintsForTotalPotential);
+  d_constraintsForTotalPotential.close ();
+
+
+  //
+  //push back into Constraint Matrices
+  //
+  d_constraintsVector.push_back(&constraintsNone); 
+  d_constraintsVector.push_back(&d_constraintsForTotalPotential);
+
+  //
+  //Dirichlet BC constraints on the boundary of fictitious ball
+  //used for computing self-potential (Vself) using Poisson problem
+  //with atoms belonging to a given bin
+  //
+  createAtomBins(d_constraintsVector);
+
+  //
   //create matrix free structure
-  std::vector<const DoFHandler<3> *> dofHandlerVector; dofHandlerVector.push_back(&dofHandler); dofHandlerVector.push_back(&dofHandler);
-  std::vector< const ConstraintMatrix * > constraintsVector; constraintsVector.push_back(&constraintsNone); constraintsVector.push_back(&constraintsZero);
-  std::vector<Quadrature<1> > quadratureVector; quadratureVector.push_back(QGauss<1>(FEOrder+1)); quadratureVector.push_back(QGaussLobatto<1>(FEOrder+1));  
-  matrix_free_data.reinit (dofHandlerVector, constraintsVector, quadratureVector, additional_data);
+  //
+  std::vector<const DoFHandler<3> *> dofHandlerVector; 
+  dofHandlerVector.push_back(&dofHandler);
+  dofHandlerVector.push_back(&dofHandler);
+  //loop over number of bins 
+  dofHandlerVector.push_back(&dofHandler);
+ 
+  std::vector<Quadrature<1> > quadratureVector; 
+  quadratureVector.push_back(QGauss<1>(FEOrder+1)); 
+  quadratureVector.push_back(QGaussLobatto<1>(FEOrder+1));  
+
+
+  matrix_free_data.reinit(dofHandlerVector, d_constraintsVector, quadratureVector, additional_data);
   //initialize eigen vectors
   matrix_free_data.initialize_dof_vector(vChebyshev);
   v0Chebyshev.reinit(vChebyshev);

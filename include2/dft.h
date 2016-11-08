@@ -7,13 +7,9 @@
 #include "headers.h"
 #include "poisson.h"
 #include "eigen.h"
-//include alglib
-#include "/nfs/mcfs_home/rudraa/Public/alglib/cpp/src/interpolation.h"
-#include "/nfs/mcfs_home/rudraa/Public/libxc/libxc-2.2.0/installDir/include/xc.h"
-//#include "/opt/software/numerics/alglib/cpp/src/interpolation.h"
-//#include "/opt/software/numerics/libxc-2.2.2/installDir/include/xc.h"
-//#include "/Users/rudraa/workspace/codes/alglib/cpp/src/interpolation.h"
-//#include "/usr/local/Cellar/libxc/2.2.2_1/include/xc.h"
+#include "/nfs/mcfs_comp/home/rudraa/software/alglib/cpp/src/interpolation.h"
+#include "/nfs/mcfs_comp/home/rudraa/software/libxc/libxc-2.2.0/installDir/include/xc.h"
+
 
 //std::cout << std::setprecision(18) << std::scientific;
 
@@ -63,6 +59,7 @@ class dftClass{
   void initRho();
   double totalCharge();
   void locateAtomCoreNodes();
+  void createAtomBins(std::vector<const ConstraintMatrix * > & constraintsVector);
   double mixing_simple();
   double mixing_anderson();
   void compute_energy();
@@ -73,11 +70,14 @@ class dftClass{
   void readPSI();
   void determineOrbitalFilling();
   void loadPSIFiles(unsigned int Z, unsigned int n, unsigned int l);
+
   //FE data structres
   parallel::distributed::Triangulation<3> triangulation;
   FE_Q<3>            FE;
   DoFHandler<3>      dofHandler;
   MatrixFree<3,double> matrix_free_data;
+  std::map<types::global_dof_index, Point<3> > d_supportPoints; 
+  std::vector< const ConstraintMatrix * > d_constraintsVector; 
   
   //parallel objects
   MPI_Comm   mpi_communicator;
@@ -88,7 +88,7 @@ class dftClass{
 
   poissonClass poisson;
   eigenClass eigen;
-  ConstraintMatrix constraintsNone, constraintsZero;
+  ConstraintMatrix constraintsNone, d_constraintsForTotalPotential; 
   std::vector<double> eigenValues;
   std::vector<parallel::distributed::Vector<double>*> eigenVectors;
   unsigned int numEigenValues;
