@@ -138,7 +138,7 @@ void poissonClass::computeRHS(std::map<dealii::CellId,std::vector<double> >* rho
   Vector<double>       elementalResidual (dofs_per_cell);
   std::vector<types::global_dof_index> local_dof_indices (dofs_per_cell);
   const ConstraintMatrix * constraintMatrix = dftPtr->d_constraintsVector[d_constraintMatrixId];
-
+  
 
     
 
@@ -169,12 +169,26 @@ void poissonClass::computeRHS(std::map<dealii::CellId,std::vector<double> >* rho
   //
   //Add nodal force to the node at the origin
   //
-  for (std::map<unsigned int, double>::iterator it=dftPtr->atoms.begin(); it!=dftPtr->atoms.end(); ++it){
-    std::vector<unsigned int> local_dof_indices_origin(1, it->first); //atomic node
-    Vector<double> cell_rhs_origin (1); 
-    cell_rhs_origin(0)=-(it->second); //atomic charge
-    dftPtr->constraintsNone.distribute_local_to_global(cell_rhs_origin, local_dof_indices_origin, rhs);
-  }
+  if(rhoValues)
+    {
+      for (std::map<unsigned int, double>::iterator it=dftPtr->atoms.begin(); it!=dftPtr->atoms.end(); ++it){
+	std::vector<unsigned int> local_dof_indices_origin(1, it->first); //atomic node
+	Vector<double> cell_rhs_origin (1); 
+	cell_rhs_origin(0)=-(it->second); //atomic charge
+	dftPtr->constraintsNone.distribute_local_to_global(cell_rhs_origin, local_dof_indices_origin, rhs);
+      }
+    }
+  else
+    {
+      int binId = d_constraintMatrixId - 2;
+      for (std::map<unsigned int, double>::iterator it=dftPtr->d_atomsInBin[binId].begin(); it!=dftPtr->atomInBin[binId].end(); ++it){
+	std::vector<unsigned int> local_dof_indices_origin(1, it->first); //atomic node
+	Vector<double> cell_rhs_origin (1); 
+	cell_rhs_origin(0)=-(it->second); //atomic charge
+	dftPtr->constraintsNone.distribute_local_to_global(cell_rhs_origin, local_dof_indices_origin, rhs);
+      }
+
+    }
   //MPI operation to sync data 
   rhs.compress(VectorOperation::add);
 
