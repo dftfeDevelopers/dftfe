@@ -21,6 +21,7 @@ void dftClass::compute_energy(){
   }
   double potentialTimesRho=0.0, exchangeEnergy=0.0, correlationEnergy=0.0, electrostaticEnergy=0.0; 
   
+
   //parallel loop over all elements
   typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
   for (; cell!=endc; ++cell) {

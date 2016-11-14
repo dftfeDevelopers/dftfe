@@ -10,7 +10,7 @@ void dftClass::locateAtomCoreNodes(){
   //locating atom nodes
   unsigned int numAtoms=atomLocations.size();
   std::set<unsigned int> atomsTolocate;
-  for (unsigned int i=0; i<numAtoms; i++) atomsTolocate.insert(i);
+  for (unsigned int i = 0; i < numAtoms; i++) atomsTolocate.insert(i);
   //element loop
   for (; cell!=endc; ++cell) {
     if (cell->is_locally_owned()){
@@ -24,9 +24,9 @@ void dftClass::locateAtomCoreNodes(){
 	     std::cout << "Atom core (" << atomLocations[*it][0] << ") located with node id " << nodeID << " in processor " << this_mpi_process;
 	     if (locally_owned_elements.is_element(nodeID)){
 	       if(isPseudopotential)
-		 atoms.insert (std::pair<unsigned int,double>(nodeID,atomLocations[*it][1]));
+		 atoms.insert(std::pair<unsigned int,double>(nodeID,atomLocations[*it][1]));
 	       else
-		 atoms.insert (std::pair<unsigned int,double>(nodeID,atomLocations[*it][0]));
+		 atoms.insert(std::pair<unsigned int,double>(nodeID,atomLocations[*it][0]));
 	       std::cout << " and added \n";
 	     }
 	     else{
@@ -34,10 +34,10 @@ void dftClass::locateAtomCoreNodes(){
 	     }
 	     atomsTolocate.erase(*it);
 	     break;
-	   }
-	}
-      }
-    }
-  }
+	   }//tolerance check if loop
+	}//atomsTolocate loop
+      }//vertices_per_cell loop
+    }//locally owned cell if loop
+  }//cell loop
   MPI_Barrier(mpi_communicator);
 }

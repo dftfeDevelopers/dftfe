@@ -37,7 +37,7 @@ void poissonClass::init()
   phiTotRhoIn.reinit (rhs);
   phiTotRhoOut.reinit (rhs);
   phiExt.reinit (rhs);
-
+  vselfBinScratch.reinit (rhs);
   
   computing_timer.exit_section("poissonClass setup"); 
 
@@ -307,23 +307,6 @@ void poissonClass::solve(vectorType& phi, int constraintMatrixId, std::map<deali
   }
 
   
-  std::vector<double> phiData;
-  for(types::global_dof_index i = 0; i < phi.size(); ++i)
-    {
-      std::cout<<"Index: "<<i<<" "<<phi(i)<<std::endl;
-      phiData.push_back(phi(i));
-    }
-
-   std::vector<double>::iterator resultmax = std::max_element(phiData.begin(), phiData.end());
-   std::vector<double>::iterator resultmin = std::min_element(phiData.begin(), phiData.end());
-   std::cout<<"Max Element: "<<*resultmax<<" "<<"Min Element: "<<*resultmin<<std::endl;
-
-   for(int i = 0; i < phiData.size(); ++i)
-     {
-       if(phiData[i] > 0.0)
-	 std::cout<<"Index: "<<i<<" "<<phiData[i]<<std::endl;
-     }
-
   char buffer[200];
   sprintf(buffer, "poisson solve: initial residual:%12.6e, current residual:%12.6e, nsteps:%u, tolerance criterion:%12.6e\n", \
 	  solver_control.initial_value(),				\

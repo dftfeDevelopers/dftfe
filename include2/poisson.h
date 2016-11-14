@@ -49,7 +49,7 @@ private:
 
   //data structures
   vectorType rhs, rhs2, jacobianDiagonal;
-  vectorType phiTotRhoIn, phiTotRhoOut, phiExt;
+  vectorType phiTotRhoIn, phiTotRhoOut, phiExt, vselfBinScratch;
   
   //parallel objects
   MPI_Comm mpi_communicator;

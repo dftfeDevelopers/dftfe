@@ -170,7 +170,8 @@ void dftClass::init(){
   //with atoms belonging to a given bin
   //
   createAtomBins(d_constraintsVector);
-
+ 
+ 
   //
   //create matrix free structure
   //
@@ -186,6 +187,7 @@ void dftClass::init(){
 
 
   matrix_free_data.reinit(dofHandlerVector, d_constraintsVector, quadratureVector, additional_data);
+
   //initialize eigen vectors
   matrix_free_data.initialize_dof_vector(vChebyshev);
   v0Chebyshev.reinit(vChebyshev);
@@ -202,6 +204,9 @@ void dftClass::init(){
   
   //locate atome core nodes
   locateAtomCoreNodes();
+
+  //locate atom nodes in each bin
+  
   
   //initialize density 
   initRho();

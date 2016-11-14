@@ -9,7 +9,7 @@ const unsigned int numSCFIterations=15;
 const bool isPseudopotential = false;
 //solver paramteters 
 const unsigned int maxLinearSolverIterations=5000;
-const double relLinearSolverTolerance=1.0e-12; 
+const double relLinearSolverTolerance=1.0e-14; 
 
 //Define constants
 const double TVal=500.0;

@@ -104,7 +104,13 @@ class dftClass{
   std::vector<std::map<dealii::CellId,std::vector<double> >*> rhoInVals, rhoOutVals;
 
   //map of atom node number and atomic weight
-  std::map<unsigned int, double> atoms; 
+  std::map<unsigned int, double> atoms;
+  std::vector<std::map<unsigned int, double> > d_atomsInBin;
+  
+  //map of binIds and atomIds in it and other bin related information
+  std::map<int,std::set<int> > d_bins;
+  std::vector<std::vector<int> > d_imageIdsInBins;
+  std::vector<std::map<dealii::types::global_dof_index, int> > d_boundaryFlag;
 
   //fermi energy
   double fermiEnergy;
