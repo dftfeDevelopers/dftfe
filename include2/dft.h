@@ -59,6 +59,7 @@ class dftClass{
   void initRho();
   double totalCharge();
   void locateAtomCoreNodes();
+  void locatePeriodicPinnedNodes();
   void createAtomBins(std::vector<const ConstraintMatrix * > & constraintsVector);
   double mixing_simple();
   double mixing_anderson();
@@ -88,7 +89,7 @@ class dftClass{
 
   poissonClass poisson;
   eigenClass eigen;
-  ConstraintMatrix constraintsNone, d_constraintsForTotalPotential; 
+  ConstraintMatrix constraintsNone, constraintsPeriodic, d_constraintsForTotalPotential; 
   std::vector<double> eigenValues;
   std::vector<parallel::distributed::Vector<double>*> eigenVectors;
   unsigned int numEigenValues;

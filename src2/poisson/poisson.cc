@@ -120,8 +120,6 @@ void poissonClass::computeRHS2()
 //compute RHS
 void poissonClass::computeRHS(std::map<dealii::CellId,std::vector<double> >* rhoValues)
 {
-
-
   if(!rhoValues)
     computeRHS2();
 
@@ -138,9 +136,6 @@ void poissonClass::computeRHS(std::map<dealii::CellId,std::vector<double> >* rho
   Vector<double>       elementalResidual (dofs_per_cell);
   std::vector<types::global_dof_index> local_dof_indices (dofs_per_cell);
   const ConstraintMatrix * constraintMatrix = dftPtr->d_constraintsVector[d_constraintMatrixId];
-
-
-    
 
   //
   //parallel loop over all elements
@@ -251,22 +246,18 @@ void poissonClass::vmult(vectorType &dst, const vectorType &src) const
   //apply Dirichlet BC's
   /*for (std::map<types::global_dof_index, double>::const_iterator it=values1byR.begin(); it!=values1byR.end(); ++it){
     if (dst.in_local_range(it->first)){
-      dst(it->first) = src(it->first); //jacobianDiagonal(it->first);
+    dst(it->first) = src(it->first); //jacobianDiagonal(it->first);
     }
     }*/
-
-for(types::global_dof_index i = 0; i < dst.size(); ++i)
-    {
-      if(dftPtr->locally_relevant_dofs.is_element(i))
-	{
-	  if(constraintMatrix->is_constrained(i))
-	    {
-	      dst(i) = src(i);
-	    }
-	}
+  for(types::global_dof_index i = 0; i < dst.size(); ++i){
+    if(dftPtr->locally_relevant_dofs.is_element(i)){
+      if(dftPtr->constraintsPeriodic.is_constrained(i)){
+	//std::cout << i << " , " << src(i) << std::endl;
+	dst(i) = 0.0; //src(i); 
+      }
     }
-
-
+  }
+  
 }
 
 //Matrix-Free Jacobi preconditioner application
@@ -277,8 +268,6 @@ void poissonClass::precondition_Jacobi(vectorType& dst, const vectorType& src, c
 
 //solve using CG
 void poissonClass::solve(vectorType& phi, int constraintMatrixId, std::map<dealii::CellId,std::vector<double> >* rhoValues){
-
-
   //
   //initialize the data member
   //
@@ -300,6 +289,9 @@ void poissonClass::solve(vectorType& phi, int constraintMatrixId, std::map<deali
     solver.solve(*this, phi, rhs, IdentityMatrix(rhs.size()));
     //solver.solve(*this, phi, rhs, preconditioner);
     dftPtr->constraintsNone.distribute(phi);
+#ifdef ENABLE_PERIODIC_BC
+    dftPtr->constraintsPeriodic.distribute(phi);
+#endif
     phi.update_ghost_values();
   }
   catch (...) {

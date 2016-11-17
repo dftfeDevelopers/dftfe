@@ -146,20 +146,45 @@ void dftClass::init(){
   constraintsNone.clear ();
   DoFTools::make_hanging_node_constraints (dofHandler, constraintsNone);
 #ifdef ENABLE_PERIODIC_BC
+  //mark faces
+  typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
+  for (; cell!=endc; ++cell) {
+    if (cell->is_locally_owned()){
+      for (unsigned int f=0; f < GeometryInfo<3>::faces_per_cell; ++f){
+	const Point<3> face_center = cell->face(f)->center();
+	if (cell->face(f)->at_boundary()){
+	  if (std::abs(face_center[0]+3.8)<1.0e-8)
+	    cell->face(f)->set_boundary_id(1);
+	  else if (std::abs(face_center[0]-3.8)<1.0e-8)
+	    cell->face(f)->set_boundary_id(2);
+	  else if (std::abs(face_center[1]+3.8)<1.0e-8)
+	    cell->face(f)->set_boundary_id(3);
+	  else if (std::abs(face_center[1]-3.8)<1.0e-8)
+	    cell->face(f)->set_boundary_id(4);
+	  else if (std::abs(face_center[2]+3.8)<1.0e-8)
+	    cell->face(f)->set_boundary_id(5);
+	  else if (std::abs(face_center[2]-3.8)<1.0e-8)
+	    cell->face(f)->set_boundary_id(6);
+	}
+      }
+    }
+  }
+  std::cout << "done with boundary flags\n";
   std::vector<GridTools::PeriodicFacePair<typename parallel::distributed::Triangulation<3>::cell_iterator> > periodicity_vector;
   for (int i=0; i<3; ++i){
-  GridTools::collect_periodic_faces(triangulation, /*b_id1*/ 2*i, /*b_id2*/ 2*i+1,/*direction*/ i, periodicity_vector);
+    GridTools::collect_periodic_faces(triangulation, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector);
   }
   triangulation.add_periodicity(periodicity_vector);
   std::cout << "periodic facepairs: " << periodicity_vector.size() << std::endl;
   std::vector<GridTools::PeriodicFacePair<typename DoFHandler<3>::cell_iterator> > periodicity_vector2;
   for (int i=0; i<3; ++i){
-  GridTools::collect_periodic_faces(dofHandler, /*b_id1*/ 2*i, /*b_id2*/ 2*i+1,/*direction*/ i, periodicity_vector2);
+    GridTools::collect_periodic_faces(dofHandler, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector2);
   }
   DoFTools::make_periodicity_constraints<DoFHandler<3> >(periodicity_vector2, constraintsNone);
+  std::cout << "num of periodic facepairs: " << constraintsNone.n_constraints() << std::endl;
 #endif
-  constraintsNone.close();
-
+  constraintsNone.close();  
+  //constraintsNone.print(std::cout);  
   //
   //Zero Dirichlet BC constraints on the boundary of the domain
   //used for computing total electrostatic potential using Poisson problem
@@ -217,9 +242,10 @@ void dftClass::init(){
   
   //locate atome core nodes
   locateAtomCoreNodes();
-
-  //locate atom nodes in each bin
-  
+#ifdef ENABLE_PERIODIC_BC
+  locatePeriodicPinnedNodes();
+#endif
+  //locate atom nodes in each bin  
   
   //initialize density 
   initRho();

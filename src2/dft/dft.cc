@@ -79,6 +79,16 @@ void dftClass::run (){
   //solve
   computing_timer.enter_section("dft solve"); 
 
+  //temp check
+  poisson.solve(poisson.phiTotRhoIn,0,rhoInValues);
+  DataOut<3> data_out;
+  data_out.attach_dof_handler (dofHandler);
+  data_out.add_data_vector (poisson.phiTotRhoIn, "solution");
+  data_out.build_patches (4);
+  std::ofstream output ("poisson.vtu");
+  data_out.write_vtu (output);
+  exit(-1);
+
   //
   //phiExt with nuclear charge
   //
@@ -86,7 +96,6 @@ void dftClass::run (){
   int constraintMatrixId = iBin + 2;
   poisson.solve(poisson.phiExt,constraintMatrixId);
 
- 
   //
   //postprocess the data
   //
@@ -107,13 +116,7 @@ void dftClass::run (){
     }
 
   //std::cout<<"L2 Norm of Phi Ext: "<<poisson.phiExt.l2_norm()<<std::endl;
-  
-  /*DataOut<3> data_out;
-  data_out.attach_dof_handler (dofHandler);
-  data_out.add_data_vector (poisson.phiExt, "solution");
-  data_out.build_patches (4);
-  std::ofstream output ("poisson.vtu");
-  data_out.write_vtu (output);*/
+ 
 
   
   //exit(-1);

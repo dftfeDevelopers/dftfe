@@ -2,7 +2,7 @@
 #define ENABLE_PERIODIC_BC
 
 //testing for one C atom in periodic domain
-const unsigned int FEOrder=4;
+const unsigned int FEOrder=1; 
 const unsigned int n_refinement_steps=4;
 const double lowerEndWantedSpectrum=-10.0;
 const unsigned int chebyshevOrder=2000; 
@@ -18,7 +18,7 @@ const double TVal=500.0;
 //Mesh information
 #define meshFileName "../../../data/meshes/allElectron/carbon1Atom/meshPeriodic.inp"
 #define coordinatesFile "../../../data/meshes/allElectron/carbon1Atom/coordinates.inp" 
-
+  
 //dft header
 #include "../../../src2/dft/dft.cc"
 
