@@ -45,6 +45,8 @@ void dftClass::set(){
     atomTypes.insert((unsigned int)((*it)[0]));
   }
   pcout << "number of atoms types: " << atomTypes.size() << "\n";
+
+
   
   //estimate total number of wave functions
   determineOrbitalFilling();  
@@ -84,6 +86,13 @@ void dftClass::run (){
   //
   int numberBins = d_boundaryFlag.size();
   int numberGlobalCharges = atomLocations.size();
+  
+  //int constraintMatrixId = 2;
+  //poisson.solve(poisson.phiExt,constraintMatrixId);
+ 
+
+  poisson.phiExt = 0;
+
 
   std::map<dealii::types::global_dof_index, int>::iterator iterMap;
   for(int iBin = 0; iBin < numberBins; ++iBin)
@@ -101,11 +110,11 @@ void dftClass::run (){
       std::map<dealii::types::global_dof_index, int> & boundaryNodeMap = d_boundaryFlag[iBin];
       std::map<types::global_dof_index,Point<3> >::iterator iterNodalCoorMap;
 
+      int inNodes =0, outNodes = 0;
       for(iterNodalCoorMap = d_supportPoints.begin(); iterNodalCoorMap != d_supportPoints.end(); ++iterNodalCoorMap)
 	{
-	  if(locally_relevant_dofs.is_element(iterNodalCoorMap->first))
+	  if(poisson.vselfBinScratch.in_local_range(iterNodalCoorMap->first))
 	    {
-
 	      //
 	      //get the vertex Id
 	      //
@@ -123,6 +132,7 @@ void dftClass::run (){
 	      else
 		{
 		  std::cout<<"Could not find boundaryNode Map for the given dof:"<<std::endl;
+		  exit(-1);
 		}
 
 	      //
@@ -139,11 +149,14 @@ void dftClass::run (){
 		  else
 		    chargeId = imageIdsOfAtomsInCurrentBin[iCharge-numberGlobalAtomsInBin]+numberGlobalCharges;
 
+		  //std::cout<<"Charge Id in BinId: "<<chargeId<<" "<<iBin<<std::endl;
+
 		  
 		  double vSelf;
 		  if(boundaryFlag == chargeId)
 		    {
 		      vSelf = poisson.vselfBinScratch(iterNodalCoorMap->first);
+		      inNodes++;
 		    }
 		  else
 		    {
@@ -168,7 +181,7 @@ void dftClass::run (){
 
 		      const double r = nodalCoor.distance(atomCoor);
 		      vSelf = -nuclearCharge/r;
-
+		      outNodes++;
 		    }
 
 		  //store updated value in phiExt which is sumVself
@@ -179,20 +192,22 @@ void dftClass::run (){
 	    
 	    }
 	}//Vertexloop
-
+      
+      //   std::cout << "In: " << inNodes << "  Out: " << outNodes << "\n";
     }//bin loop
 
-poisson.phiExt.compress(VectorOperation::insert);
+    poisson.phiExt.compress(VectorOperation::insert);
+    poisson.phiExt.update_ghost_values();
 
   //
   //postprocess the data
   //
-  /*const ConstraintMatrix * constraintMatrix = d_constraintsVector[constraintMatrixId];
+  //const ConstraintMatrix * constraintMatrix = d_constraintsVector[constraintMatrixId];
 
   //
   //Modify the phi value based on constraintValue
   //
-  for(types::global_dof_index i = 0; i < poisson.phiExt.size(); ++i)
+  /*for(types::global_dof_index i = 0; i < poisson.phiExt.size(); ++i)
     {
       if(locally_relevant_dofs.is_element(i))
 	{
@@ -204,6 +219,7 @@ poisson.phiExt.compress(VectorOperation::insert);
 	}*/
 
   //std::cout<<"L2 Norm of Phi Ext: "<<poisson.phiExt.l2_norm()<<std::endl;
+  //exit(-1);
   
   /*DataOut<3> data_out;
   data_out.attach_dof_handler (dofHandler);

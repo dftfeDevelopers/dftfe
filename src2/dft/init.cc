@@ -176,10 +176,12 @@ void dftClass::init(){
   //create matrix free structure
   //
   std::vector<const DoFHandler<3> *> dofHandlerVector; 
-  dofHandlerVector.push_back(&dofHandler);
-  dofHandlerVector.push_back(&dofHandler);
+  //dofHandlerVector.push_back(&dofHandler);
+  //dofHandlerVector.push_back(&dofHandler);
   //loop over number of bins 
-  dofHandlerVector.push_back(&dofHandler);
+
+  for(int i = 0; i < d_constraintsVector.size(); ++i)
+    dofHandlerVector.push_back(&dofHandler);
  
   std::vector<Quadrature<1> > quadratureVector; 
   quadratureVector.push_back(QGauss<1>(FEOrder+1)); 

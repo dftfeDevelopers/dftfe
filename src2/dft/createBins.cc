@@ -1,5 +1,82 @@
 //source file for locating core atom nodes
 
+void exchangeAtomToGlobalNodeIdMaps(const int totalNumberAtoms,
+				    std::map<int,std::set<int> > & atomToGlobalNodeIdMap,
+				    unsigned int numMeshPartitions,
+				    const MPI_Comm & mpi_communicator)
+
+    {
+
+      
+      std::map<int,std::set<int> >::iterator iter;
+
+      for(int iGlobal = 0; iGlobal < totalNumberAtoms; ++iGlobal){
+
+	//
+	// for each charge, exchange its global list across all procs
+	//
+	iter = atomToGlobalNodeIdMap.find(iGlobal);    
+
+	std::vector<int> localAtomToGlobalNodeIdList;
+
+	if(iter != atomToGlobalNodeIdMap.end()){
+	  std::set<int>  & localGlobalNodeIdSet = iter->second;
+	  std::copy(localGlobalNodeIdSet.begin(),
+		    localGlobalNodeIdSet.end(),
+		    std::back_inserter(localAtomToGlobalNodeIdList));
+
+	}
+
+	int numberGlobalNodeIdsOnLocalProc = localAtomToGlobalNodeIdList.size();
+
+	int * atomToGlobalNodeIdListSizes = new int[numMeshPartitions];
+
+	MPI_Allgather(&numberGlobalNodeIdsOnLocalProc,
+		      1,
+		      MPI_INT,
+		      atomToGlobalNodeIdListSizes,
+		      1,
+		      MPI_INT,
+		      mpi_communicator);
+
+	int newAtomToGlobalNodeIdListSize = 
+	  std::accumulate(&(atomToGlobalNodeIdListSizes[0]),
+			  &(atomToGlobalNodeIdListSizes[numMeshPartitions]),
+			  0);
+
+	std::vector<int> globalAtomToGlobalNodeIdList(newAtomToGlobalNodeIdListSize);
+    
+	int * mpiOffsets = new int[numMeshPartitions];
+
+	mpiOffsets[0] = 0;
+
+	for(int i = 1; i < numMeshPartitions; ++i)
+	  mpiOffsets[i] = atomToGlobalNodeIdListSizes[i-1]+ mpiOffsets[i-1];
+
+	MPI_Allgatherv(&(localAtomToGlobalNodeIdList[0]),
+		       numberGlobalNodeIdsOnLocalProc,
+		       MPI_INT,
+		       &(globalAtomToGlobalNodeIdList[0]),
+		       &(atomToGlobalNodeIdListSizes[0]),
+		       &(mpiOffsets[0]),
+		       MPI_INT,
+		       mpi_communicator);
+
+	//
+	// over-write local interaction with items of globalInteractionList
+	//
+	for(int i = 0 ; i < globalAtomToGlobalNodeIdList.size(); ++i)
+	  (atomToGlobalNodeIdMap[iGlobal]).insert(globalAtomToGlobalNodeIdList[i]);
+
+	delete [] atomToGlobalNodeIdListSizes;
+	delete [] mpiOffsets;
+
+      }
+      return;
+ 
+    }
+
+
 void dftClass::createAtomBins(std::vector<const ConstraintMatrix * > & constraintsVector)
 			     
 {
@@ -12,14 +89,11 @@ void dftClass::createAtomBins(std::vector<const ConstraintMatrix * > & constrain
   std::vector<int> imageChargeValues;
 
   const int numberImageCharges = 0.0;
-  double radiusAtomBall = 4.0;
   const int numberGlobalAtoms = atomLocations.size();
   const int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
 
   unsigned int vertices_per_cell=GeometryInfo<3>::vertices_per_cell;
-  DoFHandler<3>::active_cell_iterator
-    cell = dofHandler.begin_active(),
-    endc = dofHandler.end();
+  
 
   std::map<int,std::set<int> > atomToGlobalNodeIdMap;
 
@@ -40,6 +114,10 @@ void dftClass::createAtomBins(std::vector<const ConstraintMatrix * > & constrain
 	  //Fill with ImageAtom Coors
 	  //
 	}
+
+      // std::cout<<"Atom Coor: "<<atomCoor[0]<<" "<<atomCoor[1]<<" "<<atomCoor[2]<<std::endl;
+
+      DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),endc = dofHandler.end();
 
       for(; cell!= endc; ++cell)
 	{
@@ -81,7 +159,12 @@ void dftClass::createAtomBins(std::vector<const ConstraintMatrix * > & constrain
  
   //
   //exchange atomToGlobalNodeIdMap across all processors
-  //have to fill this up
+  //
+  exchangeAtomToGlobalNodeIdMaps(totalNumberAtoms,
+				 atomToGlobalNodeIdMap,
+				 n_mpi_processes,
+				 mpi_communicator);
+
   
   //
   //erase keys which have empty values
@@ -381,6 +464,8 @@ void dftClass::createAtomBins(std::vector<const ConstraintMatrix * > & constrain
 	}//nodal loop
       constraintsVector.push_back(constraintsForVselfInBin);
       constraintsForVselfInBin->close();
+      std::cout<<"Size of Constraints: "<<constraintsForVselfInBin->n_constraints()<<std::endl;
+      std::cout << "In: " << inNodes << "  Out: " << outNodes << "\n";
     }//bin loop
 
 

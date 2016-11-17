@@ -1,0 +1,31 @@
+#!/bin/sh
+#PBS -S /bin/sh
+#PBS -A vikramg_fluxoe
+#PBS -N DEALII    
+#PBS -l nodes=1:ppn=13,walltime=100:00:00,pmem=3800mb,qos=flux
+#PBS -q fluxoe
+#PBS -m be
+#PBS -V
+#PBS -M phanim@umich.edu
+echo "I ran on:"
+cat $PBS_NODEFILE
+# Create a local directory to run and copy your files to local.
+# Let PBS handle your output
+# Use mpirun to run with 8 nodes for 1 hour
+cd $PBS_O_WORKDIR
+mpirun ./main_rls>carbonSingAtom_ballrad4_mpi13
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 

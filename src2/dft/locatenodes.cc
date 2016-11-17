@@ -21,7 +21,7 @@ void dftClass::locateAtomCoreNodes(){
 	for (std::set<unsigned int>::iterator it=atomsTolocate.begin(); it!=atomsTolocate.end(); ++it){
 	  Point<3> atomCoord(atomLocations[*it][2],atomLocations[*it][3],atomLocations[*it][4]);
 	   if(feNodeGlobalCoord.distance(atomCoord) < 1.0e-5){ 
-	     std::cout << "Atom core (" << atomLocations[*it][0] << ") located with node id " << nodeID << " in processor " << this_mpi_process;
+	     std::cout << "Atom core (" << atomLocations[*it][0] << ") located with node id " << nodeID << " in processor " << this_mpi_process<<" nodal coor "<<feNodeGlobalCoord[0]<<" "<<feNodeGlobalCoord[1]<<" "<<feNodeGlobalCoord[2]<<std::endl;;
 	     if (locally_owned_elements.is_element(nodeID)){
 	       if(isPseudopotential)
 		 atoms.insert(std::pair<unsigned int,double>(nodeID,atomLocations[*it][1]));
@@ -44,8 +44,12 @@ void dftClass::locateAtomCoreNodes(){
   int numberBins = d_boundaryFlag.size();
   d_atomsInBin.resize(numberBins);
 
+
   for(int iBin = 0; iBin < numberBins; ++iBin)
     {
+      unsigned int vertices_per_cell=GeometryInfo<3>::vertices_per_cell;
+      DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),endc = dofHandler.end();
+
       std::set<int> & atomsInBinSet = d_bins[iBin];
       std::vector<int> atomsInCurrentBin(atomsInBinSet.begin(),atomsInBinSet.end());
       unsigned int numberGlobalAtomsInBin = atomsInCurrentBin.size();
@@ -63,7 +67,7 @@ void dftClass::locateAtomCoreNodes(){
 		int chargeId = atomsInCurrentBin[*it];
 		Point<3> atomCoord(atomLocations[chargeId][2],atomLocations[chargeId][3],atomLocations[chargeId][4]);
 		if(feNodeGlobalCoord.distance(atomCoord) < 1.0e-5){ 
-		  std::cout << "Atom core (" << atomLocations[chargeId][0] << ") located with node id " << nodeID << " in processor " << this_mpi_process;
+		  std::cout << "Atom core in bin " << iBin<<" with charge "<<atomLocations[chargeId][0] << " located with node id " << nodeID << " in processor " << this_mpi_process;
 		  if (locally_owned_elements.is_element(nodeID)){
 		    if(isPseudopotential)
 		      d_atomsInBin[iBin].insert(std::pair<unsigned int,double>(nodeID,atomLocations[chargeId][1]));

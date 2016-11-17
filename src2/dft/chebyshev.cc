@@ -39,7 +39,7 @@ double dftClass::upperBound(){
   std::vector<unsigned int> local_dof_indices(local_size);
   vChebyshev.locally_owned_elements().fill_index_vector(local_dof_indices);
   std::vector<double> local_values(local_size, 0.0);
-  for (unsigned int i=0; i<local_size; i++) local_values[i]= 1.0;//((double)std::rand())/((double)RAND_MAX);
+  for (unsigned int i=0; i<local_size; i++) local_values[i]= ((double)std::rand())/((double)RAND_MAX);
   constraintsNone.distribute_local_to_global(local_values, local_dof_indices, vChebyshev);
   //
   vChebyshev/=vChebyshev.l2_norm();

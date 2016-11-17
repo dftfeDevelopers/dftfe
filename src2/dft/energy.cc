@@ -121,9 +121,19 @@ double dftClass::repulsiveEnergy(){
   double energy=0.0;
   for (unsigned int n1=0; n1<atomLocations.size(); n1++){
     for (unsigned int n2=n1+1; n2<atomLocations.size(); n2++){
-      double Z1=atomLocations[n1][0], Z2=atomLocations[n2][0];    
-      Point<3> atom1(atomLocations[n1][1],atomLocations[n1][2],atomLocations[n1][3]);
-      Point<3> atom2(atomLocations[n2][1],atomLocations[n2][2],atomLocations[n2][3]);
+      double Z1,Z2;
+      if(isPseudopotential)
+	{
+	  Z1=atomLocations[n1][1];
+	  Z2=atomLocations[n2][1];
+	}
+      else
+	{
+	  Z1=atomLocations[n1][0];
+	  Z2=atomLocations[n2][0];
+	}
+      Point<3> atom1(atomLocations[n1][2],atomLocations[n1][3],atomLocations[n1][4]);
+      Point<3> atom2(atomLocations[n2][2],atomLocations[n2][3],atomLocations[n2][4]);
       energy+=(Z1*Z2)/atom1.distance(atom2);
     }
   }

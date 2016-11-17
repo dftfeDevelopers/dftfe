@@ -8,7 +8,7 @@ void readFile(unsigned int numColumns, std::vector<std::vector<double> > &data, 
   }
   if (readFile.is_open()) {
     while (!readFile.eof()) {
-      for(unsigned int i=0; i <numColumns; i++){
+      for(unsigned int i = 0; i < numColumns; i++){
 	readFile>>rowData[i];
       }
       data.push_back(rowData);

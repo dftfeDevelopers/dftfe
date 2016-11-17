@@ -52,7 +52,7 @@ void poissonClass::computeRHS2()
 {
   computing_timer.enter_section("poissonClass rhs2 assembly"); 
   rhs2=0.0;
-
+  jacobianDiagonal=0.0;
   //
   //local data structures
   //
@@ -181,7 +181,7 @@ void poissonClass::computeRHS(std::map<dealii::CellId,std::vector<double> >* rho
   else
     {
       int binId = d_constraintMatrixId - 2;
-      for (std::map<unsigned int, double>::iterator it=dftPtr->d_atomsInBin[binId].begin(); it!=dftPtr->atomInBin[binId].end(); ++it){
+      for (std::map<unsigned int, double>::iterator it=dftPtr->d_atomsInBin[binId].begin(); it!=dftPtr->d_atomsInBin[binId].end(); ++it){
 	std::vector<unsigned int> local_dof_indices_origin(1, it->first); //atomic node
 	Vector<double> cell_rhs_origin (1); 
 	cell_rhs_origin(0)=-(it->second); //atomic charge
@@ -202,7 +202,7 @@ void poissonClass::computeRHS(std::map<dealii::CellId,std::vector<double> >* rho
 
   for(types::global_dof_index i = 0; i < rhs.size(); ++i)
     {
-      if(dftPtr->locally_relevant_dofs.is_element(i))
+      if(rhs.in_local_range(i))
 	{
 	  if(constraintMatrix->is_constrained(i))
 	    {
@@ -271,7 +271,7 @@ void poissonClass::vmult(vectorType &dst, const vectorType &src) const
 
 for(types::global_dof_index i = 0; i < dst.size(); ++i)
     {
-      if(dftPtr->locally_relevant_dofs.is_element(i))
+      if(dst.in_local_range(i))
 	{
 	  if(constraintMatrix->is_constrained(i))
 	    {
@@ -320,7 +320,10 @@ void poissonClass::solve(vectorType& phi, int constraintMatrixId, std::map<deali
     pcout << "\nWarning: solver did not converge as per set tolerances. consider increasing maxLinearSolverIterations or decreasing relLinearSolverTolerance.\n";
   }
 
-  
+  //std::cout<<"Max of Phi : "<<phi.linfty_norm()<<std::endl;
+
+
+
   char buffer[200];
   sprintf(buffer, "poisson solve: initial residual:%12.6e, current residual:%12.6e, nsteps:%u, tolerance criterion:%12.6e\n", \
 	  solver_control.initial_value(),				\
