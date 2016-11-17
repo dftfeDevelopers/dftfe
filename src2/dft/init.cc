@@ -145,6 +145,19 @@ void dftClass::init(){
   //
   constraintsNone.clear ();
   DoFTools::make_hanging_node_constraints (dofHandler, constraintsNone);
+#ifdef ENABLE_PERIODIC_BC
+  std::vector<GridTools::PeriodicFacePair<typename parallel::distributed::Triangulation<3>::cell_iterator> > periodicity_vector;
+  for (int i=0; i<3; ++i){
+  GridTools::collect_periodic_faces(triangulation, /*b_id1*/ 2*i, /*b_id2*/ 2*i+1,/*direction*/ i, periodicity_vector);
+  }
+  triangulation.add_periodicity(periodicity_vector);
+  std::cout << "periodic facepairs: " << periodicity_vector.size() << std::endl;
+  std::vector<GridTools::PeriodicFacePair<typename DoFHandler<3>::cell_iterator> > periodicity_vector2;
+  for (int i=0; i<3; ++i){
+  GridTools::collect_periodic_faces(dofHandler, /*b_id1*/ 2*i, /*b_id2*/ 2*i+1,/*direction*/ i, periodicity_vector2);
+  }
+  DoFTools::make_periodicity_constraints<DoFHandler<3> >(periodicity_vector2, constraintsNone);
+#endif
   constraintsNone.close();
 
   //
