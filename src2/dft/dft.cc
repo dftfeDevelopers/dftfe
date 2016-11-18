@@ -79,8 +79,9 @@ void dftClass::run (){
   //solve
   computing_timer.enter_section("dft solve"); 
 
+  /*
   //temp check
-  poisson.solve(poisson.phiTotRhoIn,0,rhoInValues);
+  poisson.solve(poisson.phiTotRhoIn,1,rhoInValues);
   std::cout << poisson.phiTotRhoIn.linfty_norm() << std::endl;
   DataOut<3> data_out;
   data_out.attach_dof_handler (dofHandler);
@@ -89,6 +90,7 @@ void dftClass::run (){
   std::ofstream output ("poisson.vtu");
   data_out.write_vtu (output);
   exit(-1);
+  */
 
   //
   //phiExt with nuclear charge

@@ -89,11 +89,11 @@ class dftClass{
 
   poissonClass poisson;
   eigenClass eigen;
-  ConstraintMatrix constraintsNone, constraintsPeriodic, d_constraintsForTotalPotential; 
+  ConstraintMatrix constraintsNone, d_constraintsForTotalPotential; 
   std::vector<double> eigenValues;
   std::vector<parallel::distributed::Vector<double>*> eigenVectors;
   unsigned int numEigenValues;
-  unsigned int pinnedNode;
+
   //parallel message stream
   ConditionalOStream  pcout;  
   

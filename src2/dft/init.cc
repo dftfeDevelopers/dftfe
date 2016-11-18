@@ -66,10 +66,10 @@ void dftClass::initRho(){
 	    rhoValueAtQuadPt+=alglib::spline1dcalc(denSpline[atomLocations[n][0]], distanceToAtom);
 	  }
 	}
-	rhoInValuesPtr[q]=1.0; //std::abs(rhoValueAtQuadPt);
+	rhoInValuesPtr[q]=std::abs(rhoValueAtQuadPt);
       }
     }
-  }
+  } 
   //Normalize rho
   double charge=totalCharge();
   char buffer[100];
@@ -181,10 +181,10 @@ void dftClass::init(){
     GridTools::collect_periodic_faces(dofHandler, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector2);
   }
   DoFTools::make_periodicity_constraints<DoFHandler<3> >(periodicity_vector2, constraintsNone);
-  std::cout << "num of periodic facepairs: " << constraintsNone.n_constraints() << std::endl;
+  std::cout << "detected periodic face pairs: " << constraintsNone.n_constraints() << std::endl;
 #endif
   constraintsNone.close();  
-  //constraintsNone.print(std::cout);  
+
   //
   //Zero Dirichlet BC constraints on the boundary of the domain
   //used for computing total electrostatic potential using Poisson problem
@@ -192,9 +192,12 @@ void dftClass::init(){
   //
   d_constraintsForTotalPotential.clear ();  
   DoFTools::make_hanging_node_constraints (dofHandler, d_constraintsForTotalPotential);
+#ifdef ENABLE_PERIODIC_BC
+  locatePeriodicPinnedNodes();
+#else
   VectorTools::interpolate_boundary_values (dofHandler, 0, ZeroFunction<3>(), d_constraintsForTotalPotential);
+#endif
   d_constraintsForTotalPotential.close ();
-
 
   //
   //push back into Constraint Matrices
@@ -242,9 +245,7 @@ void dftClass::init(){
   
   //locate atome core nodes
   locateAtomCoreNodes();
-#ifdef ENABLE_PERIODIC_BC
-  locatePeriodicPinnedNodes();
-#endif
+
   //locate atom nodes in each bin  
   
   //initialize density 

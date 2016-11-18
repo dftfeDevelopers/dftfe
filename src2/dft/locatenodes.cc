@@ -43,13 +43,11 @@ void dftClass::locateAtomCoreNodes(){
 }
 
 void dftClass::locatePeriodicPinnedNodes(){ 
-  constraintsPeriodic.close();
   unsigned int vertices_per_cell=GeometryInfo<3>::vertices_per_cell;
   DoFHandler<3>::active_cell_iterator
     cell = dofHandler.begin_active(),
     endc = dofHandler.end();
-  //
-  IndexSet locally_owned_elements=eigenVectors[0]->locally_owned_elements();
+
   //locating pinned nodes
   std::vector<std::vector<double> > pinnedLocations;
   std::vector<double> temp; 
@@ -69,10 +67,9 @@ void dftClass::locatePeriodicPinnedNodes(){
 	  Point<3> atomCoord(pinnedLocations[*it][0],pinnedLocations[*it][1],pinnedLocations[*it][2]);
 	   if(feNodeGlobalCoord.distance(atomCoord) < 1.0e-5){ 
 	     std::cout << "Pinned core (" << pinnedLocations[*it][0] << ") located with node id " << nodeID << " in processor " << this_mpi_process;
-	     pinnedNode=nodeID;
-	     if (locally_owned_elements.is_element(nodeID)){
-	       //constraintsPeriodic.add_line(nodeID);
-	       //constraintsPeriodic.set_inhomogeneity(nodeID,0.0);
+	     if (locally_owned_dofs.is_element(nodeID)){
+	       d_constraintsForTotalPotential.add_line(nodeID);
+	       d_constraintsForTotalPotential.set_inhomogeneity(nodeID,0.0);
 	       std::cout << " and added \n";
 	     }
 	     else{
@@ -85,6 +82,5 @@ void dftClass::locatePeriodicPinnedNodes(){
       }//vertices_per_cell loop
     }//locally owned cell if loop
   }//cell loop
-  constraintsPeriodic.close();
   MPI_Barrier(mpi_communicator);
 }
