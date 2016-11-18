@@ -118,8 +118,7 @@ void poissonClass::computeRHS2()
 }
 
 //compute RHS
-void poissonClass::computeRHS(std::map<dealii::CellId,std::vector<double> >* rhoValues)
-{
+void poissonClass::computeRHS(std::map<dealii::CellId,std::vector<double> >* rhoValues){
   if(!rhoValues)
     computeRHS2();
 
@@ -180,7 +179,8 @@ void poissonClass::computeRHS(std::map<dealii::CellId,std::vector<double> >* rho
       else rhs(it->first)=it->second*jacobianDiagonal(it->first);
     }
     }*/
-
+  rhs(dftPtr->pinnedNode)=0.0;
+  /*
   for(types::global_dof_index i = 0; i < rhs.size(); ++i)
     {
       if(dftPtr->locally_relevant_dofs.is_element(i))
@@ -192,7 +192,7 @@ void poissonClass::computeRHS(std::map<dealii::CellId,std::vector<double> >* rho
 	    }
 	}
     }
-
+  */
   rhs.update_ghost_values();
   //pcout << "rhs: " << rhs.l2_norm() << std::endl;
   if (!rhoValues){
@@ -249,6 +249,8 @@ void poissonClass::vmult(vectorType &dst, const vectorType &src) const
     dst(it->first) = src(it->first); //jacobianDiagonal(it->first);
     }
     }*/
+  dst(dftPtr->pinnedNode)=src(dftPtr->pinnedNode);
+  /*
   for(types::global_dof_index i = 0; i < dst.size(); ++i){
     if(dftPtr->locally_relevant_dofs.is_element(i)){
       if(dftPtr->constraintsPeriodic.is_constrained(i)){
@@ -257,7 +259,7 @@ void poissonClass::vmult(vectorType &dst, const vectorType &src) const
       }
     }
   }
-  
+  */
 }
 
 //Matrix-Free Jacobi preconditioner application

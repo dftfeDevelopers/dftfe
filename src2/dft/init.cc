@@ -66,7 +66,7 @@ void dftClass::initRho(){
 	    rhoValueAtQuadPt+=alglib::spline1dcalc(denSpline[atomLocations[n][0]], distanceToAtom);
 	  }
 	}
-	rhoInValuesPtr[q]=std::abs(rhoValueAtQuadPt);
+	rhoInValuesPtr[q]=1.0; //std::abs(rhoValueAtQuadPt);
       }
     }
   }

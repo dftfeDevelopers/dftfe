@@ -81,6 +81,7 @@ void dftClass::run (){
 
   //temp check
   poisson.solve(poisson.phiTotRhoIn,0,rhoInValues);
+  std::cout << poisson.phiTotRhoIn.linfty_norm() << std::endl;
   DataOut<3> data_out;
   data_out.attach_dof_handler (dofHandler);
   data_out.add_data_vector (poisson.phiTotRhoIn, "solution");

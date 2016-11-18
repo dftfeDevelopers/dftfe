@@ -69,6 +69,7 @@ void dftClass::locatePeriodicPinnedNodes(){
 	  Point<3> atomCoord(pinnedLocations[*it][0],pinnedLocations[*it][1],pinnedLocations[*it][2]);
 	   if(feNodeGlobalCoord.distance(atomCoord) < 1.0e-5){ 
 	     std::cout << "Pinned core (" << pinnedLocations[*it][0] << ") located with node id " << nodeID << " in processor " << this_mpi_process;
+	     pinnedNode=nodeID;
 	     if (locally_owned_elements.is_element(nodeID)){
 	       //constraintsPeriodic.add_line(nodeID);
 	       //constraintsPeriodic.set_inhomogeneity(nodeID,0.0);
