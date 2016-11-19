@@ -66,10 +66,10 @@ void dftClass::initRho(){
 	    rhoValueAtQuadPt+=alglib::spline1dcalc(denSpline[atomLocations[n][0]], distanceToAtom);
 	  }
 	}
-	rhoInValuesPtr[q]=std::abs(rhoValueAtQuadPt);
+	rhoInValuesPtr[q]=1.0; //std::abs(rhoValueAtQuadPt);
       }
     }
-  }
+  } 
   //Normalize rho
   double charge=totalCharge();
   char buffer[100];
@@ -145,7 +145,45 @@ void dftClass::init(){
   //
   constraintsNone.clear ();
   DoFTools::make_hanging_node_constraints (dofHandler, constraintsNone);
-  constraintsNone.close();
+#ifdef ENABLE_PERIODIC_BC
+  //mark faces
+  typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
+  for (; cell!=endc; ++cell) {
+    if (cell->is_locally_owned()){
+      for (unsigned int f=0; f < GeometryInfo<3>::faces_per_cell; ++f){
+	const Point<3> face_center = cell->face(f)->center();
+	if (cell->face(f)->at_boundary()){
+	  if (std::abs(face_center[0]+3.8)<1.0e-8)
+	    cell->face(f)->set_boundary_id(1);
+	  else if (std::abs(face_center[0]-3.8)<1.0e-8)
+	    cell->face(f)->set_boundary_id(2);
+	  else if (std::abs(face_center[1]+3.8)<1.0e-8)
+	    cell->face(f)->set_boundary_id(3);
+	  else if (std::abs(face_center[1]-3.8)<1.0e-8)
+	    cell->face(f)->set_boundary_id(4);
+	  else if (std::abs(face_center[2]+3.8)<1.0e-8)
+	    cell->face(f)->set_boundary_id(5);
+	  else if (std::abs(face_center[2]-3.8)<1.0e-8)
+	    cell->face(f)->set_boundary_id(6);
+	}
+      }
+    }
+  }
+  std::cout << "done with boundary flags\n";
+  std::vector<GridTools::PeriodicFacePair<typename parallel::distributed::Triangulation<3>::cell_iterator> > periodicity_vector;
+  for (int i=0; i<3; ++i){
+    GridTools::collect_periodic_faces(triangulation, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector);
+  }
+  triangulation.add_periodicity(periodicity_vector);
+  std::cout << "periodic facepairs: " << periodicity_vector.size() << std::endl;
+  std::vector<GridTools::PeriodicFacePair<typename DoFHandler<3>::cell_iterator> > periodicity_vector2;
+  for (int i=0; i<3; ++i){
+    GridTools::collect_periodic_faces(dofHandler, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector2);
+  }
+  DoFTools::make_periodicity_constraints<DoFHandler<3> >(periodicity_vector2, constraintsNone);
+  std::cout << "detected periodic face pairs: " << constraintsNone.n_constraints() << std::endl;
+#endif
+  constraintsNone.close();  
 
   //
   //Zero Dirichlet BC constraints on the boundary of the domain
@@ -154,9 +192,12 @@ void dftClass::init(){
   //
   d_constraintsForTotalPotential.clear ();  
   DoFTools::make_hanging_node_constraints (dofHandler, d_constraintsForTotalPotential);
+#ifdef ENABLE_PERIODIC_BC
+  locatePeriodicPinnedNodes();
+#else
   VectorTools::interpolate_boundary_values (dofHandler, 0, ZeroFunction<3>(), d_constraintsForTotalPotential);
+#endif
   d_constraintsForTotalPotential.close ();
-
 
   //
   //push back into Constraint Matrices
@@ -207,8 +248,7 @@ void dftClass::init(){
   //locate atome core nodes
   locateAtomCoreNodes();
 
-  //locate atom nodes in each bin
-  
+  //locate atom nodes in each bin  
   
   //initialize density 
   initRho();

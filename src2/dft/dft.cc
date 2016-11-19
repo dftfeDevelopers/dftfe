@@ -81,6 +81,19 @@ void dftClass::run (){
   //solve
   computing_timer.enter_section("dft solve"); 
 
+  /*
+  //temp check
+  poisson.solve(poisson.phiTotRhoIn,1,rhoInValues);
+  std::cout << poisson.phiTotRhoIn.linfty_norm() << std::endl;
+  DataOut<3> data_out;
+  data_out.attach_dof_handler (dofHandler);
+  data_out.add_data_vector (poisson.phiTotRhoIn, "solution");
+  data_out.build_patches (4);
+  std::ofstream output ("poisson.vtu");
+  data_out.write_vtu (output);
+  exit(-1);
+  */
+
   //
   //phiExt with nuclear charge
   //
@@ -211,7 +224,6 @@ void dftClass::run (){
 
     poisson.phiExt.compress(VectorOperation::insert);
     poisson.phiExt.update_ghost_values();
-
   //
   //postprocess the data
   //
@@ -240,7 +252,6 @@ void dftClass::run (){
   data_out.build_patches (4);
   std::ofstream output ("poisson.vtu");
   data_out.write_vtu (output);*/
-
   
   //exit(-1);
   //Begin SCF iteration
@@ -257,6 +268,8 @@ void dftClass::run (){
     //phiTot with rhoIn
     int constraintMatrixId = 1;
     poisson.solve(poisson.phiTotRhoIn,constraintMatrixId,rhoInValues);
+    std::cout<<"L2 Norm of Phi Tot L2  : "<<poisson.phiTotRhoIn.l2_norm()<<std::endl;
+    std::cout<<"L2 Norm of Phi Tot Linf: "<<poisson.phiTotRhoIn.linfty_norm()<<std::endl;
     //eigen solve
     eigen.computeVEff(rhoInValues, poisson.phiTotRhoIn); 
     chebyshevSolver();

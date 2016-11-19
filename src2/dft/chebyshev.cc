@@ -2,7 +2,7 @@
 void dftClass::chebyshevSolver(){
   computing_timer.enter_section("Chebyshev solve"); 
   //compute upper bound of spectrum
-  bUp=upperBound();
+  bUp=upperBound(); bUp=540.6733378843865694;
   char buffer[100];
   sprintf(buffer, "bUp: %18.10e\n", bUp);
   pcout << buffer;

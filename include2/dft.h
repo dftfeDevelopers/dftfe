@@ -59,6 +59,7 @@ class dftClass{
   void initRho();
   double totalCharge();
   void locateAtomCoreNodes();
+  void locatePeriodicPinnedNodes();
   void createAtomBins(std::vector<const ConstraintMatrix * > & constraintsVector);
   double mixing_simple();
   double mixing_anderson();

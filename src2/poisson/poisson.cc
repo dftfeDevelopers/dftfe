@@ -113,15 +113,12 @@ void poissonClass::computeRHS2()
     }
   }
   jacobianDiagonal.update_ghost_values();
-  //pcout << "jacobian: " << jacobianDiagonal.l2_norm() << std::endl;
+  //pcout << "rhs2: " << rhs2.l2_norm() << std::endl;
   computing_timer.exit_section("poissonClass rhs2 assembly");
 }
 
 //compute RHS
-void poissonClass::computeRHS(std::map<dealii::CellId,std::vector<double> >* rhoValues)
-{
-
-
+void poissonClass::computeRHS(std::map<dealii::CellId,std::vector<double> >* rhoValues){
   if(!rhoValues)
     computeRHS2();
 
@@ -138,9 +135,6 @@ void poissonClass::computeRHS(std::map<dealii::CellId,std::vector<double> >* rho
   Vector<double>       elementalResidual (dofs_per_cell);
   std::vector<types::global_dof_index> local_dof_indices (dofs_per_cell);
   const ConstraintMatrix * constraintMatrix = dftPtr->d_constraintsVector[d_constraintMatrixId];
-  
-
-    
 
   //
   //parallel loop over all elements
@@ -211,13 +205,12 @@ void poissonClass::computeRHS(std::map<dealii::CellId,std::vector<double> >* rho
 	    }
 	}
     }
-
+  }
+  
   rhs.update_ghost_values();
-  //pcout << "rhs: " << rhs.l2_norm() << std::endl;
   if (!rhoValues){
     rhs.add(-1.0,rhs2);
   }
-  //pcout << "rhs2: " << rhs.l2_norm() << std::endl;
   computing_timer.exit_section("poissonClass rhs assembly");
 }
 
@@ -227,7 +220,11 @@ void poissonClass::AX (const dealii::MatrixFree<3,double>  &data,
 		       const vectorType &src,
 		       const std::pair<unsigned int,unsigned int> &cell_range) const{
   VectorizedArray<double>  quarter = make_vectorized_array (1.0/(4.0*M_PI));
-  FEEvaluation<3,FEOrder>  fe_eval(data, d_constraintMatrixId, 0); //select constraintsZero constraints
+#ifdef ENABLE_PERIODIC_BC
+  FEEvaluation<3,FEOrder>  fe_eval(data, 0, 0); //select constraintsNone for periodicity constraints
+#else
+  FEEvaluation<3,FEOrder>  fe_eval(data, d_constraintMatrixId, 0); //select constraints for bin constraints
+#endif
   for (unsigned int cell=cell_range.first; cell<cell_range.second; ++cell){
     fe_eval.reinit (cell); 
     fe_eval.read_dof_values(src);
@@ -246,41 +243,17 @@ void poissonClass::vmult(vectorType &dst, const vectorType &src) const
   dst=0.0;
   dftPtr->matrix_free_data.cell_loop (&poissonClass::AX, this, dst, src);
   dst.compress(VectorOperation::add);
+
+  //dst=src for the Dirichlet nodes, as the Jacobian in Ax=b has the corresponding row and column zeroed, except the diagonal entry.
   const ConstraintMatrix * constraintMatrix = dftPtr->d_constraintsVector[d_constraintMatrixId];
-  //
-  //access current constraint Matrix
-  //
-
-  //
-  //store constrained DOF's
-  //
-  //for (types::global_dof_index i=0; i<rhs.size(); i++){
-  //if (dftPtr->locally_relevant_dofs.is_element(i)){
-  //  if (constraintMatrix.is_constrained(i)){
-  //	values1byR[i] = constraintMatrix.get_inhomogeneity(i);
-  //  }
-  //}
-  //}
-
-  //apply Dirichlet BC's
-  /*for (std::map<types::global_dof_index, double>::const_iterator it=values1byR.begin(); it!=values1byR.end(); ++it){
-    if (dst.in_local_range(it->first)){
-      dst(it->first) = src(it->first); //jacobianDiagonal(it->first);
+  for(types::global_dof_index i = 0; i < dst.size(); ++i){
+    if(dst.in_local_range(i)){
+      if(constraintMatrix->is_constrained(i)){
+	dst(i)=src(i);
+      }
     }
-    }*/
-
-for(types::global_dof_index i = 0; i < dst.size(); ++i)
-    {
-      if(dst.in_local_range(i))
-	{
-	  if(constraintMatrix->is_constrained(i))
-	    {
-	      dst(i) = src(i);
-	    }
-	}
-    }
-
-
+  }
+  
 }
 
 //Matrix-Free Jacobi preconditioner application
@@ -291,8 +264,6 @@ void poissonClass::precondition_Jacobi(vectorType& dst, const vectorType& src, c
 
 //solve using CG
 void poissonClass::solve(vectorType& phi, int constraintMatrixId, std::map<dealii::CellId,std::vector<double> >* rhoValues){
-
-
   //
   //initialize the data member
   //
