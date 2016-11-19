@@ -103,20 +103,16 @@ void dftClass::run (){
   //postprocess the data
   //
   const ConstraintMatrix * constraintMatrix = d_constraintsVector[constraintMatrixId];
-
   //
   //Modify the phi value based on constraintValue
   //
-  for(types::global_dof_index i = 0; i < poisson.phiExt.size(); ++i)
-    {
-      if(locally_relevant_dofs.is_element(i))
-	{
-	  if(constraintMatrix->is_constrained(i))
-	    {
-	      poisson.phiExt(i) = constraintMatrix->get_inhomogeneity(i);
-	    }
-	}
+  for(types::global_dof_index i = 0; i < poisson.phiExt.size(); ++i){
+    if(locally_relevant_dofs.is_element(i)){
+      if(constraintMatrix->is_constrained(i)){
+	poisson.phiExt(i) = constraintMatrix->get_inhomogeneity(i);
+      }
     }
+  }
 
   //std::cout<<"L2 Norm of Phi Ext: "<<poisson.phiExt.l2_norm()<<std::endl;
  
@@ -137,6 +133,8 @@ void dftClass::run (){
     //phiTot with rhoIn
     int constraintMatrixId = 1;
     poisson.solve(poisson.phiTotRhoIn,constraintMatrixId,rhoInValues);
+    std::cout<<"L2 Norm of Phi Tot L2  : "<<poisson.phiTotRhoIn.l2_norm()<<std::endl;
+    std::cout<<"L2 Norm of Phi Tot Linf: "<<poisson.phiTotRhoIn.linfty_norm()<<std::endl;
     //eigen solve
     eigen.computeVEff(rhoInValues, poisson.phiTotRhoIn); 
     chebyshevSolver();

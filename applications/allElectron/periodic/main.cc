@@ -2,11 +2,11 @@
 #define ENABLE_PERIODIC_BC
 
 //testing for one C atom in periodic domain
-const unsigned int FEOrder=1; 
+const unsigned int FEOrder=4; 
 const unsigned int n_refinement_steps=4;
 const double lowerEndWantedSpectrum=-10.0;
-const unsigned int chebyshevOrder=2000; 
-const unsigned int numSCFIterations=15;
+const unsigned int chebyshevOrder=100; 
+const unsigned int numSCFIterations=1;
 const bool isPseudopotential = false;
 //solver paramteters 
 const unsigned int maxLinearSolverIterations=5000;

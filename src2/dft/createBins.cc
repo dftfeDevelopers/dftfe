@@ -4,7 +4,7 @@ void dftClass::createAtomBins(std::vector<const ConstraintMatrix * > & constrain
 			     
 {
 
-  double radiusAtomBall = 4.0;
+  double radiusAtomBall = 3.0;
   std::map<types::global_dof_index,Point<3> >::iterator iterMap;
   ConstraintMatrix * constraintsForVselfInBin = new ConstraintMatrix;
   DoFTools::make_hanging_node_constraints (dofHandler, *constraintsForVselfInBin);
