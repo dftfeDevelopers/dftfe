@@ -19,7 +19,7 @@ void dftClass::compute_energy(){
     bandEnergy+= 2*partialOccupancy*eigenValues[i];
     if (this_mpi_process == 0) std::printf("partialOccupancy %u: %30.20e \n", i, partialOccupancy);
   }
-  double potentialTimesRho=0.0, exchangeEnergy=0.0, correlationEnergy=0.0, electrostaticEnergy=0.0; 
+  double potentialTimesRho = 0.0, exchangeEnergy = 0.0, correlationEnergy = 0.0, electrostaticEnergyTotPot = 0.0; 
   
 
   //parallel loop over all elements
@@ -52,24 +52,58 @@ void dftClass::compute_energy(){
 	potentialTimesRho+=Veff*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW (q_point);
 	exchangeEnergy+=(exchangeEnergyVal[q_point])*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW (q_point);
 	correlationEnergy+=(corrEnergyVal[q_point])*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW (q_point);
-	electrostaticEnergy+=0.5*(Vtot+Vext)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW (q_point);
+	//electrostaticEnergyTotPot+=0.5*(Vtot+Vext)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW (q_point);
+	electrostaticEnergyTotPot+=0.5*(Vtot)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW (q_point);
       }
     }
   } 
-  double energy=-potentialTimesRho+exchangeEnergy+correlationEnergy+electrostaticEnergy;
+  double energy=-potentialTimesRho+exchangeEnergy+correlationEnergy+electrostaticEnergyTotPot;
+
+  //
+  //get nuclear electrostatic energy 0.5*sum_I*(phi_tot(RI) - VselfI(RI))
+  //
+  
+  //
+  //First evaluate sum_I*(Z_I*phi_tot(RI)) on atoms belonging to current processor
+  //
+  double phiContribution = 0.0,vSelfContribution=0.0;
+  for (std::map<unsigned int, double>::iterator it=atoms.begin(); it!=atoms.end(); ++it)
+    {
+      phiContribution += (-it->second)*poisson.phiTotRhoOut(it->first);//-charge*potential
+    }
+
+  //
+  //Then evaluate sum_I*(Z_I*Vself_I(R_I)) on atoms belonging to current processor
+  //
+  for(int i = 0; i < d_localVselfs.size(); ++i)
+    {
+      vSelfContribution += (-d_localVselfs[i][0])*(d_localVselfs[i][1]);//-charge*potential
+    }
+
+  double nuclearElectrostaticEnergy = 0.5*(phiContribution - vSelfContribution);
+
+
+
   //sum over all processors
   double totalEnergy= Utilities::MPI::sum(energy, mpi_communicator);
   double totalpotentialTimesRho= Utilities::MPI::sum(potentialTimesRho, mpi_communicator); 
   double totalexchangeEnergy= Utilities::MPI::sum(exchangeEnergy, mpi_communicator); 
   double totalcorrelationEnergy= Utilities::MPI::sum(correlationEnergy, mpi_communicator);
-  double totalelectrostaticEnergy= Utilities::MPI::sum(electrostaticEnergy, mpi_communicator); 
+  double totalelectrostaticEnergyPot= Utilities::MPI::sum(electrostaticEnergyTotPot, mpi_communicator);
+  double totalNuclearElectrostaticEnergy = Utilities::MPI::sum(nuclearElectrostaticEnergy, mpi_communicator);
+
+  
+
+  //
   //total energy
+  //
  totalEnergy+=bandEnergy;
- totalEnergy+=repulsiveEnergy();
+ //totalEnergy+=repulsiveEnergy();
+ totalEnergy+=totalNuclearElectrostaticEnergy;
  double totalkineticEnergy=-totalpotentialTimesRho+bandEnergy;
  if (this_mpi_process == 0) {
    std::printf("Total energy:%30.20e \nTotal energy per atom:%30.20e \n", totalEnergy, totalEnergy/((double) atomLocations.size()));
-   std::printf("Band energy:%30.20e \nKinetic energy:%30.20e \nExchange energy:%30.20e \nCorrelation energy:%30.20e \nElectrostatic energy:%30.20e \nRepulsive energy:%30.20e \n", bandEnergy, totalkineticEnergy, totalexchangeEnergy, totalcorrelationEnergy, totalelectrostaticEnergy, repulsiveEnergy());
+   std::printf("Band energy:%30.20e \nKinetic energy:%30.20e \nExchange energy:%30.20e \nCorrelation energy:%30.20e \nElectrostatic energy Total Potential:%30.20e \nRepulsive energy:%30.20e \nNuclear Electrostatic Energy:%30.20e \n", bandEnergy, totalkineticEnergy, totalexchangeEnergy, totalcorrelationEnergy, totalelectrostaticEnergyPot, repulsiveEnergy(),totalNuclearElectrostaticEnergy);
  }
 }
  

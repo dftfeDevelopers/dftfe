@@ -13,7 +13,7 @@ cat $PBS_NODEFILE
 # Let PBS handle your output
 # Use mpirun to run with 8 nodes for 1 hour
 cd $PBS_O_WORKDIR
-mpirun ./main_rls>CO_ballrad0d6_mpi8
+mpirun ./main_energyVself>CO_ballrad0d5_energyVself_mpi8
 
 
 

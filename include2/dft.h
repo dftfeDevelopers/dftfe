@@ -102,6 +102,7 @@ class dftClass{
   //dft related objects
   std::map<dealii::CellId, std::vector<double> > *rhoInValues, *rhoOutValues;
   std::vector<std::map<dealii::CellId,std::vector<double> >*> rhoInVals, rhoOutVals;
+  std::vector<std::vector<double> > d_localVselfs;
 
   //map of atom node number and atomic weight
   std::map<unsigned int, double> atoms;

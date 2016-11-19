@@ -191,8 +191,21 @@ void dftClass::run (){
 		}//charge loop
 	    
 	    }
+
 	}//Vertexloop
-      
+
+      //
+      //store Vselfs for atoms in bin
+      //
+      for (std::map<unsigned int, double>::iterator it = d_atomsInBin[iBin].begin(); it != d_atomsInBin[iBin].end(); ++it)
+	{
+	  std::vector<double> temp(2,0.0);
+	  temp[0] = it->second;//charge;
+	  temp[1] = poisson.vselfBinScratch(it->first);//vself 
+	  d_localVselfs.push_back(temp);
+	}
+
+
       //   std::cout << "In: " << inNodes << "  Out: " << outNodes << "\n";
     }//bin loop
 
