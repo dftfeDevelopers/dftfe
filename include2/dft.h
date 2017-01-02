@@ -45,6 +45,8 @@ class dftClass{
   dftClass();
   void run();
   std::map<unsigned int, unsigned int> additionalWaveFunctions;
+  std::map<unsigned int, unsigned int> numberAtomicWaveFunctions;
+  unsigned int numEigenValues;
  private:
   void set();
   unsigned int numElectrons, numBaseLevels, numLevels;
@@ -57,7 +59,7 @@ class dftClass{
   void mesh();
   void init();
   void initRho();
-  double totalCharge();
+  double totalCharge(std::map<dealii::CellId, std::vector<double> > *);
   void locateAtomCoreNodes();
   void locatePeriodicPinnedNodes();
   void createAtomBins(std::vector<const ConstraintMatrix * > & constraintsVector);
@@ -89,10 +91,10 @@ class dftClass{
 
   poissonClass poisson;
   eigenClass eigen;
-  ConstraintMatrix constraintsNone, d_constraintsForTotalPotential; 
+  ConstraintMatrix constraintsNone, d_constraintsForTotalPotential, d_constraintsPeriodicWithDirichlet; 
   std::vector<double> eigenValues;
   std::vector<parallel::distributed::Vector<double>*> eigenVectors;
-  unsigned int numEigenValues;
+  //unsigned int numEigenValues;
 
   //parallel message stream
   ConditionalOStream  pcout;  

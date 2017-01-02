@@ -43,7 +43,7 @@ private:
   //FE data structres
   dealii::FE_Q<3> FE;
   //constraints
-  dealii::ConstraintMatrix  constraintsNone, constraints1byR;
+  //dealii::ConstraintMatrix  constraintsNone, constraints1byR;
   //std::map<dealii::types::global_dof_index, double> values1byR;
   int d_constraintMatrixId;
 

@@ -69,6 +69,7 @@ class dftClass{
   poissonClass poisson;
   eigenClass eigen;
   ConstraintMatrix constraintsNone;
+  ConstraintMatrix constraintsPeriodicWithDirichlet;
   std::vector<double> eigenValues;
   std::vector<parallel::distributed::Vector<double>*> eigenVectors;
 

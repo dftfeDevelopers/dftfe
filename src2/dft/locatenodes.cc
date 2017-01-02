@@ -100,6 +100,7 @@ void dftClass::locatePeriodicPinnedNodes(){
   std::vector<std::vector<double> > pinnedLocations;
   std::vector<double> temp; 
   temp.push_back(3.8); temp.push_back(3.8); temp.push_back(3.8);
+  //temp.push_back(0.0); temp.push_back(0.0); temp.push_back(1.52);
   pinnedLocations.push_back(temp);
   unsigned int numAtoms=pinnedLocations.size();
   std::set<unsigned int> atomsTolocate;

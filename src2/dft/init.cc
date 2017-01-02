@@ -66,12 +66,12 @@ void dftClass::initRho(){
 	    rhoValueAtQuadPt+=alglib::spline1dcalc(denSpline[atomLocations[n][0]], distanceToAtom);
 	  }
 	}
-	rhoInValuesPtr[q]=1.0; //std::abs(rhoValueAtQuadPt);
+	rhoInValuesPtr[q]=1.0;//std::abs(rhoValueAtQuadPt);//1.0
       }
     }
   } 
   //Normalize rho
-  double charge=totalCharge();
+  double charge=totalCharge(rhoInValues);
   char buffer[100];
   sprintf(buffer, "initial total charge: %18.10e \n", charge);
   pcout << buffer;
@@ -84,7 +84,7 @@ void dftClass::initRho(){
       }
     }
   }
-  double charge2=totalCharge();
+  double charge2=totalCharge(rhoInValues);
   sprintf(buffer, "initial total charge after scaling: %18.10e \n", charge2);
   pcout << buffer;
   
@@ -145,45 +145,124 @@ void dftClass::init(){
   //
   constraintsNone.clear ();
   DoFTools::make_hanging_node_constraints (dofHandler, constraintsNone);
+
+  double halfxyzSpan = 3.8;
+
 #ifdef ENABLE_PERIODIC_BC
   //mark faces
   typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
   for (; cell!=endc; ++cell) {
-    if (cell->is_locally_owned()){
+    //if (cell->is_locally_owned()){
       for (unsigned int f=0; f < GeometryInfo<3>::faces_per_cell; ++f){
 	const Point<3> face_center = cell->face(f)->center();
 	if (cell->face(f)->at_boundary()){
-	  if (std::abs(face_center[0]+3.8)<1.0e-8)
+	  if (std::abs(face_center[0]+halfxyzSpan)<1.0e-8)
 	    cell->face(f)->set_boundary_id(1);
-	  else if (std::abs(face_center[0]-3.8)<1.0e-8)
+	  else if (std::abs(face_center[0]-halfxyzSpan)<1.0e-8)
 	    cell->face(f)->set_boundary_id(2);
-	  else if (std::abs(face_center[1]+3.8)<1.0e-8)
+	  else if (std::abs(face_center[1]+halfxyzSpan)<1.0e-8)
 	    cell->face(f)->set_boundary_id(3);
-	  else if (std::abs(face_center[1]-3.8)<1.0e-8)
+	  else if (std::abs(face_center[1]-halfxyzSpan)<1.0e-8)
 	    cell->face(f)->set_boundary_id(4);
-	  else if (std::abs(face_center[2]+3.8)<1.0e-8)
+	  else if (std::abs(face_center[2]+halfxyzSpan)<1.0e-8)
 	    cell->face(f)->set_boundary_id(5);
-	  else if (std::abs(face_center[2]-3.8)<1.0e-8)
+	  else if (std::abs(face_center[2]-halfxyzSpan)<1.0e-8)
 	    cell->face(f)->set_boundary_id(6);
 	}
       }
-    }
+      //}
   }
-  std::cout << "done with boundary flags\n";
+
+  pcout << "Done with Boundary Flags\n";
   std::vector<GridTools::PeriodicFacePair<typename parallel::distributed::Triangulation<3>::cell_iterator> > periodicity_vector;
   for (int i=0; i<3; ++i){
     GridTools::collect_periodic_faces(triangulation, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector);
   }
   triangulation.add_periodicity(periodicity_vector);
-  std::cout << "periodic facepairs: " << periodicity_vector.size() << std::endl;
+  pcout << "periodic facepairs: " << periodicity_vector.size() << std::endl;
+
   std::vector<GridTools::PeriodicFacePair<typename DoFHandler<3>::cell_iterator> > periodicity_vector2;
   for (int i=0; i<3; ++i){
     GridTools::collect_periodic_faces(dofHandler, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector2);
   }
   DoFTools::make_periodicity_constraints<DoFHandler<3> >(periodicity_vector2, constraintsNone);
-  std::cout << "detected periodic face pairs: " << constraintsNone.n_constraints() << std::endl;
+  pcout << "detected periodic face pairs: " << constraintsNone.n_constraints() << std::endl;
 #endif
-  constraintsNone.close();  
+
+  pcout<<"Size of ConstraintsNone: "<< constraintsNone.n_constraints()<<std::endl;
+
+  //
+  //modify constraintsNone to account for the bug in higher order nodes
+  //
+  ConstraintMatrix constraintsTemp(constraintsNone); constraintsNone.clear();
+  std::set<unsigned int> masterNodes;
+  double periodicPrecision=1.0e-8;
+  //fill all masters
+  for(types::global_dof_index i = 0; i <dofHandler.n_dofs(); ++i){
+    if(locally_relevant_dofs.is_element(i)){
+      if(constraintsTemp.is_constrained(i)){
+	if (constraintsTemp.is_identity_constrained(i)){
+	  Point<3> p=d_supportPoints.find(i)->second;
+	  unsigned int masterNode=(*constraintsTemp.get_constraint_entries(i))[0].first;
+	  masterNodes.insert(masterNode);
+	}
+      }
+    }
+  }
+
+  //
+  //fix wrong master map
+  //
+  for(types::global_dof_index i = 0; i <dofHandler.n_dofs(); ++i){
+    if(locally_relevant_dofs.is_element(i)){
+      if(constraintsTemp.is_constrained(i)){
+	if (constraintsTemp.is_identity_constrained(i)){
+	  Point<3> p=d_supportPoints.find(i)->second;
+	  unsigned int masterNode=(*constraintsTemp.get_constraint_entries(i))[0].first;
+	  unsigned int count=0, index=0;
+	  for (unsigned int k=0; k<3; k++){
+	    if (std::abs(std::abs(p[k])-halfxyzSpan)<periodicPrecision) {
+	      count++;
+	      index=k;
+	    }
+	  }
+	  if (count==1){
+	    Point<3> q=d_supportPoints.find(masterNode)->second;
+	    unsigned int l=1, m=2;
+	    if (index==1){l=0; m=2;}
+	    else if (index==2){l=0; m=1;} 
+	    if (!((std::abs(p[l]-q[l])<periodicPrecision) and (std::abs(p[m]-q[m])<periodicPrecision))){
+	      bool foundNewMaster=false;
+	      for (std::set<unsigned int>::iterator it=masterNodes.begin(); it!=masterNodes.end(); ++it){
+		q=d_supportPoints.find(*it)->second;
+		if (((std::abs(p[l]-q[l])<periodicPrecision) and (std::abs(p[m]-q[m])<periodicPrecision))){
+		  constraintsNone.add_line(i);
+		  constraintsNone.add_entry(i, *it, 1.0);
+		  foundNewMaster=true;
+		  break;
+		}
+	      }
+	      if (!foundNewMaster){
+		pcout << "\nError: Didnot find a replacement master node for a wrong master-slave periodic pair\n";
+		exit(-1);
+	      }
+	    }
+	    else{
+	      constraintsNone.add_line(i);
+	      constraintsNone.add_entry(i, masterNode, 1.0);
+	    }
+	  }
+	  else{
+	    constraintsNone.add_line(i);
+	    constraintsNone.add_entry(i, masterNode, 1.0);
+	  }
+	}
+      }
+    }
+  }
+  constraintsNone.close();
+  std::cout<<"Size of ConstraintsNone after fixing periodicity: "<< constraintsNone.n_constraints()<<std::endl;
+  
 
   //
   //Zero Dirichlet BC constraints on the boundary of the domain
@@ -199,10 +278,27 @@ void dftClass::init(){
 #endif
   d_constraintsForTotalPotential.close ();
 
+#ifdef ENABLE_PERIODIC_BC 
+  d_constraintsPeriodicWithDirichlet.clear();
+  d_constraintsPeriodicWithDirichlet.merge(constraintsNone);
+  d_constraintsPeriodicWithDirichlet.merge(d_constraintsForTotalPotential);
+  d_constraintsPeriodicWithDirichlet.close();  
+  std::cout<<"Updated Size of ConstraintsPeriodic with Dirichlet B.Cs: "<< d_constraintsPeriodicWithDirichlet.n_constraints()<<std::endl;
+#endif
+ 
+  
+
   //
   //push back into Constraint Matrices
   //
+  d_constraintsVector.clear();
+#ifdef ENABLE_PERIODIC_BC
+  //d_constraintsVector.push_back(&d_constraintsPeriodicWithDirichlet); 
   d_constraintsVector.push_back(&constraintsNone); 
+#else
+  d_constraintsVector.push_back(&constraintsNone); 
+#endif
+
   d_constraintsVector.push_back(&d_constraintsForTotalPotential);
 
   //
@@ -217,10 +313,7 @@ void dftClass::init(){
   //create matrix free structure
   //
   std::vector<const DoFHandler<3> *> dofHandlerVector; 
-  //dofHandlerVector.push_back(&dofHandler);
-  //dofHandlerVector.push_back(&dofHandler);
-  //loop over number of bins 
-
+  
   for(int i = 0; i < d_constraintsVector.size(); ++i)
     dofHandlerVector.push_back(&dofHandler);
  

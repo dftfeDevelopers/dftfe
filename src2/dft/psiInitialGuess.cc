@@ -1,5 +1,7 @@
 #include <fstream>
 #include <boost/math/special_functions/spherical_harmonic.hpp>
+#include <boost/math/distributions/normal.hpp>
+#include <boost/random/normal_distribution.hpp>
 
 //load PSI radial value files
 void dftClass::loadPSIFiles(unsigned int Z, unsigned int n, unsigned int l){
@@ -86,20 +88,21 @@ void dftClass::determineOrbitalFilling(){
   level.clear(); level.push_back(6); level.push_back(1); stencil.push_back(level);
   //8s
   level.clear(); level.push_back(7); level.push_back(0); stencil.push_back(level);
-  //
+  
+  int totalNumberWaveFunctions = numEigenValues;
   
   //loop over atoms
-  for (unsigned int z=0; z<atomLocations.size(); z++){
-    unsigned int Z=atomLocations[z][0];
+  for (unsigned int z = 0; z < atomLocations.size(); z++){
+    unsigned int Z = atomLocations[z][0];
         
     //check if additional wave functions requested
     unsigned int additionalLevels=0;
     if (additionalWaveFunctions.count(Z)!=0) {
       additionalLevels=additionalWaveFunctions[Z];
     } 
-    unsigned int totalLevels=((unsigned int)std::ceil(Z/2.0))+additionalLevels;
+    unsigned int totalLevels= numberAtomicWaveFunctions[Z];//((unsigned int)std::ceil(Z/2.0))+additionalLevels;
     numElectrons+=Z;
-    numBaseLevels+=(unsigned int)std::ceil(Z/2.0);
+    //numBaseLevels+=(unsigned int)std::ceil(Z/2.0);
     numLevels+=totalLevels;
     
     //fill levels
@@ -126,8 +129,8 @@ void dftClass::determineOrbitalFilling(){
     }
   }
   pcout << "total num electrons: " << numElectrons << std::endl;
-  pcout << "total num base levels: " << numBaseLevels << std::endl;
-  pcout << "total num levels: " << numLevels << std::endl;
+  // pcout << "total num base levels: " << numBaseLevels << std::endl;
+  pcout << "total num levels through atomic wavefunctions: " << numLevels << std::endl;
   pcout << "************************************" << std::endl;
 }
 
@@ -184,6 +187,29 @@ void dftClass::readPSIRadialValues(){
     }
     pp=true;
   }
+
+  if(waveFunctionsVector.size() < numEigenValues)
+    {
+      unsigned int nonAtomicWaveFunctions = numEigenValues - waveFunctionsVector.size();
+      //
+      // assign the rest of the wavefunctions using a standard normal distribution
+      //
+      boost::math::normal normDist;
+
+      for(unsigned int iWave = waveFunctionsVector.size(); iWave < numEigenValues; ++iWave)
+	{
+	  for(unsigned int dof=0; dof<locallyOwnedDOFs.size(); dof++)
+	    {
+	      double z = (-0.5 + (rand()+ 0.0)/(RAND_MAX))*3.0;
+	      double value =  boost::math::pdf(normDist, z); 
+	      if(rand()%2 == 0)
+		value = -1.0*value;
+	      local_dof_values[iWave][dof] = value;
+	    }
+	}
+
+    }
+
   //
   for (unsigned int i=0; i<eigenVectors.size(); ++i){
     constraintsNone.distribute_local_to_global(local_dof_values[i], locallyOwnedDOFs, *eigenVectors[i]);

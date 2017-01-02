@@ -35,9 +35,11 @@ void dftClass::compute_rhoOut(){
       for (unsigned int i=0; i<numEigenValues; ++i){
 	fe_values.get_function_values(*PSI[i], tempPsi);
 	for (unsigned int q_point=0; q_point<num_quad_points; ++q_point){
-	  double temp=(eigenValues[i]-fermiEnergy)/(kb*TVal);
-	  double partialOccupancy=1.0/(1.0+exp(temp)); 
-	  rhoOut[q_point]+=2.0*partialOccupancy*std::pow(tempPsi[q_point],2.0); 
+	  double factor=(eigenValues[i]-fermiEnergy)/(kb*TVal);
+	  //double partialOccupancy=1.0/(1.0+exp(temp)); 
+	  double partialOccupancy = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)) : 
+	1.0/(1.0 + std::exp(factor));
+	  rhoOut[q_point]+=2.0*partialOccupancy*tempPsi[q_point]*tempPsi[q_point];//std::pow(tempPsi[q_point],2.0); 
 	}
       }
       for (unsigned int q_point=0; q_point<num_quad_points; ++q_point){

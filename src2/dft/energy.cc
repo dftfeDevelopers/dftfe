@@ -12,10 +12,12 @@ void dftClass::compute_energy(){
   
   // Loop through all cells.
   double bandEnergy=0.0;
-  double partialOccupancy, temp;
+  double partialOccupancy, factor;
   for (unsigned int i=0; i<numEigenValues; i++){
-    temp=(eigenValues[i]-fermiEnergy)/(kb*TVal);
-    partialOccupancy=1.0/(1.0+exp(temp));
+    factor=(eigenValues[i]-fermiEnergy)/(kb*TVal);
+    //partialOccupancy=1.0/(1.0+exp(temp));
+    double partialOccupancy = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)) : 
+      1.0/(1.0 + std::exp(factor));
     bandEnergy+= 2*partialOccupancy*eigenValues[i];
     if (this_mpi_process == 0) std::printf("partialOccupancy %u: %30.20e \n", i, partialOccupancy);
   }

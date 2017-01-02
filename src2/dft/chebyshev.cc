@@ -2,7 +2,9 @@
 void dftClass::chebyshevSolver(){
   computing_timer.enter_section("Chebyshev solve"); 
   //compute upper bound of spectrum
-  bUp=upperBound(); bUp=540.6733378843865694;
+  bUp=upperBound(); //bUp = 5.406733378843865694e+02;//bUp = 7.492919140786670873e+00;//bUp = 7.2113639127e+00;
+//bUp = 7.2113639127e+00;//bUp=7.492919140786677090e+00;//bUp = 6.629435086034900060e+00;//bUp = 7.2113639127e+00;//7.492919140786677090e+00;
+//bUp=1.876884782454181959e+02;//bUp=540.6733378843865694;
   char buffer[100];
   sprintf(buffer, "bUp: %18.10e\n", bUp);
   pcout << buffer;
@@ -180,7 +182,7 @@ void dftClass::rayleighRitz(std::vector<vectorType*>& X){
   //print eigen values
   char buffer[100];
   for (unsigned int i=0; i< (unsigned int)n; i++){
-    sprintf(buffer, "eigen value %2u: %18.10e\n", i, eigenValues[i]);
+    sprintf(buffer, "eigen value %2u: %18.16e\n", i, eigenValues[i]);
     pcout << buffer;
   }
 
