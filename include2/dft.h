@@ -51,13 +51,16 @@ class dftClass{
   void set();
   unsigned int numElectrons, numBaseLevels, numLevels;
   std::set<unsigned int> atomTypes;
-  std::vector<std::vector<double> > atomLocations;
+  std::vector<std::vector<double> > atomLocations,d_latticeVectors,d_imagePositions;
+  std::vector<int> d_imageIds;
+  std::vector<double> d_imageCharges;
   std::vector<orbital> waveFunctionsVector;
   std::map<unsigned int, std::map<unsigned int, std::map<unsigned int, alglib::spline1dinterpolant*> > > radValues;
   std::map<unsigned int, std::map<unsigned int, std::map <unsigned int, double> > >outerValues;
 
   void mesh();
   void init();
+  void solveVself();
   void initRho();
   double totalCharge(std::map<dealii::CellId, std::vector<double> > *);
   void locateAtomCoreNodes();
@@ -72,6 +75,7 @@ class dftClass{
   void readPSIRadialValues();
   void readPSI();
   void determineOrbitalFilling();
+  void generateImageCharges();
   void loadPSIFiles(unsigned int Z, unsigned int n, unsigned int l);
 
   //FE data structres

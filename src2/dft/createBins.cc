@@ -86,9 +86,16 @@ void dftClass::createAtomBins(std::vector<const ConstraintMatrix * > & constrain
   //
   std::vector<int> imageIdsContainer;
   std::vector<std::vector<double > > imagePositions;
-  std::vector<int> imageChargeValues;
+  std::vector<double> imageChargeValues;
 
-  const int numberImageCharges = 0.0;
+  imageIdsContainer = d_imageIds;
+  imagePositions = d_imagePositions;
+  imageChargeValues = d_imageCharges;
+
+  const int numberImageCharges = imageIdsContainer.size();
+
+  pcout<<"Number Image Charges: "<<numberImageCharges<<std::endl;
+
   const int numberGlobalAtoms = atomLocations.size();
   const int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
 
@@ -113,6 +120,9 @@ void dftClass::createAtomBins(std::vector<const ConstraintMatrix * > & constrain
 	  //
 	  //Fill with ImageAtom Coors
 	  //
+	  atomCoor[0] = imagePositions[iAtom-numberGlobalAtoms][0];
+	  atomCoor[1] = imagePositions[iAtom-numberGlobalAtoms][1];
+	  atomCoor[2] = imagePositions[iAtom-numberGlobalAtoms][2];
 	}
 
       // std::cout<<"Atom Coor: "<<atomCoor[0]<<" "<<atomCoor[1]<<" "<<atomCoor[2]<<std::endl;
@@ -347,6 +357,7 @@ void dftClass::createAtomBins(std::vector<const ConstraintMatrix * > & constrain
       int numberGlobalAtomsInBin = atomsInCurrentBin.size();
 
       std::vector<int> &imageIdsOfAtomsInCurrentBin = d_imageIdsInBins[iBin];
+      std::vector<std::vector<double> > imagePositionsOfAtomsInCurrentBin;
 
       std::cout<<"Bin: "<<iBin<<" Number of Global Atoms: "<<numberGlobalAtomsInBin<<std::endl;
 
@@ -361,7 +372,12 @@ void dftClass::createAtomBins(std::vector<const ConstraintMatrix * > & constrain
 
 	  for(int iImageAtom = 0; iImageAtom < numberImageCharges; ++iImageAtom)
 	    {
-	      //Fill this up;
+	      if(imageIdsContainer[iImageAtom] == globalChargeIdInCurrentBin)
+		{
+		  imageIdsOfAtomsInCurrentBin.push_back(iImageAtom);
+		  std::vector<double> imageChargeCoor = imagePositions[iImageAtom];
+		  imagePositionsOfAtomsInCurrentBin.push_back(imageChargeCoor);
+		}
 	    }
 
 	}
@@ -374,6 +390,8 @@ void dftClass::createAtomBins(std::vector<const ConstraintMatrix * > & constrain
       //
       ConstraintMatrix * constraintsForVselfInBin = new ConstraintMatrix;
       DoFTools::make_hanging_node_constraints (dofHandler, *constraintsForVselfInBin);
+     
+      
       unsigned int inNodes=0, outNodes=0;
       std::map<types::global_dof_index,Point<3> >::iterator iterMap;
       for(iterMap = d_supportPoints.begin(); iterMap != d_supportPoints.end(); ++iterMap)
@@ -395,7 +413,9 @@ void dftClass::createAtomBins(std::vector<const ConstraintMatrix * > & constrain
 		    }
 		  else
 		    {
-		      //Fill this up
+		      atomCoor[0] = imagePositionsOfAtomsInCurrentBin[iAtom - numberGlobalAtomsInBin][0];
+		      atomCoor[1] = imagePositionsOfAtomsInCurrentBin[iAtom - numberGlobalAtomsInBin][1];
+		      atomCoor[2] = imagePositionsOfAtomsInCurrentBin[iAtom - numberGlobalAtomsInBin][2];
 		    }
 
 		 
@@ -462,8 +482,10 @@ void dftClass::createAtomBins(std::vector<const ConstraintMatrix * > & constrain
 	    }//locally relevant dofs
  
 	}//nodal loop
-      constraintsVector.push_back(constraintsForVselfInBin);
+      constraintsForVselfInBin->merge(constraintsNone,ConstraintMatrix::MergeConflictBehavior::left_object_wins);
       constraintsForVselfInBin->close();
+      constraintsVector.push_back(constraintsForVselfInBin);
+      
       std::cout<<"Size of Constraints: "<<constraintsForVselfInBin->n_constraints()<<std::endl;
       std::cout << "In: " << inNodes << "  Out: " << outNodes << "\n";
     }//bin loop

@@ -1,7 +1,7 @@
 //
 //Define parameters
 //
-const double radiusAtomBall = 0.5;
+const double radiusAtomBall = 3.0;
 
 //
 //test case for carbon-monoxide
@@ -21,7 +21,7 @@ const double relLinearSolverTolerance=1.0e-14;
 const double TVal=500.0;
 
 //Mesh information
-#define meshFileName "../../../data/meshes/allElectron/carbonMonoxide/meshRefined.inp"
+#define meshFileName "../../../data/meshes/allElectron/carbonMonoxide/mesh.inp"
 #define coordinatesFile "../../../data/meshes/allElectron/carbonMonoxide/coordinates.inp" 
 
 //dft header
@@ -36,8 +36,11 @@ int main (int argc, char *argv[]){
     //
     std::cout << std::scientific << std::setprecision(18);
     dftClass problem;
-    problem.additionalWaveFunctions[6]=2;
-    problem.additionalWaveFunctions[8]=1;
+    //problem.additionalWaveFunctions[6]=5;
+    //problem.additionalWaveFunctions[8]=1;
+    problem.numberAtomicWaveFunctions[6] = 5;
+    problem.numberAtomicWaveFunctions[8] = 5;
+    problem.numEigenValues = 10;
     problem.run();
   }
   return 0;

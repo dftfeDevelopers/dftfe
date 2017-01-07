@@ -54,8 +54,11 @@ void dftClass::compute_energy(){
 	potentialTimesRho+=Veff*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW (q_point);
 	exchangeEnergy+=(exchangeEnergyVal[q_point])*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW (q_point);
 	correlationEnergy+=(corrEnergyVal[q_point])*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW (q_point);
-	//electrostaticEnergyTotPot+=0.5*(Vtot+Vext)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW (q_point);
+#ifdef ENABLE_PERIODIC_BC
 	electrostaticEnergyTotPot+=0.5*(Vtot)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW (q_point);
+#else
+	electrostaticEnergyTotPot+=0.5*(Vtot+Vext)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW (q_point);
+#endif
       }
     }
   } 
@@ -94,14 +97,19 @@ void dftClass::compute_energy(){
   double totalelectrostaticEnergyPot= Utilities::MPI::sum(electrostaticEnergyTotPot, mpi_communicator);
   double totalNuclearElectrostaticEnergy = Utilities::MPI::sum(nuclearElectrostaticEnergy, mpi_communicator);
 
-  
-
   //
   //total energy
   //
  totalEnergy+=bandEnergy;
- //totalEnergy+=repulsiveEnergy();
+ 
+ 
+#ifdef ENABLE_PERIODIC_BC
  totalEnergy+=totalNuclearElectrostaticEnergy;
+#else
+ totalEnergy+=repulsiveEnergy();
+#endif
+
+
  double totalkineticEnergy=-totalpotentialTimesRho+bandEnergy;
  if (this_mpi_process == 0) {
    std::printf("Total energy:%30.20e \nTotal energy per atom:%30.20e \n", totalEnergy, totalEnergy/((double) atomLocations.size()));

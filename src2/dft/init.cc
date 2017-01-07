@@ -66,7 +66,7 @@ void dftClass::initRho(){
 	    rhoValueAtQuadPt+=alglib::spline1dcalc(denSpline[atomLocations[n][0]], distanceToAtom);
 	  }
 	}
-	rhoInValuesPtr[q]=1.0;//std::abs(rhoValueAtQuadPt);//1.0
+	rhoInValuesPtr[q]=std::abs(rhoValueAtQuadPt);//1.0
       }
     }
   } 
@@ -179,14 +179,14 @@ void dftClass::init(){
     GridTools::collect_periodic_faces(triangulation, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector);
   }
   triangulation.add_periodicity(periodicity_vector);
-  pcout << "periodic facepairs: " << periodicity_vector.size() << std::endl;
+  pcout << "Periodic Facepairs: " << periodicity_vector.size() << std::endl;
 
   std::vector<GridTools::PeriodicFacePair<typename DoFHandler<3>::cell_iterator> > periodicity_vector2;
   for (int i=0; i<3; ++i){
     GridTools::collect_periodic_faces(dofHandler, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector2);
   }
   DoFTools::make_periodicity_constraints<DoFHandler<3> >(periodicity_vector2, constraintsNone);
-  pcout << "detected periodic face pairs: " << constraintsNone.n_constraints() << std::endl;
+  pcout << "Detected Periodic Face Pairs: " << constraintsNone.n_constraints() << std::endl;
 #endif
 
   pcout<<"Size of ConstraintsNone: "<< constraintsNone.n_constraints()<<std::endl;
@@ -280,8 +280,10 @@ void dftClass::init(){
 
 #ifdef ENABLE_PERIODIC_BC 
   d_constraintsPeriodicWithDirichlet.clear();
-  d_constraintsPeriodicWithDirichlet.merge(constraintsNone);
+  DoFTools::make_hanging_node_constraints (dofHandler, d_constraintsPeriodicWithDirichlet);
   d_constraintsPeriodicWithDirichlet.merge(d_constraintsForTotalPotential);
+  d_constraintsPeriodicWithDirichlet.close();
+  d_constraintsPeriodicWithDirichlet.merge(constraintsNone);
   d_constraintsPeriodicWithDirichlet.close();  
   std::cout<<"Updated Size of ConstraintsPeriodic with Dirichlet B.Cs: "<< d_constraintsPeriodicWithDirichlet.n_constraints()<<std::endl;
 #endif
@@ -324,7 +326,9 @@ void dftClass::init(){
 
   matrix_free_data.reinit(dofHandlerVector, d_constraintsVector, quadratureVector, additional_data);
 
+  //
   //initialize eigen vectors
+  //
   matrix_free_data.initialize_dof_vector(vChebyshev);
   v0Chebyshev.reinit(vChebyshev);
   fChebyshev.reinit(vChebyshev);
@@ -338,10 +342,10 @@ void dftClass::init(){
     tempPSI3[i]->reinit(vChebyshev);
   } 
   
-  //locate atome core nodes
+  //locate atome core nodes and also locate atom nodes in each bin 
   locateAtomCoreNodes();
 
-  //locate atom nodes in each bin  
+  
   
   //initialize density 
   initRho();

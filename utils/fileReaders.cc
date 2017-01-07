@@ -6,14 +6,32 @@ void readFile(unsigned int numColumns, std::vector<std::vector<double> > &data, 
     std::cerr<< "Error opening file: " << fileName.c_str() << std::endl;
     exit(-1);
   }
-  if (readFile.is_open()) {
-    while (!readFile.eof()) {
-      for(unsigned int i = 0; i < numColumns; i++){
-	readFile>>rowData[i];
-      }
-      data.push_back(rowData);
+
+  //
+  // String to store line and word
+  //
+  std::string readLine;
+  std::string word;
+
+  //
+  // column index
+  //
+  int columnCount;
+
+  if(readFile.is_open())
+    {
+      while (std::getline(readFile, readLine))
+	{
+	  std::istringstream iss(readLine);
+        
+	  columnCount = 0; 
+
+	  while(iss >> word && columnCount < numColumns)
+	    rowData[columnCount++] = atof(word.c_str());
+     
+	  data.push_back(rowData);
+	}
     }
-  }
   readFile.close();
   return;
 }
