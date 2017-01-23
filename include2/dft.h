@@ -62,6 +62,10 @@ class dftClass{
   void init();
   void solveVself();
   void initRho();
+  void initLocalPseudoPotential();
+  void initNonLocalPseudoPotential();
+  void computeSparseStructureNonLocalProjectors();
+  void computeElementalProjectorKets();
   double totalCharge(std::map<dealii::CellId, std::vector<double> > *);
   void locateAtomCoreNodes();
   void locatePeriodicPinnedNodes();
@@ -76,7 +80,7 @@ class dftClass{
   void readPSI();
   void determineOrbitalFilling();
   void generateImageCharges();
-  void loadPSIFiles(unsigned int Z, unsigned int n, unsigned int l);
+  void loadPSIFiles(unsigned int Z, unsigned int n, unsigned int l, unsigned int & flag);
 
   //FE data structres
   parallel::distributed::Triangulation<3> triangulation;
@@ -109,7 +113,62 @@ class dftClass{
   //dft related objects
   std::map<dealii::CellId, std::vector<double> > *rhoInValues, *rhoOutValues;
   std::vector<std::map<dealii::CellId,std::vector<double> >*> rhoInVals, rhoOutVals;
+  std::map<dealii::CellId, std::vector<double> > *pseudoValues;
   std::vector<std::vector<double> > d_localVselfs;
+
+  
+  //nonlocal pseudopotential related objects used only for pseudopotential calculation
+  
+  //
+  // Store the map between the "pseudo" wave function Id and the function Id details (i.e., global splineId, l quantum number, m quantum number)
+  //
+  std::vector<std::vector<int> > d_pseudoWaveFunctionIdToFunctionIdDetails;
+
+  //
+  // Store the map between the "pseudo" potential Id and the function Id details (i.e., global splineId, l quantum number)
+  //  
+  std::vector<std::vector<int> > d_deltaVlIdToFunctionIdDetails;
+
+  //
+  // vector to store the number of pseudowave functions/pseudo potentials associated with an atom
+  //
+  std::vector<int> d_numberPseudoAtomicWaveFunctions;
+  std::vector<int> d_numberPseudoPotentials;
+  std::vector<int> d_nonLocalAtomGlobalChargeIds;
+
+  //
+  //matrices denoting the sparsity of nonlocal projectors and elemental projector matrices
+  //
+  std::vector<std::vector<int> > d_sparsityPattern;
+  std::vector<std::vector<DoFHandler<3>::active_cell_iterator> > d_elementIteratorsInAtomCompactSupport;
+  std::vector<std::vector<int> > d_nonLocalAtomIdsInElement;
+  std::vector<std::vector<std::vector<std::vector<double> > > > d_nonLocalProjectorElementMatrices;
+
+  //
+  //storage for nonlocal pseudopotential constants
+  //
+  std::vector<std::vector<double> > d_nonLocalPseudoPotentialConstants;
+
+  //
+  //globalChargeId to ImageChargeId Map
+  //
+  std::vector<std::vector<int> > d_globalChargeIdToImageIdMap;
+
+  //
+  // spline vector for data corresponding to each spline of pseudo wavefunctions
+  //
+  std::vector<alglib::spline1dinterpolant> d_pseudoWaveFunctionSplines;
+
+  //
+  // spline vector for data corresponding to each spline of delta Vl
+  //
+  std::vector<alglib::spline1dinterpolant> d_deltaVlSplines;
+
+  //
+  //vector of outermost Points for various radial Data
+  //
+  std::vector<double> d_outerMostPointPseudoWaveFunctionsData;
+  std::vector<double> d_outerMostPointPseudoPotData;
 
   //map of atom node number and atomic weight
   std::map<unsigned int, double> atoms;
@@ -119,6 +178,11 @@ class dftClass{
   std::map<int,std::set<int> > d_bins;
   std::vector<std::vector<int> > d_imageIdsInBins;
   std::vector<std::map<dealii::types::global_dof_index, int> > d_boundaryFlag;
+
+  //
+  //kPointCoordinates
+  //
+  std::vector<double> d_kPointCoordinates;
 
   //fermi energy
   double fermiEnergy;

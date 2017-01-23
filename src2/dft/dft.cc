@@ -15,6 +15,7 @@
 #include "mixingschemes.cc"
 #include "chebyshev.cc"
 #include "solveVself.cc"
+
 #ifdef ENABLE_PERIODIC_BC
 #include "generateImageCharges.cc"
 #endif
@@ -23,7 +24,7 @@
 dftClass::dftClass():
   triangulation (MPI_COMM_WORLD),
   FE (QGaussLobatto<1>(FEOrder+1)),
-    dofHandler (triangulation),
+  dofHandler (triangulation),
   mpi_communicator (MPI_COMM_WORLD),
   n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_communicator)),
   this_mpi_process (Utilities::MPI::this_mpi_process(mpi_communicator)),
@@ -214,15 +215,15 @@ void dftClass::run ()
   //Begin SCF iteration
   //
   unsigned int scfIter=0;
-  double norm=1.0;
-  while ((norm > 1.0e-13) && (scfIter < numSCFIterations))
+  double norm = 1.0;
+  while ((norm > selfConsistentSolverTolerance) && (scfIter < numSCFIterations))
     {
       if(this_mpi_process==0) printf("\n\nBegin SCF Iteration:%u\n", scfIter+1);
       //Mixing scheme
       if(scfIter > 0)
 	{
-	  if (scfIter==1) norm=mixing_simple();
-	  else norm=mixing_anderson();
+	  if (scfIter==1) norm = mixing_simple();
+	  else norm = sqrt(mixing_anderson());
 	  if(this_mpi_process==0) printf("Mixing Scheme: iter:%u, norm:%12.6e\n", scfIter+1, norm);
 	}
       //phiTot with rhoIn
@@ -238,7 +239,14 @@ void dftClass::run ()
       std::ofstream output ("poisson.vtu");
       data_out.write_vtu (output);
       //eigen solve
-      eigen.computeVEff(rhoInValues, poisson.phiTotRhoIn); 
+      if(isPseudopotential)
+	{
+	  eigen.computeVEff(rhoInValues, poisson.phiTotRhoIn, poisson.phiExt, pseudoValues);
+	}
+      else
+	{
+	  eigen.computeVEff(rhoInValues, poisson.phiTotRhoIn, poisson.phiExt); 
+	}
       chebyshevSolver();
       //fermi energy
       compute_fermienergy();

@@ -10,7 +10,7 @@ const unsigned int numSCFIterations   = 20;
 const bool isPseudopotential = false;
 
 //
-//solver paramteters 
+//solver parameters 
 //
 const unsigned int maxLinearSolverIterations = 5000;
 const double relLinearSolverTolerance = 1.0e-14; 
@@ -36,6 +36,7 @@ int main (int argc, char *argv[]){
   Utilities::MPI::MPI_InitFinalize mpi_initialization (argc, argv);
   deallog.depth_console(0);
   {
+    //
     // set stdout precision
     //
     std::cout << std::scientific << std::setprecision(18);

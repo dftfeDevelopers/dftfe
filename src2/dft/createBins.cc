@@ -381,7 +381,6 @@ void dftClass::createAtomBins(std::vector<const ConstraintMatrix * > & constrain
 	    }
 
 	}
-
       	 
       int numberImageAtomsInBin = imageIdsOfAtomsInCurrentBin.size();
 
@@ -404,8 +403,6 @@ void dftClass::createAtomBins(std::vector<const ConstraintMatrix * > & constrain
 
 	      for(unsigned int iAtom = 0; iAtom < numberGlobalAtomsInBin+numberImageAtomsInBin; ++iAtom)
 		{
-		  
-
 		  Point<3> atomCoor;
 		  if(iAtom < numberGlobalAtomsInBin)
 		    {

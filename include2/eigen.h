@@ -17,10 +17,14 @@ public:
 		   const std::pair<unsigned int,unsigned int> &cell_range) const;
   void init ();
   void computeMassVector();
-  void computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoValues, const vectorType& phi);
+  void computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoValues, 
+		   const vectorType & phi,
+		   const vectorType & phiExt,
+		   std::map<dealii::CellId,std::vector<double> >* pseudoValues=0);
   
   //pointer to dft class
   dftClass* dftPtr;
+
 
   //FE data structres
   dealii::FE_Q<3>   FE;
