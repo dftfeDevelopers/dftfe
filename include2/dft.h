@@ -190,7 +190,7 @@ class dftClass{
   //chebyshev filter variables and functions
   double bUp, bLow, a0;
   vectorType vChebyshev, v0Chebyshev, fChebyshev, aj[5];
-  std::vector<parallel::distributed::Vector<double>*> PSI, tempPSI, tempPSI2, tempPSI3;
+  std::vector<parallel::distributed::Vector<double>*> PSI, tempPSI, tempPSI2, tempPSI3, tempPSI4;
   void chebyshevSolver();
   double upperBound();
   void gramSchmidt(std::vector<vectorType*>& X);

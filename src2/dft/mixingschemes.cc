@@ -72,7 +72,7 @@ double dftClass::mixing_anderson(){
   MPI_Allreduce(&A[0], &ATotal[0], lda*N, MPI_DOUBLE, MPI_SUM, mpi_communicator);
   MPI_Allreduce(&c[0], &cTotal[0], ldb*NRHS, MPI_DOUBLE, MPI_SUM, mpi_communicator);
   //
-  std::cout << "A,c:" << ATotal[0] << " " << cTotal[0] << "\n";
+  pcout << "A,c:" << ATotal[0] << " " << cTotal[0] << "\n";
   //solve for coefficients
   dgesv_(&N, &NRHS, &ATotal[0], &lda, &ipiv[0], &cTotal[0], &ldb, &info);
   if((info > 0) && (this_mpi_process==0)) {

@@ -2,10 +2,10 @@
 //Define parameters
 //
 const double radiusAtomBall           = 3.0;
-const unsigned int FEOrder            = 4;
+const unsigned int FEOrder            = 1;
 const unsigned int n_refinement_steps = 0;
 const double lowerEndWantedSpectrum   = -0.3;
-const unsigned int chebyshevOrder     = 1500; 
+const unsigned int chebyshevOrder     = 50; 
 const unsigned int numSCFIterations   = 30;
 const bool isPseudopotential          = true;
 const double nlpTolerance = 1.0e-08;
@@ -25,8 +25,8 @@ const double TVal = 500.0;
 //
 //Mesh information
 //
-#define meshFileName "../../../data/meshes/pseudoPotential/aluminum1Atom/mesh.inp"
-#define coordinatesFile "../../../data/meshes/pseudoPotential/aluminum1Atom/coordinates.inp" 
+#define meshFileName "../../../data/meshes/pseudoPotential/aluminumDimer/mesh.inp"
+#define coordinatesFile "../../../data/meshes/pseudoPotential/aluminumDimer/coordinates.inp" 
 
 //
 //dft header
@@ -43,7 +43,7 @@ int main (int argc, char *argv[]){
     std::cout << std::scientific << std::setprecision(18);
     dftClass problem;
     problem.numberAtomicWaveFunctions[13] = 9;
-    problem.numEigenValues = 9;
+    problem.numEigenValues = 10;
     problem.run();
   }
   return 0;

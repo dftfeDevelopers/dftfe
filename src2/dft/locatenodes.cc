@@ -21,7 +21,14 @@ void dftClass::locateAtomCoreNodes(){
 	for (std::set<unsigned int>::iterator it=atomsTolocate.begin(); it!=atomsTolocate.end(); ++it){
 	  Point<3> atomCoord(atomLocations[*it][2],atomLocations[*it][3],atomLocations[*it][4]);
 	   if(feNodeGlobalCoord.distance(atomCoord) < 1.0e-5){ 
-	     std::cout << "Atom core (" << atomLocations[*it][0] << ") located with node id " << nodeID << " in processor " << this_mpi_process<<" nodal coor "<<feNodeGlobalCoord[0]<<" "<<feNodeGlobalCoord[1]<<" "<<feNodeGlobalCoord[2]<<std::endl;;
+	     if(isPseudopotential)
+	       {
+		 std::cout << "Atom core with valence charge " << atomLocations[*it][1] << " located with node id " << nodeID << " in processor " << this_mpi_process<<" nodal coor "<<feNodeGlobalCoord[0]<<" "<<feNodeGlobalCoord[1]<<" "<<feNodeGlobalCoord[2]<<std::endl;
+	       }
+	     else
+	       {
+		 std::cout << "Atom core with charge " << atomLocations[*it][1] << " located with node id " << nodeID << " in processor " << this_mpi_process<<" nodal coor "<<feNodeGlobalCoord[0]<<" "<<feNodeGlobalCoord[1]<<" "<<feNodeGlobalCoord[2]<<std::endl;
+	       }
 	     if (locally_owned_elements.is_element(nodeID)){
 	       if(isPseudopotential)
 		 atoms.insert(std::pair<unsigned int,double>(nodeID,atomLocations[*it][1]));
@@ -67,7 +74,10 @@ void dftClass::locateAtomCoreNodes(){
 		int chargeId = atomsInCurrentBin[*it];
 		Point<3> atomCoord(atomLocations[chargeId][2],atomLocations[chargeId][3],atomLocations[chargeId][4]);
 		if(feNodeGlobalCoord.distance(atomCoord) < 1.0e-5){ 
-		  std::cout << "Atom core in bin " << iBin<<" with charge "<<atomLocations[chargeId][0] << " located with node id " << nodeID << " in processor " << this_mpi_process;
+		  if(isPseudopotential)
+		    std::cout << "Atom core in bin " << iBin<<" with valence charge "<<atomLocations[chargeId][1] << " located with node id " << nodeID << " in processor " << this_mpi_process;
+		  else
+		    std::cout << "Atom core in bin " << iBin<<" with charge "<<atomLocations[chargeId][0] << " located with node id " << nodeID << " in processor " << this_mpi_process;
 		  if (locally_owned_elements.is_element(nodeID)){
 		    if(isPseudopotential)
 		      d_atomsInBin[iBin].insert(std::pair<unsigned int,double>(nodeID,atomLocations[chargeId][1]));
@@ -99,8 +109,8 @@ void dftClass::locatePeriodicPinnedNodes(){
   //locating pinned nodes
   std::vector<std::vector<double> > pinnedLocations;
   std::vector<double> temp; 
-  //temp.push_back(3.8); temp.push_back(3.8); temp.push_back(3.8);//(center)
-  temp.push_back(0.0); temp.push_back(0.0); temp.push_back(0.0);//(corner)
+  temp.push_back(3.8); temp.push_back(3.8); temp.push_back(3.8);//(center)
+  //temp.push_back(0.0); temp.push_back(0.0); temp.push_back(0.0);//(corner)
   //temp.push_back(2.28); temp.push_back(0.0); temp.push_back(3.8);//(bcc)
   pinnedLocations.push_back(temp);
   unsigned int numAtoms=pinnedLocations.size();

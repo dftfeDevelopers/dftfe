@@ -1,0 +1,1010 @@
+number of MPI processes: 1
+number of atoms: 2
+Cartesian Coordinates: -2.000000000000000000e+00 0.000000000000000000e+00 0.000000000000000000e+00
+Cartesian Coordinates: 2.000000000000000000e+00 0.000000000000000000e+00 0.000000000000000000e+00
+number of atoms types: 1
+Z:13
+***It is possible that you are doing a pseudopotential calculation and file ../../../data/electronicStructure/pseudoPotential/z13/SingleAtomData/psi10.inp possibly associated with core-wavefunction is not found***
+***It is possible that you are doing a pseudopotential calculation and file ../../../data/electronicStructure/pseudoPotential/z13/SingleAtomData/psi20.inp possibly associated with core-wavefunction is not found***
+***It is possible that you are doing a pseudopotential calculation and file ../../../data/electronicStructure/pseudoPotential/z13/SingleAtomData/psi21.inp possibly associated with core-wavefunction is not found***
+Reading data from file: ../../../data/electronicStructure/pseudoPotential/z13/SingleAtomData/psi30.inp
+ n:3 l:0 m:0
+Reading data from file: ../../../data/electronicStructure/pseudoPotential/z13/SingleAtomData/psi31.inp
+ n:3 l:1 m:-1
+ n:3 l:1 m:0
+ n:3 l:1 m:1
+***It is possible that you are doing a pseudopotential calculation and file ../../../data/electronicStructure/pseudoPotential/z13/SingleAtomData/psi40.inp possibly associated with core-wavefunction is not found***
+Reading data from file: ../../../data/electronicStructure/pseudoPotential/z13/SingleAtomData/psi32.inp
+ n:3 l:2 m:-2
+ n:3 l:2 m:-1
+ n:3 l:2 m:0
+ n:3 l:2 m:1
+ n:3 l:2 m:2
+***It is possible that you are doing a pseudopotential calculation and file ../../../data/electronicStructure/pseudoPotential/z13/SingleAtomData/psi10.inp possibly associated with core-wavefunction is not found***
+***It is possible that you are doing a pseudopotential calculation and file ../../../data/electronicStructure/pseudoPotential/z13/SingleAtomData/psi20.inp possibly associated with core-wavefunction is not found***
+***It is possible that you are doing a pseudopotential calculation and file ../../../data/electronicStructure/pseudoPotential/z13/SingleAtomData/psi21.inp possibly associated with core-wavefunction is not found***
+*****************************************************************************************************************
+Total number electrons: 6
+Total number of wavefunctions as initial guess for eigensolver computed using single atom wavefunctions: 10
+*****************************************************************************************************************
+num of eigen values: 10
+number of elements: 1296
+number of degrees of freedom: 1433
+Number Image Charges: 0
+Number Bins: 2
+Bin: 0 Number of Global Atoms: 1
+Bin: 1 Number of Global Atoms: 1
+Atom core with valence charge 3.000000000000000000e+00 located with node id 57 in processor 0 nodal coor -2.000000000000000000e+00 0.000000000000000000e+00 0.000000000000000000e+00
+ and added 
+Atom core with valence charge 3.000000000000000000e+00 located with node id 78 in processor 0 nodal coor 2.000000000000000000e+00 0.000000000000000000e+00 0.000000000000000000e+00
+ and added 
+Atom core in bin 0 with valence charge 3.000000000000000000e+00 located with node id 57 in processor 0 and added 
+Atom core in bin 1 with valence charge 3.000000000000000000e+00 located with node id 78 in processor 0 and added 
+reading initial guess for rho
+Initial total charge:   6.4000000000e+04 
+Initial total charge after scaling:   6.0000000000e+00 
+Reading Local Pseudo-potential data from: ../../../data/electronicStructure/pseudoPotential/z13/PseudoAtomData/locPot.dat
+Reading data from file: ../../../data/electronicStructure/pseudoPotential/z13/PseudoAtomData/PseudoAtomData
+Number of Pseudo Wave Functions: 4
+Radial and Angular Functions Ids: 0 0 0
+Radial and Angular Functions Ids: 1 1 -1
+Radial and Angular Functions Ids: 1 1 0
+Radial and Angular Functions Ids: 1 1 1
+Number radial Pseudo wavefunctions for atomic number 13 is: 2
+Radial WaveFunction File Name: ../../../data/electronicStructure/pseudoPotential/z13/PseudoAtomData/psi_l0.dat
+Radial WaveFunction File Name: ../../../data/electronicStructure/pseudoPotential/z13/PseudoAtomData/psi_l1.dat
+Local Pseudo File Name: ../../../data/electronicStructure/pseudoPotential/z13/PseudoAtomData/locPot.dat
+Number of Angular momentum specific potentials: 2
+Radial and Angular Function Potential Ids: 0 0
+Radial and Angular Function Potential Ids: 1 1
+Number radial potential functions for atomic number 13 is: 2
+Radial Pseudopotential File Name: ../../../data/electronicStructure/pseudoPotential/z13/PseudoAtomData/pot_l0.dat
+Number of Rows for potentials: 493
+Radial Pseudopotential File Name: ../../../data/electronicStructure/pseudoPotential/z13/PseudoAtomData/pot_l1.dat
+Number of Rows for potentials: 493
+Number of Nonlocal Atoms: 2
+No.of non zero elements in the compact support of atom 0 is 8
+No.of non zero elements in the compact support of atom 1 is 8
+Image Ids List: 1
+8
+Number of Pseudo wavefunctions: 
+4
+lQuantumNumber: 0
+lQuantumNumber of Pot: 0
+mQuantumNumber: 0
+Global Wave Spline Id: 0
+Global Pot Spline Id: 0
+Outer Most Point: 7.861960882639300507e+01
+lQuantumNumber: 1
+lQuantumNumber of Pot: 1
+mQuantumNumber: -1
+Global Wave Spline Id: 1
+Global Pot Spline Id: 1
+Outer Most Point: 7.861960882639300507e+01
+lQuantumNumber: 1
+lQuantumNumber of Pot: 1
+mQuantumNumber: 0
+Global Wave Spline Id: 1
+Global Pot Spline Id: 1
+Outer Most Point: 7.861960882639300507e+01
+lQuantumNumber: 1
+lQuantumNumber of Pot: 1
+mQuantumNumber: 1
+Global Wave Spline Id: 1
+Global Pot Spline Id: 1
+Outer Most Point: 7.861960882639300507e+01
+Image Ids List: 1
+8
+Number of Pseudo wavefunctions: 
+4
+lQuantumNumber: 0
+lQuantumNumber of Pot: 0
+mQuantumNumber: 0
+Global Wave Spline Id: 0
+Global Pot Spline Id: 0
+Outer Most Point: 7.861960882639300507e+01
+lQuantumNumber: 1
+lQuantumNumber of Pot: 1
+mQuantumNumber: -1
+Global Wave Spline Id: 1
+Global Pot Spline Id: 1
+Outer Most Point: 7.861960882639300507e+01
+lQuantumNumber: 1
+lQuantumNumber of Pot: 1
+mQuantumNumber: 0
+Global Wave Spline Id: 1
+Global Pot Spline Id: 1
+Outer Most Point: 7.861960882639300507e+01
+lQuantumNumber: 1
+lQuantumNumber of Pot: 1
+mQuantumNumber: 1
+Global Wave Spline Id: 1
+Global Pot Spline Id: 1
+Outer Most Point: 7.861960882639300507e+01
+The value of 1/nlpConst corresponding to atom and lCount 0 0 is 5.373049879597086687e+00
+The value of 1/nlpConst corresponding to atom and lCount 0 1 is 1.718224013075614565e+01
+The value of 1/nlpConst corresponding to atom and lCount 0 2 is 1.718224013075614920e+01
+The value of 1/nlpConst corresponding to atom and lCount 0 3 is 1.718224013075614565e+01
+The value of 1/nlpConst corresponding to atom and lCount 1 0 is 5.373049879597087575e+00
+The value of 1/nlpConst corresponding to atom and lCount 1 1 is 1.718224013075614920e+01
+The value of 1/nlpConst corresponding to atom and lCount 1 2 is 1.718224013075614920e+01
+The value of 1/nlpConst corresponding to atom and lCount 1 3 is 1.718224013075614565e+01
+reading initial guess for PSI
+norm 0: l1: 8.43755864e+00  l2:9.80242391e-01
+norm 1: l1: 1.14632737e+01  l2:9.90868002e-01
+norm 2: l1: 1.14632737e+01  l2:9.90868002e-01
+norm 3: l1: 1.14632447e+01  l2:9.90002436e-01
+norm 4: l1: 8.54405642e+00  l2:9.18425451e-01
+norm 5: l1: 8.52235048e+00  l2:9.20686956e-01
+norm 6: l1: 1.09085042e+01  l2:1.07926515e+00
+norm 7: l1: 8.54405642e+00  l2:9.18425451e-01
+norm 8: l1: 9.90358302e+00  l2:1.07899107e+00
+norm 9: l1: 8.43755864e+00  l2:9.80242391e-01
+Size of support points: 1433
+rhs:1.166095880060969492e+01
+poisson solve: initial residual:1.166096e+01, current residual:1.577996e-14, nsteps:4, tolerance criterion:1.166096e-11
+Peak Value of Vself: -8.247405986748047368e+00
+rhs:1.166095880060969670e+01
+poisson solve: initial residual:1.166096e+01, current residual:3.735227e-15, nsteps:4, tolerance criterion:1.166096e-11
+Peak Value of Vself: -8.247405986748045592e+00
+L2 Norm Value of phiext: 2.771723458404825280e+01
+
+
+Begin Self-Consistent-Field Iteration:1
+rhs:4.245148714381928201e+00
+poisson solve: initial residual:4.245149e+00, current residual:3.030648e-12, nsteps:45, tolerance criterion:4.245149e-12
+L-2 Norm of Phi-in   : 1.854717646801456610e+01
+L-inf Norm of Phi-in : 8.627536192822896410e+00
+bUp:   1.6515143821e+00
+bLow: 0.000000000000000000e+00
+a0: -2.999999999999999889e-01
+Total time for only chebyshev filter: 2.043517430623372367e-03mins
+eigen value  0: -1.2095230655161677e+00
+eigen value  1: -8.3912206307213788e-01
+eigen value  2: -7.9394852104836322e-01
+eigen value  3: -7.9394852104836178e-01
+eigen value  4: -6.4864157615965934e-01
+eigen value  5: -5.5909471652352782e-01
+eigen value  6: -5.5909471652352749e-01
+eigen value  7: -4.9452461851036328e-01
+eigen value  8: -4.8435359822037877e-01
+eigen value  9: -4.8336633930337852e-01
+Total time for chebyshev filter: 2.629681428273518678e-03mins
+Fermi energy Residual:    7.10542735760100185871e-15 
+Fermi energy:   -7.93948521048361222086e-01 
+Number of Electrons: 4.7804089307038842e+00 
+rhs:4.113977343053698554e+00
+poisson solve: initial residual:4.113977e+00, current residual:3.013305e-12, nsteps:45, tolerance criterion:4.113977e-12
+L-2 Norm of Phi-out   :1.137204774046380606e+01
+L-inf Norm of Phi-out :7.441272788864490728e+00
+partialOccupancy 0:     1.00000000000000000000e+00 
+partialOccupancy 1:     9.99999999999592770195e-01 
+partialOccupancy 2:     5.00000000000315525384e-01 
+partialOccupancy 3:     5.00000000000087707619e-01 
+partialOccupancy 4:     1.39764904372319271327e-40 
+partialOccupancy 5:     3.84238339132080588716e-65 
+partialOccupancy 6:     3.84238339132004094528e-65 
+partialOccupancy 7:     7.48854251619993040800e-83 
+partialOccupancy 8:     1.21535441339204704247e-85 
+partialOccupancy 9:     6.51506626087746287776e-86 
+Total energy:   -2.89033743184767555334e+00 
+Total energy per atom:   -1.44516871592383777667e+00 
+Band energy:   -5.68518729927329236062e+00 
+Kinetic energy:    1.87580746567217815368e+00 
+Exchange energy:   -6.96215730829124024304e-01 
+Correlation energy:   -1.70227280717675122368e-01 
+Electrostatic energy Total Potential:   -6.14970188597305433831e+00 
+Repulsive energy:    2.25000000000000000000e+00 
+Nuclear Electrostatic Energy:   -2.41839959365401213631e+00 
+SCF iteration: 1 complete
+
+
+Begin Self-Consistent-Field Iteration:2
+Mixing Scheme: iter:2, norm:4.504468e-02
+rhs:4.170404656658705633e+00
+poisson solve: initial residual:4.170405e+00, current residual:2.883237e-12, nsteps:45, tolerance criterion:4.170405e-12
+L-2 Norm of Phi-in   : 1.450618577460760861e+01
+L-inf Norm of Phi-in : 8.034404490843659374e+00
+bUp:   1.6500029836e+00
+bLow: -4.833663393033785227e-01
+a0: -1.209523065516167728e+00
+Total time for only chebyshev filter: 1.944498221079508449e-03mins
+eigen value  0: -9.3136910554381558e-01
+eigen value  1: -6.2567204594071124e-01
+eigen value  2: -5.7586398646904213e-01
+eigen value  3: -5.7586398646903825e-01
+eigen value  4: -3.8457038764020351e-01
+eigen value  5: -3.8456921324168569e-01
+eigen value  6: -3.0736652864375047e-01
+eigen value  7: -3.0600745079230673e-01
+eigen value  8: 1.1382897800080819e-02
+eigen value  9: 1.6126443246956373e-01
+Total time for chebyshev filter: 2.421883742014567086e-03mins
+Fermi energy Residual:    7.99360577730112709105e-15 
+Fermi energy:   -5.75863986469040134430e-01 
+Number of Electrons: 4.7577140755333671e+00 
+rhs:4.119169462657560565e+00
+poisson solve: initial residual:4.119169e+00, current residual:3.740677e-12, nsteps:44, tolerance criterion:4.119169e-12
+L-2 Norm of Phi-out   :1.140700675529895669e+01
+L-inf Norm of Phi-out :7.454038588906864327e+00
+partialOccupancy 0:     1.00000000000000000000e+00 
+partialOccupancy 1:     9.99999999999978239629e-01 
+partialOccupancy 2:     5.00000000000315525384e-01 
+partialOccupancy 3:     4.99999999999702016140e-01 
+partialOccupancy 4:     3.40594682251375005548e-53 
+partialOccupancy 5:     3.40342159738042840726e-53 
+partialOccupancy 6:     2.27437860128694477361e-74 
+partialOccupancy 7:     9.64043512307458461193e-75 
+partialOccupancy 8:    8.52472211457619903157e-162 
+partialOccupancy 9:    6.62774459158736839180e-203 
+Total energy:   -2.90016573099714403128e+00 
+Total energy per atom:   -1.45008286549857201564e+00 
+Band energy:   -4.26581027590712746900e+00 
+Kinetic energy:    1.80461404177753426126e+00 
+Exchange energy:   -6.93624408847785201004e-01 
+Correlation energy:   -1.69500641825024278564e-01 
+Electrostatic energy Total Potential:   -6.09165472210186820234e+00 
+Repulsive energy:    2.25000000000000000000e+00 
+Nuclear Electrostatic Energy:   -2.38010219352371876766e+00 
+SCF iteration: 2 complete
+
+
+Begin Self-Consistent-Field Iteration:3
+
+N:1
+A,c:1.136657040484403795e-02 -1.122565303872830392e-02
+
+Anderson mixing  c2:1.987602e+00, c1:-9.876025e-01, 
+Mixing Scheme: iter:3, norm:1.059566e-01
+rhs:4.119429392039375415e+00
+poisson solve: initial residual:4.119429e+00, current residual:3.843851e-12, nsteps:44, tolerance criterion:4.119429e-12
+L-2 Norm of Phi-in   : 1.142190441771942133e+01
+L-inf Norm of Phi-in : 7.457636139943434550e+00
+bUp:   1.6505111867e+00
+bLow: 1.612644324695637343e-01
+a0: -9.313691055438155786e-01
+Total time for only chebyshev filter: 1.947434743245442679e-03mins
+eigen value  0: -5.7637328788329689e-01
+eigen value  1: -3.5927830036167818e-01
+eigen value  2: -3.0572671720920819e-01
+eigen value  3: -3.0572671720920358e-01
+eigen value  4: -2.4992104336384025e-01
+eigen value  5: -1.7391375145939900e-01
+eigen value  6: -1.7391375145939833e-01
+eigen value  7: -1.2097893889826147e-01
+eigen value  8: -1.0635064587210723e-01
+eigen value  9: -1.0246249748970022e-01
+Total time for chebyshev filter: 2.153801918029785330e-03mins
+Fermi energy Residual:    1.42108547152020037174e-14 
+Fermi energy:   -3.05726717209205856030e-01 
+Number of Electrons: 4.7705683706763748e+00 
+rhs:4.131094268173137074e+00
+poisson solve: initial residual:4.131094e+00, current residual:2.831823e-12, nsteps:45, tolerance criterion:4.131094e-12
+L-2 Norm of Phi-out   :1.146895244942282588e+01
+L-inf Norm of Phi-out :7.488200605723644543e+00
+partialOccupancy 0:     1.00000000000000000000e+00 
+partialOccupancy 1:     9.99999999999998001599e-01 
+partialOccupancy 2:     5.00000000000368149955e-01 
+partialOccupancy 3:     4.99999999999640676318e-01 
+partialOccupancy 4:     4.93959777621209547481e-16 
+partialOccupancy 5:     7.02278489484922768839e-37 
+partialOccupancy 6:     7.02278489484633358535e-37 
+partialOccupancy 7:     2.12626353753491911896e-51 
+partialOccupancy 8:     2.06722478658250836610e-55 
+partialOccupancy 9:     1.77399082135458088739e-56 
+Total energy:   -2.91195243325030972414e+00 
+Total energy per atom:   -1.45597621662515486207e+00 
+Band energy:   -2.48275661090836585743e+00 
+Kinetic energy:    1.62945297901945274077e+00 
+Exchange energy:   -6.81602305521533891053e-01 
+Correlation energy:   -1.68054795453244865122e-01 
+Electrostatic energy Total Potential:   -5.94174831129498315363e+00 
+Repulsive energy:    2.25000000000000000000e+00 
+Nuclear Electrostatic Energy:   -2.27761614309726567740e+00 
+SCF iteration: 3 complete
+
+
+Begin Self-Consistent-Field Iteration:4
+
+N:2
+A,c:1.232105096468077976e-02 6.193504204183023420e-04
+
+Anderson mixing  c3:8.966060e-01, c2:-5.538773e-02, c1:1.587817e-01, 
+Mixing Scheme: iter:4, norm:1.201872e-02
+rhs:4.125639129024962770e+00
+poisson solve: initial residual:4.125639e+00, current residual:2.955678e-12, nsteps:45, tolerance criterion:4.125639e-12
+L-2 Norm of Phi-in   : 1.149963886903790744e+01
+L-inf Norm of Phi-in : 7.484896906934999095e+00
+bUp:   1.6509621288e+00
+bLow: -1.024624974897002244e-01
+a0: -5.763732878832968920e-01
+Total time for only chebyshev filter: 2.182968457539876186e-03mins
+eigen value  0: -5.8909984885991562e-01
+eigen value  1: -3.6715491308232423e-01
+eigen value  2: -3.1486239982669456e-01
+eigen value  3: -3.1486239982668823e-01
+eigen value  4: -2.5672680128487230e-01
+eigen value  5: -1.8043603880987802e-01
+eigen value  6: -1.8043603880985520e-01
+eigen value  7: -1.2743086301734849e-01
+eigen value  8: -1.1292002743034567e-01
+eigen value  9: -1.0914169309921387e-01
+Total time for chebyshev filter: 2.376266320546467983e-03mins
+Fermi energy Residual:    8.88178419700125232339e-15 
+Fermi energy:   -3.14862399826691397031e-01 
+Number of Electrons: 4.7669544079568702e+00 
+rhs:4.130522425690661414e+00
+poisson solve: initial residual:4.130522e+00, current residual:2.839286e-12, nsteps:45, tolerance criterion:4.130522e-12
+L-2 Norm of Phi-out   :1.146700988760672502e+01
+L-inf Norm of Phi-out :7.486360061114052833e+00
+partialOccupancy 0:     1.00000000000000000000e+00 
+partialOccupancy 1:     9.99999999999995559108e-01 
+partialOccupancy 2:     5.00000000000499600361e-01 
+partialOccupancy 3:     4.99999999999500455150e-01 
+partialOccupancy 4:     1.13407777313129978094e-16 
+partialOccupancy 5:     1.34806451001322950697e-37 
+partialOccupancy 6:     1.34806450999380414539e-37 
+partialOccupancy 7:     3.90408499587625721462e-52 
+partialOccupancy 8:     4.08795353994003649908e-56 
+partialOccupancy 9:     3.76001236240561525933e-57 
+Total energy:   -2.91151172626137189070e+00 
+Total energy per atom:   -1.45575586313068594535e+00 
+Band energy:   -2.54223432353785927518e+00 
+Kinetic energy:    1.63839081183133306041e+00 
+Exchange energy:   -6.82255294402184020441e-01 
+Correlation energy:   -1.68072865729822273906e-01 
+Electrostatic energy Total Potential:   -5.94957437796069843472e+00 
+Repulsive energy:    2.25000000000000000000e+00 
+Nuclear Electrostatic Energy:   -2.28313777690989283542e+00 
+SCF iteration: 4 complete
+
+
+Begin Self-Consistent-Field Iteration:5
+
+N:3
+A,c:5.892435076994784421e-05 -2.807352669813448838e-05
+
+Anderson mixing  c4:1.999904e+00, c3:1.030360e-01, c2:-2.515455e-01, c1:-8.513942e-01, 
+Mixing Scheme: iter:5, norm:5.420177e-03
+rhs:4.130852157871966135e+00
+poisson solve: initial residual:4.130852e+00, current residual:2.856480e-12, nsteps:45, tolerance criterion:4.130852e-12
+L-2 Norm of Phi-in   : 1.147180821320375266e+01
+L-inf Norm of Phi-in : 7.487945540967943181e+00
+bUp:   1.6525834198e+00
+bLow: -1.091416930992138712e-01
+a0: -5.890998488599156202e-01
+Total time for only chebyshev filter: 2.022814750671386545e-03mins
+eigen value  0: -5.8586919699145401e-01
+eigen value  1: -3.6302128792463573e-01
+eigen value  2: -3.1182147919780157e-01
+eigen value  3: -3.1182147919779474e-01
+eigen value  4: -2.5349327624007328e-01
+eigen value  5: -1.7740569664446623e-01
+eigen value  6: -1.7740569664446323e-01
+eigen value  7: -1.2364183350334518e-01
+eigen value  8: -1.1033606777240720e-01
+eigen value  9: -1.0650353659375628e-01
+Total time for chebyshev filter: 2.210263411204020124e-03mins
+Fermi energy Residual:    8.88178419700125232339e-16 
+Fermi energy:   -3.11821479197798123728e-01 
+Number of Electrons: 4.7635947624008494e+00 
+rhs:4.130567525766801751e+00
+poisson solve: initial residual:4.130568e+00, current residual:2.841192e-12, nsteps:45, tolerance criterion:4.130568e-12
+L-2 Norm of Phi-out   :1.146899798636928836e+01
+L-inf Norm of Phi-out :7.486452731678142847e+00
+partialOccupancy 0:     1.00000000000000000000e+00 
+partialOccupancy 1:     9.99999999999990896171e-01 
+partialOccupancy 2:     5.00000000000543454171e-01 
+partialOccupancy 3:     4.99999999999465372102e-01 
+partialOccupancy 4:     1.00418920265767569296e-16 
+partialOccupancy 5:     1.35710085056665891101e-37 
+partialOccupancy 6:     1.35710085056409389213e-37 
+partialOccupancy 7:     2.43404678599384507054e-52 
+partialOccupancy 8:     5.45557610403029079136e-56 
+partialOccupancy 9:     4.84907496652186871624e-57 
+Total energy:   -2.91103718335047823018e+00 
+Total energy per atom:   -1.45551859167523911509e+00 
+Band energy:   -2.52142392822777461348e+00 
+Kinetic energy:    1.63825997093993924736e+00 
+Exchange energy:   -6.82187037448972799503e-01 
+Correlation energy:   -1.67995422795986892872e-01 
+Electrostatic energy Total Potential:   -5.94911469404545734108e+00 
+Repulsive energy:    2.25000000000000000000e+00 
+Nuclear Electrostatic Energy:   -2.28285976521998179578e+00 
+SCF iteration: 5 complete
+
+
+Begin Self-Consistent-Field Iteration:6
+
+N:4
+A,c:3.375947803387571467e-05 2.623091344211719561e-06
+
+Anderson mixing  c5:1.845047e+00, c4:-1.462056e-03, c3:4.433108e-02, c2:9.625345e-01, c1:-1.850451e+00, 
+Mixing Scheme: iter:6, norm:9.300640e-04
+rhs:4.130703381426139131e+00
+poisson solve: initial residual:4.130703e+00, current residual:2.827521e-12, nsteps:45, tolerance criterion:4.130703e-12
+L-2 Norm of Phi-in   : 1.146993292254647834e+01
+L-inf Norm of Phi-in : 7.486953859754444274e+00
+bUp:   1.6533175421e+00
+bLow: -1.065035365937562761e-01
+a0: -5.858691969914540110e-01
+Total time for only chebyshev filter: 2.536547183990478342e-03mins
+eigen value  0: -5.8528142932867266e-01
+eigen value  1: -3.6284726361081016e-01
+eigen value  2: -3.1146589561164290e-01
+eigen value  3: -3.1146589561163485e-01
+eigen value  4: -2.5333828911893919e-01
+eigen value  5: -1.7724967240842163e-01
+eigen value  6: -1.7724967240841316e-01
+eigen value  7: -1.2454251805496014e-01
+eigen value  8: -1.1012996702882019e-01
+eigen value  9: -1.0617841075517769e-01
+Total time for chebyshev filter: 2.726332346598307494e-03mins
+Fermi energy Residual:    1.77635683940025046468e-15 
+Fermi energy:   -3.11465895611638843299e-01 
+Number of Electrons: 4.7641431152031091e+00 
+rhs:4.130616241528049848e+00
+poisson solve: initial residual:4.130616e+00, current residual:2.835392e-12, nsteps:45, tolerance criterion:4.130616e-12
+L-2 Norm of Phi-out   :1.146904628415106586e+01
+L-inf Norm of Phi-out :7.486612680785852625e+00
+partialOccupancy 0:     1.00000000000000000000e+00 
+partialOccupancy 1:     9.99999999999992006394e-01 
+partialOccupancy 2:     5.00000000000639821529e-01 
+partialOccupancy 3:     4.99999999999368949233e-01 
+partialOccupancy 4:     1.13981636397011853537e-16 
+partialOccupancy 5:     1.53938412818393222513e-37 
+partialOccupancy 6:     1.53938412817570679173e-37 
+partialOccupancy 7:     5.38141555917529755791e-52 
+partialOccupancy 8:     5.99570946720157965296e-56 
+partialOccupancy 9:     4.94325267627445121058e-57 
+Total energy:   -2.91111560714662065408e+00 
+Total energy per atom:   -1.45555780357331032704e+00 
+Band energy:   -2.51918917710224299356e+00 
+Kinetic energy:    1.63745386229010581047e+00 
+Exchange energy:   -6.82127928605140376739e-01 
+Correlation energy:   -1.67997858362546576005e-01 
+Electrostatic energy Total Potential:   -5.94844368246903965058e+00 
+Repulsive energy:    2.25000000000000000000e+00 
+Nuclear Electrostatic Energy:   -2.28237991790079775001e+00 
+SCF iteration: 6 complete
+
+
+Begin Self-Consistent-Field Iteration:7
+
+N:5
+A,c:7.325676313307441152e-07 -6.136224288336362787e-08
+
+Anderson mixing  c6:1.007038e+00, c5:-2.674181e-04, c4:6.254110e-04, c3:1.272341e-02, c2:-1.272887e-02, c1:-7.390412e-03, 
+Mixing Scheme: iter:7, norm:9.862493e-05
+rhs:4.130621181429932065e+00
+poisson solve: initial residual:4.130621e+00, current residual:2.839442e-12, nsteps:45, tolerance criterion:4.130621e-12
+L-2 Norm of Phi-in   : 1.146908782656954173e+01
+L-inf Norm of Phi-in : 7.486633048023975334e+00
+bUp:   1.6539495353e+00
+bLow: -1.061784107551776851e-01
+a0: -5.852814293286726643e-01
+Total time for only chebyshev filter: 2.093398571014404384e-03mins
+eigen value  0: -5.8514050365480419e-01
+eigen value  1: -3.6276597530702098e-01
+eigen value  2: -3.1136637981420356e-01
+eigen value  3: -3.1136637981420284e-01
+eigen value  4: -2.5326775225248521e-01
+eigen value  5: -1.7718145367967617e-01
+eigen value  6: -1.7718145367967431e-01
+eigen value  7: -1.2447152283229805e-01
+eigen value  8: -1.1005736984297035e-01
+eigen value  9: -1.0610921766609394e-01
+Total time for chebyshev filter: 2.284765243530273438e-03mins
+Fermi energy Residual:    2.44249065417534438893e-13 
+Fermi energy:   -3.11366379814203175780e-01 
+Number of Electrons: 4.7641960380263209e+00 
+rhs:4.130622692665617102e+00
+poisson solve: initial residual:4.130623e+00, current residual:3.020651e-12, nsteps:45, tolerance criterion:4.130623e-12
+L-2 Norm of Phi-out   :1.146906282896389762e+01
+L-inf Norm of Phi-out :7.486633862847565268e+00
+partialOccupancy 0:     1.00000000000000000000e+00 
+partialOccupancy 1:     9.99999999999992006394e-01 
+partialOccupancy 2:     5.00000000000061395333e-01 
+partialOccupancy 3:     4.99999999999947430940e-01 
+partialOccupancy 4:     1.16086894042975590159e-16 
+partialOccupancy 5:     1.57011377642805160440e-37 
+partialOccupancy 6:     1.57011377642622201343e-37 
+partialOccupancy 7:     5.47922477113372142360e-52 
+partialOccupancy 8:     6.09851059025828741607e-56 
+partialOccupancy 9:     5.03882973555512606291e-57 
+Total energy:   -2.91112312482838397898e+00 
+Total energy per atom:   -1.45556156241419198949e+00 
+Band energy:   -2.51854571755205647321e+00 
+Kinetic energy:    1.63734938975171395725e+00 
+Exchange energy:   -6.82120186759868185611e-01 
+Correlation energy:   -1.67997836783450926745e-01 
+Electrostatic energy Total Potential:   -5.94835449103677849081e+00 
+Repulsive energy:    2.25000000000000000000e+00 
+Nuclear Electrostatic Energy:   -2.28231637170372181345e+00 
+SCF iteration: 7 complete
+
+
+Begin Self-Consistent-Field Iteration:8
+
+N:6
+A,c:1.005725487695322333e-08 1.714019524500278835e-10
+
+Anderson mixing  c7:2.098608e+00, c6:-1.392402e-05, c5:-7.759773e-05, c4:-1.478765e-02, c3:1.444086e-02, c2:6.600984e-03, c1:-1.104770e+00, 
+Mixing Scheme: iter:8, norm:3.525140e-06
+rhs:4.130622291281462743e+00
+poisson solve: initial residual:4.130622e+00, current residual:2.994335e-12, nsteps:45, tolerance criterion:4.130622e-12
+L-2 Norm of Phi-in   : 1.146905982829902371e+01
+L-inf Norm of Phi-in : 7.486632356221907258e+00
+bUp:   1.6542103849e+00
+bLow: -1.061092176660939357e-01
+a0: -5.851405036548041894e-01
+Total time for only chebyshev filter: 2.098933855692545775e-03mins
+eigen value  0: -5.8513855981052854e-01
+eigen value  1: -3.6276343793169213e-01
+eigen value  2: -3.1136438583124970e-01
+eigen value  3: -3.1136438583124898e-01
+eigen value  4: -2.5326581287893524e-01
+eigen value  5: -1.7717979274921214e-01
+eigen value  6: -1.7717979274921164e-01
+eigen value  7: -1.2446898237103649e-01
+eigen value  8: -1.1005561824878800e-01
+eigen value  9: -1.0617661944824452e-01
+Total time for chebyshev filter: 2.322816848754882899e-03mins
+Fermi energy Residual:    2.44249065417534438893e-13 
+Fermi energy:   -3.11364385831249312897e-01 
+Number of Electrons: 4.7641945325681103e+00 
+rhs:4.130622633097878804e+00
+poisson solve: initial residual:4.130623e+00, current residual:2.975772e-12, nsteps:45, tolerance criterion:4.130623e-12
+L-2 Norm of Phi-out   :1.146906383016069064e+01
+L-inf Norm of Phi-out :7.486633820976209996e+00
+partialOccupancy 0:     1.00000000000000000000e+00 
+partialOccupancy 1:     9.99999999999992006394e-01 
+partialOccupancy 2:     5.00000000000061395333e-01 
+partialOccupancy 3:     4.99999999999947430940e-01 
+partialOccupancy 4:     1.16090897783359517701e-16 
+partialOccupancy 5:     1.57044406783603672934e-37 
+partialOccupancy 6:     1.57044406783552347499e-37 
+partialOccupancy 7:     5.47733406124971973861e-52 
+partialOccupancy 8:     6.09944422566521456187e-56 
+partialOccupancy 9:     5.26457678979858888620e-57 
+Total energy:   -2.91112289364223908450e+00 
+Total energy per atom:   -1.45556144682111954225e+00 
+Band energy:   -2.51853276714693974370e+00 
+Kinetic energy:    1.63734992226802367199e+00 
+Exchange energy:   -6.82120062620756750782e-01 
+Correlation energy:   -1.67997780783682382211e-01 
+Electrostatic energy Total Potential:   -5.94835497250582356799e+00 
+Repulsive energy:    2.25000000000000000000e+00 
+Nuclear Electrostatic Energy:   -2.28231649731878150078e+00 
+SCF iteration: 8 complete
+
+
+Begin Self-Consistent-Field Iteration:9
+
+N:7
+A,c:1.114925546631232630e-11 -5.236120012651923064e-13
+
+Anderson mixing  c8:1.027842e+00, c7:8.323961e-06, c6:-4.531963e-05, c5:-2.723502e-04, c4:9.697577e-04, c3:-1.508428e-03, c2:3.868910e-02, c1:-6.568260e-02, 
+Mixing Scheme: iter:9, norm:4.797219e-07
+rhs:4.130622621816298690e+00
+poisson solve: initial residual:4.130623e+00, current residual:3.864279e-12, nsteps:44, tolerance criterion:4.130623e-12
+L-2 Norm of Phi-in   : 1.146906327191987884e+01
+L-inf Norm of Phi-in : 7.486633667850561835e+00
+bUp:   1.6542029836e+00
+bLow: -1.061766194482445247e-01
+a0: -5.851385598105285357e-01
+Total time for only chebyshev filter: 2.037064234415690307e-03mins
+eigen value  0: -5.8513915170785569e-01
+eigen value  1: -3.6276375516548592e-01
+eigen value  2: -3.1136480038003422e-01
+eigen value  3: -3.1136480038003334e-01
+eigen value  4: -2.5326608911040688e-01
+eigen value  5: -1.7718006691046198e-01
+eigen value  6: -1.7718006691046165e-01
+eigen value  7: -1.2446931349839384e-01
+eigen value  8: -1.1005593394665647e-01
+eigen value  9: -1.0618592100127346e-01
+Total time for chebyshev filter: 2.225681145985921022e-03mins
+Fermi energy Residual:    2.96651592179841827601e-13 
+Fermi energy:   -3.11364800380033779348e-01 
+Number of Electrons: 4.7641942761785208e+00 
+rhs:4.130622605774413536e+00
+poisson solve: initial residual:4.130623e+00, current residual:3.895240e-12, nsteps:44, tolerance criterion:4.130623e-12
+L-2 Norm of Phi-out   :1.146906376871990219e+01
+L-inf Norm of Phi-out :7.486633728074344241e+00
+partialOccupancy 0:     1.00000000000000000000e+00 
+partialOccupancy 1:     9.99999999999992006394e-01 
+partialOccupancy 2:     5.00000000000070166095e-01 
+partialOccupancy 3:     4.99999999999929889416e-01 
+partialOccupancy 4:     1.16080757186064979784e-16 
+partialOccupancy 5:     1.57030483567616087063e-37 
+partialOccupancy 6:     1.57030483567582614861e-37 
+partialOccupancy 7:     5.47704549655426286052e-52 
+partialOccupancy 8:     6.09906345349584585362e-56 
+partialOccupancy 9:     5.29420776687047410274e-57 
+Total energy:   -2.91112285703147932736e+00 
+Total energy per atom:   -1.45556142851573966368e+00 
+Band energy:   -2.51853541450674489610e+00 
+Kinetic energy:    1.63735037857957754781e+00 
+Exchange energy:   -6.82120096764901817643e-01 
+Correlation energy:   -1.67997780380467170991e-01 
+Electrostatic energy Total Potential:   -5.94835535846568852492e+00 
+Repulsive energy:    2.25000000000000000000e+00 
+Nuclear Electrostatic Energy:   -2.28231677602179061637e+00 
+SCF iteration: 9 complete
+
+
+Begin Self-Consistent-Field Iteration:10
+
+N:8
+A,c:2.227278172712528733e-13 -2.972075005172882496e-15
+
+Anderson mixing  c9:2.011581e+00, c8:-8.886604e-07, c7:3.665380e-06, c6:-5.823631e-05, c5:5.931565e-06, c4:4.814134e-05, c3:-1.251949e-02, c2:1.773722e-02, c1:-1.016797e+00, 
+Mixing Scheme: iter:10, norm:3.822433e-08
+rhs:4.130622601005871530e+00
+poisson solve: initial residual:4.130623e+00, current residual:3.875271e-12, nsteps:44, tolerance criterion:4.130623e-12
+L-2 Norm of Phi-in   : 1.146906375623479235e+01
+L-inf Norm of Phi-in : 7.486633718055625053e+00
+bUp:   1.6542817215e+00
+bLow: -1.061859210012734561e-01
+a0: -5.851391517078556870e-01
+Total time for only chebyshev filter: 2.112249533335367694e-03mins
+eigen value  0: -5.8513921218750187e-01
+eigen value  1: -3.6276380471300285e-01
+eigen value  2: -3.1136485224497562e-01
+eigen value  3: -3.1136485224497401e-01
+eigen value  4: -2.5326612940145438e-01
+eigen value  5: -1.7718011075453743e-01
+eigen value  6: -1.7718011075453677e-01
+eigen value  7: -1.2446934545531509e-01
+eigen value  8: -1.1005597452369303e-01
+eigen value  9: -1.0618927748611835e-01
+Total time for chebyshev filter: 2.789398034413655744e-03mins
+Fermi energy Residual:    5.24025267623073887080e-13 
+Fermi energy:   -3.11364852244974787965e-01 
+Number of Electrons: 4.7641942955568437e+00 
+rhs:4.130622605780874146e+00
+poisson solve: initial residual:4.130623e+00, current residual:3.936635e-12, nsteps:44, tolerance criterion:4.130623e-12
+L-2 Norm of Phi-out   :1.146906375202360806e+01
+L-inf Norm of Phi-out :7.486633725947339890e+00
+partialOccupancy 0:     1.00000000000000000000e+00 
+partialOccupancy 1:     9.99999999999992006394e-01 
+partialOccupancy 2:     5.00000000000131450406e-01 
+partialOccupancy 3:     4.99999999999877264845e-01 
+partialOccupancy 4:     1.16079908697645122530e-16 
+partialOccupancy 5:     1.57029688119428616821e-37 
+partialOccupancy 6:     1.57029688119361672417e-37 
+partialOccupancy 7:     5.47697663457931236583e-52 
+partialOccupancy 8:     6.09901997417824773672e-56 
+partialOccupancy 9:     5.30526849097227814303e-57 
+Total energy:   -2.91112285963475692085e+00 
+Total energy per atom:   -1.45556142981737846043e+00 
+Band energy:   -2.51853573829095855885e+00 
+Kinetic energy:    1.63735038285219092202e+00 
+Exchange energy:   -6.82120097783522782997e-01 
+Correlation energy:   -1.67997780882958830384e-01 
+Electrostatic energy Total Potential:   -5.94835536382046647930e+00 
+Repulsive energy:    2.25000000000000000000e+00 
+Nuclear Electrostatic Energy:   -2.28231678240292978899e+00 
+SCF iteration: 10 complete
+
+
+Begin Self-Consistent-Field Iteration:11
+
+N:9
+A,c:1.663661855429826800e-15 1.119918957493672747e-16
+
+Anderson mixing  c10:1.822524e+00, c9:-2.067681e-08, c8:9.177475e-08, c7:-1.455713e-07, c6:-1.005604e-05, c5:1.096264e-04, c4:2.644963e-03, c3:-2.504336e-04, c2:8.184785e-01, c1:-1.643497e+00, 
+Mixing Scheme: iter:11, norm:4.628284e-09
+rhs:4.130622605482701104e+00
+poisson solve: initial residual:4.130623e+00, current residual:3.882802e-12, nsteps:44, tolerance criterion:4.130623e-12
+L-2 Norm of Phi-in   : 1.146906375168168957e+01
+L-inf Norm of Phi-in : 7.486633725093524205e+00
+bUp:   1.6542943090e+00
+bLow: -1.061892774861183525e-01
+a0: -5.851392121875018670e-01
+Total time for only chebyshev filter: 2.084048589070637992e-03mins
+eigen value  0: -5.8513921227219123e-01
+eigen value  1: -3.6276380377358419e-01
+eigen value  2: -3.1136485165606481e-01
+eigen value  3: -3.1136485165606365e-01
+eigen value  4: -2.5326612872765281e-01
+eigen value  5: -1.7718010984997712e-01
+eigen value  6: -1.7718010984997634e-01
+eigen value  7: -1.2446934272277813e-01
+eigen value  8: -1.1005597258432707e-01
+eigen value  9: -1.0619115745398475e-01
+Total time for chebyshev filter: 2.640680472056071166e-03mins
+Fermi energy Residual:    3.83693077310454100370e-13 
+Fermi energy:   -3.11364851656064201002e-01 
+Number of Electrons: 4.7641942923251621e+00 
+rhs:4.130622605594050256e+00
+poisson solve: initial residual:4.130623e+00, current residual:3.960368e-12, nsteps:44, tolerance criterion:4.130623e-12
+L-2 Norm of Phi-out   :1.146906375269806055e+01
+L-inf Norm of Phi-out :7.486633725439569176e+00
+partialOccupancy 0:     1.00000000000000000000e+00 
+partialOccupancy 1:     9.99999999999992006394e-01 
+partialOccupancy 2:     5.00000000000096478381e-01 
+partialOccupancy 3:     4.99999999999912347892e-01 
+partialOccupancy 4:     1.16079902474263829743e-16 
+partialOccupancy 5:     1.57029656815780207577e-37 
+partialOccupancy 6:     1.57029656815704346997e-37 
+partialOccupancy 7:     5.47696921981288022113e-52 
+partialOccupancy 8:     6.09901477244714287010e-56 
+partialOccupancy 9:     5.31157311994765989435e-57 
+Total energy:   -2.91112285918436342058e+00 
+Total energy per atom:   -1.45556142959218171029e+00 
+Band energy:   -2.51853573540367881023e+00 
+Kinetic energy:    1.63735038578228797590e+00 
+Exchange energy:   -6.82120097986847362392e-01 
+Correlation energy:   -1.67997780853313460891e-01 
+Electrostatic energy Total Potential:   -5.94835536612649029564e+00 
+Repulsive energy:    2.25000000000000000000e+00 
+Nuclear Electrostatic Energy:   -2.28231678392631920360e+00 
+SCF iteration: 11 complete
+
+
+Begin Self-Consistent-Field Iteration:12
+
+N:10
+A,c:2.094317909415856153e-17 -2.292962778358656522e-19
+
+Anderson mixing  c11:1.197101e+00, c10:-1.070307e-08, c9:4.871029e-08, c8:-9.307319e-07, c7:1.675887e-06, c6:-1.747832e-05, c5:-6.565645e-04, c4:3.512018e-04, c3:-1.536050e-01, c2:3.067922e-01, c1:-3.499657e-01, 
+Mixing Scheme: iter:12, norm:1.387042e-10
+rhs:4.130622605544676418e+00
+poisson solve: initial residual:4.130623e+00, current residual:3.789147e-12, nsteps:44, tolerance criterion:4.130623e-12
+L-2 Norm of Phi-in   : 1.146906375312675408e+01
+L-inf Norm of Phi-in : 7.486633725429650887e+00
+bUp:   1.6542922286e+00
+bLow: -1.061911574539847469e-01
+a0: -5.851392122721912337e-01
+Total time for only chebyshev filter: 1.924701531728108825e-03mins
+eigen value  0: -5.8513921243504985e-01
+eigen value  1: -3.6276380393713525e-01
+eigen value  2: -3.1136485178969386e-01
+eigen value  3: -3.1136485178969370e-01
+eigen value  4: -2.5326612886350552e-01
+eigen value  5: -1.7718010998345857e-01
+eigen value  6: -1.7718010998345840e-01
+eigen value  7: -1.2446934316815464e-01
+eigen value  8: -1.1005597288755865e-01
+eigen value  9: -1.0619244446904884e-01
+Total time for chebyshev filter: 2.110699812571207538e-03mins
+Fermi energy Residual:    6.83897383169096428901e-14 
+Fermi energy:   -3.11364851789693752870e-01 
+Number of Electrons: 4.7641942923870584e+00 
+rhs:4.130622605590842156e+00
+poisson solve: initial residual:4.130623e+00, current residual:3.802016e-12, nsteps:44, tolerance criterion:4.130623e-12
+L-2 Norm of Phi-out   :1.146906375265598221e+01
+L-inf Norm of Phi-out :7.486633725431249609e+00
+partialOccupancy 0:     1.00000000000000000000e+00 
+partialOccupancy 1:     9.99999999999992006394e-01 
+partialOccupancy 2:     5.00000000000017541524e-01 
+partialOccupancy 3:     4.99999999999991229238e-01 
+partialOccupancy 4:     1.16079902637245426339e-16 
+partialOccupancy 5:     1.57029656801092300565e-37 
+partialOccupancy 6:     1.57029656801076681596e-37 
+partialOccupancy 7:     5.47697029813959573435e-52 
+partialOccupancy 8:     6.09901542572580847140e-56 
+partialOccupancy 9:     5.31589174983485563534e-57 
+Total energy:   -2.91112285919320790128e+00 
+Total energy per atom:   -1.45556142959660395064e+00 
+Band energy:   -2.51853573632375749014e+00 
+Kinetic energy:    1.63735038582031133814e+00 
+Exchange energy:   -6.82120097991057550146e-01 
+Correlation energy:   -1.67997780854898443037e-01 
+Electrostatic energy Total Potential:   -5.94835536616756410666e+00 
+Repulsive energy:    2.25000000000000000000e+00 
+Nuclear Electrostatic Energy:   -2.28231678395073345200e+00 
+SCF iteration: 12 complete
+
+
+Begin Self-Consistent-Field Iteration:13
+
+N:11
+A,c:1.558408819342243677e-20 6.463837148467373441e-22
+
+Anderson mixing  c12:2.028091e+00, c11:3.070427e-10, c10:8.654772e-11, c9:2.981146e-07, c8:-1.593115e-06, c7:1.588197e-05, c6:4.343828e-04, c5:-1.170461e-04, c4:1.218643e-01, c3:-2.435063e-01, c2:2.838694e-01, c1:-1.190651e+00, 
+Mixing Scheme: iter:13, norm:7.033879e-11
+rhs:4.130622605592622065e+00
+poisson solve: initial residual:4.130623e+00, current residual:3.799012e-12, nsteps:44, tolerance criterion:4.130623e-12
+L-2 Norm of Phi-in   : 1.146906375251534627e+01
+L-inf Norm of Phi-in : 7.486633725408288420e+00
+bUp:   1.6542939934e+00
+bLow: -1.061924444690488384e-01
+a0: -5.851392124350498491e-01
+Total time for only chebyshev filter: 2.016417185465494907e-03mins
+eigen value  0: -5.8513921237275079e-01
+eigen value  1: -3.6276380386535728e-01
+eigen value  2: -3.1136485172926814e-01
+eigen value  3: -3.1136485172926764e-01
+eigen value  4: -2.5326612880480814e-01
+eigen value  5: -1.7718010992901770e-01
+eigen value  6: -1.7718010992901759e-01
+eigen value  7: -1.2446934329024466e-01
+eigen value  8: -1.1005597292507963e-01
+eigen value  9: -1.0619340451879961e-01
+Total time for chebyshev filter: 2.472734451293945226e-03mins
+Fermi energy Residual:    1.74082970261224545538e-13 
+Fermi energy:   -3.11364851729267866354e-01 
+Number of Electrons: 4.7641942923220970e+00 
+rhs:4.130622605589479690e+00
+poisson solve: initial residual:4.130623e+00, current residual:3.817913e-12, nsteps:44, tolerance criterion:4.130623e-12
+L-2 Norm of Phi-out   :1.146906375268514822e+01
+L-inf Norm of Phi-out :7.486633725427213726e+00
+partialOccupancy 0:     1.00000000000000000000e+00 
+partialOccupancy 1:     9.99999999999992006394e-01 
+partialOccupancy 2:     5.00000000000043853809e-01 
+partialOccupancy 3:     4.99999999999964972464e-01 
+partialOccupancy 4:     1.16079902763962347564e-16 
+partialOccupancy 5:     1.57029657394640196623e-37 
+partialOccupancy 6:     1.57029657394629025302e-37 
+partialOccupancy 7:     5.47697092945870144825e-52 
+partialOccupancy 8:     6.09901580300090221791e-56 
+partialOccupancy 9:     5.31911605893633554041e-57 
+Total energy:   -2.91112285918438473686e+00 
+Total energy per atom:   -1.45556142959219236843e+00 
+Band energy:   -2.51853573593475177361e+00 
+Kinetic energy:    1.63735038584958525476e+00 
+Exchange energy:   -6.82120097993115459545e-01 
+Correlation energy:   -1.67997780853856942818e-01 
+Electrostatic energy Total Potential:   -5.94835536618699745048e+00 
+Repulsive energy:    2.25000000000000000000e+00 
+Nuclear Electrostatic Energy:   -2.28231678396292636535e+00 
+SCF iteration: 13 complete
+
+
+Begin Self-Consistent-Field Iteration:14
+
+N:12
+A,c:6.941534649461376467e-21 1.180418318198301771e-21
+
+Anderson mixing  c13:1.080309e+00, c12:-2.586491e-11, c11:3.912488e-10, c10:-1.205536e-08, c9:1.207117e-08, c8:-1.006686e-07, c7:-3.538898e-06, c6:3.673449e-06, c5:-6.225131e-04, c4:1.180541e-03, c3:-2.727141e-03, c2:8.298528e-02, c1:-1.611252e-01, 
+Mixing Scheme: iter:14, norm:1.915327e-11
+rhs:4.130622605589669760e+00
+poisson solve: initial residual:4.130623e+00, current residual:3.774087e-12, nsteps:44, tolerance criterion:4.130623e-12
+L-2 Norm of Phi-in   : 1.146906375268273592e+01
+L-inf Norm of Phi-in : 7.486633725429062025e+00
+bUp:   1.6542943480e+00
+bLow: -1.061934045187996056e-01
+a0: -5.851392123727507943e-01
+Total time for only chebyshev filter: 2.074364821116129499e-03mins
+eigen value  0: -5.8513921238936462e-01
+eigen value  1: -3.6276380388551160e-01
+eigen value  2: -3.1136485174457795e-01
+eigen value  3: -3.1136485174457756e-01
+eigen value  4: -2.5326612882140392e-01
+eigen value  5: -1.7718010994446934e-01
+eigen value  6: -1.7718010994446920e-01
+eigen value  7: -1.2446934330700207e-01
+eigen value  8: -1.1005597293871260e-01
+eigen value  9: -1.0619415758348774e-01
+Total time for chebyshev filter: 3.174034754435221383e-03mins
+Fermi energy Residual:    1.38555833473219536245e-13 
+Fermi energy:   -3.11364851744577730841e-01 
+Number of Electrons: 4.7641942923375140e+00 
+rhs:4.130622605589558738e+00
+poisson solve: initial residual:4.130623e+00, current residual:3.775267e-12, nsteps:44, tolerance criterion:4.130623e-12
+L-2 Norm of Phi-out   :1.146906375267844602e+01
+L-inf Norm of Phi-out :7.486633725427632058e+00
+partialOccupancy 0:     1.00000000000000000000e+00 
+partialOccupancy 1:     9.99999999999992006394e-01 
+partialOccupancy 2:     5.00000000000035083048e-01 
+partialOccupancy 3:     4.99999999999973743225e-01 
+partialOccupancy 4:     1.16079902858233370453e-16 
+partialOccupancy 5:     1.57029657408701027096e-37 
+partialOccupancy 6:     1.57029657408685408127e-37 
+partialOccupancy 7:     5.47697093446574028503e-52 
+partialOccupancy 8:     6.09901579654182773008e-56 
+partialOccupancy 9:     5.32164637043744033845e-57 
+Total energy:   -2.91112285918636892745e+00 
+Total energy per atom:   -1.45556142959318446373e+00 
+Band energy:   -2.51853573603890801280e+00 
+Kinetic energy:    1.63735038584575320897e+00 
+Exchange energy:   -6.82120097992919061092e-01 
+Correlation energy:   -1.67997780854118122784e-01 
+Electrostatic energy Total Potential:   -5.94835536618508520235e+00 
+Repulsive energy:    2.25000000000000000000e+00 
+Nuclear Electrostatic Energy:   -2.28231678396134540776e+00 
+SCF iteration: 14 complete
+
+
+Begin Self-Consistent-Field Iteration:15
+
+N:13
+A,c:3.616109396036029705e-22 -2.357537207878802280e-24
+
+Anderson mixing  c14:1.213132e+00, c13:-2.137763e-11, c12:1.944816e-10, c11:-4.489298e-09, c10:2.886004e-09, c9:-2.689972e-08, c8:-2.137495e-06, c7:1.603787e-06, c6:-3.983980e-04, c5:8.067006e-04, c4:-6.059569e-04, c3:-1.329272e-02, c2:2.682298e-02, c1:-2.264636e-01, 
+Mixing Scheme: iter:15, norm:7.223610e-13
+rhs:4.130622605589577390e+00
+poisson solve: initial residual:4.130623e+00, current residual:3.772880e-12, nsteps:44, tolerance criterion:4.130623e-12
+L-2 Norm of Phi-in   : 1.146906375268112122e+01
+L-inf Norm of Phi-in : 7.486633725428353259e+00
+bUp:   1.6542943488e+00
+bLow: -1.061941575834877416e-01
+a0: -5.851392123893646158e-01
+Total time for only chebyshev filter: 2.132670084635416869e-03mins
+eigen value  0: -5.8513921238902211e-01
+eigen value  1: -3.6276380388534174e-01
+eigen value  2: -3.1136485174433798e-01
+eigen value  3: -3.1136485174433787e-01
+eigen value  4: -2.5326612882124483e-01
+eigen value  5: -1.7718010994431499e-01
+eigen value  6: -1.7718010994431488e-01
+eigen value  7: -1.2446934330679249e-01
+eigen value  8: -1.1005597293847910e-01
+eigen value  9: -1.0619476857940598e-01
+Total time for chebyshev filter: 2.603769302368164062e-03mins
+Fermi energy Residual:    5.15143483426072634757e-14 
+Fermi energy:   -3.11364851744337922668e-01 
+Number of Electrons: 4.7641942923375726e+00 
+rhs:4.130622605589574725e+00
+poisson solve: initial residual:4.130623e+00, current residual:3.772989e-12, nsteps:44, tolerance criterion:4.130623e-12
+L-2 Norm of Phi-out   :1.146906375267853484e+01
+L-inf Norm of Phi-out :7.486633725427664920e+00
+partialOccupancy 0:     1.00000000000000000000e+00 
+partialOccupancy 1:     9.99999999999992006394e-01 
+partialOccupancy 2:     5.00000000000008770762e-01 
+partialOccupancy 3:     4.99999999999991229238e-01 
+partialOccupancy 4:     1.16079902864150468192e-16 
+partialOccupancy 5:     1.57029657417176363992e-37 
+partialOccupancy 6:     1.57029657417165213551e-37 
+partialOccupancy 7:     5.47697093457026942356e-52 
+partialOccupancy 8:     6.09901579656609604445e-56 
+partialOccupancy 9:     5.32370025522158331296e-57 
+Total energy:   -2.91112285918638669102e+00 
+Total energy per atom:   -1.45556142959319334551e+00 
+Band energy:   -2.51853573603739766540e+00 
+Kinetic energy:    1.63735038584549785767e+00 
+Exchange energy:   -6.82120097992904628192e-01 
+Correlation energy:   -1.67997780854117900740e-01 
+Electrostatic energy Total Potential:   -5.94835536618486138138e+00 
+Repulsive energy:    2.25000000000000000000e+00 
+Nuclear Electrostatic Energy:   -2.28231678396118553565e+00 
+SCF iteration: 15 complete
+
+
++---------------------------------------------+------------+------------+
+| Total wallclock time elapsed since start    | 3.278e+01s |            |
+|                                             |            |            |
+| Section                         | no. calls |  wall time | % of total |
++---------------------------------+-----------+------------+------------+
+| Chebyshev GS orthonormalization |        15 | 8.016e-03s |  2.45e-02% |
+| Chebyshev Rayleigh Ritz         |        15 | 3.445e-01s |  1.05e+00% |
+| Chebyshev filtering             |        15 | 1.875e+00s |  5.72e+00% |
+| Chebyshev solve                 |        15 | 2.429e+00s |  7.41e+00% |
+| Chebyshev upper bound           |        15 | 1.990e-01s |  6.07e-01% |
+| dft solve                       |         1 | 3.073e+01s |  9.38e+01% |
+| dftClass init PSI               |         1 | 1.510e-02s |  4.61e-02% |
+| dftClass init density           |         1 | 3.675e-01s |  1.12e+00% |
+| dftClass init pseudopotentials  |         1 | 2.676e-01s |  8.16e-01% |
+| dftClass setup                  |         1 | 1.899e+00s |  5.79e+00% |
+| mesh                            |         1 | 6.900e-02s |  2.10e-01% |
++---------------------------------+-----------+------------+------------+
+
+
+
++---------------------------------------------+------------+------------+
+| Total wallclock time elapsed since start    | 3.278e+01s |            |
+|                                             |            |            |
+| Section                         | no. calls |  wall time | % of total |
++---------------------------------+-----------+------------+------------+
+| eigenClass HX                   |       915 | 1.991e+00s |  6.07e+00% |
+| eigenClass Mass assembly        |         1 | 1.218e-04s |  3.72e-04% |
+| eigenClass XHX                  |        15 | 3.880e-02s |  1.18e-01% |
+| eigenClass setup                |         1 | 2.029e-04s |  6.19e-04% |
++---------------------------------+-----------+------------+------------+
+
+
+
++---------------------------------------------+------------+------------+
+| Total wallclock time elapsed since start    | 3.278e+01s |            |
+|                                             |            |            |
+| Section                         | no. calls |  wall time | % of total |
++---------------------------------+-----------+------------+------------+
+| PoissonClass rhs assembly       |        32 | 2.006e-01s |  6.12e-01% |
+| PoissonClass rhs2 assembly      |         2 | 2.307e-02s |  7.04e-02% |
+| poissonClass setup              |         1 | 5.794e-05s |  1.77e-04% |
+| poissonClass solve              |        32 | 1.289e+00s |  3.93e+00% |
++---------------------------------+-----------+------------+------------+
+

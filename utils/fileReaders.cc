@@ -46,9 +46,12 @@ int readPsiFile(unsigned int numColumns,
 {
   std::vector<double> rowData(numColumns, 0.0);
   std::ifstream readFile(fileName.c_str());
+
   if(readFile.fail()) 
     {
-      std::cerr<< "Error opening Psi file: " << fileName.c_str() << std::endl;
+      std::cerr<< "Warning: Psi file: " << fileName.c_str() << " not found "<<std::endl;
+      //if(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+      //std::cout<<"***It is possible that you are doing a pseudopotential calculation and file "<<fileName.c_str()<<" possibly associated with core-wavefunction is not found***"<<std::endl;
       return 0;
     }
 

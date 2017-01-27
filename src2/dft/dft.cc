@@ -177,6 +177,7 @@ void dftClass::set(){
     tempPSI.push_back(new vectorType);
     tempPSI2.push_back(new vectorType);
     tempPSI3.push_back(new vectorType);
+    tempPSI4.push_back(new vectorType);
   } 
 }
 
@@ -218,7 +219,7 @@ void dftClass::run ()
   double norm = 1.0;
   while ((norm > selfConsistentSolverTolerance) && (scfIter < numSCFIterations))
     {
-      if(this_mpi_process==0) printf("\n\nBegin SCF Iteration:%u\n", scfIter+1);
+      if(this_mpi_process==0) printf("\n\nBegin Self-Consistent-Field Iteration:%u\n", scfIter+1);
       //Mixing scheme
       if(scfIter > 0)
 	{
@@ -229,8 +230,8 @@ void dftClass::run ()
       //phiTot with rhoIn
       int constraintMatrixId = 1;
       poisson.solve(poisson.phiTotRhoIn,constraintMatrixId,rhoInValues);
-      std::cout<<"L2 Norm of Phi out Tot L2  : "<<poisson.phiTotRhoIn.l2_norm()<<std::endl;
-      std::cout<<"L2 Norm of Phi out Tot Linf: "<<poisson.phiTotRhoIn.linfty_norm()<<std::endl;
+      pcout<<"L-2 Norm of Phi-in   : "<<poisson.phiTotRhoIn.l2_norm()<<std::endl;
+      pcout<<"L-inf Norm of Phi-in : "<<poisson.phiTotRhoIn.linfty_norm()<<std::endl;
       //visualise
       DataOut<3> data_out;
       data_out.attach_dof_handler (dofHandler);
@@ -259,8 +260,8 @@ void dftClass::run ()
       pcout << buffer;
       //phiTot with rhoOut
       poisson.solve(poisson.phiTotRhoOut,constraintMatrixId, rhoOutValues);
-      pcout<<"L2 Norm of Phi out Tot L2  : "<<poisson.phiTotRhoOut.l2_norm()<<std::endl;
-      pcout<<"L2 Norm of Phi out Tot Linf: "<<poisson.phiTotRhoOut.linfty_norm()<<std::endl;
+      pcout<<"L-2 Norm of Phi-out   :"<<poisson.phiTotRhoOut.l2_norm()<<std::endl;
+      pcout<<"L-inf Norm of Phi-out :"<<poisson.phiTotRhoOut.linfty_norm()<<std::endl;
       //energy
       compute_energy();
       pcout<<"SCF iteration: " << scfIter+1 << " complete\n";

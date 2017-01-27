@@ -339,7 +339,7 @@ void dftClass::createAtomBins(std::vector<const ConstraintMatrix * > & constrain
 
 
   const int numberBins = binCount + 1;
-  std::cout<<"Number Bins: "<<numberBins<<std::endl;
+  pcout<<"Number Bins: "<<numberBins<<std::endl;
 
   //std::vector<std::vector<int> > imageIdsInBins;
   d_imageIdsInBins.resize(numberBins);
@@ -359,7 +359,7 @@ void dftClass::createAtomBins(std::vector<const ConstraintMatrix * > & constrain
       std::vector<int> &imageIdsOfAtomsInCurrentBin = d_imageIdsInBins[iBin];
       std::vector<std::vector<double> > imagePositionsOfAtomsInCurrentBin;
 
-      std::cout<<"Bin: "<<iBin<<" Number of Global Atoms: "<<numberGlobalAtomsInBin<<std::endl;
+      pcout<<"Bin: "<<iBin<<" Number of Global Atoms: "<<numberGlobalAtomsInBin<<std::endl;
 
       for(int index = 0; index < numberGlobalAtomsInBin; ++index)
 	{
@@ -483,8 +483,9 @@ void dftClass::createAtomBins(std::vector<const ConstraintMatrix * > & constrain
       constraintsForVselfInBin->close();
       constraintsVector.push_back(constraintsForVselfInBin);
       
-      std::cout<<"Size of Constraints: "<<constraintsForVselfInBin->n_constraints()<<std::endl;
-      std::cout << "In: " << inNodes << "  Out: " << outNodes << "\n";
+      //std::cout<<"Size of Constraints: "<<constraintsForVselfInBin->n_constraints()<<std::endl;
+      //std::cout << "In: " << inNodes << "  Out: " << outNodes << "\n";
+
     }//bin loop
 
 

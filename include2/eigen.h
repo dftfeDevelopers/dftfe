@@ -8,13 +8,19 @@ class eigenClass
   friend class dftClass;
 public:
   eigenClass(dftClass* _dftPtr);
-  void HX(const std::vector<vectorType*> &src, std::vector<vectorType*> &dst);
+  void HX(const std::vector<vectorType*> &src, 
+	  std::vector<vectorType*> &dst);
+
   void XHX(const std::vector<vectorType*> &src); 
  private:
   void implementHX(const dealii::MatrixFree<3,double>  &data,
 		   std::vector<vectorType*>  &dst, 
 		   const std::vector<vectorType*>  &src,
 		   const std::pair<unsigned int,unsigned int> &cell_range) const;
+
+  void computeNonLocalHamiltonianTimesX(const std::vector<vectorType*> &src,
+					std::vector<vectorType*>       &dst);
+
   void init ();
   void computeMassVector();
   void computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoValues, 

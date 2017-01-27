@@ -10,7 +10,11 @@ void dftClass::loadPSIFiles(unsigned int Z,
 			    unsigned int &fileReadFlag)
 {
   //
-  if (radValues[Z][n].count(l)>0) return;
+  if (radValues[Z][n].count(l)>0) 
+    {
+      fileReadFlag = 1;
+      return;
+    }
   //
   char psiFile[256];
   if(isPseudopotential)
@@ -19,13 +23,13 @@ void dftClass::loadPSIFiles(unsigned int Z,
     sprintf(psiFile, "../../../data/electronicStructure/allElectron/z%u/psi%u%u.inp", Z, n, l);
   std::vector<std::vector<double> > values;
 
-  pcout<<"Reading data from file: "<<psiFile<<std::endl;
-
   fileReadFlag = readPsiFile(2, values, psiFile);
-  //
+  
 
   if(fileReadFlag > 0)
     {
+      pcout<<"Reading data from file: "<<psiFile<<std::endl;
+      
       int numRows = values.size()-1;
       std::vector<double> xData(numRows), yData(numRows);
 
@@ -107,6 +111,7 @@ void dftClass::determineOrbitalFilling()
   
   int totalNumberWaveFunctions = numEigenValues;
   unsigned int fileReadFlag = 0;
+  unsigned int waveFunctionCount = 0;
   
   //loop over atoms
   for (unsigned int z = 0; z < atomLocations.size(); z++)
@@ -147,18 +152,18 @@ void dftClass::determineOrbitalFilling()
 		  orbital temp;
 		  temp.atomID=z;
 		  temp.Z=Z; temp.n=n; temp.l=l; temp.m=m; temp.psi=radValues[Z][n][l];
-		  waveFunctionsVector.push_back(temp); levels++;
+		  waveFunctionsVector.push_back(temp); levels++; waveFunctionCount++;
 		  if(printLevels) pcout << " n:" << n  << " l:" << l << " m:" << m << std::endl;
-		  if(levels >= totalLevels) break;
+		  if(levels >= totalLevels || waveFunctionCount>=numEigenValues) break;
 		}
 	    }
-	  if(levels>=totalLevels) break;
+	  if(levels>=totalLevels || waveFunctionCount>=numEigenValues) break;
 	}
     }
-  pcout<<"*******************************************************************"<<std::endl;
-  pcout<<"        Total number electrons:                    "<< numElectrons <<std::endl;
-  pcout<<"Total number levels through atomic wavefunctions: " << numLevels    <<std::endl;
-  pcout<<"*******************************************************************" <<std::endl;
+  pcout<<"*****************************************************************************************************************"<<std::endl;
+  pcout<<"Total number electrons: "<<numElectrons<<std::endl;
+  pcout<<"Total number of wavefunctions as initial guess for eigensolver computed using single atom wavefunctions: " <<waveFunctionCount<<std::endl;
+  pcout<<"*****************************************************************************************************************"<<std::endl;
 }
 
 //

@@ -89,7 +89,7 @@ void dftClass::init(){
   }
   DoFTools::make_periodicity_constraints<DoFHandler<3> >(periodicity_vector2, constraintsNone);
   pcout << "Detected Periodic Face Pairs: " << constraintsNone.n_constraints() << std::endl;
-#endif
+
 
   pcout<<"Size of ConstraintsNone: "<< constraintsNone.n_constraints()<<std::endl;
 
@@ -164,7 +164,7 @@ void dftClass::init(){
   }
   constraintsNone.close();
   std::cout<<"Size of ConstraintsNone after fixing periodicity: "<< constraintsNone.n_constraints()<<std::endl;
-  
+#endif
 
   //
   //Zero Dirichlet BC constraints on the boundary of the domain
@@ -242,6 +242,7 @@ void dftClass::init(){
     tempPSI[i]->reinit(vChebyshev);
     tempPSI2[i]->reinit(vChebyshev);
     tempPSI3[i]->reinit(vChebyshev);
+    tempPSI4[i]->reinit(vChebyshev);
   } 
   
   //
@@ -277,7 +278,6 @@ void dftClass::init(){
       initNonLocalPseudoPotential();
       computeSparseStructureNonLocalProjectors();
       computeElementalProjectorKets();
-      exit(-1);
     }
 
  
