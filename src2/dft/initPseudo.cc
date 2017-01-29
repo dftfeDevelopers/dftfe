@@ -124,7 +124,9 @@ void dftClass::initLocalPseudoPotential()
   //
   //get number of image charges used only for periodic
   //
-  const int numberImageCharges = imageIdsContainer.size();
+  const int numberImageCharges = d_imageIds.size();
+
+  const double pspTail = 8.0;
 
   //
   //loop over elements
@@ -146,7 +148,7 @@ void dftClass::initLocalPseudoPotential()
 		{
 		  Point<3> atom(atomLocations[n][2],atomLocations[n][3],atomLocations[n][4]);
 		  double distanceToAtom = quadPoint.distance(atom);
-		  if(distanceToAtom <= outerMostPointPseudo[atomLocations[n][0]])
+		  if(distanceToAtom <= pspTail)//outerMostPointPseudo[atomLocations[n][0]])
 		    {
 		      pseudoValueAtQuadPt += alglib::spline1dcalc(pseudoSpline[atomLocations[n][0]], distanceToAtom);
 		    }
@@ -160,9 +162,9 @@ void dftClass::initLocalPseudoPotential()
 	      for(int iImageCharge = 0; iImageCharge < numberImageCharges; ++iImageCharge)
 		{
 		  Point<3> imageAtom(d_imagePositions[iImageCharge][0],d_imagePositions[iImageCharge][1],d_imagePositions[iImageCharge][2]);
-		  double distanceToAtom = quadPoint.distance(atom);
+		  double distanceToAtom = quadPoint.distance(imageAtom);
 		  int masterAtomId = d_imageIds[iImageCharge];
-		  if(distanceToAtom <= outerMostPointPseudo[atomLocations[masterAtomId][0]])
+		  if(distanceToAtom <= pspTail)//outerMostPointPseudo[atomLocations[masterAtomId][0]])
 		    {
 		      pseudoValueAtQuadPt += alglib::spline1dcalc(pseudoSpline[atomLocations[masterAtomId][0]], distanceToAtom);
 		    }
@@ -1099,7 +1101,6 @@ void dftClass::computeElementalProjectorKets()
 		      //std::vector<double> nonLocalProjectorQuadValuesReal(numberQuadraturePoints,0.0);
 		      for(int iQuadPoint = 0; iQuadPoint < numberQuadraturePoints; ++iQuadPoint)
 			{
-			  //nonLocalProjectorQuadValuesReal[iQuadPoint] = nonLocalProjectorBasisReal[maxkPoints*iQuadPoint+kPoint]*shapeFunctions[iQuadPoint][iNode];
 			  d_nonLocalProjectorElementMatrices[iAtom][iElemComp][kPoint][numberNodesPerElement*iPseudoWave + iNode] += nonLocalProjectorBasisReal[maxkPoints*iQuadPoint+kPoint]*fe_values.shape_value(iNode,iQuadPoint)*fe_values.JxW(iQuadPoint);
 			}
 		    

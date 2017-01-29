@@ -1,3 +1,13 @@
-0
+4
+0 0 0
+1 1 -1
+1 1 0
+1 1 1
+psi_l0.dat
+psi_l1.dat
 locPot.dat
-0
+2
+0 0
+1 1
+pot_l0.dat
+pot_l1.dat

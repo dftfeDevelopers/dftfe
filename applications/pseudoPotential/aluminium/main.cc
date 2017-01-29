@@ -4,18 +4,23 @@
 const double radiusAtomBall           = 3.0;
 const unsigned int FEOrder            = 4;
 const unsigned int n_refinement_steps = 0;
+
+//
+//Solver parameters
+//
 const double lowerEndWantedSpectrum   = -0.3;
 const unsigned int chebyshevOrder     = 1500; 
 const unsigned int numSCFIterations   = 30;
-const bool isPseudopotential          = true;
-const double nlpTolerance = 1.0e-08;
-
-//
-//Solver parameters 
-//
 const unsigned int maxLinearSolverIterations = 5000;
 const double relLinearSolverTolerance        = 1.0e-12; 
 const double selfConsistentSolverTolerance   = 1.0e-11;
+
+//
+//other inputs
+//
+const bool isPseudopotential   = true;
+const double nlpTolerance      = 1.0e-08;
+
 
 //
 //Define constants
