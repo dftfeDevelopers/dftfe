@@ -3,13 +3,20 @@
 #include <iostream>
 #include <iomanip> 
 #include <numeric>
-#include <sstream> 
+#include <sstream>
+#include <complex>
 #include "headers.h"
 #include "poisson.h"
 #include "eigen.h"
 #include "/nfs/mcfs_comp/home/rudraa/software/alglib/cpp/src/interpolation.h"
 #include "/nfs/mcfs_comp/home/rudraa/software/libxc/libxc-2.2.0/installDir/include/xc.h"
-
+#ifdef ENABLE_PERIODIC_BC
+#include "/home/vikramg/DFT-FE-softwares/softwareCentos/petsc/intel_petsc3.7.5_complex/include/petsc.h"
+#include "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/intel_slepc3.7.3_complex/include/slepceps.h"
+#else
+#include "/home/vikramg/DFT-FE-softwares/softwareCentos/petsc/intel_petsc3.7.5_double_elemental/include/petsc.h"
+#include "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/intel_slepc3.7.3_double_elemental/include/slepceps.h"
+#endif
 
 //std::cout << std::setprecision(18) << std::scientific;
 
@@ -23,7 +30,12 @@ extern "C"{
   void daxpy_(int *n, double *alpha, double *x, int *incx, double *y, int *incy);
   void dgemm_(char* transA, char* transB, int *m, int *n, int *k, double *alpha, double *A, int *lda, double *B, int *ldb, double *beta, double *C, int *ldc);
   void dsyevd_(char* jobz, char* uplo, int* n, double* A, int *lda, double* w, double* work, int* lwork, int* iwork, int* liwork, int* info);
+  void zgemm_(char* transA, char* transB, int *m, int *n, int *k, std::complex<double> *alpha, std::complex<double> *A, int *lda, std::complex<double> *B, int *ldb, std::complex<double> *beta, std::complex<double> *C, int *ldc);
+  void zheevd_(char *jobz, char *uplo,int *n,std::complex<double> *A,int *lda,double *w,std::complex<double> *work,int *lwork,double *rwork,int *lrwork,int *iwork,int *liwork,int *info);
+  void zdotc_(std::complex<double> *C,int *N,const std::complex<double> *X,int *INCX,const std::complex<double> *Y,int *INCY);
+  void zaxpy_(int *n,std::complex<double> *alpha,std::complex<double> *x,int *incx,std::complex<double> *y,int *incy);
 }
+
 xc_func_type funcX, funcC;
 
 //
@@ -80,28 +92,43 @@ class dftClass{
   void readPSI();
   void determineOrbitalFilling();
   void generateImageCharges();
+  void readkPointData();
   void loadPSIFiles(unsigned int Z, unsigned int n, unsigned int l, unsigned int & flag);
+
+#ifdef ENABLE_PERIODIC_BC  
+  std::complex<double> innerProduct(vectorType & a,
+				    vectorType & b);
+
+  void alphaTimesXPlusY(std::complex<double>   alpha,
+			vectorType           & x,
+			vectorType           & y);
+#endif
+
+  
+  
 
   //FE data structres
   parallel::distributed::Triangulation<3> triangulation;
-  FE_Q<3>            FE;
-  DoFHandler<3>      dofHandler;
+  FESystem<3>        FE, FEEigen;
+  DoFHandler<3>      dofHandler, dofHandlerEigen;
+  unsigned int       eigenDofHandlerIndex;
   MatrixFree<3,double> matrix_free_data;
-  std::map<types::global_dof_index, Point<3> > d_supportPoints; 
+  std::map<types::global_dof_index, Point<3> > d_supportPoints, d_supportPointsEigen;
   std::vector< const ConstraintMatrix * > d_constraintsVector; 
   
   //parallel objects
   MPI_Comm   mpi_communicator;
   const unsigned int n_mpi_processes;
   const unsigned int this_mpi_process;
-  IndexSet   locally_owned_dofs;
-  IndexSet   locally_relevant_dofs;
-
+  IndexSet   locally_owned_dofs, locally_owned_dofsEigen;
+  IndexSet   locally_relevant_dofs, locally_relevant_dofsEigen;
+  std::vector<unsigned int> local_dof_indicesReal, local_dof_indicesImag;
   poissonClass poisson;
   eigenClass eigen;
-  ConstraintMatrix constraintsNone, d_constraintsForTotalPotential, d_constraintsPeriodicWithDirichlet; 
-  std::vector<double> eigenValues;
-  std::vector<parallel::distributed::Vector<double>*> eigenVectors;
+  ConstraintMatrix constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_constraintsPeriodicWithDirichlet; 
+  std::vector<std::vector<double> > eigenValues;
+  std::vector<std::vector<parallel::distributed::Vector<double>*> > eigenVectors;
+  std::vector<std::vector<parallel::distributed::Vector<double>*> > eigenVectorsOrig;
   //unsigned int numEigenValues;
 
   //parallel message stream
@@ -113,6 +140,17 @@ class dftClass{
   //dft related objects
   std::map<dealii::CellId, std::vector<double> > *rhoInValues, *rhoOutValues;
   std::vector<std::map<dealii::CellId,std::vector<double> >*> rhoInVals, rhoOutVals;
+
+#ifdef xc_id
+  #if xc_id == 4
+  std::map<dealii::CellId, std::vector<double> > *gradRhoXInValues,  *gradRhoYInValues,  *gradRhoZInValues;
+  std::map<dealii::CellId, std::vector<double> > *gradRhoXOutValues, *gradRhoYOutValues, *gradRhoZOutValues;
+  std::vector<std::map<dealii::CellId,std::vector<double> >*> gradRhoXInVals, gradRhoYInVals, gradRhoZInVals; 
+  std::vector<std::map<dealii::CellId,std::vector<double> >*> gradRhoXOutVals, gradRhoYOutVals, gradRhoZOutVals;
+  #endif
+#endif
+
+
   std::map<dealii::CellId, std::vector<double> > *pseudoValues;
   std::vector<std::vector<double> > d_localVselfs;
 
@@ -142,7 +180,11 @@ class dftClass{
   std::vector<std::vector<int> > d_sparsityPattern;
   std::vector<std::vector<DoFHandler<3>::active_cell_iterator> > d_elementIteratorsInAtomCompactSupport;
   std::vector<std::vector<int> > d_nonLocalAtomIdsInElement;
+#ifdef ENABLE_PERIODIC_BC
+  std::vector<std::vector<std::vector<std::vector<std::complex<double> > > > > d_nonLocalProjectorElementMatrices;
+#else
   std::vector<std::vector<std::vector<std::vector<double> > > > d_nonLocalProjectorElementMatrices;
+#endif
 
   //
   //storage for nonlocal pseudopotential constants
@@ -183,12 +225,17 @@ class dftClass{
   //kPointCoordinates
   //
   std::vector<double> d_kPointCoordinates;
+  std::vector<double> d_kPointWeights;
+  int d_maxkPoints;
+  int d_kPointIndex;
 
   //fermi energy
   double fermiEnergy;
 
   //chebyshev filter variables and functions
-  double bUp, bLow, a0;
+  double bUp;// bLow, a0;
+  std::vector<double> a0;
+  std::vector<double> bLow;
   vectorType vChebyshev, v0Chebyshev, fChebyshev, aj[5];
   std::vector<parallel::distributed::Vector<double>*> PSI, tempPSI, tempPSI2, tempPSI3, tempPSI4;
   void chebyshevSolver();

@@ -692,6 +692,8 @@ dftClass::computeSparseStructureNonLocalProjectors()
   //
   int numberNonLocalAtoms = d_nonLocalAtomGlobalChargeIds.size();
 
+  const double nlpTolerance = 1e-08;
+
 
   //
   //pre-allocate data structures that stores the sparsity of deltaVl
@@ -722,7 +724,6 @@ dftClass::computeSparseStructureNonLocalProjectors()
   //
   QGauss<3>  quadrature(FEOrder+1);
   FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values);
-  const unsigned int numberNodesPerElement  = FE.dofs_per_cell;
   const unsigned int numberQuadraturePoints = quadrature.size();
   const unsigned int numberElements         = triangulation.n_locally_owned_active_cells();
 
@@ -759,10 +760,11 @@ dftClass::computeSparseStructureNonLocalProjectors()
       //parallel loop over all elements
       //
       typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
+      typename DoFHandler<3>::active_cell_iterator cellEigen = dofHandlerEigen.begin_active();
 
       int iElem = -1;
 
-      for(; cell != endc; ++cell)
+      for(; cell != endc; ++cell,++cellEigen)
 	{
 	  if(cell->is_locally_owned())
 	    {
@@ -838,7 +840,7 @@ dftClass::computeSparseStructureNonLocalProjectors()
 	      if(sparseFlag==1) {
 		d_sparsityPattern[iAtom][iElem] = matCount;
 		//d_elementIdsInAtomCompactSupport[iAtom].push_back(iElem);
-		d_elementIteratorsInAtomCompactSupport[iAtom].push_back(cell);
+		d_elementIteratorsInAtomCompactSupport[iAtom].push_back(cellEigen);
 		matCount += 1;
 	      }
 
@@ -891,8 +893,8 @@ void dftClass::computeElementalProjectorKets()
   //
   //get number of kPoints
   //
-  int maxkPoints = 1;//d_kpointRule->getNumberPoints();
-  d_kPointCoordinates.resize(maxkPoints*3,0.0);
+  int maxkPoints = d_maxkPoints;
+  
 
   //
   //preallocate element Matrices
@@ -951,8 +953,13 @@ void dftClass::computeElementalProjectorKets()
 	  //compute values for the current elements
 	  fe_values.reinit(cell);
 
+#ifdef ENABLE_PERIODIC_BC
+	  d_nonLocalProjectorElementMatrices[iAtom][iElemComp].resize(maxkPoints,
+								      std::vector<std::complex<double> > (numberNodesPerElement*numberPseudoWaveFunctions,0.0));
+#else
 	  d_nonLocalProjectorElementMatrices[iAtom][iElemComp].resize(maxkPoints,
 								      std::vector<double> (numberNodesPerElement*numberPseudoWaveFunctions,0.0));
+#endif
 
 	  int iPsp = -1;
 	  int lTemp = 1e5;
@@ -1077,6 +1084,9 @@ void dftClass::computeElementalProjectorKets()
 			{
 			  double angle = d_kPointCoordinates[3*kPoint+0]*pointMinusLatticeVector[0] + d_kPointCoordinates[3*kPoint+1]*pointMinusLatticeVector[1] + d_kPointCoordinates[3*kPoint+2]*pointMinusLatticeVector[2];
 			  nonLocalProjectorBasisReal[maxkPoints*iQuadPoint + kPoint] += cos(angle)*pseudoWaveFunctionValue*deltaVlValue;
+#ifdef ENABLE_PERIODIC_BC
+			  nonLocalProjectorBasisImag[maxkPoints*iQuadPoint + kPoint] += -sin(angle)*pseudoWaveFunctionValue*deltaVlValue;
+#endif
 			}
 
 		      nonLocalPseudoConstant[iQuadPoint] += pseudoWaveFunctionValue*deltaVlValue*pseudoWaveFunctionValue;
@@ -1098,13 +1108,23 @@ void dftClass::computeElementalProjectorKets()
 		{
 		  for(int kPoint = 0; kPoint < maxkPoints; ++kPoint)
 		    {
-		      //std::vector<double> nonLocalProjectorQuadValuesReal(numberQuadraturePoints,0.0);
+		      double tempReal = 0;
+		      double tempImag = 0;
 		      for(int iQuadPoint = 0; iQuadPoint < numberQuadraturePoints; ++iQuadPoint)
 			{
+#ifdef ENABLE_PERIODIC_BC
+			  tempReal += nonLocalProjectorBasisReal[maxkPoints*iQuadPoint+kPoint]*fe_values.shape_value(iNode,iQuadPoint)*fe_values.JxW(iQuadPoint);
+			  tempImag += nonLocalProjectorBasisImag[maxkPoints*iQuadPoint+kPoint]*fe_values.shape_value(iNode,iQuadPoint)*fe_values.JxW(iQuadPoint);
+#else
 			  d_nonLocalProjectorElementMatrices[iAtom][iElemComp][kPoint][numberNodesPerElement*iPseudoWave + iNode] += nonLocalProjectorBasisReal[maxkPoints*iQuadPoint+kPoint]*fe_values.shape_value(iNode,iQuadPoint)*fe_values.JxW(iQuadPoint);
+#endif
 			}
-		    
+#ifdef ENABLE_PERIODIC_BC
+		      d_nonLocalProjectorElementMatrices[iAtom][iElemComp][kPoint][numberNodesPerElement*iPseudoWave + iNode].real(tempReal);
+		      d_nonLocalProjectorElementMatrices[iAtom][iElemComp][kPoint][numberNodesPerElement*iPseudoWave + iNode].imag(tempImag);
+#endif		      
 		    }
+
 		}
 
 	    }//end of iPseudoWave loop

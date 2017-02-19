@@ -16,9 +16,9 @@ const int periodic_z = 1; //For non-orthogonal unit-cells, this is c-direction
 //
 //Solver parameters
 //
-const double lowerEndWantedSpectrum = -10.0;
+const double lowerEndWantedSpectrum = -0.3;
 const unsigned int chebyshevOrder   = 50;
-const unsigned int numSCFIterations = 30;
+const unsigned int numSCFIterations = 40;
 const unsigned int maxLinearSolverIterations = 5000;
 const double relLinearSolverTolerance        = 1.0e-14; 
 const double selfConsistentSolverTolerance   = 1.0e-11;
@@ -26,7 +26,9 @@ const double selfConsistentSolverTolerance   = 1.0e-11;
 //
 //decide whether it is all-electron and pseudopotential
 //
-const bool isPseudopotential = false;
+const bool isPseudopotential   = true;
+const double nlpTolerance      = 1.0e-08;
+
 
 //
 //Define constants
@@ -36,10 +38,10 @@ const double TVal=500.0;
 //
 //Mesh information
 //
-#define meshFileName "../../../data/meshes/allElectron/PeriodicSystems/simplecubic/carbon/meshPeriodic.inp"
-#define coordinatesFile "../../../data/meshes/allElectron/PeriodicSystems/simplecubic/carbon/coordinatesCenter.inp"
-//#define coordinatesFile "../../../data/meshes/allElectron/PeriodicSystems/simplecubic/carbon/coordinatesCorner.inp"
-#define latticeVectorsFile "../../../data/meshes/allElectron/PeriodicSystems/simplecubic/carbon/latticeVectors.inp"
+#define meshFileName "../../../data/meshes/pseudoPotential/PeriodicSystems/simplecubic/aluminum/meshPeriodic.inp"
+#define coordinatesFile "../../../data/meshes/pseudoPotential/PeriodicSystems/simplecubic/aluminum/coordinatesCenter.inp"
+//#define coordinatesFile "../../../data/meshes/pseudoPotential/PeriodicSystems/simplecubic/aluminum/coordinatesCorner.inp"
+#define latticeVectorsFile "../../../data/meshes/pseudoPotential/PeriodicSystems/simplecubic/aluminum/latticeVectors.inp"
 #define kPointDataFile "../../../data/kPointList/GammaPoint.inp"
 
 /*#define meshFileName "../../../data/meshes/allElectron/PeriodicSystems/bcc/carbon/meshPeriodic.inp"
@@ -59,8 +61,8 @@ int main (int argc, char *argv[]){
     //
     std::cout << std::scientific << std::setprecision(18);
     dftClass problem;
-    problem.numberAtomicWaveFunctions[6]=5;
-    problem.numEigenValues = 10;
+    problem.numberAtomicWaveFunctions[13]=9;
+    problem.numEigenValues = 12;
     problem.run();
   }
   return 0;

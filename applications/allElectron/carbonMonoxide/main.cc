@@ -6,16 +6,17 @@ const double radiusAtomBall = 3.0;
 //
 //test case for carbon-monoxide
 //
-const unsigned int FEOrder=4;
+const unsigned int FEOrder=1;
 const unsigned int n_refinement_steps=0;
 const double lowerEndWantedSpectrum=-18.0;
-const unsigned int chebyshevOrder=50; 
-const unsigned int numSCFIterations=20;
+const unsigned int chebyshevOrder=20; 
+const unsigned int numSCFIterations=50;
 const bool isPseudopotential = false;
-//solver paramteters 
+
+//solver parameters 
 const unsigned int maxLinearSolverIterations=5000;
 const double relLinearSolverTolerance=1.0e-14; 
-
+const double selfConsistentSolverTolerance   = 1.0e-11;
 
 //Define constants
 const double TVal=500.0;
@@ -23,6 +24,7 @@ const double TVal=500.0;
 //Mesh information
 #define meshFileName "../../../data/meshes/allElectron/carbonMonoxide/mesh.inp"
 #define coordinatesFile "../../../data/meshes/allElectron/carbonMonoxide/coordinates.inp" 
+#define kPointDataFile "../../../data/kPointList/GammaPoint.inp"
 
 //dft header
 #include "../../../src2/dft/dft.cc"

@@ -1,5 +1,6 @@
 #include "initRho.cc"
 #include "initPseudo.cc"
+#include "initkPointData.cc"
 
 //
 //source file for dft class initializations
@@ -11,9 +12,37 @@ void dftClass::init(){
   //initialize FE objects
   //
   dofHandler.distribute_dofs (FE);
+  dofHandlerEigen.distribute_dofs (FEEigen);
+
   locally_owned_dofs = dofHandler.locally_owned_dofs ();
   DoFTools::extract_locally_relevant_dofs (dofHandler, locally_relevant_dofs);
   DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), dofHandler, d_supportPoints);
+
+  locally_owned_dofsEigen = dofHandlerEigen.locally_owned_dofs ();
+  DoFTools::extract_locally_relevant_dofs (dofHandlerEigen, locally_relevant_dofsEigen);
+  DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), dofHandlerEigen, d_supportPointsEigen);
+
+  //
+  //Extract real and imag DOF indices from the global vector - this will be needed in XHX operation, etc.
+  //
+#ifdef ENABLE_PERIODIC_BC
+  FEValuesExtractors::Scalar real(0); //For Eigen
+  ComponentMask componentMaskForRealDOF = FEEigen.component_mask (real);
+  std::vector<bool> selectedDofsReal(locally_owned_dofsEigen.n_elements(), false);
+  DoFTools::extract_dofs(dofHandlerEigen, componentMaskForRealDOF, selectedDofsReal);
+  std::vector<unsigned int> local_dof_indices(locally_owned_dofsEigen.n_elements());
+  locally_owned_dofsEigen.fill_index_vector(local_dof_indices);
+  for (unsigned int i=0; i<locally_owned_dofsEigen.n_elements(); i++){
+    if (selectedDofsReal[i]) {
+      local_dof_indicesReal.push_back(local_dof_indices[i]);
+    }
+    else{
+      local_dof_indicesImag.push_back(local_dof_indices[i]);
+   }
+  }
+#endif
+
+
   
   pcout << "number of elements: "
 	<< triangulation.n_global_active_cells()
@@ -45,8 +74,9 @@ void dftClass::init(){
   //
   //hanging node constraints
   //
-  constraintsNone.clear ();
+  constraintsNone.clear(); constraintsNoneEigen.clear();
   DoFTools::make_hanging_node_constraints (dofHandler, constraintsNone);
+  DoFTools::make_hanging_node_constraints (dofHandlerEigen, constraintsNoneEigen);
 
   double halfxyzSpan = 3.8;
 
@@ -74,22 +104,48 @@ void dftClass::init(){
       }
       //}
   }
+//mark faces
+  cell = dofHandlerEigen.begin_active(), endc = dofHandlerEigen.end();
+  for (; cell!=endc; ++cell) {
+    //if (cell->is_locally_owned()){
+      for (unsigned int f=0; f < GeometryInfo<3>::faces_per_cell; ++f){
+	const Point<3> face_center = cell->face(f)->center();
+	if (cell->face(f)->at_boundary()){
+	  if (std::abs(face_center[0]+halfxyzSpan)<1.0e-8)
+	    cell->face(f)->set_boundary_id(1);
+	  else if (std::abs(face_center[0]-halfxyzSpan)<1.0e-8)
+	    cell->face(f)->set_boundary_id(2);
+	  else if (std::abs(face_center[1]+halfxyzSpan)<1.0e-8)
+	    cell->face(f)->set_boundary_id(3);
+	  else if (std::abs(face_center[1]-halfxyzSpan)<1.0e-8)
+	    cell->face(f)->set_boundary_id(4);
+	  else if (std::abs(face_center[2]+halfxyzSpan)<1.0e-8)
+	    cell->face(f)->set_boundary_id(5);
+	  else if (std::abs(face_center[2]-halfxyzSpan)<1.0e-8)
+	    cell->face(f)->set_boundary_id(6);
+	}
+      }
+      //}
+  }
 
   pcout << "Done with Boundary Flags\n";
   std::vector<GridTools::PeriodicFacePair<typename parallel::distributed::Triangulation<3>::cell_iterator> > periodicity_vector;
-  for (int i=0; i<3; ++i){
+  for (int i = 0; i < 3; ++i){
     GridTools::collect_periodic_faces(triangulation, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector);
   }
   triangulation.add_periodicity(periodicity_vector);
-  pcout << "Periodic Facepairs: " << periodicity_vector.size() << std::endl;
+  std::cout << "Periodic Facepairs: " << periodicity_vector.size() << std::endl;
 
   std::vector<GridTools::PeriodicFacePair<typename DoFHandler<3>::cell_iterator> > periodicity_vector2;
+  std::vector<GridTools::PeriodicFacePair<typename DoFHandler<3>::cell_iterator> > periodicity_vector2Eigen;
   for (int i=0; i<3; ++i){
     GridTools::collect_periodic_faces(dofHandler, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector2);
+    GridTools::collect_periodic_faces(dofHandlerEigen, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector2Eigen);
   }
+  //std::cout << "Periodic Facepairs 2: " << periodicity_vector2.size() << std::endl;
   DoFTools::make_periodicity_constraints<DoFHandler<3> >(periodicity_vector2, constraintsNone);
+  DoFTools::make_periodicity_constraints<DoFHandler<3> >(periodicity_vector2Eigen, constraintsNoneEigen);
   pcout << "Detected Periodic Face Pairs: " << constraintsNone.n_constraints() << std::endl;
-
 
   pcout<<"Size of ConstraintsNone: "<< constraintsNone.n_constraints()<<std::endl;
 
@@ -164,6 +220,78 @@ void dftClass::init(){
   }
   constraintsNone.close();
   std::cout<<"Size of ConstraintsNone after fixing periodicity: "<< constraintsNone.n_constraints()<<std::endl;
+   //
+  //modify constraintsNoneEigen to account for the bug in higher order nodes
+  //
+  ConstraintMatrix constraintsTempEigen(constraintsNoneEigen); constraintsNoneEigen.clear();
+  std::set<unsigned int> masterNodesEigen;
+  //fill all masters
+  for(types::global_dof_index i = 0; i <dofHandlerEigen.n_dofs(); ++i){
+    if(locally_relevant_dofsEigen.is_element(i)){
+      if(constraintsTempEigen.is_constrained(i)){
+	if (constraintsTempEigen.is_identity_constrained(i)){
+	  Point<3> p=d_supportPointsEigen.find(i)->second;
+	  unsigned int masterNode=(*constraintsTempEigen.get_constraint_entries(i))[0].first;
+	  masterNodesEigen.insert(masterNode);
+	}
+      }
+    }
+  }
+
+  //
+  //fix wrong master map
+  //
+  for(types::global_dof_index i = 0; i <dofHandlerEigen.n_dofs(); ++i){
+    if(locally_relevant_dofsEigen.is_element(i)){
+      if(constraintsTempEigen.is_constrained(i)){
+	if (constraintsTempEigen.is_identity_constrained(i)){
+	  Point<3> p=d_supportPointsEigen.find(i)->second;
+	  unsigned int masterNode=(*constraintsTempEigen.get_constraint_entries(i))[0].first;
+	  unsigned int count=0, index=0;
+	  for (unsigned int k=0; k<3; k++){
+	    if (std::abs(std::abs(p[k])-halfxyzSpan)<periodicPrecision) {
+	      count++;
+	      index=k;
+	    }
+	  }
+	  if (count==1){
+	    Point<3> q=d_supportPointsEigen.find(masterNode)->second;
+	    unsigned int l=1, m=2;
+	    if (index==1){l=0; m=2;}
+	    else if (index==2){l=0; m=1;} 
+	    if (!((std::abs(p[l]-q[l])<periodicPrecision) and (std::abs(p[m]-q[m])<periodicPrecision))){
+	      bool foundNewMaster=false;
+	      for (std::set<unsigned int>::iterator it=masterNodes.begin(); it!=masterNodes.end(); ++it){
+		q=d_supportPointsEigen.find(*it)->second;
+		if (((std::abs(p[l]-q[l])<periodicPrecision) and (std::abs(p[m]-q[m])<periodicPrecision))){
+		  constraintsNoneEigen.add_line(i);
+		  constraintsNoneEigen.add_entry(i, *it, 1.0);
+		  foundNewMaster=true;
+		  break;
+		}
+	      }
+	      if (!foundNewMaster){
+		pcout << "\nError: Didnot find a replacement master node for a wrong master-slave periodic pair\n";
+		exit(-1);
+	      }
+	    }
+	    else{
+	      constraintsNoneEigen.add_line(i);
+	      constraintsNoneEigen.add_entry(i, masterNode, 1.0);
+	    }
+	  }
+	  else{
+	    constraintsNoneEigen.add_line(i);
+	    constraintsNoneEigen.add_entry(i, masterNode, 1.0);
+	  }
+	}
+      }
+    }
+  }
+  constraintsNoneEigen.close();
+#else
+  constraintsNone.close();
+  constraintsNoneEigen.close();
 #endif
 
   //
@@ -221,6 +349,10 @@ void dftClass::init(){
   for(int i = 0; i < d_constraintsVector.size(); ++i)
     dofHandlerVector.push_back(&dofHandler);
  
+  dofHandlerVector.push_back(&dofHandlerEigen); //DofHandler For Eigen
+  eigenDofHandlerIndex=dofHandlerVector.size()-1; //For Eigen
+  d_constraintsVector.push_back(&constraintsNoneEigen); //For Eigen;
+
   std::vector<Quadrature<1> > quadratureVector; 
   quadratureVector.push_back(QGauss<1>(FEOrder+1)); 
   quadratureVector.push_back(QGaussLobatto<1>(FEOrder+1));  
@@ -228,23 +360,33 @@ void dftClass::init(){
 
   matrix_free_data.reinit(dofHandlerVector, d_constraintsVector, quadratureVector, additional_data);
 
+
   //
   //initialize eigen vectors
   //
-  matrix_free_data.initialize_dof_vector(vChebyshev);
+  matrix_free_data.initialize_dof_vector(vChebyshev,eigenDofHandlerIndex);
   v0Chebyshev.reinit(vChebyshev);
   fChebyshev.reinit(vChebyshev);
   aj[0].reinit(vChebyshev); aj[1].reinit(vChebyshev); aj[2].reinit(vChebyshev);
   aj[3].reinit(vChebyshev); aj[4].reinit(vChebyshev);
-  for (unsigned int i=0; i<eigenVectors.size(); ++i){  
-    eigenVectors[i]->reinit(vChebyshev);
-    PSI[i]->reinit(vChebyshev);
-    tempPSI[i]->reinit(vChebyshev);
-    tempPSI2[i]->reinit(vChebyshev);
-    tempPSI3[i]->reinit(vChebyshev);
-    tempPSI4[i]->reinit(vChebyshev);
-  } 
+  for (unsigned int i=0; i<eigenVectors[0].size(); ++i)
+    {  
+      PSI[i]->reinit(vChebyshev);
+      tempPSI[i]->reinit(vChebyshev);
+      tempPSI2[i]->reinit(vChebyshev);
+      tempPSI3[i]->reinit(vChebyshev);
+      tempPSI4[i]->reinit(vChebyshev);
+    } 
   
+  for(unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+    {
+      for (unsigned int i=0; i<eigenVectors[kPoint].size(); ++i)
+	{
+	  eigenVectors[kPoint][i]->reinit(vChebyshev);
+	  eigenVectorsOrig[kPoint][i]->reinit(vChebyshev);
+	}
+    }
+
   //
   //locate atom core nodes and also locate atom nodes in each bin 
   //
@@ -260,6 +402,24 @@ void dftClass::init(){
   //Initialize libxc (exchange-correlation)
   //
   int exceptParamX, exceptParamC;
+
+#ifdef xc_id
+  #if   xc_id == 1
+  exceptParamX = xc_func_init(&funcX,XC_LDA_X,XC_UNPOLARIZED);
+  exceptParamC = xc_func_init(&funcC,XC_LDA_C_PZ,XC_UNPOLARIZED);
+  #elif xc_id == 2
+  exceptParamX = xc_func_init(&funcX,XC_LDA_X,XC_UNPOLARIZED);
+  exceptParamC = xc_func_init(&funcC,XC_LDA_C_PW,XC_UNPOLARIZED);
+  #elif xc_id == 3
+  exceptParamX = xc_func_init(&funcX,XC_LDA_X,XC_UNPOLARIZED);
+  exceptParamC = xc_func_init(&funcC,XC_LDA_C_VWN,XC_UNPOLARIZED);
+  #elif xc_id == 4
+  exceptParamX = xc_func_init(&funcX,XC_GGA_X_PBE,XC_UNPOLARIZED);
+  exceptParamC = xc_func_init(&funcC,XC_GGA_C_PBE,XC_UNPOLARIZED);
+  #elif xc_id > 4
+  #error exchange correlation id <= 4 required. 
+  #endif
+#else
   exceptParamX = xc_func_init(&funcX,XC_LDA_X,XC_UNPOLARIZED);
   exceptParamC = xc_func_init(&funcC,XC_LDA_C_PZ,XC_UNPOLARIZED);
   if(exceptParamX != 0 || exceptParamC != 0){
@@ -268,6 +428,7 @@ void dftClass::init(){
     pcout<<"-------------------------------------"<<std::endl;
     exit(-1);
   }
+#endif
 
   //
   //initialize local pseudopotential

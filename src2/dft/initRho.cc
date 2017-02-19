@@ -48,31 +48,40 @@ void dftClass::initRho()
   QGauss<3>  quadrature_formula(FEOrder+1);
   FEValues<3> fe_values (FE, quadrature_formula, update_values);
   const unsigned int n_q_points    = quadrature_formula.size();
+
   //Initialize electron density table storage
   rhoInValues=new std::map<dealii::CellId, std::vector<double> >;
   rhoInVals.push_back(rhoInValues);
+
   //loop over elements
   typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
-  for (; cell!=endc; ++cell) {
-    if (cell->is_locally_owned()){
-      (*rhoInValues)[cell->id()]=std::vector<double>(n_q_points);
-      double *rhoInValuesPtr = &((*rhoInValues)[cell->id()][0]);
-      for (unsigned int q = 0; q < n_q_points; ++q){
-	MappingQ<3> test(1); 
-	Point<3> quadPoint(test.transform_unit_to_real_cell(cell, fe_values.get_quadrature().point(q)));
-	double rhoValueAtQuadPt=0.0;
-	//loop over atoms
-	for (unsigned int n=0; n<atomLocations.size(); n++){
-	  Point<3> atom(atomLocations[n][2],atomLocations[n][3],atomLocations[n][4]);
-	  double distanceToAtom=quadPoint.distance(atom);
-	  if(distanceToAtom <= outerMostPointDen[atomLocations[n][0]]){
-	    rhoValueAtQuadPt+=alglib::spline1dcalc(denSpline[atomLocations[n][0]], distanceToAtom);
-	  }
+  for (; cell!=endc; ++cell) 
+    {
+      if (cell->is_locally_owned())
+	{
+	  (*rhoInValues)[cell->id()]=std::vector<double>(n_q_points);
+	  double *rhoInValuesPtr = &((*rhoInValues)[cell->id()][0]);
+	  for (unsigned int q = 0; q < n_q_points; ++q)
+	    {
+	      MappingQ<3> test(1); 
+	      Point<3> quadPoint(test.transform_unit_to_real_cell(cell, fe_values.get_quadrature().point(q)));
+	      double rhoValueAtQuadPt=0.0;
+	      //loop over atoms
+	      for (unsigned int n=0; n<atomLocations.size(); n++)
+		{
+		  Point<3> atom(atomLocations[n][2],atomLocations[n][3],atomLocations[n][4]);
+		  double distanceToAtom=quadPoint.distance(atom);
+		  if(distanceToAtom <= outerMostPointDen[atomLocations[n][0]])
+		    {
+		      rhoValueAtQuadPt+=alglib::spline1dcalc(denSpline[atomLocations[n][0]], distanceToAtom);
+		    }
+		}
+	      rhoInValuesPtr[q]=std::abs(rhoValueAtQuadPt);//1.0
+	    }
 	}
-	rhoInValuesPtr[q]=1.0;//std::abs(rhoValueAtQuadPt);//1.0
-      }
-    }
-  } 
+    } 
+
+
 
   //
   //Normalize rho

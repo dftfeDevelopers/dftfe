@@ -37,7 +37,11 @@ public:
  
   //data structures
   vectorType massVector;
+#ifdef ENABLE_PERIODIC_BC
+  std::vector<std::complex<double> > XHXValue;
+#else
   std::vector<double> XHXValue;
+#endif
   std::vector<vectorType*> HXvalue;
   dealii::Table<2, dealii::VectorizedArray<double> > vEff;
 

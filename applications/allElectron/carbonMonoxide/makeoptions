@@ -1,5 +1,5 @@
 rm -rf CMakeFiles cmake_install.cmake CMakeCache.txt
-cmake -DCMAKE_BUILD_TYPE="Release" CMakeLists.txt -DCMAKE_CXX_FLAGS="${CMAKE_CXX_FLAGS} -I/nfs/mcfs_comp/home/rudraa/software/libxc/libxc-2.2.0/installDir/include -w"
+cmake -DCMAKE_BUILD_TYPE="Debug" CMakeLists.txt -DCMAKE_CXX_FLAGS="${CMAKE_CXX_FLAGS} -I/nfs/mcfs_comp/home/rudraa/software/libxc/libxc-2.2.0/installDir/include -w"
 perl -p -i -e 'chomp if eof' CMakeFiles/main.dir/link.txt
 echo "done1"
 echo "/nfs/mcfs_comp/home/rudraa/software/libxc/libxc-2.2.0/installDir/lib/libxcf90.a /nfs/mcfs_comp/home/rudraa/software/libxc/libxc-2.2.0/installDir/lib/libxc.a /nfs/mcfs_comp/home/rudraa/software/alglib/cpp/src/libAlglib.so" >> CMakeFiles/main.dir/link.txt

@@ -2,7 +2,7 @@
 //Define parameters
 //
 const double radiusAtomBall           = 3.0;
-const unsigned int FEOrder            = 4;
+const unsigned int FEOrder            = 1;
 const unsigned int n_refinement_steps = 0;
 
 //
@@ -16,7 +16,7 @@ const double relLinearSolverTolerance        = 1.0e-12;
 const double selfConsistentSolverTolerance   = 1.0e-11;
 
 //
-//other inputs
+//Other inputs
 //
 const bool isPseudopotential   = true;
 const double nlpTolerance      = 1.0e-08;
@@ -28,17 +28,29 @@ const double nlpTolerance      = 1.0e-08;
 const double TVal = 500.0;
 
 //
-//Mesh information
+//exchange correlation functional choice 
+//
+
+/*xc_id = 0 (No exchange correlation)
+  xc_id = 1 (LDA: Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)])
+  xc_id = 2 (LDA: Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)])
+  xc_id = 3 (LDA: Vosko, Wilk & Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)])
+  xc_id = 4 (GGA: Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)])*/
+#define xc_id 1 
+
+//
+//mesh information
 //
 #define meshFileName "../../../data/meshes/pseudoPotential/aluminum1Atom/mesh.inp"
 #define coordinatesFile "../../../data/meshes/pseudoPotential/aluminum1Atom/coordinates.inp" 
-
+#define kPointDataFile "../../../data/kPointList/GammaPoint.inp"
 //
 //dft header
 //
 #include "../../../src2/dft/dft.cc"
 
-int main (int argc, char *argv[]){
+int main (int argc, char *argv[])
+{
   Utilities::MPI::MPI_InitFinalize mpi_initialization (argc, argv);
   deallog.depth_console(0);
   {

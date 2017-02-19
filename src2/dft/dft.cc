@@ -15,6 +15,9 @@
 #include "mixingschemes.cc"
 #include "chebyshev.cc"
 #include "solveVself.cc"
+#include <complex>
+#include <cmath>
+#include <algorithm>
 
 #ifdef ENABLE_PERIODIC_BC
 #include "generateImageCharges.cc"
@@ -23,8 +26,14 @@
 //dft constructor
 dftClass::dftClass():
   triangulation (MPI_COMM_WORLD),
-  FE (QGaussLobatto<1>(FEOrder+1)),
+  FE (FE_Q<3>(QGaussLobatto<1>(FEOrder+1)), 1),
+#ifdef ENABLE_PERIODIC_BC
+  FEEigen (FE_Q<3>(QGaussLobatto<1>(FEOrder+1)), 2),
+#else
+  FEEigen (FE_Q<3>(QGaussLobatto<1>(FEOrder+1)), 1),
+#endif
   dofHandler (triangulation),
+  dofHandlerEigen (triangulation),
   mpi_communicator (MPI_COMM_WORLD),
   n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_communicator)),
   this_mpi_process (Utilities::MPI::this_mpi_process(mpi_communicator)),
@@ -33,11 +42,19 @@ dftClass::dftClass():
   numElectrons(0),
   numBaseLevels(0),
   numLevels(0),
+  d_maxkPoints(1),
   pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
-  computing_timer (pcout, TimerOutput::summary, TimerOutput::wall_times),
-  bLow(0.0),
-  a0(lowerEndWantedSpectrum)
+  computing_timer (pcout, TimerOutput::summary, TimerOutput::wall_times)
 {
+
+  //
+  // initialize PETSc
+  //
+  PetscErrorCode petscError = SlepcInitialize(NULL,
+					      NULL,
+					      NULL,
+					      NULL);
+
 
 }
 
@@ -155,9 +172,9 @@ void dftClass::set(){
 #endif
 
   /*readFile(numberColumnsCoordinatesFile, atomLocations, coordinatesFile);
-  pcout << "number of atoms: " << atomLocations.size() << "\n";
-  //find unique atom types
-  for (std::vector<std::vector<double> >::iterator it=atomLocations.begin(); it<atomLocations.end(); it++){
+    pcout << "number of atoms: " << atomLocations.size() << "\n";
+    //find unique atom types
+    for (std::vector<std::vector<double> >::iterator it=atomLocations.begin(); it<atomLocations.end(); it++){
     atomTypes.insert((unsigned int)((*it)[0]));
     }*/
  
@@ -169,10 +186,42 @@ void dftClass::set(){
   determineOrbitalFilling();  
   //numEigenValues=waveFunctionsVector.size();
   pcout << "num of eigen values: " << numEigenValues << std::endl; 
+
+  //
+  //read kPoint data
+  //
+#ifdef ENABLE_PERIODIC_BC
+  readkPointData();
+#else
+  d_maxkPoints = 1;
+  d_kPointCoordinates.resize(3*d_maxkPoints,0.0);
+  d_kPointWeights.resize(d_maxkPoints,1.0);
+#endif
+
+  pcout<<"Actual k-Point-coordinates and weights: "<<std::endl;
+  for(int i = 0; i < d_maxkPoints; ++i)
+    {
+      pcout<<d_kPointCoordinates[3*i + 0]<<" "<<d_kPointCoordinates[3*i + 1]<<" "<<d_kPointCoordinates[3*i + 2]<<" "<<d_kPointWeights[i]<<std::endl;
+    } 
+  
   //set size of eigenvalues and eigenvectors data structures
-  eigenValues.resize(numEigenValues);
+  eigenValues.resize(d_maxkPoints);
+  a0.resize(d_maxkPoints,lowerEndWantedSpectrum);
+  bLow.resize(d_maxkPoints,0.0);
+  eigenVectors.resize(d_maxkPoints);
+  eigenVectorsOrig.resize(d_maxkPoints);
+
+  for(unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+    {
+      eigenValues[kPoint].resize(numEigenValues);  
+      for (unsigned int i=0; i<numEigenValues; ++i)
+	{
+	  eigenVectors[kPoint].push_back(new vectorType);
+	  eigenVectorsOrig[kPoint].push_back(new vectorType);
+	}
+    }
+
   for (unsigned int i=0; i<numEigenValues; ++i){
-    eigenVectors.push_back(new vectorType);
     PSI.push_back(new vectorType);
     tempPSI.push_back(new vectorType);
     tempPSI2.push_back(new vectorType);
@@ -212,6 +261,7 @@ void dftClass::run ()
   //
   computing_timer.enter_section("dft solve"); 
 
+  
   //
   //Begin SCF iteration
   //
@@ -228,6 +278,9 @@ void dftClass::run ()
 	  if(this_mpi_process==0) printf("Mixing Scheme: iter:%u, norm:%12.6e\n", scfIter+1, norm);
 	}
       //phiTot with rhoIn
+
+      //parallel loop over all elements
+
       int constraintMatrixId = 1;
       poisson.solve(poisson.phiTotRhoIn,constraintMatrixId,rhoInValues);
       pcout<<"L-2 Norm of Phi-in   : "<<poisson.phiTotRhoIn.l2_norm()<<std::endl;
@@ -240,6 +293,8 @@ void dftClass::run ()
       std::ofstream output ("poisson.vtu");
       data_out.write_vtu (output);
       //eigen solve
+     
+
       if(isPseudopotential)
 	{
 	  eigen.computeVEff(rhoInValues, poisson.phiTotRhoIn, poisson.phiExt, pseudoValues);
@@ -248,11 +303,20 @@ void dftClass::run ()
 	{
 	  eigen.computeVEff(rhoInValues, poisson.phiTotRhoIn, poisson.phiExt); 
 	}
-      chebyshevSolver();
+
+      for(int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+	{
+	  d_kPointIndex = kPoint;
+	  chebyshevSolver();
+	}
+
+      
+      
       //fermi energy
       compute_fermienergy();
       //rhoOut
       compute_rhoOut();
+      
       //compute integral rhoOut
       double integralRhoOut=totalCharge(rhoOutValues);
       char buffer[100];

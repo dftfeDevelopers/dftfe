@@ -483,8 +483,8 @@ void dftClass::createAtomBins(std::vector<const ConstraintMatrix * > & constrain
       constraintsForVselfInBin->close();
       constraintsVector.push_back(constraintsForVselfInBin);
       
-      //std::cout<<"Size of Constraints: "<<constraintsForVselfInBin->n_constraints()<<std::endl;
-      //std::cout << "In: " << inNodes << "  Out: " << outNodes << "\n";
+      std::cout<<"Size of Constraints: "<<constraintsForVselfInBin->n_constraints()<<std::endl;
+      std::cout << "In: " << inNodes << "  Out: " << outNodes << "\n";
 
     }//bin loop
 

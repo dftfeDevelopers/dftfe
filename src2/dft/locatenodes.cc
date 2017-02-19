@@ -6,7 +6,7 @@ void dftClass::locateAtomCoreNodes(){
     cell = dofHandler.begin_active(),
     endc = dofHandler.end();
   //
-  IndexSet locally_owned_elements=eigenVectors[0]->locally_owned_elements();
+  //IndexSet locally_owned_elements=eigenVectors[0][0]->locally_owned_elements();
   //locating atom nodes
   unsigned int numAtoms=atomLocations.size();
   std::set<unsigned int> atomsTolocate;
@@ -27,9 +27,9 @@ void dftClass::locateAtomCoreNodes(){
 	       }
 	     else
 	       {
-		 std::cout << "Atom core with charge " << atomLocations[*it][1] << " located with node id " << nodeID << " in processor " << this_mpi_process<<" nodal coor "<<feNodeGlobalCoord[0]<<" "<<feNodeGlobalCoord[1]<<" "<<feNodeGlobalCoord[2]<<std::endl;
+		 std::cout << "Atom core with charge " << atomLocations[*it][0] << " located with node id " << nodeID << " in processor " << this_mpi_process<<" nodal coor "<<feNodeGlobalCoord[0]<<" "<<feNodeGlobalCoord[1]<<" "<<feNodeGlobalCoord[2]<<std::endl;
 	       }
-	     if (locally_owned_elements.is_element(nodeID)){
+	     if (locally_owned_dofs.is_element(nodeID)){
 	       if(isPseudopotential)
 		 atoms.insert(std::pair<unsigned int,double>(nodeID,atomLocations[*it][1]));
 	       else
@@ -78,7 +78,7 @@ void dftClass::locateAtomCoreNodes(){
 		    std::cout << "Atom core in bin " << iBin<<" with valence charge "<<atomLocations[chargeId][1] << " located with node id " << nodeID << " in processor " << this_mpi_process;
 		  else
 		    std::cout << "Atom core in bin " << iBin<<" with charge "<<atomLocations[chargeId][0] << " located with node id " << nodeID << " in processor " << this_mpi_process;
-		  if (locally_owned_elements.is_element(nodeID)){
+		  if (locally_owned_dofs.is_element(nodeID)){
 		    if(isPseudopotential)
 		      d_atomsInBin[iBin].insert(std::pair<unsigned int,double>(nodeID,atomLocations[chargeId][1]));
 		    else
@@ -109,8 +109,8 @@ void dftClass::locatePeriodicPinnedNodes(){
   //locating pinned nodes
   std::vector<std::vector<double> > pinnedLocations;
   std::vector<double> temp; 
-  //temp.push_back(3.8); temp.push_back(3.8); temp.push_back(3.8);//(center)
-  temp.push_back(0.0); temp.push_back(0.0); temp.push_back(0.0);//(corner)
+  temp.push_back(3.8); temp.push_back(3.8); temp.push_back(3.8);//(center)
+  //temp.push_back(0.0); temp.push_back(0.0); temp.push_back(0.0);//(corner)
   //temp.push_back(2.28); temp.push_back(0.0); temp.push_back(3.8);//(bcc)
   pinnedLocations.push_back(temp);
   unsigned int numAtoms=pinnedLocations.size();
