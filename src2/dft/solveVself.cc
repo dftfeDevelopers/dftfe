@@ -20,6 +20,7 @@ void dftClass::solveVself()
   for(int iBin = 0; iBin < numberBins; ++iBin)
     {
       int constraintMatrixId = iBin + 2;
+      matrix_free_data.initialize_dof_vector(poisson.vselfBinScratch,constraintMatrixId);
       poisson.solve(poisson.vselfBinScratch,constraintMatrixId);
 
       std::set<int> & atomsInBinSet = d_bins[iBin];

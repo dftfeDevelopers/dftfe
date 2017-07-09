@@ -10,6 +10,7 @@
 #include "eigen.h"
 #include "/nfs/mcfs_comp/home/rudraa/software/alglib/cpp/src/interpolation.h"
 #include "/nfs/mcfs_comp/home/rudraa/software/libxc/libxc-2.2.0/installDir/include/xc.h"
+
 #ifdef ENABLE_PERIODIC_BC
 #include "/home/vikramg/DFT-FE-softwares/softwareCentos/petsc/intel_petsc3.7.5_complex/include/petsc.h"
 #include "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/intel_slepc3.7.3_complex/include/slepceps.h"
@@ -95,7 +96,7 @@ class dftClass{
   void readkPointData();
   void loadPSIFiles(unsigned int Z, unsigned int n, unsigned int l, unsigned int & flag);
 
-#ifdef ENABLE_PERIODIC_BC  
+#ifdef ENABLE_PERIODIC_BC
   std::complex<double> innerProduct(vectorType & a,
 				    vectorType & b);
 
@@ -123,6 +124,7 @@ class dftClass{
   IndexSet   locally_owned_dofs, locally_owned_dofsEigen;
   IndexSet   locally_relevant_dofs, locally_relevant_dofsEigen;
   std::vector<unsigned int> local_dof_indicesReal, local_dof_indicesImag;
+  std::vector<unsigned int> localProc_dof_indicesReal,localProc_dof_indicesImag;
   poissonClass poisson;
   eigenClass eigen;
   ConstraintMatrix constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_constraintsPeriodicWithDirichlet; 
@@ -143,10 +145,10 @@ class dftClass{
 
 #ifdef xc_id
   #if xc_id == 4
-  std::map<dealii::CellId, std::vector<double> > *gradRhoXInValues,  *gradRhoYInValues,  *gradRhoZInValues;
-  std::map<dealii::CellId, std::vector<double> > *gradRhoXOutValues, *gradRhoYOutValues, *gradRhoZOutValues;
-  std::vector<std::map<dealii::CellId,std::vector<double> >*> gradRhoXInVals, gradRhoYInVals, gradRhoZInVals; 
-  std::vector<std::map<dealii::CellId,std::vector<double> >*> gradRhoXOutVals, gradRhoYOutVals, gradRhoZOutVals;
+  std::map<dealii::CellId, std::vector<double> > *gradRhoInValues;
+  std::map<dealii::CellId, std::vector<double> > *gradRhoOutValues;
+  std::vector<std::map<dealii::CellId,std::vector<double> >*> gradRhoInVals; 
+  std::vector<std::map<dealii::CellId,std::vector<double> >*> gradRhoOutVals;
   #endif
 #endif
 

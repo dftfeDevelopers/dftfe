@@ -76,12 +76,60 @@ void dftClass::initRho()
 		      rhoValueAtQuadPt+=alglib::spline1dcalc(denSpline[atomLocations[n][0]], distanceToAtom);
 		    }
 		}
-	      rhoInValuesPtr[q]=std::abs(rhoValueAtQuadPt);//1.0
+	      rhoInValuesPtr[q]= 1.0;//std::abs(rhoValueAtQuadPt);//1.0
 	    }
 	}
     } 
 
+#ifdef xc_id
+  //loop over elements
+#if xc_id == 4
+  gradRhoInValues = new std::map<dealii::CellId, std::vector<double> >;
 
+  gradRhoInVals.push_back(gradRhoInValues);
+
+
+  cell = dofHandler.begin_active();
+  for(; cell!=endc; ++cell) 
+    {
+      if(cell->is_locally_owned())
+	{
+	  (*gradRhoInValues)[cell->id()]=std::vector<double>(3*n_q_points);
+
+	  double *gradRhoInValuesPtr = &((*gradRhoInValues)[cell->id()][0]);
+
+	  for (unsigned int q = 0; q < n_q_points; ++q)
+	    {
+	      MappingQ<3> test(1); 
+	      Point<3> quadPoint(test.transform_unit_to_real_cell(cell, fe_values.get_quadrature().point(q)));
+	      double gradRhoXValueAtQuadPt = 0.0;
+	      double gradRhoYValueAtQuadPt = 0.0;
+	      double gradRhoZValueAtQuadPt = 0.0;
+	      //loop over atoms
+	      for (unsigned int n = 0; n < atomLocations.size(); n++)
+		{
+		  Point<3> atom(atomLocations[n][2],atomLocations[n][3],atomLocations[n][4]);
+		  double distanceToAtom = quadPoint.distance(atom);
+		  if(distanceToAtom <= outerMostPointDen[atomLocations[n][0]])
+		    {
+		      //rhoValueAtQuadPt+=alglib::spline1dcalc(denSpline[atomLocations[n][0]], distanceToAtom);
+		      double radialDensityDerivative = alglib::spline1ddiff(denSpline[atomLocations[n][0]],
+									    distanceToAtom);
+										      
+		      gradRhoXValueAtQuadPt += radialDensityDerivative*((quadPoint[0] - atomLocations[n][2])/distanceToAtom);
+		      gradRhoYValueAtQuadPt += radialDensityDerivative*((quadPoint[1] - atomLocations[n][3])/distanceToAtom);
+		      gradRhoZValueAtQuadPt += radialDensityDerivative*((quadPoint[2] - atomLocations[n][4])/distanceToAtom);
+		    }
+		}
+	      int signRho = (*rhoInValues)[cellPtr->id()][q]/std::abs((*rhoInValues)[cellPtr->id()][q]);
+	      gradRhoInValuesPtr[3*q+0] = signRho*gradRhoXValueAtQuadPt;
+	      gradRhoInValuesPtr[3*q+1] = signRho*gradRhoYValueAtQuadPt;
+	      gradRhoInValuesPtr[3*q+2] = signRho*gradRhoZValueAtQuadPt;
+	    }
+	}
+    } 
+#endif
+#endif
 
   //
   //Normalize rho

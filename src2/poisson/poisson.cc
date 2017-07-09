@@ -24,12 +24,14 @@ void poissonClass::init()
   //initialize vectors
   //
   dftPtr->matrix_free_data.initialize_dof_vector(rhs);
+  //dftPtr->matrix_free_data.initialize_dof_vector(vselfBinScratch,2);
+
   rhs2.reinit (rhs);
   jacobianDiagonal.reinit (rhs);
   phiTotRhoIn.reinit (rhs);
   phiTotRhoOut.reinit (rhs);
   phiExt.reinit (rhs);
-  vselfBinScratch.reinit (rhs);
+  //vselfBinScratch.reinit (rhs);
   
   computing_timer.exit_section("poissonClass setup"); 
 
@@ -81,7 +83,7 @@ void poissonClass::computeRHS2()
 		      for (unsigned int i=0; i<dofs_per_cell; ++i)
 			{
 			  //compute contribution to rhs2
-			  double localJacobianIJ=0.0;
+			  double localJacobianIJ = 0.0;
 			  for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
 			    {
 			      localJacobianIJ += (1.0/(4.0*M_PI))*(fe_values.shape_grad(i, q_point)*fe_values.shape_grad (j, q_point))*fe_values.JxW(q_point);
@@ -252,9 +254,9 @@ void poissonClass::AX (const dealii::MatrixFree<3,double>  &data,
   int constraintId = d_constraintMatrixId;
 #ifdef ENABLE_PERIODIC_BC
   if(d_constraintMatrixId > 1)
-    constraintId = d_constraintMatrixId;
+   constraintId = d_constraintMatrixId;
   else
-    constraintId = 0;
+   constraintId = 0;
 #endif
 
   FEEvaluation<3,FEOrder> fe_eval(data, constraintId, 0); 

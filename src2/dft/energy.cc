@@ -30,8 +30,67 @@ void dftClass::compute_energy(){
 
   //parallel loop over all elements
   typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
+#ifdef xc_id
+#if xc_id == 4
+  for (; cell!=endc; ++cell) 
+    {
+      if (cell->is_locally_owned())
+	{
+	  // Compute values for current cell.
+	  fe_values.reinit (cell);
+	  fe_values.get_function_values(poisson.phiTotRhoIn,cellPhiTotRhoIn);
+	  fe_values.get_function_values(poisson.phiTotRhoOut,cellPhiTotRhoOut);
+	  fe_values.get_function_values(poisson.phiExt,cellPhiExt);
+	  
+	  //Get Exc
+	  std::vector<double> densityValueIn(num_quad_points), densityValueOut(num_quad_points);
+	  std::vector<double> exchangeEnergyDensity(num_quad_points), corrEnergyDensity(num_quad_points);
+	  std::vector<double> derExchEnergyWithInputDensity(num_quad_points), derCorrEnergyWithInputDensity(num_quad_points);
+	  std::vector<double> derExchEnergyWithSigmaGradDenInput(num_quad_points),derCorrEnergyWithSigmaGradDenInput(num_quad_points);
+	  std::vector<double> sigmaWithOutputGradDensity(num_quad_points), sigmaWithInputGradDensity(num_quad_points);
+	  std::vector<double> gradRhoInDotgradRhoOut(num_quad_points);
+	  for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
+	    {
+	      densityValueIn[q_point] = (*rhoInValues)[cell->id()][q_point];
+	      densityValueOut[q_point] = (*rhoOutValues)[cell->id()][q_point];
+	      double gradRhoInX = ((*gradRhoInValues)[cellPtr->id()][3*q_point + 0]);
+	      double gradRhoInY = ((*gradRhoInValues)[cellPtr->id()][3*q_point + 1]);
+	      double gradRhoInZ = ((*gradRhoInValues)[cellPtr->id()][3*q_point + 2]);
+	      double gradRhoOutX = ((*gradRhoOutValues)[cellPtr->id()][3*q_point + 0]);
+	      double gradRhoOutY = ((*gradRhoOutValues)[cellPtr->id()][3*q_point + 1]);
+	      double gradRhoOutZ = ((*gradRhoOutValues)[cellPtr->id()][3*q_point + 2]);
+	      sigmaWithInputGradDensity[q_point] = gradRhoInX*gradRhoInX + gradRhoInY*gradRhoInY + gradRhoInZ*gradRhoInZ;
+	      sigmaWithOutputGradDensity[q_point] = gradRhoOutX*gradRhoOutX + gradRhoOutY*gradRhoOutY + gradRhoOutZ*gradRhoOutZ;
+	      gradRhoInDotgradRhoOut[q_point] = gradRhoInX[q_point]*gradRhoOutX[q_point] + gradRhoInY[q_point]*gradRhoOutY[q_point] + gradRhoInZ[q_point]*gradRhoOutZ[q_point];
+	    }
+	  xc_gga_exc(&funcX,num_quad_points,&densityValueOut[0],&sigmaWithOutputGradDensity[0],&exchangeEnergyDensity[0]);
+	  xc_gga_exc(&funcC,num_quad_points,&densityValueOut[0],&sigmaWithOutputGradDensity[0],&corrEnergyDensityx[0]);
 
+	  xc_gga_vxc(&funcX,num_quad_points,&densityValueIn[0],&sigmaWithInputGradDensity[0],&derExchEnergyWithInputDensity[0],&derExchEnergyWithSigmaGradDenInput[0]);
+	  xc_gga_vxc(&funcC,num_quad_points,&densityValueIn[0],&sigmaWithInputGradDensity[0],&derCorrEnergyWithInputDensity[0],&derCorrEnergyWithSigmaGradDenInput[0]);
+	  for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
+	    {
+	      //Veff computed with rhoIn
+	      double Veff=cellPhiTotRhoIn[q_point]+derExchEnergyWithInputDensity[q_point]+derCorrEnergyWithInputDensity[q_point];
+	      double VxcGrad = 2.0*(derExchEnergyWithSigmaGradDenInput[q_point]+derCorrEnergyWithSigmaGradDenInput[q_point])*gradRhoInDotgradRhoOut[q_point];
 
+	      //Vtot, Vext computet with rhoIn
+	      double Vtot=cellPhiTotRhoOut[q_point];
+	      double Vext=cellPhiExt[q_point];
+
+	      //quad rule
+	      potentialTimesRho+=(Veff*((*rhoOutValues)[cell->id()][q_point])+VxcGrad)*fe_values.JxW (q_point);
+	      exchangeEnergy+=(exchangeEnergyDensity[q_point])*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
+	      correlationEnergy+=(corrEnergyDensity[q_point])*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
+#ifdef ENABLE_PERIODIC_BC
+	      electrostaticEnergyTotPot+=0.5*(Vtot)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
+#else
+	      electrostaticEnergyTotPot+=0.5*(Vtot+Vext)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
+#endif
+	    }
+	}
+    } 
+#else
   for (; cell!=endc; ++cell) 
     {
       if (cell->is_locally_owned())
@@ -73,6 +132,11 @@ void dftClass::compute_energy(){
 	    }
 	}
     } 
+#endif
+#endif
+
+
+  
   double energy=-potentialTimesRho+exchangeEnergy+correlationEnergy+electrostaticEnergyTotPot;
 
   //

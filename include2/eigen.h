@@ -27,6 +27,13 @@ public:
 		   const vectorType & phi,
 		   const vectorType & phiExt,
 		   std::map<dealii::CellId,std::vector<double> >* pseudoValues=0);
+
+  void computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoValues,
+		   std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
+		   const vectorType & phi,
+		   const vectorType & phiExt,
+		   std::map<dealii::CellId,std::vector<double> >* pseudoValues=0);
+
   
   //pointer to dft class
   dftClass* dftPtr;
@@ -44,6 +51,8 @@ public:
 #endif
   std::vector<vectorType*> HXvalue;
   dealii::Table<2, dealii::VectorizedArray<double> > vEff;
+
+  dealii::Table<3, dealii::VectorizedArray<double> > derExcWithSigmaTimesGradRho;
 
   //parallel objects
   MPI_Comm mpi_communicator;

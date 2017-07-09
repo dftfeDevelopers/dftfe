@@ -7,18 +7,19 @@
 //Testing for one C atom simple cubic with periodic boundary conditions
 //
 const double radiusAtomBall           = 3.0;
-const unsigned int FEOrder            = 1; 
+const unsigned int FEOrder            = 4; 
 const unsigned int n_refinement_steps = 4;
 const int periodic_x = 1; //For non-orthogonal unit-cells, this is a-direction
 const int periodic_y = 1; //For non-orthogonal unit-cells, this is b-direction
 const int periodic_z = 1; //For non-orthogonal unit-cells, this is c-direction
+
 
 //
 //Solver parameters
 //
 const double lowerEndWantedSpectrum = -10.0;
 const unsigned int chebyshevOrder   = 50;
-const unsigned int numSCFIterations = 30;
+const unsigned int numSCFIterations = 50;
 const unsigned int maxLinearSolverIterations = 5000;
 const double relLinearSolverTolerance        = 1.0e-14; 
 const double selfConsistentSolverTolerance   = 1.0e-11;
@@ -33,10 +34,12 @@ const bool isPseudopotential = false;
 //
 const double TVal=500.0;
 
+
 //
 //Mesh information
 //
 #define meshFileName "../../../data/meshes/allElectron/PeriodicSystems/simplecubic/carbon/meshPeriodic.inp"
+//#define meshFileName "../../../data/meshes/allElectron/PeriodicSystems/DebugMeshes/mesh.inp"
 #define coordinatesFile "../../../data/meshes/allElectron/PeriodicSystems/simplecubic/carbon/coordinatesCenter.inp"
 //#define coordinatesFile "../../../data/meshes/allElectron/PeriodicSystems/simplecubic/carbon/coordinatesCorner.inp"
 #define latticeVectorsFile "../../../data/meshes/allElectron/PeriodicSystems/simplecubic/carbon/latticeVectors.inp"
@@ -45,7 +48,7 @@ const double TVal=500.0;
 /*#define meshFileName "../../../data/meshes/allElectron/PeriodicSystems/bcc/carbon/meshPeriodic.inp"
 #define coordinatesFile "../../../data/meshes/allElectron/PeriodicSystems/bcc/carbon/coordinatesPeriodic.inp"
 #define latticeVectorsFile "../../../data/meshes/allElectron/PeriodicSystems/bcc/carbon/latticeVectors.inp"*/
-
+#define xc_id 1
 //  
 //dft header
 // 

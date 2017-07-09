@@ -295,22 +295,25 @@ void dftClass::run ()
       //eigen solve
      
 
+#ifdef xc_id
+ #if xc_id < 4
       if(isPseudopotential)
-	{
-	  eigen.computeVEff(rhoInValues, poisson.phiTotRhoIn, poisson.phiExt, pseudoValues);
-	}
+	eigen.computeVEff(rhoInValues, poisson.phiTotRhoIn, poisson.phiExt, pseudoValues);
       else
-	{
-	  eigen.computeVEff(rhoInValues, poisson.phiTotRhoIn, poisson.phiExt); 
-	}
+	eigen.computeVEff(rhoInValues, poisson.phiTotRhoIn, poisson.phiExt); 
+ #elif xc_id == 4
+      if(isPseudopotential)
+	eigen.computeVEff(rhoInValues, gradRhoInValues, poisson.phiTotRhoIn, poisson.phiExt, pseudoValues);
+      else
+	eigen.computeVEff(rhoInValues, gradRhoInValues, poisson.phiTotRhoIn, poisson.phiExt);
+ #endif
+#endif
 
       for(int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
 	{
 	  d_kPointIndex = kPoint;
 	  chebyshevSolver();
 	}
-
-      
       
       //fermi energy
       compute_fermienergy();

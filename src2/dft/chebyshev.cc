@@ -119,8 +119,9 @@ void dftClass::alphaTimesXPlusY(std::complex<double>   alpha,
   y = 0.0;
   for(unsigned int i = 0; i < dofs_per_proc; ++i)
     {
-      y.local_element(2*i)   = ylocal[i].real();
-      y.local_element(2*i+1) = ylocal[i].imag();
+      y.local_element(localProc_dof_indicesReal[i]) = ylocal[i].real();
+      y.local_element(localProc_dof_indicesImag[i]) = ylocal[i].imag();
+
     }
 
   y.update_ghost_values();
@@ -182,10 +183,12 @@ double dftClass::upperBound(){
 
   /*for (unsigned int i=0; i<local_size/2; i++) 
     {
-      local_values[2*i]= 1.0;//((double)std::rand())/((double)RAND_MAX);
-      local_values[2*i+1] = 0.0;
+      local_values[localProc_dof_indicesReal[i]] = 1.0;
+      local_values[localProc_dof_indicesImag[i]] = 0.0;
       }*/
   constraintsNoneEigen.distribute_local_to_global(local_values, local_dof_indices, vChebyshev);
+  vChebyshev.compress(VectorOperation::add);
+
   //
   vChebyshev/=vChebyshev.l2_norm();
   vChebyshev.update_ghost_values();
@@ -195,9 +198,22 @@ double dftClass::upperBound(){
   f.push_back(&fChebyshev);
   eigen.HX(v,f);
 
-  char buffer2[100];
-  sprintf(buffer2, "v: %18.10e,  f: %18.10e\n", vChebyshev.l1_norm(), fChebyshev.l2_norm());
-  //pcout << buffer2;
+  char buffer2[100],buffer3[100],buffer4[100];
+  sprintf(buffer2, "v-L1: %18.10e,  f-L1: %18.10e\n", vChebyshev.l1_norm(), fChebyshev.l1_norm());
+  sprintf(buffer3, "v-L2: %18.10e,  f-L2: %18.10e\n", vChebyshev.l2_norm(), fChebyshev.l2_norm());
+  sprintf(buffer4, "v-Linf: %18.10e,  f-Linf: %18.10e\n", vChebyshev.linfty_norm(), fChebyshev.linfty_norm());
+  pcout << buffer2;
+  pcout << buffer3;
+  pcout << buffer4;
+
+  /*for(unsigned int i = 0; i < local_size/2; ++i)
+    {
+      std::cout<<2*i<<" "<<fChebyshev[2*i]<<std::endl;
+      std::cout<<2*i+1<<" "<<fChebyshev[2*i+1]<<std::endl;
+      }*/
+
+ 
+
   //
 #ifdef ENABLE_PERIODIC_BC
   //evaluate fChebyshev^{H}*vChebyshev
@@ -221,7 +237,7 @@ double dftClass::upperBound(){
       char buffer1[100];
       sprintf(buffer1, "alpha: %18.10e,  beta: %18.10e\n", alpha, beta);
       v0Chebyshev=vChebyshev; vChebyshev.equ(1.0/beta,fChebyshev);
-      eigen.HX(v,f); fChebyshev.add(-1.0*beta,v0Chebyshev);
+      eigen.HX(v,f); fChebyshev.add(-1.0*beta,v0Chebyshev);//beta is real
 #ifdef ENABLE_PERIODIC_BC
       alpha = innerProduct(fChebyshev,vChebyshev);
       alphaTimesXPlusY(-alpha,vChebyshev,fChebyshev);
@@ -271,7 +287,7 @@ double dftClass::upperBound(){
 void dftClass::gramSchmidt(std::vector<vectorType*>& X){
   computing_timer.enter_section("Chebyshev GS orthonormalization"); 
  
-  
+  //Memory optimization required here as well  
 
 #ifdef ENABLE_PERIODIC_BC
   unsigned int localSize = vChebyshev.local_size()/2;
@@ -342,7 +358,7 @@ void dftClass::gramSchmidt(std::vector<vectorType*>& X){
   }
   BVDestroy(&slepcColumnSpace);
   //
-  std::cout<<"Line 340: "<<std::endl;
+  
 
 #ifdef ENABLE_PERIODIC_BC
   VecGetArrays(petscColumnSpace, numVectors, &columnSpacePointer);
@@ -353,8 +369,8 @@ void dftClass::gramSchmidt(std::vector<vectorType*>& X){
       std::copy(&(columnSpacePointer[i][0]),&(columnSpacePointer[i][localSize]), localData.begin()); 
       for(int j = 0; j < localSize; ++j)
 	{
-	  X[i]->local_element(2*j) = localData[j].real();
-	  X[i]->local_element(2*j+1) = localData[j].imag();
+	  X[i]->local_element(localProc_dof_indicesReal[j]) = localData[j].real();
+	  X[i]->local_element(localProc_dof_indicesImag[j]) = localData[j].imag();
 	}
       X[i]->update_ghost_values();
     }
@@ -370,7 +386,6 @@ void dftClass::gramSchmidt(std::vector<vectorType*>& X){
     }
   VecRestoreArrays(petscColumnSpace, numVectors, &columnSpacePointer);
 #endif
-  std::cout<<"Line 368: "<<std::endl;
   //
   VecDestroyVecs(numVectors, &petscColumnSpace);
   //
@@ -417,8 +432,8 @@ void dftClass::rayleighRitz(std::vector<vectorType*> &X){
     {
       for (unsigned int i=0; i<(unsigned int)n1; i++)
 	{
-	  (*val).real((**x).local_element(2*i));
-	  (*val).imag((**x).local_element(2*i+1));
+	  (*val).real((**x).local_element(localProc_dof_indicesReal[i]));
+	  (*val).imag((**x).local_element(localProc_dof_indicesImag[i]));
 	   val++;
 	}
     }
@@ -455,8 +470,8 @@ lda=n1; int ldb=m, ldc=n1;
     {
       **x=0.0;
       for (unsigned int i=0; i<(unsigned int)n1; i++){
-	(**x).local_element(2*i)=(*val).real(); 
-	(**x).local_element(2*i+1)=(*val).imag(); 
+	(**x).local_element(localProc_dof_indicesReal[i])=(*val).real(); 
+	(**x).local_element(localProc_dof_indicesImag[i])=(*val).imag(); 
 	val++;
       }
       (**x).update_ghost_values();

@@ -190,9 +190,9 @@ void dftClass::readPSIRadialValues(){
   for(unsigned int dof=0; dof<numberDofs; dof++)
     {
 #ifdef ENABLE_PERIODIC_BC
-      unsigned int dofID = locallyOwnedDOFs[2*dof];
+      unsigned int dofID = local_dof_indicesReal[dof];//locallyOwnedDOFs[2*dof];
 #else
-      unsigned int dofID= locallyOwnedDOFs[dof];
+      unsigned int dofID = locallyOwnedDOFs[dof];
 #endif
       Point<3> node = d_supportPointsEigen[dofID];
       //loop over wave functions
@@ -220,13 +220,13 @@ void dftClass::readPSIRadialValues(){
 
 #ifdef ENABLE_PERIODIC_BC
 	if (it->m > 0){
-	  local_dof_values[waveFunction][2*dof] =  R*std::sqrt(2)*boost::math::spherical_harmonic_r(it->l,it->m,theta,phi);
+	  local_dof_values[waveFunction][localProc_dof_indicesReal[dof]] =  R*std::sqrt(2)*boost::math::spherical_harmonic_r(it->l,it->m,theta,phi);
 	}
 	else if (it->m == 0){
-	  local_dof_values[waveFunction][2*dof] =  R*boost::math::spherical_harmonic_r(it->l,it->m,theta,phi);
+	  local_dof_values[waveFunction][localProc_dof_indicesReal[dof]] =  R*boost::math::spherical_harmonic_r(it->l,it->m,theta,phi);
 	}
 	else{
-	  local_dof_values[waveFunction][2*dof] =  R*std::sqrt(2)*boost::math::spherical_harmonic_i(it->l,-(it->m),theta,phi);	  
+	  local_dof_values[waveFunction][localProc_dof_indicesReal[dof]] =  R*std::sqrt(2)*boost::math::spherical_harmonic_i(it->l,-(it->m),theta,phi);	  
 	}
 #else	
 	//spherical part
@@ -262,7 +262,12 @@ void dftClass::readPSIRadialValues(){
 	      double value =  boost::math::pdf(normDist, z); 
 	      if(rand()%2 == 0)
 		value = -1.0*value;
-	      local_dof_values[iWave][2*dof] = value;
+#ifdef ENABLE_PERIODIC_BC
+	      local_dof_values[iWave][localProc_dof_indicesReal[dof]] = value;
+#else
+	      local_dof_values[iWave][dof] = value;
+#endif
+	      
 	    }
 	}
 
@@ -273,6 +278,7 @@ void dftClass::readPSIRadialValues(){
       for (unsigned int i = 0; i < eigenVectors[kPoint].size(); ++i)
 	{
 	  constraintsNoneEigen.distribute_local_to_global(local_dof_values[i], locallyOwnedDOFs, *eigenVectors[kPoint][i]);
+	  eigenVectors[kPoint][i]->compress(VectorOperation::add);
 	}
     }
   //multiply by M^0.5

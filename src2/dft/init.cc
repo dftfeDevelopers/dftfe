@@ -1,12 +1,136 @@
 #include "initRho.cc"
 #include "initPseudo.cc"
+
+#ifdef ENABLE_PERIODIC_BC
 #include "initkPointData.cc"
+#endif
 
 //
 //source file for dft class initializations
 //
+void exchangeMasterNodesList(std::set<unsigned int> & masterNodeIdSet,
+			     std::set<unsigned int> & globalMasterNodeIdSet,
+			     unsigned int numMeshPartitions,
+			     const MPI_Comm & mpi_communicator)
+{
+
+  std::vector<int> localMasterNodeIdList;
+  std::copy(masterNodeIdSet.begin(),
+	    masterNodeIdSet.end(),
+	    std::back_inserter(localMasterNodeIdList));
+
+  int numberMasterNodesOnLocalProc = localMasterNodeIdList.size();
+
+  int * masterNodeIdListSizes = new int[numMeshPartitions];
+
+  MPI_Allgather(&numberMasterNodesOnLocalProc,
+		1,
+		MPI_INT,
+		masterNodeIdListSizes,
+		1,
+		MPI_INT,
+		mpi_communicator);
+
+  int newMasterNodeIdListSize = std::accumulate(&(masterNodeIdListSizes[0]),
+						&(masterNodeIdListSizes[numMeshPartitions]),
+						0);
+
+  std::vector<int> globalMasterNodeIdList(newMasterNodeIdListSize);
+
+  int * mpiOffsets = new int[numMeshPartitions];
+
+  mpiOffsets[0] = 0;
+
+  for(int i = 1; i < numMeshPartitions; ++i)
+    mpiOffsets[i] = masterNodeIdListSizes[i-1] + mpiOffsets[i-1];
+
+  MPI_Allgatherv(&(localMasterNodeIdList[0]),
+		 numberMasterNodesOnLocalProc,
+		 MPI_INT,
+		 &(globalMasterNodeIdList[0]),
+		 &(masterNodeIdListSizes[0]),
+		 &(mpiOffsets[0]),
+		 MPI_INT,
+		 mpi_communicator);
+
+
+  for(int i = 0; i < globalMasterNodeIdList.size(); ++i)
+    globalMasterNodeIdSet.insert(globalMasterNodeIdList[i]);
+
+  delete [] masterNodeIdListSizes;
+  delete [] mpiOffsets;
+	    
+  return;
+
+}
+
+
+
 void dftClass::init(){
   computing_timer.enter_section("dftClass setup");
+
+
+#ifdef ENABLE_PERIODIC_BC
+  //mark faces
+  double halfxyzSpan = 3.8;
+  typename parallel::distributed::Triangulation<3>::active_cell_iterator cell = triangulation.begin_active(), endc = triangulation.end();
+  for (; cell!=endc; ++cell) 
+    {
+      for (unsigned int f=0; f < GeometryInfo<3>::faces_per_cell; ++f)
+	{
+	  const Point<3> face_center = cell->face(f)->center();
+	  if (cell->face(f)->at_boundary())
+	    {
+	      if (std::abs(face_center[0]+halfxyzSpan)<1.0e-8)
+		cell->face(f)->set_boundary_id(1);
+	      else if (std::abs(face_center[0]-halfxyzSpan)<1.0e-8)
+		cell->face(f)->set_boundary_id(2);
+	      else if (std::abs(face_center[1]+halfxyzSpan)<1.0e-8)
+		cell->face(f)->set_boundary_id(3);
+	      else if (std::abs(face_center[1]-halfxyzSpan)<1.0e-8)
+		cell->face(f)->set_boundary_id(4);
+	      else if (std::abs(face_center[2]+halfxyzSpan)<1.0e-8)
+		cell->face(f)->set_boundary_id(5);
+	      else if (std::abs(face_center[2]-halfxyzSpan)<1.0e-8)
+		cell->face(f)->set_boundary_id(6);
+	    }
+	}
+    }
+
+  //mark faces
+  cell = triangulation.begin_active(), endc = triangulation.end();
+  for (; cell!=endc; ++cell) 
+    {
+      for (unsigned int f=0; f < GeometryInfo<3>::faces_per_cell; ++f)
+	{
+	  const Point<3> face_center = cell->face(f)->center();
+	  if (cell->face(f)->at_boundary())
+	    {
+	      if (std::abs(face_center[0]+halfxyzSpan)<1.0e-8)
+		cell->face(f)->set_boundary_id(1);
+	      else if (std::abs(face_center[0]-halfxyzSpan)<1.0e-8)
+		cell->face(f)->set_boundary_id(2);
+	      else if (std::abs(face_center[1]+halfxyzSpan)<1.0e-8)
+		cell->face(f)->set_boundary_id(3);
+	      else if (std::abs(face_center[1]-halfxyzSpan)<1.0e-8)
+		cell->face(f)->set_boundary_id(4);
+	      else if (std::abs(face_center[2]+halfxyzSpan)<1.0e-8)
+		cell->face(f)->set_boundary_id(5);
+	      else if (std::abs(face_center[2]-halfxyzSpan)<1.0e-8)
+		cell->face(f)->set_boundary_id(6);
+	    }
+	}
+    }
+
+  pcout << "Done with Boundary Flags\n";
+  std::vector<GridTools::PeriodicFacePair<typename parallel::distributed::Triangulation<3>::cell_iterator> > periodicity_vector;
+  for (int i = 0; i < 3; ++i)
+    {
+      GridTools::collect_periodic_faces(triangulation, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector);
+    }
+  triangulation.add_periodicity(periodicity_vector);
+  std::cout << "Periodic Facepairs: " << periodicity_vector.size() << std::endl;
+#endif  
     
   //
   //initialize FE objects
@@ -32,14 +156,19 @@ void dftClass::init(){
   DoFTools::extract_dofs(dofHandlerEigen, componentMaskForRealDOF, selectedDofsReal);
   std::vector<unsigned int> local_dof_indices(locally_owned_dofsEigen.n_elements());
   locally_owned_dofsEigen.fill_index_vector(local_dof_indices);
-  for (unsigned int i=0; i<locally_owned_dofsEigen.n_elements(); i++){
-    if (selectedDofsReal[i]) {
-      local_dof_indicesReal.push_back(local_dof_indices[i]);
+  for (unsigned int i = 0; i < locally_owned_dofsEigen.n_elements(); i++)
+    {
+      if (selectedDofsReal[i]) 
+	{
+	  local_dof_indicesReal.push_back(local_dof_indices[i]);
+	  localProc_dof_indicesReal.push_back(i);
+	}
+      else
+	{
+	  local_dof_indicesImag.push_back(local_dof_indices[i]);
+	  localProc_dof_indicesImag.push_back(i);	  
+	}
     }
-    else{
-      local_dof_indicesImag.push_back(local_dof_indices[i]);
-   }
-  }
 #endif
 
 
@@ -78,81 +207,32 @@ void dftClass::init(){
   DoFTools::make_hanging_node_constraints (dofHandler, constraintsNone);
   DoFTools::make_hanging_node_constraints (dofHandlerEigen, constraintsNoneEigen);
 
-  double halfxyzSpan = 3.8;
 
 #ifdef ENABLE_PERIODIC_BC
-  //mark faces
-  typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
-  for (; cell!=endc; ++cell) {
-    //if (cell->is_locally_owned()){
-      for (unsigned int f=0; f < GeometryInfo<3>::faces_per_cell; ++f){
-	const Point<3> face_center = cell->face(f)->center();
-	if (cell->face(f)->at_boundary()){
-	  if (std::abs(face_center[0]+halfxyzSpan)<1.0e-8)
-	    cell->face(f)->set_boundary_id(1);
-	  else if (std::abs(face_center[0]-halfxyzSpan)<1.0e-8)
-	    cell->face(f)->set_boundary_id(2);
-	  else if (std::abs(face_center[1]+halfxyzSpan)<1.0e-8)
-	    cell->face(f)->set_boundary_id(3);
-	  else if (std::abs(face_center[1]-halfxyzSpan)<1.0e-8)
-	    cell->face(f)->set_boundary_id(4);
-	  else if (std::abs(face_center[2]+halfxyzSpan)<1.0e-8)
-	    cell->face(f)->set_boundary_id(5);
-	  else if (std::abs(face_center[2]-halfxyzSpan)<1.0e-8)
-	    cell->face(f)->set_boundary_id(6);
-	}
-      }
-      //}
-  }
-//mark faces
-  cell = dofHandlerEigen.begin_active(), endc = dofHandlerEigen.end();
-  for (; cell!=endc; ++cell) {
-    //if (cell->is_locally_owned()){
-      for (unsigned int f=0; f < GeometryInfo<3>::faces_per_cell; ++f){
-	const Point<3> face_center = cell->face(f)->center();
-	if (cell->face(f)->at_boundary()){
-	  if (std::abs(face_center[0]+halfxyzSpan)<1.0e-8)
-	    cell->face(f)->set_boundary_id(1);
-	  else if (std::abs(face_center[0]-halfxyzSpan)<1.0e-8)
-	    cell->face(f)->set_boundary_id(2);
-	  else if (std::abs(face_center[1]+halfxyzSpan)<1.0e-8)
-	    cell->face(f)->set_boundary_id(3);
-	  else if (std::abs(face_center[1]-halfxyzSpan)<1.0e-8)
-	    cell->face(f)->set_boundary_id(4);
-	  else if (std::abs(face_center[2]+halfxyzSpan)<1.0e-8)
-	    cell->face(f)->set_boundary_id(5);
-	  else if (std::abs(face_center[2]-halfxyzSpan)<1.0e-8)
-	    cell->face(f)->set_boundary_id(6);
-	}
-      }
-      //}
-  }
-
-  pcout << "Done with Boundary Flags\n";
-  std::vector<GridTools::PeriodicFacePair<typename parallel::distributed::Triangulation<3>::cell_iterator> > periodicity_vector;
-  for (int i = 0; i < 3; ++i){
-    GridTools::collect_periodic_faces(triangulation, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector);
-  }
-  triangulation.add_periodicity(periodicity_vector);
-  std::cout << "Periodic Facepairs: " << periodicity_vector.size() << std::endl;
-
-  std::vector<GridTools::PeriodicFacePair<typename DoFHandler<3>::cell_iterator> > periodicity_vector2;
-  std::vector<GridTools::PeriodicFacePair<typename DoFHandler<3>::cell_iterator> > periodicity_vector2Eigen;
-  for (int i=0; i<3; ++i){
-    GridTools::collect_periodic_faces(dofHandler, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector2);
-    GridTools::collect_periodic_faces(dofHandlerEigen, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector2Eigen);
-  }
-  //std::cout << "Periodic Facepairs 2: " << periodicity_vector2.size() << std::endl;
+  std::vector<GridTools::PeriodicFacePair<typename DoFHandler<3>::cell_iterator> > periodicity_vector2, periodicity_vector2Eigen;
+  for (int i = 0; i < 3; ++i)
+    {
+      GridTools::collect_periodic_faces(dofHandler, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector2);
+      GridTools::collect_periodic_faces(dofHandlerEigen, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector2Eigen);
+    }
   DoFTools::make_periodicity_constraints<DoFHandler<3> >(periodicity_vector2, constraintsNone);
   DoFTools::make_periodicity_constraints<DoFHandler<3> >(periodicity_vector2Eigen, constraintsNoneEigen);
+
+  constraintsNone.close();
+  constraintsNoneEigen.close();
+
   pcout << "Detected Periodic Face Pairs: " << constraintsNone.n_constraints() << std::endl;
 
   pcout<<"Size of ConstraintsNone: "<< constraintsNone.n_constraints()<<std::endl;
+  //constraintsNone.print(std::cout);
+
+  pcout<<"Size of ConstraintsNoneEigen: "<< constraintsNoneEigen.n_constraints()<<std::endl;
+  //constraintsNoneEigen.print(std::cout);
 
   //
   //modify constraintsNone to account for the bug in higher order nodes
   //
-  ConstraintMatrix constraintsTemp(constraintsNone); constraintsNone.clear();
+  ConstraintMatrix constraintsTemp(constraintsNone); constraintsNone.clear(); 
   std::set<unsigned int> masterNodes;
   double periodicPrecision=1.0e-8;
   //fill all masters
@@ -160,13 +240,16 @@ void dftClass::init(){
     if(locally_relevant_dofs.is_element(i)){
       if(constraintsTemp.is_constrained(i)){
 	if (constraintsTemp.is_identity_constrained(i)){
-	  Point<3> p=d_supportPoints.find(i)->second;
+	  Point<3> p = d_supportPoints.find(i)->second;
 	  unsigned int masterNode=(*constraintsTemp.get_constraint_entries(i))[0].first;
 	  masterNodes.insert(masterNode);
 	}
       }
     }
   }
+  
+  std::cout<<"Size of Master Nodes: "<<masterNodes.size()<<std::endl;
+  
 
   //
   //fix wrong master map
@@ -175,7 +258,7 @@ void dftClass::init(){
     if(locally_relevant_dofs.is_element(i)){
       if(constraintsTemp.is_constrained(i)){
 	if (constraintsTemp.is_identity_constrained(i)){
-	  Point<3> p=d_supportPoints.find(i)->second;
+	  Point<3> p = d_supportPoints.find(i)->second;
 	  unsigned int masterNode=(*constraintsTemp.get_constraint_entries(i))[0].first;
 	  unsigned int count=0, index=0;
 	  for (unsigned int k=0; k<3; k++){
@@ -185,114 +268,308 @@ void dftClass::init(){
 	    }
 	  }
 	  if (count==1){
-	    Point<3> q=d_supportPoints.find(masterNode)->second;
-	    unsigned int l=1, m=2;
-	    if (index==1){l=0; m=2;}
-	    else if (index==2){l=0; m=1;} 
+	    Point<3> q = d_supportPoints.find(masterNode)->second;
+	    unsigned int l = 1, m = 2;
+	    if (index==1){l = 0; m = 2;}
+	    else if (index==2){l = 0; m = 1;} 
 	    if (!((std::abs(p[l]-q[l])<periodicPrecision) and (std::abs(p[m]-q[m])<periodicPrecision))){
 	      bool foundNewMaster=false;
 	      for (std::set<unsigned int>::iterator it=masterNodes.begin(); it!=masterNodes.end(); ++it){
 		q=d_supportPoints.find(*it)->second;
 		if (((std::abs(p[l]-q[l])<periodicPrecision) and (std::abs(p[m]-q[m])<periodicPrecision))){
+
+		  //store the correct masterNodeId
+		  unsigned int correctMasterDof = *it;
+
+		  //One component
 		  constraintsNone.add_line(i);
-		  constraintsNone.add_entry(i, *it, 1.0);
+		  constraintsNone.add_entry(i, correctMasterDof, 1.0);
+		  
 		  foundNewMaster=true;
 		  break;
 		}
 	      }
 	      if (!foundNewMaster){
-		pcout << "\nError: Didnot find a replacement master node for a wrong master-slave periodic pair\n";
+		std::cout<< " Wrong MasterNode for slave node: "<<masterNode<<" "<<i<<std::endl;
+		std::cout<< "Error: Did not find a replacement master node for a wrong master-slave periodic pair"<<" "<<masterNode<<" slaveNode: "<<i<<std::endl;
 		exit(-1);
 	      }
 	    }
 	    else{
+
+	      //One component
 	      constraintsNone.add_line(i);
 	      constraintsNone.add_entry(i, masterNode, 1.0);
+	      
 	    }
 	  }
 	  else{
+
+	    //One component
 	    constraintsNone.add_line(i);
 	    constraintsNone.add_entry(i, masterNode, 1.0);
+
 	  }
 	}
       }
     }
   }
   constraintsNone.close();
-  std::cout<<"Size of ConstraintsNone after fixing periodicity: "<< constraintsNone.n_constraints()<<std::endl;
-   //
-  //modify constraintsNoneEigen to account for the bug in higher order nodes
+
+  pcout<<"Size of ConstraintsNone New: "<< constraintsNone.n_constraints()<<std::endl;
+  //constraintsNone.print(std::cout);
+  
+  //
+  //fix periodic match for two-component fields
   //
   ConstraintMatrix constraintsTempEigen(constraintsNoneEigen); constraintsNoneEigen.clear();
-  std::set<unsigned int> masterNodesEigen;
+
+  //
+  //fill temp masterNodes and slaveNodes set
+  //
+  std::set<unsigned int> masterNodesEigen, slaveNodesEigen;
+
+  //
   //fill all masters
-  for(types::global_dof_index i = 0; i <dofHandlerEigen.n_dofs(); ++i){
-    if(locally_relevant_dofsEigen.is_element(i)){
-      if(constraintsTempEigen.is_constrained(i)){
-	if (constraintsTempEigen.is_identity_constrained(i)){
-	  Point<3> p=d_supportPointsEigen.find(i)->second;
-	  unsigned int masterNode=(*constraintsTempEigen.get_constraint_entries(i))[0].first;
-	  masterNodesEigen.insert(masterNode);
+  //
+  for(types::global_dof_index i = 0; i <dofHandlerEigen.n_dofs(); ++i)
+    {
+      if(locally_relevant_dofsEigen.is_element(i))
+	{
+	  if(constraintsTempEigen.is_constrained(i))
+	    {
+	      if (constraintsTempEigen.is_identity_constrained(i))
+		{
+		  unsigned int masterNode=(*constraintsTempEigen.get_constraint_entries(i))[0].first;
+		  masterNodesEigen.insert(masterNode);
+		  slaveNodesEigen.insert(i);
+		}
+	    }
 	}
-      }
     }
-  }
+
+  std::set<unsigned int> globalMasterNodesEigen;
+  exchangeMasterNodesList(masterNodesEigen,
+			  globalMasterNodesEigen,
+			  n_mpi_processes,
+			  mpi_communicator);
+
+  
+  //
+  //Now separate this set to real and imag sets
+  //
+  QGauss<3>  quadrature_formula(FEOrder+1);
+  FEValues<3> fe_values (FEEigen, quadrature_formula, update_values);
+  const unsigned int n_q_points    = quadrature_formula.size();
+  const unsigned int dofs_per_cell = FEEigen.dofs_per_cell;
+  std::vector<unsigned int> local_dof_indicesEigen(dofs_per_cell);
+
+  std::set<unsigned int> masterNodesReal, masterNodesImag, slaveNodesReal, slaveNodesImag;
+  typename DoFHandler<3>::active_cell_iterator cellEigen = dofHandlerEigen.begin_active(), endcellEigen = dofHandlerEigen.end();
+  for (; cellEigen!=endcellEigen; ++cellEigen)
+    {
+      if (cellEigen->is_locally_owned())
+	{
+	  fe_values.reinit (cellEigen);
+	  cellEigen->get_dof_indices (local_dof_indicesEigen);
+
+	  for (unsigned int i = 0; i < dofs_per_cell; ++i)
+	    {
+	      const unsigned int ck = fe_values.get_fe().system_to_component_index(i).first; //This is the component index 0(real) or 1 (imag).
+	      const unsigned int globalDOF = local_dof_indicesEigen[i];
+	      //std::cout<<"Real or Imag: "<<ck<<std::endl;
+	      
+	      if (globalMasterNodesEigen.count(globalDOF)==1)
+		{
+		  if (ck == 0)
+		    {
+		      masterNodesReal.insert(globalDOF);
+		    }
+		  else 
+		    {
+		      masterNodesImag.insert(globalDOF);
+		    }
+
+		}
+	      else if (slaveNodesEigen.count(globalDOF)==1)
+		{
+
+		  if (ck == 0)
+		    {
+		      slaveNodesReal.insert(globalDOF);
+		    }
+		  else 
+		    {
+		      slaveNodesImag.insert(globalDOF);
+
+		    }
+
+		}
+
+	    }
+	}
+    }//end of cellEigen loop
+
+  std::set<unsigned int> globalMasterNodesReal;
+  std::set<unsigned int> globalMasterNodesImag;
+
+  exchangeMasterNodesList(masterNodesReal,
+			  globalMasterNodesReal,
+			  n_mpi_processes,
+			  mpi_communicator);
+
+  exchangeMasterNodesList(masterNodesImag,
+			  globalMasterNodesImag,
+			  n_mpi_processes,
+			  mpi_communicator);
+
+
+  std::cout<<"Master Nodes Size: "<<globalMasterNodesEigen.size()<<std::endl;
+  std::cout<<"Slave Nodes Size: "<<slaveNodesEigen.size()<<std::endl;
+
+  std::cout<<"Master Nodes Real Size: "<<globalMasterNodesReal.size()<<std::endl;
+  std::cout<<"Master Nodes Imag Size: "<<globalMasterNodesImag.size()<<std::endl;
+  
+  std::cout<<"Slave Nodes Real Size: "<<slaveNodesReal.size()<<std::endl;
+  std::cout<<"Slave Nodes Imag Size: "<<slaveNodesImag.size()<<std::endl;
+
+  
 
   //
   //fix wrong master map
   //
-  for(types::global_dof_index i = 0; i <dofHandlerEigen.n_dofs(); ++i){
-    if(locally_relevant_dofsEigen.is_element(i)){
-      if(constraintsTempEigen.is_constrained(i)){
-	if (constraintsTempEigen.is_identity_constrained(i)){
-	  Point<3> p=d_supportPointsEigen.find(i)->second;
-	  unsigned int masterNode=(*constraintsTempEigen.get_constraint_entries(i))[0].first;
-	  unsigned int count=0, index=0;
-	  for (unsigned int k=0; k<3; k++){
-	    if (std::abs(std::abs(p[k])-halfxyzSpan)<periodicPrecision) {
-	      count++;
-	      index=k;
-	    }
-	  }
-	  if (count==1){
-	    Point<3> q=d_supportPointsEigen.find(masterNode)->second;
-	    unsigned int l=1, m=2;
-	    if (index==1){l=0; m=2;}
-	    else if (index==2){l=0; m=1;} 
-	    if (!((std::abs(p[l]-q[l])<periodicPrecision) and (std::abs(p[m]-q[m])<periodicPrecision))){
-	      bool foundNewMaster=false;
-	      for (std::set<unsigned int>::iterator it=masterNodes.begin(); it!=masterNodes.end(); ++it){
-		q=d_supportPointsEigen.find(*it)->second;
-		if (((std::abs(p[l]-q[l])<periodicPrecision) and (std::abs(p[m]-q[m])<periodicPrecision))){
-		  constraintsNoneEigen.add_line(i);
-		  constraintsNoneEigen.add_entry(i, *it, 1.0);
-		  foundNewMaster=true;
-		  break;
+  for(types::global_dof_index i = 0; i <dofHandlerEigen.n_dofs(); i++)
+    {
+      if(locally_relevant_dofsEigen.is_element(i))
+	{
+	  if(constraintsTempEigen.is_constrained(i))
+	    {
+	      if (constraintsTempEigen.is_identity_constrained(i))
+		{
+		  Point<3> p=d_supportPointsEigen.find(i)->second;
+		  unsigned int masterNode=(*constraintsTempEigen.get_constraint_entries(i))[0].first;
+		  unsigned int count=0, index=0;
+		  for (unsigned int k=0; k<3; k++)
+		    {
+		      if (std::abs(std::abs(p[k])-halfxyzSpan)<periodicPrecision) 
+			{
+			  count++;
+			  index=k;
+			}
+		    }
+		  if (count==1)
+		    {
+		      Point<3> q=d_supportPointsEigen.find(masterNode)->second;
+		      unsigned int l=1, m=2;
+		      if (index==1){l=0; m=2;}
+		      else if (index==2){l=0; m=1;} 
+		      if (!((std::abs(p[l]-q[l])<periodicPrecision) and (std::abs(p[m]-q[m])<periodicPrecision)))
+			{
+			  bool foundNewMaster=false;
+			  if(slaveNodesReal.count(i) == 1)
+			    {
+			      for (std::set<unsigned int>::iterator it=globalMasterNodesReal.begin(); it!=globalMasterNodesReal.end(); ++it)
+				{
+				  q=d_supportPointsEigen.find(*it)->second;
+				  if (((std::abs(p[l]-q[l])<periodicPrecision) and (std::abs(p[m]-q[m])<periodicPrecision)))
+				    {
+				      constraintsNoneEigen.add_line(i);
+				      constraintsNoneEigen.add_entry(i, *it, 1.0);
+				      foundNewMaster=true;
+				      break;
+				    }
+				}
+			    }
+			  else
+			    {
+			      for (std::set<unsigned int>::iterator it=globalMasterNodesImag.begin(); it!=globalMasterNodesImag.end(); ++it)
+				{
+				  q=d_supportPointsEigen.find(*it)->second;
+				  if (((std::abs(p[l]-q[l])<periodicPrecision) and (std::abs(p[m]-q[m])<periodicPrecision)))
+				    {
+				      constraintsNoneEigen.add_line(i);
+				      constraintsNoneEigen.add_entry(i, *it, 1.0);
+				      foundNewMaster=true;
+				      break;
+				    }
+				}
+			    }
+			  if (!foundNewMaster)
+			    {
+			      pcout << "\nError: Did not find a replacement master node for a wrong master-slave periodic pair\n";
+			      exit(-1);
+			    }
+			}
+		      else
+			{
+			  constraintsNoneEigen.add_line(i);
+			  constraintsNoneEigen.add_entry(i, masterNode, 1.0);
+			}
+		    }
+		  else
+		    {
+		      constraintsNoneEigen.add_line(i);
+		      constraintsNoneEigen.add_entry(i, masterNode, 1.0);
+		    }
 		}
-	      }
-	      if (!foundNewMaster){
-		pcout << "\nError: Didnot find a replacement master node for a wrong master-slave periodic pair\n";
-		exit(-1);
-	      }
 	    }
-	    else{
-	      constraintsNoneEigen.add_line(i);
-	      constraintsNoneEigen.add_entry(i, masterNode, 1.0);
-	    }
-	  }
-	  else{
-	    constraintsNoneEigen.add_line(i);
-	    constraintsNoneEigen.add_entry(i, masterNode, 1.0);
-	  }
+	}
+    }
+  
+  //loop over real slaves
+  /*for(std::set<unsigned int>::iterator it = slaveNodesReal.begin(); it != slaveNodesReal.end(); ++it)
+    {
+      //check if slave on this face
+      Point<3> S=d_supportPointsEigen.find(*it)->second;
+      bool foundMaster=false;
+      double D=2*halfxyzSpan;
+      for(std::set<unsigned int>::iterator itM = globalMasterNodesReal.begin(); itM != globalMasterNodesReal.end(); ++itM){
+	Point<3> M=d_supportPointsEigen.find(*itM)->second;
+	double d= S.distance(M);
+	if ((std::abs(d-D)<periodicPrecision) || (std::abs(d-std::sqrt(2)*D)<periodicPrecision) || (std::abs(d-std::sqrt(3)*D)<periodicPrecision)){
+	  foundMaster=true;
+	  constraintsNoneEigen.add_line(*it);
+	  constraintsNoneEigen.add_entry(*it, *itM, 1.0);	
+	  break;
 	}
       }
+      if (!foundMaster)
+	{
+	  std::cout<< "Error Real: Did not find a replacement master node for a wrong master-slave periodic pair "<<std::endl;
+	  exit(-1);
+	}
     }
-  }
+  //
+  for(std::set<unsigned int>::iterator it = slaveNodesImag.begin(); it != slaveNodesImag.end(); ++it)
+    {
+      //check if slave on this face
+      Point<3> S=d_supportPointsEigen.find(*it)->second;
+      bool foundMaster=false;
+      double D=2*halfxyzSpan;
+      for(std::set<unsigned int>::iterator itM = globalMasterNodesImag.begin(); itM != globalMasterNodesImag.end(); ++itM){
+	Point<3> M=d_supportPointsEigen.find(*itM)->second;
+	double d= S.distance(M);
+	if ((std::abs(d-D)<periodicPrecision) || (std::abs(d-std::sqrt(2)*D)<periodicPrecision) || (std::abs(d-std::sqrt(3)*D)<periodicPrecision)){
+	  foundMaster=true;
+	  constraintsNoneEigen.add_line(*it);
+	  constraintsNoneEigen.add_entry(*it, *itM, 1.0);	
+	  break;
+	}
+      }
+      if (!foundMaster)
+	{
+	  std::cout<< "Error Imag: Did not find a replacement master node for a wrong master-slave periodic pair "<<std::endl;
+	  exit(-1);
+	}
+	}*/
+ 
   constraintsNoneEigen.close();
 #else
   constraintsNone.close();
   constraintsNoneEigen.close();
 #endif
+
+  pcout<<"Size of ConstraintsNoneEigen New: "<< constraintsNoneEigen.n_constraints()<<std::endl;
 
   //
   //Zero Dirichlet BC constraints on the boundary of the domain
@@ -318,8 +595,6 @@ void dftClass::init(){
   std::cout<<"Updated Size of ConstraintsPeriodic with Dirichlet B.Cs: "<< d_constraintsPeriodicWithDirichlet.n_constraints()<<std::endl;
 #endif
  
-  
-
   //
   //push back into Constraint Matrices
   //
@@ -404,21 +679,21 @@ void dftClass::init(){
   int exceptParamX, exceptParamC;
 
 #ifdef xc_id
-  #if   xc_id == 1
+#if   xc_id == 1
   exceptParamX = xc_func_init(&funcX,XC_LDA_X,XC_UNPOLARIZED);
   exceptParamC = xc_func_init(&funcC,XC_LDA_C_PZ,XC_UNPOLARIZED);
-  #elif xc_id == 2
+#elif xc_id == 2
   exceptParamX = xc_func_init(&funcX,XC_LDA_X,XC_UNPOLARIZED);
   exceptParamC = xc_func_init(&funcC,XC_LDA_C_PW,XC_UNPOLARIZED);
-  #elif xc_id == 3
+#elif xc_id == 3
   exceptParamX = xc_func_init(&funcX,XC_LDA_X,XC_UNPOLARIZED);
   exceptParamC = xc_func_init(&funcC,XC_LDA_C_VWN,XC_UNPOLARIZED);
-  #elif xc_id == 4
+#elif xc_id == 4
   exceptParamX = xc_func_init(&funcX,XC_GGA_X_PBE,XC_UNPOLARIZED);
   exceptParamC = xc_func_init(&funcC,XC_GGA_C_PBE,XC_UNPOLARIZED);
-  #elif xc_id > 4
-  #error exchange correlation id <= 4 required. 
-  #endif
+#elif xc_id > 4
+#error exchange correlation id <= 4 required. 
+#endif
 #else
   exceptParamX = xc_func_init(&funcX,XC_LDA_X,XC_UNPOLARIZED);
   exceptParamC = xc_func_init(&funcC,XC_LDA_C_PZ,XC_UNPOLARIZED);

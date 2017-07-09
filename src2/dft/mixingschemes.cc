@@ -10,24 +10,53 @@ double dftClass::mixing_simple()
   double alpha=0.5;
   
   //create new rhoValue tables
-  std::map<dealii::CellId,std::vector<double> >* rhoInValuesOld=rhoInValues;
+  std::map<dealii::CellId,std::vector<double> >* rhoInValuesOld = rhoInValues;
   rhoInValues=new std::map<dealii::CellId,std::vector<double> >;
   rhoInVals.push_back(rhoInValues); 
 
+#ifdef xc_id
+#if xc_id == 4
+  std::map<dealii::CellId,std::vector<double> >* gradRhoInValuesOld = gradRhoInValues;
+  gradRhoInValues = new std::map<dealii::CellId,std::vector<double> >;
+  gradRhoInVals.push_back(gradRhoInValues);
+#endif
+#endif
+
   //parallel loop over all elements
   typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
- for (; cell!=endc; ++cell) {
-    if (cell->is_locally_owned()){
-      fe_values.reinit (cell); 
-      (*rhoInValues)[cell->id()]=std::vector<double>(num_quad_points*num_quad_points);
-      for (unsigned int q_point=0; q_point<num_quad_points; ++q_point){
-	//Compute (rhoIn-rhoOut)^2
-        normValue+=std::pow(((*rhoInValuesOld)[cell->id()][q_point])- ((*rhoOutValues)[cell->id()][q_point]),2.0)*fe_values.JxW(q_point);
-	//Simple mixing scheme
-	((*rhoInValues)[cell->id()][q_point])=std::abs((1-alpha)*(*rhoInValuesOld)[cell->id()][q_point]+ alpha*(*rhoOutValues)[cell->id()][q_point]);
-      }
+  for(; cell!=endc; ++cell) 
+    {
+      if(cell->is_locally_owned())
+	{
+	  fe_values.reinit (cell); 
+	  (*rhoInValues)[cell->id()]=std::vector<double>(num_quad_points);
+
+#ifdef xc_id
+#if xc_id == 4
+	  (*gradRhoInValues)[cell->id()]=std::vector<double>(3*num_quad_points);
+#endif
+#endif
+	  for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
+	    {
+	      //Compute (rhoIn-rhoOut)^2
+	      normValue+=std::pow(((*rhoInValuesOld)[cell->id()][q_point])- ((*rhoOutValues)[cell->id()][q_point]),2.0)*fe_values.JxW(q_point);
+	      
+	      //Simple mixing scheme
+	      ((*rhoInValues)[cell->id()][q_point])=std::abs((1-alpha)*(*rhoInValuesOld)[cell->id()][q_point]+ alpha*(*rhoOutValues)[cell->id()][q_point]);
+
+#ifdef xc_id
+#if xc_id == 4
+	      ((*gradRhoInValues)[cell->id()][3*q_point + 0])=std::abs((1-alpha)*(*gradRhoInValuesOld)[cell->id()][3*q_point + 0]+ alpha*(*gradRhoOutValues)[cell->id()][3*q_point + 0]);
+	      ((*gradRhoInValues)[cell->id()][3*q_point + 1])=std::abs((1-alpha)*(*gradRhoInValuesOld)[cell->id()][3*q_point + 1]+ alpha*(*gradRhoOutValues)[cell->id()][3*q_point + 1]);
+	      ((*gradRhoInValues)[cell->id()][3*q_point + 2])=std::abs((1-alpha)*(*gradRhoInValuesOld)[cell->id()][3*q_point + 2]+ alpha*(*gradRhoOutValues)[cell->id()][3*q_point + 2]);
+#endif
+#endif
+	    }
+	  
+	}
+
     }
-  }
+  
   return Utilities::MPI::sum(normValue, mpi_communicator);
 }
 
@@ -105,7 +134,7 @@ double dftClass::mixing_anderson(){
 	//Anderson mixing scheme
 	double rhoOutBar=cn*(*rhoOutVals[N])[cell->id()][q_point];
 	double rhoInBar=cn*(*rhoInVals[N])[cell->id()][q_point];
-	for (int i=0; i<N; i++){
+	for (int i = 0; i < N; i++){
 	  rhoOutBar+=cTotal[i]*(*rhoOutVals[N-1-i])[cell->id()][q_point];
 	  rhoInBar+=cTotal[i]*(*rhoInVals[N-1-i])[cell->id()][q_point];
 	}
@@ -113,5 +142,55 @@ double dftClass::mixing_anderson(){
       }
     }
   }
+
+  //compute gradRho for GGA using mixing constants from rho mixing
+
+#ifdef xc_id
+#if xc_id == 4
+  std::map<dealii::CellId,std::vector<double> >* gradRhoInValuesOld = gradRhoInValues;
+  gradRhoInValues = new std::map<dealii::CellId,std::vector<double> >;
+  gradRhoInVals.push_back(gradRhoInValues);
+  cell = dofHandler.begin_active();
+  for (; cell!=endc; ++cell) 
+    {
+    if (cell->is_locally_owned())
+      {
+	(*gradRhoInValues)[cell->id()]=std::vector<double>(3*num_quad_points);
+	fe_values.reinit (cell); 
+	for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
+	  {
+	    //
+	    //Anderson mixing scheme
+	    //
+	    double gradRhoXOutBar = cn*(*gradRhoOutVals[N])[cell->id()][3*q_point + 0];
+	    double gradRhoYOutBar = cn*(*gradRhoOutVals[N])[cell->id()][3*q_point + 1];
+	    double gradRhoZOutBar = cn*(*gradRhoOutVals[N])[cell->id()][3*q_point + 2];
+	    
+	    double gradRhoXInBar = cn*(*gradRhoInVals[N])[cell->id()][3*q_point + 0];
+	    double gradRhoYInBar = cn*(*gradRhoInVals[N])[cell->id()][3*q_point + 1];
+	    double gradRhoZInBar = cn*(*gradRhoInVals[N])[cell->id()][3*q_point + 2];
+	    
+	    for (int i = 0; i < N; i++)
+	      {
+		gradRhoXOutBar += cTotal[i]*(*gradRhoOutVals[N-1-i])[cell->id()][3*q_point + 0];
+		gradRhoYOutBar += cTotal[i]*(*gradRhoOutVals[N-1-i])[cell->id()][3*q_point + 1];
+		gradRhoZOutBar += cTotal[i]*(*gradRhoOutVals[N-1-i])[cell->id()][3*q_point + 2];
+
+		gradRhoXInBar += cTotal[i]*(*gradRhoInVals[N-1-i])[cell->id()][3*q_point + 0];
+		gradRhoYInBar += cTotal[i]*(*gradRhoInVals[N-1-i])[cell->id()][3*q_point + 1];
+		gradRhoZInBar += cTotal[i]*(*gradRhoInVals[N-1-i])[cell->id()][3*q_point + 2];
+	      }
+
+	    (*gradRhoInValues)[cell->id()][3*q_point + 0] = std::abs((1-alpha)*gradRhoXInBar+alpha*gradRhoXOutBar);
+	    (*gradRhoInValues)[cell->id()][3*q_point + 1] = std::abs((1-alpha)*gradRhoYInBar+alpha*gradRhoYOutBar);
+	    (*gradRhoInValues)[cell->id()][3*q_point + 2] = std::abs((1-alpha)*gradRhoZInBar+alpha*gradRhoZOutBar);
+	  }
+      }
+
+    }
+#endif
+#endif
+
+
   return Utilities::MPI::sum(normValue, mpi_communicator);
 }

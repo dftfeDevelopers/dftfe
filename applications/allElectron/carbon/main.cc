@@ -4,16 +4,21 @@
 const double radiusAtomBall = 4.0;
 const unsigned int FEOrder  = 4;
 const unsigned int n_refinement_steps = 4;
+const int periodic_x = 0; //For non-orthogonal unit-cells, this is a-direction
+const int periodic_y = 0; //For non-orthogonal unit-cells, this is b-direction
+const int periodic_z = 0; //For non-orthogonal unit-cells, this is c-direction
+
+
 const double lowerEndWantedSpectrum   = -10.0;
 const unsigned int chebyshevOrder     = 2000; 
 const unsigned int numSCFIterations   = 20;
+const unsigned int maxLinearSolverIterations = 5000;
+const double relLinearSolverTolerance        = 1.0e-14; 
+const double selfConsistentSolverTolerance   = 1.0e-11;
+
+
 const bool isPseudopotential = false;
 
-//
-//solver parameters 
-//
-const unsigned int maxLinearSolverIterations = 5000;
-const double relLinearSolverTolerance = 1.0e-14; 
 
 //
 //Define constants
@@ -25,6 +30,8 @@ const double TVal = 500.0;
 //
 #define meshFileName "../../../data/meshes/allElectron/carbon1Atom/mesh.inp"
 #define coordinatesFile "../../../data/meshes/allElectron/carbon1Atom/coordinates.inp" 
+
+#define xc_id 1
 
 //
 //dft header
@@ -41,7 +48,8 @@ int main (int argc, char *argv[]){
     //
     std::cout << std::scientific << std::setprecision(18);
     dftClass problem;
-    problem.additionalWaveFunctions[6]=2;
+    problem.numberAtomicWaveFunctions[6] = 5;
+    problem.numEigenValues = 5;
     problem.run();
   }
   return 0;
