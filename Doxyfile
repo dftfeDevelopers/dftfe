@@ -1107,7 +1107,7 @@ HTML_EXTRA_STYLESHEET  =
 # files will be copied as-is; there are no commands or markers available.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_EXTRA_FILES       = docs/formulations/mechanics.pdf docs/formulations/fickianFlux.pdf docs/formulations/coupledCHMechanics.pdf docs/formulations/coupledCHAC.pdf docs/formulations/cahnHillard.pdf docs/formulations/allenCahn.pdf docs/examples/ExMechanics.pdf docs/examples/ExAllenCahn.pdf docs/examples/ExCahnHilliard.pdf docs/examples/ExCoupledCHMechanics.pdf docs/examples/ExCoupledCHAC.pdf docs/examples/ExFickianDiffusion.pdf docs/examples/ExBetaPrimePrecipitate.pdf
+HTML_EXTRA_FILES       = 
 
 # The HTML_COLORSTYLE_HUE tag controls the color of the HTML output. Doxygen
 # will adjust the colors in the style sheet and background images according to
@@ -2034,13 +2034,14 @@ SKIP_FUNCTION_MACROS   = YES
 # the path). If a tag file is not located in the directory in which doxygen is
 # run, you must also specify the path to the tagfile here.
 
-TAGFILES  = /opt/software/numerics/dealiiDir/doc/doxygen/deal.tag=http://www.dealii.org/8.2.1/doxygen/deal.II
+TAGFILES = deal.tag 
 
+#TAGFILES  = /opt/software/numerics/dealiiDir/doc/doxygen/deal.tag=http://www.dealii.org/8.2.1/doxygen/deal.II
 # When a file name is specified after GENERATE_TAGFILE, doxygen will create a
 # tag file that is based on the input files it reads. See section "Linking to
 # external documentation" for more information about the usage of tag files.
 
-GENERATE_TAGFILE       = test
+GENERATE_TAGFILE       = tagfile
 
 # If the ALLEXTERNALS tag is set to YES, all external class will be listed in
 # the class index. If set to NO, only the inherited external classes will be
