@@ -203,11 +203,7 @@ void dftClass::determineOrbitalFilling()
 
 //
 void dftClass::readPSIRadialValues(){
-  //loop over nodes to set PSI initial guess
-  //get support points
-  //std::map<types::global_dof_index, Point<3> > support_points;
-  //MappingQ<3> mapQ(1);
-  //DoFTools::map_dofs_to_support_points(mapQ, dofHandler, support_points); 
+ 
   IndexSet locallyOwnedSet;
   DoFTools::extract_locally_owned_dofs(dofHandlerEigen, locallyOwnedSet);
   std::vector<unsigned int> locallyOwnedDOFs;
@@ -220,7 +216,9 @@ void dftClass::readPSIRadialValues(){
   unsigned int numberDofs = locallyOwnedDOFs.size();
 #endif
   
+  //
   //loop over nodes
+  //
   bool pp=false;
   for(unsigned int dof=0; dof<numberDofs; dof++)
     {
@@ -230,21 +228,29 @@ void dftClass::readPSIRadialValues(){
       unsigned int dofID = locallyOwnedDOFs[dof];
 #endif
       Point<3> node = d_supportPointsEigen[dofID];
+
+      //
       //loop over wave functions
+      //
       unsigned int waveFunction=0;
       for (std::vector<orbital>::iterator it=waveFunctionsVector.begin(); it<waveFunctionsVector.end(); it++){
 
-	//find coordinates of atom correspoding to this wave function
-	Point<3> atomCoord(atomLocations[it->atomID][2],atomLocations[it->atomID][3],atomLocations[it->atomID][4]);
 	//
+	//find coordinates of atom correspoding to this wave function
+	//
+	Point<3> atomCoord(atomLocations[it->atomID][2],atomLocations[it->atomID][3],atomLocations[it->atomID][4]);
+
+
 	double x =node[0]-atomCoord[0];
 	double y =node[1]-atomCoord[1];
 	double z =node[2]-atomCoord[2];
-	//
+
+
 	double r = sqrt(x*x + y*y + z*z);
 	double theta = acos(z/r);
 	double phi = atan2(y,x);
-	//
+
+
 	if (r==0){theta=0; phi=0;}
 	//radial part
 	double R=0.0;
@@ -254,26 +260,32 @@ void dftClass::readPSIRadialValues(){
 	}
 
 #ifdef ENABLE_PERIODIC_BC
-	if (it->m > 0){
-	  local_dof_values[waveFunction][localProc_dof_indicesReal[dof]] =  R*std::sqrt(2)*boost::math::spherical_harmonic_r(it->l,it->m,theta,phi);
-	}
-	else if (it->m == 0){
-	  local_dof_values[waveFunction][localProc_dof_indicesReal[dof]] =  R*boost::math::spherical_harmonic_r(it->l,it->m,theta,phi);
-	}
-	else{
-	  local_dof_values[waveFunction][localProc_dof_indicesReal[dof]] =  R*std::sqrt(2)*boost::math::spherical_harmonic_i(it->l,-(it->m),theta,phi);	  
-	}
+	if (it->m > 0)
+	  {
+	    local_dof_values[waveFunction][localProc_dof_indicesReal[dof]] =  R*std::sqrt(2)*boost::math::spherical_harmonic_r(it->l,it->m,theta,phi);
+	  }
+	else if (it->m == 0)
+	  {
+	    local_dof_values[waveFunction][localProc_dof_indicesReal[dof]] =  R*boost::math::spherical_harmonic_r(it->l,it->m,theta,phi);
+	  }
+	else
+	  {
+	    local_dof_values[waveFunction][localProc_dof_indicesReal[dof]] =  R*std::sqrt(2)*boost::math::spherical_harmonic_i(it->l,-(it->m),theta,phi);	  
+	  }
 #else	
 	//spherical part
-	if (it->m > 0){
-	  local_dof_values[waveFunction][dof] =  R*std::sqrt(2)*boost::math::spherical_harmonic_r(it->l,it->m,theta,phi);
-	}
-	else if (it->m == 0){
-	  local_dof_values[waveFunction][dof] =  R*boost::math::spherical_harmonic_r(it->l,it->m,theta,phi);
-	}
-	else{
-	  local_dof_values[waveFunction][dof] =  R*std::sqrt(2)*boost::math::spherical_harmonic_i(it->l,-(it->m),theta,phi);	  
-	}
+	if (it->m > 0)
+	  {
+	    local_dof_values[waveFunction][dof] =  R*std::sqrt(2)*boost::math::spherical_harmonic_r(it->l,it->m,theta,phi);
+	  }
+	else if (it->m == 0)
+	  {
+	    local_dof_values[waveFunction][dof] =  R*boost::math::spherical_harmonic_r(it->l,it->m,theta,phi);
+	  }
+	else
+	  {
+	    local_dof_values[waveFunction][dof] =  R*std::sqrt(2)*boost::math::spherical_harmonic_i(it->l,-(it->m),theta,phi);	  
+	  }
 #endif
 	waveFunction++;
       }
@@ -282,8 +294,11 @@ void dftClass::readPSIRadialValues(){
 
   if(waveFunctionsVector.size() < numEigenValues)
     {
+
       unsigned int nonAtomicWaveFunctions = numEigenValues - waveFunctionsVector.size();
-      pcout << "Levels Generated Randomly: " << nonAtomicWaveFunctions << std::endl;
+      pcout << "                                                                                             "<<std::end;
+      pcout << "Number of wavefunctions generated randomly to be used as initial guess for starting the SC : " << nonAtomicWaveFunctions << std::endl;
+
       //
       // assign the rest of the wavefunctions using a standard normal distribution
       //
@@ -316,7 +331,10 @@ void dftClass::readPSIRadialValues(){
 	  eigenVectors[kPoint][i]->compress(VectorOperation::add);
 	}
     }
+
+  //
   //multiply by M^0.5
+  //
   for(int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
     {
       for (unsigned int i = 0; i < eigenVectors[kPoint].size(); ++i)
@@ -339,8 +357,8 @@ void dftClass::readPSIRadialValues(){
 //
 void dftClass::readPSI(){
   computing_timer.enter_section("dftClass init PSI"); 
-  //
+
   readPSIRadialValues();
-  //
+
   computing_timer.exit_section("dftClass init PSI"); 
 }
