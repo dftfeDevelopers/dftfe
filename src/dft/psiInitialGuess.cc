@@ -22,9 +22,9 @@ void dftClass::loadPSIFiles(unsigned int Z,
   //
   char psiFile[256];
   if(isPseudopotential)
-    sprintf(psiFile, "../../../../data/electronicStructure/PseudoPotential/z%u/SingleAtomData/psi%u%u.inp", Z, n, l);
+    sprintf(psiFile, "../../../../data/electronicStructure/pseudoPotential/z%u/singleAtomData/psi%u%u.inp", Z, n, l);
   else
-    sprintf(psiFile, "../../../../data/electronicStructure/AllElectron/z%u/SingleAtomData/psi%u%u.inp", Z, n, l);
+    sprintf(psiFile, "../../../../data/electronicStructure/allElectron/z%u/singleAtomData/psi%u%u.inp", Z, n, l);
   std::vector<std::vector<double> > values;
 
   fileReadFlag = readPsiFile(2, values, psiFile);
@@ -296,7 +296,7 @@ void dftClass::readPSIRadialValues(){
     {
 
       unsigned int nonAtomicWaveFunctions = numEigenValues - waveFunctionsVector.size();
-      pcout << "                                                                                             "<<std::end;
+      pcout << "                                                                                             "<<std::endl;
       pcout << "Number of wavefunctions generated randomly to be used as initial guess for starting the SC : " << nonAtomicWaveFunctions << std::endl;
 
       //

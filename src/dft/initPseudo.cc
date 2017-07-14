@@ -88,7 +88,7 @@ void dftClass::initLocalPseudoPotential()
   for(std::set<unsigned int>::iterator it=atomTypes.begin(); it!=atomTypes.end(); it++)
     {
       char pseudoFile[256];
-      sprintf(pseudoFile, "../../../data/electronicStructure/pseudoPotential/z%u/PseudoAtomData/locPot.dat", *it);
+      sprintf(pseudoFile, "../../../../data/electronicStructure/pseudoPotential/z%u/pseudoAtomData/locPot.dat", *it);
       pcout<<"Reading Local Pseudo-potential data from: " <<pseudoFile<<std::endl;
       readFile(2, pseudoPotentialData[*it], pseudoFile);
       unsigned int numRows = pseudoPotentialData[*it].size()-1;

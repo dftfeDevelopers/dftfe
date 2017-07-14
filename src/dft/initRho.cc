@@ -17,11 +17,11 @@ void dftClass::initRho()
       char densityFile[256];
       if(isPseudopotential)
 	{
-	  sprintf(densityFile, "../../../../data/electronicStructure/PseudoPotential/z%u/SingleAtomData/density.inp", *it);
+	  sprintf(densityFile, "../../../../data/electronicStructure/pseudoPotential/z%u/singleAtomData/density.inp", *it);
 	}
       else
 	{
-	  sprintf(densityFile, "../../../../data/electronicStructure/AllElectron/z%u/SingleAtomData/density.inp", *it);
+	  sprintf(densityFile, "../../../../data/electronicStructure/allElectron/z%u/singleAtomData/density.inp", *it);
 	}
    
       readFile(2, singleAtomElectronDensity[*it], densityFile);
