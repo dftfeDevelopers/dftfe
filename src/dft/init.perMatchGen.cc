@@ -8,64 +8,6 @@
 //
 //source file for dft class initializations
 //
-void exchangeMasterNodesList(std::set<unsigned int> & masterNodeIdSet,
-			     std::set<unsigned int> & globalMasterNodeIdSet,
-			     unsigned int numMeshPartitions,
-			     const MPI_Comm & mpi_communicator)
-{
-
-  std::vector<int> localMasterNodeIdList;
-  std::copy(masterNodeIdSet.begin(),
-	    masterNodeIdSet.end(),
-	    std::back_inserter(localMasterNodeIdList));
-
-  int numberMasterNodesOnLocalProc = localMasterNodeIdList.size();
-
-  int * masterNodeIdListSizes = new int[numMeshPartitions];
-
-  MPI_Allgather(&numberMasterNodesOnLocalProc,
-		1,
-		MPI_INT,
-		masterNodeIdListSizes,
-		1,
-		MPI_INT,
-		mpi_communicator);
-
-  int newMasterNodeIdListSize = std::accumulate(&(masterNodeIdListSizes[0]),
-						&(masterNodeIdListSizes[numMeshPartitions]),
-						0);
-
-  std::vector<int> globalMasterNodeIdList(newMasterNodeIdListSize);
-
-  int * mpiOffsets = new int[numMeshPartitions];
-
-  mpiOffsets[0] = 0;
-
-  for(int i = 1; i < numMeshPartitions; ++i)
-    mpiOffsets[i] = masterNodeIdListSizes[i-1] + mpiOffsets[i-1];
-
-  MPI_Allgatherv(&(localMasterNodeIdList[0]),
-		 numberMasterNodesOnLocalProc,
-		 MPI_INT,
-		 &(globalMasterNodeIdList[0]),
-		 &(masterNodeIdListSizes[0]),
-		 &(mpiOffsets[0]),
-		 MPI_INT,
-		 mpi_communicator);
-
-
-  for(int i = 0; i < globalMasterNodeIdList.size(); ++i)
-    globalMasterNodeIdSet.insert(globalMasterNodeIdList[i]);
-
-  delete [] masterNodeIdListSizes;
-  delete [] mpiOffsets;
-	    
-  return;
-
-}
-
-
-
 void dftClass::init(){
   computing_timer.enter_section("dftClass setup");
 
@@ -161,12 +103,10 @@ void dftClass::init(){
       if (selectedDofsReal[i]) 
 	{
 	  local_dof_indicesReal.push_back(local_dof_indices[i]);
-	  localProc_dof_indicesReal.push_back(i);
 	}
       else
 	{
 	  local_dof_indicesImag.push_back(local_dof_indices[i]);
-	  localProc_dof_indicesImag.push_back(i);	  
 	}
     }
 #endif
@@ -348,11 +288,6 @@ void dftClass::init(){
 	}
     }
 
-  std::set<unsigned int> globalMasterNodesEigen;
-  exchangeMasterNodesList(masterNodesEigen,
-			  globalMasterNodesEigen,
-			  n_mpi_processes,
-			  mpi_communicator);
 
   
   //
@@ -377,9 +312,9 @@ void dftClass::init(){
 	    {
 	      const unsigned int ck = fe_values.get_fe().system_to_component_index(i).first; //This is the component index 0(real) or 1 (imag).
 	      const unsigned int globalDOF = local_dof_indicesEigen[i];
-	      //std::cout<<"Real or Imag: "<<ck<<std::endl;
+	      std::cout<<"Real or Imag: "<<ck<<std::endl;
 	      
-	      if (globalMasterNodesEigen.count(globalDOF)==1)
+	      if (masterNodesEigen.count(globalDOF)==1)
 		{
 		  if (ck == 0)
 		    {
@@ -410,112 +345,154 @@ void dftClass::init(){
 	}
     }//end of cellEigen loop
 
-  std::set<unsigned int> globalMasterNodesReal;
-  std::set<unsigned int> globalMasterNodesImag;
+  
 
-  exchangeMasterNodesList(masterNodesReal,
-			  globalMasterNodesReal,
-			  n_mpi_processes,
-			  mpi_communicator);
-
-  exchangeMasterNodesList(masterNodesImag,
-			  globalMasterNodesImag,
-			  n_mpi_processes,
-			  mpi_communicator);
+  
 
 
-  std::cout<<"Master Nodes Size: "<<globalMasterNodesEigen.size()<<std::endl;
+  std::cout<<"Master Nodes Size: "<<masterNodesEigen.size()<<std::endl;
   std::cout<<"Slave Nodes Size: "<<slaveNodesEigen.size()<<std::endl;
 
-  std::cout<<"Master Nodes Real Size: "<<globalMasterNodesReal.size()<<std::endl;
-  std::cout<<"Master Nodes Imag Size: "<<globalMasterNodesImag.size()<<std::endl;
+  std::cout<<"Master Nodes Real Size: "<<masterNodesReal.size()<<std::endl;
+  std::cout<<"Master Nodes Imag Size: "<<masterNodesImag.size()<<std::endl;
   
   std::cout<<"Slave Nodes Real Size: "<<slaveNodesReal.size()<<std::endl;
   std::cout<<"Slave Nodes Imag Size: "<<slaveNodesImag.size()<<std::endl;
-
   
-
-  //
-  //fix wrong master map
-  //
-  for(types::global_dof_index i = 0; i <dofHandlerEigen.n_dofs(); i++)
+  //loop over real slaves
+  for(std::set<unsigned int>::iterator it = slaveNodesReal.begin(); it != slaveNodesReal.end(); ++it)
     {
-      if(locally_relevant_dofsEigen.is_element(i))
+      //check if slave on this face
+      Point<3> S=d_supportPointsEigen.find(*it)->second;
+      bool foundMaster=false;
+      double D=2*halfxyzSpan;
+      for(std::set<unsigned int>::iterator itM = masterNodesReal.begin(); itM != masterNodesReal.end(); ++itM){
+	Point<3> M=d_supportPointsEigen.find(*itM)->second;
+	double d= S.distance(M);
+	if ((std::abs(d-D)<periodicPrecision) || (std::abs(d-std::sqrt(2)*D)<periodicPrecision) || (std::abs(d-std::sqrt(3)*D)<periodicPrecision)){
+	  foundMaster=true;
+	  constraintsNoneEigen.add_line(*it);
+	  constraintsNoneEigen.add_entry(*it, *itM, 1.0);	
+	  break;
+	}
+      }
+      if (!foundMaster)
 	{
-	  if(constraintsTempEigen.is_constrained(i))
-	    {
-	      if (constraintsTempEigen.is_identity_constrained(i))
-		{
-		  Point<3> p=d_supportPointsEigen.find(i)->second;
-		  unsigned int masterNode=(*constraintsTempEigen.get_constraint_entries(i))[0].first;
-		  unsigned int count=0, index=0;
-		  for (unsigned int k=0; k<3; k++)
-		    {
-		      if (std::abs(std::abs(p[k])-halfxyzSpan)<periodicPrecision) 
-			{
-			  count++;
-			  index=k;
-			}
-		    }
-		  if (count==1)
-		    {
-		      Point<3> q=d_supportPointsEigen.find(masterNode)->second;
-		      unsigned int l=1, m=2;
-		      if (index==1){l=0; m=2;}
-		      else if (index==2){l=0; m=1;} 
-		      if (!((std::abs(p[l]-q[l])<periodicPrecision) and (std::abs(p[m]-q[m])<periodicPrecision)))
-			{
-			  bool foundNewMaster=false;
-			  if(slaveNodesReal.count(i) == 1)
-			    {
-			      for (std::set<unsigned int>::iterator it=globalMasterNodesReal.begin(); it!=globalMasterNodesReal.end(); ++it)
-				{
-				  q=d_supportPointsEigen.find(*it)->second;
-				  if (((std::abs(p[l]-q[l])<periodicPrecision) and (std::abs(p[m]-q[m])<periodicPrecision)))
-				    {
-				      constraintsNoneEigen.add_line(i);
-				      constraintsNoneEigen.add_entry(i, *it, 1.0);
-				      foundNewMaster=true;
-				      break;
-				    }
-				}
-			    }
-			  else
-			    {
-			      for (std::set<unsigned int>::iterator it=globalMasterNodesImag.begin(); it!=globalMasterNodesImag.end(); ++it)
-				{
-				  q=d_supportPointsEigen.find(*it)->second;
-				  if (((std::abs(p[l]-q[l])<periodicPrecision) and (std::abs(p[m]-q[m])<periodicPrecision)))
-				    {
-				      constraintsNoneEigen.add_line(i);
-				      constraintsNoneEigen.add_entry(i, *it, 1.0);
-				      foundNewMaster=true;
-				      break;
-				    }
-				}
-			    }
-			  if (!foundNewMaster)
-			    {
-			      pcout << "\nError: Did not find a replacement master node for a wrong master-slave periodic pair\n";
-			      exit(-1);
-			    }
-			}
-		      else
-			{
-			  constraintsNoneEigen.add_line(i);
-			  constraintsNoneEigen.add_entry(i, masterNode, 1.0);
-			}
-		    }
-		  else
-		    {
-		      constraintsNoneEigen.add_line(i);
-		      constraintsNoneEigen.add_entry(i, masterNode, 1.0);
-		    }
-		}
-	    }
+	  std::cout<< "Error Real: Did not find a replacement master node for a wrong master-slave periodic pair "<<std::endl;
+	  exit(-1);
 	}
     }
-   
+  //
+  for(std::set<unsigned int>::iterator it = slaveNodesImag.begin(); it != slaveNodesImag.end(); ++it)
+    {
+      //check if slave on this face
+      Point<3> S=d_supportPointsEigen.find(*it)->second;
+      bool foundMaster=false;
+      double D=2*halfxyzSpan;
+      for(std::set<unsigned int>::iterator itM = masterNodesImag.begin(); itM != masterNodesImag.end(); ++itM){
+	Point<3> M=d_supportPointsEigen.find(*itM)->second;
+	double d= S.distance(M);
+	if ((std::abs(d-D)<periodicPrecision) || (std::abs(d-std::sqrt(2)*D)<periodicPrecision) || (std::abs(d-std::sqrt(3)*D)<periodicPrecision)){
+	  foundMaster=true;
+	  constraintsNoneEigen.add_line(*it);
+	  constraintsNoneEigen.add_entry(*it, *itM, 1.0);	
+	  break;
+	}
+      }
+      if (!foundMaster)
+	{
+	  std::cout<< "Error Imag: Did not find a replacement master node for a wrong master-slave periodic pair "<<std::endl;
+	  exit(-1);
+	}
+    }
+  /*
+  for(unsigned int face = 0; face < 3; face++)
+    {
+      //And sign for positive and negative side
+      for(int sign = -1; sign < 2; sign +=2)
+	{
+	
+	      /*
+	      if(std::abs(S[face]-sign*halfxyzSpan)<periodicPrecision)
+		{
+		  bool foundMaster=false;
+		  //loop over master for each slave 
+		  unsigned int l=1, m=2;
+		  if (face==1){l=0; m=2;}
+		  else if (face==2){l=0; m=1;} 
+		  std::cout<<*it<<" S: " << S[face] << " " << S[l] << " " << S[m] << std::endl;
+		  for(std::set<unsigned int>::iterator itM = masterNodesReal.begin(); itM != masterNodesReal.end(); ++itM)
+		    {
+		      Point<3> M=d_supportPointsEigen.find(*itM)->second;
+		      std::cout<<*it<<" M: " << M[face] << " " << M[l] << " " << M[m] << std::endl;
+		      //if the face coord has opposite sign and other two coords have same value, then the slave and master are a match
+		      if (((std::abs(S[face]+M[face])<periodicPrecision) && (std::abs(S[l]-M[l])<periodicPrecision) && (std::abs(S[m]-M[m])<periodicPrecision)) || ((std::abs(S[face]-M[face])<periodicPrecision) && (std::abs(S[l]-M[l])<periodicPrecision) && (std::abs(S[m]+M[m])<periodicPrecision)) || ((std::abs(S[face]-M[face])<periodicPrecision) && (std::abs(S[l]+M[l])<periodicPrecision) && (std::abs(S[m]-M[m])<periodicPrecision)))
+			{
+			  foundMaster=true;
+			  constraintsNoneEigen.add_line(*it);
+			  constraintsNoneEigen.add_entry(*it, *itM, 1.0);
+			
+			  break;
+			}
+
+		    }
+
+		  if (!foundMaster)
+		    {
+		      std::cout<< "Error Real: Did not find a replacement master node for a wrong master-slave periodic pair "<<std::endl;
+		      exit(-1);
+		    }
+
+		}
+	     
+	    }
+	}
+
+      //
+      //copy same code as above for loop over imag slaves on this face
+      //
+      for(int sign = -1; sign < 2; sign +=2)
+	{
+	  //loop over imag slaves on this face
+	  for(std::set<unsigned int>::iterator it = slaveNodesImag.begin(); it != slaveNodesImag.end(); ++it)
+	    {
+	      //check if slave on this face
+	      Point<3> S = d_supportPointsEigen.find(*it)->second;
+	      if(std::abs(S[face]-sign*halfxyzSpan)<periodicPrecision)
+		{
+		  bool foundMaster=false;
+		  //loop over master for each slave 
+		  unsigned int l=1, m=2;
+		  if (face==1){l=0; m=2;}
+		  else if (face==2){l=0; m=1;} 
+
+		  for(std::set<unsigned int>::iterator itM = masterNodesImag.begin(); itM != masterNodesImag.end(); ++itM)
+		    {
+		      Point<3> M = d_supportPointsEigen.find(*itM)->second;
+		      //if the face coord has opposite sign and other two coords have same value, then the slave and master are a match
+		      if ((std::abs(S[face]+M[face])<periodicPrecision) && (std::abs(S[l]-M[l])<periodicPrecision) && (std::abs(S[m]-M[m])<periodicPrecision))
+			{
+			  foundMaster=true;
+			  constraintsNoneEigen.add_line(*it);
+			  constraintsNoneEigen.add_entry(*it, *itM, 1.0);
+			  break;
+			}
+		    }
+
+		  if (!foundMaster)
+		    {
+		      std::cout<< "Error Imag: Did not find a replacement master node for a wrong master-slave periodic pair "<<std::endl;
+		      exit(-1);
+		    }
+
+		}
+
+	    }
+	  
+	}
+
+    }
+*/
   constraintsNoneEigen.close();
 #else
   constraintsNone.close();
@@ -548,6 +525,8 @@ void dftClass::init(){
   std::cout<<"Updated Size of ConstraintsPeriodic with Dirichlet B.Cs: "<< d_constraintsPeriodicWithDirichlet.n_constraints()<<std::endl;
 #endif
  
+  
+
   //
   //push back into Constraint Matrices
   //

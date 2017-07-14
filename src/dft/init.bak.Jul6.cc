@@ -8,64 +8,6 @@
 //
 //source file for dft class initializations
 //
-void exchangeMasterNodesList(std::set<unsigned int> & masterNodeIdSet,
-			     std::set<unsigned int> & globalMasterNodeIdSet,
-			     unsigned int numMeshPartitions,
-			     const MPI_Comm & mpi_communicator)
-{
-
-  std::vector<int> localMasterNodeIdList;
-  std::copy(masterNodeIdSet.begin(),
-	    masterNodeIdSet.end(),
-	    std::back_inserter(localMasterNodeIdList));
-
-  int numberMasterNodesOnLocalProc = localMasterNodeIdList.size();
-
-  int * masterNodeIdListSizes = new int[numMeshPartitions];
-
-  MPI_Allgather(&numberMasterNodesOnLocalProc,
-		1,
-		MPI_INT,
-		masterNodeIdListSizes,
-		1,
-		MPI_INT,
-		mpi_communicator);
-
-  int newMasterNodeIdListSize = std::accumulate(&(masterNodeIdListSizes[0]),
-						&(masterNodeIdListSizes[numMeshPartitions]),
-						0);
-
-  std::vector<int> globalMasterNodeIdList(newMasterNodeIdListSize);
-
-  int * mpiOffsets = new int[numMeshPartitions];
-
-  mpiOffsets[0] = 0;
-
-  for(int i = 1; i < numMeshPartitions; ++i)
-    mpiOffsets[i] = masterNodeIdListSizes[i-1] + mpiOffsets[i-1];
-
-  MPI_Allgatherv(&(localMasterNodeIdList[0]),
-		 numberMasterNodesOnLocalProc,
-		 MPI_INT,
-		 &(globalMasterNodeIdList[0]),
-		 &(masterNodeIdListSizes[0]),
-		 &(mpiOffsets[0]),
-		 MPI_INT,
-		 mpi_communicator);
-
-
-  for(int i = 0; i < globalMasterNodeIdList.size(); ++i)
-    globalMasterNodeIdSet.insert(globalMasterNodeIdList[i]);
-
-  delete [] masterNodeIdListSizes;
-  delete [] mpiOffsets;
-	    
-  return;
-
-}
-
-
-
 void dftClass::init(){
   computing_timer.enter_section("dftClass setup");
 
@@ -161,12 +103,10 @@ void dftClass::init(){
       if (selectedDofsReal[i]) 
 	{
 	  local_dof_indicesReal.push_back(local_dof_indices[i]);
-	  localProc_dof_indicesReal.push_back(i);
 	}
       else
 	{
 	  local_dof_indicesImag.push_back(local_dof_indices[i]);
-	  localProc_dof_indicesImag.push_back(i);	  
 	}
     }
 #endif
@@ -218,9 +158,6 @@ void dftClass::init(){
   DoFTools::make_periodicity_constraints<DoFHandler<3> >(periodicity_vector2, constraintsNone);
   DoFTools::make_periodicity_constraints<DoFHandler<3> >(periodicity_vector2Eigen, constraintsNoneEigen);
 
-  constraintsNone.close();
-  constraintsNoneEigen.close();
-
   pcout << "Detected Periodic Face Pairs: " << constraintsNone.n_constraints() << std::endl;
 
   pcout<<"Size of ConstraintsNone: "<< constraintsNone.n_constraints()<<std::endl;
@@ -232,7 +169,7 @@ void dftClass::init(){
   //
   //modify constraintsNone to account for the bug in higher order nodes
   //
-  ConstraintMatrix constraintsTemp(constraintsNone); constraintsNone.clear(); 
+  ConstraintMatrix constraintsTemp(constraintsNone); constraintsNone.clear(); constraintsNoneEigen.clear();
   std::set<unsigned int> masterNodes;
   double periodicPrecision=1.0e-8;
   //fill all masters
@@ -247,8 +184,13 @@ void dftClass::init(){
       }
     }
   }
+
   
-  std::cout<<"Size of Master Nodes: "<<masterNodes.size()<<std::endl;
+  std::cout<<"Node 34: "<<d_supportPointsEigen.find(34)->second[0]<<" "<<d_supportPointsEigen.find(34)->second[1]<<" "<<d_supportPointsEigen.find(34)->second[2]<<std::endl;
+  std::cout<<"Node 35: "<<d_supportPointsEigen.find(35)->second[0]<<" "<<d_supportPointsEigen.find(35)->second[1]<<" "<<d_supportPointsEigen.find(35)->second[2]<<std::endl;
+  std::cout<<"Node 16: "<<d_supportPointsEigen.find(16)->second[0]<<" "<<d_supportPointsEigen.find(16)->second[1]<<" "<<d_supportPointsEigen.find(16)->second[2]<<std::endl;
+  std::cout<<"Node 17: "<<d_supportPointsEigen.find(17)->second[0]<<" "<<d_supportPointsEigen.find(17)->second[1]<<" "<<d_supportPointsEigen.find(17)->second[2]<<std::endl;
+  
   
 
   //
@@ -284,7 +226,13 @@ void dftClass::init(){
 		  //One component
 		  constraintsNone.add_line(i);
 		  constraintsNone.add_entry(i, correctMasterDof, 1.0);
-		  
+
+		  //Two component
+		  constraintsNoneEigen.add_line(2*i);
+		  constraintsNoneEigen.add_entry(2*i, 2*correctMasterDof, 1.0);
+		  constraintsNoneEigen.add_line(2*i+1);
+		  constraintsNoneEigen.add_entry(2*i+1, 2*correctMasterDof+1, 1.0);
+
 		  foundNewMaster=true;
 		  break;
 		}
@@ -300,7 +248,13 @@ void dftClass::init(){
 	      //One component
 	      constraintsNone.add_line(i);
 	      constraintsNone.add_entry(i, masterNode, 1.0);
-	      
+
+	      //Two component
+	      constraintsNoneEigen.add_line(2*i);
+	      constraintsNoneEigen.add_entry(2*i, 2*masterNode, 1.0);
+	      constraintsNoneEigen.add_line(2*i+1);
+	      constraintsNoneEigen.add_entry(2*i+1, 2*masterNode+1, 1.0);
+
 	    }
 	  }
 	  else{
@@ -309,30 +263,37 @@ void dftClass::init(){
 	    constraintsNone.add_line(i);
 	    constraintsNone.add_entry(i, masterNode, 1.0);
 
+	    //Two component
+	    constraintsNoneEigen.add_line(2*i);
+	    constraintsNoneEigen.add_entry(2*i, 2*masterNode, 1.0);
+	    constraintsNoneEigen.add_line(2*i+1);
+	    constraintsNoneEigen.add_entry(2*i+1, 2*masterNode+1, 1.0);
+
 	  }
 	}
       }
     }
   }
   constraintsNone.close();
+  constraintsNoneEigen.close();
 
   pcout<<"Size of ConstraintsNone New: "<< constraintsNone.n_constraints()<<std::endl;
-  //constraintsNone.print(std::cout);
-  
-  //
-  //fix periodic match for two-component fields
-  //
-  ConstraintMatrix constraintsTempEigen(constraintsNoneEigen); constraintsNoneEigen.clear();
+  constraintsNone.print(std::cout);
 
-  //
-  //fill temp masterNodes and slaveNodes set
-  //
-  std::set<unsigned int> masterNodesEigen, slaveNodesEigen;
+  pcout<<"Size of ConstraintsNoneEigen New: "<< constraintsNoneEigen.n_constraints()<<std::endl;
+  constraintsNoneEigen.print(std::cout);
 
+
+  //std::cout<<"Size of ConstraintsNone after fixing periodicity: "<< constraintsNone.n_constraints()<<std::endl;
+  //std::cout<<"Size of ConstraintsNoneEigen after fixing periodicity: "<< constraintsNoneEigen.n_constraints()<<std::endl;
   //
+  //modify constraintsNoneEigen to account for the bug in higher order nodes
+  //
+  /* ConstraintMatrix constraintsTempEigen(constraintsNoneEigen); constraintsNoneEigen.clear();
+  std::set<unsigned int> masterNodesEigenReal, masterNodesEigenImag;
   //fill all masters
-  //
-  for(types::global_dof_index i = 0; i <dofHandlerEigen.n_dofs(); ++i)
+  
+  for(types::global_dof_index i = 0; i < dofHandlerEigen.n_dofs(); i++)
     {
       if(locally_relevant_dofsEigen.is_element(i))
 	{
@@ -340,100 +301,16 @@ void dftClass::init(){
 	    {
 	      if (constraintsTempEigen.is_identity_constrained(i))
 		{
+		  Point<3> p=d_supportPointsEigen.find(i)->second;
 		  unsigned int masterNode=(*constraintsTempEigen.get_constraint_entries(i))[0].first;
-		  masterNodesEigen.insert(masterNode);
-		  slaveNodesEigen.insert(i);
+		  if(i%2 == 0)
+		    masterNodesEigenReal.insert(masterNode);
+		  else
+		    masterNodesEigenImag.insert(masterNode);
 		}
 	    }
 	}
     }
-
-  std::set<unsigned int> globalMasterNodesEigen;
-  exchangeMasterNodesList(masterNodesEigen,
-			  globalMasterNodesEigen,
-			  n_mpi_processes,
-			  mpi_communicator);
-
-  
-  //
-  //Now separate this set to real and imag sets
-  //
-  QGauss<3>  quadrature_formula(FEOrder+1);
-  FEValues<3> fe_values (FEEigen, quadrature_formula, update_values);
-  const unsigned int n_q_points    = quadrature_formula.size();
-  const unsigned int dofs_per_cell = FEEigen.dofs_per_cell;
-  std::vector<unsigned int> local_dof_indicesEigen(dofs_per_cell);
-
-  std::set<unsigned int> masterNodesReal, masterNodesImag, slaveNodesReal, slaveNodesImag;
-  typename DoFHandler<3>::active_cell_iterator cellEigen = dofHandlerEigen.begin_active(), endcellEigen = dofHandlerEigen.end();
-  for (; cellEigen!=endcellEigen; ++cellEigen)
-    {
-      if (cellEigen->is_locally_owned())
-	{
-	  fe_values.reinit (cellEigen);
-	  cellEigen->get_dof_indices (local_dof_indicesEigen);
-
-	  for (unsigned int i = 0; i < dofs_per_cell; ++i)
-	    {
-	      const unsigned int ck = fe_values.get_fe().system_to_component_index(i).first; //This is the component index 0(real) or 1 (imag).
-	      const unsigned int globalDOF = local_dof_indicesEigen[i];
-	      //std::cout<<"Real or Imag: "<<ck<<std::endl;
-	      
-	      if (globalMasterNodesEigen.count(globalDOF)==1)
-		{
-		  if (ck == 0)
-		    {
-		      masterNodesReal.insert(globalDOF);
-		    }
-		  else 
-		    {
-		      masterNodesImag.insert(globalDOF);
-		    }
-
-		}
-	      else if (slaveNodesEigen.count(globalDOF)==1)
-		{
-
-		  if (ck == 0)
-		    {
-		      slaveNodesReal.insert(globalDOF);
-		    }
-		  else 
-		    {
-		      slaveNodesImag.insert(globalDOF);
-
-		    }
-
-		}
-
-	    }
-	}
-    }//end of cellEigen loop
-
-  std::set<unsigned int> globalMasterNodesReal;
-  std::set<unsigned int> globalMasterNodesImag;
-
-  exchangeMasterNodesList(masterNodesReal,
-			  globalMasterNodesReal,
-			  n_mpi_processes,
-			  mpi_communicator);
-
-  exchangeMasterNodesList(masterNodesImag,
-			  globalMasterNodesImag,
-			  n_mpi_processes,
-			  mpi_communicator);
-
-
-  std::cout<<"Master Nodes Size: "<<globalMasterNodesEigen.size()<<std::endl;
-  std::cout<<"Slave Nodes Size: "<<slaveNodesEigen.size()<<std::endl;
-
-  std::cout<<"Master Nodes Real Size: "<<globalMasterNodesReal.size()<<std::endl;
-  std::cout<<"Master Nodes Imag Size: "<<globalMasterNodesImag.size()<<std::endl;
-  
-  std::cout<<"Slave Nodes Real Size: "<<slaveNodesReal.size()<<std::endl;
-  std::cout<<"Slave Nodes Imag Size: "<<slaveNodesImag.size()<<std::endl;
-
-  
 
   //
   //fix wrong master map
@@ -466,9 +343,9 @@ void dftClass::init(){
 		      if (!((std::abs(p[l]-q[l])<periodicPrecision) and (std::abs(p[m]-q[m])<periodicPrecision)))
 			{
 			  bool foundNewMaster=false;
-			  if(slaveNodesReal.count(i) == 1)
+			  if(i%2 == 0)
 			    {
-			      for (std::set<unsigned int>::iterator it=globalMasterNodesReal.begin(); it!=globalMasterNodesReal.end(); ++it)
+			      for (std::set<unsigned int>::iterator it=masterNodesEigenReal.begin(); it!=masterNodesEigenReal.end(); ++it)
 				{
 				  q=d_supportPointsEigen.find(*it)->second;
 				  if (((std::abs(p[l]-q[l])<periodicPrecision) and (std::abs(p[m]-q[m])<periodicPrecision)))
@@ -482,7 +359,7 @@ void dftClass::init(){
 			    }
 			  else
 			    {
-			      for (std::set<unsigned int>::iterator it=globalMasterNodesImag.begin(); it!=globalMasterNodesImag.end(); ++it)
+			      for (std::set<unsigned int>::iterator it=masterNodesEigenImag.begin(); it!=masterNodesEigenImag.end(); ++it)
 				{
 				  q=d_supportPointsEigen.find(*it)->second;
 				  if (((std::abs(p[l]-q[l])<periodicPrecision) and (std::abs(p[m]-q[m])<periodicPrecision)))
@@ -515,14 +392,13 @@ void dftClass::init(){
 	    }
 	}
     }
-   
-  constraintsNoneEigen.close();
+  std::cout<<"Size of ConstraintsNoneEigen after fixing periodicity: "<< constraintsNoneEigen.n_constraints()<<std::endl;
+
+  constraintsNoneEigen.close();*/
 #else
   constraintsNone.close();
   constraintsNoneEigen.close();
 #endif
-
-  pcout<<"Size of ConstraintsNoneEigen New: "<< constraintsNoneEigen.n_constraints()<<std::endl;
 
   //
   //Zero Dirichlet BC constraints on the boundary of the domain
@@ -548,6 +424,8 @@ void dftClass::init(){
   std::cout<<"Updated Size of ConstraintsPeriodic with Dirichlet B.Cs: "<< d_constraintsPeriodicWithDirichlet.n_constraints()<<std::endl;
 #endif
  
+  
+
   //
   //push back into Constraint Matrices
   //

@@ -43,6 +43,7 @@
 #include <deal.II/lac/parallel_vector.h>
 #include <deal.II/matrix_free/matrix_free.h>
 #include <deal.II/matrix_free/fe_evaluation.h>
+#include <deal.II/lac/slepc_solver.h>
 
 //Include generic C++ headers
 #include <fstream>

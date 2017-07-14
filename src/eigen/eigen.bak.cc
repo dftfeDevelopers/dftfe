@@ -1,4 +1,4 @@
-#include "../../include/eigen.h"
+#include "../../include2/eigen.h"
 
 //constructor
 eigenClass::eigenClass(dftClass* _dftPtr):
@@ -160,7 +160,7 @@ void eigenClass::computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoV
   FEEvaluation<3,FEOrder> fe_eval_phiExt(dftPtr->matrix_free_data, 0 ,0);
   int numberQuadraturePoints = fe_eval_phi.n_q_points;
   vEff.reinit (n_cells, numberQuadraturePoints);
-  derExcWithSigmaTimesGradRho.reinit(TableIndices<3>(n_cells, numberQuadraturePoints, 3));
+  derExcWithSigmaTimesGradRho(n_cells, numberQuadraturePoints, 3);
   typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
 
   //
@@ -215,10 +215,9 @@ void eigenClass::computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoV
 	      double gradRhoX = ((*gradRhoValues)[cellPtr->id()][3*q + 0]);
 	      double gradRhoY = ((*gradRhoValues)[cellPtr->id()][3*q + 1]);
 	      double gradRhoZ = ((*gradRhoValues)[cellPtr->id()][3*q + 2]);
-	      double term = derExchEnergyWithSigma[v]+derCorrEnergyWithSigma[v];
-	      derExcWithSigmaTimesGradRhoX[v] = term*gradRhoX;
-	      derExcWithSigmaTimesGradRhoY[v] = term*gradRhoY;
-	      derExcWithSigmaTimesGradRhoZ[v] = term*gradRhoZ;
+	      derExcWithSigmaTimesGradRhoX[v] = (derExchEnergyWithSigma[v]+derCorrEnergyWithSigma[v])*gradRhoX;
+	      derExcWithSigmaTimesGradRhoY[v] = (derExchEnergyWithSigma[v]+derCorrEnergyWithSigma[v])*gradRhoY;
+	      derExcWithSigmaTimesGradRhoZ[v] = (derExchEnergyWithSigma[v]+derCorrEnergyWithSigma[v])*gradRhoZ;
 	    }
 
 	  //
@@ -253,43 +252,28 @@ void eigenClass::computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoV
 void eigenClass::computeNonLocalHamiltonianTimesX(const std::vector<vectorType*> &src,
 						  std::vector<vectorType*>       &dst)
 {
-  //
-  //get FE data
-  //
-  QGauss<3>  quadrature_formula(FEOrder+1);
-  FEValues<3> fe_values (dftPtr->FEEigen, quadrature_formula, update_values);
 
   const int kPointIndex = dftPtr->d_kPointIndex;
   const unsigned int numberElements  = dftPtr->triangulation.n_locally_owned_active_cells();
-  const unsigned int dofs_per_cell = dftPtr->FEEigen.dofs_per_cell;
 
-  int numberNodesPerElement;
-#ifdef ENABLE_PERIODIC_BC
- numberNodesPerElement = dftPtr->FEEigen.dofs_per_cell/2;//GeometryInfo<3>::vertices_per_cell;
-#else
- numberNodesPerElement = dftPtr->FEEigen.dofs_per_cell;
-#endif
+  int numberNodesPerElement  = GeometryInfo<3>::vertices_per_cell;
 
- //
- //compute nonlocal projector ket times x i.e C^{T}*X 
- //
- std::vector<dealii::types::global_dof_index> local_dof_indices(dofs_per_cell);
+   //compute nonlocal projector ket times x i.e C^{T}*X 
 #ifdef ENABLE_PERIODIC_BC
   std::vector<std::vector<std::complex<double> > > projectorKetTimesVector;
+  std::vector<dealii::types::global_dof_index> local_dof_indices(2*numberNodesPerElement);
 #else
   std::vector<std::vector<double> > projectorKetTimesVector;
+  std::vector<dealii::types::global_dof_index> local_dof_indices(numberNodesPerElement);
 #endif
 
-  //
+
   //get number of Nonlocal atoms
-  //
   const int numberNonLocalAtoms = dftPtr->d_nonLocalAtomGlobalChargeIds.size();
   int numberWaveFunctions = src.size();
   projectorKetTimesVector.clear();
 
-  //
   //allocate memory for matrix-vector product
-  //
   projectorKetTimesVector.resize(numberNonLocalAtoms);
   for(int iAtom = 0; iAtom < numberNonLocalAtoms; ++iAtom)
     {
@@ -306,7 +290,6 @@ void eigenClass::computeNonLocalHamiltonianTimesX(const std::vector<vectorType*>
   std::vector<double> inputVectors(numberNodesPerElement*numberWaveFunctions,0.0);
 #endif
   
-
   //
   //parallel loop over all elements to compute nonlocal projector ket times x i.e C^{T}*X 
   //
@@ -321,25 +304,34 @@ void eigenClass::computeNonLocalHamiltonianTimesX(const std::vector<vectorType*>
 
 	  unsigned int index=0;
 #ifdef ENABLE_PERIODIC_BC
-	  std::vector<double> temp(dofs_per_cell,0.0);
+	  std::vector<double> temp(2*numberNodesPerElement,0.0);
 	  for (std::vector<vectorType*>::const_iterator it=src.begin(); it!=src.end(); it++)
 	    {
 	      (*it)->extract_subvector_to(local_dof_indices.begin(), local_dof_indices.end(), temp.begin());
-	      for(int idof = 0; idof < dofs_per_cell; ++idof)
+	      for(int iNode = 0; iNode < numberNodesPerElement; ++iNode)
 		{
-		  //
-		  //This is the component index 0(real) or 1(imag).
-		  //
-		  const unsigned int ck = fe_values.get_fe().system_to_component_index(idof).first; 
-		  const unsigned int iNode = fe_values.get_fe().system_to_component_index(idof).second;
-		  if(ck == 0)
-		    inputVectors[numberNodesPerElement*index + iNode].real(temp[idof]);
-		  else
-		    inputVectors[numberNodesPerElement*index + iNode].imag(temp[idof]);
+		  inputVectors[numberNodesPerElement*index + iNode].real(temp[2*iNode]);
+		  inputVectors[numberNodesPerElement*index + iNode].imag(temp[2*iNode+1]);
 		}
 	      index++;
 	    }
-	 
+	  /* if(iElem == 0)
+            {
+              std::cout<<"Input Vectors for wave 0: "<<std::endl;  
+              for(int i = 0; i < numberNodesPerElement; ++i)
+		{
+		  std::cout<<inputVectors[numberNodesPerElement*0 + i].real()<<std::endl;
+		  std::cout<<inputVectors[numberNodesPerElement*0 + i].imag()<<std::endl;
+		}
+
+	      std::cout<<"Input Vectors for wave 3: "<<std::endl;  
+              for(int i = 0; i < numberNodesPerElement; ++i)
+		{
+		  std::cout<<inputVectors[numberNodesPerElement*3 + i].real()<<std::endl;
+		  std::cout<<inputVectors[numberNodesPerElement*3 + i].imag()<<std::endl;
+		}
+
+		}*/
 
 #else
 	  for (std::vector<vectorType*>::const_iterator it=src.begin(); it!=src.end(); it++)
@@ -396,8 +388,6 @@ void eigenClass::computeNonLocalHamiltonianTimesX(const std::vector<vectorType*>
 	}
 
     }//element loop
-
-  //std::cout<<"Finished Element Loop"<<std::endl;
 
 #ifdef ENABLE_PERIODIC_BC
   std::vector<std::complex<double> > tempVectorloc;
@@ -469,8 +459,7 @@ void eigenClass::computeNonLocalHamiltonianTimesX(const std::vector<vectorType*>
 	}
     }
   
-  //std::cout<<"Scaling V*C^{T} "<<std::endl;
-
+  
   char transA1 = 'N';
   char transB1 = 'N';
  	  
@@ -555,21 +544,13 @@ void eigenClass::computeNonLocalHamiltonianTimesX(const std::vector<vectorType*>
 
 #ifdef ENABLE_PERIODIC_BC
 	  unsigned int index = 0;
-	  std::vector<double> temp(dofs_per_cell,0.0);
+	  std::vector<double> temp(2*numberNodesPerElement,0.0);
 	  for(std::vector<vectorType*>::iterator it = dst.begin(); it != dst.end(); ++it)
 	    {
-	      for(int idof = 0; idof < dofs_per_cell; ++idof)
+	      for(int iNode = 0; iNode < numberNodesPerElement; ++iNode)
 		{
-		  //temp[2*iNode]   = outputVectors[numberNodesPerElement*index + iNode].real();
-		  //temp[2*iNode+1] = outputVectors[numberNodesPerElement*index + iNode].imag();
-		  const unsigned int ck = fe_values.get_fe().system_to_component_index(idof).first;
-		  const unsigned int iNode = fe_values.get_fe().system_to_component_index(idof).second;
-		  
-		  if(ck == 0)
-		    temp[idof] = outputVectors[numberNodesPerElement*index + iNode].real();
-		  else
-		    temp[idof] = outputVectors[numberNodesPerElement*index + iNode].imag();
-
+		  temp[2*iNode]   = outputVectors[numberNodesPerElement*index + iNode].real();
+		  temp[2*iNode+1] = outputVectors[numberNodesPerElement*index + iNode].imag();
 		}
 	      dftPtr->constraintsNoneEigen.distribute_local_to_global(temp.begin(), temp.end(),local_dof_indices.begin(), **it);
 	      index++;
@@ -587,32 +568,67 @@ void eigenClass::computeNonLocalHamiltonianTimesX(const std::vector<vectorType*>
 
     }
 
-  //std::cout<<"Finished C*V*C^{T} "<<std::endl;
 
   for (std::vector<vectorType*>::iterator it=dst.begin(); it!=dst.end(); it++)
     {
       (*it)->compress(VectorOperation::add);
     }
 
-  //std::cout<<"Compressed data "<<std::endl;
-
 }
 						  
 
-
+//HX
+/*void eigenClass::implementHX (const dealii::MatrixFree<3,double>  &data,
+			      std::vector<vectorType*>  &dst, 
+			      const std::vector<vectorType*>  &src,
+			      const std::pair<unsigned int,unsigned int> &cell_range) const
+{
+  VectorizedArray<double>  half = make_vectorized_array(0.5);
+  FEEvaluation<3,FEOrder>  fe_eval(data, 0, 0);
+#ifdef ENABLE_PERIODIC_BC
+  int kPointIndex = dftPtr->d_kPointIndex;
+  Tensor<1,3,VectorizedArray<std::complex<double> > > kPointValues;
+  kPointValues[0].real() = 0.0; kPointValues[0].imag() = -dftPtr->d_kPointCoordinates[3*kPointIndex+0];
+  kPointValues[1].real() = 0.0; kPointValues[1].imag() = -dftPtr->d_kPointCoordinates[3*kPointIndex+1];
+  kPointValues[2].real() = 0.0; kPointValues[2].imag() = -dftPtr->d_kPointCoordinates[3*kPointIndex+2];
+  Tensor<1,1,VectorizedArray<double> > kSquare;
+  kSquare = 0.5*(dftPtr->d_kPointCoordinates[3*kPointIndex+0]*dftPtr->d_kPointCoordinates[3*kPointIndex+0] + dftPtr->d_kPointCoordinates[3*kPointIndex+1]*dftPtr->d_kPointCoordinates[3*kPointIndex+1] + dftPtr->d_kPointCoordinates[3*kPointIndex+2]*dftPtr->d_kPointCoordinates[3*kPointIndex+2]);
+#endif
+  for(unsigned int cell=cell_range.first; cell<cell_range.second; ++cell)
+    {
+      fe_eval.reinit (cell); 
+      for(unsigned int i = 0; i < dst.size(); i++)
+	{
+	  fe_eval.read_dof_values(*src[i]);
+	  fe_eval.evaluate (true,true,false);
+	  for(unsigned int q=0; q<fe_eval.n_q_points; ++q)
+	    {
+	      fe_eval.submit_gradient (fe_eval.get_gradient(q)*half, q);
+	      fe_eval.submit_value    (fe_eval.get_value(q)*vEff(cell,q), q);
+#ifdef ENABLE_PERIODIC_BC
+	      Tensor<1,3,VectorizedArray<std::complex<double> > > temp = fe_eval.get_gradient(q);
+	      VectorizedArray<std::complex<double> > kDotGradPsi = temp[0]*kPointValues[0] + temp[1]*kPointValues[1] + temp[2]*kPointValues[2];
+	      fe_eval.submit_value(kDotGradPsi,q);
+	      fe_eval.submit_value(fe_eval.get_value(q)*kSquare,q);
+#endif
+	    }
+	  fe_eval.integrate (true, true);
+	  fe_eval.distribute_local_to_global (*dst[i]);
+	}
+    }
+    }*/
 void eigenClass::implementHX (const dealii::MatrixFree<3,double>  &data,
 			      std::vector<vectorType*>  &dst, 
 			      const std::vector<vectorType*>  &src,
 			      const std::pair<unsigned int,unsigned int> &cell_range) const
 {
   VectorizedArray<double>  half = make_vectorized_array(0.5);
-  VectorizedArray<double>  two = make_vectorized_array(2.0);
 
 #ifdef ENABLE_PERIODIC_BC
   int kPointIndex = dftPtr->d_kPointIndex;
   FEEvaluation<3,FEOrder, FEOrder+1, 2, double>  fe_eval(data, dftPtr->eigenDofHandlerIndex, 0);
   Tensor<1,2,VectorizedArray<double> > psiVal, vEffTerm, kSquareTerm, kDotGradientPsiTerm, derExchWithSigmaTimesGradRhoDotGradientPsiTerm;
-  Tensor<1,2,Tensor<1,3,VectorizedArray<double> > > gradientPsiVal, gradientPsiTerm, derExchWithSigmaTimesGradRhoTimesPsi,sumGradientTerms; 
+  Tensor<1,2,Tensor<1,3,VectorizedArray<double> > > gradientPsiVal, gradientPsiTerm, derExchWithSigmaTimesGradRhoTimesPsi; 
 
   Tensor<1,3,VectorizedArray<double> > kPointCoors;
   kPointCoors[0] = make_vectorized_array(dftPtr->d_kPointCoordinates[3*kPointIndex+0]);
@@ -657,17 +673,17 @@ void eigenClass::implementHX (const dealii::MatrixFree<3,double>  &data,
 
 #ifdef xc_id
 #if xc_id == 4
-	      derExchWithSigmaTimesGradRhoDotGradientPsiTerm[0] = two*(derExcWithSigmaTimesGradRho(cell,q,0)*gradientPsiVal[0][0] + derExcWithSigmaTimesGradRho(cell,q,1)*gradientPsiVal[0][1] + derExcWithSigmaTimesGradRho(cell,q,2)*gradientPsiVal[0][2]);
-	      derExchWithSigmaTimesGradRhoDotGradientPsiTerm[1] = two*(derExcWithSigmaTimesGradRho(cell,q,0)*gradientPsiVal[1][0] + derExcWithSigmaTimesGradRho(cell,q,1)*gradientPsiVal[1][1] + derExcWithSigmaTimesGradRho(cell,q,2)*gradientPsiVal[1][2]);
+	      derExchWithSigmaTimesGradRhoDotGradientPsiTerm[0] = derExcWithSigmaTimesGradRho(cell,q,0)*gradientPsiVal[0][0] + derExcWithSigmaTimesGradRho(cell,q,1)*gradientPsiVal[0][1] + derExcWithSigmaTimesGradRho(cell,q,2)*gradientPsiVal[0][2];
+	      derExchWithSigmaTimesGradRhoDotGradientPsiTerm[1] = derExcWithSigmaTimesGradRho(cell,q,0)*gradientPsiVal[1][0] + derExcWithSigmaTimesGradRho(cell,q,1)*gradientPsiVal[1][1] + derExcWithSigmaTimesGradRho(cell,q,2)*gradientPsiVal[1][2];
 	      //
 	      //see if you can make this shorter
 	      //
-	      derExchWithSigmaTimesGradRhoTimesPsi[0][0] = two*derExcWithSigmaTimesGradRho(cell,q,0)*psiVal[0];
-	      derExchWithSigmaTimesGradRhoTimesPsi[0][1] = two*derExcWithSigmaTimesGradRho(cell,q,1)*psiVal[0];
-	      derExchWithSigmaTimesGradRhoTimesPsi[0][2] = two*derExcWithSigmaTimesGradRho(cell,q,2)*psiVal[0];
-	      derExchWithSigmaTimesGradRhoTimesPsi[1][0] = two*derExcWithSigmaTimesGradRho(cell,q,0)*psiVal[1];
-	      derExchWithSigmaTimesGradRhoTimesPsi[1][1] = two*derExcWithSigmaTimesGradRho(cell,q,1)*psiVal[1];
-	      derExchWithSigmaTimesGradRhoTimesPsi[1][2] = two*derExcWithSigmaTimesGradRho(cell,q,2)*psiVal[1];	
+	      derExchWithSigmaTimesGradRhoTimesPsi[0][0] = derExcWithSigmaTimesGradRho(cell,q,0)*psiVal[0];
+	      derExchWithSigmaTimesGradRhoTimesPsi[0][1] = derExcWithSigmaTimesGradRho(cell,q,1)*psiVal[0];
+	      derExchWithSigmaTimesGradRhoTimesPsi[0][2] = derExcWithSigmaTimesGradRho(cell,q,2)*psiVal[0];
+	      derExchWithSigmaTimesGradRhoTimesPsi[1][0] = derExcWithSigmaTimesGradRho(cell,q,0)*psiVal[1];
+	      derExchWithSigmaTimesGradRhoTimesPsi[1][1] = derExcWithSigmaTimesGradRho(cell,q,1)*psiVal[1];
+	      derExchWithSigmaTimesGradRhoTimesPsi[1][2] = derExcWithSigmaTimesGradRho(cell,q,2)*psiVal[1];	
 #endif
 #endif	      
 
@@ -683,19 +699,12 @@ void eigenClass::implementHX (const dealii::MatrixFree<3,double>  &data,
 	      
 #ifdef xc_id
 #if xc_id == 4
-	      for(int i = 0; i < 3; ++i)
-		{
-		  sumGradientTerms[0][i] = gradientPsiTerm[0][i] + derExchWithSigmaTimesGradRhoTimesPsi[0][i];
-		  sumGradientTerms[1][i] = gradientPsiTerm[1][i] + derExchWithSigmaTimesGradRhoTimesPsi[1][i];
-		}
-
-	      fe_eval.submit_gradient(sumGradientTerms,q);
+	      fe_eval.submit_gradient(gradientPsiTerm+derExchWithSigmaTimesGradRhoTimesPsi,q);
 	      fe_eval.submit_value(vEffTerm+kDotGradientPsiTerm+kSquareTerm+derExchWithSigmaTimesGradRhoDotGradientPsiTerm,q);
 #else
 	      fe_eval.submit_gradient(gradientPsiTerm,q);
 	      fe_eval.submit_value(vEffTerm+kDotGradientPsiTerm+kSquareTerm,q);
-
-#endif	     
+#endif
 #endif
 	    }
 
@@ -727,8 +736,8 @@ void eigenClass::implementHX (const dealii::MatrixFree<3,double>  &data,
 	      derExchWithSigmaTimesGradRhoDotGradientPsiTerm = derExcWithSigmaTimesGradRho(cell,q,0)*gradientPsiVal[0] + derExcWithSigmaTimesGradRho(cell,q,1)*gradientPsiVal[1] + derExcWithSigmaTimesGradRho(cell,q,2)*gradientPsiVal[2];
 
 	      //submit gradient and value
-	      fe_eval.submit_gradient(gradientPsiVal*half + two*derExchWithSigmaTimesGradRhoTimesPsi,q); 
-	      fe_eval.submit_value(vEff(cell,q)*psiVal + two*derExchWithSigmaTimesGradRhoDotGradientPsiTerm,q);
+	      fe_eval.submit_gradient(gradientPsiVal*half + derExchWithSigmaTimesGradRhoTimesPsi,q); 
+	      fe_eval.submit_value(vEff(cell,q)*psiVal + derExchWithSigmaTimesGradRhoDotGradientPsiTerm,q);
 	      
 #else
 	      fe_eval.submit_gradient (fe_eval.get_gradient(q)*half, q);

@@ -8,37 +8,51 @@ class eigenClass
   friend class dftClass;
 public:
   eigenClass(dftClass* _dftPtr);
-  void computeLocalHamiltonians(std::map<dealii::CellId,std::vector<double> >* rhoValues, const vectorType& phi);
-  void HX(const std::vector<vectorType*> &src, std::vector<vectorType*> &dst);
+  void HX(const std::vector<vectorType*> &src, 
+	  std::vector<vectorType*> &dst);
+
   void XHX(const std::vector<vectorType*> &src); 
  private:
   void implementHX(const dealii::MatrixFree<3,double>  &data,
 		   std::vector<vectorType*>  &dst, 
 		   const std::vector<vectorType*>  &src,
 		   const std::pair<unsigned int,unsigned int> &cell_range) const;
-  void implementXHX(const dealii::MatrixFree<3,double>  &data,
-		   std::vector<vectorType*>  &dst, 
-		   const std::vector<vectorType*>  &src,
-		   const std::pair<unsigned int,unsigned int> &cell_range) const;
+
+  void computeNonLocalHamiltonianTimesX(const std::vector<vectorType*> &src,
+					std::vector<vectorType*>       &dst);
+
   void init ();
   void computeMassVector();
+  void computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoValues, 
+		   const vectorType & phi,
+		   const vectorType & phiExt,
+		   std::map<dealii::CellId,std::vector<double> >* pseudoValues=0);
 
+  void computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoValues,
+		   std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
+		   const vectorType & phi,
+		   const vectorType & phiExt,
+		   std::map<dealii::CellId,std::vector<double> >* pseudoValues=0);
+
+  
   //pointer to dft class
   dftClass* dftPtr;
 
+
   //FE data structres
   dealii::FE_Q<3>   FE;
-  std::map<dealii::CellId,std::vector<double> >   localHamiltonians;
-  std::map<dealii::CellId,std::vector<double> >*   localHamiltoniansPtr; //this ptr created to circumvent problem with const definition of HX
  
-  //constraints
-  dealii::ConstraintMatrix  constraintsNone; 
-
   //data structures
   vectorType massVector;
+#ifdef ENABLE_PERIODIC_BC
+  std::vector<std::complex<double> > XHXValue;
+#else
   std::vector<double> XHXValue;
-  std::vector<double>* XHXValuePtr;
+#endif
   std::vector<vectorType*> HXvalue;
+  dealii::Table<2, dealii::VectorizedArray<double> > vEff;
+
+  dealii::Table<3, dealii::VectorizedArray<double> > derExcWithSigmaTimesGradRho;
 
   //parallel objects
   MPI_Comm mpi_communicator;

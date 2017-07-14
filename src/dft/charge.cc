@@ -1,7 +1,7 @@
 //source file for all charge calculations
 
 //compute total charge
-double dftClass::totalCharge(){
+double dftClass::totalCharge(std::map<dealii::CellId, std::vector<double> > *rhoQuadValues){
   double normValue=0.0;
   QGauss<3>  quadrature_formula(FEOrder+1);
   FEValues<3> fe_values (FE, quadrature_formula, update_values | update_JxW_values | update_quadrature_points);
@@ -15,7 +15,7 @@ double dftClass::totalCharge(){
     if (cell->is_locally_owned()){
       fe_values.reinit (cell);
       for (unsigned int q_point=0; q_point<n_q_points; ++q_point){
-        normValue+=(*rhoInValues)[cell->id()][q_point]*fe_values.JxW(q_point);
+        normValue+=(*rhoQuadValues)[cell->id()][q_point]*fe_values.JxW(q_point);
       }
     }
   }
