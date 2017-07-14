@@ -1,0 +1,10 @@
+/home/phanim/KohnShamCodes/DEALIICode/periodicDFTFE/Tutorials/AllElectron/NonPeriodic/CarbonSingleAtom/CMakeFiles/edit_cache.dir
+/home/phanim/KohnShamCodes/DEALIICode/periodicDFTFE/Tutorials/AllElectron/NonPeriodic/CarbonSingleAtom/CMakeFiles/rebuild_cache.dir
+/home/phanim/KohnShamCodes/DEALIICode/periodicDFTFE/Tutorials/AllElectron/NonPeriodic/CarbonSingleAtom/CMakeFiles/info.dir
+/home/phanim/KohnShamCodes/DEALIICode/periodicDFTFE/Tutorials/AllElectron/NonPeriodic/CarbonSingleAtom/CMakeFiles/strip_comments.dir
+/home/phanim/KohnShamCodes/DEALIICode/periodicDFTFE/Tutorials/AllElectron/NonPeriodic/CarbonSingleAtom/CMakeFiles/distclean.dir
+/home/phanim/KohnShamCodes/DEALIICode/periodicDFTFE/Tutorials/AllElectron/NonPeriodic/CarbonSingleAtom/CMakeFiles/runclean.dir
+/home/phanim/KohnShamCodes/DEALIICode/periodicDFTFE/Tutorials/AllElectron/NonPeriodic/CarbonSingleAtom/CMakeFiles/release.dir
+/home/phanim/KohnShamCodes/DEALIICode/periodicDFTFE/Tutorials/AllElectron/NonPeriodic/CarbonSingleAtom/CMakeFiles/run.dir
+/home/phanim/KohnShamCodes/DEALIICode/periodicDFTFE/Tutorials/AllElectron/NonPeriodic/CarbonSingleAtom/CMakeFiles/debug.dir
+/home/phanim/KohnShamCodes/DEALIICode/periodicDFTFE/Tutorials/AllElectron/NonPeriodic/CarbonSingleAtom/CMakeFiles/main.dir
