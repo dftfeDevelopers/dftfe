@@ -40,7 +40,6 @@ dftClass::dftClass():
   poisson(this),
   eigen(this),
   numElectrons(0),
-  numBaseLevels(0),
   numLevels(0),
   d_maxkPoints(1),
   pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),

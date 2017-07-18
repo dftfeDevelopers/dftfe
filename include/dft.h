@@ -19,11 +19,14 @@
 #include "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/intel_slepc3.7.3_double_elemental/include/slepceps.h"
 #endif
 
-//std::cout << std::setprecision(18) << std::scientific;
-
+//
 //Initialize Namespace
+//
 using namespace dealii;
-//blas-lapack routines
+
+//
+//extern declarations for blas-lapack routines
+//
 extern "C"{
   void dgemv_(char* TRANS, const int* M, const int* N, double* alpha, double* A, const int* LDA, double* X, const int* INCX, double* beta, double* C, const int* INCY);
   void dgesv_( int* n, int* nrhs, double* a, int* lda, int* ipiv, double* b, int* ldb, int* info );
@@ -37,65 +40,138 @@ extern "C"{
   void zaxpy_(int *n,std::complex<double> *alpha,std::complex<double> *x,int *incx,std::complex<double> *y,int *incy);
 }
 
+//
+//objects for various exchange-correlations (from libxc package)
+//
 xc_func_type funcX, funcC;
 
+//
+//Boltzmann constant
 //
 const double kb = 3.166811429e-06;
 
 //
-struct orbital{
+//
+//
+struct orbital
+{
   unsigned int atomID;
   unsigned int Z, n, l;
   int m;
   alglib::spline1dinterpolant* psi;
 };
 
-//Define dft class
-class dftClass{
+//
+//dft class for initializing mesh, setting up guesses for initial electron-density and wavefunctions,
+//solving individual vSelf problem after setting up bins, initializing pseudopotentials. Also 
+//has member functions which sets up the process of SCF iteration including mixing of the electron-density
+class dftClass
+{
+
   friend class poissonClass;
   friend class eigenClass;  
- public:
-  dftClass();
-  void run();
-  std::map<unsigned int, unsigned int> additionalWaveFunctions;
-  std::map<unsigned int, unsigned int> numberAtomicWaveFunctions;
-  unsigned int numEigenValues;
- private:
-  void set();
-  unsigned int numElectrons, numBaseLevels, numLevels;
-  std::set<unsigned int> atomTypes;
-  std::vector<std::vector<double> > atomLocations,d_latticeVectors,d_imagePositions;
-  std::vector<int> d_imageIds;
-  std::vector<double> d_imageCharges;
-  std::vector<orbital> waveFunctionsVector;
-  std::map<unsigned int, std::map<unsigned int, std::map<unsigned int, alglib::spline1dinterpolant*> > > radValues;
-  std::map<unsigned int, std::map<unsigned int, std::map <unsigned int, double> > >outerValues;
 
+ public:
+
+  /**
+   * dftClass constructor
+   */
+  dftClass();
+
+  /**
+   * Sets up Kohn-Sham SCF iteration after the required pre-processing steps
+   */
+  void run();
+
+  /**
+   * Number of single-atomic wavefunctions associated with each atom to be used as initial guess
+   */
+  std::map<unsigned int, unsigned int> numberAtomicWaveFunctions;
+
+  /**
+   * Number of Kohn-Sham eigen values to be computed
+   */
+  unsigned int numEigenValues;
+
+ private:
+
+  /**
+   * Reads the coordinates of the atoms.
+   * If periodic calculation, reads fractional coordinates of atoms in the unit-cell,
+   * lattice vectors, kPoint quadrature rules to be used and also generates image atoms.
+   * Also determines orbital-ordering
+   */
+  void set();
+  void readkPointData();
+  void generateImageCharges();
+  void determineOrbitalFilling();
+
+  /**
+   * Initializes the finite-element mesh
+   */
   void mesh();
+
+  /**
+   * Initializes the guess of electron-density and single-atom wavefunctions on the mesh,
+   * maps finite-element nodes to given atomic positions,
+   * initializes pseudopotential files and exchange-correlation functionals to be used
+   * based on user-choice. 
+   * In periodic problems, periodic faces are mapped here. Further finite-element nodes
+   * to be pinned for solving the Poisson problem electro-static potential is set here
+   */
   void init();
-  void solveVself();
+  void locateAtomCoreNodes();
+  void locatePeriodicPinnedNodes();
   void initRho();
+  void readPSI();
+  void readPSIRadialValues();
+  void loadPSIFiles(unsigned int Z, unsigned int n, unsigned int l, unsigned int & flag);
   void initLocalPseudoPotential();
   void initNonLocalPseudoPotential();
   void computeSparseStructureNonLocalProjectors();
   void computeElementalProjectorKets();
-  double totalCharge(std::map<dealii::CellId, std::vector<double> > *);
-  void locateAtomCoreNodes();
-  void locatePeriodicPinnedNodes();
+
+  /**
+   * Categorizes atoms into bins based on self-potential ball radius around each atom such 
+   * that no two atoms in each bin has overlapping balls
+   * and finally solves the self-potentials in each bin one-by-one.
+   */
   void createAtomBins(std::vector<const ConstraintMatrix * > & constraintsVector);
+  void solveVself();
+  
+  /**
+   * Computes total charge by integrating the electron-density
+   */
+  double totalCharge(std::map<dealii::CellId, std::vector<double> > *);
+  
+  /**
+   * Computes output electron-density from wavefunctions
+   */
+  void compute_rhoOut();
+ 
+  /**
+   * Mixing schemes for mixing electron-density
+   */
   double mixing_simple();
   double mixing_anderson();
-  void compute_energy();
-  void compute_fermienergy();
-  double repulsiveEnergy();
-  void compute_rhoOut();
-  void readPSIRadialValues();
-  void readPSI();
-  void determineOrbitalFilling();
-  void generateImageCharges();
-  void readkPointData();
-  void loadPSIFiles(unsigned int Z, unsigned int n, unsigned int l, unsigned int & flag);
 
+  /**
+   * Computes ground-state energy in a given SCF iteration,
+   * computes repulsive energy explicity for a non-periodic system
+   */
+  void compute_energy();
+  double repulsiveEnergy();
+
+  /**
+   * Computes Fermi-energy obtained by imposing constraint on the number of electrons
+   */
+  void compute_fermienergy();
+
+
+  /**
+   * Computes inner Product and Y = alpha*X + Y for complex vectors used during
+   * periodic boundary conditions
+   */
 #ifdef ENABLE_PERIODIC_BC
   std::complex<double> innerProduct(vectorType & a,
 				    vectorType & b);
@@ -104,11 +180,22 @@ class dftClass{
 			vectorType           & x,
 			vectorType           & y);
 #endif
-
   
+  /**
+   * stores required data for Kohn-Sham problem
+   */
+  unsigned int numElectrons, numLevels;
+  std::set<unsigned int> atomTypes;
+  std::vector<std::vector<double> > atomLocations,d_latticeVectors,d_imagePositions;
+  std::vector<int> d_imageIds;
+  std::vector<double> d_imageCharges;
+  std::vector<orbital> waveFunctionsVector;
+  std::map<unsigned int, std::map<unsigned int, std::map<unsigned int, alglib::spline1dinterpolant*> > > radValues;
+  std::map<unsigned int, std::map<unsigned int, std::map <unsigned int, double> > >outerValues;
   
-
-  //FE data structres
+  /**
+   * dealii based FE data structres
+   */
   parallel::distributed::Triangulation<3> triangulation;
   FESystem<3>        FE, FEEigen;
   DoFHandler<3>      dofHandler, dofHandlerEigen;
@@ -117,7 +204,9 @@ class dftClass{
   std::map<types::global_dof_index, Point<3> > d_supportPoints, d_supportPointsEigen;
   std::vector< const ConstraintMatrix * > d_constraintsVector; 
   
-  //parallel objects
+  /**
+   * parallel objects
+   */
   MPI_Comm   mpi_communicator;
   const unsigned int n_mpi_processes;
   const unsigned int this_mpi_process;
@@ -125,13 +214,15 @@ class dftClass{
   IndexSet   locally_relevant_dofs, locally_relevant_dofsEigen;
   std::vector<unsigned int> local_dof_indicesReal, local_dof_indicesImag;
   std::vector<unsigned int> localProc_dof_indicesReal,localProc_dof_indicesImag;
+
+
   poissonClass poisson;
   eigenClass eigen;
   ConstraintMatrix constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_constraintsPeriodicWithDirichlet; 
   std::vector<std::vector<double> > eigenValues;
   std::vector<std::vector<parallel::distributed::Vector<double>*> > eigenVectors;
   std::vector<std::vector<parallel::distributed::Vector<double>*> > eigenVectorsOrig;
-  //unsigned int numEigenValues;
+
 
   //parallel message stream
   ConditionalOStream  pcout;  
