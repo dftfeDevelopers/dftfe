@@ -50,6 +50,7 @@ void poissonClass::computeRHS2()
   //
   //local data structures
   //
+  
   QGauss<3>  quadrature(FEOrder+1);
   FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values);
   const unsigned int dofs_per_cell = FE.dofs_per_cell;

@@ -43,10 +43,10 @@ RM = /sw/arcts/centos7/cmake/3.5.2/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/phanim/KohnShamCodes/DEALIICode/periodicDFTFE/examples/allElectron/nonPeriodic/carbonSingleAtom
+CMAKE_SOURCE_DIR = /home/phanim/KohnShamCodes/DEALIICode/dftfe/examples/allElectron/nonPeriodic/carbonSingleAtom
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/phanim/KohnShamCodes/DEALIICode/periodicDFTFE/examples/allElectron/nonPeriodic/carbonSingleAtom
+CMAKE_BINARY_DIR = /home/phanim/KohnShamCodes/DEALIICode/dftfe/examples/allElectron/nonPeriodic/carbonSingleAtom
 
 # Include any dependencies generated for this target.
 include CMakeFiles/main.dir/depend.make
@@ -59,16 +59,16 @@ include CMakeFiles/main.dir/flags.make
 
 CMakeFiles/main.dir/main.cc.o: CMakeFiles/main.dir/flags.make
 CMakeFiles/main.dir/main.cc.o: main.cc
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/phanim/KohnShamCodes/DEALIICode/periodicDFTFE/examples/allElectron/nonPeriodic/carbonSingleAtom/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/main.dir/main.cc.o"
-	/sw/arcts/centos7/intel/16.0.3/compilers_and_libraries_2016.3.210/linux/bin/intel64/icpc   $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/main.dir/main.cc.o -c /home/phanim/KohnShamCodes/DEALIICode/periodicDFTFE/examples/allElectron/nonPeriodic/carbonSingleAtom/main.cc
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/phanim/KohnShamCodes/DEALIICode/dftfe/examples/allElectron/nonPeriodic/carbonSingleAtom/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/main.dir/main.cc.o"
+	/sw/arcts/centos7/intel/17.0.1-1/compilers_and_libraries_2017.1.132/linux/bin/intel64/icpc   $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/main.dir/main.cc.o -c /home/phanim/KohnShamCodes/DEALIICode/dftfe/examples/allElectron/nonPeriodic/carbonSingleAtom/main.cc
 
 CMakeFiles/main.dir/main.cc.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/main.dir/main.cc.i"
-	/sw/arcts/centos7/intel/16.0.3/compilers_and_libraries_2016.3.210/linux/bin/intel64/icpc  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/phanim/KohnShamCodes/DEALIICode/periodicDFTFE/examples/allElectron/nonPeriodic/carbonSingleAtom/main.cc > CMakeFiles/main.dir/main.cc.i
+	/sw/arcts/centos7/intel/17.0.1-1/compilers_and_libraries_2017.1.132/linux/bin/intel64/icpc  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/phanim/KohnShamCodes/DEALIICode/dftfe/examples/allElectron/nonPeriodic/carbonSingleAtom/main.cc > CMakeFiles/main.dir/main.cc.i
 
 CMakeFiles/main.dir/main.cc.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/main.dir/main.cc.s"
-	/sw/arcts/centos7/intel/16.0.3/compilers_and_libraries_2016.3.210/linux/bin/intel64/icpc  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/phanim/KohnShamCodes/DEALIICode/periodicDFTFE/examples/allElectron/nonPeriodic/carbonSingleAtom/main.cc -o CMakeFiles/main.dir/main.cc.s
+	/sw/arcts/centos7/intel/17.0.1-1/compilers_and_libraries_2017.1.132/linux/bin/intel64/icpc  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/phanim/KohnShamCodes/DEALIICode/dftfe/examples/allElectron/nonPeriodic/carbonSingleAtom/main.cc -o CMakeFiles/main.dir/main.cc.s
 
 CMakeFiles/main.dir/main.cc.o.requires:
 
@@ -90,16 +90,15 @@ main_EXTERNAL_OBJECTS =
 
 main: CMakeFiles/main.dir/main.cc.o
 main: CMakeFiles/main.dir/build.make
-main: /nfs/mcfs_comp/home/rudraa/software/dealii-8.4.1/install/lib/libdeal_II.g.so.8.4.1
-main: /nfs/mcfs_comp/home/rudraa/software/p4est/install/DEBUG/lib/libp4est.so
-main: /nfs/mcfs_comp/home/rudraa/software/p4est/install/DEBUG/lib/libsc.so
+main: /nfs/mcfs_comp/home/rudraa/software/dealii-8.4.1/installNoPetsc/lib/libdeal_II.so.8.4.1
+main: /nfs/mcfs_comp/home/rudraa/software/p4est/install/FAST/lib/libp4est.so
+main: /nfs/mcfs_comp/home/rudraa/software/p4est/install/FAST/lib/libsc.so
 main: /usr/lib64/libbz2.so
-main: /sw/arcts/centos7/openmpi/1.10.2-intel-16.0.3/lib/libmpi_cxx.so
-main: /sw/arcts/centos7/openmpi/1.10.2-intel-16.0.3/lib/libmpi_usempif08.so
-main: /sw/arcts/centos7/openmpi/1.10.2-intel-16.0.3/lib/libmpi_usempi_ignore_tkr.so
-main: /sw/arcts/centos7/openmpi/1.10.2-intel-16.0.3/lib/libmpi_mpifh.so
+main: /sw/arcts/centos7/openmpi/1.10.2-intel-17.0.1-1/lib/libmpi_cxx.so
+main: /sw/arcts/centos7/openmpi/1.10.2-intel-17.0.1-1/lib/libmpi_usempif08.so
+main: /sw/arcts/centos7/openmpi/1.10.2-intel-17.0.1-1/lib/libmpi_usempi_ignore_tkr.so
+main: /sw/arcts/centos7/openmpi/1.10.2-intel-17.0.1-1/lib/libmpi_mpifh.so
 main: /usr/lib64/libz.so
-main: /sw/coe/centos7/o/metis/5.1.0/lib/libmetis.so
 main: /usr/lib64/libboost_iostreams-mt.so
 main: /usr/lib64/libboost_serialization-mt.so
 main: /usr/lib64/libboost_system-mt.so
@@ -108,15 +107,11 @@ main: /usr/lib64/libboost_regex-mt.so
 main: /usr/lib64/libboost_chrono-mt.so
 main: /usr/lib64/libboost_date_time-mt.so
 main: /usr/lib64/libboost_atomic-mt.so
-main: /sw/arcts/centos7/intel/16.0.3/compilers_and_libraries_2016.3.210/linux/mkl/lib/intel64/libmkl_intel_lp64.so
-main: /sw/arcts/centos7/intel/16.0.3/compilers_and_libraries_2016.3.210/linux/mkl/lib/intel64/libmkl_intel_thread.so
-main: /sw/arcts/centos7/intel/16.0.3/compilers_and_libraries_2016.3.210/linux/mkl/lib/intel64/libmkl_core.so
-main: /sw/arcts/centos7/intel/16.0.3/compilers_and_libraries_2016.3.210/linux/compiler/lib/intel64/libiomp5.so
-main: /sw/arcts/centos7/openmpi/1.10.2-intel-16.0.3/lib/libmpi.so
-main: /nfs/mcfs_comp/home/rudraa/software/slepc/slepc-3.6.3/shared-optimized/lib/libslepc.so
-main: /nfs/mcfs_comp/home/rudraa/software/petsc/petsc-3.6.4/shared-optimized/lib/libpetsc.so
+main: /sw/arcts/centos7/hdf5/1.8.16-intel-17.0.1-par/lib/libhdf5_hl.so
+main: /sw/arcts/centos7/hdf5/1.8.16-intel-17.0.1-par/lib/libhdf5.so
+main: /sw/arcts/centos7/openmpi/1.10.2-intel-17.0.1-1/lib/libmpi.so
 main: CMakeFiles/main.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/phanim/KohnShamCodes/DEALIICode/periodicDFTFE/examples/allElectron/nonPeriodic/carbonSingleAtom/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable main"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/phanim/KohnShamCodes/DEALIICode/dftfe/examples/allElectron/nonPeriodic/carbonSingleAtom/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable main"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/main.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
@@ -133,6 +128,6 @@ CMakeFiles/main.dir/clean:
 .PHONY : CMakeFiles/main.dir/clean
 
 CMakeFiles/main.dir/depend:
-	cd /home/phanim/KohnShamCodes/DEALIICode/periodicDFTFE/examples/allElectron/nonPeriodic/carbonSingleAtom && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/phanim/KohnShamCodes/DEALIICode/periodicDFTFE/examples/allElectron/nonPeriodic/carbonSingleAtom /home/phanim/KohnShamCodes/DEALIICode/periodicDFTFE/examples/allElectron/nonPeriodic/carbonSingleAtom /home/phanim/KohnShamCodes/DEALIICode/periodicDFTFE/examples/allElectron/nonPeriodic/carbonSingleAtom /home/phanim/KohnShamCodes/DEALIICode/periodicDFTFE/examples/allElectron/nonPeriodic/carbonSingleAtom /home/phanim/KohnShamCodes/DEALIICode/periodicDFTFE/examples/allElectron/nonPeriodic/carbonSingleAtom/CMakeFiles/main.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/phanim/KohnShamCodes/DEALIICode/dftfe/examples/allElectron/nonPeriodic/carbonSingleAtom && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/phanim/KohnShamCodes/DEALIICode/dftfe/examples/allElectron/nonPeriodic/carbonSingleAtom /home/phanim/KohnShamCodes/DEALIICode/dftfe/examples/allElectron/nonPeriodic/carbonSingleAtom /home/phanim/KohnShamCodes/DEALIICode/dftfe/examples/allElectron/nonPeriodic/carbonSingleAtom /home/phanim/KohnShamCodes/DEALIICode/dftfe/examples/allElectron/nonPeriodic/carbonSingleAtom /home/phanim/KohnShamCodes/DEALIICode/dftfe/examples/allElectron/nonPeriodic/carbonSingleAtom/CMakeFiles/main.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/main.dir/depend
 

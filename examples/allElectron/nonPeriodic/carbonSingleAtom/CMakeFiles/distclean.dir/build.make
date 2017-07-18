@@ -43,10 +43,10 @@ RM = /sw/arcts/centos7/cmake/3.5.2/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/phanim/KohnShamCodes/DEALIICode/periodicDFTFE/examples/allElectron/nonPeriodic/carbonSingleAtom
+CMAKE_SOURCE_DIR = /home/phanim/KohnShamCodes/DEALIICode/dftfe/examples/allElectron/nonPeriodic/carbonSingleAtom
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/phanim/KohnShamCodes/DEALIICode/periodicDFTFE/examples/allElectron/nonPeriodic/carbonSingleAtom
+CMAKE_BINARY_DIR = /home/phanim/KohnShamCodes/DEALIICode/dftfe/examples/allElectron/nonPeriodic/carbonSingleAtom
 
 # Utility rule file for distclean.
 
@@ -54,9 +54,9 @@ CMAKE_BINARY_DIR = /home/phanim/KohnShamCodes/DEALIICode/periodicDFTFE/examples/
 include CMakeFiles/distclean.dir/progress.make
 
 CMakeFiles/distclean:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/phanim/KohnShamCodes/DEALIICode/periodicDFTFE/examples/allElectron/nonPeriodic/carbonSingleAtom/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "distclean invoked"
-	/sw/arcts/centos7/cmake/3.5.2/bin/cmake --build /home/phanim/KohnShamCodes/DEALIICode/periodicDFTFE/examples/allElectron/nonPeriodic/carbonSingleAtom --target clean
-	/sw/arcts/centos7/cmake/3.5.2/bin/cmake --build /home/phanim/KohnShamCodes/DEALIICode/periodicDFTFE/examples/allElectron/nonPeriodic/carbonSingleAtom --target runclean
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/phanim/KohnShamCodes/DEALIICode/dftfe/examples/allElectron/nonPeriodic/carbonSingleAtom/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "distclean invoked"
+	/sw/arcts/centos7/cmake/3.5.2/bin/cmake --build /home/phanim/KohnShamCodes/DEALIICode/dftfe/examples/allElectron/nonPeriodic/carbonSingleAtom --target clean
+	/sw/arcts/centos7/cmake/3.5.2/bin/cmake --build /home/phanim/KohnShamCodes/DEALIICode/dftfe/examples/allElectron/nonPeriodic/carbonSingleAtom --target runclean
 	/sw/arcts/centos7/cmake/3.5.2/bin/cmake -E remove_directory CMakeFiles
 	/sw/arcts/centos7/cmake/3.5.2/bin/cmake -E remove CMakeCache.txt cmake_install.cmake Makefile
 
@@ -75,6 +75,6 @@ CMakeFiles/distclean.dir/clean:
 .PHONY : CMakeFiles/distclean.dir/clean
 
 CMakeFiles/distclean.dir/depend:
-	cd /home/phanim/KohnShamCodes/DEALIICode/periodicDFTFE/examples/allElectron/nonPeriodic/carbonSingleAtom && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/phanim/KohnShamCodes/DEALIICode/periodicDFTFE/examples/allElectron/nonPeriodic/carbonSingleAtom /home/phanim/KohnShamCodes/DEALIICode/periodicDFTFE/examples/allElectron/nonPeriodic/carbonSingleAtom /home/phanim/KohnShamCodes/DEALIICode/periodicDFTFE/examples/allElectron/nonPeriodic/carbonSingleAtom /home/phanim/KohnShamCodes/DEALIICode/periodicDFTFE/examples/allElectron/nonPeriodic/carbonSingleAtom /home/phanim/KohnShamCodes/DEALIICode/periodicDFTFE/examples/allElectron/nonPeriodic/carbonSingleAtom/CMakeFiles/distclean.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/phanim/KohnShamCodes/DEALIICode/dftfe/examples/allElectron/nonPeriodic/carbonSingleAtom && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/phanim/KohnShamCodes/DEALIICode/dftfe/examples/allElectron/nonPeriodic/carbonSingleAtom /home/phanim/KohnShamCodes/DEALIICode/dftfe/examples/allElectron/nonPeriodic/carbonSingleAtom /home/phanim/KohnShamCodes/DEALIICode/dftfe/examples/allElectron/nonPeriodic/carbonSingleAtom /home/phanim/KohnShamCodes/DEALIICode/dftfe/examples/allElectron/nonPeriodic/carbonSingleAtom /home/phanim/KohnShamCodes/DEALIICode/dftfe/examples/allElectron/nonPeriodic/carbonSingleAtom/CMakeFiles/distclean.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/distclean.dir/depend
 

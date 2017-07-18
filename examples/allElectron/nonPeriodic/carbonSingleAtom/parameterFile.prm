@@ -1,0 +1,8 @@
+#Radius Atom Ball
+set Radius Atom Ball = 4.0
+set Pseudopotential Calculation = false
+set Mesh File Name = ../../../../data/meshes/allElectron/carbonSingleAtom/mesh.inp
+subsection Chebyshev filtering options
+  set Lower Bound Wanted Spectrum = -10.0
+  set Chebyshev Polynomial Degree   = 1500
+end

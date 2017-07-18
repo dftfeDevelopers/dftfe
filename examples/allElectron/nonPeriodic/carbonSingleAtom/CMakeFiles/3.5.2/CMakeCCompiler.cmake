@@ -1,7 +1,7 @@
-set(CMAKE_C_COMPILER "/sw/arcts/centos7/intel/16.0.3/compilers_and_libraries_2016.3.210/linux/bin/intel64/icc")
+set(CMAKE_C_COMPILER "/sw/arcts/centos7/intel/17.0.1-1/compilers_and_libraries_2017.1.132/linux/bin/intel64/icc")
 set(CMAKE_C_COMPILER_ARG1 "")
 set(CMAKE_C_COMPILER_ID "Intel")
-set(CMAKE_C_COMPILER_VERSION "16.0.3.20160415")
+set(CMAKE_C_COMPILER_VERSION "17.0.1.20161005")
 set(CMAKE_C_COMPILER_WRAPPER "")
 set(CMAKE_C_STANDARD_COMPUTED_DEFAULT "90")
 set(CMAKE_C_COMPILE_FEATURES "")
@@ -63,5 +63,5 @@ endif()
 
 
 set(CMAKE_C_IMPLICIT_LINK_LIBRARIES "imf;svml;irng;m;ipgo;decimal;cilkrts;stdc++;irc;svml;c;irc_s;dl;c")
-set(CMAKE_C_IMPLICIT_LINK_DIRECTORIES "/sw/arcts/centos7/intel/17.0.1-1/compilers_and_libraries_2017.1.132/linux/compiler/lib/intel64;/sw/arcts/centos7/intel/17.0.1-1/compilers_and_libraries_2017.1.132/linux/mkl/lib/intel64;/sw/arcts/centos7/intel/17.0.1-1/compilers_and_libraries_2017.1.132/linux/ipp/lib/intel64;/sw/arcts/centos7/intel/17.0.1-1/compilers_and_libraries_2017.1.132/linux/compiler/lib/intel64_lin;/sw/arcts/centos7/intel/17.0.1-1/compilers_and_libraries_2017.1.132/linux/mkl/lib/intel64_lin;/sw/arcts/centos7/intel/17.0.1-1/compilers_and_libraries_2017.1.132/linux/tbb/lib/intel64/gcc4.7;/sw/arcts/centos7/intel/17.0.1-1/compilers_and_libraries_2017.1.132/linux/daal/lib/intel64_lin;/sw/arcts/centos7/intel/17.0.1-1/compilers_and_libraries_2017.1.132/linux/tbb/lib/intel64_lin/gcc4.4;/sw/arcts/centos7/intel/16.0.3/compilers_and_libraries_2016.3.210/linux/compiler/lib/intel64_lin;/usr/lib/gcc/x86_64-redhat-linux/4.8.5;/usr/lib64;/lib64;/usr/lib;/lib")
+set(CMAKE_C_IMPLICIT_LINK_DIRECTORIES "/sw/arcts/centos7/intel/17.0.1-1/compilers_and_libraries_2017.1.132/linux/compiler/lib/intel64;/sw/arcts/centos7/intel/17.0.1-1/compilers_and_libraries_2017.1.132/linux/mkl/lib/intel64;/sw/arcts/centos7/intel/17.0.1-1/compilers_and_libraries_2017.1.132/linux/ipp/lib/intel64;/sw/arcts/centos7/intel/17.0.1-1/compilers_and_libraries_2017.1.132/linux/compiler/lib/intel64_lin;/sw/arcts/centos7/intel/17.0.1-1/compilers_and_libraries_2017.1.132/linux/mkl/lib/intel64_lin;/sw/arcts/centos7/intel/17.0.1-1/compilers_and_libraries_2017.1.132/linux/tbb/lib/intel64/gcc4.7;/sw/arcts/centos7/intel/17.0.1-1/compilers_and_libraries_2017.1.132/linux/daal/lib/intel64_lin;/sw/arcts/centos7/intel/17.0.1-1/compilers_and_libraries_2017.1.132/linux/tbb/lib/intel64_lin/gcc4.4;/usr/lib/gcc/x86_64-redhat-linux/4.8.5;/usr/lib64;/lib64;/usr/lib;/lib")
 set(CMAKE_C_IMPLICIT_LINK_FRAMEWORK_DIRECTORIES "")

@@ -1,0 +1,181 @@
+Usage:
+    ./step-19 [-p parameter_file]
+Parameter sequences in brackets can be omitted if a parameter file is
+specified on the command line and if it provides values for these
+missing parameters.
+
+The parameter file has the following format and allows the following
+values (you can cut and paste this and use it for your own parameter
+file):
+
+# Listing of Parameters
+# ---------------------
+# Finite-element mesh file to be used for the given problem
+set Mesh File Name              = ../../../../data/meshes/allElectron/carbonSingleAtom/mesh.inp # default: 
+
+# Boolean Parameter specifying whether pseudopotential DFT calculation needs
+# to be performed
+set Pseudopotential Calculation = false
+
+# The radius of the ball around an atom on which self-potential of the
+# associated nuclear charge is solved
+set Radius Atom Ball            = 4.0                                                           # default: 3.0
+
+
+subsection Chebyshev filtering options
+  # The degree of the Chebyshev polynomial to be employed for filtering out
+  # the unwanted spectrum
+  set Chebyshev Polynomial Degree = 1500  # default: 50
+
+  # The lower bound of the wanted eigen spectrum
+  set Lower Bound Wanted Spectrum = -10.0
+end
+
+
+number of MPI processes: 1
+number of atoms: 1
+Cartesian Coordinates: 0.000000000000000000e+00 0.000000000000000000e+00 0.000000000000000000e+00
+number of atoms types: 1
+Z:6
+Reading data from file: ../../../../data/electronicStructure/allElectron/z6/singleAtomData/psi10.inp
+ n:1 l:0 m:0
+Reading data from file: ../../../../data/electronicStructure/allElectron/z6/singleAtomData/psi20.inp
+ n:2 l:0 m:0
+Reading data from file: ../../../../data/electronicStructure/allElectron/z6/singleAtomData/psi21.inp
+ n:2 l:1 m:-1
+ n:2 l:1 m:0
+ n:2 l:1 m:1
+=============================================================================================================================
+Number of electrons: 6
+Number of wavefunctions computed using single atom data to be used as initial guess for starting the SCF: 5
+=============================================================================================================================
+num of eigen values: 5
+Actual k-Point-coordinates and weights: 
+0.000000000000000000e+00 0.000000000000000000e+00 0.000000000000000000e+00 1.000000000000000000e+00
+number of elements: 272
+number of degrees of freedom: 17713
+Size of ConstraintsNoneEigen New: 0
+Number Image Charges: 0
+Number Bins: 1
+Bin: 0 Number of Global Atoms: 1
+Size of Constraints: 6708
+In: 11005  Out: 6708
+Atom core with charge 6.000000000000000000e+00 located with node id 17370 in processor 0 nodal coor 0.000000000000000000e+00 0.000000000000000000e+00 0.000000000000000000e+00
+ and added 
+Atom core in bin 0 with charge 6.000000000000000000e+00 located with node id 17370 in processor 0 and added 
+reading initial guess for rho
+Initial total charge:   2.5682747448e+04 
+Initial total charge after scaling:   6.0000000000e+00 
+reading initial guess for PSI
+norm 0: l1: 6.69655150e+01  l2:1.00000652e+00
+norm 1: l1: 8.35425049e+01  l2:1.00000622e+00
+norm 2: l1: 7.72619075e+01  l2:1.00000534e+00
+norm 3: l1: 7.72619075e+01  l2:1.00000534e+00
+norm 4: l1: 7.72619075e+01  l2:1.00000534e+00
+Size of support points: 17713
+rhs:6.656769351345772634e+01
+poisson solve: initial residual:6.656769e+01, current residual:6.401749e-13, nsteps:602, tolerance criterion:6.656769e-13
+Peak Value of Vself: -5.408105352155811488e+03
+L2 Norm Value of phiext: 7.204825320995772017e+03
+
+
+Begin Self-Consistent-Field Iteration:1
+rhs:6.001448179950097384e+00
+poisson solve: initial residual:6.001448e+00, current residual:5.067138e-14, nsteps:1339, tolerance criterion:6.001448e-14
+L-2 Norm of Phi-in   : 7.188545994384471669e+03
+L-inf Norm of Phi-in : 5.407613242329685818e+03
+v-L1:   1.1514985542e+02,  f-L1:   1.7998663699e+05
+v-L2:   1.0000000000e+00,  f-L2:   6.3361843546e+03
+v-Linf:   1.3079911633e-02,  f-Linf:   1.5335636916e+03
+bUp:   1.9469696389e+05
+bLow: 0.000000000000000000e+00
+a0: -1.000000000000000000e+01
+ 0 l2:   1.0000065249e+00     linf:   3.2624856486e-02 
+ 1 l2:   1.0000062187e+00     linf:   2.8787131455e-02 
+ 2 l2:   1.0000053376e+00     linf:   3.7359199282e-02 
+ 3 l2:   1.0000053376e+00     linf:   3.7359199282e-02 
+ 4 l2:   1.0000053376e+00     linf:   3.7359199282e-02 
+Total time for only chebyshev filter: 8.293016751607258652e-02mins
+ 0 l2:   1.1109032819e+03     linf:   3.6496432978e+01 
+ 1 l2:   4.4526305443e+01     linf:   1.4628227691e+00 
+ 2 l2:   3.2548068735e-04     linf:   1.4269590647e-05 
+ 3 l2:   3.2548068735e-04     linf:   1.4269594092e-05 
+ 4 l2:   3.2548068735e-04     linf:   1.4269590647e-05 
+kPoint: 0
+eigen value  0: -1.7591464635737168e+01
+kPoint: 0
+eigen value  1: -4.0916241332542356e+00
+kPoint: 0
+eigen value  2: -4.0912354032087856e+00
+kPoint: 0
+eigen value  3: -4.0912354032087768e+00
+kPoint: 0
+eigen value  4: -4.0912354032087643e+00
+Total time for chebyshev filter: 8.397106726964315149e-02mins
+Fermi energy Residual:    5.15143483426072634757e-13 
+Fermi energy:   -4.09133240285122656843e+00 
+Number of Electrons: 5.9999554763316354e+00 
+rhs:6.000657874176966722e+00
+poisson solve: initial residual:6.000658e+00, current residual:5.825304e-14, nsteps:1339, tolerance criterion:6.000658e-14
+L-2 Norm of Phi-out   :6.784190120548133564e+03
+L-inf Norm of Phi-out :5.390118882440395282e+03
+partialOccupancy 0:     1.00000000000000000000e+00 
+partialOccupancy 1:     5.45930735514473020054e-01 
+partialOccupancy 2:     4.84689754830182617518e-01 
+partialOccupancy 3:     4.84689754828781571572e-01 
+partialOccupancy 4:     4.84689754826820140554e-01 
+Total energy:   -3.34564264269941915586e+01 
+Total energy per atom:   -3.34564264269941915586e+01 
+Band energy:   -5.15482953236708070222e+01 
+Kinetic energy:    5.39186963035656745546e+01 
+Exchange energy:   -5.92775320928500981665e+00 
+Correlation energy:   -4.38190047585272024477e-01 
+Electrostatic energy Total Potential:   -8.10091794736895849383e+01 
+Repulsive energy:    0.00000000000000000000e+00 
+Nuclear Electrostatic Energy:   -5.39594091462477081222e+01 
+SCF iteration: 1 complete
+
+
++---------------------------------------------+------------+------------+
+| Total wallclock time elapsed since start    | 1.048e+01s |            |
+|                                             |            |            |
+| Section                         | no. calls |  wall time | % of total |
++---------------------------------+-----------+------------+------------+
+| Chebyshev GS orthonormalization |         1 | 4.001e-02s |  3.82e-01% |
+| Chebyshev Rayleigh Ritz         |         1 | 2.198e-02s |  2.10e-01% |
+| Chebyshev filtering             |         1 | 4.976e+00s |  4.75e+01% |
+| Chebyshev solve                 |         1 | 5.115e+00s |  4.88e+01% |
+| Chebyshev upper bound           |         1 | 7.613e-02s |  7.27e-01% |
+| dft solve                       |         1 | 7.491e+00s |  7.15e+01% |
+| dftClass init PSI               |         1 | 7.942e-02s |  7.58e-01% |
+| dftClass init density           |         1 | 9.862e-01s |  9.41e+00% |
+| dftClass setup                  |         1 | 1.128e+00s |  1.08e+01% |
+| mesh                            |         1 | 1.014e+01s |  9.68e+01% |
++---------------------------------+-----------+------------+------------+
+
+
+
++---------------------------------------------+------------+------------+
+| Total wallclock time elapsed since start    | 1.048e+01s |            |
+|                                             |            |            |
+| Section                         | no. calls |  wall time | % of total |
++---------------------------------+-----------+------------+------------+
+| eigenClass HX                   |      1511 | 4.406e+00s |  4.21e+01% |
+| eigenClass Mass assembly        |         1 | 6.680e-04s |  6.38e-03% |
+| eigenClass XHX                  |         1 | 1.143e-02s |  1.09e-01% |
+| eigenClass setup                |         1 | 1.139e-03s |  1.09e-02% |
++---------------------------------+-----------+------------+------------+
+
+
+
++---------------------------------------------+------------+------------+
+| Total wallclock time elapsed since start    | 1.048e+01s |            |
+|                                             |            |            |
+| Section                         | no. calls |  wall time | % of total |
++---------------------------------+-----------+------------+------------+
+| PoissonClass rhs assembly       |         3 | 5.944e-02s |  5.67e-01% |
+| PoissonClass rhs2 assembly      |         1 | 9.811e-01s |  9.37e+00% |
+| poissonClass setup              |         1 | 4.261e-04s |  4.07e-03% |
+| poissonClass solve              |         3 | 2.141e+00s |  2.04e+01% |
++---------------------------------+-----------+------------+------------+
+

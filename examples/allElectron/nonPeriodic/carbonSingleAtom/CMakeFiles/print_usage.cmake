@@ -2,9 +2,9 @@ MESSAGE(
 "###
 #
 #  Project  main  set up with  deal.II-8.4.1  found at
-#      /nfs/mcfs_comp/home/rudraa/software/dealii-8.4.1/install
+#      /nfs/mcfs_comp/home/rudraa/software/dealii-8.4.1/installNoPetsc
 #
-#  CMAKE_BUILD_TYPE:          Debug
+#  CMAKE_BUILD_TYPE:          Release
 #
 #  You can now run
 #       $ make                - to compile and link the program
