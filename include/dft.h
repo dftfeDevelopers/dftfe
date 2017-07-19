@@ -68,7 +68,7 @@ struct orbital
 class dftClass
 {
 
-  friend class poissonClass;
+  friend class poissonClass<4>;
   friend class eigenClass;  
 
  public:
@@ -216,7 +216,7 @@ class dftClass
   std::vector<unsigned int> localProc_dof_indicesReal,localProc_dof_indicesImag;
 
 
-  poissonClass poisson;
+  poissonClass<4> poisson;
   eigenClass eigen;
   ConstraintMatrix constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_constraintsPeriodicWithDirichlet; 
   std::vector<std::vector<double> > eigenValues;

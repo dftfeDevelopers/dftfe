@@ -22,8 +22,10 @@
 #ifdef ENABLE_PERIODIC_BC
 #include "generateImageCharges.cc"
 #endif
- 
+
+//
 //dft constructor
+//
 dftClass::dftClass():
   triangulation (MPI_COMM_WORLD),
   FE (FE_Q<3>(QGaussLobatto<1>(FEOrder+1)), 1),
@@ -90,7 +92,8 @@ void convertToCellCenteredCartesianCoordinates(std::vector<std::vector<double> >
 }
 
 
-void dftClass::set(){
+void dftClass::set()
+{
   //
   //read coordinates
   //

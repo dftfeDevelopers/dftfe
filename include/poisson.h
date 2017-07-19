@@ -7,18 +7,22 @@ typedef dealii::parallel::distributed::Vector<double> vectorType;
 
 class dftClass;
 
+//
 //Define poisson class
+//
+template <unsigned int FEOrder1>
 class poissonClass
 {
   friend class dftClass; 
+
 public:
   poissonClass(dftClass* _dftPtr);
   void vmult(vectorType &dst, const vectorType &src) const;
   void precondition_Jacobi(vectorType& dst, const vectorType& src, const double omega) const;
-  void subscribe (const char *identifier=0) const{}; //function needed to mimic SparseMatrix for Jacobi Preconditioning
-  void unsubscribe (const char *identifier=0) const{}; //function needed to mimic SparseMatrix for Jacobi Preconditioning
-  bool operator!= (double val) const {return true;}; //function needed to mimic SparseMatrix
-  typedef unsigned int size_type; //add this line
+  void subscribe (const char *identifier=0) const{};   //function needed to mimic SparseMatrix for Jacobi preconditioning
+  void unsubscribe (const char *identifier=0) const{}; //function needed to mimic SparseMatrix for Jacobi preconditioning
+  bool operator!= (double val) const {return true;};   //function needed to mimic SparseMatrix
+  typedef unsigned int size_type;                      //add this line
 
 
 private: 
@@ -42,9 +46,7 @@ private:
 
   //FE data structres
   dealii::FE_Q<3> FE;
-  //constraints
-  //dealii::ConstraintMatrix  constraintsNone, constraints1byR;
-  //std::map<dealii::types::global_dof_index, double> values1byR;
+
   int d_constraintMatrixId;
 
   //data structures
@@ -60,5 +62,7 @@ private:
   //compute-time logger
   dealii::TimerOutput computing_timer;
 };
+
+
 
 #endif

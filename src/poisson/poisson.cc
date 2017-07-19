@@ -1,22 +1,27 @@
 #include "../../include/poisson.h"
 #include "boundary.cc"
 
+//
 //constructor
-poissonClass::poissonClass(dftClass* _dftPtr):
+//
+template<unsigned int FEOrder1>
+poissonClass<FEOrder1>::poissonClass(dftClass* _dftPtr):
   dftPtr(_dftPtr),
-  FE (QGaussLobatto<1>(FEOrder+1)),
+  FE (QGaussLobatto<1>(FEOrder1+1)),
   mpi_communicator (MPI_COMM_WORLD),
   n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_communicator)),
   this_mpi_process (Utilities::MPI::this_mpi_process(mpi_communicator)),
   pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
   computing_timer (pcout, TimerOutput::summary, TimerOutput::wall_times)
 {
+
 }
 
 //
 //initialize poissonClass 
 //
-void poissonClass::init()
+template<unsigned int FEOrder1>
+void poissonClass<FEOrder1>::init()
 {
   computing_timer.enter_section("poissonClass setup"); 
 
@@ -24,7 +29,7 @@ void poissonClass::init()
   //initialize vectors
   //
   dftPtr->matrix_free_data.initialize_dof_vector(rhs);
-  //dftPtr->matrix_free_data.initialize_dof_vector(vselfBinScratch,2);
+
 
   rhs2.reinit (rhs);
   jacobianDiagonal.reinit (rhs);
@@ -34,15 +39,13 @@ void poissonClass::init()
   //vselfBinScratch.reinit (rhs);
   
   computing_timer.exit_section("poissonClass setup"); 
-
-  //compute RHS2
-  //computeRHS2();
 }
 
 //
 //compute local jacobians
 //
-void poissonClass::computeRHS2()
+template<unsigned int FEOrder1>
+void poissonClass<FEOrder1>::computeRHS2()
 {
   computing_timer.enter_section("PoissonClass rhs2 assembly"); 
   rhs2=0.0;
@@ -51,7 +54,7 @@ void poissonClass::computeRHS2()
   //local data structures
   //
   
-  QGauss<3>  quadrature(FEOrder+1);
+  QGauss<3>  quadrature(FEOrder1+1);
   FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values);
   const unsigned int dofs_per_cell = FE.dofs_per_cell;
   const unsigned int num_quad_points = quadrature.size();
@@ -128,7 +131,8 @@ void poissonClass::computeRHS2()
 //
 //compute RHS
 //
-void poissonClass::computeRHS(std::map<dealii::CellId,std::vector<double> >* rhoValues){
+template<unsigned int FEOrder1>
+void poissonClass<FEOrder1>::computeRHS(std::map<dealii::CellId,std::vector<double> >* rhoValues){
   if(!rhoValues)
     computeRHS2();
 
@@ -138,7 +142,7 @@ void poissonClass::computeRHS(std::map<dealii::CellId,std::vector<double> >* rho
   //
   //local data structures
   //
-  QGauss<3>  quadrature(FEOrder+1);
+  QGauss<3>  quadrature(FEOrder1+1);
   FEValues<3> fe_values (FE, quadrature, update_values | update_JxW_values);
   const unsigned int   dofs_per_cell = FE.dofs_per_cell;
   const unsigned int   num_quad_points = quadrature.size();
@@ -247,7 +251,8 @@ void poissonClass::computeRHS(std::map<dealii::CellId,std::vector<double> >* rho
 }
 
 //Ax
-void poissonClass::AX (const dealii::MatrixFree<3,double>  &data,
+template<unsigned int FEOrder1>
+void poissonClass<FEOrder1>::AX (const dealii::MatrixFree<3,double>  &data,
 		       vectorType &dst, 
 		       const vectorType &src,
 		       const std::pair<unsigned int,unsigned int> &cell_range) const{
@@ -260,7 +265,7 @@ void poissonClass::AX (const dealii::MatrixFree<3,double>  &data,
    constraintId = 0;
 #endif
 
-  FEEvaluation<3,FEOrder> fe_eval(data, constraintId, 0); 
+  FEEvaluation<3,FEOrder1> fe_eval(data, constraintId, 0); 
 
 
   for (unsigned int cell=cell_range.first; cell<cell_range.second; ++cell)
@@ -278,11 +283,12 @@ void poissonClass::AX (const dealii::MatrixFree<3,double>  &data,
 }
 
 //vmult
-void poissonClass::vmult(vectorType &dst, const vectorType &src) const
+template<unsigned int FEOrder1>
+void poissonClass<FEOrder1>::vmult(vectorType &dst, const vectorType &src) const
 {
  
   dst=0.0;
-  dftPtr->matrix_free_data.cell_loop (&poissonClass::AX, this, dst, src);
+  dftPtr->matrix_free_data.cell_loop (&poissonClass<FEOrder1>::AX, this, dst, src);
  
   const ConstraintMatrix * constraintMatrix = dftPtr->d_constraintsVector[d_constraintMatrixId];
 
@@ -335,7 +341,8 @@ void poissonClass::vmult(vectorType &dst, const vectorType &src) const
 //
 //Matrix-Free Jacobi preconditioner application
 //
-void poissonClass::precondition_Jacobi(vectorType& dst, const vectorType& src, const double omega) const
+template<unsigned int FEOrder1>
+void poissonClass<FEOrder1>::precondition_Jacobi(vectorType& dst, const vectorType& src, const double omega) const
 {
   dst.ratio(src, jacobianDiagonal);
 }
@@ -343,7 +350,8 @@ void poissonClass::precondition_Jacobi(vectorType& dst, const vectorType& src, c
 //
 //solve using CG
 //
-void poissonClass::solve(vectorType& phi, int constraintMatrixId, std::map<dealii::CellId,std::vector<double> >* rhoValues){
+template<unsigned int FEOrder1>
+void poissonClass<FEOrder1>::solve(vectorType& phi, int constraintMatrixId, std::map<dealii::CellId,std::vector<double> >* rhoValues){
   //
   //initialize the data member
   //
@@ -358,7 +366,7 @@ void poissonClass::solve(vectorType& phi, int constraintMatrixId, std::map<deali
   computing_timer.enter_section("poissonClass solve"); 
   SolverControl solver_control(maxLinearSolverIterations,relLinearSolverTolerance*rhs.l2_norm());
   SolverCG<vectorType> solver(solver_control);
-  PreconditionJacobi<poissonClass> preconditioner;
+  PreconditionJacobi<poissonClass<FEOrder1> > preconditioner;
   preconditioner.initialize (*this, 0.6);
   try{
     phi=0.0;
@@ -383,3 +391,8 @@ void poissonClass::solve(vectorType& phi, int constraintMatrixId, std::map<deali
   pcout<<buffer; 
   computing_timer.exit_section("poissonClass solve"); 
 }
+
+template class poissonClass<1>;
+template class poissonClass<2>;
+template class poissonClass<3>;
+template class poissonClass<4>;
