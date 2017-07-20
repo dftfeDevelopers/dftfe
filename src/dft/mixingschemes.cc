@@ -1,7 +1,8 @@
 //source file for all the mixing schemes
 
 //implement simple mixing scheme 
-double dftClass::mixing_simple()
+template<unsigned int FEOrder>
+double dftClass<FEOrder>::mixing_simple()
 {
   double normValue=0.0;
   QGauss<3>  quadrature(FEOrder+1);
@@ -61,7 +62,8 @@ double dftClass::mixing_simple()
 }
 
 //implement anderson mixing scheme 
-double dftClass::mixing_anderson(){
+template<unsigned int FEOrder>
+double dftClass<FEOrder>::mixing_anderson(){
   double normValue=0.0;
   QGauss<3>  quadrature(FEOrder+1);
   FEValues<3> fe_values (FE, quadrature, update_values | update_JxW_values | update_quadrature_points);

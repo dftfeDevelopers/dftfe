@@ -1,6 +1,6 @@
 //source file for locating core atom nodes
-
-void dftClass::solveVself()
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::solveVself()
 { 
   //
   //phiExt with nuclear charge
@@ -8,9 +8,6 @@ void dftClass::solveVself()
   int numberBins = d_boundaryFlag.size();
   int numberGlobalCharges = atomLocations.size();
   
-  //int constraintMatrixId = 2;
-  //poisson.solve(poisson.phiExt,constraintMatrixId);
- 
 
   poisson.phiExt = 0;
 
@@ -133,8 +130,6 @@ void dftClass::solveVself()
 	  d_localVselfs.push_back(temp);
 	}
 
-
-      //   std::cout << "In: " << inNodes << "  Out: " << outNodes << "\n";
     }//bin loop
 
     poisson.phiExt.compress(VectorOperation::insert);
@@ -143,6 +138,5 @@ void dftClass::solveVself()
     //
     //print the norms of phiExt (in periodic case L2 norm of phiExt field does not match. check later)
     //
-    //pcout<<"Peak Value of phiext: "<<poisson.phiExt.linfty_norm()<<std::endl;
     pcout<<"L2 Norm Value of phiext: "<<poisson.phiExt.l2_norm()<<std::endl;
 }

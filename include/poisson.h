@@ -1,22 +1,25 @@
 #ifndef poisson_H_
 #define poisson_H_
 #include "headers.h"
+#include "dft.h"
 
 typedef double dataType;
 typedef dealii::parallel::distributed::Vector<double> vectorType;
 
+template <unsigned int FEOrder>
 class dftClass;
 
 //
 //Define poisson class
 //
-template <unsigned int FEOrder1>
+template <unsigned int FEOrder>
 class poissonClass
 {
+  template <unsigned int FEOrder>
   friend class dftClass; 
 
 public:
-  poissonClass(dftClass* _dftPtr);
+  poissonClass(dftClass<FEOrder>* _dftPtr);
   void vmult(vectorType &dst, const vectorType &src) const;
   void precondition_Jacobi(vectorType& dst, const vectorType& src, const double omega) const;
   void subscribe (const char *identifier=0) const{};   //function needed to mimic SparseMatrix for Jacobi preconditioning
@@ -42,7 +45,7 @@ private:
 	  const std::pair<unsigned int,unsigned int> &cell_range) const;
 
   //pointer to dft class
-  dftClass* dftPtr;
+  dftClass<FEOrder> * dftPtr;
 
   //FE data structres
   dealii::FE_Q<3> FE;

@@ -3,8 +3,8 @@
 #include <boost/math/distributions/normal.hpp>
 #include <boost/random/normal_distribution.hpp>
 
-
-void dftClass::loadPSIFiles(unsigned int Z, 
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::loadPSIFiles(unsigned int Z, 
 			    unsigned int n, 
 			    unsigned int l,
 			    unsigned int &fileReadFlag)
@@ -72,7 +72,8 @@ void dftClass::loadPSIFiles(unsigned int Z,
 //
 //determine orbital ordering
 //
-void dftClass::determineOrbitalFilling()
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::determineOrbitalFilling()
 {
   //
   //create a stencil following orbital filling order
@@ -202,7 +203,8 @@ void dftClass::determineOrbitalFilling()
 }
 
 //
-void dftClass::readPSIRadialValues(){
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::readPSIRadialValues(){
  
   IndexSet locallyOwnedSet;
   DoFTools::extract_locally_owned_dofs(dofHandlerEigen, locallyOwnedSet);
@@ -355,7 +357,8 @@ void dftClass::readPSIRadialValues(){
 }
 
 //
-void dftClass::readPSI(){
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::readPSI(){
   computing_timer.enter_section("dftClass init PSI"); 
 
   readPSIRadialValues();

@@ -65,8 +65,8 @@ void exchangeMasterNodesList(std::set<unsigned int> & masterNodeIdSet,
 }
 
 
-
-void dftClass::init(){
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::init(){
   computing_timer.enter_section("dftClass setup");
 
 

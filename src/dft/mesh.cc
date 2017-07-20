@@ -1,7 +1,8 @@
 //source file for all mesh reading/generation functions
 
 //Generate triangulation.
-void dftClass::mesh(){
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::mesh(){
   computing_timer.enter_section("mesh"); 
   GridIn<3> gridin;
   gridin.attach_triangulation(triangulation);

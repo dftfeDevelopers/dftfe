@@ -76,8 +76,8 @@ void exchangeAtomToGlobalNodeIdMaps(const int totalNumberAtoms,
  
     }
 
-
-void dftClass::createAtomBins(std::vector<const ConstraintMatrix * > & constraintsVector)
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::createAtomBins(std::vector<const ConstraintMatrix * > & constraintsVector)
 			     
 {
 

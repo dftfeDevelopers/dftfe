@@ -70,7 +70,8 @@ convertCartesianToSpherical(double *x, double & r, double & theta, double & phi)
 //
 //Initialize rho by reading in single-atom electron-density and fit a spline
 //
-void dftClass::initLocalPseudoPotential()
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::initLocalPseudoPotential()
 { 
   computing_timer.enter_section("dftClass init pseudopotentials"); 
 
@@ -185,7 +186,8 @@ void dftClass::initLocalPseudoPotential()
   computing_timer.exit_section("dftClass init pseudopotentials"); 
 }
 
-void dftClass::initNonLocalPseudoPotential()
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::initNonLocalPseudoPotential()
 {
 
   // Store the Map between the atomic number and the waveFunction details
@@ -683,8 +685,8 @@ void dftClass::initNonLocalPseudoPotential()
   return;
 }
 
-void
-dftClass::computeSparseStructureNonLocalProjectors()
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
 {
 
   //
@@ -867,7 +869,8 @@ dftClass::computeSparseStructureNonLocalProjectors()
 
 }
 
-void dftClass::computeElementalProjectorKets()
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::computeElementalProjectorKets()
 {
 
   //

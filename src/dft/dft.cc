@@ -26,7 +26,8 @@
 //
 //dft constructor
 //
-dftClass::dftClass():
+template<unsigned int FEOrder>
+dftClass<FEOrder>::dftClass():
   triangulation (MPI_COMM_WORLD),
   FE (FE_Q<3>(QGaussLobatto<1>(FEOrder+1)), 1),
 #ifdef ENABLE_PERIODIC_BC
@@ -91,8 +92,8 @@ void convertToCellCenteredCartesianCoordinates(std::vector<std::vector<double> >
     }
 }
 
-
-void dftClass::set()
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::set()
 {
   //
   //read coordinates
@@ -233,7 +234,8 @@ void dftClass::set()
 }
 
 //dft run
-void dftClass::run ()
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::run ()
 {
   pcout << "number of MPI processes: "
 	<< Utilities::MPI::n_mpi_processes(mpi_communicator)
@@ -339,3 +341,7 @@ void dftClass::run ()
   computing_timer.exit_section("dft solve"); 
 }
 
+template class dftClass<1>;
+template class dftClass<2>;
+template class dftClass<3>;
+template class dftClass<4>;

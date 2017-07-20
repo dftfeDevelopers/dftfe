@@ -65,10 +65,14 @@ struct orbital
 //dft class for initializing mesh, setting up guesses for initial electron-density and wavefunctions,
 //solving individual vSelf problem after setting up bins, initializing pseudopotentials. Also 
 //has member functions which sets up the process of SCF iteration including mixing of the electron-density
+template <unsigned int FEOrder>
 class dftClass
 {
 
-  friend class poissonClass<4>;
+  template <unsigned int FEOrder>
+  friend class poissonClass;
+
+  template <unsigned int FEOrder>
   friend class eigenClass;  
 
  public:
@@ -216,8 +220,8 @@ class dftClass
   std::vector<unsigned int> localProc_dof_indicesReal,localProc_dof_indicesImag;
 
 
-  poissonClass<4> poisson;
-  eigenClass eigen;
+  poissonClass<FEOrder> poisson;
+  eigenClass<FEOrder> eigen;
   ConstraintMatrix constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_constraintsPeriodicWithDirichlet; 
   std::vector<std::vector<double> > eigenValues;
   std::vector<std::vector<parallel::distributed::Vector<double>*> > eigenVectors;

@@ -1,7 +1,8 @@
 //
 //Initlialize rho by reading in single-atom electron-density and fit a spline
 //
-void dftClass::initRho()
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::initRho()
 { 
   computing_timer.enter_section("dftClass init density"); 
 

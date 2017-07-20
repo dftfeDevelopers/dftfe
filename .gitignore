@@ -27,6 +27,8 @@
 
 #Temporary files
 *~
+*.swp
+*.nfs*
 
 #CMAKE files
 *.cmake

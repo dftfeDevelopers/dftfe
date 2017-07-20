@@ -1,7 +1,10 @@
 #include "../../include/eigen.h"
 
+//
 //constructor
-eigenClass::eigenClass(dftClass* _dftPtr):
+//
+template<unsigned int FEOrder>
+eigenClass<FEOrder>::eigenClass(dftClass<FEOrder>* _dftPtr):
   dftPtr(_dftPtr),
   FE (QGaussLobatto<1>(FEOrder+1)),
   mpi_communicator (MPI_COMM_WORLD),
@@ -10,30 +13,53 @@ eigenClass::eigenClass(dftClass* _dftPtr):
   pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
   computing_timer (pcout, TimerOutput::summary, TimerOutput::wall_times)
 {
+
 }
 
-
+//
 //initialize eigenClass object
-void eigenClass::init(){
+//
+template<unsigned int FEOrder>
+void eigenClass<FEOrder>::init()
+{
   computing_timer.enter_section("eigenClass setup");
+  //
   //init vectors
-  for (unsigned int i=0; i<dftPtr->numEigenValues; ++i){
-    vectorType* temp=new vectorType;
-    HXvalue.push_back(temp);
-  } 
+  //
+  for (unsigned int i=0; i<dftPtr->numEigenValues; ++i)
+    {
+      vectorType* temp=new vectorType;
+      HXvalue.push_back(temp);
+    } 
+
   dftPtr->matrix_free_data.initialize_dof_vector(massVector,dftPtr->eigenDofHandlerIndex);
+
+  //
   //compute mass vector
+  //
   computeMassVector();
+
+  //
   //XHX size
+  //
   XHXValue.resize(dftPtr->eigenVectors[0].size()*dftPtr->eigenVectors[0].size(),0.0);
+
+  //
   //HX
-  for (unsigned int i=0; i<dftPtr->numEigenValues; ++i){
-    HXvalue[i]->reinit(dftPtr->vChebyshev);
-  }
+  //
+  for (unsigned int i=0; i<dftPtr->numEigenValues; ++i)
+    {
+      HXvalue[i]->reinit(dftPtr->vChebyshev);
+    }
   computing_timer.exit_section("eigenClass setup"); 
 } 
 
-void eigenClass::computeMassVector(){
+//
+//compute mass Vector
+//
+template<unsigned int FEOrder>
+void eigenClass<FEOrder>::computeMassVector()
+{
   computing_timer.enter_section("eigenClass Mass assembly"); 
   
   
@@ -46,7 +72,7 @@ void eigenClass::computeMassVector(){
   VectorizedArray<double>  one = make_vectorized_array (1.0);
   FEEvaluation<3,FEOrder,FEOrder+1,1,double>  fe_eval(dftPtr->matrix_free_data, dftPtr->eigenDofHandlerIndex, 1); //Selecting GL quadrature points
 #endif
-  const unsigned int       n_q_points = fe_eval.n_q_points;
+  const unsigned int n_q_points = fe_eval.n_q_points;
   for (unsigned int cell=0; cell<dftPtr->matrix_free_data.n_macro_cells(); ++cell){
     fe_eval.reinit(cell);
     for (unsigned int q=0; q<n_q_points; ++q) fe_eval.submit_value(one,q);
@@ -63,13 +89,14 @@ void eigenClass::computeMassVector(){
       massVector.local_element(i)=0.0;
     }
   }
-  //pcout << "massVector norm: " << massVector.l2_norm() << "\n";
+
   computing_timer.exit_section("eigenClass Mass assembly");
 }
 
 #ifdef xc_id
 #if xc_id < 4
-void eigenClass::computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoValues, 
+template<unsigned int FEOrder>
+void eigenClass<FEOrder>::computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoValues, 
 			     const vectorType & phi,
 			     const vectorType & phiExt,
 			     std::map<dealii::CellId,std::vector<double> >* pseudoValues)
@@ -148,11 +175,12 @@ void eigenClass::computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoV
     }
 }
 #elif xc_id == 4
-void eigenClass::computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoValues,
-			     std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
-			     const vectorType & phi,
-			     const vectorType & phiExt,
-			     std::map<dealii::CellId,std::vector<double> >* pseudoValues)
+template<unsigned int FEOrder>
+void eigenClass<FEOrder>::computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoValues,
+				       std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
+				       const vectorType & phi,
+				       const vectorType & phiExt,
+				       std::map<dealii::CellId,std::vector<double> >* pseudoValues)
 {
   const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
   const unsigned int n_array_elements = VectorizedArray<double>::n_array_elements;
@@ -249,9 +277,9 @@ void eigenClass::computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoV
 }
 #endif
 #endif
-
-void eigenClass::computeNonLocalHamiltonianTimesX(const std::vector<vectorType*> &src,
-						  std::vector<vectorType*>       &dst)
+template<unsigned int FEOrder>
+void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vectorType*> &src,
+							    std::vector<vectorType*>       &dst)
 {
   //
   //get FE data
@@ -599,8 +627,8 @@ void eigenClass::computeNonLocalHamiltonianTimesX(const std::vector<vectorType*>
 }
 						  
 
-
-void eigenClass::implementHX (const dealii::MatrixFree<3,double>  &data,
+template<unsigned int FEOrder>
+void eigenClass<FEOrder>::implementHX (const dealii::MatrixFree<3,double>  &data,
 			      std::vector<vectorType*>  &dst, 
 			      const std::vector<vectorType*>  &src,
 			      const std::pair<unsigned int,unsigned int> &cell_range) const
@@ -746,7 +774,8 @@ void eigenClass::implementHX (const dealii::MatrixFree<3,double>  &data,
 
 
 //HX
-void eigenClass::HX(const std::vector<vectorType*> &src, 
+template<unsigned int FEOrder>
+void eigenClass<FEOrder>::HX(const std::vector<vectorType*> &src, 
 		          std::vector<vectorType*> &dst) 
 {
   computing_timer.enter_section("eigenClass HX");
@@ -759,7 +788,7 @@ void eigenClass::HX(const std::vector<vectorType*> &src,
       *dftPtr->tempPSI4[i] = 0.0;
     }
 
-  dftPtr->matrix_free_data.cell_loop(&eigenClass::implementHX, this, dst, dftPtr->tempPSI2); //HMX
+  dftPtr->matrix_free_data.cell_loop(&eigenClass<FEOrder>::implementHX, this, dst, dftPtr->tempPSI2); //HMX
   
   //
   //required if its a pseudopotential calculation and number of nonlocal atoms are greater than zero
@@ -796,7 +825,9 @@ void eigenClass::HX(const std::vector<vectorType*> &src,
 }
 
 //XHX
-void eigenClass::XHX(const std::vector<vectorType*> &src){
+template<unsigned int FEOrder>
+void eigenClass<FEOrder>::XHX(const std::vector<vectorType*> &src)
+{
   computing_timer.enter_section("eigenClass XHX");
 
   //HX
@@ -899,7 +930,10 @@ void eigenClass::XHX(const std::vector<vectorType*> &src){
   computing_timer.exit_section("eigenClass XHX");
 }
 
-
+template class eigenClass<1>;
+template class eigenClass<2>;
+template class eigenClass<3>;
+template class eigenClass<4>;
 
 
 

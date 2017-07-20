@@ -1,7 +1,8 @@
 //source file for all charge calculations
 
 //compute total charge
-double dftClass::totalCharge(std::map<dealii::CellId, std::vector<double> > *rhoQuadValues){
+template <unsigned int FEOrder>
+double dftClass<FEOrder>::totalCharge(std::map<dealii::CellId, std::vector<double> > *rhoQuadValues){
   double normValue=0.0;
   QGauss<3>  quadrature_formula(FEOrder+1);
   FEValues<3> fe_values (FE, quadrature_formula, update_values | update_JxW_values | update_quadrature_points);

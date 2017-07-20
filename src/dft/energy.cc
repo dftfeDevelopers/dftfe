@@ -1,7 +1,9 @@
 //source file for all energy computations 
 
 //compute energies
-void dftClass::compute_energy(){
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::compute_energy()
+{
   QGauss<3>  quadrature(FEOrder+1);
   FEValues<3> fe_values (FE, quadrature, update_values | update_gradients | update_JxW_values);
   const unsigned int   num_quad_points    = quadrature.size();
@@ -190,10 +192,13 @@ void dftClass::compute_energy(){
    std::printf("Total energy:%30.20e \nTotal energy per atom:%30.20e \n", totalEnergy, totalEnergy/((double) atomLocations.size()));
    std::printf("Band energy:%30.20e \nKinetic energy:%30.20e \nExchange energy:%30.20e \nCorrelation energy:%30.20e \nElectrostatic energy Total Potential:%30.20e \nRepulsive energy:%30.20e \nNuclear Electrostatic Energy:%30.20e \n", bandEnergy, totalkineticEnergy, totalexchangeEnergy, totalcorrelationEnergy, totalelectrostaticEnergyPot, repulsiveEnergy(),totalNuclearElectrostaticEnergy);
  }
+
 }
  
 //compute fermi energy
-void dftClass::compute_fermienergy(){
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::compute_fermienergy()
+{
   //initial guess for fe
   //double fe;
   //if (numElectrons%2==0)
@@ -261,7 +266,9 @@ void dftClass::compute_fermienergy(){
   if (this_mpi_process == 0) std::printf("Fermi energy:%30.20e \n", fermiEnergy);
 }
 
-double dftClass::repulsiveEnergy(){
+template<unsigned int FEOrder>
+double dftClass<FEOrder>::repulsiveEnergy()
+{
   double energy=0.0;
   for (unsigned int n1=0; n1<atomLocations.size(); n1++){
     for (unsigned int n2=n1+1; n2<atomLocations.size(); n2++){

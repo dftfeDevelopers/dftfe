@@ -1,8 +1,10 @@
 #include <complex>
 #include<vector>
+
 #ifdef ENABLE_PERIODIC_BC
-std::complex<double> dftClass::innerProduct(vectorType &  X,
-					    vectorType &  Y)
+template<unsigned int FEOrder>
+std::complex<double> dftClass<FEOrder>::innerProduct(vectorType &  X,
+						     vectorType &  Y)
 {
 
   //std::cout<<"Entering Inner Product: "<<std::endl;
@@ -68,7 +70,8 @@ std::complex<double> dftClass::innerProduct(vectorType &  X,
   return returnValue; 
 }
 
-void dftClass::alphaTimesXPlusY(std::complex<double>   alpha,
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::alphaTimesXPlusY(std::complex<double>   alpha,
 				vectorType           & x,
 				vectorType           & y)
 {
@@ -137,7 +140,9 @@ void dftClass::alphaTimesXPlusY(std::complex<double>   alpha,
 #endif
 
 //chebyshev solver
-void dftClass::chebyshevSolver(){
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::chebyshevSolver()
+{
   computing_timer.enter_section("Chebyshev solve"); 
   //compute upper bound of spectrum
   bUp = upperBound(); 
@@ -166,7 +171,9 @@ void dftClass::chebyshevSolver(){
   computing_timer.exit_section("Chebyshev solve"); 
 }
 
-double dftClass::upperBound(){
+template<unsigned int FEOrder>
+double dftClass<FEOrder>::upperBound()
+{
   computing_timer.enter_section("Chebyshev upper bound"); 
   unsigned int lanczosIterations=10;
   double beta;
@@ -293,7 +300,9 @@ double dftClass::upperBound(){
 }
 
 //Gram-Schmidt orthonormalization
-void dftClass::gramSchmidt(std::vector<vectorType*>& X){
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::gramSchmidt(std::vector<vectorType*>& X)
+{
   computing_timer.enter_section("Chebyshev GS orthonormalization"); 
  
   //Memory optimization required here as well  
@@ -401,7 +410,8 @@ void dftClass::gramSchmidt(std::vector<vectorType*>& X){
   computing_timer.exit_section("Chebyshev GS orthonormalization"); 
 }
 
-void dftClass::rayleighRitz(std::vector<vectorType*> &X){
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::rayleighRitz(std::vector<vectorType*> &X){
   computing_timer.enter_section("Chebyshev Rayleigh Ritz"); 
   //Hbar=Psi^T*H*Psi
   eigen.XHX(X);  //Hbar is now available as a 1D array XHXValue 
@@ -508,7 +518,9 @@ lda=n1; int ldb=m, ldc=n1;
 //chebyshev solver
 //inputs: X - input wave functions, m-polynomial degree, a-lower bound of unwanted spectrum
 //b-upper bound of the full spectrum, a0-lower bound of the wanted spectrum
-void dftClass::chebyshevFilter(std::vector<vectorType*> & X, unsigned int m, double a, double b, double a0){
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::chebyshevFilter(std::vector<vectorType*> & X, unsigned int m, double a, double b, double a0)
+{
   computing_timer.enter_section("Chebyshev filtering"); 
   double e, c, sigma, sigma1, sigma2, gamma;
   e=(b-a)/2.0; c=(b+a)/2.0;

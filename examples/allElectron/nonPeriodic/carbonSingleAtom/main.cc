@@ -12,7 +12,7 @@
 #include <fstream>
 
 double radiusAtomBall;
-const unsigned int FEOrder = 4;
+unsigned int finiteElementPolynomialOrder = 4;
 const unsigned int n_refinement_steps = 4;
 
 double lowerEndWantedSpectrum;
@@ -55,7 +55,7 @@ print_usage_message ()
   static const char *message
     =
     "Usage:\n"
-    "    ./step-19 [-p parameter_file]\n"
+    "    ./dftfe [-p parameter_file]\n"
     "Parameter sequences in brackets can be omitted if a parameter file is\n"
     "specified on the command line and if it provides values for these\n"
     "missing parameters.\n"
@@ -196,7 +196,7 @@ int main (int argc, char *argv[])
     // set stdout precision
     //
     std::cout << std::scientific << std::setprecision(18);
-    dftClass problem;
+    dftClass<finiteElementPolynomialOrder> problem;
     problem.numberAtomicWaveFunctions[6] = 5;
     problem.numEigenValues = 5;
     problem.run();

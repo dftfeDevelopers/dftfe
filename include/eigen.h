@@ -2,12 +2,17 @@
 #define eigen_H_
 #include "headers.h"
 
+//
 //Define eigenClass class
+//
+template <unsigned int FEOrder>
 class eigenClass
 {
+  template <unsigned int FEOrder>
   friend class dftClass;
+
 public:
-  eigenClass(dftClass* _dftPtr);
+  eigenClass(dftClass<FEOrder>* _dftPtr);
   void HX(const std::vector<vectorType*> &src, 
 	  std::vector<vectorType*> &dst);
 
@@ -36,7 +41,7 @@ public:
 
   
   //pointer to dft class
-  dftClass* dftPtr;
+  dftClass<FEOrder>* dftPtr;
 
 
   //FE data structres

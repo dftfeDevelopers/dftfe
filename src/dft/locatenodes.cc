@@ -1,6 +1,6 @@
 //source file for locating core atom nodes
-
-void dftClass::locateAtomCoreNodes(){ 
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::locateAtomCoreNodes(){ 
   unsigned int vertices_per_cell=GeometryInfo<3>::vertices_per_cell;
   DoFHandler<3>::active_cell_iterator
     cell = dofHandler.begin_active(),
@@ -100,7 +100,8 @@ void dftClass::locateAtomCoreNodes(){
 
 }
 
-void dftClass::locatePeriodicPinnedNodes(){ 
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::locatePeriodicPinnedNodes(){ 
   unsigned int vertices_per_cell=GeometryInfo<3>::vertices_per_cell;
   DoFHandler<3>::active_cell_iterator
     cell = dofHandler.begin_active(),

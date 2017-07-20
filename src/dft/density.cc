@@ -1,7 +1,8 @@
 //source file for electron density related computations
 
 //calculate electron density
-void dftClass::compute_rhoOut()
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::compute_rhoOut()
 {
   QGauss<3>  quadrature(FEOrder+1);
   FEValues<3> fe_values (FEEigen, quadrature, update_values | update_gradients| update_JxW_values | update_quadrature_points);

@@ -147,6 +147,8 @@ iostream
 /home/phanim/KohnShamCodes/DEALIICode/dftfe/include/poisson.h
 headers.h
 /home/phanim/KohnShamCodes/DEALIICode/dftfe/include/headers.h
+dft.h
+/home/phanim/KohnShamCodes/DEALIICode/dftfe/include/dft.h
 
 /home/phanim/KohnShamCodes/DEALIICode/dftfe/src/dft/charge.cc
 
