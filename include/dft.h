@@ -88,11 +88,6 @@ class dftClass
   void run();
 
   /**
-   * Number of single-atomic wavefunctions associated with each atom to be used as initial guess
-   */
-  std::map<unsigned int, unsigned int> numberAtomicWaveFunctions;
-
-  /**
    * Number of Kohn-Sham eigen values to be computed
    */
   unsigned int numEigenValues;
@@ -238,14 +233,10 @@ class dftClass
   std::map<dealii::CellId, std::vector<double> > *rhoInValues, *rhoOutValues;
   std::vector<std::map<dealii::CellId,std::vector<double> >*> rhoInVals, rhoOutVals;
 
-#ifdef xc_id
-  #if xc_id == 4
   std::map<dealii::CellId, std::vector<double> > *gradRhoInValues;
   std::map<dealii::CellId, std::vector<double> > *gradRhoOutValues;
   std::vector<std::map<dealii::CellId,std::vector<double> >*> gradRhoInVals; 
   std::vector<std::map<dealii::CellId,std::vector<double> >*> gradRhoOutVals;
-  #endif
-#endif
 
 
   std::map<dealii::CellId, std::vector<double> > *pseudoValues;

@@ -5,12 +5,12 @@
 
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::loadPSIFiles(unsigned int Z, 
-			    unsigned int n, 
-			    unsigned int l,
-			    unsigned int &fileReadFlag)
+				     unsigned int n, 
+				     unsigned int l,
+				     unsigned int &fileReadFlag)
 {
 
-  if (radValues[Z][n].count(l)>0) 
+  if (radValues[Z][n].count(l) > 0) 
     {
       fileReadFlag = 1;
       return;
@@ -25,6 +25,7 @@ void dftClass<FEOrder>::loadPSIFiles(unsigned int Z,
     sprintf(psiFile, "../../../../data/electronicStructure/pseudoPotential/z%u/singleAtomData/psi%u%u.inp", Z, n, l);
   else
     sprintf(psiFile, "../../../../data/electronicStructure/allElectron/z%u/singleAtomData/psi%u%u.inp", Z, n, l);
+
   std::vector<std::vector<double> > values;
 
   fileReadFlag = readPsiFile(2, values, psiFile);
@@ -125,22 +126,30 @@ void dftClass<FEOrder>::determineOrbitalFilling()
   int totalNumberWaveFunctions = numEigenValues;
   unsigned int fileReadFlag = 0;
   unsigned int waveFunctionCount = 0;
+  unsigned int extraWaveFunctionsPerAtom = 2;
   
   //
   //loop over atoms
   //
-  for (unsigned int z = 0; z < atomLocations.size(); z++)
+  numLevels = 0;
+  for(unsigned int z = 0; z < atomLocations.size(); z++)
     {
       unsigned int Z = atomLocations[z][0];
       unsigned int valenceZ = atomLocations[z][1];
-      unsigned int totalLevels= numberAtomicWaveFunctions[Z];
+      unsigned int numberAtomicWaveFunctions;  
 
       if(isPseudopotential)
-	numElectrons+=valenceZ;
+	{
+	  numberAtomicWaveFunctions = std::ceil(valenceZ/2.0) + extraWaveFunctionsPerAtom;
+	  numElectrons += valenceZ;
+	}
       else
-	numElectrons+=Z;
+	{
+	  numberAtomicWaveFunctions = std::ceil(Z/2.0) + extraWaveFunctionsPerAtom;
+	  numElectrons += Z;
+	}
 
-      numLevels+=totalLevels;
+      numLevels += numberAtomicWaveFunctions;
     
       //
       //fill levels
@@ -152,11 +161,11 @@ void dftClass<FEOrder>::determineOrbitalFilling()
 	  pcout << "Z:" << Z << std::endl;
 	}
 
-      unsigned int levels=0;
+      unsigned int levels = 0;
       unsigned int errorReadFile = 0;
-      for (std::vector<std::vector<unsigned int> >::iterator it=stencil.begin(); it <stencil.end(); it++)
+      for (std::vector<std::vector<unsigned int> >::iterator it = stencil.begin(); it < stencil.end(); it++)
 	{
-	  unsigned int n=(*it)[0], l=(*it)[1];
+	  unsigned int n = (*it)[0], l = (*it)[1];
 
 	  //
 	  //load PSI files
@@ -168,18 +177,18 @@ void dftClass<FEOrder>::determineOrbitalFilling()
 	  //
 	  if(fileReadFlag > 0)
 	    {
-	      for (int m=-l; m<= (int) l; m++)
+	      for (int m = -l; m <= (int) l; m++)
 		{
 		  orbital temp;
 		  temp.atomID=z;
-		  temp.Z=Z; temp.n=n; temp.l=l; temp.m=m; temp.psi=radValues[Z][n][l];
+		  temp.Z = Z; temp.n = n; temp.l = l; temp.m = m; temp.psi = radValues[Z][n][l];
 		  waveFunctionsVector.push_back(temp); levels++; waveFunctionCount++;
 		  if(printLevels) pcout << " n:" << n  << " l:" << l << " m:" << m << std::endl;
-		  if(levels >= totalLevels || waveFunctionCount>=numEigenValues) break;
+		  if(levels >= numberAtomicWaveFunctions || waveFunctionCount >= numEigenValues) break;
 		}
 	    }
 
-	  if(levels>=totalLevels || waveFunctionCount>=numEigenValues) break;
+	  if(levels >= numberAtomicWaveFunctions || waveFunctionCount >= numEigenValues) break;
 	  
 	  if(fileReadFlag == 0)
 	    {
@@ -225,7 +234,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
   for(unsigned int dof=0; dof<numberDofs; dof++)
     {
 #ifdef ENABLE_PERIODIC_BC
-      unsigned int dofID = local_dof_indicesReal[dof];//locallyOwnedDOFs[2*dof];
+      unsigned int dofID = local_dof_indicesReal[dof];
 #else
       unsigned int dofID = locallyOwnedDOFs[dof];
 #endif
@@ -235,7 +244,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
       //loop over wave functions
       //
       unsigned int waveFunction=0;
-      for (std::vector<orbital>::iterator it=waveFunctionsVector.begin(); it<waveFunctionsVector.end(); it++){
+      for (std::vector<orbital>::iterator it = waveFunctionsVector.begin(); it < waveFunctionsVector.end(); it++){
 
 	//
 	//find coordinates of atom correspoding to this wave function
@@ -243,9 +252,9 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 	Point<3> atomCoord(atomLocations[it->atomID][2],atomLocations[it->atomID][3],atomLocations[it->atomID][4]);
 
 
-	double x =node[0]-atomCoord[0];
-	double y =node[1]-atomCoord[1];
-	double z =node[2]-atomCoord[2];
+	double x = node[0]-atomCoord[0];
+	double y = node[1]-atomCoord[1];
+	double z = node[2]-atomCoord[2];
 
 
 	double r = sqrt(x*x + y*y + z*z);

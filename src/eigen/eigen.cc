@@ -93,13 +93,12 @@ void eigenClass<FEOrder>::computeMassVector()
   computing_timer.exit_section("eigenClass Mass assembly");
 }
 
-#ifdef xc_id
-#if xc_id < 4
+
 template<unsigned int FEOrder>
 void eigenClass<FEOrder>::computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoValues, 
-			     const vectorType & phi,
-			     const vectorType & phiExt,
-			     std::map<dealii::CellId,std::vector<double> >* pseudoValues)
+				      const vectorType & phi,
+				      const vectorType & phiExt,
+				      std::map<dealii::CellId,std::vector<double> >* pseudoValues)
 {
   const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
   const unsigned int n_array_elements = VectorizedArray<double>::n_array_elements;
@@ -174,13 +173,13 @@ void eigenClass<FEOrder>::computeVEff(std::map<dealii::CellId,std::vector<double
 	}
     }
 }
-#elif xc_id == 4
+
 template<unsigned int FEOrder>
 void eigenClass<FEOrder>::computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoValues,
-				       std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
-				       const vectorType & phi,
-				       const vectorType & phiExt,
-				       std::map<dealii::CellId,std::vector<double> >* pseudoValues)
+				      std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
+				      const vectorType & phi,
+				      const vectorType & phiExt,
+				      std::map<dealii::CellId,std::vector<double> >* pseudoValues)
 {
   const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
   const unsigned int n_array_elements = VectorizedArray<double>::n_array_elements;
@@ -275,11 +274,11 @@ void eigenClass<FEOrder>::computeVEff(std::map<dealii::CellId,std::vector<double
 	}
     }
 }
-#endif
-#endif
+
+
 template<unsigned int FEOrder>
 void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vectorType*> &src,
-							    std::vector<vectorType*>       &dst)
+							   std::vector<vectorType*>       &dst)
 {
   //
   //get FE data
@@ -293,15 +292,15 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vec
 
   int numberNodesPerElement;
 #ifdef ENABLE_PERIODIC_BC
- numberNodesPerElement = dftPtr->FEEigen.dofs_per_cell/2;//GeometryInfo<3>::vertices_per_cell;
+  numberNodesPerElement = dftPtr->FEEigen.dofs_per_cell/2;//GeometryInfo<3>::vertices_per_cell;
 #else
- numberNodesPerElement = dftPtr->FEEigen.dofs_per_cell;
+  numberNodesPerElement = dftPtr->FEEigen.dofs_per_cell;
 #endif
 
- //
- //compute nonlocal projector ket times x i.e C^{T}*X 
- //
- std::vector<dealii::types::global_dof_index> local_dof_indices(dofs_per_cell);
+  //
+  //compute nonlocal projector ket times x i.e C^{T}*X 
+  //
+  std::vector<dealii::types::global_dof_index> local_dof_indices(dofs_per_cell);
 #ifdef ENABLE_PERIODIC_BC
   std::vector<std::vector<std::complex<double> > > projectorKetTimesVector;
 #else
@@ -560,26 +559,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vec
 		 &numberNodesPerElement);
 #endif
 
-
 	  cell->get_dof_indices(local_dof_indices);
-
-	  /*if(iElemComp == 100)
-            {
-              std::cout<<"Output Vectors for wave 0: "<<std::endl;  
-              for(int i = 0; i < numberNodesPerElement; ++i)
-		{
-		  std::cout<<outputVectors[numberNodesPerElement*0 + i].real()<<std::endl;
-		  std::cout<<outputVectors[numberNodesPerElement*0 + i].imag()<<std::endl;
-		}
-
-	      std::cout<<"Output Vectors for wave 3: "<<std::endl;  
-              for(int i = 0; i < numberNodesPerElement; ++i)
-		{
-		  std::cout<<outputVectors[numberNodesPerElement*3 + i].real()<<std::endl;
-		  std::cout<<outputVectors[numberNodesPerElement*3 + i].imag()<<std::endl;
-		}
-
-		}*/
 
 #ifdef ENABLE_PERIODIC_BC
 	  unsigned int index = 0;
@@ -615,23 +595,19 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vec
 
     }
 
-  //std::cout<<"Finished C*V*C^{T} "<<std::endl;
-
   for (std::vector<vectorType*>::iterator it=dst.begin(); it!=dst.end(); it++)
     {
       (*it)->compress(VectorOperation::add);
     }
-
-  //std::cout<<"Compressed data "<<std::endl;
 
 }
 						  
 
 template<unsigned int FEOrder>
 void eigenClass<FEOrder>::implementHX (const dealii::MatrixFree<3,double>  &data,
-			      std::vector<vectorType*>  &dst, 
-			      const std::vector<vectorType*>  &src,
-			      const std::pair<unsigned int,unsigned int> &cell_range) const
+				       std::vector<vectorType*>  &dst, 
+				       const std::vector<vectorType*>  &src,
+				       const std::pair<unsigned int,unsigned int> &cell_range) const
 {
   VectorizedArray<double>  half = make_vectorized_array(0.5);
   VectorizedArray<double>  two = make_vectorized_array(2.0);
@@ -650,124 +626,191 @@ void eigenClass<FEOrder>::implementHX (const dealii::MatrixFree<3,double>  &data
   double kSquareTimesHalf =  0.5*(dftPtr->d_kPointCoordinates[3*kPointIndex+0]*dftPtr->d_kPointCoordinates[3*kPointIndex+0] + dftPtr->d_kPointCoordinates[3*kPointIndex+1]*dftPtr->d_kPointCoordinates[3*kPointIndex+1] + dftPtr->d_kPointCoordinates[3*kPointIndex+2]*dftPtr->d_kPointCoordinates[3*kPointIndex+2]);
   VectorizedArray<double> halfkSquare = make_vectorized_array(kSquareTimesHalf);
 
-  for(unsigned int cell=cell_range.first; cell<cell_range.second; ++cell)
+  if(xc_id == 4)
     {
-      fe_eval.reinit (cell); 
-      for(unsigned int i = 0; i < dst.size(); ++i)
+      for(unsigned int cell=cell_range.first; cell<cell_range.second; ++cell)
 	{
-	  fe_eval.read_dof_values(*src[i]);
-	  fe_eval.evaluate (true,true,false);
-	  for(unsigned int q = 0; q < fe_eval.n_q_points; ++q)
+	  fe_eval.reinit (cell); 
+	  for(unsigned int i = 0; i < dst.size(); ++i)
 	    {
-	      //
-	      //get the quadrature point values of psi and gradPsi which are complex
-	      //
-	      psiVal = fe_eval.get_value(q);
-	      gradientPsiVal = fe_eval.get_gradient(q);
-
-	      //
-	      //compute gradientPsiTerm of the stiffnessMatrix times vector (0.5*gradientPsi)
-	      //
-	      gradientPsiTerm[0] = gradientPsiVal[0]*half;
-	      gradientPsiTerm[1] = gradientPsiVal[1]*half;
-
-	      //
-	      //compute Veff part of the stiffness matrix times vector (Veff*psi)
-	      //
-	      vEffTerm[0] = psiVal[0]*vEff(cell,q);
-	      vEffTerm[1] = psiVal[1]*vEff(cell,q);
-
-	      //
-	      //compute term involving dot product of k-vector and gradientPsi in stiffnessmatrix times vector
-	      //
-	      kDotGradientPsiTerm[0] = kPointCoors[0]*gradientPsiVal[1][0] + kPointCoors[1]*gradientPsiVal[1][1] + kPointCoors[2]*gradientPsiVal[1][2];
-	      kDotGradientPsiTerm[1] = -(kPointCoors[0]*gradientPsiVal[0][0] + kPointCoors[1]*gradientPsiVal[0][1] + kPointCoors[2]*gradientPsiVal[0][2]);
-
-#ifdef xc_id
-#if xc_id == 4
-	      derExchWithSigmaTimesGradRhoDotGradientPsiTerm[0] = two*(derExcWithSigmaTimesGradRho(cell,q,0)*gradientPsiVal[0][0] + derExcWithSigmaTimesGradRho(cell,q,1)*gradientPsiVal[0][1] + derExcWithSigmaTimesGradRho(cell,q,2)*gradientPsiVal[0][2]);
-	      derExchWithSigmaTimesGradRhoDotGradientPsiTerm[1] = two*(derExcWithSigmaTimesGradRho(cell,q,0)*gradientPsiVal[1][0] + derExcWithSigmaTimesGradRho(cell,q,1)*gradientPsiVal[1][1] + derExcWithSigmaTimesGradRho(cell,q,2)*gradientPsiVal[1][2]);
-	      //
-	      //see if you can make this shorter
-	      //
-	      derExchWithSigmaTimesGradRhoTimesPsi[0][0] = two*derExcWithSigmaTimesGradRho(cell,q,0)*psiVal[0];
-	      derExchWithSigmaTimesGradRhoTimesPsi[0][1] = two*derExcWithSigmaTimesGradRho(cell,q,1)*psiVal[0];
-	      derExchWithSigmaTimesGradRhoTimesPsi[0][2] = two*derExcWithSigmaTimesGradRho(cell,q,2)*psiVal[0];
-	      derExchWithSigmaTimesGradRhoTimesPsi[1][0] = two*derExcWithSigmaTimesGradRho(cell,q,0)*psiVal[1];
-	      derExchWithSigmaTimesGradRhoTimesPsi[1][1] = two*derExcWithSigmaTimesGradRho(cell,q,1)*psiVal[1];
-	      derExchWithSigmaTimesGradRhoTimesPsi[1][2] = two*derExcWithSigmaTimesGradRho(cell,q,2)*psiVal[1];	
-#endif
-#endif	      
-
-	      //
-	      //compute kSquareTerm
-	      //
-	      kSquareTerm[0] = halfkSquare*psiVal[0];
-	      kSquareTerm[1] = halfkSquare*psiVal[1];
-
-	      //
-	      //submit gradients and values
-	      //
-	      
-#ifdef xc_id
-#if xc_id == 4
-	      for(int i = 0; i < 3; ++i)
+	      fe_eval.read_dof_values(*src[i]);
+	      fe_eval.evaluate (true,true,false);
+	      for(unsigned int q = 0; q < fe_eval.n_q_points; ++q)
 		{
-		  sumGradientTerms[0][i] = gradientPsiTerm[0][i] + derExchWithSigmaTimesGradRhoTimesPsi[0][i];
-		  sumGradientTerms[1][i] = gradientPsiTerm[1][i] + derExchWithSigmaTimesGradRhoTimesPsi[1][i];
+		  //
+		  //get the quadrature point values of psi and gradPsi which are complex
+		  //
+		  psiVal = fe_eval.get_value(q);
+		  gradientPsiVal = fe_eval.get_gradient(q);
+
+		  //
+		  //compute gradientPsiTerm of the stiffnessMatrix times vector (0.5*gradientPsi)
+		  //
+		  gradientPsiTerm[0] = gradientPsiVal[0]*half;
+		  gradientPsiTerm[1] = gradientPsiVal[1]*half;
+
+		  //
+		  //compute Veff part of the stiffness matrix times vector (Veff*psi)
+		  //
+		  vEffTerm[0] = psiVal[0]*vEff(cell,q);
+		  vEffTerm[1] = psiVal[1]*vEff(cell,q);
+
+		  //
+		  //compute term involving dot product of k-vector and gradientPsi in stiffnessmatrix times vector
+		  //
+		  kDotGradientPsiTerm[0] = kPointCoors[0]*gradientPsiVal[1][0] + kPointCoors[1]*gradientPsiVal[1][1] + kPointCoors[2]*gradientPsiVal[1][2];
+		  kDotGradientPsiTerm[1] = -(kPointCoors[0]*gradientPsiVal[0][0] + kPointCoors[1]*gradientPsiVal[0][1] + kPointCoors[2]*gradientPsiVal[0][2]);
+
+	     
+		  derExchWithSigmaTimesGradRhoDotGradientPsiTerm[0] = two*(derExcWithSigmaTimesGradRho(cell,q,0)*gradientPsiVal[0][0] + derExcWithSigmaTimesGradRho(cell,q,1)*gradientPsiVal[0][1] + derExcWithSigmaTimesGradRho(cell,q,2)*gradientPsiVal[0][2]);
+		  derExchWithSigmaTimesGradRhoDotGradientPsiTerm[1] = two*(derExcWithSigmaTimesGradRho(cell,q,0)*gradientPsiVal[1][0] + derExcWithSigmaTimesGradRho(cell,q,1)*gradientPsiVal[1][1] + derExcWithSigmaTimesGradRho(cell,q,2)*gradientPsiVal[1][2]);
+		  //
+		  //see if you can make this shorter
+		  //
+		  derExchWithSigmaTimesGradRhoTimesPsi[0][0] = two*derExcWithSigmaTimesGradRho(cell,q,0)*psiVal[0];
+		  derExchWithSigmaTimesGradRhoTimesPsi[0][1] = two*derExcWithSigmaTimesGradRho(cell,q,1)*psiVal[0];
+		  derExchWithSigmaTimesGradRhoTimesPsi[0][2] = two*derExcWithSigmaTimesGradRho(cell,q,2)*psiVal[0];
+		  derExchWithSigmaTimesGradRhoTimesPsi[1][0] = two*derExcWithSigmaTimesGradRho(cell,q,0)*psiVal[1];
+		  derExchWithSigmaTimesGradRhoTimesPsi[1][1] = two*derExcWithSigmaTimesGradRho(cell,q,1)*psiVal[1];
+		  derExchWithSigmaTimesGradRhoTimesPsi[1][2] = two*derExcWithSigmaTimesGradRho(cell,q,2)*psiVal[1];	
+
+
+		  //
+		  //compute kSquareTerm
+		  //
+		  kSquareTerm[0] = halfkSquare*psiVal[0];
+		  kSquareTerm[1] = halfkSquare*psiVal[1];
+
+		  //
+		  //submit gradients and values
+		  //
+	      
+		  for(int i = 0; i < 3; ++i)
+		    {
+		      sumGradientTerms[0][i] = gradientPsiTerm[0][i] + derExchWithSigmaTimesGradRhoTimesPsi[0][i];
+		      sumGradientTerms[1][i] = gradientPsiTerm[1][i] + derExchWithSigmaTimesGradRhoTimesPsi[1][i];
+		    }
+
+		  fe_eval.submit_gradient(sumGradientTerms,q);
+		  fe_eval.submit_value(vEffTerm+kDotGradientPsiTerm+kSquareTerm+derExchWithSigmaTimesGradRhoDotGradientPsiTerm,q);
+		    
 		}
 
-	      fe_eval.submit_gradient(sumGradientTerms,q);
-	      fe_eval.submit_value(vEffTerm+kDotGradientPsiTerm+kSquareTerm+derExchWithSigmaTimesGradRhoDotGradientPsiTerm,q);
-#else
-	      fe_eval.submit_gradient(gradientPsiTerm,q);
-	      fe_eval.submit_value(vEffTerm+kDotGradientPsiTerm+kSquareTerm,q);
+	      fe_eval.integrate (true, true);
+	      fe_eval.distribute_local_to_global (*dst[i]);
 
-#endif	     
-#endif
 	    }
-
-	  fe_eval.integrate (true, true);
-	  fe_eval.distribute_local_to_global (*dst[i]);
-
 	}
+    }
+  else
+    {
+      for(unsigned int cell=cell_range.first; cell<cell_range.second; ++cell)
+	{
+	  fe_eval.reinit (cell); 
+	  for(unsigned int i = 0; i < dst.size(); ++i)
+	    {
+	      fe_eval.read_dof_values(*src[i]);
+	      fe_eval.evaluate (true,true,false);
+	      for(unsigned int q = 0; q < fe_eval.n_q_points; ++q)
+		{
+		  //
+		  //get the quadrature point values of psi and gradPsi which are complex
+		  //
+		  psiVal = fe_eval.get_value(q);
+		  gradientPsiVal = fe_eval.get_gradient(q);
+
+		  //
+		  //compute gradientPsiTerm of the stiffnessMatrix times vector (0.5*gradientPsi)
+		  //
+		  gradientPsiTerm[0] = gradientPsiVal[0]*half;
+		  gradientPsiTerm[1] = gradientPsiVal[1]*half;
+
+		  //
+		  //compute Veff part of the stiffness matrix times vector (Veff*psi)
+		  //
+		  vEffTerm[0] = psiVal[0]*vEff(cell,q);
+		  vEffTerm[1] = psiVal[1]*vEff(cell,q);
+
+		  //
+		  //compute term involving dot product of k-vector and gradientPsi in stiffnessmatrix times vector
+		  //
+		  kDotGradientPsiTerm[0] = kPointCoors[0]*gradientPsiVal[1][0] + kPointCoors[1]*gradientPsiVal[1][1] + kPointCoors[2]*gradientPsiVal[1][2];
+		  kDotGradientPsiTerm[1] = -(kPointCoors[0]*gradientPsiVal[0][0] + kPointCoors[1]*gradientPsiVal[0][1] + kPointCoors[2]*gradientPsiVal[0][2]);
+
+		  //
+		  //compute kSquareTerm
+		  //
+		  kSquareTerm[0] = halfkSquare*psiVal[0];
+		  kSquareTerm[1] = halfkSquare*psiVal[1];
+
+		  //
+		  //submit gradients and values
+		  //
+		  fe_eval.submit_gradient(gradientPsiTerm,q);
+		  fe_eval.submit_value(vEffTerm+kDotGradientPsiTerm+kSquareTerm,q);
+		}
+
+	      fe_eval.integrate (true, true);
+	      fe_eval.distribute_local_to_global (*dst[i]);
+
+	    }
+	}
+
     }
 #else
   FEEvaluation<3,FEOrder, FEOrder+1, 1, double>  fe_eval(data, dftPtr->eigenDofHandlerIndex, 0);
   Tensor<1,3,VectorizedArray<double> > derExchWithSigmaTimesGradRhoTimesPsi,gradientPsiVal;
   VectorizedArray<double> psiVal,derExchWithSigmaTimesGradRhoDotGradientPsiTerm;
-  for(unsigned int cell=cell_range.first; cell<cell_range.second; ++cell)
+  if(xc_id == 4)
     {
-      fe_eval.reinit (cell); 
-      for(unsigned int i = 0; i < dst.size(); i++)
+      for(unsigned int cell = cell_range.first; cell < cell_range.second; ++cell)
 	{
-	  fe_eval.read_dof_values(*src[i]);
-	  fe_eval.evaluate (true,true,false);
-	  for(unsigned int q=0; q<fe_eval.n_q_points; ++q)
+	  fe_eval.reinit (cell); 
+	  for(unsigned int i = 0; i < dst.size(); i++)
 	    {
-#ifdef xc_id
-#if xc_id == 4
-	      psiVal = fe_eval.get_value(q);
-	      gradientPsiVal = fe_eval.get_gradient(q);
-	      derExchWithSigmaTimesGradRhoTimesPsi[0] = derExcWithSigmaTimesGradRho(cell,q,0)*psiVal;
-	      derExchWithSigmaTimesGradRhoTimesPsi[1] = derExcWithSigmaTimesGradRho(cell,q,1)*psiVal;
-	      derExchWithSigmaTimesGradRhoTimesPsi[2] = derExcWithSigmaTimesGradRho(cell,q,2)*psiVal;
-	      derExchWithSigmaTimesGradRhoDotGradientPsiTerm = derExcWithSigmaTimesGradRho(cell,q,0)*gradientPsiVal[0] + derExcWithSigmaTimesGradRho(cell,q,1)*gradientPsiVal[1] + derExcWithSigmaTimesGradRho(cell,q,2)*gradientPsiVal[2];
+	      fe_eval.read_dof_values(*src[i]);
+	      fe_eval.evaluate (true,true,false);
+	      for(unsigned int q = 0; q < fe_eval.n_q_points; ++q)
+		{
+		      psiVal = fe_eval.get_value(q);
+		      gradientPsiVal = fe_eval.get_gradient(q);
+		      derExchWithSigmaTimesGradRhoTimesPsi[0] = derExcWithSigmaTimesGradRho(cell,q,0)*psiVal;
+		      derExchWithSigmaTimesGradRhoTimesPsi[1] = derExcWithSigmaTimesGradRho(cell,q,1)*psiVal;
+		      derExchWithSigmaTimesGradRhoTimesPsi[2] = derExcWithSigmaTimesGradRho(cell,q,2)*psiVal;
+		      derExchWithSigmaTimesGradRhoDotGradientPsiTerm = derExcWithSigmaTimesGradRho(cell,q,0)*gradientPsiVal[0] + derExcWithSigmaTimesGradRho(cell,q,1)*gradientPsiVal[1] + derExcWithSigmaTimesGradRho(cell,q,2)*gradientPsiVal[2];
 
-	      //submit gradient and value
-	      fe_eval.submit_gradient(gradientPsiVal*half + two*derExchWithSigmaTimesGradRhoTimesPsi,q); 
-	      fe_eval.submit_value(vEff(cell,q)*psiVal + two*derExchWithSigmaTimesGradRhoDotGradientPsiTerm,q);
-	      
-#else
-	      fe_eval.submit_gradient (fe_eval.get_gradient(q)*half, q);
-	      fe_eval.submit_value    (fe_eval.get_value(q)*vEff(cell,q), q);
-#endif
-#endif
+		      //
+		      //submit gradient and value
+		      //
+		      fe_eval.submit_gradient(gradientPsiVal*half + two*derExchWithSigmaTimesGradRhoTimesPsi,q); 
+		      fe_eval.submit_value(vEff(cell,q)*psiVal + two*derExchWithSigmaTimesGradRhoDotGradientPsiTerm,q);
+		}
+
+	      fe_eval.integrate (true, true);
+	      fe_eval.distribute_local_to_global (*dst[i]);
 	    }
-
-	  fe_eval.integrate (true, true);
-	  fe_eval.distribute_local_to_global (*dst[i]);
 	}
+    }
+  else
+    {
+      for(unsigned int cell = cell_range.first; cell < cell_range.second; ++cell)
+	{
+	  fe_eval.reinit (cell); 
+	  for(unsigned int i = 0; i < dst.size(); i++)
+	    {
+	      fe_eval.read_dof_values(*src[i]);
+	      fe_eval.evaluate (true,true,false);
+	      for(unsigned int q = 0; q < fe_eval.n_q_points; ++q)
+		{
+		  fe_eval.submit_gradient(fe_eval.get_gradient(q)*half, q);
+		  fe_eval.submit_value(fe_eval.get_value(q)*vEff(cell,q), q);
+		}
+
+	      fe_eval.integrate (true, true);
+	      fe_eval.distribute_local_to_global (*dst[i]);
+	    }
+	}
+
     }
 #endif
 }
@@ -776,7 +819,7 @@ void eigenClass<FEOrder>::implementHX (const dealii::MatrixFree<3,double>  &data
 //HX
 template<unsigned int FEOrder>
 void eigenClass<FEOrder>::HX(const std::vector<vectorType*> &src, 
-		          std::vector<vectorType*> &dst) 
+			     std::vector<vectorType*> &dst) 
 {
   computing_timer.enter_section("eigenClass HX");
   for (unsigned int i = 0; i < src.size(); i++)
@@ -888,8 +931,8 @@ void eigenClass<FEOrder>::XHX(const std::vector<vectorType*> &src)
     {
       hx[i].real(hxReal[i]);
       hx[i].imag(hxImag[i]);
-       x[i].real(xReal[i]);
-       x[i].imag(xImag[i]);
+      x[i].real(xReal[i]);
+      x[i].imag(xImag[i]);
     }
   char transA  = 'C', transB  = 'N';
   std::complex<double> alpha = 1.0, beta  = 0.0;
@@ -904,25 +947,25 @@ void eigenClass<FEOrder>::XHX(const std::vector<vectorType*> &src)
 		MPI_SUM,
 		mpi_communicator);
 #else
-   std::vector<double> hx(dofs_per_proc*src.size()), x(dofs_per_proc*src.size());
+  std::vector<double> hx(dofs_per_proc*src.size()), x(dofs_per_proc*src.size());
 
-   //
-   //extract vectors at the processor level
-   //
-   std::vector<unsigned int> local_dof_indices(dofs_per_proc);
-   src[0]->locally_owned_elements().fill_index_vector(local_dof_indices);
+  //
+  //extract vectors at the processor level
+  //
+  std::vector<unsigned int> local_dof_indices(dofs_per_proc);
+  src[0]->locally_owned_elements().fill_index_vector(local_dof_indices);
 
-   unsigned int index=0;
-   for (std::vector<vectorType*>::const_iterator it=src.begin(); it!=src.end(); it++)
-     {
-       (*it)->extract_subvector_to(local_dof_indices.begin(), local_dof_indices.end(), x.begin()+dofs_per_proc*index);
-       dftPtr->tempPSI3[index]->extract_subvector_to(local_dof_indices.begin(), local_dof_indices.end(), hx.begin()+dofs_per_proc*index);
-       index++;
-       }
-   char transA  = 'T', transB  = 'N';
-   double alpha = 1.0, beta  = 0.0;
-   dgemm_(&transA, &transB, &n, &n, &k, &alpha, &x[0], &lda, &hx[0], &ldb, &beta, &XHXValue[0], &ldc);
-   Utilities::MPI::sum(XHXValue, mpi_communicator, XHXValue); 
+  unsigned int index=0;
+  for (std::vector<vectorType*>::const_iterator it=src.begin(); it!=src.end(); it++)
+    {
+      (*it)->extract_subvector_to(local_dof_indices.begin(), local_dof_indices.end(), x.begin()+dofs_per_proc*index);
+      dftPtr->tempPSI3[index]->extract_subvector_to(local_dof_indices.begin(), local_dof_indices.end(), hx.begin()+dofs_per_proc*index);
+      index++;
+    }
+  char transA  = 'T', transB  = 'N';
+  double alpha = 1.0, beta  = 0.0;
+  dgemm_(&transA, &transB, &n, &n, &k, &alpha, &x[0], &lda, &hx[0], &ldb, &beta, &XHXValue[0], &ldc);
+  Utilities::MPI::sum(XHXValue, mpi_communicator, XHXValue); 
 #endif
 
   //all reduce XHXValue(check in parallel)
@@ -934,6 +977,13 @@ template class eigenClass<1>;
 template class eigenClass<2>;
 template class eigenClass<3>;
 template class eigenClass<4>;
-
+template class eigenClass<5>;
+template class eigenClass<6>;
+template class eigenClass<7>;
+template class eigenClass<8>;
+template class eigenClass<9>;
+template class eigenClass<10>;
+template class eigenClass<11>;
+template class eigenClass<12>;
 
 

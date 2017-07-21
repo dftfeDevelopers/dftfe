@@ -299,19 +299,23 @@ void dftClass<FEOrder>::run ()
       //eigen solve
      
 
-#ifdef xc_id
- #if xc_id < 4
-      if(isPseudopotential)
-	eigen.computeVEff(rhoInValues, poisson.phiTotRhoIn, poisson.phiExt, pseudoValues);
-      else
-	eigen.computeVEff(rhoInValues, poisson.phiTotRhoIn, poisson.phiExt); 
- #elif xc_id == 4
-      if(isPseudopotential)
-	eigen.computeVEff(rhoInValues, gradRhoInValues, poisson.phiTotRhoIn, poisson.phiExt, pseudoValues);
-      else
-	eigen.computeVEff(rhoInValues, gradRhoInValues, poisson.phiTotRhoIn, poisson.phiExt);
- #endif
-#endif
+
+      if(xc_id < 4)
+	{
+	  if(isPseudopotential)
+	    eigen.computeVEff(rhoInValues, poisson.phiTotRhoIn, poisson.phiExt, pseudoValues);
+	  else
+	    eigen.computeVEff(rhoInValues, poisson.phiTotRhoIn, poisson.phiExt); 
+	}
+      else if (xc_id == 4)
+	{
+	  if(isPseudopotential)
+	    eigen.computeVEff(rhoInValues, gradRhoInValues, poisson.phiTotRhoIn, poisson.phiExt, pseudoValues);
+	  else
+	    eigen.computeVEff(rhoInValues, gradRhoInValues, poisson.phiTotRhoIn, poisson.phiExt);
+	}
+ 
+
 
       for(int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
 	{
@@ -345,3 +349,11 @@ template class dftClass<1>;
 template class dftClass<2>;
 template class dftClass<3>;
 template class dftClass<4>;
+template class dftClass<5>;
+template class dftClass<6>;
+template class dftClass<7>;
+template class dftClass<8>;
+template class dftClass<9>;
+template class dftClass<10>;
+template class dftClass<11>;
+template class dftClass<12>;

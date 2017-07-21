@@ -32,110 +32,113 @@ void dftClass<FEOrder>::compute_energy()
 
   //parallel loop over all elements
   typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
-#ifdef xc_id
-#if xc_id == 4
-  for (; cell!=endc; ++cell) 
+
+  if(xc_id == 4)
     {
-      if (cell->is_locally_owned())
+      for (; cell!=endc; ++cell) 
 	{
-	  // Compute values for current cell.
-	  fe_values.reinit (cell);
-	  fe_values.get_function_values(poisson.phiTotRhoIn,cellPhiTotRhoIn);
-	  fe_values.get_function_values(poisson.phiTotRhoOut,cellPhiTotRhoOut);
-	  fe_values.get_function_values(poisson.phiExt,cellPhiExt);
+	  if (cell->is_locally_owned())
+	    {
+	      // Compute values for current cell.
+	      fe_values.reinit (cell);
+	      fe_values.get_function_values(poisson.phiTotRhoIn,cellPhiTotRhoIn);
+	      fe_values.get_function_values(poisson.phiTotRhoOut,cellPhiTotRhoOut);
+	      fe_values.get_function_values(poisson.phiExt,cellPhiExt);
 	  
-	  //Get Exc
-	  std::vector<double> densityValueIn(num_quad_points), densityValueOut(num_quad_points);
-	  std::vector<double> exchangeEnergyDensity(num_quad_points), corrEnergyDensity(num_quad_points);
-	  std::vector<double> derExchEnergyWithInputDensity(num_quad_points), derCorrEnergyWithInputDensity(num_quad_points);
-	  std::vector<double> derExchEnergyWithSigmaGradDenInput(num_quad_points),derCorrEnergyWithSigmaGradDenInput(num_quad_points);
-	  std::vector<double> sigmaWithOutputGradDensity(num_quad_points), sigmaWithInputGradDensity(num_quad_points);
-	  std::vector<double> gradRhoInDotgradRhoOut(num_quad_points);
-	  for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
-	    {
-	      densityValueIn[q_point] = (*rhoInValues)[cell->id()][q_point];
-	      densityValueOut[q_point] = (*rhoOutValues)[cell->id()][q_point];
-	      double gradRhoInX = ((*gradRhoInValues)[cell->id()][3*q_point + 0]);
-	      double gradRhoInY = ((*gradRhoInValues)[cell->id()][3*q_point + 1]);
-	      double gradRhoInZ = ((*gradRhoInValues)[cell->id()][3*q_point + 2]);
-	      double gradRhoOutX = ((*gradRhoOutValues)[cell->id()][3*q_point + 0]);
-	      double gradRhoOutY = ((*gradRhoOutValues)[cell->id()][3*q_point + 1]);
-	      double gradRhoOutZ = ((*gradRhoOutValues)[cell->id()][3*q_point + 2]);
-	      sigmaWithInputGradDensity[q_point] = gradRhoInX*gradRhoInX + gradRhoInY*gradRhoInY + gradRhoInZ*gradRhoInZ;
-	      sigmaWithOutputGradDensity[q_point] = gradRhoOutX*gradRhoOutX + gradRhoOutY*gradRhoOutY + gradRhoOutZ*gradRhoOutZ;
-	      gradRhoInDotgradRhoOut[q_point] = gradRhoInX*gradRhoOutX + gradRhoInY*gradRhoOutY + gradRhoInZ*gradRhoOutZ;
-	    }
-	  xc_gga_exc(&funcX,num_quad_points,&densityValueOut[0],&sigmaWithOutputGradDensity[0],&exchangeEnergyDensity[0]);
-	  xc_gga_exc(&funcC,num_quad_points,&densityValueOut[0],&sigmaWithOutputGradDensity[0],&corrEnergyDensity[0]);
+	      //Get Exc
+	      std::vector<double> densityValueIn(num_quad_points), densityValueOut(num_quad_points);
+	      std::vector<double> exchangeEnergyDensity(num_quad_points), corrEnergyDensity(num_quad_points);
+	      std::vector<double> derExchEnergyWithInputDensity(num_quad_points), derCorrEnergyWithInputDensity(num_quad_points);
+	      std::vector<double> derExchEnergyWithSigmaGradDenInput(num_quad_points),derCorrEnergyWithSigmaGradDenInput(num_quad_points);
+	      std::vector<double> sigmaWithOutputGradDensity(num_quad_points), sigmaWithInputGradDensity(num_quad_points);
+	      std::vector<double> gradRhoInDotgradRhoOut(num_quad_points);
+	      for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
+		{
+		  densityValueIn[q_point] = (*rhoInValues)[cell->id()][q_point];
+		  densityValueOut[q_point] = (*rhoOutValues)[cell->id()][q_point];
+		  double gradRhoInX = ((*gradRhoInValues)[cell->id()][3*q_point + 0]);
+		  double gradRhoInY = ((*gradRhoInValues)[cell->id()][3*q_point + 1]);
+		  double gradRhoInZ = ((*gradRhoInValues)[cell->id()][3*q_point + 2]);
+		  double gradRhoOutX = ((*gradRhoOutValues)[cell->id()][3*q_point + 0]);
+		  double gradRhoOutY = ((*gradRhoOutValues)[cell->id()][3*q_point + 1]);
+		  double gradRhoOutZ = ((*gradRhoOutValues)[cell->id()][3*q_point + 2]);
+		  sigmaWithInputGradDensity[q_point] = gradRhoInX*gradRhoInX + gradRhoInY*gradRhoInY + gradRhoInZ*gradRhoInZ;
+		  sigmaWithOutputGradDensity[q_point] = gradRhoOutX*gradRhoOutX + gradRhoOutY*gradRhoOutY + gradRhoOutZ*gradRhoOutZ;
+		  gradRhoInDotgradRhoOut[q_point] = gradRhoInX*gradRhoOutX + gradRhoInY*gradRhoOutY + gradRhoInZ*gradRhoOutZ;
+		}
+	      xc_gga_exc(&funcX,num_quad_points,&densityValueOut[0],&sigmaWithOutputGradDensity[0],&exchangeEnergyDensity[0]);
+	      xc_gga_exc(&funcC,num_quad_points,&densityValueOut[0],&sigmaWithOutputGradDensity[0],&corrEnergyDensity[0]);
 
-	  xc_gga_vxc(&funcX,num_quad_points,&densityValueIn[0],&sigmaWithInputGradDensity[0],&derExchEnergyWithInputDensity[0],&derExchEnergyWithSigmaGradDenInput[0]);
-	  xc_gga_vxc(&funcC,num_quad_points,&densityValueIn[0],&sigmaWithInputGradDensity[0],&derCorrEnergyWithInputDensity[0],&derCorrEnergyWithSigmaGradDenInput[0]);
-	  for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
-	    {
-	      //Veff computed with rhoIn
-	      double Veff=cellPhiTotRhoIn[q_point]+derExchEnergyWithInputDensity[q_point]+derCorrEnergyWithInputDensity[q_point];
-	      double VxcGrad = 2.0*(derExchEnergyWithSigmaGradDenInput[q_point]+derCorrEnergyWithSigmaGradDenInput[q_point])*gradRhoInDotgradRhoOut[q_point];
+	      xc_gga_vxc(&funcX,num_quad_points,&densityValueIn[0],&sigmaWithInputGradDensity[0],&derExchEnergyWithInputDensity[0],&derExchEnergyWithSigmaGradDenInput[0]);
+	      xc_gga_vxc(&funcC,num_quad_points,&densityValueIn[0],&sigmaWithInputGradDensity[0],&derCorrEnergyWithInputDensity[0],&derCorrEnergyWithSigmaGradDenInput[0]);
+	      for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
+		{
+		  //Veff computed with rhoIn
+		  double Veff=cellPhiTotRhoIn[q_point]+derExchEnergyWithInputDensity[q_point]+derCorrEnergyWithInputDensity[q_point];
+		  double VxcGrad = 2.0*(derExchEnergyWithSigmaGradDenInput[q_point]+derCorrEnergyWithSigmaGradDenInput[q_point])*gradRhoInDotgradRhoOut[q_point];
 
-	      //Vtot, Vext computet with rhoIn
-	      double Vtot=cellPhiTotRhoOut[q_point];
-	      double Vext=cellPhiExt[q_point];
+		  //Vtot, Vext computet with rhoIn
+		  double Vtot=cellPhiTotRhoOut[q_point];
+		  double Vext=cellPhiExt[q_point];
 
-	      //quad rule
-	      potentialTimesRho+=(Veff*((*rhoOutValues)[cell->id()][q_point])+VxcGrad)*fe_values.JxW (q_point);
-	      exchangeEnergy+=(exchangeEnergyDensity[q_point])*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
-	      correlationEnergy+=(corrEnergyDensity[q_point])*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
+		  //quad rule
+		  potentialTimesRho+=(Veff*((*rhoOutValues)[cell->id()][q_point])+VxcGrad)*fe_values.JxW (q_point);
+		  exchangeEnergy+=(exchangeEnergyDensity[q_point])*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
+		  correlationEnergy+=(corrEnergyDensity[q_point])*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
 #ifdef ENABLE_PERIODIC_BC
-	      electrostaticEnergyTotPot+=0.5*(Vtot)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
+		  electrostaticEnergyTotPot+=0.5*(Vtot)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
 #else
-	      electrostaticEnergyTotPot+=0.5*(Vtot+Vext)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
+		  electrostaticEnergyTotPot+=0.5*(Vtot+Vext)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
 #endif
+		}
 	    }
-	}
-    } 
-#else
-  for (; cell!=endc; ++cell) 
+	} 
+    }
+  else
     {
-      if (cell->is_locally_owned())
+      for (; cell!=endc; ++cell) 
 	{
-	  // Compute values for current cell.
-	  fe_values.reinit (cell);
-	  fe_values.get_function_values(poisson.phiTotRhoIn,cellPhiTotRhoIn);
-	  fe_values.get_function_values(poisson.phiTotRhoOut,cellPhiTotRhoOut);
-	  fe_values.get_function_values(poisson.phiExt,cellPhiExt);
+	  if (cell->is_locally_owned())
+	    {
+	      // Compute values for current cell.
+	      fe_values.reinit (cell);
+	      fe_values.get_function_values(poisson.phiTotRhoIn,cellPhiTotRhoIn);
+	      fe_values.get_function_values(poisson.phiTotRhoOut,cellPhiTotRhoOut);
+	      fe_values.get_function_values(poisson.phiExt,cellPhiExt);
 	  
-	  //Get Exc
-	  std::vector<double> densityValueIn(num_quad_points), densityValueOut(num_quad_points);
-	  std::vector<double> exchangeEnergyVal(num_quad_points), corrEnergyVal(num_quad_points);
-	  std::vector<double> exchangePotentialVal(num_quad_points), corrPotentialVal(num_quad_points);
-	  for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
-	    {
-	      densityValueIn[q_point] = (*rhoInValues)[cell->id()][q_point];
-	      densityValueOut[q_point] = (*rhoOutValues)[cell->id()][q_point];
-	    }
-	  xc_lda_exc(&funcX,num_quad_points,&densityValueOut[0],&exchangeEnergyVal[0]);
-	  xc_lda_exc(&funcC,num_quad_points,&densityValueOut[0],&corrEnergyVal[0]);
-	  xc_lda_vxc(&funcX,num_quad_points,&densityValueIn[0],&exchangePotentialVal[0]);
-	  xc_lda_vxc(&funcC,num_quad_points,&densityValueIn[0],&corrPotentialVal[0]);
-	  for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
-	    {
-	      //Veff computed with rhoIn
-	      double Veff=cellPhiTotRhoIn[q_point]+exchangePotentialVal[q_point]+corrPotentialVal[q_point];
-	      //Vtot, Vext computet with rhoIn
-	      double Vtot=cellPhiTotRhoOut[q_point];
-	      double Vext=cellPhiExt[q_point];
-	      potentialTimesRho+=Veff*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW (q_point);
-	      exchangeEnergy+=(exchangeEnergyVal[q_point])*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
-	      correlationEnergy+=(corrEnergyVal[q_point])*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
+	      //Get Exc
+	      std::vector<double> densityValueIn(num_quad_points), densityValueOut(num_quad_points);
+	      std::vector<double> exchangeEnergyVal(num_quad_points), corrEnergyVal(num_quad_points);
+	      std::vector<double> exchangePotentialVal(num_quad_points), corrPotentialVal(num_quad_points);
+	      for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
+		{
+		  densityValueIn[q_point] = (*rhoInValues)[cell->id()][q_point];
+		  densityValueOut[q_point] = (*rhoOutValues)[cell->id()][q_point];
+		}
+	      xc_lda_exc(&funcX,num_quad_points,&densityValueOut[0],&exchangeEnergyVal[0]);
+	      xc_lda_exc(&funcC,num_quad_points,&densityValueOut[0],&corrEnergyVal[0]);
+	      xc_lda_vxc(&funcX,num_quad_points,&densityValueIn[0],&exchangePotentialVal[0]);
+	      xc_lda_vxc(&funcC,num_quad_points,&densityValueIn[0],&corrPotentialVal[0]);
+	      for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
+		{
+		  //Veff computed with rhoIn
+		  double Veff=cellPhiTotRhoIn[q_point]+exchangePotentialVal[q_point]+corrPotentialVal[q_point];
+		  //Vtot, Vext computet with rhoIn
+		  double Vtot=cellPhiTotRhoOut[q_point];
+		  double Vext=cellPhiExt[q_point];
+		  potentialTimesRho+=Veff*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW (q_point);
+		  exchangeEnergy+=(exchangeEnergyVal[q_point])*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
+		  correlationEnergy+=(corrEnergyVal[q_point])*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
 #ifdef ENABLE_PERIODIC_BC
-	      electrostaticEnergyTotPot+=0.5*(Vtot)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
+		  electrostaticEnergyTotPot+=0.5*(Vtot)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
 #else
-	      electrostaticEnergyTotPot+=0.5*(Vtot+Vext)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
+		  electrostaticEnergyTotPot+=0.5*(Vtot+Vext)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
 #endif
+		}
 	    }
-	}
-    } 
-#endif
-#endif
+	} 
+    }
+
 
 
   
@@ -177,21 +180,21 @@ void dftClass<FEOrder>::compute_energy()
   //
   //total energy
   //
- totalEnergy+=bandEnergy;
+  totalEnergy+=bandEnergy;
  
  
 #ifdef ENABLE_PERIODIC_BC
- totalEnergy+=totalNuclearElectrostaticEnergy;
+  totalEnergy+=totalNuclearElectrostaticEnergy;
 #else
- totalEnergy+=repulsiveEnergy();
+  totalEnergy+=repulsiveEnergy();
 #endif
 
 
- double totalkineticEnergy=-totalpotentialTimesRho+bandEnergy;
- if (this_mpi_process == 0) {
-   std::printf("Total energy:%30.20e \nTotal energy per atom:%30.20e \n", totalEnergy, totalEnergy/((double) atomLocations.size()));
-   std::printf("Band energy:%30.20e \nKinetic energy:%30.20e \nExchange energy:%30.20e \nCorrelation energy:%30.20e \nElectrostatic energy Total Potential:%30.20e \nRepulsive energy:%30.20e \nNuclear Electrostatic Energy:%30.20e \n", bandEnergy, totalkineticEnergy, totalexchangeEnergy, totalcorrelationEnergy, totalelectrostaticEnergyPot, repulsiveEnergy(),totalNuclearElectrostaticEnergy);
- }
+  double totalkineticEnergy=-totalpotentialTimesRho+bandEnergy;
+  if (this_mpi_process == 0) {
+    std::printf("Total energy:%30.20e \nTotal energy per atom:%30.20e \n", totalEnergy, totalEnergy/((double) atomLocations.size()));
+    std::printf("Band energy:%30.20e \nKinetic energy:%30.20e \nExchange energy:%30.20e \nCorrelation energy:%30.20e \nElectrostatic energy Total Potential:%30.20e \nRepulsive energy:%30.20e \nNuclear Electrostatic Energy:%30.20e \n", bandEnergy, totalkineticEnergy, totalexchangeEnergy, totalcorrelationEnergy, totalelectrostaticEnergyPot, repulsiveEnergy(),totalNuclearElectrostaticEnergy);
+  }
 
 }
  

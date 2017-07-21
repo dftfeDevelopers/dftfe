@@ -631,32 +631,43 @@ void dftClass<FEOrder>::init(){
   //
   int exceptParamX, exceptParamC;
 
-#ifdef xc_id
-#if   xc_id == 1
-  exceptParamX = xc_func_init(&funcX,XC_LDA_X,XC_UNPOLARIZED);
-  exceptParamC = xc_func_init(&funcC,XC_LDA_C_PZ,XC_UNPOLARIZED);
-#elif xc_id == 2
-  exceptParamX = xc_func_init(&funcX,XC_LDA_X,XC_UNPOLARIZED);
-  exceptParamC = xc_func_init(&funcC,XC_LDA_C_PW,XC_UNPOLARIZED);
-#elif xc_id == 3
-  exceptParamX = xc_func_init(&funcX,XC_LDA_X,XC_UNPOLARIZED);
-  exceptParamC = xc_func_init(&funcC,XC_LDA_C_VWN,XC_UNPOLARIZED);
-#elif xc_id == 4
-  exceptParamX = xc_func_init(&funcX,XC_GGA_X_PBE,XC_UNPOLARIZED);
-  exceptParamC = xc_func_init(&funcC,XC_GGA_C_PBE,XC_UNPOLARIZED);
-#elif xc_id > 4
-#error exchange correlation id <= 4 required. 
-#endif
-#else
-  exceptParamX = xc_func_init(&funcX,XC_LDA_X,XC_UNPOLARIZED);
-  exceptParamC = xc_func_init(&funcC,XC_LDA_C_PZ,XC_UNPOLARIZED);
-  if(exceptParamX != 0 || exceptParamC != 0){
-    pcout<<"-------------------------------------"<<std::endl;
-    pcout<<"Exchange or Correlation Functional not found"<<std::endl;
-    pcout<<"-------------------------------------"<<std::endl;
-    exit(-1);
-  }
-#endif
+
+  if(xc_id == 1)
+    {
+      exceptParamX = xc_func_init(&funcX,XC_LDA_X,XC_UNPOLARIZED);
+      exceptParamC = xc_func_init(&funcC,XC_LDA_C_PZ,XC_UNPOLARIZED);
+    }
+  else if(xc_id == 2)
+    {
+      exceptParamX = xc_func_init(&funcX,XC_LDA_X,XC_UNPOLARIZED);
+      exceptParamC = xc_func_init(&funcC,XC_LDA_C_PW,XC_UNPOLARIZED);
+    }
+  else if(xc_id == 3)
+    {
+      exceptParamX = xc_func_init(&funcX,XC_LDA_X,XC_UNPOLARIZED);
+      exceptParamC = xc_func_init(&funcC,XC_LDA_C_VWN,XC_UNPOLARIZED);
+    }
+  else if(xc_id == 4)
+    {
+      exceptParamX = xc_func_init(&funcX,XC_GGA_X_PBE,XC_UNPOLARIZED);
+      exceptParamC = xc_func_init(&funcC,XC_GGA_C_PBE,XC_UNPOLARIZED);
+    }
+  else if(xc_id > 4)
+    {
+      pcout<<"-------------------------------------"<<std::endl;
+      pcout<<"Exchange or Correlation Functional not found"<<std::endl;
+      pcout<<"-------------------------------------"<<std::endl;
+      exit(-1);
+    }
+
+  if(exceptParamX != 0 || exceptParamC != 0)
+    {
+      pcout<<"-------------------------------------"<<std::endl;
+      pcout<<"Exchange or Correlation Functional not found"<<std::endl;
+      pcout<<"-------------------------------------"<<std::endl;
+      exit(-1);
+    }
+
 
   //
   //initialize local pseudopotential

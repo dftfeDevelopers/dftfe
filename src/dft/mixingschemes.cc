@@ -15,13 +15,14 @@ double dftClass<FEOrder>::mixing_simple()
   rhoInValues=new std::map<dealii::CellId,std::vector<double> >;
   rhoInVals.push_back(rhoInValues); 
 
-#ifdef xc_id
-#if xc_id == 4
+  //create new gradRhoValue tables
   std::map<dealii::CellId,std::vector<double> >* gradRhoInValuesOld = gradRhoInValues;
-  gradRhoInValues = new std::map<dealii::CellId,std::vector<double> >;
-  gradRhoInVals.push_back(gradRhoInValues);
-#endif
-#endif
+
+  if(xc_id == 4)
+    {
+      gradRhoInValues = new std::map<dealii::CellId,std::vector<double> >;
+      gradRhoInVals.push_back(gradRhoInValues);
+    }
 
   //parallel loop over all elements
   typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
@@ -32,11 +33,11 @@ double dftClass<FEOrder>::mixing_simple()
 	  fe_values.reinit (cell); 
 	  (*rhoInValues)[cell->id()]=std::vector<double>(num_quad_points);
 
-#ifdef xc_id
-#if xc_id == 4
-	  (*gradRhoInValues)[cell->id()]=std::vector<double>(3*num_quad_points);
-#endif
-#endif
+
+	  if(xc_id == 4)
+	    (*gradRhoInValues)[cell->id()]=std::vector<double>(3*num_quad_points);
+
+
 	  for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
 	    {
 	      //Compute (rhoIn-rhoOut)^2
@@ -45,13 +46,14 @@ double dftClass<FEOrder>::mixing_simple()
 	      //Simple mixing scheme
 	      ((*rhoInValues)[cell->id()][q_point])=std::abs((1-alpha)*(*rhoInValuesOld)[cell->id()][q_point]+ alpha*(*rhoOutValues)[cell->id()][q_point]);
 
-#ifdef xc_id
-#if xc_id == 4
-	      ((*gradRhoInValues)[cell->id()][3*q_point + 0])= ((1-alpha)*(*gradRhoInValuesOld)[cell->id()][3*q_point + 0]+ alpha*(*gradRhoOutValues)[cell->id()][3*q_point + 0]);
-	      ((*gradRhoInValues)[cell->id()][3*q_point + 1])= ((1-alpha)*(*gradRhoInValuesOld)[cell->id()][3*q_point + 1]+ alpha*(*gradRhoOutValues)[cell->id()][3*q_point + 1]);
-	      ((*gradRhoInValues)[cell->id()][3*q_point + 2])= ((1-alpha)*(*gradRhoInValuesOld)[cell->id()][3*q_point + 2]+ alpha*(*gradRhoOutValues)[cell->id()][3*q_point + 2]);
-#endif
-#endif
+
+	      if(xc_id == 4)
+		{
+		  ((*gradRhoInValues)[cell->id()][3*q_point + 0])= ((1-alpha)*(*gradRhoInValuesOld)[cell->id()][3*q_point + 0]+ alpha*(*gradRhoOutValues)[cell->id()][3*q_point + 0]);
+		  ((*gradRhoInValues)[cell->id()][3*q_point + 1])= ((1-alpha)*(*gradRhoInValuesOld)[cell->id()][3*q_point + 1]+ alpha*(*gradRhoOutValues)[cell->id()][3*q_point + 1]);
+		  ((*gradRhoInValues)[cell->id()][3*q_point + 2])= ((1-alpha)*(*gradRhoInValuesOld)[cell->id()][3*q_point + 2]+ alpha*(*gradRhoOutValues)[cell->id()][3*q_point + 2]);
+		}
+
 	    }
 	  
 	}
@@ -147,52 +149,51 @@ double dftClass<FEOrder>::mixing_anderson(){
 
   //compute gradRho for GGA using mixing constants from rho mixing
 
-#ifdef xc_id
-#if xc_id == 4
-  std::map<dealii::CellId,std::vector<double> >* gradRhoInValuesOld = gradRhoInValues;
-  gradRhoInValues = new std::map<dealii::CellId,std::vector<double> >;
-  gradRhoInVals.push_back(gradRhoInValues);
-  cell = dofHandler.begin_active();
-  for (; cell!=endc; ++cell) 
+
+  if(xc_id == 4)
     {
-    if (cell->is_locally_owned())
-      {
-	(*gradRhoInValues)[cell->id()]=std::vector<double>(3*num_quad_points);
-	fe_values.reinit (cell); 
-	for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
-	  {
-	    //
-	    //Anderson mixing scheme
-	    //
-	    double gradRhoXOutBar = cn*(*gradRhoOutVals[N])[cell->id()][3*q_point + 0];
-	    double gradRhoYOutBar = cn*(*gradRhoOutVals[N])[cell->id()][3*q_point + 1];
-	    double gradRhoZOutBar = cn*(*gradRhoOutVals[N])[cell->id()][3*q_point + 2];
+      std::map<dealii::CellId,std::vector<double> >* gradRhoInValuesOld = gradRhoInValues;
+      gradRhoInValues = new std::map<dealii::CellId,std::vector<double> >;
+      gradRhoInVals.push_back(gradRhoInValues);
+      cell = dofHandler.begin_active();
+      for (; cell!=endc; ++cell) 
+	{
+	  if (cell->is_locally_owned())
+	    {
+	      (*gradRhoInValues)[cell->id()]=std::vector<double>(3*num_quad_points);
+	      fe_values.reinit (cell); 
+	      for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
+		{
+		  //
+		  //Anderson mixing scheme
+		  //
+		  double gradRhoXOutBar = cn*(*gradRhoOutVals[N])[cell->id()][3*q_point + 0];
+		  double gradRhoYOutBar = cn*(*gradRhoOutVals[N])[cell->id()][3*q_point + 1];
+		  double gradRhoZOutBar = cn*(*gradRhoOutVals[N])[cell->id()][3*q_point + 2];
 	    
-	    double gradRhoXInBar = cn*(*gradRhoInVals[N])[cell->id()][3*q_point + 0];
-	    double gradRhoYInBar = cn*(*gradRhoInVals[N])[cell->id()][3*q_point + 1];
-	    double gradRhoZInBar = cn*(*gradRhoInVals[N])[cell->id()][3*q_point + 2];
+		  double gradRhoXInBar = cn*(*gradRhoInVals[N])[cell->id()][3*q_point + 0];
+		  double gradRhoYInBar = cn*(*gradRhoInVals[N])[cell->id()][3*q_point + 1];
+		  double gradRhoZInBar = cn*(*gradRhoInVals[N])[cell->id()][3*q_point + 2];
 	    
-	    for (int i = 0; i < N; i++)
-	      {
-		gradRhoXOutBar += cTotal[i]*(*gradRhoOutVals[N-1-i])[cell->id()][3*q_point + 0];
-		gradRhoYOutBar += cTotal[i]*(*gradRhoOutVals[N-1-i])[cell->id()][3*q_point + 1];
-		gradRhoZOutBar += cTotal[i]*(*gradRhoOutVals[N-1-i])[cell->id()][3*q_point + 2];
+		  for (int i = 0; i < N; i++)
+		    {
+		      gradRhoXOutBar += cTotal[i]*(*gradRhoOutVals[N-1-i])[cell->id()][3*q_point + 0];
+		      gradRhoYOutBar += cTotal[i]*(*gradRhoOutVals[N-1-i])[cell->id()][3*q_point + 1];
+		      gradRhoZOutBar += cTotal[i]*(*gradRhoOutVals[N-1-i])[cell->id()][3*q_point + 2];
 
-		gradRhoXInBar += cTotal[i]*(*gradRhoInVals[N-1-i])[cell->id()][3*q_point + 0];
-		gradRhoYInBar += cTotal[i]*(*gradRhoInVals[N-1-i])[cell->id()][3*q_point + 1];
-		gradRhoZInBar += cTotal[i]*(*gradRhoInVals[N-1-i])[cell->id()][3*q_point + 2];
-	      }
+		      gradRhoXInBar += cTotal[i]*(*gradRhoInVals[N-1-i])[cell->id()][3*q_point + 0];
+		      gradRhoYInBar += cTotal[i]*(*gradRhoInVals[N-1-i])[cell->id()][3*q_point + 1];
+		      gradRhoZInBar += cTotal[i]*(*gradRhoInVals[N-1-i])[cell->id()][3*q_point + 2];
+		    }
 
-	    (*gradRhoInValues)[cell->id()][3*q_point + 0] = ((1-alpha)*gradRhoXInBar+alpha*gradRhoXOutBar);
-	    (*gradRhoInValues)[cell->id()][3*q_point + 1] = ((1-alpha)*gradRhoYInBar+alpha*gradRhoYOutBar);
-	    (*gradRhoInValues)[cell->id()][3*q_point + 2] = ((1-alpha)*gradRhoZInBar+alpha*gradRhoZOutBar);
-	  }
-      }
+		  (*gradRhoInValues)[cell->id()][3*q_point + 0] = ((1-alpha)*gradRhoXInBar+alpha*gradRhoXOutBar);
+		  (*gradRhoInValues)[cell->id()][3*q_point + 1] = ((1-alpha)*gradRhoYInBar+alpha*gradRhoYOutBar);
+		  (*gradRhoInValues)[cell->id()][3*q_point + 2] = ((1-alpha)*gradRhoZInBar+alpha*gradRhoZOutBar);
+		}
+	    }
 
+	}
     }
-#endif
-#endif
-
 
   return Utilities::MPI::sum(normValue, mpi_communicator);
 }

@@ -11,9 +11,10 @@
 #include <iostream>
 #include <fstream>
 
-double radiusAtomBall;
-unsigned int finiteElementPolynomialOrder = 4;
-const unsigned int n_refinement_steps = 4;
+double radiusAtomBall, domainSizeX, domainSizeY, domainSizeZ;
+unsigned int finiteElementPolynomialOrder;
+unsigned int n_refinement_steps;
+unsigned int numberEigenValues;
 
 double lowerEndWantedSpectrum;
 unsigned int chebyshevOrder; 
@@ -24,26 +25,20 @@ double selfConsistentSolverTolerance   = 1.0e-11;
 
 
 bool isPseudopotential;
-std::string meshFileName;
+std::string meshFileName,coordinatesFile;
+
+int xc_id;
 
 //
 //Define constants
 //
 const double TVal = 500.0;
 
-//
-//Mesh information
-//
-#define coordinatesFile "../../../../data/meshes/allElectron/carbonSingleAtom/coordinates.inp" 
-#define xc_id 1
-
 
 //
 //dft header
 //
 #include "../../../../src/dft/dft.cc"
-
-
 
 
 using namespace dealii;
@@ -71,27 +66,63 @@ print_usage_message ()
 
 void declare_parameters()
 {
-  prm.declare_entry("Radius Atom Ball", "3.0",
-		    Patterns::Double(),
-		    "The radius of the ball around an atom on which self-potential of the associated nuclear charge is solved");
 
-  prm.declare_entry("Pseudopotential Calculation", "false",
-		    Patterns::Bool(),
-		    "Boolean Parameter specifying whether pseudopotential DFT calculation needs to be performed"); 
-
-  prm.declare_entry("Mesh File Name", "",
+  prm.declare_entry("MESH FILE", "",
 		    Patterns::Anything(),
 		    "Finite-element mesh file to be used for the given problem");
 
-  prm.enter_subsection("Chebyshev filtering options");
+  prm.declare_entry("ATOMIC COORDINATES FILE", "",
+		    Patterns::Anything(),
+		    "File specifying the coordinates of the atoms in the given material system");
+
+  prm.declare_entry("FINITE ELEMENT POLYNOMIAL ORDER", "2",
+		    Patterns::Integer(1,12),
+		    "The degree of the finite-element interpolating polynomial");
+
+
+  prm.declare_entry("RADIUS ATOM BALL", "3.0",
+		    Patterns::Double(),
+		    "The radius of the ball around an atom on which self-potential of the associated nuclear charge is solved");
+
+  prm.declare_entry("DOMAIN SIZE X", "20.0",
+		    Patterns::Double(),
+		    "Size of the domain in X-direction");
+
+  prm.declare_entry("DOMAIN SIZE Y", "20.0",
+		    Patterns::Double(),
+		    "Size of the domain in Y-direction");
+
+  prm.declare_entry("DOMAIN SIZE Z", "20.0",
+		    Patterns::Double(),
+		    "Size of the domain in Z-direction");
+  
+
+  prm.declare_entry("PSEUDOPOTENTIAL CALCULATION", "false",
+		    Patterns::Bool(),
+		    "Boolean Parameter specifying whether pseudopotential DFT calculation needs to be performed"); 
+
+  prm.declare_entry("EXCHANGE CORRELATION TYPE", "1",
+		    Patterns::Integer(1,4),
+		    "Parameter specifying the type of exchange-correlation to be used");
+
+  prm.declare_entry("NUMBER OF REFINEMENT STEPS", "4",
+		    Patterns::Integer(1,4),
+		    "Number of refinement steps to be used");
+
+  prm.enter_subsection("CHEBYSHEV FILTERING OPTIONS");
   {
-    prm.declare_entry("Lower Bound Wanted Spectrum", "-10.0",
+    prm.declare_entry("LOWER BOUND WANTED SPECTRUM", "-10.0",
 		      Patterns::Double(),
 		      "The lower bound of the wanted eigen spectrum");
 
-    prm.declare_entry("Chebyshev Polynomial Degree", "50",
+    prm.declare_entry("CHEBYSHEV POLYNOMIAL DEGREE", "50",
 		      Patterns::Integer(),
 		      "The degree of the Chebyshev polynomial to be employed for filtering out the unwanted spectrum");
+
+    prm.declare_entry("NUMBER OF KOHN-SHAM WAVEFUNCTIONS", "10",
+		      Patterns::Integer(),
+		      "Number of Kohn-Sham wavefunctions to be computed");
+    
   }
   prm.leave_subsection();
 }
@@ -127,31 +158,25 @@ void parse_command_line(const int argc,
 	  prm.read_input(parameter_file);
 	  print_usage_message();
 
-	  radiusAtomBall = prm.get_double("Radius Atom Ball");
-	  prm.enter_subsection("Chebyshev filtering options");
+	  meshFileName                 = prm.get("MESH FILE");
+	  coordinatesFile              = prm.get("ATOMIC COORDINATES FILE");
+	  finiteElementPolynomialOrder = prm.get_integer("FINITE ELEMENT POLYNOMIAL ORDER");
+	  radiusAtomBall               = prm.get_double("RADIUS ATOM BALL");
+	  isPseudopotential            = prm.get_bool("PSEUDOPOTENTIAL CALCULATION");
+	  xc_id                        = prm.get_integer("EXCHANGE CORRELATION TYPE");
+	  n_refinement_steps           = prm.get_integer("NUMBER OF REFINEMENT STEPS");
+	  domainSizeX                  = prm.get_double("DOMAIN SIZE X");
+	  domainSizeY                  = prm.get_double("DOMAIN SIZE Y");
+	  domainSizeZ                  = prm.get_double("DOMAIN SIZE Z");
+
+	  prm.enter_subsection("CHEBYSHEV FILTERING OPTIONS");
 	  {
-	    lowerEndWantedSpectrum = prm.get_double("Lower Bound Wanted Spectrum");
-	    chebyshevOrder = prm.get_integer("Chebyshev Polynomial Degree");        
+	    numberEigenValues      = prm.get_integer("NUMBER OF KOHN-SHAM WAVEFUNCTIONS");
+	    lowerEndWantedSpectrum = prm.get_double("LOWER BOUND WANTED SPECTRUM");
+	    chebyshevOrder = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");        
 	  }
 	  prm.leave_subsection();
-
-	  isPseudopotential = prm.get_bool("Pseudopotential Calculation");
-
-	  meshFileName = prm.get("Mesh File Name");
-
 	}
-      /*else
-	{
-	  input_file_names.push_back (args.front());
-	  args.pop_front ();
-	}
-
-      if (input_file_names.size() == 0)
-	{
-	  std::cerr << "Error: No mesh file specified." << std::endl;
-	  print_usage_message ();
-	  exit (1);
-	  }*/
 
     }//end of while loop
 
@@ -196,10 +221,108 @@ int main (int argc, char *argv[])
     // set stdout precision
     //
     std::cout << std::scientific << std::setprecision(18);
-    dftClass<finiteElementPolynomialOrder> problem;
-    problem.numberAtomicWaveFunctions[6] = 5;
-    problem.numEigenValues = 5;
-    problem.run();
+
+    switch(finiteElementPolynomialOrder) {
+
+    case 1:
+      {
+	dftClass<1> problemFEOrder1;
+	problemFEOrder1.numEigenValues = numberEigenValues;
+	problemFEOrder1.run();
+	break;
+      }
+
+    case 2:
+      {
+	dftClass<2> problemFEOrder2;
+	problemFEOrder2.numEigenValues = numberEigenValues;
+	problemFEOrder2.run();
+	break;
+      }
+
+    case 3:
+      {
+	dftClass<3> problemFEOrder3;
+	problemFEOrder3.numEigenValues = numberEigenValues;
+	problemFEOrder3.run();
+	break;	
+      }
+
+    case 4:
+      {
+	dftClass<4> problemFEOrder4;
+	problemFEOrder4.numEigenValues = numberEigenValues;
+	problemFEOrder4.run();
+	break;
+      }
+
+    case 5:
+      {
+	dftClass<5> problemFEOrder5;
+	problemFEOrder5.numEigenValues = numberEigenValues;
+	problemFEOrder5.run();
+	break;
+      }
+
+    case 6:
+      {
+	dftClass<6> problemFEOrder6;
+	problemFEOrder6.numEigenValues = numberEigenValues;
+	problemFEOrder6.run();
+	break;
+      }
+
+    case 7:
+      {
+	dftClass<7> problemFEOrder7;
+	problemFEOrder7.numEigenValues = numberEigenValues;
+	problemFEOrder7.run();
+	break;
+      }
+
+    case 8:
+      {
+	dftClass<8> problemFEOrder8;
+	problemFEOrder8.numEigenValues = numberEigenValues;
+	problemFEOrder8.run();
+	break;
+      }
+
+    case 9:
+      {
+	dftClass<9> problemFEOrder9;
+	problemFEOrder9.numEigenValues = numberEigenValues;
+	problemFEOrder9.run();
+	break;
+      }
+
+    case 10:
+      {
+	dftClass<10> problemFEOrder10;
+	problemFEOrder10.numEigenValues = numberEigenValues;
+	problemFEOrder10.run();
+	break;
+      }
+
+    case 11:
+      {
+	dftClass<11> problemFEOrder11;
+	problemFEOrder11.numEigenValues = numberEigenValues;
+	problemFEOrder11.run();
+	break;
+      }
+
+    case 12:
+      {
+	dftClass<12> problemFEOrder12;
+	problemFEOrder12.numEigenValues = numberEigenValues;
+	problemFEOrder12.run();
+	break;
+      }
+
+    }
+
+
   }
   return 0;
 }
