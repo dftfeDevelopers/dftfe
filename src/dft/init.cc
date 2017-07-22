@@ -72,7 +72,6 @@ void dftClass<FEOrder>::init(){
 
 #ifdef ENABLE_PERIODIC_BC
   //mark faces
-  double halfxyzSpan = 3.8;
   typename parallel::distributed::Triangulation<3>::active_cell_iterator cell = triangulation.begin_active(), endc = triangulation.end();
   for (; cell!=endc; ++cell) 
     {
@@ -81,42 +80,17 @@ void dftClass<FEOrder>::init(){
 	  const Point<3> face_center = cell->face(f)->center();
 	  if (cell->face(f)->at_boundary())
 	    {
-	      if (std::abs(face_center[0]+halfxyzSpan)<1.0e-8)
+	      if (std::abs(face_center[0]+(domainSizeX/2.0))<1.0e-8)
 		cell->face(f)->set_boundary_id(1);
-	      else if (std::abs(face_center[0]-halfxyzSpan)<1.0e-8)
+	      else if (std::abs(face_center[0]-(domainSizeX/2.0))<1.0e-8)
 		cell->face(f)->set_boundary_id(2);
-	      else if (std::abs(face_center[1]+halfxyzSpan)<1.0e-8)
+	      else if (std::abs(face_center[1]+(domainSizeY/2.0))<1.0e-8)
 		cell->face(f)->set_boundary_id(3);
-	      else if (std::abs(face_center[1]-halfxyzSpan)<1.0e-8)
+	      else if (std::abs(face_center[1]-(domainSizeY/2.0))<1.0e-8)
 		cell->face(f)->set_boundary_id(4);
-	      else if (std::abs(face_center[2]+halfxyzSpan)<1.0e-8)
+	      else if (std::abs(face_center[2]+(domainSizeZ/2.0))<1.0e-8)
 		cell->face(f)->set_boundary_id(5);
-	      else if (std::abs(face_center[2]-halfxyzSpan)<1.0e-8)
-		cell->face(f)->set_boundary_id(6);
-	    }
-	}
-    }
-
-  //mark faces
-  cell = triangulation.begin_active(), endc = triangulation.end();
-  for (; cell!=endc; ++cell) 
-    {
-      for (unsigned int f=0; f < GeometryInfo<3>::faces_per_cell; ++f)
-	{
-	  const Point<3> face_center = cell->face(f)->center();
-	  if (cell->face(f)->at_boundary())
-	    {
-	      if (std::abs(face_center[0]+halfxyzSpan)<1.0e-8)
-		cell->face(f)->set_boundary_id(1);
-	      else if (std::abs(face_center[0]-halfxyzSpan)<1.0e-8)
-		cell->face(f)->set_boundary_id(2);
-	      else if (std::abs(face_center[1]+halfxyzSpan)<1.0e-8)
-		cell->face(f)->set_boundary_id(3);
-	      else if (std::abs(face_center[1]-halfxyzSpan)<1.0e-8)
-		cell->face(f)->set_boundary_id(4);
-	      else if (std::abs(face_center[2]+halfxyzSpan)<1.0e-8)
-		cell->face(f)->set_boundary_id(5);
-	      else if (std::abs(face_center[2]-halfxyzSpan)<1.0e-8)
+	      else if (std::abs(face_center[2]-(domainSizeZ/2.0))<1.0e-8)
 		cell->face(f)->set_boundary_id(6);
 	    }
 	}

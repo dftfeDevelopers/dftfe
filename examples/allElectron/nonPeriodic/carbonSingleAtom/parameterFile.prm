@@ -1,4 +1,9 @@
 #
+#flag to control optimized(release)/debug modes
+#
+set OPTIMIZED MODE = true
+
+#
 #finite-element related parameters
 #
 set MESH FILE = ../../../../data/meshes/allElectron/carbonSingleAtom/mesh.inp
@@ -37,7 +42,9 @@ set PSEUDOPOTENTIAL CALCULATION = false
 #xc_id = 4 (GGA: Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)])*/
 set EXCHANGE CORRELATION TYPE = 1
 
+#
 #Eigen-solver related parameters
+#
 subsection CHEBYSHEV FILTERING OPTIONS
   set LOWER BOUND WANTED SPECTRUM = -10.0
   set CHEBYSHEV POLYNOMIAL DEGREE = 100

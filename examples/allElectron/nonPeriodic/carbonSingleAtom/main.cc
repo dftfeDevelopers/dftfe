@@ -67,6 +67,10 @@ print_usage_message ()
 void declare_parameters()
 {
 
+  prm.declare_entry("OPTIMIZED MODE", "true",
+		    Patterns::Bool(),
+		    "Flag to control optimized/debug modes");
+
   prm.declare_entry("MESH FILE", "",
 		    Patterns::Anything(),
 		    "Finite-element mesh file to be used for the given problem");
