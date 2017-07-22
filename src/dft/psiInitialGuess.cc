@@ -22,9 +22,9 @@ void dftClass<FEOrder>::loadPSIFiles(unsigned int Z,
   //
   char psiFile[256];
   if(isPseudopotential)
-    sprintf(psiFile, "../../../../data/electronicStructure/pseudoPotential/z%u/singleAtomData/psi%u%u.inp", Z, n, l);
+    sprintf(psiFile, "../data/electronicStructure/pseudoPotential/z%u/singleAtomData/psi%u%u.inp", Z, n, l);
   else
-    sprintf(psiFile, "../../../../data/electronicStructure/allElectron/z%u/singleAtomData/psi%u%u.inp", Z, n, l);
+    sprintf(psiFile, "../data/electronicStructure/allElectron/z%u/singleAtomData/psi%u%u.inp", Z, n, l);
 
   std::vector<std::vector<double> > values;
 

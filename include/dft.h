@@ -8,9 +8,10 @@
 #include "headers.h"
 #include "poisson.h"
 #include "eigen.h"
-#include "/nfs/mcfs_comp/home/rudraa/software/alglib/cpp/src/interpolation.h"
-#include "/nfs/mcfs_comp/home/rudraa/software/libxc/libxc-2.2.0/installDir/include/xc.h"
+#include <interpolation.h> 
+#include <xc.h>
 
+/*
 #ifdef ENABLE_PERIODIC_BC
 #include "/home/vikramg/DFT-FE-softwares/softwareCentos/petsc/intel_petsc3.7.5_complex/include/petsc.h"
 #include "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/intel_slepc3.7.3_complex/include/slepceps.h"
@@ -18,6 +19,7 @@
 #include "/home/vikramg/DFT-FE-softwares/softwareCentos/petsc/intel_petsc3.7.5_double_elemental/include/petsc.h"
 #include "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/intel_slepc3.7.3_double_elemental/include/slepceps.h"
 #endif
+*/
 
 //
 //Initialize Namespace
@@ -69,10 +71,10 @@ template <unsigned int FEOrder>
 class dftClass
 {
 
-  template <unsigned int FEOrder>
+  template <unsigned int T>
   friend class poissonClass;
 
-  template <unsigned int FEOrder>
+  template <unsigned int T>
   friend class eigenClass;  
 
  public:
