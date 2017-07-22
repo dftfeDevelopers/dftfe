@@ -5,6 +5,13 @@ set MESH FILE = ../../../../data/meshes/allElectron/carbonSingleAtom/mesh.inp
 set FINITE ELEMENT POLYNOMIAL ORDER = 2
 
 #
+#set boundary conditions in three directions
+#
+set PERIODIC BOUNDARY CONDITION X = false
+set PERIODIC BOUNDARY CONDITION Y = false
+set PERIODIC BOUNDARY CONDITION Z = false
+
+#
 #Atomic-coordinates file
 #
 set ATOMIC COORDINATES FILE = ../../../../data/meshes/allElectron/carbonSingleAtom/coordinates.inp

@@ -24,7 +24,7 @@ double relLinearSolverTolerance        = 1.0e-14;
 double selfConsistentSolverTolerance   = 1.0e-11;
 
 
-bool isPseudopotential;
+bool isPseudopotential,periodicX,periodicY,periodicZ;
 std::string meshFileName,coordinatesFile;
 
 int xc_id;
@@ -95,7 +95,19 @@ void declare_parameters()
   prm.declare_entry("DOMAIN SIZE Z", "20.0",
 		    Patterns::Double(),
 		    "Size of the domain in Z-direction");
+
   
+  prm.declare_entry("PERIODIC BOUNDARY CONDITION X", "false",
+		    Patterns::Bool(),
+		    "Periodicity in X-direction");
+
+  prm.declare_entry("PERIODIC BOUNDARY CONDITION Y", "false",
+		    Patterns::Bool(),
+		    "Periodicity in Y-direction");
+
+  prm.declare_entry("PERIODIC BOUNDARY CONDITION Z", "false",
+		    Patterns::Bool(),
+		    "Periodicity in Z-direction");
 
   prm.declare_entry("PSEUDOPOTENTIAL CALCULATION", "false",
 		    Patterns::Bool(),
@@ -168,6 +180,9 @@ void parse_command_line(const int argc,
 	  domainSizeX                  = prm.get_double("DOMAIN SIZE X");
 	  domainSizeY                  = prm.get_double("DOMAIN SIZE Y");
 	  domainSizeZ                  = prm.get_double("DOMAIN SIZE Z");
+	  periodicX                    = prm.get_bool("PERIODIC BOUNDARY CONDITION X");
+	  periodicY                    = prm.get_bool("PERIODIC BOUNDARY CONDITION Y");
+	  periodicZ                    = prm.get_bool("PERIODIC BOUNDARY CONDITION Z");
 
 	  prm.enter_subsection("CHEBYSHEV FILTERING OPTIONS");
 	  {

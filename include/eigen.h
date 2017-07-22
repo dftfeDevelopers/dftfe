@@ -8,7 +8,7 @@
 template <unsigned int FEOrder>
 class eigenClass
 {
-  template <unsigned int FEOrder>
+  template <unsigned int T>
   friend class dftClass;
 
 public:

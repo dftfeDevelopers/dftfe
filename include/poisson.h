@@ -6,7 +6,7 @@
 typedef double dataType;
 typedef dealii::parallel::distributed::Vector<double> vectorType;
 
-template <unsigned int FEOrder>
+template <unsigned int T>
 class dftClass;
 
 //
@@ -15,7 +15,7 @@ class dftClass;
 template <unsigned int FEOrder>
 class poissonClass
 {
-  template <unsigned int FEOrder>
+  template <unsigned int T>
   friend class dftClass; 
 
 public:
