@@ -522,7 +522,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vec
 
 	  DoFHandler<3>::active_cell_iterator cell = dftPtr->d_elementIteratorsInAtomCompactSupport[iAtom][iElemComp];
 
-#ifdef PETSC_USE_COMPLEX
+#ifdef ENABLE_PERIODIC_BC
 	  
 	  std::complex<double> alpha1 = 1.0;
 	  std::complex<double> beta1 = 0.0;

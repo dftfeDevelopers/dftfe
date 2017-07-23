@@ -250,8 +250,8 @@ double dftClass<FEOrder>::upperBound()
   for (unsigned int j=1; j<lanczosIterations; j++)
     {
       beta=fChebyshev.l2_norm();
-      char buffer1[100];
-      sprintf(buffer1, "alpha: %18.10e,  beta: %18.10e\n", alpha, beta);
+      //char buffer1[100];
+      //sprintf(buffer1, "alpha: %18.10e,  beta: %18.10e\n", alpha, beta);
       v0Chebyshev=vChebyshev; vChebyshev.equ(1.0/beta,fChebyshev);
       eigen.HX(v,f); fChebyshev.add(-1.0*beta,v0Chebyshev);//beta is real
 #ifdef ENABLE_PERIODIC_BC
@@ -266,7 +266,7 @@ double dftClass<FEOrder>::upperBound()
       T[index]=beta; 
       index+=lanczosIterations;
       T[index]=alpha;
-      sprintf(buffer1, "alpha: %18.10e,  beta: %18.10e\n", alpha, beta);
+      //sprintf(buffer1, "alpha: %18.10e,  beta: %18.10e\n", alpha, beta);
       //pcout << buffer1;
     }
 

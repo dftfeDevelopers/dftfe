@@ -2,17 +2,37 @@
 #  CMake script for DFT-FE 
 ##
 
-#Note: Set the ALGLIB and LIBXC paths below. 
+##Note: Set the ALGLIB and LIBXC paths below. 
 
-#set ALGLIB paths
-SET(ALGLIB_INCLUDE "/Users/rudraa/workspace/software/alglib/cpp/src/") #path to interpolation.h
-SET(ALGLIB_LIB "/Users/rudraa/workspace/software/alglib/cpp/src/libAlglib.so") #path to libAlglib.so
-#Note: On some platforms, you may have to set DYLD_LIBRARY_PATH(OSX)/LD_LIBRARY_PATH to include path ALGLIB_LIB. For example:
-#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/path/to/Algib/.so/file
+##set ALGLIB paths
+SET(ALGLIB_INCLUDE "/nfs/mcfs_comp/home/rudraa/software/alglib/cpp/src/") #path to interpolation.h
+SET(ALGLIB_LIB "/nfs/mcfs_comp/home/rudraa/software/alglib/cpp/src/libAlglib.so") #path to libAlglib.so
+##Note: On some platforms, you may have to set DYLD_LIBRARY_PATH(OSX)/LD_LIBRARY_PATH to include path ALGLIB_LIB. For example:
+##export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/path/to/Algib/.so/file
 
-#set LIBXC paths
-SET(LIBXC_INCLUDE "/Users/rudraa/workspace/software/libxc/libxc-3.0.0/installDIR/include") #path to xc.h
-SET(LIBXC_LIB "/Users/rudraa/workspace/software/libxc/libxc-3.0.0/installDIR/lib/libxc.a") #path to libxc.a
+##set LIBXC paths
+SET(LIBXC_INCLUDE "/nfs/mcfs_comp/home/rudraa/software/libxc/libxc-2.2.0/installDir/include") #path to xc.h
+SET(LIBXC_LIB "/nfs/mcfs_comp/home/rudraa/software/libxc/libxc-2.2.0/installDir/lib/libxc.a") #path to libxc.a
+
+##set PETSC paths
+SET(PETSC_REAL_INCLUDE "/home/vikramg/DFT-FE-softwares/softwareCentos/petsc/intel_petsc3.7.5_double_elemental/include")
+SET(PETSC_REAL_LIB1 "/home/vikramg/DFT-FE-softwares/softwareCentos/petsc/intel_petsc3.7.5_double_elemental/lib/libpetsc.so.3.7")
+SET(PETSC_REAL_LIB2 "/home/vikramg/DFT-FE-softwares/softwareCentos/petsc/intel_petsc3.7.5_double_elemental/lib/libpetsc.so")
+
+##set SLEPC paths
+SET(SLEPC_REAL_INCLUDE "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/intel_slepc3.7.3_double_elemental/include")
+SET(SLEPC_REAL_LIB1 "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/intel_slepc3.7.3_double_elemental/lib/libslepc.so.3.7") 
+SET(SLEPC_REAL_LIB2 "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/intel_slepc3.7.3_double_elemental/lib/libslepc.so")
+
+##set PETSC paths
+SET(PETSC_COMPLEX_INCLUDE "/home/vikramg/DFT-FE-softwares/softwareCentos/petsc/intel_petsc3.7.5_complex/include")
+SET(PETSC_COMPLEX_LIB1 "/home/vikramg/DFT-FE-softwares/softwareCentos/petsc/intel_petsc3.7.5_complex/lib/libpetsc.so.3.7")
+SET(PETSC_COMPLEX_LIB2 "/home/vikramg/DFT-FE-softwares/softwareCentos/petsc/intel_petsc3.7.5_complex/lib/libpetsc.so")
+
+##set SLEPC paths
+SET(SLEPC_COMPLEX_INCLUDE "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/intel_slepc3.7.3_complex/include")
+SET(SLEPC_COMPLEX_LIB1 "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/intel_slepc3.7.3_complex/lib/libslepc.so.3.7") 
+SET(SLEPC_COMPLEX_LIB2 "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/intel_slepc3.7.3_complex/lib/libslepc.so")
 
 
 #
@@ -52,17 +72,18 @@ which is required."
     )
 ENDIF()
 
+
 DEAL_II_INITIALIZE_CACHED_VARIABLES()
 PROJECT(${TARGET})
 
 SET(SIGN_COMPARISON_WARNING  "-Wno-sign-compare -Wno-ignored-qualifiers -Wno-deprecated-declarations -Wno-vla-extension -Wno-reorder -Wno-sometimes-uninitialized -Wno-undefined-var-template")
 SET(DEAL_II_CXX_FLAGS  "${DEAL_II_CXX_FLAGS} ${SIGN_COMPARISON_WARNING}" )
 
-INCLUDE_DIRECTORIES(${ALGLIB_INCLUDE} ${LIBXC_INCLUDE})
+INCLUDE_DIRECTORIES(${ALGLIB_INCLUDE} ${LIBXC_INCLUDE} ${PETSC_COMPLEX_INCLUDE} ${SLEPC_COMPLEX_INCLUDE})
 
 ADD_EXECUTABLE(${TARGET} ${TARGET_SRC})
 DEAL_II_SETUP_TARGET(${TARGET})
-TARGET_LINK_LIBRARIES(${TARGET} ${LIBXC_LIB} ${ALGLIB_LIB})
+TARGET_LINK_LIBRARIES(${TARGET} ${LIBXC_LIB} ${ALGLIB_LIB} ${PETSC_COMPLEX_LIB1} ${PETSC_COMPLEX_LIB2} ${SLEPC_COMPLEX_LIB1} ${SLEPC_COMPLEX_LIB2})
 
 #DEAL_II_INVOKE_AUTOPILOT()
 

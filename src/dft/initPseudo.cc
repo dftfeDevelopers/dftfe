@@ -89,7 +89,7 @@ void dftClass<FEOrder>::initLocalPseudoPotential()
   for(std::set<unsigned int>::iterator it=atomTypes.begin(); it!=atomTypes.end(); it++)
     {
       char pseudoFile[256];
-      sprintf(pseudoFile, "../data/electronicStructure/pseudoPotential/z%u/pseudoAtomData/locPot.dat", *it);
+      sprintf(pseudoFile, "%s/data/electronicStructure/pseudoPotential/z%u/pseudoAtomData/locPot.dat", currentPath.c_str(),*it);
       pcout<<"Reading Local Pseudo-potential data from: " <<pseudoFile<<std::endl;
       readFile(2, pseudoPotentialData[*it], pseudoFile);
       unsigned int numRows = pseudoPotentialData[*it].size()-1;
@@ -208,7 +208,7 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential()
   for(std::set<unsigned int>::iterator it = atomTypes.begin(); it != atomTypes.end(); ++it)
     {
       char pseudoAtomDataFile[256];
-      sprintf(pseudoAtomDataFile, "../data/electronicStructure/pseudoPotential/z%u/PseudoAtomData/PseudoAtomData", *it);
+      sprintf(pseudoAtomDataFile, "%s/data/electronicStructure/pseudoPotential/z%u/PseudoAtomData/PseudoAtomData", currentPath.c_str(), *it);
 
       unsigned int atomicNumber = *it;
 
@@ -346,7 +346,7 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential()
 	  readPseudoDataFileNames >> tempPsiRadialFunctionFileName;
 
 	  char psiRadialFunctionFileName[256];
-	  sprintf(psiRadialFunctionFileName, "../data/electronicStructure/pseudoPotential/z%u/PseudoAtomData/%s", *it,tempPsiRadialFunctionFileName.c_str());
+	  sprintf(psiRadialFunctionFileName, "%s/data/electronicStructure/pseudoPotential/z%u/PseudoAtomData/%s", currentPath.c_str(),*it,tempPsiRadialFunctionFileName.c_str());
 	  pcout<<"Radial WaveFunction File Name: " <<psiRadialFunctionFileName<<std::endl;
      
 	  //
@@ -406,7 +406,7 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential()
       readPseudoDataFileNames >> tempLocPseudoPotentialFileName;
 
       char localPseudoPotentialFileName[256];
-      sprintf(localPseudoPotentialFileName,"../data/electronicStructure/pseudoPotential/z%u/PseudoAtomData/%s", *it,tempLocPseudoPotentialFileName.c_str());
+      sprintf(localPseudoPotentialFileName,"%s/data/electronicStructure/pseudoPotential/z%u/PseudoAtomData/%s", currentPath.c_str(),*it,tempLocPseudoPotentialFileName.c_str());
       pcout<<"Local Pseudo File Name: " <<localPseudoPotentialFileName<<std::endl;
 
       //
@@ -541,7 +541,7 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential()
 	  readPseudoDataFileNames >> tempPotentialRadFunctionFileName;
 
 	  char pseudoPotentialRadFunctionFileName[256];
-	  sprintf(pseudoPotentialRadFunctionFileName,"../data/electronicStructure/pseudoPotential/z%u/PseudoAtomData/%s", *it,tempPotentialRadFunctionFileName.c_str());
+	  sprintf(pseudoPotentialRadFunctionFileName,"%s/data/electronicStructure/pseudoPotential/z%u/PseudoAtomData/%s", currentPath.c_str(),*it,tempPotentialRadFunctionFileName.c_str());
 	  pcout<<"Radial Pseudopotential File Name: " <<pseudoPotentialRadFunctionFileName<<std::endl;
 
 	  //

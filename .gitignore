@@ -38,6 +38,9 @@ Makefile
 main
 *#main*
 
+#build files
+build/
+
 #Tex files
 *.aux
 *.glo

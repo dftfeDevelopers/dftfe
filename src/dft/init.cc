@@ -209,18 +209,23 @@ void dftClass<FEOrder>::init(){
   ConstraintMatrix constraintsTemp(constraintsNone); constraintsNone.clear(); 
   std::set<unsigned int> masterNodes;
   double periodicPrecision=1.0e-8;
+
   //fill all masters
-  for(types::global_dof_index i = 0; i <dofHandler.n_dofs(); ++i){
-    if(locally_relevant_dofs.is_element(i)){
-      if(constraintsTemp.is_constrained(i)){
-	if (constraintsTemp.is_identity_constrained(i)){
-	  Point<3> p = d_supportPoints.find(i)->second;
-	  unsigned int masterNode=(*constraintsTemp.get_constraint_entries(i))[0].first;
-	  masterNodes.insert(masterNode);
+  for(types::global_dof_index i = 0; i <dofHandler.n_dofs(); ++i)
+    {
+      if(locally_relevant_dofs.is_element(i))
+	{
+	  if(constraintsTemp.is_constrained(i))
+	    {
+	      if (constraintsTemp.is_identity_constrained(i))
+		{
+		  Point<3> p = d_supportPoints.find(i)->second;
+		  unsigned int masterNode=(*constraintsTemp.get_constraint_entries(i))[0].first;
+		  masterNodes.insert(masterNode);
+		}
+	    }
 	}
-      }
     }
-  }
   
   std::cout<<"Size of Master Nodes: "<<masterNodes.size()<<std::endl;
   
@@ -228,66 +233,88 @@ void dftClass<FEOrder>::init(){
   //
   //fix wrong master map
   //
-  for(types::global_dof_index i = 0; i <dofHandler.n_dofs(); ++i){
-    if(locally_relevant_dofs.is_element(i)){
-      if(constraintsTemp.is_constrained(i)){
-	if (constraintsTemp.is_identity_constrained(i)){
-	  Point<3> p = d_supportPoints.find(i)->second;
-	  unsigned int masterNode=(*constraintsTemp.get_constraint_entries(i))[0].first;
-	  unsigned int count=0, index=0;
-	  for (unsigned int k=0; k<3; k++){
-	    if (std::abs(std::abs(p[k])-halfxyzSpan)<periodicPrecision) {
-	      count++;
-	      index=k;
-	    }
-	  }
-	  if (count==1){
-	    Point<3> q = d_supportPoints.find(masterNode)->second;
-	    unsigned int l = 1, m = 2;
-	    if (index==1){l = 0; m = 2;}
-	    else if (index==2){l = 0; m = 1;} 
-	    if (!((std::abs(p[l]-q[l])<periodicPrecision) and (std::abs(p[m]-q[m])<periodicPrecision))){
-	      bool foundNewMaster=false;
-	      for (std::set<unsigned int>::iterator it=masterNodes.begin(); it!=masterNodes.end(); ++it){
-		q=d_supportPoints.find(*it)->second;
-		if (((std::abs(p[l]-q[l])<periodicPrecision) and (std::abs(p[m]-q[m])<periodicPrecision))){
+  for(types::global_dof_index i = 0; i <dofHandler.n_dofs(); ++i)
+    {
+      if(locally_relevant_dofs.is_element(i))
+	{
+	  if(constraintsTemp.is_constrained(i))
+	    {
+	      if (constraintsTemp.is_identity_constrained(i))
+		{
+		  Point<3> p = d_supportPoints.find(i)->second;
+		  unsigned int masterNode = (*constraintsTemp.get_constraint_entries(i))[0].first;
+		  unsigned int count = 0, index = 0;
+		 
+		  if(std::abs(std::abs(p[0])-(domainSizeX/2.0)) < periodicPrecision) 
+		    {
+		      count++;
+		      index = 0;
+		    }
+		  if(std::abs(std::abs(p[1])-(domainSizeY/2.0)) < periodicPrecision) 
+		    {
+		      count++;
+		      index = 1;
+		    }
+		  if(std::abs(std::abs(p[2])-(domainSizeZ/2.0)) < periodicPrecision) 
+		    {
+		      count++;
+		      index = 2;
+		    }
+		 
+		  if (count==1)
+		    {
+		      Point<3> q = d_supportPoints.find(masterNode)->second;
+		      unsigned int l = 1, m = 2;
+		      if (index==1){l = 0; m = 2;}
+		      else if (index==2){l = 0; m = 1;} 
+		      if (!((std::abs(p[l]-q[l])<periodicPrecision) and (std::abs(p[m]-q[m])<periodicPrecision)))
+			{
+			  bool foundNewMaster=false;
+			  for (std::set<unsigned int>::iterator it=masterNodes.begin(); it!=masterNodes.end(); ++it)
+			    {
+			      q=d_supportPoints.find(*it)->second;
+			      if (((std::abs(p[l]-q[l])<periodicPrecision) and (std::abs(p[m]-q[m])<periodicPrecision)))
+				{
 
-		  //store the correct masterNodeId
-		  unsigned int correctMasterDof = *it;
+				  //store the correct masterNodeId
+				  unsigned int correctMasterDof = *it;
 
-		  //One component
-		  constraintsNone.add_line(i);
-		  constraintsNone.add_entry(i, correctMasterDof, 1.0);
+				  //One component
+				  constraintsNone.add_line(i);
+				  constraintsNone.add_entry(i, correctMasterDof, 1.0);
 		  
-		  foundNewMaster=true;
-		  break;
-		}
-	      }
-	      if (!foundNewMaster){
-		std::cout<< " Wrong MasterNode for slave node: "<<masterNode<<" "<<i<<std::endl;
-		std::cout<< "Error: Did not find a replacement master node for a wrong master-slave periodic pair"<<" "<<masterNode<<" slaveNode: "<<i<<std::endl;
-		exit(-1);
-	      }
-	    }
-	    else{
+				  foundNewMaster=true;
+				  break;
+				}
+			    }
+			  if (!foundNewMaster)
+			    {
+			      std::cout<< " Wrong MasterNode for slave node: "<<masterNode<<" "<<i<<std::endl;
+			      std::cout<< "Error: Did not find a replacement master node for a wrong master-slave periodic pair"<<" "<<masterNode<<" slaveNode: "<<i<<std::endl;
+			      exit(-1);
+			    }
+			}
+		      else
+			{
 
-	      //One component
-	      constraintsNone.add_line(i);
-	      constraintsNone.add_entry(i, masterNode, 1.0);
+			  //One component
+			  constraintsNone.add_line(i);
+			  constraintsNone.add_entry(i, masterNode, 1.0);
 	      
+			}
+		    }
+		  else
+		    {
+
+		      //One component
+		      constraintsNone.add_line(i);
+		      constraintsNone.add_entry(i, masterNode, 1.0);
+
+		    }
+		}
 	    }
-	  }
-	  else{
-
-	    //One component
-	    constraintsNone.add_line(i);
-	    constraintsNone.add_entry(i, masterNode, 1.0);
-
-	  }
 	}
-      }
     }
-  }
   constraintsNone.close();
 
   pcout<<"Size of ConstraintsNone New: "<< constraintsNone.n_constraints()<<std::endl;
@@ -351,7 +378,6 @@ void dftClass<FEOrder>::init(){
 	    {
 	      const unsigned int ck = fe_values.get_fe().system_to_component_index(i).first; //This is the component index 0(real) or 1 (imag).
 	      const unsigned int globalDOF = local_dof_indicesEigen[i];
-	      //std::cout<<"Real or Imag: "<<ck<<std::endl;
 	      
 	      if (globalMasterNodesEigen.count(globalDOF)==1)
 		{
@@ -398,14 +424,14 @@ void dftClass<FEOrder>::init(){
 			  mpi_communicator);
 
 
-  std::cout<<"Master Nodes Size: "<<globalMasterNodesEigen.size()<<std::endl;
+  /*std::cout<<"Master Nodes Size: "<<globalMasterNodesEigen.size()<<std::endl;
   std::cout<<"Slave Nodes Size: "<<slaveNodesEigen.size()<<std::endl;
 
   std::cout<<"Master Nodes Real Size: "<<globalMasterNodesReal.size()<<std::endl;
   std::cout<<"Master Nodes Imag Size: "<<globalMasterNodesImag.size()<<std::endl;
   
   std::cout<<"Slave Nodes Real Size: "<<slaveNodesReal.size()<<std::endl;
-  std::cout<<"Slave Nodes Imag Size: "<<slaveNodesImag.size()<<std::endl;
+  std::cout<<"Slave Nodes Imag Size: "<<slaveNodesImag.size()<<std::endl;*/
 
   
 
@@ -423,14 +449,25 @@ void dftClass<FEOrder>::init(){
 		  Point<3> p=d_supportPointsEigen.find(i)->second;
 		  unsigned int masterNode=(*constraintsTempEigen.get_constraint_entries(i))[0].first;
 		  unsigned int count=0, index=0;
-		  for (unsigned int k=0; k<3; k++)
+
+		  if (std::abs(std::abs(p[0]) - (domainSizeX/2.0)) < periodicPrecision) 
 		    {
-		      if (std::abs(std::abs(p[k])-halfxyzSpan)<periodicPrecision) 
-			{
-			  count++;
-			  index=k;
-			}
+		      count++;
+		      index = 0;
 		    }
+
+		  if (std::abs(std::abs(p[1]) - (domainSizeY/2.0)) < periodicPrecision) 
+		    {
+		      count++;
+		      index = 1;
+		    }
+
+		  if (std::abs(std::abs(p[2]) - (domainSizeZ/2.0)) < periodicPrecision) 
+		    {
+		      count++;
+		      index = 2;
+		    }
+
 		  if (count==1)
 		    {
 		      Point<3> q=d_supportPointsEigen.find(masterNode)->second;

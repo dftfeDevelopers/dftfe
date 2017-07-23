@@ -245,15 +245,18 @@ void dftClass<FEOrder>::run ()
   //read coordinates file 
   //
   set();
+
   
   //generate mesh
   //if meshFile provided, pass to mesh()
   mesh();
 
+
   //
   //initialize
   //
   init();
+
 
   //
   //solve vself

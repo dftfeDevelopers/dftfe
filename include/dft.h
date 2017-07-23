@@ -10,16 +10,18 @@
 #include "eigen.h"
 #include <interpolation.h> 
 #include <xc.h>
+#include <petsc.h>
+#include <slepceps.h>
 
-/*
-#ifdef ENABLE_PERIODIC_BC
+
+/*#ifdef ENABLE_PERIODIC_BC
 #include "/home/vikramg/DFT-FE-softwares/softwareCentos/petsc/intel_petsc3.7.5_complex/include/petsc.h"
 #include "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/intel_slepc3.7.3_complex/include/slepceps.h"
 #else
 #include "/home/vikramg/DFT-FE-softwares/softwareCentos/petsc/intel_petsc3.7.5_double_elemental/include/petsc.h"
 #include "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/intel_slepc3.7.3_double_elemental/include/slepceps.h"
-#endif
-*/
+#endif*/
+
 
 //
 //Initialize Namespace

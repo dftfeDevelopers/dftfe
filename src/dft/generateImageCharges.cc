@@ -295,8 +295,8 @@ getMinDistanceFromImageToCell(const std::vector<double> & latticeVectors,
 
 }
 
-
-void dftClass::generateImageCharges()
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::generateImageCharges()
 { 
 
   const double pspCutOff = 15.0;
@@ -347,22 +347,22 @@ void dftClass::generateImageCharges()
 
       for(int iz = -2; iz < 3; ++iz)
 	{
-	  if(periodic_z == 0)
+	  if(periodicZ == 0)
 	    iz = izmax;
 	  for(int iy = -2; iy < 3; ++iy)
 	    {
-	      if(periodic_y == 0)
+	      if(periodicY == 0)
 		iy = iymax;
 	      for(int ix = -2; ix < 3; ++ix)
 		{
-		  if(periodic_x == 0)
+		  if(periodicX == 0)
 		    ix = ixmax;
 
-		  if((periodic_x*ix) != 0 || (periodic_y*iy) != 0 || (periodic_z*iz) != 0)
+		  if((periodicX*ix) != 0 || (periodicY*iy) != 0 || (periodicZ*iz) != 0)
 		    {
-		      const double newFracZ = periodic_z*iz + fracZ;
-		      const double newFracY = periodic_y*iy + fracY;
-		      const double newFracX = periodic_x*ix + fracX;
+		      const double newFracZ = periodicZ*iz + fracZ;
+		      const double newFracY = periodicY*iy + fracY;
+		      const double newFracX = periodicX*ix + fracX;
 
 		      std::vector<double> newFrac(3);
 		      newFrac[0] = newFracX;

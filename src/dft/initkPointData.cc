@@ -10,14 +10,16 @@ void cross_product(std::vector<double> &a,
 
 }
 
-
-void dftClass::readkPointData()
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::readkPointData()
 {
   int numberColumnskPointDataFile = 4;
   std::vector<std::vector<double> > kPointData;
   std::vector<std::vector<double> > d_reciprocalLatticeVectors;
   std::vector<double> kPointReducedCoordinates;
-  readFile(numberColumnskPointDataFile, kPointData, kPointDataFile);
+  char kPointRuleFile[256];
+  sprintf(kPointRuleFile, "%s/data/kPointList/%s", currentPath.c_str(), kPointDataFile.c_str());
+  readFile(numberColumnskPointDataFile, kPointData, kPointRuleFile);
 
   d_maxkPoints = kPointData.size();
   d_kPointCoordinates.resize(d_maxkPoints*3,0.0);

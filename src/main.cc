@@ -11,28 +11,19 @@
 #include <iostream>
 #include <fstream>
 
+
+#define ENABLE_PERIODIC_BC
+
+
+unsigned int finiteElementPolynomialOrder,n_refinement_steps,numberEigenValues,xc_id;
+unsigned int chebyshevOrder,numSCFIterations,maxLinearSolverIterations;
+
 double radiusAtomBall, domainSizeX, domainSizeY, domainSizeZ;
-unsigned int finiteElementPolynomialOrder;
-unsigned int n_refinement_steps;
-unsigned int numberEigenValues;
-
-double lowerEndWantedSpectrum;
-unsigned int chebyshevOrder; 
-unsigned int numSCFIterations   = 1;
-unsigned int maxLinearSolverIterations = 5000;
-double relLinearSolverTolerance        = 1.0e-14; 
-double selfConsistentSolverTolerance   = 1.0e-11;
-
+double lowerEndWantedSpectrum,relLinearSolverTolerance,selfConsistentSolverTolerance,TVal;
 
 bool isPseudopotential,periodicX,periodicY,periodicZ;
-std::string meshFileName,coordinatesFile;
+std::string meshFileName,coordinatesFile,currentPath,latticeVectorsFile,kPointDataFile;
 
-int xc_id;
-
-//
-//Define constants
-//
-const double TVal = 500.0;
 
 
 //
@@ -71,6 +62,10 @@ void declare_parameters()
 		    Patterns::Bool(),
 		    "Flag to control optimized/debug modes");
 
+  prm.declare_entry("ABSOLUTE PATH", "",
+		    Patterns::Anything(),
+		    "Path specifying the location of the build directory");
+
   prm.declare_entry("MESH FILE", "",
 		    Patterns::Anything(),
 		    "Finite-element mesh file to be used for the given problem");
@@ -78,6 +73,14 @@ void declare_parameters()
   prm.declare_entry("ATOMIC COORDINATES FILE", "",
 		    Patterns::Anything(),
 		    "File specifying the coordinates of the atoms in the given material system");
+
+  prm.declare_entry("LATTICE VECTORS FILE", "",
+		    Patterns::Anything(),
+		    "File specifying the lattice vectors associated with the unit-cell");
+
+  prm.declare_entry("kPOINT RULE FILE", "",
+		    Patterns::Anything(),
+		    "File specifying the k-Point quadrature rule to sample Brillouin zone");
 
   prm.declare_entry("FINITE ELEMENT POLYNOMIAL ORDER", "2",
 		    Patterns::Integer(1,12),
@@ -88,15 +91,15 @@ void declare_parameters()
 		    Patterns::Double(),
 		    "The radius of the ball around an atom on which self-potential of the associated nuclear charge is solved");
 
-  prm.declare_entry("DOMAIN SIZE X", "20.0",
+  prm.declare_entry("DOMAIN SIZE X", "0.0",
 		    Patterns::Double(),
 		    "Size of the domain in X-direction");
 
-  prm.declare_entry("DOMAIN SIZE Y", "20.0",
+  prm.declare_entry("DOMAIN SIZE Y", "0.0",
 		    Patterns::Double(),
 		    "Size of the domain in Y-direction");
 
-  prm.declare_entry("DOMAIN SIZE Z", "20.0",
+  prm.declare_entry("DOMAIN SIZE Z", "0.0",
 		    Patterns::Double(),
 		    "Size of the domain in Z-direction");
 
@@ -125,22 +128,40 @@ void declare_parameters()
 		    Patterns::Integer(1,4),
 		    "Number of refinement steps to be used");
 
-  prm.enter_subsection("CHEBYSHEV FILTERING OPTIONS");
-  {
-    prm.declare_entry("LOWER BOUND WANTED SPECTRUM", "-10.0",
-		      Patterns::Double(),
-		      "The lower bound of the wanted eigen spectrum");
+  prm.declare_entry("LOWER BOUND WANTED SPECTRUM", "-10.0",
+		    Patterns::Double(),
+		    "The lower bound of the wanted eigen spectrum");
+  
+  prm.declare_entry("CHEBYSHEV POLYNOMIAL DEGREE", "50",
+		    Patterns::Integer(),
+		    "The degree of the Chebyshev polynomial to be employed for filtering out the unwanted spectrum");
 
-    prm.declare_entry("CHEBYSHEV POLYNOMIAL DEGREE", "50",
-		      Patterns::Integer(),
-		      "The degree of the Chebyshev polynomial to be employed for filtering out the unwanted spectrum");
+  prm.declare_entry("NUMBER OF KOHN-SHAM WAVEFUNCTIONS", "10",
+		    Patterns::Integer(),
+		    "Number of Kohn-Sham wavefunctions to be computed");
 
-    prm.declare_entry("NUMBER OF KOHN-SHAM WAVEFUNCTIONS", "10",
-		      Patterns::Integer(),
-		      "Number of Kohn-Sham wavefunctions to be computed");
+  prm.declare_entry("TEMPERATURE", "500.0",
+		    Patterns::Double(),
+		    "Fermi-Dirac smearing temperature");
+
+  prm.declare_entry("SCF CONVERGENCE MAXIMUM ITERATIONS", "50",
+		    Patterns::Integer(),
+		    "Maximum number of iterations to be allowed for SCF convergence");
+  
+  prm.declare_entry("SCF CONVERGENCE TOLERANCE", "1e-08",
+		    Patterns::Double(),
+		    "SCF iterations stopping tolerance in terms of electron-density difference between two successive iterations");
+
+  prm.declare_entry("POISSON SOLVER CONVERGENCE MAXIMUM ITERATIONS", "5000",
+		    Patterns::Integer(),
+		    "Maximum number of iterations to be allowed for Poisson problem convergence");
+  
+  prm.declare_entry("POISSON SOLVER CONVERGENCE TOLERANCE", "1e-12",
+		    Patterns::Double(),
+		    "Relative tolerance as stopping criterion for Poisson problem convergence");
+
     
-  }
-  prm.leave_subsection();
+
 }
 
 void parse_command_line(const int argc,
@@ -174,27 +195,30 @@ void parse_command_line(const int argc,
 	  prm.read_input(parameter_file);
 	  print_usage_message();
 
-	  meshFileName                 = prm.get("MESH FILE");
-	  coordinatesFile              = prm.get("ATOMIC COORDINATES FILE");
-	  finiteElementPolynomialOrder = prm.get_integer("FINITE ELEMENT POLYNOMIAL ORDER");
-	  radiusAtomBall               = prm.get_double("RADIUS ATOM BALL");
-	  isPseudopotential            = prm.get_bool("PSEUDOPOTENTIAL CALCULATION");
-	  xc_id                        = prm.get_integer("EXCHANGE CORRELATION TYPE");
-	  n_refinement_steps           = prm.get_integer("NUMBER OF REFINEMENT STEPS");
-	  domainSizeX                  = prm.get_double("DOMAIN SIZE X");
-	  domainSizeY                  = prm.get_double("DOMAIN SIZE Y");
-	  domainSizeZ                  = prm.get_double("DOMAIN SIZE Z");
-	  periodicX                    = prm.get_bool("PERIODIC BOUNDARY CONDITION X");
-	  periodicY                    = prm.get_bool("PERIODIC BOUNDARY CONDITION Y");
-	  periodicZ                    = prm.get_bool("PERIODIC BOUNDARY CONDITION Z");
-
-	  prm.enter_subsection("CHEBYSHEV FILTERING OPTIONS");
-	  {
-	    numberEigenValues      = prm.get_integer("NUMBER OF KOHN-SHAM WAVEFUNCTIONS");
-	    lowerEndWantedSpectrum = prm.get_double("LOWER BOUND WANTED SPECTRUM");
-	    chebyshevOrder = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");        
-	  }
-	  prm.leave_subsection();
+	  currentPath                   = prm.get("ABSOLUTE PATH");
+	  meshFileName                  = prm.get("MESH FILE");
+	  finiteElementPolynomialOrder  = prm.get_integer("FINITE ELEMENT POLYNOMIAL ORDER");
+	  n_refinement_steps            = prm.get_integer("NUMBER OF REFINEMENT STEPS");
+	  coordinatesFile               = prm.get("ATOMIC COORDINATES FILE");
+	  radiusAtomBall                = prm.get_double("RADIUS ATOM BALL");
+	  domainSizeX                   = prm.get_double("DOMAIN SIZE X");
+	  domainSizeY                   = prm.get_double("DOMAIN SIZE Y");
+	  domainSizeZ                   = prm.get_double("DOMAIN SIZE Z");
+	  periodicX                     = prm.get_bool("PERIODIC BOUNDARY CONDITION X");
+	  periodicY                     = prm.get_bool("PERIODIC BOUNDARY CONDITION Y");
+	  periodicZ                     = prm.get_bool("PERIODIC BOUNDARY CONDITION Z");
+	  latticeVectorsFile            = prm.get("LATTICE VECTORS FILE");
+	  kPointDataFile                = prm.get("kPOINT RULE FILE");
+	  isPseudopotential             = prm.get_bool("PSEUDOPOTENTIAL CALCULATION");
+	  xc_id                         = prm.get_integer("EXCHANGE CORRELATION TYPE");
+	  numberEigenValues             = prm.get_integer("NUMBER OF KOHN-SHAM WAVEFUNCTIONS");
+	  lowerEndWantedSpectrum        = prm.get_double("LOWER BOUND WANTED SPECTRUM");
+	  chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");  
+	  numSCFIterations              = prm.get_integer("SCF CONVERGENCE MAXIMUM ITERATIONS");
+	  selfConsistentSolverTolerance = prm.get_double("SCF CONVERGENCE TOLERANCE");
+	  TVal                          = prm.get_double("TEMPERATURE");	
+	  maxLinearSolverIterations     = prm.get_integer("POISSON SOLVER CONVERGENCE MAXIMUM ITERATIONS");
+	  relLinearSolverTolerance      = prm.get_double("POISSON SOLVER CONVERGENCE TOLERANCE");
 	}
 
     }//end of while loop

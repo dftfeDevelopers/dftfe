@@ -18,11 +18,11 @@ void dftClass<FEOrder>::initRho()
       char densityFile[256];
       if(isPseudopotential)
 	{
-	  sprintf(densityFile, "../data/electronicStructure/pseudoPotential/z%u/singleAtomData/density.inp", *it);
+	  sprintf(densityFile, "%s/data/electronicStructure/pseudoPotential/z%u/singleAtomData/density.inp", currentPath.c_str(), *it);
 	}
       else
 	{
-	  sprintf(densityFile, "../data/electronicStructure/allElectron/z%u/singleAtomData/density.inp", *it);
+	  sprintf(densityFile, "%s/data/electronicStructure/allElectron/z%u/singleAtomData/density.inp", currentPath.c_str(), *it);
 	}
    
       readFile(2, singleAtomElectronDensity[*it], densityFile);
@@ -74,67 +74,68 @@ void dftClass<FEOrder>::initRho()
 		  double distanceToAtom=quadPoint.distance(atom);
 		  if(distanceToAtom <= outerMostPointDen[atomLocations[n][0]])
 		    {
-		      rhoValueAtQuadPt+=alglib::spline1dcalc(denSpline[atomLocations[n][0]], distanceToAtom);
+		      rhoValueAtQuadPt += alglib::spline1dcalc(denSpline[atomLocations[n][0]], distanceToAtom);
 		    }
 		}
-	      rhoInValuesPtr[q]= 1.0;//std::abs(rhoValueAtQuadPt);//1.0
+	      rhoInValuesPtr[q] = std::abs(rhoValueAtQuadPt);
 	    }
 	}
     } 
 
-#ifdef xc_id
+
   //loop over elements
-#if xc_id == 4
-  gradRhoInValues = new std::map<dealii::CellId, std::vector<double> >;
-
-  gradRhoInVals.push_back(gradRhoInValues);
-
-
-  cell = dofHandler.begin_active();
-  for(; cell!=endc; ++cell) 
+  if(xc_id == 4)
     {
-      if(cell->is_locally_owned())
+      gradRhoInValues = new std::map<dealii::CellId, std::vector<double> >;
+
+      gradRhoInVals.push_back(gradRhoInValues);
+
+
+      cell = dofHandler.begin_active();
+      for(; cell!=endc; ++cell) 
 	{
-	  (*gradRhoInValues)[cell->id()]=std::vector<double>(3*n_q_points);
-
-	  double *gradRhoInValuesPtr = &((*gradRhoInValues)[cell->id()][0]);
-
-	  for (unsigned int q = 0; q < n_q_points; ++q)
+	  if(cell->is_locally_owned())
 	    {
-	      MappingQ<3> test(1); 
-	      Point<3> quadPoint(test.transform_unit_to_real_cell(cell, fe_values.get_quadrature().point(q)));
-	      double gradRhoXValueAtQuadPt = 0.0;
-	      double gradRhoYValueAtQuadPt = 0.0;
-	      double gradRhoZValueAtQuadPt = 0.0;
-	      //loop over atoms
-	      for (unsigned int n = 0; n < atomLocations.size(); n++)
+	      (*gradRhoInValues)[cell->id()]=std::vector<double>(3*n_q_points);
+
+	      double *gradRhoInValuesPtr = &((*gradRhoInValues)[cell->id()][0]);
+
+	      for (unsigned int q = 0; q < n_q_points; ++q)
 		{
-		  Point<3> atom(atomLocations[n][2],atomLocations[n][3],atomLocations[n][4]);
-		  double distanceToAtom = quadPoint.distance(atom);
-		  if(distanceToAtom <= outerMostPointDen[atomLocations[n][0]])
+		  MappingQ<3> test(1); 
+		  Point<3> quadPoint(test.transform_unit_to_real_cell(cell, fe_values.get_quadrature().point(q)));
+		  double gradRhoXValueAtQuadPt = 0.0;
+		  double gradRhoYValueAtQuadPt = 0.0;
+		  double gradRhoZValueAtQuadPt = 0.0;
+		  //loop over atoms
+		  for (unsigned int n = 0; n < atomLocations.size(); n++)
 		    {
-		      //rhoValueAtQuadPt+=alglib::spline1dcalc(denSpline[atomLocations[n][0]], distanceToAtom);
-		      double value,radialDensityFirstDerivative,radialDensitySecondDerivative;
-		      alglib::spline1ddiff(denSpline[atomLocations[n][0]],
-					   distanceToAtom,
-					   value,
-					   radialDensityFirstDerivative,
-					   radialDensitySecondDerivative);
+		      Point<3> atom(atomLocations[n][2],atomLocations[n][3],atomLocations[n][4]);
+		      double distanceToAtom = quadPoint.distance(atom);
+		      if(distanceToAtom <= outerMostPointDen[atomLocations[n][0]])
+			{
+			  //rhoValueAtQuadPt+=alglib::spline1dcalc(denSpline[atomLocations[n][0]], distanceToAtom);
+			  double value,radialDensityFirstDerivative,radialDensitySecondDerivative;
+			  alglib::spline1ddiff(denSpline[atomLocations[n][0]],
+					       distanceToAtom,
+					       value,
+					       radialDensityFirstDerivative,
+					       radialDensitySecondDerivative);
 										      
-		      gradRhoXValueAtQuadPt += radialDensityFirstDerivative*((quadPoint[0] - atomLocations[n][2])/distanceToAtom);
-		      gradRhoYValueAtQuadPt += radialDensityFirstDerivative*((quadPoint[1] - atomLocations[n][3])/distanceToAtom);
-		      gradRhoZValueAtQuadPt += radialDensityFirstDerivative*((quadPoint[2] - atomLocations[n][4])/distanceToAtom);
+			  gradRhoXValueAtQuadPt += radialDensityFirstDerivative*((quadPoint[0] - atomLocations[n][2])/distanceToAtom);
+			  gradRhoYValueAtQuadPt += radialDensityFirstDerivative*((quadPoint[1] - atomLocations[n][3])/distanceToAtom);
+			  gradRhoZValueAtQuadPt += radialDensityFirstDerivative*((quadPoint[2] - atomLocations[n][4])/distanceToAtom);
+			}
 		    }
+		  int signRho = (*rhoInValues)[cell->id()][q]/std::abs((*rhoInValues)[cell->id()][q]);
+		  gradRhoInValuesPtr[3*q+0] = signRho*gradRhoXValueAtQuadPt;
+		  gradRhoInValuesPtr[3*q+1] = signRho*gradRhoYValueAtQuadPt;
+		  gradRhoInValuesPtr[3*q+2] = signRho*gradRhoZValueAtQuadPt;
 		}
-	      int signRho = (*rhoInValues)[cell->id()][q]/std::abs((*rhoInValues)[cell->id()][q]);
-	      gradRhoInValuesPtr[3*q+0] = signRho*gradRhoXValueAtQuadPt;
-	      gradRhoInValuesPtr[3*q+1] = signRho*gradRhoYValueAtQuadPt;
-	      gradRhoInValuesPtr[3*q+2] = signRho*gradRhoZValueAtQuadPt;
 	    }
-	}
-    } 
-#endif
-#endif
+	} 
+    }
+
 
   //
   //Normalize rho
