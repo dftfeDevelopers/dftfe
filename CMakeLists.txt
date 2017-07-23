@@ -2,7 +2,7 @@
 #  CMake script for DFT-FE 
 ##
 
-##Note: Set the ALGLIB and LIBXC paths below. 
+##Note: Set ALGLIB, LIBXC, PETSC and SLEPC paths below. 
 
 ##set ALGLIB paths
 SET(ALGLIB_INCLUDE "/nfs/mcfs_comp/home/rudraa/software/alglib/cpp/src/") #path to interpolation.h
@@ -76,8 +76,8 @@ ENDIF()
 DEAL_II_INITIALIZE_CACHED_VARIABLES()
 PROJECT(${TARGET})
 
-SET(SIGN_COMPARISON_WARNING  "-Wno-sign-compare -Wno-ignored-qualifiers -Wno-deprecated-declarations -Wno-vla-extension -Wno-reorder -Wno-sometimes-uninitialized -Wno-undefined-var-template")
-SET(DEAL_II_CXX_FLAGS  "${DEAL_II_CXX_FLAGS} ${SIGN_COMPARISON_WARNING}" )
+SET(WARNINGSLIST  "-w -Wno-sign-compare -Wno-ignored-qualifiers -Wno-deprecated-declarations -Wno-vla-extension -Wno-reorder -Wno-sometimes-uninitialized -Wno-undefined-var-template -Wno-ignored-qualifiers")
+SET(DEAL_II_CXX_FLAGS  "${DEAL_II_CXX_FLAGS} ${WARNINGSLIST}" )
 
 INCLUDE_DIRECTORIES(${ALGLIB_INCLUDE} ${LIBXC_INCLUDE} ${PETSC_COMPLEX_INCLUDE} ${SLEPC_COMPLEX_INCLUDE})
 
