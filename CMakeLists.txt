@@ -14,22 +14,22 @@ SET(ALGLIB_LIB "/nfs/mcfs_comp/home/rudraa/software/alglib/cpp/src/libAlglib.so"
 SET(LIBXC_INCLUDE "/nfs/mcfs_comp/home/rudraa/software/libxc/libxc-2.2.0/installDir/include") #path to xc.h
 SET(LIBXC_LIB "/nfs/mcfs_comp/home/rudraa/software/libxc/libxc-2.2.0/installDir/lib/libxc.a") #path to libxc.a
 
-##set PETSC paths
+##set PETSc Real paths
 SET(PETSC_REAL_INCLUDE "/home/vikramg/DFT-FE-softwares/softwareCentos/petsc/intel_petsc3.7.5_double_elemental/include")
 SET(PETSC_REAL_LIB1 "/home/vikramg/DFT-FE-softwares/softwareCentos/petsc/intel_petsc3.7.5_double_elemental/lib/libpetsc.so.3.7")
 SET(PETSC_REAL_LIB2 "/home/vikramg/DFT-FE-softwares/softwareCentos/petsc/intel_petsc3.7.5_double_elemental/lib/libpetsc.so")
 
-##set SLEPC paths
+##set SLEPc Real paths
 SET(SLEPC_REAL_INCLUDE "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/intel_slepc3.7.3_double_elemental/include")
 SET(SLEPC_REAL_LIB1 "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/intel_slepc3.7.3_double_elemental/lib/libslepc.so.3.7") 
 SET(SLEPC_REAL_LIB2 "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/intel_slepc3.7.3_double_elemental/lib/libslepc.so")
 
-##set PETSC paths
+##set PETSc Complex paths
 SET(PETSC_COMPLEX_INCLUDE "/home/vikramg/DFT-FE-softwares/softwareCentos/petsc/intel_petsc3.7.5_complex/include")
 SET(PETSC_COMPLEX_LIB1 "/home/vikramg/DFT-FE-softwares/softwareCentos/petsc/intel_petsc3.7.5_complex/lib/libpetsc.so.3.7")
 SET(PETSC_COMPLEX_LIB2 "/home/vikramg/DFT-FE-softwares/softwareCentos/petsc/intel_petsc3.7.5_complex/lib/libpetsc.so")
 
-##set SLEPC paths
+##set SLEPc Complex paths
 SET(SLEPC_COMPLEX_INCLUDE "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/intel_slepc3.7.3_complex/include")
 SET(SLEPC_COMPLEX_LIB1 "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/intel_slepc3.7.3_complex/lib/libslepc.so.3.7") 
 SET(SLEPC_COMPLEX_LIB2 "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/intel_slepc3.7.3_complex/lib/libslepc.so")
