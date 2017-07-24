@@ -74,7 +74,7 @@ double dftClass<FEOrder>::mixing_anderson(){
   
    //initialize data structures
   int N=rhoOutVals.size()-1;
-  pcout << "\nN:" << N << "\n";
+  //pcout << "\nN:" << N << "\n";
   int NRHS=1, lda=N, ldb=N, info;
   std::vector<int> ipiv(N);
   std::vector<double> A(lda*N), c(ldb*NRHS); 
@@ -105,7 +105,7 @@ double dftClass<FEOrder>::mixing_anderson(){
   MPI_Allreduce(&A[0], &ATotal[0], lda*N, MPI_DOUBLE, MPI_SUM, mpi_communicator);
   MPI_Allreduce(&c[0], &cTotal[0], ldb*NRHS, MPI_DOUBLE, MPI_SUM, mpi_communicator);
   //
-  pcout << "A,c:" << ATotal[0] << " " << cTotal[0] << "\n";
+  //pcout << "A,c:" << ATotal[0] << " " << cTotal[0] << "\n";
   //solve for coefficients
   dgesv_(&N, &NRHS, &ATotal[0], &lda, &ipiv[0], &cTotal[0], &ldb, &info);
   if((info > 0) && (this_mpi_process==0)) {
@@ -116,8 +116,8 @@ double dftClass<FEOrder>::mixing_anderson(){
   double cn=1.0;
   for (int i=0; i<N; i++) cn-=cTotal[i];
   if(this_mpi_process==0) {
-    printf("\nAnderson mixing  c%u:%12.6e, ", N+1, cn);
-    for (int i=0; i<N; i++) printf("c%u:%12.6e, ", N-i, cTotal[N-1-i]);
+    //printf("\nAnderson mixing  c%u:%12.6e, ", N+1, cn);
+    //for (int i=0; i<N; i++) printf("c%u:%12.6e, ", N-i, cTotal[N-1-i]);
     printf("\n");
   }
   

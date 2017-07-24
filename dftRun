@@ -54,7 +54,7 @@ if [[ $optimizedMode == 1 ]]; then
     if [[ $periodicBC == 1 ]]; then
 	execFile="$dftPath/build/release/periodic/main" 
     else
-	execFile="$dftPAth/build/release/nonPeriodic/main"
+	execFile="$dftPath/build/release/nonPeriodic/main"
     fi
 else
    if [[ $periodicBC == 1 ]]; then

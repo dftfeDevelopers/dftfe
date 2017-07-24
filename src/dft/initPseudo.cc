@@ -208,11 +208,11 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential()
   for(std::set<unsigned int>::iterator it = atomTypes.begin(); it != atomTypes.end(); ++it)
     {
       char pseudoAtomDataFile[256];
-      sprintf(pseudoAtomDataFile, "%s/data/electronicStructure/pseudoPotential/z%u/PseudoAtomData/PseudoAtomData", currentPath.c_str(), *it);
+      sprintf(pseudoAtomDataFile, "%s/data/electronicStructure/pseudoPotential/z%u/pseudoAtomData/PseudoAtomData", currentPath.c_str(), *it);
 
       unsigned int atomicNumber = *it;
 
-      pcout<<"Reading data from file: "<<pseudoAtomDataFile<<std::endl;
+      //pcout<<"Reading data from file: "<<pseudoAtomDataFile<<std::endl;
 
       //
       // open the testFunctionFileName
@@ -246,7 +246,7 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential()
       // Skip the rest in the first line and proceed to next line
       //
       readPseudoDataFileNames.ignore();
-      pcout << "Number of Pseudo Wave Functions: " << numberAtomicWaveFunctions << std::endl;
+      pcout << "Number of Pseudo Wave Functions for atom with Z: " << atomicNumber<<" is "<<numberAtomicWaveFunctions << std::endl;
 
       //
       //string to store each line of the file
@@ -330,7 +330,7 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential()
       std::vector<alglib::real_1d_array> atomicRadialFunctionNodalValues(radFunctionIds.size());
       std::vector<double> outerMostRadialPointWaveFunction(radFunctionIds.size());
       
-      pcout << "Number radial Pseudo wavefunctions for atomic number " << atomicNumber << " is: " << radFunctionIds.size() << std::endl; 
+      //pcout << "Number radial Pseudo wavefunctions for atomic number " << atomicNumber << " is: " << radFunctionIds.size() << std::endl; 
 
       //
       // string to store the radial function file name
@@ -346,8 +346,8 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential()
 	  readPseudoDataFileNames >> tempPsiRadialFunctionFileName;
 
 	  char psiRadialFunctionFileName[256];
-	  sprintf(psiRadialFunctionFileName, "%s/data/electronicStructure/pseudoPotential/z%u/PseudoAtomData/%s", currentPath.c_str(),*it,tempPsiRadialFunctionFileName.c_str());
-	  pcout<<"Radial WaveFunction File Name: " <<psiRadialFunctionFileName<<std::endl;
+	  sprintf(psiRadialFunctionFileName, "%s/data/electronicStructure/pseudoPotential/z%u/pseudoAtomData/%s", currentPath.c_str(),*it,tempPsiRadialFunctionFileName.c_str());
+	  //pcout<<"Radial WaveFunction File Name: " <<psiRadialFunctionFileName<<std::endl;
      
 	  //
 	  // 2D vector to store the radial coordinate and its corresponding
@@ -406,8 +406,8 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential()
       readPseudoDataFileNames >> tempLocPseudoPotentialFileName;
 
       char localPseudoPotentialFileName[256];
-      sprintf(localPseudoPotentialFileName,"%s/data/electronicStructure/pseudoPotential/z%u/PseudoAtomData/%s", currentPath.c_str(),*it,tempLocPseudoPotentialFileName.c_str());
-      pcout<<"Local Pseudo File Name: " <<localPseudoPotentialFileName<<std::endl;
+      sprintf(localPseudoPotentialFileName,"%s/data/electronicStructure/pseudoPotential/z%u/pseudoAtomData/%s", currentPath.c_str(),*it,tempLocPseudoPotentialFileName.c_str());
+      //pcout<<"Local Pseudo File Name: " <<localPseudoPotentialFileName<<std::endl;
 
       //
       //read the local pseudopotential radial data
@@ -526,7 +526,7 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential()
       std::vector<alglib::real_1d_array> deltaVlNodalValues(potentialIds.size());
       std::vector<double> outerMostRadialPointPseudoPot(potentialIds.size());
 
-      pcout << "Number radial potential functions for atomic number " << atomicNumber << " is: " << potentialIds.size() << std::endl;
+      //pcout << "Number radial potential functions for atomic number " << atomicNumber << " is: " << potentialIds.size() << std::endl;
 
       //
       // string to store the radial function file name
@@ -541,8 +541,8 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential()
 	  readPseudoDataFileNames >> tempPotentialRadFunctionFileName;
 
 	  char pseudoPotentialRadFunctionFileName[256];
-	  sprintf(pseudoPotentialRadFunctionFileName,"%s/data/electronicStructure/pseudoPotential/z%u/PseudoAtomData/%s", currentPath.c_str(),*it,tempPotentialRadFunctionFileName.c_str());
-	  pcout<<"Radial Pseudopotential File Name: " <<pseudoPotentialRadFunctionFileName<<std::endl;
+	  sprintf(pseudoPotentialRadFunctionFileName,"%s/data/electronicStructure/pseudoPotential/z%u/pseudoAtomData/%s", currentPath.c_str(),*it,tempPotentialRadFunctionFileName.c_str());
+	  //pcout<<"Radial Pseudopotential File Name: " <<pseudoPotentialRadFunctionFileName<<std::endl;
 
 	  //
 	  // 2D vector to store the radial coordinate and its corresponding
@@ -555,7 +555,7 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential()
 	  readFile(2,radialFunctionData,pseudoPotentialRadFunctionFileName);
 	  int numRows = radialFunctionData.size();
    
-	  pcout << "Number of Rows for potentials: " << numRows << std::endl;
+	  //pcout << "Number of Rows for potentials: " << numRows << std::endl;
    
 	  double xData[numRows];
 	  double yData[numRows];
@@ -851,7 +851,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
 
       cumulativePotSplineId += numberAngularMomentumSpecificPotentials;
 
-      pcout<<"No.of non zero elements in the compact support of atom "<<iAtom<<" is "<<d_elementIteratorsInAtomCompactSupport[iAtom].size()<<std::endl;
+      //pcout<<"No.of non zero elements in the compact support of atom "<<iAtom<<" is "<<d_elementIteratorsInAtomCompactSupport[iAtom].size()<<std::endl;
 
     }//atom loop
 
@@ -930,8 +930,8 @@ void dftClass<FEOrder>::computeElementalProjectorKets()
 
 
       //pcout<<"Number of elements in compact support of nonlocal atom "<<iAtom<<" is "<<numberElementsInAtomCompactSupport<<std::endl;
-      pcout<<"Image Ids List: "<<imageIdsList.size()<<std::endl;
-      pcout<<numberElementsInAtomCompactSupport<<std::endl;
+      //pcout<<"Image Ids List: "<<imageIdsList.size()<<std::endl;
+      //pcout<<numberElementsInAtomCompactSupport<<std::endl;
 
       //
       //get the number of pseudowavefunctions for the current nonlocal atoms
@@ -989,7 +989,7 @@ void dftClass<FEOrder>::computeElementalProjectorKets()
 	      std::vector<double> nonLocalProjectorBasisImag(maxkPoints*numberQuadraturePoints,0.0);
 	      std::vector<double> nonLocalPseudoConstant(numberQuadraturePoints,0.0);
 
-	      if(iElemComp == 0)
+	      /*if(iElemComp == 0)
 		{
 		  pcout<<"lQuantumNumber: "<<lQuantumNumber<<std::endl;
 		  pcout<<"lQuantumNumber of Pot: "<<d_deltaVlIdToFunctionIdDetails[pseudoPotentialId][1]<<std::endl;
@@ -997,7 +997,7 @@ void dftClass<FEOrder>::computeElementalProjectorKets()
 		  pcout<<"Global Wave Spline Id: "<<globalWaveSplineId<<std::endl;
 		  pcout<<"Global Pot Spline Id: "<<globalPotSplineId<<std::endl;
 		  pcout<<"Outer Most Point: "<<d_outerMostPointPseudoWaveFunctionsData[globalWaveSplineId]<<std::endl;
-		}
+		  }*/
 
 	      double nlpValue = 0.0;
 	      for(int iQuadPoint = 0; iQuadPoint < numberQuadraturePoints; ++iQuadPoint)

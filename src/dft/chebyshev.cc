@@ -144,28 +144,67 @@ template<unsigned int FEOrder>
 void dftClass<FEOrder>::chebyshevSolver()
 {
   computing_timer.enter_section("Chebyshev solve"); 
+
+  //
   //compute upper bound of spectrum
+  //
   bUp = upperBound(); 
+
+  //
+  //set Chebyshev order
+  //
+  if(chebyshevOrder == 0)
+    {
+      if(bUp >= 1e5)
+	chebyshevOrder = 1500;
+      else if(bUp >= 2e4 && bUp < 1e5)
+	chebyshevOrder = 800;
+      else if(bUp >= 7e3 && bUp < 2e4)
+	chebyshevOrder = 500;
+      else if(bUp >= 2e3  && bUp  < 7e3)
+	chebyshevOrder = 300;
+      else if(bUp >= 6e2 && bUp < 2e3)
+	chebyshevOrder = 100;
+      else if(bUp < 6e2)
+	chebyshevOrder = 50;
+    }
+
+  //
+  //output statements
+  //
   char buffer[100];
-  sprintf(buffer, "bUp: %18.10e\n", bUp);
+  sprintf(buffer, "Upper bound of Unwanted Spectrum: %18.10e\n", bUp);
   pcout << buffer;
-  pcout << "bLow: " << bLow[d_kPointIndex] << std::endl;
-  pcout << "a0: " << a0[d_kPointIndex] << std::endl;
-  //filter
-  for (unsigned int i=0; i<eigenVectors[0].size(); i++){
-  sprintf(buffer, "%2u l2: %18.10e     linf: %18.10e \n", i, eigenVectors[0][i]->l2_norm(), eigenVectors[0][i]->linfty_norm());
-  pcout << buffer; 
-  }
+  pcout << "Lower bound of Unwanted Spectrum: " << bLow[d_kPointIndex] << std::endl;
+  pcout << "Chebyshev polynomial degree: "<<chebyshevOrder<<std::endl;
+  //pcout << "a0: " << a0[d_kPointIndex] << std::endl;
+  for (unsigned int i=0; i<eigenVectors[0].size(); i++)
+    {
+      sprintf(buffer, "%2u l2: %18.10e     linf: %18.10e \n", i, eigenVectors[0][i]->l2_norm(), eigenVectors[0][i]->linfty_norm());
+      //pcout << buffer; 
+    }
+
+  //
+  //Filter
+  //
   double t=MPI_Wtime();
   chebyshevFilter(eigenVectors[d_kPointIndex], chebyshevOrder, bLow[d_kPointIndex], bUp, a0[d_kPointIndex]);
   pcout << "Total time for only chebyshev filter: " << (MPI_Wtime()-t)/60.0 << "mins\n";
-  for (unsigned int i=0; i<eigenVectors[0].size(); i++){
-  sprintf(buffer, "%2u l2: %18.10e     linf: %18.10e \n", i, eigenVectors[0][i]->l2_norm(), eigenVectors[0][i]->linfty_norm());
-  pcout << buffer; 
-  }
+
+  for (unsigned int i=0; i<eigenVectors[0].size(); i++)
+    {
+      sprintf(buffer, "%2u l2: %18.10e     linf: %18.10e \n", i, eigenVectors[0][i]->l2_norm(), eigenVectors[0][i]->linfty_norm());
+      //pcout << buffer; 
+    }
+
+  //
   //Gram Schmidt orthonormalization
+  //
   gramSchmidt(eigenVectors[d_kPointIndex]);
+
+  //
   //Rayleigh Ritz step
+  //
   rayleighRitz(eigenVectors[d_kPointIndex]);
   pcout << "Total time for chebyshev filter: " << (MPI_Wtime()-t)/60.0 << "mins\n";
   computing_timer.exit_section("Chebyshev solve"); 
@@ -217,9 +256,9 @@ double dftClass<FEOrder>::upperBound()
   sprintf(buffer2, "v-L1: %18.10e,  f-L1: %18.10e\n", vChebyshev.l1_norm(), fChebyshev.l1_norm());
   sprintf(buffer3, "v-L2: %18.10e,  f-L2: %18.10e\n", vChebyshev.l2_norm(), fChebyshev.l2_norm());
   sprintf(buffer4, "v-Linf: %18.10e,  f-Linf: %18.10e\n", vChebyshev.linfty_norm(), fChebyshev.linfty_norm());
-  pcout << buffer2;
-  pcout << buffer3;
-  pcout << buffer4;
+  //pcout << buffer2;
+  //pcout << buffer3;
+  //pcout << buffer4;
 
   /*for(unsigned int i = 0; i < local_size/2; ++i)
     {

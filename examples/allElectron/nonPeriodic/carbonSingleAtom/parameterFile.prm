@@ -1,12 +1,12 @@
 #
 #flag to control optimized(release)/debug modes
 #
-set OPTIMIZED MODE = false
+set OPTIMIZED MODE = true
 
 #
 #path specifying the location of the "build" directory which is usually the location of "src" folder 
 #
-set DFT PATH = "../../../../"
+set DFT PATH = "/home/phanim/KohnShamCodes/DEALIICode/dftfeBuild"
 
 #
 #finite-element related parameters
@@ -72,13 +72,13 @@ set EXCHANGE CORRELATION TYPE = 1
 set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 10
 #Approximate estimate of lower bound of the wanted spectrum
 set LOWER BOUND WANTED SPECTRUM = -10.0
-#Chebyshev Filter polynomial degree
-set CHEBYSHEV POLYNOMIAL DEGREE = 1500
+#Chebyshev Filter polynomial degree (0 indicates default value based on upper bound of Hamiltonian)
+set CHEBYSHEV POLYNOMIAL DEGREE = 0
 
 #
 #SCF parameters
 #
-set SCF CONVERGENCE MAXIMUM ITERATIONS = 1
+set SCF CONVERGENCE MAXIMUM ITERATIONS = 30
 set SCF CONVERGENCE TOLERANCE          = 1e-11
 set TEMPERATURE                        = 500
 

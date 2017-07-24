@@ -282,7 +282,7 @@ void dftClass<FEOrder>::run ()
 	{
 	  if (scfIter==1) norm = mixing_simple();
 	  else norm = sqrt(mixing_anderson());
-	  if(this_mpi_process==0) printf("Mixing Scheme: iter:%u, norm:%12.6e\n", scfIter+1, norm);
+	  if(this_mpi_process==0) printf("Anderson Mixing: L2 norm of electron-density difference: %12.6e\n", norm);
 	}
       //phiTot with rhoIn
 
@@ -290,8 +290,8 @@ void dftClass<FEOrder>::run ()
 
       int constraintMatrixId = 1;
       poisson.solve(poisson.phiTotRhoIn,constraintMatrixId,rhoInValues);
-      pcout<<"L-2 Norm of Phi-in   : "<<poisson.phiTotRhoIn.l2_norm()<<std::endl;
-      pcout<<"L-inf Norm of Phi-in : "<<poisson.phiTotRhoIn.linfty_norm()<<std::endl;
+      //pcout<<"L-2 Norm of Phi-in   : "<<poisson.phiTotRhoIn.l2_norm()<<std::endl;
+      //pcout<<"L-inf Norm of Phi-in : "<<poisson.phiTotRhoIn.linfty_norm()<<std::endl;
       //visualise
       DataOut<3> data_out;
       data_out.attach_dof_handler (dofHandler);
@@ -338,8 +338,8 @@ void dftClass<FEOrder>::run ()
       pcout << buffer;
       //phiTot with rhoOut
       poisson.solve(poisson.phiTotRhoOut,constraintMatrixId, rhoOutValues);
-      pcout<<"L-2 Norm of Phi-out   :"<<poisson.phiTotRhoOut.l2_norm()<<std::endl;
-      pcout<<"L-inf Norm of Phi-out :"<<poisson.phiTotRhoOut.linfty_norm()<<std::endl;
+      //pcout<<"L-2 Norm of Phi-out   :"<<poisson.phiTotRhoOut.l2_norm()<<std::endl;
+      //pcout<<"L-inf Norm of Phi-out :"<<poisson.phiTotRhoOut.linfty_norm()<<std::endl;
       //energy
       compute_energy();
       pcout<<"SCF iteration: " << scfIter+1 << " complete\n";

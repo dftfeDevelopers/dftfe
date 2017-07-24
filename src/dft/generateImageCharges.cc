@@ -413,7 +413,7 @@ void dftClass<FEOrder>::generateImageCharges()
     }
 
   const int numImageCharges = d_imageIds.size();
-  std::cout<<"Number Image Charges  "<<numImageCharges<<std::endl;
+  pcout<<"Number Image Charges  "<<numImageCharges<<std::endl;
 
   for(int i = 0; i < numImageCharges; ++i)
     {
@@ -427,12 +427,12 @@ void dftClass<FEOrder>::generateImageCharges()
 
     }
 
-  for(int i = 0; i < d_imagePositions.size();++i){
+  /*for(int i = 0; i < d_imagePositions.size();++i){
     std::cout<<"i "<<i<<std::endl;
     for(int  j= 0;  j<  3;++j)
       std::cout<<d_imagePositions[i][j]<<" ";
     std::cout<<'\n';
-  }
+    }*/
 
 }
 

@@ -35,17 +35,14 @@ print_usage_message ()
   static const char *message
     =
     "Usage:\n"
-    "    ./dftfe [-p parameter_file]\n"
-    "Parameter sequences in brackets can be omitted if a parameter file is\n"
-    "specified on the command line and if it provides values for these\n"
-    "missing parameters.\n"
-    "\n"
-    "The parameter file has the following format and allows the following\n"
-    "values (you can cut and paste this and use it for your own parameter\n"
-    "file):\n"
+    "    ./dftRun parameter_file\n"
     "\n";
-  std::cout << message;
-  prm.print_parameters (std::cout, ParameterHandler::Text);
+  //parallel message stream
+  if(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)
+    {
+      std::cout << message;
+      prm.print_parameters (std::cout, ParameterHandler::Text);
+    }
 }
 
 
@@ -56,7 +53,7 @@ void declare_parameters()
 		    Patterns::Bool(),
 		    "Flag to control optimized/debug modes");
 
-  prm.declare_entry("ABSOLUTE PATH", "",
+  prm.declare_entry("DFT PATH", "",
 		    Patterns::Anything(),
 		    "Path specifying the location of the build directory");
 
@@ -126,9 +123,9 @@ void declare_parameters()
 		    Patterns::Double(),
 		    "The lower bound of the wanted eigen spectrum");
   
-  prm.declare_entry("CHEBYSHEV POLYNOMIAL DEGREE", "50",
+  prm.declare_entry("CHEBYSHEV POLYNOMIAL DEGREE", "0",
 		    Patterns::Integer(),
-		    "The degree of the Chebyshev polynomial to be employed for filtering out the unwanted spectrum");
+		    "The degree of the Chebyshev polynomial to be employed for filtering out the unwanted spectrum (Default value is used when the input parameter value is 0");
 
   prm.declare_entry("NUMBER OF KOHN-SHAM WAVEFUNCTIONS", "10",
 		    Patterns::Integer(),
@@ -189,7 +186,8 @@ void parse_command_line(const int argc,
 	  prm.read_input(parameter_file);
 	  print_usage_message();
 
-	  currentPath                   = prm.get("ABSOLUTE PATH");
+	  currentPath                   = prm.get("DFT PATH");
+	  currentPath.erase(std::remove(currentPath.begin(),currentPath.end(),'"'),currentPath.end());
 	  meshFileName                  = prm.get("MESH FILE");
 	  finiteElementPolynomialOrder  = prm.get_integer("FINITE ELEMENT POLYNOMIAL ORDER");
 	  n_refinement_steps            = prm.get_integer("NUMBER OF REFINEMENT STEPS");

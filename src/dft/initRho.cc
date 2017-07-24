@@ -54,6 +54,11 @@ void dftClass<FEOrder>::initRho()
   rhoInValues=new std::map<dealii::CellId, std::vector<double> >;
   rhoInVals.push_back(rhoInValues);
 
+  //
+  //get number of image charges used only for periodic
+  //
+  const int numberImageCharges = d_imageIds.size();
+
   //loop over elements
   typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
   for (; cell!=endc; ++cell) 
@@ -66,17 +71,40 @@ void dftClass<FEOrder>::initRho()
 	    {
 	      MappingQ<3> test(1); 
 	      Point<3> quadPoint(test.transform_unit_to_real_cell(cell, fe_values.get_quadrature().point(q)));
-	      double rhoValueAtQuadPt=0.0;
+	      double rhoValueAtQuadPt = 0.0;
+
 	      //loop over atoms
-	      for (unsigned int n=0; n<atomLocations.size(); n++)
+	      for (unsigned int n = 0; n < atomLocations.size(); n++)
 		{
 		  Point<3> atom(atomLocations[n][2],atomLocations[n][3],atomLocations[n][4]);
-		  double distanceToAtom=quadPoint.distance(atom);
+		  double distanceToAtom = quadPoint.distance(atom);
 		  if(distanceToAtom <= outerMostPointDen[atomLocations[n][0]])
 		    {
 		      rhoValueAtQuadPt += alglib::spline1dcalc(denSpline[atomLocations[n][0]], distanceToAtom);
 		    }
+		  else
+		    {
+		      rhoValueAtQuadPt += 0.0;
+		    }
 		}
+
+	      //loop over image charges
+	      for(int iImageCharge = 0; iImageCharge < numberImageCharges; ++iImageCharge)
+		{
+		  Point<3> imageAtom(d_imagePositions[iImageCharge][0],d_imagePositions[iImageCharge][1],d_imagePositions[iImageCharge][2]);
+		  double distanceToAtom = quadPoint.distance(imageAtom);
+		  int masterAtomId = d_imageIds[iImageCharge];
+		  if(distanceToAtom <= outerMostPointDen[atomLocations[masterAtomId][0]])//outerMostPointPseudo[atomLocations[masterAtomId][0]])
+		    {
+		      rhoValueAtQuadPt += alglib::spline1dcalc(denSpline[atomLocations[masterAtomId][0]], distanceToAtom);
+		    }
+		  else
+		    {
+		      rhoValueAtQuadPt += 0.0;
+		    }
+		  
+		}
+
 	      rhoInValuesPtr[q] = std::abs(rhoValueAtQuadPt);
 	    }
 	}
@@ -126,7 +154,42 @@ void dftClass<FEOrder>::initRho()
 			  gradRhoYValueAtQuadPt += radialDensityFirstDerivative*((quadPoint[1] - atomLocations[n][3])/distanceToAtom);
 			  gradRhoZValueAtQuadPt += radialDensityFirstDerivative*((quadPoint[2] - atomLocations[n][4])/distanceToAtom);
 			}
+		      else
+			{
+			  gradRhoXValueAtQuadPt += 0.0;
+			  gradRhoYValueAtQuadPt += 0.0;
+			  gradRhoZValueAtQuadPt += 0.0;
+			}
 		    }
+
+		  for(int iImageCharge = 0; iImageCharge < numberImageCharges; ++iImageCharge)
+		    {
+		      Point<3> imageAtom(d_imagePositions[iImageCharge][0],d_imagePositions[iImageCharge][1],d_imagePositions[iImageCharge][2]);
+		      double distanceToAtom = quadPoint.distance(imageAtom);
+		      int masterAtomId = d_imageIds[iImageCharge];
+		      if(distanceToAtom <= outerMostPointDen[atomLocations[masterAtomId][0]])//outerMostPointPseudo[atomLocations[masterAtomId][0]])
+			{
+			  double value,radialDensityFirstDerivative,radialDensitySecondDerivative;
+			  alglib::spline1ddiff(denSpline[atomLocations[masterAtomId][0]],
+					       distanceToAtom,
+					       value,
+					       radialDensityFirstDerivative,
+					       radialDensitySecondDerivative);
+										      
+			  gradRhoXValueAtQuadPt += radialDensityFirstDerivative*((quadPoint[0] - d_imagePositions[iImageCharge][0])/distanceToAtom);
+			  gradRhoYValueAtQuadPt += radialDensityFirstDerivative*((quadPoint[1] - d_imagePositions[iImageCharge][1])/distanceToAtom);
+			  gradRhoZValueAtQuadPt += radialDensityFirstDerivative*((quadPoint[2] - d_imagePositions[iImageCharge][2])/distanceToAtom);
+
+			}
+		      else
+			{
+			  gradRhoXValueAtQuadPt += 0.0;
+			  gradRhoYValueAtQuadPt += 0.0;
+			  gradRhoZValueAtQuadPt += 0.0;
+			}
+		  
+		    }
+
 		  int signRho = (*rhoInValues)[cell->id()][q]/std::abs((*rhoInValues)[cell->id()][q]);
 		  gradRhoInValuesPtr[3*q+0] = signRho*gradRhoXValueAtQuadPt;
 		  gradRhoInValuesPtr[3*q+1] = signRho*gradRhoYValueAtQuadPt;

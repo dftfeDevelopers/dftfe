@@ -96,7 +96,7 @@ void dftClass<FEOrder>::init(){
 	}
     }
 
-  pcout << "Done with Boundary Flags\n";
+  //pcout << "Done with Boundary Flags\n";
   std::vector<GridTools::PeriodicFacePair<typename parallel::distributed::Triangulation<3>::cell_iterator> > periodicity_vector;
   for (int i = 0; i < 3; ++i)
     {
@@ -195,12 +195,12 @@ void dftClass<FEOrder>::init(){
   constraintsNone.close();
   constraintsNoneEigen.close();
 
-  pcout << "Detected Periodic Face Pairs: " << constraintsNone.n_constraints() << std::endl;
+  //pcout << "Detected Periodic Face Pairs: " << constraintsNone.n_constraints() << std::endl;
 
-  pcout<<"Size of ConstraintsNone: "<< constraintsNone.n_constraints()<<std::endl;
+  //pcout<<"Size of ConstraintsNone: "<< constraintsNone.n_constraints()<<std::endl;
   //constraintsNone.print(std::cout);
 
-  pcout<<"Size of ConstraintsNoneEigen: "<< constraintsNoneEigen.n_constraints()<<std::endl;
+  //pcout<<"Size of ConstraintsNoneEigen: "<< constraintsNoneEigen.n_constraints()<<std::endl;
   //constraintsNoneEigen.print(std::cout);
 
   //
@@ -317,7 +317,7 @@ void dftClass<FEOrder>::init(){
     }
   constraintsNone.close();
 
-  pcout<<"Size of ConstraintsNone New: "<< constraintsNone.n_constraints()<<std::endl;
+  //pcout<<"Size of ConstraintsNone New: "<< constraintsNone.n_constraints()<<std::endl;
   //constraintsNone.print(std::cout);
   
   //
@@ -533,7 +533,7 @@ void dftClass<FEOrder>::init(){
   constraintsNoneEigen.close();
 #endif
 
-  pcout<<"Size of ConstraintsNoneEigen New: "<< constraintsNoneEigen.n_constraints()<<std::endl;
+  //pcout<<"Size of ConstraintsNoneEigen New: "<< constraintsNoneEigen.n_constraints()<<std::endl;
 
   //
   //Zero Dirichlet BC constraints on the boundary of the domain
@@ -556,7 +556,7 @@ void dftClass<FEOrder>::init(){
   d_constraintsPeriodicWithDirichlet.close();
   d_constraintsPeriodicWithDirichlet.merge(constraintsNone);
   d_constraintsPeriodicWithDirichlet.close();  
-  std::cout<<"Updated Size of ConstraintsPeriodic with Dirichlet B.Cs: "<< d_constraintsPeriodicWithDirichlet.n_constraints()<<std::endl;
+  //std::cout<<"Updated Size of ConstraintsPeriodic with Dirichlet B.Cs: "<< d_constraintsPeriodicWithDirichlet.n_constraints()<<std::endl;
 #endif
  
   //

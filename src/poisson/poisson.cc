@@ -245,7 +245,7 @@ void poissonClass<FEOrder>::computeRHS(std::map<dealii::CellId,std::vector<doubl
       rhs.add(-1.0,rhs2);
     }
 
-  pcout<< "rhs:" <<rhs.l2_norm()<<std::endl;
+  //pcout<< "rhs:" <<rhs.l2_norm()<<std::endl;
   computing_timer.exit_section("PoissonClass rhs assembly");
 
 }
