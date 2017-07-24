@@ -65,7 +65,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&#160;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&#160;</span>Friends</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(9)"><span class="SelectionMark">&#160;</span>Macros</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(10)"><span class="SelectionMark">&#160;</span>Groups</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(11)"><span class="SelectionMark">&#160;</span>Pages</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Namespaces</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Files</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(6)"><span class="SelectionMark">&#160;</span>Typedefs</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(7)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(8)"><span class="SelectionMark">&#160;</span>Friends</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(9)"><span class="SelectionMark">&#160;</span>Groups</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(10)"><span class="SelectionMark">&#160;</span>Pages</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -81,13 +81,20 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="contents">
 <div class="textblock"><p>DFT-FE (Real Space KSDFT implementation)</p>
 <p>Installation:</p>
-<p>1) Install deal.II (version &gt;=8.5 recommended)</p>
+<p>1) Install deal.II (version &gt;=8.4 recommended)</p>
 <ul>
 <li>Download CMake [<a href="http://www.cmake.org/download/">http://www.cmake.org/download/</a>]</li>
 <li>Add CMake to your path (e.g. $ PATH="/path/to/cmake/Contents/bin":"$PATH"), preferably in a shell configuration file</li>
 <li>Download and install Deal.II following instructions from from <a href="https://www.dealii.org/download.html">https://www.dealii.org/download.html</a></li>
-<li>If a Deal.II binary is downloaded, open it and follow the instructions in the terminal window</li>
-<li>If Deal.II is installed from the source, the MPI and p4est libraries must be installed as prerequisites.</li>
+<li>If a deal.II binary is downloaded, open it and follow the instructions in the terminal window. Pre-build binaries recommended for OSX.</li>
+<li>If deal.II is installed from the source, the MPI and p4est libraries must be installed as prerequisites.</li>
+<li>If not compiled as part of deal.II, install Petsc and Slepc with both real (For Non-periodic problems) and complex (For Periodic problems) data types.</li>
+<li>Important: Add deal.II main directory path to DEAL_II_DIR environemnt variable: $export DEAL_II_DIR = /path/to/deal.ii/</li>
+</ul>
+<p>2) Install Alglib and Libxc</p>
+<ul>
+<li><a href="http://www.alglib.net/">http://www.alglib.net/</a></li>
+<li><a href="http://octopus-code.org/wiki/Libxc">http://octopus-code.org/wiki/Libxc</a></li>
 </ul>
 <p>2) Clone the repo</p>
 <ul>
@@ -95,20 +102,17 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <li>$ cd dft</li>
 <li>$ git checkout master</li>
 </ul>
-<p>Simulations:</p>
-<p>Run a simulation: For debug mode [default mode, very slow]:</p>
+<p>3) Install</p>
 <ul>
-<li>$ cmake CMakeLists.txt -DCMAKE_BUILD_TYPE=Debug For optimized mode:</li>
-<li>$ cmake CMakeLists.txt -DCMAKE_BUILD_TYPE=Release and</li>
-<li>$ make Execution (serial runs):</li>
-<li>$ make run Execution (parallel runs):</li>
-<li>$ mpirun -np nprocs ./main [here nprocs denotes the number of processors]</li>
+<li>Ensure DEAL_II_PATH environment variable is set correctly ( check: $echo $DEAL_II_DIR )</li>
+<li>$ ./setup.sh (You may need to set permissions. e.g.: $ chmod u=+x setup.sh)</li>
 </ul>
-<p>Visualization: Output of the primal fields (if any) is in standard vtk format (parallel:*.pvtu, serial:*.vtu files) which can be visualized with the following open source applications:</p>
-<ol type="1">
-<li>VisIt (<a href="https://wci.llnl.gov/simulation/computer-codes/visit/downloads">https://wci.llnl.gov/simulation/computer-codes/visit/downloads</a>)</li>
-<li>Paraview (<a href="http://www.paraview.org/download/">http://www.paraview.org/download/</a>) </li>
-</ol>
+<p>Execution:</p>
+<p>1) From folder containing parameterFile.prm:</p>
+<ul>
+<li>$ ./dftRun -np numProcs parameterFile.prm (You may need to set permissions for dftrun. e.g.: $ chmod u=+x dftrun)</li>
+<li>Note: numProcs is the number of parallel processes supplied to mpirun. For serial runs numProcs is 1. </li>
+</ul>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

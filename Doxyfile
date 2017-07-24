@@ -512,7 +512,7 @@ CASE_SENSE_NAMES       = NO
 # scope will be hidden.
 # The default value is: NO.
 
-HIDE_SCOPE_NAMES       = YES
+HIDE_SCOPE_NAMES       = NO
 
 # If the HIDE_COMPOUND_REFERENCE tag is set to NO (default) then doxygen will
 # append additional text to a page's title, such as Class Reference. If set to
@@ -765,7 +765,7 @@ WARN_LOGFILE           = DoxygenWarningLog.txt
 # spaces. See also FILE_PATTERNS and EXTENSION_MAPPING
 # Note: If this tag is empty the current directory is searched.
 
-INPUT                  = README.md src include examples data utils
+INPUT                  = README.md src src/dft src/poisson src/eigen include 
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding. Doxygen uses
@@ -796,7 +796,7 @@ FILE_PATTERNS          = *.cc *.h *.dox *.md
 # be searched for input files as well.
 # The default value is: NO.
 
-RECURSIVE              = YES
+RECURSIVE              = NO
 
 # The EXCLUDE tag can be used to specify files and/or directories that should be
 # excluded from the INPUT source files. This way you can easily exclude a
@@ -2036,7 +2036,8 @@ SKIP_FUNCTION_MACROS   = YES
 
 #TAGFILES = deal.tag 
 
-#TAGFILES  = /opt/software/numerics/dealiiDir/doc/doxygen/deal.tag=http://www.dealii.org/8.2.1/doxygen/deal.II
+TAGFILES  = deal.tag=http://www.dealii.org/8.5.0/doxygen/deal.tag 
+
 # When a file name is specified after GENERATE_TAGFILE, doxygen will create a
 # tag file that is based on the input files it reads. See section "Linking to
 # external documentation" for more information about the usage of tag files.
