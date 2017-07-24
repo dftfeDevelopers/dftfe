@@ -11,10 +11,6 @@
 #include <iostream>
 #include <fstream>
 
-
-#define ENABLE_PERIODIC_BC
-
-
 unsigned int finiteElementPolynomialOrder,n_refinement_steps,numberEigenValues,xc_id;
 unsigned int chebyshevOrder,numSCFIterations,maxLinearSolverIterations;
 
@@ -23,8 +19,6 @@ double lowerEndWantedSpectrum,relLinearSolverTolerance,selfConsistentSolverToler
 
 bool isPseudopotential,periodicX,periodicY,periodicZ;
 std::string meshFileName,coordinatesFile,currentPath,latticeVectorsFile,kPointDataFile;
-
-
 
 //
 //dft header

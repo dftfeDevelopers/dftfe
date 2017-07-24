@@ -1,12 +1,12 @@
 #
 #flag to control optimized(release)/debug modes
 #
-set OPTIMIZED MODE = true
+set OPTIMIZED MODE = false
 
 #
 #path specifying the location of the "build" directory which is usually the location of "src" folder 
 #
-set ABSOLUTE PATH = /home/phanim/KohnShamCodes/DEALIICode/dftfeNew
+set DFT PATH = "../../../../"
 
 #
 #finite-element related parameters
