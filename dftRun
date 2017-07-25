@@ -7,17 +7,12 @@ set -o pipefail
 #
 #Usually, no changes are needed to this file
 #
-validInput=0
-if [ $# -eq 3 ]; then
-    if [ $1 == "-np" ]; then
-	validInput=1
-    fi
-fi
-if [[ $validInput == 1 ]]; then
-    echo "reading $3"
+if [ $# -eq 1 ]; then
+    # exactly 1 argument was passed..use it..its available in $1
+    echo "reading $1"
 else
-    # invalid arguments list
-    echo "Invalid arguments or incorrect number of arguments passed. Need three arguments. Syntax: ./dftRun -np numProcs parametersFile.prm"
+    # either 0 or >1 arguments were passed...error out.
+    echo "Incorrect number of arguments passed"
     exit 1             
 fi
 
@@ -29,7 +24,7 @@ while read p; do
 	    dftPath=`echo "$p" | cut -d'"' -f 2`
 	fi
     fi
-done < $3
+done < $1
 echo "using DFT directory Path: $dftPath"
 
 #check for Optimized/Debug mode and Periodic BC 
@@ -52,7 +47,7 @@ while read p; do
 	    fi
 	fi
     fi    
-done < $3
+done < $1
 
 #call corresponding executable
 if [[ $optimizedMode == 1 ]]; then
@@ -81,5 +76,5 @@ else
     echo "Periodic BC: false"
 fi
 
-echo mpirun -np $2 $execFile -p $3
-eval mpirun -np $2 $execFile -p $3
+echo $execFile
+eval $execFile -p $1

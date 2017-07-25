@@ -16,24 +16,19 @@ SET(LIBXC_LIB "/nfs/mcfs_comp/home/rudraa/software/libxc/libxc-2.2.0/installDir/
 
 ##set PETSc Real paths
 SET(PETSC_REAL_INCLUDE "/home/vikramg/DFT-FE-softwares/softwareCentos/petsc/intel_petsc3.7.5_double_elemental/include")
-SET(PETSC_REAL_LIB1 "/home/vikramg/DFT-FE-softwares/softwareCentos/petsc/intel_petsc3.7.5_double_elemental/lib/libpetsc.so.3.7")
-SET(PETSC_REAL_LIB2 "/home/vikramg/DFT-FE-softwares/softwareCentos/petsc/intel_petsc3.7.5_double_elemental/lib/libpetsc.so")
+SET(PETSC_REAL_LIB "/home/vikramg/DFT-FE-softwares/softwareCentos/petsc/intel_petsc3.7.5_double_elemental/lib/libpetsc.so")
 
 ##set SLEPc Real paths
 SET(SLEPC_REAL_INCLUDE "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/intel_slepc3.7.3_double_elemental/include")
-SET(SLEPC_REAL_LIB1 "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/intel_slepc3.7.3_double_elemental/lib/libslepc.so.3.7") 
-SET(SLEPC_REAL_LIB2 "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/intel_slepc3.7.3_double_elemental/lib/libslepc.so")
+SET(SLEPC_REAL_LIB "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/intel_slepc3.7.3_double_elemental/lib/libslepc.so") 
 
 ##set PETSc Complex paths
 SET(PETSC_COMPLEX_INCLUDE "/home/vikramg/DFT-FE-softwares/softwareCentos/petsc/intel_petsc3.7.5_complex/include")
-SET(PETSC_COMPLEX_LIB1 "/home/vikramg/DFT-FE-softwares/softwareCentos/petsc/intel_petsc3.7.5_complex/lib/libpetsc.so.3.7")
-SET(PETSC_COMPLEX_LIB2 "/home/vikramg/DFT-FE-softwares/softwareCentos/petsc/intel_petsc3.7.5_complex/lib/libpetsc.so")
+SET(PETSC_COMPLEX_LIB "/home/vikramg/DFT-FE-softwares/softwareCentos/petsc/intel_petsc3.7.5_complex/lib/libpetsc.so")
 
 ##set SLEPc Complex paths
 SET(SLEPC_COMPLEX_INCLUDE "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/intel_slepc3.7.3_complex/include")
-SET(SLEPC_COMPLEX_LIB1 "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/intel_slepc3.7.3_complex/lib/libslepc.so.3.7") 
-SET(SLEPC_COMPLEX_LIB2 "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/intel_slepc3.7.3_complex/lib/libslepc.so")
-
+SET(SLEPC_COMPLEX_LIB "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/intel_slepc3.7.3_complex/lib/libslepc.so") 
 
 #
 # Usually, you will not need to modify anything beyond this point...
@@ -92,12 +87,12 @@ DEAL_II_SETUP_TARGET(${TARGET})
 IF (DEFINED _ENABLE_PERIODIC) 
 MESSAGE(STATUS "==== Periodic ====")
 INCLUDE_DIRECTORIES(${ALGLIB_INCLUDE} ${LIBXC_INCLUDE} ${PETSC_COMPLEX_INCLUDE} ${SLEPC_COMPLEX_INCLUDE})
-TARGET_LINK_LIBRARIES(${TARGET} ${LIBXC_LIB} ${ALGLIB_LIB} ${PETSC_COMPLEX_LIB1} ${PETSC_COMPLEX_LIB2} ${SLEPC_COMPLEX_LIB1} ${SLEPC_COMPLEX_LIB2})
+TARGET_LINK_LIBRARIES(${TARGET} ${LIBXC_LIB} ${ALGLIB_LIB} ${PETSC_COMPLEX_LIB} ${SLEPC_COMPLEX_LIB})
 set(ignoreMe "${_ENABLE_PERIODIC}")
 ELSE()
 MESSAGE(STATUS "==== Non Periodic ====")
 INCLUDE_DIRECTORIES(${ALGLIB_INCLUDE} ${LIBXC_INCLUDE} ${PETSC_REAL_INCLUDE} ${SLEPC_REAL_INCLUDE})
-TARGET_LINK_LIBRARIES(${TARGET} ${LIBXC_LIB} ${ALGLIB_LIB} ${PETSC_REAL_LIB1} ${PETSC_REAL_LIB2} ${SLEPC_REAL_LIB1} ${SLEPC_REAL_LIB2})
+TARGET_LINK_LIBRARIES(${TARGET} ${LIBXC_LIB} ${ALGLIB_LIB} ${PETSC_REAL_LIB} ${SLEPC_REAL_LIB})
 ENDIF()
 
 #DEAL_II_INVOKE_AUTOPILOT()

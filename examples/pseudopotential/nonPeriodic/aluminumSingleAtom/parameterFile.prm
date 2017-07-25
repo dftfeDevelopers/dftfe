@@ -1,12 +1,7 @@
 #
-#flag to control optimized(release)/debug modes
-#
-set OPTIMIZED MODE = true
-
-#
 #path specifying the location of the "build" directory which is usually the location of "src" folder 
 #
-set DFT PATH = "/home/phanim/KohnShamCodes/DEALIICode/dftfeBuild"
+set DFT PATH = "/home/phanim/KohnShamCodes/DEALIICode/dft-fe"
 
 #
 #finite-element related parameters
@@ -46,7 +41,7 @@ set LATTICE VECTORS FILE = latticeVectors.inp
 
 #
 #kPoint Quadrature Rule file for sampling the Brillouin zone (used only in Periodic calculation)
-#(Located in $ABSOLUTE PATH/data/kPointList)
+#(Located in $DFT PATH/data/kPointList)
 #
 set kPOINT RULE FILE = GammaPoint.inp
 
