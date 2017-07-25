@@ -22,7 +22,7 @@ Installation:
 (2) Cloning the repository:
       -- Execute the following commands on your command-line
          $ git clone https://userid@bitbucket.org/rudraa/dft-fe.git (Note: Here userid is your bitbucket userid)
-         $ cd dftdev
+         $ cd dft-fe
          $ git checkout master
 
 (3) Setting the relevant paths in CMakeLists.txt:          
