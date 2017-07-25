@@ -13,14 +13,14 @@ Installation:
 *************
 
 (1) Loading of relevant modules:
-     -- Modules related to cmake, compilers, openmpi has to be loaded
+      -- Modules related to cmake, compilers, openmpi has to be loaded.
         For example on flux systems located at umich, you may need to do 
           $ module load cmake
           $ module load intel/17.0.1
           $ module load openmpi/1.10.2/intel/17.0.1
 
 (2) Cloning the repository:
-     -- Execute the following commands on your command-line
+      -- Execute the following commands on your command-line
          $ git clone https://userid@bitbucket.org/rudraa/dft-fe.git (Note: Here userid is your bitbucket userid)
          $ cd dftdev
          $ git checkout master
@@ -45,7 +45,7 @@ Installation:
          SET(SLEPC_COMPLEX_INCLUDE "path to slepc-complex include")
          SET(SLEPC_COMPLEX_LIB "path to slepc-complex library libslepc.so")
 
-     -- Set DEAL_II_PATH environment variable to path containing deal.II install folder in your command-line as follows:
+      -- Set DEAL_II_PATH environment variable to path containing deal.II install folder in your command-line as follows:
          $ export DEAL_II_DIR = /path/to/deal.ii/
 
 (4) Installing the dft-fe code:
