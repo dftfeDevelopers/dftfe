@@ -1,6 +1,6 @@
 #path specifying the location of the "build" directory which is usually the location of "src" folder 
 #
-set DFT PATH = "/home/phanim/KohnShamCodes/DEALIICode/dftfeBuild"
+set DFT PATH = "/home/phanim/KohnShamCodes/DEALIICode/dft-fe"
 
 #
 #finite-element related parameters

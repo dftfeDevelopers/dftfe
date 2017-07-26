@@ -173,7 +173,7 @@ void dftClass<FEOrder>::mesh(){
 // 	<< std::endl;
 // #endif
 //   //
-//   computing_timer.exit_section("mesh"); 
+ computing_timer.exit_section("mesh"); 
 }
 
 /*

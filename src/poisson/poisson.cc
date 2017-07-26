@@ -183,19 +183,19 @@ void poissonClass<FEOrder>::computeRHS(std::map<dealii::CellId,std::vector<doubl
   }
 
   //
-  //Add nodal force to the node at the origin
+  //Add nodal force to the node containing the atom
   //
   if(rhoValues)
     {
       for (std::map<unsigned int, double>::iterator it=dftPtr->atoms.begin(); it!=dftPtr->atoms.end(); ++it)
 	{
-	std::vector<unsigned int> local_dof_indices_origin(1, it->first); //atomic node
-	Vector<double> cell_rhs_origin (1); 
-	cell_rhs_origin(0)=-(it->second); //atomic charge
+	  std::vector<unsigned int> local_dof_indices_origin(1, it->first); //atomic node
+	  Vector<double> cell_rhs_origin (1); 
+	  cell_rhs_origin(0)=-(it->second); //atomic charge
 #ifdef ENABLE_PERIODIC_BC 
-	dftPtr->d_constraintsPeriodicWithDirichlet.distribute_local_to_global(cell_rhs_origin, local_dof_indices_origin, rhs);
+	  dftPtr->d_constraintsPeriodicWithDirichlet.distribute_local_to_global(cell_rhs_origin, local_dof_indices_origin, rhs);
 #else
-	dftPtr->constraintsNone.distribute_local_to_global(cell_rhs_origin, local_dof_indices_origin, rhs);
+	  dftPtr->constraintsNone.distribute_local_to_global(cell_rhs_origin, local_dof_indices_origin, rhs);
 #endif
 	}
     }
@@ -211,8 +211,9 @@ void poissonClass<FEOrder>::computeRHS(std::map<dealii::CellId,std::vector<doubl
 	}
     }
 
-
+  //
   //MPI operation to sync data 
+  //
   rhs.compress(VectorOperation::add);
 
   //Set RHS values corresponding to Dirichlet BC's
@@ -232,7 +233,7 @@ void poissonClass<FEOrder>::computeRHS(std::map<dealii::CellId,std::vector<doubl
 	      if(!constraintMatrix->is_identity_constrained(i))
 		{
 		  if(rhoValues) rhs(i)=0.0;
-		  else rhs(i)=constraintMatrix->get_inhomogeneity(i); //*jacobianDiagonal(i);
+		  else rhs(i)=constraintMatrix->get_inhomogeneity(i)*jacobianDiagonal(i);
 		}
 	    }
 	}
@@ -371,8 +372,8 @@ void poissonClass<FEOrder>::solve(vectorType& phi, int constraintMatrixId, std::
   preconditioner.initialize (*this, 0.6);
   try{
     phi=0.0;
-    solver.solve(*this, phi, rhs, IdentityMatrix(rhs.size()));
-    //solver.solve(*this, phi, rhs, preconditioner);
+    //solver.solve(*this, phi, rhs, IdentityMatrix(rhs.size()));
+    solver.solve(*this, phi, rhs, preconditioner);
     dftPtr->constraintsNone.distribute(phi);
     phi.update_ghost_values();
   }
@@ -385,7 +386,7 @@ void poissonClass<FEOrder>::solve(vectorType& phi, int constraintMatrixId, std::
 
 
   char buffer[200];
-  sprintf(buffer, "poisson solve: initial residual:%12.6e, current residual:%12.6e, nsteps:%u, tolerance criterion:%12.6e\n", \
+  sprintf(buffer, "poisson solve: initial residual:%12.6e, current residual:%12.6e, nsteps:%u, tolerance criterion:%12.6e\n\n", \
 	  solver_control.initial_value(),				\
 	  solver_control.last_value(),					\
 	  solver_control.last_step(), solver_control.tolerance()); 

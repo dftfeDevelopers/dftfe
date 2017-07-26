@@ -308,7 +308,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 
       unsigned int nonAtomicWaveFunctions = numEigenValues - waveFunctionsVector.size();
       pcout << "                                                                                             "<<std::endl;
-      pcout << "Number of wavefunctions generated randomly to be used as initial guess for starting the SC : " << nonAtomicWaveFunctions << std::endl;
+      pcout << "Number of wavefunctions generated randomly to be used as initial guess for starting the SCF : " << nonAtomicWaveFunctions << std::endl;
 
       //
       // assign the rest of the wavefunctions using a standard normal distribution
@@ -359,7 +359,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 	    }
 	  char buffer[100];
 	  sprintf(buffer, "norm %u: l1: %14.8e  l2:%14.8e\n",i, eigenVectors[kPoint][i]->l1_norm(), eigenVectors[kPoint][i]->l2_norm());
-	  pcout << buffer;
+	  //pcout << buffer;
 	  eigenVectors[kPoint][i]->update_ghost_values();
 	}
     }

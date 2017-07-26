@@ -103,7 +103,7 @@ void dftClass<FEOrder>::init(){
       GridTools::collect_periodic_faces(triangulation, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector);
     }
   triangulation.add_periodicity(periodicity_vector);
-  std::cout << "Periodic Facepairs: " << periodicity_vector.size() << std::endl;
+  //std::cout << "Periodic Facepairs: " << periodicity_vector.size() << std::endl;
 #endif  
     
   //
@@ -227,7 +227,7 @@ void dftClass<FEOrder>::init(){
 	}
     }
   
-  std::cout<<"Size of Master Nodes: "<<masterNodes.size()<<std::endl;
+  //std::cout<<"Size of Master Nodes: "<<masterNodes.size()<<std::endl;
   
 
   //

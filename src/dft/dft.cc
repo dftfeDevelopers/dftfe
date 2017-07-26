@@ -276,13 +276,13 @@ void dftClass<FEOrder>::run ()
   double norm = 1.0;
   while ((norm > selfConsistentSolverTolerance) && (scfIter < numSCFIterations))
     {
-      if(this_mpi_process==0) printf("\n\nBegin Self-Consistent-Field Iteration:%u\n", scfIter+1);
+      if(this_mpi_process==0) printf("\n\nBegin Self-Consistent-Field Iteration:%u\n\n", scfIter+1);
       //Mixing scheme
       if(scfIter > 0)
 	{
 	  if (scfIter==1) norm = mixing_simple();
 	  else norm = sqrt(mixing_anderson());
-	  if(this_mpi_process==0) printf("Anderson Mixing: L2 norm of electron-density difference: %12.6e\n", norm);
+	  if(this_mpi_process==0) printf("Anderson Mixing: L2 norm of electron-density difference: %12.6e\n\n", norm);
 	}
       //phiTot with rhoIn
 
@@ -328,6 +328,7 @@ void dftClass<FEOrder>::run ()
       
       //fermi energy
       compute_fermienergy();
+
       //rhoOut
       compute_rhoOut();
       

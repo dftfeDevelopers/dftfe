@@ -173,29 +173,20 @@ void dftClass<FEOrder>::chebyshevSolver()
   //output statements
   //
   char buffer[100];
-  sprintf(buffer, "Upper bound of Unwanted Spectrum: %18.10e\n", bUp);
+
+  sprintf(buffer, "%s:%18.10e\n", "Upper bound of Unwanted Spectrum", bUp);
   pcout << buffer;
-  pcout << "Lower bound of Unwanted Spectrum: " << bLow[d_kPointIndex] << std::endl;
-  pcout << "Chebyshev polynomial degree: "<<chebyshevOrder<<std::endl;
-  //pcout << "a0: " << a0[d_kPointIndex] << std::endl;
-  for (unsigned int i=0; i<eigenVectors[0].size(); i++)
-    {
-      sprintf(buffer, "%2u l2: %18.10e     linf: %18.10e \n", i, eigenVectors[0][i]->l2_norm(), eigenVectors[0][i]->linfty_norm());
-      //pcout << buffer; 
-    }
+  sprintf(buffer, "%s:%18.10e\n", "Lower bound of Unwanted Spectrum", bLow[d_kPointIndex]);
+  pcout << buffer;
+  sprintf(buffer, "%s: %u\n\n", "Chebyshev polynomial degree", chebyshevOrder);
+  pcout << buffer;
+
 
   //
   //Filter
   //
-  double t=MPI_Wtime();
   chebyshevFilter(eigenVectors[d_kPointIndex], chebyshevOrder, bLow[d_kPointIndex], bUp, a0[d_kPointIndex]);
-  pcout << "Total time for only chebyshev filter: " << (MPI_Wtime()-t)/60.0 << "mins\n";
-
-  for (unsigned int i=0; i<eigenVectors[0].size(); i++)
-    {
-      sprintf(buffer, "%2u l2: %18.10e     linf: %18.10e \n", i, eigenVectors[0][i]->l2_norm(), eigenVectors[0][i]->linfty_norm());
-      //pcout << buffer; 
-    }
+ 
 
   //
   //Gram Schmidt orthonormalization
@@ -206,7 +197,6 @@ void dftClass<FEOrder>::chebyshevSolver()
   //Rayleigh Ritz step
   //
   rayleighRitz(eigenVectors[d_kPointIndex]);
-  pcout << "Total time for chebyshev filter: " << (MPI_Wtime()-t)/60.0 << "mins\n";
   computing_timer.exit_section("Chebyshev solve"); 
 }
 
@@ -223,23 +213,21 @@ double dftClass<FEOrder>::upperBound()
   double alpha;
 #endif
 
+  //
   //generate random vector v
+  //
   vChebyshev=0.0;
   std::srand(this_mpi_process);
   const unsigned int local_size = vChebyshev.local_size();
   std::vector<unsigned int> local_dof_indices(local_size);
   vChebyshev.locally_owned_elements().fill_index_vector(local_dof_indices);
   std::vector<double> local_values(local_size, 0.0);
+
   for (unsigned int i=0; i<local_size; i++) 
     {
       local_values[i]= ((double)std::rand())/((double)RAND_MAX);
     }
-
-  /*for (unsigned int i=0; i<local_size/2; i++) 
-    {
-      local_values[localProc_dof_indicesReal[i]] = 1.0;
-      local_values[localProc_dof_indicesImag[i]] = 0.0;
-      }*/
+ 
   constraintsNoneEigen.distribute_local_to_global(local_values, local_dof_indices, vChebyshev);
   vChebyshev.compress(VectorOperation::add);
 
@@ -251,22 +239,6 @@ double dftClass<FEOrder>::upperBound()
   v.push_back(&vChebyshev);
   f.push_back(&fChebyshev);
   eigen.HX(v,f);
-
-  char buffer2[100],buffer3[100],buffer4[100];
-  sprintf(buffer2, "v-L1: %18.10e,  f-L1: %18.10e\n", vChebyshev.l1_norm(), fChebyshev.l1_norm());
-  sprintf(buffer3, "v-L2: %18.10e,  f-L2: %18.10e\n", vChebyshev.l2_norm(), fChebyshev.l2_norm());
-  sprintf(buffer4, "v-Linf: %18.10e,  f-Linf: %18.10e\n", vChebyshev.linfty_norm(), fChebyshev.linfty_norm());
-  //pcout << buffer2;
-  //pcout << buffer3;
-  //pcout << buffer4;
-
-  /*for(unsigned int i = 0; i < local_size/2; ++i)
-    {
-      std::cout<<2*i<<" "<<fChebyshev[2*i]<<std::endl;
-      std::cout<<2*i+1<<" "<<fChebyshev[2*i+1]<<std::endl;
-      }*/
-
- 
 
   //
 #ifdef ENABLE_PERIODIC_BC
@@ -289,8 +261,6 @@ double dftClass<FEOrder>::upperBound()
   for (unsigned int j=1; j<lanczosIterations; j++)
     {
       beta=fChebyshev.l2_norm();
-      //char buffer1[100];
-      //sprintf(buffer1, "alpha: %18.10e,  beta: %18.10e\n", alpha, beta);
       v0Chebyshev=vChebyshev; vChebyshev.equ(1.0/beta,fChebyshev);
       eigen.HX(v,f); fChebyshev.add(-1.0*beta,v0Chebyshev);//beta is real
 #ifdef ENABLE_PERIODIC_BC
@@ -305,8 +275,6 @@ double dftClass<FEOrder>::upperBound()
       T[index]=beta; 
       index+=lanczosIterations;
       T[index]=alpha;
-      //sprintf(buffer1, "alpha: %18.10e,  beta: %18.10e\n", alpha, beta);
-      //pcout << buffer1;
     }
 
   //eigen decomposition to find max eigen value of T matrix
@@ -471,14 +439,17 @@ void dftClass<FEOrder>::rayleighRitz(std::vector<vectorType*> &X){
   dsyevd_(&jobz, &uplo, &n, &eigen.XHXValue[0], &lda, &eigenValues[d_kPointIndex][0], &work[0], &lwork, &iwork[0], &liwork, &info);
 #endif
 
+  //
   //print eigen values
+  //
   char buffer[100];
-  for (unsigned int i=0; i< (unsigned int)n; i++){
-    pcout << "kPoint: "<< d_kPointIndex<<std::endl;
-    sprintf(buffer, "eigen value %2u: %18.16e\n", i, eigenValues[d_kPointIndex][i]);
-    pcout << buffer;
+  pcout << "kPoint: "<< d_kPointIndex<<std::endl;
+  for (unsigned int i=0; i< (unsigned int)n; i++)
+    {
+      sprintf(buffer, "eigen value %2u: %18.16e\n", i, eigenValues[d_kPointIndex][i]);
+      pcout << buffer;
     }
-
+  pcout <<"\n"<<std::endl;
 
   //rotate the basis PSI=PSI*Q
   int m = X.size(); 
@@ -558,7 +529,11 @@ lda=n1; int ldb=m, ldc=n1;
 //inputs: X - input wave functions, m-polynomial degree, a-lower bound of unwanted spectrum
 //b-upper bound of the full spectrum, a0-lower bound of the wanted spectrum
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::chebyshevFilter(std::vector<vectorType*> & X, unsigned int m, double a, double b, double a0)
+void dftClass<FEOrder>::chebyshevFilter(std::vector<vectorType*> & X, 
+					unsigned int m, 
+					double a, 
+					double b, 
+					double a0)
 {
   computing_timer.enter_section("Chebyshev filtering"); 
   double e, c, sigma, sigma1, sigma2, gamma;

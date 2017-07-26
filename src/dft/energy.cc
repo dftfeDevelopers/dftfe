@@ -11,21 +11,26 @@ void dftClass<FEOrder>::compute_energy()
   std::vector<double> cellPhiTotRhoOut(num_quad_points);  
   std::vector<double> cellPhiExt(num_quad_points);
   
+  //
   // Loop through all cells.
+  //
   double bandEnergy=0.0;
   double partialOccupancy, factor;
+  char buffer[100];
   for(int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
     {
+      pcout << "kPoint: "<< kPoint <<std::endl;
       for (unsigned int i=0; i<numEigenValues; i++)
 	{
 	  factor=(eigenValues[kPoint][i]-fermiEnergy)/(kb*TVal);
 	  //partialOccupancy=1.0/(1.0+exp(temp));
-	  double partialOccupancy = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)) : 
-	    1.0/(1.0 + std::exp(factor));
+	  double partialOccupancy = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)) : 1.0/(1.0 + std::exp(factor));
 	  bandEnergy+= 2*partialOccupancy*d_kPointWeights[kPoint]*eigenValues[kPoint][i];
-	  if (this_mpi_process == 0) std::printf("partialOccupancy %u: %30.20e \n", i, partialOccupancy);
+	  sprintf(buffer, "%s %u: %0.14f\n", "Fractional Occupancy", i, partialOccupancy);
+	  pcout << buffer;
 	}
     }
+  pcout << "\n"<<std::endl;
   double potentialTimesRho = 0.0, exchangeEnergy = 0.0, correlationEnergy = 0.0, electrostaticEnergyTotPot = 0.0; 
 
   
@@ -45,7 +50,7 @@ void dftClass<FEOrder>::compute_energy()
 	      fe_values.get_function_values(poisson.phiTotRhoOut,cellPhiTotRhoOut);
 	      fe_values.get_function_values(poisson.phiExt,cellPhiExt);
 	  
-	      //Get Exc
+	      // Get exc
 	      std::vector<double> densityValueIn(num_quad_points), densityValueOut(num_quad_points);
 	      std::vector<double> exchangeEnergyDensity(num_quad_points), corrEnergyDensity(num_quad_points);
 	      std::vector<double> derExchEnergyWithInputDensity(num_quad_points), derCorrEnergyWithInputDensity(num_quad_points);
@@ -73,15 +78,15 @@ void dftClass<FEOrder>::compute_energy()
 	      xc_gga_vxc(&funcC,num_quad_points,&densityValueIn[0],&sigmaWithInputGradDensity[0],&derCorrEnergyWithInputDensity[0],&derCorrEnergyWithSigmaGradDenInput[0]);
 	      for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
 		{
-		  //Veff computed with rhoIn
+		  // Veff computed with rhoIn
 		  double Veff=cellPhiTotRhoIn[q_point]+derExchEnergyWithInputDensity[q_point]+derCorrEnergyWithInputDensity[q_point];
 		  double VxcGrad = 2.0*(derExchEnergyWithSigmaGradDenInput[q_point]+derCorrEnergyWithSigmaGradDenInput[q_point])*gradRhoInDotgradRhoOut[q_point];
 
-		  //Vtot, Vext computet with rhoIn
+		  // Vtot, Vext computet with rhoIn
 		  double Vtot=cellPhiTotRhoOut[q_point];
 		  double Vext=cellPhiExt[q_point];
 
-		  //quad rule
+		  // quad rule
 		  potentialTimesRho+=(Veff*((*rhoOutValues)[cell->id()][q_point])+VxcGrad)*fe_values.JxW (q_point);
 		  exchangeEnergy+=(exchangeEnergyDensity[q_point])*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
 		  correlationEnergy+=(corrEnergyDensity[q_point])*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
@@ -106,7 +111,7 @@ void dftClass<FEOrder>::compute_energy()
 	      fe_values.get_function_values(poisson.phiTotRhoOut,cellPhiTotRhoOut);
 	      fe_values.get_function_values(poisson.phiExt,cellPhiExt);
 	  
-	      //Get Exc
+	      // Get Exc
 	      std::vector<double> densityValueIn(num_quad_points), densityValueOut(num_quad_points);
 	      std::vector<double> exchangeEnergyVal(num_quad_points), corrEnergyVal(num_quad_points);
 	      std::vector<double> exchangePotentialVal(num_quad_points), corrPotentialVal(num_quad_points);
@@ -119,11 +124,11 @@ void dftClass<FEOrder>::compute_energy()
 	      xc_lda_exc(&funcC,num_quad_points,&densityValueOut[0],&corrEnergyVal[0]);
 	      xc_lda_vxc(&funcX,num_quad_points,&densityValueIn[0],&exchangePotentialVal[0]);
 	      xc_lda_vxc(&funcC,num_quad_points,&densityValueIn[0],&corrPotentialVal[0]);
-	      for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
+	      for (unsigned int q_point = 0; q_point < num_quad_points; ++q_point)
 		{
-		  //Veff computed with rhoIn
+		  // Veff computed with rhoIn
 		  double Veff=cellPhiTotRhoIn[q_point]+exchangePotentialVal[q_point]+corrPotentialVal[q_point];
-		  //Vtot, Vext computet with rhoIn
+		  // Vtot, Vext computet with rhoIn
 		  double Vtot=cellPhiTotRhoOut[q_point];
 		  double Vext=cellPhiExt[q_point];
 		  potentialTimesRho+=Veff*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW (q_point);
@@ -193,7 +198,7 @@ void dftClass<FEOrder>::compute_energy()
   double totalkineticEnergy=-totalpotentialTimesRho+bandEnergy;
   if (this_mpi_process == 0) {
     std::printf("Total energy:%30.20e \nTotal energy per atom:%30.20e \n", totalEnergy, totalEnergy/((double) atomLocations.size()));
-    std::printf("Band energy:%30.20e \nKinetic energy:%30.20e \nExchange energy:%30.20e \nCorrelation energy:%30.20e \nElectrostatic energy Total Potential:%30.20e \nRepulsive energy:%30.20e \nNuclear Electrostatic Energy:%30.20e \n", bandEnergy, totalkineticEnergy, totalexchangeEnergy, totalcorrelationEnergy, totalelectrostaticEnergyPot, repulsiveEnergy(),totalNuclearElectrostaticEnergy);
+    std::printf("Band energy:%30.20e \nKinetic energy:%30.20e \nExchange energy:%30.20e \nCorrelation energy:%30.20e \nElectrostatic energy Total Potential:%30.20e \nRepulsive energy:%30.20e \nNuclear Electrostatic Energy:%30.20e \n\n", bandEnergy, totalkineticEnergy, totalexchangeEnergy, totalcorrelationEnergy, totalelectrostaticEnergyPot, repulsiveEnergy(),totalNuclearElectrostaticEnergy);
   }
 
 }
@@ -262,11 +267,11 @@ void dftClass<FEOrder>::compute_fermienergy()
       //exit(-1);
     }
 
-  if (this_mpi_process == 0) std::printf("Fermi energy Residual:%30.20e \n", std::abs(R));
+  if (this_mpi_process == 0) std::printf("Fermi energy constraint residual:%30.20e \n", std::abs(R));
 
   //set Fermi energy
   fermiEnergy = fe;
-  if (this_mpi_process == 0) std::printf("Fermi energy:%30.20e \n", fermiEnergy);
+  if (this_mpi_process == 0) std::printf("Fermi energy:%30.20e \n\n", fermiEnergy);
 }
 
 template<unsigned int FEOrder>
