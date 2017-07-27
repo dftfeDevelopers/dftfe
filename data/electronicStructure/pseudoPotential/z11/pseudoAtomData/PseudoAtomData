@@ -1,0 +1,21 @@
+9
+0 0 0 
+1 1 -1 
+1 1 0 
+1 1 1 
+2 2 -2
+2 2 -1
+2 2 0
+2 2 1
+2 2 2
+Na_psi_l0.dat
+Na_psi_l1.dat
+Na_psi_l2.dat
+locPot.dat
+3
+0 0
+1 1
+2 2
+Na_pot_l0.dat
+Na_pot_l1.dat
+Na_pot_l2.dat
