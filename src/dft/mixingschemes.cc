@@ -8,7 +8,7 @@ double dftClass<FEOrder>::mixing_simple()
   QGauss<3>  quadrature(FEOrder+1);
   FEValues<3> fe_values (FE, quadrature, update_values | update_JxW_values | update_quadrature_points);
   const unsigned int num_quad_points = quadrature.size();
-  double alpha=0.5;
+  double alpha=0.1;
   
   //create new rhoValue tables
   std::map<dealii::CellId,std::vector<double> >* rhoInValuesOld = rhoInValues;
