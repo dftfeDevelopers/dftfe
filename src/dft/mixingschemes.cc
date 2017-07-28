@@ -8,7 +8,7 @@ double dftClass<FEOrder>::mixing_simple()
   QGauss<3>  quadrature(FEOrder+1);
   FEValues<3> fe_values (FE, quadrature, update_values | update_JxW_values | update_quadrature_points);
   const unsigned int num_quad_points = quadrature.size();
-  double alpha=0.5;
+  double mixingParameter = 0.1;
   
   //create new rhoValue tables
   std::map<dealii::CellId,std::vector<double> >* rhoInValuesOld = rhoInValues;
@@ -44,14 +44,14 @@ double dftClass<FEOrder>::mixing_simple()
 	      normValue+=std::pow(((*rhoInValuesOld)[cell->id()][q_point])- ((*rhoOutValues)[cell->id()][q_point]),2.0)*fe_values.JxW(q_point);
 	      
 	      //Simple mixing scheme
-	      ((*rhoInValues)[cell->id()][q_point])=std::abs((1-alpha)*(*rhoInValuesOld)[cell->id()][q_point]+ alpha*(*rhoOutValues)[cell->id()][q_point]);
+	      ((*rhoInValues)[cell->id()][q_point])=std::abs((1-mixingParameter)*(*rhoInValuesOld)[cell->id()][q_point]+ mixingParameter*(*rhoOutValues)[cell->id()][q_point]);
 
 
 	      if(xc_id == 4)
 		{
-		  ((*gradRhoInValues)[cell->id()][3*q_point + 0])= ((1-alpha)*(*gradRhoInValuesOld)[cell->id()][3*q_point + 0]+ alpha*(*gradRhoOutValues)[cell->id()][3*q_point + 0]);
-		  ((*gradRhoInValues)[cell->id()][3*q_point + 1])= ((1-alpha)*(*gradRhoInValuesOld)[cell->id()][3*q_point + 1]+ alpha*(*gradRhoOutValues)[cell->id()][3*q_point + 1]);
-		  ((*gradRhoInValues)[cell->id()][3*q_point + 2])= ((1-alpha)*(*gradRhoInValuesOld)[cell->id()][3*q_point + 2]+ alpha*(*gradRhoOutValues)[cell->id()][3*q_point + 2]);
+		  ((*gradRhoInValues)[cell->id()][3*q_point + 0])= ((1-mixingParameter)*(*gradRhoInValuesOld)[cell->id()][3*q_point + 0]+ mixingParameter*(*gradRhoOutValues)[cell->id()][3*q_point + 0]);
+		  ((*gradRhoInValues)[cell->id()][3*q_point + 1])= ((1-mixingParameter)*(*gradRhoInValuesOld)[cell->id()][3*q_point + 1]+ mixingParameter*(*gradRhoOutValues)[cell->id()][3*q_point + 1]);
+		  ((*gradRhoInValues)[cell->id()][3*q_point + 2])= ((1-mixingParameter)*(*gradRhoInValuesOld)[cell->id()][3*q_point + 2]+ mixingParameter*(*gradRhoOutValues)[cell->id()][3*q_point + 2]);
 		}
 
 	    }
@@ -70,10 +70,10 @@ double dftClass<FEOrder>::mixing_anderson(){
   QGauss<3>  quadrature(FEOrder+1);
   FEValues<3> fe_values (FE, quadrature, update_values | update_JxW_values | update_quadrature_points);
   const unsigned int num_quad_points = quadrature.size();
-  double alpha=0.5;
+  double mixingParameter = 0.1;
   
    //initialize data structures
-  int N=rhoOutVals.size()-1;
+  int N = rhoOutVals.size()- 1;
   //pcout << "\nN:" << N << "\n";
   int NRHS=1, lda=N, ldb=N, info;
   std::vector<int> ipiv(N);
@@ -142,7 +142,7 @@ double dftClass<FEOrder>::mixing_anderson(){
 	  rhoOutBar+=cTotal[i]*(*rhoOutVals[N-1-i])[cell->id()][q_point];
 	  rhoInBar+=cTotal[i]*(*rhoInVals[N-1-i])[cell->id()][q_point];
 	}
-	(*rhoInValues)[cell->id()][q_point]=std::abs((1-alpha)*rhoInBar+alpha*rhoOutBar);
+	(*rhoInValues)[cell->id()][q_point]=std::abs((1-mixingParameter)*rhoInBar+mixingParameter*rhoOutBar);
       }
     }
   }
@@ -186,14 +186,16 @@ double dftClass<FEOrder>::mixing_anderson(){
 		      gradRhoZInBar += cTotal[i]*(*gradRhoInVals[N-1-i])[cell->id()][3*q_point + 2];
 		    }
 
-		  (*gradRhoInValues)[cell->id()][3*q_point + 0] = ((1-alpha)*gradRhoXInBar+alpha*gradRhoXOutBar);
-		  (*gradRhoInValues)[cell->id()][3*q_point + 1] = ((1-alpha)*gradRhoYInBar+alpha*gradRhoYOutBar);
-		  (*gradRhoInValues)[cell->id()][3*q_point + 2] = ((1-alpha)*gradRhoZInBar+alpha*gradRhoZOutBar);
+		  (*gradRhoInValues)[cell->id()][3*q_point + 0] = ((1-mixingParameter)*gradRhoXInBar+mixingParameter*gradRhoXOutBar);
+		  (*gradRhoInValues)[cell->id()][3*q_point + 1] = ((1-mixingParameter)*gradRhoYInBar+mixingParameter*gradRhoYOutBar);
+		  (*gradRhoInValues)[cell->id()][3*q_point + 2] = ((1-mixingParameter)*gradRhoZInBar+mixingParameter*gradRhoZOutBar);
 		}
 	    }
 
 	}
     }
+
+  
 
   return Utilities::MPI::sum(normValue, mpi_communicator);
 }
