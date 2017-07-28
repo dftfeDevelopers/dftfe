@@ -5,9 +5,12 @@
 #include <numeric>
 #include <sstream>
 #include <complex>
+#include <deque>
+
 #include "headers.h"
 #include "poisson.h"
 #include "eigen.h"
+
 #include <interpolation.h> 
 #include <xc.h>
 #include <petsc.h>
