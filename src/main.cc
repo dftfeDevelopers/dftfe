@@ -12,9 +12,9 @@
 #include <fstream>
 
 unsigned int finiteElementPolynomialOrder,n_refinement_steps,numberEigenValues,xc_id;
-unsigned int chebyshevOrder,numSCFIterations,maxLinearSolverIterations;
+unsigned int chebyshevOrder,numSCFIterations,maxLinearSolverIterations, mixingHistory;
 
-double radiusAtomBall, domainSizeX, domainSizeY, domainSizeZ;
+double radiusAtomBall, domainSizeX, domainSizeY, domainSizeZ, mixingParameter;
 double lowerEndWantedSpectrum,relLinearSolverTolerance,selfConsistentSolverTolerance,TVal;
 
 bool isPseudopotential,periodicX,periodicY,periodicZ;
@@ -143,6 +143,14 @@ void declare_parameters()
 		    Patterns::Double(),
 		    "SCF iterations stopping tolerance in terms of electron-density difference between two successive iterations");
 
+  prm.declare_entry("ANDERSON SCHEME MIXING HISTORY", "70",
+		    Patterns::Integer(),
+		    "Number of SCF iterations to be considered for mixing the electron-density");
+
+  prm.declare_entry("ANDERSON SCHEME MIXING PARAMETER", "0.5",
+		    Patterns::Double(0.0,1.0),
+		    "Mixing parameter to be used in Anderson scheme");
+
   prm.declare_entry("POISSON SOLVER CONVERGENCE MAXIMUM ITERATIONS", "5000",
 		    Patterns::Integer(),
 		    "Maximum number of iterations to be allowed for Poisson problem convergence");
@@ -208,6 +216,8 @@ void parse_command_line(const int argc,
 	  chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");  
 	  numSCFIterations              = prm.get_integer("SCF CONVERGENCE MAXIMUM ITERATIONS");
 	  selfConsistentSolverTolerance = prm.get_double("SCF CONVERGENCE TOLERANCE");
+	  mixingHistory                 = prm.get_integer("ANDERSON SCHEME MIXING HISTORY");
+	  mixingParameter               = prm.get_double("ANDERSON SCHEME MIXING PARAMETER");
 	  TVal                          = prm.get_double("TEMPERATURE");	
 	  maxLinearSolverIterations     = prm.get_integer("POISSON SOLVER CONVERGENCE MAXIMUM ITERATIONS");
 	  relLinearSolverTolerance      = prm.get_double("POISSON SOLVER CONVERGENCE TOLERANCE");

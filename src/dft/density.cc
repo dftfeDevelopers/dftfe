@@ -139,4 +139,13 @@ void dftClass<FEOrder>::compute_rhoOut()
 
     }
 
+  //pop out rhoInVals and rhoOutVals if their size exceeds mixing history size
+  if(rhoInVals.size() == mixingHistory)
+    {
+      rhoInVals.pop_front();
+      rhoOutVals.pop_front();
+      gradRhoInVals.pop_front();
+      gradRhoOutVals.pop_front();
+    }
+
 }

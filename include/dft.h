@@ -225,12 +225,12 @@ class dftClass
   
   //dft related objects
   std::map<dealii::CellId, std::vector<double> > *rhoInValues, *rhoOutValues;
-  std::vector<std::map<dealii::CellId,std::vector<double> >*> rhoInVals, rhoOutVals;
+  std::deque<std::map<dealii::CellId,std::vector<double> >*> rhoInVals, rhoOutVals;
 
   std::map<dealii::CellId, std::vector<double> > *gradRhoInValues;
   std::map<dealii::CellId, std::vector<double> > *gradRhoOutValues;
-  std::vector<std::map<dealii::CellId,std::vector<double> >*> gradRhoInVals; 
-  std::vector<std::map<dealii::CellId,std::vector<double> >*> gradRhoOutVals;
+  std::deque<std::map<dealii::CellId,std::vector<double> >*> gradRhoInVals,gradRhoOutVals; 
+
 
 
   std::map<dealii::CellId, std::vector<double> > *pseudoValues;
