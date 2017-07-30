@@ -115,12 +115,17 @@ void poissonClass<FEOrder>::computeRHS2()
     }
   rhs2.compress(VectorOperation::add);
   jacobianDiagonal.compress(VectorOperation::add);
+
   //remove zero entries of the jacobianDiagonal which occur at the hanging nodes
   for (unsigned int i=0; i<jacobianDiagonal.local_size(); i++)
     {
       if (std::abs(jacobianDiagonal.local_element(i))<1.0e-15)
 	{
 	  jacobianDiagonal.local_element(i)=1.0;
+	}
+      else
+	{
+	  jacobianDiagonal.local_element(i) = 1.0/jacobianDiagonal.local_element(i);
 	}
     }
   jacobianDiagonal.update_ghost_values();
@@ -233,7 +238,7 @@ void poissonClass<FEOrder>::computeRHS(std::map<dealii::CellId,std::vector<doubl
 	      if(!constraintMatrix->is_identity_constrained(i))
 		{
 		  if(rhoValues) rhs(i)=0.0;
-		  else rhs(i)=constraintMatrix->get_inhomogeneity(i)*jacobianDiagonal(i);
+		  else rhs(i)=constraintMatrix->get_inhomogeneity(i)/jacobianDiagonal(i);
 		}
 	    }
 	}
@@ -346,7 +351,8 @@ void poissonClass<FEOrder>::vmult(vectorType &dst, const vectorType &src) const
 template<unsigned int FEOrder>
 void poissonClass<FEOrder>::precondition_Jacobi(vectorType& dst, const vectorType& src, const double omega) const
 {
-  dst.ratio(src, jacobianDiagonal);
+  dst = src;
+  dst.scale(jacobianDiagonal);
 }
 
 //

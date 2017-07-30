@@ -3,7 +3,7 @@ set -e
 set -o pipefail
 #script to setup and build DFT-FE 
 #set CMAKE path
-cmake=/sw/arcts/centos7/cmake/3.5.2/bin/cmake
+cmake=/usr/bin/cmake
 #
 #Usually, no changes are needed below this line
 #

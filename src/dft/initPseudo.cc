@@ -141,7 +141,7 @@ void dftClass<FEOrder>::initLocalPseudoPotential()
 	  double *pseudoValuesPtr = &((*pseudoValues)[cell->id()][0]);
 	  for (unsigned int q = 0; q < n_q_points; ++q)
 	    {
-	      MappingQ<3> test(1); 
+	      MappingQ1<3,3> test; 
 	      Point<3> quadPoint(test.transform_unit_to_real_cell(cell, fe_values.get_quadrature().point(q)));
 	      double pseudoValueAtQuadPt=0.0;
 	      //loop over atoms
@@ -782,7 +782,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
 		  const int globalSplineId = d_deltaVlIdToFunctionIdDetails[pseudoPotentialId][0];
 		  for(int iQuadPoint = 0; iQuadPoint < numberQuadraturePoints; ++iQuadPoint)
 		    {
-		      MappingQ<3> test(1);
+		      MappingQ1<3,3> test;
 		      Point<3> quadPoint(test.transform_unit_to_real_cell(cell, fe_values.get_quadrature().point(iQuadPoint)));
 		      
 		      for(int iImageAtomCount = 0; iImageAtomCount < imageIdsList.size(); ++iImageAtomCount)
@@ -1003,7 +1003,7 @@ void dftClass<FEOrder>::computeElementalProjectorKets()
 	      for(int iQuadPoint = 0; iQuadPoint < numberQuadraturePoints; ++iQuadPoint)
 		{
 
-		  MappingQ<3> test(1);
+		  MappingQ1<3,3> test;
 		  Point<3> quadPoint(test.transform_unit_to_real_cell(cell, fe_values.get_quadrature().point(iQuadPoint)));
 
 		  for(int iImageAtomCount = 0; iImageAtomCount < imageIdsList.size(); ++iImageAtomCount)

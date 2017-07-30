@@ -69,7 +69,7 @@ void dftClass<FEOrder>::initRho()
 	  double *rhoInValuesPtr = &((*rhoInValues)[cell->id()][0]);
 	  for (unsigned int q = 0; q < n_q_points; ++q)
 	    {
-	      MappingQ<3> test(1); 
+	      MappingQ1<3,3> test; 
 	      Point<3> quadPoint(test.transform_unit_to_real_cell(cell, fe_values.get_quadrature().point(q)));
 	      double rhoValueAtQuadPt = 0.0;
 
@@ -130,7 +130,7 @@ void dftClass<FEOrder>::initRho()
 
 	      for (unsigned int q = 0; q < n_q_points; ++q)
 		{
-		  MappingQ<3> test(1); 
+		  MappingQ1<3,3> test; 
 		  Point<3> quadPoint(test.transform_unit_to_real_cell(cell, fe_values.get_quadrature().point(q)));
 		  double gradRhoXValueAtQuadPt = 0.0;
 		  double gradRhoYValueAtQuadPt = 0.0;
