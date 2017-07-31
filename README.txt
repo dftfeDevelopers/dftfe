@@ -16,7 +16,7 @@ Installation:
 
   -- http://www.alglib.net/
       * Download Alglib free C++ edition
-      * After downloading $HOME/alglib/cpp/src, create shared library by first compiling all cpp files and then linking them to a shared library.
+      * After downloading go to $HOME/alglib/cpp/src, create shared library by first compiling all cpp files and then linking them to a shared library.
             Eg: To compile using g++ compiler do "g++ -c -fPIC *.cpp" and then to link into a shared library do "g++ *.o -shared -o libAlglib.so"
 
   -- http://octopus-code.org/wiki/Libxc
