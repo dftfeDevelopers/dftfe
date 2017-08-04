@@ -312,22 +312,22 @@ void dftClass<FEOrder>::generateImageCharges()
   //
   //get the maximum of the magnitudes
   //
-  double maxMagnitude = magnitude1;
-  if(magnitude1 <= magnitude2)
-    maxMagnitude = magnitude2;
-  else if(magnitude1 <= magnitude3)
-    maxMagnitude = magnitude3;
+  double minMagnitude = magnitude1;
+  if(magnitude1 >= magnitude2)
+    minMagnitude = magnitude2;
+  else if(magnitude1 >= magnitude3)
+    minMagnitude = magnitude3;
 
-  if(magnitude2 <= magnitude3)
+  if(magnitude2 >= magnitude3)
     {
-      if(magnitude1 <= magnitude3)
-	maxMagnitude = magnitude3;
+      if(magnitude1 >= magnitude3)
+	minMagnitude = magnitude3;
     }
 
   //
   //compute the ratio between pspCutOff and maxMagnitude and multiply by a factor 2 to decide number of image atom layers
   //
-  double ratio = pspCutOff/maxMagnitude;
+  double ratio = pspCutOff/minMagnitude;
   int numberLayers = std::ceil(ratio*2);
   
 
