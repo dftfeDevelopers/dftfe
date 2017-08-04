@@ -299,8 +299,38 @@ template<unsigned int FEOrder>
 void dftClass<FEOrder>::generateImageCharges()
 { 
 
-  const double pspCutOff = 15.0;
+  const double pspCutOff = 20.0;
   const double tol = 1e-4;
+
+  //
+  //get the magnitude of lattice Vectors
+  //
+  double magnitude1 = sqrt(d_latticeVectors[0][0]*d_latticeVectors[0][0] +  d_latticeVectors[0][1]*d_latticeVectors[0][1] + d_latticeVectors[0][2]*d_latticeVectors[0][2]);
+  double magnitude2 = sqrt(d_latticeVectors[1][0]*d_latticeVectors[1][0] +  d_latticeVectors[1][1]*d_latticeVectors[1][1] + d_latticeVectors[1][2]*d_latticeVectors[1][2]);
+  double magnitude3 = sqrt(d_latticeVectors[2][0]*d_latticeVectors[2][0] +  d_latticeVectors[2][1]*d_latticeVectors[2][1] + d_latticeVectors[2][2]*d_latticeVectors[2][2]);
+
+  //
+  //get the maximum of the magnitudes
+  //
+  double maxMagnitude = magnitude1;
+  if(magnitude1 <= magnitude2)
+    maxMagnitude = magnitude2;
+  else if(magnitude1 <= magnitude3)
+    maxMagnitude = magnitude3;
+
+  if(magnitude2 <= magnitude3)
+    {
+      if(magnitude1 <= magnitude3)
+	maxMagnitude = magnitude3;
+    }
+
+  //
+  //compute the ratio between pspCutOff and maxMagnitude and multiply by a factor 2 to decide number of image atom layers
+  //
+  double ratio = pspCutOff/maxMagnitude;
+  int numberLayers = std::ceil(ratio*2);
+  
+
 
   //
   // get origin/centroid of the cell
@@ -341,19 +371,25 @@ void dftClass<FEOrder>::generateImageCharges()
       const double fracY = atomLocations[i][3];
       const double fracZ = atomLocations[i][4];
 
-      int izmax = 3;
-      int iymax = 3;
-      int ixmax = 3;
+      int izmin = -numberLayers;
+      int iymin = -numberLayers;
+      int ixmin = -numberLayers;
 
-      for(int iz = -2; iz < 3; ++iz)
+      int izmax = numberLayers+1;
+      int iymax = numberLayers+1;
+      int ixmax = numberLayers+1;
+     
+
+
+      for(int iz = izmin; iz < izmax; ++iz)
 	{
 	  if(periodicZ == 0)
 	    iz = izmax;
-	  for(int iy = -2; iy < 3; ++iy)
+	  for(int iy = iymin; iy < iymax; ++iy)
 	    {
 	      if(periodicY == 0)
 		iy = iymax;
-	      for(int ix = -2; ix < 3; ++ix)
+	      for(int ix = ixmin; ix < ixmax; ++ix)
 		{
 		  if(periodicX == 0)
 		    ix = ixmax;
