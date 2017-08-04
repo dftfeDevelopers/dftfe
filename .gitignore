@@ -32,6 +32,7 @@
 *~
 *.swp
 *.nfs*
+.*.swp
 
 #CMAKE files
 *.cmake
