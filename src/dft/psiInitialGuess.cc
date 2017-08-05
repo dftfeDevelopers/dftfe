@@ -126,84 +126,91 @@ void dftClass<FEOrder>::determineOrbitalFilling()
   int totalNumberWaveFunctions = numEigenValues;
   unsigned int fileReadFlag = 0;
   unsigned int waveFunctionCount = 0;
-  unsigned int extraWaveFunctionsPerAtom = 2;
-  
+  unsigned int extraWaveFunctionsPerAtom = 0;
+  unsigned int numberAtoms = atomLocations.size();
+  unsigned int errorReadFile = 0;
+  std::vector<unsigned int> numberAtomicWaveFunctions(numberAtoms,0.0);
+  std::vector<unsigned int> levels(numberAtoms,0.0);
+
   //
   //loop over atoms
   //
-  numLevels = 0;
-  for(unsigned int z = 0; z < atomLocations.size(); z++)
+  for(unsigned int iAtom = 0; iAtom < numberAtoms; iAtom++)
     {
-      unsigned int Z = atomLocations[z][0];
-      unsigned int valenceZ = atomLocations[z][1];
-      unsigned int numberAtomicWaveFunctions;  
+      unsigned int Z = atomLocations[iAtom][0];
+      unsigned int valenceZ = atomLocations[iAtom][1];
+      unsigned int numberAtomFunctions; 
 
       if(isPseudopotential)
 	{
-	  numberAtomicWaveFunctions = std::ceil(valenceZ/2.0) + extraWaveFunctionsPerAtom;
+	  numberAtomFunctions = std::ceil(valenceZ/2.0) + extraWaveFunctionsPerAtom;
 	  numElectrons += valenceZ;
 	}
       else
 	{
-	  numberAtomicWaveFunctions = std::ceil(Z/2.0) + extraWaveFunctionsPerAtom;
+	  numberAtomFunctions = std::ceil(Z/2.0) + extraWaveFunctionsPerAtom;
 	  numElectrons += Z;
 	}
 
-      numLevels += numberAtomicWaveFunctions;
-    
-      //
-      //fill levels
-      //
-      bool printLevels=false;
-      if (radValues.count(Z)==0)
-	{
-	  printLevels=true;
-	  pcout << "Z:" << Z << std::endl;
-	}
+      numberAtomicWaveFunctions[iAtom] = numberAtomFunctions;
+    }
 
-      unsigned int levels = 0;
-      unsigned int errorReadFile = 0;
-      for (std::vector<std::vector<unsigned int> >::iterator it = stencil.begin(); it < stencil.end(); it++)
-	{
-	  unsigned int n = (*it)[0], l = (*it)[1];
 
-	  //
-	  //load PSI files
-	  //
-	  loadPSIFiles(Z, n, l,fileReadFlag);
-	  
-	  //
-	  //m loop
-	  //
-	  if(fileReadFlag > 0)
+  for (std::vector<std::vector<unsigned int> >::iterator it = stencil.begin(); it < stencil.end(); it++)
+    {
+      unsigned int n = (*it)[0], l = (*it)[1];
+
+      for (int m = -l; m <= (int) l; m++)
+	{
+	  for(unsigned int iAtom = 0; iAtom < numberAtoms; iAtom++)
 	    {
-	      for (int m = -l; m <= (int) l; m++)
+	      unsigned int Z = atomLocations[iAtom][0];
+
+	      //
+	      //fill levels
+	      //
+	      if(radValues.count(Z)==0)
+		{
+		  pcout << "Z:" << Z << std::endl;
+		}
+	      
+	      //
+	      //load PSI files
+	      //
+	      loadPSIFiles(Z, n, l,fileReadFlag);
+
+	      if(fileReadFlag > 0 && (levels[iAtom] < numberAtomicWaveFunctions[iAtom]))
 		{
 		  orbital temp;
-		  temp.atomID=z;
+		  temp.atomID = iAtom;
 		  temp.Z = Z; temp.n = n; temp.l = l; temp.m = m; temp.psi = radValues[Z][n][l];
-		  waveFunctionsVector.push_back(temp); levels++; waveFunctionCount++;
-		  if(printLevels) pcout << " n:" << n  << " l:" << l << " m:" << m << std::endl;
-		  if(levels >= numberAtomicWaveFunctions || waveFunctionCount >= numEigenValues) break;
+		  waveFunctionsVector.push_back(temp); levels[iAtom]++; waveFunctionCount++;
+		  if(waveFunctionCount >= numEigenValues && waveFunctionCount >= numberAtoms) break;
 		}
+	      
 	    }
 
-	  if(levels >= numberAtomicWaveFunctions || waveFunctionCount >= numEigenValues) break;
-	  
-	  if(fileReadFlag == 0)
-	    {
-	      errorReadFile += 1;
-	    }
+	  if(waveFunctionCount >= numEigenValues && waveFunctionCount >= numberAtoms) break;
 	}
 
-      if(errorReadFile == stencil.size())
-	{
-	  std::cerr<< "Error: Require single-atom wavefunctions as initial guess for starting the SCF."<< std::endl;
-	  std::cerr<< "Error: Could not find single-atom wavefunctions for the atom with atomic number: "<< Z << std::endl;
-	  exit(-1);
-	}
-	
+      if(waveFunctionCount >= numEigenValues && waveFunctionCount >= numberAtoms) break;
+
+      if(fileReadFlag == 0)
+	errorReadFile += 1;
     }
+
+  if(errorReadFile == stencil.size())
+    {
+      std::cerr<< "Error: Require single-atom wavefunctions as initial guess for starting the SCF."<< std::endl;
+      std::cerr<< "Error: Could not find single-atom wavefunctions for any atom: "<< std::endl;
+      exit(-1);
+    }
+  
+  if(waveFunctionsVector.size() > numEigenValues)
+    {
+      numEigenValues = waveFunctionsVector.size();
+    }
+  
 
   pcout<<"============================================================================================================================="<<std::endl;
   pcout<<"Number of electrons: "<<numElectrons<<std::endl;
