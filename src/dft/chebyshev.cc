@@ -169,7 +169,7 @@ void dftClass<FEOrder>::chebyshevSolver()
       chebyshevOrder = 50;*/
 
       if(bUp <= 500)
-	chebyshevOrder = 30;
+	chebyshevOrder = 40;
       else if(bUp > 500  && bUp <= 1000)
 	chebyshevOrder = 50;
       else if(bUp > 1000 && bUp <= 2000)
