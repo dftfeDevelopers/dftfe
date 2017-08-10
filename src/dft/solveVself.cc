@@ -14,10 +14,34 @@ void dftClass<FEOrder>::solveVself()
   pcout<<"Size of support points: "<<d_supportPoints.size()<<std::endl;
 
   std::map<dealii::types::global_dof_index, int>::iterator iterMap;
+
   for(int iBin = 0; iBin < numberBins; ++iBin)
     {
       int constraintMatrixId = iBin + 2;
       matrix_free_data.initialize_dof_vector(poisson.vselfBinScratch,constraintMatrixId);
+
+      std::map<types::global_dof_index,Point<3> >::iterator iterNodalCoorMap;
+      std::map<dealii::types::global_dof_index, int> & vSelfBinNodeMap = d_vselfBinField[iBin];
+
+      //
+      //set initial guess to vSelfBinScratch
+      //
+      for(iterNodalCoorMap = d_supportPoints.begin(); iterNodalCoorMap != d_supportPoints.end(); ++iterNodalCoorMap)
+	{
+	  if(poisson.vselfBinScratch.in_local_range(iterNodalCoorMap->first))
+	    {
+	      iterMap = vSelfBinNodeMap.find(iterNodalCoorMap->first);
+	      if(iterMap != vSelfBinNodeMap.end())
+		{
+		  poisson.vselfBinScratch(iterNodalCoorMap->first) = iterMap->second;
+		}
+	      
+	    }
+	}
+
+      //
+      //call the poisson solver to compute vSelf in each bin
+      //
       poisson.solve(poisson.vselfBinScratch,constraintMatrixId);
 
       std::set<int> & atomsInBinSet = d_bins[iBin];
@@ -28,7 +52,9 @@ void dftClass<FEOrder>::solveVself()
       int numberImageAtomsInBin = imageIdsOfAtomsInCurrentBin.size();
 
       std::map<dealii::types::global_dof_index, int> & boundaryNodeMap = d_boundaryFlag[iBin];
-      std::map<types::global_dof_index,Point<3> >::iterator iterNodalCoorMap;
+       
+
+     
 
       int inNodes =0, outNodes = 0;
       for(iterNodalCoorMap = d_supportPoints.begin(); iterNodalCoorMap != d_supportPoints.end(); ++iterNodalCoorMap)

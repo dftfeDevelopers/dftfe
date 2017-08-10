@@ -344,6 +344,7 @@ void dftClass<FEOrder>::createAtomBins(std::vector<const ConstraintMatrix * > & 
   //std::vector<std::vector<int> > imageIdsInBins;
   d_imageIdsInBins.resize(numberBins);
   d_boundaryFlag.resize(numberBins);
+  d_vselfBinField.resize(numberBins);
   
   //
   //set constraint matrices for each bin
@@ -448,11 +449,34 @@ void dftClass<FEOrder>::createAtomBins(std::vector<const ConstraintMatrix * > & 
 		chargeId = imageIdsOfAtomsInCurrentBin[minDistanceAtomId-numberGlobalAtomsInBin]+numberGlobalAtoms;
 
 	      std::map<dealii::types::global_dof_index, int> & boundaryNodeMap = d_boundaryFlag[iBin];
+	      std::map<dealii::types::global_dof_index, int> & vSelfBinNodeMap = d_vselfBinField[iBin];
 	   
 	      if(minDistance < radiusAtomBall)
 		{
-		  boundaryNodeMap[iterMap->first]=chargeId;
+		  boundaryNodeMap[iterMap->first] = chargeId;
 		  inNodes++;
+		  
+		  double atomCharge;
+
+		  if(minDistanceAtomId < numberGlobalAtomsInBin)
+		    {
+		      if(isPseudopotential)
+			atomCharge = atomLocations[chargeId][1];
+		      else
+			atomCharge = atomLocations[chargeId][0];
+		    }
+		  else
+		    atomCharge = imageChargeValues[imageIdsOfAtomsInCurrentBin[minDistanceAtomId-numberGlobalAtomsInBin]];
+
+		  if(minDistance <= 1e-05)
+		    {
+		      vSelfBinNodeMap[iterMap->first] = 0.0;
+		    }
+		  else
+		    {
+		      vSelfBinNodeMap[iterMap->first] = -atomCharge/minDistance;
+		    }
+
 		}
 	      else
 		{
@@ -472,6 +496,7 @@ void dftClass<FEOrder>::createAtomBins(std::vector<const ConstraintMatrix * > & 
 		  constraintsForVselfInBin->add_line(iterMap->first);
 		  constraintsForVselfInBin->set_inhomogeneity(iterMap->first,potentialValue);
 		  boundaryNodeMap[iterMap->first] = -1;
+		  vSelfBinNodeMap[iterMap->first] = potentialValue;
 		  outNodes++;
 
 		}//else loop

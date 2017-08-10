@@ -374,8 +374,10 @@ void poissonClass<FEOrder>::solve(vectorType& phi, int constraintMatrixId, std::
   computing_timer.enter_section("poissonClass solve"); 
   SolverControl solver_control(maxLinearSolverIterations,relLinearSolverTolerance*rhs.l2_norm());
   SolverCG<vectorType> solver(solver_control);
+  //SolverBicgstab<vectorType> solver(solver_control);
+  
   PreconditionJacobi<poissonClass<FEOrder> > preconditioner;
-  preconditioner.initialize (*this, 0.6);
+  preconditioner.initialize (*this, 1.0);
   try{
     phi=0.0;
     //solver.solve(*this, phi, rhs, IdentityMatrix(rhs.size()));
