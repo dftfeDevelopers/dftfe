@@ -155,7 +155,7 @@ void dftClass<FEOrder>::chebyshevSolver()
   //
   if(chebyshevOrder == 0)
     {
-      if(bUp >= 1e5)
+      /*if(bUp >= 1e5)
 	chebyshevOrder = 1500;
       else if(bUp >= 2e4 && bUp < 1e5)
 	chebyshevOrder = 800;
@@ -166,7 +166,37 @@ void dftClass<FEOrder>::chebyshevSolver()
       else if(bUp >= 6e2 && bUp < 2e3)
 	chebyshevOrder = 100;
       else if(bUp < 6e2)
+      chebyshevOrder = 50;*/
+
+      if(bUp <= 500)
+	chebyshevOrder = 40;
+      else if(bUp > 500  && bUp <= 1000)
 	chebyshevOrder = 50;
+      else if(bUp > 1000 && bUp <= 2000)
+	chebyshevOrder = 80;
+      else if(bUp > 2000 && bUp <= 5000)
+	chebyshevOrder = 150;
+      else if(bUp > 5000 && bUp <= 9000)
+	chebyshevOrder = 200;
+      else if(bUp > 9000 && bUp <= 14000)
+	chebyshevOrder = 250;
+      else if(bUp > 14000 && bUp <= 20000)
+	chebyshevOrder = 300;
+      else if(bUp > 20000 && bUp <= 30000)
+	chebyshevOrder = 350;
+      else if(bUp > 30000 && bUp <= 50000)
+	chebyshevOrder = 450;
+      else if(bUp > 50000 && bUp <= 80000)
+	chebyshevOrder = 550;
+      else if(bUp > 80000 && bUp <= 1e5)
+	chebyshevOrder = 800;
+      else if(bUp > 1e5 && bUp <= 2e5)
+	chebyshevOrder = 1000;
+      else if(bUp > 2e5 && bUp <= 5e5)
+	chebyshevOrder = 1250;
+      else if(bUp > 5e5)
+	chebyshevOrder = 1500;
+
     }
 
   //
