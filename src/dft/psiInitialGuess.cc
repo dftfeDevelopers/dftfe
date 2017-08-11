@@ -126,11 +126,11 @@ void dftClass<FEOrder>::determineOrbitalFilling()
   int totalNumberWaveFunctions = numEigenValues;
   unsigned int fileReadFlag = 0;
   unsigned int waveFunctionCount = 0;
-  unsigned int extraWaveFunctionsPerAtom = 0;
+  //unsigned int extraWaveFunctionsPerAtom = 0;
   unsigned int numberAtoms = atomLocations.size();
   unsigned int errorReadFile = 0;
-  std::vector<unsigned int> numberAtomicWaveFunctions(numberAtoms,0.0);
-  std::vector<unsigned int> levels(numberAtoms,0.0);
+  //std::vector<unsigned int> numberAtomicWaveFunctions(numberAtoms,0.0);
+  //std::vector<unsigned int> levels(numberAtoms,0.0);
 
   //
   //loop over atoms
@@ -143,16 +143,16 @@ void dftClass<FEOrder>::determineOrbitalFilling()
 
       if(isPseudopotential)
 	{
-	  numberAtomFunctions = std::ceil(valenceZ/2.0) + extraWaveFunctionsPerAtom;
+	  //numberAtomFunctions = std::ceil(valenceZ/2.0) + extraWaveFunctionsPerAtom;
 	  numElectrons += valenceZ;
 	}
       else
 	{
-	  numberAtomFunctions = std::ceil(Z/2.0) + extraWaveFunctionsPerAtom;
+	  //numberAtomFunctions = std::ceil(Z/2.0) + extraWaveFunctionsPerAtom;
 	  numElectrons += Z;
 	}
 
-      numberAtomicWaveFunctions[iAtom] = numberAtomFunctions;
+      //numberAtomicWaveFunctions[iAtom] = numberAtomFunctions;
     }
 
 
@@ -179,12 +179,12 @@ void dftClass<FEOrder>::determineOrbitalFilling()
 	      //
 	      loadPSIFiles(Z, n, l,fileReadFlag);
 
-	      if(fileReadFlag > 0 && (levels[iAtom] < numberAtomicWaveFunctions[iAtom]))
+	      if(fileReadFlag > 0)
 		{
 		  orbital temp;
 		  temp.atomID = iAtom;
 		  temp.Z = Z; temp.n = n; temp.l = l; temp.m = m; temp.psi = radValues[Z][n][l];
-		  waveFunctionsVector.push_back(temp); levels[iAtom]++; waveFunctionCount++;
+		  waveFunctionsVector.push_back(temp); waveFunctionCount++;
 		  if(waveFunctionCount >= numEigenValues && waveFunctionCount >= numberAtoms) break;
 		}
 	      
