@@ -102,52 +102,10 @@ void poissonClass<FEOrder>::computeRHS2()
 	    {
 	      dftPtr->constraintsNone.distribute_local_to_global(elementalrhs, local_dof_indices, rhs2);
 	    }
-	  //jacobianDiagonal
-	  /*elementalJacobianDiagonal=0.0;
-	  for (unsigned int i=0; i<dofs_per_cell; ++i)
-	    {
-	      for (unsigned int q_point=0; q_point<num_quad_points; ++q_point){
-		elementalJacobianDiagonal(i) += (1.0/(4.0*M_PI))*(fe_values.shape_grad(i, q_point)*fe_values.shape_grad (i, q_point))*fe_values.JxW(q_point);
-	      }
-	    }
-	  dftPtr->constraintsNone.distribute_local_to_global(elementalJacobianDiagonal, local_dof_indices, jacobianDiagonal);*/
+	  
 	}
     }
   rhs2.compress(VectorOperation::add);
-  //jacobianDiagonal.compress(VectorOperation::add);
-
-  //remove zero entries of the jacobianDiagonal which occur at the hanging nodes
-  /*for (unsigned int i = 0; i<jacobianDiagonal.local_size(); i++)
-    {
-      if (std::abs(jacobianDiagonal.local_element(i)) < 1.0e-15)
-	{
-	  jacobianDiagonal.local_element(i)=1.0;
-	}
-      else
-	{
-	  jacobianDiagonal.local_element(i) = 1.0/jacobianDiagonal.local_element(i);
-	}
-	}*/
-
-  /*for(types::global_dof_index i = 0; i < jacobianDiagonal.size(); ++i)
-    {
-      if(jacobianDiagonal.in_local_range(i))
-	{
-	  if(constraintMatrix->is_constrained(i))
-	    {
-	      if(!constraintMatrix->is_identity_constrained(i))
-		{
-		  jacobianDiagonal(i) = 1.0;
-		}
-	    }
-	  else
-	    {
-	      jacobianDiagonal(i) = 1.0/jacobianDiagonal(i);
-	    }
-	}
-    }
-
-    jacobianDiagonal.update_ghost_values();*/
   //pcout << "rhs2: " << rhs2.l2_norm() << std::endl;
   computing_timer.exit_section("PoissonClass rhs2 assembly");
 }
@@ -258,14 +216,7 @@ void poissonClass<FEOrder>::computeRHS(std::map<dealii::CellId,std::vector<doubl
   rhs.compress(VectorOperation::add);
   jacobianDiagonal.compress(VectorOperation::add);
 
-  //Set RHS values corresponding to Dirichlet BC's
-  /*for (std::map<dealii::types::global_dof_index, double>::const_iterator it=values1byR.begin(); it!=values1byR.end(); ++it){
-    if (rhs.in_local_range(it->first)){
-      if (rhoValues) rhs(it->first)=0.0;
-      else rhs(it->first)=it->second*jacobianDiagonal(it->first);
-    }
-    }*/
-
+  
   for(types::global_dof_index i = 0; i < rhs.size(); ++i)
     {
       if(rhs.in_local_range(i))
@@ -275,7 +226,7 @@ void poissonClass<FEOrder>::computeRHS(std::map<dealii::CellId,std::vector<doubl
 	      if(!constraintMatrix->is_identity_constrained(i))
 		{
 		  if(rhoValues) rhs(i) = 0.0;
-		  else rhs(i) = constraintMatrix->get_inhomogeneity(i);//*jacobianDiagonal(i);
+		  else rhs(i) = constraintMatrix->get_inhomogeneity(i);
 		}
 	    }
 	}
