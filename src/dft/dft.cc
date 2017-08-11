@@ -292,6 +292,7 @@ void dftClass<FEOrder>::run ()
       poisson.solve(poisson.phiTotRhoIn,constraintMatrixId,rhoInValues);
       //pcout<<"L-2 Norm of Phi-in   : "<<poisson.phiTotRhoIn.l2_norm()<<std::endl;
       //pcout<<"L-inf Norm of Phi-in : "<<poisson.phiTotRhoIn.linfty_norm()<<std::endl;
+
       //visualise
       DataOut<3> data_out;
       data_out.attach_dof_handler (dofHandler);

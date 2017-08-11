@@ -177,7 +177,9 @@ void poissonClass<FEOrder>::computeRHS(std::map<dealii::CellId,std::vector<doubl
 		  elementalJacobianDiagonal(i) += (1.0/(4.0*M_PI))*(fe_values.shape_grad(i, q_point)*fe_values.shape_grad (i, q_point))*fe_values.JxW(q_point);
 		}
 	    }
+
 	  dftPtr->constraintsNone.distribute_local_to_global(elementalJacobianDiagonal, local_dof_indices, jacobianDiagonal);
+
 	}
     }
 
@@ -215,7 +217,8 @@ void poissonClass<FEOrder>::computeRHS(std::map<dealii::CellId,std::vector<doubl
   //
   rhs.compress(VectorOperation::add);
   jacobianDiagonal.compress(VectorOperation::add);
-
+  dftPtr->constraintsNone.distribute(jacobianDiagonal);
+  
   
   for(types::global_dof_index i = 0; i < rhs.size(); ++i)
     {
