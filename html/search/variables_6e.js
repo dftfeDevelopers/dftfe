@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['n',['N',['http://www.dealii.org/8.5.0/doxygen/deal.tag/classFESeries_1_1Legendre.html#a5f0d3f72d2d64597cc06a84d8e247a8c',1,'FESeries::Legendre::N()'],['../structorbital.html#a2380e3d87136c8eb66c6d88e1ab56f79',1,'orbital::n()']]],
+  ['n',['n',['../structorbital.html#a2380e3d87136c8eb66c6d88e1ab56f79',1,'orbital::n()'],['http://www.dealii.org/8.5.0/doxygen/deal.tag/classFESeries_1_1Legendre.html#a5f0d3f72d2d64597cc06a84d8e247a8c',1,'FESeries::Legendre::N()']]],
   ['n_5factive_5fhexes',['n_active_hexes',['http://www.dealii.org/8.5.0/doxygen/deal.tag/structinternal_1_1Triangulation_1_1NumberCache_3_013_01_4.html#abf1eebb57c7041b1073264b678bd8fef',1,'internal::Triangulation::NumberCache&lt; 3 &gt;']]],
   ['n_5factive_5fhexes_5flevel',['n_active_hexes_level',['http://www.dealii.org/8.5.0/doxygen/deal.tag/structinternal_1_1Triangulation_1_1NumberCache_3_013_01_4.html#a5eff2ad7330fb973aad769cc9a71e916',1,'internal::Triangulation::NumberCache&lt; 3 &gt;']]],
   ['n_5factive_5flines',['n_active_lines',['http://www.dealii.org/8.5.0/doxygen/deal.tag/structinternal_1_1Triangulation_1_1NumberCache_3_011_01_4.html#a173826ecf18fa1353fed5ab632900dfa',1,'internal::Triangulation::NumberCache&lt; 1 &gt;']]],

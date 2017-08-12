@@ -53,7 +53,6 @@ var searchData=
   ['point_5fvalue_5fhistory_2ecc',['point_value_history.cc',['http://www.dealii.org/8.5.0/doxygen/deal.tag/point__value__history_8cc.html',1,'']]],
   ['point_5fvalue_5fhistory_2eh',['point_value_history.h',['http://www.dealii.org/8.5.0/doxygen/deal.tag/point__value__history_8h.html',1,'']]],
   ['pointer_5fmatrix_2eh',['pointer_matrix.h',['http://www.dealii.org/8.5.0/doxygen/deal.tag/pointer__matrix_8h.html',1,'']]],
-  ['poisson_2ebak_2ecc',['poisson.bak.cc',['../poisson_8bak_8cc.html',1,'']]],
   ['poisson_2ecc',['poisson.cc',['../poisson_8cc.html',1,'']]],
   ['poisson_2eh',['poisson.h',['../poisson_8h.html',1,'']]],
   ['polynomial_2ecc',['polynomial.cc',['http://www.dealii.org/8.5.0/doxygen/deal.tag/polynomial_8cc.html',1,'']]],

@@ -5,7 +5,6 @@ var searchData=
   ['cell_5fid_2eh',['cell_id.h',['http://www.dealii.org/8.5.0/doxygen/deal.tag/cell__id_8h.html',1,'']]],
   ['changes_2eh',['changes.h',['http://www.dealii.org/8.5.0/doxygen/deal.tag/changes_8h.html',1,'']]],
   ['charge_2ecc',['charge.cc',['../charge_8cc.html',1,'']]],
-  ['chebyshev_2ebak_2ecc',['chebyshev.bak.cc',['../chebyshev_8bak_8cc.html',1,'']]],
   ['chebyshev_2ecc',['chebyshev.cc',['../chebyshev_8cc.html',1,'']]],
   ['chunk_5fsparse_5fmatrix_2ecc',['chunk_sparse_matrix.cc',['http://www.dealii.org/8.5.0/doxygen/deal.tag/chunk__sparse__matrix_8cc.html',1,'']]],
   ['chunk_5fsparse_5fmatrix_2eh',['chunk_sparse_matrix.h',['http://www.dealii.org/8.5.0/doxygen/deal.tag/chunk__sparse__matrix_8h.html',1,'']]],

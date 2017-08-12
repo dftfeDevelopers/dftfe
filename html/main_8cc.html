@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.5"/>
-<title>DFT-FE: dftDev/src/main.cc File Reference</title>
+<title>DFT-FE: dft-fe/src/main.cc File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -81,7 +81,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="dir_412780a78749cf89cea73be889c14213.html">dftDev</a></li><li class="navelem"><a class="el" href="dir_4830ee38cf2bf4a48618e66e15003534.html">src</a></li>  </ul>
+<li class="navelem"><a class="el" href="dir_15eae51d97ec2470dc0f8d7f5f72a6f4.html">dft-fe</a></li><li class="navelem"><a class="el" href="dir_bdba8322703606330db43fe759172cc7.html">src</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
@@ -92,8 +92,8 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
 <div class="title">main.cc File Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><code>#include &lt;<a class="elRef" doxygen="/home/rudraa/dftBuild/dftDev/deal.tag:http://www.dealii.org/8.5.0/doxygen/deal.tag/" href="http://www.dealii.org/8.5.0/doxygen/deal.tag/data__out__base_8h.html">deal.II/base/data_out_base.h</a>&gt;</code><br/>
-<code>#include &lt;<a class="elRef" doxygen="/home/rudraa/dftBuild/dftDev/deal.tag:http://www.dealii.org/8.5.0/doxygen/deal.tag/" href="http://www.dealii.org/8.5.0/doxygen/deal.tag/parameter__handler_8h.html">deal.II/base/parameter_handler.h</a>&gt;</code><br/>
+<div class="textblock"><code>#include &lt;<a class="elRef" doxygen="/home/rudraa/dftBuild/dft-fe/deal.tag:http://www.dealii.org/8.5.0/doxygen/deal.tag/" href="http://www.dealii.org/8.5.0/doxygen/deal.tag/data__out__base_8h.html">deal.II/base/data_out_base.h</a>&gt;</code><br/>
+<code>#include &lt;<a class="elRef" doxygen="/home/rudraa/dftBuild/dft-fe/deal.tag:http://www.dealii.org/8.5.0/doxygen/deal.tag/" href="http://www.dealii.org/8.5.0/doxygen/deal.tag/parameter__handler_8h.html">deal.II/base/parameter_handler.h</a>&gt;</code><br/>
 <code>#include &lt;list&gt;</code><br/>
 <code>#include &lt;iostream&gt;</code><br/>
 <code>#include &lt;fstream&gt;</code><br/>
@@ -126,6 +126,8 @@ Variables</h2></td></tr>
 <tr class="separator:af1b693ccc49bf6d6ba44d3b56e4373df"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a857c69f7784d79b6fe9a1a3a61a36041"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="main_8cc.html#a857c69f7784d79b6fe9a1a3a61a36041">maxLinearSolverIterations</a></td></tr>
 <tr class="separator:a857c69f7784d79b6fe9a1a3a61a36041"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad5e86abcaa53a8d26a59806e53c482bc"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="main_8cc.html#ad5e86abcaa53a8d26a59806e53c482bc">mixingHistory</a></td></tr>
+<tr class="separator:ad5e86abcaa53a8d26a59806e53c482bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a78b62fe21208652e35d2a3ed80b959d6"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="main_8cc.html#a78b62fe21208652e35d2a3ed80b959d6">radiusAtomBall</a></td></tr>
 <tr class="separator:a78b62fe21208652e35d2a3ed80b959d6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a910d5142d2897147d480aea0f6f97c7e"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="main_8cc.html#a910d5142d2897147d480aea0f6f97c7e">domainSizeX</a></td></tr>
@@ -134,6 +136,8 @@ Variables</h2></td></tr>
 <tr class="separator:adb76dd464518647ca457edd2d5db7f37"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1d7c27b3603e759703610bfa6cec1e94"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="main_8cc.html#a1d7c27b3603e759703610bfa6cec1e94">domainSizeZ</a></td></tr>
 <tr class="separator:a1d7c27b3603e759703610bfa6cec1e94"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a90caa4feb386e02cb7dd33fabe927230"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="main_8cc.html#a90caa4feb386e02cb7dd33fabe927230">mixingParameter</a></td></tr>
+<tr class="separator:a90caa4feb386e02cb7dd33fabe927230"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a36064f31461e9157e1ff95f40036bc5c"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="main_8cc.html#a36064f31461e9157e1ff95f40036bc5c">lowerEndWantedSpectrum</a></td></tr>
 <tr class="separator:a36064f31461e9157e1ff95f40036bc5c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4baf060d8454ae2b074a34331404da09"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="main_8cc.html#a4baf060d8454ae2b074a34331404da09">relLinearSolverTolerance</a></td></tr>
@@ -160,7 +164,7 @@ Variables</h2></td></tr>
 <tr class="separator:aa5101fb06ad437f05eb2fb22beea0d24"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af42cb275acd5aff7dc9a88aa3d53cabf"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="main_8cc.html#af42cb275acd5aff7dc9a88aa3d53cabf">kPointDataFile</a></td></tr>
 <tr class="separator:af42cb275acd5aff7dc9a88aa3d53cabf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acb445f48d3f88c91ebaf91e461afdb17"><td class="memItemLeft" align="right" valign="top"><a class="elRef" doxygen="/home/rudraa/dftBuild/dftDev/deal.tag:http://www.dealii.org/8.5.0/doxygen/deal.tag/" href="http://www.dealii.org/8.5.0/doxygen/deal.tag/classParameterHandler.html">ParameterHandler</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="main_8cc.html#acb445f48d3f88c91ebaf91e461afdb17">prm</a></td></tr>
+<tr class="memitem:acb445f48d3f88c91ebaf91e461afdb17"><td class="memItemLeft" align="right" valign="top"><a class="elRef" doxygen="/home/rudraa/dftBuild/dft-fe/deal.tag:http://www.dealii.org/8.5.0/doxygen/deal.tag/" href="http://www.dealii.org/8.5.0/doxygen/deal.tag/classParameterHandler.html">ParameterHandler</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="main_8cc.html#acb445f48d3f88c91ebaf91e461afdb17">prm</a></td></tr>
 <tr class="separator:acb445f48d3f88c91ebaf91e461afdb17"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
@@ -403,6 +407,30 @@ Variables</h2></td></tr>
 
 </div>
 </div>
+<a class="anchor" id="ad5e86abcaa53a8d26a59806e53c482bc"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">unsigned int mixingHistory</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a class="anchor" id="a90caa4feb386e02cb7dd33fabe927230"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">double mixingParameter</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a class="anchor" id="a2edeaedc69ac09cc872896376d6cc1fc"></a>
 <div class="memitem">
 <div class="memproto">
@@ -480,7 +508,7 @@ Variables</h2></td></tr>
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="elRef" doxygen="/home/rudraa/dftBuild/dftDev/deal.tag:http://www.dealii.org/8.5.0/doxygen/deal.tag/" href="http://www.dealii.org/8.5.0/doxygen/deal.tag/classParameterHandler.html">ParameterHandler</a> prm</td>
+          <td class="memname"><a class="elRef" doxygen="/home/rudraa/dftBuild/dft-fe/deal.tag:http://www.dealii.org/8.5.0/doxygen/deal.tag/" href="http://www.dealii.org/8.5.0/doxygen/deal.tag/classParameterHandler.html">ParameterHandler</a> prm</td>
         </tr>
       </table>
 </div><div class="memdoc">

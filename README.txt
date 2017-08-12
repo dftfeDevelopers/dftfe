@@ -3,7 +3,9 @@ DFT-FE (Real Space finite-element based KSDFT implementation)
 Installation:
 
 1) Install deal.II (version >=8.4 recommended)
-
+[Note: DFT-FE is primarily based on the deal.II library. If you have particular questions about deal.II, contact the 
+deal.II discussion groups (https://www.dealii.org/mail.html)]
+ 
   -- Download CMake [http://www.cmake.org/download/]
   -- Add CMake to your path (e.g. $ PATH="/path/to/cmake/Contents/bin":"$PATH"), preferably in a shell configuration file 
   -- Download and install Deal.II following instructions from from https://www.dealii.org/download.html 

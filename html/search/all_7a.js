@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['z',['z',['http://www.dealii.org/8.5.0/doxygen/deal.tag/classPArpackSolver.html#a3265231de0a4435189c85ff6cff39804',1,'PArpackSolver::z()'],['../structorbital.html#a9d5d59155892ba2f768e05f99859a664',1,'orbital::Z()']]],
+  ['z',['Z',['../structorbital.html#a9d5d59155892ba2f768e05f99859a664',1,'orbital::Z()'],['http://www.dealii.org/8.5.0/doxygen/deal.tag/classPArpackSolver.html#a3265231de0a4435189c85ff6cff39804',1,'PArpackSolver::z()']]],
   ['z_5fscaling',['z_scaling',['http://www.dealii.org/8.5.0/doxygen/deal.tag/structDataOutBase_1_1EpsFlags.html#aae56c32425575726b67b106edef3787b',1,'DataOutBase::EpsFlags']]],
   ['zaxpy_5f',['zaxpy_',['../dft_8h.html#a61187c96e23d9251d7b15851e9ec8a42',1,'dft.h']]],
   ['zdotc_5f',['zdotc_',['../dft_8h.html#a033586b584bd9bbb8ef754c3c09627a8',1,'dft.h']]],
