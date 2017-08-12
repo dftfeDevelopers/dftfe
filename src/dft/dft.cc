@@ -283,6 +283,7 @@ void dftClass<FEOrder>::run ()
 	  if (scfIter==1) norm = mixing_simple();
 	  else norm = sqrt(mixing_anderson());
 	  if(this_mpi_process==0) printf("Anderson Mixing: L2 norm of electron-density difference: %12.6e\n\n", norm);
+	  poisson.phiTotRhoIn = poisson.phiTotRhoOut;
 	}
       //phiTot with rhoIn
 
@@ -293,16 +294,8 @@ void dftClass<FEOrder>::run ()
       //pcout<<"L-2 Norm of Phi-in   : "<<poisson.phiTotRhoIn.l2_norm()<<std::endl;
       //pcout<<"L-inf Norm of Phi-in : "<<poisson.phiTotRhoIn.linfty_norm()<<std::endl;
 
-      //visualise
-      DataOut<3> data_out;
-      data_out.attach_dof_handler (dofHandler);
-      data_out.add_data_vector (poisson.phiTotRhoIn, "solution");
-      data_out.build_patches (4);
-      std::ofstream output ("poisson.vtu");
-      data_out.write_vtu (output);
-      //eigen solve
      
-
+      //eigen solve
 
       if(xc_id < 4)
 	{

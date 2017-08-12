@@ -1,4 +1,66 @@
 //source file for all energy computations 
+double FermiDiracFunctionValue(double x,
+			       std::vector<std::vector<double> > & eigenValues,
+			       std::vector<double> & kPointWeights)
+{
+
+  int numberkPoints = eigenValues.size();
+  int numberEigenValues = eigenValues[0].size();
+  double functionValue,temp1,temp2;
+
+  for(unsigned int kPoint = 0; kPoint < numberkPoints; ++kPoint)
+    {
+      for(unsigned int i = 0; i < numberEigenValues; i++)
+	{
+	  temp1 = (eigenValues[kPoint][i]-x)/(kb*TVal);
+	  if(temp1 <= 0.0)
+	    {
+	      temp2  =  1.0/(1.0+exp(temp1));
+	      functionValue += 2.0*kPointWeights[kPoint]*temp2;
+	    }
+	  else
+	    {
+	      temp2 =  1.0/(1.0+exp(-temp1));
+	      functionValue += 2.0*kPointWeights[kPoint]*exp(-temp1)*temp2;
+	    }
+	}
+    }
+
+  return functionValue;
+
+}
+
+double FermiDiracFunctionDerivativeValue(double x,
+					 std::vector<std::vector<double> > & eigenValues,
+					 std::vector<double> & kPointWeights)
+{
+
+  int numberkPoints = eigenValues.size();
+  int numberEigenValues = eigenValues[0].size();
+  double functionDerivative,temp1,temp2;
+
+  for(unsigned int kPoint = 0; kPoint < numberkPoints; ++kPoint)
+    {
+      for(unsigned int i = 0; i < numberEigenValues; i++)
+	{
+	  temp1 = (eigenValues[kPoint][i]-x)/(kb*TVal);
+	  if(temp1 <= 0.0)
+	    {
+	      temp2  =  1.0/(1.0+exp(temp1));
+	      functionDerivative += 2.0*kPointWeights[kPoint]*(exp(temp1)/(kb*TVal))*temp2*temp2;
+	    }
+	  else
+	    {
+	      temp2 =  1.0/(1.0+exp(-temp1));
+	      functionDerivative += 2.0*kPointWeights[kPoint]*(exp(-temp1)/(kb*TVal))*temp2*temp2; 
+	    }
+	}
+    }
+
+  return functionDerivative;
+
+}
+
 
 //compute energies
 template<unsigned int FEOrder>
@@ -207,13 +269,7 @@ void dftClass<FEOrder>::compute_energy()
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::compute_fermienergy()
 {
-  //initial guess for fe
-  //double fe;
-  //if (numElectrons%2==0)
-  //fe = eigenValues[numElectrons/2-1];
-  //else
-  //  fe = eigenValues[numElectrons/2];
-
+  
   int count =  std::ceil(static_cast<double>(numElectrons)/2.0);
 
   std::vector<double> eigenValuesAllkPoints;
@@ -227,17 +283,74 @@ void dftClass<FEOrder>::compute_fermienergy()
 
   std::sort(eigenValuesAllkPoints.begin(),eigenValuesAllkPoints.end());
 
-  double fe = eigenValuesAllkPoints[d_maxkPoints*count - 1];
-  
-  
-  //compute residual
+  unsigned int maxNumberFermiEnergySolveIterations = 100;
+  double fe;
   double R = 1.0;
-  unsigned int iter = 0;
-  double temp1, temp2, temp3, temp4;
-  while((std::abs(R) > 1.0e-12) && (iter < 100))
+
+#ifdef ENABLE_PERIODIC_BC
+  //
+  //compute Fermi-energy first by bisection method
+  //  
+  double initialGuessLeft = eigenValuesAllkPoints[0];
+  double initialGuessRight = eigenValuesAllkPoints[eigenValuesAllkPoints.size() - 1];
+
+  double xLeft,xRight;
+
+  xRight = initialGuessRight;
+  xLeft = initialGuessLeft;
+  
+
+  for(int iter = 0; iter < maxNumberFermiEnergySolveIterations; ++iter)
     {
-      temp3 = 0.0; temp4 = 0.0;
-      for(int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+      double yRight = FermiDiracFunctionValue(xRight,
+					      eigenValues,
+					      d_kPointWeights) - numElectrons;
+
+      double yLeft =  FermiDiracFunctionValue(xLeft,
+					      eigenValues,
+					      d_kPointWeights) - numElectrons;
+
+      if((yLeft*yRight) > 0.0)
+	{
+	  pcout << " Bisection Method Failed " <<std::endl;
+	  exit(-1);
+	}
+      
+      double xBisected = (xLeft + xRight)/2.0;
+
+      double yBisected = FermiDiracFunctionValue(xBisected,
+						 eigenValues,
+						 d_kPointWeights) - numElectrons;
+
+      if((yBisected*yLeft) > 0.0)
+	xLeft = xBisected;
+      else
+	xRight = xBisected;
+					      
+      if (std::abs(yBisected) <= 1.0e-09 || iter == maxNumberFermiEnergySolveIterations-1)
+	{
+	  fe = xBisected;
+	  R  = std::abs(yBisected);
+	  break;
+	}
+
+    }
+
+  if (this_mpi_process == 0) std::printf("Fermi energy constraint residual using bisection method:%30.20e \n", R);
+#else
+   fe = eigenValuesAllkPoints[d_maxkPoints*count - 1];
+#endif  
+  //
+  //compute residual and find FermiEnergy using Newton-Raphson solve
+  //
+  //double R = 1.0;
+  unsigned int iter = 0;
+  double  functionValue, functionDerivativeValue;
+
+  while((std::abs(R) > 1.0e-12) && (iter < maxNumberFermiEnergySolveIterations))
+    {
+      /*functionValue = 0.0; functionDerivative = 0.0;
+      for(unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
 	{
 	  for (unsigned int i = 0; i < numEigenValues; i++)
 	    {
@@ -245,23 +358,32 @@ void dftClass<FEOrder>::compute_fermienergy()
 	      if (temp1 <= 0.0)
 		{
 		  temp2  =  1.0/(1.0+exp(temp1));
-		  temp3 += 2.0*d_kPointWeights[kPoint]*temp2;
-		  temp4 += 2.0*d_kPointWeights[kPoint]*(exp(temp1)/(kb*TVal))*temp2*temp2;
+		  functionValue += 2.0*d_kPointWeights[kPoint]*temp2;
+		  functionDerivative += 2.0*d_kPointWeights[kPoint]*(exp(temp1)/(kb*TVal))*temp2*temp2;
 		}
 	      else
 		{
 		  temp2 =  1.0/(1.0+exp(-temp1));
-		  temp3 += 2.0*d_kPointWeights[kPoint]*exp(-temp1)*temp2;
-		  temp4 += 2.0*d_kPointWeights[kPoint]*(exp(-temp1)/(kb*TVal))*temp2*temp2;       
+		  functionValue += 2.0*d_kPointWeights[kPoint]*exp(-temp1)*temp2;
+		  functionDerivative += 2.0*d_kPointWeights[kPoint]*(exp(-temp1)/(kb*TVal))*temp2*temp2;       
 		}
 	    }
-	}
-      R   =  temp3-numElectrons;
-      fe += -R/temp4;
+	    }*/
+
+      functionValue = FermiDiracFunctionValue(fe,
+					      eigenValues,
+					      d_kPointWeights);
+
+      functionDerivativeValue = FermiDiracFunctionDerivativeValue(fe,
+								  eigenValues,
+								  d_kPointWeights);
+
+      R   =  functionValue - numElectrons;
+      fe += -R/functionDerivativeValue; 
       iter++;
     }
 
-  if(std::abs(R)>1.0e-12)
+  if(std::abs(R) > 1.0e-12)
     {
       pcout << "Fermi Energy computation: Newton iterations failed to converge\n";
       //exit(-1);
