@@ -21,7 +21,7 @@ Installation:
 
 (2) Cloning the repository:
       -- Execute the following commands on your command-line
-         $ git clone https://userid@bitbucket.org/rudraa/dft-fe.git (Note: Here userid is your bitbucket userid)
+         $ git clone https://bitbucket.org/rudraa/dft-fe.git
          $ cd dft-fe
          $ git checkout master
 
@@ -102,25 +102,25 @@ Execution:
 
    (4) Miscellaneous Instructions:       
 
-     -- In the case of periodic calculation, one has to supply a file containing lattice vectors associated with the given periodic simulation domain. For example
+     -- In the case of periodic calculation, one has to supply a file containing lattice vectors associated with the given periodic simulation domain. For example,
         see the parameter files in /examples/allElectron/periodic/simpleCubicCarbon or see /examples/pseudopotential/periodic/faceCenteredCubicAluminum. In addition,    
         one has to also point to required k-point quadrature rule in the parameter file. The list of k-point quadrature rules are given in "/dft-fe/data/kPointList".
-        Look at the paramter files in the examples folder containing periodic cases. Currently fully periodic with cubic/cuboidal unit-cells are handled.
+        Look at the parameter files in the examples folder containing periodic cases. Currently fully periodic with cubic/cuboidal unit-cells are handled.
 
      -- The dft-fe code executable automatically picks up the single atom radial wave functions to be used as initial guesses from the folders 
-        "/dft-fe/data/electronicStructure/allElectron" or "/dft-fe/data/electronicStructure/pseudopotential". Folders inside this path are named as z1, z2, z6 etc 
+        "/dft-fe/data/electronicStructure/allElectron" or "/dft-fe/data/electronicStructure/pseudopotential". Folders inside this path are named as z1, z2, z6 etc., 
         where the number following z indicates the atomic number. Populate whenever necessary with single atom wavefunctions based on the atom-type 
         in your given problem.
 
      -- dft-fe code currently handles non-local Troullier Martins pseudopotentials. The pseudpotential files are located at 
-        "/dft-fe/data/electronicStructure/pseudopotential".  As explained before folders inside this path are named as z1, z2, z6 etc 
+        "/dft-fe/data/electronicStructure/pseudopotential".  As explained before, folders inside this path are named as z1, z2, z6 etc., 
         where the number following z indicates the atomic number. Each "zX" contains a folder "pseudoAtomData" which contains the files corresponding to radial 
         parts of the pseudowavefunctions and angular momentum dependent potentials along with the file containing local part of the pseudopotential. The file 
         "PseudoAtomData" present inside this folder embeds this information. First line of this file indicates the total number of pseudowavefunctions, 
         each of the subsequent lines indicate the radial Id, azimuthal quantum number and magnetic quantum number of the associated pseudowavefunctions. Next lines 
         indicate the filenames containing the data corresponding to radial parts of the pseudowavefunctions. Subsequently, the name of the local pseudopotential file
         is provided followed with the number of angular momentum dependent potentials. Next lines indicate the radial id, azimuthal quantum number of the associated    
-        pseudopotential file. Finally the filenames containing the data corresponding to angular momentum dependent potentials is provided. 
+        pseudopotential file. Finally, the filenames containing the data corresponding to angular momentum dependent potentials is provided. 
         Note that the name of local pseudopotential file has to be "locPot.dat"
         
 
