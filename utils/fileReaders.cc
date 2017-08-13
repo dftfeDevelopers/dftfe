@@ -67,8 +67,7 @@ int readPsiFile(unsigned int numColumns,
 
   if(readFile.fail()) 
     {
-      std::cerr<< "Warning: Psi file: " << fileName.c_str() << " not found "<<std::endl;
-      
+      //std::cerr<< "Warning: Psi file: " << fileName.c_str() << " not found "<<std::endl;      
       return 0;
     }
 

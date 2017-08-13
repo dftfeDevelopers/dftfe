@@ -85,7 +85,7 @@ void exchangeMasterNodesList(std::set<unsigned int> & masterNodeIdSet,
 
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::init(){
-  computing_timer.enter_section("dftClass setup");
+  computing_timer.enter_section("setup");
 
 
 #ifdef ENABLE_PERIODIC_BC
@@ -714,7 +714,7 @@ void dftClass<FEOrder>::init(){
   //
   //
   //
-  computing_timer.exit_section("dftClass setup"); 
+  computing_timer.exit_section("setup"); 
 
   //
   //initialize poisson and eigen problem related objects

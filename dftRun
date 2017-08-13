@@ -9,7 +9,8 @@ set -o pipefail
 #
 if [ $# -eq 1 ]; then
     # exactly 1 argument was passed..use it..its available in $1
-    echo "reading $1"
+    # echo "reading $1"
+    :
 else
     # either 0 or >1 arguments were passed...error out.
     echo "Incorrect number of arguments passed"
@@ -25,7 +26,7 @@ while read p; do
 	fi
     fi
 done < $1
-echo "using DFT directory Path: $dftPath"
+#echo "using DFT directory Path: $dftPath"
 
 #check for Optimized/Debug mode and Periodic BC 
 optimizedMode=1
@@ -66,15 +67,19 @@ fi
 
 #print
 if [[ $optimizedMode == 1 ]]; then
-    echo "Running in optmized mode"
+    #echo "Running in optmized mode"
+    :
 else
-    echo "Running in debug mode"
+    #echo "Running in debug mode"
+    :
 fi
 if [[ $periodicBC == 1 ]]; then
-    echo "Periodic BC: true"
+    #echo "Periodic BC: true"
+    :
 else 
-    echo "Periodic BC: false"
+    #echo "Periodic BC: false"
+    :
 fi
 
-echo $execFile
+#echo $execFile
 eval $execFile -p $1

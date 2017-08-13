@@ -54,7 +54,7 @@ void dftClass<FEOrder>::loadPSIFiles(unsigned int Z,
   //
   if(fileReadFlag > 0)
     {
-      pcout<<"Reading data from file: "<<psiFile<<std::endl;
+      pcout<<"reading data from file: "<<psiFile<<std::endl;
       
       int numRows = values.size()-1;
       std::vector<double> xData(numRows), yData(numRows);
@@ -231,8 +231,8 @@ void dftClass<FEOrder>::determineOrbitalFilling()
   
 
   pcout<<"============================================================================================================================="<<std::endl;
-  pcout<<"Number of electrons: "<<numElectrons<<std::endl;
-  pcout<<"Number of wavefunctions computed using single atom data to be used as initial guess for starting the SCF: " <<waveFunctionCount<<std::endl;
+  pcout<<"number of electrons: "<<numElectrons<<std::endl;
+  pcout<<"number of wavefunctions computed using single atom data to be used as initial guess for starting the SCF: " <<waveFunctionCount<<std::endl;
   pcout<<"============================================================================================================================="<<std::endl;
 }
 
@@ -333,7 +333,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 
       unsigned int nonAtomicWaveFunctions = numEigenValues - waveFunctionsVector.size();
       pcout << "                                                                                             "<<std::endl;
-      pcout << "Number of wavefunctions generated randomly to be used as initial guess for starting the SCF : " << nonAtomicWaveFunctions << std::endl;
+      pcout << "number of wavefunctions generated randomly to be used as initial guess for starting the SCF : " << nonAtomicWaveFunctions << std::endl;
 
       //
       // assign the rest of the wavefunctions using a standard normal distribution
@@ -393,9 +393,9 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 //
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::readPSI(){
-  computing_timer.enter_section("dftClass init PSI"); 
+  computing_timer.enter_section("initialize wave functions"); 
 
   readPSIRadialValues();
 
-  computing_timer.exit_section("dftClass init PSI"); 
+  computing_timer.exit_section("initialize wave functions"); 
 }

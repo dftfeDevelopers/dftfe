@@ -53,7 +53,7 @@ print_usage_message ()
   static const char *message
     =
     "Usage:\n"
-    "    ./dftRun parameter_file\n"
+    "./dftRun parameterfile.prm (OR) mpirun -np nProcs ./dftRun parameterfile.prm\n"
     "\n";
   //parallel message stream
   if(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)

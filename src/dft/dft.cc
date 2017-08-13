@@ -63,6 +63,7 @@ dftClass<FEOrder>::dftClass():
   numElectrons(0),
   numLevels(0),
   d_maxkPoints(1),
+  integralRhoValue(0),
   pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
   computing_timer (pcout, TimerOutput::summary, TimerOutput::wall_times)
 {
@@ -124,7 +125,7 @@ void dftClass<FEOrder>::set()
   //read fractionalCoordinates of atoms in periodic case
   //
   readFile(numberColumnsCoordinatesFile, atomLocations, coordinatesFile);
-  pcout << "Number of Atoms: " << atomLocations.size() << "\n";
+  pcout << "number of atoms: " << atomLocations.size() << "\n";
 
   //
   //find unique atom types
@@ -139,7 +140,7 @@ void dftClass<FEOrder>::set()
   //
   for(int i = 0; i < atomLocations.size(); ++i)
     {
-      pcout<<"Fractional Coordinates: "<<atomLocations[i][2]<<" "<<atomLocations[i][3]<<" "<<atomLocations[i][4]<<"\n";
+      pcout<<"fractional coordinates of atom: "<<atomLocations[i][2]<<" "<<atomLocations[i][3]<<" "<<atomLocations[i][4]<<"\n";
     }
 
   //
@@ -149,7 +150,7 @@ void dftClass<FEOrder>::set()
   readFile(numberColumnsLatticeVectorsFile,d_latticeVectors,latticeVectorsFile);
   for(int i = 0; i < d_latticeVectors.size(); ++i)
     {
-      pcout<<"Lattice Vectors: "<<d_latticeVectors[i][0]<<" "<<d_latticeVectors[i][1]<<" "<<d_latticeVectors[i][2]<<"\n";
+      pcout<<"lattice vectors: "<<d_latticeVectors[i][0]<<" "<<d_latticeVectors[i][1]<<" "<<d_latticeVectors[i][2]<<"\n";
     }
 
   //
@@ -169,7 +170,7 @@ void dftClass<FEOrder>::set()
   //
   for(int i = 0; i < atomLocations.size(); ++i)
     {
-      pcout<<"Cartesian Coordinates: "<<atomLocations[i][2]<<" "<<atomLocations[i][3]<<" "<<atomLocations[i][4]<<"\n";
+      pcout<<"Cartesian coordinates of atoms: "<<atomLocations[i][2]<<" "<<atomLocations[i][3]<<" "<<atomLocations[i][4]<<"\n";
     }
 
 #else
@@ -188,7 +189,7 @@ void dftClass<FEOrder>::set()
   //
   for(int i = 0; i < atomLocations.size(); ++i)
     {
-      pcout<<"Cartesian Coordinates: "<<atomLocations[i][2]<<" "<<atomLocations[i][3]<<" "<<atomLocations[i][4]<<"\n";
+      pcout<<"Cartesian coordinates of atoms: "<<atomLocations[i][2]<<" "<<atomLocations[i][3]<<" "<<atomLocations[i][4]<<"\n";
     }
 #endif
 
@@ -206,7 +207,7 @@ void dftClass<FEOrder>::set()
   //estimate total number of wave functions
   determineOrbitalFilling();  
 
-  pcout << "num of eigen values: " << numEigenValues << std::endl; 
+  pcout << "number of eigen values: " << numEigenValues << std::endl; 
 
   //
   //read kPoint data
@@ -219,7 +220,7 @@ void dftClass<FEOrder>::set()
   d_kPointWeights.resize(d_maxkPoints,1.0);
 #endif
 
-  pcout<<"Actual k-Point-coordinates and weights: "<<std::endl;
+  pcout<<"actual k-Point-coordinates and weights: "<<std::endl;
   for(int i = 0; i < d_maxkPoints; ++i)
     {
       pcout<<d_kPointCoordinates[3*i + 0]<<" "<<d_kPointCoordinates[3*i + 1]<<" "<<d_kPointCoordinates[3*i + 2]<<" "<<d_kPointWeights[i]<<std::endl;
@@ -255,7 +256,7 @@ void dftClass<FEOrder>::set()
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::run ()
 {
-  pcout << "number of MPI processes: "
+  pcout << std::endl << "number of MPI processes: "
 	<< Utilities::MPI::n_mpi_processes(mpi_communicator)
 	<< std::endl;
 
@@ -284,7 +285,7 @@ void dftClass<FEOrder>::run ()
   //
   //solve
   //
-  computing_timer.enter_section("dft solve"); 
+  computing_timer.enter_section("solve"); 
 
   
   //
@@ -292,15 +293,16 @@ void dftClass<FEOrder>::run ()
   //
   unsigned int scfIter=0;
   double norm = 1.0;
+  char buffer[100];
   while ((norm > selfConsistentSolverTolerance) && (scfIter < numSCFIterations))
     {
-      if(this_mpi_process==0) printf("\n\nBegin Self-Consistent-Field Iteration:%u\n\n", scfIter+1);
+      sprintf(buffer, "\n\n**** Begin Self-Consistent-Field Iteration: %u ****\n", scfIter+1); pcout << buffer;
       //Mixing scheme
       if(scfIter > 0)
 	{
 	  if (scfIter==1) norm = mixing_simple();
 	  else norm = sqrt(mixing_anderson());
-	  if(this_mpi_process==0) printf("Anderson Mixing: L2 norm of electron-density difference: %12.6e\n\n", norm);
+	  sprintf(buffer, "Anderson Mixing: L2 norm of electron-density difference: %12.6e\n\n", norm); pcout << buffer;
 	  poisson.phiTotRhoIn = poisson.phiTotRhoOut;
 	}
       //phiTot with rhoIn
@@ -308,7 +310,8 @@ void dftClass<FEOrder>::run ()
       //parallel loop over all elements
 
       int constraintMatrixId = 1;
-      poisson.solve(poisson.phiTotRhoIn,constraintMatrixId,rhoInValues);
+      sprintf(buffer, "Poisson solve for total electrostatic potential (rhoIn+b):\n"); pcout << buffer; 
+      poisson.solve(poisson.phiTotRhoIn,constraintMatrixId, rhoInValues);
       //pcout<<"L-2 Norm of Phi-in   : "<<poisson.phiTotRhoIn.l2_norm()<<std::endl;
       //pcout<<"L-inf Norm of Phi-in : "<<poisson.phiTotRhoIn.linfty_norm()<<std::endl;
 
@@ -345,20 +348,19 @@ void dftClass<FEOrder>::run ()
       compute_rhoOut();
       
       //compute integral rhoOut
-      double integralRhoOut=totalCharge(rhoOutValues);
-      char buffer[100];
-      sprintf(buffer, "Number of Electrons: %18.16e \n", integralRhoOut);
-      pcout << buffer;
+      integralRhoValue=totalCharge(rhoOutValues);
+
       //phiTot with rhoOut
+      sprintf(buffer, "Poisson solve for total electrostatic potential (rhoOut+b):\n"); pcout << buffer; 
       poisson.solve(poisson.phiTotRhoOut,constraintMatrixId, rhoOutValues);
       //pcout<<"L-2 Norm of Phi-out   :"<<poisson.phiTotRhoOut.l2_norm()<<std::endl;
       //pcout<<"L-inf Norm of Phi-out :"<<poisson.phiTotRhoOut.linfty_norm()<<std::endl;
       //energy
       compute_energy();
-      pcout<<"SCF iteration: " << scfIter+1 << " complete\n";
+      pcout<<"SCF iteration " << scfIter+1 << " complete\n";
       scfIter++;
     }
-  computing_timer.exit_section("dft solve"); 
+  computing_timer.exit_section("solve"); 
 }
 
 template class dftClass<1>;

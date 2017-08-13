@@ -30,7 +30,7 @@ poissonClass<FEOrder>::poissonClass(dftClass<FEOrder>* _dftPtr):
   n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_communicator)),
   this_mpi_process (Utilities::MPI::this_mpi_process(mpi_communicator)),
   pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
-  computing_timer (pcout, TimerOutput::summary, TimerOutput::wall_times)
+  computing_timer (pcout, TimerOutput::never, TimerOutput::wall_times)
 {
 
 }
@@ -424,7 +424,7 @@ void poissonClass<FEOrder>::solve(vectorType& phi, int constraintMatrixId, std::
 
 
   char buffer[200];
-  sprintf(buffer, "poisson solve: initial residual:%12.6e, current residual:%12.6e, nsteps:%u, tolerance criterion:%12.6e\n\n", \
+  sprintf(buffer, "initial abs. residual: %12.6e, current abs. residual: %12.6e, nsteps: %u, abs. tolerance criterion: %12.6e\n\n", \
 	  solver_control.initial_value(),				\
 	  solver_control.last_value(),					\
 	  solver_control.last_step(), solver_control.tolerance()); 

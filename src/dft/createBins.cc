@@ -112,7 +112,7 @@ void dftClass<FEOrder>::createAtomBins(std::vector<const ConstraintMatrix * > & 
 
   const int numberImageCharges = imageIdsContainer.size();
 
-  pcout<<"Number Image Charges: "<<numberImageCharges<<std::endl;
+  pcout<<"number image charges: "<<numberImageCharges<<std::endl;
 
   const int numberGlobalAtoms = atomLocations.size();
   const int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
@@ -357,7 +357,7 @@ void dftClass<FEOrder>::createAtomBins(std::vector<const ConstraintMatrix * > & 
 
 
   const int numberBins = binCount + 1;
-  pcout<<"Number Bins: "<<numberBins<<std::endl;
+  pcout<<"number bins: "<<numberBins<<std::endl;
 
   //std::vector<std::vector<int> > imageIdsInBins;
   d_imageIdsInBins.resize(numberBins);
@@ -378,7 +378,7 @@ void dftClass<FEOrder>::createAtomBins(std::vector<const ConstraintMatrix * > & 
       std::vector<int> &imageIdsOfAtomsInCurrentBin = d_imageIdsInBins[iBin];
       std::vector<std::vector<double> > imagePositionsOfAtomsInCurrentBin;
 
-      pcout<<"Bin: "<<iBin<<" Number of Global Atoms: "<<numberGlobalAtomsInBin<<std::endl;
+      pcout<<"bin "<<iBin<< ": number of global atoms: "<<numberGlobalAtomsInBin<<std::endl;
 
       for(int index = 0; index < numberGlobalAtomsInBin; ++index)
 	{

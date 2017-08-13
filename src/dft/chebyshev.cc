@@ -222,9 +222,9 @@ void dftClass<FEOrder>::chebyshevSolver()
   //
   char buffer[100];
 
-  sprintf(buffer, "%s:%18.10e\n", "Upper bound of Unwanted Spectrum", bUp);
+  sprintf(buffer, "%s:%18.10e\n", "upper bound of unwanted spectrum", bUp);
   pcout << buffer;
-  sprintf(buffer, "%s:%18.10e\n", "Lower bound of Unwanted Spectrum", bLow[d_kPointIndex]);
+  sprintf(buffer, "%s:%18.10e\n", "lower bound of unwanted spectrum", bLow[d_kPointIndex]);
   pcout << buffer;
   sprintf(buffer, "%s: %u\n\n", "Chebyshev polynomial degree", chebyshevOrder);
   pcout << buffer;
@@ -494,10 +494,10 @@ void dftClass<FEOrder>::rayleighRitz(std::vector<vectorType*> &X){
   pcout << "kPoint: "<< d_kPointIndex<<std::endl;
   for (unsigned int i=0; i< (unsigned int)n; i++)
     {
-      sprintf(buffer, "eigen value %2u: %18.16e\n", i, eigenValues[d_kPointIndex][i]);
+      sprintf(buffer, "eigen value %3u: %22.16e\n", i, eigenValues[d_kPointIndex][i]);
       pcout << buffer;
     }
-  pcout <<"\n"<<std::endl;
+  pcout <<std::endl;
 
   //rotate the basis PSI=PSI*Q
   int m = X.size(); 

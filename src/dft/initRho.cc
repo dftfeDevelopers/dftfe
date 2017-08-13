@@ -22,7 +22,7 @@
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::initRho()
 { 
-  computing_timer.enter_section("dftClass init density"); 
+  computing_timer.enter_section("initialize density"); 
 
   //Reading single atom rho initial guess
   pcout << "reading initial guess for rho\n";
@@ -223,7 +223,7 @@ void dftClass<FEOrder>::initRho()
   //
   double charge = totalCharge(rhoInValues);
   char buffer[100];
-  sprintf(buffer, "Initial total charge: %18.10e \n", charge);
+  sprintf(buffer, "initial total charge: %18.10e \n", charge);
   pcout << buffer;
   //scaling rho
   cell = dofHandler.begin_active();
@@ -235,10 +235,10 @@ void dftClass<FEOrder>::initRho()
     }
   }
   double chargeAfterScaling = totalCharge(rhoInValues);
-  sprintf(buffer, "Initial total charge after scaling: %18.10e \n", chargeAfterScaling);
+  sprintf(buffer, "initial total charge after scaling: %18.10e \n", chargeAfterScaling);
   pcout << buffer;
   
   
   //
-  computing_timer.exit_section("dftClass init density"); 
+  computing_timer.exit_section("initialize density"); 
 }

@@ -106,11 +106,12 @@ void dftClass<FEOrder>::compute_energy()
 	  //partialOccupancy=1.0/(1.0+exp(temp));
 	  double partialOccupancy = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)) : 1.0/(1.0 + std::exp(factor));
 	  bandEnergy+= 2*partialOccupancy*d_kPointWeights[kPoint]*eigenValues[kPoint][i];
-	  sprintf(buffer, "%s %u: %0.14f\n", "Fractional Occupancy", i, partialOccupancy);
-	  pcout << buffer;
+	  sprintf(buffer, "%s %u: %0.14f\n", "fractional occupancy", i, partialOccupancy); pcout << buffer;
 	}
+      pcout << std::endl; 
+      sprintf(buffer, "number of electrons: %18.16e \n", integralRhoValue); pcout << buffer;
     }
-  pcout << "\n"<<std::endl;
+  pcout <<std::endl;
   double potentialTimesRho = 0.0, exchangeEnergy = 0.0, correlationEnergy = 0.0, electrostaticEnergyTotPot = 0.0; 
 
   
@@ -276,18 +277,37 @@ void dftClass<FEOrder>::compute_energy()
 
 
   double totalkineticEnergy=-totalpotentialTimesRho+bandEnergy;
+
+  //output
+  char bufferEnergy[200];
+  pcout << "Energy computations\n";
+  pcout << "-------------------\n";
+  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Band energy", bandEnergy); pcout << bufferEnergy; 
+  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Kinetic energy", totalkineticEnergy); pcout << bufferEnergy; 
+  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Exchange energy", totalexchangeEnergy); pcout << bufferEnergy; 
+  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Correlation energy", totalcorrelationEnergy); pcout << bufferEnergy; 
+#ifdef ENABLE_PERIODIC_BC  
+  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Electrostatic energy", totalelectrostaticEnergyPot+totalNuclearElectrostaticEnergy); pcout << bufferEnergy; 
+#else
+  double repulsive_energy= repulsiveEnergy();
+  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Repulsive energy", repulsive_energy); pcout << bufferEnergy; 
+  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Electrostatic energy", totalelectrostaticEnergyPot+repulsive_energy); pcout << bufferEnergy; 
+#endif
+  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Total energy", totalEnergy); pcout << bufferEnergy; 
+  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Total energy per atom", totalEnergy/((double) atomLocations.size())); pcout << bufferEnergy; 
+  /* 
   if (this_mpi_process == 0) {
     std::printf("Total energy:%30.20e \nTotal energy per atom:%30.20e \n", totalEnergy, totalEnergy/((double) atomLocations.size()));
     std::printf("Band energy:%30.20e \nKinetic energy:%30.20e \nExchange energy:%30.20e \nCorrelation energy:%30.20e \nElectrostatic energy Total Potential:%30.20e \nRepulsive energy:%30.20e \nNuclear Electrostatic Energy:%30.20e \n\n", bandEnergy, totalkineticEnergy, totalexchangeEnergy, totalcorrelationEnergy, totalelectrostaticEnergyPot, repulsiveEnergy(),totalNuclearElectrostaticEnergy);
   }
-
+  */
 }
  
 //compute fermi energy
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::compute_fermienergy()
 {
-  
+  char bufferFermi[100];
   int count =  std::ceil(static_cast<double>(numElectrons)/2.0);
 
   std::vector<double> eigenValuesAllkPoints;
@@ -353,8 +373,7 @@ void dftClass<FEOrder>::compute_fermienergy()
 	}
 
     }
-
-  if (this_mpi_process == 0) std::printf("Fermi energy constraint residual using bisection method:%30.20e \n", R);
+  sprintf(bufferFermi, "%-50s: %25.16e\n", "Fermi energy constraint residual (bisection)", R); pcout << bufferFermi; 
 #else
    fe = eigenValuesAllkPoints[d_maxkPoints*count - 1];
 #endif  
@@ -407,11 +426,11 @@ void dftClass<FEOrder>::compute_fermienergy()
       //exit(-1);
     }
 
-  if (this_mpi_process == 0) std::printf("Fermi energy constraint residual:%30.20e \n", std::abs(R));
+  sprintf(bufferFermi, "%-50s: %25.16e\n", "Fermi energy constraint residual (Newton-Raphson)", std::abs(R)); pcout << bufferFermi; 
 
   //set Fermi energy
   fermiEnergy = fe;
-  if (this_mpi_process == 0) std::printf("Fermi energy:%30.20e \n\n", fermiEnergy);
+  sprintf(bufferFermi, "%-50s: %25.16e\n\n", "Fermi energy", fermiEnergy); pcout << bufferFermi; 
 }
 
 template<unsigned int FEOrder>

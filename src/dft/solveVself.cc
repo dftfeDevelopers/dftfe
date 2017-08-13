@@ -29,7 +29,7 @@ void dftClass<FEOrder>::solveVself()
 
   poisson.phiExt = 0;
 
-  pcout<<"Size of support points: "<<d_supportPoints.size()<<std::endl;
+  //pcout<<"size of support points: "<<d_supportPoints.size()<<std::endl;
 
   std::map<dealii::types::global_dof_index, int>::iterator iterMap;
 
@@ -170,7 +170,7 @@ void dftClass<FEOrder>::solveVself()
 	  std::vector<double> temp(2,0.0);
 	  temp[0] = it->second;//charge;
 	  temp[1] = poisson.vselfBinScratch(it->first);//vself 
-	  std::cout<<"Peak Value of Vself: "<<temp[1]<<std::endl;
+	  std::cout<< "(only for debugging: peak value of Vself: "<< temp[1] << ")" <<std::endl;
 	  d_localVselfs.push_back(temp);
 	}
 
@@ -182,5 +182,5 @@ void dftClass<FEOrder>::solveVself()
     //
     //print the norms of phiExt (in periodic case L2 norm of phiExt field does not match. check later)
     //
-    pcout<<"L2 Norm Value of phiext: "<<poisson.phiExt.l2_norm()<<std::endl;
+    //pcout<<"L2 Norm Value of phiext: "<<poisson.phiExt.l2_norm()<<std::endl;
 }
