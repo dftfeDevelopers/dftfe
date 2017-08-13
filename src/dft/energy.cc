@@ -24,7 +24,8 @@ double FermiDiracFunctionValue(double x,
 
   int numberkPoints = eigenValues.size();
   int numberEigenValues = eigenValues[0].size();
-  double functionValue,temp1,temp2;
+  double functionValue = 0.0;
+  double temp1,temp2;
 
   for(unsigned int kPoint = 0; kPoint < numberkPoints; ++kPoint)
     {
@@ -55,7 +56,8 @@ double FermiDiracFunctionDerivativeValue(double x,
 
   int numberkPoints = eigenValues.size();
   int numberEigenValues = eigenValues[0].size();
-  double functionDerivative,temp1,temp2;
+  double functionDerivative = 0.0;
+  double temp1,temp2;
 
   for(unsigned int kPoint = 0; kPoint < numberkPoints; ++kPoint)
     {
@@ -64,12 +66,12 @@ double FermiDiracFunctionDerivativeValue(double x,
 	  temp1 = (eigenValues[kPoint][i]-x)/(kb*TVal);
 	  if(temp1 <= 0.0)
 	    {
-	      temp2  =  1.0/(1.0+exp(temp1));
+	      temp2  =  1.0/(1.0 + exp(temp1));
 	      functionDerivative += 2.0*kPointWeights[kPoint]*(exp(temp1)/(kb*TVal))*temp2*temp2;
 	    }
 	  else
 	    {
-	      temp2 =  1.0/(1.0+exp(-temp1));
+	      temp2 =  1.0/(1.0 + exp(-temp1));
 	      functionDerivative += 2.0*kPointWeights[kPoint]*(exp(-temp1)/(kb*TVal))*temp2*temp2; 
 	    }
 	}
