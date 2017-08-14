@@ -181,6 +181,7 @@ class dftClass
    */
   void compute_fermienergy();
 
+  void output();
 
   /**
    * Computes inner Product and Y = alpha*X + Y for complex vectors used during

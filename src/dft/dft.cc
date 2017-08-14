@@ -358,9 +358,31 @@ void dftClass<FEOrder>::run ()
       //energy
       compute_energy();
       pcout<<"SCF iteration " << scfIter+1 << " complete\n";
+      
+      //output wave functions
+      output();
+      
+      //
       scfIter++;
     }
   computing_timer.exit_section("solve"); 
+}
+
+//Output
+template <unsigned int FEOrder>
+void dftClass<FEOrder>::output () {
+  //only generate wave function output for serial runs
+  if (n_mpi_processes>1) return;
+  //
+  DataOut<3> data_outEigen;
+  data_outEigen.attach_dof_handler (dofHandlerEigen);
+  for (unsigned int i=0; i<eigenVectors[0].size(); ++i){
+    char buffer[100]; sprintf(buffer,"eigen%u", i);  
+    data_outEigen.add_data_vector (*eigenVectors[0][i], buffer);
+  }
+  data_outEigen.build_patches (FEOrder+1);
+  std::ofstream output ("eigen.vtu");
+  data_outEigen.write_vtu (output);
 }
 
 template class dftClass<1>;
