@@ -26,6 +26,7 @@ void dftClass<FEOrder>::solveVself()
   int numberBins = d_boundaryFlag.size();
   int numberGlobalCharges = atomLocations.size();
   
+  matrix_free_data.initialize_dof_vector(poisson.phiExt,numberBins+3);
 
   poisson.phiExt = 0;
 
@@ -182,5 +183,5 @@ void dftClass<FEOrder>::solveVself()
     //
     //print the norms of phiExt (in periodic case L2 norm of phiExt field does not match. check later)
     //
-    //pcout<<"L2 Norm Value of phiext: "<<poisson.phiExt.l2_norm()<<std::endl;
+    pcout<<"L2 Norm Value of phiext: "<<poisson.phiExt.l2_norm()<<std::endl;
 }

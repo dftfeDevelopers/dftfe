@@ -214,7 +214,7 @@ class dftClass
   parallel::distributed::Triangulation<3> triangulation;
   FESystem<3>        FE, FEEigen;
   DoFHandler<3>      dofHandler, dofHandlerEigen;
-  unsigned int       eigenDofHandlerIndex;
+  unsigned int       eigenDofHandlerIndex,phiExtDofHandlerIndex;
   MatrixFree<3,double> matrix_free_data;
   std::map<types::global_dof_index, Point<3> > d_supportPoints, d_supportPointsEigen;
   std::vector< const ConstraintMatrix * > d_constraintsVector; 
@@ -233,7 +233,7 @@ class dftClass
 
   poissonClass<FEOrder> poisson;
   eigenClass<FEOrder> eigen;
-  ConstraintMatrix constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_constraintsPeriodicWithDirichlet; 
+  ConstraintMatrix constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_constraintsPeriodicWithDirichlet, d_noConstraints; 
   std::vector<std::vector<double> > eigenValues;
   std::vector<std::vector<parallel::distributed::Vector<double>*> > eigenVectors;
   std::vector<std::vector<parallel::distributed::Vector<double>*> > eigenVectorsOrig;

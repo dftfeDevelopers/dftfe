@@ -554,6 +554,13 @@ void dftClass<FEOrder>::init(){
   //pcout<<"Size of ConstraintsNoneEigen New: "<< constraintsNoneEigen.n_constraints()<<std::endl;
 
   //
+  //create a constraint matrix without any constraints
+  //
+  d_noConstraints.clear();
+  DoFTools::make_hanging_node_constraints(dofHandler, d_noConstraints);
+  d_noConstraints.close();
+ 
+  //
   //Zero Dirichlet BC constraints on the boundary of the domain
   //used for computing total electrostatic potential using Poisson problem
   //with (rho+b) as the rhs
@@ -569,7 +576,7 @@ void dftClass<FEOrder>::init(){
 
 #ifdef ENABLE_PERIODIC_BC 
   d_constraintsPeriodicWithDirichlet.clear();
-  DoFTools::make_hanging_node_constraints (dofHandler, d_constraintsPeriodicWithDirichlet);
+  DoFTools::make_hanging_node_constraints(dofHandler, d_constraintsPeriodicWithDirichlet);
   d_constraintsPeriodicWithDirichlet.merge(d_constraintsForTotalPotential);
   d_constraintsPeriodicWithDirichlet.close();
   d_constraintsPeriodicWithDirichlet.merge(constraintsNone);
@@ -597,7 +604,6 @@ void dftClass<FEOrder>::init(){
   //
   createAtomBins(d_constraintsVector);
  
- 
   //
   //create matrix free structure
   //
@@ -607,8 +613,15 @@ void dftClass<FEOrder>::init(){
     dofHandlerVector.push_back(&dofHandler);
  
   dofHandlerVector.push_back(&dofHandlerEigen); //DofHandler For Eigen
-  eigenDofHandlerIndex=dofHandlerVector.size()-1; //For Eigen
+  eigenDofHandlerIndex = dofHandlerVector.size() - 1; //For Eigen
   d_constraintsVector.push_back(&constraintsNoneEigen); //For Eigen;
+
+  //
+  //push d_noConstraints into constraintsVector
+  // 
+  dofHandlerVector.push_back(&dofHandler);
+  phiExtDofHandlerIndex = eigenDofHandlerIndex + 1;
+  d_constraintsVector.push_back(&d_noConstraints);
 
   std::vector<Quadrature<1> > quadratureVector; 
   quadratureVector.push_back(QGauss<1>(FEOrder+1)); 

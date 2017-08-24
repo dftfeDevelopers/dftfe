@@ -127,10 +127,12 @@ void dftClass<FEOrder>::locatePeriodicPinnedNodes(){
 
   //locating pinned nodes
   std::vector<std::vector<double> > pinnedLocations;
-  std::vector<double> temp; 
+  std::vector<double> temp(3,0.0); 
+  std::vector<double> tempLocal(3,0.0);
   //temp.push_back(3.8); temp.push_back(3.8); temp.push_back(3.8);//(center)
   //temp.push_back(0.0); temp.push_back(0.0); temp.push_back(0.0);//(corner)
   //temp.push_back(2.28); temp.push_back(0.0); temp.push_back(3.8);//(bcc)
+  //temp.push_back(3.8628);temp.push_back(3.8628);temp.push_back(3.8628);
   
   if(this_mpi_process==0)
     { 
@@ -141,12 +143,23 @@ void dftClass<FEOrder>::locatePeriodicPinnedNodes(){
 	      if (! cell->has_boundary_lines())
 		{
 		  Point<3> pinPoint = cell->vertex(0);
-		  temp.push_back(pinPoint[0]); temp.push_back(pinPoint[1]); temp.push_back(pinPoint[2]);
+		  tempLocal[0] = pinPoint[0]; 
+		  tempLocal[1] = pinPoint[1]; 
+		  tempLocal[2] = pinPoint[2];
 		  break;
 		}
 	    }
 	}
     }
+
+  MPI_Allreduce(&tempLocal[0],
+		&temp[0],
+		3,
+		MPI_DOUBLE,
+		MPI_SUM,
+		mpi_communicator);
+		
+
 
   pinnedLocations.push_back(temp);
   cell = dofHandler.begin_active();
@@ -156,8 +169,8 @@ void dftClass<FEOrder>::locatePeriodicPinnedNodes(){
   for (unsigned int i = 0; i < numberNodes; i++) nodesTolocate.insert(i);
 
   //element loop
-  if(temp.size() > 0)
-    {
+  //if(temp.size() > 0)
+  //{
       for (; cell!=endc; ++cell) 
 	{
 	  if (cell->is_locally_owned())
@@ -173,7 +186,7 @@ void dftClass<FEOrder>::locatePeriodicPinnedNodes(){
 		      if(feNodeGlobalCoord.distance(pinnedNodeCoord) < 1.0e-5)
 			{ 
 			  std::cout << "Pinned core with nodal coordinates (" << pinnedLocations[*it][0] << " " << pinnedLocations[*it][1] << " "<<pinnedLocations[*it][2]<< ") located with node id " << nodeID << " in processor " << this_mpi_process;
-			  if (locally_owned_dofs.is_element(nodeID))
+			  if (locally_relevant_dofs.is_element(nodeID))
 			    {
 			      d_constraintsForTotalPotential.add_line(nodeID);
 			      d_constraintsForTotalPotential.set_inhomogeneity(nodeID,0.0);
@@ -190,6 +203,6 @@ void dftClass<FEOrder>::locatePeriodicPinnedNodes(){
 		}//vertices_per_cell loop
 	    }//locally owned cell if loop
 	}//cell loop
-    }
+      //}
   MPI_Barrier(mpi_communicator);
 }
