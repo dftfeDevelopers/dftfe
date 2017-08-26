@@ -21,7 +21,7 @@ Installation:
 
 (2) Cloning the repository:
       -- Execute the following commands on your command-line
-         $ git clone https://bitbucket.org/rudraa/dft-fe.git
+         $ git clone https://phanim@bitbucket.org/rudraa/dft-fe.git
          $ cd dft-fe
          $ git checkout master
 

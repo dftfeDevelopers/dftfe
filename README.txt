@@ -25,7 +25,7 @@ deal.II discussion groups (https://www.dealii.org/mail.html)]
 
 3) Clone the repo
 
-  -- $ git clone https://bitbucket.org/rudraa/dft-fe.git
+  -- $ git clone https://userid@bitbucket.org/rudraa/dft-fe.git
   -- $ cd dft-fe 
   -- $ git checkout master 
 
