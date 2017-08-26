@@ -1,4 +1,0 @@
-export DEAL_II_DIR = /afs/umich.edu/user/p/h/phanim/softwares/dealii/install_caen_dealii
-alias visit= ‘/afs/umich.edu/user/s/t/stvdwtt/Public/PRISMS/software/visit_install/bin/visit'
-alias mpirun = ‘/usr/lib64/openmpi/bin/mpirun’
-
