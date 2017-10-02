@@ -283,6 +283,7 @@ class dftClass
   //
   std::vector<std::vector<int> > d_sparsityPattern;
   std::vector<std::vector<DoFHandler<3>::active_cell_iterator> > d_elementIteratorsInAtomCompactSupport;
+  std::vector<std::vector<DoFHandler<3>::active_cell_iterator> > d_elementOneFieldIteratorsInAtomCompactSupport;
   std::vector<std::vector<int> > d_nonLocalAtomIdsInElement;
 #ifdef ENABLE_PERIODIC_BC
   std::vector<std::vector<std::vector<std::vector<std::complex<double> > > > > d_nonLocalProjectorElementMatrices;

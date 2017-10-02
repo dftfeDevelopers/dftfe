@@ -711,7 +711,6 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
   //get the number of non-local atoms
   //
   int numberNonLocalAtoms = d_nonLocalAtomGlobalChargeIds.size();
-
   const double nlpTolerance = 1e-08;
 
 
@@ -719,17 +718,17 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
   //pre-allocate data structures that stores the sparsity of deltaVl
   //
   d_sparsityPattern.clear();
-  //d_elementIdsInAtomCompactSupport.clear();
   d_elementIteratorsInAtomCompactSupport.clear();
-  d_sparsityPattern.resize(numberNonLocalAtoms);
-  //d_elementIdsInAtomCompactSupport.resize(numberNonLocalAtoms);
-  d_elementIteratorsInAtomCompactSupport.resize(numberNonLocalAtoms);
+  d_elementOneFieldIteratorsInAtomCompactSupport.clear();
 
+  d_sparsityPattern.resize(numberNonLocalAtoms);
+  d_elementIteratorsInAtomCompactSupport.resize(numberNonLocalAtoms);
+  d_elementOneFieldIteratorsInAtomCompactSupport.resize(numberNonLocalAtoms);
 
   //
   //loop over nonlocal atoms
   //
-  unsigned int sparseFlag =0;
+  unsigned int sparseFlag = 0;
   int cumulativePotSplineId = 0;
   int pseudoPotentialId;
 
@@ -859,8 +858,8 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
 	    
 	      if(sparseFlag==1) {
 		d_sparsityPattern[iAtom][iElem] = matCount;
-		//d_elementIdsInAtomCompactSupport[iAtom].push_back(iElem);
 		d_elementIteratorsInAtomCompactSupport[iAtom].push_back(cellEigen);
+		d_elementOneFieldIteratorsInAtomCompactSupport[iAtom].push_back(cell);
 		matCount += 1;
 	      }
 
@@ -944,7 +943,7 @@ void dftClass<FEOrder>::computeElementalProjectorKets()
       //
       //get the number of elements in the compact support of the current nonlocal atom
       //
-      int numberElementsInAtomCompactSupport = d_elementIteratorsInAtomCompactSupport[iAtom].size();
+      int numberElementsInAtomCompactSupport = d_elementOneFieldIteratorsInAtomCompactSupport[iAtom].size();
 
 
       //pcout<<"Number of elements in compact support of nonlocal atom "<<iAtom<<" is "<<numberElementsInAtomCompactSupport<<std::endl;
@@ -969,7 +968,7 @@ void dftClass<FEOrder>::computeElementalProjectorKets()
       for(int iElemComp = 0; iElemComp < numberElementsInAtomCompactSupport; ++iElemComp)
 	{
 
-	  DoFHandler<3>::active_cell_iterator cell = d_elementIteratorsInAtomCompactSupport[iAtom][iElemComp];
+	  DoFHandler<3>::active_cell_iterator cell = d_elementOneFieldIteratorsInAtomCompactSupport[iAtom][iElemComp];
 
 	  //compute values for the current elements
 	  fe_values.reinit(cell);

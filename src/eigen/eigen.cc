@@ -182,11 +182,11 @@ void eigenClass<FEOrder>::computeVEff(std::map<dealii::CellId,std::vector<double
 		  cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
 		  pseudoPotential[v]=((*pseudoValues)[cellPtr->id()][q]);
 		}
-	      vEff(cell,q)=fe_eval_phi.get_value(q)+exchangePotential+corrPotential+(pseudoPotential-fe_eval_phiExt.get_value(q));
+	      vEff(cell,q) = fe_eval_phi.get_value(q)+exchangePotential+corrPotential+(pseudoPotential-fe_eval_phiExt.get_value(q));
 	    }
 	  else
 	    {  
-	      vEff(cell,q)=fe_eval_phi.get_value(q)+exchangePotential+corrPotential;
+	      vEff(cell,q) = fe_eval_phi.get_value(q)+exchangePotential+corrPotential;
 	    }
 	}
     }
@@ -202,7 +202,7 @@ void eigenClass<FEOrder>::computeVEff(std::map<dealii::CellId,std::vector<double
   const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
   const unsigned int n_array_elements = VectorizedArray<double>::n_array_elements;
   FEEvaluation<3,FEOrder> fe_eval_phi(dftPtr->matrix_free_data, 0 ,0);
-  FEEvaluation<3,FEOrder> fe_eval_phiExt(dftPtr->matrix_free_data, 0 ,0);
+  FEEvaluation<3,FEOrder> fe_eval_phiExt(dftPtr->matrix_free_data, dftPtr->phiExtDofHandlerIndex ,0);
   int numberQuadraturePoints = fe_eval_phi.n_q_points;
   vEff.reinit (n_cells, numberQuadraturePoints);
   derExcWithSigmaTimesGradRho.reinit(TableIndices<3>(n_cells, numberQuadraturePoints, 3));
