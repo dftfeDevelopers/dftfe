@@ -18,6 +18,8 @@
 
 #include <boost/math/special_functions/spherical_harmonic.hpp>
 double tolerance = 1e-12;
+const double pspTail = 8.0;
+
 
 //some inline functions
 inline 
@@ -144,9 +146,7 @@ void dftClass<FEOrder>::initLocalPseudoPotential()
   //get number of image charges used only for periodic
   //
   const int numberImageCharges = d_imageIds.size();
-
-  const double pspTail = 8.0;
-
+  
   //
   //loop over elements
   //
@@ -829,7 +829,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
 			  double r = quadPoint.distance(chargePoint);
 			  double deltaVl;
 
-			  if(r <= d_outerMostPointPseudoPotData[globalSplineId])
+			  if(r <= pspTail)//d_outerMostPointPseudoPotData[globalSplineId])
 			    {
 			      getRadialFunctionVal(r,
 						   deltaVl,
@@ -907,7 +907,6 @@ void dftClass<FEOrder>::computeElementalProjectorKets()
   //
   QGauss<3>  quadrature(FEOrder+1);
   FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values);
-  FEValues<3> fe_valuesEigen(FEEigen, quadrature, update_values | update_gradients | update_JxW_values);
   const unsigned int numberNodesPerElement  = FE.dofs_per_cell;
   const unsigned int numberQuadraturePoints = quadrature.size();
   
@@ -973,7 +972,7 @@ void dftClass<FEOrder>::computeElementalProjectorKets()
 	  DoFHandler<3>::active_cell_iterator cell = d_elementIteratorsInAtomCompactSupport[iAtom][iElemComp];
 
 	  //compute values for the current elements
-	  fe_valuesEigen.reinit(cell);
+	  fe_values.reinit(cell);
 
 #ifdef ENABLE_PERIODIC_BC
 	  d_nonLocalProjectorElementMatrices[iAtom][iElemComp].resize(maxkPoints,
@@ -1023,7 +1022,7 @@ void dftClass<FEOrder>::computeElementalProjectorKets()
 		{
 
 		  MappingQ1<3,3> test;
-		  Point<3> quadPoint(test.transform_unit_to_real_cell(cell, fe_valuesEigen.get_quadrature().point(iQuadPoint)));
+		  Point<3> quadPoint(test.transform_unit_to_real_cell(cell, fe_values.get_quadrature().point(iQuadPoint)));
 
 		  for(int iImageAtomCount = 0; iImageAtomCount < imageIdsList.size(); ++iImageAtomCount)
 		    {
@@ -1063,7 +1062,7 @@ void dftClass<FEOrder>::computeElementalProjectorKets()
 		    
 
 		      double radialWaveFunVal, sphericalHarmonicVal, radialPotFunVal, pseudoWaveFunctionValue, deltaVlValue;
-		      if(r <= d_outerMostPointPseudoWaveFunctionsData[globalWaveSplineId])
+		      if(r <= pspTail)//d_outerMostPointPseudoWaveFunctionsData[globalWaveSplineId])
 			{
 			  getRadialFunctionVal(r,
 					       radialWaveFunVal,
@@ -1114,7 +1113,7 @@ void dftClass<FEOrder>::computeElementalProjectorKets()
 		      nonLocalPseudoConstant[iQuadPoint] += pseudoWaveFunctionValue*deltaVlValue*pseudoWaveFunctionValue;
 		    }//image atom loop
 
-		  nlpValue += nonLocalPseudoConstant[iQuadPoint]*fe_valuesEigen.JxW(iQuadPoint);
+		  nlpValue += nonLocalPseudoConstant[iQuadPoint]*fe_values.JxW(iQuadPoint);
 
 		}//end of quad loop
 
@@ -1135,10 +1134,10 @@ void dftClass<FEOrder>::computeElementalProjectorKets()
 		      for(int iQuadPoint = 0; iQuadPoint < numberQuadraturePoints; ++iQuadPoint)
 			{
 #ifdef ENABLE_PERIODIC_BC
-			  tempReal += nonLocalProjectorBasisReal[maxkPoints*iQuadPoint+kPoint]*fe_valuesEigen.shape_value(iNode,iQuadPoint)*fe_valuesEigen.JxW(iQuadPoint);
-			  tempImag += nonLocalProjectorBasisImag[maxkPoints*iQuadPoint+kPoint]*fe_valuesEigen.shape_value(iNode,iQuadPoint)*fe_valuesEigen.JxW(iQuadPoint);
+			  tempReal += nonLocalProjectorBasisReal[maxkPoints*iQuadPoint+kPoint]*fe_values.shape_value(iNode,iQuadPoint)*fe_values.JxW(iQuadPoint);
+			  tempImag += nonLocalProjectorBasisImag[maxkPoints*iQuadPoint+kPoint]*fe_values.shape_value(iNode,iQuadPoint)*fe_values.JxW(iQuadPoint);
 #else
-			  d_nonLocalProjectorElementMatrices[iAtom][iElemComp][kPoint][numberNodesPerElement*iPseudoWave + iNode] += nonLocalProjectorBasisReal[maxkPoints*iQuadPoint+kPoint]*fe_values.shape_value(iNode,iQuadPoint)*fe_valuesEigen.JxW(iQuadPoint);
+			  d_nonLocalProjectorElementMatrices[iAtom][iElemComp][kPoint][numberNodesPerElement*iPseudoWave + iNode] += nonLocalProjectorBasisReal[maxkPoints*iQuadPoint+kPoint]*fe_values.shape_value(iNode,iQuadPoint)*fe_values.JxW(iQuadPoint);
 #endif
 			}
 #ifdef ENABLE_PERIODIC_BC
