@@ -7,7 +7,7 @@ set DFT PATH = "../../../../"
 #finite-element related parameters
 #
 set MESH FILE = mesh.inp
-set FINITE ELEMENT POLYNOMIAL ORDER = 4
+set FINITE ELEMENT POLYNOMIAL ORDER = 6
 
 #
 #Atomic-coordinates file
@@ -57,7 +57,10 @@ set PSEUDOPOTENTIAL CALCULATION = true
 # 2 (LDA: Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)])
 # 3 (LDA: Vosko, Wilk & Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)])
 # 4 (GGA: Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)])*/
-set EXCHANGE CORRELATION TYPE = 1
+set EXCHANGE CORRELATION TYPE = 4
+#spin polarization
+set SPIN POLARIZATION = 1
+set START MAGNETIZATION = 0.05
 
 #
 #Eigen-solver/Chebyshev solver related parameters

@@ -29,11 +29,11 @@
 #include <iostream>
 #include <fstream>
 
-unsigned int finiteElementPolynomialOrder,n_refinement_steps,numberEigenValues,xc_id;
-unsigned int chebyshevOrder,numSCFIterations,maxLinearSolverIterations, mixingHistory;
+unsigned int finiteElementPolynomialOrder,n_refinement_steps,numberEigenValues,xc_id, spinPolarized;
+unsigned int chebyshevOrder,numPass,numSCFIterations,maxLinearSolverIterations, mixingHistory;
 
 double radiusAtomBall, domainSizeX, domainSizeY, domainSizeZ, mixingParameter;
-double lowerEndWantedSpectrum,relLinearSolverTolerance,selfConsistentSolverTolerance,TVal;
+double lowerEndWantedSpectrum,relLinearSolverTolerance,selfConsistentSolverTolerance,TVal, start_magnetization;
 
 bool isPseudopotential,periodicX,periodicY,periodicZ;
 std::string meshFileName,coordinatesFile,currentPath,latticeVectorsFile,kPointDataFile;
@@ -112,6 +112,13 @@ void declare_parameters()
 		    Patterns::Double(),
 		    "Size of the domain in Z-direction");
 
+  prm.declare_entry("SPIN POLARIZATION", "0",
+		    Patterns::Integer(0,1),
+		    "Is spin polarization to be included?");
+
+  prm.declare_entry("START MAGNETIZATION", "0.0",
+		     Patterns::Double(),
+		    "Magnetization to start with");
   
   prm.declare_entry("PERIODIC BOUNDARY CONDITION X", "false",
 		    Patterns::Bool(),
@@ -144,6 +151,10 @@ void declare_parameters()
   prm.declare_entry("CHEBYSHEV POLYNOMIAL DEGREE", "0",
 		    Patterns::Integer(),
 		    "The degree of the Chebyshev polynomial to be employed for filtering out the unwanted spectrum (Default value is used when the input parameter value is 0");
+
+  prm.declare_entry("CHEBYSHEV FILTER PASSES", "1",
+		    Patterns::Integer(),
+		    "The number of the Chebyshev filter passes per SCF  (Default value is used when the input parameter is not specified");
 
   prm.declare_entry("NUMBER OF KOHN-SHAM WAVEFUNCTIONS", "10",
 		    Patterns::Integer(),
@@ -222,6 +233,8 @@ void parse_command_line(const int argc,
 	  domainSizeX                   = prm.get_double("DOMAIN SIZE X");
 	  domainSizeY                   = prm.get_double("DOMAIN SIZE Y");
 	  domainSizeZ                   = prm.get_double("DOMAIN SIZE Z");
+	  spinPolarized                 = prm.get_integer("SPIN POLARIZATION");
+	  start_magnetization           = prm.get_double("START MAGNETIZATION");
 	  periodicX                     = prm.get_bool("PERIODIC BOUNDARY CONDITION X");
 	  periodicY                     = prm.get_bool("PERIODIC BOUNDARY CONDITION Y");
 	  periodicZ                     = prm.get_bool("PERIODIC BOUNDARY CONDITION Z");
@@ -232,6 +245,7 @@ void parse_command_line(const int argc,
 	  numberEigenValues             = prm.get_integer("NUMBER OF KOHN-SHAM WAVEFUNCTIONS");
 	  lowerEndWantedSpectrum        = prm.get_double("LOWER BOUND WANTED SPECTRUM");
 	  chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");  
+	  numPass			= prm.get_integer("CHEBYSHEV FILTER PASSES");
 	  numSCFIterations              = prm.get_integer("SCF CONVERGENCE MAXIMUM ITERATIONS");
 	  selfConsistentSolverTolerance = prm.get_double("SCF CONVERGENCE TOLERANCE");
 	  mixingHistory                 = prm.get_integer("ANDERSON SCHEME MIXING HISTORY");

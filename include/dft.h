@@ -168,12 +168,15 @@ class dftClass
    */
   double mixing_simple();
   double mixing_anderson();
+  double mixing_simple_spinPolarized();
+  double mixing_anderson_spinPolarized();
 
   /**
    * Computes ground-state energy in a given SCF iteration,
    * computes repulsive energy explicity for a non-periodic system
    */
   void compute_energy();
+  void compute_energy_spinPolarized();
   double repulsiveEnergy();
 
   /**
@@ -234,7 +237,7 @@ class dftClass
   poissonClass<FEOrder> poisson;
   eigenClass<FEOrder> eigen;
   ConstraintMatrix constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_constraintsPeriodicWithDirichlet, d_noConstraints; 
-  std::vector<std::vector<double> > eigenValues;
+  std::vector<std::vector<double> > eigenValues, eigenValuesTemp; 
   std::vector<std::vector<parallel::distributed::Vector<double>*> > eigenVectors;
   std::vector<std::vector<parallel::distributed::Vector<double>*> > eigenVectorsOrig;
 
@@ -246,12 +249,13 @@ class dftClass
   TimerOutput computing_timer;
   
   //dft related objects
-  std::map<dealii::CellId, std::vector<double> > *rhoInValues, *rhoOutValues;
-  std::deque<std::map<dealii::CellId,std::vector<double> >*> rhoInVals, rhoOutVals;
+  std::map<dealii::CellId, std::vector<double> > *rhoInValues, *rhoOutValues, *rhoInValuesSpinPolarized, *rhoOutValuesSpinPolarized;
+  std::deque<std::map<dealii::CellId,std::vector<double> >*> rhoInVals, rhoOutVals, rhoInValsSpinPolarized, rhoOutValsSpinPolarized;
 
-  std::map<dealii::CellId, std::vector<double> > *gradRhoInValues;
-  std::map<dealii::CellId, std::vector<double> > *gradRhoOutValues;
-  std::deque<std::map<dealii::CellId,std::vector<double> >*> gradRhoInVals,gradRhoOutVals; 
+
+  std::map<dealii::CellId, std::vector<double> > *gradRhoInValues, *gradRhoInValuesSpinPolarized;
+  std::map<dealii::CellId, std::vector<double> > *gradRhoOutValues, *gradRhoOutValuesSpinPolarized;
+  std::deque<std::map<dealii::CellId,std::vector<double> >*> gradRhoInVals,gradRhoInValsSpinPolarized,gradRhoOutVals, gradRhoOutValsSpinPolarized; 
 
 
 
@@ -341,16 +345,18 @@ class dftClass
   double fermiEnergy;
 
   //chebyshev filter variables and functions
+  //int numPass ; // number of filter passes
   double bUp;// bLow, a0;
   std::vector<double> a0;
   std::vector<double> bLow;
   vectorType vChebyshev, v0Chebyshev, fChebyshev, aj[5];
   std::vector<parallel::distributed::Vector<double>*> PSI, tempPSI, tempPSI2, tempPSI3, tempPSI4;
-  void chebyshevSolver();
+  void chebyshevSolver(unsigned int s);
+  void computeResidualNorm(std::vector<vectorType*>& X);
   double upperBound();
   void gramSchmidt(std::vector<vectorType*>& X);
   void chebyshevFilter(std::vector<vectorType*>& X, unsigned int m, double a, double b, double a0);  
-  void rayleighRitz(std::vector<vectorType*>& X);
+  void rayleighRitz(unsigned int s, std::vector<vectorType*>& X);
 };
 
 #endif

@@ -159,7 +159,7 @@ void dftClass<FEOrder>::alphaTimesXPlusY(std::complex<double>   alpha,
 
 //chebyshev solver
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::chebyshevSolver()
+void dftClass<FEOrder>::chebyshevSolver(unsigned int s)
 {
   computing_timer.enter_section("Chebyshev solve"); 
 
@@ -224,27 +224,45 @@ void dftClass<FEOrder>::chebyshevSolver()
 
   sprintf(buffer, "%s:%18.10e\n", "upper bound of unwanted spectrum", bUp);
   pcout << buffer;
-  sprintf(buffer, "%s:%18.10e\n", "lower bound of unwanted spectrum", bLow[d_kPointIndex]);
+  sprintf(buffer, "%s:%18.10e\n", "lower bound of unwanted spectrum", bLow[(1+spinPolarized)*d_kPointIndex+s]);
   pcout << buffer;
   sprintf(buffer, "%s: %u\n\n", "Chebyshev polynomial degree", chebyshevOrder);
   pcout << buffer;
-
-
+  //
+  //std::vector<vectorType*>::iterator first = eigenVectors[d_kPointIndex].begin() + s*numEigenValues; 
+  //std::vector<vectorType*>::iterator last  = eigenVectors[d_kPointIndex].begin() + (s+1)*numEigenValues; 
+  //sprintf(buffer, "%s:%10u:%10u:%10u:%10u\n", "check 4", eigenVectors[d_kPointIndex].size(),first,last,eigenVectors[d_kPointIndex].end());
+  //pcout << buffer;
+  //
+  //std::vector<vectorType*>  eigenVectorsTemp (first, last);
+  //for (unsigned int i=0; i<numEigenValues; ++i)
+ //	eigenVectorsTemp.push_back(eigenVectors[d_kPointIndex][i]) ;
+ // sprintf(buffer, "%s:%10u\n", "check 5", eigenVectorsTemp.size());
+ // pcout << buffer;
   //
   //Filter
   //
-  chebyshevFilter(eigenVectors[d_kPointIndex], chebyshevOrder, bLow[d_kPointIndex], bUp, a0[d_kPointIndex]);
- 
+  chebyshevFilter(eigenVectors[(1+spinPolarized)*d_kPointIndex+s], chebyshevOrder, bLow[(1+spinPolarized)*d_kPointIndex+s], bUp, a0[(1+spinPolarized)*d_kPointIndex+s]);
+  //chebyshevFilter(eigenVectors[d_kPointIndex], chebyshevOrder, bLow[(1+spinPolarized)*d_kPointIndex+s], bUp, a0[(1+spinPolarized)*d_kPointIndex+s]);
 
   //
   //Gram Schmidt orthonormalization
   //
-  gramSchmidt(eigenVectors[d_kPointIndex]);
+  gramSchmidt(eigenVectors[(1+spinPolarized)*d_kPointIndex+s]);
+ // gramSchmidt(eigenVectors[d_kPointIndex]);
 
   //
   //Rayleigh Ritz step
   //
-  rayleighRitz(eigenVectors[d_kPointIndex]);
+  rayleighRitz(s, eigenVectors[(1+spinPolarized)*d_kPointIndex+s]);
+  //rayleighRitz(s, eigenVectors[d_kPointIndex]);
+  //
+  // Compute and print L2 norm
+  //
+  computeResidualNorm(eigenVectors[(1+spinPolarized)*d_kPointIndex+s]);
+  //computeResidualNorm(eigenVectors[d_kPointIndex]);
+  // 
+ 
   computing_timer.exit_section("Chebyshev solve"); 
 }
 
@@ -466,11 +484,10 @@ void dftClass<FEOrder>::gramSchmidt(std::vector<vectorType*>& X)
 }
 
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::rayleighRitz(std::vector<vectorType*> &X){
+void dftClass<FEOrder>::rayleighRitz(unsigned int s, std::vector<vectorType*> &X){
   computing_timer.enter_section("Chebyshev Rayleigh Ritz"); 
   //Hbar=Psi^T*H*Psi
   eigen.XHX(X);  //Hbar is now available as a 1D array XHXValue 
-
   //compute the eigen decomposition of Hbar
   int n = X.size(), lda = X.size(), info;
   int lwork = 1 + 6*n + 2*n*n, liwork = 3 + 5*n;
@@ -481,10 +498,10 @@ void dftClass<FEOrder>::rayleighRitz(std::vector<vectorType*> &X){
   int lrwork = 1 + 5*n + 2*n*n;
   std::vector<double> rwork(lrwork,0.0); 
   std::vector<std::complex<double> > work(lwork);
-  zheevd_(&jobz, &uplo, &n, &eigen.XHXValue[0],&lda,&eigenValues[d_kPointIndex][0], &work[0], &lwork, &rwork[0], &lrwork, &iwork[0], &liwork, &info);
+  zheevd_(&jobz, &uplo, &n, &eigen.XHXValue[0],&lda,&eigenValuesTemp[d_kPointIndex][0], &work[0], &lwork, &rwork[0], &lrwork, &iwork[0], &liwork, &info);
 #else
   std::vector<double> work(lwork);
-  dsyevd_(&jobz, &uplo, &n, &eigen.XHXValue[0], &lda, &eigenValues[d_kPointIndex][0], &work[0], &lwork, &iwork[0], &liwork, &info);
+  dsyevd_(&jobz, &uplo, &n, &eigen.XHXValue[0], &lda, &eigenValuesTemp[d_kPointIndex][0], &work[0], &lwork, &iwork[0], &liwork, &info);
 #endif
 
   //
@@ -492,10 +509,12 @@ void dftClass<FEOrder>::rayleighRitz(std::vector<vectorType*> &X){
   //
   char buffer[100];
   pcout << "kPoint: "<< d_kPointIndex<<std::endl;
+  pcout << "spin: "<< s+1 <<std::endl;
   for (unsigned int i=0; i< (unsigned int)n; i++)
     {
-      sprintf(buffer, "eigen value %3u: %22.16e\n", i, eigenValues[d_kPointIndex][i]);
+      sprintf(buffer, "eigen value %3u: %22.16e\n", i, eigenValuesTemp[d_kPointIndex][i]);
       pcout << buffer;
+      eigenValues[d_kPointIndex][s*numEigenValues + i] =  eigenValuesTemp[d_kPointIndex][i] ;
     }
   pcout <<std::endl;
 
@@ -567,8 +586,8 @@ lda=n1; int ldb=m, ldc=n1;
 #endif
 
   //set a0 and bLow
-  a0[d_kPointIndex]=eigenValues[d_kPointIndex][0]; 
-  bLow[d_kPointIndex]=eigenValues[d_kPointIndex].back(); 
+  a0[(1+spinPolarized)*d_kPointIndex+s]=eigenValuesTemp[d_kPointIndex][0]; 
+  bLow[(1+spinPolarized)*d_kPointIndex+s]=eigenValuesTemp[d_kPointIndex].back(); 
   //
   computing_timer.exit_section("Chebyshev Rayleigh Ritz"); 
 }
@@ -617,5 +636,24 @@ void dftClass<FEOrder>::chebyshevFilter(std::vector<vectorType*> & X,
   }   
   computing_timer.exit_section("Chebyshev filtering"); 
 }
- 
 
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::computeResidualNorm(std::vector<vectorType*> & X)
+{
+  computing_timer.enter_section("computeResidualNorm"); 
+  eigen.HX(X, PSI);
+  //
+  unsigned int n = eigenValuesTemp[d_kPointIndex].size() ;
+  char buffer[100];
+  pcout<<"L-2 Norm of residue   :"<<std::endl;
+  //pcout<<"L-inf Norm of residue :"<<(*PSI[i]).linfty_norm()<<std::endl;
+  for(unsigned int i = 0; i < n; i++)
+     {
+	(*PSI[i]).add(-eigenValuesTemp[d_kPointIndex][i] , (*X[i]) ) ;
+	 sprintf(buffer, "eigen vector %3u: %22.16e\n", i+1, (*PSI[i]).l2_norm());
+         pcout << buffer;
+    }
+  pcout <<std::endl;
+  //
+  computing_timer.exit_section("computeResidualNorm"); 
+} 
