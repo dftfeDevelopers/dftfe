@@ -60,7 +60,7 @@ void eigenClass<FEOrder>::init()
   //
   //XHX size
   //
-  XHXValue.resize(dftPtr->eigenVectors[0].size()*dftPtr->eigenVectors[0].size(),0.0);
+  XHXValue.resize(dftPtr->numEigenValues*dftPtr->numEigenValues,0.0);
 
   //
   //HX
@@ -990,6 +990,203 @@ void eigenClass<FEOrder>::XHX(const std::vector<vectorType*> &src)
   
   computing_timer.exit_section("eigenClass XHX");
 }
+
+template<unsigned int FEOrder>
+void eigenClass<FEOrder>::computeVEffSpinPolarized(std::map<dealii::CellId,std::vector<double> >* rhoValues, 
+				      const vectorType & phi,
+				      const vectorType & phiExt,
+				      const unsigned int spinIndex,
+				      std::map<dealii::CellId,std::vector<double> >* pseudoValues)
+{
+  const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
+  const unsigned int n_array_elements = VectorizedArray<double>::n_array_elements;
+  FEEvaluation<3,FEOrder> fe_eval_phi(dftPtr->matrix_free_data, 0 ,0);
+  FEEvaluation<3,FEOrder> fe_eval_phiExt(dftPtr->matrix_free_data, dftPtr->phiExtDofHandlerIndex, 0);
+  int numberQuadraturePoints = fe_eval_phi.n_q_points;
+  vEff.reinit (n_cells, numberQuadraturePoints);
+  typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
+
+  //
+  //loop over cell block
+  //
+  for (unsigned int cell = 0; cell < n_cells; ++cell)
+    {
+
+      //
+      //extract total potential
+      //
+      fe_eval_phi.reinit(cell);
+      fe_eval_phi.read_dof_values(phi);
+      fe_eval_phi.evaluate(true, false, false);
+
+      //
+      //extract phiExt
+      //
+      fe_eval_phiExt.reinit(cell);
+      fe_eval_phiExt.read_dof_values(phiExt);
+      fe_eval_phiExt.evaluate(true, false, false);
+
+
+
+      for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+	{
+	  //
+	  //loop over each cell
+	  //
+	  unsigned int n_sub_cells=dftPtr->matrix_free_data.n_components_filled(cell);
+	  std::vector<double> densityValue(2*n_sub_cells), exchangePotentialVal(2*n_sub_cells), corrPotentialVal(2*n_sub_cells);
+	  for (unsigned int v = 0; v < n_sub_cells; ++v)
+	    {
+	      cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
+	      densityValue[2*v+1] = ((*rhoValues)[cellPtr->id()][2*q+1]);
+	      densityValue[2*v] = ((*rhoValues)[cellPtr->id()][2*q]);
+	    }
+
+	  xc_lda_vxc(&funcX,n_sub_cells,&densityValue[0],&exchangePotentialVal[0]);
+	  xc_lda_vxc(&funcC,n_sub_cells,&densityValue[0],&corrPotentialVal[0]);
+
+	  VectorizedArray<double>  exchangePotential, corrPotential;
+	  for (unsigned int v = 0; v < n_sub_cells; ++v)
+	    {
+	      exchangePotential[v]=exchangePotentialVal[2*v+spinIndex];
+	      corrPotential[v]=corrPotentialVal[2*v+spinIndex];
+	    }
+
+	  //
+	  //sum all to vEffective
+	  //
+	  if(isPseudopotential)
+	    {
+	      VectorizedArray<double>  pseudoPotential;
+	      for (unsigned int v = 0; v < n_sub_cells; ++v)
+		{
+		  cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
+		  pseudoPotential[v]=((*pseudoValues)[cellPtr->id()][q]);
+		}
+	      vEff(cell,q)=fe_eval_phi.get_value(q)+exchangePotential+corrPotential+(pseudoPotential-fe_eval_phiExt.get_value(q));
+	    }
+	  else
+	    {  
+	      vEff(cell,q)=fe_eval_phi.get_value(q)+exchangePotential+corrPotential;
+	    }
+	}
+    }
+}
+
+template<unsigned int FEOrder>
+void eigenClass<FEOrder>::computeVEffSpinPolarized(std::map<dealii::CellId,std::vector<double> >* rhoValues,
+				      std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
+				      const vectorType & phi,
+				      const vectorType & phiExt,
+				      const unsigned int spinIndex,
+				      std::map<dealii::CellId,std::vector<double> >* pseudoValues)
+{
+  const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
+  const unsigned int n_array_elements = VectorizedArray<double>::n_array_elements;
+  FEEvaluation<3,FEOrder> fe_eval_phi(dftPtr->matrix_free_data, 0 ,0);
+  FEEvaluation<3,FEOrder> fe_eval_phiExt(dftPtr->matrix_free_data, dftPtr->phiExtDofHandlerIndex ,0);
+  int numberQuadraturePoints = fe_eval_phi.n_q_points;
+  vEff.reinit (n_cells, numberQuadraturePoints);
+  derExcWithSigmaTimesGradRho.reinit(TableIndices<3>(n_cells, numberQuadraturePoints, 3));
+  typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
+
+  //
+  //loop over cell block
+  //
+  for (unsigned int cell = 0; cell < n_cells; ++cell)
+    {
+
+      //
+      //extract total potential
+      //
+      fe_eval_phi.reinit(cell);
+      fe_eval_phi.read_dof_values(phi);
+      fe_eval_phi.evaluate(true, false, false);
+
+      //
+      //extract phiExt
+      //
+      fe_eval_phiExt.reinit(cell);
+      fe_eval_phiExt.read_dof_values(phiExt);
+      fe_eval_phiExt.evaluate(true, false, false);
+
+
+
+      for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
+	{
+	  //
+	  //loop over each cell
+	  //
+	  unsigned int n_sub_cells=dftPtr->matrix_free_data.n_components_filled(cell);
+	  std::vector<double> densityValue(2*n_sub_cells), derExchEnergyWithDensityVal(2*n_sub_cells), derCorrEnergyWithDensityVal(2*n_sub_cells), 
+				derExchEnergyWithSigma(3*n_sub_cells), derCorrEnergyWithSigma(3*n_sub_cells), sigmaValue(3*n_sub_cells);
+	  for (unsigned int v = 0; v < n_sub_cells; ++v)
+	    {
+	      cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
+	      densityValue[2*v+1] = ((*rhoValues)[cellPtr->id()][2*q+1]);
+	      densityValue[2*v] = ((*rhoValues)[cellPtr->id()][2*q]);
+	      double gradRhoX1 = ((*gradRhoValues)[cellPtr->id()][6*q + 0]);
+	      double gradRhoY1 = ((*gradRhoValues)[cellPtr->id()][6*q + 1]);
+	      double gradRhoZ1 = ((*gradRhoValues)[cellPtr->id()][6*q + 2]);
+	      double gradRhoX2 = ((*gradRhoValues)[cellPtr->id()][6*q + 3]);
+	      double gradRhoY2 = ((*gradRhoValues)[cellPtr->id()][6*q + 4]);
+	      double gradRhoZ2 = ((*gradRhoValues)[cellPtr->id()][6*q + 5]);
+	      //
+	      sigmaValue[3*v+0] = gradRhoX1*gradRhoX1 + gradRhoY1*gradRhoY1 + gradRhoZ1*gradRhoZ1;
+	      sigmaValue[3*v+1] = gradRhoX1*gradRhoX2 + gradRhoY1*gradRhoY2 + gradRhoZ1*gradRhoZ2;
+	      sigmaValue[3*v+2] = gradRhoX2*gradRhoX2 + gradRhoY2*gradRhoY2 + gradRhoZ2*gradRhoZ2;
+	    }
+	
+	  xc_gga_vxc(&funcX,n_sub_cells,&densityValue[0],&sigmaValue[0],&derExchEnergyWithDensityVal[0],&derExchEnergyWithSigma[0]);
+	  xc_gga_vxc(&funcC,n_sub_cells,&densityValue[0],&sigmaValue[0],&derCorrEnergyWithDensityVal[0],&derCorrEnergyWithSigma[0]);
+
+
+	  VectorizedArray<double>  derExchEnergyWithDensity, derCorrEnergyWithDensity, derExcWithSigmaTimesGradRhoX, derExcWithSigmaTimesGradRhoY, derExcWithSigmaTimesGradRhoZ;
+	  for (unsigned int v = 0; v < n_sub_cells; ++v)
+	    {
+	      cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
+	      derExchEnergyWithDensity[v]=derExchEnergyWithDensityVal[2*v+spinIndex];
+	      derCorrEnergyWithDensity[v]=derCorrEnergyWithDensityVal[2*v+spinIndex];
+	      double gradRhoX = ((*gradRhoValues)[cellPtr->id()][6*q + 0 + 3*spinIndex]);
+	      double gradRhoY = ((*gradRhoValues)[cellPtr->id()][6*q + 1 + 3*spinIndex]);
+	      double gradRhoZ = ((*gradRhoValues)[cellPtr->id()][6*q + 2 + 3*spinIndex]);
+	      double gradRhoOtherX = ((*gradRhoValues)[cellPtr->id()][6*q + 0 + 3*(1-spinIndex)]);
+	      double gradRhoOtherY = ((*gradRhoValues)[cellPtr->id()][6*q + 1 + 3*(1-spinIndex)]);
+	      double gradRhoOtherZ = ((*gradRhoValues)[cellPtr->id()][6*q + 2 + 3*(1-spinIndex)]);
+	      double term = derExchEnergyWithSigma[3*v+2*spinIndex]+derCorrEnergyWithSigma[3*v+2*spinIndex];
+	      double termOff = derExchEnergyWithSigma[3*v+1]+derCorrEnergyWithSigma[3*v+1];
+	      derExcWithSigmaTimesGradRhoX[v] = term*gradRhoX + 0.5*termOff*gradRhoOtherX; 
+	      derExcWithSigmaTimesGradRhoY[v] = term*gradRhoY + 0.5*termOff*gradRhoOtherY;
+	      derExcWithSigmaTimesGradRhoZ[v] = term*gradRhoZ + 0.5*termOff*gradRhoOtherZ;
+	    }
+
+	  //
+	  //sum all to vEffective
+	  //
+	  if(isPseudopotential)
+	    {
+	      VectorizedArray<double>  pseudoPotential;
+	      for (unsigned int v = 0; v < n_sub_cells; ++v)
+		{
+		  cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
+		  pseudoPotential[v]=((*pseudoValues)[cellPtr->id()][q]);
+		}
+	      vEff(cell,q)=fe_eval_phi.get_value(q)+derExchEnergyWithDensity+derCorrEnergyWithDensity+(pseudoPotential-fe_eval_phiExt.get_value(q));
+	      derExcWithSigmaTimesGradRho(cell,q,0) = derExcWithSigmaTimesGradRhoX;
+	      derExcWithSigmaTimesGradRho(cell,q,1) = derExcWithSigmaTimesGradRhoY;
+	      derExcWithSigmaTimesGradRho(cell,q,2) = derExcWithSigmaTimesGradRhoZ;
+	    }
+	  else
+	    {  
+	      vEff(cell,q)=fe_eval_phi.get_value(q)+derExchEnergyWithDensity+derCorrEnergyWithDensity;
+	      derExcWithSigmaTimesGradRho(cell,q,0) = derExcWithSigmaTimesGradRhoX;
+	      derExcWithSigmaTimesGradRho(cell,q,1) = derExcWithSigmaTimesGradRhoY;
+	      derExcWithSigmaTimesGradRho(cell,q,2) = derExcWithSigmaTimesGradRhoZ;
+	    }
+	}
+    }
+}
+
 
 template class eigenClass<1>;
 template class eigenClass<2>;

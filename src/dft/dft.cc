@@ -228,19 +228,31 @@ void dftClass<FEOrder>::set()
   
   //set size of eigenvalues and eigenvectors data structures
   eigenValues.resize(d_maxkPoints);
-  a0.resize(d_maxkPoints,lowerEndWantedSpectrum);
-  bLow.resize(d_maxkPoints,0.0);
-  eigenVectors.resize(d_maxkPoints);
-  eigenVectorsOrig.resize(d_maxkPoints);
-
-  for(unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+  eigenValuesTemp.resize(d_maxkPoints);
+  a0.resize((spinPolarized+1)*d_maxkPoints,lowerEndWantedSpectrum);
+  bLow.resize((spinPolarized+1)*d_maxkPoints,0.0);
+  eigenVectors.resize((1+spinPolarized)*d_maxkPoints);
+  eigenVectorsOrig.resize((1+spinPolarized)*d_maxkPoints);
+  //
+  char buffer[100];
+  sprintf(buffer, "%s:%10u\n", "check 0", eigenVectors.size());
+  pcout << buffer;
+  //
+  for(unsigned int kPoint = 0; kPoint < (1+spinPolarized)*d_maxkPoints; ++kPoint)
     {
-      eigenValues[kPoint].resize(numEigenValues);  
-      for (unsigned int i=0; i<numEigenValues; ++i)
-	{
-	  eigenVectors[kPoint].push_back(new vectorType);
-	  eigenVectorsOrig[kPoint].push_back(new vectorType);
-	}
+      //for (unsigned int j=0; j<(spinPolarized+1); ++j) // for spin
+       //{
+        for (unsigned int i=0; i<numEigenValues; ++i)
+	  {
+	    eigenVectors[kPoint].push_back(new vectorType);
+	    eigenVectorsOrig[kPoint].push_back(new vectorType);
+	  }
+       //}
+    }
+   for(unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+    {
+      eigenValues[kPoint].resize((spinPolarized+1)*numEigenValues);  
+      eigenValuesTemp[kPoint].resize(numEigenValues); 
     }
 
   for (unsigned int i=0; i<numEigenValues; ++i){
@@ -292,16 +304,34 @@ void dftClass<FEOrder>::run ()
   //Begin SCF iteration
   //
   unsigned int scfIter=0;
-  double norm = 1.0;
   char buffer[100];
+  double norm = 1.0;
   while ((norm > selfConsistentSolverTolerance) && (scfIter < numSCFIterations))
     {
       sprintf(buffer, "\n\n**** Begin Self-Consistent-Field Iteration: %u ****\n", scfIter+1); pcout << buffer;
       //Mixing scheme
       if(scfIter > 0)
 	{
-	  if (scfIter==1) norm = mixing_simple();
-	  else norm = sqrt(mixing_anderson());
+	  if (scfIter==1)
+              {
+		if (spinPolarized==1)
+                  {
+		    //for (unsigned int s=0; s<2; ++s)
+		       norm = mixing_simple_spinPolarized(); 
+		  }
+		else
+	          norm = mixing_simple();
+	      }
+	  else 
+             {
+		if (spinPolarized==1)
+		  {
+		    //for (unsigned int s=0; s<2; ++s)
+		       norm = sqrt(mixing_anderson_spinPolarized());
+		  } 
+		else
+	          norm = sqrt(mixing_anderson());		
+	      }
 	  sprintf(buffer, "Anderson Mixing: L2 norm of electron-density difference: %12.6e\n\n", norm); pcout << buffer;
 	  poisson.phiTotRhoIn = poisson.phiTotRhoOut;
 	}
@@ -317,35 +347,71 @@ void dftClass<FEOrder>::run ()
 
      
       //eigen solve
-
-      if(xc_id < 4)
+      if (spinPolarized==1)
 	{
-	  if(isPseudopotential)
-	    eigen.computeVEff(rhoInValues, poisson.phiTotRhoIn, poisson.phiExt, pseudoValues);
-	  else
-	    eigen.computeVEff(rhoInValues, poisson.phiTotRhoIn, poisson.phiExt); 
-	}
-      else if (xc_id == 4)
-	{
-	  if(isPseudopotential)
-	    eigen.computeVEff(rhoInValues, gradRhoInValues, poisson.phiTotRhoIn, poisson.phiExt, pseudoValues);
-	  else
-	    eigen.computeVEff(rhoInValues, gradRhoInValues, poisson.phiTotRhoIn, poisson.phiExt);
+	  for(unsigned int s=0; s<2; ++s)
+	      {
+	       if(xc_id < 4) 
+	        {
+		  if(isPseudopotential)
+		    eigen.computeVEffSpinPolarized(rhoInValuesSpinPolarized, poisson.phiTotRhoIn, poisson.phiExt, s, pseudoValues);
+		  else
+		    eigen.computeVEffSpinPolarized(rhoInValuesSpinPolarized, poisson.phiTotRhoIn, poisson.phiExt, s);
+                }
+	       else if (xc_id == 4)
+	        {
+	          if(isPseudopotential)
+		    eigen.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, poisson.phiTotRhoIn, poisson.phiExt, s, pseudoValues);
+	          else
+		    eigen.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, poisson.phiTotRhoIn, poisson.phiExt, s);
+	        }
+	      for (int kPoint = 0; kPoint < d_maxkPoints; ++kPoint) 
+	        {
+	          d_kPointIndex = kPoint;
+	          char buffer[100];
+	          for(int j = 0; j < numPass; ++j)
+	            { 
+		       sprintf(buffer, "%s:%3u%s:%3u\n", "Beginning Chebyshev filter pass ", j+1, " for spin ", s+1);
+		       pcout << buffer;
+		       chebyshevSolver(s);
+	            }
+	        }
+	    }
+        }
+      else
+        {
+	  if(xc_id < 4)
+	      {
+	      if(isPseudopotential)
+		eigen.computeVEff(rhoInValues, poisson.phiTotRhoIn, poisson.phiExt, pseudoValues);
+	      else
+		eigen.computeVEff(rhoInValues, poisson.phiTotRhoIn, poisson.phiExt); 
+	      }
+	  else if (xc_id == 4)
+	     {
+	      if(isPseudopotential)
+		eigen.computeVEff(rhoInValues, gradRhoInValues, poisson.phiTotRhoIn, poisson.phiExt, pseudoValues);
+	      else
+		eigen.computeVEff(rhoInValues, gradRhoInValues, poisson.phiTotRhoIn, poisson.phiExt);
+	     } 
+        
+	  for (int kPoint = 0; kPoint < d_maxkPoints; ++kPoint) 
+	    {
+	      d_kPointIndex = kPoint;
+	      char buffer[100];
+	      for(int j = 0; j < numPass; ++j)
+	      { 
+		    sprintf(buffer, "%s:%3u\n", "Beginning Chebyshev filter pass ", j+1);
+		    pcout << buffer;
+		    chebyshevSolver(0);
+	      }
+	    }
 	}
  
-
-
-      for(int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
-	{
-	  d_kPointIndex = kPoint;
-	  chebyshevSolver();
-	}
-      
-      //fermi energy
-      compute_fermienergy();
-
-      //rhoOut
-      compute_rhoOut();
+       //fermi energy
+        compute_fermienergy();
+	//rhoOut
+       compute_rhoOut();
       
       //compute integral rhoOut
       integralRhoValue=totalCharge(rhoOutValues);
@@ -356,7 +422,10 @@ void dftClass<FEOrder>::run ()
       //pcout<<"L-2 Norm of Phi-out   :"<<poisson.phiTotRhoOut.l2_norm()<<std::endl;
       //pcout<<"L-inf Norm of Phi-out :"<<poisson.phiTotRhoOut.linfty_norm()<<std::endl;
       //energy
-      compute_energy();
+      if (spinPolarized==1)
+         compute_energy_spinPolarized();
+      else
+     	 compute_energy () ;
       pcout<<"SCF iteration " << scfIter+1 << " complete\n";
       
       //output wave functions

@@ -1,12 +1,12 @@
 #
 #path specifying the location of the "build" directory which is usually the location of "src" folder 
 #
-set DFT PATH = "/home/bikash/dft-fe/"
+set DFT PATH = "../../../../"
 
 #
 #finite-element related parameters
 #
-set MESH FILE = mesh_SiF4_hex8_m5_size_0.6_lr1_sd0_od_40_ic_6_bias_0.6.inp 
+set MESH FILE = mesh.inp 
 set FINITE ELEMENT POLYNOMIAL ORDER = 4
 
 #
@@ -43,7 +43,7 @@ set LATTICE VECTORS FILE = latticeVectors.inp
 #kPoint Quadrature Rule file for sampling the Brillouin zone (used only in Periodic calculation)
 #(Located in $DFT PATH/data/kPointList)
 #
-set kPOINT RULE FILE = OnekPoint.inp
+set kPOINT RULE FILE = GammaPoint.inp
 
 #
 #DFT functional related parameters
@@ -57,7 +57,10 @@ set PSEUDOPOTENTIAL CALCULATION = true
 # 2 (LDA: Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)])
 # 3 (LDA: Vosko, Wilk & Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)])
 # 4 (GGA: Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)])*/
-set EXCHANGE CORRELATION TYPE = 1
+set EXCHANGE CORRELATION TYPE = 4
+#spin polarization
+set SPIN POLARIZATION = 1
+set START MAGNETIZATION = 0.05
 
 #
 #Eigen-solver/Chebyshev solver related parameters
@@ -68,7 +71,7 @@ set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 24
 #Approximate estimate of lower bound of the wanted spectrum
 set LOWER BOUND WANTED SPECTRUM = -10.0
 #Chebyshev Filter polynomial degree
-set CHEBYSHEV POLYNOMIAL DEGREE = 100
+set CHEBYSHEV POLYNOMIAL DEGREE = 0
 
 #
 #SCF parameters

@@ -1064,7 +1064,7 @@ void dftClass<FEOrder>::init(){
   fChebyshev.reinit(vChebyshev);
   aj[0].reinit(vChebyshev); aj[1].reinit(vChebyshev); aj[2].reinit(vChebyshev);
   aj[3].reinit(vChebyshev); aj[4].reinit(vChebyshev);
-  for (unsigned int i=0; i<eigenVectors[0].size(); ++i)
+  for (unsigned int i=0; i<numEigenValues; ++i)
     {  
       PSI[i]->reinit(vChebyshev);
       tempPSI[i]->reinit(vChebyshev);
@@ -1073,13 +1073,16 @@ void dftClass<FEOrder>::init(){
       tempPSI4[i]->reinit(vChebyshev);
     } 
   
-  for(unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+  for(unsigned int kPoint = 0; kPoint < (1+spinPolarized)*d_maxkPoints; ++kPoint)
     {
-      for(unsigned int i = 0; i < eigenVectors[kPoint].size(); ++i)
-	{
-	  eigenVectors[kPoint][i]->reinit(vChebyshev);
-	  eigenVectorsOrig[kPoint][i]->reinit(vChebyshev);
-	}
+     //for (unsigned int j=0; j<spinPolarized+1; ++j) // for spin
+     //  {
+        for (unsigned int i=0; i<eigenVectors[kPoint].size(); ++i)
+	  {
+	    eigenVectors[kPoint][i]->reinit(vChebyshev);
+	    eigenVectorsOrig[kPoint][i]->reinit(vChebyshev);
+	  }
+     // }
     }
 
   //
@@ -1097,27 +1100,34 @@ void dftClass<FEOrder>::init(){
   //Initialize libxc (exchange-correlation)
   //
   int exceptParamX, exceptParamC;
-
-
+  int isSpinPolarized ;
+  if (spinPolarized == 1)
+     {
+        isSpinPolarized = XC_POLARIZED ;
+     }
+  else
+     {
+        isSpinPolarized = XC_UNPOLARIZED ;
+     }
   if(xc_id == 1)
     {
-      exceptParamX = xc_func_init(&funcX,XC_LDA_X,XC_UNPOLARIZED);
-      exceptParamC = xc_func_init(&funcC,XC_LDA_C_PZ,XC_UNPOLARIZED);
+      exceptParamX = xc_func_init(&funcX,XC_LDA_X, isSpinPolarized);
+      exceptParamC = xc_func_init(&funcC,XC_LDA_C_PZ, isSpinPolarized);
     }
   else if(xc_id == 2)
     {
-      exceptParamX = xc_func_init(&funcX,XC_LDA_X,XC_UNPOLARIZED);
-      exceptParamC = xc_func_init(&funcC,XC_LDA_C_PW,XC_UNPOLARIZED);
+      exceptParamX = xc_func_init(&funcX,XC_LDA_X, isSpinPolarized);
+      exceptParamC = xc_func_init(&funcC,XC_LDA_C_PW, isSpinPolarized);
     }
   else if(xc_id == 3)
     {
-      exceptParamX = xc_func_init(&funcX,XC_LDA_X,XC_UNPOLARIZED);
-      exceptParamC = xc_func_init(&funcC,XC_LDA_C_VWN,XC_UNPOLARIZED);
+      exceptParamX = xc_func_init(&funcX,XC_LDA_X, isSpinPolarized);
+      exceptParamC = xc_func_init(&funcC,XC_LDA_C_VWN, isSpinPolarized);
     }
   else if(xc_id == 4)
     {
-      exceptParamX = xc_func_init(&funcX,XC_GGA_X_PBE,XC_UNPOLARIZED);
-      exceptParamC = xc_func_init(&funcC,XC_GGA_C_PBE,XC_UNPOLARIZED);
+      exceptParamX = xc_func_init(&funcX,XC_GGA_X_PBE,isSpinPolarized);
+      exceptParamC = xc_func_init(&funcC,XC_GGA_C_PBE,isSpinPolarized);
     }
   else if(xc_id > 4)
     {

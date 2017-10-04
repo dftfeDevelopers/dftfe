@@ -409,7 +409,7 @@ void poissonClass<FEOrder>::solve(vectorType& phi, int constraintMatrixId, std::
   PreconditionJacobi<poissonClass<FEOrder> > preconditioner;
   preconditioner.initialize (*this, 0.3);
   try{
-    phi=0.0;
+    //phi=0.0;
     //solver.solve(*this, phi, rhs, IdentityMatrix(rhs.size()));
     solver.solve(*this, phi, rhs, preconditioner);
     dftPtr->constraintsNone.distribute(phi);
