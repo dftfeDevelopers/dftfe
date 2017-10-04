@@ -652,7 +652,7 @@ void dftClass<FEOrder>::init(){
     {
      //for (unsigned int j=0; j<spinPolarized+1; ++j) // for spin
      //  {
-        for (unsigned int i=0; i<numEigenValues; ++i)
+        for (unsigned int i=0; i<eigenVectors[kPoint].size(); ++i)
 	  {
 	    eigenVectors[kPoint][i]->reinit(vChebyshev);
 	    eigenVectorsOrig[kPoint][i]->reinit(vChebyshev);
