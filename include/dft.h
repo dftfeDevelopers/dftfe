@@ -117,6 +117,12 @@ class dftClass
    */
   void set();
   void readkPointData();
+  //
+  void generateMPGrid();
+  void displayQuadPoints();
+  Point<3> crys2cart(Point<3> p, int i);
+  std::vector<std::map<CellId,std::vector<typename DoFHandler<3>::active_cell_iterator> >>  cellMapTable ;
+  //
   void generateImageCharges();
   void determineOrbitalFilling();
 
@@ -162,6 +168,7 @@ class dftClass
    * Computes output electron-density from wavefunctions
    */
   void compute_rhoOut();
+  void computeAndSymmetrize_rhoOut();
  
   /**
    * Mixing schemes for mixing electron-density
@@ -204,7 +211,7 @@ class dftClass
    */
   unsigned int numElectrons, numLevels;
   std::set<unsigned int> atomTypes;
-  std::vector<std::vector<double> > atomLocations,d_latticeVectors,d_imagePositions;
+  std::vector<std::vector<double> > atomLocations,d_latticeVectors,d_reciprocalLatticeVectors, d_imagePositions;
   std::vector<int> d_imageIds;
   std::vector<double> d_imageCharges;
   std::vector<orbital> waveFunctionsVector;
@@ -338,6 +345,7 @@ class dftClass
   std::vector<double> d_kPointWeights;
   int d_maxkPoints;
   int d_kPointIndex;
+  std::vector<std::vector<std::vector<double> >> symmMat;
   
   //integralRhoOut to store number of electrons
   double integralRhoValue;

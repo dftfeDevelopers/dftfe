@@ -28,6 +28,7 @@
 #include "energy.cc"
 #include "charge.cc"
 #include "density.cc"
+#include "symmetrizeRho.cc"
 #include "locatenodes.cc"
 #include "createBins.cc"
 #include "mixingschemes.cc"
@@ -213,7 +214,8 @@ void dftClass<FEOrder>::set()
   //read kPoint data
   //
 #ifdef ENABLE_PERIODIC_BC
-  readkPointData();
+  //readkPointData();
+   generateMPGrid();
 #else
   d_maxkPoints = 1;
   d_kPointCoordinates.resize(3*d_maxkPoints,0.0);
@@ -288,7 +290,9 @@ void dftClass<FEOrder>::run ()
   //
   init();
 
-
+#ifdef ENABLE_PERIODIC_BC
+  displayQuadPoints() ;
+#endif
   //
   //solve vself
   //
@@ -411,7 +415,11 @@ void dftClass<FEOrder>::run ()
        //fermi energy
         compute_fermienergy();
 	//rhoOut
-       compute_rhoOut();
+#ifdef ENABLE_PERIODIC_BC
+   computeAndSymmetrize_rhoOut();
+#else
+   compute_rhoOut();
+#endif
       
       //compute integral rhoOut
       integralRhoValue=totalCharge(rhoOutValues);

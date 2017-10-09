@@ -1174,3 +1174,64 @@ void dftClass<FEOrder>::init(){
   pcout << "reading initial guess for PSI\n";
   readPSI();
 }
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::displayQuadPoints()
+{
+//
+  QGauss<3>  quadrature(FEOrder+1);
+  FEValues<3> fe_values (FEEigen, quadrature, update_values | update_gradients| update_JxW_values | update_quadrature_points);
+  const unsigned int num_quad_points = quadrature.size();
+  Point<3> p, ptemp, p0 ;
+  char buffer[100];
+ //
+ typename DoFHandler<3>::active_cell_iterator cell = dofHandlerEigen.begin_active(), endc = dofHandlerEigen.end();
+ //std::vector< Table<2,typename DoFHandler<3> > > cellMapTable ;
+ cellMapTable.resize(symmMat.size()) ;
+ //
+  for (; cell!=endc; ++cell) 
+    {
+      if (cell->is_locally_owned())
+	{
+	  fe_values.reinit (cell);
+          for (unsigned int iSymm = 0; iSymm < symmMat.size(); ++iSymm) 
+          	cellMapTable[iSymm][cell->id()] = std::vector<typename DoFHandler<3>::active_cell_iterator>(num_quad_points);
+	  //
+	  pcout << " Cell " << cell << std::endl;
+          for(unsigned int q_point=0; q_point<num_quad_points; ++q_point) {
+              p = fe_values.quadrature_point(q_point) ;
+              //sprintf(buffer, "quad point: %22.10e %22.10e %22.10e\n", p[0], p[1], p[2]); pcout << buffer;
+	      p0 = crys2cart(p,-1) ;
+	      //sprintf(buffer, "quad point: %22.10e %22.10e %22.10e\n", p[0], p[1], p[2]); pcout << buffer;
+	      //
+              for (unsigned int iSymm = 0; iSymm < symmMat.size(); ++iSymm) {
+	         ptemp[0] = p0[0]*symmMat[iSymm][0][0] + p0[1]*symmMat[iSymm][0][1] + p0[2]*symmMat[iSymm][0][2] ;
+                 ptemp[1] = p0[0]*symmMat[iSymm][1][0] + p0[1]*symmMat[iSymm][1][1] + p0[2]*symmMat[iSymm][1][2] ;
+                 ptemp[2] = p0[0]*symmMat[iSymm][2][0] + p0[1]*symmMat[iSymm][2][1] + p0[2]*symmMat[iSymm][2][2] ; 
+	         //
+                 p = crys2cart(ptemp,1) ;
+                 //sprintf(buffer, "quad point: %22.10e %22.10e %22.10e\n", p[0], p[1], p[2]); pcout << buffer;
+	         cellMapTable [iSymm][cell->id()][q_point] = GridTools::find_active_cell_around_point ( dofHandlerEigen, p ) ;	
+                 pcout << " Cell_check " <<  cellMapTable [iSymm][cell->id()][q_point] << std::endl;
+	     }
+          }
+        }
+     }
+}    
+template<unsigned int FEOrder>
+Point<3> dftClass<FEOrder>::crys2cart(Point<3> p, int flag)
+{
+  Point<3> ptemp ;
+  if (flag==1){
+    ptemp[0] = p[0]*d_latticeVectors[0][0] + p[1]*d_latticeVectors[1][0] + p[2]*d_latticeVectors[2][0] ;
+    ptemp[1] = p[0]*d_latticeVectors[0][1] + p[1]*d_latticeVectors[1][1] + p[2]*d_latticeVectors[2][1] ;
+    ptemp[2] = p[0]*d_latticeVectors[0][2] + p[1]*d_latticeVectors[1][2] + p[2]*d_latticeVectors[2][2] ;
+  }
+  if (flag==-1){
+    ptemp[0] = p[0]*d_reciprocalLatticeVectors[0][0] + p[1]*d_reciprocalLatticeVectors[0][1] + p[2]*d_reciprocalLatticeVectors[0][2] ;
+    ptemp[1] = p[0]*d_reciprocalLatticeVectors[1][0] + p[1]*d_reciprocalLatticeVectors[1][1] + p[2]*d_reciprocalLatticeVectors[1][2] ;
+    ptemp[2] = p[0]*d_reciprocalLatticeVectors[2][0] + p[1]*d_reciprocalLatticeVectors[2][1] + p[2]*d_reciprocalLatticeVectors[2][2] ;
+    ptemp = 1.0 / (2.0*M_PI) * ptemp ;
+  }
+
+  return ptemp;
+}
