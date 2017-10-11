@@ -236,9 +236,9 @@ void dftClass<FEOrder>::set()
   eigenVectors.resize((1+spinPolarized)*d_maxkPoints);
   eigenVectorsOrig.resize((1+spinPolarized)*d_maxkPoints);
   //
-  char buffer[100];
-  sprintf(buffer, "%s:%10u\n", "check 0", eigenVectors.size());
-  pcout << buffer;
+  //char buffer[100];
+  //sprintf(buffer, "%s:%10u\n", "check 0", eigenVectors.size());
+  //pcout << buffer;
   //
   for(unsigned int kPoint = 0; kPoint < (1+spinPolarized)*d_maxkPoints; ++kPoint)
     {
@@ -416,7 +416,10 @@ void dftClass<FEOrder>::run ()
         compute_fermienergy();
 	//rhoOut
 #ifdef ENABLE_PERIODIC_BC
-   computeAndSymmetrize_rhoOut();
+   if (useSymm)
+	computeAndSymmetrize_rhoOut();
+   else
+       compute_rhoOut();
 #else
    compute_rhoOut();
 #endif

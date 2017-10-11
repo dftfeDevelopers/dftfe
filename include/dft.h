@@ -122,6 +122,7 @@ class dftClass
   void displayQuadPoints();
   Point<3> crys2cart(Point<3> p, int i);
   std::vector<std::map<CellId,std::vector<typename DoFHandler<3>::active_cell_iterator> >>  cellMapTable ;
+  std::vector<std::map<CellId,std::vector<Point<3>> >>  mappedPoint ;
   //
   void generateImageCharges();
   void determineOrbitalFilling();
@@ -346,7 +347,7 @@ class dftClass
   int d_maxkPoints;
   int d_kPointIndex;
   std::vector<std::vector<std::vector<double> >> symmMat;
-  
+  unsigned int numSymm;
   //integralRhoOut to store number of electrons
   double integralRhoValue;
   

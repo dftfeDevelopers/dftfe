@@ -1182,36 +1182,44 @@ void dftClass<FEOrder>::displayQuadPoints()
   FEValues<3> fe_values (FEEigen, quadrature, update_values | update_gradients| update_JxW_values | update_quadrature_points);
   const unsigned int num_quad_points = quadrature.size();
   Point<3> p, ptemp, p0 ;
+  MappingQ1<3> mapping;
   char buffer[100];
  //
  typename DoFHandler<3>::active_cell_iterator cell = dofHandlerEigen.begin_active(), endc = dofHandlerEigen.end();
  //std::vector< Table<2,typename DoFHandler<3> > > cellMapTable ;
- cellMapTable.resize(symmMat.size()) ;
+ std::pair<typename DoFHandler<3>::active_cell_iterator, Point<3> > mapped_cell;
+ cellMapTable.resize(numSymm) ;
+ mappedPoint.resize(numSymm) ;
  //
   for (; cell!=endc; ++cell) 
     {
       if (cell->is_locally_owned())
 	{
 	  fe_values.reinit (cell);
-          for (unsigned int iSymm = 0; iSymm < symmMat.size(); ++iSymm) 
+          for (unsigned int iSymm = 0; iSymm < numSymm; ++iSymm) 
+	      {
           	cellMapTable[iSymm][cell->id()] = std::vector<typename DoFHandler<3>::active_cell_iterator>(num_quad_points);
+		mappedPoint [iSymm][cell->id()] = std::vector<Point<3>>(num_quad_points);
+	      }
 	  //
-	  pcout << " Cell " << cell << std::endl;
+	  //pcout << " Cell " << cell << std::endl;
           for(unsigned int q_point=0; q_point<num_quad_points; ++q_point) {
               p = fe_values.quadrature_point(q_point) ;
               //sprintf(buffer, "quad point: %22.10e %22.10e %22.10e\n", p[0], p[1], p[2]); pcout << buffer;
 	      p0 = crys2cart(p,-1) ;
 	      //sprintf(buffer, "quad point: %22.10e %22.10e %22.10e\n", p[0], p[1], p[2]); pcout << buffer;
 	      //
-              for (unsigned int iSymm = 0; iSymm < symmMat.size(); ++iSymm) {
+              for (unsigned int iSymm = 0; iSymm < numSymm; ++iSymm) {
 	         ptemp[0] = p0[0]*symmMat[iSymm][0][0] + p0[1]*symmMat[iSymm][0][1] + p0[2]*symmMat[iSymm][0][2] ;
                  ptemp[1] = p0[0]*symmMat[iSymm][1][0] + p0[1]*symmMat[iSymm][1][1] + p0[2]*symmMat[iSymm][1][2] ;
                  ptemp[2] = p0[0]*symmMat[iSymm][2][0] + p0[1]*symmMat[iSymm][2][1] + p0[2]*symmMat[iSymm][2][2] ; 
 	         //
                  p = crys2cart(ptemp,1) ;
                  //sprintf(buffer, "quad point: %22.10e %22.10e %22.10e\n", p[0], p[1], p[2]); pcout << buffer;
-	         cellMapTable [iSymm][cell->id()][q_point] = GridTools::find_active_cell_around_point ( dofHandlerEigen, p ) ;	
-                 pcout << " Cell_check " <<  cellMapTable [iSymm][cell->id()][q_point] << std::endl;
+		 mapped_cell = GridTools::find_active_cell_around_point ( mapping, dofHandlerEigen, p ) ;
+	         cellMapTable [iSymm][cell->id()][q_point] = mapped_cell.first ;	
+		 mappedPoint [iSymm][cell->id()][q_point] =  GeometryInfo<3>::project_to_unit_cell (mapped_cell.second) ;
+                 //pcout << " Check map - cell id: " <<  cellMapTable [iSymm][cell->id()][q_point] << " point: "  <<mappedPoint [iSymm][cell->id()][q_point] << std::endl;
 	     }
           }
         }

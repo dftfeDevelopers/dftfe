@@ -33,7 +33,6 @@ void dftClass<FEOrder>::readkPointData()
 {
   int numberColumnskPointDataFile = 4;
   std::vector<std::vector<double> > kPointData;
-  std::vector<std::vector<double> > d_reciprocalLatticeVectors;
   std::vector<double> kPointReducedCoordinates;
   char kPointRuleFile[256];
   sprintf(kPointRuleFile, "%s/data/kPointList/%s", currentPath.c_str(), kPointDataFile.c_str());
@@ -107,7 +106,6 @@ void dftClass<FEOrder>::readkPointData()
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::generateMPGrid()
 {
-  std::vector<std::vector<double> > d_reciprocalLatticeVectors;
   std::vector<double> kPointReducedCoordinates, del(3);
   d_maxkPoints = (nkx * nky) * nkz;
   pcout<<"Total number of k-points " << d_maxkPoints << std::endl;
@@ -131,7 +129,7 @@ void dftClass<FEOrder>::generateMPGrid()
       kPointReducedCoordinates[3*i + 1] = del[1]*(std::floor( ( i%(nkz*nky) ) / nkz) ) ;
       kPointReducedCoordinates[3*i + 0] = del[0]*(std::floor( (i/(nkz*nky) ) ) );
       for (unsigned int dir = 0; dir < 3; ++dir) {
-         if(kPointReducedCoordinates[3*i + dir] > (0.5-del[dir]) )
+         if(kPointReducedCoordinates[3*i + dir] > ( 0.5 - 1.0E-10 ) )
               kPointReducedCoordinates[3*i + dir] = kPointReducedCoordinates[3*i + dir] - 1.0 ;
       }
       d_kPointWeights[i] = 1.0/d_maxkPoints ;
@@ -139,7 +137,6 @@ void dftClass<FEOrder>::generateMPGrid()
 
   // Get the reciprocal lattice vectors
   d_reciprocalLatticeVectors.resize(3,std::vector<double> (3,0.0));
-  d_reciprocalVectors.resize(3,std::vector<double> (3,0.0));
   for(int i = 0; i < 2; ++i)
     {
       std::vector<double> cross(3,0.0);
@@ -168,24 +165,28 @@ void dftClass<FEOrder>::generateMPGrid()
   d_reciprocalLatticeVectors[2][1] = (2*M_PI/scalarConst)*cross[1];
   d_reciprocalLatticeVectors[2][2] = (2*M_PI/scalarConst)*cross[2];
   
-   d_reciprocalVectors = d_reciprocalLatticeVectors ;
-  
+  if (useSymm) {
   //
   int numberColumnsSymmDataFile = 3;
   std::vector<std::vector<double> > symmData;
+  std::vector<std::vector<std::vector<double> >> symmMatTemp;
   readFile(numberColumnsSymmDataFile, symmData, symmDataFile);
-  unsigned int numSymm = symmData.size()/3 ;
+  numSymm = symmData.size()/3 ;
+  pcout<<" number of symmetries allowed for the lattice " << numSymm << std::endl;
+  symmMatTemp.resize( numSymm );
   symmMat.resize( numSymm );
-  for (unsigned int iSymm = 0; iSymm < numSymm; ++iSymm) 
+  for (unsigned int iSymm = 0; iSymm < numSymm; ++iSymm) {
+       symmMatTemp[iSymm].resize(3,std::vector<double> (3,0.0)) ;
        symmMat[iSymm].resize(3,std::vector<double> (3,0.0)) ;
+  }
   //
   for(int iSymm = 0; iSymm < numSymm; ++iSymm)
   {
     for(int j = 0; j < 3; ++j)
       {
-        symmMat[iSymm][j][0] = symmData[3*iSymm+j][0];
-        symmMat[iSymm][j][1] = symmData[3*iSymm+j][1];
-        symmMat[iSymm][j][2] = symmData[3*iSymm+j][2];
+        symmMatTemp[iSymm][j][0] = symmData[3*iSymm+j][0];
+        symmMatTemp[iSymm][j][1] = symmData[3*iSymm+j][1];
+        symmMatTemp[iSymm][j][2] = symmData[3*iSymm+j][2];
       }
   }
   //unsigned int numSymm = 1 ;
@@ -195,14 +196,17 @@ void dftClass<FEOrder>::generateMPGrid()
   //symmMat[0][0][0] = 1.0 ;
   //symmMat[0][1][1] = 1.0 ;
   //symmMat[0][2][2] = 1.0 ;
-  //
+  ///
   std::vector<double> kPointAllCoordinates, kPointTemp(3); 
-  std::vector<int> discard(d_maxkPoints, 0) ;
-  std::vector<int> usedSymm(d_maxkPoints, 0) ;
+  std::vector<int> discard(d_maxkPoints, 0), countedSymm(numSymm, 0) ;
   kPointAllCoordinates = kPointReducedCoordinates ;
   int nk = d_maxkPoints ;
   d_maxkPoints = 0;
-  unsigned int ik = 0;
+  //
+  symmMat[0] = symmMatTemp[0] ;
+  unsigned int usedSymm=1, ik = 0; // note usedSymm is initialized to 1 and not 0. Because identity is always present
+  countedSymm[0] = 1 ;
+  //
   while( ik < nk ) {
     //
     kPointReducedCoordinates[3*d_maxkPoints + 0] = kPointAllCoordinates[3*ik+0] ;
@@ -210,31 +214,33 @@ void dftClass<FEOrder>::generateMPGrid()
     kPointReducedCoordinates[3*d_maxkPoints + 2] = kPointAllCoordinates[3*ik+2] ;
     d_maxkPoints = d_maxkPoints + 1 ;
     //
-    for (unsigned int iSymm = 0; iSymm < numSymm; ++iSymm) 
+    for (unsigned int iSymm = 1; iSymm < numSymm; ++iSymm) // iSymm begins from 1. because identity is always present and is taken care of.
 	{
         
-        kPointTemp[0] = kPointAllCoordinates[3*ik+0]*symmMat[iSymm][0][0] + kPointAllCoordinates[3*ik+1]*symmMat[iSymm][0][1] + kPointAllCoordinates[3*ik+2]*symmMat[iSymm][0][2];
-	kPointTemp[1] = kPointAllCoordinates[3*ik+0]*symmMat[iSymm][1][0] + kPointAllCoordinates[3*ik+1]*symmMat[iSymm][1][1] + kPointAllCoordinates[3*ik+2]*symmMat[iSymm][1][2];
-	kPointTemp[2] = kPointAllCoordinates[3*ik+0]*symmMat[iSymm][2][0] + kPointAllCoordinates[3*ik+1]*symmMat[iSymm][2][1] + kPointAllCoordinates[3*ik+2]*symmMat[iSymm][2][2];
+        kPointTemp[0] = kPointAllCoordinates[3*ik+0]*symmMatTemp[iSymm][0][0] + kPointAllCoordinates[3*ik+1]*symmMatTemp[iSymm][0][1] + kPointAllCoordinates[3*ik+2]*symmMatTemp[iSymm][0][2];
+	kPointTemp[1] = kPointAllCoordinates[3*ik+0]*symmMatTemp[iSymm][1][0] + kPointAllCoordinates[3*ik+1]*symmMatTemp[iSymm][1][1] + kPointAllCoordinates[3*ik+2]*symmMatTemp[iSymm][1][2];
+	kPointTemp[2] = kPointAllCoordinates[3*ik+0]*symmMatTemp[iSymm][2][0] + kPointAllCoordinates[3*ik+1]*symmMatTemp[iSymm][2][1] + kPointAllCoordinates[3*ik+2]*symmMatTemp[iSymm][2][2];
         //
         for ( unsigned int dir=0;  dir < 3; ++dir) {
-            while (kPointTemp[dir] > (1.0-del[dir]) )
+            while (kPointTemp[dir] > (1.0-1.0E-10) )
               kPointTemp[dir] = kPointTemp[dir] - 1.0 ;
-	    while (kPointTemp[dir] < 0.0 )
+	    while (kPointTemp[dir] < -1.0E-10 )
               kPointTemp[dir] = kPointTemp[dir] + 1.0 ;
         }
-        //
-        //double xx = std::abs( (std::round(kPointTemp(0))*nkx) - kPointTemp(0))*nkx ) ;
-        //double yy = std::abs( (std::round(kPointTemp(1))*nky) - kPointTemp(1))*nky ) ;
-        //double zz = std::abs( (std::round(kPointTemp(2))*nkz) - kPointTemp(2))*nkz ) ;
         //           
         unsigned int jk =  round(kPointTemp[0]*nkx)*nky*nkz + round(kPointTemp[1]*nky)*nkz + round( kPointTemp[2]*nkz)  ;                   
-        if( jk!=ik && discard[jk]!=1) 
-           d_kPointWeights[ik] = d_kPointWeights[ik] + 1.0/nk;   
-	   usedSymm[d_maxkPoints-1][iSymm] = 1 ;         
-           discard[jk] = 1;                    
+        if( jk!=ik && discard[jk]!=1) {
+           d_kPointWeights[d_maxkPoints-1] = d_kPointWeights[d_maxkPoints-1] + 1.0/nk;        
+           discard[jk] = 1;
+           if (countedSymm[iSymm]==0) {
+               symmMat[usedSymm] = symmMatTemp[iSymm] ;
+	       usedSymm++ ;
+	       countedSymm[iSymm] = 1;
+             }          
+	   }        
        }
     //
+    discard[ik]=1;
     ik = ik + 1 ;
     if (ik < nk) {
         while (discard[ik]==1) {
@@ -244,10 +250,11 @@ void dftClass<FEOrder>::generateMPGrid()
         }    
     }
   }
-    
+  numSymm = usedSymm;
+  pcout<<" Following " << numSymm << " symmetries used to reduce BZ "  << std::endl;  
   pcout<<" number of irreducible k-points " << d_maxkPoints << std::endl;
-   
-
+  } 
+  
   
   pcout<<"Reduced k-Point-coordinates and weights: "<<std::endl;
 

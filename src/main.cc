@@ -29,14 +29,14 @@
 #include <iostream>
 #include <fstream>
 
-unsigned int finiteElementPolynomialOrder,n_refinement_steps,numberEigenValues,xc_id, spinPolarized;
+unsigned int finiteElementPolynomialOrder,n_refinement_steps,numberEigenValues,xc_id, spinPolarized, nkx,nky,nkz;
 unsigned int chebyshevOrder,numPass,numSCFIterations,maxLinearSolverIterations, mixingHistory;
 
 double radiusAtomBall, domainSizeX, domainSizeY, domainSizeZ, mixingParameter;
 double lowerEndWantedSpectrum,relLinearSolverTolerance,selfConsistentSolverTolerance,TVal, start_magnetization;
 
-bool isPseudopotential,periodicX,periodicY,periodicZ;
-std::string meshFileName,coordinatesFile,currentPath,latticeVectorsFile,kPointDataFile;
+bool isPseudopotential,periodicX,periodicY,periodicZ, useSymm;
+std::string meshFileName,coordinatesFile,currentPath,latticeVectorsFile,kPointDataFile, symmDataFile;
 
 //
 //dft header
@@ -90,6 +90,21 @@ void declare_parameters()
   prm.declare_entry("kPOINT RULE FILE", "",
 		    Patterns::Anything(),
 		    "File specifying the k-Point quadrature rule to sample Brillouin zone");
+  prm.declare_entry("SYMMETRY MATRIX FILE", "",
+		    Patterns::Anything(),
+		    "File specifying the symmetry matrices for obtaining the irreducible BZ");
+  prm.declare_entry("BZ SAMPLING POINTS ALONG X", "2",
+		    Patterns::Integer(1,100),
+		    "Number of Monkhorts-Pack grid points to be used along X direction for BZ sampling");
+  prm.declare_entry("BZ SAMPLING POINTS ALONG Y", "2",
+		    Patterns::Integer(1,100),
+		    "Number of Monkhorts-Pack grid points to be used along Y direction for BZ sampling");
+  prm.declare_entry("BZ SAMPLING POINTS ALONG Z", "2",
+		    Patterns::Integer(1,100),
+		    "Number of Monkhorts-Pack grid points to be used along Z direction for BZ sampling");
+  prm.declare_entry("USE GROUP SYMMETRY", "true",
+		    Patterns::Bool(),
+		    "Flag to control usage of space group symmetries (only for periodic calculation)");
 
   prm.declare_entry("FINITE ELEMENT POLYNOMIAL ORDER", "2",
 		    Patterns::Integer(1,12),
@@ -240,6 +255,11 @@ void parse_command_line(const int argc,
 	  periodicZ                     = prm.get_bool("PERIODIC BOUNDARY CONDITION Z");
 	  latticeVectorsFile            = prm.get("LATTICE VECTORS FILE");
 	  kPointDataFile                = prm.get("kPOINT RULE FILE");
+          symmDataFile                  = prm.get("SYMMETRY MATRIX FILE");
+          nkx				= prm.get_integer("BZ SAMPLING POINTS ALONG X");
+	  nky				= prm.get_integer("BZ SAMPLING POINTS ALONG Y");
+          nkz				= prm.get_integer("BZ SAMPLING POINTS ALONG Z");
+          useSymm 	                = prm.get_bool("USE GROUP SYMMETRY");
 	  isPseudopotential             = prm.get_bool("PSEUDOPOTENTIAL CALCULATION");
 	  xc_id                         = prm.get_integer("EXCHANGE CORRELATION TYPE");
 	  numberEigenValues             = prm.get_integer("NUMBER OF KOHN-SHAM WAVEFUNCTIONS");

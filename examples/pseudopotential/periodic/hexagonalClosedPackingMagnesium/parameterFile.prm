@@ -15,6 +15,10 @@ set FINITE ELEMENT POLYNOMIAL ORDER = 5
 set ATOMIC COORDINATES FILE = coordinates.inp
 
 #
+#Symmetry matrix file
+#
+set SYMMETRY MATRIX FILE = symmetryMatrixFile.inp
+#
 #Geometry related parameters
 #
 #
@@ -43,7 +47,11 @@ set LATTICE VECTORS FILE = latticeVectors.inp
 #kPoint Quadrature Rule file for sampling the Brillouin zone (used only in periodic calculation)
 #(Located in $DFT PATH/data/kPointList)
 #
-set kPOINT RULE FILE = GammaPoint.inp
+#set kPOINT RULE FILE = GammaPoint.inp
+set BZ SAMPLING POINTS ALONG X = 8
+set BZ SAMPLING POINTS ALONG Y = 8
+set BZ SAMPLING POINTS ALONG Z = 8
+set USE GROUP SYMMETRY = true
 
 #
 #DFT functional related parameters
