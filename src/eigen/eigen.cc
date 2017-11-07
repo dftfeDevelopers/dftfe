@@ -17,7 +17,7 @@
 //
 
 #include "../../include/eigen.h"
-
+#include "../../include/dft.h"
 //
 //constructor
 //
@@ -161,8 +161,8 @@ void eigenClass<FEOrder>::computeVEff(std::map<dealii::CellId,std::vector<double
 	      densityValue[v] = ((*rhoValues)[cellPtr->id()][q]);
 	    }
 
-	  xc_lda_vxc(&funcX,n_sub_cells,&densityValue[0],&exchangePotentialVal[0]);
-	  xc_lda_vxc(&funcC,n_sub_cells,&densityValue[0],&corrPotentialVal[0]);
+	  xc_lda_vxc(&(dftPtr->funcX),n_sub_cells,&densityValue[0],&exchangePotentialVal[0]);
+	  xc_lda_vxc(&(dftPtr->funcC),n_sub_cells,&densityValue[0],&corrPotentialVal[0]);
 
 	  VectorizedArray<double>  exchangePotential, corrPotential;
 	  for (unsigned int v = 0; v < n_sub_cells; ++v)
@@ -174,7 +174,7 @@ void eigenClass<FEOrder>::computeVEff(std::map<dealii::CellId,std::vector<double
 	  //
 	  //sum all to vEffective
 	  //
-	  if(isPseudopotential)
+	  if(dftPtr->d_isPseudopotential)
 	    {
 	      VectorizedArray<double>  pseudoPotential;
 	      for (unsigned int v = 0; v < n_sub_cells; ++v)
@@ -247,8 +247,8 @@ void eigenClass<FEOrder>::computeVEff(std::map<dealii::CellId,std::vector<double
 	      sigmaValue[v] = gradRhoX*gradRhoX + gradRhoY*gradRhoY + gradRhoZ*gradRhoZ;
 	    }
 	
-	  xc_gga_vxc(&funcX,n_sub_cells,&densityValue[0],&sigmaValue[0],&derExchEnergyWithDensityVal[0],&derExchEnergyWithSigma[0]);
-	  xc_gga_vxc(&funcC,n_sub_cells,&densityValue[0],&sigmaValue[0],&derCorrEnergyWithDensityVal[0],&derCorrEnergyWithSigma[0]);
+	  xc_gga_vxc(&(dftPtr->funcX),n_sub_cells,&densityValue[0],&sigmaValue[0],&derExchEnergyWithDensityVal[0],&derExchEnergyWithSigma[0]);
+	  xc_gga_vxc(&(dftPtr->funcC),n_sub_cells,&densityValue[0],&sigmaValue[0],&derCorrEnergyWithDensityVal[0],&derCorrEnergyWithSigma[0]);
 
 
 	  VectorizedArray<double>  derExchEnergyWithDensity, derCorrEnergyWithDensity, derExcWithSigmaTimesGradRhoX, derExcWithSigmaTimesGradRhoY, derExcWithSigmaTimesGradRhoZ;
@@ -269,7 +269,7 @@ void eigenClass<FEOrder>::computeVEff(std::map<dealii::CellId,std::vector<double
 	  //
 	  //sum all to vEffective
 	  //
-	  if(isPseudopotential)
+	  if(dftPtr->d_isPseudopotential)
 	    {
 	      VectorizedArray<double>  pseudoPotential;
 	      for (unsigned int v = 0; v < n_sub_cells; ++v)
@@ -644,7 +644,7 @@ void eigenClass<FEOrder>::implementHX (const dealii::MatrixFree<3,double>  &data
   double kSquareTimesHalf =  0.5*(dftPtr->d_kPointCoordinates[3*kPointIndex+0]*dftPtr->d_kPointCoordinates[3*kPointIndex+0] + dftPtr->d_kPointCoordinates[3*kPointIndex+1]*dftPtr->d_kPointCoordinates[3*kPointIndex+1] + dftPtr->d_kPointCoordinates[3*kPointIndex+2]*dftPtr->d_kPointCoordinates[3*kPointIndex+2]);
   VectorizedArray<double> halfkSquare = make_vectorized_array(kSquareTimesHalf);
 
-  if(xc_id == 4)
+  if(dftPtr->d_xc_id == 4)
     {
       for(unsigned int cell=cell_range.first; cell<cell_range.second; ++cell)
 	{
@@ -779,7 +779,7 @@ void eigenClass<FEOrder>::implementHX (const dealii::MatrixFree<3,double>  &data
   FEEvaluation<3,FEOrder, FEOrder+1, 1, double>  fe_eval(data, dftPtr->eigenDofHandlerIndex, 0);
   Tensor<1,3,VectorizedArray<double> > derExchWithSigmaTimesGradRhoTimesPsi,gradientPsiVal;
   VectorizedArray<double> psiVal,derExchWithSigmaTimesGradRhoDotGradientPsiTerm;
-  if(xc_id == 4)
+  if(dftPtr->d_xc_id == 4)
     {
       for(unsigned int cell = cell_range.first; cell < cell_range.second; ++cell)
 	{
@@ -854,7 +854,7 @@ void eigenClass<FEOrder>::HX(const std::vector<vectorType*> &src,
   //
   //required if its a pseudopotential calculation and number of nonlocal atoms are greater than zero
   //
-  if(isPseudopotential && dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0)
+  if(dftPtr->d_isPseudopotential && dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0)
     {
 
       for (unsigned int i = 0; i < src.size(); i++)

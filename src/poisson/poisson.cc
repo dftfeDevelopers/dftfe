@@ -16,6 +16,7 @@
 // @author Shiva Rudraraju (2016), Phani Motamarri (2016)
 //
 
+#include "../../include/dft.h"
 #include "../../include/poisson.h"
 #include "boundary.cc"
 
@@ -402,7 +403,7 @@ void poissonClass<FEOrder>::solve(vectorType& phi, int constraintMatrixId, std::
 
   //solve
   computing_timer.enter_section("poissonClass solve"); 
-  SolverControl solver_control(maxLinearSolverIterations,relLinearSolverTolerance*rhs.l2_norm());
+  SolverControl solver_control(dftPtr->d_maxLinearSolverIterations,dftPtr->d_relLinearSolverTolerance*rhs.l2_norm());
   SolverCG<vectorType> solver(solver_control);
 
   

@@ -19,22 +19,22 @@
 #ifndef poisson_H_
 #define poisson_H_
 #include "headers.h"
-#include "dft.h"
+//#include "dft.h"
 
 typedef double dataType;
 typedef dealii::parallel::distributed::Vector<double> vectorType;
 
+//forward declaration
 template <unsigned int T>
 class dftClass;
-
 //
 //Define poisson class
 //
 template <unsigned int FEOrder>
 class poissonClass
 {
-  template <unsigned int T>
-  friend class dftClass; 
+  //template <unsigned int FEOrder>
+  friend class dftClass<FEOrder>; 
 
 public:
   poissonClass(dftClass<FEOrder>* _dftPtr);

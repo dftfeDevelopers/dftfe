@@ -19,6 +19,11 @@
 #ifndef eigen_H_
 #define eigen_H_
 #include "headers.h"
+//#include "dft.h"
+
+using namespace dealii;
+typedef dealii::parallel::distributed::Vector<double> vectorType;
+template <unsigned int T> class dftClass;
 
 //
 //Define eigenClass class
@@ -26,8 +31,8 @@
 template <unsigned int FEOrder>
 class eigenClass
 {
-  template <unsigned int T>
-  friend class dftClass;
+  //template <unsigned int FEOrder>
+  friend class dftClass<FEOrder>;
 
 public:
   eigenClass(dftClass<FEOrder>* _dftPtr);

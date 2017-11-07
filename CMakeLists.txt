@@ -40,6 +40,8 @@ SET(TARGET "main")
 # Declare all source files the target consists of:
 SET(TARGET_SRC
   ./src/${TARGET}.cc
+  ./src/poisson/poisson.cc
+  ./src/eigen/eigen.cc
   # You can specify additional files here!
   )
 

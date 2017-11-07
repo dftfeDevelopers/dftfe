@@ -17,11 +17,11 @@
 //
 
 //Include header files
-#include "../../include/headers.h"
+//#include "../../include/headers.h"
 #include "../../include/dft.h"
 #include "../../utils/fileReaders.cc"
-#include "../poisson/poisson.cc"
-#include "../eigen/eigen.cc"
+//#include "../poisson/poisson.cc"
+//#include "../eigen/eigen.cc"
 #include "mesh.cc"
 #include "init.cc"
 #include "psiInitialGuess.cc"
@@ -65,7 +65,33 @@ dftClass<FEOrder>::dftClass():
   d_maxkPoints(1),
   integralRhoValue(0),
   pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
-  computing_timer (pcout, TimerOutput::summary, TimerOutput::wall_times)
+  computing_timer (pcout, TimerOutput::summary, TimerOutput::wall_times),
+  d_finiteElementPolynomialOrder(finiteElementPolynomialOrder),
+  d_n_refinement_steps(n_refinement_steps),
+  d_numberEigenValues(numberEigenValues),
+  d_xc_id(xc_id),
+  d_chebyshevOrder(chebyshevOrder),
+  d_numSCFIterations(numSCFIterations),
+  d_maxLinearSolverIterations(maxLinearSolverIterations), 
+  d_mixingHistory(mixingHistory),
+  d_radiusAtomBall(radiusAtomBall),
+  d_domainSizeX(domainSizeX),
+  d_domainSizeY(domainSizeY),
+  d_domainSizeZ(domainSizeZ),
+  d_mixingParameter(mixingParameter),
+  d_lowerEndWantedSpectrum(lowerEndWantedSpectrum),
+  d_relLinearSolverTolerance(relLinearSolverTolerance),
+  d_selfConsistentSolverTolerance(selfConsistentSolverTolerance),
+  d_TVal(TVal),
+  d_isPseudopotential(isPseudopotential),
+  d_periodicX(periodicX),
+  d_periodicY(periodicY),
+  d_periodicZ(periodicZ),
+  d_meshFileName(meshFileName),
+  d_coordinatesFile(coordinatesFile),
+  d_currentPath(currentPath),
+  d_latticeVectorsFile(latticeVectorsFile),
+  d_kPointDataFile(kPointDataFile)    
 {
 
   //
