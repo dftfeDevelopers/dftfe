@@ -31,8 +31,8 @@ template <unsigned int T> class dftClass;
 template <unsigned int FEOrder>
 class eigenClass
 {
-  //template <unsigned int FEOrder>
-  friend class dftClass<FEOrder>;
+  template <unsigned int T>
+  friend class dftClass;
 
 public:
   eigenClass(dftClass<FEOrder>* _dftPtr);

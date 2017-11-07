@@ -33,8 +33,8 @@ class dftClass;
 template <unsigned int FEOrder>
 class poissonClass
 {
-  //template <unsigned int FEOrder>
-  friend class dftClass<FEOrder>; 
+  template <unsigned int T>
+  friend class dftClass; 
 
 public:
   poissonClass(dftClass<FEOrder>* _dftPtr);

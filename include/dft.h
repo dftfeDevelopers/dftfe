@@ -85,11 +85,11 @@ template <unsigned int FEOrder>
 class dftClass
 {
 
-  //template <unsigned int FEOrder>
-  friend class poissonClass<FEOrder>;
+  template <unsigned int T>
+  friend class poissonClass;
 
-  //template <unsigned int FEOrder>
-  friend class eigenClass<FEOrder>;  
+  template <unsigned int T>
+  friend class eigenClass;  
 
  public:
 
