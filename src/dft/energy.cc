@@ -31,7 +31,7 @@ double FermiDiracFunctionValue(double x,
     {
       for(unsigned int i = 0; i < numberEigenValues; i++)
 	{
-	  temp1 = (eigenValues[kPoint][i]-x)/(kb*TVal);
+	  temp1 = (eigenValues[kPoint][i]-x)/(C_kb*TVal);
 	  if(temp1 <= 0.0)
 	    {
 	      temp2  =  1.0/(1.0+exp(temp1));
@@ -63,16 +63,16 @@ double FermiDiracFunctionDerivativeValue(double x,
     {
       for(unsigned int i = 0; i < numberEigenValues; i++)
 	{
-	  temp1 = (eigenValues[kPoint][i]-x)/(kb*TVal);
+	  temp1 = (eigenValues[kPoint][i]-x)/(C_kb*TVal);
 	  if(temp1 <= 0.0)
 	    {
 	      temp2  =  1.0/(1.0 + exp(temp1));
-	      functionDerivative += 2.0*kPointWeights[kPoint]*(exp(temp1)/(kb*TVal))*temp2*temp2;
+	      functionDerivative += 2.0*kPointWeights[kPoint]*(exp(temp1)/(C_kb*TVal))*temp2*temp2;
 	    }
 	  else
 	    {
 	      temp2 =  1.0/(1.0 + exp(-temp1));
-	      functionDerivative += 2.0*kPointWeights[kPoint]*(exp(-temp1)/(kb*TVal))*temp2*temp2; 
+	      functionDerivative += 2.0*kPointWeights[kPoint]*(exp(-temp1)/(C_kb*TVal))*temp2*temp2; 
 	    }
 	}
     }
@@ -104,7 +104,7 @@ void dftClass<FEOrder>::compute_energy()
       pcout << "kPoint: "<< kPoint <<std::endl;
       for (unsigned int i=0; i<numEigenValues; i++)
 	{
-	  factor=(eigenValues[kPoint][i]-fermiEnergy)/(kb*TVal);
+	  factor=(eigenValues[kPoint][i]-fermiEnergy)/(C_kb*TVal);
 	  //partialOccupancy=1.0/(1.0+exp(temp));
 	  double partialOccupancy = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)) : 1.0/(1.0 + std::exp(factor));
 	  bandEnergy+= 2*partialOccupancy*d_kPointWeights[kPoint]*eigenValues[kPoint][i];
@@ -393,18 +393,18 @@ void dftClass<FEOrder>::compute_fermienergy()
 	{
 	  for (unsigned int i = 0; i < numEigenValues; i++)
 	    {
-	      temp1 = (eigenValues[kPoint][i]-fe)/(kb*TVal);
+	      temp1 = (eigenValues[kPoint][i]-fe)/(C_kb*TVal);
 	      if (temp1 <= 0.0)
 		{
 		  temp2  =  1.0/(1.0+exp(temp1));
 		  functionValue += 2.0*d_kPointWeights[kPoint]*temp2;
-		  functionDerivative += 2.0*d_kPointWeights[kPoint]*(exp(temp1)/(kb*TVal))*temp2*temp2;
+		  functionDerivative += 2.0*d_kPointWeights[kPoint]*(exp(temp1)/(C_kb*TVal))*temp2*temp2;
 		}
 	      else
 		{
 		  temp2 =  1.0/(1.0+exp(-temp1));
 		  functionValue += 2.0*d_kPointWeights[kPoint]*exp(-temp1)*temp2;
-		  functionDerivative += 2.0*d_kPointWeights[kPoint]*(exp(-temp1)/(kb*TVal))*temp2*temp2;       
+		  functionDerivative += 2.0*d_kPointWeights[kPoint]*(exp(-temp1)/(C_kb*TVal))*temp2*temp2;       
 		}
 	    }
 	    }*/

@@ -99,7 +99,7 @@ void dftClass<FEOrder>::compute_rhoOut()
 
 		      for(unsigned int q_point=0; q_point<num_quad_points; ++q_point)
 			{
-			  double factor = (eigenValues[kPoint][i]-fermiEnergy)/(kb*TVal);
+			  double factor = (eigenValues[kPoint][i]-fermiEnergy)/(C_kb*TVal);
 			  double partialOccupancy = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)):1.0/(1.0 + std::exp(factor));
 #ifdef ENABLE_PERIODIC_BC
 			  rhoOut[q_point] += 2.0*partialOccupancy*d_kPointWeights[kPoint]*(tempPsi[q_point](0)*tempPsi[q_point](0) + tempPsi[q_point](1)*tempPsi[q_point](1));
@@ -135,7 +135,7 @@ void dftClass<FEOrder>::compute_rhoOut()
 
 		      for(unsigned int q_point=0; q_point<num_quad_points; ++q_point)
 			{
-			  double factor=(eigenValues[kPoint][i]-fermiEnergy)/(kb*TVal);
+			  double factor=(eigenValues[kPoint][i]-fermiEnergy)/(C_kb*TVal);
 			  double partialOccupancy = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)):1.0/(1.0 + std::exp(factor));
 #ifdef ENABLE_PERIODIC_BC
 			  rhoOut[q_point] += 2.0*partialOccupancy*d_kPointWeights[kPoint]*(tempPsi[q_point](0)*tempPsi[q_point](0) + tempPsi[q_point](1)*tempPsi[q_point](1));

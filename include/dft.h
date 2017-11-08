@@ -28,6 +28,7 @@
 #include "headers.h"
 #include "poisson.h"
 #include "eigen.h"
+#include "constants.h"
 
 #include <interpolation.h> 
 #include <xc.h>
@@ -60,11 +61,6 @@ extern "C"{
 }
 
 
-
-//
-//Boltzmann constant
-//
-const double kb = 3.166811429e-06;
 
 //
 //

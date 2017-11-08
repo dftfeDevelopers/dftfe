@@ -19,6 +19,7 @@
 #ifndef poisson_H_
 #define poisson_H_
 #include "headers.h"
+#include "constants.h"
 //#include "dft.h"
 
 typedef double dataType;

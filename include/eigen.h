@@ -19,6 +19,7 @@
 #ifndef eigen_H_
 #define eigen_H_
 #include "headers.h"
+#include "constants.h"
 //#include "dft.h"
 
 using namespace dealii;
