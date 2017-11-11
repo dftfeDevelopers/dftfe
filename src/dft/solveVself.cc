@@ -26,7 +26,7 @@ void dftClass<FEOrder>::solveVself()
   int numberBins = d_boundaryFlag.size();
   int numberGlobalCharges = atomLocations.size();
   
-  matrix_free_data.initialize_dof_vector(poisson.phiExt,numberBins+3);
+  matrix_free_data.initialize_dof_vector(poisson.phiExt,phiExtDofHandlerIndex);
 
   poisson.phiExt = 0;
 

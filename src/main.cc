@@ -209,7 +209,7 @@ void parse_command_line(const int argc,
 	  args.pop_front();
 	  const std::string parameter_file = args.front();
 	  args.pop_front();
-	  prm.read_input(parameter_file);
+	  prm.parse_input(parameter_file);
 	  print_usage_message();
 
 	  currentPath                   = prm.get("DFT PATH");

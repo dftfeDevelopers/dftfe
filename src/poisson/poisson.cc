@@ -54,8 +54,6 @@ void poissonClass<FEOrder>::init()
   jacobianDiagonal.reinit (rhs);
   phiTotRhoIn.reinit (rhs);
   phiTotRhoOut.reinit (rhs);
-  //phiExt.reinit (rhs);
-  //vselfBinScratch.reinit (rhs);
   
   computing_timer.exit_section("poissonClass setup"); 
 }
