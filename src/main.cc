@@ -41,6 +41,7 @@ std::string meshFileName,coordinatesFile,currentPath,latticeVectorsFile,kPointDa
 //
 //dft header
 //
+#include "../include/constants.h"
 #include "./dft/dft.cc"
 
 

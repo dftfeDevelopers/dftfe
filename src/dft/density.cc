@@ -32,7 +32,7 @@ void dftClass<FEOrder>::compute_rhoOut()
       for (unsigned int i = 0; i < numEigenValues; ++i)
 	{
 	  *eigenVectorsOrig[kPoint][i]=*eigenVectors[kPoint][i];
-	  (*eigenVectorsOrig[kPoint][i]).scale(eigen.massVector);
+	  (*eigenVectorsOrig[kPoint][i]).scale(eigenPtr->massVector);
 	  constraintsNoneEigen.distribute(*eigenVectorsOrig[kPoint][i]);
 	  eigenVectorsOrig[kPoint][i]->update_ghost_values();
 	}

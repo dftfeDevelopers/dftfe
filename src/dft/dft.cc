@@ -19,6 +19,8 @@
 //Include header files
 //#include "../../include/headers.h"
 #include "../../include/dft.h"
+#include "../../include/eigen.h"
+#include "../../include/poisson.h"
 #include "../../utils/fileReaders.cc"
 //#include "../poisson/poisson.cc"
 //#include "../eigen/eigen.cc"
@@ -58,8 +60,6 @@ dftClass<FEOrder>::dftClass():
   mpi_communicator (MPI_COMM_WORLD),
   n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_communicator)),
   this_mpi_process (Utilities::MPI::this_mpi_process(mpi_communicator)),
-  poisson(this),
-  eigen(this),
   numElectrons(0),
   numLevels(0),
   d_maxkPoints(1),
@@ -93,7 +93,8 @@ dftClass<FEOrder>::dftClass():
   d_latticeVectorsFile(latticeVectorsFile),
   d_kPointDataFile(kPointDataFile)    
 {
-
+  poissonPtr= new poissonClass<FEOrder>(this);
+  eigenPtr= new eigenClass<FEOrder>(this);
   //
   // initialize PETSc
   //
@@ -329,7 +330,7 @@ void dftClass<FEOrder>::run ()
 	  if (scfIter==1) norm = mixing_simple();
 	  else norm = sqrt(mixing_anderson());
 	  sprintf(buffer, "Anderson Mixing: L2 norm of electron-density difference: %12.6e\n\n", norm); pcout << buffer;
-	  poisson.phiTotRhoIn = poisson.phiTotRhoOut;
+	  poissonPtr->phiTotRhoIn = poissonPtr->phiTotRhoOut;
 	}
       //phiTot with rhoIn
 
@@ -337,9 +338,9 @@ void dftClass<FEOrder>::run ()
 
       int constraintMatrixId = 1;
       sprintf(buffer, "Poisson solve for total electrostatic potential (rhoIn+b):\n"); pcout << buffer; 
-      poisson.solve(poisson.phiTotRhoIn,constraintMatrixId, rhoInValues);
-      //pcout<<"L-2 Norm of Phi-in   : "<<poisson.phiTotRhoIn.l2_norm()<<std::endl;
-      //pcout<<"L-inf Norm of Phi-in : "<<poisson.phiTotRhoIn.linfty_norm()<<std::endl;
+      poissonPtr->solve(poissonPtr->phiTotRhoIn,constraintMatrixId, rhoInValues);
+      //pcout<<"L-2 Norm of Phi-in   : "<<poissonPtr->phiTotRhoIn.l2_norm()<<std::endl;
+      //pcout<<"L-inf Norm of Phi-in : "<<poissonPtr->phiTotRhoIn.linfty_norm()<<std::endl;
 
      
       //eigen solve
@@ -347,16 +348,16 @@ void dftClass<FEOrder>::run ()
       if(xc_id < 4)
 	{
 	  if(isPseudopotential)
-	    eigen.computeVEff(rhoInValues, poisson.phiTotRhoIn, poisson.phiExt, pseudoValues);
+	    eigenPtr->computeVEff(rhoInValues, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, pseudoValues);
 	  else
-	    eigen.computeVEff(rhoInValues, poisson.phiTotRhoIn, poisson.phiExt); 
+	    eigenPtr->computeVEff(rhoInValues, poissonPtr->phiTotRhoIn, poissonPtr->phiExt); 
 	}
       else if (xc_id == 4)
 	{
 	  if(isPseudopotential)
-	    eigen.computeVEff(rhoInValues, gradRhoInValues, poisson.phiTotRhoIn, poisson.phiExt, pseudoValues);
+	    eigenPtr->computeVEff(rhoInValues, gradRhoInValues, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, pseudoValues);
 	  else
-	    eigen.computeVEff(rhoInValues, gradRhoInValues, poisson.phiTotRhoIn, poisson.phiExt);
+	    eigenPtr->computeVEff(rhoInValues, gradRhoInValues, poissonPtr->phiTotRhoIn, poissonPtr->phiExt);
 	}
  
 
@@ -378,9 +379,9 @@ void dftClass<FEOrder>::run ()
 
       //phiTot with rhoOut
       sprintf(buffer, "Poisson solve for total electrostatic potential (rhoOut+b):\n"); pcout << buffer; 
-      poisson.solve(poisson.phiTotRhoOut,constraintMatrixId, rhoOutValues);
-      //pcout<<"L-2 Norm of Phi-out   :"<<poisson.phiTotRhoOut.l2_norm()<<std::endl;
-      //pcout<<"L-inf Norm of Phi-out :"<<poisson.phiTotRhoOut.linfty_norm()<<std::endl;
+      poissonPtr->solve(poissonPtr->phiTotRhoOut,constraintMatrixId, rhoOutValues);
+      //pcout<<"L-2 Norm of Phi-out   :"<<poissonPtr->phiTotRhoOut.l2_norm()<<std::endl;
+      //pcout<<"L-inf Norm of Phi-out :"<<poissonPtr->phiTotRhoOut.linfty_norm()<<std::endl;
       //energy
       compute_energy();
       pcout<<"SCF iteration " << scfIter+1 << " complete\n";

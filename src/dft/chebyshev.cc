@@ -286,7 +286,7 @@ double dftClass<FEOrder>::upperBound()
   std::vector<vectorType*> v,f; 
   v.push_back(&vChebyshev);
   f.push_back(&fChebyshev);
-  eigen.HX(v,f);
+  eigenPtr->HX(v,f);
 
   //
 #ifdef ENABLE_PERIODIC_BC
@@ -310,7 +310,7 @@ double dftClass<FEOrder>::upperBound()
     {
       beta=fChebyshev.l2_norm();
       v0Chebyshev=vChebyshev; vChebyshev.equ(1.0/beta,fChebyshev);
-      eigen.HX(v,f); fChebyshev.add(-1.0*beta,v0Chebyshev);//beta is real
+      eigenPtr->HX(v,f); fChebyshev.add(-1.0*beta,v0Chebyshev);//beta is real
 #ifdef ENABLE_PERIODIC_BC
       alpha = innerProduct(fChebyshev,vChebyshev);
       alphaTimesXPlusY(-alpha,vChebyshev,fChebyshev);
@@ -469,7 +469,7 @@ template<unsigned int FEOrder>
 void dftClass<FEOrder>::rayleighRitz(std::vector<vectorType*> &X){
   computing_timer.enter_section("Chebyshev Rayleigh Ritz"); 
   //Hbar=Psi^T*H*Psi
-  eigen.XHX(X);  //Hbar is now available as a 1D array XHXValue 
+  eigenPtr->XHX(X);  //Hbar is now available as a 1D array XHXValue 
 
   //compute the eigen decomposition of Hbar
   int n = X.size(), lda = X.size(), info;
@@ -481,10 +481,10 @@ void dftClass<FEOrder>::rayleighRitz(std::vector<vectorType*> &X){
   int lrwork = 1 + 5*n + 2*n*n;
   std::vector<double> rwork(lrwork,0.0); 
   std::vector<std::complex<double> > work(lwork);
-  zheevd_(&jobz, &uplo, &n, &eigen.XHXValue[0],&lda,&eigenValues[d_kPointIndex][0], &work[0], &lwork, &rwork[0], &lrwork, &iwork[0], &liwork, &info);
+  zheevd_(&jobz, &uplo, &n, &eigenPtr->XHXValue[0],&lda,&eigenValues[d_kPointIndex][0], &work[0], &lwork, &rwork[0], &lrwork, &iwork[0], &liwork, &info);
 #else
   std::vector<double> work(lwork);
-  dsyevd_(&jobz, &uplo, &n, &eigen.XHXValue[0], &lda, &eigenValues[d_kPointIndex][0], &work[0], &lwork, &iwork[0], &liwork, &info);
+  dsyevd_(&jobz, &uplo, &n, &eigenPtr->XHXValue[0], &lda, &eigenValues[d_kPointIndex][0], &work[0], &lwork, &iwork[0], &liwork, &info);
 #endif
 
   //
@@ -533,10 +533,10 @@ lda=n1; int ldb=m, ldc=n1;
 
 #ifdef ENABLE_PERIODIC_BC
  std::complex<double> alpha = 1.0, beta  = 0.0;
- zgemm_(&transA, &transB, &n1, &m, &m, &alpha, &Xlocal[0], &lda, &eigen.XHXValue[0], &ldb, &beta, &Xbar[0], &ldc);
+ zgemm_(&transA, &transB, &n1, &m, &m, &alpha, &Xlocal[0], &lda, &eigenPtr->XHXValue[0], &ldb, &beta, &Xbar[0], &ldc);
 #else
  double alpha = 1.0, beta  = 0.0;
- dgemm_(&transA, &transB, &n1, &m, &m, &alpha, &Xlocal[0], &lda, &eigen.XHXValue[0], &ldb, &beta, &Xbar[0], &ldc);
+ dgemm_(&transA, &transB, &n1, &m, &m, &alpha, &Xlocal[0], &lda, &eigenPtr->XHXValue[0], &ldb, &beta, &Xbar[0], &ldc);
 #endif
 
  
@@ -590,7 +590,7 @@ void dftClass<FEOrder>::chebyshevFilter(std::vector<vectorType*> & X,
   
   //Y=alpha1*(HX+alpha2*X)
   double alpha1=sigma1/e, alpha2=-c;
-  eigen.HX(X, PSI);
+  eigenPtr->HX(X, PSI);
   for (std::vector<vectorType*>::iterator y=PSI.begin(), x=X.begin(); y<PSI.end(); ++y, ++x){  
     (**y).add(alpha2,**x);
     (**y)*=alpha1;
@@ -600,7 +600,7 @@ void dftClass<FEOrder>::chebyshevFilter(std::vector<vectorType*> & X,
     sigma2=1.0/(gamma-sigma);
     //Ynew=alpha1*(HY-cY)+alpha2*X
     alpha1=2.0*sigma2/e, alpha2=-(sigma*sigma2);
-    eigen.HX(PSI, tempPSI);
+    eigenPtr->HX(PSI, tempPSI);
     for (std::vector<vectorType*>::iterator ynew=tempPSI.begin(), y=PSI.begin(), x=X.begin(); ynew<tempPSI.end(); ++ynew, ++y, ++x){  
       (**ynew).add(-c,**y);
       (**ynew)*=alpha1;

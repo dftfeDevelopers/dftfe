@@ -377,9 +377,9 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 	{
 	  for (unsigned int j = 0; j < eigenVectors[kPoint][i]->local_size(); j++)
 	    {
-	      if (std::abs(eigen.massVector.local_element(j))>1.0e-15)
+	      if (std::abs(eigenPtr->massVector.local_element(j))>1.0e-15)
 		{
-		  eigenVectors[kPoint][i]->local_element(j)/=eigen.massVector.local_element(j);
+		  eigenVectors[kPoint][i]->local_element(j)/=eigenPtr->massVector.local_element(j);
 		}
 	    }
 	  char buffer[100];

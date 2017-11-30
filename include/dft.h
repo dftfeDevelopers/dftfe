@@ -26,8 +26,6 @@
 #include <deque>
 
 #include "headers.h"
-#include "poisson.h"
-#include "eigen.h"
 #include "constants.h"
 
 #include <interpolation.h> 
@@ -242,8 +240,8 @@ class dftClass
   std::vector<unsigned int> localProc_dof_indicesReal,localProc_dof_indicesImag;
 
 
-  poissonClass<FEOrder> poisson;
-  eigenClass<FEOrder> eigen;
+  poissonClass<FEOrder> * poissonPtr;
+  eigenClass<FEOrder> * eigenPtr;
   ConstraintMatrix constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_constraintsPeriodicWithDirichlet, d_noConstraints; 
   std::vector<std::vector<double> > eigenValues;
   std::vector<std::vector<parallel::distributed::Vector<double>*> > eigenVectors;

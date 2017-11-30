@@ -1155,8 +1155,8 @@ void dftClass<FEOrder>::init(){
   //
   //initialize poisson and eigen problem related objects
   //
-  poisson.init();
-  eigen.init();
+  poissonPtr->init();
+  eigenPtr->init();
   
   //
   //initialize PSI
