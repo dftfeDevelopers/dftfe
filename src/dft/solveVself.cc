@@ -19,8 +19,8 @@
 //source file for locating core atom nodes
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::solveVself()
-{ 
-  //
+{
+  d_localVselfs.clear();
   //phiExt with nuclear charge
   //
   int numberBins = d_boundaryFlag.size();
@@ -35,7 +35,7 @@ void dftClass<FEOrder>::solveVself()
   std::map<dealii::types::global_dof_index, int>::iterator iterMap;
 
   for(int iBin = 0; iBin < numberBins; ++iBin)
-    {
+  {
       int constraintMatrixId = iBin + 2;
       matrix_free_data.initialize_dof_vector(poissonPtr->vselfBinScratch,constraintMatrixId);
 
@@ -57,7 +57,10 @@ void dftClass<FEOrder>::solveVself()
 	      
 	    }
 	}
-
+ 
+      poissonPtr->vselfBinScratch.compress(VectorOperation::insert);
+      d_constraintsVector[constraintMatrixId]->distribute(poissonPtr->vselfBinScratch);
+      poissonPtr->vselfBinScratch.update_ghost_values();
       //
       //call the poisson solver to compute vSelf in each bin
       //

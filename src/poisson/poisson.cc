@@ -16,10 +16,10 @@
 // @author Shiva Rudraraju (2016), Phani Motamarri (2016)
 //
 
-#include "../../include/dft.h"
 #include "../../include/poisson.h"
+#include "../../include/dft.h"
+#include "../../include/constants.h"
 #include "boundary.cc"
-
 //
 //constructor
 //
@@ -49,11 +49,12 @@ void poissonClass<FEOrder>::init()
   //
   dftPtr->matrix_free_data.initialize_dof_vector(rhs);
 
-
   rhs2.reinit (rhs);
   jacobianDiagonal.reinit (rhs);
   phiTotRhoIn.reinit (rhs);
   phiTotRhoOut.reinit (rhs);
+  //phiExt.reinit (rhs);
+  //vselfBinScratch.reinit (rhs);
   
   computing_timer.exit_section("poissonClass setup"); 
 }
@@ -88,36 +89,36 @@ void poissonClass<FEOrder>::computeRHS2()
       if(cell->is_locally_owned())
 	{
 	  //compute values for the current element
-	  fe_values.reinit (cell);
-	  cell->get_dof_indices (local_dof_indices);
+	  fe_values.reinit(cell);
+	  cell->get_dof_indices(local_dof_indices);
+
 	  //rhs2
 	  elementalrhs=0.0;
 	  bool assembleFlag=false;
+
 	  //local poissonClass operator
 	  for(unsigned int j = 0; j < dofs_per_cell; ++j)
 	    {
 	      unsigned int columnID = local_dof_indices[j];
-	      if(constraintMatrix->is_constrained(columnID))
+	      if(constraintMatrix->is_inhomogeneously_constrained(columnID))
 		{
-		  if(!constraintMatrix->is_identity_constrained(columnID))
+		  for (unsigned int i = 0; i < dofs_per_cell; ++i)
 		    {
-		      for (unsigned int i = 0; i < dofs_per_cell; ++i)
+		      //compute contribution to rhs2
+		      double localStiffnessMatIJ = 0.0;
+		      for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
 			{
-			  //compute contribution to rhs2
-			  double localJacobianIJ = 0.0;
-			  for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
-			    {
-			      localJacobianIJ += (1.0/(4.0*M_PI))*(fe_values.shape_grad(i, q_point)*fe_values.shape_grad (j, q_point))*fe_values.JxW(q_point);
-			    }
-			  elementalrhs(i)+=constraintMatrix->get_inhomogeneity(columnID)*localJacobianIJ;
-			  if (!assembleFlag) {assembleFlag=true;}
+			  localStiffnessMatIJ += (1.0/(4.0*M_PI))*(fe_values.shape_grad(i,q_point)*fe_values.shape_grad(j,q_point))*fe_values.JxW(q_point);
 			}
+		      elementalrhs(i)+=constraintMatrix->get_inhomogeneity(columnID)*localStiffnessMatIJ;
+		      if (!assembleFlag) {assembleFlag=true;}
 		    }
+
 		}
 	    }
 	  if(assembleFlag)
 	    {
-	      dftPtr->constraintsNone.distribute_local_to_global(elementalrhs, local_dof_indices, rhs2);
+	      constraintMatrix->distribute_local_to_global(elementalrhs,local_dof_indices,rhs2);
 	    }
 	  
 	}
@@ -174,16 +175,10 @@ void poissonClass<FEOrder>::computeRHS(std::map<dealii::CellId,std::vector<doubl
 		    }
 		}
 	    }
+
 	  //assemble to global data structures
 	  cell->get_dof_indices (local_dof_indices);
-#ifdef ENABLE_PERIODIC_BC
-	  if(rhoValues)
-	    dftPtr->d_constraintsPeriodicWithDirichlet.distribute_local_to_global(elementalResidual,local_dof_indices,rhs);
-	  else
-	    dftPtr->constraintsNone.distribute_local_to_global(elementalResidual, local_dof_indices, rhs);
-#else
-	  dftPtr->constraintsNone.distribute_local_to_global(elementalResidual, local_dof_indices, rhs);
-#endif
+	  constraintMatrix->distribute_local_to_global(elementalResidual, local_dof_indices, rhs);
 
 	  //jacobianDiagonal
 	  elementalJacobianDiagonal=0.0;
@@ -195,7 +190,7 @@ void poissonClass<FEOrder>::computeRHS(std::map<dealii::CellId,std::vector<doubl
 		}
 	    }
 
-	  dftPtr->constraintsNone.distribute_local_to_global(elementalJacobianDiagonal, local_dof_indices, jacobianDiagonal);
+	  constraintMatrix->distribute_local_to_global(elementalJacobianDiagonal, local_dof_indices, jacobianDiagonal);
 
 	}
     }
@@ -210,11 +205,8 @@ void poissonClass<FEOrder>::computeRHS(std::map<dealii::CellId,std::vector<doubl
 	  std::vector<unsigned int> local_dof_indices_origin(1, it->first); //atomic node
 	  Vector<double> cell_rhs_origin (1); 
 	  cell_rhs_origin(0)=-(it->second); //atomic charge
-#ifdef ENABLE_PERIODIC_BC 
-	  dftPtr->d_constraintsPeriodicWithDirichlet.distribute_local_to_global(cell_rhs_origin, local_dof_indices_origin, rhs);
-#else
-	  dftPtr->constraintsNone.distribute_local_to_global(cell_rhs_origin, local_dof_indices_origin, rhs);
-#endif
+
+	  constraintMatrix->distribute_local_to_global(cell_rhs_origin, local_dof_indices_origin, rhs);
 	}
     }
   else
@@ -225,7 +217,7 @@ void poissonClass<FEOrder>::computeRHS(std::map<dealii::CellId,std::vector<doubl
 	  std::vector<unsigned int> local_dof_indices_origin(1, it->first); //atomic node
 	  Vector<double> cell_rhs_origin (1); 
 	  cell_rhs_origin(0)=-(it->second); //atomic charge
-	  dftPtr->constraintsNone.distribute_local_to_global(cell_rhs_origin, local_dof_indices_origin, rhs);
+	  constraintMatrix->distribute_local_to_global(cell_rhs_origin, local_dof_indices_origin, rhs);
 	}
     }
 
@@ -234,52 +226,33 @@ void poissonClass<FEOrder>::computeRHS(std::map<dealii::CellId,std::vector<doubl
   //
   rhs.compress(VectorOperation::add);
   jacobianDiagonal.compress(VectorOperation::add);
-  dftPtr->constraintsNone.distribute(jacobianDiagonal);
+
   
-  
-  for(types::global_dof_index i = 0; i < rhs.size(); ++i)
-    {
-      if(rhs.in_local_range(i))
-	{
-	  if(constraintMatrix->is_constrained(i))
-	    {
-	      if(!constraintMatrix->is_identity_constrained(i))
-		{
-		  if(rhoValues) rhs(i) = 0.0;
-		  else rhs(i) = constraintMatrix->get_inhomogeneity(i);
-		}
-	    }
-	}
-    }
-  
-  rhs.update_ghost_values();
-
-  for(types::global_dof_index i = 0; i < jacobianDiagonal.size(); ++i)
-    {
-      if(jacobianDiagonal.in_local_range(i))
-	{
-	  if(constraintMatrix->is_constrained(i))
-	    {
-	      if(!constraintMatrix->is_identity_constrained(i))
-		{
-		  jacobianDiagonal(i) = 1.0;
-		}
-	    }
-	  else
-	    {
-	      jacobianDiagonal(i) = 1.0/jacobianDiagonal(i);
-	    }
-	}
-    }
-
-  jacobianDiagonal.update_ghost_values();
-
-
   if (!rhoValues)
     {
       rhs.add(-1.0,rhs2);
     }
 
+  //
+  //check if this is really required
+  //
+  constraintMatrix->set_zero(rhs);
+
+
+  for(types::global_dof_index i = 0; i < jacobianDiagonal.size(); ++i)
+    {
+      if(jacobianDiagonal.in_local_range(i))
+	{
+	  if(!constraintMatrix->is_constrained(i))
+	    {   
+	      jacobianDiagonal(i) = 1.0/jacobianDiagonal(i);
+	    }
+	}
+    }
+
+  jacobianDiagonal.compress(VectorOperation::insert);
+
+  
   //pcout<< "rhs:" <<rhs.l2_norm()<<std::endl;
   computing_timer.exit_section("PoissonClass rhs assembly");
 
@@ -294,20 +267,13 @@ void poissonClass<FEOrder>::AX (const dealii::MatrixFree<3,double>  &data,
 {
   VectorizedArray<double>  quarter = make_vectorized_array (1.0/(4.0*M_PI));
   int constraintId = d_constraintMatrixId;
-#ifdef ENABLE_PERIODIC_BC
-  if(d_constraintMatrixId > 1)
-   constraintId = d_constraintMatrixId;
-  else
-   constraintId = 0;
-#endif
 
   FEEvaluation<3,FEOrder> fe_eval(data, constraintId, 0); 
-
 
   for (unsigned int cell=cell_range.first; cell<cell_range.second; ++cell)
     {
       fe_eval.reinit(cell); 
-      fe_eval.read_dof_values(src);
+      fe_eval.read_dof_values_plain(src);
       fe_eval.evaluate(false,true,false);
       for (unsigned int q=0; q<fe_eval.n_q_points; ++q)
 	{
@@ -320,58 +286,26 @@ void poissonClass<FEOrder>::AX (const dealii::MatrixFree<3,double>  &data,
 
 //vmult
 template<unsigned int FEOrder>
-void poissonClass<FEOrder>::vmult(vectorType &dst, const vectorType &src) const
+void poissonClass<FEOrder>::vmult(vectorType &dst, vectorType &src) const
 {
  
   dst=0.0;
+  dftPtr->d_constraintsVector[d_constraintMatrixId]->distribute(src);
+  for(types::global_dof_index i = 0; i < src.size(); ++i)
+    {
+      if(src.in_local_range(i))
+	{	 	  
+	  if(dftPtr->d_constraintsVector[d_constraintMatrixId]->is_inhomogeneously_constrained(i))
+	    {
+	      src(i) = 0;
+	    }
+	}
+    }
   dftPtr->matrix_free_data.cell_loop (&poissonClass<FEOrder>::AX, this, dst, src);
- 
-  const ConstraintMatrix * constraintMatrix = dftPtr->d_constraintsVector[d_constraintMatrixId];
 
-#ifdef ENABLE_PERIODIC_BC
-  if(d_constraintMatrixId > 1)
-    {
-      for(types::global_dof_index i = 0; i < dst.size(); ++i)
-	{
-	  if(dst.in_local_range(i))
-	    {
-	      if(constraintMatrix->is_constrained(i))
-		{
-		  if(!constraintMatrix->is_identity_constrained(i))
-		    dst(i)=src(i);
-		}
+  //check if this is necessary
+  dftPtr->d_constraintsVector[d_constraintMatrixId]->set_zero(dst);  
 
-	    }
-	}
-    }
-  else
-    {
-      for(types::global_dof_index i = 0; i < dst.size(); ++i)
-	{
-	  if(dst.in_local_range(i))
-	    {
-	      if(dftPtr->d_constraintsPeriodicWithDirichlet.is_constrained(i))
-		{
-		  if(!dftPtr->d_constraintsPeriodicWithDirichlet.is_identity_constrained(i))
-		      dst(i)=src(i);
-		}
-
-	    }
-	}
-    }
-#else
-  for(types::global_dof_index i = 0; i < dst.size(); ++i)
-    {
-      if(dst.in_local_range(i))
-	{
-	  if(constraintMatrix->is_constrained(i))
-	    {
-	      dst(i)=src(i);
-	    }
-
-	}
-    }
-#endif
 }
 
 //
@@ -388,7 +322,8 @@ void poissonClass<FEOrder>::precondition_Jacobi(vectorType& dst, const vectorTyp
 //solve using CG
 //
 template<unsigned int FEOrder>
-void poissonClass<FEOrder>::solve(vectorType& phi, int constraintMatrixId, std::map<dealii::CellId,std::vector<double> >* rhoValues){
+void poissonClass<FEOrder>::solve(vectorType& phi, int constraintMatrixId, std::map<dealii::CellId,std::vector<double> >* rhoValues)
+{
   //
   //initialize the data member
   //
@@ -408,17 +343,31 @@ void poissonClass<FEOrder>::solve(vectorType& phi, int constraintMatrixId, std::
   PreconditionJacobi<poissonClass<FEOrder> > preconditioner;
   preconditioner.initialize (*this, 0.3);
   try{
-    phi=0.0;
+
+    //phi=0.0;
     //solver.solve(*this, phi, rhs, IdentityMatrix(rhs.size()));
+
+    //assumed phi distributed prior
+    for(types::global_dof_index i = 0; i < phi.size(); ++i)
+    {
+      if(phi.in_local_range(i))
+	{	    
+	  if(dftPtr->d_constraintsVector[d_constraintMatrixId]->is_inhomogeneously_constrained(i))
+	    phi(i)=0;
+	}
+    }   
+    phi.update_ghost_values();
     solver.solve(*this, phi, rhs, preconditioner);
-    dftPtr->constraintsNone.distribute(phi);
+
+    dftPtr->d_constraintsVector[d_constraintMatrixId]->distribute(phi);
     phi.update_ghost_values();
   }
   catch (...) {
     pcout << "\nWarning: solver did not converge as per set tolerances. consider increasing maxLinearSolverIterations or decreasing relLinearSolverTolerance.\n";
   }
 
-  //std::cout<<"Max of Phi : "<<phi.linfty_norm()<<std::endl;
+  //std::cout<<"L2 norm of phi : "<<phi.l2_norm()<<std::endl;
+ // std::cout<<"Max of Phi : "<<phi.linfty_norm()<<std::endl;
 
 
 

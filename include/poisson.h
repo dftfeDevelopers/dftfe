@@ -39,7 +39,7 @@ class poissonClass
 
 public:
   poissonClass(dftClass<FEOrder>* _dftPtr);
-  void vmult(vectorType &dst, const vectorType &src) const;
+  void vmult(vectorType &dst, vectorType &src) const;
   void precondition_Jacobi(vectorType& dst, const vectorType& src, const double omega) const;
   void subscribe (const char *identifier=0) const{};   //function needed to mimic SparseMatrix for Jacobi preconditioning
   void unsubscribe (const char *identifier=0) const{}; //function needed to mimic SparseMatrix for Jacobi preconditioning

@@ -1001,14 +1001,12 @@ void dftClass<FEOrder>::init(){
 #endif
   d_constraintsForTotalPotential.close ();
 
-#ifdef ENABLE_PERIODIC_BC 
-  d_constraintsPeriodicWithDirichlet.clear();
-  DoFTools::make_hanging_node_constraints(dofHandler, d_constraintsPeriodicWithDirichlet);
-  d_constraintsPeriodicWithDirichlet.merge(d_constraintsForTotalPotential);
-  d_constraintsPeriodicWithDirichlet.close();
-  d_constraintsPeriodicWithDirichlet.merge(constraintsNone);
-  d_constraintsPeriodicWithDirichlet.close();  
-#endif
+  //
+  //merge with constraintsNone so that d_constraintsForTotalPotential will also have periodic
+  //constraints as well for periodic problems
+  d_constraintsForTotalPotential.merge(constraintsNone);
+  d_constraintsForTotalPotential.close();
+
  
   //
   //push back into Constraint Matrices

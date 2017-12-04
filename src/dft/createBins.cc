@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Shiva Rudraraju (2016), Phani Motamarri (2016)
+// @author  Phani Motamarri (2016)
 //
 
 //source file for locating core atom nodes
@@ -98,7 +98,11 @@ template<unsigned int FEOrder>
 void dftClass<FEOrder>::createAtomBins(std::vector<const ConstraintMatrix * > & constraintsVector)
 			     
 {
-
+  d_bins.clear();	
+  d_imageIdsInBins.clear();
+  d_boundaryFlag.clear();
+  d_vselfBinField.clear();
+  d_closestAtomBin.clear();
   //
   // access complete list of image charges
   //
@@ -117,8 +121,8 @@ void dftClass<FEOrder>::createAtomBins(std::vector<const ConstraintMatrix * > & 
   const int numberGlobalAtoms = atomLocations.size();
   const int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
 
-  unsigned int vertices_per_cell=GeometryInfo<3>::vertices_per_cell;
-  
+  const unsigned int vertices_per_cell=GeometryInfo<3>::vertices_per_cell;
+  const unsigned int dofs_per_cell = FE.dofs_per_cell; 
 
   std::map<int,std::set<int> > atomToGlobalNodeIdMap;
 
@@ -152,10 +156,13 @@ void dftClass<FEOrder>::createAtomBins(std::vector<const ConstraintMatrix * > & 
 	  if(cell->is_locally_owned())
 	    {
 	      int cutOffFlag = 0;
-	      for(unsigned int iNode = 0; iNode < vertices_per_cell; ++iNode)
+	      std::vector<types::global_dof_index> cell_dof_indices(dofs_per_cell);
+	      cell->get_dof_indices(cell_dof_indices);	
+
+	      for(unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
 		{
 		  
-		  Point<3> feNodeGlobalCoord = cell->vertex(iNode);
+		  Point<3> feNodeGlobalCoord = d_supportPoints[cell_dof_indices[iNode]];
 
 		  double distance = atomCoor.distance(feNodeGlobalCoord);
 
@@ -359,11 +366,10 @@ void dftClass<FEOrder>::createAtomBins(std::vector<const ConstraintMatrix * > & 
   const int numberBins = binCount + 1;
   pcout<<"number bins: "<<numberBins<<std::endl;
 
-  //std::vector<std::vector<int> > imageIdsInBins;
   d_imageIdsInBins.resize(numberBins);
   d_boundaryFlag.resize(numberBins);
   d_vselfBinField.resize(numberBins);
-  
+  d_closestAtomBin.resize(numberBins);
   //
   //set constraint matrices for each bin
   //
@@ -466,6 +472,9 @@ void dftClass<FEOrder>::createAtomBins(std::vector<const ConstraintMatrix * > & 
 	      else
 		chargeId = imageIdsOfAtomsInCurrentBin[minDistanceAtomId-numberGlobalAtomsInBin]+numberGlobalAtoms;
 
+	      d_closestAtomBin[iBin][iterMap->first] = chargeId;
+
+	      //FIXME: These two can be moved to the outermost bin loop
 	      std::map<dealii::types::global_dof_index, int> & boundaryNodeMap = d_boundaryFlag[iBin];
 	      std::map<dealii::types::global_dof_index, int> & vSelfBinNodeMap = d_vselfBinField[iBin];
 	   
