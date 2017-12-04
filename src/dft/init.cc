@@ -1034,6 +1034,8 @@ void dftClass<FEOrder>::init(){
   
   for(int i = 0; i < d_constraintsVector.size(); ++i)
     dofHandlerVector.push_back(&dofHandler);
+
+  phiTotDofHandlerIndex = 1;
  
   dofHandlerVector.push_back(&dofHandlerEigen); //DofHandler For Eigen
   eigenDofHandlerIndex = dofHandlerVector.size() - 1; //For Eigen
@@ -1043,7 +1045,7 @@ void dftClass<FEOrder>::init(){
   //push d_noConstraints into constraintsVector
   // 
   dofHandlerVector.push_back(&dofHandler);
-  phiExtDofHandlerIndex = eigenDofHandlerIndex + 1;
+  phiExtDofHandlerIndex = dofHandlerVector.size()-1;
   d_constraintsVector.push_back(&d_noConstraints);
 
   std::vector<Quadrature<1> > quadratureVector; 

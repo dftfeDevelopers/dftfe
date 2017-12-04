@@ -336,7 +336,7 @@ void dftClass<FEOrder>::run ()
 
       //parallel loop over all elements
 
-      int constraintMatrixId = 1;
+      int constraintMatrixId = phiTotDofHandlerIndex;
       sprintf(buffer, "Poisson solve for total electrostatic potential (rhoIn+b):\n"); pcout << buffer; 
       poissonPtr->solve(poissonPtr->phiTotRhoIn,constraintMatrixId, rhoInValues);
       //pcout<<"L-2 Norm of Phi-in   : "<<poissonPtr->phiTotRhoIn.l2_norm()<<std::endl;

@@ -223,7 +223,7 @@ class dftClass
   parallel::distributed::Triangulation<3> triangulation;
   FESystem<3>        FE, FEEigen;
   DoFHandler<3>      dofHandler, dofHandlerEigen;
-  unsigned int       eigenDofHandlerIndex,phiExtDofHandlerIndex;
+  unsigned int       eigenDofHandlerIndex,phiExtDofHandlerIndex,phiTotDofHandlerIndex;
   MatrixFree<3,double> matrix_free_data;
   std::map<types::global_dof_index, Point<3> > d_supportPoints, d_supportPointsEigen;
   std::vector< const ConstraintMatrix * > d_constraintsVector; 
