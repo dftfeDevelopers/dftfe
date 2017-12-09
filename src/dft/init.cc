@@ -180,9 +180,14 @@ void dftClass<FEOrder>::init(){
   DoFTools::extract_locally_relevant_dofs(dofHandler, locally_relevant_dofs);
   DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), dofHandler, d_supportPoints);
 
+  //selectedDofsHanging.resize(dofHandler.n_dofs(),false);
+  //DoFTools::extract_hanging_node_dofs(dofHandler, selectedDofsHanging);
+
   locally_owned_dofsEigen = dofHandlerEigen.locally_owned_dofs();
   DoFTools::extract_locally_relevant_dofs(dofHandlerEigen, locally_relevant_dofsEigen);
   DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), dofHandlerEigen, d_supportPointsEigen);
+
+  
 
   //
   //Extract real and imag DOF indices from the global vector - this will be needed in XHX operation, etc.
@@ -992,7 +997,7 @@ void dftClass<FEOrder>::init(){
   //with (rho+b) as the rhs
   //
   d_constraintsForTotalPotential.clear ();  
-  DoFTools::make_hanging_node_constraints(dofHandler, d_constraintsForTotalPotential);
+  //DoFTools::make_hanging_node_constraints(dofHandler, d_constraintsForTotalPotential);
 
 #ifdef ENABLE_PERIODIC_BC
   locatePeriodicPinnedNodes();

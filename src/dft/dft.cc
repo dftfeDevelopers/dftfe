@@ -24,7 +24,7 @@
 #include "../../utils/fileReaders.cc"
 //#include "../poisson/poisson.cc"
 //#include "../eigen/eigen.cc"
-#include "mesh.cc"
+#include "meshAdapt.cc"
 #include "init.cc"
 #include "psiInitialGuess.cc"
 #include "energy.cc"

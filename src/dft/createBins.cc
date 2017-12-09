@@ -23,76 +23,76 @@ void exchangeAtomToGlobalNodeIdMaps(const int totalNumberAtoms,
 				    unsigned int numMeshPartitions,
 				    const MPI_Comm & mpi_communicator)
 
-    {
+{
 
       
-      std::map<int,std::set<int> >::iterator iter;
+  std::map<int,std::set<int> >::iterator iter;
 
-      for(int iGlobal = 0; iGlobal < totalNumberAtoms; ++iGlobal){
+  for(int iGlobal = 0; iGlobal < totalNumberAtoms; ++iGlobal){
 
-	//
-	// for each charge, exchange its global list across all procs
-	//
-	iter = atomToGlobalNodeIdMap.find(iGlobal);    
+    //
+    // for each charge, exchange its global list across all procs
+    //
+    iter = atomToGlobalNodeIdMap.find(iGlobal);    
 
-	std::vector<int> localAtomToGlobalNodeIdList;
+    std::vector<int> localAtomToGlobalNodeIdList;
 
-	if(iter != atomToGlobalNodeIdMap.end()){
-	  std::set<int>  & localGlobalNodeIdSet = iter->second;
-	  std::copy(localGlobalNodeIdSet.begin(),
-		    localGlobalNodeIdSet.end(),
-		    std::back_inserter(localAtomToGlobalNodeIdList));
+    if(iter != atomToGlobalNodeIdMap.end()){
+      std::set<int>  & localGlobalNodeIdSet = iter->second;
+      std::copy(localGlobalNodeIdSet.begin(),
+		localGlobalNodeIdSet.end(),
+		std::back_inserter(localAtomToGlobalNodeIdList));
 
-	}
-
-	int numberGlobalNodeIdsOnLocalProc = localAtomToGlobalNodeIdList.size();
-
-	int * atomToGlobalNodeIdListSizes = new int[numMeshPartitions];
-
-	MPI_Allgather(&numberGlobalNodeIdsOnLocalProc,
-		      1,
-		      MPI_INT,
-		      atomToGlobalNodeIdListSizes,
-		      1,
-		      MPI_INT,
-		      mpi_communicator);
-
-	int newAtomToGlobalNodeIdListSize = 
-	  std::accumulate(&(atomToGlobalNodeIdListSizes[0]),
-			  &(atomToGlobalNodeIdListSizes[numMeshPartitions]),
-			  0);
-
-	std::vector<int> globalAtomToGlobalNodeIdList(newAtomToGlobalNodeIdListSize);
-    
-	int * mpiOffsets = new int[numMeshPartitions];
-
-	mpiOffsets[0] = 0;
-
-	for(int i = 1; i < numMeshPartitions; ++i)
-	  mpiOffsets[i] = atomToGlobalNodeIdListSizes[i-1]+ mpiOffsets[i-1];
-
-	MPI_Allgatherv(&(localAtomToGlobalNodeIdList[0]),
-		       numberGlobalNodeIdsOnLocalProc,
-		       MPI_INT,
-		       &(globalAtomToGlobalNodeIdList[0]),
-		       &(atomToGlobalNodeIdListSizes[0]),
-		       &(mpiOffsets[0]),
-		       MPI_INT,
-		       mpi_communicator);
-
-	//
-	// over-write local interaction with items of globalInteractionList
-	//
-	for(int i = 0 ; i < globalAtomToGlobalNodeIdList.size(); ++i)
-	  (atomToGlobalNodeIdMap[iGlobal]).insert(globalAtomToGlobalNodeIdList[i]);
-
-	delete [] atomToGlobalNodeIdListSizes;
-	delete [] mpiOffsets;
-
-      }
-      return;
- 
     }
+
+    int numberGlobalNodeIdsOnLocalProc = localAtomToGlobalNodeIdList.size();
+
+    int * atomToGlobalNodeIdListSizes = new int[numMeshPartitions];
+
+    MPI_Allgather(&numberGlobalNodeIdsOnLocalProc,
+		  1,
+		  MPI_INT,
+		  atomToGlobalNodeIdListSizes,
+		  1,
+		  MPI_INT,
+		  mpi_communicator);
+
+    int newAtomToGlobalNodeIdListSize = 
+      std::accumulate(&(atomToGlobalNodeIdListSizes[0]),
+		      &(atomToGlobalNodeIdListSizes[numMeshPartitions]),
+		      0);
+
+    std::vector<int> globalAtomToGlobalNodeIdList(newAtomToGlobalNodeIdListSize);
+    
+    int * mpiOffsets = new int[numMeshPartitions];
+
+    mpiOffsets[0] = 0;
+
+    for(int i = 1; i < numMeshPartitions; ++i)
+      mpiOffsets[i] = atomToGlobalNodeIdListSizes[i-1]+ mpiOffsets[i-1];
+
+    MPI_Allgatherv(&(localAtomToGlobalNodeIdList[0]),
+		   numberGlobalNodeIdsOnLocalProc,
+		   MPI_INT,
+		   &(globalAtomToGlobalNodeIdList[0]),
+		   &(atomToGlobalNodeIdListSizes[0]),
+		   &(mpiOffsets[0]),
+		   MPI_INT,
+		   mpi_communicator);
+
+    //
+    // over-write local interaction with items of globalInteractionList
+    //
+    for(int i = 0 ; i < globalAtomToGlobalNodeIdList.size(); ++i)
+      (atomToGlobalNodeIdMap[iGlobal]).insert(globalAtomToGlobalNodeIdList[i]);
+
+    delete [] atomToGlobalNodeIdListSizes;
+    delete [] mpiOffsets;
+
+  }
+  return;
+ 
+}
 
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::createAtomBins(std::vector<const ConstraintMatrix * > & constraintsVector)
@@ -413,7 +413,7 @@ void dftClass<FEOrder>::createAtomBins(std::vector<const ConstraintMatrix * > & 
       //create constraint matrix for current bin
       //
       ConstraintMatrix * constraintsForVselfInBin = new ConstraintMatrix;
-      DoFTools::make_hanging_node_constraints (dofHandler, *constraintsForVselfInBin);
+      //DoFTools::make_hanging_node_constraints (dofHandler, *constraintsForVselfInBin);
      
       
       unsigned int inNodes=0, outNodes=0;
@@ -422,112 +422,117 @@ void dftClass<FEOrder>::createAtomBins(std::vector<const ConstraintMatrix * > & 
 	{
 	  if(locally_relevant_dofs.is_element(iterMap->first))
 	    {
-	      int overlapFlag = 0;
-	      Point<3> nodalCoor = iterMap->second;
-	      std::vector<double> distanceFromNode;
-
-	      for(unsigned int iAtom = 0; iAtom < numberGlobalAtomsInBin+numberImageAtomsInBin; ++iAtom)
+	      if(!d_noConstraints.is_constrained(iterMap->first))
 		{
-		  Point<3> atomCoor;
-		  if(iAtom < numberGlobalAtomsInBin)
+		  int overlapFlag = 0;
+		  Point<3> nodalCoor = iterMap->second;
+		  std::vector<double> distanceFromNode;
+
+		  for(unsigned int iAtom = 0; iAtom < numberGlobalAtomsInBin+numberImageAtomsInBin; ++iAtom)
 		    {
-		      atomCoor = atomPositionsInCurrentBin[iAtom];
-		    }
-		  else
-		    {
-		      atomCoor[0] = imagePositionsOfAtomsInCurrentBin[iAtom - numberGlobalAtomsInBin][0];
-		      atomCoor[1] = imagePositionsOfAtomsInCurrentBin[iAtom - numberGlobalAtomsInBin][1];
-		      atomCoor[2] = imagePositionsOfAtomsInCurrentBin[iAtom - numberGlobalAtomsInBin][2];
-		    }
+		      Point<3> atomCoor;
+		      if(iAtom < numberGlobalAtomsInBin)
+			{
+			  atomCoor = atomPositionsInCurrentBin[iAtom];
+			}
+		      else
+			{
+			  atomCoor[0] = imagePositionsOfAtomsInCurrentBin[iAtom - numberGlobalAtomsInBin][0];
+			  atomCoor[1] = imagePositionsOfAtomsInCurrentBin[iAtom - numberGlobalAtomsInBin][1];
+			  atomCoor[2] = imagePositionsOfAtomsInCurrentBin[iAtom - numberGlobalAtomsInBin][2];
+			}
 
 		 
-		  double distance = nodalCoor.distance(atomCoor);
+		      double distance = nodalCoor.distance(atomCoor);
 
-		  if(distance < radiusAtomBall)
-		    overlapFlag += 1;
+		      if(distance < radiusAtomBall)
+			overlapFlag += 1;
 
-		  if(overlapFlag > 1)
-		    {
-		      std::cout<< "One of your Bins has a problem. It has interacting atoms" << std::endl;
-		      exit(-1);
-		    }
+		      if(overlapFlag > 1)
+			{
+			  std::cout<< "One of your Bins has a problem. It has interacting atoms" << std::endl;
+			  exit(-1);
+			}
 
-		  distanceFromNode.push_back(distance);
+		      distanceFromNode.push_back(distance);
 
-		}//atom loop
+		    }//atom loop
 
-	      std::vector<double>::iterator minDistanceIter = std::min_element(distanceFromNode.begin(),
-									       distanceFromNode.end());
+		  std::vector<double>::iterator minDistanceIter = std::min_element(distanceFromNode.begin(),
+										   distanceFromNode.end());
 
-	      std::iterator_traits<std::vector<double>::iterator>::difference_type minDistanceAtomId = std::distance(distanceFromNode.begin(),
-														     minDistanceIter);
+		  std::iterator_traits<std::vector<double>::iterator>::difference_type minDistanceAtomId = std::distance(distanceFromNode.begin(),
+															 minDistanceIter);
 
 
-	      double minDistance = *minDistanceIter;
+		  double minDistance = *minDistanceIter;
 
-	      int chargeId;
+		  int chargeId;
 
-	      if(minDistanceAtomId < numberGlobalAtomsInBin)
-		chargeId = atomsInCurrentBin[minDistanceAtomId];
-	      else
-		chargeId = imageIdsOfAtomsInCurrentBin[minDistanceAtomId-numberGlobalAtomsInBin]+numberGlobalAtoms;
+		  if(minDistanceAtomId < numberGlobalAtomsInBin)
+		    chargeId = atomsInCurrentBin[minDistanceAtomId];
+		  else
+		    chargeId = imageIdsOfAtomsInCurrentBin[minDistanceAtomId-numberGlobalAtomsInBin]+numberGlobalAtoms;
 
-	      d_closestAtomBin[iBin][iterMap->first] = chargeId;
+		  d_closestAtomBin[iBin][iterMap->first] = chargeId;
 
-	      //FIXME: These two can be moved to the outermost bin loop
-	      std::map<dealii::types::global_dof_index, int> & boundaryNodeMap = d_boundaryFlag[iBin];
-	      std::map<dealii::types::global_dof_index, int> & vSelfBinNodeMap = d_vselfBinField[iBin];
+		  //FIXME: These two can be moved to the outermost bin loop
+		  std::map<dealii::types::global_dof_index, int> & boundaryNodeMap = d_boundaryFlag[iBin];
+		  std::map<dealii::types::global_dof_index, int> & vSelfBinNodeMap = d_vselfBinField[iBin];
 	   
-	      if(minDistance < radiusAtomBall)
-		{
-		  boundaryNodeMap[iterMap->first] = chargeId;
-		  inNodes++;
+		  if(minDistance < radiusAtomBall)
+		    {
+		      boundaryNodeMap[iterMap->first] = chargeId;
+		      inNodes++;
 		  
-		  double atomCharge;
+		      double atomCharge;
 
-		  if(minDistanceAtomId < numberGlobalAtomsInBin)
-		    {
-		      if(isPseudopotential)
-			atomCharge = atomLocations[chargeId][1];
+		      if(minDistanceAtomId < numberGlobalAtomsInBin)
+			{
+			  if(isPseudopotential)
+			    atomCharge = atomLocations[chargeId][1];
+			  else
+			    atomCharge = atomLocations[chargeId][0];
+			}
 		      else
-			atomCharge = atomLocations[chargeId][0];
+			atomCharge = imageChargeValues[imageIdsOfAtomsInCurrentBin[minDistanceAtomId-numberGlobalAtomsInBin]];
+
+		      if(minDistance <= 1e-05)
+			{
+			  vSelfBinNodeMap[iterMap->first] = 0.0;
+			}
+		      else
+			{
+			  vSelfBinNodeMap[iterMap->first] = -atomCharge/minDistance;
+			}
+
 		    }
 		  else
-		    atomCharge = imageChargeValues[imageIdsOfAtomsInCurrentBin[minDistanceAtomId-numberGlobalAtomsInBin]];
-
-		  if(minDistance <= 1e-05)
 		    {
-		      vSelfBinNodeMap[iterMap->first] = 0.0;
-		    }
-		  else
-		    {
-		      vSelfBinNodeMap[iterMap->first] = -atomCharge/minDistance;
-		    }
-
-		}
-	      else
-		{
-		  double atomCharge;
+		      double atomCharge;
 		  
-		  if(minDistanceAtomId < numberGlobalAtomsInBin)
-		    {
-		      if(isPseudopotential)
-			atomCharge = atomLocations[chargeId][1];
+		      if(minDistanceAtomId < numberGlobalAtomsInBin)
+			{
+			  if(isPseudopotential)
+			    atomCharge = atomLocations[chargeId][1];
+			  else
+			    atomCharge = atomLocations[chargeId][0];
+			}
 		      else
-			atomCharge = atomLocations[chargeId][0];
-		    }
-		  else
-		    atomCharge = imageChargeValues[imageIdsOfAtomsInCurrentBin[minDistanceAtomId-numberGlobalAtomsInBin]];
+			atomCharge = imageChargeValues[imageIdsOfAtomsInCurrentBin[minDistanceAtomId-numberGlobalAtomsInBin]];
 
-		  double potentialValue = -atomCharge/minDistance;
-		  constraintsForVselfInBin->add_line(iterMap->first);
-		  constraintsForVselfInBin->set_inhomogeneity(iterMap->first,potentialValue);
-		  boundaryNodeMap[iterMap->first] = -1;
-		  vSelfBinNodeMap[iterMap->first] = potentialValue;
-		  outNodes++;
+		      double potentialValue = -atomCharge/minDistance;
+		      constraintsForVselfInBin->add_line(iterMap->first);
+		      constraintsForVselfInBin->set_inhomogeneity(iterMap->first,potentialValue);
 
-		}//else loop
+		      boundaryNodeMap[iterMap->first] = -1;
+		      vSelfBinNodeMap[iterMap->first] = potentialValue;
+		      outNodes++;
 
+		    }//else loop
+
+		}//non-hanging node check
+	      
 	    }//locally relevant dofs
  
 	}//nodal loop

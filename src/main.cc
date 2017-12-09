@@ -38,6 +38,9 @@ double lowerEndWantedSpectrum,relLinearSolverTolerance,selfConsistentSolverToler
 bool isPseudopotential,periodicX,periodicY,periodicZ;
 std::string meshFileName,coordinatesFile,currentPath,latticeVectorsFile,kPointDataFile;
 
+double innerDomainSize, outerBallRadius, innerBallRadius, meshSizeOuterDomain, meshSizeInnerDomain;
+double meshSizeOuterBall, meshSizeInnerBall, baseRefinementLevel;
+
 //
 //dft header
 //
@@ -80,6 +83,52 @@ void declare_parameters()
 		    Patterns::Anything(),
 		    "Finite-element mesh file to be used for the given problem");
 
+    
+  prm.declare_entry("DOMAIN SIZE X", "0.0",
+		    Patterns::Double(),
+		    "Size of the domain in X-direction");
+
+  prm.declare_entry("DOMAIN SIZE Y", "0.0",
+		    Patterns::Double(),
+		    "Size of the domain in Y-direction");
+
+  prm.declare_entry("DOMAIN SIZE Z", "0.0",
+		    Patterns::Double(),
+		    "Size of the domain in Z-direction");
+
+  prm.declare_entry("INNER DOMAIN SIZE","0.0",
+		    Patterns::Double(),
+		    "Inner Domain Size");
+
+  prm.declare_entry("OUTER BALL RADIUS", "0.0",
+		    Patterns::Double(),
+		    "Outer Ball Radius");
+  
+  prm.declare_entry("INNER BALL RADIUS", "0.0",
+		    Patterns::Double(),
+		     "Inner Ball Radius");
+
+  prm.declare_entry("BASE REFINEMENT LEVEL", "2.0",
+		    Patterns::Double(),
+		    "Base Refinement Level");
+  
+  prm.declare_entry("MESH SIZE OUTER DOMAIN", "0.0",
+		    Patterns::Double(),
+		     "Outer Domain Mesh Size");
+
+  prm.declare_entry("MESH SIZE INNER DOMAIN", "0.0",
+		    Patterns::Double(),
+		     "Inner Domain Mesh Size");
+
+  prm.declare_entry("MESH SIZE OUTER BALL", "0.0",
+		    Patterns::Double(),
+		     "Outer Ball Mesh Size");
+
+  prm.declare_entry("MESH SIZE INNER BALL", "0.0",
+		    Patterns::Double(),
+		     "Inner Ball Mesh Size");
+ 
+
   prm.declare_entry("ATOMIC COORDINATES FILE", "",
 		    Patterns::Anything(),
 		    "File specifying the coordinates of the atoms in the given material system");
@@ -100,18 +149,6 @@ void declare_parameters()
   prm.declare_entry("RADIUS ATOM BALL", "3.0",
 		    Patterns::Double(),
 		    "The radius of the ball around an atom on which self-potential of the associated nuclear charge is solved");
-
-  prm.declare_entry("DOMAIN SIZE X", "0.0",
-		    Patterns::Double(),
-		    "Size of the domain in X-direction");
-
-  prm.declare_entry("DOMAIN SIZE Y", "0.0",
-		    Patterns::Double(),
-		    "Size of the domain in Y-direction");
-
-  prm.declare_entry("DOMAIN SIZE Z", "0.0",
-		    Patterns::Double(),
-		    "Size of the domain in Z-direction");
 
   
   prm.declare_entry("PERIODIC BOUNDARY CONDITION X", "false",
@@ -223,6 +260,14 @@ void parse_command_line(const int argc,
 	  domainSizeX                   = prm.get_double("DOMAIN SIZE X");
 	  domainSizeY                   = prm.get_double("DOMAIN SIZE Y");
 	  domainSizeZ                   = prm.get_double("DOMAIN SIZE Z");
+	  innerDomainSize               = prm.get_double("INNER DOMAIN SIZE");
+	  outerBallRadius               = prm.get_double("OUTER BALL RADIUS");
+	  innerBallRadius               = prm.get_double("INNER BALL RADIUS");
+	  baseRefinementLevel           = prm.get_double("BASE REFINEMENT LEVEL");
+	  meshSizeOuterDomain           = prm.get_double("MESH SIZE OUTER DOMAIN");
+	  meshSizeInnerDomain           = prm.get_double("MESH SIZE INNER DOMAIN");
+	  meshSizeOuterBall             = prm.get_double("MESH SIZE OUTER BALL");
+	  meshSizeInnerBall             = prm.get_double("MESH SIZE INNER BALL");
 	  periodicX                     = prm.get_bool("PERIODIC BOUNDARY CONDITION X");
 	  periodicY                     = prm.get_bool("PERIODIC BOUNDARY CONDITION Y");
 	  periodicZ                     = prm.get_bool("PERIODIC BOUNDARY CONDITION Z");
@@ -240,6 +285,7 @@ void parse_command_line(const int argc,
 	  TVal                          = prm.get_double("TEMPERATURE");	
 	  maxLinearSolverIterations     = prm.get_integer("POISSON SOLVER CONVERGENCE MAXIMUM ITERATIONS");
 	  relLinearSolverTolerance      = prm.get_double("POISSON SOLVER CONVERGENCE TOLERANCE");
+	  
 	}
 
     }//end of while loop

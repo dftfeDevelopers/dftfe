@@ -238,6 +238,7 @@ class dftClass
   IndexSet   locally_relevant_dofs, locally_relevant_dofsEigen;
   std::vector<unsigned int> local_dof_indicesReal, local_dof_indicesImag;
   std::vector<unsigned int> localProc_dof_indicesReal,localProc_dof_indicesImag;
+  std::vector<bool> selectedDofsHanging;
 
 
   poissonClass<FEOrder> * poissonPtr;

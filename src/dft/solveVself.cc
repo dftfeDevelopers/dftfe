@@ -35,9 +35,10 @@ void dftClass<FEOrder>::solveVself()
   std::map<dealii::types::global_dof_index, int>::iterator iterMap;
 
   for(int iBin = 0; iBin < numberBins; ++iBin)
-  {
+    {
       int constraintMatrixId = iBin + 2;
       matrix_free_data.initialize_dof_vector(poissonPtr->vselfBinScratch,constraintMatrixId);
+      poissonPtr->vselfBinScratch = 0;
 
       std::map<types::global_dof_index,Point<3> >::iterator iterNodalCoorMap;
       std::map<dealii::types::global_dof_index, int> & vSelfBinNodeMap = d_vselfBinField[iBin];
@@ -49,10 +50,13 @@ void dftClass<FEOrder>::solveVself()
 	{
 	  if(poissonPtr->vselfBinScratch.in_local_range(iterNodalCoorMap->first))
 	    {
-	      iterMap = vSelfBinNodeMap.find(iterNodalCoorMap->first);
-	      if(iterMap != vSelfBinNodeMap.end())
+	      if(!d_noConstraints.is_constrained(iterNodalCoorMap->first))
 		{
-		  poissonPtr->vselfBinScratch(iterNodalCoorMap->first) = iterMap->second;
+		  iterMap = vSelfBinNodeMap.find(iterNodalCoorMap->first);
+		  if(iterMap != vSelfBinNodeMap.end())
+		    {
+		      poissonPtr->vselfBinScratch(iterNodalCoorMap->first) = iterMap->second;
+		    }
 		}
 	      
 	    }
@@ -83,86 +87,90 @@ void dftClass<FEOrder>::solveVself()
 	{
 	  if(poissonPtr->vselfBinScratch.in_local_range(iterNodalCoorMap->first))
 	    {
-	      //
-	      //get the vertex Id
-	      //
-	      Point<3> nodalCoor = iterNodalCoorMap->second;
-
-	      //
-	      //get the boundary flag for iVertex for current bin
-	      //
-	      int boundaryFlag;
-	      iterMap = boundaryNodeMap.find(iterNodalCoorMap->first);
-	      if(iterMap != boundaryNodeMap.end())
-		{
-		  boundaryFlag = iterMap->second;
-		}
-	      else
-		{
-		  std::cout<<"Could not find boundaryNode Map for the given dof:"<<std::endl;
-		  exit(-1);
-		}
-
-	      //
-	      //go through all atoms in a given bin
-	      //
-	      for(int iCharge = 0; iCharge < numberGlobalAtomsInBin+numberImageAtomsInBin; ++iCharge)
+	      if(!d_noConstraints.is_constrained(iterNodalCoorMap->first))
 		{
 		  //
-		  //get the globalChargeId corresponding to iCharge in the current bin
-		  //and add numberGlobalCharges to image atomId
-		  int chargeId;
-		  if(iCharge < numberGlobalAtomsInBin)
-		    chargeId = atomsInCurrentBin[iCharge];
-		  else
-		    chargeId = imageIdsOfAtomsInCurrentBin[iCharge-numberGlobalAtomsInBin]+numberGlobalCharges;
+		  //get the vertex Id
+		  //
+		  Point<3> nodalCoor = iterNodalCoorMap->second;
 
-		  //std::cout<<"Charge Id in BinId: "<<chargeId<<" "<<iBin<<std::endl;
-
-		  
-		  double vSelf;
-		  if(boundaryFlag == chargeId)
+		  //
+		  //get the boundary flag for iVertex for current bin
+		  //
+		  int boundaryFlag;
+		  iterMap = boundaryNodeMap.find(iterNodalCoorMap->first);
+		  if(iterMap != boundaryNodeMap.end())
 		    {
-		      vSelf = poissonPtr->vselfBinScratch(iterNodalCoorMap->first);
-		      inNodes++;
+		      boundaryFlag = iterMap->second;
 		    }
 		  else
 		    {
-		      Point<3> atomCoor(0.0,0.0,0.0);
-		      double nuclearCharge;
+		      std::cout<<"Could not find boundaryNode Map for the given dof:"<<std::endl;
+		      exit(-1);
+		    }
+
+		  //
+		  //go through all atoms in a given bin
+		  //
+		  for(int iCharge = 0; iCharge < numberGlobalAtomsInBin+numberImageAtomsInBin; ++iCharge)
+		    {
+		      //
+		      //get the globalChargeId corresponding to iCharge in the current bin
+		      //and add numberGlobalCharges to image atomId
+		      int chargeId;
 		      if(iCharge < numberGlobalAtomsInBin)
+			chargeId = atomsInCurrentBin[iCharge];
+		      else
+			chargeId = imageIdsOfAtomsInCurrentBin[iCharge-numberGlobalAtomsInBin]+numberGlobalCharges;
+
+		      //std::cout<<"Charge Id in BinId: "<<chargeId<<" "<<iBin<<std::endl;
+
+		  
+		      double vSelf;
+		      if(boundaryFlag == chargeId)
 			{
-			  atomCoor[0] = atomLocations[chargeId][2];
-			  atomCoor[1] = atomLocations[chargeId][3];
-			  atomCoor[2] = atomLocations[chargeId][4];
-			  
-			  if(isPseudopotential)
-			    nuclearCharge = atomLocations[chargeId][1];
-			  else
-			    nuclearCharge = atomLocations[chargeId][0];
-			  
+			  vSelf = poissonPtr->vselfBinScratch(iterNodalCoorMap->first);
+			  inNodes++;
 			}
 		      else
 			{
-			  atomCoor[0] = d_imagePositions[imageIdsOfAtomsInCurrentBin[iCharge-numberGlobalAtomsInBin]][0];
-			  atomCoor[1] = d_imagePositions[imageIdsOfAtomsInCurrentBin[iCharge-numberGlobalAtomsInBin]][1];
-			  atomCoor[2] = d_imagePositions[imageIdsOfAtomsInCurrentBin[iCharge-numberGlobalAtomsInBin]][2];
-			  nuclearCharge = d_imageCharges[imageIdsOfAtomsInCurrentBin[iCharge-numberGlobalAtomsInBin]];
+			  Point<3> atomCoor(0.0,0.0,0.0);
+			  double nuclearCharge;
+			  if(iCharge < numberGlobalAtomsInBin)
+			    {
+			      atomCoor[0] = atomLocations[chargeId][2];
+			      atomCoor[1] = atomLocations[chargeId][3];
+			      atomCoor[2] = atomLocations[chargeId][4];
+			  
+			      if(isPseudopotential)
+				nuclearCharge = atomLocations[chargeId][1];
+			      else
+				nuclearCharge = atomLocations[chargeId][0];
+			  
+			    }
+			  else
+			    {
+			      atomCoor[0] = d_imagePositions[imageIdsOfAtomsInCurrentBin[iCharge-numberGlobalAtomsInBin]][0];
+			      atomCoor[1] = d_imagePositions[imageIdsOfAtomsInCurrentBin[iCharge-numberGlobalAtomsInBin]][1];
+			      atomCoor[2] = d_imagePositions[imageIdsOfAtomsInCurrentBin[iCharge-numberGlobalAtomsInBin]][2];
+			      nuclearCharge = d_imageCharges[imageIdsOfAtomsInCurrentBin[iCharge-numberGlobalAtomsInBin]];
 
+			    }
+
+			  const double r = nodalCoor.distance(atomCoor);
+			  vSelf = -nuclearCharge/r;
+			  outNodes++;
 			}
 
-		      const double r = nodalCoor.distance(atomCoor);
-		      vSelf = -nuclearCharge/r;
-		      outNodes++;
-		    }
+		      //store updated value in phiExt which is sumVself
 
-		  //store updated value in phiExt which is sumVself
+		      poissonPtr->phiExt(iterNodalCoorMap->first)+= vSelf;
 
-		  poissonPtr->phiExt(iterNodalCoorMap->first)+= vSelf;
+		    }//charge loop
 
-		}//charge loop
+		}//non-hanging node check
 	    
-	    }
+	    }//local range loop
 
 	}//Vertexloop
 
@@ -180,11 +188,12 @@ void dftClass<FEOrder>::solveVself()
 
     }//bin loop
 
-    poissonPtr->phiExt.compress(VectorOperation::insert);
-    poissonPtr->phiExt.update_ghost_values();
+  d_noConstraints.distribute(poissonPtr->phiExt);
+  poissonPtr->phiExt.compress(VectorOperation::insert);
+  poissonPtr->phiExt.update_ghost_values();
 
-    //
-    //print the norms of phiExt (in periodic case L2 norm of phiExt field does not match. check later)
-    //
-    pcout<<"L2 Norm Value of phiext: "<<poissonPtr->phiExt.l2_norm()<<std::endl;
+  //
+  //print the norms of phiExt (in periodic case L2 norm of phiExt field does not match. check later)
+  //
+  pcout<<"L2 Norm Value of phiext: "<<poissonPtr->phiExt.l2_norm()<<std::endl;
 }

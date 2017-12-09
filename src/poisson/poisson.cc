@@ -297,13 +297,17 @@ void poissonClass<FEOrder>::vmult(vectorType &dst, vectorType &src) const
 	{	 	  
 	  if(dftPtr->d_constraintsVector[d_constraintMatrixId]->is_inhomogeneously_constrained(i))
 	    {
-	      src(i) = 0;
+	      src(i) -= dftPtr->d_constraintsVector[d_constraintMatrixId]->get_inhomogeneity(i);
 	    }
 	}
     }
   dftPtr->matrix_free_data.cell_loop (&poissonClass<FEOrder>::AX, this, dst, src);
 
-  //check if this is necessary
+  //This is necessary specifically for periodic boundary conditions 
+  //for solving total electrostatic potential with pinned nodes
+  //Only master node is pinned and remaining slave nodes are still
+  //constrained to master node and setting other slave nodes
+  //to zero is necessary after every "Ax" and hence call this function.
   dftPtr->d_constraintsVector[d_constraintMatrixId]->set_zero(dst);  
 
 }

@@ -6,7 +6,8 @@ set DFT PATH = "../../../../"
 #finite-element related parameters
 #
 set MESH FILE = mesh.inp
-set FINITE ELEMENT POLYNOMIAL ORDER = 2
+set FINITE ELEMENT POLYNOMIAL ORDER = 4
+
 
 #
 #Atomic-coordinates file
@@ -22,9 +23,17 @@ set ATOMIC COORDINATES FILE = coordinates.inp
 set RADIUS ATOM BALL = 8.0
 #Simulation domain sizes 
 #Values listed here are not relevant if external mesh is used for non-periodic calculations
-set DOMAIN SIZE X    = 7.6
-set DOMAIN SIZE Y    = 7.6
-set DOMAIN SIZE Z    = 7.6
+set DOMAIN SIZE X    = 40.0
+set DOMAIN SIZE Y    = 40.0
+set DOMAIN SIZE Z    = 40.0 #2*Ln
+set INNER DOMAIN SIZE = 20.0 #2*Ln1
+set OUTER BALL RADIUS = 5.0  #L1
+set INNER BALL RADIUS = 1.0  #L0
+set BASE REFINEMENT LEVEL = 2 #3
+set MESH SIZE OUTER DOMAIN = 5.0 #hn
+set MESH SIZE INNER DOMAIN = 2.5 #hn-1
+set MESH SIZE OUTER BALL = 0.1 #h1
+set MESH SIZE INNER BALL = 0.05 #h0
 
 #
 #set boundary conditions in three directions
@@ -81,5 +90,5 @@ set TEMPERATURE                        = 500
 #
 #Poisson problem paramters
 #
-set POISSON SOLVER CONVERGENCE MAXIMUM ITERATIONS = 5000
+set POISSON SOLVER CONVERGENCE MAXIMUM ITERATIONS = 10000
 set POISSON SOLVER CONVERGENCE TOLERANCE          = 1e-12
