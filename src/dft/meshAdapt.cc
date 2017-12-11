@@ -27,8 +27,50 @@ void dftClass<FEOrder>::mesh()
   double hn = meshSizeOuterDomain, hn1=meshSizeInnerDomain, h1=meshSizeOuterBall, h0=meshSizeInnerBall;
   double br = baseRefinementLevel;
 
+  //
+  //get the number of image charges
+  //  
+  const int numberImageCharges = d_imageIds.size();
+
   //Generate outer box. Here an assumption is made that the box is always centered at the origin. 
   GridGenerator::hyper_cube (triangulation, -Ln, Ln);
+
+  typename parallel::distributed::Triangulation<3>::active_cell_iterator cell, endc;
+#ifdef ENABLE_PERIODIC_BC
+  //mark faces
+ cell = triangulation.begin_active(), endc = triangulation.end();
+  for(; cell!=endc; ++cell) 
+    {
+      for(unsigned int f=0; f < GeometryInfo<3>::faces_per_cell; ++f)
+	{
+	  const Point<3> face_center = cell->face(f)->center();
+	  if(cell->face(f)->at_boundary())
+	    {
+	      if (std::abs(face_center[0]+(domainSizeX/2.0))<1.0e-8)
+		cell->face(f)->set_boundary_id(1);
+	      else if (std::abs(face_center[0]-(domainSizeX/2.0))<1.0e-8)
+		cell->face(f)->set_boundary_id(2);
+	      else if (std::abs(face_center[1]+(domainSizeY/2.0))<1.0e-8)
+		cell->face(f)->set_boundary_id(3);
+	      else if (std::abs(face_center[1]-(domainSizeY/2.0))<1.0e-8)
+		cell->face(f)->set_boundary_id(4);
+	      else if (std::abs(face_center[2]+(domainSizeZ/2.0))<1.0e-8)
+		cell->face(f)->set_boundary_id(5);
+	      else if (std::abs(face_center[2]-(domainSizeZ/2.0))<1.0e-8)
+		cell->face(f)->set_boundary_id(6);
+	    }
+	}
+    }
+
+  std::vector<GridTools::PeriodicFacePair<typename parallel::distributed::Triangulation<3>::cell_iterator> > periodicity_vector;
+  for (int i = 0; i < 3; ++i)
+    {
+      GridTools::collect_periodic_faces(triangulation, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector);
+    }
+  triangulation.add_periodicity(periodicity_vector);
+#endif  
+
+
   triangulation.refine_global(br); //Base refinement is chosen as 4, but this can be changed.
 
   //
@@ -42,14 +84,13 @@ void dftClass<FEOrder>::mesh()
   dealii::Point<3> origin;
   unsigned int numLevels=0;
   bool refineFlag=true;
-  
-  typename parallel::distributed::Triangulation<3>::active_cell_iterator cell, end_cell;
-  while(refineFlag)
+
+   while(refineFlag)
     {
       refineFlag=false;
       cell = triangulation.begin_active();
-      end_cell = triangulation.end();
-      for ( ; cell != end_cell; ++cell)
+      endc = triangulation.end();
+      for ( ; cell != endc; ++cell)
 	{
 	  if (cell->is_locally_owned())
 	    {
@@ -69,6 +110,16 @@ void dftClass<FEOrder>::mesh()
 		    }
 		}
 
+	      for (unsigned int iImageCharge=0; iImageCharge < numberImageCharges; ++iImageCharge)
+		{
+		  Point<3> imageAtom(d_imagePositions[iImageCharge][0],d_imagePositions[iImageCharge][1],d_imagePositions[iImageCharge][2]);
+		  if(center.distance(imageAtom) < distanceToClosestAtom)
+		    {
+		      distanceToClosestAtom = center.distance(imageAtom);
+		      closestAtom = imageAtom;
+		    }
+		}
+
 	      //check for location of the cell with respect to the multiple layers of refinement
 	      bool inInnerBall=false, inOuterBall=false, inInnerXYZ=false, inOuterXYZ=false;
 	      if (distanceToClosestAtom <= L0) {inInnerBall=true;}
@@ -83,7 +134,7 @@ void dftClass<FEOrder>::mesh()
 	      else if (inInnerXYZ  &&  (h>hn1)) {cellRefineFlag=true;} //innerXYZ refinement
 	      else if (inOuterXYZ &&  (h>hn)) {cellRefineFlag=true;}   //outerXYZ refinement
 
-	      /*MappingQ1<3,3> mapping;
+	      MappingQ1<3,3> mapping;
 	      try
 		{
 		  Point<3> p_cell = mapping.transform_real_to_unit_cell(cell,closestAtom);
@@ -95,7 +146,7 @@ void dftClass<FEOrder>::mesh()
 	      catch(MappingQ1<3>::ExcTransformationFailed)
 		{
 		  
-		}*/
+		}
 	      //set refine flags
 	      if(cellRefineFlag)
 		{
@@ -104,12 +155,15 @@ void dftClass<FEOrder>::mesh()
 		}
 	    }
 	}
+  
       
+    
       //Refine
+      refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
       if (refineFlag)
 	{
-	  if ((triangulation.n_global_active_cells()<approxMaxNumberElements) & (numLevels<maxRefinementLevels))
-	  //if(numLevels<maxRefinementLevels)
+	  //if ((triangulation.n_global_active_cells()<approxMaxNumberElements) & (numLevels<maxRefinementLevels))
+	  if(numLevels<maxRefinementLevels)
 	    {
 	      char buffer2[100];
 	      sprintf(buffer2, "refinement in progress, level: %u\n", numLevels);
@@ -127,8 +181,8 @@ void dftClass<FEOrder>::mesh()
   //compute some adaptive mesh metrics
   double minElemLength=Ln;
   cell = triangulation.begin_active();
-  end_cell = triangulation.end();
-  for ( ; cell != end_cell; ++cell){
+  endc = triangulation.end();
+  for ( ; cell != endc; ++cell){
     if (cell->is_locally_owned()){
       if (cell->minimum_vertex_distance()<minElemLength) minElemLength = cell->minimum_vertex_distance();
     }

@@ -1,4 +1,3 @@
-#
 #path specifying the location of the "build" directory which is usually the location of "src" folder 
 #
 set DFT PATH = "../../../../"
@@ -8,6 +7,7 @@ set DFT PATH = "../../../../"
 #
 set MESH FILE = mesh.inp
 set FINITE ELEMENT POLYNOMIAL ORDER = 4
+
 
 #
 #Atomic-coordinates file
@@ -20,12 +20,20 @@ set ATOMIC COORDINATES FILE = coordinates.inp
 #
 
 #Radius of the atom-centered ball in which self-potential of the associated nuclear charge is solved
-set RADIUS ATOM BALL = 10.0
+set RADIUS ATOM BALL = 8.0
 #Simulation domain sizes 
 #Values listed here are not relevant if external mesh is used for non-periodic calculations
-set DOMAIN SIZE X    = 7.6
-set DOMAIN SIZE Y    = 7.6
-set DOMAIN SIZE Z    = 7.6
+set DOMAIN SIZE X    = 40.0
+set DOMAIN SIZE Y    = 40.0
+set DOMAIN SIZE Z    = 40.0 #2*Ln
+set INNER DOMAIN SIZE = 0.0 #2*Ln1
+set OUTER BALL RADIUS = 0.0  #L1
+set INNER BALL RADIUS = 0.0  #L0
+set BASE REFINEMENT LEVEL = 2 #3
+set MESH SIZE OUTER DOMAIN = 10.0 #hn
+set MESH SIZE INNER DOMAIN = 0.0 #hn-1
+set MESH SIZE OUTER BALL = 0.0 #h1
+set MESH SIZE INNER BALL = 1.0 #h0
 
 #
 #set boundary conditions in three directions
@@ -64,23 +72,23 @@ set EXCHANGE CORRELATION TYPE = 1
 #
 
 #Parameter indicating number of eigenfunctions to be solved
-set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 9
+set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 10
 #Approximate estimate of lower bound of the wanted spectrum
 set LOWER BOUND WANTED SPECTRUM = -10.0
 #Chebyshev Filter polynomial degree (0 indicates default value based on upper bound of Hamiltonian)
-set CHEBYSHEV POLYNOMIAL DEGREE = 1500
+set CHEBYSHEV POLYNOMIAL DEGREE = 0
 
 #
 #SCF parameters
 #
 set SCF CONVERGENCE MAXIMUM ITERATIONS = 30
-set SCF CONVERGENCE TOLERANCE          = 1e-11
-set ANDERSON SCHEME MIXING PARAMETER   = 0.1
+set SCF CONVERGENCE TOLERANCE          = 1e-09
+set ANDERSON SCHEME MIXING PARAMETER   = 0.5
 set ANDERSON SCHEME MIXING HISTORY     = 70
 set TEMPERATURE                        = 500
 
 #
 #Poisson problem paramters
 #
-set POISSON SOLVER CONVERGENCE MAXIMUM ITERATIONS = 5000
+set POISSON SOLVER CONVERGENCE MAXIMUM ITERATIONS = 10000
 set POISSON SOLVER CONVERGENCE TOLERANCE          = 1e-12

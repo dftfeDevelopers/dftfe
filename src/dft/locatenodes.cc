@@ -142,45 +142,47 @@ void dftClass<FEOrder>::locatePeriodicPinnedNodes()
     {
       if(locally_owned_dofs.is_element(iterMap->first))
 	{
-	  double minDistance = 1e10;
-	  minNode = -1;
-	  Point<3> nodalPointCoordinates = iterMap->second;
-	  for(unsigned int iAtom = 0; iAtom < totalNumberAtoms; ++iAtom)
+	  if(!d_noConstraints.is_constrained(iterMap->first))
 	    {
-	      Point<3> atomCoor;
-
-	      if(iAtom < numberGlobalAtoms)
+	      double minDistance = 1e10;
+	      minNode = -1;
+	      Point<3> nodalPointCoordinates = iterMap->second;
+	      for(unsigned int iAtom = 0; iAtom < totalNumberAtoms; ++iAtom)
 		{
-		  atomCoor[0] = atomLocations[iAtom][2];
-		  atomCoor[1] = atomLocations[iAtom][3];
-		  atomCoor[2] = atomLocations[iAtom][4];
-		}
-	      else
-		{
-		  //
-		  //Fill with ImageAtom Coors
-		  //
-		  atomCoor[0] = d_imagePositions[iAtom-numberGlobalAtoms][0];
-		  atomCoor[1] = d_imagePositions[iAtom-numberGlobalAtoms][1];
-		  atomCoor[2] = d_imagePositions[iAtom-numberGlobalAtoms][2];
-		}
+		  Point<3> atomCoor;
 
-	      double distance = atomCoor.distance(nodalPointCoordinates);
+		  if(iAtom < numberGlobalAtoms)
+		    {
+		      atomCoor[0] = atomLocations[iAtom][2];
+		      atomCoor[1] = atomLocations[iAtom][3];
+		      atomCoor[2] = atomLocations[iAtom][4];
+		    }
+		  else
+		    {
+		      //
+		      //Fill with ImageAtom Coors
+		      //
+		      atomCoor[0] = d_imagePositions[iAtom-numberGlobalAtoms][0];
+		      atomCoor[1] = d_imagePositions[iAtom-numberGlobalAtoms][1];
+		      atomCoor[2] = d_imagePositions[iAtom-numberGlobalAtoms][2];
+		    }
+
+		  double distance = atomCoor.distance(nodalPointCoordinates);
 	      
-	      if(distance <= minDistance)
-		{
-		  minDistance = distance;
-		  minNode = iterMap->first;
+		  if(distance <= minDistance)
+		    {
+		      minDistance = distance;
+		      minNode = iterMap->first;
+		    }
+
 		}
 
+	      if(minDistance > maxDistance)
+		{
+		  maxDistance = minDistance;
+		  maxNode = iterMap->first;
+		}
 	    }
-
-	  if(minDistance > maxDistance)
-	    {
-	      maxDistance = minDistance;
-	      maxNode = iterMap->first;
-	    }
-
 	}
     }
 

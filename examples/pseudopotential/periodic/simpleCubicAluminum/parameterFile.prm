@@ -26,7 +26,14 @@ set RADIUS ATOM BALL = 3.0
 set DOMAIN SIZE X    = 7.6
 set DOMAIN SIZE Y    = 7.6
 set DOMAIN SIZE Z    = 7.6
-
+set INNER DOMAIN SIZE = 0.0 #2*Ln1
+set OUTER BALL RADIUS = 0.0  #L1
+set INNER BALL RADIUS = 0.0  #L0
+set BASE REFINEMENT LEVEL = 3 #3
+set MESH SIZE OUTER DOMAIN = 0.95 #hn
+set MESH SIZE INNER DOMAIN = 0.0 #hn-1
+set MESH SIZE OUTER BALL = 0.0 #h1
+set MESH SIZE INNER BALL = 0.5 #h0
 #
 #set boundary conditions in three directions
 #
