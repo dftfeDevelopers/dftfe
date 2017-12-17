@@ -243,7 +243,7 @@ class dftClass
 
   poissonClass<FEOrder> * poissonPtr;
   eigenClass<FEOrder> * eigenPtr;
-  ConstraintMatrix constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_constraintsPeriodicWithDirichlet, d_noConstraints; 
+  ConstraintMatrix constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_constraintsPeriodicWithDirichlet, d_noConstraints, d_noConstraintsEigen; 
   std::vector<std::vector<double> > eigenValues;
   std::vector<std::vector<parallel::distributed::Vector<double>*> > eigenVectors;
   std::vector<std::vector<parallel::distributed::Vector<double>*> > eigenVectorsOrig;

@@ -122,7 +122,7 @@ void dftClass<FEOrder>::mesh()
 
 	      //check for location of the cell with respect to the multiple layers of refinement
 	      bool inInnerBall=false, inOuterBall=false, inInnerXYZ=false, inOuterXYZ=false;
-	      if (distanceToClosestAtom <= L0) {inInnerBall=true;}
+	      /*if (distanceToClosestAtom <= L0) {inInnerBall=true;}
 	      else if (distanceToClosestAtom <= L1) {inOuterBall=true;}
 	      else if (distanceToClosestAtom <= Ln1) {inInnerXYZ=true;}
 	      else if (distanceToClosestAtom <= Ln) {inOuterXYZ=true;}
@@ -132,7 +132,9 @@ void dftClass<FEOrder>::mesh()
 	      if (inInnerBall &&  (h>h0))  {cellRefineFlag=true;}       //innerBall refinement
 	      else if (inOuterBall &&  (h>h1))  {cellRefineFlag=true;} //outerBall refinement
 	      else if (inInnerXYZ  &&  (h>hn1)) {cellRefineFlag=true;} //innerXYZ refinement
-	      else if (inOuterXYZ &&  (h>hn)) {cellRefineFlag=true;}   //outerXYZ refinement
+	      else if (inOuterXYZ &&  (h>hn)) {cellRefineFlag=true;}   //outerXYZ refinement*/
+
+	      bool cellRefineFlag = false;
 
 	      MappingQ1<3,3> mapping;
 	      try

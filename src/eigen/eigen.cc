@@ -859,6 +859,7 @@ void eigenClass<FEOrder>::HX(const std::vector<vectorType*> &src,
 
       for (unsigned int i = 0; i < src.size(); i++)
 	{
+	  dftPtr->tempPSI2[i]->compress(VectorOperation::insert);
 	  dftPtr->tempPSI2[i]->update_ghost_values();
 	}
 

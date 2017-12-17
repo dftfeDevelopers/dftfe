@@ -247,8 +247,8 @@ void dftClass<FEOrder>::init(){
   //hanging node constraints
   //
   constraintsNone.clear(); constraintsNoneEigen.clear();
-  DoFTools::make_hanging_node_constraints(dofHandler, constraintsNone);
-  DoFTools::make_hanging_node_constraints(dofHandlerEigen, constraintsNoneEigen);
+  //DoFTools::make_hanging_node_constraints(dofHandler, constraintsNone);
+  //DoFTools::make_hanging_node_constraints(dofHandlerEigen, constraintsNoneEigen);
 
 
 #ifdef ENABLE_PERIODIC_BC
@@ -979,17 +979,22 @@ void dftClass<FEOrder>::init(){
     }
   constraintsNoneEigen.close();
   constraintsTemp1Eigen.clear();
-#else
-  constraintsNone.close();
-  constraintsNoneEigen.close();
 #endif
 
   //
-  //create a constraint matrix without any constraints
+  //create a constraint matrix without only hanging node constraints 
   //
-  d_noConstraints.clear();
+  d_noConstraints.clear();d_noConstraintsEigen.clear();
   DoFTools::make_hanging_node_constraints(dofHandler, d_noConstraints);
-  d_noConstraints.close();
+  DoFTools::make_hanging_node_constraints(dofHandlerEigen,d_noConstraintsEigen);
+  d_noConstraints.close();d_noConstraintsEigen.close();
+  
+
+  //
+  //merge hanging node constraint matrix with constrains None and constraints None eigen
+  //
+  constraintsNone.merge(d_noConstraints,ConstraintMatrix::MergeConflictBehavior::right_object_wins);
+  constraintsNoneEigen.merge(d_noConstraintsEigen,ConstraintMatrix::MergeConflictBehavior::right_object_wins);
  
   //
   //Zero Dirichlet BC constraints on the boundary of the domain
@@ -997,7 +1002,6 @@ void dftClass<FEOrder>::init(){
   //with (rho+b) as the rhs
   //
   d_constraintsForTotalPotential.clear ();  
-  //DoFTools::make_hanging_node_constraints(dofHandler, d_constraintsForTotalPotential);
 
 #ifdef ENABLE_PERIODIC_BC
   locatePeriodicPinnedNodes();

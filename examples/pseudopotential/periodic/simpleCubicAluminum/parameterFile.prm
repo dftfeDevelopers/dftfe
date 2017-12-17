@@ -12,7 +12,7 @@ set FINITE ELEMENT POLYNOMIAL ORDER = 4
 #
 #Atomic-coordinates file
 #
-set ATOMIC COORDINATES FILE = coordinates.inp
+set ATOMIC COORDINATES FILE = coordinatesCorner.inp
 
 #
 #Geometry related parameters
@@ -20,7 +20,7 @@ set ATOMIC COORDINATES FILE = coordinates.inp
 #
 
 #Radius of the atom-centered ball in which self-potential of the associated nuclear charge is solved
-set RADIUS ATOM BALL = 3.0
+set RADIUS ATOM BALL = 2.4
 #Simulation domain sizes 
 #Values listed here are not relevant if external mesh is used for non-periodic calculations
 set DOMAIN SIZE X    = 7.6

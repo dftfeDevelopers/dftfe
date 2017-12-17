@@ -385,6 +385,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 	  char buffer[100];
 	  sprintf(buffer, "norm %u: l1: %14.8e  l2:%14.8e\n",i, eigenVectors[kPoint][i]->l1_norm(), eigenVectors[kPoint][i]->l2_norm());
 	  //pcout << buffer;
+	  eigenVectors[kPoint][i]->compress(VectorOperation::insert);
 	  eigenVectors[kPoint][i]->update_ghost_values();
 	}
     }
