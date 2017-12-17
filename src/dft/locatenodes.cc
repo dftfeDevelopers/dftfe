@@ -68,6 +68,9 @@ void dftClass<FEOrder>::locateAtomCoreNodes(){
   }//cell loop
   MPI_Barrier(mpi_communicator);
 
+  const unsigned int totalAtomNodesFound = Utilities::MPI::sum(atoms.size(), mpi_communicator);
+  AssertThrow(totalAtomNodesFound==numAtoms,ExcMessage("Atleast one atom doesn't lie on a triangulation vertex"));
+
   int numberBins = d_boundaryFlag.size();
   d_atomsInBin.resize(numberBins);
 

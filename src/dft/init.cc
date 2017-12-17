@@ -229,8 +229,7 @@ void dftClass<FEOrder>::init(){
   DataOut<3> data_out;
   data_out.attach_dof_handler (dofHandler);
   data_out.build_patches ();
-  std::ofstream output("mesh.vtu");
-  data_out.write_vtu(output); 
+  data_out.write_vtu_in_parallel(std::string("mesh.vtu").c_str(),mpi_communicator); 
 
   //
   //matrix free data structure
