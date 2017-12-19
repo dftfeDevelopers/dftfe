@@ -21,11 +21,15 @@
 #include "../../include/dft.h"
 #include "../../include/eigen.h"
 #include "../../include/poisson.h"
+#include "../../include/meshMovementGaussian.h"
 #include "../../utils/fileReaders.cc"
 //#include "../poisson/poisson.cc"
 //#include "../eigen/eigen.cc"
+#include "moveMeshToAtoms.cc"
 #include "meshAdapt.cc"
-#include "init.cc"
+//#include "init.cc"
+#include "initUnmovedTriangulation.cc"
+#include "initMovedTriangulation.cc"
 #include "psiInitialGuess.cc"
 #include "energy.cc"
 #include "charge.cc"
@@ -297,11 +301,16 @@ void dftClass<FEOrder>::run ()
   //if meshFile provided, pass to mesh()
   mesh();
 
+  initUnmovedTriangulation();
+  //
+  //move triangulation to have atoms on triangulation vertices
+  //
+  moveMeshToAtoms(triangulation);
 
   //
   //initialize
   //
-  init();
+  initMovedTriangulation();
 
 
   //

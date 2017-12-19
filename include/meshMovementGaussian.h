@@ -16,14 +16,24 @@
 // @author Sambit Das (2017)
 //
 
-#ifndef constants_H_
-#define constants_H_
-//
-//Add prefic C_ to all constants
-//
-//Boltzmann constant
-const double C_kb =3.166811429e-06;
-//problem space dimensions
-const int C_DIM=3; 
-template <unsigned int FEOrder> constexpr unsigned int C_num1DQuad(){return FEOrder+1;}
+#ifndef meshMovementGaussian_H_
+#define meshMovementGaussian_H_
+#include "meshMovement.h"
+
+class meshMovementGaussianClass : public meshMovementClass
+{
+
+public:
+  meshMovementGaussianClass();	
+  void moveMesh(std::vector<Point<C_DIM> > controlPointLocations,
+                std::vector<Point<C_DIM> > controlPointDisplacements,
+                double controllingParameter);
+private:  
+  void computeIncrement();  
+  //move mesh data
+  std::vector<Point<C_DIM> > d_controlPointLocations;
+  std::vector<Point<C_DIM> > d_controlPointDisplacements;
+  double d_controllingParameter;  
+};
+
 #endif

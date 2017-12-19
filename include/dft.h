@@ -121,6 +121,11 @@ class dftClass
   void mesh();
 
   /**
+   * moves the triangulation vertices using Gaussians such that the all atoms are on triangulation vertices
+   */
+  void moveMeshToAtoms(parallel::distributed::Triangulation<3> & triangulationMove,bool isCoarserMove=false);  
+
+  /**
    * Initializes the guess of electron-density and single-atom wavefunctions on the mesh,
    * maps finite-element nodes to given atomic positions,
    * initializes pseudopotential files and exchange-correlation functionals to be used
@@ -128,7 +133,9 @@ class dftClass
    * In periodic problems, periodic faces are mapped here. Further finite-element nodes
    * to be pinned for solving the Poisson problem electro-static potential is set here
    */
-  void init();
+  //void init();
+  void initUnmovedTriangulation();
+  void initMovedTriangulation();
   void locateAtomCoreNodes();
   void locatePeriodicPinnedNodes();
   void initRho();
@@ -216,6 +223,8 @@ class dftClass
   std::vector<orbital> waveFunctionsVector;
   std::map<unsigned int, std::map<unsigned int, std::map<unsigned int, alglib::spline1dinterpolant*> > > radValues;
   std::map<unsigned int, std::map<unsigned int, std::map <unsigned int, double> > >outerValues;
+  std::vector<Point<3>> closestTriaVertexToAtomsLocation;
+  std::vector<Point<3>> distanceClosestTriaVerticesToAtoms;
   
   /**
    * dealii based FE data structres
