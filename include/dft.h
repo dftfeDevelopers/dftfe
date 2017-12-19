@@ -146,7 +146,13 @@ class dftClass
   void initNonLocalPseudoPotential();
   void computeSparseStructureNonLocalProjectors();
   void computeElementalProjectorKets();
-
+  
+  /**
+   * Sets dirichlet boundary conditions for total potential constraints on 
+   * non-periodic boundary (boundary id==0). Currently setting homogeneous bc
+   *
+   */
+  void applyTotalPotentialDirichletBC();
   /**
    * Categorizes atoms into bins based on self-potential ball radius around each atom such 
    * that no two atoms in each bin has overlapping balls

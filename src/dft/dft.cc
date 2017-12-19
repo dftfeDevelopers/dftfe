@@ -39,6 +39,7 @@
 #include "mixingschemes.cc"
 #include "chebyshev.cc"
 #include "solveVself.cc"
+#include "applyTotalPotentialDirichletBC.cc"
 #include <complex>
 #include <cmath>
 #include <algorithm>

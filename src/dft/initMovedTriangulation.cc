@@ -62,7 +62,8 @@ void dftClass<FEOrder>::initMovedTriangulation(){
 #ifdef ENABLE_PERIODIC_BC
   locatePeriodicPinnedNodes();
 #else
-  VectorTools::interpolate_boundary_values(dofHandler, 0, ZeroFunction<3>(), d_constraintsForTotalPotential);
+  //VectorTools::interpolate_boundary_values(dofHandler, 0, ZeroFunction<3>(), d_constraintsForTotalPotential);
+  applyTotalPotentialDirichletBC();
 #endif
   d_constraintsForTotalPotential.close ();
 

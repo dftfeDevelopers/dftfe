@@ -178,7 +178,9 @@ void meshMovementClass::movedMeshCheck()
   minElemLength=Utilities::MPI::min(minElemLength, mpi_communicator);
   char buffer[100];
   sprintf(buffer, "Mesh movement quality metric, h_min: %5.2e\n", minElemLength);
-  pcout << buffer;    
+  pcout << buffer;   
+
+  //std::cout << "l2 norm icrement field: "<<d_incrementalDisplacement.l2_norm()<<std::endl;
 }
 
 
