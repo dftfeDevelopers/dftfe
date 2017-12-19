@@ -79,7 +79,7 @@ template<unsigned int FEOrder>
 void eigenClass<FEOrder>::computeMassVector()
 {
   computing_timer.enter_section("eigenClass Mass assembly"); 
-  
+  massVector = 0.0;
   
 #ifdef ENABLE_PERIODIC_BC
   Tensor<1,2,VectorizedArray<double> > one;
@@ -91,23 +91,57 @@ void eigenClass<FEOrder>::computeMassVector()
   FEEvaluation<3,FEOrder,FEOrder+1,1,double>  fe_eval(dftPtr->matrix_free_data, dftPtr->eigenDofHandlerIndex, 1); //Selecting GL quadrature points
 #endif
   const unsigned int n_q_points = fe_eval.n_q_points;
-  for (unsigned int cell=0; cell<dftPtr->matrix_free_data.n_macro_cells(); ++cell){
-    fe_eval.reinit(cell);
-    for (unsigned int q=0; q<n_q_points; ++q) fe_eval.submit_value(one,q);
-    fe_eval.integrate (true,false);
-    fe_eval.distribute_local_to_global (massVector);
-  }
-  massVector.compress(VectorOperation::add);
-  //compute inverse
-  for (unsigned int i=0; i<massVector.local_size(); i++){
-    if (std::abs(massVector.local_element(i))>1.0e-15){
-      massVector.local_element(i)=1.0/std::sqrt(massVector.local_element(i));
+  for(unsigned int cell=0; cell<dftPtr->matrix_free_data.n_macro_cells(); ++cell)
+    {
+      fe_eval.reinit(cell);
+      for (unsigned int q = 0; q < n_q_points; ++q) 
+	fe_eval.submit_value(one,q);
+      fe_eval.integrate (true,false);
+      fe_eval.distribute_local_to_global (massVector);
     }
-    else{
-      massVector.local_element(i)=0.0;
-    }
-  }
 
+  massVector.compress(VectorOperation::add);
+  
+  //compute inverse
+  /*for(unsigned int i=0; i<massVector.local_size(); i++)
+    {
+      if(std::abs(massVector.local_element(i)) > 1.0e-15)
+	{
+	  double temp = massVector.local_element(i);
+	  massVector.local_element(i) = 1.0/std::sqrt(massVector.local_element(i));
+	  if(std::isnan(massVector.local_element(i)))
+	    {
+	      std::cout<<"Value of temp is: "<<temp<<std::endl;
+	    }
+	}
+      else
+	{
+	  massVector.local_element(i) = 0.0;
+	}
+	}*/
+
+  for(types::global_dof_index i = 0; i < massVector.size(); ++i)
+    {
+      if(massVector.in_local_range(i))
+	{
+	  if(!dftPtr->constraintsNoneEigen.is_constrained(i))
+	    {
+
+	      double temp = massVector(i);
+
+	      if(std::abs(massVector(i)) > 1.0e-15)
+		massVector(i) = 1.0/std::sqrt(massVector(i));
+
+	      if(std::isnan(massVector(i)))
+		{
+		  std::cout<<"Value of inverse square root of mass matrix on the unconstrained node is: "<<temp<<std::endl;
+		  exit(-1);
+		}
+	    }
+	}
+    }
+
+  massVector.compress(VectorOperation::insert);
   computing_timer.exit_section("eigenClass Mass assembly");
 }
 
