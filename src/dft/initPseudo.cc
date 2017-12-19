@@ -92,9 +92,17 @@ convertCartesianToSpherical(double *x, double & r, double & theta, double & phi)
 //
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::initLocalPseudoPotential()
-{ 
+{
   computing_timer.enter_section("init pseudopotentials"); 
 
+  //
+  //Initialize electron density table storage
+  //
+  if (pseudoValues!=NULL){
+     (*pseudoValues).clear();
+     delete pseudoValues;
+  }
+  pseudoValues = new std::map<dealii::CellId, std::vector<double> >;
   //
   //Reading single atom rho initial guess
   //
@@ -133,14 +141,11 @@ void dftClass<FEOrder>::initLocalPseudoPotential()
   //
   //Initialize pseudopotential
   //
-  QGauss<3>  quadrature_formula(FEOrder+1);
+  QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
   FEValues<3> fe_values (FE, quadrature_formula, update_values);
   const unsigned int n_q_points = quadrature_formula.size();
 
-  //
-  //Initialize electron density table storage
-  //
-  pseudoValues = new std::map<dealii::CellId, std::vector<double> >;
+
 
   //
   //get number of image charges used only for periodic
@@ -156,7 +161,7 @@ void dftClass<FEOrder>::initLocalPseudoPotential()
       if(cell->is_locally_owned())
 	{
 	  (*pseudoValues)[cell->id()]=std::vector<double>(n_q_points);
-	  double *pseudoValuesPtr = &((*pseudoValues)[cell->id()][0]);
+	  double * pseudoValuesPtr = &((*pseudoValues)[cell->id()][0]);
 	  for (unsigned int q = 0; q < n_q_points; ++q)
 	    {
 	      MappingQ1<3,3> test; 
@@ -207,7 +212,16 @@ void dftClass<FEOrder>::initLocalPseudoPotential()
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::initNonLocalPseudoPotential()
 {
-
+  d_pseudoWaveFunctionIdToFunctionIdDetails.clear();
+  d_deltaVlIdToFunctionIdDetails.clear();
+  d_numberPseudoAtomicWaveFunctions.clear();
+  d_numberPseudoPotentials.clear();
+  d_nonLocalAtomGlobalChargeIds.clear();
+  d_globalChargeIdToImageIdMap.clear();
+  d_pseudoWaveFunctionSplines.clear();
+  d_deltaVlSplines.clear();
+  d_outerMostPointPseudoWaveFunctionsData.clear();
+  d_outerMostPointPseudoPotData.clear();  
   // Store the Map between the atomic number and the waveFunction details
   // (i.e. map from atomicNumber to a 2D vector storing atom specific wavefunction Id and its corresponding 
   // radial and angular Ids)
@@ -741,7 +755,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
   //
   //get FE data structures
   //
-  QGauss<3>  quadrature(FEOrder+1);
+  QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
   FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values);
   const unsigned int numberQuadraturePoints = quadrature.size();
   const unsigned int numberElements         = triangulation.n_locally_owned_active_cells();
@@ -872,6 +886,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
 
     }//atom loop
 
+  d_nonLocalAtomIdsInElement.clear();
   d_nonLocalAtomIdsInElement.resize(numberElements);
 
 
@@ -904,7 +919,7 @@ void dftClass<FEOrder>::computeElementalProjectorKets()
   //
   //get FE data structures
   //
-  QGauss<3>  quadrature(FEOrder+1);
+  QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
   FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values);
   const unsigned int numberNodesPerElement  = FE.dofs_per_cell;
   const unsigned int numberQuadraturePoints = quadrature.size();

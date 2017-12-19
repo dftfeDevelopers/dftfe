@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Shiva Rudraraju (2016), Phani Motamarri (2016)
+// @author Shiva Rudraraju (2016), Phani Motamarri (2016), Sambit Das (2017)
 //
 
 #include "../../include/poisson.h"
@@ -26,7 +26,7 @@
 template<unsigned int FEOrder>
 poissonClass<FEOrder>::poissonClass(dftClass<FEOrder>* _dftPtr):
   dftPtr(_dftPtr),
-  FE (QGaussLobatto<1>(FEOrder+1)),
+  FE (QGaussLobatto<1>(C_num1DQuad<FEOrder>())),
   mpi_communicator (MPI_COMM_WORLD),
   n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_communicator)),
   this_mpi_process (Utilities::MPI::this_mpi_process(mpi_communicator)),
@@ -72,7 +72,7 @@ void poissonClass<FEOrder>::computeRHS2()
   //local data structures
   //
   
-  QGauss<3>  quadrature(FEOrder+1);
+  QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
   FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values);
   const unsigned int dofs_per_cell = FE.dofs_per_cell;
   const unsigned int num_quad_points = quadrature.size();
@@ -143,7 +143,7 @@ void poissonClass<FEOrder>::computeRHS(std::map<dealii::CellId,std::vector<doubl
   //
   //local data structures
   //
-  QGauss<3>  quadrature(FEOrder+1);
+  QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
   FEValues<3> fe_values (FE, quadrature, update_values | update_gradients | update_JxW_values);
   const unsigned int   dofs_per_cell = FE.dofs_per_cell;
   const unsigned int   num_quad_points = quadrature.size();
@@ -268,7 +268,7 @@ void poissonClass<FEOrder>::AX (const dealii::MatrixFree<3,double>  &data,
   VectorizedArray<double>  quarter = make_vectorized_array (1.0/(4.0*M_PI));
   int constraintId = d_constraintMatrixId;
 
-  FEEvaluation<3,FEOrder> fe_eval(data, constraintId, 0); 
+  FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>()> fe_eval(data, constraintId, 0); 
 
   for (unsigned int cell=cell_range.first; cell<cell_range.second; ++cell)
     {

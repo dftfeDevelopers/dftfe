@@ -42,6 +42,8 @@ SET(TARGET_SRC
   ./src/${TARGET}.cc
   ./src/poisson/poisson.cc
   ./src/eigen/eigen.cc
+  ./src/force/force.cc
+  ./src/force/eshelbyTensor/eshelbyTensor.cc
   ./src/meshMovement/meshMovement.cc
   ./src/meshMovement/meshMovementGaussian.cc
   # You can specify additional files here!

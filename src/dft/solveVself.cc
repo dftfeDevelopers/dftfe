@@ -21,6 +21,7 @@ template<unsigned int FEOrder>
 void dftClass<FEOrder>::solveVself()
 {
   d_localVselfs.clear();
+  d_vselfFieldBins.clear();    
   //phiExt with nuclear charge
   //
   int numberBins = d_boundaryFlag.size();
@@ -33,7 +34,7 @@ void dftClass<FEOrder>::solveVself()
   //pcout<<"size of support points: "<<d_supportPoints.size()<<std::endl;
 
   std::map<dealii::types::global_dof_index, int>::iterator iterMap;
-
+  d_vselfFieldBins.resize(numberBins);
   for(int iBin = 0; iBin < numberBins; ++iBin)
     {
       int constraintMatrixId = iBin + 2;
@@ -185,7 +186,10 @@ void dftClass<FEOrder>::solveVself()
 	  std::cout<< "(only for debugging: peak value of Vself: "<< temp[1] << ")" <<std::endl;
 	  d_localVselfs.push_back(temp);
 	}
-
+        //
+        //store solved vselfBinScratch field
+        //
+        d_vselfFieldBins[iBin]=poissonPtr->vselfBinScratch;
     }//bin loop
 
   d_noConstraints.distribute(poissonPtr->phiExt);

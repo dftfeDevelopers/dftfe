@@ -21,6 +21,7 @@
 #include "../../include/dft.h"
 #include "../../include/eigen.h"
 #include "../../include/poisson.h"
+#include "../../include/force.h"
 #include "../../include/meshMovementGaussian.h"
 #include "../../utils/fileReaders.cc"
 //#include "../poisson/poisson.cc"
@@ -54,11 +55,11 @@
 template<unsigned int FEOrder>
 dftClass<FEOrder>::dftClass():
   triangulation (MPI_COMM_WORLD),
-  FE (FE_Q<3>(QGaussLobatto<1>(FEOrder+1)), 1),
+  FE (FE_Q<3>(QGaussLobatto<1>(C_num1DQuad<FEOrder>())), 1),
 #ifdef ENABLE_PERIODIC_BC
-  FEEigen (FE_Q<3>(QGaussLobatto<1>(FEOrder+1)), 2),
+  FEEigen (FE_Q<3>(QGaussLobatto<1>(C_num1DQuad<FEOrder>())), 2),
 #else
-  FEEigen (FE_Q<3>(QGaussLobatto<1>(FEOrder+1)), 1),
+  FEEigen (FE_Q<3>(QGaussLobatto<1>(C_num1DQuad<FEOrder>())), 1),
 #endif
   dofHandler (triangulation),
   dofHandlerEigen (triangulation),
@@ -100,6 +101,7 @@ dftClass<FEOrder>::dftClass():
 {
   poissonPtr= new poissonClass<FEOrder>(this);
   eigenPtr= new eigenClass<FEOrder>(this);
+  forcePtr= new forceClass<FEOrder>(this);
   //
   // initialize PETSc
   //
@@ -402,6 +404,10 @@ void dftClass<FEOrder>::run ()
       //
       scfIter++;
     }
+  computing_timer.enter_section("configurational force computation"); 
+  forcePtr->computeAtomsForces();
+  forcePtr->printAtomsForces();
+  computing_timer.exit_section("configurational force computation");  
   computing_timer.exit_section("solve"); 
 }
 
@@ -417,7 +423,7 @@ void dftClass<FEOrder>::output () {
     char buffer[100]; sprintf(buffer,"eigen%u", i);  
     data_outEigen.add_data_vector (*eigenVectors[0][i], buffer);
   }
-  data_outEigen.build_patches (FEOrder+1);
+  data_outEigen.build_patches (C_num1DQuad<FEOrder>());
   data_outEigen.write_vtu_in_parallel(std::string("eigen.vtu").c_str(),mpi_communicator);
 }
 

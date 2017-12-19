@@ -18,7 +18,9 @@
 
 //source file for locating core atom nodes
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::locateAtomCoreNodes(){ 
+void dftClass<FEOrder>::locateAtomCoreNodes(){
+  atoms.clear();
+  d_atomsInBin.clear();
   unsigned int vertices_per_cell=GeometryInfo<3>::vertices_per_cell;
   DoFHandler<3>::active_cell_iterator
     cell = dofHandler.begin_active(),

@@ -22,7 +22,7 @@
 template <unsigned int FEOrder>
 double dftClass<FEOrder>::totalCharge(std::map<dealii::CellId, std::vector<double> > *rhoQuadValues){
   double normValue=0.0;
-  QGauss<3>  quadrature_formula(FEOrder+1);
+  QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
   FEValues<3> fe_values (FE, quadrature_formula, update_values | update_JxW_values | update_quadrature_points);
   const unsigned int   dofs_per_cell = FE.dofs_per_cell;
   const unsigned int   n_q_points    = quadrature_formula.size();

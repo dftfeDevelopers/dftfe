@@ -86,7 +86,7 @@ double FermiDiracFunctionDerivativeValue(double x,
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::compute_energy()
 {
-  QGauss<3>  quadrature(FEOrder+1);
+  QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
   FEValues<3> fe_values (FE, quadrature, update_values | update_gradients | update_JxW_values);
   const unsigned int   num_quad_points    = quadrature.size();
   std::vector<double> cellPhiTotRhoIn(num_quad_points);  
@@ -115,8 +115,6 @@ void dftClass<FEOrder>::compute_energy()
     }
   pcout <<std::endl;
   double potentialTimesRho = 0.0, exchangeEnergy = 0.0, correlationEnergy = 0.0, electrostaticEnergyTotPot = 0.0; 
-
-  
 
   //parallel loop over all elements
   typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
@@ -176,7 +174,7 @@ void dftClass<FEOrder>::compute_energy()
 #ifdef ENABLE_PERIODIC_BC
 		  electrostaticEnergyTotPot+=0.5*(Vtot)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
 #else
-		  electrostaticEnergyTotPot+=0.5*(Vtot+Vext)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
+		  electrostaticEnergyTotPot+=0.5*(Vtot+Vext*0)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
 #endif
 		}
 	    }
@@ -220,13 +218,12 @@ void dftClass<FEOrder>::compute_energy()
 #ifdef ENABLE_PERIODIC_BC
 		  electrostaticEnergyTotPot+=0.5*(Vtot)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
 #else
-		  electrostaticEnergyTotPot+=0.5*(Vtot+Vext)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
+		  electrostaticEnergyTotPot+=0.5*(Vtot+Vext*0)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
 #endif
 		}
 	    }
 	} 
     }
-
 
 
   
@@ -265,6 +262,7 @@ void dftClass<FEOrder>::compute_energy()
   double totalelectrostaticEnergyPot= Utilities::MPI::sum(electrostaticEnergyTotPot, mpi_communicator);
   double totalNuclearElectrostaticEnergy = Utilities::MPI::sum(nuclearElectrostaticEnergy, mpi_communicator);
 
+
   //
   //total energy
   //
@@ -274,7 +272,7 @@ void dftClass<FEOrder>::compute_energy()
 #ifdef ENABLE_PERIODIC_BC
   totalEnergy+=totalNuclearElectrostaticEnergy;
 #else
-  totalEnergy+=repulsiveEnergy();
+  totalEnergy+=totalNuclearElectrostaticEnergy;//repulsiveEnergy();
 #endif
 
 
@@ -291,9 +289,10 @@ void dftClass<FEOrder>::compute_energy()
 #ifdef ENABLE_PERIODIC_BC  
   sprintf(bufferEnergy, "%-24s:%25.16e\n", "Electrostatic energy", totalelectrostaticEnergyPot+totalNuclearElectrostaticEnergy); pcout << bufferEnergy; 
 #else
-  double repulsive_energy= repulsiveEnergy();
-  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Repulsive energy", repulsive_energy); pcout << bufferEnergy; 
-  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Electrostatic energy", totalelectrostaticEnergyPot+repulsive_energy); pcout << bufferEnergy; 
+  //double repulsive_energy= repulsiveEnergy();
+  //sprintf(bufferEnergy, "%-24s:%25.16e\n", "Repulsive energy", repulsive_energy); pcout << bufferEnergy; 
+  //sprintf(bufferEnergy, "%-24s:%25.16e\n", "Electrostatic energy", totalelectrostaticEnergyPot+repulsive_energy); pcout << bufferEnergy; 
+  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Electrostatic energy", totalelectrostaticEnergyPot+totalNuclearElectrostaticEnergy); pcout << bufferEnergy;   
 #endif
   sprintf(bufferEnergy, "%-24s:%25.16e\n", "Total energy", totalEnergy); pcout << bufferEnergy; 
   sprintf(bufferEnergy, "%-24s:%25.16e\n", "Total energy per atom", totalEnergy/((double) atomLocations.size())); pcout << bufferEnergy; 

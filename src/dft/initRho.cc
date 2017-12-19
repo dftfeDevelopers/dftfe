@@ -64,9 +64,27 @@ void dftClass<FEOrder>::initRho()
   
 
   //Initialize rho
-  QGauss<3>  quadrature_formula(FEOrder+1);
+  QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
   FEValues<3> fe_values (FE, quadrature_formula, update_values);
   const unsigned int n_q_points    = quadrature_formula.size();
+
+  //cleanup of existing data
+   for (std::deque<std::map<dealii::CellId,std::vector<double> >*>::iterator it = rhoInVals.begin(); it!=rhoInVals.end(); ++it){
+     delete (*it);
+  }
+  rhoInVals.clear();
+  for (std::deque<std::map<dealii::CellId,std::vector<double> >*>::iterator it = rhoOutVals.begin(); it!=rhoOutVals.end(); ++it){
+     delete (*it);
+  }
+  rhoOutVals.clear();
+  for (std::deque<std::map<dealii::CellId,std::vector<double> >*>::iterator it = gradRhoInVals.begin(); it!=gradRhoInVals.end(); ++it){
+     delete (*it);
+  }
+  gradRhoInVals.clear();
+  for (std::deque<std::map<dealii::CellId,std::vector<double> >*>::iterator it = gradRhoOutVals.begin(); it!=gradRhoOutVals.end(); ++it){
+     delete (*it);
+  }
+  gradRhoOutVals.clear(); 
 
   //Initialize electron density table storage
   rhoInValues=new std::map<dealii::CellId, std::vector<double> >;

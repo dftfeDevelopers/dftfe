@@ -28,6 +28,8 @@ typedef dealii::parallel::distributed::Vector<double> vectorType;
 //forward declaration
 template <unsigned int T>
 class dftClass;
+template <unsigned int T>
+class forceClass;
 //
 //Define poisson class
 //
@@ -37,6 +39,9 @@ class poissonClass
   template <unsigned int T>
   friend class dftClass; 
 
+  template <unsigned int T>
+  friend class forceClass; 
+  
 public:
   poissonClass(dftClass<FEOrder>* _dftPtr);
   void vmult(vectorType &dst, vectorType &src) const;

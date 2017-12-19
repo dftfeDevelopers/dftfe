@@ -24,7 +24,7 @@
 template<unsigned int FEOrder>
 eigenClass<FEOrder>::eigenClass(dftClass<FEOrder>* _dftPtr):
   dftPtr(_dftPtr),
-  FE (QGaussLobatto<1>(FEOrder+1)),
+  FE (QGaussLobatto<1>(C_num1DQuad<FEOrder>())),
   mpi_communicator (MPI_COMM_WORLD),
   n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_communicator)),
   this_mpi_process (Utilities::MPI::this_mpi_process(mpi_communicator)),
@@ -154,8 +154,8 @@ void eigenClass<FEOrder>::computeVEff(std::map<dealii::CellId,std::vector<double
 {
   const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
   const unsigned int n_array_elements = VectorizedArray<double>::n_array_elements;
-  FEEvaluation<3,FEOrder> fe_eval_phi(dftPtr->matrix_free_data, 0 ,0);
-  FEEvaluation<3,FEOrder> fe_eval_phiExt(dftPtr->matrix_free_data, dftPtr->phiExtDofHandlerIndex, 0);
+  FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>()> fe_eval_phi(dftPtr->matrix_free_data, 0 ,0);
+  FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>()> fe_eval_phiExt(dftPtr->matrix_free_data, dftPtr->phiExtDofHandlerIndex, 0);
   int numberQuadraturePoints = fe_eval_phi.n_q_points;
   vEff.reinit (n_cells, numberQuadraturePoints);
   typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
@@ -235,8 +235,8 @@ void eigenClass<FEOrder>::computeVEff(std::map<dealii::CellId,std::vector<double
 {
   const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
   const unsigned int n_array_elements = VectorizedArray<double>::n_array_elements;
-  FEEvaluation<3,FEOrder> fe_eval_phi(dftPtr->matrix_free_data, 0 ,0);
-  FEEvaluation<3,FEOrder> fe_eval_phiExt(dftPtr->matrix_free_data, dftPtr->phiExtDofHandlerIndex ,0);
+  FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>()> fe_eval_phi(dftPtr->matrix_free_data, 0 ,0);
+  FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>()> fe_eval_phiExt(dftPtr->matrix_free_data, dftPtr->phiExtDofHandlerIndex ,0);
   int numberQuadraturePoints = fe_eval_phi.n_q_points;
   vEff.reinit (n_cells, numberQuadraturePoints);
   derExcWithSigmaTimesGradRho.reinit(TableIndices<3>(n_cells, numberQuadraturePoints, 3));
@@ -335,7 +335,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vec
   //
   //get FE data
   //
-  QGauss<3>  quadrature_formula(FEOrder+1);
+  QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
   FEValues<3> fe_values (dftPtr->FEEigen, quadrature_formula, update_values);
 
   const int kPointIndex = dftPtr->d_kPointIndex;
@@ -666,7 +666,7 @@ void eigenClass<FEOrder>::implementHX (const dealii::MatrixFree<3,double>  &data
 
 #ifdef ENABLE_PERIODIC_BC
   int kPointIndex = dftPtr->d_kPointIndex;
-  FEEvaluation<3,FEOrder, FEOrder+1, 2, double>  fe_eval(data, dftPtr->eigenDofHandlerIndex, 0);
+  FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>(), 2, double>  fe_eval(data, dftPtr->eigenDofHandlerIndex, 0);
   Tensor<1,2,VectorizedArray<double> > psiVal, vEffTerm, kSquareTerm, kDotGradientPsiTerm, derExchWithSigmaTimesGradRhoDotGradientPsiTerm;
   Tensor<1,2,Tensor<1,3,VectorizedArray<double> > > gradientPsiVal, gradientPsiTerm, derExchWithSigmaTimesGradRhoTimesPsi,sumGradientTerms; 
 
@@ -810,7 +810,7 @@ void eigenClass<FEOrder>::implementHX (const dealii::MatrixFree<3,double>  &data
 
     }
 #else
-  FEEvaluation<3,FEOrder, FEOrder+1, 1, double>  fe_eval(data, dftPtr->eigenDofHandlerIndex, 0);
+  FEEvaluation<3,FEOrder, C_num1DQuad<FEOrder>(), 1, double>  fe_eval(data, dftPtr->eigenDofHandlerIndex, 0);
   Tensor<1,3,VectorizedArray<double> > derExchWithSigmaTimesGradRhoTimesPsi,gradientPsiVal;
   VectorizedArray<double> psiVal,derExchWithSigmaTimesGradRhoDotGradientPsiTerm;
   if(dftPtr->d_xc_id == 4)

@@ -515,7 +515,7 @@ void dftClass<FEOrder>::initUnmovedTriangulation(){
   //
   //Now separate this set to real and imag sets
   //
-  QGauss<3>  quadrature_formula(FEOrder+1);
+  QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
   FEValues<3> fe_values (FEEigen, quadrature_formula, update_values);
   const unsigned int dofs_per_cell = FEEigen.dofs_per_cell;
   std::vector<unsigned int> local_dof_indicesEigen(dofs_per_cell);
@@ -761,7 +761,7 @@ void dftClass<FEOrder>::initUnmovedTriangulation(){
 
 
   std::set<unsigned int> masterNodesEdgeReal, masterNodesEdgeImag, slaveNodesNewReal, slaveNodesNewImag;
-  QGauss<3>  quadrature_formulaNew(FEOrder+1);
+  QGauss<3>  quadrature_formulaNew(C_num1DQuad<FEOrder>());
   FEValues<3> fe_valuesNew(FEEigen, quadrature_formulaNew, update_values);
   typename DoFHandler<3>::active_cell_iterator cellEigenNew = dofHandlerEigen.begin_active(), endcellEigenNew = dofHandlerEigen.end();
   for(; cellEigenNew!=endcellEigenNew; ++cellEigenNew)

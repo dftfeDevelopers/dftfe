@@ -41,7 +41,8 @@ using namespace dealii;
 typedef dealii::parallel::distributed::Vector<double> vectorType;
 //forward declarations
 template <unsigned int T> class poissonClass;
-template <unsigned int T> class eigenClass;  
+template <unsigned int T> class eigenClass; 
+template <unsigned int T> class forceClass;  
 //
 //extern declarations for blas-lapack routines
 //
@@ -83,7 +84,10 @@ class dftClass
   friend class poissonClass;
 
   template <unsigned int T>
-  friend class eigenClass;  
+  friend class eigenClass;
+
+  template <unsigned int FEOrder>
+  friend class forceClass;  
 
  public:
 
@@ -135,7 +139,7 @@ class dftClass
    */
   //void init();
   void initUnmovedTriangulation();
-  void initMovedTriangulation();
+  void initMovedTriangulation(bool isTriaRefined=true);
   void locateAtomCoreNodes();
   void locatePeriodicPinnedNodes();
   void initRho();
@@ -238,7 +242,7 @@ class dftClass
   parallel::distributed::Triangulation<3> triangulation;
   FESystem<3>        FE, FEEigen;
   DoFHandler<3>      dofHandler, dofHandlerEigen;
-  unsigned int       eigenDofHandlerIndex,phiExtDofHandlerIndex,phiTotDofHandlerIndex;
+  unsigned int       eigenDofHandlerIndex,phiExtDofHandlerIndex,phiTotDofHandlerIndex,forceDofHandlerIndex;
   MatrixFree<3,double> matrix_free_data;
   std::map<types::global_dof_index, Point<3> > d_supportPoints, d_supportPointsEigen;
   std::vector< const ConstraintMatrix * > d_constraintsVector; 
@@ -258,6 +262,7 @@ class dftClass
 
   poissonClass<FEOrder> * poissonPtr;
   eigenClass<FEOrder> * eigenPtr;
+  forceClass<FEOrder> * forcePtr;
   ConstraintMatrix constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_constraintsPeriodicWithDirichlet, d_noConstraints, d_noConstraintsEigen; 
   std::vector<std::vector<double> > eigenValues;
   std::vector<std::vector<parallel::distributed::Vector<double>*> > eigenVectors;
@@ -352,6 +357,7 @@ class dftClass
   std::vector<std::map<dealii::types::global_dof_index, int> > d_boundaryFlag;
   std::vector<std::map<dealii::types::global_dof_index, int> > d_vselfBinField;
   std::vector<std::map<dealii::types::global_dof_index, int> > d_closestAtomBin;
+  std::vector<vectorType> d_vselfFieldBins;//required for configurational force
   //
   //kPointCoordinates
   //
