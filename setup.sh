@@ -9,7 +9,7 @@ cmake=/usr/bin/cmake
 #
 RCol='\e[0m'
 Blu='\e[0;34m';
-optimizedMode=1
+optimizedMode=0
 if [ $optimizedMode == 1 ]; then
   if [ -d "build/release" ]; then
     echo -e "${Blu}build/release directory already present${RCol}"
