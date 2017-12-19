@@ -143,7 +143,7 @@ void meshMovementClass::updateTriangulationVertices()
   //dftPtr->triangulation.communicate_locally_moved_vertices(locally_owned_vertices);
 }
 
-void meshMovementClass::periodicSanityCheck()
+void meshMovementClass::movedMeshCheck()
 {
   //sanity check to make sure periodic boundary conditions are maintained
   MPI_Barrier(mpi_communicator); 
@@ -164,6 +164,21 @@ void meshMovementClass::periodicSanityCheck()
   MPI_Barrier(mpi_communicator);  
   pcout << "...Sanity check passed" << std::endl;
 #endif
+
+  //print out mesh metrics
+  typename parallel::distributed::Triangulation<3>::active_cell_iterator cell, endc;
+  double minElemLength=1e+6;
+  cell = d_dofHandlerMoveMesh.get_tria().begin_active();
+  endc = d_dofHandlerMoveMesh.get_tria().end();
+  for ( ; cell != endc; ++cell){
+    if (cell->is_locally_owned()){
+      if (cell->minimum_vertex_distance()<minElemLength) minElemLength = cell->minimum_vertex_distance();
+    }
+  }
+  minElemLength=Utilities::MPI::min(minElemLength, mpi_communicator);
+  char buffer[100];
+  sprintf(buffer, "Mesh movement quality metric, h_min: %5.2e\n", minElemLength);
+  pcout << buffer;    
 }
 
 

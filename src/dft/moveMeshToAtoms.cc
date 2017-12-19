@@ -66,20 +66,6 @@ void dftClass<FEOrder>::moveMeshToAtoms(parallel::distributed::Triangulation<3> 
 		        distanceClosestTriaVerticesToAtoms,
 			gaussianConstant);
 
-  //print out mesh metrics
-  typename parallel::distributed::Triangulation<3>::active_cell_iterator cell, endc;
-  double minElemLength=1e+6;
-  cell = triangulationMove.begin_active();
-  endc = triangulationMove.end();
-  for ( ; cell != endc; ++cell){
-    if (cell->is_locally_owned()){
-      if (cell->minimum_vertex_distance()<minElemLength) minElemLength = cell->minimum_vertex_distance();
-    }
-  }
-  minElemLength=Utilities::MPI::min(minElemLength, mpi_communicator);
-  char buffer[100];
-  sprintf(buffer, "Mesh movement quality metric, h_min: %5.2e\n", minElemLength);
-  pcout << buffer;  
 }
 
 	

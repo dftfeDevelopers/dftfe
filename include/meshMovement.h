@@ -41,7 +41,7 @@ protected:
   void initIncrementField();
   void finalizeIncrementField();
   void updateTriangulationVertices();
-  void periodicSanityCheck();
+  void movedMeshCheck();
   virtual void moveMesh(std::vector<Point<C_DIM> > controlPointLocations,
                         std::vector<Point<C_DIM> > controlPointDisplacements,
                         double controllingParameter)=0;

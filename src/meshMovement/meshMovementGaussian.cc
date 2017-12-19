@@ -36,7 +36,7 @@ void meshMovementGaussianClass::moveMesh(std::vector<Point<C_DIM> > controlPoint
   finalizeIncrementField();
   pcout << "...Computed triangulation displacement increment" << std::endl;	
   updateTriangulationVertices();
-  periodicSanityCheck();
+  movedMeshCheck();
 }
 
 
