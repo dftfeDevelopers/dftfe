@@ -203,13 +203,15 @@ void meshMovementClass::findClosestVerticesToDestinationPoints(const std::vector
 
             const double distance=(nodalCoor-destinationPoints[idest]).norm();
 
-	    if (distance < minDistance)
+	    if (distance < minDistance){
 	        minDistance=distance;
+		closestTriaVertexLocation=nodalCoor;
+	    }
          }
        }
       }
       const double globalMinDistance=Utilities::MPI::min(minDistance, mpi_communicator);
-      
+      //std::cout << "minDistance: "<< minDistance << "globalMinDistance: "<<globalMinDistance << " closest vertex location: "<< closestTriaVertexLocation <<std::endl;
       if ((minDistance-globalMinDistance)>1e-5){
 	  closestTriaVertexLocation=Point<3>(0);
       }
@@ -225,6 +227,7 @@ void meshMovementClass::findClosestVerticesToDestinationPoints(const std::vector
 		    MPI_SUM,
 		    mpi_communicator);
 
+      //std::cout << closestTriaVertexLocationGlobal << " disp: "<<Point<3>(destinationPoints[idest]-closestTriaVertexLocationGlobal) << std::endl;
       closestTriaVertexToDestPointsLocation.push_back(closestTriaVertexLocationGlobal);
       distanceClosestTriaVerticesToDestPoints.push_back(Point<3>(destinationPoints[idest]-closestTriaVertexLocationGlobal));
   }
