@@ -189,7 +189,8 @@ void dftClass<FEOrder>::mesh()
       if (cell->minimum_vertex_distance()<minElemLength) minElemLength = cell->minimum_vertex_distance();
     }
   }
-  Utilities::MPI::min(minElemLength, mpi_communicator);
+  
+  minElemLength=Utilities::MPI::min(minElemLength, mpi_communicator);
 
   //print out adaptive mesh metrics
   pcout << "Refinement levels executed: " << numLevels << std::endl;

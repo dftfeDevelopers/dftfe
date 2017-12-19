@@ -76,7 +76,7 @@ void dftClass<FEOrder>::moveMeshToAtoms(parallel::distributed::Triangulation<3> 
       if (cell->minimum_vertex_distance()<minElemLength) minElemLength = cell->minimum_vertex_distance();
     }
   }
-  Utilities::MPI::min(minElemLength, mpi_communicator);
+  minElemLength=Utilities::MPI::min(minElemLength, mpi_communicator);
   char buffer[100];
   sprintf(buffer, "Mesh movement quality metric, h_min: %5.2e\n", minElemLength);
   pcout << buffer;  
