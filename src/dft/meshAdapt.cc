@@ -11,7 +11,7 @@ template<unsigned int FEOrder>
 void dftClass<FEOrder>::mesh()
 {
   computing_timer.enter_section("mesh"); 
-#ifdef meshFileName
+if (!meshFileName.empty()){
   GridIn<3> gridin;
   gridin.attach_triangulation(triangulation);
 
@@ -53,8 +53,8 @@ void dftClass<FEOrder>::mesh()
   triangulation.add_periodicity(periodicity_vector);
 #endif  
 
-#else
-
+}
+else{
   //
   //Adaptive mesh generation
   //
@@ -232,7 +232,7 @@ void dftClass<FEOrder>::mesh()
   char buffer[100];
   sprintf(buffer, "Adaptivity summary:\n numCells: %u, numLevels: %u, h_min: %5.2e\n", triangulation.n_global_active_cells(), numLevels, minElemLength);
   pcout << buffer;
-#endif
+}
   //
   computing_timer.exit_section("mesh"); 
 }
