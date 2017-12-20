@@ -166,7 +166,7 @@ void meshMovementClass::movedMeshCheck()
 #endif
 
   //print out mesh metrics
-  typename parallel::distributed::Triangulation<3>::active_cell_iterator cell, endc;
+  typename Triangulation<3,3>::active_cell_iterator cell, endc;
   double minElemLength=1e+6;
   cell = d_dofHandlerMoveMesh.get_tria().begin_active();
   endc = d_dofHandlerMoveMesh.get_tria().end();
