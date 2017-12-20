@@ -20,7 +20,7 @@
 
 //Generate triangulation.
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::moveMeshToAtoms(parallel::distributed::Triangulation<3> & triangulationMove,bool isCoarserMove){
+void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,bool isCoarserMove){
   meshMovementGaussianClass gaussianMove;
   gaussianMove.init(triangulationMove);
 

@@ -30,8 +30,8 @@ class meshMovementClass
 public:
   meshMovementClass();
   virtual ~meshMovementClass() {}
-  void init(parallel::distributed::Triangulation<3> & triangulation);
-  void reinit(parallel::distributed::Triangulation<3> & triangulation,
+  void init(Triangulation<3,3> & triangulation);
+  void reinit(Triangulation<3,3> & triangulation,
 	      bool isTriaRefined=true);
   void findClosestVerticesToDestinationPoints(const std::vector<Point<3>> & destinationPoints,
 		                              std::vector<Point<3>> & closestTriaVertexToDestPointsLocation,

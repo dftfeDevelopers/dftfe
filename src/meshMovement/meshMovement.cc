@@ -29,7 +29,7 @@ meshMovementClass::meshMovementClass():
 
 }
 
-void meshMovementClass::init(parallel::distributed::Triangulation<3> & triangulation)
+void meshMovementClass::init(Triangulation<3,3> & triangulation)
 {
   d_dofHandlerMoveMesh.initialize(triangulation,FEMoveMesh);		
   d_dofHandlerMoveMesh.distribute_dofs(FEMoveMesh);
@@ -55,7 +55,7 @@ void meshMovementClass::init(parallel::distributed::Triangulation<3> & triangula
 #endif	
 }
 
-void meshMovementClass::reinit(parallel::distributed::Triangulation<3> & triangulation,
+void meshMovementClass::reinit(Triangulation<3,3> & triangulation,
 		               bool isTriaRefined)
 {
   if (isTriaRefined){
@@ -96,7 +96,7 @@ void meshMovementClass::initIncrementField()
   IndexSet  ghost_indices=d_locally_relevant_dofs;
   ghost_indices.subtract_set(d_locally_owned_dofs);
   d_incrementalDisplacement=parallel::distributed::Vector<double>::Vector(d_locally_owned_dofs                                                                                              ,ghost_indices,
-                                                                          mpi_communicator);	  
+                                                                          mpi_communicator);
   d_incrementalDisplacement=0;  	
 }
 
