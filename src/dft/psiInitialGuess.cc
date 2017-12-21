@@ -46,7 +46,7 @@ void dftClass<FEOrder>::loadPSIFiles(unsigned int Z,
 
   std::vector<std::vector<double> > values;
 
-  fileReadFlag = readPsiFile(2, values, psiFile);
+  fileReadFlag = dftUtils::readPsiFile(2, values, psiFile);
   
 
   //

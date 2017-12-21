@@ -37,7 +37,7 @@ void dftClass<FEOrder>::readkPointData()
   std::vector<double> kPointReducedCoordinates;
   char kPointRuleFile[256];
   sprintf(kPointRuleFile, "%s/data/kPointList/%s", currentPath.c_str(), kPointDataFile.c_str());
-  readFile(numberColumnskPointDataFile, kPointData, kPointRuleFile);
+  dftUtils::readFile(numberColumnskPointDataFile, kPointData, kPointRuleFile);
 
   d_maxkPoints = kPointData.size();
   d_kPointCoordinates.resize(d_maxkPoints*3,0.0);

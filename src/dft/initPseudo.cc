@@ -119,7 +119,7 @@ void dftClass<FEOrder>::initLocalPseudoPotential()
       char pseudoFile[256];
       sprintf(pseudoFile, "%s/data/electronicStructure/pseudoPotential/z%u/pseudoAtomData/locPot.dat", currentPath.c_str(),*it);
       pcout<<"Reading Local Pseudo-potential data from: " <<pseudoFile<<std::endl;
-      readFile(2, pseudoPotentialData[*it], pseudoFile);
+      dftUtils::readFile(2, pseudoPotentialData[*it], pseudoFile);
       unsigned int numRows = pseudoPotentialData[*it].size()-1;
       std::vector<double> xData(numRows), yData(numRows);
       for(unsigned int irow = 0; irow < numRows; ++irow)
@@ -389,7 +389,7 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential()
 	  //
 	  //read the radial function file
 	  //
-	  readFile(2,radialFunctionData,psiRadialFunctionFileName);
+	  dftUtils::readFile(2,radialFunctionData,psiRadialFunctionFileName);
 
         
 	  int numRows = radialFunctionData.size();
@@ -449,7 +449,7 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential()
       //
       //read the radial function file
       //
-      readFile(2,localPseudoPotentialData,localPseudoPotentialFileName);
+      dftUtils::readFile(2,localPseudoPotentialData,localPseudoPotentialFileName);
 
       //
       //read the number of angular momentum components
@@ -584,7 +584,7 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential()
 	  //
 	  //read the radial function file
 	  //
-	  readFile(2,radialFunctionData,pseudoPotentialRadFunctionFileName);
+	  dftUtils::readFile(2,radialFunctionData,pseudoPotentialRadFunctionFileName);
 	  int numRows = radialFunctionData.size();
    
 	  //pcout << "Number of Rows for potentials: " << numRows << std::endl;

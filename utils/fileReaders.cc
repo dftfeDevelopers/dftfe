@@ -13,9 +13,11 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Shiva Rudraraju (2016), Phani Motamarri (2016)
+// @author Shiva Rudraraju (2016), Phani Motamarri (2016), Sambit Das
 //
+#include "../include/fileReaders.h" 
 
+namespace dftUtils{
 //Utility functions to read external files relevant to DFT
 void readFile(unsigned int numColumns, 
 	      std::vector<std::vector<double> > &data, 
@@ -98,4 +100,5 @@ int readPsiFile(unsigned int numColumns,
     }
   readFile.close();
   return 1;
+}
 }
