@@ -34,7 +34,7 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
   double dispTol=1e-8;
 
   std::vector<Point<C_DIM> > controlPointLocations;
-  std::vector<Point<C_DIM> > controlPointDisplacements;
+  std::vector<Tensor<1,C_DIM,double> > controlPointDisplacements;
   
   for (unsigned int iAtom=0;iAtom <totalNumberAtoms; iAtom++){
      Point<C_DIM> atomCoor;

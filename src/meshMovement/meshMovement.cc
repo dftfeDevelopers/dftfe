@@ -186,7 +186,7 @@ void meshMovementClass::movedMeshCheck()
 
 void meshMovementClass::findClosestVerticesToDestinationPoints(const std::vector<Point<3>> & destinationPoints,
 		                                               std::vector<Point<3>> & closestTriaVertexToDestPointsLocation,
-                                                               std::vector<Point<3>> & distanceClosestTriaVerticesToDestPoints)
+                                                               std::vector<Tensor<1,3,double>> & distanceClosestTriaVerticesToDestPoints)
 {
   closestTriaVertexToDestPointsLocation.clear();
   distanceClosestTriaVerticesToDestPoints.clear();
@@ -230,7 +230,9 @@ void meshMovementClass::findClosestVerticesToDestinationPoints(const std::vector
       const double globalMinDistance=Utilities::MPI::min(minDistance, mpi_communicator);
       //std::cout << "minDistance: "<< minDistance << "globalMinDistance: "<<globalMinDistance << " closest vertex location: "<< closestTriaVertexLocation <<std::endl;
       if ((minDistance-globalMinDistance)>1e-5){
-	  closestTriaVertexLocation=Point<3>(0);
+	  closestTriaVertexLocation[0]=0.0;
+	  closestTriaVertexLocation[1]=0.0;
+	  closestTriaVertexLocation[2]=0.0;
       }
 
 
@@ -246,6 +248,7 @@ void meshMovementClass::findClosestVerticesToDestinationPoints(const std::vector
 
       //std::cout << closestTriaVertexLocationGlobal << " disp: "<<Point<3>(destinationPoints[idest]-closestTriaVertexLocationGlobal) << std::endl;
       closestTriaVertexToDestPointsLocation.push_back(closestTriaVertexLocationGlobal);
-      distanceClosestTriaVerticesToDestPoints.push_back(Point<3>(destinationPoints[idest]-closestTriaVertexLocationGlobal));
+      Tensor<1,3,double> temp=destinationPoints[idest]-closestTriaVertexLocationGlobal;
+      distanceClosestTriaVerticesToDestPoints.push_back(temp);
   }
 }	

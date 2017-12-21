@@ -234,7 +234,7 @@ class dftClass
   std::map<unsigned int, std::map<unsigned int, std::map<unsigned int, alglib::spline1dinterpolant*> > > radValues;
   std::map<unsigned int, std::map<unsigned int, std::map <unsigned int, double> > >outerValues;
   std::vector<Point<3>> closestTriaVertexToAtomsLocation;
-  std::vector<Point<3>> distanceClosestTriaVerticesToAtoms;
+  std::vector<Tensor<1,3,double> > distanceClosestTriaVerticesToAtoms;
   
   /**
    * dealii based FE data structres

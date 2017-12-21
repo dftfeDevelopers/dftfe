@@ -35,7 +35,7 @@ public:
 	      bool isTriaRefined=true);
   void findClosestVerticesToDestinationPoints(const std::vector<Point<3>> & destinationPoints,
 		                              std::vector<Point<3>> & closestTriaVertexToDestPointsLocation,
-                                              std::vector<Point<3>> & distanceClosestTriaVerticesToDestPoints);
+                                              std::vector<Tensor<1,3,double>> & distanceClosestTriaVerticesToDestPoints);
 
 protected:
   void initIncrementField();
@@ -43,7 +43,7 @@ protected:
   void updateTriangulationVertices();
   void movedMeshCheck();
   virtual void moveMesh(std::vector<Point<C_DIM> > controlPointLocations,
-                        std::vector<Point<C_DIM> > controlPointDisplacements,
+                        std::vector<Tensor<1,C_DIM,double> > controlPointDisplacements,
                         double controllingParameter)=0;
   virtual void computeIncrement()=0;  
   vectorType d_incrementalDisplacement;
