@@ -20,7 +20,7 @@
 //init
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::initMovedTriangulation(bool isTriaRefined){
-  computing_timer.enter_section("setup");
+  computing_timer.enter_section("moved setup");
 
   //
   //initialize FE objects
@@ -222,10 +222,6 @@ void dftClass<FEOrder>::initMovedTriangulation(bool isTriaRefined){
  
   //
   //
-  //
-  computing_timer.exit_section("setup"); 
-
-  //
   //initialize poisson and eigen problem related objects
   //
   poissonPtr->init();
@@ -236,4 +232,5 @@ void dftClass<FEOrder>::initMovedTriangulation(bool isTriaRefined){
   //
   pcout << "reading initial guess for PSI\n";
   readPSI();
+  computing_timer.exit_section("moved setup");   
 }
