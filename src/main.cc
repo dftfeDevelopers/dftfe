@@ -21,7 +21,8 @@
 //
 #include <deal.II/base/data_out_base.h>
 #include <deal.II/base/parameter_handler.h>
-
+//SPG header
+#include "spglib.h"
 //
 //C++ headers
 //
@@ -29,14 +30,14 @@
 #include <iostream>
 #include <fstream>
 
-unsigned int finiteElementPolynomialOrder,n_refinement_steps,numberEigenValues,xc_id;
-unsigned int chebyshevOrder,numSCFIterations,maxLinearSolverIterations, mixingHistory;
+unsigned int finiteElementPolynomialOrder,n_refinement_steps,numberEigenValues,xc_id, spinPolarized, nkx,nky,nkz, pseudoProjector;
+unsigned int chebyshevOrder,numPass,numSCFIterations,maxLinearSolverIterations, mixingHistory;
 
-double radiusAtomBall, domainSizeX, domainSizeY, domainSizeZ, mixingParameter;
-double lowerEndWantedSpectrum,relLinearSolverTolerance,selfConsistentSolverTolerance,TVal;
+double radiusAtomBall, domainSizeX, domainSizeY, domainSizeZ, mixingParameter, dkx, dky, dkz;
+double lowerEndWantedSpectrum,relLinearSolverTolerance,selfConsistentSolverTolerance,TVal, start_magnetization;
 
-bool isPseudopotential,periodicX,periodicY,periodicZ;
-std::string meshFileName,coordinatesFile,currentPath,latticeVectorsFile,kPointDataFile;
+bool isPseudopotential,periodicX,periodicY,periodicZ, useSymm, symmFromFile;
+std::string meshFileName,coordinatesFile,currentPath,latticeVectorsFile,kPointDataFile, symmDataFile;
 
 double innerDomainSize, outerBallRadius, innerBallRadius, meshSizeOuterDomain, meshSizeInnerDomain;
 double meshSizeOuterBall, meshSizeInnerBall, baseRefinementLevel;
@@ -140,6 +141,33 @@ void declare_parameters()
   prm.declare_entry("kPOINT RULE FILE", "",
 		    Patterns::Anything(),
 		    "File specifying the k-Point quadrature rule to sample Brillouin zone");
+  prm.declare_entry("READ SYMMETRY FROM FILE", "false",
+		    Patterns::Bool(),
+		    "Flag to control whether to read symmetries supplied by user");
+  prm.declare_entry("SYMMETRY MATRIX FILE", "",
+		    Patterns::Anything(),
+		    "File specifying the symmetry matrices for obtaining the irreducible BZ");
+  prm.declare_entry("BZ SAMPLING POINTS ALONG X", "2",
+		    Patterns::Integer(1,100),
+		    "Number of Monkhorts-Pack grid points to be used along X direction for BZ sampling");
+  prm.declare_entry("BZ SAMPLING POINTS ALONG Y", "2",
+		    Patterns::Integer(1,100),
+		    "Number of Monkhorts-Pack grid points to be used along Y direction for BZ sampling");
+  prm.declare_entry("BZ SAMPLING POINTS ALONG Z", "2",
+		    Patterns::Integer(1,100),
+		    "Number of Monkhorts-Pack grid points to be used along Z direction for BZ sampling");
+  prm.declare_entry("BZ SAMPLING SHIFT ALONG X", "0.0",
+		    Patterns::Double(0.0,1.0),
+		    "Fractional shifting to be used along X direction for BZ sampling");
+  prm.declare_entry("BZ SAMPLING SHIFT ALONG Y", "0.0",
+		    Patterns::Double(0.0,1.0),
+		    "Fractional shifting to be used along Y direction for BZ sampling");
+  prm.declare_entry("BZ SAMPLING SHIFT ALONG Z", "0.0",
+		    Patterns::Double(0.0,1.0),
+		    "Fractional shifting to be used along Z direction for BZ sampling");
+  prm.declare_entry("USE GROUP SYMMETRY", "true",
+		    Patterns::Bool(),
+		    "Flag to control usage of space group symmetries (only for periodic calculation)");
 
   prm.declare_entry("FINITE ELEMENT POLYNOMIAL ORDER", "2",
 		    Patterns::Integer(1,12),
@@ -150,6 +178,25 @@ void declare_parameters()
 		    Patterns::Double(),
 		    "The radius of the ball around an atom on which self-potential of the associated nuclear charge is solved");
 
+  prm.declare_entry("DOMAIN SIZE X", "0.0",
+		    Patterns::Double(),
+		    "Size of the domain in X-direction");
+
+  prm.declare_entry("DOMAIN SIZE Y", "0.0",
+		    Patterns::Double(),
+		    "Size of the domain in Y-direction");
+
+  prm.declare_entry("DOMAIN SIZE Z", "0.0",
+		    Patterns::Double(),
+		    "Size of the domain in Z-direction");
+
+  prm.declare_entry("SPIN POLARIZATION", "0",
+		    Patterns::Integer(0,1),
+		    "Is spin polarization to be included?");
+
+  prm.declare_entry("START MAGNETIZATION", "0.0",
+		     Patterns::Double(),
+		    "Magnetization to start with");
   
   prm.declare_entry("PERIODIC BOUNDARY CONDITION X", "false",
 		    Patterns::Bool(),
@@ -167,12 +214,16 @@ void declare_parameters()
 		    Patterns::Bool(),
 		    "Boolean Parameter specifying whether pseudopotential DFT calculation needs to be performed"); 
 
+  prm.declare_entry("PSEUDOPOTENTIAL NONLOCAL PROJECTOR", "1",
+		    Patterns::Integer(1,2),
+		    "Type of nonlocal projector to be used: 1 for KB, 2 for ONCV, default is KB"); 
+
   prm.declare_entry("EXCHANGE CORRELATION TYPE", "1",
 		    Patterns::Integer(1,4),
 		    "Parameter specifying the type of exchange-correlation to be used");
 
   prm.declare_entry("NUMBER OF REFINEMENT STEPS", "4",
-		    Patterns::Integer(1,4),
+		    Patterns::Integer(1,10),
 		    "Number of refinement steps to be used");
 
   prm.declare_entry("LOWER BOUND WANTED SPECTRUM", "-10.0",
@@ -182,6 +233,10 @@ void declare_parameters()
   prm.declare_entry("CHEBYSHEV POLYNOMIAL DEGREE", "0",
 		    Patterns::Integer(),
 		    "The degree of the Chebyshev polynomial to be employed for filtering out the unwanted spectrum (Default value is used when the input parameter value is 0");
+
+  prm.declare_entry("CHEBYSHEV FILTER PASSES", "1",
+		    Patterns::Integer(),
+		    "The number of the Chebyshev filter passes per SCF  (Default value is used when the input parameter is not specified");
 
   prm.declare_entry("NUMBER OF KOHN-SHAM WAVEFUNCTIONS", "10",
 		    Patterns::Integer(),
@@ -268,16 +323,29 @@ void parse_command_line(const int argc,
 	  meshSizeInnerDomain           = prm.get_double("MESH SIZE INNER DOMAIN");
 	  meshSizeOuterBall             = prm.get_double("MESH SIZE OUTER BALL");
 	  meshSizeInnerBall             = prm.get_double("MESH SIZE INNER BALL");
+	  spinPolarized                 = prm.get_integer("SPIN POLARIZATION");
+	  start_magnetization           = prm.get_double("START MAGNETIZATION");
 	  periodicX                     = prm.get_bool("PERIODIC BOUNDARY CONDITION X");
 	  periodicY                     = prm.get_bool("PERIODIC BOUNDARY CONDITION Y");
 	  periodicZ                     = prm.get_bool("PERIODIC BOUNDARY CONDITION Z");
 	  latticeVectorsFile            = prm.get("LATTICE VECTORS FILE");
 	  kPointDataFile                = prm.get("kPOINT RULE FILE");
+	  symmFromFile                  = prm.get_bool("READ SYMMETRY FROM FILE");
+          symmDataFile                  = prm.get("SYMMETRY MATRIX FILE");
+          nkx				= prm.get_integer("BZ SAMPLING POINTS ALONG X");
+	  nky				= prm.get_integer("BZ SAMPLING POINTS ALONG Y");
+          nkz				= prm.get_integer("BZ SAMPLING POINTS ALONG Z");
+	  dkx				= prm.get_double("BZ SAMPLING SHIFT ALONG X");
+	  dky				= prm.get_double("BZ SAMPLING SHIFT ALONG Y");
+          dkz				= prm.get_double("BZ SAMPLING SHIFT ALONG Z");
+          useSymm 	                = prm.get_bool("USE GROUP SYMMETRY");
 	  isPseudopotential             = prm.get_bool("PSEUDOPOTENTIAL CALCULATION");
+	  pseudoProjector               = prm.get_integer("PSEUDOPOTENTIAL NONLOCAL PROJECTOR");
 	  xc_id                         = prm.get_integer("EXCHANGE CORRELATION TYPE");
 	  numberEigenValues             = prm.get_integer("NUMBER OF KOHN-SHAM WAVEFUNCTIONS");
 	  lowerEndWantedSpectrum        = prm.get_double("LOWER BOUND WANTED SPECTRUM");
 	  chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");  
+	  numPass			= prm.get_integer("CHEBYSHEV FILTER PASSES");
 	  numSCFIterations              = prm.get_integer("SCF CONVERGENCE MAXIMUM ITERATIONS");
 	  selfConsistentSolverTolerance = prm.get_double("SCF CONVERGENCE TOLERANCE");
 	  mixingHistory                 = prm.get_integer("ANDERSON SCHEME MIXING HISTORY");

@@ -317,7 +317,7 @@ template<unsigned int FEOrder>
 void dftClass<FEOrder>::generateImageCharges()
 { 
 
-  const double pspCutOff = 20.0;
+  const double pspCutOff = 40.0;
   const double tol = 1e-4;
 
   //
@@ -481,12 +481,8 @@ void dftClass<FEOrder>::generateImageCharges()
 
     }
 
-  /*for(int i = 0; i < d_imagePositions.size();++i){
-    std::cout<<"i "<<i<<std::endl;
-    for(int  j= 0;  j<  3;++j)
-      std::cout<<d_imagePositions[i][j]<<" ";
-    std::cout<<'\n';
-    }*/
+  for(int i = 0; i < d_imagePositions.size();++i)
+      pcout<< i << " " << d_imagePositions[i][0]<<" "<<d_imagePositions[i][1]<<" "<<d_imagePositions[i][2]<<" "<<std::endl;
 
 }
 

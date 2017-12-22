@@ -40,7 +40,10 @@ void dftClass<FEOrder>::loadPSIFiles(unsigned int Z,
   //
   char psiFile[256];
   if(isPseudopotential)
-    sprintf(psiFile, "%s/data/electronicStructure/pseudoPotential/z%u/singleAtomData/psi%u%u.inp", currentPath.c_str(), Z, n, l);
+    if(pseudoProjector==2)
+	sprintf(psiFile, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/singleAtomData/psi%u%u.inp", currentPath.c_str(), Z, n, l);
+    else
+        sprintf(psiFile, "%s/data/electronicStructure/pseudoPotential/z%u/singleAtomData/psi%u%u.inp", currentPath.c_str(), Z, n, l);
   else
     sprintf(psiFile, "%s/data/electronicStructure/allElectron/z%u/singleAtomData/psi%u%u.inp", currentPath.c_str(), Z, n, l);
 
@@ -359,19 +362,32 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 
     }
 
-  for(int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+  //char buffer[100];
+  for(int kPoint = 0; kPoint < (1+spinPolarized)*d_maxkPoints; ++kPoint)
     {
-      for (unsigned int i = 0; i < eigenVectors[kPoint].size(); ++i)
+      //sprintf(buffer, "%10u%10u\n", eigenVectors[kPoint].size(), local_dof_values.size() );
+      //pcout << buffer;
+      for (unsigned int i = 0; i < numEigenValues; ++i)
 	{
+	  //pcout<<"check 0.11: "<<std::endl;
 	  constraintsNoneEigen.distribute_local_to_global(local_dof_values[i], locallyOwnedDOFs, *eigenVectors[kPoint][i]);
+	  //pcout<<"check 0.12: "<<std::endl;
 	  eigenVectors[kPoint][i]->compress(VectorOperation::add);
+	  //if (spinPolarized==1)
+	  //{
+	  //  constraintsNoneEigen.distribute_local_to_global(local_dof_values[i], locallyOwnedDOFs, *eigenVectors[(1+spinPolarized)*kPoint+1][i]);
+	  //  eigenVectors[(1+spinPolarized)*kPoint+1][i]->compress(VectorOperation::add);
+	  //}
 	}
+    // pcout<<"check 0.13: "<<std::endl;
     }
+  
+   // pcout<<"check 1: "<<std::endl;
 
   //
   //multiply by M^0.5
   //
-  for(int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+  for(int kPoint = 0; kPoint < (1+spinPolarized)*d_maxkPoints; ++kPoint)
     {
       for (unsigned int i = 0; i < eigenVectors[kPoint].size(); ++i)
 	{
@@ -394,11 +410,16 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 
 	  char buffer[100];
 	  sprintf(buffer, "norm %u: l1: %14.8e  l2:%14.8e\n",i, eigenVectors[kPoint][i]->l1_norm(), eigenVectors[kPoint][i]->l2_norm());
+	  //char buffer[100];
+	  //sprintf(buffer, "norm %u: l1: %14.8e  l2:%14.8e\n",i, eigenVectors[kPoint][i]->l1_norm(), eigenVectors[kPoint][i]->l2_norm());
 	  //pcout << buffer;
 	  eigenVectors[kPoint][i]->compress(VectorOperation::insert);
 	  eigenVectors[kPoint][i]->update_ghost_values();
 	}
     }
+
+   //pcout<<"check 2: "<<std::endl;
+
 }
 
 //

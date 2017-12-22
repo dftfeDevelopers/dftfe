@@ -35,6 +35,7 @@
 #include "energy.cc"
 #include "charge.cc"
 #include "density.cc"
+#include "symmetrizeRho.cc"
 #include "locatenodes.cc"
 #include "createBins.cc"
 #include "mixingschemes.cc"
@@ -44,7 +45,8 @@
 #include <complex>
 #include <cmath>
 #include <algorithm>
-
+#include "linalg.h"
+#include "stdafx.h"
 #ifdef ENABLE_PERIODIC_BC
 #include "generateImageCharges.cc"
 #endif
@@ -160,7 +162,7 @@ void dftClass<FEOrder>::set()
   //
   dftUtils::readFile(numberColumnsCoordinatesFile, atomLocations, coordinatesFile);
   pcout << "number of atoms: " << atomLocations.size() << "\n";
-
+  atomLocationsFractional.resize(atomLocations.size()) ;
   //
   //find unique atom types
   //
@@ -174,7 +176,8 @@ void dftClass<FEOrder>::set()
   //
   for(int i = 0; i < atomLocations.size(); ++i)
     {
-      pcout<<"fractional coordinates of atom: "<<atomLocations[i][2]<<" "<<atomLocations[i][3]<<" "<<atomLocations[i][4]<<"\n";
+      atomLocationsFractional[i] = atomLocations[i] ;
+      pcout<<"fractional coordinates of atom: "<<atomLocationsFractional[i][2]<<" "<<atomLocationsFractional[i][3]<<" "<<atomLocationsFractional[i][4]<<"\n";
     }
 
   //
@@ -196,6 +199,13 @@ void dftClass<FEOrder>::set()
   //
   //find cell-centered cartesian coordinates
   //
+  //atomLocationsFractional = atomLocations;
+  for(int i = 0; i < atomLocationsFractional.size(); ++i)
+    {
+      atomLocationsFractional[i][2] = atomLocationsFractional[i][2] - 0.5;
+      atomLocationsFractional[i][3] = atomLocationsFractional[i][3] - 0.5;
+      atomLocationsFractional[i][4] = atomLocationsFractional[i][4] - 0.5;
+    } 
   convertToCellCenteredCartesianCoordinates(atomLocations,
 					    d_latticeVectors);
 
@@ -247,34 +257,48 @@ void dftClass<FEOrder>::set()
   //read kPoint data
   //
 #ifdef ENABLE_PERIODIC_BC
-  readkPointData();
+  //readkPointData();
+   generateMPGrid();
+   if (useSymm)
+      test_spg_get_ir_reciprocal_mesh() ;
 #else
   d_maxkPoints = 1;
   d_kPointCoordinates.resize(3*d_maxkPoints,0.0);
   d_kPointWeights.resize(d_maxkPoints,1.0);
 #endif
-
+  char buffer[100];
   pcout<<"actual k-Point-coordinates and weights: "<<std::endl;
-  for(int i = 0; i < d_maxkPoints; ++i)
-    {
-      pcout<<d_kPointCoordinates[3*i + 0]<<" "<<d_kPointCoordinates[3*i + 1]<<" "<<d_kPointCoordinates[3*i + 2]<<" "<<d_kPointWeights[i]<<std::endl;
-    } 
-  
+  for(int i = 0; i < d_maxkPoints; ++i){
+    sprintf(buffer, "  %5u:  %12.5f  %12.5f %12.5f %12.5f\n", i, d_kPointCoordinates[3*i+0], d_kPointCoordinates[3*i+1], d_kPointCoordinates[3*i+2],d_kPointWeights[i]);
+    pcout << buffer;
+  }   
   //set size of eigenvalues and eigenvectors data structures
   eigenValues.resize(d_maxkPoints);
-  a0.resize(d_maxkPoints,lowerEndWantedSpectrum);
-  bLow.resize(d_maxkPoints,0.0);
-  eigenVectors.resize(d_maxkPoints);
-  eigenVectorsOrig.resize(d_maxkPoints);
-
-  for(unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+  eigenValuesTemp.resize(d_maxkPoints);
+  a0.resize((spinPolarized+1)*d_maxkPoints,lowerEndWantedSpectrum);
+  bLow.resize((spinPolarized+1)*d_maxkPoints,0.0);
+  eigenVectors.resize((1+spinPolarized)*d_maxkPoints);
+  eigenVectorsOrig.resize((1+spinPolarized)*d_maxkPoints);
+  //
+  //char buffer[100];
+  //sprintf(buffer, "%s:%10u\n", "check 0", eigenVectors.size());
+  //pcout << buffer;
+  //
+  for(unsigned int kPoint = 0; kPoint < (1+spinPolarized)*d_maxkPoints; ++kPoint)
     {
-      eigenValues[kPoint].resize(numEigenValues);  
-      for (unsigned int i=0; i<numEigenValues; ++i)
-	{
-	  eigenVectors[kPoint].push_back(new vectorType);
-	  eigenVectorsOrig[kPoint].push_back(new vectorType);
-	}
+      //for (unsigned int j=0; j<(spinPolarized+1); ++j) // for spin
+       //{
+        for (unsigned int i=0; i<numEigenValues; ++i)
+	  {
+	    eigenVectors[kPoint].push_back(new vectorType);
+	    eigenVectorsOrig[kPoint].push_back(new vectorType);
+	  }
+       //}
+    }
+   for(unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+    {
+      eigenValues[kPoint].resize((spinPolarized+1)*numEigenValues);  
+      eigenValuesTemp[kPoint].resize(numEigenValues); 
     }
 
   for (unsigned int i=0; i<numEigenValues; ++i){
@@ -315,7 +339,6 @@ void dftClass<FEOrder>::run ()
   //
   initMovedTriangulation();
 
-
   //
   //solve vself
   //
@@ -339,8 +362,26 @@ void dftClass<FEOrder>::run ()
       //Mixing scheme
       if(scfIter > 0)
 	{
-	  if (scfIter==1) norm = mixing_simple();
-	  else norm = sqrt(mixing_anderson());
+	  if (scfIter==1)
+              {
+		if (spinPolarized==1)
+                  {
+		    //for (unsigned int s=0; s<2; ++s)
+		       norm = mixing_simple_spinPolarized(); 
+		  }
+		else
+	          norm = mixing_simple();
+	      }
+	  else 
+             {
+		if (spinPolarized==1)
+		  {
+		    //for (unsigned int s=0; s<2; ++s)
+		       norm = sqrt(mixing_anderson_spinPolarized());
+		  } 
+		else
+	          norm = sqrt(mixing_anderson());		
+	      }
 	  sprintf(buffer, "Anderson Mixing: L2 norm of electron-density difference: %12.6e\n\n", norm); pcout << buffer;
 	  poissonPtr->phiTotRhoIn = poissonPtr->phiTotRhoOut;
 	}
@@ -356,35 +397,81 @@ void dftClass<FEOrder>::run ()
 
      
       //eigen solve
-
-      if(xc_id < 4)
+      if (spinPolarized==1)
 	{
-	  if(isPseudopotential)
-	    eigenPtr->computeVEff(rhoInValues, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, pseudoValues);
-	  else
-	    eigenPtr->computeVEff(rhoInValues, poissonPtr->phiTotRhoIn, poissonPtr->phiExt); 
-	}
-      else if (xc_id == 4)
-	{
-	  if(isPseudopotential)
-	    eigenPtr->computeVEff(rhoInValues, gradRhoInValues, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, pseudoValues);
-	  else
-	    eigenPtr->computeVEff(rhoInValues, gradRhoInValues, poissonPtr->phiTotRhoIn, poissonPtr->phiExt);
+	  for(unsigned int s=0; s<2; ++s)
+	      {
+	       if(xc_id < 4) 
+	        {
+		  if(isPseudopotential)
+		    eigenPtr->computeVEffSpinPolarized(rhoInValuesSpinPolarized, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, s, pseudoValues);
+		  else
+		    eigenPtr->computeVEffSpinPolarized(rhoInValuesSpinPolarized, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, s);
+                }
+	       else if (xc_id == 4)
+	        {
+	          if(isPseudopotential)
+		    eigenPtr->computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, s, pseudoValues);
+	          else
+		    eigenPtr->computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, s);
+	        }
+	      for (int kPoint = 0; kPoint < d_maxkPoints; ++kPoint) 
+	        {
+	          d_kPointIndex = kPoint;
+	          char buffer[100];
+	          for(int j = 0; j < numPass; ++j)
+	            { 
+		       sprintf(buffer, "%s:%3u%s:%3u\n", "Beginning Chebyshev filter pass ", j+1, " for spin ", s+1);
+		       pcout << buffer;
+		       chebyshevSolver(s);
+	            }
+	        }
+	    }
+        }
+      else
+        {
+	  if(xc_id < 4)
+	      {
+	      if(isPseudopotential)
+		eigenPtr->computeVEff(rhoInValues, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, pseudoValues);
+	      else
+		eigenPtr->computeVEff(rhoInValues, poissonPtr->phiTotRhoIn, poissonPtr->phiExt); 
+	      }
+	  else if (xc_id == 4)
+	     {
+	      if(isPseudopotential)
+		eigenPtr->computeVEff(rhoInValues, gradRhoInValues, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, pseudoValues);
+	      else
+		eigenPtr->computeVEff(rhoInValues, gradRhoInValues, poissonPtr->phiTotRhoIn, poissonPtr->phiExt);
+	     } 
+        
+	  for (int kPoint = 0; kPoint < d_maxkPoints; ++kPoint) 
+	    {
+	      d_kPointIndex = kPoint;
+	      for(int j = 0; j < numPass; ++j)
+	      { 
+		    sprintf(buffer, "%s:%3u\n", "Beginning Chebyshev filter pass ", j+1);
+		    pcout << buffer;
+		    chebyshevSolver(0);
+	      }
+	    }
 	}
  
-
-
-      for(int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
-	{
-	  d_kPointIndex = kPoint;
-	  chebyshevSolver();
-	}
-      
-      //fermi energy
-      compute_fermienergy();
-
-      //rhoOut
-      compute_rhoOut();
+       //fermi energy
+        compute_fermienergy();
+	//rhoOut
+   computing_timer.enter_section("compute rho"); 
+#ifdef ENABLE_PERIODIC_BC
+   if (useSymm){
+	computeLocalrhoOut();
+	computeAndSymmetrize_rhoOut();
+    }
+   else
+       compute_rhoOut();
+#else
+   compute_rhoOut();
+#endif
+    computing_timer.exit_section("compute rho"); 
       
       //compute integral rhoOut
       integralRhoValue=totalCharge(rhoOutValues);
@@ -394,12 +481,16 @@ void dftClass<FEOrder>::run ()
       poissonPtr->solve(poissonPtr->phiTotRhoOut,constraintMatrixId, rhoOutValues);
       //pcout<<"L-2 Norm of Phi-out   :"<<poissonPtr->phiTotRhoOut.l2_norm()<<std::endl;
       //pcout<<"L-inf Norm of Phi-out :"<<poissonPtr->phiTotRhoOut.linfty_norm()<<std::endl;
+
       //energy
-      compute_energy();
+      if (spinPolarized==1)
+         compute_energy_spinPolarized();
+      else
+     	 compute_energy () ;
       pcout<<"SCF iteration " << scfIter+1 << " complete\n";
       
       //output wave functions
-      output();
+      //output();
       
       //
       scfIter++;

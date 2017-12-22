@@ -9,6 +9,7 @@ cmake=/usr/bin/cmake
 #
 RCol='\e[0m'
 Blu='\e[0;34m';
+
 optimizedMode=0
 if [ $optimizedMode == 1 ]; then
   if [ -d "build/release" ]; then

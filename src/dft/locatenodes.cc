@@ -311,3 +311,4 @@ void dftClass<FEOrder>::locatePeriodicPinnedNodes()
 
   MPI_Barrier(mpi_communicator);
 }
+

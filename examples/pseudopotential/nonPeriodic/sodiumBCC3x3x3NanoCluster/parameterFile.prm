@@ -34,6 +34,9 @@ set PERIODIC BOUNDARY CONDITION X = false
 set PERIODIC BOUNDARY CONDITION Y = false
 set PERIODIC BOUNDARY CONDITION Z = false
 
+#spin polarization
+set SPIN POLARIZATION = 1
+set START MAGNETIZATION = 0.05
 #
 #Lattice Vectors file specifying the lattice vectors associated with the unit-cell(used only for periodic calculation)
 #
@@ -68,7 +71,7 @@ set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 70
 #Approximate estimate of lower bound of the wanted spectrum
 set LOWER BOUND WANTED SPECTRUM = -10.0
 #Chebyshev Filter polynomial degree (0 indicates default value based on upper bound of Hamiltonian)
-set CHEBYSHEV POLYNOMIAL DEGREE = 40
+set CHEBYSHEV POLYNOMIAL DEGREE = 0
 
 #
 #SCF parameters

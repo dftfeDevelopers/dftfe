@@ -15,12 +15,12 @@
 //
 // @author Shiva Rudraraju (2016), Phani Motamarri (2016)
 //
-
 #include "initRho.cc"
 #include "initPseudo.cc"
-
+#include <algorithm>
 #ifdef ENABLE_PERIODIC_BC
 #include "initkPointData.cc"
+#include "initGroupSymmetry.cc"
 #endif
 
 //
@@ -136,40 +136,6 @@ template<unsigned int FEOrder>
 void dftClass<FEOrder>::init(){
   computing_timer.enter_section("setup");
 
-// #ifdef ENABLE_PERIODIC_BC
-//   //mark faces
-//   typename parallel::distributed::Triangulation<3>::active_cell_iterator cell = triangulation.begin_active(), endc = triangulation.end();
-//   for(; cell!=endc; ++cell) 
-//     {
-//       for(unsigned int f=0; f < GeometryInfo<3>::faces_per_cell; ++f)
-// 	{
-// 	  const Point<3> face_center = cell->face(f)->center();
-// 	  if(cell->face(f)->at_boundary())
-// 	    {
-// 	      if (std::abs(face_center[0]+(domainSizeX/2.0))<1.0e-8)
-// 		cell->face(f)->set_boundary_id(1);
-// 	      else if (std::abs(face_center[0]-(domainSizeX/2.0))<1.0e-8)
-// 		cell->face(f)->set_boundary_id(2);
-// 	      else if (std::abs(face_center[1]+(domainSizeY/2.0))<1.0e-8)
-// 		cell->face(f)->set_boundary_id(3);
-// 	      else if (std::abs(face_center[1]-(domainSizeY/2.0))<1.0e-8)
-// 		cell->face(f)->set_boundary_id(4);
-// 	      else if (std::abs(face_center[2]+(domainSizeZ/2.0))<1.0e-8)
-// 		cell->face(f)->set_boundary_id(5);
-// 	      else if (std::abs(face_center[2]-(domainSizeZ/2.0))<1.0e-8)
-// 		cell->face(f)->set_boundary_id(6);
-// 	    }
-// 	}
-//     }
-
-//   std::vector<GridTools::PeriodicFacePair<typename parallel::distributed::Triangulation<3>::cell_iterator> > periodicity_vector;
-//   for (int i = 0; i < 3; ++i)
-//     {
-//       GridTools::collect_periodic_faces(triangulation, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector);
-//     }
-//   triangulation.add_periodicity(periodicity_vector);
-// #endif  
-    
   //
   //initialize FE objects
   //
@@ -276,7 +242,7 @@ void dftClass<FEOrder>::init(){
   //
   ConstraintMatrix constraintsTemp(constraintsNone); constraintsNone.clear(); 
   std::set<unsigned int> masterNodes;
-  double periodicPrecision = 1.0e-8;
+  double periodicPrecision = 1.0e-5;
 
   //
   //fill all masters
@@ -1072,7 +1038,7 @@ void dftClass<FEOrder>::init(){
   fChebyshev.reinit(vChebyshev);
   aj[0].reinit(vChebyshev); aj[1].reinit(vChebyshev); aj[2].reinit(vChebyshev);
   aj[3].reinit(vChebyshev); aj[4].reinit(vChebyshev);
-  for (unsigned int i=0; i<eigenVectors[0].size(); ++i)
+  for (unsigned int i=0; i<numEigenValues; ++i)
     {  
       PSI[i]->reinit(vChebyshev);
       tempPSI[i]->reinit(vChebyshev);
@@ -1081,13 +1047,16 @@ void dftClass<FEOrder>::init(){
       tempPSI4[i]->reinit(vChebyshev);
     } 
   
-  for(unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+  for(unsigned int kPoint = 0; kPoint < (1+spinPolarized)*d_maxkPoints; ++kPoint)
     {
-      for(unsigned int i = 0; i < eigenVectors[kPoint].size(); ++i)
-	{
-	  eigenVectors[kPoint][i]->reinit(vChebyshev);
-	  eigenVectorsOrig[kPoint][i]->reinit(vChebyshev);
-	}
+     //for (unsigned int j=0; j<spinPolarized+1; ++j) // for spin
+     //  {
+        for (unsigned int i=0; i<eigenVectors[kPoint].size(); ++i)
+	  {
+	    eigenVectors[kPoint][i]->reinit(vChebyshev);
+	    eigenVectorsOrig[kPoint][i]->reinit(vChebyshev);
+	  }
+     // }
     }
 
   //
@@ -1105,27 +1074,34 @@ void dftClass<FEOrder>::init(){
   //Initialize libxc (exchange-correlation)
   //
   int exceptParamX, exceptParamC;
-
-
+  int isSpinPolarized ;
+  if (spinPolarized == 1)
+     {
+        isSpinPolarized = XC_POLARIZED ;
+     }
+  else
+     {
+        isSpinPolarized = XC_UNPOLARIZED ;
+     }
   if(xc_id == 1)
     {
-      exceptParamX = xc_func_init(&funcX,XC_LDA_X,XC_UNPOLARIZED);
-      exceptParamC = xc_func_init(&funcC,XC_LDA_C_PZ,XC_UNPOLARIZED);
+      exceptParamX = xc_func_init(&funcX,XC_LDA_X, isSpinPolarized);
+      exceptParamC = xc_func_init(&funcC,XC_LDA_C_PZ, isSpinPolarized);
     }
   else if(xc_id == 2)
     {
-      exceptParamX = xc_func_init(&funcX,XC_LDA_X,XC_UNPOLARIZED);
-      exceptParamC = xc_func_init(&funcC,XC_LDA_C_PW,XC_UNPOLARIZED);
+      exceptParamX = xc_func_init(&funcX,XC_LDA_X, isSpinPolarized);
+      exceptParamC = xc_func_init(&funcC,XC_LDA_C_PW, isSpinPolarized);
     }
   else if(xc_id == 3)
     {
-      exceptParamX = xc_func_init(&funcX,XC_LDA_X,XC_UNPOLARIZED);
-      exceptParamC = xc_func_init(&funcC,XC_LDA_C_VWN,XC_UNPOLARIZED);
+      exceptParamX = xc_func_init(&funcX,XC_LDA_X, isSpinPolarized);
+      exceptParamC = xc_func_init(&funcC,XC_LDA_C_VWN, isSpinPolarized);
     }
   else if(xc_id == 4)
     {
-      exceptParamX = xc_func_init(&funcX,XC_GGA_X_PBE,XC_UNPOLARIZED);
-      exceptParamC = xc_func_init(&funcC,XC_GGA_C_PBE,XC_UNPOLARIZED);
+      exceptParamX = xc_func_init(&funcX,XC_GGA_X_PBE,isSpinPolarized);
+      exceptParamC = xc_func_init(&funcC,XC_GGA_C_PBE,isSpinPolarized);
     }
   else if(xc_id > 4)
     {
@@ -1150,9 +1126,22 @@ void dftClass<FEOrder>::init(){
   if(isPseudopotential)
     {
       initLocalPseudoPotential();
-      initNonLocalPseudoPotential();
-      computeSparseStructureNonLocalProjectors();
-      computeElementalProjectorKets();
+      //
+      if (pseudoProjector==2)
+         initNonLocalPseudoPotential_OV() ;
+      else
+         initNonLocalPseudoPotential();	
+      //
+      //
+      if (pseudoProjector==2){
+         computeSparseStructureNonLocalProjectors_OV();
+         computeElementalOVProjectorKets();
+	}
+      else{
+	 computeSparseStructureNonLocalProjectors();
+         computeElementalProjectorKets();
+	}
+	
     }
  
   //
@@ -1171,4 +1160,16 @@ void dftClass<FEOrder>::init(){
   //
   pcout << "reading initial guess for PSI\n";
   readPSI();
+  //
+#ifdef ENABLE_PERIODIC_BC
+  if (useSymm){
+  //
+  //initialize group symmetries
+  //
+  pcout << "working on group symmetry related mappings \n";
+  computing_timer.enter_section("init symmetry"); 
+  initSymmetry();
+  computing_timer.exit_section("init symmetry"); 
+  }
+#endif
 }

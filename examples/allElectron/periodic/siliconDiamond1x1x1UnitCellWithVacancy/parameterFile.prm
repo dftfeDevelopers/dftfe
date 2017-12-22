@@ -1,7 +1,7 @@
 #
 #path specifying the location of the "build" directory which is usually the location of "src" folder 
 #
-set DFT PATH = "../../../.."
+set DFT PATH = "../../../../"
 
 #
 #finite-element related parameters
@@ -43,7 +43,11 @@ set LATTICE VECTORS FILE = latticeVectors.inp
 #kPoint Quadrature Rule file for sampling the Brillouin zone (used only in Periodic calculation)
 #(Located in $DFT PATH/data/kPointList)
 #
-set kPOINT RULE FILE = GammaPoint.inp
+#set kPOINT RULE FILE = GammaPoint.inp
+set BZ SAMPLING POINTS ALONG X = 4
+set BZ SAMPLING POINTS ALONG Y = 4
+set BZ SAMPLING POINTS ALONG Z = 4
+set USE GROUP SYMMETRY = true
 
 #
 #DFT functional related parameters
