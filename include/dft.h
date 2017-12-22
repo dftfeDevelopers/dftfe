@@ -28,6 +28,7 @@
 #include "headers.h"
 #include "poisson.h"
 #include "eigen.h"
+#include "spglib.h"
 
 #include <interpolation.h> 
 #include <xc.h>
@@ -118,12 +119,55 @@ class dftClass
   void set();
   void readkPointData();
   //
+  // ************************************************************************************************************************************  //
   void generateMPGrid();
-  void displayQuadPoints();
+  void test_spg_get_ir_reciprocal_mesh();
+  void initSymmetry();
   Point<3> crys2cart(Point<3> p, int i);
-  std::vector<std::map<CellId,std::vector<typename DoFHandler<3>::active_cell_iterator> >>  cellMapTable ;
-  std::vector<std::map<CellId,std::vector<Point<3>> >>  mappedPoint ;
+  std::map<CellId,std::vector<std::tuple<int, std::vector<double>, int> >>  cellMapTable ;
+  //std::vector<std::map<CellId,std::vector<std::vector<std::tuple<typename DoFHandler<3>::active_cell_iterator, Point<3>, int> >>>> mappedGroup ;
+  std::vector<std::vector<std::vector<std::tuple<int, int, int> >>> mappedGroup ;
+  // Communication vectors required for rho-symmetrization
+  std::vector<std::vector<std::vector<std::vector<int> >>> mappedGroupSend0;
+  std::vector<std::vector<std::vector<std::vector<int> >>> mappedGroupSend2;
+  std::vector<std::vector<std::vector<std::vector<std::vector<double>>> >> mappedGroupSend1;
+  std::vector<std::vector<std::vector<int> >> mappedGroupRecvd0;
+  std::vector<std::vector<std::vector<int> >> mappedGroupRecvd2;
+  std::vector<std::vector<std::vector<std::vector<double>>> > mappedGroupRecvd1;
+  std::vector<std::vector<std::vector<std::vector<int>> >> send_buf_size;
+  std::vector<std::vector<std::vector<std::vector<int>> >> recv_buf_size;
+  std::vector<std::vector<std::vector<std::vector<double>>> > rhoRecvd, gradRhoRecvd;
+  std::vector<std::vector<std::vector<std::vector<int>> >> groupOffsets;
+  std::map<int,typename DoFHandler<3>::active_cell_iterator> dealIICellId ;
+  std::map<CellId, int> globalCellId ;
+  std::vector<int> ownerProcGlobal;
+  std::vector<int> mpi_scatter_offset, send_scatter_size, recv_size, mpi_scatterGrad_offset, send_scatterGrad_size;
+  unsigned int totPoints ;
+  double translation[500][3];
+  std::vector<std::vector<int>> symmUnderGroup ;
+  std::vector<int> numSymmUnderGroup ;
   //
+  std::vector<typename DoFHandler<3>::active_cell_iterator> vertex2cell ;
+  std::vector<double> vertices_x_unique, vertices_y_unique, vertices_z_unique ;
+  std::vector<std::vector<unsigned int>> index_list_x, index_list_y, index_list_z ;
+  //
+  unsigned int bisectionSearch(std::vector<double> &arr, double x) ;
+  unsigned int sort_vertex (const DoFHandler<3> &mesh)  ;        
+  unsigned int find_cell (Point<3> p) ;  
+  //
+  std::pair<typename DoFHandler<3>::active_cell_iterator, Point<3> > 
+  find_active_cell_around_point_custom (const Mapping<3>  &mapping,
+                                 const DoFHandler<3> &mesh,
+                                 const Point<3>        &p) ;
+  unsigned int find_closest_vertex_custom (const DoFHandler<3> &mesh,
+                       const Point<3>        &p) ;
+  std::vector< Point<3> > vertices ;
+  //
+  std::vector<int> mpi_offsets0, mpi_offsets1 ;
+  std::vector<int> recvdData0, recvdData2, recvdData3;  
+  std::vector<std::vector<double>> recvdData1;
+  std::vector<int> recv_size0, recv_size1, recvSize;
+  // ************************************************************************************************************************************  //
   void generateImageCharges();
   void determineOrbitalFilling();
 
@@ -149,8 +193,11 @@ class dftClass
   void loadPSIFiles(unsigned int Z, unsigned int n, unsigned int l, unsigned int & flag);
   void initLocalPseudoPotential();
   void initNonLocalPseudoPotential();
+  void initNonLocalPseudoPotential_OV();
   void computeSparseStructureNonLocalProjectors();
+  void computeSparseStructureNonLocalProjectors_OV();
   void computeElementalProjectorKets();
+  void computeElementalOVProjectorKets();
 
   /**
    * Categorizes atoms into bins based on self-potential ball radius around each atom such 
@@ -170,6 +217,7 @@ class dftClass
    */
   void compute_rhoOut();
   void computeAndSymmetrize_rhoOut();
+  void computeLocalrhoOut();
  
   /**
    * Mixing schemes for mixing electron-density
@@ -212,7 +260,7 @@ class dftClass
    */
   unsigned int numElectrons, numLevels;
   std::set<unsigned int> atomTypes;
-  std::vector<std::vector<double> > atomLocations,d_latticeVectors,d_reciprocalLatticeVectors, d_imagePositions;
+  std::vector<std::vector<double> > atomLocations,atomLocationsFractional,d_latticeVectors,d_reciprocalLatticeVectors, d_imagePositions;
   std::vector<int> d_imageIds;
   std::vector<double> d_imageCharges;
   std::vector<orbital> waveFunctionsVector;
@@ -306,7 +354,8 @@ class dftClass
   //
   //storage for nonlocal pseudopotential constants
   //
-  std::vector<std::vector<double> > d_nonLocalPseudoPotentialConstants;
+  std::vector<std::vector<double> > d_nonLocalPseudoPotentialConstants; 
+  std::vector<std::vector<std::vector<double> >> d_nonLocalPseudoPotentialConstants_OV; 
 
   //
   //globalChargeId to ImageChargeId Map

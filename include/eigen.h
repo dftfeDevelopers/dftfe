@@ -43,6 +43,8 @@ public:
 
   void computeNonLocalHamiltonianTimesX(const std::vector<vectorType*> &src,
 					std::vector<vectorType*>       &dst);
+  void computeNonLocalHamiltonianTimesX_OV(const std::vector<vectorType*> &src,
+					std::vector<vectorType*>       &dst);
 
   void init ();
   void computeMassVector();

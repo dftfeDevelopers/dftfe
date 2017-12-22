@@ -21,7 +21,8 @@
 //
 #include <deal.II/base/data_out_base.h>
 #include <deal.II/base/parameter_handler.h>
-
+//SPG header
+#include "spglib.h"
 //
 //C++ headers
 //
@@ -29,13 +30,13 @@
 #include <iostream>
 #include <fstream>
 
-unsigned int finiteElementPolynomialOrder,n_refinement_steps,numberEigenValues,xc_id, spinPolarized, nkx,nky,nkz;
+unsigned int finiteElementPolynomialOrder,n_refinement_steps,numberEigenValues,xc_id, spinPolarized, nkx,nky,nkz, pseudoProjector;
 unsigned int chebyshevOrder,numPass,numSCFIterations,maxLinearSolverIterations, mixingHistory;
 
-double radiusAtomBall, domainSizeX, domainSizeY, domainSizeZ, mixingParameter;
+double radiusAtomBall, domainSizeX, domainSizeY, domainSizeZ, mixingParameter, dkx, dky, dkz;
 double lowerEndWantedSpectrum,relLinearSolverTolerance,selfConsistentSolverTolerance,TVal, start_magnetization;
 
-bool isPseudopotential,periodicX,periodicY,periodicZ, useSymm;
+bool isPseudopotential,periodicX,periodicY,periodicZ, useSymm, symmFromFile;
 std::string meshFileName,coordinatesFile,currentPath,latticeVectorsFile,kPointDataFile, symmDataFile;
 
 //
@@ -90,6 +91,9 @@ void declare_parameters()
   prm.declare_entry("kPOINT RULE FILE", "",
 		    Patterns::Anything(),
 		    "File specifying the k-Point quadrature rule to sample Brillouin zone");
+  prm.declare_entry("READ SYMMETRY FROM FILE", "false",
+		    Patterns::Bool(),
+		    "Flag to control whether to read symmetries supplied by user");
   prm.declare_entry("SYMMETRY MATRIX FILE", "",
 		    Patterns::Anything(),
 		    "File specifying the symmetry matrices for obtaining the irreducible BZ");
@@ -102,6 +106,15 @@ void declare_parameters()
   prm.declare_entry("BZ SAMPLING POINTS ALONG Z", "2",
 		    Patterns::Integer(1,100),
 		    "Number of Monkhorts-Pack grid points to be used along Z direction for BZ sampling");
+  prm.declare_entry("BZ SAMPLING SHIFT ALONG X", "0.0",
+		    Patterns::Double(0.0,1.0),
+		    "Fractional shifting to be used along X direction for BZ sampling");
+  prm.declare_entry("BZ SAMPLING SHIFT ALONG Y", "0.0",
+		    Patterns::Double(0.0,1.0),
+		    "Fractional shifting to be used along Y direction for BZ sampling");
+  prm.declare_entry("BZ SAMPLING SHIFT ALONG Z", "0.0",
+		    Patterns::Double(0.0,1.0),
+		    "Fractional shifting to be used along Z direction for BZ sampling");
   prm.declare_entry("USE GROUP SYMMETRY", "true",
 		    Patterns::Bool(),
 		    "Flag to control usage of space group symmetries (only for periodic calculation)");
@@ -150,13 +163,16 @@ void declare_parameters()
   prm.declare_entry("PSEUDOPOTENTIAL CALCULATION", "false",
 		    Patterns::Bool(),
 		    "Boolean Parameter specifying whether pseudopotential DFT calculation needs to be performed"); 
+  prm.declare_entry("PSEUDOPOTENTIAL NONLOCAL PROJECTOR", "1",
+		    Patterns::Integer(1,2),
+		    "Type of nonlocal projector to be used: 1 for KB, 2 for ONCV, default is KB"); 
 
   prm.declare_entry("EXCHANGE CORRELATION TYPE", "1",
 		    Patterns::Integer(1,4),
 		    "Parameter specifying the type of exchange-correlation to be used");
 
   prm.declare_entry("NUMBER OF REFINEMENT STEPS", "4",
-		    Patterns::Integer(1,4),
+		    Patterns::Integer(1,10),
 		    "Number of refinement steps to be used");
 
   prm.declare_entry("LOWER BOUND WANTED SPECTRUM", "-10.0",
@@ -255,12 +271,17 @@ void parse_command_line(const int argc,
 	  periodicZ                     = prm.get_bool("PERIODIC BOUNDARY CONDITION Z");
 	  latticeVectorsFile            = prm.get("LATTICE VECTORS FILE");
 	  kPointDataFile                = prm.get("kPOINT RULE FILE");
+	  symmFromFile                  = prm.get_bool("READ SYMMETRY FROM FILE");
           symmDataFile                  = prm.get("SYMMETRY MATRIX FILE");
           nkx				= prm.get_integer("BZ SAMPLING POINTS ALONG X");
 	  nky				= prm.get_integer("BZ SAMPLING POINTS ALONG Y");
           nkz				= prm.get_integer("BZ SAMPLING POINTS ALONG Z");
+	  dkx				= prm.get_double("BZ SAMPLING SHIFT ALONG X");
+	  dky				= prm.get_double("BZ SAMPLING SHIFT ALONG Y");
+          dkz				= prm.get_double("BZ SAMPLING SHIFT ALONG Z");
           useSymm 	                = prm.get_bool("USE GROUP SYMMETRY");
 	  isPseudopotential             = prm.get_bool("PSEUDOPOTENTIAL CALCULATION");
+	  pseudoProjector               = prm.get_integer("PSEUDOPOTENTIAL NONLOCAL PROJECTOR");
 	  xc_id                         = prm.get_integer("EXCHANGE CORRELATION TYPE");
 	  numberEigenValues             = prm.get_integer("NUMBER OF KOHN-SHAM WAVEFUNCTIONS");
 	  lowerEndWantedSpectrum        = prm.get_double("LOWER BOUND WANTED SPECTRUM");

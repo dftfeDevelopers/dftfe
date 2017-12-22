@@ -15,12 +15,12 @@
 //
 // @author Shiva Rudraraju (2016), Phani Motamarri (2016)
 //
-
 #include "initRho.cc"
 #include "initPseudo.cc"
-
+#include <algorithm>
 #ifdef ENABLE_PERIODIC_BC
 #include "initkPointData.cc"
+#include "initGroupSymmetry.cc"
 #endif
 
 //
@@ -137,6 +137,7 @@ void dftClass<FEOrder>::init(){
   computing_timer.enter_section("setup");
 
 #ifdef ENABLE_PERIODIC_BC
+/*
   //mark faces
   typename parallel::distributed::Triangulation<3>::active_cell_iterator cell = triangulation.begin_active(), endc = triangulation.end();
   for(; cell!=endc; ++cell) 
@@ -165,11 +166,11 @@ void dftClass<FEOrder>::init(){
   std::vector<GridTools::PeriodicFacePair<typename parallel::distributed::Triangulation<3>::cell_iterator> > periodicity_vector;
   for (int i = 0; i < 3; ++i)
     {
-      GridTools::collect_periodic_faces(triangulation, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector);
+      GridTools::collect_periodic_faces(triangulation,  2*i+1,  2*i+2, i, periodicity_vector);
     }
   triangulation.add_periodicity(periodicity_vector);
+*/
 #endif  
-    
   //
   //initialize FE objects
   //
@@ -224,8 +225,9 @@ void dftClass<FEOrder>::init(){
   DataOut<3> data_out;
   data_out.attach_dof_handler (dofHandler);
   data_out.build_patches ();
-  std::ofstream output("mesh.vtu");
-  data_out.write_vtu(output); 
+  //std::ofstream output("mesh.vtu");
+  //data_out.write_vtu(output); 
+  data_out.write_vtu_in_parallel(std::string("mesh.vtu").c_str(),mpi_communicator); 
 
   //
   //matrix free data structure
@@ -272,7 +274,7 @@ void dftClass<FEOrder>::init(){
   //
   ConstraintMatrix constraintsTemp(constraintsNone); constraintsNone.clear(); 
   std::set<unsigned int> masterNodes;
-  double periodicPrecision = 1.0e-8;
+  double periodicPrecision = 1.0e-5;
 
   //
   //fill all masters
@@ -1152,9 +1154,22 @@ void dftClass<FEOrder>::init(){
   if(isPseudopotential)
     {
       initLocalPseudoPotential();
-      initNonLocalPseudoPotential();
-      computeSparseStructureNonLocalProjectors();
-      computeElementalProjectorKets();
+      //
+      if (pseudoProjector==2)
+         initNonLocalPseudoPotential_OV() ;
+      else
+         initNonLocalPseudoPotential();	
+      //
+      //
+      if (pseudoProjector==2){
+         computeSparseStructureNonLocalProjectors_OV();
+         computeElementalOVProjectorKets();
+	}
+      else{
+	 computeSparseStructureNonLocalProjectors();
+         computeElementalProjectorKets();
+	}
+	
     }
  
   //
@@ -1173,73 +1188,16 @@ void dftClass<FEOrder>::init(){
   //
   pcout << "reading initial guess for PSI\n";
   readPSI();
-}
-template<unsigned int FEOrder>
-void dftClass<FEOrder>::displayQuadPoints()
-{
-//
-  QGauss<3>  quadrature(FEOrder+1);
-  FEValues<3> fe_values (FEEigen, quadrature, update_values | update_gradients| update_JxW_values | update_quadrature_points);
-  const unsigned int num_quad_points = quadrature.size();
-  Point<3> p, ptemp, p0 ;
-  MappingQ1<3> mapping;
-  char buffer[100];
- //
- typename DoFHandler<3>::active_cell_iterator cell = dofHandlerEigen.begin_active(), endc = dofHandlerEigen.end();
- //std::vector< Table<2,typename DoFHandler<3> > > cellMapTable ;
- std::pair<typename DoFHandler<3>::active_cell_iterator, Point<3> > mapped_cell;
- cellMapTable.resize(numSymm) ;
- mappedPoint.resize(numSymm) ;
- //
-  for (; cell!=endc; ++cell) 
-    {
-      if (cell->is_locally_owned())
-	{
-	  fe_values.reinit (cell);
-          for (unsigned int iSymm = 0; iSymm < numSymm; ++iSymm) 
-	      {
-          	cellMapTable[iSymm][cell->id()] = std::vector<typename DoFHandler<3>::active_cell_iterator>(num_quad_points);
-		mappedPoint [iSymm][cell->id()] = std::vector<Point<3>>(num_quad_points);
-	      }
-	  //
-	  //pcout << " Cell " << cell << std::endl;
-          for(unsigned int q_point=0; q_point<num_quad_points; ++q_point) {
-              p = fe_values.quadrature_point(q_point) ;
-              //sprintf(buffer, "quad point: %22.10e %22.10e %22.10e\n", p[0], p[1], p[2]); pcout << buffer;
-	      p0 = crys2cart(p,-1) ;
-	      //sprintf(buffer, "quad point: %22.10e %22.10e %22.10e\n", p[0], p[1], p[2]); pcout << buffer;
-	      //
-              for (unsigned int iSymm = 0; iSymm < numSymm; ++iSymm) {
-	         ptemp[0] = p0[0]*symmMat[iSymm][0][0] + p0[1]*symmMat[iSymm][0][1] + p0[2]*symmMat[iSymm][0][2] ;
-                 ptemp[1] = p0[0]*symmMat[iSymm][1][0] + p0[1]*symmMat[iSymm][1][1] + p0[2]*symmMat[iSymm][1][2] ;
-                 ptemp[2] = p0[0]*symmMat[iSymm][2][0] + p0[1]*symmMat[iSymm][2][1] + p0[2]*symmMat[iSymm][2][2] ; 
-	         //
-                 p = crys2cart(ptemp,1) ;
-                 //sprintf(buffer, "quad point: %22.10e %22.10e %22.10e\n", p[0], p[1], p[2]); pcout << buffer;
-		 mapped_cell = GridTools::find_active_cell_around_point ( mapping, dofHandlerEigen, p ) ;
-	         cellMapTable [iSymm][cell->id()][q_point] = mapped_cell.first ;	
-		 mappedPoint [iSymm][cell->id()][q_point] =  GeometryInfo<3>::project_to_unit_cell (mapped_cell.second) ;
-                 //pcout << " Check map - cell id: " <<  cellMapTable [iSymm][cell->id()][q_point] << " point: "  <<mappedPoint [iSymm][cell->id()][q_point] << std::endl;
-	     }
-          }
-        }
-     }
-}    
-template<unsigned int FEOrder>
-Point<3> dftClass<FEOrder>::crys2cart(Point<3> p, int flag)
-{
-  Point<3> ptemp ;
-  if (flag==1){
-    ptemp[0] = p[0]*d_latticeVectors[0][0] + p[1]*d_latticeVectors[1][0] + p[2]*d_latticeVectors[2][0] ;
-    ptemp[1] = p[0]*d_latticeVectors[0][1] + p[1]*d_latticeVectors[1][1] + p[2]*d_latticeVectors[2][1] ;
-    ptemp[2] = p[0]*d_latticeVectors[0][2] + p[1]*d_latticeVectors[1][2] + p[2]*d_latticeVectors[2][2] ;
+  //
+#ifdef ENABLE_PERIODIC_BC
+  if (useSymm){
+  //
+  //initialize group symmetries
+  //
+  pcout << "working on group symmetry related mappings \n";
+  computing_timer.enter_section("init symmetry"); 
+  initSymmetry();
+  computing_timer.exit_section("init symmetry"); 
   }
-  if (flag==-1){
-    ptemp[0] = p[0]*d_reciprocalLatticeVectors[0][0] + p[1]*d_reciprocalLatticeVectors[0][1] + p[2]*d_reciprocalLatticeVectors[0][2] ;
-    ptemp[1] = p[0]*d_reciprocalLatticeVectors[1][0] + p[1]*d_reciprocalLatticeVectors[1][1] + p[2]*d_reciprocalLatticeVectors[1][2] ;
-    ptemp[2] = p[0]*d_reciprocalLatticeVectors[2][0] + p[1]*d_reciprocalLatticeVectors[2][1] + p[2]*d_reciprocalLatticeVectors[2][2] ;
-    ptemp = 1.0 / (2.0*M_PI) * ptemp ;
-  }
-
-  return ptemp;
+#endif
 }

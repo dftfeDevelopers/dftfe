@@ -7,7 +7,7 @@ set DFT PATH = "../../../../"
 #finite-element related parameters
 #
 set MESH FILE = mesh.inp
-set FINITE ELEMENT POLYNOMIAL ORDER = 4
+set FINITE ELEMENT POLYNOMIAL ORDER = 3
 
 #
 #Atomic-coordinates file
@@ -34,8 +34,8 @@ set PERIODIC BOUNDARY CONDITION X = true
 set PERIODIC BOUNDARY CONDITION Y = true
 set PERIODIC BOUNDARY CONDITION Z = true
 #spin polarization
-set SPIN POLARIZATION = 1
-set START MAGNETIZATION = 0.05
+set SPIN POLARIZATION = 0
+set START MAGNETIZATION = 0.0
 #
 #Lattice Vectors file specifying the lattice vectors associated with the unit-cell(used only for periodic calculation)
 #
@@ -45,12 +45,17 @@ set LATTICE VECTORS FILE = latticeVectors.inp
 #kPoint Quadrature Rule file for sampling the Brillouin zone (used only in Periodic calculation)
 #(Located in $DFT PATH/data/kPointList)
 #
-set kPOINT RULE FILE = GammaPoint.inp
+#set kPOINT RULE FILE = GammaPoint.inp
+set BZ SAMPLING POINTS ALONG X = 1
+set BZ SAMPLING POINTS ALONG Y = 1
+set BZ SAMPLING POINTS ALONG Z = 2
+set BZ SAMPLING SHIFT ALONG X = 0.00
+set BZ SAMPLING SHIFT ALONG Y = 0.00
+set BZ SAMPLING SHIFT ALONG Z = 0.25
+set USE GROUP SYMMETRY = true
 
-#
-#DFT functional related parameters
-#
-
+set SYMMETRY MATRIX FILE = symmetryMatrixFile.inp
+set READ SYMMETRY FROM FILE = true
 #Pseudopotential calculation or all-electron calculation
 set PSEUDOPOTENTIAL CALCULATION = false
 
@@ -59,7 +64,7 @@ set PSEUDOPOTENTIAL CALCULATION = false
 # 2 (LDA: Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)])
 # 3 (LDA: Vosko, Wilk & Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)])
 # 4 (GGA: Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)])*/
-set EXCHANGE CORRELATION TYPE = 4
+set EXCHANGE CORRELATION TYPE = 1
 
 #
 #Eigen-solver/Chebyshev solver related parameters
