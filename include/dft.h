@@ -95,7 +95,10 @@ class dftClass
    * dftClass constructor
    */
   dftClass();
-
+  /**
+   * dftClass destructor
+   */
+  ~dftClass();
   /**
    * Sets up Kohn-Sham SCF iteration after the required pre-processing steps
    */
