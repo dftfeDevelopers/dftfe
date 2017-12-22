@@ -947,5 +947,7 @@ void dftClass<FEOrder>::initUnmovedTriangulation(){
   //
   constraintsNone.merge(d_noConstraints,ConstraintMatrix::MergeConflictBehavior::right_object_wins);
   constraintsNoneEigen.merge(d_noConstraintsEigen,ConstraintMatrix::MergeConflictBehavior::right_object_wins);
+  constraintsNone.close();
+  constraintsNoneEigen.close();
   computing_timer.exit_section("unmoved setup");    
 }
