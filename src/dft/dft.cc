@@ -320,12 +320,6 @@ void dftClass<FEOrder>::run ()
   //
   solveVself();
 
-
-  computing_timer.enter_section("configurational force computation"); 
-  forcePtr->computeAtomsForces();
-  forcePtr->printAtomsForces();
-  computing_timer.exit_section("configurational force computation");
-  exit(0);
   //
   //solve
   //

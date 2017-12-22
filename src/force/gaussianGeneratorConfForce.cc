@@ -18,7 +18,7 @@
 
 //Configurational force on atoms corresponding to Gaussian generator. Generator is discretized using linear FE shape functions. Configurational force on nodes due to linear FE shape functions precomputed 
 template<unsigned int FEOrder>
-void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator()
+void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussianOverlapOnAtoms)
 {
   const std::vector<std::vector<double> > & atomLocations=dftPtr->atomLocations;
   const std::vector<std::vector<double> > & imagePositions=dftPtr->d_imagePositions;
@@ -77,7 +77,7 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator()
 	       }
 	     }
 	  }
-	  if (!d_constraintsNoneForce.is_constrained(globalDofIndex)|| isGaussianOverlapOtherAtom)
+	  if (d_constraintsNoneForce.is_constrained(globalDofIndex)|| (isGaussianOverlapOtherAtom && !allowGaussianOverlapOnAtoms))
 	     continue;		  
 	  const double rsq= (nodalCoor-atomCoor).norm_square();
 	  globalAtomsGaussianForcesLocalPart[C_DIM*atomId]+=std::exp(-d_gaussianConstant*rsq)*d_configForceVectorLinFE[globalDofIndex];
@@ -111,7 +111,7 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator()
 	       }
 	     }
 	  }
-	  if (!d_constraintsNoneForce.is_constrained(globalDofIndex)|| isGaussianOverlapOtherAtom)
+	  if (d_constraintsNoneForce.is_constrained(globalDofIndex)|| (isGaussianOverlapOtherAtom && !allowGaussianOverlapOnAtoms))
 	     continue;		  
 	  const double rsq= (nodalCoor-atomCoor).norm_square();
 	  globalAtomsGaussianForcesLocalPart[C_DIM*atomId+1]+=std::exp(-d_gaussianConstant*rsq)*d_configForceVectorLinFE[globalDofIndex];
@@ -144,7 +144,7 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator()
 	       }
 	     }
 	  }
-	  if (!d_constraintsNoneForce.is_constrained(globalDofIndex)|| isGaussianOverlapOtherAtom)
+	  if (d_constraintsNoneForce.is_constrained(globalDofIndex)|| (isGaussianOverlapOtherAtom && !allowGaussianOverlapOnAtoms))
 	     continue;	  
 	  const double rsq= (nodalCoor-atomCoor).norm_square();
 	  globalAtomsGaussianForcesLocalPart[C_DIM*atomId+2]+=std::exp(-d_gaussianConstant*rsq)*d_configForceVectorLinFE[globalDofIndex];

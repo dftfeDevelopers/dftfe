@@ -54,11 +54,13 @@ void forceClass<FEOrder>::createBinObjectsForce()
 	   for(unsigned int iFace = 0; iFace < faces_per_cell; ++iFace)
            {
               int dirichletDofCount=0;
-	      
+	      std::vector<types::global_dof_index> iFaceGlobalDofIndices(dofs_per_face);
+	      cell->face(iFace)->get_dof_indices(iFaceGlobalDofIndices);		      
 	      for(unsigned int iFaceDof = 0; iFaceDof < dofs_per_face; ++iFaceDof){
-		 unsigned int iCellDof=dftPtr->FE.face_to_cell_index(iFaceDof,iFace,cell->face_orientation(iFace),cell->face_flip(iFace),cell->face_rotation(iFace));// FIXME: throws error in debug mode for FEOrder > 2
-                 unsigned int nodeId=cellGlobalDofIndices[iCellDof];		  
-
+                 unsigned int nodeId=iFaceGlobalDofIndices[iFaceDof];		      
+		 //unsigned int iCellDof=dftPtr->FE.face_to_cell_index(iFaceDof,iFace,cell->face_orientation(iFace),cell->face_flip(iFace),cell->face_rotation(iFace));// FIXME: throws error in debug mode for FEOrder > 2
+                 //unsigned int nodeId2=cellGlobalDofIndices[iCellDof];		  
+	         //AssertThrow(nodeId2==nodeId,ExcMessage("BUG"));	
 		 dirichletDofCount+=boundaryNodeMap[nodeId];
 		 closestAtomIdSum+=closestAtomBinMap[nodeId];
 

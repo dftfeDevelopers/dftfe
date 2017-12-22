@@ -61,7 +61,7 @@ private:
   void computeConfigurationalForceEselfLinFE();
   void computeConfigurationalForceEselfNoSurfaceLinFE();
   void computeConfigurationalForceTotalLinFE();
-  void computeAtomsForcesGaussianGenerator();
+  void computeAtomsForcesGaussianGenerator(bool allowGaussianOverlapOnAtoms=false);
   void relaxAtomsForces();
   void relaxStress();
   void relaxAtomsForcesStress();
@@ -76,6 +76,7 @@ private:
   //Gaussian generator related data and functions
   const double d_gaussianConstant=5.0;
   std::vector<double> d_globalAtomsGaussianForces;
+  const bool d_allowGaussianOverlapOnAtoms=false;//Dont use true except for debugging forces only without mesh movement, as gaussian ovelap on atoms for move mesh is by default set to false
 
   //pointer to dft class
   dftClass<FEOrder>* dftPtr;

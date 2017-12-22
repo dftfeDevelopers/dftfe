@@ -203,7 +203,7 @@ void forceClass<FEOrder>::reinit(bool isTriaRefined)
       //computeSparseStructureNonLocalProjectorsForce();
       //computeElementalProjectorKetsForce();
     }
- 
+   createBinObjectsForce(); 
 
 }
 
@@ -211,7 +211,7 @@ void forceClass<FEOrder>::reinit(bool isTriaRefined)
 template<unsigned int FEOrder>
 void forceClass<FEOrder>::computeAtomsForces(){
   computeConfigurationalForceTotalLinFE();
-  computeAtomsForcesGaussianGenerator();
+  computeAtomsForcesGaussianGenerator(d_allowGaussianOverlapOnAtoms);
 }
 
 
