@@ -49,10 +49,14 @@ private:
   std::vector<unsigned int> d_globalAtomsRelaxationPermissions;
   std::vector<double> d_globalAtomsRelaxationDisplacements;
   void createBinObjectsForce();
+  void initLocalPseudoPotentialForce();
+  void initNonLocalPseudoPotentialForce();
+  void computeSparseStructureNonLocalProjectorsForce();
+  void computeElementalProjectorKetsForce();
   void configForceLinFEInit();
   void configForceLinFEFinalize();
-  void computeConfigurationalForceEEshelbyTensorNonPeriodicLinFE();
-  void computeConfigurationalForceEEshelbyTensorPeriodicLinFE();  
+  void computeConfigurationalForceEEshelbyTensorFPSPNonPeriodicLinFE();
+  void computeConfigurationalForceEEshelbyTensorFPSPPeriodicLinFE();  
   void computeConfigurationalForcePhiExtLinFE();
   void computeConfigurationalForceEselfLinFE();
   void computeConfigurationalForceEselfNoSurfaceLinFE();
@@ -62,6 +66,9 @@ private:
   void relaxStress();
   void relaxAtomsForcesStress();
   void locateAtomCoreNodesForce();
+  
+  //force pseudopotential data
+  std::map<dealii::CellId, std::vector<double> > gradPseudoValues;
 
   //meshMovementGaussianClass object  								       
   meshMovementGaussianClass gaussianMove;

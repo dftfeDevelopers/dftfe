@@ -43,7 +43,7 @@ void dftClass<FEOrder>::initRho()
 	  sprintf(densityFile, "%s/data/electronicStructure/allElectron/z%u/singleAtomData/density.inp", currentPath.c_str(), *it);
 	}
    
-      readFile(2, singleAtomElectronDensity[*it], densityFile);
+      dftUtils::readFile(2, singleAtomElectronDensity[*it], densityFile);
       unsigned int numRows = singleAtomElectronDensity[*it].size()-1;
       std::vector<double> xData(numRows), yData(numRows);
       for(unsigned int irow = 0; irow < numRows; ++irow)

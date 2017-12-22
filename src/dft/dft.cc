@@ -23,7 +23,7 @@
 #include "../../include/poisson.h"
 #include "../../include/force.h"
 #include "../../include/meshMovementGaussian.h"
-#include "../../utils/fileReaders.cc"
+#include "../../include/fileReaders.h"
 //#include "../poisson/poisson.cc"
 //#include "../eigen/eigen.cc"
 #include "moveMeshToAtoms.cc"
@@ -158,7 +158,7 @@ void dftClass<FEOrder>::set()
   //
   //read fractionalCoordinates of atoms in periodic case
   //
-  readFile(numberColumnsCoordinatesFile, atomLocations, coordinatesFile);
+  dftUtils::readFile(numberColumnsCoordinatesFile, atomLocations, coordinatesFile);
   pcout << "number of atoms: " << atomLocations.size() << "\n";
 
   //
@@ -181,7 +181,7 @@ void dftClass<FEOrder>::set()
   //read lattice Vectors
   //
   unsigned int numberColumnsLatticeVectorsFile = 3;
-  readFile(numberColumnsLatticeVectorsFile,d_latticeVectors,latticeVectorsFile);
+  dftUtils::readFile(numberColumnsLatticeVectorsFile,d_latticeVectors,latticeVectorsFile);
   for(int i = 0; i < d_latticeVectors.size(); ++i)
     {
       pcout<<"lattice vectors: "<<d_latticeVectors[i][0]<<" "<<d_latticeVectors[i][1]<<" "<<d_latticeVectors[i][2]<<"\n";
@@ -208,7 +208,7 @@ void dftClass<FEOrder>::set()
     }
 
 #else
-  readFile(numberColumnsCoordinatesFile, atomLocations, coordinatesFile);
+  dftUtils::readFile(numberColumnsCoordinatesFile, atomLocations, coordinatesFile);
   pcout << "number of atoms: " << atomLocations.size() << "\n";
 
   //
@@ -315,12 +315,17 @@ void dftClass<FEOrder>::run ()
   //
   initMovedTriangulation();
 
-
   //
   //solve vself
   //
   solveVself();
- 
+
+
+  computing_timer.enter_section("configurational force computation"); 
+  forcePtr->computeAtomsForces();
+  forcePtr->printAtomsForces();
+  computing_timer.exit_section("configurational force computation");
+  exit(0);
   //
   //solve
   //

@@ -46,6 +46,7 @@ SET(TARGET_SRC
   ./src/force/eshelbyTensor/eshelbyTensor.cc
   ./src/meshMovement/meshMovement.cc
   ./src/meshMovement/meshMovementGaussian.cc
+  ./utils/fileReaders.cc
   # You can specify additional files here!
   )
 

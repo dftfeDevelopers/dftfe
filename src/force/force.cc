@@ -21,7 +21,10 @@
 #include "../../include/poisson.h"
 #include "../../include/constants.h"
 #include "../../include/eshelbyTensor.h"
-#include "configurationalForceLinFE.cc"
+#include "../../include/fileReaders.h"
+#include "configurationalForceEEshelbyFPSPLinFE.cc"
+#include "configurationalForceEselfLinFE.cc"
+#include "initPseudoForce.cc"
 #include "createBinObjectsForce.cc"
 #include "gaussianGeneratorConfForce.cc"
 #include "locateAtomCoreNodesForce.cc"
@@ -109,6 +112,16 @@ void forceClass<FEOrder>::init()
   createBinObjectsForce();
   locateAtomCoreNodesForce();
   gaussianMove.init(dftPtr->triangulation);
+  //
+  //initialize pseudopotential related force objects
+  //
+  if(dftPtr->d_isPseudopotential)
+    {
+      initLocalPseudoPotentialForce();
+      //initNonLocalPseudoPotentialForce();
+      //computeSparseStructureNonLocalProjectorsForce();
+      //computeElementalProjectorKetsForce();
+    }
   computing_timer.exit_section("forceClass setup"); 
 }
 
@@ -180,7 +193,17 @@ void forceClass<FEOrder>::reinit(bool isTriaRefined)
       }
   }    
 
-  createBinObjectsForce();
+  //
+  //initialize pseudopotential related force objects
+  //
+  if(dftPtr->d_isPseudopotential)
+    {
+      initLocalPseudoPotentialForce();
+      //initNonLocalPseudoPotentialForce();
+      //computeSparseStructureNonLocalProjectorsForce();
+      //computeElementalProjectorKetsForce();
+    }
+ 
 
 }
 
@@ -191,6 +214,54 @@ void forceClass<FEOrder>::computeAtomsForces(){
   computeAtomsForcesGaussianGenerator();
 }
 
+
+template<unsigned int FEOrder>
+void forceClass<FEOrder>::configForceLinFEInit()
+{
+
+  dftPtr->matrix_free_data.initialize_dof_vector(d_configForceVectorLinFE,d_forceDofHandlerIndex);
+  d_configForceVectorLinFE=0;//also zeros out the ghost vectors
+}
+
+template<unsigned int FEOrder>
+void forceClass<FEOrder>::configForceLinFEFinalize()
+{
+  d_configForceVectorLinFE.compress(VectorOperation::add);//copies the ghost element cache to the owning element 
+  d_constraintsNoneForce.distribute(d_configForceVectorLinFE);//distribute to constrained degrees of freedom (for example periodic)
+  d_configForceVectorLinFE.update_ghost_values();
+
+
+}
+
+//compute configurational force on the mesh nodes using linear shape function generators
+template<unsigned int FEOrder>
+void forceClass<FEOrder>::computeConfigurationalForceTotalLinFE()
+{
+
+ 
+  configForceLinFEInit();
+
+#ifdef ENABLE_PERIODIC_BC
+  computeConfigurationalForceEEshelbyTensorFPSPPeriodicLinFE(); 
+#else  
+  computeConfigurationalForceEEshelbyTensorFPSPNonPeriodicLinFE(); 
+#endif
+
+  //computeConfigurationalForcePhiExtLinFE();
+  //computeConfigurationalForceEselfNoSurfaceLinFE();
+  computeConfigurationalForceEselfLinFE();
+  configForceLinFEFinalize();
+
+  
+  std::map<std::pair<unsigned int,unsigned int>, unsigned int> ::const_iterator it; 
+  for (it=d_atomsForceDofs.begin(); it!=d_atomsForceDofs.end(); ++it){
+	 const std::pair<unsigned int,unsigned int> & atomIdPair= it->first;
+	 const unsigned int atomForceDof=it->second;
+	 std::cout<<" atomId: "<< atomIdPair.first << ", force component: "<<atomIdPair.second << ", force: "<<d_configForceVectorLinFE[atomForceDof] << std::endl;
+  }
+   
+
+}
 
 template<unsigned int FEOrder>
 void forceClass<FEOrder>::relax(){

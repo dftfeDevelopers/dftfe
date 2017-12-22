@@ -136,7 +136,7 @@ void exchangeMasterNodesList(std::vector<unsigned int> & masterNodeIdList,
 //init
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::initUnmovedTriangulation(){
-  computing_timer.enter_section("setup");
+  computing_timer.enter_section("unmoved setup");
   //
   //initialize FE objects
   //
@@ -947,5 +947,5 @@ void dftClass<FEOrder>::initUnmovedTriangulation(){
   //
   constraintsNone.merge(d_noConstraints,ConstraintMatrix::MergeConflictBehavior::right_object_wins);
   constraintsNoneEigen.merge(d_noConstraintsEigen,ConstraintMatrix::MergeConflictBehavior::right_object_wins);
- 
+  computing_timer.exit_section("unmoved setup");    
 }

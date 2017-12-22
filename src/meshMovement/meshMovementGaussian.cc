@@ -65,17 +65,17 @@ void meshMovementGaussianClass::computeIncrement()
             vertex_touched[global_vertex_no]=true;
 	    Point<C_DIM> nodalCoor = cell->vertex(i);
             const double rsq=(nodalCoor-d_controlPointLocations[iControl]).norm_square();
-	    bool isFrozenControlPoint=false;
+	    bool isGaussianOverlapOtherControlPoint=false;
 	    for (unsigned int jControl=0;jControl <d_controlPointLocations.size(); jControl++){
 	      if (jControl !=iControl){
                  const double distanceSq=(nodalCoor-d_controlPointLocations[jControl]).norm_square();
 		 if (distanceSq < 1e-6){
-		    isFrozenControlPoint=true;
+		    isGaussianOverlapOtherControlPoint=true;
 		    break;
 		 }
 	      }
 	    }
-	    if (isFrozenControlPoint)
+	    if (isGaussianOverlapOtherControlPoint)
 	       continue;
 	    const double gaussianWeight=std::exp(-d_controllingParameter*rsq);
 	    for (unsigned int idim=0; idim < C_DIM ; idim++){
