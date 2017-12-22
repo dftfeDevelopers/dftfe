@@ -227,7 +227,7 @@ void dftClass<FEOrder>::set()
     }
 #endif
 
-  /*readFile(numberColumnsCoordinatesFile, atomLocations, coordinatesFile);
+  /*dftUtils::readFile(numberColumnsCoordinatesFile, atomLocations, coordinatesFile);
     pcout << "number of atoms: " << atomLocations.size() << "\n";
     //find unique atom types
     for (std::vector<std::vector<double> >::iterator it=atomLocations.begin(); it<atomLocations.end(); it++){

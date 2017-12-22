@@ -23,7 +23,7 @@ meshMovementGaussianClass::meshMovementGaussianClass()
 }
 
 void meshMovementGaussianClass::moveMesh(std::vector<Point<C_DIM> > controlPointLocations,
-                                         std::vector<Point<C_DIM> > controlPointDisplacements,
+                                         std::vector<Tensor<1,C_DIM,double> > controlPointDisplacements,
                                          double controllingParameter)   
 {
   d_controlPointLocations=controlPointLocations;

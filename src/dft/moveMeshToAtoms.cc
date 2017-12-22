@@ -54,8 +54,9 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,b
       correspondingAtomCoor[0] = atomLocations[atomId][2];
       correspondingAtomCoor[1] = atomLocations[atomId][3];
       correspondingAtomCoor[2] = atomLocations[atomId][4];
-   
-      closestTriaVertexToAtomsLocation.push_back(Point<3>(closestTriaVertexToAtomsLocation[atomId]+correspondingAtomCoor-imageCoor));
+  
+      Point<3> temp=closestTriaVertexToAtomsLocation[atomId]+(correspondingAtomCoor-imageCoor);
+      closestTriaVertexToAtomsLocation.push_back(temp);
       distanceClosestTriaVerticesToAtoms.push_back(distanceClosestTriaVerticesToAtoms[atomId]);
      }
 	
