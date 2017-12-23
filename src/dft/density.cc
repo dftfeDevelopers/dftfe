@@ -133,7 +133,7 @@ void dftClass<FEOrder>::compute_rhoOut()
 			  double factor = (eigenValues[kPoint][i]-fermiEnergy)/(C_kb*TVal);
 			  double partialOccupancy = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)):1.0/(1.0 + std::exp(factor));
 			  //
-			   factor=(eigenValues[kPoint][i+spinPolarized*numEigenValues]-fermiEnergy)/(kb*TVal);
+			   factor=(eigenValues[kPoint][i+spinPolarized*numEigenValues]-fermiEnergy)/(C_kb*TVal);
 			  double partialOccupancy2 = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)):1.0/(1.0 + std::exp(factor));
 #ifdef ENABLE_PERIODIC_BC
 			  if(spinPolarized==1)
@@ -230,7 +230,7 @@ void dftClass<FEOrder>::compute_rhoOut()
 			  double factor=(eigenValues[kPoint][i]-fermiEnergy)/(C_kb*TVal);
 			  double partialOccupancy = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)):1.0/(1.0 + std::exp(factor));
 			  //
-			  factor=(eigenValues[kPoint][i+spinPolarized*numEigenValues]-fermiEnergy)/(kb*TVal);
+			  factor=(eigenValues[kPoint][i+spinPolarized*numEigenValues]-fermiEnergy)/(C_kb*TVal);
 			  double partialOccupancy2 = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)):1.0/(1.0 + std::exp(factor));
 #ifdef ENABLE_PERIODIC_BC
 			   if(spinPolarized==1)

@@ -172,7 +172,7 @@ void dftClass<FEOrder>::generateMPGrid()
   std::vector<std::vector<double> > symmData;
   std::vector<std::vector<std::vector<double> >> symmMatTemp;
   if (symmFromFile) {
-  readFile(numberColumnsSymmDataFile, symmData, symmDataFile);
+  dftUtils::readFile(numberColumnsSymmDataFile, symmData, symmDataFile);
   numSymm = symmData.size()/3 ;
   pcout<<" number of symmetries read from file " << numSymm << std::endl;
   symmMatTemp.resize( numSymm );

@@ -1652,7 +1652,7 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
 	  //
 	  //read the radial function file
 	  //
-	  readFile(numProj+1,radialFunctionData,projRadialFunctionFileName);
+	  dftUtils::readFile(numProj+1,radialFunctionData,projRadialFunctionFileName);
 
         
 	  int numRows = radialFunctionData.size();
@@ -1706,7 +1706,7 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
 	  //
 	  readPseudoDataFileNames >> tempDenominatorDataFileName ;
 	  sprintf(denominatorDataFileName, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/%s", currentPath.c_str(),*it, tempDenominatorDataFileName.c_str());
-	  readFile(projId,denominator,denominatorDataFileName);
+	  dftUtils::readFile(projId,denominator,denominatorDataFileName);
 	  denominatorData[(*it)] = denominator ;
 
         readPseudoDataFileNames.close() ;

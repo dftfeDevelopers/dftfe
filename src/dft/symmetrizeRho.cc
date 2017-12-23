@@ -164,7 +164,7 @@ void dftClass<FEOrder>::computeLocalrhoOut()
       for (unsigned int i = 0; i < numEigenValues; ++i)
 	{
 	  *eigenVectorsOrig[kPoint][i]=*eigenVectors[kPoint][i];
-	  (*eigenVectorsOrig[kPoint][i]).scale(eigen.massVector);
+	  (*eigenVectorsOrig[kPoint][i]).scale(eigenPtr->massVector);
 	  constraintsNoneEigen.distribute(*eigenVectorsOrig[kPoint][i]);
 	  eigenVectorsOrig[kPoint][i]->update_ghost_values();
 	}
@@ -264,10 +264,10 @@ void dftClass<FEOrder>::computeLocalrhoOut()
 		   if (symmUnderGroup[kPoint][iSymm] ==1) {
 		   for(unsigned int i=0; i<numEigenValues; ++i)
 		      {
-		       double factor=(eigenValues[kPoint][i]-fermiEnergy)/(kb*TVal);
+		       double factor=(eigenValues[kPoint][i]-fermiEnergy)/(C_kb*TVal);
 		       double partialOccupancyAlpha = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)):1.0/(1.0 + std::exp(factor));
 		       //
-		       factor=(eigenValues[kPoint][i+spinPolarized*numEigenValues]-fermiEnergy)/(kb*TVal);
+		       factor=(eigenValues[kPoint][i+spinPolarized*numEigenValues]-fermiEnergy)/(C_kb*TVal);
 		       double partialOccupancyBeta = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)):1.0/(1.0 + std::exp(factor));
 		       //
 		       fe_values.get_function_values(*eigenVectorsOrig[(1+spinPolarized)*kPoint][i], tempPsiAlpha);

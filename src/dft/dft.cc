@@ -259,8 +259,8 @@ void dftClass<FEOrder>::set()
 #ifdef ENABLE_PERIODIC_BC
   //readkPointData();
    generateMPGrid();
-   if (useSymm)
-      test_spg_get_ir_reciprocal_mesh() ;
+   //if (useSymm)
+   //   test_spg_get_ir_reciprocal_mesh() ;
 #else
   d_maxkPoints = 1;
   d_kPointCoordinates.resize(3*d_maxkPoints,0.0);

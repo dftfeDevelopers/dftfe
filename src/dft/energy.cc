@@ -67,12 +67,12 @@ double FermiDiracFunctionDerivativeValue(double x,
 	  if(temp1 <= 0.0)
 	    {
 	      temp2  =  1.0/(1.0 + exp(temp1));
-	      functionDerivative += (2.0-spinPolarized)*kPointWeights[kPoint]*(exp(temp1)/(kb*TVal))*temp2*temp2;
+	      functionDerivative += (2.0-spinPolarized)*kPointWeights[kPoint]*(exp(temp1)/(C_kb*TVal))*temp2*temp2;
 	    }
 	  else
 	    {
 	      temp2 =  1.0/(1.0 + exp(-temp1));
-	      functionDerivative += (2.0-spinPolarized)*kPointWeights[kPoint]*(exp(-temp1)/(kb*TVal))*temp2*temp2; 
+	      functionDerivative += (2.0-spinPolarized)*kPointWeights[kPoint]*(exp(-temp1)/(C_kb*TVal))*temp2*temp2; 
 
 	    }
 	}
@@ -481,7 +481,7 @@ void dftClass<FEOrder>::compute_energy_spinPolarized()
       pcout << "kPoint: "<< kPoint <<std::endl;
       for (unsigned int i=0; i<(1+spinPolarized)*numEigenValues; i++)
 	{
-	  factor=(eigenValues[kPoint][i]-fermiEnergy)/(kb*TVal);
+	  factor=(eigenValues[kPoint][i]-fermiEnergy)/(C_kb*TVal);
 	  //partialOccupancy=1.0/(1.0+exp(temp));
 	  double partialOccupancy = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)) : 1.0/(1.0 + std::exp(factor));
 	  bandEnergy+= (2-spinPolarized)*partialOccupancy*d_kPointWeights[kPoint]*eigenValues[kPoint][i];
@@ -506,9 +506,9 @@ void dftClass<FEOrder>::compute_energy_spinPolarized()
 	    {
 	      // Compute values for current cell.
 	      fe_values.reinit (cell);
-	      fe_values.get_function_values(poisson.phiTotRhoIn,cellPhiTotRhoIn);
-	      fe_values.get_function_values(poisson.phiTotRhoOut,cellPhiTotRhoOut);
-	      fe_values.get_function_values(poisson.phiExt,cellPhiExt);
+	      fe_values.get_function_values(poissonPtr->phiTotRhoIn,cellPhiTotRhoIn);
+	      fe_values.get_function_values(poissonPtr->phiTotRhoOut,cellPhiTotRhoOut);
+	      fe_values.get_function_values(poissonPtr->phiExt,cellPhiExt);
 	  
 	      // Get exc
 	      std::vector<double> densityValueIn(2*num_quad_points), densityValueOut(2*num_quad_points);
@@ -586,9 +586,9 @@ void dftClass<FEOrder>::compute_energy_spinPolarized()
 	    {
 	      // Compute values for current cell.
 	      fe_values.reinit (cell);
-	      fe_values.get_function_values(poisson.phiTotRhoIn,cellPhiTotRhoIn);
-	      fe_values.get_function_values(poisson.phiTotRhoOut,cellPhiTotRhoOut);
-	      fe_values.get_function_values(poisson.phiExt,cellPhiExt);
+	      fe_values.get_function_values(poissonPtr->phiTotRhoIn,cellPhiTotRhoIn);
+	      fe_values.get_function_values(poissonPtr->phiTotRhoOut,cellPhiTotRhoOut);
+	      fe_values.get_function_values(poissonPtr->phiExt,cellPhiExt);
 	  
 	      // Get Exc
 	      std::vector<double> densityValueIn(2*num_quad_points), densityValueOut(2*num_quad_points);
@@ -647,7 +647,7 @@ void dftClass<FEOrder>::compute_energy_spinPolarized()
   double phiContribution = 0.0,vSelfContribution=0.0;
   for (std::map<unsigned int, double>::iterator it=atoms.begin(); it!=atoms.end(); ++it)
     {
-      phiContribution += (-it->second)*poisson.phiTotRhoOut(it->first);//-charge*potential
+      phiContribution += (-it->second)*poissonPtr->phiTotRhoOut(it->first);//-charge*potential
     }
 
   //

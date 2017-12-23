@@ -1076,8 +1076,8 @@ void eigenClass<FEOrder>::computeVEffSpinPolarized(std::map<dealii::CellId,std::
 	      densityValue[2*v] = ((*rhoValues)[cellPtr->id()][2*q]);
 	    }
 
-	  xc_lda_vxc(&funcX,n_sub_cells,&densityValue[0],&exchangePotentialVal[0]);
-	  xc_lda_vxc(&funcC,n_sub_cells,&densityValue[0],&corrPotentialVal[0]);
+	  xc_lda_vxc(&(dftPtr->funcX),n_sub_cells,&densityValue[0],&exchangePotentialVal[0]);
+	  xc_lda_vxc(&(dftPtr->funcC),n_sub_cells,&densityValue[0],&corrPotentialVal[0]);
 
 	  VectorizedArray<double>  exchangePotential, corrPotential;
 	  for (unsigned int v = 0; v < n_sub_cells; ++v)
@@ -1089,7 +1089,7 @@ void eigenClass<FEOrder>::computeVEffSpinPolarized(std::map<dealii::CellId,std::
 	  //
 	  //sum all to vEffective
 	  //
-	  if(isPseudopotential)
+	  if(dftPtr->d_isPseudopotential)
 	    {
 	      VectorizedArray<double>  pseudoPotential;
 	      for (unsigned int v = 0; v < n_sub_cells; ++v)
@@ -1171,8 +1171,8 @@ void eigenClass<FEOrder>::computeVEffSpinPolarized(std::map<dealii::CellId,std::
 	      sigmaValue[3*v+2] = gradRhoX2*gradRhoX2 + gradRhoY2*gradRhoY2 + gradRhoZ2*gradRhoZ2;
 	    }
 	
-	  xc_gga_vxc(&funcX,n_sub_cells,&densityValue[0],&sigmaValue[0],&derExchEnergyWithDensityVal[0],&derExchEnergyWithSigma[0]);
-	  xc_gga_vxc(&funcC,n_sub_cells,&densityValue[0],&sigmaValue[0],&derCorrEnergyWithDensityVal[0],&derCorrEnergyWithSigma[0]);
+	  xc_gga_vxc(&(dftPtr->funcX),n_sub_cells,&densityValue[0],&sigmaValue[0],&derExchEnergyWithDensityVal[0],&derExchEnergyWithSigma[0]);
+	  xc_gga_vxc(&(dftPtr->funcC),n_sub_cells,&densityValue[0],&sigmaValue[0],&derCorrEnergyWithDensityVal[0],&derCorrEnergyWithSigma[0]);
 
 
 	  VectorizedArray<double>  derExchEnergyWithDensity, derCorrEnergyWithDensity, derExcWithSigmaTimesGradRhoX, derExcWithSigmaTimesGradRhoY, derExcWithSigmaTimesGradRhoZ;
@@ -1197,7 +1197,7 @@ void eigenClass<FEOrder>::computeVEffSpinPolarized(std::map<dealii::CellId,std::
 	  //
 	  //sum all to vEffective
 	  //
-	  if(isPseudopotential)
+	  if(dftPtr->d_isPseudopotential)
 	    {
 	      VectorizedArray<double>  pseudoPotential;
 	      for (unsigned int v = 0; v < n_sub_cells; ++v)
