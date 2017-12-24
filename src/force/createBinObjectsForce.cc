@@ -29,6 +29,7 @@ void forceClass<FEOrder>::createBinObjectsForce()
   d_cellsVselfBallsDofHandlerForce.clear();
   d_cellFacesVselfBallSurfacesDofHandler.clear();
   d_cellFacesVselfBallSurfacesDofHandlerForce.clear();
+  d_cellsVselfBallsClosestAtomIdDofHandler.clear();
   //resize
   d_cellsVselfBallsDofHandler.resize(numberBins);
   d_cellsVselfBallsDofHandlerForce.resize(numberBins);
@@ -75,6 +76,8 @@ void forceClass<FEOrder>::createBinObjectsForce()
 	      AssertThrow(closestAtomIdSum==closestAtomId*dofs_per_face*faces_per_cell,ExcMessage("cell dofs on vself ball surface have different closest atom ids, remedy- increase separation between vself balls"));		   
 	      d_cellsVselfBallsDofHandler[iBin].push_back(cell);
 	      d_cellsVselfBallsDofHandlerForce[iBin].push_back(cellForce);
+	      d_cellsVselfBallsClosestAtomIdDofHandler[cell->active_cell_index()]=closestAtomId;
+	      atomIdsBinsLocal.insert(closestAtomId);
 	      if (dirichletFaceIds.size()!=0){
 	        d_cellFacesVselfBallSurfacesDofHandler[iBin][cell]=dirichletFaceIds;
 		d_cellFacesVselfBallSurfacesDofHandlerForce[iBin][cellForce]=dirichletFaceIds;

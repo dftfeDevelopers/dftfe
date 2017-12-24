@@ -113,6 +113,15 @@ dftClass<FEOrder>::dftClass():
 
 }
 
+template<unsigned int FEOrder>
+dftClass<FEOrder>::~dftClass()
+{
+    delete poissonPtr;
+    delete eigenPtr;
+    matrix_free_data.clear();
+    delete forcePtr;
+}
+
 void convertToCellCenteredCartesianCoordinates(std::vector<std::vector<double> > & atomLocations,
 					       std::vector<std::vector<double> > & latticeVectors)
 {

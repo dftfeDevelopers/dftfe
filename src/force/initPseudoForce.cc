@@ -22,7 +22,6 @@
 namespace initPseudoForceUtils
 {
 double tolerance = 1e-12;
-const double pspTail = 8.0;	
 //some inline functions
 inline 
 void getRadialFunctionVal(const double radialCoordinate,
@@ -96,7 +95,8 @@ convertCartesianToSpherical(double *x, double & r, double & theta, double & phi)
 template<unsigned int FEOrder>
 void forceClass<FEOrder>::initLocalPseudoPotentialForce()
 {
-  gradPseudoValues.clear();
+  gradPseudoVLoc.clear();
+  gradPseudoVLocAtoms.clear();
 
   //
   //Reading single atom rho initial guess
@@ -141,7 +141,7 @@ void forceClass<FEOrder>::initLocalPseudoPotentialForce()
   const unsigned int n_q_points = quadrature_formula.size();
 
 
-
+  const int numberGlobalCharges=dftPtr->atomLocations.size();
   //
   //get number of image charges used only for periodic
   //
@@ -155,56 +155,77 @@ void forceClass<FEOrder>::initLocalPseudoPotentialForce()
     {
       if(cell->is_locally_owned())
 	{
-	  gradPseudoValues[cell->id()]=std::vector<double>(n_q_points*3);
-	  for (unsigned int q = 0; q < n_q_points; ++q)
-	    {
-	      MappingQ1<3,3> test; 
-	      Point<3> quadPoint(test.transform_unit_to_real_cell(cell, fe_values.get_quadrature().point(q)));
-	      double pseudoValueAtQuadPt=0.0;
-	      //loop over atoms
-	      for (unsigned int n=0; n<dftPtr->atomLocations.size(); n++)
-		{
-		  Point<3> atom(dftPtr->atomLocations[n][2],dftPtr->atomLocations[n][3],dftPtr->atomLocations[n][4]);
+	  gradPseudoVLoc[cell->id()]=std::vector<double>(n_q_points*3);
+	  //loop over atoms
+	  for (unsigned int n=0; n<dftPtr->atomLocations.size(); n++)
+	  {
+              Point<3> atom(dftPtr->atomLocations[n][2],dftPtr->atomLocations[n][3],dftPtr->atomLocations[n][4]);
+	      bool isPseudoDataInCell=false;
+	      //loop over quad points
+	      for (unsigned int q = 0; q < n_q_points; ++q)
+	      {	
+	          MappingQ1<3,3> test; 
+	          Point<3> quadPoint(test.transform_unit_to_real_cell(cell, fe_values.get_quadrature().point(q)));
 		  double distanceToAtom = quadPoint.distance(atom);
 		  double value,firstDer,secondDer;
-		  if(distanceToAtom <= initPseudoForceUtils::pspTail)//outerMostPointPseudo[atomLocations[n][0]])
+		  if(distanceToAtom <= dftPtr->d_pspTail)//outerMostPointPseudo[atomLocations[n][0]])
 		    {
-		      alglib::spline1ddiff(pseudoSpline[dftPtr->atomLocations[n][0]], distanceToAtom,value,firstDer,secondDer);		      
+		      alglib::spline1ddiff(pseudoSpline[dftPtr->atomLocations[n][0]], distanceToAtom,value,firstDer,secondDer);	
+		      isPseudoDataInCell=true;
 		    }
 		  else
 		    {
 		      firstDer= (dftPtr->atomLocations[n][1])/distanceToAtom/distanceToAtom;
 		    }
 		    Tensor<1,3,double> gradPseudoValContribution=firstDer*(quadPoint-atom)/distanceToAtom;
-		    gradPseudoValues[cell->id()][q*3+0]+=gradPseudoValContribution[0];
-		    gradPseudoValues[cell->id()][q*3+1]+=gradPseudoValContribution[1];
-		    gradPseudoValues[cell->id()][q*3+2]+=gradPseudoValContribution[2];
-		}
+		    gradPseudoVLoc[cell->id()][q*3+0]+=gradPseudoValContribution[0];
+		    gradPseudoVLoc[cell->id()][q*3+1]+=gradPseudoValContribution[1];
+		    gradPseudoVLoc[cell->id()][q*3+2]+=gradPseudoValContribution[2];
+		    if (isPseudoDataInCell){
+                       gradPseudoVLocAtoms[n][cell->id()]=std::vector<double>(n_q_points*3);
+		       gradPseudoVLocAtoms[n][cell->id()][q*3+0]=gradPseudoValContribution[0];
+		       gradPseudoVLocAtoms[n][cell->id()][q*3+1]=gradPseudoValContribution[1];
+		       gradPseudoVLocAtoms[n][cell->id()][q*3+2]=gradPseudoValContribution[2];
+		    }
+	      }//loop over quad points
+	  }//loop pver atoms
 
-	      //loop over image charges
-	      for(int iImageCharge = 0; iImageCharge < numberImageCharges; ++iImageCharge)
-		{
-		  Point<3> imageAtom(dftPtr->d_imagePositions[iImageCharge][0],dftPtr->d_imagePositions[iImageCharge][1],dftPtr->d_imagePositions[iImageCharge][2]);
+	  //loop over image charges
+	  for(int iImageCharge = 0; iImageCharge < numberImageCharges; ++iImageCharge)
+	  {
+	      Point<3> imageAtom(dftPtr->d_imagePositions[iImageCharge][0],dftPtr->d_imagePositions[iImageCharge][1],dftPtr->d_imagePositions[iImageCharge][2]);
+	      bool isPseudoDataInCell=false;	      
+	      //loop over quad points
+	      for (unsigned int q = 0; q < n_q_points; ++q)
+	      {			 
+	          MappingQ1<3,3> test; 
+	          Point<3> quadPoint(test.transform_unit_to_real_cell(cell, fe_values.get_quadrature().point(q)));		      
 		  double distanceToAtom = quadPoint.distance(imageAtom);
 		  int masterAtomId = dftPtr->d_imageIds[iImageCharge];
 		  double value,firstDer,secondDer;  
-		  if(distanceToAtom <= initPseudoForceUtils::pspTail)//outerMostPointPseudo[atomLocations[masterAtomId][0]])
+		  if(distanceToAtom <= dftPtr->d_pspTail)//outerMostPointPseudo[atomLocations[masterAtomId][0]])
 		    {
-		      alglib::spline1ddiff(pseudoSpline[dftPtr->atomLocations[masterAtomId][0]], distanceToAtom,value,firstDer,secondDer);			      
+		      alglib::spline1ddiff(pseudoSpline[dftPtr->atomLocations[masterAtomId][0]], distanceToAtom,value,firstDer,secondDer);
+		      isPseudoDataInCell=true;
 		    }
 		  else
 		    {
 		      firstDer= (dftPtr->atomLocations[masterAtomId][1])/distanceToAtom/distanceToAtom;		      
 		    }
 		    Tensor<1,3,double> gradPseudoValContribution=firstDer*(quadPoint-imageAtom)/distanceToAtom;
-		    gradPseudoValues[cell->id()][q*3+0]+=gradPseudoValContribution[0];
-		    gradPseudoValues[cell->id()][q*3+1]+=gradPseudoValContribution[1];
-		    gradPseudoValues[cell->id()][q*3+2]+=gradPseudoValContribution[2];		  
-		  
-		}
-	    }
-	}
-    } 
+		    gradPseudoVLoc[cell->id()][q*3+0]+=gradPseudoValContribution[0];
+		    gradPseudoVLoc[cell->id()][q*3+1]+=gradPseudoValContribution[1];
+		    gradPseudoVLoc[cell->id()][q*3+2]+=gradPseudoValContribution[2];
+		    if (isPseudoDataInCell){
+                       gradPseudoVLocAtoms[numberGlobalCharges+iImageCharge][cell->id()]=std::vector<double>(n_q_points*3);
+		       gradPseudoVLocAtoms[numberGlobalCharges+iImageCharge][cell->id()][q*3+0]=gradPseudoValContribution[0];
+		       gradPseudoVLocAtoms[numberGlobalCharges+iImageCharge][cell->id()][q*3+1]=gradPseudoValContribution[1];
+		       gradPseudoVLocAtoms[numberGlobalCharges+iImageCharge][cell->id()][q*3+2]=gradPseudoValContribution[2];
+		    }		    
+	      }//loop over quad points
+	   }//loop over image charges
+	}//cell locally owned check
+    }//cell loop
   
 }
 

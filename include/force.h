@@ -68,7 +68,8 @@ private:
   void locateAtomCoreNodesForce();
   
   //force pseudopotential data
-  std::map<dealii::CellId, std::vector<double> > gradPseudoValues;
+  std::map<dealii::CellId, std::vector<double> > gradPseudoVLoc;
+  std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > gradPseudoVLocAtoms;  
 
   //meshMovementGaussianClass object  								       
   meshMovementGaussianClass gaussianMove;
@@ -96,6 +97,11 @@ private:
   //(outermost vector over bins) local data required for configurational force computation corresponding to Eself
   std::vector<std::vector<DoFHandler<C_DIM>::active_cell_iterator> > d_cellsVselfBallsDofHandler;
   std::vector<std::vector<DoFHandler<C_DIM>::active_cell_iterator> > d_cellsVselfBallsDofHandlerForce;
+  //map of active cell index of cell with atleast one solved dof to the closest atom Id
+  std::map<unsigned int, unsigned int> d_cellsVselfBallsClosestAtomIdDofHandler;
+  //set of atom vself bins in interecting the current processor dofHandler
+  std::set<unsigned int> atomIdsBinsLocal;
+  //
   std::vector<std::map<DoFHandler<C_DIM>::active_cell_iterator,std::vector<unsigned int > > > d_cellFacesVselfBallSurfacesDofHandler;
   std::vector<std::map<DoFHandler<C_DIM>::active_cell_iterator,std::vector<unsigned int > > > d_cellFacesVselfBallSurfacesDofHandlerForce; 
 

@@ -73,11 +73,19 @@ void dftClass<FEOrder>::initMovedTriangulation(bool isTriaRefined){
   d_constraintsForTotalPotential.merge(constraintsNone,ConstraintMatrix::MergeConflictBehavior::right_object_wins);
   d_constraintsForTotalPotential.close();
 
- 
+  //clear exisiting constraints matrix vector
+  unsigned int count=0;
+  for (std::vector<const ConstraintMatrix *>::iterator it = d_constraintsVector.begin() ; it != d_constraintsVector.end(); ++it)
+  { 
+    if (count > 1 && count < d_bins.size()+2)
+     delete (*it);
+    count++;
+  } 
+
+  d_constraintsVector.clear(); 
   //
   //push back into Constraint Matrices
   //
-  d_constraintsVector.clear();
 #ifdef ENABLE_PERIODIC_BC
   d_constraintsVector.push_back(&constraintsNone); 
 #else

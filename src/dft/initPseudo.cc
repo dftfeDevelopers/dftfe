@@ -18,7 +18,6 @@
 
 #include <boost/math/special_functions/spherical_harmonic.hpp>
 double tolerance = 1e-12;
-const double pspTail = 8.0;
 
 
 //some inline functions
@@ -172,7 +171,7 @@ void dftClass<FEOrder>::initLocalPseudoPotential()
 		{
 		  Point<3> atom(atomLocations[n][2],atomLocations[n][3],atomLocations[n][4]);
 		  double distanceToAtom = quadPoint.distance(atom);
-		  if(distanceToAtom <= pspTail)//outerMostPointPseudo[atomLocations[n][0]])
+		  if(distanceToAtom <= d_pspTail)//outerMostPointPseudo[atomLocations[n][0]])
 		    {
 		      pseudoValueAtQuadPt += alglib::spline1dcalc(pseudoSpline[atomLocations[n][0]], distanceToAtom);
 		    }
@@ -188,7 +187,7 @@ void dftClass<FEOrder>::initLocalPseudoPotential()
 		  Point<3> imageAtom(d_imagePositions[iImageCharge][0],d_imagePositions[iImageCharge][1],d_imagePositions[iImageCharge][2]);
 		  double distanceToAtom = quadPoint.distance(imageAtom);
 		  int masterAtomId = d_imageIds[iImageCharge];
-		  if(distanceToAtom <= pspTail)//outerMostPointPseudo[atomLocations[masterAtomId][0]])
+		  if(distanceToAtom <= d_pspTail)//outerMostPointPseudo[atomLocations[masterAtomId][0]])
 		    {
 		      pseudoValueAtQuadPt += alglib::spline1dcalc(pseudoSpline[atomLocations[masterAtomId][0]], distanceToAtom);
 		    }
@@ -842,7 +841,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
 			  double r = quadPoint.distance(chargePoint);
 			  double deltaVl;
 
-			  if(r <= pspTail)//d_outerMostPointPseudoPotData[globalSplineId])
+			  if(r <= d_pspTail)//d_outerMostPointPseudoPotData[globalSplineId])
 			    {
 			      getRadialFunctionVal(r,
 						   deltaVl,
@@ -1076,7 +1075,7 @@ void dftClass<FEOrder>::computeElementalProjectorKets()
 		    
 
 		      double radialWaveFunVal, sphericalHarmonicVal, radialPotFunVal, pseudoWaveFunctionValue, deltaVlValue;
-		      if(r <= pspTail)//d_outerMostPointPseudoWaveFunctionsData[globalWaveSplineId])
+		      if(r <= d_pspTail)//d_outerMostPointPseudoWaveFunctionsData[globalWaveSplineId])
 			{
 			  getRadialFunctionVal(r,
 					       radialWaveFunVal,
