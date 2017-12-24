@@ -287,7 +287,7 @@ class dftClass
   std::deque<std::map<dealii::CellId,std::vector<double> >*> gradRhoInVals,gradRhoOutVals; 
 
 
-
+  const double d_pspTail = 8.0;
   std::map<dealii::CellId, std::vector<double> > *pseudoValues;
   std::vector<std::vector<double> > d_localVselfs;
 
