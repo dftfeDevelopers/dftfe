@@ -22,7 +22,8 @@
 #include "../../include/constants.h"
 #include "../../include/eshelbyTensor.h"
 #include "../../include/fileReaders.h"
-#include "configurationalForceEEshelbyFPSPLinFE.cc"
+#include "configurationalForceEEshelbyFPSPPeriodicLinFE.cc"
+#include "configurationalForceEEshelbyFPSPNonPeriodicLinFE.cc"
 #include "configurationalForceEselfLinFE.cc"
 #include "initPseudoForce.cc"
 #include "createBinObjectsForce.cc"
@@ -53,7 +54,7 @@ forceClass<FEOrder>::forceClass(dftClass<FEOrder>* _dftPtr):
 //initialize forceClass object
 //
 template<unsigned int FEOrder>
-void forceClass<FEOrder>::init()
+void forceClass<FEOrder>::initUnmoved()
 {
   computing_timer.enter_section("forceClass setup");
 
@@ -107,7 +108,7 @@ void forceClass<FEOrder>::init()
 #else
   d_constraintsNoneForce.close();
 #endif
-  d_forceDofHandlerIndex=dftPtr->d_constraintsVector.size();
+  //d_forceDofHandlerIndex=dftPtr->d_constraintsVector.size();
 
   createBinObjectsForce();
   locateAtomCoreNodesForce();
@@ -127,42 +128,12 @@ void forceClass<FEOrder>::init()
 
 //reinitialize force class object after mesh update
 template<unsigned int FEOrder>
-void forceClass<FEOrder>::reinit(bool isTriaRefined)
+void forceClass<FEOrder>::initMoved()
 {
-  if (isTriaRefined){
-   d_dofHandlerForce.clear();
-   d_dofHandlerForce.initialize(dftPtr->triangulation,FEForce);	
-   d_dofHandlerForce.distribute_dofs(FEForce);
-   d_supportPointsForce.clear();
-   DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), d_dofHandlerForce, d_supportPointsForce);	  
-   d_locally_owned_dofsForce.clear();d_locally_relevant_dofsForce.clear();
-   d_locally_owned_dofsForce = d_dofHandlerForce.locally_owned_dofs();
-   DoFTools::extract_locally_relevant_dofs(d_dofHandlerForce, d_locally_relevant_dofsForce);  
-
-   ///
-   d_constraintsNoneForce.clear();
-   DoFTools::make_hanging_node_constraints(d_dofHandlerForce, d_constraintsNoneForce);   
-#ifdef ENABLE_PERIODIC_BC
-   std::vector<GridTools::PeriodicFacePair<typename DoFHandler<C_DIM>::cell_iterator> > periodicity_vectorForce;
-   for (int i = 0; i < C_DIM; ++i)
-    {
-      GridTools::collect_periodic_faces(d_dofHandlerForce, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vectorForce);
-    }
-   DoFTools::make_periodicity_constraints<DoFHandler<C_DIM> >(periodicity_vectorForce, d_constraintsNoneForce);
-   d_constraintsNoneForce.close();
-#else
-   d_constraintsNoneForce.close();
-#endif
-   d_forceDofHandlerIndex=dftPtr->d_constraintsVector.size();
-   locateAtomCoreNodesForce(); 
-   gaussianMove.reinit(dftPtr->triangulation,isTriaRefined);
-  }
-  else{
-    d_dofHandlerForce.distribute_dofs(FEForce);
-    d_supportPointsForce.clear();
-    DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), d_dofHandlerForce, d_supportPointsForce);
-    gaussianMove.reinit(dftPtr->triangulation,isTriaRefined);
-  }
+  d_dofHandlerForce.distribute_dofs(FEForce);
+  d_supportPointsForce.clear();
+  DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), d_dofHandlerForce, d_supportPointsForce);
+  gaussianMove.reinit(dftPtr->triangulation,false);
   //
   //Extract force component dofs from the global force dofs - this will be needed in configurational force.
   //
@@ -226,10 +197,10 @@ void forceClass<FEOrder>::configForceLinFEInit()
 template<unsigned int FEOrder>
 void forceClass<FEOrder>::configForceLinFEFinalize()
 {
-  d_configForceVectorLinFE.compress(VectorOperation::add);//copies the ghost element cache to the owning element 
+  d_configForceVectorLinFE.compress(VectorOperation::add);//copies the ghost element cache to the owning element
+  d_configForceVectorLinFE.update_ghost_values();
   d_constraintsNoneForce.distribute(d_configForceVectorLinFE);//distribute to constrained degrees of freedom (for example periodic)
   d_configForceVectorLinFE.update_ghost_values();
-
 
 }
 

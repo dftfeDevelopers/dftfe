@@ -64,8 +64,8 @@ void dftClass<FEOrder>::solveVself()
 	}
  
       poissonPtr->vselfBinScratch.compress(VectorOperation::insert);
-      d_constraintsVector[constraintMatrixId]->distribute(poissonPtr->vselfBinScratch);
       poissonPtr->vselfBinScratch.update_ghost_values();
+      d_constraintsVector[constraintMatrixId]->distribute(poissonPtr->vselfBinScratch);
       //
       //call the poisson solver to compute vSelf in each bin
       //
@@ -192,10 +192,10 @@ void dftClass<FEOrder>::solveVself()
         d_vselfFieldBins[iBin]=poissonPtr->vselfBinScratch;
     }//bin loop
 
-  d_noConstraints.distribute(poissonPtr->phiExt);
   poissonPtr->phiExt.compress(VectorOperation::insert);
   poissonPtr->phiExt.update_ghost_values();
-
+  d_constraintsVector[phiExtDofHandlerIndex]->distribute(poissonPtr->phiExt); 
+  poissonPtr->phiExt.update_ghost_values();
   //
   //print the norms of phiExt (in periodic case L2 norm of phiExt field does not match. check later)
   //

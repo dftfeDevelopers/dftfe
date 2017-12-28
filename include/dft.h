@@ -142,7 +142,7 @@ class dftClass
    */
   //void init();
   void initUnmovedTriangulation();
-  void initMovedTriangulation(bool isTriaRefined=true);
+  void initMovedTriangulation();
   void locateAtomCoreNodes();
   void locatePeriodicPinnedNodes();
   void initRho();

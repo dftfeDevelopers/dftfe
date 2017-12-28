@@ -324,6 +324,9 @@ void dftClass<FEOrder>::run ()
   //
   initMovedTriangulation();
 
+  std::vector<Point<C_DIM> > globalAtomsDisplacements(atomLocations.size());
+  globalAtomsDisplacements[0][0]=1e-4;
+  //forcePtr->updateAtomPositionsAndMoveMesh(globalAtomsDisplacements);
   //
   //solve vself
   //

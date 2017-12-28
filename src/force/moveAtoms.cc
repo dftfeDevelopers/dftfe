@@ -68,6 +68,6 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
 
   gaussianMove.moveMesh(controlPointLocations,controlPointDisplacements,d_gaussianConstant);
   pcout << "Reinitializing all moved triangulation dependent objects..." << std::endl;  
-  dftPtr->initMovedTriangulation(false);
+  dftPtr->initMovedTriangulation();
   pcout << "...Reinitialization end" << std::endl;   
 }

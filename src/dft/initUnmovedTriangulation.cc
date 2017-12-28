@@ -229,7 +229,7 @@ void dftClass<FEOrder>::initUnmovedTriangulation(){
   //
   ConstraintMatrix constraintsTemp(constraintsNone); constraintsNone.clear(); 
   std::set<unsigned int> masterNodes;
-  double periodicPrecision = 1.0e-8;
+  double periodicPrecision = 1.0e-4;
 
   //
   //fill all masters
@@ -949,5 +949,7 @@ void dftClass<FEOrder>::initUnmovedTriangulation(){
   constraintsNoneEigen.merge(d_noConstraintsEigen,ConstraintMatrix::MergeConflictBehavior::right_object_wins);
   constraintsNone.close();
   constraintsNoneEigen.close();
+
+  forcePtr->initUnmoved();
   computing_timer.exit_section("unmoved setup");    
 }

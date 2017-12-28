@@ -30,11 +30,13 @@ void forceClass<FEOrder>::createBinObjectsForce()
   d_cellFacesVselfBallSurfacesDofHandler.clear();
   d_cellFacesVselfBallSurfacesDofHandlerForce.clear();
   d_cellsVselfBallsClosestAtomIdDofHandler.clear();
+  d_AtomIdBinIdLocalDofHandler.clear();
   //resize
   d_cellsVselfBallsDofHandler.resize(numberBins);
   d_cellsVselfBallsDofHandlerForce.resize(numberBins);
   d_cellFacesVselfBallSurfacesDofHandler.resize(numberBins);
   d_cellFacesVselfBallSurfacesDofHandlerForce.resize(numberBins);
+  d_cellsVselfBallsClosestAtomIdDofHandler.resize(numberBins);
 
   for(int iBin = 0; iBin < numberBins; ++iBin)
   {
@@ -50,8 +52,8 @@ void forceClass<FEOrder>::createBinObjectsForce()
 	   std::vector<types::global_dof_index> cellGlobalDofIndices(dofs_per_cell);
 	   cell->get_dof_indices(cellGlobalDofIndices);	
 	   std::vector<unsigned int> dirichletFaceIds;
-	   int closestAtomIdSum=0;
-	   int closestAtomId=closestAtomBinMap[cellGlobalDofIndices[0]];
+	   unsigned int closestAtomIdSum=0;
+	   unsigned int closestAtomId=closestAtomBinMap[cellGlobalDofIndices[0]];
 	   for(unsigned int iFace = 0; iFace < faces_per_cell; ++iFace)
            {
               int dirichletDofCount=0;
@@ -76,8 +78,8 @@ void forceClass<FEOrder>::createBinObjectsForce()
 	      AssertThrow(closestAtomIdSum==closestAtomId*dofs_per_face*faces_per_cell,ExcMessage("cell dofs on vself ball surface have different closest atom ids, remedy- increase separation between vself balls"));		   
 	      d_cellsVselfBallsDofHandler[iBin].push_back(cell);
 	      d_cellsVselfBallsDofHandlerForce[iBin].push_back(cellForce);
-	      d_cellsVselfBallsClosestAtomIdDofHandler[cell->active_cell_index()]=closestAtomId;
-	      atomIdsBinsLocal.insert(closestAtomId);
+	      d_cellsVselfBallsClosestAtomIdDofHandler[iBin][cell->id()]=closestAtomId;
+	      d_AtomIdBinIdLocalDofHandler[closestAtomId]=iBin;
 	      if (dirichletFaceIds.size()!=0){
 	        d_cellFacesVselfBallSurfacesDofHandler[iBin][cell]=dirichletFaceIds;
 		d_cellFacesVselfBallSurfacesDofHandlerForce[iBin][cellForce]=dirichletFaceIds;

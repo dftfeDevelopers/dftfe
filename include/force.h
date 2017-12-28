@@ -36,8 +36,8 @@ class forceClass
 
 public:
   forceClass(dftClass<FEOrder>* _dftPtr);
-  void init();
-  void reinit(bool isTriaRefined=true);
+  void initUnmoved();
+  void initMoved();
   void computeAtomsForces();
   void computeStress();
   void printAtomsForces();
@@ -66,10 +66,18 @@ private:
   void relaxStress();
   void relaxAtomsForcesStress();
   void locateAtomCoreNodesForce();
+  void computeForceContributionFPSPLocalGammaAtoms(std::map<unsigned int, std::vector<double> > & forceContributionFPSPLocalGammaAtoms,
+		                            FEValues<C_DIM> & feVselfValues,
+                                            FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,					    
+				            const unsigned int cell,
+			                    const std::vector<VectorizedArray<double> > & rhoQuads);
+
+  void distributeForceContributionFPSPLocalGammaAtoms(const std::map<unsigned int, std::vector<double> > & forceContributionFPSPLocalGammaAtoms);  
   
-  //force pseudopotential data
-  std::map<dealii::CellId, std::vector<double> > gradPseudoVLoc;
-  std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > gradPseudoVLocAtoms;  
+  //////force pseudopotential data
+  std::map<dealii::CellId, std::vector<double> > d_gradPseudoVLoc;
+  //only contains maps for atoms whose psp tail intersects the local domain
+  std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > d_gradPseudoVLocAtoms;
 
   //meshMovementGaussianClass object  								       
   meshMovementGaussianClass gaussianMove;
@@ -97,10 +105,10 @@ private:
   //(outermost vector over bins) local data required for configurational force computation corresponding to Eself
   std::vector<std::vector<DoFHandler<C_DIM>::active_cell_iterator> > d_cellsVselfBallsDofHandler;
   std::vector<std::vector<DoFHandler<C_DIM>::active_cell_iterator> > d_cellsVselfBallsDofHandlerForce;
-  //map of active cell index of cell with atleast one solved dof to the closest atom Id
-  std::map<unsigned int, unsigned int> d_cellsVselfBallsClosestAtomIdDofHandler;
-  //set of atom vself bins in interecting the current processor dofHandler
-  std::set<unsigned int> atomIdsBinsLocal;
+  //map of vself ball cell Id  with atleast one solved dof to the closest atom Id. Vector over bins
+  std::vector<std::map<dealii::CellId , unsigned int> > d_cellsVselfBallsClosestAtomIdDofHandler;
+  //map of atom Id to bin Id local
+  std::map<unsigned int, unsigned int> d_AtomIdBinIdLocalDofHandler;  
   //
   std::vector<std::map<DoFHandler<C_DIM>::active_cell_iterator,std::vector<unsigned int > > > d_cellFacesVselfBallSurfacesDofHandler;
   std::vector<std::map<DoFHandler<C_DIM>::active_cell_iterator,std::vector<unsigned int > > > d_cellFacesVselfBallSurfacesDofHandlerForce; 
