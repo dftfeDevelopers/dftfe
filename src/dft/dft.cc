@@ -41,6 +41,7 @@
 #include "chebyshev.cc"
 #include "solveVself.cc"
 #include "applyTotalPotentialDirichletBC.cc"
+#include "createBinsExtraSanityCheck.cc"
 #include <complex>
 #include <cmath>
 #include <algorithm>

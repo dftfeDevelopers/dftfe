@@ -100,6 +100,7 @@ void dftClass<FEOrder>::initMovedTriangulation(){
   //with atoms belonging to a given bin
   //
   createAtomBins(d_constraintsVector);
+  createAtomBinsExtraSanityCheck();
  
   //
   //create matrix free structure

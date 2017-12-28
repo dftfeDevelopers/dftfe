@@ -166,6 +166,7 @@ class dftClass
    * and finally solves the self-potentials in each bin one-by-one.
    */
   void createAtomBins(std::vector<const ConstraintMatrix * > & constraintsVector);
+  void createAtomBinsExtraSanityCheck();
   void solveVself();
   
   /**
