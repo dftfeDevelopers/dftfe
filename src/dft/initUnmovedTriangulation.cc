@@ -229,7 +229,7 @@ void dftClass<FEOrder>::initUnmovedTriangulation(){
   //
   ConstraintMatrix constraintsTemp(constraintsNone); constraintsNone.clear(); 
   std::set<unsigned int> masterNodes;
-  double periodicPrecision = 1.0e-4;
+  double periodicPrecision = 1.0e-5;
 
   //
   //fill all masters
