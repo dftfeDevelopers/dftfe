@@ -27,8 +27,6 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPPeriodicL
 
   const unsigned int numVectorizedArrayElements=VectorizedArray<double>::n_array_elements;
   const MatrixFree<3,double> & matrix_free_data=dftPtr->matrix_free_data;
-  std::map<dealii::CellId, std::vector<double> >  **rhoOutValues=&(dftPtr->rhoOutValues);
-  std::map<dealii::CellId, std::vector<double> > **gradRhoOutValues=&(dftPtr->gradRhoOutValues);
   //std::cout<< "n array elements" << numVectorizedArrayElements <<std::endl;
 
   FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  forceEval(matrix_free_data,d_forceDofHandlerIndex, 0);
@@ -85,19 +83,19 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPPeriodicL
 	   exit(-1);
        }
        else{
-         xc_lda_exc(&(dftPtr->funcX),numQuadPoints,&((**rhoOutValues)[subCellId][0]),&exchValQuads[0]);
-         xc_lda_exc(&(dftPtr->funcC),numQuadPoints,&((**rhoOutValues)[subCellId][0]),&corrValQuads[0]);     
+         xc_lda_exc(&(dftPtr->funcX),numQuadPoints,&((*dftPtr->rhoOutValues)[subCellId][0]),&exchValQuads[0]);
+         xc_lda_exc(&(dftPtr->funcC),numQuadPoints,&((*dftPtr->rhoOutValues)[subCellId][0]),&corrValQuads[0]);     
          for (unsigned int q=0; q<numQuadPoints; ++q){
 	   excQuads[q][iSubCell]=exchValQuads[q]+corrValQuads[q];
          }
        }
 
        for (unsigned int q=0; q<numQuadPoints; ++q){
-         rhoQuads[q][iSubCell]=(**rhoOutValues)[subCellId][q];
+         rhoQuads[q][iSubCell]=(*dftPtr->rhoOutValues)[subCellId][q];
          if(dftPtr->d_xc_id == 4){
-	   gradRhoQuads[q][0][iSubCell]=(**gradRhoOutValues)[subCellId][3*q];
-	   gradRhoQuads[q][1][iSubCell]=(**gradRhoOutValues)[subCellId][3*q+1];
-           gradRhoQuads[q][2][iSubCell]=(**gradRhoOutValues)[subCellId][3*q+2]; 
+	   gradRhoQuads[q][0][iSubCell]=(*dftPtr->gradRhoOutValues)[subCellId][3*q];
+	   gradRhoQuads[q][1][iSubCell]=(*dftPtr->gradRhoOutValues)[subCellId][3*q+1];
+           gradRhoQuads[q][2][iSubCell]=(*dftPtr->gradRhoOutValues)[subCellId][3*q+2]; 
 	 }	 
        }
     }   
@@ -160,7 +158,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPPeriodicL
     }
     if(dftPtr->d_isPseudopotential){
       for (unsigned int q=0; q<numQuadPoints; ++q){
-        Tensor<1,C_DIM,VectorizedArray<double> > gradPhiExt_q =phiExtEval.get_gradient(q)*phiExtFactor;   
+        Tensor<1,C_DIM,VectorizedArray<double> > gradPhiExt_q =phiExtEval.get_gradient(q);   
         forceEval.submit_value(eshelbyTensor::getFPSPLocal(rhoQuads[q],
 		                              gradPseudoVLocQuads[q],
 			                      gradPhiExt_q),

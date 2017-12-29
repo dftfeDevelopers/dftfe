@@ -155,7 +155,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEselfLinFE()
 	       Point<C_DIM> quadPoint=feForceFaceValues.quadrature_point(qPoint);
 	       Tensor<1,C_DIM,double> dispClosestAtom=quadPoint-closestAtomLocation;
 	       const double dist=dispClosestAtom.norm();
-	       Tensor<1,C_DIM,double> gradVselfFaceQuadExact=-closestAtomCharge*dispClosestAtom/dist/dist/dist;
+	       Tensor<1,C_DIM,double> gradVselfFaceQuadExact=closestAtomCharge*dispClosestAtom/dist/dist/dist;
 
 	       /*
 	       Point<C_DIM> debugPoint1,debugPoint2; debugPoint1[0]=-4;debugPoint1[1]=-4;debugPoint1[2]=4;

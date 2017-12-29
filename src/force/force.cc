@@ -24,6 +24,7 @@
 #include "../../include/fileReaders.h"
 #include "configurationalForceEEshelbyFPSPPeriodicLinFE.cc"
 #include "configurationalForceEEshelbyFPSPNonPeriodicLinFE.cc"
+#include "configurationalForceLinFECommon.cc"
 #include "configurationalForceEselfLinFE.cc"
 #include "initPseudoForce.cc"
 #include "createBinObjectsForce.cc"
@@ -39,7 +40,6 @@ template<unsigned int FEOrder>
 forceClass<FEOrder>::forceClass(dftClass<FEOrder>* _dftPtr):
   dftPtr(_dftPtr),
   FEForce (FE_Q<3>(QGaussLobatto<1>(2)), 3), //linear shape function
-  d_dofHandlerForce (dftPtr->triangulation),
   gaussianMove(),
   mpi_communicator (MPI_COMM_WORLD),
   n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_communicator)),
@@ -57,43 +57,12 @@ template<unsigned int FEOrder>
 void forceClass<FEOrder>::initUnmoved()
 {
   computing_timer.enter_section("forceClass setup");
-
+  d_dofHandlerForce.initialize(dftPtr->triangulation,FEForce);
   d_dofHandlerForce.distribute_dofs(FEForce);
-  d_locally_owned_dofsForce.clear();d_locally_relevant_dofsForce.clear();d_supportPointsForce.clear();
+  d_locally_owned_dofsForce.clear();d_locally_relevant_dofsForce.clear();
   d_locally_owned_dofsForce = d_dofHandlerForce.locally_owned_dofs();
   DoFTools::extract_locally_relevant_dofs(d_dofHandlerForce, d_locally_relevant_dofsForce);  
-  DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), d_dofHandlerForce, d_supportPointsForce);
 
-  //
-  //Extract force component dofs from the global force dofs - this will be needed in configurational force.
-  //
-
-  d_locallyOwnedSupportPointsForceX.clear();d_locallyOwnedSupportPointsForceY.clear();d_locallyOwnedSupportPointsForceZ.clear();
-  FEValuesExtractors::Scalar x(0), y(1); 
-  ComponentMask componentMaskX = FEForce.component_mask(x);
-  ComponentMask componentMaskY = FEForce.component_mask(y);
-  std::vector<bool> selectedDofsX(d_locally_owned_dofsForce.n_elements(), false);
-  std::vector<bool> selectedDofsY(d_locally_owned_dofsForce.n_elements(), false);
-  DoFTools::extract_dofs(d_dofHandlerForce, componentMaskX, selectedDofsX);
-  DoFTools::extract_dofs(d_dofHandlerForce, componentMaskY, selectedDofsY);
-  std::vector<unsigned int> local_dof_indicesForce(d_locally_owned_dofsForce.n_elements());
-  d_locally_owned_dofsForce.fill_index_vector(local_dof_indicesForce);
-  for (unsigned int i = 0; i < d_locally_owned_dofsForce.n_elements(); i++)
-  {
-      const int globalIndex=local_dof_indicesForce[i];
-      if(selectedDofsX[i]) 
-      {
-	  d_locallyOwnedSupportPointsForceX[globalIndex]=d_supportPointsForce[globalIndex];
-      }
-      else if(selectedDofsY[i])
-      {
-	  d_locallyOwnedSupportPointsForceY[globalIndex]=d_supportPointsForce[globalIndex];
-      }
-      else
-      {
-	  d_locallyOwnedSupportPointsForceZ[globalIndex]=d_supportPointsForce[globalIndex];
-      }
-  }   
   ///
   d_constraintsNoneForce.clear();
   DoFTools::make_hanging_node_constraints(d_dofHandlerForce, d_constraintsNoneForce);   
@@ -110,19 +79,6 @@ void forceClass<FEOrder>::initUnmoved()
 #endif
   //d_forceDofHandlerIndex=dftPtr->d_constraintsVector.size();
 
-  createBinObjectsForce();
-  locateAtomCoreNodesForce();
-  gaussianMove.init(dftPtr->triangulation);
-  //
-  //initialize pseudopotential related force objects
-  //
-  if(dftPtr->d_isPseudopotential)
-    {
-      initLocalPseudoPotentialForce();
-      //initNonLocalPseudoPotentialForce();
-      //computeSparseStructureNonLocalProjectorsForce();
-      //computeElementalProjectorKetsForce();
-    }
   computing_timer.exit_section("forceClass setup"); 
 }
 
@@ -133,7 +89,6 @@ void forceClass<FEOrder>::initMoved()
   d_dofHandlerForce.distribute_dofs(FEForce);
   d_supportPointsForce.clear();
   DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), d_dofHandlerForce, d_supportPointsForce);
-  gaussianMove.reinit(dftPtr->triangulation,false);
   //
   //Extract force component dofs from the global force dofs - this will be needed in configurational force.
   //
@@ -164,18 +119,19 @@ void forceClass<FEOrder>::initMoved()
       }
   }    
 
+  createBinObjectsForce();
+  locateAtomCoreNodesForce();
+  gaussianMove.init(dftPtr->triangulation);
   //
   //initialize pseudopotential related force objects
   //
   if(dftPtr->d_isPseudopotential)
-    {
+  {
       initLocalPseudoPotentialForce();
       //initNonLocalPseudoPotentialForce();
       //computeSparseStructureNonLocalProjectorsForce();
       //computeElementalProjectorKetsForce();
-    }
-   createBinObjectsForce(); 
-
+   }
 }
 
 //compute forces on atoms using a generator with a compact support
