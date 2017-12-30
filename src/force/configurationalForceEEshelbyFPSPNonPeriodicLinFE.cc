@@ -33,6 +33,8 @@ void forceClass<FEOrder>::computeForceContributionFPSPLocalGammaAtoms(std::map<u
   const unsigned int numQuadPoints=forceEval.n_q_points;
   DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
 
+  
+
   for (unsigned int iAtom=0;iAtom <totalNumberAtoms; iAtom++){
     std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradPseudoVLocAtomsQuads(numQuadPoints,zeroTensor1);
     std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradVselfQuads(numQuadPoints,zeroTensor1);
@@ -54,7 +56,7 @@ void forceClass<FEOrder>::computeForceContributionFPSPLocalGammaAtoms(std::map<u
        atomLocation[0]=dftPtr->atomLocations[iAtom][2];
        atomLocation[1]=dftPtr->atomLocations[iAtom][3];
        atomLocation[2]=dftPtr->atomLocations[iAtom][4];
-       if(dftPtr->d_isPseudopotential)
+       if(dftParameters::isPseudopotential)
          atomCharge = dftPtr->atomLocations[iAtom][1];
        else
          atomCharge = dftPtr->atomLocations[iAtom][0];
@@ -203,6 +205,8 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPNonPeriod
   QGauss<C_DIM>  quadrature(C_num1DQuad<FEOrder>());   
   FEValues<C_DIM> feVselfValues (dftPtr->FE, quadrature, update_gradients | update_quadrature_points);
 
+  bool isPseudopotential = dftParameters::isPseudopotential;
+
 
   const unsigned int numQuadPoints=forceEval.n_q_points;
   const unsigned int numEigenVectors=dftPtr->eigenVectorsOrig[0].size();  
@@ -214,7 +218,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPNonPeriod
 
   VectorizedArray<double> phiExtFactor=make_vectorized_array(0.0);
 
-  if (dftPtr->d_isPseudopotential){
+  if (isPseudopotential){
     phiExtFactor=make_vectorized_array(1.0);
   }
 
@@ -242,7 +246,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPNonPeriod
        dealii::CellId subCellId=subCellPtr->id();
        std::vector<double> exchValQuads(numQuadPoints);
        std::vector<double> corrValQuads(numQuadPoints); 
-       if(dftPtr->d_xc_id == 4){
+       if(dftParameters::xc_id == 4){
            pcout<< " GGA force computation not implemented yet"<<std::endl;
 	   exit(-1);
        }
@@ -256,7 +260,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPNonPeriod
 
        for (unsigned int q=0; q<numQuadPoints; ++q){
          rhoQuads[q][iSubCell]=(*dftPtr->rhoOutValues)[subCellId][q];
-         if(dftPtr->d_xc_id == 4){
+         if(dftParameters::xc_id == 4){
 	   gradRhoQuads[q][0][iSubCell]=(*dftPtr->gradRhoOutValues)[subCellId][3*q];
 	   gradRhoQuads[q][1][iSubCell]=(*dftPtr->gradRhoOutValues)[subCellId][3*q+1];
            gradRhoQuads[q][2][iSubCell]=(*dftPtr->gradRhoOutValues)[subCellId][3*q+2]; 
@@ -264,7 +268,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPNonPeriod
        }
     }  
 
-    if(dftPtr->d_isPseudopotential){
+    if(isPseudopotential){
        for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell){
           subCellPtr= matrix_free_data.get_cell_iterator(cell,iSubCell);
           dealii::CellId subCellId=subCellPtr->id();	       
@@ -312,11 +316,11 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPNonPeriod
 						                 gradPsiQuads.begin()+q*numEigenVectors,
 								 (dftPtr->eigenValues)[0],
 								 dftPtr->fermiEnergy,
-								 dftPtr->d_TVal),
+								 dftParameters::TVal),
 		                                                 q);
     }
   
-    if(dftPtr->d_isPseudopotential){
+    if(isPseudopotential){
       for (unsigned int q=0; q<numQuadPoints; ++q){
         Tensor<1,C_DIM,VectorizedArray<double> > gradPhiExt_q =phiExtEval.get_gradient(q);   
         forceEval.submit_value(eshelbyTensor::getFPSPLocal(rhoQuads[q],
@@ -333,7 +337,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPNonPeriod
   }
 
   // add global FPSPLocal contribution due to Gamma(Rj) to the configurational force vector
-  if(dftPtr->d_isPseudopotential){
+  if(isPseudopotential){
      distributeForceContributionFPSPLocalGammaAtoms(forceContributionFPSPLocalGammaAtoms);
   }
 } 

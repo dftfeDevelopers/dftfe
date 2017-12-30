@@ -15,9 +15,10 @@
 //
 // @author Shiva Rudraraju (2016), Phani Motamarri (2016)
 //
-
 #include <complex>
-#include<vector>
+#include <vector>
+
+
 
 #ifdef ENABLE_PERIODIC_BC
 template<unsigned int FEOrder>
@@ -167,6 +168,9 @@ void dftClass<FEOrder>::chebyshevSolver()
   //compute upper bound of spectrum
   //
   bUp = upperBound(); 
+
+
+  unsigned int chebyshevOrder = dftParameters::chebyshevOrder;
 
   //
   //set Chebyshev order

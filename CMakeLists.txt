@@ -40,6 +40,7 @@ SET(TARGET "main")
 # Declare all source files the target consists of:
 SET(TARGET_SRC
   ./src/${TARGET}.cc
+  ./src/dft/dft.cc
   ./src/poisson/poisson.cc
   ./src/eigen/eigen.cc
   ./src/force/force.cc
@@ -47,6 +48,7 @@ SET(TARGET_SRC
   ./src/meshMovement/meshMovement.cc
   ./src/meshMovement/meshMovementGaussian.cc
   ./utils/fileReaders.cc
+  ./utils/dftParameters.cc
   # You can specify additional files here!
   )
 

@@ -32,6 +32,7 @@
 #include <xc.h>
 #include <petsc.h>
 #include <slepceps.h>
+#include "dftParameters.h"
 
 //
 //Initialize Namespace
@@ -43,6 +44,7 @@ typedef dealii::parallel::distributed::Vector<double> vectorType;
 template <unsigned int T> class poissonClass;
 template <unsigned int T> class eigenClass; 
 template <unsigned int T> class forceClass;  
+
 //
 //extern declarations for blas-lapack routines
 //
@@ -218,14 +220,14 @@ class dftClass
   /**
    * supplied data 
    */
-  unsigned int d_finiteElementPolynomialOrder,d_n_refinement_steps,d_numberEigenValues,d_xc_id;
+  /*unsigned int d_finiteElementPolynomialOrder,d_n_refinement_steps,d_numberEigenValues,d_xc_id;
   unsigned int d_chebyshevOrder,d_numSCFIterations,d_maxLinearSolverIterations, d_mixingHistory;
 
   double d_radiusAtomBall, d_domainSizeX, d_domainSizeY, d_domainSizeZ, d_mixingParameter;
   double d_lowerEndWantedSpectrum,d_relLinearSolverTolerance,d_selfConsistentSolverTolerance,d_TVal;
 
   bool d_isPseudopotential,d_periodicX,d_periodicY,d_periodicZ;
-  std::string d_meshFileName,d_coordinatesFile,d_currentPath,d_latticeVectorsFile,d_kPointDataFile;  
+  std::string d_meshFileName,d_coordinatesFile,d_currentPath,d_latticeVectorsFile,d_kPointDataFile;*/  
   /**
    * stores required data for Kohn-Sham problem
    */

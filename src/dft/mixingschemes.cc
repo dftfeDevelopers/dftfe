@@ -18,6 +18,8 @@
 
 //source file for all the mixing schemes
 
+double mixingParameter = dftParameters::mixingParameter;
+
 //implement simple mixing scheme 
 template<unsigned int FEOrder>
 double dftClass<FEOrder>::mixing_simple()
@@ -26,6 +28,7 @@ double dftClass<FEOrder>::mixing_simple()
   QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
   FEValues<3> fe_values (FE, quadrature, update_values | update_JxW_values | update_quadrature_points);
   const unsigned int num_quad_points = quadrature.size();
+  unsigned int xc_id = dftParameters::xc_id;
   
   //create new rhoValue tables
   std::map<dealii::CellId,std::vector<double> >* rhoInValuesOld = rhoInValues;
@@ -167,7 +170,7 @@ double dftClass<FEOrder>::mixing_anderson(){
   //compute gradRho for GGA using mixing constants from rho mixing
 
 
-  if(xc_id == 4)
+  if(dftParameters::xc_id == 4)
     {
       std::map<dealii::CellId,std::vector<double> >* gradRhoInValuesOld = gradRhoInValues;
       gradRhoInValues = new std::map<dealii::CellId,std::vector<double> >;

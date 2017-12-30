@@ -17,6 +17,7 @@
 //
 
 
+
 //init
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::initMovedTriangulation(){
@@ -179,6 +180,7 @@ void dftClass<FEOrder>::initMovedTriangulation(){
   //Initialize libxc (exchange-correlation)
   //
   int exceptParamX, exceptParamC;
+  unsigned int xc_id = dftParameters::xc_id;
 
 
   if(xc_id == 1)
@@ -221,7 +223,7 @@ void dftClass<FEOrder>::initMovedTriangulation(){
   //
   //initialize local pseudopotential
   //
-  if(isPseudopotential)
+  if(dftParameters::isPseudopotential)
     {
       initLocalPseudoPotential();
       initNonLocalPseudoPotential();

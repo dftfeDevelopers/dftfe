@@ -116,7 +116,7 @@ void dftClass<FEOrder>::initLocalPseudoPotential()
   for(std::set<unsigned int>::iterator it=atomTypes.begin(); it!=atomTypes.end(); it++)
     {
       char pseudoFile[256];
-      sprintf(pseudoFile, "%s/data/electronicStructure/pseudoPotential/z%u/pseudoAtomData/locPot.dat", currentPath.c_str(),*it);
+      sprintf(pseudoFile, "%s/data/electronicStructure/pseudoPotential/z%u/pseudoAtomData/locPot.dat", dftParameters::currentPath.c_str(),*it);
       pcout<<"Reading Local Pseudo-potential data from: " <<pseudoFile<<std::endl;
       dftUtils::readFile(2, pseudoPotentialData[*it], pseudoFile);
       unsigned int numRows = pseudoPotentialData[*it].size()-1;
@@ -228,12 +228,14 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential()
   //
   std::map<unsigned int, std::vector<std::vector<int> > > atomicNumberToWaveFunctionIdDetails;
   std::map<unsigned int, std::vector<std::vector<int> > > atomicNumberToPotentialIdMap;
-  
+  std::string currentPath = dftParameters::currentPath;
+
   //
   // Store the number of unique splines encountered so far 
   //
   unsigned int cumulativeSplineId    = 0;
   unsigned int cumulativePotSplineId = 0;
+  
 
 
   for(std::set<unsigned int>::iterator it = atomTypes.begin(); it != atomTypes.end(); ++it)

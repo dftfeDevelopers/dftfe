@@ -36,7 +36,7 @@ void dftClass<FEOrder>::readkPointData()
   std::vector<std::vector<double> > d_reciprocalLatticeVectors;
   std::vector<double> kPointReducedCoordinates;
   char kPointRuleFile[256];
-  sprintf(kPointRuleFile, "%s/data/kPointList/%s", currentPath.c_str(), kPointDataFile.c_str());
+  sprintf(kPointRuleFile, "%s/data/kPointList/%s", dftParameters::currentPath.c_str(), dftParameters::kPointDataFile.c_str());
   dftUtils::readFile(numberColumnskPointDataFile, kPointData, kPointRuleFile);
 
   d_maxkPoints = kPointData.size();

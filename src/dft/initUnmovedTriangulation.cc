@@ -137,6 +137,8 @@ void exchangeMasterNodesList(std::vector<unsigned int> & masterNodeIdList,
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::initUnmovedTriangulation(){
   computing_timer.enter_section("unmoved setup");
+  double domainSizeX = dftParameters::domainSizeX,domainSizeY = dftParameters::domainSizeY,domainSizeZ=dftParameters::domainSizeZ;
+
   //
   //initialize FE objects
   //

@@ -17,18 +17,18 @@
 //
 
 //Include header files
-//#include "../../include/headers.h"
+
 #include "../../include/dft.h"
 #include "../../include/eigen.h"
 #include "../../include/poisson.h"
 #include "../../include/force.h"
 #include "../../include/meshMovementGaussian.h"
 #include "../../include/fileReaders.h"
-//#include "../poisson/poisson.cc"
-//#include "../eigen/eigen.cc"
+
+
+//Include cc files
 #include "moveMeshToAtoms.cc"
 #include "meshAdapt.cc"
-//#include "init.cc"
 #include "initUnmovedTriangulation.cc"
 #include "initMovedTriangulation.cc"
 #include "psiInitialGuess.cc"
@@ -49,6 +49,8 @@
 #ifdef ENABLE_PERIODIC_BC
 #include "generateImageCharges.cc"
 #endif
+
+
 
 //
 //dft constructor
@@ -72,33 +74,7 @@ dftClass<FEOrder>::dftClass():
   d_maxkPoints(1),
   integralRhoValue(0),
   pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
-  computing_timer (pcout, TimerOutput::summary, TimerOutput::wall_times),
-  d_finiteElementPolynomialOrder(finiteElementPolynomialOrder),
-  d_n_refinement_steps(n_refinement_steps),
-  d_numberEigenValues(numberEigenValues),
-  d_xc_id(xc_id),
-  d_chebyshevOrder(chebyshevOrder),
-  d_numSCFIterations(numSCFIterations),
-  d_maxLinearSolverIterations(maxLinearSolverIterations), 
-  d_mixingHistory(mixingHistory),
-  d_radiusAtomBall(radiusAtomBall),
-  d_domainSizeX(domainSizeX),
-  d_domainSizeY(domainSizeY),
-  d_domainSizeZ(domainSizeZ),
-  d_mixingParameter(mixingParameter),
-  d_lowerEndWantedSpectrum(lowerEndWantedSpectrum),
-  d_relLinearSolverTolerance(relLinearSolverTolerance),
-  d_selfConsistentSolverTolerance(selfConsistentSolverTolerance),
-  d_TVal(TVal),
-  d_isPseudopotential(isPseudopotential),
-  d_periodicX(periodicX),
-  d_periodicY(periodicY),
-  d_periodicZ(periodicZ),
-  d_meshFileName(meshFileName),
-  d_coordinatesFile(coordinatesFile),
-  d_currentPath(currentPath),
-  d_latticeVectorsFile(latticeVectorsFile),
-  d_kPointDataFile(kPointDataFile)    
+  computing_timer (pcout, TimerOutput::summary, TimerOutput::wall_times)
 {
   poissonPtr= new poissonClass<FEOrder>(this);
   eigenPtr= new eigenClass<FEOrder>(this);
@@ -168,7 +144,7 @@ void dftClass<FEOrder>::set()
   //
   //read fractionalCoordinates of atoms in periodic case
   //
-  dftUtils::readFile(numberColumnsCoordinatesFile, atomLocations, coordinatesFile);
+  dftUtils::readFile(numberColumnsCoordinatesFile, atomLocations, dftParameters::coordinatesFile);
   pcout << "number of atoms: " << atomLocations.size() << "\n";
 
   //
@@ -191,7 +167,7 @@ void dftClass<FEOrder>::set()
   //read lattice Vectors
   //
   unsigned int numberColumnsLatticeVectorsFile = 3;
-  dftUtils::readFile(numberColumnsLatticeVectorsFile,d_latticeVectors,latticeVectorsFile);
+  dftUtils::readFile(numberColumnsLatticeVectorsFile,d_latticeVectors,dftParameters::latticeVectorsFile);
   for(int i = 0; i < d_latticeVectors.size(); ++i)
     {
       pcout<<"lattice vectors: "<<d_latticeVectors[i][0]<<" "<<d_latticeVectors[i][1]<<" "<<d_latticeVectors[i][2]<<"\n";
@@ -218,7 +194,7 @@ void dftClass<FEOrder>::set()
     }
 
 #else
-  dftUtils::readFile(numberColumnsCoordinatesFile, atomLocations, coordinatesFile);
+  dftUtils::readFile(numberColumnsCoordinatesFile, atomLocations, dftParameters::coordinatesFile);
   pcout << "number of atoms: " << atomLocations.size() << "\n";
 
   //
@@ -272,7 +248,7 @@ void dftClass<FEOrder>::set()
   
   //set size of eigenvalues and eigenvectors data structures
   eigenValues.resize(d_maxkPoints);
-  a0.resize(d_maxkPoints,lowerEndWantedSpectrum);
+  a0.resize(d_maxkPoints,dftParameters::lowerEndWantedSpectrum);
   bLow.resize(d_maxkPoints,0.0);
   eigenVectors.resize(d_maxkPoints);
   eigenVectorsOrig.resize(d_maxkPoints);
@@ -345,7 +321,8 @@ void dftClass<FEOrder>::run ()
   unsigned int scfIter=0;
   double norm = 1.0;
   char buffer[100];
-  while ((norm > selfConsistentSolverTolerance) && (scfIter < numSCFIterations))
+
+  while ((norm > dftParameters::selfConsistentSolverTolerance) && (scfIter < dftParameters::numSCFIterations))
     {
       sprintf(buffer, "\n\n**** Begin Self-Consistent-Field Iteration: %u ****\n", scfIter+1); pcout << buffer;
       //Mixing scheme
@@ -369,16 +346,16 @@ void dftClass<FEOrder>::run ()
      
       //eigen solve
 
-      if(xc_id < 4)
+      if(dftParameters::xc_id < 4)
 	{
-	  if(isPseudopotential)
+	  if(dftParameters::isPseudopotential)
 	    eigenPtr->computeVEff(rhoInValues, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, pseudoValues);
 	  else
 	    eigenPtr->computeVEff(rhoInValues, poissonPtr->phiTotRhoIn, poissonPtr->phiExt); 
 	}
-      else if (xc_id == 4)
+      else if (dftParameters::xc_id == 4)
 	{
-	  if(isPseudopotential)
+	  if(dftParameters::isPseudopotential)
 	    eigenPtr->computeVEff(rhoInValues, gradRhoInValues, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, pseudoValues);
 	  else
 	    eigenPtr->computeVEff(rhoInValues, gradRhoInValues, poissonPtr->phiTotRhoIn, poissonPtr->phiExt);

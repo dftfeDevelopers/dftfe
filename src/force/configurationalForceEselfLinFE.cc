@@ -120,7 +120,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEselfLinFE()
            closestAtomLocation[0]=atomLocations[closestAtomId][2];
 	   closestAtomLocation[1]=atomLocations[closestAtomId][3];
 	   closestAtomLocation[2]=atomLocations[closestAtomId][4];
-	   if(dftPtr->d_isPseudopotential)
+	   if(dftParameters::isPseudopotential)
 	      closestAtomCharge = atomLocations[closestAtomId][1];
            else
 	      closestAtomCharge = atomLocations[closestAtomId][0];

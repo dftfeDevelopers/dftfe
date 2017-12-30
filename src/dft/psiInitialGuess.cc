@@ -21,6 +21,7 @@
 #include <boost/math/distributions/normal.hpp>
 #include <boost/random/normal_distribution.hpp>
 
+
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::loadPSIFiles(unsigned int Z, 
 				     unsigned int n, 
@@ -39,10 +40,10 @@ void dftClass<FEOrder>::loadPSIFiles(unsigned int Z,
   //set the paths for the Single-Atom wavefunction data
   //
   char psiFile[256];
-  if(isPseudopotential)
-    sprintf(psiFile, "%s/data/electronicStructure/pseudoPotential/z%u/singleAtomData/psi%u%u.inp", currentPath.c_str(), Z, n, l);
+  if(dftParameters::isPseudopotential)
+    sprintf(psiFile, "%s/data/electronicStructure/pseudoPotential/z%u/singleAtomData/psi%u%u.inp", dftParameters::currentPath.c_str(), Z, n, l);
   else
-    sprintf(psiFile, "%s/data/electronicStructure/allElectron/z%u/singleAtomData/psi%u%u.inp", currentPath.c_str(), Z, n, l);
+    sprintf(psiFile, "%s/data/electronicStructure/allElectron/z%u/singleAtomData/psi%u%u.inp", dftParameters::currentPath.c_str(), Z, n, l);
 
   std::vector<std::vector<double> > values;
 
@@ -159,7 +160,7 @@ void dftClass<FEOrder>::determineOrbitalFilling()
       unsigned int valenceZ = atomLocations[iAtom][1];
       unsigned int numberAtomFunctions; 
 
-      if(isPseudopotential)
+      if(dftParameters::isPseudopotential)
 	{
 	  //numberAtomFunctions = std::ceil(valenceZ/2.0) + extraWaveFunctionsPerAtom;
 	  numElectrons += valenceZ;

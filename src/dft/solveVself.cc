@@ -143,7 +143,7 @@ void dftClass<FEOrder>::solveVself()
 			      atomCoor[1] = atomLocations[chargeId][3];
 			      atomCoor[2] = atomLocations[chargeId][4];
 			  
-			      if(isPseudopotential)
+			      if(dftParameters::isPseudopotential)
 				nuclearCharge = atomLocations[chargeId][1];
 			      else
 				nuclearCharge = atomLocations[chargeId][0];

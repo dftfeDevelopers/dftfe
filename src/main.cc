@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Shiva Rudraraju (2016), Phani Motamarri (2016)
+// @author Phani Motamarri (2017)
 //
 
 //
@@ -23,29 +23,21 @@
 #include <deal.II/base/parameter_handler.h>
 
 //
+//dft header
+//
+#include "../include/constants.h"
+#include "../include/dft.h"
+//#include "../include/dftParameters.h"
+
+//
 //C++ headers
 //
 #include <list>
 #include <iostream>
 #include <fstream>
 
-unsigned int finiteElementPolynomialOrder,n_refinement_steps,numberEigenValues,xc_id;
-unsigned int chebyshevOrder,numSCFIterations,maxLinearSolverIterations, mixingHistory;
 
-double radiusAtomBall, domainSizeX, domainSizeY, domainSizeZ, mixingParameter;
-double lowerEndWantedSpectrum,relLinearSolverTolerance,selfConsistentSolverTolerance,TVal;
 
-bool isPseudopotential,periodicX,periodicY,periodicZ;
-std::string meshFileName,coordinatesFile,currentPath,latticeVectorsFile,kPointDataFile;
-
-double innerDomainSize, outerBallRadius, innerBallRadius, meshSizeOuterDomain, meshSizeInnerDomain;
-double meshSizeOuterBall, meshSizeInnerBall, baseRefinementLevel;
-
-//
-//dft header
-//
-#include "../include/constants.h"
-#include "./dft/dft.cc"
 
 
 using namespace dealii;
@@ -82,7 +74,6 @@ void declare_parameters()
   prm.declare_entry("MESH FILE", "",
 		    Patterns::Anything(),
 		    "Finite-element mesh file to be used for the given problem");
-
     
   prm.declare_entry("DOMAIN SIZE X", "0.0",
 		    Patterns::Double(),
@@ -214,9 +205,6 @@ void declare_parameters()
   prm.declare_entry("POISSON SOLVER CONVERGENCE TOLERANCE", "1e-12",
 		    Patterns::Double(),
 		    "Relative tolerance as stopping criterion for Poisson problem convergence");
-
-    
-
 }
 
 void parse_command_line(const int argc,
@@ -250,42 +238,41 @@ void parse_command_line(const int argc,
 	  prm.parse_input(parameter_file);
 	  print_usage_message();
 
-	  currentPath                   = prm.get("DFT PATH");
-	  currentPath.erase(std::remove(currentPath.begin(),currentPath.end(),'"'),currentPath.end());
-	  meshFileName                  = prm.get("MESH FILE");
-	  finiteElementPolynomialOrder  = prm.get_integer("FINITE ELEMENT POLYNOMIAL ORDER");
-	  n_refinement_steps            = prm.get_integer("NUMBER OF REFINEMENT STEPS");
-	  coordinatesFile               = prm.get("ATOMIC COORDINATES FILE");
-	  radiusAtomBall                = prm.get_double("RADIUS ATOM BALL");
-	  domainSizeX                   = prm.get_double("DOMAIN SIZE X");
-	  domainSizeY                   = prm.get_double("DOMAIN SIZE Y");
-	  domainSizeZ                   = prm.get_double("DOMAIN SIZE Z");
-	  innerDomainSize               = prm.get_double("INNER DOMAIN SIZE");
-	  outerBallRadius               = prm.get_double("OUTER BALL RADIUS");
-	  innerBallRadius               = prm.get_double("INNER BALL RADIUS");
-	  baseRefinementLevel           = prm.get_double("BASE REFINEMENT LEVEL");
-	  meshSizeOuterDomain           = prm.get_double("MESH SIZE OUTER DOMAIN");
-	  meshSizeInnerDomain           = prm.get_double("MESH SIZE INNER DOMAIN");
-	  meshSizeOuterBall             = prm.get_double("MESH SIZE OUTER BALL");
-	  meshSizeInnerBall             = prm.get_double("MESH SIZE INNER BALL");
-	  periodicX                     = prm.get_bool("PERIODIC BOUNDARY CONDITION X");
-	  periodicY                     = prm.get_bool("PERIODIC BOUNDARY CONDITION Y");
-	  periodicZ                     = prm.get_bool("PERIODIC BOUNDARY CONDITION Z");
-	  latticeVectorsFile            = prm.get("LATTICE VECTORS FILE");
-	  kPointDataFile                = prm.get("kPOINT RULE FILE");
-	  isPseudopotential             = prm.get_bool("PSEUDOPOTENTIAL CALCULATION");
-	  xc_id                         = prm.get_integer("EXCHANGE CORRELATION TYPE");
-	  numberEigenValues             = prm.get_integer("NUMBER OF KOHN-SHAM WAVEFUNCTIONS");
-	  lowerEndWantedSpectrum        = prm.get_double("LOWER BOUND WANTED SPECTRUM");
-	  chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");  
-	  numSCFIterations              = prm.get_integer("SCF CONVERGENCE MAXIMUM ITERATIONS");
-	  selfConsistentSolverTolerance = prm.get_double("SCF CONVERGENCE TOLERANCE");
-	  mixingHistory                 = prm.get_integer("ANDERSON SCHEME MIXING HISTORY");
-	  mixingParameter               = prm.get_double("ANDERSON SCHEME MIXING PARAMETER");
-	  TVal                          = prm.get_double("TEMPERATURE");	
-	  maxLinearSolverIterations     = prm.get_integer("POISSON SOLVER CONVERGENCE MAXIMUM ITERATIONS");
-	  relLinearSolverTolerance      = prm.get_double("POISSON SOLVER CONVERGENCE TOLERANCE");
-	  
+	  dftParameters::currentPath                   = prm.get("DFT PATH");
+	  dftParameters::currentPath.erase(std::remove(dftParameters::currentPath.begin(),dftParameters::currentPath.end(),'"'),dftParameters::currentPath.end());
+	  dftParameters::meshFileName                  = prm.get("MESH FILE");
+	  dftParameters::finiteElementPolynomialOrder  = prm.get_integer("FINITE ELEMENT POLYNOMIAL ORDER");
+	  dftParameters::n_refinement_steps            = prm.get_integer("NUMBER OF REFINEMENT STEPS");
+	  dftParameters::coordinatesFile               = prm.get("ATOMIC COORDINATES FILE");
+	  dftParameters::radiusAtomBall                = prm.get_double("RADIUS ATOM BALL");
+	  dftParameters::domainSizeX                   = prm.get_double("DOMAIN SIZE X");
+	  dftParameters::domainSizeY                   = prm.get_double("DOMAIN SIZE Y");
+	  dftParameters::domainSizeZ                   = prm.get_double("DOMAIN SIZE Z");
+	  dftParameters::innerDomainSize               = prm.get_double("INNER DOMAIN SIZE");
+	  dftParameters::outerBallRadius               = prm.get_double("OUTER BALL RADIUS");
+	  dftParameters::innerBallRadius               = prm.get_double("INNER BALL RADIUS");
+	  dftParameters::baseRefinementLevel           = prm.get_double("BASE REFINEMENT LEVEL");
+	  dftParameters::meshSizeOuterDomain           = prm.get_double("MESH SIZE OUTER DOMAIN");
+	  dftParameters::meshSizeInnerDomain           = prm.get_double("MESH SIZE INNER DOMAIN");
+	  dftParameters::meshSizeOuterBall             = prm.get_double("MESH SIZE OUTER BALL");
+	  dftParameters::meshSizeInnerBall             = prm.get_double("MESH SIZE INNER BALL");
+	  dftParameters::periodicX                     = prm.get_bool("PERIODIC BOUNDARY CONDITION X");
+	  dftParameters::periodicY                     = prm.get_bool("PERIODIC BOUNDARY CONDITION Y");
+	  dftParameters::periodicZ                     = prm.get_bool("PERIODIC BOUNDARY CONDITION Z");
+	  dftParameters::latticeVectorsFile            = prm.get("LATTICE VECTORS FILE");
+	  dftParameters::kPointDataFile                = prm.get("kPOINT RULE FILE");
+	  dftParameters::isPseudopotential             = prm.get_bool("PSEUDOPOTENTIAL CALCULATION");
+	  dftParameters::xc_id                         = prm.get_integer("EXCHANGE CORRELATION TYPE");
+	  dftParameters::numberEigenValues             = prm.get_integer("NUMBER OF KOHN-SHAM WAVEFUNCTIONS");
+	  dftParameters::lowerEndWantedSpectrum        = prm.get_double("LOWER BOUND WANTED SPECTRUM");
+	  dftParameters::chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");  
+	  dftParameters::numSCFIterations              = prm.get_integer("SCF CONVERGENCE MAXIMUM ITERATIONS");
+	  dftParameters::selfConsistentSolverTolerance = prm.get_double("SCF CONVERGENCE TOLERANCE");
+	  dftParameters::mixingHistory                 = prm.get_integer("ANDERSON SCHEME MIXING HISTORY");
+	  dftParameters::mixingParameter               = prm.get_double("ANDERSON SCHEME MIXING PARAMETER");
+	  dftParameters::TVal                          = prm.get_double("TEMPERATURE");	
+	  dftParameters::maxLinearSolverIterations     = prm.get_integer("POISSON SOLVER CONVERGENCE MAXIMUM ITERATIONS");
+	  dftParameters::relLinearSolverTolerance      = prm.get_double("POISSON SOLVER CONVERGENCE TOLERANCE");
 	}
 
     }//end of while loop
@@ -331,6 +318,10 @@ int main (int argc, char *argv[])
     // set stdout precision
     //
     std::cout << std::scientific << std::setprecision(18);
+
+    unsigned int finiteElementPolynomialOrder = dftParameters::finiteElementPolynomialOrder;
+    unsigned int numberEigenValues = dftParameters::numberEigenValues;
+    
 
     switch(finiteElementPolynomialOrder) {
 

@@ -22,6 +22,15 @@
 #include "../../include/constants.h"
 #include "../../include/eshelbyTensor.h"
 #include "../../include/fileReaders.h"
+//#include "../../include/dftParameters.h"
+
+//define some runTime variables
+/*bool isPseudopotential = dftParameters::isPseudopotential;
+unsigned int xc_id = dftParameters::xc_id;
+double TVal = dftParameters::TVal;
+std::string currentPath = dftParameters::currentPath;*/
+
+
 #include "configurationalForceEEshelbyFPSPPeriodicLinFE.cc"
 #include "configurationalForceEEshelbyFPSPNonPeriodicLinFE.cc"
 #include "configurationalForceEselfLinFE.cc"
@@ -32,6 +41,9 @@
 #include "stress.cc"
 #include "relax.cc"
 #include "moveAtoms.cc"
+
+
+
 //
 //constructor
 //
@@ -116,7 +128,7 @@ void forceClass<FEOrder>::initUnmoved()
   //
   //initialize pseudopotential related force objects
   //
-  if(dftPtr->d_isPseudopotential)
+  if(dftParameters::isPseudopotential)
     {
       initLocalPseudoPotentialForce();
       //initNonLocalPseudoPotentialForce();
@@ -167,7 +179,7 @@ void forceClass<FEOrder>::initMoved()
   //
   //initialize pseudopotential related force objects
   //
-  if(dftPtr->d_isPseudopotential)
+  if(dftParameters::isPseudopotential)
     {
       initLocalPseudoPotentialForce();
       //initNonLocalPseudoPotentialForce();

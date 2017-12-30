@@ -18,6 +18,8 @@
 
 #include "../../include/eigen.h"
 #include "../../include/dft.h"
+
+
 //
 //constructor
 //
@@ -208,7 +210,7 @@ void eigenClass<FEOrder>::computeVEff(std::map<dealii::CellId,std::vector<double
 	  //
 	  //sum all to vEffective
 	  //
-	  if(dftPtr->d_isPseudopotential)
+	  if(dftParameters::isPseudopotential)
 	    {
 	      VectorizedArray<double>  pseudoPotential;
 	      for (unsigned int v = 0; v < n_sub_cells; ++v)
@@ -303,7 +305,7 @@ void eigenClass<FEOrder>::computeVEff(std::map<dealii::CellId,std::vector<double
 	  //
 	  //sum all to vEffective
 	  //
-	  if(dftPtr->d_isPseudopotential)
+	  if(dftParameters::isPseudopotential)
 	    {
 	      VectorizedArray<double>  pseudoPotential;
 	      for (unsigned int v = 0; v < n_sub_cells; ++v)
@@ -678,7 +680,7 @@ void eigenClass<FEOrder>::implementHX (const dealii::MatrixFree<3,double>  &data
   double kSquareTimesHalf =  0.5*(dftPtr->d_kPointCoordinates[3*kPointIndex+0]*dftPtr->d_kPointCoordinates[3*kPointIndex+0] + dftPtr->d_kPointCoordinates[3*kPointIndex+1]*dftPtr->d_kPointCoordinates[3*kPointIndex+1] + dftPtr->d_kPointCoordinates[3*kPointIndex+2]*dftPtr->d_kPointCoordinates[3*kPointIndex+2]);
   VectorizedArray<double> halfkSquare = make_vectorized_array(kSquareTimesHalf);
 
-  if(dftPtr->d_xc_id == 4)
+  if(dftParameters::xc_id == 4)
     {
       for(unsigned int cell=cell_range.first; cell<cell_range.second; ++cell)
 	{
@@ -813,7 +815,7 @@ void eigenClass<FEOrder>::implementHX (const dealii::MatrixFree<3,double>  &data
   FEEvaluation<3,FEOrder, C_num1DQuad<FEOrder>(), 1, double>  fe_eval(data, dftPtr->eigenDofHandlerIndex, 0);
   Tensor<1,3,VectorizedArray<double> > derExchWithSigmaTimesGradRhoTimesPsi,gradientPsiVal;
   VectorizedArray<double> psiVal,derExchWithSigmaTimesGradRhoDotGradientPsiTerm;
-  if(dftPtr->d_xc_id == 4)
+  if(dftParameters::xc_id == 4)
     {
       for(unsigned int cell = cell_range.first; cell < cell_range.second; ++cell)
 	{
@@ -888,7 +890,7 @@ void eigenClass<FEOrder>::HX(const std::vector<vectorType*> &src,
   //
   //required if its a pseudopotential calculation and number of nonlocal atoms are greater than zero
   //
-  if(dftPtr->d_isPseudopotential && dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0)
+  if(dftParameters::isPseudopotential && dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0)
     {
 
       for (unsigned int i = 0; i < src.size(); i++)

@@ -25,6 +25,8 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPPeriodicL
   const unsigned int totalNumberAtoms = numberGlobalAtoms + numberImageCharges; 
   std::map<unsigned int, std::vector<double> > forceContributionFPSPLocalGammaAtoms;  
 
+  bool isPseudopotential = dftParameters::isPseudopotential;
+
   const unsigned int numVectorizedArrayElements=VectorizedArray<double>::n_array_elements;
   const MatrixFree<3,double> & matrix_free_data=dftPtr->matrix_free_data;
   std::map<dealii::CellId, std::vector<double> >  **rhoOutValues=&(dftPtr->rhoOutValues);
@@ -52,7 +54,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPPeriodicL
   }
 
   VectorizedArray<double> phiExtFactor=make_vectorized_array(0.0);
-  if (dftPtr->d_isPseudopotential){
+  if (isPseudopotential){
     phiExtFactor=make_vectorized_array(1.0);
   }
 
@@ -80,7 +82,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPPeriodicL
        dealii::CellId subCellId=subCellPtr->id();
        std::vector<double> exchValQuads(numQuadPoints);
        std::vector<double> corrValQuads(numQuadPoints); 
-       if(dftPtr->d_xc_id == 4){
+       if(dftParameters::xc_id == 4){
            pcout<< " GGA force computation not implemented yet"<<std::endl;
 	   exit(-1);
        }
@@ -94,7 +96,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPPeriodicL
 
        for (unsigned int q=0; q<numQuadPoints; ++q){
          rhoQuads[q][iSubCell]=(**rhoOutValues)[subCellId][q];
-         if(dftPtr->d_xc_id == 4){
+         if(dftParameters::xc_id == 4){
 	   gradRhoQuads[q][0][iSubCell]=(**gradRhoOutValues)[subCellId][3*q];
 	   gradRhoQuads[q][1][iSubCell]=(**gradRhoOutValues)[subCellId][3*q+1];
            gradRhoQuads[q][2][iSubCell]=(**gradRhoOutValues)[subCellId][3*q+2]; 
@@ -102,7 +104,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPPeriodicL
        }
     }   
    
-    if(dftPtr->d_isPseudopotential){
+    if(isPseudopotential){
        for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell){
           subCellPtr= matrix_free_data.get_cell_iterator(cell,iSubCell);
           dealii::CellId subCellId=subCellPtr->id();	       
@@ -155,10 +157,10 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPPeriodicL
 							      dftPtr->d_kPointWeights,
 							      dftPtr->eigenValues,
 							      dftPtr->fermiEnergy,
-							      dftPtr->d_TVal),
+							      dftParameters::TVal),
 		                                              q);
     }
-    if(dftPtr->d_isPseudopotential){
+    if(isPseudopotential){
       for (unsigned int q=0; q<numQuadPoints; ++q){
         Tensor<1,C_DIM,VectorizedArray<double> > gradPhiExt_q =phiExtEval.get_gradient(q)*phiExtFactor;   
         forceEval.submit_value(eshelbyTensor::getFPSPLocal(rhoQuads[q],
@@ -175,7 +177,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPPeriodicL
   }
 
   // add global FPSPLocal contribution due to Gamma(Rj) to the configurational force vector
-  if(dftPtr->d_isPseudopotential){
+  if(isPseudopotential){
      distributeForceContributionFPSPLocalGammaAtoms(forceContributionFPSPLocalGammaAtoms);
   }  
 }
