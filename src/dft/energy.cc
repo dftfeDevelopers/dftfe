@@ -181,7 +181,8 @@ void dftClass<FEOrder>::compute_energy()
 #ifdef ENABLE_PERIODIC_BC
 		  electrostaticEnergyTotPot+=0.5*(Vtot)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
 #else
-		  electrostaticEnergyTotPot+=0.5*(Vtot+Vext*0)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
+		  //electrostaticEnergyTotPot+=0.5*(Vtot+Vext)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
+		  electrostaticEnergyTotPot+=0.5*(Vtot)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
 #endif
 		}
 	    }
