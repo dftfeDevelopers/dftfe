@@ -39,7 +39,7 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,b
 
     gaussianMove.findClosestVerticesToDestinationPoints(atomPoints,
 		                                     closestTriaVertexToAtomsLocation,
-                                                     distanceClosestTriaVerticesToAtoms);
+                                                     dispClosestTriaVerticesToAtoms);
 
 
     //add control point locations and displacements corresponding to images
@@ -57,14 +57,14 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,b
   
       Point<3> temp=closestTriaVertexToAtomsLocation[atomId]+(correspondingAtomCoor-imageCoor);
       closestTriaVertexToAtomsLocation.push_back(temp);
-      distanceClosestTriaVerticesToAtoms.push_back(distanceClosestTriaVerticesToAtoms[atomId]);
+      dispClosestTriaVerticesToAtoms.push_back(dispClosestTriaVerticesToAtoms[atomId]);
      }
 	
   }
  
   const double gaussianConstant=0.5;
   gaussianMove.moveMesh(closestTriaVertexToAtomsLocation,
-		        distanceClosestTriaVerticesToAtoms,
+		        dispClosestTriaVerticesToAtoms,
 			gaussianConstant);
 
 }

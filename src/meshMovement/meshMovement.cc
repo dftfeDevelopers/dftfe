@@ -186,10 +186,10 @@ void meshMovementClass::movedMeshCheck()
 
 void meshMovementClass::findClosestVerticesToDestinationPoints(const std::vector<Point<3>> & destinationPoints,
 		                                               std::vector<Point<3>> & closestTriaVertexToDestPointsLocation,
-                                                               std::vector<Tensor<1,3,double>> & distanceClosestTriaVerticesToDestPoints)
+                                                               std::vector<Tensor<1,3,double>> & dispClosestTriaVerticesToDestPoints)
 {
   closestTriaVertexToDestPointsLocation.clear();
-  distanceClosestTriaVerticesToDestPoints.clear();
+  dispClosestTriaVerticesToDestPoints.clear();
   unsigned int vertices_per_cell=GeometryInfo<C_DIM>::vertices_per_cell;
   
   for (unsigned int idest=0;idest <destinationPoints.size(); idest++){
@@ -249,6 +249,6 @@ void meshMovementClass::findClosestVerticesToDestinationPoints(const std::vector
       //std::cout << closestTriaVertexLocationGlobal << " disp: "<<Point<3>(destinationPoints[idest]-closestTriaVertexLocationGlobal) << std::endl;
       closestTriaVertexToDestPointsLocation.push_back(closestTriaVertexLocationGlobal);
       Tensor<1,3,double> temp=destinationPoints[idest]-closestTriaVertexLocationGlobal;
-      distanceClosestTriaVerticesToDestPoints.push_back(temp);
+      dispClosestTriaVerticesToDestPoints.push_back(temp);
   }
 }	
