@@ -17,6 +17,53 @@
 //
 //
 #include "../../include/meshMovement.h"
+#include "../../include/dftParameters.h"
+
+namespace meshMovementUtils{
+
+  extern "C"{
+      //
+      // lapack Ax=b
+      //
+      void dgesv_(int *N, int * NRHS, double* A, int * LDA, int* IPIV,
+		  double *B, int * LDB, int *INFO);
+
+  }
+
+    
+  std::vector<double> getFractionalCoordinates(const std::vector<double> & latticeVectors,
+	                                       const Point<3> & point,                                                                                           const Point<3> & corner)
+  {   
+      //
+      // recenter vertex about corner
+      //
+      std::vector<double> recenteredPoint(3);
+      for(int i = 0; i < 3; ++i)
+        recenteredPoint[i] = point[i]-corner[i];
+
+      std::vector<double> latticeVectorsDup = latticeVectors;
+
+      //
+      // to get the fractionalCoords, solve a linear
+      // system of equations
+      //
+      int N = 3;
+      int NRHS = 1;
+      int LDA = 3;
+      int IPIV[3];
+      int info;
+
+      dgesv_(&N, &NRHS, &latticeVectorsDup[0], &LDA, &IPIV[0], &recenteredPoint[0], &LDA,&info);
+
+      if (info != 0) {
+        const std::string
+          message("LU solve in finding fractional coordinates failed.");
+        Assert(false,message);
+      }
+      return recenteredPoint;
+  }
+    
+}
 //
 //constructor
 //
@@ -95,7 +142,8 @@ void meshMovementClass::initIncrementField()
   //dftPtr->matrix_free_data.initialize_dof_vector(d_incrementalDisplacement,d_forceDofHandlerIndex);	
   IndexSet  ghost_indices=d_locally_relevant_dofs;
   ghost_indices.subtract_set(d_locally_owned_dofs);
-  d_incrementalDisplacement=parallel::distributed::Vector<double>::Vector(d_locally_owned_dofs                                                                                              ,ghost_indices,
+  d_incrementalDisplacement=parallel::distributed::Vector<double>::Vector(d_locally_owned_dofs,
+	                                                                  ghost_indices,
                                                                           mpi_communicator);
   d_incrementalDisplacement=0;  	
 }
@@ -112,7 +160,7 @@ void meshMovementClass::updateTriangulationVertices()
 {
   MPI_Barrier(mpi_communicator); 
   pcout << "Start moving triangulation..." << std::endl;
-  std::vector<bool> vertex_moved(d_dofHandlerMoveMesh.get_tria().n_vertices(),
+  std::vector<bool> vertex_moved(d_dofHandlerMoveMesh.get_triangulation().n_vertices(),
                                  false);
   
   // Next move vertices on locally owned cells
@@ -168,8 +216,8 @@ void meshMovementClass::movedMeshCheck()
   //print out mesh metrics
   typename Triangulation<3,3>::active_cell_iterator cell, endc;
   double minElemLength=1e+6;
-  cell = d_dofHandlerMoveMesh.get_tria().begin_active();
-  endc = d_dofHandlerMoveMesh.get_tria().end();
+  cell = d_dofHandlerMoveMesh.get_triangulation().begin_active();
+  endc = d_dofHandlerMoveMesh.get_triangulation().end();
   for ( ; cell != endc; ++cell){
     if (cell->is_locally_owned()){
       if (cell->minimum_vertex_distance()<minElemLength) minElemLength = cell->minimum_vertex_distance();
@@ -191,13 +239,37 @@ void meshMovementClass::findClosestVerticesToDestinationPoints(const std::vector
   closestTriaVertexToDestPointsLocation.clear();
   dispClosestTriaVerticesToDestPoints.clear();
   unsigned int vertices_per_cell=GeometryInfo<C_DIM>::vertices_per_cell;
-  
+  double domainSizeX = dftParameters::domainSizeX,domainSizeY = dftParameters::domainSizeY,domainSizeZ=dftParameters::domainSizeZ;
+  std::vector<double> latticeVectors(9,0.0);
+  latticeVectors[0]=domainSizeX; latticeVectors[4]=domainSizeY; latticeVectors[8]=domainSizeZ;
+  Point<3> corner;
+  corner[0]=-domainSizeX/2; corner[1]=-domainSizeY/2; corner[2]=-domainSizeZ/2;
+  std::vector<double> latticeVectorsMagnitudes(3);
+  latticeVectorsMagnitudes[0]=domainSizeX; latticeVectorsMagnitudes[1]=domainSizeY; latticeVectorsMagnitudes[2]=domainSizeZ;
+  std::vector<bool> isPeriodic(3,false); 
+  isPeriodic[0]=dftParameters::periodicX;isPeriodic[1]=dftParameters::periodicY;isPeriodic[2]=dftParameters::periodicZ;
+
   for (unsigned int idest=0;idest <destinationPoints.size(); idest++){
+
+      std::vector<bool> isDestPointOnPeriodicSurface(3,false);
+
+      std::vector<double> destFracCoords= meshMovementUtils::getFractionalCoordinates(latticeVectors,
+	                                                                              destinationPoints[idest],
+										      corner);
+      //std::cout<< "destFracCoords: "<< destFracCoords[0] << "," <<destFracCoords[1] <<"," <<destFracCoords[2]<<std::endl; 
+      for (int idim=0; idim<3; idim++)
+      {
+        if ((std::fabs(destFracCoords[idim]-0.0) <1e-5/latticeVectorsMagnitudes[idim]
+            || std::fabs(destFracCoords[idim]-1.0) <1e-5/latticeVectorsMagnitudes[idim])
+	    && isPeriodic[idim]==true)
+               isDestPointOnPeriodicSurface[idim]=true;
+      }
+
 
       double minDistance=1e+6;
       Point<3> closestTriaVertexLocation;
 
-      std::vector<bool> vertex_touched(d_dofHandlerMoveMesh.get_tria().n_vertices(),
+      std::vector<bool> vertex_touched(d_dofHandlerMoveMesh.get_triangulation().n_vertices(),
                                        false);      
       DoFHandler<3>::active_cell_iterator
       cell = d_dofHandlerMoveMesh.begin_active(),
@@ -217,6 +289,36 @@ void meshMovementClass::findClosestVerticesToDestinationPoints(const std::vector
 	    }
 
 	    Point<C_DIM> nodalCoor = cell->vertex(i);
+            std::vector<bool> isNodeOnPeriodicSurface(3,false);
+
+	    bool isNodeConsidered=true;
+
+	    if (isDestPointOnPeriodicSurface[0] 
+		|| isDestPointOnPeriodicSurface[1] 
+		|| isDestPointOnPeriodicSurface[2])
+	    {
+
+		std::vector<double> nodeFracCoords= meshMovementUtils::getFractionalCoordinates(latticeVectors,
+												nodalCoor,                                                                                                        corner);
+		for (int idim=0; idim<3; idim++)
+		{
+		  if ((std::fabs(nodeFracCoords[idim]-0.0) <1e-5/latticeVectorsMagnitudes[idim]
+		      || std::fabs(nodeFracCoords[idim]-1.0) <1e-5/latticeVectorsMagnitudes[idim])
+		      && isPeriodic[idim]==true)
+			isNodeOnPeriodicSurface[idim]=true;
+		}	  
+		isNodeConsidered=false;
+		//std::cout<< "nodeFracCoords: "<< nodeFracCoords[0] << "," <<nodeFracCoords[1] <<"," <<nodeFracCoords[2]<<std::endl;
+		if ( (isDestPointOnPeriodicSurface[0]==isNodeOnPeriodicSurface[0])
+	             && (isDestPointOnPeriodicSurface[1]==isNodeOnPeriodicSurface[1])
+                     && (isDestPointOnPeriodicSurface[2]==isNodeOnPeriodicSurface[2])){
+		     isNodeConsidered=true;
+		     //std::cout<< "nodeFracCoords: "<< nodeFracCoords[0] << "," <<nodeFracCoords[1] <<"," <<nodeFracCoords[2]<<std::endl;
+		}
+	    }
+
+	    if (!isNodeConsidered)
+	       continue;
 
             const double distance=(nodalCoor-destinationPoints[idest]).norm();
 
