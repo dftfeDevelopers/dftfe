@@ -50,7 +50,7 @@ void meshMovementGaussianClass::computeIncrement()
   
   for (unsigned int iControl=0;iControl <d_controlPointLocations.size(); iControl++){
 
-      std::vector<bool> vertex_touched(d_dofHandlerMoveMesh.get_tria().n_vertices(),
+      std::vector<bool> vertex_touched(d_dofHandlerMoveMesh.get_triangulation().n_vertices(),
                                        false);      
       DoFHandler<3>::active_cell_iterator
       cell = d_dofHandlerMoveMesh.begin_active(),
