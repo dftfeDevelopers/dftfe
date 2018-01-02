@@ -43,7 +43,7 @@ SET(TARGET_SRC
   ./src/dft/dft.cc
   ./src/poisson/poisson.cc
   ./src/eigen/eigen.cc
-  #./src/force/force.cc
+  ./src/force/force.cc
   ./src/force/eshelbyTensor/eshelbyTensor.cc
   ./src/meshMovement/meshMovement.cc
   ./src/meshMovement/meshMovementGaussian.cc

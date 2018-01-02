@@ -142,12 +142,12 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   quadratureVector.push_back(QGaussLobatto<1>(C_num1DQuad<FEOrder>()));  
   //
   //
-  //forcePtr->initMoved();
+  forcePtr->initMoved();
 
   //push dofHandler and constraints for force
-  //dofHandlerVector.push_back(&(forcePtr->d_dofHandlerForce));
-  //forcePtr->d_forceDofHandlerIndex = dofHandlerVector.size()-1;
-  //d_constraintsVector.push_back(&(forcePtr->d_constraintsNoneForce));  
+  dofHandlerVector.push_back(&(forcePtr->d_dofHandlerForce));
+  forcePtr->d_forceDofHandlerIndex = dofHandlerVector.size()-1;
+  d_constraintsVector.push_back(&(forcePtr->d_constraintsNoneForce));  
 
   matrix_free_data.reinit(dofHandlerVector, d_constraintsVector, quadratureVector, additional_data);
 
