@@ -370,7 +370,7 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoDataForce()
 
 }
 
-
+/*
 template<unsigned int FEOrder>
 void forceClass<FEOrder>::computeNonLocalProjectorKetTimesVector(const std::vector<vectorType*> &src,
 							         std::vector<std::vector<double> > & projectorKetTimesVec)
@@ -602,3 +602,4 @@ projectorKetTimesVec.clear();
   projectorKetTimesVec= projectorKetTimesVector;
 #endif  
 }
+*/
