@@ -413,7 +413,13 @@ void dftClass<FEOrder>::output () {
     data_outEigen.add_data_vector (*eigenVectors[0][i], buffer);
   }
   data_outEigen.build_patches (C_num1DQuad<FEOrder>());
-  data_outEigen.write_vtu_in_parallel(std::string("eigen.vtu").c_str(),mpi_communicator);
+  if (n_mpi_processes==1)
+  {
+     std::ofstream output ("eigen.vtu");
+     data_outEigen.write_vtu (output);
+  }
+  else
+     data_outEigen.write_vtu_in_parallel(std::string("eigen.vtu").c_str(),mpi_communicator);
 }
 
 template class dftClass<1>;
