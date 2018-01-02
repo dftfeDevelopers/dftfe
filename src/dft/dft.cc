@@ -419,7 +419,10 @@ void dftClass<FEOrder>::output () {
      data_outEigen.write_vtu (output);
   }
   else
+  {
+     //Doesn't work with mvapich2_ib mpi libraries
      data_outEigen.write_vtu_in_parallel(std::string("eigen.vtu").c_str(),mpi_communicator);
+  }
 }
 
 template class dftClass<1>;

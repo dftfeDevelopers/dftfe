@@ -50,8 +50,10 @@ void dftClass<FEOrder>::initMovedTriangulation(){
      data_out.write_vtu (output);
   }
   else
+  {
+     //Doesn't work with mvapich2_ib mpi libraries
      data_out.write_vtu_in_parallel(std::string("mesh.vtu").c_str(),mpi_communicator); 
-
+  }
   //
   //matrix free data structure
   //
