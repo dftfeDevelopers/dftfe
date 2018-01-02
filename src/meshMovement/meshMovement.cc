@@ -102,10 +102,9 @@ void meshMovementClass::init(Triangulation<3,3> & triangulation)
 #endif	
 }
 
-void meshMovementClass::reinit(Triangulation<3,3> & triangulation,
-		               bool isTriaRefined)
+void meshMovementClass::reinit(Triangulation<3,3> & triangulation)
+		             
 {
-  if (isTriaRefined){
     d_dofHandlerMoveMesh.clear();
     d_dofHandlerMoveMesh.initialize(triangulation,FEMoveMesh);	
     d_dofHandlerMoveMesh.distribute_dofs(FEMoveMesh);	  
@@ -130,13 +129,13 @@ void meshMovementClass::reinit(Triangulation<3,3> & triangulation,
 #else
     d_constraintsMoveMesh.close();
 #endif
-  }
-  else
-  {
-    d_dofHandlerMoveMesh.distribute_dofs(FEMoveMesh);		  
-  }
 }
 
+void meshMovementClass::reinit()
+{
+    d_dofHandlerMoveMesh.distribute_dofs(FEMoveMesh);
+}
+ 
 void meshMovementClass::initIncrementField()
 {
   //dftPtr->matrix_free_data.initialize_dof_vector(d_incrementalDisplacement,d_forceDofHandlerIndex);	

@@ -21,7 +21,7 @@
 #include "../../include/dft.h"
 #include "../../include/eigen.h"
 #include "../../include/poisson.h"
-//#include "../../include/force.h"
+#include "../../include/force.h"
 #include "../../include/meshMovementGaussian.h"
 #include "../../include/fileReaders.h"
 
@@ -75,7 +75,7 @@ dftClass<FEOrder>::dftClass():
 {
   poissonPtr= new poissonClass<FEOrder>(this);
   eigenPtr= new eigenClass<FEOrder>(this);
-  //forcePtr= new forceClass<FEOrder>(this);
+  forcePtr= new forceClass<FEOrder>(this);
   //
   // initialize PETSc
   //
@@ -435,8 +435,8 @@ void dftClass<FEOrder>::run ()
       scfIter++;
     }
   computing_timer.enter_section("configurational force computation"); 
-  //forcePtr->computeAtomsForces();
-  //forcePtr->printAtomsForces();
+  forcePtr->computeAtomsForces();
+  forcePtr->printAtomsForces();
   computing_timer.exit_section("configurational force computation");  
   computing_timer.exit_section("solve"); 
 }
