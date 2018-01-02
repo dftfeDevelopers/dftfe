@@ -58,7 +58,7 @@ namespace meshMovementUtils{
       if (info != 0) {
         const std::string
           message("LU solve in finding fractional coordinates failed.");
-        Assert(false,message);
+        Assert(false,ExcMessage(message));
       }
       return recenteredPoint;
   }
