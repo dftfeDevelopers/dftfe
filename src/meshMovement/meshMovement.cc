@@ -233,18 +233,27 @@ void meshMovementClass::movedMeshCheck()
 
 void meshMovementClass::findClosestVerticesToDestinationPoints(const std::vector<Point<3>> & destinationPoints,
 		                                               std::vector<Point<3>> & closestTriaVertexToDestPointsLocation,
-                                                               std::vector<Tensor<1,3,double>> & dispClosestTriaVerticesToDestPoints)
+                                                               std::vector<Tensor<1,3,double>> & dispClosestTriaVerticesToDestPoints,
+                                                               const std::vector<std::vector<double> > & domainBoundingVectors)
 {
   closestTriaVertexToDestPointsLocation.clear();
   dispClosestTriaVerticesToDestPoints.clear();
   unsigned int vertices_per_cell=GeometryInfo<C_DIM>::vertices_per_cell;
-  double domainSizeX = dftParameters::domainSizeX,domainSizeY = dftParameters::domainSizeY,domainSizeZ=dftParameters::domainSizeZ;
   std::vector<double> latticeVectors(9,0.0);
-  latticeVectors[0]=domainSizeX; latticeVectors[4]=domainSizeY; latticeVectors[8]=domainSizeZ;
+  for (unsigned int idim=0; idim<3; idim++)
+      for(unsigned int jdim=0; jdim<3; jdim++)
+          latticeVectors[3*idim+jdim]=domainBoundingVectors[idim][jdim];
   Point<3> corner;
-  corner[0]=-domainSizeX/2; corner[1]=-domainSizeY/2; corner[2]=-domainSizeZ/2;
+  for (unsigned int idim=0; idim<3; idim++)
+      for(unsigned int jdim=0; jdim<3; jdim++)
+          corner[idim]-=domainBoundingVectors[jdim][idim]/2.0;
   std::vector<double> latticeVectorsMagnitudes(3);
-  latticeVectorsMagnitudes[0]=domainSizeX; latticeVectorsMagnitudes[1]=domainSizeY; latticeVectorsMagnitudes[2]=domainSizeZ;
+  for (unsigned int idim=0; idim<3; idim++){
+      for(unsigned int jdim=0; jdim<3; jdim++)
+          latticeVectorsMagnitudes[idim]+=domainBoundingVectors[idim][jdim]*domainBoundingVectors[idim][jdim];
+      latticeVectorsMagnitudes[idim]=std::sqrt(latticeVectorsMagnitudes[idim]);
+  }
+
   std::vector<bool> isPeriodic(3,false); 
   isPeriodic[0]=dftParameters::periodicX;isPeriodic[1]=dftParameters::periodicY;isPeriodic[2]=dftParameters::periodicZ;
 
@@ -256,7 +265,7 @@ void meshMovementClass::findClosestVerticesToDestinationPoints(const std::vector
 	                                                                              destinationPoints[idest],
 										      corner);
       //std::cout<< "destFracCoords: "<< destFracCoords[0] << "," <<destFracCoords[1] <<"," <<destFracCoords[2]<<std::endl; 
-      for (int idim=0; idim<3; idim++)
+      for (unsigned int idim=0; idim<3; idim++)
       {
         if ((std::fabs(destFracCoords[idim]-0.0) <1e-5/latticeVectorsMagnitudes[idim]
             || std::fabs(destFracCoords[idim]-1.0) <1e-5/latticeVectorsMagnitudes[idim])

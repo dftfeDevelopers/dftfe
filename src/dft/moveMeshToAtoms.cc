@@ -41,8 +41,9 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,b
 	} 
 
     gaussianMove.findClosestVerticesToDestinationPoints(atomPoints,
-		                                     closestTriaVertexToAtomsLocation,
-                                                     dispClosestTriaVerticesToAtoms);
+		                                        closestTriaVertexToAtomsLocation,
+                                                        dispClosestTriaVerticesToAtoms,
+                                                        d_domainBoundingVectors);
 
 
       //add control point locations and displacements corresponding to images
