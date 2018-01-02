@@ -244,10 +244,12 @@ void meshMovementClass::findClosestVerticesToDestinationPoints(const std::vector
       for(unsigned int jdim=0; jdim<3; jdim++)
           latticeVectors[3*idim+jdim]=domainBoundingVectors[idim][jdim];
   Point<3> corner;
-  for (unsigned int idim=0; idim<3; idim++)
+  for (unsigned int idim=0; idim<3; idim++){
+      corner[idim]=0;
       for(unsigned int jdim=0; jdim<3; jdim++)
           corner[idim]-=domainBoundingVectors[jdim][idim]/2.0;
-  std::vector<double> latticeVectorsMagnitudes(3);
+  }
+  std::vector<double> latticeVectorsMagnitudes(3,0.0);
   for (unsigned int idim=0; idim<3; idim++){
       for(unsigned int jdim=0; jdim<3; jdim++)
           latticeVectorsMagnitudes[idim]+=domainBoundingVectors[idim][jdim]*domainBoundingVectors[idim][jdim];
