@@ -17,9 +17,10 @@
 //
 
 
+
 //init
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::initMovedTriangulation(bool isTriaRefined){
+void dftClass<FEOrder>::initMovedTriangulation(){
   computing_timer.enter_section("moved setup");
 
   //
@@ -73,11 +74,19 @@ void dftClass<FEOrder>::initMovedTriangulation(bool isTriaRefined){
   d_constraintsForTotalPotential.merge(constraintsNone,ConstraintMatrix::MergeConflictBehavior::right_object_wins);
   d_constraintsForTotalPotential.close();
 
- 
+  //clear exisiting constraints matrix vector
+  unsigned int count=0;
+  for (std::vector<const ConstraintMatrix *>::iterator it = d_constraintsVector.begin() ; it != d_constraintsVector.end(); ++it)
+  { 
+    if (count > 1 && count < d_bins.size()+2)
+     delete (*it);
+    count++;
+  } 
+
+  d_constraintsVector.clear(); 
   //
   //push back into Constraint Matrices
   //
-  d_constraintsVector.clear();
 #ifdef ENABLE_PERIODIC_BC
   d_constraintsVector.push_back(&constraintsNone); 
 #else
@@ -92,6 +101,7 @@ void dftClass<FEOrder>::initMovedTriangulation(bool isTriaRefined){
   //with atoms belonging to a given bin
   //
   createAtomBins(d_constraintsVector);
+  createAtomBinsExtraSanityCheck();
  
   //
   //create matrix free structure
@@ -118,12 +128,12 @@ void dftClass<FEOrder>::initMovedTriangulation(bool isTriaRefined){
   quadratureVector.push_back(QGauss<1>(C_num1DQuad<FEOrder>())); 
   quadratureVector.push_back(QGaussLobatto<1>(C_num1DQuad<FEOrder>()));  
   //
-  //call forceClass object init (CAUTION: Must be called before matrix_free_data.reinit and after createAtomBins(..), reinitializeEigenFEObjects(..) and phiExt objects)
   //
-  forcePtr->reinit(isTriaRefined);
+  forcePtr->initMoved();
 
   //push dofHandler and constraints for force
   dofHandlerVector.push_back(&(forcePtr->d_dofHandlerForce));
+  forcePtr->d_forceDofHandlerIndex = dofHandlerVector.size()-1;
   d_constraintsVector.push_back(&(forcePtr->d_constraintsNoneForce));  
 
   matrix_free_data.reinit(dofHandlerVector, d_constraintsVector, quadratureVector, additional_data);
@@ -170,6 +180,7 @@ void dftClass<FEOrder>::initMovedTriangulation(bool isTriaRefined){
   //Initialize libxc (exchange-correlation)
   //
   int exceptParamX, exceptParamC;
+  unsigned int xc_id = dftParameters::xc_id;
 
 
   if(xc_id == 1)
@@ -212,7 +223,7 @@ void dftClass<FEOrder>::initMovedTriangulation(bool isTriaRefined){
   //
   //initialize local pseudopotential
   //
-  if(isPseudopotential)
+  if(dftParameters::isPseudopotential)
     {
       initLocalPseudoPotential();
       initNonLocalPseudoPotential();

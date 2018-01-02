@@ -7,7 +7,8 @@ set DFT PATH = "../../../../"
 #finite-element related parameters
 #
 set MESH FILE = mesh.inp
-set FINITE ELEMENT POLYNOMIAL ORDER = 9
+
+set FINITE ELEMENT POLYNOMIAL ORDER = 1
 
 #
 #Atomic-coordinates file

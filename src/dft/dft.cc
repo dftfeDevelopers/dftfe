@@ -17,18 +17,18 @@
 //
 
 //Include header files
-//#include "../../include/headers.h"
+
 #include "../../include/dft.h"
 #include "../../include/eigen.h"
 #include "../../include/poisson.h"
 #include "../../include/force.h"
 #include "../../include/meshMovementGaussian.h"
 #include "../../include/fileReaders.h"
-//#include "../poisson/poisson.cc"
-//#include "../eigen/eigen.cc"
+
+
+//Include cc files
 #include "moveMeshToAtoms.cc"
 #include "meshAdapt.cc"
-//#include "init.cc"
 #include "initUnmovedTriangulation.cc"
 #include "initMovedTriangulation.cc"
 #include "psiInitialGuess.cc"
@@ -42,6 +42,7 @@
 #include "chebyshev.cc"
 #include "solveVself.cc"
 #include "applyTotalPotentialDirichletBC.cc"
+#include "createBinsExtraSanityCheck.cc"
 #include <complex>
 #include <cmath>
 #include <algorithm>
@@ -50,6 +51,8 @@
 #ifdef ENABLE_PERIODIC_BC
 #include "generateImageCharges.cc"
 #endif
+
+
 
 //
 //dft constructor
@@ -73,33 +76,7 @@ dftClass<FEOrder>::dftClass():
   d_maxkPoints(1),
   integralRhoValue(0),
   pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
-  computing_timer (pcout, TimerOutput::summary, TimerOutput::wall_times),
-  d_finiteElementPolynomialOrder(finiteElementPolynomialOrder),
-  d_n_refinement_steps(n_refinement_steps),
-  d_numberEigenValues(numberEigenValues),
-  d_xc_id(xc_id),
-  d_chebyshevOrder(chebyshevOrder),
-  d_numSCFIterations(numSCFIterations),
-  d_maxLinearSolverIterations(maxLinearSolverIterations), 
-  d_mixingHistory(mixingHistory),
-  d_radiusAtomBall(radiusAtomBall),
-  d_domainSizeX(domainSizeX),
-  d_domainSizeY(domainSizeY),
-  d_domainSizeZ(domainSizeZ),
-  d_mixingParameter(mixingParameter),
-  d_lowerEndWantedSpectrum(lowerEndWantedSpectrum),
-  d_relLinearSolverTolerance(relLinearSolverTolerance),
-  d_selfConsistentSolverTolerance(selfConsistentSolverTolerance),
-  d_TVal(TVal),
-  d_isPseudopotential(isPseudopotential),
-  d_periodicX(periodicX),
-  d_periodicY(periodicY),
-  d_periodicZ(periodicZ),
-  d_meshFileName(meshFileName),
-  d_coordinatesFile(coordinatesFile),
-  d_currentPath(currentPath),
-  d_latticeVectorsFile(latticeVectorsFile),
-  d_kPointDataFile(kPointDataFile)    
+  computing_timer (pcout, TimerOutput::summary, TimerOutput::wall_times)
 {
   poissonPtr= new poissonClass<FEOrder>(this);
   eigenPtr= new eigenClass<FEOrder>(this);
@@ -113,6 +90,15 @@ dftClass<FEOrder>::dftClass():
 					      NULL);
 
 
+}
+
+template<unsigned int FEOrder>
+dftClass<FEOrder>::~dftClass()
+{
+    delete poissonPtr;
+    delete eigenPtr;
+    matrix_free_data.clear();
+    delete forcePtr;
 }
 
 void convertToCellCenteredCartesianCoordinates(std::vector<std::vector<double> > & atomLocations,
@@ -160,7 +146,7 @@ void dftClass<FEOrder>::set()
   //
   //read fractionalCoordinates of atoms in periodic case
   //
-  dftUtils::readFile(numberColumnsCoordinatesFile, atomLocations, coordinatesFile);
+  dftUtils::readFile(numberColumnsCoordinatesFile, atomLocations, dftParameters::coordinatesFile);
   pcout << "number of atoms: " << atomLocations.size() << "\n";
   atomLocationsFractional.resize(atomLocations.size()) ;
   //
@@ -184,7 +170,7 @@ void dftClass<FEOrder>::set()
   //read lattice Vectors
   //
   unsigned int numberColumnsLatticeVectorsFile = 3;
-  dftUtils::readFile(numberColumnsLatticeVectorsFile,d_latticeVectors,latticeVectorsFile);
+  dftUtils::readFile(numberColumnsLatticeVectorsFile,d_latticeVectors,dftParameters::latticeVectorsFile);
   for(int i = 0; i < d_latticeVectors.size(); ++i)
     {
       pcout<<"lattice vectors: "<<d_latticeVectors[i][0]<<" "<<d_latticeVectors[i][1]<<" "<<d_latticeVectors[i][2]<<"\n";
@@ -218,7 +204,7 @@ void dftClass<FEOrder>::set()
     }
 
 #else
-  dftUtils::readFile(numberColumnsCoordinatesFile, atomLocations, coordinatesFile);
+  dftUtils::readFile(numberColumnsCoordinatesFile, atomLocations, dftParameters::coordinatesFile);
   pcout << "number of atoms: " << atomLocations.size() << "\n";
 
   //
@@ -339,11 +325,15 @@ void dftClass<FEOrder>::run ()
   //
   initMovedTriangulation();
 
+  //std::vector<Point<C_DIM> > globalAtomsDisplacements(atomLocations.size());
+  //globalAtomsDisplacements[0][0]=1e-4;
+  //forcePtr->updateAtomPositionsAndMoveMesh(globalAtomsDisplacements);
+
   //
   //solve vself
   //
   solveVself();
- 
+
   //
   //solve
   //
@@ -356,7 +346,8 @@ void dftClass<FEOrder>::run ()
   unsigned int scfIter=0;
   double norm = 1.0;
   char buffer[100];
-  while ((norm > selfConsistentSolverTolerance) && (scfIter < numSCFIterations))
+
+  while ((norm > dftParameters::selfConsistentSolverTolerance) && (scfIter < dftParameters::numSCFIterations))
     {
       sprintf(buffer, "\n\n**** Begin Self-Consistent-Field Iteration: %u ****\n", scfIter+1); pcout << buffer;
       //Mixing scheme
@@ -401,16 +392,16 @@ void dftClass<FEOrder>::run ()
 	{
 	  for(unsigned int s=0; s<2; ++s)
 	      {
-	       if(xc_id < 4) 
+	       if(dftParameters::xc_id < 4) 
 	        {
-		  if(isPseudopotential)
+		  if(dftParameters::isPseudopotential)
 		    eigenPtr->computeVEffSpinPolarized(rhoInValuesSpinPolarized, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, s, pseudoValues);
 		  else
 		    eigenPtr->computeVEffSpinPolarized(rhoInValuesSpinPolarized, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, s);
                 }
-	       else if (xc_id == 4)
+	       else if (dftParameters::xc_id == 4)
 	        {
-	          if(isPseudopotential)
+	          if(dftParameters::isPseudopotential)
 		    eigenPtr->computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, s, pseudoValues);
 	          else
 		    eigenPtr->computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, s);
@@ -419,7 +410,7 @@ void dftClass<FEOrder>::run ()
 	        {
 	          d_kPointIndex = kPoint;
 	          char buffer[100];
-	          for(int j = 0; j < numPass; ++j)
+	          for(int j = 0; j < dftParameters::numPass; ++j)
 	            { 
 		       sprintf(buffer, "%s:%3u%s:%3u\n", "Beginning Chebyshev filter pass ", j+1, " for spin ", s+1);
 		       pcout << buffer;
@@ -430,14 +421,14 @@ void dftClass<FEOrder>::run ()
         }
       else
         {
-	  if(xc_id < 4)
+	  if(dftParameters::xc_id < 4)
 	      {
 	      if(isPseudopotential)
 		eigenPtr->computeVEff(rhoInValues, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, pseudoValues);
 	      else
 		eigenPtr->computeVEff(rhoInValues, poissonPtr->phiTotRhoIn, poissonPtr->phiExt); 
 	      }
-	  else if (xc_id == 4)
+	  else if (dftParameters::xc_id == 4)
 	     {
 	      if(isPseudopotential)
 		eigenPtr->computeVEff(rhoInValues, gradRhoInValues, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, pseudoValues);
@@ -448,13 +439,14 @@ void dftClass<FEOrder>::run ()
 	  for (int kPoint = 0; kPoint < d_maxkPoints; ++kPoint) 
 	    {
 	      d_kPointIndex = kPoint;
-	      for(int j = 0; j < numPass; ++j)
+	      for(int j = 0; j < dftParameters::numPass; ++j)
 	      { 
 		    sprintf(buffer, "%s:%3u\n", "Beginning Chebyshev filter pass ", j+1);
 		    pcout << buffer;
 		    chebyshevSolver(0);
 	      }
 	    }
+
 	}
  
        //fermi energy

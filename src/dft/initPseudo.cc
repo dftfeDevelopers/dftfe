@@ -23,6 +23,7 @@ double tolerance = 1e-12;
 double pspTail = 8.0;
 
 
+
 //some inline functions
 inline 
 void getRadialFunctionVal(const double radialCoordinate,
@@ -120,9 +121,10 @@ void dftClass<FEOrder>::initLocalPseudoPotential()
     {
       char pseudoFile[256];
       if (pseudoProjector==2)
-	  sprintf(pseudoFile, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/locPot.dat", currentPath.c_str(),*it);
+	  sprintf(pseudoFile, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/locPot.dat", dftParameters::currentPath.c_str(),*it);
       else
-          sprintf(pseudoFile, "%s/data/electronicStructure/pseudoPotential/z%u/pseudoAtomData/locPot.dat", currentPath.c_str(),*it);
+          sprintf(pseudoFile, "%s/data/electronicStructure/pseudoPotential/z%u/pseudoAtomData/locPot.dat", dftParameters::currentPath.c_str(),*it);
+
       pcout<<"Reading Local Pseudo-potential data from: " <<pseudoFile<<std::endl;
       dftUtils::readFile(2, pseudoPotentialData[*it], pseudoFile);
       unsigned int numRows = pseudoPotentialData[*it].size()-1;
@@ -180,7 +182,7 @@ void dftClass<FEOrder>::initLocalPseudoPotential()
 		{
 		  Point<3> atom(atomLocations[n][2],atomLocations[n][3],atomLocations[n][4]);
 		  double distanceToAtom = quadPoint.distance(atom);
-		  if(distanceToAtom <= pspTail)//outerMostPointPseudo[atomLocations[n][0]])
+		  if(distanceToAtom <= d_pspTail)//outerMostPointPseudo[atomLocations[n][0]])
 		    {
 		      pseudoValueAtQuadPt += alglib::spline1dcalc(pseudoSpline[atomLocations[n][0]], distanceToAtom);
 		    }
@@ -196,7 +198,7 @@ void dftClass<FEOrder>::initLocalPseudoPotential()
 		  Point<3> imageAtom(d_imagePositions[iImageCharge][0],d_imagePositions[iImageCharge][1],d_imagePositions[iImageCharge][2]);
 		  double distanceToAtom = quadPoint.distance(imageAtom);
 		  int masterAtomId = d_imageIds[iImageCharge];
-		  if(distanceToAtom <= pspTail)//outerMostPointPseudo[atomLocations[masterAtomId][0]])
+		  if(distanceToAtom <= d_pspTail)//outerMostPointPseudo[atomLocations[masterAtomId][0]])
 		    {
 		      pseudoValueAtQuadPt += alglib::spline1dcalc(pseudoSpline[atomLocations[masterAtomId][0]], distanceToAtom);
 		    }
@@ -237,12 +239,14 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential()
   //
   std::map<unsigned int, std::vector<std::vector<int> > > atomicNumberToWaveFunctionIdDetails;
   std::map<unsigned int, std::vector<std::vector<int> > > atomicNumberToPotentialIdMap;
-  
+  std::string currentPath = dftParameters::currentPath;
+
   //
   // Store the number of unique splines encountered so far 
   //
   unsigned int cumulativeSplineId    = 0;
   unsigned int cumulativePotSplineId = 0;
+  
 
 
   for(std::set<unsigned int>::iterator it = atomTypes.begin(); it != atomTypes.end(); ++it)
@@ -850,7 +854,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
 			  double r = quadPoint.distance(chargePoint);
 			  double deltaVl;
 
-			  if(r <= pspTail)//d_outerMostPointPseudoPotData[globalSplineId])
+			  if(r <= d_pspTail)//d_outerMostPointPseudoPotData[globalSplineId])
 			    {
 			      getRadialFunctionVal(r,
 						   deltaVl,
@@ -1084,7 +1088,7 @@ void dftClass<FEOrder>::computeElementalProjectorKets()
 		    
 
 		      double radialWaveFunVal, sphericalHarmonicVal, radialPotFunVal, pseudoWaveFunctionValue, deltaVlValue;
-		      if(r <= pspTail)//d_outerMostPointPseudoWaveFunctionsData[globalWaveSplineId])
+		      if(r <= d_pspTail)//d_outerMostPointPseudoWaveFunctionsData[globalWaveSplineId])
 			{
 			  getRadialFunctionVal(r,
 					       radialWaveFunVal,

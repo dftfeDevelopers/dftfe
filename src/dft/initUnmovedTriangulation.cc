@@ -137,6 +137,8 @@ void exchangeMasterNodesList(std::vector<unsigned int> & masterNodeIdList,
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::initUnmovedTriangulation(){
   computing_timer.enter_section("unmoved setup");
+  double domainSizeX = dftParameters::domainSizeX,domainSizeY = dftParameters::domainSizeY,domainSizeZ=dftParameters::domainSizeZ;
+
   //
   //initialize FE objects
   //
@@ -229,7 +231,7 @@ void dftClass<FEOrder>::initUnmovedTriangulation(){
   //
   ConstraintMatrix constraintsTemp(constraintsNone); constraintsNone.clear(); 
   std::set<unsigned int> masterNodes;
-  double periodicPrecision = 1.0e-8;
+  double periodicPrecision = 1.0e-5;
 
   //
   //fill all masters
@@ -949,5 +951,7 @@ void dftClass<FEOrder>::initUnmovedTriangulation(){
   constraintsNoneEigen.merge(d_noConstraintsEigen,ConstraintMatrix::MergeConflictBehavior::right_object_wins);
   constraintsNone.close();
   constraintsNoneEigen.close();
+
+  forcePtr->initUnmoved();
   computing_timer.exit_section("unmoved setup");    
 }

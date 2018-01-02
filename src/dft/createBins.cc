@@ -16,6 +16,8 @@
 // @author  Phani Motamarri (2016)
 //
 
+
+
 //source file for locating core atom nodes
 
 void exchangeAtomToGlobalNodeIdMaps(const int totalNumberAtoms,
@@ -109,6 +111,9 @@ void dftClass<FEOrder>::createAtomBins(std::vector<const ConstraintMatrix * > & 
   std::vector<int> imageIdsContainer;
   std::vector<std::vector<double > > imagePositions;
   std::vector<double> imageChargeValues;
+
+  double radiusAtomBall = dftParameters::radiusAtomBall;
+
 
   imageIdsContainer = d_imageIds;
   imagePositions = d_imagePositions;
@@ -489,7 +494,7 @@ void dftClass<FEOrder>::createAtomBins(std::vector<const ConstraintMatrix * > & 
 
 		      if(minDistanceAtomId < numberGlobalAtomsInBin)
 			{
-			  if(isPseudopotential)
+			  if(dftParameters::isPseudopotential)
 			    atomCharge = atomLocations[chargeId][1];
 			  else
 			    atomCharge = atomLocations[chargeId][0];
@@ -513,7 +518,7 @@ void dftClass<FEOrder>::createAtomBins(std::vector<const ConstraintMatrix * > & 
 		  
 		      if(minDistanceAtomId < numberGlobalAtomsInBin)
 			{
-			  if(isPseudopotential)
+			  if(dftParameters::isPseudopotential)
 			    atomCharge = atomLocations[chargeId][1];
 			  else
 			    atomCharge = atomLocations[chargeId][0];

@@ -38,6 +38,8 @@ namespace eshelbyTensor
 							               const Tensor<1,C_DIM,VectorizedArray<double> > & gradRho,
 							               const VectorizedArray<double> & exc,
 							               const Tensor<1,C_DIM,VectorizedArray<double> > & gradRhoExc,
+                                                                       const VectorizedArray<double> & pseudoVLoc,
+                                                                       const VectorizedArray<double> & phiExt,										       
 							               std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator psiBegin,
                                                                        std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > >::const_iterator gradPsiBegin,
 								       const std::vector<double> & kPointCoordinates,
@@ -51,6 +53,8 @@ namespace eshelbyTensor
 							               const Tensor<1,C_DIM,VectorizedArray<double> > & gradRho,
 							               const VectorizedArray<double> & exc,
 							               const Tensor<1,C_DIM,VectorizedArray<double> > & gradRhoExc,
+                                                                       const VectorizedArray<double> & pseudoVLoc,
+                                                                       const VectorizedArray<double> & phiExt,								       
 								       std::vector<VectorizedArray<double> >::const_iterator psiBegin,
                                                                        std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >::const_iterator  gradPsiBegin,
 								       const std::vector<double> & eigenValues_,
@@ -58,8 +62,8 @@ namespace eshelbyTensor
 								       const double tVal);
 
 Tensor<1,C_DIM,VectorizedArray<double> >  getFPSPLocal(const VectorizedArray<double> rho,
-		                                       const Tensor<1,C_DIM,VectorizedArray<double> > & gradVPseudoLocal,
-						       const Tensor<1,C_DIM,VectorizedArray<double> > & gradSumVself);
+		                                       const Tensor<1,C_DIM,VectorizedArray<double> > & gradPseudoVLoc,
+						       const Tensor<1,C_DIM,VectorizedArray<double> > & gradPhiExt);
 
 
 };

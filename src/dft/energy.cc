@@ -16,10 +16,12 @@
 // @author Shiva Rudraraju (2016), Phani Motamarri (2016)
 //
 
+
 //source file for all energy computations 
 double FermiDiracFunctionValue(double x,
 			       std::vector<std::vector<double> > & eigenValues,
-			       std::vector<double> & kPointWeights)
+			       std::vector<double> & kPointWeights,
+			       double &TVal)
 {
 
   int numberkPoints = eigenValues.size();
@@ -27,6 +29,7 @@ double FermiDiracFunctionValue(double x,
   double functionValue = 0.0;
   double temp1,temp2;
 
+  
   for(unsigned int kPoint = 0; kPoint < numberkPoints; ++kPoint)
     {
       for(unsigned int i = 0; i < numberEigenValues; i++)
@@ -51,7 +54,8 @@ double FermiDiracFunctionValue(double x,
 
 double FermiDiracFunctionDerivativeValue(double x,
 					 std::vector<std::vector<double> > & eigenValues,
-					 std::vector<double> & kPointWeights)
+					 std::vector<double> & kPointWeights,
+					 double &TVal)
 {
 
   int numberkPoints = eigenValues.size();
@@ -93,7 +97,10 @@ void dftClass<FEOrder>::compute_energy()
   std::vector<double> cellPhiTotRhoIn(num_quad_points);  
   std::vector<double> cellPhiTotRhoOut(num_quad_points);  
   std::vector<double> cellPhiExt(num_quad_points);
-  
+  double TVal = dftParameters::TVal;
+
+
+
   //
   // Loop through all cells.
   //
@@ -120,7 +127,7 @@ void dftClass<FEOrder>::compute_energy()
   //parallel loop over all elements
   typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
 
-  if(xc_id == 4)
+  if(dftParameters::xc_id == 4)
     {
       for (; cell!=endc; ++cell) 
 	{
@@ -175,7 +182,8 @@ void dftClass<FEOrder>::compute_energy()
 #ifdef ENABLE_PERIODIC_BC
 		  electrostaticEnergyTotPot+=0.5*(Vtot)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
 #else
-		  electrostaticEnergyTotPot+=0.5*(Vtot+Vext*0)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
+		  //electrostaticEnergyTotPot+=0.5*(Vtot+Vext)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
+		  electrostaticEnergyTotPot+=0.5*(Vtot)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
 #endif
 		}
 	    }
@@ -219,7 +227,8 @@ void dftClass<FEOrder>::compute_energy()
 #ifdef ENABLE_PERIODIC_BC
 		  electrostaticEnergyTotPot+=0.5*(Vtot)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
 #else
-		  electrostaticEnergyTotPot+=0.5*(Vtot+Vext*0)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
+		  //electrostaticEnergyTotPot+=0.5*(Vtot+Vext)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
+		  electrostaticEnergyTotPot+=0.5*(Vtot)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
 #endif
 		}
 	    }
@@ -310,7 +319,9 @@ template<unsigned int FEOrder>
 void dftClass<FEOrder>::compute_fermienergy()
 {
   char bufferFermi[100];
-  int count =  std::ceil(static_cast<double>(numElectrons)/(2.0-spinPolarized));
+ int count =  std::ceil(static_cast<double>(numElectrons)/(2.0-spinPolarized));
+  double TVal = dftParameters::TVal;
+
 
   std::vector<double> eigenValuesAllkPoints;
   for(int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
@@ -344,11 +355,13 @@ void dftClass<FEOrder>::compute_fermienergy()
     {
       double yRight = FermiDiracFunctionValue(xRight,
 					      eigenValues,
-					      d_kPointWeights) - numElectrons;
+					      d_kPointWeights,
+					      TVal) - numElectrons;
 
       double yLeft =  FermiDiracFunctionValue(xLeft,
 					      eigenValues,
-					      d_kPointWeights) - numElectrons;
+					      d_kPointWeights,
+					      TVal) - numElectrons;
 
       if((yLeft*yRight) > 0.0)
 	{
@@ -360,7 +373,8 @@ void dftClass<FEOrder>::compute_fermienergy()
 
       double yBisected = FermiDiracFunctionValue(xBisected,
 						 eigenValues,
-						 d_kPointWeights) - numElectrons;
+						 d_kPointWeights,
+						 TVal) - numElectrons;
 
       if((yBisected*yLeft) > 0.0)
 	xLeft = xBisected;
@@ -388,34 +402,16 @@ void dftClass<FEOrder>::compute_fermienergy()
 
   while((std::abs(R) > 1.0e-12) && (iter < maxNumberFermiEnergySolveIterations))
     {
-      /*functionValue = 0.0; functionDerivative = 0.0;
-      for(unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
-	{
-	  for (unsigned int i = 0; i < numEigenValues; i++)
-	    {
-	      temp1 = (eigenValues[kPoint][i]-fe)/(C_kb*TVal);
-	      if (temp1 <= 0.0)
-		{
-		  temp2  =  1.0/(1.0+exp(temp1));
-		  functionValue += 2.0*d_kPointWeights[kPoint]*temp2;
-		  functionDerivative += 2.0*d_kPointWeights[kPoint]*(exp(temp1)/(C_kb*TVal))*temp2*temp2;
-		}
-	      else
-		{
-		  temp2 =  1.0/(1.0+exp(-temp1));
-		  functionValue += 2.0*d_kPointWeights[kPoint]*exp(-temp1)*temp2;
-		  functionDerivative += 2.0*d_kPointWeights[kPoint]*(exp(-temp1)/(C_kb*TVal))*temp2*temp2;       
-		}
-	    }
-	    }*/
 
       functionValue = FermiDiracFunctionValue(fe,
 					      eigenValues,
-					      d_kPointWeights);
+					      d_kPointWeights,
+					      TVal);
 
       functionDerivativeValue = FermiDiracFunctionDerivativeValue(fe,
 								  eigenValues,
-								  d_kPointWeights);
+								  d_kPointWeights,
+								  TVal);
 
       R   =  functionValue - numElectrons;
       fe += -R/functionDerivativeValue; 
@@ -442,7 +438,7 @@ double dftClass<FEOrder>::repulsiveEnergy()
   for (unsigned int n1=0; n1<atomLocations.size(); n1++){
     for (unsigned int n2=n1+1; n2<atomLocations.size(); n2++){
       double Z1,Z2;
-      if(isPseudopotential)
+      if(dftParameters::isPseudopotential)
 	{
 	  Z1=atomLocations[n1][1];
 	  Z2=atomLocations[n2][1];

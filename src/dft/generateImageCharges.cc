@@ -319,6 +319,7 @@ void dftClass<FEOrder>::generateImageCharges()
 
   const double pspCutOff = 40.0;
   const double tol = 1e-4;
+  bool periodicX = dftParameters::periodicX,periodicY = dftParameters::periodicY,periodicZ = dftParameters::periodicZ;
 
   //
   //get the magnitude of lattice Vectors
@@ -472,7 +473,7 @@ void dftClass<FEOrder>::generateImageCharges()
   for(int i = 0; i < numImageCharges; ++i)
     {
       double atomCharge;
-      if(isPseudopotential)
+      if(dftParameters::isPseudopotential)
 	atomCharge = atomLocations[d_imageIds[i]][1];
       else
 	atomCharge = atomLocations[d_imageIds[i]][0];

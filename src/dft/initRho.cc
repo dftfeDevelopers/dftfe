@@ -34,16 +34,17 @@ void dftClass<FEOrder>::initRho()
   for (std::set<unsigned int>::iterator it=atomTypes.begin(); it!=atomTypes.end(); it++)
     {
       char densityFile[256];
-      if(isPseudopotential)
+      if(dftParameters::isPseudopotential)
 	{
 	  if (pseudoProjector==1)
-	     sprintf(densityFile, "%s/data/electronicStructure/pseudoPotential/z%u/singleAtomData/density.inp", currentPath.c_str(), *it);
+	     sprintf(densityFile, "%s/data/electronicStructure/pseudoPotential/z%u/singleAtomData/density.inp", dftParameters::currentPath.c_str(), *it);
 	  else
-	     sprintf(densityFile, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/singleAtomData/density.inp", currentPath.c_str(), *it);
+	     sprintf(densityFile, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/singleAtomData/density.inp", dftParameters::currentPath.c_str(), *it);
+
 	}
       else
 	{
-	  sprintf(densityFile, "%s/data/electronicStructure/allElectron/z%u/singleAtomData/density.inp", currentPath.c_str(), *it);
+	  sprintf(densityFile, "%s/data/electronicStructure/allElectron/z%u/singleAtomData/density.inp", dftParameters::currentPath.c_str(), *it);
 	}
    
       dftUtils::readFile(2, singleAtomElectronDensity[*it], densityFile);
@@ -165,7 +166,7 @@ void dftClass<FEOrder>::initRho()
 
 
   //loop over elements
-  if(xc_id == 4)
+  if(dftParameters::xc_id == 4)
     {
       gradRhoInValues = new std::map<dealii::CellId, std::vector<double> >;
       gradRhoInVals.push_back(gradRhoInValues);

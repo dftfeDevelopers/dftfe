@@ -25,6 +25,7 @@ void dftClass<FEOrder>::compute_rhoOut()
   QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
   FEValues<3> fe_values (FEEigen, quadrature, update_values | update_gradients| update_JxW_values | update_quadrature_points);
   const unsigned int num_quad_points = quadrature.size();
+  unsigned int xc_id = dftParameters::xc_id;
    
   //project eigen vectors to regular FEM space by multiplying with M^(-0.5)
   for(int kPoint = 0; kPoint < (1+spinPolarized)*d_maxkPoints; ++kPoint)
@@ -130,7 +131,7 @@ void dftClass<FEOrder>::compute_rhoOut()
 
 		      for(unsigned int q_point=0; q_point<num_quad_points; ++q_point)
 			{
-			  double factor = (eigenValues[kPoint][i]-fermiEnergy)/(C_kb*TVal);
+			  double factor = (eigenValues[kPoint][i]-fermiEnergy)/(C_kb*dftParameters::TVal);
 			  double partialOccupancy = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)):1.0/(1.0 + std::exp(factor));
 			  //
 			   factor=(eigenValues[kPoint][i+spinPolarized*numEigenValues]-fermiEnergy)/(C_kb*TVal);
@@ -227,7 +228,7 @@ void dftClass<FEOrder>::compute_rhoOut()
 
 		      for(unsigned int q_point=0; q_point<num_quad_points; ++q_point)
 			{
-			  double factor=(eigenValues[kPoint][i]-fermiEnergy)/(C_kb*TVal);
+			  double factor=(eigenValues[kPoint][i]-fermiEnergy)/(C_kb*dftParameters::TVal);
 			  double partialOccupancy = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)):1.0/(1.0 + std::exp(factor));
 			  //
 			  factor=(eigenValues[kPoint][i+spinPolarized*numEigenValues]-fermiEnergy)/(C_kb*TVal);
@@ -277,7 +278,7 @@ void dftClass<FEOrder>::compute_rhoOut()
   //pcout<<"check 7: "<<std::endl;
 
   //pop out rhoInVals and rhoOutVals if their size exceeds mixing history size
-  if(rhoInVals.size() == mixingHistory)
+  if(rhoInVals.size() == dftParameters::mixingHistory)
     {
       rhoInVals.pop_front();
       rhoOutVals.pop_front();

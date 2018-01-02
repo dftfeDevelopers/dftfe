@@ -36,8 +36,8 @@ class forceClass
 
 public:
   forceClass(dftClass<FEOrder>* _dftPtr);
-  void init();
-  void reinit(bool isTriaRefined=true);
+  void initUnmoved();
+  void initMoved();
   void computeAtomsForces();
   void computeStress();
   void printAtomsForces();
@@ -49,19 +49,35 @@ private:
   std::vector<unsigned int> d_globalAtomsRelaxationPermissions;
   std::vector<double> d_globalAtomsRelaxationDisplacements;
   void createBinObjectsForce();
+  void initLocalPseudoPotentialForce();
+  void initNonLocalPseudoPotentialForce();
+  void computeSparseStructureNonLocalProjectorsForce();
+  void computeElementalProjectorKetsForce();
   void configForceLinFEInit();
   void configForceLinFEFinalize();
-  void computeConfigurationalForceEEshelbyTensorNonPeriodicLinFE();
-  void computeConfigurationalForceEEshelbyTensorPeriodicLinFE();  
+  void computeConfigurationalForceEEshelbyTensorFPSPNonPeriodicLinFE();
+  void computeConfigurationalForceEEshelbyTensorFPSPPeriodicLinFE();  
   void computeConfigurationalForcePhiExtLinFE();
   void computeConfigurationalForceEselfLinFE();
   void computeConfigurationalForceEselfNoSurfaceLinFE();
   void computeConfigurationalForceTotalLinFE();
-  void computeAtomsForcesGaussianGenerator();
+  void computeAtomsForcesGaussianGenerator(bool allowGaussianOverlapOnAtoms=false);
   void relaxAtomsForces();
   void relaxStress();
   void relaxAtomsForcesStress();
   void locateAtomCoreNodesForce();
+  void computeForceContributionFPSPLocalGammaAtoms(std::map<unsigned int, std::vector<double> > & forceContributionFPSPLocalGammaAtoms,
+		                            FEValues<C_DIM> & feVselfValues,
+                                            FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,					    
+				            const unsigned int cell,
+			                    const std::vector<VectorizedArray<double> > & rhoQuads);
+
+  void distributeForceContributionFPSPLocalGammaAtoms(const std::map<unsigned int, std::vector<double> > & forceContributionFPSPLocalGammaAtoms);  
+  
+  //////force pseudopotential data
+  std::map<dealii::CellId, std::vector<double> > d_gradPseudoVLoc;
+  //only contains maps for atoms whose psp tail intersects the local domain
+  std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > d_gradPseudoVLocAtoms;
 
   //meshMovementGaussianClass object  								       
   meshMovementGaussianClass gaussianMove;
@@ -69,6 +85,7 @@ private:
   //Gaussian generator related data and functions
   const double d_gaussianConstant=5.0;
   std::vector<double> d_globalAtomsGaussianForces;
+  const bool d_allowGaussianOverlapOnAtoms=false;//Dont use true except for debugging forces only without mesh movement, as gaussian ovelap on atoms for move mesh is by default set to false
 
   //pointer to dft class
   dftClass<FEOrder>* dftPtr;
@@ -88,6 +105,11 @@ private:
   //(outermost vector over bins) local data required for configurational force computation corresponding to Eself
   std::vector<std::vector<DoFHandler<C_DIM>::active_cell_iterator> > d_cellsVselfBallsDofHandler;
   std::vector<std::vector<DoFHandler<C_DIM>::active_cell_iterator> > d_cellsVselfBallsDofHandlerForce;
+  //map of vself ball cell Id  with atleast one solved dof to the closest atom Id. Vector over bins
+  std::vector<std::map<dealii::CellId , unsigned int> > d_cellsVselfBallsClosestAtomIdDofHandler;
+  //map of atom Id to bin Id local
+  std::map<unsigned int, unsigned int> d_AtomIdBinIdLocalDofHandler;  
+  //
   std::vector<std::map<DoFHandler<C_DIM>::active_cell_iterator,std::vector<unsigned int > > > d_cellFacesVselfBallSurfacesDofHandler;
   std::vector<std::map<DoFHandler<C_DIM>::active_cell_iterator,std::vector<unsigned int > > > d_cellFacesVselfBallSurfacesDofHandlerForce; 
 

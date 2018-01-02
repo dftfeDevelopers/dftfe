@@ -37,9 +37,10 @@ void dftClass<FEOrder>::applyTotalPotentialDirichletBC()
      {
         const unsigned int boundaryId=cell->face(iFace)->boundary_id();
 	if (boundaryId==0){
+	  std::vector<types::global_dof_index> iFaceGlobalDofIndices(dofs_per_face);
+	  cell->face(iFace)->get_dof_indices(iFaceGlobalDofIndices);			
           for(unsigned int iFaceDof = 0; iFaceDof < dofs_per_face; ++iFaceDof){
-	     unsigned int iCellDof=FE.face_to_cell_index(iFaceDof,iFace,cell->face_orientation(iFace),cell->face_flip(iFace),cell->face_rotation(iFace));
-	     unsigned int nodeId=cellGlobalDofIndices[iCellDof];
+             unsigned int nodeId=iFaceGlobalDofIndices[iFaceDof];			  
 	     if (dofs_touched[nodeId])
 		 continue;
 	     dofs_touched[nodeId]=true;
