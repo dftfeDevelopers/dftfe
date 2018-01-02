@@ -95,7 +95,8 @@ void meshMovementClass::initIncrementField()
   //dftPtr->matrix_free_data.initialize_dof_vector(d_incrementalDisplacement,d_forceDofHandlerIndex);	
   IndexSet  ghost_indices=d_locally_relevant_dofs;
   ghost_indices.subtract_set(d_locally_owned_dofs);
-  d_incrementalDisplacement=parallel::distributed::Vector<double>::Vector(d_locally_owned_dofs                                                                                              ,ghost_indices,
+  d_incrementalDisplacement=parallel::distributed::Vector<double>::Vector(d_locally_owned_dofs,
+									  ghost_indices,
                                                                           mpi_communicator);
   d_incrementalDisplacement=0;  	
 }

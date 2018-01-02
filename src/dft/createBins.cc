@@ -418,8 +418,8 @@ void dftClass<FEOrder>::createAtomBins(std::vector<const ConstraintMatrix * > & 
       //create constraint matrix for current bin
       //
       ConstraintMatrix * constraintsForVselfInBin = new ConstraintMatrix;
-      //DoFTools::make_hanging_node_constraints (dofHandler, *constraintsForVselfInBin);
-     
+      constraintsForVselfInBin->reinit(locally_relevant_dofs);
+      
       
       unsigned int inNodes=0, outNodes=0;
       std::map<types::global_dof_index,Point<3> >::iterator iterMap;

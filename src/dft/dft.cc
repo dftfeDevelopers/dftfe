@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Shiva Rudraraju (2016), Phani Motamarri (2016)
+// @author Shiva Rudraraju (2016), Phani Motamarri (2018)
 //
 
 //Include header files
@@ -21,27 +21,27 @@
 #include "../../include/dft.h"
 #include "../../include/eigen.h"
 #include "../../include/poisson.h"
-#include "../../include/force.h"
+//#include "../../include/force.h"
 #include "../../include/meshMovementGaussian.h"
 #include "../../include/fileReaders.h"
 
 
 //Include cc files
 #include "moveMeshToAtoms.cc"
-#include "meshAdapt.cc"
 #include "initUnmovedTriangulation.cc"
-#include "initMovedTriangulation.cc"
+#include "initBoundaryConditions.cc"
+#include "initElectronicFields.cc"
+
+
 #include "psiInitialGuess.cc"
 #include "energy.cc"
 #include "charge.cc"
 #include "density.cc"
-#include "locatenodes.cc"
-#include "createBins.cc"
+
 #include "mixingschemes.cc"
 #include "chebyshev.cc"
 #include "solveVself.cc"
-#include "applyTotalPotentialDirichletBC.cc"
-#include "createBinsExtraSanityCheck.cc"
+
 #include <complex>
 #include <cmath>
 #include <algorithm>
@@ -57,15 +57,12 @@
 //
 template<unsigned int FEOrder>
 dftClass<FEOrder>::dftClass():
-  triangulation (MPI_COMM_WORLD),
   FE (FE_Q<3>(QGaussLobatto<1>(C_num1DQuad<FEOrder>())), 1),
 #ifdef ENABLE_PERIODIC_BC
   FEEigen (FE_Q<3>(QGaussLobatto<1>(C_num1DQuad<FEOrder>())), 2),
 #else
   FEEigen (FE_Q<3>(QGaussLobatto<1>(C_num1DQuad<FEOrder>())), 1),
 #endif
-  dofHandler (triangulation),
-  dofHandlerEigen (triangulation),
   mpi_communicator (MPI_COMM_WORLD),
   n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_communicator)),
   this_mpi_process (Utilities::MPI::this_mpi_process(mpi_communicator)),
@@ -78,7 +75,7 @@ dftClass<FEOrder>::dftClass():
 {
   poissonPtr= new poissonClass<FEOrder>(this);
   eigenPtr= new eigenClass<FEOrder>(this);
-  forcePtr= new forceClass<FEOrder>(this);
+  //forcePtr= new forceClass<FEOrder>(this);
   //
   // initialize PETSc
   //
@@ -193,6 +190,11 @@ void dftClass<FEOrder>::set()
       pcout<<"Cartesian coordinates of atoms: "<<atomLocations[i][2]<<" "<<atomLocations[i][3]<<" "<<atomLocations[i][4]<<"\n";
     }
 
+  //
+  //create domain bounding vectors
+  //
+  d_domainBoundingVectors = d_latticeVectors;
+
 #else
   dftUtils::readFile(numberColumnsCoordinatesFile, atomLocations, dftParameters::coordinatesFile);
   pcout << "number of atoms: " << atomLocations.size() << "\n";
@@ -200,9 +202,10 @@ void dftClass<FEOrder>::set()
   //
   //find unique atom types
   //
-  for (std::vector<std::vector<double> >::iterator it=atomLocations.begin(); it<atomLocations.end(); it++){
-    atomTypes.insert((unsigned int)((*it)[0]));
-  }
+  for (std::vector<std::vector<double> >::iterator it=atomLocations.begin(); it<atomLocations.end(); it++)
+    {
+      atomTypes.insert((unsigned int)((*it)[0]));
+    }
 
   //
   //print cartesian coordinates
@@ -211,17 +214,24 @@ void dftClass<FEOrder>::set()
     {
       pcout<<"Cartesian coordinates of atoms: "<<atomLocations[i][2]<<" "<<atomLocations[i][3]<<" "<<atomLocations[i][4]<<"\n";
     }
+
+
+  std::vector<double> domainVector;
+  domainVector.push_back(dftParameters::domainSizeX);domainVector.push_back(0.0);domainVector.push_back(0.0);
+  d_domainBoundingVectors.push_back(domainVector);
+  domainVector.clear();
+  domainVector.push_back(0.0);domainVector.push_back(dftParameters::domainSizeY);domainVector.push_back(0.0);
+  d_domainBoundingVectors.push_back(domainVector);
+  domainVector.clear();
+  domainVector.push_back(0.0);domainVector.push_back(0.0);domainVector.push_back(dftParameters::domainSizeZ);
+  d_domainBoundingVectors.push_back(domainVector);
 #endif
 
-  /*dftUtils::readFile(numberColumnsCoordinatesFile, atomLocations, coordinatesFile);
-    pcout << "number of atoms: " << atomLocations.size() << "\n";
-    //find unique atom types
-    for (std::vector<std::vector<double> >::iterator it=atomLocations.begin(); it<atomLocations.end(); it++){
-    atomTypes.insert((unsigned int)((*it)[0]));
-    }*/
- 
   pcout << "number of atoms types: " << atomTypes.size() << "\n";
 
+  //
+  //create domain bounding vectors
+  //
 
   
   //estimate total number of wave functions
@@ -287,23 +297,54 @@ void dftClass<FEOrder>::run ()
 
   
   //generate mesh
-  //if meshFile provided, pass to mesh()
-  mesh();
+  //mesh();
 
-  initUnmovedTriangulation();
+  //
+  //generate mesh (both parallel and serial)
+  //
+  d_mesh.generateSerialAndParallelMesh(atomLocations,
+				       d_imagePositions,
+				       d_domainBoundingVectors);
+
+
+  //
+  //get access to triangulation objects from meshGenerator class
+  //
+  parallel::distributed::Triangulation<3> & triangulationPar = d_mesh.getParallelMesh();
+
+ 
+  //
+  //initialize dofHandlers and hanging-node constraints and periodic constraints on the unmoved Mesh
+  //
+  initUnmovedTriangulation(triangulationPar);
+
   //
   //move triangulation to have atoms on triangulation vertices
   //
-  moveMeshToAtoms(triangulation);
+  moveMeshToAtoms(triangulationPar);
 
   //
-  //initialize
+  //initialize dirichlet BCs for total potential and vSelf poisson solutions
   //
-  initMovedTriangulation();
+  initBoundaryConditions();
 
-  //std::vector<Point<C_DIM> > globalAtomsDisplacements(atomLocations.size());
-  //globalAtomsDisplacements[0][0]=1e-4;
-  //forcePtr->updateAtomPositionsAndMoveMesh(globalAtomsDisplacements);
+  //
+  //initialize guesses for electron-density and wavefunctions
+  //
+  initElectronicFields();
+
+  
+  //
+  //initialize local pseudopotential
+  //
+  if(dftParameters::isPseudopotential)
+    {
+      initLocalPseudoPotential();
+      initNonLocalPseudoPotential();
+      computeSparseStructureNonLocalProjectors();
+      computeElementalProjectorKets();
+    }
+ 
   //
   //solve vself
   //
@@ -394,8 +435,8 @@ void dftClass<FEOrder>::run ()
       scfIter++;
     }
   computing_timer.enter_section("configurational force computation"); 
-  forcePtr->computeAtomsForces();
-  forcePtr->printAtomsForces();
+  //forcePtr->computeAtomsForces();
+  //forcePtr->printAtomsForces();
   computing_timer.exit_section("configurational force computation");  
   computing_timer.exit_section("solve"); 
 }

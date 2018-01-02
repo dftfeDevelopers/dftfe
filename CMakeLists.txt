@@ -43,10 +43,11 @@ SET(TARGET_SRC
   ./src/dft/dft.cc
   ./src/poisson/poisson.cc
   ./src/eigen/eigen.cc
-  ./src/force/force.cc
+  #./src/force/force.cc
   ./src/force/eshelbyTensor/eshelbyTensor.cc
   ./src/meshMovement/meshMovement.cc
   ./src/meshMovement/meshMovementGaussian.cc
+  ./src/mesh/meshGenerator.cc
   ./utils/fileReaders.cc
   ./utils/dftParameters.cc
   # You can specify additional files here!

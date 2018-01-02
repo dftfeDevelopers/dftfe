@@ -13,27 +13,31 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Shiva Rudraraju (2016), Phani Motamarri (2016), Sambit Das (2017)
+// @author Phani Motamarri (2018), Shiva Rudraraju (2016), Sambit Das (2017)
 //
+#include "applyTotalPotentialDirichletBC.cc"
+#include "locatenodes.cc"
+#include "createBins.cc"
+#include "createBinsExtraSanityCheck.cc"
 
+#ifdef ENABLE_PERIODIC_BC
+#include "applyPeriodicBCHigherOrderNodes.cc"
+#endif
 
 
 //init
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::initMovedTriangulation(){
+void dftClass<FEOrder>::initBoundaryConditions(){
   computing_timer.enter_section("moved setup");
 
   //
-  //initialize FE objects
+  //initialize FE objects again
   //
   dofHandler.distribute_dofs (FE);
   dofHandlerEigen.distribute_dofs (FEEigen);
 
   d_supportPoints.clear();
   DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), dofHandler, d_supportPoints);
-
-  //selectedDofsHanging.resize(dofHandler.n_dofs(),false);
-  //DoFTools::extract_hanging_node_dofs(dofHandler, selectedDofsHanging);
 
   d_supportPointsEigen.clear();
   DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), dofHandlerEigen, d_supportPointsEigen);
@@ -58,7 +62,8 @@ void dftClass<FEOrder>::initMovedTriangulation(){
   //used for computing total electrostatic potential using Poisson problem
   //with (rho+b) as the rhs
   //
-  d_constraintsForTotalPotential.clear ();  
+  d_constraintsForTotalPotential.clear();  
+  d_constraintsForTotalPotential.reinit(locally_relevant_dofs);
 
 #ifdef ENABLE_PERIODIC_BC
   locatePeriodicPinnedNodes();
@@ -74,7 +79,7 @@ void dftClass<FEOrder>::initMovedTriangulation(){
   d_constraintsForTotalPotential.merge(constraintsNone,ConstraintMatrix::MergeConflictBehavior::right_object_wins);
   d_constraintsForTotalPotential.close();
 
-  //clear exisiting constraints matrix vector
+  //clear existing constraints matrix vector
   unsigned int count=0;
   for (std::vector<const ConstraintMatrix *>::iterator it = d_constraintsVector.begin() ; it != d_constraintsVector.end(); ++it)
   { 
@@ -129,107 +134,19 @@ void dftClass<FEOrder>::initMovedTriangulation(){
   quadratureVector.push_back(QGaussLobatto<1>(C_num1DQuad<FEOrder>()));  
   //
   //
-  forcePtr->initMoved();
+  //forcePtr->initMoved();
 
   //push dofHandler and constraints for force
-  dofHandlerVector.push_back(&(forcePtr->d_dofHandlerForce));
-  forcePtr->d_forceDofHandlerIndex = dofHandlerVector.size()-1;
-  d_constraintsVector.push_back(&(forcePtr->d_constraintsNoneForce));  
+  //dofHandlerVector.push_back(&(forcePtr->d_dofHandlerForce));
+  //forcePtr->d_forceDofHandlerIndex = dofHandlerVector.size()-1;
+  //d_constraintsVector.push_back(&(forcePtr->d_constraintsNoneForce));  
 
   matrix_free_data.reinit(dofHandlerVector, d_constraintsVector, quadratureVector, additional_data);
-
-
-  //
-  //initialize eigen vectors
-  //
-  matrix_free_data.initialize_dof_vector(vChebyshev,eigenDofHandlerIndex);
-  v0Chebyshev.reinit(vChebyshev);
-  fChebyshev.reinit(vChebyshev);
-  aj[0].reinit(vChebyshev); aj[1].reinit(vChebyshev); aj[2].reinit(vChebyshev);
-  aj[3].reinit(vChebyshev); aj[4].reinit(vChebyshev);
-  for (unsigned int i=0; i<eigenVectors[0].size(); ++i)
-    {  
-      PSI[i]->reinit(vChebyshev);
-      tempPSI[i]->reinit(vChebyshev);
-      tempPSI2[i]->reinit(vChebyshev);
-      tempPSI3[i]->reinit(vChebyshev);
-      tempPSI4[i]->reinit(vChebyshev);
-    } 
-  
-  for(unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
-    {
-      for(unsigned int i = 0; i < eigenVectors[kPoint].size(); ++i)
-	{
-	  eigenVectors[kPoint][i]->reinit(vChebyshev);
-	  eigenVectorsOrig[kPoint][i]->reinit(vChebyshev);
-	}
-    }
 
   //
   //locate atom core nodes and also locate atom nodes in each bin 
   //
   locateAtomCoreNodes();
-
-  
-  //
-  //initialize density 
-  //
-  initRho();
-
-  //
-  //Initialize libxc (exchange-correlation)
-  //
-  int exceptParamX, exceptParamC;
-  unsigned int xc_id = dftParameters::xc_id;
-
-
-  if(xc_id == 1)
-    {
-      exceptParamX = xc_func_init(&funcX,XC_LDA_X,XC_UNPOLARIZED);
-      exceptParamC = xc_func_init(&funcC,XC_LDA_C_PZ,XC_UNPOLARIZED);
-    }
-  else if(xc_id == 2)
-    {
-      exceptParamX = xc_func_init(&funcX,XC_LDA_X,XC_UNPOLARIZED);
-      exceptParamC = xc_func_init(&funcC,XC_LDA_C_PW,XC_UNPOLARIZED);
-    }
-  else if(xc_id == 3)
-    {
-      exceptParamX = xc_func_init(&funcX,XC_LDA_X,XC_UNPOLARIZED);
-      exceptParamC = xc_func_init(&funcC,XC_LDA_C_VWN,XC_UNPOLARIZED);
-    }
-  else if(xc_id == 4)
-    {
-      exceptParamX = xc_func_init(&funcX,XC_GGA_X_PBE,XC_UNPOLARIZED);
-      exceptParamC = xc_func_init(&funcC,XC_GGA_C_PBE,XC_UNPOLARIZED);
-    }
-  else if(xc_id > 4)
-    {
-      pcout<<"-------------------------------------"<<std::endl;
-      pcout<<"Exchange or Correlation Functional not found"<<std::endl;
-      pcout<<"-------------------------------------"<<std::endl;
-      exit(-1);
-    }
-
-  if(exceptParamX != 0 || exceptParamC != 0)
-    {
-      pcout<<"-------------------------------------"<<std::endl;
-      pcout<<"Exchange or Correlation Functional not found"<<std::endl;
-      pcout<<"-------------------------------------"<<std::endl;
-      exit(-1);
-    }
-
-
-  //
-  //initialize local pseudopotential
-  //
-  if(dftParameters::isPseudopotential)
-    {
-      initLocalPseudoPotential();
-      initNonLocalPseudoPotential();
-      computeSparseStructureNonLocalProjectors();
-      computeElementalProjectorKets();
-    }
  
   //
   //
@@ -238,10 +155,6 @@ void dftClass<FEOrder>::initMovedTriangulation(){
   poissonPtr->init();
   eigenPtr->init();
   
-  //
-  //initialize PSI
-  //
-  pcout << "reading initial guess for PSI\n";
-  readPSI();
+ 
   computing_timer.exit_section("moved setup");   
 }

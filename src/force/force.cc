@@ -62,6 +62,9 @@ template<unsigned int FEOrder>
 void forceClass<FEOrder>::initUnmoved()
 {
   computing_timer.enter_section("forceClass setup");
+
+  
+
   d_dofHandlerForce.initialize(dftPtr->triangulation,FEForce);
   d_dofHandlerForce.distribute_dofs(FEForce);
   d_locally_owned_dofsForce.clear();d_locally_relevant_dofsForce.clear();
@@ -82,7 +85,6 @@ void forceClass<FEOrder>::initUnmoved()
 #else
   d_constraintsNoneForce.close();
 #endif
-  //d_forceDofHandlerIndex=dftPtr->d_constraintsVector.size();
 
   computing_timer.exit_section("forceClass setup"); 
 }
