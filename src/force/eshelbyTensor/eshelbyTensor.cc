@@ -155,7 +155,7 @@ Tensor<2,C_DIM,VectorizedArray<double> >  getELocEshelbyTensorNonPeriodic(const 
 }
 
 /*
-Tensor<2,C_DIM,VectorizedArray<double> >  getENonLocEshelbyTensor(const VectorizedArray<double> & phiTot,
+Tensor<2,C_DIM,VectorizedArray<double> >  getEnlEshelbyTensor(const VectorizedArray<double> & phiTot,
 		                                                  const Tensor<1,C_DIM,VectorizedArray<double> > & gradPhiTot,
 							          const VectorizedArray<double> & rho,
 							          const Tensor<1,C_DIM,VectorizedArray<double> > & gradRho,

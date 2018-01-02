@@ -24,9 +24,8 @@
 #include "../../include/fileReaders.h"
 
 
-#include "configurationalForceEEshelbyFPSPPeriodicLinFE.cc"
-#include "configurationalForceEEshelbyFPSPNonPeriodicLinFE.cc"
-#include "configurationalForceLinFECommon.cc"
+#include "configurationalForceEEshelbyFPSPFnlLinFE.cc"
+#include "FPSPLocalElementalContribution.cc"
 #include "configurationalForceEselfLinFE.cc"
 #include "initPseudoForce.cc"
 #include "createBinObjectsForce.cc"
@@ -173,12 +172,7 @@ void forceClass<FEOrder>::computeConfigurationalForceTotalLinFE()
  
   configForceLinFEInit();
 
-#ifdef ENABLE_PERIODIC_BC
-  computeConfigurationalForceEEshelbyTensorFPSPPeriodicLinFE(); 
-#else  
-  computeConfigurationalForceEEshelbyTensorFPSPNonPeriodicLinFE(); 
-#endif
-
+  computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(); 
   //computeConfigurationalForcePhiExtLinFE();
   //computeConfigurationalForceEselfNoSurfaceLinFE();
   computeConfigurationalForceEselfLinFE();
