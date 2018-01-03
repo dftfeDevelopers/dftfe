@@ -58,10 +58,13 @@ forceClass<FEOrder>::forceClass(dftClass<FEOrder>* _dftPtr):
 //initialize forceClass object
 //
 template<unsigned int FEOrder>
-void forceClass<FEOrder>::initUnmoved()
+void forceClass<FEOrder>::initUnmoved(Triangulation<3,3> & triangulation)
 {
   computing_timer.enter_section("forceClass setup");
-  d_dofHandlerForce.initialize(dftPtr->triangulation,FEForce);
+
+  
+
+  d_dofHandlerForce.initialize(triangulation,FEForce);
   d_dofHandlerForce.distribute_dofs(FEForce);
   d_locally_owned_dofsForce.clear();d_locally_relevant_dofsForce.clear();
   d_locally_owned_dofsForce = d_dofHandlerForce.locally_owned_dofs();
@@ -81,8 +84,7 @@ void forceClass<FEOrder>::initUnmoved()
 #else
   d_constraintsNoneForce.close();
 #endif
-  //d_forceDofHandlerIndex=dftPtr->d_constraintsVector.size();
-
+  gaussianMove.init(triangulation);
   computing_timer.exit_section("forceClass setup"); 
 }
 
@@ -125,7 +127,7 @@ void forceClass<FEOrder>::initMoved()
 
   createBinObjectsForce();
   locateAtomCoreNodesForce();
-  gaussianMove.init(dftPtr->triangulation);
+  gaussianMove.reinit();
   //
   //initialize pseudopotential related force objects
   //

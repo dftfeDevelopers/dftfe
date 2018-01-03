@@ -3,13 +3,14 @@ set -e
 set -o pipefail
 #script to setup and build DFT-FE 
 #set CMAKE path
+cmake=/opt/cmake/bin/cmake
 #cmake=/usr/bin/cmake
 #
 #Usually, no changes are needed below this line
 #
 RCol='\e[0m'
 Blu='\e[0;34m';
-optimizedMode=0
+optimizedMode=1
 if [ $optimizedMode == 1 ]; then
   if [ -d "build/release" ]; then
     echo -e "${Blu}build/release directory already present${RCol}"

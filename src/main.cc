@@ -77,31 +77,28 @@ void declare_parameters()
     
   prm.declare_entry("DOMAIN SIZE X", "0.0",
 		    Patterns::Double(),
-		    "Size of the domain in X-direction");
+		    "Size of the domain along 1-direction");
 
   prm.declare_entry("DOMAIN SIZE Y", "0.0",
 		    Patterns::Double(),
-		    "Size of the domain in Y-direction");
+		    "Size of the domain along 2-direction");
 
   prm.declare_entry("DOMAIN SIZE Z", "0.0",
 		    Patterns::Double(),
-		    "Size of the domain in Z-direction");
+		    "Size of the domain along 3-direction");
 
-  prm.declare_entry("INNER DOMAIN SIZE","0.0",
+  prm.declare_entry("INNER DOMAIN SIZE X","0.0",
 		    Patterns::Double(),
-		    "Inner Domain Size");
-
-  prm.declare_entry("OUTER BALL RADIUS", "0.0",
-		    Patterns::Double(),
-		    "Outer Ball Radius");
+		    "Inner Domain Size along 1-direction");
   
-  prm.declare_entry("INNER BALL RADIUS", "0.0",
+  prm.declare_entry("INNER DOMAIN SIZE Y","0.0",
 		    Patterns::Double(),
-		     "Inner Ball Radius");
+		    "Inner Domain Size along 2-direction");
 
-  prm.declare_entry("BASE REFINEMENT LEVEL", "2.0",
+  prm.declare_entry("INNER DOMAIN SIZE Z","0.0",
 		    Patterns::Double(),
-		    "Base Refinement Level");
+		    "Inner Domain Size along 3-direction");
+
   
   prm.declare_entry("MESH SIZE OUTER DOMAIN", "0.0",
 		    Patterns::Double(),
@@ -110,10 +107,6 @@ void declare_parameters()
   prm.declare_entry("MESH SIZE INNER DOMAIN", "0.0",
 		    Patterns::Double(),
 		     "Inner Domain Mesh Size");
-
-  prm.declare_entry("MESH SIZE OUTER BALL", "0.0",
-		    Patterns::Double(),
-		     "Outer Ball Mesh Size");
 
   prm.declare_entry("MESH SIZE INNER BALL", "0.0",
 		    Patterns::Double(),
@@ -163,7 +156,7 @@ void declare_parameters()
 		    "Parameter specifying the type of exchange-correlation to be used");
 
   prm.declare_entry("NUMBER OF REFINEMENT STEPS", "4",
-		    Patterns::Integer(1,4),
+		    Patterns::Integer(1,8),
 		    "Number of refinement steps to be used");
 
   prm.declare_entry("LOWER BOUND WANTED SPECTRUM", "-10.0",
@@ -248,13 +241,11 @@ void parse_command_line(const int argc,
 	  dftParameters::domainSizeX                   = prm.get_double("DOMAIN SIZE X");
 	  dftParameters::domainSizeY                   = prm.get_double("DOMAIN SIZE Y");
 	  dftParameters::domainSizeZ                   = prm.get_double("DOMAIN SIZE Z");
-	  dftParameters::innerDomainSize               = prm.get_double("INNER DOMAIN SIZE");
-	  dftParameters::outerBallRadius               = prm.get_double("OUTER BALL RADIUS");
-	  dftParameters::innerBallRadius               = prm.get_double("INNER BALL RADIUS");
-	  dftParameters::baseRefinementLevel           = prm.get_double("BASE REFINEMENT LEVEL");
+	  dftParameters::innerDomainSizeX               = prm.get_double("INNER DOMAIN SIZE X");
+	  dftParameters::innerDomainSizeY               = prm.get_double("INNER DOMAIN SIZE Y");
+	  dftParameters::innerDomainSizeZ               = prm.get_double("INNER DOMAIN SIZE Z");
 	  dftParameters::meshSizeOuterDomain           = prm.get_double("MESH SIZE OUTER DOMAIN");
 	  dftParameters::meshSizeInnerDomain           = prm.get_double("MESH SIZE INNER DOMAIN");
-	  dftParameters::meshSizeOuterBall             = prm.get_double("MESH SIZE OUTER BALL");
 	  dftParameters::meshSizeInnerBall             = prm.get_double("MESH SIZE INNER BALL");
 	  dftParameters::periodicX                     = prm.get_bool("PERIODIC BOUNDARY CONDITION X");
 	  dftParameters::periodicY                     = prm.get_bool("PERIODIC BOUNDARY CONDITION Y");

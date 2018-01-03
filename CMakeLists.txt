@@ -47,6 +47,7 @@ SET(TARGET_SRC
   ./src/force/eshelbyTensor/eshelbyTensor.cc
   ./src/meshMovement/meshMovement.cc
   ./src/meshMovement/meshMovementGaussian.cc
+  ./src/mesh/meshGenerator.cc
   ./utils/fileReaders.cc
   ./utils/dftParameters.cc
   # You can specify additional files here!
@@ -103,6 +104,3 @@ MESSAGE(STATUS "==== Non Periodic ====")
 INCLUDE_DIRECTORIES(${ALGLIB_INCLUDE} ${LIBXC_INCLUDE} ${PETSC_REAL_INCLUDE} ${SLEPC_REAL_INCLUDE})
 TARGET_LINK_LIBRARIES(${TARGET} ${LIBXC_LIB} ${ALGLIB_LIB} ${PETSC_REAL_LIB} ${SLEPC_REAL_LIB})
 ENDIF()
-
-#DEAL_II_INVOKE_AUTOPILOT()
-

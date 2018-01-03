@@ -102,10 +102,9 @@ void meshMovementClass::init(Triangulation<3,3> & triangulation)
 #endif	
 }
 
-void meshMovementClass::reinit(Triangulation<3,3> & triangulation,
-		               bool isTriaRefined)
+void meshMovementClass::reinit(Triangulation<3,3> & triangulation)
+		             
 {
-  if (isTriaRefined){
     d_dofHandlerMoveMesh.clear();
     d_dofHandlerMoveMesh.initialize(triangulation,FEMoveMesh);	
     d_dofHandlerMoveMesh.distribute_dofs(FEMoveMesh);	  
@@ -130,20 +129,34 @@ void meshMovementClass::reinit(Triangulation<3,3> & triangulation,
 #else
     d_constraintsMoveMesh.close();
 #endif
-  }
-  else
-  {
-    d_dofHandlerMoveMesh.distribute_dofs(FEMoveMesh);		  
-  }
 }
 
+void meshMovementClass::reinit()
+{
+    d_dofHandlerMoveMesh.distribute_dofs(FEMoveMesh);
+}
+
+void meshMovementClass::writeMesh()
+{
+  //write mesh to vtk file
+  //
+  if (this_mpi_process==0 && d_dofHandlerMoveMesh.get_triangulation().locally_owned_subdomain()==numbers::invalid_subdomain_id)
+  {
+     DataOut<3> data_out;
+     data_out.attach_dof_handler(d_dofHandlerMoveMesh);
+     data_out.build_patches ();
+     std::ofstream output ("mesh.vtu");
+     data_out.write_vtu (output);
+  }
+}
+ 
 void meshMovementClass::initIncrementField()
 {
   //dftPtr->matrix_free_data.initialize_dof_vector(d_incrementalDisplacement,d_forceDofHandlerIndex);	
   IndexSet  ghost_indices=d_locally_relevant_dofs;
   ghost_indices.subtract_set(d_locally_owned_dofs);
   d_incrementalDisplacement=parallel::distributed::Vector<double>::Vector(d_locally_owned_dofs,
-	                                                                  ghost_indices,
+									  ghost_indices,
                                                                           mpi_communicator);
   d_incrementalDisplacement=0;  	
 }
@@ -234,18 +247,29 @@ void meshMovementClass::movedMeshCheck()
 
 void meshMovementClass::findClosestVerticesToDestinationPoints(const std::vector<Point<3>> & destinationPoints,
 		                                               std::vector<Point<3>> & closestTriaVertexToDestPointsLocation,
-                                                               std::vector<Tensor<1,3,double>> & dispClosestTriaVerticesToDestPoints)
+                                                               std::vector<Tensor<1,3,double>> & dispClosestTriaVerticesToDestPoints,
+                                                               const std::vector<std::vector<double> > & domainBoundingVectors)
 {
   closestTriaVertexToDestPointsLocation.clear();
   dispClosestTriaVerticesToDestPoints.clear();
   unsigned int vertices_per_cell=GeometryInfo<C_DIM>::vertices_per_cell;
-  double domainSizeX = dftParameters::domainSizeX,domainSizeY = dftParameters::domainSizeY,domainSizeZ=dftParameters::domainSizeZ;
   std::vector<double> latticeVectors(9,0.0);
-  latticeVectors[0]=domainSizeX; latticeVectors[4]=domainSizeY; latticeVectors[8]=domainSizeZ;
+  for (unsigned int idim=0; idim<3; idim++)
+      for(unsigned int jdim=0; jdim<3; jdim++)
+          latticeVectors[3*idim+jdim]=domainBoundingVectors[idim][jdim];
   Point<3> corner;
-  corner[0]=-domainSizeX/2; corner[1]=-domainSizeY/2; corner[2]=-domainSizeZ/2;
-  std::vector<double> latticeVectorsMagnitudes(3);
-  latticeVectorsMagnitudes[0]=domainSizeX; latticeVectorsMagnitudes[1]=domainSizeY; latticeVectorsMagnitudes[2]=domainSizeZ;
+  for (unsigned int idim=0; idim<3; idim++){
+      corner[idim]=0;
+      for(unsigned int jdim=0; jdim<3; jdim++)
+          corner[idim]-=domainBoundingVectors[jdim][idim]/2.0;
+  }
+  std::vector<double> latticeVectorsMagnitudes(3,0.0);
+  for (unsigned int idim=0; idim<3; idim++){
+      for(unsigned int jdim=0; jdim<3; jdim++)
+          latticeVectorsMagnitudes[idim]+=domainBoundingVectors[idim][jdim]*domainBoundingVectors[idim][jdim];
+      latticeVectorsMagnitudes[idim]=std::sqrt(latticeVectorsMagnitudes[idim]);
+  }
+
   std::vector<bool> isPeriodic(3,false); 
   isPeriodic[0]=dftParameters::periodicX;isPeriodic[1]=dftParameters::periodicY;isPeriodic[2]=dftParameters::periodicZ;
 
@@ -257,7 +281,7 @@ void meshMovementClass::findClosestVerticesToDestinationPoints(const std::vector
 	                                                                              destinationPoints[idest],
 										      corner);
       //std::cout<< "destFracCoords: "<< destFracCoords[0] << "," <<destFracCoords[1] <<"," <<destFracCoords[2]<<std::endl; 
-      for (int idim=0; idim<3; idim++)
+      for (unsigned int idim=0; idim<3; idim++)
       {
         if ((std::fabs(destFracCoords[idim]-0.0) <1e-5/latticeVectorsMagnitudes[idim]
             || std::fabs(destFracCoords[idim]-1.0) <1e-5/latticeVectorsMagnitudes[idim])
