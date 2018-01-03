@@ -45,10 +45,20 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   //
   //write mesh to vtk file
   //
-  DataOut<3> data_out;
-  data_out.attach_dof_handler (dofHandler);
-  data_out.build_patches ();
-  //data_out.write_vtu_in_parallel(std::string("mesh.vtu").c_str(),mpi_communicator); 
+
+  //DataOut<3> data_out;
+  //data_out.attach_dof_handler (dofHandler);
+  //data_out.build_patches ();
+  //if (n_mpi_processes==1)
+  //{
+  //   std::ofstream output ("mesh.vtu");
+  //   data_out.write_vtu (output);
+  //}
+  //else
+  //{
+  //   //Doesn't work with mvapich2_ib mpi libraries
+  //   data_out.write_vtu_in_parallel(std::string("mesh.vtu").c_str(),mpi_communicator); 
+  //}
 
   //
   //matrix free data structure
@@ -134,12 +144,12 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   quadratureVector.push_back(QGaussLobatto<1>(C_num1DQuad<FEOrder>()));  
   //
   //
-  //forcePtr->initMoved();
+  forcePtr->initMoved();
 
   //push dofHandler and constraints for force
-  //dofHandlerVector.push_back(&(forcePtr->d_dofHandlerForce));
-  //forcePtr->d_forceDofHandlerIndex = dofHandlerVector.size()-1;
-  //d_constraintsVector.push_back(&(forcePtr->d_constraintsNoneForce));  
+  dofHandlerVector.push_back(&(forcePtr->d_dofHandlerForce));
+  forcePtr->d_forceDofHandlerIndex = dofHandlerVector.size()-1;
+  d_constraintsVector.push_back(&(forcePtr->d_constraintsNoneForce));  
 
   matrix_free_data.reinit(dofHandlerVector, d_constraintsVector, quadratureVector, additional_data);
 

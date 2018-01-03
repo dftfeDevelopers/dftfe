@@ -142,7 +142,7 @@ void dftClass<FEOrder>::initUnmovedTriangulation(Triangulation<3,3> & triangulat
   constraintsNone.close();
   constraintsNoneEigen.close();
 
-  //forcePtr->initUnmoved();
+  forcePtr->initUnmoved(triangulation);
 
   //
   //Initialize libxc (exchange-correlation)

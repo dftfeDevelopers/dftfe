@@ -36,7 +36,7 @@ class forceClass
 
 public:
   forceClass(dftClass<FEOrder>* _dftPtr);
-  void initUnmoved();
+  void initUnmoved(Triangulation<3,3> & triangulation);
   void initMoved();
   void computeAtomsForces();
   void computeStress();

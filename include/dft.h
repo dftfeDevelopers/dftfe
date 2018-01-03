@@ -312,28 +312,24 @@ class dftClass
    */
   unsigned int numElectrons, numLevels;
   std::set<unsigned int> atomTypes;
-<<<<<<< HEAD
-  std::vector<std::vector<double> > atomLocations,atomLocationsFractional,d_latticeVectors,d_reciprocalLatticeVectors, d_imagePositions;
-=======
-  std::vector<std::vector<double> > atomLocations,d_latticeVectors,d_imagePositions,d_domainBoundingVectors;
->>>>>>> adaptiveMeshingForce1
+  std::vector<std::vector<double> > atomLocations,atomLocationsFractional,d_latticeVectors,d_reciprocalLatticeVectors, d_imagePositions, d_domainBoundingVectors;
+
   std::vector<int> d_imageIds;
   std::vector<double> d_imageCharges;
   std::vector<orbital> waveFunctionsVector;
   std::map<unsigned int, std::map<unsigned int, std::map<unsigned int, alglib::spline1dinterpolant*> > > radValues;
   std::map<unsigned int, std::map<unsigned int, std::map <unsigned int, double> > >outerValues;
   std::vector<Point<3>> closestTriaVertexToAtomsLocation;
-<<<<<<< HEAD
-  std::vector<Tensor<1,3,double> > dispClosestTriaVerticesToAtoms;
-=======
+
   std::vector<Tensor<1,3,double> > distanceClosestTriaVerticesToAtoms;
+  std::vector<Tensor<1,3,double> > dispClosestTriaVerticesToAtoms;
 
 
   /**
    * meshGenerator based object
    */
   meshGeneratorClass d_mesh;
->>>>>>> adaptiveMeshingForce1
+
   
   /**
    * dealii based FE data structres

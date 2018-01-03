@@ -202,14 +202,14 @@ void meshGeneratorClass::generateMesh(Triangulation<3,3> &triangulation)
 		  double projComponent_2 = (center[0]*d_domainBoundingVectors[1][0]+center[1]*d_domainBoundingVectors[1][1]+center[2]*d_domainBoundingVectors[1][2])/domainBoundingVectorMag2;
 		  double projComponent_3 = (center[0]*d_domainBoundingVectors[2][0]+center[1]*d_domainBoundingVectors[2][1]+center[2]*d_domainBoundingVectors[2][2])/domainBoundingVectorMag3;
 
-		  if(projComponent_1 <= dftParameters::innerDomainSizeX || projComponent_2 <= dftParameters::innerDomainSizeY || projComponent_3 <= dftParameters::innerDomainSizeZ)
+		  if((abs(projComponent_1) <= dftParameters::innerDomainSizeX) && (abs(projComponent_2) <= dftParameters::innerDomainSizeY) && (abs(projComponent_3) <= dftParameters::innerDomainSizeZ))
 		    {
 		      inInnerDomain = true;
 		    }
 
 		  bool cellRefineFlag = false;
 
-		  if(inInnerDomain && currentMeshSize > dftParameters::meshSizeInnerDomain)
+		  if(inInnerDomain && (currentMeshSize > dftParameters::meshSizeInnerDomain))
 		    cellRefineFlag = true;
 
 		  //loop over all atoms

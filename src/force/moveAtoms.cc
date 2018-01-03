@@ -68,6 +68,19 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
 
   gaussianMove.moveMesh(controlPointLocations,controlPointDisplacements,d_gaussianConstant);
   pcout << "Reinitializing all moved triangulation dependent objects..." << std::endl;  
-  dftPtr->initMovedTriangulation();
+  
+  //reinitialize dirichlet BCs for total potential and vSelf poisson solutions
+  dftPtr->initBoundaryConditions();
+  //reinitialize guesses for electron-density and wavefunctions (not required for relaxation update)
+  //dftPtr->initElectronicFields();
+  //reinitialize local pseudopotential
+  if(dftParameters::isPseudopotential)
+  {
+     dftPtr->initLocalPseudoPotential();
+     dftPtr->initNonLocalPseudoPotential();
+     dftPtr->computeSparseStructureNonLocalProjectors();
+     dftPtr->computeElementalProjectorKets();
+  }
+  
   pcout << "...Reinitialization end" << std::endl;   
 }
