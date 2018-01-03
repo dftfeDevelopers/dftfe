@@ -390,7 +390,7 @@ void forceClass<FEOrder>::computeNonLocalProjectorKetTimesVector(const std::vect
   FEValues<3> fe_values (dftPtr->FEEigen, quadrature_formula, update_values);
 
   const int kPointIndex = dftPtr->d_kPointIndex;
-  const unsigned int numberElements  = dftPtr->triangulation.n_locally_owned_active_cells();
+  const unsigned int numberElements  = dftPtr->d_mesh.getParallelMesh().n_locally_owned_active_cells();
   const unsigned int dofs_per_cell = dftPtr->FEEigen.dofs_per_cell;
 
   int numberNodesPerElement;
