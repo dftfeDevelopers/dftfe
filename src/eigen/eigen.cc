@@ -18,7 +18,9 @@
 
 #include "../../include/eigen.h"
 #include "../../include/dft.h"
+#include "../../include/dftParameters.h"
 
+using namespace dftParameters ;
 
 //
 //constructor
@@ -1091,7 +1093,7 @@ void eigenClass<FEOrder>::computeVEffSpinPolarized(std::map<dealii::CellId,std::
 	  //
 	  //sum all to vEffective
 	  //
-	  if(dftPtr->d_isPseudopotential)
+	  if(isPseudopotential)
 	    {
 	      VectorizedArray<double>  pseudoPotential;
 	      for (unsigned int v = 0; v < n_sub_cells; ++v)
@@ -1199,7 +1201,7 @@ void eigenClass<FEOrder>::computeVEffSpinPolarized(std::map<dealii::CellId,std::
 	  //
 	  //sum all to vEffective
 	  //
-	  if(dftPtr->d_isPseudopotential)
+	  if(isPseudopotential)
 	    {
 	      VectorizedArray<double>  pseudoPotential;
 	      for (unsigned int v = 0; v < n_sub_cells; ++v)

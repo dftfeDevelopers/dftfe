@@ -24,6 +24,7 @@
 #include "../../include/force.h"
 #include "../../include/meshMovementGaussian.h"
 #include "../../include/fileReaders.h"
+#include "../../include/dftParameters.h"
 
 
 //Include cc files
@@ -53,6 +54,7 @@
 #endif
 
 
+using namespace dftParameters ;
 
 //
 //dft constructor
@@ -318,7 +320,7 @@ void dftClass<FEOrder>::run ()
   //
   //move triangulation to have atoms on triangulation vertices
   //
-  moveMeshToAtoms(triangulation);
+  //moveMeshToAtoms(triangulation);
 
   //
   //initialize
@@ -423,14 +425,14 @@ void dftClass<FEOrder>::run ()
         {
 	  if(dftParameters::xc_id < 4)
 	      {
-	      if(isPseudopotential)
+	      if(dftParameters::isPseudopotential)
 		eigenPtr->computeVEff(rhoInValues, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, pseudoValues);
 	      else
 		eigenPtr->computeVEff(rhoInValues, poissonPtr->phiTotRhoIn, poissonPtr->phiExt); 
 	      }
 	  else if (dftParameters::xc_id == 4)
 	     {
-	      if(isPseudopotential)
+	      if(dftParameters::isPseudopotential)
 		eigenPtr->computeVEff(rhoInValues, gradRhoInValues, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, pseudoValues);
 	      else
 		eigenPtr->computeVEff(rhoInValues, gradRhoInValues, poissonPtr->phiTotRhoIn, poissonPtr->phiExt);
@@ -507,7 +509,7 @@ void dftClass<FEOrder>::output () {
     data_outEigen.add_data_vector (*eigenVectors[0][i], buffer);
   }
   data_outEigen.build_patches (C_num1DQuad<FEOrder>());
-  data_outEigen.write_vtu_in_parallel(std::string("eigen.vtu").c_str(),mpi_communicator);
+  //data_outEigen.write_vtu_in_parallel(std::string("eigen.vtu").c_str(),mpi_communicator);
 }
 
 template class dftClass<1>;

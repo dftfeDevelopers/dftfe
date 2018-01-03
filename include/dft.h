@@ -31,7 +31,7 @@
 
 #include "poisson.h"
 #include "eigen.h"
-#include "spglib.h"
+#include "../../softwares/spglib/include/spglib.h"
 
 
 #include <interpolation.h> 

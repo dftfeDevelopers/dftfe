@@ -32,7 +32,7 @@ namespace meshMovementUtils{
 
     
   std::vector<double> getFractionalCoordinates(const std::vector<double> & latticeVectors,
-	                                       const Point<3> & point,                                                                                           const Point<3> & corner)
+	                                       const Point<3> & point, const Point<3> & corner)
   {   
       //
       // recenter vertex about corner
@@ -58,7 +58,7 @@ namespace meshMovementUtils{
       if (info != 0) {
         const std::string
           message("LU solve in finding fractional coordinates failed.");
-        Assert(false,message);
+        Assert(false,ExcMessage(message));
       }
       return recenteredPoint;
   }

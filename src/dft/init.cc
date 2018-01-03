@@ -17,6 +17,7 @@
 //
 #include "initRho.cc"
 #include "initPseudo.cc"
+#include "initPseudo-OV.cc"
 #include <algorithm>
 #ifdef ENABLE_PERIODIC_BC
 #include "initkPointData.cc"

@@ -35,6 +35,10 @@ namespace dftParameters
   extern bool isPseudopotential,periodicX,periodicY,periodicZ, useSymm, symmFromFile;
   extern std::string meshFileName,coordinatesFile,currentPath,latticeVectorsFile,kPointDataFile, symmDataFile;
 
+  extern double innerDomainSize, outerBallRadius, innerBallRadius, meshSizeOuterDomain, meshSizeInnerDomain;
+  extern double meshSizeOuterBall, meshSizeInnerBall, baseRefinementLevel;
+
 };
 
 #endif
+

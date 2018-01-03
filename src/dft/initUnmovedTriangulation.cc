@@ -17,8 +17,7 @@
 // @author Shiva Rudraraju (2016), Phani Motamarri (2016), Sambit Das (2017)
 //
 
-#include "initRho.cc"
-#include "initPseudo.cc"
+
 
 #ifdef ENABLE_PERIODIC_BC
 #include "initkPointData.cc"

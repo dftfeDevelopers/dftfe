@@ -18,7 +18,11 @@
 
 //source file for all the mixing schemes
 
-double mixingParameter = dftParameters::mixingParameter;
+#include "../../include/dftParameters.h"
+
+using namespace dftParameters ;
+
+//double mixingParameter = dftParameters::mixingParameter;
 
 //implement simple mixing scheme 
 template<unsigned int FEOrder>

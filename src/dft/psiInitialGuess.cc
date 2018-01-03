@@ -21,6 +21,9 @@
 #include <boost/math/distributions/normal.hpp>
 #include <boost/random/normal_distribution.hpp>
 
+#include "../../include/dftParameters.h"
+
+using namespace dftParameters ;
 
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::loadPSIFiles(unsigned int Z, 

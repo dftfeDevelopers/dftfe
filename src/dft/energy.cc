@@ -18,6 +18,10 @@
 
 
 //source file for all energy computations 
+#include "../../include/dftParameters.h"
+
+using namespace dftParameters ;
+
 double FermiDiracFunctionValue(double x,
 			       std::vector<std::vector<double> > & eigenValues,
 			       std::vector<double> & kPointWeights,

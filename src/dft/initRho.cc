@@ -19,6 +19,10 @@
 //
 //Initlialize rho by reading in single-atom electron-density and fit a spline
 //
+#include "../../include/dftParameters.h"
+
+using namespace dftParameters ;
+
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::initRho()
 { 
