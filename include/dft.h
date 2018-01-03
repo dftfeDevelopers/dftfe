@@ -39,6 +39,7 @@
 #include <petsc.h>
 #include <slepceps.h>
 #include "dftParameters.h"
+#include "meshGenerator.h"
 
 //
 //Initialize Namespace
@@ -183,7 +184,7 @@ class dftClass
   /**
    * Initializes the finite-element mesh
    */
-  void mesh();
+  //void mesh();
 
   /**
    * moves the triangulation vertices using Gaussians such that the all atoms are on triangulation vertices
@@ -199,8 +200,9 @@ class dftClass
    * to be pinned for solving the Poisson problem electro-static potential is set here
    */
   //void init();
-  void initUnmovedTriangulation();
-  void initMovedTriangulation();
+  void initUnmovedTriangulation(Triangulation<3,3> & triangulation);
+  void initBoundaryConditions();
+  void initElectronicFields();
   void locateAtomCoreNodes();
   void locatePeriodicPinnedNodes();
   void initRho();
@@ -280,7 +282,16 @@ class dftClass
   void alphaTimesXPlusY(std::complex<double>   alpha,
 			vectorType           & x,
 			vectorType           & y);
+
+    
+  /**
+   * Sets dirichlet boundary conditions for total potential constraints on 
+   * non-periodic boundary (boundary id==0). Currently setting homogeneous bc
+   *
+   */
+  void applyPeriodicBCHigherOrderNodes();
 #endif
+
   //
   //objects for various exchange-correlations (from libxc package)
   //
@@ -301,19 +312,32 @@ class dftClass
    */
   unsigned int numElectrons, numLevels;
   std::set<unsigned int> atomTypes;
+<<<<<<< HEAD
   std::vector<std::vector<double> > atomLocations,atomLocationsFractional,d_latticeVectors,d_reciprocalLatticeVectors, d_imagePositions;
+=======
+  std::vector<std::vector<double> > atomLocations,d_latticeVectors,d_imagePositions,d_domainBoundingVectors;
+>>>>>>> adaptiveMeshingForce1
   std::vector<int> d_imageIds;
   std::vector<double> d_imageCharges;
   std::vector<orbital> waveFunctionsVector;
   std::map<unsigned int, std::map<unsigned int, std::map<unsigned int, alglib::spline1dinterpolant*> > > radValues;
   std::map<unsigned int, std::map<unsigned int, std::map <unsigned int, double> > >outerValues;
   std::vector<Point<3>> closestTriaVertexToAtomsLocation;
+<<<<<<< HEAD
   std::vector<Tensor<1,3,double> > dispClosestTriaVerticesToAtoms;
+=======
+  std::vector<Tensor<1,3,double> > distanceClosestTriaVerticesToAtoms;
+
+
+  /**
+   * meshGenerator based object
+   */
+  meshGeneratorClass d_mesh;
+>>>>>>> adaptiveMeshingForce1
   
   /**
    * dealii based FE data structres
    */
-  parallel::distributed::Triangulation<3> triangulation;
   FESystem<3>        FE, FEEigen;
   DoFHandler<3>      dofHandler, dofHandlerEigen;
   unsigned int       eigenDofHandlerIndex,phiExtDofHandlerIndex,phiTotDofHandlerIndex,forceDofHandlerIndex;

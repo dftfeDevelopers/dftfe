@@ -235,7 +235,7 @@ else{
   char buffer[100];
   sprintf(buffer, "Adaptivity summary:\n numCells: %u, numLevels: %u, h_min: %5.2e\n", triangulation.n_global_active_cells(), numLevels, minElemLength);
   pcout << buffer;
-}
+ }
   //
   computing_timer.exit_section("mesh"); 
 }

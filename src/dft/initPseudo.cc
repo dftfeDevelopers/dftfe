@@ -773,7 +773,18 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
   QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
   FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values);
   const unsigned int numberQuadraturePoints = quadrature.size();
-  const unsigned int numberElements         = triangulation.n_locally_owned_active_cells();
+  //const parallel::distributed::Triangulation<3> & tria = dofHandlerEigen.get_triangulation();
+  //const unsigned int numberElements  = tria.n_locally_owned_active_cells();
+
+  typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
+  int iElemCount = 0;
+  for(; cell != endc; ++cell)
+    {
+      if(cell->is_locally_owned())
+	iElemCount += 1;
+    }
+
+  const unsigned int numberElements = iElemCount;
 
 
   for(int iAtom = 0; iAtom < numberNonLocalAtoms; ++iAtom)

@@ -342,8 +342,10 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vec
   QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
   FEValues<3> fe_values (dftPtr->FEEigen, quadrature_formula, update_values);
 
+  //
+  //get access to triangulation objects from meshGenerator class
+  //
   const int kPointIndex = dftPtr->d_kPointIndex;
-  const unsigned int numberElements  = dftPtr->triangulation.n_locally_owned_active_cells();
   const unsigned int dofs_per_cell = dftPtr->FEEigen.dofs_per_cell;
 
   int numberNodesPerElement;
@@ -579,7 +581,6 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vec
 	  DoFHandler<3>::active_cell_iterator cell = dftPtr->d_elementIteratorsInAtomCompactSupport[iAtom][iElemComp];
 
 #ifdef ENABLE_PERIODIC_BC
-	  
 	  std::complex<double> alpha1 = 1.0;
 	  std::complex<double> beta1 = 0.0;
 
@@ -828,18 +829,18 @@ void eigenClass<FEOrder>::implementHX (const dealii::MatrixFree<3,double>  &data
 	      fe_eval.evaluate (true,true,false);
 	      for(unsigned int q = 0; q < fe_eval.n_q_points; ++q)
 		{
-		      psiVal = fe_eval.get_value(q);
-		      gradientPsiVal = fe_eval.get_gradient(q);
-		      derExchWithSigmaTimesGradRhoTimesPsi[0] = derExcWithSigmaTimesGradRho(cell,q,0)*psiVal;
-		      derExchWithSigmaTimesGradRhoTimesPsi[1] = derExcWithSigmaTimesGradRho(cell,q,1)*psiVal;
-		      derExchWithSigmaTimesGradRhoTimesPsi[2] = derExcWithSigmaTimesGradRho(cell,q,2)*psiVal;
-		      derExchWithSigmaTimesGradRhoDotGradientPsiTerm = derExcWithSigmaTimesGradRho(cell,q,0)*gradientPsiVal[0] + derExcWithSigmaTimesGradRho(cell,q,1)*gradientPsiVal[1] + derExcWithSigmaTimesGradRho(cell,q,2)*gradientPsiVal[2];
+		  psiVal = fe_eval.get_value(q);
+		  gradientPsiVal = fe_eval.get_gradient(q);
+		  derExchWithSigmaTimesGradRhoTimesPsi[0] = derExcWithSigmaTimesGradRho(cell,q,0)*psiVal;
+		  derExchWithSigmaTimesGradRhoTimesPsi[1] = derExcWithSigmaTimesGradRho(cell,q,1)*psiVal;
+		  derExchWithSigmaTimesGradRhoTimesPsi[2] = derExcWithSigmaTimesGradRho(cell,q,2)*psiVal;
+		  derExchWithSigmaTimesGradRhoDotGradientPsiTerm = derExcWithSigmaTimesGradRho(cell,q,0)*gradientPsiVal[0] + derExcWithSigmaTimesGradRho(cell,q,1)*gradientPsiVal[1] + derExcWithSigmaTimesGradRho(cell,q,2)*gradientPsiVal[2];
 
-		      //
-		      //submit gradient and value
-		      //
-		      fe_eval.submit_gradient(gradientPsiVal*half + two*derExchWithSigmaTimesGradRhoTimesPsi,q); 
-		      fe_eval.submit_value(vEff(cell,q)*psiVal + two*derExchWithSigmaTimesGradRhoDotGradientPsiTerm,q);
+		  //
+		  //submit gradient and value
+		  //
+		  fe_eval.submit_gradient(gradientPsiVal*half + two*derExchWithSigmaTimesGradRhoTimesPsi,q); 
+		  fe_eval.submit_value(vEff(cell,q)*psiVal + two*derExchWithSigmaTimesGradRhoDotGradientPsiTerm,q);
 		}
 
 	      fe_eval.integrate (true, true);

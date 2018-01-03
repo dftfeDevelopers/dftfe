@@ -29,7 +29,7 @@ namespace dftParameters
   bool isPseudopotential=false,periodicX=false,periodicY=false,periodicZ=false, useSymm=false, symmFromFile=false;
   std::string meshFileName=" ",coordinatesFile=" ",currentPath=" ",latticeVectorsFile=" ",kPointDataFile=" ", symmDataFile=" ";
 
-  double innerDomainSize=1.0, outerBallRadius=1.0, innerBallRadius=1.0, meshSizeOuterDomain=1.0, meshSizeInnerDomain=1.0;
-  double meshSizeOuterBall=1.0, meshSizeInnerBall=1.0, baseRefinementLevel=1.0;
+  double innerDomainSizeX=1.0, innerDomainSizeY=1.0, innerDomainSizeZ=1.0, meshSizeOuterDomain=10.0, meshSizeInnerDomain=5.0;
+  double meshSizeInnerBall=1.0;
 
 }
