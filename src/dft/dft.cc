@@ -311,7 +311,7 @@ void dftClass<FEOrder>::run ()
   //get access to triangulation objects from meshGenerator class
   //
   parallel::distributed::Triangulation<3> & triangulationPar = d_mesh.getParallelMesh();
-
+  Triangulation<3,3> & triangulationSer = d_mesh.getSerialMesh();
  
   //
   //initialize dofHandlers and hanging-node constraints and periodic constraints on the unmoved Mesh
@@ -322,6 +322,7 @@ void dftClass<FEOrder>::run ()
   //move triangulation to have atoms on triangulation vertices
   //
   moveMeshToAtoms(triangulationPar);
+  moveMeshToAtoms(triangulationSer);
 
   //
   //initialize dirichlet BCs for total potential and vSelf poisson solutions
@@ -454,16 +455,10 @@ void dftClass<FEOrder>::output () {
     data_outEigen.add_data_vector (*eigenVectors[0][i], buffer);
   }
   data_outEigen.build_patches (C_num1DQuad<FEOrder>());
-  if (n_mpi_processes==1)
-  {
-     std::ofstream output ("eigen.vtu");
-     data_outEigen.write_vtu (output);
-  }
-  else
-  {
-     //Doesn't work with mvapich2_ib mpi libraries
-     data_outEigen.write_vtu_in_parallel(std::string("eigen.vtu").c_str(),mpi_communicator);
-  }
+  std::ofstream output ("eigen.vtu");
+  data_outEigen.write_vtu (output);
+  //Doesn't work with mvapich2_ib mpi libraries
+  //data_outEigen.write_vtu_in_parallel(std::string("eigen.vtu").c_str(),mpi_communicator);
 }
 
 template class dftClass<1>;

@@ -135,6 +135,20 @@ void meshMovementClass::reinit()
 {
     d_dofHandlerMoveMesh.distribute_dofs(FEMoveMesh);
 }
+
+void meshMovementClass::writeMesh()
+{
+  //write mesh to vtk file
+  //
+  if (this_mpi_process==0 && d_dofHandlerMoveMesh.get_triangulation().locally_owned_subdomain()==numbers::invalid_subdomain_id)
+  {
+     DataOut<3> data_out;
+     data_out.attach_dof_handler(d_dofHandlerMoveMesh);
+     data_out.build_patches ();
+     std::ofstream output ("mesh.vtu");
+     data_out.write_vtu (output);
+  }
+}
  
 void meshMovementClass::initIncrementField()
 {
