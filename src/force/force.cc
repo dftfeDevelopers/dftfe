@@ -25,7 +25,7 @@
 
 
 #include "configurationalForceEEshelbyFPSPFnlLinFE.cc"
-#include "FPSPLocalElementalContribution.cc"
+#include "FPSPLocalGammaAtomsElementalContribution.cc"
 #include "configurationalForceEselfLinFE.cc"
 #include "initPseudoForce.cc"
 #include "createBinObjectsForce.cc"

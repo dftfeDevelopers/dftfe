@@ -202,6 +202,7 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoDataForce()
   int cumulativeWaveSplineId = 0;
   int waveFunctionId;
   int pseudoPotentialId;
+  unsigned int count=0;
 
   for(int iAtom = 0; iAtom < numberNonLocalAtoms; ++iAtom)
     {
@@ -229,8 +230,13 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoDataForce()
       //
       //allocate 
       //
-      d_nonLocalPSP_ClmDeltaVl[iAtom].resize(numberPseudoWaveFunctions);
-      d_nonLocalPSPGrad_ClmDeltaVl[iAtom].resize(numberPseudoWaveFunctions);      
+      if (numberElementsInAtomCompactSupport !=0)
+      {
+         d_nonLocalPSP_ClmDeltaVl.push_back(std::vector<std::map<dealii::CellId, std::vector<double> > >(numberPseudoWaveFunctions));
+         d_nonLocalPSPGrad_ClmDeltaVl.push_back(std::vector<std::map<dealii::CellId, std::vector<double> > >(numberPseudoWaveFunctions));
+      }
+      else
+         continue;     
 	
       for(int iElemComp = 0; iElemComp < numberElementsInAtomCompactSupport; ++iElemComp)
 	{
@@ -355,14 +361,15 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoDataForce()
 		    }//image atom loop
 
 		}//end of quad loop
-	        d_nonLocalPSP_ClmDeltaVl[iAtom][iPseudoWave][cell->id()]=ClmDeltaVl;
-		d_nonLocalPSPGrad_ClmDeltaVl[iAtom][iPseudoWave][cell->id()]=gradClmDeltaVl;
+	        d_nonLocalPSP_ClmDeltaVl[count][iPseudoWave][cell->id()]=ClmDeltaVl;
+		d_nonLocalPSPGrad_ClmDeltaVl[count][iPseudoWave][cell->id()]=gradClmDeltaVl;
 
 	    }//end of iPseudoWave loop
 	
 
 	}//element loop
-
+       
+      count++;
       cumulativePotSplineId += numberAngularMomentumSpecificPotentials;
       cumulativeWaveSplineId += numberPseudoWaveFunctions;
 
@@ -370,10 +377,11 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoDataForce()
 
 }
 
-/*
+
 template<unsigned int FEOrder>
 void forceClass<FEOrder>::computeNonLocalProjectorKetTimesVector(const std::vector<vectorType*> &src,
-							         std::vector<std::vector<double> > & projectorKetTimesVec)
+							         std::vector<std::vector<double> > & projectorKetTimesVectorReal,
+                                                                 std::vector<std::vector<std::complex<double> > > & projectorKetTimesVectorComplex)
 {
   //
   //get FE data
@@ -397,9 +405,9 @@ void forceClass<FEOrder>::computeNonLocalProjectorKetTimesVector(const std::vect
   //
   std::vector<dealii::types::global_dof_index> local_dof_indices(dofs_per_cell);
 #ifdef ENABLE_PERIODIC_BC
-  std::vector<std::vector<std::complex<double> > > projectorKetTimesVector;
+  std::vector<std::vector<std::complex<double> > > & projectorKetTimesVector=projectorKetTimesVectorComplex;
 #else
-  std::vector<std::vector<double> > projectorKetTimesVector;
+  std::vector<std::vector<double> > & projectorKetTimesVector=projectorKetTimesVectorReal;
 #endif
 
   //
@@ -577,29 +585,4 @@ void forceClass<FEOrder>::computeNonLocalProjectorKetTimesVector(const std::vect
 
 	}
     }
-
-projectorKetTimesVec.clear();
-#ifdef ENABLE_PERIODIC_BC
-  projectorKetTimesVec.resize(numberNonLocalAtoms);
-  for(int iAtom = 0; iAtom < numberNonLocalAtoms; ++iAtom)
-  {
-      int numberSingleAtomPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[iAtom];
-      projectorKetTimesVec[iAtom].resize(numberWaveFunctions*numberSingleAtomPseudoWaveFunctions,0.0);
-  }
-  for(int iAtom = 0; iAtom < numberNonLocalAtoms; ++iAtom)
-    {
-      int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[iAtom];
-      for(int iWave = 0; iWave < numberWaveFunctions; ++iWave)
-	{
-	  for(int iPseudoAtomicWave = 0; iPseudoAtomicWave < numberPseudoWaveFunctions; ++iPseudoAtomicWave)
-	    {
-	      projectorKetTimesVec[iAtom][numberPseudoWaveFunctions*iWave + iPseudoAtomicWave] = 
-	    }
-
-	}
-    }
-#else
-  projectorKetTimesVec= projectorKetTimesVector;
-#endif  
 }
-*/

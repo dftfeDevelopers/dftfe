@@ -321,6 +321,7 @@ class dftClass
   std::vector<std::vector<DoFHandler<3>::active_cell_iterator> > d_elementIteratorsInAtomCompactSupport;
   std::vector<std::vector<DoFHandler<3>::active_cell_iterator> > d_elementOneFieldIteratorsInAtomCompactSupport;
   std::vector<std::vector<int> > d_nonLocalAtomIdsInElement;
+  std::vector<std::vector<unsigned int> > d_nonLocalAtomIdsInProcessors;
 #ifdef ENABLE_PERIODIC_BC
   std::vector<std::vector<std::vector<std::vector<std::complex<double> > > > > d_nonLocalProjectorElementMatrices;
 #else

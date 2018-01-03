@@ -75,11 +75,15 @@ private:
   
   //////force related pseudopotential member functions and data members
   void initLocalPseudoPotentialForce();
-  void computeElementalNonLocalPseudoDataForce();  
+  void computeElementalNonLocalPseudoDataForce(); 
+  void computeNonLocalProjectorKetTimesVector(const std::vector<vectorType*> &src,
+                                         std::vector<std::vector<double> > & projectorKetTimesVectorReal,
+                                         std::vector<std::vector<std::complex<double> > > & projectorKetTimesVectorComplex);
+ 
   //storage for precomputed nonlocal pseudopotential quadrature data
-  //map<non trivial non local atom id, vector< elemental quad data >(number pseudo wave functions)>
-  std::map<unsigned int, std::vector<std::map<dealii::CellId, std::vector<double> > > > d_nonLocalPSP_ClmDeltaVl;
-  std::map<unsigned int, std::vector<std::map<dealii::CellId, std::vector<double> > > > d_nonLocalPSPGrad_ClmDeltaVl;
+  //vector<vector< elemental quad data >(number pseudo wave functions)> (number non local atoms with with compact support in curent processor)
+  std::vector<std::vector<std::map<dealii::CellId, std::vector<double> > > > d_nonLocalPSP_ClmDeltaVl;
+  std::vector<std::vector<std::map<dealii::CellId, std::vector<double> > > > d_nonLocalPSPGrad_ClmDeltaVl;
   //storage for precompute localPseudo data
   std::map<dealii::CellId, std::vector<double> > d_gradPseudoVLoc;
   //only contains maps for atoms whose psp tail intersects the local domain

@@ -735,10 +735,13 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
   d_sparsityPattern.clear();
   d_elementIteratorsInAtomCompactSupport.clear();
   d_elementOneFieldIteratorsInAtomCompactSupport.clear();
+  d_nonLocalAtomIdsInProcessors.clear();
 
   d_sparsityPattern.resize(numberNonLocalAtoms);
   d_elementIteratorsInAtomCompactSupport.resize(numberNonLocalAtoms);
   d_elementOneFieldIteratorsInAtomCompactSupport.resize(numberNonLocalAtoms);
+  d_nonLocalAtomIdsInProcessors.resize(n_mpi_processes);
+  std::vector<unsigned int> nonLocalAtomIdsInCurrentProcessor; 
 
   //
   //loop over nonlocal atoms
@@ -761,7 +764,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
   const unsigned int numberQuadraturePoints = quadrature.size();
   const unsigned int numberElements         = triangulation.n_locally_owned_active_cells();
 
-
+  
   for(int iAtom = 0; iAtom < numberNonLocalAtoms; ++iAtom)
     {
 
@@ -769,6 +772,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
       //temp variables
       //
       int matCount = 0;
+      bool isAtomIdInProcessor=false;
 
       //
       //get the number of angular momentum specific pseudopotentials for the current nonlocal atom
@@ -876,6 +880,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
 		d_elementIteratorsInAtomCompactSupport[iAtom].push_back(cellEigen);
 		d_elementOneFieldIteratorsInAtomCompactSupport[iAtom].push_back(cell);
 		matCount += 1;
+                isAtomIdInProcessor=true;
 	      }
 
 	    }
@@ -884,7 +889,8 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
       cumulativePotSplineId += numberAngularMomentumSpecificPotentials;
 
       //pcout<<"No.of non zero elements in the compact support of atom "<<iAtom<<" is "<<d_elementIteratorsInAtomCompactSupport[iAtom].size()<<std::endl;
-
+      if (isAtomIdInProcessor)
+          nonLocalAtomIdsInCurrentProcessor.push_back(iAtom);
     }//atom loop
 
   d_nonLocalAtomIdsInElement.clear();
