@@ -21,6 +21,55 @@ double tolerance = 1e-12;
 
 
 //some inline functions
+inline
+void exchangeLocalList(std::vector<unsigned int> & masterNodeIdList,
+                       std::vector<unsigned int> & globalMasterNodeIdList,
+                       unsigned int numMeshPartitions,
+                       const MPI_Comm & mpi_communicator)
+{
+
+  int numberMasterNodesOnLocalProc = masterNodeIdList.size();
+
+  int * masterNodeIdListSizes = new int[numMeshPartitions];
+
+  MPI_Allgather(&numberMasterNodesOnLocalProc,
+                1,
+                MPI_INT,
+                masterNodeIdListSizes,
+                1,
+                MPI_INT,
+                mpi_communicator);
+
+  int newMasterNodeIdListSize = std::accumulate(&(masterNodeIdListSizes[0]),
+                                                &(masterNodeIdListSizes[numMeshPartitions]),
+                                                0);
+
+  globalMasterNodeIdList.resize(newMasterNodeIdListSize);
+
+  int * mpiOffsets = new int[numMeshPartitions];
+
+  mpiOffsets[0] = 0;
+
+  for(int i = 1; i < numMeshPartitions; ++i)
+    mpiOffsets[i] = masterNodeIdListSizes[i-1] + mpiOffsets[i-1];
+
+  MPI_Allgatherv(&(masterNodeIdList[0]),
+                 numberMasterNodesOnLocalProc,
+                 MPI_INT,
+                 &(globalMasterNodeIdList[0]),
+                 &(masterNodeIdListSizes[0]),
+                 &(mpiOffsets[0]),
+                 MPI_INT,
+                 mpi_communicator);
+
+
+  delete [] masterNodeIdListSizes;
+  delete [] mpiOffsets;
+
+  return;
+}
+
+
 inline 
 void getRadialFunctionVal(const double radialCoordinate,
 			  double &splineVal,
@@ -905,6 +954,20 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
 	    d_nonLocalAtomIdsInElement[iElem].push_back(iAtom);
 	}
     }
+
+   std::vector<unsigned int> nonLocalAtomIdsProcessorsFlattened; 
+   exchangeLocalList(nonLocalAtomIdsInCurrentProcessor,
+                     nonLocalAtomIdsProcessorsFlattened,
+                     n_mpi_processes,
+                     mpi_communicator);
+
+   std::vector<unsigned int> nonLocalAtomIdsSizeCurrentProcessor(1); nonLocalAtomIdsSizeCurrentProcessor[0]=nonLocalAtomIdsInCurrentProcessor.size();
+   std::vector<unsigned int> nonLocalAtomIdsSizesProcessors;
+   exchangeLocalList(nonLocalAtomIdsSizeCurrentProcessor,
+                     nonLocalAtomIdsSizesProcessors,
+                     n_mpi_processes,
+                     mpi_communicator);
+
 
 }
 
