@@ -15,7 +15,7 @@
 //
 // @author Sambit Das (2017)
 //
-#include "pseudoUtils.cc"
+#include "pseudoForceUtils.cc"
 
 //
 //Initialize rho by reading in single-atom electron-density and fit a spline
@@ -312,7 +312,7 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoDataForce()
 		      // get the spherical coordinates from cartesian
 		      //
 		      double r,theta,phi;
-		      pseudoUtils::convertCartesianToSpherical(x,r,theta,phi);
+		      pseudoForceUtils::convertCartesianToSpherical(x,r,theta,phi);
 		    
 
 		      double radialWaveFunVal, sphericalHarmonicVal, radialPotFunVal, pseudoWaveFunctionValue, deltaVlValue;
@@ -320,21 +320,21 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoDataForce()
 		      std::vector<double> deltaVlDerivatives(3,0.0);		      
 		      if(r <= dftPtr->d_pspTail)//d_outerMostPointPseudoWaveFunctionsData[globalWaveSplineId])
 			{
-			  pseudoUtils::getRadialFunctionVal(r,
+			  pseudoForceUtils::getRadialFunctionVal(r,
 					                             radialWaveFunVal,
 					                             &dftPtr->d_pseudoWaveFunctionSplines[globalWaveSplineId]);
 
-			  pseudoUtils::getSphericalHarmonicVal(theta,phi,lQuantumNumber,mQuantumNumber,sphericalHarmonicVal);
+			  pseudoForceUtils::getSphericalHarmonicVal(theta,phi,lQuantumNumber,mQuantumNumber,sphericalHarmonicVal);
 			
 			  pseudoWaveFunctionValue = radialWaveFunVal*sphericalHarmonicVal;
 
-			  pseudoUtils::getRadialFunctionVal(r,
+			  pseudoForceUtils::getRadialFunctionVal(r,
 					                             radialPotFunVal,
 					                             &dftPtr->d_deltaVlSplines[globalPotSplineId]);
 
 			  deltaVlValue = radialPotFunVal;
 
-			  pseudoUtils::getPseudoWaveFunctionDerivatives(r,
+			  pseudoForceUtils::getPseudoWaveFunctionDerivatives(r,
 							                         theta,
 							                         phi,
 							                         lQuantumNumber,
@@ -342,7 +342,7 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoDataForce()
 							                         pseudoWaveFunctionDerivatives,
 							                         dftPtr->d_pseudoWaveFunctionSplines[globalWaveSplineId]);
 
-			  pseudoUtils::getDeltaVlDerivatives(r,
+			  pseudoForceUtils::getDeltaVlDerivatives(r,
 						                      x,
 						                      deltaVlDerivatives,
 						                      dftPtr->d_deltaVlSplines[globalPotSplineId]);

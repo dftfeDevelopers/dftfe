@@ -20,7 +20,7 @@
 #include <boost/math/special_functions/spherical_harmonic.hpp>
 
 
-namespace pseudoUtils
+namespace pseudoForceUtils
 {
      double tolerance = 1e-12;
    
