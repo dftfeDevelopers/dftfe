@@ -71,8 +71,8 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
   
   //reinitialize dirichlet BCs for total potential and vSelf poisson solutions
   dftPtr->initBoundaryConditions();
-  //reinitialize guesses for electron-density and wavefunctions
-  dftPtr->initElectronicFields();
+  //reinitialize guesses for electron-density and wavefunctions (not required for relaxation update)
+  //dftPtr->initElectronicFields();
   //reinitialize local pseudopotential
   if(dftParameters::isPseudopotential)
   {
