@@ -20,12 +20,12 @@
 
 //Generate triangulation.
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,bool isCoarserMove)
+void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,bool reuse)
 {
   meshMovementGaussianClass gaussianMove;
   gaussianMove.init(triangulationMove);
 
-  if(!isCoarserMove)
+  if(!reuse)
     {
       const int numberGlobalAtoms = atomLocations.size();
       const int numberImageAtoms = d_imageIds.size();
