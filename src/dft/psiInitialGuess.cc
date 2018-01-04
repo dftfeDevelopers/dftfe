@@ -304,7 +304,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 	  //pcout << "atom: " << it->atomID << " Z:" << it->Z << " n:" << it->n << " l:" << it->l << " m:" << it->m << " x:" << atomCoord[0] << " y:" << atomCoord[1] << " z:" << atomCoord[2] << " Ro:" << outerValues[it->Z][it->n][it->l] << std::endl; 
 	}
 
-#ifdef ENABLE_PERIODIC_BC
+	/*#ifdef ENABLE_PERIODIC_BC
 	if (it->m > 0)
 	  {
 	    local_dof_values[waveFunction][localProc_dof_indicesReal[dof]] =  R*std::sqrt(2)*boost::math::spherical_harmonic_r(it->l,it->m,theta,phi);
@@ -317,7 +317,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 	  {
 	    local_dof_values[waveFunction][localProc_dof_indicesReal[dof]] =  R*std::sqrt(2)*boost::math::spherical_harmonic_i(it->l,-(it->m),theta,phi);	  
 	  }
-#else	
+	  #else	*/
 	//spherical part
 	if (it->m > 0)
 	  {
@@ -331,7 +331,6 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 	  {
 	    local_dof_values[waveFunction][dof] =  R*std::sqrt(2)*boost::math::spherical_harmonic_i(it->l,-(it->m),theta,phi);	  
 	  }
-#endif
 	waveFunction++;
       }
       pp=true;
@@ -357,11 +356,11 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 	      double value =  boost::math::pdf(normDist, z); 
 	      if(rand()%2 == 0)
 		value = -1.0*value;
-#ifdef ENABLE_PERIODIC_BC
-	      local_dof_values[iWave][localProc_dof_indicesReal[dof]] = value;
-#else
+	      //#ifdef ENABLE_PERIODIC_BC
+	      //local_dof_values[iWave][localProc_dof_indicesReal[dof]] = value;
+	      //#else
 	      local_dof_values[iWave][dof] = value;
-#endif
+	      //#endif
 	      
 	    }
 	}
@@ -375,15 +374,33 @@ void dftClass<FEOrder>::readPSIRadialValues(){
       //pcout << buffer;
       for (unsigned int i = 0; i < numEigenValues; ++i)
 	{
-	  //pcout<<"check 0.11: "<<std::endl;
-	  constraintsNoneEigen.distribute_local_to_global(local_dof_values[i], locallyOwnedDOFs, *eigenVectors[kPoint][i]);
-	  //pcout<<"check 0.12: "<<std::endl;
-	  eigenVectors[kPoint][i]->compress(VectorOperation::add);
-	  //if (spinPolarized==1)
-	  //{
-	  //  constraintsNoneEigen.distribute_local_to_global(local_dof_values[i], locallyOwnedDOFs, *eigenVectors[(1+spinPolarized)*kPoint+1][i]);
-	  //  eigenVectors[(1+spinPolarized)*kPoint+1][i]->compress(VectorOperation::add);
-	  //}
+	  //constraintsNoneEigen.distribute_local_to_global(local_dof_values[i], locallyOwnedDOFs, *eigenVectors[kPoint][i]);
+	  //eigenVectors[kPoint][i]->compress(VectorOperation::add);
+#ifdef ENABLE_PERIODIC_BC
+	 for(unsigned int j = 0; j < numberDofs; ++j)
+	    {
+	      unsigned int dofID = local_dof_indicesReal[j];
+	      if(eigenVectors[kPoint][i]->in_local_range(dofID))
+		{
+		  if(!constraintsNoneEigen.is_constrained(dofID))
+		    (*eigenVectors[kPoint][i])(dofID) = local_dof_values[i][j];
+		}
+	    }
+#else
+	  for(unsigned int j = 0; j < numberDofs; ++j)
+	    {
+	      unsigned int dofID = locallyOwnedDOFs[j];
+	      if(eigenVectors[kPoint][i]->in_local_range(dofID))
+		{
+		  if(!constraintsNoneEigen.is_constrained(dofID))
+		    (*eigenVectors[kPoint][i])(dofID) = local_dof_values[i][j];
+		}
+	    }
+#endif
+	  eigenVectors[kPoint][i]->compress(VectorOperation::insert);
+	  eigenVectors[kPoint][i]->update_ghost_values();
+	  constraintsNoneEigen.distribute(*eigenVectors[kPoint][i]);
+	  eigenVectors[kPoint][i]->update_ghost_values();
 	}
     // pcout<<"check 0.13: "<<std::endl;
     }
@@ -419,7 +436,10 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 	  //char buffer[100];
 	  //sprintf(buffer, "norm %u: l1: %14.8e  l2:%14.8e\n",i, eigenVectors[kPoint][i]->l1_norm(), eigenVectors[kPoint][i]->l2_norm());
 	  //pcout << buffer;
+	  eigenVectors[kPoint][i]->zero_out_ghosts();
 	  eigenVectors[kPoint][i]->compress(VectorOperation::insert);
+	  eigenVectors[kPoint][i]->update_ghost_values();
+	  constraintsNoneEigen.distribute(*eigenVectors[kPoint][i]);
 	  eigenVectors[kPoint][i]->update_ghost_values();
 	}
     }

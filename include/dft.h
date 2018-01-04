@@ -200,7 +200,7 @@ class dftClass
    * to be pinned for solving the Poisson problem electro-static potential is set here
    */
   //void init();
-  void initUnmovedTriangulation(Triangulation<3,3> & triangulation);
+  void initUnmovedTriangulation(parallel::distributed::Triangulation<3> & triangulation);
   void initBoundaryConditions();
   void initElectronicFields();
   void locateAtomCoreNodes();
