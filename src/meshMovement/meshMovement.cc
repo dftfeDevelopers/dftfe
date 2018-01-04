@@ -78,18 +78,20 @@ meshMovementClass::meshMovementClass():
 
 void meshMovementClass::init(Triangulation<3,3> & triangulation)
 {
+  d_dofHandlerMoveMesh.clear();
   d_dofHandlerMoveMesh.initialize(triangulation,FEMoveMesh);		
   d_dofHandlerMoveMesh.distribute_dofs(FEMoveMesh);
   d_locally_owned_dofs.clear();d_locally_relevant_dofs.clear();
   d_locally_owned_dofs = d_dofHandlerMoveMesh.locally_owned_dofs();
   DoFTools::extract_locally_relevant_dofs(d_dofHandlerMoveMesh, d_locally_relevant_dofs);  
 
-  d_constraintsHangingNodes.clear();
+  d_constraintsHangingNodes.clear(); d_constraintsHangingNodes.reinit(d_locally_relevant_dofs);
   DoFTools::make_hanging_node_constraints(d_dofHandlerMoveMesh, d_constraintsHangingNodes);
   d_constraintsHangingNodes.close();
 
-  d_constraintsMoveMesh.clear();
-  DoFTools::make_hanging_node_constraints(d_dofHandlerMoveMesh, d_constraintsMoveMesh);   
+  d_constraintsMoveMesh.clear();  d_constraintsMoveMesh.reinit(d_locally_relevant_dofs);
+  DoFTools::make_hanging_node_constraints(d_dofHandlerMoveMesh, d_constraintsMoveMesh); 
+  d_periodicity_vector.clear(); 
 #ifdef ENABLE_PERIODIC_BC
   for (int i = 0; i < C_DIM; ++i)
     {
@@ -104,45 +106,6 @@ void meshMovementClass::init(Triangulation<3,3> & triangulation)
      d_isParallelMesh=false;
   else
      d_isParallelMesh=true;	
-}
-
-void meshMovementClass::reinit(Triangulation<3,3> & triangulation)
-		             
-{
-    d_dofHandlerMoveMesh.clear();
-    d_dofHandlerMoveMesh.initialize(triangulation,FEMoveMesh);	
-    d_dofHandlerMoveMesh.distribute_dofs(FEMoveMesh);	  
-    d_locally_owned_dofs.clear();d_locally_relevant_dofs.clear();
-    d_locally_owned_dofs = d_dofHandlerMoveMesh.locally_owned_dofs();
-    DoFTools::extract_locally_relevant_dofs(d_dofHandlerMoveMesh, d_locally_relevant_dofs);  
-
-    d_constraintsHangingNodes.clear();
-    DoFTools::make_hanging_node_constraints(d_dofHandlerMoveMesh, d_constraintsHangingNodes);
-    d_constraintsHangingNodes.close();
-
-    d_constraintsMoveMesh.clear();
-    DoFTools::make_hanging_node_constraints(d_dofHandlerMoveMesh, d_constraintsMoveMesh); 
-    d_periodicity_vector.clear();
-#ifdef ENABLE_PERIODIC_BC
-    for (int i = 0; i < C_DIM; ++i)
-    {
-       GridTools::collect_periodic_faces(d_dofHandlerMoveMesh, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, d_periodicity_vector);
-    }
-    DoFTools::make_periodicity_constraints<DoFHandler<C_DIM> >(d_periodicity_vector, d_constraintsMoveMesh);
-    d_constraintsMoveMesh.close();
-#else
-    d_constraintsMoveMesh.close();
-#endif
-  if (triangulation.locally_owned_subdomain()==numbers::invalid_subdomain_id)
-     d_isParallelMesh=false;
-  else
-     d_isParallelMesh=true;
-
-}
-
-void meshMovementClass::reinit()
-{
-    d_dofHandlerMoveMesh.distribute_dofs(FEMoveMesh);
 }
 
 void meshMovementClass::writeMesh()
@@ -226,6 +189,7 @@ void meshMovementClass::updateTriangulationVertices()
 	  }
       }
   }
+  d_dofHandlerMoveMesh.distribute_dofs(FEMoveMesh);
   pcout << "...End moving triangulation" << std::endl;
   //dftPtr->triangulation.communicate_locally_moved_vertices(locally_owned_vertices);
 }
