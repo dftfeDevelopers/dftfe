@@ -101,7 +101,7 @@ void dftClass<FEOrder>::initUnmovedTriangulation(Triangulation<3,3> & triangulat
   //hanging node constraints
   //
   constraintsNone.clear(); constraintsNoneEigen.clear();
-  constraintsNone.reinit(locally_relevant_dofs); constraintsNoneEigen.reinit(locally_relevant_dofs);
+  constraintsNone.reinit(locally_relevant_dofs); constraintsNoneEigen.reinit(locally_relevant_dofsEigen);
 
 
 #ifdef ENABLE_PERIODIC_BC

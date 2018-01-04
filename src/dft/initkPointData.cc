@@ -15,7 +15,10 @@
 //
 // @author Shiva Rudraraju (2016), Phani Motamarri (2016), Krishnendu Ghosh (2017)
 //
+#include "../../include/dftParameters.h"
 
+
+using namespace dftParameters ;
 
 void cross_product(std::vector<double> &a,
 		   std::vector<double> &b,

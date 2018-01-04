@@ -151,12 +151,11 @@ void dftClass<FEOrder>::computeLocalrhoOut()
 {
   QGauss<3>  quadrature(FEOrder+1);
   const unsigned int num_quad_points = quadrature.size();
+  totPoints = recvdData1[0].size() ;
   double px, py, pz; 
   std::vector<Vector<double> > tempPsiAlpha, tempPsiBeta ;
   std::vector<std::vector<Tensor<1,3,double> > > tempGradPsi, tempGradPsiTempAlpha, tempGradPsiTempBeta  ;
   std::vector<Point<3>> quadPointList ;
-  std::vector<int>  send_size(n_mpi_processes,0);
-  std::vector<double> gradRhoTemp(3);
   std::vector<double>  sendData(totPoints), recvdData, sendGradData(3*totPoints);
   //project eigen vectors to regular FEM space by multiplying with M^(-0.5)
   for(int kPoint = 0; kPoint < (1+spinPolarized)*d_maxkPoints; ++kPoint)
@@ -170,99 +169,62 @@ void dftClass<FEOrder>::computeLocalrhoOut()
 	}
     }
      //pcout<<"check 6: "<<std::endl;
-  std::vector<std::vector<std::vector<double>> > rhoLocal, gradRhoLocal, rhoLocalSpinPolarized, gradRhoLocalSpinPolarized ;
-  rhoLocal.resize(numSymm);
-  for (unsigned int iSymm=0; iSymm<numSymm; ++iSymm)
-	rhoLocal[iSymm] = std::vector<std::vector<double>>(triangulation.n_global_active_cells());
+  std::vector<double> rhoLocal, gradRhoLocal, rhoLocalSpinPolarized, gradRhoLocalSpinPolarized ;
+  rhoLocal.resize(totPoints, 0.0);
   //
-  if (spinPolarized==1) {
-     rhoLocalSpinPolarized.resize(numSymm);
-     for (unsigned int iSymm=0; iSymm<numSymm; ++iSymm)
-	rhoLocalSpinPolarized[iSymm] = std::vector<std::vector<double>>(triangulation.n_global_active_cells());  
-  }
+  if (spinPolarized==1) 
+     rhoLocalSpinPolarized.resize(2*totPoints, 0.0);
+  //
   if(xc_id == 4) {//GGA
-     gradRhoLocal.resize(numSymm);
-     for (unsigned int iSymm=0; iSymm<numSymm; ++iSymm)
-	gradRhoLocal[iSymm] = std::vector<std::vector<double>>(triangulation.n_global_active_cells());
-     if (spinPolarized){
-	gradRhoLocalSpinPolarized.resize(numSymm);
-        for (unsigned int iSymm=0; iSymm<numSymm; ++iSymm)
-	   gradRhoLocalSpinPolarized[iSymm] = std::vector<std::vector<double>>(triangulation.n_global_active_cells());
-     }
+     gradRhoLocal.resize(3*totPoints, 0.0);
+     if (spinPolarized)
+	gradRhoLocalSpinPolarized.resize(6*totPoints, 0.0);
   }
-  //parallel loop over all elements
-  typename DoFHandler<3>::active_cell_iterator cell = dofHandlerEigen.begin_active(), endc = dofHandlerEigen.end();
-  //
-  for (; cell!=endc; ++cell) 
-    {
-     for (unsigned int iSymm=0; iSymm<numSymm; ++iSymm)
-	{
-	  unsigned int numPointLastGroup = 0;
-          unsigned int numGroup = mappedGroupRecvd0[iSymm][globalCellId[cell->id()]].size();
-	  unsigned int numTotalPoint = mappedGroupRecvd1[iSymm][globalCellId[cell->id()]][0].size();
-	  rhoLocal[iSymm][globalCellId[cell->id()]] = std::vector<double>(numTotalPoint);
-	  std::fill(rhoLocal[iSymm][globalCellId[cell->id()]].begin(),rhoLocal[iSymm][globalCellId[cell->id()]].end(),0.0);
-	  if (spinPolarized==1){
-	     rhoLocalSpinPolarized[iSymm][globalCellId[cell->id()]] = std::vector<double>(2*numTotalPoint);
-	     std::fill(rhoLocalSpinPolarized[iSymm][globalCellId[cell->id()]].begin(),rhoLocalSpinPolarized[iSymm][globalCellId[cell->id()]].end(),0.0);
-          }
-          //
-          if(xc_id == 4) {//GGA
-	    gradRhoLocal[iSymm][globalCellId[cell->id()]] = std::vector<double>(3*numTotalPoint);
-	    std::fill(gradRhoLocal[iSymm][globalCellId[cell->id()]].begin(),gradRhoLocal[iSymm][globalCellId[cell->id()]].end(),0.0);
-	    if (spinPolarized==1) {
-	       gradRhoLocalSpinPolarized[iSymm][globalCellId[cell->id()]] = std::vector<double>(6*numTotalPoint);
-	       std::fill(gradRhoLocalSpinPolarized[iSymm][globalCellId[cell->id()]].begin(),gradRhoLocalSpinPolarized[iSymm][globalCellId[cell->id()]].end(),0.0);
-	     }
-           }
-	  //
-	  for(unsigned int iGroup=0; iGroup< numGroup; ++iGroup)
-	      {    
-	       unsigned int numPoint = mappedGroupRecvd2[iSymm][globalCellId[cell->id()]][iGroup] ;
-	       //
-               unsigned int mappedIntCellId = mappedGroupRecvd0[iSymm][globalCellId[cell->id()]][iGroup];
-	       tempPsiAlpha.resize(numPoint);
-	       tempPsiBeta.resize(numPoint);
-	       quadPointList.resize(numPoint);
-		if(xc_id == 4){ //GGA
-		   tempGradPsi.resize(numPoint);
-		   tempGradPsiTempAlpha.resize(numPoint);
-		   tempGradPsiTempBeta.resize(numPoint);
-		  }
-	       //
-		for (unsigned int iList=0; iList<numPoint; ++iList) {
-		     if (iGroup > 0 ) {
-		      px = mappedGroupRecvd1[iSymm][globalCellId[cell->id()]][0][numPointLastGroup+iList] ;
-		      py = mappedGroupRecvd1[iSymm][globalCellId[cell->id()]][1][numPointLastGroup+iList] ;
-		      pz = mappedGroupRecvd1[iSymm][globalCellId[cell->id()]][2][numPointLastGroup+iList] ;
-		     }
-		     else {
-		      px = mappedGroupRecvd1[iSymm][globalCellId[cell->id()]][0][iList] ;
-		      py = mappedGroupRecvd1[iSymm][globalCellId[cell->id()]][1][iList] ;
-		      pz = mappedGroupRecvd1[iSymm][globalCellId[cell->id()]][2][iList] ;
-		     }	
-		     Point<3> pointTemp(px, py, pz) ;	     
-		     quadPointList[iList] = pointTemp;
-		     tempPsiAlpha[iList].reinit(2);
-		     tempPsiBeta[iList].reinit(2);
-		     if(xc_id == 4){ //GGA
-			tempGradPsi[iList].resize(2);
-		        tempGradPsiTempAlpha[iList].resize(2);
-			tempGradPsiTempBeta[iList].resize(2);
-		     }
-		}
-		//
-		//pcout << " check 1.0 " << std::endl;
-		Quadrature<3> quadRule (quadPointList) ;
-		FEValues<3> fe_values (FEEigen, quadRule, update_values | update_gradients| update_JxW_values | update_quadrature_points);
-		fe_values.reinit(dealIICellId[mappedIntCellId]) ;
-                //
-		//pcout << " check 1.1 " << std::endl;
-		//
-	        for(int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
-		   {
-		   if (symmUnderGroup[kPoint][iSymm] ==1) {
-		   for(unsigned int i=0; i<numEigenValues; ++i)
+  unsigned int numPointsDone = 0, numGroupsDone = 0 ;
+  for ( unsigned int proc = 0; proc < n_mpi_processes; ++proc) {
+     //
+     for ( unsigned int iGroup = 0; iGroup < recv_size0[proc] ; ++iGroup ) {
+       //
+	unsigned int numPoint = recvdData2[ numGroupsDone + iGroup];
+        unsigned int cellId =   recvdData0[ numGroupsDone + iGroup];
+       //
+       tempPsiAlpha.resize(numPoint);
+       tempPsiBeta.resize(numPoint);
+       quadPointList.resize(numPoint);
+       if(xc_id == 4){ //GGA
+         tempGradPsi.resize(numPoint);
+	 tempGradPsiTempAlpha.resize(numPoint);
+	 tempGradPsiTempBeta.resize(numPoint);
+        }
+	for (unsigned int iList=0; iList<numPoint; ++iList) {
+       //
+         px = recvdData1[0][numPointsDone+iList] ;
+         py = recvdData1[1][numPointsDone+iList] ;
+         pz = recvdData1[2][numPointsDone+iList] ;
+	//	     
+         Point<3> pointTemp(px, py, pz) ;	     
+         quadPointList[iList] = pointTemp;
+         tempPsiAlpha[iList].reinit(2);
+         tempPsiBeta[iList].reinit(2);
+         if(xc_id == 4){ //GGA
+	    tempGradPsi[iList].resize(2);
+	    tempGradPsiTempAlpha[iList].resize(2);
+	    tempGradPsiTempBeta[iList].resize(2);
+	   }
+	} // loop on points
+       //  
+      //
+     Quadrature<3> quadRule (quadPointList) ;
+     FEValues<3> fe_values (FEEigen, quadRule, update_values | update_gradients| update_JxW_values | update_quadrature_points);
+     fe_values.reinit(dealIICellId[cellId]) ;
+     unsigned int iSymm = recvdData3[numGroupsDone + iGroup] ;
+     //
+     //pcout << " check 1.1 " << std::endl;
+     //
+     for(int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+         {
+         if (symmUnderGroup[kPoint][iSymm] ==1) {
+	     for(unsigned int i=0; i<numEigenValues; ++i)
 		      {
 		       double factor=(eigenValues[kPoint][i]-fermiEnergy)/(C_kb*TVal);
 		       double partialOccupancyAlpha = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)):1.0/(1.0 + std::exp(factor));
@@ -283,13 +245,13 @@ void dftClass<FEOrder>::computeLocalrhoOut()
 		       for (unsigned int iList=0; iList<numPoint; ++iList){
 			    //
 			    if (spinPolarized==1) {
-			    rhoLocalSpinPolarized[iSymm][globalCellId[cell->id()]][2*(numPointLastGroup+iList)] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
+			    rhoLocalSpinPolarized[2*(numPointsDone+iList)] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
 							partialOccupancyAlpha*d_kPointWeights[kPoint]*(tempPsiAlpha[iList](0)*tempPsiAlpha[iList](0) + tempPsiAlpha[iList](1)*tempPsiAlpha[iList](1));
-			    rhoLocalSpinPolarized[iSymm][globalCellId[cell->id()]][2*(numPointLastGroup+iList)+1] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
+			    rhoLocalSpinPolarized[2*(numPointsDone+iList)+1] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
 							partialOccupancyBeta*d_kPointWeights[kPoint]*(tempPsiBeta[iList](0)*tempPsiBeta[iList](0) + tempPsiBeta[iList](1)*tempPsiBeta[iList](1));
 			     }
 			     else
-				 rhoLocal[iSymm][globalCellId[cell->id()]][numPointLastGroup+iList] += 1.0 / (double(numSymmUnderGroup[kPoint]))  *
+				 rhoLocal[numPointsDone+iList] += 1.0 / (double(numSymmUnderGroup[kPoint]))  *
 							2.0*partialOccupancyAlpha*d_kPointWeights[kPoint]*(tempPsiAlpha[iList](0)*tempPsiAlpha[iList](0) + tempPsiAlpha[iList](1)*tempPsiAlpha[iList](1));
 			     if(xc_id == 4) {//GGA
 			     //
@@ -309,11 +271,11 @@ void dftClass<FEOrder>::computeLocalrhoOut()
 
 
 			     //
-			     gradRhoLocalSpinPolarized[iSymm][globalCellId[cell->id()]][6*(numPointLastGroup+iList) + 0] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
+			     gradRhoLocalSpinPolarized[6*(numPointsDone+iList) + 0] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
 						2.0*partialOccupancyAlpha*d_kPointWeights[kPoint]*(tempPsiAlpha[iList](0)*tempGradPsi[iList][0][0] + tempPsiAlpha[iList](1)*tempGradPsi[iList][1][0]);
-			     gradRhoLocalSpinPolarized[iSymm][globalCellId[cell->id()]][6*(numPointLastGroup+iList) + 1] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
+			     gradRhoLocalSpinPolarized[6*(numPointsDone+iList) + 1] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
 						2.0*partialOccupancyAlpha*d_kPointWeights[kPoint]*(tempPsiAlpha[iList](0)*tempGradPsi[iList][0][1] + tempPsiAlpha[iList](1)*tempGradPsi[iList][1][1]);
-			     gradRhoLocalSpinPolarized[iSymm][globalCellId[cell->id()]][6*(numPointLastGroup+iList) + 2] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
+			     gradRhoLocalSpinPolarized[6*(numPointsDone+iList) + 2] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
 						2.0*partialOccupancyAlpha*d_kPointWeights[kPoint]*(tempPsiAlpha[iList](0)*tempGradPsi[iList][0][2] + tempPsiAlpha[iList](1)*tempGradPsi[iList][1][2]); 
 
 		             tempGradPsi[iList][0][0]=
@@ -331,11 +293,11 @@ void dftClass<FEOrder>::computeLocalrhoOut()
 
 
 			     //
-			     gradRhoLocalSpinPolarized[iSymm][globalCellId[cell->id()]][6*(numPointLastGroup+iList) + 3] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
+			     gradRhoLocalSpinPolarized[6*(numPointsDone+iList) + 3] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
 						2.0*partialOccupancyBeta*d_kPointWeights[kPoint]*(tempPsiBeta[iList](0)*tempGradPsi[iList][0][0] + tempPsiBeta[iList](1)*tempGradPsi[iList][1][0]);
-			     gradRhoLocalSpinPolarized[iSymm][globalCellId[cell->id()]][6*(numPointLastGroup+iList) + 4] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
+			     gradRhoLocalSpinPolarized[6*(numPointsDone+iList) + 4] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
 						2.0*partialOccupancyBeta*d_kPointWeights[kPoint]*(tempPsiBeta[iList](0)*tempGradPsi[iList][0][1] + tempPsiBeta[iList](1)*tempGradPsi[iList][1][1]);
-			     gradRhoLocalSpinPolarized[iSymm][globalCellId[cell->id()]][6*(numPointLastGroup+iList) + 5] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
+			     gradRhoLocalSpinPolarized[6*(numPointsDone+iList) + 5] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
 						2.0*partialOccupancyBeta*d_kPointWeights[kPoint]*(tempPsiBeta[iList](0)*tempGradPsi[iList][0][2] + tempPsiBeta[iList](1)*tempGradPsi[iList][1][2]); 
 				}
 			     else {
@@ -354,78 +316,86 @@ void dftClass<FEOrder>::computeLocalrhoOut()
 
 
 			     //
-			     gradRhoLocal[iSymm][globalCellId[cell->id()]][3*(numPointLastGroup+iList) + 0] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
+			     gradRhoLocal[3*(numPointsDone+iList) + 0] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
 						2.0*2.0*partialOccupancyAlpha*d_kPointWeights[kPoint]*(tempPsiAlpha[iList](0)*tempGradPsi[iList][0][0] + tempPsiAlpha[iList](1)*tempGradPsi[iList][1][0]);
-			     gradRhoLocal[iSymm][globalCellId[cell->id()]][3*(numPointLastGroup+iList) + 1] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
+			     gradRhoLocal[3*(numPointsDone+iList) + 1] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
 						2.0*2.0*partialOccupancyAlpha*d_kPointWeights[kPoint]*(tempPsiAlpha[iList](0)*tempGradPsi[iList][0][1] + tempPsiAlpha[iList](1)*tempGradPsi[iList][1][1]);
-			     gradRhoLocal[iSymm][globalCellId[cell->id()]][3*(numPointLastGroup+iList) + 2] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
+			     gradRhoLocal[3*(numPointsDone+iList) + 2] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
 						2.0*2.0*partialOccupancyAlpha*d_kPointWeights[kPoint]*(tempPsiAlpha[iList](0)*tempGradPsi[iList][0][2] + tempPsiAlpha[iList](1)*tempGradPsi[iList][1][2]); 
 				}
 			     }
 			} // loop on points list
 		      } // loop on eigenValues
 		     } // if this symm is part of the group under this kpoint
-	           } // loop on k Points
-		   //
-		   numPointLastGroup += numPoint ;
-		   //
-		} // loop on group
-		//
-		//rhoRecvd[iSymm][globalCellId[cell->id()]] = std::vector<std::vector<double>>(n_mpi_processes) ;
-		//
-	       unsigned int destProc = ownerProcGlobal[globalCellId[cell->id()]] ;
-		//
-	       if (spinPolarized==1) {
-		  for ( unsigned int i=0; i<rhoLocalSpinPolarized[iSymm][globalCellId[cell->id()]].size(); ++i)
-		    sendData[mpi_scatter_offset[destProc] + send_size[destProc] + i] = rhoLocalSpinPolarized[iSymm][globalCellId[cell->id()]][i] ;	
-		}
-	       else
-		{
-		 for ( unsigned int i=0; i<rhoLocal[iSymm][globalCellId[cell->id()]].size(); ++i)
-		    sendData[mpi_scatter_offset[destProc] + send_size[destProc] + i] = rhoLocal[iSymm][globalCellId[cell->id()]][i] ;	
-                }		    
-		// 
-	       if (xc_id==4) { 
-		   if (spinPolarized==1) {
-		      for ( unsigned int i=0; i<gradRhoLocalSpinPolarized[iSymm][globalCellId[cell->id()]].size(); ++i)
-		          sendGradData[mpi_scatterGrad_offset[destProc] + 3*send_size[destProc] + i] = gradRhoLocalSpinPolarized[iSymm][globalCellId[cell->id()]][i] ;
-		   }
-		   else {
-	              for ( unsigned int i=0; i<gradRhoLocal[iSymm][globalCellId[cell->id()]].size(); ++i)
-		          sendGradData[mpi_scatterGrad_offset[destProc] + 3*send_size[destProc] + i] = gradRhoLocal[iSymm][globalCellId[cell->id()]][i] ;
-		  }
-		}	  
-	       // 	
-	       for (int recvProc = 0; recvProc<n_mpi_processes; ++recvProc) 
-		  send_size[recvProc] += (1+spinPolarized)*recv_buf_size[iSymm][globalCellId[cell->id()]][1][recvProc];
-		//
-	   } // loop on symmetries
+	  } // loop on k Points
+       //
+       numPointsDone += numPoint ;
+    } // loop on group 
+    //
+    numGroupsDone += recv_size0[proc] ;
+    //
+    //
+   } // loop on proc 
+   //
+   //std::cout << this_mpi_process << " check 1.2 " << std::endl;
+   //MPI_Barrier(mpi_communicator);
+   if (spinPolarized==1){
+      sendData.resize(2*totPoints) ;
+      sendData = rhoLocalSpinPolarized ;
+      for(int i = 0; i < n_mpi_processes; i++) {
+         recv_size1[i] = 2*recv_size1[i] ;
+         mpi_offsets1[i] = 2*mpi_offsets1[i] ;
+	}
+     }
+   else
+      sendData = rhoLocal ;
+   typename DoFHandler<3>::active_cell_iterator cell ;
+   typename DoFHandler<3>::active_cell_iterator endc = dofHandlerEigen.end();
 
-	} // loop on cellid
-        //
         //
 	for ( int sendProc = 0; sendProc<n_mpi_processes; ++sendProc) {
 	    //
 	    //
-            recvdData.resize(recv_size[sendProc]);
-	    MPI_Scatterv(&(sendData[0]),&(send_scatter_size[0]), &(mpi_scatter_offset[0]), MPI_DOUBLE, &(recvdData[0]), recv_size[sendProc], MPI_DOUBLE,sendProc,mpi_communicator);
+            recvdData.resize(recvSize[sendProc]);
+	    MPI_Scatterv(&(sendData[0]),&(recv_size1[0]), &(mpi_offsets1[0]), MPI_DOUBLE, &(recvdData[0]), recvSize[sendProc], MPI_DOUBLE,sendProc,mpi_communicator);
 	    //
 	    cell = dofHandlerEigen.begin_active();
 	    unsigned int offset = 0 ;
             for (; cell!=endc; ++cell) 
                 {
+		  if (cell->is_locally_owned()) {
                  for (unsigned int iSymm=0; iSymm<numSymm; ++iSymm) {
 			for ( unsigned int i=0; i<rhoRecvd[iSymm][globalCellId[cell->id()]][sendProc].size(); ++i)	    
 		              rhoRecvd[iSymm][globalCellId[cell->id()]][sendProc][i] = recvdData [ offset + i]  ;
 		  	offset += rhoRecvd[iSymm][globalCellId[cell->id()]][sendProc].size();
 	           }
+		 }
 	        }
 	     recvdData.clear();
 	     //
 	     //
+	  }
 	    if (xc_id==4) { //GGA
+	       if (spinPolarized==1){
+                  sendData.resize(6*totPoints) ;
+                  sendData = gradRhoLocalSpinPolarized ;
+                  for(int i = 0; i < n_mpi_processes; i++) {
+                     recv_size1[i] = 6*recv_size1[i] ;
+                    mpi_offsets1[i] = 6*mpi_offsets1[i] ;
+	           }
+	       }
+            else {
+	       sendData.resize(3*totPoints) ;
+	       sendData = gradRhoLocal ;
+	       for(int i = 0; i < n_mpi_processes; i++) {
+                     recv_size1[i] = 3*recv_size1[i] ;
+                     mpi_offsets1[i] = 3*mpi_offsets1[i] ;
+	          }
+	     }
+	    //
+	    for ( int sendProc = 0; sendProc<n_mpi_processes; ++sendProc) {
             recvdData.resize(3*recv_size[sendProc]);
-	    MPI_Scatterv(&(sendGradData[0]),&(send_scatterGrad_size[0]), &(mpi_scatterGrad_offset[0]), MPI_DOUBLE, &(recvdData[0]), 3*recv_size[sendProc], MPI_DOUBLE,sendProc,mpi_communicator);
+	    MPI_Scatterv(&(sendData[0]),&(recv_size1[0]), &(mpi_offsets1[0]), MPI_DOUBLE, &(recvdData[0]), 3*recv_size[sendProc], MPI_DOUBLE,sendProc,mpi_communicator);
 	    //
 	    cell = dofHandlerEigen.begin_active();
 	    unsigned int offset = 0 ;
@@ -439,7 +409,6 @@ void dftClass<FEOrder>::computeLocalrhoOut()
 	        }
 	     recvdData.clear();
 	    }
-
 
 	}
 

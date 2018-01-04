@@ -32,6 +32,9 @@
 #include "initUnmovedTriangulation.cc"
 #include "initBoundaryConditions.cc"
 #include "initElectronicFields.cc"
+#include "initPseudo.cc"
+#include "initPseudo-OV.cc"
+#include "initRho.cc"
 
 
 #include "psiInitialGuess.cc"
@@ -51,6 +54,7 @@
 #include "stdafx.h"
 #ifdef ENABLE_PERIODIC_BC
 #include "generateImageCharges.cc"
+#include "initGroupSymmetry.cc"
 #endif
 
 
@@ -343,37 +347,54 @@ void dftClass<FEOrder>::run ()
   //initialize dofHandlers and hanging-node constraints and periodic constraints on the unmoved Mesh
   //
   initUnmovedTriangulation(triangulationPar);
-
+  pcout << " check 0.1 : " << std::endl ;
   //
   //move triangulation to have atoms on triangulation vertices
   //
 
-  moveMeshToAtoms(triangulationPar);
-  moveMeshToAtoms(triangulationSer);
+  //moveMeshToAtoms(triangulationPar);
+  //moveMeshToAtoms(triangulationSer);
 
   //
   //initialize dirichlet BCs for total potential and vSelf poisson solutions
   //
   initBoundaryConditions();
+  pcout << " check 0.2 : " << std::endl ;
 
   //
   //initialize guesses for electron-density and wavefunctions
   //
   initElectronicFields();
+  pcout << " check 0.3 : " << std::endl ;
 
-  
+#ifdef ENABLE_PERIODIC_BC
+ initSymmetry() ;
+#endif
+   pcout << " check 0.4 : " << std::endl ;
   //
   //initialize local pseudopotential
   //
-  if(dftParameters::isPseudopotential)
+   if(isPseudopotential)
     {
       initLocalPseudoPotential();
-      initNonLocalPseudoPotential();
-      computeSparseStructureNonLocalProjectors();
-      computeElementalProjectorKets();
+      //
+      if (pseudoProjector==2)
+         initNonLocalPseudoPotential_OV() ;
+      else
+         initNonLocalPseudoPotential();	
+      //
+      //
+      if (pseudoProjector==2){
+         computeSparseStructureNonLocalProjectors_OV();
+         computeElementalOVProjectorKets();
+	}
+      else{
+	 computeSparseStructureNonLocalProjectors();
+         computeElementalProjectorKets();
+	}
+	
     }
- 
-
+   pcout << " check 0.5 : " << std::endl ;
   //
   //solve vself
   //
