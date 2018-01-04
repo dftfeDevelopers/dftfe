@@ -155,9 +155,18 @@ void meshMovementClass::initIncrementField()
   //dftPtr->matrix_free_data.initialize_dof_vector(d_incrementalDisplacement,d_forceDofHandlerIndex);	
   IndexSet  ghost_indices=d_locally_relevant_dofs;
   ghost_indices.subtract_set(d_locally_owned_dofs);
-  d_incrementalDisplacement=parallel::distributed::Vector<double>::Vector(d_locally_owned_dofs,
-									  ghost_indices,
-                                                                          mpi_communicator);
+
+  if  (d_dofHandlerMoveMesh.get_triangulation().locally_owned_subdomain()==numbers::invalid_subdomain_id)
+  {
+     d_incrementalDisplacement=parallel::distributed::Vector<double>::Vector(d_locally_owned_dofs,
+                                                                             mpi_communicator);
+  }
+  else
+  {
+     d_incrementalDisplacement=parallel::distributed::Vector<double>::Vector(d_locally_owned_dofs,
+									     ghost_indices,
+                                                                             mpi_communicator);
+  }
   d_incrementalDisplacement=0;  	
 }
 
@@ -165,8 +174,11 @@ void meshMovementClass::initIncrementField()
 void meshMovementClass::finalizeIncrementField()
 {
   //d_incrementalDisplacement.compress(VectorOperation::insert);//inserts current value at owned node and sets ghosts to zero	
-  d_constraintsMoveMesh.distribute(d_incrementalDisplacement);//distribute to constrained degrees of freedom (periodic and hanging nodes)
-  d_incrementalDisplacement.update_ghost_values();
+  //d_constraintsMoveMesh.distribute(d_incrementalDisplacement);//distribute to constrained degrees of freedom (periodic and hanging nodes)
+  if  (!d_dofHandlerMoveMesh.get_triangulation().locally_owned_subdomain()==numbers::invalid_subdomain_id){
+      d_constraintsMoveMesh.distribute(d_incrementalDisplacement);
+      d_incrementalDisplacement.update_ghost_values();
+  }
 }
 
 void meshMovementClass::updateTriangulationVertices()

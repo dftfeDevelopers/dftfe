@@ -31,7 +31,7 @@
 
 //init
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::initUnmovedTriangulation(Triangulation<3,3> & triangulation)
+void dftClass<FEOrder>::initUnmovedTriangulation(parallel::distributed::Triangulation<3> & triangulation)
 {
   computing_timer.enter_section("unmoved setup");
 
@@ -102,7 +102,7 @@ void dftClass<FEOrder>::initUnmovedTriangulation(Triangulation<3,3> & triangulat
   //hanging node constraints
   //
   constraintsNone.clear(); constraintsNoneEigen.clear();
-  constraintsNone.reinit(locally_relevant_dofs); constraintsNoneEigen.reinit(locally_relevant_dofs);
+  constraintsNone.reinit(locally_relevant_dofs); constraintsNoneEigen.reinit(locally_relevant_dofsEigen);
 
 
 #ifdef ENABLE_PERIODIC_BC
@@ -129,7 +129,7 @@ void dftClass<FEOrder>::initUnmovedTriangulation(Triangulation<3,3> & triangulat
   //create a constraint matrix without only hanging node constraints 
   //
   d_noConstraints.clear();d_noConstraintsEigen.clear();
-  
+  d_noConstraints.reinit(locally_relevant_dofs); d_noConstraintsEigen.reinit(locally_relevant_dofsEigen);  
   DoFTools::make_hanging_node_constraints(dofHandler, d_noConstraints);
   DoFTools::make_hanging_node_constraints(dofHandlerEigen,d_noConstraintsEigen);
   d_noConstraints.close();d_noConstraintsEigen.close();
