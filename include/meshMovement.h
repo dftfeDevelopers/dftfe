@@ -22,7 +22,6 @@
 #include "constants.h"
 
 using namespace dealii;
-typedef dealii::parallel::distributed::Vector<double> vectorType;
 
 class meshMovementClass
 {
@@ -48,7 +47,9 @@ protected:
                         std::vector<Tensor<1,C_DIM,double> > controlPointDisplacements,
                         double controllingParameter)=0;
   virtual void computeIncrement()=0;  
-  vectorType d_incrementalDisplacement;
+  dealii::parallel::distributed::Vector<double>  d_incrementalDisplacementParallel;
+  Vector<double> d_incrementalDisplacementSerial;
+  bool d_isParallelMesh;
 
   //dealii based FE data structres
   FESystem<C_DIM>  FEMoveMesh;

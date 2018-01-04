@@ -83,7 +83,10 @@ void meshMovementGaussianClass::computeIncrement()
               const unsigned int globalDofIndex=cell->vertex_dof_index(i,idim);
 
 	      if(!d_constraintsMoveMesh.is_constrained(globalDofIndex)){
-	           d_incrementalDisplacement[globalDofIndex]+=gaussianWeight*d_controlPointDisplacements[iControl][idim];
+                   if (d_isParallelMesh)
+	               d_incrementalDisplacementParallel[globalDofIndex]+=gaussianWeight*d_controlPointDisplacements[iControl][idim];
+                   else
+                       d_incrementalDisplacementSerial[globalDofIndex]+=gaussianWeight*d_controlPointDisplacements[iControl][idim];
 	      }
 
 	   }

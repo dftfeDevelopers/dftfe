@@ -99,7 +99,11 @@ void meshMovementClass::init(Triangulation<3,3> & triangulation)
   d_constraintsMoveMesh.close();
 #else
   d_constraintsMoveMesh.close();
-#endif	
+#endif
+  if (triangulation.locally_owned_subdomain()==numbers::invalid_subdomain_id)
+     d_isParallelMesh=false;
+  else
+     d_isParallelMesh=true;	
 }
 
 void meshMovementClass::reinit(Triangulation<3,3> & triangulation)
@@ -129,6 +133,11 @@ void meshMovementClass::reinit(Triangulation<3,3> & triangulation)
 #else
     d_constraintsMoveMesh.close();
 #endif
+  if (triangulation.locally_owned_subdomain()==numbers::invalid_subdomain_id)
+     d_isParallelMesh=false;
+  else
+     d_isParallelMesh=true;
+
 }
 
 void meshMovementClass::reinit()
@@ -155,18 +164,34 @@ void meshMovementClass::initIncrementField()
   //dftPtr->matrix_free_data.initialize_dof_vector(d_incrementalDisplacement,d_forceDofHandlerIndex);	
   IndexSet  ghost_indices=d_locally_relevant_dofs;
   ghost_indices.subtract_set(d_locally_owned_dofs);
-  d_incrementalDisplacement=parallel::distributed::Vector<double>::Vector(d_locally_owned_dofs,
-									  ghost_indices,
-                                                                          mpi_communicator);
-  d_incrementalDisplacement=0;  	
+
+  if(!d_isParallelMesh)
+  {
+     d_incrementalDisplacementSerial.reinit(d_locally_owned_dofs.size());
+     d_incrementalDisplacementSerial=0;
+  }
+  else
+  {
+     d_incrementalDisplacementParallel=parallel::distributed::Vector<double>::Vector(d_locally_owned_dofs,
+									     ghost_indices,
+                                                                             mpi_communicator);
+     d_incrementalDisplacementParallel=0;  
+  }	
 }
 
 
 void meshMovementClass::finalizeIncrementField()
 {
-  //d_incrementalDisplacement.compress(VectorOperation::insert);//inserts current value at owned node and sets ghosts to zero	
-  d_constraintsMoveMesh.distribute(d_incrementalDisplacement);//distribute to constrained degrees of freedom (periodic and hanging nodes)
-  d_incrementalDisplacement.update_ghost_values();
+  if (d_isParallelMesh)
+  {
+    //d_incrementalDisplacement.compress(VectorOperation::insert);//inserts current value at owned node and sets ghosts to zero	
+     d_constraintsMoveMesh.distribute(d_incrementalDisplacementParallel);//distribute to constrained degrees of freedom (periodic and hanging nodes)
+     d_incrementalDisplacementParallel.update_ghost_values();
+   }
+   else
+   {
+     d_constraintsMoveMesh.distribute(d_incrementalDisplacementSerial);
+   }
 }
 
 void meshMovementClass::updateTriangulationVertices()
@@ -192,7 +217,8 @@ void meshMovementClass::updateTriangulationVertices()
 	     Point<C_DIM> vertexDisplacement;
 	     for (unsigned int d=0; d<C_DIM; ++d){
 		const unsigned int globalDofIndex= cell->vertex_dof_index(vertex_no,d);
-	     	vertexDisplacement[d]=d_incrementalDisplacement[globalDofIndex];
+	     	vertexDisplacement[d]=d_isParallelMesh?d_incrementalDisplacementParallel[globalDofIndex]:
+                                                   d_incrementalDisplacementSerial[globalDofIndex];
 	     }
 			
 	     cell->vertex(vertex_no) += vertexDisplacement;
