@@ -61,9 +61,7 @@ template<unsigned int FEOrder>
 void forceClass<FEOrder>::initUnmoved(Triangulation<3,3> & triangulation)
 {
   computing_timer.enter_section("forceClass setup");
-
-  
-
+  d_dofHandlerForce.clear();
   d_dofHandlerForce.initialize(triangulation,FEForce);
   d_dofHandlerForce.distribute_dofs(FEForce);
   d_locally_owned_dofsForce.clear();d_locally_relevant_dofsForce.clear();
@@ -71,7 +69,7 @@ void forceClass<FEOrder>::initUnmoved(Triangulation<3,3> & triangulation)
   DoFTools::extract_locally_relevant_dofs(d_dofHandlerForce, d_locally_relevant_dofsForce);  
 
   ///
-  d_constraintsNoneForce.clear();
+  d_constraintsNoneForce.clear(); d_constraintsNoneForce.reinit(d_locally_relevant_dofsForce);
   DoFTools::make_hanging_node_constraints(d_dofHandlerForce, d_constraintsNoneForce);   
 #ifdef ENABLE_PERIODIC_BC
   std::vector<GridTools::PeriodicFacePair<typename DoFHandler<C_DIM>::cell_iterator> > periodicity_vectorForce;
@@ -127,7 +125,6 @@ void forceClass<FEOrder>::initMoved()
 
   createBinObjectsForce();
   locateAtomCoreNodesForce();
-  gaussianMove.reinit();
   //
   //initialize pseudopotential related force objects
   //
