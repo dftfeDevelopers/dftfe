@@ -26,10 +26,10 @@ namespace pseudoUtils
    
      //some inline functions
      inline
-     void exchangeLocalList(std::vector<unsigned int> & masterNodeIdList,
-			       std::vector<unsigned int> & globalMasterNodeIdList,
-			       unsigned int numMeshPartitions,
-			       const MPI_Comm & mpi_communicator)
+     void exchangeLocalList(const std::vector<unsigned int> & masterNodeIdList,
+			    std::vector<unsigned int> & globalMasterNodeIdList,
+			    unsigned int numMeshPartitions,
+			    const MPI_Comm & mpi_communicator)
      {
 
 	  int numberMasterNodesOnLocalProc = masterNodeIdList.size();
@@ -71,6 +71,73 @@ namespace pseudoUtils
 	  delete [] mpiOffsets;
 
 	  return;
+     }
+
+
+    inline
+    void exchangeNumberingMap(std::map<int, int >  & localMap,
+                              unsigned int numMeshPartitions,
+                              const MPI_Comm & mpi_communicator)
+
+    {
+
+      std::map<int,int >::iterator iter;
+
+      std::vector<int> localSpreadVec;
+
+      iter= localMap.begin();
+      while(iter!= localMap.end()){
+
+
+	localSpreadVec.push_back(iter->first);
+        localSpreadVec.push_back(iter->second);
+    
+        ++iter;
+
+      } 
+      int localSpreadVecSize = localSpreadVec.size();
+
+      int * spreadVecSizes = new int[numMeshPartitions];
+
+      MPI_Allgather(&localSpreadVecSize,
+		     1,
+		     MPI_INT,
+		     spreadVecSizes,
+		     1,
+		     MPI_INT,
+		     mpi_communicator);
+
+      int globalSpreadVecSize = 
+      std::accumulate(&(spreadVecSizes[0]),
+	              &(spreadVecSizes[numMeshPartitions]),
+		     0);
+
+      std::vector<int> globalSpreadVec(globalSpreadVecSize);
+    
+      int * mpiOffsets = new int[numMeshPartitions];
+
+      mpiOffsets[0] = 0;
+
+      for(int i = 1; i < numMeshPartitions; ++i)
+	  mpiOffsets[i] = spreadVecSizes[i-1]+ mpiOffsets[i-1];
+
+      MPI_Allgatherv(&(localSpreadVec[0]),
+		       localSpreadVecSize,
+		       MPI_INT,
+		       &(globalSpreadVec[0]),
+		       &(spreadVecSizes[0]),
+		       &(mpiOffsets[0]),
+		       MPI_INT,
+		       mpi_communicator);
+
+       for (int i=0 ; i < globalSpreadVecSize ; i=i+2)
+            localMap[globalSpreadVec[i]]= globalSpreadVec[i+1];
+
+
+       delete [] spreadVecSizes;
+       delete [] mpiOffsets;
+
+       return;
      }
 
      inline 

@@ -133,7 +133,7 @@ class dftClass
   /**
    * moves the triangulation vertices using Gaussians such that the all atoms are on triangulation vertices
    */
-  void moveMeshToAtoms(Triangulation<3,3> & triangulationMove,bool isCoarserMove=false);  
+  void moveMeshToAtoms(Triangulation<3,3> & triangulationMove,bool reuse=false);  
 
   /**
    * Initializes the guess of electron-density and single-atom wavefunctions on the mesh,
@@ -338,7 +338,6 @@ class dftClass
   std::vector<std::vector<DoFHandler<3>::active_cell_iterator> > d_elementIteratorsInAtomCompactSupport;
   std::vector<std::vector<DoFHandler<3>::active_cell_iterator> > d_elementOneFieldIteratorsInAtomCompactSupport;
   std::vector<std::vector<int> > d_nonLocalAtomIdsInElement;
-  std::vector<std::vector<unsigned int> > d_nonLocalAtomIdsInProcessors;
 #ifdef ENABLE_PERIODIC_BC
   std::vector<std::vector<std::vector<std::vector<std::complex<double> > > > > d_nonLocalProjectorElementMatrices;
 #else
