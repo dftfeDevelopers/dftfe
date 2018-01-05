@@ -18,6 +18,7 @@
 
 #include "../../include/eigen.h"
 #include "../../include/dft.h"
+#include "computeNonLocalHamiltonianTimesXMemoryOpt.cc"
 
 
 //
@@ -905,8 +906,8 @@ void eigenClass<FEOrder>::HX(const std::vector<vectorType*> &src,
 	  *dftPtr->tempPSI4[i] = 0.0;
 	}
           
-      computeNonLocalHamiltonianTimesX(dftPtr->tempPSI2,
-				       dftPtr->tempPSI4);
+      computeNonLocalHamiltonianTimesXMemoryOpt(dftPtr->tempPSI2,
+				                dftPtr->tempPSI4);
 
       for(unsigned int i = 0; i < src.size(); ++i)
 	{
