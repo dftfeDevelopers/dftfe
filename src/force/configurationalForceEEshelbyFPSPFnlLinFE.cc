@@ -101,9 +101,9 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(
 	  {
 	     excQuads[q][iSubCell]=exchValQuads[q]+corrValQuads[q];
 	     double temp = derExchEnergyWithSigma[q]+derCorrEnergyWithSigma[q];
-	     derExcGradRhoQuads[q][0][iSubCell]=(*dftPtr->gradRhoOutValues)[subCellId][3*q]*temp;
-	     derExcGradRhoQuads[q][1][iSubCell]=(*dftPtr->gradRhoOutValues)[subCellId][3*q+1]*temp;
-             derExcGradRhoQuads[q][2][iSubCell]=(*dftPtr->gradRhoOutValues)[subCellId][3*q+2]*temp; 	     
+	     derExcGradRhoQuads[q][0][iSubCell]=2*(*dftPtr->gradRhoOutValues)[subCellId][3*q]*temp;
+	     derExcGradRhoQuads[q][1][iSubCell]=2*(*dftPtr->gradRhoOutValues)[subCellId][3*q+1]*temp;
+             derExcGradRhoQuads[q][2][iSubCell]=2*(*dftPtr->gradRhoOutValues)[subCellId][3*q+2]*temp; 	     
           }	  
 	  
        }

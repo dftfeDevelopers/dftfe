@@ -83,7 +83,7 @@ Tensor<2,C_DIM,VectorizedArray<double> >  getELocEshelbyTensorPeriodic(const Vec
 {
 
 
-   Tensor<2,C_DIM,VectorizedArray<double> > eshelbyTensor= make_vectorized_array(1.0/(4.0*M_PI))*outer_product(gradPhiTot,gradPhiTot)+rho*outer_product(derExcGradRhoQuads,gradRho);
+   Tensor<2,C_DIM,VectorizedArray<double> > eshelbyTensor= make_vectorized_array(1.0/(4.0*M_PI))*outer_product(gradPhiTot,gradPhiTot)+outer_product(derExcGradRhoQuads,gradRho);
    VectorizedArray<double> identityTensorFactor=make_vectorized_array(-1.0/(8.0*M_PI))*scalar_product(gradPhiTot,gradPhiTot)+rho*phiTot+exc*rho + (pseudoVLoc-phiExt)*rho;
 
    std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator it1=psiBegin;
@@ -134,7 +134,7 @@ Tensor<2,C_DIM,VectorizedArray<double> >  getELocEshelbyTensorNonPeriodic(const 
 									  const double tVal)
 {
 
-   Tensor<2,C_DIM,VectorizedArray<double> > eshelbyTensor= make_vectorized_array(1.0/(4.0*M_PI))*outer_product(gradPhiTot,gradPhiTot)+ rho*outer_product(derExcGradRhoQuads,gradRho);
+   Tensor<2,C_DIM,VectorizedArray<double> > eshelbyTensor= make_vectorized_array(1.0/(4.0*M_PI))*outer_product(gradPhiTot,gradPhiTot)+ outer_product(derExcGradRhoQuads,gradRho);
    VectorizedArray<double> identityTensorFactor=make_vectorized_array(-1.0/(8.0*M_PI))*scalar_product(gradPhiTot,gradPhiTot)+rho*phiTot+exc*rho + (pseudoVLoc-phiExt)*rho;
 
    std::vector<VectorizedArray<double> >::const_iterator it1=psiBegin;   
