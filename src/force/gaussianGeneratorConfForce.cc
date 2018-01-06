@@ -27,13 +27,11 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
   const int numberImageCharges = imageIds.size();
   const int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;  
   std::vector<double> globalAtomsGaussianForcesLocalPart(numberGlobalAtoms*C_DIM,0);
-  d_globalAtomsGaussianForces.resize(numberGlobalAtoms*C_DIM);
-  //std::fill(globalAtomsGaussianForces.begin(), globalAtomsGaussianForces.end(), 0);
+  d_globalAtomsGaussianForces.clear();
+  d_globalAtomsGaussianForces.resize(numberGlobalAtoms*C_DIM,0.0);
   std::map<types::global_dof_index,Point<C_DIM> >::iterator iterMap;
 
   for (unsigned int iAtom=0;iAtom <totalNumberAtoms; iAtom++){
-     //if (iAtom>0)
-     //   continue;
      Point<C_DIM> atomCoor;
      int atomId=iAtom;
      if(iAtom < numberGlobalAtoms)
