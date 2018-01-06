@@ -355,6 +355,7 @@ namespace atomsForcesUtils{
 template<unsigned int FEOrder>
 void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussianOverlapOnAtoms)
 {
+  unsigned int vertices_per_cell=GeometryInfo<C_DIM>::vertices_per_cell;  
   const std::vector<std::vector<double> > & atomLocations=dftPtr->atomLocations;
   const std::vector<std::vector<double> > & imagePositions=dftPtr->d_imagePositions;
   const std::vector<int > & imageIds=dftPtr->d_imageIds;
@@ -364,126 +365,79 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
   std::vector<double> globalAtomsGaussianForcesLocalPart(numberGlobalAtoms*C_DIM,0);
   d_globalAtomsGaussianForces.clear();
   d_globalAtomsGaussianForces.resize(numberGlobalAtoms*C_DIM,0.0);
-  std::map<types::global_dof_index,Point<C_DIM> >::iterator iterMap;
+  std::vector<bool> vertex_touched(d_dofHandlerForce.get_triangulation().n_vertices(),
+				   false);      
+  DoFHandler<3>::active_cell_iterator
+  cell = d_dofHandlerForce.begin_active(),
+  endc = d_dofHandlerForce.end();      
+  for (; cell!=endc; ++cell) 
+  {
+   if (cell->is_locally_owned())
+   {
+    for (unsigned int i=0; i<vertices_per_cell; ++i)
+    {
+	const unsigned global_vertex_no = cell->vertex_index(i);
 
-  for (unsigned int iAtom=0;iAtom <totalNumberAtoms; iAtom++){
-     Point<C_DIM> atomCoor;
-     int atomId=iAtom;
-     if(iAtom < numberGlobalAtoms)
-     {
-        atomCoor[0] = atomLocations[iAtom][2];
-        atomCoor[1] = atomLocations[iAtom][3];
-        atomCoor[2] = atomLocations[iAtom][4];
-      }
-      else
-      {
-	atomCoor[0] = imagePositions[iAtom-numberGlobalAtoms][0];
-	atomCoor[1] = imagePositions[iAtom-numberGlobalAtoms][1];
-	atomCoor[2] = imagePositions[iAtom-numberGlobalAtoms][2];
-	atomId=imageIds[iAtom-numberGlobalAtoms];
-      }
+	if (vertex_touched[global_vertex_no])
+	   continue;	    
+	vertex_touched[global_vertex_no]=true;
+	Point<C_DIM> nodalCoor = cell->vertex(i);
 
-      for(iterMap = d_locallyOwnedSupportPointsForceX.begin(); iterMap != d_locallyOwnedSupportPointsForceX.end(); ++iterMap)
-      {
-	  const int globalDofIndex=iterMap->first; 
-	  Point<3> nodalCoor = iterMap->second;
-          bool isGaussianOverlapOtherAtom=false;
-	  for (unsigned int jAtom=0;jAtom <totalNumberAtoms; jAtom++){
-	     if (iAtom !=jAtom){
-               Point<C_DIM> jAtomCoor;
-               if(jAtom < numberGlobalAtoms)
-               {
-                 jAtomCoor[0] = atomLocations[jAtom][2];
-                 jAtomCoor[1] = atomLocations[jAtom][3];
-                 jAtomCoor[2] = atomLocations[jAtom][4];
-               }
-               else
-               {
-	         jAtomCoor[0] = imagePositions[jAtom-numberGlobalAtoms][0];
-	         jAtomCoor[1] = imagePositions[jAtom-numberGlobalAtoms][1];
-	         jAtomCoor[2] = imagePositions[jAtom-numberGlobalAtoms][2];
-               }
-               const double distanceSq=(nodalCoor-jAtomCoor).norm_square();
-	       if (distanceSq < 1e-6){
-		   isGaussianOverlapOtherAtom=true;
-		   break;
-	       }
-	     }
-	  }
-	  if (d_constraintsNoneForce.is_constrained(globalDofIndex)|| (isGaussianOverlapOtherAtom && !allowGaussianOverlapOnAtoms))
-	     continue;		  
-	  const double rsq= (nodalCoor-atomCoor).norm_square();
-	  globalAtomsGaussianForcesLocalPart[C_DIM*atomId]+=std::exp(-d_gaussianConstant*rsq)*d_configForceVectorLinFE[globalDofIndex];
+	int overlappedAtomId=-1;
+	for (unsigned int jAtom=0;jAtom <totalNumberAtoms; jAtom++)
+	{
+           Point<C_DIM> jAtomCoor;
+           if(jAtom < numberGlobalAtoms)
+           {
+              jAtomCoor[0] = atomLocations[jAtom][2];
+              jAtomCoor[1] = atomLocations[jAtom][3];
+              jAtomCoor[2] = atomLocations[jAtom][4];
+           }
+           else
+           {
+	      jAtomCoor[0] = imagePositions[jAtom-numberGlobalAtoms][0];
+	      jAtomCoor[1] = imagePositions[jAtom-numberGlobalAtoms][1];
+	      jAtomCoor[2] = imagePositions[jAtom-numberGlobalAtoms][2];
+            }
+            const double distanceSq=(nodalCoor-jAtomCoor).norm_square();
+	    if (distanceSq < 1e-6){
+		overlappedAtomId=jAtom;
+		break;
+	    }
+	}//j atom loop
 
-      }//x component support points loop
-
-      for(iterMap = d_locallyOwnedSupportPointsForceY.begin(); iterMap != d_locallyOwnedSupportPointsForceY.end(); ++iterMap)
-      {
-	  const int globalDofIndex=iterMap->first; 
-	  Point<3> nodalCoor = iterMap->second;
-          bool isGaussianOverlapOtherAtom=false;
-	  for (unsigned int jAtom=0;jAtom <totalNumberAtoms; jAtom++){
-	     if (iAtom !=jAtom){
-               Point<C_DIM> jAtomCoor;
-               if(jAtom < numberGlobalAtoms)
-               {
-                 jAtomCoor[0] = atomLocations[jAtom][2];
-                 jAtomCoor[1] = atomLocations[jAtom][3];
-                 jAtomCoor[2] = atomLocations[jAtom][4];
-               }
-               else
-               {
-	         jAtomCoor[0] = imagePositions[jAtom-numberGlobalAtoms][0];
-	         jAtomCoor[1] = imagePositions[jAtom-numberGlobalAtoms][1];
-	         jAtomCoor[2] = imagePositions[jAtom-numberGlobalAtoms][2];
-               }
-               const double distanceSq=(nodalCoor-jAtomCoor).norm_square();
-	       if (distanceSq < 1e-6){
-		   isGaussianOverlapOtherAtom=true;
-		   break;
-	       }
-	     }
-	  }
-	  if (d_constraintsNoneForce.is_constrained(globalDofIndex)|| (isGaussianOverlapOtherAtom && !allowGaussianOverlapOnAtoms))
-	     continue;		  
-	  const double rsq= (nodalCoor-atomCoor).norm_square();
-	  globalAtomsGaussianForcesLocalPart[C_DIM*atomId+1]+=std::exp(-d_gaussianConstant*rsq)*d_configForceVectorLinFE[globalDofIndex];
-      }//y component support points loop
-
-      for(iterMap = d_locallyOwnedSupportPointsForceZ.begin(); iterMap != d_locallyOwnedSupportPointsForceZ.end(); ++iterMap)
-      {
-	  const int globalDofIndex=iterMap->first;   
-	  Point<3> nodalCoor = iterMap->second;
-          bool isGaussianOverlapOtherAtom=false;
-	  for (unsigned int jAtom=0;jAtom <totalNumberAtoms; jAtom++){
-	     if (iAtom !=jAtom){
-               Point<C_DIM> jAtomCoor;
-               if(jAtom < numberGlobalAtoms)
-               {
-                 jAtomCoor[0] = atomLocations[jAtom][2];
-                 jAtomCoor[1] = atomLocations[jAtom][3];
-                 jAtomCoor[2] = atomLocations[jAtom][4];
-               }
-               else
-               {
-	         jAtomCoor[0] = imagePositions[jAtom-numberGlobalAtoms][0];
-	         jAtomCoor[1] = imagePositions[jAtom-numberGlobalAtoms][1];
-	         jAtomCoor[2] = imagePositions[jAtom-numberGlobalAtoms][2];
-               }
-               const double distanceSq=(nodalCoor-jAtomCoor).norm_square();
-	       if (distanceSq < 1e-6){
-		   isGaussianOverlapOtherAtom=true;
-		   break;
-	       }
-	     }
-	  }
-	  if (d_constraintsNoneForce.is_constrained(globalDofIndex)|| (isGaussianOverlapOtherAtom && !allowGaussianOverlapOnAtoms))
-	     continue;	  
-	  const double rsq= (nodalCoor-atomCoor).norm_square();
-	  globalAtomsGaussianForcesLocalPart[C_DIM*atomId+2]+=std::exp(-d_gaussianConstant*rsq)*d_configForceVectorLinFE[globalDofIndex];
-	  
-      }//z component support points loop      
-  }//total atoms loop
+        for (unsigned int iAtom=0;iAtom <totalNumberAtoms; iAtom++)
+	{
+             if (overlappedAtomId!=iAtom && overlappedAtomId!=-1 && !allowGaussianOverlapOnAtoms)
+		 continue;
+             Point<C_DIM> atomCoor;
+	     int atomId=iAtom;
+	     if(iAtom < numberGlobalAtoms)
+	     {
+		atomCoor[0] = atomLocations[iAtom][2];
+		atomCoor[1] = atomLocations[iAtom][3];
+		atomCoor[2] = atomLocations[iAtom][4];
+	      }
+	      else
+	      {
+		atomCoor[0] = imagePositions[iAtom-numberGlobalAtoms][0];
+		atomCoor[1] = imagePositions[iAtom-numberGlobalAtoms][1];
+		atomCoor[2] = imagePositions[iAtom-numberGlobalAtoms][2];
+		atomId=imageIds[iAtom-numberGlobalAtoms];
+	      }	
+	      const double rsq=(nodalCoor-atomCoor).norm_square();	
+	      const double gaussianWeight=std::exp(-d_gaussianConstant*rsq);
+	      for (unsigned int idim=0; idim < C_DIM ; idim++)
+	      {
+	          const unsigned int globalDofIndex=cell->vertex_dof_index(i,idim);
+	          if (!d_constraintsNoneForce.is_constrained(globalDofIndex) && d_locally_owned_dofsForce.is_element(globalDofIndex))
+	              globalAtomsGaussianForcesLocalPart[C_DIM*atomId+idim]+=gaussianWeight*d_configForceVectorLinFE[globalDofIndex];		  
+	      }//idim loop
+ 	}//iAtom loop
+     }//vertices per cell
+   }//locally owned check
+  }//cell loop
+  
 
   //Sum all processor contributions and distribute to all processors
   MPI_Allreduce(&(globalAtomsGaussianForcesLocalPart[0]),

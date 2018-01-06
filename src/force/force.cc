@@ -29,7 +29,7 @@
 #include "configurationalForceEselfLinFE.cc"
 #include "initPseudoForce.cc"
 #include "createBinObjectsForce.cc"
-#include "gaussianGeneratorConfForce.cc"
+#include "gaussianGeneratorConfForceOpt.cc"
 #include "locateAtomCoreNodesForce.cc"
 #include "stress.cc"
 #include "relax.cc"

@@ -32,7 +32,7 @@ namespace meshMovementUtils{
 
     
   std::vector<double> getFractionalCoordinates(const std::vector<double> & latticeVectors,
-	                                       const Point<3> & point,                                                                                           const Point<3> & corner)
+	                                       const Point<3> & point,                                                                                                                     const Point<3> & corner)
   {   
       //
       // recenter vertex about corner
