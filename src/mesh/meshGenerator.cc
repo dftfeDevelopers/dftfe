@@ -110,17 +110,43 @@ void meshGeneratorClass::generateMesh(Triangulation<3,3> &triangulation)
   else
     {
 
+      //
+      //compute magnitudes of domainBounding Vectors
+      //
+      double domainBoundingVectorMag1 = sqrt(d_domainBoundingVectors[0][0]*d_domainBoundingVectors[0][0] + d_domainBoundingVectors[0][1]*d_domainBoundingVectors[0][1] +  d_domainBoundingVectors[0][2]*d_domainBoundingVectors[0][2]);
+      double domainBoundingVectorMag2 = sqrt(d_domainBoundingVectors[1][0]*d_domainBoundingVectors[1][0] + d_domainBoundingVectors[1][1]*d_domainBoundingVectors[1][1] +  d_domainBoundingVectors[1][2]*d_domainBoundingVectors[1][2]);
+      double domainBoundingVectorMag3 = sqrt(d_domainBoundingVectors[2][0]*d_domainBoundingVectors[2][0] + d_domainBoundingVectors[2][1]*d_domainBoundingVectors[2][1] +  d_domainBoundingVectors[2][2]*d_domainBoundingVectors[2][2]);
+      
+      //
+      //generate base level refinement
+      //
+      unsigned int subdivisions[3];subdivisions[0]=1.0;subdivisions[1]=1.0;subdivisions[2]=1.0;
+
+      std::vector<double> numberIntervalsEachDirection;
+      numberIntervalsEachDirection.push_back(domainBoundingVectorMag1/dftParameters::meshSizeOuterDomain);
+      numberIntervalsEachDirection.push_back(domainBoundingVectorMag2/dftParameters::meshSizeOuterDomain);
+      numberIntervalsEachDirection.push_back(domainBoundingVectorMag3/dftParameters::meshSizeOuterDomain);
+      
+      for (int i=0; i<3;i++){
+
+        double temp = numberIntervalsEachDirection[i]-std::floor(numberIntervalsEachDirection[i]);
+        if((temp - std::floor(temp)) >= 0.5)
+           subdivisions[i] = std::ceil(numberIntervalsEachDirection[i]);
+        else
+	   subdivisions[i] = std::floor(numberIntervalsEachDirection[i]);
+      }
+
       Point<3> vector1(d_domainBoundingVectors[0][0],d_domainBoundingVectors[0][1],d_domainBoundingVectors[0][2]);
       Point<3> vector2(d_domainBoundingVectors[1][0],d_domainBoundingVectors[1][1],d_domainBoundingVectors[1][2]);
       Point<3> vector3(d_domainBoundingVectors[2][0],d_domainBoundingVectors[2][1],d_domainBoundingVectors[2][2]);
 
-
       //
-      //Generate outer box using domain bounding vectors
+      //Generate coarse mesh
       //
       Point<3> basisVectors[3] = {vector1,vector2,vector3};
-      GridGenerator::parallelepiped<3>(triangulation,
-				       basisVectors);
+      GridGenerator::subdivided_parallelepiped<3>(triangulation,
+	                                          subdivisions,
+				                  basisVectors);
 
       //
       //print basis vectors
@@ -141,32 +167,7 @@ void meshGeneratorClass::generateMesh(Triangulation<3,3> &triangulation)
 #endif
 
             
-      //
-      //compute magnitudes of domainBounding Vectors
-      //
-      double domainBoundingVectorMag1 = sqrt(d_domainBoundingVectors[0][0]*d_domainBoundingVectors[0][0] + d_domainBoundingVectors[0][1]*d_domainBoundingVectors[0][1] +  d_domainBoundingVectors[0][2]*d_domainBoundingVectors[0][2]);
-      double domainBoundingVectorMag2 = sqrt(d_domainBoundingVectors[1][0]*d_domainBoundingVectors[1][0] + d_domainBoundingVectors[1][1]*d_domainBoundingVectors[1][1] +  d_domainBoundingVectors[1][2]*d_domainBoundingVectors[1][2]);
-      double domainBoundingVectorMag3 = sqrt(d_domainBoundingVectors[2][0]*d_domainBoundingVectors[2][0] + d_domainBoundingVectors[2][1]*d_domainBoundingVectors[2][1] +  d_domainBoundingVectors[2][2]*d_domainBoundingVectors[2][2]);
-      
-      //
-      //generate base level refinement
-      //
-      unsigned int baseRefinementLevel,meshSizeDomain;
-
-      std::vector<double> numberIntervalsEachDirection;
-      numberIntervalsEachDirection.push_back(domainBoundingVectorMag1/dftParameters::meshSizeOuterDomain);
-      numberIntervalsEachDirection.push_back(domainBoundingVectorMag2/dftParameters::meshSizeOuterDomain);
-      numberIntervalsEachDirection.push_back(domainBoundingVectorMag3/dftParameters::meshSizeOuterDomain);
-      std::vector<double>::iterator result =  std::max_element(numberIntervalsEachDirection.begin(),
-							       numberIntervalsEachDirection.end());
-      double maxNumberIntervals = *result;
-      double temp = log(maxNumberIntervals)/log(2);
-      if((temp - std::floor(temp)) >= 0.5)
-	baseRefinementLevel = std::ceil(temp);
-      else
-	baseRefinementLevel = std::floor(temp);
-
-      triangulation.refine_global(baseRefinementLevel);
+      //triangulation.refine_global(baseRefinementLevel);
 
       char buffer1[100];
       sprintf(buffer1, "\n Base uniform number of elements: %u\n", triangulation.n_global_active_cells());
@@ -177,7 +178,7 @@ void meshGeneratorClass::generateMesh(Triangulation<3,3> &triangulation)
       //
       dealii::Point<3> origin;
       unsigned int numLevels=0;
-      bool refineFlag = true;
+      bool refineFlag = false;
 
       typename Triangulation<3,3>::active_cell_iterator cell, endc;
 
