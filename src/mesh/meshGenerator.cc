@@ -123,19 +123,13 @@ void meshGeneratorClass::generateMesh(Triangulation<3,3> &triangulation,
       //
       unsigned int subdivisions[3];subdivisions[0]=1.0;subdivisions[1]=1.0;subdivisions[2]=1.0;
 
+      
+
       std::vector<double> numberIntervalsEachDirection;
       numberIntervalsEachDirection.push_back(domainBoundingVectorMag1/dftParameters::meshSizeOuterDomain);
       numberIntervalsEachDirection.push_back(domainBoundingVectorMag2/dftParameters::meshSizeOuterDomain);
       numberIntervalsEachDirection.push_back(domainBoundingVectorMag3/dftParameters::meshSizeOuterDomain);
       
-      for (int i=0; i<3;i++){
-
-        double temp = numberIntervalsEachDirection[i]-std::floor(numberIntervalsEachDirection[i]);
-        if((temp - std::floor(temp)) >= 0.5)
-           subdivisions[i] = std::ceil(numberIntervalsEachDirection[i]);
-        else
-	   subdivisions[i] = std::floor(numberIntervalsEachDirection[i]);
-      }
 
       Point<3> vector1(d_domainBoundingVectors[0][0],d_domainBoundingVectors[0][1],d_domainBoundingVectors[0][2]);
       Point<3> vector2(d_domainBoundingVectors[1][0],d_domainBoundingVectors[1][1],d_domainBoundingVectors[1][2]);
@@ -145,7 +139,19 @@ void meshGeneratorClass::generateMesh(Triangulation<3,3> &triangulation,
       //Generate coarse mesh
       //
       Point<3> basisVectors[3] = {vector1,vector2,vector3};
-      /*GridGenerator::subdivided_parallelepiped<3>(triangulation,
+
+
+            
+      /*for (int i=0; i<3;i++){
+
+        double temp = numberIntervalsEachDirection[i]-std::floor(numberIntervalsEachDirection[i]);
+        if((temp - std::floor(temp)) >= 0.5)
+           subdivisions[i] = std::ceil(numberIntervalsEachDirection[i]);
+        else
+	   subdivisions[i] = std::floor(numberIntervalsEachDirection[i]);
+      }
+
+      GridGenerator::subdivided_parallelepiped<3>(triangulation,
 	                                          subdivisions,
 				                  basisVectors);*/
 
@@ -171,7 +177,17 @@ void meshGeneratorClass::generateMesh(Triangulation<3,3> &triangulation,
 #endif
 
             
-      //triangulation.refine_global(baseRefinementLevel);
+      std::vector<double>::iterator result =  std::max_element(numberIntervalsEachDirection.begin(),
+							       numberIntervalsEachDirection.end());
+      double maxNumberIntervals = *result;
+      double temp = log(maxNumberIntervals)/log(2);
+      unsigned int baseRefinementLevel;
+      if((temp - std::floor(temp)) >= 0.5)
+	baseRefinementLevel = std::ceil(temp);
+      else
+	baseRefinementLevel = std::floor(temp);
+
+      triangulation.refine_global(baseRefinementLevel);
 
       char buffer1[100];
       sprintf(buffer1, "\n Base uniform number of elements: %u\n", triangulation.n_global_active_cells());
