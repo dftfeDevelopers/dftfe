@@ -202,6 +202,8 @@ void meshMovementClass::movedMeshCheck()
   pcout << "Sanity check for periodic matched faces on moved triangulation..." << std::endl;  
   for(unsigned int i=0; i< d_periodicity_vector.size(); ++i) 
   {
+    if (!d_periodicity_vector[i].cell[0]->active() || !d_periodicity_vector[i].cell[1]->active())
+       continue;      
     if (d_periodicity_vector[i].cell[0]->is_artificial() || d_periodicity_vector[i].cell[1]->is_artificial())
        continue;
 
