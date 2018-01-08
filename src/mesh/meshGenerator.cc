@@ -89,7 +89,8 @@ meshGeneratorClass::~meshGeneratorClass()
 //
 //generate adaptive mesh
 //
-void meshGeneratorClass::generateMesh(Triangulation<3,3> &triangulation)
+void meshGeneratorClass::generateMesh(Triangulation<3,3> &triangulation,
+				      types::global_dof_index & numberGlobalCells)
 {
   computing_timer.enter_section("mesh");
   if(!dftParameters::meshFileName.empty())
@@ -235,6 +236,14 @@ void meshGeneratorClass::generateMesh(Triangulation<3,3> &triangulation)
 			}
 		    }
 
+		  bool inOuterAtomBall = false;
+
+		  if(distanceToClosestAtom <= dftParameters::outerAtomBallRadius)
+		    inOuterAtomBall = true;
+
+		  if(inOuterAtomBall && currentMeshSize > dftParameters::meshSizeOuterBall)
+		    cellRefineFlag = true;
+
 		  MappingQ1<3,3> mapping;
 		  try
 		    {
@@ -306,6 +315,9 @@ void meshGeneratorClass::generateMesh(Triangulation<3,3> &triangulation)
       char buffer[100];
       sprintf(buffer, "Adaptivity summary:\n numCells: %u, numLevels: %u, h_min: %5.2e\n", triangulation.n_global_active_cells(), numLevels, minElemLength);
       pcout << buffer;
+
+      numberGlobalCells = triangulation.n_global_active_cells();
+
     }
 
   computing_timer.exit_section("mesh");
@@ -327,16 +339,28 @@ void meshGeneratorClass::generateSerialAndParallelMesh(std::vector<std::vector<d
   d_imageAtomPositions = imageAtomLocations;
   d_domainBoundingVectors = domainBoundingVectors;
 
+  types::global_dof_index numberGlobalCellsSerial,numberGlobalCellsParallel;
+
   //
   //generate unmoved mesh data members
   //
-  generateMesh(d_serialTriangulationUnmoved);
-  generateMesh(d_parallelTriangulationUnmoved);
+  generateMesh(d_serialTriangulationUnmoved,
+	       numberGlobalCellsSerial);
+
+  generateMesh(d_parallelTriangulationUnmoved,
+	       numberGlobalCellsParallel);
+
+  AssertThrow(numberGlobalCellsParallel==numberGlobalCellsSerial,ExcMessage("Number of cells are different for parallel and serial triangulations"));
 
   //generate moved mesh data members which are still the same meshes before
   //but will be accessed to move the meshes later
-  generateMesh(d_serialTriangulationMoved);
-  generateMesh(d_parallelTriangulationMoved);
+  generateMesh(d_serialTriangulationMoved,
+	       numberGlobalCellsSerial);
+
+  generateMesh(d_parallelTriangulationMoved,
+	       numberGlobalCellsParallel);
+
+  
 
 }
 
