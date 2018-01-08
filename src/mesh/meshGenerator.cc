@@ -178,7 +178,7 @@ void meshGeneratorClass::generateMesh(Triangulation<3,3> &triangulation)
       //
       dealii::Point<3> origin;
       unsigned int numLevels=0;
-      bool refineFlag = false;
+      bool refineFlag = true;
 
       typename Triangulation<3,3>::active_cell_iterator cell, endc;
 
