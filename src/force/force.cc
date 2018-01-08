@@ -24,13 +24,12 @@
 #include "../../include/fileReaders.h"
 
 
-#include "configurationalForceEEshelbyFPSPPeriodicLinFE.cc"
-#include "configurationalForceEEshelbyFPSPNonPeriodicLinFE.cc"
-#include "configurationalForceLinFECommon.cc"
+#include "configurationalForceEEshelbyFPSPFnlLinFE.cc"
+#include "FPSPLocalGammaAtomsElementalContribution.cc"
 #include "configurationalForceEselfLinFE.cc"
 #include "initPseudoForce.cc"
 #include "createBinObjectsForce.cc"
-#include "gaussianGeneratorConfForce.cc"
+#include "gaussianGeneratorConfForceOpt.cc"
 #include "locateAtomCoreNodesForce.cc"
 #include "stress.cc"
 #include "relax.cc"
@@ -172,12 +171,7 @@ void forceClass<FEOrder>::computeConfigurationalForceTotalLinFE()
  
   configForceLinFEInit();
 
-#ifdef ENABLE_PERIODIC_BC
-  computeConfigurationalForceEEshelbyTensorFPSPPeriodicLinFE(); 
-#else  
-  computeConfigurationalForceEEshelbyTensorFPSPNonPeriodicLinFE(); 
-#endif
-
+  computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(); 
   //computeConfigurationalForcePhiExtLinFE();
   //computeConfigurationalForceEselfNoSurfaceLinFE();
   computeConfigurationalForceEselfLinFE();

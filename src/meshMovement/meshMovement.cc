@@ -32,7 +32,7 @@ namespace meshMovementUtils{
 
     
   std::vector<double> getFractionalCoordinates(const std::vector<double> & latticeVectors,
-	                                       const Point<3> & point,                                                                                           const Point<3> & corner)
+	                                       const Point<3> & point,                                                                                                                     const Point<3> & corner)
   {   
       //
       // recenter vertex about corner
@@ -209,8 +209,10 @@ void meshMovementClass::movedMeshCheck()
   pcout << "Sanity check for periodic matched faces on moved triangulation..." << std::endl;  
   for(unsigned int i=0; i< d_periodicity_vector.size(); ++i) 
   {
-    //if (d_periodicity_vector[i].cell[0]->is_artificial() || d_periodicity_vector[i].cell[1]->is_artificial())
-    // continue;
+    if (!d_periodicity_vector[i].cell[0]->active() || !d_periodicity_vector[i].cell[1]->active())
+       continue;      
+    if (d_periodicity_vector[i].cell[0]->is_artificial() || d_periodicity_vector[i].cell[1]->is_artificial())
+       continue;
 
     std::vector<bool> isPeriodicFace(3);	  
     for(unsigned int idim=0; idim<3; ++idim){

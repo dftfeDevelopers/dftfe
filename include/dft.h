@@ -338,6 +338,10 @@ class dftClass
   std::vector<std::vector<DoFHandler<3>::active_cell_iterator> > d_elementIteratorsInAtomCompactSupport;
   std::vector<std::vector<DoFHandler<3>::active_cell_iterator> > d_elementOneFieldIteratorsInAtomCompactSupport;
   std::vector<std::vector<int> > d_nonLocalAtomIdsInElement;
+  std::vector<unsigned int> d_nonLocalAtomIdsInCurrentProcess;
+  IndexSet d_locallyOwnedProjectorIdsCurrentProcess;
+  IndexSet d_ghostProjectorIdsCurrentProcess;
+  std::map<std::pair<unsigned int,unsigned int>, unsigned int> d_projectorIdsNumberingMapCurrentProcess;
 #ifdef ENABLE_PERIODIC_BC
   std::vector<std::vector<std::vector<std::vector<std::complex<double> > > > > d_nonLocalProjectorElementMatrices;
 #else
