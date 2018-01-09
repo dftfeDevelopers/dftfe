@@ -281,7 +281,12 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 
 	  //get the imageIdmap information corresponding to globalChargeId
 	  //
+#ifdef ENABLE_PERIODIC_BC
 	  std::vector<int> & imageIdsList = d_globalChargeIdToImageIdMap[it->atomID];
+#else
+	  std::vector<int> imageIdsList;
+	  imageIdsList.push_back(it->atomID);
+#endif
 
 	  for(int iImageAtomCount = 0; iImageAtomCount < imageIdsList.size();++iImageAtomCount)
 	    {
