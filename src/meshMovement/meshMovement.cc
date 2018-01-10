@@ -32,7 +32,7 @@ namespace meshMovementUtils{
 
     
   std::vector<double> getFractionalCoordinates(const std::vector<double> & latticeVectors,
-	                                       const Point<3> & point, const Point<3> & corner) ;
+	                                       const Point<3> & point,                                                                                                                     const Point<3> & corner)
   {   
       //
       // recenter vertex about corner
@@ -135,7 +135,6 @@ void meshMovementClass::initIncrementField()
   IndexSet  ghost_indices=d_locally_relevant_dofs;
   ghost_indices.subtract_set(d_locally_owned_dofs);
 
-
   if(!d_isParallelMesh)
   {
      d_incrementalDisplacementSerial.reinit(d_locally_owned_dofs.size());
@@ -148,7 +147,6 @@ void meshMovementClass::initIncrementField()
                                                                              mpi_communicator);
      d_incrementalDisplacementParallel=0;  
   }	
-
 }
 
 
@@ -379,3 +377,4 @@ void meshMovementClass::findClosestVerticesToDestinationPoints(const std::vector
       dispClosestTriaVerticesToDestPoints.push_back(temp);
   }
 }	
+

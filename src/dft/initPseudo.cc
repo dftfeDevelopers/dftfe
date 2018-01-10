@@ -73,10 +73,10 @@ void dftClass<FEOrder>::initLocalPseudoPotential()
       spline1dbuildcubic(x, y, numRows, natural_bound_type, 0.0, natural_bound_type, 0.0, pseudoSpline[*it]);
       outerMostPointPseudo[*it]= xData[numRows-1];
       //
-      if(outerMostPointPseudo[*it] < pspTail)
-	 pspTail = outerMostPointPseudo[*it] ;
+      if(outerMostPointPseudo[*it] < d_pspTail)
+	 d_pspTail = outerMostPointPseudo[*it] ;
     }
-   pcout << " pspTail adjusted to " << pspTail << std::endl ;
+   pcout << " d_pspTail adjusted to " << d_pspTail << std::endl ;
   //
   //Initialize pseudopotential
   //
