@@ -35,6 +35,9 @@ class eigenClass
   template <unsigned int T>
   friend class dftClass;
 
+  template <unsigned int T>
+  friend class symmetryClass;
+
 public:
   eigenClass(dftClass<FEOrder>* _dftPtr);
   void HX(const std::vector<vectorType*> &src, 

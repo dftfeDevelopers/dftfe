@@ -53,6 +53,8 @@ SET(TARGET_SRC
   ./src/meshMovement/meshMovement.cc
   ./src/meshMovement/meshMovementGaussian.cc
   ./src/mesh/meshGenerator.cc
+  ./src/symmetry/initGroupSymmetry.cc
+  ./src/symmetry/symmetrizeRho.cc
   ./utils/fileReaders.cc
   ./utils/dftParameters.cc
   # You can specify additional files here!

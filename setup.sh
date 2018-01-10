@@ -10,7 +10,7 @@ cmake=/opt/cmake/bin/cmake
 #
 RCol='\e[0m'
 Blu='\e[0;34m';
-optimizedMode=0
+optimizedMode=1
 if [ $optimizedMode == 1 ]; then
   if [ -d "build/release" ]; then
     echo -e "${Blu}build/release directory already present${RCol}"
@@ -22,7 +22,7 @@ if [ $optimizedMode == 1 ]; then
     echo -e "${Blu}Building Periodic executable in Optimized (Release) mode...${RCol}"
     mkdir -p periodic && cd periodic && cmake -DCMAKE_BUILD_TYPE=Release -D_ENABLE_PERIODIC=TRUE ../../../. && make && cd ../..
   else
-    rm -rf build
+    rm -rf build/release
     echo -e "${Blu}Creating build directory...${RCol}"
     mkdir -p build && cd build
     mkdir -p release && cd release
@@ -42,7 +42,7 @@ else
     echo -e "${Blu}Building Periodic executable in Debug mode...${RCol}"
     mkdir -p periodic && cd periodic && cmake -DCMAKE_BUILD_TYPE=Debug -D_ENABLE_PERIODIC=TRUE ../../../. && make && cd ../..
   else
-    rm -rf build
+    rm -rf build/debug
     echo -e "${Blu}Creating build directory...${RCol}"
     mkdir -p build && cd build
     mkdir -p debug && cd debug

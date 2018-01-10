@@ -22,7 +22,9 @@
 #ifdef ENABLE_PERIODIC_BC
 #include "initkPointData.cc"
 #endif
+#include "../../include/dftParameters.h"
 
+using namespace dftParameters ;
 //
 //source file for dft class initializations
 //
@@ -144,32 +146,38 @@ void dftClass<FEOrder>::initUnmovedTriangulation(parallel::distributed::Triangul
 
   forcePtr->initUnmoved(triangulation);
 
-  //
+ //
   //Initialize libxc (exchange-correlation)
   //
   int exceptParamX, exceptParamC;
-  unsigned int xc_id = dftParameters::xc_id;
-
-
+  int isSpinPolarized ;
+  if (spinPolarized == 1)
+     {
+        isSpinPolarized = XC_POLARIZED ;
+     }
+  else
+     {
+        isSpinPolarized = XC_UNPOLARIZED ;
+     }
   if(xc_id == 1)
     {
-      exceptParamX = xc_func_init(&funcX,XC_LDA_X,XC_UNPOLARIZED);
-      exceptParamC = xc_func_init(&funcC,XC_LDA_C_PZ,XC_UNPOLARIZED);
+      exceptParamX = xc_func_init(&funcX,XC_LDA_X, isSpinPolarized);
+      exceptParamC = xc_func_init(&funcC,XC_LDA_C_PZ, isSpinPolarized);
     }
   else if(xc_id == 2)
     {
-      exceptParamX = xc_func_init(&funcX,XC_LDA_X,XC_UNPOLARIZED);
-      exceptParamC = xc_func_init(&funcC,XC_LDA_C_PW,XC_UNPOLARIZED);
+      exceptParamX = xc_func_init(&funcX,XC_LDA_X, isSpinPolarized);
+      exceptParamC = xc_func_init(&funcC,XC_LDA_C_PW, isSpinPolarized);
     }
   else if(xc_id == 3)
     {
-      exceptParamX = xc_func_init(&funcX,XC_LDA_X,XC_UNPOLARIZED);
-      exceptParamC = xc_func_init(&funcC,XC_LDA_C_VWN,XC_UNPOLARIZED);
+      exceptParamX = xc_func_init(&funcX,XC_LDA_X, isSpinPolarized);
+      exceptParamC = xc_func_init(&funcC,XC_LDA_C_VWN, isSpinPolarized);
     }
   else if(xc_id == 4)
     {
-      exceptParamX = xc_func_init(&funcX,XC_GGA_X_PBE,XC_UNPOLARIZED);
-      exceptParamC = xc_func_init(&funcC,XC_GGA_C_PBE,XC_UNPOLARIZED);
+      exceptParamX = xc_func_init(&funcX,XC_GGA_X_PBE,isSpinPolarized);
+      exceptParamC = xc_func_init(&funcC,XC_GGA_C_PBE,isSpinPolarized);
     }
   else if(xc_id > 4)
     {

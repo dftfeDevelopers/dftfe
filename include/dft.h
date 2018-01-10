@@ -31,6 +31,7 @@
 
 #include "poisson.h"
 #include "eigen.h"
+#include "symmetry.h"
 #include "../../softwares/spglib/include/spglib.h"
 
 
@@ -51,6 +52,7 @@ typedef dealii::parallel::distributed::Vector<double> vectorType;
 template <unsigned int T> class poissonClass;
 template <unsigned int T> class eigenClass; 
 template <unsigned int T> class forceClass;  
+template <unsigned int T> class symmetryClass;
 
 //
 //extern declarations for blas-lapack routines
@@ -98,6 +100,9 @@ class dftClass
   template <unsigned int FEOrder>
   friend class forceClass;  
 
+  template <unsigned int FEOrder>
+  friend class symmetryClass;
+
  public:
 
   /**
@@ -128,11 +133,16 @@ class dftClass
    */
   void set();
   void readkPointData();
+  
+  void generateMPGrid();
+  /*
   //
   // ************************************************************************************************************************************  //
   void generateMPGrid();
   void test_spg_get_ir_reciprocal_mesh();
   void initSymmetry();
+  void computeLocalrhoOut();
+  void computeAndSymmetrize_rhoOut();
   Point<3> crys2cart(Point<3> p, int i);
   std::map<CellId,std::vector<std::tuple<int, std::vector<double>, int> >>  cellMapTable ;
   //std::vector<std::map<CellId,std::vector<std::vector<std::tuple<typename DoFHandler<3>::active_cell_iterator, Point<3>, int> >>>> mappedGroup ;
@@ -173,11 +183,12 @@ class dftClass
                        const Point<3>        &p) ;
   std::vector< Point<3> > vertices ;
   //
-  std::vector<int> mpi_offsets0, mpi_offsets1 ;
+  std::vector<int> mpi_offsets0, mpi_offsets1, mpiGrad_offsets1 ;
   std::vector<int> recvdData0, recvdData2, recvdData3;  
   std::vector<std::vector<double>> recvdData1;
-  std::vector<int> recv_size0, recv_size1, recvSize;
+  std::vector<int> recv_size0, recv_size1, recvGrad_size1;
   // ************************************************************************************************************************************  //
+  */
   void generateImageCharges();
   void determineOrbitalFilling();
 
@@ -245,8 +256,6 @@ class dftClass
    * Computes output electron-density from wavefunctions
    */
   void compute_rhoOut();
-  void computeAndSymmetrize_rhoOut();
-  void computeLocalrhoOut();
  
   /**
    * Mixing schemes for mixing electron-density
@@ -330,6 +339,11 @@ class dftClass
    */
   meshGeneratorClass d_mesh;
 
+  /**
+   * meshGenerator based object
+   */
+  //symmetryClass<FEOrder> d_symmetry;
+
   
   /**
    * dealii based FE data structres
@@ -356,6 +370,7 @@ class dftClass
   poissonClass<FEOrder> * poissonPtr;
   eigenClass<FEOrder> * eigenPtr;
   forceClass<FEOrder> * forcePtr;
+  symmetryClass<FEOrder> * symmetryPtr;
   ConstraintMatrix constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_constraintsPeriodicWithDirichlet, d_noConstraints, d_noConstraintsEigen; 
   std::vector<std::vector<double> > eigenValues, eigenValuesTemp; 
   std::vector<std::vector<parallel::distributed::Vector<double>*> > eigenVectors;
@@ -460,8 +475,6 @@ class dftClass
   std::vector<double> d_kPointWeights;
   int d_maxkPoints;
   int d_kPointIndex;
-  std::vector<std::vector<std::vector<double> >> symmMat;
-  unsigned int numSymm;
   //integralRhoOut to store number of electrons
   double integralRhoValue;
   

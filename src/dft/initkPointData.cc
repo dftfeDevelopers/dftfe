@@ -177,21 +177,21 @@ void dftClass<FEOrder>::generateMPGrid()
   std::vector<std::vector<std::vector<double> >> symmMatTemp;
   if (symmFromFile) {
   dftUtils::readFile(numberColumnsSymmDataFile, symmData, symmDataFile);
-  numSymm = symmData.size()/3 ;
-  pcout<<" number of symmetries read from file " << numSymm << std::endl;
-  symmMatTemp.resize( numSymm );
-  symmMat.resize( numSymm );
-  symmUnderGroupTemp.resize(numSymm);
-  for (unsigned int iSymm = 0; iSymm < numSymm; ++iSymm) {
+  (symmetryPtr->numSymm) = symmData.size()/3 ;
+  pcout<<" number of symmetries read from file " << symmetryPtr->numSymm << std::endl;
+  symmMatTemp.resize( symmetryPtr->numSymm );
+  (symmetryPtr->symmMat).resize( symmetryPtr->numSymm );
+  symmUnderGroupTemp.resize(symmetryPtr->numSymm);
+  for (unsigned int iSymm = 0; iSymm < (symmetryPtr->numSymm ); ++iSymm) {
        symmMatTemp[iSymm].resize(3,std::vector<double> (3,0.0)) ;
-       symmMat[iSymm].resize(3,std::vector<double> (3,0.0)) ;
+       (symmetryPtr->symmMat)[iSymm].resize(3,std::vector<double> (3,0.0)) ;
   }
   //
-  for(int iSymm = 0; iSymm < numSymm; ++iSymm)
+  for(int iSymm = 0; iSymm < (symmetryPtr->numSymm); ++iSymm)
   {
-    translation[iSymm][0] = 0.0 ;
-    translation[iSymm][1] = 0.0 ;
-    translation[iSymm][2] = 0.0 ;
+    (symmetryPtr->translation)[iSymm][0] = 0.0 ;
+    (symmetryPtr->translation)[iSymm][1] = 0.0 ;
+    (symmetryPtr->translation)[iSymm][2] = 0.0 ;
     for(int j = 0; j < 3; ++j)
       {
         symmMatTemp[iSymm][j][0] = symmData[3*iSymm+j][0];
@@ -240,28 +240,28 @@ void dftClass<FEOrder>::generateMPGrid()
   types[0]=1; types[1]=1; */
   //**************************************************************************************************
   pcout<<" getting space group symmetries from spg " << std::endl;
-  numSymm = spg_get_symmetry(rotation,
-                     translation,
+  symmetryPtr->numSymm = spg_get_symmetry(rotation,
+                     (symmetryPtr->translation),
                      max_size,
                      lattice,
                      position,
                      types,
                      num_atom,
                      1e-5);
-  pcout<<" number of symmetries allowed for the lattice " << numSymm << std::endl;
-  for (unsigned int iSymm=0; iSymm<numSymm; ++iSymm){
+  pcout<<" number of symmetries allowed for the lattice " <<(symmetryPtr->numSymm) << std::endl;
+  for (unsigned int iSymm=0; iSymm<(symmetryPtr->numSymm); ++iSymm){
 	pcout << " Symmetry " << iSymm+1 << std::endl ;
 	pcout << " Rotation " << std::endl;
 	for ( unsigned int ipol = 0; ipol<3; ++ipol)
 		 pcout << rotation[iSymm][ipol][0] << "  " <<rotation[iSymm][ipol][1] << "  " << rotation[iSymm][ipol][2] << std::endl;
 	pcout << " translation " << std::endl;
-	pcout << translation[iSymm][0] << "  " <<translation[iSymm][1] << "  " << translation[iSymm][2] << std::endl;	
+	pcout << (symmetryPtr->translation)[iSymm][0] << "  " <<(symmetryPtr->translation)[iSymm][1] << "  " << (symmetryPtr->translation)[iSymm][2] << std::endl;	
 	pcout << "	" << std::endl ;
   }
-  symmMatTemp.resize( numSymm );
-  symmMat.resize( numSymm );
-  symmUnderGroupTemp.resize(numSymm);
-  for (unsigned int i=0; i<numSymm; ++i) {
+  symmMatTemp.resize( symmetryPtr->numSymm );
+  (symmetryPtr->symmMat).resize( symmetryPtr->numSymm );
+  symmUnderGroupTemp.resize(symmetryPtr->numSymm);
+  for (unsigned int i=0; i<(symmetryPtr->numSymm); ++i) {
      symmMatTemp[i].resize(3,std::vector<double> (3,0.0)) ;
      for (unsigned int j=0; j<3; ++j) {
         for (unsigned int k=0; k<3; ++k)
@@ -272,18 +272,18 @@ void dftClass<FEOrder>::generateMPGrid()
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //
   std::vector<double> kPointAllCoordinates, kPointTemp(3); 
-  std::vector<int> discard(d_maxkPoints, 0), countedSymm(numSymm, 0), usedSymmNum(numSymm, 1) ;
+  std::vector<int> discard(d_maxkPoints, 0), countedSymm(symmetryPtr->numSymm, 0), usedSymmNum(symmetryPtr->numSymm, 1) ;
   kPointAllCoordinates = kPointReducedCoordinates ;
   int nk = d_maxkPoints ;
   d_maxkPoints = 0;
   
-  double translationTemp[numSymm][3];
-  for (unsigned int i=0; i<numSymm; ++i) {
+  double translationTemp[symmetryPtr->numSymm][3];
+  for (unsigned int i=0; i<(symmetryPtr->numSymm); ++i) {
     for (unsigned int j=0; j<3; ++j)
-     translationTemp[i][j] = translation[i][j];
+     translationTemp[i][j] = (symmetryPtr->translation)[i][j];
   }
   //
-  symmMat[0] = symmMatTemp[0] ;
+  (symmetryPtr->symmMat)[0] = symmMatTemp[0] ;
   //symmMat = symmMatTemp ;
   unsigned int usedSymm=1, ik = 0; // note usedSymm is initialized to 1 and not 0. Because identity is always present
   countedSymm[0] = 1 ;
@@ -295,7 +295,7 @@ void dftClass<FEOrder>::generateMPGrid()
     kPointReducedCoordinates[3*d_maxkPoints + 2] = kPointAllCoordinates[3*ik+2] ;
     d_maxkPoints = d_maxkPoints + 1 ;
     //
-    for (unsigned int iSymm = 1; iSymm < numSymm; ++iSymm) // iSymm begins from 1. because identity is always present and is taken care of.
+    for (unsigned int iSymm = 1; iSymm < (symmetryPtr->numSymm); ++iSymm) // iSymm begins from 1. because identity is always present and is taken care of.
 	{
         
         kPointTemp[0] = kPointAllCoordinates[3*ik+0]*symmMatTemp[iSymm][0][0] + kPointAllCoordinates[3*ik+1]*symmMatTemp[iSymm][1][0] + kPointAllCoordinates[3*ik+2]*symmMatTemp[iSymm][2][0];
@@ -317,9 +317,9 @@ void dftClass<FEOrder>::generateMPGrid()
 	   pcout<< "    " << ik << "     " << jk << std::endl ;
            if (countedSymm[iSymm]==0) {
 	       usedSymmNum[iSymm] = usedSymm ;
-               symmMat[usedSymm] = symmMatTemp[iSymm] ;
+               (symmetryPtr->symmMat)[usedSymm] = symmMatTemp[iSymm] ;
     		for (unsigned int j=0; j<3; ++j)
-     		    translation[usedSymm][j] = translationTemp[iSymm][j];
+     		    (symmetryPtr->translation)[usedSymm][j] = translationTemp[iSymm][j];
 	       usedSymm++ ;
 	       countedSymm[iSymm] = 1;
              }
@@ -338,26 +338,26 @@ void dftClass<FEOrder>::generateMPGrid()
     }
   }
   //
-  numSymm = usedSymm;
-  symmUnderGroup.resize (d_maxkPoints, std::vector<int>(numSymm,0) ) ;
-  numSymmUnderGroup.resize(d_maxkPoints,1) ; // minimum should be 1, because identity is always present
+  symmetryPtr->numSymm = usedSymm;
+  (symmetryPtr->symmUnderGroup).resize (d_maxkPoints, std::vector<int>(symmetryPtr->numSymm,0) ) ;
+  (symmetryPtr->numSymmUnderGroup).resize(d_maxkPoints,1) ; // minimum should be 1, because identity is always present
   for (unsigned int i=0; i<d_maxkPoints; ++i){
       //
-      symmUnderGroup[i][0] = 1 ;
-      for (unsigned int iSymm = 1; iSymm<numSymm; ++iSymm) {
+      (symmetryPtr->symmUnderGroup)[i][0] = 1 ;
+      for (unsigned int iSymm = 1; iSymm<(symmetryPtr->numSymm); ++iSymm) {
          if(std::find(symmUnderGroupTemp[iSymm].begin(), symmUnderGroupTemp[iSymm].end(), i) != symmUnderGroupTemp[iSymm].end()) {
-            symmUnderGroup[i][iSymm] = 1 ;
-	    numSymmUnderGroup[i] += 1 ;
+            (symmetryPtr->symmUnderGroup)[i][iSymm] = 1 ;
+	    (symmetryPtr->numSymmUnderGroup)[i] += 1 ;
      }
    }
-   pcout << " kpoint " << i << " numSymmUnderGroup " << numSymmUnderGroup[i] << std::endl;
+   pcout << " kpoint " << i << " numSymmUnderGroup " << (symmetryPtr->numSymmUnderGroup)[i] << std::endl;
   }
   //
   pcout<<" " << usedSymm << " symmetries used to reduce BZ "  << std::endl;  
-  for (unsigned int iSymm = 0; iSymm < numSymm; ++iSymm) 
+  for (unsigned int iSymm = 0; iSymm < (symmetryPtr->numSymm); ++iSymm) 
 	{
          for ( unsigned int ipol = 0; ipol<3; ++ipol)
-		 pcout << symmMat[iSymm][ipol][0] << "  " << symmMat[iSymm][ipol][1] << "  " << symmMat[iSymm][ipol][2] << std::endl;
+		 pcout << (symmetryPtr->symmMat)[iSymm][ipol][0] << "  " << (symmetryPtr->symmMat)[iSymm][ipol][1] << "  " << (symmetryPtr->symmMat)[iSymm][ipol][2] << std::endl;
   }
   //	
   pcout<<" number of irreducible k-points " << d_maxkPoints << std::endl;

@@ -22,6 +22,7 @@
 #include "../../include/eigen.h"
 #include "../../include/poisson.h"
 #include "../../include/force.h"
+#include "../../include/symmetry.h"
 #include "../../include/meshMovementGaussian.h"
 #include "../../include/fileReaders.h"
 #include "../../include/dftParameters.h"
@@ -41,7 +42,7 @@
 #include "energy.cc"
 #include "charge.cc"
 #include "density.cc"
-#include "symmetrizeRho.cc"
+//#include "symmetrizeRho.cc"
 
 #include "mixingschemes.cc"
 #include "chebyshev.cc"
@@ -54,7 +55,7 @@
 #include "stdafx.h"
 #ifdef ENABLE_PERIODIC_BC
 #include "generateImageCharges.cc"
-#include "initGroupSymmetry.cc"
+//#include "initGroupSymmetry.cc"
 #endif
 
 
@@ -84,6 +85,7 @@ dftClass<FEOrder>::dftClass():
   poissonPtr= new poissonClass<FEOrder>(this);
   eigenPtr= new eigenClass<FEOrder>(this);
   forcePtr= new forceClass<FEOrder>(this);
+  symmetryPtr= new symmetryClass<FEOrder>(this);
   //
   // initialize PETSc
   //
@@ -100,6 +102,7 @@ dftClass<FEOrder>::~dftClass()
 {
     delete poissonPtr;
     delete eigenPtr;
+    delete symmetryPtr;
     matrix_free_data.clear();
     delete forcePtr;
 }
@@ -368,7 +371,8 @@ void dftClass<FEOrder>::run ()
   pcout << " check 0.3 : " << std::endl ;
 
 #ifdef ENABLE_PERIODIC_BC
- initSymmetry() ;
+ if (useSymm)
+    symmetryPtr->initSymmetry() ;
 #endif
    pcout << " check 0.4 : " << std::endl ;
   //
@@ -521,8 +525,8 @@ void dftClass<FEOrder>::run ()
    computing_timer.enter_section("compute rho"); 
 #ifdef ENABLE_PERIODIC_BC
    if (useSymm){
-	computeLocalrhoOut();
-	computeAndSymmetrize_rhoOut();
+	symmetryPtr->computeLocalrhoOut();
+	symmetryPtr->computeAndSymmetrize_rhoOut();
     }
    else
        compute_rhoOut();

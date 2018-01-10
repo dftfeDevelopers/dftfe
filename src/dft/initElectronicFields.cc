@@ -16,7 +16,9 @@
 // @author  Phani Motamarri (2018)
 //
 
+#include "../../include/dftParameters.h"
 
+using namespace dftParameters ;
 
 //init
 template<unsigned int FEOrder>
@@ -40,7 +42,7 @@ void dftClass<FEOrder>::initElectronicFields(){
       tempPSI4[i]->reinit(vChebyshev);
     } 
   
-  for(unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+  for(unsigned int kPoint = 0; kPoint < (1+spinPolarized)*d_maxkPoints; ++kPoint)
     {
       for(unsigned int i = 0; i < eigenVectors[kPoint].size(); ++i)
 	{
