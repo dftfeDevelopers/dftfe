@@ -202,7 +202,7 @@ void meshGeneratorClass::generateMesh(Triangulation<3,3> &triangulation,
 
       typename Triangulation<3,3>::active_cell_iterator cell, endc;
 
-      /*while(refineFlag)
+      while(refineFlag)
 	{
 	  refineFlag = false;
 	  cell = triangulation.begin_active();
@@ -310,7 +310,7 @@ void meshGeneratorClass::generateMesh(Triangulation<3,3> &triangulation,
 		}
 	    }
 
-	} */
+	} 
 
       //
       //compute some adaptive mesh metrics
