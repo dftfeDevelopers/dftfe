@@ -16,81 +16,7 @@
 // @author Shiva Rudraraju (2016), Phani Motamarri (2016)
 //
 
-#include <boost/math/special_functions/spherical_harmonic.hpp>
-#include "stdafx.h"
-#include "linalg.h"
-#include "../../include/dftParameters.h"
-
-using namespace dftParameters ;
-double tolerance = 1e-12;
-double pspTail = 8.0;
-
-
-
-//some inline functions
-inline 
-void getRadialFunctionVal(const double radialCoordinate,
-			  double &splineVal,
-			  const alglib::spline1dinterpolant * spline) 
-{
-  
-  splineVal = alglib::spline1dcalc(*spline,
-				   radialCoordinate);
-  return;
-}
-
-inline
-void
-getSphericalHarmonicVal(const double theta, const double phi, const int l, const int m, double & sphericalHarmonicVal)
-{
-      
-  if(m < 0)
-    sphericalHarmonicVal = sqrt(2.0)*boost::math::spherical_harmonic_i(l,-m,theta,phi);
-      
-  else if (m == 0)
-    sphericalHarmonicVal = boost::math::spherical_harmonic_r(l,m,theta,phi);
-
-  else if (m > 0)
-    sphericalHarmonicVal = sqrt(2.0)*boost::math::spherical_harmonic_r(l,m,theta,phi);
-
-  return;
-
-}
-
-void
-convertCartesianToSpherical(double *x, double & r, double & theta, double & phi)
-{
-
-  r = sqrt(x[0]*x[0] + x[1]*x[1] + x[2]*x[2]);
- 
-  if(r == 0)
-    {
-	
-      theta = 0.0;
-      phi = 0.0;
-
-    }
-	
-  else
-    {
-
-      theta = acos(x[2]/r);
-      //
-      // check if theta = 0 or PI (i.e, whether the point is on the Z-axis)
-      // If yes, assign phi = 0.0.
-      // NOTE: In case theta = 0 or PI, phi is undetermined. The actual value 
-      // of phi doesn't matter in computing the enriched function value or 
-      // its gradient. We assign phi = 0.0 here just as a dummy value
-      //
-      if(fabs(theta - 0.0) >= tolerance && fabs(theta - M_PI) >= tolerance)
-	phi = atan2(x[1],x[0]);
-
-      else
-	phi = 0.0;
-
-    }
-
-}
+#include "pseudoUtils.cc"
 
 
 //
@@ -753,6 +679,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
   d_sparsityPattern.resize(numberNonLocalAtoms);
   d_elementIteratorsInAtomCompactSupport.resize(numberNonLocalAtoms);
   d_elementOneFieldIteratorsInAtomCompactSupport.resize(numberNonLocalAtoms);
+  d_nonLocalAtomIdsInCurrentProcess.clear(); 
 
   //
   //loop over nonlocal atoms
@@ -786,7 +713,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
 
   const unsigned int numberElements = iElemCount;
 
-
+  
   for(int iAtom = 0; iAtom < numberNonLocalAtoms; ++iAtom)
     {
 
@@ -794,6 +721,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
       //temp variables
       //
       int matCount = 0;
+      bool isAtomIdInProcessor=false;
 
       //
       //get the number of angular momentum specific pseudopotentials for the current nonlocal atom
@@ -822,7 +750,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
       typename DoFHandler<3>::active_cell_iterator cellEigen = dofHandlerEigen.begin_active();
 
       int iElem = -1;
-
+      
       for(; cell != endc; ++cell,++cellEigen)
 	{
 	  if(cell->is_locally_owned())
@@ -870,9 +798,9 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
 
 			  if(r <= d_pspTail)//d_outerMostPointPseudoPotData[globalSplineId])
 			    {
-			      getRadialFunctionVal(r,
-						   deltaVl,
-						   &d_deltaVlSplines[globalSplineId]);
+			      pseudoUtils::getRadialFunctionVal(r,
+						                deltaVl,
+						                &d_deltaVlSplines[globalSplineId]);
 			    }
 			  else
 			    {
@@ -901,6 +829,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
 		d_elementIteratorsInAtomCompactSupport[iAtom].push_back(cellEigen);
 		d_elementOneFieldIteratorsInAtomCompactSupport[iAtom].push_back(cell);
 		matCount += 1;
+                isAtomIdInProcessor=true;
 	      }
 
 	    }
@@ -909,7 +838,8 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
       cumulativePotSplineId += numberAngularMomentumSpecificPotentials;
 
       //pcout<<"No.of non zero elements in the compact support of atom "<<iAtom<<" is "<<d_elementIteratorsInAtomCompactSupport[iAtom].size()<<std::endl;
-
+      if (isAtomIdInProcessor)
+          d_nonLocalAtomIdsInCurrentProcess.push_back(iAtom);
     }//atom loop
 
   d_nonLocalAtomIdsInElement.clear();
@@ -924,6 +854,207 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
 	    d_nonLocalAtomIdsInElement[iElem].push_back(iAtom);
 	}
     }
+   
+   //
+   //data structures for memory optimization of projectorKetTimesVector
+   //
+   std::vector<unsigned int> nonLocalAtomIdsAllProcessFlattened; 
+   pseudoUtils::exchangeLocalList(d_nonLocalAtomIdsInCurrentProcess,
+                                  nonLocalAtomIdsAllProcessFlattened,
+                                  n_mpi_processes,
+                                  mpi_communicator);
+
+   std::vector<unsigned int> nonLocalAtomIdsSizeCurrentProcess(1); nonLocalAtomIdsSizeCurrentProcess[0]=d_nonLocalAtomIdsInCurrentProcess.size();
+   std::vector<unsigned int> nonLocalAtomIdsSizesAllProcess;
+   pseudoUtils::exchangeLocalList(nonLocalAtomIdsSizeCurrentProcess,
+                                  nonLocalAtomIdsSizesAllProcess,
+                                  n_mpi_processes,
+                                  mpi_communicator);
+
+   std::vector<std::vector<unsigned int> >nonLocalAtomIdsInAllProcess(n_mpi_processes);
+   unsigned int count=0;
+   for (unsigned int iProc=0; iProc< n_mpi_processes; iProc++)
+   {
+     for (unsigned int j=0; j < nonLocalAtomIdsSizesAllProcess[iProc]; j++)
+     {
+       nonLocalAtomIdsInAllProcess[iProc].push_back(nonLocalAtomIdsAllProcessFlattened[count]);
+       count++;
+     }
+   }
+   nonLocalAtomIdsAllProcessFlattened.clear();
+   
+   IndexSet nonLocalOwnedAtomIdsInCurrentProcess; nonLocalOwnedAtomIdsInCurrentProcess.set_size(numberNonLocalAtoms);
+   nonLocalOwnedAtomIdsInCurrentProcess.add_indices(d_nonLocalAtomIdsInCurrentProcess.begin(),d_nonLocalAtomIdsInCurrentProcess.end());
+   IndexSet nonLocalGhostAtomIdsInCurrentProcess(nonLocalOwnedAtomIdsInCurrentProcess);
+   for (unsigned int iProc=0; iProc< n_mpi_processes; iProc++)
+   {
+      if (iProc < this_mpi_process)
+      {
+         IndexSet temp; temp.set_size(numberNonLocalAtoms);
+         temp.add_indices(nonLocalAtomIdsInAllProcess[iProc].begin(),nonLocalAtomIdsInAllProcess[iProc].end());
+         nonLocalOwnedAtomIdsInCurrentProcess.subtract_set(temp);
+      }
+   }
+
+   nonLocalGhostAtomIdsInCurrentProcess.subtract_set(nonLocalOwnedAtomIdsInCurrentProcess);
+
+   std::vector<unsigned int> ownedNonLocalAtomIdsSizeCurrentProcess(1); ownedNonLocalAtomIdsSizeCurrentProcess[0]=nonLocalOwnedAtomIdsInCurrentProcess.n_elements();
+   std::vector<unsigned int> ownedNonLocalAtomIdsSizesAllProcess;
+   pseudoUtils::exchangeLocalList(ownedNonLocalAtomIdsSizeCurrentProcess,
+                                  ownedNonLocalAtomIdsSizesAllProcess,
+                                  n_mpi_processes,
+                                  mpi_communicator);
+   //renumbering to make contiguous set of nonLocal atomIds
+   std::map<int, int> oldToNewNonLocalAtomIds;
+   std::map<int, int> newToOldNonLocalAtomIds;   
+   unsigned int startingCount=0;
+   for (unsigned int iProc=0; iProc< n_mpi_processes; iProc++)
+   {
+      if (iProc < this_mpi_process)
+      {
+        startingCount+=ownedNonLocalAtomIdsSizesAllProcess[iProc];
+      }
+   }
+    
+   IndexSet nonLocalOwnedAtomIdsInCurrentProcessRenum, nonLocalGhostAtomIdsInCurrentProcessRenum;
+   nonLocalOwnedAtomIdsInCurrentProcessRenum.set_size(numberNonLocalAtoms);
+   nonLocalGhostAtomIdsInCurrentProcessRenum.set_size(numberNonLocalAtoms);
+   for (IndexSet::ElementIterator it=nonLocalOwnedAtomIdsInCurrentProcess.begin(); it!=nonLocalOwnedAtomIdsInCurrentProcess.end(); it++)
+   {
+       oldToNewNonLocalAtomIds[*it]=startingCount;
+       newToOldNonLocalAtomIds[startingCount]=*it;
+       nonLocalOwnedAtomIdsInCurrentProcessRenum.add_index(startingCount);
+       startingCount++; 
+   }
+
+   pseudoUtils::exchangeNumberingMap(oldToNewNonLocalAtomIds,
+                                     n_mpi_processes,
+                                     mpi_communicator);
+   pseudoUtils::exchangeNumberingMap(newToOldNonLocalAtomIds,
+                                     n_mpi_processes,
+                                     mpi_communicator);
+   
+   for (IndexSet::ElementIterator it=nonLocalGhostAtomIdsInCurrentProcess.begin(); it!=nonLocalGhostAtomIdsInCurrentProcess.end(); it++)
+   {
+       unsigned int newAtomId=oldToNewNonLocalAtomIds[*it];
+       nonLocalGhostAtomIdsInCurrentProcessRenum.add_index(newAtomId);
+   }
+
+   if(this_mpi_process==0 && false){
+     for( std::map<int, int>::const_iterator it=oldToNewNonLocalAtomIds.begin(); it!=oldToNewNonLocalAtomIds.end();it++)
+        std::cout<<" old nonlocal atom id: "<<it->first <<" new nonlocal atomid: "<<it->second<<std::endl;
+
+     std::cout<<"number of local owned non local atom ids in all processors"<< '\n';
+     for (unsigned int iProc=0; iProc<n_mpi_processes; iProc++)
+         std::cout<<ownedNonLocalAtomIdsSizesAllProcess[iProc]<<",";
+     std::cout<<std::endl;
+   }
+   if (false)
+   {
+     std::stringstream ss1;nonLocalOwnedAtomIdsInCurrentProcess.print(ss1);
+     std::stringstream ss2;nonLocalGhostAtomIdsInCurrentProcess.print(ss2);
+     std::string s1(ss1.str());s1.pop_back(); std::string s2(ss2.str());s2.pop_back();
+     std::cout<<"procId: "<< this_mpi_process<< " old owned: "<< s1<< " old ghost: "<< s2<<std::endl;
+     std::stringstream ss3;nonLocalOwnedAtomIdsInCurrentProcessRenum.print(ss3);
+     std::stringstream ss4;nonLocalGhostAtomIdsInCurrentProcessRenum.print(ss4);
+     std::string s3(ss3.str());s3.pop_back(); std::string s4(ss4.str());s4.pop_back();
+     std::cout<<"procId: "<< this_mpi_process<< " new owned: "<< s3<<" new ghost: "<< s4<< std::endl;
+   }
+   AssertThrow(nonLocalOwnedAtomIdsInCurrentProcessRenum.is_ascending_and_one_to_one(mpi_communicator),ExcMessage("Incorrect renumbering and/or partitioning of non local atom ids"));    
+
+   int numberLocallyOwnedProjectors=0;
+   int numberGhostProjectors=0;
+   std::vector<unsigned int> coarseNodeIdsCurrentProcess;
+   for (IndexSet::ElementIterator it=nonLocalOwnedAtomIdsInCurrentProcessRenum.begin(); it!=nonLocalOwnedAtomIdsInCurrentProcessRenum.end(); it++)
+   {
+       coarseNodeIdsCurrentProcess.push_back(numberLocallyOwnedProjectors);
+       numberLocallyOwnedProjectors += d_numberPseudoAtomicWaveFunctions[newToOldNonLocalAtomIds[*it]];  
+       
+   }
+
+   std::vector<unsigned int> ghostAtomIdNumberPseudoWaveFunctions;
+   for (IndexSet::ElementIterator it=nonLocalGhostAtomIdsInCurrentProcessRenum.begin(); it!=nonLocalGhostAtomIdsInCurrentProcessRenum.end(); it++)
+   {
+       const unsigned temp=d_numberPseudoAtomicWaveFunctions[newToOldNonLocalAtomIds[*it]]; 
+       numberGhostProjectors += temp;
+       ghostAtomIdNumberPseudoWaveFunctions.push_back(temp);
+   }
+  
+   std::vector<unsigned int> numberLocallyOwnedProjectorsCurrentProcess(1); numberLocallyOwnedProjectorsCurrentProcess[0]=numberLocallyOwnedProjectors;
+   std::vector<unsigned int> numberLocallyOwnedProjectorsAllProcess;
+   pseudoUtils::exchangeLocalList(numberLocallyOwnedProjectorsCurrentProcess,
+                                  numberLocallyOwnedProjectorsAllProcess,
+                                  n_mpi_processes,
+                                  mpi_communicator);
+
+   startingCount=0;
+   for (unsigned int iProc=0; iProc< n_mpi_processes; iProc++)
+   {
+      if (iProc < this_mpi_process)
+      {
+	 startingCount+=numberLocallyOwnedProjectorsAllProcess[iProc];
+      }
+   }   
+  
+   d_locallyOwnedProjectorIdsCurrentProcess.clear(); d_locallyOwnedProjectorIdsCurrentProcess.set_size(std::accumulate(numberLocallyOwnedProjectorsAllProcess.begin(),numberLocallyOwnedProjectorsAllProcess.end(),0));
+   std::vector<unsigned int> v(numberLocallyOwnedProjectors) ; 
+   std::iota (std::begin(v), std::end(v), startingCount);
+   d_locallyOwnedProjectorIdsCurrentProcess.add_indices(v.begin(),v.end());
+
+   std::vector<unsigned int> coarseNodeIdsAllProcess;
+   for (unsigned int i=0; i< coarseNodeIdsCurrentProcess.size();++i)
+       coarseNodeIdsCurrentProcess[i]+=startingCount;
+   pseudoUtils::exchangeLocalList(coarseNodeIdsCurrentProcess,
+                                  coarseNodeIdsAllProcess,
+                                  n_mpi_processes,
+                                  mpi_communicator);  
+
+   d_ghostProjectorIdsCurrentProcess.clear(); d_ghostProjectorIdsCurrentProcess.set_size(std::accumulate(numberLocallyOwnedProjectorsAllProcess.begin(),numberLocallyOwnedProjectorsAllProcess.end(),0));
+   unsigned int localGhostCount=0;
+   for (IndexSet::ElementIterator it=nonLocalGhostAtomIdsInCurrentProcessRenum.begin(); it!=nonLocalGhostAtomIdsInCurrentProcessRenum.end(); it++)
+   {
+      std::vector<unsigned int> g(ghostAtomIdNumberPseudoWaveFunctions[localGhostCount]); 
+      std::iota (std::begin(g), std::end(g), coarseNodeIdsAllProcess[*it]);
+      d_ghostProjectorIdsCurrentProcess.add_indices(g.begin(),g.end());
+      localGhostCount++;
+   }
+   if (false)
+   {
+     std::stringstream ss1;d_locallyOwnedProjectorIdsCurrentProcess.print(ss1);
+     std::stringstream ss2;d_ghostProjectorIdsCurrentProcess.print(ss2);
+     std::string s1(ss1.str());s1.pop_back(); std::string s2(ss2.str());s2.pop_back();
+     std::cout<<"procId: "<< this_mpi_process<< " projectors owned: "<< s1<< " projectors ghost: "<< s2<<std::endl;
+   }   
+   AssertThrow(d_locallyOwnedProjectorIdsCurrentProcess.is_ascending_and_one_to_one(mpi_communicator),ExcMessage("Incorrect numbering and/or partitioning of non local projectors"));
+
+   d_projectorIdsNumberingMapCurrentProcess.clear();
+
+   for (IndexSet::ElementIterator it=nonLocalOwnedAtomIdsInCurrentProcess.begin(); it!=nonLocalOwnedAtomIdsInCurrentProcess.end(); it++)
+   {
+       const int numberPseudoWaveFunctions=d_numberPseudoAtomicWaveFunctions[*it];
+
+       for (unsigned int i=0; i<numberPseudoWaveFunctions;++i)
+       {
+	   d_projectorIdsNumberingMapCurrentProcess[std::make_pair(*it,i)]=coarseNodeIdsAllProcess[oldToNewNonLocalAtomIds[*it]]+i;
+       }
+   } 
+
+   for (IndexSet::ElementIterator it=nonLocalGhostAtomIdsInCurrentProcess.begin(); it!=nonLocalGhostAtomIdsInCurrentProcess.end(); it++)
+   {
+       const int numberPseudoWaveFunctions=d_numberPseudoAtomicWaveFunctions[*it];
+
+       for (unsigned int i=0; i<numberPseudoWaveFunctions;++i)
+       {
+	   d_projectorIdsNumberingMapCurrentProcess[std::make_pair(*it,i)]=coarseNodeIdsAllProcess[oldToNewNonLocalAtomIds[*it]]+i;
+       }
+   }    
+
+   if (false){
+     for (std::map<std::pair<unsigned int,unsigned int>, unsigned int>::const_iterator it=d_projectorIdsNumberingMapCurrentProcess.begin(); it!=d_projectorIdsNumberingMapCurrentProcess.end();++it)
+     {
+        std::cout << "procId: "<< this_mpi_process<<" ["<<it->first.first << "," << it->first.second << "] " << it->second<< std::endl;       
+     }
+   }
 
 }
 
@@ -1098,21 +1229,21 @@ void dftClass<FEOrder>::computeElementalProjectorKets()
 		      // get the spherical coordinates from cartesian
 		      //
 		      double r,theta,phi;
-		      convertCartesianToSpherical(x,r,theta,phi);
+		      pseudoUtils::convertCartesianToSpherical(x,r,theta,phi);
 		    
 
 		      double radialWaveFunVal, sphericalHarmonicVal, radialPotFunVal, pseudoWaveFunctionValue, deltaVlValue;
 		      if(r <= d_pspTail)//d_outerMostPointPseudoWaveFunctionsData[globalWaveSplineId])
 			{
-			  getRadialFunctionVal(r,
+			  pseudoUtils::getRadialFunctionVal(r,
 					       radialWaveFunVal,
 					       &d_pseudoWaveFunctionSplines[globalWaveSplineId]);
 
-			  getSphericalHarmonicVal(theta,phi,lQuantumNumber,mQuantumNumber,sphericalHarmonicVal);
+			  pseudoUtils::getSphericalHarmonicVal(theta,phi,lQuantumNumber,mQuantumNumber,sphericalHarmonicVal);
 			
 			  pseudoWaveFunctionValue = radialWaveFunVal*sphericalHarmonicVal;
 
-			  getRadialFunctionVal(r,
+			  pseudoUtils::getRadialFunctionVal(r,
 					       radialPotFunVal,
 					       &d_deltaVlSplines[globalPotSplineId]);
 

@@ -7,7 +7,9 @@ set DFT PATH = "../../../../"
 #finite-element related parameters
 #
 set MESH FILE = mesh.inp
-set FINITE ELEMENT POLYNOMIAL ORDER = 6
+
+set FINITE ELEMENT POLYNOMIAL ORDER = 1
+
 
 #
 #Atomic-coordinates file
@@ -20,7 +22,7 @@ set ATOMIC COORDINATES FILE = coordinates.inp
 #
 
 #Radius of the atom-centered ball in which self-potential of the associated nuclear charge is solved
-set RADIUS ATOM BALL = 3.0
+set RADIUS ATOM BALL = 2.8
 #Simulation domain sizes 
 #Values listed here are not relevant if external mesh is used for non-periodic calculations
 set DOMAIN SIZE X    = 7.6

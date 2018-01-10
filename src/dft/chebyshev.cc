@@ -421,7 +421,6 @@ void dftClass<FEOrder>::gramSchmidt(std::vector<vectorType*>& X)
 	{
 	  localData[j].real(tempReal[j]);
 	  localData[j].imag(tempImag[j]);
-	  //localData[j] = tempReal[j];
 	}
       std::copy(localData.begin(),localData.end(), &(columnSpacePointer[i][0])); 
     }
@@ -460,7 +459,6 @@ void dftClass<FEOrder>::gramSchmidt(std::vector<vectorType*>& X)
   for (int i = 0; i < numVectors; ++i)
     {
       std::vector<std::complex<double> > localData(localSize);
-      //std::vector<double> localData(localSize);
       std::copy(&(columnSpacePointer[i][0]),&(columnSpacePointer[i][localSize]), localData.begin()); 
       for(int j = 0; j < localSize; ++j)
 	{

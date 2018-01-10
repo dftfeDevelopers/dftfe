@@ -45,7 +45,8 @@ class meshGeneratorClass
 				     std::vector<std::vector<double> > & imageAtomLocations,
 				     std::vector<std::vector<double> > & domainBoundingVectors);
 
-  void generateMesh(Triangulation<3,3> & triangulation);
+  void generateMesh(Triangulation<3,3> & triangulation,
+		    unsigned int & numberGlobalCells);
 
   Triangulation<3,3> & getSerialMesh();
 

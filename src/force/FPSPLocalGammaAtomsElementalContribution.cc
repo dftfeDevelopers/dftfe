@@ -18,7 +18,7 @@
  
 //(locally used function) compute FPSPLocal contibution due to Gamma(Rj) for given set of cells  
 template<unsigned int FEOrder>
-void forceClass<FEOrder>::computeForceContributionFPSPLocalGammaAtoms(std::map<unsigned int, std::vector<double> > & forceContributionFPSPLocalGammaAtoms,
+void forceClass<FEOrder>::FPSPLocalGammaAtomsElementalContribution(std::map<unsigned int, std::vector<double> > & forceContributionFPSPLocalGammaAtoms,
 		                                               FEValues<C_DIM> & feVselfValues,
 							       FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
 							       const unsigned int cell,

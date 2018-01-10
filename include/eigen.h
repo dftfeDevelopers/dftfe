@@ -55,6 +55,9 @@ public:
   void computeNonLocalHamiltonianTimesX_OV(const std::vector<vectorType*> &src,
 					std::vector<vectorType*>       &dst);
 
+  void computeNonLocalHamiltonianTimesXMemoryOpt(const std::vector<vectorType*> &src,
+					         std::vector<vectorType*>       &dst);  
+
   void init ();
   void computeMassVector();
   void computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoValues, 

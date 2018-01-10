@@ -32,7 +32,7 @@ namespace meshMovementUtils{
 
     
   std::vector<double> getFractionalCoordinates(const std::vector<double> & latticeVectors,
-	                                       const Point<3> & point, const Point<3> & corner)
+	                                       const Point<3> & point, const Point<3> & corner) ;
   {   
       //
       // recenter vertex about corner
@@ -113,13 +113,20 @@ void meshMovementClass::writeMesh()
   //write mesh to vtk file
   //
   if (this_mpi_process==0 && d_dofHandlerMoveMesh.get_triangulation().locally_owned_subdomain()==numbers::invalid_subdomain_id)
-  {
-     DataOut<3> data_out;
-     data_out.attach_dof_handler(d_dofHandlerMoveMesh);
-     data_out.build_patches ();
-     std::ofstream output ("mesh.vtu");
-     data_out.write_vtu (output);
-  }
+    {
+      DataOut<3> data_out;
+      data_out.attach_dof_handler(d_dofHandlerMoveMesh);
+      data_out.build_patches ();
+      std::ofstream output ("meshFinal.vtu");
+      data_out.write_vtu (output);
+    }
+
+  
+  /*DataOut<3> data_out;
+  data_out.attach_dof_handler(d_dofHandlerMoveMesh);
+  data_out.build_patches ();
+  data_out.write_vtu_in_parallel(std::string("mesh.vtu").c_str(),mpi_communicator);*/
+
 }
  
 void meshMovementClass::initIncrementField()
@@ -204,6 +211,8 @@ void meshMovementClass::movedMeshCheck()
   pcout << "Sanity check for periodic matched faces on moved triangulation..." << std::endl;  
   for(unsigned int i=0; i< d_periodicity_vector.size(); ++i) 
   {
+    if (!d_periodicity_vector[i].cell[0]->active() || !d_periodicity_vector[i].cell[1]->active())
+       continue;      
     if (d_periodicity_vector[i].cell[0]->is_artificial() || d_periodicity_vector[i].cell[1]->is_artificial())
        continue;
 

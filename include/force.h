@@ -49,32 +49,42 @@ private:
   std::vector<unsigned int> d_globalAtomsRelaxationPermissions;
   std::vector<double> d_globalAtomsRelaxationDisplacements;
   void createBinObjectsForce();
-  void initLocalPseudoPotentialForce();
-  void initNonLocalPseudoPotentialForce();
-  void computeSparseStructureNonLocalProjectorsForce();
-  void computeElementalProjectorKetsForce();
+  //configurational force functions
   void configForceLinFEInit();
   void configForceLinFEFinalize();
-  void computeConfigurationalForceEEshelbyTensorFPSPNonPeriodicLinFE();
-  void computeConfigurationalForceEEshelbyTensorFPSPPeriodicLinFE();  
+  void computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE();  
   void computeConfigurationalForcePhiExtLinFE();
   void computeConfigurationalForceEselfLinFE();
   void computeConfigurationalForceEselfNoSurfaceLinFE();
   void computeConfigurationalForceTotalLinFE();
+  void FPSPLocalGammaAtomsElementalContribution(std::map<unsigned int, std::vector<double> > & forceContributionFPSPLocalGammaAtoms,
+		                                FEValues<C_DIM> & feVselfValues,
+                                                FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,					    
+				                const unsigned int cell,
+			                        const std::vector<VectorizedArray<double> > & rhoQuads);
+
+  void distributeForceContributionFPSPLocalGammaAtoms(const std::map<unsigned int, std::vector<double> > & forceContributionFPSPLocalGammaAtoms);    
+  //
   void computeAtomsForcesGaussianGenerator(bool allowGaussianOverlapOnAtoms=false);
+  //void computeEnlFnlForceContribution();  
   void relaxAtomsForces();
   void relaxStress();
   void relaxAtomsForcesStress();
   void locateAtomCoreNodesForce();
-  void computeForceContributionFPSPLocalGammaAtoms(std::map<unsigned int, std::vector<double> > & forceContributionFPSPLocalGammaAtoms,
-		                            FEValues<C_DIM> & feVselfValues,
-                                            FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,					    
-				            const unsigned int cell,
-			                    const std::vector<VectorizedArray<double> > & rhoQuads);
 
-  void distributeForceContributionFPSPLocalGammaAtoms(const std::map<unsigned int, std::vector<double> > & forceContributionFPSPLocalGammaAtoms);  
   
-  //////force pseudopotential data
+  //////force related pseudopotential member functions and data members
+  void initLocalPseudoPotentialForce();
+  void computeElementalNonLocalPseudoDataForce(); 
+  void computeNonLocalProjectorKetTimesVector(const std::vector<vectorType*> &src,
+                                         std::vector<std::vector<double> > & projectorKetTimesVectorReal,
+                                         std::vector<std::vector<std::complex<double> > > & projectorKetTimesVectorComplex);
+ 
+  //storage for precomputed nonlocal pseudopotential quadrature data
+  //vector<vector< elemental quad data >(number pseudo wave functions)> (number non local atoms with with compact support in curent processor)
+  std::vector<std::vector<std::map<dealii::CellId, std::vector<double> > > > d_nonLocalPSP_ClmDeltaVl;
+  std::vector<std::vector<std::map<dealii::CellId, std::vector<double> > > > d_nonLocalPSPGrad_ClmDeltaVl;
+  //storage for precompute localPseudo data
   std::map<dealii::CellId, std::vector<double> > d_gradPseudoVLoc;
   //only contains maps for atoms whose psp tail intersects the local domain
   std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > d_gradPseudoVLocAtoms;

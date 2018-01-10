@@ -99,6 +99,10 @@ void declare_parameters()
 		    "Inner Domain Size along 3-direction");
 
   
+  prm.declare_entry("OUTER ATOM BALL RADIUS","0.0",
+		    Patterns::Double(),
+		     "Radius of outer ball enclosing atom");
+  
   prm.declare_entry("MESH SIZE OUTER DOMAIN", "0.0",
 		    Patterns::Double(),
 		     "Outer Domain Mesh Size");
@@ -107,9 +111,13 @@ void declare_parameters()
 		    Patterns::Double(),
 		     "Inner Domain Mesh Size");
 
-  prm.declare_entry("MESH SIZE INNER BALL", "0.0",
+  prm.declare_entry("MESH SIZE NEAR ATOM", "0.0",
 		    Patterns::Double(),
-		     "Inner Ball Mesh Size");
+		     "Mesh Size near atom");
+
+  prm.declare_entry("MESH SIZE OUTER ATOM BALL", "0.0",
+		    Patterns::Double(),
+		     "Mesh Size in a ball around atom");
  
 
   prm.declare_entry("ATOMIC COORDINATES FILE", "",
@@ -156,7 +164,7 @@ void declare_parameters()
 		    "The degree of the finite-element interpolating polynomial");
 
 
-  prm.declare_entry("RADIUS ATOM BALL", "3.0",
+  prm.declare_entry("SELF POTENTIAL ATOM BALL RADIUS", "3.0",
 		    Patterns::Double(),
 		    "The radius of the ball around an atom on which self-potential of the associated nuclear charge is solved");
 
@@ -290,18 +298,20 @@ void parse_command_line(const int argc,
 	  dftParameters::finiteElementPolynomialOrder  = prm.get_integer("FINITE ELEMENT POLYNOMIAL ORDER");
 	  dftParameters::n_refinement_steps            = prm.get_integer("NUMBER OF REFINEMENT STEPS");
 	  dftParameters::coordinatesFile               = prm.get("ATOMIC COORDINATES FILE");
-	  dftParameters::radiusAtomBall                = prm.get_double("RADIUS ATOM BALL");
+	  dftParameters::radiusAtomBall                = prm.get_double("SELF POTENTIAL ATOM BALL RADIUS");
 	  dftParameters::domainSizeX                   = prm.get_double("DOMAIN SIZE X");
 	  dftParameters::domainSizeY                   = prm.get_double("DOMAIN SIZE Y");
 	  dftParameters::domainSizeZ                   = prm.get_double("DOMAIN SIZE Z");
-	  dftParameters::innerDomainSizeX               = prm.get_double("INNER DOMAIN SIZE X");
-	  dftParameters::innerDomainSizeY               = prm.get_double("INNER DOMAIN SIZE Y");
-	  dftParameters::innerDomainSizeZ               = prm.get_double("INNER DOMAIN SIZE Z");
+	  dftParameters::innerDomainSizeX              = prm.get_double("INNER DOMAIN SIZE X");
+	  dftParameters::innerDomainSizeY              = prm.get_double("INNER DOMAIN SIZE Y");
+	  dftParameters::innerDomainSizeZ              = prm.get_double("INNER DOMAIN SIZE Z");
+	  dftParameters::outerAtomBallRadius           = prm.get_double("OUTER ATOM BALL RADIUS");
 	  dftParameters::meshSizeOuterDomain           = prm.get_double("MESH SIZE OUTER DOMAIN");
 	  dftParameters::meshSizeInnerDomain           = prm.get_double("MESH SIZE INNER DOMAIN");
-	  dftParameters::meshSizeInnerBall             = prm.get_double("MESH SIZE INNER BALL");
 	  dftParameters::spinPolarized                 = prm.get_integer("SPIN POLARIZATION");
 	  dftParameters::start_magnetization           = prm.get_double("START MAGNETIZATION");
+	  dftParameters::meshSizeInnerBall             = prm.get_double("MESH SIZE NEAR ATOM");
+	  dftParameters::meshSizeOuterBall             = prm.get_double("MESH SIZE OUTER ATOM BALL");
 	  dftParameters::periodicX                     = prm.get_bool("PERIODIC BOUNDARY CONDITION X");
 	  dftParameters::periodicY                     = prm.get_bool("PERIODIC BOUNDARY CONDITION Y");
 	  dftParameters::periodicZ                     = prm.get_bool("PERIODIC BOUNDARY CONDITION Z");

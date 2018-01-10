@@ -355,8 +355,9 @@ void dftClass<FEOrder>::run ()
   //move triangulation to have atoms on triangulation vertices
   //
 
-  //moveMeshToAtoms(triangulationPar);
-  //moveMeshToAtoms(triangulationSer);
+  moveMeshToAtoms(triangulationPar);
+  moveMeshToAtoms(triangulationSer,true);//can only be called after calling moveMeshToAtoms(triangulationPar)
+
 
   //
   //initialize dirichlet BCs for total potential and vSelf poisson solutions
