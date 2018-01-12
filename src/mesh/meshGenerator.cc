@@ -89,7 +89,8 @@ meshGeneratorClass::~meshGeneratorClass()
 //
 //generate adaptive mesh
 //
-void meshGeneratorClass::generateMesh(Triangulation<3,3> &triangulation)
+void meshGeneratorClass::generateMesh(Triangulation<3,3> &triangulation,
+				      types::global_dof_index & numberGlobalCells)
 {
   computing_timer.enter_section("mesh");
   if(!dftParameters::meshFileName.empty())
@@ -110,15 +111,50 @@ void meshGeneratorClass::generateMesh(Triangulation<3,3> &triangulation)
   else
     {
 
+      //
+      //compute magnitudes of domainBounding Vectors
+      //
+      double domainBoundingVectorMag1 = sqrt(d_domainBoundingVectors[0][0]*d_domainBoundingVectors[0][0] + d_domainBoundingVectors[0][1]*d_domainBoundingVectors[0][1] +  d_domainBoundingVectors[0][2]*d_domainBoundingVectors[0][2]);
+      double domainBoundingVectorMag2 = sqrt(d_domainBoundingVectors[1][0]*d_domainBoundingVectors[1][0] + d_domainBoundingVectors[1][1]*d_domainBoundingVectors[1][1] +  d_domainBoundingVectors[1][2]*d_domainBoundingVectors[1][2]);
+      double domainBoundingVectorMag3 = sqrt(d_domainBoundingVectors[2][0]*d_domainBoundingVectors[2][0] + d_domainBoundingVectors[2][1]*d_domainBoundingVectors[2][1] +  d_domainBoundingVectors[2][2]*d_domainBoundingVectors[2][2]);
+      
+      //
+      //generate base level refinement
+      //
+      unsigned int subdivisions[3];subdivisions[0]=1.0;subdivisions[1]=1.0;subdivisions[2]=1.0;
+
+      
+
+      std::vector<double> numberIntervalsEachDirection;
+      numberIntervalsEachDirection.push_back(domainBoundingVectorMag1/dftParameters::meshSizeOuterDomain);
+      numberIntervalsEachDirection.push_back(domainBoundingVectorMag2/dftParameters::meshSizeOuterDomain);
+      numberIntervalsEachDirection.push_back(domainBoundingVectorMag3/dftParameters::meshSizeOuterDomain);
+      
+
       Point<3> vector1(d_domainBoundingVectors[0][0],d_domainBoundingVectors[0][1],d_domainBoundingVectors[0][2]);
       Point<3> vector2(d_domainBoundingVectors[1][0],d_domainBoundingVectors[1][1],d_domainBoundingVectors[1][2]);
       Point<3> vector3(d_domainBoundingVectors[2][0],d_domainBoundingVectors[2][1],d_domainBoundingVectors[2][2]);
 
-
       //
-      //Generate outer box using domain bounding vectors
+      //Generate coarse mesh
       //
       Point<3> basisVectors[3] = {vector1,vector2,vector3};
+
+
+            
+      /*for (int i=0; i<3;i++){
+
+        double temp = numberIntervalsEachDirection[i]-std::floor(numberIntervalsEachDirection[i]);
+        if((temp - std::floor(temp)) >= 0.5)
+           subdivisions[i] = std::ceil(numberIntervalsEachDirection[i]);
+        else
+	   subdivisions[i] = std::floor(numberIntervalsEachDirection[i]);
+      }
+
+      GridGenerator::subdivided_parallelepiped<3>(triangulation,
+	                                          subdivisions,
+				                  basisVectors);*/
+
       GridGenerator::parallelepiped<3>(triangulation,
 				       basisVectors);
 
@@ -141,26 +177,11 @@ void meshGeneratorClass::generateMesh(Triangulation<3,3> &triangulation)
 #endif
 
             
-      //
-      //compute magnitudes of domainBounding Vectors
-      //
-      double domainBoundingVectorMag1 = sqrt(d_domainBoundingVectors[0][0]*d_domainBoundingVectors[0][0] + d_domainBoundingVectors[0][1]*d_domainBoundingVectors[0][1] +  d_domainBoundingVectors[0][2]*d_domainBoundingVectors[0][2]);
-      double domainBoundingVectorMag2 = sqrt(d_domainBoundingVectors[1][0]*d_domainBoundingVectors[1][0] + d_domainBoundingVectors[1][1]*d_domainBoundingVectors[1][1] +  d_domainBoundingVectors[1][2]*d_domainBoundingVectors[1][2]);
-      double domainBoundingVectorMag3 = sqrt(d_domainBoundingVectors[2][0]*d_domainBoundingVectors[2][0] + d_domainBoundingVectors[2][1]*d_domainBoundingVectors[2][1] +  d_domainBoundingVectors[2][2]*d_domainBoundingVectors[2][2]);
-      
-      //
-      //generate base level refinement
-      //
-      unsigned int baseRefinementLevel,meshSizeDomain;
-
-      std::vector<double> numberIntervalsEachDirection;
-      numberIntervalsEachDirection.push_back(domainBoundingVectorMag1/dftParameters::meshSizeOuterDomain);
-      numberIntervalsEachDirection.push_back(domainBoundingVectorMag2/dftParameters::meshSizeOuterDomain);
-      numberIntervalsEachDirection.push_back(domainBoundingVectorMag3/dftParameters::meshSizeOuterDomain);
       std::vector<double>::iterator result =  std::max_element(numberIntervalsEachDirection.begin(),
 							       numberIntervalsEachDirection.end());
       double maxNumberIntervals = *result;
       double temp = log(maxNumberIntervals)/log(2);
+      unsigned int baseRefinementLevel;
       if((temp - std::floor(temp)) >= 0.5)
 	baseRefinementLevel = std::ceil(temp);
       else
@@ -235,6 +256,14 @@ void meshGeneratorClass::generateMesh(Triangulation<3,3> &triangulation)
 			}
 		    }
 
+		  bool inOuterAtomBall = false;
+
+		  if(distanceToClosestAtom <= dftParameters::outerAtomBallRadius)
+		    inOuterAtomBall = true;
+
+		  if(inOuterAtomBall && currentMeshSize > dftParameters::meshSizeOuterBall)
+		    cellRefineFlag = true;
+
 		  MappingQ1<3,3> mapping;
 		  try
 		    {
@@ -306,6 +335,9 @@ void meshGeneratorClass::generateMesh(Triangulation<3,3> &triangulation)
       char buffer[100];
       sprintf(buffer, "Adaptivity summary:\n numCells: %u, numLevels: %u, h_min: %5.2e\n", triangulation.n_global_active_cells(), numLevels, minElemLength);
       pcout << buffer;
+
+      numberGlobalCells = triangulation.n_global_active_cells();
+
     }
 
   computing_timer.exit_section("mesh");
@@ -327,16 +359,28 @@ void meshGeneratorClass::generateSerialAndParallelMesh(std::vector<std::vector<d
   d_imageAtomPositions = imageAtomLocations;
   d_domainBoundingVectors = domainBoundingVectors;
 
+  types::global_dof_index numberGlobalCellsSerial,numberGlobalCellsParallel;
+
   //
   //generate unmoved mesh data members
   //
-  generateMesh(d_serialTriangulationUnmoved);
-  generateMesh(d_parallelTriangulationUnmoved);
+  generateMesh(d_serialTriangulationUnmoved,
+	       numberGlobalCellsSerial);
+
+  generateMesh(d_parallelTriangulationUnmoved,
+	       numberGlobalCellsParallel);
+
+  AssertThrow(numberGlobalCellsParallel==numberGlobalCellsSerial,ExcMessage("Number of cells are different for parallel and serial triangulations"));
 
   //generate moved mesh data members which are still the same meshes before
   //but will be accessed to move the meshes later
-  generateMesh(d_serialTriangulationMoved);
-  generateMesh(d_parallelTriangulationMoved);
+  generateMesh(d_serialTriangulationMoved,
+	       numberGlobalCellsSerial);
+
+  generateMesh(d_parallelTriangulationMoved,
+	       numberGlobalCellsParallel);
+
+  
 
 }
 

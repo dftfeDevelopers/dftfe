@@ -161,9 +161,20 @@ void dftClass<FEOrder>::compute_rhoOut()
   //pop out rhoInVals and rhoOutVals if their size exceeds mixing history size
   if(rhoInVals.size() == dftParameters::mixingHistory)
     {
+      (**(rhoInVals.begin())).clear();
+      delete *(rhoInVals.begin());	
       rhoInVals.pop_front();
+
+      (**(rhoOutVals.begin())).clear();
+      delete *(rhoOutVals.begin());	      
       rhoOutVals.pop_front();
+
+      (**(gradRhoInVals.begin())).clear();
+      delete *(gradRhoInVals.begin());	      
       gradRhoInVals.pop_front();
+
+      (**(gradRhoOutVals.begin())).clear();
+      delete *(gradRhoOutVals.begin());	      
       gradRhoOutVals.pop_front();
     }
 

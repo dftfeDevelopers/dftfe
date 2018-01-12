@@ -488,7 +488,32 @@ void dftClass<FEOrder>::generateImageCharges()
       std::cout<<d_imagePositions[i][j]<<" ";
     std::cout<<'\n';
     }*/
+  unsigned int numberGlobalCharges  = atomLocations.size();
+  std::vector<std::vector<int> > globalChargeIdToImageIdMap;
+  globalChargeIdToImageIdMap.resize(numberGlobalCharges);
 
+  for(int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
+    {
+      globalChargeIdToImageIdMap[iCharge].push_back(iCharge);
+    }
+
+  for(int iImage = 0; iImage < numImageCharges; ++iImage)
+    {
+      //
+      //Get the masterChargeId corresponding to the current image atom
+      //
+      const int masterChargeId = d_imageIds[iImage];
+
+      //
+      //insert into the map
+      //
+      globalChargeIdToImageIdMap[masterChargeId].push_back(iImage+numberGlobalCharges);
+
+    }
+
+  d_globalChargeIdToImageIdMap.clear();
+  d_globalChargeIdToImageIdMap = globalChargeIdToImageIdMap;
+  
 }
 
 

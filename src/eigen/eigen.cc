@@ -907,7 +907,10 @@ void eigenClass<FEOrder>::HX(const std::vector<vectorType*> &src,
 	}
           
       computeNonLocalHamiltonianTimesXMemoryOpt(dftPtr->tempPSI2,
-				                dftPtr->tempPSI4);
+						dftPtr->tempPSI4);
+
+      /*computeNonLocalHamiltonianTimesX(dftPtr->tempPSI2,
+	dftPtr->tempPSI4);*/
 
       for(unsigned int i = 0; i < src.size(); ++i)
 	{
