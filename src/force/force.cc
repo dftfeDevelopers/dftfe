@@ -26,6 +26,7 @@
 
 #include "configurationalForceEEshelbyFPSPFnlLinFE.cc"
 #include "FPSPLocalGammaAtomsElementalContribution.cc"
+#include "FnlGammaAtomsElementalContribution.cc"
 #include "configurationalForceEselfLinFE.cc"
 #include "initPseudoForce.cc"
 #include "createBinObjectsForce.cc"
@@ -131,9 +132,7 @@ void forceClass<FEOrder>::initMoved()
   if(dftParameters::isPseudopotential)
     {
       initLocalPseudoPotentialForce();
-      //initNonLocalPseudoPotentialForce();
-      //computeSparseStructureNonLocalProjectorsForce();
-      //computeElementalProjectorKetsForce();
+      computeElementalNonLocalPseudoDataForce();
     }
 }
 

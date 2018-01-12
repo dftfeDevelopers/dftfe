@@ -6,7 +6,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::v
   //get FE data
   //
   QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
-  FEValues<3> fe_values (dftPtr->FEEigen, quadrature_formula, update_values);
+  //FEValues<3> fe_values (dftPtr->FEEigen, quadrature_formula, update_values);
 
   //
   //get access to triangulation objects from meshGenerator class
@@ -77,8 +77,10 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::v
 		  //
 		  //This is the component index 0(real) or 1(imag).
 		  //
-		  const unsigned int ck = fe_values.get_fe().system_to_component_index(idof).first; 
-		  const unsigned int iNode = fe_values.get_fe().system_to_component_index(idof).second;
+		  //const unsigned int ck = fe_values.get_fe().system_to_component_index(idof).first; 
+		  //const unsigned int iNode = fe_values.get_fe().system_to_component_index(idof).second;
+		  const unsigned int ck = dftPtr->FEEigen.system_to_component_index(idof).first; 
+		  const unsigned int iNode = dftPtr->FEEigen.system_to_component_index(idof).second;		  
 		  if(ck == 0)
 		    inputVectors[numberNodesPerElement*index + iNode].real(temp[idof]);
 		  else
@@ -158,7 +160,8 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::v
   dealii::parallel::distributed::Vector<double > vec(dftPtr->d_locallyOwnedProjectorIdsCurrentProcess,
                                                      dftPtr->d_ghostProjectorIdsCurrentProcess,
                                                      mpi_communicator);   
-#endif      
+#endif     
+  vec.update_ghost_values();
   for (unsigned int i=0; i<numberWaveFunctions;++i)
   {
 #ifdef ENABLE_PERIODIC_BC
@@ -292,8 +295,10 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::v
 		{
 		  //temp[2*iNode]   = outputVectors[numberNodesPerElement*index + iNode].real();
 		  //temp[2*iNode+1] = outputVectors[numberNodesPerElement*index + iNode].imag();
-		  const unsigned int ck = fe_values.get_fe().system_to_component_index(idof).first;
-		  const unsigned int iNode = fe_values.get_fe().system_to_component_index(idof).second;
+		  //const unsigned int ck = fe_values.get_fe().system_to_component_index(idof).first;
+		  //const unsigned int iNode = fe_values.get_fe().system_to_component_index(idof).second;
+		  const unsigned int ck = dftPtr->FEEigen.system_to_component_index(idof).first;
+		  const unsigned int iNode = dftPtr->FEEigen.system_to_component_index(idof).second;
 		  
 		  if(ck == 0)
 		    temp[idof] = outputVectors[numberNodesPerElement*index + iNode].real();

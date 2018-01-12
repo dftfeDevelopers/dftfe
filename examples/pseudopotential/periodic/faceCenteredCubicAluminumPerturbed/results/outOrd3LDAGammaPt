@@ -1,0 +1,2351 @@
+Usage:
+./dftRun parameterfile.prm (OR) mpirun -np nProcs ./dftRun parameterfile.prm
+
+# Listing of Parameters
+# ---------------------
+# Number of SCF iterations to be considered for mixing the electron-density
+set ANDERSON SCHEME MIXING HISTORY                = 40                             # default: 70
+
+# Mixing parameter to be used in Anderson scheme
+set ANDERSON SCHEME MIXING PARAMETER              = 0.5
+
+# File specifying the coordinates of the atoms in the given material system
+set ATOMIC COORDINATES FILE                       = coordinates.inp                # default: 
+
+# The degree of the Chebyshev polynomial to be employed for filtering out the
+# unwanted spectrum (Default value is used when the input parameter value is
+# 0
+set CHEBYSHEV POLYNOMIAL DEGREE                   = 0
+
+# Path specifying the location of the build directory
+set DFT PATH                                      = "../../../../"                 # default: 
+
+# Size of the domain along 1-direction
+set DOMAIN SIZE X                                 = 7.2                            # default: 0.0
+
+# Size of the domain along 2-direction
+set DOMAIN SIZE Y                                 = 7.2                            # default: 0.0
+
+# Size of the domain along 3-direction
+set DOMAIN SIZE Z                                 = 7.2                            # default: 0.0
+
+# Parameter specifying the type of exchange-correlation to be used
+set EXCHANGE CORRELATION TYPE                     = 1
+
+# The degree of the finite-element interpolating polynomial
+set FINITE ELEMENT POLYNOMIAL ORDER               = 3                              # default: 2
+
+# Inner Domain Size along 1-direction
+set INNER DOMAIN SIZE X                           = 7.2                            # default: 0.0
+
+# Inner Domain Size along 2-direction
+set INNER DOMAIN SIZE Y                           = 7.2                            # default: 0.0
+
+# Inner Domain Size along 3-direction
+set INNER DOMAIN SIZE Z                           = 7.2                            # default: 0.0
+
+# File specifying the lattice vectors associated with the unit-cell
+set LATTICE VECTORS FILE                          = latticeVectors.inp             # default: 
+
+# The lower bound of the wanted eigen spectrum
+set LOWER BOUND WANTED SPECTRUM                   = -70.0                          # default: -10.0
+
+# Finite-element mesh file to be used for the given problem
+set MESH FILE                                     = Alfcc_locref2_meshsize0d72.inp # default: 
+
+# Inner Ball Mesh Size
+set MESH SIZE INNER BALL                          = 0.5                            # default: 0.0
+
+# Inner Domain Mesh Size
+set MESH SIZE INNER DOMAIN                        = 1.0                            # default: 0.0
+
+# Outer Domain Mesh Size
+set MESH SIZE OUTER DOMAIN                        = 1.0                            # default: 0.0
+
+# Number of Kohn-Sham wavefunctions to be computed
+set NUMBER OF KOHN-SHAM WAVEFUNCTIONS             = 20                             # default: 10
+
+# Number of refinement steps to be used
+set NUMBER OF REFINEMENT STEPS                    = 4
+
+# Flag to control optimized/debug modes
+set OPTIMIZED MODE                                = true
+
+# Periodicity in X-direction
+set PERIODIC BOUNDARY CONDITION X                 = true                           # default: false
+
+# Periodicity in Y-direction
+set PERIODIC BOUNDARY CONDITION Y                 = true                           # default: false
+
+# Periodicity in Z-direction
+set PERIODIC BOUNDARY CONDITION Z                 = true                           # default: false
+
+# Maximum number of iterations to be allowed for Poisson problem convergence
+set POISSON SOLVER CONVERGENCE MAXIMUM ITERATIONS = 10000                          # default: 5000
+
+# Relative tolerance as stopping criterion for Poisson problem convergence
+set POISSON SOLVER CONVERGENCE TOLERANCE          = 1e-12
+
+# Boolean Parameter specifying whether pseudopotential DFT calculation needs
+# to be performed
+set PSEUDOPOTENTIAL CALCULATION                   = true                           # default: false
+
+# The radius of the ball around an atom on which self-potential of the
+# associated nuclear charge is solved
+set RADIUS ATOM BALL                              = 2.8                            # default: 3.0
+
+# Maximum number of iterations to be allowed for SCF convergence
+set SCF CONVERGENCE MAXIMUM ITERATIONS            = 100                            # default: 50
+
+# SCF iterations stopping tolerance in terms of electron-density difference
+# between two successive iterations
+set SCF CONVERGENCE TOLERANCE                     = 1e-10                          # default: 1e-08
+
+# Fermi-Dirac smearing temperature
+set TEMPERATURE                                   = 500                            # default: 500.0
+
+# File specifying the k-Point quadrature rule to sample Brillouin zone
+set kPOINT RULE FILE                              = GammaPoint.inp                 # default: 
+
+number of MPI processes: 48
+number of atoms: 4
+fractional coordinates of atom: 0.000000000000000000e+00 0.000000000000000000e+00 0.000000000000000000e+00
+fractional coordinates of atom: 0.000000000000000000e+00 5.999999999999999778e-01 5.000000000000000000e-01
+fractional coordinates of atom: 5.000000000000000000e-01 0.000000000000000000e+00 5.000000000000000000e-01
+fractional coordinates of atom: 5.000000000000000000e-01 5.000000000000000000e-01 0.000000000000000000e+00
+lattice vectors: 7.200000000000000178e+00 0.000000000000000000e+00 0.000000000000000000e+00
+lattice vectors: 0.000000000000000000e+00 7.200000000000000178e+00 0.000000000000000000e+00
+lattice vectors: 0.000000000000000000e+00 0.000000000000000000e+00 7.200000000000000178e+00
+Number Image Charges  720
+Cartesian coordinates of atoms: -3.600000000000000089e+00 -3.600000000000000089e+00 -3.600000000000000089e+00
+Cartesian coordinates of atoms: -3.600000000000000089e+00 7.200000000000001954e-01 0.000000000000000000e+00
+Cartesian coordinates of atoms: 0.000000000000000000e+00 -3.600000000000000089e+00 0.000000000000000000e+00
+Cartesian coordinates of atoms: 0.000000000000000000e+00 0.000000000000000000e+00 -3.600000000000000089e+00
+number of atoms types: 1
+Z:13
+reading data from file: ../../../..//data/electronicStructure/pseudoPotential/z13/singleAtomData/psi30.inp
+reading data from file: ../../../..//data/electronicStructure/pseudoPotential/z13/singleAtomData/psi31.inp
+reading data from file: ../../../..//data/electronicStructure/pseudoPotential/z13/singleAtomData/psi32.inp
+=============================================================================================================================
+number of electrons: 12
+number of wavefunctions computed using single atom data to be used as initial guess for starting the SCF: 20
+=============================================================================================================================
+number of eigen values: 20
+Reduced k-Point-coordinates and weights: 
+0.000000000000000000e+00 0.000000000000000000e+00 0.000000000000000000e+00 1.000000000000000000e+00
+actual k-Point-coordinates and weights: 
+0.000000000000000000e+00 0.000000000000000000e+00 0.000000000000000000e+00 1.000000000000000000e+00
+number of elements: 5736
+number of degrees of freedom: 164071
+Computing triangulation displacement increment caused by gaussian generator displacements...
+...Computed triangulation displacement increment
+Start moving triangulation...
+...End moving triangulation
+Sanity check for periodic matched faces on moved triangulation...
+...Sanity check passed
+Mesh movement quality metric, h_min: 6.00e-02
+Computing triangulation displacement increment caused by gaussian generator displacements...
+...Computed triangulation displacement increment
+Start moving triangulation...
+...End moving triangulation
+Sanity check for periodic matched faces on moved triangulation...
+...Sanity check passed
+Mesh movement quality metric, h_min: 6.00e-02
+Reading Local Pseudo-potential data from: ../../../..//data/electronicStructure/pseudoPotential/z13/pseudoAtomData/locPot.dat
+Number of Pseudo Wave Functions for atom with Z: 13 is 9
+Radial and Angular Functions Ids: 0 0 0
+Radial and Angular Functions Ids: 1 1 -1
+Radial and Angular Functions Ids: 1 1 0
+Radial and Angular Functions Ids: 1 1 1
+Radial and Angular Functions Ids: 2 2 -2
+Radial and Angular Functions Ids: 2 2 -1
+Radial and Angular Functions Ids: 2 2 0
+Radial and Angular Functions Ids: 2 2 1
+Radial and Angular Functions Ids: 2 2 2
+Number of Angular momentum specific potentials: 3
+Radial and Angular Function Potential Ids: 0 0
+Radial and Angular Function Potential Ids: 1 1
+Radial and Angular Function Potential Ids: 2 2
+Number of Nonlocal Atoms: 4
+Number of Pseudo wavefunctions: 
+9
+Number of Pseudo wavefunctions: 
+9
+Number of Pseudo wavefunctions: 
+9
+Number of Pseudo wavefunctions: 
+9
+The value of 1/nlpConst corresponding to atom and lCount 0 0 is 5.060773209511947535e+00
+The value of 1/nlpConst corresponding to atom and lCount 0 1 is 1.485529110666168862e+01
+The value of 1/nlpConst corresponding to atom and lCount 0 2 is 1.485529113469686280e+01
+The value of 1/nlpConst corresponding to atom and lCount 0 3 is 1.485529113469686280e+01
+The value of 1/nlpConst corresponding to atom and lCount 0 4 is -3.371146758126806020e+01
+The value of 1/nlpConst corresponding to atom and lCount 0 5 is -3.371146758126806731e+01
+The value of 1/nlpConst corresponding to atom and lCount 0 6 is -3.370134682484111011e+01
+The value of 1/nlpConst corresponding to atom and lCount 0 7 is -3.371144788188320263e+01
+The value of 1/nlpConst corresponding to atom and lCount 0 8 is -3.370133561800604838e+01
+The value of 1/nlpConst corresponding to atom and lCount 1 0 is 5.060773209511943094e+00
+The value of 1/nlpConst corresponding to atom and lCount 1 1 is 1.485529112535179763e+01
+The value of 1/nlpConst corresponding to atom and lCount 1 2 is 1.485529115338697537e+01
+The value of 1/nlpConst corresponding to atom and lCount 1 3 is 1.485529109731661812e+01
+The value of 1/nlpConst corresponding to atom and lCount 1 4 is -3.371148071420408598e+01
+The value of 1/nlpConst corresponding to atom and lCount 1 5 is -3.371144131542669697e+01
+The value of 1/nlpConst corresponding to atom and lCount 1 6 is -3.370135803168357569e+01
+The value of 1/nlpConst corresponding to atom and lCount 1 7 is -3.371146101480387358e+01
+The value of 1/nlpConst corresponding to atom and lCount 1 8 is -3.370132441117840472e+01
+The value of 1/nlpConst corresponding to atom and lCount 2 0 is 5.060773209511943982e+00
+The value of 1/nlpConst corresponding to atom and lCount 2 1 is 1.485529112535179230e+01
+The value of 1/nlpConst corresponding to atom and lCount 2 2 is 1.485529113469685569e+01
+The value of 1/nlpConst corresponding to atom and lCount 2 3 is 1.485529111600673957e+01
+The value of 1/nlpConst corresponding to atom and lCount 2 4 is -3.371146758126804599e+01
+The value of 1/nlpConst corresponding to atom and lCount 2 5 is -3.371145444834224492e+01
+The value of 1/nlpConst corresponding to atom and lCount 2 6 is -3.370134682484106747e+01
+The value of 1/nlpConst corresponding to atom and lCount 2 7 is -3.371146101480388779e+01
+The value of 1/nlpConst corresponding to atom and lCount 2 8 is -3.370133561800601996e+01
+The value of 1/nlpConst corresponding to atom and lCount 3 0 is 5.060773209511943094e+00
+The value of 1/nlpConst corresponding to atom and lCount 3 1 is 1.485529110666168151e+01
+The value of 1/nlpConst corresponding to atom and lCount 3 2 is 1.485529115338696826e+01
+The value of 1/nlpConst corresponding to atom and lCount 3 3 is 1.485529111600673957e+01
+The value of 1/nlpConst corresponding to atom and lCount 3 4 is -3.371148071420410020e+01
+The value of 1/nlpConst corresponding to atom and lCount 3 5 is -3.371145444834223781e+01
+The value of 1/nlpConst corresponding to atom and lCount 3 6 is -3.370135803168357569e+01
+The value of 1/nlpConst corresponding to atom and lCount 3 7 is -3.371144788188317420e+01
+The value of 1/nlpConst corresponding to atom and lCount 3 8 is -3.370132441117840472e+01
+Found Node locally on processor Id: 36
+Pinned core with nodal coordinates (3.600000000000000089e+00 5.256211706197832104e-19 3.600000000000000089e+00) located with node id 34610 in processor 9 and added 
+Pinned core with nodal coordinates (3.600000000000000089e+00 5.256211706197832104e-19 3.600000000000000089e+00) located with node id 34610 in processor 43 and added 
+number image charges: 720
+number bins: 4
+bin 0: number of global atoms: 1
+bin 1: number of global atoms: 1
+bin 2: number of global atoms: 1
+bin 3: number of global atoms: 1
+Reading Local Pseudo-potential data from: ../../../..//data/electronicStructure/pseudoPotential/z13/pseudoAtomData/locPot.dat
+atom core with valence charge 3.000000000000000000e+00 located with node id 88138 in processor 24 nodal coor -3.600000000000000089e+00 -3.600000000000000089e+00 -3.600000000000000089e+00
+ and added 
+atom core with valence charge 3.000000000000000000e+00 located with node id 155713 in processor 45 nodal coor 0.000000000000000000e+00 -3.600000000000000089e+00 0.000000000000000000e+00
+ and added 
+atom core with valence charge 3.000000000000000000e+00 located with node id 47546 in processor 12 nodal coor 0.000000000000000000e+00 0.000000000000000000e+00 -3.600000000000000089e+00
+ and added 
+atom core with valence charge 3.000000000000000000e+00 located with node id 47546 in processor 13 nodal coor 0.000000000000000000e+00 0.000000000000000000e+00 -3.600000000000000089e+00
+ but skipped 
+atom core with valence charge 3.000000000000000000e+00 located with node id 155713 in processor 46 nodal coor 0.000000000000000000e+00 -3.600000000000000089e+00 0.000000000000000000e+00
+ but skipped 
+atom core with valence charge 3.000000000000000000e+00 located with node id 117957 in processor 34 nodal coor -3.600000000000000089e+00 7.200000000000001954e-01 0.000000000000000000e+00
+atom core with valence charge 3.000000000000000000e+00 located with node id 47546 in processor 17 nodal coor 0.000000000000000000e+00 0.000000000000000000e+00 -3.600000000000000089e+00
+ but skipped 
+atom core with valence charge 3.000000000000000000e+00 located with node id 117957 in processor 33 nodal coor -3.600000000000000089e+00 7.200000000000001954e-01 0.000000000000000000e+00
+ and added 
+ but skipped 
+atom core in bin 0 with valence charge 3.000000000000000000e+00 located with node id 88138 in processor 24 and added 
+atom core in bin 1 with valence charge 3.000000000000000000e+00 located with node id 117957 in processor 33 and added 
+atom core in bin 1 with valence charge 3.000000000000000000e+00 located with node id 117957 in processor 34 but skipped 
+atom core in bin 2 with valence charge 3.000000000000000000e+00 located with node id 155713 in processor 45 and added 
+atom core in bin 2 with valence charge 3.000000000000000000e+00 located with node id 155713 in processor 46 but skipped 
+atom core in bin 3 with valence charge 3.000000000000000000e+00 located with node id 47546 in processor 13 but skipped 
+atom core in bin 3 with valence charge 3.000000000000000000e+00 located with node id 47546 in processor 17 but skipped 
+atom core in bin 3 with valence charge 3.000000000000000000e+00 located with node id 47546 in processor 12 and added 
+reading initial guess for rho
+initial total charge:   1.1999999180e+01 
+initial total charge after scaling:   1.2000000000e+01 
+reading initial guess for PSI
+initial abs. residual: 4.449766e+00, current abs. residual: 3.307399e-12, nsteps: 250, abs. tolerance criterion: 3.465086e-12
+
+(only for debugging: peak value of Vself: -1.049151550970068001e+03)
+initial abs. residual: 4.450095e+00, current abs. residual: 3.320114e-12, nsteps: 260, abs. tolerance criterion: 3.471973e-12
+
+(only for debugging: peak value of Vself: -1.049151551056915650e+03)
+initial abs. residual: 4.449766e+00, current abs. residual: 3.266934e-12, nsteps: 253, abs. tolerance criterion: 3.465086e-12
+
+(only for debugging: peak value of Vself: -1.049151550970040262e+03)
+initial abs. residual: 4.449822e+00, current abs. residual: 3.362784e-12, nsteps: 252, abs. tolerance criterion: 3.458186e-12
+
+(only for debugging: peak value of Vself: -1.049151550943838856e+03)
+L2 Norm Value of phiext: 5.373771015128913132e+04
+
+
+**** Begin Self-Consistent-Field Iteration: 1 ****
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 6.000521e+00, current abs. residual: 5.829691e-12, nsteps: 546, abs. tolerance criterion: 6.000521e-12
+
+upper bound of unwanted spectrum:  3.7753364484e+04
+lower bound of unwanted spectrum:  0.0000000000e+00
+Chebyshev polynomial degree: 450
+
+kPoint: 0
+eigen value   0: -5.2556036079140556e-01
+eigen value   1: -1.8765311162133502e-01
+eigen value   2: -1.8178831156353062e-01
+eigen value   3: -1.3721562408585339e-01
+eigen value   4: -5.8715308816965198e-02
+eigen value   5: 1.6150693323706469e-01
+eigen value   6: 2.0983899626556413e-01
+eigen value   7: 2.8895846868964665e+00
+eigen value   8: 4.8290206809490241e+00
+eigen value   9: 6.1898960484847567e+00
+eigen value  10: 7.4262476676354492e+00
+eigen value  11: 8.2000659682257613e+00
+eigen value  12: 1.0553781752253824e+01
+eigen value  13: 1.2128925149320622e+01
+eigen value  14: 1.3352158438002519e+01
+eigen value  15: 1.4997547314119918e+01
+eigen value  16: 1.5847426743376046e+01
+eigen value  17: 1.6726699104171697e+01
+eigen value  18: 1.8225024285273626e+01
+eigen value  19: 3.2921439328368187e+01
+
+Fermi energy constraint residual (bisection)      :    1.0749978684998496e-10
+Fermi energy constraint residual (Newton-Raphson) :    1.7763568394002505e-15
+Fermi energy                                      :    1.8567296475238634e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 6.000605e+00, current abs. residual: 5.384212e-12, nsteps: 549, abs. tolerance criterion: 6.000605e-12
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 1.00000000000000
+fractional occupancy 5: 0.99999976461875
+fractional occupancy 6: 0.00000023538125
+fractional occupancy 7: 0.00000000000000
+fractional occupancy 8: 0.00000000000000
+fractional occupancy 9: 0.00000000000000
+fractional occupancy 10: 0.00000000000000
+fractional occupancy 11: 0.00000000000000
+fractional occupancy 12: 0.00000000000000
+fractional occupancy 13: 0.00000000000000
+fractional occupancy 14: 0.00000000000000
+fractional occupancy 15: 0.00000000000000
+fractional occupancy 16: 0.00000000000000
+fractional occupancy 17: 0.00000000000000
+fractional occupancy 18: 0.00000000000000
+fractional occupancy 19: 0.00000000000000
+
+number of electrons: 1.1987007625133295e+01 
+
+Energy computations
+-------------------
+Band energy             :  -1.8588515445311267e+00
+Kinetic energy          :   6.4072912516863374e+00
+Exchange energy         :  -2.8786904100914881e+00
+Correlation energy      :  -5.5096912084824046e-01
+Electrostatic energy    :  -1.0143282360893556e+01
+Total energy            :  -7.1656506401469464e+00
+Total energy per atom   :  -1.7914126600367366e+00
+SCF iteration 1 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 2 ****
+Anderson Mixing: L2 norm of electron-density difference: 2.493001e-02
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 9.129788e-03, current abs. residual: 5.706879e-12, nsteps: 514, abs. tolerance criterion: 6.000556e-12
+
+upper bound of unwanted spectrum:  3.7753049004e+04
+lower bound of unwanted spectrum:  3.2921439328e+01
+Chebyshev polynomial degree: 450
+
+kPoint: 0
+eigen value   0: -8.0008646901621872e-01
+eigen value   1: -4.6607373189302903e-01
+eigen value   2: -4.6433289906323644e-01
+eigen value   3: -4.6256186655332082e-01
+eigen value   4: -4.0521308274118545e-01
+eigen value   5: -3.9587055525483167e-01
+eigen value   6: -3.8608972018990517e-01
+eigen value   7: -2.5078317897494345e-02
+eigen value   8: 1.1281189736904057e-01
+eigen value   9: 1.4687259013461951e-01
+eigen value  10: 2.1860906973790653e-01
+eigen value  11: 2.4981218322440849e-01
+eigen value  12: 3.0628237273316067e-01
+eigen value  13: 3.2199546710099719e-01
+eigen value  14: 3.8368330726966421e-01
+eigen value  15: 4.0109146500444942e-01
+eigen value  16: 5.3072717370901101e-01
+eigen value  17: 7.1385798062908989e-01
+eigen value  18: 1.0136204310371095e+00
+eigen value  19: 1.2718999647391140e+00
+
+Fermi energy constraint residual (bisection)      :    3.9792347195088951e-10
+Fermi energy constraint residual (Newton-Raphson) :    3.5527136788005009e-15
+Fermi energy                                      :   -3.9097777121821781e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 2.090711e-02, current abs. residual: 5.767392e-12, nsteps: 519, abs. tolerance criterion: 6.000594e-12
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 0.99987540432754
+fractional occupancy 5: 0.95647995236706
+fractional occupancy 6: 0.04364464330540
+fractional occupancy 7: 0.00000000000000
+fractional occupancy 8: 0.00000000000000
+fractional occupancy 9: 0.00000000000000
+fractional occupancy 10: 0.00000000000000
+fractional occupancy 11: 0.00000000000000
+fractional occupancy 12: 0.00000000000000
+fractional occupancy 13: 0.00000000000000
+fractional occupancy 14: 0.00000000000000
+fractional occupancy 15: 0.00000000000000
+fractional occupancy 16: 0.00000000000000
+fractional occupancy 17: 0.00000000000000
+fractional occupancy 18: 0.00000000000000
+fractional occupancy 19: 0.00000000000000
+
+number of electrons: 1.1986556304356476e+01 
+
+Energy computations
+-------------------
+Band energy             :  -5.9874211188513806e+00
+Kinetic energy          :   5.7407405098442519e+00
+Exchange energy         :  -2.8756894463499290e+00
+Correlation energy      :  -5.5072397834801645e-01
+Electrostatic energy    :  -1.0351544372608725e+01
+Total energy            :  -8.0372172874624166e+00
+Total energy per atom   :  -2.0093043218656041e+00
+SCF iteration 2 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 3 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 1.306038e-01
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 1.201060e-02, current abs. residual: 5.325949e-12, nsteps: 512, abs. tolerance criterion: 6.000562e-12
+
+upper bound of unwanted spectrum:  3.7752953713e+04
+lower bound of unwanted spectrum:  1.2718999647e+00
+Chebyshev polynomial degree: 450
+
+kPoint: 0
+eigen value   0: -8.8935737431082007e-01
+eigen value   1: -5.5710433608950782e-01
+eigen value   2: -5.5632328573327394e-01
+eigen value   3: -5.5460633946467186e-01
+eigen value   4: -5.0077747306811993e-01
+eigen value   5: -4.9277122460282458e-01
+eigen value   6: -4.9060229824511103e-01
+eigen value   7: -1.8153214181786126e-01
+eigen value   8: -1.5772387892491641e-01
+eigen value   9: -1.5494781926909706e-01
+eigen value  10: -1.3114047542108254e-01
+eigen value  11: -1.2527703899068535e-01
+eigen value  12: -5.6066193082439181e-02
+eigen value  13: -3.3179967431538365e-02
+eigen value  14: -1.2137556736201656e-02
+eigen value  15: 2.0233493743324844e-02
+eigen value  16: 7.8714219854303533e-02
+eigen value  17: 1.3562947081837573e-01
+eigen value  18: 1.4266578771581126e-01
+eigen value  19: 1.7621307959367735e-01
+
+Fermi energy constraint residual (bisection)      :    9.9981178891539457e-10
+Fermi energy constraint residual (Newton-Raphson) :    1.2434497875801753e-14
+Fermi energy                                      :   -4.9167547075161144e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 1.885200e-02, current abs. residual: 5.664657e-12, nsteps: 513, abs. tolerance criterion: 6.000575e-12
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 0.99682215873410
+fractional occupancy 5: 0.66641689722730
+fractional occupancy 6: 0.33676094403861
+fractional occupancy 7: 0.00000000000000
+fractional occupancy 8: 0.00000000000000
+fractional occupancy 9: 0.00000000000000
+fractional occupancy 10: 0.00000000000000
+fractional occupancy 11: 0.00000000000000
+fractional occupancy 12: 0.00000000000000
+fractional occupancy 13: 0.00000000000000
+fractional occupancy 14: 0.00000000000000
+fractional occupancy 15: 0.00000000000000
+fractional occupancy 16: 0.00000000000000
+fractional occupancy 17: 0.00000000000000
+fractional occupancy 18: 0.00000000000000
+fractional occupancy 19: 0.00000000000000
+
+number of electrons: 1.1997266207702772e+01 
+
+Energy computations
+-------------------
+Band energy             :  -7.1003683619893785e+00
+Kinetic energy          :   5.6275338537374271e+00
+Exchange energy         :  -2.8514744630713245e+00
+Correlation energy      :  -5.4938756052753868e-01
+Electrostatic energy    :  -1.0317148563042558e+01
+Total energy            :  -8.0904767329039942e+00
+Total energy per atom   :  -2.0226191832259985e+00
+SCF iteration 3 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 4 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 8.983320e-02
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 8.455277e-03, current abs. residual: 5.619105e-12, nsteps: 512, abs. tolerance criterion: 6.000563e-12
+
+upper bound of unwanted spectrum:  3.7753071334e+04
+lower bound of unwanted spectrum:  1.7621307959e-01
+Chebyshev polynomial degree: 450
+
+kPoint: 0
+eigen value   0: -7.9610203535475310e-01
+eigen value   1: -4.6477520843174513e-01
+eigen value   2: -4.6373046986250871e-01
+eigen value   3: -4.6190741385002509e-01
+eigen value   4: -4.0707069080713160e-01
+eigen value   5: -4.0225925833497944e-01
+eigen value   6: -3.9835569019323175e-01
+eigen value   7: -1.0638083217892652e-01
+eigen value   8: -1.0471015188578756e-01
+eigen value   9: -1.0298160382512030e-01
+eigen value  10: -9.6784872112150463e-02
+eigen value  11: -9.1167469443797555e-02
+eigen value  12: -8.6090826119386316e-02
+eigen value  13: -7.8848062064698674e-02
+eigen value  14: -1.0646489815432484e-02
+eigen value  15: 1.0765204561078164e-02
+eigen value  16: 2.6802215188081131e-02
+eigen value  17: 4.2024752289015831e-02
+eigen value  18: 5.2791727255641414e-02
+eigen value  19: 8.4425487513708597e-02
+
+Fermi energy constraint residual (bisection)      :    6.7623595612076315e-10
+Fermi energy constraint residual (Newton-Raphson) :    1.7763568394002505e-15
+Fermi energy                                      :   -4.0024738261498022e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 1.322040e-02, current abs. residual: 5.771588e-12, nsteps: 507, abs. tolerance criterion: 6.000577e-12
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 0.98673484665824
+fractional occupancy 5: 0.78084548601662
+fractional occupancy 6: 0.23241966732514
+fractional occupancy 7: 0.00000000000000
+fractional occupancy 8: 0.00000000000000
+fractional occupancy 9: 0.00000000000000
+fractional occupancy 10: 0.00000000000000
+fractional occupancy 11: 0.00000000000000
+fractional occupancy 12: 0.00000000000000
+fractional occupancy 13: 0.00000000000000
+fractional occupancy 14: 0.00000000000000
+fractional occupancy 15: 0.00000000000000
+fractional occupancy 16: 0.00000000000000
+fractional occupancy 17: 0.00000000000000
+fractional occupancy 18: 0.00000000000000
+fractional occupancy 19: 0.00000000000000
+
+number of electrons: 1.1999881162873846e+01 
+
+Energy computations
+-------------------
+Band energy             :  -5.9897479724854410e+00
+Kinetic energy          :   5.6370569012213689e+00
+Exchange energy         :  -2.8554610551584538e+00
+Correlation energy      :  -5.4975201798201800e-01
+Electrostatic energy    :  -1.0329332827581343e+01
+Total energy            :  -8.0974889995004453e+00
+Total energy per atom   :  -2.0243722498751113e+00
+SCF iteration 4 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 5 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 7.357400e-02
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 7.873998e-03, current abs. residual: 5.791585e-12, nsteps: 511, abs. tolerance criterion: 6.000564e-12
+
+upper bound of unwanted spectrum:  3.7753156092e+04
+lower bound of unwanted spectrum:  8.4425487514e-02
+Chebyshev polynomial degree: 450
+
+kPoint: 0
+eigen value   0: -7.2830248511887064e-01
+eigen value   1: -3.9711788895977124e-01
+eigen value   2: -3.9625175388292772e-01
+eigen value   3: -3.9342520357515898e-01
+eigen value   4: -3.3947094443412779e-01
+eigen value   5: -3.3277418794903391e-01
+eigen value   6: -3.3179560322094059e-01
+eigen value   7: -7.2775971080786178e-02
+eigen value   8: -5.0928584113609301e-02
+eigen value   9: -4.0509528811645795e-02
+eigen value  10: -4.0011823980152322e-02
+eigen value  11: -3.5023928697328247e-02
+eigen value  12: -2.9460490241063248e-02
+eigen value  13: -2.4978898957254497e-02
+eigen value  14: -2.2185122822046627e-02
+eigen value  15: -1.7505650914610725e-02
+eigen value  16: 3.1662078173535840e-03
+eigen value  17: 2.3443739833241776e-02
+eigen value  18: 5.6371545347633556e-02
+eigen value  19: 8.9583889492479279e-02
+
+Fermi energy constraint residual (bisection)      :    7.4660455595676467e-10
+Fermi energy constraint residual (Newton-Raphson) :    1.2434497875801753e-14
+Fermi energy                                      :   -3.3225130265400388e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 6.490750e-03, current abs. residual: 5.964894e-12, nsteps: 499, abs. tolerance criterion: 6.000574e-12
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 0.98964180753509
+fractional occupancy 5: 0.58181491206847
+fractional occupancy 6: 0.42854328039645
+fractional occupancy 7: 0.00000000000000
+fractional occupancy 8: 0.00000000000000
+fractional occupancy 9: 0.00000000000000
+fractional occupancy 10: 0.00000000000000
+fractional occupancy 11: 0.00000000000000
+fractional occupancy 12: 0.00000000000000
+fractional occupancy 13: 0.00000000000000
+fractional occupancy 14: 0.00000000000000
+fractional occupancy 15: 0.00000000000000
+fractional occupancy 16: 0.00000000000000
+fractional occupancy 17: 0.00000000000000
+fractional occupancy 18: 0.00000000000000
+fractional occupancy 19: 0.00000000000000
+
+number of electrons: 1.1999983897149511e+01 
+
+Energy computations
+-------------------
+Band energy             :  -5.1737074634356128e+00
+Kinetic energy          :   5.6359394383695873e+00
+Exchange energy         :  -2.8519012973562896e+00
+Correlation energy      :  -5.4949060083523227e-01
+Electrostatic energy    :  -1.0340443705893357e+01
+Total energy            :  -8.1058961657152899e+00
+Total energy per atom   :  -2.0264740414288225e+00
+SCF iteration 5 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 6 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 3.770705e-02
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 3.266599e-03, current abs. residual: 5.646855e-12, nsteps: 499, abs. tolerance criterion: 6.000566e-12
+
+upper bound of unwanted spectrum:  3.7753246444e+04
+lower bound of unwanted spectrum:  8.9583889492e-02
+Chebyshev polynomial degree: 450
+
+kPoint: 0
+eigen value   0: -6.5871953549699036e-01
+eigen value   1: -3.2740349749069092e-01
+eigen value   2: -3.2689936315110829e-01
+eigen value   3: -3.2350821484348580e-01
+eigen value   4: -2.6890966023525997e-01
+eigen value   5: -2.6389709998412814e-01
+eigen value   6: -2.6228231145626441e-01
+eigen value   7: -1.2160552102290254e-02
+eigen value   8: -1.0051200506253790e-02
+eigen value   9: -5.5241794483554497e-03
+eigen value  10: 1.9141520256517268e-04
+eigen value  11: 1.5675060853408429e-03
+eigen value  12: 2.0468184265046239e-03
+eigen value  13: 2.5693419395751656e-02
+eigen value  14: 2.7723901726172746e-02
+eigen value  15: 2.9653464058793596e-02
+eigen value  16: 3.3147435015151452e-02
+eigen value  17: 4.1452920993915170e-02
+eigen value  18: 4.2737751048975675e-02
+eigen value  19: 4.3608591378778469e-02
+
+Fermi energy constraint residual (bisection)      :    7.5239015018269129e-10
+Fermi energy constraint residual (Newton-Raphson) :    8.8817841970012523e-15
+Fermi energy                                      :   -2.6301023641691978e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 3.256493e-03, current abs. residual: 5.301216e-12, nsteps: 497, abs. tolerance criterion: 6.000574e-12
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 0.97647261314540
+fractional occupancy 5: 0.63647538966195
+fractional occupancy 6: 0.38705199719265
+fractional occupancy 7: 0.00000000000000
+fractional occupancy 8: 0.00000000000000
+fractional occupancy 9: 0.00000000000000
+fractional occupancy 10: 0.00000000000000
+fractional occupancy 11: 0.00000000000000
+fractional occupancy 12: 0.00000000000000
+fractional occupancy 13: 0.00000000000000
+fractional occupancy 14: 0.00000000000000
+fractional occupancy 15: 0.00000000000000
+fractional occupancy 16: 0.00000000000000
+fractional occupancy 17: 0.00000000000000
+fractional occupancy 18: 0.00000000000000
+fractional occupancy 19: 0.00000000000000
+
+number of electrons: 1.1999984784360409e+01 
+
+Energy computations
+-------------------
+Band energy             :  -4.3371888632654976e+00
+Kinetic energy          :   5.6387171358452335e+00
+Exchange energy         :  -2.8518669158045356e+00
+Correlation energy      :  -5.4949354210911772e-01
+Electrostatic energy    :  -1.0344051903687403e+01
+Total energy            :  -8.1066952257558214e+00
+Total energy per atom   :  -2.0266738064389553e+00
+SCF iteration 6 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 7 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 2.556910e-02
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 2.142176e-03, current abs. residual: 5.986120e-12, nsteps: 480, abs. tolerance criterion: 6.000571e-12
+
+upper bound of unwanted spectrum:  3.7753389117e+04
+lower bound of unwanted spectrum:  4.3608591379e-02
+Chebyshev polynomial degree: 450
+
+kPoint: 0
+eigen value   0: -5.5265875309337220e-01
+eigen value   1: -2.2116509018012220e-01
+eigen value   2: -2.2109690162593629e-01
+eigen value   3: -2.1696265138717874e-01
+eigen value   4: -1.6264924381929827e-01
+eigen value   5: -1.5713012210751476e-01
+eigen value   6: -1.5694442709428910e-01
+eigen value   7: 5.9818108126490416e-05
+eigen value   8: 5.4563042584271154e-04
+eigen value   9: 6.7858734998360733e-04
+eigen value  10: 2.6565885090797767e-03
+eigen value  11: 5.4655424390109338e-03
+eigen value  12: 9.7348053655050195e-03
+eigen value  13: 1.5341180283264909e-02
+eigen value  14: 2.2519556232036043e-02
+eigen value  15: 4.4579035805763882e-02
+eigen value  16: 5.3600687854776702e-02
+eigen value  17: 6.4525264447568481e-02
+eigen value  18: 7.6503422753750702e-02
+eigen value  19: 1.0130805755237979e-01
+
+Fermi energy constraint residual (bisection)      :    3.8578562566726760e-10
+Fermi energy constraint residual (Newton-Raphson) :    3.5527136788005009e-15
+Fermi energy                                      :   -1.5695275863131780e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 3.419741e-03, current abs. residual: 5.710339e-12, nsteps: 495, abs. tolerance criterion: 6.000574e-12
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 0.97334120699403
+fractional occupancy 5: 0.52797423568279
+fractional occupancy 6: 0.49868455732319
+fractional occupancy 7: 0.00000000000000
+fractional occupancy 8: 0.00000000000000
+fractional occupancy 9: 0.00000000000000
+fractional occupancy 10: 0.00000000000000
+fractional occupancy 11: 0.00000000000000
+fractional occupancy 12: 0.00000000000000
+fractional occupancy 13: 0.00000000000000
+fractional occupancy 14: 0.00000000000000
+fractional occupancy 15: 0.00000000000000
+fractional occupancy 16: 0.00000000000000
+fractional occupancy 17: 0.00000000000000
+fractional occupancy 18: 0.00000000000000
+fractional occupancy 19: 0.00000000000000
+
+number of electrons: 1.1999985894417152e+01 
+
+Energy computations
+-------------------
+Band energy             :  -3.0628460517093314e+00
+Kinetic energy          :   5.6383239686242161e+00
+Exchange energy         :  -2.8516006745206495e+00
+Correlation energy      :  -5.4946875893908842e-01
+Electrostatic energy    :  -1.0344211586849205e+01
+Total energy            :  -8.1069570516847271e+00
+Total energy per atom   :  -2.0267392629211818e+00
+SCF iteration 7 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 8 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 1.186862e-02
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 1.179424e-03, current abs. residual: 5.727362e-12, nsteps: 484, abs. tolerance criterion: 6.000573e-12
+
+upper bound of unwanted spectrum:  3.7753405892e+04
+lower bound of unwanted spectrum:  1.0130805755e-01
+Chebyshev polynomial degree: 450
+
+kPoint: 0
+eigen value   0: -5.4353502783435548e-01
+eigen value   1: -2.1190584690844408e-01
+eigen value   2: -2.1187613272970959e-01
+eigen value   3: -2.0817912620176382e-01
+eigen value   4: -1.5355715376428128e-01
+eigen value   5: -1.4840189436746570e-01
+eigen value   6: -1.4766582624956850e-01
+eigen value   7: 5.7239882801021314e-06
+eigen value   8: 7.0654515232158551e-05
+eigen value   9: 8.9290836637259858e-05
+eigen value  10: 1.7692238761834694e-04
+eigen value  11: 2.9464338714251941e-04
+eigen value  12: 5.2109121226156011e-04
+eigen value  13: 7.2633264529953310e-04
+eigen value  14: 2.8998012078627240e-03
+eigen value  15: 6.7071988904040597e-03
+eigen value  16: 7.6365561114953434e-03
+eigen value  17: 1.2793154694660027e-02
+eigen value  18: 2.6612592523202732e-02
+eigen value  19: 4.3074222097498220e-02
+
+Fermi energy constraint residual (bisection)      :    8.4263263033790281e-11
+Fermi energy constraint residual (Newton-Raphson) :    8.8817841970012523e-15
+Fermi energy                                      :   -1.4794378591370405e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 1.605040e-03, current abs. residual: 5.609417e-12, nsteps: 486, abs. tolerance criterion: 6.000573e-12
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 0.97194474220044
+fractional occupancy 5: 0.57182926488003
+fractional occupancy 6: 0.45622599291953
+fractional occupancy 7: 0.00000000000000
+fractional occupancy 8: 0.00000000000000
+fractional occupancy 9: 0.00000000000000
+fractional occupancy 10: 0.00000000000000
+fractional occupancy 11: 0.00000000000000
+fractional occupancy 12: 0.00000000000000
+fractional occupancy 13: 0.00000000000000
+fractional occupancy 14: 0.00000000000000
+fractional occupancy 15: 0.00000000000000
+fractional occupancy 16: 0.00000000000000
+fractional occupancy 17: 0.00000000000000
+fractional occupancy 18: 0.00000000000000
+fractional occupancy 19: 0.00000000000000
+
+number of electrons: 1.1999986147451084e+01 
+
+Energy computations
+-------------------
+Band energy             :  -2.9539494725333477e+00
+Kinetic energy          :   5.6364881688324058e+00
+Exchange energy         :  -2.8509617924179125e+00
+Correlation energy      :  -5.4942870777161423e-01
+Electrostatic energy    :  -1.0343421447072940e+01
+Total energy            :  -8.1073237784300627e+00
+Total energy per atom   :  -2.0268309446075157e+00
+SCF iteration 8 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 9 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 4.405504e-03
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 4.763390e-04, current abs. residual: 5.803709e-12, nsteps: 470, abs. tolerance criterion: 6.000573e-12
+
+upper bound of unwanted spectrum:  3.7753405173e+04
+lower bound of unwanted spectrum:  4.3074222097e-02
+Chebyshev polynomial degree: 450
+
+kPoint: 0
+eigen value   0: -5.4502296381430815e-01
+eigen value   1: -2.1337693182683015e-01
+eigen value   2: -2.1337458511527468e-01
+eigen value   3: -2.0968915741717042e-01
+eigen value   4: -1.5511593576327562e-01
+eigen value   5: -1.4983885159558694e-01
+eigen value   6: -1.4913993292594507e-01
+eigen value   7: 7.6667441893281034e-07
+eigen value   8: 2.7041971546241463e-06
+eigen value   9: 1.0060795401749008e-05
+eigen value  10: 1.7904110461300558e-05
+eigen value  11: 3.6846218098926695e-05
+eigen value  12: 4.2624320268889687e-05
+eigen value  13: 5.7848471815517739e-05
+eigen value  14: 8.9624359959801001e-05
+eigen value  15: 1.6320864595784448e-04
+eigen value  16: 2.8120725353830039e-04
+eigen value  17: 7.5640329966457657e-04
+eigen value  18: 2.2520554765396781e-03
+eigen value  19: 5.3206396839721726e-03
+
+Fermi energy constraint residual (bisection)      :    5.4741633448429639e-10
+Fermi energy constraint residual (Newton-Raphson) :    3.5527136788005009e-15
+Fermi energy                                      :   -1.4940468921769945e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 4.342993e-04, current abs. residual: 5.721401e-12, nsteps: 469, abs. tolerance criterion: 6.000573e-12
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 0.97358204462200
+fractional occupancy 5: 0.56812254948154
+fractional occupancy 6: 0.45829540589645
+fractional occupancy 7: 0.00000000000000
+fractional occupancy 8: 0.00000000000000
+fractional occupancy 9: 0.00000000000000
+fractional occupancy 10: 0.00000000000000
+fractional occupancy 11: 0.00000000000000
+fractional occupancy 12: 0.00000000000000
+fractional occupancy 13: 0.00000000000000
+fractional occupancy 14: 0.00000000000000
+fractional occupancy 15: 0.00000000000000
+fractional occupancy 16: 0.00000000000000
+fractional occupancy 17: 0.00000000000000
+fractional occupancy 18: 0.00000000000000
+fractional occupancy 19: 0.00000000000000
+
+number of electrons: 1.1999986632164642e+01 
+
+Energy computations
+-------------------
+Band energy             :  -2.9719174090859721e+00
+Kinetic energy          :   5.6366356864844249e+00
+Exchange energy         :  -2.8510868967854615e+00
+Correlation energy      :  -5.4943668350047881e-01
+Electrostatic energy    :  -1.0343483021286790e+01
+Total energy            :  -8.1073709150883033e+00
+Total energy per atom   :  -2.0268427287720758e+00
+SCF iteration 9 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 10 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 2.082418e-03
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 1.958913e-04, current abs. residual: 5.545738e-12, nsteps: 456, abs. tolerance criterion: 6.000573e-12
+
+upper bound of unwanted spectrum:  3.7753411971e+04
+lower bound of unwanted spectrum:  5.3206396840e-03
+Chebyshev polynomial degree: 450
+
+kPoint: 0
+eigen value   0: -5.3979341321746455e-01
+eigen value   1: -2.0817406626561560e-01
+eigen value   2: -2.0815498982554523e-01
+eigen value   3: -2.0438645229611876e-01
+eigen value   4: -1.4985047076135566e-01
+eigen value   5: -1.4453510537730038e-01
+eigen value   6: -1.4397218980486950e-01
+eigen value   7: 2.8129866913823011e-07
+eigen value   8: 4.1243204802070764e-07
+eigen value   9: 2.6919958466238616e-06
+eigen value  10: 3.0340527590635967e-06
+eigen value  11: 7.5158651685405410e-06
+eigen value  12: 1.2552276646505228e-05
+eigen value  13: 1.7357923970854610e-05
+eigen value  14: 2.1883525398834309e-05
+eigen value  15: 3.5492588928858322e-05
+eigen value  16: 9.0018835792554758e-05
+eigen value  17: 1.0208763000080376e-04
+eigen value  18: 2.5111420278368360e-04
+eigen value  19: 4.8843275895102227e-04
+
+Fermi energy constraint residual (bisection)      :    8.5778495417798695e-11
+Fermi energy constraint residual (Newton-Raphson) :    5.3290705182007514e-15
+Fermi energy                                      :   -1.4416780900530346e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 3.960006e-04, current abs. residual: 5.827088e-12, nsteps: 464, abs. tolerance criterion: 6.000573e-12
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 0.97311373660428
+fractional occupancy 5: 0.55773286942917
+fractional occupancy 6: 0.46915339396655
+fractional occupancy 7: 0.00000000000000
+fractional occupancy 8: 0.00000000000000
+fractional occupancy 9: 0.00000000000000
+fractional occupancy 10: 0.00000000000000
+fractional occupancy 11: 0.00000000000000
+fractional occupancy 12: 0.00000000000000
+fractional occupancy 13: 0.00000000000000
+fractional occupancy 14: 0.00000000000000
+fractional occupancy 15: 0.00000000000000
+fractional occupancy 16: 0.00000000000000
+fractional occupancy 17: 0.00000000000000
+fractional occupancy 18: 0.00000000000000
+fractional occupancy 19: 0.00000000000000
+
+number of electrons: 1.1999986633423546e+01 
+
+Energy computations
+-------------------
+Band energy             :  -2.9089749873566357e+00
+Kinetic energy          :   5.6367646942304113e+00
+Exchange energy         :  -2.8511260817137267e+00
+Correlation energy      :  -5.4943876822147020e-01
+Electrostatic energy    :  -1.0343555695307584e+01
+Total energy            :  -8.1073558510123682e+00
+Total energy per atom   :  -2.0268389627530921e+00
+SCF iteration 10 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 11 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 1.610826e-03
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 1.865995e-04, current abs. residual: 5.738449e-12, nsteps: 456, abs. tolerance criterion: 6.000573e-12
+
+upper bound of unwanted spectrum:  3.7753410749e+04
+lower bound of unwanted spectrum:  4.8843275895e-04
+Chebyshev polynomial degree: 450
+
+kPoint: 0
+eigen value   0: -5.4104490505795932e-01
+eigen value   1: -2.0941186193765576e-01
+eigen value   2: -2.0940710114082786e-01
+eigen value   3: -2.0566157040344951e-01
+eigen value   4: -1.5110470057256209e-01
+eigen value   5: -1.4580784748169032e-01
+eigen value   6: -1.4521262091731507e-01
+eigen value   7: 1.2056081300465122e-07
+eigen value   8: 1.8484628320161148e-07
+eigen value   9: 5.7900549896453910e-07
+eigen value  10: 9.5071226500877471e-07
+eigen value  11: 2.0598047512553378e-06
+eigen value  12: 6.3880265604024790e-06
+eigen value  13: 1.1385010947692268e-05
+eigen value  14: 1.1688197728196579e-05
+eigen value  15: 2.3403835160632260e-05
+eigen value  16: 7.4204606996931488e-05
+eigen value  17: 9.1585519092855937e-05
+eigen value  18: 2.2517399643935196e-04
+eigen value  19: 4.1876185816327522e-04
+
+Fermi energy constraint residual (bisection)      :    2.1407053907296358e-10
+Fermi energy constraint residual (Newton-Raphson) :    0.0000000000000000e+00
+Fermi energy                                      :   -1.4542420142486745e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 1.472922e-04, current abs. residual: 5.875047e-12, nsteps: 454, abs. tolerance criterion: 6.000573e-12
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 0.97307797966186
+fractional occupancy 5: 0.56027832432533
+fractional occupancy 6: 0.46664369601281
+fractional occupancy 7: 0.00000000000000
+fractional occupancy 8: 0.00000000000000
+fractional occupancy 9: 0.00000000000000
+fractional occupancy 10: 0.00000000000000
+fractional occupancy 11: 0.00000000000000
+fractional occupancy 12: 0.00000000000000
+fractional occupancy 13: 0.00000000000000
+fractional occupancy 14: 0.00000000000000
+fractional occupancy 15: 0.00000000000000
+fractional occupancy 16: 0.00000000000000
+fractional occupancy 17: 0.00000000000000
+fractional occupancy 18: 0.00000000000000
+fractional occupancy 19: 0.00000000000000
+
+number of electrons: 1.1999986633870140e+01 
+
+Energy computations
+-------------------
+Band energy             :  -2.9240352517670778e+00
+Kinetic energy          :   5.6365918742866707e+00
+Exchange energy         :  -2.8510811457748320e+00
+Correlation energy      :  -5.4943592555133747e-01
+Electrostatic energy    :  -1.0343440494880788e+01
+Total energy            :  -8.1073656919202843e+00
+Total energy per atom   :  -2.0268414229800711e+00
+SCF iteration 11 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 12 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 4.065268e-04
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 4.646694e-05, current abs. residual: 5.560173e-12, nsteps: 443, abs. tolerance criterion: 6.000573e-12
+
+upper bound of unwanted spectrum:  3.7753410333e+04
+lower bound of unwanted spectrum:  4.1876185816e-04
+Chebyshev polynomial degree: 450
+
+kPoint: 0
+eigen value   0: -5.4144816050047562e-01
+eigen value   1: -2.0981276557916689e-01
+eigen value   2: -2.0981077311748081e-01
+eigen value   3: -2.0606814300144372e-01
+eigen value   4: -1.5151046250230288e-01
+eigen value   5: -1.4621926989566472e-01
+eigen value   6: -1.4560700283361888e-01
+eigen value   7: 8.4101097919531980e-08
+eigen value   8: 1.4122081234029752e-07
+eigen value   9: 4.1863976352466347e-07
+eigen value  10: 6.8666309292639387e-07
+eigen value  11: 1.4529142699527339e-06
+eigen value  12: 4.0829415557051333e-06
+eigen value  13: 7.3548814641218772e-06
+eigen value  14: 9.9383389120321956e-06
+eigen value  15: 1.8960345251705658e-05
+eigen value  16: 6.7481887423367768e-05
+eigen value  17: 8.6534411668905530e-05
+eigen value  18: 2.1591270669773789e-04
+eigen value  19: 3.9453091448752003e-04
+
+Fermi energy constraint residual (bisection)      :    9.6994767773139756e-10
+Fermi energy constraint residual (Newton-Raphson) :    8.8817841970012523e-15
+Fermi energy                                      :   -1.4582720543258595e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 3.707089e-05, current abs. residual: 5.684569e-12, nsteps: 433, abs. tolerance criterion: 6.000573e-12
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 0.97312357151556
+fractional occupancy 5: 0.56158774497391
+fractional occupancy 6: 0.46528868351053
+fractional occupancy 7: 0.00000000000000
+fractional occupancy 8: 0.00000000000000
+fractional occupancy 9: 0.00000000000000
+fractional occupancy 10: 0.00000000000000
+fractional occupancy 11: 0.00000000000000
+fractional occupancy 12: 0.00000000000000
+fractional occupancy 13: 0.00000000000000
+fractional occupancy 14: 0.00000000000000
+fractional occupancy 15: 0.00000000000000
+fractional occupancy 16: 0.00000000000000
+fractional occupancy 17: 0.00000000000000
+fractional occupancy 18: 0.00000000000000
+fractional occupancy 19: 0.00000000000000
+
+number of electrons: 1.1999986633450684e+01 
+
+Energy computations
+-------------------
+Band energy             :  -2.9288849706031765e+00
+Kinetic energy          :   5.6366510411688111e+00
+Exchange energy         :  -2.8510979172224338e+00
+Correlation energy      :  -5.4943710950901870e-01
+Electrostatic energy    :  -1.0343484067167402e+01
+Total energy            :  -8.1073680527300436e+00
+Total energy per atom   :  -2.0268420131825109e+00
+SCF iteration 12 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 13 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 1.695968e-04
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 1.785717e-05, current abs. residual: 5.838543e-12, nsteps: 432, abs. tolerance criterion: 6.000573e-12
+
+upper bound of unwanted spectrum:  3.7753409880e+04
+lower bound of unwanted spectrum:  3.9453091449e-04
+Chebyshev polynomial degree: 450
+
+kPoint: 0
+eigen value   0: -5.4182525515088265e-01
+eigen value   1: -2.1018795298490223e-01
+eigen value   2: -2.1018769548124799e-01
+eigen value   3: -2.0644924254270375e-01
+eigen value   4: -1.5188965659163234e-01
+eigen value   5: -1.4659842336077547e-01
+eigen value   6: -1.4598268470343306e-01
+eigen value   7: 6.2567719948903278e-08
+eigen value   8: 1.1402720775252655e-07
+eigen value   9: 3.1774812515153094e-07
+eigen value  10: 4.8685921361886018e-07
+eigen value  11: 1.0786707932947929e-06
+eigen value  12: 2.3620568490267691e-06
+eigen value  13: 4.6817335509525372e-06
+eigen value  14: 8.9038849088482454e-06
+eigen value  15: 1.6850505323859684e-05
+eigen value  16: 6.2609874265599961e-05
+eigen value  17: 8.2823822987854179e-05
+eigen value  18: 2.0819461028279764e-04
+eigen value  19: 3.7647632397196790e-04
+
+Fermi energy constraint residual (bisection)      :    8.3717566212726524e-10
+Fermi energy constraint residual (Newton-Raphson) :    8.8817841970012523e-15
+Fermi energy                                      :   -1.4620470357005044e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 1.798054e-05, current abs. residual: 5.800070e-12, nsteps: 433, abs. tolerance criterion: 6.000573e-12
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 0.97315157040444
+fractional occupancy 5: 0.56184511861538
+fractional occupancy 6: 0.46500331098017
+fractional occupancy 7: 0.00000000000000
+fractional occupancy 8: 0.00000000000000
+fractional occupancy 9: 0.00000000000000
+fractional occupancy 10: 0.00000000000000
+fractional occupancy 11: 0.00000000000000
+fractional occupancy 12: 0.00000000000000
+fractional occupancy 13: 0.00000000000000
+fractional occupancy 14: 0.00000000000000
+fractional occupancy 15: 0.00000000000000
+fractional occupancy 16: 0.00000000000000
+fractional occupancy 17: 0.00000000000000
+fractional occupancy 18: 0.00000000000000
+fractional occupancy 19: 0.00000000000000
+
+number of electrons: 1.1999986633655304e+01 
+
+Energy computations
+-------------------
+Band energy             :  -2.9334196885898174e+00
+Kinetic energy          :   5.6366184913929107e+00
+Exchange energy         :  -2.8510912424874180e+00
+Correlation energy      :  -5.4943668016579950e-01
+Electrostatic energy    :  -1.0343459376167157e+01
+Total energy            :  -8.1073688074274628e+00
+Total energy per atom   :  -2.0268422018568657e+00
+SCF iteration 13 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 14 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 2.368641e-05
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 2.441531e-06, current abs. residual: 5.932990e-12, nsteps: 399, abs. tolerance criterion: 6.000573e-12
+
+upper bound of unwanted spectrum:  3.7753409852e+04
+lower bound of unwanted spectrum:  3.7647632397e-04
+Chebyshev polynomial degree: 450
+
+kPoint: 0
+eigen value   0: -5.4185664456598170e-01
+eigen value   1: -2.1021918181652829e-01
+eigen value   2: -2.1021906935260934e-01
+eigen value   3: -2.0648082239767490e-01
+eigen value   4: -1.5192102363965501e-01
+eigen value   5: -1.4662972169630881e-01
+eigen value   6: -1.4601447867993758e-01
+eigen value   7: 4.7231967684159280e-08
+eigen value   8: 9.2930437434991490e-08
+eigen value   9: 2.3916641374974820e-07
+eigen value  10: 3.3283262721541757e-07
+eigen value  11: 8.3407595706927736e-07
+eigen value  12: 1.3319390823088947e-06
+eigen value  13: 2.9790383204828192e-06
+eigen value  14: 8.1175413109365947e-06
+eigen value  15: 1.5684541387399383e-05
+eigen value  16: 5.9051669381970488e-05
+eigen value  17: 7.9847800815213902e-05
+eigen value  18: 2.0154692217162266e-04
+eigen value  19: 3.6228769229848014e-04
+
+Fermi energy constraint residual (bisection)      :    8.1479889502134029e-10
+Fermi energy constraint residual (Newton-Raphson) :    3.5527136788005009e-15
+Fermi energy                                      :   -1.4623624198108856e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 2.026357e-06, current abs. residual: 5.974602e-12, nsteps: 407, abs. tolerance criterion: 6.000573e-12
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 0.97314874261869
+fractional occupancy 5: 0.56180779325748
+fractional occupancy 6: 0.46504346412383
+fractional occupancy 7: 0.00000000000000
+fractional occupancy 8: 0.00000000000000
+fractional occupancy 9: 0.00000000000000
+fractional occupancy 10: 0.00000000000000
+fractional occupancy 11: 0.00000000000000
+fractional occupancy 12: 0.00000000000000
+fractional occupancy 13: 0.00000000000000
+fractional occupancy 14: 0.00000000000000
+fractional occupancy 15: 0.00000000000000
+fractional occupancy 16: 0.00000000000000
+fractional occupancy 17: 0.00000000000000
+fractional occupancy 18: 0.00000000000000
+fractional occupancy 19: 0.00000000000000
+
+number of electrons: 1.1999986633664530e+01 
+
+Energy computations
+-------------------
+Band energy             :  -2.9337965412295670e+00
+Kinetic energy          :   5.6366139256195833e+00
+Exchange energy         :  -2.8510896648981743e+00
+Correlation energy      :  -5.4943657384572031e-01
+Electrostatic energy    :  -1.0343456415608507e+01
+Total energy            :  -8.1073687287328191e+00
+Total energy per atom   :  -2.0268421821832048e+00
+SCF iteration 14 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 15 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 1.229065e-05
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 1.237469e-06, current abs. residual: 5.915154e-12, nsteps: 394, abs. tolerance criterion: 6.000573e-12
+
+upper bound of unwanted spectrum:  3.7753409842e+04
+lower bound of unwanted spectrum:  3.6228769230e-04
+Chebyshev polynomial degree: 450
+
+kPoint: 0
+eigen value   0: -5.4186766026128552e-01
+eigen value   1: -2.1023019569585155e-01
+eigen value   2: -2.1023013554539072e-01
+eigen value   3: -2.0649169925318997e-01
+eigen value   4: -1.5193201741647647e-01
+eigen value   5: -1.4664073545832390e-01
+eigen value   6: -1.4602546970331290e-01
+eigen value   7: 3.6034885373115549e-08
+eigen value   8: 7.5283294195795088e-08
+eigen value   9: 1.7826806247963323e-07
+eigen value  10: 2.2357122817026486e-07
+eigen value  11: 6.4975063524779830e-07
+eigen value  12: 7.7064445370131753e-07
+eigen value  13: 1.9193060640586672e-06
+eigen value  14: 7.4700350368433425e-06
+eigen value  15: 1.4920953616266103e-05
+eigen value  16: 5.6308590301492749e-05
+eigen value  17: 7.7270816117200103e-05
+eigen value  18: 1.9551643260021966e-04
+eigen value  19: 3.5033914067039603e-04
+
+Fermi energy constraint residual (bisection)      :    4.9098503041022923e-12
+Fermi energy constraint residual (Newton-Raphson) :    3.5527136788005009e-15
+Fermi energy                                      :   -1.4624724388504382e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 8.217451e-07, current abs. residual: 5.708398e-12, nsteps: 383, abs. tolerance criterion: 6.000573e-12
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 0.97314860849975
+fractional occupancy 5: 0.56180963688693
+fractional occupancy 6: 0.46504175461332
+fractional occupancy 7: 0.00000000000000
+fractional occupancy 8: 0.00000000000000
+fractional occupancy 9: 0.00000000000000
+fractional occupancy 10: 0.00000000000000
+fractional occupancy 11: 0.00000000000000
+fractional occupancy 12: 0.00000000000000
+fractional occupancy 13: 0.00000000000000
+fractional occupancy 14: 0.00000000000000
+fractional occupancy 15: 0.00000000000000
+fractional occupancy 16: 0.00000000000000
+fractional occupancy 17: 0.00000000000000
+fractional occupancy 18: 0.00000000000000
+fractional occupancy 19: 0.00000000000000
+
+number of electrons: 1.1999986633667847e+01 
+
+Energy computations
+-------------------
+Band energy             :  -2.9339284821617166e+00
+Kinetic energy          :   5.6366136948731960e+00
+Exchange energy         :  -2.8510899863876720e+00
+Correlation energy      :  -5.4943659576114845e-01
+Electrostatic energy    :  -1.0343455842491959e+01
+Total energy            :  -8.1073687297675825e+00
+Total energy per atom   :  -2.0268421824418956e+00
+SCF iteration 15 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 16 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 7.428008e-06
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 7.134723e-07, current abs. residual: 5.726762e-12, nsteps: 386, abs. tolerance criterion: 6.000573e-12
+
+upper bound of unwanted spectrum:  3.7753409841e+04
+lower bound of unwanted spectrum:  3.5033914067e-04
+Chebyshev polynomial degree: 450
+
+kPoint: 0
+eigen value   0: -5.4187063163149007e-01
+eigen value   1: -2.1023316159497560e-01
+eigen value   2: -2.1023312697274382e-01
+eigen value   3: -2.0649464173451754e-01
+eigen value   4: -1.5193494449974501e-01
+eigen value   5: -1.4664348835730459e-01
+eigen value   6: -1.4602866489508895e-01
+eigen value   7: 2.7761741007237067e-08
+eigen value   8: 5.9670083281828416e-08
+eigen value   9: 1.2910271833450032e-07
+eigen value  10: 1.5384176331899462e-07
+eigen value  11: 4.3020922625456393e-07
+eigen value  12: 5.4139976105784070e-07
+eigen value  13: 1.2784348847389293e-06
+eigen value  14: 6.9109720423608805e-06
+eigen value  15: 1.4353612862901065e-05
+eigen value  16: 5.4084946210211277e-05
+eigen value  17: 7.4956017279248580e-05
+eigen value  18: 1.8992875564961050e-04
+eigen value  19: 3.3984801144124261e-04
+
+Fermi energy constraint residual (bisection)      :    2.8584068445525190e-10
+Fermi energy constraint residual (Newton-Raphson) :    7.1054273576010019e-15
+Fermi energy                                      :   -1.4625021667778990e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 1.007153e-06, current abs. residual: 5.820021e-12, nsteps: 359, abs. tolerance criterion: 6.000573e-12
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 0.97314785416182
+fractional occupancy 5: 0.56177544867072
+fractional occupancy 6: 0.46507669716746
+fractional occupancy 7: 0.00000000000000
+fractional occupancy 8: 0.00000000000000
+fractional occupancy 9: 0.00000000000000
+fractional occupancy 10: 0.00000000000000
+fractional occupancy 11: 0.00000000000000
+fractional occupancy 12: 0.00000000000000
+fractional occupancy 13: 0.00000000000000
+fractional occupancy 14: 0.00000000000000
+fractional occupancy 15: 0.00000000000000
+fractional occupancy 16: 0.00000000000000
+fractional occupancy 17: 0.00000000000000
+fractional occupancy 18: 0.00000000000000
+fractional occupancy 19: 0.00000000000000
+
+number of electrons: 1.1999986633674283e+01 
+
+Energy computations
+-------------------
+Band energy             :  -2.9339639355471894e+00
+Kinetic energy          :   5.6366120262962047e+00
+Exchange energy         :  -2.8510895358379713e+00
+Correlation energy      :  -5.4943656420040565e-01
+Electrostatic energy    :  -1.0343454605126709e+01
+Total energy            :  -8.1073686788688839e+00
+Total energy per atom   :  -2.0268421697172210e+00
+SCF iteration 16 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 17 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 3.334422e-06
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 3.965509e-07, current abs. residual: 5.806401e-12, nsteps: 350, abs. tolerance criterion: 6.000573e-12
+
+upper bound of unwanted spectrum:  3.7753409838e+04
+lower bound of unwanted spectrum:  3.3984801144e-04
+Chebyshev polynomial degree: 450
+
+kPoint: 0
+eigen value   0: -5.4187304695615834e-01
+eigen value   1: -2.1023558105980983e-01
+eigen value   2: -2.1023554643717288e-01
+eigen value   3: -2.0649704131501576e-01
+eigen value   4: -1.5193734821492291e-01
+eigen value   5: -1.4664593660678163e-01
+eigen value   6: -1.4603104463233596e-01
+eigen value   7: 2.1577898830320551e-08
+eigen value   8: 4.5379847413404880e-08
+eigen value   9: 8.8588531407849983e-08
+eigen value  10: 1.1324927590729064e-07
+eigen value  11: 2.7059551859215644e-07
+eigen value  12: 4.1166794789510138e-07
+eigen value  13: 9.0324021203890693e-07
+eigen value  14: 6.4145275968134310e-06
+eigen value  15: 1.3892405659186328e-05
+eigen value  16: 5.2197211041058200e-05
+eigen value  17: 7.2825891367362687e-05
+eigen value  18: 1.8467841800162346e-04
+eigen value  19: 3.3034765219613519e-04
+
+Fermi energy constraint residual (bisection)      :    8.7495166667395097e-10
+Fermi energy constraint residual (Newton-Raphson) :    1.7763568394002505e-15
+Fermi energy                                      :   -1.4625262998502983e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 2.194744e-07, current abs. residual: 5.989293e-12, nsteps: 343, abs. tolerance criterion: 6.000573e-12
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 0.97314769586258
+fractional occupancy 5: 0.56178088139127
+fractional occupancy 6: 0.46507142274615
+fractional occupancy 7: 0.00000000000000
+fractional occupancy 8: 0.00000000000000
+fractional occupancy 9: 0.00000000000000
+fractional occupancy 10: 0.00000000000000
+fractional occupancy 11: 0.00000000000000
+fractional occupancy 12: 0.00000000000000
+fractional occupancy 13: 0.00000000000000
+fractional occupancy 14: 0.00000000000000
+fractional occupancy 15: 0.00000000000000
+fractional occupancy 16: 0.00000000000000
+fractional occupancy 17: 0.00000000000000
+fractional occupancy 18: 0.00000000000000
+fractional occupancy 19: 0.00000000000000
+
+number of electrons: 1.1999986633673172e+01 
+
+Energy computations
+-------------------
+Band energy             :  -2.9339928906213046e+00
+Kinetic energy          :   5.6366122238180836e+00
+Exchange energy         :  -2.8510896331099977e+00
+Correlation energy      :  -5.4943657102515897e-01
+Electrostatic energy    :  -1.0343454703416295e+01
+Total energy            :  -8.1073686837333696e+00
+Total energy per atom   :  -2.0268421709333424e+00
+SCF iteration 17 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 18 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 1.476160e-06
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 1.587920e-07, current abs. residual: 5.849890e-12, nsteps: 342, abs. tolerance criterion: 6.000573e-12
+
+upper bound of unwanted spectrum:  3.7753409835e+04
+lower bound of unwanted spectrum:  3.3034765220e-04
+Chebyshev polynomial degree: 450
+
+kPoint: 0
+eigen value   0: -5.4187582950493962e-01
+eigen value   1: -2.1023834954481876e-01
+eigen value   2: -2.1023832855755176e-01
+eigen value   3: -2.0649985360088088e-01
+eigen value   4: -1.5194014265204905e-01
+eigen value   5: -1.4664874750024445e-01
+eigen value   6: -1.4603380409008387e-01
+eigen value   7: 1.6886987548901150e-08
+eigen value   8: 3.2601789010362176e-08
+eigen value   9: 5.9491265567489392e-08
+eigen value  10: 8.7633091078072020e-08
+eigen value  11: 1.8261353481560538e-07
+eigen value  12: 3.0145391337279672e-07
+eigen value  13: 6.8718342512490366e-07
+eigen value  14: 5.9661528850993813e-06
+eigen value  15: 1.3493720072371056e-05
+eigen value  16: 5.0533495839109326e-05
+eigen value  17: 7.0833996715818649e-05
+eigen value  18: 1.7970032566536331e-04
+eigen value  19: 3.2155623355828217e-04
+
+Fermi energy constraint residual (bisection)      :    7.1190875416959898e-10
+Fermi energy constraint residual (Newton-Raphson) :    3.5527136788005009e-15
+Fermi energy                                      :   -1.4625541549690083e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 1.531394e-07, current abs. residual: 5.981856e-12, nsteps: 340, abs. tolerance criterion: 6.000573e-12
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 0.97314784315744
+fractional occupancy 5: 0.56178482764035
+fractional occupancy 6: 0.46506732920221
+fractional occupancy 7: 0.00000000000000
+fractional occupancy 8: 0.00000000000000
+fractional occupancy 9: 0.00000000000000
+fractional occupancy 10: 0.00000000000000
+fractional occupancy 11: 0.00000000000000
+fractional occupancy 12: 0.00000000000000
+fractional occupancy 13: 0.00000000000000
+fractional occupancy 14: 0.00000000000000
+fractional occupancy 15: 0.00000000000000
+fractional occupancy 16: 0.00000000000000
+fractional occupancy 17: 0.00000000000000
+fractional occupancy 18: 0.00000000000000
+fractional occupancy 19: 0.00000000000000
+
+number of electrons: 1.1999986633673778e+01 
+
+Energy computations
+-------------------
+Band energy             :  -2.9340263517971570e+00
+Kinetic energy          :   5.6366121399854583e+00
+Exchange energy         :  -2.8510896086532247e+00
+Correlation energy      :  -5.4943656960374543e-01
+Electrostatic energy    :  -1.0343454652138114e+01
+Total energy            :  -8.1073686904096256e+00
+Total energy per atom   :  -2.0268421726024064e+00
+SCF iteration 18 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 19 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 2.341748e-07
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 2.191588e-08, current abs. residual: 5.574502e-12, nsteps: 310, abs. tolerance criterion: 6.000573e-12
+
+upper bound of unwanted spectrum:  3.7753409835e+04
+lower bound of unwanted spectrum:  3.2155623356e-04
+Chebyshev polynomial degree: 450
+
+kPoint: 0
+eigen value   0: -5.4187603771716342e-01
+eigen value   1: -2.1023855652502110e-01
+eigen value   2: -2.1023853736377884e-01
+eigen value   3: -2.0650006332909840e-01
+eigen value   4: -1.5194035360141775e-01
+eigen value   5: -1.4664895280985379e-01
+eigen value   6: -1.4603401440034619e-01
+eigen value   7: 1.3247603774614993e-08
+eigen value   8: 2.2249701197278177e-08
+eigen value   9: 4.0144052707982657e-08
+eigen value  10: 7.0095425430471355e-08
+eigen value  11: 1.3313532487377377e-07
+eigen value  12: 2.1492293984352873e-07
+eigen value  13: 5.5608231858381384e-07
+eigen value  14: 5.5568634212288627e-06
+eigen value  15: 1.3134851521205530e-05
+eigen value  16: 4.9025627943359724e-05
+eigen value  17: 6.8951476210668173e-05
+eigen value  18: 1.7495310396739556e-04
+eigen value  19: 3.1330105447914644e-04
+
+Fermi energy constraint residual (bisection)      :    3.4873792742473597e-10
+Fermi energy constraint residual (Newton-Raphson) :    7.1054273576010019e-15
+Fermi energy                                      :   -1.4625562347672999e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 1.526317e-08, current abs. residual: 5.766593e-12, nsteps: 305, abs. tolerance criterion: 6.000573e-12
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 0.97314789216403
+fractional occupancy 5: 0.56178441248345
+fractional occupancy 6: 0.46506769535253
+fractional occupancy 7: 0.00000000000000
+fractional occupancy 8: 0.00000000000000
+fractional occupancy 9: 0.00000000000000
+fractional occupancy 10: 0.00000000000000
+fractional occupancy 11: 0.00000000000000
+fractional occupancy 12: 0.00000000000000
+fractional occupancy 13: 0.00000000000000
+fractional occupancy 14: 0.00000000000000
+fractional occupancy 15: 0.00000000000000
+fractional occupancy 16: 0.00000000000000
+fractional occupancy 17: 0.00000000000000
+fractional occupancy 18: 0.00000000000000
+fractional occupancy 19: 0.00000000000000
+
+number of electrons: 1.1999986633674052e+01 
+
+Energy computations
+-------------------
+Band energy             :  -2.9340288561855643e+00
+Kinetic energy          :   5.6366121165324952e+00
+Exchange energy         :  -2.8510896050928523e+00
+Correlation energy      :  -5.4943656934432761e-01
+Electrostatic energy    :  -1.0343454632526392e+01
+Total energy            :  -8.1073686904310751e+00
+Total energy per atom   :  -2.0268421726077688e+00
+SCF iteration 19 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 20 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 9.578511e-08
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 8.310829e-09, current abs. residual: 5.590317e-12, nsteps: 297, abs. tolerance criterion: 6.000573e-12
+
+upper bound of unwanted spectrum:  3.7753409835e+04
+lower bound of unwanted spectrum:  3.1330105448e-04
+Chebyshev polynomial degree: 450
+
+kPoint: 0
+eigen value   0: -5.4187605503809222e-01
+eigen value   1: -2.1023857300041912e-01
+eigen value   2: -2.1023855448570827e-01
+eigen value   3: -2.0650008203056536e-01
+eigen value   4: -1.5194037201501104e-01
+eigen value   5: -1.4664897148203676e-01
+eigen value   6: -1.4603403115311672e-01
+eigen value   7: 1.0305072481138294e-08
+eigen value   8: 1.4931331576500414e-08
+eigen value   9: 2.7471212154249993e-08
+eigen value  10: 5.7551035177222326e-08
+eigen value  11: 1.0319565904867966e-07
+eigen value  12: 1.5367513266860210e-07
+eigen value  13: 4.6740937487549996e-07
+eigen value  14: 5.1806230650182351e-06
+eigen value  15: 1.2803138668948250e-05
+eigen value  16: 4.7630947318195740e-05
+eigen value  17: 6.7158499322490171e-05
+eigen value  18: 1.7040644567687974e-04
+eigen value  19: 3.0546887079379166e-04
+
+Fermi energy constraint residual (bisection)      :    5.5829296741194412e-10
+Fermi energy constraint residual (Newton-Raphson) :    7.1054273576010019e-15
+Fermi energy                                      :   -1.4625564121958234e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 8.179642e-09, current abs. residual: 5.948345e-12, nsteps: 301, abs. tolerance criterion: 6.000573e-12
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 0.97314790323332
+fractional occupancy 5: 0.56178455697269
+fractional occupancy 6: 0.46506753979399
+fractional occupancy 7: 0.00000000000000
+fractional occupancy 8: 0.00000000000000
+fractional occupancy 9: 0.00000000000000
+fractional occupancy 10: 0.00000000000000
+fractional occupancy 11: 0.00000000000000
+fractional occupancy 12: 0.00000000000000
+fractional occupancy 13: 0.00000000000000
+fractional occupancy 14: 0.00000000000000
+fractional occupancy 15: 0.00000000000000
+fractional occupancy 16: 0.00000000000000
+fractional occupancy 17: 0.00000000000000
+fractional occupancy 18: 0.00000000000000
+fractional occupancy 19: 0.00000000000000
+
+number of electrons: 1.1999986633674130e+01 
+
+Energy computations
+-------------------
+Band energy             :  -2.9340290681335972e+00
+Kinetic energy          :   5.6366121043535866e+00
+Exchange energy         :  -2.8510896020278516e+00
+Correlation energy      :  -5.4943656914886252e-01
+Electrostatic energy    :  -1.0343454623886652e+01
+Total energy            :  -8.1073686907097802e+00
+Total energy per atom   :  -2.0268421726774450e+00
+SCF iteration 20 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 21 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 2.452570e-08
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 2.520397e-09, current abs. residual: 5.850293e-12, nsteps: 285, abs. tolerance criterion: 6.000573e-12
+
+upper bound of unwanted spectrum:  3.7753409835e+04
+lower bound of unwanted spectrum:  3.0546887079e-04
+Chebyshev polynomial degree: 450
+
+kPoint: 0
+eigen value   0: -5.4187602475525465e-01
+eigen value   1: -2.1023854269952141e-01
+eigen value   2: -2.1023852429882736e-01
+eigen value   3: -2.0650005157840720e-01
+eigen value   4: -1.5194034176943108e-01
+eigen value   5: -1.4664894103071399e-01
+eigen value   6: -1.4603400088622112e-01
+eigen value   7: 7.7648292542292981e-09
+eigen value   8: 1.0397176395062604e-08
+eigen value   9: 1.9172077913435343e-08
+eigen value  10: 4.8204891670716523e-08
+eigen value  11: 8.3102993766509337e-08
+eigen value  12: 1.1301325729235660e-07
+eigen value  13: 4.0124688987996227e-07
+eigen value  14: 4.8331505839110108e-06
+eigen value  15: 1.2491310668646495e-05
+eigen value  16: 4.6322816116740744e-05
+eigen value  17: 6.5441802458382470e-05
+eigen value  18: 1.6603926436125510e-04
+eigen value  19: 2.9798670008564747e-04
+
+Fermi energy constraint residual (bisection)      :    6.1518967697793414e-10
+Fermi energy constraint residual (Newton-Raphson) :    3.5527136788005009e-15
+Fermi energy                                      :   -1.4625561086662583e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 2.071488e-09, current abs. residual: 5.776194e-12, nsteps: 283, abs. tolerance criterion: 6.000573e-12
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 0.97314790500536
+fractional occupancy 5: 0.56178454167903
+fractional occupancy 6: 0.46506755331561
+fractional occupancy 7: 0.00000000000000
+fractional occupancy 8: 0.00000000000000
+fractional occupancy 9: 0.00000000000000
+fractional occupancy 10: 0.00000000000000
+fractional occupancy 11: 0.00000000000000
+fractional occupancy 12: 0.00000000000000
+fractional occupancy 13: 0.00000000000000
+fractional occupancy 14: 0.00000000000000
+fractional occupancy 15: 0.00000000000000
+fractional occupancy 16: 0.00000000000000
+fractional occupancy 17: 0.00000000000000
+fractional occupancy 18: 0.00000000000000
+fractional occupancy 19: 0.00000000000000
+
+number of electrons: 1.1999986633674121e+01 
+
+Energy computations
+-------------------
+Band energy             :  -2.9340287044568600e+00
+Kinetic energy          :   5.6366121077794524e+00
+Exchange energy         :  -2.8510896030610056e+00
+Correlation energy      :  -5.4943656921643813e-01
+Electrostatic energy    :  -1.0343454626251987e+01
+Total energy            :  -8.1073686907499791e+00
+Total energy per atom   :  -2.0268421726874948e+00
+SCF iteration 21 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 22 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 1.198050e-08
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 1.057392e-09, current abs. residual: 5.230057e-12, nsteps: 113, abs. tolerance criterion: 6.000573e-12
+
+upper bound of unwanted spectrum:  3.7753409835e+04
+lower bound of unwanted spectrum:  2.9798670009e-04
+Chebyshev polynomial degree: 450
+
+kPoint: 0
+eigen value   0: -5.4187596741771282e-01
+eigen value   1: -2.1023848541361004e-01
+eigen value   2: -2.1023846698195289e-01
+eigen value   3: -2.0649999393478150e-01
+eigen value   4: -1.5194028432456405e-01
+eigen value   5: -1.4664888355031186e-01
+eigen value   6: -1.4603394373944228e-01
+eigen value   7: 5.6200134915729149e-09
+eigen value   8: 7.7490732086590679e-09
+eigen value   9: 1.3751381421457165e-08
+eigen value  10: 4.1001304178124738e-08
+eigen value  11: 6.7970801575212199e-08
+eigen value  12: 8.7093613110061037e-08
+eigen value  13: 3.4857693456047329e-07
+eigen value  14: 4.5112226110938547e-06
+eigen value  15: 1.2194999445736089e-05
+eigen value  16: 4.5084144289671862e-05
+eigen value  17: 6.3792056767633781e-05
+eigen value  18: 1.6183578292758576e-04
+eigen value  19: 2.9080537161998006e-04
+
+Fermi energy constraint residual (bisection)      :    1.9331380940457166e-10
+Fermi energy constraint residual (Newton-Raphson) :    3.5527136788005009e-15
+Fermi energy                                      :   -1.4625555354728365e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 9.404984e-10, current abs. residual: 5.595604e-12, nsteps: 114, abs. tolerance criterion: 6.000573e-12
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 0.97314790293382
+fractional occupancy 5: 0.56178451663797
+fractional occupancy 6: 0.46506758042822
+fractional occupancy 7: 0.00000000000000
+fractional occupancy 8: 0.00000000000000
+fractional occupancy 9: 0.00000000000000
+fractional occupancy 10: 0.00000000000000
+fractional occupancy 11: 0.00000000000000
+fractional occupancy 12: 0.00000000000000
+fractional occupancy 13: 0.00000000000000
+fractional occupancy 14: 0.00000000000000
+fractional occupancy 15: 0.00000000000000
+fractional occupancy 16: 0.00000000000000
+fractional occupancy 17: 0.00000000000000
+fractional occupancy 18: 0.00000000000000
+fractional occupancy 19: 0.00000000000000
+
+number of electrons: 1.1999986633674101e+01 
+
+Energy computations
+-------------------
+Band energy             :  -2.9340280156915526e+00
+Kinetic energy          :   5.6366121079084426e+00
+Exchange energy         :  -2.8510896032757111e+00
+Correlation energy      :  -5.4943656922988149e-01
+Electrostatic energy    :  -1.0343454626073347e+01
+Total energy            :  -8.1073686906704978e+00
+Total energy per atom   :  -2.0268421726676245e+00
+SCF iteration 22 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 23 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 2.903526e-09
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 2.416092e-10, current abs. residual: 5.787668e-12, nsteps: 86, abs. tolerance criterion: 6.000573e-12
+
+upper bound of unwanted spectrum:  3.7753409835e+04
+lower bound of unwanted spectrum:  2.9080537162e-04
+Chebyshev polynomial degree: 450
+
+kPoint: 0
+eigen value   0: -5.4187596731023280e-01
+eigen value   1: -2.1023848532501180e-01
+eigen value   2: -2.1023846686066841e-01
+eigen value   3: -2.0649999382210701e-01
+eigen value   4: -1.5194028418210176e-01
+eigen value   5: -1.4664888339879023e-01
+eigen value   6: -1.4603394368382322e-01
+eigen value   7: 4.0698194979353495e-09
+eigen value   8: 6.0038069351193335e-09
+eigen value   9: 1.0240205182774632e-08
+eigen value  10: 3.5304908715916457e-08
+eigen value  11: 5.5644206711457196e-08
+eigen value  12: 7.0907574162955830e-08
+eigen value  13: 3.0497467156275568e-07
+eigen value  14: 4.2122959638499808e-06
+eigen value  15: 1.1911466223834899e-05
+eigen value  16: 4.3903642122501604e-05
+eigen value  17: 6.2202449684973312e-05
+eigen value  18: 1.5778362863325425e-04
+eigen value  19: 2.8389044604679571e-04
+
+Fermi energy constraint residual (bisection)      :    1.6846968264871975e-11
+Fermi energy constraint residual (Newton-Raphson) :    1.7763568394002505e-15
+Fermi energy                                      :   -1.4625555344200197e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 3.535099e-10, current abs. residual: 5.702009e-12, nsteps: 89, abs. tolerance criterion: 6.000573e-12
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 0.97314790232022
+fractional occupancy 5: 0.56178450944873
+fractional occupancy 6: 0.46506758823105
+fractional occupancy 7: 0.00000000000000
+fractional occupancy 8: 0.00000000000000
+fractional occupancy 9: 0.00000000000000
+fractional occupancy 10: 0.00000000000000
+fractional occupancy 11: 0.00000000000000
+fractional occupancy 12: 0.00000000000000
+fractional occupancy 13: 0.00000000000000
+fractional occupancy 14: 0.00000000000000
+fractional occupancy 15: 0.00000000000000
+fractional occupancy 16: 0.00000000000000
+fractional occupancy 17: 0.00000000000000
+fractional occupancy 18: 0.00000000000000
+fractional occupancy 19: 0.00000000000000
+
+number of electrons: 1.1999986633674116e+01 
+
+Energy computations
+-------------------
+Band energy             :  -2.9340280143161368e+00
+Kinetic energy          :   5.6366121076380828e+00
+Exchange energy         :  -2.8510896031789672e+00
+Correlation energy      :  -5.4943656922299378e-01
+Electrostatic energy    :  -1.0343454625776364e+01
+Total energy            :  -8.1073686905402411e+00
+Total energy per atom   :  -2.0268421726350603e+00
+SCF iteration 23 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 24 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 1.263647e-09
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 1.339468e-10, current abs. residual: 5.785687e-12, nsteps: 80, abs. tolerance criterion: 6.000573e-12
+
+upper bound of unwanted spectrum:  3.7753409835e+04
+lower bound of unwanted spectrum:  2.8389044605e-04
+Chebyshev polynomial degree: 450
+
+kPoint: 0
+eigen value   0: -5.4187596729164011e-01
+eigen value   1: -2.1023848530506986e-01
+eigen value   2: -2.1023846684330902e-01
+eigen value   3: -2.0649999379532050e-01
+eigen value   4: -1.5194028416233549e-01
+eigen value   5: -1.4664888340450266e-01
+eigen value   6: -1.4603394364873570e-01
+eigen value   7: 3.0342466713516290e-09
+eigen value   8: 4.7277740570517662e-09
+eigen value   9: 7.9679951675522117e-09
+eigen value  10: 3.0708594861859435e-08
+eigen value  11: 4.5766230047010072e-08
+eigen value  12: 6.0280649970994346e-08
+eigen value  13: 2.6801629121556674e-07
+eigen value  14: 3.9342869470423143e-06
+eigen value  15: 1.1638918452383813e-05
+eigen value  16: 4.2773604646206773e-05
+eigen value  17: 6.0667853436075926e-05
+eigen value  18: 1.5387277597500625e-04
+eigen value  19: 2.7721692220997207e-04
+
+Fermi energy constraint residual (bisection)      :    3.5149838595316396e-10
+Fermi energy constraint residual (Newton-Raphson) :    5.3290705182007514e-15
+Fermi energy                                      :   -1.4625555342695809e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 1.181380e-10, current abs. residual: 5.694410e-12, nsteps: 79, abs. tolerance criterion: 6.000573e-12
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 0.97314790224229
+fractional occupancy 5: 0.56178451267585
+fractional occupancy 6: 0.46506758508186
+fractional occupancy 7: 0.00000000000000
+fractional occupancy 8: 0.00000000000000
+fractional occupancy 9: 0.00000000000000
+fractional occupancy 10: 0.00000000000000
+fractional occupancy 11: 0.00000000000000
+fractional occupancy 12: 0.00000000000000
+fractional occupancy 13: 0.00000000000000
+fractional occupancy 14: 0.00000000000000
+fractional occupancy 15: 0.00000000000000
+fractional occupancy 16: 0.00000000000000
+fractional occupancy 17: 0.00000000000000
+fractional occupancy 18: 0.00000000000000
+fractional occupancy 19: 0.00000000000000
+
+number of electrons: 1.1999986633674091e+01 
+
+Energy computations
+-------------------
+Band energy             :  -2.9340280140891348e+00
+Kinetic energy          :   5.6366121076920237e+00
+Exchange energy         :  -2.8510896032078676e+00
+Correlation energy      :  -5.4943656922512984e-01
+Electrostatic energy    :  -1.0343454625885474e+01
+Total energy            :  -8.1073686906264495e+00
+Total energy per atom   :  -2.0268421726566124e+00
+SCF iteration 24 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 25 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 1.962702e-10
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 1.789020e-11, current abs. residual: 5.919918e-12, nsteps: 34, abs. tolerance criterion: 6.000573e-12
+
+upper bound of unwanted spectrum:  3.7753409835e+04
+lower bound of unwanted spectrum:  2.7721692221e-04
+Chebyshev polynomial degree: 450
+
+kPoint: 0
+eigen value   0: -5.4187596729633836e-01
+eigen value   1: -2.1023848530777417e-01
+eigen value   2: -2.1023846684731842e-01
+eigen value   3: -2.0649999380502504e-01
+eigen value   4: -1.5194028416868108e-01
+eigen value   5: -1.4664888341197549e-01
+eigen value   6: -1.4603394365089217e-01
+eigen value   7: 2.3376591251843456e-09
+eigen value   8: 3.7954454188556383e-09
+eigen value   9: 6.4592976917064315e-09
+eigen value  10: 2.6936103768164797e-08
+eigen value  11: 3.8180309086714261e-08
+eigen value  12: 5.2566475897452747e-08
+eigen value  13: 2.3622868102863850e-07
+eigen value  14: 3.6754344855311884e-06
+eigen value  15: 1.1376120594247266e-05
+eigen value  16: 4.1688544340823208e-05
+eigen value  17: 5.9184245019405733e-05
+eigen value  18: 1.5009476207766728e-04
+eigen value  19: 2.7076577416799264e-04
+
+Fermi energy constraint residual (bisection)      :    6.9019279180793092e-10
+Fermi energy constraint residual (Newton-Raphson) :    7.1054273576010019e-15
+Fermi energy                                      :   -1.4625555343183624e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 1.637633e-11, current abs. residual: 5.925134e-12, nsteps: 33, abs. tolerance criterion: 6.000573e-12
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 0.97314790226650
+fractional occupancy 5: 0.56178451307926
+fractional occupancy 6: 0.46506758465423
+fractional occupancy 7: 0.00000000000000
+fractional occupancy 8: 0.00000000000000
+fractional occupancy 9: 0.00000000000000
+fractional occupancy 10: 0.00000000000000
+fractional occupancy 11: 0.00000000000000
+fractional occupancy 12: 0.00000000000000
+fractional occupancy 13: 0.00000000000000
+fractional occupancy 14: 0.00000000000000
+fractional occupancy 15: 0.00000000000000
+fractional occupancy 16: 0.00000000000000
+fractional occupancy 17: 0.00000000000000
+fractional occupancy 18: 0.00000000000000
+fractional occupancy 19: 0.00000000000000
+
+number of electrons: 1.1999986633674112e+01 
+
+Energy computations
+-------------------
+Band energy             :  -2.9340280141549044e+00
+Kinetic energy          :   5.6366121076896469e+00
+Exchange energy         :  -2.8510896032031185e+00
+Correlation energy      :  -5.4943656922484385e-01
+Electrostatic energy    :  -1.0343454625870226e+01
+Total energy            :  -8.1073686906085420e+00
+Total energy per atom   :  -2.0268421726521355e+00
+SCF iteration 25 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 26 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 1.266265e-10
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 1.341637e-11, current abs. residual: 5.837800e-12, nsteps: 19, abs. tolerance criterion: 6.000573e-12
+
+upper bound of unwanted spectrum:  3.7753409835e+04
+lower bound of unwanted spectrum:  2.7076577417e-04
+Chebyshev polynomial degree: 450
+
+kPoint: 0
+eigen value   0: -5.4187596729728338e-01
+eigen value   1: -2.1023848530852760e-01
+eigen value   2: -2.1023846684936157e-01
+eigen value   3: -2.0649999380330128e-01
+eigen value   4: -1.5194028417065505e-01
+eigen value   5: -1.4664888341309459e-01
+eigen value   6: -1.4603394365140077e-01
+eigen value   7: 1.8551422423996893e-09
+eigen value   8: 3.1343389190262826e-09
+eigen value   9: 5.4073060200439560e-09
+eigen value  10: 2.3792749489193075e-08
+eigen value  11: 3.2404881258275695e-08
+eigen value  12: 4.6520010307929093e-08
+eigen value  13: 2.0863375396056204e-07
+eigen value  14: 3.4342146832521423e-06
+eigen value  15: 1.1122177066314162e-05
+eigen value  16: 4.0644381178173910e-05
+eigen value  17: 5.7748363187965613e-05
+eigen value  18: 1.4644225555851491e-04
+eigen value  19: 2.6452193273885874e-04
+
+Fermi energy constraint residual (bisection)      :    9.5079677464582346e-10
+Fermi energy constraint residual (Newton-Raphson) :    8.8817841970012523e-15
+Fermi energy                                      :   -1.4625555343270677e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 2.035296e-11, current abs. residual: 5.891507e-12, nsteps: 26, abs. tolerance criterion: 6.000573e-12
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 0.97314790228471
+fractional occupancy 5: 0.56178451311791
+fractional occupancy 6: 0.46506758459737
+fractional occupancy 7: 0.00000000000000
+fractional occupancy 8: 0.00000000000000
+fractional occupancy 9: 0.00000000000000
+fractional occupancy 10: 0.00000000000000
+fractional occupancy 11: 0.00000000000000
+fractional occupancy 12: 0.00000000000000
+fractional occupancy 13: 0.00000000000000
+fractional occupancy 14: 0.00000000000000
+fractional occupancy 15: 0.00000000000000
+fractional occupancy 16: 0.00000000000000
+fractional occupancy 17: 0.00000000000000
+fractional occupancy 18: 0.00000000000000
+fractional occupancy 19: 0.00000000000000
+
+number of electrons: 1.1999986633674109e+01 
+
+Energy computations
+-------------------
+Band energy             :  -2.9340280141647730e+00
+Kinetic energy          :   5.6366121076895643e+00
+Exchange energy         :  -2.8510896032079978e+00
+Correlation energy      :  -5.4943656922516848e-01
+Electrostatic energy    :  -1.0343454625861259e+01
+Total energy            :  -8.1073686906048597e+00
+Total energy per atom   :  -2.0268421726512149e+00
+SCF iteration 26 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 27 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 6.129287e-11
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 8.952837e-12, current abs. residual: 4.861871e-12, nsteps: 13, abs. tolerance criterion: 6.000573e-12
+
+upper bound of unwanted spectrum:  3.7753409835e+04
+lower bound of unwanted spectrum:  2.6452193274e-04
+Chebyshev polynomial degree: 450
+
+kPoint: 0
+eigen value   0: -5.4187596729510423e-01
+eigen value   1: -2.1023848530634745e-01
+eigen value   2: -2.1023846684657521e-01
+eigen value   3: -2.0649999380286121e-01
+eigen value   4: -1.5194028416787211e-01
+eigen value   5: -1.4664888340998430e-01
+eigen value   6: -1.4603394365043015e-01
+eigen value   7: 1.5137485177414347e-09
+eigen value   8: 2.6687515792934326e-09
+eigen value   9: 4.6353571621146378e-09
+eigen value  10: 2.1137913690632995e-08
+eigen value  11: 2.7943493894099679e-08
+eigen value  12: 4.1564519465651880e-08
+eigen value  13: 1.8453361727628117e-07
+eigen value  14: 3.2092844882754043e-06
+eigen value  15: 1.0876405369330023e-05
+eigen value  16: 3.9637944966235388e-05
+eigen value  17: 5.6357480211956004e-05
+eigen value  18: 1.4290876347313321e-04
+eigen value  19: 2.5847300107117771e-04
+
+Fermi energy constraint residual (bisection)      :    3.1101698994007165e-10
+Fermi energy constraint residual (Newton-Raphson) :    5.3290705182007514e-15
+Fermi energy                                      :   -1.4625555343063440e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 1.008857e-11, current abs. residual: 5.338364e-12, nsteps: 14, abs. tolerance criterion: 6.000573e-12
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 0.97314790227299
+fractional occupancy 5: 0.56178451295654
+fractional occupancy 6: 0.46506758477047
+fractional occupancy 7: 0.00000000000000
+fractional occupancy 8: 0.00000000000000
+fractional occupancy 9: 0.00000000000000
+fractional occupancy 10: 0.00000000000000
+fractional occupancy 11: 0.00000000000000
+fractional occupancy 12: 0.00000000000000
+fractional occupancy 13: 0.00000000000000
+fractional occupancy 14: 0.00000000000000
+fractional occupancy 15: 0.00000000000000
+fractional occupancy 16: 0.00000000000000
+fractional occupancy 17: 0.00000000000000
+fractional occupancy 18: 0.00000000000000
+fractional occupancy 19: 0.00000000000000
+
+number of electrons: 1.1999986633674109e+01 
+
+Energy computations
+-------------------
+Band energy             :  -2.9340280141394524e+00
+Kinetic energy          :   5.6366121076757079e+00
+Exchange energy         :  -2.8510896032021833e+00
+Correlation energy      :  -5.4943656922477579e-01
+Electrostatic energy    :  -1.0343454625853354e+01
+Total energy            :  -8.1073686906046074e+00
+Total energy per atom   :  -2.0268421726511519e+00
+SCF iteration 27 complete
+ atomId: 3, force component: 0, force: 4.444132173375692219e-08
+ atomId: 3, force component: 1, force: 3.602255594387315796e-03
+ atomId: 3, force component: 2, force: -1.542161953693721443e-08
+ atomId: 0, force component: 0, force: -3.305331119918264449e-09
+ atomId: 0, force component: 1, force: -1.812079868227556290e-02
+ atomId: 0, force component: 2, force: 6.558593668160028756e-09
+ atomId: 2, force component: 0, force: -3.631612344179302454e-09
+ atomId: 2, force component: 1, force: -1.812021617479331326e-02
+ atomId: 1, force component: 0, force: 6.924210538272745907e-09
+ atomId: 1, force component: 1, force: 3.262552366300042195e-02
+ atomId: 1, force component: 2, force: 5.916626832913607359e-08
+ atomId: 2, force component: 2, force: 8.890310709830373526e-11
+------------Configurational force on atoms using Gaussian generator with constant: 5.000000000000000000e+00-------------
+Global atomId: 0,Force vec: -4.370815089966375785e-09,-1.812078576854130388e-02,1.059958291620758833e-09
+Global atomId: 1,Force vec: 2.090355936669001902e-09,3.262548669149931135e-02,6.808739701056087658e-08
+Global atomId: 2,Force vec: 1.239779706653298156e-09,-1.812019933299811175e-02,5.126187713797371943e-09
+Global atomId: 3,Force vec: 4.893712377044178589e-08,3.602261869743840581e-03,-1.934829034261957497e-08
+------------------------------------------------------------------------
+
+
++---------------------------------------------+------------+------------+
+| Total wallclock time elapsed since start    | 1.249e+03s |            |
+|                                             |            |            |
+| Section                         | no. calls |  wall time | % of total |
++---------------------------------+-----------+------------+------------+
+| Chebyshev GS orthonormalization |        27 | 4.309e-01s | 0.000e+00% |
+| Chebyshev Rayleigh Ritz         |        27 | 2.908e+00s |  2.33e-01% |
+| Chebyshev filtering             |        27 | 1.050e+03s |  8.41e+01% |
+| Chebyshev solve                 |        27 | 1.064e+03s |  8.52e+01% |
+| Chebyshev upper bound           |        27 | 1.127e+01s |  9.02e-01% |
+| configurational force computatio|         1 | 8.683e-01s | 0.000e+00% |
+| init pseudopotentials           |         1 | 2.602e-01s | 0.000e+00% |
+| initialize density              |         1 | 1.260e+00s |  1.01e-01% |
+| initialize wave functions       |         1 | 6.486e-01s | 0.000e+00% |
+| moved setup                     |         2 | 1.280e+02s |  1.03e+01% |
+| solve                           |         1 | 1.108e+03s |  8.87e+01% |
+| unmoved setup                   |         1 | 1.639e+00s |  1.31e-01% |
++---------------------------------+-----------+------------+------------+
+
