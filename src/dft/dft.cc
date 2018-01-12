@@ -295,9 +295,6 @@ void dftClass<FEOrder>::run ()
   //
   set();
 
-  
-  //generate mesh
-  //mesh();
 
   //
   //generate mesh (both parallel and serial)
