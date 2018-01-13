@@ -321,6 +321,7 @@ void dftClass<FEOrder>::run ()
   moveMeshToAtoms(triangulationPar);
   moveMeshToAtoms(triangulationSer,true);//can only be called after calling moveMeshToAtoms(triangulationPar)
 
+
   //
   //initialize dirichlet BCs for total potential and vSelf poisson solutions
   //
@@ -330,19 +331,18 @@ void dftClass<FEOrder>::run ()
   //initialize guesses for electron-density and wavefunctions
   //
   initElectronicFields();
-
   
   //
   //initialize local pseudopotential
   //
   if(dftParameters::isPseudopotential)
-    {
+  {
       initLocalPseudoPotential();
       initNonLocalPseudoPotential();
       computeSparseStructureNonLocalProjectors();
       computeElementalProjectorKets();
-    }
- 
+      forcePtr->initPseudoData();
+  }   
   //
   //solve vself
   //

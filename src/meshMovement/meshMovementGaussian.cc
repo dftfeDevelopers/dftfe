@@ -28,8 +28,9 @@ void meshMovementGaussianClass::moveMesh(std::vector<Point<C_DIM> > controlPoint
 {
   d_controlPointLocations=controlPointLocations;
   d_controlPointDisplacements=controlPointDisplacements;
-  d_controllingParameter=controllingParameter;	
-  MPI_Barrier(mpi_communicator); 
+  d_controllingParameter=controllingParameter;
+  writeMesh("meshUnmoved.vtu");
+  MPI_Barrier(mpi_communicator);
   pcout << "Computing triangulation displacement increment caused by gaussian generator displacements..." << std::endl;
   initIncrementField();
   computeIncrement();	
@@ -37,7 +38,7 @@ void meshMovementGaussianClass::moveMesh(std::vector<Point<C_DIM> > controlPoint
   pcout << "...Computed triangulation displacement increment" << std::endl;	
   updateTriangulationVertices();
   movedMeshCheck();
-  writeMesh();
+  writeMesh("meshMoved.vtu");
 }
 
 

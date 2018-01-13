@@ -108,7 +108,7 @@ void meshMovementClass::init(Triangulation<3,3> & triangulation)
      d_isParallelMesh=true;	
 }
 
-void meshMovementClass::writeMesh()
+void meshMovementClass::writeMesh(std::string meshFileName)
 {
   //write mesh to vtk file
   //
@@ -117,7 +117,8 @@ void meshMovementClass::writeMesh()
       DataOut<3> data_out;
       data_out.attach_dof_handler(d_dofHandlerMoveMesh);
       data_out.build_patches ();
-      std::ofstream output ("meshFinal.vtu");
+      //std::ofstream output ("meshFinal.vtu");
+      std::ofstream output(meshFileName);
       data_out.write_vtu (output);
     }
 

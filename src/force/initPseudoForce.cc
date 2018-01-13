@@ -65,7 +65,7 @@ void forceClass<FEOrder>::initLocalPseudoPotentialForce()
   //Initialize pseudopotential
   //
   QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
-  FEValues<3> fe_values (dftPtr->FE, quadrature_formula, update_values);
+  FEValues<3> fe_values (dftPtr->FE, quadrature_formula, update_quadrature_points);
   const unsigned int n_q_points = quadrature_formula.size();
 
 
@@ -74,7 +74,7 @@ void forceClass<FEOrder>::initLocalPseudoPotentialForce()
   //get number of image charges used only for periodic
   //
   const int numberImageCharges = dftPtr->d_imageIds.size();
-  
+  //MappingQ1<3,3> test;  
   //
   //loop over elements
   //
@@ -83,6 +83,8 @@ void forceClass<FEOrder>::initLocalPseudoPotentialForce()
     {
       if(cell->is_locally_owned())
 	{
+	  //compute values for the current elements
+	  fe_values.reinit(cell);	    
 	  d_gradPseudoVLoc[cell->id()]=std::vector<double>(n_q_points*3);
 	  std::vector<Tensor<1,3,double> > gradPseudoValContribution(n_q_points);	  
 	  //loop over atoms
@@ -93,8 +95,8 @@ void forceClass<FEOrder>::initLocalPseudoPotentialForce()
 	      //loop over quad points
 	      for (unsigned int q = 0; q < n_q_points; ++q)
 	      {	
-	          MappingQ1<3,3> test; 
-	          Point<3> quadPoint(test.transform_unit_to_real_cell(cell, fe_values.get_quadrature().point(q)));
+
+		  Point<3> quadPoint=fe_values.quadrature_point(q);
 		  double distanceToAtom = quadPoint.distance(atom);
 		  double value,firstDer,secondDer;
 		  if(distanceToAtom <= dftPtr->d_pspTail)//outerMostPointPseudo[atomLocations[n][0]])
@@ -130,8 +132,8 @@ void forceClass<FEOrder>::initLocalPseudoPotentialForce()
 	      //loop over quad points
 	      for (unsigned int q = 0; q < n_q_points; ++q)
 	      {			 
-	          MappingQ1<3,3> test; 
-	          Point<3> quadPoint(test.transform_unit_to_real_cell(cell, fe_values.get_quadrature().point(q)));		      
+
+		  Point<3> quadPoint=fe_values.quadrature_point(q);
 		  double distanceToAtom = quadPoint.distance(imageAtom);
 		  int masterAtomId = dftPtr->d_imageIds[iImageCharge];
 		  double value,firstDer,secondDer;  
@@ -182,27 +184,43 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoDataForce()
   //get FE data structures
   //
   QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
-  FEValues<3> fe_values(dftPtr->FE, quadrature, update_values | update_gradients | update_JxW_values);
+  FEValues<3> fe_values(dftPtr->FE, quadrature, update_quadrature_points);
   const unsigned int numberNodesPerElement  = dftPtr->FE.dofs_per_cell;
   const unsigned int numberQuadraturePoints = quadrature.size();
-  
+  const unsigned int numKPoints=dftPtr->d_kPointWeights.size(); 
 
   //
   //get number of kPoints
   //
-  int maxkPoints = dftPtr->d_maxkPoints;
+  int numkPoints = dftPtr->d_maxkPoints;
   
 
   //
   //clear existing data
   //
-  d_nonLocalPSP_ClmDeltaVl.clear();
-  d_nonLocalPSPGrad_ClmDeltaVl.clear();
+  d_nonLocalPSP_ZetalmDeltaVl.clear();
+#ifdef ENABLE_PERIODIC_BC 	  
+  d_nonLocalPSP_gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint.clear();
+  d_nonLocalPSP_gradZetalmDeltaVl_KPoint.clear();
+#else
+  d_nonLocalPSP_gradZetalmDeltaVl.clear();
+#endif  
+  //
+  //
   int cumulativePotSplineId = 0;
   int cumulativeWaveSplineId = 0;
   int waveFunctionId;
   int pseudoPotentialId;
   unsigned int count=0;
+  unsigned int numNonLocalAtomsCurrentProcess= dftPtr->d_nonLocalAtomIdsInCurrentProcess.size();
+  d_nonLocalPSP_ZetalmDeltaVl.resize(numNonLocalAtomsCurrentProcess);
+#ifdef ENABLE_PERIODIC_BC 	  
+  d_nonLocalPSP_gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint.resize(numNonLocalAtomsCurrentProcess);
+  d_nonLocalPSP_gradZetalmDeltaVl_KPoint.resize(numNonLocalAtomsCurrentProcess);
+#else
+  d_nonLocalPSP_gradZetalmDeltaVl.resize(numNonLocalAtomsCurrentProcess);
+#endif
+  //MappingQ1<3,3> test;
 
   for(int iAtom = 0; iAtom < numberNonLocalAtoms; ++iAtom)
     {
@@ -232,11 +250,14 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoDataForce()
       //
       if (numberElementsInAtomCompactSupport !=0)
       {
-         d_nonLocalPSP_ClmDeltaVl.push_back(std::vector<std::map<dealii::CellId, std::vector<double> > >(numberPseudoWaveFunctions));
-         d_nonLocalPSPGrad_ClmDeltaVl.push_back(std::vector<std::map<dealii::CellId, std::vector<double> > >(numberPseudoWaveFunctions));
+            d_nonLocalPSP_ZetalmDeltaVl[count].resize(numberPseudoWaveFunctions);
+#ifdef ENABLE_PERIODIC_BC 	  
+            d_nonLocalPSP_gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint[count].resize(numberPseudoWaveFunctions);
+            d_nonLocalPSP_gradZetalmDeltaVl_KPoint[count].resize(numberPseudoWaveFunctions);
+#else
+            d_nonLocalPSP_gradZetalmDeltaVl[count].resize(numberPseudoWaveFunctions);
+#endif
       }
-      else
-         continue;     
 	
       for(int iElemComp = 0; iElemComp < numberElementsInAtomCompactSupport; ++iElemComp)
 	{
@@ -251,10 +272,15 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoDataForce()
 
 	  for(int iPseudoWave = 0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
 	    {
-	      //allocate
-	      d_nonLocalPSP_ClmDeltaVl[iAtom][iPseudoWave][cell->id()]=std::vector<double>(numberQuadraturePoints);
-	      d_nonLocalPSPGrad_ClmDeltaVl[iAtom][iPseudoWave][cell->id()]=std::vector<double>(numberQuadraturePoints*C_DIM);	      
-
+#ifdef ENABLE_PERIODIC_BC 		
+	      d_nonLocalPSP_ZetalmDeltaVl[count][iPseudoWave][cell->id()]=std::vector<double>(numkPoints*numberQuadraturePoints*2);
+	      d_nonLocalPSP_gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint[count][iPseudoWave][cell->id()]=std::vector<double>(numkPoints*numberQuadraturePoints*C_DIM*2);
+	      d_nonLocalPSP_gradZetalmDeltaVl_KPoint[count][iPseudoWave][cell->id()]=std::vector<double>(numkPoints*numberQuadraturePoints*C_DIM*2);	      
+#else
+	      d_nonLocalPSP_ZetalmDeltaVl[count][iPseudoWave][cell->id()]=std::vector<double>(numberQuadraturePoints);
+	      d_nonLocalPSP_gradZetalmDeltaVl[count][iPseudoWave][cell->id()]=std::vector<double>(numberQuadraturePoints*C_DIM);		       
+#endif
+	      
 	      waveFunctionId = iPseudoWave + cumulativeWaveSplineId;
 	      const int globalWaveSplineId = dftPtr->d_pseudoWaveFunctionIdToFunctionIdDetails[waveFunctionId][0];
 	      const int lQuantumNumber = dftPtr->d_pseudoWaveFunctionIdToFunctionIdDetails[waveFunctionId][1];
@@ -270,16 +296,20 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoDataForce()
 
 	      const int globalPotSplineId = dftPtr->d_deltaVlIdToFunctionIdDetails[pseudoPotentialId][0];
 	      assert(lQuantumNumber == dftPtr->d_deltaVlIdToFunctionIdDetails[pseudoPotentialId][1]);
-
-	      std::vector<double> ClmDeltaVl(numberQuadraturePoints,0.0);
-	      std::vector<double> gradClmDeltaVl(numberQuadraturePoints*C_DIM,0.0);
+#ifdef ENABLE_PERIODIC_BC 
+	      std::vector<double>  ZetalmDeltaVl_KPoint(numkPoints*numberQuadraturePoints*2,0.0);
+	      std::vector<double> gradZetalmDeltaVl_KPoint(numkPoints*numberQuadraturePoints*C_DIM*2,0.0);
+	      std::vector<double> gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint(numkPoints*numberQuadraturePoints*C_DIM*2,0.0);	      
+#else
+	      std::vector<double> ZetalmDeltaVl(numberQuadraturePoints,0.0);
+	      std::vector<double> gradZetalmDeltaVl(numberQuadraturePoints*C_DIM,0.0);	      
+#endif
 
 	      double nlpValue = 0.0;
 	      for(int iQuadPoint = 0; iQuadPoint < numberQuadraturePoints; ++iQuadPoint)
 		{
 
-		  MappingQ1<3,3> test;
-		  Point<3> quadPoint(test.transform_unit_to_real_cell(cell, fe_values.get_quadrature().point(iQuadPoint)));
+		  Point<3> quadPoint=fe_values.quadrature_point(iQuadPoint);
 
 		  for(int iImageAtomCount = 0; iImageAtomCount < imageIdsList.size(); ++iImageAtomCount)
 		    {
@@ -302,12 +332,30 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoDataForce()
 			}
 
 
-		      double x[3];
+
+		      double x[3],qMinusLr[3];
 
 		      x[0] = quadPoint[0] - chargePoint[0];
 		      x[1] = quadPoint[1] - chargePoint[1];
 		      x[2] = quadPoint[2] - chargePoint[2];
-		    
+		      qMinusLr[0] =x[0] +nuclearCoordinates[0];
+		      qMinusLr[1] =x[1] +nuclearCoordinates[1];
+		      qMinusLr[2] =x[2] +nuclearCoordinates[2];		      
+
+                      /*
+		      if(chargeId < numberGlobalCharges)
+			{
+		          qMinusLr[0] =quadPoint[0];
+		          qMinusLr[1] =quadPoint[1];
+		          qMinusLr[2] =quadPoint[2];	
+			}
+		      else
+			{
+		          qMinusLr[0] =quadPoint[0]-(chargePoint[0]-dftPtr->atomLocations[dftPtr->d_imageIds[chargeId-numberGlobalCharges]][2]);
+		          qMinusLr[1] =quadPoint[1]-(chargePoint[1]-dftPtr->atomLocations[dftPtr->d_imageIds[chargeId-numberGlobalCharges]][3]);
+		          qMinusLr[2] =quadPoint[2]-(chargePoint[2]-dftPtr->atomLocations[dftPtr->d_imageIds[chargeId-numberGlobalCharges]][4]);	
+		        }	
+		      */
 		      //
 		      // get the spherical coordinates from cartesian
 		      //
@@ -321,76 +369,103 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoDataForce()
 		      if(r <= dftPtr->d_pspTail)//d_outerMostPointPseudoWaveFunctionsData[globalWaveSplineId])
 			{
 			  pseudoForceUtils::getRadialFunctionVal(r,
-					                             radialWaveFunVal,
-					                             &dftPtr->d_pseudoWaveFunctionSplines[globalWaveSplineId]);
+					                         radialWaveFunVal,
+					                         &dftPtr->d_pseudoWaveFunctionSplines[globalWaveSplineId]);
 
 			  pseudoForceUtils::getSphericalHarmonicVal(theta,phi,lQuantumNumber,mQuantumNumber,sphericalHarmonicVal);
 			
 			  pseudoWaveFunctionValue = radialWaveFunVal*sphericalHarmonicVal;
 
 			  pseudoForceUtils::getRadialFunctionVal(r,
-					                             radialPotFunVal,
-					                             &dftPtr->d_deltaVlSplines[globalPotSplineId]);
+					                         radialPotFunVal,
+					                         &dftPtr->d_deltaVlSplines[globalPotSplineId]);
 
 			  deltaVlValue = radialPotFunVal;
 
 			  pseudoForceUtils::getPseudoWaveFunctionDerivatives(r,
-							                         theta,
-							                         phi,
-							                         lQuantumNumber,
-							                         mQuantumNumber,
-							                         pseudoWaveFunctionDerivatives,
-							                         dftPtr->d_pseudoWaveFunctionSplines[globalWaveSplineId]);
+							                     theta,
+							                     phi,
+							                     lQuantumNumber,
+							                     mQuantumNumber,
+							                     pseudoWaveFunctionDerivatives,
+							                     dftPtr->d_pseudoWaveFunctionSplines[globalWaveSplineId]);
 
 			  pseudoForceUtils::getDeltaVlDerivatives(r,
-						                      x,
-						                      deltaVlDerivatives,
-						                      dftPtr->d_deltaVlSplines[globalPotSplineId]);
-
-		          ClmDeltaVl[iQuadPoint] += deltaVlValue*pseudoWaveFunctionValue;
+						                  x,
+						                  deltaVlDerivatives,
+						                  dftPtr->d_deltaVlSplines[globalPotSplineId]);
+			  std::vector<double> tempDer(3);
+			  for(int iDim = 0; iDim < C_DIM; ++iDim)
+			  {
+				tempDer[iDim]=pseudoWaveFunctionDerivatives[iDim]*radialPotFunVal + pseudoWaveFunctionValue*deltaVlDerivatives[iDim];		
+			  }
+#ifdef ENABLE_PERIODIC_BC
+                          for (unsigned int ik=0; ik < numkPoints; ++ik)
+			  {
+			      
+			     const double kDotqMinusLr= dftPtr->d_kPointCoordinates[ik*C_DIM+0]*qMinusLr[0]+ dftPtr->d_kPointCoordinates[ik*C_DIM+1]*qMinusLr[1]+dftPtr->d_kPointCoordinates[ik*C_DIM+2]*qMinusLr[2];
+			     const double tempReal=std::cos(-kDotqMinusLr);
+			     const double tempImag=std::sin(-kDotqMinusLr);
+		             ZetalmDeltaVl_KPoint[ik*numberQuadraturePoints*2+2*iQuadPoint+0] += tempReal*deltaVlValue*pseudoWaveFunctionValue;
+		             ZetalmDeltaVl_KPoint[ik*numberQuadraturePoints*2+2*iQuadPoint+1] += tempImag*deltaVlValue*pseudoWaveFunctionValue;			  
+			     for(int iDim = 0; iDim < C_DIM; ++iDim)
+			     {
+			         gradZetalmDeltaVl_KPoint[ik*numberQuadraturePoints*C_DIM*2+iQuadPoint*C_DIM*2+iDim*2+0]+= tempReal*tempDer[iDim];
+				 gradZetalmDeltaVl_KPoint[ik*numberQuadraturePoints*C_DIM*2+iQuadPoint*C_DIM*2+iDim*2+1]+= tempImag*tempDer[iDim]; 
+			         gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint[ik*numberQuadraturePoints*C_DIM*2+iQuadPoint*C_DIM*2+iDim*2+0]+= tempReal*tempDer[iDim];
+			         gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint[ik*numberQuadraturePoints*C_DIM*2+iQuadPoint*C_DIM*2+iDim*2+1]+= tempImag*tempDer[iDim];				 
+			         gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint[ik*numberQuadraturePoints*C_DIM*2+iQuadPoint*C_DIM*2+iDim*2+0]+= tempImag*deltaVlValue*pseudoWaveFunctionValue*dftPtr->d_kPointCoordinates[ik*C_DIM+iDim];
+			         gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint[ik*numberQuadraturePoints*C_DIM*2+iQuadPoint*C_DIM*2+iDim*2+1]-= tempReal*deltaVlValue*pseudoWaveFunctionValue*dftPtr->d_kPointCoordinates[ik*C_DIM+iDim];	
+			     }
+			  }
+#else
+			  
+		          ZetalmDeltaVl[iQuadPoint] += deltaVlValue*pseudoWaveFunctionValue;
 			  
 			  for(int iDim = 0; iDim < C_DIM; ++iDim)
-			      gradClmDeltaVl[iQuadPoint*C_DIM+iDim]= pseudoWaveFunctionDerivatives[iDim]*radialPotFunVal + pseudoWaveFunctionValue*deltaVlDerivatives[iDim];			  
-			}
-		      else
-			{
-			  pseudoWaveFunctionValue = 0.0;
-			  deltaVlValue = 0.0;
-			}
+			      gradZetalmDeltaVl[iQuadPoint*C_DIM+iDim]+= tempDer[iDim];
+			  
+#endif
+			}// within psp tail check
 
-		    }//image atom loop
+		    }//image atom loop (contribution added)
 
 		}//end of quad loop
-	        d_nonLocalPSP_ClmDeltaVl[count][iPseudoWave][cell->id()]=ClmDeltaVl;
-		d_nonLocalPSPGrad_ClmDeltaVl[count][iPseudoWave][cell->id()]=gradClmDeltaVl;
+#ifdef ENABLE_PERIODIC_BC
+	        d_nonLocalPSP_ZetalmDeltaVl[count][iPseudoWave][cell->id()]=ZetalmDeltaVl_KPoint;
+		d_nonLocalPSP_gradZetalmDeltaVl_KPoint[count][iPseudoWave][cell->id()]=gradZetalmDeltaVl_KPoint;
+		d_nonLocalPSP_gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint[count][iPseudoWave][cell->id()]=gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint;
+#else
+	        d_nonLocalPSP_ZetalmDeltaVl[count][iPseudoWave][cell->id()]=ZetalmDeltaVl;
+		d_nonLocalPSP_gradZetalmDeltaVl[count][iPseudoWave][cell->id()]=gradZetalmDeltaVl;
+#endif
 
 	    }//end of iPseudoWave loop
 	
 
 	}//element loop
        
-      count++;
       cumulativePotSplineId += numberAngularMomentumSpecificPotentials;
       cumulativeWaveSplineId += numberPseudoWaveFunctions;
+      if (numberElementsInAtomCompactSupport !=0)      
+         count++;
 
     }//atom loop
-
+   
 }
 
 
 template<unsigned int FEOrder>
-void forceClass<FEOrder>::computeNonLocalProjectorKetTimesVector(const std::vector<vectorType*> &src,
-							         std::vector<std::vector<double> > & projectorKetTimesVectorReal,
-                                                                 std::vector<std::vector<std::complex<double> > > & projectorKetTimesVectorComplex)
+void forceClass<FEOrder>::computeNonLocalProjectorKetTimesPsiTimesV(const std::vector<vectorType*> &src,
+							            std::vector<std::vector<double> > & projectorKetTimesPsiTimesVReal,
+                                                                    std::vector<std::vector<std::complex<double> > > & projectorKetTimesPsiTimesVComplex,
+								    const unsigned int kPointIndex)
 {
   //
   //get FE data
   //
   QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
-  FEValues<3> fe_values (dftPtr->FEEigen, quadrature_formula, update_values);
 
-  const int kPointIndex = dftPtr->d_kPointIndex;
-  const unsigned int numberElements  = dftPtr->d_mesh.getParallelMesh().n_locally_owned_active_cells();
   const unsigned int dofs_per_cell = dftPtr->FEEigen.dofs_per_cell;
 
   int numberNodesPerElement;
@@ -405,25 +480,24 @@ void forceClass<FEOrder>::computeNonLocalProjectorKetTimesVector(const std::vect
   //
   std::vector<dealii::types::global_dof_index> local_dof_indices(dofs_per_cell);
 #ifdef ENABLE_PERIODIC_BC
-  std::vector<std::vector<std::complex<double> > > & projectorKetTimesVector=projectorKetTimesVectorComplex;
+  std::vector<std::vector<std::complex<double> > > & projectorKetTimesVector=projectorKetTimesPsiTimesVComplex;
 #else
-  std::vector<std::vector<double> > & projectorKetTimesVector=projectorKetTimesVectorReal;
+  std::vector<std::vector<double> > & projectorKetTimesVector=projectorKetTimesPsiTimesVReal;
 #endif
 
-  //
-  //get number of Nonlocal atoms
-  //
-  const int numberNonLocalAtoms = dftPtr->d_nonLocalAtomGlobalChargeIds.size();
   int numberWaveFunctions = src.size();
   projectorKetTimesVector.clear();
+  projectorKetTimesVector.resize(dftPtr->d_nonLocalAtomIdsInCurrentProcess.size());
 
   //
   //allocate memory for matrix-vector product
   //
-  projectorKetTimesVector.resize(numberNonLocalAtoms);
-  for(int iAtom = 0; iAtom < numberNonLocalAtoms; ++iAtom)
+  std::map<unsigned int, unsigned int> globalToLocalMap;
+  for(int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
     {
-      int numberSingleAtomPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[iAtom];
+      const int atomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];
+      globalToLocalMap[atomId]=iAtom;
+      int numberSingleAtomPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
       projectorKetTimesVector[iAtom].resize(numberWaveFunctions*numberSingleAtomPseudoWaveFunctions,0.0);
     }
   
@@ -460,8 +534,8 @@ void forceClass<FEOrder>::computeNonLocalProjectorKetTimesVector(const std::vect
 		  //
 		  //This is the component index 0(real) or 1(imag).
 		  //
-		  const unsigned int ck = fe_values.get_fe().system_to_component_index(idof).first; 
-		  const unsigned int iNode = fe_values.get_fe().system_to_component_index(idof).second;
+		  const unsigned int ck = dftPtr->FEEigen.system_to_component_index(idof).first; 
+		  const unsigned int iNode = dftPtr->FEEigen.system_to_component_index(idof).second;
 		  if(ck == 0)
 		    inputVectors[numberNodesPerElement*index + iNode].real(temp[idof]);
 		  else
@@ -500,7 +574,7 @@ void forceClass<FEOrder>::computeNonLocalProjectorKetTimesVector(const std::vect
 		     &inputVectors[0],
 		     &numberNodesPerElement,
 		     &beta,
-		     &projectorKetTimesVector[atomId][0],
+		     &projectorKetTimesVector[globalToLocalMap[atomId]][0],
 		     &numberPseudoWaveFunctions);
 #else
 	      char transA = 'T';
@@ -518,7 +592,7 @@ void forceClass<FEOrder>::computeNonLocalProjectorKetTimesVector(const std::vect
 		     &inputVectors[0],
 		     &numberNodesPerElement,
 		     &beta,
-		     &projectorKetTimesVector[atomId][0],
+		     &projectorKetTimesVector[globalToLocalMap[atomId]][0],
 		     &numberPseudoWaveFunctions);
 #endif
 	    }
@@ -528,61 +602,79 @@ void forceClass<FEOrder>::computeNonLocalProjectorKetTimesVector(const std::vect
     }//element loop
 
   //std::cout<<"Finished Element Loop"<<std::endl;
-
 #ifdef ENABLE_PERIODIC_BC
-  std::vector<std::complex<double> > tempVectorloc;
-  std::vector<std::complex<double> > tempVector;
+  std::vector<dealii::parallel::distributed::Vector<std::complex<double> > > projectorKetTimesVectorPar(numberWaveFunctions);
 #else
-  std::vector<double> tempVector;
+  std::vector<dealii::parallel::distributed::Vector<double> > projectorKetTimesVectorPar(numberWaveFunctions);
 #endif
+#ifdef ENABLE_PERIODIC_BC
+  dealii::parallel::distributed::Vector<std::complex<double> > vec(dftPtr->d_locallyOwnedProjectorIdsCurrentProcess,
+                                                                   dftPtr->d_ghostProjectorIdsCurrentProcess,
+                                                                   mpi_communicator);
+#else
+  dealii::parallel::distributed::Vector<double > vec(dftPtr->d_locallyOwnedProjectorIdsCurrentProcess,
+                                                     dftPtr->d_ghostProjectorIdsCurrentProcess,
+                                                     mpi_communicator);
+#endif     
+  vec.update_ghost_values();
+  for (unsigned int i=0; i<numberWaveFunctions;++i)
+  {
+#ifdef ENABLE_PERIODIC_BC
+      projectorKetTimesVectorPar[i].reinit(vec);
+#else
+      projectorKetTimesVectorPar[i].reinit(vec);    
+#endif
+  }
 
-  for(int iAtom = 0; iAtom < numberNonLocalAtoms; ++iAtom)
+  for(int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
     {
-      int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[iAtom];
+      const int atomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];	
+      int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
       for(int iWave = 0; iWave < numberWaveFunctions; ++iWave)
 	{
 	  for(int iPseudoAtomicWave = 0; iPseudoAtomicWave < numberPseudoWaveFunctions; ++iPseudoAtomicWave)
 	    {
-#ifdef ENABLE_PERIODIC_BC
-	      tempVectorloc.push_back(projectorKetTimesVector[iAtom][numberPseudoWaveFunctions*iWave + iPseudoAtomicWave]);
-#else
-	      tempVector.push_back(projectorKetTimesVector[iAtom][numberPseudoWaveFunctions*iWave + iPseudoAtomicWave]);
-#endif
+	       projectorKetTimesVectorPar[iWave][dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(atomId,iPseudoAtomicWave)]]
+		  =projectorKetTimesVector[iAtom][numberPseudoWaveFunctions*iWave + iPseudoAtomicWave];
 	    }
-
 	}
+    } 
 
-    }
+   for (unsigned int i=0; i<numberWaveFunctions;++i)
+   {  
+      projectorKetTimesVectorPar[i].compress(VectorOperation::add);
+      projectorKetTimesVectorPar[i].update_ghost_values();
+   }
 
-
-
-#ifdef ENABLE_PERIODIC_BC
-  int size = tempVectorloc.size();
-  tempVector.resize(size);
-  MPI_Allreduce(&tempVectorloc[0],
-		&tempVector[0],
-		size,
-		MPI_C_DOUBLE_COMPLEX,
-		MPI_SUM,
-		mpi_communicator);
-#else
-  Utilities::MPI::sum(tempVector,
-  		      mpi_communicator,
-  		      tempVector);
-#endif
-
-  int count = 0;
-  for(int iAtom = 0; iAtom < numberNonLocalAtoms; ++iAtom)
+  for(int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
     {
-      int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[iAtom];
+      const int atomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];	
+      int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
       for(int iWave = 0; iWave < numberWaveFunctions; ++iWave)
 	{
 	  for(int iPseudoAtomicWave = 0; iPseudoAtomicWave < numberPseudoWaveFunctions; ++iPseudoAtomicWave)
 	    {
-	      projectorKetTimesVector[iAtom][numberPseudoWaveFunctions*iWave + iPseudoAtomicWave] = tempVector[count];
-	      count += 1;
+	      projectorKetTimesVector[iAtom][numberPseudoWaveFunctions*iWave + iPseudoAtomicWave]
+	           =projectorKetTimesVectorPar[iWave][dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(atomId,iPseudoAtomicWave)]];
+		  
 	    }
-
 	}
     }
+
+
+  //
+  //compute V*C^{T}*X
+  //
+  for(int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
+    {
+      const int atomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];		
+      int numberPseudoWaveFunctions =  dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
+      for(int iWave = 0; iWave < numberWaveFunctions; ++iWave)
+	{
+	  for(int iPseudoAtomicWave = 0; iPseudoAtomicWave < numberPseudoWaveFunctions; ++iPseudoAtomicWave)
+	    projectorKetTimesVector[iAtom][numberPseudoWaveFunctions*iWave + iPseudoAtomicWave] *= dftPtr->d_nonLocalPseudoPotentialConstants[atomId][iPseudoAtomicWave];
+	}
+    }
+  
+    
 }
