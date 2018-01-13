@@ -40,7 +40,7 @@ protected:
   void finalizeIncrementField();
   void updateTriangulationVertices();
   void movedMeshCheck();
-  void writeMesh();
+  void writeMesh(std::string meshFileName);
   virtual void moveMesh(std::vector<Point<C_DIM> > controlPointLocations,
                         std::vector<Tensor<1,C_DIM,double> > controlPointDisplacements,
                         double controllingParameter)=0;

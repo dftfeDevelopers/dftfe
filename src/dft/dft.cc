@@ -326,16 +326,6 @@ void dftClass<FEOrder>::run ()
 
 
   //
-  //initialize local pseudopotential
-  //
-  if(dftParameters::isPseudopotential)
-  {
-      initLocalPseudoPotential();
-      initNonLocalPseudoPotential();
-      computeSparseStructureNonLocalProjectors();
-      computeElementalProjectorKets();
-  }  
-  //
   //initialize dirichlet BCs for total potential and vSelf poisson solutions
   //
   initBoundaryConditions();
@@ -344,8 +334,18 @@ void dftClass<FEOrder>::run ()
   //initialize guesses for electron-density and wavefunctions
   //
   initElectronicFields();
-
   
+  //
+  //initialize local pseudopotential
+  //
+  if(dftParameters::isPseudopotential)
+  {
+      initLocalPseudoPotential();
+      initNonLocalPseudoPotential();
+      computeSparseStructureNonLocalProjectors();
+      computeElementalProjectorKets();
+      forcePtr->initPseudoData();
+  }   
   //
   //solve vself
   //

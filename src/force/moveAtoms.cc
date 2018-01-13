@@ -69,6 +69,11 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
   gaussianMove.moveMesh(controlPointLocations,controlPointDisplacements,d_gaussianConstant);
   pcout << "Reinitializing all moved triangulation dependent objects..." << std::endl;  
  
+  //reinitialize dirichlet BCs for total potential and vSelf poisson solutions
+  dftPtr->initBoundaryConditions();
+  //reinitialize guesses for electron-density and wavefunctions (not required for relaxation update)
+  //dftPtr->initElectronicFields();
+
   //reinitialize local pseudopotential
   if(dftParameters::isPseudopotential)
   {
@@ -76,12 +81,7 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
      dftPtr->initNonLocalPseudoPotential();
      dftPtr->computeSparseStructureNonLocalProjectors();
      dftPtr->computeElementalProjectorKets();
-  }  
-  //reinitialize dirichlet BCs for total potential and vSelf poisson solutions
-  dftPtr->initBoundaryConditions();
-  //reinitialize guesses for electron-density and wavefunctions (not required for relaxation update)
-  //dftPtr->initElectronicFields();
-
-  
+     initPseudoData();
+  }    
   pcout << "...Reinitialization end" << std::endl;   
 }

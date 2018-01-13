@@ -126,6 +126,11 @@ void forceClass<FEOrder>::initMoved()
 
   createBinObjectsForce();
   locateAtomCoreNodesForce();
+}
+
+//compute forces on atoms using a generator with a compact support
+template<unsigned int FEOrder>
+void forceClass<FEOrder>::initPseudoData(){
   //
   //initialize pseudopotential related force objects
   //
@@ -135,6 +140,8 @@ void forceClass<FEOrder>::initMoved()
       computeElementalNonLocalPseudoDataForce();
     }
 }
+
+
 
 //compute forces on atoms using a generator with a compact support
 template<unsigned int FEOrder>
