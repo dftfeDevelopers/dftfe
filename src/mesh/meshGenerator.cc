@@ -17,9 +17,12 @@
 //
 #include "../../include/meshGenerator.h"
 #include "../../include/dftParameters.h"
+#include "meshGenUtils.cc"
 
 #define maxRefinementLevels 10
 
+
+/*
 void markPeriodicFaces(Triangulation<3,3> &triangulation)
 {
 
@@ -57,11 +60,12 @@ void markPeriodicFaces(Triangulation<3,3> &triangulation)
   std::vector<GridTools::PeriodicFacePair<typename Triangulation<3>::cell_iterator> > periodicity_vector;
   for(int i = 0; i < 3; ++i)
     {
-      GridTools::collect_periodic_faces(triangulation, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector);
+      GridTools::collect_periodic_faces(triangulation, 2*i+1, 2*i+2,i, periodicity_vector);
     }
 
   triangulation.add_periodicity(periodicity_vector);
 }
+*/
 
 
 //
@@ -105,7 +109,8 @@ void meshGeneratorClass::generateMesh(Triangulation<3,3> &triangulation,
       gridin.read_ucd(f);
 
 #ifdef ENABLE_PERIODIC_BC
-      markPeriodicFaces(triangulation);
+      meshGenUtils::markPeriodicFaces(triangulation);
+      //meshGenUtils::markPeriodicFacesNonOrthogonal(triangulation,d_domainBoundingVectors);
 #endif  
     }
   else
@@ -145,7 +150,7 @@ void meshGeneratorClass::generateMesh(Triangulation<3,3> &triangulation,
       /*for (int i=0; i<3;i++){
 
         double temp = numberIntervalsEachDirection[i]-std::floor(numberIntervalsEachDirection[i]);
-        if((temp - std::floor(temp)) >= 0.5)
+        if(temp >= 0.5)
            subdivisions[i] = std::ceil(numberIntervalsEachDirection[i]);
         else
 	   subdivisions[i] = std::floor(numberIntervalsEachDirection[i]);
@@ -173,7 +178,8 @@ void meshGeneratorClass::generateMesh(Triangulation<3,3> &triangulation,
       //collect periodic faces of the first level mesh to set up periodic boundary conditions later
       //
 #ifdef ENABLE_PERIODIC_BC
-      markPeriodicFaces(triangulation);
+      meshGenUtils::markPeriodicFaces(triangulation);
+      //meshGenUtils::markPeriodicFacesNonOrthogonal(triangulation,d_domainBoundingVectors);      
 #endif
 
             
@@ -370,7 +376,7 @@ void meshGeneratorClass::generateSerialAndParallelMesh(std::vector<std::vector<d
   generateMesh(d_parallelTriangulationUnmoved,
 	       numberGlobalCellsParallel);
 
-  AssertThrow(numberGlobalCellsParallel==numberGlobalCellsSerial,ExcMessage("Number of cells are different for parallel and serial triangulations"));
+  //AssertThrow(numberGlobalCellsParallel==numberGlobalCellsSerial,ExcMessage("Number of cells are different for parallel and serial triangulations"));
 
   //generate moved mesh data members which are still the same meshes before
   //but will be accessed to move the meshes later
