@@ -330,6 +330,8 @@ int main (int argc, char *argv[])
       {
 	dftClass<1> problemFEOrder1;
 	problemFEOrder1.numEigenValues = numberEigenValues;
+	problemFEOrder1.set();
+	problemFEOrder1.init();
 	problemFEOrder1.run();
 	break;
       }
@@ -338,6 +340,8 @@ int main (int argc, char *argv[])
       {
 	dftClass<2> problemFEOrder2;
 	problemFEOrder2.numEigenValues = numberEigenValues;
+        problemFEOrder2.set();
+	problemFEOrder2.init();
 	problemFEOrder2.run();
 	break;
       }
@@ -346,6 +350,8 @@ int main (int argc, char *argv[])
       {
 	dftClass<3> problemFEOrder3;
 	problemFEOrder3.numEigenValues = numberEigenValues;
+        problemFEOrder3.set();
+	problemFEOrder3.init();	
 	problemFEOrder3.run();
 	break;	
       }
@@ -354,6 +360,8 @@ int main (int argc, char *argv[])
       {
 	dftClass<4> problemFEOrder4;
 	problemFEOrder4.numEigenValues = numberEigenValues;
+        problemFEOrder4.set();
+	problemFEOrder4.init();	
 	problemFEOrder4.run();
 	break;
       }
@@ -362,6 +370,8 @@ int main (int argc, char *argv[])
       {
 	dftClass<5> problemFEOrder5;
 	problemFEOrder5.numEigenValues = numberEigenValues;
+        problemFEOrder5.set();
+	problemFEOrder5.init();	
 	problemFEOrder5.run();
 	break;
       }
@@ -370,6 +380,8 @@ int main (int argc, char *argv[])
       {
 	dftClass<6> problemFEOrder6;
 	problemFEOrder6.numEigenValues = numberEigenValues;
+        problemFEOrder6.set();
+	problemFEOrder6.init();		
 	problemFEOrder6.run();
 	break;
       }
@@ -378,6 +390,8 @@ int main (int argc, char *argv[])
       {
 	dftClass<7> problemFEOrder7;
 	problemFEOrder7.numEigenValues = numberEigenValues;
+        problemFEOrder7.set();
+	problemFEOrder7.init();		
 	problemFEOrder7.run();
 	break;
       }
@@ -386,6 +400,8 @@ int main (int argc, char *argv[])
       {
 	dftClass<8> problemFEOrder8;
 	problemFEOrder8.numEigenValues = numberEigenValues;
+        problemFEOrder8.set();
+	problemFEOrder8.init();		
 	problemFEOrder8.run();
 	break;
       }
@@ -394,6 +410,8 @@ int main (int argc, char *argv[])
       {
 	dftClass<9> problemFEOrder9;
 	problemFEOrder9.numEigenValues = numberEigenValues;
+        problemFEOrder9.set();
+	problemFEOrder9.init();		
 	problemFEOrder9.run();
 	break;
       }
@@ -402,6 +420,8 @@ int main (int argc, char *argv[])
       {
 	dftClass<10> problemFEOrder10;
 	problemFEOrder10.numEigenValues = numberEigenValues;
+        problemFEOrder10.set();
+	problemFEOrder10.init();		
 	problemFEOrder10.run();
 	break;
       }
@@ -410,6 +430,8 @@ int main (int argc, char *argv[])
       {
 	dftClass<11> problemFEOrder11;
 	problemFEOrder11.numEigenValues = numberEigenValues;
+        problemFEOrder11.set();
+	problemFEOrder11.init();		
 	problemFEOrder11.run();
 	break;
       }
@@ -418,6 +440,8 @@ int main (int argc, char *argv[])
       {
 	dftClass<12> problemFEOrder12;
 	problemFEOrder12.numEigenValues = numberEigenValues;
+        problemFEOrder12.set();
+	problemFEOrder12.init();		
 	problemFEOrder12.run();
 	break;
       }
