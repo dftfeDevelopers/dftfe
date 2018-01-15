@@ -91,10 +91,13 @@ void dftClass<FEOrder>::initBoundaryConditions(){
 
   //clear existing constraints matrix vector
   unsigned int count=0;
-  for (std::vector<const ConstraintMatrix *>::iterator it = d_constraintsVector.begin() ; it != d_constraintsVector.end(); ++it)
+  for (std::vector<ConstraintMatrix *>::iterator it = d_constraintsVector.begin() ; it != d_constraintsVector.end(); ++it)
   { 
     if (count > 1 && count < d_bins.size()+2)
-     delete (*it);
+    {
+      (**it).clear();
+      delete (*it);
+    }
     count++;
   } 
 
@@ -151,7 +154,12 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   forcePtr->d_forceDofHandlerIndex = dofHandlerVector.size()-1;
   d_constraintsVector.push_back(&(forcePtr->d_constraintsNoneForce));  
 
-  matrix_free_data.reinit(dofHandlerVector, d_constraintsVector, quadratureVector, additional_data);
+  std::vector<const ConstraintMatrix * > constraintsVectorTemp(d_constraintsVector.size());
+  for (unsigned int iconstraint=0; iconstraint< d_constraintsVector.size(); iconstraint++)
+  {
+     constraintsVectorTemp[iconstraint]=d_constraintsVector[iconstraint];
+  }
+  matrix_free_data.reinit(dofHandlerVector, constraintsVectorTemp, quadratureVector, additional_data);
 
   //
   //locate atom core nodes and also locate atom nodes in each bin 

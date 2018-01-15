@@ -112,6 +112,7 @@ void meshGeneratorClass::generateMesh(Triangulation<3,3> &triangulation,
       meshGenUtils::markPeriodicFaces(triangulation);
       //meshGenUtils::markPeriodicFacesNonOrthogonal(triangulation,d_domainBoundingVectors);
 #endif  
+      numberGlobalCells = triangulation.n_global_active_cells();
     }
   else
     {
