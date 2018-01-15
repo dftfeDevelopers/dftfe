@@ -884,11 +884,11 @@ void eigenClass<FEOrder>::HX(const std::vector<vectorType*> &src,
   if(dftParameters::isPseudopotential && dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0)
     {
           
-      /*computeNonLocalHamiltonianTimesXMemoryOpt(dftPtr->tempPSI2,
-	dftPtr->tempPSI4);*/
+      computeNonLocalHamiltonianTimesXMemoryOpt(dftPtr->tempPSI2,
+						dst);
 
-      computeNonLocalHamiltonianTimesX(dftPtr->tempPSI2,
-				       dst);
+      /*computeNonLocalHamiltonianTimesX(dftPtr->tempPSI2,
+	dst);*/
 
     }
 
