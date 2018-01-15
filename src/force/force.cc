@@ -33,7 +33,6 @@
 #include "gaussianGeneratorConfForceOpt.cc"
 #include "locateAtomCoreNodesForce.cc"
 #include "stress.cc"
-#include "relax.cc"
 #include "moveAtoms.cc"
 
 
@@ -94,6 +93,7 @@ void forceClass<FEOrder>::initMoved()
   d_dofHandlerForce.distribute_dofs(FEForce);
   d_supportPointsForce.clear();
   DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), d_dofHandlerForce, d_supportPointsForce);
+  /*
   //
   //Extract force component dofs from the global force dofs - this will be needed in configurational force.
   //
@@ -123,7 +123,7 @@ void forceClass<FEOrder>::initMoved()
 	  d_locallyOwnedSupportPointsForceZ[globalIndex]=d_supportPointsForce[globalIndex];
       }
   }    
-
+  */
   createBinObjectsForce();
   locateAtomCoreNodesForce();
 }
@@ -192,10 +192,6 @@ void forceClass<FEOrder>::computeConfigurationalForceTotalLinFE()
   }
    
 
-}
-
-template<unsigned int FEOrder>
-void forceClass<FEOrder>::relax(){
 }
 
 template class forceClass<1>;

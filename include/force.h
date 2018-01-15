@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Shiva Rudraraju (2016), Phani Motamarri (2016)
+// @author Sambit Das (2017)
 //
 
 #ifndef force_H_
@@ -43,7 +43,6 @@ public:
   void computeStress();
   void printAtomsForces();
   void printStress();
-  void relax();   
   void updateAtomPositionsAndMoveMesh(const std::vector<Point<C_DIM> > & globalAtomsDisplacements);
 private:
   vectorType d_configForceVectorLinFE;
@@ -84,9 +83,6 @@ private:
   //
   void computeAtomsForcesGaussianGenerator(bool allowGaussianOverlapOnAtoms=false);
   //void computeEnlFnlForceContribution();  
-  void relaxAtomsForces();
-  void relaxStress();
-  void relaxAtomsForcesStress();
   void locateAtomCoreNodesForce();
 
   
@@ -129,7 +125,7 @@ private:
   DoFHandler<C_DIM> d_dofHandlerForce;
   unsigned int d_forceDofHandlerIndex;
   std::map<types::global_dof_index, Point<C_DIM> > d_supportPointsForce;
-  std::map<types::global_dof_index, Point<C_DIM> > d_locallyOwnedSupportPointsForceX, d_locallyOwnedSupportPointsForceY, d_locallyOwnedSupportPointsForceZ ;
+  //std::map<types::global_dof_index, Point<C_DIM> > d_locallyOwnedSupportPointsForceX, d_locallyOwnedSupportPointsForceY, d_locallyOwnedSupportPointsForceZ ;
   IndexSet   d_locally_owned_dofsForce;
   IndexSet   d_locally_relevant_dofsForce;
   ConstraintMatrix d_constraintsNoneForce;
