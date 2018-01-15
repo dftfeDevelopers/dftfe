@@ -38,6 +38,7 @@ public:
   forceClass(dftClass<FEOrder>* _dftPtr);
   void initUnmoved(Triangulation<3,3> & triangulation);
   void initMoved();
+  void initPseudoData();
   void computeAtomsForces();
   void computeStress();
   void printAtomsForces();
@@ -63,7 +64,23 @@ private:
 				                const unsigned int cell,
 			                        const std::vector<VectorizedArray<double> > & rhoQuads);
 
-  void distributeForceContributionFPSPLocalGammaAtoms(const std::map<unsigned int, std::vector<double> > & forceContributionFPSPLocalGammaAtoms);    
+  void distributeForceContributionFPSPLocalGammaAtoms(const std::map<unsigned int, std::vector<double> > & forceContributionFPSPLocalGammaAtoms);   
+
+  void FnlGammaAtomsElementalContributionNonPeriodic(std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
+						     FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
+						     const unsigned int cell,
+						     const std::vector<std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > > pspnlGammaAtomQuads,
+						     const std::vector<std::vector<double> >  & projectorKetTimesPsiTimesV,							       
+						     const std::vector< VectorizedArray<double> > & psiQuads);
+  void FnlGammaAtomsElementalContributionPeriodic(std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
+						  FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
+						  const unsigned int cell,
+						  const std::vector<std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > > & pspnlGammaAtomsQuads,
+						  const std::vector<std::vector<std::vector<std::complex<double> > > > & projectorKetTimesPsiTimesV,							       
+						  const std::vector<Tensor<1,2,VectorizedArray<double> > > & psiQuads);  
+
+
+  void distributeForceContributionFnlGammaAtoms(const std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms);   
   //
   void computeAtomsForcesGaussianGenerator(bool allowGaussianOverlapOnAtoms=false);
   //void computeEnlFnlForceContribution();  
@@ -76,14 +93,21 @@ private:
   //////force related pseudopotential member functions and data members
   void initLocalPseudoPotentialForce();
   void computeElementalNonLocalPseudoDataForce(); 
-  void computeNonLocalProjectorKetTimesVector(const std::vector<vectorType*> &src,
-                                         std::vector<std::vector<double> > & projectorKetTimesVectorReal,
-                                         std::vector<std::vector<std::complex<double> > > & projectorKetTimesVectorComplex);
+  void computeNonLocalProjectorKetTimesPsiTimesV(const std::vector<vectorType*> &src,
+                                                 std::vector<std::vector<double> > & projectorKetTimesPsiTimesVReal,
+                                                 std::vector<std::vector<std::complex<double> > > & projectorKetTimesPsiTimesVComplex,
+						 const unsigned int kPointIndex);
  
   //storage for precomputed nonlocal pseudopotential quadrature data
-  //vector<vector< elemental quad data >(number pseudo wave functions)> (number non local atoms with with compact support in curent processor)
-  std::vector<std::vector<std::map<dealii::CellId, std::vector<double> > > > d_nonLocalPSP_ClmDeltaVl;
-  std::vector<std::vector<std::map<dealii::CellId, std::vector<double> > > > d_nonLocalPSPGrad_ClmDeltaVl;
+  //map<nonlocal atom id with non-zero compact support, vector< elemental quad data >(number pseudo wave functions)>
+#ifdef ENABLE_PERIODIC_BC 
+  std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_ZetalmDeltaVl;
+  std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_gradZetalmDeltaVl_KPoint;
+  std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint;  
+#else
+  std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_ZetalmDeltaVl;
+  std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_gradZetalmDeltaVl;
+#endif
   //storage for precompute localPseudo data
   std::map<dealii::CellId, std::vector<double> > d_gradPseudoVLoc;
   //only contains maps for atoms whose psp tail intersects the local domain

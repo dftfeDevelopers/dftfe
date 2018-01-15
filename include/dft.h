@@ -103,10 +103,24 @@ class dftClass
    */
   ~dftClass();
   /**
-   * Sets up Kohn-Sham SCF iteration after the required pre-processing steps
+   * Reads the coordinates of the atoms.
+   * If periodic calculation, reads fractional coordinates of atoms in the unit-cell,
+   * lattice vectors, kPoint quadrature rules to be used and also generates image atoms.
+   * Also determines orbital-ordering
    */
-  void run();
-
+  void set();  
+  /**
+   * Does required pre-processing steps, which could also be reinited.
+   */
+  void init();    
+  /**
+   * Selects between only electronic field relaxation or combined electronic and geometry relxation
+   */
+  void run();  
+  /**
+   *  Kohn-Sham ground solve using SCF iteration 
+   */
+  void solve();  
   /**
    * Number of Kohn-Sham eigen values to be computed
    */
@@ -114,13 +128,6 @@ class dftClass
 
  private:
 
-  /**
-   * Reads the coordinates of the atoms.
-   * If periodic calculation, reads fractional coordinates of atoms in the unit-cell,
-   * lattice vectors, kPoint quadrature rules to be used and also generates image atoms.
-   * Also determines orbital-ordering
-   */
-  void set();
   void readkPointData();
   void generateImageCharges();
   void determineOrbitalFilling();

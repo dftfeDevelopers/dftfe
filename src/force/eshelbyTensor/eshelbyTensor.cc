@@ -154,30 +154,110 @@ Tensor<2,C_DIM,VectorizedArray<double> >  getELocEshelbyTensorNonPeriodic(const 
    return eshelbyTensor;
 }
 
-/*
-Tensor<2,C_DIM,VectorizedArray<double> >  getEnlEshelbyTensor(const VectorizedArray<double> & phiTot,
-		                                                  const Tensor<1,C_DIM,VectorizedArray<double> > & gradPhiTot,
-							          const VectorizedArray<double> & rho,
-							          const Tensor<1,C_DIM,VectorizedArray<double> > & gradRho,
-								  const VectorizedArray<double> & exc,
-								  const Tensor<1,C_DIM,VectorizedArray<double> > & gradRhoExc,
-								  std::vector<VectorizedArray<double> >::const_iterator psiBegin,
-                                                                  std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >::const_iterator gradPsiBegin,
-								  const std::vector<double> & eigenValues_,
-								  const double fermiEnergy_,
-								  const double tVal)
+
+Tensor<2,C_DIM,VectorizedArray<double> >  getEnlEshelbyTensorNonPeriodic(const std::vector<std::vector<VectorizedArray<double> > > & ZetaDeltaV,
+								         const std::vector<std::vector<double> > & projectorKetTimesPsiTimesV,
+								         std::vector<VectorizedArray<double> >::const_iterator psiBegin,
+								         const std::vector<double> & eigenValues_,
+								         const double fermiEnergy_,
+								         const double tVal)
 {
 
-   Tensor<2,C_DIM,VectorizedArray<double> > eshelbyTensor= make_vectorized_array(1.0/(4.0*M_PI))*outer_product(gradPhiTot,gradPhiTot);
-   VectorizedArray<double> identityTensorFactor=make_vectorized_array(-1.0/(8.0*M_PI))*scalar_product(gradPhiTot,gradPhiTot)+rho*phiTot+exc*rho;
-
+   Tensor<2,C_DIM,VectorizedArray<double> > eshelbyTensor;
+   VectorizedArray<double> identityTensorFactor=make_vectorized_array(0.0);
+   std::vector<VectorizedArray<double> >::const_iterator it1=psiBegin;   
+   for (unsigned int eigenIndex=0; eigenIndex < eigenValues_.size(); ++it1, ++ eigenIndex)
+   {
+      const VectorizedArray<double> & psi= *it1;
+      double factor=(eigenValues_[eigenIndex]-fermiEnergy_)/(C_kb*tVal);
+      double partOcc = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)) : 1.0/(1.0 + std::exp(factor));
+      for (unsigned int iAtomNonLocal=0; iAtomNonLocal < ZetaDeltaV.size(); ++iAtomNonLocal)
+      {
+	 const int numberPseudoWaveFunctions = ZetaDeltaV[iAtomNonLocal].size();
+         for (unsigned int iPseudoWave=0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
+         {	  
+             identityTensorFactor+=make_vectorized_array(4.0*partOcc*projectorKetTimesPsiTimesV[iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave])*psi*ZetaDeltaV[iAtomNonLocal][iPseudoWave];
+	 }
+      }
+   }  
+   eshelbyTensor[0][0]=identityTensorFactor;
+   eshelbyTensor[1][1]=identityTensorFactor;
+   eshelbyTensor[2][2]=identityTensorFactor;
    
+   return eshelbyTensor;
+}
+
+Tensor<2,C_DIM,VectorizedArray<double> >  getEnlEshelbyTensorPeriodic(const std::vector<std::vector<std::vector<Tensor<1,2,VectorizedArray<double> > > > > & ZetaDeltaV,
+								      const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiTimesV,
+								      std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator psiBegin,
+                                                                      const std::vector<double> & kPointWeights,								      
+								      const std::vector<std::vector<double> > & eigenValues_,
+								      const double fermiEnergy_,
+								      const double tVal)
+{
+   Tensor<2,C_DIM,VectorizedArray<double> > eshelbyTensor;
+   VectorizedArray<double> identityTensorFactor=make_vectorized_array(0.0);
+   std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator it1=psiBegin;
+   VectorizedArray<double> four=make_vectorized_array(4.0);
+   const int numKPoints=eigenValues_.size();
+   for (unsigned int ik=0; ik<numKPoints; ++ik){
+     for (unsigned int eigenIndex=0; eigenIndex<eigenValues_[0].size(); ++it1, ++ eigenIndex){
+        const Tensor<1,2,VectorizedArray<double> > & psi= *it1;
+
+        double factor=(eigenValues_[ik][eigenIndex]-fermiEnergy_)/(C_kb*tVal);
+        double partOcc = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)) : 1.0/(1.0 + std::exp(factor));
+
+	VectorizedArray<double> fnk=make_vectorized_array(partOcc*kPointWeights[ik]);
+	for (unsigned int iAtomNonLocal=0; iAtomNonLocal < ZetaDeltaV.size(); ++iAtomNonLocal)
+	{
+	     const int numberPseudoWaveFunctions = ZetaDeltaV[iAtomNonLocal].size();
+	     for (unsigned int iPseudoWave=0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
+	     {	  
+		 VectorizedArray<double> CReal=make_vectorized_array(projectorKetTimesPsiTimesV[ik][iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave].real());
+		 VectorizedArray<double> CImag=make_vectorized_array(projectorKetTimesPsiTimesV[ik][iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave].imag());
+		 VectorizedArray<double> zdvR=ZetaDeltaV[iAtomNonLocal][iPseudoWave][ik][0];
+		 VectorizedArray<double> zdvI=ZetaDeltaV[iAtomNonLocal][iPseudoWave][ik][1];
+		 identityTensorFactor+=four*fnk*((psi[0]*zdvR+psi[1]*zdvI)*CReal-(psi[0]*zdvI-psi[1]*zdvR)*CImag);
+	     }
+	}	
+
+     }
+   }
+
    eshelbyTensor[0][0]+=identityTensorFactor;
    eshelbyTensor[1][1]+=identityTensorFactor;
    eshelbyTensor[2][2]+=identityTensorFactor;
    return eshelbyTensor;
+    
 }
-*/
+
+Tensor<1,C_DIM,VectorizedArray<double> >  getFnlNonPeriodic(const std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > & gradZetaDeltaV,
+						            const std::vector<std::vector<double> > & projectorKetTimesPsiTimesV,
+						            std::vector<VectorizedArray<double> >::const_iterator psiBegin,
+						            const std::vector<double> & eigenValues_,
+						            const double fermiEnergy_,
+						            const double tVal)
+{
+
+   Tensor<1,C_DIM,VectorizedArray<double> > F; 
+   std::vector<VectorizedArray<double> >::const_iterator it1=psiBegin;   
+   for (unsigned int eigenIndex=0; eigenIndex < eigenValues_.size(); ++it1, ++ eigenIndex)
+   {
+      const VectorizedArray<double> & psi= *it1;
+      double factor=(eigenValues_[eigenIndex]-fermiEnergy_)/(C_kb*tVal);
+      double partOcc = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)) : 1.0/(1.0 + std::exp(factor));
+      for (unsigned int iAtomNonLocal=0; iAtomNonLocal < gradZetaDeltaV.size(); ++iAtomNonLocal)
+      {
+	 const int numberPseudoWaveFunctions = gradZetaDeltaV[iAtomNonLocal].size();
+         for (unsigned int iPseudoWave=0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
+         {	
+	     F+=make_vectorized_array(4.0*partOcc*projectorKetTimesPsiTimesV[iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave])*psi*gradZetaDeltaV[iAtomNonLocal][iPseudoWave];
+	 }
+      }
+   }  
+   
+   return F;
+}
 
 Tensor<1,C_DIM,VectorizedArray<double> >  getFPSPLocal(const VectorizedArray<double> rho,
 		                                       const Tensor<1,C_DIM,VectorizedArray<double> > & gradPseudoVLoc,
@@ -188,11 +268,43 @@ Tensor<1,C_DIM,VectorizedArray<double> >  getFPSPLocal(const VectorizedArray<dou
    return rho*(gradPseudoVLoc-gradPhiExt);
 }
 
-//Tensor<1,C_DIM,VectorizedArray<double> >  getFPSPNonLocal()
+Tensor<1,C_DIM,VectorizedArray<double> >  getFnlPeriodic(const std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > & gradZetaDeltaV,
+						         const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiTimesV,
+						         std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiBegin,
+                                                         const std::vector<double> & kPointWeights,								      
+					                 const std::vector<std::vector<double> > & eigenValues_,
+						         const double fermiEnergy_,
+						         const double tVal)
+{
+   Tensor<1,C_DIM,VectorizedArray<double> > F;
+   std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator it1=psiBegin;
+   VectorizedArray<double> four=make_vectorized_array(4.0);
+   const int numKPoints=eigenValues_.size();
+   for (unsigned int ik=0; ik<numKPoints; ++ik){
+     for (unsigned int eigenIndex=0; eigenIndex<eigenValues_[0].size(); ++it1, ++ eigenIndex){
+        const Tensor<1,2,VectorizedArray<double> > & psi= *it1;
 
-//{
+        double factor=(eigenValues_[ik][eigenIndex]-fermiEnergy_)/(C_kb*tVal);
+        double partOcc = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)) : 1.0/(1.0 + std::exp(factor));
 
+	VectorizedArray<double> fnk=make_vectorized_array(partOcc*kPointWeights[ik]);
+	for (unsigned int iAtomNonLocal=0; iAtomNonLocal < gradZetaDeltaV.size(); ++iAtomNonLocal)
+	{
+	     const int numberPseudoWaveFunctions = gradZetaDeltaV[iAtomNonLocal].size();
+	     for (unsigned int iPseudoWave=0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
+	     {	  
+		 VectorizedArray<double> CReal=make_vectorized_array(projectorKetTimesPsiTimesV[ik][iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave].real());
+		 VectorizedArray<double> CImag=make_vectorized_array(projectorKetTimesPsiTimesV[ik][iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave].imag());
+		 Tensor<1,C_DIM,VectorizedArray<double> >  zdvR=gradZetaDeltaV[iAtomNonLocal][iPseudoWave][ik][0];
+		 Tensor<1,C_DIM,VectorizedArray<double> >  zdvI=gradZetaDeltaV[iAtomNonLocal][iPseudoWave][ik][1];
+		 F+=four*fnk*((psi[0]*zdvR+psi[1]*zdvI)*CReal-(psi[0]*zdvI-psi[1]*zdvR)*CImag);
+	     }
+	}	
 
-//}
+     }
+   }
+
+   return F;    
+}
 
 }

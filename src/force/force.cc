@@ -26,6 +26,7 @@
 
 #include "configurationalForceEEshelbyFPSPFnlLinFE.cc"
 #include "FPSPLocalGammaAtomsElementalContribution.cc"
+#include "FnlGammaAtomsElementalContribution.cc"
 #include "configurationalForceEselfLinFE.cc"
 #include "initPseudoForce.cc"
 #include "createBinObjectsForce.cc"
@@ -125,17 +126,22 @@ void forceClass<FEOrder>::initMoved()
 
   createBinObjectsForce();
   locateAtomCoreNodesForce();
+}
+
+//compute forces on atoms using a generator with a compact support
+template<unsigned int FEOrder>
+void forceClass<FEOrder>::initPseudoData(){
   //
   //initialize pseudopotential related force objects
   //
   if(dftParameters::isPseudopotential)
     {
       initLocalPseudoPotentialForce();
-      //initNonLocalPseudoPotentialForce();
-      //computeSparseStructureNonLocalProjectorsForce();
-      //computeElementalProjectorKetsForce();
+      computeElementalNonLocalPseudoDataForce();
     }
 }
+
+
 
 //compute forces on atoms using a generator with a compact support
 template<unsigned int FEOrder>

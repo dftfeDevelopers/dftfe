@@ -131,6 +131,9 @@ void convertToCellCenteredCartesianCoordinates(std::vector<std::vector<double> >
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::set()
 {
+  pcout << std::endl << "number of MPI processes: "
+	<< Utilities::MPI::n_mpi_processes(mpi_communicator)
+	<< std::endl;       
   //
   //read coordinates
   //
@@ -281,20 +284,11 @@ void dftClass<FEOrder>::set()
   } 
 }
 
-//dft run
+
+//dft init
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::run ()
+void dftClass<FEOrder>::init ()
 {
-  pcout << std::endl << "number of MPI processes: "
-	<< Utilities::MPI::n_mpi_processes(mpi_communicator)
-	<< std::endl;
-
-  //
-  //read coordinates file 
-  //
-  set();
-
-
   //
   //generate mesh (both parallel and serial)
   //
@@ -320,6 +314,7 @@ void dftClass<FEOrder>::run ()
   moveMeshToAtoms(triangulationPar);
   moveMeshToAtoms(triangulationSer,true);//can only be called after calling moveMeshToAtoms(triangulationPar)
 
+
   //
   //initialize dirichlet BCs for total potential and vSelf poisson solutions
   //
@@ -329,19 +324,32 @@ void dftClass<FEOrder>::run ()
   //initialize guesses for electron-density and wavefunctions
   //
   initElectronicFields();
-
   
   //
   //initialize local pseudopotential
   //
   if(dftParameters::isPseudopotential)
-    {
+  {
       initLocalPseudoPotential();
       initNonLocalPseudoPotential();
       computeSparseStructureNonLocalProjectors();
       computeElementalProjectorKets();
-    }
- 
+      forcePtr->initPseudoData();
+  }
+}
+
+//dft run
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::run()
+{ 
+
+  solve();
+}
+
+//dft solve
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::solve()
+{  
   //
   //solve vself
   //

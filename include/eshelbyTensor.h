@@ -66,6 +66,40 @@ Tensor<1,C_DIM,VectorizedArray<double> >  getFPSPLocal(const VectorizedArray<dou
 						       const Tensor<1,C_DIM,VectorizedArray<double> > & gradPhiExt);
 
 
-};
+Tensor<2,C_DIM,VectorizedArray<double> >  getEnlEshelbyTensorNonPeriodic(const std::vector<std::vector<VectorizedArray<double> > > & ZetaDeltaV,
+								         const std::vector<std::vector<double> >& projectorKetTimesPsiTimesV,
+								         std::vector<VectorizedArray<double> >::const_iterator psiBegin,
+								         const std::vector<double> & eigenValues_,
+								         const double fermiEnergy_,
+								         const double tVal);
 
+Tensor<2,C_DIM,VectorizedArray<double> >  getEnlEshelbyTensorPeriodic(const std::vector<std::vector<std::vector<Tensor<1,2,VectorizedArray<double> > > > > & ZetaDeltaV,
+								      const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiTimesV,
+								      std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiBegin,
+                                                                      const std::vector<double> & kPointWeights,								      
+								      const std::vector<std::vector<double> > & eigenValues_,
+								      const double fermiEnergy_,
+								      const double tVal);
+
+
+
+
+Tensor<1,C_DIM,VectorizedArray<double> >  getFnlNonPeriodic(const std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > & gradZetaDeltaV,
+						            const std::vector<std::vector<double> > & projectorKetTimesPsiTimesV,
+						            std::vector<VectorizedArray<double> >::const_iterator psiBegin,
+						            const std::vector<double> & eigenValues_,
+						            const double fermiEnergy_,
+						            const double tVal);
+
+
+
+Tensor<1,C_DIM,VectorizedArray<double> >  getFnlPeriodic(const std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > & gradZetaDeltaV,
+						         const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiTimesV,
+						         std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiBegin,
+                                                         const std::vector<double> & kPointWeights,								      
+					                 const std::vector<std::vector<double> > & eigenValues_,
+						         const double fermiEnergy_,
+						         const double tVal);
+
+};
 #endif
