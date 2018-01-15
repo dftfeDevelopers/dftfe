@@ -20,7 +20,7 @@ set ATOMIC COORDINATES FILE = coordinates.inp
 #
 
 #Radius of the atom-centered ball in which self-potential of the associated nuclear charge is solved
-set RADIUS ATOM BALL = 2.8
+set SELF POTENTIAL ATOM BALL RADIUS  = 2.8
 #Simulation domain sizes 
 #Values listed here are not relevant if external mesh is used for non-periodic calculations
 set DOMAIN SIZE X    = 7.2
@@ -29,9 +29,6 @@ set DOMAIN SIZE Z    = 7.2 #2*Ln
 set INNER DOMAIN SIZE X = 7.2 #2*Ln1
 set INNER DOMAIN SIZE Y = 7.2
 set INNER DOMAIN SIZE Z = 7.2
-set MESH SIZE OUTER DOMAIN = 1.0 #hn
-set MESH SIZE INNER DOMAIN = 1.0 #hn-1
-set MESH SIZE INNER BALL = 0.5 #h0
 
 #
 #set boundary conditions in three directions

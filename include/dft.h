@@ -177,7 +177,7 @@ class dftClass
    * that no two atoms in each bin has overlapping balls
    * and finally solves the self-potentials in each bin one-by-one.
    */
-  void createAtomBins(std::vector<const ConstraintMatrix * > & constraintsVector);
+  void createAtomBins(std::vector<ConstraintMatrix * > & constraintsVector);
   void createAtomBinsExtraSanityCheck();
   void solveVself();
   
@@ -275,7 +275,7 @@ class dftClass
   unsigned int       eigenDofHandlerIndex,phiExtDofHandlerIndex,phiTotDofHandlerIndex,forceDofHandlerIndex;
   MatrixFree<3,double> matrix_free_data;
   std::map<types::global_dof_index, Point<3> > d_supportPoints, d_supportPointsEigen;
-  std::vector< const ConstraintMatrix * > d_constraintsVector; 
+  std::vector< ConstraintMatrix * > d_constraintsVector; 
   
   /**
    * parallel objects
