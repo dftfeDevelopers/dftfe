@@ -106,7 +106,8 @@ void meshGeneratorClass::generateMesh(Triangulation<3,3> &triangulation,
 
 #ifdef ENABLE_PERIODIC_BC
       markPeriodicFaces(triangulation);
-#endif  
+#endif 
+      numberGlobalCells = triangulation.n_global_active_cells();
     }
   else
     {
