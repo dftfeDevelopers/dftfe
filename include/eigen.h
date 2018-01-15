@@ -81,9 +81,8 @@ public:
 #else
   std::vector<double> XHXValue;
 #endif
-  std::vector<vectorType*> HXvalue;
-  dealii::Table<2, dealii::VectorizedArray<double> > vEff;
 
+  dealii::Table<2, dealii::VectorizedArray<double> > vEff;
   dealii::Table<3, dealii::VectorizedArray<double> > derExcWithSigmaTimesGradRho;
 
   //parallel objects

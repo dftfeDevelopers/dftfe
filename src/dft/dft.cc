@@ -278,7 +278,6 @@ void dftClass<FEOrder>::set()
     tempPSI.push_back(new vectorType);
     tempPSI2.push_back(new vectorType);
     tempPSI3.push_back(new vectorType);
-    tempPSI4.push_back(new vectorType);
   } 
 }
 
