@@ -339,10 +339,10 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::v
 	}
 
     }
-
+  /*
   for (std::vector<vectorType*>::iterator it=dst.begin(); it!=dst.end(); it++)
     {
       (*it)->compress(VectorOperation::add);
     }
-  
+  */
 }
