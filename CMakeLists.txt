@@ -48,7 +48,10 @@ SET(TARGET_SRC
   ./src/meshMovement/meshMovement.cc
   ./src/meshMovement/meshMovementGaussian.cc
   ./src/mesh/meshGenerator.cc
-  ./src/geoOpt/geoOpt.cc
+  ./src/geoOpt/geoOptIon.cc
+  ./src/solvers/solverFunction.cc
+  ./src/solvers/nonLinearSolver.cc
+  ./src/solvers/cgPRPNonLinearSolver.cc
   ./utils/fileReaders.cc
   ./utils/dftParameters.cc
   # You can specify additional files here!

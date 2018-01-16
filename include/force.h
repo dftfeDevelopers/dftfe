@@ -43,7 +43,9 @@ public:
   void computeStress();
   void printAtomsForces();
   void printStress();
-  void updateAtomPositionsAndMoveMesh(const std::vector<Point<C_DIM> > & globalAtomsDisplacements);
+  void getAtomsForces(std::vector<double> forces);
+  void getStress(std::vector<double> stress);
+  void updateAtomPositionsAndMoveMesh(const std::vector<Point<C_DIM> > & globalAtomsDisplacements,double maximumForceOnAtom=0.0);
 private:
   vectorType d_configForceVectorLinFE;
   std::vector<unsigned int> d_globalAtomsRelaxationPermissions;

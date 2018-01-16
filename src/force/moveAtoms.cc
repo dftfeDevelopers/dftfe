@@ -23,7 +23,7 @@
 //
 //
 template<unsigned int FEOrder>
-void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point<C_DIM> > & globalAtomsDisplacements)
+void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point<C_DIM> > & globalAtomsDisplacements, double maximumForceOnAtom)
 {
   std::vector<std::vector<double> > & atomLocations=dftPtr->atomLocations;
   std::vector<std::vector<double> > & imagePositions=dftPtr->d_imagePositions;
@@ -65,23 +65,53 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
      }
   }
   MPI_Barrier(mpi_communicator); 
-
-  gaussianMove.moveMesh(controlPointLocations,controlPointDisplacements,d_gaussianConstant);
-  pcout << "Reinitializing all moved triangulation dependent objects..." << std::endl;  
- 
-  //reinitialize dirichlet BCs for total potential and vSelf poisson solutions
-  dftPtr->initBoundaryConditions();
-  //reinitialize guesses for electron-density and wavefunctions (not required for relaxation update)
-  //dftPtr->initElectronicFields();
-
-  //reinitialize local pseudopotential
-  if(dftParameters::isPseudopotential)
+  const double tol=1e-6;
+  if (maximumForceOnAtom >(1e-2-tol))
   {
-     dftPtr->initLocalPseudoPotential();
-     dftPtr->initNonLocalPseudoPotential();
-     dftPtr->computeSparseStructureNonLocalProjectors();
-     dftPtr->computeElementalProjectorKets();
-     initPseudoData();
-  }    
-  pcout << "...Reinitialization end" << std::endl;   
+      pcout << "Remeshing and reinitialization of dft problem for new atom coordinates..." << std::endl;  
+      dftPtr->init(); 
+      pcout << "...Reinitialization end" << std::endl;       
+  }
+  else if (maximumForceOnAtom <(1e-2+tol) && maximumForceOnAtom>1e-4)
+  {
+      gaussianMove.moveMesh(controlPointLocations,controlPointDisplacements,2.0);
+      pcout << "Reinitializing all moved triangulation dependent objects..." << std::endl;  
+     
+      //reinitialize dirichlet BCs for total potential and vSelf poisson solutions
+      dftPtr->initBoundaryConditions();
+      //reinitialize guesses for electron-density and wavefunctions (not required for relaxation update)
+      //dftPtr->initElectronicFields();
+
+      //reinitialize local pseudopotential
+      if(dftParameters::isPseudopotential)
+      {
+	 dftPtr->initLocalPseudoPotential();
+	 dftPtr->initNonLocalPseudoPotential();
+	 dftPtr->computeSparseStructureNonLocalProjectors();
+	 dftPtr->computeElementalProjectorKets();
+	 initPseudoData();
+      }    
+      pcout << "...Reinitialization end" << std::endl;        
+  }
+  else
+  {
+      gaussianMove.moveMesh(controlPointLocations,controlPointDisplacements,d_gaussianConstant);
+      pcout << "Reinitializing all moved triangulation dependent objects..." << std::endl;  
+     
+      //reinitialize dirichlet BCs for total potential and vSelf poisson solutions
+      dftPtr->initBoundaryConditions();
+      //reinitialize guesses for electron-density and wavefunctions (not required for relaxation update)
+      //dftPtr->initElectronicFields();
+
+      //reinitialize local pseudopotential
+      if(dftParameters::isPseudopotential)
+      {
+	 dftPtr->initLocalPseudoPotential();
+	 dftPtr->initNonLocalPseudoPotential();
+	 dftPtr->computeSparseStructureNonLocalProjectors();
+	 dftPtr->computeElementalProjectorKets();
+	 initPseudoData();
+      }    
+      pcout << "...Reinitialization end" << std::endl;  
+  }
 }

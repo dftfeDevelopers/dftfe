@@ -194,6 +194,17 @@ void forceClass<FEOrder>::computeConfigurationalForceTotalLinFE()
 
 }
 
+
+template<unsigned int FEOrder>
+void getAtomsForces(std::vector<double> forces)
+{
+   return  d_globalAtomsGaussianForces;
+}
+  
+void getStress(std::vector<double> stress)
+{
+}
+
 template class forceClass<1>;
 template class forceClass<2>;
 template class forceClass<3>;

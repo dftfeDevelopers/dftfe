@@ -16,34 +16,39 @@
 // @author Sambit Das (2018)
 //
 
-#ifndef geoOpt_H_
-#define geoOpt_H_
-#include "headers.h"
+#ifndef geoOptIon_H_
+#define geoOptIon_H_
+#include "solverFunction.h"
 #include "constants.h"
 
 using namespace dealii;
-typedef dealii::parallel::distributed::Vector<double> vectorType;
-template <unsigned int FEOrder> class forceClass;
 template <unsigned int FEOrder> class dftClass;
 //
 //Define geoOpt class
 //
 template <unsigned int FEOrder>
-class geoOpt
+class geoOptIon : public solverFunction
 {
 
 public:
-  geoOpt(dftClass<FEOrder>* _dftPtr, forceClass<FEOrder>* _forcePtr);
+  geoOptIon(dftClass<FEOrder>* _dftPtr);
   void init();
-  void relax();   
+  void run();   
 private:
-  void relaxAtomsForces();
-  void relaxStress();
-  void relaxAtomsForcesStress();
+
+    
+  int getNumberUnknowns() const ;
+  double value() const;
+  void value(std::vector<double> & functionValue);
+  void gradient(std::vector<double> & gradient);
+  void precondition(std::vector<double>       & s,
+			      const std::vector<double> & gradient) const;
+  void update(const std::vector<double> & solution);
+  void solution(std::vector<double> & solution);
+  std::vector<int> getUnknownCountFlag() const;
+
   //pointer to dft class
   dftClass<FEOrder>* dftPtr;
-  //pointer to force class
-  forceClass<FEOrder>* forcePtr;
   //parallel objects
   MPI_Comm mpi_communicator;
   const unsigned int n_mpi_processes;
