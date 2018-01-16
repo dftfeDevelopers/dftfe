@@ -367,7 +367,12 @@ void meshGeneratorClass::generateSerialAndParallelMesh(std::vector<std::vector<d
   d_domainBoundingVectors = domainBoundingVectors;
 
   types::global_dof_index numberGlobalCellsSerial,numberGlobalCellsParallel;
-
+  
+  //clear existing triangulation data
+  d_serialTriangulationUnmoved.clear();
+  d_parallelTriangulationUnmoved.clear();
+  d_serialTriangulationMoved.clear();
+  d_parallelTriangulationMoved.clear();
   //
   //generate unmoved mesh data members
   //

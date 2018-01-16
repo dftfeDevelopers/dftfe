@@ -5,7 +5,7 @@ set DFT PATH = "../../../../"
 #
 #finite-element related parameters
 #
-set MESH FILE = mesh.inp
+#set MESH FILE = mesh.inp
 set FINITE ELEMENT POLYNOMIAL ORDER = 4
 
 
@@ -20,12 +20,20 @@ set ATOMIC COORDINATES FILE = coordinates.inp
 #
 
 #Radius of the atom-centered ball in which self-potential of the associated nuclear charge is solved
-set SELF POTENTIAL ATOM BALL RADIUS = 8.0
+set SELF POTENTIAL ATOM BALL RADIUS = 15.0
 #Simulation domain sizes 
 #Values listed here are not relevant if external mesh is used for non-periodic calculations
-set DOMAIN SIZE X    = 40.0
-set DOMAIN SIZE Y    = 40.0
-set DOMAIN SIZE Z    = 40.0 #2*Ln
+set DOMAIN SIZE X    = 80.0
+set DOMAIN SIZE Y    = 80.0
+set DOMAIN SIZE Z    = 80.0 #2*Ln
+set INNER DOMAIN SIZE X = 0.0 #2*Ln1
+set INNER DOMAIN SIZE Y = 0.0
+set INNER DOMAIN SIZE Z = 0.0
+set OUTER ATOM BALL RADIUS = 3
+set MESH SIZE OUTER DOMAIN = 10.0 #hn
+set MESH SIZE INNER DOMAIN = 0.625 #hn-1
+set MESH SIZE NEAR ATOM = 0.625
+set MESH SIZE OUTER ATOM BALL = 0.625 #h0
 
 #
 #set boundary conditions in three directions
@@ -73,7 +81,7 @@ set CHEBYSHEV POLYNOMIAL DEGREE = 0
 #
 #SCF parameters
 #
-set SCF CONVERGENCE MAXIMUM ITERATIONS = 30
+set SCF CONVERGENCE MAXIMUM ITERATIONS = 40
 set SCF CONVERGENCE TOLERANCE          = 1e-09
 set ANDERSON SCHEME MIXING PARAMETER   = 0.5
 set ANDERSON SCHEME MIXING HISTORY     = 70

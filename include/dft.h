@@ -411,7 +411,7 @@ class dftClass
   std::vector<double> a0;
   std::vector<double> bLow;
   vectorType vChebyshev, v0Chebyshev, fChebyshev, aj[5];
-  std::vector<parallel::distributed::Vector<double>*> PSI, tempPSI, tempPSI2, tempPSI3, tempPSI4;
+  std::vector<parallel::distributed::Vector<double>*> PSI, tempPSI, tempPSI2, tempPSI3;
   void chebyshevSolver();
   double upperBound();
   void gramSchmidt(std::vector<vectorType*>& X);
