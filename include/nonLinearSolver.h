@@ -39,7 +39,8 @@
     enum ReturnValueType { SUCCESS = 0,
 			   FAILURE,
 			   LINESEARCH_FAILED,
-			   MAX_ITER_REACHED };
+			   MAX_ITER_REACHED,
+                           RESTART};
     
     //
     // methods

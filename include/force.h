@@ -20,6 +20,7 @@
 #define force_H_
 #include "headers.h"
 #include "constants.h"
+#include "geoOptIon.h"
 #include "meshMovementGaussian.h"
 //#include "dft.h"
 
@@ -33,7 +34,7 @@ template <unsigned int FEOrder>
 class forceClass
 {
   template <unsigned int T>  friend class dftClass;
-
+  template <unsigned int FEOrder>  friend class geoOptIon;
 public:
   forceClass(dftClass<FEOrder>* _dftPtr);
   void initUnmoved(Triangulation<3,3> & triangulation);
@@ -43,8 +44,8 @@ public:
   void computeStress();
   void printAtomsForces();
   void printStress();
-  void getAtomsForces(std::vector<double> forces);
-  void getStress(std::vector<double> stress);
+  std::vector<double> getAtomsForces();
+  std::vector<double> getStress();
   void updateAtomPositionsAndMoveMesh(const std::vector<Point<C_DIM> > & globalAtomsDisplacements,double maximumForceOnAtom=0.0);
 private:
   vectorType d_configForceVectorLinFE;

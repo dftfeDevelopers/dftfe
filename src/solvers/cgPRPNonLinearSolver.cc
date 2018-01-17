@@ -370,19 +370,19 @@
     //
     // value of sigma0
     //
-    const double sigma0 = 0.1;
+    const double sigma0 = 0.7;//0.1;
 
     //
     // set the initial value of alpha
     //
-    double alpha = -sigma0;
+    double alpha = sigma0;//-sigma0;
 
     //
     // update unknowns
     //
-    updateSolution(sigma0,
-	           d_direction,
-		   function);
+    //updateSolution(sigma0,
+    //	           d_direction,
+    //		   function);
 
     //
     // evaluate function gradient
@@ -396,16 +396,16 @@
                  computeDeltaD();
     double deltaD = deltaDReturnValue.first;
     double etaP   = deltaDReturnValue.second;
-     
+    double alphaP=0;
     //
     // update unknowns removing earlier update
     //
-    updateSolution(-sigma0,
+    updateSolution(alpha,//-sigma0,
 		   d_direction,
 		   function);
 
     //
-    // begin iteration
+    // begin iteration (using secant method)
     //
     for (int iter = 0; iter < maxNumberIterations; ++iter) {
 
@@ -414,15 +414,19 @@
       //
       function.gradient(d_gradient);
 
+
       //
       // compute eta
       //
       const double eta = computeEta();
 
+      if (std::fabs(eta) < tolerance*d_numberUnknowns)
+	return SUCCESS;      
       //
       // update alpha
       //
-      alpha *= eta/(etaP - eta);
+      //alpha *= eta/(etaP - eta);
+      alpha=(alphaP*eta-alpha*etaP)/(eta-etaP);
 
       //
       // update unknowns
@@ -435,19 +439,19 @@
       // update etaP
       //
       etaP = eta;
-
+      alphaP=alpha;
       //
       // output 
       //
       if (debugLevel >= 1)
-	std::cout << "iteration: " << iter << " alpha: " << alpha 
+	std::cout << "Line search iteration: " << iter << " alpha: " << alpha << "  eta: "<< eta 
 		  << std::endl;
 
       //
       // check for convergence
       //
-      if (alpha*alpha*deltaD < toleranceSqr)
-	return SUCCESS;
+      //if (alpha*alpha*deltaD < toleranceSqr)
+      //   return SUCCESS;
 
     }
 
@@ -591,23 +595,22 @@
       computeDeltas();
 
       //
-      // compute beta
+      // compute PRP beta
       //
       //d_beta = (lineSearchReturnValue == SUCCESS) ? 
       //(d_deltaNew - d_deltaMid)/d_deltaOld : 0.0;
 
       d_beta = (d_deltaNew - d_deltaMid)/d_deltaOld;
 
-      if(d_debugLevel >= 1)
-	{
-	  if(d_beta < 0)
-	    {
-	      std::cout<<"d_beta is negative: "<<std::endl;
-	    }
-	}
-
+     if (this_mpi_process == 0)
+	   std::cout<<" CG- d_beta: "<<d_beta<<std::endl;
       if(d_beta <= 0)
-	d_beta = 0;
+      {
+	  if (this_mpi_process == 0)
+	     std::cout<<" Negative d_beta- setting it to zero "<<std::endl;
+	  d_beta=0;
+	  //return RESTART;	  
+      }
 
       //
       // update direction

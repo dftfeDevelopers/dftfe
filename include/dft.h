@@ -44,7 +44,8 @@ typedef dealii::parallel::distributed::Vector<double> vectorType;
 //forward declarations
 template <unsigned int T> class poissonClass;
 template <unsigned int T> class eigenClass; 
-template <unsigned int T> class forceClass;  
+template <unsigned int T> class forceClass; 
+template <unsigned int T> class geoOptIon; 
 
 //
 //extern declarations for blas-lapack routines
@@ -90,7 +91,10 @@ class dftClass
   friend class eigenClass;
 
   template <unsigned int FEOrder>
-  friend class forceClass;  
+  friend class forceClass; 
+
+  template <unsigned int FEOrder>
+  friend class geoOptIon;    
 
  public:
 
@@ -293,6 +297,7 @@ class dftClass
   poissonClass<FEOrder> * poissonPtr;
   eigenClass<FEOrder> * eigenPtr;
   forceClass<FEOrder> * forcePtr;
+  geoOptIon<FEOrder> * geoOptIonPtr;
   ConstraintMatrix constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_constraintsPeriodicWithDirichlet, d_noConstraints, d_noConstraintsEigen; 
   std::vector<std::vector<double> > eigenValues;
   std::vector<std::vector<parallel::distributed::Vector<double>*> > eigenVectors;

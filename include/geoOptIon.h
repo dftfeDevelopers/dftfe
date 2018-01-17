@@ -29,7 +29,6 @@ template <unsigned int FEOrder> class dftClass;
 template <unsigned int FEOrder>
 class geoOptIon : public solverFunction
 {
-
 public:
   geoOptIon(dftClass<FEOrder>* _dftPtr);
   void init();
@@ -46,6 +45,10 @@ private:
   void update(const std::vector<double> & solution);
   void solution(std::vector<double> & solution);
   std::vector<int> getUnknownCountFlag() const;
+
+  //member data
+  std::vector<int> d_relaxationFlags;
+  double d_maximumAtomForceToBeRelaxed;
 
   //pointer to dft class
   dftClass<FEOrder>* dftPtr;

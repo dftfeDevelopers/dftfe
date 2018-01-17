@@ -22,9 +22,9 @@ meshMovementGaussianClass::meshMovementGaussianClass()
 {
 }
 
-void meshMovementGaussianClass::moveMesh(std::vector<Point<C_DIM> > controlPointLocations,
-                                         std::vector<Tensor<1,C_DIM,double> > controlPointDisplacements,
-                                         double controllingParameter)   
+std::pair<bool,double> meshMovementGaussianClass::moveMesh(std::vector<Point<C_DIM> > controlPointLocations,
+                                                           std::vector<Tensor<1,C_DIM,double> > controlPointDisplacements,
+                                                           double controllingParameter)   
 {
   d_controlPointLocations=controlPointLocations;
   d_controlPointDisplacements=controlPointDisplacements;
@@ -37,8 +37,9 @@ void meshMovementGaussianClass::moveMesh(std::vector<Point<C_DIM> > controlPoint
   finalizeIncrementField();
   pcout << "...Computed triangulation displacement increment" << std::endl;	
   updateTriangulationVertices();
-  movedMeshCheck();
+  std::pair<bool,double> returnData=movedMeshCheck();
   writeMesh("meshMoved.vtu");
+  return returnData;
 }
 
 

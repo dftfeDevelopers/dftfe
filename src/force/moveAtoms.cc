@@ -66,52 +66,88 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
   }
   MPI_Barrier(mpi_communicator); 
   const double tol=1e-6;
-  if (maximumForceOnAtom >(1e-2-tol))
+  const  double maxJacobianRatio=30.0;
+  const double break1=1e-2;//try 1e-3
+  const double break2=1e-4;//try 1e-5
+  if (maximumForceOnAtom >(break1-tol))
   {
-      pcout << "Remeshing and reinitialization of dft problem for new atom coordinates..." << std::endl;  
+      pcout << "Auto remeshing and reinitialization of dft problem for new atom coordinates as max force is greater than: "<< break1 << " Hatree/Bohr..." << std::endl;  
       dftPtr->init(); 
       pcout << "...Reinitialization end" << std::endl;       
   }
-  else if (maximumForceOnAtom <(1e-2+tol) && maximumForceOnAtom>1e-4)
+  else if (maximumForceOnAtom <(break1+tol) && maximumForceOnAtom>break2)
   {
-      gaussianMove.moveMesh(controlPointLocations,controlPointDisplacements,2.0);
-      pcout << "Reinitializing all moved triangulation dependent objects..." << std::endl;  
-     
-      //reinitialize dirichlet BCs for total potential and vSelf poisson solutions
-      dftPtr->initBoundaryConditions();
-      //reinitialize guesses for electron-density and wavefunctions (not required for relaxation update)
-      //dftPtr->initElectronicFields();
 
-      //reinitialize local pseudopotential
-      if(dftParameters::isPseudopotential)
+      const double gaussianParameter=2.0;
+      pcout << "Trying to Move using a wide Gaussian with Gaussian constant: "<<gaussianParameter<<" as max force is between "<< break2<<" and "<<break1<<" Hatree/Bohr"<<std::endl;
+      
+      std::pair<bool,double> meshQualityMetrics= gaussianMove.moveMesh(controlPointLocations,controlPointDisplacements,gaussianParameter);
+      //AssertThrow(!meshQualityMetrics.first,ExcMessage("Negative jacobian created after moving closest nodes to atoms. Suggestion: use auto remeshing"));
+      if (meshQualityMetrics.first || meshQualityMetrics.second>maxJacobianRatio)
       {
-	 dftPtr->initLocalPseudoPotential();
-	 dftPtr->initNonLocalPseudoPotential();
-	 dftPtr->computeSparseStructureNonLocalProjectors();
-	 dftPtr->computeElementalProjectorKets();
-	 initPseudoData();
-      }    
-      pcout << "...Reinitialization end" << std::endl;        
+	  if (meshQualityMetrics.first)
+	     pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to negative jacobian after Gaussian mesh movement using Gaussian constant: "<< gaussianParameter<<std::endl; 	  
+	  else
+	     pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to maximum jacobian ratio: "<< meshQualityMetrics.second<< " exceeding set bound of: "<< maxJacobianRatio<<" after Gaussian mesh movement using Gaussian constant: "<< gaussianParameter<<std::endl;
+          dftPtr->init(); 
+          pcout << "...Reinitialization end" << std::endl;  
+      }
+      else
+      {
+	  pcout<< " Mesh quality check: maximum jacobian ratio after movement: "<< meshQualityMetrics.second<<std::endl;  
+	  std::cout<<"Now reinitializing all moved triangulation dependent objects..." << std::endl;        
+
+	  //reinitialize dirichlet BCs for total potential and vSelf poisson solutions
+	  dftPtr->initBoundaryConditions();
+	  //reinitialize guesses for electron-density and wavefunctions (not required for relaxation update)
+	  //dftPtr->initElectronicFields();
+
+	  //reinitialize local pseudopotential
+	  if(dftParameters::isPseudopotential)
+	  {
+	     dftPtr->initLocalPseudoPotential();
+	     dftPtr->initNonLocalPseudoPotential();
+	     dftPtr->computeSparseStructureNonLocalProjectors();
+	     dftPtr->computeElementalProjectorKets();
+	     initPseudoData();
+	  }    
+	  pcout << "...Reinitialization end" << std::endl;  
+      }
   }
   else
   {
-      gaussianMove.moveMesh(controlPointLocations,controlPointDisplacements,d_gaussianConstant);
-      pcout << "Reinitializing all moved triangulation dependent objects..." << std::endl;  
-     
-      //reinitialize dirichlet BCs for total potential and vSelf poisson solutions
-      dftPtr->initBoundaryConditions();
-      //reinitialize guesses for electron-density and wavefunctions (not required for relaxation update)
-      //dftPtr->initElectronicFields();
-
-      //reinitialize local pseudopotential
-      if(dftParameters::isPseudopotential)
+       pcout << "Trying to Move using a narrow Gaussian with same Gaussian constant for computing the forces: "<<d_gaussianConstant<<" as max force is below " << break2 <<" Hatree/Bohr"<<std::endl;       
+      std::pair<bool,double> meshQualityMetrics=gaussianMove.moveMesh(controlPointLocations,controlPointDisplacements,d_gaussianConstant);
+      //AssertThrow(!meshQualityMetrics.first,ExcMessage("Negative jacobian created after moving closest nodes to atoms. Suggestion: use auto remeshing"));
+      if (meshQualityMetrics.first || meshQualityMetrics.second>maxJacobianRatio)
       {
-	 dftPtr->initLocalPseudoPotential();
-	 dftPtr->initNonLocalPseudoPotential();
-	 dftPtr->computeSparseStructureNonLocalProjectors();
-	 dftPtr->computeElementalProjectorKets();
-	 initPseudoData();
-      }    
-      pcout << "...Reinitialization end" << std::endl;  
+	  if (meshQualityMetrics.first)
+	     pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to negative jacobian after Gaussian mesh movement using Gaussian constant: "<< d_gaussianConstant<<std::endl; 	  
+	  else
+	     pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to maximum jacobian ratio: "<< meshQualityMetrics.second<< " exceeding set bound of: "<< maxJacobianRatio<<" after Gaussian mesh movement using Gaussian constant: "<< d_gaussianConstant<<std::endl;
+          dftPtr->init(); 
+          pcout << "...Reinitialization end" << std::endl;  
+      }
+      else
+      {
+	  pcout<< " Mesh quality check: maximum jacobian ratio after movement: "<< meshQualityMetrics.second<<std::endl; 
+	  pcout << "Now Reinitializing all moved triangulation dependent objects..." << std::endl;  
+	 
+	  //reinitialize dirichlet BCs for total potential and vSelf poisson solutions
+	  dftPtr->initBoundaryConditions();
+	  //reinitialize guesses for electron-density and wavefunctions (not required for relaxation update)
+	  //dftPtr->initElectronicFields();
+
+	  //reinitialize local pseudopotential
+	  if(dftParameters::isPseudopotential)
+	  {
+	     dftPtr->initLocalPseudoPotential();
+	     dftPtr->initNonLocalPseudoPotential();
+	     dftPtr->computeSparseStructureNonLocalProjectors();
+	     dftPtr->computeElementalProjectorKets();
+	     initPseudoData();
+	  }    
+	  pcout << "...Reinitialization end" << std::endl;  
+      }
   }
 }

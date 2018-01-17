@@ -22,6 +22,7 @@
 #include "../../include/eigen.h"
 #include "../../include/poisson.h"
 #include "../../include/force.h"
+#include "../../include/geoOptIon.h"
 #include "../../include/meshMovementGaussian.h"
 #include "../../include/fileReaders.h"
 
@@ -76,6 +77,7 @@ dftClass<FEOrder>::dftClass():
   poissonPtr= new poissonClass<FEOrder>(this);
   eigenPtr= new eigenClass<FEOrder>(this);
   forcePtr= new forceClass<FEOrder>(this);
+  geoOptIonPtr= new geoOptIon<FEOrder>(this);
   //
   // initialize PETSc
   //
@@ -94,6 +96,7 @@ dftClass<FEOrder>::~dftClass()
     delete eigenPtr;
     matrix_free_data.clear();
     delete forcePtr;
+    delete geoOptIonPtr;
 }
 
 void convertToCellCenteredCartesianCoordinates(std::vector<std::vector<double> > & atomLocations,
@@ -341,9 +344,10 @@ void dftClass<FEOrder>::init ()
 //dft run
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::run()
-{ 
-
-  solve();
+{
+  //solve();
+  geoOptIonPtr->init();
+  geoOptIonPtr->run();
 }
 
 //dft solve

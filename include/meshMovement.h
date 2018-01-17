@@ -39,11 +39,12 @@ protected:
   void initIncrementField();
   void finalizeIncrementField();
   void updateTriangulationVertices();
-  void movedMeshCheck();
+  //periodic matching sanity check and returns the pair<if negative jacobian, maximum inverse jacobian magnitude>
+  std::pair<bool,double> movedMeshCheck();
   void writeMesh(std::string meshFileName);
-  virtual void moveMesh(std::vector<Point<C_DIM> > controlPointLocations,
-                        std::vector<Tensor<1,C_DIM,double> > controlPointDisplacements,
-                        double controllingParameter)=0;
+  virtual std::pair<bool,double> moveMesh(std::vector<Point<C_DIM> > controlPointLocations,
+                                          std::vector<Tensor<1,C_DIM,double> > controlPointDisplacements,
+                                          double controllingParameter)=0;
   virtual void computeIncrement()=0;  
   dealii::parallel::distributed::Vector<double>  d_incrementalDisplacementParallel;
   Vector<double> d_incrementalDisplacementSerial;
