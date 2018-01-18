@@ -70,7 +70,7 @@ void geoOptIon<FEOrder>::run()
    dftPtr->solve();
    const double tol=5e-5;//Hatree/Bohr
    const int  maxIter=100;
-   const double lineSearchTol=1e-4;//5e-2;
+   const double lineSearchTol=1e-2;//5e-2;
    const int maxLineSearchIter=10;
    int debugLevel=this_mpi_process==0?1:0;
    int maxRestarts=2; int restartCount=0;
@@ -227,8 +227,7 @@ void geoOptIon<FEOrder>::update(const std::vector<double> & solution)
 
    if (this_mpi_process==0)
        std::cout<< "  Maximum force to be relaxed: "<<  d_maximumAtomForceToBeRelaxed <<std::endl;
-   dftPtr->forcePtr->updateAtomPositionsAndMoveMesh(globalAtomsDisplacements,
-	                                            d_maximumAtomForceToBeRelaxed); 
+   dftPtr->forcePtr->updateAtomPositionsAndMoveMesh(globalAtomsDisplacements); 
    dftPtr->solve();
 }
 

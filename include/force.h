@@ -46,12 +46,13 @@ public:
   void printStress();
   std::vector<double> getAtomsForces();
   std::vector<double> getStress();
-  void updateAtomPositionsAndMoveMesh(const std::vector<Point<C_DIM> > & globalAtomsDisplacements,double maximumForceOnAtom=0.0);
+  void updateAtomPositionsAndMoveMesh(const std::vector<Point<C_DIM> > & globalAtomsDisplacements);
 private:
   vectorType d_configForceVectorLinFE;
   std::vector<unsigned int> d_globalAtomsRelaxationPermissions;
   std::vector<double> d_globalAtomsRelaxationDisplacements;
   void createBinObjectsForce();
+  void gaussianUpdateRhoDataCleanup();
   //configurational force functions
   void configForceLinFEInit();
   void configForceLinFEFinalize();
@@ -116,7 +117,7 @@ private:
   meshMovementGaussianClass gaussianMove;
 
   //Gaussian generator related data and functions
-  const double d_gaussianConstant=5.0;
+  const double d_gaussianConstant=4.0;//5.0
   std::vector<double> d_globalAtomsGaussianForces;
   const bool d_allowGaussianOverlapOnAtoms=false;//Dont use true except for debugging forces only without mesh movement, as gaussian ovelap on atoms for move mesh is by default set to false
 

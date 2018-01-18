@@ -397,13 +397,14 @@
     double deltaD = deltaDReturnValue.first;
     double etaP   = deltaDReturnValue.second;
     double alphaP=0;
+    if (debugLevel >= 1)
+       std::cout << "Initial guess for secant line search iteration, alpha: " << alpha << std::endl;    
     //
     // update unknowns removing earlier update
     //
-    updateSolution(alpha,//-sigma0,
+    updateSolution(alpha-alphaP,//-sigma0,
 		   d_direction,
 		   function);
-
     //
     // begin iteration (using secant method)
     //
@@ -426,26 +427,28 @@
       // update alpha
       //
       //alpha *= eta/(etaP - eta);
-      alpha=(alphaP*eta-alpha*etaP)/(eta-etaP);
+      double alphaNew=(alphaP*eta-alpha*etaP)/(eta-etaP);
 
-      //
-      // update unknowns
-      //
-      updateSolution(alpha,
-		     d_direction,
-		     function);
+      
 
-      //
-      // update etaP
-      //
-      etaP = eta;
-      alphaP=alpha;
       //
       // output 
       //
       if (debugLevel >= 1)
-	std::cout << "Line search iteration: " << iter << " alpha: " << alpha << "  eta: "<< eta 
-		  << std::endl;
+	std::cout << "Line search iteration: " << iter << " alphaNew: " << alphaNew << " alpha: "<<alpha<< " alphaP: "<<alphaP <<"  eta: "<< eta << " etaP: "<<etaP << std::endl;      
+      //
+      // update unknowns
+      //
+      updateSolution(alphaNew-alpha,
+		     d_direction,
+		     function);
+
+      //
+      // update etaP, alphaP and alpha
+      //
+      etaP = eta;
+      alphaP=alpha;
+      alpha=alphaNew;
 
       //
       // check for convergence
