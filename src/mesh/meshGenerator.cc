@@ -72,6 +72,7 @@ meshGeneratorClass::meshGeneratorClass():
   d_parallelTriangulationMoved(MPI_COMM_WORLD),
   mpi_communicator (MPI_COMM_WORLD),
   this_mpi_process (Utilities::MPI::this_mpi_process(mpi_communicator)),
+  n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_communicator)),
   pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
   computing_timer (pcout, TimerOutput::never, TimerOutput::wall_times)
 {
@@ -89,23 +90,26 @@ meshGeneratorClass::~meshGeneratorClass()
 //
 //generate adaptive mesh
 //
-void meshGeneratorClass::generateMesh(Triangulation<3,3> &triangulation,
-				      types::global_dof_index & numberGlobalCells)
+void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& parallelTriangulation, Triangulation<3,3>& serialTriangulation, types::global_dof_index & numberGlobalCells)
 {
   computing_timer.enter_section("mesh");
   if(!dftParameters::meshFileName.empty())
     {
-      GridIn<3> gridin;
-      gridin.attach_triangulation(triangulation);
+      GridIn<3> gridinParallel, gridinSerial;
+      gridinParallel.attach_triangulation(parallelTriangulation);
+      gridinSerial.attach_triangulation(serialTriangulation);
 
       //
       //Read mesh in UCD format generated from Cubit
       //
-      std::ifstream f(dftParameters::meshFileName.c_str());
-      gridin.read_ucd(f);
+      std::ifstream f1(dftParameters::meshFileName.c_str());
+      std::ifstream f2(dftParameters::meshFileName.c_str());
+      gridinParallel.read_ucd(f1);
+      gridinSerial.read_ucd(f2);
 
 #ifdef ENABLE_PERIODIC_BC
-      markPeriodicFaces(triangulation);
+      markPeriodicFaces(parallelTriangulation);
+      markPeriodicFaces(serialTriangulation);
 #endif  
     }
   else
@@ -142,7 +146,7 @@ void meshGeneratorClass::generateMesh(Triangulation<3,3> &triangulation,
 
 
             
-      /*for (int i=0; i<3;i++){
+      for (int i=0; i<3;i++){
 
         double temp = numberIntervalsEachDirection[i]-std::floor(numberIntervalsEachDirection[i]);
         if((temp - std::floor(temp)) >= 0.5)
@@ -151,12 +155,21 @@ void meshGeneratorClass::generateMesh(Triangulation<3,3> &triangulation,
 	   subdivisions[i] = std::floor(numberIntervalsEachDirection[i]);
       }
 
-      GridGenerator::subdivided_parallelepiped<3>(triangulation,
+      /*subdivisions[0] = 16 ; subdivisions[1] = 16 ; subdivisions[2] = 24 ; 
+      numberIntervalsEachDirection[0] = 16.0; numberIntervalsEachDirection[1] = 16.0 ; numberIntervalsEachDirection[2] = 24.0 ; */
+      GridGenerator::subdivided_parallelepiped<3>(parallelTriangulation,
 	                                          subdivisions,
-				                  basisVectors);*/
+				                  basisVectors);
 
-      GridGenerator::parallelepiped<3>(triangulation,
+       GridGenerator::subdivided_parallelepiped<3>(serialTriangulation,
+	                                          subdivisions,
+				                  basisVectors);
+
+      /*GridGenerator::parallelepiped<3>(parallelTriangulation,
 				       basisVectors);
+
+      GridGenerator::parallelepiped<3>(serialTriangulation,
+				       basisVectors);*/
 
       //
       //print basis vectors
@@ -167,17 +180,19 @@ void meshGeneratorClass::generateMesh(Triangulation<3,3> &triangulation,
       //Translate the main grid so that midpoint is at center
       //
       const Point<3> translation = 0.5*(vector1+vector2+vector3);
-      GridTools::shift(-translation,triangulation);
+      GridTools::shift(-translation,parallelTriangulation);
+      GridTools::shift(-translation,serialTriangulation);
       
       //
       //collect periodic faces of the first level mesh to set up periodic boundary conditions later
       //
 #ifdef ENABLE_PERIODIC_BC
-      markPeriodicFaces(triangulation);
+      markPeriodicFaces(parallelTriangulation);
+      markPeriodicFaces(serialTriangulation);
 #endif
 
             
-      std::vector<double>::iterator result =  std::max_element(numberIntervalsEachDirection.begin(),
+      /*std::vector<double>::iterator result =  std::max_element(numberIntervalsEachDirection.begin(),
 							       numberIntervalsEachDirection.end());
       double maxNumberIntervals = *result;
       double temp = log(maxNumberIntervals)/log(2);
@@ -187,10 +202,11 @@ void meshGeneratorClass::generateMesh(Triangulation<3,3> &triangulation,
       else
 	baseRefinementLevel = std::floor(temp);
 
-      triangulation.refine_global(baseRefinementLevel);
+      parallelTriangulation.refine_global(baseRefinementLevel);
+      serialTriangulation.refine_global(baseRefinementLevel); */
 
       char buffer1[100];
-      sprintf(buffer1, "\n Base uniform number of elements: %u\n", triangulation.n_global_active_cells());
+      sprintf(buffer1, "\n Base uniform number of elements: %u\n", parallelTriangulation.n_global_active_cells());
       pcout << buffer1;
       
       //
@@ -200,13 +216,19 @@ void meshGeneratorClass::generateMesh(Triangulation<3,3> &triangulation,
       unsigned int numLevels=0;
       bool refineFlag = true;
 
-      typename Triangulation<3,3>::active_cell_iterator cell, endc;
+      std::vector<double> centroid ;
+      std::vector<int> localRefineFlag ;
+      unsigned int n_cell ;
+
+      typename parallel::distributed::Triangulation<3>::active_cell_iterator cell, endc;
 
       while(refineFlag)
 	{
+          n_cell = 0; centroid.clear(); localRefineFlag.clear();
 	  refineFlag = false;
-	  cell = triangulation.begin_active();
-	  endc = triangulation.end();
+	  cell = parallelTriangulation.begin_active();
+	  endc = parallelTriangulation.end();
+	  //
 	  for(;cell != endc; ++cell)
 	    {
 	      if(cell->is_locally_owned())
@@ -279,7 +301,18 @@ void meshGeneratorClass::generateMesh(Triangulation<3,3> &triangulation,
 
 
 		    }
-
+		  //
+		  n_cell++ ;
+	          Point<3> currentCentroid=cell->center();
+                  centroid.push_back(currentCentroid[0]) ; 
+		  centroid.push_back(currentCentroid[1]) ;
+		  centroid.push_back(currentCentroid[2]) ;
+		  //
+		  if (cellRefineFlag)
+                    localRefineFlag.push_back (1) ;
+		  else
+		    localRefineFlag.push_back (0) ;
+		  //
 		  //set refine flags
 		  if(cellRefineFlag)
 		    {
@@ -301,7 +334,7 @@ void meshGeneratorClass::generateMesh(Triangulation<3,3> &triangulation,
 		  char buffer2[100];
 		  sprintf(buffer2, "refinement in progress, level: %u\n", numLevels);
 		  pcout << buffer2;
-		  triangulation.execute_coarsening_and_refinement();
+		  parallelTriangulation.execute_coarsening_and_refinement();
 		  numLevels++;
 		}
 	      else
@@ -309,15 +342,21 @@ void meshGeneratorClass::generateMesh(Triangulation<3,3> &triangulation,
 		  refineFlag=false;
 		}
 	    }
-
-	} 
-
+           
+           // Refine serial mesh
+	      numberGlobalCells = parallelTriangulation.n_global_active_cells();
+	      //pcout << " check 1.1 " << std::endl ;
+              refineSerialMesh(n_cell, centroid, localRefineFlag, numberGlobalCells, serialTriangulation) ;
+	      //pcout << " check 1.2 " << std::endl ;
+	      serialTriangulation.execute_coarsening_and_refinement();
+	      
+        }
       //
       //compute some adaptive mesh metrics
       //
       double minElemLength = dftParameters::meshSizeOuterDomain;
-      cell = triangulation.begin_active();
-      endc = triangulation.end();
+      cell = parallelTriangulation.begin_active();
+      endc = parallelTriangulation.end();
       for ( ; cell != endc; ++cell)
 	{
 	if (cell->is_locally_owned())
@@ -333,10 +372,14 @@ void meshGeneratorClass::generateMesh(Triangulation<3,3> &triangulation,
       //
       pcout << "Refinement levels executed: " << numLevels << std::endl;
       char buffer[100];
-      sprintf(buffer, "Adaptivity summary:\n numCells: %u, numLevels: %u, h_min: %5.2e\n", triangulation.n_global_active_cells(), numLevels, minElemLength);
+      sprintf(buffer, "Adaptivity summary:\n numCells: %u, numLevels: %u, h_min: %5.2e\n", parallelTriangulation.n_global_active_cells(), numLevels, minElemLength);
       pcout << buffer;
 
-      numberGlobalCells = triangulation.n_global_active_cells();
+      int numberGlobalCellsParallel = parallelTriangulation.n_global_active_cells();
+      int numberGlobalCellsSerial = serialTriangulation.n_global_active_cells();
+
+      sprintf(buffer, " numParallelCells: %u, numSerialCells: %u \n", numberGlobalCellsParallel, numberGlobalCellsSerial);
+      pcout << buffer;
 
     }
 
@@ -364,21 +407,21 @@ void meshGeneratorClass::generateSerialAndParallelMesh(std::vector<std::vector<d
   //
   //generate unmoved mesh data members
   //
-  generateMesh(d_serialTriangulationUnmoved,
-	       numberGlobalCellsSerial);
+  //generateMesh(numberGlobalCellsSerial);
 
-  generateMesh(d_parallelTriangulationUnmoved,
-	       numberGlobalCellsParallel);
+  generateMesh(d_parallelTriangulationUnmoved, d_serialTriangulationUnmoved, numberGlobalCellsParallel);
+  generateMesh(d_parallelTriangulationMoved, d_serialTriangulationMoved, numberGlobalCellsParallel);
 
-  AssertThrow(numberGlobalCellsParallel==numberGlobalCellsSerial,ExcMessage("Number of cells are different for parallel and serial triangulations"));
+  //AssertThrow(numberGlobalCellsParallel==numberGlobalCellsSerial,ExcMessage("Number of cells are different for parallel and serial triangulations"));
 
   //generate moved mesh data members which are still the same meshes before
   //but will be accessed to move the meshes later
-  generateMesh(d_serialTriangulationMoved,
+  
+  /*generateMesh(d_serialTriangulationMoved,
 	       numberGlobalCellsSerial);
 
   generateMesh(d_parallelTriangulationMoved,
-	       numberGlobalCellsParallel);
+	       numberGlobalCellsParallel);*/
 
   
 
@@ -391,6 +434,7 @@ Triangulation<3,3> &
 meshGeneratorClass::getSerialMesh()
 {
   return d_serialTriangulationMoved;
+  //return d_serialTriangulationUnmoved;
 }
 
 //
@@ -400,5 +444,104 @@ parallel::distributed::Triangulation<3> &
 meshGeneratorClass::getParallelMesh()
 {
   return d_parallelTriangulationMoved;
+  //return d_parallelTriangulationUnmoved;
+}
+//
+void meshGeneratorClass::refineSerialMesh(unsigned int n_cell, std::vector<double>& centroid, std::vector<int>& localRefineFlag, unsigned int n_global_cell, Triangulation<3,3>& serialTriangulation)
+{
+ /*std::vector<double> centroid ;
+ std::vector<bool> localRefineFlag ;
+ unsigned int n_cell=0 ;
+ cell = d_parallelTriangulationUnmoved.begin_active();
+ endc = d_parallelTriangulationUnmoved.end();
+ for(;cell != endc; ++cell)
+  {
+  if(cell->is_locally_owned())
+    {
+     n_cell++ ;
+     centroid.push_back(cell->center()) ; 
+     //localRefineFlag.push_back (cell->refine()) ;
+    }
+  }*/
+  //
+  std::vector<int> globalRefineFlag(n_global_cell) ;
+  std::vector<Point<3>> centroidGlobal(n_global_cell) ;
+  std::vector<double> centroidGlobalData(3*n_global_cell) ;
+  std::vector<int> localSize(n_mpi_processes, 0), localSizeAllProc(n_mpi_processes, 0), mpi_offsets(n_mpi_processes, 0) ;
+  //std::map<Point<3>, bool> centerToRefineMap ;
+  //
+  //pcout << "1 localSizeAllProc.size() " << localSizeAllProc.size() << std::endl ;
+  for (unsigned int i=0; i<n_mpi_processes; ++i) {
+      if (this_mpi_process==i)
+	 localSize[i] = n_cell ;
+  }
+  MPI_Allreduce(&localSize[0], &localSizeAllProc[0], n_mpi_processes, MPI_INT, MPI_SUM, mpi_communicator) ;
+  //
+ // pcout << "2 localSizeAllProc.size() " << localSizeAllProc.size() << std::endl ;
+ // pcout << " check 1.11 " <<  localSize[0] << " " << localSizeAllProc[0] << std::endl ;
+  //
+  for (unsigned int i=1; i<n_mpi_processes; ++i) 
+      mpi_offsets[i] = mpi_offsets[i-1] + localSizeAllProc[i-1] ;
+  //
+  //pcout << " check 1.115 " <<  std::endl ;
+  //
+  MPI_Allgatherv(&localRefineFlag[0], n_cell, MPI_INT, &globalRefineFlag[0], &localSizeAllProc[0], &mpi_offsets[0], MPI_INT, mpi_communicator) ;
+  //
+  //MPI_Barrier(mpi_communicator) ;
+  //pcout << " check 1.12 " << n_mpi_processes << std::endl ;
+  //pcout << "3 localSizeAllProc.size() " << localSizeAllProc.size() << std::endl ;
+  for (unsigned int i=0; i<n_mpi_processes; ++i) 
+      localSizeAllProc[i] = 3*localSizeAllProc[i];
+  //
+  //pcout << " check 1.121 " << n_mpi_processes << std::endl ;
+  mpi_offsets.resize(n_mpi_processes, 0) ;
+  for (unsigned int i=1; i<n_mpi_processes; ++i) 
+      mpi_offsets[i] = mpi_offsets[i-1] + localSizeAllProc[i-1] ;
+  //pcout << " check 1.125 " << std::endl ;
+  //MPI_Barrier(mpi_communicator) ;
+  MPI_Allgatherv(&centroid[0], 3*n_cell, MPI_DOUBLE, &centroidGlobalData[0], &localSizeAllProc[0], &mpi_offsets[0], MPI_DOUBLE, mpi_communicator) ;
+  //
+  //pcout << " check 1.13 " << std::endl ;
+ for ( unsigned int i = 0; i < n_global_cell ; ++i ) {
+     Point<3> p1 (centroidGlobalData[3*i+0], centroidGlobalData[3*i+1], centroidGlobalData[3*i+2]) ;
+     centroidGlobal[i] = p1  ; 
+     //centerToRefineMap[p1] =  globalRefineFlag[i] ;
+   }
+ //
+ Triangulation<3>::active_cell_iterator cell = serialTriangulation.begin_active();
+ Triangulation<3>::active_cell_iterator endc = serialTriangulation.end();
+ //pcout << " check 1.14 " << std::endl ;
+ for(;cell != endc; ++cell)
+  {
+  if(cell->is_locally_owned())
+    {
+      //auto index  = centerToRefineMap.find(cell->center()) ;
+      /*std::map<Point<3>, bool>:: iterator index ;
+      for (std::map<Point<3>, bool>:: iterator iter= centerToRefineMap.begin() ; iter!= centerToRefineMap.end() ; ++iter) {
+	  Point<3> p1 = iter->first ;
+	  Point<3> p2 = cell->center() ;
+	  if (p1==p2) {
+	     index = iter ;
+	     break;
+	  }
+      }
+      if(index->second)
+	 cell->set_refine_flag();  */
+     Point<3> p1 = cell->center() ;
+     unsigned int index = 0 ;
+     for ( unsigned int i = 0; i < n_global_cell ; ++i ) {
+	  Point<3> p2 = centroidGlobal[i] ;
+	  if (p1==p2) {
+	      index = i ;
+	      break;
+	  }
+      }
+      if (globalRefineFlag[index]==1)
+	   cell->set_refine_flag();
+
+    }
+  }
+  //
+
 }
 

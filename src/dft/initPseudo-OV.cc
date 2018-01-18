@@ -765,7 +765,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
 	      fe_values.reinit(cell);
 
 	      iElem += 1;
-	      /*int lTemp = 1000 ;
+	      int lTemp = 1000 ;
 	      
 	      for(int iPsp = 0; iPsp < numberPseudoWaveFunctions; ++iPsp)
 		{
@@ -830,7 +830,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
 		    break;
 
 		}//iPsp loop ("l" loop) 
-	        */
+	        
 	      //if(sparseFlag==1) {
 		d_sparsityPattern[iAtom][iElem] = matCount;
 		d_elementIteratorsInAtomCompactSupport[iAtom].push_back(cellEigen);
@@ -862,7 +862,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
    //
    //data structures for memory optimization of projectorKetTimesVector
    //
-   std::vector<unsigned int> nonLocalAtomIdsAllProcessFlattened; 
+  /* std::vector<unsigned int> nonLocalAtomIdsAllProcessFlattened; 
    pseudoUtils::exchangeLocalList(d_nonLocalAtomIdsInCurrentProcess,
                                   nonLocalAtomIdsAllProcessFlattened,
                                   n_mpi_processes,
@@ -1058,6 +1058,6 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
      {
         std::cout << "procId: "<< this_mpi_process<<" ["<<it->first.first << "," << it->first.second << "] " << it->second<< std::endl;       
      }
-   }
+   } */
 
 }

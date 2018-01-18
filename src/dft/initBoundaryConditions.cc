@@ -57,8 +57,9 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   else
   {
      //Doesn't work with mvapich2_ib mpi libraries
-     data_out.write_vtu_in_parallel(std::string("meshInit.vtu").c_str(),mpi_communicator); 
+     //data_out.write_vtu_in_parallel(std::string("meshInit.vtu").c_str(),mpi_communicator); 
   }
+
 
   //
   //matrix free data structure
@@ -117,7 +118,6 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   //
   createAtomBins(d_constraintsVector);
   createAtomBinsExtraSanityCheck();
- 
   //
   //create matrix free structure
   //
@@ -131,7 +131,6 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   dofHandlerVector.push_back(&dofHandlerEigen); //DofHandler For Eigen
   eigenDofHandlerIndex = dofHandlerVector.size() - 1; //For Eigen
   d_constraintsVector.push_back(&constraintsNoneEigen); //For Eigen;
-
   //
   //push d_noConstraints into constraintsVector
   // 
@@ -145,19 +144,16 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   //
   //
   forcePtr->initMoved();
-
   //push dofHandler and constraints for force
   dofHandlerVector.push_back(&(forcePtr->d_dofHandlerForce));
   forcePtr->d_forceDofHandlerIndex = dofHandlerVector.size()-1;
   d_constraintsVector.push_back(&(forcePtr->d_constraintsNoneForce));  
-
   matrix_free_data.reinit(dofHandlerVector, d_constraintsVector, quadratureVector, additional_data);
 
   //
   //locate atom core nodes and also locate atom nodes in each bin 
   //
   locateAtomCoreNodes();
- 
   //
   //
   //initialize poisson and eigen problem related objects

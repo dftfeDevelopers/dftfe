@@ -45,8 +45,9 @@ class meshGeneratorClass
 				     std::vector<std::vector<double> > & imageAtomLocations,
 				     std::vector<std::vector<double> > & domainBoundingVectors);
 
-  void generateMesh(Triangulation<3,3> & triangulation,
-		    unsigned int & numberGlobalCells);
+  void generateMesh(parallel::distributed::Triangulation<3>& parallelTriangulation, Triangulation<3,3>& serialTriangulation, unsigned int & numberGlobalCells);
+
+  void refineSerialMesh(unsigned int n_cell, std::vector<double>& centroid, std::vector<int>& localRefineFlag, unsigned int n_global_cell, Triangulation<3,3>& serialTriangulation) ;
 
   Triangulation<3,3> & getSerialMesh();
 
@@ -73,6 +74,7 @@ class meshGeneratorClass
   //
   MPI_Comm mpi_communicator;
   const unsigned int this_mpi_process;
+  const unsigned int n_mpi_processes;
   dealii::ConditionalOStream   pcout;  
 
   //

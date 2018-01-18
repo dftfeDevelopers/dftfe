@@ -6,35 +6,36 @@
 
 ##set ALGLIB paths
 
-SET(ALGLIB_INCLUDE "/oasis/projects/nsf/mia168/dsambit/software/alglib/cpp/src/") #path to interpolation.h
-SET(ALGLIB_LIB "/oasis/projects/nsf/mia168/dsambit/software/alglib/cpp/src/libAlglib.so") #path to libAlglib.so
-
+##set ALGLIB paths
+SET(ALGLIB_INCLUDE "/nfs/mcfs_comp/home/rudraa/software/alglib/cpp/src/") #path to interpolation.h
+SET(ALGLIB_LIB "/nfs/mcfs_comp/home/rudraa/software/alglib/cpp/src/libAlglib.so") #path to libAlglib.so
 ##Note: On some platforms, you may have to set DYLD_LIBRARY_PATH(OSX)/LD_LIBRARY_PATH to include path ALGLIB_LIB. For example:
 ##export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/path/to/Algib/.so/file
 
 ##set LIBXC paths
-SET(LIBXC_INCLUDE "/oasis/projects/nsf/mia168/dsambit/software/libxc/install_intel15/include") #path to xc.h
-SET(LIBXC_LIB "/oasis/projects/nsf/mia168/dsambit/software/libxc/install_intel15/lib/libxc.a") #path to libxc.a
+SET(LIBXC_INCLUDE "/nfs/mcfs_comp/home/rudraa/software/libxc/libxc-2.2.0/installDir/include") #path to xc.h
+SET(LIBXC_LIB "/nfs/mcfs_comp/home/rudraa/software/libxc/libxc-2.2.0/installDir/lib/libxc.a") #path to libxc.a
 
 ##set PETSc Real paths
-SET(PETSC_REAL_INCLUDE "/oasis/projects/nsf/mia168/dsambit/software/petsc/petsc-3.8.3/intel15_mvapich2_ib_real/include")
-SET(PETSC_REAL_LIB "/oasis/projects/nsf/mia168/dsambit/software/petsc/petsc-3.8.3/intel15_mvapich2_ib_real/lib/libpetsc.so")
+SET(PETSC_REAL_INCLUDE "/home/vikramg/DFT-FE-softwares/softwareCentos/petsc/intel_petsc3.7.5_double_elemental/include")
+SET(PETSC_REAL_LIB "/home/vikramg/DFT-FE-softwares/softwareCentos/petsc/intel_petsc3.7.5_double_elemental/lib/libpetsc.so")
 
 ##set SLEPc Real paths
-SET(SLEPC_REAL_INCLUDE "/oasis/projects/nsf/mia168/dsambit/software/slepc/slepc-3.8.2/intel15_mvapich2_ib_real/include")
-SET(SLEPC_REAL_LIB "/oasis/projects/nsf/mia168/dsambit/software/slepc/slepc-3.8.2/intel15_mvapich2_ib_real/lib/libslepc.so") 
+SET(SLEPC_REAL_INCLUDE "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/intel_slepc3.7.3_double_elemental/include")
+SET(SLEPC_REAL_LIB "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/intel_slepc3.7.3_double_elemental/lib/libslepc.so") 
 
 ##set PETSc Complex paths
-SET(PETSC_COMPLEX_INCLUDE "/oasis/projects/nsf/mia168/dsambit/software/petsc/petsc-3.8.3/intel15_mvapich2_ib_complex/include")
-SET(PETSC_COMPLEX_LIB "/oasis/projects/nsf/mia168/dsambit/software/petsc/petsc-3.8.3/intel15_mvapich2_ib_complex/lib/libpetsc.so")
+SET(PETSC_COMPLEX_INCLUDE "/home/vikramg/DFT-FE-softwares/softwareCentos/petsc/intel_petsc3.7.5_complex/include")
+SET(PETSC_COMPLEX_LIB "/home/vikramg/DFT-FE-softwares/softwareCentos/petsc/intel_petsc3.7.5_complex/lib/libpetsc.so")
 
 ##set SLEPc Complex paths
-SET(SLEPC_COMPLEX_INCLUDE "/oasis/projects/nsf/mia168/dsambit/software/slepc/slepc-3.8.2/intel15_mvapich2_ib_complex/include")
-SET(SLEPC_COMPLEX_LIB "/oasis/projects/nsf/mia168/dsambit/software/slepc/slepc-3.8.2/intel15_mvapich2_ib_complex/lib/libslepc.so") 
+SET(SLEPC_COMPLEX_INCLUDE "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/intel_slepc3.7.3_complex/include")
+SET(SLEPC_COMPLEX_LIB "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/intel_slepc3.7.3_complex/lib/libslepc.so") 
+
 
 ##set SPG paths
-SET(SPG_INCLUDE "/home/krisghos/softwares/spglib/include")
-SET(SPG_LIB "/home/krisghos/softwares/spglib/lib/libsymspg.so") 
+SET(SPG_INCLUDE "/home/krisg/softwares/spglib/include")
+SET(SPG_LIB "/home/krisg/softwares/spglib/lib/libsymspg.so") 
 #
 
 #

@@ -219,6 +219,7 @@ void symmetryClass<FEOrder>::initSymmetry()
 			ptemp[i] = ptemp[i] + 1.0 ;
 		 }
                  p = crys2cart(ptemp,1) ;
+		 //p = p + originShift ;
                  //mapped_cell = GridTools::find_active_cell_around_point ( mapping, (dftPtr->dofHandlerEigen), p ) ;
 		 if (q_point==0){
 			  //vertex_id = find_cell (p) ;

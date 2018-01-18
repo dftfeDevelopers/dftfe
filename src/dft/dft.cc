@@ -345,37 +345,36 @@ void dftClass<FEOrder>::run ()
   //
   parallel::distributed::Triangulation<3> & triangulationPar = d_mesh.getParallelMesh();
   Triangulation<3,3> & triangulationSer = d_mesh.getSerialMesh();
- 
   //
   //initialize dofHandlers and hanging-node constraints and periodic constraints on the unmoved Mesh
   //
   initUnmovedTriangulation(triangulationPar);
-  pcout << " check 0.1 : " << std::endl ;
+#ifdef ENABLE_PERIODIC_BC
+ if (useSymm)
+    symmetryPtr->initSymmetry() ;
+#endif
   //
   //move triangulation to have atoms on triangulation vertices
   //
-
+  //pcout << " check 0.11 : " << std::endl ;
   moveMeshToAtoms(triangulationPar);
-  moveMeshToAtoms(triangulationSer,true);//can only be called after calling moveMeshToAtoms(triangulationPar)
-
+  //moveMeshToAtoms(triangulationSer,true);//can only be called after calling moveMeshToAtoms(triangulationPar)
 
   //
   //initialize dirichlet BCs for total potential and vSelf poisson solutions
   //
   initBoundaryConditions();
-  pcout << " check 0.2 : " << std::endl ;
 
   //
   //initialize guesses for electron-density and wavefunctions
   //
   initElectronicFields();
-  pcout << " check 0.3 : " << std::endl ;
-
+/*
 #ifdef ENABLE_PERIODIC_BC
  if (useSymm)
     symmetryPtr->initSymmetry() ;
 #endif
-   pcout << " check 0.4 : " << std::endl ;
+*/
   //
   //initialize local pseudopotential
   //
