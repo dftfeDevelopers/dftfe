@@ -20,7 +20,6 @@
 #include "../../include/dft.h"
 #include "../../include/constants.h"
 #include "../../include/dftParameters.h"
-#include "boundary.cc"
 //
 //constructor
 //
