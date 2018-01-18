@@ -37,6 +37,10 @@ void readFile(unsigned int numColumns,
 int readPsiFile(unsigned int numColumns, 
 		 std::vector<std::vector<double> > &data, 
 		 std::string fileName);
+
+void readRelaxationFlagsFile(unsigned int numColumns, 
+		            std::vector<std::vector<int> > &data, 
+		            std::string fileName);
 };
 
 #endif

@@ -13,22 +13,53 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Sambit Das(2017)
+// @author Sambit Das (2018)
 //
 
-template<unsigned int FEOrder>
-void forceClass<FEOrder>::relaxAtomsForces()
-{
-}
+#include "../../include/solverFunction.h"
 
-template<unsigned int FEOrder>
-void forceClass<FEOrder>::relaxStress()
-{
-}
+  //
+  // Constructor.
+  //
+  solverFunction::solverFunction()
+  {
 
-template<unsigned int FEOrder>
-void forceClass<FEOrder>::relaxAtomsForcesStress()
-{
-}
+    //
+    //
+    //
+    return;
 
-//
+  }
+  
+  /*
+  void
+  solverFunction::getInitialGuessForBisectionMethod(std::vector<double> & solution) const
+  {
+
+     
+    //
+    // firewalls
+    //
+    const std::string message("Method not used by "
+			      "SolverFunction.");
+    throw NotImplemented(message);
+
+    //
+    //
+    //
+    return;
+  }
+  */
+  
+  //
+  // Destructor.
+  //
+  solverFunction::~solverFunction()
+  {
+
+    //
+    //
+    //
+    return;
+
+  }

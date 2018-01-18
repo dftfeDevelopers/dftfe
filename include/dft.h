@@ -53,6 +53,8 @@ template <unsigned int T> class poissonClass;
 template <unsigned int T> class eigenClass; 
 template <unsigned int T> class forceClass;  
 template <unsigned int T> class symmetryClass;
+template <unsigned int T> class forceClass; 
+template <unsigned int T> class geoOptIon; 
 
 //
 //extern declarations for blas-lapack routines
@@ -98,7 +100,10 @@ class dftClass
   friend class eigenClass;
 
   template <unsigned int FEOrder>
-  friend class forceClass;  
+  friend class forceClass; 
+
+  template <unsigned int FEOrder>
+  friend class geoOptIon;    
 
   template <unsigned int FEOrder>
   friend class symmetryClass;
@@ -114,10 +119,24 @@ class dftClass
    */
   ~dftClass();
   /**
-   * Sets up Kohn-Sham SCF iteration after the required pre-processing steps
+   * Reads the coordinates of the atoms.
+   * If periodic calculation, reads fractional coordinates of atoms in the unit-cell,
+   * lattice vectors, kPoint quadrature rules to be used and also generates image atoms.
+   * Also determines orbital-ordering
    */
-  void run();
-
+  void set();  
+  /**
+   * Does required pre-processing steps, which could also be reinited.
+   */
+  void init();    
+  /**
+   * Selects between only electronic field relaxation or combined electronic and geometry relxation
+   */
+  void run();  
+  /**
+   *  Kohn-Sham ground solve using SCF iteration 
+   */
+  void solve();  
   /**
    * Number of Kohn-Sham eigen values to be computed
    */
@@ -125,13 +144,6 @@ class dftClass
 
  private:
 
-  /**
-   * Reads the coordinates of the atoms.
-   * If periodic calculation, reads fractional coordinates of atoms in the unit-cell,
-   * lattice vectors, kPoint quadrature rules to be used and also generates image atoms.
-   * Also determines orbital-ordering
-   */
-  void set();
   void readkPointData();
   
   void generateMPGrid();
@@ -243,7 +255,7 @@ class dftClass
    * that no two atoms in each bin has overlapping balls
    * and finally solves the self-potentials in each bin one-by-one.
    */
-  void createAtomBins(std::vector<const ConstraintMatrix * > & constraintsVector);
+  void createAtomBins(std::vector<ConstraintMatrix * > & constraintsVector);
   void createAtomBinsExtraSanityCheck();
   void solveVself();
   
@@ -353,7 +365,7 @@ class dftClass
   unsigned int       eigenDofHandlerIndex,phiExtDofHandlerIndex,phiTotDofHandlerIndex,forceDofHandlerIndex;
   MatrixFree<3,double> matrix_free_data;
   std::map<types::global_dof_index, Point<3> > d_supportPoints, d_supportPointsEigen;
-  std::vector< const ConstraintMatrix * > d_constraintsVector; 
+  std::vector< ConstraintMatrix * > d_constraintsVector; 
   
   /**
    * parallel objects
@@ -371,6 +383,7 @@ class dftClass
   eigenClass<FEOrder> * eigenPtr;
   forceClass<FEOrder> * forcePtr;
   symmetryClass<FEOrder> * symmetryPtr;
+  geoOptIon<FEOrder> * geoOptIonPtr;
   ConstraintMatrix constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_constraintsPeriodicWithDirichlet, d_noConstraints, d_noConstraintsEigen; 
   std::vector<std::vector<double> > eigenValues, eigenValuesTemp; 
   std::vector<std::vector<parallel::distributed::Vector<double>*> > eigenVectors;
@@ -491,9 +504,11 @@ class dftClass
   std::vector<double> a0;
   std::vector<double> bLow;
   vectorType vChebyshev, v0Chebyshev, fChebyshev, aj[5];
-  std::vector<parallel::distributed::Vector<double>*> PSI, tempPSI, tempPSI2, tempPSI3, tempPSI4;
+
+  std::vector<parallel::distributed::Vector<double>*> PSI, tempPSI, tempPSI2, tempPSI3;
   void chebyshevSolver(unsigned int s);
   void computeResidualNorm(std::vector<vectorType*>& X);
+
   double upperBound();
   void gramSchmidt(std::vector<vectorType*>& X);
   void chebyshevFilter(std::vector<vectorType*>& X, unsigned int m, double a, double b, double a0);  

@@ -35,8 +35,6 @@ void dftClass<FEOrder>::createAtomBinsExtraSanityCheck()
      {
 	if(cell->is_locally_owned())
 	{
-	   std::vector<types::global_dof_index> cellGlobalDofIndices(dofs_per_cell);
-	   cell->get_dof_indices(cellGlobalDofIndices);	
 	   std::vector<unsigned int> dirichletFaceIds;
 	   unsigned int closestAtomIdSum=0;
 	   unsigned int closestAtomId;

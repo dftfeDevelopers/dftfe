@@ -81,7 +81,8 @@ void dftClass<FEOrder>::initLocalPseudoPotential()
   //Initialize pseudopotential
   //
   QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
-  FEValues<3> fe_values (FE, quadrature_formula, update_values);
+  //FEValues<3> fe_values (FE, quadrature_formula, update_values);
+  FEValues<3> fe_values (FE, quadrature_formula, update_quadrature_points);
   const unsigned int n_q_points = quadrature_formula.size();
 
 
@@ -99,12 +100,14 @@ void dftClass<FEOrder>::initLocalPseudoPotential()
     {
       if(cell->is_locally_owned())
 	{
+	  fe_values.reinit(cell);
 	  (*pseudoValues)[cell->id()]=std::vector<double>(n_q_points);
 	  double * pseudoValuesPtr = &((*pseudoValues)[cell->id()][0]);
 	  for (unsigned int q = 0; q < n_q_points; ++q)
 	    {
-	      MappingQ1<3,3> test; 
-	      Point<3> quadPoint(test.transform_unit_to_real_cell(cell, fe_values.get_quadrature().point(q)));
+	      //MappingQ1<3,3> test; 
+	      //Point<3> quadPoint(test.transform_unit_to_real_cell(cell, fe_values.get_quadrature().point(q)));
+	      Point<3> quadPoint=fe_values.quadrature_point(q);
 	      double pseudoValueAtQuadPt=0.0;
 	      //loop over atoms
 	      for (unsigned int n=0; n<atomLocations.size(); n++)
@@ -698,7 +701,8 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
   //get FE data structures
   //
   QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
-  FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values);
+  //FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values);
+  FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values| update_quadrature_points);
   const unsigned int numberQuadraturePoints = quadrature.size();
   //const parallel::distributed::Triangulation<3> & tria = dofHandlerEigen.get_triangulation();
   //const unsigned int numberElements  = tria.n_locally_owned_active_cells();
@@ -767,8 +771,9 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
 		  const int globalSplineId = d_deltaVlIdToFunctionIdDetails[pseudoPotentialId][0];
 		  for(int iQuadPoint = 0; iQuadPoint < numberQuadraturePoints; ++iQuadPoint)
 		    {
-		      MappingQ1<3,3> test;
-		      Point<3> quadPoint(test.transform_unit_to_real_cell(cell, fe_values.get_quadrature().point(iQuadPoint)));
+		      //MappingQ1<3,3> test;
+		      //Point<3> quadPoint(test.transform_unit_to_real_cell(cell, fe_values.get_quadrature().point(iQuadPoint)));
+		      Point<3> quadPoint=fe_values.quadrature_point(iQuadPoint);
 		      
 		      for(int iImageAtomCount = 0; iImageAtomCount < imageIdsList.size(); ++iImageAtomCount)
 			{
@@ -1077,7 +1082,8 @@ void dftClass<FEOrder>::computeElementalProjectorKets()
   //get FE data structures
   //
   QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
-  FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values);
+  //FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values);
+  FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values | update_quadrature_points);
   const unsigned int numberNodesPerElement  = FE.dofs_per_cell;
   const unsigned int numberQuadraturePoints = quadrature.size();
   
@@ -1192,8 +1198,9 @@ void dftClass<FEOrder>::computeElementalProjectorKets()
 	      for(int iQuadPoint = 0; iQuadPoint < numberQuadraturePoints; ++iQuadPoint)
 		{
 
-		  MappingQ1<3,3> test;
-		  Point<3> quadPoint(test.transform_unit_to_real_cell(cell, fe_values.get_quadrature().point(iQuadPoint)));
+		  //MappingQ1<3,3> test;
+		  //Point<3> quadPoint(test.transform_unit_to_real_cell(cell, fe_values.get_quadrature().point(iQuadPoint)));
+		  Point<3> quadPoint=fe_values.quadrature_point(iQuadPoint);
 
 		  for(int iImageAtomCount = 0; iImageAtomCount < imageIdsList.size(); ++iImageAtomCount)
 		    {

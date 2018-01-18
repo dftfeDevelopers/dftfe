@@ -58,6 +58,10 @@ SET(TARGET_SRC
   ./src/mesh/meshGenerator.cc
   ./src/symmetry/initGroupSymmetry.cc
   ./src/symmetry/symmetrizeRho.cc
+  ./src/geoOpt/geoOptIon.cc
+  ./src/solvers/solverFunction.cc
+  ./src/solvers/nonLinearSolver.cc
+  ./src/solvers/cgPRPNonLinearSolver.cc
   ./utils/fileReaders.cc
   ./utils/dftParameters.cc
   # You can specify additional files here!

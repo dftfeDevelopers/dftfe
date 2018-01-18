@@ -399,8 +399,8 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
 	      jAtomCoor[1] = imagePositions[jAtom-numberGlobalAtoms][1];
 	      jAtomCoor[2] = imagePositions[jAtom-numberGlobalAtoms][2];
             }
-            const double distanceSq=(nodalCoor-jAtomCoor).norm_square();
-	    if (distanceSq < 1e-6){
+            const double distance=(nodalCoor-jAtomCoor).norm();
+	    if (distance < 1e-5){
 		overlappedAtomId=jAtom;
 		break;
 	    }

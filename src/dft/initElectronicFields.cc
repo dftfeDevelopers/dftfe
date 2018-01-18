@@ -39,7 +39,6 @@ void dftClass<FEOrder>::initElectronicFields(){
       tempPSI[i]->reinit(vChebyshev);
       tempPSI2[i]->reinit(vChebyshev);
       tempPSI3[i]->reinit(vChebyshev);
-      tempPSI4[i]->reinit(vChebyshev);
     } 
   
   for(unsigned int kPoint = 0; kPoint < (1+spinPolarized)*d_maxkPoints; ++kPoint)

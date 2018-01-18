@@ -17,9 +17,12 @@
 //
 #include "../../include/meshGenerator.h"
 #include "../../include/dftParameters.h"
+#include "meshGenUtils.cc"
 
 #define maxRefinementLevels 10
 
+
+/*
 void markPeriodicFaces(Triangulation<3,3> &triangulation)
 {
 
@@ -57,11 +60,12 @@ void markPeriodicFaces(Triangulation<3,3> &triangulation)
   std::vector<GridTools::PeriodicFacePair<typename Triangulation<3>::cell_iterator> > periodicity_vector;
   for(int i = 0; i < 3; ++i)
     {
-      GridTools::collect_periodic_faces(triangulation, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector);
+      GridTools::collect_periodic_faces(triangulation, 2*i+1, 2*i+2,i, periodicity_vector);
     }
 
   triangulation.add_periodicity(periodicity_vector);
 }
+*/
 
 
 //
@@ -108,9 +112,10 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       gridinSerial.read_ucd(f2);
 
 #ifdef ENABLE_PERIODIC_BC
-      markPeriodicFaces(parallelTriangulation);
-      markPeriodicFaces(serialTriangulation);
+      meshGenUtils::markPeriodicFaces(parallelTriangulation);
+      meshGenUtils::markPeriodicFaces(serialTriangulation);
 #endif  
+      numberGlobalCells = parallelTriangulation.n_global_active_cells();
     }
   else
     {
@@ -149,7 +154,7 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       for (int i=0; i<3;i++){
 
         double temp = numberIntervalsEachDirection[i]-std::floor(numberIntervalsEachDirection[i]);
-        if((temp - std::floor(temp)) >= 0.5)
+        if(temp >= 0.5)
            subdivisions[i] = std::ceil(numberIntervalsEachDirection[i]);
         else
 	   subdivisions[i] = std::floor(numberIntervalsEachDirection[i]);
@@ -187,8 +192,8 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       //collect periodic faces of the first level mesh to set up periodic boundary conditions later
       //
 #ifdef ENABLE_PERIODIC_BC
-      markPeriodicFaces(parallelTriangulation);
-      markPeriodicFaces(serialTriangulation);
+      meshGenUtils::markPeriodicFaces(parallelTriangulation);
+      meshGenUtils::markPeriodicFaces(serialTriangulation);
 #endif
 
             
@@ -403,7 +408,12 @@ void meshGeneratorClass::generateSerialAndParallelMesh(std::vector<std::vector<d
   d_domainBoundingVectors = domainBoundingVectors;
 
   types::global_dof_index numberGlobalCellsSerial,numberGlobalCellsParallel;
-
+  
+  //clear existing triangulation data
+  d_serialTriangulationUnmoved.clear();
+  d_parallelTriangulationUnmoved.clear();
+  d_serialTriangulationMoved.clear();
+  d_parallelTriangulationMoved.clear();
   //
   //generate unmoved mesh data members
   //

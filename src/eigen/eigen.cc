@@ -46,15 +46,7 @@ template<unsigned int FEOrder>
 void eigenClass<FEOrder>::init()
 {
   computing_timer.enter_section("eigenClass setup");
-  //
-  //init vectors
-  //
-  for (unsigned int i=0; i<dftPtr->numEigenValues; ++i)
-    {
-      vectorType* temp=new vectorType;
-      HXvalue.push_back(temp);
-    } 
-
+  
   dftPtr->matrix_free_data.initialize_dof_vector(massVector,dftPtr->eigenDofHandlerIndex);
 
   //
@@ -65,15 +57,9 @@ void eigenClass<FEOrder>::init()
   //
   //XHX size
   //
-  XHXValue.resize(dftPtr->numEigenValues*dftPtr->numEigenValues,0.0);
 
-  //
-  //HX
-  //
-  for (unsigned int i=0; i<dftPtr->numEigenValues; ++i)
-    {
-      HXvalue[i]->reinit(dftPtr->vChebyshev);
-    }
+  XHXValue.resize(dftPtr->eigenVectors[0].size()*dftPtr->eigenVectors[0].size(),0.0);
+
   computing_timer.exit_section("eigenClass setup"); 
 } 
 
@@ -653,10 +639,10 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vec
 
     }
 
-  for (std::vector<vectorType*>::iterator it=dst.begin(); it!=dst.end(); it++)
+  /*for (std::vector<vectorType*>::iterator it=dst.begin(); it!=dst.end(); it++)
     {
       (*it)->compress(VectorOperation::add);
-    }
+      }*/
 
 }
 						  
@@ -669,6 +655,7 @@ void eigenClass<FEOrder>::implementHX (const dealii::MatrixFree<3,double>  &data
 {
   VectorizedArray<double>  half = make_vectorized_array(0.5);
   VectorizedArray<double>  two = make_vectorized_array(2.0);
+
 
 #ifdef ENABLE_PERIODIC_BC
   int kPointIndex = dftPtr->d_kPointIndex;
@@ -879,53 +866,43 @@ template<unsigned int FEOrder>
 void eigenClass<FEOrder>::HX(const std::vector<vectorType*> &src, 
 			     std::vector<vectorType*> &dst) 
 {
+
+
+
   computing_timer.enter_section("eigenClass HX");
   for (unsigned int i = 0; i < src.size(); i++)
     {
       *(dftPtr->tempPSI2[i]) = *src[i];
       dftPtr->tempPSI2[i]->scale(massVector); //MX
+      dftPtr->tempPSI2[i]->update_ghost_values();
       dftPtr->constraintsNoneEigen.distribute(*(dftPtr->tempPSI2[i]));
+      dftPtr->tempPSI2[i]->update_ghost_values();
       *dst[i] = 0.0;
-      *dftPtr->tempPSI4[i] = 0.0;
     }
 
-  dftPtr->matrix_free_data.cell_loop(&eigenClass<FEOrder>::implementHX, this, dst, dftPtr->tempPSI2); //HMX
-  
+
   //
   //required if its a pseudopotential calculation and number of nonlocal atoms are greater than zero
   //
   if(dftParameters::isPseudopotential && dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0)
     {
 
-      for (unsigned int i = 0; i < src.size(); i++)
-	{
-	  //dftPtr->tempPSI2[i]->compress(VectorOperation::insert);  
-	  dftPtr->tempPSI2[i]->update_ghost_values();
-	}
-
-      for (unsigned int i = 0; i < src.size(); i++)
-	{
-	  *dftPtr->tempPSI4[i] = 0.0;
-	}
-
           
-    /*  computeNonLocalHamiltonianTimesXMemoryOpt(dftPtr->tempPSI2,
-						dftPtr->tempPSI4); */
+      /*computeNonLocalHamiltonianTimesXMemoryOpt(dftPtr->tempPSI2,
+						dst);*/
 
-     computeNonLocalHamiltonianTimesX(dftPtr->tempPSI2,
-	dftPtr->tempPSI4);
-
-      for(unsigned int i = 0; i < src.size(); ++i)
-	{
-	  *dst[i]+=*dftPtr->tempPSI4[i];
-	}
+      computeNonLocalHamiltonianTimesX(dftPtr->tempPSI2,
+	dst);
 
     }
 
+
+  dftPtr->matrix_free_data.cell_loop(&eigenClass<FEOrder>::implementHX, this, dst, dftPtr->tempPSI2); //HMX
+  
+  
   for (std::vector<vectorType*>::iterator it=dst.begin(); it!=dst.end(); it++)
     {
       (*it)->scale(massVector); //MHMX  
-      (*it)->compress(VectorOperation::add);  
     }
   computing_timer.exit_section("eigenClass HX");
 }

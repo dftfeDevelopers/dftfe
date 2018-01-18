@@ -25,9 +25,9 @@ class meshMovementGaussianClass : public meshMovementClass
 
 public:
   meshMovementGaussianClass();	
-  void moveMesh(std::vector<Point<C_DIM> > controlPointLocations,
-                std::vector<Tensor<1,3,double> > controlPointDisplacements,
-                double controllingParameter);
+  std::pair<bool,double> moveMesh(std::vector<Point<C_DIM> > controlPointLocations,
+                                  std::vector<Tensor<1,3,double> > controlPointDisplacements,
+                                  double controllingParameter);
 private:  
   void computeIncrement();  
   //move mesh data

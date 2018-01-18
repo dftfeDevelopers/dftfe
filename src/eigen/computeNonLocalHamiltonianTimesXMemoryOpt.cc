@@ -1,12 +1,30 @@
+// ---------------------------------------------------------------------
+//
+// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+//
+// This file is part of the DFT-FE code.
+//
+// The DFT-FE code is free software; you can use it, redistribute
+// it, and/or modify it under the terms of the GNU Lesser General
+// Public License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+// The full text of the license can be found in the file LICENSE at
+// the top level of the DFT-FE distribution.
+//
+// ---------------------------------------------------------------------
+//
+// @author Sambit Das (2017)
+//
+
 template<unsigned int FEOrder>
 void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::vector<vectorType*> &src,
-							   std::vector<vectorType*>       &dst)
+								    std::vector<vectorType*>       &dst)
 {
   //
   //get FE data
   //
   QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
-  FEValues<3> fe_values (dftPtr->FEEigen, quadrature_formula, update_values);
+  //FEValues<3> fe_values (dftPtr->FEEigen, quadrature_formula, update_values);
 
   //
   //get access to triangulation objects from meshGenerator class
@@ -77,8 +95,10 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::v
 		  //
 		  //This is the component index 0(real) or 1(imag).
 		  //
-		  const unsigned int ck = fe_values.get_fe().system_to_component_index(idof).first; 
-		  const unsigned int iNode = fe_values.get_fe().system_to_component_index(idof).second;
+		  //const unsigned int ck = fe_values.get_fe().system_to_component_index(idof).first; 
+		  //const unsigned int iNode = fe_values.get_fe().system_to_component_index(idof).second;
+		  const unsigned int ck = dftPtr->FEEigen.system_to_component_index(idof).first; 
+		  const unsigned int iNode = dftPtr->FEEigen.system_to_component_index(idof).second;		  
 		  if(ck == 0)
 		    inputVectors[numberNodesPerElement*index + iNode].real(temp[idof]);
 		  else
@@ -158,7 +178,8 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::v
   dealii::parallel::distributed::Vector<double > vec(dftPtr->d_locallyOwnedProjectorIdsCurrentProcess,
                                                      dftPtr->d_ghostProjectorIdsCurrentProcess,
                                                      mpi_communicator);   
-#endif      
+#endif     
+  vec.update_ghost_values();
   for (unsigned int i=0; i<numberWaveFunctions;++i)
   {
 #ifdef ENABLE_PERIODIC_BC
@@ -292,8 +313,10 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::v
 		{
 		  //temp[2*iNode]   = outputVectors[numberNodesPerElement*index + iNode].real();
 		  //temp[2*iNode+1] = outputVectors[numberNodesPerElement*index + iNode].imag();
-		  const unsigned int ck = fe_values.get_fe().system_to_component_index(idof).first;
-		  const unsigned int iNode = fe_values.get_fe().system_to_component_index(idof).second;
+		  //const unsigned int ck = fe_values.get_fe().system_to_component_index(idof).first;
+		  //const unsigned int iNode = fe_values.get_fe().system_to_component_index(idof).second;
+		  const unsigned int ck = dftPtr->FEEigen.system_to_component_index(idof).first;
+		  const unsigned int iNode = dftPtr->FEEigen.system_to_component_index(idof).second;
 		  
 		  if(ck == 0)
 		    temp[idof] = outputVectors[numberNodesPerElement*index + iNode].real();
@@ -316,10 +339,10 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::v
 	}
 
     }
-
+  /*
   for (std::vector<vectorType*>::iterator it=dst.begin(); it!=dst.end(); it++)
     {
       (*it)->compress(VectorOperation::add);
     }
-  
+  */
 }

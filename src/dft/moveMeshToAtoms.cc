@@ -71,10 +71,12 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,b
     }
  
   const double gaussianConstant=0.5;
-  gaussianMove.moveMesh(closestTriaVertexToAtomsLocation,
-		        dispClosestTriaVerticesToAtoms,
-			gaussianConstant);
+  std::pair<bool,double> meshQualityMetrics=gaussianMove.moveMesh(closestTriaVertexToAtomsLocation,
+		                                                  dispClosestTriaVerticesToAtoms,
+			                                          gaussianConstant);
 
+  AssertThrow(!meshQualityMetrics.first,ExcMessage("Negative jacobian created after moving closest nodes to atoms. Suggestion: increase refinement near atoms"));
+  pcout<< " Mesh quality check: maximum jacobian ratio: "<< meshQualityMetrics.second<<std::endl;
 }
 
 	

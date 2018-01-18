@@ -108,7 +108,12 @@ void meshMovementClass::init(Triangulation<3,3> & triangulation)
      d_isParallelMesh=true;	
 }
 
-void meshMovementClass::writeMesh()
+void meshMovementClass::initMoved()
+{
+   d_dofHandlerMoveMesh.distribute_dofs(FEMoveMesh);
+}
+
+void meshMovementClass::writeMesh(std::string meshFileName)
 {
   //write mesh to vtk file
   //
@@ -117,7 +122,8 @@ void meshMovementClass::writeMesh()
       DataOut<3> data_out;
       data_out.attach_dof_handler(d_dofHandlerMoveMesh);
       data_out.build_patches ();
-      std::ofstream output ("meshFinal.vtu");
+      //std::ofstream output ("meshFinal.vtu");
+      std::ofstream output(meshFileName);
       data_out.write_vtu (output);
     }
 
@@ -142,9 +148,9 @@ void meshMovementClass::initIncrementField()
   }
   else
   {
-     d_incrementalDisplacementParallel=parallel::distributed::Vector<double>::Vector(d_locally_owned_dofs,
-									     ghost_indices,
-                                                                             mpi_communicator);
+     d_incrementalDisplacementParallel=dealii::parallel::distributed::Vector<double>(d_locally_owned_dofs,
+									             ghost_indices,
+                                                                                     mpi_communicator);
      d_incrementalDisplacementParallel=0;  
   }	
 }
@@ -201,7 +207,7 @@ void meshMovementClass::updateTriangulationVertices()
   //dftPtr->triangulation.communicate_locally_moved_vertices(locally_owned_vertices);
 }
 
-void meshMovementClass::movedMeshCheck()
+std::pair<bool,double> meshMovementClass::movedMeshCheck()
 {
   //sanity check to make sure periodic boundary conditions are maintained
   MPI_Barrier(mpi_communicator); 
@@ -240,6 +246,45 @@ void meshMovementClass::movedMeshCheck()
   sprintf(buffer, "Mesh movement quality metric, h_min: %5.2e\n", minElemLength);
   pcout << buffer;   
 
+  std::pair<bool,double> meshQualityMetrics;
+  QGauss<3>  quadrature(2);
+  FEValues<3> fe_values (FEMoveMesh, quadrature,update_JxW_values);
+  const unsigned int   num_quad_points    = quadrature.size();  
+  cell = d_dofHandlerMoveMesh.get_triangulation().begin_active();
+  int isNegativeJacobianDeterminant=0;
+  double maxJacobianRatio=1;
+  for (; cell!=endc; ++cell) 
+  {
+      if (cell->is_locally_owned())
+	{
+           // Compute values for current cell.
+	   fe_values.reinit (cell);
+	   double maxJacobian=-1e+6;
+	   double minJacobian=1e+6;
+	   for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
+           {	    
+	      double jw=fe_values.JxW (q_point);
+	      double j=jw/quadrature.weight(q_point);
+
+	      if (j<0)
+		isNegativeJacobianDeterminant=1;
+	      else if (j>1e-6)
+	      {
+		  if (j>maxJacobian)
+                      maxJacobian=j;
+		  if (j< minJacobian)
+		      minJacobian=j;
+	      }
+
+	   }
+	   maxJacobianRatio=maxJacobian/minJacobian;
+	}
+  }
+  maxJacobianRatio= Utilities::MPI::max(maxJacobianRatio,mpi_communicator);
+  isNegativeJacobianDeterminant= Utilities::MPI::max(isNegativeJacobianDeterminant, mpi_communicator);
+  bool isNegativeJacobian=isNegativeJacobianDeterminant==1?true:false;
+  meshQualityMetrics=std::make_pair(isNegativeJacobian,maxJacobianRatio);
+  return meshQualityMetrics;
   //std::cout << "l2 norm icrement field: "<<d_incrementalDisplacement.l2_norm()<<std::endl;
 }
 
