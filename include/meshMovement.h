@@ -30,6 +30,7 @@ public:
   meshMovementClass();
   virtual ~meshMovementClass() {}
   void init(Triangulation<3,3> & triangulation);
+  void initMoved();
   void findClosestVerticesToDestinationPoints(const std::vector<Point<3>> & destinationPoints,
 		                              std::vector<Point<3>> & closestTriaVertexToDestPointsLocation,
                                               std::vector<Tensor<1,3,double>> & dispClosestTriaVerticesToDestPoints,

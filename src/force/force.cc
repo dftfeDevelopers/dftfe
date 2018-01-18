@@ -126,6 +126,7 @@ void forceClass<FEOrder>::initMoved()
   */
   createBinObjectsForce();
   locateAtomCoreNodesForce();
+  gaussianMove.initMoved();
 }
 
 //compute forces on atoms using a generator with a compact support

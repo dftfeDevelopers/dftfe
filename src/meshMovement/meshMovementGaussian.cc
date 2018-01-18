@@ -67,8 +67,8 @@ void meshMovementGaussianClass::computeIncrement()
 
 	int overlappedControlPointId=-1;
 	for (unsigned int jControl=0;jControl <d_controlPointLocations.size(); jControl++){
-	     const double distanceSq=(nodalCoor-d_controlPointLocations[jControl]).norm_square();
-	     if (distanceSq < 1e-6){
+	     const double distance=(nodalCoor-d_controlPointLocations[jControl]).norm();
+	     if (distance < 1e-5){
 		overlappedControlPointId=jControl;
 		break;
 	     }
@@ -76,7 +76,10 @@ void meshMovementGaussianClass::computeIncrement()
 	for (unsigned int iControl=0;iControl <d_controlPointLocations.size(); iControl++)
 	{	    
 	    if (overlappedControlPointId!=iControl && overlappedControlPointId!=-1)
+	    {
+	       //std::cout<< " overlappedControlPointId: "<< overlappedControlPointId << std::endl;	
 	       continue;
+	    }
   	    const double rsq=(nodalCoor-d_controlPointLocations[iControl]).norm_square();	    
 	    const double gaussianWeight=std::exp(-d_controllingParameter*rsq);
 	    for (unsigned int idim=0; idim < C_DIM ; idim++)

@@ -108,6 +108,10 @@ void meshMovementClass::init(Triangulation<3,3> & triangulation)
      d_isParallelMesh=true;	
 }
 
+void meshMovementClass::initMoved()
+{
+   d_dofHandlerMoveMesh.distribute_dofs(FEMoveMesh);
+}
 
 void meshMovementClass::writeMesh(std::string meshFileName)
 {
@@ -144,9 +148,9 @@ void meshMovementClass::initIncrementField()
   }
   else
   {
-     d_incrementalDisplacementParallel=parallel::distributed::Vector<double>::Vector(d_locally_owned_dofs,
-									     ghost_indices,
-                                                                             mpi_communicator);
+     d_incrementalDisplacementParallel=dealii::parallel::distributed::Vector<double>(d_locally_owned_dofs,
+									             ghost_indices,
+                                                                                     mpi_communicator);
      d_incrementalDisplacementParallel=0;  
   }	
 }
