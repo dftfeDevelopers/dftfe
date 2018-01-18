@@ -101,6 +101,30 @@ void dftClass<FEOrder>::initRho()
      delete (*it);
   }
   gradRhoOutVals.clear(); 
+    for (std::deque<std::map<dealii::CellId,std::vector<double> >*>::iterator it = rhoInValsSpinPolarized.begin(); it!=rhoInValsSpinPolarized.end(); ++it)
+  {
+     (**it).clear();	  
+     delete (*it);
+  }
+  rhoInValsSpinPolarized.clear();
+  for (std::deque<std::map<dealii::CellId,std::vector<double> >*>::iterator it = rhoOutValsSpinPolarized.begin(); it!=rhoOutValsSpinPolarized.end(); ++it)
+  {
+     (**it).clear();	  
+     delete (*it);
+  }
+  rhoOutValsSpinPolarized.clear();
+  for (std::deque<std::map<dealii::CellId,std::vector<double> >*>::iterator it = gradRhoInValsSpinPolarized.begin(); it!=gradRhoInValsSpinPolarized.end(); ++it)
+  {
+     (**it).clear();	  
+     delete (*it);
+  }
+  gradRhoInValsSpinPolarized.clear();
+  for (std::deque<std::map<dealii::CellId,std::vector<double> >*>::iterator it = gradRhoOutValsSpinPolarized.begin(); it!=gradRhoOutValsSpinPolarized.end(); ++it)
+  {
+     (**it).clear();	  
+     delete (*it);
+  }
+  gradRhoOutValsSpinPolarized.clear(); 
 
   //Initialize electron density table storage
   rhoInValues=new std::map<dealii::CellId, std::vector<double> >;

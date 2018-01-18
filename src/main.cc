@@ -204,7 +204,7 @@ void declare_parameters()
 		    Patterns::Bool(),
 		    "Boolean Parameter specifying whether pseudopotential DFT calculation needs to be performed"); 
 
-  prm.declare_entry("PSEUDOPOTENTIAL NONLOCAL PROJECTOR", "1",
+  prm.declare_entry("PSEUDOPOTENTIAL TYPE", "1",
 		    Patterns::Integer(1,2),
 		    "Type of nonlocal projector to be used: 1 for KB, 2 for ONCV, default is KB"); 
 
@@ -327,7 +327,7 @@ void parse_command_line(const int argc,
           dftParameters::dkz				= prm.get_double("BZ SAMPLING SHIFT ALONG Z");
           dftParameters::useSymm 	                = prm.get_bool("USE GROUP SYMMETRY");
 	  dftParameters::isPseudopotential             = prm.get_bool("PSEUDOPOTENTIAL CALCULATION");
-	  dftParameters::pseudoProjector               = prm.get_integer("PSEUDOPOTENTIAL NONLOCAL PROJECTOR");
+	  dftParameters::pseudoProjector               = prm.get_integer("PSEUDOPOTENTIAL TYPE");
 	  dftParameters::xc_id                         = prm.get_integer("EXCHANGE CORRELATION TYPE");
 	  dftParameters::numberEigenValues             = prm.get_integer("NUMBER OF KOHN-SHAM WAVEFUNCTIONS");
 	  dftParameters::lowerEndWantedSpectrum        = prm.get_double("LOWER BOUND WANTED SPECTRUM");

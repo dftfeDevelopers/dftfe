@@ -141,14 +141,34 @@ void symmetryClass<FEOrder>::computeAndSymmetrize_rhoOut()
   //pop out rhoInVals and rhoOutVals if their size exceeds mixing history size
   if((dftPtr->rhoInVals).size() == mixingHistory)
     {
-      (dftPtr->rhoInVals).pop_front();
-      (dftPtr->rhoOutVals).pop_front();
-      (dftPtr->rhoInValsSpinPolarized).pop_front();
-      (dftPtr->rhoOutValsSpinPolarized).pop_front();
-      (dftPtr->gradRhoInVals).pop_front();
-      (dftPtr->gradRhoOutVals).pop_front();
-      (dftPtr->gradRhoInValsSpinPolarized).pop_front();
-      (dftPtr->gradRhoOutValsSpinPolarized).pop_front();
+      (**(dftPtr->rhoInVals.begin())).clear();
+      delete *(dftPtr->rhoInVals.begin());	
+      dftPtr->rhoInVals.pop_front();
+
+      (**(dftPtr->rhoOutVals.begin())).clear();
+      delete *(dftPtr->rhoOutVals.begin());	      
+      dftPtr->rhoOutVals.pop_front();
+
+      (**(dftPtr->rhoInValsSpinPolarized.begin())).clear();
+      delete *(dftPtr->rhoInValsSpinPolarized.begin());
+      dftPtr->rhoInValsSpinPolarized.pop_front();
+      (**(dftPtr->rhoOutValsSpinPolarized.begin())).clear();
+      delete *(dftPtr->rhoOutValsSpinPolarized.begin());
+      dftPtr->rhoOutValsSpinPolarized.pop_front();
+
+      (**(dftPtr->gradRhoInVals.begin())).clear();
+      delete *(dftPtr->gradRhoInVals.begin());	      
+      dftPtr->gradRhoInVals.pop_front();
+      (**(dftPtr->gradRhoOutVals.begin())).clear();
+      delete *(dftPtr->gradRhoOutVals.begin());	      
+      dftPtr->gradRhoOutVals.pop_front();
+
+      (**(dftPtr->gradRhoInValsSpinPolarized.begin())).clear();
+      delete *(dftPtr->gradRhoInValsSpinPolarized.begin());	 
+      dftPtr->gradRhoInValsSpinPolarized.pop_front();
+      (**(dftPtr->gradRhoOutValsSpinPolarized.begin())).clear();
+      delete *(dftPtr->gradRhoOutValsSpinPolarized.begin());	   
+      dftPtr->gradRhoOutValsSpinPolarized.pop_front();
     }
 
 }
