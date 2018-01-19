@@ -74,6 +74,7 @@ void geoOptIon<FEOrder>::run()
    const int maxLineSearchIter=10;
    int debugLevel=this_mpi_process==0?1:0;
    int maxRestarts=2; int restartCount=0;
+   d_totalUpdateCalls=0;
    cgPRPNonLinearSolver cgSolver(tol,maxIter,debugLevel,lineSearchTol,maxLineSearchIter);
    if (this_mpi_process==0)
    {
@@ -100,7 +101,7 @@ void geoOptIon<FEOrder>::run()
        if (cgReturn == nonLinearSolver::SUCCESS )
        {
 	   if (this_mpi_process==0)
-	      std::cout<< " ...CG Ion Relaxation completed "<<std::endl;
+	      std::cout<< " ...CG Ion Relaxation completed, total number of geometry updates: "<<d_totalUpdateCalls<<std::endl;
        }
        else if (cgReturn == nonLinearSolver::FAILURE)
        {
@@ -210,24 +211,23 @@ void geoOptIon<FEOrder>::update(const std::vector<double> & solution)
 	  }
       }
 
-
-      Point<3> temp;
-      // accumulate value
-      MPI_Allreduce(&(globalAtomsDisplacements[i]),
-		    &(temp[0]),
-		    3,
-		    MPI_DOUBLE,
-		    MPI_SUM,
-		    mpi_communicator); 
-      globalAtomsDisplacements[i]=temp;
-
+      MPI_Bcast(&(globalAtomsDisplacements[i][0]),
+	        3,
+	        MPI_DOUBLE,
+	        0,
+	        mpi_communicator);	
+   }
+   for (unsigned int i=0; i< numberGlobalAtoms; ++i)
+   {
+       std::cout<< "processor: "<< this_mpi_process << " atomId: "<< i<< " disp: "<<globalAtomsDisplacements[i] << std::endl; 
    }
    if (this_mpi_process==0)
       std::cout<<" -----------------------------" << std::endl;
 
    if (this_mpi_process==0)
        std::cout<< "  Maximum force to be relaxed: "<<  d_maximumAtomForceToBeRelaxed <<std::endl;
-   dftPtr->forcePtr->updateAtomPositionsAndMoveMesh(globalAtomsDisplacements); 
+   dftPtr->forcePtr->updateAtomPositionsAndMoveMesh(globalAtomsDisplacements);
+   d_totalUpdateCalls+=1;
    dftPtr->solve();
 }
 

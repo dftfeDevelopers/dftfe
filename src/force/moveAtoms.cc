@@ -83,7 +83,6 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
   const int numberGlobalAtoms = atomLocations.size();
   const int numberImageCharges = imageIds.size();
   const int totalNumberAtoms = numberGlobalAtoms + numberImageCharges; 
-  double dispTol=1e-8;
 
   std::vector<Point<C_DIM> > controlPointLocations;
   std::vector<Tensor<1,C_DIM,double> > controlPointDisplacements;
@@ -97,10 +96,11 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
         atomCoor[0] = atomLocations[iAtom][2];
         atomCoor[1] = atomLocations[iAtom][3];
         atomCoor[2] = atomLocations[iAtom][4];
+	double temp=globalAtomsDisplacements[atomId].norm();
         atomLocations[iAtom][2]+=globalAtomsDisplacements[atomId][0];
         atomLocations[iAtom][3]+=globalAtomsDisplacements[atomId][1];
         atomLocations[iAtom][4]+=globalAtomsDisplacements[atomId][2];
-	double temp=globalAtomsDisplacements[atomId].norm();
+
 	if (temp>maxDispAtom)
 	    maxDispAtom=temp;
      }
@@ -115,10 +115,8 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
 	imagePositions[iAtom-numberGlobalAtoms][2]+=globalAtomsDisplacements[atomId][2];
 	
      }
-     if (globalAtomsDisplacements[atomId].norm()>dispTol){
-	   controlPointLocations.push_back(atomCoor);
-	   controlPointDisplacements.push_back(globalAtomsDisplacements[atomId]);
-     }
+     controlPointLocations.push_back(atomCoor);
+     controlPointDisplacements.push_back(globalAtomsDisplacements[atomId]);
   }
   MPI_Barrier(mpi_communicator); 
   const double tol=1e-6;
