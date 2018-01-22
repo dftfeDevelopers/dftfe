@@ -19,9 +19,25 @@
 #include "../../include/geoOptIon.h"
 #include "../../include/cgPRPNonLinearSolver.h"
 #include "../../include/force.h"
+#include "../../include/meshGenerator.h"
 #include "../../include/dft.h"
 #include "../../include/fileReaders.h"
 
+namespace geoOptLocal
+{
+  void writeMesh(std::string meshFileName, const Triangulation<3,3> & triangulation)
+ {
+      FESystem<3> FE(FE_Q<3>(QGaussLobatto<1>(2)), 1);
+      DoFHandler<3> dofHandler; dofHandler.initialize(triangulation,FE);		
+      dofHandler.distribute_dofs(FE);
+      DataOut<3> data_out;
+      data_out.attach_dof_handler(dofHandler);
+      data_out.build_patches ();
+      std::ofstream output(meshFileName);
+      data_out.write_vtu (output);
+      //data_out.write_dx(output);
+ }
+}
 
 //
 //constructor
@@ -67,10 +83,13 @@ void geoOptIon<FEOrder>::init()
 template<unsigned int FEOrder>
 void geoOptIon<FEOrder>::run()
 {
-   dftPtr->solve();
+   //dftPtr->solve();
+   std::string meshFileName="mesh_geo0.vtu";//"mesh_geo0.dx"//"mesh_geo0.vtu";
+   geoOptLocal::writeMesh(meshFileName,dftPtr->d_mesh.getSerialMesh());
+
    const double tol=5e-5;//Hatree/Bohr
    const int  maxIter=100;
-   const double lineSearchTol=1e-2;//5e-2;
+   const double lineSearchTol=2e-3;//5e-2;
    const int maxLineSearchIter=10;
    int debugLevel=this_mpi_process==0?1:0;
    int maxRestarts=2; int restartCount=0;
@@ -228,7 +247,14 @@ void geoOptIon<FEOrder>::update(const std::vector<double> & solution)
        std::cout<< "  Maximum force to be relaxed: "<<  d_maximumAtomForceToBeRelaxed <<std::endl;
    dftPtr->forcePtr->updateAtomPositionsAndMoveMesh(globalAtomsDisplacements);
    d_totalUpdateCalls+=1;
+   //write new mesh
+   std::string meshFileName="mesh_geo";
+   meshFileName+=std::to_string(d_totalUpdateCalls);
+   meshFileName+=".vtu";//".dx";//".vtu";
+   geoOptLocal::writeMesh(meshFileName,dftPtr->d_mesh.getSerialMesh());
+
    dftPtr->solve();
+   
 }
 
 template<unsigned int FEOrder>

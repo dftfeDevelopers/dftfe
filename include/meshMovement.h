@@ -35,14 +35,13 @@ public:
 		                              std::vector<Point<3>> & closestTriaVertexToDestPointsLocation,
                                               std::vector<Tensor<1,3,double>> & dispClosestTriaVerticesToDestPoints,
                                               const std::vector<std::vector<double> > & domainBoundingVectors);
-
+  void writeMesh(std::string meshFileName);
 protected:
   void initIncrementField();
   void finalizeIncrementField();
   void updateTriangulationVertices();
   //periodic matching sanity check and returns the pair<if negative jacobian, maximum inverse jacobian magnitude>
   std::pair<bool,double> movedMeshCheck();
-  void writeMesh(std::string meshFileName);
   virtual std::pair<bool,double> moveMesh(std::vector<Point<C_DIM> > controlPointLocations,
                                           std::vector<Tensor<1,C_DIM,double> > controlPointDisplacements,
                                           double controllingParameter)=0;
