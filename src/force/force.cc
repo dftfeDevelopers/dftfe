@@ -21,6 +21,7 @@
 #include "../../include/poisson.h"
 #include "../../include/constants.h"
 #include "../../include/eshelbyTensor.h"
+#include "../../include/meshGenerator.h"
 #include "../../include/fileReaders.h"
 
 
@@ -44,7 +45,8 @@ template<unsigned int FEOrder>
 forceClass<FEOrder>::forceClass(dftClass<FEOrder>* _dftPtr):
   dftPtr(_dftPtr),
   FEForce (FE_Q<3>(QGaussLobatto<1>(2)), 3), //linear shape function
-  gaussianMove(),
+  gaussianMovePar(),
+  gaussianMoveSer(),
   mpi_communicator (MPI_COMM_WORLD),
   n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_communicator)),
   this_mpi_process (Utilities::MPI::this_mpi_process(mpi_communicator)),
@@ -82,7 +84,8 @@ void forceClass<FEOrder>::initUnmoved(Triangulation<3,3> & triangulation)
 #else
   d_constraintsNoneForce.close();
 #endif
-  gaussianMove.init(triangulation);
+  gaussianMovePar.init(triangulation);
+  gaussianMoveSer.init(dftPtr->d_mesh.getSerialMesh());
   computing_timer.exit_section("forceClass setup"); 
 }
 
@@ -126,7 +129,8 @@ void forceClass<FEOrder>::initMoved()
   */
   createBinObjectsForce();
   locateAtomCoreNodesForce();
-  gaussianMove.initMoved();
+  gaussianMovePar.initMoved();
+  gaussianMoveSer.initMoved();
 }
 
 //compute forces on atoms using a generator with a compact support
