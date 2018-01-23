@@ -38,6 +38,8 @@ namespace dftParameters
   extern double innerDomainSizeX, innerDomainSizeY, innerDomainSizeZ, outerAtomBallRadius, meshSizeOuterDomain, meshSizeInnerDomain;
   extern double meshSizeInnerBall, meshSizeOuterBall;
 
+  extern bool isIonOpt, isCellOpt;
+
 };
 
 #endif

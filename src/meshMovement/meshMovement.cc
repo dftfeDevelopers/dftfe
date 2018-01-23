@@ -416,6 +416,10 @@ void meshMovementClass::findClosestVerticesToDestinationPoints(const std::vector
 		    MPI_SUM,
 		    mpi_communicator);
 
+      //floating point error correction
+      //if ((closestTriaVertexLocationGlobal-closestTriaVertexLocation).norm()<1e-5)
+      //   closestTriaVertexLocationGlobal=closestTriaVertexLocation;
+
       //std::cout << closestTriaVertexLocationGlobal << " disp: "<<Point<3>(destinationPoints[idest]-closestTriaVertexLocationGlobal) << std::endl;
       closestTriaVertexToDestPointsLocation.push_back(closestTriaVertexLocationGlobal);
       Tensor<1,3,double> temp=destinationPoints[idest]-closestTriaVertexLocationGlobal;

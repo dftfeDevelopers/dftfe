@@ -211,6 +211,13 @@ void declare_parameters()
   prm.declare_entry("EXCHANGE CORRELATION TYPE", "1",
 		    Patterns::Integer(1,4),
 		    "Parameter specifying the type of exchange-correlation to be used");
+  prm.declare_entry("ION OPT", "false",
+		    Patterns::Bool(),
+		    "Boolean parameter specifying if atomic forces are to be relaxed");
+
+  prm.declare_entry("CELL OPT", "false",
+		    Patterns::Bool(),
+		    "Boolean parameter specifying if cell stress is to be relaxed");  
 
   prm.declare_entry("NUMBER OF REFINEMENT STEPS", "4",
 		    Patterns::Integer(1,10),
@@ -330,6 +337,8 @@ void parse_command_line(const int argc,
 	  dftParameters::pseudoProjector               = prm.get_integer("PSEUDOPOTENTIAL TYPE");
 	  dftParameters::xc_id                         = prm.get_integer("EXCHANGE CORRELATION TYPE");
 	  dftParameters::numberEigenValues             = prm.get_integer("NUMBER OF KOHN-SHAM WAVEFUNCTIONS");
+	  dftParameters::isIonOpt                    = prm.get_bool("ION OPT");
+	  dftParameters::isCellOpt                    = prm.get_bool("CELL OPT");
 	  dftParameters::lowerEndWantedSpectrum        = prm.get_double("LOWER BOUND WANTED SPECTRUM");
 	  dftParameters::chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");  
 	  dftParameters::numPass			= prm.get_integer("CHEBYSHEV FILTER PASSES");

@@ -398,9 +398,12 @@ template<unsigned int FEOrder>
 void dftClass<FEOrder>::run()
 {
   solve();
-  //uncomment to turn on ion relaxation
-  //geoOptIonPtr->init();
-  //geoOptIonPtr->run();
+
+  if (dftParameters::isIonOpt)
+  {
+    geoOptIonPtr->init();
+    geoOptIonPtr->run();
+  }
 }
 
 //dft solve
@@ -568,7 +571,7 @@ void dftClass<FEOrder>::solve()
     }
   computing_timer.enter_section("configurational force computation"); 
   forcePtr->computeAtomsForces();
-  forcePtr->printAtomsForces();
+  //forcePtr->printAtomsForces();
   computing_timer.exit_section("configurational force computation");  
   computing_timer.exit_section("solve"); 
 }
