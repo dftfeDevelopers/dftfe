@@ -97,7 +97,8 @@ double getCosineAngle(std::vector<double> & Vector1,
 
 
 
-void markPeriodicFacesNonOrthogonal(Triangulation<3,3> &triangulation, std::vector<std::vector<double> > & latticeVectors)
+void markPeriodicFacesNonOrthogonal(Triangulation<3,3> &triangulation, 
+				    std::vector<std::vector<double> > & latticeVectors)
 {
 
   std::vector<std::vector<double> > periodicFaceNormals;

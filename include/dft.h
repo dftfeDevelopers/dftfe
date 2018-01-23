@@ -32,7 +32,7 @@
 #include "poisson.h"
 #include "eigen.h"
 #include "symmetry.h"
-#include "../../softwares/spglib/include/spglib.h"
+
 
 
 #include <interpolation.h> 
@@ -41,6 +41,7 @@
 #include <slepceps.h>
 #include "dftParameters.h"
 #include "meshGenerator.h"
+#include <spglib.h>
 
 //
 //Initialize Namespace

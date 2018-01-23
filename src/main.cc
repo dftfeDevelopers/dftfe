@@ -21,8 +21,7 @@
 //
 #include <deal.II/base/data_out_base.h>
 #include <deal.II/base/parameter_handler.h>
-//SPG header
-#include "../../softwares/spglib/include/spglib.h"
+
 //
 //dft header
 //

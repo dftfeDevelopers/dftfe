@@ -32,10 +32,9 @@ SET(PETSC_COMPLEX_LIB "/home/vikramg/DFT-FE-softwares/softwareCentos/petsc/intel
 SET(SLEPC_COMPLEX_INCLUDE "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/intel_slepc3.7.3_complex/include")
 SET(SLEPC_COMPLEX_LIB "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/intel_slepc3.7.3_complex/lib/libslepc.so") 
 
-
 ##set SPG paths
-SET(SPG_INCLUDE "/home/krisg/softwares/spglib/include")
-SET(SPG_LIB "/home/krisg/softwares/spglib/lib/libsymspg.so") 
+SET(SPG_INCLUDE "/home/vikramg/DFT-FE-softwares/softwareCentos/spglib/include")
+SET(SPG_LIB "/home/vikramg/DFT-FE-softwares/softwareCentos/spglib/lib/libsymspg.so") 
 #
 
 #

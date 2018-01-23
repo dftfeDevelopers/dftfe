@@ -564,7 +564,7 @@ void dftClass<FEOrder>::solve()
       pcout<<"SCF iteration " << scfIter+1 << " complete\n";
       
       //output wave functions
-      //output();
+      output();
       
       //
       scfIter++;
@@ -578,22 +578,94 @@ void dftClass<FEOrder>::solve()
 
 //Output
 template <unsigned int FEOrder>
-void dftClass<FEOrder>::output () {
+void dftClass<FEOrder>::output() 
+{
+  //
   //only generate wave function output for serial runs
-  if (n_mpi_processes>1) return;
   //
   DataOut<3> data_outEigen;
   data_outEigen.attach_dof_handler (dofHandlerEigen);
-  for (unsigned int i=0; i<eigenVectors[0].size(); ++i){
-    char buffer[100]; sprintf(buffer,"eigen%u", i);  
-    data_outEigen.add_data_vector (*eigenVectors[0][i], buffer);
-  }
+  for(unsigned int i=0; i<eigenVectors[0].size(); ++i)
+    {
+      char buffer[100]; sprintf(buffer,"eigen%u", i);  
+      data_outEigen.add_data_vector (*eigenVectors[0][i], buffer);
+    }
   data_outEigen.build_patches (C_num1DQuad<FEOrder>());
 
   std::ofstream output ("eigen.vtu");
-  data_outEigen.write_vtu (output);
+  //data_outEigen.write_vtu (output);
   //Doesn't work with mvapich2_ib mpi libraries
-  //data_outEigen.write_vtu_in_parallel(std::string("eigen.vtu").c_str(),mpi_communicator);
+  data_outEigen.write_vtu_in_parallel(std::string("eigen.vtu").c_str(),mpi_communicator);
+
+  //
+  //write the electron-density
+  //
+
+  //
+  //access quadrature rules and mapping data
+  //
+  QGauss<3>  quadrature_formula(FEOrder+1);
+  const unsigned int n_q_points = quadrature_formula.size();
+  MappingQ1<3,3> mapping;
+  struct quadDensityData { double density; };
+
+  //
+  //create electron-density quadrature data using "CellDataStorage" class of dealii
+  //
+  CellDataStorage<typename DoFHandler<3>::active_cell_iterator,quadDensityData> rhoQuadData;
+  
+
+  rhoQuadData.initialize(dofHandler.begin_active(),
+			 dofHandler.end(),
+			 n_q_points);
+  //
+  //copy rhoValues into CellDataStorage container
+  //
+  typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
+
+  for(; cell!=endc; ++cell) 
+    {
+      if(cell->is_locally_owned())
+	{
+	  const std::vector<std::shared_ptr<quadDensityData> > rhoQuadPointVector = rhoQuadData.get_data(cell);
+	  for(unsigned int q = 0; q < n_q_points; ++q)
+	    {
+	      rhoQuadPointVector[q]->density = (*rhoOutValues)[cell->id()][q];
+	    }
+	}
+    }
+
+  //
+  //project and create a nodal field of the same mesh from the quadrature data (L2 projection from quad points to nodes)
+  //
+
+  //
+  //create a new nodal field
+  //
+  vectorType rhoNodalField;
+  matrix_free_data.initialize_dof_vector(rhoNodalField);
+
+  VectorTools::project<3,parallel::distributed::Vector<double>>(mapping,
+								dofHandler,
+								constraintsNone,
+								quadrature_formula,
+								[&](const typename DoFHandler<3>::active_cell_iterator & cell , const unsigned int q) -> double {return rhoQuadData.get_data(cell)[q]->density;},
+								rhoNodalField);
+
+  rhoNodalField.update_ghost_values();
+
+  //
+  //only generate output for electron-density
+  //
+  DataOut<3> dataOutRho;
+  dataOutRho.attach_dof_handler(dofHandler);
+  char buffer[100]; sprintf(buffer,"rhoField");  
+  dataOutRho.add_data_vector(rhoNodalField, buffer);
+  dataOutRho.build_patches(C_num1DQuad<FEOrder>());
+  //data_outEigen.write_vtu (output);
+  //Doesn't work with mvapich2_ib mpi libraries
+  dataOutRho.write_vtu_in_parallel(std::string("rhoField.vtu").c_str(),mpi_communicator);
+
 }
 
 template class dftClass<1>;
