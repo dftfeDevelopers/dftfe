@@ -6,7 +6,7 @@ set DFT PATH = "../../../../"
 #finite-element related parameters
 #
 #set MESH FILE = mesh.inp
-set FINITE ELEMENT POLYNOMIAL ORDER = 4
+set FINITE ELEMENT POLYNOMIAL ORDER = 2
 
 
 #
@@ -66,6 +66,9 @@ set PSEUDOPOTENTIAL CALCULATION = true
 # 3 (LDA: Vosko, Wilk & Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)])
 # 4 (GGA: Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)])*/
 set EXCHANGE CORRELATION TYPE = 1
+
+#ION OPT FLAG
+set ION OPT=true
 
 #
 #Eigen-solver/Chebyshev solver related parameters

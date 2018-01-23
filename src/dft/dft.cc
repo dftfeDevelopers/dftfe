@@ -346,9 +346,12 @@ template<unsigned int FEOrder>
 void dftClass<FEOrder>::run()
 {
   solve();
-  //uncomment to turn on ion relaxation
-  //geoOptIonPtr->init();
-  //geoOptIonPtr->run();
+
+  if (dftParameters::isIonOpt)
+  {
+    geoOptIonPtr->init();
+    geoOptIonPtr->run();
+  }
 }
 
 //dft solve

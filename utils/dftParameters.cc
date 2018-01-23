@@ -32,4 +32,6 @@ namespace dftParameters
   double innerDomainSizeX=1.0, innerDomainSizeY=1.0, innerDomainSizeZ=1.0, outerAtomBallRadius=2.0, meshSizeOuterDomain=10.0, meshSizeInnerDomain=5.0;
   double meshSizeInnerBall=1.0, meshSizeOuterBall=1.0;
 
+  bool isIonOpt=false, isCellOpt=false;
+
 }
