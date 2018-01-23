@@ -168,7 +168,6 @@ void geoOptIon<FEOrder>::value(std::vector<double> & functionValue)
 {
 }
 
-
 template<unsigned int FEOrder>
 void geoOptIon<FEOrder>::gradient(std::vector<double> & gradient)
 {
@@ -183,6 +182,8 @@ void geoOptIon<FEOrder>::gradient(std::vector<double> & gradient)
           if (d_relaxationFlags[3*i+j]==1) 
 	  {
               gradient.push_back(tempGradient[3*i+j]);
+	      if  (this_mpi_process==0)
+	         std::cout<<" atomId: "<<i << " direction: "<< j << " force: "<<-tempGradient[3*i+j]<<std::endl;
 	  }	  
       }
    }

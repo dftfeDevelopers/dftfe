@@ -449,7 +449,7 @@ void dftClass<FEOrder>::solve()
     }
   computing_timer.enter_section("configurational force computation"); 
   forcePtr->computeAtomsForces();
-  forcePtr->printAtomsForces();
+  //forcePtr->printAtomsForces();
   computing_timer.exit_section("configurational force computation");  
   computing_timer.exit_section("solve"); 
 }

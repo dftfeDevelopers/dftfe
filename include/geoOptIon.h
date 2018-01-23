@@ -35,7 +35,6 @@ public:
   void run();   
 private:
 
-    
   int getNumberUnknowns() const ;
   double value() const;
   void value(std::vector<double> & functionValue);
