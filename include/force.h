@@ -114,7 +114,8 @@ private:
   std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > d_gradPseudoVLocAtoms;
 
   //meshMovementGaussianClass object  								       
-  meshMovementGaussianClass gaussianMove;
+  meshMovementGaussianClass gaussianMovePar;
+  meshMovementGaussianClass gaussianMoveSer;
 
   //Gaussian generator related data and functions
   const double d_gaussianConstant=4.0;//5.0
