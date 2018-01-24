@@ -46,7 +46,14 @@ set LATTICE VECTORS FILE = latticeVectors.inp
 #kPoint Quadrature Rule file for sampling the Brillouin zone (used only in periodic calculation)
 #(Located in $DFT PATH/data/kPointList)
 #
-set kPOINT RULE FILE = GammaPoint.inp
+#set kPOINT RULE FILE = GammaPoint.inp
+set BZ SAMPLING POINTS ALONG X = 1
+set BZ SAMPLING POINTS ALONG Y = 1
+set BZ SAMPLING POINTS ALONG Z = 1
+set BZ SAMPLING SHIFT ALONG X = 0.00
+set BZ SAMPLING SHIFT ALONG Y = 0.00
+set BZ SAMPLING SHIFT ALONG Z = 0.00
+set USE GROUP SYMMETRY = true
 
 #
 #DFT functional related parameters
@@ -61,7 +68,9 @@ set PSEUDOPOTENTIAL CALCULATION = true
 # 3 (LDA: Vosko, Wilk & Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)])
 # 4 (GGA: Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)])*/
 set EXCHANGE CORRELATION TYPE = 1
-
+#spin polarization
+set SPIN POLARIZATION = 0
+set START MAGNETIZATION = 0.0
 #
 #Eigen-solver/Chebyshev solver related parameters
 #

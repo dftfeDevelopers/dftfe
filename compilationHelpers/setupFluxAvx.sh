@@ -4,7 +4,7 @@ set -o pipefail
 #script to setup and build DFT-FE 
 #set CMAKE path
 cmake=/opt/cmake/bin/cmake
-
+#cmake=/usr/bin/cmake
 #
 #Usually, no changes are needed below this line
 #
@@ -18,18 +18,18 @@ if [ $optimizedMode == 1 ]; then
     cd build
     cd release
     echo -e "${Blu}Building Non-Periodic executable in Optimized (Release) mode...${RCol}"
-    mkdir -p nonPeriodic && cd nonPeriodic && cmake -DCMAKE_CXX_FLAGS_RELEASE="-O3" -DCMAKE_BUILD_TYPE=Release ../../../. && make && cd ..
+    mkdir -p nonPeriodic && cd nonPeriodic && cmake -DCMAKE_CXX_FLAGS_RELEASE="-O3 -axAVX,SSE4.2 -msse2" -DCMAKE_BUILD_TYPE=Release ../../../. && make && cd ..
     echo -e "${Blu}Building Periodic executable in Optimized (Release) mode...${RCol}"
-    mkdir -p periodic && cd periodic && cmake -DCMAKE_CXX_FLAGS_RELEASE="-O3" -DCMAKE_BUILD_TYPE=Release -D_ENABLE_PERIODIC=TRUE ../../../. && make && cd ../..
+    mkdir -p periodic && cd periodic && cmake -DCMAKE_CXX_FLAGS_RELEASE="-O3 -axAVX,SSE4.2 -msse2" -DCMAKE_BUILD_TYPE=Release -D_ENABLE_PERIODIC=TRUE ../../../. && make && cd ../..
   else
-    rm -rf build/release
+    rm -rf build
     echo -e "${Blu}Creating build directory...${RCol}"
     mkdir -p build && cd build
     mkdir -p release && cd release
     echo -e "${Blu}Building Non-Periodic executable in Optimized (Release) mode...${RCol}"
-    mkdir -p nonPeriodic && cd nonPeriodic && cmake -DCMAKE_CXX_FLAGS_RELEASE="-O3" -DCMAKE_BUILD_TYPE=Release ../../../. && make && cd ..
+    mkdir -p nonPeriodic && cd nonPeriodic && cmake -DCMAKE_CXX_FLAGS_RELEASE="-O3 -axAVX,SSE4.2 -msse2" -DCMAKE_BUILD_TYPE=Release ../../../. && make && cd ..
     echo -e "${Blu}Building Periodic executable in Optimized (Release) mode...${RCol}"
-    mkdir -p periodic && cd periodic && cmake -DCMAKE_CXX_FLAGS_RELEASE="-O3" -DCMAKE_BUILD_TYPE=Release -D_ENABLE_PERIODIC=TRUE ../../../. && make && cd ../..
+    mkdir -p periodic && cd periodic && cmake -DCMAKE_CXX_FLAGS_RELEASE="-O3 -axAVX,SSE4.2 -msse2" -DCMAKE_BUILD_TYPE=Release -D_ENABLE_PERIODIC=TRUE ../../../. && make && cd ../..
   fi
 else
   if [ -d "build/debug" ]; then
@@ -42,7 +42,7 @@ else
     echo -e "${Blu}Building Periodic executable in Debug mode...${RCol}"
     mkdir -p periodic && cd periodic && cmake -DCMAKE_BUILD_TYPE=Debug -D_ENABLE_PERIODIC=TRUE ../../../. && make && cd ../..
   else
-    rm -rf build/debug
+    rm -rf build
     echo -e "${Blu}Creating build directory...${RCol}"
     mkdir -p build && cd build
     mkdir -p debug && cd debug

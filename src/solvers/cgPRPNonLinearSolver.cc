@@ -574,7 +574,11 @@
 				      d_lineSearchTolerance,
 				      d_lineSearchMaxIterations,
 				      d_debugLevel);
-					
+				
+      //write mesh
+      std::string meshFileName="mesh_geo";
+      meshFileName+=std::to_string(d_iter);
+      function.writeMesh(meshFileName);      
       //
       // evaluate gradient
       //

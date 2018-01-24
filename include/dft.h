@@ -148,6 +148,8 @@ class dftClass
   void readkPointData();
   
   void generateMPGrid();
+
+  void writeMesh(std::string meshFileName);
   /*
   //
   // ************************************************************************************************************************************  //

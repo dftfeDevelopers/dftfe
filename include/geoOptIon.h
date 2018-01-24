@@ -35,6 +35,7 @@ public:
   void run();   
 private:
 
+  void writeMesh(std::string meshFileName);
   int getNumberUnknowns() const ;
   double value() const;
   void value(std::vector<double> & functionValue);

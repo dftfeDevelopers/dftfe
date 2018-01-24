@@ -350,6 +350,7 @@ void dftClass<FEOrder>::init ()
   //move triangulation to have atoms on triangulation vertices
   //
   //pcout << " check 0.11 : " << std::endl ;
+  writeMesh("meshInitial");
   moveMeshToAtoms(triangulationPar);
   //moveMeshToAtoms(triangulationSer,true);//can only be called after calling moveMeshToAtoms(triangulationPar)
 
@@ -571,7 +572,7 @@ void dftClass<FEOrder>::solve()
     }
   computing_timer.enter_section("configurational force computation"); 
   forcePtr->computeAtomsForces();
-  //forcePtr->printAtomsForces();
+  forcePtr->printAtomsForces();
   computing_timer.exit_section("configurational force computation");  
   computing_timer.exit_section("solve"); 
 }
@@ -667,6 +668,20 @@ void dftClass<FEOrder>::output()
   dataOutRho.write_vtu_in_parallel(std::string("rhoField.vtu").c_str(),mpi_communicator);
 
 }
+
+template <unsigned int FEOrder>
+void dftClass<FEOrder>::writeMesh(std::string meshFileName)
+ {
+      FESystem<3> FETemp(FE_Q<3>(QGaussLobatto<1>(2)), 1);
+      DoFHandler<3> dofHandlerTemp; dofHandlerTemp.initialize(d_mesh.getSerialMesh(),FETemp);		
+      dofHandlerTemp.distribute_dofs(FETemp);
+      DataOut<3> data_out;
+      data_out.attach_dof_handler(dofHandlerTemp);
+      data_out.build_patches ();
+      meshFileName+=".vtu";
+      std::ofstream output(meshFileName);
+      data_out.write_vtu (output);
+ }
 
 template class dftClass<1>;
 template class dftClass<2>;

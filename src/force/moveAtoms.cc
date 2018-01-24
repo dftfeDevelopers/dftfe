@@ -137,7 +137,7 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
       pcout << "Trying to Move using a wide Gaussian with Gaussian constant: "<<gaussianParameter<<" as max displacement magnitude: "<<maxDispAtom<< " is between "<< break2<<" and "<<break1<<" Hatree/Bohr"<<std::endl;
       
       std::pair<bool,double> meshQualityMetrics= gaussianMovePar.moveMesh(controlPointLocations,controlPointDisplacements,gaussianParameter);
-      std::pair<bool,double> meshQualityMetricsSer=gaussianMoveSer.moveMesh(controlPointLocations,controlPointDisplacements,gaussianParameter);      
+      //std::pair<bool,double> meshQualityMetricsSer=gaussianMoveSer.moveMesh(controlPointLocations,controlPointDisplacements,gaussianParameter);      
       //AssertThrow(!meshQualityMetrics.first,ExcMessage("Negative jacobian created after moving closest nodes to atoms. Suggestion: use auto remeshing"));
       if (meshQualityMetrics.first || meshQualityMetrics.second>maxJacobianRatio)
       {
@@ -174,7 +174,7 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
   {
        pcout << "Trying to Move using a narrow Gaussian with same Gaussian constant for computing the forces: "<<d_gaussianConstant<<" as max displacement magnitude: "<< maxDispAtom<< " is below " << break2 <<" Hatree/Bohr"<<std::endl;       
       std::pair<bool,double> meshQualityMetrics=gaussianMovePar.moveMesh(controlPointLocations,controlPointDisplacements,d_gaussianConstant);
-      std::pair<bool,double> meshQualityMetricsSer=gaussianMoveSer.moveMesh(controlPointLocations,controlPointDisplacements,d_gaussianConstant);
+      //std::pair<bool,double> meshQualityMetricsSer=gaussianMoveSer.moveMesh(controlPointLocations,controlPointDisplacements,d_gaussianConstant);
       //AssertThrow(!meshQualityMetrics.first,ExcMessage("Negative jacobian created after moving closest nodes to atoms. Suggestion: use auto remeshing"));
       if (meshQualityMetrics.first || meshQualityMetrics.second>maxJacobianRatio)
       {

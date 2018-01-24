@@ -23,12 +23,13 @@
 #include "../../include/dft.h"
 #include "../../include/fileReaders.h"
 
-namespace geoOptLocal
-{
-  void writeMesh(std::string meshFileName, const Triangulation<3,3> & triangulation)
+template<unsigned int FEOrder>
+void geoOptIon<FEOrder>::writeMesh(std::string meshFileName)
  {
+      dftPtr->writeMesh(meshFileName);
+      /*
       FESystem<3> FE(FE_Q<3>(QGaussLobatto<1>(2)), 1);
-      DoFHandler<3> dofHandler; dofHandler.initialize(triangulation,FE);		
+      DoFHandler<3> dofHandler; dofHandler.initialize(dftPtr->d_mesh.getSerialMesh(),FE);		
       dofHandler.distribute_dofs(FE);
       DataOut<3> data_out;
       data_out.attach_dof_handler(dofHandler);
@@ -36,8 +37,8 @@ namespace geoOptLocal
       std::ofstream output(meshFileName);
       data_out.write_vtu (output);
       //data_out.write_dx(output);
+      */
  }
-}
 
 //
 //constructor
@@ -84,8 +85,8 @@ template<unsigned int FEOrder>
 void geoOptIon<FEOrder>::run()
 {
    //dftPtr->solve();
-   std::string meshFileName="mesh_geo0.vtu";//"mesh_geo0.dx"//"mesh_geo0.vtu";
-   geoOptLocal::writeMesh(meshFileName,dftPtr->d_mesh.getSerialMesh());
+   //std::string meshFileName="mesh_geo0.vtu";//"mesh_geo0.dx"//"mesh_geo0.vtu";
+   //writeMesh(meshFileName);
 
    const double tol=5e-5;//Hatree/Bohr
    const int  maxIter=100;
@@ -224,8 +225,8 @@ void geoOptIon<FEOrder>::update(const std::vector<double> & solution)
             if (d_relaxationFlags[3*i+j]==1) 
 	    {
                globalAtomsDisplacements[i][j]=solution[count];
-	       if (this_mpi_process==0)
-                 std::cout << " atomId: "<<i << " ,direction: "<< j << " ,displacement: "<< solution[count]<<std::endl;
+	       //if (this_mpi_process==0)
+               //  std::cout << " atomId: "<<i << " ,direction: "<< j << " ,displacement: "<< solution[count]<<std::endl;
 	       count++;
 	    }
 	  }
@@ -249,10 +250,10 @@ void geoOptIon<FEOrder>::update(const std::vector<double> & solution)
    dftPtr->forcePtr->updateAtomPositionsAndMoveMesh(globalAtomsDisplacements);
    d_totalUpdateCalls+=1;
    //write new mesh
-   std::string meshFileName="mesh_geo";
-   meshFileName+=std::to_string(d_totalUpdateCalls);
-   meshFileName+=".vtu";//".dx";//".vtu";
-   geoOptLocal::writeMesh(meshFileName,dftPtr->d_mesh.getSerialMesh());
+   //std::string meshFileName="mesh_geo";
+   //meshFileName+=std::to_string(d_totalUpdateCalls);
+   //meshFileName+=".vtu";//".dx";//".vtu";
+   //writeMesh(meshFileName);
 
    dftPtr->solve();
    
