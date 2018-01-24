@@ -83,9 +83,13 @@ private:
 						  const std::vector<Tensor<1,2,VectorizedArray<double> > > & psiQuads);  
 
 
-  void distributeForceContributionFnlGammaAtoms(const std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms);   
+  void distributeForceContributionFnlGammaAtoms(const std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms);  
   //
   void computeAtomsForcesGaussianGenerator(bool allowGaussianOverlapOnAtoms=false);
+
+  //stress computation functions
+  void computeStressEself();
+  //void computeStressEEshelbyEPSPEnlEk();
   //void computeEnlFnlForceContribution();  
   void locateAtomCoreNodesForce();
 
@@ -120,6 +124,7 @@ private:
   //Gaussian generator related data and functions
   const double d_gaussianConstant=4.0;//5.0
   std::vector<double> d_globalAtomsGaussianForces;
+  Tensor<2,C_DIM,double> d_stress;
   const bool d_allowGaussianOverlapOnAtoms=false;//Dont use true except for debugging forces only without mesh movement, as gaussian ovelap on atoms for move mesh is by default set to false
 
   //pointer to dft class

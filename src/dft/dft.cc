@@ -399,7 +399,6 @@ template<unsigned int FEOrder>
 void dftClass<FEOrder>::run()
 {
   solve();
-
   if (dftParameters::isIonOpt)
   {
     geoOptIonPtr->init();

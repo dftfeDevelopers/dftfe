@@ -29,6 +29,8 @@
 #include "FPSPLocalGammaAtomsElementalContribution.cc"
 #include "FnlGammaAtomsElementalContribution.cc"
 #include "configurationalForceEselfLinFE.cc"
+#include "computeStressEself.cc"
+//#include "computeStressEEshelbyEPSPEnlEk.cc"
 #include "initPseudoForce.cc"
 #include "createBinObjectsForce.cc"
 #include "gaussianGeneratorConfForceOpt.cc"
