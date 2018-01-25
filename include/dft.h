@@ -32,7 +32,7 @@
 #include "poisson.h"
 #include "eigen.h"
 #include "symmetry.h"
-#include "../../softwares/spglib/include/spglib.h"
+
 
 
 #include <interpolation.h> 
@@ -41,6 +41,7 @@
 #include <slepceps.h>
 #include "dftParameters.h"
 #include "meshGenerator.h"
+#include <spglib.h>
 
 //
 //Initialize Namespace
@@ -99,13 +100,13 @@ class dftClass
   template <unsigned int T>
   friend class eigenClass;
 
-  template <unsigned int FEOrder>
+  template <unsigned int T>
   friend class forceClass; 
 
-  template <unsigned int FEOrder>
+  template <unsigned int T>
   friend class geoOptIon;    
 
-  template <unsigned int FEOrder>
+  template <unsigned int T>
   friend class symmetryClass;
 
  public:
@@ -147,6 +148,8 @@ class dftClass
   void readkPointData();
   
   void generateMPGrid();
+
+  void writeMesh(std::string meshFileName);
   /*
   //
   // ************************************************************************************************************************************  //

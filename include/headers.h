@@ -21,6 +21,7 @@
 
 //Include all deal.II header file
 #include <deal.II/base/quadrature.h>
+#include <deal.II/base/quadrature_point_data.h>
 #include <deal.II/base/function.h>
 #include <deal.II/base/logstream.h>
 #include <deal.II/base/timer.h>

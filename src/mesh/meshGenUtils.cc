@@ -97,7 +97,8 @@ double getCosineAngle(std::vector<double> & Vector1,
 
 
 
-void markPeriodicFacesNonOrthogonal(Triangulation<3,3> &triangulation, std::vector<std::vector<double> > & latticeVectors)
+void markPeriodicFacesNonOrthogonal(Triangulation<3,3> &triangulation, 
+				    std::vector<std::vector<double> > & latticeVectors)
 {
 
   std::vector<std::vector<double> > periodicFaceNormals;
@@ -205,17 +206,17 @@ void markPeriodicFaces(Triangulation<3,3> &triangulation)
 	  const Point<3> face_center = cell->face(f)->center();
 	  if(cell->face(f)->at_boundary())
 	    {
-	      if (std::abs(face_center[0]-(domainSizeX/2.0)) < 1.0e-5)
+	      if (std::abs(face_center[0]+(domainSizeX/2.0)) < 1.0e-5)
 		cell->face(f)->set_boundary_id(1);
-	      else if (std::abs(face_center[0]+(domainSizeX/2.0)) < 1.0e-5)
+	      else if (std::abs(face_center[0]-(domainSizeX/2.0)) < 1.0e-5)
 		cell->face(f)->set_boundary_id(2);
-	      else if (std::abs(face_center[1]-(domainSizeY/2.0)) < 1.0e-5)
-		cell->face(f)->set_boundary_id(3);
 	      else if (std::abs(face_center[1]+(domainSizeY/2.0)) < 1.0e-5)
+		cell->face(f)->set_boundary_id(3);
+	      else if (std::abs(face_center[1]-(domainSizeY/2.0)) < 1.0e-5)
 		cell->face(f)->set_boundary_id(4);
-	      else if (std::abs(face_center[2]-(domainSizeZ/2.0)) < 1.0e-5)
-		cell->face(f)->set_boundary_id(5);
 	      else if (std::abs(face_center[2]+(domainSizeZ/2.0)) < 1.0e-5)
+		cell->face(f)->set_boundary_id(5);
+	      else if (std::abs(face_center[2]-(domainSizeZ/2.0)) < 1.0e-5)
 		cell->face(f)->set_boundary_id(6);
 	    }
 	}

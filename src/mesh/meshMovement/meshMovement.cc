@@ -16,8 +16,8 @@
 // @author Sambit Das(2017)
 //
 //
-#include "../../include/meshMovement.h"
-#include "../../include/dftParameters.h"
+#include "../../../include/meshMovement.h"
+#include "../../../include/dftParameters.h"
 
 namespace meshMovementUtils{
 
@@ -415,6 +415,10 @@ void meshMovementClass::findClosestVerticesToDestinationPoints(const std::vector
 		    MPI_DOUBLE,
 		    MPI_SUM,
 		    mpi_communicator);
+
+      //floating point error correction
+      //if ((closestTriaVertexLocationGlobal-closestTriaVertexLocation).norm()<1e-5)
+      //   closestTriaVertexLocationGlobal=closestTriaVertexLocation;
 
       //std::cout << closestTriaVertexLocationGlobal << " disp: "<<Point<3>(destinationPoints[idest]-closestTriaVertexLocationGlobal) << std::endl;
       closestTriaVertexToDestPointsLocation.push_back(closestTriaVertexLocationGlobal);

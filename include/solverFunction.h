@@ -98,6 +98,8 @@ class solverFunction {
     virtual std::vector<int> 
     getUnknownCountFlag() const = 0;
 
+    virtual void writeMesh(std::string meshFileName)=0; 
+
 };
 
 #endif // dft_solverFunction_H_

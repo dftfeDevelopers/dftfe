@@ -21,53 +21,6 @@
 
 #define maxRefinementLevels 10
 
-
-/*
-void markPeriodicFaces(parallel::distributed::Triangulation<3> &triangulation)
-{
-
-  double domainSizeX = dftParameters::domainSizeX,domainSizeY = dftParameters::domainSizeY,domainSizeZ=dftParameters::domainSizeZ;
-
-  typename parallel::distributed::Triangulation<3>::active_cell_iterator cell, endc;
-
-  //
-  //mark faces
-  //
-  cell = triangulation.begin_active(), endc = triangulation.end();
-  for(; cell!=endc; ++cell) 
-    {
-      for(unsigned int f=0; f < GeometryInfo<3>::faces_per_cell; ++f)
-	{
-	  const Point<3> face_center = cell->face(f)->center();
-	  if(cell->face(f)->at_boundary())
-	    {
-	      if (std::abs(face_center[0]+(domainSizeX/2.0)) < 1.0e-5)
-		cell->face(f)->set_boundary_id(1);
-	      else if (std::abs(face_center[0]-(domainSizeX/2.0)) < 1.0e-5)
-		cell->face(f)->set_boundary_id(2);
-	      else if (std::abs(face_center[1]+(domainSizeY/2.0)) < 1.0e-5)
-		cell->face(f)->set_boundary_id(3);
-	      else if (std::abs(face_center[1]-(domainSizeY/2.0)) < 1.0e-5)
-		cell->face(f)->set_boundary_id(4);
-	      else if (std::abs(face_center[2]+(domainSizeZ/2.0)) < 1.0e-5)
-		cell->face(f)->set_boundary_id(5);
-	      else if (std::abs(face_center[2]-(domainSizeZ/2.0)) < 1.0e-5)
-		cell->face(f)->set_boundary_id(6);
-	    }
-	}
-    }
-
-  std::vector<GridTools::PeriodicFacePair<typename Triangulation<3>::cell_iterator> > periodicity_vector;
-  for(int i = 0; i < 3; ++i)
-    {
-      GridTools::collect_periodic_faces(triangulation, 2*i+1, 2*i+2,i, periodicity_vector);
-    }
-
-  triangulation.add_periodicity(periodicity_vector);
-}
-*/
-
-
 //
 //constructor
 //
@@ -96,7 +49,9 @@ meshGeneratorClass::~meshGeneratorClass()
 //
 //generate adaptive mesh
 //
+
 void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& parallelTriangulation, parallel::distributed::Triangulation<3>& serialTriangulation, types::global_dof_index & numberGlobalCells)
+
 {
   computing_timer.enter_section("mesh");
   if(!dftParameters::meshFileName.empty())
@@ -162,22 +117,13 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 	   subdivisions[i] = std::floor(numberIntervalsEachDirection[i]);
       }
 
-      /*subdivisions[0] = 12 ; subdivisions[1] = 12 ; subdivisions[2] = 12 ; 
-      numberIntervalsEachDirection[0] = 12.0; numberIntervalsEachDirection[1] = 12.0 ; numberIntervalsEachDirection[2] = 12.0 ; */
-      //
       GridGenerator::subdivided_parallelepiped<3>(parallelTriangulation,
 	                                          subdivisions,
 				                  basisVectors);
 
-       GridGenerator::subdivided_parallelepiped<3>(serialTriangulation,
+      GridGenerator::subdivided_parallelepiped<3>(serialTriangulation,
 	                                          subdivisions,
 				                  basisVectors);
-
-      /*GridGenerator::parallelepiped<3>(parallelTriangulation,
-				       basisVectors);
-
-      GridGenerator::parallelepiped<3>(serialTriangulation,
-				       basisVectors);*/
 
       //
       //print basis vectors
@@ -195,11 +141,9 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       //collect periodic faces of the first level mesh to set up periodic boundary conditions later
       //
 #ifdef ENABLE_PERIODIC_BC
-      meshGenUtils::markPeriodicFaces(parallelTriangulation);
-      meshGenUtils::markPeriodicFaces(serialTriangulation);
+      meshGenUtils::markPeriodicFacesNonOrthogonal(parallelTriangulation,d_domainBoundingVectors);
+      meshGenUtils::markPeriodicFacesNonOrthogonal(serialTriangulation,d_domainBoundingVectors);
 #endif
-
-            
 
       char buffer1[100];
       sprintf(buffer1, "\n Base uniform number of elements: %u\n", parallelTriangulation.n_global_active_cells());
@@ -378,6 +322,10 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       sprintf(buffer, " numParallelCells: %u, numSerialCells: %u \n", numberGlobalCellsParallel, numberGlobalCellsSerial);
       pcout << buffer;
 
+      AssertThrow(numberGlobalCellsParallel==numberGlobalCellsSerial,ExcMessage("Number of cells are different for parallel and serial triangulations"));
+
+
+
     }
 
   computing_timer.exit_section("mesh");
@@ -406,24 +354,13 @@ void meshGeneratorClass::generateSerialAndParallelMesh(std::vector<std::vector<d
   d_parallelTriangulationUnmoved.clear();
   d_serialTriangulationMoved.clear();
   d_parallelTriangulationMoved.clear();
+
   //
   //generate unmoved mesh data members
   //
-  //generateMesh(numberGlobalCellsSerial);
-
   generateMesh(d_parallelTriangulationUnmoved, d_serialTriangulationUnmoved, numberGlobalCellsParallel);
   generateMesh(d_parallelTriangulationMoved, d_serialTriangulationMoved, numberGlobalCellsParallel);
 
-  //AssertThrow(numberGlobalCellsParallel==numberGlobalCellsSerial,ExcMessage("Number of cells are different for parallel and serial triangulations"));
-
-  //generate moved mesh data members which are still the same meshes before
-  //but will be accessed to move the meshes later
-  
-  /*generateMesh(d_serialTriangulationMoved,
-	       numberGlobalCellsSerial);
-
-  generateMesh(d_parallelTriangulationMoved,
-	       numberGlobalCellsParallel);*/
 
   
 
@@ -436,7 +373,6 @@ parallel::distributed::Triangulation<3> &
 meshGeneratorClass::getSerialMesh()
 {
   return d_serialTriangulationMoved;
-  //return d_serialTriangulationUnmoved;
 }
 
 //

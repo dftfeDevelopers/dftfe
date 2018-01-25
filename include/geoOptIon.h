@@ -35,7 +35,7 @@ public:
   void run();   
 private:
 
-    
+  void writeMesh(std::string meshFileName);
   int getNumberUnknowns() const ;
   double value() const;
   void value(std::vector<double> & functionValue);
@@ -49,6 +49,7 @@ private:
   //member data
   std::vector<int> d_relaxationFlags;
   double d_maximumAtomForceToBeRelaxed;
+  int d_totalUpdateCalls;
 
   //pointer to dft class
   dftClass<FEOrder>* dftPtr;
