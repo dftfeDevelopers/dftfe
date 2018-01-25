@@ -223,6 +223,7 @@ void dftClass<FEOrder>::generateMPGrid()
       for (unsigned int j=0; j<3; ++j)
       position[i][j] = atomLocationsFractional[i][j+2] ;
    }
+   types[0]=0; types[1]=1; types[2]=1; types[3]=0; types[4]=1; types[5]=1;
   // ***********************************  Checking on SPG ******************************************** 
   /*int max_size = 500;
   int num_atom = 2 ;
@@ -379,7 +380,5 @@ void dftClass<FEOrder>::generateMPGrid()
       d_kPointCoordinates[3*i + 1] = kPointReducedCoordinates[3*i+0]*d_reciprocalLatticeVectors[0][1] + kPointReducedCoordinates[3*i+1]*d_reciprocalLatticeVectors[1][1] + kPointReducedCoordinates[3*i+2]*d_reciprocalLatticeVectors[2][1];
       d_kPointCoordinates[3*i + 2] = kPointReducedCoordinates[3*i+0]*d_reciprocalLatticeVectors[0][2] + kPointReducedCoordinates[3*i+1]*d_reciprocalLatticeVectors[1][2] + kPointReducedCoordinates[3*i+2]*d_reciprocalLatticeVectors[2][2];
     }
-
- 
  
 }

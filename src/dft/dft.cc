@@ -198,12 +198,12 @@ void dftClass<FEOrder>::set()
   //find cell-centered cartesian coordinates
   //
   //atomLocationsFractional = atomLocations;
-  for(int i = 0; i < atomLocationsFractional.size(); ++i)
+  /*for(int i = 0; i < atomLocationsFractional.size(); ++i)
     {
       atomLocationsFractional[i][2] = atomLocationsFractional[i][2] - 0.5;
       atomLocationsFractional[i][3] = atomLocationsFractional[i][3] - 0.5;
       atomLocationsFractional[i][4] = atomLocationsFractional[i][4] - 0.5;
-    } 
+    }*/ 
   convertToCellCenteredCartesianCoordinates(atomLocations,
 					    d_latticeVectors);
 
@@ -270,8 +270,8 @@ void dftClass<FEOrder>::set()
 #ifdef ENABLE_PERIODIC_BC
   //readkPointData();
    generateMPGrid();
-   //if (useSymm)
-   //   test_spg_get_ir_reciprocal_mesh() ;
+   if (useSymm)
+      symmetryPtr->test_spg_get_ir_reciprocal_mesh() ;
 #else
   d_maxkPoints = 1;
   d_kPointCoordinates.resize(3*d_maxkPoints,0.0);
@@ -337,7 +337,7 @@ void dftClass<FEOrder>::init ()
   //get access to triangulation objects from meshGenerator class
   //
   parallel::distributed::Triangulation<3> & triangulationPar = d_mesh.getParallelMesh();
-  Triangulation<3,3> & triangulationSer = d_mesh.getSerialMesh();
+  parallel::distributed::Triangulation<3> & triangulationSer = d_mesh.getSerialMesh();
   //
   //initialize dofHandlers and hanging-node constraints and periodic constraints on the unmoved Mesh
   //

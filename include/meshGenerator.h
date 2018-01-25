@@ -45,11 +45,11 @@ class meshGeneratorClass
 				     std::vector<std::vector<double> > & imageAtomLocations,
 				     std::vector<std::vector<double> > & domainBoundingVectors);
 
-  void generateMesh(parallel::distributed::Triangulation<3>& parallelTriangulation, Triangulation<3,3>& serialTriangulation, unsigned int & numberGlobalCells);
+  void generateMesh(parallel::distributed::Triangulation<3>& parallelTriangulation, parallel::distributed::Triangulation<3>& serialTriangulation, unsigned int & numberGlobalCells);
 
-  void refineSerialMesh(unsigned int n_cell, std::vector<double>& centroid, std::vector<int>& localRefineFlag, unsigned int n_global_cell, Triangulation<3,3>& serialTriangulation) ;
+  void refineSerialMesh(unsigned int n_cell, std::vector<double>& centroid, std::vector<int>& localRefineFlag, unsigned int n_global_cell, parallel::distributed::Triangulation<3>& serialTriangulation) ;
 
-  Triangulation<3,3> & getSerialMesh();
+  parallel::distributed::Triangulation<3> & getSerialMesh();
 
   parallel::distributed::Triangulation<3> & getParallelMesh();
 
@@ -62,8 +62,8 @@ class meshGeneratorClass
   parallel::distributed::Triangulation<3> d_parallelTriangulationUnmoved;
   parallel::distributed::Triangulation<3> d_parallelTriangulationMoved;
 
-  Triangulation<3,3> d_serialTriangulationUnmoved;
-  Triangulation<3,3> d_serialTriangulationMoved;
+  parallel::distributed::Triangulation<3> d_serialTriangulationUnmoved;
+  parallel::distributed::Triangulation<3> d_serialTriangulationMoved;
 
   std::vector<std::vector<double> > d_atomPositions;
   std::vector<std::vector<double> > d_imageAtomPositions;
