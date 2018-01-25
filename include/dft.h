@@ -100,13 +100,13 @@ class dftClass
   template <unsigned int T>
   friend class eigenClass;
 
-  template <unsigned int FEOrder>
+  template <unsigned int T>
   friend class forceClass; 
 
-  template <unsigned int FEOrder>
+  template <unsigned int T>
   friend class geoOptIon;    
 
-  template <unsigned int FEOrder>
+  template <unsigned int T>
   friend class symmetryClass;
 
  public:

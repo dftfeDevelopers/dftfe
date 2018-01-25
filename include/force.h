@@ -34,7 +34,7 @@ template <unsigned int FEOrder>
 class forceClass
 {
   template <unsigned int T>  friend class dftClass;
-  template <unsigned int FEOrder>  friend class geoOptIon;
+  template <unsigned int T>  friend class geoOptIon;
 public:
   forceClass(dftClass<FEOrder>* _dftPtr);
   void initUnmoved(Triangulation<3,3> & triangulation);

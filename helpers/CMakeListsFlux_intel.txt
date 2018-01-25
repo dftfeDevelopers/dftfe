@@ -13,31 +13,31 @@ SET(ALGLIB_LIB "/nfs/mcfs_comp/home/rudraa/software/alglib/cpp/src/libAlglib.so"
 ##export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/path/to/Algib/.so/file
 
 ##set LIBXC paths
-SET(LIBXC_INCLUDE "/home/vikramg/DFT-FE-softwares/softwareCentos/libxc/install_gcc7.2.0/include") #path to xc.h
-SET(LIBXC_LIB "/home/vikramg/DFT-FE-softwares/softwareCentos/libxc/install_gcc7.2.0/lib/libxc.a") #path to libxc.a
+SET(LIBXC_INCLUDE "/nfs/mcfs_comp/home/rudraa/software/libxc/libxc-2.2.0/installDir/include") #path to xc.h
+SET(LIBXC_LIB "/nfs/mcfs_comp/home/rudraa/software/libxc/libxc-2.2.0/installDir/lib/libxc.a") #path to libxc.a
 
 ##set PETSc Real paths
-SET(PETSC_REAL_INCLUDE "/home/vikramg/DFT-FE-softwares/softwareCentos/petsc/gcc_petsc3.8.3/include")
-SET(PETSC_REAL_LIB "/home/vikramg/DFT-FE-softwares/softwareCentos/petsc/gcc_petsc3.8.3/lib/libpetsc.so")
+SET(PETSC_REAL_INCLUDE "/home/vikramg/DFT-FE-softwares/softwareCentos/petsc/intel_petsc3.7.5_double_elemental/include")
+SET(PETSC_REAL_LIB "/home/vikramg/DFT-FE-softwares/softwareCentos/petsc/intel_petsc3.7.5_double_elemental/lib/libpetsc.so")
 
 ##set SLEPc Real paths
-SET(SLEPC_REAL_INCLUDE "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/gcc_slepc3.8.3/include")
-SET(SLEPC_REAL_LIB "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/gcc_slepc3.8.3/lib/libslepc.so") 
+SET(SLEPC_REAL_INCLUDE "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/intel_slepc3.7.3_double_elemental/include")
+SET(SLEPC_REAL_LIB "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/intel_slepc3.7.3_double_elemental/lib/libslepc.so") 
 
 ##set PETSc Complex paths
-SET(PETSC_COMPLEX_INCLUDE "/home/vikramg/DFT-FE-softwares/softwareCentos/petsc/intel_petsc3.8.3_complex/include")
-SET(PETSC_COMPLEX_LIB "/home/vikramg/DFT-FE-softwares/softwareCentos/petsc/gcc_petsc3.8.3_complex/lib/libpetsc.so")
+SET(PETSC_COMPLEX_INCLUDE "/home/vikramg/DFT-FE-softwares/softwareCentos/petsc/intel_petsc3.7.5_complex/include")
+SET(PETSC_COMPLEX_LIB "/home/vikramg/DFT-FE-softwares/softwareCentos/petsc/intel_petsc3.7.5_complex/lib/libpetsc.so")
 
 ##set SLEPc Complex paths
-SET(SLEPC_COMPLEX_INCLUDE "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/gcc_slepc3.8.3_complex/include")
-SET(SLEPC_COMPLEX_LIB "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/gcc_slepc3.8.3_complex/lib/libslepc.so") 
+SET(SLEPC_COMPLEX_INCLUDE "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/intel_slepc3.7.3_complex/include")
+SET(SLEPC_COMPLEX_LIB "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/intel_slepc3.7.3_complex/lib/libslepc.so") 
 
 ##set SPG paths
 SET(SPG_INCLUDE "/home/vikramg/DFT-FE-softwares/softwareCentos/spglib/include")
 SET(SPG_LIB "/home/vikramg/DFT-FE-softwares/softwareCentos/spglib/lib/libsymspg.so") 
 
 ## set DEAL_II dir path
-SET(DEAL_II_DIR "/home/vikramg/DFT-FE-softwares/softwareCentos/dealiiDev/gcc_nopetsc_mkl")
+SET(DEAL_II_DIR "/home/vikramg/DFT-FE-softwares/softwareCentos/dealiiTest/intel_17.0.1_nopetsc_mkl_noavx")
 #
 # Usually, you will not need to modify anything beyond this point...
 #
@@ -53,8 +53,8 @@ SET(TARGET_SRC
   ./src/eigen/eigen.cc
   ./src/force/force.cc
   ./src/force/eshelbyTensor/eshelbyTensor.cc
-  ./src/mesh/meshMovement/meshMovement.cc
-  ./src/mesh/meshMovement/meshMovementGaussian.cc
+  ./src/meshMovement/meshMovement.cc
+  ./src/meshMovement/meshMovementGaussian.cc
   ./src/mesh/meshGenerator.cc
   ./src/symmetry/initGroupSymmetry.cc
   ./src/symmetry/symmetrizeRho.cc
