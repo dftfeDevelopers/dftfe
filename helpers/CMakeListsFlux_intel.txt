@@ -53,8 +53,8 @@ SET(TARGET_SRC
   ./src/eigen/eigen.cc
   ./src/force/force.cc
   ./src/force/eshelbyTensor/eshelbyTensor.cc
-  ./src/meshMovement/meshMovement.cc
-  ./src/meshMovement/meshMovementGaussian.cc
+  ./src/mesh/meshMovement/meshMovement.cc
+  ./src/mesh/meshMovement/meshMovementGaussian.cc
   ./src/mesh/meshGenerator.cc
   ./src/symmetry/initGroupSymmetry.cc
   ./src/symmetry/symmetrizeRho.cc
