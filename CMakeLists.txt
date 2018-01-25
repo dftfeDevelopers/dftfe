@@ -35,8 +35,9 @@ SET(SLEPC_COMPLEX_LIB "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/intel
 ##set SPG paths
 SET(SPG_INCLUDE "/home/vikramg/DFT-FE-softwares/softwareCentos/spglib/include")
 SET(SPG_LIB "/home/vikramg/DFT-FE-softwares/softwareCentos/spglib/lib/libsymspg.so") 
-#
 
+## set DEAL_II dir path
+SET(DEAL_II_DIR "/home/vikramg/DFT-FE-softwares/softwareCentos/dealiiTest/intel_17.0.1_nopetsc_mkl_noavx")
 #
 # Usually, you will not need to modify anything beyond this point...
 #
@@ -52,8 +53,8 @@ SET(TARGET_SRC
   ./src/eigen/eigen.cc
   ./src/force/force.cc
   ./src/force/eshelbyTensor/eshelbyTensor.cc
-  ./src/meshMovement/meshMovement.cc
-  ./src/meshMovement/meshMovementGaussian.cc
+  ./src/mesh/meshMovement/meshMovement.cc
+  ./src/mesh/meshMovement/meshMovementGaussian.cc
   ./src/mesh/meshGenerator.cc
   ./src/symmetry/initGroupSymmetry.cc
   ./src/symmetry/symmetrizeRho.cc
@@ -69,7 +70,7 @@ SET(TARGET_SRC
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8.8)
 
 FIND_PACKAGE(deal.II 8.4.0 QUIET
-  HINTS ${deal.II_DIR} ${DEAL_II_DIR} ../ ../../ $ENV{DEAL_II_DIR}
+  HINTS ${deal.II_DIR} ${DEAL_II_DIR}
   )
 IF(NOT ${deal.II_FOUND})
   MESSAGE(FATAL_ERROR "\n"

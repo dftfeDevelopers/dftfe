@@ -18,18 +18,18 @@ if [ $optimizedMode == 1 ]; then
     cd build
     cd release
     echo -e "${Blu}Building Non-Periodic executable in Optimized (Release) mode...${RCol}"
-    mkdir -p nonPeriodic && cd nonPeriodic && cmake -DCMAKE_CXX_FLAGS_RELEASE="-O3" -DCMAKE_BUILD_TYPE=Release ../../../. && make && cd ..
+    mkdir -p nonPeriodic && cd nonPeriodic && cmake -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_CXX_FLAGS_RELEASE="-O3" -DCMAKE_BUILD_TYPE=Release ../../../. && make && cd ..
     echo -e "${Blu}Building Periodic executable in Optimized (Release) mode...${RCol}"
-    mkdir -p periodic && cd periodic && cmake -DCMAKE_CXX_FLAGS_RELEASE="-O3" -DCMAKE_BUILD_TYPE=Release -D_ENABLE_PERIODIC=TRUE ../../../. && make && cd ../..
+    mkdir -p periodic && cd periodic && cmake -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_CXX_FLAGS_RELEASE="-O3" -DCMAKE_BUILD_TYPE=Release -D_ENABLE_PERIODIC=TRUE ../../../. && make && cd ../..
   else
     rm -rf build/release
     echo -e "${Blu}Creating build directory...${RCol}"
     mkdir -p build && cd build
     mkdir -p release && cd release
     echo -e "${Blu}Building Non-Periodic executable in Optimized (Release) mode...${RCol}"
-    mkdir -p nonPeriodic && cd nonPeriodic && cmake -DCMAKE_CXX_FLAGS_RELEASE="-O3" -DCMAKE_BUILD_TYPE=Release ../../../. && make && cd ..
+    mkdir -p nonPeriodic && cd nonPeriodic && cmake -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_CXX_FLAGS_RELEASE="-O3" -DCMAKE_BUILD_TYPE=Release ../../../. && make && cd ..
     echo -e "${Blu}Building Periodic executable in Optimized (Release) mode...${RCol}"
-    mkdir -p periodic && cd periodic && cmake -DCMAKE_CXX_FLAGS_RELEASE="-O3" -DCMAKE_BUILD_TYPE=Release -D_ENABLE_PERIODIC=TRUE ../../../. && make && cd ../..
+    mkdir -p periodic && cd periodic && cmake -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_CXX_FLAGS_RELEASE="-O3" -DCMAKE_BUILD_TYPE=Release -D_ENABLE_PERIODIC=TRUE ../../../. && make && cd ../..
   fi
 else
   if [ -d "build/debug" ]; then
@@ -38,18 +38,18 @@ else
     cd build
     cd debug
     echo -e "${Blu}Building Non-Periodic executable in Debug mode...${RCol}"
-    mkdir -p nonPeriodic && cd nonPeriodic && cmake -DCMAKE_BUILD_TYPE=Debug ../../../. && make && cd ..
+    mkdir -p nonPeriodic && cd nonPeriodic && cmake -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_BUILD_TYPE=Debug ../../../. && make && cd ..
     echo -e "${Blu}Building Periodic executable in Debug mode...${RCol}"
-    mkdir -p periodic && cd periodic && cmake -DCMAKE_BUILD_TYPE=Debug -D_ENABLE_PERIODIC=TRUE ../../../. && make && cd ../..
+    mkdir -p periodic && cd periodic && cmake -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_BUILD_TYPE=Debug -D_ENABLE_PERIODIC=TRUE ../../../. && make && cd ../..
   else
     rm -rf build/debug
     echo -e "${Blu}Creating build directory...${RCol}"
     mkdir -p build && cd build
     mkdir -p debug && cd debug
     echo -e "${Blu}Building Non-Periodic executable in Debug mode...${RCol}"
-    mkdir -p nonPeriodic && cd nonPeriodic && cmake -DCMAKE_BUILD_TYPE=Debug ../../../. && make && cd ..
+    mkdir -p nonPeriodic && cd nonPeriodic && cmake -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_BUILD_TYPE=Debug ../../../. && make && cd ..
     echo -e "${Blu}Building Periodic executable in Debug mode...${RCol}"
-    mkdir -p periodic && cd periodic && cmake -DCMAKE_BUILD_TYPE=Debug -D_ENABLE_PERIODIC=TRUE ../../../. && make && cd ../..
+    mkdir -p periodic && cd periodic && cmake -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_BUILD_TYPE=Debug -D_ENABLE_PERIODIC=TRUE ../../../. && make && cd ../..
   fi
 fi
 echo -e "${Blu}Build complete.${RCol}"
