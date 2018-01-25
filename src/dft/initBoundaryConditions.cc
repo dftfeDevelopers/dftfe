@@ -64,6 +64,7 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   //matrix free data structure
   //
   typename MatrixFree<3>::AdditionalData additional_data;
+  //comment this if using deal ii version 9
   additional_data.mpi_communicator = MPI_COMM_WORLD;
   additional_data.tasks_parallel_scheme = MatrixFree<3>::AdditionalData::partition_partition;
 
