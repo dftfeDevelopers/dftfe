@@ -39,7 +39,7 @@ class eigenClass
   friend class symmetryClass;
 
 public:
-  eigenClass(dftClass<FEOrder>* _dftPtr);
+  eigenClass(dftClass<FEOrder>* _dftPtr, MPI_Comm &mpi_comm_replica);
   void HX(const std::vector<vectorType*> &src, 
 	  std::vector<vectorType*> &dst);
 

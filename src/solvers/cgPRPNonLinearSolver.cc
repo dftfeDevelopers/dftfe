@@ -25,11 +25,12 @@
   cgPRPNonLinearSolver::cgPRPNonLinearSolver(double tolerance,
                                             int    maxNumberIterations,
                                             int    debugLevel,
+					    MPI_Comm &mpi_comm_replica,
                                             double lineSearchTolerance,
 				            int    lineSearchMaxIterations) :
     d_lineSearchTolerance(lineSearchTolerance),
     d_lineSearchMaxIterations(lineSearchMaxIterations),
-    mpi_communicator (MPI_COMM_WORLD),
+    mpi_communicator (mpi_comm_replica),
     n_mpi_processes (dealii::Utilities::MPI::n_mpi_processes(mpi_communicator)),
     this_mpi_process (dealii::Utilities::MPI::this_mpi_process(mpi_communicator)),
     pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))    

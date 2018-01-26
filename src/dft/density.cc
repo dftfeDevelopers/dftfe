@@ -63,8 +63,8 @@ void dftClass<FEOrder>::compute_rhoOut()
     }
   
   //temp arrays
-  std::vector<double> rhoOut(num_quad_points), rhoOutSpinPolarized(2*num_quad_points);
-  std::vector<double> gradRhoOut(3*num_quad_points), gradRhoOutSpinPolarized(6*num_quad_points);
+  std::vector<double> rhoTemp(num_quad_points), rhoTempSpinPolarized(2*num_quad_points), rhoOut(num_quad_points), rhoOutSpinPolarized(2*num_quad_points);
+  std::vector<double> gradRhoTemp(3*num_quad_points), gradRhoTempSpinPolarized(6*num_quad_points),gradRhoOut(3*num_quad_points), gradRhoOutSpinPolarized(6*num_quad_points);
 
   //parallel loop over all elements
   typename DoFHandler<3>::active_cell_iterator cell = dofHandlerEigen.begin_active(), endc = dofHandlerEigen.end();
@@ -76,11 +76,11 @@ void dftClass<FEOrder>::compute_rhoOut()
 	  fe_values.reinit (cell); 
 
 	  (*rhoOutValues)[cell->id()] = std::vector<double>(num_quad_points);
-	  std::fill(rhoOut.begin(),rhoOut.end(),0.0);
+	  std::fill(rhoTemp.begin(),rhoTemp.end(),0.0);
 	  if (spinPolarized==1)
     	     {
 	       	(*rhoOutValuesSpinPolarized)[cell->id()] = std::vector<double>(2*num_quad_points);
-		std::fill(rhoOutSpinPolarized.begin(),rhoOutSpinPolarized.end(),0.0);
+		std::fill(rhoTempSpinPolarized.begin(),rhoTempSpinPolarized.end(),0.0);
 	     }
 	
 #ifdef ENABLE_PERIODIC_BC
@@ -99,11 +99,11 @@ void dftClass<FEOrder>::compute_rhoOut()
 	  if(xc_id == 4)//GGA
 	    {
 	      (*gradRhoOutValues)[cell->id()] = std::vector<double>(3*num_quad_points);
-	      std::fill(gradRhoOut.begin(),gradRhoOut.end(),0.0);
+	      std::fill(gradRhoTemp.begin(),gradRhoTemp.end(),0.0);
 	      if (spinPolarized==1)
     	        {
 	       	   (*gradRhoOutValuesSpinPolarized)[cell->id()] = std::vector<double>(6*num_quad_points);
-	            std::fill(gradRhoOutSpinPolarized.begin(),gradRhoOutSpinPolarized.end(),0.0);
+	            std::fill(gradRhoTempSpinPolarized.begin(),gradRhoTempSpinPolarized.end(),0.0);
 	        } 
 #ifdef ENABLE_PERIODIC_BC
 	      std::vector<std::vector<Tensor<1,3,double> > > tempGradPsi(num_quad_points), tempGradPsi2(num_quad_points);
@@ -139,54 +139,65 @@ void dftClass<FEOrder>::compute_rhoOut()
 #ifdef ENABLE_PERIODIC_BC
 			  if(spinPolarized==1)
 			    {
-			      rhoOutSpinPolarized[2*q_point] += partialOccupancy*d_kPointWeights[kPoint]*(tempPsi[q_point](0)*tempPsi[q_point](0) + tempPsi[q_point](1)*tempPsi[q_point](1));
-			      rhoOutSpinPolarized[2*q_point+1] += partialOccupancy2*d_kPointWeights[kPoint]*(tempPsi2[q_point](0)*tempPsi2[q_point](0) + tempPsi2[q_point](1)*tempPsi2[q_point](1));
+			      rhoTempSpinPolarized[2*q_point] += partialOccupancy*d_kPointWeights[kPoint]*(tempPsi[q_point](0)*tempPsi[q_point](0) + tempPsi[q_point](1)*tempPsi[q_point](1));
+			      rhoTempSpinPolarized[2*q_point+1] += partialOccupancy2*d_kPointWeights[kPoint]*(tempPsi2[q_point](0)*tempPsi2[q_point](0) + tempPsi2[q_point](1)*tempPsi2[q_point](1));
 			      //
-			      gradRhoOutSpinPolarized[6*q_point + 0] += 
+			      gradRhoTempSpinPolarized[6*q_point + 0] += 
 			      2.0*partialOccupancy*d_kPointWeights[kPoint]*(tempPsi[q_point](0)*tempGradPsi[q_point][0][0] + tempPsi[q_point](1)*tempGradPsi[q_point][1][0]);
-			      gradRhoOutSpinPolarized[6*q_point + 1] += 
+			      gradRhoTempSpinPolarized[6*q_point + 1] += 
 			      2.0*partialOccupancy*d_kPointWeights[kPoint]*(tempPsi[q_point](0)*tempGradPsi[q_point][0][1] + tempPsi[q_point](1)*tempGradPsi[q_point][1][1]);
-			      gradRhoOutSpinPolarized[6*q_point + 2] += 
+			      gradRhoTempSpinPolarized[6*q_point + 2] += 
 			      2.0*partialOccupancy*d_kPointWeights[kPoint]*(tempPsi[q_point](0)*tempGradPsi[q_point][0][2] + tempPsi[q_point](1)*tempGradPsi[q_point][1][2]);
-			      gradRhoOutSpinPolarized[6*q_point + 3] += 
+			      gradRhoTempSpinPolarized[6*q_point + 3] += 
 			      2.0*partialOccupancy2*d_kPointWeights[kPoint]*(tempPsi2[q_point](0)*tempGradPsi2[q_point][0][0] + tempPsi2[q_point](1)*tempGradPsi2[q_point][1][0]);
-			      gradRhoOutSpinPolarized[6*q_point + 4] += 
+			      gradRhoTempSpinPolarized[6*q_point + 4] += 
 			      2.0*partialOccupancy2*d_kPointWeights[kPoint]*(tempPsi2[q_point](0)*tempGradPsi2[q_point][0][1] + tempPsi2[q_point](1)*tempGradPsi2[q_point][1][1]);
-			      gradRhoOutSpinPolarized[6*q_point + 5] += 
+			      gradRhoTempSpinPolarized[6*q_point + 5] += 
 			      2.0*partialOccupancy2*d_kPointWeights[kPoint]*(tempPsi2[q_point](0)*tempGradPsi2[q_point][0][2] + tempPsi2[q_point](1)*tempGradPsi2[q_point][1][2]);
 			    }
 			  else
 			    {
-			      rhoOut[q_point] += 2.0*partialOccupancy*d_kPointWeights[kPoint]*(tempPsi[q_point](0)*tempPsi[q_point](0) + tempPsi[q_point](1)*tempPsi[q_point](1));
-			      gradRhoOut[3*q_point + 0] += 2.0*2.0*partialOccupancy*d_kPointWeights[kPoint]*(tempPsi[q_point](0)*tempGradPsi[q_point][0][0] + tempPsi[q_point](1)*tempGradPsi[q_point][1][0]);
-			      gradRhoOut[3*q_point + 1] += 2.0*2.0*partialOccupancy*d_kPointWeights[kPoint]*(tempPsi[q_point](0)*tempGradPsi[q_point][0][1] + tempPsi[q_point](1)*tempGradPsi[q_point][1][1]);
-			      gradRhoOut[3*q_point + 2] += 2.0*2.0*partialOccupancy*d_kPointWeights[kPoint]*(tempPsi[q_point](0)*tempGradPsi[q_point][0][2] + tempPsi[q_point](1)*tempGradPsi[q_point][1][2]);
+			      rhoTemp[q_point] += 2.0*partialOccupancy*d_kPointWeights[kPoint]*(tempPsi[q_point](0)*tempPsi[q_point](0) + tempPsi[q_point](1)*tempPsi[q_point](1));
+			      gradRhoTemp[3*q_point + 0] += 2.0*2.0*partialOccupancy*d_kPointWeights[kPoint]*(tempPsi[q_point](0)*tempGradPsi[q_point][0][0] + tempPsi[q_point](1)*tempGradPsi[q_point][1][0]);
+			      gradRhoTemp[3*q_point + 1] += 2.0*2.0*partialOccupancy*d_kPointWeights[kPoint]*(tempPsi[q_point](0)*tempGradPsi[q_point][0][1] + tempPsi[q_point](1)*tempGradPsi[q_point][1][1]);
+			      gradRhoTemp[3*q_point + 2] += 2.0*2.0*partialOccupancy*d_kPointWeights[kPoint]*(tempPsi[q_point](0)*tempGradPsi[q_point][0][2] + tempPsi[q_point](1)*tempGradPsi[q_point][1][2]);
 			    }
 #else
 			  if(spinPolarized==1)
 			    {
-			      rhoOutSpinPolarized[2*q_point] += partialOccupancy*tempPsi[q_point]*tempPsi[q_point];
-			      rhoOutSpinPolarized[2*q_point+1] += partialOccupancy2*tempPsi2[q_point]*tempPsi2[q_point];
-			      //rhoOut[q_point] += rhoOutSpinPolarized[2*q_point] + rhoOutSpinPolarized[2*q_point+1];
-			      gradRhoOutSpinPolarized[6*q_point + 0] += 2.0*partialOccupancy*(tempPsi[q_point]*tempGradPsi[q_point][0]) ;
-			      gradRhoOutSpinPolarized[6*q_point + 1] +=  2.0*partialOccupancy*(tempPsi[q_point]*tempGradPsi[q_point][1]) ;
-			      gradRhoOutSpinPolarized[6*q_point + 2] += 2.0*partialOccupancy*(tempPsi[q_point]*tempGradPsi[q_point][2]) ;			      
-			      gradRhoOutSpinPolarized[6*q_point + 3] +=  2.0*partialOccupancy2*(tempPsi2[q_point]*tempGradPsi2[q_point][0]);
-			      gradRhoOutSpinPolarized[6*q_point + 4] += 2.0*partialOccupancy2*(tempPsi2[q_point]*tempGradPsi2[q_point][1]) ;
-			      gradRhoOutSpinPolarized[6*q_point + 5] += 2.0*partialOccupancy2*(tempPsi2[q_point]*tempGradPsi2[q_point][2]) ;
+			      rhoTempSpinPolarized[2*q_point] += partialOccupancy*tempPsi[q_point]*tempPsi[q_point];
+			      rhoTempSpinPolarized[2*q_point+1] += partialOccupancy2*tempPsi2[q_point]*tempPsi2[q_point];
+			      gradRhoTempSpinPolarized[6*q_point + 0] += 2.0*partialOccupancy*(tempPsi[q_point]*tempGradPsi[q_point][0]) ;
+			      gradRhoTempSpinPolarized[6*q_point + 1] +=  2.0*partialOccupancy*(tempPsi[q_point]*tempGradPsi[q_point][1]) ;
+			      gradRhoTempSpinPolarized[6*q_point + 2] += 2.0*partialOccupancy*(tempPsi[q_point]*tempGradPsi[q_point][2]) ;			      
+			      gradRhoTempSpinPolarized[6*q_point + 3] +=  2.0*partialOccupancy2*(tempPsi2[q_point]*tempGradPsi2[q_point][0]);
+			      gradRhoTempSpinPolarized[6*q_point + 4] += 2.0*partialOccupancy2*(tempPsi2[q_point]*tempGradPsi2[q_point][1]) ;
+			      gradRhoTempSpinPolarized[6*q_point + 5] += 2.0*partialOccupancy2*(tempPsi2[q_point]*tempGradPsi2[q_point][2]) ;
 			    }
 			  else
 			    {
-			      rhoOut[q_point] += 2.0*partialOccupancy*tempPsi[q_point]*tempPsi[q_point];//std::pow(tempPsi[q_point],2.0); 
-			      gradRhoOut[3*q_point + 0] += 2.0*2.0*partialOccupancy*tempPsi[q_point]*tempGradPsi[q_point][0];
-			      gradRhoOut[3*q_point + 1] += 2.0*2.0*partialOccupancy*tempPsi[q_point]*tempGradPsi[q_point][1];
-			      gradRhoOut[3*q_point + 2] += 2.0*2.0*partialOccupancy*tempPsi[q_point]*tempGradPsi[q_point][2];
+			      rhoTemp[q_point] += 2.0*partialOccupancy*tempPsi[q_point]*tempPsi[q_point];//std::pow(tempPsi[q_point],2.0); 
+			      gradRhoTemp[3*q_point + 0] += 2.0*2.0*partialOccupancy*tempPsi[q_point]*tempGradPsi[q_point][0];
+			      gradRhoTemp[3*q_point + 1] += 2.0*2.0*partialOccupancy*tempPsi[q_point]*tempGradPsi[q_point][1];
+			      gradRhoTemp[3*q_point + 2] += 2.0*2.0*partialOccupancy*tempPsi[q_point]*tempGradPsi[q_point][2];
 			    }
 
 #endif
 			}
 		    }
 		}
+
+              //  gather density from all pools
+	      int numPoint = rhoTemp.size() ;
+              MPI_Allreduce(&rhoTemp[0], &rhoOut[0], numPoint, MPI_DOUBLE, MPI_SUM, interpoolcomm) ;
+	      MPI_Allreduce(&gradRhoTemp[0], &gradRhoOut[0], 3*numPoint, MPI_DOUBLE, MPI_SUM, interpoolcomm) ;
+              if (spinPolarized==1) {
+                 MPI_Allreduce(&rhoTempSpinPolarized[0], &rhoOutSpinPolarized[0], 2*numPoint, MPI_DOUBLE, MPI_SUM, interpoolcomm) ;
+	         MPI_Allreduce(&gradRhoTempSpinPolarized[0], &gradRhoOutSpinPolarized[0], 6*numPoint, MPI_DOUBLE, MPI_SUM, interpoolcomm) ; 
+              }
+
+       //
+
 
 	      for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
 		{
@@ -236,27 +247,31 @@ void dftClass<FEOrder>::compute_rhoOut()
 #ifdef ENABLE_PERIODIC_BC
 			   if(spinPolarized==1)
 			    {
-			      rhoOutSpinPolarized[2*q_point] += partialOccupancy*d_kPointWeights[kPoint]*(tempPsi[q_point](0)*tempPsi[q_point](0) + tempPsi[q_point](1)*tempPsi[q_point](1));
-			      rhoOutSpinPolarized[2*q_point+1] += partialOccupancy2*d_kPointWeights[kPoint]*(tempPsi2[q_point](0)*tempPsi2[q_point](0) + tempPsi2[q_point](1)*tempPsi2[q_point](1));
+			      rhoTempSpinPolarized[2*q_point] += partialOccupancy*d_kPointWeights[kPoint]*(tempPsi[q_point](0)*tempPsi[q_point](0) + tempPsi[q_point](1)*tempPsi[q_point](1));
+			      rhoTempSpinPolarized[2*q_point+1] += partialOccupancy2*d_kPointWeights[kPoint]*(tempPsi2[q_point](0)*tempPsi2[q_point](0) + tempPsi2[q_point](1)*tempPsi2[q_point](1));
 			      //rhoOut[q_point] += rhoOutSpinPolarized[2*q_point] + rhoOutSpinPolarized[2*q_point+1];
 			    }
 			  else
-			      rhoOut[q_point] += 2.0*partialOccupancy*d_kPointWeights[kPoint]*(tempPsi[q_point](0)*tempPsi[q_point](0) + tempPsi[q_point](1)*tempPsi[q_point](1));
+			      rhoTemp[q_point] += 2.0*partialOccupancy*d_kPointWeights[kPoint]*(tempPsi[q_point](0)*tempPsi[q_point](0) + tempPsi[q_point](1)*tempPsi[q_point](1));
 #else
 			   if(spinPolarized==1)
 			    {
-			      rhoOutSpinPolarized[2*q_point] += partialOccupancy*tempPsi[q_point]*tempPsi[q_point];
-			      rhoOutSpinPolarized[2*q_point+1] += partialOccupancy2*tempPsi2[q_point]*tempPsi2[q_point];
-			      //rhoOut[q_point] += rhoOutSpinPolarized[2*q_point] + rhoOutSpinPolarized[2*q_point+1];
+			      rhoTempSpinPolarized[2*q_point] += partialOccupancy*tempPsi[q_point]*tempPsi[q_point];
+			      rhoTempSpinPolarized[2*q_point+1] += partialOccupancy2*tempPsi2[q_point]*tempPsi2[q_point];
 			    }
 			  else
-			      rhoOut[q_point] += 2.0*partialOccupancy*tempPsi[q_point]*tempPsi[q_point];//std::pow(tempPsi[q_point],2.0); 
+			      rhoTemp[q_point] += 2.0*partialOccupancy*tempPsi[q_point]*tempPsi[q_point];//std::pow(tempPsi[q_point],2.0); 
 			  //
 #endif
 			}
 		    }
 		}
-              //pcout<<"check 6.2: "<<std::endl;
+              //  gather density from all pools
+	      int numPoint = rhoTemp.size() ;
+              MPI_Allreduce(&rhoTemp[0], &rhoOut[0], numPoint, MPI_DOUBLE, MPI_SUM, interpoolcomm) ;
+              if (spinPolarized==1) 
+                 MPI_Allreduce(&rhoTempSpinPolarized[0], &rhoOutSpinPolarized[0], 2*numPoint, MPI_DOUBLE, MPI_SUM, interpoolcomm) ;
+	      //   
 	      for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
 		{
 		  if(spinPolarized==1)

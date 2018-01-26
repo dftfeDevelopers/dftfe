@@ -113,7 +113,7 @@ class dftClass
   /**
    * dftClass constructor
    */
-  dftClass();
+  dftClass(MPI_Comm &mpi_comm_replica, MPI_Comm &interpoolcomm);
   /**
    * dftClass destructor
    */
@@ -370,7 +370,7 @@ class dftClass
   /**
    * parallel objects
    */
-  MPI_Comm   mpi_communicator;
+  MPI_Comm   mpi_communicator, interpoolcomm;
   const unsigned int n_mpi_processes;
   const unsigned int this_mpi_process;
   IndexSet   locally_owned_dofs, locally_owned_dofsEigen;

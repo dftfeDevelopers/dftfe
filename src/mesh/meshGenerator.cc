@@ -22,59 +22,14 @@
 #define maxRefinementLevels 10
 
 
-/*
-void markPeriodicFaces(Triangulation<3,3> &triangulation)
-{
-
-  double domainSizeX = dftParameters::domainSizeX,domainSizeY = dftParameters::domainSizeY,domainSizeZ=dftParameters::domainSizeZ;
-
-  typename Triangulation<3,3>::active_cell_iterator cell, endc;
-
-  //
-  //mark faces
-  //
-  cell = triangulation.begin_active(), endc = triangulation.end();
-  for(; cell!=endc; ++cell) 
-    {
-      for(unsigned int f=0; f < GeometryInfo<3>::faces_per_cell; ++f)
-	{
-	  const Point<3> face_center = cell->face(f)->center();
-	  if(cell->face(f)->at_boundary())
-	    {
-	      if (std::abs(face_center[0]+(domainSizeX/2.0)) < 1.0e-5)
-		cell->face(f)->set_boundary_id(1);
-	      else if (std::abs(face_center[0]-(domainSizeX/2.0)) < 1.0e-5)
-		cell->face(f)->set_boundary_id(2);
-	      else if (std::abs(face_center[1]+(domainSizeY/2.0)) < 1.0e-5)
-		cell->face(f)->set_boundary_id(3);
-	      else if (std::abs(face_center[1]-(domainSizeY/2.0)) < 1.0e-5)
-		cell->face(f)->set_boundary_id(4);
-	      else if (std::abs(face_center[2]+(domainSizeZ/2.0)) < 1.0e-5)
-		cell->face(f)->set_boundary_id(5);
-	      else if (std::abs(face_center[2]-(domainSizeZ/2.0)) < 1.0e-5)
-		cell->face(f)->set_boundary_id(6);
-	    }
-	}
-    }
-
-  std::vector<GridTools::PeriodicFacePair<typename Triangulation<3>::cell_iterator> > periodicity_vector;
-  for(int i = 0; i < 3; ++i)
-    {
-      GridTools::collect_periodic_faces(triangulation, 2*i+1, 2*i+2,i, periodicity_vector);
-    }
-
-  triangulation.add_periodicity(periodicity_vector);
-}
-*/
-
 
 //
 //constructor
 //
-meshGeneratorClass::meshGeneratorClass():
-  d_parallelTriangulationUnmoved(MPI_COMM_WORLD),
-  d_parallelTriangulationMoved(MPI_COMM_WORLD),
-  mpi_communicator (MPI_COMM_WORLD),
+meshGeneratorClass::meshGeneratorClass( MPI_Comm &mpi_comm_replica):
+  d_parallelTriangulationUnmoved(mpi_comm_replica),
+  d_parallelTriangulationMoved(mpi_comm_replica),
+  mpi_communicator (mpi_comm_replica),
   this_mpi_process (Utilities::MPI::this_mpi_process(mpi_communicator)),
   n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_communicator)),
   pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
@@ -160,8 +115,9 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 	   subdivisions[i] = std::floor(numberIntervalsEachDirection[i]);
       }
 
-      /*subdivisions[0] = 16 ; subdivisions[1] = 16 ; subdivisions[2] = 24 ; 
-      numberIntervalsEachDirection[0] = 16.0; numberIntervalsEachDirection[1] = 16.0 ; numberIntervalsEachDirection[2] = 24.0 ; */
+      /*subdivisions[0] = 12 ; subdivisions[1] = 12 ; subdivisions[2] = 12 ; 
+      numberIntervalsEachDirection[0] = 12.0; numberIntervalsEachDirection[1] = 12.0 ; numberIntervalsEachDirection[2] = 12.0 ; */
+      //
       GridGenerator::subdivided_parallelepiped<3>(parallelTriangulation,
 	                                          subdivisions,
 				                  basisVectors);
@@ -197,18 +153,6 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 #endif
 
             
-      /*std::vector<double>::iterator result =  std::max_element(numberIntervalsEachDirection.begin(),
-							       numberIntervalsEachDirection.end());
-      double maxNumberIntervals = *result;
-      double temp = log(maxNumberIntervals)/log(2);
-      unsigned int baseRefinementLevel;
-      if((temp - std::floor(temp)) >= 0.5)
-	baseRefinementLevel = std::ceil(temp);
-      else
-	baseRefinementLevel = std::floor(temp);
-
-      parallelTriangulation.refine_global(baseRefinementLevel);
-      serialTriangulation.refine_global(baseRefinementLevel); */
 
       char buffer1[100];
       sprintf(buffer1, "\n Base uniform number of elements: %u\n", parallelTriangulation.n_global_active_cells());
@@ -355,7 +299,7 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 	      //pcout << " check 1.2 " << std::endl ;
 	      serialTriangulation.execute_coarsening_and_refinement();
 	      
-        }
+        } 
       //
       //compute some adaptive mesh metrics
       //

@@ -54,6 +54,7 @@
     cgPRPNonLinearSolver(double tolerance,
                       int    maxNumberIterations,
                       int    debugLevel,
+		      MPI_Comm &mpi_comm_replica,
                       double lineSearchTolerance = 1.0e-6,
 		      int    lineSearchMaxIterations = 10);
 

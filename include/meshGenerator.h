@@ -31,7 +31,7 @@ class meshGeneratorClass
   /**
    * meshGeneratorClass constructor
    */
-  meshGeneratorClass();
+  meshGeneratorClass( MPI_Comm &mpi_comm_replica);
 
 
   /**

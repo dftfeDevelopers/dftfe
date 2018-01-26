@@ -66,28 +66,30 @@ using namespace dftParameters ;
 //dft constructor
 //
 template<unsigned int FEOrder>
-dftClass<FEOrder>::dftClass():
+dftClass<FEOrder>::dftClass(MPI_Comm &mpi_comm_replica, MPI_Comm &interpoolcomm):
   FE (FE_Q<3>(QGaussLobatto<1>(C_num1DQuad<FEOrder>())), 1),
 #ifdef ENABLE_PERIODIC_BC
   FEEigen (FE_Q<3>(QGaussLobatto<1>(C_num1DQuad<FEOrder>())), 2),
 #else
   FEEigen (FE_Q<3>(QGaussLobatto<1>(C_num1DQuad<FEOrder>())), 1),
 #endif
-  mpi_communicator (MPI_COMM_WORLD),
+  mpi_communicator (mpi_comm_replica),
+  interpoolcomm (interpoolcomm),
   n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_communicator)),
   this_mpi_process (Utilities::MPI::this_mpi_process(mpi_communicator)),
   numElectrons(0),
   numLevels(0),
   d_maxkPoints(1),
   integralRhoValue(0),
+  d_mesh(mpi_comm_replica),
   pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
   computing_timer (pcout, TimerOutput::summary, TimerOutput::wall_times)
 {
-  poissonPtr= new poissonClass<FEOrder>(this);
-  eigenPtr= new eigenClass<FEOrder>(this);
-  forcePtr= new forceClass<FEOrder>(this);
-  symmetryPtr= new symmetryClass<FEOrder>(this);
-  geoOptIonPtr= new geoOptIon<FEOrder>(this);
+  poissonPtr= new poissonClass<FEOrder>(this, mpi_comm_replica);
+  eigenPtr= new eigenClass<FEOrder>(this, mpi_comm_replica);
+  forcePtr= new forceClass<FEOrder>(this, mpi_comm_replica);
+  symmetryPtr= new symmetryClass<FEOrder>(this, mpi_comm_replica);
+  geoOptIonPtr= new geoOptIon<FEOrder>(this, mpi_comm_replica);
   //
   // initialize PETSc
   //
@@ -198,12 +200,12 @@ void dftClass<FEOrder>::set()
   //find cell-centered cartesian coordinates
   //
   //atomLocationsFractional = atomLocations;
-  for(int i = 0; i < atomLocationsFractional.size(); ++i)
+  /*for(int i = 0; i < atomLocationsFractional.size(); ++i)
     {
       atomLocationsFractional[i][2] = atomLocationsFractional[i][2] - 0.5;
       atomLocationsFractional[i][3] = atomLocationsFractional[i][3] - 0.5;
       atomLocationsFractional[i][4] = atomLocationsFractional[i][4] - 0.5;
-    } 
+    }*/ 
   convertToCellCenteredCartesianCoordinates(atomLocations,
 					    d_latticeVectors);
 
@@ -270,8 +272,8 @@ void dftClass<FEOrder>::set()
 #ifdef ENABLE_PERIODIC_BC
   //readkPointData();
    generateMPGrid();
-   //if (useSymm)
-   //   test_spg_get_ir_reciprocal_mesh() ;
+   if (useSymm)
+      symmetryPtr->test_spg_get_ir_reciprocal_mesh() ;
 #else
   d_maxkPoints = 1;
   d_kPointCoordinates.resize(3*d_maxkPoints,0.0);

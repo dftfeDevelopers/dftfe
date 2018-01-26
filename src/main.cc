@@ -38,7 +38,6 @@
 #include <fstream>
 
 
-
 using namespace dealii;
 ParameterHandler prm;
 
@@ -352,6 +351,86 @@ void parse_command_line(const int argc,
 int main (int argc, char *argv[])
 {
   Utilities::MPI::MPI_InitFinalize mpi_initialization (argc, argv);
+  //
+  int color1, color2, npool=2;  
+  int n_mpi_processes = Utilities::MPI::n_mpi_processes(MPI_COMM_WORLD) ;    
+  double poolSizeFloat = (double)n_mpi_processes/(double)npool;  
+  int poolSize = std::floor(poolSizeFloat);
+  int taskId = Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) ;
+  MPI_Comm interpoolcomm, intrapoolcomm, mpi_comm_replica ;
+  //
+      if(taskId == 0) {
+        std::cout<<"Number of pools: "<<npool<<std::endl;
+	std::cout<<"Pool size: "<<poolSize<<std::endl;
+      }
+      
+      //color1 = npool-1;
+
+      /*for(int icount = 0; icount < npool; ++icount)
+        {
+          if((taskId - icount*poolSize)>= 0)
+            {
+              if((taskId - icount*poolSize) < poolSize)
+                color1 = icount;
+            }
+	  
+        } */
+  
+     color1 = taskId%poolSize ; 
+
+
+      MPI_Barrier(MPI_COMM_WORLD);
+
+      MPI_Comm_split(MPI_COMM_WORLD,
+                     color1,
+                     0,
+                     &interpoolcomm);
+
+   //
+   
+      //std::cout << " check 0.1 " << std::endl;
+
+      // color2 = poolSize-1;
+
+          color2 = taskId / poolSize ;
+
+      /* for(int icount = 0; icount < poolSize; ++icount)
+        {
+          if((taskId - icount*npool)>= 0)
+            {
+              if((taskId - icount*npool) < npool)
+                color2 = icount;
+            }
+	  
+        } */
+
+      MPI_Barrier(MPI_COMM_WORLD);
+     
+
+      //FILE *dummy;
+
+      //PetscSynchronizedPrintf(PETSC_COMM_WORLD,"[%d] Color %d\n",taskId,color2);
+      //PetscSynchronizedFlush(PETSC_COMM_WORLD, dummy);
+
+      MPI_Comm_split(MPI_COMM_WORLD,
+                     color2,
+                     0,
+                     &intrapoolcomm);
+
+      MPI_Comm_dup(intrapoolcomm , &mpi_comm_replica)  ;
+
+      for (int i=0; i<n_mpi_processes; ++i) {
+	   if (taskId==i)
+	       std::cout << " My global id is " << taskId << " , pool id is " << Utilities::MPI::this_mpi_process(interpoolcomm)  << 
+							" , intrapool id is " << Utilities::MPI::this_mpi_process(intrapoolcomm) << std::endl;
+	   MPI_Barrier(MPI_COMM_WORLD);
+
+      }
+
+      //std::cout << " check 0.2 " << std::endl;      
+
+   
+  //
   try
     {
       declare_parameters ();
@@ -395,7 +474,7 @@ int main (int argc, char *argv[])
 
     case 1:
       {
-	dftClass<1> problemFEOrder1;
+	dftClass<1> problemFEOrder1(mpi_comm_replica, interpoolcomm);
 	problemFEOrder1.numEigenValues = numberEigenValues;
 	problemFEOrder1.set();
 	problemFEOrder1.init();
@@ -405,7 +484,7 @@ int main (int argc, char *argv[])
 
     case 2:
       {
-	dftClass<2> problemFEOrder2;
+	dftClass<2> problemFEOrder2(mpi_comm_replica, interpoolcomm);
 	problemFEOrder2.numEigenValues = numberEigenValues;
         problemFEOrder2.set();
 	problemFEOrder2.init();
@@ -415,7 +494,7 @@ int main (int argc, char *argv[])
 
     case 3:
       {
-	dftClass<3> problemFEOrder3;
+	dftClass<3> problemFEOrder3(mpi_comm_replica, interpoolcomm);
 	problemFEOrder3.numEigenValues = numberEigenValues;
         problemFEOrder3.set();
 	problemFEOrder3.init();	
@@ -425,7 +504,7 @@ int main (int argc, char *argv[])
 
     case 4:
       {
-	dftClass<4> problemFEOrder4;
+	dftClass<4> problemFEOrder4(mpi_comm_replica, interpoolcomm);
 	problemFEOrder4.numEigenValues = numberEigenValues;
         problemFEOrder4.set();
 	problemFEOrder4.init();	
@@ -435,7 +514,7 @@ int main (int argc, char *argv[])
 
     case 5:
       {
-	dftClass<5> problemFEOrder5;
+	dftClass<5> problemFEOrder5(mpi_comm_replica, interpoolcomm);
 	problemFEOrder5.numEigenValues = numberEigenValues;
         problemFEOrder5.set();
 	problemFEOrder5.init();	
@@ -445,7 +524,7 @@ int main (int argc, char *argv[])
 
     case 6:
       {
-	dftClass<6> problemFEOrder6;
+	dftClass<6> problemFEOrder6(mpi_comm_replica, interpoolcomm);
 	problemFEOrder6.numEigenValues = numberEigenValues;
         problemFEOrder6.set();
 	problemFEOrder6.init();		
@@ -455,7 +534,7 @@ int main (int argc, char *argv[])
 
     case 7:
       {
-	dftClass<7> problemFEOrder7;
+	dftClass<7> problemFEOrder7(mpi_comm_replica, interpoolcomm);
 	problemFEOrder7.numEigenValues = numberEigenValues;
         problemFEOrder7.set();
 	problemFEOrder7.init();		
@@ -465,7 +544,7 @@ int main (int argc, char *argv[])
 
     case 8:
       {
-	dftClass<8> problemFEOrder8;
+	dftClass<8> problemFEOrder8(mpi_comm_replica, interpoolcomm);
 	problemFEOrder8.numEigenValues = numberEigenValues;
         problemFEOrder8.set();
 	problemFEOrder8.init();		
@@ -475,7 +554,7 @@ int main (int argc, char *argv[])
 
     case 9:
       {
-	dftClass<9> problemFEOrder9;
+	dftClass<9> problemFEOrder9(mpi_comm_replica, interpoolcomm);
 	problemFEOrder9.numEigenValues = numberEigenValues;
         problemFEOrder9.set();
 	problemFEOrder9.init();		
@@ -485,7 +564,7 @@ int main (int argc, char *argv[])
 
     case 10:
       {
-	dftClass<10> problemFEOrder10;
+	dftClass<10> problemFEOrder10(mpi_comm_replica, interpoolcomm);
 	problemFEOrder10.numEigenValues = numberEigenValues;
         problemFEOrder10.set();
 	problemFEOrder10.init();		
@@ -495,7 +574,7 @@ int main (int argc, char *argv[])
 
     case 11:
       {
-	dftClass<11> problemFEOrder11;
+	dftClass<11> problemFEOrder11(mpi_comm_replica, interpoolcomm);
 	problemFEOrder11.numEigenValues = numberEigenValues;
         problemFEOrder11.set();
 	problemFEOrder11.init();		
@@ -505,7 +584,7 @@ int main (int argc, char *argv[])
 
     case 12:
       {
-	dftClass<12> problemFEOrder12;
+	dftClass<12> problemFEOrder12(mpi_comm_replica, interpoolcomm);
 	problemFEOrder12.numEigenValues = numberEigenValues;
         problemFEOrder12.set();
 	problemFEOrder12.init();		

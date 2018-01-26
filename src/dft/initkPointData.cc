@@ -223,6 +223,7 @@ void dftClass<FEOrder>::generateMPGrid()
       for (unsigned int j=0; j<3; ++j)
       position[i][j] = atomLocationsFractional[i][j+2] ;
    }
+   types[0]=0; types[1]=1; types[2]=1; types[3]=0; types[4]=1; types[5]=1;
   // ***********************************  Checking on SPG ******************************************** 
   /*int max_size = 500;
   int num_atom = 2 ;
@@ -379,7 +380,41 @@ void dftClass<FEOrder>::generateMPGrid()
       d_kPointCoordinates[3*i + 1] = kPointReducedCoordinates[3*i+0]*d_reciprocalLatticeVectors[0][1] + kPointReducedCoordinates[3*i+1]*d_reciprocalLatticeVectors[1][1] + kPointReducedCoordinates[3*i+2]*d_reciprocalLatticeVectors[2][1];
       d_kPointCoordinates[3*i + 2] = kPointReducedCoordinates[3*i+0]*d_reciprocalLatticeVectors[0][2] + kPointReducedCoordinates[3*i+1]*d_reciprocalLatticeVectors[1][2] + kPointReducedCoordinates[3*i+2]*d_reciprocalLatticeVectors[2][2];
     }
-
- 
+   //
+   // Split k-points over pools
+   //
+   unsigned int npool = 2;
+   unsigned int this_mpi_pool (Utilities::MPI::this_mpi_process(interpoolcomm)) ;
+   std::vector<double> d_kPointCoordinatesGlobal(3*d_maxkPoints, 0.0) ;
+   for(int i = 0; i < d_maxkPoints; ++i)
+    {
+     d_kPointCoordinatesGlobal[3*i + 0] = d_kPointCoordinates[3*i + 0] ;
+     d_kPointCoordinatesGlobal[3*i + 1] = d_kPointCoordinates[3*i + 1] ;
+     d_kPointCoordinatesGlobal[3*i + 2] = d_kPointCoordinates[3*i + 2] ;
+    }
+   //
+   unsigned int d_maxkPointsGlobal = d_maxkPoints ;
+   d_kPointCoordinates.clear() ;
+   d_maxkPoints = d_maxkPointsGlobal / npool ;
+   unsigned int rest = d_maxkPointsGlobal%npool ;
+   if (this_mpi_pool < rest)
+       d_maxkPoints = d_maxkPoints + 1 ;
+   //
+   d_kPointCoordinates.resize(3*d_maxkPoints, 0.0) ;
+   //
+   std::vector<int> sendSizekPoints(npool, 0), mpiOffsetskPoints(npool, 0) ;
+   if (this_mpi_pool==0) {
+   //
+   for (int i=0; i < npool; ++i) {
+	sendSizekPoints[i] = 3*d_maxkPointsGlobal / npool ;
+	if (i < rest)
+	   sendSizekPoints[i] = sendSizekPoints[i] + 3 ;
+	if (i > 0)
+	    mpiOffsetskPoints[i] = mpiOffsetskPoints[i-1] + sendSizekPoints[i-1] ;
+   }
+   }
+   pcout << sendSizekPoints[0] << "  " << sendSizekPoints[1] << " " << d_maxkPoints << std::endl;
+   //
+   MPI_Scatterv(&(d_kPointCoordinatesGlobal[0]),&(sendSizekPoints[0]), &(mpiOffsetskPoints[0]), MPI_DOUBLE, &(d_kPointCoordinates[0]), 3*d_maxkPoints, MPI_DOUBLE, 0, interpoolcomm); 
  
 }

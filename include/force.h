@@ -36,7 +36,7 @@ class forceClass
   template <unsigned int T>  friend class dftClass;
   template <unsigned int FEOrder>  friend class geoOptIon;
 public:
-  forceClass(dftClass<FEOrder>* _dftPtr);
+  forceClass(dftClass<FEOrder>* _dftPtr,  MPI_Comm &mpi_comm_replica);
   void initUnmoved(Triangulation<3,3> & triangulation);
   void initMoved();
   void initPseudoData();

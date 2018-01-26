@@ -24,7 +24,9 @@ class meshMovementGaussianClass : public meshMovementClass
 {
 
 public:
-  meshMovementGaussianClass();	
+  meshMovementGaussianClass( MPI_Comm &mpi_comm_replica);
+  //meshMovementGaussianClass();	
+  MPI_Comm mpi_communicator;
   std::pair<bool,double> moveMesh(std::vector<Point<C_DIM> > controlPointLocations,
                                   std::vector<Tensor<1,3,double> > controlPointDisplacements,
                                   double controllingParameter);

@@ -27,9 +27,9 @@
 //constructor
 //
 template<unsigned int FEOrder>
-geoOptIon<FEOrder>::geoOptIon(dftClass<FEOrder>* _dftPtr):
+geoOptIon<FEOrder>::geoOptIon(dftClass<FEOrder>* _dftPtr, MPI_Comm &mpi_comm_replica):
   dftPtr(_dftPtr),
-  mpi_communicator (MPI_COMM_WORLD),
+  mpi_communicator (mpi_comm_replica),
   n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_communicator)),
   this_mpi_process (Utilities::MPI::this_mpi_process(mpi_communicator)),
   pcout(std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
@@ -74,7 +74,7 @@ void geoOptIon<FEOrder>::run()
    const int maxLineSearchIter=10;
    int debugLevel=this_mpi_process==0?1:0;
    int maxRestarts=2; int restartCount=0;
-   cgPRPNonLinearSolver cgSolver(tol,maxIter,debugLevel,lineSearchTol,maxLineSearchIter);
+   cgPRPNonLinearSolver cgSolver(tol,maxIter,debugLevel, mpi_communicator, lineSearchTol, maxLineSearchIter);
    if (this_mpi_process==0)
    {
        std::cout<<" Starting CG Ion Relaxation... "<<std::endl;

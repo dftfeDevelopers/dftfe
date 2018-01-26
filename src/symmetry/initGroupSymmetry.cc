@@ -29,10 +29,10 @@ using namespace dftParameters ;
 //constructor
 //
 template<unsigned int FEOrder>
-symmetryClass<FEOrder>::symmetryClass(dftClass<FEOrder>* _dftPtr):
+symmetryClass<FEOrder>::symmetryClass(dftClass<FEOrder>* _dftPtr, MPI_Comm &mpi_comm_replica):
   dftPtr(_dftPtr),
   FE (QGaussLobatto<1>(C_num1DQuad<FEOrder>())),
-  mpi_communicator (MPI_COMM_WORLD),
+  mpi_communicator (mpi_comm_replica),
   n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_communicator)),
   this_mpi_process (Utilities::MPI::this_mpi_process(mpi_communicator)),
   pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
@@ -514,7 +514,7 @@ void symmetryClass<FEOrder>:: test_spg_get_ir_reciprocal_mesh()
 					  grid_mapping_table,
 					  mesh,
 					  is_shift,
-					  0,
+					  1,
 					  lattice,
 					  position,
 					  types,

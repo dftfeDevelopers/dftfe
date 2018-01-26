@@ -18,9 +18,14 @@
 //
 #include "../../include/meshMovementGaussian.h"
 
-meshMovementGaussianClass::meshMovementGaussianClass()
+meshMovementGaussianClass::meshMovementGaussianClass( MPI_Comm &mpi_comm_replica):
+ mpi_communicator(mpi_comm_replica)
 {
 }
+
+//meshMovementGaussianClass::meshMovementGaussianClass()
+//{
+//}
 
 std::pair<bool,double> meshMovementGaussianClass::moveMesh(std::vector<Point<C_DIM> > controlPointLocations,
                                                            std::vector<Tensor<1,C_DIM,double> > controlPointDisplacements,

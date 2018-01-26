@@ -21,6 +21,15 @@
   //
   // Constructor.
   //
+  solverFunction::solverFunction(MPI_Comm &mpi_comm_replica)
+  {
+
+    //
+    //
+    //
+    return;
+
+  }
   solverFunction::solverFunction()
   {
 
@@ -30,7 +39,6 @@
     return;
 
   }
-  
   /*
   void
   solverFunction::getInitialGuessForBisectionMethod(std::vector<double> & solution) const

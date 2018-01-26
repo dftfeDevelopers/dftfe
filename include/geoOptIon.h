@@ -30,7 +30,7 @@ template <unsigned int FEOrder>
 class geoOptIon : public solverFunction
 {
 public:
-  geoOptIon(dftClass<FEOrder>* _dftPtr);
+  geoOptIon(dftClass<FEOrder>* _dftPtr,  MPI_Comm &mpi_comm_replica);
   void init();
   void run();   
 private:

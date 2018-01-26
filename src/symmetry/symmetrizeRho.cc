@@ -355,6 +355,17 @@ void symmetryClass<FEOrder>::computeLocalrhoOut()
 		     } // if this symm is part of the group under this kpoint
 	  } // loop on k Points
        //
+       //  gather density from all pools
+          /*MPI_Allreduce(&rhoTemp[0], &rhoLocal[numPointsDone], numPoint, MPI_DOUBLE, MPI_SUM, mpi_communicator) ;
+	  if (xc_id==4)
+	      MPI_Allreduce(&gradRhoTemp[0], &gradRhoLocal[3*numPointsDone], 3*numPoint, MPI_DOUBLE, MPI_SUM, mpi_communicator) ;
+          if (spinPolarized==1) {
+              MPI_Allreduce(&rhoTempSpinPolarized[0], &rhoLocalSpinPolarized[2*numPointsDone], 2*numPoint, MPI_DOUBLE, MPI_SUM, mpi_communicator) ;
+          if (xc_id==4)
+	      MPI_Allreduce(&gradRhoTempSpinPolarized[0], &gradRhoLocalSpinPolarized[6*numPointsDone], 6*numPoint, MPI_DOUBLE, MPI_SUM, mpi_communicator) ; 
+          }*/
+
+       //
        numPointsDone += numPoint ;
     } // loop on group 
     //
