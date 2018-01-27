@@ -45,7 +45,7 @@ void dftClass<FEOrder>::initUnmovedTriangulation(parallel::distributed::Triangul
   dofHandlerEigen.initialize(triangulation,FEEigen);
   dofHandler.distribute_dofs (FE);
   dofHandlerEigen.distribute_dofs (FEEigen);
-
+  
   //
   //extract locally owned dofs
   //
@@ -94,6 +94,7 @@ void dftClass<FEOrder>::initUnmovedTriangulation(parallel::distributed::Triangul
 	<< dofHandler.n_dofs() 
 	<< std::endl;
 
+  //std::cout<< " procId: "<< this_mpi_process << " ,locallly_owned_dofs: "<<dofHandler.n_locally_owned_dofs()<<std::endl;
 
   //
   //constraints
@@ -104,18 +105,45 @@ void dftClass<FEOrder>::initUnmovedTriangulation(parallel::distributed::Triangul
   //
   constraintsNone.clear(); constraintsNoneEigen.clear();
   constraintsNone.reinit(locally_relevant_dofs); constraintsNoneEigen.reinit(locally_relevant_dofsEigen);
-
+  if(dftParameters::meshFileName.empty())
+  {  
+      DoFTools::make_hanging_node_constraints(dofHandler, constraintsNone);
+      DoFTools::make_hanging_node_constraints(dofHandlerEigen,constraintsNoneEigen);
+  }
 
 #ifdef ENABLE_PERIODIC_BC
+  //create unitVectorsXYZ
+  std::vector<std::vector<double> > unitVectorsXYZ;
+  unitVectorsXYZ.resize(3);
+
+  for(int i = 0; i < 3; ++i)
+    {
+      unitVectorsXYZ[i].resize(3,0.0);
+      unitVectorsXYZ[i][i] = 0.0;
+    }
+
+  std::vector<Tensor<1,3> > offsetVectors;
+  //resize offset vectors
+  offsetVectors.resize(3);
+
+  for(int i = 0; i < 3; ++i)
+    {
+      for(int j = 0; j < 3; ++j)
+	{
+	  offsetVectors[i][j] = unitVectorsXYZ[i][j] - d_domainBoundingVectors[i][j];
+	}
+    }
+  
   std::vector<GridTools::PeriodicFacePair<typename DoFHandler<3>::cell_iterator> > periodicity_vector2, periodicity_vector2Eigen;
   for (int i = 0; i < 3; ++i)
-    {
-      GridTools::collect_periodic_faces(dofHandler, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector2);
-      GridTools::collect_periodic_faces(dofHandlerEigen, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector2Eigen);
+   {
+      GridTools::collect_periodic_faces(dofHandler, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector2,offsetVectors[i]);
+      GridTools::collect_periodic_faces(dofHandlerEigen, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector2Eigen,offsetVectors[i]);
+
     }
+
   DoFTools::make_periodicity_constraints<DoFHandler<3> >(periodicity_vector2, constraintsNone);
   DoFTools::make_periodicity_constraints<DoFHandler<3> >(periodicity_vector2Eigen, constraintsNoneEigen);
-
   constraintsNone.close();
   constraintsNoneEigen.close();
 
@@ -125,7 +153,26 @@ void dftClass<FEOrder>::initUnmovedTriangulation(parallel::distributed::Triangul
     }
 
 #endif
+  //
+  //create a constraint matrix without only hanging node constraints 
+  //
+  d_noConstraints.clear();d_noConstraintsEigen.clear();
+  d_noConstraints.reinit(locally_relevant_dofs); d_noConstraintsEigen.reinit(locally_relevant_dofsEigen);  
+  DoFTools::make_hanging_node_constraints(dofHandler, d_noConstraints);
+  DoFTools::make_hanging_node_constraints(dofHandlerEigen,d_noConstraintsEigen);
+  d_noConstraints.close();d_noConstraintsEigen.close(); 
 
+  if(!dftParameters::meshFileName.empty())
+    {
+      //
+      //merge hanging node constraint matrix with constrains None and constraints None eigen
+      //
+      constraintsNone.merge(d_noConstraints,ConstraintMatrix::MergeConflictBehavior::right_object_wins);
+      constraintsNoneEigen.merge(d_noConstraintsEigen,ConstraintMatrix::MergeConflictBehavior::right_object_wins);
+      constraintsNone.close();
+      constraintsNoneEigen.close();      
+    }  
+  /*
   //
   //create a constraint matrix without only hanging node constraints 
   //
@@ -143,6 +190,7 @@ void dftClass<FEOrder>::initUnmovedTriangulation(parallel::distributed::Triangul
   constraintsNoneEigen.merge(d_noConstraintsEigen,ConstraintMatrix::MergeConflictBehavior::right_object_wins);
   constraintsNone.close();
   constraintsNoneEigen.close();
+  */
 
   forcePtr->initUnmoved(triangulation);
 

@@ -96,7 +96,7 @@ dftClass<FEOrder>::dftClass():
 					      NULL,
 					      NULL);
 
-
+  pseudoValues=NULL;
 }
 
 template<unsigned int FEOrder>
@@ -338,6 +338,7 @@ void dftClass<FEOrder>::init ()
   //
   parallel::distributed::Triangulation<3> & triangulationPar = d_mesh.getParallelMesh();
   Triangulation<3,3> & triangulationSer = d_mesh.getSerialMesh();
+  writeMesh("meshInitial");
   //
   //initialize dofHandlers and hanging-node constraints and periodic constraints on the unmoved Mesh
   //
@@ -350,7 +351,7 @@ void dftClass<FEOrder>::init ()
   //move triangulation to have atoms on triangulation vertices
   //
   //pcout << " check 0.11 : " << std::endl ;
-  writeMesh("meshInitial");
+  
   moveMeshToAtoms(triangulationPar);
   //moveMeshToAtoms(triangulationSer,true);//can only be called after calling moveMeshToAtoms(triangulationPar)
 

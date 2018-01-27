@@ -485,7 +485,7 @@ class dftClass
   std::map<int,std::set<int> > d_bins;
   std::vector<std::vector<int> > d_imageIdsInBins;
   std::vector<std::map<dealii::types::global_dof_index, int> > d_boundaryFlag;
-  std::vector<std::map<dealii::types::global_dof_index, int> > d_vselfBinField;
+  std::vector<std::map<dealii::types::global_dof_index, double> > d_vselfBinField;
   std::vector<std::map<dealii::types::global_dof_index, int> > d_closestAtomBin;
   std::vector<vectorType> d_vselfFieldBins;//required for configurational force
   //

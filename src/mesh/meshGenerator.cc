@@ -69,8 +69,10 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       gridinSerial.read_ucd(f2);
 
 #ifdef ENABLE_PERIODIC_BC
-      meshGenUtils::markPeriodicFaces(parallelTriangulation);
-      meshGenUtils::markPeriodicFaces(serialTriangulation);
+      //meshGenUtils::markPeriodicFaces(parallelTriangulation);
+      //meshGenUtils::markPeriodicFaces(serialTriangulation);
+      meshGenUtils::markPeriodicFacesNonOrthogonal(parallelTriangulation,d_domainBoundingVectors);
+      meshGenUtils::markPeriodicFacesNonOrthogonal(serialTriangulation,d_domainBoundingVectors);      
 #endif  
       numberGlobalCells = parallelTriangulation.n_global_active_cells();
     }
@@ -107,7 +109,7 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       Point<3> basisVectors[3] = {vector1,vector2,vector3};
 
 
-            
+           
       for (int i=0; i<3;i++){
 
         double temp = numberIntervalsEachDirection[i]-std::floor(numberIntervalsEachDirection[i]);
@@ -116,7 +118,7 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
         else
 	   subdivisions[i] = std::floor(numberIntervalsEachDirection[i]);
       }
-
+      
 
       GridGenerator::subdivided_parallelepiped<3>(parallelTriangulation,
 	                                          subdivisions,
@@ -145,7 +147,7 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       meshGenUtils::markPeriodicFacesNonOrthogonal(parallelTriangulation,d_domainBoundingVectors);
       meshGenUtils::markPeriodicFacesNonOrthogonal(serialTriangulation,d_domainBoundingVectors);
 #endif
-     
+    
       char buffer1[100];
       sprintf(buffer1, "\n Base uniform number of elements: %u\n", parallelTriangulation.n_global_active_cells());
       pcout << buffer1;

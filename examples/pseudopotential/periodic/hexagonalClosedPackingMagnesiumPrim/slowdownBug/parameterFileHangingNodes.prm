@@ -1,13 +1,13 @@
+#
 #path specifying the location of the "build" directory which is usually the location of "src" folder 
 #
-set DFT PATH = "../../../../"
-
+set DFT PATH = "/home/dsambit/dealiiKSDFT/dft-fe-newdealiiversion"
+set OPTIMIZED MODE = true
 #
 #finite-element related parameters
 #
-#set MESH FILE = mesh.inp
+set MESH FILE =
 set FINITE ELEMENT POLYNOMIAL ORDER = 4
-
 
 #
 #Atomic-coordinates file
@@ -20,27 +20,26 @@ set ATOMIC COORDINATES FILE = coordinates.inp
 #
 
 #Radius of the atom-centered ball in which self-potential of the associated nuclear charge is solved
-set SELF POTENTIAL ATOM BALL RADIUS = 8.0
+set SELF POTENTIAL ATOM BALL RADIUS = 1.5
 #Simulation domain sizes 
 #Values listed here are not relevant if external mesh is used for non-periodic calculations
-set DOMAIN SIZE X    = 80.0
-set DOMAIN SIZE Y    = 80.0
-set DOMAIN SIZE Z    = 80.0 #2*Ln
-set INNER DOMAIN SIZE X = 0.0 #2*Ln1
-set INNER DOMAIN SIZE Y = 0.0
-set INNER DOMAIN SIZE Z = 0.0
-set OUTER ATOM BALL RADIUS = 3
-set MESH SIZE OUTER DOMAIN = 10.0 #hn
-set MESH SIZE INNER DOMAIN = 0.625 #hn-1
-set MESH SIZE NEAR ATOM = 0.2
-set MESH SIZE OUTER ATOM BALL = 2.0 #h0
-
+set DOMAIN SIZE X    = 7.6
+set DOMAIN SIZE Y    = 7.6
+set DOMAIN SIZE Z    = 7.6 #2*Ln
+set INNER DOMAIN SIZE X = 0 #2*Ln1
+set INNER DOMAIN SIZE Y = 0
+set INNER DOMAIN SIZE Z = 0
+set OUTER ATOM BALL RADIUS = 2.0
+set MESH SIZE OUTER DOMAIN = 1.0 #hn
+set MESH SIZE INNER DOMAIN = 1.0 #hn-1
+set MESH SIZE OUTER ATOM BALL = 1.0
+set MESH SIZE NEAR ATOM = 0.6 #h0
 #
 #set boundary conditions in three directions
 #
-set PERIODIC BOUNDARY CONDITION X = false
-set PERIODIC BOUNDARY CONDITION Y = false
-set PERIODIC BOUNDARY CONDITION Z = false
+set PERIODIC BOUNDARY CONDITION X = true
+set PERIODIC BOUNDARY CONDITION Y = true
+set PERIODIC BOUNDARY CONDITION Z = true
 
 #
 #Lattice Vectors file specifying the lattice vectors associated with the unit-cell(used only for periodic calculation)
@@ -51,7 +50,13 @@ set LATTICE VECTORS FILE = latticeVectors.inp
 #kPoint Quadrature Rule file for sampling the Brillouin zone (used only in Periodic calculation)
 #(Located in $DFT PATH/data/kPointList)
 #
-set kPOINT RULE FILE = GammaPoint.inp
+set BZ SAMPLING POINTS ALONG X = 1
+set BZ SAMPLING POINTS ALONG Y = 1
+set BZ SAMPLING POINTS ALONG Z = 1
+set BZ SAMPLING SHIFT ALONG X = 0.00
+set BZ SAMPLING SHIFT ALONG Y = 0.00
+set BZ SAMPLING SHIFT ALONG Z = 0.00
+set USE GROUP SYMMETRY = false
 
 #
 #DFT functional related parameters
@@ -67,24 +72,21 @@ set PSEUDOPOTENTIAL CALCULATION = true
 # 4 (GGA: Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)])*/
 set EXCHANGE CORRELATION TYPE = 1
 
-#ION OPT FLAG
-set ION OPT=true
-
 #
 #Eigen-solver/Chebyshev solver related parameters
 #
 
 #Parameter indicating number of eigenfunctions to be solved
-set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 12
+set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 10
 #Approximate estimate of lower bound of the wanted spectrum
 set LOWER BOUND WANTED SPECTRUM = -10.0
-#Chebyshev Filter polynomial degree (0 indicates default value based on upper bound of Hamiltonian)
-set CHEBYSHEV POLYNOMIAL DEGREE = 0
-
+#Chebyshev Filter polynomial degree
+set CHEBYSHEV POLYNOMIAL DEGREE = 80
+set CHEBYSHEV FILTER PASSES = 1
 #
 #SCF parameters
 #
-set SCF CONVERGENCE MAXIMUM ITERATIONS =100
+set SCF CONVERGENCE MAXIMUM ITERATIONS = 1
 set SCF CONVERGENCE TOLERANCE          = 1e-9
 set ANDERSON SCHEME MIXING PARAMETER   = 0.5
 set ANDERSON SCHEME MIXING HISTORY     = 70
@@ -93,5 +95,5 @@ set TEMPERATURE                        = 500
 #
 #Poisson problem paramters
 #
-set POISSON SOLVER CONVERGENCE MAXIMUM ITERATIONS = 10000
+set POISSON SOLVER CONVERGENCE MAXIMUM ITERATIONS = 5000
 set POISSON SOLVER CONVERGENCE TOLERANCE          = 1e-12

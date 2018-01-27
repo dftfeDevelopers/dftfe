@@ -23,7 +23,7 @@ template<unsigned int FEOrder>
 void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,bool reuse)
 {
   meshMovementGaussianClass gaussianMove;
-  gaussianMove.init(triangulationMove);
+  gaussianMove.init(triangulationMove,d_domainBoundingVectors);
 
   if(!reuse)
     {

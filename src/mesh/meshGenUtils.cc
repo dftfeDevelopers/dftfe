@@ -48,7 +48,7 @@ void computeOffsetVectors(std::vector<std::vector<double> > & latticeVectors,
   for(int i = 0; i < 3; ++i)
     {
       unitVectorsXYZ[i].resize(3,0.0);
-      unitVectorsXYZ[i][i] = 1.0;
+      unitVectorsXYZ[i][i] = 0.0;
     }
 
 
@@ -100,7 +100,7 @@ double getCosineAngle(std::vector<double> & Vector1,
 void markPeriodicFacesNonOrthogonal(Triangulation<3,3> &triangulation, 
 				    std::vector<std::vector<double> > & latticeVectors)
 {
-
+  dealii::ConditionalOStream   pcout(std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
   std::vector<std::vector<double> > periodicFaceNormals;
   std::vector<Tensor<1,3> > offsetVectors;
 
@@ -112,9 +112,9 @@ void markPeriodicFacesNonOrthogonal(Triangulation<3,3> &triangulation,
   computeOffsetVectors(latticeVectors,
 		       offsetVectors);
 
-  std::cout<<"Periodic Face Normals 1: "<<periodicFaceNormals[0][0]<<" "<<periodicFaceNormals[0][1]<<" "<<periodicFaceNormals[0][2]<<std::endl;
-  std::cout<<"Periodic Face Normals 2: "<<periodicFaceNormals[1][0]<<" "<<periodicFaceNormals[1][1]<<" "<<periodicFaceNormals[1][2]<<std::endl;
-  std::cout<<"Periodic Face Normals 3: "<<periodicFaceNormals[2][0]<<" "<<periodicFaceNormals[2][1]<<" "<<periodicFaceNormals[2][2]<<std::endl;
+  pcout<<"Periodic Face Normals 1: "<<periodicFaceNormals[0][0]<<" "<<periodicFaceNormals[0][1]<<" "<<periodicFaceNormals[0][2]<<std::endl;
+  pcout<<"Periodic Face Normals 2: "<<periodicFaceNormals[1][0]<<" "<<periodicFaceNormals[1][1]<<" "<<periodicFaceNormals[1][2]<<std::endl;
+  pcout<<"Periodic Face Normals 3: "<<periodicFaceNormals[2][0]<<" "<<periodicFaceNormals[2][1]<<" "<<periodicFaceNormals[2][2]<<std::endl;
 
   QGauss<2>  quadratureFace_formula(2); FESystem<3>  FE(FE_Q<3>(QGaussLobatto<1>(2)), 1);
   FEFaceValues<3> feFace_values(FE, quadratureFace_formula, update_normal_vectors);
@@ -131,45 +131,46 @@ void markPeriodicFacesNonOrthogonal(Triangulation<3,3> &triangulation,
 	  const Point<3> face_center = cell->face(f)->center();
 	  if (cell->face(f)->at_boundary())
 	    {
-
 	      feFace_values.reinit(cell,f);
 	      Tensor<1,3> faceNormalVector = feFace_values.normal_vector(0);
 
 	      //std::cout<<"Face normal vector: "<<faceNormalVector[0]<<" "<<faceNormalVector[1]<<" "<<faceNormalVector[2]<<std::endl;
-	      std::cout<<"Angle : "<<getCosineAngle(faceNormalVector,periodicFaceNormals[0])<<" "<<getCosineAngle(faceNormalVector,periodicFaceNormals[1])<<" "<<getCosineAngle(faceNormalVector,periodicFaceNormals[2])<<std::endl;
+	      //pcout<<"Angle : "<<getCosineAngle(faceNormalVector,periodicFaceNormals[0])<<" "<<getCosineAngle(faceNormalVector,periodicFaceNormals[1])<<" "<<getCosineAngle(faceNormalVector,periodicFaceNormals[2])<<std::endl;
 	      
-	      if(std::abs(getCosineAngle(faceNormalVector,periodicFaceNormals[0]) + 1.0) < 1.0e-05)
+	      if(std::abs(getCosineAngle(faceNormalVector,periodicFaceNormals[0]) - 1.0) < 1.0e-05)
 		{
 		  cell->face(f)->set_boundary_id(1);
-		  std::cout<<"Boundary 1"<<std::endl;
+		  //pcout<<"Boundary 1"<<std::endl;
 		}
-	      else if(std::abs(getCosineAngle(faceNormalVector,periodicFaceNormals[0]) - 1.0) < 1.0e-05)
+	      else if(std::abs(getCosineAngle(faceNormalVector,periodicFaceNormals[0]) + 1.0) < 1.0e-05)
 		{
 		  cell->face(f)->set_boundary_id(2);
-		  std::cout<<"Boundary 2"<<std::endl;
-		}
-	      else if(std::abs(getCosineAngle(faceNormalVector,periodicFaceNormals[1]) + 1.0) < 1.0e-05) 
-		{
-		  cell->face(f)->set_boundary_id(3);
-		  std::cout<<"Boundary 3"<<std::endl;
+		  //pcout<<"Boundary 2"<<std::endl;
 		}
 	      else if(std::abs(getCosineAngle(faceNormalVector,periodicFaceNormals[1]) - 1.0) < 1.0e-05) 
 		{
-		  cell->face(f)->set_boundary_id(4);
-		  std::cout<<"Boundary 4"<<std::endl;
+		  cell->face(f)->set_boundary_id(3);
+		  //pcout<<"Boundary 3"<<std::endl;
 		}
-	      else if(std::abs(getCosineAngle(faceNormalVector,periodicFaceNormals[2]) + 1.0) < 1.0e-05) 
+	      else if(std::abs(getCosineAngle(faceNormalVector,periodicFaceNormals[1]) + 1.0) < 1.0e-05) 
 		{
-		  cell->face(f)->set_boundary_id(5);
-		  std::cout<<"Boundary 5"<<std::endl;
+		  cell->face(f)->set_boundary_id(4);
+		  //pcout<<"Boundary 4"<<std::endl;
 		}
 	      else if(std::abs(getCosineAngle(faceNormalVector,periodicFaceNormals[2]) - 1.0) < 1.0e-05) 
 		{
+		  cell->face(f)->set_boundary_id(5);
+		  //pcout<<"Boundary 5"<<std::endl;
+		}
+	      else if(std::abs(getCosineAngle(faceNormalVector,periodicFaceNormals[2]) + 1.0) < 1.0e-05) 
+		{
 		  cell->face(f)->set_boundary_id(6);
-		  std::cout<<"Boundary 6"<<std::endl;
+		  //pcout<<"Boundary 6"<<std::endl;
 		}
 	      else
-		std::cout<<"Domain is not periodic: "<<std::endl;
+	      {
+		//pcout<<"Domain is not periodic: "<<std::endl;
+	      }
 	      
 	    }
 	}
@@ -183,7 +184,18 @@ void markPeriodicFacesNonOrthogonal(Triangulation<3,3> &triangulation,
       //GridTools::collect_periodic_faces(triangulation, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector);      
     }
   triangulation.add_periodicity(periodicity_vector);
-  std::cout << "Periodic Facepairs: " << periodicity_vector.size() << std::endl;
+  pcout << "Periodic Facepairs size: " << periodicity_vector.size() << std::endl;
+  /*
+  for(unsigned int i=0; i< periodicity_vector.size(); ++i) 
+  {
+    if (!periodicity_vector[i].cell[0]->active() || !periodicity_vector[i].cell[1]->active())
+       continue;      
+    if (periodicity_vector[i].cell[0]->is_artificial() || periodicity_vector[i].cell[1]->is_artificial())
+       continue;
+
+    std::cout << "matched face pairs: "<< periodicity_vector[i].cell[0]->face(periodicity_vector[i].face_idx[0])->boundary_id() << " "<< periodicity_vector[i].cell[1]->face(periodicity_vector[i].face_idx[1])->boundary_id()<<std::endl;
+  }    
+  */
 }
 
 void markPeriodicFaces(Triangulation<3,3> &triangulation)

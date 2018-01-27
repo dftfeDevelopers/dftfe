@@ -34,6 +34,7 @@ void dftClass<FEOrder>::solveVself()
   //pcout<<"size of support points: "<<d_supportPoints.size()<<std::endl;
 
   std::map<dealii::types::global_dof_index, int>::iterator iterMap;
+  std::map<dealii::types::global_dof_index, double>::iterator iterMapVal;
   d_vselfFieldBins.resize(numberBins);
   for(int iBin = 0; iBin < numberBins; ++iBin)
     {
@@ -42,7 +43,7 @@ void dftClass<FEOrder>::solveVself()
       poissonPtr->vselfBinScratch = 0;
 
       std::map<types::global_dof_index,Point<3> >::iterator iterNodalCoorMap;
-      std::map<dealii::types::global_dof_index, int> & vSelfBinNodeMap = d_vselfBinField[iBin];
+      std::map<dealii::types::global_dof_index, double> & vSelfBinNodeMap = d_vselfBinField[iBin];
 
       //
       //set initial guess to vSelfBinScratch
@@ -53,10 +54,10 @@ void dftClass<FEOrder>::solveVself()
 	    {
 	      if(!d_noConstraints.is_constrained(iterNodalCoorMap->first))
 		{
-		  iterMap = vSelfBinNodeMap.find(iterNodalCoorMap->first);
-		  if(iterMap != vSelfBinNodeMap.end())
+		  iterMapVal = vSelfBinNodeMap.find(iterNodalCoorMap->first);
+		  if(iterMapVal != vSelfBinNodeMap.end())
 		    {
-		      poissonPtr->vselfBinScratch(iterNodalCoorMap->first) = iterMap->second;
+		      poissonPtr->vselfBinScratch(iterNodalCoorMap->first) = iterMapVal->second;
 		    }
 		}
 	      

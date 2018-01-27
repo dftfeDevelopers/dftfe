@@ -76,7 +76,7 @@ meshMovementClass::meshMovementClass():
 
 }
 
-void meshMovementClass::init(Triangulation<3,3> & triangulation)
+void meshMovementClass::init(Triangulation<3,3> & triangulation, const std::vector<std::vector<double> > & domainBoundingVectors)
 {
   d_dofHandlerMoveMesh.clear();
   d_dofHandlerMoveMesh.initialize(triangulation,FEMoveMesh);		
@@ -93,9 +93,31 @@ void meshMovementClass::init(Triangulation<3,3> & triangulation)
   DoFTools::make_hanging_node_constraints(d_dofHandlerMoveMesh, d_constraintsMoveMesh); 
   d_periodicity_vector.clear(); 
 #ifdef ENABLE_PERIODIC_BC
+  //create unitVectorsXYZ
+  std::vector<std::vector<double> > unitVectorsXYZ;
+  unitVectorsXYZ.resize(3);
+
+  for(int i = 0; i < 3; ++i)
+    {
+      unitVectorsXYZ[i].resize(3,0.0);
+      unitVectorsXYZ[i][i] = 0.0;
+    }
+
+  std::vector<Tensor<1,3> > offsetVectors;
+  //resize offset vectors
+  offsetVectors.resize(3);
+
+  for(int i = 0; i < 3; ++i)
+    {
+      for(int j = 0; j < 3; ++j)
+	{
+	  offsetVectors[i][j] = unitVectorsXYZ[i][j] - domainBoundingVectors[i][j];
+	}
+    }  
+  d_domainBoundingVectors=domainBoundingVectors;
   for (int i = 0; i < C_DIM; ++i)
     {
-      GridTools::collect_periodic_faces(d_dofHandlerMoveMesh, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, d_periodicity_vector);
+      GridTools::collect_periodic_faces(d_dofHandlerMoveMesh, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, d_periodicity_vector,offsetVectors[i]);
     }
   DoFTools::make_periodicity_constraints<DoFHandler<C_DIM> >(d_periodicity_vector, d_constraintsMoveMesh);
   d_constraintsMoveMesh.close();
@@ -212,6 +234,27 @@ std::pair<bool,double> meshMovementClass::movedMeshCheck()
   //sanity check to make sure periodic boundary conditions are maintained
   MPI_Barrier(mpi_communicator); 
 #ifdef ENABLE_PERIODIC_BC
+  //create unitVectorsXYZ
+  std::vector<std::vector<double> > unitVectorsXYZ;
+  unitVectorsXYZ.resize(3);
+
+  for(int i = 0; i < 3; ++i)
+    {
+      unitVectorsXYZ[i].resize(3,0.0);
+      unitVectorsXYZ[i][i] = 0.0;
+    }
+
+  std::vector<Tensor<1,3> > offsetVectors;
+  //resize offset vectors
+  offsetVectors.resize(3);
+
+  for(int i = 0; i < 3; ++i)
+    {
+      for(int j = 0; j < 3; ++j)
+	{
+	  offsetVectors[i][j] = unitVectorsXYZ[i][j] - d_domainBoundingVectors[i][j];
+	}
+    }    
   pcout << "Sanity check for periodic matched faces on moved triangulation..." << std::endl;  
   for(unsigned int i=0; i< d_periodicity_vector.size(); ++i) 
   {
@@ -222,7 +265,7 @@ std::pair<bool,double> meshMovementClass::movedMeshCheck()
 
     std::vector<bool> isPeriodicFace(3);	  
     for(unsigned int idim=0; idim<3; ++idim){
-        isPeriodicFace[idim]=GridTools::orthogonal_equality(d_periodicity_vector[i].cell[0]->face(d_periodicity_vector[i].face_idx[0]),d_periodicity_vector[i].cell[1]->face(d_periodicity_vector[i].face_idx[1]),idim);
+        isPeriodicFace[idim]=GridTools::orthogonal_equality(d_periodicity_vector[i].cell[0]->face(d_periodicity_vector[i].face_idx[0]),d_periodicity_vector[i].cell[1]->face(d_periodicity_vector[i].face_idx[1]),idim,offsetVectors[idim]);
     }
 	      
     AssertThrow(isPeriodicFace[0]==true || isPeriodicFace[1]==true || isPeriodicFace[2]==true,ExcMessage("Previously periodic matched face pairs not matching periodically for any directions after mesh movement"));			    

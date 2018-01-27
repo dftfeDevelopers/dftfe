@@ -35,9 +35,36 @@ void dftClass<FEOrder>::createAtomBinsExtraSanityCheck()
      {
 	if(cell->is_locally_owned())
 	{
+
+	  std::vector<types::global_dof_index> cell_dof_indices(dofs_per_cell);
+	  cell->get_dof_indices(cell_dof_indices);	
+
+	  bool isSolvedNodePresent=false;
+	  int numSolvedNodes=0;
+	  int closestChargeIdSolvedSum=0;
+	  int closestChargeIdSolvedNode=-1;
+	  for(unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
+	    {
+	      const int globalNodeId=cell_dof_indices[iNode];
+	      if(!d_noConstraints.is_constrained(globalNodeId))
+	      {		  
+		const int boundaryId=d_boundaryFlag[iBin][globalNodeId];
+		if(boundaryId != -1)
+		{
+		    isSolvedNodePresent=true;
+		    closestChargeIdSolvedNode=boundaryId;
+		    numSolvedNodes++;
+		    closestChargeIdSolvedSum+=boundaryId;
+		}
+		
+	      }
+	      
+	    }//element node loop
+           Assert(numSolvedNodes*closestChargeIdSolvedNode==closestChargeIdSolvedSum,ExcMessage("BUG"));
+
 	   std::vector<unsigned int> dirichletFaceIds;
 	   unsigned int closestAtomIdSum=0;
-	   unsigned int closestAtomId;
+	   unsigned int closestAtomId=0;
 	   unsigned int nonHangingNodeIdCountCell=0;
 	   for(unsigned int iFace = 0; iFace < faces_per_cell; ++iFace)
            {
@@ -48,6 +75,8 @@ void dftClass<FEOrder>::createAtomBinsExtraSanityCheck()
 	      for(unsigned int iFaceDof = 0; iFaceDof < dofs_per_face; ++iFaceDof){
                  unsigned int nodeId=iFaceGlobalDofIndices[iFaceDof];
 		 if (!d_noConstraints.is_constrained(nodeId)){
+	            Assert(boundaryNodeMap.find(nodeId)!=boundaryNodeMap.end(),ExcMessage("BUG"));
+                    Assert(closestAtomBinMap.find(nodeId)!=closestAtomBinMap.end(),ExcMessage("BUG"));
 		    dirichletDofCount+=boundaryNodeMap[nodeId];
 		    closestAtomId=closestAtomBinMap[nodeId];
 		    closestAtomIdSum+=closestAtomId;
@@ -64,6 +93,10 @@ void dftClass<FEOrder>::createAtomBinsExtraSanityCheck()
 	   
 	   if (dirichletFaceIds.size()!=faces_per_cell){
 	      //run time exception handling
+	      if (!(closestAtomIdSum==closestAtomId*nonHangingNodeIdCountCell))
+	      {
+		  std::cout << "closestAtomIdSum: "<<closestAtomIdSum<< ", closestAtomId: "<<closestAtomId<< ", nonHangingNodeIdCountCell: "<<nonHangingNodeIdCountCell<< " cell center: "<< cell->center() << " is solved node present: "<< isSolvedNodePresent<< std::endl;
+	      }
 	      AssertThrow(closestAtomIdSum==closestAtomId*nonHangingNodeIdCountCell,ExcMessage("dofs of cells touching vself ball have different closest atom ids, remedy- increase separation between vself balls"));		   
 	   }
 	}//cell locally owned
