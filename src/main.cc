@@ -360,6 +360,7 @@ void parse_command_line(const int argc,
 int main (int argc, char *argv[])
 {
   Utilities::MPI::MPI_InitFinalize mpi_initialization (argc, argv);
+  //
   try
     {
       declare_parameters ();

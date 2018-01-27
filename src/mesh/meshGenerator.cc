@@ -21,13 +21,14 @@
 
 #define maxRefinementLevels 10
 
-
 //
 //constructor
 //
 meshGeneratorClass::meshGeneratorClass():
   d_parallelTriangulationUnmoved(MPI_COMM_WORLD),
   d_parallelTriangulationMoved(MPI_COMM_WORLD),
+  d_serialTriangulationUnmoved(MPI_COMM_SELF),
+  d_serialTriangulationMoved(MPI_COMM_SELF),
   mpi_communicator (MPI_COMM_WORLD),
   this_mpi_process (Utilities::MPI::this_mpi_process(mpi_communicator)),
   n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_communicator)),
@@ -48,9 +49,8 @@ meshGeneratorClass::~meshGeneratorClass()
 //
 //generate adaptive mesh
 //
-void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& parallelTriangulation, 
-				      Triangulation<3,3>& serialTriangulation, 
-				      types::global_dof_index & numberGlobalCells)
+
+void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& parallelTriangulation, parallel::distributed::Triangulation<3>& serialTriangulation, types::global_dof_index & numberGlobalCells)
 
 {
   computing_timer.enter_section("mesh");
@@ -118,7 +118,6 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
         else
 	   subdivisions[i] = std::floor(numberIntervalsEachDirection[i]);
       }
-      
 
       GridGenerator::subdivided_parallelepiped<3>(parallelTriangulation,
 	                                          subdivisions,
@@ -147,7 +146,7 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       meshGenUtils::markPeriodicFacesNonOrthogonal(parallelTriangulation,d_domainBoundingVectors);
       meshGenUtils::markPeriodicFacesNonOrthogonal(serialTriangulation,d_domainBoundingVectors);
 #endif
-    
+
       char buffer1[100];
       sprintf(buffer1, "\n Base uniform number of elements: %u\n", parallelTriangulation.n_global_active_cells());
       pcout << buffer1;
@@ -169,6 +168,7 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 	{
           n_cell = 0; centroid.clear(); localRefineFlag.clear();
 	  refineFlag = false;
+          numberGlobalCells = parallelTriangulation.n_global_active_cells();
 	  cell = parallelTriangulation.begin_active();
 	  endc = parallelTriangulation.end();
 	  //
@@ -287,13 +287,13 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 	    }
            
            // Refine serial mesh
-	      numberGlobalCells = parallelTriangulation.n_global_active_cells();
+	     // numberGlobalCells = parallelTriangulation.n_global_active_cells();
 	      //pcout << " check 1.1 " << std::endl ;
               refineSerialMesh(n_cell, centroid, localRefineFlag, numberGlobalCells, serialTriangulation) ;
 	      //pcout << " check 1.2 " << std::endl ;
 	      serialTriangulation.execute_coarsening_and_refinement();
 	      
-        }
+        } 
       //
       //compute some adaptive mesh metrics
       //
@@ -371,7 +371,7 @@ void meshGeneratorClass::generateSerialAndParallelMesh(std::vector<std::vector<d
 //
 //get unmoved serial mesh
 //
-Triangulation<3,3> &
+parallel::distributed::Triangulation<3> &
 meshGeneratorClass::getSerialMesh()
 {
   return d_serialTriangulationMoved;
@@ -387,7 +387,7 @@ meshGeneratorClass::getParallelMesh()
   //return d_parallelTriangulationUnmoved;
 }
 //
-void meshGeneratorClass::refineSerialMesh(unsigned int n_cell, std::vector<double>& centroid, std::vector<int>& localRefineFlag, unsigned int n_global_cell, Triangulation<3,3>& serialTriangulation)
+void meshGeneratorClass::refineSerialMesh(unsigned int n_cell, std::vector<double>& centroid, std::vector<int>& localRefineFlag, unsigned int n_global_cell, parallel::distributed::Triangulation<3>& serialTriangulation)
 {
  /*std::vector<double> centroid ;
  std::vector<bool> localRefineFlag ;
@@ -471,7 +471,8 @@ void meshGeneratorClass::refineSerialMesh(unsigned int n_cell, std::vector<doubl
      unsigned int index = 0 ;
      for ( unsigned int i = 0; i < n_global_cell ; ++i ) {
 	  Point<3> p2 = centroidGlobal[i] ;
-	  if (p1==p2) {
+	  double dist = (p1[0]-p2[0])*(p1[0]-p2[0]) + (p1[1]-p2[1])*(p1[1]-p2[1]) + (p1[2]-p2[2])*(p1[2]-p2[2]) ;
+	  if (dist < 1.0E-10) {
 	      index = i ;
 	      break;
 	  }
