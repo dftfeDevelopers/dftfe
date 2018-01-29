@@ -259,6 +259,20 @@ void dftClass<FEOrder>::generateMPGrid()
 	pcout << (symmetryPtr->translation)[iSymm][0] << "  " <<(symmetryPtr->translation)[iSymm][1] << "  " << (symmetryPtr->translation)[iSymm][2] << std::endl;	
 	pcout << "	" << std::endl ;
   }
+
+ if(timeReversal) {
+  //// adding time reversal  //////
+  //
+  for (unsigned int iSymm=symmetryPtr->numSymm; iSymm<2*(symmetryPtr->numSymm); ++iSymm){
+     for (unsigned int j=0; j<3; ++j) {
+        for (unsigned int k=0; k<3; ++k)
+            rotation[iSymm][j][k] = -1.0*rotation[iSymm-(symmetryPtr->numSymm)][j][k] ; 
+	    (symmetryPtr->translation)[iSymm][j] = -(symmetryPtr->translation)[iSymm-(symmetryPtr->numSymm)][j] ;
+  }
+  }
+  symmetryPtr->numSymm = 2*(symmetryPtr->numSymm) ;
+  }
+  ///
   symmMatTemp.resize( symmetryPtr->numSymm );
   (symmetryPtr->symmMat).resize( symmetryPtr->numSymm );
   symmUnderGroupTemp.resize(symmetryPtr->numSymm);
@@ -269,6 +283,10 @@ void dftClass<FEOrder>::generateMPGrid()
          symmMatTemp[i][j][k] = double(rotation[i][j][k]);
     }
   }
+  //symmMatTemp[numSymm].resize(3,std::vector<double> (3,0.0)) ;
+  //symmMatTemp[numSymm][0][0] = -1.0 ;
+  //symmMatTemp[numSymm][1][1] = -1.0 ;
+  //symmMatTemp[numSymm][2][2] = -1.0 ;
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //
@@ -383,38 +401,48 @@ void dftClass<FEOrder>::generateMPGrid()
    //
    // Split k-points over pools
    //
-   unsigned int npool = 2;
    unsigned int this_mpi_pool (Utilities::MPI::this_mpi_process(interpoolcomm)) ;
    std::vector<double> d_kPointCoordinatesGlobal(3*d_maxkPoints, 0.0) ;
+   std::vector<double> d_kPointWeightsGlobal(d_maxkPoints, 0.0) ;
    for(int i = 0; i < d_maxkPoints; ++i)
     {
      d_kPointCoordinatesGlobal[3*i + 0] = d_kPointCoordinates[3*i + 0] ;
      d_kPointCoordinatesGlobal[3*i + 1] = d_kPointCoordinates[3*i + 1] ;
      d_kPointCoordinatesGlobal[3*i + 2] = d_kPointCoordinates[3*i + 2] ;
+     d_kPointWeightsGlobal[i] = d_kPointWeights[i] ;
     }
    //
    unsigned int d_maxkPointsGlobal = d_maxkPoints ;
    d_kPointCoordinates.clear() ;
+   d_kPointWeights.clear() ;
    d_maxkPoints = d_maxkPointsGlobal / npool ;
    unsigned int rest = d_maxkPointsGlobal%npool ;
    if (this_mpi_pool < rest)
        d_maxkPoints = d_maxkPoints + 1 ;
    //
    d_kPointCoordinates.resize(3*d_maxkPoints, 0.0) ;
+   d_kPointWeights.resize(d_maxkPoints, 0.0) ;
    //
-   std::vector<int> sendSizekPoints(npool, 0), mpiOffsetskPoints(npool, 0) ;
+   std::vector<int> sendSizekPoints1(npool, 0), mpiOffsetskPoints1(npool, 0) ;
+   std::vector<int> sendSizekPoints2(npool, 0), mpiOffsetskPoints2(npool, 0) ;
    if (this_mpi_pool==0) {
    //
    for (int i=0; i < npool; ++i) {
-	sendSizekPoints[i] = 3*d_maxkPointsGlobal / npool ;
-	if (i < rest)
-	   sendSizekPoints[i] = sendSizekPoints[i] + 3 ;
-	if (i > 0)
-	    mpiOffsetskPoints[i] = mpiOffsetskPoints[i-1] + sendSizekPoints[i-1] ;
+	sendSizekPoints1[i] = 3*(d_maxkPointsGlobal / npool) ;
+	sendSizekPoints2[i] = d_maxkPointsGlobal / npool ;
+	if (i < rest){
+	   sendSizekPoints1[i] = sendSizekPoints1[i] + 3 ;
+	   sendSizekPoints2[i] = sendSizekPoints2[i] + 1 ;
+        }
+	if (i > 0){
+	    mpiOffsetskPoints1[i] = mpiOffsetskPoints1[i-1] + sendSizekPoints1[i-1] ;
+	    mpiOffsetskPoints2[i] = mpiOffsetskPoints2[i-1] + sendSizekPoints2[i-1] ;
+        }
    }
    }
-   pcout << sendSizekPoints[0] << "  " << sendSizekPoints[1] << " " << d_maxkPoints << std::endl;
+   //pcout << sendSizekPoints[0] << "  " << sendSizekPoints[1] << " " << d_maxkPoints << std::endl;
    //
-   MPI_Scatterv(&(d_kPointCoordinatesGlobal[0]),&(sendSizekPoints[0]), &(mpiOffsetskPoints[0]), MPI_DOUBLE, &(d_kPointCoordinates[0]), 3*d_maxkPoints, MPI_DOUBLE, 0, interpoolcomm); 
+   MPI_Scatterv(&(d_kPointCoordinatesGlobal[0]),&(sendSizekPoints1[0]), &(mpiOffsetskPoints1[0]), MPI_DOUBLE, &(d_kPointCoordinates[0]), 3*d_maxkPoints, MPI_DOUBLE, 0, interpoolcomm); 
+   MPI_Scatterv(&(d_kPointWeightsGlobal[0]),&(sendSizekPoints2[0]), &(mpiOffsetskPoints2[0]), MPI_DOUBLE, &(d_kPointWeights[0]), d_maxkPoints, MPI_DOUBLE, 0, interpoolcomm); 
  
 }

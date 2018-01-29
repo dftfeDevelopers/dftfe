@@ -212,7 +212,7 @@ void dftClass<FEOrder>::locatePeriodicPinnedNodes()
   unsigned int taskId = 0;
 
   if(std::abs(maxDistance - globalMaxDistance) < 1e-07)
-    taskId = Utilities::MPI::this_mpi_process(MPI_COMM_WORLD);
+    taskId = Utilities::MPI::this_mpi_process(mpi_communicator);
 
   unsigned int maxTaskId;
 
@@ -223,9 +223,9 @@ void dftClass<FEOrder>::locatePeriodicPinnedNodes()
 		MPI_MAX,
 		mpi_communicator);
 
-  if(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == maxTaskId)
+  if(Utilities::MPI::this_mpi_process(mpi_communicator) == maxTaskId)
     {
-      std::cout<<"Found Node locally on processor Id: "<<Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)<<std::endl;
+      std::cout<<"Found Node locally on processor Id: "<<Utilities::MPI::this_mpi_process(mpi_communicator)<<std::endl;
       if(locally_owned_dofs.is_element(maxNode))
 	{
 	  if(constraintsNone.is_identity_constrained(maxNode))

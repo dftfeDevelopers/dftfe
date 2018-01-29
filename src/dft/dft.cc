@@ -88,7 +88,7 @@ dftClass<FEOrder>::dftClass(MPI_Comm &mpi_comm_replica, MPI_Comm &interpoolcomm)
   poissonPtr= new poissonClass<FEOrder>(this, mpi_comm_replica);
   eigenPtr= new eigenClass<FEOrder>(this, mpi_comm_replica);
   forcePtr= new forceClass<FEOrder>(this, mpi_comm_replica);
-  symmetryPtr= new symmetryClass<FEOrder>(this, mpi_comm_replica);
+  symmetryPtr= new symmetryClass<FEOrder>(this, mpi_comm_replica, interpoolcomm);
   geoOptIonPtr= new geoOptIon<FEOrder>(this, mpi_comm_replica);
   //
   // initialize PETSc

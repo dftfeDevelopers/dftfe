@@ -164,11 +164,14 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   //
   locateAtomCoreNodes();
   //
+  pcout << " check 1.1 " << std::endl; 
   //
   //initialize poisson and eigen problem related objects
   //
   poissonPtr->init();
+   pcout << " check 1.2 " << std::endl; 
   eigenPtr->init();
+   pcout << " check 1.3 " << std::endl; 
   
  
   computing_timer.exit_section("moved setup");   

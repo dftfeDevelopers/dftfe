@@ -393,7 +393,8 @@ void dftClass<FEOrder>::gramSchmidt(std::vector<vectorType*>& X)
   //copy to petsc vectors
   unsigned int numVectors = X.size();
   Vec vec;
-  VecCreateMPI(PETSC_COMM_WORLD, localSize, PETSC_DETERMINE, &vec);
+  //VecCreateMPI(PETSC_COMM_WORLD, localSize, PETSC_DETERMINE, &vec);
+  VecCreateMPI(mpi_communicator, localSize, PETSC_DETERMINE, &vec);
   VecSetFromOptions(vec);
   //
   Vec *petscColumnSpace;
@@ -439,7 +440,8 @@ void dftClass<FEOrder>::gramSchmidt(std::vector<vectorType*>& X)
 
   //
   BV slepcColumnSpace;
-  BVCreate(PETSC_COMM_WORLD,&slepcColumnSpace);
+  //BVCreate(PETSC_COMM_WORLD,&slepcColumnSpace);
+  BVCreate(mpi_communicator,&slepcColumnSpace);
   BVSetFromOptions(slepcColumnSpace);
   BVSetSizesFromVec(slepcColumnSpace,petscColumnSpace[0],numVectors);
   BVSetType(slepcColumnSpace,"vecs");

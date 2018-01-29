@@ -28,7 +28,7 @@ class meshMovementClass
 
 public:
   meshMovementClass( MPI_Comm &mpi_comm_replica);
-  //meshMovementClass();
+  meshMovementClass();
   virtual ~meshMovementClass() {}
   void init(Triangulation<3,3> & triangulation);
   void initMoved();

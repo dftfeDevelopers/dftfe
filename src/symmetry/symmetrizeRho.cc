@@ -196,15 +196,22 @@ void symmetryClass<FEOrder>::computeLocalrhoOut()
     }
      //pcout<<"check 6: "<<std::endl;
   std::vector<double> rhoLocal, gradRhoLocal, rhoLocalSpinPolarized, gradRhoLocalSpinPolarized ;
+  std::vector<double> rhoTemp, gradRhoTemp, rhoTempSpinPolarized, gradRhoTempSpinPolarized ;
   rhoLocal.resize(totPoints, 0.0);
+  rhoTemp.resize(totPoints, 0.0);
   //
-  if (spinPolarized==1) 
+  if (spinPolarized==1) {
      rhoLocalSpinPolarized.resize(2*totPoints, 0.0);
+     rhoTempSpinPolarized.resize(2*totPoints, 0.0);
+  }
   //
   if(xc_id == 4) {//GGA
      gradRhoLocal.resize(3*totPoints, 0.0);
-     if (spinPolarized)
+     gradRhoTemp.resize(3*totPoints, 0.0);
+     if (spinPolarized){
 	gradRhoLocalSpinPolarized.resize(6*totPoints, 0.0);
+	gradRhoTempSpinPolarized.resize(6*totPoints, 0.0);
+    }
   }
   unsigned int numPointsDone = 0, numGroupsDone = 0 ;
   for ( unsigned int proc = 0; proc < n_mpi_processes; ++proc) {
@@ -271,13 +278,13 @@ void symmetryClass<FEOrder>::computeLocalrhoOut()
 		       for (unsigned int iList=0; iList<numPoint; ++iList){
 			    //
 			    if (spinPolarized==1) {
-			    rhoLocalSpinPolarized[2*(numPointsDone+iList)] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
+			    rhoTempSpinPolarized[2*(numPointsDone+iList)] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
 							partialOccupancyAlpha*(dftPtr->d_kPointWeights)[kPoint]*(tempPsiAlpha[iList](0)*tempPsiAlpha[iList](0) + tempPsiAlpha[iList](1)*tempPsiAlpha[iList](1));
-			    rhoLocalSpinPolarized[2*(numPointsDone+iList)+1] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
+			    rhoTempSpinPolarized[2*(numPointsDone+iList)+1] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
 							partialOccupancyBeta*(dftPtr->d_kPointWeights)[kPoint]*(tempPsiBeta[iList](0)*tempPsiBeta[iList](0) + tempPsiBeta[iList](1)*tempPsiBeta[iList](1));
 			     }
 			     else
-				 rhoLocal[numPointsDone+iList] += 1.0 / (double(numSymmUnderGroup[kPoint]))  *
+				 rhoTemp[numPointsDone+iList] += 1.0 / (double(numSymmUnderGroup[kPoint]))  *
 							2.0*partialOccupancyAlpha*(dftPtr->d_kPointWeights)[kPoint]*(tempPsiAlpha[iList](0)*tempPsiAlpha[iList](0) + tempPsiAlpha[iList](1)*tempPsiAlpha[iList](1));
 			     if(xc_id == 4) {//GGA
 			     //
@@ -297,11 +304,11 @@ void symmetryClass<FEOrder>::computeLocalrhoOut()
 
 
 			     //
-			     gradRhoLocalSpinPolarized[6*(numPointsDone+iList) + 0] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
+			     gradRhoTempSpinPolarized[6*(numPointsDone+iList) + 0] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
 						2.0*partialOccupancyAlpha*(dftPtr->d_kPointWeights)[kPoint]*(tempPsiAlpha[iList](0)*tempGradPsi[iList][0][0] + tempPsiAlpha[iList](1)*tempGradPsi[iList][1][0]);
-			     gradRhoLocalSpinPolarized[6*(numPointsDone+iList) + 1] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
+			     gradRhoTempSpinPolarized[6*(numPointsDone+iList) + 1] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
 						2.0*partialOccupancyAlpha*(dftPtr->d_kPointWeights)[kPoint]*(tempPsiAlpha[iList](0)*tempGradPsi[iList][0][1] + tempPsiAlpha[iList](1)*tempGradPsi[iList][1][1]);
-			     gradRhoLocalSpinPolarized[6*(numPointsDone+iList) + 2] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
+			     gradRhoTempSpinPolarized[6*(numPointsDone+iList) + 2] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
 						2.0*partialOccupancyAlpha*(dftPtr->d_kPointWeights)[kPoint]*(tempPsiAlpha[iList](0)*tempGradPsi[iList][0][2] + tempPsiAlpha[iList](1)*tempGradPsi[iList][1][2]); 
 
 		             tempGradPsi[iList][0][0]=
@@ -319,11 +326,11 @@ void symmetryClass<FEOrder>::computeLocalrhoOut()
 
 
 			     //
-			     gradRhoLocalSpinPolarized[6*(numPointsDone+iList) + 3] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
+			     gradRhoTempSpinPolarized[6*(numPointsDone+iList) + 3] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
 						2.0*partialOccupancyBeta*(dftPtr->d_kPointWeights)[kPoint]*(tempPsiBeta[iList](0)*tempGradPsi[iList][0][0] + tempPsiBeta[iList](1)*tempGradPsi[iList][1][0]);
-			     gradRhoLocalSpinPolarized[6*(numPointsDone+iList) + 4] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
+			     gradRhoTempSpinPolarized[6*(numPointsDone+iList) + 4] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
 						2.0*partialOccupancyBeta*(dftPtr->d_kPointWeights)[kPoint]*(tempPsiBeta[iList](0)*tempGradPsi[iList][0][1] + tempPsiBeta[iList](1)*tempGradPsi[iList][1][1]);
-			     gradRhoLocalSpinPolarized[6*(numPointsDone+iList) + 5] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
+			     gradRhoTempSpinPolarized[6*(numPointsDone+iList) + 5] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
 						2.0*partialOccupancyBeta*(dftPtr->d_kPointWeights)[kPoint]*(tempPsiBeta[iList](0)*tempGradPsi[iList][0][2] + tempPsiBeta[iList](1)*tempGradPsi[iList][1][2]); 
 				}
 			     else {
@@ -342,11 +349,11 @@ void symmetryClass<FEOrder>::computeLocalrhoOut()
 
 
 			     //
-			     gradRhoLocal[3*(numPointsDone+iList) + 0] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
+			     gradRhoTemp[3*(numPointsDone+iList) + 0] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
 						2.0*2.0*partialOccupancyAlpha*(dftPtr->d_kPointWeights)[kPoint]*(tempPsiAlpha[iList](0)*tempGradPsi[iList][0][0] + tempPsiAlpha[iList](1)*tempGradPsi[iList][1][0]);
-			     gradRhoLocal[3*(numPointsDone+iList) + 1] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
+			     gradRhoTemp[3*(numPointsDone+iList) + 1] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
 						2.0*2.0*partialOccupancyAlpha*(dftPtr->d_kPointWeights)[kPoint]*(tempPsiAlpha[iList](0)*tempGradPsi[iList][0][1] + tempPsiAlpha[iList](1)*tempGradPsi[iList][1][1]);
-			     gradRhoLocal[3*(numPointsDone+iList) + 2] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
+			     gradRhoTemp[3*(numPointsDone+iList) + 2] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
 						2.0*2.0*partialOccupancyAlpha*(dftPtr->d_kPointWeights)[kPoint]*(tempPsiAlpha[iList](0)*tempGradPsi[iList][0][2] + tempPsiAlpha[iList](1)*tempGradPsi[iList][1][2]); 
 				}
 			     }
@@ -355,15 +362,6 @@ void symmetryClass<FEOrder>::computeLocalrhoOut()
 		     } // if this symm is part of the group under this kpoint
 	  } // loop on k Points
        //
-       //  gather density from all pools
-          /*MPI_Allreduce(&rhoTemp[0], &rhoLocal[numPointsDone], numPoint, MPI_DOUBLE, MPI_SUM, mpi_communicator) ;
-	  if (xc_id==4)
-	      MPI_Allreduce(&gradRhoTemp[0], &gradRhoLocal[3*numPointsDone], 3*numPoint, MPI_DOUBLE, MPI_SUM, mpi_communicator) ;
-          if (spinPolarized==1) {
-              MPI_Allreduce(&rhoTempSpinPolarized[0], &rhoLocalSpinPolarized[2*numPointsDone], 2*numPoint, MPI_DOUBLE, MPI_SUM, mpi_communicator) ;
-          if (xc_id==4)
-	      MPI_Allreduce(&gradRhoTempSpinPolarized[0], &gradRhoLocalSpinPolarized[6*numPointsDone], 6*numPoint, MPI_DOUBLE, MPI_SUM, mpi_communicator) ; 
-          }*/
 
        //
        numPointsDone += numPoint ;
@@ -374,6 +372,16 @@ void symmetryClass<FEOrder>::computeLocalrhoOut()
     //
    } // loop on proc 
    //
+       //  gather density from all pools
+          MPI_Allreduce(&rhoTemp[0], &rhoLocal[0], totPoints, MPI_DOUBLE, MPI_SUM, interpoolcomm) ;
+	  if (xc_id==4)
+	      MPI_Allreduce(&gradRhoTemp[0], &gradRhoLocal[0], 3*totPoints, MPI_DOUBLE, MPI_SUM, interpoolcomm) ;
+          if (spinPolarized==1) {
+              MPI_Allreduce(&rhoTempSpinPolarized[0], &rhoLocalSpinPolarized[0], 2*totPoints, MPI_DOUBLE, MPI_SUM, interpoolcomm) ;
+          if (xc_id==4)
+	      MPI_Allreduce(&gradRhoTempSpinPolarized[0], &gradRhoLocalSpinPolarized[0], 6*totPoints, MPI_DOUBLE, MPI_SUM, interpoolcomm) ; 
+          }
+   
    //std::cout << this_mpi_process << " check 1.2 " << std::endl;
    //MPI_Barrier(mpi_communicator);
     sendData.resize((1+spinPolarized)*totPoints) ;

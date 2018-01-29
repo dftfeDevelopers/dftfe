@@ -44,7 +44,7 @@ class symmetryClass
   /**
    * symmetryClass constructor
    */
-  symmetryClass(dftClass<FEOrder>* _dftPtr,  MPI_Comm &mpi_comm_replica);
+  symmetryClass(dftClass<FEOrder>* _dftPtr,  MPI_Comm &mpi_comm_replica, MPI_Comm &interpoolcomm);
 
 
   /**
@@ -68,7 +68,7 @@ class symmetryClass
   //compute-time logger
   dealii::TimerOutput computing_timer;
    //parallel objects
-  MPI_Comm mpi_communicator;
+  MPI_Comm mpi_communicator, interpoolcomm;
   const unsigned int n_mpi_processes;
   const unsigned int this_mpi_process;
   dealii::ConditionalOStream   pcout;

@@ -19,6 +19,7 @@
 #include "../../include/meshMovementGaussian.h"
 
 meshMovementGaussianClass::meshMovementGaussianClass( MPI_Comm &mpi_comm_replica):
+ meshMovementClass(mpi_comm_replica),
  mpi_communicator(mpi_comm_replica)
 {
 }
@@ -37,9 +38,13 @@ std::pair<bool,double> meshMovementGaussianClass::moveMesh(std::vector<Point<C_D
   writeMesh("meshUnmoved.vtu");
   MPI_Barrier(mpi_communicator);
   pcout << "Computing triangulation displacement increment caused by gaussian generator displacements..." << std::endl;
+  pcout << " check 0.0" << std::endl ;
   initIncrementField();
-  computeIncrement();	
+  pcout << " check 0.1" << std::endl ;
+  computeIncrement();
+  pcout << " check 0.2" << std::endl ;	
   finalizeIncrementField();
+  pcout << " check 0.3" << std::endl ;
   pcout << "...Computed triangulation displacement increment" << std::endl;	
   updateTriangulationVertices();
   std::pair<bool,double> returnData=movedMeshCheck();

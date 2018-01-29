@@ -27,12 +27,12 @@ namespace dftParameters
 {
 
   extern unsigned int finiteElementPolynomialOrder,n_refinement_steps,numberEigenValues,xc_id, spinPolarized, nkx,nky,nkz, pseudoProjector;
-  extern unsigned int chebyshevOrder,numPass,numSCFIterations,maxLinearSolverIterations, mixingHistory;
+  extern unsigned int chebyshevOrder,numPass,numSCFIterations,maxLinearSolverIterations, mixingHistory, npool;
 
   extern double radiusAtomBall, domainSizeX, domainSizeY, domainSizeZ, mixingParameter, dkx, dky, dkz;
   extern double lowerEndWantedSpectrum,relLinearSolverTolerance,selfConsistentSolverTolerance,TVal, start_magnetization;
 
-  extern bool isPseudopotential,periodicX,periodicY,periodicZ, useSymm, symmFromFile;
+  extern bool isPseudopotential,periodicX,periodicY,periodicZ, useSymm, symmFromFile, timeReversal;
   extern std::string meshFileName,coordinatesFile,currentPath,latticeVectorsFile,kPointDataFile, symmDataFile;
 
   extern double innerDomainSizeX, innerDomainSizeY, innerDomainSizeZ, outerAtomBallRadius, meshSizeOuterDomain, meshSizeInnerDomain;

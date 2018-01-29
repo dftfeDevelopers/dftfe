@@ -8,7 +8,7 @@ set DFT PATH = "../../../../"
 #
 set MESH FILE = mesh.inp
 
-set FINITE ELEMENT POLYNOMIAL ORDER = 1
+set FINITE ELEMENT POLYNOMIAL ORDER = 4
 
 
 #
@@ -49,13 +49,15 @@ set LATTICE VECTORS FILE = latticeVectors.inp
 #
 #set kPOINT RULE FILE = 2x2x2kPointRule.inp
 #set kPOINT RULE FILE = GammaPoint.inp
-set BZ SAMPLING POINTS ALONG X = 1
-set BZ SAMPLING POINTS ALONG Y = 1
-set BZ SAMPLING POINTS ALONG Z = 2
+set BZ SAMPLING POINTS ALONG X = 4
+set BZ SAMPLING POINTS ALONG Y = 4
+set BZ SAMPLING POINTS ALONG Z = 4
 set BZ SAMPLING SHIFT ALONG X = 0.00
 set BZ SAMPLING SHIFT ALONG Y = 0.00
 set BZ SAMPLING SHIFT ALONG Z = 0.0
-set USE GROUP SYMMETRY = false
+set USE GROUP SYMMETRY = true
+set NUMBER OF POOLS = 8
+set USE TIME REVERSAL SYMMETRY = true
 #
 #Symmetry matrix file
 #
@@ -82,7 +84,7 @@ set EXCHANGE CORRELATION TYPE = 1
 #
 
 #Parameter indicating number of eigenfunctions to be solved
-set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 100
+set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 20
 #Approximate estimate of lower bound of the wanted spectrum
 set LOWER BOUND WANTED SPECTRUM = -10.0
 #Chebyshev Filter polynomial degree (0 indicates default value based on upper bound of Hamiltonian)

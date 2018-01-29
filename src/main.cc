@@ -157,6 +157,9 @@ void declare_parameters()
   prm.declare_entry("USE GROUP SYMMETRY", "true",
 		    Patterns::Bool(),
 		    "Flag to control usage of space group symmetries (only for periodic calculation)");
+  prm.declare_entry("USE TIME REVERSAL SYMMETRY", "false",
+		    Patterns::Bool(),
+		    "Flag to control usage of time reversal symmetry ");
 
   prm.declare_entry("FINITE ELEMENT POLYNOMIAL ORDER", "2",
 		    Patterns::Integer(1,12),
@@ -258,6 +261,10 @@ void declare_parameters()
   prm.declare_entry("POISSON SOLVER CONVERGENCE TOLERANCE", "1e-12",
 		    Patterns::Double(),
 		    "Relative tolerance as stopping criterion for Poisson problem convergence");
+
+   prm.declare_entry("NUMBER OF POOLS", "1",
+		    Patterns::Integer(),
+		    "Number of pools to be generated for k-point parallelization");
 }
 
 void parse_command_line(const int argc,
@@ -325,6 +332,7 @@ void parse_command_line(const int argc,
 	  dftParameters::dky				= prm.get_double("BZ SAMPLING SHIFT ALONG Y");
           dftParameters::dkz				= prm.get_double("BZ SAMPLING SHIFT ALONG Z");
           dftParameters::useSymm 	                = prm.get_bool("USE GROUP SYMMETRY");
+          dftParameters::timeReversal 	                = prm.get_bool("USE TIME REVERSAL SYMMETRY");
 	  dftParameters::isPseudopotential             = prm.get_bool("PSEUDOPOTENTIAL CALCULATION");
 	  dftParameters::pseudoProjector               = prm.get_integer("PSEUDOPOTENTIAL TYPE");
 	  dftParameters::xc_id                         = prm.get_integer("EXCHANGE CORRELATION TYPE");
@@ -339,6 +347,7 @@ void parse_command_line(const int argc,
 	  dftParameters::TVal                          = prm.get_double("TEMPERATURE");	
 	  dftParameters::maxLinearSolverIterations     = prm.get_integer("POISSON SOLVER CONVERGENCE MAXIMUM ITERATIONS");
 	  dftParameters::relLinearSolverTolerance      = prm.get_double("POISSON SOLVER CONVERGENCE TOLERANCE");
+          dftParameters::npool			       = prm.get_integer("NUMBER OF POOLS");
 
 	}
 
@@ -351,85 +360,6 @@ void parse_command_line(const int argc,
 int main (int argc, char *argv[])
 {
   Utilities::MPI::MPI_InitFinalize mpi_initialization (argc, argv);
-  //
-  int color1, color2, npool=2;  
-  int n_mpi_processes = Utilities::MPI::n_mpi_processes(MPI_COMM_WORLD) ;    
-  double poolSizeFloat = (double)n_mpi_processes/(double)npool;  
-  int poolSize = std::floor(poolSizeFloat);
-  int taskId = Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) ;
-  MPI_Comm interpoolcomm, intrapoolcomm, mpi_comm_replica ;
-  //
-      if(taskId == 0) {
-        std::cout<<"Number of pools: "<<npool<<std::endl;
-	std::cout<<"Pool size: "<<poolSize<<std::endl;
-      }
-      
-      //color1 = npool-1;
-
-      /*for(int icount = 0; icount < npool; ++icount)
-        {
-          if((taskId - icount*poolSize)>= 0)
-            {
-              if((taskId - icount*poolSize) < poolSize)
-                color1 = icount;
-            }
-	  
-        } */
-  
-     color1 = taskId%poolSize ; 
-
-
-      MPI_Barrier(MPI_COMM_WORLD);
-
-      MPI_Comm_split(MPI_COMM_WORLD,
-                     color1,
-                     0,
-                     &interpoolcomm);
-
-   //
-   
-      //std::cout << " check 0.1 " << std::endl;
-
-      // color2 = poolSize-1;
-
-          color2 = taskId / poolSize ;
-
-      /* for(int icount = 0; icount < poolSize; ++icount)
-        {
-          if((taskId - icount*npool)>= 0)
-            {
-              if((taskId - icount*npool) < npool)
-                color2 = icount;
-            }
-	  
-        } */
-
-      MPI_Barrier(MPI_COMM_WORLD);
-     
-
-      //FILE *dummy;
-
-      //PetscSynchronizedPrintf(PETSC_COMM_WORLD,"[%d] Color %d\n",taskId,color2);
-      //PetscSynchronizedFlush(PETSC_COMM_WORLD, dummy);
-
-      MPI_Comm_split(MPI_COMM_WORLD,
-                     color2,
-                     0,
-                     &intrapoolcomm);
-
-      MPI_Comm_dup(intrapoolcomm , &mpi_comm_replica)  ;
-
-      for (int i=0; i<n_mpi_processes; ++i) {
-	   if (taskId==i)
-	       std::cout << " My global id is " << taskId << " , pool id is " << Utilities::MPI::this_mpi_process(interpoolcomm)  << 
-							" , intrapool id is " << Utilities::MPI::this_mpi_process(intrapoolcomm) << std::endl;
-	   MPI_Barrier(MPI_COMM_WORLD);
-
-      }
-
-      //std::cout << " check 0.2 " << std::endl;      
-
-   
   //
   try
     {
@@ -460,6 +390,53 @@ int main (int argc, char *argv[])
       return 1;
     };
   deallog.depth_console(0);
+  //
+  int color1, color2;  
+  unsigned int npool = dftParameters::npool;
+  int n_mpi_processes = Utilities::MPI::n_mpi_processes(MPI_COMM_WORLD) ;    
+  double poolSizeFloat = (double)n_mpi_processes/(double)npool;  
+  int poolSize = std::floor(poolSizeFloat);
+  int taskId = Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) ;
+  MPI_Comm interpoolcomm, intrapoolcomm, mpi_comm_replica ;
+  //
+      if(taskId == 0) {
+        std::cout<<"Number of pools: "<<npool<<std::endl;
+	std::cout<<"Pool size: "<<poolSize<<std::endl;
+      }
+      
+     color1 = taskId%poolSize ; 
+
+
+      MPI_Barrier(MPI_COMM_WORLD);
+
+      MPI_Comm_split(MPI_COMM_WORLD,
+                     color1,
+                     0,
+                     &interpoolcomm);
+
+   //
+
+      color2 = taskId / poolSize ;
+
+      MPI_Barrier(MPI_COMM_WORLD);
+     
+
+      MPI_Comm_split(MPI_COMM_WORLD,
+                     color2,
+                     0,
+                     &intrapoolcomm);
+
+      MPI_Comm_dup(intrapoolcomm , &mpi_comm_replica)  ;
+
+      for (int i=0; i<n_mpi_processes; ++i) {
+	   if (taskId==i)
+	       std::cout << " My global id is " << taskId << " , pool id is " << Utilities::MPI::this_mpi_process(interpoolcomm)  << 
+							" , intrapool id is " << Utilities::MPI::this_mpi_process(intrapoolcomm) << std::endl;
+	   MPI_Barrier(MPI_COMM_WORLD);
+
+      }
+
+
   {
     //
     // set stdout precision

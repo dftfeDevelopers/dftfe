@@ -76,7 +76,7 @@ void dftClass<FEOrder>::compute_rhoOut()
 	  fe_values.reinit (cell); 
 
 	  (*rhoOutValues)[cell->id()] = std::vector<double>(num_quad_points);
-	  std::fill(rhoTemp.begin(),rhoTemp.end(),0.0);
+	  std::fill(rhoTemp.begin(),rhoTemp.end(),0.0); std::fill(rhoOut.begin(),rhoOut.end(),0.0);
 	  if (spinPolarized==1)
     	     {
 	       	(*rhoOutValuesSpinPolarized)[cell->id()] = std::vector<double>(2*num_quad_points);
@@ -188,7 +188,7 @@ void dftClass<FEOrder>::compute_rhoOut()
 		}
 
               //  gather density from all pools
-	      int numPoint = rhoTemp.size() ;
+	      int numPoint = num_quad_points ;
               MPI_Allreduce(&rhoTemp[0], &rhoOut[0], numPoint, MPI_DOUBLE, MPI_SUM, interpoolcomm) ;
 	      MPI_Allreduce(&gradRhoTemp[0], &gradRhoOut[0], 3*numPoint, MPI_DOUBLE, MPI_SUM, interpoolcomm) ;
               if (spinPolarized==1) {
@@ -267,7 +267,7 @@ void dftClass<FEOrder>::compute_rhoOut()
 		    }
 		}
               //  gather density from all pools
-	      int numPoint = rhoTemp.size() ;
+	      int numPoint = num_quad_points ;
               MPI_Allreduce(&rhoTemp[0], &rhoOut[0], numPoint, MPI_DOUBLE, MPI_SUM, interpoolcomm) ;
               if (spinPolarized==1) 
                  MPI_Allreduce(&rhoTempSpinPolarized[0], &rhoOutSpinPolarized[0], 2*numPoint, MPI_DOUBLE, MPI_SUM, interpoolcomm) ;

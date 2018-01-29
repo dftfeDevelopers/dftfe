@@ -108,7 +108,7 @@ void dftClass<FEOrder>::compute_energy()
   //
   // Loop through all cells.
   //
-  double bandEnergy=0.0;
+  double bandEnergy=0.0, bandEnergyLocal=0.0;
   double partialOccupancy, factor;
   char buffer[100];
   for(int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
@@ -119,12 +119,15 @@ void dftClass<FEOrder>::compute_energy()
 	  factor=(eigenValues[kPoint][i]-fermiEnergy)/(C_kb*TVal);
 	  //partialOccupancy=1.0/(1.0+exp(temp));
 	  double partialOccupancy = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)) : 1.0/(1.0 + std::exp(factor));
-	  bandEnergy+= 2*partialOccupancy*d_kPointWeights[kPoint]*eigenValues[kPoint][i];
+	  bandEnergyLocal+= 2*partialOccupancy*d_kPointWeights[kPoint]*eigenValues[kPoint][i];
 	  sprintf(buffer, "%s %u: %0.14f\n", "fractional occupancy", i, partialOccupancy); pcout << buffer;
 	}
       pcout << std::endl; 
       sprintf(buffer, "number of electrons: %18.16e \n", integralRhoValue); pcout << buffer;
     }
+  
+   bandEnergy= Utilities::MPI::sum(bandEnergyLocal, interpoolcomm);
+  
   pcout <<std::endl;
   double potentialTimesRho = 0.0, exchangeEnergy = 0.0, correlationEnergy = 0.0, electrostaticEnergyTotPot = 0.0; 
 
@@ -346,26 +349,38 @@ void dftClass<FEOrder>::compute_fermienergy()
   //
   //compute Fermi-energy first by bisection method
   //  
+  //double initialGuessLeft = Utilities::MPI::min(eigenValuesAllkPoints[0],interpoolcomm);
+  //double initialGuessRight = Utilities::MPI::max(eigenValuesAllkPoints[eigenValuesAllkPoints.size() - 1],interpoolcomm);
+
   double initialGuessLeft = eigenValuesAllkPoints[0];
   double initialGuessRight = eigenValuesAllkPoints[eigenValuesAllkPoints.size() - 1];
 
+
   double xLeft,xRight;
 
-  xRight = initialGuessRight;
-  xLeft = initialGuessLeft;
+  xRight = Utilities::MPI::max(initialGuessRight, interpoolcomm);
+  xLeft =  Utilities::MPI::min(initialGuessLeft, interpoolcomm);
   
 
   for(int iter = 0; iter < maxNumberFermiEnergySolveIterations; ++iter)
     {
-      double yRight = FermiDiracFunctionValue(xRight,
+      double yRightLocal = FermiDiracFunctionValue(xRight,
 					      eigenValues,
 					      d_kPointWeights,
-					      TVal) - numElectrons;
+					      TVal);
 
-      double yLeft =  FermiDiracFunctionValue(xLeft,
+      double yRight = Utilities::MPI::sum(yRightLocal, interpoolcomm);
+
+      yRight -=  (double)numElectrons;
+
+      double yLeftLocal =  FermiDiracFunctionValue(xLeft,
 					      eigenValues,
 					      d_kPointWeights,
-					      TVal) - numElectrons;
+					      TVal);
+
+      double yLeft = Utilities::MPI::sum(yLeftLocal, interpoolcomm);
+
+      yLeft -=  (double)numElectrons;
 
       if((yLeft*yRight) > 0.0)
 	{
@@ -375,10 +390,12 @@ void dftClass<FEOrder>::compute_fermienergy()
       
       double xBisected = (xLeft + xRight)/2.0;
 
-      double yBisected = FermiDiracFunctionValue(xBisected,
+      double yBisectedLocal = FermiDiracFunctionValue(xBisected,
 						 eigenValues,
 						 d_kPointWeights,
-						 TVal) - numElectrons;
+						 TVal) ;
+      double yBisected = Utilities::MPI::sum(yBisectedLocal, interpoolcomm);
+      yBisected -=  (double)numElectrons;
 
       if((yBisected*yLeft) > 0.0)
 	xLeft = xBisected;
@@ -407,15 +424,19 @@ void dftClass<FEOrder>::compute_fermienergy()
   while((std::abs(R) > 1.0e-12) && (iter < maxNumberFermiEnergySolveIterations))
     {
 
-      functionValue = FermiDiracFunctionValue(fe,
+      double functionValueLocal = FermiDiracFunctionValue(fe,
 					      eigenValues,
 					      d_kPointWeights,
 					      TVal);
+      functionValue = Utilities::MPI::sum(functionValueLocal, interpoolcomm);
 
-      functionDerivativeValue = FermiDiracFunctionDerivativeValue(fe,
+      double functionDerivativeValueLocal  = FermiDiracFunctionDerivativeValue(fe,
 								  eigenValues,
 								  d_kPointWeights,
 								  TVal);
+
+      functionDerivativeValue = Utilities::MPI::sum(functionDerivativeValueLocal, interpoolcomm);
+      
 
       R   =  functionValue - numElectrons;
       fe += -R/functionDerivativeValue; 

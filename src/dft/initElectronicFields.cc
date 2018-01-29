@@ -51,6 +51,10 @@ void dftClass<FEOrder>::initElectronicFields(){
     }
 
    
+  if ( (Utilities::MPI::this_mpi_process(interpoolcomm)) > 1 && (Utilities::MPI::this_mpi_process(mpi_communicator))==0 )
+	std::cout << " check 2.1 " << std::endl ;
+	
+
   //
   //initialize density 
   //
