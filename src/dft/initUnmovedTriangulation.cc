@@ -144,8 +144,7 @@ void dftClass<FEOrder>::initUnmovedTriangulation(parallel::distributed::Triangul
 
   DoFTools::make_periodicity_constraints<DoFHandler<3> >(periodicity_vector2, constraintsNone);
   DoFTools::make_periodicity_constraints<DoFHandler<3> >(periodicity_vector2Eigen, constraintsNoneEigen);
-  constraintsNone.close();
-  constraintsNoneEigen.close();
+  
 
   if(!dftParameters::meshFileName.empty())
     {
@@ -153,6 +152,10 @@ void dftClass<FEOrder>::initUnmovedTriangulation(parallel::distributed::Triangul
     }
 
 #endif
+
+  constraintsNone.close();
+  constraintsNoneEigen.close();
+
   //
   //create a constraint matrix without only hanging node constraints 
   //
