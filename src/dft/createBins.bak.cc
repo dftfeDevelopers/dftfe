@@ -479,11 +479,12 @@ void dftClass<FEOrder>::createAtomBins(std::vector<ConstraintMatrix * > & constr
 		  else
 		    chargeId = imageIdsOfAtomsInCurrentBin[minDistanceAtomId-numberGlobalAtomsInBin]+numberGlobalAtoms;
 
+		  Assert(chargeId<totalNumberAtoms,ExcMessage("BUG"));
 		  d_closestAtomBin[iBin][iterMap->first] = chargeId;
 
 		  //FIXME: These two can be moved to the outermost bin loop
 		  std::map<dealii::types::global_dof_index, int> & boundaryNodeMap = d_boundaryFlag[iBin];
-		  std::map<dealii::types::global_dof_index, double> & vSelfBinNodeMap = d_vselfBinField[iBin];
+		  std::map<dealii::types::global_dof_index, int> & vSelfBinNodeMap = d_vselfBinField[iBin];
 	   
 		  if(minDistance < radiusAtomBall)
 		    {
@@ -527,8 +528,8 @@ void dftClass<FEOrder>::createAtomBins(std::vector<ConstraintMatrix * > & constr
 			atomCharge = imageChargeValues[imageIdsOfAtomsInCurrentBin[minDistanceAtomId-numberGlobalAtomsInBin]];
 
 		      double potentialValue = -atomCharge/minDistance;
-		      //constraintsForVselfInBin->add_line(iterMap->first);
-		      //constraintsForVselfInBin->set_inhomogeneity(iterMap->first,potentialValue);
+		      constraintsForVselfInBin->add_line(iterMap->first);
+		      constraintsForVselfInBin->set_inhomogeneity(iterMap->first,potentialValue);
 
 		      boundaryNodeMap[iterMap->first] = -1;
 		      vSelfBinNodeMap[iterMap->first] = potentialValue;
@@ -541,147 +542,12 @@ void dftClass<FEOrder>::createAtomBins(std::vector<ConstraintMatrix * > & constr
 	    }//locally relevant dofs
  
 	}//nodal loop
-      //constraintsForVselfInBin->merge(constraintsNone,ConstraintMatrix::MergeConflictBehavior::left_object_wins);
-      //constraintsForVselfInBin->close();
-      //constraintsVector.push_back(constraintsForVselfInBin);
+      constraintsForVselfInBin->merge(constraintsNone,ConstraintMatrix::MergeConflictBehavior::left_object_wins);
+      constraintsForVselfInBin->close();pcout<<" ibin: "<<iBin <<" size of constraints: "<< constraintsForVselfInBin->n_constraints()<<std::endl;
+      constraintsVector.push_back(constraintsForVselfInBin);
       
       //std::cout<<"Size of Constraints: "<<constraintsForVselfInBin->n_constraints()<<std::endl;
-      //std::cout << " processor id: "<< this_mpi_process<< " In: " << inNodes << "  Out: " << outNodes << "\n";
-      //int outNodes2=0;
-       //First apply correct dirichlet boundary conditions on elements with atleast one solved node
-       DoFHandler<C_DIM>::active_cell_iterator cell = dofHandler.begin_active(),endc = dofHandler.end();
-       for(; cell!= endc; ++cell)
-        {
-  	  if(cell->is_locally_owned() || cell->is_ghost())
-	  {
-
-	      std::vector<types::global_dof_index> cell_dof_indices(dofs_per_cell);
-	      cell->get_dof_indices(cell_dof_indices);	
-
-	      int closestChargeIdSolvedNode=-1;
-	      bool isDirichletNodePresent=false;
-	      bool isSolvedNodePresent=false;
-	      int numSolvedNodes=0;
-	      int closestChargeIdSolvedSum=0;
-	      for(unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
-		{
-		  const int globalNodeId=cell_dof_indices[iNode];
-		  if(!d_noConstraints.is_constrained(globalNodeId))
-		  {		  
-                    const int boundaryId=d_boundaryFlag[iBin][globalNodeId];
-		    if(boundaryId == -1)
-		    {
-		        isDirichletNodePresent=true;
-		    }
-		    else
-		    {
-			isSolvedNodePresent=true;
-		        closestChargeIdSolvedNode=boundaryId;
-			numSolvedNodes++;
-			closestChargeIdSolvedSum+=boundaryId;
-		    }
-		  }
-		  
-		}//element node loop
-
-
-
-	      if(isDirichletNodePresent && isSolvedNodePresent)
-		{
-		   double closestAtomChargeSolved;
-		   Point<C_DIM> closestAtomLocationSolved;
-		   Assert(numSolvedNodes*closestChargeIdSolvedNode==closestChargeIdSolvedSum,ExcMessage("BUG"));
-		   if(closestChargeIdSolvedNode < numberGlobalAtoms)
-		   {
-		       closestAtomLocationSolved[0]=atomLocations[closestChargeIdSolvedNode][2];
-		       closestAtomLocationSolved[1]=atomLocations[closestChargeIdSolvedNode][3];
-		       closestAtomLocationSolved[2]=atomLocations[closestChargeIdSolvedNode][4];
-		       if(dftParameters::isPseudopotential)
-			  closestAtomChargeSolved = atomLocations[closestChargeIdSolvedNode][1];
-		       else
-			  closestAtomChargeSolved = atomLocations[closestChargeIdSolvedNode][0];
-		   }
-		   else
-		   {
-		       const int imageId=closestChargeIdSolvedNode-numberGlobalAtoms;
-		       closestAtomChargeSolved = d_imageCharges[imageId];
-		       closestAtomLocationSolved[0]=d_imagePositions[imageId][0];
-		       closestAtomLocationSolved[1]=d_imagePositions[imageId][1];
-		       closestAtomLocationSolved[2]=d_imagePositions[imageId][2];
-		   }		    
-		  for(unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
-		    {
-			
-		      const int globalNodeId=cell_dof_indices[iNode];
-		      const int boundaryId=d_boundaryFlag[iBin][globalNodeId]; 
-		      if(!d_noConstraints.is_constrained(globalNodeId) && !constraintsForVselfInBin->is_constrained(globalNodeId) && boundaryId==-1)
-		      {
-		        constraintsForVselfInBin->add_line(globalNodeId);
-			const double distance=d_supportPoints[globalNodeId].distance(closestAtomLocationSolved);
-		        const double newPotentialValue =-closestAtomChargeSolved/distance;
-		        constraintsForVselfInBin->set_inhomogeneity(globalNodeId,newPotentialValue);
-			d_vselfBinField[iBin][globalNodeId] = newPotentialValue;
-			d_closestAtomBin[iBin][globalNodeId] = closestChargeIdSolvedNode;
-			//outNodes2++;
-		      }//check non hanging node and vself consraints not already set
-		    }//element node loop
-
-		}//check if element has atleast one dirichlet node and atleast one solved node	      
-  	  }//cell locally owned or ghost
-        }// cell loop
-
-
-       //Next apply correct dirichlet boundary conditions on elements with all dirichlet nodes
-       cell = dofHandler.begin_active();
-       for(; cell!= endc; ++cell) {
-  	  if(cell->is_locally_owned() || cell->is_ghost())
-	  {
-
-	      std::vector<types::global_dof_index> cell_dof_indices(dofs_per_cell);
-	      cell->get_dof_indices(cell_dof_indices);	
-
-	      bool isDirichletNodePresent=false;
-	      bool isSolvedNodePresent=false;
-	      for(unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
-		{
-		  const int globalNodeId=cell_dof_indices[iNode];
-		  if(!d_noConstraints.is_constrained(globalNodeId))
-		  {		  
-                    const int boundaryId=d_boundaryFlag[iBin][globalNodeId];
-		    if(boundaryId == -1)
-		    {
-		        isDirichletNodePresent=true;
-		    }
-		    else
-		    {
-			isSolvedNodePresent=true;
-		    }
-		  }
-		  
-		}//element node loop
-
-	      if(isDirichletNodePresent && !isSolvedNodePresent)
-		{
-		  for(unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
-		    {
-			
-		      const int globalNodeId=cell_dof_indices[iNode];
-		      const int boundaryId=d_boundaryFlag[iBin][globalNodeId]; 
-		      if(!d_noConstraints.is_constrained(globalNodeId) && !constraintsForVselfInBin->is_constrained(globalNodeId) && boundaryId==-1)
-		      {
-		        constraintsForVselfInBin->add_line(globalNodeId);
-		        constraintsForVselfInBin->set_inhomogeneity(globalNodeId,d_vselfBinField[iBin][globalNodeId]);
-			//outNodes2++;
-		      }//check non hanging node and vself consraints not already set
-		    }//element node loop
-
-		}//check if element has atleast one dirichlet node and atleast one solved node	      
-  	  }//cell locally owned or ghost
-        } //cell loop      
-        constraintsForVselfInBin->merge(constraintsNone,ConstraintMatrix::MergeConflictBehavior::left_object_wins);
-        constraintsForVselfInBin->close(); //pcout<<" ibin: "<<iBin <<" size of constraints: "<< constraintsForVselfInBin->n_constraints()<<std::endl;
-        constraintsVector.push_back(constraintsForVselfInBin);   
-	//std::cout<< "processor id: "<< this_mpi_process << " ibin: "<< iBin <<" outNodes2: "<< outNodes<<" size of constraints: "<< constraintsForVselfInBin->n_constraints()<<std::endl;
+      //std::cout << "In: " << inNodes << "  Out: " << outNodes << "\n";
 
     }//bin loop
 

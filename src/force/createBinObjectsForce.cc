@@ -62,6 +62,8 @@ void forceClass<FEOrder>::createBinObjectsForce()
 	      for(unsigned int iFaceDof = 0; iFaceDof < dofs_per_face; ++iFaceDof){
                  unsigned int nodeId=iFaceGlobalDofIndices[iFaceDof];
 		 if (!dftPtr->d_noConstraints.is_constrained(nodeId)){
+	            Assert(boundaryNodeMap.find(nodeId)!=boundaryNodeMap.end(),ExcMessage("BUG"));
+                    Assert(closestAtomBinMap.find(nodeId)!=closestAtomBinMap.end(),ExcMessage("BUG"));
 		    dirichletDofCount+=boundaryNodeMap[nodeId];
 		    closestAtomId=closestAtomBinMap[nodeId];
 		    closestAtomIdSum+=closestAtomId;
@@ -80,6 +82,10 @@ void forceClass<FEOrder>::createBinObjectsForce()
 	   //fill the target objects
 	   if (dirichletFaceIds.size()!=faces_per_cell){
 	      //run time exception handling
+	      if (!(closestAtomIdSum==closestAtomId*nonHangingNodeIdCountCell))
+	      {
+		  std::cout << "closestAtomIdSum: "<<closestAtomIdSum<< ", closestAtomId: "<<closestAtomId<< ", nonHangingNodeIdCountCell: "<<nonHangingNodeIdCountCell<<std::endl;
+	      }
 	      AssertThrow(closestAtomIdSum==closestAtomId*nonHangingNodeIdCountCell,ExcMessage("cell dofs on vself ball surface have different closest atom ids, remedy- increase separation between vself balls"));		   
 	      d_cellsVselfBallsDofHandler[iBin].push_back(cell);
 	      d_cellsVselfBallsDofHandlerForce[iBin].push_back(cellForce);

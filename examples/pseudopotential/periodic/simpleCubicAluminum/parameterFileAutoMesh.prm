@@ -31,7 +31,7 @@ set INNER DOMAIN SIZE Z = 0.0
 set OUTER ATOM BALL RADIUS = 0.0
 set MESH SIZE OUTER DOMAIN = 1.0 #0.5 #hn
 set MESH SIZE INNER DOMAIN = 1.0 #0.5 #hn-1
-set MESH SIZE NEAR ATOM = 1.0 #0.5
+set MESH SIZE NEAR ATOM = 0.24 #0.5
 set MESH SIZE OUTER ATOM BALL = 1.0 #0.2 #h0
 
 #
@@ -40,6 +40,9 @@ set MESH SIZE OUTER ATOM BALL = 1.0 #0.2 #h0
 set PERIODIC BOUNDARY CONDITION X = true
 set PERIODIC BOUNDARY CONDITION Y = true
 set PERIODIC BOUNDARY CONDITION Z = true
+#spin polarization
+set SPIN POLARIZATION = 0
+set START MAGNETIZATION = 0.0
 
 #
 #Lattice Vectors file specifying the lattice vectors associated with the unit-cell(used only for periodic calculation)
@@ -50,7 +53,21 @@ set LATTICE VECTORS FILE = latticeVectors.inp
 #kPoint Quadrature Rule file for sampling the Brillouin zone (used only in Periodic calculation)
 #(Located in $DFT PATH/data/kPointList)
 #
-set kPOINT RULE FILE = GammaPoint.inp
+#set kPOINT RULE FILE = GammaPoint.inp
+set BZ SAMPLING POINTS ALONG X = 1
+set BZ SAMPLING POINTS ALONG Y = 1
+set BZ SAMPLING POINTS ALONG Z = 1
+set BZ SAMPLING SHIFT ALONG X = 0.0
+set BZ SAMPLING SHIFT ALONG Y = 0.0
+set BZ SAMPLING SHIFT ALONG Z = 0.0
+set USE GROUP SYMMETRY = false
+
+#
+#Symmetry matrix file
+#
+set SYMMETRY MATRIX FILE = symmetryMatrixFile.inp
+set READ SYMMETRY FROM FILE = false
+
 
 #
 #DFT functional related parameters
@@ -58,6 +75,8 @@ set kPOINT RULE FILE = GammaPoint.inp
 
 #Pseudopotential calculation or all-electron calculation
 set PSEUDOPOTENTIAL CALCULATION = true
+set PSEUDOPOTENTIAL TYPE = 1
+
 
 #Exhchange-correlation functional
 # 1 (LDA: Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)])
@@ -80,7 +99,7 @@ set CHEBYSHEV POLYNOMIAL DEGREE = 100
 #
 #SCF parameters
 #
-set SCF CONVERGENCE MAXIMUM ITERATIONS = 30
+set SCF CONVERGENCE MAXIMUM ITERATIONS = 1
 set SCF CONVERGENCE TOLERANCE          = 1e-11
 set ANDERSON SCHEME MIXING PARAMETER   = 0.1
 set ANDERSON SCHEME MIXING HISTORY     = 70

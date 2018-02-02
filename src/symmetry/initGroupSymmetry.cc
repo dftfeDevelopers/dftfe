@@ -57,7 +57,7 @@ void symmetryClass<FEOrder>::initSymmetry()
   MappingQ1<3> mapping;
   char buffer[100];
  //
- std::pair<typename Triangulation<3,3>::active_cell_iterator, Point<3> > mapped_cell;
+ std::pair<typename parallel::distributed::Triangulation<3>::active_cell_iterator, Point<3> > mapped_cell;
  std::tuple<int, std::vector<double>, int> tupleTemp ;
  std::tuple< int, int, int> tupleTemp2 ;
  std::map<CellId,int> groupId  ;
@@ -96,8 +96,8 @@ void symmetryClass<FEOrder>::initSymmetry()
  //(dftPtr->dofHandlerEigen)_serial(triangulation_serial) ;
  //(dftPtr->dofHandlerEigen)_serial.distribute_dofs(FEEigen_serial);
  //FEValues<3> fe_values (FEEigen_serial, quadrature, update_values | update_gradients| update_JxW_values | update_quadrature_points);
- Triangulation<3,3> & triangulationSer = (dftPtr->d_mesh).getSerialMesh();
- typename Triangulation<3,3>::active_cell_iterator cellTemp = triangulationSer.begin_active(), endcTemp = triangulationSer.end();
+ parallel::distributed::Triangulation<3> & triangulationSer = (dftPtr->d_mesh).getSerialMesh();
+ typename parallel::distributed::Triangulation<3>::active_cell_iterator cellTemp = triangulationSer.begin_active(), endcTemp = triangulationSer.end();
   for (; cellTemp!=endcTemp; ++cellTemp) 
     {
       globalCellId[cellTemp->id()] = cell_id;

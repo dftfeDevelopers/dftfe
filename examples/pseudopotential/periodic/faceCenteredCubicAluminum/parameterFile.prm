@@ -6,10 +6,16 @@ set DFT PATH = "../../../../"
 #
 #finite-element related parameters
 #
+<<<<<<< HEAD
 set MESH FILE = mesh.inp
 
 set FINITE ELEMENT POLYNOMIAL ORDER = 4
 
+=======
+#set MESH FILE = mesh.inp
+set FINITE ELEMENT POLYNOMIAL ORDER = 4
+#set NUMBER OF REFINEMENT STEPS  = 4
+>>>>>>> 8029a6a5d48baba6cc3e50b721f0b4baf5302ca7
 
 #
 #Atomic-coordinates file
@@ -21,14 +27,26 @@ set ATOMIC COORDINATES FILE = coordinates.inp
 #
 #
 
+
 #Radius of the atom-centered ball in which self-potential of the associated nuclear charge is solved
+<<<<<<< HEAD
 set SELF POTENTIAL ATOM BALL RADIUS = 2.8
+=======
+set SELF POTENTIAL ATOM BALL RADIUS = 3.0
+>>>>>>> 8029a6a5d48baba6cc3e50b721f0b4baf5302ca7
 #Simulation domain sizes 
 #Values listed here are not relevant if external mesh is used for non-periodic calculations
 set DOMAIN SIZE X    = 7.6
 set DOMAIN SIZE Y    = 7.6
-set DOMAIN SIZE Z    = 7.6
-
+set DOMAIN SIZE Z    = 7.6 #2*Ln
+set INNER DOMAIN SIZE X = 0.0 #2*Ln1
+set INNER DOMAIN SIZE Y = 0.0
+set INNER DOMAIN SIZE Z = 0.0
+set OUTER ATOM BALL RADIUS = 0.0
+set MESH SIZE OUTER DOMAIN = 0.76 #hn
+set MESH SIZE INNER DOMAIN = 1.0 #hn-1
+set MESH SIZE OUTER ATOM BALL = 0.0
+set MESH SIZE NEAR ATOM = 0.5 #h0
 #
 #set boundary conditions in three directions
 #
@@ -47,13 +65,21 @@ set LATTICE VECTORS FILE = latticeVectors.inp
 #kPoint Quadrature Rule file for sampling the Brillouin zone (used only in periodic calculation)
 #(Located in $DFT PATH/data/kPointList)
 #
-#set kPOINT RULE FILE = 2x2x2kPointRule.inp
+set kPOINT RULE FILE = fccBandkPointRule.inp
 #set kPOINT RULE FILE = GammaPoint.inp
+<<<<<<< HEAD
 set BZ SAMPLING POINTS ALONG X = 4
 set BZ SAMPLING POINTS ALONG Y = 4
 set BZ SAMPLING POINTS ALONG Z = 4
 set BZ SAMPLING SHIFT ALONG X = 0.00
 set BZ SAMPLING SHIFT ALONG Y = 0.00
+=======
+set BZ SAMPLING POINTS ALONG X = 1
+set BZ SAMPLING POINTS ALONG Y = 1
+set BZ SAMPLING POINTS ALONG Z = 1
+set BZ SAMPLING SHIFT ALONG X = 0.0
+set BZ SAMPLING SHIFT ALONG Y = 0.0
+>>>>>>> 8029a6a5d48baba6cc3e50b721f0b4baf5302ca7
 set BZ SAMPLING SHIFT ALONG Z = 0.0
 set USE GROUP SYMMETRY = true
 set NUMBER OF POOLS = 8

@@ -32,7 +32,7 @@
 #include "poisson.h"
 #include "eigen.h"
 #include "symmetry.h"
-#include "../../softwares/spglib/include/spglib.h"
+
 
 
 #include <interpolation.h> 
@@ -41,6 +41,7 @@
 #include <slepceps.h>
 #include "dftParameters.h"
 #include "meshGenerator.h"
+#include <spglib.h>
 
 //
 //Initialize Namespace
@@ -99,13 +100,13 @@ class dftClass
   template <unsigned int T>
   friend class eigenClass;
 
-  template <unsigned int FEOrder>
+  template <unsigned int T>
   friend class forceClass; 
 
-  template <unsigned int FEOrder>
+  template <unsigned int T>
   friend class geoOptIon;    
 
-  template <unsigned int FEOrder>
+  template <unsigned int T>
   friend class symmetryClass;
 
  public:
@@ -142,11 +143,15 @@ class dftClass
    */
   unsigned int numEigenValues;
 
+    void readkPointData();
+
  private:
 
-  void readkPointData();
+
   
   void generateMPGrid();
+
+  void writeMesh(std::string meshFileName);
   /*
   //
   // ************************************************************************************************************************************  //
@@ -291,6 +296,7 @@ class dftClass
   void compute_fermienergy();
 
   void output();
+  void nscf();
 
   /**
    * Computes inner Product and Y = alpha*X + Y for complex vectors used during
@@ -482,7 +488,7 @@ class dftClass
   std::map<int,std::set<int> > d_bins;
   std::vector<std::vector<int> > d_imageIdsInBins;
   std::vector<std::map<dealii::types::global_dof_index, int> > d_boundaryFlag;
-  std::vector<std::map<dealii::types::global_dof_index, int> > d_vselfBinField;
+  std::vector<std::map<dealii::types::global_dof_index, double> > d_vselfBinField;
   std::vector<std::map<dealii::types::global_dof_index, int> > d_closestAtomBin;
   std::vector<vectorType> d_vselfFieldBins;//required for configurational force
   //

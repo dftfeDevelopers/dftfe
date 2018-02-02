@@ -30,20 +30,19 @@ public:
   meshMovementClass( MPI_Comm &mpi_comm_replica);
   meshMovementClass();
   virtual ~meshMovementClass() {}
-  void init(Triangulation<3,3> & triangulation);
+  void init(Triangulation<3,3> & triangulation, const std::vector<std::vector<double> > & domainBoundingVectors);
   void initMoved();
   void findClosestVerticesToDestinationPoints(const std::vector<Point<3>> & destinationPoints,
 		                              std::vector<Point<3>> & closestTriaVertexToDestPointsLocation,
                                               std::vector<Tensor<1,3,double>> & dispClosestTriaVerticesToDestPoints,
                                               const std::vector<std::vector<double> > & domainBoundingVectors);
-
+  void writeMesh(std::string meshFileName);
 protected:
   void initIncrementField();
   void finalizeIncrementField();
   void updateTriangulationVertices();
   //periodic matching sanity check and returns the pair<if negative jacobian, maximum inverse jacobian magnitude>
   std::pair<bool,double> movedMeshCheck();
-  void writeMesh(std::string meshFileName);
   virtual std::pair<bool,double> moveMesh(std::vector<Point<C_DIM> > controlPointLocations,
                                           std::vector<Tensor<1,C_DIM,double> > controlPointDisplacements,
                                           double controllingParameter)=0;
@@ -60,6 +59,7 @@ protected:
   ConstraintMatrix d_constraintsMoveMesh;
   ConstraintMatrix d_constraintsHangingNodes;
   std::vector<GridTools::PeriodicFacePair<typename DoFHandler<C_DIM>::cell_iterator> > d_periodicity_vector;
+  std::vector<std::vector<double> >  d_domainBoundingVectors;
 
   //parallel objects
   MPI_Comm mpi_communicator;

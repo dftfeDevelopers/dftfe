@@ -494,7 +494,7 @@ void dftClass<FEOrder>::compute_energy_spinPolarized()
   //
   // Loop through all cells.
   //
-  double bandEnergy=0.0;
+  double bandEnergy=0.0, bandEnergyLocal=0.0;
   double partialOccupancy, factor;
   char buffer[100];
   for(int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
@@ -505,13 +505,14 @@ void dftClass<FEOrder>::compute_energy_spinPolarized()
 	  factor=(eigenValues[kPoint][i]-fermiEnergy)/(C_kb*TVal);
 	  //partialOccupancy=1.0/(1.0+exp(temp));
 	  double partialOccupancy = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)) : 1.0/(1.0 + std::exp(factor));
-	  bandEnergy+= (2-spinPolarized)*partialOccupancy*d_kPointWeights[kPoint]*eigenValues[kPoint][i];
+	  bandEnergyLocal+= (2-spinPolarized)*partialOccupancy*d_kPointWeights[kPoint]*eigenValues[kPoint][i];
 	  sprintf(buffer, "%s %u: %0.14f\n", "fractional occupancy", i, partialOccupancy); pcout << buffer;
 	}
       pcout << std::endl; 
       sprintf(buffer, "number of electrons: %18.16e \n", integralRhoValue); pcout << buffer;
     }
   pcout <<std::endl;
+  bandEnergy= Utilities::MPI::sum(bandEnergyLocal, interpoolcomm);
   double potentialTimesRho = 0.0, exchangeEnergy = 0.0, correlationEnergy = 0.0, electrostaticEnergyTotPot = 0.0; 
 
   

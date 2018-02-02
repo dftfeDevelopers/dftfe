@@ -21,6 +21,7 @@
 #include "../../include/poisson.h"
 #include "../../include/constants.h"
 #include "../../include/eshelbyTensor.h"
+#include "../../include/meshGenerator.h"
 #include "../../include/fileReaders.h"
 
 
@@ -28,6 +29,8 @@
 #include "FPSPLocalGammaAtomsElementalContribution.cc"
 #include "FnlGammaAtomsElementalContribution.cc"
 #include "configurationalForceEselfLinFE.cc"
+#include "computeStressEself.cc"
+//#include "computeStressEEshelbyEPSPEnlEk.cc"
 #include "initPseudoForce.cc"
 #include "createBinObjectsForce.cc"
 #include "gaussianGeneratorConfForceOpt.cc"
@@ -44,8 +47,9 @@ template<unsigned int FEOrder>
 forceClass<FEOrder>::forceClass(dftClass<FEOrder>* _dftPtr, MPI_Comm &mpi_comm_replica):
   dftPtr(_dftPtr),
   FEForce (FE_Q<3>(QGaussLobatto<1>(2)), 3), //linear shape function
-  gaussianMove(mpi_comm_replica),
   mpi_communicator (mpi_comm_replica),
+  gaussianMovePar(mpi_comm_replica),
+  gaussianMoveSer(mpi_comm_replica),
   n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_communicator)),
   this_mpi_process (Utilities::MPI::this_mpi_process(mpi_communicator)),
   pcout(std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
@@ -72,17 +76,40 @@ void forceClass<FEOrder>::initUnmoved(Triangulation<3,3> & triangulation)
   d_constraintsNoneForce.clear(); d_constraintsNoneForce.reinit(d_locally_relevant_dofsForce);
   DoFTools::make_hanging_node_constraints(d_dofHandlerForce, d_constraintsNoneForce);   
 #ifdef ENABLE_PERIODIC_BC
+  //create unitVectorsXYZ
+  std::vector<std::vector<double> > unitVectorsXYZ;
+  unitVectorsXYZ.resize(3);
+
+  for(int i = 0; i < 3; ++i)
+    {
+      unitVectorsXYZ[i].resize(3,0.0);
+      unitVectorsXYZ[i][i] = 0.0;
+    }
+
+  std::vector<Tensor<1,3> > offsetVectors;
+  //resize offset vectors
+  offsetVectors.resize(3);
+
+  for(int i = 0; i < 3; ++i)
+    {
+      for(int j = 0; j < 3; ++j)
+	{
+	  offsetVectors[i][j] = unitVectorsXYZ[i][j] - dftPtr->d_domainBoundingVectors[i][j];
+	}
+    }
+
   std::vector<GridTools::PeriodicFacePair<typename DoFHandler<C_DIM>::cell_iterator> > periodicity_vectorForce;
   for (int i = 0; i < C_DIM; ++i)
     {
-      GridTools::collect_periodic_faces(d_dofHandlerForce, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vectorForce);
+      GridTools::collect_periodic_faces(d_dofHandlerForce, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vectorForce,offsetVectors[i]);
     }
   DoFTools::make_periodicity_constraints<DoFHandler<C_DIM> >(periodicity_vectorForce, d_constraintsNoneForce);
   d_constraintsNoneForce.close();
 #else
   d_constraintsNoneForce.close();
 #endif
-  gaussianMove.init(triangulation);
+  gaussianMovePar.init(triangulation,dftPtr->d_domainBoundingVectors);
+  gaussianMoveSer.init(dftPtr->d_mesh.getSerialMesh(),dftPtr->d_domainBoundingVectors);
   computing_timer.exit_section("forceClass setup"); 
 }
 
@@ -126,7 +153,8 @@ void forceClass<FEOrder>::initMoved()
   */
   createBinObjectsForce();
   locateAtomCoreNodesForce();
-  gaussianMove.initMoved();
+  gaussianMovePar.initMoved();
+  gaussianMoveSer.initMoved();
 }
 
 //compute forces on atoms using a generator with a compact support

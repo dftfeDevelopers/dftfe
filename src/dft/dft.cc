@@ -43,6 +43,7 @@
 #include "energy.cc"
 #include "charge.cc"
 #include "density.cc"
+#include "nscf.cc"
 //#include "symmetrizeRho.cc"
 
 #include "mixingschemes.cc"
@@ -98,7 +99,7 @@ dftClass<FEOrder>::dftClass(MPI_Comm &mpi_comm_replica, MPI_Comm &interpoolcomm)
 					      NULL,
 					      NULL);
 
-
+  pseudoValues=NULL;
 }
 
 template<unsigned int FEOrder>
@@ -339,7 +340,8 @@ void dftClass<FEOrder>::init ()
   //get access to triangulation objects from meshGenerator class
   //
   parallel::distributed::Triangulation<3> & triangulationPar = d_mesh.getParallelMesh();
-  Triangulation<3,3> & triangulationSer = d_mesh.getSerialMesh();
+  parallel::distributed::Triangulation<3> & triangulationSer = d_mesh.getSerialMesh();
+  writeMesh("meshInitial");
   //
   //initialize dofHandlers and hanging-node constraints and periodic constraints on the unmoved Mesh
   //
@@ -352,6 +354,7 @@ void dftClass<FEOrder>::init ()
   //move triangulation to have atoms on triangulation vertices
   //
   //pcout << " check 0.11 : " << std::endl ;
+  
   moveMeshToAtoms(triangulationPar);
   //moveMeshToAtoms(triangulationSer,true);//can only be called after calling moveMeshToAtoms(triangulationPar)
 
@@ -400,9 +403,11 @@ template<unsigned int FEOrder>
 void dftClass<FEOrder>::run()
 {
   solve();
-  //uncomment to turn on ion relaxation
-  //geoOptIonPtr->init();
-  //geoOptIonPtr->run();
+  if (dftParameters::isIonOpt)
+  {
+    geoOptIonPtr->init();
+    geoOptIonPtr->run();
+  }
 }
 
 //dft solve
@@ -568,32 +573,134 @@ void dftClass<FEOrder>::solve()
       //
       scfIter++;
     }
-  computing_timer.enter_section("configurational force computation"); 
+#ifdef ENABLE_PERIODIC_BC
+  if ((Utilities::MPI::this_mpi_process(interpoolcomm))==0){
+     pcout<<"Beginning nscf calculation "<<std::endl;
+     readkPointData() ;
+     char buffer[100];
+     pcout<<"actual k-Point-coordinates and weights: "<<std::endl;
+     for(int i = 0; i < d_maxkPoints; ++i){
+       sprintf(buffer, "  %5u:  %12.5f  %12.5f %12.5f %12.5f\n", i, d_kPointCoordinates[3*i+0], d_kPointCoordinates[3*i+1], d_kPointCoordinates[3*i+2],d_kPointWeights[i]);
+       pcout << buffer;
+     }   
+     //
+     nscf() ;
+  }
+#endif
+  //
+  MPI_Barrier(interpoolcomm) ;
+  /*computing_timer.enter_section("configurational force computation"); 
   forcePtr->computeAtomsForces();
   forcePtr->printAtomsForces();
-  computing_timer.exit_section("configurational force computation");  
+  computing_timer.exit_section("configurational force computation"); */ 
   computing_timer.exit_section("solve"); 
 }
 
 //Output
 template <unsigned int FEOrder>
-void dftClass<FEOrder>::output () {
+void dftClass<FEOrder>::output() 
+{
+  //
   //only generate wave function output for serial runs
-  if (n_mpi_processes>1) return;
   //
   DataOut<3> data_outEigen;
   data_outEigen.attach_dof_handler (dofHandlerEigen);
-  for (unsigned int i=0; i<eigenVectors[0].size(); ++i){
-    char buffer[100]; sprintf(buffer,"eigen%u", i);  
-    data_outEigen.add_data_vector (*eigenVectors[0][i], buffer);
-  }
+  for(unsigned int i=0; i<eigenVectors[0].size(); ++i)
+    {
+      char buffer[100]; sprintf(buffer,"eigen%u", i);  
+      data_outEigen.add_data_vector (*eigenVectors[0][i], buffer);
+    }
   data_outEigen.build_patches (C_num1DQuad<FEOrder>());
 
   std::ofstream output ("eigen.vtu");
-  data_outEigen.write_vtu (output);
+  //data_outEigen.write_vtu (output);
   //Doesn't work with mvapich2_ib mpi libraries
-  //data_outEigen.write_vtu_in_parallel(std::string("eigen.vtu").c_str(),mpi_communicator);
+  data_outEigen.write_vtu_in_parallel(std::string("eigen.vtu").c_str(),mpi_communicator);
+
+  //
+  //write the electron-density
+  //
+
+  //
+  //access quadrature rules and mapping data
+  //
+  QGauss<3>  quadrature_formula(FEOrder+1);
+  const unsigned int n_q_points = quadrature_formula.size();
+  MappingQ1<3,3> mapping;
+  struct quadDensityData { double density; };
+
+  //
+  //create electron-density quadrature data using "CellDataStorage" class of dealii
+  //
+  CellDataStorage<typename DoFHandler<3>::active_cell_iterator,quadDensityData> rhoQuadData;
+  
+
+  rhoQuadData.initialize(dofHandler.begin_active(),
+			 dofHandler.end(),
+			 n_q_points);
+  //
+  //copy rhoValues into CellDataStorage container
+  //
+  typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
+
+  for(; cell!=endc; ++cell) 
+    {
+      if(cell->is_locally_owned())
+	{
+	  const std::vector<std::shared_ptr<quadDensityData> > rhoQuadPointVector = rhoQuadData.get_data(cell);
+	  for(unsigned int q = 0; q < n_q_points; ++q)
+	    {
+	      rhoQuadPointVector[q]->density = (*rhoOutValues)[cell->id()][q];
+	    }
+	}
+    }
+
+  //
+  //project and create a nodal field of the same mesh from the quadrature data (L2 projection from quad points to nodes)
+  //
+
+  //
+  //create a new nodal field
+  //
+  vectorType rhoNodalField;
+  matrix_free_data.initialize_dof_vector(rhoNodalField);
+
+  VectorTools::project<3,parallel::distributed::Vector<double>>(mapping,
+								dofHandler,
+								constraintsNone,
+								quadrature_formula,
+								[&](const typename DoFHandler<3>::active_cell_iterator & cell , const unsigned int q) -> double {return rhoQuadData.get_data(cell)[q]->density;},
+								rhoNodalField);
+
+  rhoNodalField.update_ghost_values();
+
+  //
+  //only generate output for electron-density
+  //
+  DataOut<3> dataOutRho;
+  dataOutRho.attach_dof_handler(dofHandler);
+  char buffer[100]; sprintf(buffer,"rhoField");  
+  dataOutRho.add_data_vector(rhoNodalField, buffer);
+  dataOutRho.build_patches(C_num1DQuad<FEOrder>());
+  //data_outEigen.write_vtu (output);
+  //Doesn't work with mvapich2_ib mpi libraries
+  dataOutRho.write_vtu_in_parallel(std::string("rhoField.vtu").c_str(),mpi_communicator);
+
 }
+
+template <unsigned int FEOrder>
+void dftClass<FEOrder>::writeMesh(std::string meshFileName)
+ {
+      FESystem<3> FETemp(FE_Q<3>(QGaussLobatto<1>(2)), 1);
+      DoFHandler<3> dofHandlerTemp; dofHandlerTemp.initialize(d_mesh.getSerialMesh(),FETemp);		
+      dofHandlerTemp.distribute_dofs(FETemp);
+      DataOut<3> data_out;
+      data_out.attach_dof_handler(dofHandlerTemp);
+      data_out.build_patches ();
+      meshFileName+=".vtu";
+      std::ofstream output(meshFileName);
+      data_out.write_vtu (output);
+ }
 
 template class dftClass<1>;
 template class dftClass<2>;

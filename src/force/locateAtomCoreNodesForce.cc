@@ -46,7 +46,7 @@ void forceClass<FEOrder>::locateAtomCoreNodesForce(){
 	      for (unsigned int idim=0; idim < C_DIM ; idim++){
                 const unsigned int forceNodeId=cell->vertex_dof_index(i,idim);		  
 	        if (d_locally_owned_dofsForce.is_element(forceNodeId)){            
- 	        //std::cout << "Atom nodal coordinates (" << feNodeGlobalCoord[0] << " " << feNodeGlobalCoord[1] << " "<<feNodeGlobalCoord[2]<< ") associated with force node id " << forceNodeId << " , force component: "<< idim << " in processor " << this_mpi_process << " and added \n";
+ 	           //std::cout << "Atom nodal coordinates (" << feNodeGlobalCoord << " ,"<< atomCoord <<") associated with force node id " << forceNodeId << " , force component: "<< idim << " in processor " << this_mpi_process << " and added \n";
 
                  d_atomsForceDofs[std::pair<unsigned int,unsigned int>(*it,idim)]=forceNodeId;
 	       }

@@ -41,7 +41,8 @@ void dftClass<FEOrder>::readkPointData()
   char kPointRuleFile[256];
   sprintf(kPointRuleFile, "%s/data/kPointList/%s", dftParameters::currentPath.c_str(), dftParameters::kPointDataFile.c_str());
   dftUtils::readFile(numberColumnskPointDataFile, kPointData, kPointRuleFile);
-
+  d_kPointCoordinates.clear() ;
+  d_kPointWeights.clear();
   d_maxkPoints = kPointData.size();
   d_kPointCoordinates.resize(d_maxkPoints*3,0.0);
   d_kPointWeights.resize(d_maxkPoints,0.0);
@@ -63,39 +64,6 @@ void dftClass<FEOrder>::readkPointData()
       pcout<<kPointReducedCoordinates[3*i + 0]<<" "<<kPointReducedCoordinates[3*i + 1]<<" "<<kPointReducedCoordinates[3*i + 2]<<" "<<d_kPointWeights[i]<<std::endl;
     }
 
-  d_reciprocalLatticeVectors.resize(3,
-				    std::vector<double> (3,0.0));
-
-  //
-  //convert them into reciprocal lattice vectors
-  //
-  for(int i = 0; i < 2; ++i)
-    {
-      std::vector<double> cross(3,0.0);
-      cross_product(d_latticeVectors[i+1],
-		    d_latticeVectors[3 - (2*i + 1)],
-		    cross);
-
-      double scalarConst = d_latticeVectors[i][0]*cross[0] + d_latticeVectors[i][1]*cross[1] + d_latticeVectors[i][2]*cross[2];
-
-      d_reciprocalLatticeVectors[i][0] = (2*M_PI/scalarConst)*cross[0];
-      d_reciprocalLatticeVectors[i][1] = (2*M_PI/scalarConst)*cross[1];
-      d_reciprocalLatticeVectors[i][2] = (2*M_PI/scalarConst)*cross[2];
-    }
-
-  //
-  //fill up 3rd reciprocal lattice vector
-  //
-  std::vector<double> cross(3,0.0);
-  cross_product(d_latticeVectors[0],
-		d_latticeVectors[1],
-		cross);
-
-  double scalarConst = d_latticeVectors[2][0]*cross[0] + d_latticeVectors[2][1]*cross[1] + d_latticeVectors[2][2]*cross[2];
-
-  d_reciprocalLatticeVectors[2][0] = (2*M_PI/scalarConst)*cross[0];
-  d_reciprocalLatticeVectors[2][1] = (2*M_PI/scalarConst)*cross[1];
-  d_reciprocalLatticeVectors[2][2] = (2*M_PI/scalarConst)*cross[2];
 
   for(int i = 0; i < d_maxkPoints; ++i)
     {
@@ -174,7 +142,7 @@ void dftClass<FEOrder>::generateMPGrid()
   int numberColumnsSymmDataFile = 3;
   std::vector<std::vector<int>> symmUnderGroupTemp ;
   std::vector<std::vector<double> > symmData;
-  std::vector<std::vector<std::vector<double> >> symmMatTemp;
+  std::vector<std::vector<std::vector<double> >> symmMatTemp, symmMatTemp2;
   if (symmFromFile) {
   dftUtils::readFile(numberColumnsSymmDataFile, symmData, symmDataFile);
   (symmetryPtr->numSymm) = symmData.size()/3 ;
@@ -266,21 +234,27 @@ void dftClass<FEOrder>::generateMPGrid()
   for (unsigned int iSymm=symmetryPtr->numSymm; iSymm<2*(symmetryPtr->numSymm); ++iSymm){
      for (unsigned int j=0; j<3; ++j) {
         for (unsigned int k=0; k<3; ++k)
-            rotation[iSymm][j][k] = -1.0*rotation[iSymm-(symmetryPtr->numSymm)][j][k] ; 
-	    (symmetryPtr->translation)[iSymm][j] = -(symmetryPtr->translation)[iSymm-(symmetryPtr->numSymm)][j] ;
+            rotation[iSymm][j][k] = -1*rotation[iSymm-(symmetryPtr->numSymm)][j][k] ; 
+	    (symmetryPtr->translation)[iSymm][j] = (symmetryPtr->translation)[iSymm-(symmetryPtr->numSymm)][j] ;
   }
   }
   symmetryPtr->numSymm = 2*(symmetryPtr->numSymm) ;
   }
   ///
-  symmMatTemp.resize( symmetryPtr->numSymm );
+  symmMatTemp.resize( symmetryPtr->numSymm ); symmMatTemp2.resize( symmetryPtr->numSymm );
   (symmetryPtr->symmMat).resize( symmetryPtr->numSymm );
   symmUnderGroupTemp.resize(symmetryPtr->numSymm);
   for (unsigned int i=0; i<(symmetryPtr->numSymm); ++i) {
      symmMatTemp[i].resize(3,std::vector<double> (3,0.0)) ;
+     symmMatTemp2[i].resize(3,std::vector<double> (3,0.0)) ;
      for (unsigned int j=0; j<3; ++j) {
-        for (unsigned int k=0; k<3; ++k)
+        for (unsigned int k=0; k<3; ++k) {
          symmMatTemp[i][j][k] = double(rotation[i][j][k]);
+         symmMatTemp2[i][j][k] = double(rotation[i][j][k]);
+	 if (timeReversal && i >= (symmetryPtr->numSymm)/2) 
+              symmMatTemp2[i][j][k] = - double(rotation[i][j][k]);
+	
+	}
     }
   }
   //symmMatTemp[numSymm].resize(3,std::vector<double> (3,0.0)) ;
@@ -336,7 +310,7 @@ void dftClass<FEOrder>::generateMPGrid()
 	   pcout<< "    " << ik << "     " << jk << std::endl ;
            if (countedSymm[iSymm]==0) {
 	       usedSymmNum[iSymm] = usedSymm ;
-               (symmetryPtr->symmMat)[usedSymm] = symmMatTemp[iSymm] ;
+               (symmetryPtr->symmMat)[usedSymm] = symmMatTemp2[iSymm] ;
     		for (unsigned int j=0; j<3; ++j)
      		    (symmetryPtr->translation)[usedSymm][j] = translationTemp[iSymm][j];
 	       usedSymm++ ;

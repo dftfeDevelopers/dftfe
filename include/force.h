@@ -34,7 +34,7 @@ template <unsigned int FEOrder>
 class forceClass
 {
   template <unsigned int T>  friend class dftClass;
-  template <unsigned int FEOrder>  friend class geoOptIon;
+  template <unsigned int T>  friend class geoOptIon;
 public:
   forceClass(dftClass<FEOrder>* _dftPtr,  MPI_Comm &mpi_comm_replica);
   void initUnmoved(Triangulation<3,3> & triangulation);
@@ -83,9 +83,13 @@ private:
 						  const std::vector<Tensor<1,2,VectorizedArray<double> > > & psiQuads);  
 
 
-  void distributeForceContributionFnlGammaAtoms(const std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms);   
+  void distributeForceContributionFnlGammaAtoms(const std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms);  
   //
   void computeAtomsForcesGaussianGenerator(bool allowGaussianOverlapOnAtoms=false);
+
+  //stress computation functions
+  void computeStressEself();
+  //void computeStressEEshelbyEPSPEnlEk();
   //void computeEnlFnlForceContribution();  
   void locateAtomCoreNodesForce();
 
@@ -114,11 +118,13 @@ private:
   std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > d_gradPseudoVLocAtoms;
 
   //meshMovementGaussianClass object  								       
-  meshMovementGaussianClass gaussianMove;
+  meshMovementGaussianClass gaussianMovePar;
+  meshMovementGaussianClass gaussianMoveSer;
 
   //Gaussian generator related data and functions
   const double d_gaussianConstant=4.0;//5.0
   std::vector<double> d_globalAtomsGaussianForces;
+  Tensor<2,C_DIM,double> d_stress;
   const bool d_allowGaussianOverlapOnAtoms=false;//Dont use true except for debugging forces only without mesh movement, as gaussian ovelap on atoms for move mesh is by default set to false
 
   //pointer to dft class
