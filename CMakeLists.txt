@@ -37,7 +37,7 @@ SET(SPG_INCLUDE "/home/vikramg/DFT-FE-softwares/softwareCentos/spglib/include")
 SET(SPG_LIB "/home/vikramg/DFT-FE-softwares/softwareCentos/spglib/lib/libsymspg.so") 
 
 ## set DEAL_II dir path
-SET(DEAL_II_DIR "/home/vikramg/DFT-FE-softwares/softwareCentos/dealiiTest/intel_17.0.1_nopetsc_mkl_noavx")
+SET(DEAL_II_DIR "/home/vikramg/DFT-FE-softwares/softwareCentos/dealiiDev/intel_17.0.1_nopetsc_mkl_noavx")
 #
 # Usually, you will not need to modify anything beyond this point...
 #
