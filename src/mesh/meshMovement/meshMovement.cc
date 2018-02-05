@@ -86,8 +86,18 @@ meshMovementClass::meshMovementClass(MPI_Comm &mpi_comm_replica):
 
 void meshMovementClass::init(Triangulation<3,3> & triangulation, const std::vector<std::vector<double> > & domainBoundingVectors)
 {
+  if (triangulation.locally_owned_subdomain()==numbers::invalid_subdomain_id)
+     d_isParallelMesh=false;
+  else
+  {
+     d_isParallelMesh=true;
+  }
+    
   d_dofHandlerMoveMesh.clear();
-  d_dofHandlerMoveMesh.initialize(triangulation,FEMoveMesh);		
+  if (d_isParallelMesh)
+    d_dofHandlerMoveMesh.initialize(dynamic_cast< parallel::distributed::Triangulation<3> & >(triangulation),FEMoveMesh);
+  else
+    d_dofHandlerMoveMesh.initialize(triangulation,FEMoveMesh);
   d_dofHandlerMoveMesh.distribute_dofs(FEMoveMesh);
   d_locally_owned_dofs.clear();d_locally_relevant_dofs.clear();
   d_locally_owned_dofs = d_dofHandlerMoveMesh.locally_owned_dofs();
@@ -132,10 +142,6 @@ void meshMovementClass::init(Triangulation<3,3> & triangulation, const std::vect
 #else
   d_constraintsMoveMesh.close();
 #endif
-  if (triangulation.locally_owned_subdomain()==numbers::invalid_subdomain_id)
-     d_isParallelMesh=false;
-  else
-     d_isParallelMesh=true;	
 }
 
 void meshMovementClass::initMoved()
@@ -384,7 +390,7 @@ void meshMovementClass::findClosestVerticesToDestinationPoints(const std::vector
                isDestPointOnPeriodicSurface[idim]=true;
       }
 
-
+      //pcout<<"idest: "<<idest<< "destFracCoords: "<< destFracCoords[0] << "," <<destFracCoords[1] <<"," <<destFracCoords[2]<<" isDestPeriodicSurface: "<<isDestPointOnPeriodicSurface[0]<<isDestPointOnPeriodicSurface[1]<<isDestPointOnPeriodicSurface[2]<<std::endl; 
       double minDistance=1e+6;
       Point<3> closestTriaVertexLocation;
 
@@ -449,15 +455,26 @@ void meshMovementClass::findClosestVerticesToDestinationPoints(const std::vector
        }
       }
       const double globalMinDistance=Utilities::MPI::min(minDistance, mpi_communicator);
+        
       //std::cout << "minDistance: "<< minDistance << "globalMinDistance: "<<globalMinDistance << " closest vertex location: "<< closestTriaVertexLocation <<std::endl;
-      if ((minDistance-globalMinDistance)>1e-5){
+
+      int minProcIdWithGlobalMinDistance=1e+6;
+
+
+      if (std::fabs(minDistance-globalMinDistance)<1e-5)
+      {
+	  minProcIdWithGlobalMinDistance=this_mpi_process;
+      }
+
+      minProcIdWithGlobalMinDistance=Utilities::MPI::min(minProcIdWithGlobalMinDistance, mpi_communicator);
+
+      if (this_mpi_process!=minProcIdWithGlobalMinDistance)
+      {
 	  closestTriaVertexLocation[0]=0.0;
 	  closestTriaVertexLocation[1]=0.0;
 	  closestTriaVertexLocation[2]=0.0;
-      }
-
-
-
+      }      
+ 
       Point<3> closestTriaVertexLocationGlobal;
       // accumulate value
       MPI_Allreduce(&(closestTriaVertexLocation[0]),

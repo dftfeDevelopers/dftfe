@@ -28,30 +28,35 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,b
 
 
   if(!reuse)
-    {
+  {
       const int numberGlobalAtoms = atomLocations.size();
       const int numberImageAtoms = d_imageIds.size();
 
       std::vector<Point<3>> atomPoints;
       for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
-	{
+      {
 	  Point<3> atomCoor;
 	  atomCoor[0] = atomLocations[iAtom][2];
 	  atomCoor[1] = atomLocations[iAtom][3];
 	  atomCoor[2] = atomLocations[iAtom][4];
 	  atomPoints.push_back(atomCoor);
-	} 
+      } 
 
 
-    gaussianMove.findClosestVerticesToDestinationPoints(atomPoints,
-		                                        closestTriaVertexToAtomsLocation,
-                                                        dispClosestTriaVerticesToAtoms,
-                                                        d_domainBoundingVectors);
-
+      gaussianMove.findClosestVerticesToDestinationPoints(atomPoints,
+		                                          closestTriaVertexToAtomsLocation,
+                                                          dispClosestTriaVerticesToAtoms,
+                                                          d_domainBoundingVectors);
+      /*
+      for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
+      {
+  	  pcout<< " atomId: "<< iAtom << " disp: "<< dispClosestTriaVerticesToAtoms[iAtom] <<std::endl;
+      }       
+      */
 
       //add control point locations and displacements corresponding to images
       for(unsigned int iImage=0;iImage <numberImageAtoms; iImage++)
-	{
+      {
 	  Point<3> imageCoor;
 	  Point<3> correspondingAtomCoor;
      
@@ -64,13 +69,11 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,b
 	  correspondingAtomCoor[2] = atomLocations[atomId][4];
   
 
-      Point<3> temp=closestTriaVertexToAtomsLocation[atomId]+(correspondingAtomCoor-imageCoor);
-      closestTriaVertexToAtomsLocation.push_back(temp);
-      dispClosestTriaVerticesToAtoms.push_back(dispClosestTriaVerticesToAtoms[atomId]);
-     }
-
-	
-    }
+          Point<3> temp=closestTriaVertexToAtomsLocation[atomId]+(correspondingAtomCoor-imageCoor);
+          closestTriaVertexToAtomsLocation.push_back(temp);
+          dispClosestTriaVerticesToAtoms.push_back(dispClosestTriaVerticesToAtoms[atomId]);
+       }
+  }
  
   const double gaussianConstant=0.5;
   std::pair<bool,double> meshQualityMetrics=gaussianMove.moveMesh(closestTriaVertexToAtomsLocation,
