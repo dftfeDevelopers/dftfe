@@ -202,13 +202,23 @@ void markPeriodicFaces(Triangulation<3,3> &triangulation)
 {
 
   double domainSizeX = dftParameters::domainSizeX,domainSizeY = dftParameters::domainSizeY,domainSizeZ=dftParameters::domainSizeZ;
+  bool periodicX = dftParameters::periodicX, periodicY = dftParameters::periodicY, periodicZ=dftParameters::periodicZ;
 
-  std::cout << "domainSizeX: "<<domainSizeX<<",domainSizeY: "<<domainSizeY<<",domainSizeZ: "<<domainSizeZ<< std::endl;
+  pcout << "domainSizeX: "<<domainSizeX<<",domainSizeY: "<<domainSizeY<<",domainSizeZ: "<<domainSizeZ<< std::endl;
 
   typename Triangulation<3,3>::active_cell_iterator cell, endc;
 
   //
   //mark faces
+  //
+   //
+  unsigned int px=0, py=0,pz=0;
+  if(periodicX)
+    px = 1;
+  if(periodicY)
+    py = 1;
+  if(periodicZ)
+    pz = 1;   
   //
   cell = triangulation.begin_active(), endc = triangulation.end();
   for(; cell!=endc; ++cell) 
@@ -218,24 +228,34 @@ void markPeriodicFaces(Triangulation<3,3> &triangulation)
 	  const Point<3> face_center = cell->face(f)->center();
 	  if(cell->face(f)->at_boundary())
 	    {
+              unsigned int i = 1 ;
+              if (px==1) {
 	      if (std::abs(face_center[0]+(domainSizeX/2.0)) < 1.0e-5)
-		cell->face(f)->set_boundary_id(1);
+		cell->face(f)->set_boundary_id(i);
 	      else if (std::abs(face_center[0]-(domainSizeX/2.0)) < 1.0e-5)
-		cell->face(f)->set_boundary_id(2);
-	      else if (std::abs(face_center[1]+(domainSizeY/2.0)) < 1.0e-5)
-		cell->face(f)->set_boundary_id(3);
+		cell->face(f)->set_boundary_id(i+1);
+              i = i+2 ;
+              }
+              if (py==1) {
+	      if (std::abs(face_center[1]+(domainSizeY/2.0)) < 1.0e-5)
+		cell->face(f)->set_boundary_id(i);
 	      else if (std::abs(face_center[1]-(domainSizeY/2.0)) < 1.0e-5)
-		cell->face(f)->set_boundary_id(4);
-	      else if (std::abs(face_center[2]+(domainSizeZ/2.0)) < 1.0e-5)
-		cell->face(f)->set_boundary_id(5);
+		cell->face(f)->set_boundary_id(i+1);
+              i = i+2 ;
+              }
+              if(pz==1) {
+	      if (std::abs(face_center[2]+(domainSizeZ/2.0)) < 1.0e-5)
+		cell->face(f)->set_boundary_id(i);
 	      else if (std::abs(face_center[2]-(domainSizeZ/2.0)) < 1.0e-5)
-		cell->face(f)->set_boundary_id(6);
+		cell->face(f)->set_boundary_id(i+1);
+              i = i + 2 ;
+	     }
 	    }
 	}
     }
-
+  //
   std::vector<GridTools::PeriodicFacePair<typename Triangulation<3,3>::cell_iterator> > periodicity_vector;
-  for(int i = 0; i < 3; ++i)
+  for(int i = 0; i < (px+py+pz); ++i)
     {
       GridTools::collect_periodic_faces(triangulation, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector);
     }

@@ -58,6 +58,7 @@ class symmetryClass
   void initSymmetry();
   void computeAndSymmetrize_rhoOut();
   void computeLocalrhoOut();
+  void clearMaps();
   Point<3> crys2cart(Point<3> p, int i);
   
   

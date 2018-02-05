@@ -574,6 +574,12 @@ void dftClass<FEOrder>::solve()
       scfIter++;
     }
 #ifdef ENABLE_PERIODIC_BC
+ if (useSymm)
+    symmetryPtr->clearMaps() ;
+#endif
+//
+/*
+#ifdef ENABLE_PERIODIC_BC
   if ((Utilities::MPI::this_mpi_process(interpoolcomm))==0){
      pcout<<"Beginning nscf calculation "<<std::endl;
      readkPointData() ;
@@ -587,6 +593,7 @@ void dftClass<FEOrder>::solve()
      nscf() ;
   }
 #endif
+*/
   //
   MPI_Barrier(interpoolcomm) ;
   /*computing_timer.enter_section("configurational force computation"); 

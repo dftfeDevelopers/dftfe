@@ -153,6 +153,8 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 #ifdef ENABLE_PERIODIC_BC
       meshGenUtils::markPeriodicFacesNonOrthogonal(parallelTriangulation,d_domainBoundingVectors);
       meshGenUtils::markPeriodicFacesNonOrthogonal(serialTriangulation,d_domainBoundingVectors);
+      //meshGenUtils::markPeriodicFaces(parallelTriangulation);
+      //meshGenUtils::markPeriodicFaces(serialTriangulation);
 #endif
 
 

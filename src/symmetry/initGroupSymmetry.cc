@@ -42,7 +42,25 @@ symmetryClass<FEOrder>::symmetryClass(dftClass<FEOrder>* _dftPtr, MPI_Comm &mpi_
 
 }
 
+template<unsigned int FEOrder>
+void symmetryClass<FEOrder>::clearMaps()
+{
+ mappedGroup.clear() ;
+ mappedGroupSend0.clear() ;
+ mappedGroupSend1.clear() ;
+ mappedGroupSend2.clear() ;
+ mappedGroupRecvd0.clear() ;
+ mappedGroupRecvd2.clear() ;
+ mappedGroupRecvd1.clear() ;
+ send_buf_size.clear() ;
+ recv_buf_size..clear() ;
+ rhoRecvd.clear() ;
+ groupOffsets.clear() ;
+ if (xc_id==4)
+ gradRhoRecvd.clear() ;
 
+
+}
 
 
 template<unsigned int FEOrder>
