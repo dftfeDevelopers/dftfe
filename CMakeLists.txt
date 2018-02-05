@@ -34,8 +34,8 @@ SET(SLEPC_COMPLEX_LIB "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/intel
 
 
 ##set SPG paths
-SET(SPG_INCLUDE "/home/krisg/softwares/spglib/include")
-SET(SPG_LIB "/home/krisg/softwares/spglib/lib/libsymspg.so") 
+SET(SPG_INCLUDE "/home/vikramg/DFT-FE-softwares/softwareCentos/spglib/include")
+SET(SPG_LIB "/home/vikramg/DFT-FE-softwares/softwareCentos/spglib/lib/libsymspg.so") 
 #
 
 ## set DEAL_II dir path

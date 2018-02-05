@@ -6,16 +6,9 @@ set DFT PATH = "../../../../"
 #
 #finite-element related parameters
 #
-<<<<<<< HEAD
-set MESH FILE = mesh.inp
-
-set FINITE ELEMENT POLYNOMIAL ORDER = 4
-
-=======
 #set MESH FILE = mesh.inp
 set FINITE ELEMENT POLYNOMIAL ORDER = 4
 #set NUMBER OF REFINEMENT STEPS  = 4
->>>>>>> 8029a6a5d48baba6cc3e50b721f0b4baf5302ca7
 
 #
 #Atomic-coordinates file
@@ -29,11 +22,7 @@ set ATOMIC COORDINATES FILE = coordinates.inp
 
 
 #Radius of the atom-centered ball in which self-potential of the associated nuclear charge is solved
-<<<<<<< HEAD
 set SELF POTENTIAL ATOM BALL RADIUS = 2.8
-=======
-set SELF POTENTIAL ATOM BALL RADIUS = 3.0
->>>>>>> 8029a6a5d48baba6cc3e50b721f0b4baf5302ca7
 #Simulation domain sizes 
 #Values listed here are not relevant if external mesh is used for non-periodic calculations
 set DOMAIN SIZE X    = 7.6
@@ -67,20 +56,12 @@ set LATTICE VECTORS FILE = latticeVectors.inp
 #
 set kPOINT RULE FILE = fccBandkPointRule.inp
 #set kPOINT RULE FILE = GammaPoint.inp
-<<<<<<< HEAD
 set BZ SAMPLING POINTS ALONG X = 4
 set BZ SAMPLING POINTS ALONG Y = 4
 set BZ SAMPLING POINTS ALONG Z = 4
 set BZ SAMPLING SHIFT ALONG X = 0.00
 set BZ SAMPLING SHIFT ALONG Y = 0.00
-=======
-set BZ SAMPLING POINTS ALONG X = 1
-set BZ SAMPLING POINTS ALONG Y = 1
-set BZ SAMPLING POINTS ALONG Z = 1
-set BZ SAMPLING SHIFT ALONG X = 0.0
-set BZ SAMPLING SHIFT ALONG Y = 0.0
->>>>>>> 8029a6a5d48baba6cc3e50b721f0b4baf5302ca7
-set BZ SAMPLING SHIFT ALONG Z = 0.0
+set BZ SAMPLING SHIFT ALONG Z = 0.00
 set USE GROUP SYMMETRY = true
 set NUMBER OF POOLS = 8
 set USE TIME REVERSAL SYMMETRY = true
