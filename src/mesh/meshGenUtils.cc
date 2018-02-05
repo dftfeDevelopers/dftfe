@@ -204,7 +204,7 @@ void markPeriodicFaces(Triangulation<3,3> &triangulation)
   double domainSizeX = dftParameters::domainSizeX,domainSizeY = dftParameters::domainSizeY,domainSizeZ=dftParameters::domainSizeZ;
   bool periodicX = dftParameters::periodicX, periodicY = dftParameters::periodicY, periodicZ=dftParameters::periodicZ;
 
-  pcout << "domainSizeX: "<<domainSizeX<<",domainSizeY: "<<domainSizeY<<",domainSizeZ: "<<domainSizeZ<< std::endl;
+  std::cout << "domainSizeX: "<<domainSizeX<<",domainSizeY: "<<domainSizeY<<",domainSizeZ: "<<domainSizeZ<< std::endl;
 
   typename Triangulation<3,3>::active_cell_iterator cell, endc;
 
