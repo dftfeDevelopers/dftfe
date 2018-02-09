@@ -58,6 +58,7 @@ void forceClass<FEOrder>::gaussianUpdateRhoDataCleanup()
   *(dftPtr->rhoInValues)=*rhoOutValuesCopy;
   rhoOutValuesCopy->clear();  delete rhoOutValuesCopy;
   dftPtr->rhoInVals.push_back(dftPtr->rhoInValues);
+
   if (dftParameters::xc_id==4)
   {
     dftPtr->gradRhoInValues = new std::map<dealii::CellId, std::vector<double> >;
@@ -124,13 +125,33 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
   const double break1=1e-2;//try 1e-3
   const double break2=1e-4;//try 1e-5
   //maxDispAtom=0;//HARDCODING TO ONLY USE GAUSSIAN MOVE WITH GAUSSIAN CONSTANT SAME AS FORCE COMPUTATION
+  unsigned int updateCase=0;
   if (maxDispAtom >(break1-tol))
+  {
+    updateCase=0;     
+  }
+  else if (maxDispAtom <(break1+tol) && maxDispAtom>break2)
+  {
+    updateCase=1;
+  }
+  else
+  {
+    updateCase=2;
+  }
+  
+  MPI_Bcast(&(updateCase),
+	    1,
+	    MPI_INT,
+	    0,
+	    MPI_COMM_WORLD); 
+
+  if (updateCase==0)//(maxDispAtom >(break1-tol))
   {
       pcout << "Auto remeshing and reinitialization of dft problem for new atom coordinates as max displacement magnitude: "<<maxDispAtom<< " is greater than: "<< break1 << " Hatree/Bohr..." << std::endl;  
       dftPtr->init(); 
       pcout << "...Reinitialization end" << std::endl;       
   }
-  else if (maxDispAtom <(break1+tol) && maxDispAtom>break2)
+  else if (updateCase==1)//(maxDispAtom <(break1+tol) && maxDispAtom>break2)
   {
 
       const double gaussianParameter=2.0;
@@ -139,7 +160,16 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
       std::pair<bool,double> meshQualityMetrics= gaussianMovePar.moveMesh(controlPointLocations,controlPointDisplacements,gaussianParameter);
       //std::pair<bool,double> meshQualityMetricsSer=gaussianMoveSer.moveMesh(controlPointLocations,controlPointDisplacements,gaussianParameter);      
       //AssertThrow(!meshQualityMetrics.first,ExcMessage("Negative jacobian created after moving closest nodes to atoms. Suggestion: use auto remeshing"));
+     
+      unsigned int autoMesh=0;
       if (meshQualityMetrics.first || meshQualityMetrics.second>maxJacobianRatio)
+          autoMesh=1;
+      MPI_Bcast(&(autoMesh),
+		1,
+		MPI_INT,
+		0,
+		MPI_COMM_WORLD);       
+      if (autoMesh==1)//(meshQualityMetrics.first || meshQualityMetrics.second>maxJacobianRatio)
       {
 	  if (meshQualityMetrics.first)
 	     pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to negative jacobian after Gaussian mesh movement using Gaussian constant: "<< gaussianParameter<<std::endl; 	  
@@ -176,7 +206,15 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
       std::pair<bool,double> meshQualityMetrics=gaussianMovePar.moveMesh(controlPointLocations,controlPointDisplacements,d_gaussianConstant);
       //std::pair<bool,double> meshQualityMetricsSer=gaussianMoveSer.moveMesh(controlPointLocations,controlPointDisplacements,d_gaussianConstant);
       //AssertThrow(!meshQualityMetrics.first,ExcMessage("Negative jacobian created after moving closest nodes to atoms. Suggestion: use auto remeshing"));
+      unsigned int autoMesh=0;      
       if (meshQualityMetrics.first || meshQualityMetrics.second>maxJacobianRatio)
+          autoMesh=1;
+      MPI_Bcast(&(autoMesh),
+		1,
+		MPI_INT,
+		0,
+		MPI_COMM_WORLD);       
+      if (autoMesh==1)//(meshQualityMetrics.first || meshQualityMetrics.second>maxJacobianRatio)
       {
 	  if (meshQualityMetrics.first)
 	     pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to negative jacobian after Gaussian mesh movement using Gaussian constant: "<< d_gaussianConstant<<std::endl; 	  

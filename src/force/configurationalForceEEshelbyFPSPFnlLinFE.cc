@@ -32,8 +32,10 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(
   const unsigned int numVectorizedArrayElements=VectorizedArray<double>::n_array_elements;
   const MatrixFree<3,double> & matrix_free_data=dftPtr->matrix_free_data;
   //std::cout<< "n array elements" << numVectorizedArrayElements <<std::endl;
-
   FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  forceEval(matrix_free_data,d_forceDofHandlerIndex, 0);
+#ifdef ENABLE_PERIODIC_BC
+  FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  forceEvalKPoints(matrix_free_data,d_forceDofHandlerIndex, 0); 
+#endif  
   FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> phiTotEval(matrix_free_data,dftPtr->phiTotDofHandlerIndex, 0);
 #ifdef ENABLE_PERIODIC_BC
   FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),2> psiEval(matrix_free_data,dftPtr->eigenDofHandlerIndex , 0);
@@ -72,6 +74,9 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(
 
   for (unsigned int cell=0; cell<matrix_free_data.n_macro_cells(); ++cell){
     forceEval.reinit(cell);
+#ifdef ENABLE_PERIODIC_BC
+    forceEvalKPoints.reinit(cell);
+#endif
     phiTotEval.reinit(cell);
     psiEval.reinit(cell);    
     phiTotEval.read_dof_values_plain(dftPtr->poissonPtr->phiTotRhoOut);//read without taking constraints into account
@@ -281,16 +286,19 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(
        VectorizedArray<double> phiTot_q =phiTotEval.get_value(q);   
        Tensor<1,C_DIM,VectorizedArray<double> > gradPhiTot_q =phiTotEval.get_gradient(q);
        VectorizedArray<double> phiExt_q =phiExtEval.get_value(q)*phiExtFactor;
-#ifdef ENABLE_PERIODIC_BC      
-       Tensor<2,C_DIM,VectorizedArray<double> > E=eshelbyTensor::getELocEshelbyTensorPeriodic(phiTot_q,
+#ifdef ENABLE_PERIODIC_BC   
+       Tensor<2,C_DIM,VectorizedArray<double> > E=eshelbyTensor::getELocEshelbyTensorPeriodicNoKPoints
+	                                                     (phiTot_q,
 			                                      gradPhiTot_q,
 						              rhoQuads[q],
 						              gradRhoQuads[q],
 						              excQuads[q],
 						              derExcGradRhoQuads[q],
 							      pseudoVLocQuads[q],
-							      phiExt_q,				      
-						              psiQuads.begin()+q*numEigenVectors*numKPoints,
+							      phiExt_q);				      
+
+       Tensor<2,C_DIM,VectorizedArray<double> > EKPoints=eshelbyTensor::getELocEshelbyTensorPeriodicKPoints
+						             (psiQuads.begin()+q*numEigenVectors*numKPoints,
 						              gradPsiQuads.begin()+q*numEigenVectors*numKPoints,
 							      dftPtr->d_kPointCoordinates,
 							      dftPtr->d_kPointWeights,
@@ -319,8 +327,9 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(
 		                                                                  gradPseudoVLocQuads[q],
 			                                                          gradPhiExt_q);
 
-#ifdef ENABLE_PERIODIC_BC    
-           F+=eshelbyTensor::getFnlPeriodic(gradZetaDeltaVQuads[q],
+#ifdef ENABLE_PERIODIC_BC 
+           Tensor<1,C_DIM,VectorizedArray<double> > FKPoints;	   
+           FKPoints+=eshelbyTensor::getFnlPeriodic(gradZetaDeltaVQuads[q],
 					    projectorKetTimesPsiTimesVComplexKPoints,
 					    psiQuads.begin()+q*numEigenVectors*numKPoints,
 					    dftPtr->d_kPointWeights,
@@ -329,13 +338,14 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(
 					    dftParameters::TVal);
  
 
-           E+=eshelbyTensor::getEnlEshelbyTensorPeriodic(ZetaDeltaVQuads[q],
+           EKPoints+=eshelbyTensor::getEnlEshelbyTensorPeriodic(ZetaDeltaVQuads[q],
 		                                         projectorKetTimesPsiTimesVComplexKPoints,
 						         psiQuads.begin()+q*numEigenVectors*numKPoints,
 							 dftPtr->d_kPointWeights,
 						         dftPtr->eigenValues,
 						         dftPtr->fermiEnergy,
 						         dftParameters::TVal);
+           forceEvalKPoints.submit_value(FKPoints,q);	   
 #else     
            F+=eshelbyTensor::getFnlNonPeriodic(gradZetaDeltaVQuads[q],
 					       projectorKetTimesPsiTimesVReal,
@@ -350,22 +360,32 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(
 						            (dftPtr->eigenValues)[0],
 						            dftPtr->fermiEnergy,
 						            dftParameters::TVal);
-							    
-            							    
 #endif	  
 	   forceEval.submit_value(F,q);    
        }
-       forceEval.submit_gradient(E,q);       
+       forceEval.submit_gradient(E,q); 
+#ifdef ENABLE_PERIODIC_BC
+       forceEvalKPoints.submit_gradient(EKPoints,q); 
+#endif
     }//quad point loop
     if(isPseudopotential)
     {
       forceEval.integrate(true,true);
+#ifdef ENABLE_PERIODIC_BC
+      forceEvalKPoints.integrate(true,true);
+#endif      
     }
     else
     {
       forceEval.integrate (false,true);
+#ifdef ENABLE_PERIODIC_BC
+      forceEvalKPoints.integrate(false,true);
+#endif       
     }    
     forceEval.distribute_local_to_global(d_configForceVectorLinFE);//also takes care of constraints
+#ifdef ENABLE_PERIODIC_BC
+    forceEvalKPoints.distribute_local_to_global(d_configForceVectorLinFEKPoints); 
+#endif
   }
 
   // add global FPSPLocal contribution due to Gamma(Rj) to the configurational force vector

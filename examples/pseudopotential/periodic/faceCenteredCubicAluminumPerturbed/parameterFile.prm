@@ -2,7 +2,7 @@
 #path specifying the location of the "build" directory which is usually the location of "src" folder 
 #
 set DFT PATH = "../../../../"
-
+set OPTIMIZED MODE=true
 #
 #finite-element related parameters
 #
@@ -47,14 +47,14 @@ set LATTICE VECTORS FILE = latticeVectors.inp
 #(Located in $DFT PATH/data/kPointList)
 #
 #set kPOINT RULE FILE = GammaPoint.inp
-set BZ SAMPLING POINTS ALONG X = 1
+set BZ SAMPLING POINTS ALONG X = 2
 set BZ SAMPLING POINTS ALONG Y = 1
 set BZ SAMPLING POINTS ALONG Z = 1
 set BZ SAMPLING SHIFT ALONG X = 0.00
 set BZ SAMPLING SHIFT ALONG Y = 0.00
 set BZ SAMPLING SHIFT ALONG Z = 0.00
-set USE GROUP SYMMETRY = true
-
+set USE GROUP SYMMETRY = false
+set NUMBER OF POOLS = 1
 #
 #DFT functional related parameters
 #
@@ -86,7 +86,7 @@ set CHEBYSHEV POLYNOMIAL DEGREE = 0
 #SCF parameters
 #
 set SCF CONVERGENCE MAXIMUM ITERATIONS = 100
-set SCF CONVERGENCE TOLERANCE          = 1e-10
+set SCF CONVERGENCE TOLERANCE          = 1e-9
 set ANDERSON SCHEME MIXING PARAMETER   = 0.5
 set ANDERSON SCHEME MIXING HISTORY     = 40
 set TEMPERATURE                        = 500

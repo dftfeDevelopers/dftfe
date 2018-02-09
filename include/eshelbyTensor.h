@@ -32,21 +32,25 @@ namespace eshelbyTensor
   Tensor<2,C_DIM,VectorizedArray<double> >  getPhiExtEshelbyTensor(const VectorizedArray<double> & phiExt, const Tensor<1,C_DIM,VectorizedArray<double> > & gradPhiExt);
   Tensor<2,C_DIM,VectorizedArray<double> >  getVselfBallEshelbyTensor(const Tensor<1,C_DIM,VectorizedArray<double> > & gradVself);
   Tensor<2,C_DIM,double >  getVselfBallEshelbyTensor(const Tensor<1,C_DIM,double > & gradVself);
-  Tensor<2,C_DIM,VectorizedArray<double> >  getELocEshelbyTensorPeriodic(const VectorizedArray<double> & phiTot,
+  Tensor<2,C_DIM,VectorizedArray<double> >  getELocEshelbyTensorPeriodicNoKPoints
+                                                                      (const VectorizedArray<double> & phiTot,
 		                                                       const Tensor<1,C_DIM,VectorizedArray<double> > & gradPhiTot,
 							               const VectorizedArray<double> & rho,
 							               const Tensor<1,C_DIM,VectorizedArray<double> > & gradRho,
 							               const VectorizedArray<double> & exc,
 							               const Tensor<1,C_DIM,VectorizedArray<double> > & derExcGradRhoQuads,
                                                                        const VectorizedArray<double> & pseudoVLoc,
-                                                                       const VectorizedArray<double> & phiExt,										       
-							               std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator psiBegin,
+                                                                       const VectorizedArray<double> & phiExt);										       
+
+  Tensor<2,C_DIM,VectorizedArray<double> >  getELocEshelbyTensorPeriodicKPoints
+							               (std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator psiBegin,
                                                                        std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > >::const_iterator gradPsiBegin,
 								       const std::vector<double> & kPointCoordinates,
                                                                        const std::vector<double> & kPointWeights,
 								       const std::vector<std::vector<double> > & eigenValues_,
 								       const double fermiEnergy_,
 								       const double tVal); 
+
   Tensor<2,C_DIM,VectorizedArray<double> >  getELocEshelbyTensorNonPeriodic(const VectorizedArray<double> & phiTot,
 		                                                       const Tensor<1,C_DIM,VectorizedArray<double> > & gradPhiTot,
 							               const VectorizedArray<double> & rho,

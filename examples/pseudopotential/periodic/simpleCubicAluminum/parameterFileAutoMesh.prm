@@ -2,11 +2,12 @@
 #path specifying the location of the "build" directory which is usually the location of "src" folder 
 #
 set DFT PATH = "../../../../"
-
+set OPTIMIZED MODE=true
 #
 #finite-element related parameters
 #
-set FINITE ELEMENT POLYNOMIAL ORDER = 4
+set MESH FILE = mesh.inp
+set FINITE ELEMENT POLYNOMIAL ORDER = 1
 
 #
 #Atomic-coordinates file
@@ -54,14 +55,14 @@ set LATTICE VECTORS FILE = latticeVectors.inp
 #(Located in $DFT PATH/data/kPointList)
 #
 #set kPOINT RULE FILE = GammaPoint.inp
-set BZ SAMPLING POINTS ALONG X = 1
+set BZ SAMPLING POINTS ALONG X = 2
 set BZ SAMPLING POINTS ALONG Y = 1
 set BZ SAMPLING POINTS ALONG Z = 1
 set BZ SAMPLING SHIFT ALONG X = 0.0
 set BZ SAMPLING SHIFT ALONG Y = 0.0
 set BZ SAMPLING SHIFT ALONG Z = 0.0
 set USE GROUP SYMMETRY = false
-
+set NUMBER OF POOLS = 1
 #
 #Symmetry matrix file
 #
@@ -90,7 +91,7 @@ set EXCHANGE CORRELATION TYPE = 1
 #
 
 #Parameter indicating number of eigenfunctions to be solved
-set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 10
+set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 5
 #Approximate estimate of lower bound of the wanted spectrum
 set LOWER BOUND WANTED SPECTRUM = -10.0
 #Chebyshev Filter polynomial degree
@@ -99,8 +100,8 @@ set CHEBYSHEV POLYNOMIAL DEGREE = 100
 #
 #SCF parameters
 #
-set SCF CONVERGENCE MAXIMUM ITERATIONS = 1
-set SCF CONVERGENCE TOLERANCE          = 1e-11
+set SCF CONVERGENCE MAXIMUM ITERATIONS = 100
+set SCF CONVERGENCE TOLERANCE          = 1e-9
 set ANDERSON SCHEME MIXING PARAMETER   = 0.1
 set ANDERSON SCHEME MIXING HISTORY     = 70
 set TEMPERATURE                        = 500
