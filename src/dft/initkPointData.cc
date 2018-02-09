@@ -191,7 +191,7 @@ void dftClass<FEOrder>::generateMPGrid()
       for (unsigned int j=0; j<3; ++j)
       position[i][j] = atomLocationsFractional[i][j+2] ;
    }
-   types[0]=0; types[1]=1; types[2]=1; types[3]=0; types[4]=1; types[5]=1;
+   //types[0]=0; types[1]=1; types[2]=1; types[3]=0; types[4]=1; types[5]=1;
   // ***********************************  Checking on SPG ******************************************** 
   /*int max_size = 500;
   int num_atom = 2 ;
