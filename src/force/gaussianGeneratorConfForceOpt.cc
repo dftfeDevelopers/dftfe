@@ -467,8 +467,11 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
   //Sum over k point pools and add to total Gaussian force
   for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
   {
-     d_globalAtomsGaussianForcesKPoints[iAtom]= Utilities::MPI::sum(d_globalAtomsGaussianForcesKPoints[iAtom], dftPtr->interpoolcomm);
-     d_globalAtomsGaussianForces[iAtom]+=d_globalAtomsGaussianForcesKPoints[iAtom];
+      for (unsigned int idim=0; idim < C_DIM ; idim++)
+      {      
+          d_globalAtomsGaussianForcesKPoints[iAtom*C_DIM+idim]= Utilities::MPI::sum(d_globalAtomsGaussianForcesKPoints[iAtom*C_DIM+idim], dftPtr->interpoolcomm);
+          d_globalAtomsGaussianForces[iAtom*C_DIM+idim]+=d_globalAtomsGaussianForcesKPoints[iAtom*C_DIM+idim];
+      }
   }
 #endif
 

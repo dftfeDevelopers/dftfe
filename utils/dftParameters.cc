@@ -27,7 +27,7 @@ namespace dftParameters
   double lowerEndWantedSpectrum=0.0,relLinearSolverTolerance=1e-10,selfConsistentSolverTolerance=1e-10,TVal=500, start_magnetization=0.0;
 
   bool isPseudopotential=false,periodicX=false,periodicY=false,periodicZ=false, useSymm=false, symmFromFile=false, timeReversal=false;
-  std::string meshFileName=" ",coordinatesFile=" ",currentPath=" ",latticeVectorsFile=" ",kPointDataFile=" ", symmDataFile=" ";
+  std::string meshFileName=" ",coordinatesFile=" ",currentPath=" ",latticeVectorsFile=" ",kPointDataFile=" ", symmDataFile=" ", ionRelaxFlagsFile=" ";
 
   double innerDomainSizeX=1.0, innerDomainSizeY=1.0, innerDomainSizeZ=1.0, outerAtomBallRadius=2.0, meshSizeOuterDomain=10.0, meshSizeInnerDomain=5.0;
   double meshSizeInnerBall=1.0, meshSizeOuterBall=1.0;

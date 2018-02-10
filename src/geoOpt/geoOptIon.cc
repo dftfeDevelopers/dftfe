@@ -22,6 +22,7 @@
 #include "../../include/meshGenerator.h"
 #include "../../include/dft.h"
 #include "../../include/fileReaders.h"
+#include "../../include/dftParameters.h"
 
 template<unsigned int FEOrder>
 void geoOptIon<FEOrder>::writeMesh(std::string meshFileName)
@@ -61,7 +62,7 @@ void geoOptIon<FEOrder>::init()
 {
    const int numberGlobalAtoms=dftPtr->atomLocations.size();
    std::vector<std::vector<int> > tempRelaxFlagsData;
-   dftUtils::readRelaxationFlagsFile(3,tempRelaxFlagsData,"relaxationFlags.inp");
+   dftUtils::readRelaxationFlagsFile(3,tempRelaxFlagsData,dftParameters::ionRelaxFlagsFile);
    AssertThrow(tempRelaxFlagsData.size()==numberGlobalAtoms,ExcMessage("Incorrect number of entries in relaxationFlags file"));
    d_relaxationFlags.clear();
    for (unsigned int i=0; i< numberGlobalAtoms; ++i)

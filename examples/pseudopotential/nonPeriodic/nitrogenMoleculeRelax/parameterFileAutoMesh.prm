@@ -67,8 +67,9 @@ set PSEUDOPOTENTIAL CALCULATION = true
 # 4 (GGA: Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)])*/
 set EXCHANGE CORRELATION TYPE = 1
 
-#ION OPT FLAG
+#Geomtery relaxation options
 set ION OPT=true
+set ION RELAX FLAGS FILE= relaxationFlags.inp
 
 #
 #Eigen-solver/Chebyshev solver related parameters
