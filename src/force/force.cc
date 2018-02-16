@@ -186,6 +186,10 @@ void forceClass<FEOrder>::configForceLinFEInit()
 
   dftPtr->matrix_free_data.initialize_dof_vector(d_configForceVectorLinFE,d_forceDofHandlerIndex);
   d_configForceVectorLinFE=0;//also zeros out the ghost vectors
+#ifdef ENABLE_PERIODIC_BC
+  dftPtr->matrix_free_data.initialize_dof_vector(d_configForceVectorLinFEKPoints,d_forceDofHandlerIndex);
+  d_configForceVectorLinFEKPoints=0;
+#endif
 }
 
 template<unsigned int FEOrder>
@@ -194,7 +198,13 @@ void forceClass<FEOrder>::configForceLinFEFinalize()
   d_configForceVectorLinFE.compress(VectorOperation::add);//copies the ghost element cache to the owning element
   d_configForceVectorLinFE.update_ghost_values();
   d_constraintsNoneForce.distribute(d_configForceVectorLinFE);//distribute to constrained degrees of freedom (for example periodic)
-  d_configForceVectorLinFE.update_ghost_values();
+  d_configForceVectorLinFE.update_ghost_values();  
+#ifdef ENABLE_PERIODIC_BC
+  d_configForceVectorLinFEKPoints.compress(VectorOperation::add);//copies the ghost element cache to the owning element
+  d_configForceVectorLinFEKPoints.update_ghost_values();
+  d_constraintsNoneForce.distribute(d_configForceVectorLinFEKPoints);//distribute to constrained degrees of freedom (for example periodic)
+  d_configForceVectorLinFEKPoints.update_ghost_values();  
+#endif  
 
 }
 
@@ -217,7 +227,10 @@ void forceClass<FEOrder>::computeConfigurationalForceTotalLinFE()
   for (it=d_atomsForceDofs.begin(); it!=d_atomsForceDofs.end(); ++it){
 	 const std::pair<unsigned int,unsigned int> & atomIdPair= it->first;
 	 const unsigned int atomForceDof=it->second;
-	 std::cout<<" atomId: "<< atomIdPair.first << ", force component: "<<atomIdPair.second << ", force: "<<d_configForceVectorLinFE[atomForceDof] << std::endl;
+	 //std::cout<<"procid: "<< this_mpi_process<<" atomId: "<< atomIdPair.first << ", force component: "<<atomIdPair.second << ", force: "<<d_configForceVectorLinFE[atomForceDof] << std::endl;
+#ifdef ENABLE_PERIODIC_BC
+	 //std::cout<<"procid: "<< this_mpi_process<<" atomId: "<< atomIdPair.first << ", force component: "<<atomIdPair.second << ", forceKPoints: "<<d_configForceVectorLinFEKPoints[atomForceDof] << std::endl; 
+#endif  	 
   }
    
 

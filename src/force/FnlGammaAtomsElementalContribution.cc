@@ -169,8 +169,11 @@ void forceClass<FEOrder>::distributeForceContributionFnlGammaAtoms(const std::ma
         std::vector<types::global_dof_index> forceLocalDofIndices(C_DIM);
         for (unsigned int idim=0; idim<C_DIM; idim++)
 	    forceLocalDofIndices[idim]=d_atomsForceDofs[std::pair<unsigned int,unsigned int>(iAtom,idim)];
-
+#ifdef ENABLE_PERIODIC_BC
+        d_constraintsNoneForce.distribute_local_to_global(forceContributionFnlGammaiAtomGlobal,forceLocalDofIndices,d_configForceVectorLinFEKPoints); 	
+#else
         d_constraintsNoneForce.distribute_local_to_global(forceContributionFnlGammaiAtomGlobal,forceLocalDofIndices,d_configForceVectorLinFE); 
+#endif
       }
     }	
 }

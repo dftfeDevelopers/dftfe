@@ -22,6 +22,7 @@
 #include "../../include/meshGenerator.h"
 #include "../../include/dft.h"
 #include "../../include/fileReaders.h"
+#include "../../include/dftParameters.h"
 
 template<unsigned int FEOrder>
 void geoOptIon<FEOrder>::writeMesh(std::string meshFileName)
@@ -61,7 +62,7 @@ void geoOptIon<FEOrder>::init()
 {
    const int numberGlobalAtoms=dftPtr->atomLocations.size();
    std::vector<std::vector<int> > tempRelaxFlagsData;
-   dftUtils::readRelaxationFlagsFile(3,tempRelaxFlagsData,"relaxationFlags.inp");
+   dftUtils::readRelaxationFlagsFile(3,tempRelaxFlagsData,dftParameters::ionRelaxFlagsFile);
    AssertThrow(tempRelaxFlagsData.size()==numberGlobalAtoms,ExcMessage("Incorrect number of entries in relaxationFlags file"));
    d_relaxationFlags.clear();
    for (unsigned int i=0; i< numberGlobalAtoms; ++i)
@@ -70,15 +71,12 @@ void geoOptIon<FEOrder>::init()
           d_relaxationFlags.push_back(tempRelaxFlagsData[i][j]);
    }
    //print relaxation flags
-   if (this_mpi_process==0)
+   pcout<<" --------------Ion relaxation flags----------------"<<std::endl;
+   for (unsigned int i=0; i< numberGlobalAtoms; ++i)
    {
-     std::cout<<" --------------Ion relaxation flags----------------"<<std::endl;
-     for (unsigned int i=0; i< numberGlobalAtoms; ++i)
-     {
-	 std::cout<<tempRelaxFlagsData[i][0] << "  "<< tempRelaxFlagsData[i][1] << "  "<<tempRelaxFlagsData[i][2]<<std::endl;
-     }
-     std::cout<<" --------------------------------------------------"<<std::endl;
+       pcout<<tempRelaxFlagsData[i][0] << "  "<< tempRelaxFlagsData[i][1] << "  "<<tempRelaxFlagsData[i][2]<<std::endl;
    }
+   pcout<<" --------------------------------------------------"<<std::endl;
 }
 
 template<unsigned int FEOrder>
@@ -98,49 +96,41 @@ void geoOptIon<FEOrder>::run()
    d_totalUpdateCalls=0;
    cgPRPNonLinearSolver cgSolver(tol,maxIter,debugLevel,mpi_communicator, lineSearchTol,maxLineSearchIter);
 
-   if (this_mpi_process==0)
-   {
-       std::cout<<" Starting CG Ion Relaxation... "<<std::endl;
-       std::cout<<"   ---CG Parameters--------------  "<<std::endl;
-       std::cout<<"      stopping tol: "<< tol<<std::endl;
-       std::cout<<"      maxIter: "<< maxIter<<std::endl;
-       std::cout<<"      lineSearch tol: "<< lineSearchTol<<std::endl;
-       std::cout<<"      lineSearch maxIter: "<< maxLineSearchIter<<std::endl;
-       std::cout<<"   ------------------------------  "<<std::endl;
+   pcout<<" Starting CG Ion Relaxation... "<<std::endl;
+   pcout<<"   ---CG Parameters--------------  "<<std::endl;
+   pcout<<"      stopping tol: "<< tol<<std::endl;
+   pcout<<"      maxIter: "<< maxIter<<std::endl;
+   pcout<<"      lineSearch tol: "<< lineSearchTol<<std::endl;
+   pcout<<"      lineSearch maxIter: "<< maxLineSearchIter<<std::endl;
+   pcout<<"   ------------------------------  "<<std::endl;
 
-   }
    if  (getNumberUnknowns()>0)
    {
        nonLinearSolver::ReturnValueType cgReturn=cgSolver.solve(*this);
        if (cgReturn == nonLinearSolver::RESTART && restartCount<maxRestarts )
        {
-	   if (this_mpi_process==0)
-	      std::cout<< " ...Restarting CG, restartCount: "<<restartCount<<std::endl;
+	   pcout<< " ...Restarting CG, restartCount: "<<restartCount<<std::endl;
 	   cgReturn=cgSolver.solve(*this); 
 	   restartCount++;
        }       
        
        if (cgReturn == nonLinearSolver::SUCCESS )
        {
-	   if (this_mpi_process==0)
-	      std::cout<< " ...CG Ion Relaxation completed, total number of geometry updates: "<<d_totalUpdateCalls<<std::endl;
+	    pcout<< " ...CG Ion Relaxation completed, total number of geometry updates: "<<d_totalUpdateCalls<<std::endl;
        }
        else if (cgReturn == nonLinearSolver::FAILURE)
        {
-	   if (this_mpi_process==0)
-	     std::cout<< " ...CG Ion Relaxation failed "<<std::endl;
+	    pcout<< " ...CG Ion Relaxation failed "<<std::endl;
 
        }
        else if (cgReturn == nonLinearSolver::MAX_ITER_REACHED)
        {
-	   if (this_mpi_process==0)
-	     std::cout<< " ...Maximum CG iterations reached "<<std::endl;
+	    pcout<< " ...Maximum CG iterations reached "<<std::endl;
 
        }        
        else if (cgReturn == nonLinearSolver::RESTART)
        {
-	   if (this_mpi_process==0)
-	     std::cout<< " ...Maximum restarts reached "<<std::endl;
+	    pcout<< " ...Maximum restarts reached "<<std::endl;
 
        }       
 
@@ -185,8 +175,7 @@ void geoOptIon<FEOrder>::gradient(std::vector<double> & gradient)
           if (d_relaxationFlags[3*i+j]==1) 
 	  {
               gradient.push_back(tempGradient[3*i+j]);
-	      if  (this_mpi_process==0)
-	         std::cout<<" atomId: "<<i << " direction: "<< j << " force: "<<-tempGradient[3*i+j]<<std::endl;
+	      pcout<<" atomId: "<<i << " direction: "<< j << " force: "<<-tempGradient[3*i+j]<<std::endl;
 	  }	  
       }
    }
@@ -215,8 +204,7 @@ void geoOptIon<FEOrder>::update(const std::vector<double> & solution)
    const int numberGlobalAtoms=dftPtr->atomLocations.size();
    std::vector<Point<3> > globalAtomsDisplacements(numberGlobalAtoms);
    int count=0;
-   if (this_mpi_process==0)
-      std::cout<<" ----CG atom displacement update-----" << std::endl;
+   pcout<<" ----CG atom displacement update-----" << std::endl;
    for (unsigned int i=0; i< numberGlobalAtoms; ++i)
    {
       for (unsigned int j=0; j< 3; ++j)
@@ -233,22 +221,27 @@ void geoOptIon<FEOrder>::update(const std::vector<double> & solution)
 	    }
 	  }
       }
-
+      /*
       MPI_Bcast(&(globalAtomsDisplacements[i][0]),
 	        3,
 	        MPI_DOUBLE,
 	        0,
-	        mpi_communicator);	
+	        mpi_communicator);
+      */
+      MPI_Bcast(&(globalAtomsDisplacements[i][0]),
+	        3,
+	        MPI_DOUBLE,
+	        0,
+	        MPI_COMM_WORLD);      
    }
+   /*
    for (unsigned int i=0; i< numberGlobalAtoms; ++i)
    {
        std::cout<< "processor: "<< this_mpi_process << " atomId: "<< i<< " disp: "<<globalAtomsDisplacements[i] << std::endl; 
    }
-   if (this_mpi_process==0)
-      std::cout<<" -----------------------------" << std::endl;
-
-   if (this_mpi_process==0)
-       std::cout<< "  Maximum force to be relaxed: "<<  d_maximumAtomForceToBeRelaxed <<std::endl;
+   */
+   pcout<<" -----------------------------" << std::endl;
+   pcout<< "  Maximum force to be relaxed: "<<  d_maximumAtomForceToBeRelaxed <<std::endl;
    dftPtr->forcePtr->updateAtomPositionsAndMoveMesh(globalAtomsDisplacements);
    d_totalUpdateCalls+=1;
    //write new mesh

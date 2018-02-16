@@ -135,6 +135,9 @@ void declare_parameters()
   prm.declare_entry("SYMMETRY MATRIX FILE", "",
 		    Patterns::Anything(),
 		    "File specifying the symmetry matrices for obtaining the irreducible BZ");
+  prm.declare_entry("ION RELAX FLAGS FILE", "",
+		    Patterns::Anything(),
+		    "File specifying the atomic position update permission flags. 1- update 0- no update");  
   prm.declare_entry("BZ SAMPLING POINTS ALONG X", "2",
 		    Patterns::Integer(1,100),
 		    "Number of Monkhorts-Pack grid points to be used along X direction for BZ sampling");
@@ -331,6 +334,7 @@ void parse_command_line(const int argc,
 	  dftParameters::kPointDataFile                = prm.get("kPOINT RULE FILE");
 	  dftParameters::symmFromFile                  = prm.get_bool("READ SYMMETRY FROM FILE");
           dftParameters::symmDataFile                  = prm.get("SYMMETRY MATRIX FILE");
+	  dftParameters::ionRelaxFlagsFile             = prm.get("ION RELAX FLAGS FILE");
           dftParameters::nkx				= prm.get_integer("BZ SAMPLING POINTS ALONG X");
 	  dftParameters::nky				= prm.get_integer("BZ SAMPLING POINTS ALONG Y");
           dftParameters::nkz				= prm.get_integer("BZ SAMPLING POINTS ALONG Z");

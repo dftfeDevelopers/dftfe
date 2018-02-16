@@ -304,26 +304,38 @@ void dftClass<FEOrder>::compute_rhoOut()
       delete *(rhoOutVals.begin());	      
       rhoOutVals.pop_front();
 
-      (**(rhoInValsSpinPolarized.begin())).clear();
-      delete *(rhoInValsSpinPolarized.begin());
-      rhoInValsSpinPolarized.pop_front();
-      (**(rhoOutValsSpinPolarized.begin())).clear();
-      delete *(rhoOutValsSpinPolarized.begin());
-      rhoOutValsSpinPolarized.pop_front();
+      if(spinPolarized==1)
+      {
+	  (**(rhoInValsSpinPolarized.begin())).clear();
+	  delete *(rhoInValsSpinPolarized.begin());
+	  rhoInValsSpinPolarized.pop_front();
 
-      (**(gradRhoInVals.begin())).clear();
-      delete *(gradRhoInVals.begin());	      
-      gradRhoInVals.pop_front();
-      (**(gradRhoOutVals.begin())).clear();
-      delete *(gradRhoOutVals.begin());	      
-      gradRhoOutVals.pop_front();
+	  (**(rhoOutValsSpinPolarized.begin())).clear();
+	  delete *(rhoOutValsSpinPolarized.begin());
+	  rhoOutValsSpinPolarized.pop_front();
+      }
+	  
+      if(xc_id == 4)//GGA
+      {
+	  (**(gradRhoInVals.begin())).clear();
+	  delete *(gradRhoInVals.begin());	      
+	  gradRhoInVals.pop_front();
 
-      (**(gradRhoInValsSpinPolarized.begin())).clear();
-      delete *(gradRhoInValsSpinPolarized.begin());	 
-      gradRhoInValsSpinPolarized.pop_front();
-      (**(gradRhoOutValsSpinPolarized.begin())).clear();
-      delete *(gradRhoOutValsSpinPolarized.begin());	   
-      gradRhoOutValsSpinPolarized.pop_front();
+	  (**(gradRhoOutVals.begin())).clear();
+	  delete *(gradRhoOutVals.begin());	      
+	  gradRhoOutVals.pop_front();
+      }
+
+      if(spinPolarized==1 && xc_id==4)
+      {      
+	  (**(gradRhoInValsSpinPolarized.begin())).clear();
+	  delete *(gradRhoInValsSpinPolarized.begin());	 
+	  gradRhoInValsSpinPolarized.pop_front();
+
+	  (**(gradRhoOutValsSpinPolarized.begin())).clear();
+	  delete *(gradRhoOutValsSpinPolarized.begin());	   
+	  gradRhoOutValsSpinPolarized.pop_front();
+      }
     }
 
 }

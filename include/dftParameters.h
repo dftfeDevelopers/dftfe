@@ -33,7 +33,7 @@ namespace dftParameters
   extern double lowerEndWantedSpectrum,relLinearSolverTolerance,selfConsistentSolverTolerance,TVal, start_magnetization;
 
   extern bool isPseudopotential,periodicX,periodicY,periodicZ, useSymm, symmFromFile, timeReversal;
-  extern std::string meshFileName,coordinatesFile,currentPath,latticeVectorsFile,kPointDataFile, symmDataFile;
+  extern std::string meshFileName,coordinatesFile,currentPath,latticeVectorsFile,kPointDataFile, symmDataFile, ionRelaxFlagsFile;
 
   extern double innerDomainSizeX, innerDomainSizeY, innerDomainSizeZ, outerAtomBallRadius, meshSizeOuterDomain, meshSizeInnerDomain;
   extern double meshSizeInnerBall, meshSizeOuterBall;

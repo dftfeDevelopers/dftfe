@@ -49,6 +49,9 @@ public:
   void updateAtomPositionsAndMoveMesh(const std::vector<Point<C_DIM> > & globalAtomsDisplacements);
 private:
   vectorType d_configForceVectorLinFE;
+#ifdef ENABLE_PERIODIC_BC  
+  vectorType d_configForceVectorLinFEKPoints;
+#endif
   std::vector<unsigned int> d_globalAtomsRelaxationPermissions;
   std::vector<double> d_globalAtomsRelaxationDisplacements;
   void createBinObjectsForce();
@@ -124,6 +127,9 @@ private:
   //Gaussian generator related data and functions
   const double d_gaussianConstant=4.0;//5.0
   std::vector<double> d_globalAtomsGaussianForces;
+#ifdef ENABLE_PERIODIC_BC  
+  std::vector<double> d_globalAtomsGaussianForcesKPoints;
+#endif  
   Tensor<2,C_DIM,double> d_stress;
   const bool d_allowGaussianOverlapOnAtoms=false;//Dont use true except for debugging forces only without mesh movement, as gaussian ovelap on atoms for move mesh is by default set to false
 

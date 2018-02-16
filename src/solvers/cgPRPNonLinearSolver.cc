@@ -422,7 +422,15 @@
       //
       const double eta = computeEta();
 
+      unsigned int isSuccess=0;
       if (std::fabs(eta) < tolerance*d_numberUnknowns)
+         isSuccess=1;
+      MPI_Bcast(&(isSuccess),
+		1,
+		MPI_INT,
+		0,
+		MPI_COMM_WORLD); 
+      if (isSuccess==1)	  
 	return SUCCESS;      
       //
       // update alpha
@@ -529,21 +537,26 @@
     //
     // check for convergence
     //
+    unsigned int isSuccess=0;    
     if ( d_deltaNew < toleranceSqr*totalnumberUnknowns*totalnumberUnknowns)
-      return SUCCESS;
+        isSuccess=1;
 
+    MPI_Bcast(&(isSuccess),
+	       1,
+	       MPI_INT,
+	       0,
+	       MPI_COMM_WORLD); 
+    if (isSuccess==1)	  
+       return SUCCESS;  
    
 
 
     for (d_iter = 0; d_iter < d_maxNumberIterations; ++d_iter) {
 
-      if(this_mpi_process ==0)
-	{
-	  for(int i = 0; i < d_gradient.size(); ++i)
-	    {
-	      std::cout<<"d_gradient: "<<d_gradient[i]<<std::endl;
-	    }
-	}
+      for(int i = 0; i < d_gradient.size(); ++i)
+      {
+	  pcout<<"d_gradient: "<<d_gradient[i]<<std::endl;
+      }
 
 
       //
@@ -559,9 +572,8 @@
       //
       // output at the begining of the iteration
       //
-      if (this_mpi_process == 0)
-	if (d_debugLevel >= 1) 
-	  std::cout << d_iter << " " 
+      if (d_debugLevel >= 1) 
+	  pcout << d_iter << " " 
 		    << d_deltaNew << " " 
 		    << residualNorm << " " 
 		    << residualNorm/totalnumberUnknowns << " "
@@ -610,16 +622,23 @@
 
       d_beta = (d_deltaNew - d_deltaMid)/d_deltaOld;
 
-     if (this_mpi_process == 0)
-	   std::cout<<" CG- d_beta: "<<d_beta<<std::endl;
+      pcout<<" CG- d_beta: "<<d_beta<<std::endl;
+
+      unsigned int isBetaZero=0;
       if(d_beta <= 0)
       {
-	  if (this_mpi_process == 0)
-	     std::cout<<" Negative d_beta- setting it to zero "<<std::endl;
-	  d_beta=0;
+	  pcout<<" Negative d_beta- setting it to zero "<<std::endl;
+	  isBetaZero=1;
+	  //d_beta=0;
 	  //return RESTART;	  
       }
-
+      MPI_Bcast(&(isBetaZero),
+		   1,
+		   MPI_INT,
+		   0,
+		   MPI_COMM_WORLD); 
+      if (isBetaZero==1)	  
+	  d_beta=0; 
       //
       // update direction
       //
@@ -628,9 +647,16 @@
       //
       // check for convergence
       //
+      unsigned int isBreak=0;
       if (d_deltaNew < toleranceSqr*totalnumberUnknowns*totalnumberUnknowns)
-	break;
-
+	isBreak=1;
+      MPI_Bcast(&(isSuccess),
+		   1,
+		   MPI_INT,
+		   0,
+		   MPI_COMM_WORLD); 
+      if (isBreak==1)	  
+	  break; 
     }
 
     //
@@ -649,25 +675,27 @@
     //
     // final output
     //
-    if (this_mpi_process == 0)
-      if (d_debugLevel >= 1) {
-	
-	if (returnValue == SUCCESS) {
-	  std::cout << "Conjugate Gradient converged after " 
-		    << d_iter << " iterations." << std::endl;
-	} else {
-	  std::cout << "Conjugate Gradient failed to converge after "
-		    << d_iter << " iterations." << std::endl;
-	}
-
-	//std::cout << "Final function value: " << functionValue
-	//	  << std::endl;
-	
+    if (d_debugLevel >= 1)
+    {
+    
+      if (returnValue == SUCCESS)
+      {
+        pcout << "Conjugate Gradient converged after " 
+		<< d_iter << " iterations." << std::endl;
+      } else
+      {
+        pcout << "Conjugate Gradient failed to converge after "
+		<< d_iter << " iterations." << std::endl;
       }
 
+      //std::cout << "Final function value: " << functionValue
+      //	  << std::endl;
+    
+    }
+
     //
     //
     //
-    return SUCCESS;
+    return returnValue;
 
   }
