@@ -3,7 +3,7 @@ set -e
 set -o pipefail
 #script to setup and build DFT-FE 
 #set CMAKE path
-cmake=/opt/cmake/bin/cmake
+#cmake=/opt/cmake/bin/cmake
 
 #
 #Usually, no changes are needed below this line

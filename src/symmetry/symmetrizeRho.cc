@@ -190,6 +190,7 @@ void symmetryClass<FEOrder>::computeLocalrhoOut()
 	{
 	  *((dftPtr->eigenVectorsOrig)[kPoint][i])=*((dftPtr->eigenVectors)[kPoint][i]);
 	  (*((dftPtr->eigenVectorsOrig)[kPoint][i])).scale(dftPtr->eigenPtr->massVector);
+	  ((dftPtr->eigenVectorsOrig)[kPoint][i])->update_ghost_values();
 	  (dftPtr->constraintsNoneEigen).distribute(*((dftPtr->eigenVectorsOrig)[kPoint][i]));
 	  ((dftPtr->eigenVectorsOrig)[kPoint][i])->update_ghost_values();
 	}

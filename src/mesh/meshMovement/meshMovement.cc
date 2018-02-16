@@ -197,11 +197,13 @@ void meshMovementClass::finalizeIncrementField()
   if (d_isParallelMesh)
   {
     //d_incrementalDisplacement.compress(VectorOperation::insert);//inserts current value at owned node and sets ghosts to zero	
-     d_constraintsMoveMesh.distribute(d_incrementalDisplacementParallel);//distribute to constrained degrees of freedom (periodic and hanging nodes)
-     d_incrementalDisplacementParallel.update_ghost_values();
+    d_incrementalDisplacementParallel.update_ghost_values();
+    d_constraintsMoveMesh.distribute(d_incrementalDisplacementParallel);//distribute to constrained degrees of freedom (periodic and hanging nodes)
+    d_incrementalDisplacementParallel.update_ghost_values();
    }
    else
    {
+     d_incrementalDisplacementSerial.update_ghost_values();
      d_constraintsMoveMesh.distribute(d_incrementalDisplacementSerial);
    }
 }

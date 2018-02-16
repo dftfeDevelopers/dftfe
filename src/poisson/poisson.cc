@@ -290,6 +290,7 @@ void poissonClass<FEOrder>::vmult(vectorType &dst, vectorType &src) const
 {
  
   dst=0.0;
+  src.update_ghost_values();
   dftPtr->d_constraintsVector[d_constraintMatrixId]->distribute(src);
   for(types::global_dof_index i = 0; i < src.size(); ++i)
     {
@@ -362,7 +363,7 @@ void poissonClass<FEOrder>::solve(vectorType& phi, int constraintMatrixId, std::
     }   
     phi.update_ghost_values();
     solver.solve(*this, phi, rhs, preconditioner);
-
+    phi.update_ghost_values();
     dftPtr->d_constraintsVector[d_constraintMatrixId]->distribute(phi);
     phi.update_ghost_values();
   }

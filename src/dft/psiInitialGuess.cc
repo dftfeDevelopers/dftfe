@@ -450,6 +450,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 	  //pcout << buffer;
 	  eigenVectors[kPoint][i]->zero_out_ghosts();
 	  eigenVectors[kPoint][i]->compress(VectorOperation::insert);
+	  eigenVectors[kPoint][i]->update_ghost_values();
 	  constraintsNoneEigen.distribute(*eigenVectors[kPoint][i]);
 	  eigenVectors[kPoint][i]->update_ghost_values();
 	}
