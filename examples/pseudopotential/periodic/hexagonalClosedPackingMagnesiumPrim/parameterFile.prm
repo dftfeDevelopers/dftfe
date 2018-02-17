@@ -1,7 +1,7 @@
 #
 #path specifying the location of the "build" directory which is usually the location of "src" folder 
 #
-set DFT PATH = "/home/dsambit/dealiiKSDFT/dft-fe-newdealiiversion"
+set DFT PATH = "../../../../"
 set OPTIMIZED MODE = true
 #
 #finite-element related parameters
@@ -30,10 +30,10 @@ set INNER DOMAIN SIZE X = 0 #2*Ln1
 set INNER DOMAIN SIZE Y = 0
 set INNER DOMAIN SIZE Z = 0
 set OUTER ATOM BALL RADIUS = 2.0
-set MESH SIZE OUTER DOMAIN = 0.3 #hn
+set MESH SIZE OUTER DOMAIN = 1.0 #hn
 set MESH SIZE INNER DOMAIN = 1.0 #hn-1
-set MESH SIZE OUTER ATOM BALL =10.0
-set MESH SIZE NEAR ATOM = 10.0 #h0
+set MESH SIZE OUTER ATOM BALL =0.5
+set MESH SIZE NEAR ATOM = 0.5 #h0
 #
 #set boundary conditions in three directions
 #
