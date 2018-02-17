@@ -888,11 +888,11 @@ void eigenClass<FEOrder>::HX(const std::vector<vectorType*> &src,
     {
 
           
-      /*computeNonLocalHamiltonianTimesXMemoryOpt(dftPtr->tempPSI2,
-						dst);*/
+      computeNonLocalHamiltonianTimesXMemoryOpt(dftPtr->tempPSI2,
+						dst);
 
-      computeNonLocalHamiltonianTimesX(dftPtr->tempPSI2,
-	dst);
+      //computeNonLocalHamiltonianTimesX(dftPtr->tempPSI2,
+      //  dst);
 
     }
 

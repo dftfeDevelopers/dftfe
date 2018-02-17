@@ -1061,6 +1061,21 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
      }
    }
 
+#ifdef ENABLE_PERIODIC_BC
+  dealii::parallel::distributed::Vector<std::complex<double> > vec(d_locallyOwnedProjectorIdsCurrentProcess,
+                                                                   d_ghostProjectorIdsCurrentProcess,
+                                                                   mpi_communicator);
+#else
+  dealii::parallel::distributed::Vector<double > vec(d_locallyOwnedProjectorIdsCurrentProcess,
+                                                     d_ghostProjectorIdsCurrentProcess,
+                                                     mpi_communicator);   
+#endif     
+  vec.update_ghost_values();
+  d_projectorKetTimesVectorPar.resize(eigenVectors[0].size());
+  for (unsigned int i=0; i<eigenVectors[0].size();++i)
+  {
+      d_projectorKetTimesVectorPar[i].reinit(vec);    
+  }     
 }
 
 template<unsigned int FEOrder>

@@ -7,7 +7,7 @@ set OPTIMIZED MODE=true
 #finite-element related parameters
 #
 set MESH FILE = Alfcc_locref2_meshsize0d72.inp
-set FINITE ELEMENT POLYNOMIAL ORDER =3
+set FINITE ELEMENT POLYNOMIAL ORDER =5
 
 #
 #Atomic-coordinates file
@@ -47,7 +47,7 @@ set LATTICE VECTORS FILE = latticeVectors.inp
 #(Located in $DFT PATH/data/kPointList)
 #
 #set kPOINT RULE FILE = GammaPoint.inp
-set BZ SAMPLING POINTS ALONG X = 2
+set BZ SAMPLING POINTS ALONG X = 1
 set BZ SAMPLING POINTS ALONG Y = 1
 set BZ SAMPLING POINTS ALONG Z = 1
 set BZ SAMPLING SHIFT ALONG X = 0.00
@@ -61,13 +61,14 @@ set NUMBER OF POOLS = 1
 
 #Pseudopotential calculation or all-electron calculation
 set PSEUDOPOTENTIAL CALCULATION = true
-
+# Pseudopotential type: 1 for KB projector, 2 for ONCV projectors
+set PSEUDOPOTENTIAL TYPE = 2
 #Exhchange-correlation functional
 # 1 (LDA: Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)])
 # 2 (LDA: Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)])
 # 3 (LDA: Vosko, Wilk & Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)])
 # 4 (GGA: Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)])*/
-set EXCHANGE CORRELATION TYPE = 1
+set EXCHANGE CORRELATION TYPE = 4
 #spin polarization
 set SPIN POLARIZATION = 0
 set START MAGNETIZATION = 0.0
@@ -76,7 +77,7 @@ set START MAGNETIZATION = 0.0
 #
 
 #Parameter indicating number of eigenfunctions to be solved
-set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 20
+set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 32
 #Approximate estimate of lower bound of the wanted spectrum
 set LOWER BOUND WANTED SPECTRUM = -70.0
 #Chebyshev Filter polynomial degree (0 indicates default value based on upper bound of Hamiltonian)

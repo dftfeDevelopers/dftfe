@@ -40,6 +40,7 @@ public:
   void initUnmoved(Triangulation<3,3> & triangulation);
   void initMoved();
   void initPseudoData();
+  void computeElementalNonLocalPseudoOVDataForce();
   void computeAtomsForces();
   void computeStress();
   void printAtomsForces();
