@@ -32,6 +32,7 @@
 #include "computeStressEself.cc"
 //#include "computeStressEEshelbyEPSPEnlEk.cc"
 #include "initPseudoForce.cc"
+#include "initPseudoOVForce.cc"
 #include "createBinObjectsForce.cc"
 #include "gaussianGeneratorConfForceOpt.cc"
 #include "locateAtomCoreNodesForce.cc"
@@ -166,7 +167,14 @@ void forceClass<FEOrder>::initPseudoData(){
   if(dftParameters::isPseudopotential)
     {
       initLocalPseudoPotentialForce();
-      computeElementalNonLocalPseudoDataForce();
+      if (dftParameters::pseudoProjector==2)
+      {
+        computeElementalNonLocalPseudoOVDataForce();
+      }
+      else
+      {
+        computeElementalNonLocalPseudoDataForce();	  
+      }
     }
 }
 

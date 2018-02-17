@@ -44,7 +44,8 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
   //get FE data structures
   //
   QGauss<3>  quadrature(FEOrder+1);
-  FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values);
+  //FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values);
+  FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values| update_quadrature_points);  
   const unsigned int numberNodesPerElement  = FE.dofs_per_cell;
   const unsigned int numberQuadraturePoints = quadrature.size();
   
@@ -141,8 +142,9 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
 	      for(int iQuadPoint = 0; iQuadPoint < numberQuadraturePoints; ++iQuadPoint)
 		{
 
-		  MappingQ1<3,3> test;
-		  Point<3> quadPoint(test.transform_unit_to_real_cell(cell, fe_values.get_quadrature().point(iQuadPoint)));
+		  //MappingQ1<3,3> test;
+		  //Point<3> quadPoint(test.transform_unit_to_real_cell(cell, fe_values.get_quadrature().point(iQuadPoint)));
+		  Point<3> quadPoint=fe_values.quadrature_point(iQuadPoint);
 
 		  for(int iImageAtomCount = 0; iImageAtomCount < imageIdsList.size(); ++iImageAtomCount)
 		    {
@@ -676,7 +678,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
   //get the number of non-local atoms
   //
   int numberNonLocalAtoms = d_nonLocalAtomGlobalChargeIds.size();
-  const double nlpTolerance = 1e-08;
+  const double nlpTolerance = 1e-8;
 
 
   //
@@ -689,6 +691,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
   d_sparsityPattern.resize(numberNonLocalAtoms);
   d_elementIteratorsInAtomCompactSupport.resize(numberNonLocalAtoms);
   d_elementOneFieldIteratorsInAtomCompactSupport.resize(numberNonLocalAtoms);
+  d_nonLocalAtomIdsInCurrentProcess.clear();  
 
   //
   //loop over nonlocal atoms
@@ -707,7 +710,8 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
   //get FE data structures
   //
   QGauss<3>  quadrature(FEOrder+1);
-  FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values);
+  //FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values);
+  FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values| update_quadrature_points);  
   const unsigned int numberQuadraturePoints = quadrature.size();
   //const unsigned int numberElements         = triangulation.n_locally_owned_active_cells();
    typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
@@ -728,6 +732,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
       //temp variables
       //
       int matCount = 0;
+      bool isAtomIdInProcessor=false;
 
       //
       //
@@ -778,9 +783,10 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
 		     lTemp = lQuantumNumber ;
 		  for(int iQuadPoint = 0; iQuadPoint < numberQuadraturePoints; ++iQuadPoint)
 		    {
-		      MappingQ1<3,3> test;
-		      Point<3> quadPoint(test.transform_unit_to_real_cell(cell, fe_values.get_quadrature().point(iQuadPoint)));
-		      
+		      //MappingQ1<3,3> test;
+		      //Point<3> quadPoint(test.transform_unit_to_real_cell(cell, fe_values.get_quadrature().point(iQuadPoint)));
+		      Point<3> quadPoint=fe_values.quadrature_point(iQuadPoint);
+
 		      for(int iImageAtomCount = 0; iImageAtomCount < imageIdsList.size(); ++iImageAtomCount)
 			{
 
@@ -831,12 +837,13 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
 
 		}//iPsp loop ("l" loop) 
 	        
-	      //if(sparseFlag==1) {
+	      if(sparseFlag==1) {
 		d_sparsityPattern[iAtom][iElem] = matCount;
 		d_elementIteratorsInAtomCompactSupport[iAtom].push_back(cellEigen);
 		d_elementOneFieldIteratorsInAtomCompactSupport[iAtom].push_back(cell);
 		matCount += 1;
-	      //}
+		isAtomIdInProcessor=true;
+	      }
 
 	    }
 	}//cell loop
@@ -844,6 +851,8 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
       cumulativeSplineId += numberPseudoWaveFunctions;
 
       pcout<<"No.of non zero elements in the compact support of atom "<<iAtom<<" is "<<d_elementIteratorsInAtomCompactSupport[iAtom].size()<<std::endl;
+      if (isAtomIdInProcessor)
+          d_nonLocalAtomIdsInCurrentProcess.push_back(iAtom);      
 
     }//atom loop
 
@@ -862,7 +871,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
    //
    //data structures for memory optimization of projectorKetTimesVector
    //
-  /* std::vector<unsigned int> nonLocalAtomIdsAllProcessFlattened; 
+   std::vector<unsigned int> nonLocalAtomIdsAllProcessFlattened; 
    pseudoUtils::exchangeLocalList(d_nonLocalAtomIdsInCurrentProcess,
                                   nonLocalAtomIdsAllProcessFlattened,
                                   n_mpi_processes,
@@ -1058,6 +1067,23 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
      {
         std::cout << "procId: "<< this_mpi_process<<" ["<<it->first.first << "," << it->first.second << "] " << it->second<< std::endl;       
      }
-   } */
+   }
+
+#ifdef ENABLE_PERIODIC_BC
+  dealii::parallel::distributed::Vector<std::complex<double> > vec(d_locallyOwnedProjectorIdsCurrentProcess,
+                                                                   d_ghostProjectorIdsCurrentProcess,
+                                                                   mpi_communicator);
+#else
+  dealii::parallel::distributed::Vector<double > vec(d_locallyOwnedProjectorIdsCurrentProcess,
+                                                     d_ghostProjectorIdsCurrentProcess,
+                                                     mpi_communicator);   
+#endif     
+  vec.update_ghost_values();
+  d_projectorKetTimesVectorPar.resize(eigenVectors[0].size());
+  for (unsigned int i=0; i<eigenVectors[0].size();++i)
+  {
+      d_projectorKetTimesVectorPar[i].reinit(vec);    
+  }   
+   
 
 }

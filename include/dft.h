@@ -449,10 +449,11 @@ class dftClass
   std::map<std::pair<unsigned int,unsigned int>, unsigned int> d_projectorIdsNumberingMapCurrentProcess;
 #ifdef ENABLE_PERIODIC_BC
   std::vector<std::vector<std::vector<std::vector<std::complex<double> > > > > d_nonLocalProjectorElementMatrices;
+  std::vector<dealii::parallel::distributed::Vector<std::complex<double> > > d_projectorKetTimesVectorPar;  
 #else
   std::vector<std::vector<std::vector<std::vector<double> > > > d_nonLocalProjectorElementMatrices;
+  std::vector<dealii::parallel::distributed::Vector<double> > d_projectorKetTimesVectorPar;  
 #endif
-
   //
   //storage for nonlocal pseudopotential constants
   //

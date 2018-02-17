@@ -156,19 +156,24 @@ void symmetryClass<FEOrder>::computeAndSymmetrize_rhoOut()
       delete *(dftPtr->rhoOutValsSpinPolarized.begin());
       dftPtr->rhoOutValsSpinPolarized.pop_front();
 
-      (**(dftPtr->gradRhoInVals.begin())).clear();
-      delete *(dftPtr->gradRhoInVals.begin());	      
-      dftPtr->gradRhoInVals.pop_front();
-      (**(dftPtr->gradRhoOutVals.begin())).clear();
-      delete *(dftPtr->gradRhoOutVals.begin());	      
-      dftPtr->gradRhoOutVals.pop_front();
+      if(xc_id == 4)//GGA
+      {      
+	  (**(dftPtr->gradRhoInVals.begin())).clear();
+	  delete *(dftPtr->gradRhoInVals.begin());	      
+	  dftPtr->gradRhoInVals.pop_front();
 
-      (**(dftPtr->gradRhoInValsSpinPolarized.begin())).clear();
-      delete *(dftPtr->gradRhoInValsSpinPolarized.begin());	 
-      dftPtr->gradRhoInValsSpinPolarized.pop_front();
-      (**(dftPtr->gradRhoOutValsSpinPolarized.begin())).clear();
-      delete *(dftPtr->gradRhoOutValsSpinPolarized.begin());	   
-      dftPtr->gradRhoOutValsSpinPolarized.pop_front();
+	  (**(dftPtr->gradRhoOutVals.begin())).clear();
+	  delete *(dftPtr->gradRhoOutVals.begin());	      
+	  dftPtr->gradRhoOutVals.pop_front();
+
+	  (**(dftPtr->gradRhoInValsSpinPolarized.begin())).clear();
+	  delete *(dftPtr->gradRhoInValsSpinPolarized.begin());	 
+	  dftPtr->gradRhoInValsSpinPolarized.pop_front();
+
+	  (**(dftPtr->gradRhoOutValsSpinPolarized.begin())).clear();
+	  delete *(dftPtr->gradRhoOutValsSpinPolarized.begin());	   
+	  dftPtr->gradRhoOutValsSpinPolarized.pop_front();
+      }
     }
 
 }
