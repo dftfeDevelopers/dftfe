@@ -59,8 +59,11 @@ void forceClass<FEOrder>::initLocalPseudoPotentialForce()
       x.setcontent(numRows,&xData[0]);
       alglib::real_1d_array y;
       y.setcontent(numRows,&yData[0]);
-      alglib::ae_int_t natural_bound_type = 1;
-      spline1dbuildcubic(x, y, numRows, natural_bound_type, 0.0, natural_bound_type, 0.0, pseudoSpline[*it]);
+      alglib::ae_int_t bound_type_l = 0;
+      alglib::ae_int_t bound_type_r = 1;
+      const double slopeL= (pseudoPotentialData[*it][1][1]-pseudoPotentialData[*it][0][1])/(pseudoPotentialData[*it][1][0]-pseudoPotentialData[*it][0][0]);
+      const double slopeR=-pseudoPotentialData[*it][numRows-1][1]/pseudoPotentialData[*it][numRows-1][0];      
+      spline1dbuildcubic(x, y, numRows, bound_type_l, slopeL, bound_type_r, slopeR, pseudoSpline[*it]);
       outerMostPointPseudo[*it]= xData[numRows-1];
     }
   

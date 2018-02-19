@@ -7,7 +7,7 @@ set OPTIMIZED MODE=true
 #finite-element related parameters
 #
 set MESH FILE = Alfcc_locref2_meshsize0d72.inp
-set FINITE ELEMENT POLYNOMIAL ORDER =4
+set FINITE ELEMENT POLYNOMIAL ORDER =5
 
 #
 #Atomic-coordinates file
@@ -62,13 +62,13 @@ set NUMBER OF POOLS = 1
 #Pseudopotential calculation or all-electron calculation
 set PSEUDOPOTENTIAL CALCULATION = true
 # Pseudopotential type: 1 for KB projector, 2 for ONCV projectors
-set PSEUDOPOTENTIAL TYPE = 1
+set PSEUDOPOTENTIAL TYPE = 2
 #Exhchange-correlation functional
 # 1 (LDA: Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)])
 # 2 (LDA: Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)])
 # 3 (LDA: Vosko, Wilk & Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)])
 # 4 (GGA: Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)])*/
-set EXCHANGE CORRELATION TYPE = 1
+set EXCHANGE CORRELATION TYPE = 4
 #spin polarization
 set SPIN POLARIZATION = 0
 set START MAGNETIZATION = 0.0
@@ -82,6 +82,7 @@ set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 32
 set LOWER BOUND WANTED SPECTRUM = -70.0
 #Chebyshev Filter polynomial degree (0 indicates default value based on upper bound of Hamiltonian)
 set CHEBYSHEV POLYNOMIAL DEGREE = 0
+set CHEBYSHEV FILTER PASSES = 2
 
 #
 #SCF parameters

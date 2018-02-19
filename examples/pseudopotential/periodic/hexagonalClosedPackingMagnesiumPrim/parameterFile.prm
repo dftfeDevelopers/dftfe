@@ -32,8 +32,8 @@ set INNER DOMAIN SIZE Z = 0
 set OUTER ATOM BALL RADIUS = 2.0
 set MESH SIZE OUTER DOMAIN = 1.0 #hn
 set MESH SIZE INNER DOMAIN = 1.0 #hn-1
-set MESH SIZE OUTER ATOM BALL =0.5
-set MESH SIZE NEAR ATOM = 0.2 #h0
+set MESH SIZE OUTER ATOM BALL =0.3
+set MESH SIZE NEAR ATOM = 0.1 #h0
 #
 #set boundary conditions in three directions
 #
