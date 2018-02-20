@@ -76,4 +76,4 @@ Execution:
 1) Do the following from the folder containing parameterFile.prm:
   -- $ mpirun -np numProcs ./dftRun parameterFile.prm (You may need to set permissions for dftRun. e.g.: $ chmod u=+x dftRun)
   -- Note: numProcs is the number of parallel processes supplied to mpirun. For serial runs numProcs is 1.
-See README.txt for more detailed information on execution of dftfe code.
+See DEMO.txt for more detailed information on execution of dftfe code.
