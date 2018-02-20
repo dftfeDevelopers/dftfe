@@ -2,7 +2,7 @@ DFT-FE (Real Space finite-element based KSDFT implementation)
 
 Installation:
 
-1) Install deal.II (version >=8.4 recommended)
+1) Install deal.II after cloning from https://dsambit@bitbucket.org/dftfedevelopers/dealiiopt.git
 [Note: DFT-FE is primarily based on the deal.II library. If you have particular questions about deal.II, contact the 
 deal.II discussion groups (https://www.dealii.org/mail.html)]
  
@@ -12,7 +12,6 @@ deal.II discussion groups (https://www.dealii.org/mail.html)]
   -- If a deal.II binary is downloaded, open it and follow the instructions in the terminal window. Pre-build binaries recommended for OSX. 
   -- If deal.II is installed from the source, the MPI and p4est libraries must be installed as prerequisites if they are not already installed.
   -- If not compiled as part of deal.II, install Petsc and Slepc with both real (For Non-periodic problems) and complex (For Periodic problems) data types.
-  -- Important: Add deal.II directory path to DEAL_II_DIR environment variable: $export DEAL_II_DIR = /path/to/deal.ii/
 
 2) Install Alglib and Libxc
 
@@ -31,7 +30,7 @@ deal.II discussion groups (https://www.dealii.org/mail.html)]
 
 4) Setting the paths
 
-  -- set the paths related to alglib, libxc, petsc, slepc both real and complex in CMakeLists.txt in the "dft-fe" folder
+  -- set the paths related to dealii, alglib, libxc, petsc, slepc both real and complex in CMakeLists.txt in the "dft-fe" folder
 
 5) Install
 
