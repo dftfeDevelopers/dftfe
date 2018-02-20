@@ -30,7 +30,7 @@ deal.II discussion groups (https://www.dealii.org/mail.html)]
 
 4) Setting the paths
 
-  -- set the paths related to dealii, alglib, libxc, petsc, slepc both real and complex in CMakeLists.txt in the "dft-fe" folder
+  -- set the paths related to dealii, alglib, libxc, spglib, petsc, slepc both real and complex in CMakeLists.txt in the "dft-fe" folder
 
 5) Install
 
