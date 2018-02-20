@@ -45,7 +45,11 @@ Installation:
          SET(SLEPC_COMPLEX_INCLUDE "path to slepc-complex include")
          SET(SLEPC_COMPLEX_LIB "path to slepc-complex library libslepc.so")
 
-         SET(DEAL_II_DIR "/path/to/deal.ii/")
+         SET(SPG_INCLUDE "/home/vikramg/DFT-FE-softwares/softwareCentos/spglib/include")
+         SET(SPG_LIB "/home/vikramg/DFT-FE-softwares/softwareCentos/spglib/lib/libsymspg.so") 
+
+      -- Set DEAL_II_PATH environment variable to path containing deal.II install folder in your command-line as follows:
+         $ export DEAL_II_DIR = /path/to/deal.ii/
 
 (4) Installing the dft-fe code:
       -- Do the following from your command line
