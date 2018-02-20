@@ -64,6 +64,7 @@ set USE GROUP SYMMETRY = false
 
 #Pseudopotential calculation or all-electron calculation
 set PSEUDOPOTENTIAL CALCULATION = true
+# Pseudopotential type: 1 for KB projector, 2 for ONCV projectors
 set PSEUDOPOTENTIAL TYPE = 2
 
 #Exhchange-correlation functional
