@@ -655,10 +655,44 @@ void dftClass<FEOrder>::computeResidualNorm(std::vector<vectorType*> & X)
   for(unsigned int i = 0; i < n; i++)
      {
 	(*PSI[i]).add(-eigenValuesTemp[d_kPointIndex][i] , (*X[i]) ) ;
-	 sprintf(buffer, "eigen vector %3u: %22.16e\n", i+1, (*PSI[i]).l2_norm());
-         pcout << buffer;
+	const double resNorm= (*PSI[i]).l2_norm();
+	d_tempResidualNormWaveFunctions[d_kPointIndex][i]=resNorm;
+	sprintf(buffer, "eigen vector %3u: %22.16e\n", i+1,resNorm);
+        pcout << buffer;
     }
   pcout <<std::endl;
   //
   computing_timer.exit_section("computeResidualNorm"); 
+}
+
+//compute the maximum of the residual norm of the highest occupied state among all k points 
+template<unsigned int FEOrder>
+double dftClass<FEOrder>::computeMaximumHighestOccupiedStateResidualNorm()
+{
+
+  double maxHighestOccupiedStateResNorm=-1e+6;
+  for (int kPoint = 0; kPoint < d_maxkPoints; ++kPoint) 
+   {    
+
+      unsigned int highestOccupiedState=0;
+      unsigned int n = eigenValues[kPoint].size() ;
+      for(unsigned int i = 0; i < n; i++)
+      {
+         double factor=(eigenValues[kPoint][i]-fermiEnergy)/(C_kb*dftParameters::TVal);
+         double partOcc = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)) : 1.0/(1.0 + std::exp(factor));
+	 //pcout<< "partial occupancy: "<<partOcc <<std::endl;
+	 if (partOcc>1e-5 && i> highestOccupiedState)
+	 {
+	     highestOccupiedState=i;
+	 }
+      }
+      //pcout<< "highest occupied state: "<< highestOccupiedState <<std::endl;
+      if (d_tempResidualNormWaveFunctions[kPoint][highestOccupiedState]>maxHighestOccupiedStateResNorm)
+      {
+         maxHighestOccupiedStateResNorm=d_tempResidualNormWaveFunctions[kPoint][highestOccupiedState];
+      }
+   }
+
+  maxHighestOccupiedStateResNorm= Utilities::MPI::max(maxHighestOccupiedStateResNorm, interpoolcomm);
+  return maxHighestOccupiedStateResNorm;
 } 

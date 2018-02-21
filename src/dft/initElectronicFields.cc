@@ -40,7 +40,18 @@ void dftClass<FEOrder>::initElectronicFields(){
       tempPSI2[i]->reinit(vChebyshev);
       tempPSI3[i]->reinit(vChebyshev);
     } 
-  
+
+  if (spinPolarized!=1)
+  {
+     d_tempResidualNormWaveFunctions.clear();
+     d_tempResidualNormWaveFunctions.resize(d_maxkPoints);
+     for(unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+     {
+        d_tempResidualNormWaveFunctions[kPoint].resize(eigenVectors[kPoint].size());
+     }
+  }
+     
+
   for(unsigned int kPoint = 0; kPoint < (1+spinPolarized)*d_maxkPoints; ++kPoint)
     {
       for(unsigned int i = 0; i < eigenVectors[kPoint].size(); ++i)
@@ -50,7 +61,7 @@ void dftClass<FEOrder>::initElectronicFields(){
 	}
     }
 
-   
+
   if ( (Utilities::MPI::this_mpi_process(interpoolcomm)) > 1 && (Utilities::MPI::this_mpi_process(mpi_communicator))==0 )
 	std::cout << " check 2.1 " << std::endl ;
 	
