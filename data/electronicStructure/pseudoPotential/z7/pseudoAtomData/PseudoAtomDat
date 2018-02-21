@@ -1,0 +1,21 @@
+9
+0 0 0 
+1 1 -1 
+1 1 0 
+1 1 1 
+2 2 -2
+2 2 -1
+2 2 0
+2 2 1
+2 2 2
+N_psi_l0.dat
+N_psi_l1.dat
+N_psi_l2.dat
+locPot.dat
+3
+0 0
+1 1
+2 2
+N_pot_l0.dat
+N_pot_l1.dat
+N_pot_l2.dat
