@@ -515,6 +515,8 @@ class dftClass
   std::vector<parallel::distributed::Vector<double>*> PSI, tempPSI, tempPSI2, tempPSI3;
   void chebyshevSolver(unsigned int s);
   void computeResidualNorm(std::vector<vectorType*>& X);
+  std::vector<std::vector<double> > d_tempResidualNormWaveFunctions;
+  double computeMaximumHighestOccupiedStateResidualNorm();
 
   double upperBound();
   void gramSchmidt(std::vector<vectorType*>& X);
