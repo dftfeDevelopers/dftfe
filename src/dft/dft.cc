@@ -532,6 +532,7 @@ void dftClass<FEOrder>::solve()
 		    chebyshevSolver(0);
 	      }
 	    }
+	  /*
 	  if (norm>1e-2)
 	  {
 	      //fermi energy
@@ -553,7 +554,7 @@ void dftClass<FEOrder>::solve()
 		    }	      
 	      }
 	  }
-
+          */
 	}
  
        //fermi energy

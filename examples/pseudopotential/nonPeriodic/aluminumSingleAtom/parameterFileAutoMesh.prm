@@ -54,7 +54,7 @@ set LATTICE VECTORS FILE = latticeVectors.inp
 #kPoint Quadrature Rule file for sampling the Brillouin zone (used only in Periodic calculation)
 #(Located in $DFT PATH/data/kPointList)
 #
-set kPOINT RULE FILE = GammaPoint.inp
+#set kPOINT RULE FILE = GammaPoint.inp
 
 #
 #DFT functional related parameters
@@ -62,7 +62,7 @@ set kPOINT RULE FILE = GammaPoint.inp
 
 #Pseudopotential calculation or all-electron calculation
 set PSEUDOPOTENTIAL CALCULATION = true
-set PSEUDOPOTENTIAL NONLOCAL PROJECTOR = 1
+set PSEUDOPOTENTIAL TYPE = 1
 
 #Exhchange-correlation functional
 # 1 (LDA: Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)])

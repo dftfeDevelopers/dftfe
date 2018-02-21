@@ -297,7 +297,7 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
   for(std::set<unsigned int>::iterator it = atomTypes.begin(); it != atomTypes.end(); ++it)
     {
       char pseudoAtomDataFile[256];
-      sprintf(pseudoAtomDataFile, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/PseudoAtomData", currentPath.c_str(), *it);
+      sprintf(pseudoAtomDataFile, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/PseudoAtomDat", currentPath.c_str(), *it);
 
 
       unsigned int atomicNumber = *it;

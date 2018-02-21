@@ -669,7 +669,7 @@ void dftClass<FEOrder>::computeResidualNorm(std::vector<vectorType*> & X)
 template<unsigned int FEOrder>
 double dftClass<FEOrder>::computeMaximumHighestOccupiedStateResidualNorm()
 {
-
+ //std::cout<< "HELLO1"<<std::endl;
   double maxHighestOccupiedStateResNorm=-1e+6;
   for (int kPoint = 0; kPoint < d_maxkPoints; ++kPoint) 
    {    
@@ -680,7 +680,7 @@ double dftClass<FEOrder>::computeMaximumHighestOccupiedStateResidualNorm()
       {
          double factor=(eigenValues[kPoint][i]-fermiEnergy)/(C_kb*dftParameters::TVal);
          double partOcc = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)) : 1.0/(1.0 + std::exp(factor));
-	 //pcout<< "partial occupancy: "<<partOcc <<std::endl;
+	// pcout<< "partial occupancy: "<<partOcc <<std::endl;
 	 if (partOcc>1e-5 && i> highestOccupiedState)
 	 {
 	     highestOccupiedState=i;
@@ -692,7 +692,8 @@ double dftClass<FEOrder>::computeMaximumHighestOccupiedStateResidualNorm()
          maxHighestOccupiedStateResNorm=d_tempResidualNormWaveFunctions[kPoint][highestOccupiedState];
       }
    }
-
+  //std::cout<< "HELLO2"<<std::endl;
   maxHighestOccupiedStateResNorm= Utilities::MPI::max(maxHighestOccupiedStateResNorm, interpoolcomm);
+  //std::cout<< "maxHighestOccupiedStateResNorm: "<< maxHighestOccupiedStateResNorm <<std::endl;
   return maxHighestOccupiedStateResNorm;
 } 
