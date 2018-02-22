@@ -102,7 +102,7 @@ void markPeriodicFacesNonOrthogonal(Triangulation<3,3> &triangulation,
   dealii::ConditionalOStream   pcout(std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
   std::vector<std::vector<double> > periodicFaceNormals;
   std::vector<Tensor<1,3> > offsetVectors;
-  bool periodicX = dftParameters::periodicX, periodicY = dftParameters::periodicY, periodicZ=dftParameters::periodicZ;
+  //bool periodicX = dftParameters::periodicX, periodicY = dftParameters::periodicY, periodicZ=dftParameters::periodicZ;
 
   //compute periodic face normals from lattice vector information
   computePeriodicFaceNormals(latticeVectors,
@@ -123,9 +123,10 @@ void markPeriodicFacesNonOrthogonal(Triangulation<3,3> &triangulation,
   //
   //mark faces
   //
-   const unsigned int px=periodicX, py=periodicY,pz=periodicZ;
+  //const unsigned int px=dftParameters::periodicX, py=dftParameters::periodicX, pz=dftParameters::periodicX;
   //
   cell = triangulation.begin_active(), endc = triangulation.end();
+  const std::array<int,3> periodic = {dftParameters::periodicX, dftParameters::periodicY, dftParameters::periodicZ};
   for(;cell!=endc; ++cell) 
     {
       for(unsigned int f = 0; f < GeometryInfo<3>::faces_per_cell; ++f)
@@ -174,9 +175,9 @@ void markPeriodicFacesNonOrthogonal(Triangulation<3,3> &triangulation,
 		//pcout<<"Domain is not periodic: "<<std::endl;
 	      } */
 	     unsigned int i = 1 ;
-             const std::array<bool,3> periodic = {dftParameters::periodicX, dftParameters::periodicY, dftParameters::periodicZ};
+            
              for (unsigned int  d= 0; d < 3; ++d) {
-	        if (periodic[d]) {
+	        if (periodic[d]==1) {
                  if (std::abs(getCosineAngle(faceNormalVector,periodicFaceNormals[d]) - 1.0) < 1.0e-05)
 		    cell->face(f)->set_boundary_id(i);
 	         else if (std::abs(getCosineAngle(faceNormalVector,periodicFaceNormals[d]) + 1.0) < 1.0e-05)
@@ -192,7 +193,7 @@ void markPeriodicFacesNonOrthogonal(Triangulation<3,3> &triangulation,
 
   //pcout << "Done with Boundary Flags\n";
   std::vector<GridTools::PeriodicFacePair<typename Triangulation<3,3>::cell_iterator> > periodicity_vector;
-  for (int i = 0; i < (px+py+pz); ++i)
+  for (int i = 0; i < std::accumulate(periodic.begin(),periodic.end(),0); ++i)
     {
       GridTools::collect_periodic_faces(triangulation, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector, offsetVectors[i]);
       //GridTools::collect_periodic_faces(triangulation, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector);      
