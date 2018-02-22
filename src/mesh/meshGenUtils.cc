@@ -173,7 +173,7 @@ void markPeriodicFacesNonOrthogonal(Triangulation<3,3> &triangulation,
 	      {
 		//pcout<<"Domain is not periodic: "<<std::endl;
 	      } */
-
+	     unsigned int i = 1 ;
              const std::array<bool,3> periodic = {dftParameters::periodicX, dftParameters::periodicY, dftParameters::periodicZ};
              for (unsigned int  d= 0; d < 3; ++d) {
 	        if (periodic[d]) {
