@@ -144,6 +144,7 @@ class dftClass
   unsigned int numEigenValues;
 
     void readkPointData();
+    void compute_polarization() ;
 
  private:
 
@@ -496,6 +497,7 @@ class dftClass
   //kPointCoordinates
   //
   std::vector<double> d_kPointCoordinates;
+  std::vector<double> kPointReducedCoordinates;
   std::vector<double> d_kPointWeights;
   int d_maxkPoints;
   int d_kPointIndex;

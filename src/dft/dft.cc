@@ -44,6 +44,7 @@
 #include "charge.cc"
 #include "density.cc"
 #include "nscf.cc"
+#include "polarization.cc"
 //#include "symmetrizeRho.cc"
 
 #include "mixingschemes.cc"
@@ -594,12 +595,13 @@ void dftClass<FEOrder>::solve()
       //
       scfIter++;
     }
+ computing_timer.exit_section("solve");
 #ifdef ENABLE_PERIODIC_BC
  if (useSymm)
     symmetryPtr->clearMaps() ;
 #endif
 //
-/*
+ computing_timer.enter_section(" pp "); 
 #ifdef ENABLE_PERIODIC_BC
   if ((Utilities::MPI::this_mpi_process(interpoolcomm))==0){
      pcout<<"Beginning nscf calculation "<<std::endl;
@@ -612,16 +614,17 @@ void dftClass<FEOrder>::solve()
      }   
      //
      nscf() ;
+     compute_polarization() ;
   }
 #endif
-*/
+ computing_timer.exit_section(" pp "); 
   //
   MPI_Barrier(interpoolcomm) ;
-  computing_timer.enter_section("configurational force computation"); 
-  forcePtr->computeAtomsForces();
-  forcePtr->printAtomsForces();
-  computing_timer.exit_section("configurational force computation");  
-  computing_timer.exit_section("solve"); 
+  //computing_timer.enter_section("configurational force computation"); 
+  //forcePtr->computeAtomsForces();
+  //forcePtr->printAtomsForces();
+  //computing_timer.exit_section("configurational force computation");  
+   
 }
 
 //Output

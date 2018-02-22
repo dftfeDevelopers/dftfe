@@ -37,7 +37,7 @@ void dftClass<FEOrder>::readkPointData()
 {
   int numberColumnskPointDataFile = 4;
   std::vector<std::vector<double> > kPointData;
-  std::vector<double> kPointReducedCoordinates;
+  //std::vector<double> kPointReducedCoordinates;
   char kPointRuleFile[256];
   sprintf(kPointRuleFile, "%s/data/kPointList/%s", dftParameters::currentPath.c_str(), dftParameters::kPointDataFile.c_str());
   dftUtils::readFile(numberColumnskPointDataFile, kPointData, kPointRuleFile);

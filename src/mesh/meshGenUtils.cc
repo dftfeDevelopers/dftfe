@@ -96,13 +96,13 @@ double getCosineAngle(std::vector<double> & Vector1,
 }
 
 
-
 void markPeriodicFacesNonOrthogonal(Triangulation<3,3> &triangulation, 
 				    std::vector<std::vector<double> > & latticeVectors)
 {
   dealii::ConditionalOStream   pcout(std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
   std::vector<std::vector<double> > periodicFaceNormals;
   std::vector<Tensor<1,3> > offsetVectors;
+  bool periodicX = dftParameters::periodicX, periodicY = dftParameters::periodicY, periodicZ=dftParameters::periodicZ;
 
   //compute periodic face normals from lattice vector information
   computePeriodicFaceNormals(latticeVectors,
@@ -123,6 +123,14 @@ void markPeriodicFacesNonOrthogonal(Triangulation<3,3> &triangulation,
   //
   //mark faces
   //
+   unsigned int px=0, py=0,pz=0;
+  if(periodicX)
+    px = 1;
+  if(periodicY)
+    py = 1;
+  if(periodicZ)
+    pz = 1;   
+  //
   cell = triangulation.begin_active(), endc = triangulation.end();
   for(;cell!=endc; ++cell) 
     {
@@ -137,7 +145,7 @@ void markPeriodicFacesNonOrthogonal(Triangulation<3,3> &triangulation,
 	      //std::cout<<"Face normal vector: "<<faceNormalVector[0]<<" "<<faceNormalVector[1]<<" "<<faceNormalVector[2]<<std::endl;
 	      //pcout<<"Angle : "<<getCosineAngle(faceNormalVector,periodicFaceNormals[0])<<" "<<getCosineAngle(faceNormalVector,periodicFaceNormals[1])<<" "<<getCosineAngle(faceNormalVector,periodicFaceNormals[2])<<std::endl;
 	      
-	      if(std::abs(getCosineAngle(faceNormalVector,periodicFaceNormals[0]) - 1.0) < 1.0e-05)
+	      /*if(std::abs(getCosineAngle(faceNormalVector,periodicFaceNormals[0]) - 1.0) < 1.0e-05)
 		{
 		  cell->face(f)->set_boundary_id(1);
 		  //pcout<<"Boundary 1"<<std::endl;
@@ -170,7 +178,32 @@ void markPeriodicFacesNonOrthogonal(Triangulation<3,3> &triangulation,
 	      else
 	      {
 		//pcout<<"Domain is not periodic: "<<std::endl;
-	      }
+	      } */
+
+	      unsigned int i = 1 ;
+              if (px==1) {
+	      if (std::abs(getCosineAngle(faceNormalVector,periodicFaceNormals[0]) - 1.0) < 1.0e-05)
+		cell->face(f)->set_boundary_id(i);
+	      else if (std::abs(getCosineAngle(faceNormalVector,periodicFaceNormals[0]) + 1.0) < 1.0e-05)
+		cell->face(f)->set_boundary_id(i+1);
+              i = i+2 ;
+              }
+              if (py==1) {
+	      if (std::abs(getCosineAngle(faceNormalVector,periodicFaceNormals[1]) - 1.0) < 1.0e-05)
+		cell->face(f)->set_boundary_id(i);
+	      else if (std::abs(getCosineAngle(faceNormalVector,periodicFaceNormals[1]) + 1.0) < 1.0e-05)
+		cell->face(f)->set_boundary_id(i+1);
+              i = i+2 ;
+              }
+              if(pz==1) {
+	      if (std::abs(getCosineAngle(faceNormalVector,periodicFaceNormals[2]) - 1.0) < 1.0e-05)
+		cell->face(f)->set_boundary_id(i);
+	      else if (std::abs(getCosineAngle(faceNormalVector,periodicFaceNormals[2]) + 1.0) < 1.0e-05)
+		cell->face(f)->set_boundary_id(i+1);
+              i = i + 2 ;
+	     }
+
+
 	      
 	    }
 	}
@@ -178,7 +211,7 @@ void markPeriodicFacesNonOrthogonal(Triangulation<3,3> &triangulation,
 
   //pcout << "Done with Boundary Flags\n";
   std::vector<GridTools::PeriodicFacePair<typename Triangulation<3,3>::cell_iterator> > periodicity_vector;
-  for (int i = 0; i < 3; ++i)
+  for (int i = 0; i < (px+py+pz); ++i)
     {
       GridTools::collect_periodic_faces(triangulation, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector, offsetVectors[i]);
       //GridTools::collect_periodic_faces(triangulation, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector);      
