@@ -44,7 +44,7 @@
 #include "charge.cc"
 #include "density.cc"
 #include "nscf.cc"
-#include "polarization.cc"
+//#include "polarization.cc"
 //#include "symmetrizeRho.cc"
 
 #include "mixingschemes.cc"
@@ -614,16 +614,16 @@ void dftClass<FEOrder>::solve()
      }   
      //
      nscf() ;
-     compute_polarization() ;
+     //compute_polarization() ;
   }
 #endif
  computing_timer.exit_section(" pp "); 
   //
   MPI_Barrier(interpoolcomm) ;
-  //computing_timer.enter_section("configurational force computation"); 
-  //forcePtr->computeAtomsForces();
-  //forcePtr->printAtomsForces();
-  //computing_timer.exit_section("configurational force computation");  
+  computing_timer.enter_section("configurational force computation"); 
+  forcePtr->computeAtomsForces();
+  forcePtr->printAtomsForces();
+  computing_timer.exit_section("configurational force computation");  
    
 }
 

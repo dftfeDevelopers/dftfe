@@ -144,7 +144,7 @@ class dftClass
   unsigned int numEigenValues;
 
     void readkPointData();
-    void compute_polarization() ;
+    //void compute_polarization() ;
 
  private:
 
