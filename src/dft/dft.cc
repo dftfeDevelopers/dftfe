@@ -44,7 +44,6 @@
 #include "charge.cc"
 #include "density.cc"
 #include "nscf.cc"
-//#include "polarization.cc"
 //#include "symmetrizeRho.cc"
 
 #include "mixingschemes.cc"
@@ -614,7 +613,6 @@ void dftClass<FEOrder>::solve()
      }   
      //
      nscf() ;
-     //compute_polarization() ;
   }
 #endif
  computing_timer.exit_section(" pp "); 

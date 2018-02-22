@@ -123,13 +123,7 @@ void markPeriodicFacesNonOrthogonal(Triangulation<3,3> &triangulation,
   //
   //mark faces
   //
-   unsigned int px=0, py=0,pz=0;
-  if(periodicX)
-    px = 1;
-  if(periodicY)
-    py = 1;
-  if(periodicZ)
-    pz = 1;   
+   const unsigned int px=periodicX, py=periodicY,pz=periodicZ;
   //
   cell = triangulation.begin_active(), endc = triangulation.end();
   for(;cell!=endc; ++cell) 
