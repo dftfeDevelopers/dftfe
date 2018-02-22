@@ -86,7 +86,7 @@ void symmetryClass<FEOrder>::initSymmetry()
  //
  unsigned int count = 0, cell_id=0, ownerProcId ;
  //typename DoFHandler<3>::active_cell_iterator cellTemp = (dftPtr->dofHandlerEigen).begin_active();
- // for (; cellTemp!=endc; ++cellTemp) 
+ // for (; cellTemp!=endc; ++cellTemp)
  //     n_cell++ ;
  //std::cout << this_mpi_process << " total number of cells " << n_cell << std::endl;
  unsigned int mappedPointId ;
@@ -108,7 +108,7 @@ void symmetryClass<FEOrder>::initSymmetry()
  //
  //unsigned int n_vertices = sort_vertex((dftPtr->dofHandlerEigen)) ;
  //unsigned int min_index=0 ;
- //vertex2cell.resize(n_vertices) ; 
+ //vertex2cell.resize(n_vertices) ;
  //
  //FEEigen_serial(FE_Q<3>(QGaussLobatto<1>(FEOrder+1)), 2);
  //(dftPtr->dofHandlerEigen)_serial(triangulation_serial) ;
@@ -116,7 +116,7 @@ void symmetryClass<FEOrder>::initSymmetry()
  //FEValues<3> fe_values (FEEigen_serial, quadrature, update_values | update_gradients| update_JxW_values | update_quadrature_points);
  parallel::distributed::Triangulation<3> & triangulationSer = (dftPtr->d_mesh).getSerialMesh();
  typename parallel::distributed::Triangulation<3>::active_cell_iterator cellTemp = triangulationSer.begin_active(), endcTemp = triangulationSer.end();
-  for (; cellTemp!=endcTemp; ++cellTemp) 
+  for (; cellTemp!=endcTemp; ++cellTemp)
     {
       globalCellId[cellTemp->id()] = cell_id;
       //dealIICellId [cell_id] = cellTemp;
@@ -143,11 +143,11 @@ void symmetryClass<FEOrder>::initSymmetry()
  //
   typename DoFHandler<3>::active_cell_iterator cell = (dftPtr->dofHandlerEigen).begin_active(), endc = (dftPtr->dofHandlerEigen).end();
   dealii::Tensor<1, 3, double> center_diff ;
-  for(; cell!=endc; ++cell) 
+  for(; cell!=endc; ++cell)
   {
      if (cell->is_locally_owned())
      {
-          
+
 	 cellTemp = triangulationSer.begin_active(), endcTemp = triangulationSer.end();
 	 for(; cellTemp!=endcTemp; ++cellTemp) {
 	    center_diff = cellTemp->center() - cell->center() ;
@@ -157,7 +157,7 @@ void symmetryClass<FEOrder>::initSymmetry()
 		break;
 	     }
 	}
-         dealIICellId [globalCellId_parallel[cell->id()]] = cell;   
+         dealIICellId [globalCellId_parallel[cell->id()]] = cell;
          ownerProc[globalCellId_parallel[cell->id()]] = this_mpi_process ;
       }
   }
@@ -178,7 +178,7 @@ void symmetryClass<FEOrder>::initSymmetry()
   //
   int exception = 0 ;
   cell = (dftPtr->dofHandlerEigen).begin_active(); endc = (dftPtr->dofHandlerEigen).end();
-  for (; cell!=endc; ++cell) 
+  for (; cell!=endc; ++cell)
     {
     if (cell->is_locally_owned()) {
           for (unsigned int iSymm = 0; iSymm < numSymm; ++iSymm) {
@@ -221,11 +221,11 @@ void symmetryClass<FEOrder>::initSymmetry()
 	         //
 		 //ptemp[0] = p0[0]*symmMat[iSymm][0][0] + p0[1]*symmMat[iSymm][1][0] + p0[2]*symmMat[iSymm][2][0] ;
                  //ptemp[1] = p0[0]*symmMat[iSymm][0][1] + p0[1]*symmMat[iSymm][1][1] + p0[2]*symmMat[iSymm][2][1] ;
-                 //ptemp[2] = p0[0]*symmMat[iSymm][0][2] + p0[1]*symmMat[iSymm][1][2] + p0[2]*symmMat[iSymm][2][2] ; 
+                 //ptemp[2] = p0[0]*symmMat[iSymm][0][2] + p0[1]*symmMat[iSymm][1][2] + p0[2]*symmMat[iSymm][2][2] ;
 	         //
                  ptemp[0] = p0[0]*symmMat[iSymm][0][0] + p0[1]*symmMat[iSymm][0][1] + p0[2]*symmMat[iSymm][0][2] ;
                  ptemp[1] = p0[0]*symmMat[iSymm][1][0] + p0[1]*symmMat[iSymm][1][1] + p0[2]*symmMat[iSymm][1][2] ;
-                 ptemp[2] = p0[0]*symmMat[iSymm][2][0] + p0[1]*symmMat[iSymm][2][1] + p0[2]*symmMat[iSymm][2][2] ; 
+                 ptemp[2] = p0[0]*symmMat[iSymm][2][0] + p0[1]*symmMat[iSymm][2][1] + p0[2]*symmMat[iSymm][2][2] ;
 		 //
 		 ptemp[0] = ptemp[0] + translation[iSymm][0] ;
 		 ptemp[1] = ptemp[1] + translation[iSymm][1] ;
@@ -253,12 +253,12 @@ void symmetryClass<FEOrder>::initSymmetry()
 		    Point<3> p_cell =  mapping.transform_real_to_unit_cell( mapped_cell.first, p ) ;
 		    dist = GeometryInfo<3>::distance_to_unit_cell(p_cell);
 		    if (dist < 1.0E-10)
-			mapped_cell.second = p_cell ;				
+			mapped_cell.second = p_cell ;
 		 }
 		 catch (MappingQ1<3>::ExcTransformationFailed)
 		   {
 
-		   }	
+		   }
 		 if (dist > 1.0E-10)
 		    mapped_cell = GridTools::find_active_cell_around_point ( mapping, triangulationSer, p ) ;
 		 }
@@ -270,7 +270,7 @@ void symmetryClass<FEOrder>::initSymmetry()
 		 }*/
 		 Point<3> pointTemp = mapped_cell.second;
 		 //Point<3> pointTemp = GeometryInfo<3>::project_to_unit_cell (mapped_cell.second);
-		 //		 
+		 //
 		 mappedPoint[0] = pointTemp.operator()(0);
 		 mappedPoint[1] = pointTemp.operator()(1);
 		 mappedPoint[2] = pointTemp.operator()(2);
@@ -294,7 +294,7 @@ void symmetryClass<FEOrder>::initSymmetry()
 		send_buf_size[iSymm][globalCellId_parallel[cell->id()]][ownerProcId][1] = send_buf_size[iSymm][globalCellId_parallel[cell->id()]][ownerProcId][1] + 1;
 		send_buf_size[iSymm][globalCellId_parallel[cell->id()]][ownerProcId][2] = send_buf_size[iSymm][globalCellId_parallel[cell->id()]][ownerProcId][2] + 1;
 		//
-		 
+
 	     }
 	     std::fill(countPointPerProc.begin(),countPointPerProc.end(),0);
 	     for(std::map<CellId,std::vector<std::tuple<int, std::vector<double>, int> >>::iterator iter = cellMapTable.begin(); iter != cellMapTable.end(); ++iter) {
@@ -306,9 +306,9 @@ void symmetryClass<FEOrder>::initSymmetry()
 		 send_buf_size[iSymm][globalCellId_parallel[cell->id()]][ownerProcId][0] = send_buf_size[iSymm][globalCellId_parallel[cell->id()]][ownerProcId][0] + 1;
 		 //
 		 for (unsigned int i=0; i<value.size(); ++i) {
-		   //ownerProcId = std::get<0>(value[i]) ; 
-		   mappedPoint = std::get<1>(value[i]) ; 
-                   int q_point = std::get<2>(value[i]) ; 
+		   //ownerProcId = std::get<0>(value[i]) ;
+		   mappedPoint = std::get<1>(value[i]) ;
+                   int q_point = std::get<2>(value[i]) ;
 		   //
                    tupleTemp2 = std::make_tuple(ownerProcId, 0,countPointPerProc[ownerProcId]);
 		   mappedGroup[iSymm][globalCellId_parallel[cell->id()]][q_point] = tupleTemp2 ;
@@ -317,10 +317,10 @@ void symmetryClass<FEOrder>::initSymmetry()
 		   mappedGroupSend1[iSymm][globalCellId_parallel[cell->id()]][ownerProcId][0].push_back(mappedPoint[0]) ;
 		   mappedGroupSend1[iSymm][globalCellId_parallel[cell->id()]][ownerProcId][1].push_back(mappedPoint[1]) ;
 		   mappedGroupSend1[iSymm][globalCellId_parallel[cell->id()]][ownerProcId][2].push_back(mappedPoint[2]) ;
-		 }	
+		 }
              }
 	     /*for (unsigned int proc=0; proc < dftPtr->n_mpi_processes; ++proc){
-	        for ( unsigned int i=0; i < countPointsPerGroupPerProc[proc].size(); ++i)  
+	        for ( unsigned int i=0; i < countPointsPerGroupPerProc[proc].size(); ++i)
 	            mappedGroupSend2[iSymm][globalCellId[cell->id()]][proc].push_back(countPointsPerGroupPerProc[proc][i]) ;
 	        countPointsPerGroupPerProc[proc].clear();
 		tailofGroup[proc].clear();
@@ -330,7 +330,7 @@ void symmetryClass<FEOrder>::initSymmetry()
 	  //tailofGroup.clear() ;
         }
      }
-     //  
+     //
      MPI_Barrier(mpi_communicator) ;
      pcout << " check 0.1 " << std::endl ;
      int recvDataSize0=0, recvDataSize1=0, send_size0, send_size1, send_size2 ;
@@ -350,10 +350,10 @@ void symmetryClass<FEOrder>::initSymmetry()
      for ( unsigned int proc = 0; proc < dftPtr->n_mpi_processes; ++proc) {
 	send_size1 = 0 ; send_size0 = 0 ;
 	cell = (dftPtr->dofHandlerEigen).begin_active();
-  	for (; cell!=endc; ++cell) 
+  	for (; cell!=endc; ++cell)
     	 {
           if (cell->is_locally_owned()) {
-	 for (unsigned int iSymm = 0; iSymm < numSymm; iSymm++) 
+	 for (unsigned int iSymm = 0; iSymm < numSymm; iSymm++)
 	    {
 	     for (unsigned int iPoint = 0; iPoint < send_buf_size[iSymm][globalCellId_parallel[cell->id()]][proc][1]; ++iPoint) {
 		 //
@@ -384,7 +384,7 @@ void symmetryClass<FEOrder>::initSymmetry()
 	 //
 	 if (proc==this_mpi_process)
 	  {
- 	  //  
+ 	  //
 	   for(int i = 1; i < dftPtr->n_mpi_processes; i++) {
   	       mpi_offsets0[i] = recv_size0[i-1]+ mpi_offsets0[i-1];
 	       mpi_offsets1[i] = recv_size1[i-1]+ mpi_offsets1[i-1];
@@ -402,23 +402,23 @@ void symmetryClass<FEOrder>::initSymmetry()
 	  }
 	  //
 	  MPI_Gatherv(&(send_data0[0]),send_size0,MPI_INT, &(recvdData0[0]),&(recv_size0[0]), &(mpi_offsets0[0]), MPI_INT,proc,mpi_communicator);
-	  MPI_Gatherv(&(send_data2[0]),send_size0,MPI_INT, &(recvdData2[0]),&(recv_size0[0]), &(mpi_offsets0[0]), MPI_INT,proc,mpi_communicator);	
+	  MPI_Gatherv(&(send_data2[0]),send_size0,MPI_INT, &(recvdData2[0]),&(recv_size0[0]), &(mpi_offsets0[0]), MPI_INT,proc,mpi_communicator);
 	  MPI_Gatherv(&(send_data3[0]),send_size0,MPI_INT, &(recvdData3[0]),&(recv_size0[0]), &(mpi_offsets0[0]), MPI_INT,proc,mpi_communicator);
 	  for (unsigned int ipol=0; ipol<3; ++ipol) {
 	      send_data = send_data1[ipol] ;
-	      MPI_Gatherv(&(send_data[0]),send_size1,MPI_DOUBLE, &(recvdData[0]),&(recv_size1[0]), &(mpi_offsets1[0]),  MPI_DOUBLE,proc,mpi_communicator); 
+	      MPI_Gatherv(&(send_data[0]),send_size1,MPI_DOUBLE, &(recvdData[0]),&(recv_size1[0]), &(mpi_offsets1[0]),  MPI_DOUBLE,proc,mpi_communicator);
 	      if (proc==this_mpi_process)
 	          recvdData1[ipol] = recvdData ;
-	      }	
+	      }
           send_data0.clear() ; send_data.clear() ; recvdData.clear() ;
-          send_data1[0].clear(); send_data1[1].clear(); send_data1[2].clear(); 
+          send_data1[0].clear(); send_data1[1].clear(); send_data1[2].clear();
 	  send_data2.clear() ;
 	  send_data3.clear();
-     } 
-		 
+     }
+
      MPI_Barrier(mpi_communicator) ;
      pcout << " check 0.2 " << std::endl ;
-    
+
     //
    cell = (dftPtr->dofHandlerEigen).begin_active();
    totPoints = 0;
@@ -426,7 +426,7 @@ void symmetryClass<FEOrder>::initSymmetry()
    //send_scatter_size.resize(dftPtr->n_mpi_processes,0);
    recv_size.resize(dftPtr->n_mpi_processes,0) ;
    //
-   for (; cell!=endc; ++cell) 
+   for (; cell!=endc; ++cell)
     {
       if (cell->is_locally_owned()) {
      for (unsigned int iSymm=0; iSymm<numSymm; ++iSymm)
@@ -467,7 +467,7 @@ void symmetryClass<FEOrder>::initSymmetry()
    //mpi_scatterGrad_offset.resize(dftPtr->n_mpi_processes,0);
    //send_scatterGrad_size.resize(dftPtr->n_mpi_processes,0);
    //
-   for (; cell!=endc; ++cell) 
+   for (; cell!=endc; ++cell)
     {
       if (cell->is_locally_owned()) {
      for (unsigned int iSymm=0; iSymm<numSymm; ++iSymm)
@@ -481,9 +481,9 @@ void symmetryClass<FEOrder>::initSymmetry()
 	 }
        }
     }
-  } 
-     
-}    
+  }
+
+}
 template<unsigned int FEOrder>
 Point<3> symmetryClass<FEOrder>::crys2cart(Point<3> p, int flag)
 {
@@ -508,8 +508,8 @@ void symmetryClass<FEOrder>:: test_spg_get_ir_reciprocal_mesh()
   double lattice[3][3], position[(dftPtr->atomLocations).size()][3];
   int num_atom = (dftPtr->atomLocations).size();
   int types[num_atom] ;
-  int mesh[3] = {nkx, nky, nkz};
-  int is_shift[] = {ceil(dkx), ceil(dky), ceil(dkz)};
+  int mesh[3] = {static_cast<int>(nkx), static_cast<int>(nky), static_cast<int>(nkz)};
+  int is_shift[] = {(int)ceil(dkx), (int)ceil(dky), (int)ceil(dkz)};
   int grid_address[nkx * nky * nkz][3];
   int grid_mapping_table[nkx * nky * nkz];
   int max_size = 50;
@@ -519,7 +519,7 @@ void symmetryClass<FEOrder>:: test_spg_get_ir_reciprocal_mesh()
          lattice[i][j] = (dftPtr->d_latticeVectors)[i][j];
   }
   //
-  std::set<unsigned int>::iterator it = (dftPtr->atomTypes).begin();  
+  std::set<unsigned int>::iterator it = (dftPtr->atomTypes).begin();
   for (unsigned int i=0; i<(dftPtr->atomLocations).size(); ++i){
       std::advance(it, i);
       types[i] = (int)(*it);
