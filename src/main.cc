@@ -407,7 +407,8 @@ int main (int argc, char *argv[])
   unsigned int npool = dftParameters::npool;
   int n_mpi_processes = Utilities::MPI::n_mpi_processes(MPI_COMM_WORLD) ;    
   double poolSizeFloat = (double)n_mpi_processes/(double)npool;  
-  int poolSize = std::floor(poolSizeFloat);
+  //int poolSize = std::floor(poolSizeFloat);
+  int poolSize= std::round(poolSizeFloat);
   int taskId = Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) ;
   MPI_Comm interpoolcomm, intrapoolcomm, mpi_comm_replica ;
   //
