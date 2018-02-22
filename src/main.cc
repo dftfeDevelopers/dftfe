@@ -404,13 +404,13 @@ int main (int argc, char *argv[])
   deallog.depth_console(0);
   //
   int color1, color2;  
-  int npool = dftParameters::npool;
-  int n_mpi_processes = Utilities::MPI::n_mpi_processes(MPI_COMM_WORLD) ;    
+  const int npool = dftParameters::npool;
+  const int n_mpi_processes = Utilities::MPI::n_mpi_processes(MPI_COMM_WORLD) ;    
   //double poolSizeFloat = (double)n_mpi_processes/(double)npool;  
   //int poolSize = std::floor(poolSizeFloat);
   AssertThrow(n_mpi_processes % npool == 0,ExcMessage("Number of mpi processes must be a multiple of NUMBER OF POOLS"));
-  int poolSize= n_mpi_processes/npool;
-  int taskId = Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) ;
+  const int poolSize= n_mpi_processes/npool;
+  const int taskId = Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) ;
   MPI_Comm interpoolcomm, intrapoolcomm, mpi_comm_replica ;
   //
       if(taskId == 0) {
