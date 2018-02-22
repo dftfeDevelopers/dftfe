@@ -174,31 +174,18 @@ void markPeriodicFacesNonOrthogonal(Triangulation<3,3> &triangulation,
 		//pcout<<"Domain is not periodic: "<<std::endl;
 	      } */
 
-	      unsigned int i = 1 ;
-              if (px==1) {
-	      if (std::abs(getCosineAngle(faceNormalVector,periodicFaceNormals[0]) - 1.0) < 1.0e-05)
-		cell->face(f)->set_boundary_id(i);
-	      else if (std::abs(getCosineAngle(faceNormalVector,periodicFaceNormals[0]) + 1.0) < 1.0e-05)
-		cell->face(f)->set_boundary_id(i+1);
-              i = i+2 ;
-              }
-              if (py==1) {
-	      if (std::abs(getCosineAngle(faceNormalVector,periodicFaceNormals[1]) - 1.0) < 1.0e-05)
-		cell->face(f)->set_boundary_id(i);
-	      else if (std::abs(getCosineAngle(faceNormalVector,periodicFaceNormals[1]) + 1.0) < 1.0e-05)
-		cell->face(f)->set_boundary_id(i+1);
-              i = i+2 ;
-              }
-              if(pz==1) {
-	      if (std::abs(getCosineAngle(faceNormalVector,periodicFaceNormals[2]) - 1.0) < 1.0e-05)
-		cell->face(f)->set_boundary_id(i);
-	      else if (std::abs(getCosineAngle(faceNormalVector,periodicFaceNormals[2]) + 1.0) < 1.0e-05)
-		cell->face(f)->set_boundary_id(i+1);
-              i = i + 2 ;
-	     }
-
-
+             const std::array<bool,3> periodic = {dftParameters::periodicX, dftParameters::periodicY, dftParameters::periodicZ};
+             for (unsigned int  d= 0; d < 3; ++d) {
+	        if (periodic[d]) {
+                 if (std::abs(getCosineAngle(faceNormalVector,periodicFaceNormals[d]) - 1.0) < 1.0e-05)
+		    cell->face(f)->set_boundary_id(i);
+	         else if (std::abs(getCosineAngle(faceNormalVector,periodicFaceNormals[d]) + 1.0) < 1.0e-05)
+		    cell->face(f)->set_boundary_id(i+1);
+                  i = i+2 ;
+                }
+             }
 	      
+
 	    }
 	}
     }
