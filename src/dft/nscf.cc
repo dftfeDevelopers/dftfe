@@ -65,8 +65,12 @@ void dftClass<FEOrder>::nscf()
   {
         d_tempResidualNormWaveFunctions[kPoint].resize(eigenVectors[kPoint].size());
   }
-  if(isPseudopotential)
-      computeElementalProjectorKets();
+  if(isPseudopotential) {
+       if (pseudoProjector==2)
+         computeElementalOVProjectorKets();
+      else
+         computeElementalProjectorKets();
+  }
 
 
   for(unsigned int kPoint = 0; kPoint < (1+spinPolarized)*d_maxkPoints; ++kPoint)
