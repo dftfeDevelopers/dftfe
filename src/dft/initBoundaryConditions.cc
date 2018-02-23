@@ -78,10 +78,11 @@ void dftClass<FEOrder>::initBoundaryConditions(){
 
 #ifdef ENABLE_PERIODIC_BC
   locatePeriodicPinnedNodes();
-#else
+#endif
+//#else
   //VectorTools::interpolate_boundary_values(dofHandler, 0, ZeroFunction<3>(), d_constraintsForTotalPotential);
   applyTotalPotentialDirichletBC();
-#endif
+//#endif
   d_constraintsForTotalPotential.close ();
 
   //
