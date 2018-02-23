@@ -551,13 +551,13 @@ void dftClass<FEOrder>::solve()
 	      for (int kPoint = 0; kPoint < d_maxkPoints; ++kPoint) 
 		{
 		  d_kPointIndex = kPoint;
-		  sprintf(buffer, "%s:%3u\n", "Beginning Chebyshev filter pass ", dftParameters::numPass+1);
+		  sprintf(buffer, "%s:%3u\n", "Beginning Chebyshev filter pass ", dftParameters::numPass+count);
 		  pcout << buffer;
 		  chebyshevSolver(0);
 		}
 	      count++;
 	      compute_fermienergy();
-	      double maxRes = computeMaximumHighestOccupiedStateResidualNorm();
+	      maxRes = computeMaximumHighestOccupiedStateResidualNorm();
 	      pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;	      
 	  }
           
