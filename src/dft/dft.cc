@@ -538,11 +538,12 @@ void dftClass<FEOrder>::solve()
 	  
 	  //fermi energy
 	  compute_fermienergy();
-	  //maximum of the residual norm of the highest occupied state among all k points
+	  //maximum of the residual norm of the state closest to and below the Fermi level among all k points
 	  double maxRes = computeMaximumHighestOccupiedStateResidualNorm();
-	  pcout << "Maximum residual norm of the highest occupied state: "<< maxRes << std::endl;
-	  //if the maximum residual norm of the highest occupied state is greater than 1e-2 (heuristic) 
-	  // more passes of chebysev filter till the check passes. This improves the scf convergence performance. Currently this
+	  pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
+	  //if the residual norm is greater than 1e-2 (heuristic) 
+	  // do more passes of chebysev filter till the check passes. 
+	  // This improves the scf convergence performance. Currently this
 	  // approach is not implemented for spin-polarization case
 	  int count=1;
 	  while (maxRes>1e-2)
@@ -555,11 +556,9 @@ void dftClass<FEOrder>::solve()
 		  chebyshevSolver(0);
 		}
 	      count++;
-	      //fermi energy
 	      compute_fermienergy();
-	      //maximum of the residual norm of the highest occupied state among all k points
 	      double maxRes = computeMaximumHighestOccupiedStateResidualNorm();
-	      pcout << "Maximum residual norm of the highest occupied state: "<< maxRes << std::endl;	      
+	      pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;	      
 	  }
           
 	}
