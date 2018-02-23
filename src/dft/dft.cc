@@ -604,6 +604,7 @@ void dftClass<FEOrder>::solve()
     symmetryPtr->clearMaps() ;
 #endif
 //
+/*
  computing_timer.enter_section(" pp "); 
 #ifdef ENABLE_PERIODIC_BC
   if ((Utilities::MPI::this_mpi_process(interpoolcomm))==0){
@@ -619,7 +620,8 @@ void dftClass<FEOrder>::solve()
      nscf() ;
   }
 #endif
- computing_timer.exit_section(" pp "); 
+ computing_timer.exit_section(" pp ");
+ */
   //
   MPI_Barrier(interpoolcomm) ;
   computing_timer.enter_section("configurational force computation"); 
