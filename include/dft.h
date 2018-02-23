@@ -231,6 +231,7 @@ class dftClass
   void initUnmovedTriangulation(parallel::distributed::Triangulation<3> & triangulation);
   void initBoundaryConditions();
   void initElectronicFields();
+  void initPseudoPotentialAll();
   void locateAtomCoreNodes();
   void locatePeriodicPinnedNodes();
   void initRho();
