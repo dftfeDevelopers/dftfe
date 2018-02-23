@@ -535,29 +535,33 @@ void dftClass<FEOrder>::solve()
 		    chebyshevSolver(0);
 	      }
 	    }
-	  /*
-	  if (norm>1e-2)
+	  
+	  //fermi energy
+	  compute_fermienergy();
+	  //maximum of the residual norm of the highest occupied state among all k points
+	  double maxRes = computeMaximumHighestOccupiedStateResidualNorm();
+	  pcout << "Maximum residual norm of the highest occupied state: "<< maxRes << std::endl;
+	  //if the maximum residual norm of the highest occupied state is greater than 1e-2 (heuristic) 
+	  // more passes of chebysev filter till the check passes. This improves the scf convergence performance. Currently this
+	  // approach is not implemented for spin-polarization case
+	  int count=1;
+	  while (maxRes>1e-2)
 	  {
+	      for (int kPoint = 0; kPoint < d_maxkPoints; ++kPoint) 
+		{
+		  d_kPointIndex = kPoint;
+		  sprintf(buffer, "%s:%3u\n", "Beginning Chebyshev filter pass ", dftParameters::numPass+1);
+		  pcout << buffer;
+		  chebyshevSolver(0);
+		}
+	      count++;
 	      //fermi energy
 	      compute_fermienergy();
 	      //maximum of the residual norm of the highest occupied state among all k points
 	      double maxRes = computeMaximumHighestOccupiedStateResidualNorm();
-	      pcout << "Maximum residual norm of the highest occupied state: "<< maxRes << std::endl;
-	      //if the maximum residual norm of the highest occupied state is greater than 1e-2 (heuristic) 
-	      // do one more pass of chebysev filter. This improves the scf convergence performance. Currently this
-	      // approach is not implemented for spin-polarization case
-	      if (maxRes>1e-2)
-	      {
-		  for (int kPoint = 0; kPoint < d_maxkPoints; ++kPoint) 
-		    {
-		      d_kPointIndex = kPoint;
-		      sprintf(buffer, "%s:%3u\n", "Beginning Chebyshev filter pass ", dftParameters::numPass+1);
-		      pcout << buffer;
-		      chebyshevSolver(0);
-		    }	      
-	      }
+	      pcout << "Maximum residual norm of the highest occupied state: "<< maxRes << std::endl;	      
 	  }
-          */
+          
 	}
  
        //fermi energy

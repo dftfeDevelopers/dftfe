@@ -679,12 +679,19 @@ double dftClass<FEOrder>::computeMaximumHighestOccupiedStateResidualNorm()
       for(unsigned int i = 0; i < n; i++)
       {
          double factor=(eigenValues[kPoint][i]-fermiEnergy)/(C_kb*dftParameters::TVal);
-         double partOcc = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)) : 1.0/(1.0 + std::exp(factor));
+        /*
+	 double partOcc = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)) : 1.0/(1.0 + std::exp(factor));
 	// pcout<< "partial occupancy: "<<partOcc <<std::endl;
+	
 	 if (partOcc>1e-5 && i> highestOccupiedState)
 	 {
 	     highestOccupiedState=i;
 	 }
+	 */
+	 if (factor<0)
+	 {
+	     highestOccupiedState=i;
+	 }	 
       }
       //pcout<< "highest occupied state: "<< highestOccupiedState <<std::endl;
       if (d_tempResidualNormWaveFunctions[kPoint][highestOccupiedState]>maxHighestOccupiedStateResNorm)
