@@ -37,6 +37,7 @@ void dftClass<FEOrder>::nscf()
   a0.resize((spinPolarized+1)*d_maxkPoints,lowerEndWantedSpectrum);
   bLow.resize((spinPolarized+1)*d_maxkPoints,0.0);
   eigenVectors.resize((1+spinPolarized)*d_maxkPoints);
+
   //eigenVectorsOrig.resize((1+spinPolarized)*d_maxkPoints);
   //
   //
@@ -56,7 +57,14 @@ void dftClass<FEOrder>::nscf()
       eigenValues[kPoint].resize((spinPolarized+1)*numEigenValues);  
       eigenValuesTemp[kPoint].resize(numEigenValues); 
     }
-
+  //
+    //
+  d_tempResidualNormWaveFunctions.clear();
+  d_tempResidualNormWaveFunctions.resize(d_maxkPoints);
+  for(unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+  {
+        d_tempResidualNormWaveFunctions[kPoint].resize(eigenVectors[kPoint].size());
+  }
   if(isPseudopotential)
       computeElementalProjectorKets();
 
