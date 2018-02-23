@@ -323,7 +323,34 @@ void dftClass<FEOrder>::set()
   } 
 }
 
+//dft pseudopotential init
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::initPseudoPotentialAll()
+{
 
+   if(isPseudopotential)
+    {
+      initLocalPseudoPotential();
+      //
+      if (pseudoProjector==2)
+         initNonLocalPseudoPotential_OV() ;
+      else
+         initNonLocalPseudoPotential();	
+      //
+      //
+      if (pseudoProjector==2){
+         computeSparseStructureNonLocalProjectors_OV();
+         computeElementalOVProjectorKets();
+	}
+      else{
+	 computeSparseStructureNonLocalProjectors();
+         computeElementalProjectorKets();
+	}
+     
+      forcePtr->initPseudoData();
+	
+    }    
+}
 //dft init
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::init ()
@@ -356,8 +383,6 @@ void dftClass<FEOrder>::init ()
   //pcout << " check 0.11 : " << std::endl ;
   
   moveMeshToAtoms(triangulationPar);
-  //moveMeshToAtoms(triangulationSer,true);//can only be called after calling moveMeshToAtoms(triangulationPar)
-
 
   //
   //initialize dirichlet BCs for total potential and vSelf poisson solutions
@@ -368,33 +393,11 @@ void dftClass<FEOrder>::init ()
   //initialize guesses for electron-density and wavefunctions
   //
   initElectronicFields();
-
   //
-  //initialize local pseudopotential
+  //initialize pseudopotential data for both local and nonlocal part
   //
-   if(isPseudopotential)
-    {
-      initLocalPseudoPotential();
-      //
-      if (pseudoProjector==2)
-         initNonLocalPseudoPotential_OV() ;
-      else
-         initNonLocalPseudoPotential();	
-      //
-      //
-      if (pseudoProjector==2){
-         computeSparseStructureNonLocalProjectors_OV();
-         computeElementalOVProjectorKets();
-	}
-      else{
-	 computeSparseStructureNonLocalProjectors();
-         computeElementalProjectorKets();
-	}
-     
-      forcePtr->initPseudoData();
-	
-    }
-   pcout << " check 0.5 : " << std::endl ;
+  initPseudoPotentialAll();
+  pcout << " check 0.5 : " << std::endl ;
   
 }
 
