@@ -340,116 +340,78 @@ void dftClass<FEOrder>::compute_rhoOut()
 
 }
 
+namespace internaldft 
+{
+   void clearDequeMap(std::deque<std::map<dealii::CellId,std::vector<double> >*> & dequeMap)
+   {
+      for (std::deque<std::map<dealii::CellId,std::vector<double> >*>::iterator it = dequeMap.begin(); it!=dequeMap.end(); ++it)
+      {
+	 (**it).clear();	  
+	 delete (*it);
+      }
+      dequeMap.clear();       
+   }
+}
+
 //rho data reinitilization without remeshing. The rho out of last ground state solve is made the rho in of the new solve
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::noRemeshRhoDataInit()
 {
+  //create temporary copies of rho Out data
+  std::map<dealii::CellId, std::vector<double> > rhoOutValuesCopy=*(rhoOutValues);
 
-  std::map<dealii::CellId, std::vector<double> > *rhoOutValuesCopy=new std::map<dealii::CellId, std::vector<double> >;
-  *rhoOutValuesCopy=*(rhoOutValues);
-  std::map<dealii::CellId, std::vector<double> > *gradRhoOutValuesCopy;
+  std::map<dealii::CellId, std::vector<double> > gradRhoOutValuesCopy;
   if (dftParameters::xc_id==4)
   {
-     gradRhoOutValuesCopy = new std::map<dealii::CellId, std::vector<double> >;
-    *gradRhoOutValuesCopy=*(gradRhoOutValues);
+     gradRhoOutValuesCopy=*(gradRhoOutValues);
   }
 
-  std::map<dealii::CellId, std::vector<double> > *rhoOutValuesSpinPolarizedCopy;  
+  std::map<dealii::CellId, std::vector<double> > rhoOutValuesSpinPolarizedCopy;  
   if(spinPolarized==1)
   {
-     rhoOutValuesSpinPolarizedCopy = new std::map<dealii::CellId, std::vector<double> >;
-    *rhoOutValuesSpinPolarizedCopy=*(rhoOutValuesSpinPolarized);
+     rhoOutValuesSpinPolarizedCopy=*(rhoOutValuesSpinPolarized);
 
   } 
 
-  std::map<dealii::CellId, std::vector<double> > *gradRhoOutValuesSpinPolarizedCopy;  
+  std::map<dealii::CellId, std::vector<double> > gradRhoOutValuesSpinPolarizedCopy;  
   if(spinPolarized==1 && dftParameters::xc_id==4)
   {
-     gradRhoOutValuesSpinPolarizedCopy = new std::map<dealii::CellId, std::vector<double> >;
-    *gradRhoOutValuesSpinPolarizedCopy=*(gradRhoOutValuesSpinPolarized);
+     gradRhoOutValuesSpinPolarizedCopy=*(gradRhoOutValuesSpinPolarized);
 
   }    
-  //cleanup of existing data
-  for (std::deque<std::map<dealii::CellId,std::vector<double> >*>::iterator it = rhoInVals.begin(); it!=rhoInVals.end(); ++it)
-  {
-     (**it).clear();	  
-     delete (*it);
-  }
-  rhoInVals.clear();
-  for (std::deque<std::map<dealii::CellId,std::vector<double> >*>::iterator it = rhoOutVals.begin(); it!=rhoOutVals.end(); ++it)
-  {
-     (**it).clear();	  
-     delete (*it);
-  }
-  rhoOutVals.clear();
-  for (std::deque<std::map<dealii::CellId,std::vector<double> >*>::iterator it = gradRhoInVals.begin(); it!=gradRhoInVals.end(); ++it)
-  {
-     (**it).clear();	  
-     delete (*it);
-  }
-  gradRhoInVals.clear();
-  for (std::deque<std::map<dealii::CellId,std::vector<double> >*>::iterator it = gradRhoOutVals.begin(); it!=gradRhoOutVals.end(); ++it)
-  {
-     (**it).clear();	  
-     delete (*it);
-  }
-  gradRhoOutVals.clear();
+  //cleanup of existing rho Out and rho In data
+  internaldft::clearDequeMap(rhoInVals);
+  internaldft::clearDequeMap(rhoOutVals);
+  internaldft::clearDequeMap(gradRhoInVals);
+  internaldft::clearDequeMap(gradRhoOutVals);
+  internaldft::clearDequeMap(rhoInValsSpinPolarized);
+  internaldft::clearDequeMap(rhoOutValsSpinPolarized);
+  internaldft::clearDequeMap(gradRhoInValsSpinPolarized);
+  internaldft::clearDequeMap(gradRhoOutValsSpinPolarized);
 
-  for (std::deque<std::map<dealii::CellId,std::vector<double> >*>::iterator it = rhoInValsSpinPolarized.begin(); it!=rhoInValsSpinPolarized.end(); ++it)
-  {
-     (**it).clear();	  
-     delete (*it);
-  }
-  rhoInValsSpinPolarized.clear();
-
-  for (std::deque<std::map<dealii::CellId,std::vector<double> >*>::iterator it = rhoOutValsSpinPolarized.begin(); it!=rhoOutValsSpinPolarized.end(); ++it)
-  {
-     (**it).clear();	  
-     delete (*it);
-  }
-  rhoOutValsSpinPolarized.clear();
-
-  for (std::deque<std::map<dealii::CellId,std::vector<double> >*>::iterator it = gradRhoInValsSpinPolarized.begin(); it!=gradRhoInValsSpinPolarized.end(); ++it)
-  {
-     (**it).clear();	  
-     delete (*it);
-  }
-  gradRhoInValsSpinPolarized.clear();
-
-  for (std::deque<std::map<dealii::CellId,std::vector<double> >*>::iterator it = gradRhoOutValsSpinPolarized.begin(); it!=gradRhoOutValsSpinPolarized.end(); ++it)
-  {
-     (**it).clear();	  
-     delete (*it);
-  }
-  gradRhoOutValsSpinPolarized.clear();  
-  ///
-
+  ///copy back temporary rho out to rho in data
   rhoInValues=new std::map<dealii::CellId, std::vector<double> >;
-  *(rhoInValues)=*rhoOutValuesCopy;
-  rhoOutValuesCopy->clear();  delete rhoOutValuesCopy;
+  *(rhoInValues)=rhoOutValuesCopy;
   rhoInVals.push_back(rhoInValues);
 
   if (dftParameters::xc_id==4)
   {
     gradRhoInValues = new std::map<dealii::CellId, std::vector<double> >;
-    *(gradRhoInValues)=*gradRhoOutValuesCopy;
-    gradRhoOutValuesCopy->clear();  delete gradRhoOutValuesCopy;
+    *(gradRhoInValues)=gradRhoOutValuesCopy;
     gradRhoInVals.push_back(gradRhoInValues);
   }
 
   if(spinPolarized==1)
   {
     rhoInValuesSpinPolarized=new std::map<dealii::CellId, std::vector<double> >;      
-    *(rhoInValuesSpinPolarized) =  *(rhoOutValuesSpinPolarizedCopy);
-    rhoOutValuesSpinPolarizedCopy->clear();  delete rhoOutValuesSpinPolarizedCopy;
+    *(rhoInValuesSpinPolarized) =  rhoOutValuesSpinPolarizedCopy;
     rhoInValsSpinPolarized.push_back(rhoInValuesSpinPolarized);
   } 
 
   if (dftParameters::xc_id==4 && spinPolarized==1)
   {
     gradRhoInValuesSpinPolarized = new std::map<dealii::CellId, std::vector<double> >;
-    *(gradRhoInValuesSpinPolarized)=*gradRhoOutValuesSpinPolarizedCopy;
-    gradRhoOutValuesSpinPolarizedCopy->clear();  delete gradRhoOutValuesSpinPolarizedCopy;
+    *(gradRhoInValuesSpinPolarized)=gradRhoOutValuesSpinPolarizedCopy;
     gradRhoInValsSpinPolarized.push_back(gradRhoInValuesSpinPolarized);
   }
 
