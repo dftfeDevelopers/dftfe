@@ -62,11 +62,15 @@ PROJECT(${TARGET})
 SET(WARNINGSLIST  "-w -Wno-sign-compare -Wno-ignored-qualifiers -Wno-deprecated-declarations -Wno-vla-extension -Wno-reorder -Wno-sometimes-uninitialized -Wno-undefined-var-template -Wno-ignored-qualifiers")
 SET(DEAL_II_CXX_FLAGS  "${DEAL_II_CXX_FLAGS} ${WARNINGSLIST}" )
 
+#
 #Set periodic BC flag
-IF (DEFINED _ENABLE_PERIODIC)
+#
+IF (DEAL_II_PETSC_WITH_COMPLEX)
    ADD_DEFINITIONS(-DENABLE_PERIODIC_BC)
+   MESSAGE(STATUS "Periodic")
 ELSE()
    ADD_DEFINITIONS(-DDISABLE_PERIODIC_BC)
+   MESSAGE(STATUS "Non-periodic")
 ENDIF()
 
 ADD_EXECUTABLE(${TARGET} ${TARGET_SRC})
@@ -140,13 +144,3 @@ IF (DEFINED SPGLIB_DIR)
 ELSE()
   MESSAGE(FATAL_ERROR "-- Provide path to prefix of SPGLIB: -DSPGLIB_DIR=/path/to/prefix")
 ENDIF (DEFINED SPGLIB_DIR)
-
-#
-# set ignoreMe based on real/comple version of PETSC/SLEPC in deal.II
-#
-IF (DEAL_II_PETSC_WITH_COMPLEX)
-  MESSAGE(STATUS "Periodic")
-  SET(ignoreMe "TRUE")
-ELSE()
-  MESSAGE(STATUS "Non-periodic")
-ENDIF()
