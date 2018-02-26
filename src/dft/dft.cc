@@ -44,7 +44,7 @@
 #include "charge.cc"
 #include "density.cc"
 #include "nscf.cc"
-//#include "symmetrizeRho.cc"
+
 
 #include "mixingschemes.cc"
 #include "chebyshev.cc"
@@ -57,7 +57,6 @@
 #include "stdafx.h"
 #ifdef ENABLE_PERIODIC_BC
 #include "generateImageCharges.cc"
-//#include "initGroupSymmetry.cc"
 #endif
 
 
@@ -200,13 +199,6 @@ void dftClass<FEOrder>::set()
   //
   //find cell-centered cartesian coordinates
   //
-  //atomLocationsFractional = atomLocations;
-  /*for(int i = 0; i < atomLocationsFractional.size(); ++i)
-    {
-      atomLocationsFractional[i][2] = atomLocationsFractional[i][2] - 0.5;
-      atomLocationsFractional[i][3] = atomLocationsFractional[i][3] - 0.5;
-      atomLocationsFractional[i][4] = atomLocationsFractional[i][4] - 0.5;
-    }*/ 
   convertToCellCenteredCartesianCoordinates(atomLocations,
 					    d_latticeVectors);
 
@@ -393,6 +385,16 @@ void dftClass<FEOrder>::init ()
   //initialize guesses for electron-density and wavefunctions
   //
   initElectronicFields();
+
+  //
+  //store constraintEigen Matrix entries into STL vector
+  //
+  dftUtils::convertConstraintMatrixToSTLVector(vChebyshev,
+					       constraintsNoneEigen,
+					       locally_owned_dofs,
+					       constraintsNoneEigenDataInVector);
+
+
   //
   //initialize pseudopotential data for both local and nonlocal part
   //

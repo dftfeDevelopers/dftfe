@@ -66,6 +66,7 @@ SET(TARGET_SRC
   ./src/solvers/cgPRPNonLinearSolver.cc
   ./utils/fileReaders.cc
   ./utils/dftParameters.cc
+  ./utils/dealiiOverloadedFunc.cc
   # You can specify additional files here!
   )
 
