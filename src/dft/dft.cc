@@ -403,6 +403,17 @@ void dftClass<FEOrder>::init ()
   
 }
 
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::initNoRemesh()
+{
+  //reinitialize dirichlet BCs for total potential and vSelf poisson solutions
+  initBoundaryConditions();
+  //rho init (use previous ground state electron density)
+  noRemeshRhoDataInit();
+  //reinitialize pseudopotential related data structures
+  initPseudoPotentialAll();      
+}
+
 //dft run
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::run()

@@ -128,9 +128,13 @@ class dftClass
    */
   void set();  
   /**
-   * Does required pre-processing steps, which could also be reinited.
+   * Does required pre-processing steps including mesh generation calls.
    */
-  void init();    
+  void init();   
+  /**
+   * Does required pre-processing steps but without remeshing.
+   */
+  void initNoRemesh();   
   /**
    * Selects between only electronic field relaxation or combined electronic and geometry relxation
    */
@@ -177,6 +181,7 @@ class dftClass
   void locateAtomCoreNodes();
   void locatePeriodicPinnedNodes();
   void initRho();
+  void noRemeshRhoDataInit();
   void readPSI();
   void readPSIRadialValues();
   void loadPSIFiles(unsigned int Z, unsigned int n, unsigned int l, unsigned int & flag);

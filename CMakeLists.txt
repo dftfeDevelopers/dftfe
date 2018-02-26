@@ -1,48 +1,6 @@
 ##
-#  CMake script for DFT-FE 
+#  CMakeList file for DFT-FE
 ##
-
-##Note: Set ALGLIB, LIBXC, PETSC and SLEPC paths below. 
-
-##set ALGLIB paths
-
-##set ALGLIB paths
-SET(ALGLIB_INCLUDE "/nfs/mcfs_comp/home/rudraa/software/alglib/cpp/src/") #path to interpolation.h
-SET(ALGLIB_LIB "/nfs/mcfs_comp/home/rudraa/software/alglib/cpp/src/libAlglib.so") #path to libAlglib.so
-##Note: On some platforms, you may have to set DYLD_LIBRARY_PATH(OSX)/LD_LIBRARY_PATH to include path ALGLIB_LIB. For example:
-##export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/path/to/Algib/.so/file
-
-##set LIBXC paths
-SET(LIBXC_INCLUDE "/nfs/mcfs_comp/home/rudraa/software/libxc/libxc-2.2.0/installDir/include") #path to xc.h
-SET(LIBXC_LIB "/nfs/mcfs_comp/home/rudraa/software/libxc/libxc-2.2.0/installDir/lib/libxc.a") #path to libxc.a
-
-##set PETSc Real paths
-SET(PETSC_REAL_INCLUDE "/home/vikramg/DFT-FE-softwares/softwareCentos/petsc/intel_petsc3.7.5_double_elemental/include")
-SET(PETSC_REAL_LIB "/home/vikramg/DFT-FE-softwares/softwareCentos/petsc/intel_petsc3.7.5_double_elemental/lib/libpetsc.so")
-
-##set SLEPc Real paths
-SET(SLEPC_REAL_INCLUDE "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/intel_slepc3.7.3_double_elemental/include")
-SET(SLEPC_REAL_LIB "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/intel_slepc3.7.3_double_elemental/lib/libslepc.so") 
-
-##set PETSc Complex paths
-SET(PETSC_COMPLEX_INCLUDE "/home/vikramg/DFT-FE-softwares/softwareCentos/petsc/intel_petsc3.7.5_complex/include")
-SET(PETSC_COMPLEX_LIB "/home/vikramg/DFT-FE-softwares/softwareCentos/petsc/intel_petsc3.7.5_complex/lib/libpetsc.so")
-
-##set SLEPc Complex paths
-SET(SLEPC_COMPLEX_INCLUDE "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/intel_slepc3.7.3_complex/include")
-SET(SLEPC_COMPLEX_LIB "/home/vikramg/DFT-FE-softwares/softwareCentos/slepc/intel_slepc3.7.3_complex/lib/libslepc.so") 
-
-
-##set SPG paths
-SET(SPG_INCLUDE "/home/vikramg/DFT-FE-softwares/softwareCentos/spglib/include")
-SET(SPG_LIB "/home/vikramg/DFT-FE-softwares/softwareCentos/spglib/lib/libsymspg.so") 
-#
-
-## set DEAL_II dir path
-SET(DEAL_II_DIR "/home/vikramg/DFT-FE-softwares/softwareCentos/dealiiDev/intel_17.0.1_nopetsc_mkl_noavx_opt")
-#
-# Usually, you will not need to modify anything beyond this point...
-#
 
 # Set the name of the project and target:
 SET(TARGET "main")
@@ -86,10 +44,14 @@ ENDIF()
 #
 # Are all dependencies fullfilled?
 #
-IF(NOT DEAL_II_WITH_LAPACK)
+IF(NOT DEAL_II_WITH_LAPACK OR
+   NOT DEAL_II_WITH_PETSC OR
+   NOT DEAL_II_WITH_SLEPC)
   MESSAGE(FATAL_ERROR "
 Error! The deal.II library found at ${DEAL_II_PATH} was not configured with
     DEAL_II_WITH_LAPACK = ON
+    DEAL_II_WITH_PETSC = ON
+    DEAL_II_WITH_SLEPC = ON
 which is required."
     )
 ENDIF()
@@ -101,26 +63,85 @@ PROJECT(${TARGET})
 SET(WARNINGSLIST  "-w -Wno-sign-compare -Wno-ignored-qualifiers -Wno-deprecated-declarations -Wno-vla-extension -Wno-reorder -Wno-sometimes-uninitialized -Wno-undefined-var-template -Wno-ignored-qualifiers")
 SET(DEAL_II_CXX_FLAGS  "${DEAL_II_CXX_FLAGS} ${WARNINGSLIST}" )
 
+#
 #Set periodic BC flag
-IF (DEFINED _ENABLE_PERIODIC)
+#
+IF (DEAL_II_PETSC_WITH_COMPLEX)
    ADD_DEFINITIONS(-DENABLE_PERIODIC_BC)
+   MESSAGE(STATUS "Periodic")
 ELSE()
    ADD_DEFINITIONS(-DDISABLE_PERIODIC_BC)
+   MESSAGE(STATUS "Non-periodic")
 ENDIF()
 
 ADD_EXECUTABLE(${TARGET} ${TARGET_SRC})
 DEAL_II_SETUP_TARGET(${TARGET})
 
-IF (DEFINED _ENABLE_PERIODIC) 
-MESSAGE(STATUS "==== Periodic ====")
-INCLUDE_DIRECTORIES(${ALGLIB_INCLUDE} ${LIBXC_INCLUDE} ${PETSC_COMPLEX_INCLUDE} ${SLEPC_COMPLEX_INCLUDE} ${SPG_INCLUDE})
-TARGET_LINK_LIBRARIES(${TARGET} ${SPG_LIB} ${LIBXC_LIB} ${ALGLIB_LIB} ${PETSC_COMPLEX_LIB} ${SLEPC_COMPLEX_LIB})
-set(ignoreMe "${_ENABLE_PERIODIC}")
+#
+# REQUIRED DEPENDENCIES:
+#
+
+#
+# Alglib. Set with -DALGLIB_DIR=/path/to/prefix
+#
+IF (DEFINED ALGLIB_DIR)
+  FIND_LIBRARY(ALGLIB_LIBRARY
+    NAMES Alglib alglib
+    HINTS ${ALGLIB_DIR}/lib ${ALGLIB_DIR}
+    NO_DEFAULT_PATH
+  )
+  IF(ALGLIB_LIBRARY STREQUAL "ALGLIB_LIBRARY-NOTFOUND")
+      MESSAGE(FATAL_ERROR "-- Alglib was not found in ${ALGLIB_DIR}")
+  ENDIF()
+  MESSAGE("-- Use Alglib from ${ALGLIB_DIR}")
+  TARGET_LINK_LIBRARIES(${TARGET}
+	  "${ALGLIB_LIBRARY}"
+  )
+  INCLUDE_DIRECTORIES ("${ALGLIB_DIR}")
+  INCLUDE_DIRECTORIES ("${ALGLIB_DIR}/include")
 ELSE()
-MESSAGE(STATUS "==== Non Periodic ====")
-INCLUDE_DIRECTORIES(${ALGLIB_INCLUDE} ${LIBXC_INCLUDE} ${PETSC_REAL_INCLUDE} ${SLEPC_REAL_INCLUDE} ${SPG_INCLUDE})
-TARGET_LINK_LIBRARIES(${TARGET} ${LIBXC_LIB} ${ALGLIB_LIB} ${PETSC_REAL_LIB} ${SLEPC_REAL_LIB} ${SPG_LIB})
-ENDIF()
+  MESSAGE(FATAL_ERROR "-- Provide path to AlgLIB: -DALGLIB_DIR=/path/to/prefix")
+ENDIF (DEFINED ALGLIB_DIR)
 
-#DEAL_II_INVOKE_AUTOPILOT()
+#
+# LIBXC. Set with -DLIBXC_DIR=/path/to/prefix
+#
+IF (DEFINED LIBXC_DIR)
+  FIND_LIBRARY(LIBXC_LIBRARY
+    NAMES xc
+    HINTS ${LIBXC_DIR}/lib
+    NO_DEFAULT_PATH
+  )
+  IF(LIBXC_LIBRARY STREQUAL "LIBXC_LIBRARY-NOTFOUND")
+      MESSAGE(FATAL_ERROR "-- LibXC was not found in ${LIBXC_DIR}")
+  ENDIF()
+  MESSAGE("-- Use LibXC from ${LIBXC_DIR}")
+  TARGET_LINK_LIBRARIES(${TARGET}
+	    "${LIBXC_LIBRARY}"
+  )
+  INCLUDE_DIRECTORIES ("${LIBXC_DIR}/include")
+ELSE()
+  MESSAGE(FATAL_ERROR "-- Provide path to prefix of LibXC: -DLIBXC_DIR=/path/to/prefix")
+ENDIF (DEFINED LIBXC_DIR)
 
+
+#
+# SPG. Set with -DSPGLIB_DIR=/path/to/prefix
+#
+IF (DEFINED SPGLIB_DIR)
+  FIND_LIBRARY(SPGLIB_LIBRARY
+    NAMES symspg
+    HINTS ${SPGLIB_DIR}/lib
+    NO_DEFAULT_PATH
+  )
+  IF(SPGLIB_LIBRARY STREQUAL "SPGLIB_LIBRARY-NOTFOUND")
+      MESSAGE(FATAL_ERROR "-- SPGLib was not found in ${SPGLIB_DIR}")
+  ENDIF()
+  MESSAGE("-- Use SPGLib from ${SPGLIB_DIR}")
+  TARGET_LINK_LIBRARIES(${TARGET}
+	    "${SPGLIB_LIBRARY}"
+  )
+  INCLUDE_DIRECTORIES ("${SPGLIB_DIR}/include")
+ELSE()
+  MESSAGE(FATAL_ERROR "-- Provide path to prefix of SPGLIB: -DSPGLIB_DIR=/path/to/prefix")
+ENDIF (DEFINED SPGLIB_DIR)

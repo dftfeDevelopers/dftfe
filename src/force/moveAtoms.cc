@@ -15,62 +15,6 @@
 //
 // @author Sambit Das(2017)
 //
-
-template<unsigned int FEOrder>
-void forceClass<FEOrder>::gaussianUpdateRhoDataCleanup()
-{
-
-  std::map<dealii::CellId, std::vector<double> > *rhoOutValuesCopy=new std::map<dealii::CellId, std::vector<double> >;
-  *rhoOutValuesCopy=*(dftPtr->rhoOutValues);
-  std::map<dealii::CellId, std::vector<double> > *gradRhoOutValuesCopy;
-  if (dftParameters::xc_id==4)
-  {
-     gradRhoOutValuesCopy = new std::map<dealii::CellId, std::vector<double> >;
-    *gradRhoOutValuesCopy=*(dftPtr->gradRhoOutValues);
-  }
-  //cleanup of existing data
-  for (std::deque<std::map<dealii::CellId,std::vector<double> >*>::iterator it = dftPtr->rhoInVals.begin(); it!=dftPtr->rhoInVals.end(); ++it)
-  {
-     (**it).clear();	  
-     delete (*it);
-  }
-  dftPtr->rhoInVals.clear();
-  for (std::deque<std::map<dealii::CellId,std::vector<double> >*>::iterator it = dftPtr->rhoOutVals.begin(); it!=dftPtr->rhoOutVals.end(); ++it)
-  {
-     (**it).clear();	  
-     delete (*it);
-  }
-  dftPtr->rhoOutVals.clear();
-  for (std::deque<std::map<dealii::CellId,std::vector<double> >*>::iterator it = dftPtr->gradRhoInVals.begin(); it!=dftPtr->gradRhoInVals.end(); ++it)
-  {
-     (**it).clear();	  
-     delete (*it);
-  }
-  dftPtr->gradRhoInVals.clear();
-  for (std::deque<std::map<dealii::CellId,std::vector<double> >*>::iterator it = dftPtr->gradRhoOutVals.begin(); it!=dftPtr->gradRhoOutVals.end(); ++it)
-  {
-     (**it).clear();	  
-     delete (*it);
-  }
-  dftPtr->gradRhoOutVals.clear();
-
-  dftPtr->rhoInValues=new std::map<dealii::CellId, std::vector<double> >;
-  *(dftPtr->rhoInValues)=*rhoOutValuesCopy;
-  rhoOutValuesCopy->clear();  delete rhoOutValuesCopy;
-  dftPtr->rhoInVals.push_back(dftPtr->rhoInValues);
-
-  if (dftParameters::xc_id==4)
-  {
-    dftPtr->gradRhoInValues = new std::map<dealii::CellId, std::vector<double> >;
-    *(dftPtr->gradRhoInValues)=*gradRhoOutValuesCopy;
-    gradRhoOutValuesCopy->clear();  delete gradRhoOutValuesCopy;
-    dftPtr->gradRhoInVals.push_back(dftPtr->gradRhoInValues);
-  }
-
-
-
-}
-
 //
 // Function to update the atom positions and mesh based on the provided displacement input.
 // Depending on the maximum displacement magnitude this function decides wether to do auto remeshing
@@ -182,13 +126,7 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
       {
 	  pcout<< " Mesh quality check: maximum jacobian ratio after movement: "<< meshQualityMetrics.second<<std::endl;  
 	  pcout<<"Now reinitializing all moved triangulation dependent objects..." << std::endl;        
-
-	  //reinitialize dirichlet BCs for total potential and vSelf poisson solutions
-	  dftPtr->initBoundaryConditions();
-	  //memory deallocation
-          gaussianUpdateRhoDataCleanup();
-	  //reinitialize pseudopotential related data structures
-          dftPtr->initPseudoPotentialAll();  
+          dftPtr->initNoRemesh();  
 	  pcout << "...Reinitialization end" << std::endl;  
       }
   }
@@ -217,13 +155,7 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
       {
 	  pcout<< " Mesh quality check: maximum jacobian ratio after movement: "<< meshQualityMetrics.second<<std::endl; 
 	  pcout << "Now Reinitializing all moved triangulation dependent objects..." << std::endl;  
-	 
-	  //reinitialize dirichlet BCs for total potential and vSelf poisson solutions
-	  dftPtr->initBoundaryConditions();
-          //memory deallocation
-	  gaussianUpdateRhoDataCleanup();
-	  //reinitialize pseudopotential related data structures
-          dftPtr->initPseudoPotentialAll();     
+          dftPtr->initNoRemesh();  
 	  pcout << "...Reinitialization end" << std::endl;  
       }
   }
