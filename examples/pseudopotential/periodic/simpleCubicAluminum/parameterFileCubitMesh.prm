@@ -78,7 +78,7 @@ set EXCHANGE CORRELATION TYPE = 1
 #
 
 #Parameter indicating number of eigenfunctions to be solved
-set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 10
+set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 9
 #Approximate estimate of lower bound of the wanted spectrum
 set LOWER BOUND WANTED SPECTRUM = -10.0
 #Chebyshev Filter polynomial degree

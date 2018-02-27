@@ -391,7 +391,7 @@ void dftClass<FEOrder>::init ()
   //
   dftUtils::convertConstraintMatrixToSTLVector(vChebyshev,
 					       constraintsNoneEigen,
-					       locally_owned_dofs,
+					       locally_owned_dofsEigen,
 					       constraintsNoneEigenDataInVector);
 
 
