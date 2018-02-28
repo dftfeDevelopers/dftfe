@@ -22,38 +22,41 @@
 
 namespace dftUtils{
 
-  void convertConstraintMatrixToSTLVector(dealii::parallel::distributed::Vector<double> &fieldVector,
-					  dealii::ConstraintMatrix & constraintMatrixData,
-					  dealii::IndexSet         & locally_owned_dofs,
+  void convertConstraintMatrixToSTLVector(const dealii::parallel::distributed::Vector<double> &fieldVector,
+					  const dealii::ConstraintMatrix & constraintMatrixData,
+					  const dealii::IndexSet         & locally_owned_dofs,
 					  constraintMatrixInfo     & constraintMatrixDataInVector)
   {
     const std::shared_ptr< const dealii::Utilities::MPI::Partitioner > & partitioner = fieldVector.get_partitioner();
-    constraintMatrixDataInVector.rowIdsGlobal.clear();
-    constraintMatrixDataInVector.rowIdsLocal.clear();
-    constraintMatrixDataInVector.columnIdsLocal.clear();
-    constraintMatrixDataInVector.columnValues.clear();
-    constraintMatrixDataInVector.inhomogenities.clear();
-    constraintMatrixDataInVector.rowSizes.clear();
+   
+    clearData(constraintMatrixDataInVector);
 
+    //
+    //store constraintMatrix row data in STL vector
+    //
     for(dealii::IndexSet::ElementIterator it = locally_owned_dofs.begin(); it != locally_owned_dofs.end();++it)
       {
 	if(constraintMatrixData.is_constrained(*it))
 	  {
-	    (constraintMatrixDataInVector.rowIdsGlobal).push_back(*it);
-	    (constraintMatrixDataInVector.rowIdsLocal).push_back(partitioner->global_to_local(*it));
+	    constraintMatrixDataInVector.rowIdsGlobal.push_back(*it);
+	    constraintMatrixDataInVector.rowIdsLocal.push_back(partitioner->global_to_local(*it));
 	  }
       }
 
+
+    //
+    //store constraintMatrix column Data in STL vector
+    //
     for(unsigned int i = 0; i < (constraintMatrixDataInVector.rowIdsGlobal).size(); ++i)
       {
-	const int lineDof = constraintMatrixDataInVector.rowIdsGlobal[i];
-	(constraintMatrixDataInVector.inhomogenities).push_back(constraintMatrixData.get_inhomogeneity(lineDof));
+	const dealii::types::global_dof_index lineDof = constraintMatrixDataInVector.rowIdsGlobal[i];
+	constraintMatrixDataInVector.inhomogenities.push_back(constraintMatrixData.get_inhomogeneity(lineDof));
 	const std::vector<std::pair<dealii::types::global_dof_index, double > > * rowData=constraintMatrixData.get_constraint_entries(lineDof);
 	(constraintMatrixDataInVector.rowSizes).push_back(rowData->size());
 	for(unsigned int j = 0; j < rowData->size();++j)
 	  {
-	    (constraintMatrixDataInVector.columnIdsLocal).push_back(partitioner->global_to_local((*rowData)[j].first));
-	    (constraintMatrixDataInVector.columnValues).push_back((*rowData)[j].second);
+	    constraintMatrixDataInVector.columnIdsLocal.push_back(partitioner->global_to_local((*rowData)[j].first));
+	    constraintMatrixDataInVector.columnValues.push_back((*rowData)[j].second);
 	  }
       }
 
@@ -63,20 +66,17 @@ namespace dftUtils{
 
 
 
-  void distribute(constraintMatrixInfo &constraintMatrixDataInVector, 
+  void distribute(const constraintMatrixInfo &constraintMatrixDataInVector, 
 		  dealii::parallel::distributed::Vector<double> &fieldVector)
   {
     unsigned int count = 0;
-    //std::cout<<"Size Local: "<< (constraintMatrixDataInVector.rowIdsLocal).size()<<std::endl;
-    //std::cout<<"Size Global: "<< (constraintMatrixDataInVector.rowIdsGlobal).size()<<std::endl;
 
-    for(unsigned int i = 0; i < (constraintMatrixDataInVector.rowIdsLocal).size();++i)
+    for(unsigned int i = 0; i < constraintMatrixDataInVector.rowIdsLocal.size();++i)
       {
 	double new_value = constraintMatrixDataInVector.inhomogenities[i];
 
 	for(unsigned int j = 0; j < constraintMatrixDataInVector.rowSizes[i]; ++j)
 	  {
-
 	    new_value += fieldVector.local_element(constraintMatrixDataInVector.columnIdsLocal[count])*constraintMatrixDataInVector.columnValues[count];
 	    count++;
 	  }
@@ -87,6 +87,17 @@ namespace dftUtils{
 
     return;
   }
+
+  void clearData(constraintMatrixInfo & constraintMatrixDataInVector)
+  {
+    constraintMatrixDataInVector.rowIdsGlobal.clear();
+    constraintMatrixDataInVector.rowIdsLocal.clear();
+    constraintMatrixDataInVector.columnIdsLocal.clear();
+    constraintMatrixDataInVector.columnValues.clear();
+    constraintMatrixDataInVector.inhomogenities.clear();
+    constraintMatrixDataInVector.rowSizes.clear();
+  }
+
 
 }
 

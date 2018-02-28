@@ -271,17 +271,7 @@ class dftClass
   //objects for various exchange-correlations (from libxc package)
   //
   xc_func_type funcX, funcC; 
-  /**
-   * supplied data 
-   */
-  /*unsigned int d_finiteElementPolynomialOrder,d_n_refinement_steps,d_numberEigenValues,d_xc_id;
-  unsigned int d_chebyshevOrder,d_numSCFIterations,d_maxLinearSolverIterations, d_mixingHistory;
-
-  double d_radiusAtomBall, d_domainSizeX, d_domainSizeY, d_domainSizeZ, d_mixingParameter;
-  double d_lowerEndWantedSpectrum,d_relLinearSolverTolerance,d_selfConsistentSolverTolerance,d_TVal;
-
-  bool d_isPseudopotential,d_periodicX,d_periodicY,d_periodicZ;
-  std::string d_meshFileName,d_coordinatesFile,d_currentPath,d_latticeVectorsFile,d_kPointDataFile;*/  
+  
   /**
    * stores required data for Kohn-Sham problem
    */

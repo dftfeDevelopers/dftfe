@@ -28,6 +28,12 @@
 //
 namespace dftUtils
 {
+  //
+  //method which overloads dealii's constraints.distribute. Stores the constraintMatrix data
+  //into STL vectors and then sets all constrained degrees of freedom to values so that constraints
+  //are satisfied using these STL vectors
+  //
+
 
   struct constraintMatrixInfo
   {
@@ -42,17 +48,22 @@ namespace dftUtils
   /**
    *  convert a given constraintMatrix to simple arrays (STL) for fast access 
    */
-  void convertConstraintMatrixToSTLVector(dealii::parallel::distributed::Vector<double> &fieldVector,
-					  dealii::ConstraintMatrix & constraintMatrixData,
-					  dealii::IndexSet         & locally_owned_dofs,
+  void convertConstraintMatrixToSTLVector(const dealii::parallel::distributed::Vector<double> &fieldVector,
+					  const dealii::ConstraintMatrix & constraintMatrixData,
+					  const dealii::IndexSet         & locally_owned_dofs,
 					  constraintMatrixInfo     & constraintMatrixDataInVector);
 
 
   /**
    *  overload dealii internal function distribute  
    */
-  void distribute(constraintMatrixInfo &constraintMatrixDataInVector, 
+  void distribute(const constraintMatrixInfo &constraintMatrixDataInVector, 
 		  dealii::parallel::distributed::Vector<double> &fieldVector);
+
+  /**
+   * 
+   */
+  void clearData(constraintMatrixInfo & constraintMatrixDataInVector);
  
 
 };
