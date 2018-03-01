@@ -178,7 +178,7 @@ void dftClass<FEOrder>::set()
   for(int i = 0; i < atomLocations.size(); ++i)
     {
       atomLocationsFractional[i] = atomLocations[i] ;
-      pcout<<"fractional coordinates of atom: "<<atomLocationsFractional[i][2]<<" "<<atomLocationsFractional[i][3]<<" "<<atomLocationsFractional[i][4]<<"\n";
+      //pcout<<"fractional coordinates of atom: "<<atomLocationsFractional[i][2]<<" "<<atomLocationsFractional[i][3]<<" "<<atomLocationsFractional[i][4]<<"\n";
     }
 
   //
@@ -189,33 +189,6 @@ void dftClass<FEOrder>::set()
   for(int i = 0; i < d_latticeVectors.size(); ++i)
     {
       pcout<<"lattice vectors: "<<d_latticeVectors[i][0]<<" "<<d_latticeVectors[i][1]<<" "<<d_latticeVectors[i][2]<<"\n";
-    }
-
-  //
-  //generate Image charges
-  //
-  generateImageCharges();
-
-
-  //
-  //find cell-centered cartesian coordinates
-  //
-  //atomLocationsFractional = atomLocations;
-  /*for(int i = 0; i < atomLocationsFractional.size(); ++i)
-    {
-      atomLocationsFractional[i][2] = atomLocationsFractional[i][2] - 0.5;
-      atomLocationsFractional[i][3] = atomLocationsFractional[i][3] - 0.5;
-      atomLocationsFractional[i][4] = atomLocationsFractional[i][4] - 0.5;
-    }*/ 
-  convertToCellCenteredCartesianCoordinates(atomLocations,
-					    d_latticeVectors);
-
-  //
-  //print cartesian coordinates
-  //
-  for(int i = 0; i < atomLocations.size(); ++i)
-    {
-      pcout<<"Cartesian coordinates of atoms: "<<atomLocations[i][2]<<" "<<atomLocations[i][3]<<" "<<atomLocations[i][4]<<"\n";
     }
 
   //
@@ -236,14 +209,8 @@ void dftClass<FEOrder>::set()
     }
 
   //
-  //print cartesian coordinates
+  //create domain bounding vectors
   //
-  for(int i = 0; i < atomLocations.size(); ++i)
-    {
-      pcout<<"Cartesian coordinates of atoms: "<<atomLocations[i][2]<<" "<<atomLocations[i][3]<<" "<<atomLocations[i][4]<<"\n";
-    }
-
-
   std::vector<double> domainVector;
   domainVector.push_back(dftParameters::domainSizeX);domainVector.push_back(0.0);domainVector.push_back(0.0);
   d_domainBoundingVectors.push_back(domainVector);
@@ -256,20 +223,12 @@ void dftClass<FEOrder>::set()
 #endif
 
   pcout << "number of atoms types: " << atomTypes.size() << "\n";
-
-  //
-  //create domain bounding vectors
-  //
-
   
   //estimate total number of wave functions
   determineOrbitalFilling();  
 
   pcout << "number of eigen values: " << numEigenValues << std::endl; 
 
-  //
-  //read kPoint data
-  //
 #ifdef ENABLE_PERIODIC_BC
   //readkPointData();
    generateMPGrid();
@@ -293,21 +252,14 @@ void dftClass<FEOrder>::set()
   bLow.resize((spinPolarized+1)*d_maxkPoints,0.0);
   eigenVectors.resize((1+spinPolarized)*d_maxkPoints);
   eigenVectorsOrig.resize((1+spinPolarized)*d_maxkPoints);
-  //
-  //char buffer[100];
-  //sprintf(buffer, "%s:%10u\n", "check 0", eigenVectors.size());
-  //pcout << buffer;
-  //
+  
   for(unsigned int kPoint = 0; kPoint < (1+spinPolarized)*d_maxkPoints; ++kPoint)
     {
-      //for (unsigned int j=0; j<(spinPolarized+1); ++j) // for spin
-       //{
         for (unsigned int i=0; i<numEigenValues; ++i)
 	  {
 	    eigenVectors[kPoint].push_back(new vectorType);
 	    eigenVectorsOrig[kPoint].push_back(new vectorType);
 	  }
-       //}
     }
    for(unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
     {
@@ -355,6 +307,27 @@ void dftClass<FEOrder>::initPseudoPotentialAll()
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::init ()
 {
+#ifdef ENABLE_PERIODIC_BC
+  pcout<<"-----Fractional coordinates of atom------ "<<std::endl;    
+  for(int i = 0; i < atomLocations.size(); ++i)
+  {
+      atomLocations[i] = atomLocationsFractional[i] ;
+      pcout<<" atomId- "<<i <<" : "<<atomLocationsFractional[i][2]<<" "<<atomLocationsFractional[i][3]<<" "<<atomLocationsFractional[i][4]<<"\n";
+  }   
+  generateImageCharges();
+
+  convertToCellCenteredCartesianCoordinates(atomLocations,
+					    d_latticeVectors);
+#else
+  //
+  //print cartesian coordinates
+  //
+  for(int i = 0; i < atomLocations.size(); ++i)
+    {
+      pcout<<"Cartesian coordinates of atoms: "<<atomLocations[i][2]<<" "<<atomLocations[i][3]<<" "<<atomLocations[i][4]<<"\n";
+    }
+#endif
+
   //
   //generate mesh (both parallel and serial)
   //
@@ -404,6 +377,27 @@ void dftClass<FEOrder>::init ()
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::initNoRemesh()
 {
+#ifdef ENABLE_PERIODIC_BC  
+  pcout<<"-----Fractional coordinates of atom------ "<<std::endl;    
+  for(int i = 0; i < atomLocations.size(); ++i)
+  {
+      atomLocations[i] = atomLocationsFractional[i] ;
+      pcout<<" atomId- "<<i <<" : "<<atomLocationsFractional[i][2]<<" "<<atomLocationsFractional[i][3]<<" "<<atomLocationsFractional[i][4]<<"\n";
+  }   
+  generateImageCharges();
+  convertToCellCenteredCartesianCoordinates(atomLocations,
+					    d_latticeVectors);    
+#else
+  //
+  //print cartesian coordinates
+  //
+  pcout<<"-----Cartesian coordinates of atom------ "<<std::endl;
+  for(int i = 0; i < atomLocations.size(); ++i)
+    {
+      pcout<<" atomId- "<<i <<" : "<<atomLocations[i][2]<<" "<<atomLocations[i][3]<<" "<<atomLocations[i][4]<<"\n";
+    }  
+#endif
+  
   //reinitialize dirichlet BCs for total potential and vSelf poisson solutions
   initBoundaryConditions();
   //rho init (use previous ground state electron density)
