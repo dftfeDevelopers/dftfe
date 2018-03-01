@@ -78,7 +78,7 @@ void dftClass<FEOrder>::readkPointData()
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::generateMPGrid()
 {
-  std::vector<double> kPointReducedCoordinates, del(3);
+  std::vector<double> del(3);
   d_maxkPoints = (nkx * nky) * nkz;
   pcout<<"Total number of k-points " << d_maxkPoints << std::endl;
   //
