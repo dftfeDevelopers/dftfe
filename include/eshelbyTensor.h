@@ -105,5 +105,14 @@ Tensor<1,C_DIM,VectorizedArray<double> >  getFnlPeriodic(const std::vector<std::
 						         const double fermiEnergy_,
 						         const double tVal);
 
+Tensor<1,C_DIM,VectorizedArray<double> >  getNonSelfConsistentForce(const VectorizedArray<double> & vEffRhoIn,
+								    const VectorizedArray<double> & vEffRhoOut,
+							            const Tensor<1,C_DIM,VectorizedArray<double> > & gradRhoOut,
+							            const Tensor<1,C_DIM,VectorizedArray<double> > & derExchCorrEnergyWithGradRhoIn,
+								    const Tensor<1,C_DIM,VectorizedArray<double> > & derExchCorrEnergyWithGradRhoOut,
+                                                                    const Tensor<2,C_DIM,VectorizedArray<double> > & hessianRhoOut
+								    );
+
+
 };
 #endif
