@@ -70,6 +70,10 @@ void dftClass<FEOrder>::initUnmovedTriangulation(parallel::distributed::Triangul
   DoFTools::extract_dofs(dofHandlerEigen, componentMaskForRealDOF, selectedDofsReal);
   std::vector<unsigned int> local_dof_indices(locally_owned_dofsEigen.n_elements());
   locally_owned_dofsEigen.fill_index_vector(local_dof_indices);
+  local_dof_indicesReal.clear();
+  localProc_dof_indicesReal.clear();
+  local_dof_indicesImag.clear();
+  localProc_dof_indicesImag.clear();
   for (unsigned int i = 0; i < locally_owned_dofsEigen.n_elements(); i++)
     {
       if (selectedDofsReal[i]) 

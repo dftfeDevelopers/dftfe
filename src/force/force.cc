@@ -121,37 +121,7 @@ void forceClass<FEOrder>::initMoved()
   d_dofHandlerForce.distribute_dofs(FEForce);
   d_supportPointsForce.clear();
   DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), d_dofHandlerForce, d_supportPointsForce);
-  /*
-  //
-  //Extract force component dofs from the global force dofs - this will be needed in configurational force.
-  //
-  d_locallyOwnedSupportPointsForceX.clear();d_locallyOwnedSupportPointsForceY.clear();d_locallyOwnedSupportPointsForceZ.clear();
-  FEValuesExtractors::Scalar x(0), y(1); 
-  ComponentMask componentMaskX = FEForce.component_mask(x);
-  ComponentMask componentMaskY = FEForce.component_mask(y);
-  std::vector<bool> selectedDofsX(d_locally_owned_dofsForce.n_elements(), false);
-  std::vector<bool> selectedDofsY(d_locally_owned_dofsForce.n_elements(), false);
-  DoFTools::extract_dofs(d_dofHandlerForce, componentMaskX, selectedDofsX);
-  DoFTools::extract_dofs(d_dofHandlerForce, componentMaskY, selectedDofsY);
-  std::vector<unsigned int> local_dof_indicesForce(d_locally_owned_dofsForce.n_elements());
-  d_locally_owned_dofsForce.fill_index_vector(local_dof_indicesForce);
-  for (unsigned int i = 0; i < d_locally_owned_dofsForce.n_elements(); i++)
-  {
-      const int globalIndex=local_dof_indicesForce[i];
-      if(selectedDofsX[i]) 
-      {
-	  d_locallyOwnedSupportPointsForceX[globalIndex]=d_supportPointsForce[globalIndex];
-      }
-      else if(selectedDofsY[i])
-      {
-	  d_locallyOwnedSupportPointsForceY[globalIndex]=d_supportPointsForce[globalIndex];
-      }
-      else
-      {
-	  d_locallyOwnedSupportPointsForceZ[globalIndex]=d_supportPointsForce[globalIndex];
-      }
-  }    
-  */
+  
   createBinObjectsForce();
   locateAtomCoreNodesForce();
   gaussianMovePar.initMoved();

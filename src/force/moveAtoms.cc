@@ -15,66 +15,10 @@
 //
 // @author Sambit Das(2017)
 //
-
-template<unsigned int FEOrder>
-void forceClass<FEOrder>::gaussianUpdateRhoDataCleanup()
-{
-
-  std::map<dealii::CellId, std::vector<double> > *rhoOutValuesCopy=new std::map<dealii::CellId, std::vector<double> >;
-  *rhoOutValuesCopy=*(dftPtr->rhoOutValues);
-  std::map<dealii::CellId, std::vector<double> > *gradRhoOutValuesCopy;
-  if (dftParameters::xc_id==4)
-  {
-     gradRhoOutValuesCopy = new std::map<dealii::CellId, std::vector<double> >;
-    *gradRhoOutValuesCopy=*(dftPtr->gradRhoOutValues);
-  }
-  //cleanup of existing data
-  for (std::deque<std::map<dealii::CellId,std::vector<double> >*>::iterator it = dftPtr->rhoInVals.begin(); it!=dftPtr->rhoInVals.end(); ++it)
-  {
-     (**it).clear();	  
-     delete (*it);
-  }
-  dftPtr->rhoInVals.clear();
-  for (std::deque<std::map<dealii::CellId,std::vector<double> >*>::iterator it = dftPtr->rhoOutVals.begin(); it!=dftPtr->rhoOutVals.end(); ++it)
-  {
-     (**it).clear();	  
-     delete (*it);
-  }
-  dftPtr->rhoOutVals.clear();
-  for (std::deque<std::map<dealii::CellId,std::vector<double> >*>::iterator it = dftPtr->gradRhoInVals.begin(); it!=dftPtr->gradRhoInVals.end(); ++it)
-  {
-     (**it).clear();	  
-     delete (*it);
-  }
-  dftPtr->gradRhoInVals.clear();
-  for (std::deque<std::map<dealii::CellId,std::vector<double> >*>::iterator it = dftPtr->gradRhoOutVals.begin(); it!=dftPtr->gradRhoOutVals.end(); ++it)
-  {
-     (**it).clear();	  
-     delete (*it);
-  }
-  dftPtr->gradRhoOutVals.clear();
-
-  dftPtr->rhoInValues=new std::map<dealii::CellId, std::vector<double> >;
-  *(dftPtr->rhoInValues)=*rhoOutValuesCopy;
-  rhoOutValuesCopy->clear();  delete rhoOutValuesCopy;
-  dftPtr->rhoInVals.push_back(dftPtr->rhoInValues);
-
-  if (dftParameters::xc_id==4)
-  {
-    dftPtr->gradRhoInValues = new std::map<dealii::CellId, std::vector<double> >;
-    *(dftPtr->gradRhoInValues)=*gradRhoOutValuesCopy;
-    gradRhoOutValuesCopy->clear();  delete gradRhoOutValuesCopy;
-    dftPtr->gradRhoInVals.push_back(dftPtr->gradRhoInValues);
-  }
-
-
-
-}
-
 //
-//
-//
-//
+// Function to update the atom positions and mesh based on the provided displacement input.
+// Depending on the maximum displacement magnitude this function decides wether to do auto remeshing
+// or move mesh using Gaussian functions.
 template<unsigned int FEOrder>
 void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point<C_DIM> > & globalAtomsDisplacements)
 {
@@ -121,10 +65,11 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
   }
   MPI_Barrier(mpi_communicator); 
   const double tol=1e-6;
+  //Heuristic values
   const  double maxJacobianRatio=10.0;
-  const double break1=1e-2;//try 1e-1
-  const double break2=1e-4;//try 1e-3
-  //maxDispAtom=0;//HARDCODING TO ONLY USE GAUSSIAN MOVE WITH GAUSSIAN CONSTANT SAME AS FORCE COMPUTATION
+  const double break1=1e-2;
+  const double break2=1e-4;
+  
   unsigned int updateCase=0;
   if (maxDispAtom >(break1-tol))
   {
@@ -138,28 +83,27 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
   {
     updateCase=2;
   }
-  
+ 
+  //for synchrozination in case there are the updateCase is different in different processors due to floating point comparison
   MPI_Bcast(&(updateCase),
 	    1,
 	    MPI_INT,
 	    0,
 	    MPI_COMM_WORLD); 
 
-  if (updateCase==0)//(maxDispAtom >(break1-tol))
+  if (updateCase==0)
   {
       pcout << "Auto remeshing and reinitialization of dft problem for new atom coordinates as max displacement magnitude: "<<maxDispAtom<< " is greater than: "<< break1 << " Bohr..." << std::endl;  
       dftPtr->init(); 
       pcout << "...Reinitialization end" << std::endl;       
   }
-  else if (updateCase==1)//(maxDispAtom <(break1+tol) && maxDispAtom>break2)
+  else if (updateCase==1)
   {
 
       const double gaussianParameter=2.0;
       pcout << "Trying to Move using a wide Gaussian with Gaussian constant: "<<gaussianParameter<<" as max displacement magnitude: "<<maxDispAtom<< " is between "<< break2<<" and "<<break1<<" Bohr"<<std::endl;
       
       std::pair<bool,double> meshQualityMetrics= gaussianMovePar.moveMesh(controlPointLocations,controlPointDisplacements,gaussianParameter);
-      //std::pair<bool,double> meshQualityMetricsSer=gaussianMoveSer.moveMesh(controlPointLocations,controlPointDisplacements,gaussianParameter);      
-      //AssertThrow(!meshQualityMetrics.first,ExcMessage("Negative jacobian created after moving closest nodes to atoms. Suggestion: use auto remeshing"));
      
       unsigned int autoMesh=0;
       if (meshQualityMetrics.first || meshQualityMetrics.second>maxJacobianRatio)
@@ -169,7 +113,7 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
 		MPI_INT,
 		0,
 		MPI_COMM_WORLD);       
-      if (autoMesh==1)//(meshQualityMetrics.first || meshQualityMetrics.second>maxJacobianRatio)
+      if (autoMesh==1)
       {
 	  if (meshQualityMetrics.first)
 	     pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to negative jacobian after Gaussian mesh movement using Gaussian constant: "<< gaussianParameter<<std::endl; 	  
@@ -182,21 +126,7 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
       {
 	  pcout<< " Mesh quality check: maximum jacobian ratio after movement: "<< meshQualityMetrics.second<<std::endl;  
 	  pcout<<"Now reinitializing all moved triangulation dependent objects..." << std::endl;        
-
-	  //reinitialize dirichlet BCs for total potential and vSelf poisson solutions
-	  dftPtr->initBoundaryConditions();
-	  //reinitialize guesses for electron-density and wavefunctions (not required for relaxation update)
-	  //dftPtr->initElectronicFields();
-          gaussianUpdateRhoDataCleanup();
-	  //reinitialize local pseudopotential
-	  if(dftParameters::isPseudopotential)
-	  {
-	     dftPtr->initLocalPseudoPotential();
-	     dftPtr->initNonLocalPseudoPotential();
-	     dftPtr->computeSparseStructureNonLocalProjectors();
-	     dftPtr->computeElementalProjectorKets();
-	     initPseudoData();
-	  }    
+          dftPtr->initNoRemesh();  
 	  pcout << "...Reinitialization end" << std::endl;  
       }
   }
@@ -204,8 +134,6 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
   {
        pcout << "Trying to Move using a narrow Gaussian with same Gaussian constant for computing the forces: "<<d_gaussianConstant<<" as max displacement magnitude: "<< maxDispAtom<< " is below " << break2 <<" Bohr"<<std::endl;       
       std::pair<bool,double> meshQualityMetrics=gaussianMovePar.moveMesh(controlPointLocations,controlPointDisplacements,d_gaussianConstant);
-      //std::pair<bool,double> meshQualityMetricsSer=gaussianMoveSer.moveMesh(controlPointLocations,controlPointDisplacements,d_gaussianConstant);
-      //AssertThrow(!meshQualityMetrics.first,ExcMessage("Negative jacobian created after moving closest nodes to atoms. Suggestion: use auto remeshing"));
       unsigned int autoMesh=0;      
       if (meshQualityMetrics.first || meshQualityMetrics.second>maxJacobianRatio)
           autoMesh=1;
@@ -214,7 +142,7 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
 		MPI_INT,
 		0,
 		MPI_COMM_WORLD);       
-      if (autoMesh==1)//(meshQualityMetrics.first || meshQualityMetrics.second>maxJacobianRatio)
+      if (autoMesh==1)
       {
 	  if (meshQualityMetrics.first)
 	     pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to negative jacobian after Gaussian mesh movement using Gaussian constant: "<< d_gaussianConstant<<std::endl; 	  
@@ -227,21 +155,7 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
       {
 	  pcout<< " Mesh quality check: maximum jacobian ratio after movement: "<< meshQualityMetrics.second<<std::endl; 
 	  pcout << "Now Reinitializing all moved triangulation dependent objects..." << std::endl;  
-	 
-	  //reinitialize dirichlet BCs for total potential and vSelf poisson solutions
-	  dftPtr->initBoundaryConditions();
-	  //reinitialize guesses for electron-density and wavefunctions (not required for relaxation update)
-	  //dftPtr->initElectronicFields();
-          gaussianUpdateRhoDataCleanup();
-	  //reinitialize local pseudopotential
-	  if(dftParameters::isPseudopotential)
-	  {
-	     dftPtr->initLocalPseudoPotential();
-	     dftPtr->initNonLocalPseudoPotential();
-	     dftPtr->computeSparseStructureNonLocalProjectors();
-	     dftPtr->computeElementalProjectorKets();
-	     initPseudoData();
-	  }    
+          dftPtr->initNoRemesh();  
 	  pcout << "...Reinitialization end" << std::endl;  
       }
   }

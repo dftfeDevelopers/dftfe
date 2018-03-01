@@ -187,7 +187,7 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential()
   for(std::set<unsigned int>::iterator it = atomTypes.begin(); it != atomTypes.end(); ++it)
     {
       char pseudoAtomDataFile[256];
-      sprintf(pseudoAtomDataFile, "%s/data/electronicStructure/pseudoPotential/z%u/pseudoAtomData/PseudoAtomData", currentPath.c_str(), *it);
+      sprintf(pseudoAtomDataFile, "%s/data/electronicStructure/pseudoPotential/z%u/pseudoAtomData/PseudoAtomDat", currentPath.c_str(), *it);
 
       unsigned int atomicNumber = *it;
 
@@ -845,7 +845,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
 
       cumulativePotSplineId += numberAngularMomentumSpecificPotentials;
 
-      //pcout<<"No.of non zero elements in the compact support of atom "<<iAtom<<" is "<<d_elementIteratorsInAtomCompactSupport[iAtom].size()<<std::endl;
+      pcout<<"No.of non zero elements in the compact support of atom "<<iAtom<<" is "<<d_elementIteratorsInAtomCompactSupport[iAtom].size()<<std::endl;
       if (isAtomIdInProcessor)
           d_nonLocalAtomIdsInCurrentProcess.push_back(iAtom);
     }//atom loop

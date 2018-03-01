@@ -276,7 +276,12 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
 {
-
+  d_pseudoWaveFunctionIdToFunctionIdDetails.clear();
+  d_numberPseudoAtomicWaveFunctions.clear();
+  d_nonLocalAtomGlobalChargeIds.clear();
+  d_globalChargeIdToImageIdMap.clear();
+  d_pseudoWaveFunctionSplines.clear();
+  d_nonLocalPseudoPotentialConstants.clear();
   // Store the Map between the atomic number and the waveFunction details
   // (i.e. map from atomicNumber to a 2D vector storing atom specific wavefunction Id and its corresponding 
   // radial and angular Ids)
@@ -297,7 +302,7 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
   for(std::set<unsigned int>::iterator it = atomTypes.begin(); it != atomTypes.end(); ++it)
     {
       char pseudoAtomDataFile[256];
-      sprintf(pseudoAtomDataFile, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/PseudoAtomData", currentPath.c_str(), *it);
+      sprintf(pseudoAtomDataFile, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/PseudoAtomDat", currentPath.c_str(), *it);
 
 
       unsigned int atomicNumber = *it;
@@ -856,6 +861,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
 
     }//atom loop
 
+  d_nonLocalAtomIdsInElement.clear();  
   d_nonLocalAtomIdsInElement.resize(numberElements);
 
 

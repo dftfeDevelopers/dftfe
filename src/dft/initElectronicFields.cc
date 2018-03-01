@@ -41,8 +41,10 @@ void dftClass<FEOrder>::initElectronicFields(){
       tempPSI3[i]->reinit(vChebyshev);
     } 
 
+  //std::cout<< "SPIN POLARIZED:"<< spinPolarized <<std::endl;
   if (spinPolarized!=1)
   {
+     //std::cout<< "HELLO"<<std::endl;
      d_tempResidualNormWaveFunctions.clear();
      d_tempResidualNormWaveFunctions.resize(d_maxkPoints);
      for(unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)

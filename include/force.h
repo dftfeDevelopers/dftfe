@@ -56,7 +56,6 @@ private:
   std::vector<unsigned int> d_globalAtomsRelaxationPermissions;
   std::vector<double> d_globalAtomsRelaxationDisplacements;
   void createBinObjectsForce();
-  void gaussianUpdateRhoDataCleanup();
   //configurational force functions
   void configForceLinFEInit();
   void configForceLinFEFinalize();
