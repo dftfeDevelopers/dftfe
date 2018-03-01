@@ -132,7 +132,7 @@ void forceClass<FEOrder>::initMoved()
 }
 
 //
-//initialize pseudopotential related force objects
+//initialize pseudopotential data for force computation
 //
 template<unsigned int FEOrder>
 void forceClass<FEOrder>::initPseudoData(){
