@@ -84,7 +84,7 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
     updateCase=2;
   }
  
-  //for synchrozination in case there are the updateCase is different in different processors due to floating point comparison
+  //for synchrozination in case the updateCase are different in different processors due to floating point comparison
   MPI_Bcast(&(updateCase),
 	    1,
 	    MPI_INT,
