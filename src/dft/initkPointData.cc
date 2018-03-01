@@ -208,7 +208,7 @@ void dftClass<FEOrder>::generateMPGrid()
             for (unsigned int k=0; k<3; ++k)
                rotation[iSymm][j][k] = -1*rotation[iSymm-symmetryPtr->numSymm][j][k] ;
 	    symmetryPtr->translation[iSymm][j] = symmetryPtr->translation[iSymm-symmetryPtr->numSymm][j] ;
-            }     
+         }     
       }
       symmetryPtr->numSymm = 2*symmetryPtr->numSymm;
     }
