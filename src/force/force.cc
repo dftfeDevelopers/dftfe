@@ -39,7 +39,10 @@
 #include "stress.cc"
 #include "moveAtoms.cc"
 
-
+//This class computes and stores the configurational forces corresponding to geometry optimization.
+//It uses the formulation in the paper by Motamarri et.al. (https://arxiv.org/abs/1712.05535) 
+//which provides an unified approach to atomic forces corresponding to internal atomic relaxation and cell stress
+//corresponding to cell relaxation.
 
 //
 //constructor
@@ -128,12 +131,12 @@ void forceClass<FEOrder>::initMoved()
   gaussianMoveSer.initMoved();
 }
 
-//compute forces on atoms using a generator with a compact support
+//
+//initialize pseudopotential related force objects
+//
 template<unsigned int FEOrder>
 void forceClass<FEOrder>::initPseudoData(){
-  //
-  //initialize pseudopotential related force objects
-  //
+
   if(dftParameters::isPseudopotential)
     {
       initLocalPseudoPotentialForce();
@@ -150,7 +153,7 @@ void forceClass<FEOrder>::initPseudoData(){
 
 
 
-//compute forces on atoms using a generator with a compact support
+//compute forces on atoms corresponding to a Gaussian generator
 template<unsigned int FEOrder>
 void forceClass<FEOrder>::computeAtomsForces(){
   computeConfigurationalForceTotalLinFE();
@@ -186,31 +189,35 @@ void forceClass<FEOrder>::configForceLinFEFinalize()
 
 }
 
-//compute configurational force on the mesh nodes using linear shape function generators
+//compute configurational force on the finite element nodes corresponding to linear shape function
+// generators. This function is generic to all-electron and pseudopotential as well as non-periodic and periodic 
+//cases. Also both LDA and GGA exchange correlation are handled. For details of the configurational
+//force expressions refer to the Configurational force paper by Motamarri et.al. 
+//(https://arxiv.org/abs/1712.05535) 
 template<unsigned int FEOrder>
 void forceClass<FEOrder>::computeConfigurationalForceTotalLinFE()
 {
 
  
   configForceLinFEInit();
-
+  //configurational force contribution from all terms except those from nuclear self energy 
   computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(); 
-  //computeConfigurationalForcePhiExtLinFE();
-  //computeConfigurationalForceEselfNoSurfaceLinFE();
+  //configurational force contribution from nuclear self energy. This is handled separately as it involves
+  // a surface integral over the vself ball surface
   computeConfigurationalForceEselfLinFE();
   configForceLinFEFinalize();
-
-  
+#ifdef DEBUG
   std::map<std::pair<unsigned int,unsigned int>, unsigned int> ::const_iterator it; 
-  for (it=d_atomsForceDofs.begin(); it!=d_atomsForceDofs.end(); ++it){
+  for (it=d_atomsForceDofs.begin(); it!=d_atomsForceDofs.end(); ++it)
+  {
 	 const std::pair<unsigned int,unsigned int> & atomIdPair= it->first;
 	 const unsigned int atomForceDof=it->second;
-	 //std::cout<<"procid: "<< this_mpi_process<<" atomId: "<< atomIdPair.first << ", force component: "<<atomIdPair.second << ", force: "<<d_configForceVectorLinFE[atomForceDof] << std::endl;
+	 std::cout<<"procid: "<< this_mpi_process<<" atomId: "<< atomIdPair.first << ", force component: "<<atomIdPair.second << ", force: "<<d_configForceVectorLinFE[atomForceDof] << std::endl;
 #ifdef ENABLE_PERIODIC_BC
-	 //std::cout<<"procid: "<< this_mpi_process<<" atomId: "<< atomIdPair.first << ", force component: "<<atomIdPair.second << ", forceKPoints: "<<d_configForceVectorLinFEKPoints[atomForceDof] << std::endl; 
+	 std::cout<<"procid: "<< this_mpi_process<<" atomId: "<< atomIdPair.first << ", force component: "<<atomIdPair.second << ", forceKPoints: "<<d_configForceVectorLinFEKPoints[atomForceDof] << std::endl; 
 #endif  	 
   }
-   
+#endif   
 
 }
 
