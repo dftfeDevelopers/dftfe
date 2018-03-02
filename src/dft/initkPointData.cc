@@ -123,7 +123,7 @@ void dftClass<FEOrder>::recomputeKPointCoordinates()
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::generateMPGrid()
 {
-  std::vector<double> kPointReducedCoordinates, del(3);
+  std::vector<double> del(3);
   d_maxkPoints = (nkx * nky) * nkz;
   pcout<<"Total number of k-points " << d_maxkPoints << std::endl;
   //
@@ -155,76 +155,38 @@ void dftClass<FEOrder>::generateMPGrid()
   // Get the reciprocal lattice vectors
   internaldft::getReciprocalLatticeVectors(d_reciprocalLatticeVectors,d_latticeVectors);
 
-  if (useSymm) {
-  //
-  const int numberColumnsSymmDataFile = 3;
-  std::vector<std::vector<int>> symmUnderGroupTemp ;
-  std::vector<std::vector<double> > symmData;
-  std::vector<std::vector<std::vector<double> >> symmMatTemp, symmMatTemp2;
-  if (symmFromFile) {
-  dftUtils::readFile(numberColumnsSymmDataFile, symmData, symmDataFile);
-  symmetryPtr->numSymm = symmData.size()/3 ;
-  pcout<<" number of symmetries read from file " << symmetryPtr->numSymm << std::endl;
-  symmMatTemp.resize(symmetryPtr->numSymm);
-  symmetryPtr->symmMat.resize(symmetryPtr->numSymm);
-  symmUnderGroupTemp.resize(symmetryPtr->numSymm);
-  for (unsigned int iSymm = 0; iSymm < symmetryPtr->numSymm; ++iSymm) {
-       symmMatTemp[iSymm].resize(3,std::vector<double> (3,0.0)) ;
-       symmetryPtr->symmMat[iSymm].resize(3,std::vector<double> (3,0.0)) ;
-  }
-  //
-  for(unsigned int iSymm = 0; iSymm < symmetryPtr->numSymm; ++iSymm)
-  {
-    symmetryPtr->translation[iSymm][0] = 0.0;
-    symmetryPtr->translation[iSymm][1] = 0.0;
-    symmetryPtr->translation[iSymm][2] = 0.0;
-    for(unsigned int j = 0; j < 3; ++j)
-      for (unsigned int d = 0; d < 3; ++d)
-        symmMatTemp[iSymm][j][d] = symmData[3*iSymm+j][d];
-  }
-  }
-  else {
-  //////////////////////////////////////////  SPG CALL  ///////////////////////////////////////////////////
-
-  const int num_atom = atomLocationsFractional.size();
-  double lattice[3][3], position[num_atom][3];
-  int types[num_atom] ;
-  const int mesh[3] = {static_cast<int>(nkx), static_cast<int>(nky), static_cast<int>(nkz)};
-  int grid_address[nkx * nky * nkz][3];
-  int grid_mapping_table[nkx * nky * nkz];
-  //
-  const int max_size = 500;
-  int rotation[max_size][3][3];
-  for (unsigned int i=0; i<3; ++i) {
-     for (unsigned int j=0; j<3; ++j)
-         lattice[i][j] = d_latticeVectors[i][j];
-  }
-   std::set<unsigned int>::iterator it = atomTypes.begin();
-  for (unsigned int i=0; i<num_atom; ++i){
-      std::advance(it, i);
-      types[i] = atomLocationsFractional[i][0];
-      for (unsigned int j=0; j<3; ++j)
-      position[i][j] = atomLocationsFractional[i][j+2] ;
-   }
-   //types[0]=0; types[1]=1; types[2]=1; types[3]=0; types[4]=1; types[5]=1;
-  // ***********************************  Checking on SPG ********************************************
-  /*int max_size = 500;
-  int num_atom = 2 ;
-  int rotation[max_size][3][3];
-  double lattice[3][3], position[num_atom][3];
-  int types[num_atom] ;
-  //
-  lattice[0][0] = 5.131550 ; lattice[0][1]=5.131550 ; lattice[0][2]=0.000000 ;
-  lattice[1][0] = 5.131550 ; lattice[1][1]=0.000000 ; lattice[1][2]=5.131550 ;
-  lattice[2][0] = 0.000000 ; lattice[2][1]=5.131550 ; lattice[2][2]=5.131550 ;
-  //
-  position[0][0] = 0.000000; position[0][1] = 0.0000000; position[0][2] = 0.000000 ;
-  position[1][0] = 0.125000; position[1][1] = 0.1250000; position[1][2] = 0.125000 ;
-  //
-  types[0]=1; types[1]=1; */
-  //**************************************************************************************************
-  pcout<<" getting space group symmetries from spg " << std::endl;
-  symmetryPtr->numSymm = spg_get_symmetry(rotation,
+  if (useSymm || timeReversal) {
+    //
+    const int numberColumnsSymmDataFile = 3;
+    std::vector<std::vector<int>> symmUnderGroupTemp ;
+    std::vector<std::vector<double> > symmData;
+    std::vector<std::vector<std::vector<double> >> symmMatTemp, symmMatTemp2;
+    const int max_size = 500;
+    int rotation[max_size][3][3];
+    //
+    //////////////////////////////////////////  SPG CALL  ///////////////////////////////////////////////////
+    if (useSymm) { 
+     const int num_atom = atomLocationsFractional.size();
+     double lattice[3][3], position[num_atom][3];
+     int types[num_atom] ;
+     const int mesh[3] = {static_cast<int>(nkx), static_cast<int>(nky), static_cast<int>(nkz)};
+     int grid_address[nkx * nky * nkz][3];
+     int grid_mapping_table[nkx * nky * nkz];
+     //
+     for (unsigned int i=0; i<3; ++i) {
+        for (unsigned int j=0; j<3; ++j)
+            lattice[i][j] = d_latticeVectors[i][j];
+     }
+     std::set<unsigned int>::iterator it = atomTypes.begin();
+     for (unsigned int i=0; i<num_atom; ++i){
+        std::advance(it, i);
+        types[i] = atomLocationsFractional[i][0];
+        for (unsigned int j=0; j<3; ++j)
+           position[i][j] = atomLocationsFractional[i][j+2] ;
+     }
+     //
+     pcout<<" getting space group symmetries from spg " << std::endl;
+     symmetryPtr->numSymm = spg_get_symmetry(rotation,
                      (symmetryPtr->translation),
                      max_size,
                      lattice,
@@ -232,8 +194,8 @@ void dftClass<FEOrder>::generateMPGrid()
                      types,
                      num_atom,
                      1e-5);
-  pcout<<" number of symmetries allowed for the lattice " <<symmetryPtr->numSymm << std::endl;
-  for (unsigned int iSymm=0; iSymm<symmetryPtr->numSymm; ++iSymm){
+     pcout<<" number of symmetries allowed for the lattice " <<symmetryPtr->numSymm << std::endl;
+     for (unsigned int iSymm=0; iSymm<symmetryPtr->numSymm; ++iSymm){
 	pcout << " Symmetry " << iSymm+1 << std::endl;
 	pcout << " Rotation " << std::endl;
 	for (unsigned int ipol = 0; ipol<3; ++ipol)
@@ -241,20 +203,36 @@ void dftClass<FEOrder>::generateMPGrid()
 	pcout << " translation " << std::endl;
 	pcout << symmetryPtr->translation[iSymm][0] << "  " <<symmetryPtr->translation[iSymm][1] << "  " << symmetryPtr->translation[iSymm][2] << std::endl;
 	pcout << "	" << std::endl ;
-  }
-
- if(timeReversal) {
-  //// adding time reversal  //////
-  //
-  for (unsigned int iSymm=symmetryPtr->numSymm; iSymm<2*symmetryPtr->numSymm; ++iSymm){
+     }
+    }
+    //
+    else {   // only time reversal symmetry; no point group symmetry       
+     //
+     symmetryPtr->numSymm = 1 ;
      for (unsigned int j=0; j<3; ++j) {
-        for (unsigned int k=0; k<3; ++k)
-            rotation[iSymm][j][k] = -1*rotation[iSymm-symmetryPtr->numSymm][j][k] ;
+          for (unsigned int k=0; k<3; ++k) {
+	       if (j==k) 
+                   rotation[0][j][k] = 1 ;
+	       else 
+	           rotation[0][j][k] = 0 ;
+          }
+	  symmetryPtr->translation[0][j] = 0.0 ;
+      }
+      pcout<<" Only time reversal symmetry to be used " << std::endl;
+
+    }
+
+    //// adding time reversal  //////
+    if(timeReversal) {
+      for (unsigned int iSymm=symmetryPtr->numSymm; iSymm<2*symmetryPtr->numSymm; ++iSymm){
+         for (unsigned int j=0; j<3; ++j) {
+            for (unsigned int k=0; k<3; ++k)
+               rotation[iSymm][j][k] = -1*rotation[iSymm-symmetryPtr->numSymm][j][k] ;
 	    symmetryPtr->translation[iSymm][j] = symmetryPtr->translation[iSymm-symmetryPtr->numSymm][j] ;
-  }
-  }
-  symmetryPtr->numSymm = 2*symmetryPtr->numSymm;
-  }
+         }     
+      }
+      symmetryPtr->numSymm = 2*symmetryPtr->numSymm;
+    }
   ///
   symmMatTemp.resize(symmetryPtr->numSymm);
   symmMatTemp2.resize(symmetryPtr->numSymm);
@@ -273,11 +251,7 @@ void dftClass<FEOrder>::generateMPGrid()
 	}
     }
   }
-  //symmMatTemp[numSymm].resize(3,std::vector<double> (3,0.0)) ;
-  //symmMatTemp[numSymm][0][0] = -1.0 ;
-  //symmMatTemp[numSymm][1][1] = -1.0 ;
-  //symmMatTemp[numSymm][2][2] = -1.0 ;
-  }
+
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //
   std::vector<double> kPointAllCoordinates, kPointTemp(3);
@@ -375,6 +349,7 @@ void dftClass<FEOrder>::generateMPGrid()
   }
 
 
+
   pcout<<"Reduced k-Point-coordinates and weights: "<<std::endl;
   char buffer[100];
   for(int i = 0; i < d_maxkPoints; ++i){
@@ -392,6 +367,7 @@ void dftClass<FEOrder>::generateMPGrid()
    //
    // Split k-points over pools
    //
+   AssertThrow(d_maxkPoints>=npool,ExcMessage("Number of k-points should be higher than or equal to number of pools"));
    const unsigned int this_mpi_pool (Utilities::MPI::this_mpi_process(interpoolcomm)) ;
    std::vector<double> d_kPointCoordinatesGlobal(3*d_maxkPoints, 0.0) ;
    std::vector<double> d_kPointWeightsGlobal(d_maxkPoints, 0.0) ;
