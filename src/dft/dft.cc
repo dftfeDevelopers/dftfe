@@ -230,8 +230,8 @@ void dftClass<FEOrder>::set()
   pcout << "number of eigen values: " << numEigenValues << std::endl; 
 
 #ifdef ENABLE_PERIODIC_BC
-   if (dftParameters::isIonOpt || dftParameters::isCellOpt)  
-      AssertThrow(!dftParameters::useSymm,ExcMessage("USE GROUP SYMMETRY must be set to false if either ION OPT or CELL OPT is set to true"));  
+   if (dftParameters::isIonForce || dftParameters::isCellStress)  
+      AssertThrow(!dftParameters::useSymm,ExcMessage("USE GROUP SYMMETRY must be set to false if either ION FORCE or CELL STRESS is set to true. This functionality will be added in a future release"));  
   //readkPointData();
    generateMPGrid();
    //if (useSymm)
@@ -306,7 +306,7 @@ void dftClass<FEOrder>::init ()
 {
 #ifdef ENABLE_PERIODIC_BC
   pcout<<"-----Fractional coordinates of atoms------ "<<std::endl;    
-  for(int i = 0; i < atomLocations.size(); ++i)
+  for(unsigned int i = 0; i < atomLocations.size(); ++i)
   {
       atomLocations[i] = atomLocationsFractional[i] ;
       pcout<<" atomId- "<<i <<" : "<<atomLocationsFractional[i][2]<<" "<<atomLocationsFractional[i][3]<<" "<<atomLocationsFractional[i][4]<<"\n";
@@ -317,19 +317,17 @@ void dftClass<FEOrder>::init ()
 					    d_latticeVectors);
   recomputeKPointCoordinates();
 
-  char buffer[100];
-  pcout<<"actual k-Point-coordinates and weights: "<<std::endl;
+  pcout<<"Actual k-Point-coordinates and weights: "<<std::endl;
   for(int i = 0; i < d_maxkPoints; ++i)
   {
-    sprintf(buffer, "  %5u:  %12.5f  %12.5f %12.5f %12.5f\n", i, d_kPointCoordinates[3*i+0], d_kPointCoordinates[3*i+1], d_kPointCoordinates[3*i+2],d_kPointWeights[i]);
-    pcout << buffer;
+    pcout<< i<<": ["<< d_kPointCoordinates[3*i+0] <<", "<< d_kPointCoordinates[3*i+1]<<", "<< d_kPointCoordinates[3*i+2]<<"] "<<d_kPointWeights[i]<<std::endl;
   }   
 #else
   //
   //print cartesian coordinates
   //
   pcout<<"-----Cartesian coordinates of atoms------ "<<std::endl;
-  for(int i = 0; i < atomLocations.size(); ++i)
+  for(unsigned int i = 0; i < atomLocations.size(); ++i)
     {
       pcout<<" atomId- "<<i <<" : "<<atomLocations[i][2]<<" "<<atomLocations[i][3]<<" "<<atomLocations[i][4]<<"\n";
     }  
@@ -386,7 +384,7 @@ void dftClass<FEOrder>::initNoRemesh()
 {
 #ifdef ENABLE_PERIODIC_BC  
   pcout<<"-----Fractional coordinates of atoms------ "<<std::endl;    
-  for(int i = 0; i < atomLocations.size(); ++i)
+  for(unsigned int i = 0; i < atomLocations.size(); ++i)
   {
       atomLocations[i] = atomLocationsFractional[i] ;
       pcout<<" atomId- "<<i <<" : "<<atomLocationsFractional[i][2]<<" "<<atomLocationsFractional[i][3]<<" "<<atomLocationsFractional[i][4]<<"\n";
@@ -396,19 +394,17 @@ void dftClass<FEOrder>::initNoRemesh()
 					    d_latticeVectors);
   recomputeKPointCoordinates(); 
 
-  char buffer[100];
   pcout<<"actual k-Point-coordinates and weights: "<<std::endl;
   for(int i = 0; i < d_maxkPoints; ++i)
   {
-    sprintf(buffer, "  %5u:  %12.5f  %12.5f %12.5f %12.5f\n", i, d_kPointCoordinates[3*i+0], d_kPointCoordinates[3*i+1], d_kPointCoordinates[3*i+2],d_kPointWeights[i]);
-    pcout << buffer;
+    pcout<< i<<": ["<< d_kPointCoordinates[3*i+0] <<", " <<d_kPointCoordinates[3*i+1]<<", "<< d_kPointCoordinates[3*i+2]<<"] "<<d_kPointWeights[i]<<std::endl;
   }     
 #else
   //
   //print cartesian coordinates
   //
   pcout<<"-----Cartesian coordinates of atoms------ "<<std::endl;
-  for(int i = 0; i < atomLocations.size(); ++i)
+  for(unsigned int i = 0; i < atomLocations.size(); ++i)
     {
       pcout<<" atomId- "<<i <<" : "<<atomLocations[i][2]<<" "<<atomLocations[i][3]<<" "<<atomLocations[i][4]<<"\n";
     }  
@@ -645,11 +641,13 @@ void dftClass<FEOrder>::solve()
  */
   //
   MPI_Barrier(interpoolcomm) ;
-  computing_timer.enter_section("configurational force computation"); 
-  forcePtr->computeAtomsForces();
-  forcePtr->printAtomsForces();
-  computing_timer.exit_section("configurational force computation");  
-   
+  if (dftParameters::isIonForce)
+  {
+    computing_timer.enter_section("configurational force computation"); 
+    forcePtr->computeAtomsForces();
+    forcePtr->printAtomsForces();
+    computing_timer.exit_section("configurational force computation"); 
+   }
 }
 
 //Output

@@ -35,7 +35,7 @@ namespace internalforce{
       // recenter vertex about corner
       //
       std::vector<double> recenteredPoint(3);
-      for(int i = 0; i < 3; ++i)
+      for(unsigned int i = 0; i < 3; ++i)
         recenteredPoint[i] = point[i]-corner[i];
 
       std::vector<double> latticeVectorsDup = latticeVectors;
@@ -51,12 +51,7 @@ namespace internalforce{
       int info;
 
       dgesv_(&N, &NRHS, &latticeVectorsDup[0], &LDA, &IPIV[0], &recenteredPoint[0], &LDA,&info);
-
-      if (info != 0) {
-        const std::string
-          message("LU solve in finding fractional coordinates failed.");
-        Assert(false,ExcMessage(message));
-      }
+      AssertThrow(info == 0, ExcMessage("LU solve in finding fractional coordinates failed."));
       return recenteredPoint;
   }
    

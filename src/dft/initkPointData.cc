@@ -20,30 +20,26 @@
 
 using namespace dftParameters ;
 namespace internaldft{
-  void cross_product(const std::vector<double> &a,
-		     const std::vector<double> &b,
-		     std::vector<double> &crossProduct)
+  std::vector<double>  cross_product(const std::vector<double> &a,
+		                     const std::vector<double> &b)
   {
-    crossProduct.resize(a.size(),0.0);
+    std::vector<double> crossProduct(a.size(),0.0);
 
     crossProduct[0] = a[1]*b[2]-a[2]*b[1];
     crossProduct[1] = a[2]*b[0]-a[0]*b[2];
     crossProduct[2] = a[0]*b[1]-a[1]*b[0];
 
+    return crossProduct;
   }
 
-  void getReciprocalLatticeVectors(std::vector<std::vector<double> > & reciprocalLatticeVectors,
-	                           const std::vector<std::vector<double> > & latticeVectors) 
+  std::vector<std::vector<double> > getReciprocalLatticeVectors(const std::vector<std::vector<double> > & latticeVectors) 
 	                           
   {
-      reciprocalLatticeVectors.clear();
-      reciprocalLatticeVectors.resize(3,std::vector<double> (3,0.0));
+      std::vector<std::vector<double> > reciprocalLatticeVectors(3,std::vector<double> (3,0.0));
       for(unsigned int i = 0; i < 2; ++i)
 	{
-	  std::vector<double> cross(3,0.0);
-	  internaldft::cross_product(latticeVectors[i+1],
-				     latticeVectors[3 - (2*i + 1)],
-				     cross);
+	  std::vector<double> cross=internaldft::cross_product(latticeVectors[i+1],
+				                               latticeVectors[3 - (2*i + 1)]);
 
 	  const double scalarConst = latticeVectors[i][0]*cross[0] + latticeVectors[i][1]*cross[1] + latticeVectors[i][2]*cross[2];
 
@@ -54,14 +50,14 @@ namespace internaldft{
       //
       //fill up 3rd reciprocal lattice vector
       //
-      std::vector<double> cross(3,0.0);
-      internaldft::cross_product(latticeVectors[0],
-				 latticeVectors[1],
-				 cross);
+      std::vector<double> cross=internaldft::cross_product(latticeVectors[0],
+				                           latticeVectors[1]);
 
       const double scalarConst = latticeVectors[2][0]*cross[0] + latticeVectors[2][1]*cross[1] + latticeVectors[2][2]*cross[2];
       for (unsigned int d = 0; d < 3; ++d)
          reciprocalLatticeVectors[2][d] = (2*M_PI/scalarConst)*cross[d];
+
+      return reciprocalLatticeVectors;
   }
 }
 
@@ -111,9 +107,9 @@ template<unsigned int FEOrder>
 void dftClass<FEOrder>::recomputeKPointCoordinates()
 {
   // Get the reciprocal lattice vectors
-  internaldft::getReciprocalLatticeVectors(d_reciprocalLatticeVectors,d_latticeVectors);    
+  d_reciprocalLatticeVectors=internaldft::getReciprocalLatticeVectors(d_latticeVectors);    
   // Convert from crystal to Cartesian coordinates
-  for(int i = 0; i < d_maxkPoints; ++i)
+  for(unsigned int i = 0; i < d_maxkPoints; ++i)
     for (unsigned int d=0; d < 3; ++d)
       d_kPointCoordinates[3*i + d] = kPointReducedCoordinates[3*i+0]*d_reciprocalLatticeVectors[0][d] +
                                      kPointReducedCoordinates[3*i+1]*d_reciprocalLatticeVectors[1][d] +
@@ -153,7 +149,7 @@ void dftClass<FEOrder>::generateMPGrid()
     }
 
   // Get the reciprocal lattice vectors
-  internaldft::getReciprocalLatticeVectors(d_reciprocalLatticeVectors,d_latticeVectors);
+  d_reciprocalLatticeVectors=internaldft::getReciprocalLatticeVectors(d_latticeVectors);
 
   if (useSymm || timeReversal) {
     //
