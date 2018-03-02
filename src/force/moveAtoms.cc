@@ -69,7 +69,7 @@ namespace internalforce{
      std::vector<double> fracCoord= getFractionalCoordinates(latticeVectors,
 	                                                     cellCenteredCoord,                                                                                                corner);  
      //wrap fractional coordinate
-     for(int i = 0; i < 3; ++i)
+     for(unsigned int i = 0; i < 3; ++i)
      {
        if (periodicBc[i])
        {
@@ -127,7 +127,7 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
         atomCoor[0] = atomLocations[iAtom][2];
         atomCoor[1] = atomLocations[iAtom][3];
         atomCoor[2] = atomLocations[iAtom][4];
-	double temp=globalAtomsDisplacements[atomId].norm();
+	const double temp=globalAtomsDisplacements[atomId].norm();
 #ifdef ENABLE_PERIODIC_BC
 	Point<C_DIM> newCoord;
 	for (unsigned int idim=0; idim<C_DIM; ++idim)
@@ -137,7 +137,7 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
 					                                          latticeVectorsFlattened,
 						                                  periodicBc);
         //for synchrozination 
-        MPI_Bcast(&(newFracCoord),
+        MPI_Bcast(&(newFracCoord[0]),
 	         3,
 	         MPI_DOUBLE,
 	         0,

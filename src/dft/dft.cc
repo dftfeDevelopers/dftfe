@@ -308,7 +308,7 @@ template<unsigned int FEOrder>
 void dftClass<FEOrder>::init ()
 {
 #ifdef ENABLE_PERIODIC_BC
-  pcout<<"-----Fractional coordinates of atom------ "<<std::endl;    
+  pcout<<"-----Fractional coordinates of atoms------ "<<std::endl;    
   for(int i = 0; i < atomLocations.size(); ++i)
   {
       atomLocations[i] = atomLocationsFractional[i] ;
@@ -322,10 +322,11 @@ void dftClass<FEOrder>::init ()
   //
   //print cartesian coordinates
   //
+  pcout<<"-----Cartesian coordinates of atoms------ "<<std::endl;
   for(int i = 0; i < atomLocations.size(); ++i)
     {
-      pcout<<"Cartesian coordinates of atoms: "<<atomLocations[i][2]<<" "<<atomLocations[i][3]<<" "<<atomLocations[i][4]<<"\n";
-    }
+      pcout<<" atomId- "<<i <<" : "<<atomLocations[i][2]<<" "<<atomLocations[i][3]<<" "<<atomLocations[i][4]<<"\n";
+    }  
 #endif
 
   //
@@ -378,7 +379,7 @@ template<unsigned int FEOrder>
 void dftClass<FEOrder>::initNoRemesh()
 {
 #ifdef ENABLE_PERIODIC_BC  
-  pcout<<"-----Fractional coordinates of atom------ "<<std::endl;    
+  pcout<<"-----Fractional coordinates of atoms------ "<<std::endl;    
   for(int i = 0; i < atomLocations.size(); ++i)
   {
       atomLocations[i] = atomLocationsFractional[i] ;
@@ -391,7 +392,7 @@ void dftClass<FEOrder>::initNoRemesh()
   //
   //print cartesian coordinates
   //
-  pcout<<"-----Cartesian coordinates of atom------ "<<std::endl;
+  pcout<<"-----Cartesian coordinates of atoms------ "<<std::endl;
   for(int i = 0; i < atomLocations.size(); ++i)
     {
       pcout<<" atomId- "<<i <<" : "<<atomLocations[i][2]<<" "<<atomLocations[i][3]<<" "<<atomLocations[i][4]<<"\n";
