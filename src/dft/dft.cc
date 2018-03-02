@@ -230,7 +230,8 @@ void dftClass<FEOrder>::set()
   pcout << "number of eigen values: " << numEigenValues << std::endl; 
 
 #ifdef ENABLE_PERIODIC_BC
-   AssertThrow( (dftParameters::ionOpt || dftParameters::cellOpt)&& dftParameters::useSymm,ExcMessage("USE GROUP SYMMETRY must be set to false if either ION OPT or CELL OPT is set to true"));  
+   if (dftParameters::isIonOpt || dftParameters::isCellOpt)  
+      AssertThrow(!dftParameters::useSymm,ExcMessage("USE GROUP SYMMETRY must be set to false if either ION OPT or CELL OPT is set to true"));  
   //readkPointData();
    generateMPGrid();
    //if (useSymm)
