@@ -24,6 +24,11 @@
 
 using namespace dftParameters ;
 
+double getOccupancy(const double &factor)
+{
+   return (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)):1.0/(1.0 + std::exp(factor));
+}
+
 
 template<unsigned int FEOrder>
 void symmetryClass<FEOrder>::computeAndSymmetrize_rhoOut()
@@ -265,10 +270,10 @@ void symmetryClass<FEOrder>::computeLocalrhoOut()
 	     for(unsigned int i=0; i<(dftPtr->numEigenValues); ++i)
 		      {
 		       double factor=((dftPtr->eigenValues)[kPoint][i]-(dftPtr->fermiEnergy))/(C_kb*TVal);
-		       const double partialOccupancyAlpha = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)):1.0/(1.0 + std::exp(factor));
+		       const double partialOccupancyAlpha = getOccupancy(factor) ;
 		       //
 		       factor=((dftPtr->eigenValues)[kPoint][i+spinPolarized*(dftPtr->numEigenValues)]-(dftPtr->fermiEnergy))/(C_kb*TVal);
-		       double partialOccupancyBeta = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)):1.0/(1.0 + std::exp(factor));
+		       const double partialOccupancyBeta = getOccupancy(factor) ;
 		       //
 		       fe_values.get_function_values(*((dftPtr->eigenVectorsOrig)[(1+spinPolarized)*kPoint][i]), tempPsiAlpha);
 		       if (spinPolarized==1)
