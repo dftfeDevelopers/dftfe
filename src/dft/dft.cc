@@ -239,12 +239,7 @@ void dftClass<FEOrder>::set()
   d_kPointCoordinates.resize(3*d_maxkPoints,0.0);
   d_kPointWeights.resize(d_maxkPoints,1.0);
 #endif
-  char buffer[100];
-  pcout<<"actual k-Point-coordinates and weights: "<<std::endl;
-  for(int i = 0; i < d_maxkPoints; ++i){
-    sprintf(buffer, "  %5u:  %12.5f  %12.5f %12.5f %12.5f\n", i, d_kPointCoordinates[3*i+0], d_kPointCoordinates[3*i+1], d_kPointCoordinates[3*i+2],d_kPointWeights[i]);
-    pcout << buffer;
-  }   
+  
   //set size of eigenvalues and eigenvectors data structures
   eigenValues.resize(d_maxkPoints);
   eigenValuesTemp.resize(d_maxkPoints);
@@ -318,6 +313,15 @@ void dftClass<FEOrder>::init ()
 
   convertToCellCenteredCartesianCoordinates(atomLocations,
 					    d_latticeVectors);
+  recomputeKPointCoordinates();
+
+  char buffer[100];
+  pcout<<"actual k-Point-coordinates and weights: "<<std::endl;
+  for(int i = 0; i < d_maxkPoints; ++i)
+  {
+    sprintf(buffer, "  %5u:  %12.5f  %12.5f %12.5f %12.5f\n", i, d_kPointCoordinates[3*i+0], d_kPointCoordinates[3*i+1], d_kPointCoordinates[3*i+2],d_kPointWeights[i]);
+    pcout << buffer;
+  }   
 #else
   //
   //print cartesian coordinates
@@ -387,7 +391,16 @@ void dftClass<FEOrder>::initNoRemesh()
   }   
   generateImageCharges();
   convertToCellCenteredCartesianCoordinates(atomLocations,
-					    d_latticeVectors);    
+					    d_latticeVectors);
+  recomputeKPointCoordinates(); 
+
+  char buffer[100];
+  pcout<<"actual k-Point-coordinates and weights: "<<std::endl;
+  for(int i = 0; i < d_maxkPoints; ++i)
+  {
+    sprintf(buffer, "  %5u:  %12.5f  %12.5f %12.5f %12.5f\n", i, d_kPointCoordinates[3*i+0], d_kPointCoordinates[3*i+1], d_kPointCoordinates[3*i+2],d_kPointWeights[i]);
+    pcout << buffer;
+  }     
 #else
   //
   //print cartesian coordinates

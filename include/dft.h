@@ -507,6 +507,7 @@ class dftClass
   std::vector<double> d_kPointWeights;
   int d_maxkPoints;
   int d_kPointIndex;
+  void recomputeKPointCoordinates();
   //integralRhoOut to store number of electrons
   double integralRhoValue;
   
