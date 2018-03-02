@@ -21,6 +21,7 @@
 #include "../../include/dftParameters.h"
 #include "../../include/symmetry.h"
 #include "../../include/dft.h"
+#include "symmetrizeRho.cc"
 
 using namespace dftParameters ;
 
@@ -91,6 +92,8 @@ void symmetryClass<FEOrder>::initSymmetry()
  //std::cout << this_mpi_process << " total number of cells " << n_cell << std::endl;
  unsigned int mappedPointId ;
  std::map<CellId, int> globalCellId_parallel ;
+ //
+ clearMaps() ;
  //
  mappedGroup.resize(numSymm) ;
  mappedGroupSend0.resize(numSymm) ;
@@ -484,6 +487,7 @@ void symmetryClass<FEOrder>::initSymmetry()
   }
 
 }
+
 template<unsigned int FEOrder>
 Point<3> symmetryClass<FEOrder>::crys2cart(Point<3> p, int flag)
 {

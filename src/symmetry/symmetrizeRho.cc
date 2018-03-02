@@ -24,6 +24,12 @@
 
 using namespace dftParameters ;
 
+double getOccupancy(const double &factor)
+{
+   return (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)):1.0/(1.0 + std::exp(factor));
+}
+
+
 template<unsigned int FEOrder>
 void symmetryClass<FEOrder>::computeAndSymmetrize_rhoOut()
 {
@@ -76,9 +82,9 @@ void symmetryClass<FEOrder>::computeAndSymmetrize_rhoOut()
 	  //
 	  for(unsigned int q_point=0; q_point<num_quad_points; ++q_point) {
 	     for(unsigned int iSymm=0; iSymm<numSymm; ++iSymm) {
-		unsigned int proc = std::get<0>(mappedGroup[iSymm][globalCellId[cell->id()]][q_point]) ;
-		unsigned int group = std::get<1>(mappedGroup[iSymm][globalCellId[cell->id()]][q_point]) ;
-		unsigned int point = std::get<2>(mappedGroup[iSymm][globalCellId[cell->id()]][q_point]) ;
+		const unsigned int proc = std::get<0>(mappedGroup[iSymm][globalCellId[cell->id()]][q_point]) ;
+		const unsigned int group = std::get<1>(mappedGroup[iSymm][globalCellId[cell->id()]][q_point]) ;
+		const unsigned int point = std::get<2>(mappedGroup[iSymm][globalCellId[cell->id()]][q_point]) ;
 		//
 		if (spinPolarized==1) {
 		   rhoOutSpinPolarized[2*q_point] += rhoRecvd[iSymm][globalCellId[cell->id()]][proc][2*point];
@@ -88,17 +94,12 @@ void symmetryClass<FEOrder>::computeAndSymmetrize_rhoOut()
 		   rhoOut[q_point] += rhoRecvd[iSymm][globalCellId[cell->id()]][proc][point];
 		if (xc_id==4){
 		   if (spinPolarized==1) {
-		     gradRhoOutSpinPolarized[6*q_point+0] += gradRhoRecvd[iSymm][globalCellId[cell->id()]][proc][6*point+0];
-		     gradRhoOutSpinPolarized[6*q_point+1] += gradRhoRecvd[iSymm][globalCellId[cell->id()]][proc][6*point+1];
-		     gradRhoOutSpinPolarized[6*q_point+2] += gradRhoRecvd[iSymm][globalCellId[cell->id()]][proc][6*point+2];
-		     gradRhoOutSpinPolarized[6*q_point+3] += gradRhoRecvd[iSymm][globalCellId[cell->id()]][proc][6*point+3];
-		     gradRhoOutSpinPolarized[6*q_point+4] += gradRhoRecvd[iSymm][globalCellId[cell->id()]][proc][6*point+4];
-		     gradRhoOutSpinPolarized[6*q_point+5] += gradRhoRecvd[iSymm][globalCellId[cell->id()]][proc][6*point+5];
+                       for (unsigned int j = 0; j < 6; ++j) 
+			   gradRhoOutSpinPolarized[6*q_point+j] += gradRhoRecvd[iSymm][globalCellId[cell->id()]][proc][6*point+j];
 		   }
 		   else {
-		     gradRhoOut[3*q_point+0] += gradRhoRecvd[iSymm][globalCellId[cell->id()]][proc][3*point+0];
-		     gradRhoOut[3*q_point+1] += gradRhoRecvd[iSymm][globalCellId[cell->id()]][proc][3*point+1];
-		     gradRhoOut[3*q_point+2] += gradRhoRecvd[iSymm][globalCellId[cell->id()]][proc][3*point+2];
+		       for (unsigned int j = 0; j < 3; ++j) 
+		           gradRhoOut[3*q_point+j] += gradRhoRecvd[iSymm][globalCellId[cell->id()]][proc][3*point+j];
 		   } 
 		  }
 		}	
@@ -114,22 +115,16 @@ void symmetryClass<FEOrder>::computeAndSymmetrize_rhoOut()
 		if (xc_id==4) {
                   if(spinPolarized==1)
 		      {
-			(*dftPtr->gradRhoOutValuesSpinPolarized)[cell->id()][6*q_point + 0] = gradRhoOutSpinPolarized[6*q_point + 0];
-		        (*dftPtr->gradRhoOutValuesSpinPolarized)[cell->id()][6*q_point + 1] = gradRhoOutSpinPolarized[6*q_point + 1];
-		        (*dftPtr->gradRhoOutValuesSpinPolarized)[cell->id()][6*q_point + 2] = gradRhoOutSpinPolarized[6*q_point + 2];
-			(*dftPtr->gradRhoOutValuesSpinPolarized)[cell->id()][6*q_point + 3] = gradRhoOutSpinPolarized[6*q_point + 3];
-		        (*dftPtr->gradRhoOutValuesSpinPolarized)[cell->id()][6*q_point + 4] = gradRhoOutSpinPolarized[6*q_point + 4];
-		        (*dftPtr->gradRhoOutValuesSpinPolarized)[cell->id()][6*q_point + 5] = gradRhoOutSpinPolarized[6*q_point + 5];
+			for (unsigned int j = 0; j < 6; ++j) 
+			  (*dftPtr->gradRhoOutValuesSpinPolarized)[cell->id()][6*q_point + j] = gradRhoOutSpinPolarized[6*q_point + j];
 			//
-			(*dftPtr->gradRhoOutValues)[cell->id()][3*q_point + 0] = gradRhoOutSpinPolarized[6*q_point + 0] + gradRhoOutSpinPolarized[6*q_point + 3];
-		        (*dftPtr->gradRhoOutValues)[cell->id()][3*q_point + 1] = gradRhoOutSpinPolarized[6*q_point + 1] + gradRhoOutSpinPolarized[6*q_point + 4];
-		        (*dftPtr->gradRhoOutValues)[cell->id()][3*q_point + 2] = gradRhoOutSpinPolarized[6*q_point + 2] + gradRhoOutSpinPolarized[6*q_point + 5];
+			for (unsigned int j = 0; j < 3; ++j)
+			  (*dftPtr->gradRhoOutValues)[cell->id()][3*q_point + j] = gradRhoOutSpinPolarized[6*q_point + j] + gradRhoOutSpinPolarized[6*q_point + j + 3];
                       }
 		   else
 		      {
-		        (*dftPtr->gradRhoOutValues)[cell->id()][3*q_point + 0] = gradRhoOut[3*q_point + 0];
-		        (*dftPtr->gradRhoOutValues)[cell->id()][3*q_point + 1] = gradRhoOut[3*q_point + 1];
-		        (*dftPtr->gradRhoOutValues)[cell->id()][3*q_point + 2] = gradRhoOut[3*q_point + 2];
+		        for (unsigned int j = 0; j < 3; ++j)
+		           (*dftPtr->gradRhoOutValues)[cell->id()][3*q_point + j] = gradRhoOut[3*q_point + j];
 		      }
 	       }
 	    }
@@ -148,6 +143,8 @@ void symmetryClass<FEOrder>::computeAndSymmetrize_rhoOut()
       (**(dftPtr->rhoOutVals.begin())).clear();
       delete *(dftPtr->rhoOutVals.begin());	      
       dftPtr->rhoOutVals.pop_front();
+     
+      if (spinPolarized) {
 
       (**(dftPtr->rhoInValsSpinPolarized.begin())).clear();
       delete *(dftPtr->rhoInValsSpinPolarized.begin());
@@ -155,6 +152,8 @@ void symmetryClass<FEOrder>::computeAndSymmetrize_rhoOut()
       (**(dftPtr->rhoOutValsSpinPolarized.begin())).clear();
       delete *(dftPtr->rhoOutValsSpinPolarized.begin());
       dftPtr->rhoOutValsSpinPolarized.pop_front();
+
+      }
 
       if(xc_id == 4)//GGA
       {      
@@ -166,6 +165,8 @@ void symmetryClass<FEOrder>::computeAndSymmetrize_rhoOut()
 	  delete *(dftPtr->gradRhoOutVals.begin());	      
 	  dftPtr->gradRhoOutVals.pop_front();
 
+          if (spinPolarized) {
+
 	  (**(dftPtr->gradRhoInValsSpinPolarized.begin())).clear();
 	  delete *(dftPtr->gradRhoInValsSpinPolarized.begin());	 
 	  dftPtr->gradRhoInValsSpinPolarized.pop_front();
@@ -173,6 +174,9 @@ void symmetryClass<FEOrder>::computeAndSymmetrize_rhoOut()
 	  (**(dftPtr->gradRhoOutValsSpinPolarized.begin())).clear();
 	  delete *(dftPtr->gradRhoOutValsSpinPolarized.begin());	   
 	  dftPtr->gradRhoOutValsSpinPolarized.pop_front();
+
+         }
+
       }
     }
 
@@ -189,9 +193,9 @@ void symmetryClass<FEOrder>::computeLocalrhoOut()
   std::vector<Point<3>> quadPointList ;
   std::vector<double>  sendData, recvdData;
   //project eigen vectors to regular FEM space by multiplying with M^(-0.5)
-  for(int kPoint = 0; kPoint < (1+spinPolarized)*(dftPtr->d_maxkPoints); ++kPoint)
+  for(unsigned int kPoint = 0; kPoint < (1+spinPolarized)*(dftPtr->d_maxkPoints); ++kPoint)
     {
-      for (unsigned int i = 0; i < (dftPtr->numEigenValues); ++i)
+      for (unsigned int i = 0; i < dftPtr->numEigenValues; ++i)
 	{
 	  *((dftPtr->eigenVectorsOrig)[kPoint][i])=*((dftPtr->eigenVectors)[kPoint][i]);
 	  (*((dftPtr->eigenVectorsOrig)[kPoint][i])).scale(dftPtr->eigenPtr->massVector);
@@ -224,8 +228,8 @@ void symmetryClass<FEOrder>::computeLocalrhoOut()
      //
      for ( unsigned int iGroup = 0; iGroup < recv_size0[proc] ; ++iGroup ) {
        //
-	unsigned int numPoint = recvdData2[ numGroupsDone + iGroup];
-        unsigned int cellId =   recvdData0[ numGroupsDone + iGroup];
+	const unsigned int numPoint = recvdData2[ numGroupsDone + iGroup];
+        const unsigned int cellId =   recvdData0[ numGroupsDone + iGroup];
        //
        tempPsiAlpha.resize(numPoint);
        tempPsiBeta.resize(numPoint);
@@ -241,7 +245,7 @@ void symmetryClass<FEOrder>::computeLocalrhoOut()
          py = recvdData1[1][numPointsDone+iList] ;
          pz = recvdData1[2][numPointsDone+iList] ;
 	//	     
-         Point<3> pointTemp(px, py, pz) ;	     
+         const Point<3> pointTemp(px, py, pz) ;	     
          quadPointList[iList] = pointTemp;
          tempPsiAlpha[iList].reinit(2);
          tempPsiBeta[iList].reinit(2);
@@ -256,20 +260,20 @@ void symmetryClass<FEOrder>::computeLocalrhoOut()
      Quadrature<3> quadRule (quadPointList) ;
      FEValues<3> fe_values (dftPtr->FEEigen, quadRule, update_values | update_gradients| update_JxW_values | update_quadrature_points);
      fe_values.reinit(dealIICellId[cellId]) ;
-     unsigned int iSymm = recvdData3[numGroupsDone + iGroup] ;
+     const unsigned int iSymm = recvdData3[numGroupsDone + iGroup] ;
      //
      //pcout << " check 1.1 " << std::endl;
      //
-     for(int kPoint = 0; kPoint < (dftPtr->d_maxkPoints); ++kPoint)
+     for(unsigned int kPoint = 0; kPoint < (dftPtr->d_maxkPoints); ++kPoint)
          {
          if (symmUnderGroup[kPoint][iSymm] ==1) {
 	     for(unsigned int i=0; i<(dftPtr->numEigenValues); ++i)
 		      {
 		       double factor=((dftPtr->eigenValues)[kPoint][i]-(dftPtr->fermiEnergy))/(C_kb*TVal);
-		       double partialOccupancyAlpha = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)):1.0/(1.0 + std::exp(factor));
+		       const double partialOccupancyAlpha = getOccupancy(factor) ;
 		       //
 		       factor=((dftPtr->eigenValues)[kPoint][i+spinPolarized*(dftPtr->numEigenValues)]-(dftPtr->fermiEnergy))/(C_kb*TVal);
-		       double partialOccupancyBeta = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)):1.0/(1.0 + std::exp(factor));
+		       const double partialOccupancyBeta = getOccupancy(factor) ;
 		       //
 		       fe_values.get_function_values(*((dftPtr->eigenVectorsOrig)[(1+spinPolarized)*kPoint][i]), tempPsiAlpha);
 		       if (spinPolarized==1)
@@ -294,21 +298,13 @@ void symmetryClass<FEOrder>::computeLocalrhoOut()
 							2.0*partialOccupancyAlpha*(dftPtr->d_kPointWeights)[kPoint]*(tempPsiAlpha[iList](0)*tempPsiAlpha[iList](0) + tempPsiAlpha[iList](1)*tempPsiAlpha[iList](1));
 			     if(xc_id == 4) {//GGA
 			     //
+			       for (unsigned int j = 0; j < 3; ++j) {
+			           tempGradPsi[iList][0][j]=
+				     (tempGradPsiTempAlpha[iList][0][0]*symmMat[iSymm][0][j] + tempGradPsiTempAlpha[iList][0][1]*symmMat[iSymm][1][j] + tempGradPsiTempAlpha[iList][0][2]*symmMat[iSymm][2][j]) ; 
+			           tempGradPsi[iList][1][j]=
+				     (tempGradPsiTempAlpha[iList][1][0]*symmMat[iSymm][0][j] + tempGradPsiTempAlpha[iList][1][1]*symmMat[iSymm][1][j] + tempGradPsiTempAlpha[iList][1][2]*symmMat[iSymm][2][j]) ;
+			        }
 			     if (spinPolarized==1) {
-			     tempGradPsi[iList][0][0]=
-				(tempGradPsiTempAlpha[iList][0][0]*symmMat[iSymm][0][0] + tempGradPsiTempAlpha[iList][0][1]*symmMat[iSymm][1][0] + tempGradPsiTempAlpha[iList][0][2]*symmMat[iSymm][2][0]) ;
-                 	     tempGradPsi[iList][0][1] = 
-				(tempGradPsiTempAlpha[iList][0][0]*symmMat[iSymm][0][1] + tempGradPsiTempAlpha[iList][0][1]*symmMat[iSymm][1][1] + tempGradPsiTempAlpha[iList][0][2]*symmMat[iSymm][2][1]) ;
-                 	     tempGradPsi[iList][0][2] =
-				(tempGradPsiTempAlpha[iList][0][0]*symmMat[iSymm][0][2] + tempGradPsiTempAlpha[iList][0][1]*symmMat[iSymm][1][2] + tempGradPsiTempAlpha[iList][0][2]*symmMat[iSymm][2][2]) ; 
-			     tempGradPsi[iList][1][0]=
-				(tempGradPsiTempAlpha[iList][1][0]*symmMat[iSymm][0][0] + tempGradPsiTempAlpha[iList][1][1]*symmMat[iSymm][1][0] + tempGradPsiTempAlpha[iList][1][2]*symmMat[iSymm][2][0]) ;
-                 	     tempGradPsi[iList][1][1] = 
-				(tempGradPsiTempAlpha[iList][1][0]*symmMat[iSymm][0][1] + tempGradPsiTempAlpha[iList][1][1]*symmMat[iSymm][1][1] + tempGradPsiTempAlpha[iList][1][2]*symmMat[iSymm][2][1]) ;
-                 	     tempGradPsi[iList][1][2] =
-				(tempGradPsiTempAlpha[iList][1][0]*symmMat[iSymm][0][2] + tempGradPsiTempAlpha[iList][1][1]*symmMat[iSymm][1][2] + tempGradPsiTempAlpha[iList][1][2]*symmMat[iSymm][2][2]) ;
-
-
 			     //
 			     gradRhoTempSpinPolarized[6*(numPointsDone+iList) + 0] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
 						2.0*partialOccupancyAlpha*(dftPtr->d_kPointWeights)[kPoint]*(tempPsiAlpha[iList](0)*tempGradPsi[iList][0][0] + tempPsiAlpha[iList](1)*tempGradPsi[iList][1][0]);
@@ -317,18 +313,12 @@ void symmetryClass<FEOrder>::computeLocalrhoOut()
 			     gradRhoTempSpinPolarized[6*(numPointsDone+iList) + 2] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
 						2.0*partialOccupancyAlpha*(dftPtr->d_kPointWeights)[kPoint]*(tempPsiAlpha[iList](0)*tempGradPsi[iList][0][2] + tempPsiAlpha[iList](1)*tempGradPsi[iList][1][2]); 
 
-		             tempGradPsi[iList][0][0]=
-				(tempGradPsiTempBeta[iList][0][0]*symmMat[iSymm][0][0] + tempGradPsiTempBeta[iList][0][1]*symmMat[iSymm][1][0] + tempGradPsiTempBeta[iList][0][2]*symmMat[iSymm][2][0]) ;
-                 	     tempGradPsi[iList][0][1] = 
-				(tempGradPsiTempBeta[iList][0][0]*symmMat[iSymm][0][1] + tempGradPsiTempBeta[iList][0][1]*symmMat[iSymm][1][1] + tempGradPsiTempBeta[iList][0][2]*symmMat[iSymm][2][1]) ;
-                 	     tempGradPsi[iList][0][2] =
-				(tempGradPsiTempBeta[iList][0][0]*symmMat[iSymm][0][2] + tempGradPsiTempBeta[iList][0][1]*symmMat[iSymm][1][2] + tempGradPsiTempBeta[iList][0][2]*symmMat[iSymm][2][2]) ; 
-			     tempGradPsi[iList][1][0]=
-				(tempGradPsiTempBeta[iList][1][0]*symmMat[iSymm][0][0] + tempGradPsiTempBeta[iList][1][1]*symmMat[iSymm][1][0] + tempGradPsiTempBeta[iList][1][2]*symmMat[iSymm][2][0]) ;
-                 	     tempGradPsi[iList][1][1] = 
-				(tempGradPsiTempBeta[iList][1][0]*symmMat[iSymm][0][1] + tempGradPsiTempBeta[iList][1][1]*symmMat[iSymm][1][1] + tempGradPsiTempBeta[iList][1][2]*symmMat[iSymm][2][1]) ;
-                 	     tempGradPsi[iList][1][2] =
-				(tempGradPsiTempBeta[iList][1][0]*symmMat[iSymm][0][2] + tempGradPsiTempBeta[iList][1][1]*symmMat[iSymm][1][2] + tempGradPsiTempBeta[iList][1][2]*symmMat[iSymm][2][2]) ;
+		             for (unsigned int j = 0; j < 3; ++j) {
+			           tempGradPsi[iList][0][j]=
+				     (tempGradPsiTempBeta[iList][0][0]*symmMat[iSymm][0][j] + tempGradPsiTempBeta[iList][0][1]*symmMat[iSymm][1][j] + tempGradPsiTempBeta[iList][0][2]*symmMat[iSymm][2][j]) ; 
+			           tempGradPsi[iList][1][j]=
+				     (tempGradPsiTempBeta[iList][1][0]*symmMat[iSymm][0][j] + tempGradPsiTempBeta[iList][1][1]*symmMat[iSymm][1][j] + tempGradPsiTempBeta[iList][1][2]*symmMat[iSymm][2][j]) ;
+			        }
 
 
 			     //
@@ -340,19 +330,6 @@ void symmetryClass<FEOrder>::computeLocalrhoOut()
 						2.0*partialOccupancyBeta*(dftPtr->d_kPointWeights)[kPoint]*(tempPsiBeta[iList](0)*tempGradPsi[iList][0][2] + tempPsiBeta[iList](1)*tempGradPsi[iList][1][2]); 
 				}
 			     else {
-				 tempGradPsi[iList][0][0]=
-				(tempGradPsiTempAlpha[iList][0][0]*symmMat[iSymm][0][0] + tempGradPsiTempAlpha[iList][0][1]*symmMat[iSymm][1][0] + tempGradPsiTempAlpha[iList][0][2]*symmMat[iSymm][2][0]) ;
-                 	     tempGradPsi[iList][0][1] = 
-				(tempGradPsiTempAlpha[iList][0][0]*symmMat[iSymm][0][1] + tempGradPsiTempAlpha[iList][0][1]*symmMat[iSymm][1][1] + tempGradPsiTempAlpha[iList][0][2]*symmMat[iSymm][2][1]) ;
-                 	     tempGradPsi[iList][0][2] =
-				(tempGradPsiTempAlpha[iList][0][0]*symmMat[iSymm][0][2] + tempGradPsiTempAlpha[iList][0][1]*symmMat[iSymm][1][2] + tempGradPsiTempAlpha[iList][0][2]*symmMat[iSymm][2][2]) ; 
-			     tempGradPsi[iList][1][0]=
-				(tempGradPsiTempAlpha[iList][1][0]*symmMat[iSymm][0][0] + tempGradPsiTempAlpha[iList][1][1]*symmMat[iSymm][1][0] + tempGradPsiTempAlpha[iList][1][2]*symmMat[iSymm][2][0]) ;
-                 	     tempGradPsi[iList][1][1] = 
-				(tempGradPsiTempAlpha[iList][1][0]*symmMat[iSymm][0][1] + tempGradPsiTempAlpha[iList][1][1]*symmMat[iSymm][1][1] + tempGradPsiTempAlpha[iList][1][2]*symmMat[iSymm][2][1]) ;
-                 	     tempGradPsi[iList][1][2] =
-				(tempGradPsiTempAlpha[iList][1][0]*symmMat[iSymm][0][2] + tempGradPsiTempAlpha[iList][1][1]*symmMat[iSymm][1][2] + tempGradPsiTempAlpha[iList][1][2]*symmMat[iSymm][2][2]) ;
-
 
 			     //
 			     gradRhoTemp[3*(numPointsDone+iList) + 0] += 1.0 / (double(numSymmUnderGroup[kPoint])) *
@@ -388,17 +365,10 @@ void symmetryClass<FEOrder>::computeLocalrhoOut()
 	      MPI_Allreduce(&gradRhoTempSpinPolarized[0], &gradRhoLocalSpinPolarized[0], 6*totPoints, MPI_DOUBLE, MPI_SUM, interpoolcomm) ; 
           }
    
-   //std::cout << this_mpi_process << " check 1.2 " << std::endl;
-   //MPI_Barrier(mpi_communicator);
+   
     sendData.resize((1+spinPolarized)*totPoints) ;
-   if (spinPolarized==1){
-     
+   if (spinPolarized==1)
       sendData = rhoLocalSpinPolarized ;
-      /*for(int i = 0; i < n_mpi_processes; i++) {
-         recv_size1[i] = 2*recv_size1[i] ;
-         mpi_offsets1[i] = 2*mpi_offsets1[i] ;
-	}*/
-     }
    else
       sendData = rhoLocal ;
    //
@@ -483,16 +453,3 @@ void symmetryClass<FEOrder>::computeLocalrhoOut()
 	
 
   }
-
-template class symmetryClass<1>;
-template class symmetryClass<2>;
-template class symmetryClass<3>;
-template class symmetryClass<4>;
-template class symmetryClass<5>;
-template class symmetryClass<6>;
-template class symmetryClass<7>;
-template class symmetryClass<8>;
-template class symmetryClass<9>;
-template class symmetryClass<10>;
-template class symmetryClass<11>;
-template class symmetryClass<12>;

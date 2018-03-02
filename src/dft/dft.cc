@@ -273,8 +273,8 @@ void dftClass<FEOrder>::set()
 #ifdef ENABLE_PERIODIC_BC
   //readkPointData();
    generateMPGrid();
-   if (useSymm)
-      symmetryPtr->test_spg_get_ir_reciprocal_mesh() ;
+   //if (useSymm)
+   //symmetryPtr->test_spg_get_ir_reciprocal_mesh() ;
 #else
   d_maxkPoints = 1;
   d_kPointCoordinates.resize(3*d_maxkPoints,0.0);
@@ -374,7 +374,7 @@ void dftClass<FEOrder>::init ()
   //
   initUnmovedTriangulation(triangulationPar);
 #ifdef ENABLE_PERIODIC_BC
- if (useSymm)
+ if (useSymm || timeReversal)
     symmetryPtr->initSymmetry() ;
 #endif
   //
@@ -579,7 +579,7 @@ void dftClass<FEOrder>::solve()
 	//rhoOut
    computing_timer.enter_section("compute rho"); 
 #ifdef ENABLE_PERIODIC_BC
-   if (useSymm){
+   if (useSymm || timeReversal){
 	symmetryPtr->computeLocalrhoOut();
 	symmetryPtr->computeAndSymmetrize_rhoOut();
     }
@@ -613,10 +613,7 @@ void dftClass<FEOrder>::solve()
       scfIter++;
     }
  computing_timer.exit_section("solve");
-#ifdef ENABLE_PERIODIC_BC
- if (useSymm)
-    symmetryPtr->clearMaps() ;
-#endif
+
 //
 /*
  computing_timer.enter_section(" pp "); 
