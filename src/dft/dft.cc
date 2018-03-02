@@ -318,7 +318,7 @@ void dftClass<FEOrder>::init ()
   recomputeKPointCoordinates();
 
   pcout<<"Actual k-Point-coordinates and weights: "<<std::endl;
-  for(int i = 0; i < d_maxkPoints; ++i)
+  for(unsigned int i = 0; i < d_maxkPoints; ++i)
   {
     pcout<< i<<": ["<< d_kPointCoordinates[3*i+0] <<", "<< d_kPointCoordinates[3*i+1]<<", "<< d_kPointCoordinates[3*i+2]<<"] "<<d_kPointWeights[i]<<std::endl;
   }   
@@ -395,7 +395,7 @@ void dftClass<FEOrder>::initNoRemesh()
   recomputeKPointCoordinates(); 
 
   pcout<<"actual k-Point-coordinates and weights: "<<std::endl;
-  for(int i = 0; i < d_maxkPoints; ++i)
+  for(unsigned int i = 0; i < d_maxkPoints; ++i)
   {
     pcout<< i<<": ["<< d_kPointCoordinates[3*i+0] <<", " <<d_kPointCoordinates[3*i+1]<<", "<< d_kPointCoordinates[3*i+2]<<"] "<<d_kPointWeights[i]<<std::endl;
   }     
