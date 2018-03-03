@@ -375,13 +375,8 @@ void dftClass<FEOrder>::generateImageCharges()
     }
   
   d_imageIds.clear();
-  for (int i = 0; i < d_imagePositions.size(); ++i)
-    {
-      std::vector<double> & imagePosition = d_imagePositions[i];
-      imagePosition.clear();
-    }
-
-
+  d_imagePositions.clear();
+  d_imageCharges.clear();
   
   for(int i = 0; i < atomLocations.size(); ++i)
     {

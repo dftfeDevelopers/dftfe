@@ -507,6 +507,12 @@ class dftClass
   std::vector<double> d_kPointWeights;
   int d_maxkPoints;
   int d_kPointIndex;
+  ///
+  ///recomputes the k point cartesian coordinates from the crystal k point coordinates
+  ///and the current lattice vectors, which can change in each ground state solve when
+  ///isCellOpt is true
+  ///
+  void recomputeKPointCoordinates();
   //integralRhoOut to store number of electrons
   double integralRhoValue;
   

@@ -175,7 +175,7 @@ void geoOptIon<FEOrder>::gradient(std::vector<double> & gradient)
           if (d_relaxationFlags[3*i+j]==1) 
 	  {
               gradient.push_back(tempGradient[3*i+j]);
-	      pcout<<" atomId: "<<i << " direction: "<< j << " force: "<<-tempGradient[3*i+j]<<std::endl;
+	      //pcout<<" atomId: "<<i << " direction: "<< j << " force: "<<-tempGradient[3*i+j]<<std::endl;
 	  }	  
       }
    }

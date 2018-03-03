@@ -19,17 +19,46 @@
 
 
 using namespace dftParameters ;
+namespace internaldft{
+  std::vector<double>  cross_product(const std::vector<double> &a,
+		                     const std::vector<double> &b)
+  {
+    std::vector<double> crossProduct(a.size(),0.0);
 
-void cross_product(std::vector<double> &a,
-		   std::vector<double> &b,
-		   std::vector<double> &crossProduct)
-{
-  crossProduct.resize(a.size(),0.0);
+    crossProduct[0] = a[1]*b[2]-a[2]*b[1];
+    crossProduct[1] = a[2]*b[0]-a[0]*b[2];
+    crossProduct[2] = a[0]*b[1]-a[1]*b[0];
 
-  crossProduct[0] = a[1]*b[2]-a[2]*b[1];
-  crossProduct[1] = a[2]*b[0]-a[0]*b[2];
-  crossProduct[2] = a[0]*b[1]-a[1]*b[0];
+    return crossProduct;
+  }
 
+  std::vector<std::vector<double> > getReciprocalLatticeVectors(const std::vector<std::vector<double> > & latticeVectors) 
+	                           
+  {
+      std::vector<std::vector<double> > reciprocalLatticeVectors(3,std::vector<double> (3,0.0));
+      for(unsigned int i = 0; i < 2; ++i)
+	{
+	  std::vector<double> cross=internaldft::cross_product(latticeVectors[i+1],
+				                               latticeVectors[3 - (2*i + 1)]);
+
+	  const double scalarConst = latticeVectors[i][0]*cross[0] + latticeVectors[i][1]*cross[1] + latticeVectors[i][2]*cross[2];
+
+	  for (unsigned int d = 0; d < 3; ++d)
+	    reciprocalLatticeVectors[i][d] = (2.*M_PI/scalarConst)*cross[d];
+	}
+
+      //
+      //fill up 3rd reciprocal lattice vector
+      //
+      std::vector<double> cross=internaldft::cross_product(latticeVectors[0],
+				                           latticeVectors[1]);
+
+      const double scalarConst = latticeVectors[2][0]*cross[0] + latticeVectors[2][1]*cross[1] + latticeVectors[2][2]*cross[2];
+      for (unsigned int d = 0; d < 3; ++d)
+         reciprocalLatticeVectors[2][d] = (2*M_PI/scalarConst)*cross[d];
+
+      return reciprocalLatticeVectors;
+  }
 }
 
 template<unsigned int FEOrder>
@@ -73,6 +102,20 @@ void dftClass<FEOrder>::readkPointData()
 
 
 }
+
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::recomputeKPointCoordinates()
+{
+  // Get the reciprocal lattice vectors
+  d_reciprocalLatticeVectors=internaldft::getReciprocalLatticeVectors(d_latticeVectors);    
+  // Convert from crystal to Cartesian coordinates
+  for(unsigned int i = 0; i < d_maxkPoints; ++i)
+    for (unsigned int d=0; d < 3; ++d)
+      d_kPointCoordinates[3*i + d] = kPointReducedCoordinates[3*i+0]*d_reciprocalLatticeVectors[0][d] +
+                                     kPointReducedCoordinates[3*i+1]*d_reciprocalLatticeVectors[1][d] +
+                                     kPointReducedCoordinates[3*i+2]*d_reciprocalLatticeVectors[2][d];    
+}
+
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::generateMPGrid()
 {
@@ -106,33 +149,7 @@ void dftClass<FEOrder>::generateMPGrid()
     }
 
   // Get the reciprocal lattice vectors
-  d_reciprocalLatticeVectors.resize(3,std::vector<double> (3,0.0));
-  for(unsigned int i = 0; i < 2; ++i)
-    {
-      std::vector<double> cross(3,0.0);
-      cross_product(d_latticeVectors[i+1],
-		    d_latticeVectors[3 - (2*i + 1)],
-		    cross);
-
-      const double scalarConst = d_latticeVectors[i][0]*cross[0] + d_latticeVectors[i][1]*cross[1] + d_latticeVectors[i][2]*cross[2];
-
-      for (unsigned int d = 0; d < 3; ++d)
-        d_reciprocalLatticeVectors[i][d] = (2.*M_PI/scalarConst)*cross[d];
-    }
-
-  //
-  //fill up 3rd reciprocal lattice vector
-  //
-  std::vector<double> cross(3,0.0);
-  cross_product(d_latticeVectors[0],
-		d_latticeVectors[1],
-		cross);
-
-  const double scalarConst = d_latticeVectors[2][0]*cross[0] + d_latticeVectors[2][1]*cross[1] + d_latticeVectors[2][2]*cross[2];
-
-  d_reciprocalLatticeVectors[2][0] = (2*M_PI/scalarConst)*cross[0];
-  d_reciprocalLatticeVectors[2][1] = (2*M_PI/scalarConst)*cross[1];
-  d_reciprocalLatticeVectors[2][2] = (2*M_PI/scalarConst)*cross[2];
+  d_reciprocalLatticeVectors=internaldft::getReciprocalLatticeVectors(d_latticeVectors);
 
   if (useSymm || timeReversal) {
     //
@@ -265,8 +282,8 @@ void dftClass<FEOrder>::generateMPGrid()
                         kPointAllCoordinates[3*ik+2]*symmMatTemp[iSymm][2][d];
         //
 	kPointTemp[0] = kPointTemp[0] - dkx ;
-    kPointTemp[1] = kPointTemp[1] - dky ;
-    kPointTemp[2] = kPointTemp[2] - dkz ;
+        kPointTemp[1] = kPointTemp[1] - dky ;
+        kPointTemp[2] = kPointTemp[2] - dkz ;
         for ( unsigned int dir=0;  dir < 3; ++dir) {
             while (kPointTemp[dir] > (1.0-1.0E-5) )
               kPointTemp[dir] = kPointTemp[dir] - 1.0 ;
@@ -350,15 +367,20 @@ void dftClass<FEOrder>::generateMPGrid()
    const unsigned int this_mpi_pool (Utilities::MPI::this_mpi_process(interpoolcomm)) ;
    std::vector<double> d_kPointCoordinatesGlobal(3*d_maxkPoints, 0.0) ;
    std::vector<double> d_kPointWeightsGlobal(d_maxkPoints, 0.0) ;
+   std::vector<double> kPointReducedCoordinatesGlobal(3*d_maxkPoints, 0.0) ;   
    for(unsigned int i = 0; i < d_maxkPoints; ++i)
     {
        for (unsigned int d=0; d < 3; ++d)
+       {
          d_kPointCoordinatesGlobal[3*i + d] = d_kPointCoordinates[3*i + d];
+	 kPointReducedCoordinatesGlobal[3*i + d] = kPointReducedCoordinates[3*i + d];
+       }
      d_kPointWeightsGlobal[i] = d_kPointWeights[i] ;
     }
    //
    const unsigned int d_maxkPointsGlobal = d_maxkPoints ;
    d_kPointCoordinates.clear() ;
+   kPointReducedCoordinates.clear();
    d_kPointWeights.clear() ;
    d_maxkPoints = d_maxkPointsGlobal / npool ;
    const unsigned int rest = d_maxkPointsGlobal%npool ;
@@ -366,6 +388,7 @@ void dftClass<FEOrder>::generateMPGrid()
        d_maxkPoints = d_maxkPoints + 1 ;
    //
    d_kPointCoordinates.resize(3*d_maxkPoints, 0.0) ;
+   kPointReducedCoordinates.resize(3*d_maxkPoints, 0.0);
    d_kPointWeights.resize(d_maxkPoints, 0.0) ;
    //
    std::vector<int> sendSizekPoints1(npool, 0), mpiOffsetskPoints1(npool, 0) ;
@@ -389,5 +412,6 @@ void dftClass<FEOrder>::generateMPGrid()
    //
    MPI_Scatterv(&(d_kPointCoordinatesGlobal[0]),&(sendSizekPoints1[0]), &(mpiOffsetskPoints1[0]), MPI_DOUBLE, &(d_kPointCoordinates[0]), 3*d_maxkPoints, MPI_DOUBLE, 0, interpoolcomm);
    MPI_Scatterv(&(d_kPointWeightsGlobal[0]),&(sendSizekPoints2[0]), &(mpiOffsetskPoints2[0]), MPI_DOUBLE, &(d_kPointWeights[0]), d_maxkPoints, MPI_DOUBLE, 0, interpoolcomm);
+   MPI_Scatterv(&(kPointReducedCoordinatesGlobal[0]),&(sendSizekPoints1[0]), &(mpiOffsetskPoints1[0]), MPI_DOUBLE, &(kPointReducedCoordinates[0]), 3*d_maxkPoints, MPI_DOUBLE, 0, interpoolcomm);   
 
 }

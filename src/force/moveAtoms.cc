@@ -15,7 +15,71 @@
 //
 // @author Sambit Das(2017)
 //
-//
+
+namespace internalforce{
+
+  extern "C"{
+      //
+      // lapack Ax=b
+      //
+      void dgesv_(int *N, int * NRHS, double* A, int * LDA, int* IPIV,
+		  double *B, int * LDB, int *INFO);
+
+  }
+
+    
+  std::vector<double> getFractionalCoordinates(const std::vector<double> & latticeVectors,
+	                                       const Point<3> & point,                                                                                           const Point<3> & corner)
+  {   
+      //
+      // recenter vertex about corner
+      //
+      std::vector<double> recenteredPoint(3);
+      for(unsigned int i = 0; i < 3; ++i)
+        recenteredPoint[i] = point[i]-corner[i];
+
+      std::vector<double> latticeVectorsDup = latticeVectors;
+
+      //
+      // to get the fractionalCoords, solve a linear
+      // system of equations
+      //
+      int N = 3;
+      int NRHS = 1;
+      int LDA = 3;
+      int IPIV[3];
+      int info;
+
+      dgesv_(&N, &NRHS, &latticeVectorsDup[0], &LDA, &IPIV[0], &recenteredPoint[0], &LDA,&info);
+      AssertThrow(info == 0, ExcMessage("LU solve in finding fractional coordinates failed."));
+      return recenteredPoint;
+  }
+   
+  std::vector<double> wrapAtomsAcrossPeriodicBc(const Point<3> & cellCenteredCoord,
+	                                        const Point<3> & corner,
+					        const std::vector<double> & latticeVectors,
+						const std::vector<bool> & periodicBc)
+  {
+     const double tol=1e-6;      
+     std::vector<double> fracCoord= getFractionalCoordinates(latticeVectors,
+	                                                     cellCenteredCoord,                                                                                                corner);  
+     //wrap fractional coordinate
+     for(unsigned int i = 0; i < 3; ++i)
+     {
+       if (periodicBc[i])
+       {
+         if (fracCoord[i]<-tol)
+	   fracCoord[i]+=1.0;
+         else if (fracCoord[i]>1.0+tol)
+	   fracCoord[i]-=1.0;
+         AssertThrow(fracCoord[i]>-2.0*tol && fracCoord[i]<1.0+2.0*tol,ExcMessage("Moved atom position doesnt't lie inside the cell after wrapping across periodic boundary"));
+       }
+     }     
+     return fracCoord;
+  } 
+  
+}
+
 // Function to update the atom positions and mesh based on the provided displacement input.
 // Depending on the maximum displacement magnitude this function decides wether to do auto remeshing
 // or move mesh using Gaussian functions.
@@ -27,13 +91,30 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
   const std::vector<int > & imageIds=dftPtr->d_imageIds;
   const int numberGlobalAtoms = atomLocations.size();
   const int numberImageCharges = imageIds.size();
-  const int totalNumberAtoms = numberGlobalAtoms + numberImageCharges; 
+  const int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
+
+#ifdef ENABLE_PERIODIC_BC
+  std::vector<double> latticeVectorsFlattened(9,0.0);
+  for (unsigned int idim=0; idim<3; idim++)
+      for(unsigned int jdim=0; jdim<3; jdim++)
+          latticeVectorsFlattened[3*idim+jdim]=dftPtr->d_latticeVectors[idim][jdim];
+  Point<3> corner;
+  for (unsigned int idim=0; idim<3; idim++)
+  {
+      corner[idim]=0;
+      for(unsigned int jdim=0; jdim<3; jdim++)
+          corner[idim]-=dftPtr->d_latticeVectors[jdim][idim]/2.0;
+  }
+  std::vector<bool> periodicBc(3,false); 
+  periodicBc[0]=dftParameters::periodicX;periodicBc[1]=dftParameters::periodicY;periodicBc[2]=dftParameters::periodicZ;  
+#endif
 
   std::vector<Point<C_DIM> > controlPointLocations;
   std::vector<Tensor<1,C_DIM,double> > controlPointDisplacements;
  
   double maxDispAtom=-1;
-  for (unsigned int iAtom=0;iAtom <totalNumberAtoms; iAtom++){
+  for (unsigned int iAtom=0;iAtom <totalNumberAtoms; iAtom++)
+  {
      Point<C_DIM> atomCoor;
      int atomId=iAtom;
      if(iAtom < numberGlobalAtoms)
@@ -41,10 +122,30 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
         atomCoor[0] = atomLocations[iAtom][2];
         atomCoor[1] = atomLocations[iAtom][3];
         atomCoor[2] = atomLocations[iAtom][4];
-	double temp=globalAtomsDisplacements[atomId].norm();
+	const double temp=globalAtomsDisplacements[atomId].norm();
+#ifdef ENABLE_PERIODIC_BC
+	Point<C_DIM> newCoord;
+	for (unsigned int idim=0; idim<C_DIM; ++idim)
+	    newCoord[idim]=atomCoor[idim]+globalAtomsDisplacements[atomId][idim];
+        std::vector<double> newFracCoord=internalforce::wrapAtomsAcrossPeriodicBc(newCoord,
+	                                                                          corner,
+					                                          latticeVectorsFlattened,
+						                                  periodicBc);
+        //for synchrozination 
+        MPI_Bcast(&(newFracCoord[0]),
+	         3,
+	         MPI_DOUBLE,
+	         0,
+	         MPI_COMM_WORLD); 
+
+        dftPtr->atomLocationsFractional[iAtom][2]=newFracCoord[0];
+        dftPtr->atomLocationsFractional[iAtom][3]=newFracCoord[1];
+        dftPtr->atomLocationsFractional[iAtom][4]=newFracCoord[2];	
+#else
         atomLocations[iAtom][2]+=globalAtomsDisplacements[atomId][0];
         atomLocations[iAtom][3]+=globalAtomsDisplacements[atomId][1];
         atomLocations[iAtom][4]+=globalAtomsDisplacements[atomId][2];
+#endif
 
 	if (temp>maxDispAtom)
 	    maxDispAtom=temp;
@@ -55,10 +156,6 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
 	atomCoor[1] = imagePositions[iAtom-numberGlobalAtoms][1];
 	atomCoor[2] = imagePositions[iAtom-numberGlobalAtoms][2];
 	atomId=imageIds[iAtom-numberGlobalAtoms];
-	imagePositions[iAtom-numberGlobalAtoms][0]+=globalAtomsDisplacements[atomId][0];
-	imagePositions[iAtom-numberGlobalAtoms][1]+=globalAtomsDisplacements[atomId][1];
-	imagePositions[iAtom-numberGlobalAtoms][2]+=globalAtomsDisplacements[atomId][2];
-	
      }
      controlPointLocations.push_back(atomCoor);
      controlPointDisplacements.push_back(globalAtomsDisplacements[atomId]);
@@ -84,7 +181,7 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
     updateCase=2;
   }
  
-  //for synchrozination in case there are the updateCase is different in different processors due to floating point comparison
+  //for synchrozination in case the updateCase are different in different processors due to floating point comparison
   MPI_Bcast(&(updateCase),
 	    1,
 	    MPI_INT,
