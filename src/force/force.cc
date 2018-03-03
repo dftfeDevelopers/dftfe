@@ -25,18 +25,18 @@
 #include "../../include/fileReaders.h"
 
 
-#include "configurationalForceEEshelbyFPSPFnlLinFE.cc"
-#include "FPSPLocalGammaAtomsElementalContribution.cc"
-#include "FnlGammaAtomsElementalContribution.cc"
-#include "configurationalForceEselfLinFE.cc"
-#include "computeStressEself.cc"
+#include "configurationalForceCompute/configurationalForceEEshelbyFPSPFnlLinFE.cc"
+#include "configurationalForceCompute/FPSPLocalGammaAtomsElementalContribution.cc"
+#include "configurationalForceCompute/FnlGammaAtomsElementalContribution.cc"
+#include "configurationalForceCompute/configurationalForceEselfLinFE.cc"
+#include "configurationalForceCompute/gaussianGeneratorConfForceOpt.cc"
+#include "configurationalStressCompute/computeStressEself.cc"
 //#include "computeStressEEshelbyEPSPEnlEk.cc"
+#include "configurationalStressCompute/stress.cc"
 #include "initPseudoForce.cc"
 #include "initPseudoOVForce.cc"
 #include "createBinObjectsForce.cc"
-#include "gaussianGeneratorConfForceOpt.cc"
 #include "locateAtomCoreNodesForce.cc"
-#include "stress.cc"
 #include "moveAtoms.cc"
 
 //This class computes and stores the configurational forces corresponding to geometry optimization.
