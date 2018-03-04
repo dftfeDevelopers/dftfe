@@ -611,9 +611,12 @@ void dftClass<FEOrder>::chebyshevFilter(std::vector<vectorType*> & X,
   double e, c, sigma, sigma1, sigma2, gamma;
   e=(b-a)/2.0; c=(b+a)/2.0;
   sigma=e/(a0-c); sigma1=sigma; gamma=2.0/sigma1;
-  
+
   //Y=alpha1*(HX+alpha2*X)
   double alpha1=sigma1/e, alpha2=-c;
+  for(unsigned int i = 0; i < X.size(); ++i)
+    constraintsNoneEigen.set_zero(*X[i]);
+
   eigenPtr->HX(X, PSI);
   for (std::vector<vectorType*>::iterator y=PSI.begin(), x=X.begin(); y<PSI.end(); ++y, ++x){  
     (**y).add(alpha2,**x);

@@ -44,7 +44,7 @@
 #include "charge.cc"
 #include "density.cc"
 #include "nscf.cc"
-//#include "symmetrizeRho.cc"
+
 
 #include "mixingschemes.cc"
 #include "chebyshev.cc"
@@ -57,7 +57,6 @@
 #include "stdafx.h"
 #ifdef ENABLE_PERIODIC_BC
 #include "generateImageCharges.cc"
-//#include "initGroupSymmetry.cc"
 #endif
 
 
@@ -371,6 +370,14 @@ void dftClass<FEOrder>::init ()
   //initialize guesses for electron-density and wavefunctions
   //
   initElectronicFields();
+
+  //
+  //store constraintEigen Matrix entries into STL vector
+  //
+  constraintsNoneEigenDataInfo.initialize(vChebyshev.get_partitioner(),
+					  constraintsNoneEigen);
+
+
   //
   //initialize pseudopotential data for both local and nonlocal part
   //

@@ -58,13 +58,14 @@
 #include <deal.II/dofs/dof_accessor.h>
 #include <deal.II/lac/solver_cg.h>
 #include <deal.II/lac/solver_gmres.h>
-//#include <deal.II/lac/solver_bicgstab.h>
 #include <deal.II/lac/precondition.h>
 #include <deal.II/distributed/tria.h>
 #include <deal.II/lac/parallel_vector.h>
 #include <deal.II/matrix_free/matrix_free.h>
 #include <deal.II/matrix_free/fe_evaluation.h>
 #include <deal.II/lac/slepc_solver.h>
+#include <deal.II/base/config.h>
+#include <deal.II/base/smartpointer.h>
 
 //Include generic C++ headers
 #include <fstream>

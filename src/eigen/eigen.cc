@@ -875,7 +875,8 @@ void eigenClass<FEOrder>::HX(const std::vector<vectorType*> &src,
       *(dftPtr->tempPSI2[i]) = *src[i];
       dftPtr->tempPSI2[i]->scale(massVector); //MX
       dftPtr->tempPSI2[i]->update_ghost_values();
-      dftPtr->constraintsNoneEigen.distribute(*(dftPtr->tempPSI2[i]));
+      //dftPtr->constraintsNoneEigen.distribute(*(dftPtr->tempPSI2[i]));
+      dftPtr->constraintsNoneEigenDataInfo.distribute(*(dftPtr->tempPSI2[i]));
       dftPtr->tempPSI2[i]->update_ghost_values();
       *dst[i] = 0.0;
     }
