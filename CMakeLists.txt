@@ -23,6 +23,7 @@ SET(TARGET_SRC
   ./src/solvers/cgPRPNonLinearSolver.cc
   ./utils/fileReaders.cc
   ./utils/dftParameters.cc
+  ./utils/constraintMatrixInfo.cc
   # You can specify additional files here!
   )
 
