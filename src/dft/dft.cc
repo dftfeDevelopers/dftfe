@@ -177,7 +177,7 @@ void dftClass<FEOrder>::set()
   for(int i = 0; i < atomLocations.size(); ++i)
     {
       atomLocationsFractional[i] = atomLocations[i] ;
-      pcout<<"fractional coordinates of atom: "<<atomLocationsFractional[i][2]<<" "<<atomLocationsFractional[i][3]<<" "<<atomLocationsFractional[i][4]<<"\n";
+      //pcout<<"fractional coordinates of atom: "<<atomLocationsFractional[i][2]<<" "<<atomLocationsFractional[i][3]<<" "<<atomLocationsFractional[i][4]<<"\n";
     }
 
   //
@@ -188,26 +188,6 @@ void dftClass<FEOrder>::set()
   for(int i = 0; i < d_latticeVectors.size(); ++i)
     {
       pcout<<"lattice vectors: "<<d_latticeVectors[i][0]<<" "<<d_latticeVectors[i][1]<<" "<<d_latticeVectors[i][2]<<"\n";
-    }
-
-  //
-  //generate Image charges
-  //
-  generateImageCharges();
-
-
-  //
-  //find cell-centered cartesian coordinates
-  //
-  convertToCellCenteredCartesianCoordinates(atomLocations,
-					    d_latticeVectors);
-
-  //
-  //print cartesian coordinates
-  //
-  for(int i = 0; i < atomLocations.size(); ++i)
-    {
-      pcout<<"Cartesian coordinates of atoms: "<<atomLocations[i][2]<<" "<<atomLocations[i][3]<<" "<<atomLocations[i][4]<<"\n";
     }
 
   //
@@ -228,14 +208,8 @@ void dftClass<FEOrder>::set()
     }
 
   //
-  //print cartesian coordinates
+  //create domain bounding vectors
   //
-  for(int i = 0; i < atomLocations.size(); ++i)
-    {
-      pcout<<"Cartesian coordinates of atoms: "<<atomLocations[i][2]<<" "<<atomLocations[i][3]<<" "<<atomLocations[i][4]<<"\n";
-    }
-
-
   std::vector<double> domainVector;
   domainVector.push_back(dftParameters::domainSizeX);domainVector.push_back(0.0);domainVector.push_back(0.0);
   d_domainBoundingVectors.push_back(domainVector);
@@ -248,36 +222,25 @@ void dftClass<FEOrder>::set()
 #endif
 
   pcout << "number of atoms types: " << atomTypes.size() << "\n";
-
-  //
-  //create domain bounding vectors
-  //
-
   
   //estimate total number of wave functions
   determineOrbitalFilling();  
 
   pcout << "number of eigen values: " << numEigenValues << std::endl; 
 
-  //
-  //read kPoint data
-  //
 #ifdef ENABLE_PERIODIC_BC
+   if (dftParameters::isIonForce || dftParameters::isCellStress)  
+      AssertThrow(!dftParameters::useSymm,ExcMessage("USE GROUP SYMMETRY must be set to false if either ION FORCE or CELL STRESS is set to true. This functionality will be added in a future release"));  
   //readkPointData();
    generateMPGrid();
-   if (useSymm)
-      symmetryPtr->test_spg_get_ir_reciprocal_mesh() ;
+   //if (useSymm)
+   //symmetryPtr->test_spg_get_ir_reciprocal_mesh() ;
 #else
   d_maxkPoints = 1;
   d_kPointCoordinates.resize(3*d_maxkPoints,0.0);
   d_kPointWeights.resize(d_maxkPoints,1.0);
 #endif
-  char buffer[100];
-  pcout<<"actual k-Point-coordinates and weights: "<<std::endl;
-  for(int i = 0; i < d_maxkPoints; ++i){
-    sprintf(buffer, "  %5u:  %12.5f  %12.5f %12.5f %12.5f\n", i, d_kPointCoordinates[3*i+0], d_kPointCoordinates[3*i+1], d_kPointCoordinates[3*i+2],d_kPointWeights[i]);
-    pcout << buffer;
-  }   
+  
   //set size of eigenvalues and eigenvectors data structures
   eigenValues.resize(d_maxkPoints);
   eigenValuesTemp.resize(d_maxkPoints);
@@ -285,21 +248,14 @@ void dftClass<FEOrder>::set()
   bLow.resize((spinPolarized+1)*d_maxkPoints,0.0);
   eigenVectors.resize((1+spinPolarized)*d_maxkPoints);
   eigenVectorsOrig.resize((1+spinPolarized)*d_maxkPoints);
-  //
-  //char buffer[100];
-  //sprintf(buffer, "%s:%10u\n", "check 0", eigenVectors.size());
-  //pcout << buffer;
-  //
+  
   for(unsigned int kPoint = 0; kPoint < (1+spinPolarized)*d_maxkPoints; ++kPoint)
     {
-      //for (unsigned int j=0; j<(spinPolarized+1); ++j) // for spin
-       //{
         for (unsigned int i=0; i<numEigenValues; ++i)
 	  {
 	    eigenVectors[kPoint].push_back(new vectorType);
 	    eigenVectorsOrig[kPoint].push_back(new vectorType);
 	  }
-       //}
     }
    for(unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
     {
@@ -347,6 +303,35 @@ void dftClass<FEOrder>::initPseudoPotentialAll()
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::init ()
 {
+#ifdef ENABLE_PERIODIC_BC
+  pcout<<"-----Fractional coordinates of atoms------ "<<std::endl;    
+  for(unsigned int i = 0; i < atomLocations.size(); ++i)
+  {
+      atomLocations[i] = atomLocationsFractional[i] ;
+      pcout<<" atomId- "<<i <<" : "<<atomLocationsFractional[i][2]<<" "<<atomLocationsFractional[i][3]<<" "<<atomLocationsFractional[i][4]<<"\n";
+  }   
+  generateImageCharges();
+
+  convertToCellCenteredCartesianCoordinates(atomLocations,
+					    d_latticeVectors);
+  recomputeKPointCoordinates();
+
+  pcout<<"Actual k-Point-coordinates and weights: "<<std::endl;
+  for(unsigned int i = 0; i < d_maxkPoints; ++i)
+  {
+    pcout<< i<<": ["<< d_kPointCoordinates[3*i+0] <<", "<< d_kPointCoordinates[3*i+1]<<", "<< d_kPointCoordinates[3*i+2]<<"] "<<d_kPointWeights[i]<<std::endl;
+  }   
+#else
+  //
+  //print cartesian coordinates
+  //
+  pcout<<"-----Cartesian coordinates of atoms------ "<<std::endl;
+  for(unsigned int i = 0; i < atomLocations.size(); ++i)
+    {
+      pcout<<" atomId- "<<i <<" : "<<atomLocations[i][2]<<" "<<atomLocations[i][3]<<" "<<atomLocations[i][4]<<"\n";
+    }  
+#endif
+
   //
   //generate mesh (both parallel and serial)
   //
@@ -366,7 +351,7 @@ void dftClass<FEOrder>::init ()
   //
   initUnmovedTriangulation(triangulationPar);
 #ifdef ENABLE_PERIODIC_BC
- if (useSymm)
+ if (useSymm || timeReversal)
     symmetryPtr->initSymmetry() ;
 #endif
   //
@@ -404,6 +389,34 @@ void dftClass<FEOrder>::init ()
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::initNoRemesh()
 {
+#ifdef ENABLE_PERIODIC_BC  
+  pcout<<"-----Fractional coordinates of atoms------ "<<std::endl;    
+  for(unsigned int i = 0; i < atomLocations.size(); ++i)
+  {
+      atomLocations[i] = atomLocationsFractional[i] ;
+      pcout<<" atomId- "<<i <<" : "<<atomLocationsFractional[i][2]<<" "<<atomLocationsFractional[i][3]<<" "<<atomLocationsFractional[i][4]<<"\n";
+  }   
+  generateImageCharges();
+  convertToCellCenteredCartesianCoordinates(atomLocations,
+					    d_latticeVectors);
+  recomputeKPointCoordinates(); 
+
+  pcout<<"actual k-Point-coordinates and weights: "<<std::endl;
+  for(unsigned int i = 0; i < d_maxkPoints; ++i)
+  {
+    pcout<< i<<": ["<< d_kPointCoordinates[3*i+0] <<", " <<d_kPointCoordinates[3*i+1]<<", "<< d_kPointCoordinates[3*i+2]<<"] "<<d_kPointWeights[i]<<std::endl;
+  }     
+#else
+  //
+  //print cartesian coordinates
+  //
+  pcout<<"-----Cartesian coordinates of atoms------ "<<std::endl;
+  for(unsigned int i = 0; i < atomLocations.size(); ++i)
+    {
+      pcout<<" atomId- "<<i <<" : "<<atomLocations[i][2]<<" "<<atomLocations[i][3]<<" "<<atomLocations[i][4]<<"\n";
+    }  
+#endif
+  
   //reinitialize dirichlet BCs for total potential and vSelf poisson solutions
   initBoundaryConditions();
   //rho init (use previous ground state electron density)
@@ -579,7 +592,7 @@ void dftClass<FEOrder>::solve()
 	//rhoOut
    computing_timer.enter_section("compute rho"); 
 #ifdef ENABLE_PERIODIC_BC
-   if (useSymm){
+   if (useSymm || timeReversal){
 	symmetryPtr->computeLocalrhoOut();
 	symmetryPtr->computeAndSymmetrize_rhoOut();
     }
@@ -613,10 +626,7 @@ void dftClass<FEOrder>::solve()
       scfIter++;
     }
  computing_timer.exit_section("solve");
-#ifdef ENABLE_PERIODIC_BC
- if (useSymm)
-    symmetryPtr->clearMaps() ;
-#endif
+
 //
 /*
  computing_timer.enter_section(" pp "); 
@@ -638,11 +648,13 @@ void dftClass<FEOrder>::solve()
  */
   //
   MPI_Barrier(interpoolcomm) ;
-  computing_timer.enter_section("configurational force computation"); 
-  forcePtr->computeAtomsForces();
-  forcePtr->printAtomsForces();
-  computing_timer.exit_section("configurational force computation");  
-   
+  if (dftParameters::isIonForce)
+  {
+    computing_timer.enter_section("configurational force computation"); 
+    forcePtr->computeAtomsForces();
+    forcePtr->printAtomsForces();
+    computing_timer.exit_section("configurational force computation"); 
+   }
 }
 
 //Output

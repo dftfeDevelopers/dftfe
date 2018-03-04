@@ -17,7 +17,6 @@ SET(TARGET_SRC
   ./src/mesh/meshMovement/meshMovementGaussian.cc
   ./src/mesh/meshGenerator.cc
   ./src/symmetry/initGroupSymmetry.cc
-  ./src/symmetry/symmetrizeRho.cc
   ./src/geoOpt/geoOptIon.cc
   ./src/solvers/solverFunction.cc
   ./src/solvers/nonLinearSolver.cc
