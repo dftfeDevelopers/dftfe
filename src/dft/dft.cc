@@ -389,10 +389,8 @@ void dftClass<FEOrder>::init ()
   //
   //store constraintEigen Matrix entries into STL vector
   //
-  dftUtils::convertConstraintMatrixToSTLVector(vChebyshev,
-					       constraintsNoneEigen,
-					       locally_owned_dofsEigen,
-					       constraintsNoneEigenDataInVector);
+  constraintsNoneEigenDataInfo.initialize(vChebyshev.get_partitioner(),
+					  constraintsNoneEigen);
 
 
   //

@@ -40,7 +40,7 @@
 #include <slepceps.h>
 
 #include "dftParameters.h"
-#include "dealiiOverloadedFunc.h"
+#include "constraintMatrixInfo.h"
 #include "meshGenerator.h"
 #include <spglib.h>
 
@@ -344,7 +344,8 @@ class dftClass
   /**
    * storage for constraintMatrices in terms of arrays (STL)
    */
-  dftUtils::constraintMatrixInfo constraintsNoneEigenDataInVector; 
+ dftUtils::constraintMatrixInfo constraintsNoneEigenDataInfo; 
+
 
 
   //parallel message stream
