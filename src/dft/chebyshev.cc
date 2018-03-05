@@ -659,7 +659,8 @@ void dftClass<FEOrder>::computeResidualNorm(std::vector<vectorType*> & X)
      {
 	(*PSI[i]).add(-eigenValuesTemp[d_kPointIndex][i] , (*X[i]) ) ;
 	const double resNorm= (*PSI[i]).l2_norm();
-	d_tempResidualNormWaveFunctions[d_kPointIndex][i]=resNorm;
+        if (spinPolarized!=1)
+	   d_tempResidualNormWaveFunctions[d_kPointIndex][i]=resNorm;
 	sprintf(buffer, "eigen vector %3u: %22.16e\n", i+1,resNorm);
         pcout << buffer;
     }
