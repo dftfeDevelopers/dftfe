@@ -24,7 +24,7 @@ namespace eshelbyTensorSP
  {
    double getPartialOccupancy(double eigenValue, double fermiEnergy, double kb, double T)
    {
-      const double factor=(eigenValue-fermiEnergy_)/(kb*T);       
+      const double factor=(eigenValue-fermiEnergy)/(kb*T);       
       return (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)) : 1.0/(1.0 + std::exp(factor));
    }
  }
@@ -33,7 +33,7 @@ Tensor<2,C_DIM,VectorizedArray<double> >  getELocEshelbyTensorPeriodicNoKPoints
 		                                                       const Tensor<1,C_DIM,VectorizedArray<double> > & gradPhiTot,
 							               const VectorizedArray<double> & rho,
 							               const Tensor<1,C_DIM,VectorizedArray<double> > & gradRhoSpin0,
-                                                                       const Tensor<1,C_DIM,VectorizedArray<double> > & gradRhoSpin1
+                                                                       const Tensor<1,C_DIM,VectorizedArray<double> > & gradRhoSpin1,
 							               const VectorizedArray<double> & exc,
 							               const Tensor<1,C_DIM,VectorizedArray<double> > & derExcGradRhoQuadsSpin0,
                                                                        const Tensor<1,C_DIM,VectorizedArray<double> > & derExcGradRhoQuadsSpin1,								       
@@ -74,8 +74,8 @@ Tensor<2,C_DIM,VectorizedArray<double> >  getELocEshelbyTensorPeriodicKPoints
 
    std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator it1Spin0=psiSpin0Begin;
    std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > >::const_iterator it2Spin0=gradPsiSpin0Begin;
-   std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator it1Spin0=psiSpin0Begin;
-   std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > >::const_iterator it2Spin0=gradPsiSpin1Begin;   const int numEigenValues=eigenValues_[0].size()/2;
+   std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator it1Spin1=psiSpin1Begin;
+   std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > >::const_iterator it2Spin1=gradPsiSpin1Begin;   const unsigned int numEigenValues=eigenValues_[0].size()/2;
 
    Tensor<1,C_DIM,VectorizedArray<double> > kPointCoord;
    for (unsigned int ik=0; ik<kPointWeights.size(); ++ik){
@@ -89,11 +89,11 @@ Tensor<2,C_DIM,VectorizedArray<double> >  getELocEshelbyTensorPeriodicKPoints
         const Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > >  & gradPsiSpin1=*it2Spin1;	
 
         const double partOccSpin0 =internal::getPartialOccupancy(eigenValues_[ik][eigenIndex],
-		                                                 fermiEnergy,
+		                                                 fermiEnergy_,
 								 C_kb,
 								 tVal); 
         const double partOccSpin1 =internal::getPartialOccupancy(eigenValues_[ik][eigenIndex+numEigenValues],
-		                                                 fermiEnergy,
+		                                                 fermiEnergy_,
 								 C_kb,
 								 tVal); 
 
@@ -149,18 +149,18 @@ Tensor<2,C_DIM,VectorizedArray<double> >  getELocEshelbyTensorNonPeriodic(const 
    std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >::const_iterator it2Spin0=gradPsiSpin0Begin;
    std::vector<VectorizedArray<double> >::const_iterator it1Spin1=psiSpin1Begin;   
    std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >::const_iterator it2Spin1=gradPsiSpin1Begin;   
-   const int numEigenValues=eigenValues_[0].size()/2;   
-   for (unsigned int eigenIndex=0; eigenIndex < numEigenValues; ++it1, ++it2, ++ eigenIndex){
+   const unsigned int numEigenValues=eigenValues_.size()/2;   
+   for (unsigned int eigenIndex=0; eigenIndex < numEigenValues; ++it1Spin0, ++it2Spin0,  ++it1Spin1, ++it2Spin1, ++ eigenIndex){
       const VectorizedArray<double> & psiSpin0= *it1Spin0;
       const Tensor<1,C_DIM,VectorizedArray<double> > & gradPsiSpin0=*it2Spin0;
       const VectorizedArray<double> & psiSpin1= *it1Spin1;
       const Tensor<1,C_DIM,VectorizedArray<double> > & gradPsiSpin1=*it2Spin1;      
       const double partOccSpin0 =internal::getPartialOccupancy(eigenValues_[eigenIndex],
-							       fermiEnergy,
+							       fermiEnergy_,
 							       C_kb,
 							       tVal); 
       const double partOccSpin1 =internal::getPartialOccupancy(eigenValues_[eigenIndex+numEigenValues],
-		                                               fermiEnergy,
+		                                               fermiEnergy_,
 							       C_kb,
 							       tVal);    
       identityTensorFactor+=make_vectorized_array(0.5*partOccSpin0)*scalar_product(gradPsiSpin0,gradPsiSpin0)-make_vectorized_array(partOccSpin0*eigenValues_[eigenIndex])*psiSpin0*psiSpin0;
@@ -177,7 +177,9 @@ Tensor<2,C_DIM,VectorizedArray<double> >  getELocEshelbyTensorNonPeriodic(const 
 
 
 Tensor<2,C_DIM,VectorizedArray<double> >  getEnlEshelbyTensorNonPeriodic(const std::vector<std::vector<VectorizedArray<double> > > & ZetaDeltaV,
-								         const std::vector<std::vector<double> > & projectorKetTimesPsiTimesV,
+								         const std::vector<std::vector<double> > & projectorKetTimesPsiSpin0TimesV,
+                                                                         const std::vector<std::vector<double> > & projectorKetTimesPsiSpin1TimesV,
+									 
 								         std::vector<VectorizedArray<double> >::const_iterator psiSpin0Begin,
                                                                          std::vector<VectorizedArray<double> >::const_iterator psiSpin1Begin,									 
 								         const std::vector<double> & eigenValues_,
@@ -187,19 +189,19 @@ Tensor<2,C_DIM,VectorizedArray<double> >  getEnlEshelbyTensorNonPeriodic(const s
 
    Tensor<2,C_DIM,VectorizedArray<double> > eshelbyTensor;
    VectorizedArray<double> identityTensorFactor=make_vectorized_array(0.0);
-   std::vector<VectorizedArray<double> >::const_iterator it1Spin0=psiSpin0begin; 
-   std::vector<VectorizedArray<double> >::const_iterator it1Spin1=psiSpin1begin;     
-   const int numEigenValues=eigenValues_[0].size()/2;    
+   std::vector<VectorizedArray<double> >::const_iterator it1Spin0=psiSpin0Begin; 
+   std::vector<VectorizedArray<double> >::const_iterator it1Spin1=psiSpin1Begin;     
+   const unsigned int numEigenValues=eigenValues_.size()/2;    
    for (unsigned int eigenIndex=0; eigenIndex < numEigenValues; ++it1Spin0, ++it1Spin1, ++ eigenIndex)
    {
       const VectorizedArray<double> & psiSpin0= *it1Spin0;
       const VectorizedArray<double> & psiSpin1= *it1Spin1;      
       const double partOccSpin0 =internal::getPartialOccupancy(eigenValues_[eigenIndex],
-							       fermiEnergy,
+							       fermiEnergy_,
 							       C_kb,
 							       tVal); 
       const double partOccSpin1 =internal::getPartialOccupancy(eigenValues_[eigenIndex+numEigenValues],
-		                                               fermiEnergy,
+		                                               fermiEnergy_,
 							       C_kb,
 							       tVal);   
       for (unsigned int iAtomNonLocal=0; iAtomNonLocal < ZetaDeltaV.size(); ++iAtomNonLocal)
@@ -207,8 +209,8 @@ Tensor<2,C_DIM,VectorizedArray<double> >  getEnlEshelbyTensorNonPeriodic(const s
 	 const int numberPseudoWaveFunctions = ZetaDeltaV[iAtomNonLocal].size();
          for (unsigned int iPseudoWave=0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
          {	  
-             identityTensorFactor+=make_vectorized_array(2.0*partOccSpin0*projectorKetTimesPsiTimesV[iAtomNonLocal][numberPseudoWaveFunctions*(2*eigenIndex) + iPseudoWave])*psi*ZetaDeltaV[iAtomNonLocal][iPseudoWave];
-             identityTensorFactor+=make_vectorized_array(2.0*partOccSpin1*projectorKetTimesPsiTimesV[iAtomNonLocal][numberPseudoWaveFunctions*(2*eigenIndex+1) + iPseudoWave])*psi*ZetaDeltaV[iAtomNonLocal][iPseudoWave];	     
+             identityTensorFactor+=make_vectorized_array(2.0*partOccSpin0*projectorKetTimesPsiSpin0TimesV[iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave])*psiSpin0*ZetaDeltaV[iAtomNonLocal][iPseudoWave];
+             identityTensorFactor+=make_vectorized_array(2.0*partOccSpin1*projectorKetTimesPsiSpin1TimesV[iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave])*psiSpin1*ZetaDeltaV[iAtomNonLocal][iPseudoWave];	     
 	 }
       }
    }  
@@ -220,7 +222,9 @@ Tensor<2,C_DIM,VectorizedArray<double> >  getEnlEshelbyTensorNonPeriodic(const s
 }
 
 Tensor<2,C_DIM,VectorizedArray<double> >  getEnlEshelbyTensorPeriodic(const std::vector<std::vector<std::vector<Tensor<1,2,VectorizedArray<double> > > > > & ZetaDeltaV,
-								      const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiTimesV,
+								      const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiSpin0TimesV,
+                                                                      const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiSpin1TimesV,
+								      
 								      std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator psiSpin0Begin,
                                                                       std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator psiSpin1Begin,								      
                                                                       const std::vector<double> & kPointWeights,								      
@@ -230,27 +234,40 @@ Tensor<2,C_DIM,VectorizedArray<double> >  getEnlEshelbyTensorPeriodic(const std:
 {
    Tensor<2,C_DIM,VectorizedArray<double> > eshelbyTensor;
    VectorizedArray<double> identityTensorFactor=make_vectorized_array(0.0);
-   std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator it1=psiBegin;
+   std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator it1Spin0=psiSpin0Begin;
+   std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator it1Spin1=psiSpin1Begin;   
    VectorizedArray<double> two=make_vectorized_array(2.0);
-   const int numKPoints=eigenValues_.size();
+   const unsigned int numKPoints=kPointWeights.size();
+   const unsigned int numEigenValues=eigenValues_[0].size()/2;    
    for (unsigned int ik=0; ik<numKPoints; ++ik){
-     for (unsigned int eigenIndex=0; eigenIndex<eigenValues_[0].size(); ++it1, ++ eigenIndex){
-        const Tensor<1,2,VectorizedArray<double> > & psi= *it1;
+     for (unsigned int eigenIndex=0; eigenIndex<numEigenValues; ++it1Spin0,++it1Spin1, ++ eigenIndex){
+        const Tensor<1,2,VectorizedArray<double> > & psiSpin0= *it1Spin0;
+        const Tensor<1,2,VectorizedArray<double> > & psiSpin1= *it1Spin1;	
 
-        double factor=(eigenValues_[ik][eigenIndex]-fermiEnergy_)/(C_kb*tVal);
-        double partOcc = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)) : 1.0/(1.0 + std::exp(factor));
+        const double partOccSpin0 =internal::getPartialOccupancy(eigenValues_[ik][eigenIndex],
+							         fermiEnergy_,
+							         C_kb,
+							         tVal); 
+        const double partOccSpin1 =internal::getPartialOccupancy(eigenValues_[ik][eigenIndex+numEigenValues],
+		                                                 fermiEnergy_,
+							         C_kb,
+							         tVal);  
 
-	VectorizedArray<double> fnk=make_vectorized_array(partOcc*kPointWeights[ik]);
+	const VectorizedArray<double> fnkSpin0=make_vectorized_array(partOccSpin0*kPointWeights[ik]);
+	const VectorizedArray<double> fnkSpin1=make_vectorized_array(partOccSpin1*kPointWeights[ik]);	
 	for (unsigned int iAtomNonLocal=0; iAtomNonLocal < ZetaDeltaV.size(); ++iAtomNonLocal)
 	{
-	     const int numberPseudoWaveFunctions = ZetaDeltaV[iAtomNonLocal].size();
+	     const unsigned int numberPseudoWaveFunctions = ZetaDeltaV[iAtomNonLocal].size();
 	     for (unsigned int iPseudoWave=0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
 	     {	  
-		 VectorizedArray<double> CReal=make_vectorized_array(projectorKetTimesPsiTimesV[ik][iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave].real());
-		 VectorizedArray<double> CImag=make_vectorized_array(projectorKetTimesPsiTimesV[ik][iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave].imag());
-		 VectorizedArray<double> zdvR=ZetaDeltaV[iAtomNonLocal][iPseudoWave][ik][0];
-		 VectorizedArray<double> zdvI=ZetaDeltaV[iAtomNonLocal][iPseudoWave][ik][1];
-		 identityTensorFactor+=two*fnk*((psi[0]*zdvR+psi[1]*zdvI)*CReal-(psi[0]*zdvI-psi[1]*zdvR)*CImag);
+		 const VectorizedArray<double> CRealSpin0=make_vectorized_array(projectorKetTimesPsiSpin0TimesV[ik][iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave].real());
+		 const VectorizedArray<double> CImagSpin0=make_vectorized_array(projectorKetTimesPsiSpin0TimesV[ik][iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave].imag());
+		 const VectorizedArray<double> CRealSpin1=make_vectorized_array(projectorKetTimesPsiSpin1TimesV[ik][iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave].real());
+		 const VectorizedArray<double> CImagSpin1=make_vectorized_array(projectorKetTimesPsiSpin1TimesV[ik][iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave].imag());		 
+		 const VectorizedArray<double> zdvR=ZetaDeltaV[iAtomNonLocal][iPseudoWave][ik][0];
+		 const VectorizedArray<double> zdvI=ZetaDeltaV[iAtomNonLocal][iPseudoWave][ik][1];
+		 identityTensorFactor+=two*fnkSpin0*((psiSpin0[0]*zdvR+psiSpin0[1]*zdvI)*CRealSpin0-(psiSpin0[0]*zdvI-psiSpin0[1]*zdvR)*CImagSpin0);
+		 identityTensorFactor+=two*fnkSpin1*((psiSpin1[0]*zdvR+psiSpin1[1]*zdvI)*CRealSpin1-(psiSpin1[0]*zdvI-psiSpin1[1]*zdvR)*CImagSpin1);		 
 	     }
 	}	
 
@@ -265,26 +282,39 @@ Tensor<2,C_DIM,VectorizedArray<double> >  getEnlEshelbyTensorPeriodic(const std:
 }
 
 Tensor<1,C_DIM,VectorizedArray<double> >  getFnlNonPeriodic(const std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > & gradZetaDeltaV,
-						            const std::vector<std::vector<double> > & projectorKetTimesPsiTimesV,
-						            std::vector<VectorizedArray<double> >::const_iterator psiBegin,
+						            const std::vector<std::vector<double> > & projectorKetTimesPsiSpin0TimesV,
+                                                            const std::vector<std::vector<double> > & projectorKetTimesPsiSpin1TimesV,							    
+						            std::vector<VectorizedArray<double> >::const_iterator psiSpin0Begin,
+                                                            std::vector<VectorizedArray<double> >::const_iterator psiSpin1Begin,
+							    
 						            const std::vector<double> & eigenValues_,
 						            const double fermiEnergy_,
 						            const double tVal)
 {
 
    Tensor<1,C_DIM,VectorizedArray<double> > F; 
-   std::vector<VectorizedArray<double> >::const_iterator it1=psiBegin;   
-   for (unsigned int eigenIndex=0; eigenIndex < eigenValues_.size(); ++it1, ++ eigenIndex)
+   std::vector<VectorizedArray<double> >::const_iterator it1Spin0=psiSpin0Begin;
+   std::vector<VectorizedArray<double> >::const_iterator it1Spin1=psiSpin1Begin;    
+   const unsigned int numEigenValues=eigenValues_.size()/2;     
+   for (unsigned int eigenIndex=0; eigenIndex < numEigenValues; ++it1Spin0,++it1Spin1, ++ eigenIndex)
    {
-      const VectorizedArray<double> & psi= *it1;
-      double factor=(eigenValues_[eigenIndex]-fermiEnergy_)/(C_kb*tVal);
-      double partOcc = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)) : 1.0/(1.0 + std::exp(factor));
+      const VectorizedArray<double> & psiSpin0= *it1Spin0;
+      const VectorizedArray<double> & psiSpin1= *it1Spin1;      
+      const double partOccSpin0 =internal::getPartialOccupancy(eigenValues_[eigenIndex],
+							       fermiEnergy_,
+							       C_kb,
+							       tVal); 
+      const double partOccSpin1 =internal::getPartialOccupancy(eigenValues_[eigenIndex+numEigenValues],
+		                                               fermiEnergy_,
+							       C_kb,
+							       tVal);  
       for (unsigned int iAtomNonLocal=0; iAtomNonLocal < gradZetaDeltaV.size(); ++iAtomNonLocal)
       {
-	 const int numberPseudoWaveFunctions = gradZetaDeltaV[iAtomNonLocal].size();
+	 const unsigned int numberPseudoWaveFunctions = gradZetaDeltaV[iAtomNonLocal].size();
          for (unsigned int iPseudoWave=0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
          {	
-	     F+=make_vectorized_array(4.0*partOcc*projectorKetTimesPsiTimesV[iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave])*psi*gradZetaDeltaV[iAtomNonLocal][iPseudoWave];
+	     F+=make_vectorized_array(2.0*partOccSpin0*projectorKetTimesPsiSpin0TimesV[iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave])*psiSpin0*gradZetaDeltaV[iAtomNonLocal][iPseudoWave];
+	     F+=make_vectorized_array(2.0*partOccSpin1*projectorKetTimesPsiSpin1TimesV[iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave])*psiSpin1*gradZetaDeltaV[iAtomNonLocal][iPseudoWave];	     
 	 }
       }
    }  
@@ -302,35 +332,50 @@ Tensor<1,C_DIM,VectorizedArray<double> >  getFPSPLocal(const VectorizedArray<dou
 }
 
 Tensor<1,C_DIM,VectorizedArray<double> >  getFnlPeriodic(const std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > & gradZetaDeltaV,
-						         const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiTimesV,
-						         std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiBegin,
+						         const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiSpin0TimesV,
+                                                         const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiSpin1TimesV,							 
+						         std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiSpin0Begin,
+                                                         std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiSpin1Begin,
+							 
                                                          const std::vector<double> & kPointWeights,								      
 					                 const std::vector<std::vector<double> > & eigenValues_,
 						         const double fermiEnergy_,
 						         const double tVal)
 {
    Tensor<1,C_DIM,VectorizedArray<double> > F;
-   std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator it1=psiBegin;
-   VectorizedArray<double> four=make_vectorized_array(4.0);
-   const int numKPoints=eigenValues_.size();
+   std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator it1Spin0=psiSpin0Begin;
+   std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator it1Spin1=psiSpin1Begin;   
+   VectorizedArray<double> two=make_vectorized_array(2.0);
+   const unsigned int numKPoints=kPointWeights.size();
+   const unsigned int numEigenValues=eigenValues_[0].size()/2;     
    for (unsigned int ik=0; ik<numKPoints; ++ik){
-     for (unsigned int eigenIndex=0; eigenIndex<eigenValues_[0].size(); ++it1, ++ eigenIndex){
-        const Tensor<1,2,VectorizedArray<double> > & psi= *it1;
+     for (unsigned int eigenIndex=0; eigenIndex<numEigenValues; ++it1Spin0,++it1Spin1, ++ eigenIndex){
+        const Tensor<1,2,VectorizedArray<double> > & psiSpin0= *it1Spin0;
+        const Tensor<1,2,VectorizedArray<double> > & psiSpin1= *it1Spin1;	
 
-        double factor=(eigenValues_[ik][eigenIndex]-fermiEnergy_)/(C_kb*tVal);
-        double partOcc = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)) : 1.0/(1.0 + std::exp(factor));
-
-	VectorizedArray<double> fnk=make_vectorized_array(partOcc*kPointWeights[ik]);
+        const double partOccSpin0 =internal::getPartialOccupancy(eigenValues_[ik][eigenIndex],
+							       fermiEnergy_,
+							       C_kb,
+							       tVal); 
+        const double partOccSpin1 =internal::getPartialOccupancy(eigenValues_[ik][eigenIndex+numEigenValues],
+		                                               fermiEnergy_,
+							       C_kb,
+							       tVal);  
+        const VectorizedArray<double> fnkSpin0=make_vectorized_array(partOccSpin0*kPointWeights[ik]);
+        const VectorizedArray<double> fnkSpin1=make_vectorized_array(partOccSpin1*kPointWeights[ik]);	
 	for (unsigned int iAtomNonLocal=0; iAtomNonLocal < gradZetaDeltaV.size(); ++iAtomNonLocal)
 	{
-	     const int numberPseudoWaveFunctions = gradZetaDeltaV[iAtomNonLocal].size();
+	     const unsigned int numberPseudoWaveFunctions = gradZetaDeltaV[iAtomNonLocal].size();
 	     for (unsigned int iPseudoWave=0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
 	     {	  
-		 VectorizedArray<double> CReal=make_vectorized_array(projectorKetTimesPsiTimesV[ik][iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave].real());
-		 VectorizedArray<double> CImag=make_vectorized_array(projectorKetTimesPsiTimesV[ik][iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave].imag());
-		 Tensor<1,C_DIM,VectorizedArray<double> >  zdvR=gradZetaDeltaV[iAtomNonLocal][iPseudoWave][ik][0];
-		 Tensor<1,C_DIM,VectorizedArray<double> >  zdvI=gradZetaDeltaV[iAtomNonLocal][iPseudoWave][ik][1];
-		 F+=four*fnk*((psi[0]*zdvR+psi[1]*zdvI)*CReal-(psi[0]*zdvI-psi[1]*zdvR)*CImag);
+		 const VectorizedArray<double> CRealSpin0=make_vectorized_array(projectorKetTimesPsiSpin0TimesV[ik][iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave].real());
+		 const VectorizedArray<double> CImagSpin0=make_vectorized_array(projectorKetTimesPsiSpin0TimesV[ik][iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave].imag());
+		 const VectorizedArray<double> CRealSpin1=make_vectorized_array(projectorKetTimesPsiSpin1TimesV[ik][iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave].real());
+		 const VectorizedArray<double> CImagSpin1=make_vectorized_array(projectorKetTimesPsiSpin1TimesV[ik][iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave].imag());		 
+		 const Tensor<1,C_DIM,VectorizedArray<double> >  zdvR=gradZetaDeltaV[iAtomNonLocal][iPseudoWave][ik][0];
+		 const Tensor<1,C_DIM,VectorizedArray<double> >  zdvI=gradZetaDeltaV[iAtomNonLocal][iPseudoWave][ik][1];
+		 F+=two*fnkSpin0*((psiSpin0[0]*zdvR+psiSpin0[1]*zdvI)*CRealSpin0-(psiSpin0[0]*zdvI-psiSpin0[1]*zdvR)*CImagSpin0);
+		 F+=two*fnkSpin1*((psiSpin1[0]*zdvR+psiSpin1[1]*zdvI)*CRealSpin1-(psiSpin1[0]*zdvI-psiSpin1[1]*zdvR)*CImagSpin1);		 
 	     }
 	}	
 
@@ -348,13 +393,11 @@ Tensor<1,C_DIM,VectorizedArray<double> >  getNonSelfConsistentForce(const Vector
 							            const Tensor<1,C_DIM,VectorizedArray<double> > & gradRhoOutSpin0,
                                                                     const Tensor<1,C_DIM,VectorizedArray<double> > & gradRhoOutSpin1,								    
 							            const Tensor<1,C_DIM,VectorizedArray<double> > & derExchCorrEnergyWithGradRhoInSpin0,
-								    const Tensor<1,C_DIM,VectorizedArray<double> > & derExchCorrEnergyWithGradRhoOutSpin0,
-                                                                    const Tensor<1,C_DIM,VectorizedArray<double> > & derExchCorrEnergyWithGradRhoInSpin1,
+								    const Tensor<1,C_DIM,VectorizedArray<double> > & derExchCorrEnergyWithGradRhoInSpin1,
+                                                                    const Tensor<1,C_DIM,VectorizedArray<double> > & derExchCorrEnergyWithGradRhoOutSpin0,
 								    const Tensor<1,C_DIM,VectorizedArray<double> > & derExchCorrEnergyWithGradRhoOutSpin1,
                                                                     const Tensor<2,C_DIM,VectorizedArray<double> > & hessianRhoOutSpin0,
-                                                                    const Tensor<2,C_DIM,VectorizedArray<double> > & hessianRhoOutSpin1
-								    
-								    )
+                                                                    const Tensor<2,C_DIM,VectorizedArray<double> > & hessianRhoOutSpin1)
 {
    Tensor<1,C_DIM,VectorizedArray<double> > F; 
 
