@@ -16,8 +16,8 @@
 // @author Sambit Das (2017)
 //
 
-#ifndef eshelby_H_
-#define eshelby_H_
+#ifndef eshelbySP_H_
+#define eshelbySP_H_
 #include "headers.h"
 #include "constants.h"
 //#include "dft.h"
@@ -42,42 +42,39 @@ namespace eshelbyTensorSP
                                                                        const VectorizedArray<double> & phiExt);									       
 
   Tensor<2,C_DIM,VectorizedArray<double> >  getELocEshelbyTensorPeriodicKPoints
-								      (std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator psiSpin0Begin,
-                                                                       std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > >::const_iterator gradPsiSpin0Begin,
-                                                                       std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator psiSpin1Begin,
-                                                                       std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > >::const_iterator gradPsiSpin1Begin,
-								       
-								       const std::vector<double> & kPointCoordinates,
-                                                                       const std::vector<double> & kPointWeights,							
-								       const std::vector<std::vector<double> > & eigenValues_,
-								       const double fermiEnergy_,
-								       const double tVal);
+		(std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator psiSpin0Begin,
+                 std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator psiSpin1Begin,
+                 std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > >::const_iterator gradPsiSpin0Begin,		 
+                 std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > >::const_iterator gradPsiSpin1Begin,
+                 const std::vector<double> & kPointCoordinates,
+                 const std::vector<double> & kPointWeights,							
+	         const std::vector<std::vector<double> > & eigenValues_,
+	         const double fermiEnergy_,
+	         const double tVal);
 
   Tensor<2,C_DIM,VectorizedArray<double> >  getELocEshelbyTensorNonPeriodic
-                                                                         (const VectorizedArray<double> & phiTot,
-		                                                          const Tensor<1,C_DIM,VectorizedArray<double> > & gradPhiTot,
-									  const VectorizedArray<double> & rho,
-									  const Tensor<1,C_DIM,VectorizedArray<double> > & gradRhoSpin0,
-                                                                          const Tensor<1,C_DIM,VectorizedArray<double> > & gradRhoSpin1,									  
-									  const VectorizedArray<double> & exc,
-									  const Tensor<1,C_DIM,VectorizedArray<double> > & derExcGradRhoQuadsSpin0,
-                                                                          const Tensor<1,C_DIM,VectorizedArray<double> > & derExcGradRhoQuadsSpin1,									  
-                                                                          const VectorizedArray<double> & pseudoVLoc,
-                                                                          const VectorizedArray<double> & phiExt,
-									  std::vector<VectorizedArray<double> >::const_iterator psiSpin0Begin,
-                                                                          std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >::const_iterator gradPsiSpin0Begin,
-									  std::vector<VectorizedArray<double> >::const_iterator psiSpin1Begin,
-                                                                          std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >::const_iterator gradPsiSpin1Begin,									  
-									  const std::vector<double> & eigenValues_,
-									  const double fermiEnergy_,
-									  const double tVal);
+                   (const VectorizedArray<double> & phiTot,
+		    const Tensor<1,C_DIM,VectorizedArray<double> > & gradPhiTot,
+		    const VectorizedArray<double> & rho,
+		    const Tensor<1,C_DIM,VectorizedArray<double> > & gradRhoSpin0,
+                    const Tensor<1,C_DIM,VectorizedArray<double> > & gradRhoSpin1,	
+		    const VectorizedArray<double> & exc,
+		    const Tensor<1,C_DIM,VectorizedArray<double> > & derExcGradRhoQuadsSpin0,
+                    const Tensor<1,C_DIM,VectorizedArray<double> > & derExcGradRhoQuadsSpin1,			  
+                    const VectorizedArray<double> & pseudoVLoc,
+                    const VectorizedArray<double> & phiExt,
+		    std::vector<VectorizedArray<double> >::const_iterator psiSpin0Begin,
+                    std::vector<VectorizedArray<double> >::const_iterator psiSpin1Begin,                                              std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >::const_iterator gradPsiSpin0Begin,	                        std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >::const_iterator gradPsiSpin1Begin,
+		    const std::vector<double> & eigenValues_,
+		    const double fermiEnergy_,
+		    const double tVal);
 
-Tensor<1,C_DIM,VectorizedArray<double> >  getFPSPLocal(const VectorizedArray<double> rho,
+  Tensor<1,C_DIM,VectorizedArray<double> >  getFPSPLocal(const VectorizedArray<double> rho,
 		                                       const Tensor<1,C_DIM,VectorizedArray<double> > & gradPseudoVLoc,
 						       const Tensor<1,C_DIM,VectorizedArray<double> > & gradPhiExt);
 
 
-Tensor<2,C_DIM,VectorizedArray<double> >  getEnlEshelbyTensorNonPeriodic(const std::vector<std::vector<VectorizedArray<double> > > & ZetaDeltaV,
+  Tensor<2,C_DIM,VectorizedArray<double> >  getEnlEshelbyTensorNonPeriodic(const std::vector<std::vector<VectorizedArray<double> > > & ZetaDeltaV,
 								         const std::vector<std::vector<double> > & projectorKetTimesPsiSpin0TimesV,
                                                                          const std::vector<std::vector<double> > & projectorKetTimesPsiSpin1TimesV,									 
 								         std::vector<VectorizedArray<double> >::const_iterator psiSpin0Begin,
@@ -86,7 +83,7 @@ Tensor<2,C_DIM,VectorizedArray<double> >  getEnlEshelbyTensorNonPeriodic(const s
 								         const double fermiEnergy_,
 								         const double tVal);     
 
-Tensor<2,C_DIM,VectorizedArray<double> >  getEnlEshelbyTensorPeriodic(const std::vector<std::vector<std::vector<Tensor<1,2,VectorizedArray<double> > > > > & ZetaDeltaV,
+  Tensor<2,C_DIM,VectorizedArray<double> >  getEnlEshelbyTensorPeriodic(const std::vector<std::vector<std::vector<Tensor<1,2,VectorizedArray<double> > > > > & ZetaDeltaV,
 								      const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiSpin0TimesV,
                                                                       const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiSpin1TimesV,
 								      
@@ -98,7 +95,7 @@ Tensor<2,C_DIM,VectorizedArray<double> >  getEnlEshelbyTensorPeriodic(const std:
 								      const double tVal);
 
 
-Tensor<1,C_DIM,VectorizedArray<double> >  getFnlNonPeriodic(const std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > & gradZetaDeltaV,
+  Tensor<1,C_DIM,VectorizedArray<double> >  getFnlNonPeriodic(const std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > & gradZetaDeltaV,
 						            const std::vector<std::vector<double> > & projectorKetTimesPsiSpin0TimesV,
                                                             const std::vector<std::vector<double> > & projectorKetTimesPsiSpin1TimesV,							    
 						            std::vector<VectorizedArray<double> >::const_iterator psiSpin0Begin,
@@ -110,7 +107,7 @@ Tensor<1,C_DIM,VectorizedArray<double> >  getFnlNonPeriodic(const std::vector<st
 
 
 
-Tensor<1,C_DIM,VectorizedArray<double> >  getFnlPeriodic(const std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > & gradZetaDeltaV,
+  Tensor<1,C_DIM,VectorizedArray<double> >  getFnlPeriodic(const std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > & gradZetaDeltaV,
 						         const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiSpin0TimesV,
                                                          const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiSpin1TimesV,							 
 						         std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiSpin0Begin,
@@ -121,7 +118,7 @@ Tensor<1,C_DIM,VectorizedArray<double> >  getFnlPeriodic(const std::vector<std::
 						         const double fermiEnergy_,
 						         const double tVal);
 
-Tensor<1,C_DIM,VectorizedArray<double> >  getNonSelfConsistentForce(const VectorizedArray<double> & vEffRhoInSpin0,
+  Tensor<1,C_DIM,VectorizedArray<double> >  getNonSelfConsistentForce(const VectorizedArray<double> & vEffRhoInSpin0,
 								    const VectorizedArray<double> & vEffRhoOutSpin0,
                                                                     const VectorizedArray<double> & vEffRhoInSpin1,
 								    const VectorizedArray<double> & vEffRhoOutSpin1,

@@ -21,13 +21,16 @@
 #include "../../include/poisson.h"
 #include "../../include/constants.h"
 #include "../../include/eshelbyTensor.h"
+#include "../../include/eshelbyTensorSpinPolarized.h"
 #include "../../include/meshGenerator.h"
 #include "../../include/fileReaders.h"
 
 
 #include "configurationalForceCompute/configurationalForceEEshelbyFPSPFnlLinFE.cc"
+#include "configurationalForceCompute/configurationalForceSpinPolarizedEEshelbyFPSPFnlLinFE.cc"
 #include "configurationalForceCompute/FPSPLocalGammaAtomsElementalContribution.cc"
 #include "configurationalForceCompute/FnlGammaAtomsElementalContribution.cc"
+#include "configurationalForceCompute/FnlGammaAtomsElementalContributionSpinPolarized.cc"
 #include "configurationalForceCompute/configurationalForceEselfLinFE.cc"
 #include "configurationalForceCompute/gaussianGeneratorConfForceOpt.cc"
 #include "configurationalStressCompute/computeStressEself.cc"
@@ -200,8 +203,11 @@ void forceClass<FEOrder>::computeConfigurationalForceTotalLinFE()
 
  
   configForceLinFEInit();
-  //configurational force contribution from all terms except those from nuclear self energy 
-  computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(); 
+  //configurational force contribution from all terms except those from nuclear self energy
+  if (dftParameters::spinPolarized)
+     computeConfigurationalForceSpinPolarizedEEshelbyTensorFPSPFnlLinFE();      
+  else
+     computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(); 
   //configurational force contribution from nuclear self energy. This is handled separately as it involves
   // a surface integral over the vself ball surface
   computeConfigurationalForceEselfLinFE();
