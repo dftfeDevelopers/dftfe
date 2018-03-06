@@ -21,10 +21,10 @@ namespace dftUtils
 /** @brief Calculates partial occupancy of the atomic orbital using 
  *  Fermi-Dirac smearing.
  *
- *  @param  eigenValue value of the eigenValue of the orbital
+ *  @param  eigenValue
  *  @param  fermiEnergy 
- *  @param  kb Boltzmann's constant
- *  @param  T temperature 
+ *  @param  kb Boltzmann constant
+ *  @param  T smearing temperature 
  *  @return double The partial occupancy of the orbital
  */    
 double getPartialOccupancy(const double eigenValue,const double fermiEnergy,const double kb,const double T);
