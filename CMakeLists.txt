@@ -25,6 +25,7 @@ SET(TARGET_SRC
   ./utils/fileReaders.cc
   ./utils/dftParameters.cc
   ./utils/constraintMatrixInfo.cc
+  ./utils/dftUtils.cc
   # You can specify additional files here!
   )
 

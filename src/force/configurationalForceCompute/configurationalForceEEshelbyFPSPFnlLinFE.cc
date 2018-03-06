@@ -58,7 +58,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(
   std::map<unsigned int, std::vector<double> > forceContributionFPSPLocalGammaAtoms;
   std::map<unsigned int, std::vector<double> > forceContributionFnlGammaAtoms;
 
-  bool isPseudopotential = dftParameters::isPseudopotential;
+  const bool isPseudopotential = dftParameters::isPseudopotential;
 
   const unsigned int numVectorizedArrayElements=VectorizedArray<double>::n_array_elements;
   const MatrixFree<3,double> & matrix_free_data=dftPtr->matrix_free_data;
