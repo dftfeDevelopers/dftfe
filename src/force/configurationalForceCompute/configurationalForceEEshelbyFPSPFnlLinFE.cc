@@ -329,8 +329,10 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(
 		 gradPsiQuads[id][idim][iSubCell]=tempGradPsi[q][idim];
 	     }
 #endif 	     
-	     const double factor=(dftPtr->eigenValues[ikPoint][iEigenVec]-dftPtr->fermiEnergy)/(C_kb*dftParameters::TVal);
-	     const double partOcc = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)) : 1.0/(1.0 + std::exp(factor));
+             const double partOcc =dftUtils::getPartialOccupancy(dftPtr->eigenValues[ikPoint][iEigenVec],
+		                                                 dftPtr->fermiEnergy,
+							         C_kb,
+							         dftParameters::TVal); 	     
 	     Tensor<1,C_DIM,double > tempGradRhoContribution=2.0*dftPtr->d_kPointWeights[ikPoint]*partOcc*internalforce::computeGradRhoContribution(tempPsi[q], tempGradPsi[q]);
 	     Tensor<2,C_DIM,double > tempHessianRhoContribution=2.0*dftPtr->d_kPointWeights[ikPoint]*partOcc*internalforce::computeHessianRhoContribution(tempPsi[q], tempGradPsi[q], tempHessianPsi[q]);
 

@@ -33,7 +33,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionPeriodic(std::map<un
   const unsigned int numQuadPoints=forceEval.n_q_points;
   DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
 
-  unsigned int numNonLocalAtomsCurrentProcess= dftPtr->d_nonLocalAtomIdsInCurrentProcess.size();
+  const unsigned int numNonLocalAtomsCurrentProcess= dftPtr->d_nonLocalAtomIdsInCurrentProcess.size();
 
   for(int iAtom = 0; iAtom < numNonLocalAtomsCurrentProcess; ++iAtom)
   {
@@ -54,7 +54,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionPeriodic(std::map<un
 	   std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > temp1(1);
 	   temp1[0]=pspnlGammaAtomsQuads[q][iAtom];	
    
-           Tensor<1,C_DIM,VectorizedArray<double> > 
+           const Tensor<1,C_DIM,VectorizedArray<double> > 
 	       F=-eshelbyTensor::getFnlPeriodic(temp1,
 						temp2,
 						psiQuads.begin()+q*numEigenVectors*numKPoints,
@@ -66,7 +66,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionPeriodic(std::map<un
 
            forceEval.submit_value(F,q);
       }
-      Tensor<1,C_DIM,VectorizedArray<double> > forceContributionFnlGammaiAtomCells
+      const Tensor<1,C_DIM,VectorizedArray<double> > forceContributionFnlGammaiAtomCells
 						     =forceEval.integrate_value();
 
       if (forceContributionFnlGammaAtoms.find(globalChargeIdNonLocalAtom)==forceContributionFnlGammaAtoms.end())
@@ -99,7 +99,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodic(std::map
   const unsigned int numQuadPoints=forceEval.n_q_points;
   DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
 
-  unsigned int numNonLocalAtomsCurrentProcess= dftPtr->d_nonLocalAtomIdsInCurrentProcess.size();
+  const unsigned int numNonLocalAtomsCurrentProcess= dftPtr->d_nonLocalAtomIdsInCurrentProcess.size();
 
   for(int iAtom = 0; iAtom < numNonLocalAtomsCurrentProcess; ++iAtom)
   {
@@ -115,7 +115,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodic(std::map
 	   std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > temp1(1);
 	   temp1[0]=pspnlGammaAtomQuads[q][iAtom];
 
-           Tensor<1,C_DIM,VectorizedArray<double> > F=
+           const Tensor<1,C_DIM,VectorizedArray<double> > F=
 	                  -eshelbyTensor::getFnlNonPeriodic(temp1,
 					                    temp2,
 					                    psiQuads.begin()+q*numEigenVectors,
@@ -126,7 +126,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodic(std::map
             							    
            forceEval.submit_value(F,q);
       }
-      Tensor<1,C_DIM,VectorizedArray<double> > forceContributionFnlGammaiAtomCells
+      const Tensor<1,C_DIM,VectorizedArray<double> > forceContributionFnlGammaiAtomCells
 						     =forceEval.integrate_value();
 
       if (forceContributionFnlGammaAtoms.find(globalChargeIdNonLocalAtom)==forceContributionFnlGammaAtoms.end())

@@ -18,6 +18,7 @@
 
 #include "../../include/force.h"
 #include "../../include/dft.h"
+#include "../../include/dftUtils.h"
 #include "../../include/poisson.h"
 #include "../../include/constants.h"
 #include "../../include/eshelbyTensor.h"
