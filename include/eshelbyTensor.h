@@ -24,11 +24,11 @@
 using namespace dealii;
 /**
  * This functions in this namespace contain the expressions for the various terms of the configurational force (https://arxiv.org/abs/1712.05535)
- * for both periodic (see Eq. 38) and non-periodic (see Eqs. 28-29) case. Basicall, the configurational force is the Gateaux derivative
+ * for both periodic (see Eq. 38) and non-periodic (see Eqs. 28-29) case. Basically, the configurational force is the Gateaux derivative
  * of the Kohn-Sham saddle point problem with respect to perturbations of the underlying space due to generic generator (which can be affine perturbation in 
  * case of stress computation or an atom centered generator with a compact support for computing the forces). The terms in the configurational force can be 
- * grouped into two types: one type can be written as contraction of Eshelby tensor (second order tensor) with the gradient of the Generator. Another type involves
- * contraction of a first order tensor with the Generator. The functions in this class provide expressions for the left side of the contraction operation- the second
+ * grouped into two types: one type can be written as contraction of Eshelby tensors (second order tensor) with the gradient of the Generator. Another type involves
+ * contraction of first order tensors with the Generator. The functions in this class provide expressions for the left side of the contraction operation- the second
  * order Eshelby tensors (denoted by E*) and the first order force tensors (denoted by F*). 
  * General nomenclature of the input arguments:
  * a) phiTot- total electrostatic potential
