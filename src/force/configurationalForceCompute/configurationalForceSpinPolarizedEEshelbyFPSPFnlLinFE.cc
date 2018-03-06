@@ -594,7 +594,7 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 #endif	  
   
        }
-
+       
        F+=eshelbyTensorSP::getNonSelfConsistentForce
 	                                       (vEffRhoInSpin0Quads[q],
 						vEffRhoInSpin1Quads[q],
@@ -609,7 +609,7 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 						hessianRhoSpin0Quads[q],
 						hessianRhoSpin1Quads[q]);
        
-       
+        
        forceEval.submit_value(F,q);         
        forceEval.submit_gradient(E,q); 
 #ifdef ENABLE_PERIODIC_BC

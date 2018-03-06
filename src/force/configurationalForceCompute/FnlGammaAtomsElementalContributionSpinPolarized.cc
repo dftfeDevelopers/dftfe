@@ -53,7 +53,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionPeriodicSpinPolarize
 	  temp2Spin0[ikPoint].resize(1);
 	  temp2Spin0[ikPoint][0]=projectorKetTimesPsiSpin0TimesV[ikPoint][iAtom];
 	  temp2Spin1[ikPoint].resize(1);
-	  temp2Spin1[ikPoint][0]=projectorKetTimesPsiSpin0TimesV[ikPoint][iAtom];
+	  temp2Spin1[ikPoint][0]=projectorKetTimesPsiSpin1TimesV[ikPoint][iAtom];
       }        
       for (unsigned int q=0; q<numQuadPoints; ++q)
       {  	  

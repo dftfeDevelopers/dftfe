@@ -107,7 +107,7 @@ Tensor<2,C_DIM,VectorizedArray<double> >  getELocEshelbyTensorPeriodicKPoints
 
         identityTensorFactorContributionSpin1+=(scalar_product(gradPsiSpin1[0],gradPsiSpin1[0])+scalar_product(gradPsiSpin1[1],gradPsiSpin1[1]));
 	identityTensorFactorContributionSpin1+=make_vectorized_array(2.0)*(psiSpin1[0]*scalar_product(kPointCoord,gradPsiSpin1[1])-psiSpin1[1]*scalar_product(kPointCoord,gradPsiSpin1[0]));
-	identityTensorFactorContributionSpin1+=(scalar_product(kPointCoord,kPointCoord)-make_vectorized_array(2.0*eigenValues_[ik][eigenIndex]))*(psiSpin1[0]*psiSpin1[0]+psiSpin1[1]*psiSpin1[1]);	
+	identityTensorFactorContributionSpin1+=(scalar_product(kPointCoord,kPointCoord)-make_vectorized_array(2.0*eigenValues_[ik][eigenIndex+numEigenValues]))*(psiSpin1[0]*psiSpin1[0]+psiSpin1[1]*psiSpin1[1]);	
 
 	identityTensorFactor+=(identityTensorFactorContributionSpin0*fnkSpin0+identityTensorFactorContributionSpin1*fnkSpin1)*make_vectorized_array(0.5);
 
