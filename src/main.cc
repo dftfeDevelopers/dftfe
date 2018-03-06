@@ -25,8 +25,8 @@
 //
 //dft header
 //
-#include "../include/constants.h"
-#include "../include/dft.h"
+#include "constants.h"
+#include "dft.h"
 
 
 //
@@ -71,7 +71,7 @@ void declare_parameters()
   prm.declare_entry("MESH FILE", "",
 		    Patterns::Anything(),
 		    "Finite-element mesh file to be used for the given problem");
-    
+
   prm.declare_entry("DOMAIN SIZE X", "0.0",
 		    Patterns::Double(),
 		    "Size of the domain along 1-direction");
@@ -87,7 +87,7 @@ void declare_parameters()
   prm.declare_entry("INNER DOMAIN SIZE X","0.0",
 		    Patterns::Double(),
 		    "Inner Domain Size along 1-direction");
-  
+
   prm.declare_entry("INNER DOMAIN SIZE Y","0.0",
 		    Patterns::Double(),
 		    "Inner Domain Size along 2-direction");
@@ -96,11 +96,11 @@ void declare_parameters()
 		    Patterns::Double(),
 		    "Inner Domain Size along 3-direction");
 
-  
+
   prm.declare_entry("OUTER ATOM BALL RADIUS","0.0",
 		    Patterns::Double(),
 		     "Radius of outer ball enclosing atom");
-  
+
   prm.declare_entry("MESH SIZE OUTER DOMAIN", "0.0",
 		    Patterns::Double(),
 		     "Outer Domain Mesh Size");
@@ -116,7 +116,7 @@ void declare_parameters()
   prm.declare_entry("MESH SIZE OUTER ATOM BALL", "0.0",
 		    Patterns::Double(),
 		     "Mesh Size in a ball around atom");
- 
+
 
   prm.declare_entry("ATOMIC COORDINATES FILE", "",
 		    Patterns::Anything(),
@@ -137,7 +137,7 @@ void declare_parameters()
 		    "File specifying the symmetry matrices for obtaining the irreducible BZ");
   prm.declare_entry("ION RELAX FLAGS FILE", "",
 		    Patterns::Anything(),
-		    "File specifying the atomic position update permission flags. 1- update 0- no update");  
+		    "File specifying the atomic position update permission flags. 1- update 0- no update");
   prm.declare_entry("BZ SAMPLING POINTS ALONG X", "2",
 		    Patterns::Integer(1,100),
 		    "Number of Monkhorts-Pack grid points to be used along X direction for BZ sampling");
@@ -191,7 +191,7 @@ void declare_parameters()
   prm.declare_entry("START MAGNETIZATION", "0.0",
 		     Patterns::Double(),
 		    "Magnetization to start with");
-  
+
   prm.declare_entry("PERIODIC BOUNDARY CONDITION X", "false",
 		    Patterns::Bool(),
 		    "Periodicity in X-direction");
@@ -206,11 +206,11 @@ void declare_parameters()
 
   prm.declare_entry("PSEUDOPOTENTIAL CALCULATION", "false",
 		    Patterns::Bool(),
-		    "Boolean Parameter specifying whether pseudopotential DFT calculation needs to be performed"); 
+		    "Boolean Parameter specifying whether pseudopotential DFT calculation needs to be performed");
 
   prm.declare_entry("PSEUDOPOTENTIAL TYPE", "1",
 		    Patterns::Integer(1,2),
-		    "Type of nonlocal projector to be used: 1 for KB, 2 for ONCV, default is KB"); 
+		    "Type of nonlocal projector to be used: 1 for KB, 2 for ONCV, default is KB");
 
   prm.declare_entry("EXCHANGE CORRELATION TYPE", "1",
 		    Patterns::Integer(1,4),
@@ -222,7 +222,7 @@ void declare_parameters()
 
   prm.declare_entry("CELL OPT", "false",
 		    Patterns::Bool(),
-		    "Boolean parameter specifying if cell stress is to be relaxed");  
+		    "Boolean parameter specifying if cell stress is to be relaxed");
 
   prm.declare_entry("ION FORCE", "false",
 		    Patterns::Bool(),
@@ -230,7 +230,7 @@ void declare_parameters()
 
   prm.declare_entry("CELL STRESS", "false",
 		    Patterns::Bool(),
-		    "Boolean parameter specifying if cell stress is to be computed");    
+		    "Boolean parameter specifying if cell stress is to be computed");
 
   prm.declare_entry("NUMBER OF REFINEMENT STEPS", "4",
 		    Patterns::Integer(1,10),
@@ -239,7 +239,7 @@ void declare_parameters()
   prm.declare_entry("LOWER BOUND WANTED SPECTRUM", "-10.0",
 		    Patterns::Double(),
 		    "The lower bound of the wanted eigen spectrum");
-  
+
   prm.declare_entry("CHEBYSHEV POLYNOMIAL DEGREE", "0",
 		    Patterns::Integer(),
 		    "The degree of the Chebyshev polynomial to be employed for filtering out the unwanted spectrum (Default value is used when the input parameter value is 0");
@@ -259,7 +259,7 @@ void declare_parameters()
   prm.declare_entry("SCF CONVERGENCE MAXIMUM ITERATIONS", "50",
 		    Patterns::Integer(),
 		    "Maximum number of iterations to be allowed for SCF convergence");
-  
+
   prm.declare_entry("SCF CONVERGENCE TOLERANCE", "1e-08",
 		    Patterns::Double(),
 		    "SCF iterations stopping tolerance in terms of electron-density difference between two successive iterations");
@@ -275,7 +275,7 @@ void declare_parameters()
   prm.declare_entry("POISSON SOLVER CONVERGENCE MAXIMUM ITERATIONS", "5000",
 		    Patterns::Integer(),
 		    "Maximum number of iterations to be allowed for Poisson problem convergence");
-  
+
   prm.declare_entry("POISSON SOLVER CONVERGENCE TOLERANCE", "1e-12",
 		    Patterns::Double(),
 		    "Relative tolerance as stopping criterion for Poisson problem convergence");
@@ -359,15 +359,15 @@ void parse_command_line(const int argc,
 	  dftParameters::isIonOpt                      = prm.get_bool("ION OPT");
 	  dftParameters::isCellOpt                     = prm.get_bool("CELL OPT");
 	  dftParameters::isIonForce                    = dftParameters::isIonOpt || prm.get_bool("ION FORCE");
-	  dftParameters::isCellStress                  = dftParameters::isCellOpt || prm.get_bool("CELL STRESS"); 
+	  dftParameters::isCellStress                  = dftParameters::isCellOpt || prm.get_bool("CELL STRESS");
 	  dftParameters::lowerEndWantedSpectrum        = prm.get_double("LOWER BOUND WANTED SPECTRUM");
-	  dftParameters::chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");  
+	  dftParameters::chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
 	  dftParameters::numPass		       = prm.get_integer("CHEBYSHEV FILTER PASSES");
 	  dftParameters::numSCFIterations              = prm.get_integer("SCF CONVERGENCE MAXIMUM ITERATIONS");
 	  dftParameters::selfConsistentSolverTolerance = prm.get_double("SCF CONVERGENCE TOLERANCE");
 	  dftParameters::mixingHistory                 = prm.get_integer("ANDERSON SCHEME MIXING HISTORY");
 	  dftParameters::mixingParameter               = prm.get_double("ANDERSON SCHEME MIXING PARAMETER");
-	  dftParameters::TVal                          = prm.get_double("TEMPERATURE");	
+	  dftParameters::TVal                          = prm.get_double("TEMPERATURE");
 	  dftParameters::maxLinearSolverIterations     = prm.get_integer("POISSON SOLVER CONVERGENCE MAXIMUM ITERATIONS");
 	  dftParameters::relLinearSolverTolerance      = prm.get_double("POISSON SOLVER CONVERGENCE TOLERANCE");
           dftParameters::npool			       = prm.get_integer("NUMBER OF POOLS");
@@ -414,10 +414,10 @@ int main (int argc, char *argv[])
     };
   deallog.depth_console(0);
   //
-  int color1, color2;  
+  int color1, color2;
   const int npool = dftParameters::npool;
-  const int n_mpi_processes = Utilities::MPI::n_mpi_processes(MPI_COMM_WORLD) ;    
-  //double poolSizeFloat = (double)n_mpi_processes/(double)npool;  
+  const int n_mpi_processes = Utilities::MPI::n_mpi_processes(MPI_COMM_WORLD) ;
+  //double poolSizeFloat = (double)n_mpi_processes/(double)npool;
   //int poolSize = std::floor(poolSizeFloat);
   AssertThrow(n_mpi_processes % npool == 0,ExcMessage("Number of mpi processes must be a multiple of NUMBER OF POOLS"));
   const int poolSize= n_mpi_processes/npool;
@@ -428,8 +428,8 @@ int main (int argc, char *argv[])
         std::cout<<"Number of pools: "<<npool<<std::endl;
 	std::cout<<"Pool size: "<<poolSize<<std::endl;
       }
-      
-     color1 = taskId%poolSize ; 
+
+     color1 = taskId%poolSize ;
 
 
       MPI_Barrier(MPI_COMM_WORLD);
@@ -444,7 +444,7 @@ int main (int argc, char *argv[])
       color2 = taskId / poolSize ;
 
       MPI_Barrier(MPI_COMM_WORLD);
-     
+
 
       MPI_Comm_split(MPI_COMM_WORLD,
                      color2,
@@ -455,7 +455,7 @@ int main (int argc, char *argv[])
 
       for (int i=0; i<n_mpi_processes; ++i) {
 	   if (taskId==i)
-	       std::cout << " My global id is " << taskId << " , pool id is " << Utilities::MPI::this_mpi_process(interpoolcomm)  << 
+	       std::cout << " My global id is " << taskId << " , pool id is " << Utilities::MPI::this_mpi_process(interpoolcomm)  <<
 							" , intrapool id is " << Utilities::MPI::this_mpi_process(intrapoolcomm) << std::endl;
 	   MPI_Barrier(MPI_COMM_WORLD);
 
@@ -470,7 +470,7 @@ int main (int argc, char *argv[])
 
     unsigned int finiteElementPolynomialOrder = dftParameters::finiteElementPolynomialOrder;
     unsigned int numberEigenValues = dftParameters::numberEigenValues;
-    
+
 
     switch(finiteElementPolynomialOrder) {
 
@@ -499,9 +499,9 @@ int main (int argc, char *argv[])
 	dftClass<3> problemFEOrder3(mpi_comm_replica, interpoolcomm);
 	problemFEOrder3.numEigenValues = numberEigenValues;
         problemFEOrder3.set();
-	problemFEOrder3.init();	
+	problemFEOrder3.init();
 	problemFEOrder3.run();
-	break;	
+	break;
       }
 
     case 4:
@@ -509,7 +509,7 @@ int main (int argc, char *argv[])
 	dftClass<4> problemFEOrder4(mpi_comm_replica, interpoolcomm);
 	problemFEOrder4.numEigenValues = numberEigenValues;
         problemFEOrder4.set();
-	problemFEOrder4.init();	
+	problemFEOrder4.init();
 	problemFEOrder4.run();
 	break;
       }
@@ -519,7 +519,7 @@ int main (int argc, char *argv[])
 	dftClass<5> problemFEOrder5(mpi_comm_replica, interpoolcomm);
 	problemFEOrder5.numEigenValues = numberEigenValues;
         problemFEOrder5.set();
-	problemFEOrder5.init();	
+	problemFEOrder5.init();
 	problemFEOrder5.run();
 	break;
       }
@@ -529,7 +529,7 @@ int main (int argc, char *argv[])
 	dftClass<6> problemFEOrder6(mpi_comm_replica, interpoolcomm);
 	problemFEOrder6.numEigenValues = numberEigenValues;
         problemFEOrder6.set();
-	problemFEOrder6.init();		
+	problemFEOrder6.init();
 	problemFEOrder6.run();
 	break;
       }
@@ -539,7 +539,7 @@ int main (int argc, char *argv[])
 	dftClass<7> problemFEOrder7(mpi_comm_replica, interpoolcomm);
 	problemFEOrder7.numEigenValues = numberEigenValues;
         problemFEOrder7.set();
-	problemFEOrder7.init();		
+	problemFEOrder7.init();
 	problemFEOrder7.run();
 	break;
       }
@@ -549,7 +549,7 @@ int main (int argc, char *argv[])
 	dftClass<8> problemFEOrder8(mpi_comm_replica, interpoolcomm);
 	problemFEOrder8.numEigenValues = numberEigenValues;
         problemFEOrder8.set();
-	problemFEOrder8.init();		
+	problemFEOrder8.init();
 	problemFEOrder8.run();
 	break;
       }
@@ -559,7 +559,7 @@ int main (int argc, char *argv[])
 	dftClass<9> problemFEOrder9(mpi_comm_replica, interpoolcomm);
 	problemFEOrder9.numEigenValues = numberEigenValues;
         problemFEOrder9.set();
-	problemFEOrder9.init();		
+	problemFEOrder9.init();
 	problemFEOrder9.run();
 	break;
       }
@@ -569,7 +569,7 @@ int main (int argc, char *argv[])
 	dftClass<10> problemFEOrder10(mpi_comm_replica, interpoolcomm);
 	problemFEOrder10.numEigenValues = numberEigenValues;
         problemFEOrder10.set();
-	problemFEOrder10.init();		
+	problemFEOrder10.init();
 	problemFEOrder10.run();
 	break;
       }
@@ -579,7 +579,7 @@ int main (int argc, char *argv[])
 	dftClass<11> problemFEOrder11(mpi_comm_replica, interpoolcomm);
 	problemFEOrder11.numEigenValues = numberEigenValues;
         problemFEOrder11.set();
-	problemFEOrder11.init();		
+	problemFEOrder11.init();
 	problemFEOrder11.run();
 	break;
       }
@@ -589,7 +589,7 @@ int main (int argc, char *argv[])
 	dftClass<12> problemFEOrder12(mpi_comm_replica, interpoolcomm);
 	problemFEOrder12.numEigenValues = numberEigenValues;
         problemFEOrder12.set();
-	problemFEOrder12.init();		
+	problemFEOrder12.init();
 	problemFEOrder12.run();
 	break;
       }
@@ -600,4 +600,3 @@ int main (int argc, char *argv[])
   }
   return 0;
 }
-
