@@ -32,7 +32,7 @@ using namespace dealii;
  * order Eshelby tensors (denoted by E*) and the first order force tensors (denoted by F*). 
  * General nomenclature of the input arguments:
  * a) phiTot- total electrostatic potential
- * b) phiExt- external electrostatic potential from nuclear charges
+ * b) phiExt- sum of electrostatic potential from all nuclear charges
  * c) rho- electron density
  * d) gradRho- gradient of electron density
  * e) exc- exchange correlation energy
@@ -51,10 +51,10 @@ using namespace dealii;
  */
 namespace eshelbyTensor
 {
-  ///Only used for sanity checks 
+  ///Eshelby tensor from sum of electrostatic potential from all nuclear charges (only used for testing purpose) 
   Tensor<2,C_DIM,VectorizedArray<double> >  getPhiExtEshelbyTensor(const VectorizedArray<double> & phiExt, const Tensor<1,C_DIM,VectorizedArray<double> > & gradPhiExt);
+  ///Eshelby tensor corresponding to nuclear self energy (only used for testing purpose)
   Tensor<2,C_DIM,VectorizedArray<double> >  getVselfBallEshelbyTensor(const Tensor<1,C_DIM,VectorizedArray<double> > & gradVself);
-
   ///Eshelby tensor corresponding to nuclear self energy 
   Tensor<2,C_DIM,double >  getVselfBallEshelbyTensor(const Tensor<1,C_DIM,double > & gradVself);
   ///Local part of the Eshelby tensor for periodic case (only considers terms which are not summed over k points)
@@ -111,8 +111,6 @@ namespace eshelbyTensor
 								      const double fermiEnergy_,
 								      const double tVal);
 
-
-
   ///Nonlocal pseudotential force contribution (for non periodic case)
   Tensor<1,C_DIM,VectorizedArray<double> >  getFnlNonPeriodic(const std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > & gradZetaDeltaV,
 						            const std::vector<std::vector<double> > & projectorKetTimesPsiTimesV,
@@ -120,8 +118,6 @@ namespace eshelbyTensor
 						            const std::vector<double> & eigenValues_,
 						            const double fermiEnergy_,
 						            const double tVal);
-
-
   ///Nonlocal pseudotential force contribution (for periodic case)
   Tensor<1,C_DIM,VectorizedArray<double> >  getFnlPeriodic(const std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > & gradZetaDeltaV,
 						         const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiTimesV,
@@ -130,7 +126,6 @@ namespace eshelbyTensor
 					                 const std::vector<std::vector<double> > & eigenValues_,
 						         const double fermiEnergy_,
 						         const double tVal);
-
   ///Force contribution due to the numerical difference between the input and output electron density (rhoIn and rhoOut) 
   ///of the final scf iteration. vEff denotes the Kohn-Sham effective potential.
   Tensor<1,C_DIM,VectorizedArray<double> >  getNonSelfConsistentForce(const VectorizedArray<double> & vEffRhoIn,
