@@ -8,7 +8,7 @@ dealiiPetscComplexDir="/home/vikramg/DFT-FE-softwares/softwareCentos/dealiiDev/i
 #dealiiPetscRealDir="/home/vikramg/DFT-FE-softwares/softwareCentos/dealii8.5.1/intel_18.0.1_petscDouble_noavx"
 #dealiiPetscComplexDir="/home/vikramg/DFT-FE-softwares/softwareCentos/dealii8.5.1/intel_18.0.1_petscComplex_noavx"
 alglibDir="/nfs/mcfs_comp/home/rudraa/software/alglib/cpp/src"
-libxcDir="/nfs/mcfs_comp/home/rudraa/software/libxc/libxc-2.2.0/installDir"
+libxcDir="/home/vikramg/DFT-FE-softwares/softwareCentos/libxcNew/install_intel18"
 spglibDir="/home/vikramg/DFT-FE-softwares/softwareCentos/spglib"
 optimizedMode=1
 #
