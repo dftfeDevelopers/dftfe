@@ -20,6 +20,14 @@
 template<unsigned int FEOrder>
 void forceClass<FEOrder>::computeStress()
 {
+  //configurational stress contribution from all terms except those from nuclear self energy
+  if (dftParameters::spinPolarized)
+     std::cout<<"TO BE IMPLEMENTED"<<std::endl;  
+  else
+     computeStressEEshelbyEPSPEnlEk(); 
+  //configurational stress contribution from nuclear self energy. This is handled separately as it involves
+  // a surface integral over the vself ball surface
+  computeStressEself();
 }
 
 template<unsigned int FEOrder>

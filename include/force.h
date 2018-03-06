@@ -46,7 +46,7 @@ public:
   void printAtomsForces();
   void printStress();
   std::vector<double> getAtomsForces();
-  std::vector<double> getStress();
+  Tensor<2,C_DIM,double> getStress();
   void updateAtomPositionsAndMoveMesh(const std::vector<Point<C_DIM> > & globalAtomsDisplacements);
 private:
   vectorType d_configForceVectorLinFE;
@@ -153,6 +153,9 @@ private:
   std::vector<double> d_globalAtomsGaussianForcesKPoints;
 #endif  
   Tensor<2,C_DIM,double> d_stress;
+#ifdef ENABLE_PERIODIC_BC  
+  Tensor<2,C_DIM,double> d_stressKPoints;
+#endif  
   const bool d_allowGaussianOverlapOnAtoms=false;//Dont use true except for debugging forces only without mesh movement, as gaussian ovelap on atoms for move mesh is by default set to false
 
   //pointer to dft class

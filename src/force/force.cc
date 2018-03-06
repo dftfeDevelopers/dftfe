@@ -235,10 +235,9 @@ std::vector<double>  forceClass<FEOrder>::getAtomsForces()
 }
 
 template<unsigned int FEOrder>
-std::vector<double>  forceClass<FEOrder>::getStress()
+Tensor<2,C_DIM,double>  forceClass<FEOrder>::getStress()
 {
-    std::vector<double> temp;
-    return temp;
+    return d_stress;
 }
 
 template class forceClass<1>;
