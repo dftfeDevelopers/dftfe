@@ -60,8 +60,6 @@
 #endif
 
 
-using namespace dftParameters ;
-
 //
 //dft constructor
 //
@@ -344,7 +342,7 @@ void dftClass<FEOrder>::init ()
   //get access to triangulation objects from meshGenerator class
   //
   parallel::distributed::Triangulation<3> & triangulationPar = d_mesh.getParallelMesh();
-  if (useSymm) {
+  if (dftParameters::useSymm) {
     parallel::distributed::Triangulation<3> & triangulationSer = d_mesh.getSerialMesh();
     writeMesh("meshInitial");
   }
@@ -353,7 +351,7 @@ void dftClass<FEOrder>::init ()
   //
   initUnmovedTriangulation(triangulationPar);
 #ifdef ENABLE_PERIODIC_BC
- if (useSymm)
+ if (dftParameters::useSymm)
     symmetryPtr->initSymmetry() ;
 #endif
   //
