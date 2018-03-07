@@ -49,6 +49,7 @@ namespace internalforce
    
 }
 
+//compute configurational force contribution from all terms except the nuclear self energy
 template<unsigned int FEOrder>
 void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE()
 {

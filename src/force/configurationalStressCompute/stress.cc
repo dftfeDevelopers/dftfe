@@ -28,10 +28,22 @@ void forceClass<FEOrder>::computeStress()
   //configurational stress contribution from nuclear self energy. This is handled separately as it involves
   // a surface integral over the vself ball surface
   computeStressEself();
+
+  //Sum all processor contributions and distribute to all processors
+  d_stress=Utilities::MPI::sum(d_stress,mpi_communicator);
+#ifdef ENABLE_PERIODIC_BC 
+  //Sum over k point pools and add to total stress
+  d_stressKPoints=Utilities::MPI::sum(d_stressKPoints,dftPtr->interpoolcomm);  
+  d_stress+=d_stressKPoints;
+#endif
+  //Scale by inverse of domain volume
+  d_stress=d_stress*(1.0/dftPtr->d_domainVolume);
 }
 
 template<unsigned int FEOrder>
 void forceClass<FEOrder>::printStress()
 {
+    pcout<< "------------Configurational stress (Hartree/Bohr^3): "<< std::endl;
+    pcout<< d_stress<<std::endl;
+    pcout<< "------------------------------------------------------------------------"<<std::endl;    
 }
-//

@@ -12,9 +12,19 @@
 // the top level of the DFT-FE distribution.
 //
 // ---------------------------------------------------------------------
-//
-// @author Sambit Das (2017)
-//
+
+/** @file force.h
+ *  @brief computes configurational forces in KSDFT
+ *
+ *  This class computes and stores the configurational forces corresponding to geometry optimization.
+ *  It uses the formulation in the paper by Motamarri et.al. (https://arxiv.org/abs/1712.05535) 
+ *  which provides an unified approach to atomic forces corresponding to internal atomic relaxation 
+ *  and cell stress corresponding to cell relaxation.
+ *
+ *  @author Sambit Das
+ */
+
+
 
 #ifndef force_H_
 #define force_H_
@@ -22,7 +32,6 @@
 #include "constants.h"
 #include "geoOptIon.h"
 #include "meshMovementGaussian.h"
-//#include "dft.h"
 
 using namespace dealii;
 typedef dealii::parallel::distributed::Vector<double> vectorType;
@@ -114,8 +123,7 @@ private:
 
   //stress computation functions
   void computeStressEself();
-  //void computeStressEEshelbyEPSPEnlEk();
-  //void computeEnlFnlForceContribution();  
+  void computeStressEEshelbyEPSPEnlEk();
   void locateAtomCoreNodesForce();
 
   

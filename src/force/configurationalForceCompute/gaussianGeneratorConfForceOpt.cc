@@ -480,11 +480,9 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
 template<unsigned int FEOrder>
 void forceClass<FEOrder>::printAtomsForces()
 {
-  //if (this_mpi_process==0){
     const int numberGlobalAtoms = dftPtr->atomLocations.size();	  
-    pcout<< "------------Configurational force on atoms using Gaussian generator with constant: "<< d_gaussianConstant << "-------------"<<std::endl;
+    pcout<< "------------Configurational force (Hartree/Bohr) on atoms using Gaussian generator with constant: "<< d_gaussianConstant << "-------------"<<std::endl;
     for (unsigned int i=0; i< numberGlobalAtoms; i++)
 	pcout<< "Global atomId: "<< i << ",Force vec: "<< d_globalAtomsGaussianForces[3*i]<<","<< d_globalAtomsGaussianForces[3*i+1]<<","<<d_globalAtomsGaussianForces[3*i+2]<<std::endl;   
     pcout<< "------------------------------------------------------------------------"<<std::endl;
-  //}
 }
