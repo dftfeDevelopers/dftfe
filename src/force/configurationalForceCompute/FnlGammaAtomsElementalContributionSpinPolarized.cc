@@ -37,9 +37,9 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionPeriodicSpinPolarize
   const unsigned int numQuadPoints=forceEval.n_q_points;
   DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
 
-  unsigned int numNonLocalAtomsCurrentProcess= dftPtr->d_nonLocalAtomIdsInCurrentProcess.size();
+  const unsigned int numNonLocalAtomsCurrentProcess= dftPtr->d_nonLocalAtomIdsInCurrentProcess.size();
 
-  for(int iAtom = 0; iAtom < numNonLocalAtomsCurrentProcess; ++iAtom)
+  for(unsigned int iAtom = 0; iAtom < numNonLocalAtomsCurrentProcess; ++iAtom)
   {
       //
       //get the global charge Id of the current nonlocal atom
@@ -60,7 +60,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionPeriodicSpinPolarize
 	   std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > temp1(1);
 	   temp1[0]=pspnlGammaAtomsQuads[q][iAtom];	
    
-           Tensor<1,C_DIM,VectorizedArray<double> > 
+           const Tensor<1,C_DIM,VectorizedArray<double> > 
 	       F=-eshelbyTensorSP::getFnlPeriodic(temp1,
 						temp2Spin0,
 						temp2Spin1,
@@ -70,11 +70,9 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionPeriodicSpinPolarize
 						dftPtr->eigenValues,
 						dftPtr->fermiEnergy,
 						dftParameters::TVal);
- 
-
            forceEval.submit_value(F,q);
       }
-      Tensor<1,C_DIM,VectorizedArray<double> > forceContributionFnlGammaiAtomCells
+      const Tensor<1,C_DIM,VectorizedArray<double> > forceContributionFnlGammaiAtomCells
 						     =forceEval.integrate_value();
 
       if (forceContributionFnlGammaAtoms.find(globalChargeIdNonLocalAtom)==forceContributionFnlGammaAtoms.end())
@@ -110,9 +108,9 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodicSpinPolar
   const unsigned int numQuadPoints=forceEval.n_q_points;
   DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
 
-  unsigned int numNonLocalAtomsCurrentProcess= dftPtr->d_nonLocalAtomIdsInCurrentProcess.size();
+  const unsigned int numNonLocalAtomsCurrentProcess= dftPtr->d_nonLocalAtomIdsInCurrentProcess.size();
 
-  for(int iAtom = 0; iAtom < numNonLocalAtomsCurrentProcess; ++iAtom)
+  for(unsigned int iAtom = 0; iAtom < numNonLocalAtomsCurrentProcess; ++iAtom)
   {
       //
       //get the global charge Id of the current nonlocal atom
@@ -128,7 +126,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodicSpinPolar
 	   std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > temp1(1);
 	   temp1[0]=pspnlGammaAtomQuads[q][iAtom];
 
-           Tensor<1,C_DIM,VectorizedArray<double> > F=
+           const Tensor<1,C_DIM,VectorizedArray<double> > F=
 	                  -eshelbyTensorSP::getFnlNonPeriodic(temp1,
 					                    temp2Spin0,
 							    temp2Spin1,
@@ -137,11 +135,9 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodicSpinPolar
 					                    (dftPtr->eigenValues)[0],
 					                    dftPtr->fermiEnergy,
 					                    dftParameters::TVal);  
-	   
-            							    
            forceEval.submit_value(F,q);
       }
-      Tensor<1,C_DIM,VectorizedArray<double> > forceContributionFnlGammaiAtomCells
+      const Tensor<1,C_DIM,VectorizedArray<double> > forceContributionFnlGammaiAtomCells
 						     =forceEval.integrate_value();
 
       if (forceContributionFnlGammaAtoms.find(globalChargeIdNonLocalAtom)==forceContributionFnlGammaAtoms.end())

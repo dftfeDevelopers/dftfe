@@ -4,10 +4,14 @@
 
 # Set the name of the project and target:
 SET(TARGET "main")
+SET(TARGETLIB "dftfe")
+
+INCLUDE_DIRECTORIES(
+ ${CMAKE_SOURCE_DIR}/include
+)
 
 # Declare all source files the target consists of:
 SET(TARGET_SRC
-  ./src/${TARGET}.cc
   ./src/dft/dft.cc
   ./src/poisson/poisson.cc
   ./src/eigen/eigen.cc
@@ -25,6 +29,7 @@ SET(TARGET_SRC
   ./utils/fileReaders.cc
   ./utils/dftParameters.cc
   ./utils/constraintMatrixInfo.cc
+  ./utils/dftUtils.cc
   # You can specify additional files here!
   )
 
@@ -74,8 +79,20 @@ ELSE()
    MESSAGE(STATUS "Non-periodic")
 ENDIF()
 
-ADD_EXECUTABLE(${TARGET} ${TARGET_SRC})
+ADD_LIBRARY(${TARGETLIB} SHARED
+    ${TARGET_SRC}
+  )
+
+ADD_EXECUTABLE(${TARGET}
+    src/main.cc
+  )
+
+DEAL_II_SETUP_TARGET(${TARGETLIB})
 DEAL_II_SETUP_TARGET(${TARGET})
+
+TARGET_LINK_LIBRARIES(${TARGET}
+    ${TARGETLIB}
+  )
 
 #
 # REQUIRED DEPENDENCIES:
@@ -94,7 +111,7 @@ IF (DEFINED ALGLIB_DIR)
       MESSAGE(FATAL_ERROR "-- Alglib was not found in ${ALGLIB_DIR}")
   ENDIF()
   MESSAGE("-- Use Alglib from ${ALGLIB_DIR}")
-  TARGET_LINK_LIBRARIES(${TARGET}
+  TARGET_LINK_LIBRARIES(${TARGETLIB}
 	  "${ALGLIB_LIBRARY}"
   )
   INCLUDE_DIRECTORIES ("${ALGLIB_DIR}")
@@ -116,7 +133,7 @@ IF (DEFINED LIBXC_DIR)
       MESSAGE(FATAL_ERROR "-- LibXC was not found in ${LIBXC_DIR}")
   ENDIF()
   MESSAGE("-- Use LibXC from ${LIBXC_DIR}")
-  TARGET_LINK_LIBRARIES(${TARGET}
+  TARGET_LINK_LIBRARIES(${TARGETLIB}
 	    "${LIBXC_LIBRARY}"
   )
   INCLUDE_DIRECTORIES ("${LIBXC_DIR}/include")
@@ -138,7 +155,7 @@ IF (DEFINED SPGLIB_DIR)
       MESSAGE(FATAL_ERROR "-- SPGLib was not found in ${SPGLIB_DIR}")
   ENDIF()
   MESSAGE("-- Use SPGLib from ${SPGLIB_DIR}")
-  TARGET_LINK_LIBRARIES(${TARGET}
+  TARGET_LINK_LIBRARIES(${TARGETLIB}
 	    "${SPGLIB_LIBRARY}"
   )
   INCLUDE_DIRECTORIES ("${SPGLIB_DIR}/include")

@@ -15,14 +15,6 @@
 //
 // @author Sambit Das (2017)
 //
-namespace internalforce
-{
-   double getPartialOccupancy(double eigenValue, double fermiEnergy, double kb, double T)
-   {
-      const double factor=(eigenValue-fermiEnergy)/(kb*T);       
-      return (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)) : 1.0/(1.0 + std::exp(factor));
-   }   
-}
 
 template<unsigned int FEOrder>
 void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensorFPSPFnlLinFE()
@@ -33,7 +25,7 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
   std::map<unsigned int, std::vector<double> > forceContributionFPSPLocalGammaAtoms;
   std::map<unsigned int, std::vector<double> > forceContributionFnlGammaAtoms;
 
-  bool isPseudopotential = dftParameters::isPseudopotential;
+  const bool isPseudopotential = dftParameters::isPseudopotential;
 
   const unsigned int numVectorizedArrayElements=VectorizedArray<double>::n_array_elements;
   const MatrixFree<3,double> & matrix_free_data=dftPtr->matrix_free_data;
@@ -226,22 +218,20 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
        {
 	  for (unsigned int q = 0; q < numQuadPoints; ++q)
 	  {
-	      gradRhoOutSpin0[q][0] = ((*dftPtr->gradRhoOutValuesSpinPolarized)[subCellId][6*q + 0]);
-	      gradRhoOutSpin0[q][1] = ((*dftPtr->gradRhoOutValuesSpinPolarized)[subCellId][6*q + 1]);
-	      gradRhoOutSpin0[q][2] = ((*dftPtr->gradRhoOutValuesSpinPolarized)[subCellId][6*q + 2]);
-	      gradRhoOutSpin1[q][0] = ((*dftPtr->gradRhoOutValuesSpinPolarized)[subCellId][6*q + 3]);
-	      gradRhoOutSpin1[q][1] = ((*dftPtr->gradRhoOutValuesSpinPolarized)[subCellId][6*q + 4]);
-	      gradRhoOutSpin1[q][2] = ((*dftPtr->gradRhoOutValuesSpinPolarized)[subCellId][6*q + 5]);	      
+	      for (unsigned int idim=0; idim<C_DIM; idim++)
+	      {		      
+	        gradRhoOutSpin0[q][idim] = ((*dftPtr->gradRhoOutValuesSpinPolarized)[subCellId][6*q + idim]);
+	        gradRhoOutSpin1[q][idim] = ((*dftPtr->gradRhoOutValuesSpinPolarized)[subCellId][6*q +3+idim]);
+	      }
 	      sigmaValRhoOut[3*q+0] = scalar_product(gradRhoOutSpin0[q],gradRhoOutSpin0[q]);
 	      sigmaValRhoOut[3*q+1] = scalar_product(gradRhoOutSpin0[q],gradRhoOutSpin1[q]);
 	      sigmaValRhoOut[3*q+2] = scalar_product(gradRhoOutSpin1[q],gradRhoOutSpin1[q]);
 
-	      gradRhoInSpin0[q][0] = ((*dftPtr->gradRhoInValuesSpinPolarized)[subCellId][6*q + 0]);
-	      gradRhoInSpin0[q][1] = ((*dftPtr->gradRhoInValuesSpinPolarized)[subCellId][6*q + 1]);
-	      gradRhoInSpin0[q][2] = ((*dftPtr->gradRhoInValuesSpinPolarized)[subCellId][6*q + 2]);
-	      gradRhoInSpin1[q][0] = ((*dftPtr->gradRhoInValuesSpinPolarized)[subCellId][6*q + 3]);
-	      gradRhoInSpin1[q][1] = ((*dftPtr->gradRhoInValuesSpinPolarized)[subCellId][6*q + 4]);
-	      gradRhoInSpin1[q][2] = ((*dftPtr->gradRhoInValuesSpinPolarized)[subCellId][6*q + 5]);	
+	      for (unsigned int idim=0; idim<C_DIM; idim++)
+	      {		      
+	        gradRhoInSpin0[q][idim] = ((*dftPtr->gradRhoInValuesSpinPolarized)[subCellId][6*q + idim]);
+	        gradRhoInSpin1[q][idim] = ((*dftPtr->gradRhoInValuesSpinPolarized)[subCellId][6*q +3+idim]);
+	      }
 	      sigmaValRhoIn[3*q+0] = scalar_product(gradRhoInSpin0[q],gradRhoInSpin0[q]);
 	      sigmaValRhoIn[3*q+1] = scalar_product(gradRhoInSpin0[q],gradRhoInSpin1[q]);
 	      sigmaValRhoIn[3*q+2] = scalar_product(gradRhoInSpin1[q],gradRhoInSpin1[q]);      
@@ -370,12 +360,12 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 		 gradPsiSpin1Quads[id][idim][iSubCell]=tempGradPsiSpin1[q][idim];		 
 	     }
 #endif 	     
-             const double partOccSpin0 =internalforce::getPartialOccupancy
+             const double partOccSpin0 =dftUtils::getPartialOccupancy
 		                                                     (dftPtr->eigenValues[ikPoint][iEigenVec],
 		                                                      dftPtr->fermiEnergy,
 								      C_kb,
 								      dftParameters::TVal); 
-             const double partOccSpin1 =internalforce::getPartialOccupancy
+             const double partOccSpin1 =dftUtils::getPartialOccupancy
 		                                                     (dftPtr->eigenValues[ikPoint][iEigenVec+numEigenVectors],
 		                                                      dftPtr->fermiEnergy,
 								      C_kb,
