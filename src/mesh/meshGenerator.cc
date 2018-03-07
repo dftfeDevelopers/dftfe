@@ -21,7 +21,6 @@
 
 #define maxRefinementLevels 10
 
-using namespace dftParameters ;
 
 
 //
@@ -61,7 +60,7 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
     {
       GridIn<3> gridinParallel, gridinSerial;
       gridinParallel.attach_triangulation(parallelTriangulation);
-      if (useSymm)
+      if (dftParameters::useSymm)
       gridinSerial.attach_triangulation(serialTriangulation);
 
       //
@@ -76,7 +75,7 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       //meshGenUtils::markPeriodicFaces(parallelTriangulation);
       //meshGenUtils::markPeriodicFaces(serialTriangulation);
       meshGenUtils::markPeriodicFacesNonOrthogonal(parallelTriangulation,d_domainBoundingVectors);
-      if (useSymm)
+      if (dftParameters::useSymm)
       meshGenUtils::markPeriodicFacesNonOrthogonal(serialTriangulation,d_domainBoundingVectors);      
 #endif  
       numberGlobalCells = parallelTriangulation.n_global_active_cells();
@@ -132,7 +131,7 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       GridGenerator::subdivided_parallelepiped<3>(parallelTriangulation,
 	                                          subdivisions,
 				                  basisVectors);
-       if (useSymm) {
+       if (dftParameters::useSymm) {
       GridGenerator::subdivided_parallelepiped<3>(serialTriangulation,
 	                                          subdivisions,
 				                  basisVectors);
@@ -148,7 +147,7 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       //
       const Point<3> translation = 0.5*(vector1+vector2+vector3);
       GridTools::shift(-translation,parallelTriangulation);
-       if (useSymm)
+       if (dftParameters::useSymm)
       GridTools::shift(-translation,serialTriangulation);
       
       //
@@ -156,7 +155,7 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       //
 #ifdef ENABLE_PERIODIC_BC
       meshGenUtils::markPeriodicFacesNonOrthogonal(parallelTriangulation,d_domainBoundingVectors);
-       if (useSymm)
+       if (dftParameters::useSymm)
       meshGenUtils::markPeriodicFacesNonOrthogonal(serialTriangulation,d_domainBoundingVectors);
       //meshGenUtils::markPeriodicFaces(parallelTriangulation);
       //meshGenUtils::markPeriodicFaces(serialTriangulation);
@@ -305,7 +304,7 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
            // Refine serial mesh
 	     // numberGlobalCells = parallelTriangulation.n_global_active_cells();
 	      //pcout << " check 1.1 " << std::endl ;
-               if (useSymm) {
+               if (dftParameters::useSymm) {
               refineSerialMesh(n_cell, centroid, localRefineFlag, numberGlobalCells, serialTriangulation) ;
 	      //pcout << " check 1.2 " << std::endl ;
 	      serialTriangulation.execute_coarsening_and_refinement();
@@ -337,7 +336,7 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       pcout << buffer;
 
       int numberGlobalCellsParallel = parallelTriangulation.n_global_active_cells();
-      if (useSymm) {
+      if (dftParameters::useSymm) {
       int numberGlobalCellsSerial = serialTriangulation.n_global_active_cells();
 
       sprintf(buffer, " numParallelCells: %u, numSerialCells: %u \n", numberGlobalCellsParallel, numberGlobalCellsSerial);
