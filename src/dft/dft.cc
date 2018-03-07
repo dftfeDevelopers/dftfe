@@ -60,8 +60,6 @@
 #endif
 
 
-using namespace dftParameters ;
-
 //
 //dft constructor
 //
@@ -344,14 +342,16 @@ void dftClass<FEOrder>::init ()
   //get access to triangulation objects from meshGenerator class
   //
   parallel::distributed::Triangulation<3> & triangulationPar = d_mesh.getParallelMesh();
-  parallel::distributed::Triangulation<3> & triangulationSer = d_mesh.getSerialMesh();
-  writeMesh("meshInitial");
+  if (dftParameters::useSymm) {
+    parallel::distributed::Triangulation<3> & triangulationSer = d_mesh.getSerialMesh();
+    writeMesh("meshInitial");
+  }
   //
   //initialize dofHandlers and hanging-node constraints and periodic constraints on the unmoved Mesh
   //
   initUnmovedTriangulation(triangulationPar);
 #ifdef ENABLE_PERIODIC_BC
- if (useSymm || timeReversal)
+ if (dftParameters::useSymm)
     symmetryPtr->initSymmetry() ;
 #endif
   //
@@ -592,7 +592,7 @@ void dftClass<FEOrder>::solve()
 	//rhoOut
    computing_timer.enter_section("compute rho"); 
 #ifdef ENABLE_PERIODIC_BC
-   if (useSymm || timeReversal){
+   if (useSymm){
 	symmetryPtr->computeLocalrhoOut();
 	symmetryPtr->computeAndSymmetrize_rhoOut();
     }

@@ -152,7 +152,6 @@ private:
 
   //meshMovementGaussianClass object  								       
   meshMovementGaussianClass gaussianMovePar;
-  meshMovementGaussianClass gaussianMoveSer;
 
   //Gaussian generator related data and functions
   const double d_gaussianConstant=4.0;//5.0
