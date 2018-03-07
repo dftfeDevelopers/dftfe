@@ -17,6 +17,7 @@ SET(TARGET_SRC
   ./src/eigen/eigen.cc
   ./src/force/force.cc
   ./src/force/eshelbyTensor/eshelbyTensor.cc
+  ./src/force/eshelbyTensor/eshelbyTensorSpinPolarized.cc
   ./src/mesh/meshMovement/meshMovement.cc
   ./src/mesh/meshMovement/meshMovementGaussian.cc
   ./src/mesh/meshGenerator.cc
@@ -28,6 +29,7 @@ SET(TARGET_SRC
   ./utils/fileReaders.cc
   ./utils/dftParameters.cc
   ./utils/constraintMatrixInfo.cc
+  ./utils/dftUtils.cc
   # You can specify additional files here!
   )
 

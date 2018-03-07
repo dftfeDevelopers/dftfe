@@ -59,7 +59,8 @@ private:
   //configurational force functions
   void configForceLinFEInit();
   void configForceLinFEFinalize();
-  void computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE();  
+  void computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(); 
+  void computeConfigurationalForceSpinPolarizedEEshelbyTensorFPSPFnlLinFE();    
   void computeConfigurationalForcePhiExtLinFE();
   void computeConfigurationalForceEselfLinFE();
   void computeConfigurationalForceEselfNoSurfaceLinFE();
@@ -69,23 +70,44 @@ private:
                                                 FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,					    
 				                const unsigned int cell,
 			                        const std::vector<VectorizedArray<double> > & rhoQuads);
+  void distributeForceContributionFPSPLocalGammaAtoms(const std::map<unsigned int, std::vector<double> > & forceContributionFPSPLocalGammaAtoms); 
+#ifdef ENABLE_PERIODIC_BC   
+  void FnlGammaAtomsElementalContributionPeriodic
+      (std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
+       FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
+       const unsigned int cell,
+       const std::vector<std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > > & pspnlGammaAtomsQuads,
+       const std::vector<std::vector<std::vector<std::complex<double> > > > & projectorKetTimesPsiTimesV,       
+       const std::vector<Tensor<1,2,VectorizedArray<double> > > & psiQuads);  
 
-  void distributeForceContributionFPSPLocalGammaAtoms(const std::map<unsigned int, std::vector<double> > & forceContributionFPSPLocalGammaAtoms);   
+  void FnlGammaAtomsElementalContributionPeriodicSpinPolarized
+      (std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
+       FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
+       const unsigned int cell,
+       const std::vector<std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > > & pspnlGammaAtomsQuads,
+       const std::vector<std::vector<std::vector<std::complex<double> > > > & projectorKetTimesPsiSpin0TimesV,
+       const std::vector<std::vector<std::vector<std::complex<double> > > > & projectorKetTimesPsiSpin1TimesV,    
+       const std::vector<Tensor<1,2,VectorizedArray<double> > > & psiSpin0Quads,
+       const std::vector<Tensor<1,2,VectorizedArray<double> > > & psiSpin1Quads); 
+#else  
+  void FnlGammaAtomsElementalContributionNonPeriodicSpinPolarized
+      (std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
+       FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
+       const unsigned int cell,
+       const std::vector<std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > > pspnlGammaAtomQuads,
+       const std::vector<std::vector<double> >  & projectorKetTimesPsiSpin0TimesV,
+       const std::vector<std::vector<double> >  & projectorKetTimesPsiSpin1TimesV,       
+       const std::vector< VectorizedArray<double> > & psiSpin0Quads,
+       const std::vector< VectorizedArray<double> > & psiSpin1Quads);
 
-  void FnlGammaAtomsElementalContributionNonPeriodic(std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
-						     FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
-						     const unsigned int cell,
-						     const std::vector<std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > > pspnlGammaAtomQuads,
-						     const std::vector<std::vector<double> >  & projectorKetTimesPsiTimesV,							       
-						     const std::vector< VectorizedArray<double> > & psiQuads);
-  void FnlGammaAtomsElementalContributionPeriodic(std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
-						  FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
-						  const unsigned int cell,
-						  const std::vector<std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > > & pspnlGammaAtomsQuads,
-						  const std::vector<std::vector<std::vector<std::complex<double> > > > & projectorKetTimesPsiTimesV,							       
-						  const std::vector<Tensor<1,2,VectorizedArray<double> > > & psiQuads);  
-
-
+  void FnlGammaAtomsElementalContributionNonPeriodic
+      (std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
+       FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
+       const unsigned int cell,
+       const std::vector<std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > > pspnlGammaAtomQuads,
+       const std::vector<std::vector<double> >  & projectorKetTimesPsiTimesV,			       
+       const std::vector< VectorizedArray<double> > & psiQuads);  
+#endif 
   void distributeForceContributionFnlGammaAtoms(const std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms);  
   //
   void computeAtomsForcesGaussianGenerator(bool allowGaussianOverlapOnAtoms=false);
