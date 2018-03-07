@@ -57,7 +57,6 @@ forceClass<FEOrder>::forceClass(dftClass<FEOrder>* _dftPtr, MPI_Comm &mpi_comm_r
   FEForce (FE_Q<3>(QGaussLobatto<1>(2)), 3), //linear shape function
   mpi_communicator (mpi_comm_replica),
   gaussianMovePar(mpi_comm_replica),
-  gaussianMoveSer(mpi_comm_replica),
   n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_communicator)),
   this_mpi_process (Utilities::MPI::this_mpi_process(mpi_communicator)),
   pcout(std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
@@ -117,8 +116,6 @@ void forceClass<FEOrder>::initUnmoved(Triangulation<3,3> & triangulation)
   d_constraintsNoneForce.close();
 #endif
   gaussianMovePar.init(triangulation,dftPtr->d_domainBoundingVectors);
-  if(dftParameters::useSymm)
-     gaussianMoveSer.init(dftPtr->d_mesh.getSerialMesh(),dftPtr->d_domainBoundingVectors);
   computing_timer.exit_section("forceClass setup"); 
 }
 
@@ -133,8 +130,6 @@ void forceClass<FEOrder>::initMoved()
   createBinObjectsForce();
   locateAtomCoreNodesForce();
   gaussianMovePar.initMoved();
-  if (dftParameters::useSymm)
-    gaussianMoveSer.initMoved();
 }
 
 //
