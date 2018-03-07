@@ -21,7 +21,7 @@
 
 #define maxRefinementLevels 10
 
-
+using namespace dftParameters ;
 
 
 //

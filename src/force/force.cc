@@ -117,7 +117,8 @@ void forceClass<FEOrder>::initUnmoved(Triangulation<3,3> & triangulation)
   d_constraintsNoneForce.close();
 #endif
   gaussianMovePar.init(triangulation,dftPtr->d_domainBoundingVectors);
-  gaussianMoveSer.init(dftPtr->d_mesh.getSerialMesh(),dftPtr->d_domainBoundingVectors);
+  if(dftParameters::useSymm)
+     gaussianMoveSer.init(dftPtr->d_mesh.getSerialMesh(),dftPtr->d_domainBoundingVectors);
   computing_timer.exit_section("forceClass setup"); 
 }
 
@@ -132,7 +133,8 @@ void forceClass<FEOrder>::initMoved()
   createBinObjectsForce();
   locateAtomCoreNodesForce();
   gaussianMovePar.initMoved();
-  gaussianMoveSer.initMoved();
+  if (dftParameters::useSymm)
+    gaussianMoveSer.initMoved();
 }
 
 //

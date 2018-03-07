@@ -343,10 +343,11 @@ void dftClass<FEOrder>::init ()
   //
   //get access to triangulation objects from meshGenerator class
   //
-  parallel::distributed::Triangulation<3> & triangulationPar = d_mesh.getParallelMesh();'
-  if (useSymm)
+  parallel::distributed::Triangulation<3> & triangulationPar = d_mesh.getParallelMesh();
+  if (useSymm) {
     parallel::distributed::Triangulation<3> & triangulationSer = d_mesh.getSerialMesh();
-  writeMesh("meshInitial");
+    writeMesh("meshInitial");
+  }
   //
   //initialize dofHandlers and hanging-node constraints and periodic constraints on the unmoved Mesh
   //
