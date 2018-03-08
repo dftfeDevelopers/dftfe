@@ -158,6 +158,7 @@ void dftClass<FEOrder>::computeVolume()
   {
      if (cell->is_locally_owned())
       {
+	   fe_values.reinit (cell);
 	   for (unsigned int q_point = 0; q_point < quadrature.size(); ++q_point)
 	   {
 	       d_domainVolume+=fe_values.JxW (q_point);
