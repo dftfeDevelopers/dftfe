@@ -37,6 +37,8 @@
 #include "configurationalStressCompute/stress.cc"
 #include "configurationalStressCompute/computeStressEself.cc"
 #include "configurationalStressCompute/computeStressEEshelbyEPSPEnlEk.cc"
+#include "configurationalStressCompute/computeStressSpinPolarizedEEshelbyEPSPEnlEk.cc"
+#include "configurationalStressCompute/EPSPStressContribution.cc"
 #include "initPseudoForce.cc"
 #include "initPseudoOVForce.cc"
 #include "createBinObjectsForce.cc"
@@ -232,11 +234,13 @@ std::vector<double>  forceClass<FEOrder>::getAtomsForces()
    return  d_globalAtomsGaussianForces;
 }
 
+#ifdef ENABLE_PERIODIC_BC
 template<unsigned int FEOrder>
 Tensor<2,C_DIM,double>  forceClass<FEOrder>::getStress()
 {
     return d_stress;
 }
+#endif
 
 template class forceClass<1>;
 template class forceClass<2>;

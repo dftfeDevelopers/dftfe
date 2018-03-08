@@ -16,13 +16,13 @@
 // @author Sambit Das(2017)
 //
 
-
+#ifdef ENABLE_PERIODIC_BC 
 template<unsigned int FEOrder>
 void forceClass<FEOrder>::computeStress()
 {
   //configurational stress contribution from all terms except those from nuclear self energy
   if (dftParameters::spinPolarized)
-     std::cout<<"TO BE IMPLEMENTED"<<std::endl;  
+     computeStressSpinPolarizedEEshelbyEPSPEnlEk();  
   else
      computeStressEEshelbyEPSPEnlEk(); 
   //configurational stress contribution from nuclear self energy. This is handled separately as it involves
@@ -31,14 +31,15 @@ void forceClass<FEOrder>::computeStress()
 
   //Sum all processor contributions and distribute to all processors
   d_stress=Utilities::MPI::sum(d_stress,mpi_communicator);
-#ifdef ENABLE_PERIODIC_BC 
+
   //Sum over k point pools and add to total stress
   d_stressKPoints=Utilities::MPI::sum(d_stressKPoints,dftPtr->interpoolcomm);  
   d_stress+=d_stressKPoints;
-#endif
+
   //Scale by inverse of domain volume
   d_stress=d_stress*(1.0/dftPtr->d_domainVolume);
 }
+
 
 template<unsigned int FEOrder>
 void forceClass<FEOrder>::printStress()
@@ -47,3 +48,5 @@ void forceClass<FEOrder>::printStress()
     pcout<< d_stress<<std::endl;
     pcout<< "------------------------------------------------------------------------"<<std::endl;    
 }
+
+#endif

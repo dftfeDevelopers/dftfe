@@ -110,36 +110,62 @@ dftClass<FEOrder>::~dftClass()
     delete geoOptIonPtr;
 }
 
-void convertToCellCenteredCartesianCoordinates(std::vector<std::vector<double> > & atomLocations,
-					       std::vector<std::vector<double> > & latticeVectors)
+namespace internaldft
 {
-  std::vector<double> cartX(atomLocations.size(),0.0);
-  std::vector<double> cartY(atomLocations.size(),0.0);
-  std::vector<double> cartZ(atomLocations.size(),0.0);
 
-  //
-  //convert fractional atomic coordinates to cartesian coordinates
-  //
-  for(int i = 0; i < atomLocations.size(); ++i)
+    void convertToCellCenteredCartesianCoordinates(std::vector<std::vector<double> > & atomLocations,
+						   std::vector<std::vector<double> > & latticeVectors)
     {
-      cartX[i] = atomLocations[i][2]*latticeVectors[0][0] + atomLocations[i][3]*latticeVectors[1][0] + atomLocations[i][4]*latticeVectors[2][0];
-      cartY[i] = atomLocations[i][2]*latticeVectors[0][1] + atomLocations[i][3]*latticeVectors[1][1] + atomLocations[i][4]*latticeVectors[2][1];
-      cartZ[i] = atomLocations[i][2]*latticeVectors[0][2] + atomLocations[i][3]*latticeVectors[1][2] + atomLocations[i][4]*latticeVectors[2][2];
-    }
+      std::vector<double> cartX(atomLocations.size(),0.0);
+      std::vector<double> cartY(atomLocations.size(),0.0);
+      std::vector<double> cartZ(atomLocations.size(),0.0);
 
-  //
-  //define cell centroid (confirm whether it will work for non-orthogonal lattice vectors)
-  //
-  double cellCentroidX = 0.5*(latticeVectors[0][0] + latticeVectors[1][0] + latticeVectors[2][0]);
-  double cellCentroidY = 0.5*(latticeVectors[0][1] + latticeVectors[1][1] + latticeVectors[2][1]);
-  double cellCentroidZ = 0.5*(latticeVectors[0][2] + latticeVectors[1][2] + latticeVectors[2][2]);
+      //
+      //convert fractional atomic coordinates to cartesian coordinates
+      //
+      for(int i = 0; i < atomLocations.size(); ++i)
+	{
+	  cartX[i] = atomLocations[i][2]*latticeVectors[0][0] + atomLocations[i][3]*latticeVectors[1][0] + atomLocations[i][4]*latticeVectors[2][0];
+	  cartY[i] = atomLocations[i][2]*latticeVectors[0][1] + atomLocations[i][3]*latticeVectors[1][1] + atomLocations[i][4]*latticeVectors[2][1];
+	  cartZ[i] = atomLocations[i][2]*latticeVectors[0][2] + atomLocations[i][3]*latticeVectors[1][2] + atomLocations[i][4]*latticeVectors[2][2];
+	}
 
-  for(int i = 0; i < atomLocations.size(); ++i)
-    {
-      atomLocations[i][2] = cartX[i] - cellCentroidX;
-      atomLocations[i][3] = cartY[i] - cellCentroidY;
-      atomLocations[i][4] = cartZ[i] - cellCentroidZ;
+      //
+      //define cell centroid (confirm whether it will work for non-orthogonal lattice vectors)
+      //
+      double cellCentroidX = 0.5*(latticeVectors[0][0] + latticeVectors[1][0] + latticeVectors[2][0]);
+      double cellCentroidY = 0.5*(latticeVectors[0][1] + latticeVectors[1][1] + latticeVectors[2][1]);
+      double cellCentroidZ = 0.5*(latticeVectors[0][2] + latticeVectors[1][2] + latticeVectors[2][2]);
+
+      for(int i = 0; i < atomLocations.size(); ++i)
+	{
+	  atomLocations[i][2] = cartX[i] - cellCentroidX;
+	  atomLocations[i][3] = cartY[i] - cellCentroidY;
+	  atomLocations[i][4] = cartZ[i] - cellCentroidZ;
+	}
     }
+}   
+
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::computeVolume()
+{
+  d_domainVolume=0;
+  QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
+  FEValues<3> fe_values (FE, quadrature, update_JxW_values);
+
+  typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
+  for (; cell!=endc; ++cell) 
+  {
+     if (cell->is_locally_owned())
+      {
+	   for (unsigned int q_point = 0; q_point < quadrature.size(); ++q_point)
+	   {
+	       d_domainVolume+=fe_values.JxW (q_point);
+	   }
+      }
+  }
+  d_domainVolume= Utilities::MPI::sum(d_domainVolume, mpi_communicator);
+  pcout<< "Volume of the domain (Bohr^3): "<< d_domainVolume<<std::endl;
 }
 
 template<unsigned int FEOrder>
@@ -310,8 +336,8 @@ void dftClass<FEOrder>::init ()
   }   
   generateImageCharges();
 
-  convertToCellCenteredCartesianCoordinates(atomLocations,
-					    d_latticeVectors);
+  internaldft::convertToCellCenteredCartesianCoordinates(atomLocations,
+					                 d_latticeVectors);
   recomputeKPointCoordinates();
 
   pcout<<"Actual k-Point-coordinates and weights: "<<std::endl;
@@ -360,7 +386,9 @@ void dftClass<FEOrder>::init ()
   //pcout << " check 0.11 : " << std::endl ;
   
   moveMeshToAtoms(triangulationPar);
-
+  
+  //compute volume of the domain
+  computeVolume();
   //
   //initialize dirichlet BCs for total potential and vSelf poisson solutions
   //
@@ -376,7 +404,6 @@ void dftClass<FEOrder>::init ()
   //
   constraintsNoneEigenDataInfo.initialize(vChebyshev.get_partitioner(),
 					  constraintsNoneEigen);
-
 
   //
   //initialize pseudopotential data for both local and nonlocal part
@@ -397,8 +424,8 @@ void dftClass<FEOrder>::initNoRemesh()
       pcout<<" atomId- "<<i <<" : "<<atomLocationsFractional[i][2]<<" "<<atomLocationsFractional[i][3]<<" "<<atomLocationsFractional[i][4]<<"\n";
   }   
   generateImageCharges();
-  convertToCellCenteredCartesianCoordinates(atomLocations,
-					    d_latticeVectors);
+  internaldft::convertToCellCenteredCartesianCoordinates(atomLocations,
+					                 d_latticeVectors);
   recomputeKPointCoordinates(); 
 
   pcout<<"actual k-Point-coordinates and weights: "<<std::endl;
@@ -416,11 +443,15 @@ void dftClass<FEOrder>::initNoRemesh()
       pcout<<" atomId- "<<i <<" : "<<atomLocations[i][2]<<" "<<atomLocations[i][3]<<" "<<atomLocations[i][4]<<"\n";
     }  
 #endif
-  
+  //compute volume of the domain
+  computeVolume();
+
   //reinitialize dirichlet BCs for total potential and vSelf poisson solutions
   initBoundaryConditions();
+
   //rho init (use previous ground state electron density)
   noRemeshRhoDataInit();
+
   //reinitialize pseudopotential related data structures
   initPseudoPotentialAll();      
 }
@@ -655,6 +686,15 @@ void dftClass<FEOrder>::solve()
     forcePtr->printAtomsForces();
     computing_timer.exit_section("configurational force computation"); 
    }
+#ifdef ENABLE_PERIODIC_BC
+  if (dftParameters::isCellStress)
+  {
+    computing_timer.enter_section("Cell stress computation"); 
+    forcePtr->computeStress();
+    forcePtr->printStress();
+    computing_timer.exit_section("Cell stress computation"); 
+   }  
+#endif  
 }
 
 //Output

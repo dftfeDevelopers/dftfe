@@ -51,13 +51,16 @@ public:
   void initPseudoData();
   void computeElementalNonLocalPseudoOVDataForce();
   void computeAtomsForces();
-  void computeStress();
+  std::vector<double> getAtomsForces();  
   void printAtomsForces();
+#ifdef ENABLE_PERIODIC_BC  
+  void computeStress();
   void printStress();
-  std::vector<double> getAtomsForces();
   Tensor<2,C_DIM,double> getStress();
+#endif
   void updateAtomPositionsAndMoveMesh(const std::vector<Point<C_DIM> > & globalAtomsDisplacements);
 private:
+  void locateAtomCoreNodesForce();  
   vectorType d_configForceVectorLinFE;
 #ifdef ENABLE_PERIODIC_BC  
   vectorType d_configForceVectorLinFEKPoints;
@@ -122,9 +125,16 @@ private:
   void computeAtomsForcesGaussianGenerator(bool allowGaussianOverlapOnAtoms=false);
 
   //stress computation functions
+#ifdef ENABLE_PERIODIC_BC 
   void computeStressEself();
   void computeStressEEshelbyEPSPEnlEk();
-  void locateAtomCoreNodesForce();
+  void computeStressSpinPolarizedEEshelbyEPSPEnlEk();
+  void forceClass<FEOrder>::addEPSPStressContribution
+                               (FEValues<C_DIM> & feVselfValues,
+			        FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
+			        const unsigned int cell,
+			        const std::vector<VectorizedArray<double> > & rhoQuads);  
+#endif
 
   
   //////force related pseudopotential member functions and data members
@@ -140,7 +150,8 @@ private:
 #ifdef ENABLE_PERIODIC_BC 
   std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_ZetalmDeltaVl;
   std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_gradZetalmDeltaVl_KPoint;
-  std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint;  
+  std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint; 
+  std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_gradZetalmDeltaVlDyadicDistImageAtoms_KPoint;
 #else
   std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_ZetalmDeltaVl;
   std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_gradZetalmDeltaVl;
@@ -159,8 +170,13 @@ private:
 #ifdef ENABLE_PERIODIC_BC  
   std::vector<double> d_globalAtomsGaussianForcesKPoints;
 #endif  
+
+#ifdef ENABLE_PERIODIC_BC
+  /// Second order cell stress tensor 
   Tensor<2,C_DIM,double> d_stress;
-#ifdef ENABLE_PERIODIC_BC  
+  /* Part of the stress tensor which is summed over k points. 
+   * Used only during the computation of d_stress
+   */
   Tensor<2,C_DIM,double> d_stressKPoints;
 #endif  
   const bool d_allowGaussianOverlapOnAtoms=false;//Dont use true except for debugging forces only without mesh movement, as gaussian ovelap on atoms for move mesh is by default set to false

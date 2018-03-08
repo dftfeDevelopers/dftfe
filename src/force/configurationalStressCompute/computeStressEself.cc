@@ -16,6 +16,7 @@
 // @author Sambit Das (2017)
 //
 
+#ifdef ENABLE_PERIODIC_BC 
 //compute stress contribution from nuclear self energy
 template<unsigned int FEOrder>
 void forceClass<FEOrder>::computeStressEself()
@@ -135,3 +136,4 @@ void forceClass<FEOrder>::computeStressEself()
      }//cell loop 
   }//bin loop 
 }
+#endif
