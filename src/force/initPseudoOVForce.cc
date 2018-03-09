@@ -243,8 +243,8 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoOVDataForce()
 			         gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint[ik*numberQuadraturePoints*C_DIM*2+iQuadPoint*C_DIM*2+iDim*2+1]-= tempReal*projectorFunctionValue*dftPtr->d_kPointCoordinates[ik*C_DIM+iDim];
 				 for(unsigned int jDim=0; jDim < C_DIM; ++jDim)
 				 {
-				     gradZetalmDeltaVlDyadicDistImageAtoms_KPoint[ik*numberQuadraturePoints*C_DIM*2+iQuadPoint*C_DIM*C_DIM*2+iDim*C_DIM*2+jDim*2+0]+= tempReal*tempDer[iDim]*x[jDim];
-				     gradZetalmDeltaVlDyadicDistImageAtoms_KPoint[ik*numberQuadraturePoints*C_DIM*2+iQuadPoint*C_DIM*C_DIM*2+iDim*C_DIM*2+jDim*2+1]+= tempImag*tempDer[iDim]*x[jDim];
+				     gradZetalmDeltaVlDyadicDistImageAtoms_KPoint[ik*numberQuadraturePoints*C_DIM*C_DIM*2+iQuadPoint*C_DIM*C_DIM*2+iDim*C_DIM*2+jDim*2+0]+= tempReal*tempDer[iDim]*x[jDim];
+				     gradZetalmDeltaVlDyadicDistImageAtoms_KPoint[ik*numberQuadraturePoints*C_DIM*C_DIM*2+iQuadPoint*C_DIM*C_DIM*2+iDim*C_DIM*2+jDim*2+1]+= tempImag*tempDer[iDim]*x[jDim];
 				 }				 
 			     }
 			  }

@@ -117,20 +117,24 @@ void forceClass<FEOrder>::computeStressEEshelbyEPSPEnlEk()
     }     
     //allocate storage for vector of quadPoints, nonlocal atom id, pseudo wave, k point
     //FIXME: flatten nonlocal atomid id and pseudo wave and k point
+    std::vector<std::vector<std::vector<std::vector<Tensor<1,2,VectorizedArray<double> > > > > >ZetaDeltaVQuads;
     std::vector<std::vector<std::vector<std::vector<Tensor<1,2, Tensor<2,C_DIM,VectorizedArray<double> > > > > > >gradZetalmDeltaVlDyadicDistImageAtomsQuads; 
     if(isPseudopotential)
     {
+        ZetaDeltaVQuads.resize(numQuadPoints);	
 	gradZetalmDeltaVlDyadicDistImageAtomsQuads.resize(numQuadPoints);
-
 	for (unsigned int q=0; q<numQuadPoints; ++q)
 	{
+	  ZetaDeltaVQuads[q].resize(d_nonLocalPSP_ZetalmDeltaVl.size());	    
 	  gradZetalmDeltaVlDyadicDistImageAtomsQuads[q].resize(d_nonLocalPSP_gradZetalmDeltaVlDyadicDistImageAtoms_KPoint.size());
 	  for (unsigned int i=0; i < d_nonLocalPSP_gradZetalmDeltaVlDyadicDistImageAtoms_KPoint.size(); ++i)
 	  {
 	    const int numberPseudoWaveFunctions = d_nonLocalPSP_gradZetalmDeltaVlDyadicDistImageAtoms_KPoint[i].size();
+	    ZetaDeltaVQuads[q][i].resize(numberPseudoWaveFunctions);
 	    gradZetalmDeltaVlDyadicDistImageAtomsQuads[q][i].resize(numberPseudoWaveFunctions);
 	    for (unsigned int iPseudoWave=0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
 	    {
+		ZetaDeltaVQuads[q][i][iPseudoWave].resize(numKPoints,zeroTensor1);
 		gradZetalmDeltaVlDyadicDistImageAtomsQuads[q][i][iPseudoWave].resize(numKPoints,zeroTensor5);
 	    }
 	  }
@@ -307,13 +311,15 @@ void forceClass<FEOrder>::computeStressEEshelbyEPSPEnlEk()
 		if (d_nonLocalPSP_gradZetalmDeltaVlDyadicDistImageAtoms_KPoint[i][iPseudoWave].find(subCellId)!=d_nonLocalPSP_gradZetalmDeltaVlDyadicDistImageAtoms_KPoint[i][iPseudoWave].end())
 		{
                    for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
-		   { 		    
+		   { 
+                      ZetaDeltaVQuads[q][i][iPseudoWave][ikPoint][0][iSubCell]=d_nonLocalPSP_ZetalmDeltaVl[i][iPseudoWave][subCellId][ikPoint*numQuadPoints*2+q*2+0];
+                      ZetaDeltaVQuads[q][i][iPseudoWave][ikPoint][1][iSubCell]=d_nonLocalPSP_ZetalmDeltaVl[i][iPseudoWave][subCellId][ikPoint*numQuadPoints*2+q*2+1];		       
 		      for (unsigned int idim=0; idim<C_DIM; idim++)
 		      {
 		        for (unsigned int jdim=0; jdim<C_DIM; jdim++)
 		        {			  
                            gradZetalmDeltaVlDyadicDistImageAtomsQuads[q][i][iPseudoWave][ikPoint][0][idim][jdim][iSubCell]=d_nonLocalPSP_gradZetalmDeltaVlDyadicDistImageAtoms_KPoint[i][iPseudoWave][subCellId][ikPoint*numQuadPoints*C_DIM*C_DIM*2+q*C_DIM*C_DIM*2+idim*C_DIM*2+jdim*2+0];
-                           gradZetalmDeltaVlDyadicDistImageAtomsQuads[q][i][iPseudoWave][ikPoint][1][idim][jdim][iSubCell]=d_nonLocalPSP_gradZetalmDeltaVlDyadicDistImageAtoms_KPoint[i][iPseudoWave][subCellId][ikPoint*numQuadPoints*C_DIM*C_DIM*2+q*C_DIM*C_DIM*2+idim*C_DIM*2+jdim*2+0];
+                           gradZetalmDeltaVlDyadicDistImageAtomsQuads[q][i][iPseudoWave][ikPoint][1][idim][jdim][iSubCell]=d_nonLocalPSP_gradZetalmDeltaVlDyadicDistImageAtoms_KPoint[i][iPseudoWave][subCellId][ikPoint*numQuadPoints*C_DIM*C_DIM*2+q*C_DIM*C_DIM*2+idim*C_DIM*2+jdim*2+1];
 			}
 		      }
 		   }
@@ -364,7 +370,15 @@ void forceClass<FEOrder>::computeStressEEshelbyEPSPEnlEk()
        
        if(isPseudopotential)
        {
-           EKPoints+=eshelbyTensor::getEnlStress(gradZetalmDeltaVlDyadicDistImageAtomsQuads[q],
+          EKPoints+=eshelbyTensor::getEnlEshelbyTensorPeriodic(ZetaDeltaVQuads[q],
+		                                         projectorKetTimesPsiTimesVComplexKPoints,
+						         psiQuads.begin()+q*numEigenVectors*numKPoints,
+							 dftPtr->d_kPointWeights,
+						         dftPtr->eigenValues,
+						         dftPtr->fermiEnergy,
+						         dftParameters::TVal); 	   
+
+          EKPoints+=eshelbyTensor::getEnlStress(gradZetalmDeltaVlDyadicDistImageAtomsQuads[q],
 		                                 projectorKetTimesPsiTimesVComplexKPoints,
 						 psiQuads.begin()+q*numEigenVectors*numKPoints,
 					         dftPtr->d_kPointWeights,

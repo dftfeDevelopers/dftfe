@@ -482,7 +482,25 @@ void forceClass<FEOrder>::printAtomsForces()
 {
     const int numberGlobalAtoms = dftPtr->atomLocations.size();	  
     pcout<< "------------Configurational force (Hartree/Bohr) on atoms using Gaussian generator with constant: "<< d_gaussianConstant << "-------------"<<std::endl;
+    //also find the atom with the maximum absolute force and print that
+    double maxForce=-1.0;
+    unsigned int maxForceAtomId=0;
     for (unsigned int i=0; i< numberGlobalAtoms; i++)
-	pcout<< "Global atomId: "<< i << ",Force vec: "<< d_globalAtomsGaussianForces[3*i]<<","<< d_globalAtomsGaussianForces[3*i+1]<<","<<d_globalAtomsGaussianForces[3*i+2]<<std::endl;   
+    {
+	pcout<< "Global atomId: "<< i << ",Force vec: "<< d_globalAtomsGaussianForces[3*i]<<","<< d_globalAtomsGaussianForces[3*i+1]<<","<<d_globalAtomsGaussianForces[3*i+2]<<std::endl;  
+	double absForce=0.0;
+	for (unsigned int idim=0; idim< C_DIM; idim++)
+        {
+	    absForce+=d_globalAtomsGaussianForces[3*i+idim]*d_globalAtomsGaussianForces[3*i+idim];
+	}
+	absForce=std::sqrt(absForce);
+	if (absForce>maxForce)
+	{
+	    maxForce=absForce;
+	    maxForceAtomId=i;
+	}
+    }
+    
     pcout<< "------------------------------------------------------------------------"<<std::endl;
+    pcout<<" Maximum absolute force atom id: "<< maxForceAtomId << ", Force vec: "<< d_globalAtomsGaussianForces[3*maxForceAtomId]<<","<< d_globalAtomsGaussianForces[3*maxForceAtomId+1]<<","<<d_globalAtomsGaussianForces[3*maxForceAtomId+2]<<std::endl;
 }

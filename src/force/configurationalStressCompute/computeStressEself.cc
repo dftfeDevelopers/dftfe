@@ -24,7 +24,7 @@ void forceClass<FEOrder>::computeStressEself()
   const std::vector<std::vector<double> > & atomLocations=dftPtr->atomLocations;
   const std::vector<std::vector<double> > & imagePositions=dftPtr->d_imagePositions;
   const std::vector<double> & imageCharges=dftPtr->d_imageCharges;
-  //configurational force contribution from the volume integral
+  //configurational stress contribution from the volume integral
   QGauss<C_DIM>  quadrature(C_num1DQuad<FEOrder>());
   FEValues<C_DIM> feForceValues (FEForce, quadrature, update_gradients | update_JxW_values);
   FEValues<C_DIM> feVselfValues (dftPtr->FE, quadrature, update_gradients);
@@ -61,7 +61,7 @@ void forceClass<FEOrder>::computeStressEself()
   }//bin loop
 
 
-  //configurational force contribution from the surface integral
+  //configurational stress contribution from the surface integral
   
   QGauss<C_DIM-1>  faceQuadrature(C_num1DQuad<FEOrder>());
   FEFaceValues<C_DIM> feForceFaceValues (FEForce, faceQuadrature, update_values | update_JxW_values | update_normal_vectors | update_quadrature_points);
@@ -128,7 +128,8 @@ void forceClass<FEOrder>::computeStressEself()
 	       const double dist=dispClosestAtom.norm();
 	       Tensor<1,C_DIM,double> gradVselfFaceQuadExact=closestAtomCharge*dispClosestAtom/dist/dist/dist;
              
-	       d_stress-=outer_product(eshelbyTensor::getVselfBallEshelbyTensor(gradVselfFaceQuadExact)*feForceFaceValues.normal_vector(qPoint),dispClosestAtom)*feForceFaceValues.JxW(qPoint);
+	       //d_stress-=outer_product(eshelbyTensor::getVselfBallEshelbyTensor(gradVselfFaceQuadExact)*feForceFaceValues.normal_vector(qPoint),dispClosestAtom)*feForceFaceValues.JxW(qPoint);
+	       d_stress-=outer_product(dispClosestAtom,eshelbyTensor::getVselfBallEshelbyTensor(gradVselfFaceQuadExact)*feForceFaceValues.normal_vector(qPoint))*feForceFaceValues.JxW(qPoint);	       
 	       
 	   }//q point loop
 	}//face loop

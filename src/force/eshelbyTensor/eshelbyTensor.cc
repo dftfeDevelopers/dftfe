@@ -391,7 +391,7 @@ namespace eshelbyTensor
        Tensor<2,C_DIM,VectorizedArray<double> > E;
        std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator it1=psiBegin;
        VectorizedArray<double> four=make_vectorized_array(4.0);
-       const int numKPoints=eigenValues_.size();
+       const int numKPoints=kPointWeights.size();
        for (unsigned int ik=0; ik<numKPoints; ++ik){
 	 for (unsigned int eigenIndex=0; eigenIndex<eigenValues_[0].size(); ++it1, ++ eigenIndex){
 	    const Tensor<1,2,VectorizedArray<double> > & psi= *it1;
