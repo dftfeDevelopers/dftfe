@@ -129,7 +129,7 @@ private:
   void computeStressEself();
   void computeStressEEshelbyEPSPEnlEk();
   void computeStressSpinPolarizedEEshelbyEPSPEnlEk();
-  void forceClass<FEOrder>::addEPSPStressContribution
+  void addEPSPStressContribution
                                (FEValues<C_DIM> & feVselfValues,
 			        FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
 			        const unsigned int cell,
