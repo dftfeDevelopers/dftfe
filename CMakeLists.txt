@@ -13,6 +13,7 @@ INCLUDE_DIRECTORIES(
 # Declare all source files the target consists of:
 SET(TARGET_SRC
   ./src/dft/dft.cc
+  ./src/dft/dftParameters.cc
   ./src/poisson/poisson.cc
   ./src/eigen/eigen.cc
   ./src/force/force.cc
