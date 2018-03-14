@@ -21,74 +21,62 @@
 template<unsigned int FEOrder>
 void forceClass<FEOrder>::computeStressEself()
 {
+#ifdef DEBUG    
+  double dummyTest=0; 
+  Tensor<1,3,double> dummyVec;
+  Tensor<2,3,double> dummyTensor;
+#endif
   const std::vector<std::vector<double> > & atomLocations=dftPtr->atomLocations;
   const std::vector<std::vector<double> > & imagePositions=dftPtr->d_imagePositions;
   const std::vector<double> & imageCharges=dftPtr->d_imageCharges;
-  //configurational stress contribution from the volume integral
+  const unsigned int numberGlobalAtoms = atomLocations.size();  
+  //
+  //First add configurational stress contribution from the volume integral
+  //
   QGauss<C_DIM>  quadrature(C_num1DQuad<FEOrder>());
-  FEValues<C_DIM> feForceValues (FEForce, quadrature, update_gradients | update_JxW_values);
-  FEValues<C_DIM> feVselfValues (dftPtr->FE, quadrature, update_gradients);
-  const unsigned int   forceDofsPerCell = FEForce.dofs_per_cell;
-  Vector<double>       elementalForce (forceDofsPerCell);
+  FEValues<C_DIM> feVselfValues (dftPtr->FE, quadrature, update_gradients | update_JxW_values);
   const unsigned int   numQuadPoints = quadrature.size();
-  std::vector<types::global_dof_index> forceLocalDofIndices(forceDofsPerCell);
-  const int numberBins=dftPtr->d_bins.size();
+  const unsigned int numberBins=dftPtr->d_bins.size();
+
   std::vector<Tensor<1,C_DIM,double> > gradVselfQuad(numQuadPoints);
 
-  for(int iBin = 0; iBin < numberBins; ++iBin)
+  for(unsigned int iBin = 0; iBin < numberBins; ++iBin)
   {
     const std::vector<DoFHandler<C_DIM>::active_cell_iterator> & cellsVselfBallDofHandler=d_cellsVselfBallsDofHandler[iBin];	   
-    const std::vector<DoFHandler<C_DIM>::active_cell_iterator> & cellsVselfBallDofHandlerForce=d_cellsVselfBallsDofHandlerForce[iBin]; 
     const vectorType & iBinVselfField= dftPtr->d_vselfFieldBins[iBin];
     std::vector<DoFHandler<C_DIM>::active_cell_iterator>::const_iterator iter1;
-    std::vector<DoFHandler<C_DIM>::active_cell_iterator>::const_iterator iter2;
-    iter2 = cellsVselfBallDofHandlerForce.begin();
     for (iter1 = cellsVselfBallDofHandler.begin(); iter1 != cellsVselfBallDofHandler.end(); ++iter1)
     {
 	DoFHandler<C_DIM>::active_cell_iterator cell=*iter1;
-	DoFHandler<C_DIM>::active_cell_iterator cellForce=*iter2;
 	feVselfValues.reinit(cell);
 	feVselfValues.get_function_gradients(iBinVselfField,gradVselfQuad);
 
-	feForceValues.reinit(cellForce);
-	cellForce->get_dof_indices(forceLocalDofIndices);
 	for (unsigned int qPoint=0; qPoint<numQuadPoints; ++qPoint)
-	{ 
-	     d_stress+=eshelbyTensor::getVselfBallEshelbyTensor(gradVselfQuad[qPoint])*feForceValues.JxW(qPoint);
+	{
+	     d_stress+=eshelbyTensor::getVselfBallEshelbyTensor(gradVselfQuad[qPoint])*feVselfValues.JxW(qPoint);
 	}//q point loop
-        ++iter2;
      }//cell loop 
   }//bin loop
 
 
-  //configurational stress contribution from the surface integral
-  
+  //
+  //second add configurational stress contribution from the surface integral
+  //
   QGauss<C_DIM-1>  faceQuadrature(C_num1DQuad<FEOrder>());
-  FEFaceValues<C_DIM> feForceFaceValues (FEForce, faceQuadrature, update_values | update_JxW_values | update_normal_vectors | update_quadrature_points);
-  //FEFaceValues<C_DIM> feVselfFaceValues (FE, faceQuadrature, update_gradients);
+  FEFaceValues<C_DIM> feVselfFaceValues (dftPtr->FE, faceQuadrature, update_gradients| update_JxW_values | update_normal_vectors | update_quadrature_points);
   const unsigned int faces_per_cell=GeometryInfo<C_DIM>::faces_per_cell;
   const unsigned int   numFaceQuadPoints = faceQuadrature.size();
-  const unsigned int   forceDofsPerFace = FEForce.dofs_per_face;
-  Vector<double>       elementalFaceForce(forceDofsPerFace);
-  std::vector<types::global_dof_index> forceFaceLocalDofIndices(forceDofsPerFace);
-  std::vector<types::global_dof_index> vselfLocalDofIndices(dftPtr->FE.dofs_per_cell);
-  const int numberGlobalAtoms = atomLocations.size();
 	   
 
-  for(int iBin = 0; iBin < numberBins; ++iBin)
+  for(unsigned int iBin = 0; iBin < numberBins; ++iBin)
   {
-    std::map<dealii::types::global_dof_index, int> & closestAtomBinMap = dftPtr->d_closestAtomBin[iBin];
     const std::map<DoFHandler<C_DIM>::active_cell_iterator,std::vector<unsigned int > >  & cellsVselfBallSurfacesDofHandler=d_cellFacesVselfBallSurfacesDofHandler[iBin];	   
-    const std::map<DoFHandler<C_DIM>::active_cell_iterator,std::vector<unsigned int > >  & cellsVselfBallSurfacesDofHandlerForce=d_cellFacesVselfBallSurfacesDofHandlerForce[iBin]; 
     const vectorType & iBinVselfField= dftPtr->d_vselfFieldBins[iBin];
     std::map<DoFHandler<C_DIM>::active_cell_iterator,std::vector<unsigned int > >::const_iterator iter1;
-    std::map<DoFHandler<C_DIM>::active_cell_iterator,std::vector<unsigned int > >::const_iterator iter2;
-    iter2 = cellsVselfBallSurfacesDofHandlerForce.begin();
     for (iter1 = cellsVselfBallSurfacesDofHandler.begin(); iter1 != cellsVselfBallSurfacesDofHandler.end(); ++iter1)
     {
 	DoFHandler<C_DIM>::active_cell_iterator cell=iter1->first;
-	cell->get_dof_indices(vselfLocalDofIndices);
-        const int closestAtomId=closestAtomBinMap[vselfLocalDofIndices[0]];//is same for all faces in the cell
+        const int closestAtomId= d_cellsVselfBallsClosestAtomIdDofHandler[iBin][cell->id()];
         double closestAtomCharge;
 	Point<C_DIM> closestAtomLocation;
 	if(closestAtomId < numberGlobalAtoms)
@@ -109,32 +97,36 @@ void forceClass<FEOrder>::computeStressEself()
 	   closestAtomLocation[2]=imagePositions[imageId][2];
         }
 
-	DoFHandler<C_DIM>::active_cell_iterator cellForce=iter2->first;
-
 	const std::vector<unsigned int > & dirichletFaceIds= iter1->second;
 	for (unsigned int index=0; index< dirichletFaceIds.size(); index++){
-           const int faceId=dirichletFaceIds[index];
-	   //feVselfFaceValues.reinit(cell,faceId);
-	   //std::vector<Tensor<1,C_DIM,double> > gradVselfFaceQuad(numFaceQuadPoints);
-	   //feVselfFaceValues.get_function_gradients(iBinVselfField,gradVselfFaceQuad);
+           const unsigned int faceId=dirichletFaceIds[index];
+	   feVselfFaceValues.reinit(cell,faceId);
             
-	   feForceFaceValues.reinit(cellForce,faceId);
-	   cellForce->face(faceId)->get_dof_indices(forceFaceLocalDofIndices);
-
 	   for (unsigned int qPoint=0; qPoint<numFaceQuadPoints; ++qPoint)
 	   {  
-	       Point<C_DIM> quadPoint=feForceFaceValues.quadrature_point(qPoint);
-	       Tensor<1,C_DIM,double> dispClosestAtom=quadPoint-closestAtomLocation;
+	       const Point<C_DIM> quadPoint=feVselfFaceValues.quadrature_point(qPoint);
+	       const Tensor<1,C_DIM,double> dispClosestAtom=quadPoint-closestAtomLocation;
 	       const double dist=dispClosestAtom.norm();
-	       Tensor<1,C_DIM,double> gradVselfFaceQuadExact=closestAtomCharge*dispClosestAtom/dist/dist/dist;
-             
-	       //d_stress-=outer_product(eshelbyTensor::getVselfBallEshelbyTensor(gradVselfFaceQuadExact)*feForceFaceValues.normal_vector(qPoint),dispClosestAtom)*feForceFaceValues.JxW(qPoint);
-	       d_stress-=outer_product(dispClosestAtom,eshelbyTensor::getVselfBallEshelbyTensor(gradVselfFaceQuadExact)*feForceFaceValues.normal_vector(qPoint))*feForceFaceValues.JxW(qPoint);	       
+	       const Tensor<1,C_DIM,double> gradVselfFaceQuadExact=closestAtomCharge*dispClosestAtom/dist/dist/dist;
+	       d_stress-=outer_product(dispClosestAtom,eshelbyTensor::getVselfBallEshelbyTensor(gradVselfFaceQuadExact)*feVselfFaceValues.normal_vector(qPoint))*feVselfFaceValues.JxW(qPoint);	 
+#ifdef DEBUG 	       
+	       dummyTest+=scalar_product(gradVselfFaceQuadExact,feVselfFaceValues.normal_vector(qPoint))*feVselfFaceValues.JxW(qPoint);	       
+	       dummyVec+=feForceFaceValues.normal_vector(qPoint)*feForceFaceValues.JxW(qPoint);
+	       dummyTensor+=outer_product(gradVselfFaceQuadExact,feForceFaceValues.normal_vector(qPoint))*feForceFaceValues.JxW(qPoint);
+#endif	       
 	       
 	   }//q point loop
 	}//face loop
-        ++iter2;
      }//cell loop 
-  }//bin loop 
+  }//bin loop
+#ifdef DEBUG   
+  dummyTest=Utilities::MPI::sum(dummyTest,mpi_communicator); 
+  pcout<< "dummyTest: "<<dummyTest<<std::endl;
+  dummyVec=Utilities::MPI::sum(dummyVec,mpi_communicator);
+  pcout<< "dummyVec: "<<dummyVec<<std::endl;
+  dummyTensor=Utilities::MPI::sum(dummyTensor,mpi_communicator);
+  pcout<< "dummyTensor: "<<dummyTensor<<std::endl;  
+#endif  
+
 }
 #endif
