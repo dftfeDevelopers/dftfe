@@ -20,6 +20,10 @@
 #define dftParameters_H_
 
 #include <string>
+#include <deal.II/base/parameter_handler.h>
+
+// FIXME: document Parameters
+// FIXME: this should really be an object, not global values
 //
 //Declare dftUtils functions
 //
@@ -40,7 +44,16 @@ namespace dftParameters
 
   extern bool isIonOpt, isCellOpt, isIonForce, isCellStress;
 
+  /**
+   * Declare parameters.
+   */
+  void declare_parameters(dealii::ParameterHandler &prm);
+
+  /**
+   * Parse parameters.
+   */
+  void parse_parameters(const dealii::ParameterHandler &prm);
+
 };
 
 #endif
-
