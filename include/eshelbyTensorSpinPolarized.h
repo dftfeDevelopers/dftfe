@@ -71,6 +71,7 @@ namespace eshelbyTensorSP
 	         const std::vector<std::vector<double> > & eigenValues_,
 	         const double fermiEnergy_,
 	         const double tVal);
+
   ///Local part of the Eshelby tensor for non-periodic case
   Tensor<2,C_DIM,VectorizedArray<double> >  getELocEshelbyTensorNonPeriodic
                    (const VectorizedArray<double> & phiTot,
@@ -90,6 +91,7 @@ namespace eshelbyTensorSP
 		    const std::vector<double> & eigenValues_,
 		    const double fermiEnergy_,
 		    const double tVal);
+
   ///Local pseudotential force contribution
   Tensor<1,C_DIM,VectorizedArray<double> >  getFPSPLocal(const VectorizedArray<double> rho,
 		                                       const Tensor<1,C_DIM,VectorizedArray<double> > & gradPseudoVLoc,
@@ -103,7 +105,8 @@ namespace eshelbyTensorSP
                                                                          std::vector<VectorizedArray<double> >::const_iterator psiSpin1Begin,									 
 								         const std::vector<double> & eigenValues_,
 								         const double fermiEnergy_,
-								         const double tVal);     
+								         const double tVal);  
+
   ///Nonlocal pseudotential Eshelby tensor (for periodic case)
   Tensor<2,C_DIM,VectorizedArray<double> >  getEnlEshelbyTensorPeriodic(const std::vector<std::vector<std::vector<Tensor<1,2,VectorizedArray<double> > > > > & ZetaDeltaV,
 								      const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiSpin0TimesV,
@@ -134,6 +137,7 @@ namespace eshelbyTensorSP
 					                 const std::vector<std::vector<double> > & eigenValues_,
 						         const double fermiEnergy_,
 						         const double tVal);
+
   ///Force contribution due to the numerical difference between the input and output electron density (rhoIn and rhoOut) 
   ///of the final scf iteration. vEff denotes the Kohn-Sham effective potential.
   Tensor<1,C_DIM,VectorizedArray<double> >  getNonSelfConsistentForce(const VectorizedArray<double> & vEffRhoInSpin0,
@@ -148,5 +152,27 @@ namespace eshelbyTensorSP
 								    const Tensor<1,C_DIM,VectorizedArray<double> > & derExchCorrEnergyWithGradRhoOutSpin1,
                                                                     const Tensor<2,C_DIM,VectorizedArray<double> > & hessianRhoOutSpin0,
                                                                     const Tensor<2,C_DIM,VectorizedArray<double> > & hessianRhoOutSpin1);
+
+  /// EK Eshelby tensor (used only for stress computation)
+  Tensor<2,C_DIM,VectorizedArray<double> > getEKStress(std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiSpin0Begin,
+	                                       std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiSpin1Begin,
+                                               std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > >::const_iterator gradPsiSpin0Begin,
+					       std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > >::const_iterator gradPsiSpin1Begin,
+					       const std::vector<double> & kPointCoordinates,
+					       const std::vector<double> & kPointWeights,
+		                               const std::vector<std::vector<double> > & eigenValues_,
+					       const double fermiEnergy_,
+					       const double tVal); 
+
+  /// Nonlocal pseudotential Eshelby tensor (used only for stress computation)
+  Tensor<2,C_DIM,VectorizedArray<double> >  getEnlStress(const std::vector<std::vector<std::vector<Tensor<1,2, Tensor<2,C_DIM,VectorizedArray<double> > > > > > & gradZetalmDeltaVlDyadicDistImageAtoms,
+						         const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiSpin0TimesV,
+                                                         const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiSpin1TimesV,							 
+						         std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiSpin0Begin,
+						         std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiSpin1Begin,							 
+                                                         const std::vector<double> & kPointWeights,								      
+					                 const std::vector<std::vector<double> > & eigenValues_,
+						         const double fermiEnergy_,
+						         const double tVal);    
 };
 #endif

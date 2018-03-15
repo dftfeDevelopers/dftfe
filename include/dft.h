@@ -247,6 +247,11 @@ class dftClass
   void nscf();
 
   /**
+   * Computes the volume of the domain
+   */
+  void computeVolume();
+
+  /**
    * Computes inner Product and Y = alpha*X + Y for complex vectors used during
    * periodic boundary conditions
    */
@@ -267,9 +272,7 @@ class dftClass
   void applyPeriodicBCHigherOrderNodes();
 #endif
 
-  //
-  //objects for various exchange-correlations (from libxc package)
-  //
+  /// objects for various exchange-correlations (from libxc package)
   xc_func_type funcX, funcC; 
   
   /**
@@ -295,12 +298,9 @@ class dftClass
    */
   meshGeneratorClass d_mesh;
 
-  /**
-   * meshGenerator based object
-   */
-  //symmetryClass<FEOrder> d_symmetry;
+  /// volume of the domain
+  double d_domainVolume;
 
-  
   /**
    * dealii based FE data structres
    */
@@ -348,10 +348,10 @@ class dftClass
 
 
 
-  //parallel message stream
+  /// parallel message stream
   ConditionalOStream  pcout;  
   
-  //compute-time logger
+  /// compute-time logger
   TimerOutput computing_timer;
   
   //dft related objects
@@ -444,24 +444,32 @@ class dftClass
   std::vector<std::map<dealii::types::global_dof_index, double> > d_vselfBinField;
   std::vector<std::map<dealii::types::global_dof_index, int> > d_closestAtomBin;
   std::vector<vectorType> d_vselfFieldBins;//required for configurational force
-  //
-  //kPointCoordinates
-  //
+  
+  /// kPoint cartesian coordinates 
   std::vector<double> d_kPointCoordinates;
+
+  /// k point crystal coordinates
   std::vector<double> kPointReducedCoordinates;
+
+  /// k point weights
   std::vector<double> d_kPointWeights;
+
+  /// total number of k points
   int d_maxkPoints;
+
+  /// current k point index during the ground state solve
   int d_kPointIndex;
-  ///
-  ///recomputes the k point cartesian coordinates from the crystal k point coordinates
-  ///and the current lattice vectors, which can change in each ground state solve when
-  ///isCellOpt is true
-  ///
+  
+  /** recomputes the k point cartesian coordinates from the crystal k point coordinates
+    * and the current lattice vectors, which can change in each ground state solve when
+    * isCellOpt is true
+    */
   void recomputeKPointCoordinates();
-  //integralRhoOut to store number of electrons
+
+  /// integralRhoOut to store number of electrons
   double integralRhoValue;
   
-  //fermi energy
+  /// fermi energy
   double fermiEnergy;
 
   //chebyshev filter variables and functions
