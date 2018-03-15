@@ -202,7 +202,7 @@ void poissonClass<FEOrder>::computeRHS(std::map<dealii::CellId,std::vector<doubl
     {
       for (std::map<unsigned int, double>::iterator it=dftPtr->atoms.begin(); it!=dftPtr->atoms.end(); ++it)
 	{
-	  std::vector<unsigned int> local_dof_indices_origin(1, it->first); //atomic node
+	  std::vector<ConstraintMatrix::size_type> local_dof_indices_origin(1, it->first); //atomic node
 	  Vector<double> cell_rhs_origin (1); 
 	  cell_rhs_origin(0)=-(it->second); //atomic charge
 
@@ -214,7 +214,7 @@ void poissonClass<FEOrder>::computeRHS(std::map<dealii::CellId,std::vector<doubl
       int binId = d_constraintMatrixId - 2;
       for (std::map<unsigned int, double>::iterator it=dftPtr->d_atomsInBin[binId].begin(); it!=dftPtr->d_atomsInBin[binId].end(); ++it)
 	{
-	  std::vector<unsigned int> local_dof_indices_origin(1, it->first); //atomic node
+	  std::vector<ConstraintMatrix::size_type> local_dof_indices_origin(1, it->first); //atomic node
 	  Vector<double> cell_rhs_origin (1); 
 	  cell_rhs_origin(0)=-(it->second); //atomic charge
 	  constraintMatrix->distribute_local_to_global(cell_rhs_origin, local_dof_indices_origin, rhs);

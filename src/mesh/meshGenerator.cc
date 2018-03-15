@@ -124,10 +124,6 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       }
 
 
-      /*subdivisions[0] = 12 ; subdivisions[1] = 12 ; subdivisions[2] = 12 ; 
-      numberIntervalsEachDirection[0] = 12.0; numberIntervalsEachDirection[1] = 12.0 ; numberIntervalsEachDirection[2] = 12.0 ; */
-      //
-
       GridGenerator::subdivided_parallelepiped<3>(parallelTriangulation,
 	                                          subdivisions,
 				                  basisVectors);
@@ -302,13 +298,11 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 	    }
            
            // Refine serial mesh
-	     // numberGlobalCells = parallelTriangulation.n_global_active_cells();
-	      //pcout << " check 1.1 " << std::endl ;
-               if (dftParameters::useSymm) {
-              refineSerialMesh(n_cell, centroid, localRefineFlag, numberGlobalCells, serialTriangulation) ;
-	      //pcout << " check 1.2 " << std::endl ;
+	  if (dftParameters::useSymm) 
+	    {
+	      refineSerialMesh(n_cell, centroid, localRefineFlag, numberGlobalCells, serialTriangulation) ;
 	      serialTriangulation.execute_coarsening_and_refinement();
-              }
+	    }
 	      
         } 
       //
@@ -325,7 +319,7 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 	  }
 	}
   
-      minElemLength=Utilities::MPI::min(minElemLength, mpi_communicator);
+      minElemLength = Utilities::MPI::min(minElemLength, mpi_communicator);
 
       //
       //print out adaptive mesh metrics
@@ -344,8 +338,6 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 
       AssertThrow(numberGlobalCellsParallel==numberGlobalCellsSerial,ExcMessage("Number of cells are different for parallel and serial triangulations"));
       }
-
-
 
     }
 

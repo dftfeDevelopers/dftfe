@@ -153,13 +153,10 @@ void dftClass<FEOrder>::determineOrbitalFilling()
   int totalNumberWaveFunctions = numEigenValues;
   unsigned int fileReadFlag = 0;
   unsigned int waveFunctionCount = 0;
-  //unsigned int extraWaveFunctionsPerAtom = 0;
   unsigned int numberGlobalAtoms = atomLocations.size();
   const int numberImageCharges = d_imageIds.size();
   const int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
   unsigned int errorReadFile = 0;
-  //std::vector<unsigned int> numberAtomicWaveFunctions(numberAtoms,0.0);
-  //std::vector<unsigned int> levels(numberAtoms,0.0);
 
   //
   //loop over atoms
@@ -172,16 +169,13 @@ void dftClass<FEOrder>::determineOrbitalFilling()
 
       if(dftParameters::isPseudopotential)
 	{
-	  //numberAtomFunctions = std::ceil(valenceZ/2.0) + extraWaveFunctionsPerAtom;
 	  numElectrons += valenceZ;
 	}
       else
 	{
-	  //numberAtomFunctions = std::ceil(Z/2.0) + extraWaveFunctionsPerAtom;
 	  numElectrons += Z;
 	}
 
-      //numberAtomicWaveFunctions[iAtom] = numberAtomFunctions;
     }
 
 
@@ -253,7 +247,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
  
   IndexSet locallyOwnedSet;
   DoFTools::extract_locally_owned_dofs(dofHandlerEigen, locallyOwnedSet);
-  std::vector<unsigned int> locallyOwnedDOFs;
+  std::vector<IndexSet::size_type> locallyOwnedDOFs;
   locallyOwnedSet.fill_index_vector(locallyOwnedDOFs);
 
 
@@ -370,26 +364,17 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 	      double value =  boost::math::pdf(normDist, z); 
 	      if(rand()%2 == 0)
 		value = -1.0*value;
-	      //#ifdef ENABLE_PERIODIC_BC
-	      //local_dof_values[iWave][localProc_dof_indicesReal[dof]] = value;
-	      //#else
+
 	      local_dof_values[iWave][dof] = value;
-	      //#endif
-	      
 	    }
 	}
 
     }
 
-  //char buffer[100];
   for(int kPoint = 0; kPoint < (1+spinPolarized)*d_maxkPoints; ++kPoint)
     {
-      //sprintf(buffer, "%10u%10u\n", eigenVectors[kPoint].size(), local_dof_values.size() );
-      //pcout << buffer;
       for (unsigned int i = 0; i < numEigenValues; ++i)
 	{
-	  //constraintsNoneEigen.distribute_local_to_global(local_dof_values[i], locallyOwnedDOFs, *eigenVectors[kPoint][i]);
-	  //eigenVectors[kPoint][i]->compress(VectorOperation::add);
 #ifdef ENABLE_PERIODIC_BC
 	 for(unsigned int j = 0; j < numberDofs; ++j)
 	    {
@@ -414,10 +399,8 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 	  eigenVectors[kPoint][i]->compress(VectorOperation::insert);
 	  eigenVectors[kPoint][i]->update_ghost_values();
 	}
-    // pcout<<"check 0.13: "<<std::endl;
     }
   
-   // pcout<<"check 1: "<<std::endl;
 
   //
   //multiply by M^0.5
@@ -426,13 +409,6 @@ void dftClass<FEOrder>::readPSIRadialValues(){
     {
       for (unsigned int i = 0; i < eigenVectors[kPoint].size(); ++i)
 	{
-	  /*for (unsigned int j = 0; j < eigenVectors[kPoint][i]->local_size(); j++)
-	    {
-	      if (std::abs(eigenPtr->massVector.local_element(j))>1.0e-15)
-		{
-		  eigenVectors[kPoint][i]->local_element(j)/=eigenPtr->massVector.local_element(j);
-		}
-		}*/
 	  for(types::global_dof_index j = 0; j < eigenVectors[kPoint][i]->size(); ++j)
 	     {
 	       if(eigenVectors[kPoint][i]->in_local_range(j))
@@ -445,9 +421,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 
 	  char buffer[100];
 	  sprintf(buffer, "norm %u: l1: %14.8e  l2:%14.8e\n",i, eigenVectors[kPoint][i]->l1_norm(), eigenVectors[kPoint][i]->l2_norm());
-	  //char buffer[100];
-	  //sprintf(buffer, "norm %u: l1: %14.8e  l2:%14.8e\n",i, eigenVectors[kPoint][i]->l1_norm(), eigenVectors[kPoint][i]->l2_norm());
-	  //pcout << buffer;
+
 	  eigenVectors[kPoint][i]->zero_out_ghosts();
 	  eigenVectors[kPoint][i]->compress(VectorOperation::insert);
 	  eigenVectors[kPoint][i]->update_ghost_values();
@@ -455,17 +429,12 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 	  eigenVectors[kPoint][i]->update_ghost_values();
 	}
     }
-
-   //pcout<<"check 2: "<<std::endl;
-
 }
 
 //
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::readPSI(){
   computing_timer.enter_section("initialize wave functions"); 
-
   readPSIRadialValues();
-
   computing_timer.exit_section("initialize wave functions"); 
 }

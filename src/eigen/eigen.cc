@@ -93,23 +93,6 @@ void eigenClass<FEOrder>::computeMassVector()
 
   massVector.compress(VectorOperation::add);
   
-  //compute inverse
-  /*for(unsigned int i=0; i<massVector.local_size(); i++)
-    {
-      if(std::abs(massVector.local_element(i)) > 1.0e-15)
-	{
-	  double temp = massVector.local_element(i);
-	  massVector.local_element(i) = 1.0/std::sqrt(massVector.local_element(i));
-	  if(std::isnan(massVector.local_element(i)))
-	    {
-	      std::cout<<"Value of temp is: "<<temp<<std::endl;
-	    }
-	}
-      else
-	{
-	  massVector.local_element(i) = 0.0;
-	}
-	}*/
 
   for(types::global_dof_index i = 0; i < massVector.size(); ++i)
     {
@@ -337,7 +320,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vec
 
   int numberNodesPerElement;
 #ifdef ENABLE_PERIODIC_BC
-  numberNodesPerElement = dftPtr->FEEigen.dofs_per_cell/2;//GeometryInfo<3>::vertices_per_cell;
+  numberNodesPerElement = dftPtr->FEEigen.dofs_per_cell/2;
 #else
   numberNodesPerElement = dftPtr->FEEigen.dofs_per_cell;
 #endif
@@ -469,8 +452,6 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vec
 
     }//element loop
 
-  //std::cout<<"Finished Element Loop"<<std::endl;
-
 #ifdef ENABLE_PERIODIC_BC
   std::vector<std::complex<double> > tempVectorloc;
   std::vector<std::complex<double> > tempVector;
@@ -541,7 +522,6 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vec
 	}
     }
   
-  //std::cout<<"Scaling V*C^{T} "<<std::endl;
 
   char transA1 = 'N';
   char transB1 = 'N';
@@ -612,8 +592,6 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vec
 	    {
 	      for(int idof = 0; idof < dofs_per_cell; ++idof)
 		{
-		  //temp[2*iNode]   = outputVectors[numberNodesPerElement*index + iNode].real();
-		  //temp[2*iNode+1] = outputVectors[numberNodesPerElement*index + iNode].imag();
 		  const unsigned int ck = fe_values.get_fe().system_to_component_index(idof).first;
 		  const unsigned int iNode = fe_values.get_fe().system_to_component_index(idof).second;
 		  
@@ -638,11 +616,6 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vec
 	}
 
     }
-
-  /*for (std::vector<vectorType*>::iterator it=dst.begin(); it!=dst.end(); it++)
-    {
-      (*it)->compress(VectorOperation::add);
-      }*/
 
 }
 						  
@@ -993,7 +966,7 @@ void eigenClass<FEOrder>::XHX(const std::vector<vectorType*> &src)
   //
   //extract vectors at the processor level
   //
-  std::vector<unsigned int> local_dof_indices(dofs_per_proc);
+  std::vector<IndexSet::size_type> local_dof_indices(dofs_per_proc);
   src[0]->locally_owned_elements().fill_index_vector(local_dof_indices);
 
   unsigned int index=0;

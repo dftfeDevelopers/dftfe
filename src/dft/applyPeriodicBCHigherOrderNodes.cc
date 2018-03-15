@@ -422,7 +422,7 @@ void dftClass<FEOrder>::applyPeriodicBCHigherOrderNodes()
   QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
   FEValues<3> fe_values (FEEigen, quadrature_formula, update_values);
   const unsigned int dofs_per_cell = FEEigen.dofs_per_cell;
-  std::vector<unsigned int> local_dof_indicesEigen(dofs_per_cell);
+  std::vector<IndexSet::size_type> local_dof_indicesEigen(dofs_per_cell);
 
   std::set<unsigned int> masterNodesReal, masterNodesImag, slaveNodesReal, slaveNodesImag;
   typename DoFHandler<3>::active_cell_iterator cellEigen = dofHandlerEigen.begin_active(), endcellEigen = dofHandlerEigen.end();

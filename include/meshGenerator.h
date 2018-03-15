@@ -45,7 +45,7 @@ class meshGeneratorClass
 				     std::vector<std::vector<double> > & imageAtomLocations,
 				     std::vector<std::vector<double> > & domainBoundingVectors);
 
-  void generateMesh(parallel::distributed::Triangulation<3>& parallelTriangulation, parallel::distributed::Triangulation<3>& serialTriangulation, unsigned int & numberGlobalCells);
+  void generateMesh(parallel::distributed::Triangulation<3>& parallelTriangulation, parallel::distributed::Triangulation<3>& serialTriangulation, types::global_dof_index & numberGlobalCells);
 
   void refineSerialMesh(unsigned int n_cell, std::vector<double>& centroid, std::vector<int>& localRefineFlag, unsigned int n_global_cell, parallel::distributed::Triangulation<3>& serialTriangulation) ;
 
