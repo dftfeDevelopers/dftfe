@@ -257,8 +257,8 @@ void forceClass<FEOrder>::computeStressEEshelbyEPSPEnlEk()
 		                                                 dftPtr->fermiEnergy,
 							         C_kb,
 							         dftParameters::TVal); 	     
-	     Tensor<1,C_DIM,double > tempGradRhoContribution=2.0*dftPtr->d_kPointWeights[ikPoint]*partOcc*internalforce::computeGradRhoContribution(tempPsi[q], tempGradPsi[q]);
-	     Tensor<2,C_DIM,double > tempHessianRhoContribution=2.0*dftPtr->d_kPointWeights[ikPoint]*partOcc*internalforce::computeHessianRhoContribution(tempPsi[q], tempGradPsi[q], tempHessianPsi[q]);
+	     const Tensor<1,C_DIM,double > tempGradRhoContribution=2.0*dftPtr->d_kPointWeights[ikPoint]*partOcc*internalforce::computeGradRhoContribution(tempPsi[q], tempGradPsi[q]);
+	     const Tensor<2,C_DIM,double > tempHessianRhoContribution=2.0*dftPtr->d_kPointWeights[ikPoint]*partOcc*internalforce::computeHessianRhoContribution(tempPsi[q], tempGradPsi[q], tempHessianPsi[q]);
 
 	     for (unsigned int idim=0; idim<C_DIM; idim++)
 	     {

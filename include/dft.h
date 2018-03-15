@@ -460,10 +460,10 @@ class dftClass
   /// current k point index during the ground state solve
   int d_kPointIndex;
   
-  /** recomputes the k point cartesian coordinates from the crystal k point coordinates
-    * and the current lattice vectors, which can change in each ground state solve when
-    * isCellOpt is true
-    */
+  /** Recomputes the k point cartesian coordinates from the crystal k point coordinates
+   * and the current lattice vectors, which can change in each ground state solve when
+   * isCellOpt is true
+   */
   void recomputeKPointCoordinates();
 
   /// integralRhoOut to store number of electrons
