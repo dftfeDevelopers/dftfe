@@ -135,10 +135,16 @@ public:
  */   
   void printStress();  
 #endif
-/** @brief Constructor.
+
+/** @brief Updates atom positions, remeshes/moves mesh and calls appropriate reinits. 
+ *  
+ *  Function to update the atom positions and mesh based on the provided displacement input.
+ *  Depending on the maximum displacement magnitude this function decides wether to do auto remeshing
+ *  or move mesh using Gaussian functions. Additionaly this function also wraps the atom position across the 
+ *  periodic boundary if the atom moves across it.
  *
- *  @param _dftPtr pointer to dftClass
- *  @param mpi_comm_replica mpi_communicator of the current pool
+ *  @param globalAtomsDisplacements vector containing the displacements (from current position) of all atoms (global). 
+ *  @return void.
  */    
   void updateAtomPositionsAndMoveMesh(const std::vector<Point<C_DIM> > & globalAtomsDisplacements);
 

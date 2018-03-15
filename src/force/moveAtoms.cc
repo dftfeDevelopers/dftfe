@@ -174,9 +174,7 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
   }
   else if (maxDispAtom <(break1+tol) && maxDispAtom>break2)
   {
-    //FIXME: updateCase=1 can only be enabled after resolving the issue with vself configurational force
-    //surface integral when hanging nodes are present
-    updateCase=0;
+    updateCase=1;
   }
   else
   {
