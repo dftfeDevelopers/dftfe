@@ -26,6 +26,7 @@
 //
 #include "constants.h"
 #include "dft.h"
+#include <dftUtils.h>
 
 
 //
@@ -99,222 +100,141 @@ int main (int argc, char *argv[])
 {
   Utilities::MPI::MPI_InitFinalize mpi_initialization (argc, argv);
 
-  //
-  try
-    {
-      ParameterHandler prm;
-      dftParameters::declare_parameters (prm);
-      parse_command_line(argc,argv, prm);
-    }
-  catch (std::exception &exc)
-    {
-      std::cerr << std::endl << std::endl
-                << "----------------------------------------------------"
-                << std::endl;
-      std::cerr << "Exception on processing: " << std::endl
-                << exc.what() << std::endl
-                << "Aborting!" << std::endl
-                << "----------------------------------------------------"
-                << std::endl;
-      return 1;
-    }
-  catch (...)
-    {
-      std::cerr << std::endl << std::endl
-                << "----------------------------------------------------"
-                << std::endl;
-      std::cerr << "Unknown exception!" << std::endl
-                << "Aborting!" << std::endl
-                << "----------------------------------------------------"
-                << std::endl;
-      return 1;
-    };
+  ParameterHandler prm;
+  dftParameters::declare_parameters (prm);
+  parse_command_line(argc,argv, prm);
+
   deallog.depth_console(0);
-  //
-  int color1, color2;
-  const int npool = dftParameters::npool;
-  const int n_mpi_processes = Utilities::MPI::n_mpi_processes(MPI_COMM_WORLD);
-  //double poolSizeFloat = (double)n_mpi_processes/(double)npool;
-  //int poolSize = std::floor(poolSizeFloat);
-  AssertThrow(n_mpi_processes % npool == 0,ExcMessage("Number of mpi processes must be a multiple of NUMBER OF POOLS"));
-  const int poolSize= n_mpi_processes/npool;
-  const int taskId = Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) ;
-  MPI_Comm interpoolcomm, intrapoolcomm, mpi_comm_replica ;
-  //
-  if (taskId == 0)
+
+  dftUtils::Pool pool(MPI_COMM_WORLD, dftParameters::npool);
+
+  // set stdout precision
+  std::cout << std::scientific << std::setprecision(18);
+
+  switch (dftParameters::finiteElementPolynomialOrder)
     {
-      std::cout<<"Number of pools: "<<npool<<std::endl;
-      std::cout<<"Pool size: "<<poolSize<<std::endl;
+
+    case 1:
+    {
+      dftClass<1> problemFEOrder1(pool.get_replica_comm(), pool.get_interpool_comm());
+      problemFEOrder1.numEigenValues = dftParameters::numberEigenValues;
+      problemFEOrder1.set();
+      problemFEOrder1.init();
+      problemFEOrder1.run();
+      break;
     }
 
-  color1 = taskId%poolSize ;
-
-
-  MPI_Barrier(MPI_COMM_WORLD);
-
-  MPI_Comm_split(MPI_COMM_WORLD,
-                 color1,
-                 0,
-                 &interpoolcomm);
-
-  //
-
-  color2 = taskId / poolSize ;
-
-  MPI_Barrier(MPI_COMM_WORLD);
-
-
-  MPI_Comm_split(MPI_COMM_WORLD,
-                 color2,
-                 0,
-                 &intrapoolcomm);
-
-  MPI_Comm_dup(intrapoolcomm , &mpi_comm_replica)  ;
-
-  for (int i=0; i<n_mpi_processes; ++i)
+    case 2:
     {
-      if (taskId==i)
-        std::cout << " My global id is " << taskId << " , pool id is " << Utilities::MPI::this_mpi_process(interpoolcomm)  <<
-                  " , intrapool id is " << Utilities::MPI::this_mpi_process(intrapoolcomm) << std::endl;
-      MPI_Barrier(MPI_COMM_WORLD);
+      dftClass<2> problemFEOrder2(pool.get_replica_comm(), pool.get_interpool_comm());
+      problemFEOrder2.numEigenValues = dftParameters::numberEigenValues;
+      problemFEOrder2.set();
+      problemFEOrder2.init();
+      problemFEOrder2.run();
+      break;
+    }
+
+    case 3:
+    {
+      dftClass<3> problemFEOrder3(pool.get_replica_comm(), pool.get_interpool_comm());
+      problemFEOrder3.numEigenValues = dftParameters::numberEigenValues;
+      problemFEOrder3.set();
+      problemFEOrder3.init();
+      problemFEOrder3.run();
+      break;
+    }
+
+    case 4:
+    {
+      dftClass<4> problemFEOrder4(pool.get_replica_comm(), pool.get_interpool_comm());
+      problemFEOrder4.numEigenValues = dftParameters::numberEigenValues;
+      problemFEOrder4.set();
+      problemFEOrder4.init();
+      problemFEOrder4.run();
+      break;
+    }
+
+    case 5:
+    {
+      dftClass<5> problemFEOrder5(pool.get_replica_comm(), pool.get_interpool_comm());
+      problemFEOrder5.numEigenValues = dftParameters::numberEigenValues;
+      problemFEOrder5.set();
+      problemFEOrder5.init();
+      problemFEOrder5.run();
+      break;
+    }
+
+    case 6:
+    {
+      dftClass<6> problemFEOrder6(pool.get_replica_comm(), pool.get_interpool_comm());
+      problemFEOrder6.numEigenValues = dftParameters::numberEigenValues;
+      problemFEOrder6.set();
+      problemFEOrder6.init();
+      problemFEOrder6.run();
+      break;
+    }
+
+    case 7:
+    {
+      dftClass<7> problemFEOrder7(pool.get_replica_comm(), pool.get_interpool_comm());
+      problemFEOrder7.numEigenValues = dftParameters::numberEigenValues;
+      problemFEOrder7.set();
+      problemFEOrder7.init();
+      problemFEOrder7.run();
+      break;
+    }
+
+    case 8:
+    {
+      dftClass<8> problemFEOrder8(pool.get_replica_comm(), pool.get_interpool_comm());
+      problemFEOrder8.numEigenValues = dftParameters::numberEigenValues;
+      problemFEOrder8.set();
+      problemFEOrder8.init();
+      problemFEOrder8.run();
+      break;
+    }
+
+    case 9:
+    {
+      dftClass<9> problemFEOrder9(pool.get_replica_comm(), pool.get_interpool_comm());
+      problemFEOrder9.numEigenValues = dftParameters::numberEigenValues;
+      problemFEOrder9.set();
+      problemFEOrder9.init();
+      problemFEOrder9.run();
+      break;
+    }
+
+    case 10:
+    {
+      dftClass<10> problemFEOrder10(pool.get_replica_comm(), pool.get_interpool_comm());
+      problemFEOrder10.numEigenValues = dftParameters::numberEigenValues;
+      problemFEOrder10.set();
+      problemFEOrder10.init();
+      problemFEOrder10.run();
+      break;
+    }
+
+    case 11:
+    {
+      dftClass<11> problemFEOrder11(pool.get_replica_comm(), pool.get_interpool_comm());
+      problemFEOrder11.numEigenValues = dftParameters::numberEigenValues;
+      problemFEOrder11.set();
+      problemFEOrder11.init();
+      problemFEOrder11.run();
+      break;
+    }
+
+    case 12:
+    {
+      dftClass<12> problemFEOrder12(pool.get_replica_comm(), pool.get_interpool_comm());
+      problemFEOrder12.numEigenValues = dftParameters::numberEigenValues;
+      problemFEOrder12.set();
+      problemFEOrder12.init();
+      problemFEOrder12.run();
+      break;
+    }
 
     }
 
-
-  {
-    //
-    // set stdout precision
-    //
-    std::cout << std::scientific << std::setprecision(18);
-
-    unsigned int finiteElementPolynomialOrder = dftParameters::finiteElementPolynomialOrder;
-    unsigned int numberEigenValues = dftParameters::numberEigenValues;
-
-    switch (finiteElementPolynomialOrder)
-      {
-
-      case 1:
-      {
-        dftClass<1> problemFEOrder1(mpi_comm_replica, interpoolcomm);
-        problemFEOrder1.numEigenValues = numberEigenValues;
-        problemFEOrder1.set();
-        problemFEOrder1.init();
-        problemFEOrder1.run();
-        break;
-      }
-
-      case 2:
-      {
-        dftClass<2> problemFEOrder2(mpi_comm_replica, interpoolcomm);
-        problemFEOrder2.numEigenValues = numberEigenValues;
-        problemFEOrder2.set();
-        problemFEOrder2.init();
-        problemFEOrder2.run();
-        break;
-      }
-
-      case 3:
-      {
-        dftClass<3> problemFEOrder3(mpi_comm_replica, interpoolcomm);
-        problemFEOrder3.numEigenValues = numberEigenValues;
-        problemFEOrder3.set();
-        problemFEOrder3.init();
-        problemFEOrder3.run();
-        break;
-      }
-
-      case 4:
-      {
-        dftClass<4> problemFEOrder4(mpi_comm_replica, interpoolcomm);
-        problemFEOrder4.numEigenValues = numberEigenValues;
-        problemFEOrder4.set();
-        problemFEOrder4.init();
-        problemFEOrder4.run();
-        break;
-      }
-
-      case 5:
-      {
-        dftClass<5> problemFEOrder5(mpi_comm_replica, interpoolcomm);
-        problemFEOrder5.numEigenValues = numberEigenValues;
-        problemFEOrder5.set();
-        problemFEOrder5.init();
-        problemFEOrder5.run();
-        break;
-      }
-
-      case 6:
-      {
-        dftClass<6> problemFEOrder6(mpi_comm_replica, interpoolcomm);
-        problemFEOrder6.numEigenValues = numberEigenValues;
-        problemFEOrder6.set();
-        problemFEOrder6.init();
-        problemFEOrder6.run();
-        break;
-      }
-
-      case 7:
-      {
-        dftClass<7> problemFEOrder7(mpi_comm_replica, interpoolcomm);
-        problemFEOrder7.numEigenValues = numberEigenValues;
-        problemFEOrder7.set();
-        problemFEOrder7.init();
-        problemFEOrder7.run();
-        break;
-      }
-
-      case 8:
-      {
-        dftClass<8> problemFEOrder8(mpi_comm_replica, interpoolcomm);
-        problemFEOrder8.numEigenValues = numberEigenValues;
-        problemFEOrder8.set();
-        problemFEOrder8.init();
-        problemFEOrder8.run();
-        break;
-      }
-
-      case 9:
-      {
-        dftClass<9> problemFEOrder9(mpi_comm_replica, interpoolcomm);
-        problemFEOrder9.numEigenValues = numberEigenValues;
-        problemFEOrder9.set();
-        problemFEOrder9.init();
-        problemFEOrder9.run();
-        break;
-      }
-
-      case 10:
-      {
-        dftClass<10> problemFEOrder10(mpi_comm_replica, interpoolcomm);
-        problemFEOrder10.numEigenValues = numberEigenValues;
-        problemFEOrder10.set();
-        problemFEOrder10.init();
-        problemFEOrder10.run();
-        break;
-      }
-
-      case 11:
-      {
-        dftClass<11> problemFEOrder11(mpi_comm_replica, interpoolcomm);
-        problemFEOrder11.numEigenValues = numberEigenValues;
-        problemFEOrder11.set();
-        problemFEOrder11.init();
-        problemFEOrder11.run();
-        break;
-      }
-
-      case 12:
-      {
-        dftClass<12> problemFEOrder12(mpi_comm_replica, interpoolcomm);
-        problemFEOrder12.numEigenValues = numberEigenValues;
-        problemFEOrder12.set();
-        problemFEOrder12.init();
-        problemFEOrder12.run();
-        break;
-      }
-
-      }
-
-  }
   return 0;
 }

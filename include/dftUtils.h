@@ -16,18 +16,56 @@
 
 #ifndef dftUtils_H_
 #define dftUtils_H_
+
+#include <mpi.h>
+
 namespace dftUtils
 {
-/** @brief Calculates partial occupancy of the atomic orbital using 
- *  Fermi-Dirac smearing.
- *
- *  @param  eigenValue
- *  @param  fermiEnergy 
- *  @param  kb Boltzmann constant
- *  @param  T smearing temperature 
- *  @return double The partial occupancy of the orbital
- */    
-double getPartialOccupancy(const double eigenValue,const double fermiEnergy,const double kb,const double T);
+  /** @brief Calculates partial occupancy of the atomic orbital using
+   *  Fermi-Dirac smearing.
+   *
+   *  @param  eigenValue
+   *  @param  fermiEnergy
+   *  @param  kb Boltzmann constant
+   *  @param  T smearing temperature
+   *  @return double The partial occupancy of the orbital
+   */
+  double getPartialOccupancy(const double eigenValue,const double fermiEnergy,const double kb,const double T);
+
+  /**
+   * A class to split the given communicator into a number of pools
+   */
+  class Pool
+  {
+  public:
+    Pool(const MPI_Comm &mpi_communicator,
+         const unsigned int n_pools);
+
+    /**
+     * FIXME: document
+     */
+    MPI_Comm &get_interpool_comm();
+
+    /**
+     * FIXME: document
+     */
+    MPI_Comm &get_intrapool_comm();
+
+    /**
+     * FIXME: document
+     */
+    MPI_Comm &get_replica_comm();
+
+  private:
+    /// FIXME: document
+    MPI_Comm interpoolcomm;
+
+    /// FIXME: document
+    MPI_Comm intrapoolcomm;
+
+    /// FIXME: document
+    MPI_Comm mpi_comm_replica;
+  };
 
 }
 #endif
