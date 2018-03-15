@@ -111,8 +111,8 @@ void forceClass<FEOrder>::computeStressEself()
 	       d_stress-=outer_product(dispClosestAtom,eshelbyTensor::getVselfBallEshelbyTensor(gradVselfFaceQuadExact)*feVselfFaceValues.normal_vector(qPoint))*feVselfFaceValues.JxW(qPoint);	 
 #ifdef DEBUG 	       
 	       dummyTest+=scalar_product(gradVselfFaceQuadExact,feVselfFaceValues.normal_vector(qPoint))*feVselfFaceValues.JxW(qPoint);	       
-	       dummyVec+=feForceFaceValues.normal_vector(qPoint)*feForceFaceValues.JxW(qPoint);
-	       dummyTensor+=outer_product(gradVselfFaceQuadExact,feForceFaceValues.normal_vector(qPoint))*feForceFaceValues.JxW(qPoint);
+	       dummyVec+=feVselfFaceValues.normal_vector(qPoint)*feVselfFaceValues.JxW(qPoint);
+	       dummyTensor+=outer_product(gradVselfFaceQuadExact,feVselfFaceValues.normal_vector(qPoint))*feVselfFaceValues.JxW(qPoint);
 #endif	       
 	       
 	   }//q point loop
