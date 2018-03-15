@@ -24,8 +24,6 @@
  *  @author Sambit Das
  */
 
-
-
 #ifndef force_H_
 #define force_H_
 #include "headers.h"

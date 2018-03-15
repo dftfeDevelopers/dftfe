@@ -114,7 +114,7 @@ namespace internaldft
 {
 
     void convertToCellCenteredCartesianCoordinates(std::vector<std::vector<double> > & atomLocations,
-						   std::vector<std::vector<double> > & latticeVectors)
+						   const std::vector<std::vector<double> > & latticeVectors)
     {
       std::vector<double> cartX(atomLocations.size(),0.0);
       std::vector<double> cartY(atomLocations.size(),0.0);

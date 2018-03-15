@@ -493,6 +493,7 @@ void forceClass<FEOrder>::printAtomsForces()
         {
 	    absForce+=d_globalAtomsGaussianForces[3*i+idim]*d_globalAtomsGaussianForces[3*i+idim];
 	}
+	Assert (absForce>=0., ExcInternalError());
 	absForce=std::sqrt(absForce);
 	if (absForce>maxForce)
 	{

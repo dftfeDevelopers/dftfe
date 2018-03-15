@@ -91,7 +91,7 @@ namespace eshelbyTensor
 							               const VectorizedArray<double> & exc,
 							               const Tensor<1,C_DIM,VectorizedArray<double> > & derExcGradRho,
                                                                        const VectorizedArray<double> & pseudoVLoc,
-                                                                       const VectorizedArray<double> & phiExt,								       
+                                                                       const VectorizedArray<double> & phiExt,
 								       std::vector<VectorizedArray<double> >::const_iterator psiBegin,
                                                                        std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >::const_iterator  gradPsiBegin,
 								       const std::vector<double> & eigenValues_,
@@ -116,7 +116,7 @@ namespace eshelbyTensor
   Tensor<2,C_DIM,VectorizedArray<double> >  getEnlEshelbyTensorPeriodic(const std::vector<std::vector<std::vector<Tensor<1,2,VectorizedArray<double> > > > > & ZetaDeltaV,
 								      const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiTimesV,
 								      std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiBegin,
-                                                                      const std::vector<double> & kPointWeights,								      
+                                                                      const std::vector<double> & kPointWeights,
 								      const std::vector<std::vector<double> > & eigenValues_,
 								      const double fermiEnergy_,
 								      const double tVal);
@@ -133,7 +133,7 @@ namespace eshelbyTensor
   Tensor<1,C_DIM,VectorizedArray<double> >  getFnlPeriodic(const std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > & gradZetaDeltaV,
 						         const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiTimesV,
 						         std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiBegin,
-                                                         const std::vector<double> & kPointWeights,								      
+                                                         const std::vector<double> & kPointWeights,
 					                 const std::vector<std::vector<double> > & eigenValues_,
 						         const double fermiEnergy_,
 						         const double tVal);
@@ -162,7 +162,7 @@ namespace eshelbyTensor
   Tensor<2,C_DIM,VectorizedArray<double> >  getEnlStress(const std::vector<std::vector<std::vector<Tensor<1,2, Tensor<2,C_DIM,VectorizedArray<double> > > > > > & gradZetalmDeltaVlDyadicDistImageAtoms,
 						         const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiTimesV,
 						         std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiBegin,
-                                                         const std::vector<double> & kPointWeights,								      
+                                                         const std::vector<double> & kPointWeights,
 					                 const std::vector<std::vector<double> > & eigenValues_,
 						         const double fermiEnergy_,
 						         const double tVal);  
