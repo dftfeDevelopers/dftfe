@@ -36,53 +36,151 @@
 using namespace dealii;
 typedef dealii::parallel::distributed::Vector<double> vectorType;
 template <unsigned int T> class dftClass;
-//
-//Define forceClass class
-//
+
 template <unsigned int FEOrder>
 class forceClass
 {
   template <unsigned int T>  friend class dftClass;
   template <unsigned int T>  friend class geoOptIon;
 public:
+/** @brief Constructor.
+ *
+ *  @param _dftPtr pointer to dftClass
+ *  @param mpi_comm_replica mpi_communicator of the current pool
+ */   
   forceClass(dftClass<FEOrder>* _dftPtr,  MPI_Comm &mpi_comm_replica);
+
+/** @brief initializes data structures inside forceClass assuming unmoved triangulation.
+ *
+ *  initUnmoved is the first step of the initialization/reinitialization of force class when
+ *  starting from a new unmoved triangulation. It creates the dofHandler with linear finite elements and
+ *  three components corresponding to the three force components. It also creates the corresponding constraint
+ *  matrices which is why an unmoved triangulation is necessary. Finally this function also initializes the 
+ *  gaussianMovePar data member.
+ *
+ *  @param triangulation reference to unmoved triangulation where the mesh nodes have not been manually moved.
+ *  @return void.
+ */    
   void initUnmoved(Triangulation<3,3> & triangulation);
+
+/** @brief initializes data structures inside forceClass which depend on the moved mesh.
+ *
+ *  initMoved is the second step (first step call initUnmoved) of the initialization/reinitialization of force class when
+ *  starting from a new mesh, and the first step when recomputing forces on a
+ *  perturbed mesh. initMoved assumes that the triangulation whose reference was passed to the forceClass object
+ *  in the initUnmoved call now has its nodes moved such that all atomic positions lie on nodes.
+ *
+ *  @return void. 
+ */  
   void initMoved();
+
+/** @brief initializes and precomputes pseudopotential related data structuers required for configurational force
+ *  and stress computation.
+ *
+ *  This function is only activated for pseudopotential calculations and is currently called when initializing/reinitializing
+ *  the dftClass object. This function initializes and precomputes the pseudopotential datastructures for local and non-local
+ *  parts. Separate internal function calls are made for KB and ONCV projectors.
+ *
+ *  @return void. 
+ */  
   void initPseudoData();
-  void computeElementalNonLocalPseudoOVDataForce();
+
+/** @brief computes the configurational force on all atoms corresponding to Gaussian generator.
+ *
+ *  The Gaussian generator is taken to be exp(-d_gaussianConstant*r^2), r being the distance from the atom.
+ *  Currently d_gaussianConstant is hardcoded to be 4.0. To get the computed atomic forces use
+ *  getAtomsForces
+ *
+ *  @return void. 
+ */  
   void computeAtomsForces();
-  std::vector<double> getAtomsForces();  
+
+/** @brief returns a copy of the configurational force on all global atoms.
+ *
+ *  computeAtomsForces must be called prior to this function call.
+ *
+ *  @return std::vector<double> flattened array of the configurational force on all atoms,
+ *  the three force components on each atom being the leading dimension. Units- Hartree/Bohr
+ */ 
+  std::vector<double> getAtomsForces(); 
+
+/** @brief prints the currently stored configurational forces on atoms and the Gaussian generator constant 
+ *  used to compute them.
+ *
+ *  @return void. 
+ */  
   void printAtomsForces();
-#ifdef ENABLE_PERIODIC_BC  
+
+#ifdef ENABLE_PERIODIC_BC
+/** @brief computes the configurational stress on the domain corresponding to 
+ *  affine deformation of the periodic cell.
+ *
+ *  This function cannot be called for fully non-periodic calculations.
+ *
+ *  @return void. 
+ */    
   void computeStress();
-  void printStress();
+
+/** @brief returns a copy of the current stress tensor value.
+ *
+ *  computeStress must be call prior to this function call.
+ *
+ *  @return Tensor<2,C_DIM,double>  second order stress Tensor in Hartree/Bohr^3
+ */    
   Tensor<2,C_DIM,double> getStress();
+
+/** @brief prints the currently stored configurational stress tensor.
+ *
+ *  @return void. 
+ */   
+  void printStress();  
 #endif
+/** @brief Constructor.
+ *
+ *  @param _dftPtr pointer to dftClass
+ *  @param mpi_comm_replica mpi_communicator of the current pool
+ */    
   void updateAtomPositionsAndMoveMesh(const std::vector<Point<C_DIM> > & globalAtomsDisplacements);
+
 private:
-  void locateAtomCoreNodesForce();  
+  void locateAtomCoreNodesForce(); 
+
   vectorType d_configForceVectorLinFE;
+
 #ifdef ENABLE_PERIODIC_BC  
   vectorType d_configForceVectorLinFEKPoints;
 #endif
+
   std::vector<unsigned int> d_globalAtomsRelaxationPermissions;
+
   std::vector<double> d_globalAtomsRelaxationDisplacements;
+
   void createBinObjectsForce();
-  //configurational force functions
+
   void configForceLinFEInit();
+
   void configForceLinFEFinalize();
+
   void computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(); 
+
   void computeConfigurationalForceSpinPolarizedEEshelbyTensorFPSPFnlLinFE();    
+
   void computeConfigurationalForcePhiExtLinFE();
+
   void computeConfigurationalForceEselfLinFE();
+
   void computeConfigurationalForceEselfNoSurfaceLinFE();
+
   void computeConfigurationalForceTotalLinFE();
+
   void FPSPLocalGammaAtomsElementalContribution(std::map<unsigned int, std::vector<double> > & forceContributionFPSPLocalGammaAtoms,
 		                                FEValues<C_DIM> & feVselfValues,
                                                 FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,					    
 				                const unsigned int cell,
 			                        const std::vector<VectorizedArray<double> > & rhoQuads);
+
   void distributeForceContributionFPSPLocalGammaAtoms(const std::map<unsigned int, std::vector<double> > & forceContributionFPSPLocalGammaAtoms); 
+
 #ifdef ENABLE_PERIODIC_BC   
   void FnlGammaAtomsElementalContributionPeriodic
       (std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
@@ -102,6 +200,7 @@ private:
        const std::vector<Tensor<1,2,VectorizedArray<double> > > & psiSpin0Quads,
        const std::vector<Tensor<1,2,VectorizedArray<double> > > & psiSpin1Quads); 
 #else  
+
   void FnlGammaAtomsElementalContributionNonPeriodicSpinPolarized
       (std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
        FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
@@ -119,16 +218,22 @@ private:
        const std::vector<std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > > pspnlGammaAtomQuads,
        const std::vector<std::vector<double> >  & projectorKetTimesPsiTimesV,			       
        const std::vector< VectorizedArray<double> > & psiQuads);  
+
 #endif 
+
   void distributeForceContributionFnlGammaAtoms(const std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms);  
+
   //
   void computeAtomsForcesGaussianGenerator(bool allowGaussianOverlapOnAtoms=false);
 
   //stress computation functions
 #ifdef ENABLE_PERIODIC_BC 
   void computeStressEself();
+
   void computeStressEEshelbyEPSPEnlEk();
+
   void computeStressSpinPolarizedEEshelbyEPSPEnlEk();
+
   void addEPSPStressContribution
                                (FEValues<C_DIM> & feVselfValues,
 			        FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
@@ -139,81 +244,143 @@ private:
   
   //////force related pseudopotential member functions and data members
   void initLocalPseudoPotentialForce();
-  void computeElementalNonLocalPseudoDataForce(); 
+
+  void computeElementalNonLocalPseudoDataForce();
+
+  void computeElementalNonLocalPseudoOVDataForce();  
+
   void computeNonLocalProjectorKetTimesPsiTimesV(const std::vector<vectorType*> &src,
                                                  std::vector<std::vector<double> > & projectorKetTimesPsiTimesVReal,
                                                  std::vector<std::vector<std::complex<double> > > & projectorKetTimesPsiTimesVComplex,
 						 const unsigned int kPointIndex);
+
  
   //storage for precomputed nonlocal pseudopotential quadrature data
   //map<nonlocal atom id with non-zero compact support, vector< elemental quad data >(number pseudo wave functions)>
 #ifdef ENABLE_PERIODIC_BC 
   std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_ZetalmDeltaVl;
+
   std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_gradZetalmDeltaVl_KPoint;
+
   std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint; 
+
   std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_gradZetalmDeltaVlDyadicDistImageAtoms_KPoint;
+
 #else
   std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_ZetalmDeltaVl;
+
   std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_gradZetalmDeltaVl;
 #endif
   //storage for precompute localPseudo data
   std::map<dealii::CellId, std::vector<double> > d_gradPseudoVLoc;
-  //only contains maps for atoms whose psp tail intersects the local domain
+
+  /// Internal data:: maps for cell id to gradient of Vpseudo local. Only for atoms
+  /// whose psp tail intersects the local domain.
   std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > d_gradPseudoVLocAtoms;
 
-  //meshMovementGaussianClass object  								       
+  /// meshMovementGaussianClass object  								       
   meshMovementGaussianClass gaussianMovePar;
 
-  //Gaussian generator related data and functions
-  const double d_gaussianConstant=4.0;//5.0
+  /// Gaussian generator constant. Gaussian generator: Gamma(r)= exp(-d_gaussianConstant*r^2)
+  const double d_gaussianConstant=4.0;
+
+  /// Storage for configurational force on all global atoms.
   std::vector<double> d_globalAtomsGaussianForces;
-#ifdef ENABLE_PERIODIC_BC  
+
+#ifdef ENABLE_PERIODIC_BC 
+  /* Part of the configurational force which is summed over k points. 
+   * It is a temporary data structure required for force evaluation (d_globalAtomsGaussianForces)
+   * when parallization over k points is on.
+   */  
   std::vector<double> d_globalAtomsGaussianForcesKPoints;
 #endif  
 
 #ifdef ENABLE_PERIODIC_BC
-  /// Second order cell stress tensor 
+
+  /// Storage for configurational stress tensor 
   Tensor<2,C_DIM,double> d_stress;
+
   /* Part of the stress tensor which is summed over k points. 
-   * Used only during the computation of d_stress
+   * It is a temporary data structure required for stress evaluation (d_stress)
+   * when parallization over k points is on.
    */
   Tensor<2,C_DIM,double> d_stressKPoints;
-#endif  
-  const bool d_allowGaussianOverlapOnAtoms=false;//Dont use true except for debugging forces only without mesh movement, as gaussian ovelap on atoms for move mesh is by default set to false
+#endif 
+  /* Dont use true except for debugging forces only without mesh movement, as gaussian ovelap 
+   * on atoms for move mesh is by default set to false
+   */
+  const bool d_allowGaussianOverlapOnAtoms=false;
 
-  //pointer to dft class
+  /// pointer to dft class
   dftClass<FEOrder>* dftPtr;
 
-  //dealii based FE data structres
+  /// Finite element object for configurational force computation. Linear finite elements with three force field components are used.
   FESystem<C_DIM>  FEForce;
-  DoFHandler<C_DIM> d_dofHandlerForce;
-  unsigned int d_forceDofHandlerIndex;
-  std::map<types::global_dof_index, Point<C_DIM> > d_supportPointsForce;
-  //std::map<types::global_dof_index, Point<C_DIM> > d_locallyOwnedSupportPointsForceX, d_locallyOwnedSupportPointsForceY, d_locallyOwnedSupportPointsForceZ ;
-  IndexSet   d_locally_owned_dofsForce;
-  IndexSet   d_locally_relevant_dofsForce;
-  ConstraintMatrix d_constraintsNoneForce;
-  //data structures
 
-  std::map<std::pair<unsigned int,unsigned int>, unsigned int>  d_atomsForceDofs;//(<atomId,force component>, globaldof>  
-  //(outermost vector over bins) local data required for configurational force computation corresponding to Eself
+  /* DofHandler on which we define the configurational force field. Each geometric fem node has 
+   * three dofs corresponding the the three force components. The generator for the configurational 
+   * force on the fem node is the Linear shape function attached to it. This DofHandler is based on the same
+   * triangulation on which we solve the dft problem.
+   */
+  DoFHandler<C_DIM> d_dofHandlerForce;
+
+  /// Index of the d_dofHandlerForce in the MatrixFree object stored in dftClass. This is required to correctly use FEEvaluation class.
+  unsigned int d_forceDofHandlerIndex;
+
+  /// Map of locally relevant global dof index in dofHandlerForce to the cartesian coordinates of the dof 
+  std::map<types::global_dof_index, Point<C_DIM> > d_supportPointsForce;
+
+  /// IndexSet of locally owned dofs of in d_dofHandlerForce the current processor
+  IndexSet   d_locally_owned_dofsForce;
+
+  /// IndexSet of locally relevant dofs of in d_dofHandlerForce the current processor
+  IndexSet   d_locally_relevant_dofsForce;
+
+  /// Constraint matrix for hanging node and periodic constaints on d_dofHandlerForce.
+  ConstraintMatrix d_constraintsNoneForce;
+
+  /// Internal data: map < <atomId,force component>, globaldof in d_dofHandlerForce>  
+  std::map<std::pair<unsigned int,unsigned int>, unsigned int>  d_atomsForceDofs;
+
+  /// Internal data: stores cell iterators of all cells in dftPtr->d_dofHandler which are part of the vself ball. Outer vector is over vself bins.
   std::vector<std::vector<DoFHandler<C_DIM>::active_cell_iterator> > d_cellsVselfBallsDofHandler;
+
+  /// Internal data: stores cell iterators of all cells in d_dofHandlerForce which are part of the vself ball. Outer vector is over vself bins.
   std::vector<std::vector<DoFHandler<C_DIM>::active_cell_iterator> > d_cellsVselfBallsDofHandlerForce;
-  //map of vself ball cell Id  with atleast one solved dof to the closest atom Id. Vector over bins
+
+  /// Internal data: stores map of vself ball cell Id  to the closest atom Id of that cell. Outer vector over vself bins.
   std::vector<std::map<dealii::CellId , unsigned int> > d_cellsVselfBallsClosestAtomIdDofHandler;
-  //map of atom Id to bin Id local
+
+  /// Internal data: stores the map of atom Id (only in the local processor) to the vself bin Id.
   std::map<unsigned int, unsigned int> d_AtomIdBinIdLocalDofHandler;  
-  //
+  
+  /* Internal data: stores the face ids of dftPtr->d_dofHandler (single component field) on which to 
+   * evaluate the vself ball surface integral in the configurational force expression. Outer vector is over
+   * the vself bins. Inner map is between the cell iterator and the vector of face ids to integrate on for that
+   * cell iterator.
+   */  
   std::vector<std::map<DoFHandler<C_DIM>::active_cell_iterator,std::vector<unsigned int > > > d_cellFacesVselfBallSurfacesDofHandler;
+
+  /* Internal data: stores the face ids of d_dofHandlerForce (three component field) on which to 
+   * evaluate the vself ball surface integral in the configurational force expression. Outer vector is over
+   * the vself bins. Inner map is between the cell iterator and the vector of face ids to integrate on for that
+   * cell iterator.
+   */
   std::vector<std::map<DoFHandler<C_DIM>::active_cell_iterator,std::vector<unsigned int > > > d_cellFacesVselfBallSurfacesDofHandlerForce; 
 
-  //parallel objects
+  /// mpi_communicator in the current pool
   MPI_Comm mpi_communicator;
+
+  /// number of mpi processes in the current pool
   const unsigned int n_mpi_processes;
+
+  /// current mpi process id in the current pool
   const unsigned int this_mpi_process;
+
+  /// conditional stream object to enable printing only on root processor across all pools
   dealii::ConditionalOStream   pcout;
 
-  //compute-time logger
+  /// compute-time logger
   dealii::TimerOutput computing_timer;
 
 };
