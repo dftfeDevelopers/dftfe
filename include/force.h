@@ -85,7 +85,8 @@ public:
  */  
   void initPseudoData();
 
-/** @brief computes the configurational force on all atoms corresponding to Gaussian generator.
+/** @brief computes the configurational force on all atoms corresponding to a Gaussian generator,
+ *  which represents perturbation of the underlying space.
  *
  *  The Gaussian generator is taken to be exp(-d_gaussianConstant*r^2), r being the distance from the atom.
  *  Currently d_gaussianConstant is hardcoded to be 4.0. To get the computed atomic forces use
@@ -149,17 +150,13 @@ public:
   void updateAtomPositionsAndMoveMesh(const std::vector<Point<C_DIM> > & globalAtomsDisplacements);
 
 private:
+
+/** @brief Locates and stores the global dof indices of d_dofHandlerForce whose cooridinates match
+ *  with the atomic positions.
+ *
+ *  @return void. 
+ */     
   void locateAtomCoreNodesForce(); 
-
-  vectorType d_configForceVectorLinFE;
-
-#ifdef ENABLE_PERIODIC_BC  
-  vectorType d_configForceVectorLinFEKPoints;
-#endif
-
-  std::vector<unsigned int> d_globalAtomsRelaxationPermissions;
-
-  std::vector<double> d_globalAtomsRelaxationDisplacements;
 
   void createBinObjectsForce();
 
@@ -229,10 +226,8 @@ private:
 
   void distributeForceContributionFnlGammaAtoms(const std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms);  
 
-  //
   void computeAtomsForcesGaussianGenerator(bool allowGaussianOverlapOnAtoms=false);
 
-  //stress computation functions
 #ifdef ENABLE_PERIODIC_BC 
   void computeStressEself();
 
@@ -247,8 +242,6 @@ private:
 			        const std::vector<VectorizedArray<double> > & rhoQuads);  
 #endif
 
-  
-  //////force related pseudopotential member functions and data members
   void initLocalPseudoPotentialForce();
 
   void computeElementalNonLocalPseudoDataForce();
@@ -260,27 +253,82 @@ private:
                                                  std::vector<std::vector<std::complex<double> > > & projectorKetTimesPsiTimesVComplex,
 						 const unsigned int kPointIndex);
 
- 
-  //storage for precomputed nonlocal pseudopotential quadrature data
-  //map<nonlocal atom id with non-zero compact support, vector< elemental quad data >(number pseudo wave functions)>
+
+  /// Parallel distributed vector field which stores the configurational force for each fem node corresponding
+  /// to linear shape function generator (see equations 52-53 in (https://arxiv.org/abs/1712.05535)).
+  /// This vector doesn't contain contribution from terms which have sums over k points.
+  vectorType d_configForceVectorLinFE;
+
 #ifdef ENABLE_PERIODIC_BC 
+  /// Parallel distributed vector field which stores the configurational force for each fem node corresponding
+  /// to linear shape function generator (see equations 52-53 in (https://arxiv.org/abs/1712.05535)).
+  /// This vector only contains contribution from terms which have sums over k points.
+  vectorType d_configForceVectorLinFEKPoints;
+#endif
+
+
+#ifdef ENABLE_PERIODIC_BC
+  /* Storage for precomputed nonlocal pseudopotential quadrature data. This is to speedup the 
+   * configurational force computation. Data format: vector(numNonLocalAtomsCurrentProcess with 
+   * non-zero compact support, vector(number pseudo wave functions,map<cellid,num_quad_points*2>)).
+   * Refer to (https://arxiv.org/abs/1712.05535) for details of the expression of the configurational force terms 
+   * for the norm-conserving Troullier-Martins pseudopotential in the Kleinman-Bylander form. 
+   * The same expressions also extend to the Optimized Norm-Conserving Vanderbilt (ONCV) pseudopotentials.
+   */
   std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_ZetalmDeltaVl;
 
+  /* Storage for precomputed nonlocal pseudopotential quadrature data. This is to speedup the 
+   * configurational force computation. Data format: vector(numNonLocalAtomsCurrentProcess with 
+   * non-zero compact support, vector(number pseudo wave functions,map<cellid,num_quad_points*num_k_points*3*2>)).
+   * Refer to (https://arxiv.org/abs/1712.05535) for details of the expression of the configurational force terms 
+   * for the norm-conserving Troullier-Martins pseudopotential in the Kleinman-Bylander form. 
+   * The same expressions also extend to the Optimized Norm-Conserving Vanderbilt (ONCV) pseudopotentials.
+   */  
   std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_gradZetalmDeltaVl_KPoint;
 
+  /* Storage for precomputed nonlocal pseudopotential quadrature data. This is to speedup the 
+   * configurational force computation. Data format: vector(numNonLocalAtomsCurrentProcess with 
+   * non-zero compact support, vector(number pseudo wave functions,map<cellid,num_quad_points*num_k_points*3*2>)).
+   * Refer to (https://arxiv.org/abs/1712.05535) for details of the expression of the configurational force terms 
+   * for the norm-conserving Troullier-Martins pseudopotential in the Kleinman-Bylander form. 
+   * The same expressions also extend to the Optimized Norm-Conserving Vanderbilt (ONCV) pseudopotentials.
+   */  
   std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint; 
 
+  /* Storage for precomputed nonlocal pseudopotential quadrature data. This is to speedup the 
+   * configurational stress computation. Data format: vector(numNonLocalAtomsCurrentProcess with 
+   * non-zero compact support, vector(number pseudo wave functions,map<cellid,num_quad_points*num_k_points*3*3*2>)).
+   * Refer to (https://arxiv.org/abs/1712.05535) for details of the expression of the configurational force terms 
+   * for the norm-conserving Troullier-Martins pseudopotential in the Kleinman-Bylander form. 
+   * The same expressions also extend to the Optimized Norm-Conserving Vanderbilt (ONCV) pseudopotentials.
+   */   
   std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_gradZetalmDeltaVlDyadicDistImageAtoms_KPoint;
 
 #else
+
+  /* Storage for precomputed nonlocal pseudopotential quadrature data. This is to speedup the 
+   * configurational stress computation. Data format: vector(numNonLocalAtomsCurrentProcess with 
+   * non-zero compact support, vector(number pseudo wave functions,map<cellid,num_quad_points>)).
+   * Refer to (https://arxiv.org/abs/1712.05535) for details of the expression of the configurational force terms 
+   * for the norm-conserving Troullier-Martins pseudopotential in the Kleinman-Bylander form. 
+   * The same expressions also extend to the Optimized Norm-Conserving Vanderbilt (ONCV) pseudopotentials.
+   */    
   std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_ZetalmDeltaVl;
 
+  /* Storage for precomputed nonlocal pseudopotential quadrature data. This is to speedup the 
+   * configurational stress computation. Data format: vector(numNonLocalAtomsCurrentProcess with 
+   * non-zero compact support, vector(number pseudo wave functions,map<cellid,num_quad_points*3>)).
+   * Refer to (https://arxiv.org/abs/1712.05535) for details of the expression of the configurational force terms 
+   * for the norm-conserving Troullier-Martins pseudopotential in the Kleinman-Bylander form. 
+   * The same expressions also extend to the Optimized Norm-Conserving Vanderbilt (ONCV) pseudopotentials.
+   */    
   std::vector<std::vector<std::map<dealii::CellId, std::vector<double > > > > d_nonLocalPSP_gradZetalmDeltaVl;
 #endif
-  //storage for precompute localPseudo data
+
+  /// Internal data: map for cell id to sum Vpseudo local of all atoms whose psp tail intersects the local domain. 
   std::map<dealii::CellId, std::vector<double> > d_gradPseudoVLoc;
 
-  /// Internal data:: maps for cell id to gradient of Vpseudo local. Only for atoms
+  /// Internal data:: map for cell id to gradient of Vpseudo local of individual atoms. Only for atoms
   /// whose psp tail intersects the local domain.
   std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > d_gradPseudoVLocAtoms;
 
@@ -325,7 +373,7 @@ private:
 
   /* DofHandler on which we define the configurational force field. Each geometric fem node has 
    * three dofs corresponding the the three force components. The generator for the configurational 
-   * force on the fem node is the Linear shape function attached to it. This DofHandler is based on the same
+   * force on the fem node is the linear shape function attached to it. This DofHandler is based on the same
    * triangulation on which we solve the dft problem.
    */
   DoFHandler<C_DIM> d_dofHandlerForce;
