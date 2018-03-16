@@ -258,7 +258,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 #endif
 
   std::vector<std::vector<double> > local_dof_values(numEigenValues, std::vector<double>(numberDofs, 0.0));
-  unsigned int numberGlobalAtoms = atomLocations.size();
+  const unsigned int numberGlobalAtoms = atomLocations.size();
 
   
   //
