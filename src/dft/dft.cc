@@ -284,7 +284,7 @@ void dftClass<FEOrder>::set()
     }
    for(unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
     {
-      eigenValues[kPoint].resize((spinPolarized+1)*numEigenValues);  
+      eigenValues[kPoint].resize((spinPolarized+1)*numEigenValues);
       eigenValuesTemp[kPoint].resize(numEigenValues); 
     }
 
@@ -306,9 +306,9 @@ void dftClass<FEOrder>::initPseudoPotentialAll()
       initLocalPseudoPotential();
       //
       if (pseudoProjector==2)
-         initNonLocalPseudoPotential_OV() ;
+         initNonLocalPseudoPotential_OV();
       else
-         initNonLocalPseudoPotential();	
+         initNonLocalPseudoPotential();
       //
       //
       if (pseudoProjector==2){
@@ -331,7 +331,7 @@ template<unsigned int FEOrder>
 void dftClass<FEOrder>::initImageChargesUpdateKPoints()
 {
 #ifdef ENABLE_PERIODIC_BC
-  pcout<<"-----Fractional coordinates of atoms------ "<<std::endl;    
+  pcout<<"-----Fractional coordinates of atoms------ "<<std::endl;
   for(unsigned int i = 0; i < atomLocations.size(); ++i)
   {
       atomLocations[i] = atomLocationsFractional[i] ;
@@ -357,7 +357,7 @@ void dftClass<FEOrder>::initImageChargesUpdateKPoints()
     {
       pcout<<" atomId- "<<i <<" : "<<atomLocations[i][2]<<" "<<atomLocations[i][3]<<" "<<atomLocations[i][4]<<"\n";
     }  
-#endif    
+#endif
 }
 
 //dft init
@@ -365,7 +365,7 @@ template<unsigned int FEOrder>
 void dftClass<FEOrder>::init ()
 {
 
-  initImageChargesUpdateKPoints();  
+  initImageChargesUpdateKPoints();
 
   //
   //generate mesh (both parallel and serial)
@@ -499,7 +499,7 @@ void dftClass<FEOrder>::solve()
 		       norm = sqrt(mixing_anderson_spinPolarized());
 		  } 
 		else
-	          norm = sqrt(mixing_anderson());		
+	          norm = sqrt(mixing_anderson());
 	      }
 	  sprintf(buffer, "Anderson Mixing: L2 norm of electron-density difference: %12.6e\n\n", norm); pcout << buffer;
 	  poissonPtr->phiTotRhoIn = poissonPtr->phiTotRhoOut;
@@ -616,7 +616,7 @@ void dftClass<FEOrder>::solve()
 #else
    compute_rhoOut();
 #endif
-    computing_timer.exit_section("compute rho"); 
+    computing_timer.exit_section("compute rho");
       
       //compute integral rhoOut
       integralRhoValue=totalCharge(rhoOutValues);
@@ -665,18 +665,18 @@ void dftClass<FEOrder>::solve()
   MPI_Barrier(interpoolcomm) ;
   if (dftParameters::isIonForce)
   {
-    computing_timer.enter_section("configurational force computation"); 
+    computing_timer.enter_section("configurational force computation");
     forcePtr->computeAtomsForces();
     forcePtr->printAtomsForces();
-    computing_timer.exit_section("configurational force computation"); 
+    computing_timer.exit_section("configurational force computation");
    }
 #ifdef ENABLE_PERIODIC_BC
   if (dftParameters::isCellStress)
   {
-    computing_timer.enter_section("Cell stress computation"); 
+    computing_timer.enter_section("Cell stress computation");
     forcePtr->computeStress();
     forcePtr->printStress();
-    computing_timer.exit_section("Cell stress computation"); 
+    computing_timer.exit_section("Cell stress computation");
    }  
 #endif  
 }
