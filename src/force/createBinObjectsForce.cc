@@ -87,7 +87,9 @@ void forceClass<FEOrder>::createBinObjectsForce()
 		   for (unsigned int icol=0;icol<rowData->size();++icol)
 		   {
 		       if (boundaryNodeMap[(*rowData)[icol].first]!=-1)
+		       {
 		         isSolvedDofPresent=true;
+		       }
 		   }
 		     
 		 }
@@ -118,7 +120,7 @@ void forceClass<FEOrder>::createBinObjectsForce()
 	      d_cellsVselfBallsClosestAtomIdDofHandler[iBin][cell->id()]=closestAtomId;
 	      d_AtomIdBinIdLocalDofHandler[closestAtomId]=iBin;
 	      d_cellFacesVselfBallSurfacesDofHandler[iBin][cell]= allFaceIdsOfCell;
-	      d_cellFacesVselfBallSurfacesDofHandlerForce[iBin][cellForce]= allFaceIdsOfCell;
+	      d_cellFacesVselfBallSurfacesDofHandlerForce[iBin][cellForce]= dirichletFaceIds;//allFaceIdsOfCell;
 	   }
 	}//cell locally owned
      }// cell loop

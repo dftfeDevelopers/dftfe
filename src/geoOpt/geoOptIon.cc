@@ -28,17 +28,6 @@ template<unsigned int FEOrder>
 void geoOptIon<FEOrder>::writeMesh(std::string meshFileName)
  {
       dftPtr->writeMesh(meshFileName);
-      /*
-      FESystem<3> FE(FE_Q<3>(QGaussLobatto<1>(2)), 1);
-      DoFHandler<3> dofHandler; dofHandler.initialize(dftPtr->d_mesh.getSerialMesh(),FE);		
-      dofHandler.distribute_dofs(FE);
-      DataOut<3> data_out;
-      data_out.attach_dof_handler(dofHandler);
-      data_out.build_patches ();
-      std::ofstream output(meshFileName);
-      data_out.write_vtu (output);
-      //data_out.write_dx(output);
-      */
  }
 
 //
@@ -82,16 +71,13 @@ void geoOptIon<FEOrder>::init()
 template<unsigned int FEOrder>
 void geoOptIon<FEOrder>::run()
 {
-   //dftPtr->solve();
-   //std::string meshFileName="mesh_geo0.vtu";//"mesh_geo0.dx"//"mesh_geo0.vtu";
-   //writeMesh(meshFileName);
-
-   const double tol=5e-5;//Hatree/Bohr
-   const int  maxIter=100;
+   const double tol=dftParameters::forceRelaxTol;//Hatree/Bohr
+   const unsigned int  maxIter=100;
    const double lineSearchTol=2e-3;//5e-2;
-   const int maxLineSearchIter=10;
-   int debugLevel=this_mpi_process==0?1:0;
-   int maxRestarts=2; int restartCount=0;
+   const unsigned int maxLineSearchIter=10;
+   const unsigned int debugLevel=this_mpi_process==0?1:0;
+   const unsigned int maxRestarts=2;
+   unsigned int restartCount=0;
 
    d_totalUpdateCalls=0;
    cgPRPNonLinearSolver cgSolver(tol,maxIter,debugLevel,mpi_communicator, lineSearchTol,maxLineSearchIter);
@@ -166,7 +152,7 @@ void geoOptIon<FEOrder>::gradient(std::vector<double> & gradient)
 {
    gradient.clear();
    const int numberGlobalAtoms=dftPtr->atomLocations.size();
-   std::vector<double> tempGradient= dftPtr->forcePtr->getAtomsForces();
+   const std::vector<double> tempGradient= dftPtr->forcePtr->getAtomsForces();
    AssertThrow(tempGradient.size()==numberGlobalAtoms*3,ExcMessage("Atom forces have wrong size"));
    for (unsigned int i=0; i< numberGlobalAtoms; ++i)
    {
@@ -175,7 +161,6 @@ void geoOptIon<FEOrder>::gradient(std::vector<double> & gradient)
           if (d_relaxationFlags[3*i+j]==1) 
 	  {
               gradient.push_back(tempGradient[3*i+j]);
-	      //pcout<<" atomId: "<<i << " direction: "<< j << " force: "<<-tempGradient[3*i+j]<<std::endl;
 	  }	  
       }
    }
@@ -201,7 +186,7 @@ void geoOptIon<FEOrder>::precondition(std::vector<double>       & s,
 template<unsigned int FEOrder>
 void geoOptIon<FEOrder>::update(const std::vector<double> & solution)
 {
-   const int numberGlobalAtoms=dftPtr->atomLocations.size();
+   const unsigned int numberGlobalAtoms=dftPtr->atomLocations.size();
    std::vector<Point<3> > globalAtomsDisplacements(numberGlobalAtoms);
    int count=0;
    pcout<<" ----CG atom displacement update-----" << std::endl;
@@ -215,40 +200,22 @@ void geoOptIon<FEOrder>::update(const std::vector<double> & solution)
             if (d_relaxationFlags[3*i+j]==1) 
 	    {
                globalAtomsDisplacements[i][j]=solution[count];
-	       //if (this_mpi_process==0)
-               //  std::cout << " atomId: "<<i << " ,direction: "<< j << " ,displacement: "<< solution[count]<<std::endl;
 	       count++;
 	    }
 	  }
       }
-      /*
-      MPI_Bcast(&(globalAtomsDisplacements[i][0]),
-	        3,
-	        MPI_DOUBLE,
-	        0,
-	        mpi_communicator);
-      */
+      
       MPI_Bcast(&(globalAtomsDisplacements[i][0]),
 	        3,
 	        MPI_DOUBLE,
 	        0,
 	        MPI_COMM_WORLD);      
    }
-   /*
-   for (unsigned int i=0; i< numberGlobalAtoms; ++i)
-   {
-       std::cout<< "processor: "<< this_mpi_process << " atomId: "<< i<< " disp: "<<globalAtomsDisplacements[i] << std::endl; 
-   }
-   */
+   
    pcout<<" -----------------------------" << std::endl;
    pcout<< "  Maximum force to be relaxed: "<<  d_maximumAtomForceToBeRelaxed <<std::endl;
    dftPtr->forcePtr->updateAtomPositionsAndMoveMesh(globalAtomsDisplacements);
    d_totalUpdateCalls+=1;
-   //write new mesh
-   //std::string meshFileName="mesh_geo";
-   //meshFileName+=std::to_string(d_totalUpdateCalls);
-   //meshFileName+=".vtu";//".dx";//".vtu";
-   //writeMesh(meshFileName);
 
    dftPtr->solve();
    
