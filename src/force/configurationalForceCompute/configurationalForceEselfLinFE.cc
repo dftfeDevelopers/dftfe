@@ -79,7 +79,11 @@ void forceClass<FEOrder>::computeConfigurationalForceEselfLinFE()
   }//bin loop
 
   //
-  //Second add configurational force contribution from the surface integral
+  //Second add configurational force contribution from the surface integral.
+  //FIXME: The surface integral is incorrect incase of hanging nodes. The temporary fix is to use
+  //a narrow Gaussian generator (d_gaussianConstant=4.0 or 5.0) and self potential ball radius>1.5 Bohr
+  //which is anyway required to solve the vself accurately- these parameters assure that the contribution of
+  //the surface integral to the configurational force is negligible (< 1e-6 Hartree/Bohr)
   //
   
   QGauss<C_DIM-1>  faceQuadrature(C_num1DQuad<FEOrder>());
