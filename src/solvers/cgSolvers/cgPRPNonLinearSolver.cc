@@ -15,8 +15,8 @@
 //
 // @author Sambit Das (2018)
 
-#include "../../../include/cgPRPNonLinearSolver.h"
-#include "../../../include/solverFunction.h"
+#include <cgPRPNonLinearSolver.h>
+#include <solverFunction.h>
 
 
   //
