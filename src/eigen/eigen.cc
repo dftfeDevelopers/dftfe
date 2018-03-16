@@ -318,11 +318,10 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vec
   const int kPointIndex = dftPtr->d_kPointIndex;
   const unsigned int dofs_per_cell = dftPtr->FEEigen.dofs_per_cell;
 
-  const unsigned int numberNodesPerElement;
 #ifdef ENABLE_PERIODIC_BC
-  numberNodesPerElement = dftPtr->FEEigen.dofs_per_cell/2;
+  int numberNodesPerElement = dftPtr->FEEigen.dofs_per_cell/2;
 #else
-  numberNodesPerElement = dftPtr->FEEigen.dofs_per_cell;
+  int numberNodesPerElement = dftPtr->FEEigen.dofs_per_cell;
 #endif
 
   //
