@@ -12,9 +12,14 @@
 // the top level of the DFT-FE distribution.
 //
 // ---------------------------------------------------------------------
-//
-// @author Sambit Das (2018)
-//
+
+/** @file geoOptIon.h
+ *  @brief This calls calls the relaxation solver for the atomic relaxations and acts as an interface between the
+ *  solver and the force class. Currently we have option of one solver: Polak–Ribière nonlinear CG solver 
+ *  with secant based line search. In future releases, we will have more options like BFGS solver.
+ *
+ *  @author Sambit Das
+ */
 
 #ifndef geoOptIon_H_
 #define geoOptIon_H_
@@ -24,39 +29,96 @@
 using namespace dealii;
 template <unsigned int FEOrder> class dftClass;
 //
-//Define geoOpt class
+//Define geoOptIon class
 //
 template <unsigned int FEOrder>
 class geoOptIon : public solverFunction
 {
 public:
+/** @brief Constructor.
+ *
+ *  @param _dftPtr pointer to dftClass
+ *  @param mpi_comm_replica mpi_communicator of the current pool
+ */      
   geoOptIon(dftClass<FEOrder>* _dftPtr,  MPI_Comm &mpi_comm_replica);
-  void init();
-  void run();   
-private:
 
+/**
+ * @brief initializes the data member d_relaxationFlags.
+ *
+ */    
+  void init();
+
+/**
+ * @brief starts the atomic force relaxation.
+ *
+ */    
+  void run();  
+
+/**
+ * @brief writes the current fem mesh. The mesh changes as atoms move.
+ *
+ */   
   void writeMesh(std::string meshFileName);
+
+/**
+ * @brief Obtain number of unknowns (total number of force components to be relaxed).
+ *
+ * @return int Number of unknowns.
+ */   
   int getNumberUnknowns() const ;
-  double value() const;
-  void value(std::vector<double> & functionValue);
+
+/**
+ * @brief Compute function gradient (aka forces).
+ *
+ * @param gradient STL vector for gradient values.
+ */    
   void gradient(std::vector<double> & gradient);
-  void precondition(std::vector<double>       & s,
-			      const std::vector<double> & gradient) const;
+
+/**
+ * @brief Update atomic positions.
+ *
+ * @param solution displacement of the atoms with respect to their current position. 
+ * The size of the solution vector is equal to the number of unknowns.
+ */    
   void update(const std::vector<double> & solution);
+
+  /// not implemented
+  double value() const;
+
+  /// not implemented
+  void value(std::vector<double> & functionValue);
+
+  /// not implemented
+  void precondition(std::vector<double>       & s,
+	            const std::vector<double> & gradient) const;  
+
+  /// not implemented
   void solution(std::vector<double> & solution);
+
+  /// not implemented
   std::vector<int> getUnknownCountFlag() const;
 
-  //member data
+private:
+
+  /// storage for relaxation flags for each global atom.
+  /// each atom has three flags corresponding to three components (0- no relax, 1- relax)
   std::vector<int> d_relaxationFlags;
+
+  /// maximum force component to be relaxed
   double d_maximumAtomForceToBeRelaxed;
+
+  /// total number of calls to update()
   int d_totalUpdateCalls;
 
-  //pointer to dft class
+  /// pointer to dft class
   dftClass<FEOrder>* dftPtr;
-  //parallel objects
+
+  /// parallel communication objects
   MPI_Comm mpi_communicator;
   const unsigned int n_mpi_processes;
   const unsigned int this_mpi_process;
+
+  /// conditional stream object
   dealii::ConditionalOStream   pcout;
 };
 
