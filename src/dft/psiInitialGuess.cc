@@ -150,13 +150,16 @@ void dftClass<FEOrder>::determineOrbitalFilling()
   //8s
   level.clear(); level.push_back(8); level.push_back(0); stencil.push_back(level);
   
-  int totalNumberWaveFunctions = numEigenValues;
-  unsigned int fileReadFlag = 0;
-  unsigned int waveFunctionCount = 0;
-  unsigned int numberGlobalAtoms = atomLocations.size();
+  
+  
+  const unsigned int numberGlobalAtoms = atomLocations.size();
   const int numberImageCharges = d_imageIds.size();
   const int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
+
   unsigned int errorReadFile = 0;
+  unsigned int fileReadFlag = 0;
+  unsigned int waveFunctionCount = 0;
+  unsigned int totalNumberWaveFunctions = numEigenValues;
 
   //
   //loop over atoms
