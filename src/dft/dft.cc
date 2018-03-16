@@ -284,7 +284,7 @@ void dftClass<FEOrder>::set()
     }
    for(unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
     {
-      eigenValues[kPoint].resize((spinPolarized+1)*numEigenValues);  
+      eigenValues[kPoint].resize((spinPolarized+1)*numEigenValues);
       eigenValuesTemp[kPoint].resize(numEigenValues); 
     }
 
@@ -306,9 +306,9 @@ void dftClass<FEOrder>::initPseudoPotentialAll()
       initLocalPseudoPotential();
       //
       if (pseudoProjector==2)
-         initNonLocalPseudoPotential_OV() ;
+         initNonLocalPseudoPotential_OV();
       else
-         initNonLocalPseudoPotential();	
+         initNonLocalPseudoPotential();
       //
       //
       if (pseudoProjector==2){
@@ -324,12 +324,14 @@ void dftClass<FEOrder>::initPseudoPotentialAll()
 	
     }    
 }
-//dft init
+
+
+// generate image charges and update k point cartesian coordinates based on current lattice vectors
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::init ()
+void dftClass<FEOrder>::initImageChargesUpdateKPoints()
 {
 #ifdef ENABLE_PERIODIC_BC
-  pcout<<"-----Fractional coordinates of atoms------ "<<std::endl;    
+  pcout<<"-----Fractional coordinates of atoms------ "<<std::endl;
   for(unsigned int i = 0; i < atomLocations.size(); ++i)
   {
       atomLocations[i] = atomLocationsFractional[i] ;
@@ -356,6 +358,14 @@ void dftClass<FEOrder>::init ()
       pcout<<" atomId- "<<i <<" : "<<atomLocations[i][2]<<" "<<atomLocations[i][3]<<" "<<atomLocations[i][4]<<"\n";
     }  
 #endif
+}
+
+//dft init
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::init ()
+{
+
+  initImageChargesUpdateKPoints();
 
   //
   //generate mesh (both parallel and serial)
@@ -384,7 +394,6 @@ void dftClass<FEOrder>::init ()
   //
   //move triangulation to have atoms on triangulation vertices
   //
-  //pcout << " check 0.11 : " << std::endl ;
   
   moveMeshToAtoms(triangulationPar);
   
@@ -410,40 +419,14 @@ void dftClass<FEOrder>::init ()
   //initialize pseudopotential data for both local and nonlocal part
   //
   initPseudoPotentialAll();
-  pcout << " check 0.5 : " << std::endl ;
-  
 }
 
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::initNoRemesh()
 {
-#ifdef ENABLE_PERIODIC_BC  
-  pcout<<"-----Fractional coordinates of atoms------ "<<std::endl;    
-  for(unsigned int i = 0; i < atomLocations.size(); ++i)
-  {
-      atomLocations[i] = atomLocationsFractional[i] ;
-      pcout<<" atomId- "<<i <<" : "<<atomLocationsFractional[i][2]<<" "<<atomLocationsFractional[i][3]<<" "<<atomLocationsFractional[i][4]<<"\n";
-  }   
-  generateImageCharges();
-  internaldft::convertToCellCenteredCartesianCoordinates(atomLocations,
-					                 d_latticeVectors);
-  recomputeKPointCoordinates(); 
+  
+  initImageChargesUpdateKPoints();
 
-  pcout<<"actual k-Point-coordinates and weights: "<<std::endl;
-  for(unsigned int i = 0; i < d_maxkPoints; ++i)
-  {
-    pcout<< i<<": ["<< d_kPointCoordinates[3*i+0] <<", " <<d_kPointCoordinates[3*i+1]<<", "<< d_kPointCoordinates[3*i+2]<<"] "<<d_kPointWeights[i]<<std::endl;
-  }     
-#else
-  //
-  //print cartesian coordinates
-  //
-  pcout<<"-----Cartesian coordinates of atoms------ "<<std::endl;
-  for(unsigned int i = 0; i < atomLocations.size(); ++i)
-    {
-      pcout<<" atomId- "<<i <<" : "<<atomLocations[i][2]<<" "<<atomLocations[i][3]<<" "<<atomLocations[i][4]<<"\n";
-    }  
-#endif
   //compute volume of the domain
   computeVolume();
 
@@ -516,7 +499,7 @@ void dftClass<FEOrder>::solve()
 		       norm = sqrt(mixing_anderson_spinPolarized());
 		  } 
 		else
-	          norm = sqrt(mixing_anderson());		
+	          norm = sqrt(mixing_anderson());
 	      }
 	  sprintf(buffer, "Anderson Mixing: L2 norm of electron-density difference: %12.6e\n\n", norm); pcout << buffer;
 	  poissonPtr->phiTotRhoIn = poissonPtr->phiTotRhoOut;
@@ -633,7 +616,7 @@ void dftClass<FEOrder>::solve()
 #else
    compute_rhoOut();
 #endif
-    computing_timer.exit_section("compute rho"); 
+    computing_timer.exit_section("compute rho");
       
       //compute integral rhoOut
       integralRhoValue=totalCharge(rhoOutValues);
@@ -682,18 +665,18 @@ void dftClass<FEOrder>::solve()
   MPI_Barrier(interpoolcomm) ;
   if (dftParameters::isIonForce)
   {
-    computing_timer.enter_section("configurational force computation"); 
+    computing_timer.enter_section("configurational force computation");
     forcePtr->computeAtomsForces();
     forcePtr->printAtomsForces();
-    computing_timer.exit_section("configurational force computation"); 
+    computing_timer.exit_section("configurational force computation");
    }
 #ifdef ENABLE_PERIODIC_BC
   if (dftParameters::isCellStress)
   {
-    computing_timer.enter_section("Cell stress computation"); 
+    computing_timer.enter_section("Cell stress computation");
     forcePtr->computeStress();
     forcePtr->printStress();
-    computing_timer.exit_section("Cell stress computation"); 
+    computing_timer.exit_section("Cell stress computation");
    }  
 #endif  
 }

@@ -140,11 +140,13 @@ int geoOptIon<FEOrder>::getNumberUnknowns() const
 template<unsigned int FEOrder>
 double geoOptIon<FEOrder>::value() const
 {
+   AssertThrow(false,ExcMessage("Not implemented"));    
 }
 
 template<unsigned int FEOrder>
 void geoOptIon<FEOrder>::value(std::vector<double> & functionValue)
 {
+   AssertThrow(false,ExcMessage("Not implemented"));     
 }
 
 template<unsigned int FEOrder>
@@ -181,6 +183,7 @@ template<unsigned int FEOrder>
 void geoOptIon<FEOrder>::precondition(std::vector<double>       & s,
 			              const std::vector<double> & gradient) const
 {
+   AssertThrow(false,ExcMessage("Not implemented"));     
 }
 
 template<unsigned int FEOrder>
@@ -224,11 +227,13 @@ void geoOptIon<FEOrder>::update(const std::vector<double> & solution)
 template<unsigned int FEOrder>
 void geoOptIon<FEOrder>::solution(std::vector<double> & solution)
 {
+   AssertThrow(false,ExcMessage("Not implemented"));     
 }
 
 template<unsigned int FEOrder>
 std::vector<int>  geoOptIon<FEOrder>::getUnknownCountFlag() const
 {
+   AssertThrow(false,ExcMessage("Not implemented"));     
 }
 
 

@@ -74,8 +74,6 @@ extern "C"{
   void zaxpy_(int *n,std::complex<double> *alpha,std::complex<double> *x,int *incx,std::complex<double> *y,int *incy);
 }
 
-
-
 //
 //
 //
@@ -148,13 +146,16 @@ class dftClass
    */
   unsigned int numEigenValues;
 
-    void readkPointData();
-    //void compute_polarization() ;
+  void readkPointData();
 
  private:
 
+  /**
+   * generate image charges and update k point cartesian coordinates based
+   * on current lattice vectors
+   */
+  void initImageChargesUpdateKPoints();
 
-  
   void generateMPGrid();
   void writeMesh(std::string meshFileName);
   void generateImageCharges();
