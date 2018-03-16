@@ -196,6 +196,14 @@ namespace dftParameters
                       Patterns::Bool(),
                       "Boolean parameter specifying if cell stress is to be computed");
 
+    prm.declare_entry("FTOL", "5e-5",
+                      Patterns::Double(),
+                      "Sets the tolerance of the maximum force (in atomic units) on an ion when forces are considered to be relaxed.");   
+
+    prm.declare_entry("STOL", "5e-7",
+                      Patterns::Double(),
+                      "Sets the tolerance of the cell stress (in atomic units) when cell stress is considered to be relaxed.");     
+
     prm.declare_entry("NUMBER OF REFINEMENT STEPS", "4",
                       Patterns::Integer(1,10),
                       "Number of refinement steps to be used");
@@ -295,6 +303,8 @@ namespace dftParameters
     dftParameters::isCellOpt                     = prm.get_bool("CELL OPT");
     dftParameters::isIonForce                    = dftParameters::isIonOpt || prm.get_bool("ION FORCE");
     dftParameters::isCellStress                  = dftParameters::isCellOpt || prm.get_bool("CELL STRESS");
+    dftParameters::forceRelaxTol                 = prm.get_double("FTOL");
+    dftParameters::stressRelaxTol                = prm.get_double("STOL");    
     dftParameters::lowerEndWantedSpectrum        = prm.get_double("LOWER BOUND WANTED SPECTRUM");
     dftParameters::chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
     dftParameters::numPass           = prm.get_integer("CHEBYSHEV FILTER PASSES");

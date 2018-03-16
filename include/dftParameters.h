@@ -43,6 +43,7 @@ namespace dftParameters
   extern double meshSizeInnerBall, meshSizeOuterBall;
 
   extern bool isIonOpt, isCellOpt, isIonForce, isCellStress;
+  extern double forceRelaxTol, stressRelaxTol;
 
   /**
    * Declare parameters.

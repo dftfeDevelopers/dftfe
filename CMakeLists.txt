@@ -13,7 +13,6 @@ INCLUDE_DIRECTORIES(
 # Declare all source files the target consists of:
 SET(TARGET_SRC
   ./src/dft/dft.cc
-  ./src/dft/dftParameters.cc
   ./src/poisson/poisson.cc
   ./src/eigen/eigen.cc
   ./src/force/force.cc
@@ -26,7 +25,7 @@ SET(TARGET_SRC
   ./src/geoOpt/geoOptIon.cc
   ./src/solvers/solverFunction.cc
   ./src/solvers/nonLinearSolver.cc
-  ./src/solvers/cgPRPNonLinearSolver.cc
+  ./src/solvers/cgSolvers/cgPRPNonLinearSolver.cc
   ./utils/fileReaders.cc
   ./utils/dftParameters.cc
   ./utils/constraintMatrixInfo.cc

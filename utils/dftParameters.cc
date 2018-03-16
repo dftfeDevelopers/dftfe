@@ -15,7 +15,8 @@
 //
 // @author Phani Motamarri (2017)
 //
-#include "../include/dftParameters.h" 
+#include "../include/dftParameters.h"
+#include "parseDftParameters.cc"
 
 namespace dftParameters
 {
@@ -33,5 +34,7 @@ namespace dftParameters
   double meshSizeInnerBall=1.0, meshSizeOuterBall=1.0;
 
   bool isIonOpt=false, isCellOpt=false, isIonForce=false, isCellStress=false;
+  double forceRelaxTol=5e-5;//Hartree/Bohr
+  double stressRelaxTol=5e-7;//Hartree/Bohr^3
 
 }
