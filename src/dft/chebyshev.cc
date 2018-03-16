@@ -26,7 +26,6 @@ std::complex<double> dftClass<FEOrder>::innerProduct(vectorType &  X,
 						     vectorType &  Y)
 {
 
-  //std::cout<<"Entering Inner Product: "<<std::endl;
   unsigned int dofs_per_proc = X.local_size()/2; 
   std::vector<double> xReal(dofs_per_proc), xImag(dofs_per_proc);
   std::vector<double> yReal(dofs_per_proc), yImag(dofs_per_proc);
@@ -50,7 +49,6 @@ std::complex<double> dftClass<FEOrder>::innerProduct(vectorType &  X,
 			 local_dof_indicesImag.end(), 
 			 yImag.begin());
 
-  //std::cout<<"Finished extracting sub vectors: "<<std::endl;
 
   for(int i = 0; i < dofs_per_proc; ++i)
     {
@@ -72,8 +70,6 @@ std::complex<double> dftClass<FEOrder>::innerProduct(vectorType &  X,
 	 &ylocal[0],
 	 &inc);
 
-  //std::cout<<"Finished blas operation: "<<std::endl;
-
   std::complex<double> returnValue(0.0,0.0);
 
   MPI_Allreduce(&localInnerProduct,
@@ -82,8 +78,6 @@ std::complex<double> dftClass<FEOrder>::innerProduct(vectorType &  X,
 		MPI_C_DOUBLE_COMPLEX,
 		MPI_SUM,
 		mpi_communicator);
-
-  //std::cout<<"Finished MPI Allreduce: "<<std::endl;
 
 
   return returnValue; 
@@ -177,18 +171,6 @@ void dftClass<FEOrder>::chebyshevSolver(unsigned int s)
   //
   if(chebyshevOrder == 0)
     {
-      /*if(bUp >= 1e5)
-	chebyshevOrder = 1500;
-      else if(bUp >= 2e4 && bUp < 1e5)
-	chebyshevOrder = 800;
-      else if(bUp >= 7e3 && bUp < 2e4)
-	chebyshevOrder = 500;
-      else if(bUp >= 2e3  && bUp  < 7e3)
-	chebyshevOrder = 300;
-      else if(bUp >= 6e2 && bUp < 2e3)
-	chebyshevOrder = 100;
-      else if(bUp < 6e2)
-      chebyshevOrder = 50;*/
 
       if(bUp <= 500)
 	chebyshevOrder = 40;
@@ -289,7 +271,7 @@ double dftClass<FEOrder>::upperBound()
   vChebyshev=0.0;
   std::srand(this_mpi_process);
   const unsigned int local_size = vChebyshev.local_size();
-  std::vector<unsigned int> local_dof_indices(local_size);
+  std::vector<IndexSet::size_type> local_dof_indices(local_size);
   vChebyshev.locally_owned_elements().fill_index_vector(local_dof_indices);
   std::vector<double> local_values(local_size, 0.0);
 
@@ -393,7 +375,6 @@ void dftClass<FEOrder>::gramSchmidt(std::vector<vectorType*>& X)
   //copy to petsc vectors
   unsigned int numVectors = X.size();
   Vec vec;
-  //VecCreateMPI(PETSC_COMM_WORLD, localSize, PETSC_DETERMINE, &vec);
   VecCreateMPI(mpi_communicator, localSize, PETSC_DETERMINE, &vec);
   VecSetFromOptions(vec);
   //
@@ -408,7 +389,6 @@ void dftClass<FEOrder>::gramSchmidt(std::vector<vectorType*>& X)
   for (int i = 0; i < numVectors; ++i)
     {
       std::vector<std::complex<double> > localData(localSize);
-      //std::vector<double> localData(localSize);
       std::vector<double> tempReal(localSize),tempImag(localSize);
       X[i]->extract_subvector_to(local_dof_indicesReal.begin(),
 				 local_dof_indicesReal.end(),
@@ -440,12 +420,11 @@ void dftClass<FEOrder>::gramSchmidt(std::vector<vectorType*>& X)
 
   //
   BV slepcColumnSpace;
-  //BVCreate(PETSC_COMM_WORLD,&slepcColumnSpace);
   BVCreate(mpi_communicator,&slepcColumnSpace);
   BVSetFromOptions(slepcColumnSpace);
   BVSetSizesFromVec(slepcColumnSpace,petscColumnSpace[0],numVectors);
   BVSetType(slepcColumnSpace,"vecs");
-  int numVectors2=numVectors;
+  PetscInt numVectors2=numVectors;
   BVInsertVecs(slepcColumnSpace,0, &numVectors2,petscColumnSpace,PETSC_FALSE);
   BVOrthogonalize(slepcColumnSpace,NULL);
   //

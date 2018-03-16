@@ -49,7 +49,7 @@ public:
   void subscribe (const char *identifier=0) const{};   //function needed to mimic SparseMatrix for Jacobi preconditioning
   void unsubscribe (const char *identifier=0) const{}; //function needed to mimic SparseMatrix for Jacobi preconditioning
   bool operator!= (double val) const {return true;};   //function needed to mimic SparseMatrix
-  typedef unsigned int size_type;                      //add this line
+  typedef dealii::types::global_dof_index size_type;                      //add this line
 
 
 private: 

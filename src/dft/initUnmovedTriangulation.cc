@@ -68,7 +68,7 @@ void dftClass<FEOrder>::initUnmovedTriangulation(parallel::distributed::Triangul
   ComponentMask componentMaskForRealDOF = FEEigen.component_mask (real);
   std::vector<bool> selectedDofsReal(locally_owned_dofsEigen.n_elements(), false);
   DoFTools::extract_dofs(dofHandlerEigen, componentMaskForRealDOF, selectedDofsReal);
-  std::vector<unsigned int> local_dof_indices(locally_owned_dofsEigen.n_elements());
+  std::vector<IndexSet::size_type> local_dof_indices(locally_owned_dofsEigen.n_elements());
   locally_owned_dofsEigen.fill_index_vector(local_dof_indices);
   local_dof_indicesReal.clear();
   localProc_dof_indicesReal.clear();
