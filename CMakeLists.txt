@@ -20,9 +20,11 @@ SET(TARGET_SRC
   ./src/force/eshelbyTensor/eshelbyTensorSpinPolarized.cc
   ./src/mesh/meshMovement/meshMovement.cc
   ./src/mesh/meshMovement/meshMovementGaussian.cc
+  ./src/mesh/meshMovement/meshMovementAffineTransform.cc
   ./src/mesh/meshGenerator.cc
   ./src/symmetry/initGroupSymmetry.cc
   ./src/geoOpt/geoOptIon.cc
+  ./src/geoOpt/geoOptCell.cc
   ./src/solvers/solverFunction.cc
   ./src/solvers/nonLinearSolver.cc
   ./src/solvers/cgSolvers/cgPRPNonLinearSolver.cc

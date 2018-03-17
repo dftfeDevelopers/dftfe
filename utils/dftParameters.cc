@@ -24,11 +24,11 @@ namespace dftParameters
   unsigned int finiteElementPolynomialOrder=1,n_refinement_steps=1,numberEigenValues=1,xc_id=1, spinPolarized=0, nkx=1,nky=1,nkz=1, pseudoProjector=1;
   unsigned int chebyshevOrder=1,numPass=1, numSCFIterations=1,maxLinearSolverIterations=1, mixingHistory=1, npool=1;
 
-  double radiusAtomBall=1.0, domainSizeX=1.0, domainSizeY=1.0, domainSizeZ=1.0, mixingParameter=0.5, dkx=0.0, dky=0.0, dkz=0.0;
+  double radiusAtomBall=1.0, mixingParameter=0.5, dkx=0.0, dky=0.0, dkz=0.0;
   double lowerEndWantedSpectrum=0.0,relLinearSolverTolerance=1e-10,selfConsistentSolverTolerance=1e-10,TVal=500, start_magnetization=0.0;
 
   bool isPseudopotential=false,periodicX=false,periodicY=false,periodicZ=false, useSymm=false, symmFromFile=false, timeReversal=false;
-  std::string meshFileName=" ",coordinatesFile=" ",currentPath=" ",latticeVectorsFile=" ",kPointDataFile=" ", symmDataFile=" ", ionRelaxFlagsFile=" ";
+  std::string meshFileName=" ",coordinatesFile=" ",currentPath=" ",domainBoundingVectorsFile=" ",kPointDataFile=" ", symmDataFile=" ", ionRelaxFlagsFile=" ";
 
   double innerDomainSizeX=1.0, innerDomainSizeY=1.0, innerDomainSizeZ=1.0, outerAtomBallRadius=2.0, meshSizeOuterDomain=10.0, meshSizeInnerDomain=5.0;
   double meshSizeInnerBall=1.0, meshSizeOuterBall=1.0;
@@ -36,6 +36,7 @@ namespace dftParameters
   bool isIonOpt=false, isCellOpt=false, isIonForce=false, isCellStress=false;
   double forceRelaxTol=5e-5;//Hartree/Bohr
   double stressRelaxTol=5e-7;//Hartree/Bohr^3
+  unsigned int stressConstraintType=1;// Default isotropic shape fixed volume relaxation
 
 
 
@@ -52,18 +53,6 @@ namespace dftParameters
     prm.declare_entry("MESH FILE", "",
                       Patterns::Anything(),
                       "Finite-element mesh file to be used for the given problem");
-
-    prm.declare_entry("DOMAIN SIZE X", "0.0",
-                      Patterns::Double(),
-                      "Size of the domain along 1-direction");
-
-    prm.declare_entry("DOMAIN SIZE Y", "0.0",
-                      Patterns::Double(),
-                      "Size of the domain along 2-direction");
-
-    prm.declare_entry("DOMAIN SIZE Z", "0.0",
-                      Patterns::Double(),
-                      "Size of the domain along 3-direction");
 
     prm.declare_entry("INNER DOMAIN SIZE X","0.0",
                       Patterns::Double(),
@@ -103,9 +92,9 @@ namespace dftParameters
                       Patterns::Anything(),
                       "File specifying the coordinates of the atoms in the given material system");
 
-    prm.declare_entry("LATTICE VECTORS FILE", "",
+    prm.declare_entry("DOMAIN BOUNDING VECTORS FILE", "",
                       Patterns::Anything(),
-                      "File specifying the lattice vectors associated with the unit-cell");
+                      "File specifying the domain bounding vectors associated with the domain. In fully periodic case, these are the lattice vectors.");
 
     prm.declare_entry("kPOINT RULE FILE", "",
                       Patterns::Anything(),
@@ -152,18 +141,6 @@ namespace dftParameters
     prm.declare_entry("SELF POTENTIAL ATOM BALL RADIUS", "3.0",
                       Patterns::Double(),
                       "The radius of the ball around an atom on which self-potential of the associated nuclear charge is solved");
-
-    prm.declare_entry("DOMAIN SIZE X", "0.0",
-                      Patterns::Double(),
-                      "Size of the domain in X-direction");
-
-    prm.declare_entry("DOMAIN SIZE Y", "0.0",
-                      Patterns::Double(),
-                      "Size of the domain in Y-direction");
-
-    prm.declare_entry("DOMAIN SIZE Z", "0.0",
-                      Patterns::Double(),
-                      "Size of the domain in Z-direction");
 
     prm.declare_entry("SPIN POLARIZATION", "0",
                       Patterns::Integer(0,1),
@@ -213,13 +190,17 @@ namespace dftParameters
                       Patterns::Bool(),
                       "Boolean parameter specifying if cell stress is to be computed");
 
-    prm.declare_entry("FTOL", "5e-5",
+    prm.declare_entry("FORCE TOL", "5e-5",
                       Patterns::Double(),
                       "Sets the tolerance of the maximum force (in atomic units) on an ion when forces are considered to be relaxed.");   
 
-    prm.declare_entry("STOL", "5e-7",
+    prm.declare_entry("STRESS TOL", "5e-7",
                       Patterns::Double(),
-                      "Sets the tolerance of the cell stress (in atomic units) when cell stress is considered to be relaxed.");     
+                      "Sets the tolerance of the cell stress (in atomic units) when cell stress is considered to be relaxed.");
+
+    prm.declare_entry("STRESS CONSTRAINT TYPE", "1",
+                      Patterns::Integer(1,9),
+                      "Type of the constraint to be used during cell stress relaxation");    
 
     prm.declare_entry("NUMBER OF REFINEMENT STEPS", "4",
                       Patterns::Integer(1,10),
@@ -283,9 +264,6 @@ namespace dftParameters
     dftParameters::n_refinement_steps            = prm.get_integer("NUMBER OF REFINEMENT STEPS");
     dftParameters::coordinatesFile               = prm.get("ATOMIC COORDINATES FILE");
     dftParameters::radiusAtomBall                = prm.get_double("SELF POTENTIAL ATOM BALL RADIUS");
-    dftParameters::domainSizeX                   = prm.get_double("DOMAIN SIZE X");
-    dftParameters::domainSizeY                   = prm.get_double("DOMAIN SIZE Y");
-    dftParameters::domainSizeZ                   = prm.get_double("DOMAIN SIZE Z");
     dftParameters::innerDomainSizeX              = prm.get_double("INNER DOMAIN SIZE X");
     dftParameters::innerDomainSizeY              = prm.get_double("INNER DOMAIN SIZE Y");
     dftParameters::innerDomainSizeZ              = prm.get_double("INNER DOMAIN SIZE Z");
@@ -299,7 +277,7 @@ namespace dftParameters
     dftParameters::periodicX                     = prm.get_bool("PERIODIC BOUNDARY CONDITION X");
     dftParameters::periodicY                     = prm.get_bool("PERIODIC BOUNDARY CONDITION Y");
     dftParameters::periodicZ                     = prm.get_bool("PERIODIC BOUNDARY CONDITION Z");
-    dftParameters::latticeVectorsFile            = prm.get("LATTICE VECTORS FILE");
+    dftParameters::domainBoundingVectorsFile     = prm.get("DOMAIN BOUNDING VECTORS FILE");
     dftParameters::kPointDataFile                = prm.get("kPOINT RULE FILE");
     dftParameters::symmFromFile                  = prm.get_bool("READ SYMMETRY FROM FILE");
     dftParameters::symmDataFile                  = prm.get("SYMMETRY MATRIX FILE");
@@ -320,8 +298,9 @@ namespace dftParameters
     dftParameters::isCellOpt                     = prm.get_bool("CELL OPT");
     dftParameters::isIonForce                    = dftParameters::isIonOpt || prm.get_bool("ION FORCE");
     dftParameters::isCellStress                  = dftParameters::isCellOpt || prm.get_bool("CELL STRESS");
-    dftParameters::forceRelaxTol                 = prm.get_double("FTOL");
-    dftParameters::stressRelaxTol                = prm.get_double("STOL");    
+    dftParameters::forceRelaxTol                 = prm.get_double("FORCE TOL");
+    dftParameters::stressRelaxTol                = prm.get_double("STRESS TOL"); 
+    dftParameters::stressConstraintType          = prm.get_double("STRESS CONSTRAINT TYPE"); 
     dftParameters::lowerEndWantedSpectrum        = prm.get_double("LOWER BOUND WANTED SPECTRUM");
     dftParameters::chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
     dftParameters::numPass           = prm.get_integer("CHEBYSHEV FILTER PASSES");

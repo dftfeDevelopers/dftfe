@@ -356,10 +356,10 @@ void meshMovementClass::findClosestVerticesToDestinationPoints(const std::vector
   closestTriaVertexToDestPointsLocation.clear();
   dispClosestTriaVerticesToDestPoints.clear();
   unsigned int vertices_per_cell=GeometryInfo<C_DIM>::vertices_per_cell;
-  std::vector<double> latticeVectors(9,0.0);
+  std::vector<double> latticeVectorsFlattened(9,0.0);
   for (unsigned int idim=0; idim<3; idim++)
       for(unsigned int jdim=0; jdim<3; jdim++)
-          latticeVectors[3*idim+jdim]=domainBoundingVectors[idim][jdim];
+          latticeVectorsFlattened[3*idim+jdim]=domainBoundingVectors[idim][jdim];
   Point<3> corner;
   for (unsigned int idim=0; idim<3; idim++){
       corner[idim]=0;
@@ -380,7 +380,7 @@ void meshMovementClass::findClosestVerticesToDestinationPoints(const std::vector
 
       std::vector<bool> isDestPointOnPeriodicSurface(3,false);
 
-      std::vector<double> destFracCoords= meshMovementUtils::getFractionalCoordinates(latticeVectors,
+      std::vector<double> destFracCoords= meshMovementUtils::getFractionalCoordinates(latticeVectorsFlattened,
 	                                                                              destinationPoints[idest],
 										      corner);
       //std::cout<< "destFracCoords: "<< destFracCoords[0] << "," <<destFracCoords[1] <<"," <<destFracCoords[2]<<std::endl; 
@@ -425,7 +425,7 @@ void meshMovementClass::findClosestVerticesToDestinationPoints(const std::vector
 		|| isDestPointOnPeriodicSurface[2])
 	    {
 
-		std::vector<double> nodeFracCoords= meshMovementUtils::getFractionalCoordinates(latticeVectors,
+		std::vector<double> nodeFracCoords= meshMovementUtils::getFractionalCoordinates(latticeVectorsFlattened,
 												nodalCoor,                                                                                                        corner);
 		for (int idim=0; idim<3; idim++)
 		{

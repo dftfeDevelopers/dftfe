@@ -13,35 +13,36 @@
 //
 // ---------------------------------------------------------------------
 
-/** @file geoOptIon.h
+/** @file geoOptCell.h
  *
- *  @brief This calls the relaxation solver for the atomic relaxations and acts as an interface between the
- *  solver and the force class. Currently we have option of one solver: Polak–Ribière nonlinear CG solver
- *  with secant based line search. In future releases, we will have more options like BFGS solver.
+ *  @brief This calls the solver for the cell stress relaxation and acts as an interface between the
+ *  solver and the force class. The Polak–Ribière nonlinear CG solver with secant based line search
+ *  is used for the stress relaxation.
  *
  *  @author Sambit Das
  */
 
-#ifndef geoOptIon_H_
-#define geoOptIon_H_
+#ifndef geoOptCell_H_
+#define geoOptCell_H_
+#ifdef ENABLE_PERIODIC_BC 
 #include "solverFunction.h"
 #include "constants.h"
 
 using namespace dealii;
 template <unsigned int FEOrder> class dftClass;
 //
-//Define geoOptIon class
+//Define geoOptCell class
 //
 template <unsigned int FEOrder>
-class geoOptIon : public solverFunction
+class geoOptCell : public solverFunction
 {
 public:
 /** @brief Constructor.
  *
  *  @param _dftPtr pointer to dftClass
  *  @param mpi_comm_replica mpi_communicator of the current pool
- */
-  geoOptIon(dftClass<FEOrder>* _dftPtr,  MPI_Comm &mpi_comm_replica);
+ */ 
+  geoOptCell(dftClass<FEOrder>* _dftPtr,  MPI_Comm &mpi_comm_replica);
 
 /**
  * @brief initializes the data member d_relaxationFlags.
@@ -50,66 +51,69 @@ public:
   void init();
 
 /**
- * @brief starts the atomic force relaxation.
+ * @brief starts the cell stress relaxation.
  *
  */
-  void run();  
+  void run();
 
 /**
- * @brief writes the current fem mesh. The mesh changes as atoms move.
+ * @brief writes the current fem mesh.
  *
  */
   void writeMesh(std::string meshFileName);
 
 /**
- * @brief Obtain number of unknowns (total number of force components to be relaxed).
+ * @brief Obtain number of unknowns (depends on the stress relaxation constraint type).
  *
  * @return int Number of unknowns.
  */
-  int getNumberUnknowns() const ;
+  int getNumberUnknowns() const;
 
 /**
- * @brief Compute function gradient (aka forces).
+ * @brief Compute function gradient (stress).
  *
  * @param gradient STL vector for gradient values.
- */
+ */  
   void gradient(std::vector<double> & gradient);
 
 /**
- * @brief Update atomic positions.
+ * @brief Update the strain tensor epsilon.
  *
- * @param solution displacement of the atoms with respect to their current position.
- * The size of the solution vector is equal to the number of unknowns.
- */
+ * The new strain tensor is epsilonNew= epsilon+ delta(epsilon). Since epsilon strain
+ * is already applied to the domain. The new strain to be applied to the domain
+ * is epsilonNew*inv(epsilon)
+ *
+ * @param solution delta(epsilon).
+ */  
   void update(const std::vector<double> & solution);
 
-  /// not implemented
+  /// Not implemented
   double value() const;
 
-  /// not implemented
+  /// Not implemented
   void value(std::vector<double> & functionValue);
 
-  /// not implemented
-  void precondition(std::vector<double>       & s,
+  /// Not implemented
+  void precondition(std::vector<double>  & s,
 	            const std::vector<double> & gradient) const;
 
-  /// not implemented
+  /// Not implemented
   void solution(std::vector<double> & solution);
 
-  /// not implemented
+  /// Not implemented
   std::vector<int> getUnknownCountFlag() const;
 
 private:
 
-  /// storage for relaxation flags for each global atom.
-  /// each atom has three flags corresponding to three components (0- no relax, 1- relax)
+  /// Relaxation flags which determine whether a particular stress component is to be relaxed or not.
+  //  The relaxation flags are determined based on the stress relaxation constraint type.
   std::vector<int> d_relaxationFlags;
-
-  /// maximum force component to be relaxed
-  double d_maximumAtomForceToBeRelaxed;
-
+  
   /// total number of calls to update()
-  int d_totalUpdateCalls;
+  unsigned int d_totalUpdateCalls;
+
+  /// current strain tensor applied on the domain
+  Tensor<2,C_DIM,double> d_strainEpsilon;
 
   /// pointer to dft class
   dftClass<FEOrder>* dftPtr;
@@ -123,4 +127,5 @@ private:
   dealii::ConditionalOStream   pcout;
 };
 
+#endif
 #endif

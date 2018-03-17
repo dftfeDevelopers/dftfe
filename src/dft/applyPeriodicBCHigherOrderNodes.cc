@@ -126,7 +126,7 @@ template<unsigned int FEOrder>
 void dftClass<FEOrder>::applyPeriodicBCHigherOrderNodes()
 			     
 {
-  double domainSizeX = dftParameters::domainSizeX,domainSizeY = dftParameters::domainSizeY,domainSizeZ=dftParameters::domainSizeZ;
+  double domainSizeX = d_domainBoundingVectors[0][0],domainSizeY = d_domainBoundingVectors[1][1],domainSizeZ=d_domainBoundingVectors[2][2];
 
   //
   //modify constraintsNone to account for the bug in higher order nodes

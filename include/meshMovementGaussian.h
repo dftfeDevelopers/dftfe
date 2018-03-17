@@ -25,17 +25,16 @@ class meshMovementGaussianClass : public meshMovementClass
 
 public:
   meshMovementGaussianClass( MPI_Comm &mpi_comm_replica);
-  //meshMovementGaussianClass();	
-  MPI_Comm mpi_communicator;
-  std::pair<bool,double> moveMesh(std::vector<Point<C_DIM> > controlPointLocations,
-                                  std::vector<Tensor<1,3,double> > controlPointDisplacements,
-                                  double controllingParameter);
+
+  std::pair<bool,double> moveMesh(const std::vector<Point<C_DIM> > & controlPointLocations,
+                                  const std::vector<Tensor<1,3,double> > & controlPointDisplacements,
+                                  const double controllingParameter);
 private:  
   void computeIncrement();  
   //move mesh data
   std::vector<Point<C_DIM> > d_controlPointLocations;
   std::vector<Tensor<1,C_DIM,double> > d_controlPointDisplacements;
-  double d_controllingParameter;  
+  double d_controllingParameter;
 };
 
 #endif

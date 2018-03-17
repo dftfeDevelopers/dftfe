@@ -30,7 +30,7 @@ public:
   meshMovementClass( MPI_Comm &mpi_comm_replica);
   meshMovementClass();
   virtual ~meshMovementClass() {}
-  void init(Triangulation<3,3> & triangulation, const std::vector<std::vector<double> > & domainBoundingVectors);
+  void init(Triangulation<3,3> & triangulation, const std::vector<std::vector<double> > & latticeVectors);
   void initMoved();
   void findClosestVerticesToDestinationPoints(const std::vector<Point<3>> & destinationPoints,
 		                              std::vector<Point<3>> & closestTriaVertexToDestPointsLocation,
@@ -43,8 +43,8 @@ protected:
   void updateTriangulationVertices();
   //periodic matching sanity check and returns the pair<if negative jacobian, maximum inverse jacobian magnitude>
   std::pair<bool,double> movedMeshCheck();
-  virtual std::pair<bool,double> moveMesh(std::vector<Point<C_DIM> > controlPointLocations,
-                                          std::vector<Tensor<1,C_DIM,double> > controlPointDisplacements,
+  virtual std::pair<bool,double> moveMesh(const std::vector<Point<C_DIM> > & controlPointLocations,
+                                          const std::vector<Tensor<1,C_DIM,double> > & controlPointDisplacements,
                                           double controllingParameter)=0;
   virtual void computeIncrement()=0;  
   dealii::parallel::distributed::Vector<double>  d_incrementalDisplacementParallel;

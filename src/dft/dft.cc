@@ -13,20 +13,23 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Shiva Rudraraju (2016), Phani Motamarri (2018)
+// @author Shiva Rudraraju (2016), Phani Motamarri (2018), Sambit Das (2018)
 //
 
 //Include header files
 
-#include "../../include/dft.h"
-#include "../../include/eigen.h"
-#include "../../include/poisson.h"
-#include "../../include/force.h"
-#include "../../include/symmetry.h"
-#include "../../include/geoOptIon.h"
-#include "../../include/meshMovementGaussian.h"
-#include "../../include/fileReaders.h"
-#include "../../include/dftParameters.h"
+#include <dft.h>
+#include <eigen.h>
+#include <poisson.h>
+#include <force.h>
+#include <symmetry.h>
+#include <geoOptIon.h>
+#include <geoOptCell.h>
+#include <meshMovementGaussian.h>
+#include <meshMovementAffineTransform.h>
+#include <fileReaders.h>
+#include <dftParameters.h>
+#include <dftUtils.h>
 
 
 //Include cc files
@@ -181,7 +184,6 @@ void dftClass<FEOrder>::set()
   unsigned int numberColumnsCoordinatesFile = 5;
 
 #ifdef ENABLE_PERIODIC_BC
-
   //
   //read fractionalCoordinates of atoms in periodic case
   //
@@ -204,22 +206,6 @@ void dftClass<FEOrder>::set()
       atomLocationsFractional[i] = atomLocations[i] ;
       //pcout<<"fractional coordinates of atom: "<<atomLocationsFractional[i][2]<<" "<<atomLocationsFractional[i][3]<<" "<<atomLocationsFractional[i][4]<<"\n";
     }
-
-  //
-  //read lattice Vectors
-  //
-  unsigned int numberColumnsLatticeVectorsFile = 3;
-  dftUtils::readFile(numberColumnsLatticeVectorsFile,d_latticeVectors,dftParameters::latticeVectorsFile);
-  for(int i = 0; i < d_latticeVectors.size(); ++i)
-    {
-      pcout<<"lattice vectors: "<<d_latticeVectors[i][0]<<" "<<d_latticeVectors[i][1]<<" "<<d_latticeVectors[i][2]<<"\n";
-    }
-
-  //
-  //create domain bounding vectors
-  //
-  d_domainBoundingVectors = d_latticeVectors;
-
 #else
   dftUtils::readFile(numberColumnsCoordinatesFile, atomLocations, dftParameters::coordinatesFile);
   pcout << "number of atoms: " << atomLocations.size() << "\n";
@@ -231,20 +217,13 @@ void dftClass<FEOrder>::set()
     {
       atomTypes.insert((unsigned int)((*it)[0]));
     }
+#endif
 
   //
-  //create domain bounding vectors
+  //read domain bounding Vectors
   //
-  std::vector<double> domainVector;
-  domainVector.push_back(dftParameters::domainSizeX);domainVector.push_back(0.0);domainVector.push_back(0.0);
-  d_domainBoundingVectors.push_back(domainVector);
-  domainVector.clear();
-  domainVector.push_back(0.0);domainVector.push_back(dftParameters::domainSizeY);domainVector.push_back(0.0);
-  d_domainBoundingVectors.push_back(domainVector);
-  domainVector.clear();
-  domainVector.push_back(0.0);domainVector.push_back(0.0);domainVector.push_back(dftParameters::domainSizeZ);
-  d_domainBoundingVectors.push_back(domainVector);
-#endif
+  unsigned int numberColumnsLatticeVectorsFile = 3;
+  dftUtils::readFile(numberColumnsLatticeVectorsFile,d_domainBoundingVectors,dftParameters::domainBoundingVectorsFile);
 
   pcout << "number of atoms types: " << atomTypes.size() << "\n";
   
@@ -330,6 +309,13 @@ void dftClass<FEOrder>::initPseudoPotentialAll()
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::initImageChargesUpdateKPoints()
 {
+
+  pcout<<"-----------Domain bounding vectors (lattice vectors in fully periodic case)-------------"<<std::endl; 
+  for(int i = 0; i < d_domainBoundingVectors.size(); ++i)
+    {
+      pcout<<"Vector- "<< i<<" : "<< d_domainBoundingVectors[i][0]<<" "<<d_domainBoundingVectors[i][1]<<" "<<d_domainBoundingVectors[i][2]<<"\n";
+    }  
+  pcout<<"-----------------------------------------------------------------------------------------"<<std::endl;    
 #ifdef ENABLE_PERIODIC_BC
   pcout<<"-----Fractional coordinates of atoms------ "<<std::endl;
   for(unsigned int i = 0; i < atomLocations.size(); ++i)
@@ -340,7 +326,7 @@ void dftClass<FEOrder>::initImageChargesUpdateKPoints()
   generateImageCharges();
 
   internaldft::convertToCellCenteredCartesianCoordinates(atomLocations,
-					                 d_latticeVectors);
+					                 d_domainBoundingVectors);
   recomputeKPointCoordinates();
 
   pcout<<"Actual k-Point-coordinates and weights: "<<std::endl;
@@ -424,7 +410,6 @@ void dftClass<FEOrder>::init ()
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::initNoRemesh()
 {
-  
   initImageChargesUpdateKPoints();
 
   //compute volume of the domain
@@ -440,16 +425,48 @@ void dftClass<FEOrder>::initNoRemesh()
   initPseudoPotentialAll();      
 }
 
+// deform domain and call appropriate reinits
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::deformDomain(const Tensor<2,3,double> & deformationGradient)
+{
+  meshMovementAffineTransform affineTransformMesh(mpi_communicator);
+  affineTransformMesh.init(d_mesh.getParallelMesh(),d_domainBoundingVectors);
+  affineTransformMesh.transform(deformationGradient);
+
+  dftUtils::transformDomainBoundingVectors(d_domainBoundingVectors,deformationGradient);
+
+  initNoRemesh();  
+}
+
+
 //dft run
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::run()
 {
   solve();
-  if (dftParameters::isIonOpt)
+  if (dftParameters::isIonOpt && !dftParameters::isCellOpt)
   {
     geoOptIonPtr->init();
     geoOptIonPtr->run();
   }
+  else if (!dftParameters::isIonOpt && dftParameters::isCellOpt)
+  {
+#ifdef ENABLE_PERIODIC_BC      
+    geoOptCellPtr->init();
+    geoOptCellPtr->run();
+#else
+   AssertThrow(false,ExcMessage("CELL OPT cannot be set to true for fully non-periodic domain."));    
+#endif
+  } 
+  else if (dftParameters::isIonOpt && dftParameters::isCellOpt)
+  {
+#ifdef ENABLE_PERIODIC_BC      
+    geoOptCellPtr->init();
+    geoOptCellPtr->run();
+#else
+   AssertThrow(false,ExcMessage("CELL OPT cannot be set to true for fully non-periodic domain."));     
+#endif
+  }    
 }
 
 //dft solve
@@ -673,10 +690,10 @@ void dftClass<FEOrder>::solve()
 #ifdef ENABLE_PERIODIC_BC
   if (dftParameters::isCellStress)
   {
-    computing_timer.enter_section("Cell stress computation");
+    computing_timer.enter_section("cell stress computation");
     forcePtr->computeStress();
     forcePtr->printStress();
-    computing_timer.exit_section("Cell stress computation");
+    computing_timer.exit_section("cell stress computation");
    }  
 #endif  
 }
