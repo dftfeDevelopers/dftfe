@@ -92,7 +92,7 @@ void eigenClass<FEOrder>::computeMassVector()
       for (unsigned int q = 0; q < n_q_points; ++q) 
 	fe_eval.submit_value(one,q);
       fe_eval.integrate (true,false);
-      fe_eval.distribute_local_to_global (invSqrtMassVector);
+      fe_eval.distribute_local_to_global(invSqrtMassVector);
     }
 
   invSqrtMassVector.compress(VectorOperation::add);
@@ -107,16 +107,12 @@ void eigenClass<FEOrder>::computeMassVector()
 	  if(!dftPtr->constraintsNoneEigen.is_constrained(i))
 	    {
 
-	      double temp = invSqrtMassVector(i);
-
 	      if(std::abs(invSqrtMassVector(i)) > 1.0e-15)
 		invSqrtMassVector(i) = 1.0/std::sqrt(invSqrtMassVector(i));
 
-	      if(std::isnan(invSqrtMassVector(i)))
-		{
-		  std::cout<<"Value of inverse square root of mass matrix on the unconstrained node is: "<<temp<<std::endl;
-		  exit(-1);
-		}
+	      
+	      Assert(!std::isnan(invSqrtMassVector(i)),ExcMessage("Value of inverse square root of mass matrix on the unconstrained node is undefined"));
+
 	    }
 	}
     }
