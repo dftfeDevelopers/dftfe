@@ -93,7 +93,7 @@ public:
   dealii::FE_Q<3>   FE;
  
   //data structures
-  vectorType massVector;
+  vectorType invSqrtMassVector;
 #ifdef ENABLE_PERIODIC_BC
   std::vector<std::complex<double> > XHXValue;
 #else

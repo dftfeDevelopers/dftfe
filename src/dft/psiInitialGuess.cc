@@ -416,8 +416,8 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 	     {
 	       if(eigenVectors[kPoint][i]->in_local_range(j))
 		  {
-		    if(!constraintsNoneEigen.is_constrained(j) && std::abs(eigenPtr->massVector(j))>1.0e-15)
-		      (*eigenVectors[kPoint][i])(j) /= eigenPtr->massVector(j);
+		    if(!constraintsNoneEigen.is_constrained(j) && std::abs(eigenPtr->invSqrtMassVector(j))>1.0e-15)
+		      (*eigenVectors[kPoint][i])(j) /= eigenPtr->invSqrtMassVector(j);
 		  }
 	     }
 
