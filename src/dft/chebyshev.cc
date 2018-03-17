@@ -214,40 +214,30 @@ void dftClass<FEOrder>::chebyshevSolver(unsigned int s)
   pcout << buffer;
   sprintf(buffer, "%s: %u\n\n", "Chebyshev polynomial degree", chebyshevOrder);
   pcout << buffer;
-  //
-  //std::vector<vectorType*>::iterator first = eigenVectors[d_kPointIndex].begin() + s*numEigenValues; 
-  //std::vector<vectorType*>::iterator last  = eigenVectors[d_kPointIndex].begin() + (s+1)*numEigenValues; 
-  //sprintf(buffer, "%s:%10u:%10u:%10u:%10u\n", "check 4", eigenVectors[d_kPointIndex].size(),first,last,eigenVectors[d_kPointIndex].end());
-  //pcout << buffer;
-  //
-  //std::vector<vectorType*>  eigenVectorsTemp (first, last);
-  //for (unsigned int i=0; i<numEigenValues; ++i)
- //	eigenVectorsTemp.push_back(eigenVectors[d_kPointIndex][i]) ;
- // sprintf(buffer, "%s:%10u\n", "check 5", eigenVectorsTemp.size());
- // pcout << buffer;
+
+  
   //
   //Filter
   //
   chebyshevFilter(eigenVectors[(1+spinPolarized)*d_kPointIndex+s], chebyshevOrder, bLow[(1+spinPolarized)*d_kPointIndex+s], bUp, a0[(1+spinPolarized)*d_kPointIndex+s]);
-  //chebyshevFilter(eigenVectors[d_kPointIndex], chebyshevOrder, bLow[(1+spinPolarized)*d_kPointIndex+s], bUp, a0[(1+spinPolarized)*d_kPointIndex+s]);
+  
 
   //
   //Gram Schmidt orthonormalization
   //
   gramSchmidt(eigenVectors[(1+spinPolarized)*d_kPointIndex+s]);
- // gramSchmidt(eigenVectors[d_kPointIndex]);
+
 
   //
   //Rayleigh Ritz step
   //
   rayleighRitz(s, eigenVectors[(1+spinPolarized)*d_kPointIndex+s]);
-  //rayleighRitz(s, eigenVectors[d_kPointIndex]);
+
   //
   // Compute and print L2 norm
   //
   computeResidualNorm(eigenVectors[(1+spinPolarized)*d_kPointIndex+s]);
-  //computeResidualNorm(eigenVectors[d_kPointIndex]);
-  // 
+
  
   computing_timer.exit_section("Chebyshev solve"); 
 }

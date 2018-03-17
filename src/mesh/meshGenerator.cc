@@ -61,7 +61,7 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       GridIn<3> gridinParallel, gridinSerial;
       gridinParallel.attach_triangulation(parallelTriangulation);
       if (dftParameters::useSymm)
-      gridinSerial.attach_triangulation(serialTriangulation);
+	gridinSerial.attach_triangulation(serialTriangulation);
 
       //
       //Read mesh in UCD format generated from Cubit
@@ -76,7 +76,7 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       //meshGenUtils::markPeriodicFaces(serialTriangulation);
       meshGenUtils::markPeriodicFacesNonOrthogonal(parallelTriangulation,d_domainBoundingVectors);
       if (dftParameters::useSymm)
-      meshGenUtils::markPeriodicFacesNonOrthogonal(serialTriangulation,d_domainBoundingVectors);      
+	meshGenUtils::markPeriodicFacesNonOrthogonal(serialTriangulation,d_domainBoundingVectors);      
 #endif  
       numberGlobalCells = parallelTriangulation.n_global_active_cells();
     }
@@ -118,19 +118,19 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 
         double temp = numberIntervalsEachDirection[i]-std::floor(numberIntervalsEachDirection[i]);
         if(temp >= 0.5)
-           subdivisions[i] = std::ceil(numberIntervalsEachDirection[i]);
+	  subdivisions[i] = std::ceil(numberIntervalsEachDirection[i]);
         else
-	   subdivisions[i] = std::floor(numberIntervalsEachDirection[i]);
+	  subdivisions[i] = std::floor(numberIntervalsEachDirection[i]);
       }
 
 
       GridGenerator::subdivided_parallelepiped<3>(parallelTriangulation,
 	                                          subdivisions,
 				                  basisVectors);
-       if (dftParameters::useSymm) {
-      GridGenerator::subdivided_parallelepiped<3>(serialTriangulation,
-	                                          subdivisions,
-				                  basisVectors);
+      if (dftParameters::useSymm) {
+	GridGenerator::subdivided_parallelepiped<3>(serialTriangulation,
+						    subdivisions,
+						    basisVectors);
       }
 
       //
@@ -143,18 +143,16 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       //
       const Point<3> translation = 0.5*(vector1+vector2+vector3);
       GridTools::shift(-translation,parallelTriangulation);
-       if (dftParameters::useSymm)
-      GridTools::shift(-translation,serialTriangulation);
+      if (dftParameters::useSymm)
+	GridTools::shift(-translation,serialTriangulation);
       
       //
       //collect periodic faces of the first level mesh to set up periodic boundary conditions later
       //
 #ifdef ENABLE_PERIODIC_BC
       meshGenUtils::markPeriodicFacesNonOrthogonal(parallelTriangulation,d_domainBoundingVectors);
-       if (dftParameters::useSymm)
-      meshGenUtils::markPeriodicFacesNonOrthogonal(serialTriangulation,d_domainBoundingVectors);
-      //meshGenUtils::markPeriodicFaces(parallelTriangulation);
-      //meshGenUtils::markPeriodicFaces(serialTriangulation);
+      if (dftParameters::useSymm)
+	meshGenUtils::markPeriodicFacesNonOrthogonal(serialTriangulation,d_domainBoundingVectors);
 #endif
 
 
@@ -297,8 +295,8 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 		}
 	    }
            
-           // Refine serial mesh
-	  if (dftParameters::useSymm) 
+	  // Refine serial mesh
+	  if(dftParameters::useSymm)
 	    {
 	      refineSerialMesh(n_cell, centroid, localRefineFlag, numberGlobalCells, serialTriangulation) ;
 	      serialTriangulation.execute_coarsening_and_refinement();
@@ -311,12 +309,12 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       double minElemLength = dftParameters::meshSizeOuterDomain;
       cell = parallelTriangulation.begin_active();
       endc = parallelTriangulation.end();
-      for ( ; cell != endc; ++cell)
+      for( ; cell != endc; ++cell)
 	{
-	if (cell->is_locally_owned())
-	  {
-	    if (cell->minimum_vertex_distance() < minElemLength) minElemLength = cell->minimum_vertex_distance();
-	  }
+	  if(cell->is_locally_owned())
+	    {
+	      if(cell->minimum_vertex_distance() < minElemLength) minElemLength = cell->minimum_vertex_distance();
+	    }
 	}
   
       minElemLength = Utilities::MPI::min(minElemLength, mpi_communicator);
@@ -331,12 +329,12 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 
       int numberGlobalCellsParallel = parallelTriangulation.n_global_active_cells();
       if (dftParameters::useSymm) {
-      int numberGlobalCellsSerial = serialTriangulation.n_global_active_cells();
+	int numberGlobalCellsSerial = serialTriangulation.n_global_active_cells();
 
-      sprintf(buffer, " numParallelCells: %u, numSerialCells: %u \n", numberGlobalCellsParallel, numberGlobalCellsSerial);
-      pcout << buffer;
+	sprintf(buffer, " numParallelCells: %u, numSerialCells: %u \n", numberGlobalCellsParallel, numberGlobalCellsSerial);
+	pcout << buffer;
 
-      AssertThrow(numberGlobalCellsParallel==numberGlobalCellsSerial,ExcMessage("Number of cells are different for parallel and serial triangulations"));
+	AssertThrow(numberGlobalCellsParallel==numberGlobalCellsSerial,ExcMessage("Number of cells are different for parallel and serial triangulations"));
       }
 
     }
@@ -398,102 +396,91 @@ meshGeneratorClass::getParallelMesh()
   //return d_parallelTriangulationUnmoved;
 }
 //
-void meshGeneratorClass::refineSerialMesh(unsigned int n_cell, std::vector<double>& centroid, std::vector<int>& localRefineFlag, unsigned int n_global_cell, parallel::distributed::Triangulation<3>& serialTriangulation)
+void meshGeneratorClass::refineSerialMesh(unsigned int n_cell, 
+					  std::vector<double>& centroid, 
+					  std::vector<int>& localRefineFlag, 
+					  unsigned int n_global_cell, 
+					  parallel::distributed::Triangulation<3>& serialTriangulation)
 {
- /*std::vector<double> centroid ;
- std::vector<bool> localRefineFlag ;
- unsigned int n_cell=0 ;
- cell = d_parallelTriangulationUnmoved.begin_active();
- endc = d_parallelTriangulationUnmoved.end();
- for(;cell != endc; ++cell)
-  {
-  if(cell->is_locally_owned())
-    {
-     n_cell++ ;
-     centroid.push_back(cell->center()) ; 
-     //localRefineFlag.push_back (cell->refine()) ;
-    }
-  }*/
-  //
+ 
   std::vector<int> globalRefineFlag(n_global_cell) ;
   std::vector<Point<3>> centroidGlobal(n_global_cell) ;
   std::vector<double> centroidGlobalData(3*n_global_cell) ;
   std::vector<int> localSize(n_mpi_processes, 0), localSizeAllProc(n_mpi_processes, 0), mpi_offsets(n_mpi_processes, 0) ;
-  //std::map<Point<3>, bool> centerToRefineMap ;
-  //
-  //pcout << "1 localSizeAllProc.size() " << localSizeAllProc.size() << std::endl ;
-  for (unsigned int i=0; i<n_mpi_processes; ++i) {
-      if (this_mpi_process==i)
-	 localSize[i] = n_cell ;
-  }
-  MPI_Allreduce(&localSize[0], &localSizeAllProc[0], n_mpi_processes, MPI_INT, MPI_SUM, mpi_communicator) ;
-  //
- // pcout << "2 localSizeAllProc.size() " << localSizeAllProc.size() << std::endl ;
- // pcout << " check 1.11 " <<  localSize[0] << " " << localSizeAllProc[0] << std::endl ;
-  //
-  for (unsigned int i=1; i<n_mpi_processes; ++i) 
-      mpi_offsets[i] = mpi_offsets[i-1] + localSizeAllProc[i-1] ;
-  //
-  //pcout << " check 1.115 " <<  std::endl ;
-  //
-  MPI_Allgatherv(&localRefineFlag[0], n_cell, MPI_INT, &globalRefineFlag[0], &localSizeAllProc[0], &mpi_offsets[0], MPI_INT, mpi_communicator) ;
-  //
-  //MPI_Barrier(mpi_communicator) ;
-  //pcout << " check 1.12 " << n_mpi_processes << std::endl ;
-  //pcout << "3 localSizeAllProc.size() " << localSizeAllProc.size() << std::endl ;
+
   for (unsigned int i=0; i<n_mpi_processes; ++i) 
-      localSizeAllProc[i] = 3*localSizeAllProc[i];
-  //
-  //pcout << " check 1.121 " << n_mpi_processes << std::endl ;
+    {
+      if (this_mpi_process==i)
+	localSize[i] = n_cell ;
+    }
+  MPI_Allreduce(&localSize[0], 
+		&localSizeAllProc[0], 
+		n_mpi_processes, 
+		MPI_INT, 
+		MPI_SUM, 
+		mpi_communicator) ;
+
+
+  for (unsigned int i=1; i<n_mpi_processes; ++i) 
+    mpi_offsets[i] = mpi_offsets[i-1] + localSizeAllProc[i-1] ;
+
+
+  MPI_Allgatherv(&localRefineFlag[0], 
+		 n_cell, 
+		 MPI_INT, 
+		 &globalRefineFlag[0], 
+		 &localSizeAllProc[0], 
+		 &mpi_offsets[0], 
+		 MPI_INT, 
+		 mpi_communicator) ;
+
+  for (unsigned int i=0; i<n_mpi_processes; ++i) 
+    localSizeAllProc[i] = 3*localSizeAllProc[i];
+
+
   mpi_offsets.resize(n_mpi_processes, 0) ;
   for (unsigned int i=1; i<n_mpi_processes; ++i) 
-      mpi_offsets[i] = mpi_offsets[i-1] + localSizeAllProc[i-1] ;
-  //pcout << " check 1.125 " << std::endl ;
-  //MPI_Barrier(mpi_communicator) ;
-  MPI_Allgatherv(&centroid[0], 3*n_cell, MPI_DOUBLE, &centroidGlobalData[0], &localSizeAllProc[0], &mpi_offsets[0], MPI_DOUBLE, mpi_communicator) ;
-  //
-  //pcout << " check 1.13 " << std::endl ;
- for ( unsigned int i = 0; i < n_global_cell ; ++i ) {
-     Point<3> p1 (centroidGlobalData[3*i+0], centroidGlobalData[3*i+1], centroidGlobalData[3*i+2]) ;
-     centroidGlobal[i] = p1  ; 
-     //centerToRefineMap[p1] =  globalRefineFlag[i] ;
-   }
- //
- Triangulation<3>::active_cell_iterator cell = serialTriangulation.begin_active();
- Triangulation<3>::active_cell_iterator endc = serialTriangulation.end();
- //pcout << " check 1.14 " << std::endl ;
- for(;cell != endc; ++cell)
-  {
-  if(cell->is_locally_owned())
-    {
-      //auto index  = centerToRefineMap.find(cell->center()) ;
-      /*std::map<Point<3>, bool>:: iterator index ;
-      for (std::map<Point<3>, bool>:: iterator iter= centerToRefineMap.begin() ; iter!= centerToRefineMap.end() ; ++iter) {
-	  Point<3> p1 = iter->first ;
-	  Point<3> p2 = cell->center() ;
-	  if (p1==p2) {
-	     index = iter ;
-	     break;
-	  }
-      }
-      if(index->second)
-	 cell->set_refine_flag();  */
-     Point<3> p1 = cell->center() ;
-     unsigned int index = 0 ;
-     for ( unsigned int i = 0; i < n_global_cell ; ++i ) {
-	  Point<3> p2 = centroidGlobal[i] ;
-	  double dist = (p1[0]-p2[0])*(p1[0]-p2[0]) + (p1[1]-p2[1])*(p1[1]-p2[1]) + (p1[2]-p2[2])*(p1[2]-p2[2]) ;
-	  if (dist < 1.0E-10) {
-	      index = i ;
-	      break;
-	  }
-      }
-      if (globalRefineFlag[index]==1)
-	   cell->set_refine_flag();
+    mpi_offsets[i] = mpi_offsets[i-1] + localSizeAllProc[i-1] ;
 
-    }
+  MPI_Allgatherv(&centroid[0], 
+		 3*n_cell, 
+		 MPI_DOUBLE, 
+		 &centroidGlobalData[0], 
+		 &localSizeAllProc[0], 
+		 &mpi_offsets[0], 
+		 MPI_DOUBLE, 
+		 mpi_communicator) ;
+
+  for ( unsigned int i = 0; i < n_global_cell ; ++i ) {
+    Point<3> p1 (centroidGlobalData[3*i+0], centroidGlobalData[3*i+1], centroidGlobalData[3*i+2]) ;
+    centroidGlobal[i] = p1  ; 
   }
+
   //
+  Triangulation<3>::active_cell_iterator cell = serialTriangulation.begin_active();
+  Triangulation<3>::active_cell_iterator endc = serialTriangulation.end();
+
+  for(;cell != endc; ++cell)
+    {
+      if(cell->is_locally_owned())
+	{
+	  Point<3> p1 = cell->center() ;
+	  unsigned int index = 0 ;
+	  for(unsigned int i = 0; i < n_global_cell ; ++i ) 
+	    {
+	      Point<3> p2 = centroidGlobal[i] ;
+	      double dist = (p1[0]-p2[0])*(p1[0]-p2[0]) + (p1[1]-p2[1])*(p1[1]-p2[1]) + (p1[2]-p2[2])*(p1[2]-p2[2]) ;
+	      if (dist < 1.0E-10) 
+		{
+		  index = i ;
+		  break;
+		}
+	    }
+	  if(globalRefineFlag[index]==1)
+	    cell->set_refine_flag();
+	}
+    }
+ 
 
 }
 
