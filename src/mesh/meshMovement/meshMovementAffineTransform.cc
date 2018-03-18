@@ -66,7 +66,7 @@ void meshMovementAffineTransform::computeIncrement()
 	   continue;	    
 	vertex_touched[global_vertex_no]=true;
 	Point<C_DIM> nodalCoor = cell->vertex(i);
-        const Tensor<1,3,double> increment= d_deformationGradient*nodalCoor;
+        const Tensor<1,3,double> increment= d_deformationGradient*nodalCoor-nodalCoor;
 
 	for (unsigned int idim=0; idim < C_DIM ; idim++)
 	{
