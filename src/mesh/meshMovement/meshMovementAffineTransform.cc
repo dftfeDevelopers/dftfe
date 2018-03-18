@@ -31,7 +31,6 @@ std::pair<bool,double> meshMovementAffineTransform::transform(const Tensor<2,3,d
   pcout << "Computing triangulation displacement increment under affine deformation..." << std::endl;
   initIncrementField();
   computeIncrement();
-  finalizeIncrementField();
   pcout << "...Computed triangulation displacement increment" << std::endl;
 
   dftUtils::transformDomainBoundingVectors(d_domainBoundingVectors,deformationGradient);
@@ -72,13 +71,10 @@ void meshMovementAffineTransform::computeIncrement()
 	{
 	    const unsigned int globalDofIndex=cell->vertex_dof_index(i,idim);
 
-	    if(!d_constraintsMoveMesh.is_constrained(globalDofIndex))
-	    {
-	       if (d_isParallelMesh)
-		   d_incrementalDisplacementParallel[globalDofIndex]=increment[idim];
-	       else
-		   d_incrementalDisplacementSerial[globalDofIndex]=increment[idim];
-	     }
+	    if (d_isParallelMesh)
+	       d_incrementalDisplacementParallel[globalDofIndex]=increment[idim];
+	    else
+	       d_incrementalDisplacementSerial[globalDofIndex]=increment[idim];
 	 }	
 	
      }

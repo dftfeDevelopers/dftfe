@@ -29,7 +29,7 @@
 template<unsigned int FEOrder>
 void geoOptCell<FEOrder>::writeMesh(std::string meshFileName)
  {
-      dftPtr->writeMesh(meshFileName);
+      //dftPtr->writeMesh(meshFileName);
  }
 
 //
@@ -59,46 +59,64 @@ void geoOptCell<FEOrder>::init()
     d_relaxationFlags.clear();
     d_relaxationFlags.resize(6,0);
 
-    if (dftParameters::stressConstraintType==1)//isotropic (shape fixed volume optimization)
+    if (dftParameters::cellConstraintType==1)//isotropic (shape fixed isotropic volume optimization)
     {
 	d_relaxationFlags[0]=1;
-        d_relaxationFlags[3]=1;
-        d_relaxationFlags[5]=1;	
     }
-    else if (dftParameters::stressConstraintType==2)// volume fixed shape optimization
+    else if (dftParameters::cellConstraintType==2)// volume fixed shape optimization
     {
 	d_relaxationFlags[1]=1;
         d_relaxationFlags[2]=1;
         d_relaxationFlags[4]=1;	
     }
-    else if (dftParameters::stressConstraintType==3)// (only for orthoRhombic: relax lattice direction 1, fix other 2)
+    else if (dftParameters::cellConstraintType==3)// (relax only cell component l1_x)
     {
 	d_relaxationFlags[0]=1;
     }
-    else if (dftParameters::stressConstraintType==4)// (only for orthoRhombic: relax lattice direction 2, fix other 2)
+    else if (dftParameters::cellConstraintType==4)// (relax only cell component l2_x)
     {
         d_relaxationFlags[3]=1;
     }
-    else if (dftParameters::stressConstraintType==5)// (only for orthoRhombic: relax lattice direction 3, fix other 2)
+    else if (dftParameters::cellConstraintType==5)// (relax only cell component l3_x)
     {
         d_relaxationFlags[5]=1;	
     }
-    else if (dftParameters::stressConstraintType==6)// (only for orthoRhombic: fix lattice direction 1, relax other 2)
+    else if (dftParameters::cellConstraintType==6)// (relax only cell components l2_x and l3_x)
     {
         d_relaxationFlags[3]=1;
         d_relaxationFlags[5]=1;	
     }
-    else if (dftParameters::stressConstraintType==7)// (only for orthoRhombic: fix lattice direction 2, relax other 2)
+    else if (dftParameters::cellConstraintType==7)// (relax only cell components l1_x and l3_x)
     {
 	d_relaxationFlags[0]=1;
         d_relaxationFlags[5]=1;	
     }
-    else if (dftParameters::stressConstraintType==8)// (only for orthoRhombic: fix lattice direction 3, relax other 2)
+    else if (dftParameters::cellConstraintType==8)// (relax only cell components l1x and l2_x)
     {
 	d_relaxationFlags[0]=1;
         d_relaxationFlags[3]=1;
     }
-    else if (dftParameters::stressConstraintType==9)// (all stress components relaxed)
+    else if (dftParameters::cellConstraintType==9)//(only volume optimization relax l1_x, l2_x and l3_x)
+    {
+	d_relaxationFlags[0]=1;
+        d_relaxationFlags[3]=1;
+        d_relaxationFlags[5]=1;	
+    }   
+    else if (dftParameters::cellConstraintType==10)//(2D only x and y components relaxed)
+    {
+	d_relaxationFlags[0]=1;
+        d_relaxationFlags[1]=1;
+        d_relaxationFlags[2]=1;
+	d_relaxationFlags[3]=1;
+        d_relaxationFlags[4]=1;	
+    }
+    else if (dftParameters::cellConstraintType==11)//(2D only x and y shape components- inplane area fixed)
+    {
+        d_relaxationFlags[1]=1;
+        d_relaxationFlags[2]=1;
+        d_relaxationFlags[4]=1;	
+    }      
+    else if (dftParameters::cellConstraintType==12)// (all cell components relaxed)
     {
 	d_relaxationFlags[0]=1;
         d_relaxationFlags[1]=1;
@@ -109,7 +127,7 @@ void geoOptCell<FEOrder>::init()
     }
     else
     {
-	AssertThrow(false,ExcMessage("The given value for STRESS CONSTRAINT TYPE doesn't match with any available options (1-9)."));		
+	AssertThrow(false,ExcMessage("The given value for STRESS CONSTRAINT TYPE doesn't match with any available options (1-12)."));		
     }
 
    pcout<<" --------------Cell stress relaxation flags----------------"<<std::endl;
@@ -125,7 +143,7 @@ void geoOptCell<FEOrder>::run()
    const double tol=dftParameters::stressRelaxTol;// (units: Hatree/Bohr^3)
    const unsigned int  maxIter=100;
    const double lineSearchTol=5e-2;
-   const unsigned int maxLineSearchIter=4;
+   const unsigned int maxLineSearchIter=3;
    const unsigned int debugLevel=this_mpi_process==0?1:0;
 
    d_totalUpdateCalls=0;
@@ -199,7 +217,12 @@ void geoOptCell<FEOrder>::gradient(std::vector<double> & gradient)
    if (d_relaxationFlags[4]==1)
        gradient.push_back(stress[1][2]);  
    if (d_relaxationFlags[5]==1)
-       gradient.push_back(stress[2][2]);     
+       gradient.push_back(stress[2][2]);    
+
+    if (dftParameters::cellConstraintType==1)//isotropic (shape fixed isotropic volume optimization)
+    {
+	gradient[0]=(stress[0][0]+stress[1][1]+stress[2][2])/3.0;
+    }
 
 }
 
@@ -266,10 +289,26 @@ void geoOptCell<FEOrder>::update(const std::vector<double> & solution)
        count++;
    }
 
+
+    if (dftParameters::cellConstraintType==1)//isotropic (shape fixed isotropic volume optimization)
+    {
+	strainEpsilonNew[1][1]=strainEpsilonNew[0][0];
+	strainEpsilonNew[2][2]=strainEpsilonNew[0][0];
+    }
+
    // To transform the domain under the strain we have to first do a inverse transformation
    // to bring the domain back to the unstrained state.
-   const Tensor<2,3,double> deformationGradient=strainEpsilonNew*invert(d_strainEpsilon);
+   Tensor<2,3,double> deformationGradient=strainEpsilonNew*invert(d_strainEpsilon);
    d_strainEpsilon=strainEpsilonNew;
+
+   /*
+   for (unsigned int i=0;i<3; i++)
+      for (unsigned int j=0;j<3; j++)
+	  deformationGradient[i][j]=0.0;
+
+   for (unsigned int i=0;i<3; i++)
+       deformationGradient[i][i]=1.0;
+   */ 
 
    //deform fem mesh and reinit
    d_totalUpdateCalls+=1;

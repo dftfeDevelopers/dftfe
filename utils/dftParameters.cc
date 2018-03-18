@@ -16,6 +16,10 @@
 // @author Phani Motamarri (2017)
 //
 #include <dftParameters.h>
+#include <iostream>
+#include <fstream>
+#include <deal.II/base/data_out_base.h>
+
 using namespace dealii;
 
 namespace dftParameters
@@ -36,7 +40,7 @@ namespace dftParameters
   bool isIonOpt=false, isCellOpt=false, isIonForce=false, isCellStress=false;
   double forceRelaxTol=5e-5;//Hartree/Bohr
   double stressRelaxTol=5e-7;//Hartree/Bohr^3
-  unsigned int stressConstraintType=1;// Default isotropic shape fixed volume relaxation
+  unsigned int cellConstraintType=12;// all cell components to be relaxed
 
 
 
@@ -198,8 +202,8 @@ namespace dftParameters
                       Patterns::Double(),
                       "Sets the tolerance of the cell stress (in atomic units) when cell stress is considered to be relaxed.");
 
-    prm.declare_entry("STRESS CONSTRAINT TYPE", "1",
-                      Patterns::Integer(1,9),
+    prm.declare_entry("CELL CONSTRAINT TYPE", "12",
+                      Patterns::Integer(1,12),
                       "Type of the constraint to be used during cell stress relaxation");    
 
     prm.declare_entry("NUMBER OF REFINEMENT STEPS", "4",
@@ -300,7 +304,7 @@ namespace dftParameters
     dftParameters::isCellStress                  = dftParameters::isCellOpt || prm.get_bool("CELL STRESS");
     dftParameters::forceRelaxTol                 = prm.get_double("FORCE TOL");
     dftParameters::stressRelaxTol                = prm.get_double("STRESS TOL"); 
-    dftParameters::stressConstraintType          = prm.get_double("STRESS CONSTRAINT TYPE"); 
+    dftParameters::cellConstraintType            = prm.get_integer("CELL CONSTRAINT TYPE"); 
     dftParameters::lowerEndWantedSpectrum        = prm.get_double("LOWER BOUND WANTED SPECTRUM");
     dftParameters::chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
     dftParameters::numPass           = prm.get_integer("CHEBYSHEV FILTER PASSES");

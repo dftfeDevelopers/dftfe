@@ -30,12 +30,11 @@ public:
   meshMovementClass( MPI_Comm &mpi_comm_replica);
   meshMovementClass();
   virtual ~meshMovementClass() {}
-  void init(Triangulation<3,3> & triangulation, const std::vector<std::vector<double> > & latticeVectors);
-  void initMoved();
+  void init(Triangulation<3,3> & triangulation, const std::vector<std::vector<double> > & domainBoundingVectors);
+  void initMoved(const std::vector<std::vector<double> > & domainBoundingVectors);
   void findClosestVerticesToDestinationPoints(const std::vector<Point<3>> & destinationPoints,
 		                              std::vector<Point<3>> & closestTriaVertexToDestPointsLocation,
-                                              std::vector<Tensor<1,3,double>> & dispClosestTriaVerticesToDestPoints,
-                                              const std::vector<std::vector<double> > & domainBoundingVectors);
+                                              std::vector<Tensor<1,3,double>> & dispClosestTriaVerticesToDestPoints);
   void writeMesh(std::string meshFileName);
 protected:
   void initIncrementField();

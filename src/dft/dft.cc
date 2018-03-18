@@ -76,13 +76,14 @@ dftClass<FEOrder>::dftClass(MPI_Comm &mpi_comm_replica, MPI_Comm &interpoolcomm)
 #endif
   mpi_communicator (mpi_comm_replica),
   interpoolcomm (interpoolcomm),
-  n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_communicator)),
-  this_mpi_process (Utilities::MPI::this_mpi_process(mpi_communicator)),
+  n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_comm_replica)),
+  this_mpi_process (Utilities::MPI::this_mpi_process(mpi_comm_replica)),
   numElectrons(0),
   numLevels(0),
   d_maxkPoints(1),
   integralRhoValue(0),
   d_mesh(mpi_comm_replica),
+  d_affineTransformMesh(mpi_comm_replica),
   pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
   computing_timer (pcout, TimerOutput::summary, TimerOutput::wall_times)
 {
@@ -375,6 +376,10 @@ void dftClass<FEOrder>::init ()
     parallel::distributed::Triangulation<3> & triangulationSer = d_mesh.getSerialMesh();
     writeMesh("meshInitial");
   }
+
+  //initialize affine transformation object (must be done on unmoved triangulation)
+  d_affineTransformMesh.init(d_mesh.getParallelMesh(),d_domainBoundingVectors);
+  
   //
   //initialize dofHandlers and hanging-node constraints and periodic constraints on the unmoved Mesh
   //
@@ -389,13 +394,13 @@ void dftClass<FEOrder>::init ()
   
   moveMeshToAtoms(triangulationPar);
   
-  //compute volume of the domain
-  computeVolume();
   //
   //initialize dirichlet BCs for total potential and vSelf poisson solutions
   //
   initBoundaryConditions();
 
+  //compute volume of the domain
+  computeVolume();  
   //
   //initialize guesses for electron-density and wavefunctions
   //
@@ -418,11 +423,11 @@ void dftClass<FEOrder>::initNoRemesh()
 {
   initImageChargesUpdateKPoints();
 
-  //compute volume of the domain
-  computeVolume();
-
   //reinitialize dirichlet BCs for total potential and vSelf poisson solutions
   initBoundaryConditions();
+
+  //compute volume of the domain
+  computeVolume();
 
   //rho init (use previous ground state electron density)
   noRemeshRhoDataInit();
@@ -435,9 +440,8 @@ void dftClass<FEOrder>::initNoRemesh()
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::deformDomain(const Tensor<2,3,double> & deformationGradient)
 {
-  meshMovementAffineTransform affineTransformMesh(mpi_communicator);
-  affineTransformMesh.init(d_mesh.getParallelMesh(),d_domainBoundingVectors);
-  affineTransformMesh.transform(deformationGradient);
+  d_affineTransformMesh.initMoved(d_domainBoundingVectors);    
+  d_affineTransformMesh.transform(deformationGradient);
 
   dftUtils::transformDomainBoundingVectors(d_domainBoundingVectors,deformationGradient);
 

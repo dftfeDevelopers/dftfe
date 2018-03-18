@@ -45,8 +45,7 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,b
 
       gaussianMove.findClosestVerticesToDestinationPoints(atomPoints,
 		                                          closestTriaVertexToAtomsLocation,
-                                                          dispClosestTriaVerticesToAtoms,
-                                                          d_domainBoundingVectors);
+                                                          dispClosestTriaVerticesToAtoms);
       /*
       for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
       {

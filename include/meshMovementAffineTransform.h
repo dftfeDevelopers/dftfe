@@ -36,10 +36,6 @@ public:
 
   /** @brief Performs affine transformation of the triangulation
    * 
-   *  Performs affine transformation of the triangulation
-   *  taking care of hanging node and periodic constraints
-   *  and parallel distributed domain.
-   *
    *  @param  deformationGradient
    *  @return std::pair<bool,double> mesh quality metrics pair(bool for is negative jacobian, maximum jacobian ratio) 
    */

@@ -31,6 +31,7 @@
 #include "poisson.h"
 #include "eigen.h"
 #include "symmetry.h"
+#include "meshMovementAffineTransform.h"
 
 
 
@@ -308,6 +309,9 @@ class dftClass
    * meshGenerator based object
    */
   meshGeneratorClass d_mesh;
+
+  /// affine transformation object
+  meshMovementAffineTransform d_affineTransformMesh;
 
   /// volume of the domain
   double d_domainVolume;
