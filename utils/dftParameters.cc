@@ -16,6 +16,8 @@
 // @author Phani Motamarri (2017)
 //
 #include <dftParameters.h>
+#include <deal.II/base/data_out_base.h>
+
 using namespace dealii;
 
 namespace dftParameters
