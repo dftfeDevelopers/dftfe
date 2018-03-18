@@ -91,6 +91,9 @@ dftClass<FEOrder>::dftClass(MPI_Comm &mpi_comm_replica, MPI_Comm &interpoolcomm)
   forcePtr= new forceClass<FEOrder>(this, mpi_comm_replica);
   symmetryPtr= new symmetryClass<FEOrder>(this, mpi_comm_replica, interpoolcomm);
   geoOptIonPtr= new geoOptIon<FEOrder>(this, mpi_comm_replica);
+#ifdef ENABLE_PERIODIC_BC  
+  geoOptCellPtr= new geoOptCell<FEOrder>(this, mpi_comm_replica);  
+#endif  
   //
   // initialize PETSc
   //
@@ -111,6 +114,9 @@ dftClass<FEOrder>::~dftClass()
     matrix_free_data.clear();
     delete forcePtr;
     delete geoOptIonPtr;
+#ifdef ENABLE_PERIODIC_BC    
+    delete geoOptCellPtr;
+#endif    
 }
 
 namespace internaldft

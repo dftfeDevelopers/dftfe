@@ -53,52 +53,52 @@ void geoOptCell<FEOrder>::init()
 {
     // initialize d_strainEpsilon to identity
     for (unsigned int i=0; i<3;++i)
-	d_strainEpsilon[i][i]=0.0;
+	d_strainEpsilon[i][i]=1.0;
 
     // stress tensor is a symmetric second order with six independent components
     d_relaxationFlags.clear();
     d_relaxationFlags.resize(6,0);
 
-    if (dftParameters::stressConstraintType=1)//isotropic (shape fixed volume optimization)
+    if (dftParameters::stressConstraintType==1)//isotropic (shape fixed volume optimization)
     {
 	d_relaxationFlags[0]=1;
         d_relaxationFlags[3]=1;
         d_relaxationFlags[5]=1;	
     }
-    else if (dftParameters::stressConstraintType=2)// volume fixed shape optimization
+    else if (dftParameters::stressConstraintType==2)// volume fixed shape optimization
     {
 	d_relaxationFlags[1]=1;
         d_relaxationFlags[2]=1;
         d_relaxationFlags[4]=1;	
     }
-    else if (dftParameters::stressConstraintType=3)// (only for orthoRhombic: relax lattice direction 1, fix other 2)
+    else if (dftParameters::stressConstraintType==3)// (only for orthoRhombic: relax lattice direction 1, fix other 2)
     {
 	d_relaxationFlags[0]=1;
     }
-    else if (dftParameters::stressConstraintType=4)// (only for orthoRhombic: relax lattice direction 2, fix other 2)
+    else if (dftParameters::stressConstraintType==4)// (only for orthoRhombic: relax lattice direction 2, fix other 2)
     {
         d_relaxationFlags[3]=1;
     }
-    else if (dftParameters::stressConstraintType=5)// (only for orthoRhombic: relax lattice direction 3, fix other 2)
+    else if (dftParameters::stressConstraintType==5)// (only for orthoRhombic: relax lattice direction 3, fix other 2)
     {
         d_relaxationFlags[5]=1;	
     }
-    else if (dftParameters::stressConstraintType=6)// (only for orthoRhombic: fix lattice direction 1, relax other 2)
+    else if (dftParameters::stressConstraintType==6)// (only for orthoRhombic: fix lattice direction 1, relax other 2)
     {
         d_relaxationFlags[3]=1;
         d_relaxationFlags[5]=1;	
     }
-    else if (dftParameters::stressConstraintType=7)// (only for orthoRhombic: fix lattice direction 2, relax other 2)
+    else if (dftParameters::stressConstraintType==7)// (only for orthoRhombic: fix lattice direction 2, relax other 2)
     {
 	d_relaxationFlags[0]=1;
         d_relaxationFlags[5]=1;	
     }
-    else if (dftParameters::stressConstraintType=8)// (only for orthoRhombic: fix lattice direction 3, relax other 2)
+    else if (dftParameters::stressConstraintType==8)// (only for orthoRhombic: fix lattice direction 3, relax other 2)
     {
 	d_relaxationFlags[0]=1;
         d_relaxationFlags[3]=1;
     }
-    else if (dftParameters::stressConstraintType=9)// (all stress components relaxed)
+    else if (dftParameters::stressConstraintType==9)// (all stress components relaxed)
     {
 	d_relaxationFlags[0]=1;
         d_relaxationFlags[1]=1;
@@ -240,11 +240,13 @@ void geoOptCell<FEOrder>::update(const std::vector<double> & solution)
    if (d_relaxationFlags[1]==1)
    {
        strainEpsilonNew[0][1]+=bcastSolution[count];
+       strainEpsilonNew[1][0]+=bcastSolution[count];       
        count++;
    }
    if (d_relaxationFlags[2]==1)
    {
        strainEpsilonNew[0][2]+=bcastSolution[count];
+       strainEpsilonNew[2][0]+=bcastSolution[count];       
        count++; 
    }
    if (d_relaxationFlags[3]==1)
@@ -255,6 +257,7 @@ void geoOptCell<FEOrder>::update(const std::vector<double> & solution)
    if (d_relaxationFlags[4]==1)
    {
        strainEpsilonNew[1][2]+=bcastSolution[count];
+       strainEpsilonNew[2][1]+=bcastSolution[count];       
        count++;
    }
    if (d_relaxationFlags[5]==1)
@@ -266,6 +269,7 @@ void geoOptCell<FEOrder>::update(const std::vector<double> & solution)
    // To transform the domain under the strain we have to first do a inverse transformation
    // to bring the domain back to the unstrained state.
    const Tensor<2,3,double> deformationGradient=strainEpsilonNew*invert(d_strainEpsilon);
+   d_strainEpsilon=strainEpsilonNew;
 
    //deform fem mesh and reinit
    d_totalUpdateCalls+=1;
