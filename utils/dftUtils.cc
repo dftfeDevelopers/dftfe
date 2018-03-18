@@ -16,6 +16,9 @@
  */
 
 #include <dftUtils.h>
+#include <iostream>
+#include <fstream>
+#include <deal.II/base/data_out_base.h>
 #include <deal.II/base/mpi.h>
 
 using namespace dealii;
