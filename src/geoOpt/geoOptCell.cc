@@ -143,11 +143,18 @@ void geoOptCell<FEOrder>::run()
    const double tol=dftParameters::stressRelaxTol;// (units: Hatree/Bohr^3)
    const unsigned int  maxIter=100;
    const double lineSearchTol=5e-2;
+   const double lineSearchDampingParameter=10.0;   
    const unsigned int maxLineSearchIter=3;
    const unsigned int debugLevel=this_mpi_process==0?1:0;
 
    d_totalUpdateCalls=0;
-   cgPRPNonLinearSolver cgSolver(tol,maxIter,debugLevel,mpi_communicator, lineSearchTol,maxLineSearchIter);
+   cgPRPNonLinearSolver cgSolver(tol,
+	                        maxIter,
+				debugLevel,
+				mpi_communicator, 
+				lineSearchTol,
+				maxLineSearchIter,
+				lineSearchDampingParameter);
 
    pcout<<" Starting CG Cell stress relaxation... "<<std::endl;
    pcout<<"   ---CG Parameters--------------  "<<std::endl;
@@ -155,6 +162,7 @@ void geoOptCell<FEOrder>::run()
    pcout<<"      maxIter: "<< maxIter<<std::endl;
    pcout<<"      lineSearch tol: "<< lineSearchTol<<std::endl;
    pcout<<"      lineSearch maxIter: "<< maxLineSearchIter<<std::endl;
+   pcout<<"      lineSearch damping parameter: "<< lineSearchDampingParameter<<std::endl;    
    pcout<<"   ------------------------------  "<<std::endl;
 
    if  (getNumberUnknowns()>0)
@@ -300,15 +308,6 @@ void geoOptCell<FEOrder>::update(const std::vector<double> & solution)
    // to bring the domain back to the unstrained state.
    Tensor<2,3,double> deformationGradient=strainEpsilonNew*invert(d_strainEpsilon);
    d_strainEpsilon=strainEpsilonNew;
-
-   /*
-   for (unsigned int i=0;i<3; i++)
-      for (unsigned int j=0;j<3; j++)
-	  deformationGradient[i][j]=0.0;
-
-   for (unsigned int i=0;i<3; i++)
-       deformationGradient[i][i]=1.0;
-   */ 
 
    //deform fem mesh and reinit
    d_totalUpdateCalls+=1;

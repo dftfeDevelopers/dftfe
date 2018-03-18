@@ -222,6 +222,11 @@ class dftClass
    * Computes total charge by integrating the electron-density
    */
   double totalCharge(std::map<dealii::CellId, std::vector<double> > *);
+
+  /**
+   * normalized the charge density
+   */
+  void normalizeRho();  
   
   /**
    * Computes output electron-density from wavefunctions

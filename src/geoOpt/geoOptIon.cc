@@ -75,13 +75,20 @@ void geoOptIon<FEOrder>::run()
    const double tol=dftParameters::forceRelaxTol;//(units: Hatree/Bohr)
    const unsigned int  maxIter=100;
    const double lineSearchTol=2e-3;//5e-2;
+   const double lineSearchDampingParameter=0.7;
    const unsigned int maxLineSearchIter=10;
    const unsigned int debugLevel=this_mpi_process==0?1:0;
    const unsigned int maxRestarts=2;
    unsigned int restartCount=0;
 
    d_totalUpdateCalls=0;
-   cgPRPNonLinearSolver cgSolver(tol,maxIter,debugLevel,mpi_communicator, lineSearchTol,maxLineSearchIter);
+   cgPRPNonLinearSolver cgSolver(tol,
+	                        maxIter,
+				debugLevel,
+				mpi_communicator, 
+				lineSearchTol,
+				maxLineSearchIter,
+				lineSearchDampingParameter);
 
    pcout<<" Starting CG Ion force relaxation... "<<std::endl;
    pcout<<"   ---CG Parameters--------------  "<<std::endl;
@@ -89,6 +96,7 @@ void geoOptIon<FEOrder>::run()
    pcout<<"      maxIter: "<< maxIter<<std::endl;
    pcout<<"      lineSearch tol: "<< lineSearchTol<<std::endl;
    pcout<<"      lineSearch maxIter: "<< maxLineSearchIter<<std::endl;
+   pcout<<"      lineSearch damping parameter: "<< lineSearchDampingParameter<<std::endl;   
    pcout<<"   ------------------------------  "<<std::endl;
 
    if  (getNumberUnknowns()>0)
