@@ -140,10 +140,10 @@ void geoOptCell<FEOrder>::init()
 template<unsigned int FEOrder>
 void geoOptCell<FEOrder>::run()
 {
-   const double tol=dftParameters::stressRelaxTol;// (units: Hatree/Bohr^3)
+   const double tol=dftParameters::stressRelaxTol*dftPtr->d_domainVolume;
    const unsigned int  maxIter=100;
    const double lineSearchTol=5e-2;
-   const double lineSearchDampingParameter=10.0;   
+   const double lineSearchDampingParameter=0.1;   
    const unsigned int maxLineSearchIter=3;
    const unsigned int debugLevel=this_mpi_process==0?1:0;
 
@@ -212,24 +212,24 @@ template<unsigned int FEOrder>
 void geoOptCell<FEOrder>::gradient(std::vector<double> & gradient)
 {
    gradient.clear();
-   const Tensor<2,3,double> stress= dftPtr->forcePtr->getStress();
+   const Tensor<2,3,double> tempGradient= dftPtr->forcePtr->getStress()*dftPtr->d_domainVolume;
    
    if (d_relaxationFlags[0]==1)
-       gradient.push_back(stress[0][0]);
+       gradient.push_back(tempGradient[0][0]);
    if (d_relaxationFlags[1]==1)
-       gradient.push_back(stress[0][1]);  
+       gradient.push_back(tempGradient[0][1]);  
    if (d_relaxationFlags[2]==1)
-       gradient.push_back(stress[0][2]);  
+       gradient.push_back(tempGradient[0][2]);  
    if (d_relaxationFlags[3]==1)
-       gradient.push_back(stress[1][1]);
+       gradient.push_back(tempGradient[1][1]);
    if (d_relaxationFlags[4]==1)
-       gradient.push_back(stress[1][2]);  
+       gradient.push_back(tempGradient[1][2]);  
    if (d_relaxationFlags[5]==1)
-       gradient.push_back(stress[2][2]);    
+       gradient.push_back(tempGradient[2][2]);    
 
     if (dftParameters::cellConstraintType==1)//isotropic (shape fixed isotropic volume optimization)
     {
-	gradient[0]=(stress[0][0]+stress[1][1]+stress[2][2])/3.0;
+	gradient[0]=(tempGradient[0][0]+tempGradient[1][1]+tempGradient[2][2])/3.0;
     }
 
 }
