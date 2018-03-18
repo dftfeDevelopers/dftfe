@@ -193,7 +193,7 @@ void symmetryClass<FEOrder>::computeLocalrhoOut()
   std::vector<Point<3>> quadPointList ;
   std::vector<double>  sendData, recvdData;
   //project eigen vectors to regular FEM space by multiplying with M^(-0.5)
-  for(unsigned int kPoint = 0; kPoint < (1+spinPolarized)*(dftPtr->d_maxkPoints); ++kPoint)
+  /* for(unsigned int kPoint = 0; kPoint < (1+spinPolarized)*(dftPtr->d_maxkPoints); ++kPoint)
     {
       for (unsigned int i = 0; i < dftPtr->numEigenValues; ++i)
 	{
@@ -203,7 +203,7 @@ void symmetryClass<FEOrder>::computeLocalrhoOut()
 	  (dftPtr->constraintsNoneEigen).distribute(*((dftPtr->eigenVectorsOrig)[kPoint][i]));
 	  ((dftPtr->eigenVectorsOrig)[kPoint][i])->update_ghost_values();
 	}
-    }
+	}*/
      //pcout<<"check 6: "<<std::endl;
   std::vector<double> rhoLocal, gradRhoLocal, rhoLocalSpinPolarized, gradRhoLocalSpinPolarized ;
   std::vector<double> rhoTemp, gradRhoTemp, rhoTempSpinPolarized, gradRhoTempSpinPolarized ;
@@ -275,14 +275,14 @@ void symmetryClass<FEOrder>::computeLocalrhoOut()
 		       factor=((dftPtr->eigenValues)[kPoint][i+spinPolarized*(dftPtr->numEigenValues)]-(dftPtr->fermiEnergy))/(C_kb*TVal);
 		       const double partialOccupancyBeta = getOccupancy(factor) ;
 		       //
-		       fe_values.get_function_values(*((dftPtr->eigenVectorsOrig)[(1+spinPolarized)*kPoint][i]), tempPsiAlpha);
+		       fe_values.get_function_values(*((dftPtr->eigenVectors)[(1+spinPolarized)*kPoint][i]), tempPsiAlpha);
 		       if (spinPolarized==1)
-			  fe_values.get_function_values(*((dftPtr->eigenVectorsOrig)[(1+spinPolarized)*kPoint+1][i]), tempPsiBeta);
+			  fe_values.get_function_values(*((dftPtr->eigenVectors)[(1+spinPolarized)*kPoint+1][i]), tempPsiBeta);
 		       //
 		       if(xc_id == 4){
-			   fe_values.get_function_gradients(*((dftPtr->eigenVectorsOrig)[(1+spinPolarized)*kPoint][i]),tempGradPsiTempAlpha);
+			   fe_values.get_function_gradients(*((dftPtr->eigenVectors)[(1+spinPolarized)*kPoint][i]),tempGradPsiTempAlpha);
 			   if (spinPolarized==1)
-			   fe_values.get_function_gradients(*((dftPtr->eigenVectorsOrig)[(1+spinPolarized)*kPoint+1][i]),tempGradPsiTempBeta);
+			   fe_values.get_function_gradients(*((dftPtr->eigenVectors)[(1+spinPolarized)*kPoint+1][i]),tempGradPsiTempBeta);
 			}
 		       //
 		       for (unsigned int iList=0; iList<numPoint; ++iList){

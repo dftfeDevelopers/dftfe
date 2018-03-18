@@ -18,6 +18,13 @@
 #include <dftParameters.h>
 using namespace dealii;
 
+//
+//C++ headers
+//
+#include <list>
+#include <iostream>
+#include <fstream>
+
 namespace dftParameters
 {
   
@@ -277,7 +284,7 @@ namespace dftParameters
   void parse_parameters(const ParameterHandler &prm)
   {
     dftParameters::currentPath                   = prm.get("DFT PATH");
-    dftParameters::currentPath.erase(std::remove(dftParameters::currentPath.begin(),dftParameters::currentPath.end(),'"'),dftParameters::currentPath.end());
+    //dftParameters::currentPath.erase(std::remove(dftParameters::currentPath.begin(),dftParameters::currentPath.end(),'"'),dftParameters::currentPath.end());
     dftParameters::meshFileName                  = prm.get("MESH FILE");
     dftParameters::finiteElementPolynomialOrder  = prm.get_integer("FINITE ELEMENT POLYNOMIAL ORDER");
     dftParameters::n_refinement_steps            = prm.get_integer("NUMBER OF REFINEMENT STEPS");

@@ -36,7 +36,7 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk()
   FEValues<C_DIM> psiValues(dftPtr->FEEigen, quadrature, update_values | update_gradients| update_hessians);
 
   const unsigned int numQuadPoints=forceEval.n_q_points;
-  const unsigned int numEigenVectors=dftPtr->eigenVectorsOrig[0].size();  
+  const unsigned int numEigenVectors=dftPtr->eigenVectors[0].size();  
   const unsigned int numKPoints=dftPtr->d_kPointWeights.size();
 
   DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
@@ -70,14 +70,14 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk()
     phiExtFactor=make_vectorized_array(1.0);
     for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
     {
-         computeNonLocalProjectorKetTimesPsiTimesV(dftPtr->eigenVectorsOrig[2*ikPoint],
+         computeNonLocalProjectorKetTimesPsiTimesV(dftPtr->eigenVectors[2*ikPoint],
 			                           projectorKetTimesPsiSpin0TimesVReal,
                                                    projectorKetTimesPsiSpin0TimesVComplexKPoints[ikPoint],
 						   ikPoint);
     } 
     for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
     {
-         computeNonLocalProjectorKetTimesPsiTimesV(dftPtr->eigenVectorsOrig[2*ikPoint+1],
+         computeNonLocalProjectorKetTimesPsiTimesV(dftPtr->eigenVectors[2*ikPoint+1],
 			                           projectorKetTimesPsiSpin1TimesVReal,
                                                    projectorKetTimesPsiSpin1TimesVComplexKPoints[ikPoint],
 						   ikPoint);
@@ -295,12 +295,12 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk()
       { 
         for (unsigned int iEigenVec=0; iEigenVec<numEigenVectors; ++iEigenVec)
         {
-	  psiValues.get_function_values(*((dftPtr->eigenVectorsOrig)[2*ikPoint][iEigenVec]), tempPsiSpin0);
-	  psiValues.get_function_values(*((dftPtr->eigenVectorsOrig)[2*ikPoint+1][iEigenVec]), tempPsiSpin1);	  
-          psiValues.get_function_gradients(*((dftPtr->eigenVectorsOrig)[2*ikPoint][iEigenVec]), tempGradPsiSpin0);
-          psiValues.get_function_gradients(*((dftPtr->eigenVectorsOrig)[2*ikPoint+1][iEigenVec]), tempGradPsiSpin1);  
-          psiValues.get_function_hessians(*((dftPtr->eigenVectorsOrig)[2*ikPoint][iEigenVec]), tempHessianPsiSpin0);
-          psiValues.get_function_hessians(*((dftPtr->eigenVectorsOrig)[2*ikPoint+1][iEigenVec]), tempHessianPsiSpin1);
+	  psiValues.get_function_values(*((dftPtr->eigenVectors)[2*ikPoint][iEigenVec]), tempPsiSpin0);
+	  psiValues.get_function_values(*((dftPtr->eigenVectors)[2*ikPoint+1][iEigenVec]), tempPsiSpin1);	  
+          psiValues.get_function_gradients(*((dftPtr->eigenVectors)[2*ikPoint][iEigenVec]), tempGradPsiSpin0);
+          psiValues.get_function_gradients(*((dftPtr->eigenVectors)[2*ikPoint+1][iEigenVec]), tempGradPsiSpin1);  
+          psiValues.get_function_hessians(*((dftPtr->eigenVectors)[2*ikPoint][iEigenVec]), tempHessianPsiSpin0);
+          psiValues.get_function_hessians(*((dftPtr->eigenVectors)[2*ikPoint+1][iEigenVec]), tempHessianPsiSpin1);
           for (unsigned int q=0; q<numQuadPoints; ++q)
           {
 	     const int id=q*numEigenVectors*numKPoints+numEigenVectors*ikPoint+iEigenVec;

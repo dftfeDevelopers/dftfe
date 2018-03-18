@@ -408,7 +408,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
   //
   //multiply by M^0.5
   //
-  for(int kPoint = 0; kPoint < (1+spinPolarized)*d_maxkPoints; ++kPoint)
+  /*for(int kPoint = 0; kPoint < (1+spinPolarized)*d_maxkPoints; ++kPoint)
     {
       for (unsigned int i = 0; i < eigenVectors[kPoint].size(); ++i)
 	{
@@ -431,7 +431,8 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 	  constraintsNoneEigen.distribute(*eigenVectors[kPoint][i]);
 	  eigenVectors[kPoint][i]->update_ghost_values();
 	}
-    }
+	}*/
+
 }
 
 //

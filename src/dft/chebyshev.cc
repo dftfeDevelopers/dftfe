@@ -215,6 +215,16 @@ void dftClass<FEOrder>::chebyshevSolver(unsigned int s)
   sprintf(buffer, "%s: %u\n\n", "Chebyshev polynomial degree", chebyshevOrder);
   pcout << buffer;
 
+  //
+  //scale the eigenVectors (initial guess of single atom wavefunctions or previous guess) to convert into Lowden Orthonormalized FE basis
+  //multiply by M^{1/2}
+  for(unsigned int i = 0; i < eigenVectors[(1+spinPolarized)*d_kPointIndex+s].size();++i)
+    {
+      eigenVectors[(1+spinPolarized)*d_kPointIndex+s][i]->scale(eigenPtr->sqrtMassVector);
+      eigenVectors[(1+spinPolarized)*d_kPointIndex+s][i]->update_ghost_values();
+      constraintsNoneEigen.distribute(*eigenVectors[(1+spinPolarized)*d_kPointIndex+s][i]);
+      eigenVectors[(1+spinPolarized)*d_kPointIndex+s][i]->update_ghost_values();
+    }
   
   //
   //Filter
@@ -237,6 +247,19 @@ void dftClass<FEOrder>::chebyshevSolver(unsigned int s)
   // Compute and print L2 norm
   //
   computeResidualNorm(eigenVectors[(1+spinPolarized)*d_kPointIndex+s]);
+
+  
+  //
+  //scale the eigenVectors with M^{-1/2} to represent the wavefunctions in the usual FE basis
+  //
+  for(unsigned int i = 0; i < eigenVectors[(1+spinPolarized)*d_kPointIndex+s].size();++i)
+    {
+      eigenVectors[(1+spinPolarized)*d_kPointIndex+s][i]->scale(eigenPtr->invSqrtMassVector);
+      eigenVectors[(1+spinPolarized)*d_kPointIndex+s][i]->update_ghost_values();
+      constraintsNoneEigen.distribute(*eigenVectors[(1+spinPolarized)*d_kPointIndex+s][i]);
+      eigenVectors[(1+spinPolarized)*d_kPointIndex+s][i]->update_ghost_values();
+    }
+
 
  
   computing_timer.exit_section("Chebyshev solve"); 

@@ -43,7 +43,7 @@
 #include "energy.cc"
 #include "charge.cc"
 #include "density.cc"
-#include "nscf.cc"
+
 
 
 #include "mixingschemes.cc"
@@ -272,14 +272,14 @@ void dftClass<FEOrder>::set()
   a0.resize((spinPolarized+1)*d_maxkPoints,lowerEndWantedSpectrum);
   bLow.resize((spinPolarized+1)*d_maxkPoints,0.0);
   eigenVectors.resize((1+spinPolarized)*d_maxkPoints);
-  eigenVectorsOrig.resize((1+spinPolarized)*d_maxkPoints);
+  //eigenVectorsOrig.resize((1+spinPolarized)*d_maxkPoints);
   
   for(unsigned int kPoint = 0; kPoint < (1+spinPolarized)*d_maxkPoints; ++kPoint)
     {
         for (unsigned int i=0; i<numEigenValues; ++i)
 	  {
 	    eigenVectors[kPoint].push_back(new vectorType);
-	    eigenVectorsOrig[kPoint].push_back(new vectorType);
+	    //eigenVectorsOrig[kPoint].push_back(new vectorType);
 	  }
     }
    for(unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
@@ -640,44 +640,24 @@ void dftClass<FEOrder>::solve()
       //
       scfIter++;
     }
- computing_timer.exit_section("solve");
-
-//
-/*
- computing_timer.enter_section(" pp "); 
-#ifdef ENABLE_PERIODIC_BC
-  if ((Utilities::MPI::this_mpi_process(interpoolcomm))==0){
-     pcout<<"Beginning nscf calculation "<<std::endl;
-     readkPointData() ;
-     char buffer[100];
-     pcout<<"actual k-Point-coordinates and weights: "<<std::endl;
-     for(int i = 0; i < d_maxkPoints; ++i){
-       sprintf(buffer, "  %5u:  %12.5f  %12.5f %12.5f %12.5f\n", i, d_kPointCoordinates[3*i+0], d_kPointCoordinates[3*i+1], d_kPointCoordinates[3*i+2],d_kPointWeights[i]);
-       pcout << buffer;
-     }   
-     //
-     nscf() ;
-  }
-#endif
- computing_timer.exit_section(" pp ");
- */
-  //
+  computing_timer.exit_section("solve");
+ 
   MPI_Barrier(interpoolcomm) ;
   if (dftParameters::isIonForce)
-  {
-    computing_timer.enter_section("configurational force computation");
-    forcePtr->computeAtomsForces();
-    forcePtr->printAtomsForces();
-    computing_timer.exit_section("configurational force computation");
-   }
+    {
+      computing_timer.enter_section("configurational force computation");
+      forcePtr->computeAtomsForces();
+      forcePtr->printAtomsForces();
+      computing_timer.exit_section("configurational force computation");
+    }
 #ifdef ENABLE_PERIODIC_BC
   if (dftParameters::isCellStress)
-  {
-    computing_timer.enter_section("Cell stress computation");
-    forcePtr->computeStress();
-    forcePtr->printStress();
-    computing_timer.exit_section("Cell stress computation");
-   }  
+    {
+      computing_timer.enter_section("Cell stress computation");
+      forcePtr->computeStress();
+      forcePtr->printStress();
+      computing_timer.exit_section("Cell stress computation");
+    }  
 #endif  
 }
 

@@ -245,7 +245,7 @@ class dftClass
   void compute_fermienergy();
 
   void output();
-  void nscf();
+
 
   /**
    * Computes the volume of the domain
@@ -340,7 +340,7 @@ class dftClass
    */
   std::vector<std::vector<double> > eigenValues, eigenValuesTemp; 
   std::vector<std::vector<parallel::distributed::Vector<double>*> > eigenVectors;
-  std::vector<std::vector<parallel::distributed::Vector<double>*> > eigenVectorsOrig;
+  //std::vector<std::vector<parallel::distributed::Vector<double>*> > eigenVectorsOrig;
 
   /**
    * storage for constraintMatrices in terms of arrays (STL)

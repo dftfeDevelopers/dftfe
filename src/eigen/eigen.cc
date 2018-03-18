@@ -71,6 +71,7 @@ void eigenClass<FEOrder>::computeMassVector()
 {
   computing_timer.enter_section("eigenClass Mass assembly"); 
   invSqrtMassVector = 0.0;
+  sqrtMassVector = 0.0;
   
 #ifdef ENABLE_PERIODIC_BC
   Tensor<1,2,VectorizedArray<double> > one;
@@ -108,9 +109,10 @@ void eigenClass<FEOrder>::computeMassVector()
 	    {
 
 	      if(std::abs(invSqrtMassVector(i)) > 1.0e-15)
-		invSqrtMassVector(i) = 1.0/std::sqrt(invSqrtMassVector(i));
-
-	      
+		{ 
+		  sqrtMassVector(i) = std::sqrt(invSqrtMassVector(i));
+		  invSqrtMassVector(i) = 1.0/std::sqrt(invSqrtMassVector(i));
+		}
 	      Assert(!std::isnan(invSqrtMassVector(i)),ExcMessage("Value of inverse square root of mass matrix on the unconstrained node is undefined"));
 
 	    }
@@ -118,6 +120,7 @@ void eigenClass<FEOrder>::computeMassVector()
     }
 
   invSqrtMassVector.compress(VectorOperation::insert);
+  sqrtMassVector.compress(VectorOperation::insert);
   computing_timer.exit_section("eigenClass Mass assembly");
 }
 

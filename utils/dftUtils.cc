@@ -17,6 +17,14 @@
 
 #include <dftUtils.h>
 #include <deal.II/base/mpi.h>
+#include <deal.II/base/exceptions.h>
+
+//
+//C++ headers
+//
+#include <list>
+#include <iostream>
+#include <fstream>
 
 using namespace dealii;
 
