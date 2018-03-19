@@ -29,6 +29,7 @@ template<unsigned int FEOrder>
 void geoOptIon<FEOrder>::writeMesh(std::string meshFileName)
  {
       //dftPtr->writeMesh(meshFileName);
+      dftUtils::ExcNotImplementedYet; 
  }
 
 //

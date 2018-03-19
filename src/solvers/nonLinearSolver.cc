@@ -60,7 +60,7 @@
   //
   // Get maximum number of iterations.
   //
-  int 
+  unsigned int 
   nonLinearSolver::getMaximumNumberIterations() const
   {
 
@@ -75,7 +75,7 @@
   //
   // Get debug level.
   //
-  int 
+  unsigned int 
   nonLinearSolver::getDebugLevel() const
   {
     
