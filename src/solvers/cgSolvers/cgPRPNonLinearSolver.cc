@@ -22,13 +22,13 @@
   //
   // Constructor.
   //
-  cgPRPNonLinearSolver::cgPRPNonLinearSolver(double tolerance,
-                                            int    maxNumberIterations,
-                                            int    debugLevel,
-					    MPI_Comm &mpi_comm_replica,
-                                            double lineSearchTolerance,
-				            int    lineSearchMaxIterations,
-					    double lineSearchDampingParameter) :
+  cgPRPNonLinearSolver::cgPRPNonLinearSolver(const double tolerance,
+                                             const unsigned int    maxNumberIterations,
+                                             const unsigned int    debugLevel,
+					     const MPI_Comm &mpi_comm_replica,
+                                             const double lineSearchTolerance,
+				             const unsigned int    lineSearchMaxIterations,
+					     const double lineSearchDampingParameter) :
     d_lineSearchTolerance(lineSearchTolerance),
     d_lineSearchMaxIterations(lineSearchMaxIterations),
     d_lineSearchDampingParameter(lineSearchDampingParameter),
@@ -60,12 +60,12 @@
   // reinit cg solve parameters
   //
   void
-  cgPRPNonLinearSolver::reinit(double tolerance,
-                               int    maxNumberIterations,
-                               int    debugLevel,
-                               double lineSearchTolerance,
-			       int    lineSearchMaxIterations,
-			       double lineSearchDampingParameter)
+  cgPRPNonLinearSolver::reinit(const double tolerance,
+                               const unsigned int    maxNumberIterations,
+                               const unsigned int    debugLevel,
+                               const double lineSearchTolerance,
+			       const unsigned int    lineSearchMaxIterations,
+			       const double lineSearchDampingParameter)
   {
     d_debugLevel=debugLevel;
     d_maxNumberIterations=maxNumberIterations;
@@ -89,7 +89,7 @@
     //
     // iterate over unknowns
     //
-    for (int i = 0; i < d_numberUnknowns; ++i) {
+    for (unsigned int i = 0; i < d_numberUnknowns; ++i) {
 
       const double factor = d_unknownCountFlag[i];
       const double r = -d_gradient[i];
@@ -122,7 +122,7 @@
     //
     // iterate over unknowns
     //
-    for (int i = 0; i < d_numberUnknowns; ++i) {
+    for (unsigned int i = 0; i < d_numberUnknowns; ++i) {
 
       const double factor = d_unknownCountFlag[i];
       const double direction = d_direction[i];
@@ -155,7 +155,7 @@
     //
     // iterate over unknowns
     //
-    for (int i = 0; i < d_numberUnknowns; ++i) {
+    for (unsigned int i = 0; i < d_numberUnknowns; ++i) {
 
       const double factor = d_unknownCountFlag[i];
       const double direction = d_direction[i];
@@ -185,7 +185,7 @@
     //
     // iterate over unknowns
     //
-    for (int i = 0; i < d_numberUnknowns; ++i) {
+    for (unsigned int i = 0; i < d_numberUnknowns; ++i) {
 
       const double factor = d_unknownCountFlag[i];
       const double r    = -d_gradient[i];
@@ -225,7 +225,7 @@
     //
     // iterate over unknowns
     //
-    for (int i = 0; i < d_numberUnknowns; ++i) {
+    for (unsigned int i = 0; i < d_numberUnknowns; ++i) {
 
       d_direction[i] *= d_beta;
       d_direction[i] += d_s[i];
@@ -252,7 +252,7 @@
     //
     // iterate over unknowns
     //
-    for (int i = 0; i < d_numberUnknowns; ++i) {
+    for (unsigned int i = 0; i < d_numberUnknowns; ++i) {
       const double factor = d_unknownCountFlag[i];
       const double gradient = d_gradient[i];
       norm += factor*gradient*gradient;
@@ -274,21 +274,21 @@
   //
   // Compute the total number of unknowns in all processors.
   //
-  int
+  unsigned int
   cgPRPNonLinearSolver::computeTotalNumberUnknowns() const
   {
 
     //
     // initialize total number of unknowns
     //
-    int totalNumberUnknowns = 0;
+    unsigned int totalNumberUnknowns = 0;
 
     //
     // iterate over unknowns
     //
-    for (int i = 0; i < d_numberUnknowns; ++i) {
+    for (unsigned int i = 0; i < d_numberUnknowns; ++i) {
 
-      const int factor = d_unknownCountFlag[i];
+      const unsigned int factor = d_unknownCountFlag[i];
 
       totalNumberUnknowns += factor;
 
@@ -310,46 +310,28 @@
   // Update solution x -> x + \alpha direction.
   //
   void
-  cgPRPNonLinearSolver::updateSolution(double                      alpha,
-				    const std::vector<double> & direction,
-				    solverFunction            & function)
+  cgPRPNonLinearSolver::updateSolution(const double                      alpha,
+				       const std::vector<double> & direction,
+				       solverFunction            & function)
   {
 
-    //
-    // get the solution from solver function
-    //
-    //function.solution(d_solution);
 
-    //
-    // get unknownCountFlag
-    //
-    //const std::vector<int> unknownCountFlag = function.getUnknownCountFlag();
-
-    std::vector<double> displacements;
+    std::vector<double> incrementVector;
     
     //
     // get the size of solution
     //
     const std::vector<double>::size_type solutionSize = d_numberUnknowns;
-    displacements.resize(d_numberUnknowns);
+    incrementVector.resize(d_numberUnknowns);
 
-    //
-    // get the size of solution
-    //
-    //const std::vector<double>::size_type solutionSize = d_solution.size();
-    
-    //
-    // update solution
-    //
+
     for (std::vector<double>::size_type i = 0; i < solutionSize; ++i)
-      displacements[i] = alpha*direction[i];
-      //d_solution[i] = (d_solution[i] + alpha*direction[i])*unknownCountFlag[i];
+      incrementVector[i] = alpha*direction[i];
     
     //
-    // store solution
+    // call solver function update
     //
-    //function.update(d_solution);
-    function.update(displacements);
+    function.update(incrementVector);
 
     //
     //
@@ -362,32 +344,21 @@
   // Perform line search.
   //
   nonLinearSolver::ReturnValueType
-  cgPRPNonLinearSolver::lineSearch(solverFunction & function,
-				double           tolerance,
-				int              maxNumberIterations,
-				int              debugLevel)
+  cgPRPNonLinearSolver::lineSearch(solverFunction &       function,
+				   const double           tolerance,
+				   const unsigned int     maxNumberIterations,
+				   const unsigned int     debugLevel)
   {
     //
     // local data
     //
     const double toleranceSqr = tolerance*tolerance;
 
-    //
-    // value of sigma0
-    //
-    const double sigma0 =d_lineSearchDampingParameter;
-
+ 
     //
     // set the initial value of alpha
     //
-    double alpha = sigma0;//-sigma0;
-
-    //
-    // update unknowns
-    //
-    //updateSolution(sigma0,
-    //	           d_direction,
-    //		   function);
+    double alpha = d_lineSearchDampingParameter;
 
     //
     // evaluate function gradient
@@ -407,13 +378,13 @@
     //
     // update unknowns removing earlier update
     //
-    updateSolution(alpha-alphaP,//-sigma0,
+    updateSolution(alpha-alphaP,
 		   d_direction,
 		   function);
     //
     // begin iteration (using secant method)
     //
-    for (int iter = 0; iter < maxNumberIterations; ++iter) {
+    for (unsigned int iter = 0; iter < maxNumberIterations; ++iter) {
 
       //
       // evaluate function gradient
@@ -439,7 +410,6 @@
       //
       // update alpha
       //
-      //alpha *= eta/(etaP - eta);
       double alphaNew=(alphaP*eta-alpha*etaP)/(eta-etaP);
 
       
@@ -462,13 +432,6 @@
       etaP = eta;
       alphaP=alpha;
       alpha=alphaNew;
-
-      //
-      // check for convergence
-      //
-      //if (alpha*alpha*deltaD < toleranceSqr)
-      //   return SUCCESS;
-
     }
 
     //
@@ -506,7 +469,6 @@
     // get total number of unknowns
     //
     const int totalnumberUnknowns = d_numberUnknowns;
-      //cgPRPNonLinearSolver::computeTotalNumberUnknowns();
 
     //
     // allocate space for direction, gradient and old gradient
@@ -520,7 +482,6 @@
     //
     // compute initial values of function and function gradient
     //
-    //double functionValue = function.value();
     function.gradient(d_gradient);
 
     //
@@ -557,7 +518,7 @@
 
     for (d_iter = 0; d_iter < d_maxNumberIterations; ++d_iter) {
 
-      for(int i = 0; i < d_gradient.size(); ++i)
+      for(unsigned int i = 0; i < d_gradient.size(); ++i)
       {
 	  pcout<<"d_gradient: "<<d_gradient[i]<<std::endl;
       }
@@ -595,7 +556,7 @@
       //write mesh
       std::string meshFileName="mesh_geo";
       meshFileName+=std::to_string(d_iter);
-      function.writeMesh(meshFileName);      
+      //function.writeMesh(meshFileName);      
       //
       // evaluate gradient
       //
@@ -621,8 +582,6 @@
       //
       // compute PRP beta
       //
-      //d_beta = (lineSearchReturnValue == SUCCESS) ? 
-      //(d_deltaNew - d_deltaMid)/d_deltaOld : 0.0;
 
       d_beta = (d_deltaNew - d_deltaMid)/d_deltaOld;
 

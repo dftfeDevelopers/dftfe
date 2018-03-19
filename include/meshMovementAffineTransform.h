@@ -37,7 +37,8 @@ public:
   /** @brief Performs affine transformation of the triangulation
    * 
    *  @param  deformationGradient
-   *  @return std::pair<bool,double> mesh quality metrics pair(bool for is negative jacobian, maximum jacobian ratio) 
+   *  @return std::pair<bool,double> mesh quality metrics 
+   *  pair(bool for is negative jacobian, maximum jacobian ratio) 
    */
   std::pair<bool,double> transform(const Tensor<2,3,double> & deformationGradient);
 

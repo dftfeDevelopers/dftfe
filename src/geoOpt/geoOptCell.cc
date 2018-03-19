@@ -30,6 +30,7 @@ template<unsigned int FEOrder>
 void geoOptCell<FEOrder>::writeMesh(std::string meshFileName)
  {
       //dftPtr->writeMesh(meshFileName);
+      dftUtils::ExcNotImplementedYet; 
  }
 
 //

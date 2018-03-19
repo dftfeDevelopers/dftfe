@@ -52,13 +52,13 @@
      * line search.
      * @param lineSearchDampingParameter scales the initial line search step
      */
-    cgPRPNonLinearSolver(double tolerance,
-                      int    maxNumberIterations,
-                      int    debugLevel,
-		      MPI_Comm &mpi_comm_replica,
-                      double lineSearchTolerance = 1.0e-6,
-		      int    lineSearchMaxIterations = 10,
-		      double lineSeachDampingParameter=1.0);
+    cgPRPNonLinearSolver(const double tolerance,
+                         const unsigned int    maxNumberIterations,
+                         const unsigned int    debugLevel,
+		         const MPI_Comm &mpi_comm_replica,
+                         const double lineSearchTolerance = 1.0e-6,
+		         const unsigned int    lineSearchMaxIterations = 10,
+		         const double lineSeachDampingParameter=1.0);
 
     /**
      * @brief Destructor.
@@ -68,12 +68,12 @@
     /**
      * @reinit cg parameters
      */
-     void reinit(double tolerance,
-                 int    maxNumberIterations,
-                 int    debugLevel,
-                 double lineSearchTolerance,
-                 int    lineSearchMaxIterations,
-		 double lineSeachDampingParameter);
+     void reinit(const double tolerance,
+                 const unsigned int    maxNumberIterations,
+                 const unsigned int    debugLevel,
+                 const double lineSearchTolerance,
+                 const unsigned int    lineSearchMaxIterations,
+		 const double lineSeachDampingParameter);
 
     /**
      * @brief Solve non-linear algebraic equation.
@@ -105,9 +105,9 @@
      */
     nonLinearSolver::ReturnValueType
     lineSearch(solverFunction & function,
-	       double                 tolerance,
-	       int                    maxNumberIterations,
-	       int                    debugLevel);
+	       const double                 tolerance,
+	       const unsigned int           maxNumberIterations,
+	       const unsigned int           debugLevel);
 
     /**
      * @brief Compute delta_d and eta_p.
@@ -146,7 +146,7 @@
      *
      * @return Number of unknowns in all processors.
      */
-    int computeTotalNumberUnknowns() const;
+    unsigned int computeTotalNumberUnknowns() const;
 
     /**
      * @brief Update solution x -> x + \alpha direction.
@@ -155,7 +155,7 @@
      * @param direction Direction vector.
      * @param function solver function object.
      */
-    void updateSolution(double                      alpha,
+    void updateSolution(const double                alpha,
 			const std::vector<double> & direction,
 			solverFunction            & function);
 
@@ -172,11 +172,11 @@
     double              d_deltaMid;
     double              d_deltaOld;
     double              d_beta;
-    int                 d_numberUnknowns;
-    int                 d_iter;
-    std::vector<int>    d_unknownCountFlag;
+    unsigned int                 d_numberUnknowns;
+    unsigned int                 d_iter;
+    std::vector<unsigned int>    d_unknownCountFlag;
     double              d_lineSearchTolerance;
-    int                 d_lineSearchMaxIterations;
+    unsigned int                 d_lineSearchMaxIterations;
     double              d_lineSearchDampingParameter;
 
     //
