@@ -272,14 +272,12 @@ void dftClass<FEOrder>::set()
   a0.resize((spinPolarized+1)*d_maxkPoints,lowerEndWantedSpectrum);
   bLow.resize((spinPolarized+1)*d_maxkPoints,0.0);
   eigenVectors.resize((1+spinPolarized)*d_maxkPoints);
-  //eigenVectorsOrig.resize((1+spinPolarized)*d_maxkPoints);
   
   for(unsigned int kPoint = 0; kPoint < (1+spinPolarized)*d_maxkPoints; ++kPoint)
     {
         for (unsigned int i=0; i<numEigenValues; ++i)
 	  {
 	    eigenVectors[kPoint].push_back(new vectorType);
-	    //eigenVectorsOrig[kPoint].push_back(new vectorType);
 	  }
     }
    for(unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
@@ -288,12 +286,6 @@ void dftClass<FEOrder>::set()
       eigenValuesTemp[kPoint].resize(numEigenValues); 
     }
 
-  for (unsigned int i=0; i<numEigenValues; ++i){
-    PSI.push_back(new vectorType);
-    tempPSI.push_back(new vectorType);
-    tempPSI2.push_back(new vectorType);
-    tempPSI3.push_back(new vectorType);
-  } 
 }
 
 //dft pseudopotential init

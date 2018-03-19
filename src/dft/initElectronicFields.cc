@@ -31,15 +31,6 @@ void dftClass<FEOrder>::initElectronicFields(){
   matrix_free_data.initialize_dof_vector(vChebyshev,eigenDofHandlerIndex);
   v0Chebyshev.reinit(vChebyshev);
   fChebyshev.reinit(vChebyshev);
-  aj[0].reinit(vChebyshev); aj[1].reinit(vChebyshev); aj[2].reinit(vChebyshev);
-  aj[3].reinit(vChebyshev); aj[4].reinit(vChebyshev);
-  for (unsigned int i=0; i<eigenVectors[0].size(); ++i)
-    {  
-      PSI[i]->reinit(vChebyshev);
-      tempPSI[i]->reinit(vChebyshev);
-      tempPSI2[i]->reinit(vChebyshev);
-      tempPSI3[i]->reinit(vChebyshev);
-    } 
 
   //std::cout<< "SPIN POLARIZED:"<< spinPolarized <<std::endl;
   if (spinPolarized!=1)
@@ -58,7 +49,6 @@ void dftClass<FEOrder>::initElectronicFields(){
       for(unsigned int i = 0; i < eigenVectors[kPoint].size(); ++i)
 	{
 	  eigenVectors[kPoint][i]->reinit(vChebyshev);
-	  //eigenVectorsOrig[kPoint][i]->reinit(vChebyshev);
 	}
     }
 

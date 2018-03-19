@@ -599,48 +599,92 @@ void dftClass<FEOrder>::chebyshevFilter(std::vector<vectorType*> & X,
 					double b, 
 					double a0)
 {
-  computing_timer.enter_section("Chebyshev filtering"); 
   double e, c, sigma, sigma1, sigma2, gamma;
   e=(b-a)/2.0; c=(b+a)/2.0;
   sigma=e/(a0-c); sigma1=sigma; gamma=2.0/sigma1;
 
+  std::vector<vectorType*> PSI,tempPSI;
+
+  for(unsigned int i = 0; i < X.size(); ++i)
+    {
+      PSI.push_back(new vectorType);
+      tempPSI.push_back(new vectorType);
+    }
+  
+  for(unsigned int i = 0; i < X.size(); ++i)
+    {
+      PSI[i]->reinit(*X[0]);
+      tempPSI[i]->reinit(*X[0]);
+    }
+  
+
+  computing_timer.enter_section("Chebyshev filtering"); 
   //Y=alpha1*(HX+alpha2*X)
   double alpha1=sigma1/e, alpha2=-c;
   for(unsigned int i = 0; i < X.size(); ++i)
     constraintsNoneEigen.set_zero(*X[i]);
 
   eigenPtr->HX(X, PSI);
-  for (std::vector<vectorType*>::iterator y=PSI.begin(), x=X.begin(); y<PSI.end(); ++y, ++x){  
-    (**y).add(alpha2,**x);
-    (**y)*=alpha1;
-  } 
+  for (std::vector<vectorType*>::iterator y=PSI.begin(), x=X.begin(); y<PSI.end(); ++y, ++x)
+    {  
+      (**y).add(alpha2,**x);
+      (**y)*=alpha1;
+    } 
   //loop over polynomial order
-  for (unsigned int i=2; i<m+1; i++){
-    sigma2=1.0/(gamma-sigma);
-    //Ynew=alpha1*(HY-cY)+alpha2*X
-    alpha1=2.0*sigma2/e, alpha2=-(sigma*sigma2);
-    eigenPtr->HX(PSI, tempPSI);
-    for (std::vector<vectorType*>::iterator ynew=tempPSI.begin(), y=PSI.begin(), x=X.begin(); ynew<tempPSI.end(); ++ynew, ++y, ++x){  
-      (**ynew).add(-c,**y);
-      (**ynew)*=alpha1;
-      (**ynew).add(alpha2,**x);
-      **x=**y;
-      **y=**ynew;
+  for(unsigned int i=2; i<m+1; i++)
+    {
+      sigma2=1.0/(gamma-sigma);
+      //Ynew=alpha1*(HY-cY)+alpha2*X
+      alpha1=2.0*sigma2/e, alpha2=-(sigma*sigma2);
+      eigenPtr->HX(PSI, tempPSI);
+      for (std::vector<vectorType*>::iterator ynew=tempPSI.begin(), y=PSI.begin(), x=X.begin(); ynew<tempPSI.end(); ++ynew, ++y, ++x)
+	{  
+	  (**ynew).add(-c,**y);
+	  (**ynew)*=alpha1;
+	  (**ynew).add(alpha2,**x);
+	  **x=**y;
+	  **y=**ynew;
+	}
+      sigma=sigma2;
     }
-    sigma=sigma2;
-  }
   
   //copy back PSI to eigenVectors
   for (std::vector<vectorType*>::iterator y=PSI.begin(), x=X.begin(); y<PSI.end(); ++y, ++x){  
     **x=**y;
   }   
+
   computing_timer.exit_section("Chebyshev filtering"); 
+
+  for(unsigned int i = 0; i < X.size(); ++i)
+    {
+      delete PSI[i];
+      delete tempPSI[i];
+    }
+
+  PSI.clear();
+  tempPSI.clear();
+  
+  
 }
 
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::computeResidualNorm(std::vector<vectorType*> & X)
 {
   computing_timer.enter_section("computeResidualNorm"); 
+
+  std::vector<vectorType*> PSI;
+
+  for(unsigned int i = 0; i < X.size(); ++i)
+    {
+      PSI.push_back(new vectorType);
+    }
+  
+  for(unsigned int i = 0; i < X.size(); ++i)
+    {
+      PSI[i]->reinit(*X[0]);
+    }
+
+
   eigenPtr->HX(X, PSI);
   //
   unsigned int n = eigenValuesTemp[d_kPointIndex].size() ;
@@ -657,6 +701,15 @@ void dftClass<FEOrder>::computeResidualNorm(std::vector<vectorType*> & X)
         pcout << buffer;
     }
   pcout <<std::endl;
+
+  //clean ups
+  for(unsigned int i = 0; i < X.size(); ++i)
+    {
+      delete PSI[i];
+    }
+
+  PSI.clear();
+
   //
   computing_timer.exit_section("computeResidualNorm"); 
 }

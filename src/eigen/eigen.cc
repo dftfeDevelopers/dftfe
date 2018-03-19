@@ -841,7 +841,7 @@ void eigenClass<FEOrder>::implementHX (const dealii::MatrixFree<3,double>  &data
 
 //HX
 template<unsigned int FEOrder>
-void eigenClass<FEOrder>::HX(const std::vector<vectorType*> &src, 
+void eigenClass<FEOrder>::HX(std::vector<vectorType*> &src, 
 			     std::vector<vectorType*> &dst) 
 {
 
@@ -850,24 +850,23 @@ void eigenClass<FEOrder>::HX(const std::vector<vectorType*> &src,
   computing_timer.enter_section("eigenClass HX");
   for (unsigned int i = 0; i < src.size(); i++)
     {
-      *(dftPtr->tempPSI2[i]) = *src[i];
-      dftPtr->tempPSI2[i]->scale(invSqrtMassVector); //MX
-      dftPtr->tempPSI2[i]->update_ghost_values();
+      src[i]->scale(invSqrtMassVector); //M^{-1/2}*X
+      src[i]->update_ghost_values();
       //dftPtr->constraintsNoneEigen.distribute(*(dftPtr->tempPSI2[i]));
-      dftPtr->constraintsNoneEigenDataInfo.distribute(*(dftPtr->tempPSI2[i]));
-      dftPtr->tempPSI2[i]->update_ghost_values();
+      dftPtr->constraintsNoneEigenDataInfo.distribute(*(src[i]));
+      src[i]->update_ghost_values();
       *dst[i] = 0.0;
     }
 
 
   //
   //required if its a pseudopotential calculation and number of nonlocal atoms are greater than zero
-  //
+  //H^{nloc}*M^{-1/2}*X
   if(dftParameters::isPseudopotential && dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0)
     {
 
            
-      computeNonLocalHamiltonianTimesXMemoryOpt(dftPtr->tempPSI2,
+      computeNonLocalHamiltonianTimesXMemoryOpt(src,
 						dst);
       
       //computeNonLocalHamiltonianTimesX(dftPtr->tempPSI2,
@@ -876,27 +875,54 @@ void eigenClass<FEOrder>::HX(const std::vector<vectorType*> &src,
     }
 
 
-  dftPtr->matrix_free_data.cell_loop(&eigenClass<FEOrder>::implementHX, this, dst, dftPtr->tempPSI2); //HMX
+  //
+  //First evaluate H^{loc}*M^{-1/2}*X and then add to H^{nloc}*M^{-1/2}*X
+  //
+  dftPtr->matrix_free_data.cell_loop(&eigenClass<FEOrder>::implementHX, this, dst, src); //HMX
   
-  
+  //
+  //Finally evaluate M^{-1/2}*H*M^{-1/2}*X
+  //
   for (std::vector<vectorType*>::iterator it=dst.begin(); it!=dst.end(); it++)
     {
-      (*it)->scale(invSqrtMassVector); //MHMX  
+      (*it)->scale(invSqrtMassVector); 
     }
+
+  //
+  //unscale src back
+  //
+  for (std::vector<vectorType*>::iterator it=src.begin(); it!=src.end(); it++)
+    {
+      (*it)->scale(sqrtMassVector); //MHMX  
+    }
+
   computing_timer.exit_section("eigenClass HX");
 }
 
 //XHX
 template<unsigned int FEOrder>
-void eigenClass<FEOrder>::XHX(const std::vector<vectorType*> &src)
+void eigenClass<FEOrder>::XHX(std::vector<vectorType*> &src)
 {
+
+  std::vector<vectorType*> tempPSI3;
+
+  for(unsigned int i = 0; i < src.size(); ++i)
+    {
+      tempPSI3.push_back(new vectorType);
+    }
+  
+  for(unsigned int i = 0; i < src.size(); ++i)
+    {
+      tempPSI3[i]->reinit(*src[0]);
+    }
+
   computing_timer.enter_section("eigenClass XHX");
 
   //HX
-  HX(src, dftPtr->tempPSI3);
+  HX(src, tempPSI3);
   for (unsigned int i = 0; i < src.size(); i++)
     {
-      dftPtr->tempPSI3[i]->update_ghost_values();
+      tempPSI3[i]->update_ghost_values();
     }
 
 #ifdef ENABLE_PERIODIC_BC
@@ -930,11 +956,11 @@ void eigenClass<FEOrder>::XHX(const std::vector<vectorType*> &src)
 				  dftPtr->local_dof_indicesImag.end(), 
 				  xImag.begin()+dofs_per_proc*index);
 
-      dftPtr->tempPSI3[index]->extract_subvector_to(dftPtr->local_dof_indicesReal.begin(),
+      tempPSI3[index]->extract_subvector_to(dftPtr->local_dof_indicesReal.begin(),
 						    dftPtr->local_dof_indicesReal.end(),
 						    hxReal.begin()+dofs_per_proc*index);
 
-      dftPtr->tempPSI3[index]->extract_subvector_to(dftPtr->local_dof_indicesImag.begin(),
+      tempPSI3[index]->extract_subvector_to(dftPtr->local_dof_indicesImag.begin(),
 						    dftPtr->local_dof_indicesImag.end(),
 						    hxImag.begin()+dofs_per_proc*index);
  
@@ -978,7 +1004,7 @@ void eigenClass<FEOrder>::XHX(const std::vector<vectorType*> &src)
   for (std::vector<vectorType*>::const_iterator it=src.begin(); it!=src.end(); it++)
     {
       (*it)->extract_subvector_to(local_dof_indices.begin(), local_dof_indices.end(), x.begin()+dofs_per_proc*index);
-      dftPtr->tempPSI3[index]->extract_subvector_to(local_dof_indices.begin(), local_dof_indices.end(), hx.begin()+dofs_per_proc*index);
+      tempPSI3[index]->extract_subvector_to(local_dof_indices.begin(), local_dof_indices.end(), hx.begin()+dofs_per_proc*index);
       index++;
     }
   char transA  = 'T', transB  = 'N';
@@ -986,10 +1012,16 @@ void eigenClass<FEOrder>::XHX(const std::vector<vectorType*> &src)
   dgemm_(&transA, &transB, &n, &n, &k, &alpha, &x[0], &lda, &hx[0], &ldb, &beta, &XHXValue[0], &ldc);
   Utilities::MPI::sum(XHXValue, mpi_communicator, XHXValue); 
 #endif
-
-  //all reduce XHXValue(check in parallel)
   
   computing_timer.exit_section("eigenClass XHX");
+
+  for(unsigned int i = 0; i < src.size(); ++i)
+    {
+      delete tempPSI3[i];
+    }
+
+  tempPSI3.clear();
+
 }
 
 template<unsigned int FEOrder>

@@ -340,7 +340,6 @@ class dftClass
    */
   std::vector<std::vector<double> > eigenValues, eigenValuesTemp; 
   std::vector<std::vector<parallel::distributed::Vector<double>*> > eigenVectors;
-  //std::vector<std::vector<parallel::distributed::Vector<double>*> > eigenVectorsOrig;
 
   /**
    * storage for constraintMatrices in terms of arrays (STL)
@@ -478,9 +477,8 @@ class dftClass
   double bUp;// bLow, a0;
   std::vector<double> a0;
   std::vector<double> bLow;
-  vectorType vChebyshev, v0Chebyshev, fChebyshev, aj[5];
+  vectorType vChebyshev, v0Chebyshev, fChebyshev;
 
-  std::vector<parallel::distributed::Vector<double>*> PSI, tempPSI, tempPSI2, tempPSI3;
   void chebyshevSolver(unsigned int s);
   void computeResidualNorm(std::vector<vectorType*>& X);
   std::vector<std::vector<double> > d_tempResidualNormWaveFunctions;
