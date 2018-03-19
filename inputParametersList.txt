@@ -143,7 +143,7 @@ USE GROUP SYMMETRY
 # whether to use time-reversal symmetry
 USE TIME REVERSAL SYMMETRY 
 
-# number of pools the irreducible k-points to be split on (should be a multiple of total number of procs)
+# number of pools the irreducible k-points to be split on (should be a divisor of total number of procs)
 NUMBER OF POOLS 
 
 
