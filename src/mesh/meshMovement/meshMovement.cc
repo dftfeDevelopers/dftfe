@@ -86,6 +86,7 @@ meshMovementClass::meshMovementClass(MPI_Comm &mpi_comm_replica):
 
 void meshMovementClass::init(Triangulation<3,3> & triangulation, const std::vector<std::vector<double> > & domainBoundingVectors)
 {
+  d_domainBoundingVectors=domainBoundingVectors;    
   if (triangulation.locally_owned_subdomain()==numbers::invalid_subdomain_id)
      d_isParallelMesh=false;
   else
@@ -132,7 +133,7 @@ void meshMovementClass::init(Triangulation<3,3> & triangulation, const std::vect
 	  offsetVectors[i][j] = unitVectorsXYZ[i][j] - domainBoundingVectors[i][j];
 	}
     }  
-  d_domainBoundingVectors=domainBoundingVectors;
+
   for (int i = 0; i < C_DIM; ++i)
     {
       GridTools::collect_periodic_faces(d_dofHandlerMoveMesh, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, d_periodicity_vector,offsetVectors[i]);

@@ -144,10 +144,10 @@ void geoOptCell<FEOrder>::run()
 {
    const double tol=dftParameters::stressRelaxTol*dftPtr->d_domainVolume;
    const unsigned int  maxIter=100;
-   const double lineSearchTol=5e-2;
+   const double lineSearchTol=tol*2.0;
    const double lineSearchDampingParameter=0.1;   
-   const unsigned int maxLineSearchIter=3;
-   const unsigned int debugLevel=this_mpi_process==0?1:0;
+   const unsigned int maxLineSearchIter=4;
+   const unsigned int debugLevel=Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) ==0?1:0;
 
    d_totalUpdateCalls=0;
    cgPRPNonLinearSolver cgSolver(tol,
@@ -173,7 +173,7 @@ void geoOptCell<FEOrder>::run()
        
        if (cgReturn == nonLinearSolver::SUCCESS )
        {
-	    pcout<< " ...CG cell stress relaxation completed, total number of cell geometry updates: "<<d_totalUpdateCalls<<std::endl;
+	    pcout<< " ...CG cell stress relaxation completed as maximum stress magnitude is less than stress relaxation tolerance: "<< dftParameters::stressRelaxTol<<", total number of cell geometry updates: "<<d_totalUpdateCalls<<std::endl;
        }
        else if (cgReturn == nonLinearSolver::MAX_ITER_REACHED)
        {
@@ -315,16 +315,12 @@ void geoOptCell<FEOrder>::update(const std::vector<double> & solution)
    d_totalUpdateCalls+=1;
    dftPtr->deformDomain(deformationGradient);
    
-   
+   dftPtr->solve(); 
    // if ion optimization is on, then for every cell relaxation also relax the atomic forces
    if (dftParameters::isIonOpt)
    {
       dftPtr->geoOptIonPtr->init();
       dftPtr->geoOptIonPtr->run();
-   }
-   else
-   {
-      dftPtr->solve();
    }
 }
 

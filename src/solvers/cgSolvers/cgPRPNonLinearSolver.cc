@@ -427,7 +427,7 @@
       const double eta = computeEta();
 
       unsigned int isSuccess=0;
-      if (std::fabs(eta) < tolerance*d_numberUnknowns)
+      if (std::fabs(eta) < toleranceSqr*d_numberUnknowns)
          isSuccess=1;
       MPI_Bcast(&(isSuccess),
 		1,
@@ -542,7 +542,7 @@
     // check for convergence
     //
     unsigned int isSuccess=0;    
-    if ( d_deltaNew < toleranceSqr*totalnumberUnknowns*totalnumberUnknowns)
+    if ( d_deltaNew < toleranceSqr*totalnumberUnknowns)
         isSuccess=1;
 
     MPI_Bcast(&(isSuccess),
@@ -652,7 +652,7 @@
       // check for convergence
       //
       unsigned int isBreak=0;
-      if (d_deltaNew < toleranceSqr*totalnumberUnknowns*totalnumberUnknowns)
+      if (d_deltaNew < toleranceSqr*totalnumberUnknowns)
 	isBreak=1;
       MPI_Bcast(&(isSuccess),
 		   1,

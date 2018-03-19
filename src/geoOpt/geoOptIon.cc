@@ -74,10 +74,10 @@ void geoOptIon<FEOrder>::run()
 {
    const double tol=dftParameters::forceRelaxTol;//(units: Hatree/Bohr)
    const unsigned int  maxIter=100;
-   const double lineSearchTol=2e-3;//5e-2;
+   const double lineSearchTol=tol*2.0;
    const double lineSearchDampingParameter=0.7;
-   const unsigned int maxLineSearchIter=10;
-   const unsigned int debugLevel=this_mpi_process==0?1:0;
+   const unsigned int maxLineSearchIter=4;
+   const unsigned int debugLevel=Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) ==0?1:0;
    const unsigned int maxRestarts=2;
    unsigned int restartCount=0;
 
@@ -111,7 +111,7 @@ void geoOptIon<FEOrder>::run()
        
        if (cgReturn == nonLinearSolver::SUCCESS )
        {
-	    pcout<< " ...CG Ion force relaxation completed, total number of ion position updates: "<<d_totalUpdateCalls<<std::endl;
+	    pcout<< " ...CG Ion force relaxation completed as maximum force magnitude is less than force relaxation tolerance: "<< dftParameters::forceRelaxTol<<", total number of ion position updates: "<<d_totalUpdateCalls<<std::endl;
        }
        else if (cgReturn == nonLinearSolver::FAILURE)
        {

@@ -470,7 +470,12 @@ void dftClass<FEOrder>::run()
   } 
   else if (dftParameters::isIonOpt && dftParameters::isCellOpt)
   {
-#ifdef ENABLE_PERIODIC_BC      
+#ifdef ENABLE_PERIODIC_BC
+    //first relax ion positions in the starting cell configuration     
+    geoOptIonPtr->init();
+    geoOptIonPtr->run();
+
+    //start cell relaxation, where for each cell relaxation update the ion positions are again relaxed
     geoOptCellPtr->init();
     geoOptCellPtr->run();
 #else
