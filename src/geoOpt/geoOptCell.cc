@@ -60,44 +60,44 @@ void geoOptCell<FEOrder>::init()
     d_relaxationFlags.clear();
     d_relaxationFlags.resize(6,0);
 
-    if (dftParameters::cellConstraintType==1)//isotropic (shape fixed isotropic volume optimization)
+    if (dftParameters::cellConstraintType==1)//(isotropic shape fixed isotropic volume optimization)
     {
 	d_relaxationFlags[0]=1;
     }
-    else if (dftParameters::cellConstraintType==2)// volume fixed shape optimization
+    else if (dftParameters::cellConstraintType==2)//(volume fixed shape optimization)
     {
 	d_relaxationFlags[1]=1;
         d_relaxationFlags[2]=1;
         d_relaxationFlags[4]=1;	
     }
-    else if (dftParameters::cellConstraintType==3)// (relax only cell component l1_x)
+    else if (dftParameters::cellConstraintType==3)// (relax only cell component v1_x)
     {
 	d_relaxationFlags[0]=1;
     }
-    else if (dftParameters::cellConstraintType==4)// (relax only cell component l2_x)
+    else if (dftParameters::cellConstraintType==4)// (relax only cell component v2_x)
     {
         d_relaxationFlags[3]=1;
     }
-    else if (dftParameters::cellConstraintType==5)// (relax only cell component l3_x)
+    else if (dftParameters::cellConstraintType==5)// (relax only cell component v3_x)
     {
         d_relaxationFlags[5]=1;	
     }
-    else if (dftParameters::cellConstraintType==6)// (relax only cell components l2_x and l3_x)
+    else if (dftParameters::cellConstraintType==6)// (relax only cell components v2_x and v3_x)
     {
         d_relaxationFlags[3]=1;
         d_relaxationFlags[5]=1;	
     }
-    else if (dftParameters::cellConstraintType==7)// (relax only cell components l1_x and l3_x)
+    else if (dftParameters::cellConstraintType==7)// (relax only cell components v1_x and v3_x)
     {
 	d_relaxationFlags[0]=1;
         d_relaxationFlags[5]=1;	
     }
-    else if (dftParameters::cellConstraintType==8)// (relax only cell components l1x and l2_x)
+    else if (dftParameters::cellConstraintType==8)// (relax only cell components v1x and v2_x)
     {
 	d_relaxationFlags[0]=1;
         d_relaxationFlags[3]=1;
     }
-    else if (dftParameters::cellConstraintType==9)//(only volume optimization relax l1_x, l2_x and l3_x)
+    else if (dftParameters::cellConstraintType==9)//(only volume optimization relax v1_x, v2_x and v3_x)
     {
 	d_relaxationFlags[0]=1;
         d_relaxationFlags[3]=1;
@@ -105,7 +105,7 @@ void geoOptCell<FEOrder>::init()
     }   
     else if (dftParameters::cellConstraintType==10)//(2D only x and y components relaxed)
     {
-	//FIXME: Not sure if l3_x and l3_y are to be relaxed in this case or not
+	//FIXME: Not sure if v3_x and v3_y are to be relaxed in this case or not
 	d_relaxationFlags[0]=1;
         d_relaxationFlags[1]=1;
         d_relaxationFlags[2]=1;
