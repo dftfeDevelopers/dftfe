@@ -142,7 +142,7 @@ NUMBER OF POOLS
 #DFT functional related parameters#
 ###################################
 
-#Pseudopotential calculation or all-electron calculation
+#Pseudopotential calculation or all-electron calculation: true or false
 PSEUDOPOTENTIAL CALCULATION 
 
 # Pseudopotential type: 1 for KB projector, 2 for ONCV projectors
@@ -155,7 +155,7 @@ PSEUDOPOTENTIAL TYPE
 # 4 (GGA: Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)])*/
 EXCHANGE CORRELATION TYPE 
 
-#Is spin polarization to be included?
+#Spin polarization: 0 for no spin polarization and 1 for spin polarization 
 SPIN POLARIZATION 
 
 #Magnetization to start with
@@ -186,9 +186,11 @@ SCF CONVERGENCE MAXIMUM ITERATIONS
 
 #SCF iterations stopping tolerance in terms of electron-density difference between two successive iterations 
 SCF CONVERGENCE TOLERANCE    
-     
+ 
+#Anderson mixing parameter $\Gamma$ (Refer to Motamarri et.al, J. Comp. Phys., 253, 308-343 (2013))   
 ANDERSON SCHEME MIXING PARAMETER  
  
+#Number of previous SCF iterations used for computing Anderson mixing constants 
 ANDERSON SCHEME MIXING HISTORY
     
 #Fermi-Dirac smearing temperature (in Kelvin) 
@@ -197,5 +199,9 @@ TEMPERATURE
 ###########################
 #Poisson problem paramters#
 ###########################
+
+#Maximum iterations for Poisson solver convergence
 POISSON SOLVER CONVERGENCE MAXIMUM ITERATIONS 
+
+#Tolerance criterion for Poisson residual norm to decide convergence
 POISSON SOLVER CONVERGENCE TOLERANCE          
