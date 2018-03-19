@@ -167,7 +167,7 @@ EXCHANGE CORRELATION TYPE
 #Spin polarization: 0 for no spin polarization and 1 for spin polarization 
 SPIN POLARIZATION 
 
-#Magnetization to start with
+#Magnetization to start with (must be between -0.5 and +0.5)
 START MAGNETIZATION 
 
 ##################################################
