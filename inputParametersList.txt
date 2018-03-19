@@ -5,15 +5,17 @@
 #path specifying the location of the "build" directory which is usually the location of "src" folder 
 DFT PATH
 
+#Flag to control optimized/debug modes (datatype: bool, default: true)
 OPTIMIZED MODE
 
 ###################################
-#finite-element related parameters#
+#Finite-element related parameters#
 ###################################
 
-#external mesh file path. If nothing given auto mesh generation is done 
+#external mesh file path. If nothing is given auto mesh generation is performed
 MESH FILE 
 
+#The degree of the finite-element interpolating polynomial (datatype: integer, range: 1-12, default: 2)
 FINITE ELEMENT POLYNOMIAL ORDER
 
 ##########
@@ -21,10 +23,17 @@ FINITE ELEMENT POLYNOMIAL ORDER
 ##########                           
 
 
-#Set file specifying the domain bounding vectors v1, v2 and v3
+#Set file specifying the domain bounding vectors v1, v2 and v3 in a.u. with the underlying format
+#v1x v1y v1z
+#v2x v2y v2z
+#v3x v3y v3z
 DOMAIN BOUNDING VECTORS FILE
 
-#Atomic-coordinates file
+#Atomic-coordinates file. For fully non-periodic domain give cartesian coordinates of the atoms
+# (in a.u) with respect origin at the center of the domain. For periodic and semi-periodic
+# give fractional coordinates of atoms. File format (for two atoms):
+#x1 y1 z1
+#x2 y2 z2
 ATOMIC COORDINATES FILE
 
 
@@ -32,19 +41,33 @@ ATOMIC COORDINATES FILE
 #Geomtery optimization#
 ####################### 
 
+#Boolean parameter specifying if atomic forces are to be computed (datatype: bool, default: false)
 ION FORCE
 
+#Boolean parameter specifying if atomic forces are to be relaxed (datatype: bool, default: false)
 ION OPT
 
+#Sets the tolerance of the maximum force (in a.u.) on an ion when forces are considered to be relaxed
+#(datatype: double, default: 5e-5)
 FORCE TOL
 
+#File specifying the atomic position update permission flags for x, y and z positions of all atoms.
+#1- update 0- no update. File format (for two atoms, atom 1 fixed and atom 2 free):
+#0 0 0
+#1 1 1
 ION RELAX FLAGS FILE
 
+#Boolean parameter specifying if cell stress is to be computed (datatype: bool, default: false)
 CELL STRESS
 
+#Boolean parameter specifying if cell stress is to be relaxed (datatype: bool, default: false)
 CELL OPT
 
-#Cell relaxation constraint type
+#Sets the tolerance of the cell stress (in a.u.) when cell stress is considered to be relaxed
+#(datatype: double, default: 5e-5)
+STRESS TOL
+
+#Cell relaxation constraint type (datatype: integer, range: 1-12, default: 12)
 # 1 (isotropic shape fixed volume optimization) 
 # 2 (volume fixed shape optimization) 
 # 3 (relax only cell component v1_x) 
@@ -59,8 +82,8 @@ CELL OPT
 # 12 (relax all cell components)
 CELL CONSTRAINT TYPE
 
-STRESS TOL
-
+#Additional notes: if CELL OPT and ION OPT are both set to true the atomic positions will be relaxed for each 
+cell relaxation step.
 
 ###############################
 #Auto mesh generation options.#
@@ -70,10 +93,20 @@ STRESS TOL
 INNER DOMAIN SIZE X 
 INNER DOMAIN SIZE Y 
 INNER DOMAIN SIZE Z
-OUTER ATOM BALL RADIUS 
-MESH SIZE OUTER DOMAIN 
+
+#Radius of outer ball enclosing atom
+OUTER ATOM BALL RADIUS
+
+#Outer Domain Mesh Size 
+MESH SIZE OUTER DOMAIN
+
+#Inner Domain Mesh Size 
 MESH SIZE INNER DOMAIN 
+
+#Mesh Size in a ball around atom
 MESH SIZE OUTER ATOM BALL
+
+#Mesh Size near atom
 MESH SIZE NEAR ATOM
 
 
@@ -81,10 +114,10 @@ MESH SIZE NEAR ATOM
 #Boundary conditions.#
 ######################
 
-#Radius of the atom-centered ball in which self-potential of the associated nuclear charge is solved
+#Radius (in a.u) of the atom-centered ball in which self-potential of the associated nuclear charge is solved
 SELF POTENTIAL ATOM BALL RADIUS
 
-#boundary conditions in three directions
+#boundary conditions in three directions along v1, v2 and v3. X, Y and Z correspond to 1,2 and 3.
 PERIODIC BOUNDARY CONDITION X 
 PERIODIC BOUNDARY CONDITION Y 
 PERIODIC BOUNDARY CONDITION Z 
@@ -122,8 +155,10 @@ PSEUDOPOTENTIAL TYPE
 # 4 (GGA: Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)])*/
 EXCHANGE CORRELATION TYPE 
 
-#spin polarization
+#Is spin polarization to be included?
 SPIN POLARIZATION 
+
+#Magnetization to start with
 START MAGNETIZATION 
 
 ##################################################
@@ -139,16 +174,24 @@ LOWER BOUND WANTED SPECTRUM
 #Chebyshev Filter polynomial degree (0 indicates default value based on upper bound of Hamiltonian)
 CHEBYSHEV POLYNOMIAL DEGREE 
 
+#The number of the Chebyshev filter passes per SCF (datatype: integer, default: 1) 
 CHEBYSHEV FILTER PASSES 
 
 ################
 #SCF parameters#
 ################
 
-SCF CONVERGENCE MAXIMUM ITERATIONS 
-SCF CONVERGENCE TOLERANCE          
-ANDERSON SCHEME MIXING PARAMETER   
-ANDERSON SCHEME MIXING HISTORY     
+#Maximum number of iterations to be allowed for SCF convergence
+SCF CONVERGENCE MAXIMUM ITERATIONS
+
+#SCF iterations stopping tolerance in terms of electron-density difference between two successive iterations 
+SCF CONVERGENCE TOLERANCE    
+     
+ANDERSON SCHEME MIXING PARAMETER  
+ 
+ANDERSON SCHEME MIXING HISTORY
+    
+#Fermi-Dirac smearing temperature (in Kelvin) 
 TEMPERATURE                        
 
 ###########################
