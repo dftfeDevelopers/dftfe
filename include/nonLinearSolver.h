@@ -65,7 +65,9 @@
      * @brief Constructor.
      *
      */
-    nonLinearSolver();
+    nonLinearSolver(const unsigned int debugLevel,
+		    const unsigned int maxNumberIterations,
+	            const double tolerance);
 
 
   protected:
@@ -93,9 +95,9 @@
 
     
     
-    unsigned int    d_debugLevel;
-    unsigned int    d_maxNumberIterations;
-    double d_tolerance;
+    const unsigned int    d_debugLevel;
+    const unsigned int    d_maxNumberIterations;
+    const double d_tolerance;
 
   };
 

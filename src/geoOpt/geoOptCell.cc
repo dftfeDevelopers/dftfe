@@ -30,7 +30,7 @@ template<unsigned int FEOrder>
 void geoOptCell<FEOrder>::writeMesh(std::string meshFileName)
  {
       //dftPtr->writeMesh(meshFileName);
-      dftUtils::ExcNotImplementedYet; 
+      AssertThrow(false,dftUtils::ExcNotImplementedYet());
  }
 
 //
@@ -126,7 +126,7 @@ void geoOptCell<FEOrder>::init()
         d_relaxationFlags[2]=1;
 	d_relaxationFlags[3]=1;
         d_relaxationFlags[4]=1;
-        d_relaxationFlags[5]=1;		
+        d_relaxationFlags[5]=1;
     }
     else
     {
@@ -165,7 +165,7 @@ void geoOptCell<FEOrder>::run()
    pcout<<"      maxIter: "<< maxIter<<std::endl;
    pcout<<"      lineSearch tol: "<< lineSearchTol<<std::endl;
    pcout<<"      lineSearch maxIter: "<< maxLineSearchIter<<std::endl;
-   pcout<<"      lineSearch damping parameter: "<< lineSearchDampingParameter<<std::endl;    
+   pcout<<"      lineSearch damping parameter: "<< lineSearchDampingParameter<<std::endl;
    pcout<<"   ------------------------------  "<<std::endl;
 
    if  (getNumberUnknowns()>0)
@@ -202,13 +202,13 @@ int geoOptCell<FEOrder>::getNumberUnknowns() const
 template<unsigned int FEOrder>
 double geoOptCell<FEOrder>::value() const
 {
-   dftUtils::ExcNotImplementedYet;     
+   AssertThrow(false,dftUtils::ExcNotImplementedYet());
 }
 
 template<unsigned int FEOrder>
 void geoOptCell<FEOrder>::value(std::vector<double> & functionValue)
 {
-   dftUtils::ExcNotImplementedYet;     
+   AssertThrow(false,dftUtils::ExcNotImplementedYet());
 }
 
 template<unsigned int FEOrder>
@@ -242,7 +242,7 @@ template<unsigned int FEOrder>
 void geoOptCell<FEOrder>::precondition(std::vector<double>       & s,
 			              const std::vector<double> & gradient) const
 {
-   dftUtils::ExcNotImplementedYet;     
+   AssertThrow(false,dftUtils::ExcNotImplementedYet());     
 }
 
 template<unsigned int FEOrder>
@@ -328,13 +328,13 @@ void geoOptCell<FEOrder>::update(const std::vector<double> & solution)
 template<unsigned int FEOrder>
 void geoOptCell<FEOrder>::solution(std::vector<double> & solution)
 {
-   dftUtils::ExcNotImplementedYet;     
+   AssertThrow(false,dftUtils::ExcNotImplementedYet());     
 }
 
 template<unsigned int FEOrder>
 std::vector<int>  geoOptCell<FEOrder>::getUnknownCountFlag() const
 {
-   dftUtils::ExcNotImplementedYet;     
+   AssertThrow(false,dftUtils::ExcNotImplementedYet());     
 }
 
 

@@ -66,16 +66,6 @@
     ~cgPRPNonLinearSolver();
 
     /**
-     * @reinit cg parameters
-     */
-     void reinit(const double tolerance,
-                 const unsigned int    maxNumberIterations,
-                 const unsigned int    debugLevel,
-                 const double lineSearchTolerance,
-                 const unsigned int    lineSearchMaxIterations,
-		 const double lineSeachDampingParameter);
-
-    /**
      * @brief Solve non-linear algebraic equation.
      *
      * @return Return value indicating success or failure.
@@ -175,9 +165,9 @@
     unsigned int                 d_numberUnknowns;
     unsigned int                 d_iter;
     std::vector<unsigned int>    d_unknownCountFlag;
-    double              d_lineSearchTolerance;
-    unsigned int                 d_lineSearchMaxIterations;
-    double              d_lineSearchDampingParameter;
+    const double              d_lineSearchTolerance;
+    const unsigned int        d_lineSearchMaxIterations;
+    const double              d_lineSearchDampingParameter;
 
     //
     // data
