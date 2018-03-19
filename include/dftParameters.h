@@ -21,7 +21,6 @@
 
 #include <string>
 #include <deal.II/base/parameter_handler.h>
-#include <deal.II/base/data_out_base.h>
 
 // FIXME: document Parameters
 // FIXME: this should really be an object, not global values

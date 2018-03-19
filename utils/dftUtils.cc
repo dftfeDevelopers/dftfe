@@ -18,6 +18,7 @@
 #include <dftUtils.h>
 #include <deal.II/base/mpi.h>
 #include <deal.II/base/exceptions.h>
+#include <deal.II/base/data_out_base.h>
 
 //
 //C++ headers
