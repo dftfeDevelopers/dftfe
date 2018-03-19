@@ -52,6 +52,7 @@ template<unsigned int FEOrder>
 void geoOptCell<FEOrder>::init()
 {
     // initialize d_strainEpsilon to identity
+    d_strainEpsilon=0;
     for (unsigned int i=0; i<3;++i)
 	d_strainEpsilon[i][i]=1.0;
 
@@ -104,6 +105,7 @@ void geoOptCell<FEOrder>::init()
     }   
     else if (dftParameters::cellConstraintType==10)//(2D only x and y components relaxed)
     {
+	//FIXME: Not sure if l3_x and l3_y are to be relaxed in this case or not
 	d_relaxationFlags[0]=1;
         d_relaxationFlags[1]=1;
         d_relaxationFlags[2]=1;
