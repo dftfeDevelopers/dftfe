@@ -1,0 +1,158 @@
+##################
+#Executable setup#
+##################
+
+#path specifying the location of the "build" directory which is usually the location of "src" folder 
+DFT PATH
+
+OPTIMIZED MODE
+
+###################################
+#finite-element related parameters#
+###################################
+
+#external mesh file path. If nothing given auto mesh generation is done 
+MESH FILE 
+
+FINITE ELEMENT POLYNOMIAL ORDER
+
+##########
+#Geomtery#
+##########                           
+
+
+#Set file specifying the domain bounding vectors v1, v2 and v3
+DOMAIN BOUNDING VECTORS FILE
+
+#Atomic-coordinates file
+ATOMIC COORDINATES FILE
+
+
+#######################
+#Geomtery optimization#
+####################### 
+
+ION FORCE
+
+ION OPT
+
+FORCE TOL
+
+ION RELAX FLAGS FILE
+
+CELL STRESS
+
+CELL OPT
+
+#Cell relaxation constraint type
+# 1 (isotropic shape fixed volume optimization) 
+# 2 (volume fixed shape optimization) 
+# 3 (relax only cell component v1_x) 
+# 4 (relax only cell component v2_x)
+# 5 (relax only cell component v3_x)
+# 6 (relax only cell components v2_x and v3_x) 
+# 7 (relax only cell components v1_x and v3_x)
+# 8 (relax only cell components v1x and v2_x) 
+# 9 (volume optimization- relax only v1_x, v2_x and v3_x) 
+# 10 (2D- relax only x and y components relaxed) 
+# 11 (2D- relax only x and y shape components- inplane area fixed)
+# 12 (relax all cell components)
+CELL CONSTRAINT TYPE
+
+STRESS TOL
+
+
+###############################
+#Auto mesh generation options.#
+###############################
+#Parameters listed here are not relevant if external mesh is used for non-periodic calculations
+
+INNER DOMAIN SIZE X 
+INNER DOMAIN SIZE Y 
+INNER DOMAIN SIZE Z
+OUTER ATOM BALL RADIUS 
+MESH SIZE OUTER DOMAIN 
+MESH SIZE INNER DOMAIN 
+MESH SIZE OUTER ATOM BALL
+MESH SIZE NEAR ATOM
+
+
+######################
+#Boundary conditions.#
+######################
+
+#Radius of the atom-centered ball in which self-potential of the associated nuclear charge is solved
+SELF POTENTIAL ATOM BALL RADIUS
+
+#boundary conditions in three directions
+PERIODIC BOUNDARY CONDITION X 
+PERIODIC BOUNDARY CONDITION Y 
+PERIODIC BOUNDARY CONDITION Z 
+
+
+
+##############################################################################################
+#Options to setup kpoints for sampling the Brillouin zone (used only in periodic calculation)#
+##############################################################################################
+BZ SAMPLING POINTS ALONG X 
+BZ SAMPLING POINTS ALONG Y 
+BZ SAMPLING POINTS ALONG Z 
+BZ SAMPLING SHIFT ALONG X 
+BZ SAMPLING SHIFT ALONG Y 
+BZ SAMPLING SHIFT ALONG Z 
+USE GROUP SYMMETRY 
+USE TIME REVERSAL SYMMETRY 
+NUMBER OF POOLS 
+
+
+###################################
+#DFT functional related parameters#
+###################################
+
+#Pseudopotential calculation or all-electron calculation
+PSEUDOPOTENTIAL CALCULATION 
+
+# Pseudopotential type: 1 for KB projector, 2 for ONCV projectors
+PSEUDOPOTENTIAL TYPE 
+
+#Exhchange-correlation functional
+# 1 (LDA: Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)])
+# 2 (LDA: Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)])
+# 3 (LDA: Vosko, Wilk & Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)])
+# 4 (GGA: Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)])*/
+EXCHANGE CORRELATION TYPE 
+
+#spin polarization
+SPIN POLARIZATION 
+START MAGNETIZATION 
+
+##################################################
+#Eigen-solver/Chebyshev solver related parameters#
+##################################################
+
+#Parameter indicating number of eigenfunctions to be solved
+NUMBER OF KOHN-SHAM WAVEFUNCTIONS
+
+#Approximate estimate of lower bound of the wanted spectrum
+LOWER BOUND WANTED SPECTRUM 
+
+#Chebyshev Filter polynomial degree (0 indicates default value based on upper bound of Hamiltonian)
+CHEBYSHEV POLYNOMIAL DEGREE 
+
+CHEBYSHEV FILTER PASSES 
+
+################
+#SCF parameters#
+################
+
+SCF CONVERGENCE MAXIMUM ITERATIONS 
+SCF CONVERGENCE TOLERANCE          
+ANDERSON SCHEME MIXING PARAMETER   
+ANDERSON SCHEME MIXING HISTORY     
+TEMPERATURE                        
+
+###########################
+#Poisson problem paramters#
+###########################
+POISSON SOLVER CONVERGENCE MAXIMUM ITERATIONS 
+POISSON SOLVER CONVERGENCE TOLERANCE          
