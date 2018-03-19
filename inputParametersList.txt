@@ -127,14 +127,23 @@ PERIODIC BOUNDARY CONDITION Z
 ##############################################################################################
 #Options to setup kpoints for sampling the Brillouin zone (used only in periodic calculation)#
 ##############################################################################################
+# Brillouin zone sampling along the three reciprocal vector directions; creates a Monkhorst-Pack (MP) grid
 BZ SAMPLING POINTS ALONG X 
 BZ SAMPLING POINTS ALONG Y 
 BZ SAMPLING POINTS ALONG Z 
+
+# Shifting in MP grid
 BZ SAMPLING SHIFT ALONG X 
 BZ SAMPLING SHIFT ALONG Y 
 BZ SAMPLING SHIFT ALONG Z 
+
+# whether to use point group symmetries (set to FALSE for relaxation calculation)
 USE GROUP SYMMETRY 
+
+# whether to use time-reversal symmetry
 USE TIME REVERSAL SYMMETRY 
+
+# number of pools the irreducible k-points to be split on (should be a multiple of total number of procs)
 NUMBER OF POOLS 
 
 
