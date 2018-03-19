@@ -25,9 +25,6 @@ set ATOMIC COORDINATES FILE = coordinates.inp
 set SELF POTENTIAL ATOM BALL RADIUS = 2.8
 #Simulation domain sizes 
 #Values listed here are not relevant if external mesh is used for non-periodic calculations
-set DOMAIN SIZE X    = 7.6
-set DOMAIN SIZE Y    = 7.6
-set DOMAIN SIZE Z    = 7.6 #2*Ln
 set INNER DOMAIN SIZE X = 0.0 #2*Ln1
 set INNER DOMAIN SIZE Y = 0.0
 set INNER DOMAIN SIZE Z = 0.0
@@ -48,7 +45,7 @@ set START MAGNETIZATION = 0.0
 #
 #Lattice Vectors file specifying the lattice vectors associated with the unit-cell(used only for periodic calculation)
 #
-set LATTICE VECTORS FILE = latticeVectors.inp
+set DOMAIN BOUNDING VECTORS FILE = latticeVectors.inp
 
 #
 #kPoint Quadrature Rule file for sampling the Brillouin zone (used only in periodic calculation)

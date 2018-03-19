@@ -18,6 +18,7 @@
 #define dftUtils_H_
 
 #include <mpi.h>
+#include <deal.II/base/data_out_base.h>
 
 namespace dftUtils
 {
@@ -31,6 +32,15 @@ namespace dftUtils
    *  @return double The partial occupancy of the orbital
    */
   double getPartialOccupancy(const double eigenValue,const double fermiEnergy,const double kb,const double T);
+
+  /** @brief Applies an affine transformation to the domain bounding vectors
+   *
+   *  @param  d_domainBoundingVectors the bounding vectors of the domain given as a 2d array
+   *  @param  deformationGradient 
+   *  @return void.
+   */
+   void transformDomainBoundingVectors(std::vector<std::vector<double> > & domainBoundingVectors,
+	                               const dealii::Tensor<2,3,double> & deformationGradient);  
 
   /**
    * A class to split the given communicator into a number of pools
@@ -67,5 +77,7 @@ namespace dftUtils
     MPI_Comm mpi_comm_replica;
   };
 
+  /// Exception handler for not implemented functionality
+  DeclExceptionMsg (ExcNotImplementedYet,"This functionality is not implemented yet or not needed to be implemented");
 }
 #endif

@@ -21,11 +21,12 @@ set ATOMIC COORDINATES FILE = coordinates.inp
 
 #Radius of the atom-centered ball in which self-potential of the associated nuclear charge is solved
 set SELF POTENTIAL ATOM BALL RADIUS = 8.0
-#Simulation domain sizes 
-#Values listed here are not relevant if external mesh is used for non-periodic calculations
-set DOMAIN SIZE X    = 40.0
-set DOMAIN SIZE Y    = 40.0
-set DOMAIN SIZE Z    = 40.0 #2*Ln
+
+
+#
+#File specifying the domain bounding vectors associated with the domain
+#
+set DOMAIN BOUNDING VECTORS FILE = domainBoundingVectors.inp
 
 #
 #set boundary conditions in three directions
@@ -33,11 +34,6 @@ set DOMAIN SIZE Z    = 40.0 #2*Ln
 set PERIODIC BOUNDARY CONDITION X = false
 set PERIODIC BOUNDARY CONDITION Y = false
 set PERIODIC BOUNDARY CONDITION Z = false
-
-#
-#Lattice Vectors file specifying the lattice vectors associated with the unit-cell(used only for periodic calculation)
-#
-set LATTICE VECTORS FILE = latticeVectors.inp
 
 #
 #kPoint Quadrature Rule file for sampling the Brillouin zone (used only in Periodic calculation)

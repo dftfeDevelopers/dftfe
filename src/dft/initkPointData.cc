@@ -107,7 +107,7 @@ template<unsigned int FEOrder>
 void dftClass<FEOrder>::recomputeKPointCoordinates()
 {
   // Get the reciprocal lattice vectors
-  d_reciprocalLatticeVectors=internaldft::getReciprocalLatticeVectors(d_latticeVectors);    
+  d_reciprocalLatticeVectors=internaldft::getReciprocalLatticeVectors(d_domainBoundingVectors);    
   // Convert from crystal to Cartesian coordinates
   for(unsigned int i = 0; i < d_maxkPoints; ++i)
     for (unsigned int d=0; d < 3; ++d)
@@ -149,7 +149,7 @@ void dftClass<FEOrder>::generateMPGrid()
     }
 
   // Get the reciprocal lattice vectors
-  d_reciprocalLatticeVectors=internaldft::getReciprocalLatticeVectors(d_latticeVectors);
+  d_reciprocalLatticeVectors=internaldft::getReciprocalLatticeVectors(d_domainBoundingVectors);
 
   if (useSymm || timeReversal) {
     //
@@ -171,7 +171,7 @@ void dftClass<FEOrder>::generateMPGrid()
      //
      for (unsigned int i=0; i<3; ++i) {
         for (unsigned int j=0; j<3; ++j)
-            lattice[i][j] = d_latticeVectors[i][j];
+            lattice[i][j] = d_domainBoundingVectors[i][j];
      }
      std::set<unsigned int>::iterator it = atomTypes.begin();
      for (unsigned int i=0; i<num_atom; ++i){

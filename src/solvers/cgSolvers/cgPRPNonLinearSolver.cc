@@ -27,9 +27,11 @@
                                             int    debugLevel,
 					    MPI_Comm &mpi_comm_replica,
                                             double lineSearchTolerance,
-				            int    lineSearchMaxIterations) :
+				            int    lineSearchMaxIterations,
+					    double lineSearchDampingParameter) :
     d_lineSearchTolerance(lineSearchTolerance),
     d_lineSearchMaxIterations(lineSearchMaxIterations),
+    d_lineSearchDampingParameter(lineSearchDampingParameter),
     mpi_communicator (mpi_comm_replica),
     n_mpi_processes (dealii::Utilities::MPI::n_mpi_processes(mpi_communicator)),
     this_mpi_process (dealii::Utilities::MPI::this_mpi_process(mpi_communicator)),
@@ -62,13 +64,15 @@
                                int    maxNumberIterations,
                                int    debugLevel,
                                double lineSearchTolerance,
-			       int    lineSearchMaxIterations)
+			       int    lineSearchMaxIterations,
+			       double lineSearchDampingParameter)
   {
     d_debugLevel=debugLevel;
     d_maxNumberIterations=maxNumberIterations;
     d_tolerance=tolerance; 
     d_lineSearchTolerance=lineSearchTolerance;
     d_lineSearchMaxIterations=lineSearchMaxIterations;
+    d_lineSearchDampingParameter=lineSearchDampingParameter;
   }
   //
   // initialize direction
@@ -371,7 +375,7 @@
     //
     // value of sigma0
     //
-    const double sigma0 = 0.7;//0.1;
+    const double sigma0 =d_lineSearchDampingParameter;
 
     //
     // set the initial value of alpha
@@ -423,7 +427,7 @@
       const double eta = computeEta();
 
       unsigned int isSuccess=0;
-      if (std::fabs(eta) < tolerance*d_numberUnknowns)
+      if (std::fabs(eta) < toleranceSqr*d_numberUnknowns)
          isSuccess=1;
       MPI_Bcast(&(isSuccess),
 		1,
@@ -538,7 +542,7 @@
     // check for convergence
     //
     unsigned int isSuccess=0;    
-    if ( d_deltaNew < toleranceSqr*totalnumberUnknowns*totalnumberUnknowns)
+    if ( d_deltaNew < toleranceSqr*totalnumberUnknowns)
         isSuccess=1;
 
     MPI_Bcast(&(isSuccess),
@@ -648,7 +652,7 @@
       // check for convergence
       //
       unsigned int isBreak=0;
-      if (d_deltaNew < toleranceSqr*totalnumberUnknowns*totalnumberUnknowns)
+      if (d_deltaNew < toleranceSqr*totalnumberUnknowns)
 	isBreak=1;
       MPI_Bcast(&(isSuccess),
 		   1,

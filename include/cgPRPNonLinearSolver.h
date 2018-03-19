@@ -50,13 +50,15 @@
      * convergence.
      * @param lineSearchMaxIterations Maximum number of iterations for the 
      * line search.
+     * @param lineSearchDampingParameter scales the initial line search step
      */
     cgPRPNonLinearSolver(double tolerance,
                       int    maxNumberIterations,
                       int    debugLevel,
 		      MPI_Comm &mpi_comm_replica,
                       double lineSearchTolerance = 1.0e-6,
-		      int    lineSearchMaxIterations = 10);
+		      int    lineSearchMaxIterations = 10,
+		      double lineSeachDampingParameter=1.0);
 
     /**
      * @brief Destructor.
@@ -70,7 +72,8 @@
                  int    maxNumberIterations,
                  int    debugLevel,
                  double lineSearchTolerance,
-                 int    lineSearchMaxIterations);
+                 int    lineSearchMaxIterations,
+		 double lineSeachDampingParameter);
 
     /**
      * @brief Solve non-linear algebraic equation.
@@ -174,6 +177,7 @@
     std::vector<int>    d_unknownCountFlag;
     double              d_lineSearchTolerance;
     int                 d_lineSearchMaxIterations;
+    double              d_lineSearchDampingParameter;
 
     //
     // data

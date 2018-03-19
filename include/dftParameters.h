@@ -33,17 +33,18 @@ namespace dftParameters
   extern unsigned int finiteElementPolynomialOrder,n_refinement_steps,numberEigenValues,xc_id, spinPolarized, nkx,nky,nkz, pseudoProjector;
   extern unsigned int chebyshevOrder,numPass,numSCFIterations,maxLinearSolverIterations, mixingHistory, npool;
 
-  extern double radiusAtomBall, domainSizeX, domainSizeY, domainSizeZ, mixingParameter, dkx, dky, dkz;
+  extern double radiusAtomBall, mixingParameter, dkx, dky, dkz;
   extern double lowerEndWantedSpectrum,relLinearSolverTolerance,selfConsistentSolverTolerance,TVal, start_magnetization;
 
   extern bool isPseudopotential,periodicX,periodicY,periodicZ, useSymm, symmFromFile, timeReversal;
-  extern std::string meshFileName,coordinatesFile,currentPath,latticeVectorsFile,kPointDataFile, symmDataFile, ionRelaxFlagsFile;
+  extern std::string meshFileName,coordinatesFile,currentPath,domainBoundingVectorsFile,kPointDataFile, symmDataFile, ionRelaxFlagsFile;
 
   extern double innerDomainSizeX, innerDomainSizeY, innerDomainSizeZ, outerAtomBallRadius, meshSizeOuterDomain, meshSizeInnerDomain;
   extern double meshSizeInnerBall, meshSizeOuterBall;
 
   extern bool isIonOpt, isCellOpt, isIonForce, isCellStress;
   extern double forceRelaxTol, stressRelaxTol;
+  extern unsigned int cellConstraintType;
 
   /**
    * Declare parameters.

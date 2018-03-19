@@ -324,9 +324,9 @@ void dftClass<FEOrder>::generateImageCharges()
   //
   //get the magnitude of lattice Vectors
   //
-  double magnitude1 = sqrt(d_latticeVectors[0][0]*d_latticeVectors[0][0] +  d_latticeVectors[0][1]*d_latticeVectors[0][1] + d_latticeVectors[0][2]*d_latticeVectors[0][2]);
-  double magnitude2 = sqrt(d_latticeVectors[1][0]*d_latticeVectors[1][0] +  d_latticeVectors[1][1]*d_latticeVectors[1][1] + d_latticeVectors[1][2]*d_latticeVectors[1][2]);
-  double magnitude3 = sqrt(d_latticeVectors[2][0]*d_latticeVectors[2][0] +  d_latticeVectors[2][1]*d_latticeVectors[2][1] + d_latticeVectors[2][2]*d_latticeVectors[2][2]);
+  double magnitude1 = sqrt(d_domainBoundingVectors[0][0]*d_domainBoundingVectors[0][0] +  d_domainBoundingVectors[0][1]*d_domainBoundingVectors[0][1] + d_domainBoundingVectors[0][2]*d_domainBoundingVectors[0][2]);
+  double magnitude2 = sqrt(d_domainBoundingVectors[1][0]*d_domainBoundingVectors[1][0] +  d_domainBoundingVectors[1][1]*d_domainBoundingVectors[1][1] + d_domainBoundingVectors[1][2]*d_domainBoundingVectors[1][2]);
+  double magnitude3 = sqrt(d_domainBoundingVectors[2][0]*d_domainBoundingVectors[2][0] +  d_domainBoundingVectors[2][1]*d_domainBoundingVectors[2][1] + d_domainBoundingVectors[2][2]*d_domainBoundingVectors[2][2]);
 
   //
   //get the maximum of the magnitudes
@@ -359,7 +359,7 @@ void dftClass<FEOrder>::generateImageCharges()
   for(int i = 0; i < 3; ++i)
     {
       for(int j = 0; j < 3; ++j){
-	shift[i] += d_latticeVectors[j][i]/2.0; 
+	shift[i] += d_domainBoundingVectors[j][i]/2.0; 
       }
     }
 
@@ -369,7 +369,7 @@ void dftClass<FEOrder>::generateImageCharges()
     {
       for(int j = 0; j < 3; ++j)
 	{
-	  latticeVectors[count] = d_latticeVectors[i][j];
+	  latticeVectors[count] = d_domainBoundingVectors[i][j];
 	  count++;
 	}
     }
@@ -441,7 +441,7 @@ void dftClass<FEOrder>::generateImageCharges()
 		
 			for (int ii = 0; ii < 3; ++ii)
 			  for(int jj = 0; jj < 3;++jj)
-			    currentImageChargePosition[ii] += d_latticeVectors[jj][ii]*newFrac[jj];
+			    currentImageChargePosition[ii] += d_domainBoundingVectors[jj][ii]*newFrac[jj];
  
 			for(int ii = 0; ii < 3; ++ii)
 			  currentImageChargePosition[ii] -= shift[ii];

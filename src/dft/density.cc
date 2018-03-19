@@ -415,5 +415,7 @@ void dftClass<FEOrder>::noRemeshRhoDataInit()
     gradRhoInValsSpinPolarized.push_back(gradRhoInValuesSpinPolarized);
   }
 
+  normalizeRho();
+
 }
 
