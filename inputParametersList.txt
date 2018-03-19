@@ -151,23 +151,24 @@ NUMBER OF POOLS
 #DFT functional related parameters#
 ###################################
 
-#Pseudopotential calculation or all-electron calculation: true or false
+#Pseudopotential calculation or all-electron calculation: true or false (datatype: bool, default: false)
 PSEUDOPOTENTIAL CALCULATION 
 
-# Pseudopotential type: 1 for KB projector, 2 for ONCV projectors
+# Pseudopotential type: 1 for KB projector, 2 for ONCV projectors (datatype: integer, default: 1)
 PSEUDOPOTENTIAL TYPE 
 
-#Exhchange-correlation functional
+#Exhchange-correlation functional (datatype: integer, default: 1)
 # 1 (LDA: Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)])
 # 2 (LDA: Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)])
 # 3 (LDA: Vosko, Wilk & Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)])
 # 4 (GGA: Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)])*/
 EXCHANGE CORRELATION TYPE 
 
-#Spin polarization: 0 for no spin polarization and 1 for spin polarization 
+#Spin polarization: 0 for no spin polarization and 1 for spin polarization (datatype: integer, default: 0) 
 SPIN POLARIZATION 
 
 #Magnetization to start with (must be between -0.5 and +0.5)
+#(datatype: double, default: 0.0)
 START MAGNETIZATION 
 
 ##################################################
