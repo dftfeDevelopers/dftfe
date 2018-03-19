@@ -19,18 +19,13 @@
 #include "../../../include/meshMovementGaussian.h"
 
 meshMovementGaussianClass::meshMovementGaussianClass( MPI_Comm &mpi_comm_replica):
- meshMovementClass(mpi_comm_replica),
- mpi_communicator(mpi_comm_replica)
+ meshMovementClass(mpi_comm_replica)
 {
 }
 
-//meshMovementGaussianClass::meshMovementGaussianClass()
-//{
-//}
-
-std::pair<bool,double> meshMovementGaussianClass::moveMesh(std::vector<Point<C_DIM> > controlPointLocations,
-                                                           std::vector<Tensor<1,C_DIM,double> > controlPointDisplacements,
-                                                           double controllingParameter)   
+std::pair<bool,double> meshMovementGaussianClass::moveMesh(const std::vector<Point<C_DIM> > & controlPointLocations,
+                                                           const std::vector<Tensor<1,C_DIM,double> > & controlPointDisplacements,
+                                                           const double controllingParameter)   
 {
   d_controlPointLocations=controlPointLocations;
   d_controlPointDisplacements=controlPointDisplacements;
@@ -38,13 +33,9 @@ std::pair<bool,double> meshMovementGaussianClass::moveMesh(std::vector<Point<C_D
   //writeMesh("meshUnmoved.vtu");
   MPI_Barrier(mpi_communicator);
   pcout << "Computing triangulation displacement increment caused by gaussian generator displacements..." << std::endl;
-  pcout << " check 0.0" << std::endl ;
   initIncrementField();
-  pcout << " check 0.1" << std::endl ;
   computeIncrement();
-  pcout << " check 0.2" << std::endl ;	
   finalizeIncrementField();
-  pcout << " check 0.3" << std::endl ;
   pcout << "...Computed triangulation displacement increment" << std::endl;	
   updateTriangulationVertices();
   std::pair<bool,double> returnData=movedMeshCheck();

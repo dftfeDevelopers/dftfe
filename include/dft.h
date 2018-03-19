@@ -31,6 +31,7 @@
 #include "poisson.h"
 #include "eigen.h"
 #include "symmetry.h"
+#include "meshMovementAffineTransform.h"
 
 
 
@@ -56,7 +57,8 @@ template <unsigned int T> class eigenClass;
 template <unsigned int T> class forceClass;  
 template <unsigned int T> class symmetryClass;
 template <unsigned int T> class forceClass; 
-template <unsigned int T> class geoOptIon; 
+template <unsigned int T> class geoOptIon;
+template <unsigned int T> class geoOptCell; 
 
 //
 //extern declarations for blas-lapack routines
@@ -103,7 +105,10 @@ class dftClass
   friend class forceClass; 
 
   template <unsigned int T>
-  friend class geoOptIon;    
+  friend class geoOptIon; 
+ 
+  template <unsigned int T>
+  friend class geoOptCell;    
 
   template <unsigned int T>
   friend class symmetryClass;
@@ -217,6 +222,11 @@ class dftClass
    * Computes total charge by integrating the electron-density
    */
   double totalCharge(std::map<dealii::CellId, std::vector<double> > *);
+
+  /**
+   * normalized the charge density
+   */
+  void normalizeRho();  
   
   /**
    * Computes output electron-density from wavefunctions
@@ -253,6 +263,12 @@ class dftClass
   void computeVolume();
 
   /**
+   * Deforms the domain by the given deformation gradient and reinitializes the
+   * dftClass datastructures.
+   */
+  void deformDomain(const Tensor<2,3,double> & deformationGradient);  
+
+  /**
    * Computes inner Product and Y = alpha*X + Y for complex vectors used during
    * periodic boundary conditions
    */
@@ -281,7 +297,7 @@ class dftClass
    */
   unsigned int numElectrons, numLevels;
   std::set<unsigned int> atomTypes;
-  std::vector<std::vector<double> > atomLocations,atomLocationsFractional,d_latticeVectors,d_reciprocalLatticeVectors, d_imagePositions, d_domainBoundingVectors;
+  std::vector<std::vector<double> > atomLocations,atomLocationsFractional,d_reciprocalLatticeVectors, d_imagePositions, d_domainBoundingVectors;
 
   std::vector<int> d_imageIds;
   std::vector<double> d_imageCharges;
@@ -298,6 +314,9 @@ class dftClass
    * meshGenerator based object
    */
   meshGeneratorClass d_mesh;
+
+  /// affine transformation object
+  meshMovementAffineTransform d_affineTransformMesh;
 
   /// volume of the domain
   double d_domainVolume;
@@ -329,6 +348,7 @@ class dftClass
   forceClass<FEOrder> * forcePtr;
   symmetryClass<FEOrder> * symmetryPtr;
   geoOptIon<FEOrder> * geoOptIonPtr;
+  geoOptCell<FEOrder> * geoOptCellPtr;  
 
   /**
    * constraint Matrices

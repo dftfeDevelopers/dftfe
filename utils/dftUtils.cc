@@ -31,6 +31,27 @@ namespace dftUtils
     return (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)) : 1.0/(1.0 + std::exp(factor));
   }
 
+  void transformDomainBoundingVectors(std::vector<std::vector<double> > & domainBoundingVectors,
+	                               const dealii::Tensor<2,3,double> & deformationGradient)
+  {
+      for (unsigned int idim=0; idim<3;++idim)
+      {
+	  dealii::Tensor<1,3,double> domainVector;
+	  for (unsigned int jdim=0; jdim<3;++jdim)
+          {
+	      domainVector[jdim]=domainBoundingVectors[idim][jdim];
+	  }
+
+	  domainVector=deformationGradient*domainVector;
+
+	  for (unsigned int jdim=0; jdim<3;++jdim)
+          {
+	      domainBoundingVectors[idim][jdim]=domainVector[jdim];
+	  }
+
+      }
+  }
+
   Pool::Pool(const MPI_Comm &mpi_communicator,
              const unsigned int npool)
   {

@@ -304,16 +304,26 @@ void dftClass<FEOrder>::initRho()
 	} 
     }
 
+  normalizeRho();
+  //
+  computing_timer.exit_section("initialize density"); 
+}
 
-  //
-  //Normalize rho
-  //
+//
+//Normalize rho
+//
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::normalizeRho()
+{
+  QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
+  const unsigned int n_q_points    = quadrature_formula.size();    
+
   double charge = totalCharge(rhoInValues);
   char buffer[100];
   sprintf(buffer, "initial total charge: %18.10e \n", charge);
   pcout << buffer;
   //scaling rho
-  cell = dofHandler.begin_active();
+  typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
   for (; cell!=endc; ++cell) {
     if (cell->is_locally_owned()){
       for (unsigned int q=0; q<n_q_points; ++q){
@@ -329,8 +339,4 @@ void dftClass<FEOrder>::initRho()
   double chargeAfterScaling = totalCharge(rhoInValues);
   sprintf(buffer, "initial total charge after scaling: %18.10e \n", chargeAfterScaling);
   pcout << buffer;
-  
-  
-  //
-  computing_timer.exit_section("initialize density"); 
 }

@@ -493,9 +493,9 @@ Point<3> symmetryClass<FEOrder>::crys2cart(Point<3> p, int flag)
 {
   Point<3> ptemp ;
   if (flag==1){
-    ptemp[0] = p[0]*(dftPtr->d_latticeVectors)[0][0] + p[1]*(dftPtr->d_latticeVectors)[1][0] + p[2]*(dftPtr->d_latticeVectors)[2][0] ;
-    ptemp[1] = p[0]*(dftPtr->d_latticeVectors)[0][1] + p[1]*(dftPtr->d_latticeVectors)[1][1] + p[2]*(dftPtr->d_latticeVectors)[2][1] ;
-    ptemp[2] = p[0]*(dftPtr->d_latticeVectors)[0][2] + p[1]*(dftPtr->d_latticeVectors)[1][2] + p[2]*(dftPtr->d_latticeVectors)[2][2] ;
+    ptemp[0] = p[0]*(dftPtr->d_domainBoundingVectors)[0][0] + p[1]*(dftPtr->d_domainBoundingVectors)[1][0] + p[2]*(dftPtr->d_domainBoundingVectors)[2][0] ;
+    ptemp[1] = p[0]*(dftPtr->d_domainBoundingVectors)[0][1] + p[1]*(dftPtr->d_domainBoundingVectors)[1][1] + p[2]*(dftPtr->d_domainBoundingVectors)[2][1] ;
+    ptemp[2] = p[0]*(dftPtr->d_domainBoundingVectors)[0][2] + p[1]*(dftPtr->d_domainBoundingVectors)[1][2] + p[2]*(dftPtr->d_domainBoundingVectors)[2][2] ;
   }
   if (flag==-1){
     ptemp[0] = p[0]*(dftPtr->d_reciprocalLatticeVectors)[0][0] + p[1]*(dftPtr->d_reciprocalLatticeVectors)[0][1] + p[2]*(dftPtr->d_reciprocalLatticeVectors)[0][2] ;
@@ -520,7 +520,7 @@ void symmetryClass<FEOrder>:: test_spg_get_ir_reciprocal_mesh()
   //
   for (unsigned int i=0; i<3; ++i) {
      for (unsigned int j=0; j<3; ++j)
-         lattice[i][j] = (dftPtr->d_latticeVectors)[i][j];
+         lattice[i][j] = (dftPtr->d_domainBoundingVectors)[i][j];
   }
   //
   std::set<unsigned int>::iterator it = (dftPtr->atomTypes).begin();

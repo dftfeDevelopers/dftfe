@@ -86,6 +86,7 @@ meshMovementClass::meshMovementClass(MPI_Comm &mpi_comm_replica):
 
 void meshMovementClass::init(Triangulation<3,3> & triangulation, const std::vector<std::vector<double> > & domainBoundingVectors)
 {
+  d_domainBoundingVectors=domainBoundingVectors;    
   if (triangulation.locally_owned_subdomain()==numbers::invalid_subdomain_id)
      d_isParallelMesh=false;
   else
@@ -132,7 +133,7 @@ void meshMovementClass::init(Triangulation<3,3> & triangulation, const std::vect
 	  offsetVectors[i][j] = unitVectorsXYZ[i][j] - domainBoundingVectors[i][j];
 	}
     }  
-  d_domainBoundingVectors=domainBoundingVectors;
+
   for (int i = 0; i < C_DIM; ++i)
     {
       GridTools::collect_periodic_faces(d_dofHandlerMoveMesh, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, d_periodicity_vector,offsetVectors[i]);
@@ -144,9 +145,10 @@ void meshMovementClass::init(Triangulation<3,3> & triangulation, const std::vect
 #endif
 }
 
-void meshMovementClass::initMoved()
+void meshMovementClass::initMoved(const std::vector<std::vector<double> > & domainBoundingVectors)
 {
    d_dofHandlerMoveMesh.distribute_dofs(FEMoveMesh);
+   d_domainBoundingVectors=domainBoundingVectors;
 }
 
 void meshMovementClass::writeMesh(std::string meshFileName)
@@ -350,26 +352,25 @@ std::pair<bool,double> meshMovementClass::movedMeshCheck()
 
 void meshMovementClass::findClosestVerticesToDestinationPoints(const std::vector<Point<3>> & destinationPoints,
 		                                               std::vector<Point<3>> & closestTriaVertexToDestPointsLocation,
-                                                               std::vector<Tensor<1,3,double>> & dispClosestTriaVerticesToDestPoints,
-                                                               const std::vector<std::vector<double> > & domainBoundingVectors)
+                                                               std::vector<Tensor<1,3,double>> & dispClosestTriaVerticesToDestPoints)
 {
   closestTriaVertexToDestPointsLocation.clear();
   dispClosestTriaVerticesToDestPoints.clear();
   unsigned int vertices_per_cell=GeometryInfo<C_DIM>::vertices_per_cell;
-  std::vector<double> latticeVectors(9,0.0);
+  std::vector<double> latticeVectorsFlattened(9,0.0);
   for (unsigned int idim=0; idim<3; idim++)
       for(unsigned int jdim=0; jdim<3; jdim++)
-          latticeVectors[3*idim+jdim]=domainBoundingVectors[idim][jdim];
+          latticeVectorsFlattened[3*idim+jdim]=d_domainBoundingVectors[idim][jdim];
   Point<3> corner;
   for (unsigned int idim=0; idim<3; idim++){
       corner[idim]=0;
       for(unsigned int jdim=0; jdim<3; jdim++)
-          corner[idim]-=domainBoundingVectors[jdim][idim]/2.0;
+          corner[idim]-=d_domainBoundingVectors[jdim][idim]/2.0;
   }
   std::vector<double> latticeVectorsMagnitudes(3,0.0);
   for (unsigned int idim=0; idim<3; idim++){
       for(unsigned int jdim=0; jdim<3; jdim++)
-          latticeVectorsMagnitudes[idim]+=domainBoundingVectors[idim][jdim]*domainBoundingVectors[idim][jdim];
+          latticeVectorsMagnitudes[idim]+=d_domainBoundingVectors[idim][jdim]*d_domainBoundingVectors[idim][jdim];
       latticeVectorsMagnitudes[idim]=std::sqrt(latticeVectorsMagnitudes[idim]);
   }
 
@@ -380,7 +381,7 @@ void meshMovementClass::findClosestVerticesToDestinationPoints(const std::vector
 
       std::vector<bool> isDestPointOnPeriodicSurface(3,false);
 
-      std::vector<double> destFracCoords= meshMovementUtils::getFractionalCoordinates(latticeVectors,
+      std::vector<double> destFracCoords= meshMovementUtils::getFractionalCoordinates(latticeVectorsFlattened,
 	                                                                              destinationPoints[idest],
 										      corner);
       //std::cout<< "destFracCoords: "<< destFracCoords[0] << "," <<destFracCoords[1] <<"," <<destFracCoords[2]<<std::endl; 
@@ -425,7 +426,7 @@ void meshMovementClass::findClosestVerticesToDestinationPoints(const std::vector
 		|| isDestPointOnPeriodicSurface[2])
 	    {
 
-		std::vector<double> nodeFracCoords= meshMovementUtils::getFractionalCoordinates(latticeVectors,
+		std::vector<double> nodeFracCoords= meshMovementUtils::getFractionalCoordinates(latticeVectorsFlattened,
 												nodalCoor,                                                                                                        corner);
 		for (int idim=0; idim<3; idim++)
 		{

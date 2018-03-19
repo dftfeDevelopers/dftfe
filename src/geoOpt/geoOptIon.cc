@@ -16,18 +16,19 @@
 // @author Sambit Das (2018)
 //
 
-#include "../../include/geoOptIon.h"
-#include "../../include/cgPRPNonLinearSolver.h"
-#include "../../include/force.h"
-#include "../../include/meshGenerator.h"
-#include "../../include/dft.h"
-#include "../../include/fileReaders.h"
-#include "../../include/dftParameters.h"
+#include <geoOptIon.h>
+#include <cgPRPNonLinearSolver.h>
+#include <force.h>
+#include <meshGenerator.h>
+#include <dft.h>
+#include <fileReaders.h>
+#include <dftParameters.h>
+#include <dftUtils.h>
 
 template<unsigned int FEOrder>
 void geoOptIon<FEOrder>::writeMesh(std::string meshFileName)
  {
-      dftPtr->writeMesh(meshFileName);
+      //dftPtr->writeMesh(meshFileName);
  }
 
 //
@@ -60,7 +61,7 @@ void geoOptIon<FEOrder>::init()
           d_relaxationFlags.push_back(tempRelaxFlagsData[i][j]);
    }
    //print relaxation flags
-   pcout<<" --------------Ion relaxation flags----------------"<<std::endl;
+   pcout<<" --------------Ion force relaxation flags----------------"<<std::endl;
    for (unsigned int i=0; i< numberGlobalAtoms; ++i)
    {
        pcout<<tempRelaxFlagsData[i][0] << "  "<< tempRelaxFlagsData[i][1] << "  "<<tempRelaxFlagsData[i][2]<<std::endl;
@@ -71,23 +72,31 @@ void geoOptIon<FEOrder>::init()
 template<unsigned int FEOrder>
 void geoOptIon<FEOrder>::run()
 {
-   const double tol=dftParameters::forceRelaxTol;//Hatree/Bohr
+   const double tol=dftParameters::forceRelaxTol;//(units: Hatree/Bohr)
    const unsigned int  maxIter=100;
-   const double lineSearchTol=2e-3;//5e-2;
-   const unsigned int maxLineSearchIter=10;
-   const unsigned int debugLevel=this_mpi_process==0?1:0;
+   const double lineSearchTol=tol*2.0;
+   const double lineSearchDampingParameter=0.7;
+   const unsigned int maxLineSearchIter=4;
+   const unsigned int debugLevel=Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) ==0?1:0;
    const unsigned int maxRestarts=2;
    unsigned int restartCount=0;
 
    d_totalUpdateCalls=0;
-   cgPRPNonLinearSolver cgSolver(tol,maxIter,debugLevel,mpi_communicator, lineSearchTol,maxLineSearchIter);
+   cgPRPNonLinearSolver cgSolver(tol,
+	                        maxIter,
+				debugLevel,
+				mpi_communicator, 
+				lineSearchTol,
+				maxLineSearchIter,
+				lineSearchDampingParameter);
 
-   pcout<<" Starting CG Ion Relaxation... "<<std::endl;
+   pcout<<" Starting CG Ion force relaxation... "<<std::endl;
    pcout<<"   ---CG Parameters--------------  "<<std::endl;
    pcout<<"      stopping tol: "<< tol<<std::endl;
    pcout<<"      maxIter: "<< maxIter<<std::endl;
    pcout<<"      lineSearch tol: "<< lineSearchTol<<std::endl;
    pcout<<"      lineSearch maxIter: "<< maxLineSearchIter<<std::endl;
+   pcout<<"      lineSearch damping parameter: "<< lineSearchDampingParameter<<std::endl;   
    pcout<<"   ------------------------------  "<<std::endl;
 
    if  (getNumberUnknowns()>0)
@@ -102,11 +111,11 @@ void geoOptIon<FEOrder>::run()
        
        if (cgReturn == nonLinearSolver::SUCCESS )
        {
-	    pcout<< " ...CG Ion Relaxation completed, total number of geometry updates: "<<d_totalUpdateCalls<<std::endl;
+	    pcout<< " ...CG Ion force relaxation completed as maximum force magnitude is less than force relaxation tolerance: "<< dftParameters::forceRelaxTol<<", total number of ion position updates: "<<d_totalUpdateCalls<<std::endl;
        }
        else if (cgReturn == nonLinearSolver::FAILURE)
        {
-	    pcout<< " ...CG Ion Relaxation failed "<<std::endl;
+	    pcout<< " ...CG Ion force relaxation failed "<<std::endl;
 
        }
        else if (cgReturn == nonLinearSolver::MAX_ITER_REACHED)
@@ -140,13 +149,13 @@ int geoOptIon<FEOrder>::getNumberUnknowns() const
 template<unsigned int FEOrder>
 double geoOptIon<FEOrder>::value() const
 {
-   AssertThrow(false,ExcMessage("Not implemented"));    
+   dftUtils::ExcNotImplementedYet;    
 }
 
 template<unsigned int FEOrder>
 void geoOptIon<FEOrder>::value(std::vector<double> & functionValue)
 {
-   AssertThrow(false,ExcMessage("Not implemented"));     
+   dftUtils::ExcNotImplementedYet;     
 }
 
 template<unsigned int FEOrder>
@@ -183,7 +192,7 @@ template<unsigned int FEOrder>
 void geoOptIon<FEOrder>::precondition(std::vector<double>       & s,
 			              const std::vector<double> & gradient) const
 {
-   AssertThrow(false,ExcMessage("Not implemented"));     
+   dftUtils::ExcNotImplementedYet;
 }
 
 template<unsigned int FEOrder>
@@ -227,13 +236,13 @@ void geoOptIon<FEOrder>::update(const std::vector<double> & solution)
 template<unsigned int FEOrder>
 void geoOptIon<FEOrder>::solution(std::vector<double> & solution)
 {
-   AssertThrow(false,ExcMessage("Not implemented"));     
+   dftUtils::ExcNotImplementedYet;     
 }
 
 template<unsigned int FEOrder>
 std::vector<int>  geoOptIon<FEOrder>::getUnknownCountFlag() const
 {
-   AssertThrow(false,ExcMessage("Not implemented"));     
+   dftUtils::ExcNotImplementedYet;     
 }
 
 

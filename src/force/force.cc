@@ -131,7 +131,7 @@ void forceClass<FEOrder>::initMoved()
   
   createBinObjectsForce();
   locateAtomCoreNodesForce();
-  gaussianMovePar.initMoved();
+  gaussianMovePar.initMoved(dftPtr->d_domainBoundingVectors);
 }
 
 //

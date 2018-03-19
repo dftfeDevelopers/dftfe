@@ -97,13 +97,13 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
   std::vector<double> latticeVectorsFlattened(9,0.0);
   for (unsigned int idim=0; idim<3; idim++)
       for(unsigned int jdim=0; jdim<3; jdim++)
-          latticeVectorsFlattened[3*idim+jdim]=dftPtr->d_latticeVectors[idim][jdim];
+          latticeVectorsFlattened[3*idim+jdim]=dftPtr->d_domainBoundingVectors[idim][jdim];
   Point<3> corner;
   for (unsigned int idim=0; idim<3; idim++)
   {
       corner[idim]=0;
       for(unsigned int jdim=0; jdim<3; jdim++)
-          corner[idim]-=dftPtr->d_latticeVectors[jdim][idim]/2.0;
+          corner[idim]-=dftPtr->d_domainBoundingVectors[jdim][idim]/2.0;
   }
   std::vector<bool> periodicBc(3,false); 
   periodicBc[0]=dftParameters::periodicX;periodicBc[1]=dftParameters::periodicY;periodicBc[2]=dftParameters::periodicZ;  
