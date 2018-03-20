@@ -95,7 +95,7 @@ void dftClass<FEOrder>::initLocalPseudoPotential()
       if(cell->is_locally_owned())
 	{
 	  fe_values.reinit(cell);
-	  (pseudoValues)[cell->id()]=std::vector<double>(n_q_points);
+	  pseudoValues[cell->id()]=std::vector<double>(n_q_points);
 	  double * pseudoValuesPtr = &((pseudoValues)[cell->id()][0]);
 	  for (unsigned int q = 0; q < n_q_points; ++q)
 	    {
