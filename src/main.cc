@@ -88,6 +88,7 @@ void parse_command_line(const int argc,
           prm.parse_input(parameter_file);
           print_usage_message(prm);
           dftParameters::parse_parameters(prm);
+	  prm.print_parameters (ConditionalOStream(std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)), ParameterHandler::Text);
         }
 
     }//end of while loop
