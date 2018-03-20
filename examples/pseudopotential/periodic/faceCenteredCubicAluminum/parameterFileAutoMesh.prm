@@ -84,7 +84,6 @@ set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 20
 set LOWER BOUND WANTED SPECTRUM = -10.0
 #Chebyshev Filter polynomial degree (0 indicates default value based on upper bound of Hamiltonian)
 set CHEBYSHEV POLYNOMIAL DEGREE = 0
-set CHEBYSHEV FILTER PASSES = 1
 
 #
 #SCF parameters
