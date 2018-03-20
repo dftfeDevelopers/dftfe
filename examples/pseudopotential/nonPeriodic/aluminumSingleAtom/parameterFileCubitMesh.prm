@@ -18,7 +18,7 @@ set ATOMIC COORDINATES FILE = coordinates.inp
 #Geometry related parameters
 #
 #
-
+set ION FORCE=true
 #Radius of the atom-centered ball in which self-potential of the associated nuclear charge is solved
 set SELF POTENTIAL ATOM BALL RADIUS = 8.0
 
@@ -35,11 +35,6 @@ set PERIODIC BOUNDARY CONDITION X = false
 set PERIODIC BOUNDARY CONDITION Y = false
 set PERIODIC BOUNDARY CONDITION Z = false
 
-#
-#kPoint Quadrature Rule file for sampling the Brillouin zone (used only in Periodic calculation)
-#(Located in $DFT PATH/data/kPointList)
-#
-set kPOINT RULE FILE = GammaPoint.inp
 
 #
 #DFT functional related parameters
@@ -70,7 +65,7 @@ set CHEBYSHEV POLYNOMIAL DEGREE = 0
 #SCF parameters
 #
 set SCF CONVERGENCE MAXIMUM ITERATIONS = 30
-set SCF CONVERGENCE TOLERANCE          = 1e-09
+set SCF CONVERGENCE TOLERANCE          = 1e-7
 set ANDERSON SCHEME MIXING PARAMETER   = 0.5
 set ANDERSON SCHEME MIXING HISTORY     = 70
 set TEMPERATURE                        = 500
