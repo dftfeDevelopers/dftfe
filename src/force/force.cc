@@ -108,10 +108,13 @@ void forceClass<FEOrder>::initUnmoved(Triangulation<3,3> & triangulation)
     }
 
   std::vector<GridTools::PeriodicFacePair<typename DoFHandler<C_DIM>::cell_iterator> > periodicity_vectorForce;
-  for (int i = 0; i < C_DIM; ++i)
-    {
+
+  const std::array<int,3> periodic = {dftParameters::periodicX, dftParameters::periodicY, dftParameters::periodicZ};
+  for (int i = 0; i < std::accumulate(periodic.begin(),periodic.end(),0); ++i)
+   {
       GridTools::collect_periodic_faces(d_dofHandlerForce, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vectorForce,offsetVectors[i]);
-    }
+    }  
+
   DoFTools::make_periodicity_constraints<DoFHandler<C_DIM> >(periodicity_vectorForce, d_constraintsNoneForce);
   d_constraintsNoneForce.close();
 #else
