@@ -79,11 +79,11 @@ void forceClass<FEOrder>::initUnmoved(Triangulation<3,3> & triangulation)
   d_dofHandlerForce.distribute_dofs(FEForce);
   d_locally_owned_dofsForce.clear();d_locally_relevant_dofsForce.clear();
   d_locally_owned_dofsForce = d_dofHandlerForce.locally_owned_dofs();
-  DoFTools::extract_locally_relevant_dofs(d_dofHandlerForce, d_locally_relevant_dofsForce);  
+  DoFTools::extract_locally_relevant_dofs(d_dofHandlerForce, d_locally_relevant_dofsForce);
 
   ///
   d_constraintsNoneForce.clear(); d_constraintsNoneForce.reinit(d_locally_relevant_dofsForce);
-  DoFTools::make_hanging_node_constraints(d_dofHandlerForce, d_constraintsNoneForce);   
+  DoFTools::make_hanging_node_constraints(d_dofHandlerForce, d_constraintsNoneForce);
 #ifdef ENABLE_PERIODIC_BC
   //create unitVectorsXYZ
   std::vector<std::vector<double> > unitVectorsXYZ;
@@ -113,7 +113,7 @@ void forceClass<FEOrder>::initUnmoved(Triangulation<3,3> & triangulation)
   for (int i = 0; i < std::accumulate(periodic.begin(),periodic.end(),0); ++i)
    {
       GridTools::collect_periodic_faces(d_dofHandlerForce, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vectorForce,offsetVectors[i]);
-    }  
+    }
 
   DoFTools::make_periodicity_constraints<DoFHandler<C_DIM> >(periodicity_vectorForce, d_constraintsNoneForce);
   d_constraintsNoneForce.close();
@@ -121,7 +121,7 @@ void forceClass<FEOrder>::initUnmoved(Triangulation<3,3> & triangulation)
   d_constraintsNoneForce.close();
 #endif
   gaussianMovePar.init(triangulation,dftPtr->d_domainBoundingVectors);
-  computing_timer.exit_section("forceClass setup"); 
+  computing_timer.exit_section("forceClass setup");
 }
 
 //reinitialize force class object after mesh update
@@ -152,7 +152,7 @@ void forceClass<FEOrder>::initPseudoData(){
       }
       else
       {
-        computeElementalNonLocalPseudoDataForce();	  
+        computeElementalNonLocalPseudoDataForce();
       }
     }
 }
@@ -185,18 +185,18 @@ void forceClass<FEOrder>::configForceLinFEFinalize()
   d_configForceVectorLinFE.compress(VectorOperation::add);//copies the ghost element cache to the owning element
   d_configForceVectorLinFE.update_ghost_values();
   d_constraintsNoneForce.distribute(d_configForceVectorLinFE);//distribute to constrained degrees of freedom (for example periodic)
-  d_configForceVectorLinFE.update_ghost_values();  
+  d_configForceVectorLinFE.update_ghost_values();
 #ifdef ENABLE_PERIODIC_BC
   d_configForceVectorLinFEKPoints.compress(VectorOperation::add);//copies the ghost element cache to the owning element
   d_configForceVectorLinFEKPoints.update_ghost_values();
   d_constraintsNoneForce.distribute(d_configForceVectorLinFEKPoints);//distribute to constrained degrees of freedom (for example periodic)
-  d_configForceVectorLinFEKPoints.update_ghost_values();  
-#endif  
+  d_configForceVectorLinFEKPoints.update_ghost_values();
+#endif
 
 }
 
 //compute configurational force on the finite element nodes corresponding to linear shape function
-// generators. This function is generic to all-electron and pseudopotential as well as non-periodic and periodic 
+// generators. This function is generic to all-electron and pseudopotential as well as non-periodic and periodic
 //cases. Also both LDA and GGA exchange correlation are handled. For details of the configurational
 //force expressions refer to the Configurational force paper by Motamarri et.al. 
 //(https://arxiv.org/abs/1712.05535) 
@@ -208,7 +208,7 @@ void forceClass<FEOrder>::computeConfigurationalForceTotalLinFE()
   configForceLinFEInit();
   //configurational force contribution from all terms except those from nuclear self energy
   if (dftParameters::spinPolarized)
-     computeConfigurationalForceSpinPolarizedEEshelbyTensorFPSPFnlLinFE();      
+     computeConfigurationalForceSpinPolarizedEEshelbyTensorFPSPFnlLinFE();
   else
      computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(); 
   //configurational force contribution from nuclear self energy. This is handled separately as it involves
@@ -216,7 +216,7 @@ void forceClass<FEOrder>::computeConfigurationalForceTotalLinFE()
   computeConfigurationalForceEselfLinFE();
   configForceLinFEFinalize();
 #ifdef DEBUG
-  std::map<std::pair<unsigned int,unsigned int>, unsigned int> ::const_iterator it; 
+  std::map<std::pair<unsigned int,unsigned int>, unsigned int> ::const_iterator it;
   for (it=d_atomsForceDofs.begin(); it!=d_atomsForceDofs.end(); ++it)
   {
 	 const std::pair<unsigned int,unsigned int> & atomIdPair= it->first;
@@ -224,9 +224,9 @@ void forceClass<FEOrder>::computeConfigurationalForceTotalLinFE()
 	 std::cout<<"procid: "<< this_mpi_process<<" atomId: "<< atomIdPair.first << ", force component: "<<atomIdPair.second << ", force: "<<d_configForceVectorLinFE[atomForceDof] << std::endl;
 #ifdef ENABLE_PERIODIC_BC
 	 std::cout<<"procid: "<< this_mpi_process<<" atomId: "<< atomIdPair.first << ", force component: "<<atomIdPair.second << ", forceKPoints: "<<d_configForceVectorLinFEKPoints[atomForceDof] << std::endl; 
-#endif  	 
+#endif
   }
-#endif   
+#endif
 
 }
 
