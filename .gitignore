@@ -16,7 +16,7 @@
 *.lib
 *.pbs
 *.e*
-*.o*
+#*.o*  ## don't build in-source!
 
 # Executables
 *.exe
@@ -43,7 +43,7 @@ main
 *#main*
 
 #build files
-build/
+/*build/
 
 #Tex files
 *.aux

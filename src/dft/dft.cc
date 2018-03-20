@@ -83,7 +83,9 @@ dftClass<FEOrder>::dftClass(MPI_Comm &mpi_comm_replica, MPI_Comm &interpoolcomm)
   d_mesh(mpi_comm_replica,interpoolcomm),
   d_affineTransformMesh(mpi_comm_replica),
   pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
-  computing_timer (pcout, TimerOutput::summary, TimerOutput::wall_times)
+  computing_timer (pcout,
+                   dftParameters::reproducible_output ? TimerOutput::never : TimerOutput::summary,
+                   TimerOutput::wall_times)
 {
   poissonPtr= new poissonClass<FEOrder>(this, mpi_comm_replica);
   eigenPtr= new eigenClass<FEOrder>(this, mpi_comm_replica);

@@ -44,10 +44,15 @@ namespace dftParameters
 
   unsigned int verbosity=0;
 
+  bool reproducible_output=false;
 
 
   void declare_parameters(ParameterHandler &prm)
   {
+    prm.declare_entry("Reproducible output", "false",
+                      Patterns::Bool(),
+                      "Limit output to that which is reprodicible, i.e. don't print "
+											"timing or absolute paths.");
 
     prm.declare_entry("VERBOSITY", "1",
                       Patterns::Integer(0,2),
@@ -305,6 +310,7 @@ namespace dftParameters
   void parse_parameters(ParameterHandler &prm)
   {
     dftParameters::verbosity                     = prm.get_integer("VERBOSITY");
+    dftParameters::reproducible_output           = prm.get_bool("Reproducible output");
 
     prm.enter_subsection ("Geometry");
     {

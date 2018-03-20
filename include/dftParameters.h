@@ -48,6 +48,8 @@ namespace dftParameters
 
   extern unsigned int verbosity;
 
+  extern bool reproducible_output;
+
   /**
    * Declare parameters.
    */
