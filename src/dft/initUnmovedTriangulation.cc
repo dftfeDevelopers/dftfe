@@ -139,7 +139,8 @@ void dftClass<FEOrder>::initUnmovedTriangulation(parallel::distributed::Triangul
     }
   
   std::vector<GridTools::PeriodicFacePair<typename DoFHandler<3>::cell_iterator> > periodicity_vector2, periodicity_vector2Eigen;
-  for (int i = 0; i < 3; ++i)
+  const std::array<int,3> periodic = {dftParameters::periodicX, dftParameters::periodicY, dftParameters::periodicZ};
+  for (int i = 0; i < std::accumulate(periodic.begin(),periodic.end(),0); ++i)
    {
       GridTools::collect_periodic_faces(dofHandler, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector2,offsetVectors[i]);
       GridTools::collect_periodic_faces(dofHandlerEigen, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector2Eigen,offsetVectors[i]);
