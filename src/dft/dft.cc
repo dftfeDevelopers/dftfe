@@ -553,16 +553,10 @@ void dftClass<FEOrder>::solve()
 	      {
 	       if(dftParameters::xc_id < 4) 
 	        {
-		  if(dftParameters::isPseudopotential)
-		    eigenPtr->computeVEffSpinPolarized(rhoInValuesSpinPolarized, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, s, pseudoValues);
-		  else
 		    eigenPtr->computeVEffSpinPolarized(rhoInValuesSpinPolarized, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, s, pseudoValues);
                 }
 	       else if (dftParameters::xc_id == 4)
 	        {
-	          if(dftParameters::isPseudopotential)
-		    eigenPtr->computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, s, pseudoValues);
-	          else
 		    eigenPtr->computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, s, pseudoValues);
 	        }
 	      for (int kPoint = 0; kPoint < d_maxkPoints; ++kPoint) 
@@ -582,16 +576,10 @@ void dftClass<FEOrder>::solve()
         {
 	  if(dftParameters::xc_id < 4)
 	      {
-	      if(dftParameters::isPseudopotential)
 		eigenPtr->computeVEff(rhoInValues, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, pseudoValues);
-	      else
-		eigenPtr->computeVEff(rhoInValues, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, pseudoValues); 
 	      }
 	  else if (dftParameters::xc_id == 4)
 	     {
-	      if(dftParameters::isPseudopotential)
-		eigenPtr->computeVEff(rhoInValues, gradRhoInValues, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, pseudoValues);
-	      else
 		eigenPtr->computeVEff(rhoInValues, gradRhoInValues, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, pseudoValues);
 	     } 
         
