@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Shiva Rudraraju (2016), Phani Motamarri (2016)
+// @author Shiva Rudraraju (2016), Phani Motamarri (2016), Sambit Das (2018)
 //
 
 #include "pseudoUtils.cc"
@@ -26,15 +26,8 @@ template<unsigned int FEOrder>
 void dftClass<FEOrder>::initLocalPseudoPotential()
 {
   computing_timer.enter_section("init pseudopotentials"); 
-
-  //
-  //Initialize electron density table storage
-  //
-  if (pseudoValues!=NULL){
-     (*pseudoValues).clear();
-     delete pseudoValues;
-  }
-  pseudoValues = new std::map<dealii::CellId, std::vector<double> >;
+ 
+  pseudoValues.clear();
   //
   //Reading single atom rho initial guess
   //
@@ -88,8 +81,6 @@ void dftClass<FEOrder>::initLocalPseudoPotential()
   FEValues<3> fe_values (FE, quadrature_formula, update_quadrature_points);
   const unsigned int n_q_points = quadrature_formula.size();
 
-
-
   //
   //get number of image charges used only for periodic
   //
@@ -104,13 +95,11 @@ void dftClass<FEOrder>::initLocalPseudoPotential()
       if(cell->is_locally_owned())
 	{
 	  fe_values.reinit(cell);
-	  (*pseudoValues)[cell->id()]=std::vector<double>(n_q_points);
-	  double * pseudoValuesPtr = &((*pseudoValues)[cell->id()][0]);
+	  pseudoValues[cell->id()]=std::vector<double>(n_q_points);
+	  double * pseudoValuesPtr = &((pseudoValues)[cell->id()][0]);
 	  for (unsigned int q = 0; q < n_q_points; ++q)
 	    {
-	      //MappingQ1<3,3> test; 
-	      //Point<3> quadPoint(test.transform_unit_to_real_cell(cell, fe_values.get_quadrature().point(q)));
-	      Point<3> quadPoint=fe_values.quadrature_point(q);
+	      const Point<3> & quadPoint=fe_values.quadrature_point(q);
 	      double pseudoValueAtQuadPt=0.0;
 	      //loop over atoms
 	      for (unsigned int n=0; n<atomLocations.size(); n++)
@@ -128,7 +117,7 @@ void dftClass<FEOrder>::initLocalPseudoPotential()
 		}
 
 	      //loop over image charges
-	      for(int iImageCharge = 0; iImageCharge < numberImageCharges; ++iImageCharge)
+	      for(unsigned int iImageCharge = 0; iImageCharge < numberImageCharges; ++iImageCharge)
 		{
 		  Point<3> imageAtom(d_imagePositions[iImageCharge][0],d_imagePositions[iImageCharge][1],d_imagePositions[iImageCharge][2]);
 		  double distanceToAtom = quadPoint.distance(imageAtom);

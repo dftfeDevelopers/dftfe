@@ -63,25 +63,25 @@ public:
   void computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoValues, 
 		   const vectorType & phi,
 		   const vectorType & phiExt,
-		   std::map<dealii::CellId,std::vector<double> >* pseudoValues=0);
+		   const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
   void computeVEffSpinPolarized(std::map<dealii::CellId,std::vector<double> >* rhoValues, 
 		   const vectorType & phi,
 		   const vectorType & phiExt,
 		   unsigned int j,
-		   std::map<dealii::CellId,std::vector<double> >* pseudoValues=0);
+		   const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
 
   void computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoValues,
 		   std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
 		   const vectorType & phi,
 		   const vectorType & phiExt,
-		   std::map<dealii::CellId,std::vector<double> >* pseudoValues=0);
+		   const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
 
   void computeVEffSpinPolarized(std::map<dealii::CellId,std::vector<double> >* rhoValues, 
 		   std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
 		   const vectorType & phi,
 		   const vectorType & phiExt,
 		   unsigned int j,
-		   std::map<dealii::CellId,std::vector<double> >* pseudoValues=0);
+		   const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
 
 
   
