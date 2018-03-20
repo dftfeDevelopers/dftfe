@@ -3,7 +3,7 @@
 ##################
 
 #path specifying the location of the "build" directory which is usually the location of "src" folder 
-set DFT PATH = "/home/dsambit/dftfe/pullreq"
+set DFT PATH = "../../../../"
 
 
 set OPTIMIZED MODE=true
@@ -36,6 +36,10 @@ set ATOMIC COORDINATES FILE = coordinates.inp
 set ION FORCE=true
 
 set ION OPT=false
+
+set FORCE TOL= 2e-4
+
+set ION RELAX FLAGS FILE= relaxationFlags.inp
 
 set CELL STRESS=true
 

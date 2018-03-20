@@ -19,20 +19,21 @@ set ATOMIC COORDINATES FILE = coordinates.inp
 #Geometry related parameters
 #
 #
-
+set ION FORCE=true
+set CELL STRESS=true
 
 #Radius of the atom-centered ball in which self-potential of the associated nuclear charge is solved
-set SELF POTENTIAL ATOM BALL RADIUS = 2.8
+set SELF POTENTIAL ATOM BALL RADIUS = 2.5
 #Simulation domain sizes 
 #Values listed here are not relevant if external mesh is used for non-periodic calculations
 set INNER DOMAIN SIZE X = 0.0 #2*Ln1
 set INNER DOMAIN SIZE Y = 0.0
 set INNER DOMAIN SIZE Z = 0.0
-set OUTER ATOM BALL RADIUS = 0.0
-set MESH SIZE OUTER DOMAIN = 0.7 #hn
-set MESH SIZE INNER DOMAIN = 1.0 #hn-1
-set MESH SIZE OUTER ATOM BALL = 0.0
-set MESH SIZE NEAR ATOM = 0.7 #h0
+set OUTER ATOM BALL RADIUS = 2.0
+set MESH SIZE OUTER DOMAIN = 4.0 #hn
+set MESH SIZE INNER DOMAIN = 0.0 #hn-1
+set MESH SIZE OUTER ATOM BALL = 0.5
+set MESH SIZE NEAR ATOM = 0.5 #h0
 #
 #set boundary conditions in three directions
 #
@@ -48,26 +49,15 @@ set START MAGNETIZATION = 0.0
 set DOMAIN BOUNDING VECTORS FILE = latticeVectors.inp
 
 #
-#kPoint Quadrature Rule file for sampling the Brillouin zone (used only in periodic calculation)
-#(Located in $DFT PATH/data/kPointList)
-#
-#set kPOINT RULE FILE = fccBandkPointRule.inp
-#set kPOINT RULE FILE = GammaPoint.inp
-set BZ SAMPLING POINTS ALONG X = 4
-set BZ SAMPLING POINTS ALONG Y = 4
-set BZ SAMPLING POINTS ALONG Z = 4
+set BZ SAMPLING POINTS ALONG X = 1
+set BZ SAMPLING POINTS ALONG Y = 1
+set BZ SAMPLING POINTS ALONG Z = 1
 set BZ SAMPLING SHIFT ALONG X = 0.00
 set BZ SAMPLING SHIFT ALONG Y = 0.00
 set BZ SAMPLING SHIFT ALONG Z = 0.00
-set USE GROUP SYMMETRY = true
-set NUMBER OF POOLS = 8
-set USE TIME REVERSAL SYMMETRY = true
-#
-#Symmetry matrix file
-#
-set SYMMETRY MATRIX FILE = symmetryMatrixFile.inp
-set READ SYMMETRY FROM FILE = false
-#
+set USE GROUP SYMMETRY = false
+set NUMBER OF POOLS = 1
+set USE TIME REVERSAL SYMMETRY = false
 
 #
 #DFT functional related parameters
@@ -100,7 +90,7 @@ set CHEBYSHEV FILTER PASSES = 1
 #SCF parameters
 #
 set SCF CONVERGENCE MAXIMUM ITERATIONS = 200
-set SCF CONVERGENCE TOLERANCE          = 5e-8
+set SCF CONVERGENCE TOLERANCE          = 1e-8
 set ANDERSON SCHEME MIXING PARAMETER   = 0.5
 set ANDERSON SCHEME MIXING HISTORY     = 70
 set TEMPERATURE                        = 500
