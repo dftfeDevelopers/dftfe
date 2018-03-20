@@ -105,6 +105,7 @@ void dftClass<FEOrder>::createAtomBins(std::vector<ConstraintMatrix * > & constr
   d_boundaryFlag.clear();
   d_vselfBinField.clear();
   d_closestAtomBin.clear();
+  d_vselfBinConstraintMatrices.clear();
   //
   // access complete list of image charges
   //
@@ -375,6 +376,7 @@ void dftClass<FEOrder>::createAtomBins(std::vector<ConstraintMatrix * > & constr
   d_boundaryFlag.resize(numberBins);
   d_vselfBinField.resize(numberBins);
   d_closestAtomBin.resize(numberBins);
+  d_vselfBinConstraintMatrices.resize(numberBins);
   //
   //set constraint matrices for each bin
   //
@@ -417,8 +419,7 @@ void dftClass<FEOrder>::createAtomBins(std::vector<ConstraintMatrix * > & constr
       //
       //create constraint matrix for current bin
       //
-      ConstraintMatrix * constraintsForVselfInBin = new ConstraintMatrix;
-      constraintsForVselfInBin->reinit(locally_relevant_dofs);
+      d_vselfBinConstraintMatrices[iBin].reinit(locally_relevant_dofs);
       
       
       unsigned int inNodes=0, outNodes=0;
@@ -526,9 +527,7 @@ void dftClass<FEOrder>::createAtomBins(std::vector<ConstraintMatrix * > & constr
 		      else
 			atomCharge = imageChargeValues[imageIdsOfAtomsInCurrentBin[minDistanceAtomId-numberGlobalAtomsInBin]];
 
-		      double potentialValue = -atomCharge/minDistance;
-		      //constraintsForVselfInBin->add_line(iterMap->first);
-		      //constraintsForVselfInBin->set_inhomogeneity(iterMap->first,potentialValue);
+		      const double potentialValue = -atomCharge/minDistance;
 
 		      boundaryNodeMap[iterMap->first] = -1;
 		      vSelfBinNodeMap[iterMap->first] = potentialValue;
@@ -541,13 +540,7 @@ void dftClass<FEOrder>::createAtomBins(std::vector<ConstraintMatrix * > & constr
 	    }//locally relevant dofs
  
 	}//nodal loop
-      //constraintsForVselfInBin->merge(constraintsNone,ConstraintMatrix::MergeConflictBehavior::left_object_wins);
-      //constraintsForVselfInBin->close();
-      //constraintsVector.push_back(constraintsForVselfInBin);
-      
-      //std::cout<<"Size of Constraints: "<<constraintsForVselfInBin->n_constraints()<<std::endl;
-      //std::cout << " processor id: "<< this_mpi_process<< " In: " << inNodes << "  Out: " << outNodes << "\n";
-      //int outNodes2=0;
+
        //First apply correct dirichlet boundary conditions on elements with atleast one solved node
        DoFHandler<C_DIM>::active_cell_iterator cell = dofHandler.begin_active(),endc = dofHandler.end();
        for(; cell!= endc; ++cell)
@@ -614,12 +607,12 @@ void dftClass<FEOrder>::createAtomBins(std::vector<ConstraintMatrix * > & constr
 			
 		      const int globalNodeId=cell_dof_indices[iNode];
 		      const int boundaryId=d_boundaryFlag[iBin][globalNodeId]; 
-		      if(!d_noConstraints.is_constrained(globalNodeId) && !constraintsForVselfInBin->is_constrained(globalNodeId) && boundaryId==-1)
+		      if(!d_noConstraints.is_constrained(globalNodeId) && !d_vselfBinConstraintMatrices[iBin].is_constrained(globalNodeId) && boundaryId==-1)
 		      {
-		        constraintsForVselfInBin->add_line(globalNodeId);
+		        d_vselfBinConstraintMatrices[iBin].add_line(globalNodeId);
 			const double distance=d_supportPoints[globalNodeId].distance(closestAtomLocationSolved);
 		        const double newPotentialValue =-closestAtomChargeSolved/distance;
-		        constraintsForVselfInBin->set_inhomogeneity(globalNodeId,newPotentialValue);
+		        d_vselfBinConstraintMatrices[iBin].set_inhomogeneity(globalNodeId,newPotentialValue);
 			d_vselfBinField[iBin][globalNodeId] = newPotentialValue;
 			d_closestAtomBin[iBin][globalNodeId] = closestChargeIdSolvedNode;
 			//outNodes2++;
@@ -665,12 +658,12 @@ void dftClass<FEOrder>::createAtomBins(std::vector<ConstraintMatrix * > & constr
 		  for(unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
 		    {
 			
-		      const int globalNodeId=cell_dof_indices[iNode];
+		      const unsigned int globalNodeId=cell_dof_indices[iNode];
 		      const int boundaryId=d_boundaryFlag[iBin][globalNodeId]; 
-		      if(!d_noConstraints.is_constrained(globalNodeId) && !constraintsForVselfInBin->is_constrained(globalNodeId) && boundaryId==-1)
+		      if(!d_noConstraints.is_constrained(globalNodeId) && !d_vselfBinConstraintMatrices[iBin].is_constrained(globalNodeId) && boundaryId==-1)
 		      {
-		        constraintsForVselfInBin->add_line(globalNodeId);
-		        constraintsForVselfInBin->set_inhomogeneity(globalNodeId,d_vselfBinField[iBin][globalNodeId]);
+		        d_vselfBinConstraintMatrices[iBin].add_line(globalNodeId);
+		        d_vselfBinConstraintMatrices[iBin].set_inhomogeneity(globalNodeId,d_vselfBinField[iBin][globalNodeId]);
 			//outNodes2++;
 		      }//check non hanging node and vself consraints not already set
 		    }//element node loop
@@ -678,10 +671,10 @@ void dftClass<FEOrder>::createAtomBins(std::vector<ConstraintMatrix * > & constr
 		}//check if element has atleast one dirichlet node and atleast one solved node	      
   	  }//cell locally owned or ghost
         } //cell loop      
-        constraintsForVselfInBin->merge(constraintsNone,ConstraintMatrix::MergeConflictBehavior::left_object_wins);
-        constraintsForVselfInBin->close(); //pcout<<" ibin: "<<iBin <<" size of constraints: "<< constraintsForVselfInBin->n_constraints()<<std::endl;
-        constraintsVector.push_back(constraintsForVselfInBin);   
-	//std::cout<< "processor id: "<< this_mpi_process << " ibin: "<< iBin <<" outNodes2: "<< outNodes<<" size of constraints: "<< constraintsForVselfInBin->n_constraints()<<std::endl;
+        
+        d_vselfBinConstraintMatrices[iBin].merge(constraintsNone,ConstraintMatrix::MergeConflictBehavior::left_object_wins);
+        d_vselfBinConstraintMatrices[iBin].close(); //pcout<<" ibin: "<<iBin <<" size of constraints: "<< constraintsForVselfInBin->n_constraints()<<std::endl;
+        constraintsVector.push_back(&(d_vselfBinConstraintMatrices[iBin]));   
 
     }//bin loop
 

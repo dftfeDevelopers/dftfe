@@ -353,7 +353,10 @@ class dftClass
   /**
    * constraint Matrices
    */
-  ConstraintMatrix constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_constraintsPeriodicWithDirichlet, d_noConstraints, d_noConstraintsEigen; 
+  ConstraintMatrix constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_constraintsPeriodicWithDirichlet, d_noConstraints, d_noConstraintsEigen;
+ 
+  /// vector of constraint matrices for vself bins
+  std::vector<ConstraintMatrix> d_vselfBinConstraintMatrices;
 
   /**
    * data storage for Kohn-Sham wavefunctions

@@ -80,19 +80,6 @@ void forceClass<FEOrder>::createBinObjectsForce()
 		    nonHangingNodeIdCountCell++;
 		    nonHangingNodeIdCountFace++;
 	         }//non-hanging node check 
-		 else
-		 {
-                   const std::vector< std::pair< types::global_dof_index, double > > * rowData 
-		       = (dftPtr->d_noConstraints).get_constraint_entries(nodeId);
-		   for (unsigned int icol=0;icol<rowData->size();++icol)
-		   {
-		       if (boundaryNodeMap[(*rowData)[icol].first]!=-1)
-		       {
-		         isSolvedDofPresent=true;
-		       }
-		   }
-		     
-		 }
 
 	      }//Face dof loop
               
