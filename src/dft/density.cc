@@ -25,7 +25,7 @@ void dftClass<FEOrder>::compute_rhoOut()
   QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
   FEValues<3> fe_values (FEEigen, quadrature, update_values | update_gradients| update_JxW_values | update_quadrature_points);
   const unsigned int num_quad_points = quadrature.size();
-  unsigned int xc_id = dftParameters::xc_id;
+  const unsigned int xc_id = dftParameters::xc_id;
    
   //project eigen vectors to regular FEM space by multiplying with M^(-0.5)
   for(int kPoint = 0; kPoint < (1+spinPolarized)*d_maxkPoints; ++kPoint)
@@ -43,23 +43,23 @@ void dftClass<FEOrder>::compute_rhoOut()
   //pcout<<"check 6: "<<std::endl;
   
   //create new rhoValue tables
-  rhoOutValues = new std::map<dealii::CellId,std::vector<double> >;
-  rhoOutVals.push_back(rhoOutValues);
+  rhoOutVals.push_back(std::map<dealii::CellId,std::vector<double> > ());
+  rhoOutValues = &(rhoOutVals.back());  
   if (spinPolarized==1)
     {
-    rhoOutValuesSpinPolarized = new std::map<dealii::CellId,std::vector<double> >;
-    rhoOutValsSpinPolarized.push_back(rhoOutValuesSpinPolarized);
+    rhoOutValsSpinPolarized.push_back(std::map<dealii::CellId,std::vector<double> > ());
+    rhoOutValuesSpinPolarized = &(rhoOutValsSpinPolarized.back());
     }
 
   //pcout<<"check 6.1: "<<std::endl;
   if(xc_id == 4)
     {
-      gradRhoOutValues = new std::map<dealii::CellId, std::vector<double> >;
-      gradRhoOutVals.push_back(gradRhoOutValues);
+      gradRhoOutVals.push_back(std::map<dealii::CellId, std::vector<double> >());
+      gradRhoOutValues = &(gradRhoOutVals.back());
       if (spinPolarized==1)
        {
-         gradRhoOutValuesSpinPolarized = new std::map<dealii::CellId, std::vector<double> >;
-         gradRhoOutValsSpinPolarized.push_back(gradRhoOutValuesSpinPolarized);
+         gradRhoOutValsSpinPolarized.push_back(std::map<dealii::CellId, std::vector<double> >());
+         gradRhoOutValuesSpinPolarized = &(gradRhoOutValsSpinPolarized.back());	 
        }
     }
   
@@ -296,62 +296,30 @@ void dftClass<FEOrder>::compute_rhoOut()
   //pop out rhoInVals and rhoOutVals if their size exceeds mixing history size
   if(rhoInVals.size() == dftParameters::mixingHistory)
     {
-      (**(rhoInVals.begin())).clear();
-      delete *(rhoInVals.begin());	
       rhoInVals.pop_front();
-
-      (**(rhoOutVals.begin())).clear();
-      delete *(rhoOutVals.begin());	      
       rhoOutVals.pop_front();
 
       if(spinPolarized==1)
       {
-	  (**(rhoInValsSpinPolarized.begin())).clear();
-	  delete *(rhoInValsSpinPolarized.begin());
 	  rhoInValsSpinPolarized.pop_front();
-
-	  (**(rhoOutValsSpinPolarized.begin())).clear();
-	  delete *(rhoOutValsSpinPolarized.begin());
 	  rhoOutValsSpinPolarized.pop_front();
       }
 	  
       if(xc_id == 4)//GGA
       {
-	  (**(gradRhoInVals.begin())).clear();
-	  delete *(gradRhoInVals.begin());	      
 	  gradRhoInVals.pop_front();
-
-	  (**(gradRhoOutVals.begin())).clear();
-	  delete *(gradRhoOutVals.begin());	      
 	  gradRhoOutVals.pop_front();
       }
 
       if(spinPolarized==1 && xc_id==4)
       {      
-	  (**(gradRhoInValsSpinPolarized.begin())).clear();
-	  delete *(gradRhoInValsSpinPolarized.begin());	 
 	  gradRhoInValsSpinPolarized.pop_front();
-
-	  (**(gradRhoOutValsSpinPolarized.begin())).clear();
-	  delete *(gradRhoOutValsSpinPolarized.begin());	   
 	  gradRhoOutValsSpinPolarized.pop_front();
       }
     }
 
 }
 
-namespace internaldft 
-{
-   void clearDequeMap(std::deque<std::map<dealii::CellId,std::vector<double> >*> & dequeMap)
-   {
-      for (std::deque<std::map<dealii::CellId,std::vector<double> >*>::iterator it = dequeMap.begin(); it!=dequeMap.end(); ++it)
-      {
-	 (**it).clear();	  
-	 delete (*it);
-      }
-      dequeMap.clear();       
-   }
-}
 
 //rho data reinitilization without remeshing. The rho out of last ground state solve is made the rho in of the new solve
 template<unsigned int FEOrder>
@@ -380,39 +348,35 @@ void dftClass<FEOrder>::noRemeshRhoDataInit()
 
   }    
   //cleanup of existing rho Out and rho In data
-  internaldft::clearDequeMap(rhoInVals);
-  internaldft::clearDequeMap(rhoOutVals);
-  internaldft::clearDequeMap(gradRhoInVals);
-  internaldft::clearDequeMap(gradRhoOutVals);
-  internaldft::clearDequeMap(rhoInValsSpinPolarized);
-  internaldft::clearDequeMap(rhoOutValsSpinPolarized);
-  internaldft::clearDequeMap(gradRhoInValsSpinPolarized);
-  internaldft::clearDequeMap(gradRhoOutValsSpinPolarized);
+  rhoInVals.clear();
+  rhoOutVals.clear();
+  gradRhoInVals.clear();
+  gradRhoOutVals.clear();
+  rhoInValsSpinPolarized.clear();
+  rhoOutValsSpinPolarized.clear();
+  gradRhoInValsSpinPolarized.clear();
+  gradRhoOutValsSpinPolarized.clear();
 
   ///copy back temporary rho out to rho in data
-  rhoInValues=new std::map<dealii::CellId, std::vector<double> >;
-  *(rhoInValues)=rhoOutValuesCopy;
-  rhoInVals.push_back(rhoInValues);
+  rhoInVals.push_back(rhoOutValuesCopy);
+  rhoInValues=&(rhoInVals.back());
 
   if (dftParameters::xc_id==4)
   {
-    gradRhoInValues = new std::map<dealii::CellId, std::vector<double> >;
-    *(gradRhoInValues)=gradRhoOutValuesCopy;
-    gradRhoInVals.push_back(gradRhoInValues);
+    gradRhoInVals.push_back(gradRhoOutValuesCopy);
+    gradRhoInValues=&(gradRhoInVals.back());
   }
 
   if(spinPolarized==1)
   {
-    rhoInValuesSpinPolarized=new std::map<dealii::CellId, std::vector<double> >;      
-    *(rhoInValuesSpinPolarized) =  rhoOutValuesSpinPolarizedCopy;
-    rhoInValsSpinPolarized.push_back(rhoInValuesSpinPolarized);
+    rhoInValsSpinPolarized.push_back(rhoOutValuesSpinPolarizedCopy);
+    rhoInValuesSpinPolarized=&(rhoInValsSpinPolarized.back());
   } 
 
   if (dftParameters::xc_id==4 && spinPolarized==1)
   {
-    gradRhoInValuesSpinPolarized = new std::map<dealii::CellId, std::vector<double> >;
-    *(gradRhoInValuesSpinPolarized)=gradRhoOutValuesSpinPolarizedCopy;
-    gradRhoInValsSpinPolarized.push_back(gradRhoInValuesSpinPolarized);
+    gradRhoInValsSpinPolarized.push_back(gradRhoOutValuesSpinPolarizedCopy);
+    gradRhoInValuesSpinPolarized=&(gradRhoInValsSpinPolarized.back());
   }
 
   normalizeRho();
