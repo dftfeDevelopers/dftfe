@@ -176,6 +176,8 @@ START MAGNETIZATION
 ##################################################
 
 #Parameter indicating number of eigenfunctions to be solved
+#For insulators use N/2+(10-20) and for metals use 20 percent more than N/2 (atleast 10 more). 
+#N is the total number of electrons (datatype: integer, default: 1) 
 NUMBER OF KOHN-SHAM WAVEFUNCTIONS
 
 #Approximate estimate of lower bound of the wanted spectrum
