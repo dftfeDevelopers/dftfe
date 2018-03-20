@@ -32,15 +32,12 @@
     d_lineSearchTolerance(lineSearchTolerance),
     d_lineSearchMaxIterations(lineSearchMaxIterations),
     d_lineSearchDampingParameter(lineSearchDampingParameter),
+    nonLinearSolver(debugLevel,maxNumberIterations,tolerance),    
     mpi_communicator (mpi_comm_replica),
     n_mpi_processes (dealii::Utilities::MPI::n_mpi_processes(mpi_communicator)),
     this_mpi_process (dealii::Utilities::MPI::this_mpi_process(mpi_communicator)),
     pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))    
   {
-    d_debugLevel=debugLevel;
-    d_maxNumberIterations=maxNumberIterations;
-    d_tolerance=tolerance;
-
   }
 
   //
@@ -56,24 +53,6 @@
 
   }
 
-  //
-  // reinit cg solve parameters
-  //
-  void
-  cgPRPNonLinearSolver::reinit(const double tolerance,
-                               const unsigned int    maxNumberIterations,
-                               const unsigned int    debugLevel,
-                               const double lineSearchTolerance,
-			       const unsigned int    lineSearchMaxIterations,
-			       const double lineSearchDampingParameter)
-  {
-    d_debugLevel=debugLevel;
-    d_maxNumberIterations=maxNumberIterations;
-    d_tolerance=tolerance; 
-    d_lineSearchTolerance=lineSearchTolerance;
-    d_lineSearchMaxIterations=lineSearchMaxIterations;
-    d_lineSearchDampingParameter=lineSearchDampingParameter;
-  }
   //
   // initialize direction
   //

@@ -26,7 +26,12 @@
   //
   // Constructor.
   //
-  nonLinearSolver::nonLinearSolver()
+  nonLinearSolver::nonLinearSolver(const unsigned int debugLevel,
+				   const unsigned int maxNumberIterations,
+			           const double tolerance):
+  d_debugLevel(debugLevel),
+  d_maxNumberIterations(maxNumberIterations),
+  d_tolerance(tolerance)    
   {
   }
 

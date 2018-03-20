@@ -353,7 +353,10 @@ class dftClass
   /**
    * constraint Matrices
    */
-  ConstraintMatrix constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_constraintsPeriodicWithDirichlet, d_noConstraints, d_noConstraintsEigen; 
+  ConstraintMatrix constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_constraintsPeriodicWithDirichlet, d_noConstraints, d_noConstraintsEigen;
+ 
+  /// vector of constraint matrices for vself bins
+  std::vector<ConstraintMatrix> d_vselfBinConstraintMatrices;
 
   /**
    * data storage for Kohn-Sham wavefunctions
@@ -386,7 +389,7 @@ class dftClass
 
 
   double d_pspTail = 8.0;
-  std::map<dealii::CellId, std::vector<double> > *pseudoValues;
+  std::map<dealii::CellId, std::vector<double> > pseudoValues;
   std::vector<std::vector<double> > d_localVselfs;
 
   
