@@ -36,21 +36,21 @@ void symmetryClass<FEOrder>::computeAndSymmetrize_rhoOut()
   QGauss<3>  quadrature(FEOrder+1);
   const unsigned int num_quad_points = quadrature.size();
 
-  dftPtr->rhoOutValues = new std::map<dealii::CellId,std::vector<double> >;
-  dftPtr->rhoOutVals.push_back(dftPtr->rhoOutValues);
+  dftPtr->rhoOutVals.push_back(std::map<dealii::CellId,std::vector<double> >());
+  dftPtr->rhoOutValues=&(dftPtr->rhoOutVals.back());
   if (spinPolarized==1)
   {
-    dftPtr->rhoOutValuesSpinPolarized = new std::map<dealii::CellId,std::vector<double> >;
-    dftPtr->rhoOutValsSpinPolarized.push_back(dftPtr->rhoOutValuesSpinPolarized);
+    dftPtr->rhoOutValsSpinPolarized.push_back(std::map<dealii::CellId,std::vector<double> >());
+    dftPtr->rhoOutValuesSpinPolarized= &(dftPtr->rhoOutValsSpinPolarized.back());
   }
   if(xc_id == 4)
   {
-   dftPtr->gradRhoOutValues = new std::map<dealii::CellId, std::vector<double> >;
-   dftPtr->gradRhoOutVals.push_back(dftPtr->gradRhoOutValues);
+   dftPtr->gradRhoOutVals.push_back(std::map<dealii::CellId, std::vector<double> >());
+   dftPtr->gradRhoOutValues=&(dftPtr->gradRhoOutVals.back());
    if (spinPolarized==1)
       {
-         dftPtr->gradRhoOutValuesSpinPolarized = new std::map<dealii::CellId, std::vector<double> >;
-         dftPtr->gradRhoOutValsSpinPolarized.push_back(dftPtr->gradRhoOutValuesSpinPolarized);
+         dftPtr->gradRhoOutValsSpinPolarized.push_back(std::map<dealii::CellId, std::vector<double> >());
+         dftPtr->gradRhoOutValuesSpinPolarized=&(dftPtr->gradRhoOutValsSpinPolarized.back());
       }
   }
  
@@ -136,43 +136,24 @@ void symmetryClass<FEOrder>::computeAndSymmetrize_rhoOut()
   //pop out rhoInVals and rhoOutVals if their size exceeds mixing history size
   if((dftPtr->rhoInVals).size() == mixingHistory)
     {
-      (**(dftPtr->rhoInVals.begin())).clear();
-      delete *(dftPtr->rhoInVals.begin());	
       dftPtr->rhoInVals.pop_front();
-
-      (**(dftPtr->rhoOutVals.begin())).clear();
-      delete *(dftPtr->rhoOutVals.begin());	      
       dftPtr->rhoOutVals.pop_front();
      
       if (spinPolarized) {
 
-      (**(dftPtr->rhoInValsSpinPolarized.begin())).clear();
-      delete *(dftPtr->rhoInValsSpinPolarized.begin());
       dftPtr->rhoInValsSpinPolarized.pop_front();
-      (**(dftPtr->rhoOutValsSpinPolarized.begin())).clear();
-      delete *(dftPtr->rhoOutValsSpinPolarized.begin());
       dftPtr->rhoOutValsSpinPolarized.pop_front();
 
       }
 
       if(xc_id == 4)//GGA
       {      
-	  (**(dftPtr->gradRhoInVals.begin())).clear();
-	  delete *(dftPtr->gradRhoInVals.begin());	      
 	  dftPtr->gradRhoInVals.pop_front();
-
-	  (**(dftPtr->gradRhoOutVals.begin())).clear();
-	  delete *(dftPtr->gradRhoOutVals.begin());	      
 	  dftPtr->gradRhoOutVals.pop_front();
 
           if (spinPolarized) {
 
-	  (**(dftPtr->gradRhoInValsSpinPolarized.begin())).clear();
-	  delete *(dftPtr->gradRhoInValsSpinPolarized.begin());	 
 	  dftPtr->gradRhoInValsSpinPolarized.pop_front();
-
-	  (**(dftPtr->gradRhoOutValsSpinPolarized.begin())).clear();
-	  delete *(dftPtr->gradRhoOutValsSpinPolarized.begin());	   
 	  dftPtr->gradRhoOutValsSpinPolarized.pop_front();
 
          }

@@ -73,66 +73,28 @@ void dftClass<FEOrder>::initRho()
 
   //Initialize rho
   QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
-  FEValues<3> fe_values (FE, quadrature_formula, update_values);
+  FEValues<3> fe_values (FE, quadrature_formula, update_values | update_quadrature_points);
   const unsigned int n_q_points    = quadrature_formula.size();
 
   //cleanup of existing data
-  for (std::deque<std::map<dealii::CellId,std::vector<double> >*>::iterator it = rhoInVals.begin(); it!=rhoInVals.end(); ++it)
-  {
-     (**it).clear();	  
-     delete (*it);
-  }
   rhoInVals.clear();
-  for (std::deque<std::map<dealii::CellId,std::vector<double> >*>::iterator it = rhoOutVals.begin(); it!=rhoOutVals.end(); ++it)
-  {
-     (**it).clear();	  
-     delete (*it);
-  }
   rhoOutVals.clear();
-  for (std::deque<std::map<dealii::CellId,std::vector<double> >*>::iterator it = gradRhoInVals.begin(); it!=gradRhoInVals.end(); ++it)
-  {
-     (**it).clear();	  
-     delete (*it);
-  }
   gradRhoInVals.clear();
-  for (std::deque<std::map<dealii::CellId,std::vector<double> >*>::iterator it = gradRhoOutVals.begin(); it!=gradRhoOutVals.end(); ++it)
-  {
-     (**it).clear();	  
-     delete (*it);
-  }
   gradRhoOutVals.clear(); 
-    for (std::deque<std::map<dealii::CellId,std::vector<double> >*>::iterator it = rhoInValsSpinPolarized.begin(); it!=rhoInValsSpinPolarized.end(); ++it)
-  {
-     (**it).clear();	  
-     delete (*it);
-  }
   rhoInValsSpinPolarized.clear();
-  for (std::deque<std::map<dealii::CellId,std::vector<double> >*>::iterator it = rhoOutValsSpinPolarized.begin(); it!=rhoOutValsSpinPolarized.end(); ++it)
-  {
-     (**it).clear();	  
-     delete (*it);
-  }
   rhoOutValsSpinPolarized.clear();
-  for (std::deque<std::map<dealii::CellId,std::vector<double> >*>::iterator it = gradRhoInValsSpinPolarized.begin(); it!=gradRhoInValsSpinPolarized.end(); ++it)
-  {
-     (**it).clear();	  
-     delete (*it);
-  }
   gradRhoInValsSpinPolarized.clear();
-  for (std::deque<std::map<dealii::CellId,std::vector<double> >*>::iterator it = gradRhoOutValsSpinPolarized.begin(); it!=gradRhoOutValsSpinPolarized.end(); ++it)
-  {
-     (**it).clear();	  
-     delete (*it);
-  }
   gradRhoOutValsSpinPolarized.clear(); 
 
   //Initialize electron density table storage
-  rhoInValues=new std::map<dealii::CellId, std::vector<double> >;
-  rhoInVals.push_back(rhoInValues);
-  rhoInValuesSpinPolarized=new std::map<dealii::CellId, std::vector<double> >;
+  rhoInVals.push_back(std::map<dealii::CellId, std::vector<double> >());
+  rhoInValues=&(rhoInVals.back());
+
+
   if (spinPolarized==1)
     {
-      rhoInValsSpinPolarized.push_back(rhoInValuesSpinPolarized);
+      rhoInValsSpinPolarized.push_back(std::map<dealii::CellId, std::vector<double> >());
+      rhoInValuesSpinPolarized=&(rhoInValsSpinPolarized.back());
     }
   //
   //get number of image charges used only for periodic
@@ -145,17 +107,19 @@ void dftClass<FEOrder>::initRho()
     {
       if (cell->is_locally_owned())
 	{
+	  fe_values.reinit(cell);
 	  (*rhoInValues)[cell->id()]=std::vector<double>(n_q_points);
 	  double *rhoInValuesPtr = &((*rhoInValues)[cell->id()][0]);
-          //if (spinPolarized==1)
-	  //  {
+	
+          double *rhoInValuesSpinPolarizedPtr;	  
+          if (spinPolarized==1)
+	  {
 	      (*rhoInValuesSpinPolarized)[cell->id()]=std::vector<double>(2*n_q_points);
-	      double *rhoInValuesSpinPolarizedPtr = &((*rhoInValuesSpinPolarized)[cell->id()][0]);
-	   // }
+	      rhoInValuesSpinPolarizedPtr = &((*rhoInValuesSpinPolarized)[cell->id()][0]);
+	  }
 	  for (unsigned int q = 0; q < n_q_points; ++q)
 	    {
-	      MappingQ1<3,3> test; 
-	      Point<3> quadPoint(test.transform_unit_to_real_cell(cell, fe_values.get_quadrature().point(q)));
+	      const Point<3> & quadPoint=fe_values.quadrature_point(q);
 	      double rhoValueAtQuadPt = 0.0;
 
 	      //loop over atoms
@@ -204,13 +168,13 @@ void dftClass<FEOrder>::initRho()
   //loop over elements
   if(dftParameters::xc_id == 4)
     {
-      gradRhoInValues = new std::map<dealii::CellId, std::vector<double> >;
-      gradRhoInVals.push_back(gradRhoInValues);
+      gradRhoInVals.push_back(std::map<dealii::CellId, std::vector<double> >());
+      gradRhoInValues= &(gradRhoInVals.back());
       //
-      gradRhoInValuesSpinPolarized=new std::map<dealii::CellId, std::vector<double> >;
       if (spinPolarized==1)
         {
-          gradRhoInValsSpinPolarized.push_back(gradRhoInValuesSpinPolarized);
+          gradRhoInValsSpinPolarized.push_back(std::map<dealii::CellId, std::vector<double> >());
+          gradRhoInValuesSpinPolarized=&(gradRhoInValsSpinPolarized.back());
         } 
       //
       cell = dofHandler.begin_active();
@@ -218,16 +182,20 @@ void dftClass<FEOrder>::initRho()
 	{
 	  if(cell->is_locally_owned())
 	    {
+	      fe_values.reinit(cell); 
+
 	      (*gradRhoInValues)[cell->id()]=std::vector<double>(3*n_q_points);
 	      double *gradRhoInValuesPtr = &((*gradRhoInValues)[cell->id()][0]);
-	      //
-	      (*gradRhoInValuesSpinPolarized)[cell->id()]=std::vector<double>(6*n_q_points);
-               double *gradRhoInValuesSpinPolarizedPtr = &((*gradRhoInValuesSpinPolarized)[cell->id()][0]);
-	      //
+	      
+              double *gradRhoInValuesSpinPolarizedPtr;
+              if (spinPolarized==1)
+              {	      
+	        (*gradRhoInValuesSpinPolarized)[cell->id()]=std::vector<double>(6*n_q_points);
+                gradRhoInValuesSpinPolarizedPtr = &((*gradRhoInValuesSpinPolarized)[cell->id()][0]);
+	      }
 	      for (unsigned int q = 0; q < n_q_points; ++q)
 		{
-		  MappingQ1<3,3> test; 
-		  Point<3> quadPoint(test.transform_unit_to_real_cell(cell, fe_values.get_quadrature().point(q)));
+		  const Point<3> & quadPoint=fe_values.quadrature_point(q);  
 		  double gradRhoXValueAtQuadPt = 0.0;
 		  double gradRhoYValueAtQuadPt = 0.0;
 		  double gradRhoZValueAtQuadPt = 0.0;

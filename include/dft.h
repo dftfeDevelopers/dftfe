@@ -380,12 +380,12 @@ class dftClass
   
   //dft related objects
   std::map<dealii::CellId, std::vector<double> > *rhoInValues, *rhoOutValues, *rhoInValuesSpinPolarized, *rhoOutValuesSpinPolarized;
-  std::deque<std::map<dealii::CellId,std::vector<double> >*> rhoInVals, rhoOutVals, rhoInValsSpinPolarized, rhoOutValsSpinPolarized;
+  std::deque<std::map<dealii::CellId,std::vector<double> >> rhoInVals, rhoOutVals, rhoInValsSpinPolarized, rhoOutValsSpinPolarized;
 
 
-  std::map<dealii::CellId, std::vector<double> > *gradRhoInValues, *gradRhoInValuesSpinPolarized;
-  std::map<dealii::CellId, std::vector<double> > *gradRhoOutValues, *gradRhoOutValuesSpinPolarized;
-  std::deque<std::map<dealii::CellId,std::vector<double> >*> gradRhoInVals,gradRhoInValsSpinPolarized,gradRhoOutVals, gradRhoOutValsSpinPolarized; 
+  std::map<dealii::CellId, std::vector<double> > * gradRhoInValues, *gradRhoInValuesSpinPolarized;
+  std::map<dealii::CellId, std::vector<double> > * gradRhoOutValues, *gradRhoOutValuesSpinPolarized;
+  std::deque<std::map<dealii::CellId,std::vector<double> >> gradRhoInVals,gradRhoInValsSpinPolarized,gradRhoOutVals, gradRhoOutValsSpinPolarized; 
 
 
   double d_pspTail = 8.0;
