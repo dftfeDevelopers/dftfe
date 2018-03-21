@@ -19,9 +19,6 @@
 #include "../../include/dftParameters.h"
 #include "meshGenUtils.cc"
 
-#define maxRefinementLevels 10
-
-
 
 //
 //constructor
@@ -188,7 +185,6 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 		  dealii::Point<3> center(cell->center());
 		  double currentMeshSize = cell->minimum_vertex_distance();
 
-		  bool inInnerDomain = false;
 		  //
 		  //compute projection of the vector joining the center of domain and centroid of cell onto
 		  //each of the domain bounding vectors
@@ -197,15 +193,9 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 		  double projComponent_2 = (center[0]*d_domainBoundingVectors[1][0]+center[1]*d_domainBoundingVectors[1][1]+center[2]*d_domainBoundingVectors[1][2])/domainBoundingVectorMag2;
 		  double projComponent_3 = (center[0]*d_domainBoundingVectors[2][0]+center[1]*d_domainBoundingVectors[2][1]+center[2]*d_domainBoundingVectors[2][2])/domainBoundingVectorMag3;
 
-		  if((std::fabs(projComponent_1) <= dftParameters::innerDomainSizeX) && (std::fabs(projComponent_2) <= dftParameters::innerDomainSizeY) && (std::fabs(projComponent_3) <= dftParameters::innerDomainSizeZ))
-		    {
-		      inInnerDomain = true;
-		    }
 
 		  bool cellRefineFlag = false;
 
-		  if(inInnerDomain && (currentMeshSize > dftParameters::meshSizeInnerDomain))
-		    cellRefineFlag = true;
 
 		  //loop over all atoms
 		  double distanceToClosestAtom = 1e8;
@@ -281,7 +271,7 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 
 	  if (refineFlag)
 	    {
-	      if(numLevels<maxRefinementLevels)
+	      if(numLevels<dftParameters::n_refinement_steps)
 		{
 		  char buffer2[100];
 		  sprintf(buffer2, "refinement in progress, level: %u\n", numLevels);
