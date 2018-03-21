@@ -4,7 +4,7 @@
 set DFT PATH = "/home/dsambit/dftfe/pullreq" # default: 
 
 
-subsection B: Geometry
+subsection A: Geometry
   # Atomic-coordinates file. For fully non-periodic domain give cartesian
   # coordinates of the atoms (in a.u) with respect origin at the center of the
   # domain. For periodic and semi-periodic give fractional coordinates of
@@ -61,7 +61,7 @@ subsection B: Geometry
 end
 
 
-subsection C: Boundary conditions
+subsection B: Boundary conditions
   # Periodicity along domain bounding vector, v1.
   set PERIODIC1                       = false
 
@@ -77,7 +77,7 @@ subsection C: Boundary conditions
 end
 
 
-subsection D: Finite element mesh parameters
+subsection C: Finite element mesh parameters
   # External mesh file path. If nothing is given auto mesh generation is
   # performed
   set MESH FILE        = 
@@ -107,7 +107,7 @@ subsection D: Finite element mesh parameters
 end
 
 
-subsection E: Brillouin zone k point sampling options
+subsection D: Brillouin zone k point sampling options
   # Number of pools the irreducible k-points to be split on should be a
   # divisor of total number of procs and be less than or equal to the number
   # of irreducible k-points
@@ -153,7 +153,7 @@ subsection E: Brillouin zone k point sampling options
 end
 
 
-subsection F: DFT functional related parameters
+subsection E: DFT functional related parameters
   # Parameter specifying the type of exchange-correlation to be used: 1(LDA:
   # Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23,
   # 5048 (1981)]), 2(LDA: Perdew-Wang 92 functional with Slater Exchange [PRB.
@@ -178,7 +178,7 @@ subsection F: DFT functional related parameters
 end
 
 
-subsection G: SCF parameters
+subsection F: SCF parameters
   # Number of SCF iterations to be considered for mixing the electron-density
   set ANDERSON SCHEME MIXING HISTORY   = 70
 
@@ -197,7 +197,7 @@ subsection G: SCF parameters
 end
 
 
-subsection H: Eigen-solver/Chebyshev solver related parameters
+subsection G: Eigen-solver/Chebyshev solver related parameters
   # The number of the Chebyshev filter passes per SCF  (Default value is used
   # when the input parameter is not specified
   set CHEBYSHEV FILTER PASSES           = 1
@@ -217,7 +217,7 @@ subsection H: Eigen-solver/Chebyshev solver related parameters
 end
 
 
-subsection I: Poisson problem paramters
+subsection H: Poisson problem paramters
   # Maximum number of iterations to be allowed for Poisson problem
   # convergence
   set MAXIMUM ITERATIONS = 10000 # default: 5000

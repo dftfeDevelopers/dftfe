@@ -89,7 +89,7 @@ void parse_command_line(const int argc,
           print_usage_message(prm);
           dftParameters::parse_parameters(prm);
 
-	  const bool printParametersToFile=true;
+	  const bool printParametersToFile=false;
 	  if (printParametersToFile)
 	  {
 	    std::ofstream output ("demoParameterFile.prm");
