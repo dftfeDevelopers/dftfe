@@ -16,8 +16,8 @@
 // @author Sambit Das(2017)
 //
 //
-#include "../../../include/meshMovement.h"
-#include "../../../include/dftParameters.h"
+#include <meshMovement.h>
+#include <dftParameters.h>
 
 namespace meshMovementUtils{
 
@@ -134,10 +134,12 @@ void meshMovementClass::init(Triangulation<3,3> & triangulation, const std::vect
 	}
     }  
 
-  for (int i = 0; i < C_DIM; ++i)
-    {
+  const std::array<int,3> periodic = {dftParameters::periodicX, dftParameters::periodicY, dftParameters::periodicZ};
+  for (int i = 0; i < std::accumulate(periodic.begin(),periodic.end(),0); ++i)
+   {
       GridTools::collect_periodic_faces(d_dofHandlerMoveMesh, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, d_periodicity_vector,offsetVectors[i]);
     }
+  
   DoFTools::make_periodicity_constraints<DoFHandler<C_DIM> >(d_periodicity_vector, d_constraintsMoveMesh);
   d_constraintsMoveMesh.close();
 #else

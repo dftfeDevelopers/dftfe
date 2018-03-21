@@ -88,6 +88,18 @@ void parse_command_line(const int argc,
           prm.parse_input(parameter_file);
           print_usage_message(prm);
           dftParameters::parse_parameters(prm);
+
+	  const bool printParametersToFile=false;
+	  if (printParametersToFile)
+	  {
+	    std::ofstream output ("demoParameterFile.prm");
+	    prm.print_parameters (output, ParameterHandler::OutputStyle::Text);
+	  }
+#ifdef ENABLE_PERIODIC_BC
+	  AssertThrow(dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ,ExcMessage("Incorrect executable: periodic executable being used for non-periodic problem."));	
+#else
+	  AssertThrow(!(dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ),ExcMessage("Incorrect executable: non-periodic executable being used for periodic problem."));	
+#endif	  
         }
 
     }//end of while loop
