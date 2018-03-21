@@ -31,10 +31,10 @@ namespace dftParameters
   double radiusAtomBall=1.0, mixingParameter=0.5, dkx=0.0, dky=0.0, dkz=0.0;
   double lowerEndWantedSpectrum=0.0,relLinearSolverTolerance=1e-10,selfConsistentSolverTolerance=1e-10,TVal=500, start_magnetization=0.0;
 
-  bool isPseudopotential=false,periodicX=false,periodicY=false,periodicZ=false, useSymm=false, symmFromFile=false, timeReversal=false;
-  std::string meshFileName=" ",coordinatesFile=" ",currentPath=" ",domainBoundingVectorsFile=" ",kPointDataFile=" ", symmDataFile=" ", ionRelaxFlagsFile=" ";
+  bool isPseudopotential=false,periodicX=false,periodicY=false,periodicZ=false, useSymm=false, timeReversal=false;
+  std::string meshFileName=" ",coordinatesFile=" ",currentPath=" ",domainBoundingVectorsFile=" ",kPointDataFile=" ", ionRelaxFlagsFile=" ";
 
-  double innerDomainSizeX=1.0, innerDomainSizeY=1.0, innerDomainSizeZ=1.0, outerAtomBallRadius=2.0, meshSizeOuterDomain=10.0, meshSizeInnerDomain=5.0;
+  double outerAtomBallRadius=2.0, meshSizeOuterDomain=10.0;
   double meshSizeInnerBall=1.0, meshSizeOuterBall=1.0;
 
   bool isIonOpt=false, isCellOpt=false, isIonForce=false, isCellStress=false;
@@ -47,25 +47,15 @@ namespace dftParameters
   void declare_parameters(ParameterHandler &prm)
   {
 
-    prm.enter_subsection ("Executable setup");
-    {      
-      prm.declare_entry("DFT PATH", "",
+    prm.declare_entry("DFT PATH", "",
                       Patterns::Anything(),
-                      "Path specifying the location of the build directory");
+                      "Path specifying the location of the source folder of dftfe code.");
 
-      prm.declare_entry("OPTIMIZED MODE", "true",
-                      Patterns::Bool(),
-                      "Flag to control optimized/debug modes");
-
-    }
-    prm.leave_subsection ();
-
-
-    prm.enter_subsection ("Geometry");
+    prm.enter_subsection ("B: Geometry");
     {      
 	prm.declare_entry("ATOMIC COORDINATES FILE", "",
 			  Patterns::Anything(),
-			  "Atomic-coordinates file. For fully non-periodic domain give cartesian coordinates of the atoms (in a.u) with respect origin at the center of the domain. For periodic and semi-periodic give fractional coordinates of atoms. File format (for two atoms): x1 y1 z1 (row1), x2 y2 z2 (row2).");
+			  "Atomic-coordinates file. For fully non-periodic domain give cartesian coordinates of the atoms (in a.u) with respect origin at the center of the domain. For periodic and semi-periodic give fractional coordinates of atoms. File format (example for two atoms): x1 y1 z1 (row1), x2 y2 z2 (row2).");
 
 	prm.declare_entry("DOMAIN BOUNDING VECTORS FILE", "",
 			  Patterns::Anything(),
@@ -80,7 +70,7 @@ namespace dftParameters
 
 	    prm.declare_entry("ION OPT", "false",
 			      Patterns::Bool(),
-			      "Boolean parameter specifying if atomic forces are to be relaxed");
+			      "Boolean parameter specifying if atomic forces are to be relaxed.");
 
 	    prm.declare_entry("FORCE TOL", "5e-5",
 			      Patterns::Double(),
@@ -88,7 +78,7 @@ namespace dftParameters
 
 	    prm.declare_entry("ION RELAX FLAGS FILE", "",
 			      Patterns::Anything(),
-			      "File specifying the atomic position update permission flags. 1- update 0- no update");	   
+			      "File specifying the atomic position update permission flags. 1- update 0- no update. File format (example for two atoms with atom 1 fixed and atom 2 free): 0 0 0 (row1), 1 1 1 (row2).");	   
 
 	    prm.declare_entry("CELL STRESS", "false",
 			      Patterns::Bool(),
@@ -112,31 +102,31 @@ namespace dftParameters
     }
     prm.leave_subsection ();   
 
-    prm.enter_subsection ("Boundary conditions");
+    prm.enter_subsection ("C: Boundary conditions");
     {
         prm.declare_entry("SELF POTENTIAL ATOM BALL RADIUS", "3.0",
                       Patterns::Double(),
                       "The radius (in a.u) of the ball around an atom on which self-potential of the associated nuclear charge is solved");
 
-	prm.declare_entry("PERIODIC BOUNDARY CONDITION X", "false",
+	prm.declare_entry("PERIODIC1", "false",
 			  Patterns::Bool(),
-			  "Periodicity along v1 direction");
+			  "Periodicity along domain bounding vector, v1.");
 
-	prm.declare_entry("PERIODIC BOUNDARY CONDITION Y", "false",
+	prm.declare_entry("PERIODIC2", "false",
 			  Patterns::Bool(),
-			  "Periodicity along v2 direction");
+			  "Periodicity along domain bounding vector, v2.");
 
-	prm.declare_entry("PERIODIC BOUNDARY CONDITION Z", "false",
+	prm.declare_entry("PERIODIC3", "false",
 			  Patterns::Bool(),
-			  "Periodicity along v3 direction");   
+			  "Periodicity along domain bounding vector, v3.");   
     }
     prm.leave_subsection ();     
 
 
-    prm.enter_subsection ("Finite element mesh parameters");
+    prm.enter_subsection ("D: Finite element mesh parameters");
     {      
 
-      prm.declare_entry("FINITE ELEMENT POLYNOMIAL ORDER", "2",
+      prm.declare_entry("POLYNOMIAL ORDER", "4",
                         Patterns::Integer(1,12),
                        "The degree of the finite-element interpolating polynomial");
 
@@ -144,44 +134,28 @@ namespace dftParameters
                        Patterns::Anything(),
                        "External mesh file path. If nothing is given auto mesh generation is performed");
 
-      prm.enter_subsection ("AUTO FEM Mesh generation parameters (Not relevant if external mesh is used).");
+      prm.enter_subsection ("Auto mesh generation parameters");
       {      
-	prm.declare_entry("INNER DOMAIN SIZE X","0.0",
+
+	prm.declare_entry("BASE MESH SIZE", "2.0",
 			  Patterns::Double(),
-			  "Inner Domain Size along 1-direction");
+			  "Mesh size of the base mesh on which refinement is performed.");
 
-	prm.declare_entry("INNER DOMAIN SIZE Y","0.0",
+	prm.declare_entry("ATOM BALL RADIUS","2.0",
 			  Patterns::Double(),
-			  "Inner Domain Size along 2-direction");
+			  "Radius of ball enclosing atom");
 
-	prm.declare_entry("INNER DOMAIN SIZE Z","0.0",
+	prm.declare_entry("MESH SIZE ATOM BALL", "0.5",
 			  Patterns::Double(),
-			  "Inner Domain Size along 3-direction");
+			  "Mesh size in a ball around atom");		
 
-
-	prm.declare_entry("OUTER ATOM BALL RADIUS","0.0",
+	prm.declare_entry("MESH SIZE NEAR ATOM", "0.5",
 			  Patterns::Double(),
-			  "Radius of outer ball enclosing atom");
+			  "Mesh size near atom. Useful for all-electron case.");
 
-	prm.declare_entry("MESH SIZE OUTER DOMAIN", "0.0",
-			  Patterns::Double(),
-			  "Outer Domain Mesh Size");
-
-	prm.declare_entry("MESH SIZE INNER DOMAIN", "0.0",
-			  Patterns::Double(),
-			  "Inner Domain Mesh Size");
-
-	prm.declare_entry("MESH SIZE NEAR ATOM", "0.0",
-			  Patterns::Double(),
-			  "Mesh Size near atom");
-
-	prm.declare_entry("MESH SIZE OUTER ATOM BALL", "0.0",
-			  Patterns::Double(),
-			  "Mesh Size in a ball around atom");
-
-        prm.declare_entry("NUMBER OF REFINEMENT STEPS", "4",
+        prm.declare_entry("MAX REFINEMENT STEPS", "10",
                         Patterns::Integer(1,10),
-                        "Number of refinement steps to be used");
+                        "Maximum number of refinement steps to be used. The default value is good enough in most cases.");
 	
 
       }
@@ -189,50 +163,42 @@ namespace dftParameters
     }
     prm.leave_subsection ();    
 
-    prm.enter_subsection ("Brillouin zone k point sampling options");
+    prm.enter_subsection ("E: Brillouin zone k point sampling options");
     {      
         prm.enter_subsection ("Monkhorst-Pack (MP) grid generation");
         { 	
-	    prm.declare_entry("BZ SAMPLING POINTS ALONG X", "2",
+	    prm.declare_entry("SAMPLING POINTS 1", "2",
 			      Patterns::Integer(1,100),
-			      "Number of Monkhorts-Pack grid points to be used along X direction for BZ sampling");
+			      "Number of Monkhorts-Pack grid points to be used along reciprocal latttice vector 1.");
 
-	    prm.declare_entry("BZ SAMPLING POINTS ALONG Y", "2",
+	    prm.declare_entry("SAMPLING POINTS 2", "2",
 			      Patterns::Integer(1,100),
-			      "Number of Monkhorts-Pack grid points to be used along Y direction for BZ sampling");
+			      "Number of Monkhorts-Pack grid points to be used along reciprocal latttice vector 2.");
 
-	    prm.declare_entry("BZ SAMPLING POINTS ALONG Z", "2",
+	    prm.declare_entry("SAMPLING POINTS 3", "2",
 			      Patterns::Integer(1,100),
-			      "Number of Monkhorts-Pack grid points to be used along Z direction for BZ sampling");
+			      "Number of Monkhorts-Pack grid points to be used along reciprocal latttice vector 3.");
 
-	    prm.declare_entry("BZ SAMPLING SHIFT ALONG X", "0.0",
+	    prm.declare_entry("SAMPLING SHIFT 1", "0.0",
 			      Patterns::Double(0.0,1.0),
-			      "Fractional shifting to be used along X direction for BZ sampling");
+			      "Fractional shifting to be used along reciprocal latttice vector 1.");
 
-	    prm.declare_entry("BZ SAMPLING SHIFT ALONG Y", "0.0",
+	    prm.declare_entry("SAMPLING SHIFT 2", "0.0",
 			      Patterns::Double(0.0,1.0),
-			      "Fractional shifting to be used along Y direction for BZ sampling");
+			      "Fractional shifting to be used along reciprocal latttice vector 2.");
 
-	    prm.declare_entry("BZ SAMPLING SHIFT ALONG Z", "0.0",
+	    prm.declare_entry("SAMPLING SHIFT 3", "0.0",
 			      Patterns::Double(0.0,1.0),
-			      "Fractional shifting to be used along Z direction for BZ sampling");
+			      "Fractional shifting to be used along reciprocal latttice vector 3.");
 
 	}
 	prm.leave_subsection ();  
 
 	prm.declare_entry("kPOINT RULE FILE", "",
 			  Patterns::Anything(),
-			  "File specifying the k-Point quadrature rule to sample Brillouin zone.");
+			  "File specifying the k-Point quadrature rule to sample Brillouin zone. CAUTION: This option is only used for postprocessing, for example band structure calculation. To set k point rule for DFT solve use the Monkhorst-Pack (MP) grid generation.");
 
-	prm.declare_entry("READ SYMMETRY FROM FILE", "false",
-			  Patterns::Bool(),
-			  "Flag to control whether to read symmetries supplied by user");
-
-	prm.declare_entry("SYMMETRY MATRIX FILE", "",
-			  Patterns::Anything(),
-			  "File specifying the symmetry matrices for obtaining the irreducible BZ");
-
-	prm.declare_entry("USE GROUP SYMMETRY", "true",
+	prm.declare_entry("USE GROUP SYMMETRY", "false",
 			  Patterns::Bool(),
 			  "Flag to control whether to use point group symmetries (set to false for relaxation calculation)");
 
@@ -246,10 +212,10 @@ namespace dftParameters
     }
     prm.leave_subsection ();  
 
-    prm.enter_subsection ("DFT functional related parameters");
+    prm.enter_subsection ("F: DFT functional related parameters");
     {       
 
-	prm.declare_entry("PSEUDOPOTENTIAL CALCULATION", "false",
+	prm.declare_entry("PSEUDOPOTENTIAL CALCULATION", "true",
 			  Patterns::Bool(),
 			  "Boolean Parameter specifying whether pseudopotential DFT calculation needs to be performed");
 
@@ -259,7 +225,7 @@ namespace dftParameters
 
 	prm.declare_entry("EXCHANGE CORRELATION TYPE", "1",
 			  Patterns::Integer(1,4),
-			  "Parameter specifying the type of exchange-correlation to be used");
+			  "Parameter specifying the type of exchange-correlation to be used: 1(LDA: Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)]), 2(LDA: Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)]), 3(LDA: Vosko, Wilk & Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)]), 4(GGA: Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)])");
 
 	prm.declare_entry("SPIN POLARIZATION", "0",
 			  Patterns::Integer(0,1),
@@ -272,17 +238,17 @@ namespace dftParameters
     prm.leave_subsection ();     
 
 
-    prm.enter_subsection ("SCF parameters");
+    prm.enter_subsection ("G: SCF parameters");
     {   
 	prm.declare_entry("TEMPERATURE", "500.0",
 			  Patterns::Double(),
 			  "Fermi-Dirac smearing temperature (in Kelvin)");
 
-	prm.declare_entry("SCF CONVERGENCE MAXIMUM ITERATIONS", "50",
+	prm.declare_entry("MAXIMUM ITERATIONS", "50",
 			  Patterns::Integer(),
 			  "Maximum number of iterations to be allowed for SCF convergence");
 
-	prm.declare_entry("SCF CONVERGENCE TOLERANCE", "1e-08",
+	prm.declare_entry("TOLERANCE", "1e-08",
 			  Patterns::Double(),
 			  "SCF iterations stopping tolerance in terms of electron-density difference between two successive iterations");
 
@@ -297,7 +263,7 @@ namespace dftParameters
     prm.leave_subsection ();
 
 
-    prm.enter_subsection ("Eigen-solver/Chebyshev solver related parameters");
+    prm.enter_subsection ("H: Eigen-solver/Chebyshev solver related parameters");
     {  
 
 	prm.declare_entry("NUMBER OF KOHN-SHAM WAVEFUNCTIONS", "10",
@@ -320,13 +286,13 @@ namespace dftParameters
     prm.leave_subsection (); 
 
 
-    prm.enter_subsection ("Poisson problem paramters");
+    prm.enter_subsection ("I: Poisson problem paramters");
     {   
-	prm.declare_entry("POISSON SOLVER CONVERGENCE MAXIMUM ITERATIONS", "5000",
+	prm.declare_entry("MAXIMUM ITERATIONS", "5000",
 			  Patterns::Integer(),
 			  "Maximum number of iterations to be allowed for Poisson problem convergence");
 
-	prm.declare_entry("POISSON SOLVER CONVERGENCE TOLERANCE", "1e-12",
+	prm.declare_entry("TOLERANCE", "1e-12",
 			  Patterns::Double(),
 			  "Relative tolerance as stopping criterion for Poisson problem convergence");
     }
@@ -334,17 +300,13 @@ namespace dftParameters
 
   }
 
-  void parse_parameters(const ParameterHandler &prm)
+  void parse_parameters(ParameterHandler &prm)
   {
 
-    prm.enter_subsection ("Executable setup");
-    {      
-      dftParameters::currentPath                   = prm.get("DFT PATH");
-      dftParameters::currentPath.erase(std::remove(dftParameters::currentPath.begin(),dftParameters::currentPath.end(),'"'),dftParameters::currentPath.end());
-    }
-    prm.leave_subsection ();
+    dftParameters::currentPath                   = prm.get("DFT PATH");
+    dftParameters::currentPath.erase(std::remove(dftParameters::currentPath.begin(),dftParameters::currentPath.end(),'"'),dftParameters::currentPath.end());
 
-    prm.enter_subsection ("Geometry");
+    prm.enter_subsection ("B: Geometry");
     {   
         dftParameters::coordinatesFile               = prm.get("ATOMIC COORDINATES FILE");	
         dftParameters::domainBoundingVectorsFile     = prm.get("DOMAIN BOUNDING VECTORS FILE");	
@@ -363,45 +325,41 @@ namespace dftParameters
     }
     prm.leave_subsection ();  
 
-    prm.enter_subsection ("Boundary conditions");
+    prm.enter_subsection ("C: Boundary conditions");
     {
         dftParameters::radiusAtomBall                = prm.get_double("SELF POTENTIAL ATOM BALL RADIUS");	
-	dftParameters::periodicX                     = prm.get_bool("PERIODIC BOUNDARY CONDITION X");
-	dftParameters::periodicY                     = prm.get_bool("PERIODIC BOUNDARY CONDITION Y");
-	dftParameters::periodicZ                     = prm.get_bool("PERIODIC BOUNDARY CONDITION Z");	
+	dftParameters::periodicX                     = prm.get_bool("PERIODIC1");
+	dftParameters::periodicY                     = prm.get_bool("PERIODIC2");
+	dftParameters::periodicZ                     = prm.get_bool("PERIODIC3");	
     }
     prm.leave_subsection ();
 
-    prm.enter_subsection ("Finite element mesh parameters");
+    prm.enter_subsection ("D: Finite element mesh parameters");
     {    
-        dftParameters::finiteElementPolynomialOrder  = prm.get_integer("FINITE ELEMENT POLYNOMIAL ORDER");
+        dftParameters::finiteElementPolynomialOrder  = prm.get_integer("POLYNOMIAL ORDER");
         dftParameters::meshFileName                  = prm.get("MESH FILE");	
-	prm.enter_subsection ("AUTO FEM Mesh generation parameters (Not relevant if external mesh is used).")
+	prm.enter_subsection ("Auto mesh generation parameters");
 	{
-	    dftParameters::innerDomainSizeX              = prm.get_double("INNER DOMAIN SIZE X");
-	    dftParameters::innerDomainSizeY              = prm.get_double("INNER DOMAIN SIZE Y");
-	    dftParameters::innerDomainSizeZ              = prm.get_double("INNER DOMAIN SIZE Z");
-	    dftParameters::outerAtomBallRadius           = prm.get_double("OUTER ATOM BALL RADIUS");
-	    dftParameters::meshSizeOuterDomain           = prm.get_double("MESH SIZE OUTER DOMAIN");
-	    dftParameters::meshSizeInnerDomain           = prm.get_double("MESH SIZE INNER DOMAIN");
+	    dftParameters::outerAtomBallRadius           = prm.get_double("ATOM BALL RADIUS");
+	    dftParameters::meshSizeOuterDomain           = prm.get_double("BASE MESH SIZE");
 	    dftParameters::meshSizeInnerBall             = prm.get_double("MESH SIZE NEAR ATOM");
-	    dftParameters::meshSizeOuterBall             = prm.get_double("MESH SIZE OUTER ATOM BALL");
-	    dftParameters::n_refinement_steps            = prm.get_integer("NUMBER OF REFINEMENT STEPS");	    
+	    dftParameters::meshSizeOuterBall             = prm.get_double("MESH SIZE ATOM BALL");
+	    dftParameters::n_refinement_steps            = prm.get_integer("MAX REFINEMENT STEPS");	    
 	}
         prm.leave_subsection ();	
     }
     prm.leave_subsection ();
     
-    prm.enter_subsection ("Brillouin zone k point sampling options");
+    prm.enter_subsection ("E: Brillouin zone k point sampling options");
     {    
 	prm.enter_subsection ("Monkhorst-Pack (MP) grid generation");
 	{     
-	    dftParameters::nkx        = prm.get_integer("BZ SAMPLING POINTS ALONG X");
-	    dftParameters::nky        = prm.get_integer("BZ SAMPLING POINTS ALONG Y");
-	    dftParameters::nkz        = prm.get_integer("BZ SAMPLING POINTS ALONG Z");
-	    dftParameters::dkx        = prm.get_double("BZ SAMPLING SHIFT ALONG X");
-	    dftParameters::dky        = prm.get_double("BZ SAMPLING SHIFT ALONG Y");
-	    dftParameters::dkz        = prm.get_double("BZ SAMPLING SHIFT ALONG Z");	    
+	    dftParameters::nkx        = prm.get_integer("SAMPLING POINTS 1");
+	    dftParameters::nky        = prm.get_integer("SAMPLING POINTS 2");
+	    dftParameters::nkz        = prm.get_integer("SAMPLING POINTS 3");
+	    dftParameters::dkx        = prm.get_double("SAMPLING SHIFT 1");
+	    dftParameters::dky        = prm.get_double("SAMPLING SHIFT 2");
+	    dftParameters::dkz        = prm.get_double("SAMPLING SHIFT 3");	    
 	}
 	prm.leave_subsection ();
 
@@ -409,12 +367,10 @@ namespace dftParameters
 	dftParameters::timeReversal                   = prm.get_bool("USE TIME REVERSAL SYMMETRY");
 	dftParameters::npool             = prm.get_integer("NUMBER OF POOLS");
 	dftParameters::kPointDataFile                = prm.get("kPOINT RULE FILE");
-	dftParameters::symmFromFile                  = prm.get_bool("READ SYMMETRY FROM FILE");
-	dftParameters::symmDataFile                  = prm.get("SYMMETRY MATRIX FILE");  	
     }
     prm.leave_subsection ();      
 
-    prm.enter_subsection ("DFT functional related parameters");
+    prm.enter_subsection ("F: DFT functional related parameters");
     {    
 	dftParameters::isPseudopotential             = prm.get_bool("PSEUDOPOTENTIAL CALCULATION");
 	dftParameters::pseudoProjector               = prm.get_integer("PSEUDOPOTENTIAL TYPE");
@@ -424,17 +380,17 @@ namespace dftParameters
     }
     prm.leave_subsection (); 
 
-    prm.enter_subsection ("SCF parameters");
+    prm.enter_subsection ("G: SCF parameters");
     {   
 	dftParameters::TVal                          = prm.get_double("TEMPERATURE");		
-	dftParameters::numSCFIterations              = prm.get_integer("SCF CONVERGENCE MAXIMUM ITERATIONS");
-	dftParameters::selfConsistentSolverTolerance = prm.get_double("SCF CONVERGENCE TOLERANCE");
+	dftParameters::numSCFIterations              = prm.get_integer("MAXIMUM ITERATIONS");
+	dftParameters::selfConsistentSolverTolerance = prm.get_double("TOLERANCE");
 	dftParameters::mixingHistory                 = prm.get_integer("ANDERSON SCHEME MIXING HISTORY");
 	dftParameters::mixingParameter               = prm.get_double("ANDERSON SCHEME MIXING PARAMETER");
     }
     prm.leave_subsection ();      
 
-    prm.enter_subsection ("Eigen-solver/Chebyshev solver related parameters");
+    prm.enter_subsection ("H: Eigen-solver/Chebyshev solver related parameters");
     {    
        dftParameters::numberEigenValues             = prm.get_integer("NUMBER OF KOHN-SHAM WAVEFUNCTIONS");	
        dftParameters::lowerEndWantedSpectrum        = prm.get_double("LOWER BOUND WANTED SPECTRUM");
@@ -443,10 +399,10 @@ namespace dftParameters
     }
     prm.leave_subsection ();   
 
-    prm.enter_subsection ("Poisson problem paramters");
+    prm.enter_subsection ("I: Poisson problem paramters");
     {  
-       dftParameters::maxLinearSolverIterations     = prm.get_integer("POISSON SOLVER CONVERGENCE MAXIMUM ITERATIONS");
-       dftParameters::relLinearSolverTolerance      = prm.get_double("POISSON SOLVER CONVERGENCE TOLERANCE");	
+       dftParameters::maxLinearSolverIterations     = prm.get_integer("MAXIMUM ITERATIONS");
+       dftParameters::relLinearSolverTolerance      = prm.get_double("TOLERANCE");	
     }
     prm.leave_subsection ();       
   }
