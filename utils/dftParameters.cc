@@ -51,7 +51,7 @@ namespace dftParameters
                       Patterns::Anything(),
                       "Path specifying the location of the source folder of dftfe code.");
 
-    prm.enter_subsection ("A: Geometry");
+    prm.enter_subsection ("Geometry");
     {      
 	prm.declare_entry("ATOMIC COORDINATES FILE", "",
 			  Patterns::Anything(),
@@ -61,7 +61,7 @@ namespace dftParameters
 			  Patterns::Anything(),
 			  "Set file specifying the domain bounding vectors v1, v2 and v3 in a.u. with the following format: v1x v1y v1z (row1), v2x v2y v2z (row2), v3x v3y v3z (row3). Domain bounding vectors are the typical lattice vectors in a fully periodic calculation.");
 
-	prm.enter_subsection ("Geometry optimization");
+	prm.enter_subsection ("Optimization");
 	{     
 
 	    prm.declare_entry("ION FORCE", "false",
@@ -102,7 +102,7 @@ namespace dftParameters
     }
     prm.leave_subsection ();   
 
-    prm.enter_subsection ("B: Boundary conditions");
+    prm.enter_subsection ("Boundary conditions");
     {
         prm.declare_entry("SELF POTENTIAL ATOM BALL RADIUS", "3.0",
                       Patterns::Double(),
@@ -123,7 +123,7 @@ namespace dftParameters
     prm.leave_subsection ();     
 
 
-    prm.enter_subsection ("C: Finite element mesh parameters");
+    prm.enter_subsection ("Finite element mesh parameters");
     {      
 
       prm.declare_entry("POLYNOMIAL ORDER", "4",
@@ -163,7 +163,7 @@ namespace dftParameters
     }
     prm.leave_subsection ();    
 
-    prm.enter_subsection ("D: Brillouin zone k point sampling options");
+    prm.enter_subsection ("Brillouin zone k point sampling options");
     {      
         prm.enter_subsection ("Monkhorst-Pack (MP) grid generation");
         { 	
@@ -212,7 +212,7 @@ namespace dftParameters
     }
     prm.leave_subsection ();  
 
-    prm.enter_subsection ("E: DFT functional related parameters");
+    prm.enter_subsection ("DFT functional related parameters");
     {       
 
 	prm.declare_entry("PSEUDOPOTENTIAL CALCULATION", "true",
@@ -238,7 +238,7 @@ namespace dftParameters
     prm.leave_subsection ();     
 
 
-    prm.enter_subsection ("F: SCF parameters");
+    prm.enter_subsection ("SCF parameters");
     {   
 	prm.declare_entry("TEMPERATURE", "500.0",
 			  Patterns::Double(),
@@ -263,7 +263,7 @@ namespace dftParameters
     prm.leave_subsection ();
 
 
-    prm.enter_subsection ("G: Eigen-solver/Chebyshev solver related parameters");
+    prm.enter_subsection ("Eigen-solver/Chebyshev solver related parameters");
     {  
 
 	prm.declare_entry("NUMBER OF KOHN-SHAM WAVEFUNCTIONS", "10",
@@ -286,7 +286,7 @@ namespace dftParameters
     prm.leave_subsection (); 
 
 
-    prm.enter_subsection ("H: Poisson problem paramters");
+    prm.enter_subsection ("Poisson problem paramters");
     {   
 	prm.declare_entry("MAXIMUM ITERATIONS", "5000",
 			  Patterns::Integer(),
@@ -306,11 +306,11 @@ namespace dftParameters
     dftParameters::currentPath                   = prm.get("DFT PATH");
     dftParameters::currentPath.erase(std::remove(dftParameters::currentPath.begin(),dftParameters::currentPath.end(),'"'),dftParameters::currentPath.end());
 
-    prm.enter_subsection ("A: Geometry");
+    prm.enter_subsection ("Geometry");
     {   
         dftParameters::coordinatesFile               = prm.get("ATOMIC COORDINATES FILE");	
         dftParameters::domainBoundingVectorsFile     = prm.get("DOMAIN BOUNDING VECTORS FILE");	
-	prm.enter_subsection ("Geometry optimization");
+	prm.enter_subsection ("Optimization");
 	{     
 	    dftParameters::isIonOpt                      = prm.get_bool("ION OPT");
 	    dftParameters::isIonForce                    = dftParameters::isIonOpt || prm.get_bool("ION FORCE");    
@@ -325,7 +325,7 @@ namespace dftParameters
     }
     prm.leave_subsection ();  
 
-    prm.enter_subsection ("B: Boundary conditions");
+    prm.enter_subsection ("Boundary conditions");
     {
         dftParameters::radiusAtomBall                = prm.get_double("SELF POTENTIAL ATOM BALL RADIUS");	
 	dftParameters::periodicX                     = prm.get_bool("PERIODIC1");
@@ -334,7 +334,7 @@ namespace dftParameters
     }
     prm.leave_subsection ();
 
-    prm.enter_subsection ("C: Finite element mesh parameters");
+    prm.enter_subsection ("Finite element mesh parameters");
     {    
         dftParameters::finiteElementPolynomialOrder  = prm.get_integer("POLYNOMIAL ORDER");
         dftParameters::meshFileName                  = prm.get("MESH FILE");	
@@ -350,7 +350,7 @@ namespace dftParameters
     }
     prm.leave_subsection ();
     
-    prm.enter_subsection ("D: Brillouin zone k point sampling options");
+    prm.enter_subsection ("Brillouin zone k point sampling options");
     {    
 	prm.enter_subsection ("Monkhorst-Pack (MP) grid generation");
 	{     
@@ -370,7 +370,7 @@ namespace dftParameters
     }
     prm.leave_subsection ();      
 
-    prm.enter_subsection ("E: DFT functional related parameters");
+    prm.enter_subsection ("DFT functional related parameters");
     {    
 	dftParameters::isPseudopotential             = prm.get_bool("PSEUDOPOTENTIAL CALCULATION");
 	dftParameters::pseudoProjector               = prm.get_integer("PSEUDOPOTENTIAL TYPE");
@@ -380,7 +380,7 @@ namespace dftParameters
     }
     prm.leave_subsection (); 
 
-    prm.enter_subsection ("F: SCF parameters");
+    prm.enter_subsection ("SCF parameters");
     {   
 	dftParameters::TVal                          = prm.get_double("TEMPERATURE");		
 	dftParameters::numSCFIterations              = prm.get_integer("MAXIMUM ITERATIONS");
@@ -390,7 +390,7 @@ namespace dftParameters
     }
     prm.leave_subsection ();      
 
-    prm.enter_subsection ("G: Eigen-solver/Chebyshev solver related parameters");
+    prm.enter_subsection ("Eigen-solver/Chebyshev solver related parameters");
     {    
        dftParameters::numberEigenValues             = prm.get_integer("NUMBER OF KOHN-SHAM WAVEFUNCTIONS");	
        dftParameters::lowerEndWantedSpectrum        = prm.get_double("LOWER BOUND WANTED SPECTRUM");
@@ -399,7 +399,7 @@ namespace dftParameters
     }
     prm.leave_subsection ();   
 
-    prm.enter_subsection ("H: Poisson problem paramters");
+    prm.enter_subsection ("Poisson problem paramters");
     {  
        dftParameters::maxLinearSolverIterations     = prm.get_integer("MAXIMUM ITERATIONS");
        dftParameters::relLinearSolverTolerance      = prm.get_double("TOLERANCE");	

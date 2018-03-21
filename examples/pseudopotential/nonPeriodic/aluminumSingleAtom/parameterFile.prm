@@ -1,17 +1,17 @@
 set DFT PATH = "/home/dsambit/dftfe/pullreq"
 
-subsection A: Geometry
+subsection Geometry
   set ATOMIC COORDINATES FILE = coordinates.inp
   set DOMAIN BOUNDING VECTORS FILE = domainBoundingVectors.inp
   
-  subsection Geometry optimization
+  subsection Optimization
     set ION FORCE=true
   end 
  
 end
 
 
-subsection B: Boundary conditions
+subsection Boundary conditions
   set SELF POTENTIAL ATOM BALL RADIUS = 8.0
   set PERIODIC1 = false
   set PERIODIC2 = false
@@ -19,7 +19,7 @@ subsection B: Boundary conditions
 end
 
 
-subsection C: Finite element mesh parameters
+subsection Finite element mesh parameters
   set POLYNOMIAL ORDER = 4
  
   subsection Auto mesh generation parameters
@@ -32,14 +32,14 @@ subsection C: Finite element mesh parameters
 end
 
 
-subsection E: DFT functional related parameters
+subsection DFT functional related parameters
   set PSEUDOPOTENTIAL CALCULATION =true
   set PSEUDOPOTENTIAL TYPE = 1
   set EXCHANGE CORRELATION TYPE = 1
 end
 
 
-subsection F: SCF parameters
+subsection SCF parameters
   set MAXIMUM ITERATIONS = 100 
   set TOLERANCE          = 1e-7
   set ANDERSON SCHEME MIXING PARAMETER   = 0.5
@@ -48,14 +48,14 @@ subsection F: SCF parameters
 end
 
 
-subsection G: Eigen-solver/Chebyshev solver related parameters
+subsection Eigen-solver/Chebyshev solver related parameters
   set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 20
   set LOWER BOUND WANTED SPECTRUM = -10.0
   set CHEBYSHEV POLYNOMIAL DEGREE = 0
 end
 
 
-subsection H: Poisson problem paramters
+subsection Poisson problem paramters
   set MAXIMUM ITERATIONS = 10000
   set TOLERANCE          = 1e-12
 end
