@@ -21,7 +21,6 @@
 #include "../../include/dftParameters.h"
 #include "computeNonLocalHamiltonianTimesXMemoryOpt.cc"
 
-using namespace dftParameters ;
 
 //
 //constructor
@@ -58,7 +57,6 @@ void eigenClass<FEOrder>::init()
   //
   //XHX size
   //
-
   XHXValue.resize(dftPtr->eigenVectors[0].size()*dftPtr->eigenVectors[0].size(),0.0);
 
   computing_timer.exit_section("eigenClass setup"); 
@@ -311,8 +309,8 @@ void eigenClass<FEOrder>::computeVEff(std::map<dealii::CellId,std::vector<double
 
 template<unsigned int FEOrder>
 void eigenClass<FEOrder>::implementHX (const dealii::MatrixFree<3,double>  &data,
-				       std::vector<vectorType*>  &dst, 
-				       const std::vector<vectorType*>  &src,
+				       std::vector<boost::shared_ptr<vectorType> >  &dst, 
+				       const std::vector<boost::shared_ptr<vectorType> >  &src,
 				       const std::pair<unsigned int,unsigned int> &cell_range) const
 {
   VectorizedArray<double>  half = make_vectorized_array(0.5);
@@ -525,8 +523,8 @@ void eigenClass<FEOrder>::implementHX (const dealii::MatrixFree<3,double>  &data
 
 //HX
 template<unsigned int FEOrder>
-void eigenClass<FEOrder>::HX(std::vector<vectorType*> &src, 
-			     std::vector<vectorType*> &dst) 
+void eigenClass<FEOrder>::HX(std::vector<boost::shared_ptr<vectorType> > &src, 
+			     std::vector<boost::shared_ptr<vectorType> > &dst) 
 {
 
 
@@ -567,7 +565,7 @@ void eigenClass<FEOrder>::HX(std::vector<vectorType*> &src,
   //
   //Finally evaluate M^{-1/2}*H*M^{-1/2}*X
   //
-  for (std::vector<vectorType*>::iterator it=dst.begin(); it!=dst.end(); it++)
+  for (std::vector<boost::shared_ptr<vectorType> >::iterator it=dst.begin(); it!=dst.end(); it++)
     {
       (*it)->scale(invSqrtMassVector); 
     }
@@ -575,7 +573,7 @@ void eigenClass<FEOrder>::HX(std::vector<vectorType*> &src,
   //
   //unscale src back
   //
-  for (std::vector<vectorType*>::iterator it=src.begin(); it!=src.end(); it++)
+  for (std::vector<boost::shared_ptr<vectorType> >::iterator it=src.begin(); it!=src.end(); it++)
     {
       (*it)->scale(sqrtMassVector); //MHMX  
     }
@@ -585,14 +583,14 @@ void eigenClass<FEOrder>::HX(std::vector<vectorType*> &src,
 
 //XHX
 template<unsigned int FEOrder>
-void eigenClass<FEOrder>::XHX(std::vector<vectorType*> &src)
+void eigenClass<FEOrder>::XHX(std::vector<boost::shared_ptr<vectorType> > &src)
 {
 
-  std::vector<vectorType*> tempPSI3;
+  std::vector<boost::shared_ptr<vectorType> > tempPSI3;
 
   for(unsigned int i = 0; i < src.size(); ++i)
     {
-      tempPSI3.push_back(new vectorType);
+      tempPSI3.push_back(boost::shared_ptr<vectorType>(new vectorType));
     }
   
   for(unsigned int i = 0; i < src.size(); ++i)
@@ -630,7 +628,7 @@ void eigenClass<FEOrder>::XHX(std::vector<vectorType*> &src)
   //extract vectors at the processor level(too much memory expensive)
   //
   unsigned int index = 0;
-  for (std::vector<vectorType*>::const_iterator it = src.begin(); it != src.end(); it++)
+  for (std::vector<boost::shared_ptr<vectorType> >::const_iterator it = src.begin(); it != src.end(); it++)
     {
       (*it)->extract_subvector_to(dftPtr->local_dof_indicesReal.begin(), 
 				  dftPtr->local_dof_indicesReal.end(), 
@@ -685,7 +683,7 @@ void eigenClass<FEOrder>::XHX(std::vector<vectorType*> &src)
   src[0]->locally_owned_elements().fill_index_vector(local_dof_indices);
 
   unsigned int index=0;
-  for (std::vector<vectorType*>::const_iterator it=src.begin(); it!=src.end(); it++)
+  for (std::vector<boost::shared_ptr<vectorType> >::const_iterator it=src.begin(); it!=src.end(); it++)
     {
       (*it)->extract_subvector_to(local_dof_indices.begin(), local_dof_indices.end(), x.begin()+dofs_per_proc*index);
       tempPSI3[index]->extract_subvector_to(local_dof_indices.begin(), local_dof_indices.end(), hx.begin()+dofs_per_proc*index);
@@ -699,10 +697,10 @@ void eigenClass<FEOrder>::XHX(std::vector<vectorType*> &src)
   
   computing_timer.exit_section("eigenClass XHX");
 
-  for(unsigned int i = 0; i < src.size(); ++i)
+  /*for(unsigned int i = 0; i < src.size(); ++i)
     {
       delete tempPSI3[i];
-    }
+      }*/
 
   tempPSI3.clear();
 
@@ -772,7 +770,7 @@ void eigenClass<FEOrder>::computeVEffSpinPolarized(std::map<dealii::CellId,std::
 	  //
 	  //sum all to vEffective
 	  //
-	  if(isPseudopotential)
+	  if(dftParameters::isPseudopotential)
 	    {
 	      VectorizedArray<double>  pseudoPotential;
 	      for (unsigned int v = 0; v < n_sub_cells; ++v)
@@ -880,7 +878,7 @@ void eigenClass<FEOrder>::computeVEffSpinPolarized(std::map<dealii::CellId,std::
 	  //
 	  //sum all to vEffective
 	  //
-	  if(isPseudopotential)
+	  if(dftParameters::isPseudopotential)
 	    {
 	      VectorizedArray<double>  pseudoPotential;
 	      for (unsigned int v = 0; v < n_sub_cells; ++v)

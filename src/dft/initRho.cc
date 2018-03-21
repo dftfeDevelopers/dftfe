@@ -21,7 +21,6 @@
 //
 #include "../../include/dftParameters.h"
 
-using namespace dftParameters ;
 
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::initRho()
@@ -40,7 +39,7 @@ void dftClass<FEOrder>::initRho()
       char densityFile[256];
       if(dftParameters::isPseudopotential)
 	{
-	  if (pseudoProjector==1)
+	  if(dftParameters::pseudoProjector==1)
 	     sprintf(densityFile, "%s/data/electronicStructure/pseudoPotential/z%u/singleAtomData/density.inp", dftParameters::currentPath.c_str(), *it);
 	  else
 	     sprintf(densityFile, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/singleAtomData/density.inp", dftParameters::currentPath.c_str(), *it);
@@ -130,7 +129,7 @@ void dftClass<FEOrder>::initRho()
   rhoInValues=new std::map<dealii::CellId, std::vector<double> >;
   rhoInVals.push_back(rhoInValues);
   rhoInValuesSpinPolarized=new std::map<dealii::CellId, std::vector<double> >;
-  if (spinPolarized==1)
+  if (dftParameters::spinPolarized==1)
     {
       rhoInValsSpinPolarized.push_back(rhoInValuesSpinPolarized);
     }
@@ -191,10 +190,10 @@ void dftClass<FEOrder>::initRho()
 		}
 
 	      rhoInValuesPtr[q] = std::abs(rhoValueAtQuadPt);
-	      if (spinPolarized==1)
+	      if(dftParameters::spinPolarized==1)
 	        { 
-	           rhoInValuesSpinPolarizedPtr[2*q+1] =( 0.5 + start_magnetization)*(std::abs(rhoValueAtQuadPt));
-	           rhoInValuesSpinPolarizedPtr[2*q] = ( 0.5 - start_magnetization)*(std::abs(rhoValueAtQuadPt));
+		  rhoInValuesSpinPolarizedPtr[2*q+1] =( 0.5 + dftParameters::start_magnetization)*(std::abs(rhoValueAtQuadPt));
+		  rhoInValuesSpinPolarizedPtr[2*q] = ( 0.5 - dftParameters::start_magnetization)*(std::abs(rhoValueAtQuadPt));
 		}
 	    }
 	}
@@ -208,7 +207,7 @@ void dftClass<FEOrder>::initRho()
       gradRhoInVals.push_back(gradRhoInValues);
       //
       gradRhoInValuesSpinPolarized=new std::map<dealii::CellId, std::vector<double> >;
-      if (spinPolarized==1)
+      if (dftParameters::spinPolarized==1)
         {
           gradRhoInValsSpinPolarized.push_back(gradRhoInValuesSpinPolarized);
         } 
@@ -290,14 +289,14 @@ void dftClass<FEOrder>::initRho()
 		  gradRhoInValuesPtr[3*q+0] = signRho*gradRhoXValueAtQuadPt;
 		  gradRhoInValuesPtr[3*q+1] = signRho*gradRhoYValueAtQuadPt;
 		  gradRhoInValuesPtr[3*q+2] = signRho*gradRhoZValueAtQuadPt;
-		  if (spinPolarized==1)
+		  if(dftParameters::spinPolarized==1)
 	           { 
-	             gradRhoInValuesSpinPolarizedPtr[6*q+0] =( 0.5 + start_magnetization)*signRho*gradRhoXValueAtQuadPt;
-	             gradRhoInValuesSpinPolarizedPtr[6*q+1] = ( 0.5 + start_magnetization)*signRho*gradRhoYValueAtQuadPt ;
-		     gradRhoInValuesSpinPolarizedPtr[6*q+2] =  ( 0.5 + start_magnetization)*signRho*gradRhoZValueAtQuadPt ;
-		     gradRhoInValuesSpinPolarizedPtr[6*q+3] =( 0.5 - start_magnetization)*signRho*gradRhoXValueAtQuadPt;
-	             gradRhoInValuesSpinPolarizedPtr[6*q+4] = ( 0.5 - start_magnetization)*signRho*gradRhoYValueAtQuadPt ;
-		     gradRhoInValuesSpinPolarizedPtr[6*q+5] =  ( 0.5 - start_magnetization)*signRho*gradRhoZValueAtQuadPt ;
+	             gradRhoInValuesSpinPolarizedPtr[6*q+0] =( 0.5 + dftParameters::start_magnetization)*signRho*gradRhoXValueAtQuadPt;
+	             gradRhoInValuesSpinPolarizedPtr[6*q+1] = ( 0.5 + dftParameters::start_magnetization)*signRho*gradRhoYValueAtQuadPt ;
+		     gradRhoInValuesSpinPolarizedPtr[6*q+2] =  ( 0.5 + dftParameters::start_magnetization)*signRho*gradRhoZValueAtQuadPt ;
+		     gradRhoInValuesSpinPolarizedPtr[6*q+3] =( 0.5 - dftParameters::start_magnetization)*signRho*gradRhoXValueAtQuadPt;
+	             gradRhoInValuesSpinPolarizedPtr[6*q+4] = ( 0.5 - dftParameters::start_magnetization)*signRho*gradRhoYValueAtQuadPt ;
+		     gradRhoInValuesSpinPolarizedPtr[6*q+5] =  ( 0.5 - dftParameters::start_magnetization)*signRho*gradRhoZValueAtQuadPt ;
 		   }
 		}
 	    }
@@ -328,7 +327,7 @@ void dftClass<FEOrder>::normalizeRho()
     if (cell->is_locally_owned()){
       for (unsigned int q=0; q<n_q_points; ++q){
 	(*rhoInValues)[cell->id()][q]*=((double)numElectrons)/charge;
-	if (spinPolarized==1)
+	if (dftParameters::spinPolarized==1)
 	   {
            	(*rhoInValuesSpinPolarized)[cell->id()][2*q+1]*=((double)numElectrons)/charge;
            	(*rhoInValuesSpinPolarized)[cell->id()][2*q]*=((double)numElectrons)/charge;

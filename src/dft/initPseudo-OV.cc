@@ -21,9 +21,6 @@
 #include "linalg.h"
 #include "../../include/dftParameters.h"
 
-//#include "pseudoUtils.cc"
-
-using namespace dftParameters ;
 
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::computeElementalOVProjectorKets()
@@ -302,7 +299,7 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
   for(std::set<unsigned int>::iterator it = atomTypes.begin(); it != atomTypes.end(); ++it)
     {
       char pseudoAtomDataFile[256];
-      sprintf(pseudoAtomDataFile, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/PseudoAtomDat", currentPath.c_str(), *it);
+      sprintf(pseudoAtomDataFile, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/PseudoAtomDat", dftParameters::currentPath.c_str(), *it);
 
 
       unsigned int atomicNumber = *it;
@@ -469,7 +466,7 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
 	  //readPseudoDataFileNames >> numProj ;
 
 	  char projRadialFunctionFileName[512];
-	  sprintf(projRadialFunctionFileName, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/%s", currentPath.c_str(),*it,tempProjRadialFunctionFileName.c_str());
+	  sprintf(projRadialFunctionFileName, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/%s", dftParameters::currentPath.c_str(),*it,tempProjRadialFunctionFileName.c_str());
 
 	  //
 	  // 2D vector to store the radial coordinate and its corresponding
@@ -532,7 +529,7 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
 	  char denominatorDataFileName[256];
 	  //
 	  readPseudoDataFileNames >> tempDenominatorDataFileName ;
-	  sprintf(denominatorDataFileName, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/%s", currentPath.c_str(),*it, tempDenominatorDataFileName.c_str());
+	  sprintf(denominatorDataFileName, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/%s", dftParameters::currentPath.c_str(),*it, tempDenominatorDataFileName.c_str());
 	  dftUtils::readFile(projId,denominator,denominatorDataFileName);
 	  denominatorData[(*it)] = denominator ;
 

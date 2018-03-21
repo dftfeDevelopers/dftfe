@@ -23,7 +23,6 @@
 
 #include "../../include/dftParameters.h"
 
-using namespace dftParameters ;
 
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::loadPSIFiles(unsigned int Z, 
@@ -44,8 +43,8 @@ void dftClass<FEOrder>::loadPSIFiles(unsigned int Z,
   //
   char psiFile[256];
 
-  if(isPseudopotential)
-    if(pseudoProjector==2)
+  if(dftParameters::isPseudopotential)
+    if(dftParameters::pseudoProjector==2)
 	sprintf(psiFile, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/singleAtomData/psi%u%u.inp", dftParameters::currentPath.c_str(), Z, n, l);
     else
         sprintf(psiFile, "%s/data/electronicStructure/pseudoPotential/z%u/singleAtomData/psi%u%u.inp", dftParameters::currentPath.c_str(), Z, n, l);
@@ -374,7 +373,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 
     }
 
-  for(int kPoint = 0; kPoint < (1+spinPolarized)*d_maxkPoints; ++kPoint)
+  for(int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_maxkPoints; ++kPoint)
     {
       for (unsigned int i = 0; i < numEigenValues; ++i)
 	{

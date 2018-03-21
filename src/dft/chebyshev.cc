@@ -18,6 +18,19 @@
 #include <complex>
 #include <vector>
 
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::scale(const vectorType & diagonal,
+			      const unsigned int spinType)
+{
+   for(unsigned int i = 0; i < eigenVectors[(1+dftParameters::spinPolarized)*d_kPointIndex+spinType].size();++i)
+    {
+      auto & vec = eigenVectors[(1+dftParameters::spinPolarized)*d_kPointIndex+spinType][i];
+      vec->scale(diagonal);
+      constraintsNoneEigen.distribute(*vec);
+      vec->update_ghost_values();
+    }
+
+}
 
 
 #ifdef ENABLE_PERIODIC_BC
@@ -154,7 +167,7 @@ void dftClass<FEOrder>::alphaTimesXPlusY(std::complex<double>   alpha,
 
 //chebyshev solver
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::chebyshevSolver(unsigned int s)
+void dftClass<FEOrder>::chebyshevSolver(unsigned int spinType)
 {
   computing_timer.enter_section("Chebyshev solve"); 
 
@@ -210,7 +223,7 @@ void dftClass<FEOrder>::chebyshevSolver(unsigned int s)
 
   sprintf(buffer, "%s:%18.10e\n", "upper bound of unwanted spectrum", bUp);
   pcout << buffer;
-  sprintf(buffer, "%s:%18.10e\n", "lower bound of unwanted spectrum", bLow[(1+spinPolarized)*d_kPointIndex+s]);
+  sprintf(buffer, "%s:%18.10e\n", "lower bound of unwanted spectrum", bLow[(1+dftParameters::spinPolarized)*d_kPointIndex+spinType]);
   pcout << buffer;
   sprintf(buffer, "%s: %u\n\n", "Chebyshev polynomial degree", chebyshevOrder);
   pcout << buffer;
@@ -218,47 +231,37 @@ void dftClass<FEOrder>::chebyshevSolver(unsigned int s)
   //
   //scale the eigenVectors (initial guess of single atom wavefunctions or previous guess) to convert into Lowden Orthonormalized FE basis
   //multiply by M^{1/2}
-  for(unsigned int i = 0; i < eigenVectors[(1+spinPolarized)*d_kPointIndex+s].size();++i)
-    {
-      eigenVectors[(1+spinPolarized)*d_kPointIndex+s][i]->scale(eigenPtr->sqrtMassVector);
-      eigenVectors[(1+spinPolarized)*d_kPointIndex+s][i]->update_ghost_values();
-      constraintsNoneEigen.distribute(*eigenVectors[(1+spinPolarized)*d_kPointIndex+s][i]);
-      eigenVectors[(1+spinPolarized)*d_kPointIndex+s][i]->update_ghost_values();
-    }
+  scale(eigenPtr->sqrtMassVector,
+	spinType);
   
   //
-  //Filter
+  //Chebyshev filter
   //
-  chebyshevFilter(eigenVectors[(1+spinPolarized)*d_kPointIndex+s], chebyshevOrder, bLow[(1+spinPolarized)*d_kPointIndex+s], bUp, a0[(1+spinPolarized)*d_kPointIndex+s]);
+  chebyshevFilter(eigenVectors[(1+dftParameters::spinPolarized)*d_kPointIndex+spinType], chebyshevOrder, bLow[(1+dftParameters::spinPolarized)*d_kPointIndex+spinType], bUp, a0[(1+dftParameters::spinPolarized)*d_kPointIndex+spinType]);
   
 
   //
   //Gram Schmidt orthonormalization
   //
-  gramSchmidt(eigenVectors[(1+spinPolarized)*d_kPointIndex+s]);
+  gramSchmidt(eigenVectors[(1+dftParameters::spinPolarized)*d_kPointIndex+spinType]);
 
 
   //
   //Rayleigh Ritz step
   //
-  rayleighRitz(s, eigenVectors[(1+spinPolarized)*d_kPointIndex+s]);
+  rayleighRitz(spinType, eigenVectors[(1+dftParameters::spinPolarized)*d_kPointIndex+spinType]);
 
   //
-  // Compute and print L2 norm
+  //Compute and print L2 norm
   //
-  computeResidualNorm(eigenVectors[(1+spinPolarized)*d_kPointIndex+s]);
+  computeResidualNorm(eigenVectors[(1+dftParameters::spinPolarized)*d_kPointIndex+spinType]);
 
   
   //
   //scale the eigenVectors with M^{-1/2} to represent the wavefunctions in the usual FE basis
   //
-  for(unsigned int i = 0; i < eigenVectors[(1+spinPolarized)*d_kPointIndex+s].size();++i)
-    {
-      eigenVectors[(1+spinPolarized)*d_kPointIndex+s][i]->scale(eigenPtr->invSqrtMassVector);
-      eigenVectors[(1+spinPolarized)*d_kPointIndex+s][i]->update_ghost_values();
-      constraintsNoneEigen.distribute(*eigenVectors[(1+spinPolarized)*d_kPointIndex+s][i]);
-      eigenVectors[(1+spinPolarized)*d_kPointIndex+s][i]->update_ghost_values();
-    }
+  scale(eigenPtr->invSqrtMassVector,
+	spinType);
 
 
  
@@ -300,10 +303,14 @@ double dftClass<FEOrder>::upperBound()
   vChebyshev/=vChebyshev.l2_norm();
   vChebyshev.update_ghost_values();
   //
-  std::vector<vectorType*> v,f; 
-  v.push_back(&vChebyshev);
-  f.push_back(&fChebyshev);
-  eigenPtr->HX(v,f);
+  //std::vector<boost::shared_ptr<vectorType> > v,f; 
+  //d_v.clear();
+  //d_f.clear();
+  //d_v.resize(1);
+  //d_f.resize(1);
+  //d_v.push_back(boost::shared_ptr<vectorType> (&vChebyshev));
+  //d_f.push_back(boost::shared_ptr<vectorType> (&fChebyshev));
+  eigenPtr->HX(d_v,d_f);
 
   //
 #ifdef ENABLE_PERIODIC_BC
@@ -327,7 +334,7 @@ double dftClass<FEOrder>::upperBound()
     {
       beta=fChebyshev.l2_norm();
       v0Chebyshev=vChebyshev; vChebyshev.equ(1.0/beta,fChebyshev);
-      eigenPtr->HX(v,f); fChebyshev.add(-1.0*beta,v0Chebyshev);//beta is real
+      eigenPtr->HX(d_v,d_f); fChebyshev.add(-1.0*beta,v0Chebyshev);//beta is real
 #ifdef ENABLE_PERIODIC_BC
       alpha = innerProduct(fChebyshev,vChebyshev);
       alphaTimesXPlusY(-alpha,vChebyshev,fChebyshev);
@@ -367,13 +374,13 @@ double dftClass<FEOrder>::upperBound()
   char buffer[100];
   sprintf(buffer, "bUp1: %18.10e,  bUp2: %18.10e\n", eigenValuesT[lanczosIterations-1], fChebyshev.l2_norm());
   //pcout << buffer;
-  
+ 
   return (eigenValuesT[lanczosIterations-1]+fChebyshev.l2_norm());
 }
 
 //Gram-Schmidt orthonormalization
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::gramSchmidt(std::vector<vectorType*>& X)
+void dftClass<FEOrder>::gramSchmidt(std::vector<boost::shared_ptr<vectorType> > & X)
 {
   computing_timer.enter_section("Chebyshev GS orthonormalization"); 
  
@@ -480,7 +487,9 @@ void dftClass<FEOrder>::gramSchmidt(std::vector<vectorType*>& X)
 }
 
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::rayleighRitz(unsigned int s, std::vector<vectorType*> &X){
+void dftClass<FEOrder>::rayleighRitz(unsigned int s, 
+				     std::vector<boost::shared_ptr<vectorType> > & X)
+{
   computing_timer.enter_section("Chebyshev Rayleigh Ritz"); 
   //Hbar=Psi^T*H*Psi
 
@@ -521,7 +530,7 @@ void dftClass<FEOrder>::rayleighRitz(unsigned int s, std::vector<vectorType*> &X
   int n1 = X[0]->local_size()/2;
   std::vector<std::complex<double> > Xbar(n1*m), Xlocal(n1*m); //Xbar=Xlocal*Q
   std::vector<std::complex<double> >::iterator val = Xlocal.begin();
-  for(std::vector<vectorType*>::iterator x=X.begin(); x<X.end(); ++x)
+  for(std::vector<boost::shared_ptr<vectorType> >::iterator x=X.begin(); x<X.end(); ++x)
     {
       for (unsigned int i=0; i<(unsigned int)n1; i++)
 	{
@@ -534,7 +543,7 @@ void dftClass<FEOrder>::rayleighRitz(unsigned int s, std::vector<vectorType*> &X
   int n1 = X[0]->local_size();
   std::vector<double> Xbar(n1*m), Xlocal(n1*m); //Xbar=Xlocal*Q
   std::vector<double>::iterator val = Xlocal.begin();
-  for (std::vector<vectorType*>::iterator x = X.begin(); x < X.end(); ++x)
+  for (std::vector<boost::shared_ptr<vectorType> >::iterator x = X.begin(); x < X.end(); ++x)
     {
       for (unsigned int i=0; i<(unsigned int)n1; i++)
 	{
@@ -559,7 +568,7 @@ lda=n1; int ldb=m, ldc=n1;
 #ifdef ENABLE_PERIODIC_BC
  //copy back Xbar to X
   val=Xbar.begin();
-  for (std::vector<vectorType*>::iterator x=X.begin(); x<X.end(); ++x)
+  for (std::vector<boost::shared_ptr<vectorType> >::iterator x=X.begin(); x<X.end(); ++x)
     {
       **x=0.0;
       for (unsigned int i=0; i<(unsigned int)n1; i++){
@@ -572,7 +581,7 @@ lda=n1; int ldb=m, ldc=n1;
 #else
   //copy back Xbar to X
   val=Xbar.begin();
-  for (std::vector<vectorType*>::iterator x=X.begin(); x<X.end(); ++x)
+  for (std::vector<boost::shared_ptr<vectorType> >::iterator x=X.begin(); x<X.end(); ++x)
     {
       **x=0.0;
       for (unsigned int i=0; i<(unsigned int)n1; i++){
@@ -583,8 +592,8 @@ lda=n1; int ldb=m, ldc=n1;
 #endif
 
   //set a0 and bLow
-  a0[(1+spinPolarized)*d_kPointIndex+s]=eigenValuesTemp[d_kPointIndex][0]; 
-  bLow[(1+spinPolarized)*d_kPointIndex+s]=eigenValuesTemp[d_kPointIndex].back(); 
+  a0[(1+dftParameters::spinPolarized)*d_kPointIndex+s]=eigenValuesTemp[d_kPointIndex][0]; 
+  bLow[(1+dftParameters::spinPolarized)*d_kPointIndex+s]=eigenValuesTemp[d_kPointIndex].back(); 
   //
   computing_timer.exit_section("Chebyshev Rayleigh Ritz"); 
 }
@@ -593,7 +602,7 @@ lda=n1; int ldb=m, ldc=n1;
 //inputs: X - input wave functions, m-polynomial degree, a-lower bound of unwanted spectrum
 //b-upper bound of the full spectrum, a0-lower bound of the wanted spectrum
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::chebyshevFilter(std::vector<vectorType*> & X, 
+void dftClass<FEOrder>::chebyshevFilter(std::vector<boost::shared_ptr<vectorType> > & X, 
 					unsigned int m, 
 					double a, 
 					double b, 
@@ -603,12 +612,12 @@ void dftClass<FEOrder>::chebyshevFilter(std::vector<vectorType*> & X,
   e=(b-a)/2.0; c=(b+a)/2.0;
   sigma=e/(a0-c); sigma1=sigma; gamma=2.0/sigma1;
 
-  std::vector<vectorType*> PSI,tempPSI;
+  std::vector<boost::shared_ptr<vectorType> > PSI,tempPSI;
 
   for(unsigned int i = 0; i < X.size(); ++i)
     {
-      PSI.push_back(new vectorType);
-      tempPSI.push_back(new vectorType);
+      PSI.push_back(boost::shared_ptr<vectorType>(new vectorType));
+      tempPSI.push_back(boost::shared_ptr<vectorType>(new vectorType));
     }
   
   for(unsigned int i = 0; i < X.size(); ++i)
@@ -625,7 +634,9 @@ void dftClass<FEOrder>::chebyshevFilter(std::vector<vectorType*> & X,
     constraintsNoneEigen.set_zero(*X[i]);
 
   eigenPtr->HX(X, PSI);
-  for (std::vector<vectorType*>::iterator y=PSI.begin(), x=X.begin(); y<PSI.end(); ++y, ++x)
+  //std::vector<boost::shared_ptr<vectorType> >::iterator y,ynew;
+  //std::vector<vectorType*>::iterator x;
+  for (std::vector<boost::shared_ptr<vectorType> >::iterator y=PSI.begin(), x=X.begin(); y<PSI.end(); ++y, ++x)
     {  
       (**y).add(alpha2,**x);
       (**y)*=alpha1;
@@ -637,7 +648,7 @@ void dftClass<FEOrder>::chebyshevFilter(std::vector<vectorType*> & X,
       //Ynew=alpha1*(HY-cY)+alpha2*X
       alpha1=2.0*sigma2/e, alpha2=-(sigma*sigma2);
       eigenPtr->HX(PSI, tempPSI);
-      for (std::vector<vectorType*>::iterator ynew=tempPSI.begin(), y=PSI.begin(), x=X.begin(); ynew<tempPSI.end(); ++ynew, ++y, ++x)
+      for(std::vector<boost::shared_ptr<vectorType> >::iterator ynew=tempPSI.begin(), y=PSI.begin(), x=X.begin(); ynew<tempPSI.end(); ++ynew, ++y, ++x)
 	{  
 	  (**ynew).add(-c,**y);
 	  (**ynew)*=alpha1;
@@ -649,17 +660,17 @@ void dftClass<FEOrder>::chebyshevFilter(std::vector<vectorType*> & X,
     }
   
   //copy back PSI to eigenVectors
-  for (std::vector<vectorType*>::iterator y=PSI.begin(), x=X.begin(); y<PSI.end(); ++y, ++x){  
+  for (std::vector<boost::shared_ptr<vectorType> >::iterator y=PSI.begin(), x=X.begin(); y<PSI.end(); ++y, ++x){  
     **x=**y;
   }   
 
   computing_timer.exit_section("Chebyshev filtering"); 
 
-  for(unsigned int i = 0; i < X.size(); ++i)
+  /*for(unsigned int i = 0; i < X.size(); ++i)
     {
       delete PSI[i];
       delete tempPSI[i];
-    }
+      }*/
 
   PSI.clear();
   tempPSI.clear();
@@ -668,15 +679,15 @@ void dftClass<FEOrder>::chebyshevFilter(std::vector<vectorType*> & X,
 }
 
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::computeResidualNorm(std::vector<vectorType*> & X)
+void dftClass<FEOrder>::computeResidualNorm(std::vector<boost::shared_ptr<vectorType> > & X)
 {
   computing_timer.enter_section("computeResidualNorm"); 
 
-  std::vector<vectorType*> PSI;
+  std::vector<boost::shared_ptr<vectorType> > PSI;
 
   for(unsigned int i = 0; i < X.size(); ++i)
     {
-      PSI.push_back(new vectorType);
+      PSI.push_back(boost::shared_ptr<vectorType>(new vectorType));
     }
   
   for(unsigned int i = 0; i < X.size(); ++i)
@@ -695,7 +706,7 @@ void dftClass<FEOrder>::computeResidualNorm(std::vector<vectorType*> & X)
      {
 	(*PSI[i]).add(-eigenValuesTemp[d_kPointIndex][i] , (*X[i]) ) ;
 	const double resNorm= (*PSI[i]).l2_norm();
-        if (spinPolarized!=1)
+        if (dftParameters::spinPolarized!=1)
 	   d_tempResidualNormWaveFunctions[d_kPointIndex][i]=resNorm;
 	sprintf(buffer, "eigen vector %3u: %22.16e\n", i+1,resNorm);
         pcout << buffer;
@@ -703,10 +714,10 @@ void dftClass<FEOrder>::computeResidualNorm(std::vector<vectorType*> & X)
   pcout <<std::endl;
 
   //clean ups
-  for(unsigned int i = 0; i < X.size(); ++i)
+  /*for(unsigned int i = 0; i < X.size(); ++i)
     {
       delete PSI[i];
-    }
+      }*/
 
   PSI.clear();
 

@@ -17,8 +17,6 @@
 //
 #include "../../include/dftParameters.h"
 
-
-using namespace dftParameters ;
 namespace internaldft{
   std::vector<double>  cross_product(const std::vector<double> &a,
 		                     const std::vector<double> &b)
@@ -119,6 +117,14 @@ void dftClass<FEOrder>::recomputeKPointCoordinates()
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::generateMPGrid()
 {
+  const unsigned int nkx = dftParameters::nkx;
+  const unsigned int nky = dftParameters::nky;
+  const unsigned int nkz = dftParameters::nkz;
+
+  const double dkx = dftParameters::dkx;
+  const double dky = dftParameters::dky;
+  const double dkz = dftParameters::dkz;
+
   std::vector<double> del(3);
   d_maxkPoints = (nkx * nky) * nkz;
   pcout<<"Total number of k-points " << d_maxkPoints << std::endl;
@@ -151,7 +157,7 @@ void dftClass<FEOrder>::generateMPGrid()
   // Get the reciprocal lattice vectors
   d_reciprocalLatticeVectors=internaldft::getReciprocalLatticeVectors(d_domainBoundingVectors);
 
-  if (useSymm || timeReversal) {
+  if (dftParameters::useSymm || dftParameters::timeReversal) {
     //
     const int numberColumnsSymmDataFile = 3;
     std::vector<std::vector<int>> symmUnderGroupTemp ;
@@ -161,7 +167,7 @@ void dftClass<FEOrder>::generateMPGrid()
     int rotation[max_size][3][3];
     //
     //////////////////////////////////////////  SPG CALL  ///////////////////////////////////////////////////
-    if (useSymm) { 
+    if (dftParameters::useSymm) { 
      const int num_atom = atomLocationsFractional.size();
      double lattice[3][3], position[num_atom][3];
      int types[num_atom] ;
@@ -219,7 +225,7 @@ void dftClass<FEOrder>::generateMPGrid()
     }
 
     //// adding time reversal  //////
-    if(timeReversal) {
+    if(dftParameters::timeReversal) {
       for (unsigned int iSymm=symmetryPtr->numSymm; iSymm<2*symmetryPtr->numSymm; ++iSymm){
          for (unsigned int j=0; j<3; ++j) {
             for (unsigned int k=0; k<3; ++k)
@@ -241,7 +247,7 @@ void dftClass<FEOrder>::generateMPGrid()
         for (unsigned int k=0; k<3; ++k) {
          symmMatTemp[i][j][k] = double(rotation[i][j][k]);
          symmMatTemp2[i][j][k] = double(rotation[i][j][k]);
-	 if (timeReversal && i >= symmetryPtr->numSymm/2)
+	 if (dftParameters::timeReversal && i >= symmetryPtr->numSymm/2)
               symmMatTemp2[i][j][k] = - double(rotation[i][j][k]);
 
 	}
@@ -363,7 +369,7 @@ void dftClass<FEOrder>::generateMPGrid()
    //
    // Split k-points over pools
    //
-   AssertThrow(d_maxkPoints>=npool,ExcMessage("Number of k-points should be higher than or equal to number of pools"));
+  AssertThrow(d_maxkPoints>=dftParameters::npool,ExcMessage("Number of k-points should be higher than or equal to number of pools"));
    const unsigned int this_mpi_pool (Utilities::MPI::this_mpi_process(interpoolcomm)) ;
    std::vector<double> d_kPointCoordinatesGlobal(3*d_maxkPoints, 0.0) ;
    std::vector<double> d_kPointWeightsGlobal(d_maxkPoints, 0.0) ;
@@ -382,8 +388,8 @@ void dftClass<FEOrder>::generateMPGrid()
    d_kPointCoordinates.clear() ;
    kPointReducedCoordinates.clear();
    d_kPointWeights.clear() ;
-   d_maxkPoints = d_maxkPointsGlobal / npool ;
-   const unsigned int rest = d_maxkPointsGlobal%npool ;
+   d_maxkPoints = d_maxkPointsGlobal / dftParameters::npool ;
+   const unsigned int rest = d_maxkPointsGlobal%dftParameters::npool ;
    if (this_mpi_pool < rest)
        d_maxkPoints = d_maxkPoints + 1 ;
    //
@@ -391,13 +397,13 @@ void dftClass<FEOrder>::generateMPGrid()
    kPointReducedCoordinates.resize(3*d_maxkPoints, 0.0);
    d_kPointWeights.resize(d_maxkPoints, 0.0) ;
    //
-   std::vector<int> sendSizekPoints1(npool, 0), mpiOffsetskPoints1(npool, 0) ;
-   std::vector<int> sendSizekPoints2(npool, 0), mpiOffsetskPoints2(npool, 0) ;
+   std::vector<int> sendSizekPoints1(dftParameters::npool, 0), mpiOffsetskPoints1(dftParameters::npool, 0) ;
+   std::vector<int> sendSizekPoints2(dftParameters::npool, 0), mpiOffsetskPoints2(dftParameters::npool, 0) ;
    if (this_mpi_pool==0) {
    //
-   for (unsigned int i=0; i < npool; ++i) {
-	sendSizekPoints1[i] = 3*(d_maxkPointsGlobal / npool) ;
-	sendSizekPoints2[i] = d_maxkPointsGlobal / npool ;
+     for (unsigned int i=0; i < dftParameters::npool; ++i) {
+       sendSizekPoints1[i] = 3*(d_maxkPointsGlobal / dftParameters::npool) ;
+       sendSizekPoints2[i] = d_maxkPointsGlobal / dftParameters::npool ;
 	if (i < rest){
 	   sendSizekPoints1[i] = sendSizekPoints1[i] + 3 ;
 	   sendSizekPoints2[i] = sendSizekPoints2[i] + 1 ;

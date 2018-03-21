@@ -18,7 +18,6 @@
 
 #include "../../include/dftParameters.h"
 
-using namespace dftParameters ;
 
 //init
 template<unsigned int FEOrder>
@@ -32,8 +31,14 @@ void dftClass<FEOrder>::initElectronicFields(){
   v0Chebyshev.reinit(vChebyshev);
   fChebyshev.reinit(vChebyshev);
 
-  //std::cout<< "SPIN POLARIZED:"<< spinPolarized <<std::endl;
-  if (spinPolarized!=1)
+  //
+  //temp STL d_v and d_f vectors required for upper bound computation filled here
+  //
+  d_v.push_back(boost::shared_ptr<vectorType> (&vChebyshev));
+  d_f.push_back(boost::shared_ptr<vectorType> (&fChebyshev));
+  
+
+  if(dftParameters::spinPolarized!=1)
   {
      d_tempResidualNormWaveFunctions.clear();
      d_tempResidualNormWaveFunctions.resize(d_maxkPoints);
@@ -44,7 +49,7 @@ void dftClass<FEOrder>::initElectronicFields(){
   }
      
 
-  for(unsigned int kPoint = 0; kPoint < (1+spinPolarized)*d_maxkPoints; ++kPoint)
+  for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_maxkPoints; ++kPoint)
     {
       for(unsigned int i = 0; i < eigenVectors[kPoint].size(); ++i)
 	{
@@ -53,7 +58,7 @@ void dftClass<FEOrder>::initElectronicFields(){
     }
 
 
-  if ( (Utilities::MPI::this_mpi_process(interpoolcomm)) > 1 && (Utilities::MPI::this_mpi_process(mpi_communicator))==0 )
+  if((Utilities::MPI::this_mpi_process(interpoolcomm)) > 1 && (Utilities::MPI::this_mpi_process(mpi_communicator))==0 )
 	std::cout << " check 2.1 " << std::endl ;
 	
 

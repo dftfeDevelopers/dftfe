@@ -40,23 +40,21 @@ class eigenClass
 
 public:
   eigenClass(dftClass<FEOrder>* _dftPtr, MPI_Comm &mpi_comm_replica);
-  void HX(std::vector<vectorType*> &src, 
-	  std::vector<vectorType*> &dst);
+  void HX(std::vector<boost::shared_ptr<vectorType> > &src, 
+	  std::vector<boost::shared_ptr<vectorType> > &dst);
 
-  void XHX(std::vector<vectorType*> &src); 
+  void XHX(std::vector<boost::shared_ptr<vectorType> > &src); 
  private:
   void implementHX(const dealii::MatrixFree<3,double>  &data,
-		   std::vector<vectorType*>  &dst, 
-		   const std::vector<vectorType*>  &src,
+		   std::vector<boost::shared_ptr<vectorType> >  &dst, 
+		   const std::vector<boost::shared_ptr<vectorType> >  &src,
 		   const std::pair<unsigned int,unsigned int> &cell_range) const;
 
-  void computeNonLocalHamiltonianTimesX(const std::vector<vectorType*> &src,
-					std::vector<vectorType*>       &dst);
-  void computeNonLocalHamiltonianTimesX_OV(const std::vector<vectorType*> &src,
-					std::vector<vectorType*>       &dst);
-
-  void computeNonLocalHamiltonianTimesXMemoryOpt(const std::vector<vectorType*> &src,
-					         std::vector<vectorType*>       &dst);  
+  void computeNonLocalHamiltonianTimesX(const std::vector<boost::shared_ptr<vectorType> > &src,
+					std::vector<boost::shared_ptr<vectorType> >       &dst);
+ 
+  void computeNonLocalHamiltonianTimesXMemoryOpt(const std::vector<boost::shared_ptr<vectorType> > &src,
+					         std::vector<boost::shared_ptr<vectorType> >       &dst);  
 
   void init ();
   void computeMassVector();

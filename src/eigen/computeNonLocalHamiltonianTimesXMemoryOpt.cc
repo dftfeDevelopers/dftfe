@@ -17,8 +17,8 @@
 //
 
 template<unsigned int FEOrder>
-void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::vector<vectorType*> &src,
-								    std::vector<vectorType*>       &dst)
+void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::vector<boost::shared_ptr<vectorType> > &src,
+								    std::vector<boost::shared_ptr<vectorType> >       &dst)
 {
   //
   //get FE data
@@ -55,10 +55,10 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::v
   //
   //allocate memory for matrix-vector product
   //
-  for(int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
+  for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
     {
       const int atomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];
-      int numberSingleAtomPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
+      const int numberSingleAtomPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
       projectorKetTimesVector[atomId].resize(numberWaveFunctions*numberSingleAtomPseudoWaveFunctions,0.0);
     }
   
@@ -81,16 +81,17 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::v
     {
       if(cell->is_locally_owned())
 	{
-	  iElem += 1;
+	  iElem ++;
 	  cell->get_dof_indices(local_dof_indices);
 
 	  unsigned int index=0;
-#ifdef ENABLE_PERIODIC_BC
+
 	  std::vector<double> temp(dofs_per_cell,0.0);
-	  for (std::vector<vectorType*>::const_iterator it=src.begin(); it!=src.end(); it++)
+	  for (std::vector<boost::shared_ptr<vectorType> >::const_iterator it=src.begin(); it!=src.end(); it++)
 	    {
+#ifdef ENABLE_PERIODIC_BC
 	      (*it)->extract_subvector_to(local_dof_indices.begin(), local_dof_indices.end(), temp.begin());
-	      for(int idof = 0; idof < dofs_per_cell; ++idof)
+	      for(unsigned int idof = 0; idof < dofs_per_cell; ++idof)
 		{
 		  //
 		  //This is the component index 0(real) or 1(imag).
@@ -104,19 +105,14 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::v
 		  else
 		    inputVectors[numberNodesPerElement*index + iNode].imag(temp[idof]);
 		}
+#else
+	      (*it)->extract_subvector_to(local_dof_indices.begin(), local_dof_indices.end(), inputVectors.begin()+numberNodesPerElement*index);
+#endif
 	      index++;
 	    }
 	 
 
-#else
-	  for (std::vector<vectorType*>::const_iterator it=src.begin(); it!=src.end(); it++)
-	    {
-	      (*it)->extract_subvector_to(local_dof_indices.begin(), local_dof_indices.end(), inputVectors.begin()+numberNodesPerElement*index);
-	      index++;
-	    }
-#endif
-
-	  for(int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInElement[iElem].size();++iAtom)
+	  for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInElement[iElem].size();++iAtom)
 	    {
 	      int atomId = dftPtr->d_nonLocalAtomIdsInElement[iElem][iAtom];
 	      int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
@@ -164,35 +160,14 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::v
 
     }//element loop
 
-  //std::cout<<"Finished Element Loop"<<std::endl;
-/*
-#ifdef ENABLE_PERIODIC_BC
-  std::vector<dealii::parallel::distributed::Vector<std::complex<double> > > d_projectorKetTimesVectorPar(numberWaveFunctions);
-#else
-  std::vector<dealii::parallel::distributed::Vector<double> > d_projectorKetTimesVectorPar(numberWaveFunctions);
-#endif
-#ifdef ENABLE_PERIODIC_BC
-  dealii::parallel::distributed::Vector<std::complex<double> > vec(dftPtr->d_locallyOwnedProjectorIdsCurrentProcess,
-                                                                   dftPtr->d_ghostProjectorIdsCurrentProcess,
-                                                                   mpi_communicator);
-#else
-  dealii::parallel::distributed::Vector<double > vec(dftPtr->d_locallyOwnedProjectorIdsCurrentProcess,
-                                                     dftPtr->d_ghostProjectorIdsCurrentProcess,
-                                                     mpi_communicator);   
-#endif     
-  vec.update_ghost_values();
-  for (unsigned int i=0; i<numberWaveFunctions;++i)
-  {
-      d_projectorKetTimesVectorPar[i].reinit(vec);    
-  }
-*/
-  for(int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
+ 
+  for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
     {
-      const int atomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];	
-      int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
-      for(int iWave = 0; iWave < numberWaveFunctions; ++iWave)
+      const unsigned int atomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];	
+      const unsigned int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
+      for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
 	{
-	  for(int iPseudoAtomicWave = 0; iPseudoAtomicWave < numberPseudoWaveFunctions; ++iPseudoAtomicWave)
+	  for(unsigned int iPseudoAtomicWave = 0; iPseudoAtomicWave < numberPseudoWaveFunctions; ++iPseudoAtomicWave)
 	    {
 	      dftPtr->d_projectorKetTimesVectorPar[iWave][dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(atomId,iPseudoAtomicWave)]]
 		  =projectorKetTimesVector[atomId][numberPseudoWaveFunctions*iWave + iPseudoAtomicWave];
@@ -206,13 +181,13 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::v
       dftPtr->d_projectorKetTimesVectorPar[i].update_ghost_values();
    }
 
-  for(int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
+  for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
     {
-      const int atomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];	
-      int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
-      for(int iWave = 0; iWave < numberWaveFunctions; ++iWave)
+      const unsigned int atomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];	
+      const unsigned int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
+      for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
 	{
-	  for(int iPseudoAtomicWave = 0; iPseudoAtomicWave < numberPseudoWaveFunctions; ++iPseudoAtomicWave)
+	  for(unsigned int iPseudoAtomicWave = 0; iPseudoAtomicWave < numberPseudoWaveFunctions; ++iPseudoAtomicWave)
 	    {
 	      projectorKetTimesVector[atomId][numberPseudoWaveFunctions*iWave + iPseudoAtomicWave]
 	           =dftPtr->d_projectorKetTimesVectorPar[iWave][dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(atomId,iPseudoAtomicWave)]];
@@ -225,13 +200,13 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::v
   //
   //compute V*C^{T}*X
   //
-  for(int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
+  for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
     {
-      const int atomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];		
-      int numberPseudoWaveFunctions =  dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
-      for(int iWave = 0; iWave < numberWaveFunctions; ++iWave)
+      const unsigned int atomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];		
+      const unsigned int numberPseudoWaveFunctions =  dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
+      for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
 	{
-	  for(int iPseudoAtomicWave = 0; iPseudoAtomicWave < numberPseudoWaveFunctions; ++iPseudoAtomicWave)
+	  for(unsigned int iPseudoAtomicWave = 0; iPseudoAtomicWave < numberPseudoWaveFunctions; ++iPseudoAtomicWave)
 	    projectorKetTimesVector[atomId][numberPseudoWaveFunctions*iWave + iPseudoAtomicWave] *= dftPtr->d_nonLocalPseudoPotentialConstants[atomId][iPseudoAtomicWave];
 	}
     }
@@ -254,11 +229,11 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::v
   //
   //compute C*V*C^{T}*x
   //
-  for(int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
+  for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
     {
-      const int atomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];		
+      const unsigned int atomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];		
       int numberPseudoWaveFunctions =  dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
-      for(int iElemComp = 0; iElemComp < dftPtr->d_elementIteratorsInAtomCompactSupport[atomId].size(); ++iElemComp)
+      for(unsigned int iElemComp = 0; iElemComp < dftPtr->d_elementIteratorsInAtomCompactSupport[atomId].size(); ++iElemComp)
 	{
 
 	  DoFHandler<3>::active_cell_iterator cell = dftPtr->d_elementIteratorsInAtomCompactSupport[atomId][iElemComp];
@@ -304,14 +279,10 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::v
 #ifdef ENABLE_PERIODIC_BC
 	  unsigned int index = 0;
 	  std::vector<double> temp(dofs_per_cell,0.0);
-	  for(std::vector<vectorType*>::iterator it = dst.begin(); it != dst.end(); ++it)
+	  for(std::vector<boost::shared_ptr<vectorType> >::iterator it = dst.begin(); it != dst.end(); ++it)
 	    {
-	      for(int idof = 0; idof < dofs_per_cell; ++idof)
+	      for(unsigned int idof = 0; idof < dofs_per_cell; ++idof)
 		{
-		  //temp[2*iNode]   = outputVectors[numberNodesPerElement*index + iNode].real();
-		  //temp[2*iNode+1] = outputVectors[numberNodesPerElement*index + iNode].imag();
-		  //const unsigned int ck = fe_values.get_fe().system_to_component_index(idof).first;
-		  //const unsigned int iNode = fe_values.get_fe().system_to_component_index(idof).second;
 		  const unsigned int ck = dftPtr->FEEigen.system_to_component_index(idof).first;
 		  const unsigned int iNode = dftPtr->FEEigen.system_to_component_index(idof).second;
 		  
@@ -326,7 +297,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::v
 	    }
 #else
 	  std::vector<double>::iterator iter = outputVectors.begin();
-	  for (std::vector<vectorType*>::iterator it=dst.begin(); it!=dst.end(); ++it)
+	  for (std::vector<boost::shared_ptr<vectorType> >::iterator it=dst.begin(); it!=dst.end(); ++it)
 	    {
 	      dftPtr->constraintsNoneEigen.distribute_local_to_global(iter, iter+numberNodesPerElement,local_dof_indices.begin(), **it);
 	      iter+=numberNodesPerElement;
@@ -336,10 +307,4 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::v
 	}
 
     }
-  /*
-  for (std::vector<vectorType*>::iterator it=dst.begin(); it!=dst.end(); it++)
-    {
-      (*it)->compress(VectorOperation::add);
-    }
-  */
 }

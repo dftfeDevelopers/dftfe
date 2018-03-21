@@ -255,20 +255,22 @@ void dftClass<FEOrder>::set()
   //set size of eigenvalues and eigenvectors data structures
   eigenValues.resize(d_maxkPoints);
   eigenValuesTemp.resize(d_maxkPoints);
-  a0.resize((spinPolarized+1)*d_maxkPoints,lowerEndWantedSpectrum);
-  bLow.resize((spinPolarized+1)*d_maxkPoints,0.0);
-  eigenVectors.resize((1+spinPolarized)*d_maxkPoints);
+  a0.resize((dftParameters::spinPolarized+1)*d_maxkPoints,dftParameters::lowerEndWantedSpectrum);
+  bLow.resize((dftParameters::spinPolarized+1)*d_maxkPoints,0.0);
+  eigenVectors.resize((1+dftParameters::spinPolarized)*d_maxkPoints);
   
-  for(unsigned int kPoint = 0; kPoint < (1+spinPolarized)*d_maxkPoints; ++kPoint)
+  for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_maxkPoints; ++kPoint)
     {
-        for (unsigned int i=0; i<numEigenValues; ++i)
-	  {
-	    eigenVectors[kPoint].push_back(new vectorType);
-	  }
+      for (unsigned int i=0; i<numEigenValues; ++i)
+	{
+	  //eigenVectors[kPoint].push_back(new vectorType);
+	  eigenVectors[kPoint].push_back(boost::shared_ptr<vectorType>(new vectorType));
+	}
     }
+
    for(unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
     {
-      eigenValues[kPoint].resize((spinPolarized+1)*numEigenValues);
+      eigenValues[kPoint].resize((dftParameters::spinPolarized+1)*numEigenValues);
       eigenValuesTemp[kPoint].resize(numEigenValues); 
     }
 
@@ -279,21 +281,23 @@ template<unsigned int FEOrder>
 void dftClass<FEOrder>::initPseudoPotentialAll()
 {
 
-   if(isPseudopotential)
+  if(dftParameters::isPseudopotential)
     {
       initLocalPseudoPotential();
       //
-      if (pseudoProjector==2)
+      if(dftParameters::pseudoProjector == 2)
          initNonLocalPseudoPotential_OV();
       else
          initNonLocalPseudoPotential();
       //
       //
-      if (pseudoProjector==2){
+      if(dftParameters::pseudoProjector == 2)
+	{
          computeSparseStructureNonLocalProjectors_OV();
          computeElementalOVProjectorKets();
 	}
-      else{
+      else
+	{
 	 computeSparseStructureNonLocalProjectors();
          computeElementalProjectorKets();
 	}
@@ -507,7 +511,7 @@ void dftClass<FEOrder>::solve()
 	{
 	  if (scfIter==1)
               {
-		if (spinPolarized==1)
+		if (dftParameters::spinPolarized==1)
                   {
 		    //for (unsigned int s=0; s<2; ++s)
 		       norm = mixing_simple_spinPolarized(); 
@@ -517,7 +521,7 @@ void dftClass<FEOrder>::solve()
 	      }
 	  else 
              {
-		if (spinPolarized==1)
+	       if (dftParameters::spinPolarized==1)
 		  {
 		    //for (unsigned int s=0; s<2; ++s)
 		       norm = sqrt(mixing_anderson_spinPolarized());
@@ -540,7 +544,7 @@ void dftClass<FEOrder>::solve()
 
      
       //eigen solve
-      if (spinPolarized==1)
+      if (dftParameters::spinPolarized==1)
 	{
 	  for(unsigned int s=0; s<2; ++s)
 	      {
@@ -631,7 +635,7 @@ void dftClass<FEOrder>::solve()
 	//rhoOut
    computing_timer.enter_section("compute rho"); 
 #ifdef ENABLE_PERIODIC_BC
-   if (useSymm){
+   if(dftParameters::useSymm){
 	symmetryPtr->computeLocalrhoOut();
 	symmetryPtr->computeAndSymmetrize_rhoOut();
     }
@@ -652,7 +656,7 @@ void dftClass<FEOrder>::solve()
       //pcout<<"L-inf Norm of Phi-out :"<<poissonPtr->phiTotRhoOut.linfty_norm()<<std::endl;
 
       //energy
-      if (spinPolarized==1)
+      if (dftParameters::spinPolarized==1)
          compute_energy_spinPolarized();
       else
      	 compute_energy () ;
