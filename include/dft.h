@@ -245,8 +245,8 @@ class dftClass
    * Computes ground-state energy in a given SCF iteration,
    * computes repulsive energy explicity for a non-periodic system
    */
-  void compute_energy();
-  void compute_energy_spinPolarized();
+  double compute_energy(const bool print);
+  double compute_energy_spinPolarized(const bool print);
   double repulsiveEnergy();
 
   /**

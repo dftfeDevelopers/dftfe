@@ -112,9 +112,12 @@ void markPeriodicFacesNonOrthogonal(Triangulation<3,3> &triangulation,
   computeOffsetVectors(latticeVectors,
 		       offsetVectors);
 
-  pcout<<"Periodic Face Normals 1: "<<periodicFaceNormals[0][0]<<" "<<periodicFaceNormals[0][1]<<" "<<periodicFaceNormals[0][2]<<std::endl;
-  pcout<<"Periodic Face Normals 2: "<<periodicFaceNormals[1][0]<<" "<<periodicFaceNormals[1][1]<<" "<<periodicFaceNormals[1][2]<<std::endl;
-  pcout<<"Periodic Face Normals 3: "<<periodicFaceNormals[2][0]<<" "<<periodicFaceNormals[2][1]<<" "<<periodicFaceNormals[2][2]<<std::endl;
+  if (dftParameters::verbosity==2)
+  {
+    pcout<<"Periodic Face Normals 1: "<<periodicFaceNormals[0][0]<<" "<<periodicFaceNormals[0][1]<<" "<<periodicFaceNormals[0][2]<<std::endl;
+    pcout<<"Periodic Face Normals 2: "<<periodicFaceNormals[1][0]<<" "<<periodicFaceNormals[1][1]<<" "<<periodicFaceNormals[1][2]<<std::endl;
+    pcout<<"Periodic Face Normals 3: "<<periodicFaceNormals[2][0]<<" "<<periodicFaceNormals[2][1]<<" "<<periodicFaceNormals[2][2]<<std::endl;
+  }
 
   QGauss<2>  quadratureFace_formula(2); FESystem<3>  FE(FE_Q<3>(QGaussLobatto<1>(2)), 1);
   FEFaceValues<3> feFace_values(FE, quadratureFace_formula, update_normal_vectors);
@@ -199,7 +202,9 @@ void markPeriodicFacesNonOrthogonal(Triangulation<3,3> &triangulation,
       //GridTools::collect_periodic_faces(triangulation, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector);      
     }
   triangulation.add_periodicity(periodicity_vector);
-  pcout << "Periodic Facepairs size: " << periodicity_vector.size() << std::endl;
+
+  if (dftParameters::verbosity==2)
+     pcout << "Periodic Facepairs size: " << periodicity_vector.size() << std::endl;
   /*
   for(unsigned int i=0; i< periodicity_vector.size(); ++i) 
   {

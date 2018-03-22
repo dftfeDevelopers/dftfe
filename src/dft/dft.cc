@@ -92,9 +92,9 @@ dftClass<FEOrder>::dftClass(MPI_Comm &mpi_comm_replica, MPI_Comm &interpoolcomm)
   forcePtr= new forceClass<FEOrder>(this, mpi_comm_replica);
   symmetryPtr= new symmetryClass<FEOrder>(this, mpi_comm_replica, interpoolcomm);
   geoOptIonPtr= new geoOptIon<FEOrder>(this, mpi_comm_replica);
-#ifdef ENABLE_PERIODIC_BC  
-  geoOptCellPtr= new geoOptCell<FEOrder>(this, mpi_comm_replica);  
-#endif  
+#ifdef ENABLE_PERIODIC_BC
+  geoOptCellPtr= new geoOptCell<FEOrder>(this, mpi_comm_replica);
+#endif
   //
   // initialize PETSc
   //
@@ -114,9 +114,9 @@ dftClass<FEOrder>::~dftClass()
     matrix_free_data.clear();
     delete forcePtr;
     delete geoOptIonPtr;
-#ifdef ENABLE_PERIODIC_BC    
+#ifdef ENABLE_PERIODIC_BC
     delete geoOptCellPtr;
-#endif    
+#endif
 }
 
 namespace internaldft
@@ -153,7 +153,7 @@ namespace internaldft
 	  atomLocations[i][4] = cartZ[i] - cellCentroidZ;
 	}
     }
-}   
+}
 
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::computeVolume()
@@ -163,7 +163,7 @@ void dftClass<FEOrder>::computeVolume()
   FEValues<3> fe_values (FE, quadrature, update_JxW_values);
 
   typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
-  for (; cell!=endc; ++cell) 
+  for (; cell!=endc; ++cell)
   {
      if (cell->is_locally_owned())
       {
@@ -181,9 +181,10 @@ void dftClass<FEOrder>::computeVolume()
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::set()
 {
-  pcout << std::endl << "number of MPI processes: "
+  if (dftParameters::verbosity==2)
+    pcout << std::endl << "number of MPI processes: "
 	<< Utilities::MPI::n_mpi_processes(mpi_communicator)
-	<< std::endl;       
+	<< std::endl;
   //
   //read coordinates
   //
@@ -232,15 +233,13 @@ void dftClass<FEOrder>::set()
   dftUtils::readFile(numberColumnsLatticeVectorsFile,d_domainBoundingVectors,dftParameters::domainBoundingVectorsFile);
 
   pcout << "number of atoms types: " << atomTypes.size() << "\n";
-  
-  //estimate total number of wave functions
-  determineOrbitalFilling();  
 
-  pcout << "number of eigen values: " << numEigenValues << std::endl; 
+  //estimate total number of wave functions
+  determineOrbitalFilling();
 
 #ifdef ENABLE_PERIODIC_BC
-   if (dftParameters::isIonForce || dftParameters::isCellStress)  
-      AssertThrow(!dftParameters::useSymm,ExcMessage("USE GROUP SYMMETRY must be set to false if either ION FORCE or CELL STRESS is set to true. This functionality will be added in a future release"));  
+   if (dftParameters::isIonForce || dftParameters::isCellStress)
+      AssertThrow(!dftParameters::useSymm,ExcMessage("USE GROUP SYMMETRY must be set to false if either ION FORCE or CELL STRESS is set to true. This functionality will be added in a future release"));
   //readkPointData();
    generateMPGrid();
    //if (useSymm)
@@ -250,7 +249,7 @@ void dftClass<FEOrder>::set()
   d_kPointCoordinates.resize(3*d_maxkPoints,0.0);
   d_kPointWeights.resize(d_maxkPoints,1.0);
 #endif
-  
+
   //set size of eigenvalues and eigenvectors data structures
   eigenValues.resize(d_maxkPoints);
   eigenValuesTemp.resize(d_maxkPoints);
@@ -258,7 +257,7 @@ void dftClass<FEOrder>::set()
   bLow.resize((spinPolarized+1)*d_maxkPoints,0.0);
   eigenVectors.resize((1+spinPolarized)*d_maxkPoints);
   eigenVectorsOrig.resize((1+spinPolarized)*d_maxkPoints);
-  
+
   for(unsigned int kPoint = 0; kPoint < (1+spinPolarized)*d_maxkPoints; ++kPoint)
     {
         for (unsigned int i=0; i<numEigenValues; ++i)
@@ -270,7 +269,7 @@ void dftClass<FEOrder>::set()
    for(unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
     {
       eigenValues[kPoint].resize((spinPolarized+1)*numEigenValues);
-      eigenValuesTemp[kPoint].resize(numEigenValues); 
+      eigenValuesTemp[kPoint].resize(numEigenValues);
     }
 
   for (unsigned int i=0; i<numEigenValues; ++i){
@@ -278,14 +277,14 @@ void dftClass<FEOrder>::set()
     tempPSI.push_back(new vectorType);
     tempPSI2.push_back(new vectorType);
     tempPSI3.push_back(new vectorType);
-  } 
+  }
 }
 
 //dft pseudopotential init
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::initPseudoPotentialAll()
 {
-
+   pcout<<std::endl<<"Pseuodopotential initalization...."<<std::endl;
    if(isPseudopotential)
     {
       initLocalPseudoPotential();
@@ -304,10 +303,10 @@ void dftClass<FEOrder>::initPseudoPotentialAll()
 	 computeSparseStructureNonLocalProjectors();
          computeElementalProjectorKets();
 	}
-     
+
       forcePtr->initPseudoData();
-	
-    }    
+
+    }
 }
 
 
@@ -316,39 +315,46 @@ template<unsigned int FEOrder>
 void dftClass<FEOrder>::initImageChargesUpdateKPoints()
 {
 
-  pcout<<"-----------Domain bounding vectors (lattice vectors in fully periodic case)-------------"<<std::endl; 
+  pcout<<"-----------Domain bounding vectors (lattice vectors in fully periodic case)-------------"<<std::endl;
   for(int i = 0; i < d_domainBoundingVectors.size(); ++i)
     {
-      pcout<<"Vector- "<< i<<" : "<< d_domainBoundingVectors[i][0]<<" "<<d_domainBoundingVectors[i][1]<<" "<<d_domainBoundingVectors[i][2]<<"\n";
-    }  
-  pcout<<"-----------------------------------------------------------------------------------------"<<std::endl;    
+      pcout<<"v"<< i+1<<" : "<< d_domainBoundingVectors[i][0]<<" "<<d_domainBoundingVectors[i][1]<<" "<<d_domainBoundingVectors[i][2]<<std::endl;
+    }
+  pcout<<"-----------------------------------------------------------------------------------------"<<std::endl;
 #ifdef ENABLE_PERIODIC_BC
   pcout<<"-----Fractional coordinates of atoms------ "<<std::endl;
   for(unsigned int i = 0; i < atomLocations.size(); ++i)
   {
       atomLocations[i] = atomLocationsFractional[i] ;
-      pcout<<" atomId- "<<i <<" : "<<atomLocationsFractional[i][2]<<" "<<atomLocationsFractional[i][3]<<" "<<atomLocationsFractional[i][4]<<"\n";
-  }   
+      pcout<<"AtomId "<<i <<":  "<<atomLocationsFractional[i][2]<<" "<<atomLocationsFractional[i][3]<<" "<<atomLocationsFractional[i][4]<<"\n";
+  }
+  pcout<<"-----------------------------------------------------------------------------------------"<<std::endl;
   generateImageCharges();
 
   internaldft::convertToCellCenteredCartesianCoordinates(atomLocations,
 					                 d_domainBoundingVectors);
   recomputeKPointCoordinates();
 
-  pcout<<"Actual k-Point-coordinates and weights: "<<std::endl;
-  for(unsigned int i = 0; i < d_maxkPoints; ++i)
+  if (dftParameters::verbosity==2)
   {
-    pcout<< i<<": ["<< d_kPointCoordinates[3*i+0] <<", "<< d_kPointCoordinates[3*i+1]<<", "<< d_kPointCoordinates[3*i+2]<<"] "<<d_kPointWeights[i]<<std::endl;
-  }   
+      //FIXME: Print all k points across all pools
+      pcout<<"-------------------k points cartesian coordinates and weights-----------------------------"<<std::endl;
+      for(unsigned int i = 0; i < d_maxkPoints; ++i)
+      {
+	pcout<<" ["<< d_kPointCoordinates[3*i+0] <<", "<< d_kPointCoordinates[3*i+1]<<", "<< d_kPointCoordinates[3*i+2]<<"] "<<d_kPointWeights[i]<<std::endl;
+      }
+     pcout<<"-----------------------------------------------------------------------------------------"<<std::endl;
+  }
 #else
   //
   //print cartesian coordinates
   //
-  pcout<<"-----Cartesian coordinates of atoms------ "<<std::endl;
+  pcout<<"------------Cartesian coordinates of atoms (origin at center of domain)------------------"<<std::endl;
   for(unsigned int i = 0; i < atomLocations.size(); ++i)
     {
-      pcout<<" atomId- "<<i <<" : "<<atomLocations[i][2]<<" "<<atomLocations[i][3]<<" "<<atomLocations[i][4]<<"\n";
-    }  
+      pcout<<"AtomId "<<i <<":  "<<atomLocations[i][2]<<" "<<atomLocations[i][3]<<" "<<atomLocations[i][4]<<"\n";
+    }
+ pcout<<"-----------------------------------------------------------------------------------------"<<std::endl;
 #endif
 }
 
@@ -378,7 +384,7 @@ void dftClass<FEOrder>::init ()
 
   //initialize affine transformation object (must be done on unmoved triangulation)
   d_affineTransformMesh.init(d_mesh.getParallelMesh(),d_domainBoundingVectors);
-  
+
   //
   //initialize dofHandlers and hanging-node constraints and periodic constraints on the unmoved Mesh
   //
@@ -390,16 +396,16 @@ void dftClass<FEOrder>::init ()
   //
   //move triangulation to have atoms on triangulation vertices
   //
-  
+
   moveMeshToAtoms(triangulationPar);
-  
+
   //
   //initialize dirichlet BCs for total potential and vSelf poisson solutions
   //
   initBoundaryConditions();
 
   //compute volume of the domain
-  computeVolume();  
+  computeVolume();
   //
   //initialize guesses for electron-density and wavefunctions
   //
@@ -432,19 +438,19 @@ void dftClass<FEOrder>::initNoRemesh()
   noRemeshRhoDataInit();
 
   //reinitialize pseudopotential related data structures
-  initPseudoPotentialAll();      
+  initPseudoPotentialAll();
 }
 
 // deform domain and call appropriate reinits
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::deformDomain(const Tensor<2,3,double> & deformationGradient)
 {
-  d_affineTransformMesh.initMoved(d_domainBoundingVectors);    
+  d_affineTransformMesh.initMoved(d_domainBoundingVectors);
   d_affineTransformMesh.transform(deformationGradient);
 
   dftUtils::transformDomainBoundingVectors(d_domainBoundingVectors,deformationGradient);
 
-  initNoRemesh();  
+  initNoRemesh();
 }
 
 
@@ -460,17 +466,17 @@ void dftClass<FEOrder>::run()
   }
   else if (!dftParameters::isIonOpt && dftParameters::isCellOpt)
   {
-#ifdef ENABLE_PERIODIC_BC      
+#ifdef ENABLE_PERIODIC_BC
     geoOptCellPtr->init();
     geoOptCellPtr->run();
 #else
-   AssertThrow(false,ExcMessage("CELL OPT cannot be set to true for fully non-periodic domain."));    
+   AssertThrow(false,ExcMessage("CELL OPT cannot be set to true for fully non-periodic domain."));
 #endif
-  } 
+  }
   else if (dftParameters::isIonOpt && dftParameters::isCellOpt)
   {
 #ifdef ENABLE_PERIODIC_BC
-    //first relax ion positions in the starting cell configuration     
+    //first relax ion positions in the starting cell configuration
     geoOptIonPtr->init();
     geoOptIonPtr->run();
 
@@ -478,15 +484,15 @@ void dftClass<FEOrder>::run()
     geoOptCellPtr->init();
     geoOptCellPtr->run();
 #else
-   AssertThrow(false,ExcMessage("CELL OPT cannot be set to true for fully non-periodic domain."));     
+   AssertThrow(false,ExcMessage("CELL OPT cannot be set to true for fully non-periodic domain."));
 #endif
-  }    
+  }
 }
 
 //dft solve
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::solve()
-{  
+{
 
   //
   //solve vself
@@ -496,19 +502,23 @@ void dftClass<FEOrder>::solve()
   //
   //solve
   //
-  computing_timer.enter_section("solve"); 
+  computing_timer.enter_section("solve");
 
-  
+
   //
   //Begin SCF iteration
   //
   unsigned int scfIter=0;
   double norm = 1.0;
-  char buffer[100];
 
+
+  pcout<<std::endl;
+  if (dftParameters::verbosity==0)
+    pcout<<"Starting SCF iteration...."<<std::endl;  
   while ((norm > dftParameters::selfConsistentSolverTolerance) && (scfIter < dftParameters::numSCFIterations))
     {
-      sprintf(buffer, "\n\n**** Begin Self-Consistent-Field Iteration: %u ****\n", scfIter+1); pcout << buffer;
+      if (dftParameters::verbosity>=1)
+        pcout<<"************************Begin Self-Consistent-Field Iteration: "<<std::setw(2)<<scfIter+1<<" ***********************"<<std::endl;
       //Mixing scheme
       if(scfIter > 0)
 	{
@@ -517,22 +527,25 @@ void dftClass<FEOrder>::solve()
 		if (spinPolarized==1)
                   {
 		    //for (unsigned int s=0; s<2; ++s)
-		       norm = mixing_simple_spinPolarized(); 
+		       norm = mixing_simple_spinPolarized();
 		  }
 		else
 	          norm = mixing_simple();
 	      }
-	  else 
+	  else
              {
 		if (spinPolarized==1)
 		  {
 		    //for (unsigned int s=0; s<2; ++s)
 		       norm = sqrt(mixing_anderson_spinPolarized());
-		  } 
+		  }
 		else
 	          norm = sqrt(mixing_anderson());
 	      }
-	  sprintf(buffer, "Anderson Mixing: L2 norm of electron-density difference: %12.6e\n\n", norm); pcout << buffer;
+
+	  if (dftParameters::verbosity>=1)
+	      pcout<<"Anderson Mixing: L2 norm of electron-density difference: "<< norm<< std::endl;
+
 	  poissonPtr->phiTotRhoIn = poissonPtr->phiTotRhoOut;
 	}
       //phiTot with rhoIn
@@ -540,18 +553,20 @@ void dftClass<FEOrder>::solve()
       //parallel loop over all elements
 
       int constraintMatrixId = phiTotDofHandlerIndex;
-      sprintf(buffer, "Poisson solve for total electrostatic potential (rhoIn+b):\n"); pcout << buffer; 
+      if (dftParameters::verbosity==2)
+        pcout<< std::endl<<"Poisson solve for total electrostatic potential (rhoIn+b): ";
+
       poissonPtr->solve(poissonPtr->phiTotRhoIn,constraintMatrixId, rhoInValues);
       //pcout<<"L-2 Norm of Phi-in   : "<<poissonPtr->phiTotRhoIn.l2_norm()<<std::endl;
       //pcout<<"L-inf Norm of Phi-in : "<<poissonPtr->phiTotRhoIn.linfty_norm()<<std::endl;
 
-     
+
       //eigen solve
       if (spinPolarized==1)
 	{
 	  for(unsigned int s=0; s<2; ++s)
 	      {
-	       if(dftParameters::xc_id < 4) 
+	       if(dftParameters::xc_id < 4)
 	        {
 		    eigenPtr->computeVEffSpinPolarized(rhoInValuesSpinPolarized, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, s, pseudoValues);
                 }
@@ -559,18 +574,21 @@ void dftClass<FEOrder>::solve()
 	        {
 		    eigenPtr->computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, s, pseudoValues);
 	        }
-	      for (int kPoint = 0; kPoint < d_maxkPoints; ++kPoint) 
+	      for (int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
 	        {
 	          d_kPointIndex = kPoint;
-	          char buffer[100];
 	          for(int j = 0; j < dftParameters::numPass; ++j)
-	            { 
-		       sprintf(buffer, "%s:%3u%s:%3u\n", "Beginning Chebyshev filter pass ", j+1, " for spin ", s+1);
-		       pcout << buffer;
+	            {
+		       if (dftParameters::verbosity==2)
+		         pcout<<"Beginning Chebyshev filter pass "<< j+1<< " for spin "<< s+1<<std::endl;
+
 		       chebyshevSolver(s);
 	            }
 	        }
 	    }
+
+	  //fermi energy
+          compute_fermienergy();
         }
       else
         {
@@ -581,50 +599,55 @@ void dftClass<FEOrder>::solve()
 	  else if (dftParameters::xc_id == 4)
 	     {
 		eigenPtr->computeVEff(rhoInValues, gradRhoInValues, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, pseudoValues);
-	     } 
-        
-	  for (int kPoint = 0; kPoint < d_maxkPoints; ++kPoint) 
+	     }
+
+	  for (int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
 	    {
 	      d_kPointIndex = kPoint;
 	      for(int j = 0; j < dftParameters::numPass; ++j)
-	      { 
-		    sprintf(buffer, "%s:%3u\n", "Beginning Chebyshev filter pass ", j+1);
-		    pcout << buffer;
+	      {
+		    if (dftParameters::verbosity==2)
+		      pcout<< "Beginning Chebyshev filter pass "<< j+1<<std::endl;
+
 		    chebyshevSolver(0);
 	      }
 	    }
-	  
+
 	  //fermi energy
 	  compute_fermienergy();
 	  //maximum of the residual norm of the state closest to and below the Fermi level among all k points
 	  double maxRes = computeMaximumHighestOccupiedStateResidualNorm();
-	  pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
-	  //if the residual norm is greater than 1e-1 (heuristic) 
-	  // do more passes of chebysev filter till the check passes. 
+	  if (dftParameters::verbosity==2)
+	     pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
+
+	  //if the residual norm is greater than 1e-1 (heuristic)
+	  // do more passes of chebysev filter till the check passes.
 	  // This improves the scf convergence performance. Currently this
 	  // approach is not implemented for spin-polarization case
 	  int count=1;
 	  while (maxRes>1e-1)
 	  {
-	      for (int kPoint = 0; kPoint < d_maxkPoints; ++kPoint) 
+	      for (int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
 		{
 		  d_kPointIndex = kPoint;
-		  sprintf(buffer, "%s:%3u\n", "Beginning Chebyshev filter pass ", dftParameters::numPass+count);
-		  pcout << buffer;
+		  if (dftParameters::verbosity==2)
+		     pcout<< "Beginning Chebyshev filter pass "<< dftParameters::numPass+count<<std::endl;
+
 		  chebyshevSolver(0);
 		}
 	      count++;
 	      compute_fermienergy();
 	      maxRes = computeMaximumHighestOccupiedStateResidualNorm();
-	      pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;	      
+	      if (dftParameters::verbosity==2)
+	        pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
 	  }
-          
+
 	}
- 
+
        //fermi energy
-       compute_fermienergy();
+       //compute_fermienergy();
 	//rhoOut
-   computing_timer.enter_section("compute rho"); 
+   computing_timer.enter_section("compute rho");
 #ifdef ENABLE_PERIODIC_BC
    if (useSymm){
 	symmetryPtr->computeLocalrhoOut();
@@ -636,34 +659,53 @@ void dftClass<FEOrder>::solve()
    compute_rhoOut();
 #endif
     computing_timer.exit_section("compute rho");
-      
+
       //compute integral rhoOut
       integralRhoValue=totalCharge(rhoOutValues);
 
       //phiTot with rhoOut
-      sprintf(buffer, "Poisson solve for total electrostatic potential (rhoOut+b):\n"); pcout << buffer; 
+      if (dftParameters::verbosity==2)
+         pcout<< std::endl<<"Poisson solve for total electrostatic potential (rhoOut+b): ";
+
       poissonPtr->solve(poissonPtr->phiTotRhoOut,constraintMatrixId, rhoOutValues);
       //pcout<<"L-2 Norm of Phi-out   :"<<poissonPtr->phiTotRhoOut.l2_norm()<<std::endl;
       //pcout<<"L-inf Norm of Phi-out :"<<poissonPtr->phiTotRhoOut.linfty_norm()<<std::endl;
 
-      //energy
-      if (spinPolarized==1)
-         compute_energy_spinPolarized();
-      else
-     	 compute_energy () ;
-      pcout<<"SCF iteration " << scfIter+1 << " complete\n";
-      
+
+      const double totalEnergy = spinPolarized==1 ?
+                                 compute_energy_spinPolarized(dftParameters::verbosity==2) :
+                                 compute_energy(dftParameters::verbosity==2);
+      if (dftParameters::verbosity==1)
+      {
+	  pcout<<"Total energy  : " << totalEnergy << std::endl;
+      }
+
+      if (dftParameters::verbosity>=1)
+        pcout<<"***********************Self-Consistent-Field Iteration: "<<std::setw(2)<<scfIter+1<<" complete**********************"<<std::endl<<std::endl;
+
       //output wave functions
       //output();
-      
+
       //
       scfIter++;
     }
+
+    if(scfIter==dftParameters::numSCFIterations)
+	pcout<< "SCF iteration did not converge to the specified tolerance after: "<<scfIter<<" iterations."<<std::endl;
+    else
+        pcout<< "SCF iteration converged to the specified tolerance after: "<<scfIter<<" iterations."<<std::endl;
+
+    // compute and print ground state energy or energy after max scf iterations
+    if (spinPolarized==1)
+      compute_energy_spinPolarized(true);
+    else
+      compute_energy (true);
+
  computing_timer.exit_section("solve");
 
 //
 /*
- computing_timer.enter_section(" pp "); 
+ computing_timer.enter_section(" pp ");
 #ifdef ENABLE_PERIODIC_BC
   if ((Utilities::MPI::this_mpi_process(interpoolcomm))==0){
      pcout<<"Beginning nscf calculation "<<std::endl;
@@ -673,7 +715,7 @@ void dftClass<FEOrder>::solve()
      for(int i = 0; i < d_maxkPoints; ++i){
        sprintf(buffer, "  %5u:  %12.5f  %12.5f %12.5f %12.5f\n", i, d_kPointCoordinates[3*i+0], d_kPointCoordinates[3*i+1], d_kPointCoordinates[3*i+2],d_kPointWeights[i]);
        pcout << buffer;
-     }   
+     }
      //
      nscf() ;
   }
@@ -684,25 +726,25 @@ void dftClass<FEOrder>::solve()
   MPI_Barrier(interpoolcomm) ;
   if (dftParameters::isIonForce)
   {
-    computing_timer.enter_section("configurational force computation");
+    computing_timer.enter_section("ion force");
     forcePtr->computeAtomsForces();
     forcePtr->printAtomsForces();
-    computing_timer.exit_section("configurational force computation");
+    computing_timer.exit_section("ion force");
    }
 #ifdef ENABLE_PERIODIC_BC
   if (dftParameters::isCellStress)
   {
-    computing_timer.enter_section("cell stress computation");
+    computing_timer.enter_section("cell stress");
     forcePtr->computeStress();
     forcePtr->printStress();
-    computing_timer.exit_section("cell stress computation");
-   }  
-#endif  
+    computing_timer.exit_section("cell stress");
+   }
+#endif
 }
 
 //Output
 template <unsigned int FEOrder>
-void dftClass<FEOrder>::output() 
+void dftClass<FEOrder>::output()
 {
   //
   //only generate wave function output for serial runs
@@ -711,7 +753,7 @@ void dftClass<FEOrder>::output()
   data_outEigen.attach_dof_handler (dofHandlerEigen);
   for(unsigned int i=0; i<eigenVectors[0].size(); ++i)
     {
-      char buffer[100]; sprintf(buffer,"eigen%u", i);  
+      char buffer[100]; sprintf(buffer,"eigen%u", i);
       data_outEigen.add_data_vector (*eigenVectors[0][i], buffer);
     }
   data_outEigen.build_patches (C_num1DQuad<FEOrder>());
@@ -737,7 +779,7 @@ void dftClass<FEOrder>::output()
   //create electron-density quadrature data using "CellDataStorage" class of dealii
   //
   CellDataStorage<typename DoFHandler<3>::active_cell_iterator,quadDensityData> rhoQuadData;
-  
+
 
   rhoQuadData.initialize(dofHandler.begin_active(),
 			 dofHandler.end(),
@@ -747,7 +789,7 @@ void dftClass<FEOrder>::output()
   //
   typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
 
-  for(; cell!=endc; ++cell) 
+  for(; cell!=endc; ++cell)
     {
       if(cell->is_locally_owned())
 	{
@@ -783,7 +825,7 @@ void dftClass<FEOrder>::output()
   //
   DataOut<3> dataOutRho;
   dataOutRho.attach_dof_handler(dofHandler);
-  char buffer[100]; sprintf(buffer,"rhoField");  
+  char buffer[100]; sprintf(buffer,"rhoField");
   dataOutRho.add_data_vector(rhoNodalField, buffer);
   dataOutRho.build_patches(C_num1DQuad<FEOrder>());
   //data_outEigen.write_vtu (output);
@@ -796,7 +838,7 @@ template <unsigned int FEOrder>
 void dftClass<FEOrder>::writeMesh(std::string meshFileName)
  {
       FESystem<3> FETemp(FE_Q<3>(QGaussLobatto<1>(2)), 1);
-      DoFHandler<3> dofHandlerTemp; dofHandlerTemp.initialize(d_mesh.getSerialMesh(),FETemp);		
+      DoFHandler<3> dofHandlerTemp; dofHandlerTemp.initialize(d_mesh.getSerialMesh(),FETemp);
       dofHandlerTemp.distribute_dofs(FETemp);
       DataOut<3> data_out;
       data_out.attach_dof_handler(dofHandlerTemp);

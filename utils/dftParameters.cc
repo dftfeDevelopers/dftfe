@@ -42,6 +42,8 @@ namespace dftParameters
   double stressRelaxTol=5e-7;//Hartree/Bohr^3
   unsigned int cellConstraintType=12;// all cell components to be relaxed
 
+  unsigned int verbosity=0;
+
 
 
   void declare_parameters(ParameterHandler &prm)
@@ -50,6 +52,10 @@ namespace dftParameters
     prm.declare_entry("DFT PATH", "",
                       Patterns::Anything(),
                       "Path specifying the location of the source folder of dftfe code.");
+
+    prm.declare_entry("VERBOSITY", "1",
+                      Patterns::Integer(0,2),
+                      "Parameter to control verbosity of terminal output. 0 for low, 1 for medium, and 2 for high.");    
 
     prm.enter_subsection ("Geometry");
     {      
@@ -305,6 +311,7 @@ namespace dftParameters
 
     dftParameters::currentPath                   = prm.get("DFT PATH");
     dftParameters::currentPath.erase(std::remove(dftParameters::currentPath.begin(),dftParameters::currentPath.end(),'"'),dftParameters::currentPath.end());
+    dftParameters::verbosity                     = prm.get_integer("VERBOSITY");
 
     prm.enter_subsection ("Geometry");
     {   

@@ -18,6 +18,7 @@
 //
 #include <meshMovementAffineTransform.h>
 #include <dftUtils.h>
+#include <dftParameters.h>
 
 meshMovementAffineTransform::meshMovementAffineTransform( MPI_Comm &mpi_comm_replica):
  meshMovementClass(mpi_comm_replica)
@@ -25,13 +26,15 @@ meshMovementAffineTransform::meshMovementAffineTransform( MPI_Comm &mpi_comm_rep
 }
 
 
-std::pair<bool,double> meshMovementAffineTransform::transform(const Tensor<2,3,double> & deformationGradient) 
+std::pair<bool,double> meshMovementAffineTransform::transform(const Tensor<2,3,double> & deformationGradient)
 {
-  d_deformationGradient=deformationGradient;  
-  pcout << "Computing triangulation displacement increment under affine deformation..." << std::endl;
+  d_deformationGradient=deformationGradient;
+  if (dftParameters::verbosity==2)
+     pcout << "Computing triangulation displacement increment under affine deformation..." << std::endl;
   initIncrementField();
   computeIncrement();
-  pcout << "...Computed triangulation displacement increment" << std::endl;
+  if (dftParameters::verbosity==2)
+     pcout << "...Computed triangulation displacement increment" << std::endl;
 
   dftUtils::transformDomainBoundingVectors(d_domainBoundingVectors,deformationGradient);
   
@@ -44,7 +47,7 @@ std::pair<bool,double> meshMovementAffineTransform::moveMesh(const std::vector<P
                                                              const std::vector<Tensor<1,C_DIM,double> > & controlPointDisplacements,
                                                              const double controllingParameter)   
 {
-   AssertThrow(false,dftUtils::ExcNotImplementedYet());    
+   AssertThrow(false,dftUtils::ExcNotImplementedYet());
 }
 
 
@@ -52,7 +55,7 @@ void meshMovementAffineTransform::computeIncrement()
 {
   const unsigned int vertices_per_cell=GeometryInfo<C_DIM>::vertices_per_cell;
   std::vector<bool> vertex_touched(d_dofHandlerMoveMesh.get_triangulation().n_vertices(),
-				   false);      
+				   false);
   DoFHandler<3>::active_cell_iterator
   cell = d_dofHandlerMoveMesh.begin_active(),
   endc = d_dofHandlerMoveMesh.end();      

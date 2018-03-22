@@ -214,8 +214,9 @@ void meshMovementClass::finalizeIncrementField()
 
 void meshMovementClass::updateTriangulationVertices()
 {
-  MPI_Barrier(mpi_communicator); 
-  pcout << "Start moving triangulation..." << std::endl;
+  MPI_Barrier(mpi_communicator);
+  if (dftParameters::verbosity==2)
+    pcout << "Start moving triangulation..." << std::endl;
   std::vector<bool> vertex_moved(d_dofHandlerMoveMesh.get_triangulation().n_vertices(),
                                  false);
   
@@ -245,7 +246,8 @@ void meshMovementClass::updateTriangulationVertices()
       }
   }
   d_dofHandlerMoveMesh.distribute_dofs(FEMoveMesh);
-  pcout << "...End moving triangulation" << std::endl;
+  if (dftParameters::verbosity==2)
+    pcout << "...End moving triangulation" << std::endl;
   //dftPtr->triangulation.communicate_locally_moved_vertices(locally_owned_vertices);
 }
 
@@ -274,8 +276,9 @@ std::pair<bool,double> meshMovementClass::movedMeshCheck()
 	{
 	  offsetVectors[i][j] = unitVectorsXYZ[i][j] - d_domainBoundingVectors[i][j];
 	}
-    }    
-  pcout << "Sanity check for periodic matched faces on moved triangulation..." << std::endl;  
+    }   
+  if (dftParameters::verbosity==2)
+    pcout << "Sanity check for periodic matched faces on moved triangulation..." << std::endl;  
   for(unsigned int i=0; i< d_periodicity_vector.size(); ++i) 
   {
     if (!d_periodicity_vector[i].cell[0]->active() || !d_periodicity_vector[i].cell[1]->active())
@@ -290,8 +293,9 @@ std::pair<bool,double> meshMovementClass::movedMeshCheck()
 	      
     AssertThrow(isPeriodicFace[0]==true || isPeriodicFace[1]==true || isPeriodicFace[2]==true,ExcMessage("Previously periodic matched face pairs not matching periodically for any directions after mesh movement"));			    
   }
-  MPI_Barrier(mpi_communicator);  
-  pcout << "...Sanity check passed" << std::endl;
+  MPI_Barrier(mpi_communicator); 
+  if (dftParameters::verbosity==2)
+    pcout << "...Sanity check passed" << std::endl;
 #endif
 
   //print out mesh metrics
@@ -305,9 +309,9 @@ std::pair<bool,double> meshMovementClass::movedMeshCheck()
     }
   }
   minElemLength=Utilities::MPI::min(minElemLength, mpi_communicator);
-  char buffer[100];
-  sprintf(buffer, "Mesh movement quality metric, h_min: %5.2e\n", minElemLength);
-  pcout << buffer;   
+  
+  if (dftParameters::verbosity==2)
+    pcout<< "Mesh movement quality metric, h_min: "<<minElemLength<<std::endl;
 
   std::pair<bool,double> meshQualityMetrics;
   QGauss<3>  quadrature(2);

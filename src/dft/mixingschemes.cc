@@ -144,7 +144,7 @@ double dftClass<FEOrder>::mixing_anderson(){
   if(this_mpi_process==0) {
     //printf("\nAnderson mixing  c%u:%12.6e, ", N+1, cn);
     //for (int i=0; i<N; i++) printf("c%u:%12.6e, ", N-i, cTotal[N-1-i]);
-    printf("\n");
+    //printf("\n");
   }
   
   //create new rhoValue tables
@@ -381,7 +381,7 @@ template<unsigned int FEOrder>
   if(this_mpi_process==0) {
     //printf("\nAnderson mixing  c%u:%12.6e, ", N+1, cn);
     //for (int i=0; i<N; i++) printf("c%u:%12.6e, ", N-i, cTotal[N-1-i]);
-    printf("\n");
+    //printf("\n");
   }
   
   //create new rhoValue tables

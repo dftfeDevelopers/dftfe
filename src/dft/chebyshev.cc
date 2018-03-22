@@ -206,14 +206,17 @@ void dftClass<FEOrder>::chebyshevSolver(unsigned int s)
   //
   //output statements
   //
-  char buffer[100];
+  if (dftParameters::verbosity==2)
+  {
+     char buffer[100];
 
-  sprintf(buffer, "%s:%18.10e\n", "upper bound of unwanted spectrum", bUp);
-  pcout << buffer;
-  sprintf(buffer, "%s:%18.10e\n", "lower bound of unwanted spectrum", bLow[(1+spinPolarized)*d_kPointIndex+s]);
-  pcout << buffer;
-  sprintf(buffer, "%s: %u\n\n", "Chebyshev polynomial degree", chebyshevOrder);
-  pcout << buffer;
+     sprintf(buffer, "%s:%18.10e\n", "upper bound of unwanted spectrum", bUp);
+     pcout << buffer;
+     sprintf(buffer, "%s:%18.10e\n", "lower bound of unwanted spectrum", bLow[(1+spinPolarized)*d_kPointIndex+s]);
+     pcout << buffer;
+     sprintf(buffer, "%s: %u\n\n", "Chebyshev polynomial degree", chebyshevOrder);
+     pcout << buffer;
+  }
 
   
   //
@@ -341,9 +344,12 @@ double dftClass<FEOrder>::upperBound()
   for (unsigned int i=0; i<eigenValuesT.size(); i++){eigenValuesT[i]=std::abs(eigenValuesT[i]);}
   std::sort(eigenValuesT.begin(),eigenValuesT.end()); 
   //
-  char buffer[100];
-  sprintf(buffer, "bUp1: %18.10e,  bUp2: %18.10e\n", eigenValuesT[lanczosIterations-1], fChebyshev.l2_norm());
+  if (dftParameters::verbosity==2)
+  {
+    char buffer[100];
+    sprintf(buffer, "bUp1: %18.10e,  bUp2: %18.10e\n", eigenValuesT[lanczosIterations-1], fChebyshev.l2_norm());
   //pcout << buffer;
+  }
   
   return (eigenValuesT[lanczosIterations-1]+fChebyshev.l2_norm());
 }
@@ -478,19 +484,23 @@ void dftClass<FEOrder>::rayleighRitz(unsigned int s, std::vector<vectorType*> &X
   dsyevd_(&jobz, &uplo, &n, &eigenPtr->XHXValue[0], &lda, &eigenValuesTemp[d_kPointIndex][0], &work[0], &lwork, &iwork[0], &liwork, &info);
 #endif
 
-  //
-  //print eigen values
-  //
-  char buffer[100];
-  pcout << "kPoint: "<< d_kPointIndex<<std::endl;
-  pcout << "spin: "<< s+1 <<std::endl;
+  //char buffer[100];
+  if (dftParameters::verbosity==2)
+  {
+    pcout << "kPoint: "<< d_kPointIndex<<std::endl;
+    pcout << "spin: "<< s+1 <<std::endl;
+  }
   for (unsigned int i=0; i< (unsigned int)n; i++)
     {
-      sprintf(buffer, "eigen value %3u: %22.16e\n", i, eigenValuesTemp[d_kPointIndex][i]);
-      pcout << buffer;
-      eigenValues[d_kPointIndex][s*numEigenValues + i] =  eigenValuesTemp[d_kPointIndex][i] ;
+      //sprintf(buffer, "eigen value %3u: %22.16e\n", i, eigenValuesTemp[d_kPointIndex][i]);
+      //pcout << buffer;
+      if (dftParameters::verbosity==2)
+          pcout<<"eigen value "<< std::setw(3) <<i <<": "<<eigenValuesTemp[d_kPointIndex][i] <<std::endl;
+
+      eigenValues[d_kPointIndex][s*numEigenValues + i] =  eigenValuesTemp[d_kPointIndex][i];
     }
-  pcout <<std::endl;
+  if (dftParameters::verbosity==2)  
+     pcout <<std::endl;
 
   //rotate the basis PSI=PSI*Q
   int m = X.size(); 
@@ -621,8 +631,8 @@ void dftClass<FEOrder>::computeResidualNorm(std::vector<vectorType*> & X)
   eigenPtr->HX(X, PSI);
   //
   unsigned int n = eigenValuesTemp[d_kPointIndex].size() ;
-  char buffer[100];
-  pcout<<"L-2 Norm of residue   :"<<std::endl;
+  if (dftParameters::verbosity==2)
+     pcout<<"L-2 Norm of residue   :"<<std::endl;
   //pcout<<"L-inf Norm of residue :"<<(*PSI[i]).linfty_norm()<<std::endl;
   for(unsigned int i = 0; i < n; i++)
      {
@@ -630,10 +640,14 @@ void dftClass<FEOrder>::computeResidualNorm(std::vector<vectorType*> & X)
 	const double resNorm= (*PSI[i]).l2_norm();
         if (spinPolarized!=1)
 	   d_tempResidualNormWaveFunctions[d_kPointIndex][i]=resNorm;
-	sprintf(buffer, "eigen vector %3u: %22.16e\n", i+1,resNorm);
-        pcout << buffer;
+      
+	if (dftParameters::verbosity==2)
+        {	
+ 	   pcout<<"eigen vector "<< i<<": "<<resNorm<<std::endl;
+	}
     }
-  pcout <<std::endl;
+  if (dftParameters::verbosity==2)  
+    pcout <<std::endl;
   //
   computing_timer.exit_section("computeResidualNorm"); 
 }

@@ -64,7 +64,8 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
   int cumulativeWaveSplineId = 0;
   int waveFunctionId;
   //
-  pcout << " d_pspTail  " << d_pspTail << std::endl ;
+  if (dftParameters::verbosity==2)
+     pcout << " d_pspTail  " << d_pspTail << std::endl ;
   //
   for(int iAtom = 0; iAtom < numberNonLocalAtoms; ++iAtom)
     {
@@ -93,8 +94,11 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
       //
       int numberPseudoWaveFunctions = d_numberPseudoAtomicWaveFunctions[iAtom];
 
-      pcout<<"Number of Pseudo wavefunctions: "<<std::endl;
-      pcout<<numberPseudoWaveFunctions<<std::endl;
+      if (dftParameters::verbosity==2)
+      {
+       pcout<<"Number of Pseudo wavefunctions: "<<std::endl;
+       pcout<<numberPseudoWaveFunctions<<std::endl;
+      }
 
       //
       //allocate element Matrices
@@ -343,7 +347,9 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
       // Skip the rest in the first line and proceed to next line
       //
       readPseudoDataFileNames.ignore();
-      pcout << "Number of projectors for atom with Z: " << atomicNumber<<" is " << numberAtomicWaveFunctions << std::endl;
+      
+      if (dftParameters::verbosity==2)
+              pcout << "Number of projectors for atom with Z: " << atomicNumber<<" is " << numberAtomicWaveFunctions << std::endl;
 
       //
       //string to store each line of the file
@@ -423,13 +429,17 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
 		projector[(*it)][i] = projector[(*it)][i-1];*/
 		
 	  radAndAngularFunctionId[0] += cumulativeSplineId;
-	    
-	  pcout << "Radial and Angular Functions Ids: " << radAndAngularFunctionId[0] << " " << radAndAngularFunctionId[1] << " " << radAndAngularFunctionId[2] << std::endl;
-	  pcout << "Projector Id: " << projector[(*it)][i] << std::endl;
+	  
+	  if (dftParameters::verbosity==2)
+	  {
+	    pcout << "Radial and Angular Functions Ids: " << radAndAngularFunctionId[0] << " " << radAndAngularFunctionId[1] << " " << radAndAngularFunctionId[2] << std::endl;
+	    pcout << "Projector Id: " << projector[(*it)][i] << std::endl;
+	  }
 
 	}
 
-	pcout << " splineFunctionIds.size() " << splineFunctionIds.size() << std::endl;
+       	if (dftParameters::verbosity==2)
+	   pcout << " splineFunctionIds.size() " << splineFunctionIds.size() << std::endl;
 
       //
       // map the atomic number to atomicNumberToFunctionIdDetails
@@ -599,7 +609,8 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
   d_nonLocalAtomGlobalChargeIds = nonLocalAtomGlobalChargeIds;
   int numberNonLocalAtoms = d_nonLocalAtomGlobalChargeIds.size();
   
-  pcout<<"Number of Nonlocal Atoms: " <<d_nonLocalAtomGlobalChargeIds.size()<<std::endl;
+  if (dftParameters::verbosity==2)  
+     pcout<<"Number of Nonlocal Atoms: " <<d_nonLocalAtomGlobalChargeIds.size()<<std::endl;
   //
   //fill up global charge image Id map by inserting the image atoms
   //corresponding to the master chargeId
@@ -662,8 +673,9 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
 	{
 	  d_nonLocalPseudoPotentialConstants[iAtom][iPseudoWave] = denominatorData[atomLocations[iAtom][0]][projector[atomLocations[iAtom][0]][iPseudoWave]][projector[atomLocations[iAtom][0]][iPseudoWave]];
 	  //d_nonLocalPseudoPotentialConstants[iAtom][iPseudoWave] = 1.0/d_nonLocalPseudoPotentialConstants[iAtom][iPseudoWave];
-	  pcout<<"The value of 1/nlpConst corresponding to atom and lCount "<<iAtom<<' '<<
-	    iPseudoWave<<" is "<<d_nonLocalPseudoPotentialConstants[iAtom][iPseudoWave]<<std::endl;	
+	  if (dftParameters::verbosity==2)
+	     pcout<<"The value of 1/nlpConst corresponding to atom and lCount "<<iAtom<<' '<<
+	      iPseudoWave<<" is "<<d_nonLocalPseudoPotentialConstants[iAtom][iPseudoWave]<<std::endl;	
 	  
 	}
 
@@ -765,7 +777,10 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
       typename DoFHandler<3>::active_cell_iterator cellEigen = dofHandlerEigen.begin_active();
 
       int iElem = -1;
-      pcout << " d_pspTail adjusted to " << d_pspTail << std::endl ;
+
+      if (dftParameters::verbosity==2)
+         pcout << " d_pspTail adjusted to " << d_pspTail << std::endl ;
+
       for(; cell != endc; ++cell,++cellEigen)
 	{
 	  if(cell->is_locally_owned())
@@ -855,7 +870,9 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
 
       cumulativeSplineId += numberPseudoWaveFunctions;
 
-      pcout<<"No.of non zero elements in the compact support of atom "<<iAtom<<" is "<<d_elementIteratorsInAtomCompactSupport[iAtom].size()<<std::endl;
+      if (dftParameters::verbosity==2)
+         pcout<<"No.of non zero elements in the compact support of atom "<<iAtom<<" is "<<d_elementIteratorsInAtomCompactSupport[iAtom].size()<<std::endl;
+
       if (isAtomIdInProcessor)
           d_nonLocalAtomIdsInCurrentProcess.push_back(iAtom);      
 

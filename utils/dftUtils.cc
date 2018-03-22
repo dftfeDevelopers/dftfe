@@ -20,6 +20,7 @@
 #include <fstream>
 #include <deal.II/base/data_out_base.h>
 #include <deal.II/base/mpi.h>
+#include <dftParameters.h>
 
 using namespace dealii;
 
@@ -65,7 +66,7 @@ namespace dftUtils
     if (taskId == 0)
       {
         std::cout<<"Number of pools: "<<npool<<std::endl;
-        std::cout<<"Pool size: "<<poolSize<<std::endl;
+        std::cout<<"Pool size (number of MPI processes for domain decomposition): "<<poolSize<<std::endl;
       }
     MPI_Barrier(mpi_communicator);
 
@@ -89,8 +90,11 @@ namespace dftUtils
     for (unsigned int i=0; i<n_mpi_processes; ++i)
       {
         if (taskId==i)
-          std::cout << " My global id is " << taskId << " , pool id is " << Utilities::MPI::this_mpi_process(interpoolcomm)  <<
+	{
+           if (dftParameters::verbosity==1)
+             std::cout << " My global id is " << taskId << " , pool id is " << Utilities::MPI::this_mpi_process(interpoolcomm)  <<
                     " , intrapool id is " << Utilities::MPI::this_mpi_process(intrapoolcomm) << std::endl;
+	}
         MPI_Barrier(mpi_communicator);
       }
   }

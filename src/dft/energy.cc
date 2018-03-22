@@ -17,7 +17,7 @@
 //
 
 
-//source file for all energy computations 
+//source file for all energy computations
 #include "../../include/dftParameters.h"
 
 using namespace dftParameters ;
@@ -33,7 +33,7 @@ double FermiDiracFunctionValue(double x,
   double functionValue = 0.0;
   double temp1,temp2;
 
-  
+
   for(unsigned int kPoint = 0; kPoint < numberkPoints; ++kPoint)
     {
       for(unsigned int i = 0; i < numberEigenValues; i++)
@@ -80,7 +80,7 @@ double FermiDiracFunctionDerivativeValue(double x,
 	  else
 	    {
 	      temp2 =  1.0/(1.0 + exp(-temp1));
-	      functionDerivative += (2.0-spinPolarized)*kPointWeights[kPoint]*(exp(-temp1)/(C_kb*TVal))*temp2*temp2; 
+	      functionDerivative += (2.0-spinPolarized)*kPointWeights[kPoint]*(exp(-temp1)/(C_kb*TVal))*temp2*temp2;
 
 	    }
 	}
@@ -93,13 +93,13 @@ double FermiDiracFunctionDerivativeValue(double x,
 
 //compute energies
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::compute_energy()
+double dftClass<FEOrder>::compute_energy(const bool print)
 {
   QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
   FEValues<3> fe_values (FE, quadrature, update_values | update_gradients | update_JxW_values);
   const unsigned int   num_quad_points    = quadrature.size();
-  std::vector<double> cellPhiTotRhoIn(num_quad_points);  
-  std::vector<double> cellPhiTotRhoOut(num_quad_points);  
+  std::vector<double> cellPhiTotRhoIn(num_quad_points);
+  std::vector<double> cellPhiTotRhoOut(num_quad_points);
   std::vector<double> cellPhiExt(num_quad_points);
   double TVal = dftParameters::TVal;
 
@@ -110,33 +110,33 @@ void dftClass<FEOrder>::compute_energy()
   //
   double bandEnergy=0.0, bandEnergyLocal=0.0;
   double partialOccupancy, factor;
-  char buffer[100];
   for(int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
     {
-      pcout << "kPoint: "<< kPoint <<std::endl;
+      if (dftParameters::verbosity==2)
+         pcout << "kPoint: "<< kPoint <<std::endl;
       for (unsigned int i=0; i<numEigenValues; i++)
 	{
 	  factor=(eigenValues[kPoint][i]-fermiEnergy)/(C_kb*TVal);
 	  //partialOccupancy=1.0/(1.0+exp(temp));
 	  double partialOccupancy = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)) : 1.0/(1.0 + std::exp(factor));
 	  bandEnergyLocal+= 2*partialOccupancy*d_kPointWeights[kPoint]*eigenValues[kPoint][i];
-	  sprintf(buffer, "%s %u: %0.14f\n", "fractional occupancy", i, partialOccupancy); pcout << buffer;
+	  if (dftParameters::verbosity==2)
+	     pcout<< "fractional occupancy "<< i<<": "<< partialOccupancy<< std::endl;
 	}
-      pcout << std::endl; 
-      sprintf(buffer, "number of electrons: %18.16e \n", integralRhoValue); pcout << buffer;
+      if (dftParameters::verbosity==2)
+        pcout << std::endl<<"number of electrons: "<< integralRhoValue<< std::endl;
     }
-  
+
    bandEnergy= Utilities::MPI::sum(bandEnergyLocal, interpoolcomm);
-  
-  pcout <<std::endl;
-  double potentialTimesRho = 0.0, exchangeEnergy = 0.0, correlationEnergy = 0.0, electrostaticEnergyTotPot = 0.0; 
+
+  double potentialTimesRho = 0.0, exchangeEnergy = 0.0, correlationEnergy = 0.0, electrostaticEnergyTotPot = 0.0;
 
   //parallel loop over all elements
   typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
 
   if(dftParameters::xc_id == 4)
     {
-      for (; cell!=endc; ++cell) 
+      for (; cell!=endc; ++cell)
 	{
 	  if (cell->is_locally_owned())
 	    {
@@ -145,7 +145,7 @@ void dftClass<FEOrder>::compute_energy()
 	      fe_values.get_function_values(poissonPtr->phiTotRhoIn,cellPhiTotRhoIn);
 	      fe_values.get_function_values(poissonPtr->phiTotRhoOut,cellPhiTotRhoOut);
 	      fe_values.get_function_values(poissonPtr->phiExt,cellPhiExt);
-	  
+
 	      // Get exc
 	      std::vector<double> densityValueIn(num_quad_points), densityValueOut(num_quad_points);
 	      std::vector<double> exchangeEnergyDensity(num_quad_points), corrEnergyDensity(num_quad_points);
@@ -194,11 +194,11 @@ void dftClass<FEOrder>::compute_energy()
 #endif
 		}
 	    }
-	} 
+	}
     }
   else
     {
-      for (; cell!=endc; ++cell) 
+      for (; cell!=endc; ++cell)
 	{
 	  if (cell->is_locally_owned())
 	    {
@@ -207,7 +207,7 @@ void dftClass<FEOrder>::compute_energy()
 	      fe_values.get_function_values(poissonPtr->phiTotRhoIn,cellPhiTotRhoIn);
 	      fe_values.get_function_values(poissonPtr->phiTotRhoOut,cellPhiTotRhoOut);
 	      fe_values.get_function_values(poissonPtr->phiExt,cellPhiExt);
-	  
+
 	      // Get Exc
 	      std::vector<double> densityValueIn(num_quad_points), densityValueOut(num_quad_points);
 	      std::vector<double> exchangeEnergyVal(num_quad_points), corrEnergyVal(num_quad_points);
@@ -239,17 +239,17 @@ void dftClass<FEOrder>::compute_energy()
 #endif
 		}
 	    }
-	} 
+	}
     }
 
 
-  
+
   double energy=-potentialTimesRho+exchangeEnergy+correlationEnergy+electrostaticEnergyTotPot;
 
   //
   //get nuclear electrostatic energy 0.5*sum_I*(phi_tot(RI) - VselfI(RI))
   //
-  
+
   //
   //First evaluate sum_I*(Z_I*phi_tot(RI)) on atoms belonging to current processor
   //
@@ -273,8 +273,8 @@ void dftClass<FEOrder>::compute_energy()
 
   //sum over all processors
   double totalEnergy= Utilities::MPI::sum(energy, mpi_communicator);
-  double totalpotentialTimesRho= Utilities::MPI::sum(potentialTimesRho, mpi_communicator); 
-  double totalexchangeEnergy= Utilities::MPI::sum(exchangeEnergy, mpi_communicator); 
+  double totalpotentialTimesRho= Utilities::MPI::sum(potentialTimesRho, mpi_communicator);
+  double totalexchangeEnergy= Utilities::MPI::sum(exchangeEnergy, mpi_communicator);
   double totalcorrelationEnergy= Utilities::MPI::sum(correlationEnergy, mpi_communicator);
   double totalelectrostaticEnergyPot= Utilities::MPI::sum(electrostaticEnergyTotPot, mpi_communicator);
   double totalNuclearElectrostaticEnergy = Utilities::MPI::sum(nuclearElectrostaticEnergy, mpi_communicator);
@@ -284,8 +284,8 @@ void dftClass<FEOrder>::compute_energy()
   //total energy
   //
   totalEnergy+=bandEnergy;
- 
- 
+
+
 #ifdef ENABLE_PERIODIC_BC
   totalEnergy+=totalNuclearElectrostaticEnergy;
 #else
@@ -296,37 +296,41 @@ void dftClass<FEOrder>::compute_energy()
   double totalkineticEnergy=-totalpotentialTimesRho+bandEnergy;
 
   //output
+  if (print)
+  {
+  pcout<<std::endl;
   char bufferEnergy[200];
-  pcout << "Energy computations\n";
+  pcout << "Energy computations (Hartree)\n";
   pcout << "-------------------\n";
-  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Band energy", bandEnergy); pcout << bufferEnergy; 
-  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Kinetic energy", totalkineticEnergy); pcout << bufferEnergy; 
-  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Exchange energy", totalexchangeEnergy); pcout << bufferEnergy; 
-  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Correlation energy", totalcorrelationEnergy); pcout << bufferEnergy; 
-#ifdef ENABLE_PERIODIC_BC  
-  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Electrostatic energy", totalelectrostaticEnergyPot+totalNuclearElectrostaticEnergy); pcout << bufferEnergy; 
+  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Band energy", bandEnergy); pcout << bufferEnergy;
+  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Kinetic energy", totalkineticEnergy); pcout << bufferEnergy;
+  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Exchange energy", totalexchangeEnergy); pcout << bufferEnergy;
+  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Correlation energy", totalcorrelationEnergy); pcout << bufferEnergy;
+#ifdef ENABLE_PERIODIC_BC
+  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Electrostatic energy", totalelectrostaticEnergyPot+totalNuclearElectrostaticEnergy); pcout << bufferEnergy;
 #else
   //double repulsive_energy= repulsiveEnergy();
-  //sprintf(bufferEnergy, "%-24s:%25.16e\n", "Repulsive energy", repulsive_energy); pcout << bufferEnergy; 
-  //sprintf(bufferEnergy, "%-24s:%25.16e\n", "Electrostatic energy", totalelectrostaticEnergyPot+repulsive_energy); pcout << bufferEnergy; 
-  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Electrostatic energy", totalelectrostaticEnergyPot+totalNuclearElectrostaticEnergy); pcout << bufferEnergy;   
+  //sprintf(bufferEnergy, "%-24s:%25.16e\n", "Repulsive energy", repulsive_energy); pcout << bufferEnergy;
+  //sprintf(bufferEnergy, "%-24s:%25.16e\n", "Electrostatic energy", totalelectrostaticEnergyPot+repulsive_energy); pcout << bufferEnergy;
+  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Electrostatic energy", totalelectrostaticEnergyPot+totalNuclearElectrostaticEnergy); pcout << bufferEnergy;
 #endif
-  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Total energy", totalEnergy); pcout << bufferEnergy; 
-  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Total energy per atom", totalEnergy/((double) atomLocations.size())); pcout << bufferEnergy; 
-  /* 
+  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Total energy", totalEnergy); pcout << bufferEnergy;
+  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Total energy per atom", totalEnergy/((double) atomLocations.size())); pcout << bufferEnergy;
+  }
+  /*
   if (this_mpi_process == 0) {
     std::printf("Total energy:%30.20e \nTotal energy per atom:%30.20e \n", totalEnergy, totalEnergy/((double) atomLocations.size()));
     std::printf("Band energy:%30.20e \nKinetic energy:%30.20e \nExchange energy:%30.20e \nCorrelation energy:%30.20e \nElectrostatic energy Total Potential:%30.20e \nRepulsive energy:%30.20e \nNuclear Electrostatic Energy:%30.20e \n\n", bandEnergy, totalkineticEnergy, totalexchangeEnergy, totalcorrelationEnergy, totalelectrostaticEnergyPot, repulsiveEnergy(),totalNuclearElectrostaticEnergy);
   }
   */
+  return totalEnergy;
 }
- 
+
 //compute fermi energy
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::compute_fermienergy()
 {
-  char bufferFermi[100];
- int count =  std::ceil(static_cast<double>(numElectrons)/(2.0-spinPolarized));
+  int count =  std::ceil(static_cast<double>(numElectrons)/(2.0-spinPolarized));
   double TVal = dftParameters::TVal;
 
 
@@ -348,7 +352,7 @@ void dftClass<FEOrder>::compute_fermienergy()
 #ifdef ENABLE_PERIODIC_BC
   //
   //compute Fermi-energy first by bisection method
-  //  
+  //
   //double initialGuessLeft = Utilities::MPI::min(eigenValuesAllkPoints[0],interpoolcomm);
   //double initialGuessRight = Utilities::MPI::max(eigenValuesAllkPoints[eigenValuesAllkPoints.size() - 1],interpoolcomm);
 
@@ -360,7 +364,7 @@ void dftClass<FEOrder>::compute_fermienergy()
 
   xRight = Utilities::MPI::max(initialGuessRight, interpoolcomm);
   xLeft =  Utilities::MPI::min(initialGuessLeft, interpoolcomm);
-  
+
 
   for(int iter = 0; iter < maxNumberFermiEnergySolveIterations; ++iter)
     {
@@ -387,7 +391,7 @@ void dftClass<FEOrder>::compute_fermienergy()
 	  pcout << " Bisection Method Failed " <<std::endl;
 	  exit(-1);
 	}
-      
+
       double xBisected = (xLeft + xRight)/2.0;
 
       double yBisectedLocal = FermiDiracFunctionValue(xBisected,
@@ -401,7 +405,7 @@ void dftClass<FEOrder>::compute_fermienergy()
 	xLeft = xBisected;
       else
 	xRight = xBisected;
-					      
+
       if (std::abs(yBisected) <= 1.0e-09 || iter == maxNumberFermiEnergySolveIterations-1)
 	{
 	  fe = xBisected;
@@ -410,10 +414,11 @@ void dftClass<FEOrder>::compute_fermienergy()
 	}
 
     }
-  sprintf(bufferFermi, "%-50s: %25.16e\n", "Fermi energy constraint residual (bisection)", R); pcout << bufferFermi; 
+    if (dftParameters::verbosity==2)
+      pcout<< "Fermi energy constraint residual (bisection): "<< R << std::endl;
 #else
    fe = eigenValuesAllkPoints[d_maxkPoints*count - 1];
-#endif  
+#endif
   //
   //compute residual and find FermiEnergy using Newton-Raphson solve
   //
@@ -436,10 +441,10 @@ void dftClass<FEOrder>::compute_fermienergy()
 								  TVal);
 
       functionDerivativeValue = Utilities::MPI::sum(functionDerivativeValueLocal, interpoolcomm);
-      
+
 
       R   =  functionValue - numElectrons;
-      fe += -R/functionDerivativeValue; 
+      fe += -R/functionDerivativeValue;
       iter++;
     }
 
@@ -449,11 +454,14 @@ void dftClass<FEOrder>::compute_fermienergy()
       //exit(-1);
     }
 
-  sprintf(bufferFermi, "%-50s: %25.16e\n", "Fermi energy constraint residual (Newton-Raphson)", std::abs(R)); pcout << bufferFermi; 
-
   //set Fermi energy
   fermiEnergy = fe;
-  sprintf(bufferFermi, "%-50s: %25.16e\n\n", "Fermi energy", fermiEnergy); pcout << bufferFermi; 
+
+  if (dftParameters::verbosity==2)
+     pcout<< "Fermi energy constraint residual (Newton-Raphson): "<< std::abs(R)<<std::endl;
+
+  if (dftParameters::verbosity==2)
+     pcout<< "Fermi energy                                     : "<< fermiEnergy<<std::endl;
 }
 
 template<unsigned int FEOrder>
@@ -482,47 +490,52 @@ double dftClass<FEOrder>::repulsiveEnergy()
 }
 //compute energies
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::compute_energy_spinPolarized()
+double dftClass<FEOrder>::compute_energy_spinPolarized(const bool print)
 {
   QGauss<3>  quadrature(FEOrder+1);
   FEValues<3> fe_values (FE, quadrature, update_values | update_gradients | update_JxW_values);
   const unsigned int   num_quad_points    = quadrature.size();
-  std::vector<double> cellPhiTotRhoIn(num_quad_points);  
-  std::vector<double> cellPhiTotRhoOut(num_quad_points);  
+  std::vector<double> cellPhiTotRhoIn(num_quad_points);
+  std::vector<double> cellPhiTotRhoOut(num_quad_points);
   std::vector<double> cellPhiExt(num_quad_points);
-  
+
   //
   // Loop through all cells.
   //
   double bandEnergy=0.0, bandEnergyLocal=0.0;
   double partialOccupancy, factor;
-  char buffer[100];
   for(int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
     {
-      pcout << "kPoint: "<< kPoint <<std::endl;
+      if (dftParameters::verbosity==2)
+         pcout << "kPoint: "<< kPoint <<std::endl;
       for (unsigned int i=0; i<(1+spinPolarized)*numEigenValues; i++)
 	{
 	  factor=(eigenValues[kPoint][i]-fermiEnergy)/(C_kb*TVal);
 	  //partialOccupancy=1.0/(1.0+exp(temp));
 	  double partialOccupancy = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)) : 1.0/(1.0 + std::exp(factor));
 	  bandEnergyLocal+= (2-spinPolarized)*partialOccupancy*d_kPointWeights[kPoint]*eigenValues[kPoint][i];
-	  sprintf(buffer, "%s %u: %0.14f\n", "fractional occupancy", i, partialOccupancy); pcout << buffer;
+	  if (dftParameters::verbosity==2)
+	   pcout<<"fractional occupancy "<< i<<": "<< partialOccupancy<<std::endl;
 	}
-      pcout << std::endl; 
-      sprintf(buffer, "number of electrons: %18.16e \n", integralRhoValue); pcout << buffer;
-    }
-  pcout <<std::endl;
-  bandEnergy= Utilities::MPI::sum(bandEnergyLocal, interpoolcomm);
-  double potentialTimesRho = 0.0, exchangeEnergy = 0.0, correlationEnergy = 0.0, electrostaticEnergyTotPot = 0.0; 
 
-  
+      if (dftParameters::verbosity==2)
+      {
+        pcout << std::endl;
+        pcout<< "number of electrons: "<< integralRhoValue<<std::endl;
+      }
+    }
+
+  bandEnergy= Utilities::MPI::sum(bandEnergyLocal, interpoolcomm);
+  double potentialTimesRho = 0.0, exchangeEnergy = 0.0, correlationEnergy = 0.0, electrostaticEnergyTotPot = 0.0;
+
+
 
   //parallel loop over all elements
   typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
 
   if(xc_id == 4)
     {
-      for (; cell!=endc; ++cell) 
+      for (; cell!=endc; ++cell)
 	{
 	  if (cell->is_locally_owned())
 	    {
@@ -531,7 +544,7 @@ void dftClass<FEOrder>::compute_energy_spinPolarized()
 	      fe_values.get_function_values(poissonPtr->phiTotRhoIn,cellPhiTotRhoIn);
 	      fe_values.get_function_values(poissonPtr->phiTotRhoOut,cellPhiTotRhoOut);
 	      fe_values.get_function_values(poissonPtr->phiExt,cellPhiExt);
-	  
+
 	      // Get exc
 	      std::vector<double> densityValueIn(2*num_quad_points), densityValueOut(2*num_quad_points);
 	      std::vector<double> exchangeEnergyDensity(num_quad_points), corrEnergyDensity(num_quad_points);
@@ -598,11 +611,11 @@ void dftClass<FEOrder>::compute_energy_spinPolarized()
 #endif
 		}
 	    }
-	} 
+	}
     }
   else
     {
-      for (; cell!=endc; ++cell) 
+      for (; cell!=endc; ++cell)
 	{
 	  if (cell->is_locally_owned())
 	    {
@@ -611,7 +624,7 @@ void dftClass<FEOrder>::compute_energy_spinPolarized()
 	      fe_values.get_function_values(poissonPtr->phiTotRhoIn,cellPhiTotRhoIn);
 	      fe_values.get_function_values(poissonPtr->phiTotRhoOut,cellPhiTotRhoOut);
 	      fe_values.get_function_values(poissonPtr->phiExt,cellPhiExt);
-	  
+
 	      // Get Exc
 	      std::vector<double> densityValueIn(2*num_quad_points), densityValueOut(2*num_quad_points);
 	      std::vector<double> exchangeEnergyVal(num_quad_points), corrEnergyVal(num_quad_points);
@@ -622,7 +635,7 @@ void dftClass<FEOrder>::compute_energy_spinPolarized()
                   densityValueOut[q_point] = (*rhoOutValuesSpinPolarized)[cell->id()][q_point];
 		}
               //
-           
+
 	      xc_lda_exc(&funcX,num_quad_points,&densityValueOut[0],&exchangeEnergyVal[0]);
 	      xc_lda_exc(&funcC,num_quad_points,&densityValueOut[0],&corrEnergyVal[0]);
 	      xc_lda_vxc(&funcX,num_quad_points,&densityValueIn[0],&exchangePotentialVal[0]);
@@ -642,7 +655,7 @@ void dftClass<FEOrder>::compute_energy_spinPolarized()
 		  //
 		  exchangeEnergy+=(exchangeEnergyVal[q_point])*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
                   //exchangeEnergy+=(exchangeEnergyVal[2*q_point+1])*((*rhoOutValuesSpinPolarized)[cell->id()][2*q_point+1])*fe_values.JxW(q_point) ;
-		  correlationEnergy+=(corrEnergyVal[q_point])*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point) ; 
+		  correlationEnergy+=(corrEnergyVal[q_point])*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point) ;
 		  //correlationEnergy+=(corrEnergyVal[2*q_point+1])*((*rhoOutValuesSpinPolarized)[cell->id()][2*q_point+1])*fe_values.JxW(q_point);
 #ifdef ENABLE_PERIODIC_BC
 		  electrostaticEnergyTotPot+=0.5*(Vtot)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
@@ -651,18 +664,18 @@ void dftClass<FEOrder>::compute_energy_spinPolarized()
 #endif
 		}
 	    }
-	} 
+	}
     }
 
 
 
-  
+
   double energy=-potentialTimesRho+exchangeEnergy+correlationEnergy+electrostaticEnergyTotPot;
 
   //
   //get nuclear electrostatic energy 0.5*sum_I*(phi_tot(RI) - VselfI(RI))
   //
-  
+
   //
   //First evaluate sum_I*(Z_I*phi_tot(RI)) on atoms belonging to current processor
   //
@@ -686,8 +699,8 @@ void dftClass<FEOrder>::compute_energy_spinPolarized()
 
   //sum over all processors
   double totalEnergy= Utilities::MPI::sum(energy, mpi_communicator);
-  double totalpotentialTimesRho= Utilities::MPI::sum(potentialTimesRho, mpi_communicator); 
-  double totalexchangeEnergy= Utilities::MPI::sum(exchangeEnergy, mpi_communicator); 
+  double totalpotentialTimesRho= Utilities::MPI::sum(potentialTimesRho, mpi_communicator);
+  double totalexchangeEnergy= Utilities::MPI::sum(exchangeEnergy, mpi_communicator);
   double totalcorrelationEnergy= Utilities::MPI::sum(correlationEnergy, mpi_communicator);
   double totalelectrostaticEnergyPot= Utilities::MPI::sum(electrostaticEnergyTotPot, mpi_communicator);
   double totalNuclearElectrostaticEnergy = Utilities::MPI::sum(nuclearElectrostaticEnergy, mpi_communicator);
@@ -696,8 +709,8 @@ void dftClass<FEOrder>::compute_energy_spinPolarized()
   //total energy
   //
   totalEnergy+=bandEnergy;
- 
- 
+
+
 #ifdef ENABLE_PERIODIC_BC
   totalEnergy+=totalNuclearElectrostaticEnergy;
 #else
@@ -708,26 +721,31 @@ void dftClass<FEOrder>::compute_energy_spinPolarized()
   double totalkineticEnergy=-totalpotentialTimesRho+bandEnergy;
 
   //output
+  if (print)
+  {
+  pcout<<std::endl;
   char bufferEnergy[200];
-  pcout << "Energy computations\n";
+  pcout << "Energy computations (Hartree)\n";
   pcout << "-------------------\n";
-  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Band energy", bandEnergy); pcout << bufferEnergy; 
-  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Kinetic energy", totalkineticEnergy); pcout << bufferEnergy; 
-  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Exchange energy", totalexchangeEnergy); pcout << bufferEnergy; 
-  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Correlation energy", totalcorrelationEnergy); pcout << bufferEnergy; 
-#ifdef ENABLE_PERIODIC_BC  
-  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Electrostatic energy", totalelectrostaticEnergyPot+totalNuclearElectrostaticEnergy); pcout << bufferEnergy; 
+  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Band energy", bandEnergy); pcout << bufferEnergy;
+  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Kinetic energy", totalkineticEnergy); pcout << bufferEnergy;
+  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Exchange energy", totalexchangeEnergy); pcout << bufferEnergy;
+  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Correlation energy", totalcorrelationEnergy); pcout << bufferEnergy;
+#ifdef ENABLE_PERIODIC_BC
+  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Electrostatic energy", totalelectrostaticEnergyPot+totalNuclearElectrostaticEnergy); pcout << bufferEnergy;
 #else
   double repulsive_energy= repulsiveEnergy();
-  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Repulsive energy", repulsive_energy); pcout << bufferEnergy; 
-  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Electrostatic energy", totalelectrostaticEnergyPot+repulsive_energy); pcout << bufferEnergy; 
+  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Repulsive energy", repulsive_energy); pcout << bufferEnergy;
+  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Electrostatic energy", totalelectrostaticEnergyPot+repulsive_energy); pcout << bufferEnergy;
 #endif
-  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Total energy", totalEnergy); pcout << bufferEnergy; 
-  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Total energy per atom", totalEnergy/((double) atomLocations.size())); pcout << bufferEnergy; 
-  /* 
+  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Total energy", totalEnergy); pcout << bufferEnergy;
+  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Total energy per atom", totalEnergy/((double) atomLocations.size())); pcout << bufferEnergy;
+  }
+  /*
   if (this_mpi_process == 0) {
     std::printf("Total energy:%30.20e \nTotal energy per atom:%30.20e \n", totalEnergy, totalEnergy/((double) atomLocations.size()));
     std::printf("Band energy:%30.20e \nKinetic energy:%30.20e \nExchange energy:%30.20e \nCorrelation energy:%30.20e \nElectrostatic energy Total Potential:%30.20e \nRepulsive energy:%30.20e \nNuclear Electrostatic Energy:%30.20e \n\n", bandEnergy, totalkineticEnergy, totalexchangeEnergy, totalcorrelationEnergy, totalelectrostaticEnergyPot, repulsiveEnergy(),totalNuclearElectrostaticEnergy);
   }
   */
+  return totalEnergy;
 }

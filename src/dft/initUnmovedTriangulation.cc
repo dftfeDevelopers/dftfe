@@ -84,20 +84,21 @@ void dftClass<FEOrder>::initUnmovedTriangulation(parallel::distributed::Triangul
       else
 	{
 	  local_dof_indicesImag.push_back(local_dof_indices[i]);
-	  localProc_dof_indicesImag.push_back(i);	  
+	  localProc_dof_indicesImag.push_back(i);
 	}
     }
 #endif
 
 
-  
+  pcout << std::endl<<"Finite element mesh information"<<std::endl;
+  pcout<<"-------------------------------------------------"<<std::endl;
   pcout << "number of elements: "
 	<< triangulation.n_global_active_cells()
 	<< std::endl
 	<< "number of degrees of freedom: " 
 	<< dofHandler.n_dofs() 
 	<< std::endl;
-
+  pcout<<"-------------------------------------------------"<<std::endl;
   //std::cout<< " procId: "<< this_mpi_process << " ,locallly_owned_dofs: "<<dofHandler.n_locally_owned_dofs()<<std::endl;
 
   //

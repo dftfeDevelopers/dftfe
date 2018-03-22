@@ -34,12 +34,12 @@ void dftClass<FEOrder>::initElectronicFields(){
   aj[0].reinit(vChebyshev); aj[1].reinit(vChebyshev); aj[2].reinit(vChebyshev);
   aj[3].reinit(vChebyshev); aj[4].reinit(vChebyshev);
   for (unsigned int i=0; i<eigenVectors[0].size(); ++i)
-    {  
+    {
       PSI[i]->reinit(vChebyshev);
       tempPSI[i]->reinit(vChebyshev);
       tempPSI2[i]->reinit(vChebyshev);
       tempPSI3[i]->reinit(vChebyshev);
-    } 
+    }
 
   //std::cout<< "SPIN POLARIZED:"<< spinPolarized <<std::endl;
   if (spinPolarized!=1)
@@ -51,7 +51,7 @@ void dftClass<FEOrder>::initElectronicFields(){
         d_tempResidualNormWaveFunctions[kPoint].resize(eigenVectors[kPoint].size());
      }
   }
-     
+
 
   for(unsigned int kPoint = 0; kPoint < (1+spinPolarized)*d_maxkPoints; ++kPoint)
     {
@@ -63,20 +63,22 @@ void dftClass<FEOrder>::initElectronicFields(){
     }
 
 
-  if ( (Utilities::MPI::this_mpi_process(interpoolcomm)) > 1 && (Utilities::MPI::this_mpi_process(mpi_communicator))==0 )
+  if (dftParameters::verbosity==2)
+  {
+    if ( (Utilities::MPI::this_mpi_process(interpoolcomm)) > 1 && (Utilities::MPI::this_mpi_process(mpi_communicator))==0 )
 	std::cout << " check 2.1 " << std::endl ;
-	
+  }
 
   //
-  //initialize density 
+  //initialize density
   //
   initRho();
 
-  
+
   //
   //initialize PSI
   //
-  pcout << "reading initial guess for PSI\n";
+  pcout <<std::endl<< "Reading initial guess for PSI...."<<std::endl;
   readPSI();
-  computing_timer.exit_section("moved setup");   
+  computing_timer.exit_section("moved setup");
 }

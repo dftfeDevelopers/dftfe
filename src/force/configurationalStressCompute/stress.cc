@@ -57,7 +57,9 @@ void forceClass<FEOrder>::computeStress()
 template<unsigned int FEOrder>
 void forceClass<FEOrder>::printStress()
 {
-    pcout<< "------------Configurational stress (Hartree/Bohr^3)--------------------- "<< std::endl;
+    pcout<<std::endl;
+    pcout<<"Cell stress (Hartree/Bohr^3)"<<std::endl;
+    pcout<< "------------------------------------------------------------------------"<< std::endl;
     for (unsigned int idim=0; idim< 3; idim++)
         pcout<< d_stress[idim][0]<<"  "<<d_stress[idim][1]<<"  "<<d_stress[idim][2]<< std::endl;    
     pcout<< "------------------------------------------------------------------------"<<std::endl;    
