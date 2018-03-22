@@ -484,7 +484,7 @@ void forceClass<FEOrder>::printAtomsForces()
     pcout<<std::endl;
     pcout<<"Ion forces"<<std::endl;
     if (dftParameters::verbosity==1)    
-       pcout<< "Negative of configurational force (Hartree/Bohr) on atoms for Gaussian generator with constant: "<<std::setprecision(4)<< d_gaussianConstant <<std::endl;
+       pcout<< "Negative of configurational force (Hartree/Bohr) on atoms for Gaussian generator with constant: "<< d_gaussianConstant <<std::endl;
 
     pcout<< "--------------------------------------------------------------------------------------------"<<std::endl;    
     //also find the atom with the maximum absolute force and print that

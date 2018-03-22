@@ -515,7 +515,10 @@ void dftClass<FEOrder>::solve()
   pcout<<std::endl;
   while ((norm > dftParameters::selfConsistentSolverTolerance) && (scfIter < dftParameters::numSCFIterations))
     {
-      pcout<<"************************Begin Self-Consistent-Field Iteration: "<<std::setw(2)<<scfIter+1<<" ***********************"<<std::endl;
+      if (dftParameters::verbosity==1)
+      {	
+        pcout<<"************************Begin Self-Consistent-Field Iteration: "<<std::setw(2)<<scfIter+1<<" ***********************"<<std::endl;
+      }
       //Mixing scheme
       if(scfIter > 0)
 	{
@@ -539,7 +542,10 @@ void dftClass<FEOrder>::solve()
 		else
 	          norm = sqrt(mixing_anderson());
 	      }
-	  pcout<<"Anderson Mixing: L2 norm of electron-density difference: "<< norm<< std::endl;
+	        
+	  if (dftParameters::verbosity==1)
+	      pcout<<"Anderson Mixing: L2 norm of electron-density difference: "<< norm<< std::endl;
+
 	  poissonPtr->phiTotRhoIn = poissonPtr->phiTotRhoOut;
 	}
       //phiTot with rhoIn
@@ -687,10 +693,14 @@ void dftClass<FEOrder>::solve()
 	  else
 	     totalEnergy=compute_energy (false);	  
 
-	  pcout<<"Total energy  : " << totalEnergy << std::endl;
+	  //pcout<<"Total energy  : " << totalEnergy << std::endl;
       }
-      pcout<<"***********************Self-Consistent-Field Iteration: "<<std::setw(2)<<scfIter+1<<" complete**********************"<<std::endl; 
-      pcout<<std::endl;
+     
+      if (dftParameters::verbosity==1)
+      {
+        pcout<<"***********************Self-Consistent-Field Iteration: "<<std::setw(2)<<scfIter+1<<" complete**********************"<<std::endl; 
+        pcout<<std::endl;
+      }
       
       //output wave functions
       //output();

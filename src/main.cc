@@ -60,10 +60,9 @@ void parse_command_line(const int argc,
                         char *const *argv,
                         ParameterHandler &prm)
 {
-  if (argc < 2)
+  if (argc < 3)
     {
-      print_usage_message(prm);
-      exit(1);
+      AssertThrow(false,ExcMessage("Incorrect usage! Correct usage: mpirun -np nProcs executable -p parameterfile.prm"));
     }
 
   std::list<std::string> args;
