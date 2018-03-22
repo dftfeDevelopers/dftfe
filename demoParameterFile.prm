@@ -1,5 +1,5 @@
 Usage:
-mpirun -np nProcs -p parameterfile.prm
+mpirun -np nProcs executable -p parameterfile.prm
 
 # Listing of Parameters
 # ---------------------

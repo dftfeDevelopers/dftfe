@@ -329,7 +329,8 @@ void dftClass<FEOrder>::initImageChargesUpdateKPoints()
   {
       atomLocations[i] = atomLocationsFractional[i] ;
       pcout<<"AtomId "<<i <<":  "<<atomLocationsFractional[i][2]<<" "<<atomLocationsFractional[i][3]<<" "<<atomLocationsFractional[i][4]<<"\n";
-  }   
+  }  
+  pcout<<"-----------------------------------------------------------------------------------------"<<std::endl;  
   generateImageCharges();
 
   internaldft::convertToCellCenteredCartesianCoordinates(atomLocations,
