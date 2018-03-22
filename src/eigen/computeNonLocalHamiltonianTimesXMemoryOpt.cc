@@ -17,8 +17,8 @@
 //
 
 template<unsigned int FEOrder>
-void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::vector<boost::shared_ptr<vectorType> > &src,
-								    std::vector<boost::shared_ptr<vectorType> >       &dst)
+void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::vector<vectorType* > &src,
+								    std::vector<vectorType* >       &dst)
 {
   //
   //get FE data
@@ -87,7 +87,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::v
 	  unsigned int index=0;
 
 	  std::vector<double> temp(dofs_per_cell,0.0);
-	  for (std::vector<boost::shared_ptr<vectorType> >::const_iterator it=src.begin(); it!=src.end(); it++)
+	  for (std::vector<vectorType* >::const_iterator it=src.begin(); it!=src.end(); it++)
 	    {
 #ifdef ENABLE_PERIODIC_BC
 	      (*it)->extract_subvector_to(local_dof_indices.begin(), local_dof_indices.end(), temp.begin());
@@ -279,7 +279,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::v
 #ifdef ENABLE_PERIODIC_BC
 	  unsigned int index = 0;
 	  std::vector<double> temp(dofs_per_cell,0.0);
-	  for(std::vector<boost::shared_ptr<vectorType> >::iterator it = dst.begin(); it != dst.end(); ++it)
+	  for(std::vector<vectorType* >::iterator it = dst.begin(); it != dst.end(); ++it)
 	    {
 	      for(unsigned int idof = 0; idof < dofs_per_cell; ++idof)
 		{
@@ -297,7 +297,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::v
 	    }
 #else
 	  std::vector<double>::iterator iter = outputVectors.begin();
-	  for (std::vector<boost::shared_ptr<vectorType> >::iterator it=dst.begin(); it!=dst.end(); ++it)
+	  for (std::vector<vectorType* >::iterator it=dst.begin(); it!=dst.end(); ++it)
 	    {
 	      dftPtr->constraintsNoneEigen.distribute_local_to_global(iter, iter+numberNodesPerElement,local_dof_indices.begin(), **it);
 	      iter+=numberNodesPerElement;

@@ -303,14 +303,10 @@ double dftClass<FEOrder>::upperBound()
   vChebyshev/=vChebyshev.l2_norm();
   vChebyshev.update_ghost_values();
   //
-  //std::vector<boost::shared_ptr<vectorType> > v,f; 
-  //d_v.clear();
-  //d_f.clear();
-  //d_v.resize(1);
-  //d_f.resize(1);
-  //d_v.push_back(boost::shared_ptr<vectorType> (&vChebyshev));
-  //d_f.push_back(boost::shared_ptr<vectorType> (&fChebyshev));
-  eigenPtr->HX(d_v,d_f);
+  std::vector<vectorType*> v,f; 
+  v.push_back(&vChebyshev);
+  f.push_back(&fChebyshev);
+  eigenPtr->HX(v,f);
 
   //
 #ifdef ENABLE_PERIODIC_BC
@@ -334,7 +330,7 @@ double dftClass<FEOrder>::upperBound()
     {
       beta=fChebyshev.l2_norm();
       v0Chebyshev=vChebyshev; vChebyshev.equ(1.0/beta,fChebyshev);
-      eigenPtr->HX(d_v,d_f); fChebyshev.add(-1.0*beta,v0Chebyshev);//beta is real
+      eigenPtr->HX(v,f); fChebyshev.add(-1.0*beta,v0Chebyshev);//beta is real
 #ifdef ENABLE_PERIODIC_BC
       alpha = innerProduct(fChebyshev,vChebyshev);
       alphaTimesXPlusY(-alpha,vChebyshev,fChebyshev);
@@ -380,7 +376,7 @@ double dftClass<FEOrder>::upperBound()
 
 //Gram-Schmidt orthonormalization
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::gramSchmidt(std::vector<boost::shared_ptr<vectorType> > & X)
+void dftClass<FEOrder>::gramSchmidt(std::vector<vectorType* > & X)
 {
   computing_timer.enter_section("Chebyshev GS orthonormalization"); 
  
@@ -488,7 +484,7 @@ void dftClass<FEOrder>::gramSchmidt(std::vector<boost::shared_ptr<vectorType> > 
 
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::rayleighRitz(unsigned int s, 
-				     std::vector<boost::shared_ptr<vectorType> > & X)
+				     std::vector<vectorType* > & X)
 {
   computing_timer.enter_section("Chebyshev Rayleigh Ritz"); 
   //Hbar=Psi^T*H*Psi
@@ -530,7 +526,7 @@ void dftClass<FEOrder>::rayleighRitz(unsigned int s,
   int n1 = X[0]->local_size()/2;
   std::vector<std::complex<double> > Xbar(n1*m), Xlocal(n1*m); //Xbar=Xlocal*Q
   std::vector<std::complex<double> >::iterator val = Xlocal.begin();
-  for(std::vector<boost::shared_ptr<vectorType> >::iterator x=X.begin(); x<X.end(); ++x)
+  for(std::vector<vectorType* >::iterator x=X.begin(); x<X.end(); ++x)
     {
       for (unsigned int i=0; i<(unsigned int)n1; i++)
 	{
@@ -543,7 +539,7 @@ void dftClass<FEOrder>::rayleighRitz(unsigned int s,
   int n1 = X[0]->local_size();
   std::vector<double> Xbar(n1*m), Xlocal(n1*m); //Xbar=Xlocal*Q
   std::vector<double>::iterator val = Xlocal.begin();
-  for (std::vector<boost::shared_ptr<vectorType> >::iterator x = X.begin(); x < X.end(); ++x)
+  for (std::vector<vectorType* >::iterator x = X.begin(); x < X.end(); ++x)
     {
       for (unsigned int i=0; i<(unsigned int)n1; i++)
 	{
@@ -568,7 +564,7 @@ lda=n1; int ldb=m, ldc=n1;
 #ifdef ENABLE_PERIODIC_BC
  //copy back Xbar to X
   val=Xbar.begin();
-  for (std::vector<boost::shared_ptr<vectorType> >::iterator x=X.begin(); x<X.end(); ++x)
+  for (std::vector<vectorType* >::iterator x=X.begin(); x<X.end(); ++x)
     {
       **x=0.0;
       for (unsigned int i=0; i<(unsigned int)n1; i++){
@@ -581,7 +577,7 @@ lda=n1; int ldb=m, ldc=n1;
 #else
   //copy back Xbar to X
   val=Xbar.begin();
-  for (std::vector<boost::shared_ptr<vectorType> >::iterator x=X.begin(); x<X.end(); ++x)
+  for (std::vector<vectorType* >::iterator x=X.begin(); x<X.end(); ++x)
     {
       **x=0.0;
       for (unsigned int i=0; i<(unsigned int)n1; i++){
@@ -602,7 +598,7 @@ lda=n1; int ldb=m, ldc=n1;
 //inputs: X - input wave functions, m-polynomial degree, a-lower bound of unwanted spectrum
 //b-upper bound of the full spectrum, a0-lower bound of the wanted spectrum
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::chebyshevFilter(std::vector<boost::shared_ptr<vectorType> > & X, 
+void dftClass<FEOrder>::chebyshevFilter(std::vector<vectorType* > & X, 
 					unsigned int m, 
 					double a, 
 					double b, 
@@ -612,12 +608,12 @@ void dftClass<FEOrder>::chebyshevFilter(std::vector<boost::shared_ptr<vectorType
   e=(b-a)/2.0; c=(b+a)/2.0;
   sigma=e/(a0-c); sigma1=sigma; gamma=2.0/sigma1;
 
-  std::vector<boost::shared_ptr<vectorType> > PSI,tempPSI;
+  std::vector<vectorType* > PSI,tempPSI;
 
   for(unsigned int i = 0; i < X.size(); ++i)
     {
-      PSI.push_back(boost::shared_ptr<vectorType>(new vectorType));
-      tempPSI.push_back(boost::shared_ptr<vectorType>(new vectorType));
+      PSI.push_back(new vectorType);
+      tempPSI.push_back(new vectorType);
     }
   
   for(unsigned int i = 0; i < X.size(); ++i)
@@ -634,9 +630,9 @@ void dftClass<FEOrder>::chebyshevFilter(std::vector<boost::shared_ptr<vectorType
     constraintsNoneEigen.set_zero(*X[i]);
 
   eigenPtr->HX(X, PSI);
-  //std::vector<boost::shared_ptr<vectorType> >::iterator y,ynew;
+  //std::vector<vectorType* >::iterator y,ynew;
   //std::vector<vectorType*>::iterator x;
-  for (std::vector<boost::shared_ptr<vectorType> >::iterator y=PSI.begin(), x=X.begin(); y<PSI.end(); ++y, ++x)
+  for (std::vector<vectorType* >::iterator y=PSI.begin(), x=X.begin(); y<PSI.end(); ++y, ++x)
     {  
       (**y).add(alpha2,**x);
       (**y)*=alpha1;
@@ -648,7 +644,7 @@ void dftClass<FEOrder>::chebyshevFilter(std::vector<boost::shared_ptr<vectorType
       //Ynew=alpha1*(HY-cY)+alpha2*X
       alpha1=2.0*sigma2/e, alpha2=-(sigma*sigma2);
       eigenPtr->HX(PSI, tempPSI);
-      for(std::vector<boost::shared_ptr<vectorType> >::iterator ynew=tempPSI.begin(), y=PSI.begin(), x=X.begin(); ynew<tempPSI.end(); ++ynew, ++y, ++x)
+      for(std::vector<vectorType* >::iterator ynew=tempPSI.begin(), y=PSI.begin(), x=X.begin(); ynew<tempPSI.end(); ++ynew, ++y, ++x)
 	{  
 	  (**ynew).add(-c,**y);
 	  (**ynew)*=alpha1;
@@ -660,17 +656,17 @@ void dftClass<FEOrder>::chebyshevFilter(std::vector<boost::shared_ptr<vectorType
     }
   
   //copy back PSI to eigenVectors
-  for (std::vector<boost::shared_ptr<vectorType> >::iterator y=PSI.begin(), x=X.begin(); y<PSI.end(); ++y, ++x){  
+  for (std::vector<vectorType* >::iterator y=PSI.begin(), x=X.begin(); y<PSI.end(); ++y, ++x){  
     **x=**y;
   }   
 
   computing_timer.exit_section("Chebyshev filtering"); 
 
-  /*for(unsigned int i = 0; i < X.size(); ++i)
+  for(unsigned int i = 0; i < X.size(); ++i)
     {
       delete PSI[i];
       delete tempPSI[i];
-      }*/
+    }
 
   PSI.clear();
   tempPSI.clear();
@@ -679,15 +675,15 @@ void dftClass<FEOrder>::chebyshevFilter(std::vector<boost::shared_ptr<vectorType
 }
 
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::computeResidualNorm(std::vector<boost::shared_ptr<vectorType> > & X)
+void dftClass<FEOrder>::computeResidualNorm(std::vector<vectorType* > & X)
 {
   computing_timer.enter_section("computeResidualNorm"); 
 
-  std::vector<boost::shared_ptr<vectorType> > PSI;
+  std::vector<vectorType* > PSI;
 
   for(unsigned int i = 0; i < X.size(); ++i)
     {
-      PSI.push_back(boost::shared_ptr<vectorType>(new vectorType));
+      PSI.push_back(new vectorType);
     }
   
   for(unsigned int i = 0; i < X.size(); ++i)
@@ -714,10 +710,10 @@ void dftClass<FEOrder>::computeResidualNorm(std::vector<boost::shared_ptr<vector
   pcout <<std::endl;
 
   //clean ups
-  /*for(unsigned int i = 0; i < X.size(); ++i)
+  for(unsigned int i = 0; i < X.size(); ++i)
     {
       delete PSI[i];
-      }*/
+    }
 
   PSI.clear();
 

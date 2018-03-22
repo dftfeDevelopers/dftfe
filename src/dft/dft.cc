@@ -263,8 +263,8 @@ void dftClass<FEOrder>::set()
     {
       for (unsigned int i=0; i<numEigenValues; ++i)
 	{
-	  //eigenVectors[kPoint].push_back(new vectorType);
-	  eigenVectors[kPoint].push_back(boost::shared_ptr<vectorType>(new vectorType));
+	  eigenVectors[kPoint].push_back(new vectorType);
+	  //eigenVectors[kPoint].push_back(boost::shared_ptr<vectorType>(new vectorType));
 	}
     }
 

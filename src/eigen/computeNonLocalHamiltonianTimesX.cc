@@ -16,8 +16,8 @@
 // @author Phani Motamarri (2017)
 //
 template<unsigned int FEOrder>
-void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<boost::shared_ptr<vectorType> > &src,
-							   std::vector<boost::shared_ptr<vectorType> >       &dst)
+void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vectorType*> &src,
+							   std::vector<vectorType*>       &dst)
 {
 
   //

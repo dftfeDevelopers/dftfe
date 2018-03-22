@@ -34,9 +34,6 @@ void dftClass<FEOrder>::initElectronicFields(){
   //
   //temp STL d_v and d_f vectors required for upper bound computation filled here
   //
-  d_v.push_back(boost::shared_ptr<vectorType> (&vChebyshev));
-  d_f.push_back(boost::shared_ptr<vectorType> (&fChebyshev));
-  
 
   if(dftParameters::spinPolarized!=1)
   {

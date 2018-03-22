@@ -24,7 +24,7 @@
 #include <sstream>
 #include <complex>
 #include <deque>
-#include <boost/shared_ptr.hpp>
+
 
 
 #include "headers.h"
@@ -360,7 +360,7 @@ class dftClass
    */
   std::vector<std::vector<double> > eigenValues, eigenValuesTemp; 
   //std::vector<std::vector<vectorType*> > eigenVectors;
-  std::vector<std::vector<boost::shared_ptr<vectorType> > > eigenVectors;
+  std::vector<std::vector<vectorType* > > eigenVectors;
 
   /**
    * storage for constraintMatrices in terms of arrays (STL)
@@ -500,17 +500,16 @@ class dftClass
   std::vector<double> bLow;
   vectorType vChebyshev, v0Chebyshev, fChebyshev;
 
-  std::vector<boost::shared_ptr<vectorType> > d_v,d_f; 
-
+  
   void chebyshevSolver(unsigned int s);
-  void computeResidualNorm(std::vector<boost::shared_ptr<vectorType> >& X);
+  void computeResidualNorm(std::vector<vectorType*>& X);
   std::vector<std::vector<double> > d_tempResidualNormWaveFunctions;
   double computeMaximumHighestOccupiedStateResidualNorm();
 
   double upperBound();
-  void gramSchmidt(std::vector<boost::shared_ptr<vectorType> >& X);
-  void chebyshevFilter(std::vector<boost::shared_ptr<vectorType> >& X, unsigned int m, double a, double b, double a0);  
-  void rayleighRitz(unsigned int s, std::vector<boost::shared_ptr<vectorType> >& X);
+  void gramSchmidt(std::vector<vectorType*>& X);
+  void chebyshevFilter(std::vector<vectorType*>& X, unsigned int m, double a, double b, double a0);  
+  void rayleighRitz(unsigned int s, std::vector<vectorType*>& X);
 
   void scale(const vectorType & diagonal,
 	     const unsigned int spinType);
