@@ -181,7 +181,7 @@ void dftClass<FEOrder>::computeVolume()
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::set()
 {
-  if (dftParameters::verbosity==1)  
+  if (dftParameters::verbosity==2)  
     pcout << std::endl << "number of MPI processes: "
 	<< Utilities::MPI::n_mpi_processes(mpi_communicator)
 	<< std::endl;       
@@ -337,7 +337,7 @@ void dftClass<FEOrder>::initImageChargesUpdateKPoints()
 					                 d_domainBoundingVectors);
   recomputeKPointCoordinates();
 
-  if (dftParameters::verbosity==1)  
+  if (dftParameters::verbosity==2)  
   {
       //FIXME: Print all k points across all pools
       pcout<<"-------------------k points cartesian coordinates and weights-----------------------------"<<std::endl;
@@ -515,7 +515,7 @@ void dftClass<FEOrder>::solve()
   pcout<<std::endl;
   while ((norm > dftParameters::selfConsistentSolverTolerance) && (scfIter < dftParameters::numSCFIterations))
     {
-      if (dftParameters::verbosity==1)
+      if (dftParameters::verbosity>=1)
       {	
         pcout<<"************************Begin Self-Consistent-Field Iteration: "<<std::setw(2)<<scfIter+1<<" ***********************"<<std::endl;
       }
@@ -543,7 +543,7 @@ void dftClass<FEOrder>::solve()
 	          norm = sqrt(mixing_anderson());
 	      }
 	        
-	  if (dftParameters::verbosity==1)
+	  if (dftParameters::verbosity>=1)
 	      pcout<<"Anderson Mixing: L2 norm of electron-density difference: "<< norm<< std::endl;
 
 	  poissonPtr->phiTotRhoIn = poissonPtr->phiTotRhoOut;
@@ -553,7 +553,7 @@ void dftClass<FEOrder>::solve()
       //parallel loop over all elements
 
       int constraintMatrixId = phiTotDofHandlerIndex;
-      if (dftParameters::verbosity==1)
+      if (dftParameters::verbosity==2)
         pcout<< std::endl<<"Poisson solve for total electrostatic potential (rhoIn+b): ";
 
       poissonPtr->solve(poissonPtr->phiTotRhoIn,constraintMatrixId, rhoInValues);
@@ -579,7 +579,7 @@ void dftClass<FEOrder>::solve()
 	          d_kPointIndex = kPoint;
 	          for(int j = 0; j < dftParameters::numPass; ++j)
 	            {
-		       if (dftParameters::verbosity==1)
+		       if (dftParameters::verbosity==2)
                        {			
 		         pcout<<"Beginning Chebyshev filter pass "<< j+1<< " for spin "<< s+1<<std::endl;
 		       }
@@ -607,7 +607,7 @@ void dftClass<FEOrder>::solve()
 	      d_kPointIndex = kPoint;
 	      for(int j = 0; j < dftParameters::numPass; ++j)
 	      { 
-		    if (dftParameters::verbosity==1)
+		    if (dftParameters::verbosity==2)
 		    {
 		      pcout<< "Beginning Chebyshev filter pass "<< j+1<<std::endl;
 		    }
@@ -619,7 +619,7 @@ void dftClass<FEOrder>::solve()
 	  compute_fermienergy();
 	  //maximum of the residual norm of the state closest to and below the Fermi level among all k points
 	  double maxRes = computeMaximumHighestOccupiedStateResidualNorm();
-	  if (dftParameters::verbosity==1)
+	  if (dftParameters::verbosity==2)
           {
 	     pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
 	  }
@@ -633,7 +633,7 @@ void dftClass<FEOrder>::solve()
 	      for (int kPoint = 0; kPoint < d_maxkPoints; ++kPoint) 
 		{
 		  d_kPointIndex = kPoint;
-		  if (dftParameters::verbosity==1)
+		  if (dftParameters::verbosity==2)
                   {
 		    pcout<< "Beginning Chebyshev filter pass "<< dftParameters::numPass+count<<std::endl;
 		  }
@@ -642,7 +642,7 @@ void dftClass<FEOrder>::solve()
 	      count++;
 	      compute_fermienergy();
 	      maxRes = computeMaximumHighestOccupiedStateResidualNorm();
-	      if (dftParameters::verbosity==1)
+	      if (dftParameters::verbosity==2)
               {
 	        pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
 	      }
@@ -670,7 +670,7 @@ void dftClass<FEOrder>::solve()
       integralRhoValue=totalCharge(rhoOutValues);
 
       //phiTot with rhoOut
-      if (dftParameters::verbosity==1)
+      if (dftParameters::verbosity==2)
          pcout<< std::endl<<"Poisson solve for total electrostatic potential (rhoOut+b): "; 
 
       poissonPtr->solve(poissonPtr->phiTotRhoOut,constraintMatrixId, rhoOutValues);
@@ -679,24 +679,24 @@ void dftClass<FEOrder>::solve()
 
       //energy
       double totalEnergy;
-      if (dftParameters::verbosity==1)
+      if (dftParameters::verbosity==2)
       {    
 	  if (spinPolarized==1)
 	     totalEnergy=compute_energy_spinPolarized(true);
 	  else
 	     totalEnergy=compute_energy (true);
       }
-      else if (dftParameters::verbosity==0)
+      else if (dftParameters::verbosity==1)
       {
 	  if (spinPolarized==1)
 	     totalEnergy=compute_energy_spinPolarized(false);
 	  else
 	     totalEnergy=compute_energy (false);	  
 
-	  //pcout<<"Total energy  : " << totalEnergy << std::endl;
+	  pcout<<"Total energy  : " << totalEnergy << std::endl;
       }
      
-      if (dftParameters::verbosity==1)
+      if (dftParameters::verbosity>=1)
       {
         pcout<<"***********************Self-Consistent-Field Iteration: "<<std::setw(2)<<scfIter+1<<" complete**********************"<<std::endl; 
         pcout<<std::endl;

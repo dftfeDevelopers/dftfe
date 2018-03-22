@@ -112,7 +112,7 @@ double dftClass<FEOrder>::compute_energy(const bool print)
   double partialOccupancy, factor;
   for(int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
     {
-      if (dftParameters::verbosity==1)
+      if (dftParameters::verbosity==2)
          pcout << "kPoint: "<< kPoint <<std::endl;
       for (unsigned int i=0; i<numEigenValues; i++)
 	{
@@ -120,10 +120,10 @@ double dftClass<FEOrder>::compute_energy(const bool print)
 	  //partialOccupancy=1.0/(1.0+exp(temp));
 	  double partialOccupancy = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)) : 1.0/(1.0 + std::exp(factor));
 	  bandEnergyLocal+= 2*partialOccupancy*d_kPointWeights[kPoint]*eigenValues[kPoint][i];
-	  if (dftParameters::verbosity==1)
+	  if (dftParameters::verbosity==2)
 	     pcout<< "fractional occupancy "<< i<<": "<< partialOccupancy<< std::endl;
 	}
-      if (dftParameters::verbosity==1)
+      if (dftParameters::verbosity==2)
       {
         pcout << std::endl; 
         pcout<<"number of electrons: "<< integralRhoValue<< std::endl;
@@ -416,7 +416,7 @@ void dftClass<FEOrder>::compute_fermienergy()
 	}
 
     }
-    if (dftParameters::verbosity==1) 
+    if (dftParameters::verbosity==2) 
       pcout<< "Fermi energy constraint residual (bisection): "<< R << std::endl; 
 #else
    fe = eigenValuesAllkPoints[d_maxkPoints*count - 1];
@@ -459,10 +459,10 @@ void dftClass<FEOrder>::compute_fermienergy()
   //set Fermi energy
   fermiEnergy = fe;
 
-  if (dftParameters::verbosity==1)
+  if (dftParameters::verbosity==2)
      pcout<< "Fermi energy constraint residual (Newton-Raphson): "<< std::abs(R)<<std::endl; 
 
-  if (dftParameters::verbosity==1)
+  if (dftParameters::verbosity==2)
      pcout<< "Fermi energy                                     : "<< fermiEnergy<<std::endl; 
 }
 
@@ -508,7 +508,7 @@ double dftClass<FEOrder>::compute_energy_spinPolarized(const bool print)
   double partialOccupancy, factor;
   for(int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
     {
-      if (dftParameters::verbosity==1)	
+      if (dftParameters::verbosity==2)	
          pcout << "kPoint: "<< kPoint <<std::endl;
       for (unsigned int i=0; i<(1+spinPolarized)*numEigenValues; i++)
 	{
@@ -516,11 +516,11 @@ double dftClass<FEOrder>::compute_energy_spinPolarized(const bool print)
 	  //partialOccupancy=1.0/(1.0+exp(temp));
 	  double partialOccupancy = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)) : 1.0/(1.0 + std::exp(factor));
 	  bandEnergyLocal+= (2-spinPolarized)*partialOccupancy*d_kPointWeights[kPoint]*eigenValues[kPoint][i];
-	  if (dftParameters::verbosity==1)
+	  if (dftParameters::verbosity==2)
 	   pcout<<"fractional occupancy "<< i<<": "<< partialOccupancy<<std::endl;
 	}
       
-      if (dftParameters::verbosity==1)
+      if (dftParameters::verbosity==2)
       {
         pcout << std::endl; 
         pcout<< "number of electrons: "<< integralRhoValue<<std::endl;

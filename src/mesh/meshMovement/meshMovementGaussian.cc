@@ -33,13 +33,13 @@ std::pair<bool,double> meshMovementGaussianClass::moveMesh(const std::vector<Poi
   d_controllingParameter=controllingParameter;
   //writeMesh("meshUnmoved.vtu");
   MPI_Barrier(mpi_communicator);
-  if (dftParameters::verbosity==1)
+  if (dftParameters::verbosity==2)
      pcout << "Computing triangulation displacement increment caused by gaussian generator displacements..." << std::endl;
 
   initIncrementField();
   computeIncrement();
   finalizeIncrementField();
-  if (dftParameters::verbosity==1)
+  if (dftParameters::verbosity==2)
       pcout << "...Computed triangulation displacement increment" << std::endl;	
 
   updateTriangulationVertices();

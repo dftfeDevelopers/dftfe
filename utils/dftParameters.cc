@@ -53,9 +53,9 @@ namespace dftParameters
                       Patterns::Anything(),
                       "Path specifying the location of the source folder of dftfe code.");
 
-    prm.declare_entry("VERBOSITY", "0",
-                      Patterns::Integer(0,1),
-                      "Parameter to control verbosity of terminal output. 0 for low and 1 for high (prints details like eigenvalues, residuals, fractional occupancies etc for each scf.)");    
+    prm.declare_entry("VERBOSITY", "1",
+                      Patterns::Integer(0,2),
+                      "Parameter to control verbosity of terminal output. 0 for low, 1 for medium, and 2 for high.");    
 
     prm.enter_subsection ("Geometry");
     {      

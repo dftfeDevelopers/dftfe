@@ -375,7 +375,7 @@ void poissonClass<FEOrder>::solve(vectorType& phi, int constraintMatrixId, std::
  // std::cout<<"Max of Phi : "<<phi.linfty_norm()<<std::endl;
 
 
-  if (dftParameters::verbosity==1)
+  if (dftParameters::verbosity==2)
   {
     pcout<<std::endl;	  
     char buffer[200];

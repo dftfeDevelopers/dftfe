@@ -325,7 +325,7 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       {
          int numberGlobalCellsSerial = serialTriangulation.n_global_active_cells();
 
-	if (dftParameters::verbosity==1)
+	if (dftParameters::verbosity==2)
 	{
 	   pcout<<" numParallelCells: "<< numberGlobalCellsParallel<<", numSerialCells: "<< numberGlobalCellsSerial<<std::endl;
 	}

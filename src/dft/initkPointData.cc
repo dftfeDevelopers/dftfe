@@ -295,7 +295,7 @@ void dftClass<FEOrder>::generateMPGrid()
         if( jk!=ik && jk<nk && discard[jk]!=1) {
            d_kPointWeights[d_maxkPoints-1] = d_kPointWeights[d_maxkPoints-1] + 1.0/nk;
            discard[jk] = 1;
-	   if (dftParameters::verbosity==1)
+	   if (dftParameters::verbosity==2)
 	        pcout<< "    " << ik << "     " << jk << std::endl ;
 
            if (countedSymm[iSymm]==0) {
@@ -333,7 +333,7 @@ void dftClass<FEOrder>::generateMPGrid()
 	    symmetryPtr->numSymmUnderGroup[i] += 1 ;
      }
    }
-   if (dftParameters::verbosity==1)
+   if (dftParameters::verbosity==2)
        pcout << " kpoint " << i << " numSymmUnderGroup " << symmetryPtr->numSymmUnderGroup[i] << std::endl;
   }
   //
@@ -342,7 +342,7 @@ void dftClass<FEOrder>::generateMPGrid()
 	{
          for ( unsigned int ipol = 0; ipol<3; ++ipol)
 	 {
-	      if (dftParameters::verbosity==1)
+	      if (dftParameters::verbosity==2)
 		 pcout << symmetryPtr->symmMat[iSymm][ipol][0] << "  " << symmetryPtr->symmMat[iSymm][ipol][1] << "  " << symmetryPtr->symmMat[iSymm][ipol][2] << std::endl;
 	 }
   }

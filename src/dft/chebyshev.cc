@@ -206,7 +206,7 @@ void dftClass<FEOrder>::chebyshevSolver(unsigned int s)
   //
   //output statements
   //
-  if (dftParameters::verbosity==1)
+  if (dftParameters::verbosity==2)
   {
      char buffer[100];
 
@@ -344,7 +344,7 @@ double dftClass<FEOrder>::upperBound()
   for (unsigned int i=0; i<eigenValuesT.size(); i++){eigenValuesT[i]=std::abs(eigenValuesT[i]);}
   std::sort(eigenValuesT.begin(),eigenValuesT.end()); 
   //
-  if (dftParameters::verbosity==1)
+  if (dftParameters::verbosity==2)
   {
     char buffer[100];
     sprintf(buffer, "bUp1: %18.10e,  bUp2: %18.10e\n", eigenValuesT[lanczosIterations-1], fChebyshev.l2_norm());
@@ -485,7 +485,7 @@ void dftClass<FEOrder>::rayleighRitz(unsigned int s, std::vector<vectorType*> &X
 #endif
 
   //char buffer[100];
-  if (dftParameters::verbosity==1)
+  if (dftParameters::verbosity==2)
   {
     pcout << "kPoint: "<< d_kPointIndex<<std::endl;
     pcout << "spin: "<< s+1 <<std::endl;
@@ -494,12 +494,12 @@ void dftClass<FEOrder>::rayleighRitz(unsigned int s, std::vector<vectorType*> &X
     {
       //sprintf(buffer, "eigen value %3u: %22.16e\n", i, eigenValuesTemp[d_kPointIndex][i]);
       //pcout << buffer;
-      if (dftParameters::verbosity==1)
+      if (dftParameters::verbosity==2)
           pcout<<"eigen value "<< std::setw(3) <<i <<": "<<eigenValuesTemp[d_kPointIndex][i] <<std::endl;
 
       eigenValues[d_kPointIndex][s*numEigenValues + i] =  eigenValuesTemp[d_kPointIndex][i];
     }
-  if (dftParameters::verbosity==1)  
+  if (dftParameters::verbosity==2)  
      pcout <<std::endl;
 
   //rotate the basis PSI=PSI*Q
@@ -631,7 +631,7 @@ void dftClass<FEOrder>::computeResidualNorm(std::vector<vectorType*> & X)
   eigenPtr->HX(X, PSI);
   //
   unsigned int n = eigenValuesTemp[d_kPointIndex].size() ;
-  if (dftParameters::verbosity==1)
+  if (dftParameters::verbosity==2)
      pcout<<"L-2 Norm of residue   :"<<std::endl;
   //pcout<<"L-inf Norm of residue :"<<(*PSI[i]).linfty_norm()<<std::endl;
   for(unsigned int i = 0; i < n; i++)
@@ -641,12 +641,12 @@ void dftClass<FEOrder>::computeResidualNorm(std::vector<vectorType*> & X)
         if (spinPolarized!=1)
 	   d_tempResidualNormWaveFunctions[d_kPointIndex][i]=resNorm;
       
-	if (dftParameters::verbosity==1)
+	if (dftParameters::verbosity==2)
         {	
  	   pcout<<"eigen vector "<< i<<": "<<resNorm<<std::endl;
 	}
     }
-  if (dftParameters::verbosity==1)  
+  if (dftParameters::verbosity==2)  
     pcout <<std::endl;
   //
   computing_timer.exit_section("computeResidualNorm"); 

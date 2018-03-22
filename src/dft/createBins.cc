@@ -369,7 +369,7 @@ void dftClass<FEOrder>::createAtomBins(std::vector<ConstraintMatrix * > & constr
 
 
   const int numberBins = binCount + 1;
-  if (dftParameters::verbosity==1)
+  if (dftParameters::verbosity==2)
     pcout<<"number bins: "<<numberBins<<std::endl;
 
   d_imageIdsInBins.resize(numberBins);
@@ -391,7 +391,7 @@ void dftClass<FEOrder>::createAtomBins(std::vector<ConstraintMatrix * > & constr
       std::vector<int> &imageIdsOfAtomsInCurrentBin = d_imageIdsInBins[iBin];
       std::vector<std::vector<double> > imagePositionsOfAtomsInCurrentBin;
 
-      if (dftParameters::verbosity==1)
+      if (dftParameters::verbosity==2)
        pcout<<"bin "<<iBin<< ": number of global atoms: "<<numberGlobalAtomsInBin<<std::endl;
 
       for(int index = 0; index < numberGlobalAtomsInBin; ++index)

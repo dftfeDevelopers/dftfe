@@ -184,7 +184,7 @@ void dftClass<FEOrder>::solveVself()
 	  std::vector<double> temp(2,0.0);
 	  temp[0] = it->second;//charge;
 	  temp[1] = poissonPtr->vselfBinScratch(it->first);//vself
-	  if (dftParameters::verbosity==1)
+	  if (dftParameters::verbosity==2)
 	      std::cout<< "(only for debugging: peak value of Vself: "<< temp[1] << ")" <<std::endl;
 
 	  d_localVselfs.push_back(temp);
@@ -202,6 +202,6 @@ void dftClass<FEOrder>::solveVself()
   //
   //print the norms of phiExt (in periodic case L2 norm of phiExt field does not match. check later)
   //
-  if (dftParameters::verbosity==1)
+  if (dftParameters::verbosity==2)
      pcout<<"L2 Norm Value of phiext: "<<poissonPtr->phiExt.l2_norm()<<std::endl;
 }

@@ -29,11 +29,11 @@ meshMovementAffineTransform::meshMovementAffineTransform( MPI_Comm &mpi_comm_rep
 std::pair<bool,double> meshMovementAffineTransform::transform(const Tensor<2,3,double> & deformationGradient)
 {
   d_deformationGradient=deformationGradient;
-  if (dftParameters::verbosity==1)
+  if (dftParameters::verbosity==2)
      pcout << "Computing triangulation displacement increment under affine deformation..." << std::endl;
   initIncrementField();
   computeIncrement();
-  if (dftParameters::verbosity==1)
+  if (dftParameters::verbosity==2)
      pcout << "...Computed triangulation displacement increment" << std::endl;
 
   dftUtils::transformDomainBoundingVectors(d_domainBoundingVectors,deformationGradient);

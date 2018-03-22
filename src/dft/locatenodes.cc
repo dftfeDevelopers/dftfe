@@ -48,14 +48,14 @@ void dftClass<FEOrder>::locateAtomCoreNodes(){
 	   if(feNodeGlobalCoord.distance(atomCoord) < 1.0e-5){ 
 	     if(isPseudopotential)
 	       {
-		 if (dftParameters::verbosity==1)
+		 if (dftParameters::verbosity==2)
                  {
 		   std::cout << "atom core with valence charge " << atomLocations[*it][1] << " located with node id " << nodeID << " in processor " << this_mpi_process<<" nodal coor "<<feNodeGlobalCoord[0]<<" "<<feNodeGlobalCoord[1]<<" "<<feNodeGlobalCoord[2]<<std::endl;
 		 }
 	       }
 	     else
 	       {
-		 if (dftParameters::verbosity==1)
+		 if (dftParameters::verbosity==2)
                  {		   
 		    std::cout << "atom core with charge " << atomLocations[*it][0] << " located with node id " << nodeID << " in processor " << this_mpi_process<<" nodal coor "<<feNodeGlobalCoord[0]<<" "<<feNodeGlobalCoord[1]<<" "<<feNodeGlobalCoord[2]<<std::endl;
 		 }
@@ -66,11 +66,11 @@ void dftClass<FEOrder>::locateAtomCoreNodes(){
 	       else
 		 atoms.insert(std::pair<unsigned int,double>(nodeID,atomLocations[*it][0]));
 		 
-	       if (dftParameters::verbosity==1)
+	       if (dftParameters::verbosity==2)
 	          std::cout << " and added \n";
 	     }
 	     else{
-	       if (dftParameters::verbosity==1)		 
+	       if (dftParameters::verbosity==2)		 
 	         std::cout << " but skipped \n"; 
 	     }
 	     atomsTolocate.erase(*it);
@@ -115,12 +115,12 @@ void dftClass<FEOrder>::locateAtomCoreNodes(){
 		if(feNodeGlobalCoord.distance(atomCoord) < 1.0e-5){ 
 		  if(isPseudopotential)
 		  {
-		    if (dftParameters::verbosity==1)
+		    if (dftParameters::verbosity==2)
 		      std::cout << "atom core in bin " << iBin<<" with valence charge "<<atomLocations[chargeId][1] << " located with node id " << nodeID << " in processor " << this_mpi_process;
 		  }
 		  else
 		  {
-		    if (dftParameters::verbosity==1)  
+		    if (dftParameters::verbosity==2)  
 		      std::cout << "atom core in bin " << iBin<<" with charge "<<atomLocations[chargeId][0] << " located with node id " << nodeID << " in processor " << this_mpi_process;
 		  }
 		  if (locally_owned_dofs.is_element(nodeID)){
@@ -128,12 +128,12 @@ void dftClass<FEOrder>::locateAtomCoreNodes(){
 		      d_atomsInBin[iBin].insert(std::pair<unsigned int,double>(nodeID,atomLocations[chargeId][1]));
 		    else
 		      d_atomsInBin[iBin].insert(std::pair<unsigned int,double>(nodeID,atomLocations[chargeId][0]));
-		    if (dftParameters::verbosity==1)
+		    if (dftParameters::verbosity==2)
 		       std::cout << " and added \n";
 		  }
 		  else
 		  {
-            	    if (dftParameters::verbosity==1)
+            	    if (dftParameters::verbosity==2)
 		       std::cout << " but skipped \n"; 
 		  }
 		  atomsTolocate.erase(*it);
@@ -243,7 +243,7 @@ void dftClass<FEOrder>::locatePeriodicPinnedNodes()
 
   if(Utilities::MPI::this_mpi_process(mpi_communicator) == maxTaskId)
     {
-      if (dftParameters::verbosity==1)
+      if (dftParameters::verbosity==2)
           std::cout<<"Found Node locally on processor Id: "<<Utilities::MPI::this_mpi_process(mpi_communicator)<<std::endl;
       if(locally_owned_dofs.is_element(maxNode))
 	{
@@ -308,18 +308,18 @@ void dftClass<FEOrder>::locatePeriodicPinnedNodes()
 		  Point<3> pinnedNodeCoord(pinnedLocations[*it][0],pinnedLocations[*it][1],pinnedLocations[*it][2]);
 		  if(feNodeGlobalCoord.distance(pinnedNodeCoord) < 1.0e-5)
 		    {
-	              if (dftParameters::verbosity==1)			
+	              if (dftParameters::verbosity==2)			
 		         std::cout << "Pinned core with nodal coordinates (" << pinnedLocations[*it][0] << " " << pinnedLocations[*it][1] << " "<<pinnedLocations[*it][2]<< ") located with node id " << nodeID << " in processor " << this_mpi_process;
 		      if (locally_relevant_dofs.is_element(nodeID))
 			{
 			  d_constraintsForTotalPotential.add_line(nodeID);
 			  d_constraintsForTotalPotential.set_inhomogeneity(nodeID,0.0);
-			  if (dftParameters::verbosity==1)
+			  if (dftParameters::verbosity==2)
 			     std::cout << " and added \n";
 			}
 		      else
 			{
-			  if (dftParameters::verbosity==1)  
+			  if (dftParameters::verbosity==2)  
 			     std::cout << " but skipped \n"; 
 			}
 		      nodesTolocate.erase(*it);
