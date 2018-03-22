@@ -111,6 +111,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::v
 #else
 	  for (std::vector<vectorType*>::const_iterator it=src.begin(); it!=src.end(); it++)
 	    {
+	      (*it)->update_ghost_values();	
 	      (*it)->extract_subvector_to(local_dof_indices.begin(), local_dof_indices.end(), inputVectors.begin()+numberNodesPerElement*index);
 	      index++;
 	    }
@@ -164,28 +165,15 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::v
 
     }//element loop
 
-  //std::cout<<"Finished Element Loop"<<std::endl;
-/*
-#ifdef ENABLE_PERIODIC_BC
-  std::vector<dealii::parallel::distributed::Vector<std::complex<double> > > d_projectorKetTimesVectorPar(numberWaveFunctions);
+   for (unsigned int i=0; i<numberWaveFunctions;++i)
+   {
+#ifdef ENABLE_PERIODIC_BC       
+      dftPtr->d_projectorKetTimesVectorPar[i]=std::complex<double>(0.0,0.0);
 #else
-  std::vector<dealii::parallel::distributed::Vector<double> > d_projectorKetTimesVectorPar(numberWaveFunctions);
+      dftPtr->d_projectorKetTimesVectorPar[i]=0;
 #endif
-#ifdef ENABLE_PERIODIC_BC
-  dealii::parallel::distributed::Vector<std::complex<double> > vec(dftPtr->d_locallyOwnedProjectorIdsCurrentProcess,
-                                                                   dftPtr->d_ghostProjectorIdsCurrentProcess,
-                                                                   mpi_communicator);
-#else
-  dealii::parallel::distributed::Vector<double > vec(dftPtr->d_locallyOwnedProjectorIdsCurrentProcess,
-                                                     dftPtr->d_ghostProjectorIdsCurrentProcess,
-                                                     mpi_communicator);   
-#endif     
-  vec.update_ghost_values();
-  for (unsigned int i=0; i<numberWaveFunctions;++i)
-  {
-      d_projectorKetTimesVectorPar[i].reinit(vec);    
-  }
-*/
+   }
+
   for(int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
     {
       const int atomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];	
@@ -201,7 +189,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::v
     } 
 
    for (unsigned int i=0; i<numberWaveFunctions;++i)
-   {  
+   { 
       dftPtr->d_projectorKetTimesVectorPar[i].compress(VectorOperation::add);
       dftPtr->d_projectorKetTimesVectorPar[i].update_ghost_values();
    }
