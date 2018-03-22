@@ -147,7 +147,7 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 	meshGenUtils::markPeriodicFacesNonOrthogonal(serialTriangulation,d_domainBoundingVectors);
 #endif
 
-      if (dftParameters::verbosity==1)
+      if (dftParameters::verbosity>=1)
       {
         char buffer1[100];
         sprintf(buffer1, "\n Base uniform number of elements: %u\n", parallelTriangulation.n_global_active_cells());
@@ -270,7 +270,7 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 	    {
 	      if(numLevels<dftParameters::n_refinement_steps)
 		{
-		  if (dftParameters::verbosity==1)
+		  if (dftParameters::verbosity>=1)
 		  {
 		     char buffer2[100];
 		     sprintf(buffer2, "refinement in progress, level: %u\n", numLevels);
@@ -312,7 +312,7 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       //
       //print out adaptive mesh metrics
       //
-      if (dftParameters::verbosity==1)
+      if (dftParameters::verbosity>=1)
       {
         pcout << "Refinement levels executed: " << numLevels << std::endl;
         char buffer[100];
