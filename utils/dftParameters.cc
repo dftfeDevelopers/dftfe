@@ -55,7 +55,7 @@ namespace dftParameters
 
     prm.declare_entry("VERBOSITY", "0",
                       Patterns::Integer(0,1),
-                      "Parameter to control verbosity of terminal output. 0 for low and 1 for high (prints details like eigenvalues, residuals, fractional occupancies etc for each scf.");    
+                      "Parameter to control verbosity of terminal output. 0 for low and 1 for high (prints details like eigenvalues, residuals, fractional occupancies etc for each scf.)");    
 
     prm.enter_subsection ("Geometry");
     {      

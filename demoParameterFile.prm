@@ -1,22 +1,30 @@
+Usage:
+mpirun -np nProcs -p parameterfile.prm
+
 # Listing of Parameters
 # ---------------------
 # Path specifying the location of the source folder of dftfe code.
-set DFT PATH = "/home/dsambit/dftfe/pullreq" # default: 
+set DFT PATH  = "/home/dsambit/dftfe/pullreq" # default: 
+
+# Parameter to control verbosity of terminal output. 0 for low and 1 for high
+# (prints details like eigenvalues, residuals, fractional occupancies etc for
+# each scf).
+set VERBOSITY = 0
 
 
 subsection Boundary conditions
   # Periodicity along domain bounding vector, v1.
-  set PERIODIC1                       = true # default: false
+  set PERIODIC1                       = false
 
   # Periodicity along domain bounding vector, v2.
-  set PERIODIC2                       = true # default: false
+  set PERIODIC2                       = false
 
   # Periodicity along domain bounding vector, v3.
-  set PERIODIC3                       = true # default: false
+  set PERIODIC3                       = false
 
   # The radius (in a.u) of the ball around an atom on which self-potential of
   # the associated nuclear charge is solved
-  set SELF POTENTIAL ATOM BALL RADIUS = 2.5  # default: 3.0
+  set SELF POTENTIAL ATOM BALL RADIUS = 4.0   # default: 3.0
 end
 
 
@@ -24,14 +32,14 @@ subsection Brillouin zone k point sampling options
   # Number of pools the irreducible k-points to be split on should be a
   # divisor of total number of procs and be less than or equal to the number
   # of irreducible k-points
-  set NUMBER OF POOLS            = 2     # default: 1
+  set NUMBER OF POOLS            = 1
 
   # Flag to control whether to use point group symmetries (set to false for
   # relaxation calculation)
-  set USE GROUP SYMMETRY         = false # default: true
+  set USE GROUP SYMMETRY         = true
 
   # Flag to control usage of time reversal symmetry
-  set USE TIME REVERSAL SYMMETRY = true  # default: false
+  set USE TIME REVERSAL SYMMETRY = false
 
   # File specifying the k-Point quadrature rule to sample Brillouin zone.
   # CAUTION: This option is only used for postprocessing, for example band
@@ -54,13 +62,13 @@ subsection Brillouin zone k point sampling options
     set SAMPLING POINTS 3 = 2
 
     # Fractional shifting to be used along reciprocal latttice vector 1.
-    set SAMPLING SHIFT 1  = 0.25 # default: 0.0
+    set SAMPLING SHIFT 1  = 0.0
 
     # Fractional shifting to be used along reciprocal latttice vector 2.
-    set SAMPLING SHIFT 2  = 0.25 # default: 0.0
+    set SAMPLING SHIFT 2  = 0.0
 
     # Fractional shifting to be used along reciprocal latttice vector 3.
-    set SAMPLING SHIFT 3  = 0.25 # default: 0.0
+    set SAMPLING SHIFT 3  = 0.0
   end
 
 end
@@ -87,7 +95,7 @@ subsection DFT functional related parameters
   set SPIN POLARIZATION           = 0
 
   # Magnetization to start with (must be between -0.5 and +0.5)
-  set START MAGNETIZATION         = 0.0
+  set START MAGNETIZATION         = 0    # default: 0.0
 end
 
 
@@ -107,7 +115,7 @@ subsection Eigen-solver/Chebyshev solver related parameters
   # Number of Kohn-Sham wavefunctions to be computed. For insulators use
   # N/2+(10-20) and for metals use 20 percent more than N/2 (atleast 10 more).
   # N is the total number of electrons
-  set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 40    # default: 10
+  set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 20    # default: 10
 end
 
 
@@ -125,7 +133,7 @@ subsection Finite element mesh parameters
     set ATOM BALL RADIUS     = 2.0
 
     # Mesh size of the base mesh on which refinement is performed.
-    set BASE MESH SIZE       = 2.0
+    set BASE MESH SIZE       = 10.0 # default: 2.0
 
     # Maximum number of refinement steps to be used. The default value is good
     # enough in most cases.
@@ -165,22 +173,22 @@ subsection Geometry
     # and v2_x), 9(volume optimization- relax only v1_x, v2_x and v3_x),
     # 10(2D- relax only x and y components relaxed), 11(2D- relax only x and y
     # shape components- inplane area fixed), 12(relax all cell components)
-    set CELL CONSTRAINT TYPE = 1                   # default: 12
+    set CELL CONSTRAINT TYPE = 12
 
     # Boolean parameter specifying if cell stress is to be relaxed
-    set CELL OPT             = true                # default: false
+    set CELL OPT             = false
 
     # Boolean parameter specifying if cell stress is to be computed.
     # Automatically set to true if CELL OPT is true.
-    set CELL STRESS          = true                # default: false
+    set CELL STRESS          = false
 
     # Sets the tolerance of the maximum force (in a.u.) on an ion when forces
     # are considered to be relaxed.
-    set FORCE TOL            = 2e-4                # default: 5e-5
+    set FORCE TOL            = 5e-5
 
     # Boolean parameter specifying if atomic forces are to be computed.
     # Automatically set to true if ION OPT is true.
-    set ION FORCE            = true                # default: false
+    set ION FORCE            = true  # default: false
 
     # Boolean parameter specifying if atomic forces are to be relaxed.
     set ION OPT              = false
@@ -188,7 +196,7 @@ subsection Geometry
     # File specifying the atomic position update permission flags. 1- update
     # 0- no update. File format (example for two atoms with atom 1 fixed and
     # atom 2 free): 0 0 0 (row1), 1 1 1 (row2).
-    set ION RELAX FLAGS FILE = relaxationFlags.inp # default: 
+    set ION RELAX FLAGS FILE = 
 
     # Sets the tolerance of the cell stress (in a.u.) when cell stress is
     # considered to be relaxed.
@@ -223,7 +231,5 @@ subsection SCF parameters
 
   # SCF iterations stopping tolerance in terms of electron-density difference
   # between two successive iterations
-  set TOLERANCE                        = 1e-7 # default: 1e-08
+  set TOLERANCE                        = 1e-8 # default: 1e-08
 end
-
-
