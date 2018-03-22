@@ -309,8 +309,8 @@ void eigenClass<FEOrder>::computeVEff(std::map<dealii::CellId,std::vector<double
 
 template<unsigned int FEOrder>
 void eigenClass<FEOrder>::implementHX (const dealii::MatrixFree<3,double>  &data,
-				       std::vector<vectorType* >  &dst, 
-				       const std::vector<vectorType* >  &src,
+				       std::vector<vectorType>  &dst, 
+				       const std::vector<vectorType>  &src,
 				       const std::pair<unsigned int,unsigned int> &cell_range) const
 {
   VectorizedArray<double>  half = make_vectorized_array(0.5);
@@ -338,7 +338,7 @@ void eigenClass<FEOrder>::implementHX (const dealii::MatrixFree<3,double>  &data
 	  fe_eval.reinit (cell); 
 	  for(unsigned int i = 0; i < dst.size(); ++i)
 	    {
-	      fe_eval.read_dof_values(*src[i]);
+	      fe_eval.read_dof_values(src[i]);
 	      fe_eval.evaluate (true,true,false);
 	      for(unsigned int q = 0; q < fe_eval.n_q_points; ++q)
 		{
@@ -402,7 +402,7 @@ void eigenClass<FEOrder>::implementHX (const dealii::MatrixFree<3,double>  &data
 		}
 
 	      fe_eval.integrate (true, true);
-	      fe_eval.distribute_local_to_global (*dst[i]);
+	      fe_eval.distribute_local_to_global (dst[i]);
 
 	    }
 	}
@@ -414,7 +414,7 @@ void eigenClass<FEOrder>::implementHX (const dealii::MatrixFree<3,double>  &data
 	  fe_eval.reinit (cell); 
 	  for(unsigned int i = 0; i < dst.size(); ++i)
 	    {
-	      fe_eval.read_dof_values(*src[i]);
+	      fe_eval.read_dof_values(src[i]);
 	      fe_eval.evaluate (true,true,false);
 	      for(unsigned int q = 0; q < fe_eval.n_q_points; ++q)
 		{
@@ -456,7 +456,7 @@ void eigenClass<FEOrder>::implementHX (const dealii::MatrixFree<3,double>  &data
 		}
 
 	      fe_eval.integrate (true, true);
-	      fe_eval.distribute_local_to_global (*dst[i]);
+	      fe_eval.distribute_local_to_global (dst[i]);
 
 	    }
 	}
@@ -473,7 +473,7 @@ void eigenClass<FEOrder>::implementHX (const dealii::MatrixFree<3,double>  &data
 	  fe_eval.reinit (cell); 
 	  for(unsigned int i = 0; i < dst.size(); i++)
 	    {
-	      fe_eval.read_dof_values(*src[i]);
+	      fe_eval.read_dof_values(src[i]);
 	      fe_eval.evaluate (true,true,false);
 	      for(unsigned int q = 0; q < fe_eval.n_q_points; ++q)
 		{
@@ -492,7 +492,7 @@ void eigenClass<FEOrder>::implementHX (const dealii::MatrixFree<3,double>  &data
 		}
 
 	      fe_eval.integrate (true, true);
-	      fe_eval.distribute_local_to_global (*dst[i]);
+	      fe_eval.distribute_local_to_global (dst[i]);
 	    }
 	}
     }
@@ -503,7 +503,7 @@ void eigenClass<FEOrder>::implementHX (const dealii::MatrixFree<3,double>  &data
 	  fe_eval.reinit (cell); 
 	  for(unsigned int i = 0; i < dst.size(); i++)
 	    {
-	      fe_eval.read_dof_values(*src[i]);
+	      fe_eval.read_dof_values(src[i]);
 	      fe_eval.evaluate (true,true,false);
 	      for(unsigned int q = 0; q < fe_eval.n_q_points; ++q)
 		{
@@ -512,7 +512,7 @@ void eigenClass<FEOrder>::implementHX (const dealii::MatrixFree<3,double>  &data
 		}
 
 	      fe_eval.integrate (true, true);
-	      fe_eval.distribute_local_to_global (*dst[i]);
+	      fe_eval.distribute_local_to_global(dst[i]);
 	    }
 	}
 
@@ -523,8 +523,8 @@ void eigenClass<FEOrder>::implementHX (const dealii::MatrixFree<3,double>  &data
 
 //HX
 template<unsigned int FEOrder>
-void eigenClass<FEOrder>::HX(std::vector<vectorType* > &src, 
-			     std::vector<vectorType* > &dst) 
+void eigenClass<FEOrder>::HX(std::vector<vectorType> &src, 
+			     std::vector<vectorType> &dst) 
 {
 
 
@@ -532,12 +532,12 @@ void eigenClass<FEOrder>::HX(std::vector<vectorType* > &src,
   computing_timer.enter_section("eigenClass HX");
   for (unsigned int i = 0; i < src.size(); i++)
     {
-      src[i]->scale(invSqrtMassVector); //M^{-1/2}*X
-      src[i]->update_ghost_values();
+      src[i].scale(invSqrtMassVector); //M^{-1/2}*X
+      src[i].update_ghost_values();
       //dftPtr->constraintsNoneEigen.distribute(*(dftPtr->tempPSI2[i]));
-      dftPtr->constraintsNoneEigenDataInfo.distribute(*(src[i]));
-      src[i]->update_ghost_values();
-      *dst[i] = 0.0;
+      dftPtr->constraintsNoneEigenDataInfo.distribute(src[i]);
+      src[i].update_ghost_values();
+      dst[i] = 0.0;
     }
 
 
@@ -565,17 +565,17 @@ void eigenClass<FEOrder>::HX(std::vector<vectorType* > &src,
   //
   //Finally evaluate M^{-1/2}*H*M^{-1/2}*X
   //
-  for (std::vector<vectorType* >::iterator it=dst.begin(); it!=dst.end(); it++)
+  for (std::vector<vectorType>::iterator it=dst.begin(); it!=dst.end(); it++)
     {
-      (*it)->scale(invSqrtMassVector); 
+      (*it).scale(invSqrtMassVector); 
     }
 
   //
   //unscale src back
   //
-  for (std::vector<vectorType* >::iterator it=src.begin(); it!=src.end(); it++)
+  for (std::vector<vectorType>::iterator it=src.begin(); it!=src.end(); it++)
     {
-      (*it)->scale(sqrtMassVector); //MHMX  
+      (*it).scale(sqrtMassVector); //MHMX  
     }
 
   computing_timer.exit_section("eigenClass HX");
@@ -583,19 +583,14 @@ void eigenClass<FEOrder>::HX(std::vector<vectorType* > &src,
 
 //XHX
 template<unsigned int FEOrder>
-void eigenClass<FEOrder>::XHX(std::vector<vectorType* > &src)
+void eigenClass<FEOrder>::XHX(std::vector<vectorType> &src)
 {
 
-  std::vector<vectorType* > tempPSI3;
+  std::vector<vectorType> tempPSI3(src.size());
 
   for(unsigned int i = 0; i < src.size(); ++i)
     {
-      tempPSI3.push_back(new vectorType);
-    }
-  
-  for(unsigned int i = 0; i < src.size(); ++i)
-    {
-      tempPSI3[i]->reinit(*src[0]);
+      tempPSI3[i].reinit(src[0]);
     }
 
   computing_timer.enter_section("eigenClass XHX");
@@ -604,13 +599,13 @@ void eigenClass<FEOrder>::XHX(std::vector<vectorType* > &src)
   HX(src, tempPSI3);
   for (unsigned int i = 0; i < src.size(); i++)
     {
-      tempPSI3[i]->update_ghost_values();
+      tempPSI3[i].update_ghost_values();
     }
 
 #ifdef ENABLE_PERIODIC_BC
-  unsigned int dofs_per_proc=src[0]->local_size()/2; 
+  unsigned int dofs_per_proc=src[0].local_size()/2; 
 #else
-  unsigned int dofs_per_proc=src[0]->local_size(); 
+  unsigned int dofs_per_proc=src[0].local_size(); 
 #endif
 
   //
@@ -628,21 +623,21 @@ void eigenClass<FEOrder>::XHX(std::vector<vectorType* > &src)
   //extract vectors at the processor level(too much memory expensive)
   //
   unsigned int index = 0;
-  for (std::vector<vectorType* >::const_iterator it = src.begin(); it != src.end(); it++)
+  for (std::vector<vectorType>::const_iterator it = src.begin(); it != src.end(); it++)
     {
-      (*it)->extract_subvector_to(dftPtr->local_dof_indicesReal.begin(), 
+      (*it).extract_subvector_to(dftPtr->local_dof_indicesReal.begin(), 
 				  dftPtr->local_dof_indicesReal.end(), 
 				  xReal.begin()+dofs_per_proc*index); 
 
-      (*it)->extract_subvector_to(dftPtr->local_dof_indicesImag.begin(), 
+      (*it).extract_subvector_to(dftPtr->local_dof_indicesImag.begin(), 
 				  dftPtr->local_dof_indicesImag.end(), 
 				  xImag.begin()+dofs_per_proc*index);
 
-      tempPSI3[index]->extract_subvector_to(dftPtr->local_dof_indicesReal.begin(),
+      tempPSI3[index].extract_subvector_to(dftPtr->local_dof_indicesReal.begin(),
 						    dftPtr->local_dof_indicesReal.end(),
 						    hxReal.begin()+dofs_per_proc*index);
 
-      tempPSI3[index]->extract_subvector_to(dftPtr->local_dof_indicesImag.begin(),
+      tempPSI3[index].extract_subvector_to(dftPtr->local_dof_indicesImag.begin(),
 						    dftPtr->local_dof_indicesImag.end(),
 						    hxImag.begin()+dofs_per_proc*index);
  
@@ -680,13 +675,13 @@ void eigenClass<FEOrder>::XHX(std::vector<vectorType* > &src)
   //extract vectors at the processor level
   //
   std::vector<IndexSet::size_type> local_dof_indices(dofs_per_proc);
-  src[0]->locally_owned_elements().fill_index_vector(local_dof_indices);
+  src[0].locally_owned_elements().fill_index_vector(local_dof_indices);
 
   unsigned int index=0;
-  for (std::vector<vectorType*>::const_iterator it=src.begin(); it!=src.end(); it++)
+  for (std::vector<vectorType>::const_iterator it=src.begin(); it!=src.end(); it++)
     {
-      (*it)->extract_subvector_to(local_dof_indices.begin(), local_dof_indices.end(), x.begin()+dofs_per_proc*index);
-      tempPSI3[index]->extract_subvector_to(local_dof_indices.begin(), local_dof_indices.end(), hx.begin()+dofs_per_proc*index);
+      (*it).extract_subvector_to(local_dof_indices.begin(), local_dof_indices.end(), x.begin()+dofs_per_proc*index);
+      tempPSI3[index].extract_subvector_to(local_dof_indices.begin(), local_dof_indices.end(), hx.begin()+dofs_per_proc*index);
       index++;
     }
   char transA  = 'T', transB  = 'N';
@@ -696,22 +691,15 @@ void eigenClass<FEOrder>::XHX(std::vector<vectorType* > &src)
 #endif
   
   computing_timer.exit_section("eigenClass XHX");
-
-  for(unsigned int i = 0; i < src.size(); ++i)
-    {
-      delete tempPSI3[i];
-    }
-
-  tempPSI3.clear();
-
+ 
 }
 
 template<unsigned int FEOrder>
 void eigenClass<FEOrder>::computeVEffSpinPolarized(std::map<dealii::CellId,std::vector<double> >* rhoValues, 
-				      const vectorType & phi,
-				      const vectorType & phiExt,
-				      const unsigned int spinIndex,
-				      std::map<dealii::CellId,std::vector<double> >* pseudoValues)
+						   const vectorType & phi,
+						   const vectorType & phiExt,
+						   const unsigned int spinIndex,
+						   std::map<dealii::CellId,std::vector<double> >* pseudoValues)
 {
   const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
   const unsigned int n_array_elements = VectorizedArray<double>::n_array_elements;

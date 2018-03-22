@@ -276,14 +276,14 @@ void symmetryClass<FEOrder>::computeLocalrhoOut()
 		       factor=((dftPtr->eigenValues)[kPoint][i+dftParameters::spinPolarized*(dftPtr->numEigenValues)]-(dftPtr->fermiEnergy))/(C_kb*dftParameters::TVal);
 		       const double partialOccupancyBeta = getOccupancy(factor) ;
 		       //
-		       fe_values.get_function_values(*((dftPtr->eigenVectors)[(1+dftParameters::spinPolarized)*kPoint][i]), tempPsiAlpha);
+		       fe_values.get_function_values((dftPtr->eigenVectors[(1+dftParameters::spinPolarized)*kPoint][i]), tempPsiAlpha);
 		       if (dftParameters::spinPolarized==1)
-			  fe_values.get_function_values(*((dftPtr->eigenVectors)[(1+dftParameters::spinPolarized)*kPoint+1][i]), tempPsiBeta);
+			 fe_values.get_function_values((dftPtr->eigenVectors[(1+dftParameters::spinPolarized)*kPoint+1][i]), tempPsiBeta);
 		       //
 		       if(dftParameters::xc_id == 4){
-			   fe_values.get_function_gradients(*((dftPtr->eigenVectors)[(1+dftParameters::spinPolarized)*kPoint][i]),tempGradPsiTempAlpha);
+			   fe_values.get_function_gradients((dftPtr->eigenVectors[(1+dftParameters::spinPolarized)*kPoint][i]),tempGradPsiTempAlpha);
 			   if (dftParameters::spinPolarized==1)
-			   fe_values.get_function_gradients(*((dftPtr->eigenVectors)[(1+dftParameters::spinPolarized)*kPoint+1][i]),tempGradPsiTempBeta);
+			   fe_values.get_function_gradients((dftPtr->eigenVectors[(1+dftParameters::spinPolarized)*kPoint+1][i]),tempGradPsiTempBeta);
 			}
 		       //
 		       for (unsigned int iList=0; iList<numPoint; ++iList){

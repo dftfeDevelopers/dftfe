@@ -359,8 +359,8 @@ class dftClass
    * data storage for Kohn-Sham wavefunctions
    */
   std::vector<std::vector<double> > eigenValues, eigenValuesTemp; 
-  //std::vector<std::vector<vectorType*> > eigenVectors;
-  std::vector<std::vector<vectorType* > > eigenVectors;
+  //std::vector<std::vector<vectorType> > eigenVectors;
+  std::vector<std::vector<vectorType> > eigenVectors;
 
   /**
    * storage for constraintMatrices in terms of arrays (STL)
@@ -495,21 +495,21 @@ class dftClass
 
   //chebyshev filter variables and functions
   //int numPass ; // number of filter passes
-  double bUp;// bLow, a0;
+  double bUp;
   std::vector<double> a0;
   std::vector<double> bLow;
   vectorType vChebyshev, v0Chebyshev, fChebyshev;
 
   
   void chebyshevSolver(unsigned int s);
-  void computeResidualNorm(std::vector<vectorType*>& X);
+  void computeResidualNorm(std::vector<vectorType>& X);
   std::vector<std::vector<double> > d_tempResidualNormWaveFunctions;
   double computeMaximumHighestOccupiedStateResidualNorm();
 
   double upperBound();
-  void gramSchmidt(std::vector<vectorType*>& X);
-  void chebyshevFilter(std::vector<vectorType*>& X, unsigned int m, double a, double b, double a0);  
-  void rayleighRitz(unsigned int s, std::vector<vectorType*>& X);
+  void gramSchmidt(std::vector<vectorType>& X);
+  void chebyshevFilter(std::vector<vectorType>& X, unsigned int m, double a, double b, double a0);  
+  void rayleighRitz(unsigned int s, std::vector<vectorType>& X);
 
   void scale(const vectorType & diagonal,
 	     const unsigned int spinType);

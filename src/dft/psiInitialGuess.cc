@@ -381,25 +381,25 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 	 for(unsigned int j = 0; j < numberDofs; ++j)
 	    {
 	      unsigned int dofID = local_dof_indicesReal[j];
-	      if(eigenVectors[kPoint][i]->in_local_range(dofID))
+	      if(eigenVectors[kPoint][i].in_local_range(dofID))
 		{
 		  if(!constraintsNoneEigen.is_constrained(dofID))
-		    (*eigenVectors[kPoint][i])(dofID) = local_dof_values[i][j];
+		    (eigenVectors[kPoint][i])(dofID) = local_dof_values[i][j];
 		}
 	    }
 #else
 	  for(unsigned int j = 0; j < numberDofs; ++j)
 	    {
 	      unsigned int dofID = locallyOwnedDOFs[j];
-	      if(eigenVectors[kPoint][i]->in_local_range(dofID))
+	      if(eigenVectors[kPoint][i].in_local_range(dofID))
 		{
 		  if(!constraintsNoneEigen.is_constrained(dofID))
-		    (*eigenVectors[kPoint][i])(dofID) = local_dof_values[i][j];
+		    (eigenVectors[kPoint][i])(dofID) = local_dof_values[i][j];
 		}
 	    }
 #endif
-	  eigenVectors[kPoint][i]->compress(VectorOperation::insert);
-	  eigenVectors[kPoint][i]->update_ghost_values();
+	  eigenVectors[kPoint][i].compress(VectorOperation::insert);
+	  eigenVectors[kPoint][i].update_ghost_values();
 	}
     }
   
@@ -411,24 +411,24 @@ void dftClass<FEOrder>::readPSIRadialValues(){
     {
       for (unsigned int i = 0; i < eigenVectors[kPoint].size(); ++i)
 	{
-	  for(types::global_dof_index j = 0; j < eigenVectors[kPoint][i]->size(); ++j)
+	  for(types::global_dof_index j = 0; j < eigenVectors[kPoint][i].size(); ++j)
 	     {
-	       if(eigenVectors[kPoint][i]->in_local_range(j))
+	       if(eigenVectors[kPoint][i].in_local_range(j))
 		  {
 		    if(!constraintsNoneEigen.is_constrained(j) && std::abs(eigenPtr->invSqrtMassVector(j))>1.0e-15)
-		      (*eigenVectors[kPoint][i])(j) /= eigenPtr->invSqrtMassVector(j);
+		      (eigenVectors[kPoint][i])(j) /= eigenPtr->invSqrtMassVector(j);
 		  }
 	     }
 
 
 	  char buffer[100];
-	  sprintf(buffer, "norm %u: l1: %14.8e  l2:%14.8e\n",i, eigenVectors[kPoint][i]->l1_norm(), eigenVectors[kPoint][i]->l2_norm());
+	  sprintf(buffer, "norm %u: l1: %14.8e  l2:%14.8e\n",i, eigenVectors[kPoint][i].l1_norm(), eigenVectors[kPoint][i].l2_norm());
 
-	  eigenVectors[kPoint][i]->zero_out_ghosts();
-	  eigenVectors[kPoint][i]->compress(VectorOperation::insert);
-	  eigenVectors[kPoint][i]->update_ghost_values();
-	  constraintsNoneEigen.distribute(*eigenVectors[kPoint][i]);
-	  eigenVectors[kPoint][i]->update_ghost_values();
+	  eigenVectors[kPoint][i].zero_out_ghosts();
+	  eigenVectors[kPoint][i].compress(VectorOperation::insert);
+	  eigenVectors[kPoint][i].update_ghost_values();
+	  constraintsNoneEigen.distribute(eigenVectors[kPoint][i]);
+	  eigenVectors[kPoint][i].update_ghost_values();
 	}
 	}*/
 

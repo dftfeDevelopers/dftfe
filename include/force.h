@@ -246,7 +246,7 @@ private:
 
   void computeElementalNonLocalPseudoOVDataForce();  
 
-  void computeNonLocalProjectorKetTimesPsiTimesV(const std::vector<vectorType*> &src,
+  void computeNonLocalProjectorKetTimesPsiTimesV(const std::vector<vectorType> &src,
                                                  std::vector<std::vector<double> > & projectorKetTimesPsiTimesVReal,
                                                  std::vector<std::vector<std::complex<double> > > & projectorKetTimesPsiTimesVComplex,
 						 const unsigned int kPointIndex);

@@ -238,9 +238,9 @@ void forceClass<FEOrder>::computeStressEEshelbyEPSPEnlEk()
         for (unsigned int iEigenVec=0; iEigenVec<numEigenVectors; ++iEigenVec)
         {
 		      
-	  psiValues.get_function_values(*((dftPtr->eigenVectors)[ikPoint][iEigenVec]), tempPsi);
-          psiValues.get_function_gradients(*((dftPtr->eigenVectors)[ikPoint][iEigenVec]), tempGradPsi);
-          psiValues.get_function_hessians(*((dftPtr->eigenVectors)[ikPoint][iEigenVec]), tempHessianPsi);
+	  psiValues.get_function_values((dftPtr->eigenVectors[ikPoint][iEigenVec]), tempPsi);
+          psiValues.get_function_gradients((dftPtr->eigenVectors[ikPoint][iEigenVec]), tempGradPsi);
+          psiValues.get_function_hessians((dftPtr->eigenVectors[ikPoint][iEigenVec]), tempHessianPsi);
           for (unsigned int q=0; q<numQuadPoints; ++q)
           {
 	     const int id=q*numEigenVectors*numKPoints+numEigenVectors*ikPoint+iEigenVec;

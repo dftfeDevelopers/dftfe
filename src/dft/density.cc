@@ -106,13 +106,13 @@ void dftClass<FEOrder>::compute_rhoOut()
 		{
 		  for(unsigned int i=0; i<numEigenValues; ++i)
 		    {
-		      fe_values.get_function_values(*eigenVectors[(1+dftParameters::spinPolarized)*kPoint][i], tempPsi);
+		      fe_values.get_function_values(eigenVectors[(1+dftParameters::spinPolarized)*kPoint][i], tempPsi);
 		      if(dftParameters::spinPolarized==1)
-			fe_values.get_function_values(*eigenVectors[(1+dftParameters::spinPolarized)*kPoint+1][i], tempPsi2);
+			fe_values.get_function_values(eigenVectors[(1+dftParameters::spinPolarized)*kPoint+1][i], tempPsi2);
 		      //
-		      fe_values.get_function_gradients(*eigenVectors[(1+dftParameters::spinPolarized)*kPoint][i],tempGradPsi);
+		      fe_values.get_function_gradients(eigenVectors[(1+dftParameters::spinPolarized)*kPoint][i],tempGradPsi);
 		      if(dftParameters::spinPolarized==1)
-			fe_values.get_function_gradients(*eigenVectors[(1+dftParameters::spinPolarized)*kPoint+1][i], tempGradPsi2);
+			fe_values.get_function_gradients(eigenVectors[(1+dftParameters::spinPolarized)*kPoint+1][i], tempGradPsi2);
 
 		      for(unsigned int q_point=0; q_point<num_quad_points; ++q_point)
 			{
@@ -218,9 +218,9 @@ void dftClass<FEOrder>::compute_rhoOut()
 		{
 		  for(unsigned int i=0; i<numEigenValues; ++i)
 		    {
-		      fe_values.get_function_values(*eigenVectors[(1+dftParameters::spinPolarized)*kPoint][i], tempPsi);
+		      fe_values.get_function_values(eigenVectors[(1+dftParameters::spinPolarized)*kPoint][i], tempPsi);
 		      if(dftParameters::spinPolarized==1)
-		         fe_values.get_function_values(*eigenVectors[(1+dftParameters::spinPolarized)*kPoint+1][i], tempPsi2);
+		         fe_values.get_function_values(eigenVectors[(1+dftParameters::spinPolarized)*kPoint+1][i], tempPsi2);
 
 		      for(unsigned int q_point=0; q_point<num_quad_points; ++q_point)
 			{

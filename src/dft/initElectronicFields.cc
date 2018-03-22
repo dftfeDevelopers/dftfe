@@ -50,7 +50,7 @@ void dftClass<FEOrder>::initElectronicFields(){
     {
       for(unsigned int i = 0; i < eigenVectors[kPoint].size(); ++i)
 	{
-	  eigenVectors[kPoint][i]->reinit(vChebyshev);
+	  eigenVectors[kPoint][i].reinit(vChebyshev);
 	}
     }
 

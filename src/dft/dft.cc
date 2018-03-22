@@ -261,11 +261,13 @@ void dftClass<FEOrder>::set()
   
   for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_maxkPoints; ++kPoint)
     {
-      for (unsigned int i=0; i<numEigenValues; ++i)
-	{
-	  eigenVectors[kPoint].push_back(new vectorType);
+      //for (unsigned int i=0; i<numEigenValues; ++i)
+      //{
+	  //eigenVectors[kPoint].push_back(new vectorType);
 	  //eigenVectors[kPoint].push_back(boost::shared_ptr<vectorType>(new vectorType));
-	}
+      //}
+      eigenVectors[kPoint].resize(numEigenValues);
+      
     }
 
    for(unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
@@ -701,7 +703,7 @@ void dftClass<FEOrder>::output()
   for(unsigned int i=0; i<eigenVectors[0].size(); ++i)
     {
       char buffer[100]; sprintf(buffer,"eigen%u", i);  
-      data_outEigen.add_data_vector (*eigenVectors[0][i], buffer);
+      data_outEigen.add_data_vector (eigenVectors[0][i], buffer);
     }
   data_outEigen.build_patches (C_num1DQuad<FEOrder>());
 

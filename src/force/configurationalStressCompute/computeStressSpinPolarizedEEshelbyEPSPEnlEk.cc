@@ -295,12 +295,12 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk()
       { 
         for (unsigned int iEigenVec=0; iEigenVec<numEigenVectors; ++iEigenVec)
         {
-	  psiValues.get_function_values(*((dftPtr->eigenVectors)[2*ikPoint][iEigenVec]), tempPsiSpin0);
-	  psiValues.get_function_values(*((dftPtr->eigenVectors)[2*ikPoint+1][iEigenVec]), tempPsiSpin1);	  
-          psiValues.get_function_gradients(*((dftPtr->eigenVectors)[2*ikPoint][iEigenVec]), tempGradPsiSpin0);
-          psiValues.get_function_gradients(*((dftPtr->eigenVectors)[2*ikPoint+1][iEigenVec]), tempGradPsiSpin1);  
-          psiValues.get_function_hessians(*((dftPtr->eigenVectors)[2*ikPoint][iEigenVec]), tempHessianPsiSpin0);
-          psiValues.get_function_hessians(*((dftPtr->eigenVectors)[2*ikPoint+1][iEigenVec]), tempHessianPsiSpin1);
+	  psiValues.get_function_values((dftPtr->eigenVectors[2*ikPoint][iEigenVec]), tempPsiSpin0);
+	  psiValues.get_function_values((dftPtr->eigenVectors[2*ikPoint+1][iEigenVec]), tempPsiSpin1);	  
+          psiValues.get_function_gradients((dftPtr->eigenVectors[2*ikPoint][iEigenVec]), tempGradPsiSpin0);
+          psiValues.get_function_gradients((dftPtr->eigenVectors[2*ikPoint+1][iEigenVec]), tempGradPsiSpin1);  
+          psiValues.get_function_hessians((dftPtr->eigenVectors[2*ikPoint][iEigenVec]), tempHessianPsiSpin0);
+          psiValues.get_function_hessians((dftPtr->eigenVectors[2*ikPoint+1][iEigenVec]), tempHessianPsiSpin1);
           for (unsigned int q=0; q<numQuadPoints; ++q)
           {
 	     const int id=q*numEigenVectors*numKPoints+numEigenVectors*ikPoint+iEigenVec;

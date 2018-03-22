@@ -1073,7 +1073,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
                                                      d_ghostProjectorIdsCurrentProcess,
                                                      mpi_communicator);   
 #endif     
-  vec.update_ghost_values();
+  //vec.update_ghost_values();
   d_projectorKetTimesVectorPar.resize(eigenVectors[0].size());
   for (unsigned int i=0; i<eigenVectors[0].size();++i)
   {
