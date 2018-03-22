@@ -335,7 +335,6 @@ void symmetryClass<FEOrder>::initSymmetry()
      }
      //
      MPI_Barrier(mpi_communicator) ;
-     pcout << " check 0.1 " << std::endl ;
      int recvDataSize0=0, recvDataSize1=0, send_size0, send_size1, send_size2 ;
      std::vector<int> send_data0, send_data2, send_data3;
      std::vector<std::vector<double>> send_data1;
@@ -379,7 +378,6 @@ void symmetryClass<FEOrder>::initSymmetry()
 	   }
 	 }
 	 //
-         pcout << " check 0.11 " << std::endl ;
 	 //recvSize[proc] = send_size1 ; // to be used later to recv symmetrized rho
          //
 	 MPI_Gather(&send_size0,1,MPI_INT, &(recv_size0[0]),1, MPI_INT,proc,mpi_communicator);
@@ -420,7 +418,6 @@ void symmetryClass<FEOrder>::initSymmetry()
      }
 
      MPI_Barrier(mpi_communicator) ;
-     pcout << " check 0.2 " << std::endl ;
 
     //
    cell = (dftPtr->dofHandlerEigen).begin_active();
@@ -445,7 +442,6 @@ void symmetryClass<FEOrder>::initSymmetry()
 	 }
      }
     }
-   pcout << " check 0.3 " << std::endl ;
    /*for(int i = 0; i < dftPtr->n_mpi_processes; i++) {
 		if (this_mpi_process==i)
 	           std::cout << this_mpi_process << " " << recv_size[i] << std::endl;

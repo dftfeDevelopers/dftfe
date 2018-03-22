@@ -181,7 +181,8 @@ void dftClass<FEOrder>::computeVolume()
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::set()
 {
-  pcout << std::endl << "number of MPI processes: "
+  if (dftParameters::verbosity==1)  
+    pcout << std::endl << "number of MPI processes: "
 	<< Utilities::MPI::n_mpi_processes(mpi_communicator)
 	<< std::endl;       
   //
@@ -319,7 +320,7 @@ void dftClass<FEOrder>::initImageChargesUpdateKPoints()
   pcout<<"-----------Domain bounding vectors (lattice vectors in fully periodic case)-------------"<<std::endl; 
   for(int i = 0; i < d_domainBoundingVectors.size(); ++i)
     {
-      pcout<<"Vector- "<< i<<" : "<< d_domainBoundingVectors[i][0]<<" "<<d_domainBoundingVectors[i][1]<<" "<<d_domainBoundingVectors[i][2]<<"\n";
+      pcout<<"v"<< i+1<<" : "<< d_domainBoundingVectors[i][0]<<" "<<d_domainBoundingVectors[i][1]<<" "<<d_domainBoundingVectors[i][2]<<std::endl;
     }  
   pcout<<"-----------------------------------------------------------------------------------------"<<std::endl;    
 #ifdef ENABLE_PERIODIC_BC
@@ -327,7 +328,7 @@ void dftClass<FEOrder>::initImageChargesUpdateKPoints()
   for(unsigned int i = 0; i < atomLocations.size(); ++i)
   {
       atomLocations[i] = atomLocationsFractional[i] ;
-      pcout<<" atomId- "<<i <<" : "<<atomLocationsFractional[i][2]<<" "<<atomLocationsFractional[i][3]<<" "<<atomLocationsFractional[i][4]<<"\n";
+      pcout<<"AtomId "<<i <<":  "<<atomLocationsFractional[i][2]<<" "<<atomLocationsFractional[i][3]<<" "<<atomLocationsFractional[i][4]<<"\n";
   }   
   generateImageCharges();
 
@@ -335,20 +336,26 @@ void dftClass<FEOrder>::initImageChargesUpdateKPoints()
 					                 d_domainBoundingVectors);
   recomputeKPointCoordinates();
 
-  pcout<<"Actual k-Point-coordinates and weights: "<<std::endl;
-  for(unsigned int i = 0; i < d_maxkPoints; ++i)
+  if (dftParameters::verbosity==1)  
   {
-    pcout<< i<<": ["<< d_kPointCoordinates[3*i+0] <<", "<< d_kPointCoordinates[3*i+1]<<", "<< d_kPointCoordinates[3*i+2]<<"] "<<d_kPointWeights[i]<<std::endl;
-  }   
+      //FIXME: Print all k points across all pools
+      pcout<<"-------------------k points cartesian coordinates and weights-----------------------------"<<std::endl;
+      for(unsigned int i = 0; i < d_maxkPoints; ++i)
+      {
+	pcout<<" ["<< d_kPointCoordinates[3*i+0] <<", "<< d_kPointCoordinates[3*i+1]<<", "<< d_kPointCoordinates[3*i+2]<<"] "<<d_kPointWeights[i]<<std::endl;
+      } 
+     pcout<<"-----------------------------------------------------------------------------------------"<<std::endl;
+  }
 #else
   //
   //print cartesian coordinates
   //
-  pcout<<"-----Cartesian coordinates of atoms------ "<<std::endl;
+  pcout<<"------------Cartesian coordinates of atoms (origin at center of domain)------------------"<<std::endl;
   for(unsigned int i = 0; i < atomLocations.size(); ++i)
     {
-      pcout<<" atomId- "<<i <<" : "<<atomLocations[i][2]<<" "<<atomLocations[i][3]<<" "<<atomLocations[i][4]<<"\n";
-    }  
+      pcout<<"AtomId "<<i <<":  "<<atomLocations[i][2]<<" "<<atomLocations[i][3]<<" "<<atomLocations[i][4]<<"\n";
+    } 
+ pcout<<"-----------------------------------------------------------------------------------------"<<std::endl;
 #endif
 }
 
@@ -504,11 +511,10 @@ void dftClass<FEOrder>::solve()
   //
   unsigned int scfIter=0;
   double norm = 1.0;
-  char buffer[100];
-
+  pcout<<std::endl;
   while ((norm > dftParameters::selfConsistentSolverTolerance) && (scfIter < dftParameters::numSCFIterations))
     {
-      sprintf(buffer, "\n\n**** Begin Self-Consistent-Field Iteration: %u ****\n", scfIter+1); pcout << buffer;
+      pcout<<"************************Begin Self-Consistent-Field Iteration: "<<std::setw(2)<<scfIter+1<<" ***********************"<<std::endl;
       //Mixing scheme
       if(scfIter > 0)
 	{
@@ -532,7 +538,7 @@ void dftClass<FEOrder>::solve()
 		else
 	          norm = sqrt(mixing_anderson());
 	      }
-	  sprintf(buffer, "Anderson Mixing: L2 norm of electron-density difference: %12.6e\n\n", norm); pcout << buffer;
+	  pcout<<"Anderson Mixing: L2 norm of electron-density difference: "<< norm<< std::endl;
 	  poissonPtr->phiTotRhoIn = poissonPtr->phiTotRhoOut;
 	}
       //phiTot with rhoIn
@@ -540,7 +546,9 @@ void dftClass<FEOrder>::solve()
       //parallel loop over all elements
 
       int constraintMatrixId = phiTotDofHandlerIndex;
-      sprintf(buffer, "Poisson solve for total electrostatic potential (rhoIn+b):\n"); pcout << buffer; 
+      if (dftParameters::verbosity==1)
+        pcout<< std::endl<<"Poisson solve for total electrostatic potential (rhoIn+b): ";
+
       poissonPtr->solve(poissonPtr->phiTotRhoIn,constraintMatrixId, rhoInValues);
       //pcout<<"L-2 Norm of Phi-in   : "<<poissonPtr->phiTotRhoIn.l2_norm()<<std::endl;
       //pcout<<"L-inf Norm of Phi-in : "<<poissonPtr->phiTotRhoIn.linfty_norm()<<std::endl;
@@ -562,15 +570,19 @@ void dftClass<FEOrder>::solve()
 	      for (int kPoint = 0; kPoint < d_maxkPoints; ++kPoint) 
 	        {
 	          d_kPointIndex = kPoint;
-	          char buffer[100];
 	          for(int j = 0; j < dftParameters::numPass; ++j)
-	            { 
-		       sprintf(buffer, "%s:%3u%s:%3u\n", "Beginning Chebyshev filter pass ", j+1, " for spin ", s+1);
-		       pcout << buffer;
+	            {
+		       if (dftParameters::verbosity==1)
+                       {			
+		         pcout<<"Beginning Chebyshev filter pass "<< j+1<< " for spin "<< s+1<<std::endl;
+		       }
 		       chebyshevSolver(s);
 	            }
 	        }
 	    }
+
+	  //fermi energy
+          compute_fermienergy();
         }
       else
         {
@@ -588,8 +600,10 @@ void dftClass<FEOrder>::solve()
 	      d_kPointIndex = kPoint;
 	      for(int j = 0; j < dftParameters::numPass; ++j)
 	      { 
-		    sprintf(buffer, "%s:%3u\n", "Beginning Chebyshev filter pass ", j+1);
-		    pcout << buffer;
+		    if (dftParameters::verbosity==1)
+		    {
+		      pcout<< "Beginning Chebyshev filter pass "<< j+1<<std::endl;
+		    }
 		    chebyshevSolver(0);
 	      }
 	    }
@@ -598,7 +612,10 @@ void dftClass<FEOrder>::solve()
 	  compute_fermienergy();
 	  //maximum of the residual norm of the state closest to and below the Fermi level among all k points
 	  double maxRes = computeMaximumHighestOccupiedStateResidualNorm();
-	  pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
+	  if (dftParameters::verbosity==1)
+          {
+	     pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
+	  }
 	  //if the residual norm is greater than 1e-1 (heuristic) 
 	  // do more passes of chebysev filter till the check passes. 
 	  // This improves the scf convergence performance. Currently this
@@ -609,20 +626,25 @@ void dftClass<FEOrder>::solve()
 	      for (int kPoint = 0; kPoint < d_maxkPoints; ++kPoint) 
 		{
 		  d_kPointIndex = kPoint;
-		  sprintf(buffer, "%s:%3u\n", "Beginning Chebyshev filter pass ", dftParameters::numPass+count);
-		  pcout << buffer;
+		  if (dftParameters::verbosity==1)
+                  {
+		    pcout<< "Beginning Chebyshev filter pass "<< dftParameters::numPass+count<<std::endl;
+		  }
 		  chebyshevSolver(0);
 		}
 	      count++;
 	      compute_fermienergy();
 	      maxRes = computeMaximumHighestOccupiedStateResidualNorm();
-	      pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;	      
+	      if (dftParameters::verbosity==1)
+              {
+	        pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
+	      }
 	  }
           
 	}
  
        //fermi energy
-       compute_fermienergy();
+       //compute_fermienergy();
 	//rhoOut
    computing_timer.enter_section("compute rho"); 
 #ifdef ENABLE_PERIODIC_BC
@@ -641,17 +663,33 @@ void dftClass<FEOrder>::solve()
       integralRhoValue=totalCharge(rhoOutValues);
 
       //phiTot with rhoOut
-      sprintf(buffer, "Poisson solve for total electrostatic potential (rhoOut+b):\n"); pcout << buffer; 
+      if (dftParameters::verbosity==1)
+         pcout<< std::endl<<"Poisson solve for total electrostatic potential (rhoOut+b): "; 
+
       poissonPtr->solve(poissonPtr->phiTotRhoOut,constraintMatrixId, rhoOutValues);
       //pcout<<"L-2 Norm of Phi-out   :"<<poissonPtr->phiTotRhoOut.l2_norm()<<std::endl;
       //pcout<<"L-inf Norm of Phi-out :"<<poissonPtr->phiTotRhoOut.linfty_norm()<<std::endl;
 
       //energy
-      if (spinPolarized==1)
-         compute_energy_spinPolarized();
-      else
-     	 compute_energy () ;
-      pcout<<"SCF iteration " << scfIter+1 << " complete\n";
+      double totalEnergy;
+      if (dftParameters::verbosity==1)
+      {    
+	  if (spinPolarized==1)
+	     totalEnergy=compute_energy_spinPolarized(true);
+	  else
+	     totalEnergy=compute_energy (true);
+      }
+      else if (dftParameters::verbosity==0)
+      {
+	  if (spinPolarized==1)
+	     totalEnergy=compute_energy_spinPolarized(false);
+	  else
+	     totalEnergy=compute_energy (false);	  
+
+	  pcout<<"Total energy  : " << totalEnergy << std::endl;
+      }
+      pcout<<"***********************Self-Consistent-Field Iteration: "<<std::setw(2)<<scfIter+1<<" complete**********************"<<std::endl; 
+      pcout<<std::endl;
       
       //output wave functions
       //output();
@@ -659,6 +697,18 @@ void dftClass<FEOrder>::solve()
       //
       scfIter++;
     }
+
+    if(scfIter==dftParameters::numSCFIterations)
+	pcout<< "SCF did not converge to the specified tolerance after: "<<scfIter<<" iterations."<<std::endl;
+    else
+        pcout<< "SCF converged to the specified tolerance after: "<<scfIter<<" iterations."<<std::endl;
+
+    // compute and print ground state energy or energy after max scf iterations
+    if (spinPolarized==1)
+      compute_energy_spinPolarized(true);
+    else
+      compute_energy (true);
+
  computing_timer.exit_section("solve");
 
 //
@@ -684,18 +734,18 @@ void dftClass<FEOrder>::solve()
   MPI_Barrier(interpoolcomm) ;
   if (dftParameters::isIonForce)
   {
-    computing_timer.enter_section("configurational force computation");
+    computing_timer.enter_section("ion force");
     forcePtr->computeAtomsForces();
     forcePtr->printAtomsForces();
-    computing_timer.exit_section("configurational force computation");
+    computing_timer.exit_section("ion force");
    }
 #ifdef ENABLE_PERIODIC_BC
   if (dftParameters::isCellStress)
   {
-    computing_timer.enter_section("cell stress computation");
+    computing_timer.enter_section("cell stress");
     forcePtr->computeStress();
     forcePtr->printStress();
-    computing_timer.exit_section("cell stress computation");
+    computing_timer.exit_section("cell stress");
    }  
 #endif  
 }

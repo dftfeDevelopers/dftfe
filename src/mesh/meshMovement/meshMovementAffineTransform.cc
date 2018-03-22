@@ -18,6 +18,7 @@
 //
 #include <meshMovementAffineTransform.h>
 #include <dftUtils.h>
+#include <dftParameters.h>
 
 meshMovementAffineTransform::meshMovementAffineTransform( MPI_Comm &mpi_comm_replica):
  meshMovementClass(mpi_comm_replica)
@@ -27,11 +28,13 @@ meshMovementAffineTransform::meshMovementAffineTransform( MPI_Comm &mpi_comm_rep
 
 std::pair<bool,double> meshMovementAffineTransform::transform(const Tensor<2,3,double> & deformationGradient) 
 {
-  d_deformationGradient=deformationGradient;  
-  pcout << "Computing triangulation displacement increment under affine deformation..." << std::endl;
+  d_deformationGradient=deformationGradient; 
+  if (dftParameters::verbosity==1)
+     pcout << "Computing triangulation displacement increment under affine deformation..." << std::endl;
   initIncrementField();
   computeIncrement();
-  pcout << "...Computed triangulation displacement increment" << std::endl;
+  if (dftParameters::verbosity==1)
+     pcout << "...Computed triangulation displacement increment" << std::endl;
 
   dftUtils::transformDomainBoundingVectors(d_domainBoundingVectors,deformationGradient);
   

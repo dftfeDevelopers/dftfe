@@ -295,7 +295,9 @@ void dftClass<FEOrder>::generateMPGrid()
         if( jk!=ik && jk<nk && discard[jk]!=1) {
            d_kPointWeights[d_maxkPoints-1] = d_kPointWeights[d_maxkPoints-1] + 1.0/nk;
            discard[jk] = 1;
-	   pcout<< "    " << ik << "     " << jk << std::endl ;
+	   if (dftParameters::verbosity==1)
+	        pcout<< "    " << ik << "     " << jk << std::endl ;
+
            if (countedSymm[iSymm]==0) {
 	       usedSymmNum[iSymm] = usedSymm ;
                (symmetryPtr->symmMat)[usedSymm] = symmMatTemp2[iSymm] ;
@@ -331,14 +333,18 @@ void dftClass<FEOrder>::generateMPGrid()
 	    symmetryPtr->numSymmUnderGroup[i] += 1 ;
      }
    }
-   pcout << " kpoint " << i << " numSymmUnderGroup " << symmetryPtr->numSymmUnderGroup[i] << std::endl;
+   if (dftParameters::verbosity==1)
+       pcout << " kpoint " << i << " numSymmUnderGroup " << symmetryPtr->numSymmUnderGroup[i] << std::endl;
   }
   //
   pcout<<" " << usedSymm << " symmetries used to reduce BZ "  << std::endl;
   for (unsigned int iSymm = 0; iSymm < symmetryPtr->numSymm; ++iSymm)
 	{
          for ( unsigned int ipol = 0; ipol<3; ++ipol)
+	 {
+	      if (dftParameters::verbosity==1)
 		 pcout << symmetryPtr->symmMat[iSymm][ipol][0] << "  " << symmetryPtr->symmMat[iSymm][ipol][1] << "  " << symmetryPtr->symmMat[iSymm][ipol][2] << std::endl;
+	 }
   }
   //
   pcout<<" number of irreducible k-points " << d_maxkPoints << std::endl;

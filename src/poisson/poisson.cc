@@ -375,13 +375,16 @@ void poissonClass<FEOrder>::solve(vectorType& phi, int constraintMatrixId, std::
  // std::cout<<"Max of Phi : "<<phi.linfty_norm()<<std::endl;
 
 
-
-  char buffer[200];
-  sprintf(buffer, "initial abs. residual: %12.6e, current abs. residual: %12.6e, nsteps: %u, abs. tolerance criterion: %12.6e\n\n", \
+  if (dftParameters::verbosity==1)
+  {
+    pcout<<std::endl;	  
+    char buffer[200];
+    sprintf(buffer, "initial abs. residual: %12.6e, current abs. residual: %12.6e, nsteps: %u, abs. tolerance criterion: %12.6e\n\n", \
 	  solver_control.initial_value(),				\
 	  solver_control.last_value(),					\
 	  solver_control.last_step(), solver_control.tolerance()); 
-  pcout<<buffer; 
+    pcout<<buffer;
+  }
   computing_timer.exit_section("poissonClass solve"); 
 }
 

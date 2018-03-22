@@ -72,7 +72,8 @@ void dftClass<FEOrder>::initLocalPseudoPotential()
       if(outerMostPointPseudo[*it] < d_pspTail)
 	 d_pspTail = outerMostPointPseudo[*it] ;
     }
-   pcout << " d_pspTail adjusted to " << d_pspTail << std::endl ;
+   if (dftParameters::verbosity==1)  
+      pcout << " d_pspTail adjusted to " << d_pspTail << std::endl ;
   //
   //Initialize pseudopotential
   //
@@ -214,7 +215,10 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential()
       // Skip the rest in the first line and proceed to next line
       //
       readPseudoDataFileNames.ignore();
-      pcout << "Number of Pseudo Wave Functions for atom with Z: " << atomicNumber<<" is "<<numberAtomicWaveFunctions << std::endl;
+      if (dftParameters::verbosity==1)
+      {
+        pcout << "Number of Pseudo Wave Functions for atom with Z: " << atomicNumber<<" is "<<numberAtomicWaveFunctions << std::endl;
+      }
 
       //
       //string to store each line of the file
@@ -275,8 +279,9 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential()
 	  // Add the cumulativeSplineId to radialId
 	  //
 	  radAndAngularFunctionId[0] += cumulativeSplineId;
-	    
-	  pcout << "Radial and Angular Functions Ids: " << radAndAngularFunctionId[0] << " " << radAndAngularFunctionId[1] << " " << radAndAngularFunctionId[2] << std::endl;
+	   
+	  if (dftParameters::verbosity==1)
+	      pcout << "Radial and Angular Functions Ids: " << radAndAngularFunctionId[0] << " " << radAndAngularFunctionId[1] << " " << radAndAngularFunctionId[2] << std::endl;
 
 	}
 
@@ -411,7 +416,9 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential()
       // Skip the rest in the first line and proceed to next line
       //
       readPseudoDataFileNames.ignore();
-      pcout << "Number of Angular momentum specific potentials: " << numberAngularMomentumSpecificPotentials<< std::endl;
+
+      if (dftParameters::verbosity==1)    
+         pcout << "Number of Angular momentum specific potentials: " << numberAngularMomentumSpecificPotentials<< std::endl;
 
       std::string readPotLine;
 
@@ -472,7 +479,8 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential()
 	  // Add the cumulativeSplineId to radialId
 	  //
 	  radAndAngularFunctionId[0] += cumulativePotSplineId;
-	  pcout << "Radial and Angular Function Potential Ids: " << radAndAngularFunctionId[0] << " " << radAndAngularFunctionId[1] << std::endl;
+	  if (dftParameters::verbosity==1)
+	     pcout << "Radial and Angular Function Potential Ids: " << radAndAngularFunctionId[0] << " " << radAndAngularFunctionId[1] << std::endl;
    
 	}
       
@@ -627,8 +635,8 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential()
 
   d_nonLocalAtomGlobalChargeIds = nonLocalAtomGlobalChargeIds;
 
-  
-  pcout<<"Number of Nonlocal Atoms: " <<d_nonLocalAtomGlobalChargeIds.size()<<std::endl;
+  if (dftParameters::verbosity==1)  
+     pcout<<"Number of Nonlocal Atoms: " <<d_nonLocalAtomGlobalChargeIds.size()<<std::endl;
   //
   //fill up global charge image Id map by inserting the image atoms
   //corresponding to the master chargeId
@@ -834,7 +842,8 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
 
       cumulativePotSplineId += numberAngularMomentumSpecificPotentials;
 
-      pcout<<"No.of non zero elements in the compact support of atom "<<iAtom<<" is "<<d_elementIteratorsInAtomCompactSupport[iAtom].size()<<std::endl;
+      if (dftParameters::verbosity==1)
+         pcout<<"No.of non zero elements in the compact support of atom "<<iAtom<<" is "<<d_elementIteratorsInAtomCompactSupport[iAtom].size()<<std::endl;
       if (isAtomIdInProcessor)
           d_nonLocalAtomIdsInCurrentProcess.push_back(iAtom);
     }//atom loop
@@ -1141,8 +1150,11 @@ void dftClass<FEOrder>::computeElementalProjectorKets()
       int numberPseudoWaveFunctions = d_numberPseudoAtomicWaveFunctions[iAtom];
       int numberAngularMomentumSpecificPotentials = d_numberPseudoPotentials[iAtom];
 
-      pcout<<"Number of Pseudo wavefunctions: "<<std::endl;
-      pcout<<numberPseudoWaveFunctions<<std::endl;
+      if (dftParameters::verbosity==1)
+      {
+        pcout<<"Number of Pseudo wavefunctions: "<<std::endl;
+        pcout<<numberPseudoWaveFunctions<<std::endl;
+      }
 
       //
       //allocate element Matrices
@@ -1356,7 +1368,8 @@ void dftClass<FEOrder>::computeElementalProjectorKets()
 	  d_nonLocalPseudoPotentialConstants[iAtom][iPseudoWave] = Utilities::MPI::sum(d_nonLocalPseudoPotentialConstants[iAtom][iPseudoWave],mpi_communicator);
 
 	  d_nonLocalPseudoPotentialConstants[iAtom][iPseudoWave] = 1.0/d_nonLocalPseudoPotentialConstants[iAtom][iPseudoWave];
-	  pcout<<"The value of 1/nlpConst corresponding to atom and lCount "<<iAtom<<' '<<
+	  if (dftParameters::verbosity==1)
+	     pcout<<"The value of 1/nlpConst corresponding to atom and lCount "<<iAtom<<' '<<
 	    iPseudoWave<<" is "<<d_nonLocalPseudoPotentialConstants[iAtom][iPseudoWave]<<std::endl;	
 	  
 	}
