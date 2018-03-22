@@ -482,7 +482,7 @@ void forceClass<FEOrder>::printAtomsForces()
 {
     const int numberGlobalAtoms = dftPtr->atomLocations.size();	 
     pcout<<std::endl;
-    pcout<<"Ion forces"<<std::endl;
+    pcout<<"Ion forces (Hartree/Bohr)"<<std::endl;
     if (dftParameters::verbosity==2)    
        pcout<< "Negative of configurational force (Hartree/Bohr) on atoms for Gaussian generator with constant: "<< d_gaussianConstant <<std::endl;
 

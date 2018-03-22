@@ -301,6 +301,7 @@ double dftClass<FEOrder>::compute_energy(const bool print)
   //output
   if (print)
   {
+  pcout<<std::endl;	  
   char bufferEnergy[200];
   pcout << "Energy computations\n";
   pcout << "-------------------\n";
@@ -725,6 +726,7 @@ double dftClass<FEOrder>::compute_energy_spinPolarized(const bool print)
   //output
   if (print)
   {
+  pcout<<std::endl;	  
   char bufferEnergy[200];
   pcout << "Energy computations\n";
   pcout << "-------------------\n";
