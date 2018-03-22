@@ -216,9 +216,7 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential()
       //
       readPseudoDataFileNames.ignore();
       if (dftParameters::verbosity==2)
-      {
-        pcout << "Number of Pseudo Wave Functions for atom with Z: " << atomicNumber<<" is "<<numberAtomicWaveFunctions << std::endl;
-      }
+         pcout << "Number of Pseudo Wave Functions for atom with Z: " << atomicNumber<<" is "<<numberAtomicWaveFunctions << std::endl;
 
       //
       //string to store each line of the file
