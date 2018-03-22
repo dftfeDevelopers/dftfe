@@ -303,10 +303,11 @@ double dftClass<FEOrder>::upperBound()
   vChebyshev/=vChebyshev.l2_norm();
   vChebyshev.update_ghost_values();
   //
-  std::vector<vectorType> v,f; 
-  v.push_back(vChebyshev);
-  f.push_back(fChebyshev);
+  std::vector<vectorType> v(1),f(1); 
+  v[0] = vChebyshev;
+  f[0] = fChebyshev;
   eigenPtr->HX(v,f);
+  fChebyshev = f[0];
 
   //
 #ifdef ENABLE_PERIODIC_BC
@@ -330,7 +331,10 @@ double dftClass<FEOrder>::upperBound()
     {
       beta=fChebyshev.l2_norm();
       v0Chebyshev=vChebyshev; vChebyshev.equ(1.0/beta,fChebyshev);
-      eigenPtr->HX(v,f); fChebyshev.add(-1.0*beta,v0Chebyshev);//beta is real
+      v[0] = vChebyshev,f[0] = fChebyshev;
+      eigenPtr->HX(v,f); 
+      fChebyshev = f[0];
+      fChebyshev.add(-1.0*beta,v0Chebyshev);//beta is real
 #ifdef ENABLE_PERIODIC_BC
       alpha = innerProduct(fChebyshev,vChebyshev);
       alphaTimesXPlusY(-alpha,vChebyshev,fChebyshev);
