@@ -309,10 +309,9 @@ std::pair<bool,double> meshMovementClass::movedMeshCheck()
     }
   }
   minElemLength=Utilities::MPI::min(minElemLength, mpi_communicator);
-  char buffer[100];
-  //if (dftParameters::verbosity==2)
-    sprintf(buffer, "Mesh movement quality metric, h_min: %5.2e\n", minElemLength);
-  pcout << buffer;   
+  
+  if (dftParameters::verbosity==2)
+    pcout<< "Mesh movement quality metric, h_min: "<<minElemLength<<std::endl;
 
   std::pair<bool,double> meshQualityMetrics;
   QGauss<3>  quadrature(2);

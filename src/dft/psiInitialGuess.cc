@@ -240,6 +240,7 @@ void dftClass<FEOrder>::determineOrbitalFilling()
 
   pcout<<"============================================================================================================================="<<std::endl;
   pcout<<"number of electrons: "<<numElectrons<<std::endl;
+  pcout << "number of eigen values: " << numEigenValues << std::endl;
   pcout<<"number of wavefunctions computed using single atom data to be used as initial guess for starting the SCF: " <<waveFunctionCount<<std::endl;
   pcout<<"============================================================================================================================="<<std::endl;
 }
@@ -351,8 +352,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
     {
 
       unsigned int nonAtomicWaveFunctions = numEigenValues - waveFunctionsVector.size();
-      pcout << "                                                                                             "<<std::endl;
-      pcout << "number of wavefunctions generated randomly to be used as initial guess for starting the SCF : " << nonAtomicWaveFunctions << std::endl;
+      pcout << "Number of wavefunctions generated randomly to be used as initial guess for starting the SCF : " << nonAtomicWaveFunctions << std::endl;
 
       //
       // assign the rest of the wavefunctions using a standard normal distribution

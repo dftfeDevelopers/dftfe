@@ -78,7 +78,7 @@ void dftClass<FEOrder>::initElectronicFields(){
   //
   //initialize PSI
   //
-  pcout << "reading initial guess for PSI\n";
+  pcout <<std::endl<< "Reading initial guess for PSI...."<<std::endl;
   readPSI();
   computing_timer.exit_section("moved setup");
 }

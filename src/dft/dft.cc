@@ -237,8 +237,6 @@ void dftClass<FEOrder>::set()
   //estimate total number of wave functions
   determineOrbitalFilling();
 
-  pcout << "number of eigen values: " << numEigenValues << std::endl;
-
 #ifdef ENABLE_PERIODIC_BC
    if (dftParameters::isIonForce || dftParameters::isCellStress)
       AssertThrow(!dftParameters::useSymm,ExcMessage("USE GROUP SYMMETRY must be set to false if either ION FORCE or CELL STRESS is set to true. This functionality will be added in a future release"));
@@ -286,7 +284,7 @@ void dftClass<FEOrder>::set()
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::initPseudoPotentialAll()
 {
-
+   pcout<<std::endl<<"Pseuodopotential initalization...."<<std::endl;
    if(isPseudopotential)
     {
       initLocalPseudoPotential();
@@ -512,7 +510,11 @@ void dftClass<FEOrder>::solve()
   //
   unsigned int scfIter=0;
   double norm = 1.0;
+
+
   pcout<<std::endl;
+  if (dftParameters::verbosity==0)
+    pcout<<"Starting SCF iteration...."<<std::endl;  
   while ((norm > dftParameters::selfConsistentSolverTolerance) && (scfIter < dftParameters::numSCFIterations))
     {
       if (dftParameters::verbosity>=1)
@@ -689,9 +691,9 @@ void dftClass<FEOrder>::solve()
     }
 
     if(scfIter==dftParameters::numSCFIterations)
-	pcout<< "SCF did not converge to the specified tolerance after: "<<scfIter<<" iterations."<<std::endl;
+	pcout<< "SCF iteration did not converge to the specified tolerance after: "<<scfIter<<" iterations."<<std::endl;
     else
-        pcout<< "SCF converged to the specified tolerance after: "<<scfIter<<" iterations."<<std::endl;
+        pcout<< "SCF iteration converged to the specified tolerance after: "<<scfIter<<" iterations."<<std::endl;
 
     // compute and print ground state energy or energy after max scf iterations
     if (spinPolarized==1)

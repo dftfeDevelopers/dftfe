@@ -29,7 +29,7 @@ void dftClass<FEOrder>::initRho()
   computing_timer.enter_section("initialize density"); 
 
   //Reading single atom rho initial guess
-  pcout << "reading initial guess for rho\n";
+  pcout <<std::endl<< "Reading initial guess for rho....."<<std::endl;
   std::map<unsigned int, alglib::spline1dinterpolant> denSpline;
   std::map<unsigned int, std::vector<std::vector<double> > > singleAtomElectronDensity;
   std::map<unsigned int, double> outerMostPointDen;

@@ -300,7 +300,7 @@ double dftClass<FEOrder>::compute_energy(const bool print)
   {
   pcout<<std::endl;
   char bufferEnergy[200];
-  pcout << "Energy computations\n";
+  pcout << "Energy computations (Hartree)\n";
   pcout << "-------------------\n";
   sprintf(bufferEnergy, "%-24s:%25.16e\n", "Band energy", bandEnergy); pcout << bufferEnergy;
   sprintf(bufferEnergy, "%-24s:%25.16e\n", "Kinetic energy", totalkineticEnergy); pcout << bufferEnergy;
@@ -725,7 +725,7 @@ double dftClass<FEOrder>::compute_energy_spinPolarized(const bool print)
   {
   pcout<<std::endl;
   char bufferEnergy[200];
-  pcout << "Energy computations\n";
+  pcout << "Energy computations (Hartree)\n";
   pcout << "-------------------\n";
   sprintf(bufferEnergy, "%-24s:%25.16e\n", "Band energy", bandEnergy); pcout << bufferEnergy;
   sprintf(bufferEnergy, "%-24s:%25.16e\n", "Kinetic energy", totalkineticEnergy); pcout << bufferEnergy;
