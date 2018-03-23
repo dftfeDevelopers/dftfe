@@ -40,7 +40,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::v
 #endif
 
   //
-  //compute nonlocal projector ket times x i.e C^{T}*X 
+  //compute nonlocal projector ket times x i.e C^{T}*X
   //
   std::vector<dealii::types::global_dof_index> local_dof_indices(dofs_per_cell);
 #ifdef ENABLE_PERIODIC_BC
@@ -61,7 +61,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::v
       const int numberSingleAtomPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
       projectorKetTimesVector[atomId].resize(numberWaveFunctions*numberSingleAtomPseudoWaveFunctions,0.0);
     }
-  
+
   //
   //some useful vectors
   //
@@ -70,14 +70,14 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::v
 #else
   std::vector<double> inputVectors(numberNodesPerElement*numberWaveFunctions,0.0);
 #endif
-  
+
 
   //
-  //parallel loop over all elements to compute nonlocal projector ket times x i.e C^{T}*X 
+  //parallel loop over all elements to compute nonlocal projector ket times x i.e C^{T}*X
   //
   typename DoFHandler<3>::active_cell_iterator cell = dftPtr->dofHandlerEigen.begin_active(), endc = dftPtr->dofHandlerEigen.end();
   int iElem = -1;
-  for(; cell!=endc; ++cell) 
+  for(; cell!=endc; ++cell)
     {
       if(cell->is_locally_owned())
 	{
@@ -96,10 +96,10 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::v
 		  //
 		  //This is the component index 0(real) or 1(imag).
 		  //
-		  //const unsigned int ck = fe_values.get_fe().system_to_component_index(idof).first; 
+		  //const unsigned int ck = fe_values.get_fe().system_to_component_index(idof).first;
 		  //const unsigned int iNode = fe_values.get_fe().system_to_component_index(idof).second;
-		  const unsigned int ck = dftPtr->FEEigen.system_to_component_index(idof).first; 
-		  const unsigned int iNode = dftPtr->FEEigen.system_to_component_index(idof).second;		  
+		  const unsigned int ck = dftPtr->FEEigen.system_to_component_index(idof).first;
+		  const unsigned int iNode = dftPtr->FEEigen.system_to_component_index(idof).second;
 		  if(ck == 0)
 		    inputVectors[numberNodesPerElement*index + iNode].real(temp[idof]);
 		  else
@@ -160,6 +160,16 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::v
 
     }//element loop
 
+for (unsigned int i=0; i<numberWaveFunctions;++i)
+   {
+#ifdef ENABLE_PERIODIC_BC
+      dftPtr->d_projectorKetTimesVectorPar[i]=std::complex<double>(0.0,0.0);
+#else
+      dftPtr->d_projectorKetTimesVectorPar[i]=0;
+#endif
+   }
+
+
  
   for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
     {
@@ -173,10 +183,10 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::v
 		  =projectorKetTimesVector[atomId][numberPseudoWaveFunctions*iWave + iPseudoAtomicWave];
 	    }
 	}
-    } 
+    }
 
    for (unsigned int i=0; i<numberWaveFunctions;++i)
-   {  
+   {
       dftPtr->d_projectorKetTimesVectorPar[i].compress(VectorOperation::add);
       dftPtr->d_projectorKetTimesVectorPar[i].update_ghost_values();
    }
@@ -191,7 +201,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::v
 	    {
 	      projectorKetTimesVector[atomId][numberPseudoWaveFunctions*iWave + iPseudoAtomicWave]
 	           =dftPtr->d_projectorKetTimesVectorPar[iWave][dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(atomId,iPseudoAtomicWave)]];
-		  
+
 	    }
 	}
     }
@@ -210,16 +220,16 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::v
 	    projectorKetTimesVector[atomId][numberPseudoWaveFunctions*iWave + iPseudoAtomicWave] *= dftPtr->d_nonLocalPseudoPotentialConstants[atomId][iPseudoAtomicWave];
 	}
     }
-  
+
   //std::cout<<"Scaling V*C^{T} "<<std::endl;
 
   char transA1 = 'N';
   char transB1 = 'N';
- 	  
+
   //
   //access elementIdsInAtomCompactSupport
   //
-  
+
 #ifdef ENABLE_PERIODIC_BC
   std::vector<std::complex<double> > outputVectors(numberNodesPerElement*numberWaveFunctions,0.0);
 #else
@@ -285,7 +295,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::v
 		{
 		  const unsigned int ck = dftPtr->FEEigen.system_to_component_index(idof).first;
 		  const unsigned int iNode = dftPtr->FEEigen.system_to_component_index(idof).second;
-		  
+
 		  if(ck == 0)
 		    temp[idof] = outputVectors[numberNodesPerElement*index + iNode].real();
 		  else

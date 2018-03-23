@@ -36,15 +36,17 @@ namespace dftParameters
   extern double radiusAtomBall, mixingParameter, dkx, dky, dkz;
   extern double lowerEndWantedSpectrum,relLinearSolverTolerance,selfConsistentSolverTolerance,TVal, start_magnetization;
 
-  extern bool isPseudopotential,periodicX,periodicY,periodicZ, useSymm, symmFromFile, timeReversal;
-  extern std::string meshFileName,coordinatesFile,currentPath,domainBoundingVectorsFile,kPointDataFile, symmDataFile, ionRelaxFlagsFile;
+  extern bool isPseudopotential,periodicX,periodicY,periodicZ, useSymm, timeReversal;
+  extern std::string meshFileName,coordinatesFile,currentPath,domainBoundingVectorsFile,kPointDataFile, ionRelaxFlagsFile;
 
-  extern double innerDomainSizeX, innerDomainSizeY, innerDomainSizeZ, outerAtomBallRadius, meshSizeOuterDomain, meshSizeInnerDomain;
+  extern double outerAtomBallRadius, meshSizeOuterDomain;
   extern double meshSizeInnerBall, meshSizeOuterBall;
 
   extern bool isIonOpt, isCellOpt, isIonForce, isCellStress;
   extern double forceRelaxTol, stressRelaxTol;
   extern unsigned int cellConstraintType;
+ 
+  extern unsigned int verbosity;
 
   /**
    * Declare parameters.
@@ -54,7 +56,7 @@ namespace dftParameters
   /**
    * Parse parameters.
    */
-  void parse_parameters(const dealii::ParameterHandler &prm);
+  void parse_parameters(dealii::ParameterHandler &prm);
 
 };
 

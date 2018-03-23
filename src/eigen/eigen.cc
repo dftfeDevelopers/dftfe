@@ -128,7 +128,7 @@ template<unsigned int FEOrder>
 void eigenClass<FEOrder>::computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoValues, 
 				      const vectorType & phi,
 				      const vectorType & phiExt,
-				      std::map<dealii::CellId,std::vector<double> >* pseudoValues)
+				      const std::map<dealii::CellId,std::vector<double> > & pseudoValues)
 {
   const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
   const unsigned int n_array_elements = VectorizedArray<double>::n_array_elements;
@@ -192,7 +192,7 @@ void eigenClass<FEOrder>::computeVEff(std::map<dealii::CellId,std::vector<double
 	      for (unsigned int v = 0; v < n_sub_cells; ++v)
 		{
 		  cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
-		  pseudoPotential[v]=((*pseudoValues)[cellPtr->id()][q]);
+		  pseudoPotential[v]=pseudoValues.find(cellPtr->id())->second[q];
 		}
 	      vEff(cell,q) = fe_eval_phi.get_value(q)+exchangePotential+corrPotential+(pseudoPotential-fe_eval_phiExt.get_value(q));
 	    }
@@ -209,7 +209,7 @@ void eigenClass<FEOrder>::computeVEff(std::map<dealii::CellId,std::vector<double
 				      std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
 				      const vectorType & phi,
 				      const vectorType & phiExt,
-				      std::map<dealii::CellId,std::vector<double> >* pseudoValues)
+				      const std::map<dealii::CellId,std::vector<double> > & pseudoValues)
 {
   const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
   const unsigned int n_array_elements = VectorizedArray<double>::n_array_elements;
@@ -287,7 +287,7 @@ void eigenClass<FEOrder>::computeVEff(std::map<dealii::CellId,std::vector<double
 	      for (unsigned int v = 0; v < n_sub_cells; ++v)
 		{
 		  cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
-		  pseudoPotential[v]=((*pseudoValues)[cellPtr->id()][q]);
+		  pseudoPotential[v]=pseudoValues.find(cellPtr->id())->second[q];
 		}
 	      vEff(cell,q)=fe_eval_phi.get_value(q)+derExchEnergyWithDensity+derCorrEnergyWithDensity+(pseudoPotential-fe_eval_phiExt.get_value(q));
 	      derExcWithSigmaTimesGradRho(cell,q,0) = derExcWithSigmaTimesGradRhoX;
@@ -699,7 +699,8 @@ void eigenClass<FEOrder>::computeVEffSpinPolarized(std::map<dealii::CellId,std::
 						   const vectorType & phi,
 						   const vectorType & phiExt,
 						   const unsigned int spinIndex,
-						   std::map<dealii::CellId,std::vector<double> >* pseudoValues)
+						   const std::map<dealii::CellId,std::vector<double> > & pseudoValues)
+
 {
   const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
   const unsigned int n_array_elements = VectorizedArray<double>::n_array_elements;
@@ -764,7 +765,7 @@ void eigenClass<FEOrder>::computeVEffSpinPolarized(std::map<dealii::CellId,std::
 	      for (unsigned int v = 0; v < n_sub_cells; ++v)
 		{
 		  cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
-		  pseudoPotential[v]=((*pseudoValues)[cellPtr->id()][q]);
+		  pseudoPotential[v]=pseudoValues.find(cellPtr->id())->second[q];
 		}
 	      vEff(cell,q)=fe_eval_phi.get_value(q)+exchangePotential+corrPotential+(pseudoPotential-fe_eval_phiExt.get_value(q));
 	    }
@@ -782,7 +783,7 @@ void eigenClass<FEOrder>::computeVEffSpinPolarized(std::map<dealii::CellId,std::
 				      const vectorType & phi,
 				      const vectorType & phiExt,
 				      const unsigned int spinIndex,
-				      std::map<dealii::CellId,std::vector<double> >* pseudoValues)
+				      const std::map<dealii::CellId,std::vector<double> > & pseudoValues)
 {
   const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
   const unsigned int n_array_elements = VectorizedArray<double>::n_array_elements;
@@ -872,7 +873,7 @@ void eigenClass<FEOrder>::computeVEffSpinPolarized(std::map<dealii::CellId,std::
 	      for (unsigned int v = 0; v < n_sub_cells; ++v)
 		{
 		  cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
-		  pseudoPotential[v]=((*pseudoValues)[cellPtr->id()][q]);
+		  pseudoPotential[v]=pseudoValues.find(cellPtr->id())->second[q];
 		}
 	      vEff(cell,q)=fe_eval_phi.get_value(q)+derExchEnergyWithDensity+derCorrEnergyWithDensity+(pseudoPotential-fe_eval_phiExt.get_value(q));
 	      derExcWithSigmaTimesGradRho(cell,q,0) = derExcWithSigmaTimesGradRhoX;

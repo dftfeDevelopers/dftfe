@@ -44,7 +44,7 @@ void dftClass<FEOrder>::initElectronicFields(){
         d_tempResidualNormWaveFunctions[kPoint].resize(eigenVectors[kPoint].size());
      }
   }
-     
+
 
   for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_maxkPoints; ++kPoint)
     {
@@ -55,20 +55,23 @@ void dftClass<FEOrder>::initElectronicFields(){
     }
 
 
-  if((Utilities::MPI::this_mpi_process(interpoolcomm)) > 1 && (Utilities::MPI::this_mpi_process(mpi_communicator))==0 )
+
+  if (dftParameters::verbosity==2)
+  {
+    if ( (Utilities::MPI::this_mpi_process(interpoolcomm)) > 1 && (Utilities::MPI::this_mpi_process(mpi_communicator))==0 )
 	std::cout << " check 2.1 " << std::endl ;
-	
+  }
 
   //
-  //initialize density 
+  //initialize density
   //
   initRho();
 
-  
+
   //
   //initialize PSI
   //
-  pcout << "reading initial guess for PSI\n";
+  pcout <<std::endl<< "Reading initial guess for PSI...."<<std::endl;
   readPSI();
-  computing_timer.exit_section("moved setup");   
+  computing_timer.exit_section("moved setup");
 }

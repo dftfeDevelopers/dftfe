@@ -245,8 +245,8 @@ class dftClass
    * Computes ground-state energy in a given SCF iteration,
    * computes repulsive energy explicity for a non-periodic system
    */
-  void compute_energy();
-  void compute_energy_spinPolarized();
+  double compute_energy(const bool print);
+  double compute_energy_spinPolarized(const bool print);
   double repulsiveEnergy();
 
   /**
@@ -353,7 +353,10 @@ class dftClass
   /**
    * constraint Matrices
    */
-  ConstraintMatrix constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_constraintsPeriodicWithDirichlet, d_noConstraints, d_noConstraintsEigen; 
+  ConstraintMatrix constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_constraintsPeriodicWithDirichlet, d_noConstraints, d_noConstraintsEigen;
+ 
+  /// vector of constraint matrices for vself bins
+  std::vector<ConstraintMatrix> d_vselfBinConstraintMatrices;
 
   /**
    * data storage for Kohn-Sham wavefunctions
@@ -377,16 +380,16 @@ class dftClass
   
   //dft related objects
   std::map<dealii::CellId, std::vector<double> > *rhoInValues, *rhoOutValues, *rhoInValuesSpinPolarized, *rhoOutValuesSpinPolarized;
-  std::deque<std::map<dealii::CellId,std::vector<double> >*> rhoInVals, rhoOutVals, rhoInValsSpinPolarized, rhoOutValsSpinPolarized;
+  std::deque<std::map<dealii::CellId,std::vector<double> >> rhoInVals, rhoOutVals, rhoInValsSpinPolarized, rhoOutValsSpinPolarized;
 
 
-  std::map<dealii::CellId, std::vector<double> > *gradRhoInValues, *gradRhoInValuesSpinPolarized;
-  std::map<dealii::CellId, std::vector<double> > *gradRhoOutValues, *gradRhoOutValuesSpinPolarized;
-  std::deque<std::map<dealii::CellId,std::vector<double> >*> gradRhoInVals,gradRhoInValsSpinPolarized,gradRhoOutVals, gradRhoOutValsSpinPolarized; 
+  std::map<dealii::CellId, std::vector<double> > * gradRhoInValues, *gradRhoInValuesSpinPolarized;
+  std::map<dealii::CellId, std::vector<double> > * gradRhoOutValues, *gradRhoOutValuesSpinPolarized;
+  std::deque<std::map<dealii::CellId,std::vector<double> >> gradRhoInVals,gradRhoInValsSpinPolarized,gradRhoOutVals, gradRhoOutValsSpinPolarized; 
 
 
   double d_pspTail = 8.0;
-  std::map<dealii::CellId, std::vector<double> > *pseudoValues;
+  std::map<dealii::CellId, std::vector<double> > pseudoValues;
   std::vector<std::vector<double> > d_localVselfs;
 
   

@@ -26,7 +26,12 @@
   //
   // Constructor.
   //
-  nonLinearSolver::nonLinearSolver()
+  nonLinearSolver::nonLinearSolver(const unsigned int debugLevel,
+				   const unsigned int maxNumberIterations,
+			           const double tolerance):
+  d_debugLevel(debugLevel),
+  d_maxNumberIterations(maxNumberIterations),
+  d_tolerance(tolerance)    
   {
   }
 
@@ -60,7 +65,7 @@
   //
   // Get maximum number of iterations.
   //
-  int 
+  unsigned int 
   nonLinearSolver::getMaximumNumberIterations() const
   {
 
@@ -75,7 +80,7 @@
   //
   // Get debug level.
   //
-  int 
+  unsigned int 
   nonLinearSolver::getDebugLevel() const
   {
     

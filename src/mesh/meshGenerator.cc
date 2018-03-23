@@ -19,9 +19,6 @@
 #include "../../include/dftParameters.h"
 #include "meshGenUtils.cc"
 
-#define maxRefinementLevels 10
-
-
 
 //
 //constructor
@@ -134,11 +131,6 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       }
 
       //
-      //print basis vectors
-      //
-      pcout << basisVectors[0] << " "<<basisVectors[1] << " " << basisVectors[2]<<std::endl;
-
-      //
       //Translate the main grid so that midpoint is at center
       //
       const Point<3> translation = 0.5*(vector1+vector2+vector3);
@@ -155,10 +147,12 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 	meshGenUtils::markPeriodicFacesNonOrthogonal(serialTriangulation,d_domainBoundingVectors);
 #endif
 
-
-      char buffer1[100];
-      sprintf(buffer1, "\n Base uniform number of elements: %u\n", parallelTriangulation.n_global_active_cells());
-      pcout << buffer1;
+      if (dftParameters::verbosity>=1)
+      {
+        char buffer1[100];
+        sprintf(buffer1, "\n Base uniform number of elements: %u\n", parallelTriangulation.n_global_active_cells());
+        pcout << buffer1;
+      }
       
       //
       //Multilayer refinement
@@ -188,7 +182,6 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 		  dealii::Point<3> center(cell->center());
 		  double currentMeshSize = cell->minimum_vertex_distance();
 
-		  bool inInnerDomain = false;
 		  //
 		  //compute projection of the vector joining the center of domain and centroid of cell onto
 		  //each of the domain bounding vectors
@@ -197,15 +190,9 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 		  double projComponent_2 = (center[0]*d_domainBoundingVectors[1][0]+center[1]*d_domainBoundingVectors[1][1]+center[2]*d_domainBoundingVectors[1][2])/domainBoundingVectorMag2;
 		  double projComponent_3 = (center[0]*d_domainBoundingVectors[2][0]+center[1]*d_domainBoundingVectors[2][1]+center[2]*d_domainBoundingVectors[2][2])/domainBoundingVectorMag3;
 
-		  if((std::fabs(projComponent_1) <= dftParameters::innerDomainSizeX) && (std::fabs(projComponent_2) <= dftParameters::innerDomainSizeY) && (std::fabs(projComponent_3) <= dftParameters::innerDomainSizeZ))
-		    {
-		      inInnerDomain = true;
-		    }
 
 		  bool cellRefineFlag = false;
 
-		  if(inInnerDomain && (currentMeshSize > dftParameters::meshSizeInnerDomain))
-		    cellRefineFlag = true;
 
 		  //loop over all atoms
 		  double distanceToClosestAtom = 1e8;
@@ -281,11 +268,14 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 
 	  if (refineFlag)
 	    {
-	      if(numLevels<maxRefinementLevels)
+	      if(numLevels<dftParameters::n_refinement_steps)
 		{
-		  char buffer2[100];
-		  sprintf(buffer2, "refinement in progress, level: %u\n", numLevels);
-		  pcout << buffer2;
+		  if (dftParameters::verbosity>=1)
+		  {
+		     char buffer2[100];
+		     sprintf(buffer2, "refinement in progress, level: %u\n", numLevels);
+		     pcout << buffer2;
+		   }
 		  parallelTriangulation.execute_coarsening_and_refinement();
 		  numLevels++;
 		}
@@ -322,17 +312,23 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       //
       //print out adaptive mesh metrics
       //
-      pcout << "Refinement levels executed: " << numLevels << std::endl;
-      char buffer[100];
-      sprintf(buffer, "Adaptivity summary:\n numCells: %u, numLevels: %u, h_min: %5.2e\n", parallelTriangulation.n_global_active_cells(), numLevels, minElemLength);
-      pcout << buffer;
+      if (dftParameters::verbosity>=1)
+      {
+        pcout << "Refinement levels executed: " << numLevels << std::endl;
+        char buffer[100];
+        sprintf(buffer, "Adaptivity summary:\n numCells: %u, numLevels: %u, h_min: %5.2e\n", parallelTriangulation.n_global_active_cells(), numLevels, minElemLength);
+        pcout << buffer;
+      }
 
       int numberGlobalCellsParallel = parallelTriangulation.n_global_active_cells();
-      if (dftParameters::useSymm) {
-	int numberGlobalCellsSerial = serialTriangulation.n_global_active_cells();
+      if (dftParameters::useSymm)
+      {
+         int numberGlobalCellsSerial = serialTriangulation.n_global_active_cells();
 
-	sprintf(buffer, " numParallelCells: %u, numSerialCells: %u \n", numberGlobalCellsParallel, numberGlobalCellsSerial);
-	pcout << buffer;
+	if (dftParameters::verbosity==2)
+	{
+	   pcout<<" numParallelCells: "<< numberGlobalCellsParallel<<", numSerialCells: "<< numberGlobalCellsSerial<<std::endl;
+	}
 
 	AssertThrow(numberGlobalCellsParallel==numberGlobalCellsSerial,ExcMessage("Number of cells are different for parallel and serial triangulations"));
       }

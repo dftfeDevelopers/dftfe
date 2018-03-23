@@ -92,18 +92,8 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   d_constraintsForTotalPotential.close();
 
   //clear existing constraints matrix vector
-  unsigned int count=0;
-  for (std::vector<ConstraintMatrix *>::iterator it = d_constraintsVector.begin() ; it != d_constraintsVector.end(); ++it)
-  { 
-    if (count > 1 && count < d_bins.size()+2)
-    {
-      (**it).clear();
-      delete (*it);
-    }
-    count++;
-  } 
+  d_constraintsVector.clear();
 
-  d_constraintsVector.clear(); 
   //
   //push back into Constraint Matrices
   //

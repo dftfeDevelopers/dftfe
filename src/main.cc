@@ -45,7 +45,7 @@ print_usage_message (ParameterHandler &prm)
   static const char *message
     =
       "Usage:\n"
-      "./dftRun parameterfile.prm (OR) mpirun -np nProcs ./dftRun parameterfile.prm\n"
+      "mpirun -np nProcs executable -p parameterfile.prm\n"
       "\n";
   //parallel message stream
   if (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)
@@ -60,10 +60,9 @@ void parse_command_line(const int argc,
                         char *const *argv,
                         ParameterHandler &prm)
 {
-  if (argc < 2)
+  if (argc < 3)
     {
-      print_usage_message(prm);
-      exit(1);
+      AssertThrow(false,ExcMessage("Incorrect usage! Correct usage: mpirun -np nProcs executable -p parameterfile.prm"));
     }
 
   std::list<std::string> args;
@@ -88,6 +87,18 @@ void parse_command_line(const int argc,
           prm.parse_input(parameter_file);
           print_usage_message(prm);
           dftParameters::parse_parameters(prm);
+
+	  const bool printParametersToFile=false;
+	  if (printParametersToFile)
+	  {
+	    std::ofstream output ("demoParameterFile.prm");
+	    prm.print_parameters (output, ParameterHandler::OutputStyle::Text);
+	  }
+#ifdef ENABLE_PERIODIC_BC
+	  AssertThrow(dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ,ExcMessage("Incorrect executable: periodic executable being used for non-periodic problem."));	
+#else
+	  AssertThrow(!(dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ),ExcMessage("Incorrect executable: non-periodic executable being used for periodic problem."));	
+#endif	  
         }
 
     }//end of while loop

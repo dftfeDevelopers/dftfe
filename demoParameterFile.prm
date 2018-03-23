@@ -1,0 +1,234 @@
+Usage:
+mpirun -np nProcs executable -p parameterfile.prm
+
+# Listing of Parameters
+# ---------------------
+# Path specifying the location of the source folder of dftfe code.
+set DFT PATH  = "/home/dsambit/dftfe/pullreq" # default: 
+
+# Parameter to control verbosity of terminal output. 0 for low, 1 for medium,
+# and 2 for high.
+set VERBOSITY = 1
+
+
+subsection Boundary conditions
+  # Periodicity along domain bounding vector, v1.
+  set PERIODIC1                       = false
+
+  # Periodicity along domain bounding vector, v2.
+  set PERIODIC2                       = false
+
+  # Periodicity along domain bounding vector, v3.
+  set PERIODIC3                       = false
+
+  # The radius (in a.u) of the ball around an atom on which self-potential of
+  # the associated nuclear charge is solved
+  set SELF POTENTIAL ATOM BALL RADIUS = 4.0   # default: 3.0
+end
+
+
+subsection Brillouin zone k point sampling options
+  # Number of pools the irreducible k-points to be split on should be a
+  # divisor of total number of procs and be less than or equal to the number
+  # of irreducible k-points
+  set NUMBER OF POOLS            = 1
+
+  # Flag to control whether to use point group symmetries (set to false for
+  # relaxation calculation)
+  set USE GROUP SYMMETRY         = true
+
+  # Flag to control usage of time reversal symmetry
+  set USE TIME REVERSAL SYMMETRY = false
+
+  # File specifying the k-Point quadrature rule to sample Brillouin zone.
+  # CAUTION: This option is only used for postprocessing, for example band
+  # structure calculation. To set k point rule for DFT solve use the
+  # Monkhorst-Pack (MP) grid generation.
+  set kPOINT RULE FILE           = 
+
+
+  subsection Monkhorst-Pack (MP) grid generation
+    # Number of Monkhorts-Pack grid points to be used along reciprocal
+    # latttice vector 1.
+    set SAMPLING POINTS 1 = 2
+
+    # Number of Monkhorts-Pack grid points to be used along reciprocal
+    # latttice vector 2.
+    set SAMPLING POINTS 2 = 2
+
+    # Number of Monkhorts-Pack grid points to be used along reciprocal
+    # latttice vector 3.
+    set SAMPLING POINTS 3 = 2
+
+    # Fractional shifting to be used along reciprocal latttice vector 1.
+    set SAMPLING SHIFT 1  = 0.0
+
+    # Fractional shifting to be used along reciprocal latttice vector 2.
+    set SAMPLING SHIFT 2  = 0.0
+
+    # Fractional shifting to be used along reciprocal latttice vector 3.
+    set SAMPLING SHIFT 3  = 0.0
+  end
+
+end
+
+
+subsection DFT functional related parameters
+  # Parameter specifying the type of exchange-correlation to be used: 1(LDA:
+  # Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23,
+  # 5048 (1981)]), 2(LDA: Perdew-Wang 92 functional with Slater Exchange [PRB.
+  # 45, 13244 (1992)]), 3(LDA: Vosko, Wilk & Nusair with Slater Exchange[Can.
+  # J. Phys. 58, 1200 (1980)]), 4(GGA: Perdew-Burke-Ernzerhof functional [PRL.
+  # 77, 3865 (1996)])
+  set EXCHANGE CORRELATION TYPE   = 1
+
+  # Boolean Parameter specifying whether pseudopotential DFT calculation needs
+  # to be performed
+  set PSEUDOPOTENTIAL CALCULATION = true
+
+  # Type of nonlocal projector to be used: 1 for KB, 2 for ONCV, default is
+  # KB
+  set PSEUDOPOTENTIAL TYPE        = 1
+
+  # Spin polarization: 0 for no spin polarization and 1 for spin polarization
+  set SPIN POLARIZATION           = 0
+
+  # Magnetization to start with (must be between -0.5 and +0.5)
+  set START MAGNETIZATION         = 0    # default: 0.0
+end
+
+
+subsection Eigen-solver/Chebyshev solver related parameters
+  # The number of the Chebyshev filter passes per SCF  (Default value is used
+  # when the input parameter is not specified
+  set CHEBYSHEV FILTER PASSES           = 1
+
+  # The degree of the Chebyshev polynomial to be employed for filtering out
+  # the unwanted spectrum (Default value is used when the input parameter
+  # value is 0
+  set CHEBYSHEV POLYNOMIAL DEGREE       = 0
+
+  # The lower bound of the wanted eigen spectrum
+  set LOWER BOUND WANTED SPECTRUM       = -10.0
+
+  # Number of Kohn-Sham wavefunctions to be computed. For insulators use
+  # N/2+(10-20) and for metals use 20 percent more than N/2 (atleast 10 more).
+  # N is the total number of electrons
+  set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 20    # default: 10
+end
+
+
+subsection Finite element mesh parameters
+  # External mesh file path. If nothing is given auto mesh generation is
+  # performed
+  set MESH FILE        = 
+
+  # The degree of the finite-element interpolating polynomial
+  set POLYNOMIAL ORDER = 4
+
+
+  subsection Auto mesh generation parameters
+    # Radius of ball enclosing atom
+    set ATOM BALL RADIUS     = 2.0
+
+    # Mesh size of the base mesh on which refinement is performed.
+    set BASE MESH SIZE       = 10.0 # default: 2.0
+
+    # Maximum number of refinement steps to be used. The default value is good
+    # enough in most cases.
+    set MAX REFINEMENT STEPS = 10
+
+    # Mesh size in a ball around atom
+    set MESH SIZE ATOM BALL  = 0.5
+
+    # Mesh size near atom. Useful for all-electron case.
+    set MESH SIZE NEAR ATOM  = 0.5
+  end
+
+end
+
+
+subsection Geometry
+  # Atomic-coordinates file. For fully non-periodic domain give cartesian
+  # coordinates of the atoms (in a.u) with respect origin at the center of the
+  # domain. For periodic and semi-periodic give fractional coordinates of
+  # atoms. File format (example for two atoms): x1 y1 z1 (row1), x2 y2 z2
+  # (row2).
+  set ATOMIC COORDINATES FILE      = coordinates.inp           # default: 
+
+  # Set file specifying the domain bounding vectors v1, v2 and v3 in a.u. with
+  # the following format: v1x v1y v1z (row1), v2x v2y v2z (row2), v3x v3y v3z
+  # (row3). Domain bounding vectors are the typical lattice vectors in a fully
+  # periodic calculation.
+  set DOMAIN BOUNDING VECTORS FILE = domainBoundingVectors.inp # default: 
+
+
+  subsection Optimization
+    # Cell relaxation constraint type, 1(isotropic shape fixed volume
+    # optimization), 2(volume fixed shape optimization), 3(relax only cell
+    # component v1_x), 4(relax only cell component v2_x), 5(relax only cell
+    # component v3_x), 6(relax only cell components v2_x and v3_x), 7(relax
+    # only cell components v1_x and v3_x), 8(relax only cell components v1x
+    # and v2_x), 9(volume optimization- relax only v1_x, v2_x and v3_x),
+    # 10(2D- relax only x and y components relaxed), 11(2D- relax only x and y
+    # shape components- inplane area fixed), 12(relax all cell components)
+    set CELL CONSTRAINT TYPE = 12
+
+    # Boolean parameter specifying if cell stress is to be relaxed
+    set CELL OPT             = false
+
+    # Boolean parameter specifying if cell stress is to be computed.
+    # Automatically set to true if CELL OPT is true.
+    set CELL STRESS          = false
+
+    # Sets the tolerance of the maximum force (in a.u.) on an ion when forces
+    # are considered to be relaxed.
+    set FORCE TOL            = 5e-5
+
+    # Boolean parameter specifying if atomic forces are to be computed.
+    # Automatically set to true if ION OPT is true.
+    set ION FORCE            = true  # default: false
+
+    # Boolean parameter specifying if atomic forces are to be relaxed.
+    set ION OPT              = false
+
+    # File specifying the atomic position update permission flags. 1- update
+    # 0- no update. File format (example for two atoms with atom 1 fixed and
+    # atom 2 free): 0 0 0 (row1), 1 1 1 (row2).
+    set ION RELAX FLAGS FILE = 
+
+    # Sets the tolerance of the cell stress (in a.u.) when cell stress is
+    # considered to be relaxed.
+    set STRESS TOL           = 5e-7
+  end
+
+end
+
+
+subsection Poisson problem paramters
+  # Maximum number of iterations to be allowed for Poisson problem
+  # convergence
+  set MAXIMUM ITERATIONS = 10000 # default: 5000
+
+  # Relative tolerance as stopping criterion for Poisson problem convergence
+  set TOLERANCE          = 1e-12
+end
+
+
+subsection SCF parameters
+  # Number of SCF iterations to be considered for mixing the electron-density
+  set ANDERSON SCHEME MIXING HISTORY   = 70
+
+  # Mixing parameter to be used in Anderson scheme
+  set ANDERSON SCHEME MIXING PARAMETER = 0.5
+
+  # Maximum number of iterations to be allowed for SCF convergence
+  set MAXIMUM ITERATIONS               = 100  # default: 50
+
+  # Fermi-Dirac smearing temperature (in Kelvin)
+  set TEMPERATURE                      = 500  # default: 500.0
+
+  # SCF iterations stopping tolerance in terms of electron-density difference
+  # between two successive iterations
+  set TOLERANCE                        = 1e-8 # default: 1e-08
+end
