@@ -167,7 +167,7 @@ void dftClass<FEOrder>::alphaTimesXPlusY(std::complex<double>   alpha,
 
 //chebyshev solver
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::chebyshevSolver(unsigned int spinType)
+void dftClass<FEOrder>::chebyshevSolver(const unsigned int spinType)
 {
   computing_timer.enter_section("Chebyshev solve"); 
 
@@ -491,7 +491,7 @@ void dftClass<FEOrder>::gramSchmidt(std::vector<vectorType> & X)
 }
 
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::rayleighRitz(unsigned int s, 
+void dftClass<FEOrder>::rayleighRitz(const unsigned int spinType, 
 				     std::vector<vectorType> & X)
 {
   computing_timer.enter_section("Chebyshev Rayleigh Ritz"); 
@@ -516,10 +516,10 @@ void dftClass<FEOrder>::rayleighRitz(unsigned int s,
 
   //char buffer[100];
   if (dftParameters::verbosity==2)
-  {
-    pcout << "kPoint: "<< d_kPointIndex<<std::endl;
-    pcout << "spin: "<< s+1 <<std::endl;
-  }
+    {
+      pcout << "kPoint: "<< d_kPointIndex<<std::endl;
+      pcout << "spin: "<< spinType+1 <<std::endl;
+    }
   for (unsigned int i=0; i< (unsigned int)n; i++)
     {
       //sprintf(buffer, "eigen value %3u: %22.16e\n", i, eigenValuesTemp[d_kPointIndex][i]);
@@ -527,7 +527,7 @@ void dftClass<FEOrder>::rayleighRitz(unsigned int s,
       if (dftParameters::verbosity==2)
           pcout<<"eigen value "<< std::setw(3) <<i <<": "<<eigenValuesTemp[d_kPointIndex][i] <<std::endl;
 
-      eigenValues[d_kPointIndex][s*numEigenValues + i] =  eigenValuesTemp[d_kPointIndex][i];
+      eigenValues[d_kPointIndex][spinType*numEigenValues + i] =  eigenValuesTemp[d_kPointIndex][i];
     }
   if (dftParameters::verbosity==2)  
      pcout <<std::endl;
@@ -561,14 +561,14 @@ void dftClass<FEOrder>::rayleighRitz(unsigned int s,
     }
 #endif
   
-char transA  = 'N', transB  = 'N';
+const char transA  = 'N', transB  = 'N';
 lda=n1; int ldb=m, ldc=n1;
 
 #ifdef ENABLE_PERIODIC_BC
- std::complex<double> alpha = 1.0, beta  = 0.0;
+ const std::complex<double> alpha = 1.0, beta  = 0.0;
  zgemm_(&transA, &transB, &n1, &m, &m, &alpha, &Xlocal[0], &lda, &eigenPtr->XHXValue[0], &ldb, &beta, &Xbar[0], &ldc);
 #else
- double alpha = 1.0, beta  = 0.0;
+ const double alpha = 1.0, beta  = 0.0;
  dgemm_(&transA, &transB, &n1, &m, &m, &alpha, &Xlocal[0], &lda, &eigenPtr->XHXValue[0], &ldb, &beta, &Xbar[0], &ldc);
 #endif
 
@@ -600,8 +600,8 @@ lda=n1; int ldb=m, ldc=n1;
 #endif
 
   //set a0 and bLow
-  a0[(1+dftParameters::spinPolarized)*d_kPointIndex+s]=eigenValuesTemp[d_kPointIndex][0]; 
-  bLow[(1+dftParameters::spinPolarized)*d_kPointIndex+s]=eigenValuesTemp[d_kPointIndex].back(); 
+  a0[(1+dftParameters::spinPolarized)*d_kPointIndex+spinType]=eigenValuesTemp[d_kPointIndex][0]; 
+  bLow[(1+dftParameters::spinPolarized)*d_kPointIndex+spinType]=eigenValuesTemp[d_kPointIndex].back(); 
   //
   computing_timer.exit_section("Chebyshev Rayleigh Ritz"); 
 }
@@ -611,10 +611,10 @@ lda=n1; int ldb=m, ldc=n1;
 //b-upper bound of the full spectrum, a0-lower bound of the wanted spectrum
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::chebyshevFilter(std::vector<vectorType> & X, 
-					unsigned int m, 
-					double a, 
-					double b, 
-					double a0)
+					const unsigned int m, 
+					const double a, 
+					const double b, 
+					const double a0)
 {
   double e, c, sigma, sigma1, sigma2, gamma;
   e=(b-a)/2.0; c=(b+a)/2.0;
@@ -637,8 +637,7 @@ void dftClass<FEOrder>::chebyshevFilter(std::vector<vectorType> & X,
     constraintsNoneEigen.set_zero(X[i]);
 
   eigenPtr->HX(X, PSI);
-  //std::vector<vectorType* >::iterator y,ynew;
-  //std::vector<vectorType*>::iterator x;
+
   for (std::vector<vectorType>::iterator y=PSI.begin(), x=X.begin(); y<PSI.end(); ++y, ++x)
     {  
       (*y).add(alpha2,*x);
@@ -679,9 +678,7 @@ void dftClass<FEOrder>::computeResidualNorm(std::vector<vectorType> & X)
   std::vector<vectorType> PSI(X.size());
   
   for(unsigned int i = 0; i < X.size(); ++i)
-    {
       PSI[i].reinit(X[0]);
-    }
 
 
   eigenPtr->HX(X, PSI);

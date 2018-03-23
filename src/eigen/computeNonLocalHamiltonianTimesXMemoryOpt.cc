@@ -24,7 +24,6 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::v
   //get FE data
   //
   QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
-  //FEValues<3> fe_values (dftPtr->FEEigen, quadrature_formula, update_values);
 
   //
   //get access to triangulation objects from meshGenerator class
@@ -32,11 +31,10 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::v
   const int kPointIndex = dftPtr->d_kPointIndex;
   const unsigned int dofs_per_cell = dftPtr->FEEigen.dofs_per_cell;
 
-  int numberNodesPerElement;
 #ifdef ENABLE_PERIODIC_BC
-  numberNodesPerElement = dftPtr->FEEigen.dofs_per_cell/2;//GeometryInfo<3>::vertices_per_cell;
+  const int numberNodesPerElement = dftPtr->FEEigen.dofs_per_cell/2;//GeometryInfo<3>::vertices_per_cell;
 #else
-  numberNodesPerElement = dftPtr->FEEigen.dofs_per_cell;
+  const int numberNodesPerElement = dftPtr->FEEigen.dofs_per_cell;
 #endif
 
   //
@@ -49,7 +47,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::v
   std::map<unsigned int, std::vector<double> > projectorKetTimesVector;
 #endif
 
-  int numberWaveFunctions = src.size();
+  const int numberWaveFunctions = src.size();
   projectorKetTimesVector.clear();
 
   //
@@ -96,8 +94,6 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::v
 		  //
 		  //This is the component index 0(real) or 1(imag).
 		  //
-		  //const unsigned int ck = fe_values.get_fe().system_to_component_index(idof).first;
-		  //const unsigned int iNode = fe_values.get_fe().system_to_component_index(idof).second;
 		  const unsigned int ck = dftPtr->FEEigen.system_to_component_index(idof).first;
 		  const unsigned int iNode = dftPtr->FEEigen.system_to_component_index(idof).second;
 		  if(ck == 0)
@@ -114,14 +110,14 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::v
 
 	  for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInElement[iElem].size();++iAtom)
 	    {
-	      int atomId = dftPtr->d_nonLocalAtomIdsInElement[iElem][iAtom];
-	      int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
-	      int nonZeroElementMatrixId = dftPtr->d_sparsityPattern[atomId][iElem];
+	      const int atomId = dftPtr->d_nonLocalAtomIdsInElement[iElem][iAtom];
+	      const int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
+	      const int nonZeroElementMatrixId = dftPtr->d_sparsityPattern[atomId][iElem];
 #ifdef ENABLE_PERIODIC_BC
-	      char transA = 'C';
-	      char transB = 'N';
-	      std::complex<double> alpha = 1.0;
-	      std::complex<double> beta = 1.0;
+	      const char transA = 'C';
+	      const char transB = 'N';
+	      const std::complex<double> alpha = 1.0;
+	      const std::complex<double> beta = 1.0;
 	      zgemm_(&transA,
 		     &transB,
 		     &numberPseudoWaveFunctions,
@@ -136,10 +132,10 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::v
 		     &projectorKetTimesVector[atomId][0],
 		     &numberPseudoWaveFunctions);
 #else
-	      char transA = 'T';
-	      char transB = 'N';
-	      double alpha = 1.0;
-	      double beta = 1.0;
+	      const char transA = 'T';
+	      const char transB = 'N';
+	      const double alpha = 1.0;
+	      const double beta = 1.0;
 	      dgemm_(&transA,
 		     &transB,
 		     &numberPseudoWaveFunctions,
@@ -223,8 +219,8 @@ for (unsigned int i=0; i<numberWaveFunctions;++i)
 
   //std::cout<<"Scaling V*C^{T} "<<std::endl;
 
-  char transA1 = 'N';
-  char transB1 = 'N';
+  const char transA1 = 'N';
+  const char transB1 = 'N';
 
   //
   //access elementIdsInAtomCompactSupport
@@ -249,8 +245,8 @@ for (unsigned int i=0; i<numberWaveFunctions;++i)
 	  DoFHandler<3>::active_cell_iterator cell = dftPtr->d_elementIteratorsInAtomCompactSupport[atomId][iElemComp];
 
 #ifdef ENABLE_PERIODIC_BC
-	  std::complex<double> alpha1 = 1.0;
-	  std::complex<double> beta1 = 0.0;
+	  const std::complex<double> alpha1 = 1.0;
+	  const std::complex<double> beta1 = 0.0;
 
 	  zgemm_(&transA1,
 		 &transB1,
@@ -266,8 +262,8 @@ for (unsigned int i=0; i<numberWaveFunctions;++i)
 		 &outputVectors[0],
 		 &numberNodesPerElement);
 #else
-	  double alpha1 = 1.0;
-	  double beta1 = 0.0;
+	  const double alpha1 = 1.0;
+	  const double beta1 = 0.0;
 
 	  dgemm_(&transA1,
 		 &transB1,

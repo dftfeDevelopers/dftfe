@@ -1067,15 +1067,13 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
 #else
   dealii::parallel::distributed::Vector<double > vec(d_locallyOwnedProjectorIdsCurrentProcess,
                                                      d_ghostProjectorIdsCurrentProcess,
-                                                     mpi_communicator);   
+                                                     mpi_communicator);
 #endif     
-  //vec.update_ghost_values();
 
   d_projectorKetTimesVectorPar.resize(eigenVectors[0].size());
-  for (unsigned int i=0; i<eigenVectors[0].size();++i)
-  {
-      d_projectorKetTimesVectorPar[i].reinit(vec);
-  }
+  for (unsigned int i = 0; i < eigenVectors[0].size(); ++i)
+    d_projectorKetTimesVectorPar[i].reinit(vec);
+
 }
 
 template<unsigned int FEOrder>

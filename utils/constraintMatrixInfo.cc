@@ -81,6 +81,7 @@ namespace dftUtils
   //
   void constraintMatrixInfo::distribute(dealii::parallel::distributed::Vector<double> &fieldVector) const
   {
+    fieldVector.update_ghost_values();
     unsigned int count = 0;
     for(unsigned int i = 0; i < d_rowIdsLocal.size();++i)
       {
