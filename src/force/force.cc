@@ -183,12 +183,12 @@ template<unsigned int FEOrder>
 void forceClass<FEOrder>::configForceLinFEFinalize()
 {
   d_configForceVectorLinFE.compress(VectorOperation::add);//copies the ghost element cache to the owning element
-  d_configForceVectorLinFE.update_ghost_values();
+  //d_configForceVectorLinFE.update_ghost_values();
   d_constraintsNoneForce.distribute(d_configForceVectorLinFE);//distribute to constrained degrees of freedom (for example periodic)
   d_configForceVectorLinFE.update_ghost_values();
 #ifdef ENABLE_PERIODIC_BC
   d_configForceVectorLinFEKPoints.compress(VectorOperation::add);//copies the ghost element cache to the owning element
-  d_configForceVectorLinFEKPoints.update_ghost_values();
+  //d_configForceVectorLinFEKPoints.update_ghost_values();
   d_constraintsNoneForce.distribute(d_configForceVectorLinFEKPoints);//distribute to constrained degrees of freedom (for example periodic)
   d_configForceVectorLinFEKPoints.update_ghost_values();
 #endif
