@@ -46,7 +46,7 @@
 #include "energy.cc"
 #include "charge.cc"
 #include "density.cc"
-#include "nscf.cc"
+
 
 
 #include "mixingschemes.cc"
@@ -253,53 +253,52 @@ void dftClass<FEOrder>::set()
   //set size of eigenvalues and eigenvectors data structures
   eigenValues.resize(d_maxkPoints);
   eigenValuesTemp.resize(d_maxkPoints);
-  a0.resize((spinPolarized+1)*d_maxkPoints,lowerEndWantedSpectrum);
-  bLow.resize((spinPolarized+1)*d_maxkPoints,0.0);
-  eigenVectors.resize((1+spinPolarized)*d_maxkPoints);
-  eigenVectorsOrig.resize((1+spinPolarized)*d_maxkPoints);
 
-  for(unsigned int kPoint = 0; kPoint < (1+spinPolarized)*d_maxkPoints; ++kPoint)
+  a0.resize((dftParameters::spinPolarized+1)*d_maxkPoints,dftParameters::lowerEndWantedSpectrum);
+  bLow.resize((dftParameters::spinPolarized+1)*d_maxkPoints,0.0);
+  eigenVectors.resize((1+dftParameters::spinPolarized)*d_maxkPoints);
+  
+  for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_maxkPoints; ++kPoint)
     {
-        for (unsigned int i=0; i<numEigenValues; ++i)
-	  {
-	    eigenVectors[kPoint].push_back(new vectorType);
-	    eigenVectorsOrig[kPoint].push_back(new vectorType);
-	  }
+      //for (unsigned int i=0; i<numEigenValues; ++i)
+      //{
+	  //eigenVectors[kPoint].push_back(new vectorType);
+	  //eigenVectors[kPoint].push_back(boost::shared_ptr<vectorType>(new vectorType));
+      //}
+      eigenVectors[kPoint].resize(numEigenValues);
+      
     }
+
    for(unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
     {
-      eigenValues[kPoint].resize((spinPolarized+1)*numEigenValues);
-      eigenValuesTemp[kPoint].resize(numEigenValues);
+      eigenValues[kPoint].resize((dftParameters::spinPolarized+1)*numEigenValues);
+      eigenValuesTemp[kPoint].resize(numEigenValues); 
     }
 
-  for (unsigned int i=0; i<numEigenValues; ++i){
-    PSI.push_back(new vectorType);
-    tempPSI.push_back(new vectorType);
-    tempPSI2.push_back(new vectorType);
-    tempPSI3.push_back(new vectorType);
-  }
 }
 
 //dft pseudopotential init
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::initPseudoPotentialAll()
 {
-   pcout<<std::endl<<"Pseuodopotential initalization...."<<std::endl;
-   if(isPseudopotential)
+  pcout<<std::endl<<"Pseuodopotential initalization...."<<std::endl;
+  if(dftParameters::isPseudopotential)
     {
       initLocalPseudoPotential();
       //
-      if (pseudoProjector==2)
+      if(dftParameters::pseudoProjector == 2)
          initNonLocalPseudoPotential_OV();
       else
          initNonLocalPseudoPotential();
       //
       //
-      if (pseudoProjector==2){
+      if(dftParameters::pseudoProjector == 2)
+	{
          computeSparseStructureNonLocalProjectors_OV();
          computeElementalOVProjectorKets();
 	}
-      else{
+      else
+	{
 	 computeSparseStructureNonLocalProjectors();
          computeElementalProjectorKets();
 	}
@@ -524,7 +523,7 @@ void dftClass<FEOrder>::solve()
 	{
 	  if (scfIter==1)
               {
-		if (spinPolarized==1)
+		if (dftParameters::spinPolarized==1)
                   {
 		    //for (unsigned int s=0; s<2; ++s)
 		       norm = mixing_simple_spinPolarized();
@@ -534,7 +533,7 @@ void dftClass<FEOrder>::solve()
 	      }
 	  else
              {
-		if (spinPolarized==1)
+	       if (dftParameters::spinPolarized==1)
 		  {
 		    //for (unsigned int s=0; s<2; ++s)
 		       norm = sqrt(mixing_anderson_spinPolarized());
@@ -562,7 +561,7 @@ void dftClass<FEOrder>::solve()
 
 
       //eigen solve
-      if (spinPolarized==1)
+      if (dftParameters::spinPolarized==1)
 	{
 	  for(unsigned int s=0; s<2; ++s)
 	      {
@@ -649,7 +648,7 @@ void dftClass<FEOrder>::solve()
 	//rhoOut
    computing_timer.enter_section("compute rho");
 #ifdef ENABLE_PERIODIC_BC
-   if (useSymm){
+   if(dftParameters::useSymm){
 	symmetryPtr->computeLocalrhoOut();
 	symmetryPtr->computeAndSymmetrize_rhoOut();
     }
@@ -664,21 +663,20 @@ void dftClass<FEOrder>::solve()
       integralRhoValue=totalCharge(rhoOutValues);
 
       //phiTot with rhoOut
-      if (dftParameters::verbosity==2)
-         pcout<< std::endl<<"Poisson solve for total electrostatic potential (rhoOut+b): ";
+      if(dftParameters::verbosity==2)
+	pcout<< std::endl<<"Poisson solve for total electrostatic potential (rhoOut+b): ";
 
       poissonPtr->solve(poissonPtr->phiTotRhoOut,constraintMatrixId, rhoOutValues);
       //pcout<<"L-2 Norm of Phi-out   :"<<poissonPtr->phiTotRhoOut.l2_norm()<<std::endl;
       //pcout<<"L-inf Norm of Phi-out :"<<poissonPtr->phiTotRhoOut.linfty_norm()<<std::endl;
 
-
-      const double totalEnergy = spinPolarized==1 ?
-                                 compute_energy_spinPolarized(dftParameters::verbosity==2) :
-                                 compute_energy(dftParameters::verbosity==2);
+      const double totalEnergy = dftParameters::spinPolarized==1 ?
+	compute_energy_spinPolarized(dftParameters::verbosity==2) :
+	compute_energy(dftParameters::verbosity==2);
       if (dftParameters::verbosity==1)
-      {
+	{
 	  pcout<<"Total energy  : " << totalEnergy << std::endl;
-      }
+	}
 
       if (dftParameters::verbosity>=1)
         pcout<<"***********************Self-Consistent-Field Iteration: "<<std::setw(2)<<scfIter+1<<" complete**********************"<<std::endl<<std::endl;
@@ -696,33 +694,13 @@ void dftClass<FEOrder>::solve()
         pcout<< "SCF iteration converged to the specified tolerance after: "<<scfIter<<" iterations."<<std::endl;
 
     // compute and print ground state energy or energy after max scf iterations
-    if (spinPolarized==1)
+    if (dftParameters::spinPolarized==1)
       compute_energy_spinPolarized(true);
     else
       compute_energy (true);
 
  computing_timer.exit_section("solve");
 
-//
-/*
- computing_timer.enter_section(" pp ");
-#ifdef ENABLE_PERIODIC_BC
-  if ((Utilities::MPI::this_mpi_process(interpoolcomm))==0){
-     pcout<<"Beginning nscf calculation "<<std::endl;
-     readkPointData() ;
-     char buffer[100];
-     pcout<<"actual k-Point-coordinates and weights: "<<std::endl;
-     for(int i = 0; i < d_maxkPoints; ++i){
-       sprintf(buffer, "  %5u:  %12.5f  %12.5f %12.5f %12.5f\n", i, d_kPointCoordinates[3*i+0], d_kPointCoordinates[3*i+1], d_kPointCoordinates[3*i+2],d_kPointWeights[i]);
-       pcout << buffer;
-     }
-     //
-     nscf() ;
-  }
-#endif
- computing_timer.exit_section(" pp ");
- */
-  //
   MPI_Barrier(interpoolcomm) ;
   if (dftParameters::isIonForce)
   {
@@ -753,8 +731,8 @@ void dftClass<FEOrder>::output()
   data_outEigen.attach_dof_handler (dofHandlerEigen);
   for(unsigned int i=0; i<eigenVectors[0].size(); ++i)
     {
-      char buffer[100]; sprintf(buffer,"eigen%u", i);
-      data_outEigen.add_data_vector (*eigenVectors[0][i], buffer);
+      char buffer[100]; sprintf(buffer,"eigen%u", i);  
+      data_outEigen.add_data_vector (eigenVectors[0][i], buffer);
     }
   data_outEigen.build_patches (C_num1DQuad<FEOrder>());
 

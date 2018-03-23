@@ -38,8 +38,8 @@ namespace dftParameters
   double meshSizeInnerBall=1.0, meshSizeOuterBall=1.0;
 
   bool isIonOpt=false, isCellOpt=false, isIonForce=false, isCellStress=false;
-  double forceRelaxTol=5e-5;//Hartree/Bohr
-  double stressRelaxTol=5e-7;//Hartree/Bohr^3
+  double forceRelaxTol  = 5e-5;//Hartree/Bohr
+  double stressRelaxTol = 5e-7;//Hartree/Bohr^3
   unsigned int cellConstraintType=12;// all cell components to be relaxed
 
   unsigned int verbosity=0;

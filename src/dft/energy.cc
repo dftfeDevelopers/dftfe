@@ -20,7 +20,6 @@
 //source file for all energy computations
 #include "../../include/dftParameters.h"
 
-using namespace dftParameters ;
 
 double FermiDiracFunctionValue(double x,
 			       std::vector<std::vector<double> > & eigenValues,
@@ -42,12 +41,12 @@ double FermiDiracFunctionValue(double x,
 	  if(temp1 <= 0.0)
 	    {
 	      temp2  =  1.0/(1.0+exp(temp1));
-	      functionValue += (2.0-spinPolarized)*kPointWeights[kPoint]*temp2;
+	      functionValue += (2.0-dftParameters::spinPolarized)*kPointWeights[kPoint]*temp2;
 	    }
 	  else
 	    {
 	      temp2 =  1.0/(1.0+exp(-temp1));
-	      functionValue += (2.0-spinPolarized)*kPointWeights[kPoint]*exp(-temp1)*temp2;
+	      functionValue += (2.0-dftParameters::spinPolarized)*kPointWeights[kPoint]*exp(-temp1)*temp2;
 	    }
 	}
     }
@@ -75,13 +74,12 @@ double FermiDiracFunctionDerivativeValue(double x,
 	  if(temp1 <= 0.0)
 	    {
 	      temp2  =  1.0/(1.0 + exp(temp1));
-	      functionDerivative += (2.0-spinPolarized)*kPointWeights[kPoint]*(exp(temp1)/(C_kb*TVal))*temp2*temp2;
+	      functionDerivative += (2.0-dftParameters::spinPolarized)*kPointWeights[kPoint]*(exp(temp1)/(C_kb*TVal))*temp2*temp2;
 	    }
 	  else
 	    {
 	      temp2 =  1.0/(1.0 + exp(-temp1));
-	      functionDerivative += (2.0-spinPolarized)*kPointWeights[kPoint]*(exp(-temp1)/(C_kb*TVal))*temp2*temp2;
-
+	      functionDerivative += (2.0-dftParameters::spinPolarized)*kPointWeights[kPoint]*(exp(-temp1)/(C_kb*TVal))*temp2*temp2; 
 	    }
 	}
     }
@@ -330,7 +328,8 @@ double dftClass<FEOrder>::compute_energy(const bool print)
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::compute_fermienergy()
 {
-  int count =  std::ceil(static_cast<double>(numElectrons)/(2.0-spinPolarized));
+
+  int count =  std::ceil(static_cast<double>(numElectrons)/(2.0-dftParameters::spinPolarized));
   double TVal = dftParameters::TVal;
 
 
@@ -508,12 +507,12 @@ double dftClass<FEOrder>::compute_energy_spinPolarized(const bool print)
     {
       if (dftParameters::verbosity==2)
          pcout << "kPoint: "<< kPoint <<std::endl;
-      for (unsigned int i=0; i<(1+spinPolarized)*numEigenValues; i++)
+      for (unsigned int i=0; i<(1+dftParameters::spinPolarized)*numEigenValues; i++)
 	{
-	  factor=(eigenValues[kPoint][i]-fermiEnergy)/(C_kb*TVal);
+	  factor=(eigenValues[kPoint][i]-fermiEnergy)/(C_kb*dftParameters::TVal);
 	  //partialOccupancy=1.0/(1.0+exp(temp));
 	  double partialOccupancy = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)) : 1.0/(1.0 + std::exp(factor));
-	  bandEnergyLocal+= (2-spinPolarized)*partialOccupancy*d_kPointWeights[kPoint]*eigenValues[kPoint][i];
+	  bandEnergyLocal+= (2-dftParameters::spinPolarized)*partialOccupancy*d_kPointWeights[kPoint]*eigenValues[kPoint][i];
 	  if (dftParameters::verbosity==2)
 	   pcout<<"fractional occupancy "<< i<<": "<< partialOccupancy<<std::endl;
 	}
@@ -533,7 +532,7 @@ double dftClass<FEOrder>::compute_energy_spinPolarized(const bool print)
   //parallel loop over all elements
   typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
 
-  if(xc_id == 4)
+  if(dftParameters::xc_id == 4)
     {
       for (; cell!=endc; ++cell)
 	{

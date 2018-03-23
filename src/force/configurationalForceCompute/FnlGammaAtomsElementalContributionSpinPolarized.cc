@@ -31,7 +31,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionPeriodicSpinPolarize
 {
  
   const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
-  const unsigned int numEigenVectors=dftPtr->eigenVectorsOrig[0].size(); 
+  const unsigned int numEigenVectors=dftPtr->eigenVectors[0].size(); 
   const unsigned int numKPoints=dftPtr->d_kPointWeights.size();
   const unsigned int numSubCells= dftPtr->matrix_free_data.n_components_filled(cell);
   const unsigned int numQuadPoints=forceEval.n_q_points;
@@ -103,7 +103,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodicSpinPolar
 {
  
   const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
-  const unsigned int numEigenVectors=dftPtr->eigenVectorsOrig[0].size(); 
+  const unsigned int numEigenVectors=dftPtr->eigenVectors[0].size(); 
   const unsigned int numSubCells= dftPtr->matrix_free_data.n_components_filled(cell);
   const unsigned int numQuadPoints=forceEval.n_q_points;
   DoFHandler<C_DIM>::active_cell_iterator subCellPtr;

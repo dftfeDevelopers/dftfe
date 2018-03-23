@@ -40,23 +40,21 @@ class eigenClass
 
 public:
   eigenClass(dftClass<FEOrder>* _dftPtr, MPI_Comm &mpi_comm_replica);
-  void HX(const std::vector<vectorType*> &src, 
-	  std::vector<vectorType*> &dst);
+  void HX(std::vector<vectorType> &src, 
+	  std::vector<vectorType> &dst);
 
-  void XHX(const std::vector<vectorType*> &src); 
+  void XHX(std::vector<vectorType> &src); 
  private:
   void implementHX(const dealii::MatrixFree<3,double>  &data,
-		   std::vector<vectorType*>  &dst, 
-		   const std::vector<vectorType*>  &src,
+		   std::vector<vectorType>  &dst, 
+		   const std::vector<vectorType>  &src,
 		   const std::pair<unsigned int,unsigned int> &cell_range) const;
 
-  void computeNonLocalHamiltonianTimesX(const std::vector<vectorType*> &src,
-					std::vector<vectorType*>       &dst);
-  void computeNonLocalHamiltonianTimesX_OV(const std::vector<vectorType*> &src,
-					std::vector<vectorType*>       &dst);
-
-  void computeNonLocalHamiltonianTimesXMemoryOpt(const std::vector<vectorType*> &src,
-					         std::vector<vectorType*>       &dst);  
+  void computeNonLocalHamiltonianTimesX(const std::vector<vectorType> &src,
+					std::vector<vectorType>       &dst);
+ 
+  void computeNonLocalHamiltonianTimesXMemoryOpt(const std::vector<vectorType> &src,
+					         std::vector<vectorType>       &dst);  
 
   void init ();
   void computeMassVector();
@@ -93,7 +91,7 @@ public:
   dealii::FE_Q<3>   FE;
  
   //data structures
-  vectorType invSqrtMassVector;
+  vectorType invSqrtMassVector,sqrtMassVector;
 #ifdef ENABLE_PERIODIC_BC
   std::vector<std::complex<double> > XHXValue;
 #else

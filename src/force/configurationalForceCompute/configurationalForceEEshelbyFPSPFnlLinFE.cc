@@ -75,7 +75,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(
   FEValues<C_DIM> psiValues(dftPtr->FEEigen, quadrature, update_values | update_gradients| update_hessians);
 
   const unsigned int numQuadPoints=forceEval.n_q_points;
-  const unsigned int numEigenVectors=dftPtr->eigenVectorsOrig[0].size();  
+  const unsigned int numEigenVectors=dftPtr->eigenVectors[0].size();  
   const unsigned int numKPoints=dftPtr->d_kPointWeights.size();
   DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
   Tensor<1,2,VectorizedArray<double> > zeroTensor1;zeroTensor1[0]=make_vectorized_array(0.0);zeroTensor1[1]=make_vectorized_array(0.0);
@@ -103,7 +103,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(
     phiExtFactor=make_vectorized_array(1.0);
     for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
     {
-         computeNonLocalProjectorKetTimesPsiTimesV(dftPtr->eigenVectorsOrig[ikPoint],
+         computeNonLocalProjectorKetTimesPsiTimesV(dftPtr->eigenVectors[ikPoint],
 			                           projectorKetTimesPsiTimesVReal,
                                                    projectorKetTimesPsiTimesVComplexKPoints[ikPoint],
 						   ikPoint);
@@ -308,9 +308,9 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(
         for (unsigned int iEigenVec=0; iEigenVec<numEigenVectors; ++iEigenVec)
         {
 		      
-	  psiValues.get_function_values(*((dftPtr->eigenVectorsOrig)[ikPoint][iEigenVec]), tempPsi);
-          psiValues.get_function_gradients(*((dftPtr->eigenVectorsOrig)[ikPoint][iEigenVec]), tempGradPsi);
-          psiValues.get_function_hessians(*((dftPtr->eigenVectorsOrig)[ikPoint][iEigenVec]), tempHessianPsi);
+	  psiValues.get_function_values((dftPtr->eigenVectors[ikPoint][iEigenVec]), tempPsi);
+          psiValues.get_function_gradients((dftPtr->eigenVectors[ikPoint][iEigenVec]), tempGradPsi);
+          psiValues.get_function_hessians((dftPtr->eigenVectors[ikPoint][iEigenVec]), tempHessianPsi);
           for (unsigned int q=0; q<numQuadPoints; ++q)
           {
 	     const int id=q*numEigenVectors*numKPoints+numEigenVectors*ikPoint+iEigenVec;

@@ -23,7 +23,6 @@
 #include "../../include/dft.h"
 #include "symmetrizeRho.cc"
 
-using namespace dftParameters ;
 
 
 //
@@ -57,7 +56,7 @@ void symmetryClass<FEOrder>::clearMaps()
  recv_buf_size.clear() ;
  rhoRecvd.clear() ;
  groupOffsets.clear() ;
- if (xc_id==4)
+ if (dftParameters::xc_id==4)
  gradRhoRecvd.clear() ;
 
 
@@ -106,7 +105,7 @@ void symmetryClass<FEOrder>::initSymmetry()
  recv_buf_size.resize(numSymm) ;
  rhoRecvd.resize(numSymm) ;
  groupOffsets.resize(numSymm) ;
- if (xc_id==4)
+ if (dftParameters::xc_id==4)
  gradRhoRecvd.resize(numSymm) ;
  //
  //unsigned int n_vertices = sort_vertex((dftPtr->dofHandlerEigen)) ;
@@ -140,7 +139,7 @@ void symmetryClass<FEOrder>::initSymmetry()
     recv_buf_size[iSymm]=std::vector<std::vector<std::vector<int>> >(cell_id);
     rhoRecvd[iSymm]=std::vector<std::vector<std::vector<double>> >(cell_id);
     groupOffsets[iSymm]=std::vector<std::vector<std::vector<int>> >(cell_id);
-    if (xc_id==4)
+    if (dftParameters::xc_id==4)
     gradRhoRecvd[iSymm]=std::vector<std::vector<std::vector<double>> >(cell_id);
   }
  //
@@ -166,11 +165,11 @@ void symmetryClass<FEOrder>::initSymmetry()
   }
   //
   MPI_Allreduce(&ownerProc[0],
-    &ownerProcGlobal[0],
-    cell_id,
-    MPI_INT,
-    MPI_SUM,
-    mpi_communicator) ;
+		&ownerProcGlobal[0],
+		cell_id,
+		MPI_INT,
+		MPI_SUM,
+		mpi_communicator) ;
   //
   /*Point<3> p1(0.0155, 0.0155, 0.0155) ;
   unsigned int vertex_id = find_cell (p1) ;
@@ -373,7 +372,7 @@ void symmetryClass<FEOrder>::initSymmetry()
 		 }
 	     send_size0 += send_buf_size[iSymm][globalCellId_parallel[cell->id()]][proc][0] ;
 	     //
-	     rhoRecvd[iSymm][globalCellId_parallel[cell->id()]][proc].resize((1+spinPolarized)*send_buf_size[iSymm][globalCellId_parallel[cell->id()]][proc][1]) ; // to be used later to recv symmetrized rho
+	     rhoRecvd[iSymm][globalCellId_parallel[cell->id()]][proc].resize((1+dftParameters::spinPolarized)*send_buf_size[iSymm][globalCellId_parallel[cell->id()]][proc][1]) ; // to be used later to recv symmetrized rho
 	     }
 	   }
 	 }
@@ -436,8 +435,8 @@ void symmetryClass<FEOrder>::initSymmetry()
 		//totPoints += (1+spinPolarized)*recv_buf_size[iSymm][globalCellId_parallel[cell->id()]][1][proc] ;
 		//mpi_scatter_offset[proc] += (1+spinPolarized)*groupOffsets[iSymm][globalCellId_parallel[cell->id()]][1][proc];
 		//send_scatter_size[proc] += (1+spinPolarized)*recv_buf_size[iSymm][globalCellId_parallel[cell->id()]][1][proc];
-		recv_size[proc] = recv_size[proc] + (1+spinPolarized)*send_buf_size[iSymm][globalCellId_parallel[cell->id()]][proc][1] ;
-		rhoRecvd[iSymm][globalCellId_parallel[cell->id()]][proc].resize((1+spinPolarized)*send_buf_size[iSymm][globalCellId_parallel[cell->id()]][proc][1]) ;
+	   recv_size[proc] = recv_size[proc] + (1+dftParameters::spinPolarized)*send_buf_size[iSymm][globalCellId_parallel[cell->id()]][proc][1] ;
+	   rhoRecvd[iSymm][globalCellId_parallel[cell->id()]][proc].resize((1+dftParameters::spinPolarized)*send_buf_size[iSymm][globalCellId_parallel[cell->id()]][proc][1]) ;
 		}
 	 }
      }
@@ -449,15 +448,15 @@ void symmetryClass<FEOrder>::initSymmetry()
     }*/
    //
      for(int i = 0; i < dftPtr->n_mpi_processes; i++) {
-         recv_size1[i] = (1 + spinPolarized)*recv_size1[i] ;
-         mpi_offsets1[i] = (1 + spinPolarized)*mpi_offsets1[i] ;
+       recv_size1[i] = (1 + dftParameters::spinPolarized)*recv_size1[i] ;
+       mpi_offsets1[i] = (1 + dftParameters::spinPolarized)*mpi_offsets1[i] ;
    }
    /*for(int i = 0; i < dftPtr->n_mpi_processes; i++) {
 		if (this_mpi_process==i)
 	           std::cout << this_mpi_process << " " << recv_size1[i] << std::endl;
 	        MPI_Barrier(mpi_communicator);
     }*/
-   if (xc_id==4){
+     if (dftParameters::xc_id==4){
    cell = (dftPtr->dofHandlerEigen).begin_active();
    for(int i = 0; i < dftPtr->n_mpi_processes; i++) {
        recvGrad_size1[i] = 3*recv_size1[i] ;
@@ -475,7 +474,7 @@ void symmetryClass<FEOrder>::initSymmetry()
 	 for (unsigned int proc=0; proc<dftPtr->n_mpi_processes; ++proc){
 		//mpi_scatterGrad_offset[proc] += (1+spinPolarized)*3*groupOffsets[iSymm][globalCellId_parallel[cell->id()]][1][proc];
 		//send_scatterGrad_size[proc] += (1+spinPolarized)*3*recv_buf_size[iSymm][globalCellId_parallel[cell->id()]][1][proc];
-		gradRhoRecvd[iSymm][globalCellId_parallel[cell->id()]][proc].resize((1+spinPolarized)*3*send_buf_size[iSymm][globalCellId_parallel[cell->id()]][proc][1]) ;
+	   gradRhoRecvd[iSymm][globalCellId_parallel[cell->id()]][proc].resize((1+dftParameters::spinPolarized)*3*send_buf_size[iSymm][globalCellId_parallel[cell->id()]][proc][1]) ;
 		}
 	 }
        }
@@ -508,10 +507,10 @@ void symmetryClass<FEOrder>:: test_spg_get_ir_reciprocal_mesh()
   double lattice[3][3], position[(dftPtr->atomLocations).size()][3];
   int num_atom = (dftPtr->atomLocations).size();
   int types[num_atom] ;
-  int mesh[3] = {static_cast<int>(nkx), static_cast<int>(nky), static_cast<int>(nkz)};
-  int is_shift[] = {(int)ceil(dkx), (int)ceil(dky), (int)ceil(dkz)};
-  int grid_address[nkx * nky * nkz][3];
-  int grid_mapping_table[nkx * nky * nkz];
+  int mesh[3] = {static_cast<int>(dftParameters::nkx), static_cast<int>(dftParameters::nky), static_cast<int>(dftParameters::nkz)};
+  int is_shift[] = {(int)ceil(dftParameters::dkx), (int)ceil(dftParameters::dky), (int)ceil(dftParameters::dkz)};
+  int grid_address[dftParameters::nkx * dftParameters::nky * dftParameters::nkz][3];
+  int grid_mapping_table[dftParameters::nkx * dftParameters::nky * dftParameters::nkz];
   int max_size = 50;
   //
   for (unsigned int i=0; i<3; ++i) {
@@ -548,7 +547,7 @@ void symmetryClass<FEOrder>:: test_spg_get_ir_reciprocal_mesh()
   //
   pcout << "Number of irreducible BZ points using SPG " << num_ir <<std:: endl;
   for (unsigned int i=0; i<v.size(); ++i) {
-     sprintf(buffer, "  %5u:  %12.5f  %12.5f %12.5f\n", i+1, float(grid_address[v[i]][0])/float(nkx), float(grid_address[v[i]][1])/float(nky), float(grid_address[v[i]][2])/float(nkz));
+    sprintf(buffer, "  %5u:  %12.5f  %12.5f %12.5f\n", i+1, float(grid_address[v[i]][0])/float(dftParameters::nkx), float(grid_address[v[i]][1])/float(dftParameters::nky), float(grid_address[v[i]][2])/float(dftParameters::nkz));
      pcout << buffer;
   }
    pcout << "*** Make sure previously given k-points are same as the one above ***" << std:: endl;

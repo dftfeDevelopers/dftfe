@@ -454,7 +454,7 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoDataForce()
 
 
 template<unsigned int FEOrder>
-void forceClass<FEOrder>::computeNonLocalProjectorKetTimesPsiTimesV(const std::vector<vectorType*> &src,
+void forceClass<FEOrder>::computeNonLocalProjectorKetTimesPsiTimesV(const std::vector<vectorType> &src,
 							            std::vector<std::vector<double> > & projectorKetTimesPsiTimesVReal,
                                                                     std::vector<std::vector<std::complex<double> > > & projectorKetTimesPsiTimesVComplex,
 								    const unsigned int kPointIndex)
@@ -524,9 +524,9 @@ void forceClass<FEOrder>::computeNonLocalProjectorKetTimesPsiTimesV(const std::v
 	  unsigned int index=0;
 #ifdef ENABLE_PERIODIC_BC
 	  std::vector<double> temp(dofs_per_cell,0.0);
-	  for (std::vector<vectorType*>::const_iterator it=src.begin(); it!=src.end(); it++)
+	  for (std::vector<vectorType>::const_iterator it=src.begin(); it!=src.end(); it++)
 	    {
-	      (*it)->extract_subvector_to(local_dof_indices.begin(), local_dof_indices.end(), temp.begin());
+	      (*it).extract_subvector_to(local_dof_indices.begin(), local_dof_indices.end(), temp.begin());
 	      for(int idof = 0; idof < dofs_per_cell; ++idof)
 		{
 		  //
@@ -544,9 +544,9 @@ void forceClass<FEOrder>::computeNonLocalProjectorKetTimesPsiTimesV(const std::v
 	 
 
 #else
-	  for (std::vector<vectorType*>::const_iterator it=src.begin(); it!=src.end(); it++)
+	  for (std::vector<vectorType>::const_iterator it=src.begin(); it!=src.end(); it++)
 	    {
-	      (*it)->extract_subvector_to(local_dof_indices.begin(), local_dof_indices.end(), inputVectors.begin()+numberNodesPerElement*index);
+	      (*it).extract_subvector_to(local_dof_indices.begin(), local_dof_indices.end(), inputVectors.begin()+numberNodesPerElement*index);
 	      index++;
 	    }
 #endif

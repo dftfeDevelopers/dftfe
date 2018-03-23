@@ -23,7 +23,6 @@
 
 #include "../../include/dftParameters.h"
 
-using namespace dftParameters ;
 
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::loadPSIFiles(unsigned int Z, 
@@ -44,8 +43,8 @@ void dftClass<FEOrder>::loadPSIFiles(unsigned int Z,
   //
   char psiFile[256];
 
-  if(isPseudopotential)
-    if(pseudoProjector==2)
+  if(dftParameters::isPseudopotential)
+    if(dftParameters::pseudoProjector==2)
 	sprintf(psiFile, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/singleAtomData/psi%u%u.inp", dftParameters::currentPath.c_str(), Z, n, l);
     else
         sprintf(psiFile, "%s/data/electronicStructure/pseudoPotential/z%u/singleAtomData/psi%u%u.inp", dftParameters::currentPath.c_str(), Z, n, l);
@@ -374,7 +373,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 
     }
 
-  for(int kPoint = 0; kPoint < (1+spinPolarized)*d_maxkPoints; ++kPoint)
+  for(int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_maxkPoints; ++kPoint)
     {
       for (unsigned int i = 0; i < numEigenValues; ++i)
 	{
@@ -382,25 +381,25 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 	 for(unsigned int j = 0; j < numberDofs; ++j)
 	    {
 	      unsigned int dofID = local_dof_indicesReal[j];
-	      if(eigenVectors[kPoint][i]->in_local_range(dofID))
+	      if(eigenVectors[kPoint][i].in_local_range(dofID))
 		{
 		  if(!constraintsNoneEigen.is_constrained(dofID))
-		    (*eigenVectors[kPoint][i])(dofID) = local_dof_values[i][j];
+		    (eigenVectors[kPoint][i])(dofID) = local_dof_values[i][j];
 		}
 	    }
 #else
 	  for(unsigned int j = 0; j < numberDofs; ++j)
 	    {
 	      unsigned int dofID = locallyOwnedDOFs[j];
-	      if(eigenVectors[kPoint][i]->in_local_range(dofID))
+	      if(eigenVectors[kPoint][i].in_local_range(dofID))
 		{
 		  if(!constraintsNoneEigen.is_constrained(dofID))
-		    (*eigenVectors[kPoint][i])(dofID) = local_dof_values[i][j];
+		    (eigenVectors[kPoint][i])(dofID) = local_dof_values[i][j];
 		}
 	    }
 #endif
-	  eigenVectors[kPoint][i]->compress(VectorOperation::insert);
-	  eigenVectors[kPoint][i]->update_ghost_values();
+	  eigenVectors[kPoint][i].compress(VectorOperation::insert);
+	  eigenVectors[kPoint][i].update_ghost_values();
 	}
     }
   
@@ -408,30 +407,31 @@ void dftClass<FEOrder>::readPSIRadialValues(){
   //
   //multiply by M^0.5
   //
-  for(int kPoint = 0; kPoint < (1+spinPolarized)*d_maxkPoints; ++kPoint)
+  /*for(int kPoint = 0; kPoint < (1+spinPolarized)*d_maxkPoints; ++kPoint)
     {
       for (unsigned int i = 0; i < eigenVectors[kPoint].size(); ++i)
 	{
-	  for(types::global_dof_index j = 0; j < eigenVectors[kPoint][i]->size(); ++j)
+	  for(types::global_dof_index j = 0; j < eigenVectors[kPoint][i].size(); ++j)
 	     {
-	       if(eigenVectors[kPoint][i]->in_local_range(j))
+	       if(eigenVectors[kPoint][i].in_local_range(j))
 		  {
 		    if(!constraintsNoneEigen.is_constrained(j) && std::abs(eigenPtr->invSqrtMassVector(j))>1.0e-15)
-		      (*eigenVectors[kPoint][i])(j) /= eigenPtr->invSqrtMassVector(j);
+		      (eigenVectors[kPoint][i])(j) /= eigenPtr->invSqrtMassVector(j);
 		  }
 	     }
 
 
 	  char buffer[100];
-	  sprintf(buffer, "norm %u: l1: %14.8e  l2:%14.8e\n",i, eigenVectors[kPoint][i]->l1_norm(), eigenVectors[kPoint][i]->l2_norm());
+	  sprintf(buffer, "norm %u: l1: %14.8e  l2:%14.8e\n",i, eigenVectors[kPoint][i].l1_norm(), eigenVectors[kPoint][i].l2_norm());
 
-	  eigenVectors[kPoint][i]->zero_out_ghosts();
-	  eigenVectors[kPoint][i]->compress(VectorOperation::insert);
-	  eigenVectors[kPoint][i]->update_ghost_values();
-	  constraintsNoneEigen.distribute(*eigenVectors[kPoint][i]);
-	  eigenVectors[kPoint][i]->update_ghost_values();
+	  eigenVectors[kPoint][i].zero_out_ghosts();
+	  eigenVectors[kPoint][i].compress(VectorOperation::insert);
+	  eigenVectors[kPoint][i].update_ghost_values();
+	  constraintsNoneEigen.distribute(eigenVectors[kPoint][i]);
+	  eigenVectors[kPoint][i].update_ghost_values();
 	}
-    }
+	}*/
+
 }
 
 //

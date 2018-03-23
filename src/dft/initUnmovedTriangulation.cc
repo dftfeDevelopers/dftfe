@@ -24,7 +24,7 @@
 #endif
 #include "../../include/dftParameters.h"
 
-using namespace dftParameters ;
+
 //
 //source file for dft class initializations
 //
@@ -145,8 +145,7 @@ void dftClass<FEOrder>::initUnmovedTriangulation(parallel::distributed::Triangul
    {
       GridTools::collect_periodic_faces(dofHandler, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector2,offsetVectors[i]);
       GridTools::collect_periodic_faces(dofHandlerEigen, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector2Eigen,offsetVectors[i]);
-
-    }
+   }
 
   DoFTools::make_periodicity_constraints<DoFHandler<3> >(periodicity_vector2, constraintsNone);
   DoFTools::make_periodicity_constraints<DoFHandler<3> >(periodicity_vector2Eigen, constraintsNoneEigen);
@@ -209,7 +208,7 @@ void dftClass<FEOrder>::initUnmovedTriangulation(parallel::distributed::Triangul
   //
   int exceptParamX, exceptParamC;
   int isSpinPolarized ;
-  if (spinPolarized == 1)
+  if (dftParameters::spinPolarized == 1)
      {
         isSpinPolarized = XC_POLARIZED ;
      }
@@ -217,27 +216,27 @@ void dftClass<FEOrder>::initUnmovedTriangulation(parallel::distributed::Triangul
      {
         isSpinPolarized = XC_UNPOLARIZED ;
      }
-  if(xc_id == 1)
+  if(dftParameters::xc_id == 1)
     {
       exceptParamX = xc_func_init(&funcX,XC_LDA_X, isSpinPolarized);
       exceptParamC = xc_func_init(&funcC,XC_LDA_C_PZ, isSpinPolarized);
     }
-  else if(xc_id == 2)
+  else if(dftParameters::xc_id == 2)
     {
       exceptParamX = xc_func_init(&funcX,XC_LDA_X, isSpinPolarized);
       exceptParamC = xc_func_init(&funcC,XC_LDA_C_PW, isSpinPolarized);
     }
-  else if(xc_id == 3)
+  else if(dftParameters::xc_id == 3)
     {
       exceptParamX = xc_func_init(&funcX,XC_LDA_X, isSpinPolarized);
       exceptParamC = xc_func_init(&funcC,XC_LDA_C_VWN, isSpinPolarized);
     }
-  else if(xc_id == 4)
+  else if(dftParameters::xc_id == 4)
     {
       exceptParamX = xc_func_init(&funcX,XC_GGA_X_PBE,isSpinPolarized);
       exceptParamC = xc_func_init(&funcC,XC_GGA_C_PBE,isSpinPolarized);
     }
-  else if(xc_id > 4)
+  else if(dftParameters::xc_id > 4)
     {
       pcout<<"-------------------------------------"<<std::endl;
       pcout<<"Exchange or Correlation Functional not found"<<std::endl;

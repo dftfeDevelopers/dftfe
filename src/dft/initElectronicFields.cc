@@ -18,7 +18,6 @@
 
 #include "../../include/dftParameters.h"
 
-using namespace dftParameters ;
 
 //init
 template<unsigned int FEOrder>
@@ -31,18 +30,12 @@ void dftClass<FEOrder>::initElectronicFields(){
   matrix_free_data.initialize_dof_vector(vChebyshev,eigenDofHandlerIndex);
   v0Chebyshev.reinit(vChebyshev);
   fChebyshev.reinit(vChebyshev);
-  aj[0].reinit(vChebyshev); aj[1].reinit(vChebyshev); aj[2].reinit(vChebyshev);
-  aj[3].reinit(vChebyshev); aj[4].reinit(vChebyshev);
-  for (unsigned int i=0; i<eigenVectors[0].size(); ++i)
-    {
-      PSI[i]->reinit(vChebyshev);
-      tempPSI[i]->reinit(vChebyshev);
-      tempPSI2[i]->reinit(vChebyshev);
-      tempPSI3[i]->reinit(vChebyshev);
-    }
 
-  //std::cout<< "SPIN POLARIZED:"<< spinPolarized <<std::endl;
-  if (spinPolarized!=1)
+  //
+  //temp STL d_v and d_f vectors required for upper bound computation filled here
+  //
+
+  if(dftParameters::spinPolarized!=1)
   {
      d_tempResidualNormWaveFunctions.clear();
      d_tempResidualNormWaveFunctions.resize(d_maxkPoints);
@@ -53,14 +46,14 @@ void dftClass<FEOrder>::initElectronicFields(){
   }
 
 
-  for(unsigned int kPoint = 0; kPoint < (1+spinPolarized)*d_maxkPoints; ++kPoint)
+  for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_maxkPoints; ++kPoint)
     {
       for(unsigned int i = 0; i < eigenVectors[kPoint].size(); ++i)
 	{
-	  eigenVectors[kPoint][i]->reinit(vChebyshev);
-	  eigenVectorsOrig[kPoint][i]->reinit(vChebyshev);
+	  eigenVectors[kPoint][i].reinit(vChebyshev);
 	}
     }
+
 
 
   if (dftParameters::verbosity==2)

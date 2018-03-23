@@ -42,7 +42,7 @@ void dftClass<FEOrder>::initLocalPseudoPotential()
   for(std::set<unsigned int>::iterator it=atomTypes.begin(); it!=atomTypes.end(); it++)
     {
       char pseudoFile[256];
-      if (pseudoProjector==2)
+      if (dftParameters::pseudoProjector==2)
 	  sprintf(pseudoFile, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/locPot.dat", dftParameters::currentPath.c_str(),*it);
       else
           sprintf(pseudoFile, "%s/data/electronicStructure/pseudoPotential/z%u/pseudoAtomData/locPot.dat", dftParameters::currentPath.c_str(),*it);
@@ -1068,12 +1068,12 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
   dealii::parallel::distributed::Vector<double > vec(d_locallyOwnedProjectorIdsCurrentProcess,
                                                      d_ghostProjectorIdsCurrentProcess,
                                                      mpi_communicator);
-#endif
+#endif     
+
   d_projectorKetTimesVectorPar.resize(eigenVectors[0].size());
-  for (unsigned int i=0; i<eigenVectors[0].size();++i)
-  {
-      d_projectorKetTimesVectorPar[i].reinit(vec);
-  }
+  for (unsigned int i = 0; i < eigenVectors[0].size(); ++i)
+    d_projectorKetTimesVectorPar[i].reinit(vec);
+
 }
 
 template<unsigned int FEOrder>
