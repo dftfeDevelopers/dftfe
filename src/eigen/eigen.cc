@@ -533,7 +533,7 @@ void eigenClass<FEOrder>::HX(std::vector<vectorType> &src,
   for (unsigned int i = 0; i < src.size(); i++)
     {
       src[i].scale(invSqrtMassVector); //M^{-1/2}*X
-      //src[i].update_ghost_values();
+      src[i].update_ghost_values();
       //dftPtr->constraintsNoneEigen.distribute(*(dftPtr->tempPSI2[i]));
       dftPtr->constraintsNoneEigenDataInfo.distribute(src[i]);
       src[i].update_ghost_values();
