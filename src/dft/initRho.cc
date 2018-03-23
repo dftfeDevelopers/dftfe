@@ -110,7 +110,7 @@ void dftClass<FEOrder>::initRho()
 	  double *rhoInValuesPtr = &((*rhoInValues)[cell->id()][0]);
 	
           double *rhoInValuesSpinPolarizedPtr;	  
-          if (spinPolarized==1)
+          if(dftParameters::spinPolarized==1)
 	  {
 	      (*rhoInValuesSpinPolarized)[cell->id()]=std::vector<double>(2*n_q_points);
 	      rhoInValuesSpinPolarizedPtr = &((*rhoInValuesSpinPolarized)[cell->id()][0]);
@@ -169,7 +169,7 @@ void dftClass<FEOrder>::initRho()
       gradRhoInVals.push_back(std::map<dealii::CellId, std::vector<double> >());
       gradRhoInValues= &(gradRhoInVals.back());
       //
-	if (dftParameters::spinPolarized==1)
+	if(dftParameters::spinPolarized==1)
         {
           gradRhoInValsSpinPolarized.push_back(std::map<dealii::CellId, std::vector<double> >());
           gradRhoInValuesSpinPolarized=&(gradRhoInValsSpinPolarized.back());
@@ -186,7 +186,7 @@ void dftClass<FEOrder>::initRho()
 	      double *gradRhoInValuesPtr = &((*gradRhoInValues)[cell->id()][0]);
 	      
               double *gradRhoInValuesSpinPolarizedPtr;
-              if (spinPolarized==1)
+              if(dftParameters::spinPolarized==1)
               {	      
 	        (*gradRhoInValuesSpinPolarized)[cell->id()]=std::vector<double>(6*n_q_points);
                 gradRhoInValuesSpinPolarizedPtr = &((*gradRhoInValuesSpinPolarized)[cell->id()][0]);

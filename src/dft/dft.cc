@@ -670,13 +670,13 @@ void dftClass<FEOrder>::solve()
       //pcout<<"L-2 Norm of Phi-out   :"<<poissonPtr->phiTotRhoOut.l2_norm()<<std::endl;
       //pcout<<"L-inf Norm of Phi-out :"<<poissonPtr->phiTotRhoOut.linfty_norm()<<std::endl;
 
-	const double totalEnergy = dftParameters::spinPolarized==1 ?
-                                 compute_energy_spinPolarized(dftParameters::verbosity==2) :
-                                 compute_energy(dftParameters::verbosity==2);
+      const double totalEnergy = dftParameters::spinPolarized==1 ?
+	compute_energy_spinPolarized(dftParameters::verbosity==2) :
+	compute_energy(dftParameters::verbosity==2);
       if (dftParameters::verbosity==1)
-      {
+	{
 	  pcout<<"Total energy  : " << totalEnergy << std::endl;
-      }
+	}
 
       if (dftParameters::verbosity>=1)
         pcout<<"***********************Self-Consistent-Field Iteration: "<<std::setw(2)<<scfIter+1<<" complete**********************"<<std::endl<<std::endl;
@@ -694,7 +694,7 @@ void dftClass<FEOrder>::solve()
         pcout<< "SCF iteration converged to the specified tolerance after: "<<scfIter<<" iterations."<<std::endl;
 
     // compute and print ground state energy or energy after max scf iterations
-    if (spinPolarized==1)
+    if (dftParameters::spinPolarized==1)
       compute_energy_spinPolarized(true);
     else
       compute_energy (true);

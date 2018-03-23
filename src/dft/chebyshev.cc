@@ -184,7 +184,6 @@ void dftClass<FEOrder>::chebyshevSolver(unsigned int spinType)
   //
   if(chebyshevOrder == 0)
     {
-
       if(bUp <= 500)
 	chebyshevOrder = 40;
       else if(bUp > 500  && bUp <= 1000)
@@ -213,7 +212,6 @@ void dftClass<FEOrder>::chebyshevSolver(unsigned int spinType)
 	chebyshevOrder = 1250;
       else if(bUp > 5e5)
 	chebyshevOrder = 1500;
-
     }
 
   //
@@ -225,7 +223,7 @@ void dftClass<FEOrder>::chebyshevSolver(unsigned int spinType)
 
      sprintf(buffer, "%s:%18.10e\n", "upper bound of unwanted spectrum", bUp);
      pcout << buffer;
-     sprintf(buffer, "%s:%18.10e\n", "lower bound of unwanted spectrum", bLow[(1+spinPolarized)*d_kPointIndex+s]);
+     sprintf(buffer, "%s:%18.10e\n", "lower bound of unwanted spectrum", bLow[(1+dftParameters::spinPolarized)*d_kPointIndex+spinType]);
      pcout << buffer;
      sprintf(buffer, "%s: %u\n\n", "Chebyshev polynomial degree", chebyshevOrder);
      pcout << buffer;
@@ -695,8 +693,8 @@ void dftClass<FEOrder>::computeResidualNorm(std::vector<vectorType> & X)
   for(unsigned int i = 0; i < n; i++)
      {
 	(PSI[i]).add(-eigenValuesTemp[d_kPointIndex][i],X[i]) ;
-	const double resNorm= (*PSI[i]).l2_norm();
-        if (spinPolarized!=1)
+	const double resNorm= (PSI[i]).l2_norm();
+        if (dftParameters::spinPolarized!=1)
 	   d_tempResidualNormWaveFunctions[d_kPointIndex][i]=resNorm;
       
 	if (dftParameters::verbosity==2)

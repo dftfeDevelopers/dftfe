@@ -1,4 +1,4 @@
-set DFT PATH = "/home/dsambit/dftfe/pullreq"
+set DFT PATH = "../../../../"
 
 subsection Geometry
   set ATOMIC COORDINATES FILE = coordinates.inp
@@ -20,6 +20,8 @@ end
 
 
 subsection Finite element mesh parameters
+  set MESH FILE = mesh.inp
+
   set POLYNOMIAL ORDER = 4
  
   subsection Auto mesh generation parameters
@@ -49,7 +51,7 @@ end
 
 
 subsection Eigen-solver/Chebyshev solver related parameters
-  set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 20
+  set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 10
   set LOWER BOUND WANTED SPECTRUM = -10.0
   set CHEBYSHEV POLYNOMIAL DEGREE = 0
 end
