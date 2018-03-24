@@ -49,9 +49,9 @@ namespace dftParameters
   void declare_parameters(ParameterHandler &prm)
   {
 
-    prm.declare_entry("DFT PATH", "",
-                      Patterns::Anything(),
-                      "Path specifying the location of the source folder of dftfe code.");
+    //prm.declare_entry("DFT PATH", "",
+    //                  Patterns::Anything(),
+    //                  "Path specifying the location of the source folder of dftfe code.");
 
     prm.declare_entry("VERBOSITY", "1",
                       Patterns::Integer(0,2),
@@ -309,8 +309,10 @@ namespace dftParameters
   void parse_parameters(ParameterHandler &prm)
   {
 
-    dftParameters::currentPath                   = prm.get("DFT PATH");
-    dftParameters::currentPath.erase(std::remove(dftParameters::currentPath.begin(),dftParameters::currentPath.end(),'"'),dftParameters::currentPath.end());
+    //dftParameters::currentPath                   = prm.get("DFT PATH");
+    //dftParameters::currentPath.erase(std::remove(dftParameters::currentPath.begin(),dftParameters::currentPath.end(),'"'),dftParameters::currentPath.end());
+    dftParameters::currentPath                   = DFT_PATH;
+
     dftParameters::verbosity                     = prm.get_integer("VERBOSITY");
 
     prm.enter_subsection ("Geometry");
