@@ -3,9 +3,6 @@ mpirun -np nProcs executable -p parameterfile.prm
 
 # Listing of Parameters
 # ---------------------
-# Path specifying the location of the source folder of dftfe code.
-set DFT PATH  = "/home/dsambit/dftfe/pullreq" # default: 
-
 # Parameter to control verbosity of terminal output. 0 for low, 1 for medium,
 # and 2 for high.
 set VERBOSITY = 1
