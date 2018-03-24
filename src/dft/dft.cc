@@ -281,9 +281,9 @@ void dftClass<FEOrder>::set()
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::initPseudoPotentialAll()
 {
-  pcout<<std::endl<<"Pseuodopotential initalization...."<<std::endl;
   if(dftParameters::isPseudopotential)
     {
+      pcout<<std::endl<<"Pseuodopotential initalization...."<<std::endl;	
       initLocalPseudoPotential();
       //
       if(dftParameters::pseudoProjector == 2)

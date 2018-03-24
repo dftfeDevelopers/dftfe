@@ -273,7 +273,7 @@ void poissonClass<FEOrder>::AX (const dealii::MatrixFree<3,double>  &data,
   for (unsigned int cell=cell_range.first; cell<cell_range.second; ++cell)
     {
       fe_eval.reinit(cell); 
-      fe_eval.read_dof_values_plain(src);
+      fe_eval.read_dof_values(src);
       fe_eval.evaluate(false,true,false);
       for (unsigned int q=0; q<fe_eval.n_q_points; ++q)
 	{
@@ -290,8 +290,10 @@ void poissonClass<FEOrder>::vmult(vectorType &dst, vectorType &src) const
 {
  
   dst=0.0;
-  //src.update_ghost_values();
+
+  /*
   dftPtr->d_constraintsVector[d_constraintMatrixId]->distribute(src);
+  
   for(types::global_dof_index i = 0; i < src.size(); ++i)
     {
       if(src.in_local_range(i))
@@ -302,6 +304,7 @@ void poissonClass<FEOrder>::vmult(vectorType &dst, vectorType &src) const
 	    }
 	}
     }
+  */ 
   dftPtr->matrix_free_data.cell_loop (&poissonClass<FEOrder>::AX, this, dst, src);
 
   //This is necessary specifically for periodic boundary conditions 
@@ -309,7 +312,8 @@ void poissonClass<FEOrder>::vmult(vectorType &dst, vectorType &src) const
   //Only master node is pinned and remaining slave nodes are still
   //constrained to master node and setting other slave nodes
   //to zero is necessary after every "Ax" and hence call this function.
-  dftPtr->d_constraintsVector[d_constraintMatrixId]->set_zero(dst);  
+  // (Only necessary for dealiiOpt)
+  //dftPtr->d_constraintsVector[d_constraintMatrixId]->set_zero(dst);  
 
 }
 
@@ -353,6 +357,7 @@ void poissonClass<FEOrder>::solve(vectorType& phi, int constraintMatrixId, std::
     //solver.solve(*this, phi, rhs, IdentityMatrix(rhs.size()));
 
     //assumed phi distributed prior
+    /*
     for(types::global_dof_index i = 0; i < phi.size(); ++i)
     {
       if(phi.in_local_range(i))
@@ -361,6 +366,7 @@ void poissonClass<FEOrder>::solve(vectorType& phi, int constraintMatrixId, std::
 	    phi(i)=0;
 	}
     }   
+    */
     phi.update_ghost_values();
     solver.solve(*this, phi, rhs, preconditioner);
     //phi.update_ghost_values();

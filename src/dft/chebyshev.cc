@@ -26,7 +26,8 @@ void dftClass<FEOrder>::scale(const vectorType & diagonal,
     {
       auto & vec = eigenVectors[(1+dftParameters::spinPolarized)*d_kPointIndex+spinType][i];
       vec.scale(diagonal);
-      constraintsNoneEigen.distribute(vec);
+      constraintsNoneEigenDataInfo.distribute(vec);     
+      //constraintsNoneEigen.distribute(vec);
       vec.update_ghost_values();
     }
 
