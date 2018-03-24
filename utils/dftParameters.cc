@@ -99,8 +99,8 @@ namespace dftParameters
 			      "Sets the tolerance of the cell stress (in a.u.) when cell stress is considered to be relaxed.");
 
 	    prm.declare_entry("CELL CONSTRAINT TYPE", "12",
-			      Patterns::Integer(1,12),
-			      "Cell relaxation constraint type, 1(isotropic shape fixed volume optimization), 2(volume fixed shape optimization), 3(relax only cell component v1_x), 4(relax only cell component v2_x), 5(relax only cell component v3_x), 6(relax only cell components v2_x and v3_x), 7(relax only cell components v1_x and v3_x), 8(relax only cell components v1x and v2_x), 9(volume optimization- relax only v1_x, v2_x and v3_x), 10(2D- relax only x and y components relaxed), 11(2D- relax only x and y shape components- inplane area fixed), 12(relax all cell components)");    
+			      Patterns::Integer(1,13),
+			      "Cell relaxation constraint type, 1(isotropic shape-fixed volume optimization), 2(volume-fixed shape optimization), 3(relax only cell component v1_x), 4(relax only cell component v2_x), 5(relax only cell component v3_x), 6(relax only cell components v2_x and v3_x), 7(relax only cell components v1_x and v3_x), 8(relax only cell components v1x and v2_x), 9(volume optimization- relax only v1_x, v2_x and v3_x), 10(2D- relax only x and y components relaxed), 11(2D- relax only x and y shape components- inplane area fixed), 12(relax all cell components), 13 automatically decides the constraints based boundary conditions. CAUTION: A majority of these options only make sense in an orthorhombic cell geometry.");    
 
 	}
 	prm.leave_subsection ();  	
