@@ -45,12 +45,12 @@ void dftClass<FEOrder>::loadPSIFiles(unsigned int Z,
 
   if(dftParameters::isPseudopotential)
     if(dftParameters::pseudoProjector==2)
-	sprintf(psiFile, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/singleAtomData/psi%u%u.inp", dftParameters::currentPath.c_str(), Z, n, l);
+	sprintf(psiFile, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/singleAtomData/psi%u%u.inp", DFT_PATH, Z, n, l);
     else
-        sprintf(psiFile, "%s/data/electronicStructure/pseudoPotential/z%u/singleAtomData/psi%u%u.inp", dftParameters::currentPath.c_str(), Z, n, l);
+        sprintf(psiFile, "%s/data/electronicStructure/pseudoPotential/z%u/singleAtomData/psi%u%u.inp", DFT_PATH, Z, n, l);
 
   else
-    sprintf(psiFile, "%s/data/electronicStructure/allElectron/z%u/singleAtomData/psi%u%u.inp", dftParameters::currentPath.c_str(), Z, n, l);
+    sprintf(psiFile, "%s/data/electronicStructure/allElectron/z%u/singleAtomData/psi%u%u.inp", DFT_PATH, Z, n, l);
 
   std::vector<std::vector<double> > values;
 
