@@ -32,7 +32,7 @@ namespace dftParameters
   double lowerEndWantedSpectrum=0.0,relLinearSolverTolerance=1e-10,selfConsistentSolverTolerance=1e-10,TVal=500, start_magnetization=0.0;
 
   bool isPseudopotential=false,periodicX=false,periodicY=false,periodicZ=false, useSymm=false, timeReversal=false;
-  std::string meshFileName=" ",coordinatesFile=" ",currentPath=" ",domainBoundingVectorsFile=" ",kPointDataFile=" ", ionRelaxFlagsFile=" ";
+  std::string meshFileName=" ",coordinatesFile=" ",domainBoundingVectorsFile=" ",kPointDataFile=" ", ionRelaxFlagsFile=" ";
 
   double outerAtomBallRadius=2.0, meshSizeOuterDomain=10.0;
   double meshSizeInnerBall=1.0, meshSizeOuterBall=1.0;
@@ -48,10 +48,6 @@ namespace dftParameters
 
   void declare_parameters(ParameterHandler &prm)
   {
-
-    prm.declare_entry("DFT PATH", "",
-                      Patterns::Anything(),
-                      "Path specifying the location of the source folder of dftfe code.");
 
     prm.declare_entry("VERBOSITY", "1",
                       Patterns::Integer(0,2),
@@ -308,9 +304,6 @@ namespace dftParameters
 
   void parse_parameters(ParameterHandler &prm)
   {
-
-    dftParameters::currentPath                   = prm.get("DFT PATH");
-    dftParameters::currentPath.erase(std::remove(dftParameters::currentPath.begin(),dftParameters::currentPath.end(),'"'),dftParameters::currentPath.end());
     dftParameters::verbosity                     = prm.get_integer("VERBOSITY");
 
     prm.enter_subsection ("Geometry");

@@ -303,7 +303,7 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
   for(std::set<unsigned int>::iterator it = atomTypes.begin(); it != atomTypes.end(); ++it)
     {
       char pseudoAtomDataFile[256];
-      sprintf(pseudoAtomDataFile, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/PseudoAtomDat", dftParameters::currentPath.c_str(), *it);
+      sprintf(pseudoAtomDataFile, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/PseudoAtomDat", DFT_PATH, *it);
 
 
       unsigned int atomicNumber = *it;
@@ -476,7 +476,7 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
 	  //readPseudoDataFileNames >> numProj ;
 
 	  char projRadialFunctionFileName[512];
-	  sprintf(projRadialFunctionFileName, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/%s", dftParameters::currentPath.c_str(),*it,tempProjRadialFunctionFileName.c_str());
+	  sprintf(projRadialFunctionFileName, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/%s", DFT_PATH,*it,tempProjRadialFunctionFileName.c_str());
 
 	  //
 	  // 2D vector to store the radial coordinate and its corresponding
@@ -539,7 +539,7 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
 	  char denominatorDataFileName[256];
 	  //
 	  readPseudoDataFileNames >> tempDenominatorDataFileName ;
-	  sprintf(denominatorDataFileName, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/%s", dftParameters::currentPath.c_str(),*it, tempDenominatorDataFileName.c_str());
+	  sprintf(denominatorDataFileName, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/%s", DFT_PATH,*it, tempDenominatorDataFileName.c_str());
 	  dftUtils::readFile(projId,denominator,denominatorDataFileName);
 	  denominatorData[(*it)] = denominator ;
 
@@ -638,7 +638,7 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
 	  /*
           //
 	  char pseudoAtomDataFile[256];
-          sprintf(pseudoAtomDataFile, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/PseudoAtomData", currentPath.c_str(), atomLocations[iAtom][0]);
+          sprintf(pseudoAtomDataFile, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/PseudoAtomData", DFT_PATH.c_str(), atomLocations[iAtom][0]);
 	  //
 	  std::ifstream readPseudoDataFileNames(pseudoAtomDataFile);
           if(readPseudoDataFileNames.is_open()){
@@ -654,7 +654,7 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
 	  //        readPseudoDataFileNames >> tempDenominatorDataFileName;
 	  pcout << tempDenominatorDataFileName.c_str() << std::endl ;
 	  char denominatorDataFileName[256];
-	  sprintf(denominatorDataFileName, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/%s", currentPath.c_str(),atomLocations[iAtom][0], tempDenominatorDataFileName.c_str());
+	  sprintf(denominatorDataFileName, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/%s", DFT_PATH.c_str(),atomLocations[iAtom][0], tempDenominatorDataFileName.c_str());
      
 	  //
 	  // 2D vector to store the radial coordinate and its corresponding
