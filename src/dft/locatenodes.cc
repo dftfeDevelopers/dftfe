@@ -19,6 +19,7 @@
 //source file for locating core atom nodes
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::locateAtomCoreNodes(){
+  TimerOutput::Scope scope (computing_timer,"locate atom nodes");
   atoms.clear();
   d_atomsInBin.clear();
   unsigned int vertices_per_cell=GeometryInfo<3>::vertices_per_cell;
@@ -45,7 +46,7 @@ void dftClass<FEOrder>::locateAtomCoreNodes(){
 	//
 	for (std::set<unsigned int>::iterator it=atomsTolocate.begin(); it!=atomsTolocate.end(); ++it){
 	  Point<3> atomCoord(atomLocations[*it][2],atomLocations[*it][3],atomLocations[*it][4]);
-	   if(feNodeGlobalCoord.distance(atomCoord) < 1.0e-5){ 
+	   if(feNodeGlobalCoord.distance(atomCoord) < 1.0e-5){
 	     if(isPseudopotential)
 	       {
 		 if (dftParameters::verbosity==2)
@@ -56,7 +57,7 @@ void dftClass<FEOrder>::locateAtomCoreNodes(){
 	     else
 	       {
 		 if (dftParameters::verbosity==2)
-                 {		   
+                 {
 		    std::cout << "atom core with charge " << atomLocations[*it][0] << " located with node id " << nodeID << " in processor " << this_mpi_process<<" nodal coor "<<feNodeGlobalCoord[0]<<" "<<feNodeGlobalCoord[1]<<" "<<feNodeGlobalCoord[2]<<std::endl;
 		 }
 	       }
@@ -65,13 +66,13 @@ void dftClass<FEOrder>::locateAtomCoreNodes(){
 		 atoms.insert(std::pair<unsigned int,double>(nodeID,atomLocations[*it][1]));
 	       else
 		 atoms.insert(std::pair<unsigned int,double>(nodeID,atomLocations[*it][0]));
-		 
+
 	       if (dftParameters::verbosity==2)
 	          std::cout << " and added \n";
 	     }
 	     else{
-	       if (dftParameters::verbosity==2)		 
-	         std::cout << " but skipped \n"; 
+	       if (dftParameters::verbosity==2)
+	         std::cout << " but skipped \n";
 	     }
 	     atomsTolocate.erase(*it);
 	     break;
@@ -112,7 +113,7 @@ void dftClass<FEOrder>::locateAtomCoreNodes(){
 	      {
 		int chargeId = atomsInCurrentBin[*it];
 		Point<3> atomCoord(atomLocations[chargeId][2],atomLocations[chargeId][3],atomLocations[chargeId][4]);
-		if(feNodeGlobalCoord.distance(atomCoord) < 1.0e-5){ 
+		if(feNodeGlobalCoord.distance(atomCoord) < 1.0e-5){
 		  if(isPseudopotential)
 		  {
 		    if (dftParameters::verbosity==2)
@@ -120,7 +121,7 @@ void dftClass<FEOrder>::locateAtomCoreNodes(){
 		  }
 		  else
 		  {
-		    if (dftParameters::verbosity==2)  
+		    if (dftParameters::verbosity==2)
 		      std::cout << "atom core in bin " << iBin<<" with charge "<<atomLocations[chargeId][0] << " located with node id " << nodeID << " in processor " << this_mpi_process;
 		  }
 		  if (locally_owned_dofs.is_element(nodeID)){
@@ -134,7 +135,7 @@ void dftClass<FEOrder>::locateAtomCoreNodes(){
 		  else
 		  {
             	    if (dftParameters::verbosity==2)
-		       std::cout << " but skipped \n"; 
+		       std::cout << " but skipped \n";
 		  }
 		  atomsTolocate.erase(*it);
 		  break;
@@ -150,8 +151,8 @@ void dftClass<FEOrder>::locateAtomCoreNodes(){
 
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::locatePeriodicPinnedNodes()
-{ 
-
+{
+  TimerOutput::Scope scope (computing_timer,"locate periodic pinned node");
   const int numberImageCharges = d_imageIds.size();
   const int numberGlobalAtoms = atomLocations.size();
   const int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
@@ -194,7 +195,7 @@ void dftClass<FEOrder>::locatePeriodicPinnedNodes()
 		    }
 
 		  double distance = atomCoor.distance(nodalPointCoordinates);
-	      
+
 		  if(distance <= minDistance)
 		    {
 		      minDistance = distance;
@@ -221,7 +222,7 @@ void dftClass<FEOrder>::locatePeriodicPinnedNodes()
 		MPI_MAX,
 		mpi_communicator);
 
-  
+
 
   //locating pinned nodes
   std::vector<std::vector<double> > pinnedLocations;
@@ -265,7 +266,7 @@ void dftClass<FEOrder>::locatePeriodicPinnedNodes()
 	  //checkFlag = 1;
 	}
     }
-  
+
 
   MPI_Allreduce(&tempLocal[0],
 		&temp[0],
@@ -273,20 +274,20 @@ void dftClass<FEOrder>::locatePeriodicPinnedNodes()
 		MPI_DOUBLE,
 		MPI_SUM,
 		mpi_communicator);
-		
+
   pinnedLocations.push_back(temp);
-  
+
 
   const unsigned int dofs_per_cell = FE.dofs_per_cell;
   DoFHandler<3>::active_cell_iterator
     cell = dofHandler.begin_active(),
     endc = dofHandler.end();
-  
+
   unsigned int numberNodes = pinnedLocations.size();
   std::set<unsigned int> nodesTolocate;
   for (unsigned int i = 0; i < numberNodes; i++) nodesTolocate.insert(i);
 
-  for (; cell!=endc; ++cell) 
+  for (; cell!=endc; ++cell)
     {
       if (cell->is_locally_owned())
 	{
@@ -308,7 +309,7 @@ void dftClass<FEOrder>::locatePeriodicPinnedNodes()
 		  Point<3> pinnedNodeCoord(pinnedLocations[*it][0],pinnedLocations[*it][1],pinnedLocations[*it][2]);
 		  if(feNodeGlobalCoord.distance(pinnedNodeCoord) < 1.0e-5)
 		    {
-	              if (dftParameters::verbosity==2)			
+	              if (dftParameters::verbosity==2)
 		         std::cout << "Pinned core with nodal coordinates (" << pinnedLocations[*it][0] << " " << pinnedLocations[*it][1] << " "<<pinnedLocations[*it][2]<< ") located with node id " << nodeID << " in processor " << this_mpi_process;
 		      if (locally_relevant_dofs.is_element(nodeID))
 			{
@@ -319,8 +320,8 @@ void dftClass<FEOrder>::locatePeriodicPinnedNodes()
 			}
 		      else
 			{
-			  if (dftParameters::verbosity==2)  
-			     std::cout << " but skipped \n"; 
+			  if (dftParameters::verbosity==2)
+			     std::cout << " but skipped \n";
 			}
 		      nodesTolocate.erase(*it);
 		      break;

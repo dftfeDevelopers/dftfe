@@ -257,7 +257,7 @@ void dftClass<FEOrder>::set()
   a0.resize((dftParameters::spinPolarized+1)*d_maxkPoints,dftParameters::lowerEndWantedSpectrum);
   bLow.resize((dftParameters::spinPolarized+1)*d_maxkPoints,0.0);
   eigenVectors.resize((1+dftParameters::spinPolarized)*d_maxkPoints);
-  
+
   for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_maxkPoints; ++kPoint)
     {
       //for (unsigned int i=0; i<numEigenValues; ++i)
@@ -266,13 +266,13 @@ void dftClass<FEOrder>::set()
 	  //eigenVectors[kPoint].push_back(boost::shared_ptr<vectorType>(new vectorType));
       //}
       eigenVectors[kPoint].resize(numEigenValues);
-      
+
     }
 
    for(unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
     {
       eigenValues[kPoint].resize((dftParameters::spinPolarized+1)*numEigenValues);
-      eigenValuesTemp[kPoint].resize(numEigenValues); 
+      eigenValuesTemp[kPoint].resize(numEigenValues);
     }
 
 }
@@ -283,7 +283,8 @@ void dftClass<FEOrder>::initPseudoPotentialAll()
 {
   if(dftParameters::isPseudopotential)
     {
-      pcout<<std::endl<<"Pseuodopotential initalization...."<<std::endl;	
+      TimerOutput::Scope scope (computing_timer, "psp init");
+      pcout<<std::endl<<"Pseuodopotential initalization...."<<std::endl;
       initLocalPseudoPotential();
       //
       if(dftParameters::pseudoProjector == 2)
@@ -304,7 +305,6 @@ void dftClass<FEOrder>::initPseudoPotentialAll()
 	}
 
       forcePtr->initPseudoData();
-
     }
 }
 
@@ -364,12 +364,14 @@ void dftClass<FEOrder>::init ()
 
   initImageChargesUpdateKPoints();
 
+  computing_timer.enter_section("mesh generation");
   //
   //generate mesh (both parallel and serial)
   //
   d_mesh.generateSerialAndParallelMesh(atomLocations,
 				       d_imagePositions,
 				       d_domainBoundingVectors);
+  computing_timer.exit_section("mesh generation");
 
 
   //
@@ -496,12 +498,13 @@ void dftClass<FEOrder>::solve()
   //
   //solve vself
   //
+  computing_timer.enter_section("vself solve");
   solveVself();
-
+  computing_timer.exit_section("vself solve");
   //
   //solve
   //
-  computing_timer.enter_section("solve");
+  computing_timer.enter_section("scf solve");
 
 
   //
@@ -513,7 +516,7 @@ void dftClass<FEOrder>::solve()
 
   pcout<<std::endl;
   if (dftParameters::verbosity==0)
-    pcout<<"Starting SCF iteration...."<<std::endl;  
+    pcout<<"Starting SCF iteration...."<<std::endl;
   while ((norm > dftParameters::selfConsistentSolverTolerance) && (scfIter < dftParameters::numSCFIterations))
     {
       if (dftParameters::verbosity>=1)
@@ -554,8 +557,9 @@ void dftClass<FEOrder>::solve()
       int constraintMatrixId = phiTotDofHandlerIndex;
       if (dftParameters::verbosity==2)
         pcout<< std::endl<<"Poisson solve for total electrostatic potential (rhoIn+b): ";
-
+      computing_timer.enter_section("phiTot solve");
       poissonPtr->solve(poissonPtr->phiTotRhoIn,constraintMatrixId, rhoInValues);
+      computing_timer.exit_section("phiTot solve");
       //pcout<<"L-2 Norm of Phi-in   : "<<poissonPtr->phiTotRhoIn.l2_norm()<<std::endl;
       //pcout<<"L-inf Norm of Phi-in : "<<poissonPtr->phiTotRhoIn.linfty_norm()<<std::endl;
 
@@ -666,7 +670,9 @@ void dftClass<FEOrder>::solve()
       if(dftParameters::verbosity==2)
 	pcout<< std::endl<<"Poisson solve for total electrostatic potential (rhoOut+b): ";
 
+      computing_timer.enter_section("phiTot solve");
       poissonPtr->solve(poissonPtr->phiTotRhoOut,constraintMatrixId, rhoOutValues);
+      computing_timer.exit_section("phiTot solve");
       //pcout<<"L-2 Norm of Phi-out   :"<<poissonPtr->phiTotRhoOut.l2_norm()<<std::endl;
       //pcout<<"L-inf Norm of Phi-out :"<<poissonPtr->phiTotRhoOut.linfty_norm()<<std::endl;
 
@@ -731,7 +737,7 @@ void dftClass<FEOrder>::output()
   data_outEigen.attach_dof_handler (dofHandlerEigen);
   for(unsigned int i=0; i<eigenVectors[0].size(); ++i)
     {
-      char buffer[100]; sprintf(buffer,"eigen%u", i);  
+      char buffer[100]; sprintf(buffer,"eigen%u", i);
       data_outEigen.add_data_vector (eigenVectors[0][i], buffer);
     }
   data_outEigen.build_patches (C_num1DQuad<FEOrder>());

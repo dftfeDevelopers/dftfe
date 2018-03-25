@@ -27,7 +27,7 @@ void exchangeAtomToGlobalNodeIdMaps(const int totalNumberAtoms,
 
 {
 
-      
+
   std::map<int,std::set<int> >::iterator iter;
 
   for(int iGlobal = 0; iGlobal < totalNumberAtoms; ++iGlobal){
@@ -35,7 +35,7 @@ void exchangeAtomToGlobalNodeIdMaps(const int totalNumberAtoms,
     //
     // for each charge, exchange its global list across all procs
     //
-    iter = atomToGlobalNodeIdMap.find(iGlobal);    
+    iter = atomToGlobalNodeIdMap.find(iGlobal);
 
     std::vector<int> localAtomToGlobalNodeIdList;
 
@@ -59,13 +59,13 @@ void exchangeAtomToGlobalNodeIdMaps(const int totalNumberAtoms,
 		  MPI_INT,
 		  mpi_communicator);
 
-    int newAtomToGlobalNodeIdListSize = 
+    int newAtomToGlobalNodeIdListSize =
       std::accumulate(&(atomToGlobalNodeIdListSizes[0]),
 		      &(atomToGlobalNodeIdListSizes[numMeshPartitions]),
 		      0);
 
     std::vector<int> globalAtomToGlobalNodeIdList(newAtomToGlobalNodeIdListSize);
-    
+
     int * mpiOffsets = new int[numMeshPartitions];
 
     mpiOffsets[0] = 0;
@@ -93,14 +93,15 @@ void exchangeAtomToGlobalNodeIdMaps(const int totalNumberAtoms,
 
   }
   return;
- 
+
 }
 
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::createAtomBins(std::vector<ConstraintMatrix * > & constraintsVector)
-			     
+
 {
-  d_bins.clear();	
+  TimerOutput::Scope scope (computing_timer,"create atom bins");
+  d_bins.clear();
   d_imageIdsInBins.clear();
   d_boundaryFlag.clear();
   d_vselfBinField.clear();
@@ -127,7 +128,7 @@ void dftClass<FEOrder>::createAtomBins(std::vector<ConstraintMatrix * > & constr
   const int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
 
   const unsigned int vertices_per_cell=GeometryInfo<3>::vertices_per_cell;
-  const unsigned int dofs_per_cell = FE.dofs_per_cell; 
+  const unsigned int dofs_per_cell = FE.dofs_per_cell;
 
   std::map<int,std::set<int> > atomToGlobalNodeIdMap;
 
@@ -162,11 +163,11 @@ void dftClass<FEOrder>::createAtomBins(std::vector<ConstraintMatrix * > & constr
 	    {
 	      int cutOffFlag = 0;
 	      std::vector<types::global_dof_index> cell_dof_indices(dofs_per_cell);
-	      cell->get_dof_indices(cell_dof_indices);	
+	      cell->get_dof_indices(cell_dof_indices);
 
 	      for(unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
 		{
-		  
+
 		  Point<3> feNodeGlobalCoord = d_supportPoints[cell_dof_indices[iNode]];
 
 		  double distance = atomCoor.distance(feNodeGlobalCoord);
@@ -176,7 +177,7 @@ void dftClass<FEOrder>::createAtomBins(std::vector<ConstraintMatrix * > & constr
 		      cutOffFlag = 1;
 		      break;
 		    }
-		  
+
 		}//element node loop
 
 	      if(cutOffFlag == 1)
@@ -196,7 +197,7 @@ void dftClass<FEOrder>::createAtomBins(std::vector<ConstraintMatrix * > & constr
       atomToGlobalNodeIdMap[iAtom] = tempNodalSet;
 
     }//atom loop
- 
+
   //
   //exchange atomToGlobalNodeIdMap across all processors
   //
@@ -205,7 +206,7 @@ void dftClass<FEOrder>::createAtomBins(std::vector<ConstraintMatrix * > & constr
 				 n_mpi_processes,
 				 mpi_communicator);
 
-  
+
   //
   //erase keys which have empty values
   //
@@ -219,8 +220,8 @@ void dftClass<FEOrder>::createAtomBins(std::vector<ConstraintMatrix * > & constr
 
 
   //
-  //create interaction maps by finding the intersection of global NodeIds of each atom 
-  //  
+  //create interaction maps by finding the intersection of global NodeIds of each atom
+  //
   std::map<int,std::set<int> > interactionMap;
 
   for(int iAtom = 0; iAtom < totalNumberAtoms; ++iAtom)
@@ -230,13 +231,13 @@ void dftClass<FEOrder>::createAtomBins(std::vector<ConstraintMatrix * > & constr
       //
       if(iAtom < numberGlobalAtoms)
 	interactionMap[iAtom].insert(iAtom);
-	  
+
       //std::cout<<"IAtom: "<<iAtom<<std::endl;
 
       for(int jAtom = iAtom - 1; jAtom > -1; jAtom--)
 	{
 	  //std::cout<<"JAtom: "<<jAtom<<std::endl;
-	      
+
 	  //
 	  //compute intersection between the atomGlobalNodeIdMap of iAtom and jAtom
 	  //
@@ -337,9 +338,9 @@ void dftClass<FEOrder>::createAtomBins(std::vector<ConstraintMatrix * > & constr
     for(iter = d_bins.begin();iter!= d_bins.end();++iter){
 
       // pick out atoms in this bin
-      std::set<int>& atomsInThisBin = iter->second;      
+      std::set<int>& atomsInThisBin = iter->second;
       int index = std::distance(d_bins.begin(),iter);
-	
+
       isBinFound = true;
 
       // to belong to this bin, this atom must not overlap with any other
@@ -347,7 +348,7 @@ void dftClass<FEOrder>::createAtomBins(std::vector<ConstraintMatrix * > & constr
       for(std::set<int>::iterator iter2 = interactingAtoms.begin(); iter2!= interactingAtoms.end();++iter2){
 
 	int atom = *iter2;
-	
+
 	if(atomsInThisBin.find(atom) != atomsInThisBin.end()){
 	  isBinFound = false;
 	  break;
@@ -357,7 +358,7 @@ void dftClass<FEOrder>::createAtomBins(std::vector<ConstraintMatrix * > & constr
       if(isBinFound == true){
 	(d_bins[index]).insert(i);
 	break;
-      }            
+      }
     }
     // if all current bins have been iterated over w/o a match then
     // create a new bin for this atom
@@ -400,7 +401,7 @@ void dftClass<FEOrder>::createAtomBins(std::vector<ConstraintMatrix * > & constr
 
 	  //std:cout<<"Index: "<<index<<"Global Charge Id: "<<globalChargeIdInCurrentBin<<std::endl;
 
-	  Point<3> atomPosition(atomLocations[globalChargeIdInCurrentBin][2],atomLocations[globalChargeIdInCurrentBin][3],atomLocations[globalChargeIdInCurrentBin][4]); 
+	  Point<3> atomPosition(atomLocations[globalChargeIdInCurrentBin][2],atomLocations[globalChargeIdInCurrentBin][3],atomLocations[globalChargeIdInCurrentBin][4]);
 	  atomPositionsInCurrentBin.push_back(atomPosition);
 
 	  for(int iImageAtom = 0; iImageAtom < numberImageCharges; ++iImageAtom)
@@ -414,15 +415,15 @@ void dftClass<FEOrder>::createAtomBins(std::vector<ConstraintMatrix * > & constr
 	    }
 
 	}
-      	 
+
       int numberImageAtomsInBin = imageIdsOfAtomsInCurrentBin.size();
 
       //
       //create constraint matrix for current bin
       //
       d_vselfBinConstraintMatrices[iBin].reinit(locally_relevant_dofs);
-      
-      
+
+
       unsigned int inNodes=0, outNodes=0;
       std::map<types::global_dof_index,Point<3> >::iterator iterMap;
       for(iterMap = d_supportPoints.begin(); iterMap != d_supportPoints.end(); ++iterMap)
@@ -449,7 +450,7 @@ void dftClass<FEOrder>::createAtomBins(std::vector<ConstraintMatrix * > & constr
 			  atomCoor[2] = imagePositionsOfAtomsInCurrentBin[iAtom - numberGlobalAtomsInBin][2];
 			}
 
-		 
+
 		      double distance = nodalCoor.distance(atomCoor);
 
 		      if(distance < radiusAtomBall)
@@ -486,12 +487,12 @@ void dftClass<FEOrder>::createAtomBins(std::vector<ConstraintMatrix * > & constr
 		  //FIXME: These two can be moved to the outermost bin loop
 		  std::map<dealii::types::global_dof_index, int> & boundaryNodeMap = d_boundaryFlag[iBin];
 		  std::map<dealii::types::global_dof_index, double> & vSelfBinNodeMap = d_vselfBinField[iBin];
-	   
+
 		  if(minDistance < radiusAtomBall)
 		    {
 		      boundaryNodeMap[iterMap->first] = chargeId;
 		      inNodes++;
-		  
+
 		      double atomCharge;
 
 		      if(minDistanceAtomId < numberGlobalAtomsInBin)
@@ -517,7 +518,7 @@ void dftClass<FEOrder>::createAtomBins(std::vector<ConstraintMatrix * > & constr
 		  else
 		    {
 		      double atomCharge;
-		  
+
 		      if(minDistanceAtomId < numberGlobalAtomsInBin)
 			{
 			  if(dftParameters::isPseudopotential)
@@ -537,9 +538,9 @@ void dftClass<FEOrder>::createAtomBins(std::vector<ConstraintMatrix * > & constr
 		    }//else loop
 
 		}//non-hanging node check
-	      
+
 	    }//locally relevant dofs
- 
+
 	}//nodal loop
 
        //First apply correct dirichlet boundary conditions on elements with atleast one solved node
@@ -550,7 +551,7 @@ void dftClass<FEOrder>::createAtomBins(std::vector<ConstraintMatrix * > & constr
 	  {
 
 	      std::vector<types::global_dof_index> cell_dof_indices(dofs_per_cell);
-	      cell->get_dof_indices(cell_dof_indices);	
+	      cell->get_dof_indices(cell_dof_indices);
 
 	      int closestChargeIdSolvedNode=-1;
 	      bool isDirichletNodePresent=false;
@@ -561,7 +562,7 @@ void dftClass<FEOrder>::createAtomBins(std::vector<ConstraintMatrix * > & constr
 		{
 		  const int globalNodeId=cell_dof_indices[iNode];
 		  if(!d_noConstraints.is_constrained(globalNodeId))
-		  {		  
+		  {
                     const int boundaryId=d_boundaryFlag[iBin][globalNodeId];
 		    if(boundaryId == -1)
 		    {
@@ -575,7 +576,7 @@ void dftClass<FEOrder>::createAtomBins(std::vector<ConstraintMatrix * > & constr
 			closestChargeIdSolvedSum+=boundaryId;
 		    }
 		  }
-		  
+
 		}//element node loop
 
 
@@ -602,12 +603,12 @@ void dftClass<FEOrder>::createAtomBins(std::vector<ConstraintMatrix * > & constr
 		       closestAtomLocationSolved[0]=d_imagePositions[imageId][0];
 		       closestAtomLocationSolved[1]=d_imagePositions[imageId][1];
 		       closestAtomLocationSolved[2]=d_imagePositions[imageId][2];
-		   }		    
+		   }
 		  for(unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
 		    {
-			
+
 		      const int globalNodeId=cell_dof_indices[iNode];
-		      const int boundaryId=d_boundaryFlag[iBin][globalNodeId]; 
+		      const int boundaryId=d_boundaryFlag[iBin][globalNodeId];
 		      if(!d_noConstraints.is_constrained(globalNodeId) && !d_vselfBinConstraintMatrices[iBin].is_constrained(globalNodeId) && boundaryId==-1)
 		      {
 		        d_vselfBinConstraintMatrices[iBin].add_line(globalNodeId);
@@ -620,7 +621,7 @@ void dftClass<FEOrder>::createAtomBins(std::vector<ConstraintMatrix * > & constr
 		      }//check non hanging node and vself consraints not already set
 		    }//element node loop
 
-		}//check if element has atleast one dirichlet node and atleast one solved node	      
+		}//check if element has atleast one dirichlet node and atleast one solved node
   	  }//cell locally owned or ghost
         }// cell loop
 
@@ -632,7 +633,7 @@ void dftClass<FEOrder>::createAtomBins(std::vector<ConstraintMatrix * > & constr
 	  {
 
 	      std::vector<types::global_dof_index> cell_dof_indices(dofs_per_cell);
-	      cell->get_dof_indices(cell_dof_indices);	
+	      cell->get_dof_indices(cell_dof_indices);
 
 	      bool isDirichletNodePresent=false;
 	      bool isSolvedNodePresent=false;
@@ -640,7 +641,7 @@ void dftClass<FEOrder>::createAtomBins(std::vector<ConstraintMatrix * > & constr
 		{
 		  const int globalNodeId=cell_dof_indices[iNode];
 		  if(!d_noConstraints.is_constrained(globalNodeId))
-		  {		  
+		  {
                     const int boundaryId=d_boundaryFlag[iBin][globalNodeId];
 		    if(boundaryId == -1)
 		    {
@@ -651,16 +652,16 @@ void dftClass<FEOrder>::createAtomBins(std::vector<ConstraintMatrix * > & constr
 			isSolvedNodePresent=true;
 		    }
 		  }
-		  
+
 		}//element node loop
 
 	      if(isDirichletNodePresent && !isSolvedNodePresent)
 		{
 		  for(unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
 		    {
-			
+
 		      const unsigned int globalNodeId=cell_dof_indices[iNode];
-		      const int boundaryId=d_boundaryFlag[iBin][globalNodeId]; 
+		      const int boundaryId=d_boundaryFlag[iBin][globalNodeId];
 		      if(!d_noConstraints.is_constrained(globalNodeId) && !d_vselfBinConstraintMatrices[iBin].is_constrained(globalNodeId) && boundaryId==-1)
 		      {
 		        d_vselfBinConstraintMatrices[iBin].add_line(globalNodeId);
@@ -669,13 +670,13 @@ void dftClass<FEOrder>::createAtomBins(std::vector<ConstraintMatrix * > & constr
 		      }//check non hanging node and vself consraints not already set
 		    }//element node loop
 
-		}//check if element has atleast one dirichlet node and atleast one solved node	      
+		}//check if element has atleast one dirichlet node and atleast one solved node
   	  }//cell locally owned or ghost
-        } //cell loop      
-        
+        } //cell loop
+
         d_vselfBinConstraintMatrices[iBin].merge(constraintsNone,ConstraintMatrix::MergeConflictBehavior::left_object_wins);
         d_vselfBinConstraintMatrices[iBin].close(); //pcout<<" ibin: "<<iBin <<" size of constraints: "<< constraintsForVselfInBin->n_constraints()<<std::endl;
-        constraintsVector.push_back(&(d_vselfBinConstraintMatrices[iBin]));   
+        constraintsVector.push_back(&(d_vselfBinConstraintMatrices[iBin]));
 
     }//bin loop
 

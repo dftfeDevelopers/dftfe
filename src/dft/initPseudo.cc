@@ -25,8 +25,6 @@
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::initLocalPseudoPotential()
 {
-  computing_timer.enter_section("init pseudopotentials");
-
   pseudoValues.clear();
   //
   //Reading single atom rho initial guess
@@ -141,7 +139,6 @@ void dftClass<FEOrder>::initLocalPseudoPotential()
   //
   //
   //
-  computing_timer.exit_section("init pseudopotentials");
 }
 
 template<unsigned int FEOrder>
