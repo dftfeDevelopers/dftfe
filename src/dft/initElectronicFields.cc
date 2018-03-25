@@ -22,7 +22,7 @@
 //init
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::initElectronicFields(){
-  computing_timer.enter_section("moved setup");
+  TimerOutput::Scope scope (computing_timer,"init electronic fields");
 
   //
   //initialize eigen vectors
@@ -73,5 +73,4 @@ void dftClass<FEOrder>::initElectronicFields(){
   //
   pcout <<std::endl<< "Reading initial guess for PSI...."<<std::endl;
   readPSI();
-  computing_timer.exit_section("moved setup");
 }

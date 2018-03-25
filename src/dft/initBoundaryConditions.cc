@@ -28,8 +28,7 @@
 //init
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::initBoundaryConditions(){
-  computing_timer.enter_section("moved setup");
-
+  TimerOutput::Scope scope (computing_timer,"moved setup");
   //
   //initialize FE objects again
   //
@@ -57,7 +56,7 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   else
   {
      //Doesn't work with mvapich2_ib mpi libraries
-     //data_out.write_vtu_in_parallel(std::string("meshInit.vtu").c_str(),mpi_communicator); 
+     //data_out.write_vtu_in_parallel(std::string("meshInit.vtu").c_str(),mpi_communicator);
   }
   */
   //
@@ -73,7 +72,7 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   //used for computing total electrostatic potential using Poisson problem
   //with (rho+b) as the rhs
   //
-  d_constraintsForTotalPotential.clear();  
+  d_constraintsForTotalPotential.clear();
   d_constraintsForTotalPotential.reinit(locally_relevant_dofs);
 
 #ifdef ENABLE_PERIODIC_BC
@@ -98,9 +97,9 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   //push back into Constraint Matrices
   //
 #ifdef ENABLE_PERIODIC_BC
-  d_constraintsVector.push_back(&constraintsNone); 
+  d_constraintsVector.push_back(&constraintsNone);
 #else
-  d_constraintsVector.push_back(&constraintsNone); 
+  d_constraintsVector.push_back(&constraintsNone);
 #endif
 
   d_constraintsVector.push_back(&d_constraintsForTotalPotential);
@@ -115,33 +114,33 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   //
   //create matrix free structure
   //
-  std::vector<const DoFHandler<3> *> dofHandlerVector; 
-  
+  std::vector<const DoFHandler<3> *> dofHandlerVector;
+
   for(int i = 0; i < d_constraintsVector.size(); ++i)
     dofHandlerVector.push_back(&dofHandler);
 
   phiTotDofHandlerIndex = 1;
- 
+
   dofHandlerVector.push_back(&dofHandlerEigen); //DofHandler For Eigen
   eigenDofHandlerIndex = dofHandlerVector.size() - 1; //For Eigen
   d_constraintsVector.push_back(&constraintsNoneEigen); //For Eigen;
   //
   //push d_noConstraints into constraintsVector
-  // 
+  //
   dofHandlerVector.push_back(&dofHandler);
   phiExtDofHandlerIndex = dofHandlerVector.size()-1;
   d_constraintsVector.push_back(&d_noConstraints);
 
-  std::vector<Quadrature<1> > quadratureVector; 
-  quadratureVector.push_back(QGauss<1>(C_num1DQuad<FEOrder>())); 
-  quadratureVector.push_back(QGaussLobatto<1>(C_num1DQuad<FEOrder>()));  
+  std::vector<Quadrature<1> > quadratureVector;
+  quadratureVector.push_back(QGauss<1>(C_num1DQuad<FEOrder>()));
+  quadratureVector.push_back(QGaussLobatto<1>(C_num1DQuad<FEOrder>()));
   //
   //
   forcePtr->initMoved();
   //push dofHandler and constraints for force
   dofHandlerVector.push_back(&(forcePtr->d_dofHandlerForce));
   forcePtr->d_forceDofHandlerIndex = dofHandlerVector.size()-1;
-  d_constraintsVector.push_back(&(forcePtr->d_constraintsNoneForce));  
+  d_constraintsVector.push_back(&(forcePtr->d_constraintsNoneForce));
 
   std::vector<const ConstraintMatrix * > constraintsVectorTemp(d_constraintsVector.size());
   for (unsigned int iconstraint=0; iconstraint< d_constraintsVector.size(); iconstraint++)
@@ -152,7 +151,7 @@ void dftClass<FEOrder>::initBoundaryConditions(){
 
 
   //
-  //locate atom core nodes and also locate atom nodes in each bin 
+  //locate atom core nodes and also locate atom nodes in each bin
   //
   locateAtomCoreNodes();
   //
@@ -161,7 +160,4 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   //
   poissonPtr->init();
   eigenPtr->init();
-  
- 
-  computing_timer.exit_section("moved setup");   
 }
