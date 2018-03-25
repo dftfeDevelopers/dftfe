@@ -283,6 +283,7 @@ void dftClass<FEOrder>::initPseudoPotentialAll()
 {
   if(dftParameters::isPseudopotential)
     {
+      computing_timer.enter_section("psp init");
       pcout<<std::endl<<"Pseuodopotential initalization...."<<std::endl;	
       initLocalPseudoPotential();
       //
@@ -304,7 +305,7 @@ void dftClass<FEOrder>::initPseudoPotentialAll()
 	}
 
       forcePtr->initPseudoData();
-
+      computing_timer.exit_section("psp init");	
     }
 }
 
@@ -364,12 +365,14 @@ void dftClass<FEOrder>::init ()
 
   initImageChargesUpdateKPoints();
 
+  computing_timer.enter_section("mesh generation");
   //
   //generate mesh (both parallel and serial)
   //
   d_mesh.generateSerialAndParallelMesh(atomLocations,
 				       d_imagePositions,
 				       d_domainBoundingVectors);
+  computing_timer.exit_section("mesh generation");
 
 
   //
@@ -492,7 +495,7 @@ void dftClass<FEOrder>::run()
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::solve()
 {
-
+  
   //
   //solve vself
   //
