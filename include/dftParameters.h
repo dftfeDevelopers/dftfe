@@ -37,7 +37,7 @@ namespace dftParameters
   extern double lowerEndWantedSpectrum,relLinearSolverTolerance,selfConsistentSolverTolerance,TVal, start_magnetization;
 
   extern bool isPseudopotential,periodicX,periodicY,periodicZ, useSymm, timeReversal;
-  extern std::string meshFileName,coordinatesFile,domainBoundingVectorsFile,kPointDataFile, ionRelaxFlagsFile;
+  extern std::string meshFileName,coordinatesFile,domainBoundingVectorsFile,kPointDataFile, ionRelaxFlagsFile, chkDirPath;
 
   extern double outerAtomBallRadius, meshSizeOuterDomain;
   extern double meshSizeInnerBall, meshSizeOuterBall;
@@ -45,8 +45,9 @@ namespace dftParameters
   extern bool isIonOpt, isCellOpt, isIonForce, isCellStress;
   extern double forceRelaxTol, stressRelaxTol;
   extern unsigned int cellConstraintType;
- 
-  extern unsigned int verbosity;
+
+  extern unsigned int verbosity, chkType;
+  extern bool restartFromChk;
 
   /**
    * Declare parameters.
