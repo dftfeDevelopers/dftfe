@@ -112,7 +112,7 @@ void eigenClass<FEOrder>::computeMassVector()
 		  sqrtMassVector(i) = std::sqrt(invSqrtMassVector(i));
 		  invSqrtMassVector(i) = 1.0/std::sqrt(invSqrtMassVector(i));
 		}
-	      Assert(!std::isnan(invSqrtMassVector(i)),ExcMessage("Value of inverse square root of mass matrix on the unconstrained node is undefined"));
+	      AssertThrow(!std::isnan(invSqrtMassVector(i)),ExcMessage("Value of inverse square root of mass matrix on the unconstrained node is undefined"));
 
 	    }
 	}
