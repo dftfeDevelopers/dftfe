@@ -500,7 +500,7 @@ void dftClass<FEOrder>::solve()
   //
   computing_timer.enter_section("vself solve");
   solveVself();
-  computing_timer.enter_section("vself solve");
+  computing_timer.exit_section("vself solve");
   //
   //solve
   //
