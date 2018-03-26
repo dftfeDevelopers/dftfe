@@ -143,4 +143,7 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   //
   poissonPtr->init();
   eigenPtr->init();
+
+  //compute volume of the domain
+  computeVolume();
 }

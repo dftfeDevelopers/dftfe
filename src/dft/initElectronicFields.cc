@@ -21,7 +21,7 @@
 
 //init
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::initElectronicFields(){
+void dftClass<FEOrder>::initElectronicFields(const bool usePreviousGroundStateRho){
   TimerOutput::Scope scope (computing_timer,"init electronic fields");
 
   //
@@ -54,20 +54,20 @@ void dftClass<FEOrder>::initElectronicFields(){
 	}
     }
 
-
-
-  if (dftParameters::verbosity==2)
-  {
-    if ( (Utilities::MPI::this_mpi_process(interpoolcomm)) > 1 && (Utilities::MPI::this_mpi_process(mpi_communicator))==0 )
-	std::cout << " check 2.1 " << std::endl ;
-  }
-
   //
   //initialize density
   //
-  initRho();
+  if (!usePreviousGroundStateRho)
+     initRho();
+  else
+     projectPreviousGroundStateRho();
 
-
+  //
+  //update parallel unmoved previous mesh
+  //
+  d_mesh.generateParallelUnmovedPreviousMesh(atomLocations,
+				             d_imagePositions,
+				             d_domainBoundingVectors);
   //
   //initialize PSI
   //
