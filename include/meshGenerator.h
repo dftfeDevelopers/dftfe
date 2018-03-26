@@ -39,23 +39,26 @@ class meshGeneratorClass
    */
   ~meshGeneratorClass();
 
- 
+
 
   void generateSerialAndParallelMesh(std::vector<std::vector<double> > & atomLocations,
 				     std::vector<std::vector<double> > & imageAtomLocations,
 				     std::vector<std::vector<double> > & domainBoundingVectors);
 
-  void generateMesh(parallel::distributed::Triangulation<3>& parallelTriangulation, parallel::distributed::Triangulation<3>& serialTriangulation, types::global_dof_index & numberGlobalCells);
-
-  void refineSerialMesh(unsigned int n_cell, std::vector<double>& centroid, std::vector<int>& localRefineFlag, unsigned int n_global_cell, parallel::distributed::Triangulation<3>& serialTriangulation) ;
-
-  parallel::distributed::Triangulation<3> & getSerialMesh();
+  const parallel::distributed::Triangulation<3> & getSerialMeshUnmoved();
 
   parallel::distributed::Triangulation<3> & getParallelMesh();
 
-  
-  
+
+
  private:
+
+  void generateMesh(parallel::distributed::Triangulation<3>& parallelTriangulation, parallel::distributed::Triangulation<3>& serialTriangulation, types::global_dof_index & numberGlobalCells);
+
+
+  void generateMesh(parallel::distributed::Triangulation<3>& parallelTriangulation, types::global_dof_index & numberGlobalCells);
+
+  void refineSerialMesh(unsigned int n_cell, std::vector<double>& centroid, std::vector<int>& localRefineFlag, unsigned int n_global_cell, parallel::distributed::Triangulation<3>& serialTriangulation);
   //
   //data members
   //
@@ -63,7 +66,6 @@ class meshGeneratorClass
   parallel::distributed::Triangulation<3> d_parallelTriangulationMoved;
 
   parallel::distributed::Triangulation<3> d_serialTriangulationUnmoved;
-  parallel::distributed::Triangulation<3> d_serialTriangulationMoved;
 
   std::vector<std::vector<double> > d_atomPositions;
   std::vector<std::vector<double> > d_imageAtomPositions;
@@ -75,7 +77,7 @@ class meshGeneratorClass
   MPI_Comm mpi_communicator;
   const unsigned int this_mpi_process;
   const unsigned int n_mpi_processes;
-  dealii::ConditionalOStream   pcout;  
+  dealii::ConditionalOStream   pcout;
 
   //
   //compute-time logger

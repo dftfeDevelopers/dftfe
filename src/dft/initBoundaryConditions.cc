@@ -34,6 +34,7 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   //
   dofHandler.distribute_dofs (FE);
   dofHandlerEigen.distribute_dofs (FEEigen);
+  writeMesh("currentMesh");
 
   d_supportPoints.clear();
   DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), dofHandler, d_supportPoints);
@@ -41,24 +42,6 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   d_supportPointsEigen.clear();
   DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), dofHandlerEigen, d_supportPointsEigen);
 
-  //
-  //write mesh to vtk file
-  //
-  /*
-  DataOut<3> data_out;
-  data_out.attach_dof_handler (dofHandler);
-  data_out.build_patches ();
-  if (n_mpi_processes==1)
-  {
-     std::ofstream output ("meshInit.vtu");
-     data_out.write_vtu (output);
-  }
-  else
-  {
-     //Doesn't work with mvapich2_ib mpi libraries
-     //data_out.write_vtu_in_parallel(std::string("meshInit.vtu").c_str(),mpi_communicator);
-  }
-  */
   //
   //matrix free data structure
   //
