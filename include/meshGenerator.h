@@ -19,7 +19,7 @@
  *
  *  The class uses an adpative mesh generation strategy to generate finite element mesh for given domain
  *  based on five input parameters: BASE MESH SIZE, ATOM BALL RADIUS, MESH SIZE ATOM BALL, MESH SIZE NEAR ATOM
- *  and MAX REFINEMENT STEPS (Refer to utils/dftParameters for their corresponding internal variable names).
+ *  and MAX REFINEMENT STEPS (Refer to utils/dftParameters.cc for their corresponding internal variable names).
  *  Additionaly, this class also applies periodicity to mesh. The class stores two types of meshes: moved
  *  and unmoved. They are essentially the same meshes, except that we move the nodes of the moved mesh
  *  (in the meshMovement class) such that the atoms lie on the nodes. However, once the mesh is moved, dealii
