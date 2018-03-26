@@ -60,9 +60,9 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       //
       //compute magnitudes of domainBounding Vectors
       //
-      double domainBoundingVectorMag1 = sqrt(d_domainBoundingVectors[0][0]*d_domainBoundingVectors[0][0] + d_domainBoundingVectors[0][1]*d_domainBoundingVectors[0][1] +  d_domainBoundingVectors[0][2]*d_domainBoundingVectors[0][2]);
-      double domainBoundingVectorMag2 = sqrt(d_domainBoundingVectors[1][0]*d_domainBoundingVectors[1][0] + d_domainBoundingVectors[1][1]*d_domainBoundingVectors[1][1] +  d_domainBoundingVectors[1][2]*d_domainBoundingVectors[1][2]);
-      double domainBoundingVectorMag3 = sqrt(d_domainBoundingVectors[2][0]*d_domainBoundingVectors[2][0] + d_domainBoundingVectors[2][1]*d_domainBoundingVectors[2][1] +  d_domainBoundingVectors[2][2]*d_domainBoundingVectors[2][2]);
+      const double domainBoundingVectorMag1 = sqrt(d_domainBoundingVectors[0][0]*d_domainBoundingVectors[0][0] + d_domainBoundingVectors[0][1]*d_domainBoundingVectors[0][1] +  d_domainBoundingVectors[0][2]*d_domainBoundingVectors[0][2]);
+      const double domainBoundingVectorMag2 = sqrt(d_domainBoundingVectors[1][0]*d_domainBoundingVectors[1][0] + d_domainBoundingVectors[1][1]*d_domainBoundingVectors[1][1] +  d_domainBoundingVectors[1][2]*d_domainBoundingVectors[1][2]);
+      const double domainBoundingVectorMag3 = sqrt(d_domainBoundingVectors[2][0]*d_domainBoundingVectors[2][0] + d_domainBoundingVectors[2][1]*d_domainBoundingVectors[2][1] +  d_domainBoundingVectors[2][2]*d_domainBoundingVectors[2][2]);
 
       unsigned int subdivisions[3];subdivisions[0]=1.0;subdivisions[1]=1.0;subdivisions[2]=1.0;
 
@@ -85,9 +85,9 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 
 
 
-      for (int i=0; i<3;i++){
+      for (unsigned int i=0; i<3;i++){
 
-        double temp = numberIntervalsEachDirection[i]-std::floor(numberIntervalsEachDirection[i]);
+        const double temp = numberIntervalsEachDirection[i]-std::floor(numberIntervalsEachDirection[i]);
         if(temp >= 0.5)
 	  subdivisions[i] = std::ceil(numberIntervalsEachDirection[i]);
         else
@@ -113,11 +113,7 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 #endif
 
       if (dftParameters::verbosity>=1)
-      {
-        char buffer1[100];
-        sprintf(buffer1, "\n Base uniform number of elements: %u\n", parallelTriangulation.n_global_active_cells());
-        pcout << buffer1;
-      }
+        pcout<<std::endl<< "Base uniform number of elements: "<< parallelTriangulation.n_global_active_cells()<<std::endl;
 
       //
       //Multilayer refinement
@@ -135,10 +131,9 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 	  endc = parallelTriangulation.end();
 	  //
 	  for(;cell != endc; ++cell)
-	    {
 	      if(cell->is_locally_owned())
 		{
-		  dealii::Point<3> center(cell->center());
+		  const dealii::Point<3> center(cell->center());
 		  double currentMeshSize = cell->minimum_vertex_distance();
 
 		  //
@@ -196,8 +191,6 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 		    }
 		  catch(MappingQ1<3>::ExcTransformationFailed)
 		    {
-
-
 		    }
 		  //
 		  //set refine flags
@@ -209,7 +202,6 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 
 		}
 
-	    }
 
 	  //Refine
 	  refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
@@ -219,11 +211,8 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 	      if(numLevels<dftParameters::n_refinement_steps)
 		{
 		  if (dftParameters::verbosity>=1)
-		  {
-		     char buffer2[100];
-		     sprintf(buffer2, "refinement in progress, level: %u\n", numLevels);
-		     pcout << buffer2;
-		   }
+		     pcout<< "refinement in progress, level: "<< numLevels<<std::endl;
+
 		  parallelTriangulation.execute_coarsening_and_refinement();
 		  numLevels++;
 		}
@@ -254,10 +243,7 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       //
       if (dftParameters::verbosity>=1)
       {
-        pcout << "Refinement levels executed: " << numLevels << std::endl;
-        char buffer[100];
-        sprintf(buffer, "Adaptivity summary:\n numCells: %u, numLevels: %u, h_min: %5.2e\n", parallelTriangulation.n_global_active_cells(), numLevels, minElemLength);
-        pcout << buffer;
+        pcout<< "Adaptivity summary: "<<std::endl<<" numCells: "<<parallelTriangulation.n_global_active_cells()<<", num refinement levels: "<<numLevels<<", h_min: "<<minElemLength<<std::endl;
       }
 }
 
@@ -291,9 +277,9 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       //
       //compute magnitudes of domainBounding Vectors
       //
-      double domainBoundingVectorMag1 = sqrt(d_domainBoundingVectors[0][0]*d_domainBoundingVectors[0][0] + d_domainBoundingVectors[0][1]*d_domainBoundingVectors[0][1] +  d_domainBoundingVectors[0][2]*d_domainBoundingVectors[0][2]);
-      double domainBoundingVectorMag2 = sqrt(d_domainBoundingVectors[1][0]*d_domainBoundingVectors[1][0] + d_domainBoundingVectors[1][1]*d_domainBoundingVectors[1][1] +  d_domainBoundingVectors[1][2]*d_domainBoundingVectors[1][2]);
-      double domainBoundingVectorMag3 = sqrt(d_domainBoundingVectors[2][0]*d_domainBoundingVectors[2][0] + d_domainBoundingVectors[2][1]*d_domainBoundingVectors[2][1] +  d_domainBoundingVectors[2][2]*d_domainBoundingVectors[2][2]);
+      const double domainBoundingVectorMag1 = sqrt(d_domainBoundingVectors[0][0]*d_domainBoundingVectors[0][0] + d_domainBoundingVectors[0][1]*d_domainBoundingVectors[0][1] +  d_domainBoundingVectors[0][2]*d_domainBoundingVectors[0][2]);
+      const double domainBoundingVectorMag2 = sqrt(d_domainBoundingVectors[1][0]*d_domainBoundingVectors[1][0] + d_domainBoundingVectors[1][1]*d_domainBoundingVectors[1][1] +  d_domainBoundingVectors[1][2]*d_domainBoundingVectors[1][2]);
+      const double domainBoundingVectorMag3 = sqrt(d_domainBoundingVectors[2][0]*d_domainBoundingVectors[2][0] + d_domainBoundingVectors[2][1]*d_domainBoundingVectors[2][1] +  d_domainBoundingVectors[2][2]*d_domainBoundingVectors[2][2]);
 
       //
       //generate base level refinement
@@ -319,9 +305,9 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 
 
 
-      for (int i=0; i<3;i++){
+      for (unsigned int i=0; i<3;i++){
 
-        double temp = numberIntervalsEachDirection[i]-std::floor(numberIntervalsEachDirection[i]);
+        const double temp = numberIntervalsEachDirection[i]-std::floor(numberIntervalsEachDirection[i]);
         if(temp >= 0.5)
 	  subdivisions[i] = std::ceil(numberIntervalsEachDirection[i]);
         else
@@ -356,11 +342,7 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 #endif
 
       if (dftParameters::verbosity>=1)
-      {
-        char buffer1[100];
-        sprintf(buffer1, "\n Base uniform number of elements: %u\n", parallelTriangulation.n_global_active_cells());
-        pcout << buffer1;
-      }
+        pcout<<std::endl<< "Base uniform number of elements: "<< parallelTriangulation.n_global_active_cells()<<std::endl;
 
       //
       //Multilayer refinement
@@ -383,7 +365,6 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 	  endc = parallelTriangulation.end();
 	  //
 	  for(;cell != endc; ++cell)
-	    {
 	      if(cell->is_locally_owned())
 		{
 		  dealii::Point<3> center(cell->center());
@@ -444,8 +425,6 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 		    }
 		  catch(MappingQ1<3>::ExcTransformationFailed)
 		    {
-
-
 		    }
 		  //
 		  n_cell++ ;
@@ -468,8 +447,6 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 
 		}
 
-	    }
-
 	  //Refine
 	  refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
 
@@ -478,11 +455,8 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 	      if(numLevels<dftParameters::n_refinement_steps)
 		{
 		  if (dftParameters::verbosity>=1)
-		  {
-		     char buffer2[100];
-		     sprintf(buffer2, "refinement in progress, level: %u\n", numLevels);
-		     pcout << buffer2;
-		   }
+		     pcout<< "refinement in progress, level: "<< numLevels<<std::endl;
+
 		  parallelTriangulation.execute_coarsening_and_refinement();
 		  numLevels++;
 		}
@@ -521,10 +495,7 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       //
       if (dftParameters::verbosity>=1)
       {
-        pcout << "Refinement levels executed: " << numLevels << std::endl;
-        char buffer[100];
-        sprintf(buffer, "Adaptivity summary:\n numCells: %u, numLevels: %u, h_min: %5.2e\n", parallelTriangulation.n_global_active_cells(), numLevels, minElemLength);
-        pcout << buffer;
+        pcout<< "Adaptivity summary: "<<std::endl<<" numCells: "<<parallelTriangulation.n_global_active_cells()<<", num refinement levels: "<<numLevels<<", h_min: "<<minElemLength<<std::endl;
       }
 
       const unsigned int numberGlobalCellsParallel = parallelTriangulation.n_global_active_cells();

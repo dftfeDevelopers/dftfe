@@ -181,7 +181,7 @@ class dftClass
   /**
    * moves the triangulation vertices using Gaussians such that the all atoms are on triangulation vertices
    */
-  void moveMeshToAtoms(const Triangulation<3,3> & triangulationMove,bool reuse=false);
+  void moveMeshToAtoms(const Triangulation<3,3> & triangulationMove,const bool reuse=false);
 
   /**
    * Initializes the guess of electron-density and single-atom wavefunctions on the mesh,
