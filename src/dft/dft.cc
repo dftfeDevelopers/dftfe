@@ -701,7 +701,7 @@ void dftClass<FEOrder>::solve()
     else
       compute_energy (true);
 
- computing_timer.exit_section("solve");
+ computing_timer.exit_section("scf solve");
 
   MPI_Barrier(interpoolcomm) ;
   if (dftParameters::isIonForce)
