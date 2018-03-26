@@ -20,7 +20,7 @@
 
 //Generate triangulation.
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,bool reuse)
+void dftClass<FEOrder>::moveMeshToAtoms(const Triangulation<3,3> & triangulationMove,bool reuse)
 {
 
   meshMovementGaussianClass gaussianMove(mpi_communicator);
@@ -40,7 +40,7 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,b
 	  atomCoor[1] = atomLocations[iAtom][3];
 	  atomCoor[2] = atomLocations[iAtom][4];
 	  atomPoints.push_back(atomCoor);
-      } 
+      }
 
 
       gaussianMove.findClosestVerticesToDestinationPoints(atomPoints,
@@ -50,7 +50,7 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,b
       for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
       {
   	  pcout<< " atomId: "<< iAtom << " disp: "<< dispClosestTriaVerticesToAtoms[iAtom] <<std::endl;
-      }       
+      }
       */
 
       //add control point locations and displacements corresponding to images
@@ -58,7 +58,7 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,b
       {
 	  Point<3> imageCoor;
 	  Point<3> correspondingAtomCoor;
-     
+
 	  imageCoor[0] = d_imagePositions[iImage][0];
 	  imageCoor[1] = d_imagePositions[iImage][1];
 	  imageCoor[2] = d_imagePositions[iImage][2];
@@ -66,24 +66,24 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,b
 	  correspondingAtomCoor[0] = atomLocations[atomId][2];
 	  correspondingAtomCoor[1] = atomLocations[atomId][3];
 	  correspondingAtomCoor[2] = atomLocations[atomId][4];
-  
+
 
           Point<3> temp=closestTriaVertexToAtomsLocation[atomId]+(correspondingAtomCoor-imageCoor);
           closestTriaVertexToAtomsLocation.push_back(temp);
           dispClosestTriaVerticesToAtoms.push_back(dispClosestTriaVerticesToAtoms[atomId]);
        }
   }
- 
+
   const double gaussianConstant=0.5;
   std::pair<bool,double> meshQualityMetrics=gaussianMove.moveMesh(closestTriaVertexToAtomsLocation,
 		                                                  dispClosestTriaVerticesToAtoms,
 			                                          gaussianConstant);
 
   AssertThrow(!meshQualityMetrics.first,ExcMessage("Negative jacobian created after moving closest nodes to atoms. Suggestion: increase refinement near atoms"));
-  
+
   if (dftParameters::verbosity>=1)
       pcout<< "Mesh quality check after mesh movement, maximum jacobian ratio: "<< meshQualityMetrics.second<<std::endl;
 }
 
-	
+
 

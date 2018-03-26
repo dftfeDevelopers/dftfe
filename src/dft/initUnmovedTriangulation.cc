@@ -32,7 +32,7 @@
 
 //init
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::initUnmovedTriangulation(parallel::distributed::Triangulation<3> & triangulation)
+void dftClass<FEOrder>::initUnmovedTriangulation(const parallel::distributed::Triangulation<3> & triangulation)
 {
   computing_timer.enter_section("unmoved setup");
 
@@ -45,7 +45,7 @@ void dftClass<FEOrder>::initUnmovedTriangulation(parallel::distributed::Triangul
   dofHandlerEigen.initialize(triangulation,FEEigen);
   dofHandler.distribute_dofs (FE);
   dofHandlerEigen.distribute_dofs (FEEigen);
-  
+
   //
   //extract locally owned dofs
   //
@@ -58,7 +58,7 @@ void dftClass<FEOrder>::initUnmovedTriangulation(parallel::distributed::Triangul
   DoFTools::extract_locally_relevant_dofs(dofHandlerEigen, locally_relevant_dofsEigen);
   DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), dofHandlerEigen, d_supportPointsEigen);
 
-  
+
 
   //
   //Extract real and imag DOF indices from the global vector - this will be needed in XHX operation, etc.
@@ -76,7 +76,7 @@ void dftClass<FEOrder>::initUnmovedTriangulation(parallel::distributed::Triangul
   localProc_dof_indicesImag.clear();
   for (unsigned int i = 0; i < locally_owned_dofsEigen.n_elements(); i++)
     {
-      if (selectedDofsReal[i]) 
+      if (selectedDofsReal[i])
 	{
 	  local_dof_indicesReal.push_back(local_dof_indices[i]);
 	  localProc_dof_indicesReal.push_back(i);
@@ -95,8 +95,8 @@ void dftClass<FEOrder>::initUnmovedTriangulation(parallel::distributed::Triangul
   pcout << "number of elements: "
 	<< triangulation.n_global_active_cells()
 	<< std::endl
-	<< "number of degrees of freedom: " 
-	<< dofHandler.n_dofs() 
+	<< "number of degrees of freedom: "
+	<< dofHandler.n_dofs()
 	<< std::endl;
   pcout<<"-------------------------------------------------"<<std::endl;
   //std::cout<< " procId: "<< this_mpi_process << " ,locallly_owned_dofs: "<<dofHandler.n_locally_owned_dofs()<<std::endl;
@@ -111,7 +111,7 @@ void dftClass<FEOrder>::initUnmovedTriangulation(parallel::distributed::Triangul
   constraintsNone.clear(); constraintsNoneEigen.clear();
   constraintsNone.reinit(locally_relevant_dofs); constraintsNoneEigen.reinit(locally_relevant_dofsEigen);
   if(dftParameters::meshFileName.empty())
-  {  
+  {
       DoFTools::make_hanging_node_constraints(dofHandler, constraintsNone);
       DoFTools::make_hanging_node_constraints(dofHandlerEigen,constraintsNoneEigen);
   }
@@ -138,7 +138,7 @@ void dftClass<FEOrder>::initUnmovedTriangulation(parallel::distributed::Triangul
 	  offsetVectors[i][j] = unitVectorsXYZ[i][j] - d_domainBoundingVectors[i][j];
 	}
     }
-  
+
   std::vector<GridTools::PeriodicFacePair<typename DoFHandler<3>::cell_iterator> > periodicity_vector2, periodicity_vector2Eigen;
   const std::array<int,3> periodic = {dftParameters::periodicX, dftParameters::periodicY, dftParameters::periodicZ};
   for (int i = 0; i < std::accumulate(periodic.begin(),periodic.end(),0); ++i)
@@ -149,7 +149,7 @@ void dftClass<FEOrder>::initUnmovedTriangulation(parallel::distributed::Triangul
 
   DoFTools::make_periodicity_constraints<DoFHandler<3> >(periodicity_vector2, constraintsNone);
   DoFTools::make_periodicity_constraints<DoFHandler<3> >(periodicity_vector2Eigen, constraintsNoneEigen);
-  
+
 
   if(!dftParameters::meshFileName.empty())
     {
@@ -163,13 +163,13 @@ void dftClass<FEOrder>::initUnmovedTriangulation(parallel::distributed::Triangul
 
 
   //
-  //create a constraint matrix without only hanging node constraints 
+  //create a constraint matrix without only hanging node constraints
   //
   d_noConstraints.clear();d_noConstraintsEigen.clear();
-  d_noConstraints.reinit(locally_relevant_dofs); d_noConstraintsEigen.reinit(locally_relevant_dofsEigen);  
+  d_noConstraints.reinit(locally_relevant_dofs); d_noConstraintsEigen.reinit(locally_relevant_dofsEigen);
   DoFTools::make_hanging_node_constraints(dofHandler, d_noConstraints);
   DoFTools::make_hanging_node_constraints(dofHandlerEigen,d_noConstraintsEigen);
-  d_noConstraints.close();d_noConstraintsEigen.close(); 
+  d_noConstraints.close();d_noConstraintsEigen.close();
 
   if(!dftParameters::meshFileName.empty())
     {
@@ -179,18 +179,18 @@ void dftClass<FEOrder>::initUnmovedTriangulation(parallel::distributed::Triangul
       constraintsNone.merge(d_noConstraints,ConstraintMatrix::MergeConflictBehavior::right_object_wins);
       constraintsNoneEigen.merge(d_noConstraintsEigen,ConstraintMatrix::MergeConflictBehavior::right_object_wins);
       constraintsNone.close();
-      constraintsNoneEigen.close();      
-    }  
+      constraintsNoneEigen.close();
+    }
   /*
   //
-  //create a constraint matrix without only hanging node constraints 
+  //create a constraint matrix without only hanging node constraints
   //
   d_noConstraints.clear();d_noConstraintsEigen.clear();
-  d_noConstraints.reinit(locally_relevant_dofs); d_noConstraintsEigen.reinit(locally_relevant_dofsEigen);  
+  d_noConstraints.reinit(locally_relevant_dofs); d_noConstraintsEigen.reinit(locally_relevant_dofsEigen);
   DoFTools::make_hanging_node_constraints(dofHandler, d_noConstraints);
   DoFTools::make_hanging_node_constraints(dofHandlerEigen,d_noConstraintsEigen);
   d_noConstraints.close();d_noConstraintsEigen.close();
-  
+
 
   //
   //merge hanging node constraint matrix with constrains None and constraints None eigen
@@ -253,5 +253,5 @@ void dftClass<FEOrder>::initUnmovedTriangulation(parallel::distributed::Triangul
     }
 
 
-  computing_timer.exit_section("unmoved setup");    
+  computing_timer.exit_section("unmoved setup");
 }

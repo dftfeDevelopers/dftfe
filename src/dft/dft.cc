@@ -368,19 +368,19 @@ void dftClass<FEOrder>::init ()
   //
   //generate mesh (both parallel and serial)
   //
-  d_mesh.generateSerialAndParallelMesh(atomLocations,
-				       d_imagePositions,
-				       d_domainBoundingVectors);
+  d_mesh.generateSerialUnmovedAndParallelMovedUnmovedMesh(atomLocations,
+				                          d_imagePositions,
+				                          d_domainBoundingVectors);
   computing_timer.exit_section("mesh generation");
 
 
   //
   //get access to triangulation objects from meshGenerator class
   //
-  parallel::distributed::Triangulation<3> & triangulationPar = d_mesh.getParallelMesh();
+  const parallel::distributed::Triangulation<3> & triangulationPar = d_mesh.getParallelMeshMoved();
 
   //initialize affine transformation object (must be done on unmoved triangulation)
-  d_affineTransformMesh.init(d_mesh.getParallelMesh(),d_domainBoundingVectors);
+  d_affineTransformMesh.init(d_mesh.getParallelMeshMoved(),d_domainBoundingVectors);
 
   //
   //initialize dofHandlers and hanging-node constraints and periodic constraints on the unmoved Mesh

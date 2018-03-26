@@ -12,14 +12,17 @@
 // the top level of the DFT-FE distribution.
 //
 // ---------------------------------------------------------------------
-//
-// @author Phani Motamarri (2017)
-//
+
+/** @file meshGenerator.h
+ *
+ *  @brief This class generates and stores adaptive finite element meshes for the real-space dft problem.
+ *
+ *  @author Phani Motamarri, Sambit Das, Krishnendu Ghosh
+ */
 
 #ifndef meshGenerator_H_
 #define meshGenerator_H_
 #include "headers.h"
-#include "constants.h"
 
 using namespace dealii;
 
@@ -31,7 +34,7 @@ class meshGeneratorClass
   /**
    * meshGeneratorClass constructor
    */
-  meshGeneratorClass( MPI_Comm &mpi_comm_replica);
+  meshGeneratorClass(const MPI_Comm &mpi_comm_replica);
 
 
   /**
@@ -39,30 +42,37 @@ class meshGeneratorClass
    */
   ~meshGeneratorClass();
 
+  void generateSerialUnmovedAndParallelMovedUnmovedMesh
+              (const std::vector<std::vector<double> > & atomLocations,
+	       const std::vector<std::vector<double> > & imageAtomLocations,
+	       const std::vector<std::vector<double> > & domainBoundingVectors);
 
-
-  void generateSerialAndParallelMesh(const std::vector<std::vector<double> > & atomLocations,
-				     const std::vector<std::vector<double> > & imageAtomLocations,
-				     const std::vector<std::vector<double> > & domainBoundingVectors);
+  void generateParallelUnmovedPreviousMesh
+              (const std::vector<std::vector<double> > & atomLocations,
+	       const std::vector<std::vector<double> > & imageAtomLocations,
+	       const std::vector<std::vector<double> > & domainBoundingVectors);
 
   const parallel::distributed::Triangulation<3> & getSerialMeshUnmoved();
 
-  parallel::distributed::Triangulation<3> & getParallelMesh();
+  const parallel::distributed::Triangulation<3> & getParallelMeshMoved();
 
+  const parallel::distributed::Triangulation<3> & getParallelMeshUnmoved();
 
+  const parallel::distributed::Triangulation<3> & getParallelMeshUnmovedPrevious();
 
  private:
 
-  void generateMesh(parallel::distributed::Triangulation<3>& parallelTriangulation, parallel::distributed::Triangulation<3>& serialTriangulation, types::global_dof_index & numberGlobalCells);
+  void generateMesh(parallel::distributed::Triangulation<3>& parallelTriangulation, parallel::distributed::Triangulation<3>& serialTriangulation);
 
 
-  void generateMesh(parallel::distributed::Triangulation<3>& parallelTriangulation, types::global_dof_index & numberGlobalCells);
+  void generateMesh(parallel::distributed::Triangulation<3>& parallelTriangulation);
 
   void refineSerialMesh(unsigned int n_cell, std::vector<double>& centroid, std::vector<int>& localRefineFlag, unsigned int n_global_cell, parallel::distributed::Triangulation<3>& serialTriangulation);
   //
   //data members
   //
   parallel::distributed::Triangulation<3> d_parallelTriangulationUnmoved;
+  parallel::distributed::Triangulation<3> d_parallelTriangulationUnmovedPrevious;
   parallel::distributed::Triangulation<3> d_parallelTriangulationMoved;
 
   parallel::distributed::Triangulation<3> d_serialTriangulationUnmoved;
@@ -74,7 +84,7 @@ class meshGeneratorClass
   //
   //parallel objects
   //
-  MPI_Comm mpi_communicator;
+  const MPI_Comm mpi_communicator;
   const unsigned int this_mpi_process;
   const unsigned int n_mpi_processes;
   dealii::ConditionalOStream   pcout;

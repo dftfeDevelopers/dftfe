@@ -13,18 +13,25 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Phani Motamarri (2017)
-//
-#include "../../include/meshGenerator.h"
-#include "../../include/dftParameters.h"
+/** @file meshGenerator.cc
+ *
+ *  @brief Source file for meshGenerator.h
+ *
+ *  @author Phani Motamarri, Sambit Das, Krishnendu Ghosh
+ */
+
+
+#include <meshGenerator.h>
+#include <dftParameters.h>
 #include "meshGenUtils.cc"
 
 
 //
 //constructor
 //
-meshGeneratorClass::meshGeneratorClass( MPI_Comm &mpi_comm_replica):
+meshGeneratorClass::meshGeneratorClass(const MPI_Comm &mpi_comm_replica):
   d_parallelTriangulationUnmoved(mpi_comm_replica),
+  d_parallelTriangulationUnmovedPrevious(mpi_comm_replica),
   d_parallelTriangulationMoved(mpi_comm_replica),
   mpi_communicator (mpi_comm_replica),
   d_serialTriangulationUnmoved(MPI_COMM_SELF),
@@ -48,7 +55,7 @@ meshGeneratorClass::~meshGeneratorClass()
 //generate adaptive mesh
 //
 
-void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& parallelTriangulation, types::global_dof_index & numberGlobalCells)
+void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& parallelTriangulation)
 {
       //
       //compute magnitudes of domainBounding Vectors
@@ -57,9 +64,6 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       double domainBoundingVectorMag2 = sqrt(d_domainBoundingVectors[1][0]*d_domainBoundingVectors[1][0] + d_domainBoundingVectors[1][1]*d_domainBoundingVectors[1][1] +  d_domainBoundingVectors[1][2]*d_domainBoundingVectors[1][2]);
       double domainBoundingVectorMag3 = sqrt(d_domainBoundingVectors[2][0]*d_domainBoundingVectors[2][0] + d_domainBoundingVectors[2][1]*d_domainBoundingVectors[2][1] +  d_domainBoundingVectors[2][2]*d_domainBoundingVectors[2][2]);
 
-      //
-      //generate base level refinement
-      //
       unsigned int subdivisions[3];subdivisions[0]=1.0;subdivisions[1]=1.0;subdivisions[2]=1.0;
 
 
@@ -127,7 +131,6 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       while(refineFlag)
 	{
 	  refineFlag = false;
-          numberGlobalCells = parallelTriangulation.n_global_active_cells();
 	  cell = parallelTriangulation.begin_active();
 	  endc = parallelTriangulation.end();
 	  //
@@ -256,13 +259,11 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
         sprintf(buffer, "Adaptivity summary:\n numCells: %u, numLevels: %u, h_min: %5.2e\n", parallelTriangulation.n_global_active_cells(), numLevels, minElemLength);
         pcout << buffer;
       }
-
 }
 
-void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& parallelTriangulation, parallel::distributed::Triangulation<3>& serialTriangulation, types::global_dof_index & numberGlobalCells)
-
+void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& parallelTriangulation,
+	                              parallel::distributed::Triangulation<3>& serialTriangulation)
 {
-  computing_timer.enter_section("mesh");
   if(!dftParameters::meshFileName.empty())
     {
       GridIn<3> gridinParallel, gridinSerial;
@@ -283,7 +284,6 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       if (dftParameters::useSymm)
 	meshGenUtils::markPeriodicFacesNonOrthogonal(serialTriangulation,d_domainBoundingVectors);
 #endif
-      numberGlobalCells = parallelTriangulation.n_global_active_cells();
     }
   else
     {
@@ -379,7 +379,6 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 	{
           n_cell = 0; centroid.clear(); localRefineFlag.clear();
 	  refineFlag = false;
-          numberGlobalCells = parallelTriangulation.n_global_active_cells();
 	  cell = parallelTriangulation.begin_active();
 	  endc = parallelTriangulation.end();
 	  //
@@ -496,7 +495,7 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 	  // Refine serial mesh
 	  if(dftParameters::useSymm)
 	    {
-	      refineSerialMesh(n_cell, centroid, localRefineFlag, numberGlobalCells, serialTriangulation) ;
+	      refineSerialMesh(n_cell, centroid, localRefineFlag, parallelTriangulation.n_global_active_cells(), serialTriangulation) ;
 	      serialTriangulation.execute_coarsening_and_refinement();
 	    }
 
@@ -528,10 +527,10 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
         pcout << buffer;
       }
 
-      int numberGlobalCellsParallel = parallelTriangulation.n_global_active_cells();
+      const unsigned int numberGlobalCellsParallel = parallelTriangulation.n_global_active_cells();
       if (dftParameters::useSymm)
       {
-         int numberGlobalCellsSerial = serialTriangulation.n_global_active_cells();
+         const unsigned int numberGlobalCellsSerial = serialTriangulation.n_global_active_cells();
 
 	if (dftParameters::verbosity==2)
 	{
@@ -542,17 +541,15 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       }
 
     }
-
-  computing_timer.exit_section("mesh");
-
 }
 
 //
 //generate Mesh
 //
-void meshGeneratorClass::generateSerialAndParallelMesh(const std::vector<std::vector<double> > & atomLocations,
-						       const std::vector<std::vector<double> > & imageAtomLocations,
-						       const std::vector<std::vector<double> > & domainBoundingVectors)
+void meshGeneratorClass::generateSerialUnmovedAndParallelMovedUnmovedMesh
+                    (const std::vector<std::vector<double> > & atomLocations,
+		     const std::vector<std::vector<double> > & imageAtomLocations,
+		     const std::vector<std::vector<double> > & domainBoundingVectors)
 {
 
   //
@@ -562,8 +559,6 @@ void meshGeneratorClass::generateSerialAndParallelMesh(const std::vector<std::ve
   d_imageAtomPositions = imageAtomLocations;
   d_domainBoundingVectors = domainBoundingVectors;
 
-  types::global_dof_index numberGlobalCellsSerial,numberGlobalCellsParallel;
-
   //clear existing triangulation data
   d_serialTriangulationUnmoved.clear();
   d_parallelTriangulationUnmoved.clear();
@@ -572,12 +567,29 @@ void meshGeneratorClass::generateSerialAndParallelMesh(const std::vector<std::ve
   //
   //generate mesh data members
   //
-  generateMesh(d_parallelTriangulationUnmoved, d_serialTriangulationUnmoved, numberGlobalCellsParallel);
-  generateMesh(d_parallelTriangulationMoved,numberGlobalCellsParallel);
+  generateMesh(d_parallelTriangulationUnmoved, d_serialTriangulationUnmoved);
+  generateMesh(d_parallelTriangulationMoved);
+}
 
+//
+//generate Mesh
+//
+void meshGeneratorClass::generateParallelUnmovedPreviousMesh
+                    (const std::vector<std::vector<double> > & atomLocations,
+		     const std::vector<std::vector<double> > & imageAtomLocations,
+		     const std::vector<std::vector<double> > & domainBoundingVectors)
+{
 
+  //
+  //set the data members before generating mesh
+  //
+  d_atomPositions = atomLocations;
+  d_imageAtomPositions = imageAtomLocations;
+  d_domainBoundingVectors = domainBoundingVectors;
 
+  d_parallelTriangulationUnmovedPrevious.clear();
 
+  generateMesh(d_parallelTriangulationUnmovedPrevious);
 }
 
 //
@@ -592,10 +604,28 @@ meshGeneratorClass::getSerialMeshUnmoved()
 //
 //get moved parallel mesh
 //
-parallel::distributed::Triangulation<3> &
-meshGeneratorClass::getParallelMesh()
+const parallel::distributed::Triangulation<3> &
+meshGeneratorClass::getParallelMeshMoved()
 {
   return d_parallelTriangulationMoved;
+}
+
+//
+//get unmoved parallel mesh
+//
+const parallel::distributed::Triangulation<3> &
+meshGeneratorClass::getParallelMeshUnmoved()
+{
+  return d_parallelTriangulationUnmoved;
+}
+
+//
+//get unmoved parallel mesh
+//
+const parallel::distributed::Triangulation<3> &
+meshGeneratorClass::getParallelMeshUnmovedPrevious()
+{
+  return d_parallelTriangulationUnmovedPrevious;
 }
 
 //
@@ -686,4 +716,3 @@ void meshGeneratorClass::refineSerialMesh(unsigned int n_cell,
 
 
 }
-
