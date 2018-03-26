@@ -368,23 +368,19 @@ void dftClass<FEOrder>::init ()
   //
   //generate mesh (both parallel and serial)
   //
-  d_mesh.generateSerialAndParallelMesh(atomLocations,
-				       d_imagePositions,
-				       d_domainBoundingVectors);
+  d_mesh.generateSerialUnmovedAndParallelMovedUnmovedMesh(atomLocations,
+				                          d_imagePositions,
+				                          d_domainBoundingVectors);
   computing_timer.exit_section("mesh generation");
 
 
   //
   //get access to triangulation objects from meshGenerator class
   //
-  parallel::distributed::Triangulation<3> & triangulationPar = d_mesh.getParallelMesh();
-  if (dftParameters::useSymm) {
-    parallel::distributed::Triangulation<3> & triangulationSer = d_mesh.getSerialMesh();
-    writeMesh("meshInitial");
-  }
+  const parallel::distributed::Triangulation<3> & triangulationPar = d_mesh.getParallelMeshMoved();
 
   //initialize affine transformation object (must be done on unmoved triangulation)
-  d_affineTransformMesh.init(d_mesh.getParallelMesh(),d_domainBoundingVectors);
+  d_affineTransformMesh.init(d_mesh.getParallelMeshMoved(),d_domainBoundingVectors);
 
   //
   //initialize dofHandlers and hanging-node constraints and periodic constraints on the unmoved Mesh
@@ -821,15 +817,11 @@ void dftClass<FEOrder>::output()
 template <unsigned int FEOrder>
 void dftClass<FEOrder>::writeMesh(std::string meshFileName)
  {
-      FESystem<3> FETemp(FE_Q<3>(QGaussLobatto<1>(2)), 1);
-      DoFHandler<3> dofHandlerTemp; dofHandlerTemp.initialize(d_mesh.getSerialMesh(),FETemp);
-      dofHandlerTemp.distribute_dofs(FETemp);
       DataOut<3> data_out;
-      data_out.attach_dof_handler(dofHandlerTemp);
+      data_out.attach_dof_handler(dofHandler);
       data_out.build_patches ();
       meshFileName+=".vtu";
-      std::ofstream output(meshFileName);
-      data_out.write_vtu (output);
+      data_out.write_vtu_in_parallel(meshFileName.c_str(),mpi_communicator);
  }
 
 template class dftClass<1>;

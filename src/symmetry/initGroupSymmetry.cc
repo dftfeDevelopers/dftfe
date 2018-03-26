@@ -116,7 +116,7 @@ void symmetryClass<FEOrder>::initSymmetry()
  //(dftPtr->dofHandlerEigen)_serial(triangulation_serial) ;
  //(dftPtr->dofHandlerEigen)_serial.distribute_dofs(FEEigen_serial);
  //FEValues<3> fe_values (FEEigen_serial, quadrature, update_values | update_gradients| update_JxW_values | update_quadrature_points);
- parallel::distributed::Triangulation<3> & triangulationSer = (dftPtr->d_mesh).getSerialMesh();
+ const parallel::distributed::Triangulation<3> & triangulationSer = (dftPtr->d_mesh).getSerialMeshUnmoved();
  typename parallel::distributed::Triangulation<3>::active_cell_iterator cellTemp = triangulationSer.begin_active(), endcTemp = triangulationSer.end();
   for (; cellTemp!=endcTemp; ++cellTemp)
     {

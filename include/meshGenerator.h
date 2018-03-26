@@ -12,14 +12,27 @@
 // the top level of the DFT-FE distribution.
 //
 // ---------------------------------------------------------------------
-//
-// @author Phani Motamarri (2017)
-//
+
+/** @file meshGenerator.h
+ *
+ *  @brief This class generates and stores adaptive finite element meshes for the real-space dft problem.
+ *
+ *  The class uses an adpative mesh generation strategy to generate finite element mesh for given domain
+ *  based on five input parameters: BASE MESH SIZE, ATOM BALL RADIUS, MESH SIZE ATOM BALL, MESH SIZE NEAR ATOM
+ *  and MAX REFINEMENT STEPS (Refer to utils/dftParameters.cc for their corresponding internal variable names).
+ *  Additionaly, this class also applies periodicity to mesh. The class stores two types of meshes: moved
+ *  and unmoved. They are essentially the same meshes, except that we move the nodes of the moved mesh
+ *  (in the meshMovement class) such that the atoms lie on the nodes. However, once the mesh is moved, dealii
+ *  has issues using that mesh for further refinement, which is why we also carry an unmoved triangulation.
+ *  There are other places where we require an unmoved triangulation, for example in projection of solution
+ *  fields from the previous ground state in stucture optimization.
+ *
+ *  @author Phani Motamarri, Sambit Das, Krishnendu Ghosh
+ */
 
 #ifndef meshGenerator_H_
 #define meshGenerator_H_
 #include "headers.h"
-#include "constants.h"
 
 using namespace dealii;
 
@@ -28,10 +41,11 @@ class meshGeneratorClass
 {
 
  public:
-  /**
-   * meshGeneratorClass constructor
-   */
-  meshGeneratorClass( MPI_Comm &mpi_comm_replica);
+/** @brief Constructor.
+ *
+ *  @param mpi_comm_replica mpi_communicator of the current pool
+ */
+  meshGeneratorClass(const MPI_Comm &mpi_comm_replica);
 
 
   /**
@@ -39,31 +53,90 @@ class meshGeneratorClass
    */
   ~meshGeneratorClass();
 
- 
+/** @brief generates parallel moved and unmoved meshes, and serial unmoved mesh.
+ *
+ *  @param atomLocations vector containing cartesian coordinates at atoms with
+ *  respect to origin (center of domain).
+ *  @param imageAtomLocations vector containing cartesian coordinates of image
+ *  atoms with respect to origin.
+ *  @param domainBoundingVectors vector of domain bounding vectors (refer to
+ *  description of input parameters.
+ */
+  void generateSerialUnmovedAndParallelMovedUnmovedMesh
+              (const std::vector<std::vector<double> > & atomLocations,
+	       const std::vector<std::vector<double> > & imageAtomLocations,
+	       const std::vector<std::vector<double> > & domainBoundingVectors);
 
-  void generateSerialAndParallelMesh(std::vector<std::vector<double> > & atomLocations,
-				     std::vector<std::vector<double> > & imageAtomLocations,
-				     std::vector<std::vector<double> > & domainBoundingVectors);
+/** @brief generates parallel unmoved previous mesh.
+ *
+ *  The function is to be used a update call to update the parallel unmoved previous
+ *  mesh after we have used it for the field projection purposes in structure optimization.
+ *
+ *  @param atomLocations vector containing cartesian coordinates at atoms with
+ *  respect to origin (center of domain).
+ *  @param imageAtomLocations vector containing cartesian coordinates of image
+ *  atoms with respect to origin.
+ *  @param domainBoundingVectors vector of domain bounding vectors (refer to
+ *  description of input parameters.
+ */
+  void generateParallelUnmovedPreviousMesh
+              (const std::vector<std::vector<double> > & atomLocations,
+	       const std::vector<std::vector<double> > & imageAtomLocations,
+	       const std::vector<std::vector<double> > & domainBoundingVectors);
 
-  void generateMesh(parallel::distributed::Triangulation<3>& parallelTriangulation, parallel::distributed::Triangulation<3>& serialTriangulation, types::global_dof_index & numberGlobalCells);
+/**
+ * @brief returns constant reference to serial unmoved triangulation
+ *
+ */
+  const parallel::distributed::Triangulation<3> & getSerialMeshUnmoved();
 
-  void refineSerialMesh(unsigned int n_cell, std::vector<double>& centroid, std::vector<int>& localRefineFlag, unsigned int n_global_cell, parallel::distributed::Triangulation<3>& serialTriangulation) ;
+/**
+ * @brief returns constant reference to parallel moved triangulation
+ *
+ */
+  const parallel::distributed::Triangulation<3> & getParallelMeshMoved();
 
-  parallel::distributed::Triangulation<3> & getSerialMesh();
+/**
+ * @brief returns constant reference to parallel unmoved triangulation
+ *
+ */
+  const parallel::distributed::Triangulation<3> & getParallelMeshUnmoved();
 
-  parallel::distributed::Triangulation<3> & getParallelMesh();
+/**
+ * @brief returns constant reference to parallel unmoved previous triangulation
+ * (triangulation used in the last ground state solve during structure optimization).
+ *
+ */
+  const parallel::distributed::Triangulation<3> & getParallelMeshUnmovedPrevious();
 
-  
-  
  private:
+
+/**
+ * @brief internal function which generates a parallel and serial mesh using a adaptive refinement strategy.
+ *
+ */
+  void generateMesh(parallel::distributed::Triangulation<3>& parallelTriangulation, parallel::distributed::Triangulation<3>& serialTriangulation);
+
+/**
+ * @brief internal function which generates a parallel mesh using a adaptive refinement strategy.
+ *
+ */
+  void generateMesh(parallel::distributed::Triangulation<3>& parallelTriangulation);
+
+/**
+ * @brief internal function which refines the serial mesh based on refinement flags from parallel mesh.
+ * This ensures that we get the same mesh in serial and parallel.
+ *
+ */
+  void refineSerialMesh(unsigned int n_cell, std::vector<double>& centroid, std::vector<int>& localRefineFlag, unsigned int n_global_cell, parallel::distributed::Triangulation<3>& serialTriangulation);
+
   //
   //data members
   //
   parallel::distributed::Triangulation<3> d_parallelTriangulationUnmoved;
+  parallel::distributed::Triangulation<3> d_parallelTriangulationUnmovedPrevious;
   parallel::distributed::Triangulation<3> d_parallelTriangulationMoved;
-
   parallel::distributed::Triangulation<3> d_serialTriangulationUnmoved;
-  parallel::distributed::Triangulation<3> d_serialTriangulationMoved;
 
   std::vector<std::vector<double> > d_atomPositions;
   std::vector<std::vector<double> > d_imageAtomPositions;
@@ -72,10 +145,10 @@ class meshGeneratorClass
   //
   //parallel objects
   //
-  MPI_Comm mpi_communicator;
+  const MPI_Comm mpi_communicator;
   const unsigned int this_mpi_process;
   const unsigned int n_mpi_processes;
-  dealii::ConditionalOStream   pcout;  
+  dealii::ConditionalOStream   pcout;
 
   //
   //compute-time logger

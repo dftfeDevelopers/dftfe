@@ -46,7 +46,7 @@
 #include "moveAtoms.cc"
 
 //This class computes and stores the configurational forces corresponding to geometry optimization.
-//It uses the formulation in the paper by Motamarri et.al. (https://arxiv.org/abs/1712.05535) 
+//It uses the formulation in the paper by Motamarri et.al. (https://arxiv.org/abs/1712.05535)
 //which provides an unified approach to atomic forces corresponding to internal atomic relaxation and cell stress
 //corresponding to cell relaxation.
 
@@ -71,7 +71,7 @@ forceClass<FEOrder>::forceClass(dftClass<FEOrder>* _dftPtr, MPI_Comm &mpi_comm_r
 //initialize forceClass object
 //
 template<unsigned int FEOrder>
-void forceClass<FEOrder>::initUnmoved(Triangulation<3,3> & triangulation)
+void forceClass<FEOrder>::initUnmoved(const Triangulation<3,3> & triangulation)
 {
   computing_timer.enter_section("forceClass setup");
   d_dofHandlerForce.clear();
@@ -131,7 +131,7 @@ void forceClass<FEOrder>::initMoved()
   d_dofHandlerForce.distribute_dofs(FEForce);
   d_supportPointsForce.clear();
   DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), d_dofHandlerForce, d_supportPointsForce);
-  
+
   createBinObjectsForce();
   locateAtomCoreNodesForce();
   gaussianMovePar.initMoved(dftPtr->d_domainBoundingVectors);
@@ -198,19 +198,19 @@ void forceClass<FEOrder>::configForceLinFEFinalize()
 //compute configurational force on the finite element nodes corresponding to linear shape function
 // generators. This function is generic to all-electron and pseudopotential as well as non-periodic and periodic
 //cases. Also both LDA and GGA exchange correlation are handled. For details of the configurational
-//force expressions refer to the Configurational force paper by Motamarri et.al. 
-//(https://arxiv.org/abs/1712.05535) 
+//force expressions refer to the Configurational force paper by Motamarri et.al.
+//(https://arxiv.org/abs/1712.05535)
 template<unsigned int FEOrder>
 void forceClass<FEOrder>::computeConfigurationalForceTotalLinFE()
 {
 
- 
+
   configForceLinFEInit();
   //configurational force contribution from all terms except those from nuclear self energy
   if (dftParameters::spinPolarized)
      computeConfigurationalForceSpinPolarizedEEshelbyTensorFPSPFnlLinFE();
   else
-     computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(); 
+     computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE();
   //configurational force contribution from nuclear self energy. This is handled separately as it involves
   // a surface integral over the vself ball surface
   computeConfigurationalForceEselfLinFE();
@@ -223,7 +223,7 @@ void forceClass<FEOrder>::computeConfigurationalForceTotalLinFE()
 	 const unsigned int atomForceDof=it->second;
 	 std::cout<<"procid: "<< this_mpi_process<<" atomId: "<< atomIdPair.first << ", force component: "<<atomIdPair.second << ", force: "<<d_configForceVectorLinFE[atomForceDof] << std::endl;
 #ifdef ENABLE_PERIODIC_BC
-	 std::cout<<"procid: "<< this_mpi_process<<" atomId: "<< atomIdPair.first << ", force component: "<<atomIdPair.second << ", forceKPoints: "<<d_configForceVectorLinFEKPoints[atomForceDof] << std::endl; 
+	 std::cout<<"procid: "<< this_mpi_process<<" atomId: "<< atomIdPair.first << ", force component: "<<atomIdPair.second << ", forceKPoints: "<<d_configForceVectorLinFEKPoints[atomForceDof] << std::endl;
 #endif
   }
 #endif
