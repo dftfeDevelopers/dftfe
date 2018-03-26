@@ -113,9 +113,7 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 #endif
 
       if (dftParameters::verbosity>=1)
-      {
-        pcout<<std::endl<< " Base uniform number of elements: "<< parallelTriangulation.n_global_active_cells();
-      }
+        pcout<<std::endl<< "Base uniform number of elements: "<< parallelTriangulation.n_global_active_cells()<<std::endl;
 
       //
       //Multilayer refinement
@@ -213,9 +211,8 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 	      if(numLevels<dftParameters::n_refinement_steps)
 		{
 		  if (dftParameters::verbosity>=1)
-		  {
-		     pcout<< "refinement in progress, level: ", numLevels<<std::endl;
-		   }
+		     pcout<< "refinement in progress, level: "<< numLevels<<std::endl;
+
 		  parallelTriangulation.execute_coarsening_and_refinement();
 		  numLevels++;
 		}
@@ -246,7 +243,7 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       //
       if (dftParameters::verbosity>=1)
       {
-        pcout<< std::endl<<"Adaptivity summary: "<<std::endl<<" numCells: "<<parallelTriangulation.n_global_active_cells()<<", num refinement levels: "<<numLevels<<", h_min: "<<minElemLength<<std::endl;
+        pcout<< "Adaptivity summary: "<<std::endl<<" numCells: "<<parallelTriangulation.n_global_active_cells()<<", num refinement levels: "<<numLevels<<", h_min: "<<minElemLength<<std::endl;
       }
 }
 
@@ -345,9 +342,7 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 #endif
 
       if (dftParameters::verbosity>=1)
-      {
-        pcout<<std::endl<< " Base uniform number of elements: "<< parallelTriangulation.n_global_active_cells();
-      }
+        pcout<<std::endl<< "Base uniform number of elements: "<< parallelTriangulation.n_global_active_cells()<<std::endl;
 
       //
       //Multilayer refinement
@@ -460,9 +455,8 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 	      if(numLevels<dftParameters::n_refinement_steps)
 		{
 		  if (dftParameters::verbosity>=1)
-		  {
-		     pcout<< "refinement in progress, level: ", numLevels<<std::endl;
-		   }
+		     pcout<< "refinement in progress, level: "<< numLevels<<std::endl;
+
 		  parallelTriangulation.execute_coarsening_and_refinement();
 		  numLevels++;
 		}
@@ -501,7 +495,7 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       //
       if (dftParameters::verbosity>=1)
       {
-        pcout<< std::endl<<"Adaptivity summary: "<<std::endl<<" numCells: "<<parallelTriangulation.n_global_active_cells()<<", num refinement levels: "<<numLevels<<", h_min: "<<minElemLength<<std::endl;
+        pcout<< "Adaptivity summary: "<<std::endl<<" numCells: "<<parallelTriangulation.n_global_active_cells()<<", num refinement levels: "<<numLevels<<", h_min: "<<minElemLength<<std::endl;
       }
 
       const unsigned int numberGlobalCellsParallel = parallelTriangulation.n_global_active_cells();
