@@ -20,7 +20,7 @@
 
 //Generate triangulation.
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::moveMeshToAtoms(const Triangulation<3,3> & triangulationMove,bool reuse)
+void dftClass<FEOrder>::moveMeshToAtoms(const Triangulation<3,3> & triangulationMove,const bool reuse)
 {
 
   meshMovementGaussianClass gaussianMove(mpi_communicator);
