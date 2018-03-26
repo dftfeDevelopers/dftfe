@@ -41,9 +41,9 @@ class meshGeneratorClass
 
 
 
-  void generateSerialAndParallelMesh(std::vector<std::vector<double> > & atomLocations,
-				     std::vector<std::vector<double> > & imageAtomLocations,
-				     std::vector<std::vector<double> > & domainBoundingVectors);
+  void generateSerialAndParallelMesh(const std::vector<std::vector<double> > & atomLocations,
+				     const std::vector<std::vector<double> > & imageAtomLocations,
+				     const std::vector<std::vector<double> > & domainBoundingVectors);
 
   const parallel::distributed::Triangulation<3> & getSerialMeshUnmoved();
 

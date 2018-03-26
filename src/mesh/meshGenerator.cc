@@ -550,9 +550,9 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 //
 //generate Mesh
 //
-void meshGeneratorClass::generateSerialAndParallelMesh(std::vector<std::vector<double> > & atomLocations,
-						       std::vector<std::vector<double> > & imageAtomLocations,
-						       std::vector<std::vector<double> > & domainBoundingVectors)
+void meshGeneratorClass::generateSerialAndParallelMesh(const std::vector<std::vector<double> > & atomLocations,
+						       const std::vector<std::vector<double> > & imageAtomLocations,
+						       const std::vector<std::vector<double> > & domainBoundingVectors)
 {
 
   //
