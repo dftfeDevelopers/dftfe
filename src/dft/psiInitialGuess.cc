@@ -25,13 +25,13 @@
 
 
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::loadPSIFiles(unsigned int Z, 
-				     unsigned int n, 
+void dftClass<FEOrder>::loadPSIFiles(unsigned int Z,
+				     unsigned int n,
 				     unsigned int l,
 				     unsigned int &fileReadFlag)
 {
 
-  if (radValues[Z][n].count(l) > 0) 
+  if (radValues[Z][n].count(l) > 0)
     {
       fileReadFlag = 1;
       return;
@@ -55,7 +55,7 @@ void dftClass<FEOrder>::loadPSIFiles(unsigned int Z,
   std::vector<std::vector<double> > values;
 
   fileReadFlag = dftUtils::readPsiFile(2, values, psiFile);
-  
+
 
   //
   //spline fitting for single-atom wavefunctions
@@ -63,7 +63,7 @@ void dftClass<FEOrder>::loadPSIFiles(unsigned int Z,
   if(fileReadFlag > 0)
     {
       pcout<<"reading data from file: "<<psiFile<<std::endl;
-      
+
       int numRows = values.size()-1;
       std::vector<double> xData(numRows), yData(numRows);
 
@@ -74,7 +74,7 @@ void dftClass<FEOrder>::loadPSIFiles(unsigned int Z,
 	}
       outerValues[Z][n][l] = xData[numRows-1];
       alglib::real_1d_array x;
-      x.setcontent(numRows,&xData[0]);	
+      x.setcontent(numRows,&xData[0]);
 
       //y
       for(int irow = 0; irow < numRows; ++irow)
@@ -148,9 +148,9 @@ void dftClass<FEOrder>::determineOrbitalFilling()
   level.clear(); level.push_back(7); level.push_back(1); stencil.push_back(level);
   //8s
   level.clear(); level.push_back(8); level.push_back(0); stencil.push_back(level);
-  
-  
-  
+
+
+
   const unsigned int numberGlobalAtoms = atomLocations.size();
   const int numberImageCharges = d_imageIds.size();
   const int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
@@ -167,7 +167,7 @@ void dftClass<FEOrder>::determineOrbitalFilling()
     {
       unsigned int Z = atomLocations[iAtom][0];
       unsigned int valenceZ = atomLocations[iAtom][1];
-      unsigned int numberAtomFunctions; 
+      unsigned int numberAtomFunctions;
 
       if(dftParameters::isPseudopotential)
 	{
@@ -198,7 +198,7 @@ void dftClass<FEOrder>::determineOrbitalFilling()
 		{
 		  pcout << "Z:" << Z << std::endl;
 		}
-	      
+
 	      //
 	      //load PSI files
 	      //
@@ -212,7 +212,7 @@ void dftClass<FEOrder>::determineOrbitalFilling()
 		  waveFunctionsVector.push_back(temp); waveFunctionCount++;
 		  if(waveFunctionCount >= numEigenValues && waveFunctionCount >= numberGlobalAtoms) break;
 		}
-	      
+
 	    }
 
 	  if(waveFunctionCount >= numEigenValues && waveFunctionCount >= numberGlobalAtoms) break;
@@ -230,12 +230,12 @@ void dftClass<FEOrder>::determineOrbitalFilling()
       std::cerr<< "Error: Could not find single-atom wavefunctions for any atom: "<< std::endl;
       exit(-1);
     }
-  
+
   if(waveFunctionsVector.size() > numEigenValues)
     {
       numEigenValues = waveFunctionsVector.size();
     }
-  
+
 
   pcout<<"============================================================================================================================="<<std::endl;
   pcout<<"number of electrons: "<<numElectrons<<std::endl;
@@ -247,7 +247,7 @@ void dftClass<FEOrder>::determineOrbitalFilling()
 //
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::readPSIRadialValues(){
- 
+
   IndexSet locallyOwnedSet;
   DoFTools::extract_locally_owned_dofs(dofHandlerEigen, locallyOwnedSet);
   std::vector<IndexSet::size_type> locallyOwnedDOFs;
@@ -263,7 +263,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
   std::vector<std::vector<double> > local_dof_values(numEigenValues, std::vector<double>(numberDofs, 0.0));
   const unsigned int numberGlobalAtoms = atomLocations.size();
 
-  
+
   //
   //loop over nodes
   //
@@ -295,7 +295,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 
 	  for(int iImageAtomCount = 0; iImageAtomCount < imageIdsList.size();++iImageAtomCount)
 	    {
-	  
+
 	      //
 	      //find coordinates of atom correspoding to this wave function and imageAtom
 	      //
@@ -314,7 +314,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 		  atomCoord[1] = d_imagePositions[chargeId-numberGlobalAtoms][1];
 		  atomCoord[2] = d_imagePositions[chargeId-numberGlobalAtoms][2];
 		}
-	  
+
 	      double x = node[0]-atomCoord[0];
 	      double y = node[1]-atomCoord[1];
 	      double z = node[2]-atomCoord[2];
@@ -340,7 +340,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 		}
 	      else
 		{
-		  local_dof_values[waveFunction][dof] +=  R*std::sqrt(2)*boost::math::spherical_harmonic_i(it->l,-(it->m),theta,phi);	  
+		  local_dof_values[waveFunction][dof] +=  R*std::sqrt(2)*boost::math::spherical_harmonic_i(it->l,-(it->m),theta,phi);
 		}
 	    }
 	  waveFunction++;
@@ -363,7 +363,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 	  for(unsigned int dof=0; dof<numberDofs; dof++)
 	    {
 	      double z = (-0.5 + (rand()+ 0.0)/(RAND_MAX))*3.0;
-	      double value =  boost::math::pdf(normDist, z); 
+	      double value =  boost::math::pdf(normDist, z);
 	      if(rand()%2 == 0)
 		value = -1.0*value;
 
@@ -402,7 +402,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 	  eigenVectors[kPoint][i].update_ghost_values();
 	}
     }
-  
+
 
   //
   //multiply by M^0.5
@@ -437,7 +437,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 //
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::readPSI(){
-  computing_timer.enter_section("initialize wave functions"); 
+  computing_timer.enter_section("initialize wave functions");
   readPSIRadialValues();
-  computing_timer.exit_section("initialize wave functions"); 
+  computing_timer.exit_section("initialize wave functions");
 }

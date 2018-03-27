@@ -59,6 +59,23 @@ meshGeneratorClass::~meshGeneratorClass()
 
 void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& parallelTriangulation)
 {
+  if(!dftParameters::meshFileName.empty())
+    {
+      GridIn<3> gridinParallel;
+      gridinParallel.attach_triangulation(parallelTriangulation);
+
+      //
+      //Read mesh in UCD format generated from Cubit
+      //
+      std::ifstream f1(dftParameters::meshFileName.c_str());
+      gridinParallel.read_ucd(f1);
+
+#ifdef ENABLE_PERIODIC_BC
+      meshGenUtils::markPeriodicFacesNonOrthogonal(parallelTriangulation,d_domainBoundingVectors);
+#endif
+    }
+  else
+    {
       //
       //compute magnitudes of domainBounding Vectors
       //
@@ -263,6 +280,7 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       const unsigned int numberLocalCellsMaxPools =
 	               Utilities::MPI::max(numLocallyOwnedCells, interpoolcomm);
       AssertThrow(numberLocalCellsMinPools==numberLocalCellsMaxPools,ExcMessage("Number of local cells are different across pools or in other words the physical partitions don't have the same ordering across pools."));
+    }
 }
 
 void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& parallelTriangulation,
