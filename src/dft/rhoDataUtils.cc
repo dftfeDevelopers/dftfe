@@ -86,10 +86,4 @@ void dftClass<FEOrder>::projectPreviousGroundStateRho()
 
   DoFHandler<3> dofHandlerUnmovedCurrent(d_mesh.getParallelMeshUnmoved());
   dofHandlerUnmovedCurrent.distribute_dofs(FE);
-
-  VectorTools::interpolate_to_different_mesh (dofHandlerUnmovedPrevious,
-                                              d_rhoNodalFieldGroundState,
-                                              dofHandlerUnmovedCurrent,
-                                              constraintsNone,
-					      rhoNodalFieldInitialGuess);
 }
