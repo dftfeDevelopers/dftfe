@@ -133,7 +133,7 @@ class dftClass
   /**
    * Does required pre-processing steps including mesh generation calls.
    */
-  void init();
+  void init(const bool usePreviousGroundStateRho=false);
   /**
    * Does required pre-processing steps but without remeshing.
    */
@@ -161,6 +161,17 @@ class dftClass
    */
   void initImageChargesUpdateKPoints();
 
+  /**
+   * L2 projection from rho quad point data to nodal field
+   */
+  void computeGroundStateRhoNodalField();
+
+  /**
+   * project ground state electron density from previous mesh into
+   * the new mesh to be used as initial guess for the new ground state solve
+   */
+  void projectPreviousGroundStateRho();
+
   void generateMPGrid();
   void writeMesh(std::string meshFileName);
   void generateImageCharges();
@@ -182,7 +193,7 @@ class dftClass
    */
   void initUnmovedTriangulation(const parallel::distributed::Triangulation<3> & triangulation);
   void initBoundaryConditions();
-  void initElectronicFields();
+  void initElectronicFields(bool usePreviousGroundStateRho=false);
   void initPseudoPotentialAll();
   void locateAtomCoreNodes();
   void locatePeriodicPinnedNodes();
@@ -320,6 +331,9 @@ class dftClass
 
   /// volume of the domain
   double d_domainVolume;
+
+  /// storage for ground state rho nodal field
+  vectorType d_rhoNodalFieldGroundState;
 
   /**
    * dealii based FE data structres

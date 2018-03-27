@@ -44,8 +44,9 @@ class meshGeneratorClass
 /** @brief Constructor.
  *
  *  @param mpi_comm_replica mpi_communicator of the current pool
+ *  @param interpoolcomm mpi_communicator across pools (required to synchronize mesh generation)
  */
-  meshGeneratorClass(const MPI_Comm &mpi_comm_replica);
+  meshGeneratorClass(const MPI_Comm &mpi_comm_replica,const MPI_Comm &interpoolcomm);
 
 
   /**
@@ -67,9 +68,9 @@ class meshGeneratorClass
 	       const std::vector<std::vector<double> > & imageAtomLocations,
 	       const std::vector<std::vector<double> > & domainBoundingVectors);
 
-/** @brief generates parallel unmoved previous mesh.
+/** @brief generates serial and parallel unmoved previous mesh.
  *
- *  The function is to be used a update call to update the parallel unmoved previous
+ *  The function is to be used a update call to update the serial and parallel unmoved previous
  *  mesh after we have used it for the field projection purposes in structure optimization.
  *
  *  @param atomLocations vector containing cartesian coordinates at atoms with
@@ -79,7 +80,7 @@ class meshGeneratorClass
  *  @param domainBoundingVectors vector of domain bounding vectors (refer to
  *  description of input parameters.
  */
-  void generateParallelUnmovedPreviousMesh
+  void generateSerialAndParallelUnmovedPreviousMesh
               (const std::vector<std::vector<double> > & atomLocations,
 	       const std::vector<std::vector<double> > & imageAtomLocations,
 	       const std::vector<std::vector<double> > & domainBoundingVectors);
@@ -109,6 +110,14 @@ class meshGeneratorClass
  */
   const parallel::distributed::Triangulation<3> & getParallelMeshUnmovedPrevious();
 
+/**
+ * @brief returns constant reference to serial unmoved previous triangulation
+ * (serial version of the triangulation used in the last ground state solve during
+ * structure optimization).
+ *
+ */
+  const parallel::distributed::Triangulation<3> & getSerialMeshUnmovedPrevious();
+
  private:
 
 /**
@@ -128,7 +137,11 @@ class meshGeneratorClass
  * This ensures that we get the same mesh in serial and parallel.
  *
  */
-  void refineSerialMesh(unsigned int n_cell, std::vector<double>& centroid, std::vector<int>& localRefineFlag, unsigned int n_global_cell, parallel::distributed::Triangulation<3>& serialTriangulation);
+  void refineSerialMesh(const unsigned int n_cell,
+	                const  std::vector<double>& centroid,
+			const std::vector<unsigned int>& localRefineFlag,
+			const unsigned int n_global_cell,
+			parallel::distributed::Triangulation<3>& serialTriangulation);
 
   //
   //data members
@@ -137,6 +150,7 @@ class meshGeneratorClass
   parallel::distributed::Triangulation<3> d_parallelTriangulationUnmovedPrevious;
   parallel::distributed::Triangulation<3> d_parallelTriangulationMoved;
   parallel::distributed::Triangulation<3> d_serialTriangulationUnmoved;
+  parallel::distributed::Triangulation<3> d_serialTriangulationUnmovedPrevious;
 
   std::vector<std::vector<double> > d_atomPositions;
   std::vector<std::vector<double> > d_imageAtomPositions;
@@ -146,6 +160,7 @@ class meshGeneratorClass
   //parallel objects
   //
   const MPI_Comm mpi_communicator;
+  const MPI_Comm interpoolcomm;
   const unsigned int this_mpi_process;
   const unsigned int n_mpi_processes;
   dealii::ConditionalOStream   pcout;
