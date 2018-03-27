@@ -29,12 +29,14 @@
 //
 //constructor
 //
-meshGeneratorClass::meshGeneratorClass(const MPI_Comm &mpi_comm_replica):
+meshGeneratorClass::meshGeneratorClass(const MPI_Comm &mpi_comm_replica,const MPI_Comm &interpoolcomm):
   d_parallelTriangulationUnmoved(mpi_comm_replica),
   d_parallelTriangulationUnmovedPrevious(mpi_comm_replica),
   d_parallelTriangulationMoved(mpi_comm_replica),
   mpi_communicator (mpi_comm_replica),
+  interpoolcomm(interpoolcomm),
   d_serialTriangulationUnmoved(MPI_COMM_SELF),
+  d_serialTriangulationUnmovedPrevious(MPI_COMM_SELF),
   this_mpi_process (Utilities::MPI::this_mpi_process(mpi_communicator)),
   n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_communicator)),
   pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
@@ -121,12 +123,12 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       dealii::Point<3> origin;
       unsigned int numLevels=0;
       bool refineFlag = true;
-
       typename parallel::distributed::Triangulation<3>::active_cell_iterator cell, endc;
 
       while(refineFlag)
 	{
 	  refineFlag = false;
+	  std::vector<unsigned int> locallyOwnedCellsRefineFlags;
 	  cell = parallelTriangulation.begin_active();
 	  endc = parallelTriangulation.end();
 	  //
@@ -196,14 +198,16 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 		  //set refine flags
 		  if(cellRefineFlag)
 		    {
-		      refineFlag=true; //This sets the global refinement sweep flag
+		      locallyOwnedCellsRefineFlags.push_back(1);
 		      cell->set_refine_flag();
 		    }
-
+		   else
+                      locallyOwnedCellsRefineFlags.push_back(0);
 		}
 
-
-	  //Refine
+	  //This sets the global refinement sweep flag
+          refineFlag = std::accumulate(locallyOwnedCellsRefineFlags.begin(),
+		                       locallyOwnedCellsRefineFlags.end(), 0)>0?1:0;
 	  refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
 
 	  if (refineFlag)
@@ -226,12 +230,14 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       //compute some adaptive mesh metrics
       //
       double minElemLength = dftParameters::meshSizeOuterDomain;
+      unsigned int numLocallyOwnedCells=0;
       cell = parallelTriangulation.begin_active();
       endc = parallelTriangulation.end();
       for( ; cell != endc; ++cell)
 	{
 	  if(cell->is_locally_owned())
 	    {
+	      numLocallyOwnedCells++;
 	      if(cell->minimum_vertex_distance() < minElemLength) minElemLength = cell->minimum_vertex_distance();
 	    }
 	}
@@ -245,6 +251,18 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       {
         pcout<< "Adaptivity summary: "<<std::endl<<" numCells: "<<parallelTriangulation.n_global_active_cells()<<", num refinement levels: "<<numLevels<<", h_min: "<<minElemLength<<std::endl;
       }
+
+      const unsigned int numberGlobalCellsParallelMinPools =
+	               Utilities::MPI::min(parallelTriangulation.n_global_active_cells(), interpoolcomm);
+      const unsigned int numberGlobalCellsParallelMaxPools =
+	               Utilities::MPI::max(parallelTriangulation.n_global_active_cells(), interpoolcomm);
+      AssertThrow(numberGlobalCellsParallelMinPools==numberGlobalCellsParallelMaxPools,ExcMessage("Number of global cells are different across pools."));
+
+      const unsigned int numberLocalCellsMinPools =
+	               Utilities::MPI::min(numLocallyOwnedCells, interpoolcomm);
+      const unsigned int numberLocalCellsMaxPools =
+	               Utilities::MPI::max(numLocallyOwnedCells, interpoolcomm);
+      AssertThrow(numberLocalCellsMinPools==numberLocalCellsMaxPools,ExcMessage("Number of local cells are different across pools or in other words the physical partitions don't have the same ordering across pools."));
 }
 
 void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& parallelTriangulation,
@@ -318,11 +336,11 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       GridGenerator::subdivided_parallelepiped<3>(parallelTriangulation,
 	                                          subdivisions,
 				                  basisVectors);
-      if (dftParameters::useSymm) {
+      if (dftParameters::useSymm)
 	GridGenerator::subdivided_parallelepiped<3>(serialTriangulation,
 						    subdivisions,
 						    basisVectors);
-      }
+
 
       //
       //Translate the main grid so that midpoint is at center
@@ -352,15 +370,15 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       bool refineFlag = true;
 
       std::vector<double> centroid ;
-      std::vector<int> localRefineFlag ;
       unsigned int n_cell ;
 
       typename parallel::distributed::Triangulation<3>::active_cell_iterator cell, endc;
 
       while(refineFlag)
 	{
-          n_cell = 0; centroid.clear(); localRefineFlag.clear();
+          n_cell = 0; centroid.clear();
 	  refineFlag = false;
+	  std::vector<unsigned int> locallyOwnedCellsRefineFlags;
 	  cell = parallelTriangulation.begin_active();
 	  endc = parallelTriangulation.end();
 	  //
@@ -432,24 +450,24 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
                   centroid.push_back(currentCentroid[0]) ;
 		  centroid.push_back(currentCentroid[1]) ;
 		  centroid.push_back(currentCentroid[2]) ;
-		  //
-		  if (cellRefineFlag)
-                    localRefineFlag.push_back (1) ;
-		  else
-		    localRefineFlag.push_back (0) ;
+
 		  //
 		  //set refine flags
 		  if(cellRefineFlag)
 		    {
-		      refineFlag=true; //This sets the global refinement sweep flag
+		      locallyOwnedCellsRefineFlags.push_back(1);
 		      cell->set_refine_flag();
 		    }
-
+		   else
+                      locallyOwnedCellsRefineFlags.push_back(0);
 		}
 
-	  //Refine
+	  //This sets the global refinement sweep flag
+          refineFlag = std::accumulate(locallyOwnedCellsRefineFlags.begin(),
+		                       locallyOwnedCellsRefineFlags.end(), 0)>0?1:0;
 	  refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
 
+	  //Refine
 	  if (refineFlag)
 	    {
 	      if(numLevels<dftParameters::n_refinement_steps)
@@ -469,7 +487,11 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 	  // Refine serial mesh
 	  if(dftParameters::useSymm)
 	    {
-	      refineSerialMesh(n_cell, centroid, localRefineFlag, parallelTriangulation.n_global_active_cells(), serialTriangulation) ;
+	      refineSerialMesh(n_cell,
+		               centroid,
+			       locallyOwnedCellsRefineFlags,
+			       parallelTriangulation.n_global_active_cells(),
+			       serialTriangulation) ;
 	      serialTriangulation.execute_coarsening_and_refinement();
 	    }
 
@@ -480,10 +502,12 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       double minElemLength = dftParameters::meshSizeOuterDomain;
       cell = parallelTriangulation.begin_active();
       endc = parallelTriangulation.end();
+      unsigned int numLocallyOwnedCells=0;
       for( ; cell != endc; ++cell)
 	{
 	  if(cell->is_locally_owned())
 	    {
+              numLocallyOwnedCells++;
 	      if(cell->minimum_vertex_distance() < minElemLength) minElemLength = cell->minimum_vertex_distance();
 	    }
 	}
@@ -491,7 +515,7 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       minElemLength = Utilities::MPI::min(minElemLength, mpi_communicator);
 
       //
-      //print out adaptive mesh metrics
+      //print out adaptive mesh metrics and check mesh generation synchronization across pools
       //
       if (dftParameters::verbosity>=1)
       {
@@ -499,6 +523,19 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       }
 
       const unsigned int numberGlobalCellsParallel = parallelTriangulation.n_global_active_cells();
+
+      const unsigned int numberGlobalCellsParallelMinPools =
+	               Utilities::MPI::min(numberGlobalCellsParallel, interpoolcomm);
+      const unsigned int numberGlobalCellsParallelMaxPools =
+	               Utilities::MPI::max(numberGlobalCellsParallel, interpoolcomm);
+      AssertThrow(numberGlobalCellsParallelMinPools==numberGlobalCellsParallelMaxPools,ExcMessage("Number of global cells are different across pools."));
+
+      const unsigned int numberLocalCellsMinPools =
+	               Utilities::MPI::min(numLocallyOwnedCells, interpoolcomm);
+      const unsigned int numberLocalCellsMaxPools =
+	               Utilities::MPI::max(numLocallyOwnedCells, interpoolcomm);
+      AssertThrow(numberLocalCellsMinPools==numberLocalCellsMaxPools,ExcMessage("Number of local cells are different across pools or in other words the physical partitions don't have the same ordering across pools."));
+
       if (dftParameters::useSymm)
       {
          const unsigned int numberGlobalCellsSerial = serialTriangulation.n_global_active_cells();
@@ -545,7 +582,7 @@ void meshGeneratorClass::generateSerialUnmovedAndParallelMovedUnmovedMesh
 //
 //generate Mesh
 //
-void meshGeneratorClass::generateParallelUnmovedPreviousMesh
+void meshGeneratorClass::generateSerialAndParallelUnmovedPreviousMesh
                     (const std::vector<std::vector<double> > & atomLocations,
 		     const std::vector<std::vector<double> > & imageAtomLocations,
 		     const std::vector<std::vector<double> > & domainBoundingVectors)
@@ -559,8 +596,9 @@ void meshGeneratorClass::generateParallelUnmovedPreviousMesh
   d_domainBoundingVectors = domainBoundingVectors;
 
   d_parallelTriangulationUnmovedPrevious.clear();
+  d_serialTriangulationUnmovedPrevious.clear();
 
-  generateMesh(d_parallelTriangulationUnmovedPrevious);
+  generateMesh(d_parallelTriangulationUnmovedPrevious, d_serialTriangulationUnmovedPrevious);
 }
 
 //
@@ -600,14 +638,23 @@ meshGeneratorClass::getParallelMeshUnmovedPrevious()
 }
 
 //
-void meshGeneratorClass::refineSerialMesh(unsigned int n_cell,
-					  std::vector<double>& centroid,
-					  std::vector<int>& localRefineFlag,
-					  unsigned int n_global_cell,
+//get unmoved serial mesh
+//
+const parallel::distributed::Triangulation<3> &
+meshGeneratorClass::getSerialMeshUnmovedPrevious()
+{
+  return d_serialTriangulationUnmovedPrevious;
+}
+
+//
+void meshGeneratorClass::refineSerialMesh(const unsigned int n_cell,
+					  const std::vector<double>& centroid,
+					  const std::vector<unsigned int>& localRefineFlag,
+					  const unsigned int n_global_cell,
 					  parallel::distributed::Triangulation<3>& serialTriangulation)
 {
 
-  std::vector<int> globalRefineFlag(n_global_cell) ;
+  std::vector<unsigned int> globalRefineFlag(n_global_cell) ;
   std::vector<Point<3>> centroidGlobal(n_global_cell) ;
   std::vector<double> centroidGlobalData(3*n_global_cell) ;
   std::vector<int> localSize(n_mpi_processes, 0), localSizeAllProc(n_mpi_processes, 0), mpi_offsets(n_mpi_processes, 0) ;
@@ -684,6 +731,4 @@ void meshGeneratorClass::refineSerialMesh(unsigned int n_cell,
 	    cell->set_refine_flag();
 	}
     }
-
-
 }
