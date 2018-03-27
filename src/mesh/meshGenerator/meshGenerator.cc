@@ -258,11 +258,11 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 	               Utilities::MPI::max(parallelTriangulation.n_global_active_cells(), interpoolcomm);
       AssertThrow(numberGlobalCellsParallelMinPools==numberGlobalCellsParallelMaxPools,ExcMessage("Number of global cells are different across pools."));
 
-      const unsigned int numberLocalCellsParallelMinPools =
+      const unsigned int numberLocalCellsMinPools =
 	               Utilities::MPI::min(numLocallyOwnedCells, interpoolcomm);
-      const unsigned int numberLocalCellsParallelMaxPools =
+      const unsigned int numberLocalCellsMaxPools =
 	               Utilities::MPI::max(numLocallyOwnedCells, interpoolcomm);
-      AssertThrow(numberGlobalCellsParallelMinPools==numberGlobalCellsParallelMaxPools,ExcMessage("Number of local cells are different across pools or in other words the physical partitions don't have the same ordering across pools."));
+      AssertThrow(numberLocalCellsMinPools==numberLocalCellsMaxPools,ExcMessage("Number of local cells are different across pools or in other words the physical partitions don't have the same ordering across pools."));
 }
 
 void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& parallelTriangulation,
@@ -530,11 +530,11 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 	               Utilities::MPI::max(numberGlobalCellsParallel, interpoolcomm);
       AssertThrow(numberGlobalCellsParallelMinPools==numberGlobalCellsParallelMaxPools,ExcMessage("Number of global cells are different across pools."));
 
-      const unsigned int numberLocalCellsParallelMinPools =
+      const unsigned int numberLocalCellsMinPools =
 	               Utilities::MPI::min(numLocallyOwnedCells, interpoolcomm);
-      const unsigned int numberLocalCellsParallelMaxPools =
+      const unsigned int numberLocalCellsMaxPools =
 	               Utilities::MPI::max(numLocallyOwnedCells, interpoolcomm);
-      AssertThrow(numberGlobalCellsParallelMinPools==numberGlobalCellsParallelMaxPools,ExcMessage("Number of local cells are different across pools or in other words the physical partitions don't have the same ordering across pools."));
+      AssertThrow(numberLocalCellsMinPools==numberLocalCellsMaxPools,ExcMessage("Number of local cells are different across pools or in other words the physical partitions don't have the same ordering across pools."));
 
       if (dftParameters::useSymm)
       {
