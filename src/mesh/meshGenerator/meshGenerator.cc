@@ -230,12 +230,14 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       //compute some adaptive mesh metrics
       //
       double minElemLength = dftParameters::meshSizeOuterDomain;
+      unsigned int numLocallyOwnedCells=0;
       cell = parallelTriangulation.begin_active();
       endc = parallelTriangulation.end();
       for( ; cell != endc; ++cell)
 	{
 	  if(cell->is_locally_owned())
 	    {
+	      numLocallyOwnedCells++;
 	      if(cell->minimum_vertex_distance() < minElemLength) minElemLength = cell->minimum_vertex_distance();
 	    }
 	}
@@ -249,6 +251,18 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       {
         pcout<< "Adaptivity summary: "<<std::endl<<" numCells: "<<parallelTriangulation.n_global_active_cells()<<", num refinement levels: "<<numLevels<<", h_min: "<<minElemLength<<std::endl;
       }
+
+      const unsigned int numberGlobalCellsParallelMinPools =
+	               Utilities::MPI::min(parallelTriangulation.n_global_active_cells(), interpoolcomm);
+      const unsigned int numberGlobalCellsParallelMaxPools =
+	               Utilities::MPI::max(parallelTriangulation.n_global_active_cells(), interpoolcomm);
+      AssertThrow(numberGlobalCellsParallelMinPools==numberGlobalCellsParallelMaxPools,ExcMessage("Number of global cells are different across pools."));
+
+      const unsigned int numberLocalCellsParallelMinPools =
+	               Utilities::MPI::min(numLocallyOwnedCells, interpoolcomm);
+      const unsigned int numberLocalCellsParallelMaxPools =
+	               Utilities::MPI::max(numLocallyOwnedCells, interpoolcomm);
+      AssertThrow(numberGlobalCellsParallelMinPools==numberGlobalCellsParallelMaxPools,ExcMessage("Number of local cells are different across pools or in other words the physical partitions don't have the same ordering across pools."));
 }
 
 void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& parallelTriangulation,
@@ -488,10 +502,12 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       double minElemLength = dftParameters::meshSizeOuterDomain;
       cell = parallelTriangulation.begin_active();
       endc = parallelTriangulation.end();
+      unsigned int numLocallyOwnedCells=0;
       for( ; cell != endc; ++cell)
 	{
 	  if(cell->is_locally_owned())
 	    {
+              numLocallyOwnedCells++;
 	      if(cell->minimum_vertex_distance() < minElemLength) minElemLength = cell->minimum_vertex_distance();
 	    }
 	}
@@ -499,7 +515,7 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       minElemLength = Utilities::MPI::min(minElemLength, mpi_communicator);
 
       //
-      //print out adaptive mesh metrics
+      //print out adaptive mesh metrics and check mesh generation synchronization across pools
       //
       if (dftParameters::verbosity>=1)
       {
@@ -507,6 +523,19 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       }
 
       const unsigned int numberGlobalCellsParallel = parallelTriangulation.n_global_active_cells();
+
+      const unsigned int numberGlobalCellsParallelMinPools =
+	               Utilities::MPI::min(numberGlobalCellsParallel, interpoolcomm);
+      const unsigned int numberGlobalCellsParallelMaxPools =
+	               Utilities::MPI::max(numberGlobalCellsParallel, interpoolcomm);
+      AssertThrow(numberGlobalCellsParallelMinPools==numberGlobalCellsParallelMaxPools,ExcMessage("Number of global cells are different across pools."));
+
+      const unsigned int numberLocalCellsParallelMinPools =
+	               Utilities::MPI::min(numLocallyOwnedCells, interpoolcomm);
+      const unsigned int numberLocalCellsParallelMaxPools =
+	               Utilities::MPI::max(numLocallyOwnedCells, interpoolcomm);
+      AssertThrow(numberGlobalCellsParallelMinPools==numberGlobalCellsParallelMaxPools,ExcMessage("Number of local cells are different across pools or in other words the physical partitions don't have the same ordering across pools."));
+
       if (dftParameters::useSymm)
       {
          const unsigned int numberGlobalCellsSerial = serialTriangulation.n_global_active_cells();
