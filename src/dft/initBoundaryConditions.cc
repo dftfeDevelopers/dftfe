@@ -34,7 +34,7 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   //
   dofHandler.distribute_dofs (FE);
   dofHandlerEigen.distribute_dofs (FEEigen);
-  writeMesh("currentMesh");
+  //writeMesh("currentMesh");
 
   d_supportPoints.clear();
   DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), dofHandler, d_supportPoints);
