@@ -44,6 +44,35 @@ public:
 	  std::vector<vectorType> &dst);
 
   void XHX(std::vector<vectorType> &src); 
+
+   
+  void computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoValues, 
+		   const vectorType & phi,
+		   const vectorType & phiExt,
+		   const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
+  void computeVEffSpinPolarized(std::map<dealii::CellId,std::vector<double> >* rhoValues, 
+				const vectorType & phi,
+				const vectorType & phiExt,
+				unsigned int j,
+				const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
+
+  void computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoValues,
+		   std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
+		   const vectorType & phi,
+		   const vectorType & phiExt,
+		   const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
+
+  void computeVEffSpinPolarized(std::map<dealii::CellId,std::vector<double> >* rhoValues, 
+				std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
+				const vectorType & phi,
+				const vectorType & phiExt,
+				unsigned int j,
+				const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
+
+  unsigned int & reinitkPointIndex();
+
+
+
  private:
   void implementHX(const dealii::MatrixFree<3,double>  &data,
 		   std::vector<vectorType>  &dst, 
@@ -58,29 +87,6 @@ public:
 
   void init ();
   void computeMassVector();
-  void computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoValues, 
-		   const vectorType & phi,
-		   const vectorType & phiExt,
-		   const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
-  void computeVEffSpinPolarized(std::map<dealii::CellId,std::vector<double> >* rhoValues, 
-		   const vectorType & phi,
-		   const vectorType & phiExt,
-		   unsigned int j,
-		   const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
-
-  void computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoValues,
-		   std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
-		   const vectorType & phi,
-		   const vectorType & phiExt,
-		   const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
-
-  void computeVEffSpinPolarized(std::map<dealii::CellId,std::vector<double> >* rhoValues, 
-		   std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
-		   const vectorType & phi,
-		   const vectorType & phiExt,
-		   unsigned int j,
-		   const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
-
 
   
   //pointer to dft class
@@ -111,6 +117,10 @@ public:
   dealii::TimerOutput computing_timer;
   //mutex thread for managing multi-thread writing to XHXvalue
   mutable dealii::Threads::Mutex  assembler_lock;
+
+  //d_kpoint index for which Hamiltonian is computed
+  unsigned int d_kPointIndex;
+
 };
 
 #endif

@@ -502,6 +502,17 @@ void dftClass<FEOrder>::solve()
   solveVself();
   computing_timer.exit_section("vself solve");
 
+
+  //
+  //create eigen solver object
+  //
+  /* eigenSolverClass * eigenSubspaceIterationSolver = new chebyshevOrthogonalizedSubspaceIterationSolver(dftParameters::lowerEndWantedSpectrum,
+												       0.0,
+												       numEigenvalues);*/
+
+  
+												       
+
   //
   //solve
   //
@@ -577,9 +588,10 @@ void dftClass<FEOrder>::solve()
 	        {
 		  eigenPtr->computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, s, pseudoValues);
 	        }
-	      for (int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+	      for(int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
 	        {
-	          d_kPointIndex = kPoint;
+	          unsigned int & kPointIndex = eigenPtr->reinitkPointIndex();
+		  kPointIndex = kPoint;
 	          for(int j = 0; j < dftParameters::numPass; ++j)
 	            {
 		      if (dftParameters::verbosity==2)
@@ -608,7 +620,8 @@ void dftClass<FEOrder>::solve()
 
 	  for (int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
 	    {
-	      d_kPointIndex = kPoint;
+	      unsigned int & kPointIndex = eigenPtr->reinitkPointIndex();
+	      kPointIndex = kPoint;
 	      for(int j = 0; j < dftParameters::numPass; ++j)
 		{
 		  if (dftParameters::verbosity==2)
@@ -639,7 +652,8 @@ void dftClass<FEOrder>::solve()
 	    {
 	      for (int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
 		{
-		  d_kPointIndex = kPoint;
+		  unsigned int & kPointIndex = eigenPtr->reinitkPointIndex();
+		  kPointIndex = kPoint;
 		  if (dftParameters::verbosity==2)
 		    pcout<< "Beginning Chebyshev filter pass "<< dftParameters::numPass+count<<std::endl;
 

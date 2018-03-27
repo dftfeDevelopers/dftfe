@@ -29,6 +29,7 @@ template<unsigned int FEOrder>
 eigenClass<FEOrder>::eigenClass(dftClass<FEOrder>* _dftPtr, MPI_Comm &mpi_comm_replica):
   dftPtr(_dftPtr),
   FE (QGaussLobatto<1>(C_num1DQuad<FEOrder>())),
+  d_kPointIndex(0),
   mpi_communicator (mpi_comm_replica),
   n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_communicator)),
   this_mpi_process (Utilities::MPI::this_mpi_process(mpi_communicator)),
@@ -122,6 +123,13 @@ void eigenClass<FEOrder>::computeMassVector()
   sqrtMassVector.compress(VectorOperation::insert);
   computing_timer.exit_section("eigenClass Mass assembly");
 }
+
+template<unsigned int FEOrder>
+unsigned int & eigenClass<FEOrder>::reinitkPointIndex()
+{
+  return d_kPointIndex;
+}
+
 
 
 template<unsigned int FEOrder>
@@ -318,7 +326,7 @@ void eigenClass<FEOrder>::implementHX (const dealii::MatrixFree<3,double>  &data
 
 
 #ifdef ENABLE_PERIODIC_BC
-  int kPointIndex = dftPtr->d_kPointIndex;
+  int kPointIndex = d_kPointIndex;
   FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>(), 2, double>  fe_eval(data, dftPtr->eigenDofHandlerIndex, 0);
   Tensor<1,2,VectorizedArray<double> > psiVal, vEffTerm, kSquareTerm, kDotGradientPsiTerm, derExchWithSigmaTimesGradRhoDotGradientPsiTerm;
   Tensor<1,2,Tensor<1,3,VectorizedArray<double> > > gradientPsiVal, gradientPsiTerm, derExchWithSigmaTimesGradRhoTimesPsi,sumGradientTerms; 
