@@ -128,6 +128,7 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       while(refineFlag)
 	{
 	  refineFlag = false;
+	  std::vector<unsigned int> locallyOwnedCellsRefineFlags;
 	  cell = parallelTriangulation.begin_active();
 	  endc = parallelTriangulation.end();
 	  //
@@ -193,24 +194,20 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 		  catch(MappingQ1<3>::ExcTransformationFailed)
 		    {
 		    }
-
+		  //
 		  //set refine flags
 		  if(cellRefineFlag)
 		    {
+		      locallyOwnedCellsRefineFlags.push_back(1);
 		      cell->set_refine_flag();
 		    }
-
+		   else
+                      locallyOwnedCellsRefineFlags.push_back(0);
 		}
 
-          std::vector<bool> localRefineFlagsBools;
-	  parallelTriangulation.save_refine_flags (localRefineFlagsBools);
-
-	  std::vector<unsigned int> localRefineFlags(localRefineFlagsBools.size());
-	  for (unsigned int i=0; i< localRefineFlagsBools.size();++i)
-	      localRefineFlags[i]=(unsigned int)localRefineFlagsBools[i];
-
 	  //This sets the global refinement sweep flag
-          refineFlag = std::accumulate(localRefineFlags.begin(), localRefineFlags.end(), 0)>0?1:0;
+          refineFlag = std::accumulate(locallyOwnedCellsRefineFlags.begin(),
+		                       locallyOwnedCellsRefineFlags.end(), 0)>0?1:0;
 	  refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
 
 	  if (refineFlag)
@@ -367,6 +364,7 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 	{
           n_cell = 0; centroid.clear();
 	  refineFlag = false;
+	  std::vector<unsigned int> locallyOwnedCellsRefineFlags;
 	  cell = parallelTriangulation.begin_active();
 	  endc = parallelTriangulation.end();
 	  //
@@ -443,20 +441,16 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 		  //set refine flags
 		  if(cellRefineFlag)
 		    {
+		      locallyOwnedCellsRefineFlags.push_back(1);
 		      cell->set_refine_flag();
 		    }
-
+		   else
+                      locallyOwnedCellsRefineFlags.push_back(0);
 		}
 
-          std::vector<bool> localRefineFlagsBools;
-	  parallelTriangulation.save_refine_flags (localRefineFlagsBools);
-
-	  std::vector<unsigned int> localRefineFlags(localRefineFlagsBools.size());
-	  for (unsigned int i=0; i< localRefineFlagsBools.size();++i)
-	      localRefineFlags[i]=(unsigned int)localRefineFlagsBools[i];
-
 	  //This sets the global refinement sweep flag
-          refineFlag = std::accumulate(localRefineFlags.begin(), localRefineFlags.end(), 0)>0?1:0;
+          refineFlag = std::accumulate(locallyOwnedCellsRefineFlags.begin(),
+		                       locallyOwnedCellsRefineFlags.end(), 0)>0?1:0;
 	  refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
 
 	  //Refine
@@ -479,7 +473,11 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 	  // Refine serial mesh
 	  if(dftParameters::useSymm)
 	    {
-	      refineSerialMesh(n_cell, centroid, localRefineFlags, parallelTriangulation.n_global_active_cells(), serialTriangulation) ;
+	      refineSerialMesh(n_cell,
+		               centroid,
+			       locallyOwnedCellsRefineFlags,
+			       parallelTriangulation.n_global_active_cells(),
+			       serialTriangulation) ;
 	      serialTriangulation.execute_coarsening_and_refinement();
 	    }
 
