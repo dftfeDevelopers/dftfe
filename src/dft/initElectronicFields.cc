@@ -63,11 +63,11 @@ void dftClass<FEOrder>::initElectronicFields(const bool usePreviousGroundStateRh
      projectPreviousGroundStateRho();
 
   //
-  //update parallel unmoved previous mesh
+  //update serial and parallel unmoved previous mesh
   //
-  d_mesh.generateParallelUnmovedPreviousMesh(atomLocations,
-				             d_imagePositions,
-				             d_domainBoundingVectors);
+  d_mesh.generateSerialAndParallelUnmovedPreviousMesh(atomLocations,
+				                      d_imagePositions,
+				                      d_domainBoundingVectors);
   //
   //initialize PSI
   //

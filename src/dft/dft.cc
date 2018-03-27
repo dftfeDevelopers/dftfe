@@ -80,7 +80,7 @@ dftClass<FEOrder>::dftClass(MPI_Comm &mpi_comm_replica, MPI_Comm &interpoolcomm)
   numLevels(0),
   d_maxkPoints(1),
   integralRhoValue(0),
-  d_mesh(mpi_comm_replica),
+  d_mesh(mpi_comm_replica,interpoolcomm),
   d_affineTransformMesh(mpi_comm_replica),
   pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
   computing_timer (pcout, TimerOutput::summary, TimerOutput::wall_times)
