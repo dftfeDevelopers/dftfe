@@ -45,7 +45,7 @@ namespace dftParameters
   extern bool isIonOpt, isCellOpt, isIonForce, isCellStress;
   extern double forceRelaxTol, stressRelaxTol;
   extern unsigned int cellConstraintType;
- 
+
   extern unsigned int verbosity;
 
   /**
