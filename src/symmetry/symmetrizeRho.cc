@@ -33,7 +33,7 @@ double getOccupancy(const double &factor)
 template<unsigned int FEOrder>
 void symmetryClass<FEOrder>::computeAndSymmetrize_rhoOut()
 {
-  QGauss<3>  quadrature(FEOrder+1);
+  QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
   const unsigned int num_quad_points = quadrature.size();
 
   dftPtr->rhoOutVals.push_back(std::map<dealii::CellId,std::vector<double> >());
@@ -166,7 +166,7 @@ void symmetryClass<FEOrder>::computeAndSymmetrize_rhoOut()
 template<unsigned int FEOrder>
 void symmetryClass<FEOrder>::computeLocalrhoOut()
 {
-  QGauss<3>  quadrature(FEOrder+1);
+  QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
   const unsigned int num_quad_points = quadrature.size();
   totPoints = recvdData1[0].size() ;
   double px, py, pz; 
