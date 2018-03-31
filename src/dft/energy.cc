@@ -491,7 +491,7 @@ double dftClass<FEOrder>::repulsiveEnergy()
 template<unsigned int FEOrder>
 double dftClass<FEOrder>::compute_energy_spinPolarized(const bool print)
 {
-  QGauss<3>  quadrature(FEOrder+1);
+  QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
   FEValues<3> fe_values (FE, quadrature, update_values | update_gradients | update_JxW_values);
   const unsigned int   num_quad_points    = quadrature.size();
   std::vector<double> cellPhiTotRhoIn(num_quad_points);

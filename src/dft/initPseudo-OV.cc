@@ -40,7 +40,7 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
   //
   //get FE data structures
   //
-  QGauss<3>  quadrature(FEOrder+1);
+  QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
   //FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values);
   FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values| update_quadrature_points);  
   const unsigned int numberNodesPerElement  = FE.dofs_per_cell;
@@ -723,7 +723,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
   //
   //get FE data structures
   //
-  QGauss<3>  quadrature(FEOrder+1);
+  QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
   //FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values);
   FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values| update_quadrature_points);  
   const unsigned int numberQuadraturePoints = quadrature.size();

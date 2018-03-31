@@ -31,7 +31,7 @@
 template<unsigned int FEOrder>
 symmetryClass<FEOrder>::symmetryClass(dftClass<FEOrder>* _dftPtr, MPI_Comm &mpi_comm_replica, MPI_Comm &interpoolcomm):
   dftPtr(_dftPtr),
-  FE (QGaussLobatto<1>(C_num1DQuad<FEOrder>())),
+  FE (QGaussLobatto<1>(FEOrder+1)),
   mpi_communicator (mpi_comm_replica),
   interpoolcomm (interpoolcomm),
   n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_communicator)),
@@ -68,7 +68,7 @@ void symmetryClass<FEOrder>::initSymmetry()
 {
 //
   //dftPtr= new dftClass<FEOrder>(this);
-  QGauss<3>  quadrature(FEOrder+1);
+  QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
   FEValues<3> fe_values (dftPtr->FEEigen, quadrature, update_values | update_gradients| update_JxW_values | update_quadrature_points);
   const unsigned int num_quad_points = quadrature.size();
   Point<3> p, ptemp, p0 ;
