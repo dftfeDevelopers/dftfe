@@ -34,8 +34,8 @@ symmetryClass<FEOrder>::symmetryClass(dftClass<FEOrder>* _dftPtr, MPI_Comm &mpi_
   FE (QGaussLobatto<1>(FEOrder+1)),
   mpi_communicator (mpi_comm_replica),
   interpoolcomm (interpoolcomm),
-  n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_communicator)),
-  this_mpi_process (Utilities::MPI::this_mpi_process(mpi_communicator)),
+  n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_comm_replica)),
+  this_mpi_process (Utilities::MPI::this_mpi_process(mpi_comm_replica)),
   pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
   computing_timer (pcout, TimerOutput::never, TimerOutput::wall_times)
 {

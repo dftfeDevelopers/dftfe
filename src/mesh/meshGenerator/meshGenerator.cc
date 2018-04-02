@@ -37,8 +37,8 @@ meshGeneratorClass::meshGeneratorClass(const MPI_Comm &mpi_comm_replica,const MP
   interpoolcomm(interpoolcomm),
   d_serialTriangulationUnmoved(MPI_COMM_SELF),
   d_serialTriangulationUnmovedPrevious(MPI_COMM_SELF),
-  this_mpi_process (Utilities::MPI::this_mpi_process(mpi_communicator)),
-  n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_communicator)),
+  this_mpi_process (Utilities::MPI::this_mpi_process(mpi_comm_replica)),
+  n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_comm_replica)),
   pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
   computing_timer (pcout, TimerOutput::never, TimerOutput::wall_times)
 {
@@ -290,8 +290,7 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
     {
       GridIn<3> gridinParallel, gridinSerial;
       gridinParallel.attach_triangulation(parallelTriangulation);
-      if (dftParameters::useSymm)
-	gridinSerial.attach_triangulation(serialTriangulation);
+      gridinSerial.attach_triangulation(serialTriangulation);
 
       //
       //Read mesh in UCD format generated from Cubit
@@ -303,8 +302,7 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 
 #ifdef ENABLE_PERIODIC_BC
       meshGenUtils::markPeriodicFacesNonOrthogonal(parallelTriangulation,d_domainBoundingVectors);
-      if (dftParameters::useSymm)
-	meshGenUtils::markPeriodicFacesNonOrthogonal(serialTriangulation,d_domainBoundingVectors);
+      meshGenUtils::markPeriodicFacesNonOrthogonal(serialTriangulation,d_domainBoundingVectors);
 #endif
     }
   else
@@ -354,8 +352,7 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       GridGenerator::subdivided_parallelepiped<3>(parallelTriangulation,
 	                                          subdivisions,
 				                  basisVectors);
-      if (dftParameters::useSymm)
-	GridGenerator::subdivided_parallelepiped<3>(serialTriangulation,
+      GridGenerator::subdivided_parallelepiped<3>(serialTriangulation,
 						    subdivisions,
 						    basisVectors);
 
@@ -365,16 +362,14 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
       //
       const Point<3> translation = 0.5*(vector1+vector2+vector3);
       GridTools::shift(-translation,parallelTriangulation);
-      if (dftParameters::useSymm)
-	GridTools::shift(-translation,serialTriangulation);
+      GridTools::shift(-translation,serialTriangulation);
 
       //
       //collect periodic faces of the first level mesh to set up periodic boundary conditions later
       //
 #ifdef ENABLE_PERIODIC_BC
       meshGenUtils::markPeriodicFacesNonOrthogonal(parallelTriangulation,d_domainBoundingVectors);
-      if (dftParameters::useSymm)
-	meshGenUtils::markPeriodicFacesNonOrthogonal(serialTriangulation,d_domainBoundingVectors);
+      meshGenUtils::markPeriodicFacesNonOrthogonal(serialTriangulation,d_domainBoundingVectors);
 #endif
 
       if (dftParameters::verbosity>=1)
@@ -503,15 +498,12 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 	    }
 
 	  // Refine serial mesh
-	  if(dftParameters::useSymm)
-	    {
-	      refineSerialMesh(n_cell,
-		               centroid,
-			       locallyOwnedCellsRefineFlags,
-			       parallelTriangulation.n_global_active_cells(),
-			       serialTriangulation) ;
-	      serialTriangulation.execute_coarsening_and_refinement();
-	    }
+	    refineSerialMesh(n_cell,
+		             centroid,
+			     locallyOwnedCellsRefineFlags,
+			     parallelTriangulation.n_global_active_cells(),
+			     serialTriangulation) ;
+	    serialTriangulation.execute_coarsening_and_refinement();
 
         }
       //
@@ -554,17 +546,12 @@ void meshGeneratorClass::generateMesh(parallel::distributed::Triangulation<3>& p
 	               Utilities::MPI::max(numLocallyOwnedCells, interpoolcomm);
       AssertThrow(numberLocalCellsMinPools==numberLocalCellsMaxPools,ExcMessage("Number of local cells are different across pools or in other words the physical partitions don't have the same ordering across pools."));
 
-      if (dftParameters::useSymm)
-      {
-         const unsigned int numberGlobalCellsSerial = serialTriangulation.n_global_active_cells();
+      const unsigned int numberGlobalCellsSerial = serialTriangulation.n_global_active_cells();
 
-	if (dftParameters::verbosity==2)
-	{
-	   pcout<<" numParallelCells: "<< numberGlobalCellsParallel<<", numSerialCells: "<< numberGlobalCellsSerial<<std::endl;
-	}
+      if (dftParameters::verbosity==2)
+           pcout<<" numParallelCells: "<< numberGlobalCellsParallel<<", numSerialCells: "<< numberGlobalCellsSerial<<std::endl;
 
-	AssertThrow(numberGlobalCellsParallel==numberGlobalCellsSerial,ExcMessage("Number of cells are different for parallel and serial triangulations"));
-      }
+      AssertThrow(numberGlobalCellsParallel==numberGlobalCellsSerial,ExcMessage("Number of cells are different for parallel and serial triangulations"));
 
     }
 }
@@ -593,7 +580,10 @@ void meshGeneratorClass::generateSerialUnmovedAndParallelMovedUnmovedMesh
   //
   //generate mesh data members
   //
-  generateMesh(d_parallelTriangulationUnmoved, d_serialTriangulationUnmoved);
+  if (dftParameters::useSymm)
+     generateMesh(d_parallelTriangulationUnmoved, d_serialTriangulationUnmoved);
+  else
+     generateMesh(d_parallelTriangulationUnmoved);
   generateMesh(d_parallelTriangulationMoved);
 }
 

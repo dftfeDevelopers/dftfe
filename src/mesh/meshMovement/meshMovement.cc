@@ -67,18 +67,10 @@ namespace meshMovementUtils{
 //
 //constructor
 //
-  meshMovementClass::meshMovementClass():
-  FEMoveMesh(FE_Q<3>(QGaussLobatto<1>(2)), 3), //linear shape function
-  mpi_communicator(MPI_COMM_WORLD),
-  this_mpi_process (Utilities::MPI::this_mpi_process(mpi_communicator)),
-  pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_communicator) == 0))
-{
-
-}
 meshMovementClass::meshMovementClass(MPI_Comm &mpi_comm_replica):
   FEMoveMesh(FE_Q<3>(QGaussLobatto<1>(2)), 3), //linear shape function
   mpi_communicator(mpi_comm_replica),
-  this_mpi_process (Utilities::MPI::this_mpi_process(mpi_communicator)),
+  this_mpi_process (Utilities::MPI::this_mpi_process(mpi_comm_replica)),
   pcout(std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
 {
 

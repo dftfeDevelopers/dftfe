@@ -76,6 +76,8 @@ void dftClass<FEOrder>::initElectronicFields(const bool usePreviousGroundStateFi
      if (dftParameters::verbosity==2)
        pcout<<"L2 Norm Value of previous eigenvector 0: "<<eigenVectorsPreviousPtrs[0]->l2_norm()<<std::endl;
 
+     computing_timer.enter_section("project previous PSI");
+
      pcout <<std::endl<< "Projecting previous grounstate PSI into the new finite element mesh...."<<std::endl;
      vectorTools::projectFieldsFromPreviousMesh projectEigenVecPrev(mpi_communicator);
      projectEigenVecPrev.project(d_mesh.getSerialMeshUnmovedPrevious(),
@@ -85,6 +87,8 @@ void dftClass<FEOrder>::initElectronicFields(const bool usePreviousGroundStateFi
 				 constraintsNoneEigen,
 				 eigenVectorsPreviousPtrs,
 				 eigenVectorsCurrentPtrs);
+
+     computing_timer.exit_section("project previous PSI");
 
      if (dftParameters::verbosity==2)
       pcout<<"L2 Norm Value of projected eigenvector 0: "<<eigenVectorsCurrentPtrs[0]->l2_norm()<<std::endl;

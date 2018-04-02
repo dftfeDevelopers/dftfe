@@ -59,10 +59,9 @@ forceClass<FEOrder>::forceClass(dftClass<FEOrder>* _dftPtr, MPI_Comm &mpi_comm_r
   FEForce (FE_Q<3>(QGaussLobatto<1>(2)), 3), //linear shape function
   mpi_communicator (mpi_comm_replica),
   gaussianMovePar(mpi_comm_replica),
-  n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_communicator)),
-  this_mpi_process (Utilities::MPI::this_mpi_process(mpi_communicator)),
-  pcout(std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
-  computing_timer (pcout, TimerOutput::never, TimerOutput::wall_times)
+  n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_comm_replica)),
+  this_mpi_process (Utilities::MPI::this_mpi_process(mpi_comm_replica)),
+  pcout(std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
 {
 
 }
@@ -73,7 +72,6 @@ forceClass<FEOrder>::forceClass(dftClass<FEOrder>* _dftPtr, MPI_Comm &mpi_comm_r
 template<unsigned int FEOrder>
 void forceClass<FEOrder>::initUnmoved(const Triangulation<3,3> & triangulation)
 {
-  computing_timer.enter_section("forceClass setup");
   d_dofHandlerForce.clear();
   d_dofHandlerForce.initialize(triangulation,FEForce);
   d_dofHandlerForce.distribute_dofs(FEForce);
@@ -121,7 +119,6 @@ void forceClass<FEOrder>::initUnmoved(const Triangulation<3,3> & triangulation)
   d_constraintsNoneForce.close();
 #endif
   gaussianMovePar.init(triangulation,dftPtr->d_domainBoundingVectors);
-  computing_timer.exit_section("forceClass setup");
 }
 
 //reinitialize force class object after mesh update

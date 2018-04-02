@@ -162,7 +162,7 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
   }
   MPI_Barrier(mpi_communicator);
 
-  const bool useHybridMeshUpdateScheme=true;
+  const bool useHybridMeshUpdateScheme=false;
 
   if (!useHybridMeshUpdateScheme)//always remesh
   {
@@ -203,7 +203,7 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
       if (updateCase==0)
       {
 	  pcout << "Auto remeshing and reinitialization of dft problem for new atom coordinates as max displacement magnitude: "<<maxDispAtom<< " is greater than: "<< break1 << " Bohr..." << std::endl;
-	  dftPtr->init();
+	  dftPtr->init(true);
 	  pcout << "...Reinitialization end" << std::endl;
       }
       else if (updateCase==1)
@@ -228,7 +228,7 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
 		 pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to negative jacobian after Gaussian mesh movement using Gaussian constant: "<< gaussianParameter<<std::endl;
 	      else
 		 pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to maximum jacobian ratio: "<< meshQualityMetrics.second<< " exceeding set bound of: "<< maxJacobianRatio<<" after Gaussian mesh movement using Gaussian constant: "<< gaussianParameter<<std::endl;
-	      dftPtr->init();
+	      dftPtr->init(true);
 	      pcout << "...Reinitialization end" << std::endl;
 	  }
 	  else
@@ -257,7 +257,7 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
 		 pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to negative jacobian after Gaussian mesh movement using Gaussian constant: "<< d_gaussianConstant<<std::endl;
 	      else
 		 pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to maximum jacobian ratio: "<< meshQualityMetrics.second<< " exceeding set bound of: "<< maxJacobianRatio<<" after Gaussian mesh movement using Gaussian constant: "<< d_gaussianConstant<<std::endl;
-	      dftPtr->init();
+	      dftPtr->init(true);
 	      pcout << "...Reinitialization end" << std::endl;
 	  }
 	  else
