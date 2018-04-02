@@ -84,6 +84,7 @@ void dftClass<FEOrder>::initElectronicFields(const bool usePreviousGroundStateFi
 	                         d_mesh.getParallelMeshUnmovedPrevious(),
 				 d_mesh.getParallelMeshUnmoved(),
 				 FEEigen,
+				 FEEigen,
 				 constraintsNoneEigen,
 				 eigenVectorsPreviousPtrs,
 				 eigenVectorsCurrentPtrs);

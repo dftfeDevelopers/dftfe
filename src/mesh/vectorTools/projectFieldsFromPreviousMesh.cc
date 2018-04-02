@@ -26,26 +26,29 @@ namespace vectorTools
 //
 //constructor
 //
-projectFieldsFromPreviousMesh::projectFieldsFromPreviousMesh(const MPI_Comm &mpi_communicator):
-  mpi_communicator (mpi_communicator),
-  n_mpi_processes (dealii::Utilities::MPI::n_mpi_processes(mpi_communicator)),
-  this_mpi_process (dealii::Utilities::MPI::this_mpi_process(mpi_communicator)),
+projectFieldsFromPreviousMesh::projectFieldsFromPreviousMesh(const MPI_Comm &mpi_comm):
+  mpi_communicator (mpi_comm),
+  n_mpi_processes (dealii::Utilities::MPI::n_mpi_processes(mpi_comm)),
+  this_mpi_process (dealii::Utilities::MPI::this_mpi_process(mpi_comm)),
   pcout (std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
 {
 }
 
 void projectFieldsFromPreviousMesh::project
                   (const dealii::parallel::distributed::Triangulation<3> & triangulationSerPrev,
-	           const dealii::parallel::distributed::Triangulation<3> & triangulationParPrev,
+		   const dealii::parallel::distributed::Triangulation<3> & triangulationParPrev,
 		   const dealii::parallel::distributed::Triangulation<3> & triangulationParCurrent,
-		   const dealii::FESystem<3> & FE,
-		   const dealii::ConstraintMatrix & constraintsCurrentDof,
-	           const std::vector<vectorType*> & fieldsPreviousMesh,
-	           std::vector<vectorType *> & fieldsCurrentMesh)
+		   const dealii::FESystem<3> & FEPrev,
+		   const dealii::FESystem<3> & FECurrent,
+		   const dealii::ConstraintMatrix & constraintsCurrent,
+		   const std::vector<vectorType*> & fieldsPreviousMesh,
+		   std::vector<vectorType*> & fieldsCurrentMesh)
 {
-  const unsigned int dofs_per_cell = FE.dofs_per_cell;
-  const unsigned int fe_components=FE.components;
-  const unsigned int base_indices_per_cell = FE.dofs_per_cell/fe_components;
+  AssertThrow(FEPrev.components==FECurrent.components,dealii::ExcMessage("FEPrev and FECurrent must have the same number of components."));
+
+  const unsigned int dofs_per_cell_current = FECurrent.dofs_per_cell;
+  const unsigned int fe_components=FECurrent.components;
+  const unsigned int base_indices_per_cell_current = dofs_per_cell_current/fe_components;
 
   /// compute-time logger
   dealii::TimerOutput computing_timer(pcout, dealii::TimerOutput::summary, dealii::TimerOutput::wall_times);
@@ -55,7 +58,7 @@ void projectFieldsFromPreviousMesh::project
 
   computing_timer.enter_section("project:step1");
   dealii::DoFHandler<3> dofHandlerUnmovedParPrev(triangulationParPrev);
-  dofHandlerUnmovedParPrev.distribute_dofs(FE);
+  dofHandlerUnmovedParPrev.distribute_dofs(FEPrev);
 
   typename dealii::parallel::distributed::Triangulation<3>::active_cell_iterator cellTria= triangulationSerPrev.begin_active(), endcTria= triangulationSerPrev.end();
   const unsigned int numGlobalCellsPrev=triangulationSerPrev.n_global_active_cells();
@@ -117,7 +120,7 @@ void projectFieldsFromPreviousMesh::project
   const unsigned int numLocallyOwnedCellsCurrent=triangulationParCurrent.n_locally_owned_active_cells();
 
   dealii::DoFHandler<3> dofHandlerUnmovedCurrent(triangulationParCurrent);
-  dofHandlerUnmovedCurrent.distribute_dofs(FE);
+  dofHandlerUnmovedCurrent.distribute_dofs(FECurrent);
   std::map<dealii::types::global_dof_index, dealii::Point<3> > supportPointsUnmovedCurrent;
   dealii::DoFTools::map_dofs_to_support_points(dealii::MappingQ1<3,3>(), dofHandlerUnmovedCurrent, supportPointsUnmovedCurrent);
 
@@ -159,14 +162,14 @@ void projectFieldsFromPreviousMesh::project
     {
 	  std::map<dealii::CellId,std::vector<std::pair<std::vector<double>,unsigned int>>>  cellSerPrevToMappedDofData;
 
-	  std::vector<dealii::types::global_dof_index> cell_dof_indices(dofs_per_cell);
+	  std::vector<dealii::types::global_dof_index> cell_dof_indices(dofs_per_cell_current);
 	  cell->get_dof_indices(cell_dof_indices);
 
 	  std::pair<typename dealii::parallel::distributed::Triangulation<3>::active_cell_iterator, dealii::Point<3> > mappedCellSerPrev;
 	  unsigned int count=0;
-	  for(unsigned int ibase = 0; ibase< base_indices_per_cell; ++ibase)
+	  for(unsigned int ibase = 0; ibase< base_indices_per_cell_current; ++ibase)
 	  {
-	         const dealii::types::global_dof_index globalDofId=cell_dof_indices[FE.component_to_system_index(0,ibase)];
+	         const dealii::types::global_dof_index globalDofId=cell_dof_indices[FECurrent.component_to_system_index(0,ibase)];
 
 		 if (!dofsTouched[globalDofId])
                      dofsTouched[globalDofId]=true;
@@ -381,7 +384,7 @@ void projectFieldsFromPreviousMesh::project
 	} // loop on points
         //
         const dealii::Quadrature<3> quadRule(pointsList);
-        dealii::FEValues<3> feValues(mapping,FE, quadRule, dealii::update_values);
+        dealii::FEValues<3> feValues(mapping,FEPrev, quadRule, dealii::update_values);
 
         AssertThrow(cellNumSerPrevToParPrevCellIter[serCellNumOfMappedPointsGroup]->is_locally_owned(),
                     dealii::ExcMessage("Cell not available here"));
@@ -434,15 +437,15 @@ void projectFieldsFromPreviousMesh::project
    endc = dofHandlerUnmovedCurrent.end();
    iLocalCellCurrent=0;
    for (; cell!=endc; ++cell)
-    if (cell->is_locally_owned())
-    {
-      for (unsigned int proc=0; proc<n_mpi_processes; ++proc)
-      {
-	   fieldsValuesRecvSize[proc] += fieldsBlockSize*fe_components*send1_buf_size[iLocalCellCurrent][proc] ;
-	   fieldsValuesRecvData[iLocalCellCurrent][proc].resize(fieldsBlockSize*fe_components*send1_buf_size[iLocalCellCurrent][proc]) ;
-      }//procs loop
-      iLocalCellCurrent++;
-    }//locally owned cell loop
+	if (cell->is_locally_owned())
+	{
+	  for (unsigned int proc=0; proc<n_mpi_processes; ++proc)
+	  {
+	       fieldsValuesRecvSize[proc] += fieldsBlockSize*fe_components*send1_buf_size[iLocalCellCurrent][proc] ;
+	       fieldsValuesRecvData[iLocalCellCurrent][proc].resize(fieldsBlockSize*fe_components*send1_buf_size[iLocalCellCurrent][proc]) ;
+	  }//procs loop
+	  iLocalCellCurrent++;
+	}//locally owned cell loop
 
    std::vector<int> mpiOffsetsFieldsValuesSend(n_mpi_processes);
    std::vector<int> fieldsValuesSendSize(n_mpi_processes);
@@ -483,7 +486,7 @@ void projectFieldsFromPreviousMesh::project
    for (; cell!=endc; ++cell)
 	if (cell->is_locally_owned())
 	{
-	      std::vector<dealii::types::global_dof_index> cell_dof_indices(dofs_per_cell);
+	      std::vector<dealii::types::global_dof_index> cell_dof_indices(dofs_per_cell_current);
 	      cell->get_dof_indices(cell_dof_indices);
 
 	      for (unsigned int i=0; i<mappedGroup[iLocalCellCurrent].size(); i++)
@@ -494,7 +497,7 @@ void projectFieldsFromPreviousMesh::project
 		  for(unsigned int ifield = 0; ifield < fieldsBlockSize; ++ifield)
 		     for (unsigned int icomp=0; icomp<fe_components; icomp++)
 		     {
-			   const dealii::types::global_dof_index globalDofId=cell_dof_indices[FE.component_to_system_index(icomp,baseIndexId)];
+			   const dealii::types::global_dof_index globalDofId=cell_dof_indices[FECurrent.component_to_system_index(icomp,baseIndexId)];
 			   (*(fieldsCurrentMesh[ifield]))[globalDofId]=
 			       fieldsValuesRecvData[iLocalCellCurrent][proc][
 					pointCount*fieldsBlockSize*fe_components
@@ -507,7 +510,7 @@ void projectFieldsFromPreviousMesh::project
        }//locally owned loop over cells
 
   for(unsigned int ifield = 0; ifield < fieldsBlockSize; ++ifield)
-      constraintsCurrentDof.distribute(*(fieldsCurrentMesh[ifield]));
+      constraintsCurrent.distribute(*(fieldsCurrentMesh[ifield]));
 
   computing_timer.exit_section("project:step6");
 }

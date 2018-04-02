@@ -44,7 +44,7 @@ class symmetryClass
   /**
    * symmetryClass constructor
    */
-  symmetryClass(dftClass<FEOrder>* _dftPtr,  MPI_Comm &mpi_comm_replica, MPI_Comm &interpoolcomm);
+  symmetryClass(dftClass<FEOrder>* _dftPtr,  MPI_Comm &mpi_comm_replica, MPI_Comm &_interpoolcomm);
 
 
   /**
