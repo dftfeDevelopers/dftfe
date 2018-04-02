@@ -13,9 +13,9 @@
 //
 // ---------------------------------------------------------------------
 
-/** @file projectFieldsFromPreviousMesh.h
+/** @file interpolateFieldsFromPreviousMesh.h
  *
- *  @brief Projects solutions fields from one finite element mesh to another.
+ *  @brief Interpolate solutions fields from one finite element mesh to another.
  *
  *   Unlike the dealii function  VectorTools::interpolate_to_different_mesh, this function
  *   doesn't assume that the parallel partitioning of the two meshes are same.
@@ -27,8 +27,8 @@
 
 
 
-#ifndef projectFields_H_
-#define projectFields_H_
+#ifndef interpolateFields_H_
+#define interpolateFields_H_
 #include "headers.h"
 
 #include <iostream>
@@ -42,14 +42,14 @@ namespace vectorTools
 {
     typedef dealii::parallel::distributed::Vector<double> vectorType;
 
-    class projectFieldsFromPreviousMesh
+    class interpolateFieldsFromPreviousMesh
     {
      public:
     /** @brief Constructor.
      *
      *  @param mpi_comm mpi_communicator of the domain decomposition
      */
-      projectFieldsFromPreviousMesh(const MPI_Comm &mpi_comm);
+      interpolateFieldsFromPreviousMesh(const MPI_Comm &mpi_comm);
 
     /**
      * @brief Projects a vector of parallel distributed vectors
@@ -67,10 +67,10 @@ namespace vectorTools
      * @param FECurrent FiniteElement object of the current mesh. FECurrent and FEPrev must have
      * the same number of components.
      * @param constraintsCurrent  dof constraints of current mesh
-     * @param fieldsPreviousMesh parallel distributed fields on previous mesh to be projected from
-     * @param fieldsCurrentMesh  parallel distributed fields on current mesh to be projected upon
+     * @param fieldsPreviousMesh parallel distributed fields on previous mesh to be interpolated from
+     * @param fieldsCurrentMesh  parallel distributed fields on current mesh to be interpolated upon
      */
-      void project(const dealii::parallel::distributed::Triangulation<3> & triangulationSerPrev,
+      void interpolate(const dealii::parallel::distributed::Triangulation<3> & triangulationSerPrev,
 		   const dealii::parallel::distributed::Triangulation<3> & triangulationParPrev,
 		   const dealii::parallel::distributed::Triangulation<3> & triangulationParCurrent,
 		   const dealii::FESystem<3> & FEPrev,

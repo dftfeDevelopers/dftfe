@@ -18,7 +18,7 @@
 
 
 
-#include <projectFieldsFromPreviousMesh.h>
+#include <interpolateFieldsFromPreviousMesh.h>
 
 
 namespace vectorTools
@@ -26,7 +26,7 @@ namespace vectorTools
 //
 //constructor
 //
-projectFieldsFromPreviousMesh::projectFieldsFromPreviousMesh(const MPI_Comm &mpi_comm):
+interpolateFieldsFromPreviousMesh::interpolateFieldsFromPreviousMesh(const MPI_Comm &mpi_comm):
   mpi_communicator (mpi_comm),
   n_mpi_processes (dealii::Utilities::MPI::n_mpi_processes(mpi_comm)),
   this_mpi_process (dealii::Utilities::MPI::this_mpi_process(mpi_comm)),
@@ -34,7 +34,7 @@ projectFieldsFromPreviousMesh::projectFieldsFromPreviousMesh(const MPI_Comm &mpi
 {
 }
 
-void projectFieldsFromPreviousMesh::project
+void interpolateFieldsFromPreviousMesh::interpolate
                   (const dealii::parallel::distributed::Triangulation<3> & triangulationSerPrev,
 		   const dealii::parallel::distributed::Triangulation<3> & triangulationParPrev,
 		   const dealii::parallel::distributed::Triangulation<3> & triangulationParCurrent,
@@ -56,7 +56,7 @@ void projectFieldsFromPreviousMesh::project
   //Step1: create maps which will be used for the MPI calls in the later steps///
   ///////////////////////////////////////////////////////////////////////////////
 
-  computing_timer.enter_section("project:step1");
+  computing_timer.enter_section("interpolate:step1");
   dealii::DoFHandler<3> dofHandlerUnmovedParPrev(triangulationParPrev);
   dofHandlerUnmovedParPrev.distribute_dofs(FEPrev);
 
@@ -124,13 +124,13 @@ void projectFieldsFromPreviousMesh::project
   std::map<dealii::types::global_dof_index, dealii::Point<3> > supportPointsUnmovedCurrent;
   dealii::DoFTools::map_dofs_to_support_points(dealii::MappingQ1<3,3>(), dofHandlerUnmovedCurrent, supportPointsUnmovedCurrent);
 
-  computing_timer.exit_section("project:step1");
+  computing_timer.exit_section("interpolate:step1");
 
   ///////////////////////////////////////////////////////////
   //Step2: collect sending information from each processor///
   ///////////////////////////////////////////////////////////
 
-  computing_timer.enter_section("project:step2");
+  computing_timer.enter_section("interpolate:step2");
   const dealii::MappingQ1<3> mapping;
 
   //
@@ -250,13 +250,13 @@ void projectFieldsFromPreviousMesh::project
   }//cell_loop
     //
   MPI_Barrier(mpi_communicator);
-  computing_timer.exit_section("project:step2");
+  computing_timer.exit_section("interpolate:step2");
 
   ////////////////////////////////////////////////////
   //Step3: Gather mapped points from all processors///
   ////////////////////////////////////////////////////
 
-  computing_timer.enter_section("project:step3");
+  computing_timer.enter_section("interpolate:step3");
   /// <sending processor<data size in d_recvData0 from sending processor> >
   std::vector<int> recv_size0(n_mpi_processes, 0);
 
@@ -349,13 +349,13 @@ void projectFieldsFromPreviousMesh::project
   mappedGroupSend0.clear();
   mappedGroupSend1.clear();
   mappedGroupSend2.clear();
-  computing_timer.exit_section("project:step3");
+  computing_timer.exit_section("interpolate:step3");
 
   ///////////////////////////////////////////////////////////
   //Step4: Interpolate previous fields to all mapped points//
   ///////////////////////////////////////////////////////////
 
-  computing_timer.enter_section("project:step4");
+  computing_timer.enter_section("interpolate:step4");
   const unsigned int fieldsBlockSize=fieldsPreviousMesh.size();
 
   for(unsigned int ifield = 0; ifield < fieldsBlockSize; ++ifield)
@@ -423,13 +423,13 @@ void projectFieldsFromPreviousMesh::project
      }// loop on group
      numGroupsDone += recv_size0[proc] ;
    }// loop on proc
-   computing_timer.exit_section("project:step4");
+   computing_timer.exit_section("interpolate:step4");
 
    ///////////////////////////////////////////////////////////////
    //Step5: scatter interpolated data back to sending processors//
    ///////////////////////////////////////////////////////////////
 
-   computing_timer.enter_section("project:step5");
+   computing_timer.enter_section("interpolate:step5");
 
    std::vector<std::vector<std::vector<double>>> fieldsValuesRecvData(numLocallyOwnedCellsCurrent,std::vector<std::vector<double>>(n_mpi_processes));
    std::vector<int> fieldsValuesRecvSize(n_mpi_processes,0);
@@ -474,13 +474,13 @@ void projectFieldsFromPreviousMesh::project
 		iLocalCellCurrent++;
 	  }//locally owned cell loop
    }//loop on proc
-   computing_timer.exit_section("project:step5");
+   computing_timer.exit_section("interpolate:step5");
 
    ////////////////////////////////////////////////////////////////////////////////////////////
    //Step6: set values on fieldsCurrentMesh using interpolated data received after scattering//
    ////////////////////////////////////////////////////////////////////////////////////////////
 
-   computing_timer.enter_section("project:step6");
+   computing_timer.enter_section("interpolate:step6");
    cell = dofHandlerUnmovedCurrent.begin_active();endc = dofHandlerUnmovedCurrent.end();
    iLocalCellCurrent=0;
    for (; cell!=endc; ++cell)
@@ -512,7 +512,7 @@ void projectFieldsFromPreviousMesh::project
   for(unsigned int ifield = 0; ifield < fieldsBlockSize; ++ifield)
       constraintsCurrent.distribute(*(fieldsCurrentMesh[ifield]));
 
-  computing_timer.exit_section("project:step6");
+  computing_timer.exit_section("interpolate:step6");
 }
 
 }

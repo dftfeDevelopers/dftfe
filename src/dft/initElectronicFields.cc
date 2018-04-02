@@ -44,7 +44,7 @@ void dftClass<FEOrder>::initElectronicFields(const bool usePreviousGroundStateFi
 
 
   //
-  //initialize density and PSI/ project from previous ground state solution
+  //initialize density and PSI/ interpolate from previous ground state solution
   //
   if (!usePreviousGroundStateFields)
   {
@@ -76,11 +76,11 @@ void dftClass<FEOrder>::initElectronicFields(const bool usePreviousGroundStateFi
      if (dftParameters::verbosity==2)
        pcout<<"L2 Norm Value of previous eigenvector 0: "<<eigenVectorsPreviousPtrs[0]->l2_norm()<<std::endl;
 
-     computing_timer.enter_section("project previous PSI");
+     computing_timer.enter_section("interpolate previous PSI");
 
-     pcout <<std::endl<< "Projecting previous grounstate PSI into the new finite element mesh...."<<std::endl;
-     vectorTools::projectFieldsFromPreviousMesh projectEigenVecPrev(mpi_communicator);
-     projectEigenVecPrev.project(d_mesh.getSerialMeshUnmovedPrevious(),
+     pcout <<std::endl<< "Interpolating previous grounstate PSI into the new finite element mesh...."<<std::endl;
+     vectorTools::interpolateFieldsFromPreviousMesh interpolateEigenVecPrev(mpi_communicator);
+     interpolateEigenVecPrev.interpolate(d_mesh.getSerialMeshUnmovedPrevious(),
 	                         d_mesh.getParallelMeshUnmovedPrevious(),
 				 d_mesh.getParallelMeshUnmoved(),
 				 FEEigen,
@@ -89,10 +89,10 @@ void dftClass<FEOrder>::initElectronicFields(const bool usePreviousGroundStateFi
 				 eigenVectorsPreviousPtrs,
 				 eigenVectorsCurrentPtrs);
 
-     computing_timer.exit_section("project previous PSI");
+     computing_timer.exit_section("interpolate previous PSI");
 
      if (dftParameters::verbosity==2)
-      pcout<<"L2 Norm Value of projected eigenvector 0: "<<eigenVectorsCurrentPtrs[0]->l2_norm()<<std::endl;
+      pcout<<"L2 Norm Value of interpolated eigenvector 0: "<<eigenVectorsCurrentPtrs[0]->l2_norm()<<std::endl;
 
      for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_maxkPoints; ++kPoint)
         for(unsigned int i = 0; i < eigenVectors[kPoint].size(); ++i)

@@ -30,7 +30,7 @@
 #include <fileReaders.h>
 #include <dftParameters.h>
 #include <dftUtils.h>
-#include <projectFieldsFromPreviousMesh.h>
+#include <interpolateFieldsFromPreviousMesh.h>
 
 
 //Include cc files
