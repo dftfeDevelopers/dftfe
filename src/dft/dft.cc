@@ -67,11 +67,11 @@
 //
 template<unsigned int FEOrder>
 dftClass<FEOrder>::dftClass(MPI_Comm &mpi_comm_replica, MPI_Comm &interpoolcomm):
-  FE (FE_Q<3>(QGaussLobatto<1>(C_num1DQuad<FEOrder>())), 1),
+  FE (FE_Q<3>(QGaussLobatto<1>(FEOrder+1)), 1),
 #ifdef ENABLE_PERIODIC_BC
-  FEEigen (FE_Q<3>(QGaussLobatto<1>(C_num1DQuad<FEOrder>())), 2),
+  FEEigen (FE_Q<3>(QGaussLobatto<1>(FEOrder+1)), 2),
 #else
-  FEEigen (FE_Q<3>(QGaussLobatto<1>(C_num1DQuad<FEOrder>())), 1),
+  FEEigen (FE_Q<3>(QGaussLobatto<1>(FEOrder+1)), 1),
 #endif
   mpi_communicator (mpi_comm_replica),
   interpoolcomm (interpoolcomm),
