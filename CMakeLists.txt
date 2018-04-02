@@ -22,6 +22,7 @@ SET(TARGET_SRC
   ./src/mesh/meshMovement/meshMovementGaussian.cc
   ./src/mesh/meshMovement/meshMovementAffineTransform.cc
   ./src/mesh/meshGenerator/meshGenerator.cc
+  ./src/mesh/vectorTools/projectFieldsFromPreviousMesh.cc
   ./src/symmetry/initGroupSymmetry.cc
   ./src/geoOpt/geoOptIon.cc
   ./src/geoOpt/geoOptCell.cc

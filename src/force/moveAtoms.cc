@@ -27,10 +27,10 @@ namespace internalforce{
 
   }
 
-    
+
   std::vector<double> getFractionalCoordinates(const std::vector<double> & latticeVectors,
 	                                       const Point<3> & point,                                                                                           const Point<3> & corner)
-  {   
+  {
       //
       // recenter vertex about corner
       //
@@ -54,15 +54,15 @@ namespace internalforce{
       AssertThrow(info == 0, ExcMessage("LU solve in finding fractional coordinates failed."));
       return recenteredPoint;
   }
-   
+
   std::vector<double> wrapAtomsAcrossPeriodicBc(const Point<3> & cellCenteredCoord,
 	                                        const Point<3> & corner,
 					        const std::vector<double> & latticeVectors,
 						const std::vector<bool> & periodicBc)
   {
-     const double tol=1e-6;      
+     const double tol=1e-6;
      std::vector<double> fracCoord= getFractionalCoordinates(latticeVectors,
-	                                                     cellCenteredCoord,                                                                                                corner);  
+	                                                     cellCenteredCoord,                                                                                                corner);
      //wrap fractional coordinate
      for(unsigned int i = 0; i < 3; ++i)
      {
@@ -74,10 +74,10 @@ namespace internalforce{
 	   fracCoord[i]-=1.0;
          AssertThrow(fracCoord[i]>-2.0*tol && fracCoord[i]<1.0+2.0*tol,ExcMessage("Moved atom position doesnt't lie inside the cell after wrapping across periodic boundary"));
        }
-     }     
+     }
      return fracCoord;
-  } 
-  
+  }
+
 }
 
 // Function to update the atom positions and mesh based on the provided displacement input.
@@ -105,13 +105,13 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
       for(unsigned int jdim=0; jdim<3; jdim++)
           corner[idim]-=dftPtr->d_domainBoundingVectors[jdim][idim]/2.0;
   }
-  std::vector<bool> periodicBc(3,false); 
-  periodicBc[0]=dftParameters::periodicX;periodicBc[1]=dftParameters::periodicY;periodicBc[2]=dftParameters::periodicZ;  
+  std::vector<bool> periodicBc(3,false);
+  periodicBc[0]=dftParameters::periodicX;periodicBc[1]=dftParameters::periodicY;periodicBc[2]=dftParameters::periodicZ;
 #endif
 
   std::vector<Point<C_DIM> > controlPointLocations;
   std::vector<Tensor<1,C_DIM,double> > controlPointDisplacements;
- 
+
   double maxDispAtom=-1;
   for (unsigned int iAtom=0;iAtom <totalNumberAtoms; iAtom++)
   {
@@ -131,16 +131,16 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
 	                                                                          corner,
 					                                          latticeVectorsFlattened,
 						                                  periodicBc);
-        //for synchrozination 
+        //for synchrozination
         MPI_Bcast(&(newFracCoord[0]),
 	         3,
 	         MPI_DOUBLE,
 	         0,
-	         MPI_COMM_WORLD); 
+	         MPI_COMM_WORLD);
 
         dftPtr->atomLocationsFractional[iAtom][2]=newFracCoord[0];
         dftPtr->atomLocationsFractional[iAtom][3]=newFracCoord[1];
-        dftPtr->atomLocationsFractional[iAtom][4]=newFracCoord[2];	
+        dftPtr->atomLocationsFractional[iAtom][4]=newFracCoord[2];
 #else
         atomLocations[iAtom][2]+=globalAtomsDisplacements[atomId][0];
         atomLocations[iAtom][3]+=globalAtomsDisplacements[atomId][1];
@@ -160,100 +160,114 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
      controlPointLocations.push_back(atomCoor);
      controlPointDisplacements.push_back(globalAtomsDisplacements[atomId]);
   }
-  MPI_Barrier(mpi_communicator); 
-  const double tol=1e-6;
-  //Heuristic values
-  const  double maxJacobianRatio=10.0;
-  const double break1=1e-2;
-  const double break2=1e-4;
-  
-  unsigned int updateCase=0;
-  if (maxDispAtom >(break1-tol))
+  MPI_Barrier(mpi_communicator);
+
+  const bool useHybridMeshUpdateScheme=true;
+
+  if (!useHybridMeshUpdateScheme)//always remesh
   {
-    updateCase=0;     
-  }
-  else if (maxDispAtom <(break1+tol) && maxDispAtom>break2)
-  {
-    updateCase=1;
+	  pcout << "Auto remeshing and reinitialization of dft problem for new atom coordinates" << std::endl;
+	  dftPtr->init(true);
+	  pcout << "...Reinitialization end" << std::endl;
   }
   else
   {
-    updateCase=2;
-  }
- 
-  //for synchrozination in case the updateCase are different in different processors due to floating point comparison
-  MPI_Bcast(&(updateCase),
-	    1,
-	    MPI_INT,
-	    0,
-	    MPI_COMM_WORLD); 
 
-  if (updateCase==0)
-  {
-      pcout << "Auto remeshing and reinitialization of dft problem for new atom coordinates as max displacement magnitude: "<<maxDispAtom<< " is greater than: "<< break1 << " Bohr..." << std::endl;  
-      dftPtr->init(); 
-      pcout << "...Reinitialization end" << std::endl;       
-  }
-  else if (updateCase==1)
-  {
+      const double tol=1e-6;
+      //Heuristic values
+      const  double maxJacobianRatio=10.0;
+      const double break1=1e-2;
+      const double break2=1e-4;
 
-      const double gaussianParameter=2.0;
-      pcout << "Trying to Move using a wide Gaussian with Gaussian constant: "<<gaussianParameter<<" as max displacement magnitude: "<<maxDispAtom<< " is between "<< break2<<" and "<<break1<<" Bohr"<<std::endl;
-      
-      std::pair<bool,double> meshQualityMetrics= gaussianMovePar.moveMesh(controlPointLocations,controlPointDisplacements,gaussianParameter);
-     
-      unsigned int autoMesh=0;
-      if (meshQualityMetrics.first || meshQualityMetrics.second>maxJacobianRatio)
-          autoMesh=1;
-      MPI_Bcast(&(autoMesh),
-		1,
-		MPI_INT,
-		0,
-		MPI_COMM_WORLD);       
-      if (autoMesh==1)
+      unsigned int updateCase=0;
+      if (maxDispAtom >(break1-tol))
       {
-	  if (meshQualityMetrics.first)
-	     pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to negative jacobian after Gaussian mesh movement using Gaussian constant: "<< gaussianParameter<<std::endl; 	  
-	  else
-	     pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to maximum jacobian ratio: "<< meshQualityMetrics.second<< " exceeding set bound of: "<< maxJacobianRatio<<" after Gaussian mesh movement using Gaussian constant: "<< gaussianParameter<<std::endl;
-          dftPtr->init(); 
-          pcout << "...Reinitialization end" << std::endl;  
+	updateCase=0;
+      }
+      else if (maxDispAtom <(break1+tol) && maxDispAtom>break2)
+      {
+	updateCase=1;
       }
       else
       {
-	  pcout<< " Mesh quality check: maximum jacobian ratio after movement: "<< meshQualityMetrics.second<<std::endl;  
-	  pcout<<"Now reinitializing all moved triangulation dependent objects..." << std::endl;        
-          dftPtr->initNoRemesh();  
-	  pcout << "...Reinitialization end" << std::endl;  
+	updateCase=2;
       }
-  }
-  else
-  {
-       pcout << "Trying to Move using a narrow Gaussian with same Gaussian constant for computing the forces: "<<d_gaussianConstant<<" as max displacement magnitude: "<< maxDispAtom<< " is below " << break2 <<" Bohr"<<std::endl;       
-      std::pair<bool,double> meshQualityMetrics=gaussianMovePar.moveMesh(controlPointLocations,controlPointDisplacements,d_gaussianConstant);
-      unsigned int autoMesh=0;      
-      if (meshQualityMetrics.first || meshQualityMetrics.second>maxJacobianRatio)
-          autoMesh=1;
-      MPI_Bcast(&(autoMesh),
+
+      //for synchrozination in case the updateCase are different in different processors due to floating point comparison
+      MPI_Bcast(&(updateCase),
 		1,
 		MPI_INT,
 		0,
-		MPI_COMM_WORLD);       
-      if (autoMesh==1)
+		MPI_COMM_WORLD);
+
+      if (updateCase==0)
       {
-	  if (meshQualityMetrics.first)
-	     pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to negative jacobian after Gaussian mesh movement using Gaussian constant: "<< d_gaussianConstant<<std::endl; 	  
+	  pcout << "Auto remeshing and reinitialization of dft problem for new atom coordinates as max displacement magnitude: "<<maxDispAtom<< " is greater than: "<< break1 << " Bohr..." << std::endl;
+	  dftPtr->init();
+	  pcout << "...Reinitialization end" << std::endl;
+      }
+      else if (updateCase==1)
+      {
+
+	  const double gaussianParameter=2.0;
+	  pcout << "Trying to Move using a wide Gaussian with Gaussian constant: "<<gaussianParameter<<" as max displacement magnitude: "<<maxDispAtom<< " is between "<< break2<<" and "<<break1<<" Bohr"<<std::endl;
+
+	  std::pair<bool,double> meshQualityMetrics= gaussianMovePar.moveMesh(controlPointLocations,controlPointDisplacements,gaussianParameter);
+
+	  unsigned int autoMesh=0;
+	  if (meshQualityMetrics.first || meshQualityMetrics.second>maxJacobianRatio)
+	      autoMesh=1;
+	  MPI_Bcast(&(autoMesh),
+		    1,
+		    MPI_INT,
+		    0,
+		    MPI_COMM_WORLD);
+	  if (autoMesh==1)
+	  {
+	      if (meshQualityMetrics.first)
+		 pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to negative jacobian after Gaussian mesh movement using Gaussian constant: "<< gaussianParameter<<std::endl;
+	      else
+		 pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to maximum jacobian ratio: "<< meshQualityMetrics.second<< " exceeding set bound of: "<< maxJacobianRatio<<" after Gaussian mesh movement using Gaussian constant: "<< gaussianParameter<<std::endl;
+	      dftPtr->init();
+	      pcout << "...Reinitialization end" << std::endl;
+	  }
 	  else
-	     pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to maximum jacobian ratio: "<< meshQualityMetrics.second<< " exceeding set bound of: "<< maxJacobianRatio<<" after Gaussian mesh movement using Gaussian constant: "<< d_gaussianConstant<<std::endl;
-          dftPtr->init(); 
-          pcout << "...Reinitialization end" << std::endl;  
+	  {
+	      pcout<< " Mesh quality check: maximum jacobian ratio after movement: "<< meshQualityMetrics.second<<std::endl;
+	      pcout<<"Now reinitializing all moved triangulation dependent objects..." << std::endl;
+	      dftPtr->initNoRemesh();
+	      pcout << "...Reinitialization end" << std::endl;
+	  }
       }
       else
       {
-	  pcout<< " Mesh quality check: maximum jacobian ratio after movement: "<< meshQualityMetrics.second<<std::endl; 
-	  pcout << "Now Reinitializing all moved triangulation dependent objects..." << std::endl;  
-          dftPtr->initNoRemesh();  
-	  pcout << "...Reinitialization end" << std::endl;  
+	   pcout << "Trying to Move using a narrow Gaussian with same Gaussian constant for computing the forces: "<<d_gaussianConstant<<" as max displacement magnitude: "<< maxDispAtom<< " is below " << break2 <<" Bohr"<<std::endl;
+	  std::pair<bool,double> meshQualityMetrics=gaussianMovePar.moveMesh(controlPointLocations,controlPointDisplacements,d_gaussianConstant);
+	  unsigned int autoMesh=0;
+	  if (meshQualityMetrics.first || meshQualityMetrics.second>maxJacobianRatio)
+	      autoMesh=1;
+	  MPI_Bcast(&(autoMesh),
+		    1,
+		    MPI_INT,
+		    0,
+		    MPI_COMM_WORLD);
+	  if (autoMesh==1)
+	  {
+	      if (meshQualityMetrics.first)
+		 pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to negative jacobian after Gaussian mesh movement using Gaussian constant: "<< d_gaussianConstant<<std::endl;
+	      else
+		 pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to maximum jacobian ratio: "<< meshQualityMetrics.second<< " exceeding set bound of: "<< maxJacobianRatio<<" after Gaussian mesh movement using Gaussian constant: "<< d_gaussianConstant<<std::endl;
+	      dftPtr->init();
+	      pcout << "...Reinitialization end" << std::endl;
+	  }
+	  else
+	  {
+	      pcout<< " Mesh quality check: maximum jacobian ratio after movement: "<< meshQualityMetrics.second<<std::endl;
+	      pcout << "Now Reinitializing all moved triangulation dependent objects..." << std::endl;
+	      dftPtr->initNoRemesh();
+	      pcout << "...Reinitialization end" << std::endl;
+	  }
       }
   }
+
 }

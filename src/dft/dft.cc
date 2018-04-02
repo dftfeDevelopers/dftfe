@@ -30,6 +30,7 @@
 #include <fileReaders.h>
 #include <dftParameters.h>
 #include <dftUtils.h>
+#include <projectFieldsFromPreviousMesh.h>
 
 
 //Include cc files
@@ -348,7 +349,7 @@ void dftClass<FEOrder>::initImageChargesUpdateKPoints()
 
 //dft init
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::init (const bool usePreviousGroundStateRho)
+void dftClass<FEOrder>::init (const bool usePreviousGroundStateFields)
 {
 
   initImageChargesUpdateKPoints();
@@ -393,7 +394,7 @@ void dftClass<FEOrder>::init (const bool usePreviousGroundStateRho)
   //
   //initialize guesses for electron-density and wavefunctions
   //
-  initElectronicFields(usePreviousGroundStateRho);
+  initElectronicFields(usePreviousGroundStateFields);
 
   //
   //store constraintEigen Matrix entries into STL vector
@@ -448,6 +449,7 @@ template<unsigned int FEOrder>
 void dftClass<FEOrder>::run()
 {
   solve();
+
   if (dftParameters::isIonOpt && !dftParameters::isCellOpt)
     {
       geoOptIonPtr->init();
