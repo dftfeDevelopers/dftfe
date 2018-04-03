@@ -40,9 +40,9 @@ void interpolateFieldsFromPreviousMesh::interpolate
 		   const dealii::parallel::distributed::Triangulation<3> & triangulationParCurrent,
 		   const dealii::FESystem<3> & FEPrev,
 		   const dealii::FESystem<3> & FECurrent,
-		   const dealii::ConstraintMatrix & constraintsCurrent,
 		   const std::vector<vectorType*> & fieldsPreviousMesh,
-		   std::vector<vectorType*> & fieldsCurrentMesh)
+		   std::vector<vectorType*> & fieldsCurrentMesh,
+		   const dealii::ConstraintMatrix * constraintsCurrentPtr)
 {
   AssertThrow(FEPrev.components==FECurrent.components,dealii::ExcMessage("FEPrev and FECurrent must have the same number of components."));
 
@@ -481,6 +481,9 @@ void interpolateFieldsFromPreviousMesh::interpolate
    ////////////////////////////////////////////////////////////////////////////////////////////
 
    computing_timer.enter_section("interpolate:step6");
+   const std::shared_ptr< const dealii::Utilities::MPI::Partitioner > & partitioner
+                   =fieldsCurrentMesh[0]->get_partitioner();
+
    cell = dofHandlerUnmovedCurrent.begin_active();endc = dofHandlerUnmovedCurrent.end();
    iLocalCellCurrent=0;
    for (; cell!=endc; ++cell)
@@ -498,19 +501,19 @@ void interpolateFieldsFromPreviousMesh::interpolate
 		     for (unsigned int icomp=0; icomp<fe_components; icomp++)
 		     {
 			   const dealii::types::global_dof_index globalDofId=cell_dof_indices[FECurrent.component_to_system_index(icomp,baseIndexId)];
-			   (*(fieldsCurrentMesh[ifield]))[globalDofId]=
-			       fieldsValuesRecvData[iLocalCellCurrent][proc][
-					pointCount*fieldsBlockSize*fe_components
-				        +ifield*fe_components
-					+icomp];
-			   //(*(fieldsCurrentMesh[ifield]))[globalDofId]=(*(fieldsPreviousMesh[ifield]))[globalDofId];
+			   if (partitioner->in_local_range(globalDofId))
+			        (*(fieldsCurrentMesh[ifield])).local_element(partitioner->global_to_local(globalDofId))=fieldsValuesRecvData[iLocalCellCurrent][proc][
+					                pointCount*fieldsBlockSize*fe_components
+				                        +ifield*fe_components
+					                +icomp];
 		     }//loop over components
 	      }//loop over mapped points originating from iLocalCellCurrent
 	      iLocalCellCurrent++;
-       }//locally owned loop over cells
+        }//locally owned loop over cells
 
-  for(unsigned int ifield = 0; ifield < fieldsBlockSize; ++ifield)
-      constraintsCurrent.distribute(*(fieldsCurrentMesh[ifield]));
+  if (constraintsCurrentPtr!=NULL)
+     for(unsigned int ifield = 0; ifield < fieldsBlockSize; ++ifield)
+        constraintsCurrentPtr->distribute(*(fieldsCurrentMesh[ifield]));
 
   computing_timer.exit_section("interpolate:step6");
 }
