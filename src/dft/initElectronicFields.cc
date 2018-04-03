@@ -85,18 +85,20 @@ void dftClass<FEOrder>::initElectronicFields(const bool usePreviousGroundStateFi
 				 d_mesh.getParallelMeshUnmoved(),
 				 FEEigen,
 				 FEEigen,
-				 constraintsNoneEigen,
 				 eigenVectorsPreviousPtrs,
 				 eigenVectorsCurrentPtrs);
 
      computing_timer.exit_section("interpolate previous PSI");
 
-     if (dftParameters::verbosity==2)
-      pcout<<"L2 Norm Value of interpolated eigenvector 0: "<<eigenVectorsCurrentPtrs[0]->l2_norm()<<std::endl;
-
      for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_maxkPoints; ++kPoint)
         for(unsigned int i = 0; i < eigenVectors[kPoint].size(); ++i)
+	{
+	  constraintsNoneEigenDataInfo.distribute(eigenVectors[kPoint][i]);
 	  eigenVectors[kPoint][i].update_ghost_values();
+	}
+
+     if (dftParameters::verbosity==2)
+      pcout<<"L2 Norm Value of interpolated eigenvector 0: "<<eigenVectorsCurrentPtrs[0]->l2_norm()<<std::endl;
 
      pcout <<std::endl<< "Computing rho initial guess from previous ground state PSI...."<<std::endl;
      computeRhoInitialGuessFromPSI();

@@ -66,18 +66,18 @@ namespace vectorTools
      * @param FEPrev FiniteElement object of the previous mesh
      * @param FECurrent FiniteElement object of the current mesh. FECurrent and FEPrev must have
      * the same number of components.
-     * @param constraintsCurrent  dof constraints of current mesh
      * @param fieldsPreviousMesh parallel distributed fields on previous mesh to be interpolated from
      * @param fieldsCurrentMesh  parallel distributed fields on current mesh to be interpolated upon
+     * @param constraintsCurrentPtr  pointer to ConstraintMatrix object of current mesh
      */
       void interpolate(const dealii::parallel::distributed::Triangulation<3> & triangulationSerPrev,
 		   const dealii::parallel::distributed::Triangulation<3> & triangulationParPrev,
 		   const dealii::parallel::distributed::Triangulation<3> & triangulationParCurrent,
 		   const dealii::FESystem<3> & FEPrev,
 		   const dealii::FESystem<3> & FECurrent,
-		   const dealii::ConstraintMatrix & constraintsCurrent,
 		   const std::vector<vectorType*> & fieldsPreviousMesh,
-		   std::vector<vectorType*> & fieldsCurrentMesh);
+		   std::vector<vectorType*> & fieldsCurrentMesh,
+		   const dealii::ConstraintMatrix * constraintsCurrentPtr=NULL);
 
      private:
 
