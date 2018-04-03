@@ -695,7 +695,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
   //
   QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
   //FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values);
-  FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values| update_quadrature_points);
+  FEValues<3> fe_values(FE, quadrature, update_quadrature_points);
   const unsigned int numberQuadraturePoints = quadrature.size();
   //const parallel::distributed::Triangulation<3> & tria = dofHandlerEigen.get_triangulation();
   //const unsigned int numberElements  = tria.n_locally_owned_active_cells();
@@ -1063,7 +1063,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
   dealii::parallel::distributed::Vector<double > vec(d_locallyOwnedProjectorIdsCurrentProcess,
                                                      d_ghostProjectorIdsCurrentProcess,
                                                      mpi_communicator);
-#endif     
+#endif
 
   d_projectorKetTimesVectorPar.resize(eigenVectors[0].size());
   for (unsigned int i = 0; i < eigenVectors[0].size(); ++i)
@@ -1091,7 +1091,7 @@ void dftClass<FEOrder>::computeElementalProjectorKets()
   //
   QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
   //FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values);
-  FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values | update_quadrature_points);
+  FEValues<3> fe_values(FE, quadrature, update_values | update_JxW_values | update_quadrature_points);
   const unsigned int numberNodesPerElement  = FE.dofs_per_cell;
   const unsigned int numberQuadraturePoints = quadrature.size();
 

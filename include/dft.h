@@ -19,7 +19,7 @@
 #ifndef dft_H_
 #define dft_H_
 #include <iostream>
-#include <iomanip> 
+#include <iomanip>
 #include <numeric>
 #include <sstream>
 #include <complex>
@@ -35,7 +35,7 @@
 #include "symmetry.h"
 #include "meshMovementAffineTransform.h"
 
-#include <interpolation.h> 
+#include <interpolation.h>
 #include <xc.h>
 #include <petsc.h>
 #include <slepceps.h>
@@ -53,12 +53,12 @@ using namespace dealii;
 typedef dealii::parallel::distributed::Vector<double> vectorType;
 //forward declarations
 template <unsigned int T> class poissonClass;
-template <unsigned int T> class eigenClass; 
-template <unsigned int T> class forceClass;  
+template <unsigned int T> class eigenClass;
+template <unsigned int T> class forceClass;
 template <unsigned int T> class symmetryClass;
-template <unsigned int T> class forceClass; 
+template <unsigned int T> class forceClass;
 template <unsigned int T> class geoOptIon;
-template <unsigned int T> class geoOptCell; 
+template <unsigned int T> class geoOptCell;
 
 //
 //extern declarations for blas-lapack routines
@@ -89,7 +89,7 @@ struct orbital
 
 //
 //dft class for initializing mesh, setting up guesses for initial electron-density and wavefunctions,
-//solving individual vSelf problem after setting up bins, initializing pseudopotentials. Also 
+//solving individual vSelf problem after setting up bins, initializing pseudopotentials. Also
 //has member functions which sets up the process of SCF iteration including mixing of the electron-density
 template <unsigned int FEOrder>
 class dftClass
@@ -102,13 +102,13 @@ class dftClass
   friend class eigenClass;
 
   template <unsigned int T>
-  friend class forceClass; 
+  friend class forceClass;
 
   template <unsigned int T>
-  friend class geoOptIon; 
- 
+  friend class geoOptIon;
+
   template <unsigned int T>
-  friend class geoOptCell;    
+  friend class geoOptCell;
 
   template <unsigned int T>
   friend class symmetryClass;
@@ -129,23 +129,23 @@ class dftClass
    * lattice vectors, kPoint quadrature rules to be used and also generates image atoms.
    * Also determines orbital-ordering
    */
-  void set();  
+  void set();
   /**
    * Does required pre-processing steps including mesh generation calls.
    */
-  void init();   
+  void init(const bool usePreviousGroundStateFields=false);
   /**
    * Does required pre-processing steps but without remeshing.
    */
-  void initNoRemesh();   
+  void initNoRemesh();
   /**
    * Selects between only electronic field relaxation or combined electronic and geometry relxation
    */
-  void run();  
+  void run();
   /**
-   *  Kohn-Sham ground solve using SCF iteration 
+   *  Kohn-Sham ground solve using SCF iteration
    */
-  void solve();  
+  void solve();
   /**
    * Number of Kohn-Sham eigen values to be computed
    */
@@ -161,28 +161,43 @@ class dftClass
    */
   void initImageChargesUpdateKPoints();
 
+  /**
+   * L2 projection from rho quad point data to nodal field
+   */
+  void computeGroundStateRhoNodalField();
+
+  /**
+   * Set rho initial guess from PSI.
+   */
+  void computeRhoInitialGuessFromPSI();
+
+  /**
+   * clear all exisitng electron density data structures.
+   */
+  void clearRhoData();
+
   void generateMPGrid();
   void writeMesh(std::string meshFileName);
   void generateImageCharges();
   void determineOrbitalFilling();
 
- 
+
   /**
    * moves the triangulation vertices using Gaussians such that the all atoms are on triangulation vertices
    */
-  void moveMeshToAtoms(Triangulation<3,3> & triangulationMove,bool reuse=false);  
+  void moveMeshToAtoms(const Triangulation<3,3> & triangulationMove,const bool reuse=false);
 
   /**
    * Initializes the guess of electron-density and single-atom wavefunctions on the mesh,
    * maps finite-element nodes to given atomic positions,
    * initializes pseudopotential files and exchange-correlation functionals to be used
-   * based on user-choice. 
+   * based on user-choice.
    * In periodic problems, periodic faces are mapped here. Further finite-element nodes
    * to be pinned for solving the Poisson problem electro-static potential is set here
    */
-  void initUnmovedTriangulation(parallel::distributed::Triangulation<3> & triangulation);
+  void initUnmovedTriangulation(const parallel::distributed::Triangulation<3> & triangulation);
   void initBoundaryConditions();
-  void initElectronicFields();
+  void initElectronicFields(bool usePreviousGroundStateFields=false);
   void initPseudoPotentialAll();
   void locateAtomCoreNodes();
   void locatePeriodicPinnedNodes();
@@ -198,9 +213,9 @@ class dftClass
   void computeSparseStructureNonLocalProjectors_OV();
   void computeElementalProjectorKets();
 
-  
+
   /**
-   * Sets dirichlet boundary conditions for total potential constraints on 
+   * Sets dirichlet boundary conditions for total potential constraints on
    * non-periodic boundary (boundary id==0). Currently setting homogeneous bc
    *
    */
@@ -210,14 +225,14 @@ class dftClass
 
 
   /**
-   * Categorizes atoms into bins based on self-potential ball radius around each atom such 
+   * Categorizes atoms into bins based on self-potential ball radius around each atom such
    * that no two atoms in each bin has overlapping balls
    * and finally solves the self-potentials in each bin one-by-one.
    */
   void createAtomBins(std::vector<ConstraintMatrix * > & constraintsVector);
   void createAtomBinsExtraSanityCheck();
   void solveVself();
-  
+
   /**
    * Computes total charge by integrating the electron-density
    */
@@ -226,13 +241,13 @@ class dftClass
   /**
    * normalized the charge density
    */
-  void normalizeRho();  
-  
+  void normalizeRho();
+
   /**
    * Computes output electron-density from wavefunctions
    */
   void compute_rhoOut();
- 
+
   /**
    * Mixing schemes for mixing electron-density
    */
@@ -266,7 +281,7 @@ class dftClass
    * Deforms the domain by the given deformation gradient and reinitializes the
    * dftClass datastructures.
    */
-  void deformDomain(const Tensor<2,3,double> & deformationGradient);  
+  void deformDomain(const Tensor<2,3,double> & deformationGradient);
 
   /**
    * Computes inner Product and Y = alpha*X + Y for complex vectors used during
@@ -280,9 +295,9 @@ class dftClass
 			vectorType           & x,
 			vectorType           & y);
 
-    
+
   /**
-   * Sets dirichlet boundary conditions for total potential constraints on 
+   * Sets dirichlet boundary conditions for total potential constraints on
    * non-periodic boundary (boundary id==0). Currently setting homogeneous bc
    *
    */
@@ -290,8 +305,8 @@ class dftClass
 #endif
 
   /// objects for various exchange-correlations (from libxc package)
-  xc_func_type funcX, funcC; 
-  
+  xc_func_type funcX, funcC;
+
   /**
    * stores required data for Kohn-Sham problem
    */
@@ -321,6 +336,9 @@ class dftClass
   /// volume of the domain
   double d_domainVolume;
 
+  /// storage for ground state rho nodal field
+  vectorType d_rhoNodalFieldGroundState;
+
   /**
    * dealii based FE data structres
    */
@@ -329,8 +347,8 @@ class dftClass
   unsigned int       eigenDofHandlerIndex,phiExtDofHandlerIndex,phiTotDofHandlerIndex,forceDofHandlerIndex;
   MatrixFree<3,double> matrix_free_data;
   std::map<types::global_dof_index, Point<3> > d_supportPoints, d_supportPointsEigen;
-  std::vector< ConstraintMatrix * > d_constraintsVector; 
-  
+  std::vector< ConstraintMatrix * > d_constraintsVector;
+
   /**
    * parallel objects
    */
@@ -348,35 +366,35 @@ class dftClass
   forceClass<FEOrder> * forcePtr;
   symmetryClass<FEOrder> * symmetryPtr;
   geoOptIon<FEOrder> * geoOptIonPtr;
-  geoOptCell<FEOrder> * geoOptCellPtr;  
+  geoOptCell<FEOrder> * geoOptCellPtr;
 
   /**
    * constraint Matrices
    */
   ConstraintMatrix constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_constraintsPeriodicWithDirichlet, d_noConstraints, d_noConstraintsEigen;
- 
+
   /// vector of constraint matrices for vself bins
   std::vector<ConstraintMatrix> d_vselfBinConstraintMatrices;
 
   /**
    * data storage for Kohn-Sham wavefunctions
    */
-  std::vector<std::vector<double> > eigenValues, eigenValuesTemp; 
+  std::vector<std::vector<double> > eigenValues, eigenValuesTemp;
   std::vector<std::vector<vectorType> > eigenVectors;
 
   /**
    * storage for constraintMatrices in terms of arrays (STL)
    */
- dftUtils::constraintMatrixInfo constraintsNoneEigenDataInfo; 
+ dftUtils::constraintMatrixInfo constraintsNoneEigenDataInfo;
 
 
 
   /// parallel message stream
-  ConditionalOStream  pcout;  
-  
+  ConditionalOStream  pcout;
+
   /// compute-time logger
   TimerOutput computing_timer;
-  
+
   //dft related objects
   std::map<dealii::CellId, std::vector<double> > *rhoInValues, *rhoOutValues, *rhoInValuesSpinPolarized, *rhoOutValuesSpinPolarized;
   std::deque<std::map<dealii::CellId,std::vector<double> >> rhoInVals, rhoOutVals, rhoInValsSpinPolarized, rhoOutValsSpinPolarized;
@@ -384,16 +402,16 @@ class dftClass
 
   std::map<dealii::CellId, std::vector<double> > * gradRhoInValues, *gradRhoInValuesSpinPolarized;
   std::map<dealii::CellId, std::vector<double> > * gradRhoOutValues, *gradRhoOutValuesSpinPolarized;
-  std::deque<std::map<dealii::CellId,std::vector<double> >> gradRhoInVals,gradRhoInValsSpinPolarized,gradRhoOutVals, gradRhoOutValsSpinPolarized; 
+  std::deque<std::map<dealii::CellId,std::vector<double> >> gradRhoInVals,gradRhoInValsSpinPolarized,gradRhoOutVals, gradRhoOutValsSpinPolarized;
 
 
   double d_pspTail = 8.0;
   std::map<dealii::CellId, std::vector<double> > pseudoValues;
   std::vector<std::vector<double> > d_localVselfs;
 
-  
+
   //nonlocal pseudopotential related objects used only for pseudopotential calculation
-  
+
   //
   // Store the map between the "pseudo" wave function Id and the function Id details (i.e., global splineId, l quantum number, m quantum number)
   //
@@ -401,7 +419,7 @@ class dftClass
 
   //
   // Store the map between the "pseudo" potential Id and the function Id details (i.e., global splineId, l quantum number)
-  //  
+  //
   std::vector<std::vector<int> > d_deltaVlIdToFunctionIdDetails;
 
   //
@@ -424,16 +442,16 @@ class dftClass
   std::map<std::pair<unsigned int,unsigned int>, unsigned int> d_projectorIdsNumberingMapCurrentProcess;
 #ifdef ENABLE_PERIODIC_BC
   std::vector<std::vector<std::vector<std::vector<std::complex<double> > > > > d_nonLocalProjectorElementMatrices;
-  std::vector<dealii::parallel::distributed::Vector<std::complex<double> > > d_projectorKetTimesVectorPar;  
+  std::vector<dealii::parallel::distributed::Vector<std::complex<double> > > d_projectorKetTimesVectorPar;
 #else
   std::vector<std::vector<std::vector<std::vector<double> > > > d_nonLocalProjectorElementMatrices;
-  std::vector<dealii::parallel::distributed::Vector<double> > d_projectorKetTimesVectorPar;  
+  std::vector<dealii::parallel::distributed::Vector<double> > d_projectorKetTimesVectorPar;
 #endif
   //
   //storage for nonlocal pseudopotential constants
   //
-  std::vector<std::vector<double> > d_nonLocalPseudoPotentialConstants; 
-  std::vector<std::vector<std::vector<double> >> d_nonLocalPseudoPotentialConstants_OV; 
+  std::vector<std::vector<double> > d_nonLocalPseudoPotentialConstants;
+  std::vector<std::vector<std::vector<double> >> d_nonLocalPseudoPotentialConstants_OV;
 
   //
   //globalChargeId to ImageChargeId Map
@@ -459,7 +477,7 @@ class dftClass
   //map of atom node number and atomic weight
   std::map<unsigned int, double> atoms;
   std::vector<std::map<unsigned int, double> > d_atomsInBin;
-  
+
   //map of binIds and atomIds in it and other bin related information
   std::map<int,std::set<int> > d_bins;
   std::vector<std::vector<int> > d_imageIdsInBins;
@@ -467,8 +485,8 @@ class dftClass
   std::vector<std::map<dealii::types::global_dof_index, double> > d_vselfBinField;
   std::vector<std::map<dealii::types::global_dof_index, int> > d_closestAtomBin;
   std::vector<vectorType> d_vselfFieldBins;//required for configurational force
-  
-  /// kPoint cartesian coordinates 
+
+  /// kPoint cartesian coordinates
   std::vector<double> d_kPointCoordinates;
 
   /// k point crystal coordinates
@@ -482,7 +500,7 @@ class dftClass
 
   /// current k point index during the ground state solve
   int d_kPointIndex;
-  
+
   /** Recomputes the k point cartesian coordinates from the crystal k point coordinates
    * and the current lattice vectors, which can change in each ground state solve when
    * isCellOpt is true
@@ -491,7 +509,7 @@ class dftClass
 
   /// integralRhoOut to store number of electrons
   double integralRhoValue;
-  
+
   /// fermi energy
   double fermiEnergy;
 
@@ -502,7 +520,7 @@ class dftClass
   std::vector<double> bLow;
   vectorType vChebyshev, v0Chebyshev, fChebyshev;
 
-  
+
   void chebyshevSolver(const unsigned int s);
   void computeResidualNorm(std::vector<vectorType>& X);
   std::vector<std::vector<double> > d_tempResidualNormWaveFunctions;
@@ -512,13 +530,13 @@ class dftClass
 
   void gramSchmidt(std::vector<vectorType>& X);
 
-  void chebyshevFilter(std::vector<vectorType>& X, 
-		       const unsigned int m, 
-		       const double a, 
-		       const double b, 
-		       const double a0);  
+  void chebyshevFilter(std::vector<vectorType>& X,
+		       const unsigned int m,
+		       const double a,
+		       const double b,
+		       const double a0);
 
-  void rayleighRitz(const unsigned int spinType, 
+  void rayleighRitz(const unsigned int spinType,
 		    std::vector<vectorType>& X);
 
   void scale(const vectorType & diagonal,

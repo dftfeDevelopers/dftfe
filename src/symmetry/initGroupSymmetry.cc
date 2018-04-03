@@ -29,13 +29,13 @@
 //constructor
 //
 template<unsigned int FEOrder>
-symmetryClass<FEOrder>::symmetryClass(dftClass<FEOrder>* _dftPtr, MPI_Comm &mpi_comm_replica, MPI_Comm &interpoolcomm):
+symmetryClass<FEOrder>::symmetryClass(dftClass<FEOrder>* _dftPtr, MPI_Comm &mpi_comm_replica, MPI_Comm &_interpoolcomm):
   dftPtr(_dftPtr),
-  FE (QGaussLobatto<1>(C_num1DQuad<FEOrder>())),
+  FE (QGaussLobatto<1>(FEOrder+1)),
   mpi_communicator (mpi_comm_replica),
-  interpoolcomm (interpoolcomm),
-  n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_communicator)),
-  this_mpi_process (Utilities::MPI::this_mpi_process(mpi_communicator)),
+  interpoolcomm (_interpoolcomm),
+  n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_comm_replica)),
+  this_mpi_process (Utilities::MPI::this_mpi_process(mpi_comm_replica)),
   pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
   computing_timer (pcout, TimerOutput::never, TimerOutput::wall_times)
 {
@@ -68,7 +68,7 @@ void symmetryClass<FEOrder>::initSymmetry()
 {
 //
   //dftPtr= new dftClass<FEOrder>(this);
-  QGauss<3>  quadrature(FEOrder+1);
+  QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
   FEValues<3> fe_values (dftPtr->FEEigen, quadrature, update_values | update_gradients| update_JxW_values | update_quadrature_points);
   const unsigned int num_quad_points = quadrature.size();
   Point<3> p, ptemp, p0 ;
@@ -116,7 +116,7 @@ void symmetryClass<FEOrder>::initSymmetry()
  //(dftPtr->dofHandlerEigen)_serial(triangulation_serial) ;
  //(dftPtr->dofHandlerEigen)_serial.distribute_dofs(FEEigen_serial);
  //FEValues<3> fe_values (FEEigen_serial, quadrature, update_values | update_gradients| update_JxW_values | update_quadrature_points);
- parallel::distributed::Triangulation<3> & triangulationSer = (dftPtr->d_mesh).getSerialMesh();
+ const parallel::distributed::Triangulation<3> & triangulationSer = (dftPtr->d_mesh).getSerialMeshUnmoved();
  typename parallel::distributed::Triangulation<3>::active_cell_iterator cellTemp = triangulationSer.begin_active(), endcTemp = triangulationSer.end();
   for (; cellTemp!=endcTemp; ++cellTemp)
     {

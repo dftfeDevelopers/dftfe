@@ -30,10 +30,10 @@ namespace meshMovementUtils{
 
   }
 
-    
+
   std::vector<double> getFractionalCoordinates(const std::vector<double> & latticeVectors,
 	                                       const Point<3> & point,                                                                                                                     const Point<3> & corner)
-  {   
+  {
       //
       // recenter vertex about corner
       //
@@ -62,55 +62,47 @@ namespace meshMovementUtils{
       }
       return recenteredPoint;
   }
-    
+
 }
 //
 //constructor
 //
-  meshMovementClass::meshMovementClass():
-  FEMoveMesh(FE_Q<3>(QGaussLobatto<1>(2)), 3), //linear shape function
-  mpi_communicator(MPI_COMM_WORLD),	
-  this_mpi_process (Utilities::MPI::this_mpi_process(mpi_communicator)),
-  pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_communicator) == 0))
-{
-
-}
 meshMovementClass::meshMovementClass(MPI_Comm &mpi_comm_replica):
   FEMoveMesh(FE_Q<3>(QGaussLobatto<1>(2)), 3), //linear shape function
-  mpi_communicator(mpi_comm_replica),	
-  this_mpi_process (Utilities::MPI::this_mpi_process(mpi_communicator)),
+  mpi_communicator(mpi_comm_replica),
+  this_mpi_process (Utilities::MPI::this_mpi_process(mpi_comm_replica)),
   pcout(std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
 {
 
 }
 
-void meshMovementClass::init(Triangulation<3,3> & triangulation, const std::vector<std::vector<double> > & domainBoundingVectors)
+void meshMovementClass::init(const Triangulation<3,3> & triangulation, const std::vector<std::vector<double> > & domainBoundingVectors)
 {
-  d_domainBoundingVectors=domainBoundingVectors;    
+  d_domainBoundingVectors=domainBoundingVectors;
   if (triangulation.locally_owned_subdomain()==numbers::invalid_subdomain_id)
      d_isParallelMesh=false;
   else
   {
      d_isParallelMesh=true;
   }
-    
+
   d_dofHandlerMoveMesh.clear();
   if (d_isParallelMesh)
-    d_dofHandlerMoveMesh.initialize(dynamic_cast< parallel::distributed::Triangulation<3> & >(triangulation),FEMoveMesh);
+    d_dofHandlerMoveMesh.initialize(dynamic_cast<const parallel::distributed::Triangulation<3> & >(triangulation),FEMoveMesh);
   else
     d_dofHandlerMoveMesh.initialize(triangulation,FEMoveMesh);
   d_dofHandlerMoveMesh.distribute_dofs(FEMoveMesh);
   d_locally_owned_dofs.clear();d_locally_relevant_dofs.clear();
   d_locally_owned_dofs = d_dofHandlerMoveMesh.locally_owned_dofs();
-  DoFTools::extract_locally_relevant_dofs(d_dofHandlerMoveMesh, d_locally_relevant_dofs);  
+  DoFTools::extract_locally_relevant_dofs(d_dofHandlerMoveMesh, d_locally_relevant_dofs);
 
   d_constraintsHangingNodes.clear(); d_constraintsHangingNodes.reinit(d_locally_relevant_dofs);
   DoFTools::make_hanging_node_constraints(d_dofHandlerMoveMesh, d_constraintsHangingNodes);
   d_constraintsHangingNodes.close();
 
   d_constraintsMoveMesh.clear();  d_constraintsMoveMesh.reinit(d_locally_relevant_dofs);
-  DoFTools::make_hanging_node_constraints(d_dofHandlerMoveMesh, d_constraintsMoveMesh); 
-  d_periodicity_vector.clear(); 
+  DoFTools::make_hanging_node_constraints(d_dofHandlerMoveMesh, d_constraintsMoveMesh);
+  d_periodicity_vector.clear();
 #ifdef ENABLE_PERIODIC_BC
   //create unitVectorsXYZ
   std::vector<std::vector<double> > unitVectorsXYZ;
@@ -132,14 +124,14 @@ void meshMovementClass::init(Triangulation<3,3> & triangulation, const std::vect
 	{
 	  offsetVectors[i][j] = unitVectorsXYZ[i][j] - domainBoundingVectors[i][j];
 	}
-    }  
+    }
 
   const std::array<int,3> periodic = {dftParameters::periodicX, dftParameters::periodicY, dftParameters::periodicZ};
   for (int i = 0; i < std::accumulate(periodic.begin(),periodic.end(),0); ++i)
    {
       GridTools::collect_periodic_faces(d_dofHandlerMoveMesh, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, d_periodicity_vector,offsetVectors[i]);
     }
-  
+
   DoFTools::make_periodicity_constraints<DoFHandler<C_DIM> >(d_periodicity_vector, d_constraintsMoveMesh);
   d_constraintsMoveMesh.close();
 #else
@@ -167,17 +159,17 @@ void meshMovementClass::writeMesh(std::string meshFileName)
       data_out.write_vtu (output);
     }
 
-  
+
   /*DataOut<3> data_out;
   data_out.attach_dof_handler(d_dofHandlerMoveMesh);
   data_out.build_patches ();
   data_out.write_vtu_in_parallel(std::string("mesh.vtu").c_str(),mpi_communicator);*/
 
 }
- 
+
 void meshMovementClass::initIncrementField()
 {
-  //dftPtr->matrix_free_data.initialize_dof_vector(d_incrementalDisplacement,d_forceDofHandlerIndex);	
+  //dftPtr->matrix_free_data.initialize_dof_vector(d_incrementalDisplacement,d_forceDofHandlerIndex);
   IndexSet  ghost_indices=d_locally_relevant_dofs;
   ghost_indices.subtract_set(d_locally_owned_dofs);
 
@@ -191,8 +183,8 @@ void meshMovementClass::initIncrementField()
      d_incrementalDisplacementParallel=dealii::parallel::distributed::Vector<double>(d_locally_owned_dofs,
 									             ghost_indices,
                                                                                      mpi_communicator);
-     d_incrementalDisplacementParallel=0;  
-  }	
+     d_incrementalDisplacementParallel=0;
+  }
 }
 
 
@@ -200,7 +192,7 @@ void meshMovementClass::finalizeIncrementField()
 {
   if (d_isParallelMesh)
   {
-    //d_incrementalDisplacement.compress(VectorOperation::insert);//inserts current value at owned node and sets ghosts to zero	
+    //d_incrementalDisplacement.compress(VectorOperation::insert);//inserts current value at owned node and sets ghosts to zero
     //d_incrementalDisplacementParallel.update_ghost_values();
     d_constraintsMoveMesh.distribute(d_incrementalDisplacementParallel);//distribute to constrained degrees of freedom (periodic and hanging nodes)
     d_incrementalDisplacementParallel.update_ghost_values();
@@ -219,7 +211,7 @@ void meshMovementClass::updateTriangulationVertices()
     pcout << "Start moving triangulation..." << std::endl;
   std::vector<bool> vertex_moved(d_dofHandlerMoveMesh.get_triangulation().n_vertices(),
                                  false);
-  
+
   // Next move vertices on locally owned cells
   DoFHandler<3>::active_cell_iterator   cell = d_dofHandlerMoveMesh.begin_active();
   DoFHandler<3>::active_cell_iterator   endc = d_dofHandlerMoveMesh.end();
@@ -231,7 +223,7 @@ void meshMovementClass::updateTriangulationVertices()
 	     const unsigned global_vertex_no = cell->vertex_index(vertex_no);
 
 	     if (vertex_moved[global_vertex_no])
-	       continue;	    
+	       continue;
 
 	     Point<C_DIM> vertexDisplacement;
 	     for (unsigned int d=0; d<C_DIM; ++d){
@@ -239,7 +231,7 @@ void meshMovementClass::updateTriangulationVertices()
 	     	vertexDisplacement[d]=d_isParallelMesh?d_incrementalDisplacementParallel[globalDofIndex]:
                                                    d_incrementalDisplacementSerial[globalDofIndex];
 	     }
-			
+
 	     cell->vertex(vertex_no) += vertexDisplacement;
 	     vertex_moved[global_vertex_no] = true;
 	  }
@@ -254,7 +246,7 @@ void meshMovementClass::updateTriangulationVertices()
 std::pair<bool,double> meshMovementClass::movedMeshCheck()
 {
   //sanity check to make sure periodic boundary conditions are maintained
-  MPI_Barrier(mpi_communicator); 
+  MPI_Barrier(mpi_communicator);
 #ifdef ENABLE_PERIODIC_BC
   //create unitVectorsXYZ
   std::vector<std::vector<double> > unitVectorsXYZ;
@@ -276,24 +268,24 @@ std::pair<bool,double> meshMovementClass::movedMeshCheck()
 	{
 	  offsetVectors[i][j] = unitVectorsXYZ[i][j] - d_domainBoundingVectors[i][j];
 	}
-    }   
+    }
   if (dftParameters::verbosity==2)
-    pcout << "Sanity check for periodic matched faces on moved triangulation..." << std::endl;  
-  for(unsigned int i=0; i< d_periodicity_vector.size(); ++i) 
+    pcout << "Sanity check for periodic matched faces on moved triangulation..." << std::endl;
+  for(unsigned int i=0; i< d_periodicity_vector.size(); ++i)
   {
     if (!d_periodicity_vector[i].cell[0]->active() || !d_periodicity_vector[i].cell[1]->active())
-       continue;      
+       continue;
     if (d_periodicity_vector[i].cell[0]->is_artificial() || d_periodicity_vector[i].cell[1]->is_artificial())
        continue;
 
-    std::vector<bool> isPeriodicFace(3);	  
+    std::vector<bool> isPeriodicFace(3);
     for(unsigned int idim=0; idim<3; ++idim){
         isPeriodicFace[idim]=GridTools::orthogonal_equality(d_periodicity_vector[i].cell[0]->face(d_periodicity_vector[i].face_idx[0]),d_periodicity_vector[i].cell[1]->face(d_periodicity_vector[i].face_idx[1]),idim,offsetVectors[idim]);
     }
-	      
-    AssertThrow(isPeriodicFace[0]==true || isPeriodicFace[1]==true || isPeriodicFace[2]==true,ExcMessage("Previously periodic matched face pairs not matching periodically for any directions after mesh movement"));			    
+
+    AssertThrow(isPeriodicFace[0]==true || isPeriodicFace[1]==true || isPeriodicFace[2]==true,ExcMessage("Previously periodic matched face pairs not matching periodically for any directions after mesh movement"));
   }
-  MPI_Barrier(mpi_communicator); 
+  MPI_Barrier(mpi_communicator);
   if (dftParameters::verbosity==2)
     pcout << "...Sanity check passed" << std::endl;
 #endif
@@ -309,18 +301,18 @@ std::pair<bool,double> meshMovementClass::movedMeshCheck()
     }
   }
   minElemLength=Utilities::MPI::min(minElemLength, mpi_communicator);
-  
+
   if (dftParameters::verbosity==2)
     pcout<< "Mesh movement quality metric, h_min: "<<minElemLength<<std::endl;
 
   std::pair<bool,double> meshQualityMetrics;
   QGauss<3>  quadrature(2);
   FEValues<3> fe_values (FEMoveMesh, quadrature,update_JxW_values);
-  const unsigned int   num_quad_points    = quadrature.size();  
+  const unsigned int   num_quad_points    = quadrature.size();
   cell = d_dofHandlerMoveMesh.get_triangulation().begin_active();
   int isNegativeJacobianDeterminant=0;
   double maxJacobianRatio=1;
-  for (; cell!=endc; ++cell) 
+  for (; cell!=endc; ++cell)
   {
       if (cell->is_locally_owned())
 	{
@@ -329,7 +321,7 @@ std::pair<bool,double> meshMovementClass::movedMeshCheck()
 	   double maxJacobian=-1e+6;
 	   double minJacobian=1e+6;
 	   for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
-           {	    
+           {
 	      double jw=fe_values.JxW (q_point);
 	      double j=jw/quadrature.weight(q_point);
 
@@ -380,7 +372,7 @@ void meshMovementClass::findClosestVerticesToDestinationPoints(const std::vector
       latticeVectorsMagnitudes[idim]=std::sqrt(latticeVectorsMagnitudes[idim]);
   }
 
-  std::vector<bool> isPeriodic(3,false); 
+  std::vector<bool> isPeriodic(3,false);
   isPeriodic[0]=dftParameters::periodicX;isPeriodic[1]=dftParameters::periodicY;isPeriodic[2]=dftParameters::periodicZ;
 
   for (unsigned int idest=0;idest <destinationPoints.size(); idest++){
@@ -390,7 +382,7 @@ void meshMovementClass::findClosestVerticesToDestinationPoints(const std::vector
       std::vector<double> destFracCoords= meshMovementUtils::getFractionalCoordinates(latticeVectorsFlattened,
 	                                                                              destinationPoints[idest],
 										      corner);
-      //std::cout<< "destFracCoords: "<< destFracCoords[0] << "," <<destFracCoords[1] <<"," <<destFracCoords[2]<<std::endl; 
+      //std::cout<< "destFracCoords: "<< destFracCoords[0] << "," <<destFracCoords[1] <<"," <<destFracCoords[2]<<std::endl;
       for (unsigned int idim=0; idim<3; idim++)
       {
         if ((std::fabs(destFracCoords[idim]-0.0) <1e-5/latticeVectorsMagnitudes[idim]
@@ -399,22 +391,22 @@ void meshMovementClass::findClosestVerticesToDestinationPoints(const std::vector
                isDestPointOnPeriodicSurface[idim]=true;
       }
 
-      //pcout<<"idest: "<<idest<< "destFracCoords: "<< destFracCoords[0] << "," <<destFracCoords[1] <<"," <<destFracCoords[2]<<" isDestPeriodicSurface: "<<isDestPointOnPeriodicSurface[0]<<isDestPointOnPeriodicSurface[1]<<isDestPointOnPeriodicSurface[2]<<std::endl; 
+      //pcout<<"idest: "<<idest<< "destFracCoords: "<< destFracCoords[0] << "," <<destFracCoords[1] <<"," <<destFracCoords[2]<<" isDestPeriodicSurface: "<<isDestPointOnPeriodicSurface[0]<<isDestPointOnPeriodicSurface[1]<<isDestPointOnPeriodicSurface[2]<<std::endl;
       double minDistance=1e+6;
       Point<3> closestTriaVertexLocation;
 
       std::vector<bool> vertex_touched(d_dofHandlerMoveMesh.get_triangulation().n_vertices(),
-                                       false);      
+                                       false);
       DoFHandler<3>::active_cell_iterator
       cell = d_dofHandlerMoveMesh.begin_active(),
-      endc = d_dofHandlerMoveMesh.end();      
+      endc = d_dofHandlerMoveMesh.end();
       for (; cell!=endc; ++cell) {
        if (cell->is_locally_owned()){
         for (unsigned int i=0; i<vertices_per_cell; ++i){
             const unsigned global_vertex_no = cell->vertex_index(i);
 
 	   if (vertex_touched[global_vertex_no])
-	       continue;		   
+	       continue;
            vertex_touched[global_vertex_no]=true;
 
 	   if(d_constraintsHangingNodes.is_constrained(cell->vertex_dof_index(i,0))
@@ -427,8 +419,8 @@ void meshMovementClass::findClosestVerticesToDestinationPoints(const std::vector
 
 	    bool isNodeConsidered=true;
 
-	    if (isDestPointOnPeriodicSurface[0] 
-		|| isDestPointOnPeriodicSurface[1] 
+	    if (isDestPointOnPeriodicSurface[0]
+		|| isDestPointOnPeriodicSurface[1]
 		|| isDestPointOnPeriodicSurface[2])
 	    {
 
@@ -440,7 +432,7 @@ void meshMovementClass::findClosestVerticesToDestinationPoints(const std::vector
 		      || std::fabs(nodeFracCoords[idim]-1.0) <1e-5/latticeVectorsMagnitudes[idim])
 		      && isPeriodic[idim]==true)
 			isNodeOnPeriodicSurface[idim]=true;
-		}	  
+		}
 		isNodeConsidered=false;
 		//std::cout<< "nodeFracCoords: "<< nodeFracCoords[0] << "," <<nodeFracCoords[1] <<"," <<nodeFracCoords[2]<<std::endl;
 		if ( (isDestPointOnPeriodicSurface[0]==isNodeOnPeriodicSurface[0])
@@ -464,7 +456,7 @@ void meshMovementClass::findClosestVerticesToDestinationPoints(const std::vector
        }
       }
       const double globalMinDistance=Utilities::MPI::min(minDistance, mpi_communicator);
-        
+
       //std::cout << "minDistance: "<< minDistance << "globalMinDistance: "<<globalMinDistance << " closest vertex location: "<< closestTriaVertexLocation <<std::endl;
 
       int minProcIdWithGlobalMinDistance=1e+6;
@@ -482,8 +474,8 @@ void meshMovementClass::findClosestVerticesToDestinationPoints(const std::vector
 	  closestTriaVertexLocation[0]=0.0;
 	  closestTriaVertexLocation[1]=0.0;
 	  closestTriaVertexLocation[2]=0.0;
-      }      
- 
+      }
+
       Point<3> closestTriaVertexLocationGlobal;
       // accumulate value
       MPI_Allreduce(&(closestTriaVertexLocation[0]),
@@ -497,7 +489,7 @@ void meshMovementClass::findClosestVerticesToDestinationPoints(const std::vector
 	        3,
 	        MPI_DOUBLE,
 	        0,
-	        MPI_COMM_WORLD);         
+	        MPI_COMM_WORLD);
 
       //floating point error correction
       //if ((closestTriaVertexLocationGlobal-closestTriaVertexLocation).norm()<1e-5)
@@ -508,5 +500,5 @@ void meshMovementClass::findClosestVerticesToDestinationPoints(const std::vector
       Tensor<1,3,double> temp=destinationPoints[idest]-closestTriaVertexLocationGlobal;
       dispClosestTriaVerticesToDestPoints.push_back(temp);
   }
-}	
+}
 

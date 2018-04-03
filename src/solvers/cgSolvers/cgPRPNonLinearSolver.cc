@@ -34,8 +34,8 @@
     d_lineSearchDampingParameter(lineSearchDampingParameter),
     nonLinearSolver(debugLevel,maxNumberIterations,tolerance),    
     mpi_communicator (mpi_comm_replica),
-    n_mpi_processes (dealii::Utilities::MPI::n_mpi_processes(mpi_communicator)),
-    this_mpi_process (dealii::Utilities::MPI::this_mpi_process(mpi_communicator)),
+    n_mpi_processes (dealii::Utilities::MPI::n_mpi_processes(mpi_comm_replica)),
+    this_mpi_process (dealii::Utilities::MPI::this_mpi_process(mpi_comm_replica)),
     pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))    
   {
   }

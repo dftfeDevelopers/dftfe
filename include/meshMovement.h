@@ -27,10 +27,9 @@ class meshMovementClass
 {
 
 public:
-  meshMovementClass( MPI_Comm &mpi_comm_replica);
-  meshMovementClass();
+  meshMovementClass(MPI_Comm &mpi_comm_replica);
   virtual ~meshMovementClass() {}
-  void init(Triangulation<3,3> & triangulation, const std::vector<std::vector<double> > & domainBoundingVectors);
+  void init(const Triangulation<3,3> & triangulation, const std::vector<std::vector<double> > & domainBoundingVectors);
   void initMoved(const std::vector<std::vector<double> > & domainBoundingVectors);
   void findClosestVerticesToDestinationPoints(const std::vector<Point<3>> & destinationPoints,
 		                              std::vector<Point<3>> & closestTriaVertexToDestPointsLocation,
@@ -45,7 +44,7 @@ protected:
   virtual std::pair<bool,double> moveMesh(const std::vector<Point<C_DIM> > & controlPointLocations,
                                           const std::vector<Tensor<1,C_DIM,double> > & controlPointDisplacements,
                                           double controllingParameter)=0;
-  virtual void computeIncrement()=0;  
+  virtual void computeIncrement()=0;
   dealii::parallel::distributed::Vector<double>  d_incrementalDisplacementParallel;
   Vector<double> d_incrementalDisplacementSerial;
   bool d_isParallelMesh;
@@ -63,7 +62,7 @@ protected:
   //parallel objects
   MPI_Comm mpi_communicator;
   const unsigned int this_mpi_process;
-  dealii::ConditionalOStream   pcout;  
+  dealii::ConditionalOStream   pcout;
 };
 
 #endif

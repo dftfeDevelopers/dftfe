@@ -23,7 +23,7 @@ template<unsigned int FEOrder>
 void dftClass<FEOrder>::compute_rhoOut()
 {
   QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
-  FEValues<3> fe_values (FEEigen, quadrature, update_values | update_gradients| update_JxW_values | update_quadrature_points);
+  FEValues<3> fe_values (FEEigen, quadrature, update_values | update_gradients);
   const unsigned int num_quad_points = quadrature.size();
    
   //create new rhoValue tables
