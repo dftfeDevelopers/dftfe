@@ -87,7 +87,7 @@ void dftClass<FEOrder>::initRho()
 
   //Initialize rho
   QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
-  FEValues<3> fe_values (FE, quadrature_formula, update_values | update_quadrature_points);
+  FEValues<3> fe_values (FE, quadrature_formula, update_quadrature_points);
   const unsigned int n_q_points    = quadrature_formula.size();
 
   //Initialize electron density table storage
