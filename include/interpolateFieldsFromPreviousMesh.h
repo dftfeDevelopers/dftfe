@@ -68,7 +68,9 @@ namespace vectorTools
      * the same number of components.
      * @param fieldsPreviousMesh parallel distributed fields on previous mesh to be interpolated from
      * @param fieldsCurrentMesh  parallel distributed fields on current mesh to be interpolated upon
-     * @param constraintsCurrentPtr  pointer to ConstraintMatrix object of current mesh
+     * @param constraintsCurrentPtr  pointer to ConstraintMatrix object of current mesh. Default value
+     * is NULL in which case the distribute operation doesn't happen inside interpolate. We have this
+     * function so that outside interpolate function we can use the inhouse distribute function.
      */
       void interpolate(const dealii::parallel::distributed::Triangulation<3> & triangulationSerPrev,
 		   const dealii::parallel::distributed::Triangulation<3> & triangulationParPrev,
