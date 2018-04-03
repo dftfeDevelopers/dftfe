@@ -65,7 +65,7 @@ namespace dftParameters
 
 	prm.declare_entry("RESTART FROM CHK", "false",
 			   Patterns::Bool(),
-			   "Boolean parameter specifying if the current job reads from the last checkpoint of CHECKPOINT TYPE. Is always false for CHK TYPE 0.");
+			   "Boolean parameter specifying if the current job reads from the last checkpoint of CHK TYPE. Is always false for CHK TYPE 0.");
     }
     prm.leave_subsection ();
 
