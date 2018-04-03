@@ -94,14 +94,6 @@ dftClass<FEOrder>::dftClass(MPI_Comm &mpi_comm_replica, MPI_Comm &interpoolcomm)
 #ifdef ENABLE_PERIODIC_BC
   geoOptCellPtr= new geoOptCell<FEOrder>(this, mpi_comm_replica);
 #endif
-  //
-  // initialize PETSc
-  //
-  PetscErrorCode petscError = SlepcInitialize(NULL,
-					      NULL,
-					      NULL,
-					      NULL);
-
 }
 
 template<unsigned int FEOrder>
