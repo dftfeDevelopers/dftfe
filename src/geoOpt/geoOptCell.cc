@@ -37,7 +37,7 @@ void geoOptCell<FEOrder>::writeMesh(std::string meshFileName)
 //constructor
 //
 template<unsigned int FEOrder>
-geoOptCell<FEOrder>::geoOptCell(dftClass<FEOrder>* _dftPtr, MPI_Comm &mpi_comm_replica):
+geoOptCell<FEOrder>::geoOptCell(dftClass<FEOrder>* _dftPtr,const MPI_Comm &mpi_comm_replica):
   dftPtr(_dftPtr),
   mpi_communicator (mpi_comm_replica),
   n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_comm_replica)),

@@ -24,7 +24,7 @@
 //constructor
 //
 template<unsigned int FEOrder>
-poissonClass<FEOrder>::poissonClass(dftClass<FEOrder>* _dftPtr, MPI_Comm &mpi_comm_replica):
+poissonClass<FEOrder>::poissonClass(dftClass<FEOrder>* _dftPtr,const MPI_Comm &mpi_comm_replica):
   dftPtr(_dftPtr),
   FE (QGaussLobatto<1>(FEOrder+1)),
   mpi_communicator (mpi_comm_replica),

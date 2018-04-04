@@ -39,7 +39,7 @@ class eigenClass
   friend class symmetryClass;
 
 public:
-  eigenClass(dftClass<FEOrder>* _dftPtr, MPI_Comm &mpi_comm_replica);
+  eigenClass(dftClass<FEOrder>* _dftPtr,const MPI_Comm &mpi_comm_replica);
   void HX(std::vector<vectorType> &src, 
 	  std::vector<vectorType> &dst);
 
@@ -102,7 +102,7 @@ public:
   dealii::Table<3, dealii::VectorizedArray<double> > derExcWithSigmaTimesGradRho;
 
   //parallel objects
-  MPI_Comm mpi_communicator;
+  const MPI_Comm mpi_communicator;
   const unsigned int n_mpi_processes;
   const unsigned int this_mpi_process;
   dealii::ConditionalOStream   pcout;

@@ -67,7 +67,7 @@ namespace meshMovementUtils{
 //
 //constructor
 //
-meshMovementClass::meshMovementClass(MPI_Comm &mpi_comm_replica):
+meshMovementClass::meshMovementClass(const MPI_Comm &mpi_comm_replica):
   FEMoveMesh(FE_Q<3>(QGaussLobatto<1>(2)), 3), //linear shape function
   mpi_communicator(mpi_comm_replica),
   this_mpi_process (Utilities::MPI::this_mpi_process(mpi_comm_replica)),

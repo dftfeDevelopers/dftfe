@@ -118,7 +118,7 @@ class dftClass
   /**
    * dftClass constructor
    */
-  dftClass(MPI_Comm &mpi_comm_replica, MPI_Comm &interpoolcomm);
+  dftClass(const MPI_Comm &mpi_comm_replica,const MPI_Comm &_interpoolcomm);
   /**
    * dftClass destructor
    */
@@ -177,7 +177,6 @@ class dftClass
   void clearRhoData();
 
   void generateMPGrid();
-  void writeMesh(std::string meshFileName);
   void generateImageCharges();
   void determineOrbitalFilling();
 
@@ -352,7 +351,7 @@ class dftClass
   /**
    * parallel objects
    */
-  MPI_Comm   mpi_communicator, interpoolcomm;
+  const MPI_Comm   mpi_communicator, interpoolcomm;
   const unsigned int n_mpi_processes;
   const unsigned int this_mpi_process;
   IndexSet   locally_owned_dofs, locally_owned_dofsEigen;

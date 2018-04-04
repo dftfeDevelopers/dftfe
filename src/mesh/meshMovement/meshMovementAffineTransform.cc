@@ -20,7 +20,7 @@
 #include <dftUtils.h>
 #include <dftParameters.h>
 
-meshMovementAffineTransform::meshMovementAffineTransform( MPI_Comm &mpi_comm_replica):
+meshMovementAffineTransform::meshMovementAffineTransform(const MPI_Comm &mpi_comm_replica):
  meshMovementClass(mpi_comm_replica)
 {
 }
