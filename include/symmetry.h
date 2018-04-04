@@ -23,7 +23,7 @@
 #include "dft.h"
 
 #include <iostream>
-#include <iomanip> 
+#include <iomanip>
 #include <numeric>
 #include <sstream>
 #include <complex>
@@ -44,7 +44,7 @@ class symmetryClass
   /**
    * symmetryClass constructor
    */
-  symmetryClass(dftClass<FEOrder>* _dftPtr,const  MPI_Comm &mpi_comm_replica,const MPI_Comm &interpoolcomm);
+  symmetryClass(dftClass<FEOrder>* _dftPtr,const  MPI_Comm &mpi_comm_replica,const MPI_Comm &_interpoolcomm);
 
 
   /**
@@ -52,7 +52,7 @@ class symmetryClass
    */
   //~symmetryClass();
 
- 
+
 
   void test_spg_get_ir_reciprocal_mesh();
   void initSymmetry();
@@ -60,8 +60,8 @@ class symmetryClass
   void computeLocalrhoOut();
   void clearMaps();
   Point<3> crys2cart(Point<3> p, int i);
-  
-  
+
+
  private:
   dftClass<FEOrder>* dftPtr;
    //FE data structres
@@ -104,10 +104,10 @@ class symmetryClass
   std::vector<std::vector<unsigned int>> index_list_x, index_list_y, index_list_z ;
   //
   unsigned int bisectionSearch(std::vector<double> &arr, double x) ;
-  unsigned int sort_vertex (const DoFHandler<3> &mesh)  ;        
-  unsigned int find_cell (Point<3> p) ;  
+  unsigned int sort_vertex (const DoFHandler<3> &mesh)  ;
+  unsigned int find_cell (Point<3> p) ;
   //
-  std::pair<typename DoFHandler<3>::active_cell_iterator, Point<3> > 
+  std::pair<typename DoFHandler<3>::active_cell_iterator, Point<3> >
   find_active_cell_around_point_custom (const Mapping<3>  &mapping,
                                  const DoFHandler<3> &mesh,
                                  const Point<3>        &p) ;
@@ -116,7 +116,7 @@ class symmetryClass
   std::vector< Point<3> > vertices ;
   //
   std::vector<int> mpi_offsets0, mpi_offsets1, mpiGrad_offsets1 ;
-  std::vector<int> recvdData0, recvdData2, recvdData3;  
+  std::vector<int> recvdData0, recvdData2, recvdData3;
   std::vector<std::vector<double>> recvdData1;
   std::vector<int> recv_size0, recv_size1, recvGrad_size1;
 
