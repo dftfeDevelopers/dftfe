@@ -436,11 +436,7 @@ namespace dftfe {
 
       /// conditional stream object to enable printing only on root processor across all pools
       dealii::ConditionalOStream   pcout;
-
-      /// compute-time logger
-      dealii::TimerOutput computing_timer;
-
-    };
+};
 
 }
 #endif

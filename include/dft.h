@@ -134,7 +134,7 @@ namespace dftfe {
       /**
        * Does required pre-processing steps including mesh generation calls.
        */
-      void init(const bool usePreviousGroundStateRho=false);
+      void init(const bool usePreviousGroundStateFields=false);
       /**
        * Does required pre-processing steps but without remeshing.
        */
@@ -168,10 +168,14 @@ namespace dftfe {
       void computeGroundStateRhoNodalField();
 
       /**
-       * project ground state electron density from previous mesh into
-       * the new mesh to be used as initial guess for the new ground state solve
+       * Set rho initial guess from PSI.
        */
-      void projectPreviousGroundStateRho();
+      void computeRhoInitialGuessFromPSI();
+
+      /**
+       * clear all exisitng electron density data structures.
+       */
+      void clearRhoData();
 
       void generateMPGrid();
       void generateImageCharges();
@@ -193,7 +197,7 @@ namespace dftfe {
        */
       void initUnmovedTriangulation(const parallel::distributed::Triangulation<3> & triangulation);
       void initBoundaryConditions();
-      void initElectronicFields(bool usePreviousGroundStateRho=false);
+      void initElectronicFields(bool usePreviousGroundStateFields=false);
       void initPseudoPotentialAll();
       void locateAtomCoreNodes();
       void locatePeriodicPinnedNodes();

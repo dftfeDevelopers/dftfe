@@ -71,19 +71,3 @@ void dftClass<FEOrder>::computeGroundStateRhoNodalField()
 
   d_rhoNodalFieldGroundState.update_ghost_values();
 }
-
-
-template <unsigned int FEOrder>
-void dftClass<FEOrder>::projectPreviousGroundStateRho()
-{
-  computeGroundStateRhoNodalField();
-
-  vectorType rhoNodalFieldInitialGuess;
-  matrix_free_data.initialize_dof_vector(rhoNodalFieldInitialGuess);
-
-  DoFHandler<3> dofHandlerUnmovedPrevious(d_mesh.getParallelMeshUnmovedPrevious());
-  dofHandlerUnmovedPrevious.distribute_dofs(FE);
-
-  DoFHandler<3> dofHandlerUnmovedCurrent(d_mesh.getParallelMeshUnmoved());
-  dofHandlerUnmovedCurrent.distribute_dofs(FE);
-}
