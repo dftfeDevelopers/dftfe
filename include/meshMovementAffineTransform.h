@@ -32,7 +32,7 @@ public:
    *
    *  @param mpi_comm_replica mpi communicator in the current pool
    */    
-  meshMovementAffineTransform( MPI_Comm &mpi_comm_replica);
+  meshMovementAffineTransform(const MPI_Comm &mpi_comm_replica);
 
   /** @brief Performs affine transformation of the triangulation
    * 

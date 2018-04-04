@@ -26,7 +26,7 @@
 //constructor
 //
 template<unsigned int FEOrder>
-eigenClass<FEOrder>::eigenClass(dftClass<FEOrder>* _dftPtr, MPI_Comm &mpi_comm_replica):
+eigenClass<FEOrder>::eigenClass(dftClass<FEOrder>* _dftPtr,const MPI_Comm &mpi_comm_replica):
   dftPtr(_dftPtr),
   FE (QGaussLobatto<1>(FEOrder+1)),
   mpi_communicator (mpi_comm_replica),

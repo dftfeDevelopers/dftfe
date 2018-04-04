@@ -31,7 +31,7 @@ public:
    *
    *  @param mpi_comm_replica mpi communicator in the current pool
    */     
-  meshMovementGaussianClass( MPI_Comm &mpi_comm_replica);
+  meshMovementGaussianClass(const MPI_Comm &mpi_comm_replica);
 
   /** @brief Moves the triangulation corresponding to Gaussians attached to control points
    * 

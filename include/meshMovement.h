@@ -27,7 +27,7 @@ class meshMovementClass
 {
 
 public:
-  meshMovementClass( MPI_Comm &mpi_comm_replica);
+  meshMovementClass(const MPI_Comm &mpi_comm_replica);
   meshMovementClass();
   virtual ~meshMovementClass() {}
   void init(const Triangulation<3,3> & triangulation, const std::vector<std::vector<double> > & domainBoundingVectors);

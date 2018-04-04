@@ -29,7 +29,7 @@
 //constructor
 //
 template<unsigned int FEOrder>
-symmetryClass<FEOrder>::symmetryClass(dftClass<FEOrder>* _dftPtr, MPI_Comm &mpi_comm_replica, MPI_Comm &interpoolcomm):
+symmetryClass<FEOrder>::symmetryClass(dftClass<FEOrder>* _dftPtr,const MPI_Comm &mpi_comm_replica,const MPI_Comm &interpoolcomm):
   dftPtr(_dftPtr),
   FE (QGaussLobatto<1>(FEOrder+1)),
   mpi_communicator (mpi_comm_replica),
