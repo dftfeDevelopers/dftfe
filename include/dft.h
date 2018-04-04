@@ -543,7 +543,5 @@ namespace dftfe {
 		 const unsigned int spinType);
 
     };
-
 }
-
 #endif
