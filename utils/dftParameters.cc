@@ -20,6 +20,8 @@
 #include <fstream>
 #include <deal.II/base/data_out_base.h>
 
+namespace dftfe {
+
 using namespace dealii;
 
 namespace dftParameters
@@ -406,5 +408,7 @@ namespace dftParameters
     }
     prm.leave_subsection ();
   }
+
+}
 
 }

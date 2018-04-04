@@ -21,49 +21,51 @@
 #include "headers.h"
 #include "constants.h"
 
-using namespace dealii;
+namespace dftfe {
 
-class meshMovementClass
-{
+    using namespace dealii;
 
-public:
-  meshMovementClass(const MPI_Comm &mpi_comm_replica);
-  meshMovementClass();
-  virtual ~meshMovementClass() {}
-  void init(const Triangulation<3,3> & triangulation, const std::vector<std::vector<double> > & domainBoundingVectors);
-  void initMoved(const std::vector<std::vector<double> > & domainBoundingVectors);
-  void findClosestVerticesToDestinationPoints(const std::vector<Point<3>> & destinationPoints,
-		                              std::vector<Point<3>> & closestTriaVertexToDestPointsLocation,
-                                              std::vector<Tensor<1,3,double>> & dispClosestTriaVerticesToDestPoints);
-  void writeMesh(std::string meshFileName);
-protected:
-  void initIncrementField();
-  void finalizeIncrementField();
-  void updateTriangulationVertices();
-  //periodic matching sanity check and returns the pair<if negative jacobian, maximum inverse jacobian magnitude>
-  std::pair<bool,double> movedMeshCheck();
-  virtual std::pair<bool,double> moveMesh(const std::vector<Point<C_DIM> > & controlPointLocations,
-                                          const std::vector<Tensor<1,C_DIM,double> > & controlPointDisplacements,
-                                          double controllingParameter)=0;
-  virtual void computeIncrement()=0;
-  dealii::parallel::distributed::Vector<double>  d_incrementalDisplacementParallel;
-  Vector<double> d_incrementalDisplacementSerial;
-  bool d_isParallelMesh;
+    class meshMovementClass
+    {
 
-  //dealii based FE data structres
-  FESystem<C_DIM>  FEMoveMesh;
-  DoFHandler<C_DIM> d_dofHandlerMoveMesh;
-  IndexSet   d_locally_owned_dofs;
-  IndexSet   d_locally_relevant_dofs;
-  ConstraintMatrix d_constraintsMoveMesh;
-  ConstraintMatrix d_constraintsHangingNodes;
-  std::vector<GridTools::PeriodicFacePair<typename DoFHandler<C_DIM>::cell_iterator> > d_periodicity_vector;
-  std::vector<std::vector<double> >  d_domainBoundingVectors;
+    public:
+      meshMovementClass(const MPI_Comm &mpi_comm_replica);
+      meshMovementClass();
+      virtual ~meshMovementClass() {}
+      void init(const Triangulation<3,3> & triangulation, const std::vector<std::vector<double> > & domainBoundingVectors);
+      void initMoved(const std::vector<std::vector<double> > & domainBoundingVectors);
+      void findClosestVerticesToDestinationPoints(const std::vector<Point<3>> & destinationPoints,
+						  std::vector<Point<3>> & closestTriaVertexToDestPointsLocation,
+						  std::vector<Tensor<1,3,double>> & dispClosestTriaVerticesToDestPoints);
+      void writeMesh(std::string meshFileName);
+    protected:
+      void initIncrementField();
+      void finalizeIncrementField();
+      void updateTriangulationVertices();
+      //periodic matching sanity check and returns the pair<if negative jacobian, maximum inverse jacobian magnitude>
+      std::pair<bool,double> movedMeshCheck();
+      virtual std::pair<bool,double> moveMesh(const std::vector<Point<C_DIM> > & controlPointLocations,
+					      const std::vector<Tensor<1,C_DIM,double> > & controlPointDisplacements,
+					      double controllingParameter)=0;
+      virtual void computeIncrement()=0;
+      dealii::parallel::distributed::Vector<double>  d_incrementalDisplacementParallel;
+      Vector<double> d_incrementalDisplacementSerial;
+      bool d_isParallelMesh;
 
-  //parallel objects
-  MPI_Comm mpi_communicator;
-  const unsigned int this_mpi_process;
-  dealii::ConditionalOStream   pcout;
-};
+      //dealii based FE data structres
+      FESystem<C_DIM>  FEMoveMesh;
+      DoFHandler<C_DIM> d_dofHandlerMoveMesh;
+      IndexSet   d_locally_owned_dofs;
+      IndexSet   d_locally_relevant_dofs;
+      ConstraintMatrix d_constraintsMoveMesh;
+      ConstraintMatrix d_constraintsHangingNodes;
+      std::vector<GridTools::PeriodicFacePair<typename DoFHandler<C_DIM>::cell_iterator> > d_periodicity_vector;
+      std::vector<std::vector<double> >  d_domainBoundingVectors;
 
+      //parallel objects
+      MPI_Comm mpi_communicator;
+      const unsigned int this_mpi_process;
+      dealii::ConditionalOStream   pcout;
+    };
+}
 #endif

@@ -20,6 +20,8 @@
 #include <fstream>
 #include <dftParameters.h>
 
+namespace dftfe {
+
 namespace dftUtils
 {
   double getPartialOccupancy(const double eigenValue,const double fermiEnergy,const double kb,const double T)
@@ -126,5 +128,7 @@ namespace dftUtils
   {
     return intrapoolcomm;
   }
+
+}
 
 }

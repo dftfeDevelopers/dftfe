@@ -21,96 +21,98 @@
 #include "headers.h"
 #include "constants.h"
 
+namespace dftfe {
 
-using namespace dealii;
-typedef dealii::parallel::distributed::Vector<double> vectorType;
-template <unsigned int T> class dftClass;
+    using namespace dealii;
+    typedef dealii::parallel::distributed::Vector<double> vectorType;
+    template <unsigned int T> class dftClass;
 
-//
-//Define eigenClass class
-//
-template <unsigned int FEOrder>
-class eigenClass
-{
-  template <unsigned int T>
-  friend class dftClass;
+    //
+    //Define eigenClass class
+    //
+    template <unsigned int FEOrder>
+    class eigenClass
+    {
+      template <unsigned int T>
+      friend class dftClass;
 
-  template <unsigned int T>
-  friend class symmetryClass;
+      template <unsigned int T>
+      friend class symmetryClass;
 
-public:
-  eigenClass(dftClass<FEOrder>* _dftPtr,const MPI_Comm &mpi_comm_replica);
-  void HX(std::vector<vectorType> &src, 
-	  std::vector<vectorType> &dst);
+    public:
+      eigenClass(dftClass<FEOrder>* _dftPtr,const MPI_Comm &mpi_comm_replica);
+      void HX(std::vector<vectorType> &src,
+	      std::vector<vectorType> &dst);
 
-  void XHX(std::vector<vectorType> &src); 
- private:
-  void implementHX(const dealii::MatrixFree<3,double>  &data,
-		   std::vector<vectorType>  &dst, 
-		   const std::vector<vectorType>  &src,
-		   const std::pair<unsigned int,unsigned int> &cell_range) const;
+      void XHX(std::vector<vectorType> &src);
+     private:
+      void implementHX(const dealii::MatrixFree<3,double>  &data,
+		       std::vector<vectorType>  &dst,
+		       const std::vector<vectorType>  &src,
+		       const std::pair<unsigned int,unsigned int> &cell_range) const;
 
-  void computeNonLocalHamiltonianTimesX(const std::vector<vectorType> &src,
-					std::vector<vectorType>       &dst);
- 
-  void computeNonLocalHamiltonianTimesXMemoryOpt(const std::vector<vectorType> &src,
-					         std::vector<vectorType>       &dst);  
+      void computeNonLocalHamiltonianTimesX(const std::vector<vectorType> &src,
+					    std::vector<vectorType>       &dst);
 
-  void init ();
-  void computeMassVector();
-  void computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoValues, 
-		   const vectorType & phi,
-		   const vectorType & phiExt,
-		   const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
-  void computeVEffSpinPolarized(std::map<dealii::CellId,std::vector<double> >* rhoValues, 
-		   const vectorType & phi,
-		   const vectorType & phiExt,
-		   unsigned int j,
-		   const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
+      void computeNonLocalHamiltonianTimesXMemoryOpt(const std::vector<vectorType> &src,
+						     std::vector<vectorType>       &dst);
 
-  void computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoValues,
-		   std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
-		   const vectorType & phi,
-		   const vectorType & phiExt,
-		   const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
+      void init ();
+      void computeMassVector();
+      void computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoValues,
+		       const vectorType & phi,
+		       const vectorType & phiExt,
+		       const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
+      void computeVEffSpinPolarized(std::map<dealii::CellId,std::vector<double> >* rhoValues,
+		       const vectorType & phi,
+		       const vectorType & phiExt,
+		       unsigned int j,
+		       const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
 
-  void computeVEffSpinPolarized(std::map<dealii::CellId,std::vector<double> >* rhoValues, 
-		   std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
-		   const vectorType & phi,
-		   const vectorType & phiExt,
-		   unsigned int j,
-		   const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
+      void computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoValues,
+		       std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
+		       const vectorType & phi,
+		       const vectorType & phiExt,
+		       const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
 
-
-  
-  //pointer to dft class
-  dftClass<FEOrder>* dftPtr;
+      void computeVEffSpinPolarized(std::map<dealii::CellId,std::vector<double> >* rhoValues,
+		       std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
+		       const vectorType & phi,
+		       const vectorType & phiExt,
+		       unsigned int j,
+		       const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
 
 
-  //FE data structres
-  dealii::FE_Q<3>   FE;
- 
-  //data structures
-  vectorType invSqrtMassVector,sqrtMassVector;
+
+      //pointer to dft class
+      dftClass<FEOrder>* dftPtr;
+
+
+      //FE data structres
+      dealii::FE_Q<3>   FE;
+
+      //data structures
+      vectorType invSqrtMassVector,sqrtMassVector;
 #ifdef ENABLE_PERIODIC_BC
-  std::vector<std::complex<double> > XHXValue;
+      std::vector<std::complex<double> > XHXValue;
 #else
-  std::vector<double> XHXValue;
+      std::vector<double> XHXValue;
 #endif
 
-  dealii::Table<2, dealii::VectorizedArray<double> > vEff;
-  dealii::Table<3, dealii::VectorizedArray<double> > derExcWithSigmaTimesGradRho;
+      dealii::Table<2, dealii::VectorizedArray<double> > vEff;
+      dealii::Table<3, dealii::VectorizedArray<double> > derExcWithSigmaTimesGradRho;
 
-  //parallel objects
-  const MPI_Comm mpi_communicator;
-  const unsigned int n_mpi_processes;
-  const unsigned int this_mpi_process;
-  dealii::ConditionalOStream   pcout;
+      //parallel objects
+      const MPI_Comm mpi_communicator;
+      const unsigned int n_mpi_processes;
+      const unsigned int this_mpi_process;
+      dealii::ConditionalOStream   pcout;
 
-  //compute-time logger
-  dealii::TimerOutput computing_timer;
-  //mutex thread for managing multi-thread writing to XHXvalue
-  mutable dealii::Threads::Mutex  assembler_lock;
-};
+      //compute-time logger
+      dealii::TimerOutput computing_timer;
+      //mutex thread for managing multi-thread writing to XHXvalue
+      mutable dealii::Threads::Mutex  assembler_lock;
+    };
 
+}
 #endif

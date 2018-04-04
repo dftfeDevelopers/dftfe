@@ -16,91 +16,93 @@
 // @author Sambit Das (2018)
 //
 
-#ifndef dft_solverFunction_H_
-#define dft_solverFunction_H_
+#ifndef solverFunction_H_
+#define solverFunction_H_
 #include "headers.h"
 
-/**
-* @brief Abstract class for solver functions.
-*/
-class solverFunction {
-
-    public:
-
+namespace dftfe {
     /**
-     * @brief Constructor.
-     */
-    solverFunction();
-    solverFunction( MPI_Comm &mpi_comm_replica);
+    * @brief Abstract class for solver functions.
+    */
+    class solverFunction {
 
-    /**
-     * @brief Destructor.
-     */
-    virtual ~solverFunction() = 0;
+	public:
 
-    /**
-     * @brief Obtain number of unknowns.
-     *
-     * @return Number of unknowns.
-     */
-    virtual int getNumberUnknowns() const = 0;
+	/**
+	 * @brief Constructor.
+	 */
+	solverFunction();
+	solverFunction( MPI_Comm &mpi_comm_replica);
 
-    /**
-     * @brief Compute function value (aka energy).
-     *
-     *
-     * @return Function value.
-     */
-    virtual double value() const = 0;
-    virtual void value(std::vector<double> & functionValue) = 0;
+	/**
+	 * @brief Destructor.
+	 */
+	virtual ~solverFunction() = 0;
+
+	/**
+	 * @brief Obtain number of unknowns.
+	 *
+	 * @return Number of unknowns.
+	 */
+	virtual int getNumberUnknowns() const = 0;
+
+	/**
+	 * @brief Compute function value (aka energy).
+	 *
+	 *
+	 * @return Function value.
+	 */
+	virtual double value() const = 0;
+	virtual void value(std::vector<double> & functionValue) = 0;
 
 
-    /**
-     * @brief Compute function gradient (aka forces).
-     *
-     * @param gradient STL vector for gradient values.
-     */
-    virtual void gradient(std::vector<double> & gradient) = 0;
+	/**
+	 * @brief Compute function gradient (aka forces).
+	 *
+	 * @param gradient STL vector for gradient values.
+	 */
+	virtual void gradient(std::vector<double> & gradient) = 0;
 
-    /**
-     * @brief Apply preconditioner to function gradient.
-     *
-     * @param s STL vector for s=-M^{-1} gradient.
-     * @param gradient STL vector for gradient values.
-     */
-    virtual void precondition(std::vector<double>       & s,
-			      const std::vector<double> & gradient) const = 0;
+	/**
+	 * @brief Apply preconditioner to function gradient.
+	 *
+	 * @param s STL vector for s=-M^{-1} gradient.
+	 * @param gradient STL vector for gradient values.
+	 */
+	virtual void precondition(std::vector<double>       & s,
+				  const std::vector<double> & gradient) const = 0;
 
-    /**
-     * @brief Update solution.
-     *
-     * @param solution Updated solution.
-     */
-    virtual void update(const std::vector<double> & solution) = 0;
+	/**
+	 * @brief Update solution.
+	 *
+	 * @param solution Updated solution.
+	 */
+	virtual void update(const std::vector<double> & solution) = 0;
 
-    /**
-     * @brief Obtain current solution.
-     *
-     * @param solution Space for current solution.
-     */
-    virtual void solution(std::vector<double> & solution) = 0;
+	/**
+	 * @brief Obtain current solution.
+	 *
+	 * @param solution Space for current solution.
+	 */
+	virtual void solution(std::vector<double> & solution) = 0;
 
-    /**
-     * @brief For each unknown indicate whether that unknown should
-     * be accumulated. This functionality is needed in the case of
-     * parallel execution when domain decomposition is
-     * employed. Unknowns residing on processor boundary should only
-     * be accumulated once when dot products of vertex fields are
-     * computed (e.g. residual). 
-     * 
-     * @return A vector of int values for each unknown. Value of 1
-     * indicates that the unknown should be counted and 0 otherwise.
-     */
-    virtual std::vector<int> 
-    getUnknownCountFlag() const = 0;
+	/**
+	 * @brief For each unknown indicate whether that unknown should
+	 * be accumulated. This functionality is needed in the case of
+	 * parallel execution when domain decomposition is
+	 * employed. Unknowns residing on processor boundary should only
+	 * be accumulated once when dot products of vertex fields are
+	 * computed (e.g. residual).
+	 *
+	 * @return A vector of int values for each unknown. Value of 1
+	 * indicates that the unknown should be counted and 0 otherwise.
+	 */
+	virtual std::vector<int>
+	getUnknownCountFlag() const = 0;
 
-    virtual void writeMesh(std::string meshFileName)=0; 
+	virtual void writeMesh(std::string meshFileName)=0;
 
-};
+    };
 
-#endif // dft_solverFunction_H_
+}
+#endif // solverFunction_H_

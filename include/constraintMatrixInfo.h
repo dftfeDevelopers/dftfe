@@ -23,6 +23,7 @@
 
 #include "headers.h"
 
+namespace dftfe {
 //
 //Declare dftUtils functions
 //
@@ -38,7 +39,7 @@ namespace dftUtils
   {
 
   public:
-    
+
     /**
      * class constructor
      */
@@ -64,7 +65,7 @@ namespace dftUtils
      * clear data members
      */
     void clear();
-    
+
 
   private:
 
@@ -80,4 +81,5 @@ namespace dftUtils
 
 };
 
+}
 #endif

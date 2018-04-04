@@ -19,6 +19,7 @@
 #include <meshMovement.h>
 #include <dftParameters.h>
 
+namespace dftfe {
 namespace meshMovementUtils{
 
   extern "C"{
@@ -509,4 +510,4 @@ void meshMovementClass::findClosestVerticesToDestinationPoints(const std::vector
       dispClosestTriaVerticesToDestPoints.push_back(temp);
   }
 }
-
+}

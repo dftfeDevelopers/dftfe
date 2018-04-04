@@ -18,6 +18,7 @@
 #include <cgPRPNonLinearSolver.h>
 #include <solverFunction.h>
 
+namespace dftfe {
 
   //
   // Constructor.
@@ -32,11 +33,11 @@
     d_lineSearchTolerance(lineSearchTolerance),
     d_lineSearchMaxIterations(lineSearchMaxIterations),
     d_lineSearchDampingParameter(lineSearchDampingParameter),
-    nonLinearSolver(debugLevel,maxNumberIterations,tolerance),    
+    nonLinearSolver(debugLevel,maxNumberIterations,tolerance),
     mpi_communicator (mpi_comm_replica),
     n_mpi_processes (dealii::Utilities::MPI::n_mpi_processes(mpi_communicator)),
     this_mpi_process (dealii::Utilities::MPI::this_mpi_process(mpi_communicator)),
-    pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))    
+    pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
   {
   }
 
@@ -64,7 +65,7 @@
     // initialize delta new
     //
     d_deltaNew = 0.0;
-	
+
     //
     // iterate over unknowns
     //
@@ -125,7 +126,7 @@
   cgPRPNonLinearSolver::computeEta()
   {
 
-      
+
     //
     // initialize eta
     //
@@ -240,7 +241,7 @@
 
     //
     // take square root
-    // 
+    //
     norm = std::sqrt(norm);
 
     //
@@ -296,7 +297,7 @@
 
 
     std::vector<double> incrementVector;
-    
+
     //
     // get the size of solution
     //
@@ -306,7 +307,7 @@
 
     for (std::vector<double>::size_type i = 0; i < solutionSize; ++i)
       incrementVector[i] = alpha*direction[i];
-    
+
     //
     // call solver function update
     //
@@ -333,7 +334,7 @@
     //
     const double toleranceSqr = tolerance*tolerance;
 
- 
+
     //
     // set the initial value of alpha
     //
@@ -347,13 +348,13 @@
     //
     // compute delta_d and eta_p
     //
-    std::pair<double, double> deltaDReturnValue = 
+    std::pair<double, double> deltaDReturnValue =
                  computeDeltaD();
     double deltaD = deltaDReturnValue.first;
     double etaP   = deltaDReturnValue.second;
     double alphaP=0;
     if (debugLevel >= 1)
-       std::cout << "Initial guess for secant line search iteration, alpha: " << alpha << std::endl;    
+       std::cout << "Initial guess for secant line search iteration, alpha: " << alpha << std::endl;
     //
     // update unknowns removing earlier update
     //
@@ -383,21 +384,21 @@
 		1,
 		MPI_INT,
 		0,
-		MPI_COMM_WORLD); 
-      if (isSuccess==1)	  
-	return SUCCESS;      
+		MPI_COMM_WORLD);
+      if (isSuccess==1)
+	return SUCCESS;
       //
       // update alpha
       //
       double alphaNew=(alphaP*eta-alpha*etaP)/(eta-etaP);
 
-      
+
 
       //
-      // output 
+      // output
       //
       if (debugLevel >= 1)
-	std::cout << "Line search iteration: " << iter << " alphaNew: " << alphaNew << " alpha: "<<alpha<< " alphaP: "<<alphaP <<"  eta: "<< eta << " etaP: "<<etaP << std::endl;      
+	std::cout << "Line search iteration: " << iter << " alphaNew: " << alphaNew << " alpha: "<<alpha<< " alphaP: "<<alphaP <<"  eta: "<< eta << " etaP: "<<etaP << std::endl;
       //
       // update unknowns
       //
@@ -477,11 +478,11 @@
     // initialize delta new and direction
     //
     initializeDirection();
-      
+
     //
     // check for convergence
     //
-    unsigned int isSuccess=0;    
+    unsigned int isSuccess=0;
     if ( d_deltaNew < toleranceSqr*totalnumberUnknowns)
         isSuccess=1;
 
@@ -489,10 +490,10 @@
 	       1,
 	       MPI_INT,
 	       0,
-	       MPI_COMM_WORLD); 
-    if (isSuccess==1)	  
-       return SUCCESS;  
-   
+	       MPI_COMM_WORLD);
+    if (isSuccess==1)
+       return SUCCESS;
+
 
 
     for (d_iter = 0; d_iter < d_maxNumberIterations; ++d_iter) {
@@ -510,37 +511,37 @@
 
 
       if (d_debugLevel >= 1)
-      std::cout << "Iteration no. | delta new | residual norm " 
+      std::cout << "Iteration no. | delta new | residual norm "
 	"| residual norm avg" << std::endl;
 
       //
       // output at the begining of the iteration
       //
-      if (d_debugLevel >= 1) 
-	  pcout << d_iter << " " 
-		    << d_deltaNew << " " 
-		    << residualNorm << " " 
+      if (d_debugLevel >= 1)
+	  pcout << d_iter << " "
+		    << d_deltaNew << " "
+		    << residualNorm << " "
 		    << residualNorm/totalnumberUnknowns << " "
 		    << std::endl;
-	
+
       //
       // perform line search along direction
       //
-      ReturnValueType lineSearchReturnValue = 
+      ReturnValueType lineSearchReturnValue =
 	                   lineSearch(function,
 				      d_lineSearchTolerance,
 				      d_lineSearchMaxIterations,
 				      d_debugLevel);
-				
+
       //write mesh
       std::string meshFileName="mesh_geo";
       meshFileName+=std::to_string(d_iter);
-      //function.writeMesh(meshFileName);      
+      //function.writeMesh(meshFileName);
       //
       // evaluate gradient
       //
       function.gradient(d_gradient);
-	
+
       //
       // apply preconditioner
       //
@@ -572,15 +573,15 @@
 	  pcout<<" Negative d_beta- setting it to zero "<<std::endl;
 	  isBetaZero=1;
 	  //d_beta=0;
-	  //return RESTART;	  
+	  //return RESTART;
       }
       MPI_Bcast(&(isBetaZero),
 		   1,
 		   MPI_INT,
 		   0,
-		   MPI_COMM_WORLD); 
-      if (isBetaZero==1)	  
-	  d_beta=0; 
+		   MPI_COMM_WORLD);
+      if (isBetaZero==1)
+	  d_beta=0;
       //
       // update direction
       //
@@ -596,33 +597,33 @@
 		   1,
 		   MPI_INT,
 		   0,
-		   MPI_COMM_WORLD); 
-      if (isBreak==1)	  
-	  break; 
+		   MPI_COMM_WORLD);
+      if (isBreak==1)
+	  break;
     }
 
     //
     // set error condition
     //
     ReturnValueType returnValue = SUCCESS;
-      
-    if(d_iter == d_maxNumberIterations) 
+
+    if(d_iter == d_maxNumberIterations)
       returnValue = MAX_ITER_REACHED;
 
     //
     // compute function value
     //
     //functionValue = function.value();
-      
+
     //
     // final output
     //
     if (d_debugLevel >= 1)
     {
-    
+
       if (returnValue == SUCCESS)
       {
-        pcout << "Conjugate Gradient converged after " 
+        pcout << "Conjugate Gradient converged after "
 		<< d_iter << " iterations." << std::endl;
       } else
       {
@@ -632,7 +633,7 @@
 
       //std::cout << "Final function value: " << functionValue
       //	  << std::endl;
-    
+
     }
 
     //
@@ -641,3 +642,5 @@
     return returnValue;
 
   }
+
+}

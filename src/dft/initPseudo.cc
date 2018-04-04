@@ -16,9 +16,6 @@
 // @author Shiva Rudraraju (2016), Phani Motamarri (2016), Sambit Das (2018)
 //
 
-#include "pseudoUtils.cc"
-
-
 //
 //Initialize rho by reading in single-atom electron-density and fit a spline
 //
