@@ -22,11 +22,11 @@
 #include "constants.h"
 
 namespace dftfe {
-
     using namespace dealii;
 
     class meshMovementClass
     {
+
     public:
       meshMovementClass(const MPI_Comm &mpi_comm_replica);
       virtual ~meshMovementClass() {}
@@ -49,6 +49,21 @@ namespace dftfe {
       dealii::parallel::distributed::Vector<double>  d_incrementalDisplacementParallel;
       Vector<double> d_incrementalDisplacementSerial;
       bool d_isParallelMesh;
+
+      //dealii based FE data structres
+      FESystem<C_DIM>  FEMoveMesh;
+      DoFHandler<C_DIM> d_dofHandlerMoveMesh;
+      IndexSet   d_locally_owned_dofs;
+      IndexSet   d_locally_relevant_dofs;
+      ConstraintMatrix d_constraintsMoveMesh;
+      ConstraintMatrix d_constraintsHangingNodes;
+      std::vector<GridTools::PeriodicFacePair<typename DoFHandler<C_DIM>::cell_iterator> > d_periodicity_vector;
+      std::vector<std::vector<double> >  d_domainBoundingVectors;
+
+      //parallel objects
+      MPI_Comm mpi_communicator;
+      const unsigned int this_mpi_process;
+      dealii::ConditionalOStream   pcout;
     };
 }
 #endif
