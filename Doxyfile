@@ -2036,7 +2036,7 @@ SKIP_FUNCTION_MACROS   = YES
 
 #TAGFILES = deal.tag 
 
-TAGFILES  = deal.tag=http://www.dealii.org/8.5.0/doxygen/deal.tag 
+#TAGFILES  = deal.tag=http://www.dealii.org/8.5.0/doxygen/deal.tag 
 
 # When a file name is specified after GENERATE_TAGFILE, doxygen will create a
 # tag file that is based on the input files it reads. See section "Linking to
