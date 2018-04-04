@@ -18,7 +18,7 @@
 #define dftUtils_H_
 
 #include <mpi.h>
-#include <deal.II/base/data_out_base.h>
+#include <headers.h>
 
 namespace dftUtils
 {
@@ -36,11 +36,23 @@ namespace dftUtils
   /** @brief Applies an affine transformation to the domain bounding vectors
    *
    *  @param  d_domainBoundingVectors the bounding vectors of the domain given as a 2d array
-   *  @param  deformationGradient 
+   *  @param  deformationGradient
    *  @return void.
    */
    void transformDomainBoundingVectors(std::vector<std::vector<double> > & domainBoundingVectors,
-	                               const dealii::Tensor<2,3,double> & deformationGradient);  
+	                               const dealii::Tensor<2,3,double> & deformationGradient);
+
+  /** @brief Writes to vtu file only from the lowest pool id
+   *
+   *  @param  dataOut  DataOut class object
+   *  @param  intralpoolcomm mpi communicator of domain decomposition inside each pool
+   *  @param  interpoolcomm  mpi communicator across pools
+   *  @param  fileName
+   */
+   void writeDataVTUParallelLowestPoolId(const dealii::DataOut<3> & dataOut,
+	                                 const MPI_Comm & intrapoolcomm,
+				         const MPI_Comm & interpoolcomm,
+	                                 const std::string & fileName);
 
   /**
    * A class to split the given communicator into a number of pools
