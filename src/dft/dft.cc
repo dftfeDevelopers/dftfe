@@ -66,7 +66,7 @@
 //dft constructor
 //
 template<unsigned int FEOrder>
-dftClass<FEOrder>::dftClass(MPI_Comm &mpi_comm_replica, MPI_Comm &interpoolcomm):
+dftClass<FEOrder>::dftClass(const MPI_Comm &mpi_comm_replica,const MPI_Comm &_interpoolcomm):
   FE (FE_Q<3>(QGaussLobatto<1>(FEOrder+1)), 1),
 #ifdef ENABLE_PERIODIC_BC
   FEEigen (FE_Q<3>(QGaussLobatto<1>(FEOrder+1)), 2),
@@ -74,14 +74,14 @@ dftClass<FEOrder>::dftClass(MPI_Comm &mpi_comm_replica, MPI_Comm &interpoolcomm)
   FEEigen (FE_Q<3>(QGaussLobatto<1>(FEOrder+1)), 1),
 #endif
   mpi_communicator (mpi_comm_replica),
-  interpoolcomm (interpoolcomm),
+  interpoolcomm (_interpoolcomm),
   n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_comm_replica)),
   this_mpi_process (Utilities::MPI::this_mpi_process(mpi_comm_replica)),
   numElectrons(0),
   numLevels(0),
   d_maxkPoints(1),
   integralRhoValue(0),
-  d_mesh(mpi_comm_replica,interpoolcomm),
+  d_mesh(mpi_comm_replica,_interpoolcomm),
   d_affineTransformMesh(mpi_comm_replica),
   pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
   computing_timer (pcout, TimerOutput::summary, TimerOutput::wall_times)
@@ -89,7 +89,7 @@ dftClass<FEOrder>::dftClass(MPI_Comm &mpi_comm_replica, MPI_Comm &interpoolcomm)
   poissonPtr= new poissonClass<FEOrder>(this, mpi_comm_replica);
   eigenPtr= new eigenClass<FEOrder>(this, mpi_comm_replica);
   forcePtr= new forceClass<FEOrder>(this, mpi_comm_replica);
-  symmetryPtr= new symmetryClass<FEOrder>(this, mpi_comm_replica, interpoolcomm);
+  symmetryPtr= new symmetryClass<FEOrder>(this, mpi_comm_replica, _interpoolcomm);
   geoOptIonPtr= new geoOptIon<FEOrder>(this, mpi_comm_replica);
 #ifdef ENABLE_PERIODIC_BC
   geoOptCellPtr= new geoOptCell<FEOrder>(this, mpi_comm_replica);
@@ -722,9 +722,6 @@ void dftClass<FEOrder>::solve()
 template <unsigned int FEOrder>
 void dftClass<FEOrder>::output()
 {
-  //
-  //only generate wave function output for serial runs
-  //
   DataOut<3> data_outEigen;
   data_outEigen.attach_dof_handler (dofHandlerEigen);
   for(unsigned int i=0; i<eigenVectors[0].size(); ++i)
@@ -735,12 +732,12 @@ void dftClass<FEOrder>::output()
   data_outEigen.build_patches (C_num1DQuad<FEOrder>());
 
   std::ofstream output ("eigen.vtu");
-  //data_outEigen.write_vtu (output);
-  //Doesn't work with mvapich2_ib mpi libraries
-  data_outEigen.write_vtu_in_parallel(std::string("eigen.vtu").c_str(),mpi_communicator);
-
+  dftUtils::writeDataVTUParallelLowestPoolId(data_outEigen,
+	                                     mpi_communicator,
+					     interpoolcomm,
+					     std::string("eigen"));
   //
-  //write the electron-density
+  //compute nodal electron-density from quad data
   //
   computeGroundStateRhoNodalField();
 
@@ -752,20 +749,11 @@ void dftClass<FEOrder>::output()
   char buffer[100]; sprintf(buffer,"rhoField");
   dataOutRho.add_data_vector(d_rhoNodalFieldGroundState, buffer);
   dataOutRho.build_patches(C_num1DQuad<FEOrder>());
-  //data_outEigen.write_vtu (output);
-  //Doesn't work with mvapich2_ib mpi libraries
-  dataOutRho.write_vtu_in_parallel(std::string("rhoField.vtu").c_str(),mpi_communicator);
+  dftUtils::writeDataVTUParallelLowestPoolId(dataOutRho,
+	                                     mpi_communicator,
+					     interpoolcomm,
+					     std::string("rhoField"));
 
-}
-
-template <unsigned int FEOrder>
-void dftClass<FEOrder>::writeMesh(std::string meshFileName)
-{
-  DataOut<3> data_out;
-  data_out.attach_dof_handler(dofHandler);
-  data_out.build_patches ();
-  meshFileName+=".vtu";
-  data_out.write_vtu_in_parallel(meshFileName.c_str(),mpi_communicator);
 }
 
 template class dftClass<1>;

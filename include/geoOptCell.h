@@ -42,7 +42,7 @@ public:
  *  @param _dftPtr pointer to dftClass
  *  @param mpi_comm_replica mpi_communicator of the current pool
  */ 
-  geoOptCell(dftClass<FEOrder>* _dftPtr,  MPI_Comm &mpi_comm_replica);
+  geoOptCell(dftClass<FEOrder>* _dftPtr,const  MPI_Comm &mpi_comm_replica);
 
 /**
  * @brief initializes the data member d_relaxationFlags.
@@ -119,7 +119,7 @@ private:
   dftClass<FEOrder>* dftPtr;
 
   /// parallel communication objects
-  MPI_Comm mpi_communicator;
+  const MPI_Comm mpi_communicator;
   const unsigned int n_mpi_processes;
   const unsigned int this_mpi_process;
 

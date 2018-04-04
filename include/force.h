@@ -46,7 +46,7 @@ public:
  *  @param _dftPtr pointer to dftClass
  *  @param mpi_comm_replica mpi_communicator of the current pool
  */
-  forceClass(dftClass<FEOrder>* _dftPtr,  MPI_Comm &mpi_comm_replica);
+  forceClass(dftClass<FEOrder>* _dftPtr,const  MPI_Comm &mpi_comm_replica);
 
 /** @brief initializes data structures inside forceClass assuming unmoved triangulation.
  *
@@ -422,7 +422,7 @@ private:
   std::vector<std::map<DoFHandler<C_DIM>::active_cell_iterator,std::vector<unsigned int > > > d_cellFacesVselfBallSurfacesDofHandlerForce;
 
   /// mpi_communicator in the current pool
-  MPI_Comm mpi_communicator;
+  const MPI_Comm mpi_communicator;
 
   /// number of mpi processes in the current pool
   const unsigned int n_mpi_processes;

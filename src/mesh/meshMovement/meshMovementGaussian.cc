@@ -19,7 +19,7 @@
 #include <meshMovementGaussian.h>
 #include <dftParameters.h>
 
-meshMovementGaussianClass::meshMovementGaussianClass( MPI_Comm &mpi_comm_replica):
+meshMovementGaussianClass::meshMovementGaussianClass(const MPI_Comm &mpi_comm_replica):
  meshMovementClass(mpi_comm_replica)
 {
 }
