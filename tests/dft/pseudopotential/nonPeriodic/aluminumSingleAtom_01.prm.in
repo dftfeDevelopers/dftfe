@@ -1,5 +1,5 @@
 set VERBOSITY = 0
-set Reproducible output = true
+set REPRODUCIBLE OUTPUT = true
 
 subsection Geometry
   set ATOMIC COORDINATES FILE = @SOURCE_DIR@/aluminumSingleAtom_coordinates.inp

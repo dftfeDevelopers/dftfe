@@ -49,7 +49,7 @@ namespace dftParameters
 
   void declare_parameters(ParameterHandler &prm)
   {
-    prm.declare_entry("Reproducible output", "false",
+    prm.declare_entry("REPRODUCIBLE OUTPUT", "false",
                       Patterns::Bool(),
                       "Limit output to that which is reprodicible, i.e. don't print "
 											"timing or absolute paths.");
@@ -310,7 +310,7 @@ namespace dftParameters
   void parse_parameters(ParameterHandler &prm)
   {
     dftParameters::verbosity                     = prm.get_integer("VERBOSITY");
-    dftParameters::reproducible_output           = prm.get_bool("Reproducible output");
+    dftParameters::reproducible_output           = prm.get_bool("REPRODUCIBLE OUTPUT");
 
     prm.enter_subsection ("Geometry");
     {
