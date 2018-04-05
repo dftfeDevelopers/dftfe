@@ -21,26 +21,28 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
-#include <string>  
+#include <string>
 #include <vector>
 
-//
-//Declare dftUtils functions
-//
-namespace dftUtils
-{
+namespace dftfe {
+    //
+    //Declare dftUtils functions
+    //
+    namespace dftUtils
+    {
 
-void readFile(unsigned int numColumns, 
-	      std::vector<std::vector<double> > &data, 
-	      std::string fileName);
+    void readFile(unsigned int numColumns,
+		  std::vector<std::vector<double> > &data,
+		  std::string fileName);
 
-int readPsiFile(unsigned int numColumns, 
-		 std::vector<std::vector<double> > &data, 
-		 std::string fileName);
+    int readPsiFile(unsigned int numColumns,
+		     std::vector<std::vector<double> > &data,
+		     std::string fileName);
 
-void readRelaxationFlagsFile(unsigned int numColumns, 
-		            std::vector<std::vector<int> > &data, 
-		            std::string fileName);
-};
+    void readRelaxationFlagsFile(unsigned int numColumns,
+				std::vector<std::vector<int> > &data,
+				std::string fileName);
+    };
 
+}
 #endif

@@ -25,7 +25,7 @@
 #include <dftParameters.h>
 #include "meshGenUtils.cc"
 
-
+namespace dftfe {
 //
 //constructor
 //
@@ -739,4 +739,6 @@ void meshGeneratorClass::refineSerialMesh(const unsigned int n_cell,
 	    cell->set_refine_flag();
 	}
     }
+}
+
 }

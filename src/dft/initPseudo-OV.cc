@@ -16,7 +16,6 @@
 // @author Krishnendu Ghosh(2017), adapted from initPseudo.cc
 //
 
-#include <boost/math/special_functions/spherical_harmonic.hpp>
 #include "stdafx.h"
 #include "linalg.h"
 #include "../../include/dftParameters.h"

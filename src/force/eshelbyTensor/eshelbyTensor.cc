@@ -18,6 +18,8 @@
 #include "../../../include/eshelbyTensor.h"
 #include "../../../include/dftUtils.h"
 
+namespace dftfe {
+
 namespace eshelbyTensor
 {
     Tensor<2,C_DIM,VectorizedArray<double> >  getPhiExtEshelbyTensor(const VectorizedArray<double> & phiExt,const Tensor<1,C_DIM,VectorizedArray<double> > & gradPhiExt)
@@ -60,7 +62,7 @@ namespace eshelbyTensor
        eshelbyTensor[0][0]+=identityTensorFactor;
        eshelbyTensor[1][1]+=identityTensorFactor;
        eshelbyTensor[2][2]+=identityTensorFactor;
-      
+
        return eshelbyTensor;
     }
 
@@ -79,14 +81,14 @@ namespace eshelbyTensor
        eshelbyTensor[0][0]+=identityTensorFactor;
        eshelbyTensor[1][1]+=identityTensorFactor;
        eshelbyTensor[2][2]+=identityTensorFactor;
-       return eshelbyTensor;   
+       return eshelbyTensor;
     }
 
     Tensor<2,C_DIM,VectorizedArray<double> >  getELocEshelbyTensorPeriodicKPoints
 									   (std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator psiBegin,
 									   std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > >::const_iterator gradPsiBegin,
 									   const std::vector<double> & kPointCoordinates,
-									   const std::vector<double> & kPointWeights,							
+									   const std::vector<double> & kPointWeights,
 									   const std::vector<std::vector<double> > & eigenValues_,
 									   const double fermiEnergy_,
 									   const double tVal)
@@ -95,10 +97,10 @@ namespace eshelbyTensor
        for (unsigned int idim=0; idim<C_DIM; idim++)
        {
 	 for (unsigned int jdim=0; jdim<C_DIM; jdim++)
-	 {       
+	 {
 	   eshelbyTensor[idim][jdim]=make_vectorized_array(0.0);
 	 }
-       }   
+       }
        VectorizedArray<double> identityTensorFactor=make_vectorized_array(0.0);
 
        std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator it1=psiBegin;
@@ -115,7 +117,7 @@ namespace eshelbyTensor
 	    const double partOcc =dftUtils::getPartialOccupancy(eigenValues_[ik][eigenIndex],
 								fermiEnergy_,
 								C_kb,
-								tVal);  
+								tVal);
 	    VectorizedArray<double> identityTensorFactorContribution=make_vectorized_array(0.0);
 	    VectorizedArray<double> fnk=make_vectorized_array(partOcc*kPointWeights[ik]);
 	    identityTensorFactorContribution+=(scalar_product(gradPsi[0],gradPsi[0])+scalar_product(gradPsi[1],gradPsi[1]));
@@ -152,7 +154,7 @@ namespace eshelbyTensor
        Tensor<2,C_DIM,VectorizedArray<double> > eshelbyTensor= make_vectorized_array(1.0/(4.0*M_PI))*outer_product(gradPhiTot,gradPhiTot)-outer_product(derExcGradRho,gradRho);
        VectorizedArray<double> identityTensorFactor=make_vectorized_array(-1.0/(8.0*M_PI))*scalar_product(gradPhiTot,gradPhiTot)+rho*phiTot+exc*rho + (pseudoVLoc-phiExt)*rho;
 
-       std::vector<VectorizedArray<double> >::const_iterator it1=psiBegin;   
+       std::vector<VectorizedArray<double> >::const_iterator it1=psiBegin;
        std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >::const_iterator it2=gradPsiBegin;
        for (unsigned int eigenIndex=0; eigenIndex < eigenValues_.size(); ++it1, ++it2, ++ eigenIndex){
 	  const VectorizedArray<double> & psi= *it1;
@@ -160,11 +162,11 @@ namespace eshelbyTensor
 	  const double partOcc =dftUtils::getPartialOccupancy(eigenValues_[eigenIndex],
 							      fermiEnergy_,
 							      C_kb,
-							      tVal);       
+							      tVal);
 	  identityTensorFactor+=make_vectorized_array(partOcc)*scalar_product(gradPsi,gradPsi)-make_vectorized_array(2*partOcc*eigenValues_[eigenIndex])*psi*psi;
 	  eshelbyTensor-=make_vectorized_array(2.0*partOcc)*outer_product(gradPsi,gradPsi);
        }
-       
+
        eshelbyTensor[0][0]+=identityTensorFactor;
        eshelbyTensor[1][1]+=identityTensorFactor;
        eshelbyTensor[2][2]+=identityTensorFactor;
@@ -182,34 +184,34 @@ namespace eshelbyTensor
 
        Tensor<2,C_DIM,VectorizedArray<double> > eshelbyTensor;
        VectorizedArray<double> identityTensorFactor=make_vectorized_array(0.0);
-       std::vector<VectorizedArray<double> >::const_iterator it1=psiBegin;   
+       std::vector<VectorizedArray<double> >::const_iterator it1=psiBegin;
        for (unsigned int eigenIndex=0; eigenIndex < eigenValues_.size(); ++it1, ++ eigenIndex)
        {
 	  const VectorizedArray<double> & psi= *it1;
 	  const double partOcc =dftUtils::getPartialOccupancy(eigenValues_[eigenIndex],
 							      fermiEnergy_,
 							      C_kb,
-							      tVal);       
+							      tVal);
 	  for (unsigned int iAtomNonLocal=0; iAtomNonLocal < ZetaDeltaV.size(); ++iAtomNonLocal)
 	  {
 	     const int numberPseudoWaveFunctions = ZetaDeltaV[iAtomNonLocal].size();
 	     for (unsigned int iPseudoWave=0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
-	     {	  
+	     {
 		 identityTensorFactor+=make_vectorized_array(4.0*partOcc*projectorKetTimesPsiTimesV[iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave])*psi*ZetaDeltaV[iAtomNonLocal][iPseudoWave];
 	     }
 	  }
-       }  
+       }
        eshelbyTensor[0][0]=identityTensorFactor;
        eshelbyTensor[1][1]=identityTensorFactor;
        eshelbyTensor[2][2]=identityTensorFactor;
-       
+
        return eshelbyTensor;
     }
 
     Tensor<2,C_DIM,VectorizedArray<double> >  getEnlEshelbyTensorPeriodic(const std::vector<std::vector<std::vector<Tensor<1,2,VectorizedArray<double> > > > > & ZetaDeltaV,
 									  const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiTimesV,
 									  std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator psiBegin,
-									  const std::vector<double> & kPointWeights,								      
+									  const std::vector<double> & kPointWeights,
 									  const std::vector<std::vector<double> > & eigenValues_,
 									  const double fermiEnergy_,
 									  const double tVal)
@@ -225,20 +227,20 @@ namespace eshelbyTensor
 	    const double partOcc =dftUtils::getPartialOccupancy(eigenValues_[ik][eigenIndex],
 							      fermiEnergy_,
 							      C_kb,
-							      tVal); 
+							      tVal);
 	    VectorizedArray<double> fnk=make_vectorized_array(partOcc*kPointWeights[ik]);
 	    for (unsigned int iAtomNonLocal=0; iAtomNonLocal < ZetaDeltaV.size(); ++iAtomNonLocal)
 	    {
 		 const int numberPseudoWaveFunctions = ZetaDeltaV[iAtomNonLocal].size();
 		 for (unsigned int iPseudoWave=0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
-		 {	  
+		 {
 		     VectorizedArray<double> CReal=make_vectorized_array(projectorKetTimesPsiTimesV[ik][iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave].real());
 		     VectorizedArray<double> CImag=make_vectorized_array(projectorKetTimesPsiTimesV[ik][iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave].imag());
 		     VectorizedArray<double> zdvR=ZetaDeltaV[iAtomNonLocal][iPseudoWave][ik][0];
 		     VectorizedArray<double> zdvI=ZetaDeltaV[iAtomNonLocal][iPseudoWave][ik][1];
 		     identityTensorFactor+=four*fnk*((psi[0]*zdvR+psi[1]*zdvI)*CReal-(psi[0]*zdvI-psi[1]*zdvR)*CImag);
 		 }
-	    }	
+	    }
 
 	 }
        }
@@ -247,7 +249,7 @@ namespace eshelbyTensor
        eshelbyTensor[1][1]+=identityTensorFactor;
        eshelbyTensor[2][2]+=identityTensorFactor;
        return eshelbyTensor;
-	
+
     }
 
     Tensor<1,C_DIM,VectorizedArray<double> >  getFnlNonPeriodic(const std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > & gradZetaDeltaV,
@@ -258,25 +260,25 @@ namespace eshelbyTensor
 								const double tVal)
     {
 
-       Tensor<1,C_DIM,VectorizedArray<double> > F; 
-       std::vector<VectorizedArray<double> >::const_iterator it1=psiBegin;   
+       Tensor<1,C_DIM,VectorizedArray<double> > F;
+       std::vector<VectorizedArray<double> >::const_iterator it1=psiBegin;
        for (unsigned int eigenIndex=0; eigenIndex < eigenValues_.size(); ++it1, ++ eigenIndex)
        {
 	  const VectorizedArray<double> & psi= *it1;
 	  const double partOcc =dftUtils::getPartialOccupancy(eigenValues_[eigenIndex],
 							      fermiEnergy_,
 							      C_kb,
-							      tVal);        
+							      tVal);
 	  for (unsigned int iAtomNonLocal=0; iAtomNonLocal < gradZetaDeltaV.size(); ++iAtomNonLocal)
 	  {
 	     const int numberPseudoWaveFunctions = gradZetaDeltaV[iAtomNonLocal].size();
 	     for (unsigned int iPseudoWave=0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
-	     {	
+	     {
 		 F+=make_vectorized_array(4.0*partOcc*projectorKetTimesPsiTimesV[iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave])*psi*gradZetaDeltaV[iAtomNonLocal][iPseudoWave];
 	     }
 	  }
-       }  
-       
+       }
+
        return F;
     }
 
@@ -292,7 +294,7 @@ namespace eshelbyTensor
     Tensor<1,C_DIM,VectorizedArray<double> >  getFnlPeriodic(const std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > & gradZetaDeltaV,
 							     const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiTimesV,
 							     std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiBegin,
-							     const std::vector<double> & kPointWeights,								      
+							     const std::vector<double> & kPointWeights,
 							     const std::vector<std::vector<double> > & eigenValues_,
 							     const double fermiEnergy_,
 							     const double tVal)
@@ -307,25 +309,25 @@ namespace eshelbyTensor
 	    const double partOcc =dftUtils::getPartialOccupancy(eigenValues_[ik][eigenIndex],
 							      fermiEnergy_,
 							      C_kb,
-							      tVal); 
+							      tVal);
 	    VectorizedArray<double> fnk=make_vectorized_array(partOcc*kPointWeights[ik]);
 	    for (unsigned int iAtomNonLocal=0; iAtomNonLocal < gradZetaDeltaV.size(); ++iAtomNonLocal)
 	    {
 		 const int numberPseudoWaveFunctions = gradZetaDeltaV[iAtomNonLocal].size();
 		 for (unsigned int iPseudoWave=0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
-		 {	  
+		 {
 		     VectorizedArray<double> CReal=make_vectorized_array(projectorKetTimesPsiTimesV[ik][iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave].real());
 		     VectorizedArray<double> CImag=make_vectorized_array(projectorKetTimesPsiTimesV[ik][iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave].imag());
 		     Tensor<1,C_DIM,VectorizedArray<double> >  zdvR=gradZetaDeltaV[iAtomNonLocal][iPseudoWave][ik][0];
 		     Tensor<1,C_DIM,VectorizedArray<double> >  zdvI=gradZetaDeltaV[iAtomNonLocal][iPseudoWave][ik][1];
 		     F+=four*fnk*((psi[0]*zdvR+psi[1]*zdvI)*CReal-(psi[0]*zdvI-psi[1]*zdvR)*CImag);
 		 }
-	    }	
+	    }
 
 	 }
        }
 
-       return F;    
+       return F;
     }
 
     Tensor<1,C_DIM,VectorizedArray<double> >  getNonSelfConsistentForce(const VectorizedArray<double> & vEffRhoIn,
@@ -336,7 +338,7 @@ namespace eshelbyTensor
 									const Tensor<2,C_DIM,VectorizedArray<double> > & hessianRhoOut
 									)
     {
-       return (vEffRhoOut-vEffRhoIn)*gradRhoOut+(derExchCorrEnergyWithGradRhoOut-derExchCorrEnergyWithGradRhoIn)*hessianRhoOut; 
+       return (vEffRhoOut-vEffRhoIn)*gradRhoOut+(derExchCorrEnergyWithGradRhoOut-derExchCorrEnergyWithGradRhoIn)*hessianRhoOut;
     }
 
 
@@ -352,10 +354,10 @@ namespace eshelbyTensor
        for (unsigned int idim=0; idim<C_DIM; idim++)
        {
 	 for (unsigned int jdim=0; jdim<C_DIM; jdim++)
-	 {       
+	 {
 	   eshelbyTensor[idim][jdim]=make_vectorized_array(0.0);
 	 }
-       }   
+       }
 
        std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator it1=psiBegin;
        std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > >::const_iterator it2=gradPsiBegin;
@@ -371,13 +373,13 @@ namespace eshelbyTensor
 	    const double partOcc =dftUtils::getPartialOccupancy(eigenValues_[ik][eigenIndex],
 								fermiEnergy_,
 								C_kb,
-								tVal);  
+								tVal);
 	    VectorizedArray<double> fnk=make_vectorized_array(2.0*partOcc*kPointWeights[ik]);
 	    eshelbyTensor+=fnk*(psi[1]*outer_product(kPointCoord,gradPsi[0])-psi[0]*outer_product(kPointCoord,gradPsi[1])-outer_product(kPointCoord,kPointCoord)*(psi[0]*psi[0]+psi[1]*psi[1]));
 	 }
        }
 
-       return eshelbyTensor;	
+       return eshelbyTensor;
     }
 
   Tensor<2,C_DIM,VectorizedArray<double> >  getEnlStress(const std::vector<std::vector<std::vector<Tensor<1,2, Tensor<2,C_DIM,VectorizedArray<double> > > > > > & gradZetalmDeltaVlDyadicDistImageAtoms,
@@ -398,24 +400,26 @@ namespace eshelbyTensor
 	    const double partOcc =dftUtils::getPartialOccupancy(eigenValues_[ik][eigenIndex],
 							      fermiEnergy_,
 							      C_kb,
-							      tVal); 
+							      tVal);
 	    VectorizedArray<double> fnk=make_vectorized_array(partOcc*kPointWeights[ik]);
 	    for (unsigned int iAtomNonLocal=0; iAtomNonLocal < gradZetalmDeltaVlDyadicDistImageAtoms.size(); ++iAtomNonLocal)
 	    {
 		 const int numberPseudoWaveFunctions = gradZetalmDeltaVlDyadicDistImageAtoms[iAtomNonLocal].size();
 		 for (unsigned int iPseudoWave=0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
-		 {	  
+		 {
 		     VectorizedArray<double> CReal=make_vectorized_array(projectorKetTimesPsiTimesV[ik][iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave].real());
 		     VectorizedArray<double> CImag=make_vectorized_array(projectorKetTimesPsiTimesV[ik][iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave].imag());
 		     Tensor<2,C_DIM,VectorizedArray<double> >  zdvR=gradZetalmDeltaVlDyadicDistImageAtoms[iAtomNonLocal][iPseudoWave][ik][0];
 		     Tensor<2,C_DIM,VectorizedArray<double> >  zdvI=gradZetalmDeltaVlDyadicDistImageAtoms[iAtomNonLocal][iPseudoWave][ik][1];
 		     E+=four*fnk*((psi[0]*zdvR+psi[1]*zdvI)*CReal-(psi[0]*zdvI-psi[1]*zdvR)*CImag);
 		 }
-	    }	
+	    }
 
 	 }
        }
 
-       return E;          
+       return E;
   }
+}
+
 }

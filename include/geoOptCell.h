@@ -24,108 +24,112 @@
 
 #ifndef geoOptCell_H_
 #define geoOptCell_H_
-#ifdef ENABLE_PERIODIC_BC 
+#ifdef ENABLE_PERIODIC_BC
 #include "solverFunction.h"
 #include "constants.h"
 
-using namespace dealii;
-template <unsigned int FEOrder> class dftClass;
-//
-//Define geoOptCell class
-//
-template <unsigned int FEOrder>
-class geoOptCell : public solverFunction
-{
-public:
-/** @brief Constructor.
- *
- *  @param _dftPtr pointer to dftClass
- *  @param mpi_comm_replica mpi_communicator of the current pool
- */ 
-  geoOptCell(dftClass<FEOrder>* _dftPtr,const  MPI_Comm &mpi_comm_replica);
+namespace dftfe {
 
-/**
- * @brief initializes the data member d_relaxationFlags.
- *
- */
-  void init();
+    using namespace dealii;
+    template <unsigned int FEOrder> class dftClass;
+    //
+    //Define geoOptCell class
+    //
+    template <unsigned int FEOrder>
+    class geoOptCell : public solverFunction
+    {
+    public:
+    /** @brief Constructor.
+     *
+     *  @param _dftPtr pointer to dftClass
+     *  @param mpi_comm_replica mpi_communicator of the current pool
+     */
+      geoOptCell(dftClass<FEOrder>* _dftPtr,const  MPI_Comm &mpi_comm_replica);
 
-/**
- * @brief starts the cell stress relaxation.
- *
- */
-  void run();
+    /**
+     * @brief initializes the data member d_relaxationFlags.
+     *
+     */
+      void init();
 
-/**
- * @brief writes the current fem mesh.
- *
- */
-  void writeMesh(std::string meshFileName);
+    /**
+     * @brief starts the cell stress relaxation.
+     *
+     */
+      void run();
 
-/**
- * @brief Obtain number of unknowns (depends on the stress relaxation constraint type).
- *
- * @return int Number of unknowns.
- */
-  int getNumberUnknowns() const;
+    /**
+     * @brief writes the current fem mesh.
+     *
+     */
+      void writeMesh(std::string meshFileName);
 
-/**
- * @brief Compute function gradient (stress).
- *
- * @param gradient STL vector for gradient values.
- */  
-  void gradient(std::vector<double> & gradient);
+    /**
+     * @brief Obtain number of unknowns (depends on the stress relaxation constraint type).
+     *
+     * @return int Number of unknowns.
+     */
+      int getNumberUnknowns() const;
 
-/**
- * @brief Update the strain tensor epsilon.
- *
- * The new strain tensor is epsilonNew= epsilon+ delta(epsilon). Since epsilon strain
- * is already applied to the domain. The new strain to be applied to the domain
- * is epsilonNew*inv(epsilon)
- *
- * @param solution delta(epsilon).
- */  
-  void update(const std::vector<double> & solution);
+    /**
+     * @brief Compute function gradient (stress).
+     *
+     * @param gradient STL vector for gradient values.
+     */
+      void gradient(std::vector<double> & gradient);
 
-  /// Not implemented
-  double value() const;
+    /**
+     * @brief Update the strain tensor epsilon.
+     *
+     * The new strain tensor is epsilonNew= epsilon+ delta(epsilon). Since epsilon strain
+     * is already applied to the domain. The new strain to be applied to the domain
+     * is epsilonNew*inv(epsilon)
+     *
+     * @param solution delta(epsilon).
+     */
+      void update(const std::vector<double> & solution);
 
-  /// Not implemented
-  void value(std::vector<double> & functionValue);
+      /// Not implemented
+      double value() const;
 
-  /// Not implemented
-  void precondition(std::vector<double>  & s,
-	            const std::vector<double> & gradient) const;
+      /// Not implemented
+      void value(std::vector<double> & functionValue);
 
-  /// Not implemented
-  void solution(std::vector<double> & solution);
+      /// Not implemented
+      void precondition(std::vector<double>  & s,
+			const std::vector<double> & gradient) const;
 
-  /// Not implemented
-  std::vector<int> getUnknownCountFlag() const;
+      /// Not implemented
+      void solution(std::vector<double> & solution);
 
-private:
+      /// Not implemented
+      std::vector<int> getUnknownCountFlag() const;
 
-  /// Relaxation flags which determine whether a particular stress component is to be relaxed or not.
-  //  The relaxation flags are determined based on the stress relaxation constraint type.
-  std::vector<int> d_relaxationFlags;
-  
-  /// total number of calls to update()
-  unsigned int d_totalUpdateCalls;
+    private:
 
-  /// current strain tensor applied on the domain
-  Tensor<2,C_DIM,double> d_strainEpsilon;
+      /// Relaxation flags which determine whether a particular stress component is to be relaxed or not.
+      //  The relaxation flags are determined based on the stress relaxation constraint type.
+      std::vector<int> d_relaxationFlags;
 
-  /// pointer to dft class
-  dftClass<FEOrder>* dftPtr;
+      /// total number of calls to update()
+      unsigned int d_totalUpdateCalls;
 
-  /// parallel communication objects
-  const MPI_Comm mpi_communicator;
-  const unsigned int n_mpi_processes;
-  const unsigned int this_mpi_process;
+      /// current strain tensor applied on the domain
+      Tensor<2,C_DIM,double> d_strainEpsilon;
 
-  /// conditional stream object
-  dealii::ConditionalOStream   pcout;
-};
+      /// pointer to dft class
+      dftClass<FEOrder>* dftPtr;
+
+      /// parallel communication objects
+      const MPI_Comm mpi_communicator;
+      const unsigned int n_mpi_processes;
+      const unsigned int this_mpi_process;
+
+      /// conditional stream object
+      dealii::ConditionalOStream   pcout;
+    };
+
+}
 
 #endif
 #endif

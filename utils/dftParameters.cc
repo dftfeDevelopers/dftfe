@@ -22,6 +22,8 @@
 
 using namespace dealii;
 
+namespace dftfe {
+
 namespace dftParameters
 {
 
@@ -406,5 +408,7 @@ namespace dftParameters
     }
     prm.leave_subsection ();
   }
+
+}
 
 }
