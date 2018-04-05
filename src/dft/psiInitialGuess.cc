@@ -55,7 +55,8 @@ void dftClass<FEOrder>::loadPSIFiles(unsigned int Z,
   //
   if(fileReadFlag > 0)
     {
-      pcout<<"reading data from file: "<<psiFile<<std::endl;
+      if (!dftParameters::reproducible_output)
+        pcout<<"reading data from file: "<<psiFile<<std::endl;
 
       int numRows = values.size()-1;
       std::vector<double> xData(numRows), yData(numRows);
