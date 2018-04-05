@@ -170,7 +170,8 @@ void dftClass<FEOrder>::computeVolume()
 	}
     }
   d_domainVolume= Utilities::MPI::sum(d_domainVolume, mpi_communicator);
-  pcout<< "Volume of the domain (Bohr^3): "<< d_domainVolume<<std::endl;
+  if (dftParameters::verbosity>=1)
+    pcout<< "Volume of the domain (Bohr^3): "<< d_domainVolume<<std::endl;
 }
 
 template<unsigned int FEOrder>
