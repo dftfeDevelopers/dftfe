@@ -20,7 +20,9 @@
 #include <dftUtils.h>
 #include <dftParameters.h>
 
-meshMovementAffineTransform::meshMovementAffineTransform( MPI_Comm &mpi_comm_replica):
+namespace dftfe {
+
+meshMovementAffineTransform::meshMovementAffineTransform(const MPI_Comm &mpi_comm_replica):
  meshMovementClass(mpi_comm_replica)
 {
 }
@@ -37,7 +39,7 @@ std::pair<bool,double> meshMovementAffineTransform::transform(const Tensor<2,3,d
      pcout << "...Computed triangulation displacement increment" << std::endl;
 
   dftUtils::transformDomainBoundingVectors(d_domainBoundingVectors,deformationGradient);
-  
+
   updateTriangulationVertices();
   std::pair<bool,double> returnData=movedMeshCheck();
   return returnData;
@@ -45,7 +47,7 @@ std::pair<bool,double> meshMovementAffineTransform::transform(const Tensor<2,3,d
 
 std::pair<bool,double> meshMovementAffineTransform::moveMesh(const std::vector<Point<C_DIM> > & controlPointLocations,
                                                              const std::vector<Tensor<1,C_DIM,double> > & controlPointDisplacements,
-                                                             const double controllingParameter)   
+                                                             const double controllingParameter)
 {
    AssertThrow(false,dftUtils::ExcNotImplementedYet());
 }
@@ -58,14 +60,14 @@ void meshMovementAffineTransform::computeIncrement()
 				   false);
   DoFHandler<3>::active_cell_iterator
   cell = d_dofHandlerMoveMesh.begin_active(),
-  endc = d_dofHandlerMoveMesh.end();      
+  endc = d_dofHandlerMoveMesh.end();
   for (; cell!=endc; ++cell) {
    if (!cell->is_artificial()){
     for (unsigned int i=0; i<vertices_per_cell; ++i){
 	const unsigned global_vertex_no = cell->vertex_index(i);
 
 	if (vertex_touched[global_vertex_no])
-	   continue;	    
+	   continue;
 	vertex_touched[global_vertex_no]=true;
 	const Point<C_DIM> nodalCoor = cell->vertex(i);
         const Tensor<1,3,double> increment= d_deformationGradient*nodalCoor-nodalCoor;
@@ -78,10 +80,11 @@ void meshMovementAffineTransform::computeIncrement()
 	       d_incrementalDisplacementParallel[globalDofIndex]=increment[idim];
 	    else
 	       d_incrementalDisplacementSerial[globalDofIndex]=increment[idim];
-	 }	
-	
+	 }
+
      }
    }
   }
 }
 
+}

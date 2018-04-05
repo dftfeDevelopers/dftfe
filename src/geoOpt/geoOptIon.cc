@@ -25,22 +25,24 @@
 #include <dftParameters.h>
 #include <dftUtils.h>
 
+namespace dftfe {
+
 template<unsigned int FEOrder>
 void geoOptIon<FEOrder>::writeMesh(std::string meshFileName)
  {
       //dftPtr->writeMesh(meshFileName);
-      AssertThrow(false,dftUtils::ExcNotImplementedYet()); 
+      AssertThrow(false,dftUtils::ExcNotImplementedYet());
  }
 
 //
 //constructor
 //
 template<unsigned int FEOrder>
-geoOptIon<FEOrder>::geoOptIon(dftClass<FEOrder>* _dftPtr, MPI_Comm &mpi_comm_replica):
+geoOptIon<FEOrder>::geoOptIon(dftClass<FEOrder>* _dftPtr,const MPI_Comm &mpi_comm_replica):
   dftPtr(_dftPtr),
   mpi_communicator (mpi_comm_replica),
-  n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_communicator)),
-  this_mpi_process (Utilities::MPI::this_mpi_process(mpi_communicator)),
+  n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_comm_replica)),
+  this_mpi_process (Utilities::MPI::this_mpi_process(mpi_comm_replica)),
   pcout(std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
 {
 
@@ -86,7 +88,7 @@ void geoOptIon<FEOrder>::run()
    cgPRPNonLinearSolver cgSolver(tol,
 	                        maxIter,
 				debugLevel,
-				mpi_communicator, 
+				mpi_communicator,
 				lineSearchTol,
 				maxLineSearchIter,
 				lineSearchDampingParameter);
@@ -97,7 +99,7 @@ void geoOptIon<FEOrder>::run()
    pcout<<"      maxIter: "<< maxIter<<std::endl;
    pcout<<"      lineSearch tol: "<< lineSearchTol<<std::endl;
    pcout<<"      lineSearch maxIter: "<< maxLineSearchIter<<std::endl;
-   pcout<<"      lineSearch damping parameter: "<< lineSearchDampingParameter<<std::endl;   
+   pcout<<"      lineSearch damping parameter: "<< lineSearchDampingParameter<<std::endl;
    pcout<<"   ------------------------------  "<<std::endl;
 
    if  (getNumberUnknowns()>0)
@@ -106,10 +108,10 @@ void geoOptIon<FEOrder>::run()
        if (cgReturn == nonLinearSolver::RESTART && restartCount<maxRestarts )
        {
 	   pcout<< " ...Restarting CG, restartCount: "<<restartCount<<std::endl;
-	   cgReturn=cgSolver.solve(*this); 
+	   cgReturn=cgSolver.solve(*this);
 	   restartCount++;
-       }       
-       
+       }
+
        if (cgReturn == nonLinearSolver::SUCCESS )
        {
 	    pcout<< " ...CG Ion force relaxation completed as maximum force magnitude is less than force relaxation tolerance: "<< dftParameters::forceRelaxTol<<", total number of ion position updates: "<<d_totalUpdateCalls<<std::endl;
@@ -123,12 +125,12 @@ void geoOptIon<FEOrder>::run()
        {
 	    pcout<< " ...Maximum CG iterations reached "<<std::endl;
 
-       }        
+       }
        else if (cgReturn == nonLinearSolver::RESTART)
        {
 	    pcout<< " ...Maximum restarts reached "<<std::endl;
 
-       }       
+       }
 
    }
 }
@@ -150,13 +152,13 @@ int geoOptIon<FEOrder>::getNumberUnknowns() const
 template<unsigned int FEOrder>
 double geoOptIon<FEOrder>::value() const
 {
-   AssertThrow(false,dftUtils::ExcNotImplementedYet());    
+   AssertThrow(false,dftUtils::ExcNotImplementedYet());
 }
 
 template<unsigned int FEOrder>
 void geoOptIon<FEOrder>::value(std::vector<double> & functionValue)
 {
-   AssertThrow(false,dftUtils::ExcNotImplementedYet());     
+   AssertThrow(false,dftUtils::ExcNotImplementedYet());
 }
 
 template<unsigned int FEOrder>
@@ -170,10 +172,10 @@ void geoOptIon<FEOrder>::gradient(std::vector<double> & gradient)
    {
       for (unsigned int j=0; j< 3; ++j)
       {
-          if (d_relaxationFlags[3*i+j]==1) 
+          if (d_relaxationFlags[3*i+j]==1)
 	  {
               gradient.push_back(tempGradient[3*i+j]);
-	  }	  
+	  }
       }
    }
 
@@ -185,7 +187,7 @@ void geoOptIon<FEOrder>::gradient(std::vector<double> & gradient)
        if (temp>d_maximumAtomForceToBeRelaxed)
 	  d_maximumAtomForceToBeRelaxed=temp;
    }
-   
+
 }
 
 
@@ -210,42 +212,41 @@ void geoOptIon<FEOrder>::update(const std::vector<double> & solution)
 	  globalAtomsDisplacements[i][j]=0.0;
 	  if (this_mpi_process==0)
 	  {
-            if (d_relaxationFlags[3*i+j]==1) 
+            if (d_relaxationFlags[3*i+j]==1)
 	    {
                globalAtomsDisplacements[i][j]=solution[count];
 	       count++;
 	    }
 	  }
       }
-      
+
       MPI_Bcast(&(globalAtomsDisplacements[i][0]),
 	        3,
 	        MPI_DOUBLE,
 	        0,
-	        MPI_COMM_WORLD);      
+	        MPI_COMM_WORLD);
    }
-   
+
    pcout<<" -----------------------------" << std::endl;
    pcout<< "  Maximum force to be relaxed: "<<  d_maximumAtomForceToBeRelaxed <<std::endl;
    dftPtr->forcePtr->updateAtomPositionsAndMoveMesh(globalAtomsDisplacements);
    d_totalUpdateCalls+=1;
 
    dftPtr->solve();
-   
+
 }
 
 template<unsigned int FEOrder>
 void geoOptIon<FEOrder>::solution(std::vector<double> & solution)
 {
-   AssertThrow(false,dftUtils::ExcNotImplementedYet());     
+   AssertThrow(false,dftUtils::ExcNotImplementedYet());
 }
 
 template<unsigned int FEOrder>
 std::vector<int>  geoOptIon<FEOrder>::getUnknownCountFlag() const
 {
-   AssertThrow(false,dftUtils::ExcNotImplementedYet());     
+   AssertThrow(false,dftUtils::ExcNotImplementedYet());
 }
-
 
 template class geoOptIon<1>;
 template class geoOptIon<2>;
@@ -259,3 +260,5 @@ template class geoOptIon<9>;
 template class geoOptIon<10>;
 template class geoOptIon<11>;
 template class geoOptIon<12>;
+
+}

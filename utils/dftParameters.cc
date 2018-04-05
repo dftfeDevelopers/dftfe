@@ -22,6 +22,8 @@
 
 using namespace dealii;
 
+namespace dftfe {
+
 namespace dftParameters
 {
 
@@ -411,6 +413,21 @@ namespace dftParameters
        dftParameters::relLinearSolverTolerance      = prm.get_double("TOLERANCE");
     }
     prm.leave_subsection ();
+
+
+    const bool printParametersToFile=false;
+    if (printParametersToFile)
+    {
+	std::ofstream output ("demoParameterFile.prm");
+	prm.print_parameters (output, ParameterHandler::OutputStyle::Text);
+    }
+#ifdef ENABLE_PERIODIC_BC
+    AssertThrow(dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ,ExcMessage("Incorrect executable: periodic executable being used for non-periodic problem."));
+#else
+    AssertThrow(!(dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ),ExcMessage("Incorrect executable: non-periodic executable being used for periodic problem."));
+#endif    
   }
+
+}
 
 }

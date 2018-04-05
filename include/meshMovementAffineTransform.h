@@ -23,39 +23,43 @@
 #define meshMovementAffineTransform_H_
 #include "meshMovement.h"
 
-class meshMovementAffineTransform : public meshMovementClass
-{
+namespace dftfe {
 
-public:
+    class meshMovementAffineTransform : public meshMovementClass
+    {
 
-  /** @brief Constructor
-   *
-   *  @param mpi_comm_replica mpi communicator in the current pool
-   */    
-  meshMovementAffineTransform( MPI_Comm &mpi_comm_replica);
+    public:
 
-  /** @brief Performs affine transformation of the triangulation
-   * 
-   *  @param  deformationGradient
-   *  @return std::pair<bool,double> mesh quality metrics 
-   *  pair(bool for is negative jacobian, maximum jacobian ratio) 
-   */
-  std::pair<bool,double> transform(const Tensor<2,3,double> & deformationGradient);
+      /** @brief Constructor
+       *
+       *  @param mpi_comm_replica mpi communicator in the current pool
+       */
+      meshMovementAffineTransform(const MPI_Comm &mpi_comm_replica);
 
-  /// Not implemented, just present to override the pure virtual from base class
-  std::pair<bool,double> moveMesh(const std::vector<Point<C_DIM> > & controlPointLocations,
-                                  const std::vector<Tensor<1,3,double> > & controlPointDisplacements,
-                                  const double controllingParameter);
-  
-private: 
+      /** @brief Performs affine transformation of the triangulation
+       *
+       *  @param  deformationGradient
+       *  @return std::pair<bool,double> mesh quality metrics
+       *  pair(bool for is negative jacobian, maximum jacobian ratio)
+       */
+      std::pair<bool,double> transform(const Tensor<2,3,double> & deformationGradient);
 
-  /** @brief internal function which computes the nodal increment field in the local processor
-   *
-   */      
-  void computeIncrement();
+      /// Not implemented, just present to override the pure virtual from base class
+      std::pair<bool,double> moveMesh(const std::vector<Point<C_DIM> > & controlPointLocations,
+				      const std::vector<Tensor<1,3,double> > & controlPointDisplacements,
+				      const double controllingParameter);
 
-  /// storage for the deformation gradient to be applied to the triangulation
-  Tensor<2,3,double> d_deformationGradient;
-};
+    private:
+
+      /** @brief internal function which computes the nodal increment field in the local processor
+       *
+       */
+      void computeIncrement();
+
+      /// storage for the deformation gradient to be applied to the triangulation
+      Tensor<2,3,double> d_deformationGradient;
+    };
+
+}
 
 #endif

@@ -16,12 +16,13 @@
 // @author Sambit Das (2018)
 
 
-#ifndef dft_NonLinearSolver_h
-#define dft_NonLinearSolver_h
+#ifndef NonLinearSolver_h
+#define NonLinearSolver_h
 
 
 #include "headers.h"
 
+namespace dftfe {
   //
   // forward declarations
   //
@@ -41,7 +42,7 @@
 			   LINESEARCH_FAILED,
 			   MAX_ITER_REACHED,
                            RESTART};
-    
+
     //
     // methods
     //
@@ -71,7 +72,7 @@
 
 
   protected:
-    
+
     /**
      * @brief Get tolerance.
      *
@@ -91,15 +92,16 @@
      *
      * @return Debug level.
      */
-    unsigned int getDebugLevel() const;  
+    unsigned int getDebugLevel() const;
 
-    
-    
+
+
     const unsigned int    d_debugLevel;
     const unsigned int    d_maxNumberIterations;
     const double d_tolerance;
 
   };
 
+}
 
-#endif // dft_NonLinearSolver_h
+#endif // NonLinearSolver_h
