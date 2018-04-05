@@ -234,7 +234,9 @@ void dftClass<FEOrder>::determineOrbitalFilling()
   pcout<<"============================================================================================================================="<<std::endl;
   pcout<<"number of electrons: "<<numElectrons<<std::endl;
   pcout << "number of eigen values: " << numEigenValues << std::endl;
-  pcout<<"number of wavefunctions computed using single atom data to be used as initial guess for starting the SCF: " <<waveFunctionCount<<std::endl;
+
+  if (dftParameters::verbosity>=1)
+     pcout<<"number of wavefunctions computed using single atom data to be used as initial guess for starting the SCF: " <<waveFunctionCount<<std::endl;
   pcout<<"============================================================================================================================="<<std::endl;
 }
 
