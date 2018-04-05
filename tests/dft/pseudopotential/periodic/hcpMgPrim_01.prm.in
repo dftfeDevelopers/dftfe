@@ -37,11 +37,11 @@ end
 subsection Brillouin zone k point sampling options
 
   subsection Monkhorst-Pack (MP) grid generation
-    set SAMPLING POINTS 1 = 2
-    set SAMPLING POINTS 2 = 2
+    set SAMPLING POINTS 1 = 1
+    set SAMPLING POINTS 2 = 1
     set SAMPLING POINTS 3 = 2
-    set SAMPLING SHIFT 1 = 0.25
-    set SAMPLING SHIFT 2 = 0.25
+    set SAMPLING SHIFT 1 = 0.0
+    set SAMPLING SHIFT 2 = 0.0
     set SAMPLING SHIFT 3 = 0.25
   end
 
@@ -63,7 +63,7 @@ end
 
 subsection SCF parameters
   set MAXIMUM ITERATIONS = 100 
-  set TOLERANCE          = 1e-6
+  set TOLERANCE          = 1e-7
   set ANDERSON SCHEME MIXING PARAMETER   = 0.5
   set ANDERSON SCHEME MIXING HISTORY     = 70
   set TEMPERATURE                        = 500

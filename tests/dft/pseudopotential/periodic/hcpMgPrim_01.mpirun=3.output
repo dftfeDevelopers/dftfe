@@ -1,5 +1,3 @@
-Number of pools: 1
-Pool size (number of MPI processes for domain decomposition): 3
 number of atoms: 2
 number of atoms types: 1
 Z:12
@@ -7,15 +5,7 @@ Z:12
 number of electrons: 20
 number of eigen values: 20
 =============================================================================================================================
-Total number of k-points 8
- Only time reversal symmetry to be used 
- 2 symmetries used to reduce BZ 
- number of irreducible k-points 4
-Reduced k-Point-coordinates and weights: 
-      1:       0.25000       0.25000      0.25000      0.25000
-      2:       0.25000       0.25000     -0.25000      0.25000
-      3:       0.25000      -0.25000      0.25000      0.25000
-      4:       0.25000      -0.25000     -0.25000      0.25000
+Total number of k-points 2
 -----------Domain bounding vectors (lattice vectors in fully periodic case)-------------
 v1 : 5.882191053999999752e+00 0.000000000000000000e+00 0.000000000000000000e+00
 v2 : -2.941095526999999876e+00 5.094126882677563195e+00 0.000000000000000000e+00
@@ -41,21 +31,21 @@ Reading initial guess for rho.....
 Pseuodopotential initalization....
 
 Starting SCF iteration....
-SCF iteration converged to the specified tolerance after: 12 iterations.
+SCF iteration converged to the specified tolerance after: 14 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:        -108.32962405
+             Total energy:        -108.71470445
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.001672,0.000965,0.003417
-AtomId    1:  0.003485,0.002012,0.003418
+AtomId    0:  0.000044,0.000025,0.003542
+AtomId    1:  0.005210,0.003008,0.003543
 --------------------------------------------------------------------------------------------
 
 Absolute value of cell stress (Hartree/Bohr^3)
 ------------------------------------------------------------------------
-0.001776  0.001533  0.000001
-0.001533  0.000006  0.000001
-0.000001  0.000001  0.000773
+0.002550  0.000981  0.000000
+0.000981  0.001417  0.000000
+0.000000  0.000000  0.000632
 ------------------------------------------------------------------------

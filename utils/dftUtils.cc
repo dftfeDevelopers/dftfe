@@ -78,7 +78,7 @@ namespace dftUtils
     const unsigned int taskId = dealii::Utilities::MPI::this_mpi_process(mpi_communicator);
 
     // FIXME: any and all terminal output should be optional
-    if (taskId == 0)
+    if (taskId == 0 && dftParameters::verbosity>=2)
       {
         std::cout<<"Number of pools: "<<npool<<std::endl;
         std::cout<<"Pool size (number of MPI processes for domain decomposition): "<<poolSize<<std::endl;
