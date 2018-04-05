@@ -20,9 +20,9 @@
 #include <fstream>
 #include <deal.II/base/data_out_base.h>
 
-namespace dftfe {
-
 using namespace dealii;
+
+namespace dftfe {
 
 namespace dftParameters
 {
