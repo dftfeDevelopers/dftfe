@@ -16,7 +16,7 @@
 // @author Sambit Das(2018)
 //
 
-#ifdef ENABLE_PERIODIC_BC 
+#ifdef ENABLE_PERIODIC_BC
 template<unsigned int FEOrder>
 void forceClass<FEOrder>::computeStress()
 {
@@ -32,7 +32,7 @@ void forceClass<FEOrder>::computeStress()
 
   //configurational stress contribution from all terms except those from nuclear self energy
   if (dftParameters::spinPolarized)
-     computeStressSpinPolarizedEEshelbyEPSPEnlEk();  
+     computeStressSpinPolarizedEEshelbyEPSPEnlEk();
   else
      computeStressEEshelbyEPSPEnlEk();
 
@@ -45,8 +45,8 @@ void forceClass<FEOrder>::computeStress()
 
   //Sum k point stress contribution over all processors
   //and k point pools and add to total stress
-  d_stressKPoints=Utilities::MPI::sum(d_stressKPoints,mpi_communicator); 
-  d_stressKPoints=Utilities::MPI::sum(d_stressKPoints,dftPtr->interpoolcomm);  
+  d_stressKPoints=Utilities::MPI::sum(d_stressKPoints,mpi_communicator);
+  d_stressKPoints=Utilities::MPI::sum(d_stressKPoints,dftPtr->interpoolcomm);
   d_stress+=d_stressKPoints;
 
   //Scale by inverse of domain volume
@@ -57,12 +57,30 @@ void forceClass<FEOrder>::computeStress()
 template<unsigned int FEOrder>
 void forceClass<FEOrder>::printStress()
 {
-    pcout<<std::endl;
-    pcout<<"Cell stress (Hartree/Bohr^3)"<<std::endl;
-    pcout<< "------------------------------------------------------------------------"<< std::endl;
-    for (unsigned int idim=0; idim< 3; idim++)
-        pcout<< d_stress[idim][0]<<"  "<<d_stress[idim][1]<<"  "<<d_stress[idim][2]<< std::endl;    
-    pcout<< "------------------------------------------------------------------------"<<std::endl;    
+    if (!dftParameters::reproducible_output)
+    {
+	pcout<<std::endl;
+	pcout<<"Cell stress (Hartree/Bohr^3)"<<std::endl;
+	pcout<< "------------------------------------------------------------------------"<< std::endl;
+	for (unsigned int idim=0; idim< 3; idim++)
+	    pcout<< d_stress[idim][0]<<"  "<<d_stress[idim][1]<<"  "<<d_stress[idim][2]<< std::endl;
+	pcout<< "------------------------------------------------------------------------"<<std::endl;
+    }
+    else
+    {
+	pcout<<std::endl;
+	pcout<<"Absolute value of cell stress (Hartree/Bohr^3)"<<std::endl;
+	pcout<< "------------------------------------------------------------------------"<< std::endl;
+	for (unsigned int idim=0; idim< 3; idim++)
+	{
+	   std::vector<double> truncatedStress(3);
+	   for (unsigned int jdim=0; jdim< 3; jdim++)
+		truncatedStress[jdim]  = std::fabs(std::floor(10000000 * d_stress[idim][jdim]) / 10000000.0);
+	    pcout<<  std::fixed<<std::setprecision(6)<< truncatedStress[0]<<"  "<<truncatedStress[1]<<"  "<<truncatedStress[2]<< std::endl;
+	}
+	pcout<< "------------------------------------------------------------------------"<<std::endl;
+    }
+
 }
 
 #endif

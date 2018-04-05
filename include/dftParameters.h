@@ -50,6 +50,8 @@ namespace dftfe {
       extern unsigned int verbosity, chkType;
       extern bool restartFromChk;
 
+      extern bool reproducible_output;
+
       /**
        * Declare parameters.
        */
@@ -59,6 +61,11 @@ namespace dftfe {
        * Parse parameters.
        */
       void parse_parameters(dealii::ParameterHandler &prm);
+
+      /**
+       * Check and print parameters
+       */
+      void check_print_parameters(const dealii::ParameterHandler &prm);
 
     };
 

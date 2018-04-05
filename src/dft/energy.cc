@@ -20,74 +20,124 @@
 //source file for all energy computations
 #include "../../include/dftParameters.h"
 
+namespace internal {
 
-double FermiDiracFunctionValue(double x,
-			       std::vector<std::vector<double> > & eigenValues,
-			       std::vector<double> & kPointWeights,
-			       double &TVal)
-{
-
-  int numberkPoints = eigenValues.size();
-  int numberEigenValues = eigenValues[0].size();
-  double functionValue = 0.0;
-  double temp1,temp2;
-
-
-  for(unsigned int kPoint = 0; kPoint < numberkPoints; ++kPoint)
+    double FermiDiracFunctionValue(const double x,
+				   const std::vector<std::vector<double> > & eigenValues,
+				   const std::vector<double> & kPointWeights,
+				   const double &TVal)
     {
-      for(unsigned int i = 0; i < numberEigenValues; i++)
+
+      int numberkPoints = eigenValues.size();
+      int numberEigenValues = eigenValues[0].size();
+      double functionValue = 0.0;
+      double temp1,temp2;
+
+
+      for(unsigned int kPoint = 0; kPoint < numberkPoints; ++kPoint)
 	{
-	  temp1 = (eigenValues[kPoint][i]-x)/(C_kb*TVal);
-	  if(temp1 <= 0.0)
+	  for(unsigned int i = 0; i < numberEigenValues; i++)
 	    {
-	      temp2  =  1.0/(1.0+exp(temp1));
-	      functionValue += (2.0-dftParameters::spinPolarized)*kPointWeights[kPoint]*temp2;
-	    }
-	  else
-	    {
-	      temp2 =  1.0/(1.0+exp(-temp1));
-	      functionValue += (2.0-dftParameters::spinPolarized)*kPointWeights[kPoint]*exp(-temp1)*temp2;
+	      temp1 = (eigenValues[kPoint][i]-x)/(C_kb*TVal);
+	      if(temp1 <= 0.0)
+		{
+		  temp2  =  1.0/(1.0+exp(temp1));
+		  functionValue += (2.0-dftParameters::spinPolarized)*kPointWeights[kPoint]*temp2;
+		}
+	      else
+		{
+		  temp2 =  1.0/(1.0+exp(-temp1));
+		  functionValue += (2.0-dftParameters::spinPolarized)*kPointWeights[kPoint]*exp(-temp1)*temp2;
+		}
 	    }
 	}
+
+      return functionValue;
+
     }
 
-  return functionValue;
-
-}
-
-double FermiDiracFunctionDerivativeValue(double x,
-					 std::vector<std::vector<double> > & eigenValues,
-					 std::vector<double> & kPointWeights,
-					 double &TVal)
-{
-
-  int numberkPoints = eigenValues.size();
-  int numberEigenValues = eigenValues[0].size();
-  double functionDerivative = 0.0;
-  double temp1,temp2;
-
-  for(unsigned int kPoint = 0; kPoint < numberkPoints; ++kPoint)
+    double FermiDiracFunctionDerivativeValue(const double x,
+					     const std::vector<std::vector<double> > & eigenValues,
+					     const std::vector<double> & kPointWeights,
+					     const double &TVal)
     {
-      for(unsigned int i = 0; i < numberEigenValues; i++)
+
+      int numberkPoints = eigenValues.size();
+      int numberEigenValues = eigenValues[0].size();
+      double functionDerivative = 0.0;
+      double temp1,temp2;
+
+      for(unsigned int kPoint = 0; kPoint < numberkPoints; ++kPoint)
 	{
-	  temp1 = (eigenValues[kPoint][i]-x)/(C_kb*TVal);
-	  if(temp1 <= 0.0)
+	  for(unsigned int i = 0; i < numberEigenValues; i++)
 	    {
-	      temp2  =  1.0/(1.0 + exp(temp1));
-	      functionDerivative += (2.0-dftParameters::spinPolarized)*kPointWeights[kPoint]*(exp(temp1)/(C_kb*TVal))*temp2*temp2;
-	    }
-	  else
-	    {
-	      temp2 =  1.0/(1.0 + exp(-temp1));
-	      functionDerivative += (2.0-dftParameters::spinPolarized)*kPointWeights[kPoint]*(exp(-temp1)/(C_kb*TVal))*temp2*temp2; 
+	      temp1 = (eigenValues[kPoint][i]-x)/(C_kb*TVal);
+	      if(temp1 <= 0.0)
+		{
+		  temp2  =  1.0/(1.0 + exp(temp1));
+		  functionDerivative += (2.0-dftParameters::spinPolarized)*kPointWeights[kPoint]*(exp(temp1)/(C_kb*TVal))*temp2*temp2;
+		}
+	      else
+		{
+		  temp2 =  1.0/(1.0 + exp(-temp1));
+		  functionDerivative += (2.0-dftParameters::spinPolarized)*kPointWeights[kPoint]*(exp(-temp1)/(C_kb*TVal))*temp2*temp2;
+		}
 	    }
 	}
+
+      return functionDerivative;
+
     }
 
-  return functionDerivative;
+    void  printEnergy(const double bandEnergy,
+                      const double totalkineticEnergy,
+		      const double totalexchangeEnergy,
+		      const double totalcorrelationEnergy,
+		      const double totalElectrostaticEnergy,
+		      const double totalEnergy,
+		      const double totalEnergyPerAtom,
+		      const ConditionalOStream & pcout,
+		      const bool reproducibleOutput)
+    {
+
+      if (reproducibleOutput)
+      {
+          const double bandEnergyTrunc  = std::floor(1000000000 * (bandEnergy)) / 1000000000.0;
+          const double totalkineticEnergyTrunc  = std::floor(1000000000 * (totalkineticEnergy)) / 1000000000.0;
+          const double totalexchangeEnergyTrunc  = std::floor(1000000000 * (totalexchangeEnergy)) / 1000000000.0;
+          const double totalcorrelationEnergyTrunc  = std::floor(1000000000 * (totalcorrelationEnergy)) / 1000000000.0;
+          const double totalElectrostaticEnergyTrunc  = std::floor(1000000000 * (totalElectrostaticEnergy)) / 1000000000.0;
+          const double totalEnergyTrunc  = std::floor(1000000000 * (totalEnergy)) / 1000000000.0;
+          const double totalEnergyPerAtomTrunc  = std::floor(1000000000 * (totalEnergyPerAtom)) / 1000000000.0;
+
+	  pcout <<std::endl<< "Energy computations (Hartree) "<<std::endl;
+	  pcout << "-------------------"<<std::endl;
+	  //pcout<<std::setw(25)<<"Band energy"<<": "<<std::fixed<<std::setprecision(8)<<std::setw(20) <<bandEnergyTrunc<< std::endl;
+	  //pcout<<std::setw(25)<<"Kinetic energy"<<": " <<std::fixed<<std::setprecision(8)<<std::setw(20)<<totalkineticEnergyTrunc<<std::endl;
+	  //pcout<<std::setw(25)<<"Exchange energy"<<": "<<std::fixed<<std::setprecision(8)<<std::setw(20)<< totalexchangeEnergyTrunc<< std::endl;
+	  //pcout<<std::setw(25)<<"Correlation energy"<<": "<<std::fixed<<std::setprecision(8)<<std::setw(20)<<totalcorrelationEnergyTrunc<<std::endl;
+	  //pcout<<std::setw(25)<<"Electrostatic energy"<<": "<<std::fixed<<std::setprecision(8)<<std::setw(20)<< totalElectrostaticEnergyTrunc<<std::endl;
+	  pcout<<std::setw(25)<<"Total energy"<<": "<<std::fixed<<std::setprecision(8)<<std::setw(20)<<totalEnergyTrunc<< std::endl;
+	  //pcout<<std::setw(25)<<"Total energy per atom"<<": "<< std::fixed<<std::setprecision(8)<<std::setw(20)<<totalEnergyPerAtomTrunc <<std::endl;
+      }
+      else
+      {
+	  pcout<<std::endl;
+	  char bufferEnergy[200];
+	  pcout << "Energy computations (Hartree)\n";
+	  pcout << "-------------------\n";
+	  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Band energy", bandEnergy); pcout << bufferEnergy;
+	  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Kinetic energy", totalkineticEnergy); pcout << bufferEnergy;
+	  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Exchange energy", totalexchangeEnergy); pcout << bufferEnergy;
+	  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Correlation energy", totalcorrelationEnergy); pcout << bufferEnergy;
+	  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Electrostatic energy", totalElectrostaticEnergy); pcout << bufferEnergy;
+	  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Total energy", totalEnergy); pcout << bufferEnergy;
+	  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Total energy per atom", totalEnergyPerAtom); pcout << bufferEnergy;
+      }
+
+    }
 
 }
-
 
 //compute energies
 template<unsigned int FEOrder>
@@ -296,31 +346,17 @@ double dftClass<FEOrder>::compute_energy(const bool print)
   //output
   if (print)
   {
-  pcout<<std::endl;
-  char bufferEnergy[200];
-  pcout << "Energy computations (Hartree)\n";
-  pcout << "-------------------\n";
-  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Band energy", bandEnergy); pcout << bufferEnergy;
-  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Kinetic energy", totalkineticEnergy); pcout << bufferEnergy;
-  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Exchange energy", totalexchangeEnergy); pcout << bufferEnergy;
-  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Correlation energy", totalcorrelationEnergy); pcout << bufferEnergy;
-#ifdef ENABLE_PERIODIC_BC
-  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Electrostatic energy", totalelectrostaticEnergyPot+totalNuclearElectrostaticEnergy); pcout << bufferEnergy;
-#else
-  //double repulsive_energy= repulsiveEnergy();
-  //sprintf(bufferEnergy, "%-24s:%25.16e\n", "Repulsive energy", repulsive_energy); pcout << bufferEnergy;
-  //sprintf(bufferEnergy, "%-24s:%25.16e\n", "Electrostatic energy", totalelectrostaticEnergyPot+repulsive_energy); pcout << bufferEnergy;
-  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Electrostatic energy", totalelectrostaticEnergyPot+totalNuclearElectrostaticEnergy); pcout << bufferEnergy;
-#endif
-  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Total energy", totalEnergy); pcout << bufferEnergy;
-  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Total energy per atom", totalEnergy/((double) atomLocations.size())); pcout << bufferEnergy;
+      internal::printEnergy(bandEnergy,
+		            totalkineticEnergy,
+		            totalexchangeEnergy,
+		            totalcorrelationEnergy,
+		            totalelectrostaticEnergyPot+totalNuclearElectrostaticEnergy,
+		            totalEnergy,
+		            totalEnergy/((double) atomLocations.size()),
+			    pcout,
+			    dftParameters::reproducible_output);
   }
-  /*
-  if (this_mpi_process == 0) {
-    std::printf("Total energy:%30.20e \nTotal energy per atom:%30.20e \n", totalEnergy, totalEnergy/((double) atomLocations.size()));
-    std::printf("Band energy:%30.20e \nKinetic energy:%30.20e \nExchange energy:%30.20e \nCorrelation energy:%30.20e \nElectrostatic energy Total Potential:%30.20e \nRepulsive energy:%30.20e \nNuclear Electrostatic Energy:%30.20e \n\n", bandEnergy, totalkineticEnergy, totalexchangeEnergy, totalcorrelationEnergy, totalelectrostaticEnergyPot, repulsiveEnergy(),totalNuclearElectrostaticEnergy);
-  }
-  */
+
   return totalEnergy;
 }
 
@@ -367,7 +403,7 @@ void dftClass<FEOrder>::compute_fermienergy()
 
   for(int iter = 0; iter < maxNumberFermiEnergySolveIterations; ++iter)
     {
-      double yRightLocal = FermiDiracFunctionValue(xRight,
+      double yRightLocal = internal::FermiDiracFunctionValue(xRight,
 					      eigenValues,
 					      d_kPointWeights,
 					      TVal);
@@ -376,7 +412,7 @@ void dftClass<FEOrder>::compute_fermienergy()
 
       yRight -=  (double)numElectrons;
 
-      double yLeftLocal =  FermiDiracFunctionValue(xLeft,
+      double yLeftLocal =  internal::FermiDiracFunctionValue(xLeft,
 					      eigenValues,
 					      d_kPointWeights,
 					      TVal);
@@ -393,7 +429,7 @@ void dftClass<FEOrder>::compute_fermienergy()
 
       double xBisected = (xLeft + xRight)/2.0;
 
-      double yBisectedLocal = FermiDiracFunctionValue(xBisected,
+      double yBisectedLocal = internal::FermiDiracFunctionValue(xBisected,
 						 eigenValues,
 						 d_kPointWeights,
 						 TVal) ;
@@ -428,13 +464,13 @@ void dftClass<FEOrder>::compute_fermienergy()
   while((std::abs(R) > 1.0e-12) && (iter < maxNumberFermiEnergySolveIterations))
     {
 
-      double functionValueLocal = FermiDiracFunctionValue(fe,
+      double functionValueLocal = internal::FermiDiracFunctionValue(fe,
 					      eigenValues,
 					      d_kPointWeights,
 					      TVal);
       functionValue = Utilities::MPI::sum(functionValueLocal, interpoolcomm);
 
-      double functionDerivativeValueLocal  = FermiDiracFunctionDerivativeValue(fe,
+      double functionDerivativeValueLocal  = internal::FermiDiracFunctionDerivativeValue(fe,
 								  eigenValues,
 								  d_kPointWeights,
 								  TVal);
@@ -722,29 +758,16 @@ double dftClass<FEOrder>::compute_energy_spinPolarized(const bool print)
   //output
   if (print)
   {
-  pcout<<std::endl;
-  char bufferEnergy[200];
-  pcout << "Energy computations (Hartree)\n";
-  pcout << "-------------------\n";
-  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Band energy", bandEnergy); pcout << bufferEnergy;
-  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Kinetic energy", totalkineticEnergy); pcout << bufferEnergy;
-  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Exchange energy", totalexchangeEnergy); pcout << bufferEnergy;
-  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Correlation energy", totalcorrelationEnergy); pcout << bufferEnergy;
-#ifdef ENABLE_PERIODIC_BC
-  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Electrostatic energy", totalelectrostaticEnergyPot+totalNuclearElectrostaticEnergy); pcout << bufferEnergy;
-#else
-  double repulsive_energy= repulsiveEnergy();
-  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Repulsive energy", repulsive_energy); pcout << bufferEnergy;
-  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Electrostatic energy", totalelectrostaticEnergyPot+repulsive_energy); pcout << bufferEnergy;
-#endif
-  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Total energy", totalEnergy); pcout << bufferEnergy;
-  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Total energy per atom", totalEnergy/((double) atomLocations.size())); pcout << bufferEnergy;
+      internal::printEnergy(bandEnergy,
+		            totalkineticEnergy,
+		            totalexchangeEnergy,
+		            totalcorrelationEnergy,
+		            totalelectrostaticEnergyPot+totalNuclearElectrostaticEnergy,
+		            totalEnergy,
+		            totalEnergy/((double) atomLocations.size()),
+			    pcout,
+			    dftParameters::reproducible_output);
   }
-  /*
-  if (this_mpi_process == 0) {
-    std::printf("Total energy:%30.20e \nTotal energy per atom:%30.20e \n", totalEnergy, totalEnergy/((double) atomLocations.size()));
-    std::printf("Band energy:%30.20e \nKinetic energy:%30.20e \nExchange energy:%30.20e \nCorrelation energy:%30.20e \nElectrostatic energy Total Potential:%30.20e \nRepulsive energy:%30.20e \nNuclear Electrostatic Energy:%30.20e \n\n", bandEnergy, totalkineticEnergy, totalexchangeEnergy, totalcorrelationEnergy, totalelectrostaticEnergyPot, repulsiveEnergy(),totalNuclearElectrostaticEnergy);
-  }
-  */
+
   return totalEnergy;
 }

@@ -46,10 +46,15 @@ namespace dftParameters
 
   unsigned int verbosity=0; unsigned int chkType=0;
   bool restartFromChk=false;
+  bool reproducible_output=false;
 
 
   void declare_parameters(ParameterHandler &prm)
   {
+    prm.declare_entry("REPRODUCIBLE OUTPUT", "false",
+                      Patterns::Bool(),
+                      "Limit output to that which is reprodicible, i.e. don't print "
+											"timing or absolute paths.");
 
     prm.declare_entry("VERBOSITY", "1",
                       Patterns::Integer(0,2),
@@ -323,6 +328,7 @@ namespace dftParameters
   void parse_parameters(ParameterHandler &prm)
   {
     dftParameters::verbosity                     = prm.get_integer("VERBOSITY");
+    dftParameters::reproducible_output           = prm.get_bool("REPRODUCIBLE OUTPUT");
 
     prm.enter_subsection ("RESTART");
     {
@@ -431,6 +437,29 @@ namespace dftParameters
        dftParameters::relLinearSolverTolerance      = prm.get_double("TOLERANCE");
     }
     prm.leave_subsection ();
+
+    check_print_parameters(prm);
+  }
+
+
+  void check_print_parameters(const dealii::ParameterHandler &prm)
+  {
+    if (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0 &&  dftParameters::verbosity>=1)
+    {
+      prm.print_parameters (std::cout, ParameterHandler::Text);
+    }
+
+    const bool printParametersToFile=false;
+    if (printParametersToFile)
+    {
+	std::ofstream output ("demoParameterFile.prm");
+	prm.print_parameters (output, ParameterHandler::OutputStyle::Text);
+    }
+#ifdef ENABLE_PERIODIC_BC
+    AssertThrow(dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ,ExcMessage("Incorrect executable: periodic executable being used for non-periodic problem."));
+#else
+    AssertThrow(!(dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ),ExcMessage("Incorrect executable: non-periodic executable being used for periodic problem."));
+#endif
   }
 
 }

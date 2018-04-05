@@ -221,9 +221,11 @@ void forceClass<FEOrder>::computeConfigurationalForceTotalLinFE()
   {
 	 const std::pair<unsigned int,unsigned int> & atomIdPair= it->first;
 	 const unsigned int atomForceDof=it->second;
-	 std::cout<<"procid: "<< this_mpi_process<<" atomId: "<< atomIdPair.first << ", force component: "<<atomIdPair.second << ", force: "<<d_configForceVectorLinFE[atomForceDof] << std::endl;
+	 if (dftParameters::verbosity==2)
+	   std::cout<<"procid: "<< this_mpi_process<<" atomId: "<< atomIdPair.first << ", force component: "<<atomIdPair.second << ", force: "<<d_configForceVectorLinFE[atomForceDof] << std::endl;
 #ifdef ENABLE_PERIODIC_BC
-	 std::cout<<"procid: "<< this_mpi_process<<" atomId: "<< atomIdPair.first << ", force component: "<<atomIdPair.second << ", forceKPoints: "<<d_configForceVectorLinFEKPoints[atomForceDof] << std::endl;
+	 if (dftParamters::verbosity==2)
+	   std::cout<<"procid: "<< this_mpi_process<<" atomId: "<< atomIdPair.first << ", force component: "<<atomIdPair.second << ", forceKPoints: "<<d_configForceVectorLinFEKPoints[atomForceDof] << std::endl;
 #endif
   }
 #endif

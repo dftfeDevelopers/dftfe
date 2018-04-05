@@ -86,7 +86,9 @@ dftClass<FEOrder>::dftClass(const MPI_Comm &mpi_comm_replica,const MPI_Comm &_in
   d_mesh(mpi_comm_replica,_interpoolcomm),
   d_affineTransformMesh(mpi_comm_replica),
   pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
-  computing_timer (pcout, TimerOutput::summary, TimerOutput::wall_times)
+  computing_timer (pcout,
+                   dftParameters::reproducible_output ? TimerOutput::never : TimerOutput::summary,
+                   TimerOutput::wall_times)
 {
   poissonPtr= new poissonClass<FEOrder>(this, mpi_comm_replica);
   eigenPtr= new eigenClass<FEOrder>(this, mpi_comm_replica);
@@ -168,7 +170,8 @@ void dftClass<FEOrder>::computeVolume()
 	}
     }
   d_domainVolume= Utilities::MPI::sum(d_domainVolume, mpi_communicator);
-  pcout<< "Volume of the domain (Bohr^3): "<< d_domainVolume<<std::endl;
+  if (dftParameters::verbosity>=1)
+    pcout<< "Volume of the domain (Bohr^3): "<< d_domainVolume<<std::endl;
 }
 
 template<unsigned int FEOrder>

@@ -556,9 +556,10 @@ void dftClass<FEOrder>::normalizeRho()
   const unsigned int n_q_points    = quadrature_formula.size();
 
   double charge = totalCharge(rhoInValues);
-  char buffer[100];
-  sprintf(buffer, "initial total charge: %18.10e \n", charge);
-  pcout << buffer;
+
+  if (dftParameters::verbosity>=1)
+     pcout<< "initial total charge: "<< charge<<std::endl;
+
   //scaling rho
   typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
   for (; cell!=endc; ++cell) {
@@ -574,6 +575,7 @@ void dftClass<FEOrder>::normalizeRho()
     }
   }
   double chargeAfterScaling = totalCharge(rhoInValues);
-  sprintf(buffer, "initial total charge after scaling: %18.10e \n", chargeAfterScaling);
-  pcout << buffer;
+
+  if (dftParameters::verbosity>=1)
+     pcout<<"initial total charge after scaling: "<< chargeAfterScaling<<std::endl;
 }

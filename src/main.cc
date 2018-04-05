@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Phani Motamarri (2017)
+// @author Phani Motamarri (2017), Denis Davdov (2018)
 //
 
 //
@@ -39,81 +39,21 @@
 
 using namespace dealii;
 
-void
-print_usage_message (ParameterHandler &prm)
-{
-  static const char *message
-    =
-      "Usage:\n"
-      "mpirun -np nProcs executable -p parameterfile.prm\n"
-      "\n";
-  //parallel message stream
-  if (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)
-    {
-      std::cout << message;
-      prm.print_parameters (std::cout, ParameterHandler::Text);
-    }
-}
-
-
-void parse_command_line(const int argc,
-                        char *const *argv,
-                        ParameterHandler &prm)
-{
-  if (argc < 3)
-    {
-      AssertThrow(false,ExcMessage("Incorrect usage! Correct usage: mpirun -np nProcs executable -p parameterfile.prm"));
-    }
-
-  std::list<std::string> args;
-  for (int i=1; i<argc; ++i)
-    args.push_back (argv[i]);
-
-  while (args.size())
-    {
-      if (args.front() == std::string("-p"))
-        {
-          if (args.size() == 1)
-            {
-              std::cerr << "Error: flag '-p' must be followed by the "
-                        << "name of a parameter file."
-                        << std::endl;
-              print_usage_message (prm);
-              exit (1);
-            }
-          args.pop_front();
-          const std::string parameter_file = args.front();
-          args.pop_front();
-          prm.parse_input(parameter_file);
-          print_usage_message(prm);
-	  dftfe::dftParameters::parse_parameters(prm);
-
-	  const bool printParametersToFile=false;
-	  if (printParametersToFile)
-	  {
-	    std::ofstream output ("demoParameterFile.prm");
-	    prm.print_parameters (output, ParameterHandler::OutputStyle::Text);
-	  }
-#ifdef ENABLE_PERIODIC_BC
-	  AssertThrow(dftfe::dftParameters::periodicX || dftfe::dftParameters::periodicY || dftfe::dftParameters::periodicZ,ExcMessage("Incorrect executable: periodic executable being used for non-periodic problem."));
-#else
-	  AssertThrow(!(dftfe::dftParameters::periodicX || dftfe::dftParameters::periodicY || dftfe::dftParameters::periodicZ),ExcMessage("Incorrect executable: non-periodic executable being used for periodic problem."));
-#endif
-        }
-
-    }//end of while loop
-
-}//end of function
-
-
-
 int main (int argc, char *argv[])
 {
+  // deal.II tests expect parameter file as a first (!) argument
+  AssertThrow(argc > 1,
+              ExcMessage("Usage:\n"
+                         "mpirun -np nProcs executable parameterfile.prm\n"
+                         "\n"));
+
   Utilities::MPI::MPI_InitFinalize mpi_initialization (argc, argv);
 
   ParameterHandler prm;
   dftfe::dftParameters::declare_parameters (prm);
-  parse_command_line(argc,argv, prm);
+  const std::string parameter_file = argv[1];
+  prm.parse_input(parameter_file);
+  dftfe::dftParameters::parse_parameters(prm);
 
   deallog.depth_console(0);
 
