@@ -18,66 +18,82 @@
 #define dftUtils_H_
 
 #include <mpi.h>
-#include <deal.II/base/data_out_base.h>
+#include <headers.h>
 
-namespace dftUtils
-{
-  /** @brief Calculates partial occupancy of the atomic orbital using
-   *  Fermi-Dirac smearing.
-   *
-   *  @param  eigenValue
-   *  @param  fermiEnergy
-   *  @param  kb Boltzmann constant
-   *  @param  T smearing temperature
-   *  @return double The partial occupancy of the orbital
-   */
-  double getPartialOccupancy(const double eigenValue,const double fermiEnergy,const double kb,const double T);
+namespace dftfe {
 
-  /** @brief Applies an affine transformation to the domain bounding vectors
-   *
-   *  @param  d_domainBoundingVectors the bounding vectors of the domain given as a 2d array
-   *  @param  deformationGradient 
-   *  @return void.
-   */
-   void transformDomainBoundingVectors(std::vector<std::vector<double> > & domainBoundingVectors,
-	                               const dealii::Tensor<2,3,double> & deformationGradient);  
+    namespace dftUtils
+    {
+      /** @brief Calculates partial occupancy of the atomic orbital using
+       *  Fermi-Dirac smearing.
+       *
+       *  @param  eigenValue
+       *  @param  fermiEnergy
+       *  @param  kb Boltzmann constant
+       *  @param  T smearing temperature
+       *  @return double The partial occupancy of the orbital
+       */
+      double getPartialOccupancy(const double eigenValue,const double fermiEnergy,const double kb,const double T);
 
-  /**
-   * A class to split the given communicator into a number of pools
-   */
-  class Pool
-  {
-  public:
-    Pool(const MPI_Comm &mpi_communicator,
-         const unsigned int n_pools);
+      /** @brief Applies an affine transformation to the domain bounding vectors
+       *
+       *  @param  d_domainBoundingVectors the bounding vectors of the domain given as a 2d array
+       *  @param  deformationGradient
+       *  @return void.
+       */
+       void transformDomainBoundingVectors(std::vector<std::vector<double> > & domainBoundingVectors,
+					   const dealii::Tensor<2,3,double> & deformationGradient);
 
-    /**
-     * FIXME: document
-     */
-    MPI_Comm &get_interpool_comm();
+      /** @brief Writes to vtu file only from the lowest pool id
+       *
+       *  @param  dataOut  DataOut class object
+       *  @param  intralpoolcomm mpi communicator of domain decomposition inside each pool
+       *  @param  interpoolcomm  mpi communicator across pools
+       *  @param  fileName
+       */
+       void writeDataVTUParallelLowestPoolId(const dealii::DataOut<3> & dataOut,
+					     const MPI_Comm & intrapoolcomm,
+					     const MPI_Comm & interpoolcomm,
+					     const std::string & fileName);
 
-    /**
-     * FIXME: document
-     */
-    MPI_Comm &get_intrapool_comm();
+      /**
+       * A class to split the given communicator into a number of pools
+       */
+      class Pool
+      {
+      public:
+	Pool(const MPI_Comm &mpi_communicator,
+	     const unsigned int n_pools);
 
-    /**
-     * FIXME: document
-     */
-    MPI_Comm &get_replica_comm();
+	/**
+	 * FIXME: document
+	 */
+	MPI_Comm &get_interpool_comm();
 
-  private:
-    /// FIXME: document
-    MPI_Comm interpoolcomm;
+	/**
+	 * FIXME: document
+	 */
+	MPI_Comm &get_intrapool_comm();
 
-    /// FIXME: document
-    MPI_Comm intrapoolcomm;
+	/**
+	 * FIXME: document
+	 */
+	MPI_Comm &get_replica_comm();
 
-    /// FIXME: document
-    MPI_Comm mpi_comm_replica;
-  };
+      private:
+	/// FIXME: document
+	MPI_Comm interpoolcomm;
 
-  /// Exception handler for not implemented functionality
-  DeclExceptionMsg (ExcNotImplementedYet,"This functionality is not implemented yet or not needed to be implemented");
+	/// FIXME: document
+	MPI_Comm intrapoolcomm;
+
+	/// FIXME: document
+	MPI_Comm mpi_comm_replica;
+      };
+
+      /// Exception handler for not implemented functionality
+      DeclExceptionMsg (ExcNotImplementedYet,"This functionality is not implemented yet or not needed to be implemented");
+    }
+
 }
 #endif

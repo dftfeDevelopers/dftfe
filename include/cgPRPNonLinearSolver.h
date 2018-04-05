@@ -15,12 +15,13 @@
 //
 // @author Sambit Das (2018)
 
-#ifndef dft_CGPRPNonLinearSolver_h
-#define dft_CGPRPNonLinearSolver_h
+#ifndef CGPRPNonLinearSolver_h
+#define CGPRPNonLinearSolver_h
 
 
 #include "nonLinearSolver.h"
 
+namespace dftfe {
   /**
    * @brief Concrete class implementing PRP Conjugate Gradient non-linear
    * algebraic solver.
@@ -46,9 +47,9 @@
      *                   0 - no debug output
      *                   1 - limited debug output
      *                   2 - all debug output.
-     * @param lineSearchTolerance Tolereance required for line search 
+     * @param lineSearchTolerance Tolereance required for line search
      * convergence.
-     * @param lineSearchMaxIterations Maximum number of iterations for the 
+     * @param lineSearchMaxIterations Maximum number of iterations for the
      * line search.
      * @param lineSearchDampingParameter scales the initial line search step
      */
@@ -70,7 +71,7 @@
      *
      * @return Return value indicating success or failure.
      */
-     nonLinearSolver::ReturnValueType 
+     nonLinearSolver::ReturnValueType
      solve(solverFunction & function);
 
   private:
@@ -78,7 +79,7 @@
      * @brief Initialize direction.
      */
     void initializeDirection();
-      
+
     /**
      * @brief Perform line search.
      *
@@ -180,5 +181,5 @@
     dealii::ConditionalOStream   pcout;
   };
 
-
-#endif // dft_CGPRPNonLinearSolver_h
+}
+#endif // CGPRPNonLinearSolver_h

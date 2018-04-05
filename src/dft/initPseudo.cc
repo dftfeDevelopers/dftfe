@@ -16,9 +16,6 @@
 // @author Shiva Rudraraju (2016), Phani Motamarri (2016), Sambit Das (2018)
 //
 
-#include "pseudoUtils.cc"
-
-
 //
 //Initialize rho by reading in single-atom electron-density and fit a spline
 //
@@ -45,7 +42,8 @@ void dftClass<FEOrder>::initLocalPseudoPotential()
       else
           sprintf(pseudoFile, "%s/data/electronicStructure/pseudoPotential/z%u/pseudoAtomData/locPot.dat", DFT_PATH,*it);
 
-      pcout<<"Reading Local Pseudo-potential data from: " <<pseudoFile<<std::endl;
+      if (!dftParameters::reproducible_output)
+        pcout<<"Reading Local Pseudo-potential data from: " <<pseudoFile<<std::endl;
       dftUtils::readFile(2, pseudoPotentialData[*it], pseudoFile);
       unsigned int numRows = pseudoPotentialData[*it].size()-1;
       std::vector<double> xData(numRows), yData(numRows);
@@ -695,7 +693,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
   //
   QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
   //FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values);
-  FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values| update_quadrature_points);
+  FEValues<3> fe_values(FE, quadrature, update_quadrature_points);
   const unsigned int numberQuadraturePoints = quadrature.size();
   //const parallel::distributed::Triangulation<3> & tria = dofHandlerEigen.get_triangulation();
   //const unsigned int numberElements  = tria.n_locally_owned_active_cells();
@@ -1091,7 +1089,7 @@ void dftClass<FEOrder>::computeElementalProjectorKets()
   //
   QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
   //FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values);
-  FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values | update_quadrature_points);
+  FEValues<3> fe_values(FE, quadrature, update_values | update_JxW_values | update_quadrature_points);
   const unsigned int numberNodesPerElement  = FE.dofs_per_cell;
   const unsigned int numberQuadraturePoints = quadrature.size();
 

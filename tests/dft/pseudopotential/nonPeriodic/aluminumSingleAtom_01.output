@@ -1,0 +1,55 @@
+Number of pools: 1
+Pool size (number of MPI processes for domain decomposition): 1
+number of atoms: 1
+number of atoms types: 1
+Z:13
+=============================================================================================================================
+number of electrons: 3
+number of eigen values: 20
+number of wavefunctions computed using single atom data to be used as initial guess for starting the SCF: 9
+=============================================================================================================================
+-----------Domain bounding vectors (lattice vectors in fully periodic case)-------------
+v1 : 4.000000000000000000e+01 0.000000000000000000e+00 0.000000000000000000e+00
+v2 : 0.000000000000000000e+00 4.000000000000000000e+01 0.000000000000000000e+00
+v3 : 0.000000000000000000e+00 0.000000000000000000e+00 4.000000000000000000e+01
+-----------------------------------------------------------------------------------------
+------------Cartesian coordinates of atoms (origin at center of domain)------------------
+AtomId 0:  0.000000000000000000e+00 0.000000000000000000e+00 0.000000000000000000e+00
+-----------------------------------------------------------------------------------------
+
+Finite element mesh information
+-------------------------------------------------
+number of elements: 5888
+number of degrees of freedom: 413049
+-------------------------------------------------
+Volume of the domain (Bohr^3): 6.399999999944306182e+04
+
+Reading initial guess for rho.....
+initial total charge:   2.9999999099e+00 
+initial total charge after scaling:   3.0000000000e+00 
+
+Reading initial guess for PSI....
+Number of wavefunctions generated randomly to be used as initial guess for starting the SCF : 11
+
+Pseuodopotential initalization....
+
+Starting SCF iteration....
+SCF iteration converged to the specified tolerance after: 2 iterations.
+
+Energy computations (Hartree)
+-------------------
+Band energy             :  -6.7849639592935274e-01
+Kinetic energy          :   1.0431480807039510e+00
+Exchange energy         :  -4.7633982347365017e-01
+Correlation energy      :  -1.1049722317285435e-01
+Electrostatic energy    :  -2.4026759725786317e+00
+Total energy            :  -1.9463649385211852e+00
+Total energy per atom   :  -1.9463649385211852e+00
+procid: 0 atomId: 0, force component: 0, force: 1.677221916907001287e-09
+procid: 0 atomId: 0, force component: 1, force: -2.010634148064127658e-08
+procid: 0 atomId: 0, force component: 2, force: -3.024675265805853996e-08
+
+Ion forces (Hartree/Bohr)
+--------------------------------------------------------------------------------------------
+AtomId    0:  -1.617061201074021407e-09,2.020008235176327561e-08,3.020636463397072590e-08
+--------------------------------------------------------------------------------------------

@@ -25,7 +25,16 @@
 #include "../../include/eshelbyTensorSpinPolarized.h"
 #include "../../include/meshGenerator.h"
 #include "../../include/fileReaders.h"
+#include <boost/math/special_functions/spherical_harmonic.hpp>
 
+
+
+//This class computes and stores the configurational forces corresponding to geometry optimization.
+//It uses the formulation in the paper by Motamarri et.al. (https://arxiv.org/abs/1712.05535)
+//which provides an unified approach to atomic forces corresponding to internal atomic relaxation and cell stress
+//corresponding to cell relaxation.
+
+namespace  dftfe {
 
 #include "configurationalForceCompute/configurationalForceEEshelbyFPSPFnlLinFE.cc"
 #include "configurationalForceCompute/configurationalForceSpinPolarizedEEshelbyFPSPFnlLinFE.cc"
@@ -44,25 +53,18 @@
 #include "createBinObjectsForce.cc"
 #include "locateAtomCoreNodesForce.cc"
 #include "moveAtoms.cc"
-
-//This class computes and stores the configurational forces corresponding to geometry optimization.
-//It uses the formulation in the paper by Motamarri et.al. (https://arxiv.org/abs/1712.05535)
-//which provides an unified approach to atomic forces corresponding to internal atomic relaxation and cell stress
-//corresponding to cell relaxation.
-
 //
 //constructor
 //
 template<unsigned int FEOrder>
-forceClass<FEOrder>::forceClass(dftClass<FEOrder>* _dftPtr, MPI_Comm &mpi_comm_replica):
+forceClass<FEOrder>::forceClass(dftClass<FEOrder>* _dftPtr,const MPI_Comm &mpi_comm_replica):
   dftPtr(_dftPtr),
   FEForce (FE_Q<3>(QGaussLobatto<1>(2)), 3), //linear shape function
   mpi_communicator (mpi_comm_replica),
   gaussianMovePar(mpi_comm_replica),
-  n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_communicator)),
-  this_mpi_process (Utilities::MPI::this_mpi_process(mpi_communicator)),
-  pcout(std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
-  computing_timer (pcout, TimerOutput::never, TimerOutput::wall_times)
+  n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_comm_replica)),
+  this_mpi_process (Utilities::MPI::this_mpi_process(mpi_comm_replica)),
+  pcout(std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
 {
 
 }
@@ -73,7 +75,6 @@ forceClass<FEOrder>::forceClass(dftClass<FEOrder>* _dftPtr, MPI_Comm &mpi_comm_r
 template<unsigned int FEOrder>
 void forceClass<FEOrder>::initUnmoved(const Triangulation<3,3> & triangulation)
 {
-  computing_timer.enter_section("forceClass setup");
   d_dofHandlerForce.clear();
   d_dofHandlerForce.initialize(triangulation,FEForce);
   d_dofHandlerForce.distribute_dofs(FEForce);
@@ -121,7 +122,6 @@ void forceClass<FEOrder>::initUnmoved(const Triangulation<3,3> & triangulation)
   d_constraintsNoneForce.close();
 #endif
   gaussianMovePar.init(triangulation,dftPtr->d_domainBoundingVectors);
-  computing_timer.exit_section("forceClass setup");
 }
 
 //reinitialize force class object after mesh update
@@ -257,3 +257,5 @@ template class forceClass<9>;
 template class forceClass<10>;
 template class forceClass<11>;
 template class forceClass<12>;
+
+}

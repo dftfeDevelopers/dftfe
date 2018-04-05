@@ -19,14 +19,16 @@
 #include <meshMovementGaussian.h>
 #include <dftParameters.h>
 
-meshMovementGaussianClass::meshMovementGaussianClass( MPI_Comm &mpi_comm_replica):
+namespace dftfe {
+
+meshMovementGaussianClass::meshMovementGaussianClass(const MPI_Comm &mpi_comm_replica):
  meshMovementClass(mpi_comm_replica)
 {
 }
 
 std::pair<bool,double> meshMovementGaussianClass::moveMesh(const std::vector<Point<C_DIM> > & controlPointLocations,
                                                            const std::vector<Tensor<1,C_DIM,double> > & controlPointDisplacements,
-                                                           const double controllingParameter)   
+                                                           const double controllingParameter)
 {
   d_controlPointLocations=controlPointLocations;
   d_controlPointDisplacements=controlPointDisplacements;
@@ -40,7 +42,7 @@ std::pair<bool,double> meshMovementGaussianClass::moveMesh(const std::vector<Poi
   computeIncrement();
   finalizeIncrementField();
   if (dftParameters::verbosity==2)
-      pcout << "...Computed triangulation displacement increment" << std::endl;	
+      pcout << "...Computed triangulation displacement increment" << std::endl;
 
   updateTriangulationVertices();
   std::pair<bool,double> returnData=movedMeshCheck();
@@ -50,24 +52,24 @@ std::pair<bool,double> meshMovementGaussianClass::moveMesh(const std::vector<Poi
 
 
 
-//The triangulation nodes corresponding to control point location are constrained to only 
-//their corresponding controlPointDisplacements. In other words for those nodes we don't consider overlapping 
+//The triangulation nodes corresponding to control point location are constrained to only
+//their corresponding controlPointDisplacements. In other words for those nodes we don't consider overlapping
 //Gaussians
 void meshMovementGaussianClass::computeIncrement()
 {
   unsigned int vertices_per_cell=GeometryInfo<C_DIM>::vertices_per_cell;
   std::vector<bool> vertex_touched(d_dofHandlerMoveMesh.get_triangulation().n_vertices(),
-				   false);      
+				   false);
   DoFHandler<3>::active_cell_iterator
   cell = d_dofHandlerMoveMesh.begin_active(),
-  endc = d_dofHandlerMoveMesh.end();      
+  endc = d_dofHandlerMoveMesh.end();
   for (; cell!=endc; ++cell) {
    if (!cell->is_artificial()){
     for (unsigned int i=0; i<vertices_per_cell; ++i){
 	const unsigned global_vertex_no = cell->vertex_index(i);
 
 	if (vertex_touched[global_vertex_no])
-	   continue;	    
+	   continue;
 	vertex_touched[global_vertex_no]=true;
 	Point<C_DIM> nodalCoor = cell->vertex(i);
 
@@ -80,13 +82,13 @@ void meshMovementGaussianClass::computeIncrement()
 	     }
 	}
 	for (unsigned int iControl=0;iControl <d_controlPointLocations.size(); iControl++)
-	{	    
+	{
 	    if (overlappedControlPointId!=iControl && overlappedControlPointId!=-1)
 	    {
-	       //std::cout<< " overlappedControlPointId: "<< overlappedControlPointId << std::endl;	
+	       //std::cout<< " overlappedControlPointId: "<< overlappedControlPointId << std::endl;
 	       continue;
 	    }
-  	    const double rsq=(nodalCoor-d_controlPointLocations[iControl]).norm_square();	    
+  	    const double rsq=(nodalCoor-d_controlPointLocations[iControl]).norm_square();
 	    const double gaussianWeight=std::exp(-d_controllingParameter*rsq);
 	    for (unsigned int idim=0; idim < C_DIM ; idim++)
 	    {
@@ -107,3 +109,4 @@ void meshMovementGaussianClass::computeIncrement()
   }
 }
 
+}

@@ -22,42 +22,51 @@
 #include <string>
 #include <deal.II/base/parameter_handler.h>
 
-// FIXME: document Parameters
-// FIXME: this should really be an object, not global values
-//
-//Declare dftUtils functions
-//
-namespace dftParameters
-{
+namespace dftfe {
+    // FIXME: document Parameters
+    // FIXME: this should really be an object, not global values
+    //
+    //Declare dftUtils functions
+    //
+    namespace dftParameters
+    {
 
-  extern unsigned int finiteElementPolynomialOrder,n_refinement_steps,numberEigenValues,xc_id, spinPolarized, nkx,nky,nkz, pseudoProjector;
-  extern unsigned int chebyshevOrder,numPass,numSCFIterations,maxLinearSolverIterations, mixingHistory, npool;
+      extern unsigned int finiteElementPolynomialOrder,n_refinement_steps,numberEigenValues,xc_id, spinPolarized, nkx,nky,nkz, pseudoProjector;
+      extern unsigned int chebyshevOrder,numPass,numSCFIterations,maxLinearSolverIterations, mixingHistory, npool;
 
-  extern double radiusAtomBall, mixingParameter, dkx, dky, dkz;
-  extern double lowerEndWantedSpectrum,relLinearSolverTolerance,selfConsistentSolverTolerance,TVal, start_magnetization;
+      extern double radiusAtomBall, mixingParameter, dkx, dky, dkz;
+      extern double lowerEndWantedSpectrum,relLinearSolverTolerance,selfConsistentSolverTolerance,TVal, start_magnetization;
 
-  extern bool isPseudopotential,periodicX,periodicY,periodicZ, useSymm, timeReversal;
-  extern std::string meshFileName,coordinatesFile,domainBoundingVectorsFile,kPointDataFile, ionRelaxFlagsFile;
+      extern bool isPseudopotential,periodicX,periodicY,periodicZ, useSymm, timeReversal;
+      extern std::string meshFileName,coordinatesFile,domainBoundingVectorsFile,kPointDataFile, ionRelaxFlagsFile;
 
-  extern double outerAtomBallRadius, meshSizeOuterDomain;
-  extern double meshSizeInnerBall, meshSizeOuterBall;
+      extern double outerAtomBallRadius, meshSizeOuterDomain;
+      extern double meshSizeInnerBall, meshSizeOuterBall;
 
-  extern bool isIonOpt, isCellOpt, isIonForce, isCellStress;
-  extern double forceRelaxTol, stressRelaxTol;
-  extern unsigned int cellConstraintType;
+      extern bool isIonOpt, isCellOpt, isIonForce, isCellStress;
+      extern double forceRelaxTol, stressRelaxTol;
+      extern unsigned int cellConstraintType;
 
-  extern unsigned int verbosity;
+      extern unsigned int verbosity;
 
-  /**
-   * Declare parameters.
-   */
-  void declare_parameters(dealii::ParameterHandler &prm);
+      extern bool reproducible_output;
 
-  /**
-   * Parse parameters.
-   */
-  void parse_parameters(dealii::ParameterHandler &prm);
+      /**
+       * Declare parameters.
+       */
+      void declare_parameters(dealii::ParameterHandler &prm);
 
-};
+      /**
+       * Parse parameters.
+       */
+      void parse_parameters(dealii::ParameterHandler &prm);
 
+      /**
+       * Check and print parameters
+       */
+      void check_print_parameters(const dealii::ParameterHandler &prm);
+
+    };
+
+}
 #endif

@@ -18,6 +18,7 @@
 
 #include "../../include/solverFunction.h"
 
+namespace dftfe {
   //
   // Constructor.
   //
@@ -44,7 +45,7 @@
   solverFunction::getInitialGuessForBisectionMethod(std::vector<double> & solution) const
   {
 
-     
+
     //
     // firewalls
     //
@@ -58,7 +59,7 @@
     return;
   }
   */
-  
+
   //
   // Destructor.
   //
@@ -71,3 +72,5 @@
     return;
 
   }
+
+}

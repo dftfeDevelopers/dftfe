@@ -18,11 +18,9 @@
 #include <dftUtils.h>
 #include <iostream>
 #include <fstream>
-#include <deal.II/base/data_out_base.h>
-#include <deal.II/base/mpi.h>
 #include <dftParameters.h>
 
-using namespace dealii;
+namespace dftfe {
 
 namespace dftUtils
 {
@@ -53,14 +51,31 @@ namespace dftUtils
       }
   }
 
+
+  void writeDataVTUParallelLowestPoolId(const dealii::DataOut<3> & dataOut,
+	                                const MPI_Comm & intrapoolcomm,
+				        const MPI_Comm & interpoolcomm,
+	                                const std::string & fileName)
+  {
+    const unsigned int poolId=dealii::Utilities::MPI::this_mpi_process(interpoolcomm);
+    const unsigned int minPoolId=dealii::Utilities::MPI::min(poolId,interpoolcomm);
+
+    if (poolId==minPoolId)
+    {
+      std::string fileNameVTU=fileName+".vtu";
+      dataOut.write_vtu_in_parallel(fileNameVTU.c_str(),intrapoolcomm);
+    }
+  }
+
+
   Pool::Pool(const MPI_Comm &mpi_communicator,
              const unsigned int npool)
   {
-    const unsigned int n_mpi_processes = Utilities::MPI::n_mpi_processes(mpi_communicator);
+    const unsigned int n_mpi_processes = dealii::Utilities::MPI::n_mpi_processes(mpi_communicator);
     AssertThrow(n_mpi_processes % npool == 0,
-                ExcMessage("Number of mpi processes must be a multiple of NUMBER OF POOLS"));
+                dealii::ExcMessage("Number of mpi processes must be a multiple of NUMBER OF POOLS"));
     const unsigned int poolSize= n_mpi_processes/npool;
-    const unsigned int taskId = Utilities::MPI::this_mpi_process(mpi_communicator);
+    const unsigned int taskId = dealii::Utilities::MPI::this_mpi_process(mpi_communicator);
 
     // FIXME: any and all terminal output should be optional
     if (taskId == 0)
@@ -92,8 +107,8 @@ namespace dftUtils
         if (taskId==i)
 	{
            if (dftParameters::verbosity==1)
-             std::cout << " My global id is " << taskId << " , pool id is " << Utilities::MPI::this_mpi_process(interpoolcomm)  <<
-                    " , intrapool id is " << Utilities::MPI::this_mpi_process(intrapoolcomm) << std::endl;
+             std::cout << " My global id is " << taskId << " , pool id is " << dealii::Utilities::MPI::this_mpi_process(interpoolcomm)  <<
+                    " , intrapool id is " << dealii::Utilities::MPI::this_mpi_process(intrapoolcomm) << std::endl;
 	}
         MPI_Barrier(mpi_communicator);
       }
@@ -113,5 +128,7 @@ namespace dftUtils
   {
     return intrapoolcomm;
   }
+
+}
 
 }

@@ -16,13 +16,6 @@
 // @author Shiva Rudraraju (2016), Phani Motamarri (2016)
 //
 
-#include <fstream>
-#include <boost/math/special_functions/spherical_harmonic.hpp>
-#include <boost/math/distributions/normal.hpp>
-#include <boost/random/normal_distribution.hpp>
-
-#include "../../include/dftParameters.h"
-
 
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::loadPSIFiles(unsigned int Z,
@@ -62,7 +55,8 @@ void dftClass<FEOrder>::loadPSIFiles(unsigned int Z,
   //
   if(fileReadFlag > 0)
     {
-      pcout<<"reading data from file: "<<psiFile<<std::endl;
+      if (!dftParameters::reproducible_output)
+        pcout<<"reading data from file: "<<psiFile<<std::endl;
 
       int numRows = values.size()-1;
       std::vector<double> xData(numRows), yData(numRows);
