@@ -30,10 +30,20 @@
 #include <fileReaders.h>
 #include <dftParameters.h>
 #include <dftUtils.h>
+#include <complex>
+#include <cmath>
+#include <algorithm>
+#include "linalg.h"
+#include "stdafx.h"
+#include <fstream>
+#include <boost/math/special_functions/spherical_harmonic.hpp>
+#include <boost/math/distributions/normal.hpp>
+#include <boost/random/normal_distribution.hpp>
 #include <interpolateFieldsFromPreviousMesh.h>
 
-
+namespace dftfe {
 //Include cc files
+#include "pseudoUtils.cc"
 #include "moveMeshToAtoms.cc"
 #include "initUnmovedTriangulation.cc"
 #include "initBoundaryConditions.cc"
@@ -41,8 +51,9 @@
 #include "initPseudo.cc"
 #include "initPseudo-OV.cc"
 #include "initRho.cc"
-
-
+#ifdef ENABLE_PERIODIC_BC
+#include "generateImageCharges.cc"
+#endif
 #include "psiInitialGuess.cc"
 #include "energy.cc"
 #include "charge.cc"
@@ -51,15 +62,6 @@
 #include "mixingschemes.cc"
 #include "chebyshev.cc"
 #include "solveVself.cc"
-
-#include <complex>
-#include <cmath>
-#include <algorithm>
-#include "linalg.h"
-#include "stdafx.h"
-#ifdef ENABLE_PERIODIC_BC
-#include "generateImageCharges.cc"
-#endif
 
 
 //
@@ -768,3 +770,4 @@ template class dftClass<9>;
 template class dftClass<10>;
 template class dftClass<11>;
 template class dftClass<12>;
+}

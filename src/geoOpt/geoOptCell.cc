@@ -26,6 +26,8 @@
 #include <dftParameters.h>
 #include <dftUtils.h>
 
+namespace dftfe {
+
 template<unsigned int FEOrder>
 void geoOptCell<FEOrder>::writeMesh(std::string meshFileName)
  {
@@ -378,5 +380,5 @@ template class geoOptCell<9>;
 template class geoOptCell<10>;
 template class geoOptCell<11>;
 template class geoOptCell<12>;
-
+}
 #endif

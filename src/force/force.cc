@@ -25,7 +25,16 @@
 #include "../../include/eshelbyTensorSpinPolarized.h"
 #include "../../include/meshGenerator.h"
 #include "../../include/fileReaders.h"
+#include <boost/math/special_functions/spherical_harmonic.hpp>
 
+
+
+//This class computes and stores the configurational forces corresponding to geometry optimization.
+//It uses the formulation in the paper by Motamarri et.al. (https://arxiv.org/abs/1712.05535)
+//which provides an unified approach to atomic forces corresponding to internal atomic relaxation and cell stress
+//corresponding to cell relaxation.
+
+namespace  dftfe {
 
 #include "configurationalForceCompute/configurationalForceEEshelbyFPSPFnlLinFE.cc"
 #include "configurationalForceCompute/configurationalForceSpinPolarizedEEshelbyFPSPFnlLinFE.cc"
@@ -44,12 +53,6 @@
 #include "createBinObjectsForce.cc"
 #include "locateAtomCoreNodesForce.cc"
 #include "moveAtoms.cc"
-
-//This class computes and stores the configurational forces corresponding to geometry optimization.
-//It uses the formulation in the paper by Motamarri et.al. (https://arxiv.org/abs/1712.05535)
-//which provides an unified approach to atomic forces corresponding to internal atomic relaxation and cell stress
-//corresponding to cell relaxation.
-
 //
 //constructor
 //
@@ -254,3 +257,5 @@ template class forceClass<9>;
 template class forceClass<10>;
 template class forceClass<11>;
 template class forceClass<12>;
+
+}

@@ -16,6 +16,8 @@
 // @author Sambit Das (2017)
 //
 
+namespace dftfe {
+
 template<unsigned int FEOrder>
 void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::vector<vectorType> &src,
 								    std::vector<vectorType>       &dst)
@@ -106,7 +108,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::v
 #endif
 	      index++;
 	    }
-	 
+
 
 	  for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInElement[iElem].size();++iAtom)
 	    {
@@ -166,10 +168,10 @@ for (unsigned int i=0; i<numberWaveFunctions;++i)
    }
 
 
- 
+
   for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
     {
-      const unsigned int atomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];	
+      const unsigned int atomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];
       const unsigned int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
       for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
 	{
@@ -189,7 +191,7 @@ for (unsigned int i=0; i<numberWaveFunctions;++i)
 
   for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
     {
-      const unsigned int atomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];	
+      const unsigned int atomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];
       const unsigned int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
       for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
 	{
@@ -208,7 +210,7 @@ for (unsigned int i=0; i<numberWaveFunctions;++i)
   //
   for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
     {
-      const unsigned int atomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];		
+      const unsigned int atomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];
       const unsigned int numberPseudoWaveFunctions =  dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
       for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
 	{
@@ -237,7 +239,7 @@ for (unsigned int i=0; i<numberWaveFunctions;++i)
   //
   for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
     {
-      const unsigned int atomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];		
+      const unsigned int atomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];
       int numberPseudoWaveFunctions =  dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
       for(unsigned int iElemComp = 0; iElemComp < dftPtr->d_elementIteratorsInAtomCompactSupport[atomId].size(); ++iElemComp)
 	{
@@ -313,4 +315,6 @@ for (unsigned int i=0; i<numberWaveFunctions;++i)
 	}
 
     }
+}
+
 }

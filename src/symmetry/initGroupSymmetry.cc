@@ -24,7 +24,7 @@
 #include "symmetrizeRho.cc"
 
 
-
+namespace dftfe {
 //
 //constructor
 //
@@ -565,3 +565,5 @@ template class symmetryClass<9>;
 template class symmetryClass<10>;
 template class symmetryClass<11>;
 template class symmetryClass<12>;
+
+}

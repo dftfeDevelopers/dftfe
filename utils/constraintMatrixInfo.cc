@@ -15,9 +15,9 @@
 //
 // @author  Phani Motamarri (2018)
 //
-#include "../include/constraintMatrixInfo.h" 
+#include "../include/constraintMatrixInfo.h"
 
-
+namespace dftfe {
 //
 //Declare dftUtils functions
 //
@@ -48,13 +48,13 @@ namespace dftUtils
   //
   void constraintMatrixInfo::initialize(const std::shared_ptr< const dealii::Utilities::MPI::Partitioner > & partitioner,
 					const dealii::ConstraintMatrix & constraintMatrixData)
-		
+
   {
-   
+
     clear();
 
     const dealii::IndexSet & locally_owned_dofs = partitioner->locally_owned_range();
-    
+
     for(dealii::IndexSet::ElementIterator it = locally_owned_dofs.begin(); it != locally_owned_dofs.end();++it)
       {
 	if(constraintMatrixData.is_constrained(*it))
@@ -77,7 +77,7 @@ namespace dftUtils
 
   //
   //set the constrained degrees of freedom to values so that constraints
-  //are satisfied 
+  //are satisfied
   //
   void constraintMatrixInfo::distribute(dealii::parallel::distributed::Vector<double> &fieldVector) const
   {
@@ -112,5 +112,5 @@ namespace dftUtils
 
 }
 
-
+}
 

@@ -17,19 +17,16 @@
 //
 
 
-#include <boost/math/special_functions/spherical_harmonic.hpp>
-
-
 namespace pseudoForceUtils
 {
      double tolerance = 1e-12;
-   
-     inline 
+
+     inline
      void getRadialFunctionVal(const double radialCoordinate,
 			  double &splineVal,
-			  const alglib::spline1dinterpolant * spline) 
+			  const alglib::spline1dinterpolant * spline)
      {
-  
+
        splineVal = alglib::spline1dcalc(*spline,
 				        radialCoordinate);
        return;
@@ -39,10 +36,10 @@ namespace pseudoForceUtils
      void
      getSphericalHarmonicVal(const double theta, const double phi, const int l, const int m, double & sphericalHarmonicVal)
      {
-      
+
        if(m < 0)
           sphericalHarmonicVal = sqrt(2.0)*boost::math::spherical_harmonic_i(l,-m,theta,phi);
-      
+
        else if (m == 0)
           sphericalHarmonicVal = boost::math::spherical_harmonic_r(l,m,theta,phi);
 
@@ -52,14 +49,14 @@ namespace pseudoForceUtils
        return;
 
      }
-     
+
      inline
      void
      convertCartesianToSpherical(double *x, double & r, double & theta, double & phi)
      {
 
        r = sqrt(x[0]*x[0] + x[1]*x[1] + x[2]*x[2]);
- 
+
        if(r == 0)
         {
            theta = 0.0;
@@ -71,8 +68,8 @@ namespace pseudoForceUtils
 	   //
 	   // check if theta = 0 or PI (i.e, whether the point is on the Z-axis)
 	   // If yes, assign phi = 0.0.
-	   // NOTE: In case theta = 0 or PI, phi is undetermined. The actual value 
-	   // of phi doesn't matter in computing the enriched function value or 
+	   // NOTE: In case theta = 0 or PI, phi is undetermined. The actual value
+	   // of phi doesn't matter in computing the enriched function value or
 	   // its gradient. We assign phi = 0.0 here just as a dummy value
 	   //
 	   if(fabs(theta - 0.0) >= tolerance && fabs(theta - M_PI) >= tolerance)
@@ -84,7 +81,7 @@ namespace pseudoForceUtils
 
 
 
-    inline 
+    inline
     void
     getPolarFunctionVal(const double theta, const int l, const int m, double & polarFunctionVal)
     {
@@ -127,7 +124,7 @@ namespace pseudoForceUtils
 	}
 
       return;
-    
+
     }
 
     //
@@ -138,13 +135,13 @@ namespace pseudoForceUtils
     // sin(|m|*phi)/sqrt(PI)  	if m < 0
     // 1/sqrt(2*PI) 		if m = 0;
     //
- 
-    inline 
+
+    inline
     void
     getAzimuthalFunctionVal(const double phi, const int m, double  & azimuthalFunctionVal)
     {
 
-      if(m > 0) 
+      if(m > 0)
         azimuthalFunctionVal = cos(m*phi)/sqrt(M_PI);
 
       else if(m == 0)
@@ -159,7 +156,7 @@ namespace pseudoForceUtils
 	  std::string message("Invalid m quantum number.");
 	  Assert(false,ExcMessage(message));
 	}
-      
+
       return;
 
     }
@@ -183,7 +180,7 @@ namespace pseudoForceUtils
       // get the value of cosine(theta)
       //
       const double cosTheta = cos(theta);
-     
+
       const double term1 = (abs(modM+1) <= l) ? boost::math::legendre_p(l, modM + 1, cosTheta) : 0.0;
       const double term2 = (abs(modM-1) <= l) ? -1.0*(l+modM)*(l-modM+1)*boost::math::legendre_p(l, modM - 1, cosTheta) : 0.0;
 
@@ -193,14 +190,14 @@ namespace pseudoForceUtils
       const double normalizingCoeff = sqrt(((2.0*l + 1)*boost::math::factorial<double>(l-modM))/(2.0*boost::math::factorial<double>(l+modM)));
 
       //
-      // multiply the normalizing coeff 
+      // multiply the normalizing coeff
       //
       polarDerivative = 0.5*(term1 + term2)*normalizingCoeff;
-     
+
       return;
 
-    } 
- 
+    }
+
     //
     // compute the derivative of the azimuthal part of the enriched function w.r.t the azimuthal angle (phi)
     // Real form of spherical harmonic used for non-periodic problem.
@@ -208,15 +205,15 @@ namespace pseudoForceUtils
     // -|m|*sin(|m|*phi)/sqrt(PI) if m > 0;
     //  |m|*cos(|m|*phi)/sqrt(PI) if m < 0;
     //  0.0 if 			  if m = 0;
-    // 
+    //
     inline
-    void 
+    void
     getAzimuthalFunctionDerivative(const double phi, const int m, double & azimuthalDerivative)
     {
 
       if(m > 0)
         azimuthalDerivative = -m*sin(m*phi)/sqrt(M_PI);
- 
+
       else if(m < 0)
 	azimuthalDerivative = abs(m)*cos(abs(m)*phi)/sqrt(M_PI);
 
@@ -229,7 +226,7 @@ namespace pseudoForceUtils
 	  std::string message("Invalid m quantum number.");
 	  Assert(false,ExcMessage(message));
 	}
-      
+
       return;
 
     }
@@ -261,7 +258,7 @@ namespace pseudoForceUtils
 	  pseudoWaveFunctionDerivatives[0] = 0.0;
 	  pseudoWaveFunctionDerivatives[1] = 0.0;
 	  pseudoWaveFunctionDerivatives[2] = normalizingCoeff/sqrt(2.0*M_PI)*radialDerivative*boost::math::legendre_p(l, modM, cosTheta)*cosTheta;
- 
+
 	}
 
       else if(m == 1)
@@ -286,7 +283,7 @@ namespace pseudoForceUtils
 
 	  else
 	    {
-	
+
 	      std::string message("Value of theta for the point lying on Z axis is neither zero nor PI");
 	      Assert(false,ExcMessage(message));
 
@@ -303,7 +300,7 @@ namespace pseudoForceUtils
 	      pseudoWaveFunctionDerivatives[0] = 0.0;
 	      pseudoWaveFunctionDerivatives[1] = -1.0*alpha*l*(l+1);
 	      pseudoWaveFunctionDerivatives[2] = 0.0;
-	
+
 	    }
 
 	  else if(fabs(theta - M_PI) < tolerance)
@@ -316,14 +313,14 @@ namespace pseudoForceUtils
 
 	  else
 	    {
-	
+
 	      std::string message("Value of theta for the point lying on Z axis is neither zero nor PI");
 	      Assert(false,ExcMessage(message));
 
 	    }
 
 	}
-	
+
       else
 	{
 	  pseudoWaveFunctionDerivatives[0] = 0.0;
@@ -337,32 +334,32 @@ namespace pseudoForceUtils
 
     }
 
-  
-    inline 
-    void 
+
+    inline
+    void
     getRadialFunctionDerivative(const double radialCoordinate,
 	 			double & splineVal,
                                 double & dSplineVal,
 				double & ddSplineVal,
-				const alglib::spline1dinterpolant * spline) 
+				const alglib::spline1dinterpolant * spline)
     {
-  
+
       alglib::spline1ddiff(*spline,
                            radialCoordinate,
                            splineVal,
                            dSplineVal,
                            ddSplineVal);
-  
+
       return;
-  
+
     }
 
     inline
     void
-    getPseudoWaveFunctionDerivatives(const double r, 
-				     const double theta, 
-				     const double phi, 
-				     const int lQuantumNumber, 
+    getPseudoWaveFunctionDerivatives(const double r,
+				     const double theta,
+				     const double phi,
+				     const int lQuantumNumber,
 				     const int mQuantumNumber,
 				     std::vector<double> & pseudoWaveFunctionDerivatives,
 				     const alglib::spline1dinterpolant & spline)
@@ -382,7 +379,7 @@ namespace pseudoForceUtils
                            ddRadialValD2r);
 
       //
-      // define variable to store the polar function value, polar function derivative (w.r.t polar angle theta), azimuthal function value 
+      // define variable to store the polar function value, polar function derivative (w.r.t polar angle theta), azimuthal function value
       // and azimuthal angle derivative (w.r.t azimuthal angle phi)
       //
       double polarVal, dPolarValDtheta, azimuthalVal, dAzimuthalValDphi;
@@ -397,7 +394,7 @@ namespace pseudoForceUtils
 	  //
 	  // get the value for polar part of the enriched function
 	  //
-	  getPolarFunctionVal(theta, lQuantumNumber, mQuantumNumber, polarVal); 
+	  getPolarFunctionVal(theta, lQuantumNumber, mQuantumNumber, polarVal);
 
 	  //
 	  // get the derivative of the polar function w.r.t theta
@@ -445,7 +442,7 @@ namespace pseudoForceUtils
     }
 
     inline
-    void 
+    void
     getDeltaVlDerivatives(const double r,
 			  double *x,
 			  std::vector<double> & deltaVlDerivatives,
@@ -468,5 +465,5 @@ namespace pseudoForceUtils
 
     }
 
-   
+
 }
