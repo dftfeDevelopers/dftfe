@@ -61,6 +61,11 @@ namespace dftfe {
        */
       void parse_parameters(dealii::ParameterHandler &prm);
 
+      /**
+       * Check and print parameters
+       */
+      void check_print_parameters(const dealii::ParameterHandler &prm);
+
     };
 
 }

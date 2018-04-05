@@ -414,6 +414,16 @@ namespace dftParameters
     }
     prm.leave_subsection ();
 
+    check_print_parameters(prm);
+  }
+
+
+  void check_print_parameters(const dealii::ParameterHandler &prm)
+  {
+    if (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0 &&  dftParameters::verbosity>=1)
+    {
+      prm.print_parameters (std::cout, ParameterHandler::Text);
+    }
 
     const bool printParametersToFile=false;
     if (printParametersToFile)
@@ -425,7 +435,7 @@ namespace dftParameters
     AssertThrow(dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ,ExcMessage("Incorrect executable: periodic executable being used for non-periodic problem."));
 #else
     AssertThrow(!(dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ),ExcMessage("Incorrect executable: non-periodic executable being used for periodic problem."));
-#endif    
+#endif
   }
 
 }
