@@ -1,5 +1,3 @@
-Number of pools: 1
-Pool size (number of MPI processes for domain decomposition): 1
 number of atoms: 1
 number of atoms types: 1
 Z:13

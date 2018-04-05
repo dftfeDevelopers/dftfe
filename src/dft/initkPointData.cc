@@ -30,8 +30,8 @@ namespace internaldft{
     return crossProduct;
   }
 
-  std::vector<std::vector<double> > getReciprocalLatticeVectors(const std::vector<std::vector<double> > & latticeVectors) 
-	                           
+  std::vector<std::vector<double> > getReciprocalLatticeVectors(const std::vector<std::vector<double> > & latticeVectors)
+
   {
       std::vector<std::vector<double> > reciprocalLatticeVectors(3,std::vector<double> (3,0.0));
       for(unsigned int i = 0; i < 2; ++i)
@@ -105,13 +105,13 @@ template<unsigned int FEOrder>
 void dftClass<FEOrder>::recomputeKPointCoordinates()
 {
   // Get the reciprocal lattice vectors
-  d_reciprocalLatticeVectors=internaldft::getReciprocalLatticeVectors(d_domainBoundingVectors);    
+  d_reciprocalLatticeVectors=internaldft::getReciprocalLatticeVectors(d_domainBoundingVectors);
   // Convert from crystal to Cartesian coordinates
   for(unsigned int i = 0; i < d_maxkPoints; ++i)
     for (unsigned int d=0; d < 3; ++d)
       d_kPointCoordinates[3*i + d] = kPointReducedCoordinates[3*i+0]*d_reciprocalLatticeVectors[0][d] +
                                      kPointReducedCoordinates[3*i+1]*d_reciprocalLatticeVectors[1][d] +
-                                     kPointReducedCoordinates[3*i+2]*d_reciprocalLatticeVectors[2][d];    
+                                     kPointReducedCoordinates[3*i+2]*d_reciprocalLatticeVectors[2][d];
 }
 
 template<unsigned int FEOrder>
@@ -167,7 +167,7 @@ void dftClass<FEOrder>::generateMPGrid()
     int rotation[max_size][3][3];
     //
     //////////////////////////////////////////  SPG CALL  ///////////////////////////////////////////////////
-    if (dftParameters::useSymm) { 
+    if (dftParameters::useSymm) {
      const int num_atom = atomLocationsFractional.size();
      double lattice[3][3], position[num_atom][3];
      int types[num_atom] ;
@@ -187,7 +187,8 @@ void dftClass<FEOrder>::generateMPGrid()
            position[i][j] = atomLocationsFractional[i][j+2] ;
      }
      //
-     pcout<<" getting space group symmetries from spg " << std::endl;
+     if (!dftParameters::reproducible_output)
+        pcout<<" getting space group symmetries from spg " << std::endl;
      symmetryPtr->numSymm = spg_get_symmetry(rotation,
                      (symmetryPtr->translation),
                      max_size,
@@ -196,32 +197,36 @@ void dftClass<FEOrder>::generateMPGrid()
                      types,
                      num_atom,
                      1e-5);
-     pcout<<" number of symmetries allowed for the lattice " <<symmetryPtr->numSymm << std::endl;
-     for (unsigned int iSymm=0; iSymm<symmetryPtr->numSymm; ++iSymm){
-	pcout << " Symmetry " << iSymm+1 << std::endl;
-	pcout << " Rotation " << std::endl;
-	for (unsigned int ipol = 0; ipol<3; ++ipol)
-		 pcout << rotation[iSymm][ipol][0] << "  " <<rotation[iSymm][ipol][1] << "  " << rotation[iSymm][ipol][2] << std::endl;
-	pcout << " translation " << std::endl;
-	pcout << symmetryPtr->translation[iSymm][0] << "  " <<symmetryPtr->translation[iSymm][1] << "  " << symmetryPtr->translation[iSymm][2] << std::endl;
-	pcout << "	" << std::endl ;
+     if (!dftParameters::reproducible_output)
+     {
+	 pcout<<" number of symmetries allowed for the lattice " <<symmetryPtr->numSymm << std::endl;
+	 for (unsigned int iSymm=0; iSymm<symmetryPtr->numSymm; ++iSymm)
+	 {
+	    pcout << " Symmetry " << iSymm+1 << std::endl;
+	    pcout << " Rotation " << std::endl;
+	    for (unsigned int ipol = 0; ipol<3; ++ipol)
+		     pcout << rotation[iSymm][ipol][0] << "  " <<rotation[iSymm][ipol][1] << "  " << rotation[iSymm][ipol][2] << std::endl;
+	    pcout << " translation " << std::endl;
+	    pcout << symmetryPtr->translation[iSymm][0] << "  " <<symmetryPtr->translation[iSymm][1] << "  " << symmetryPtr->translation[iSymm][2] << std::endl;
+	    pcout << "	" << std::endl ;
+	 }
      }
     }
     //
-    else {   // only time reversal symmetry; no point group symmetry       
+    else {   // only time reversal symmetry; no point group symmetry
      //
      symmetryPtr->numSymm = 1 ;
      for (unsigned int j=0; j<3; ++j) {
           for (unsigned int k=0; k<3; ++k) {
-	       if (j==k) 
+	       if (j==k)
                    rotation[0][j][k] = 1 ;
-	       else 
+	       else
 	           rotation[0][j][k] = 0 ;
           }
 	  symmetryPtr->translation[0][j] = 0.0 ;
       }
-      pcout<<" Only time reversal symmetry to be used " << std::endl;
-
+      if (!dftParameters::reproducible_output)
+          pcout<<" Only time reversal symmetry to be used " << std::endl;
     }
 
     //// adding time reversal  //////
@@ -231,7 +236,7 @@ void dftClass<FEOrder>::generateMPGrid()
             for (unsigned int k=0; k<3; ++k)
                rotation[iSymm][j][k] = -1*rotation[iSymm-symmetryPtr->numSymm][j][k] ;
 	    symmetryPtr->translation[iSymm][j] = symmetryPtr->translation[iSymm-symmetryPtr->numSymm][j] ;
-         }     
+         }
       }
       symmetryPtr->numSymm = 2*symmetryPtr->numSymm;
     }
@@ -330,39 +335,40 @@ void dftClass<FEOrder>::generateMPGrid()
   symmetryPtr->numSymm = usedSymm;
   symmetryPtr->symmUnderGroup.resize (d_maxkPoints, std::vector<int>(symmetryPtr->numSymm,0));
   symmetryPtr->numSymmUnderGroup.resize(d_maxkPoints,1) ; // minimum should be 1, because identity is always present
-  for (unsigned int i=0; i<d_maxkPoints; ++i){
-      //
+  for (unsigned int i=0; i<d_maxkPoints; ++i)
+  {
       symmetryPtr->symmUnderGroup[i][0] = 1;
-      for (unsigned int iSymm = 1; iSymm<(symmetryPtr->numSymm); ++iSymm) {
+      for (unsigned int iSymm = 1; iSymm<(symmetryPtr->numSymm); ++iSymm)
+      {
          if(std::find(symmUnderGroupTemp[iSymm].begin(), symmUnderGroupTemp[iSymm].end(), i) != symmUnderGroupTemp[iSymm].end()) {
             symmetryPtr->symmUnderGroup[i][iSymm] = 1 ;
 	    symmetryPtr->numSymmUnderGroup[i] += 1 ;
-     }
-   }
-   if (dftParameters::verbosity==2)
-       pcout << " kpoint " << i << " numSymmUnderGroup " << symmetryPtr->numSymmUnderGroup[i] << std::endl;
+          }
+      }
+      if (dftParameters::verbosity==2)
+         pcout << " kpoint " << i << " numSymmUnderGroup " << symmetryPtr->numSymmUnderGroup[i] << std::endl;
   }
   //
-  pcout<<" " << usedSymm << " symmetries used to reduce BZ "  << std::endl;
-  for (unsigned int iSymm = 0; iSymm < symmetryPtr->numSymm; ++iSymm)
-	{
-         for ( unsigned int ipol = 0; ipol<3; ++ipol)
-	 {
-	      if (dftParameters::verbosity==2)
-		 pcout << symmetryPtr->symmMat[iSymm][ipol][0] << "  " << symmetryPtr->symmMat[iSymm][ipol][1] << "  " << symmetryPtr->symmMat[iSymm][ipol][2] << std::endl;
-	 }
+  if (!dftParameters::reproducible_output)
+  {
+      pcout<<" " << usedSymm << " symmetries used to reduce BZ "  << std::endl;
+      for (unsigned int iSymm = 0; iSymm < symmetryPtr->numSymm; ++iSymm)
+	     for ( unsigned int ipol = 0; ipol<3; ++ipol)
+	     {
+		  if (dftParameters::verbosity==2)
+		     pcout << symmetryPtr->symmMat[iSymm][ipol][0] << "  " << symmetryPtr->symmMat[iSymm][ipol][1] << "  " << symmetryPtr->symmMat[iSymm][ipol][2] << std::endl;
+	     }
+      pcout<<" number of irreducible k-points " << d_maxkPoints << std::endl;
+
+      pcout<<"Reduced k-Point-coordinates and weights: "<<std::endl;
+      char buffer[100];
+      for(int i = 0; i < d_maxkPoints; ++i)
+      {
+	sprintf(buffer, "  %5u:  %12.5f  %12.5f %12.5f %12.5f\n", i+1, kPointReducedCoordinates[3*i+0], kPointReducedCoordinates[3*i+1], kPointReducedCoordinates[3*i+2],d_kPointWeights[i]);
+	pcout << buffer;
+      }
   }
-  //
-  pcout<<" number of irreducible k-points " << d_maxkPoints << std::endl;
-  }
 
-
-
-  pcout<<"Reduced k-Point-coordinates and weights: "<<std::endl;
-  char buffer[100];
-  for(int i = 0; i < d_maxkPoints; ++i){
-    sprintf(buffer, "  %5u:  %12.5f  %12.5f %12.5f %12.5f\n", i+1, kPointReducedCoordinates[3*i+0], kPointReducedCoordinates[3*i+1], kPointReducedCoordinates[3*i+2],d_kPointWeights[i]);
-    pcout << buffer;
   }
 
  // Convert from crystal to Cartesian coordinates
@@ -379,7 +385,7 @@ void dftClass<FEOrder>::generateMPGrid()
    const unsigned int this_mpi_pool (Utilities::MPI::this_mpi_process(interpoolcomm)) ;
    std::vector<double> d_kPointCoordinatesGlobal(3*d_maxkPoints, 0.0) ;
    std::vector<double> d_kPointWeightsGlobal(d_maxkPoints, 0.0) ;
-   std::vector<double> kPointReducedCoordinatesGlobal(3*d_maxkPoints, 0.0) ;   
+   std::vector<double> kPointReducedCoordinatesGlobal(3*d_maxkPoints, 0.0) ;
    for(unsigned int i = 0; i < d_maxkPoints; ++i)
     {
        for (unsigned int d=0; d < 3; ++d)
@@ -424,6 +430,6 @@ void dftClass<FEOrder>::generateMPGrid()
    //
    MPI_Scatterv(&(d_kPointCoordinatesGlobal[0]),&(sendSizekPoints1[0]), &(mpiOffsetskPoints1[0]), MPI_DOUBLE, &(d_kPointCoordinates[0]), 3*d_maxkPoints, MPI_DOUBLE, 0, interpoolcomm);
    MPI_Scatterv(&(d_kPointWeightsGlobal[0]),&(sendSizekPoints2[0]), &(mpiOffsetskPoints2[0]), MPI_DOUBLE, &(d_kPointWeights[0]), d_maxkPoints, MPI_DOUBLE, 0, interpoolcomm);
-   MPI_Scatterv(&(kPointReducedCoordinatesGlobal[0]),&(sendSizekPoints1[0]), &(mpiOffsetskPoints1[0]), MPI_DOUBLE, &(kPointReducedCoordinates[0]), 3*d_maxkPoints, MPI_DOUBLE, 0, interpoolcomm);   
+   MPI_Scatterv(&(kPointReducedCoordinatesGlobal[0]),&(sendSizekPoints1[0]), &(mpiOffsetskPoints1[0]), MPI_DOUBLE, &(kPointReducedCoordinates[0]), 3*d_maxkPoints, MPI_DOUBLE, 0, interpoolcomm);
 
 }
