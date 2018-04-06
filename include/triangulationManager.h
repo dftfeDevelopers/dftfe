@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 
-/** @file meshGenerator.h
+/** @file triangulationManager.h
  *
  *  @brief This class generates and stores adaptive finite element meshes for the real-space dft problem.
  *
@@ -30,8 +30,8 @@
  *  @author Phani Motamarri, Sambit Das, Krishnendu Ghosh
  */
 
-#ifndef meshGenerator_H_
-#define meshGenerator_H_
+#ifndef triangulationManager_H_
+#define triangulationManager_H_
 #include "headers.h"
 
 namespace dftfe  {
@@ -39,7 +39,7 @@ namespace dftfe  {
     using namespace dealii;
 
 
-    class meshGeneratorClass
+    class triangulationManager
     {
 
      public:
@@ -48,13 +48,13 @@ namespace dftfe  {
      *  @param mpi_comm_replica mpi_communicator of the current pool
      *  @param interpoolcomm mpi_communicator across pools (required to synchronize mesh generation)
      */
-      meshGeneratorClass(const MPI_Comm &mpi_comm_replica,const MPI_Comm &interpoolcomm);
+      triangulationManager(const MPI_Comm &mpi_comm_replica,const MPI_Comm &interpoolcomm);
 
 
       /**
-       * meshGeneratorClass destructor
+       * triangulationManager destructor
        */
-      ~meshGeneratorClass();
+      ~triangulationManager();
 
     /** @brief generates parallel moved and unmoved meshes, and serial unmoved mesh.
      *
@@ -119,6 +119,13 @@ namespace dftfe  {
      *
      */
       const parallel::distributed::Triangulation<3> & getSerialMeshUnmovedPrevious();
+
+    /**
+     * @brief serialize the triangulations and the associated solution vectors depending
+     * on the problem type
+     *
+     */
+     void saveTriangulations();
 
      private:
 

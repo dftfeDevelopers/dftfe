@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Shiva Rudraraju (2016), Phani Motamarri (2016)
+// @author Shiva Rudraraju (2016), Phani Motamarri (2016), Sambit Das (2017)
 //
 
 #ifndef dft_H_
@@ -42,7 +42,7 @@
 
 #include "dftParameters.h"
 #include "constraintMatrixInfo.h"
-#include "meshGenerator.h"
+#include "triangulationManager.h"
 #include <spglib.h>
 
 namespace dftfe {
@@ -328,7 +328,7 @@ namespace dftfe {
       /**
        * meshGenerator based object
        */
-      meshGeneratorClass d_mesh;
+      triangulationManager d_mesh;
 
       /// affine transformation object
       meshMovementAffineTransform d_affineTransformMesh;
