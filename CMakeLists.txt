@@ -18,11 +18,11 @@ SET(TARGET_SRC
   ./src/force/force.cc
   ./src/force/eshelbyTensor/eshelbyTensor.cc
   ./src/force/eshelbyTensor/eshelbyTensorSpinPolarized.cc
-  ./src/mesh/meshMovement/meshMovement.cc
-  ./src/mesh/meshMovement/meshMovementGaussian.cc
-  ./src/mesh/meshMovement/meshMovementAffineTransform.cc
-  ./src/mesh/meshGenerator/meshGenerator.cc
-  ./src/mesh/vectorTools/interpolateFieldsFromPreviousMesh.cc
+  ./src/triangulation/meshMovement/meshMovement.cc
+  ./src/triangulation/meshMovement/meshMovementGaussian.cc
+  ./src/triangulation/meshMovement/meshMovementAffineTransform.cc
+  ./src/triangulation/triangulationManager/triangulationManager.cc
+  ./src/triangulation/vectorTools/interpolateFieldsFromPreviousMesh.cc
   ./src/symmetry/initGroupSymmetry.cc
   ./src/geoOpt/geoOptIon.cc
   ./src/geoOpt/geoOptCell.cc

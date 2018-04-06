@@ -23,7 +23,6 @@
 #include "../../include/constants.h"
 #include "../../include/eshelbyTensor.h"
 #include "../../include/eshelbyTensorSpinPolarized.h"
-#include "../../include/meshGenerator.h"
 #include "../../include/fileReaders.h"
 #include <boost/math/special_functions/spherical_harmonic.hpp>
 

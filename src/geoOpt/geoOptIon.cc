@@ -19,7 +19,6 @@
 #include <geoOptIon.h>
 #include <cgPRPNonLinearSolver.h>
 #include <force.h>
-#include <meshGenerator.h>
 #include <dft.h>
 #include <fileReaders.h>
 #include <dftParameters.h>
