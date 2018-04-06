@@ -1,40 +1,38 @@
-number of atoms: 1
+number of atoms: 2
 number of atoms types: 1
-Z:13
+Z:12
 =============================================================================================================================
-number of electrons: 3
+number of electrons: 20
 number of eigen values: 20
 =============================================================================================================================
+Total number of k-points 2
 -----------Domain bounding vectors (lattice vectors in fully periodic case)-------------
-v1 : 4.000000000000000000e+01 0.000000000000000000e+00 0.000000000000000000e+00
-v2 : 0.000000000000000000e+00 4.000000000000000000e+01 0.000000000000000000e+00
-v3 : 0.000000000000000000e+00 0.000000000000000000e+00 4.000000000000000000e+01
+v1 : 5.882191053999999752e+00 0.000000000000000000e+00 0.000000000000000000e+00
+v2 : -2.941095526999999876e+00 5.094126882677563195e+00 0.000000000000000000e+00
+v3 : 0.000000000000000000e+00 0.000000000000000000e+00 9.585777736000000715e+00
 -----------------------------------------------------------------------------------------
-------------Cartesian coordinates of atoms (origin at center of domain)------------------
+-----Fractional coordinates of atoms------ 
 AtomId 0:  0.000000000000000000e+00 0.000000000000000000e+00 0.000000000000000000e+00
+AtomId 1:  6.666666666666666297e-01 3.333333333333333148e-01 5.000000000000000000e-01
 -----------------------------------------------------------------------------------------
+Number Image Charges  2661
 
 Finite element mesh information
 -------------------------------------------------
-number of elements: 288
-number of degrees of freedom: 10381
+number of elements: 976
+number of degrees of freedom: 10699
 -------------------------------------------------
 
 Reading initial guess for PSI....
-Number of wavefunctions generated randomly to be used as initial guess for starting the SCF : 11
+Number of wavefunctions generated randomly to be used as initial guess for starting the SCF : 12
 
 Reading initial guess for rho.....
 
 Pseuodopotential initalization....
 
 Starting SCF iteration....
-SCF iteration converged to the specified tolerance after: 7 iterations.
+SCF iteration converged to the specified tolerance after: 14 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:          -1.94589202
-
-Absolute values of ion forces (Hartree/Bohr)
---------------------------------------------------------------------------------------------
-AtomId    0:  0.000000,0.000000,0.000000
---------------------------------------------------------------------------------------------
+             Total energy:        -108.71470447

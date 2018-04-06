@@ -46,8 +46,8 @@ subsection Brillouin zone k point sampling options
   end
 
   set USE GROUP SYMMETRY =false
-  set USE TIME REVERSAL SYMMETRY = true
-  set NUMBER OF POOLS = 1
+  set USE TIME REVERSAL SYMMETRY =false
+  set NUMBER OF POOLS = 2
 end
 
 
