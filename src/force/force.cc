@@ -223,7 +223,7 @@ void forceClass<FEOrder>::computeConfigurationalForceTotalLinFE()
 	 if (dftParameters::verbosity==2)
 	   std::cout<<"procid: "<< this_mpi_process<<" atomId: "<< atomIdPair.first << ", force component: "<<atomIdPair.second << ", force: "<<d_configForceVectorLinFE[atomForceDof] << std::endl;
 #ifdef ENABLE_PERIODIC_BC
-	 if (dftParamters::verbosity==2)
+	 if (dftParameters::verbosity==2)
 	   std::cout<<"procid: "<< this_mpi_process<<" atomId: "<< atomIdPair.first << ", force component: "<<atomIdPair.second << ", forceKPoints: "<<d_configForceVectorLinFEKPoints[atomForceDof] << std::endl;
 #endif
   }
