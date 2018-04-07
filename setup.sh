@@ -8,7 +8,7 @@ dealiiPetscComplexDir="/home/vikramg/DFT-FE-softwares/softwareCentos/dealiiDev/i
 alglibDir="/nfs/mcfs_comp/home/rudraa/software/alglib/cpp/src"
 libxcDir="/home/vikramg/DFT-FE-softwares/softwareCentos/libxcNew/install_intel18"
 spglibDir="/home/vikramg/DFT-FE-softwares/softwareCentos/spglib"
-optimizedMode=1
+optimizedMode=0
 #
 #Usually, no changes are needed below this line
 #
