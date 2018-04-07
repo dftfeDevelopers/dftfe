@@ -25,6 +25,7 @@
 #include <dftParameters.h>
 #include "meshGenUtils.cc"
 #include "generateMesh.cc"
+#include "restartUtils.cc"
 
 namespace dftfe {
 //
@@ -61,7 +62,8 @@ triangulationManager::~triangulationManager()
 void triangulationManager::generateSerialUnmovedAndParallelMovedUnmovedMesh
                     (const std::vector<std::vector<double> > & atomLocations,
 		     const std::vector<std::vector<double> > & imageAtomLocations,
-		     const std::vector<std::vector<double> > & domainBoundingVectors)
+		     const std::vector<std::vector<double> > & domainBoundingVectors,
+		     const bool generateSerialTria)
 {
 
   //
@@ -79,7 +81,7 @@ void triangulationManager::generateSerialUnmovedAndParallelMovedUnmovedMesh
   //
   //generate mesh data members
   //
-  if (dftParameters::useSymm)
+  if (generateSerialTria)
      generateMesh(d_parallelTriangulationUnmoved, d_serialTriangulationUnmoved);
   else
      generateMesh(d_parallelTriangulationUnmoved);

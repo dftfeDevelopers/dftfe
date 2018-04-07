@@ -64,11 +64,13 @@ namespace dftfe  {
      *  atoms with respect to origin.
      *  @param domainBoundingVectors vector of domain bounding vectors (refer to
      *  description of input parameters.
+     *  @param generateSerialMesh bool to toggle to generation of serial tria
      */
       void generateSerialUnmovedAndParallelMovedUnmovedMesh
 		  (const std::vector<std::vector<double> > & atomLocations,
 		   const std::vector<std::vector<double> > & imageAtomLocations,
-		   const std::vector<std::vector<double> > & domainBoundingVectors);
+		   const std::vector<std::vector<double> > & domainBoundingVectors,
+		   const bool generateSerialTria);
 
     /** @brief generates serial and parallel unmoved previous mesh.
      *
@@ -125,7 +127,9 @@ namespace dftfe  {
      * on the problem type
      *
      */
-     void saveTriangulations();
+     void saveTriangulationsSolutionVectors
+	     (const dealii::DoFHandler<3> & dofHandler,
+	      const std::vector< const dealii::parallel::distributed::Vector<double> * > & solutionVectors);
 
      private:
 

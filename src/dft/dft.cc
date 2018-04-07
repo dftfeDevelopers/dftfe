@@ -357,7 +357,8 @@ void dftClass<FEOrder>::init (const bool usePreviousGroundStateFields)
   //
   d_mesh.generateSerialUnmovedAndParallelMovedUnmovedMesh(atomLocations,
 				                          d_imagePositions,
-				                          d_domainBoundingVectors);
+				                          d_domainBoundingVectors,
+							  dftParameters::useSymm);
   computing_timer.exit_section("mesh generation");
 
 
@@ -721,6 +722,12 @@ void dftClass<FEOrder>::solve()
       computing_timer.exit_section("cell stress");
     }
 #endif
+    computeGroundStateRhoNodalField();
+    std::vector<const parallel::distributed::Vector<double> *> solutions;
+    solutions.push_back(&d_rhoNodalFieldGroundState);
+    d_mesh.saveTriangulationsSolutionVectors
+	     (dofHandler,
+	      solutions);
 }
 
 //Output
