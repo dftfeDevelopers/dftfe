@@ -1,5 +1,5 @@
-DFT-FE 
-===========================================================
+DFT-FE : Density Functional Theory With Finite-Elements 
+=======================================================
 
 
 About
@@ -21,7 +21,7 @@ in the Installation instructions section of the DFT-FE [manual](give link).
 
 
 Running DFT-FE
-----------------------------
+--------------
 
 Instructions on how to run and DFT-FE can also be found in the DFT-FE [manual](give link). 
 
