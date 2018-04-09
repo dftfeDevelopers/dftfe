@@ -37,9 +37,13 @@ More information
 ----------------
 
 For more information see:
+
  - The official website at (give link)
+ 
  - The current [manual](give link)
+ 
  - DFT-FE is primarily based on the deal.II library. If you have particular questions about deal.II, contact the [deal.II discussion groups](https://groups.google.com/d/forum/dealii).
+ 
  - If you have specific questions about DFT-FE that are not suitable for the public bitbucket issue list, you can contact the principal developers:
 
     - Phani Motamarri: phanim@umich.edu
