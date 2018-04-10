@@ -20,7 +20,8 @@
 #define eigen_H_
 #include "headers.h"
 #include "constants.h"
-
+#include "constraintMatrixInfo.h"
+#include "operator.h"
 
 using namespace dealii;
 typedef dealii::parallel::distributed::Vector<double> vectorType;
@@ -30,7 +31,7 @@ template <unsigned int T> class dftClass;
 //Define eigenClass class
 //
 template <unsigned int FEOrder>
-class eigenClass
+class eigenClass : public operatorClass
 {
   template <unsigned int T>
   friend class dftClass;
@@ -40,16 +41,23 @@ class eigenClass
 
 public:
   eigenClass(dftClass<FEOrder>* _dftPtr, MPI_Comm &mpi_comm_replica);
+
   void HX(std::vector<vectorType> &src, 
 	  std::vector<vectorType> &dst);
 
-  void XHX(std::vector<vectorType> &src); 
-
+#ifdef ENABLE_PERIODIC_BC
+  void XtHX(std::vector<vectorType> &src,
+	    std::vector<std::complex<double> > & ProjHam); 
+#else
+  void XtHX(std::vector<vectorType> &src,
+	    std::vector<double> & ProjHam);
+#endif
    
   void computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoValues, 
 		   const vectorType & phi,
 		   const vectorType & phiExt,
 		   const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
+
   void computeVEffSpinPolarized(std::map<dealii::CellId,std::vector<double> >* rhoValues, 
 				const vectorType & phi,
 				const vectorType & phiExt,
@@ -69,7 +77,15 @@ public:
 				unsigned int j,
 				const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
 
-  unsigned int & reinitkPointIndex();
+  void reinitkPointIndex(unsigned int & kPointIndex);
+
+
+  void init ();
+	    
+  void computeMassVector();
+
+  //data structures
+  vectorType tempDealiiVector;
 
 
 
@@ -85,9 +101,6 @@ public:
   void computeNonLocalHamiltonianTimesXMemoryOpt(const std::vector<vectorType> &src,
 					         std::vector<vectorType>       &dst);  
 
-  void init ();
-  void computeMassVector();
-
   
   //pointer to dft class
   dftClass<FEOrder>* dftPtr;
@@ -98,11 +111,11 @@ public:
  
   //data structures
   vectorType invSqrtMassVector,sqrtMassVector;
-#ifdef ENABLE_PERIODIC_BC
-  std::vector<std::complex<double> > XHXValue;
-#else
-  std::vector<double> XHXValue;
-#endif
+  //#ifdef ENABLE_PERIODIC_BC
+  //  std::vector<std::complex<double> > XHXValue;
+  //#else
+  //  std::vector<double> XHXValue;
+  //#endif
 
   dealii::Table<2, dealii::VectorizedArray<double> > vEff;
   dealii::Table<3, dealii::VectorizedArray<double> > derExcWithSigmaTimesGradRho;
@@ -115,6 +128,7 @@ public:
 
   //compute-time logger
   dealii::TimerOutput computing_timer;
+
   //mutex thread for managing multi-thread writing to XHXvalue
   mutable dealii::Threads::Mutex  assembler_lock;
 

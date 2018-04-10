@@ -21,23 +21,29 @@
 #include "../../include/dftParameters.h"
 #include "computeNonLocalHamiltonianTimesXMemoryOpt.cc"
 
-
 //
 //constructor
 //
 template<unsigned int FEOrder>
-eigenClass<FEOrder>::eigenClass(dftClass<FEOrder>* _dftPtr, MPI_Comm &mpi_comm_replica):
+eigenClass<FEOrder>::eigenClass(dftClass<FEOrder>* _dftPtr, 
+				MPI_Comm &mpi_comm_replica):
   dftPtr(_dftPtr),
   FE (QGaussLobatto<1>(C_num1DQuad<FEOrder>())),
   d_kPointIndex(0),
   mpi_communicator (mpi_comm_replica),
-  n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_communicator)),
-  this_mpi_process (Utilities::MPI::this_mpi_process(mpi_communicator)),
+  n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_comm_replica)),
+  this_mpi_process (Utilities::MPI::this_mpi_process(mpi_comm_replica)),
   pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
-  computing_timer (pcout, TimerOutput::never, TimerOutput::wall_times)
-{
-
-}
+  computing_timer (pcout, TimerOutput::never, TimerOutput::wall_times),
+  operatorClass(mpi_comm_replica,
+		_dftPtr->getLocalDofIndicesReal(),
+		_dftPtr->getLocalDofIndicesImag(),
+		_dftPtr->getLocalProcDofIndicesReal(),
+		_dftPtr->getLocalProcDofIndicesImag(),
+		_dftPtr->getConstraintMatrixEigen())
+  {
+    
+  }
 
 //
 //initialize eigenClass object
@@ -49,6 +55,7 @@ void eigenClass<FEOrder>::init()
   
   dftPtr->matrix_free_data.initialize_dof_vector(invSqrtMassVector,dftPtr->eigenDofHandlerIndex);
   sqrtMassVector.reinit(invSqrtMassVector);
+  tempDealiiVector.reinit(invSqrtMassVector);
 
   //
   //compute mass vector
@@ -58,7 +65,14 @@ void eigenClass<FEOrder>::init()
   //
   //XHX size
   //
-  XHXValue.resize(dftPtr->eigenVectors[0].size()*dftPtr->eigenVectors[0].size(),0.0);
+  //XHXValue.resize(dftPtr->eigenVectors[0].size()*dftPtr->eigenVectors[0].size(),0.0);
+
+
+  //const std::vector<unsigned int> & temp = dftPtr->getLocalDofIndicesReal();
+  //pcout<<" Size of local dof indices real eigen class init: "<<temp.size()<<std::endl;
+  //pcout<<" Size of ConstraintsNone Eigen: "<< dftPtr->getConstraintMatrixEigen().n_constraints()<<std::endl;
+  //  std::cout<<"Inside Eigen Init: "<<operatorClass::getLocalDofIndicesReal()->size()<<std::endl;
+
 
   computing_timer.exit_section("eigenClass setup"); 
 } 
@@ -105,7 +119,7 @@ void eigenClass<FEOrder>::computeMassVector()
     {
       if(invSqrtMassVector.in_local_range(i))
 	{
-	  if(!dftPtr->constraintsNoneEigen.is_constrained(i))
+	  if(!dftPtr->getConstraintMatrixEigen().is_constrained(i))
 	    {
 
 	      if(std::abs(invSqrtMassVector(i)) > 1.0e-15)
@@ -125,9 +139,9 @@ void eigenClass<FEOrder>::computeMassVector()
 }
 
 template<unsigned int FEOrder>
-unsigned int & eigenClass<FEOrder>::reinitkPointIndex()
+void eigenClass<FEOrder>::reinitkPointIndex(unsigned int & kPointIndex)
 {
-  return d_kPointIndex;
+  d_kPointIndex = kPointIndex;
 }
 
 
@@ -165,8 +179,6 @@ void eigenClass<FEOrder>::computeVEff(std::map<dealii::CellId,std::vector<double
       fe_eval_phiExt.reinit(cell);
       fe_eval_phiExt.read_dof_values(phiExt);
       fe_eval_phiExt.evaluate(true, false, false);
-
-
 
       for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
 	{
@@ -541,8 +553,8 @@ void eigenClass<FEOrder>::HX(std::vector<vectorType> &src,
   for (unsigned int i = 0; i < src.size(); i++)
     {
       src[i].scale(invSqrtMassVector); //M^{-1/2}*X
-      //dftPtr->constraintsNoneEigen.distribute(*(dftPtr->tempPSI2[i]));
-      dftPtr->constraintsNoneEigenDataInfo.distribute(src[i]);
+      //dftPtr->constraintsNoneEigen.distribute(src[i]);
+      dftPtr->getConstraintMatrixEigenDataInfo().distribute(src[i]);
       src[i].update_ghost_values();
       dst[i] = 0.0;
     }
@@ -552,16 +564,7 @@ void eigenClass<FEOrder>::HX(std::vector<vectorType> &src,
   //required if its a pseudopotential calculation and number of nonlocal atoms are greater than zero
   //H^{nloc}*M^{-1/2}*X
   if(dftParameters::isPseudopotential && dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0)
-    {
-
-           
-      computeNonLocalHamiltonianTimesXMemoryOpt(src,
-						dst);
-      
-      //computeNonLocalHamiltonianTimesX(dftPtr->tempPSI2,
-      //  dst);
-
-    }
+    computeNonLocalHamiltonianTimesXMemoryOpt(src,dst);
 
 
   //
@@ -589,31 +592,32 @@ void eigenClass<FEOrder>::HX(std::vector<vectorType> &src,
 }
 
 //XHX
+
+
+//XHX
+#ifdef ENABLE_PERIODIC_BC
 template<unsigned int FEOrder>
-void eigenClass<FEOrder>::XHX(std::vector<vectorType> &src)
+void eigenClass<FEOrder>::XtHX(std::vector<vectorType> & src,
+			       std::vector<std::complex<double> > & ProjHam)
 {
+  
+  //Resize ProjHam 
+  ProjHam.resize(src.size()*src.size(),0.0);
 
   std::vector<vectorType> tempPSI3(src.size());
 
   for(unsigned int i = 0; i < src.size(); ++i)
-    {
-      tempPSI3[i].reinit(src[0]);
-    }
+    tempPSI3[i].reinit(src[0]);
+
 
   computing_timer.enter_section("eigenClass XHX");
 
   //HX
   HX(src, tempPSI3);
   for (unsigned int i = 0; i < src.size(); i++)
-    {
-      tempPSI3[i].update_ghost_values();
-    }
-
-#ifdef ENABLE_PERIODIC_BC
+    tempPSI3[i].update_ghost_values();
+    
   unsigned int dofs_per_proc=src[0].local_size()/2; 
-#else
-  unsigned int dofs_per_proc=src[0].local_size(); 
-#endif
 
   //
   //required for lapack functions
@@ -622,7 +626,7 @@ void eigenClass<FEOrder>::XHX(std::vector<vectorType> &src)
   int vectorSize = k*n;
   int lda=k, ldb=k, ldc=n;
 
-#ifdef ENABLE_PERIODIC_BC
+
   std::vector<double> hxReal(vectorSize), xReal(vectorSize);
   std::vector<double> hxImag(vectorSize), xImag(vectorSize);
 
@@ -632,21 +636,21 @@ void eigenClass<FEOrder>::XHX(std::vector<vectorType> &src)
   unsigned int index = 0;
   for (std::vector<vectorType>::const_iterator it = src.begin(); it != src.end(); it++)
     {
-      (*it).extract_subvector_to(dftPtr->local_dof_indicesReal.begin(), 
-				  dftPtr->local_dof_indicesReal.end(), 
-				  xReal.begin()+dofs_per_proc*index); 
+      (*it).extract_subvector_to(dftPtr->getLocalDofIndicesReal().begin(), 
+				 dftPtr->getLocalDofIndicesReal().end(), 
+				 xReal.begin()+dofs_per_proc*index); 
 
-      (*it).extract_subvector_to(dftPtr->local_dof_indicesImag.begin(), 
-				  dftPtr->local_dof_indicesImag.end(), 
+      (*it).extract_subvector_to(dftPtr->getLocalDofIndicesImag().begin(), 
+				 dftPtr->getLocalDofIndicesImag().end(), 
 				  xImag.begin()+dofs_per_proc*index);
 
-      tempPSI3[index].extract_subvector_to(dftPtr->local_dof_indicesReal.begin(),
-						    dftPtr->local_dof_indicesReal.end(),
-						    hxReal.begin()+dofs_per_proc*index);
+      tempPSI3[index].extract_subvector_to(dftPtr->getLocalDofIndicesReal().begin(),
+					   dftPtr->getLocalDofIndicesReal().end(),
+					   hxReal.begin()+dofs_per_proc*index);
 
-      tempPSI3[index].extract_subvector_to(dftPtr->local_dof_indicesImag.begin(),
-						    dftPtr->local_dof_indicesImag.end(),
-						    hxImag.begin()+dofs_per_proc*index);
+      tempPSI3[index].extract_subvector_to(dftPtr->getLocalDofIndicesImag().begin(),
+					   dftPtr->getLocalDofIndicesImag().end(),
+					   hxImag.begin()+dofs_per_proc*index);
  
       index++;
     }
@@ -670,12 +674,51 @@ void eigenClass<FEOrder>::XHX(std::vector<vectorType> &src)
   zgemm_(&transA, &transB, &n, &n, &k, &alpha, &x[0], &lda, &hx[0], &ldb, &beta, &XtHXValuelocal[0], &ldc);
 
   MPI_Allreduce(&XtHXValuelocal[0],
-		&XHXValue[0],
+		&ProjHam[0],
 		sizeXtHX,
 		MPI_C_DOUBLE_COMPLEX,
 		MPI_SUM,
 		mpi_communicator);
+  
+  computing_timer.exit_section("eigenClass XHX");
+ 
+}
 #else
+template<unsigned int FEOrder>
+void eigenClass<FEOrder>::XtHX(std::vector<vectorType> &src,
+			       std::vector<double> & ProjHam)
+{
+
+  //Resize ProjHam 
+  ProjHam.resize(src.size()*src.size(),0.0);
+
+  std::vector<vectorType> tempPSI3(src.size());
+
+  for(unsigned int i = 0; i < src.size(); ++i)
+    {
+      tempPSI3[i].reinit(src[0]);
+    }
+
+  computing_timer.enter_section("eigenClass XHX");
+
+  //HX
+  HX(src, tempPSI3);
+  for (unsigned int i = 0; i < src.size(); i++)
+    {
+      tempPSI3[i].update_ghost_values();
+    }
+
+  unsigned int dofs_per_proc=src[0].local_size(); 
+
+
+  //
+  //required for lapack functions
+  //
+  int k = dofs_per_proc, n = src.size(); 
+  int vectorSize = k*n;
+  int lda=k, ldb=k, ldc=n;
+
+
   std::vector<double> hx(dofs_per_proc*src.size()), x(dofs_per_proc*src.size());
 
   //
@@ -693,13 +736,13 @@ void eigenClass<FEOrder>::XHX(std::vector<vectorType> &src)
     }
   char transA  = 'T', transB  = 'N';
   double alpha = 1.0, beta  = 0.0;
-  dgemm_(&transA, &transB, &n, &n, &k, &alpha, &x[0], &lda, &hx[0], &ldb, &beta, &XHXValue[0], &ldc);
-  Utilities::MPI::sum(XHXValue, mpi_communicator, XHXValue); 
-#endif
+  dgemm_(&transA, &transB, &n, &n, &k, &alpha, &x[0], &lda, &hx[0], &ldb, &beta, &ProjHam[0], &ldc);
+  Utilities::MPI::sum(ProjHam, mpi_communicator, ProjHam); 
   
   computing_timer.exit_section("eigenClass XHX");
  
 }
+#endif
 
 template<unsigned int FEOrder>
 void eigenClass<FEOrder>::computeVEffSpinPolarized(std::map<dealii::CellId,std::vector<double> >* rhoValues, 

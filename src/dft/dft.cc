@@ -17,7 +17,6 @@
 //
 
 //Include header files
-
 #include <dft.h>
 #include <eigen.h>
 #include <poisson.h>
@@ -30,6 +29,7 @@
 #include <fileReaders.h>
 #include <dftParameters.h>
 #include <dftUtils.h>
+#include <chebyshevOrthogonalizedSubspaceIterationSolver.h>
 
 
 //Include cc files
@@ -40,7 +40,7 @@
 #include "initPseudo.cc"
 #include "initPseudo-OV.cc"
 #include "initRho.cc"
-
+#include "publicMethods.cc"
 
 #include "psiInitialGuess.cc"
 #include "energy.cc"
@@ -86,7 +86,6 @@ dftClass<FEOrder>::dftClass(MPI_Comm &mpi_comm_replica, MPI_Comm &interpoolcomm)
   computing_timer (pcout, TimerOutput::summary, TimerOutput::wall_times)
 {
   poissonPtr= new poissonClass<FEOrder>(this, mpi_comm_replica);
-  eigenPtr= new eigenClass<FEOrder>(this, mpi_comm_replica);
   forcePtr= new forceClass<FEOrder>(this, mpi_comm_replica);
   symmetryPtr= new symmetryClass<FEOrder>(this, mpi_comm_replica, interpoolcomm);
   geoOptIonPtr= new geoOptIon<FEOrder>(this, mpi_comm_replica);
@@ -249,7 +248,6 @@ void dftClass<FEOrder>::set()
 
   //set size of eigenvalues and eigenvectors data structures
   eigenValues.resize(d_maxkPoints);
-  eigenValuesTemp.resize(d_maxkPoints);
 
   a0.resize((dftParameters::spinPolarized+1)*d_maxkPoints,dftParameters::lowerEndWantedSpectrum);
   bLow.resize((dftParameters::spinPolarized+1)*d_maxkPoints,0.0);
@@ -261,7 +259,6 @@ void dftClass<FEOrder>::set()
   for(unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
     {
       eigenValues[kPoint].resize((dftParameters::spinPolarized+1)*numEigenValues);
-      eigenValuesTemp[kPoint].resize(numEigenValues);
     }
 
 }
@@ -496,13 +493,11 @@ void dftClass<FEOrder>::solve()
   //
   //create eigen solver object
   //
-  /* eigenSolverClass * eigenSubspaceIterationSolver = new chebyshevOrthogonalizedSubspaceIterationSolver(dftParameters::lowerEndWantedSpectrum,
-												       0.0,
-												       numEigenvalues);*/
+  chebyshevOrthogonalizedSubspaceIterationSolver subspaceIterationSolver(dftParameters::lowerEndWantedSpectrum,
+									 0.0,
+									 numEigenValues);
 
-  
-												       
-
+    
   //
   //solve
   //
@@ -578,16 +573,15 @@ void dftClass<FEOrder>::solve()
 	        {
 		  eigenPtr->computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, s, pseudoValues);
 	        }
-	      for(int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+	      for(unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
 	        {
-	          unsigned int & kPointIndex = eigenPtr->reinitkPointIndex();
-		  kPointIndex = kPoint;
+		  eigenPtr->reinitkPointIndex(kPoint);
 	          for(int j = 0; j < dftParameters::numPass; ++j)
 	            {
 		      if (dftParameters::verbosity==2)
 			pcout<<"Beginning Chebyshev filter pass "<< j+1<< " for spin "<< s+1<<std::endl;
 
-		      chebyshevSolver(s);
+		      chebyshevSolver(s,kPoint,subspaceIterationSolver);
 	            }
 	        }
 	    }
@@ -608,16 +602,15 @@ void dftClass<FEOrder>::solve()
 	      eigenPtr->computeVEff(rhoInValues, gradRhoInValues, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, pseudoValues);
 	    }
 
-	  for (int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+	  for (unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
 	    {
-	      unsigned int & kPointIndex = eigenPtr->reinitkPointIndex();
-	      kPointIndex = kPoint;
+	      eigenPtr->reinitkPointIndex(kPoint);
 	      for(int j = 0; j < dftParameters::numPass; ++j)
 		{
 		  if (dftParameters::verbosity==2)
 		    pcout<< "Beginning Chebyshev filter pass "<< j+1<<std::endl;
 
-		  chebyshevSolver(0);
+		  chebyshevSolver(0,kPoint,subspaceIterationSolver);
 		}
 	    }
 
@@ -640,14 +633,13 @@ void dftClass<FEOrder>::solve()
 	  int count=1;
 	  while (maxRes>1e-1)
 	    {
-	      for (int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+	      for (unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
 		{
-		  unsigned int & kPointIndex = eigenPtr->reinitkPointIndex();
-		  kPointIndex = kPoint;
+		  eigenPtr->reinitkPointIndex(kPoint);
 		  if (dftParameters::verbosity==2)
 		    pcout<< "Beginning Chebyshev filter pass "<< dftParameters::numPass+count<<std::endl;
 
-		  chebyshevSolver(0);
+		  chebyshevSolver(0,kPoint,subspaceIterationSolver);
 		}
 	      count++;
 	      compute_fermienergy();

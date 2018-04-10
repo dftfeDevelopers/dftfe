@@ -29,11 +29,14 @@
 
 #include "headers.h"
 #include "constants.h"
+#include "constraintMatrixInfo.h"
 
 #include "poisson.h"
 #include "eigen.h"
 #include "symmetry.h"
 #include "meshMovementAffineTransform.h"
+#include "eigenSolver.h"
+#include "chebyshevOrthogonalizedSubspaceIterationSolver.h"
 
 #include <interpolation.h>
 #include <xc.h>
@@ -41,7 +44,6 @@
 #include <slepceps.h>
 
 #include "dftParameters.h"
-#include "constraintMatrixInfo.h"
 #include "meshGenerator.h"
 #include <spglib.h>
 
@@ -138,20 +140,56 @@ class dftClass
    * Does required pre-processing steps but without remeshing.
    */
   void initNoRemesh();
+
   /**
    * Selects between only electronic field relaxation or combined electronic and geometry relxation
    */
   void run();
+
   /**
    *  Kohn-Sham ground solve using SCF iteration
    */
   void solve();
+
   /**
    * Number of Kohn-Sham eigen values to be computed
    */
   unsigned int numEigenValues;
 
   void readkPointData();
+
+  /**
+   *Get local dofs global indices real
+   */
+  const std::vector<unsigned int> & getLocalDofIndicesReal();
+
+  /**
+   *Get local dofs global indices imag
+   */
+  const std::vector<unsigned int> & getLocalDofIndicesImag();
+
+  /**
+   *Get local dofs local proc indices real
+   */
+  const std::vector<unsigned int> & getLocalProcDofIndicesReal();
+
+  /**
+   *Get local dofs local proc indices imag
+   */
+  const std::vector<unsigned int> & getLocalProcDofIndicesImag();
+
+  /**
+   *Get dealii constraint matrix involving periodic constraints and hanging node constraints in periodic  
+   *case else only hanging node constraints in non-periodic case
+   */
+  const ConstraintMatrix & getConstraintMatrixEigen();
+
+  /**
+   *Get overloaded constraint matrix information involving periodic constraints and hanging node constraints in periodic
+   *case else only hanging node constraints in non-periodic case (data stored in STL format)
+   */
+  const dftUtils::constraintMatrixInfo & getConstraintMatrixEigenDataInfo();
+  
 
  private:
 
@@ -369,21 +407,19 @@ class dftClass
    */
   ConstraintMatrix constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_constraintsPeriodicWithDirichlet, d_noConstraints, d_noConstraintsEigen;
 
+  /**
+   * storage for constraintMatrices in terms of arrays (STL)
+   */
+  dftUtils::constraintMatrixInfo constraintsNoneEigenDataInfo;
+
   /// vector of constraint matrices for vself bins
   std::vector<ConstraintMatrix> d_vselfBinConstraintMatrices;
 
   /**
    * data storage for Kohn-Sham wavefunctions
    */
-  std::vector<std::vector<double> > eigenValues, eigenValuesTemp;
+  std::vector<std::vector<double> > eigenValues;
   std::vector<std::vector<vectorType> > eigenVectors;
-
-  /**
-   * storage for constraintMatrices in terms of arrays (STL)
-   */
- dftUtils::constraintMatrixInfo constraintsNoneEigenDataInfo;
-
-
 
   /// parallel message stream
   ConditionalOStream  pcout;
@@ -495,7 +531,7 @@ class dftClass
   int d_maxkPoints;
 
   /// current k point index during the ground state solve
-  int d_kPointIndex;
+  //int d_kPointIndex;
 
   /** Recomputes the k point cartesian coordinates from the crystal k point coordinates
    * and the current lattice vectors, which can change in each ground state solve when
@@ -517,14 +553,21 @@ class dftClass
   vectorType vChebyshev, v0Chebyshev, fChebyshev;
 
 
-  void chebyshevSolver(const unsigned int s);
-  void computeResidualNorm(std::vector<vectorType>& X);
+  void chebyshevSolver(const unsigned int s,
+		       const unsigned int kPointIndex,
+		       chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver);
+
+  void computeResidualNorm(const std::vector<double> & eigenValuesTemp,
+			   std::vector<vectorType> & X, 
+			   std::vector<double> & residualNorm);
+
   std::vector<std::vector<double> > d_tempResidualNormWaveFunctions;
+
   double computeMaximumHighestOccupiedStateResidualNorm();
 
   double upperBound();
 
-  void gramSchmidt(std::vector<vectorType>& X);
+  void gramSchmidt(std::vector<vectorType> & X);
 
   void chebyshevFilter(std::vector<vectorType>& X,
 		       const unsigned int m,
@@ -533,10 +576,9 @@ class dftClass
 		       const double a0);
 
   void rayleighRitz(const unsigned int spinType,
-		    std::vector<vectorType>& X);
-
-  void scale(const vectorType & diagonal,
-	     const unsigned int spinType);
+		    std::vector<vectorType> & X,
+		    std::vector<double> & eigenValuesTemp);
+		    
 
 };
 

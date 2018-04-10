@@ -34,7 +34,7 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   //
   dofHandler.distribute_dofs (FE);
   dofHandlerEigen.distribute_dofs (FEEigen);
-  writeMesh("currentMesh");
+  //writeMesh("currentMesh");
 
   d_supportPoints.clear();
   DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), dofHandler, d_supportPoints);
@@ -107,6 +107,7 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   dofHandlerVector.push_back(&dofHandlerEigen); //DofHandler For Eigen
   eigenDofHandlerIndex = dofHandlerVector.size() - 1; //For Eigen
   d_constraintsVector.push_back(&constraintsNoneEigen); //For Eigen;
+
   //
   //push d_noConstraints into constraintsVector
   //
@@ -117,19 +118,23 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   std::vector<Quadrature<1> > quadratureVector;
   quadratureVector.push_back(QGauss<1>(C_num1DQuad<FEOrder>()));
   quadratureVector.push_back(QGaussLobatto<1>(FEOrder+1));
+
+  //
   //
   //
   forcePtr->initMoved();
+
+  //
   //push dofHandler and constraints for force
+  //
   dofHandlerVector.push_back(&(forcePtr->d_dofHandlerForce));
   forcePtr->d_forceDofHandlerIndex = dofHandlerVector.size()-1;
   d_constraintsVector.push_back(&(forcePtr->d_constraintsNoneForce));
 
   std::vector<const ConstraintMatrix * > constraintsVectorTemp(d_constraintsVector.size());
   for (unsigned int iconstraint=0; iconstraint< d_constraintsVector.size(); iconstraint++)
-  {
-     constraintsVectorTemp[iconstraint]=d_constraintsVector[iconstraint];
-  }
+    constraintsVectorTemp[iconstraint] = d_constraintsVector[iconstraint];
+    
   matrix_free_data.reinit(dofHandlerVector, constraintsVectorTemp, quadratureVector, additional_data);
 
 
@@ -137,13 +142,17 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   //locate atom core nodes and also locate atom nodes in each bin
   //
   locateAtomCoreNodes();
-  //
+
   //
   //initialize poisson and eigen problem related objects
   //
   poissonPtr->init();
+
+  eigenPtr= new eigenClass<FEOrder>(this, mpi_communicator);
   eigenPtr->init();
 
+  //
   //compute volume of the domain
+  //
   computeVolume();
 }
