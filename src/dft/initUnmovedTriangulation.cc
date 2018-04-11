@@ -200,7 +200,6 @@ void dftClass<FEOrder>::initUnmovedTriangulation(const parallel::distributed::Tr
   constraintsNoneEigen.close();
   */
 
-  pcout<<"Size of ConstraintsNone Eigen in init: "<<constraintsNoneEigen.n_constraints()<<std::endl;
   forcePtr->initUnmoved(triangulation);
 
  //

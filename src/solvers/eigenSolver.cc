@@ -26,24 +26,25 @@
 //
 // Constructor.
 //
-eigenSolverClass::eigenSolverClass()
-{
+namespace dftfe{
+  eigenSolverClass::eigenSolverClass()
+  {
 
+  }
+
+  //
+  // Destructor.
+  //
+  eigenSolverClass::~eigenSolverClass()
+  {
+
+    //
+    //
+    //
+    return;
+
+  }
 }
-
-//
-// Destructor.
-//
-eigenSolverClass::~eigenSolverClass()
-{
-
-  //
-  //
-  //
-  return;
-
-}
-
 
 
 

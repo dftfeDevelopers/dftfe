@@ -26,91 +26,94 @@
 //
 // Constructor.
 //
-operatorClass::operatorClass(MPI_Comm                        & mpi_comm_replica,
-			     const std::vector<unsigned int> & localDofIndicesReal,
-			     const std::vector<unsigned int> & localDofIndicesImag,
-			     const std::vector<unsigned int> & localProcDofIndicesReal,
-			     const std::vector<unsigned int> & localProcDofIndicesImag,
-			     const dealii::ConstraintMatrix  & constraintMatrixEigen):
-  d_mpi_communicator   (mpi_comm_replica),
-  d_localDofIndicesReal(&localDofIndicesReal),
-  d_localDofIndicesImag(&localDofIndicesImag),
-  d_localProcDofIndicesReal(&localProcDofIndicesReal),
-  d_localProcDofIndicesImag(&localProcDofIndicesImag),
-  d_constraintMatrixEigen(&constraintMatrixEigen)
-{
+namespace dftfe {
+  operatorClass::operatorClass(const MPI_Comm                  & mpi_comm_replica,
+			       const std::vector<unsigned int> & localDofIndicesReal,
+			       const std::vector<unsigned int> & localDofIndicesImag,
+			       const std::vector<unsigned int> & localProcDofIndicesReal,
+			       const std::vector<unsigned int> & localProcDofIndicesImag,
+			       const dealii::ConstraintMatrix  & constraintMatrixEigen):
+    d_mpi_communicator   (mpi_comm_replica),
+    d_localDofIndicesReal(&localDofIndicesReal),
+    d_localDofIndicesImag(&localDofIndicesImag),
+    d_localProcDofIndicesReal(&localProcDofIndicesReal),
+    d_localProcDofIndicesImag(&localProcDofIndicesImag),
+    d_constraintMatrixEigen(&constraintMatrixEigen)
+  {
 
-  //d_localDofIndicesReal = localDofIndicesReal;
-  //d_localDofIndicesImag = localDofIndicesImag;
-  //d_localProcDofIndicesReal = localProcDofIndicesReal;
-  //d_localProcDofIndicesImag = localProcDofIndicesImag;
-  //d_constraintMatrixEigen = constraintMatrixEigen;
+    //d_localDofIndicesReal = localDofIndicesReal;
+    //d_localDofIndicesImag = localDofIndicesImag;
+    //d_localProcDofIndicesReal = localProcDofIndicesReal;
+    //d_localProcDofIndicesImag = localProcDofIndicesImag;
+    //d_constraintMatrixEigen = constraintMatrixEigen;
 
-  //std::cout<<" Size of local dof indices real in Operator: "<<d_localDofIndicesReal->size()<<std::endl;
-  //std::cout<<" Size of ConstraintsNone Eigen in Operator: "<< d_constraintMatrixEigen->n_constraints()<<std::endl;
+    //std::cout<<" Size of local dof indices real in Operator: "<<d_localDofIndicesReal->size()<<std::endl;
+    //std::cout<<" Size of ConstraintsNone Eigen in Operator: "<< d_constraintMatrixEigen->n_constraints()<<std::endl;
 
-  //d_constraintMatrixEigen
+    //d_constraintMatrixEigen
 
-}
-
-//
-// Destructor.
-//
-operatorClass::~operatorClass()
-{
+  }
 
   //
+  // Destructor.
   //
+  operatorClass::~operatorClass()
+  {
+
+    //
+    //
+    //
+    return;
+
+  }
+
   //
-  return;
+  //Get local dof indices real
+  //
+  const std::vector<unsigned int> * operatorClass::getLocalDofIndicesReal()
+  {
+    return d_localDofIndicesReal;
+  }
 
-}
+  //
+  //Get local dof indices imag
+  //
+  const std::vector<unsigned int> * operatorClass::getLocalDofIndicesImag()
+  {
+    return d_localDofIndicesImag;
+  }
 
-//
-//Get local dof indices real
-//
-const std::vector<unsigned int> * operatorClass::getLocalDofIndicesReal()
-{
-  return d_localDofIndicesReal;
-}
-
-//
-//Get local dof indices imag
-//
-const std::vector<unsigned int> * operatorClass::getLocalDofIndicesImag()
-{
-  return d_localDofIndicesImag;
-}
-
-//
-//Get local proc dof indices real
-//
-const std::vector<unsigned int> * operatorClass::getLocalProcDofIndicesReal()
-{
-  return d_localProcDofIndicesReal;
-}
+  //
+  //Get local proc dof indices real
+  //
+  const std::vector<unsigned int> * operatorClass::getLocalProcDofIndicesReal()
+  {
+    return d_localProcDofIndicesReal;
+  }
 
 
-//
-//Get local proc dof indices imag
-//
-const std::vector<unsigned int> * operatorClass::getLocalProcDofIndicesImag()
-{
-  return d_localProcDofIndicesImag;
-}
+  //
+  //Get local proc dof indices imag
+  //
+  const std::vector<unsigned int> * operatorClass::getLocalProcDofIndicesImag()
+  {
+    return d_localProcDofIndicesImag;
+  }
 
-//
-//Get constraint matrix
-//
-const dealii::ConstraintMatrix * operatorClass::getConstraintMatrixEigen()
-{
-  return d_constraintMatrixEigen;
-}
+  //
+  //Get constraint matrix
+  //
+  const dealii::ConstraintMatrix * operatorClass::getConstraintMatrixEigen()
+  {
+    return d_constraintMatrixEigen;
+  }
 
-//
-//Get relevant mpi communicator
-//
-const MPI_Comm & operatorClass::getMPICommunicator()
-{
-  return d_mpi_communicator;
+  //
+  //Get relevant mpi communicator
+  //
+  const MPI_Comm & operatorClass::getMPICommunicator()
+  {
+    return d_mpi_communicator;
+  }
+
 }

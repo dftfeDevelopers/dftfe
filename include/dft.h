@@ -122,7 +122,7 @@ namespace dftfe {
       /**
        * dftClass constructor
        */
-      dftClass(MPI_Comm &mpi_comm_replica, MPI_Comm &interpoolcomm);
+      dftClass(const MPI_Comm &mpi_comm_replica, const MPI_Comm &interpoolcomm);
       /**
        * dftClass destructor
        */
@@ -238,6 +238,8 @@ namespace dftfe {
       void locateAtomCoreNodes();
       void locatePeriodicPinnedNodes();
       void initRho();
+      void computeRhoInitialGuessFromPSI();
+      void clearRhoData();
       void noRemeshRhoDataInit();
       void readPSI();
       void readPSIRadialValues();

@@ -24,136 +24,139 @@
 #include "headers.h"
 
 typedef dealii::parallel::distributed::Vector<double> vectorType;
-class operatorClass {
+namespace dftfe{
 
-  //
-  // types
-  //
+  class operatorClass {
+
+    //
+    // types
+    //
   public:
-  //
-  // methods
-  //
+    //
+    // methods
+    //
   public:
 
-  /**
-   * @brief Destructor.
-   */
-  virtual ~operatorClass() = 0;
+    /**
+     * @brief Destructor.
+     */
+    virtual ~operatorClass() = 0;
 
 
-  /**
-   * @brief initialize operatorClass
-   *
-   */
-  virtual void init() = 0;
+    /**
+     * @brief initialize operatorClass
+     *
+     */
+    virtual void init() = 0;
 
 
-  /**
-   * @brief compute M matrix
-   *
-   * @return diagonal M matrix
-   */
-  virtual void computeMassVector() = 0;
+    /**
+     * @brief compute M matrix
+     *
+     * @return diagonal M matrix
+     */
+    virtual void computeMassVector() = 0;
 
 
-  /**
-   * @brief Compute operator times vector or operator times bunch of vectors
-   *
-   * @param X Vector of Vectors containing current values of X
-   * @param Y Vector of Vectors containing operator times vectors product
-   */
-  virtual void HX(std::vector<vectorType> & x,
-		  std::vector<vectorType> & y) = 0;
+    /**
+     * @brief Compute operator times vector or operator times bunch of vectors
+     *
+     * @param X Vector of Vectors containing current values of X
+     * @param Y Vector of Vectors containing operator times vectors product
+     */
+    virtual void HX(std::vector<vectorType> & x,
+		    std::vector<vectorType> & y) = 0;
 
 
-  /**
-   * @brief Compute projection of the operator into orthogonal basis
-   *
-   * @param X given orthogonal basis vectors
-   * @return ProjMatrix projected small matrix 
-   */
+    /**
+     * @brief Compute projection of the operator into orthogonal basis
+     *
+     * @param X given orthogonal basis vectors
+     * @return ProjMatrix projected small matrix 
+     */
 #ifdef ENABLE_PERIODIC_BC
-  virtual void XtHX(std::vector<vectorType> & X,
-		    std::vector<std::complex<double> > & ProjHam) = 0;
+    virtual void XtHX(std::vector<vectorType> & X,
+		      std::vector<std::complex<double> > & ProjHam) = 0;
 #else
-  virtual void XtHX(std::vector<vectorType> & X,
-		    std::vector<double> & ProjHam) = 0;
+    virtual void XtHX(std::vector<vectorType> & X,
+		      std::vector<double> & ProjHam) = 0;
 #endif
 
 
-  /**
-   * @brief Get local dof indices real
-   *
-   * @return pointer to local dof indices real
-   */
-  const std::vector<unsigned int> * getLocalDofIndicesReal();
+    /**
+     * @brief Get local dof indices real
+     *
+     * @return pointer to local dof indices real
+     */
+    const std::vector<unsigned int> * getLocalDofIndicesReal();
 
-  /**
-   * @brief Get local dof indices imag
-   *
-   * @return pointer to local dof indices real
-   */
-  const std::vector<unsigned int> * getLocalDofIndicesImag();
+    /**
+     * @brief Get local dof indices imag
+     *
+     * @return pointer to local dof indices real
+     */
+    const std::vector<unsigned int> * getLocalDofIndicesImag();
 
-  /**
-   * @brief Get local proc dof indices real
-   *
-   * @return pointer to local proc dof indices real
-   */
-  const std::vector<unsigned int> * getLocalProcDofIndicesReal();
-
-
-  /**
-   * @brief Get local proc dof indices imag
-   *
-   * @return pointer to local proc dof indices imag
-   */
-  const std::vector<unsigned int> * getLocalProcDofIndicesImag();
-
-  /**
-   * @brief Get constraint matrix eigen
-   *
-   * @return pointer to constraint matrix eigen
-   */
-  const dealii::ConstraintMatrix * getConstraintMatrixEigen();
+    /**
+     * @brief Get local proc dof indices real
+     *
+     * @return pointer to local proc dof indices real
+     */
+    const std::vector<unsigned int> * getLocalProcDofIndicesReal();
 
 
-  /**
-   * @brief Get relevant mpi communicator
-   *
-   * @return mpi communicator
-   */
-  const MPI_Comm & getMPICommunicator();
+    /**
+     * @brief Get local proc dof indices imag
+     *
+     * @return pointer to local proc dof indices imag
+     */
+    const std::vector<unsigned int> * getLocalProcDofIndicesImag();
+
+    /**
+     * @brief Get constraint matrix eigen
+     *
+     * @return pointer to constraint matrix eigen
+     */
+    const dealii::ConstraintMatrix * getConstraintMatrixEigen();
+
+
+    /**
+     * @brief Get relevant mpi communicator
+     *
+     * @return mpi communicator
+     */
+    const MPI_Comm & getMPICommunicator();
   
 
- protected:
+  protected:
     
-  /**
-   * @brief default Constructor.
-   */
-  operatorClass();
+    /**
+     * @brief default Constructor.
+     */
+    operatorClass();
 
 
-  /**
-   * @brief Constructor.
-   */
-  operatorClass(MPI_Comm & mpi_comm_replica,
-		const std::vector<unsigned int> & localDofIndicesReal,
-		const std::vector<unsigned int> & localDofIndicesImag,
-		const std::vector<unsigned int> & localProcDofIndicesReal,
-		const std::vector<unsigned int> & localProcDofIndicesImag,
-		const dealii::ConstraintMatrix  & constraintMatrixEigen);
+    /**
+     * @brief Constructor.
+     */
+    operatorClass(const MPI_Comm & mpi_comm_replica,
+		  const std::vector<unsigned int> & localDofIndicesReal,
+		  const std::vector<unsigned int> & localDofIndicesImag,
+		  const std::vector<unsigned int> & localProcDofIndicesReal,
+		  const std::vector<unsigned int> & localProcDofIndicesImag,
+		  const dealii::ConstraintMatrix  & constraintMatrixEigen);
 
- protected:
+  protected:
 
-  //data members
-  const std::vector<unsigned int> * d_localDofIndicesReal;
-  const std::vector<unsigned int> * d_localDofIndicesImag;
-  const std::vector<unsigned int> * d_localProcDofIndicesReal;
-  const std::vector<unsigned int> * d_localProcDofIndicesImag;
-  const dealii::ConstraintMatrix  * d_constraintMatrixEigen;
-  MPI_Comm                          d_mpi_communicator;
+    //data members
+    const std::vector<unsigned int> * d_localDofIndicesReal;
+    const std::vector<unsigned int> * d_localDofIndicesImag;
+    const std::vector<unsigned int> * d_localProcDofIndicesReal;
+    const std::vector<unsigned int> * d_localProcDofIndicesImag;
+    const dealii::ConstraintMatrix  * d_constraintMatrixEigen;
+    MPI_Comm                          d_mpi_communicator;
 
-};
+  };
 
+}
 #endif

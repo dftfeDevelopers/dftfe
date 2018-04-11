@@ -26,61 +26,64 @@
  * @brief Concrete class implementing Chebyshev filtered orthogonalized subspace
  * iteration solver.
  */
-class chebyshevOrthogonalizedSubspaceIterationSolver : public eigenSolverClass {
+namespace dftfe{
+
+  class chebyshevOrthogonalizedSubspaceIterationSolver : public eigenSolverClass {
   
-  //
-  // types
-  //
- public:
+    //
+    // types
+    //
+  public:
 
-  //
-  // methods
-  //
- public:
+    //
+    // methods
+    //
+  public:
 
-  /**
-   * @brief Constructor.
-   *
-   * @param lowerBoundWantedSpectrum Lower Bound of the Wanted Spectrum.
-   * @param lowerBoundUnWantedSpectrum Lower Bound of the UnWanted Spectrum.
-   * @param numberEigenvalues Number of smallest eigenvalues to be
-   * solved for.
-   * @param verbosityLevel Debug output level:
-   *                   0 - very limited debug output
-   *                   1 - limited debug output
-   *                   2 - all debug output.
-   */
-  chebyshevOrthogonalizedSubspaceIterationSolver(double lowerBoundWantedSpectrum,
-						 double lowerBoundUnWantedSpectrum,
-						 const unsigned int numberEigenvalues);
+    /**
+     * @brief Constructor.
+     *
+     * @param lowerBoundWantedSpectrum Lower Bound of the Wanted Spectrum.
+     * @param lowerBoundUnWantedSpectrum Lower Bound of the UnWanted Spectrum.
+     * @param numberEigenvalues Number of smallest eigenvalues to be
+     * solved for.
+     * @param verbosityLevel Debug output level:
+     *                   0 - very limited debug output
+     *                   1 - limited debug output
+     *                   2 - all debug output.
+     */
+    chebyshevOrthogonalizedSubspaceIterationSolver(double lowerBoundWantedSpectrum,
+						   double lowerBoundUnWantedSpectrum,
+						   const unsigned int numberEigenvalues);
 
-  /**
-   * @brief Destructor.
-   */
-  ~chebyshevOrthogonalizedSubspaceIterationSolver();
+    /**
+     * @brief Destructor.
+     */
+    ~chebyshevOrthogonalizedSubspaceIterationSolver();
 
 
-  /**
-   * @brief Solve a generalized eigen problem. 
-   */
-  eigenSolverClass::ReturnValueType solve(operatorClass * operatorMatrix,
-					  std::vector<vectorType> & eigenVectors,
-					  std::vector<double> & eigenValues);
+    /**
+     * @brief Solve a generalized eigen problem. 
+     */
+    eigenSolverClass::ReturnValueType solve(operatorClass * operatorMatrix,
+					    std::vector<vectorType> & eigenVectors,
+					    std::vector<double> & eigenValues);
 
-  /**
-   * @brief reinit spectrum bounds
-   */
-  void reinitSpectrumBounds(double lowerBoundWantedSpectrum,
-			    double lowerBoundUnWantedSpectrum);
+    /**
+     * @brief reinit spectrum bounds
+     */
+    void reinitSpectrumBounds(double lowerBoundWantedSpectrum,
+			      double lowerBoundUnWantedSpectrum);
   
-  //
-  //data
-  //
- private:
-  double d_lowerBoundWantedSpectrum;
-  double d_lowerBoundUnWantedSpectrum;
-  const unsigned int d_numberEigenValues;
-  dealii::ConditionalOStream   pcout;
-  TimerOutput computing_timer;
-};
+    //
+    //data
+    //
+  private:
+    double d_lowerBoundWantedSpectrum;
+    double d_lowerBoundUnWantedSpectrum;
+    const unsigned int d_numberEigenValues;
+    dealii::ConditionalOStream   pcout;
+    TimerOutput computing_timer;
+  };
+}
 #endif

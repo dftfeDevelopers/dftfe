@@ -41,7 +41,7 @@ namespace dftfe{
 	friend class symmetryClass;
 
     public:
-      eigenClass(dftClass<FEOrder>* _dftPtr, MPI_Comm &mpi_comm_replica);
+      eigenClass(dftClass<FEOrder>* _dftPtr, const MPI_Comm &mpi_comm_replica);
 
       void HX(std::vector<vectorType> &src, 
 	      std::vector<vectorType> &dst);

@@ -27,6 +27,8 @@ typedef dealii::parallel::distributed::Vector<double> vectorType;
 /**
  * @brief Base class for non-linear algebraic solver.
  */
+namespace dftfe{
+
   class eigenSolverClass {
 
     //
@@ -66,4 +68,6 @@ typedef dealii::parallel::distributed::Vector<double> vectorType;
     eigenSolverClass();
 
   };
+}
 #endif // dft_eigenSolver_h
+

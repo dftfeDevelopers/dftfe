@@ -27,9 +27,10 @@
 
 using namespace dealii;
 
+namespace dftfe{
+
 namespace linearAlgebraOperations
 {
-
 #ifdef ENABLE_PERIODIC_BC
   std::complex<double> innerProduct(operatorClass * operatorMatrix,
 				    const vectorType & X,
@@ -551,3 +552,5 @@ namespace linearAlgebraOperations
   }
 
 }//end of namespace
+
+}
