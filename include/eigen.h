@@ -23,118 +23,117 @@
 #include "constraintMatrixInfo.h"
 #include "operator.h"
 
-using namespace dealii;
-typedef dealii::parallel::distributed::Vector<double> vectorType;
-template <unsigned int T> class dftClass;
+namespace dftfe{
+  using namespace dealii;
+  typedef dealii::parallel::distributed::Vector<double> vectorType;
+  template <unsigned int T> class dftClass;
 
-//
-//Define eigenClass class
-//
-template <unsigned int FEOrder>
-class eigenClass : public operatorClass
-{
-  template <unsigned int T>
-  friend class dftClass;
+  //
+  //Define eigenClass class
+  //
+  template <unsigned int FEOrder>
+    class eigenClass : public operatorClass
+    {
+      template <unsigned int T>
+	friend class dftClass;
 
-  template <unsigned int T>
-  friend class symmetryClass;
+      template <unsigned int T>
+	friend class symmetryClass;
 
-public:
-  eigenClass(dftClass<FEOrder>* _dftPtr, MPI_Comm &mpi_comm_replica);
+    public:
+      eigenClass(dftClass<FEOrder>* _dftPtr, MPI_Comm &mpi_comm_replica);
 
-  void HX(std::vector<vectorType> &src, 
-	  std::vector<vectorType> &dst);
+      void HX(std::vector<vectorType> &src, 
+	      std::vector<vectorType> &dst);
 
 #ifdef ENABLE_PERIODIC_BC
-  void XtHX(std::vector<vectorType> &src,
-	    std::vector<std::complex<double> > & ProjHam); 
+      void XtHX(std::vector<vectorType> &src,
+		std::vector<std::complex<double> > & ProjHam); 
 #else
-  void XtHX(std::vector<vectorType> &src,
-	    std::vector<double> & ProjHam);
+      void XtHX(std::vector<vectorType> &src,
+		std::vector<double> & ProjHam);
 #endif
    
-  void computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoValues, 
-		   const vectorType & phi,
-		   const vectorType & phiExt,
-		   const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
+      void computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoValues, 
+		       const vectorType & phi,
+		       const vectorType & phiExt,
+		       const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
 
-  void computeVEffSpinPolarized(std::map<dealii::CellId,std::vector<double> >* rhoValues, 
-				const vectorType & phi,
-				const vectorType & phiExt,
-				unsigned int j,
-				const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
+      void computeVEffSpinPolarized(std::map<dealii::CellId,std::vector<double> >* rhoValues, 
+				    const vectorType & phi,
+				    const vectorType & phiExt,
+				    unsigned int j,
+				    const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
 
-  void computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoValues,
-		   std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
-		   const vectorType & phi,
-		   const vectorType & phiExt,
-		   const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
+      void computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoValues,
+		       std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
+		       const vectorType & phi,
+		       const vectorType & phiExt,
+		       const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
 
-  void computeVEffSpinPolarized(std::map<dealii::CellId,std::vector<double> >* rhoValues, 
-				std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
-				const vectorType & phi,
-				const vectorType & phiExt,
-				unsigned int j,
-				const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
+      void computeVEffSpinPolarized(std::map<dealii::CellId,std::vector<double> >* rhoValues, 
+				    std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
+				    const vectorType & phi,
+				    const vectorType & phiExt,
+				    unsigned int j,
+				    const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
 
-  void reinitkPointIndex(unsigned int & kPointIndex);
+      void reinitkPointIndex(unsigned int & kPointIndex);
 
 
-  void init ();
+      void init ();
 	    
-  void computeMassVector();
+      void computeMassVector();
 
-  //data structures
-  vectorType tempDealiiVector;
+      //data structures
+      vectorType tempDealiiVector;
 
 
 
- private:
-  void implementHX(const dealii::MatrixFree<3,double>  &data,
-		   std::vector<vectorType>  &dst, 
-		   const std::vector<vectorType>  &src,
-		   const std::pair<unsigned int,unsigned int> &cell_range) const;
+    private:
+      void implementHX(const dealii::MatrixFree<3,double>  &data,
+		       std::vector<vectorType>  &dst, 
+		       const std::vector<vectorType>  &src,
+		       const std::pair<unsigned int,unsigned int> &cell_range) const;
 
-  void computeNonLocalHamiltonianTimesX(const std::vector<vectorType> &src,
-					std::vector<vectorType>       &dst);
+      void computeNonLocalHamiltonianTimesX(const std::vector<vectorType> &src,
+					    std::vector<vectorType>       &dst);
  
-  void computeNonLocalHamiltonianTimesXMemoryOpt(const std::vector<vectorType> &src,
-					         std::vector<vectorType>       &dst);  
+      void computeNonLocalHamiltonianTimesXMemoryOpt(const std::vector<vectorType> &src,
+						     std::vector<vectorType>       &dst);  
 
   
-  //pointer to dft class
-  dftClass<FEOrder>* dftPtr;
+      //pointer to dft class
+      dftClass<FEOrder>* dftPtr;
 
 
-  //FE data structres
-  dealii::FE_Q<3>   FE;
+      //FE data structres
+      dealii::FE_Q<3>   FE;
  
-  //data structures
-  vectorType invSqrtMassVector,sqrtMassVector;
-  //#ifdef ENABLE_PERIODIC_BC
-  //  std::vector<std::complex<double> > XHXValue;
-  //#else
-  //  std::vector<double> XHXValue;
-  //#endif
+      //data structures
+      vectorType invSqrtMassVector,sqrtMassVector;
 
-  dealii::Table<2, dealii::VectorizedArray<double> > vEff;
-  dealii::Table<3, dealii::VectorizedArray<double> > derExcWithSigmaTimesGradRho;
 
-  //parallel objects
-  MPI_Comm mpi_communicator;
-  const unsigned int n_mpi_processes;
-  const unsigned int this_mpi_process;
-  dealii::ConditionalOStream   pcout;
+      dealii::Table<2, dealii::VectorizedArray<double> > vEff;
+      dealii::Table<3, dealii::VectorizedArray<double> > derExcWithSigmaTimesGradRho;
 
-  //compute-time logger
-  dealii::TimerOutput computing_timer;
+      //parallel objects
+      const MPI_Comm mpi_communicator;
+      const unsigned int n_mpi_processes;
+      const unsigned int this_mpi_process;
+      dealii::ConditionalOStream   pcout;
 
-  //mutex thread for managing multi-thread writing to XHXvalue
-  mutable dealii::Threads::Mutex  assembler_lock;
+      //compute-time logger
+      dealii::TimerOutput computing_timer;
 
-  //d_kpoint index for which Hamiltonian is computed
-  unsigned int d_kPointIndex;
+      //mutex thread for managing multi-thread writing to XHXvalue
+      mutable dealii::Threads::Mutex  assembler_lock;
 
-};
+      //d_kpoint index for which Hamiltonian is computed
+      unsigned int d_kPointIndex;
 
+    };
+
+
+}
 #endif

@@ -27,100 +27,103 @@
 #include "solverFunction.h"
 #include "constants.h"
 
-using namespace dealii;
-template <unsigned int FEOrder> class dftClass;
-//
-//Define geoOptIon class
-//
-template <unsigned int FEOrder>
-class geoOptIon : public solverFunction
-{
-public:
-/** @brief Constructor.
- *
- *  @param _dftPtr pointer to dftClass
- *  @param mpi_comm_replica mpi_communicator of the current pool
- */
-  geoOptIon(dftClass<FEOrder>* _dftPtr,  MPI_Comm &mpi_comm_replica);
+namespace dftfe {
 
-/**
- * @brief initializes the data member d_relaxationFlags.
- *
- */
-  void init();
+    using namespace dealii;
+    template <unsigned int FEOrder> class dftClass;
+    //
+    //Define geoOptIon class
+    //
+    template <unsigned int FEOrder>
+    class geoOptIon : public solverFunction
+    {
+    public:
+    /** @brief Constructor.
+     *
+     *  @param _dftPtr pointer to dftClass
+     *  @param mpi_comm_replica mpi_communicator of the current pool
+     */
+      geoOptIon(dftClass<FEOrder>* _dftPtr,const  MPI_Comm &mpi_comm_replica);
 
-/**
- * @brief starts the atomic force relaxation.
- *
- */
-  void run();  
+    /**
+     * @brief initializes the data member d_relaxationFlags.
+     *
+     */
+      void init();
 
-/**
- * @brief writes the current fem mesh. The mesh changes as atoms move.
- *
- */
-  void writeMesh(std::string meshFileName);
+    /**
+     * @brief starts the atomic force relaxation.
+     *
+     */
+      void run();
 
-/**
- * @brief Obtain number of unknowns (total number of force components to be relaxed).
- *
- * @return int Number of unknowns.
- */
-  int getNumberUnknowns() const ;
+    /**
+     * @brief writes the current fem mesh. The mesh changes as atoms move.
+     *
+     */
+      void writeMesh(std::string meshFileName);
 
-/**
- * @brief Compute function gradient (aka forces).
- *
- * @param gradient STL vector for gradient values.
- */
-  void gradient(std::vector<double> & gradient);
+    /**
+     * @brief Obtain number of unknowns (total number of force components to be relaxed).
+     *
+     * @return int Number of unknowns.
+     */
+      int getNumberUnknowns() const ;
 
-/**
- * @brief Update atomic positions.
- *
- * @param solution displacement of the atoms with respect to their current position.
- * The size of the solution vector is equal to the number of unknowns.
- */
-  void update(const std::vector<double> & solution);
+    /**
+     * @brief Compute function gradient (aka forces).
+     *
+     * @param gradient STL vector for gradient values.
+     */
+      void gradient(std::vector<double> & gradient);
 
-  /// not implemented
-  double value() const;
+    /**
+     * @brief Update atomic positions.
+     *
+     * @param solution displacement of the atoms with respect to their current position.
+     * The size of the solution vector is equal to the number of unknowns.
+     */
+      void update(const std::vector<double> & solution);
 
-  /// not implemented
-  void value(std::vector<double> & functionValue);
+      /// not implemented
+      double value() const;
 
-  /// not implemented
-  void precondition(std::vector<double>       & s,
-	            const std::vector<double> & gradient) const;
+      /// not implemented
+      void value(std::vector<double> & functionValue);
 
-  /// not implemented
-  void solution(std::vector<double> & solution);
+      /// not implemented
+      void precondition(std::vector<double>       & s,
+			const std::vector<double> & gradient) const;
 
-  /// not implemented
-  std::vector<int> getUnknownCountFlag() const;
+      /// not implemented
+      void solution(std::vector<double> & solution);
 
-private:
+      /// not implemented
+      std::vector<int> getUnknownCountFlag() const;
 
-  /// storage for relaxation flags for each global atom.
-  /// each atom has three flags corresponding to three components (0- no relax, 1- relax)
-  std::vector<int> d_relaxationFlags;
+    private:
 
-  /// maximum force component to be relaxed
-  double d_maximumAtomForceToBeRelaxed;
+      /// storage for relaxation flags for each global atom.
+      /// each atom has three flags corresponding to three components (0- no relax, 1- relax)
+      std::vector<int> d_relaxationFlags;
 
-  /// total number of calls to update()
-  int d_totalUpdateCalls;
+      /// maximum force component to be relaxed
+      double d_maximumAtomForceToBeRelaxed;
 
-  /// pointer to dft class
-  dftClass<FEOrder>* dftPtr;
+      /// total number of calls to update()
+      int d_totalUpdateCalls;
 
-  /// parallel communication objects
-  MPI_Comm mpi_communicator;
-  const unsigned int n_mpi_processes;
-  const unsigned int this_mpi_process;
+      /// pointer to dft class
+      dftClass<FEOrder>* dftPtr;
 
-  /// conditional stream object
-  dealii::ConditionalOStream   pcout;
-};
+      /// parallel communication objects
+      const MPI_Comm mpi_communicator;
+      const unsigned int n_mpi_processes;
+      const unsigned int this_mpi_process;
 
+      /// conditional stream object
+      dealii::ConditionalOStream   pcout;
+    };
+
+}
 #endif

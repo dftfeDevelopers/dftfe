@@ -21,14 +21,14 @@
 #include "../../include/dftParameters.h"
 #include "computeNonLocalHamiltonianTimesXMemoryOpt.cc"
 
+namespace dftfe {
 //
 //constructor
 //
 template<unsigned int FEOrder>
-eigenClass<FEOrder>::eigenClass(dftClass<FEOrder>* _dftPtr, 
-				MPI_Comm &mpi_comm_replica):
+eigenClass<FEOrder>::eigenClass(dftClass<FEOrder>* _dftPtr,const MPI_Comm &mpi_comm_replica):
   dftPtr(_dftPtr),
-  FE (QGaussLobatto<1>(C_num1DQuad<FEOrder>())),
+  FE (QGaussLobatto<1>(FEOrder+1)),
   d_kPointIndex(0),
   mpi_communicator (mpi_comm_replica),
   n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_comm_replica)),
@@ -52,7 +52,7 @@ template<unsigned int FEOrder>
 void eigenClass<FEOrder>::init()
 {
   computing_timer.enter_section("eigenClass setup");
-  
+
   dftPtr->matrix_free_data.initialize_dof_vector(invSqrtMassVector,dftPtr->eigenDofHandlerIndex);
   sqrtMassVector.reinit(invSqrtMassVector);
   tempDealiiVector.reinit(invSqrtMassVector);
@@ -74,8 +74,8 @@ void eigenClass<FEOrder>::init()
   //  std::cout<<"Inside Eigen Init: "<<operatorClass::getLocalDofIndicesReal()->size()<<std::endl;
 
 
-  computing_timer.exit_section("eigenClass setup"); 
-} 
+  computing_timer.exit_section("eigenClass setup");
+}
 
 //
 //compute mass Vector
@@ -83,10 +83,10 @@ void eigenClass<FEOrder>::init()
 template<unsigned int FEOrder>
 void eigenClass<FEOrder>::computeMassVector()
 {
-  computing_timer.enter_section("eigenClass Mass assembly"); 
+  computing_timer.enter_section("eigenClass Mass assembly");
   invSqrtMassVector = 0.0;
   sqrtMassVector = 0.0;
-  
+
 #ifdef ENABLE_PERIODIC_BC
   Tensor<1,2,VectorizedArray<double> > one;
   one[0] =  make_vectorized_array (1.0);
@@ -104,14 +104,14 @@ void eigenClass<FEOrder>::computeMassVector()
   for(unsigned int cell=0; cell<dftPtr->matrix_free_data.n_macro_cells(); ++cell)
     {
       fe_eval.reinit(cell);
-      for (unsigned int q = 0; q < n_q_points; ++q) 
+      for (unsigned int q = 0; q < n_q_points; ++q)
 	fe_eval.submit_value(one,q);
       fe_eval.integrate (true,false);
       fe_eval.distribute_local_to_global(invSqrtMassVector);
     }
 
   invSqrtMassVector.compress(VectorOperation::add);
-  
+
   //
   //evaluate inverse square root of the diagonal mass matrix and store in the dealii vector "invSqrtMassVector"
   //
@@ -123,7 +123,7 @@ void eigenClass<FEOrder>::computeMassVector()
 	    {
 
 	      if(std::abs(invSqrtMassVector(i)) > 1.0e-15)
-		{ 
+		{
 		  sqrtMassVector(i) = std::sqrt(invSqrtMassVector(i));
 		  invSqrtMassVector(i) = 1.0/std::sqrt(invSqrtMassVector(i));
 		}
@@ -147,7 +147,7 @@ void eigenClass<FEOrder>::reinitkPointIndex(unsigned int & kPointIndex)
 
 
 template<unsigned int FEOrder>
-void eigenClass<FEOrder>::computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoValues, 
+void eigenClass<FEOrder>::computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				      const vectorType & phi,
 				      const vectorType & phiExt,
 				      const std::map<dealii::CellId,std::vector<double> > & pseudoValues)
@@ -217,7 +217,7 @@ void eigenClass<FEOrder>::computeVEff(std::map<dealii::CellId,std::vector<double
 	      vEff(cell,q) = fe_eval_phi.get_value(q)+exchangePotential+corrPotential+(pseudoPotential-fe_eval_phiExt.get_value(q));
 	    }
 	  else
-	    {  
+	    {
 	      vEff(cell,q) = fe_eval_phi.get_value(q)+exchangePotential+corrPotential;
 	    }
 	}
@@ -278,7 +278,7 @@ void eigenClass<FEOrder>::computeVEff(std::map<dealii::CellId,std::vector<double
 	      double gradRhoZ = ((*gradRhoValues)[cellPtr->id()][3*q + 2]);
 	      sigmaValue[v] = gradRhoX*gradRhoX + gradRhoY*gradRhoY + gradRhoZ*gradRhoZ;
 	    }
-	
+
 	  xc_gga_vxc(&(dftPtr->funcX),n_sub_cells,&densityValue[0],&sigmaValue[0],&derExchEnergyWithDensityVal[0],&derExchEnergyWithSigma[0]);
 	  xc_gga_vxc(&(dftPtr->funcC),n_sub_cells,&densityValue[0],&sigmaValue[0],&derCorrEnergyWithDensityVal[0],&derCorrEnergyWithSigma[0]);
 
@@ -315,7 +315,7 @@ void eigenClass<FEOrder>::computeVEff(std::map<dealii::CellId,std::vector<double
 	      derExcWithSigmaTimesGradRho(cell,q,2) = derExcWithSigmaTimesGradRhoZ;
 	    }
 	  else
-	    {  
+	    {
 	      vEff(cell,q)=fe_eval_phi.get_value(q)+derExchEnergyWithDensity+derCorrEnergyWithDensity;
 	      derExcWithSigmaTimesGradRho(cell,q,0) = derExcWithSigmaTimesGradRhoX;
 	      derExcWithSigmaTimesGradRho(cell,q,1) = derExcWithSigmaTimesGradRhoY;
@@ -325,11 +325,11 @@ void eigenClass<FEOrder>::computeVEff(std::map<dealii::CellId,std::vector<double
     }
 }
 
-						  
+
 
 template<unsigned int FEOrder>
 void eigenClass<FEOrder>::implementHX (const dealii::MatrixFree<3,double>  &data,
-				       std::vector<vectorType>  &dst, 
+				       std::vector<vectorType>  &dst,
 				       const std::vector<vectorType>  &src,
 				       const std::pair<unsigned int,unsigned int> &cell_range) const
 {
@@ -341,7 +341,7 @@ void eigenClass<FEOrder>::implementHX (const dealii::MatrixFree<3,double>  &data
   int kPointIndex = d_kPointIndex;
   FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>(), 2, double>  fe_eval(data, dftPtr->eigenDofHandlerIndex, 0);
   Tensor<1,2,VectorizedArray<double> > psiVal, vEffTerm, kSquareTerm, kDotGradientPsiTerm, derExchWithSigmaTimesGradRhoDotGradientPsiTerm;
-  Tensor<1,2,Tensor<1,3,VectorizedArray<double> > > gradientPsiVal, gradientPsiTerm, derExchWithSigmaTimesGradRhoTimesPsi,sumGradientTerms; 
+  Tensor<1,2,Tensor<1,3,VectorizedArray<double> > > gradientPsiVal, gradientPsiTerm, derExchWithSigmaTimesGradRhoTimesPsi,sumGradientTerms;
 
   Tensor<1,3,VectorizedArray<double> > kPointCoors;
   kPointCoors[0] = make_vectorized_array(dftPtr->d_kPointCoordinates[3*kPointIndex+0]);
@@ -355,7 +355,7 @@ void eigenClass<FEOrder>::implementHX (const dealii::MatrixFree<3,double>  &data
     {
       for(unsigned int cell=cell_range.first; cell<cell_range.second; ++cell)
 	{
-	  fe_eval.reinit (cell); 
+	  fe_eval.reinit (cell);
 	  for(unsigned int i = 0; i < dst.size(); ++i)
 	    {
 	      fe_eval.read_dof_values(src[i]);
@@ -386,7 +386,7 @@ void eigenClass<FEOrder>::implementHX (const dealii::MatrixFree<3,double>  &data
 		  kDotGradientPsiTerm[0] = kPointCoors[0]*gradientPsiVal[1][0] + kPointCoors[1]*gradientPsiVal[1][1] + kPointCoors[2]*gradientPsiVal[1][2];
 		  kDotGradientPsiTerm[1] = -(kPointCoors[0]*gradientPsiVal[0][0] + kPointCoors[1]*gradientPsiVal[0][1] + kPointCoors[2]*gradientPsiVal[0][2]);
 
-	     
+
 		  derExchWithSigmaTimesGradRhoDotGradientPsiTerm[0] = two*(derExcWithSigmaTimesGradRho(cell,q,0)*gradientPsiVal[0][0] + derExcWithSigmaTimesGradRho(cell,q,1)*gradientPsiVal[0][1] + derExcWithSigmaTimesGradRho(cell,q,2)*gradientPsiVal[0][2]);
 		  derExchWithSigmaTimesGradRhoDotGradientPsiTerm[1] = two*(derExcWithSigmaTimesGradRho(cell,q,0)*gradientPsiVal[1][0] + derExcWithSigmaTimesGradRho(cell,q,1)*gradientPsiVal[1][1] + derExcWithSigmaTimesGradRho(cell,q,2)*gradientPsiVal[1][2]);
 		  //
@@ -397,7 +397,7 @@ void eigenClass<FEOrder>::implementHX (const dealii::MatrixFree<3,double>  &data
 		  derExchWithSigmaTimesGradRhoTimesPsi[0][2] = two*derExcWithSigmaTimesGradRho(cell,q,2)*psiVal[0];
 		  derExchWithSigmaTimesGradRhoTimesPsi[1][0] = two*derExcWithSigmaTimesGradRho(cell,q,0)*psiVal[1];
 		  derExchWithSigmaTimesGradRhoTimesPsi[1][1] = two*derExcWithSigmaTimesGradRho(cell,q,1)*psiVal[1];
-		  derExchWithSigmaTimesGradRhoTimesPsi[1][2] = two*derExcWithSigmaTimesGradRho(cell,q,2)*psiVal[1];	
+		  derExchWithSigmaTimesGradRhoTimesPsi[1][2] = two*derExcWithSigmaTimesGradRho(cell,q,2)*psiVal[1];
 
 
 		  //
@@ -409,7 +409,7 @@ void eigenClass<FEOrder>::implementHX (const dealii::MatrixFree<3,double>  &data
 		  //
 		  //submit gradients and values
 		  //
-	      
+
 		  for(int i = 0; i < 3; ++i)
 		    {
 		      sumGradientTerms[0][i] = gradientPsiTerm[0][i] + derExchWithSigmaTimesGradRhoTimesPsi[0][i];
@@ -418,7 +418,7 @@ void eigenClass<FEOrder>::implementHX (const dealii::MatrixFree<3,double>  &data
 
 		  fe_eval.submit_gradient(sumGradientTerms,q);
 		  fe_eval.submit_value(vEffTerm+kDotGradientPsiTerm+kSquareTerm+derExchWithSigmaTimesGradRhoDotGradientPsiTerm,q);
-		    
+
 		}
 
 	      fe_eval.integrate (true, true);
@@ -431,7 +431,7 @@ void eigenClass<FEOrder>::implementHX (const dealii::MatrixFree<3,double>  &data
     {
       for(unsigned int cell=cell_range.first; cell<cell_range.second; ++cell)
 	{
-	  fe_eval.reinit (cell); 
+	  fe_eval.reinit (cell);
 	  for(unsigned int i = 0; i < dst.size(); ++i)
 	    {
 	      fe_eval.read_dof_values(src[i]);
@@ -490,7 +490,7 @@ void eigenClass<FEOrder>::implementHX (const dealii::MatrixFree<3,double>  &data
     {
       for(unsigned int cell = cell_range.first; cell < cell_range.second; ++cell)
 	{
-	  fe_eval.reinit (cell); 
+	  fe_eval.reinit (cell);
 	  for(unsigned int i = 0; i < dst.size(); i++)
 	    {
 	      fe_eval.read_dof_values(src[i]);
@@ -507,7 +507,7 @@ void eigenClass<FEOrder>::implementHX (const dealii::MatrixFree<3,double>  &data
 		  //
 		  //submit gradient and value
 		  //
-		  fe_eval.submit_gradient(gradientPsiVal*half + two*derExchWithSigmaTimesGradRhoTimesPsi,q); 
+		  fe_eval.submit_gradient(gradientPsiVal*half + two*derExchWithSigmaTimesGradRhoTimesPsi,q);
 		  fe_eval.submit_value(vEff(cell,q)*psiVal + two*derExchWithSigmaTimesGradRhoDotGradientPsiTerm,q);
 		}
 
@@ -520,7 +520,7 @@ void eigenClass<FEOrder>::implementHX (const dealii::MatrixFree<3,double>  &data
     {
       for(unsigned int cell = cell_range.first; cell < cell_range.second; ++cell)
 	{
-	  fe_eval.reinit (cell); 
+	  fe_eval.reinit (cell);
 	  for(unsigned int i = 0; i < dst.size(); i++)
 	    {
 	      fe_eval.read_dof_values(src[i]);
@@ -543,8 +543,8 @@ void eigenClass<FEOrder>::implementHX (const dealii::MatrixFree<3,double>  &data
 
 //HX
 template<unsigned int FEOrder>
-void eigenClass<FEOrder>::HX(std::vector<vectorType> &src, 
-			     std::vector<vectorType> &dst) 
+void eigenClass<FEOrder>::HX(std::vector<vectorType> &src,
+			     std::vector<vectorType> &dst)
 {
 
 
@@ -566,18 +566,17 @@ void eigenClass<FEOrder>::HX(std::vector<vectorType> &src,
   if(dftParameters::isPseudopotential && dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0)
     computeNonLocalHamiltonianTimesXMemoryOpt(src,dst);
 
-
   //
   //First evaluate H^{loc}*M^{-1/2}*X and then add to H^{nloc}*M^{-1/2}*X
   //
   dftPtr->matrix_free_data.cell_loop(&eigenClass<FEOrder>::implementHX, this, dst, src); //HMX
-  
+
   //
   //Finally evaluate M^{-1/2}*H*M^{-1/2}*X
   //
   for (std::vector<vectorType>::iterator it=dst.begin(); it!=dst.end(); it++)
     {
-      (*it).scale(invSqrtMassVector); 
+      (*it).scale(invSqrtMassVector);
     }
 
   //
@@ -585,7 +584,7 @@ void eigenClass<FEOrder>::HX(std::vector<vectorType> &src,
   //
   for (std::vector<vectorType>::iterator it=src.begin(); it!=src.end(); it++)
     {
-      (*it).scale(sqrtMassVector); //MHMX  
+      (*it).scale(sqrtMassVector); //MHMX
     }
 
   computing_timer.exit_section("eigenClass HX");
@@ -622,7 +621,7 @@ void eigenClass<FEOrder>::XtHX(std::vector<vectorType> & src,
   //
   //required for lapack functions
   //
-  int k = dofs_per_proc, n = src.size(); 
+  int k = dofs_per_proc, n = src.size();
   int vectorSize = k*n;
   int lda=k, ldb=k, ldc=n;
 
@@ -642,7 +641,7 @@ void eigenClass<FEOrder>::XtHX(std::vector<vectorType> & src,
 
       (*it).extract_subvector_to(dftPtr->getLocalDofIndicesImag().begin(), 
 				 dftPtr->getLocalDofIndicesImag().end(), 
-				  xImag.begin()+dofs_per_proc*index);
+				 xImag.begin()+dofs_per_proc*index);
 
       tempPSI3[index].extract_subvector_to(dftPtr->getLocalDofIndicesReal().begin(),
 					   dftPtr->getLocalDofIndicesReal().end(),
@@ -740,12 +739,12 @@ void eigenClass<FEOrder>::XtHX(std::vector<vectorType> &src,
   Utilities::MPI::sum(ProjHam, mpi_communicator, ProjHam); 
   
   computing_timer.exit_section("eigenClass XHX");
- 
+
 }
 #endif
 
 template<unsigned int FEOrder>
-void eigenClass<FEOrder>::computeVEffSpinPolarized(std::map<dealii::CellId,std::vector<double> >* rhoValues, 
+void eigenClass<FEOrder>::computeVEffSpinPolarized(std::map<dealii::CellId,std::vector<double> >* rhoValues,
 						   const vectorType & phi,
 						   const vectorType & phiExt,
 						   const unsigned int spinIndex,
@@ -820,7 +819,7 @@ void eigenClass<FEOrder>::computeVEffSpinPolarized(std::map<dealii::CellId,std::
 	      vEff(cell,q)=fe_eval_phi.get_value(q)+exchangePotential+corrPotential+(pseudoPotential-fe_eval_phiExt.get_value(q));
 	    }
 	  else
-	    {  
+	    {
 	      vEff(cell,q)=fe_eval_phi.get_value(q)+exchangePotential+corrPotential;
 	    }
 	}
@@ -872,7 +871,7 @@ void eigenClass<FEOrder>::computeVEffSpinPolarized(std::map<dealii::CellId,std::
 	  //loop over each cell
 	  //
 	  unsigned int n_sub_cells=dftPtr->matrix_free_data.n_components_filled(cell);
-	  std::vector<double> densityValue(2*n_sub_cells), derExchEnergyWithDensityVal(2*n_sub_cells), derCorrEnergyWithDensityVal(2*n_sub_cells), 
+	  std::vector<double> densityValue(2*n_sub_cells), derExchEnergyWithDensityVal(2*n_sub_cells), derCorrEnergyWithDensityVal(2*n_sub_cells),
 				derExchEnergyWithSigma(3*n_sub_cells), derCorrEnergyWithSigma(3*n_sub_cells), sigmaValue(3*n_sub_cells);
 	  for (unsigned int v = 0; v < n_sub_cells; ++v)
 	    {
@@ -890,7 +889,7 @@ void eigenClass<FEOrder>::computeVEffSpinPolarized(std::map<dealii::CellId,std::
 	      sigmaValue[3*v+1] = gradRhoX1*gradRhoX2 + gradRhoY1*gradRhoY2 + gradRhoZ1*gradRhoZ2;
 	      sigmaValue[3*v+2] = gradRhoX2*gradRhoX2 + gradRhoY2*gradRhoY2 + gradRhoZ2*gradRhoZ2;
 	    }
-	
+
 	  xc_gga_vxc(&(dftPtr->funcX),n_sub_cells,&densityValue[0],&sigmaValue[0],&derExchEnergyWithDensityVal[0],&derExchEnergyWithSigma[0]);
 	  xc_gga_vxc(&(dftPtr->funcC),n_sub_cells,&densityValue[0],&sigmaValue[0],&derCorrEnergyWithDensityVal[0],&derCorrEnergyWithSigma[0]);
 
@@ -909,7 +908,7 @@ void eigenClass<FEOrder>::computeVEffSpinPolarized(std::map<dealii::CellId,std::
 	      double gradRhoOtherZ = ((*gradRhoValues)[cellPtr->id()][6*q + 2 + 3*(1-spinIndex)]);
 	      double term = derExchEnergyWithSigma[3*v+2*spinIndex]+derCorrEnergyWithSigma[3*v+2*spinIndex];
 	      double termOff = derExchEnergyWithSigma[3*v+1]+derCorrEnergyWithSigma[3*v+1];
-	      derExcWithSigmaTimesGradRhoX[v] = term*gradRhoX + 0.5*termOff*gradRhoOtherX; 
+	      derExcWithSigmaTimesGradRhoX[v] = term*gradRhoX + 0.5*termOff*gradRhoOtherX;
 	      derExcWithSigmaTimesGradRhoY[v] = term*gradRhoY + 0.5*termOff*gradRhoOtherY;
 	      derExcWithSigmaTimesGradRhoZ[v] = term*gradRhoZ + 0.5*termOff*gradRhoOtherZ;
 	    }
@@ -931,7 +930,7 @@ void eigenClass<FEOrder>::computeVEffSpinPolarized(std::map<dealii::CellId,std::
 	      derExcWithSigmaTimesGradRho(cell,q,2) = derExcWithSigmaTimesGradRhoZ;
 	    }
 	  else
-	    {  
+	    {
 	      vEff(cell,q)=fe_eval_phi.get_value(q)+derExchEnergyWithDensity+derCorrEnergyWithDensity;
 	      derExcWithSigmaTimesGradRho(cell,q,0) = derExcWithSigmaTimesGradRhoX;
 	      derExcWithSigmaTimesGradRho(cell,q,1) = derExcWithSigmaTimesGradRhoY;
@@ -955,4 +954,4 @@ template class eigenClass<10>;
 template class eigenClass<11>;
 template class eigenClass<12>;
 
-
+}

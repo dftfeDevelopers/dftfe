@@ -4,7 +4,7 @@
 
 # Parameter to control verbosity of terminal output. 0 for low, 1 for medium,
 # and 2 for high.
-set VERBOSITY = 2
+set VERBOSITY = 1
 
 subsection Boundary conditions
   # Periodicity along domain bounding vector, v1.
@@ -69,8 +69,8 @@ end
 
 
 subsection DFT functional related parameters
-  # Parameter specifying the type of exchange-correlation to be used: 1(LDA:
-  # Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23,
+  # Parameter specifying the type of exchange-correlation to be used: 
+  # 1(LDA: Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23,
   # 5048 (1981)]), 2(LDA: Perdew-Wang 92 functional with Slater Exchange [PRB.
   # 45, 13244 (1992)]), 3(LDA: Vosko, Wilk & Nusair with Slater Exchange[Can.
   # J. Phys. 58, 1200 (1980)]), 4(GGA: Perdew-Burke-Ernzerhof functional [PRL.
@@ -118,7 +118,7 @@ subsection Finite element mesh parameters
   set MESH FILE        = 
 
   # The degree of the finite-element interpolating polynomial
-  set POLYNOMIAL ORDER = 1
+  set POLYNOMIAL ORDER = 4
 
 
   subsection Auto mesh generation parameters
@@ -216,7 +216,7 @@ subsection SCF parameters
   set ANDERSON SCHEME MIXING PARAMETER = 0.5
 
   # Maximum number of iterations to be allowed for SCF convergence
-  set MAXIMUM ITERATIONS               = 1 #100  # default: 50
+  set MAXIMUM ITERATIONS               = 100  # default: 50
 
   # Fermi-Dirac smearing temperature (in Kelvin)
   set TEMPERATURE                      = 500  # default: 500.0

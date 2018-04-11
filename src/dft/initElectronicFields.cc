@@ -13,15 +13,12 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author  Phani Motamarri (2018)
+// @author  Phani Motamarri (2018), Sambit Das (2018)
 //
-
-#include "../../include/dftParameters.h"
-
 
 //init
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::initElectronicFields(const bool usePreviousGroundStateRho){
+void dftClass<FEOrder>::initElectronicFields(const bool usePreviousGroundStateFields){
   TimerOutput::Scope scope (computing_timer,"init electronic fields");
 
   //
@@ -45,21 +42,66 @@ void dftClass<FEOrder>::initElectronicFields(const bool usePreviousGroundStateRh
   }
 
 
-  for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_maxkPoints; ++kPoint)
-    {
-      for(unsigned int i = 0; i < eigenVectors[kPoint].size(); ++i)
-	{
+  //
+  //initialize density and PSI/ interpolate from previous ground state solution
+  //
+  if (!usePreviousGroundStateFields)
+  {
+     for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_maxkPoints; ++kPoint)
+        for(unsigned int i = 0; i < eigenVectors[kPoint].size(); ++i)
 	  eigenVectors[kPoint][i].reinit(vChebyshev);
-	}
-    }
 
-  //
-  //initialize density
-  //
-  if (!usePreviousGroundStateRho)
+     pcout <<std::endl<< "Reading initial guess for PSI...."<<std::endl;
+     readPSI();
+
      initRho();
+  }
   else
-     projectPreviousGroundStateRho();
+  {
+     const unsigned int totalNumEigenVectors=(1+dftParameters::spinPolarized)*d_maxkPoints*eigenVectors[0].size();
+     std::vector<vectorType> eigenVectorsPrevious(totalNumEigenVectors);
+     std::vector<vectorType* > eigenVectorsPreviousPtrs(totalNumEigenVectors);
+     std::vector<vectorType* > eigenVectorsCurrentPtrs(totalNumEigenVectors);
+
+     for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_maxkPoints; ++kPoint)
+        for(unsigned int i = 0; i < eigenVectors[kPoint].size(); ++i)
+	{
+	  eigenVectorsPrevious[kPoint* eigenVectors[0].size()+i]=eigenVectors[kPoint][i];
+	  eigenVectorsPreviousPtrs[kPoint* eigenVectors[0].size()+i]=&(eigenVectorsPrevious[kPoint* eigenVectors[0].size()+i]);
+	  eigenVectors[kPoint][i].reinit(vChebyshev);
+	  eigenVectorsCurrentPtrs[kPoint* eigenVectors[0].size()+i]=&(eigenVectors[kPoint][i]);
+	}
+
+     if (dftParameters::verbosity==2)
+       pcout<<"L2 Norm Value of previous eigenvector 0: "<<eigenVectorsPreviousPtrs[0]->l2_norm()<<std::endl;
+
+     computing_timer.enter_section("interpolate previous PSI");
+
+     pcout <<std::endl<< "Interpolating previous grounstate PSI into the new finite element mesh...."<<std::endl;
+     vectorTools::interpolateFieldsFromPreviousMesh interpolateEigenVecPrev(mpi_communicator);
+     interpolateEigenVecPrev.interpolate(d_mesh.getSerialMeshUnmovedPrevious(),
+	                         d_mesh.getParallelMeshUnmovedPrevious(),
+				 d_mesh.getParallelMeshUnmoved(),
+				 FEEigen,
+				 FEEigen,
+				 eigenVectorsPreviousPtrs,
+				 eigenVectorsCurrentPtrs);
+
+     computing_timer.exit_section("interpolate previous PSI");
+
+     for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_maxkPoints; ++kPoint)
+        for(unsigned int i = 0; i < eigenVectors[kPoint].size(); ++i)
+	{
+	  constraintsNoneEigenDataInfo.distribute(eigenVectors[kPoint][i]);
+	  eigenVectors[kPoint][i].update_ghost_values();
+	}
+
+     if (dftParameters::verbosity==2)
+      pcout<<"L2 Norm Value of interpolated eigenvector 0: "<<eigenVectorsCurrentPtrs[0]->l2_norm()<<std::endl;
+
+     pcout <<std::endl<< "Computing rho initial guess from previous ground state PSI...."<<std::endl;
+     computeRhoInitialGuessFromPSI();
+  }
 
   //
   //update serial and parallel unmoved previous mesh
@@ -67,9 +109,4 @@ void dftClass<FEOrder>::initElectronicFields(const bool usePreviousGroundStateRh
   d_mesh.generateSerialAndParallelUnmovedPreviousMesh(atomLocations,
 				                      d_imagePositions,
 				                      d_domainBoundingVectors);
-  //
-  //initialize PSI
-  //
-  pcout <<std::endl<< "Reading initial guess for PSI...."<<std::endl;
-  readPSI();
 }

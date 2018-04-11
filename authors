@@ -1,16 +1,48 @@
-This file lists people who contributed code/documentation to DFT-FE.
+DFT-FE Authors
+==============
+DFT-FE is intended to be a community project. It is run by a group of principal developers, 
+who manage the architecture of the code and the core functionalities. Developers with
+significant contributions to core functionalities and code architecture in the past who are 
+no longer active principal developers, are listed under principal developers emeriti. 
+A subset of the principal developers and mentors are administrators. Finally, all contributors who have
+contributed major parts of the DFT-FE code or sent fixes and small enhancements are listed
+under contributors. All the underlying lists are in alphabetical order. 
 
-(c) 2017 The Regents of the University of Michigan
 
-Code development
-=================
-Phani Motamarri  - University of Michigan (developer)
-Sambit Das       - University of Michigan (developer)
-Krishnendu Ghosh - University of Michigan (developer)
-Shiva Rudraraju  - University of Wisconsin Madison (developer)
-Vikram Gavini    - University of Michigan (mentor)
+Principal developers
+====================
+Sambit Das       - University of Michigan, USA
+Phani Motamarri  - University of Michigan, USA
+
+
+Prinicipal developers emeriti
+=============================
+Krishnendu Ghosh - University of Michigan, USA
+Shiva Rudraraju  - University of Wisconsin Madison, USA
+
+
+Contributors
+============
+Sambit Das       - University of Michigan, USA
+Denis Davydov    - University of Erlangen-Nuremberg, Germany
+Krishnendu Ghosh - University of Michigan, USA
+Phani Motamarri  - University of Michigan, USA
+Shiva Rudraraju  - University of Wisconsin Madison, USA
+
+
+Administrators
+==============
+Sambit Das       - University of Michigan, USA
+Vikram Gavini    - University of Michigan, USA
+Phani Motamarri  - University of Michigan, USA
+
 
 Documentation
-=================
-Phani Motamarri - University of Michigan
-Sambit Das      - University of Michigan
+=============
+Sambit Das      - University of Michigan, USA
+Phani Motamarri - University of Michigan, USA
+
+
+Mentors
+=======
+Vikram Gavini   - University of Michigan, USA

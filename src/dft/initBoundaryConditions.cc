@@ -34,7 +34,22 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   //
   dofHandler.distribute_dofs (FE);
   dofHandlerEigen.distribute_dofs (FEEigen);
+<<<<<<< HEAD
   //writeMesh("currentMesh");
+=======
+
+  //write mesh
+  if (!dftParameters::reproducible_output)
+  {
+    DataOut<3> dataOut;
+    dataOut.attach_dof_handler(dofHandler);
+    dataOut.build_patches(C_num1DQuad<FEOrder>());
+    dftUtils::writeDataVTUParallelLowestPoolId(dataOut,
+	                                     mpi_communicator,
+					     interpoolcomm,
+					     std::string("currentMesh"));
+  }
+>>>>>>> develop
 
   d_supportPoints.clear();
   DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), dofHandler, d_supportPoints);

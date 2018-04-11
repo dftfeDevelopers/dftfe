@@ -481,8 +481,10 @@ template<unsigned int FEOrder>
 void forceClass<FEOrder>::printAtomsForces()
 {
     const int numberGlobalAtoms = dftPtr->atomLocations.size();
-    pcout<<std::endl;
-    pcout<<"Ion forces (Hartree/Bohr)"<<std::endl;
+    if (!dftParameters::reproducible_output)
+       pcout<<std::endl<<"Ion forces (Hartree/Bohr)"<<std::endl;
+    else
+       pcout<<std::endl<<"Absolute values of ion forces (Hartree/Bohr)"<<std::endl;
     if (dftParameters::verbosity==2)
        pcout<< "Negative of configurational force (Hartree/Bohr) on atoms for Gaussian generator with constant: "<< d_gaussianConstant <<std::endl;
 
@@ -492,7 +494,17 @@ void forceClass<FEOrder>::printAtomsForces()
     unsigned int maxForceAtomId=0;
     for (unsigned int i=0; i< numberGlobalAtoms; i++)
     {
-	pcout<< "AtomId "<< std::setw(4) << i << ":  "<< std::scientific<< -d_globalAtomsGaussianForces[3*i]<<","<< -d_globalAtomsGaussianForces[3*i+1]<<","<<-d_globalAtomsGaussianForces[3*i+2]<<std::endl;
+	if (!dftParameters::reproducible_output)
+	   pcout<< "AtomId "<< std::setw(4) << i << ":  "<< std::scientific<< -d_globalAtomsGaussianForces[3*i]<<","<< -d_globalAtomsGaussianForces[3*i+1]<<","<<-d_globalAtomsGaussianForces[3*i+2]<<std::endl;
+	else
+	{
+	   std::vector<double> truncatedForce(C_DIM);
+	   for (unsigned int idim=0; idim< C_DIM; idim++)
+                truncatedForce[idim]  = std::fabs(std::floor(10000000 * (-d_globalAtomsGaussianForces[3*i+idim])) / 10000000.0);
+
+	   pcout<< "AtomId "<< std::setw(4) << i << ":  "<< std::fixed<<std::setprecision(6)<< truncatedForce[0]<<","<<truncatedForce[1]<<","<<truncatedForce[2]<<std::endl;
+	}
+
 	double absForce=0.0;
 	for (unsigned int idim=0; idim< C_DIM; idim++)
         {
@@ -509,6 +521,6 @@ void forceClass<FEOrder>::printAtomsForces()
 
     pcout<< "--------------------------------------------------------------------------------------------"<<std::endl;
 
-    if (dftParameters::verbosity==1)
+    if (dftParameters::verbosity>=1)
         pcout<<" Maximum absolute force atom id: "<< maxForceAtomId << ", Force vec: "<< -d_globalAtomsGaussianForces[3*maxForceAtomId]<<","<< -d_globalAtomsGaussianForces[3*maxForceAtomId+1]<<","<<-d_globalAtomsGaussianForces[3*maxForceAtomId+2]<<std::endl;
 }

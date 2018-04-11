@@ -20,11 +20,12 @@
 #include <geoOptCell.h>
 #include <cgPRPNonLinearSolver.h>
 #include <force.h>
-#include <meshGenerator.h>
 #include <dft.h>
 #include <fileReaders.h>
 #include <dftParameters.h>
 #include <dftUtils.h>
+
+namespace dftfe {
 
 template<unsigned int FEOrder>
 void geoOptCell<FEOrder>::writeMesh(std::string meshFileName)
@@ -37,11 +38,11 @@ void geoOptCell<FEOrder>::writeMesh(std::string meshFileName)
 //constructor
 //
 template<unsigned int FEOrder>
-geoOptCell<FEOrder>::geoOptCell(dftClass<FEOrder>* _dftPtr, MPI_Comm &mpi_comm_replica):
+geoOptCell<FEOrder>::geoOptCell(dftClass<FEOrder>* _dftPtr,const MPI_Comm &mpi_comm_replica):
   dftPtr(_dftPtr),
   mpi_communicator (mpi_comm_replica),
-  n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_communicator)),
-  this_mpi_process (Utilities::MPI::this_mpi_process(mpi_communicator)),
+  n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_comm_replica)),
+  this_mpi_process (Utilities::MPI::this_mpi_process(mpi_comm_replica)),
   pcout(std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
 {
 
@@ -378,5 +379,5 @@ template class geoOptCell<9>;
 template class geoOptCell<10>;
 template class geoOptCell<11>;
 template class geoOptCell<12>;
-
+}
 #endif

@@ -22,6 +22,8 @@
 
 using namespace dealii;
 
+namespace dftfe {
+
 namespace dftParameters
 {
 
@@ -32,7 +34,7 @@ namespace dftParameters
   double lowerEndWantedSpectrum=0.0,relLinearSolverTolerance=1e-10,selfConsistentSolverTolerance=1e-10,TVal=500, start_magnetization=0.0;
 
   bool isPseudopotential=false,periodicX=false,periodicY=false,periodicZ=false, useSymm=false, timeReversal=false;
-  std::string meshFileName=" ",coordinatesFile=" ",domainBoundingVectorsFile=" ",kPointDataFile=" ", ionRelaxFlagsFile=" ";
+  std::string meshFileName="",coordinatesFile="",domainBoundingVectorsFile="",kPointDataFile="", ionRelaxFlagsFile="",chkDirPath="";
 
   double outerAtomBallRadius=2.0, meshSizeOuterDomain=10.0;
   double meshSizeInnerBall=1.0, meshSizeOuterBall=1.0;
@@ -42,22 +44,43 @@ namespace dftParameters
   double stressRelaxTol = 5e-7;//Hartree/Bohr^3
   unsigned int cellConstraintType=12;// all cell components to be relaxed
 
-  unsigned int verbosity=0;
-
+  unsigned int verbosity=0; unsigned int chkType=0;
+  bool restartFromChk=false;
+  bool reproducible_output=false;
 
 
   void declare_parameters(ParameterHandler &prm)
   {
+    prm.declare_entry("REPRODUCIBLE OUTPUT", "false",
+                      Patterns::Bool(),
+                      "Limit output to that which is reprodicible, i.e. don't print "
+											"timing or absolute paths.");
 
     prm.declare_entry("VERBOSITY", "1",
                       Patterns::Integer(0,2),
                       "Parameter to control verbosity of terminal output. 0 for low, 1 for medium, and 2 for high.");
 
+    prm.enter_subsection ("RESTART");
+    {
+	prm.declare_entry("CHK DIR PATH", "",
+			  Patterns::Anything(),
+			  "Full path of the directory where the checkpoint data required to restart the calculation is written to and read from. The user has to manually create this directory. Not required to be set if CHK TYPE is 0.");
+
+	prm.declare_entry("CHK TYPE", "0",
+			   Patterns::Integer(0,2),
+			   "Checkpoint type, 0(dont write any checkpoint data), 1(checkpoint data for ion optimization. This option assumes cell optimization is set to false. The checkpoint is created at the end of the last ground state solve.).");
+
+	prm.declare_entry("RESTART FROM CHK", "false",
+			   Patterns::Bool(),
+			   "Boolean parameter specifying if the current job reads from the last checkpoint of CHK TYPE. Is always false for CHK TYPE 0.");
+    }
+    prm.leave_subsection ();
+
     prm.enter_subsection ("Geometry");
     {
 	prm.declare_entry("ATOMIC COORDINATES FILE", "",
 			  Patterns::Anything(),
-			  "Atomic-coordinates file. For fully non-periodic domain give cartesian coordinates of the atoms (in a.u) with respect origin at the center of the domain. For periodic and semi-periodic give fractional coordinates of atoms. File format (example for two atoms): x1 y1 z1 (row1), x2 y2 z2 (row2).");
+			  "Atomic-coordinates file. For fully non-periodic domain give cartesian coordinates of the atoms (in a.u) with respect to origin at the center of the domain. For periodic and semi-periodic give fractional coordinates of atoms. File format (example for two atoms): x1 y1 z1 (row1), x2 y2 z2 (row2).");
 
 	prm.declare_entry("DOMAIN BOUNDING VECTORS FILE", "",
 			  Patterns::Anything(),
@@ -305,6 +328,15 @@ namespace dftParameters
   void parse_parameters(ParameterHandler &prm)
   {
     dftParameters::verbosity                     = prm.get_integer("VERBOSITY");
+    dftParameters::reproducible_output           = prm.get_bool("REPRODUCIBLE OUTPUT");
+
+    prm.enter_subsection ("RESTART");
+    {
+	chkDirPath=prm.get("CHK DIR PATH");
+	chkType=prm.get_integer("CHK TYPE");
+	restartFromChk=prm.get_bool("RESTART FROM CHK") && chkType!=0;
+    }
+    prm.leave_subsection ();
 
     prm.enter_subsection ("Geometry");
     {
@@ -405,6 +437,31 @@ namespace dftParameters
        dftParameters::relLinearSolverTolerance      = prm.get_double("TOLERANCE");
     }
     prm.leave_subsection ();
+
+    check_print_parameters(prm);
   }
+
+
+  void check_print_parameters(const dealii::ParameterHandler &prm)
+  {
+    if (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0 &&  dftParameters::verbosity>=1)
+    {
+      prm.print_parameters (std::cout, ParameterHandler::Text);
+    }
+
+    const bool printParametersToFile=false;
+    if (printParametersToFile)
+    {
+	std::ofstream output ("demoParameterFile.prm");
+	prm.print_parameters (output, ParameterHandler::OutputStyle::Text);
+    }
+#ifdef ENABLE_PERIODIC_BC
+    AssertThrow(dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ,ExcMessage("Incorrect executable: periodic executable being used for non-periodic problem."));
+#else
+    AssertThrow(!(dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ),ExcMessage("Incorrect executable: non-periodic executable being used for periodic problem."));
+#endif
+  }
+
+}
 
 }

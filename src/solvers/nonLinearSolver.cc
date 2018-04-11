@@ -23,6 +23,7 @@
 //
 #include "../../include/nonLinearSolver.h"
 
+namespace dftfe {
   //
   // Constructor.
   //
@@ -31,7 +32,7 @@
 			           const double tolerance):
   d_debugLevel(debugLevel),
   d_maxNumberIterations(maxNumberIterations),
-  d_tolerance(tolerance)    
+  d_tolerance(tolerance)
   {
   }
 
@@ -51,7 +52,7 @@
   //
   // Get tolerance.
   //
-  double 
+  double
   nonLinearSolver::getTolerance() const
   {
 
@@ -61,11 +62,11 @@
     return d_tolerance;
 
   }
-  
+
   //
   // Get maximum number of iterations.
   //
-  unsigned int 
+  unsigned int
   nonLinearSolver::getMaximumNumberIterations() const
   {
 
@@ -80,10 +81,10 @@
   //
   // Get debug level.
   //
-  unsigned int 
+  unsigned int
   nonLinearSolver::getDebugLevel() const
   {
-    
+
     //
     //
     //
@@ -91,4 +92,4 @@
 
   }
 
-
+}

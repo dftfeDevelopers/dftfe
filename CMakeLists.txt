@@ -19,10 +19,11 @@ SET(TARGET_SRC
   ./src/force/force.cc
   ./src/force/eshelbyTensor/eshelbyTensor.cc
   ./src/force/eshelbyTensor/eshelbyTensorSpinPolarized.cc
-  ./src/mesh/meshMovement/meshMovement.cc
-  ./src/mesh/meshMovement/meshMovementGaussian.cc
-  ./src/mesh/meshMovement/meshMovementAffineTransform.cc
-  ./src/mesh/meshGenerator/meshGenerator.cc
+  ./src/triangulation/meshMovement/meshMovement.cc
+  ./src/triangulation/meshMovement/meshMovementGaussian.cc
+  ./src/triangulation/meshMovement/meshMovementAffineTransform.cc
+  ./src/triangulation/triangulationManager/triangulationManager.cc
+  ./src/triangulation/vectorTools/interpolateFieldsFromPreviousMesh.cc
   ./src/symmetry/initGroupSymmetry.cc
   ./src/geoOpt/geoOptIon.cc
   ./src/geoOpt/geoOptCell.cc
@@ -71,6 +72,37 @@ ENDIF()
 DEAL_II_INITIALIZE_CACHED_VARIABLES()
 PROJECT(${TARGET})
 
+#
+# RPATHS: https://cmake.org/Wiki/CMake_RPATH_handling#Mac_OS_X_and_the_RPATH
+#
+IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  ## cmake  --help-policy CMP0042
+  set(CMAKE_MACOSX_RPATH ON)
+ENDIF()
+
+# use, i.e. don't skip the full RPATH for the build tree
+SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
+
+# when building, don't use the install RPATH already
+# (but later on when installing)
+SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+
+SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+
+# add the automatically determined parts of the RPATH
+# which point to directories outside the build tree to the install RPATH
+SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
+# the RPATH to be used when installing, but only if it's not a system directory
+LIST(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
+IF("${isSystemDir}" STREQUAL "-1")
+   SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+ENDIF("${isSystemDir}" STREQUAL "-1")
+
+# make sure RPATHs are used on macOS
+SET(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
+
+# FIXME: fix warnings, remove flags
 SET(WARNINGSLIST  "-w -Wno-sign-compare -Wno-ignored-qualifiers -Wno-deprecated-declarations -Wno-vla-extension -Wno-reorder -Wno-sometimes-uninitialized -Wno-undefined-var-template -Wno-ignored-qualifiers")
 SET(DEAL_II_CXX_FLAGS  "${DEAL_II_CXX_FLAGS} ${WARNINGSLIST}" )
 
@@ -170,3 +202,18 @@ ELSE()
 ENDIF (DEFINED SPGLIB_DIR)
 
 ADD_DEFINITIONS(-DDFT_PATH="${CMAKE_CURRENT_SOURCE_DIR}")
+
+# Enable testing and descent into tests/ subdirectory:
+# Make sure numdiff is in path before configuring, otherwise due to roundoff
+# errors many tests may fail.
+# Test will run in Debug or Release mode based on the way library is compiled.
+ENABLE_TESTING()
+INCLUDE(CTest)
+# default 600sec is not enough for some tests, increase:
+SET (TEST_TIME_LIMIT 3600)
+#
+IF (DEAL_II_PETSC_WITH_COMPLEX)
+   ADD_SUBDIRECTORY(tests/dft/pseudopotential/periodic)
+ELSE()
+   ADD_SUBDIRECTORY(tests/dft/pseudopotential/nonPeriodic)
+ENDIF()

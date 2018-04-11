@@ -3,12 +3,12 @@ set -e
 set -o pipefail
 #script to setup and build DFT-FE
 #Provide paths for external libraries and optimization flag (0 for Debug, 1 for Release)
-dealiiPetscRealDir="/home/vikramg/DFT-FE-softwares/softwareCentos/dealiiDev/intel_18.0.1_petscReal_noavx_64bit_thread_master"
-dealiiPetscComplexDir="/home/vikramg/DFT-FE-softwares/softwareCentos/dealiiDev/intel_18.0.1_petscComplex_noavx_64bit_thread_master"
+dealiiPetscRealDir="/home/vikramg/DFT-FE-softwares/softwareCentos/dealiiDev/intel_18.0.1_petscReal_noavx_64bit_thread_master2"
+dealiiPetscComplexDir="/home/vikramg/DFT-FE-softwares/softwareCentos/dealiiDev/intel_18.0.1_petscComplex_noavx_64bit_thread_master2"
 alglibDir="/nfs/mcfs_comp/home/rudraa/software/alglib/cpp/src"
 libxcDir="/home/vikramg/DFT-FE-softwares/softwareCentos/libxcNew/install_intel18"
 spglibDir="/home/vikramg/DFT-FE-softwares/softwareCentos/spglib"
-optimizedMode=1
+optimizedMode=0
 #
 #Usually, no changes are needed below this line
 #
@@ -21,9 +21,9 @@ if [ $optimizedMode == 1 ]; then
     cd build
     cd release
     echo -e "${Blu}Building Non-Periodic executable in Optimized (Release) mode...${RCol}"
-    mkdir -p nonPeriodic && cd nonPeriodic && cmake -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_CXX_FLAGS_RELEASE="-O3" -DCMAKE_BUILD_TYPE=Release -DDEAL_II_DIR=$dealiiPetscRealDir -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir -DSPGLIB_DIR=$spglibDir ../../../. && make -j 8 && cd ..
+    mkdir -p nonPeriodic && cd nonPeriodic && cmake -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_CXX_FLAGS_RELEASE="-O3" -DCMAKE_BUILD_TYPE=Release -DDEAL_II_DIR=$dealiiPetscRealDir -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir -DSPGLIB_DIR=$spglibDir ../../../. && make -j 4 && cd ..
     echo -e "${Blu}Building Periodic executable in Optimized (Release) mode...${RCol}"
-    mkdir -p periodic && cd periodic && cmake -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_CXX_FLAGS_RELEASE="-O3" -DCMAKE_BUILD_TYPE=Release -DDEAL_II_DIR=$dealiiPetscComplexDir -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir -DSPGLIB_DIR=$spglibDir  ../../../. && make -j 8 && cd ../..
+    mkdir -p periodic && cd periodic && cmake -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_CXX_FLAGS_RELEASE="-O3" -DCMAKE_BUILD_TYPE=Release -DDEAL_II_DIR=$dealiiPetscComplexDir -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir -DSPGLIB_DIR=$spglibDir  ../../../. && make -j 4 && cd ../..
   else
     rm -rf build/release
     echo -e "${Blu}Creating build directory...${RCol}"

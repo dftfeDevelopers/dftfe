@@ -228,7 +228,7 @@ template<unsigned int FEOrder>
 double dftClass<FEOrder>::mixing_simple_spinPolarized()
 {
   double normValue=0.0;
-  QGauss<3>  quadrature(FEOrder+1);
+  QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
   FEValues<3> fe_values (FE, quadrature, update_values | update_JxW_values | update_quadrature_points);
   const unsigned int num_quad_points = quadrature.size();
   
@@ -319,7 +319,7 @@ double dftClass<FEOrder>::mixing_simple_spinPolarized()
 template<unsigned int FEOrder>
 double dftClass<FEOrder>::mixing_anderson_spinPolarized(){
   double normValue=0.0;
-  QGauss<3>  quadrature(FEOrder+1);
+  QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
   FEValues<3> fe_values (FE, quadrature, update_values | update_JxW_values | update_quadrature_points);
   const unsigned int num_quad_points = quadrature.size();
 
