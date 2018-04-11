@@ -40,7 +40,6 @@
 #include <boost/math/distributions/normal.hpp>
 #include <boost/random/normal_distribution.hpp>
 #include <interpolateFieldsFromPreviousMesh.h>
-#include <vectorTools.h>
 
 namespace dftfe {
 //Include cc files
@@ -747,12 +746,14 @@ void dftClass<FEOrder>::output()
   //
   dealii::parallel::distributed::Vector<double>  rhoNodalField;
   matrix_free_data.initialize_dof_vector(rhoNodalField);
-  vectorTools::projectQuadDataToNodalField(rhoOutValues,
-	                                   QGauss<3>(C_num1DQuad<FEOrder>()),
-				           dofHandler,
-				           constraintsNone,
-	                                   rhoNodalField);
-
+  rhoNodalField=0;
+  dealii::VectorTools::project<3,dealii::parallel::distributed::Vector<double>>
+							(dealii::MappingQ1<3,3>(),
+							 dofHandler,
+							 constraintsNone,
+							 QGauss<3>(C_num1DQuad<FEOrder>()),
+							 [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell , const unsigned int q) -> double {return (*rhoOutValues).find(cell->id())->second[q];},
+							 rhoNodalField);
   //
   //only generate output for electron-density
   //
