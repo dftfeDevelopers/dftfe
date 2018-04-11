@@ -64,11 +64,13 @@ namespace dftfe  {
      *  atoms with respect to origin.
      *  @param domainBoundingVectors vector of domain bounding vectors (refer to
      *  description of input parameters.
+     *  @param generateSerialMesh bool to toggle to generation of serial tria
      */
       void generateSerialUnmovedAndParallelMovedUnmovedMesh
 		  (const std::vector<std::vector<double> > & atomLocations,
 		   const std::vector<std::vector<double> > & imageAtomLocations,
-		   const std::vector<std::vector<double> > & domainBoundingVectors);
+		   const std::vector<std::vector<double> > & domainBoundingVectors,
+		   const bool generateSerialTria);
 
     /** @brief generates serial and parallel unmoved previous mesh.
      *
@@ -121,11 +123,53 @@ namespace dftfe  {
       const parallel::distributed::Triangulation<3> & getSerialMeshUnmovedPrevious();
 
     /**
-     * @brief serialize the triangulations and the associated solution vectors depending
-     * on the problem type
+     * @brief serialize the triangulations and the associated solution vectors
      *
+     *  @param [input]dofHandler DofHandler object on which solution vectors are based
+     *  @param [input]solutionVectors vector of parallel distributed solution vectors to be serialized
+     *  @param [input]interpoolComm interpool communicator to ensure serialization happens only in pool
      */
-     void saveTriangulations();
+     void saveTriangulationsSolutionVectors
+	     (const dealii::DoFHandler<3> & dofHandler,
+	      const std::vector< const dealii::parallel::distributed::Vector<double> * > & solutionVectors,
+	      const MPI_Comm & interpoolComm);
+
+    /**
+     * @brief de-serialize the triangulations and the associated solution vectors
+     *
+     *  @param [input]feOrder finite element polynomial order of the dofHandler on which solution
+     *  vectors to be de-serialized are based upon
+     *  @param [input]nComponents number of components of the dofHandler on which solution
+     *  vectors to be de-serialized are based upon
+     *  @param [output]solutionVectors vector of parallel distributed de-serialized solution vectors. The
+     *  vector length must match the input vector length used in the call to saveTriangulationSolutionVectors
+     */
+     void loadTriangulationsSolutionVectors
+	      (const unsigned int feOrder,
+	       const unsigned int nComponents,
+	       std::vector< dealii::parallel::distributed::Vector<double> * > & solutionVectors);
+    /**
+     * @brief serialize the triangulations and the associated cell quadrature data container
+     *
+     *  @param [input]cellQuadDataContainerIn container of input cell quadrature data to be serialized
+     *  @param [input]interpoolComm interpool communicator to ensure serialization happens only in pool
+     */
+     void saveTriangulationsCellQuadData
+	      (const std::vector<const std::map<dealii::CellId, std::vector<double> > *> & cellQuadDataContainerIn,
+	       const MPI_Comm & interpoolComm);
+
+    /**
+     * @brief de-serialize the triangulations and the associated cell quadrature data container
+     *
+     *  @param [output]cellQuadDataContainerOut container of output cell quadrature data. Must pass container
+     *  of the same size used in the call to saveTriangulationsCellQuadData.
+     *  @param [input]cellDataSizeContainer
+     *  @param [input]offsetContainer
+     */
+     void loadTriangulationsCellQuadData
+	       (std::vector<std::map<dealii::CellId, std::vector<double> > *> & cellQuadDataContainerOut,
+		const std::vector<unsigned int>  & cellDataSizeContainer,
+		const std::vector<unsigned int>  & offsetContainer);
 
      private:
 

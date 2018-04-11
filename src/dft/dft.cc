@@ -58,7 +58,6 @@ namespace dftfe {
 #include "energy.cc"
 #include "charge.cc"
 #include "density.cc"
-#include "rhoDataUtils.cc"
 #include "mixingschemes.cc"
 #include "chebyshev.cc"
 #include "solveVself.cc"
@@ -357,7 +356,8 @@ void dftClass<FEOrder>::init (const bool usePreviousGroundStateFields)
   //
   d_mesh.generateSerialUnmovedAndParallelMovedUnmovedMesh(atomLocations,
 				                          d_imagePositions,
-				                          d_domainBoundingVectors);
+				                          d_domainBoundingVectors,
+							  dftParameters::useSymm);
   computing_timer.exit_section("mesh generation");
 
 
@@ -744,15 +744,23 @@ void dftClass<FEOrder>::output()
   //
   //compute nodal electron-density from quad data
   //
-  computeGroundStateRhoNodalField();
-
+  dealii::parallel::distributed::Vector<double>  rhoNodalField;
+  matrix_free_data.initialize_dof_vector(rhoNodalField);
+  rhoNodalField=0;
+  dealii::VectorTools::project<3,dealii::parallel::distributed::Vector<double>>
+							(dealii::MappingQ1<3,3>(),
+							 dofHandler,
+							 constraintsNone,
+							 QGauss<3>(C_num1DQuad<FEOrder>()),
+							 [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell , const unsigned int q) -> double {return (*rhoOutValues).find(cell->id())->second[q];},
+							 rhoNodalField);
   //
   //only generate output for electron-density
   //
   DataOut<3> dataOutRho;
   dataOutRho.attach_dof_handler(dofHandler);
   char buffer[100]; sprintf(buffer,"rhoField");
-  dataOutRho.add_data_vector(d_rhoNodalFieldGroundState, buffer);
+  dataOutRho.add_data_vector(rhoNodalField, buffer);
   dataOutRho.build_patches(C_num1DQuad<FEOrder>());
   dftUtils::writeDataVTUParallelLowestPoolId(dataOutRho,
 	                                     mpi_communicator,
