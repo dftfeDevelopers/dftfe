@@ -48,7 +48,7 @@
 #include "density.cc"
 #include "rhoDataUtils.cc"
 #include "mixingschemes.cc"
-#include "chebyshev.cc"
+#include "kohnShamEigenSolve.cc"
 #include "solveVself.cc"
 
 #include <complex>
@@ -365,7 +365,9 @@ void dftClass<FEOrder>::init (const bool usePreviousGroundStateRho)
   //
   const parallel::distributed::Triangulation<3> & triangulationPar = d_mesh.getParallelMeshMoved();
 
+  //
   //initialize affine transformation object (must be done on unmoved triangulation)
+  //
   d_affineTransformMesh.init(d_mesh.getParallelMeshMoved(),d_domainBoundingVectors);
 
   //
@@ -581,7 +583,7 @@ void dftClass<FEOrder>::solve()
 		      if (dftParameters::verbosity==2)
 			pcout<<"Beginning Chebyshev filter pass "<< j+1<< " for spin "<< s+1<<std::endl;
 
-		      chebyshevSolver(s,kPoint,subspaceIterationSolver);
+		      kohnShamEigenSpaceCompute(s,kPoint,subspaceIterationSolver);
 	            }
 	        }
 	    }
@@ -610,7 +612,7 @@ void dftClass<FEOrder>::solve()
 		  if (dftParameters::verbosity==2)
 		    pcout<< "Beginning Chebyshev filter pass "<< j+1<<std::endl;
 
-		  chebyshevSolver(0,kPoint,subspaceIterationSolver);
+		  kohnShamEigenSpaceCompute(0,kPoint,subspaceIterationSolver);
 		}
 	    }
 
@@ -639,7 +641,7 @@ void dftClass<FEOrder>::solve()
 		  if (dftParameters::verbosity==2)
 		    pcout<< "Beginning Chebyshev filter pass "<< dftParameters::numPass+count<<std::endl;
 
-		  chebyshevSolver(0,kPoint,subspaceIterationSolver);
+		  kohnShamEigenSpaceCompute(0,kPoint,subspaceIterationSolver);
 		}
 	      count++;
 	      compute_fermienergy();

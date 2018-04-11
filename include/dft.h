@@ -550,12 +550,12 @@ class dftClass
   double bUp;
   std::vector<double> a0;
   std::vector<double> bLow;
-  vectorType vChebyshev, v0Chebyshev, fChebyshev;
+  vectorType vChebyshev;
 
 
-  void chebyshevSolver(const unsigned int s,
-		       const unsigned int kPointIndex,
-		       chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver);
+  void kohnShamEigenSpaceCompute(const unsigned int s,
+				 const unsigned int kPointIndex,
+				 chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver);
 
   void computeResidualNorm(const std::vector<double> & eigenValuesTemp,
 			   std::vector<vectorType> & X, 
@@ -564,20 +564,6 @@ class dftClass
   std::vector<std::vector<double> > d_tempResidualNormWaveFunctions;
 
   double computeMaximumHighestOccupiedStateResidualNorm();
-
-  double upperBound();
-
-  void gramSchmidt(std::vector<vectorType> & X);
-
-  void chebyshevFilter(std::vector<vectorType>& X,
-		       const unsigned int m,
-		       const double a,
-		       const double b,
-		       const double a0);
-
-  void rayleighRitz(const unsigned int spinType,
-		    std::vector<vectorType> & X,
-		    std::vector<double> & eigenValuesTemp);
 		    
 
 };

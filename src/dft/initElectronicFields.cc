@@ -28,8 +28,7 @@ void dftClass<FEOrder>::initElectronicFields(const bool usePreviousGroundStateRh
   //initialize eigen vectors
   //
   matrix_free_data.initialize_dof_vector(vChebyshev,eigenDofHandlerIndex);
-  v0Chebyshev.reinit(vChebyshev);
-  fChebyshev.reinit(vChebyshev);
+  
 
   //
   //temp STL d_v and d_f vectors required for upper bound computation filled here
