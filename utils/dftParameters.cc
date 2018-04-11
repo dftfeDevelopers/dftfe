@@ -119,7 +119,7 @@ namespace dftParameters
 
 	    prm.declare_entry("CELL CONSTRAINT TYPE", "12",
 			      Patterns::Integer(1,13),
-			      "Cell relaxation constraint type, 1(isotropic shape-fixed volume optimization), 2(volume-fixed shape optimization), 3(relax only cell component v1_x), 4(relax only cell component v2_x), 5(relax only cell component v3_x), 6(relax only cell components v2_x and v3_x), 7(relax only cell components v1_x and v3_x), 8(relax only cell components v1x and v2_x), 9(volume optimization- relax only v1_x, v2_x and v3_x), 10(2D- relax only x and y components relaxed), 11(2D- relax only x and y shape components- inplane area fixed), 12(relax all cell components), 13 automatically decides the constraints based boundary conditions. CAUTION: A majority of these options only make sense in an orthorhombic cell geometry.");
+			      "Cell relaxation constraint type, 1(isotropic shape-fixed volume optimization), 2(volume-fixed shape optimization), 3(relax only cell component v1x), 4(relax only cell component v2x), 5(relax only cell component v3x), 6(relax only cell components v2x and v3x), 7(relax only cell components v1x and v3x), 8(relax only cell components v1x and v2x), 9(volume optimization- relax only v1x, v2x and v3x), 10(2D- relax only x and y components relaxed), 11(2D- relax only x and y shape components- inplane area fixed), 12(relax all cell components), 13 automatically decides the constraints based boundary conditions. CAUTION: A majority of these options only make sense in an orthorhombic cell geometry.");
 
 	}
 	prm.leave_subsection ();
@@ -130,7 +130,7 @@ namespace dftParameters
     prm.enter_subsection ("Boundary conditions");
     {
         prm.declare_entry("SELF POTENTIAL ATOM BALL RADIUS", "3.0",
-                      Patterns::Double(),
+                      Patterns::Double(1.5,10),
                       "The radius (in a.u) of the ball around an atom on which self-potential of the associated nuclear charge is solved");
 
 	prm.declare_entry("PERIODIC1", "false",
@@ -163,19 +163,19 @@ namespace dftParameters
       {
 
 	prm.declare_entry("BASE MESH SIZE", "2.0",
-			  Patterns::Double(),
+			  Patterns::Double(0,20),
 			  "Mesh size of the base mesh on which refinement is performed.");
 
 	prm.declare_entry("ATOM BALL RADIUS","2.0",
-			  Patterns::Double(),
+			  Patterns::Double(0,10),
 			  "Radius of ball enclosing atom");
 
 	prm.declare_entry("MESH SIZE ATOM BALL", "0.5",
-			  Patterns::Double(),
+			  Patterns::Double(0,10),
 			  "Mesh size in a ball around atom");
 
 	prm.declare_entry("MESH SIZE NEAR ATOM", "0.5",
-			  Patterns::Double(),
+			  Patterns::Double(0,10),
 			  "Mesh size near atom. Useful for all-electron case.");
 
         prm.declare_entry("MAX REFINEMENT STEPS", "10",
@@ -232,7 +232,7 @@ namespace dftParameters
 			  "Flag to control usage of time reversal symmetry ");
 
 	prm.declare_entry("NUMBER OF POOLS", "1",
-			  Patterns::Integer(),
+			  Patterns::Integer(1),
 			  "Number of pools the irreducible k-points to be split on should be a divisor of total number of procs and be less than or equal to the number of irreducible k-points");
     }
     prm.leave_subsection ();
@@ -250,7 +250,7 @@ namespace dftParameters
 
 	prm.declare_entry("EXCHANGE CORRELATION TYPE", "1",
 			  Patterns::Integer(1,4),
-			  "Parameter specifying the type of exchange-correlation to be used: 1(LDA: Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)]), 2(LDA: Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)]), 3(LDA: Vosko, Wilk & Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)]), 4(GGA: Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)])");
+			  "Parameter specifying the type of exchange-correlation to be used: 1(LDA: Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)]), 2(LDA: Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)]), 3(LDA: Vosko, Wilk \\& Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)]), 4(GGA: Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)])");
 
 	prm.declare_entry("SPIN POLARIZATION", "0",
 			  Patterns::Integer(0,1),
@@ -270,7 +270,7 @@ namespace dftParameters
 			  "Fermi-Dirac smearing temperature (in Kelvin)");
 
 	prm.declare_entry("MAXIMUM ITERATIONS", "50",
-			  Patterns::Integer(),
+			  Patterns::Integer(1,1000),
 			  "Maximum number of iterations to be allowed for SCF convergence");
 
 	prm.declare_entry("TOLERANCE", "1e-08",
@@ -278,7 +278,7 @@ namespace dftParameters
 			  "SCF iterations stopping tolerance in terms of electron-density difference between two successive iterations");
 
 	prm.declare_entry("ANDERSON SCHEME MIXING HISTORY", "70",
-			  Patterns::Integer(),
+			  Patterns::Integer(1,1000),
 			  "Number of SCF iterations to be considered for mixing the electron-density");
 
 	prm.declare_entry("ANDERSON SCHEME MIXING PARAMETER", "0.5",
@@ -292,7 +292,7 @@ namespace dftParameters
     {
 
 	prm.declare_entry("NUMBER OF KOHN-SHAM WAVEFUNCTIONS", "10",
-			  Patterns::Integer(),
+			  Patterns::Integer(0),
 			  "Number of Kohn-Sham wavefunctions to be computed. For insulators use N/2+(10-20) and for metals use 20 percent more than N/2 (atleast 10 more). N is the total number of electrons");
 
 	prm.declare_entry("LOWER BOUND WANTED SPECTRUM", "-10.0",
@@ -300,11 +300,11 @@ namespace dftParameters
 			  "The lower bound of the wanted eigen spectrum");
 
 	prm.declare_entry("CHEBYSHEV POLYNOMIAL DEGREE", "0",
-			  Patterns::Integer(),
+			  Patterns::Integer(0,2000),
 			  "The degree of the Chebyshev polynomial to be employed for filtering out the unwanted spectrum (Default value is used when the input parameter value is 0");
 
 	prm.declare_entry("CHEBYSHEV FILTER PASSES", "1",
-			  Patterns::Integer(),
+			  Patterns::Integer(1,20),
 			  "The number of the Chebyshev filter passes per SCF  (Default value is used when the input parameter is not specified");
 
     }
@@ -314,7 +314,7 @@ namespace dftParameters
     prm.enter_subsection ("Poisson problem paramters");
     {
 	prm.declare_entry("MAXIMUM ITERATIONS", "5000",
-			  Patterns::Integer(),
+			  Patterns::Integer(0,20000),
 			  "Maximum number of iterations to be allowed for Poisson problem convergence");
 
 	prm.declare_entry("TOLERANCE", "1e-12",
@@ -450,10 +450,11 @@ namespace dftParameters
     }
 
     const bool printParametersToFile=false;
-    if (printParametersToFile)
+    if (printParametersToFile && Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)
     {
-	std::ofstream output ("demoParameterFile.prm");
-	prm.print_parameters (output, ParameterHandler::OutputStyle::Text);
+	std::ofstream output ("parameterFile.tex");
+	prm.print_parameters (output, ParameterHandler::OutputStyle::LaTeX);
+	exit(0);
     }
 #ifdef ENABLE_PERIODIC_BC
     AssertThrow(dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ,ExcMessage("Incorrect executable: periodic executable being used for non-periodic problem."));

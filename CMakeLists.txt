@@ -33,7 +33,6 @@ SET(TARGET_SRC
   ./utils/constraintMatrixInfo.cc
   ./utils/dftUtils.cc
   ./utils/vectorTools/interpolateFieldsFromPreviousMesh.cc
-  ./utils/vectorTools/vectorTools.cc
   # You can specify additional files here!
   )
 
