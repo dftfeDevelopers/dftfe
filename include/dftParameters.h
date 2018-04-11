@@ -13,8 +13,12 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Phani Motamarri (2017)
-//
+
+
+/** @file dftParameters.h
+ *
+ *  @author Phani Motamarri (2017), Sambit Das (2018)
+ */
 
 #ifndef dftParameters_H_
 #define dftParameters_H_
