@@ -38,8 +38,10 @@
 #include <complex>
 #include <deque>
 
-namespace vectorTools
+namespace dftfe
 {
+  namespace vectorTools
+  {
     typedef dealii::parallel::distributed::Vector<double> vectorType;
 
     class interpolateFieldsFromPreviousMesh
@@ -91,6 +93,6 @@ namespace vectorTools
       dealii::ConditionalOStream   pcout;
     };
 
+  }
 }
-
 #endif

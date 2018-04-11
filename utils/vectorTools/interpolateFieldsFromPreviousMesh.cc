@@ -20,6 +20,8 @@
 
 #include <interpolateFieldsFromPreviousMesh.h>
 
+namespace dftfe
+{
 
 namespace vectorTools
 {
@@ -518,4 +520,5 @@ void interpolateFieldsFromPreviousMesh::interpolate
   computing_timer.exit_section("interpolate:step6");
 }
 
+}
 }

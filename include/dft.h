@@ -162,10 +162,6 @@ namespace dftfe {
        */
       void initImageChargesUpdateKPoints();
 
-      /**
-       * L2 projection from rho quad point data to nodal field
-       */
-      void computeGroundStateRhoNodalField();
 
       /**
        * Set rho initial guess from PSI.
@@ -335,9 +331,6 @@ namespace dftfe {
 
       /// volume of the domain
       double d_domainVolume;
-
-      /// storage for ground state rho nodal field
-      vectorType d_rhoNodalFieldGroundState;
 
       /**
        * dealii based FE data structres

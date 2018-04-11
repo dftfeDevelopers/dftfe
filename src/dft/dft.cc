@@ -40,6 +40,7 @@
 #include <boost/math/distributions/normal.hpp>
 #include <boost/random/normal_distribution.hpp>
 #include <interpolateFieldsFromPreviousMesh.h>
+#include <vectorTools.h>
 
 namespace dftfe {
 //Include cc files
@@ -58,7 +59,6 @@ namespace dftfe {
 #include "energy.cc"
 #include "charge.cc"
 #include "density.cc"
-#include "rhoDataUtils.cc"
 #include "mixingschemes.cc"
 #include "chebyshev.cc"
 #include "solveVself.cc"
@@ -722,12 +722,6 @@ void dftClass<FEOrder>::solve()
       computing_timer.exit_section("cell stress");
     }
 #endif
-    computeGroundStateRhoNodalField();
-    std::vector<const parallel::distributed::Vector<double> *> solutions;
-    solutions.push_back(&d_rhoNodalFieldGroundState);
-    d_mesh.saveTriangulationsSolutionVectors
-	     (dofHandler,
-	      solutions);
 }
 
 //Output
@@ -751,7 +745,13 @@ void dftClass<FEOrder>::output()
   //
   //compute nodal electron-density from quad data
   //
-  computeGroundStateRhoNodalField();
+  dealii::parallel::distributed::Vector<double>  rhoNodalField;
+  matrix_free_data.initialize_dof_vector(rhoNodalField);
+  vectorTools::projectQuadDataToNodalField(rhoOutValues,
+	                                   QGauss<3>(C_num1DQuad<FEOrder>()),
+				           dofHandler,
+				           constraintsNone,
+	                                   rhoNodalField);
 
   //
   //only generate output for electron-density
@@ -759,7 +759,7 @@ void dftClass<FEOrder>::output()
   DataOut<3> dataOutRho;
   dataOutRho.attach_dof_handler(dofHandler);
   char buffer[100]; sprintf(buffer,"rhoField");
-  dataOutRho.add_data_vector(d_rhoNodalFieldGroundState, buffer);
+  dataOutRho.add_data_vector(rhoNodalField, buffer);
   dataOutRho.build_patches(C_num1DQuad<FEOrder>());
   dftUtils::writeDataVTUParallelLowestPoolId(dataOutRho,
 	                                     mpi_communicator,

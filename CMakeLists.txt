@@ -22,7 +22,6 @@ SET(TARGET_SRC
   ./src/triangulation/meshMovement/meshMovementGaussian.cc
   ./src/triangulation/meshMovement/meshMovementAffineTransform.cc
   ./src/triangulation/triangulationManager/triangulationManager.cc
-  ./src/triangulation/vectorTools/interpolateFieldsFromPreviousMesh.cc
   ./src/symmetry/initGroupSymmetry.cc
   ./src/geoOpt/geoOptIon.cc
   ./src/geoOpt/geoOptCell.cc
@@ -33,6 +32,8 @@ SET(TARGET_SRC
   ./utils/dftParameters.cc
   ./utils/constraintMatrixInfo.cc
   ./utils/dftUtils.cc
+  ./utils/vectorTools/interpolateFieldsFromPreviousMesh.cc
+  ./utils/vectorTools/vectorTools.cc
   # You can specify additional files here!
   )
 
