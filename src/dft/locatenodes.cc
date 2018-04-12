@@ -169,7 +169,8 @@ void dftClass<FEOrder>::locatePeriodicPinnedNodes()
     {
       if(locally_owned_dofs.is_element(iterMap->first))
 	{
-	  if(!d_noConstraints.is_constrained(iterMap->first))
+	  if(!(constraintsNone.is_constrained(iterMap->first)
+		      && !constraintsNone.is_identity_constrained(iterMap->first)))
 	    {
 	      double minDistance = 1e10;
 	      minNode = -1;

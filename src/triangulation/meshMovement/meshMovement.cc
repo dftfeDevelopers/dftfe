@@ -97,10 +97,6 @@ void meshMovementClass::init(const Triangulation<3,3> & triangulation, const std
   d_locally_owned_dofs = d_dofHandlerMoveMesh.locally_owned_dofs();
   DoFTools::extract_locally_relevant_dofs(d_dofHandlerMoveMesh, d_locally_relevant_dofs);
 
-  d_constraintsHangingNodes.clear(); d_constraintsHangingNodes.reinit(d_locally_relevant_dofs);
-  DoFTools::make_hanging_node_constraints(d_dofHandlerMoveMesh, d_constraintsHangingNodes);
-  d_constraintsHangingNodes.close();
-
   d_constraintsMoveMesh.clear();  d_constraintsMoveMesh.reinit(d_locally_relevant_dofs);
   DoFTools::make_hanging_node_constraints(d_dofHandlerMoveMesh, d_constraintsMoveMesh);
   d_periodicity_vector.clear();
@@ -410,7 +406,8 @@ void meshMovementClass::findClosestVerticesToDestinationPoints(const std::vector
 	       continue;
            vertex_touched[global_vertex_no]=true;
 
-	   if(d_constraintsHangingNodes.is_constrained(cell->vertex_dof_index(i,0))
+	   if((d_constraintsMoveMesh.is_constrained(cell->vertex_dof_index(i,0))
+	      && !d_constraintsMoveMesh.is_identity_constrained(cell->vertex_dof_index(i,0)))
 	      || !d_locally_owned_dofs.is_element(cell->vertex_dof_index(i,0))){
 	          continue;
 	    }
