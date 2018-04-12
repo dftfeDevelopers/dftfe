@@ -120,12 +120,12 @@ void forceClass<FEOrder>::computeStressEself()
      }//cell loop 
   }//bin loop
 #ifdef DEBUG   
-  dummyTest=Utilities::MPI::sum(dummyTest,mpi_communicator); 
-  pcout<< "dummyTest: "<<dummyTest<<std::endl;
-  dummyVec=Utilities::MPI::sum(dummyVec,mpi_communicator);
-  pcout<< "dummyVec: "<<dummyVec<<std::endl;
-  dummyTensor=Utilities::MPI::sum(dummyTensor,mpi_communicator);
-  pcout<< "dummyTensor: "<<dummyTensor<<std::endl;  
+  //dummyTest=Utilities::MPI::sum(dummyTest,mpi_communicator); 
+  //pcout<< "dummyTest: "<<dummyTest<<std::endl;
+  //dummyVec=Utilities::MPI::sum(dummyVec,mpi_communicator);
+  //pcout<< "dummyVec: "<<dummyVec<<std::endl;
+  //dummyTensor=Utilities::MPI::sum(dummyTensor,mpi_communicator);
+  //pcout<< "dummyTensor: "<<dummyTensor<<std::endl;  
 #endif  
 
 }

@@ -62,18 +62,6 @@ void eigenClass<FEOrder>::init()
   //
   computeMassVector();
 
-  //
-  //XHX size
-  //
-  //XHXValue.resize(dftPtr->eigenVectors[0].size()*dftPtr->eigenVectors[0].size(),0.0);
-
-
-  //const std::vector<unsigned int> & temp = dftPtr->getLocalDofIndicesReal();
-  //pcout<<" Size of local dof indices real eigen class init: "<<temp.size()<<std::endl;
-  //pcout<<" Size of ConstraintsNone Eigen: "<< dftPtr->getConstraintMatrixEigen().n_constraints()<<std::endl;
-  //  std::cout<<"Inside Eigen Init: "<<operatorClass::getLocalDofIndicesReal()->size()<<std::endl;
-
-
   computing_timer.exit_section("eigenClass setup");
 }
 
