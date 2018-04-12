@@ -56,7 +56,6 @@ namespace dftfe {
       IndexSet   d_locally_owned_dofs;
       IndexSet   d_locally_relevant_dofs;
       ConstraintMatrix d_constraintsMoveMesh;
-      ConstraintMatrix d_constraintsHangingNodes;
       std::vector<GridTools::PeriodicFacePair<typename DoFHandler<C_DIM>::cell_iterator> > d_periodicity_vector;
       std::vector<std::vector<double> >  d_domainBoundingVectors;
 
