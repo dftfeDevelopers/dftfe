@@ -42,7 +42,7 @@ namespace dftfe {
       extern double lowerEndWantedSpectrum,relLinearSolverTolerance,selfConsistentSolverTolerance,TVal, start_magnetization;
 
       extern bool isPseudopotential,periodicX,periodicY,periodicZ, useSymm, timeReversal;
-      extern std::string meshFileName,coordinatesFile,domainBoundingVectorsFile,kPointDataFile, ionRelaxFlagsFile, chkDirPath;
+      extern std::string meshFileName,coordinatesFile,domainBoundingVectorsFile,kPointDataFile, ionRelaxFlagsFile;
 
       extern double outerAtomBallRadius, meshSizeOuterDomain;
       extern double meshSizeInnerBall, meshSizeOuterBall;

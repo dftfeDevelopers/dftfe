@@ -61,6 +61,7 @@ namespace dftfe {
 #include "mixingschemes.cc"
 #include "chebyshev.cc"
 #include "solveVself.cc"
+#include "restart.cc"
 
 
 //
@@ -354,7 +355,17 @@ void dftClass<FEOrder>::init (const bool usePreviousGroundStateFields)
   //
   //generate mesh (both parallel and serial)
   //
-  d_mesh.generateSerialUnmovedAndParallelMovedUnmovedMesh(atomLocations,
+  if (dftParameters::chkType>=1 && dftParameters::restartFromChk)
+  {
+     d_mesh.generateCoarseMeshesForRestart(atomLocations,
+				           d_imagePositions,
+				           d_domainBoundingVectors,
+				           dftParameters::useSymm);
+     if (dftParameters::chkType==2)
+	 loadTriaInfoAndRhoData();
+  }
+  else
+     d_mesh.generateSerialUnmovedAndParallelMovedUnmovedMesh(atomLocations,
 				                          d_imagePositions,
 				                          d_domainBoundingVectors,
 							  dftParameters::useSymm);
@@ -514,7 +525,7 @@ void dftClass<FEOrder>::solve()
       //
       //Mixing scheme
       //
-      if(scfIter > 0)
+      if(scfIter > 0 && !(dftParameters::restartFromChk && dftParameters::chkType==2))
 	{
 	  if (scfIter==1)
 	    {
@@ -524,6 +535,9 @@ void dftClass<FEOrder>::solve()
 		}
 	      else
 		norm = mixing_simple();
+
+	      if (dftParameters::verbosity>=1)
+	        pcout<<"Simple mixing: L2 norm of electron-density difference: "<< norm<< std::endl;
 	    }
 	  else
 	    {
@@ -533,13 +547,27 @@ void dftClass<FEOrder>::solve()
 		}
 	      else
 		norm = sqrt(mixing_anderson());
+
+	      if (dftParameters::verbosity>=1)
+	        pcout<<"Anderson mixing: L2 norm of electron-density difference: "<< norm<< std::endl;
 	    }
+
+	  poissonPtr->phiTotRhoIn = poissonPtr->phiTotRhoOut;
+	}
+      else if (dftParameters::restartFromChk && dftParameters::chkType==2)
+        {
+	  if (dftParameters::spinPolarized==1)
+	    {
+	      norm = sqrt(mixing_anderson_spinPolarized());
+	    }
+	  else
+	    norm = sqrt(mixing_anderson());
 
 	  if (dftParameters::verbosity>=1)
 	    pcout<<"Anderson Mixing: L2 norm of electron-density difference: "<< norm<< std::endl;
 
 	  poissonPtr->phiTotRhoIn = poissonPtr->phiTotRhoOut;
-	}
+       }
 
       //
       //phiTot with rhoIn
@@ -566,10 +594,10 @@ void dftClass<FEOrder>::solve()
 	        {
 		  eigenPtr->computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, s, pseudoValues);
 	        }
-	      for (int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+	      for (unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
 	        {
 	          d_kPointIndex = kPoint;
-	          for(int j = 0; j < dftParameters::numPass; ++j)
+	          for(unsigned int j = 0; j < dftParameters::numPass; ++j)
 	            {
 		      if (dftParameters::verbosity==2)
 			pcout<<"Beginning Chebyshev filter pass "<< j+1<< " for spin "<< s+1<<std::endl;
@@ -595,10 +623,10 @@ void dftClass<FEOrder>::solve()
 	      eigenPtr->computeVEff(rhoInValues, gradRhoInValues, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, pseudoValues);
 	    }
 
-	  for (int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+	  for (unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
 	    {
 	      d_kPointIndex = kPoint;
-	      for(int j = 0; j < dftParameters::numPass; ++j)
+	      for(unsigned int j = 0; j < dftParameters::numPass; ++j)
 		{
 		  if (dftParameters::verbosity==2)
 		    pcout<< "Beginning Chebyshev filter pass "<< j+1<<std::endl;
@@ -623,10 +651,10 @@ void dftClass<FEOrder>::solve()
 	  // do more passes of chebysev filter till the check passes.
 	  // This improves the scf convergence performance. Currently this
 	  // approach is not implemented for spin-polarization case
-	  int count=1;
-	  while (maxRes>1e-1)
+	  unsigned int count=1;
+	  while (maxRes>1e-2)
 	    {
-	      for (int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+	      for (unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
 		{
 		  d_kPointIndex = kPoint;
 		  if (dftParameters::verbosity==2)
@@ -687,6 +715,9 @@ void dftClass<FEOrder>::solve()
 
       //
       scfIter++;
+
+      if (dftParameters::chkType==2)
+          saveTriaInfoAndRhoData();
     }
 
   if(scfIter==dftParameters::numSCFIterations)

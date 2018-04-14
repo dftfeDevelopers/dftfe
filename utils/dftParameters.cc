@@ -34,7 +34,7 @@ namespace dftParameters
   double lowerEndWantedSpectrum=0.0,relLinearSolverTolerance=1e-10,selfConsistentSolverTolerance=1e-10,TVal=500, start_magnetization=0.0;
 
   bool isPseudopotential=false,periodicX=false,periodicY=false,periodicZ=false, useSymm=false, timeReversal=false;
-  std::string meshFileName="",coordinatesFile="",domainBoundingVectorsFile="",kPointDataFile="", ionRelaxFlagsFile="",chkDirPath="";
+  std::string meshFileName="",coordinatesFile="",domainBoundingVectorsFile="",kPointDataFile="", ionRelaxFlagsFile="";
 
   double outerAtomBallRadius=2.0, meshSizeOuterDomain=10.0;
   double meshSizeInnerBall=1.0, meshSizeOuterBall=1.0;
@@ -60,19 +60,15 @@ namespace dftParameters
                       Patterns::Integer(0,2),
                       "Parameter to control verbosity of terminal output. 0 for low, 1 for medium, and 2 for high.");
 
-    prm.enter_subsection ("RESTART");
+    prm.enter_subsection ("Checkpointing and Restart");
     {
-	prm.declare_entry("CHK DIR PATH", "",
-			  Patterns::Anything(),
-			  "Full path of the directory where the checkpoint data required to restart the calculation is written to and read from. The user has to manually create this directory. Not required to be set if CHK TYPE is 0.");
-
 	prm.declare_entry("CHK TYPE", "0",
 			   Patterns::Integer(0,2),
-			   "Checkpoint type, 0(dont write any checkpoint data), 1(checkpoint data for ion optimization. This option assumes cell optimization is set to false. The checkpoint is created at the end of the last ground state solve.).");
+			   "Checkpoint type, 0(dont create any checkpoint), 1(create checkpoint only for ion optimization restart if ION OPT is set to true. This option writes the current atomic coordinates and the cg ion relaxation solver state to checkpoint files. This option assumes CELL OPT is set to false. The checkpoint is created at the end of the last ground state solve.), 2(create checkpoint for scf restart. This option also creates checkpoint for ion optimization restart if ION OPT is set to true.)");
 
 	prm.declare_entry("RESTART FROM CHK", "false",
 			   Patterns::Bool(),
-			   "Boolean parameter specifying if the current job reads from the last checkpoint of CHK TYPE. Is always false for CHK TYPE 0.");
+			   "Boolean parameter specifying if the current job reads from a checkpoint. The nature of the restart corresponds to the CHK TYPE parameter. Hence, the checkpoint being read must have been created using the same value of the CHK TYPE parameter. RESTART FROM CHK is always false for CHK TYPE 0.");
     }
     prm.leave_subsection ();
 
@@ -223,7 +219,7 @@ namespace dftParameters
 			  Patterns::Anything(),
 			  "File specifying the k-Point quadrature rule to sample Brillouin zone. CAUTION: This option is only used for postprocessing, for example band structure calculation. To set k point rule for DFT solve use the Monkhorst-Pack (MP) grid generation.");
 
-	prm.declare_entry("USE GROUP SYMMETRY", "true",
+	prm.declare_entry("USE GROUP SYMMETRY", "false",
 			  Patterns::Bool(),
 			  "Flag to control whether to use point group symmetries (set to false for relaxation calculation)");
 
@@ -330,9 +326,8 @@ namespace dftParameters
     dftParameters::verbosity                     = prm.get_integer("VERBOSITY");
     dftParameters::reproducible_output           = prm.get_bool("REPRODUCIBLE OUTPUT");
 
-    prm.enter_subsection ("RESTART");
+    prm.enter_subsection ("Checkpointing and Restart");
     {
-	chkDirPath=prm.get("CHK DIR PATH");
 	chkType=prm.get_integer("CHK TYPE");
 	restartFromChk=prm.get_bool("RESTART FROM CHK") && chkType!=0;
     }

@@ -173,6 +173,16 @@ namespace dftfe {
        */
       void clearRhoData();
 
+      /**
+       * save triangulation information and rho quadrature data to checkpoint file for restarts
+       */
+      void saveTriaInfoAndRhoData();
+
+      /**
+       * load triangulation information rho quadrature data from checkpoint file for restarted run
+       */
+      void loadTriaInfoAndRhoData();
+
       void generateMPGrid();
       void generateImageCharges();
       void determineOrbitalFilling();
@@ -232,10 +242,10 @@ namespace dftfe {
       /**
        * Computes total charge by integrating the electron-density
        */
-      double totalCharge(std::map<dealii::CellId, std::vector<double> > *);
+      double totalCharge(const std::map<dealii::CellId, std::vector<double> > *rhoQuadValues);
 
       /**
-       * normalized the charge density
+       * normalize the electron density
        */
       void normalizeRho();
 
