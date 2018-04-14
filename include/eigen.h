@@ -80,14 +80,20 @@ namespace dftfe{
 
       void reinitkPointIndex(unsigned int & kPointIndex);
 
-
+      
       void init ();
 	    
+      //compute mass vector
       void computeMassVector();
 
       //data structures
       vectorType tempDealiiVector;
 
+      //precompute shapefunction gradient integral
+      void preComputeShapeFunctionGradientIntegrals();
+
+      //compute element Hamiltonian matrix
+      void computeHamiltonianMatrix(unsigned int kPointIndex);
 
 
     private:
@@ -116,6 +122,17 @@ namespace dftfe{
 
       dealii::Table<2, dealii::VectorizedArray<double> > vEff;
       dealii::Table<3, dealii::VectorizedArray<double> > derExcWithSigmaTimesGradRho;
+
+
+      //precomputed data for the Hamiltonian matrix
+      std::vector<std::vector<VectorizedArray<double> > > d_cellShapeFunctionGradientIntegral;
+      std::vector<double> d_shapeFunctionValue;
+
+#ifdef ENABLE_PERIODIC_BC
+      std::vector<std::vector<std::complex<double> > > d_cellHamiltonianMatrix;
+#else
+      std::vector<std::vector<double> > d_cellHamiltonianMatrix;
+#endif
 
       //parallel objects
       const MPI_Comm mpi_communicator;

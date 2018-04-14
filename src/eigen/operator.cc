@@ -27,6 +27,7 @@
 // Constructor.
 //
 namespace dftfe {
+
   operatorClass::operatorClass(const MPI_Comm                  & mpi_comm_replica,
 			       const std::vector<unsigned int> & localDofIndicesReal,
 			       const std::vector<unsigned int> & localDofIndicesImag,

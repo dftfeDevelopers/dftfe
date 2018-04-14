@@ -130,10 +130,71 @@ namespace dftfe{
 	pcout << buffer;
       }
 
+
+    //
+    //Split the complete wavefunctions into multiple blocks.
+    //Create the size of vectors in each block
+    //
+    const unsigned int totalNumberWaveFunctions = eigenVectors.size();
+    const unsigned int equalNumberWaveFunctionsPerBlock = totalNumberWaveFunctions; //1000;
+    const double temp = (double)totalNumberWaveFunctions/(double)equalNumberWaveFunctionsPerBlock;
+    const unsigned int totalNumberBlocks = std::ceil(temp);
+    const unsigned int numberWaveFunctionsLastBlock = totalNumberWaveFunctions - equalNumberWaveFunctionsPerBlock*(totalNumberBlocks-1);
+
+    std::vector<unsigned int> d_numberWaveFunctionsBlock(totalNumberBlocks,equalNumberWaveFunctionsPerBlock);
+
+    if(totalNumberBlocks > 1)
+      d_numberWaveFunctionsBlock[totalNumberBlocks - 1] = numberWaveFunctionsLastBlock;
+    
+    
+    for(unsigned int nBlock = 0; nBlock < totalNumberBlocks; ++nBlock)
+      {
+	//
+	//Get the current block data
+	//
+	unsigned int numberWaveFunctionsPerCurrentBlock = d_numberWaveFunctionsBlock[nBlock];
+
+#ifdef ENABLE_PERIODIC_BC
+	dealii::parallel::distributed::Vector<std::complex<double> > XArray;
+#else
+	dealii::parallel::distributed::Vector<double> XArray;
+#endif
+	//
+	//create custom partitioned dealii array by storing wavefunctions
+	//
+	//
+	VectorTools::createDealiiVector(eigenVectors[0]->get_partitioner(),
+					numberWaveFunctionsPerCurrentBlock,
+					XArray);
+
+	//
+	//precompute certain maps
+	//
+	std::vector<std::vector<dealii::types::global_dof_index> > d_flattenedArrayCellLocalProcIndexId;
+	VectorTools::computeCellLocalIndexSetMap(XArray.get_partitioner(),
+						 d_flattenedArrayCellLocalProcIndexId);
+				    
+	//
+	//copy the data from eigenVectors to eigenVectorsFlattened (this will be changed from flattened 
+	//to flattened array containing only block vectors eventually)
+	//
+	
+
+
+	//
+	//call Chebyshev filtering function only for the current block to be filtered
+	//and does in-place filtering
+
+
+	//
+	//copy back to eigenVectors array 
+	//
+
+      }
+
     //
     //call chebyshev filtering routine
     //
-
     computing_timer.enter_section("Chebyshev filtering"); 
 
     linearAlgebraOperations::chebyshevFilter(operatorMatrix,
@@ -142,6 +203,7 @@ namespace dftfe{
 					     d_lowerBoundUnWantedSpectrum,
 					     upperBoundUnwantedSpectrum,
 					     d_lowerBoundWantedSpectrum);
+
 
     computing_timer.exit_section("Chebyshev filtering");
   

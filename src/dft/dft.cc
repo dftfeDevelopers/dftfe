@@ -499,12 +499,19 @@ namespace dftfe {
 									   0.0,
 									   numEigenValues);
 
+
+    //
+    //precompute shapeFunctions and shapeFunctionGradients and shapeFunctionGradientIntegrals
+    //
+    computing_timer.enter_section("shapefunction data");
+    eigenPtr->preComputeShapeFunctionGradientIntegrals();
+    computing_timer.exit_section("shapefunction data");
+
     
     //
     //solve
     //
     computing_timer.enter_section("scf solve");
-
 
     //
     //Begin SCF iteration
@@ -560,6 +567,10 @@ namespace dftfe {
 	poissonPtr->solve(poissonPtr->phiTotRhoIn,constraintMatrixId, rhoInValues);
 	computing_timer.exit_section("phiTot solve");
 
+
+	
+
+
 	//
 	//eigen solve
 	//
@@ -578,6 +589,12 @@ namespace dftfe {
 		for(unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
 		  {
 		    eigenPtr->reinitkPointIndex(kPoint);
+
+		    computing_timer.enter_section("Hamiltonian Matrix Computation"); 
+		    eigenPtr->computeHamiltonianMatrix(kPoint);
+		    computing_timer.exit_section("Hamiltonian Matrix Computation");
+
+
 		    for(int j = 0; j < dftParameters::numPass; ++j)
 		      {
 			if (dftParameters::verbosity==2)
@@ -607,6 +624,11 @@ namespace dftfe {
 	    for (unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
 	      {
 		eigenPtr->reinitkPointIndex(kPoint);
+		
+		computing_timer.enter_section("Hamiltonian Matrix Computation"); 
+		eigenPtr->computeHamiltonianMatrix(kPoint);
+		computing_timer.exit_section("Hamiltonian Matrix Computation");
+
 		for(int j = 0; j < dftParameters::numPass; ++j)
 		  {
 		    if (dftParameters::verbosity==2)
@@ -633,9 +655,9 @@ namespace dftfe {
 	    // This improves the scf convergence performance. Currently this
 	    // approach is not implemented for spin-polarization case
 	    int count=1;
-	    while (maxRes>1e-1)
+	    while(maxRes>1e-1)
 	      {
-		for (unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+		for(unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
 		  {
 		    eigenPtr->reinitkPointIndex(kPoint);
 		    if (dftParameters::verbosity==2)

@@ -20,6 +20,8 @@
 #include "../../include/dft.h"
 #include "../../include/dftParameters.h"
 #include "computeNonLocalHamiltonianTimesXMemoryOpt.cc"
+#include "shapeFunctionDataCalculator.cc"
+#include "hamiltonianMatrixCalculator.cc"
 
 namespace dftfe {
 //
@@ -816,11 +818,11 @@ void eigenClass<FEOrder>::computeVEffSpinPolarized(std::map<dealii::CellId,std::
 
 template<unsigned int FEOrder>
 void eigenClass<FEOrder>::computeVEffSpinPolarized(std::map<dealii::CellId,std::vector<double> >* rhoValues,
-				      std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
-				      const vectorType & phi,
-				      const vectorType & phiExt,
-				      const unsigned int spinIndex,
-				      const std::map<dealii::CellId,std::vector<double> > & pseudoValues)
+						   std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
+						   const vectorType & phi,
+						   const vectorType & phiExt,
+						   const unsigned int spinIndex,
+						   const std::map<dealii::CellId,std::vector<double> > & pseudoValues)
 {
   const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
   const unsigned int n_array_elements = VectorizedArray<double>::n_array_elements;
