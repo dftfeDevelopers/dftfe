@@ -55,7 +55,8 @@ void dftClass<FEOrder>::initElectronicFields(const bool usePreviousGroundStateFi
      pcout <<std::endl<< "Reading initial guess for PSI...."<<std::endl;
      readPSI();
 
-     initRho();
+     if (!(dftParameters::chkType==2 && dftParameters::restartFromChk))
+	initRho();
   }
   else
   {

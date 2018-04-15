@@ -13,8 +13,12 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Phani Motamarri (2017)
-//
+
+
+/** @file dftParameters.h
+ *
+ *  @author Phani Motamarri (2017), Sambit Das (2018)
+ */
 
 #ifndef dftParameters_H_
 #define dftParameters_H_
@@ -38,7 +42,7 @@ namespace dftfe {
       extern double lowerEndWantedSpectrum,relLinearSolverTolerance,selfConsistentSolverTolerance,TVal, start_magnetization;
 
       extern bool isPseudopotential,periodicX,periodicY,periodicZ, useSymm, timeReversal;
-      extern std::string meshFileName,coordinatesFile,domainBoundingVectorsFile,kPointDataFile, ionRelaxFlagsFile, chkDirPath;
+      extern std::string meshFileName,coordinatesFile,domainBoundingVectorsFile,kPointDataFile, ionRelaxFlagsFile;
 
       extern double outerAtomBallRadius, meshSizeOuterDomain;
       extern double meshSizeInnerBall, meshSizeOuterBall;
