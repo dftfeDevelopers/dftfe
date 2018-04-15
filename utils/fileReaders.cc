@@ -13,17 +13,21 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Shiva Rudraraju (2016), Phani Motamarri (2016), Sambit Das
+// @author Shiva Rudraraju (2016), Phani Motamarri (2016), Sambit Das (2017)
 //
-#include "../include/fileReaders.h"
+#include <fileReaders.h>
+#include <headers.h>
+#include <fstream>
+#include <iostream>
+#include <sstream>
 
 namespace dftfe {
 
 namespace dftUtils{
 //Utility functions to read external files relevant to DFT
-void readFile(unsigned int numColumns,
+void readFile(const unsigned int numColumns,
 	      std::vector<std::vector<double> > &data,
-	      std::string fileName)
+	      const std::string & fileName)
 {
   std::vector<double> rowData(numColumns, 0.0);
   std::ifstream readFile(fileName.c_str());
@@ -62,9 +66,9 @@ void readFile(unsigned int numColumns,
   return;
 }
 
-int readPsiFile(unsigned int numColumns,
-		 std::vector<std::vector<double> > &data,
-		 std::string fileName)
+int readPsiFile(const unsigned int numColumns,
+		std::vector<std::vector<double> > &data,
+		const std::string & fileName)
 {
   std::vector<double> rowData(numColumns, 0.0);
   std::ifstream readFile(fileName.c_str());
@@ -104,9 +108,9 @@ int readPsiFile(unsigned int numColumns,
   return 1;
 }
 
-void readRelaxationFlagsFile(unsigned int numColumns,
+void readRelaxationFlagsFile(const unsigned int numColumns,
 		             std::vector<std::vector<int> > &data,
-		             std::string fileName)
+		             const std::string & fileName)
 {
   std::vector<int> rowData(numColumns, 0.0);
   std::ifstream readFile(fileName.c_str());
@@ -145,6 +149,51 @@ void readRelaxationFlagsFile(unsigned int numColumns,
   return;
 
 }
+
+// Move/rename a checkpoint file
+void moveFile(const std::string &old_name, const std::string &new_name)
+{
+
+    int error = system (("mv " + old_name + " " + new_name).c_str());
+
+    // If the above call failed, e.g. because there is no command-line
+    // available, try with internal functions.
+    if (error != 0)
+    {
+	std::ifstream ifile(new_name);
+	if (static_cast<bool>(ifile))
+	{
+	    error = remove(new_name.c_str());
+	    AssertThrow (error == 0, dealii::ExcMessage(std::string ("Unable to remove file: "
+	    + new_name
+	    + ", although it seems to exist. "
+	    + "The error code is "
+	    + dealii::Utilities::to_string(error) + ".")));
+	}
+
+	error = rename(old_name.c_str(),new_name.c_str());
+	AssertThrow (error == 0, dealii::ExcMessage(std::string ("Unable to rename files: ")
+	+
+	old_name + " -> " + new_name
+	+ ". The error code is "
+	+ dealii::Utilities::to_string(error) + "."));
+    }
+}
+
+void verifyCheckpointFileExists(const std::string & filename)
+{
+      std::ifstream in (filename);
+      if (!in)
+      {
+	AssertThrow (false,
+	   dealii::ExcMessage (std::string("DFT-FE Error: You are trying to restart a previous computation, "
+	   "but the restart file <")
+	    +
+	    filename
+	    +
+	    "> does not appear to exist!"));
+      }
+ }
 
 }
 

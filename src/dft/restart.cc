@@ -66,12 +66,16 @@ void dftClass<FEOrder>::saveTriaInfoAndRhoData()
 	                                   interpoolcomm);
 
      //write size of current mixing history into an additional .txt file
-     std::ofstream extraInfoFile("rhoDataExtraInfo.chk");
+     const std::string extraInfoFileName="rhoDataExtraInfo.chk";
+     if (std::ifstream(extraInfoFileName) && Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+	 dftUtils::moveFile(extraInfoFileName, extraInfoFileName+".old");
+     std::ofstream extraInfoFile(extraInfoFileName);
      if (extraInfoFile.is_open())
      {
         extraInfoFile <<rhoInVals.size();
         extraInfoFile.close();
      }
+
      pcout<< "...checkpointing done." << std::endl;
 }
 
@@ -83,7 +87,9 @@ void dftClass<FEOrder>::loadTriaInfoAndRhoData()
      pcout<< "Reading tria info and rho data from checkpoint in progress..." << std::endl;
      //read mixing history size of the rhoData to be read in the next step
      unsigned int mixingHistorySize;
-     std::ifstream extraInfoFile("rhoDataExtraInfo.chk");
+     const std::string extraInfoFileName="rhoDataExtraInfo.chk";
+     dftUtils::verifyCheckpointFileExists(extraInfoFileName);
+     std::ifstream extraInfoFile(extraInfoFileName);
      if (extraInfoFile.is_open())
      {
        extraInfoFile >> mixingHistorySize;

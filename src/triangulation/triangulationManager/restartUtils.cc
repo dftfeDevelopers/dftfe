@@ -22,55 +22,6 @@
 #include <deal.II/numerics/solution_transfer.h>
 
 namespace dftfe {
-
-    // Move/rename a checkpoint file
-    namespace internal
-    {
-      void moveFile(const std::string &old_name, const std::string &new_name)
-      {
-
-	int error = system (("mv " + old_name + " " + new_name).c_str());
-
-	// If the above call failed, e.g. because there is no command-line
-	// available, try with internal functions.
-	if (error != 0)
-	{
-	    std::ifstream ifile(new_name);
-	    if (static_cast<bool>(ifile))
-	    {
-		error = remove(new_name.c_str());
-		AssertThrow (error == 0, ExcMessage(std::string ("Unable to remove file: "
-		+ new_name
-		+ ", although it seems to exist. "
-		+ "The error code is "
-		+ dealii::Utilities::to_string(error) + ".")));
-	    }
-
-	    error = rename(old_name.c_str(),new_name.c_str());
-	    AssertThrow (error == 0, ExcMessage(std::string ("Unable to rename files: ")
-	    +
-	    old_name + " -> " + new_name
-	    + ". The error code is "
-	    + dealii::Utilities::to_string(error) + "."));
-	}
-      }
-
-      void verifyCheckpointFileExists(const std::string filename)
-      {
-          std::ifstream in (filename);
-          if (!in)
-	  {
-            AssertThrow (false,
-               ExcMessage (std::string("DFT-FE Error: You are trying to restart a previous computation, "
-               "but the restart file <")
-                +
-                filename
-                +
-                "> does not appear to exist!"));
-	  }
-      }
-    }
-    //
     //
     void triangulationManager::saveSupportTriangulations()
     {
@@ -78,7 +29,10 @@ namespace dftfe {
        {
          const std::string filename1="serialUnmovedTria.chk";
 	 if (std::ifstream(filename1))
-	     internal::moveFile(filename1, filename1+".old");
+	 {
+	     dftUtils::moveFile(filename1, filename1+".old");
+	     dftUtils::moveFile(filename1+".info", filename1+".info.old");
+	 }
 
 	 d_serialTriangulationUnmoved.save(filename1.c_str());
        }
@@ -87,7 +41,10 @@ namespace dftfe {
        {
          const std::string filename2="parallelUmmovedPrevTria.chk";
 	 if (std::ifstream(filename2) && this_mpi_process==0)
-	     internal::moveFile(filename2, filename2+".old");
+	 {
+	     dftUtils::moveFile(filename2, filename2+".old");
+	     dftUtils::moveFile(filename2+".info", filename2+".info.old");
+	 }
 	 MPI_Barrier(mpi_communicator);
 
          d_parallelTriangulationUnmovedPrevious.save(filename2.c_str());
@@ -97,7 +54,10 @@ namespace dftfe {
        {
          const std::string filename3="serialUnmovedPrevTria.chk";
 	 if (std::ifstream(filename3) && this_mpi_process==0)
-	      internal::moveFile(filename3, filename3+".old");
+	 {
+	      dftUtils::moveFile(filename3, filename3+".old");
+	      dftUtils::moveFile(filename3+".info", filename3+".info.old");
+	 }
 
          d_serialTriangulationUnmovedPrevious.save(filename3.c_str());
        }
@@ -109,7 +69,7 @@ namespace dftfe {
        if (d_serialTriangulationUnmoved.n_global_active_cells()!=0)
        {
 	   const std::string filename1="serialUnmovedTria.chk";
-	   internal::verifyCheckpointFileExists(filename1);
+	   dftUtils::verifyCheckpointFileExists(filename1);
 	   try
 	   {
 	      d_serialTriangulationUnmoved.load(filename1.c_str(),false);
@@ -123,7 +83,7 @@ namespace dftfe {
        if (d_parallelTriangulationUnmovedPrevious.n_global_active_cells()!=0)
        {
          const std::string filename2="parallelUmmovedPrevTria.chk";
-	 internal::verifyCheckpointFileExists(filename2);
+	 dftUtils::verifyCheckpointFileExists(filename2);
          try
          {
 	    d_parallelTriangulationUnmovedPrevious.load(filename2.c_str());
@@ -137,7 +97,7 @@ namespace dftfe {
        if (d_serialTriangulationUnmovedPrevious.n_global_active_cells()!=0)
        {
          const std::string filename3="serialUnmovedPrevTria.chk";
-	 internal::verifyCheckpointFileExists(filename3);
+	 dftUtils::verifyCheckpointFileExists(filename3);
          try
          {
 	    d_serialTriangulationUnmovedPrevious.load(filename3.c_str(),false);
@@ -173,7 +133,10 @@ namespace dftfe {
 
          const std::string filename="parallelUnmovedTriaSolData.chk";
 	 if (std::ifstream(filename) && this_mpi_process==0)
-	     internal::moveFile(filename, filename+".old");
+	 {
+	     dftUtils::moveFile(filename, filename+".old");
+	     dftUtils::moveFile(filename+".info", filename+".info.old");
+	 }
 	 MPI_Barrier(mpi_communicator);
 
          d_parallelTriangulationUnmoved.save(filename.c_str());
@@ -192,7 +155,7 @@ namespace dftfe {
     {
       loadSupportTriangulations();
       const std::string filename="parallelUnmovedTriaSolData.chk";
-      internal::verifyCheckpointFileExists(filename);
+      dftUtils::verifyCheckpointFileExists(filename);
       try
       {
          d_parallelTriangulationMoved.load(filename.c_str());
@@ -299,7 +262,10 @@ namespace dftfe {
 
          const std::string filename="parallelUnmovedTriaSolData.chk";
 	 if (std::ifstream(filename) && this_mpi_process==0)
-	    internal::moveFile(filename, filename+".old");
+	 {
+	    dftUtils::moveFile(filename, filename+".old");
+	    dftUtils::moveFile(filename+".info", filename+".info.old");
+	 }
 	 MPI_Barrier(mpi_communicator);
          d_parallelTriangulationUnmoved.save(filename.c_str());
 
@@ -316,7 +282,7 @@ namespace dftfe {
     {
       loadSupportTriangulations();
       const std::string filename="parallelUnmovedTriaSolData.chk";
-      internal::verifyCheckpointFileExists(filename);
+      dftUtils::verifyCheckpointFileExists(filename);
       try
       {
          d_parallelTriangulationMoved.load(filename.c_str());

@@ -23,6 +23,7 @@
 
 #include <triangulationManager.h>
 #include <dftParameters.h>
+#include <fileReaders.h>
 #include "meshGenUtils.cc"
 #include "generateMesh.cc"
 #include "restartUtils.cc"

@@ -12,36 +12,53 @@
 // the top level of the DFT-FE distribution.
 //
 // ---------------------------------------------------------------------
-//
-// @author Sambit Das (2017)
-//
+
+/** @file fileReaders.h
+ *  @brief Contains commonly used I/O file utils functions
+ *
+ *  @author Shiva Rudraraju, Phani Motamarri, Sambit Das
+ */
 
 #ifndef fileReaders_H_
 #define fileReaders_H_
-#include <fstream>
-#include <iostream>
-#include <sstream>
 #include <string>
 #include <vector>
 
 namespace dftfe {
-    //
-    //Declare dftUtils functions
-    //
     namespace dftUtils
     {
 
-    void readFile(unsigned int numColumns,
+  /**
+   * @brief Read from file containing only double data in columns.
+   */
+    void readFile(const unsigned int numColumns,
 		  std::vector<std::vector<double> > &data,
-		  std::string fileName);
+		  const std::string & fileName);
 
-    int readPsiFile(unsigned int numColumns,
-		     std::vector<std::vector<double> > &data,
-		     std::string fileName);
+  /**
+   * @brief Read from file containing only double data in columns.
+   */
+    int readPsiFile(const unsigned int numColumns,
+		    std::vector<std::vector<double> > &data,
+		    const std::string & fileName);
 
-    void readRelaxationFlagsFile(unsigned int numColumns,
-				std::vector<std::vector<int> > &data,
-				std::string fileName);
+  /**
+   * @brief Read from file containing only integer data in columns.
+   */
+    void readRelaxationFlagsFile(const unsigned int numColumns,
+				 std::vector<std::vector<int> > &data,
+				 const std::string & fileName);
+
+  /**
+   * @brief Move/rename checkpoint file.
+   */
+    void moveFile(const std::string &old_name,
+	          const std::string &new_name);
+
+  /**
+   * @brief Verify if checkpoint file exists.
+   */
+    void verifyCheckpointFileExists(const std::string & filename);
     };
 
 }
