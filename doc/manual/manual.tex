@@ -84,9 +84,9 @@
 \pagenumbering{gobble}
 \begin{center}
 \resizebox{\textwidth}{!}{\textcolor{dark_grey}{\fontfamily{\sfdefault}\selectfont
-COMPUTATIONAL MATERIAL PHYSICS GROUP
+	\href{http://www-personal.umich.edu/~vikramg/}{COMPUTATIONAL MATERIAL PHYSICS GROUP}
 }}
-
+\vspace{0.05em}
 \hrule
 
 %LINE 2%
@@ -134,9 +134,9 @@ COMPUTATIONAL MATERIAL PHYSICS GROUP
 \hfill{\Huge \fontfamily{\sfdefault}\selectfont User Manual \\
 \raggedleft \huge \fontfamily{\sfdefault}\selectfont Version
 % keep the following line as is so that we can replace this using a script:
-0.9.0-pre %VERSION-INFO%
+0.5.0-pre %VERSION-INFO%
 \\\large(generated \today)\\
-{\Large Sambit Das\\Phani Motamarri\\}
+{\Large Sambit Das\\Vikram Gavini\\Phani Motamarri\\}
 }
 
 %AUTHOR(S) & WEBSITE%
@@ -154,7 +154,7 @@ COMPUTATIONAL MATERIAL PHYSICS GROUP
 }
 
 {\noindent
-{\fontfamily{\sfdefault}\selectfont \href{https://dftfe.org}{dftfe.org}}
+{\fontfamily{\sfdefault}\selectfont \href{https://dftfe.org}{website of dftfe}}
 }
 
 %LINE%
@@ -164,7 +164,7 @@ COMPUTATIONAL MATERIAL PHYSICS GROUP
 }
 
 }
-
+Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors: Phani Motamarri, Sambit Das, Shiva Rudraraju, Krishnendu Ghosh, Denis Davydov, Vikram Gavini.
 \pagebreak
 \pagenumbering{arabic}
 
@@ -179,14 +179,66 @@ COMPUTATIONAL MATERIAL PHYSICS GROUP
 \pagebreak
 
 \section{Introduction}
+DFT-FE is a C++ code for material modeling from first principles using Kohn-Sham density functional theory.
+It is based on adaptive finite-element based methodologies and handles all-electron and pseudopotential calculations in the 
+same framework while accomodating arbitrary boundary conditions. dft-fe code builds on top of the deal.II library for everything 
+that has to do with finite elements, geometries, meshes, etc., and, through deal.II on p4est for parallel adaptive mesh handling.
+
+\subsection{Authors}
+\dftfe{} is hosted by the \href{http://www-personal.umich.edu/~vikramg/}{Computational Materials Physics
+group at University of Michigan}, with Vikram Gavini, Associate Professor of Mechanical Engineering and Materials Science and Engineering as
+the principal investigator. The code is maintained by a group of principal developers, 
+who manage the architecture of the code and the core functionalities. Developers with
+significant contributions to core functionalities and code architecture in the past who are 
+no longer active principal developers, are listed under principal developers emeriti. 
+A subset of the principal developers and mentors are administrators. Finally, all contributors who have
+contributed major parts of the DFT-FE code or sent fixes and small enhancements are listed
+under contributors. All the underlying lists are in alphabetical order. 
+
+\paragraph{Principal developers}
+\begin{itemize}
+	\item Sambit Das (University of Michigan, USA).
+	\item Phani Motamarri (University of Michigan, USA).
+\end{itemize}
+
+\paragraph{Prinicipal developers emeriti}
+\begin{itemize}
+	\item Krishnendu Ghosh (University of Michigan, USA).
+	\item Shiva Rudraraju (University of Wisconsin Madison, USA).	
+\end{itemize}
+
+\paragraph{Contributors}
+\begin{itemize}
+	\item Sambit Das (University of Michigan, USA).
+	\item Denis Davydov (University of Erlangen-Nuremberg, Germany).
+	\item Krishnendu Ghosh (University of Michigan, USA).
+	\item Phani Motamarri (University of Michigan, USA).
+	\item Shiva Rudraraju (University of Wisconsin Madison, USA).	
+\end{itemize}
+
+\paragraph{Mentors}
+\begin{itemize}
+	\item Vikram Gavini (University of Michigan, USA).
+\end{itemize}
+
+\subsection{Acknowledgments}
+The development of \dftfe{} has been funded ...
 
 
 
-\section{Contributing to \\dftfe{}'s development}
+\subsection{Referencing \dftfe{}}
+
+\section{Overview of the formulation}
+
+\section{Installation}
+
+\section{Running \dftfe}
+
+\section{Contributing to \dftfe{}'s development}
 
 
 
-\section{Future plans for \\dftfe}
+\section{Future plans for \dftfe}
 \label{sec:future}
 
 
@@ -194,7 +246,28 @@ COMPUTATIONAL MATERIAL PHYSICS GROUP
 
 \section{Finding answers to more questions}
 \label{sec:questions-and-answers}
+If you have questions that go beyond this manual, there are a number of
+resources:
+\begin{itemize}
+\item For questions about the source code of \dftfe{}, portability, installation,
+  etc., use the \dftfe{} development mailing list at
+  \url{dft-fe.users@umich.edu}.
 
+\item \dftfe{} is primarily based on the deal.II library (the dependency
+  on PETSc, SLEPc, and p4est are primarily through deal.II, and not directly
+  visible in the \dftfe{} source code). If you have particular questions
+  about deal.II, contact
+  the mailing lists described at \url{https://www.dealii.org/mail.html}.
+
+\item If you have specific questions about \dftfe{} that are not suitable
+  for public and archived mailing lists, you can contact the
+  primary developers and mentors:
+  \begin{itemize}
+  \item Phani Motamarri: \url{phanim@umich.edu}.
+  \item Sambit Das: \url{dsambit@umich.edu}.
+  \item Vikram Gavini: \url{vikramg@umich.edu} (Mentor).
+  \end{itemize}
+\end{itemize}
 
 
 \appendix
