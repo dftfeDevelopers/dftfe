@@ -1,0 +1,698 @@
+\subsection{Global parameters}
+\label{parameters:global}
+
+
+\begin{itemize}
+\item {\it Parameter name:} {\tt REPRODUCIBLE OUTPUT}
+\phantomsection\label{parameters:REPRODUCIBLE OUTPUT}
+\label{parameters:REPRODUCIBLE_20OUTPUT}
+
+
+\index[prmindex]{REPRODUCIBLE OUTPUT}
+\index[prmindexfull]{REPRODUCIBLE OUTPUT}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} Limit output to that which is reprodicible, i.e. don't print timing or absolute paths.
+
+
+{\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt VERBOSITY}
+\phantomsection\label{parameters:VERBOSITY}
+
+
+\index[prmindex]{VERBOSITY}
+\index[prmindexfull]{VERBOSITY}
+{\it Value:} 1
+
+
+{\it Default:} 1
+
+
+{\it Description:} Parameter to control verbosity of terminal output. 0 for low, 1 for medium, and 2 for high.
+
+
+{\it Possible values:} An integer $n$ such that $0\leq n \leq 2$
+\end{itemize}
+
+
+
+\subsection{Parameters in section \tt Boundary conditions}
+\label{parameters:Boundary_20conditions}
+
+\begin{itemize}
+\item {\it Parameter name:} {\tt PERIODIC1}
+\phantomsection\label{parameters:Boundary conditions/PERIODIC1}
+\label{parameters:Boundary_20conditions/PERIODIC1}
+
+
+\index[prmindex]{PERIODIC1}
+\index[prmindexfull]{Boundary conditions!PERIODIC1}
+{\it Value:} true
+
+
+{\it Default:} false
+
+
+{\it Description:} Periodicity along domain bounding vector, v1.
+
+
+{\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt PERIODIC2}
+\phantomsection\label{parameters:Boundary conditions/PERIODIC2}
+\label{parameters:Boundary_20conditions/PERIODIC2}
+
+
+\index[prmindex]{PERIODIC2}
+\index[prmindexfull]{Boundary conditions!PERIODIC2}
+{\it Value:} true
+
+
+{\it Default:} false
+
+
+{\it Description:} Periodicity along domain bounding vector, v2.
+
+
+{\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt PERIODIC3}
+\phantomsection\label{parameters:Boundary conditions/PERIODIC3}
+\label{parameters:Boundary_20conditions/PERIODIC3}
+
+
+\index[prmindex]{PERIODIC3}
+\index[prmindexfull]{Boundary conditions!PERIODIC3}
+{\it Value:} true
+
+
+{\it Default:} false
+
+
+{\it Description:} Periodicity along domain bounding vector, v3.
+
+
+{\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt SELF POTENTIAL ATOM BALL RADIUS}
+\phantomsection\label{parameters:Boundary conditions/SELF POTENTIAL ATOM BALL RADIUS}
+\label{parameters:Boundary_20conditions/SELF_20POTENTIAL_20ATOM_20BALL_20RADIUS}
+
+
+\index[prmindex]{SELF POTENTIAL ATOM BALL RADIUS}
+\index[prmindexfull]{Boundary conditions!SELF POTENTIAL ATOM BALL RADIUS}
+{\it Value:} 1.6
+
+
+{\it Default:} 3.0
+
+
+{\it Description:} The radius (in a.u) of the ball around an atom on which self-potential of the associated nuclear charge is solved
+
+
+{\it Possible values:} A floating point number $v$ such that $1.5 \leq v \leq 10$
+\end{itemize}
+
+\subsection{Parameters in section \tt Brillouin zone k point sampling options}
+\label{parameters:Brillouin_20zone_20k_20point_20sampling_20options}
+
+\begin{itemize}
+\item {\it Parameter name:} {\tt NUMBER OF POOLS}
+\phantomsection\label{parameters:Brillouin zone k point sampling options/NUMBER OF POOLS}
+\label{parameters:Brillouin_20zone_20k_20point_20sampling_20options/NUMBER_20OF_20POOLS}
+
+
+\index[prmindex]{NUMBER OF POOLS}
+\index[prmindexfull]{Brillouin zone k point sampling options!NUMBER OF POOLS}
+{\it Value:} 2
+
+
+{\it Default:} 1
+
+
+{\it Description:} Number of pools the irreducible k-points to be split on should be a divisor of total number of procs and be less than or equal to the number of irreducible k-points
+
+
+{\it Possible values:} An integer $n$ such that $1\leq n \leq 2147483647$
+\item {\it Parameter name:} {\tt USE GROUP SYMMETRY}
+\phantomsection\label{parameters:Brillouin zone k point sampling options/USE GROUP SYMMETRY}
+\label{parameters:Brillouin_20zone_20k_20point_20sampling_20options/USE_20GROUP_20SYMMETRY}
+
+
+\index[prmindex]{USE GROUP SYMMETRY}
+\index[prmindexfull]{Brillouin zone k point sampling options!USE GROUP SYMMETRY}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} Flag to control whether to use point group symmetries (set to false for relaxation calculation)
+
+
+{\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt USE TIME REVERSAL SYMMETRY}
+\phantomsection\label{parameters:Brillouin zone k point sampling options/USE TIME REVERSAL SYMMETRY}
+\label{parameters:Brillouin_20zone_20k_20point_20sampling_20options/USE_20TIME_20REVERSAL_20SYMMETRY}
+
+
+\index[prmindex]{USE TIME REVERSAL SYMMETRY}
+\index[prmindexfull]{Brillouin zone k point sampling options!USE TIME REVERSAL SYMMETRY}
+{\it Value:} true
+
+
+{\it Default:} false
+
+
+{\it Description:} Flag to control usage of time reversal symmetry 
+
+
+{\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt kPOINT RULE FILE}
+\phantomsection\label{parameters:Brillouin zone k point sampling options/kPOINT RULE FILE}
+\label{parameters:Brillouin_20zone_20k_20point_20sampling_20options/kPOINT_20RULE_20FILE}
+
+
+\index[prmindex]{kPOINT RULE FILE}
+\index[prmindexfull]{Brillouin zone k point sampling options!kPOINT RULE FILE}
+{\it Value:} 
+
+
+{\it Default:} 
+
+
+{\it Description:} File specifying the k-Point quadrature rule to sample Brillouin zone. CAUTION: This option is only used for postprocessing, for example band structure calculation. To set k point rule for DFT solve use the Monkhorst-Pack (MP) grid generation.
+
+
+{\it Possible values:} Any string
+\end{itemize}
+
+
+
+\subsection{Parameters in section \tt Brillouin zone k point sampling options/Monkhorst-Pack (MP) grid generation}
+\label{parameters:Brillouin_20zone_20k_20point_20sampling_20options/Monkhorst_2dPack_20_28MP_29_20grid_20generation}
+
+\begin{itemize}
+\item {\it Parameter name:} {\tt SAMPLING POINTS 1}
+\phantomsection\label{parameters:Brillouin zone k point sampling options/Monkhorst_2dPack _28MP_29 grid generation/SAMPLING POINTS 1}
+\label{parameters:Brillouin_20zone_20k_20point_20sampling_20options/Monkhorst_2dPack_20_28MP_29_20grid_20generation/SAMPLING_20POINTS_201}
+
+
+\index[prmindex]{SAMPLING POINTS 1}
+\index[prmindexfull]{Brillouin zone k point sampling options!Monkhorst-Pack (MP) grid generation!SAMPLING POINTS 1}
+{\it Value:} 2
+
+
+{\it Default:} 2
+
+
+{\it Description:} Number of Monkhorts-Pack grid points to be used along reciprocal latttice vector 1.
+
+
+{\it Possible values:} An integer $n$ such that $1\leq n \leq 100$
+\item {\it Parameter name:} {\tt SAMPLING POINTS 2}
+\phantomsection\label{parameters:Brillouin zone k point sampling options/Monkhorst_2dPack _28MP_29 grid generation/SAMPLING POINTS 2}
+\label{parameters:Brillouin_20zone_20k_20point_20sampling_20options/Monkhorst_2dPack_20_28MP_29_20grid_20generation/SAMPLING_20POINTS_202}
+
+
+\index[prmindex]{SAMPLING POINTS 2}
+\index[prmindexfull]{Brillouin zone k point sampling options!Monkhorst-Pack (MP) grid generation!SAMPLING POINTS 2}
+{\it Value:} 2
+
+
+{\it Default:} 2
+
+
+{\it Description:} Number of Monkhorts-Pack grid points to be used along reciprocal latttice vector 2.
+
+
+{\it Possible values:} An integer $n$ such that $1\leq n \leq 100$
+\item {\it Parameter name:} {\tt SAMPLING POINTS 3}
+\phantomsection\label{parameters:Brillouin zone k point sampling options/Monkhorst_2dPack _28MP_29 grid generation/SAMPLING POINTS 3}
+\label{parameters:Brillouin_20zone_20k_20point_20sampling_20options/Monkhorst_2dPack_20_28MP_29_20grid_20generation/SAMPLING_20POINTS_203}
+
+
+\index[prmindex]{SAMPLING POINTS 3}
+\index[prmindexfull]{Brillouin zone k point sampling options!Monkhorst-Pack (MP) grid generation!SAMPLING POINTS 3}
+{\it Value:} 2
+
+
+{\it Default:} 2
+
+
+{\it Description:} Number of Monkhorts-Pack grid points to be used along reciprocal latttice vector 3.
+
+
+{\it Possible values:} An integer $n$ such that $1\leq n \leq 100$
+\item {\it Parameter name:} {\tt SAMPLING SHIFT 1}
+\phantomsection\label{parameters:Brillouin zone k point sampling options/Monkhorst_2dPack _28MP_29 grid generation/SAMPLING SHIFT 1}
+\label{parameters:Brillouin_20zone_20k_20point_20sampling_20options/Monkhorst_2dPack_20_28MP_29_20grid_20generation/SAMPLING_20SHIFT_201}
+
+
+\index[prmindex]{SAMPLING SHIFT 1}
+\index[prmindexfull]{Brillouin zone k point sampling options!Monkhorst-Pack (MP) grid generation!SAMPLING SHIFT 1}
+{\it Value:} 0.25
+
+
+{\it Default:} 0.0
+
+
+{\it Description:} Fractional shifting to be used along reciprocal latttice vector 1.
+
+
+{\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 1$
+\item {\it Parameter name:} {\tt SAMPLING SHIFT 2}
+\phantomsection\label{parameters:Brillouin zone k point sampling options/Monkhorst_2dPack _28MP_29 grid generation/SAMPLING SHIFT 2}
+\label{parameters:Brillouin_20zone_20k_20point_20sampling_20options/Monkhorst_2dPack_20_28MP_29_20grid_20generation/SAMPLING_20SHIFT_202}
+
+
+\index[prmindex]{SAMPLING SHIFT 2}
+\index[prmindexfull]{Brillouin zone k point sampling options!Monkhorst-Pack (MP) grid generation!SAMPLING SHIFT 2}
+{\it Value:} 0.25
+
+
+{\it Default:} 0.0
+
+
+{\it Description:} Fractional shifting to be used along reciprocal latttice vector 2.
+
+
+{\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 1$
+\item {\it Parameter name:} {\tt SAMPLING SHIFT 3}
+\phantomsection\label{parameters:Brillouin zone k point sampling options/Monkhorst_2dPack _28MP_29 grid generation/SAMPLING SHIFT 3}
+\label{parameters:Brillouin_20zone_20k_20point_20sampling_20options/Monkhorst_2dPack_20_28MP_29_20grid_20generation/SAMPLING_20SHIFT_203}
+
+
+\index[prmindex]{SAMPLING SHIFT 3}
+\index[prmindexfull]{Brillouin zone k point sampling options!Monkhorst-Pack (MP) grid generation!SAMPLING SHIFT 3}
+{\it Value:} 0.25
+
+
+{\it Default:} 0.0
+
+
+{\it Description:} Fractional shifting to be used along reciprocal latttice vector 3.
+
+
+{\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 1$
+\end{itemize}
+
+\subsection{Parameters in section \tt Checkpointing and Restart}
+\label{parameters:Checkpointing_20and_20Restart}
+
+\begin{itemize}
+\item {\it Parameter name:} {\tt CHK TYPE}
+\phantomsection\label{parameters:Checkpointing and Restart/CHK TYPE}
+\label{parameters:Checkpointing_20and_20Restart/CHK_20TYPE}
+
+
+\index[prmindex]{CHK TYPE}
+\index[prmindexfull]{Checkpointing and Restart!CHK TYPE}
+{\it Value:} 2
+
+
+{\it Default:} 0
+
+
+{\it Description:} Checkpoint type, 0(dont create any checkpoint), 1(create checkpoint only for ion optimization restart if ION OPT is set to true. This option writes the current atomic coordinates and the cg ion relaxation solver state to checkpoint files. This option assumes CELL OPT is set to false. The checkpoint is created at the end of the last ground state solve.), 2(create checkpoint for scf restart. This option also creates checkpoint for ion optimization restart if ION OPT is set to true.)
+
+
+{\it Possible values:} An integer $n$ such that $0\leq n \leq 2$
+\item {\it Parameter name:} {\tt RESTART FROM CHK}
+\phantomsection\label{parameters:Checkpointing and Restart/RESTART FROM CHK}
+\label{parameters:Checkpointing_20and_20Restart/RESTART_20FROM_20CHK}
+
+
+\index[prmindex]{RESTART FROM CHK}
+\index[prmindexfull]{Checkpointing and Restart!RESTART FROM CHK}
+{\it Value:} false
+
+
+{\it Default:} false
+
+
+{\it Description:} Boolean parameter specifying if the current job reads from a checkpoint. The nature of the restart corresponds to the CHK TYPE parameter. Hence, the checkpoint being read must have been created using the same value of the CHK TYPE parameter. RESTART FROM CHK is always false for CHK TYPE 0.
+
+
+{\it Possible values:} A boolean value (true or false)
+\end{itemize}
+
+\subsection{Parameters in section \tt DFT functional related parameters}
+\label{parameters:DFT_20functional_20related_20parameters}
+
+\begin{itemize}
+\item {\it Parameter name:} {\tt EXCHANGE CORRELATION TYPE}
+\phantomsection\label{parameters:DFT functional related parameters/EXCHANGE CORRELATION TYPE}
+\label{parameters:DFT_20functional_20related_20parameters/EXCHANGE_20CORRELATION_20TYPE}
+
+
+\index[prmindex]{EXCHANGE CORRELATION TYPE}
+\index[prmindexfull]{DFT functional related parameters!EXCHANGE CORRELATION TYPE}
+{\it Value:} 4
+
+
+{\it Default:} 1
+
+
+{\it Description:} Parameter specifying the type of exchange-correlation to be used: 1(LDA: Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)]), 2(LDA: Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)]), 3(LDA: Vosko, Wilk \& Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)]), 4(GGA: Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)])
+
+
+{\it Possible values:} An integer $n$ such that $1\leq n \leq 4$
+\item {\it Parameter name:} {\tt PSEUDOPOTENTIAL CALCULATION}
+\phantomsection\label{parameters:DFT functional related parameters/PSEUDOPOTENTIAL CALCULATION}
+\label{parameters:DFT_20functional_20related_20parameters/PSEUDOPOTENTIAL_20CALCULATION}
+
+
+\index[prmindex]{PSEUDOPOTENTIAL CALCULATION}
+\index[prmindexfull]{DFT functional related parameters!PSEUDOPOTENTIAL CALCULATION}
+{\it Value:} true
+
+
+{\it Default:} true
+
+
+{\it Description:} Boolean Parameter specifying whether pseudopotential DFT calculation needs to be performed
+
+
+{\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt PSEUDOPOTENTIAL TYPE}
+\phantomsection\label{parameters:DFT functional related parameters/PSEUDOPOTENTIAL TYPE}
+\label{parameters:DFT_20functional_20related_20parameters/PSEUDOPOTENTIAL_20TYPE}
+
+
+\index[prmindex]{PSEUDOPOTENTIAL TYPE}
+\index[prmindexfull]{DFT functional related parameters!PSEUDOPOTENTIAL TYPE}
+{\it Value:} 2
+
+
+{\it Default:} 1
+
+
+{\it Description:} Type of nonlocal projector to be used: 1 for KB, 2 for ONCV, default is KB
+
+
+{\it Possible values:} An integer $n$ such that $1\leq n \leq 2$
+\item {\it Parameter name:} {\tt SPIN POLARIZATION}
+\phantomsection\label{parameters:DFT functional related parameters/SPIN POLARIZATION}
+\label{parameters:DFT_20functional_20related_20parameters/SPIN_20POLARIZATION}
+
+
+\index[prmindex]{SPIN POLARIZATION}
+\index[prmindexfull]{DFT functional related parameters!SPIN POLARIZATION}
+{\it Value:} 0
+
+
+{\it Default:} 0
+
+
+{\it Description:} Spin polarization: 0 for no spin polarization and 1 for spin polarization
+
+
+{\it Possible values:} An integer $n$ such that $0\leq n \leq 1$
+\item {\it Parameter name:} {\tt START MAGNETIZATION}
+\phantomsection\label{parameters:DFT functional related parameters/START MAGNETIZATION}
+\label{parameters:DFT_20functional_20related_20parameters/START_20MAGNETIZATION}
+
+
+\index[prmindex]{START MAGNETIZATION}
+\index[prmindexfull]{DFT functional related parameters!START MAGNETIZATION}
+{\it Value:} 0.0
+
+
+{\it Default:} 0.0
+
+
+{\it Description:} Magnetization to start with (must be between -0.5 and +0.5)
+
+
+{\it Possible values:} A floating point number $v$ such that $-\text{MAX\_DOUBLE} \leq v \leq \text{MAX\_DOUBLE}$
+\end{itemize}
+
+\subsection{Parameters in section \tt Eigen-solver/Chebyshev solver related parameters}
+\label{parameters:Eigen_2dsolver_2fChebyshev_20solver_20related_20parameters}
+
+\begin{itemize}
+\item {\it Parameter name:} {\tt CHEBYSHEV FILTER PASSES}
+\phantomsection\label{parameters:Eigen_2dsolver_2fChebyshev solver related parameters/CHEBYSHEV FILTER PASSES}
+\label{parameters:Eigen_2dsolver_2fChebyshev_20solver_20related_20parameters/CHEBYSHEV_20FILTER_20PASSES}
+
+
+\index[prmindex]{CHEBYSHEV FILTER PASSES}
+\index[prmindexfull]{Eigen-solver/Chebyshev solver related parameters!CHEBYSHEV FILTER PASSES}
+{\it Value:} 1
+
+
+{\it Default:} 1
+
+
+{\it Description:} The number of the Chebyshev filter passes per SCF  (Default value is used when the input parameter is not specified
+
+
+{\it Possible values:} An integer $n$ such that $1\leq n \leq 20$
+\item {\it Parameter name:} {\tt CHEBYSHEV POLYNOMIAL DEGREE}
+\phantomsection\label{parameters:Eigen_2dsolver_2fChebyshev solver related parameters/CHEBYSHEV POLYNOMIAL DEGREE}
+\label{parameters:Eigen_2dsolver_2fChebyshev_20solver_20related_20parameters/CHEBYSHEV_20POLYNOMIAL_20DEGREE}
+
+
+\index[prmindex]{CHEBYSHEV POLYNOMIAL DEGREE}
+\index[prmindexfull]{Eigen-solver/Chebyshev solver related parameters!CHEBYSHEV POLYNOMIAL DEGREE}
+{\it Value:} 0
+
+
+{\it Default:} 0
+
+
+{\it Description:} The degree of the Chebyshev polynomial to be employed for filtering out the unwanted spectrum (Default value is used when the input parameter value is 0
+
+
+{\it Possible values:} An integer $n$ such that $0\leq n \leq 2000$
+\item {\it Parameter name:} {\tt LOWER BOUND WANTED SPECTRUM}
+\phantomsection\label{parameters:Eigen_2dsolver_2fChebyshev solver related parameters/LOWER BOUND WANTED SPECTRUM}
+\label{parameters:Eigen_2dsolver_2fChebyshev_20solver_20related_20parameters/LOWER_20BOUND_20WANTED_20SPECTRUM}
+
+
+\index[prmindex]{LOWER BOUND WANTED SPECTRUM}
+\index[prmindexfull]{Eigen-solver/Chebyshev solver related parameters!LOWER BOUND WANTED SPECTRUM}
+{\it Value:} -10.0
+
+
+{\it Default:} -10.0
+
+
+{\it Description:} The lower bound of the wanted eigen spectrum
+
+
+{\it Possible values:} A floating point number $v$ such that $-\text{MAX\_DOUBLE} \leq v \leq \text{MAX\_DOUBLE}$
+\item {\it Parameter name:} {\tt NUMBER OF KOHN-SHAM WAVEFUNCTIONS}
+\phantomsection\label{parameters:Eigen_2dsolver_2fChebyshev solver related parameters/NUMBER OF KOHN_2dSHAM WAVEFUNCTIONS}
+\label{parameters:Eigen_2dsolver_2fChebyshev_20solver_20related_20parameters/NUMBER_20OF_20KOHN_2dSHAM_20WAVEFUNCTIONS}
+
+
+\index[prmindex]{NUMBER OF KOHN-SHAM WAVEFUNCTIONS}
+\index[prmindexfull]{Eigen-solver/Chebyshev solver related parameters!NUMBER OF KOHN-SHAM WAVEFUNCTIONS}
+{\it Value:} 20
+
+
+{\it Default:} 10
+
+
+{\it Description:} Number of Kohn-Sham wavefunctions to be computed. For insulators use N/2+(10-20) and for metals use 20 percent more than N/2 (atleast 10 more). N is the total number of electrons
+
+
+{\it Possible values:} An integer $n$ such that $0\leq n \leq 2147483647$
+\end{itemize}
+
+\subsection{Parameters in section \tt Finite element mesh parameters}
+\label{parameters:Finite_20element_20mesh_20parameters}
+
+\begin{itemize}
+\item {\it Parameter name:} {\tt MESH FILE}
+\phantomsection\label{parameters:Finite element mesh parameters/MESH FILE}
+\label{parameters:Finite_20element_20mesh_20parameters/MESH_20FILE}
+
+
+\index[prmindex]{MESH FILE}
+\index[prmindexfull]{Finite element mesh parameters!MESH FILE}
+{\it Value:} 
+
+
+{\it Default:} 
+
+
+{\it Description:} External mesh file path. If nothing is given auto mesh generation is performed
+
+
+{\it Possible values:} Any string
+\item {\it Parameter name:} {\tt POLYNOMIAL ORDER}
+\phantomsection\label{parameters:Finite element mesh parameters/POLYNOMIAL ORDER}
+\label{parameters:Finite_20element_20mesh_20parameters/POLYNOMIAL_20ORDER}
+
+
+\index[prmindex]{POLYNOMIAL ORDER}
+\index[prmindexfull]{Finite element mesh parameters!POLYNOMIAL ORDER}
+{\it Value:} 4
+
+
+{\it Default:} 4
+
+
+{\it Description:} The degree of the finite-element interpolating polynomial
+
+
+{\it Possible values:} An integer $n$ such that $1\leq n \leq 12$
+\end{itemize}
+
+
+
+\subsection{Parameters in section \tt Finite element mesh parameters/Auto mesh generation parameters}
+\label{parameters:Finite_20element_20mesh_20parameters/Auto_20mesh_20generation_20parameters}
+
+\begin{itemize}
+\item {\it Parameter name:} {\tt ATOM BALL RADIUS}
+\phantomsection\label{parameters:Finite element mesh parameters/Auto mesh generation parameters/ATOM BALL RADIUS}
+\label{parameters:Finite_20element_20mesh_20parameters/Auto_20mesh_20generation_20parameters/ATOM_20BALL_20RADIUS}
+
+
+\index[prmindex]{ATOM BALL RADIUS}
+\index[prmindexfull]{Finite element mesh parameters!Auto mesh generation parameters!ATOM BALL RADIUS}
+{\it Value:} 2.0
+
+
+{\it Default:} 2.0
+
+
+{\it Description:} Radius of ball enclosing atom
+
+
+{\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 10$
+\item {\it Parameter name:} {\tt BASE MESH SIZE}
+\phantomsection\label{parameters:Finite element mesh parameters/Auto mesh generation parameters/BASE MESH SIZE}
+\label{parameters:Finite_20element_20mesh_20parameters/Auto_20mesh_20generation_20parameters/BASE_20MESH_20SIZE}
+
+
+\index[prmindex]{BASE MESH SIZE}
+\index[prmindexfull]{Finite element mesh parameters!Auto mesh generation parameters!BASE MESH SIZE}
+{\it Value:} 1.0
+
+
+{\it Default:} 2.0
+
+
+{\it Description:} Mesh size of the base mesh on which refinement is performed.
+
+
+{\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 20$
+\item {\it Parameter name:} {\tt MAX REFINEMENT STEPS}
+\phantomsection\label{parameters:Finite element mesh parameters/Auto mesh generation parameters/MAX REFINEMENT STEPS}
+\label{parameters:Finite_20element_20mesh_20parameters/Auto_20mesh_20generation_20parameters/MAX_20REFINEMENT_20STEPS}
+
+
+\index[prmindex]{MAX REFINEMENT STEPS}
+\index[prmindexfull]{Finite element mesh parameters!Auto mesh generation parameters!MAX REFINEMENT STEPS}
+{\it Value:} 10
+
+
+{\it Default:} 10
+
+
+{\it Description:} Maximum number of refinement steps to be used. The default value is good enough in most cases.
+
+
+{\it Possible values:} An integer $n$ such that $1\leq n \leq 10$
+\item {\it Parameter name:} {\tt MESH SIZE ATOM BALL}
+\phantomsection\label{parameters:Finite element mesh parameters/Auto mesh generation parameters/MESH SIZE ATOM BALL}
+\label{parameters:Finite_20element_20mesh_20parameters/Auto_20mesh_20generation_20parameters/MESH_20SIZE_20ATOM_20BALL}
+
+
+\index[prmindex]{MESH SIZE ATOM BALL}
+\index[prmindexfull]{Finite element mesh parameters!Auto mesh generation parameters!MESH SIZE ATOM BALL}
+{\it Value:} 0.5
+
+
+{\it Default:} 0.5
+
+
+{\it Description:} Mesh size in a ball around atom
+
+
+{\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 10$
+\item {\it Parameter name:} {\tt MESH SIZE NEAR ATOM}
+\phantomsection\label{parameters:Finite element mesh parameters/Auto mesh generation parameters/MESH SIZE NEAR ATOM}
+\label{parameters:Finite_20element_20mesh_20parameters/Auto_20mesh_20generation_20parameters/MESH_20SIZE_20NEAR_20ATOM}
+
+
+\index[prmindex]{MESH SIZE NEAR ATOM}
+\index[prmindexfull]{Finite element mesh parameters!Auto mesh generation parameters!MESH SIZE NEAR ATOM}
+{\it Value:} 0.5
+
+
+{\it Default:} 0.5
+
+
+{\it Description:} Mesh size near atom. Useful for all-electron case.
+
+
+{\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 10$
+\end{itemize}
+
+\subsection{Parameters in section \tt Geometry}
+\label{parameters:Geometry}
+
+\begin{itemize}
+\item {\it Parameter name:} {\tt ATOMIC COORDINATES FILE}
+\phantomsection\label{parameters:Geometry/ATOMIC COORDINATES FILE}
+\label{parameters:Geometry/ATOMIC_20COORDINATES_20FILE}
+
+
+\index[prmindex]{ATOMIC COORDINATES FILE}
+\index[prmindexfull]{Geometry!ATOMIC COORDINATES FILE}
+{\it Value:} coordinates.inp
+
+
+{\it Default:} 
+
+
+{\it Description:} Atomic-coordinates file. For fully non-periodic domain give cartesian coordinates of the atoms (in a.u) with respect to origin at the center of the domain. For periodic and semi-periodic give fractional coordinates of atoms. File format (example for two atoms): x1 y1 z1 (row1), x2 y2 z2 (row2).
+
+
+{\it Possible values:} Any string
+\item {\it Parameter name:} {\tt DOMAIN BOUNDING VECTORS FILE}
+\phantomsection\label{parameters:Geometry/DOMAIN BOUNDING VECTORS FILE}
+\label{parameters:Geometry/DOMAIN_20BOUNDING_20VECTORS_20FILE}
+
+
+\index[prmindex]{DOMAIN BOUNDING VECTORS FILE}
+\index[prmindexfull]{Geometry!DOMAIN BOUNDING VECTORS FILE}
+{\it Value:} latticeVectors.inp
+
+
+{\it Default:} 
+
+
+{\it Description:} Set file specifying the domain bounding vectors v1, v2 and v3 in a.u. with the following format: v1x v1y v1z (row1), v2x v2y v2z (row2), v3x v3y v3z (row3). Domain bounding vectors are the typical lattice vectors in a fully periodic calculation.
+
+
+{\it Possible values:} Any string
+\end{itemize}
+
+
+
+\subsection{Parameters in section \tt Geometry/Optimization}
+\label{parameters:Geometry/Optimization}
+
+\begin{itemize}
+\item {\it Parameter name:} {\tt CELL CONSTRAINT TYPE}
+\phantomsection\label{parameters:Geometry/Optimization/CELL CONSTRAINT TYPE}
+\label{parameters:Geometry/Optimization/CELL_20CONSTRAINT_20TYPE}
+
+
+\index[prmindex]{CELL CONSTRAINT TYPE}
+\index[prmindexfull]{Geometry!Optimization!CELL CONSTRAINT TYPE}
+{\it Value:} 1
+
+
+{\it Default:} 12
+
+
+{\it Description:} Cell relaxation constraint type, 1(isotropic shape-fixed volume optimization), 2(volume-fixed shape optimization), 3(relax only cell component v1x), 4(relax only cell component v2x), 5(relax only cell component v3x), 6(relax only cell components v2x and v3x), 7(relax only cell components v1x and v3x), 8(relax only cell components v1x and v2x), 9(volume optimization- relax only v1x, v2x and v3x), 10(2D- relax only x and y components relaxed), 11(2D- relax only x and y shape components- inplane area fixed), 12(relax all cell components), 13 automatically decides the constraints based boundary conditions. CAUTION: A majority of these options only make sense in an orthorhombic cell geometry.
