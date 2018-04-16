@@ -16,14 +16,14 @@ Installation instructions
 -------------------------
 
 The steps to install the necessary dependencies and DFT-FE itself are described
-in the Installation instructions section of the DFT-FE [manual](/doc/manual/manual.pdf).
+in the Installation instructions section of the DFT-FE [manual](/dftfedevelopers/dftfe/src/manualSkeletonWithParametersList/doc/manual/manual.pdf).
 
 
 
 Running DFT-FE
 --------------
 
-Instructions on how to run and DFT-FE can also be found in the DFT-FE [manual](/doc/manual/manual.pdf). 
+Instructions on how to run and DFT-FE can also be found in the DFT-FE [manual](/dftfedevelopers/dftfe/src/manualSkeletonWithParametersList/doc/manual/manual.pdf). 
 
 
 
@@ -40,7 +40,7 @@ For more information see:
 
  - The official website at (give link)
  
- - The current [manual](/doc/manual/manual.pdf)
+ - The current [manual](/dftfedevelopers/dftfe/src/manualSkeletonWithParametersList/doc/manual/manual.pdf)
  
  - DFT-FE is primarily based on the deal.II library. If you have particular questions about deal.II, contact the [deal.II discussion groups](https://groups.google.com/d/forum/dealii).
  
