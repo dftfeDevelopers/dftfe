@@ -53,22 +53,21 @@ namespace dftParameters
   {
     prm.declare_entry("REPRODUCIBLE OUTPUT", "false",
                       Patterns::Bool(),
-                      "Limit output to that which is reprodicible, i.e. don't print "
-											"timing or absolute paths.");
+                      "[Developer] Limit output to that which is reprodicible, i.e. don't print timing or absolute paths. This parameter is only used for testing purposes.");
 
     prm.declare_entry("VERBOSITY", "1",
                       Patterns::Integer(0,2),
-                      "Parameter to control verbosity of terminal output. 0 for low, 1 for medium, and 2 for high.");
+                      "[Standard] Parameter to control verbosity of terminal output. 0 for low, 1 for medium, and 2 for high.");
 
     prm.enter_subsection ("Checkpointing and Restart");
     {
 	prm.declare_entry("CHK TYPE", "0",
 			   Patterns::Integer(0,2),
-			   "Checkpoint type, 0(dont create any checkpoint), 1(create checkpoint only for ion optimization restart if ION OPT is set to true. This option writes the current atomic coordinates and the cg ion relaxation solver state to checkpoint files. This option assumes CELL OPT is set to false. The checkpoint is created at the end of the last ground state solve.), 2(create checkpoint for scf restart. This option also creates checkpoint for ion optimization restart if ION OPT is set to true.)");
+			   "[Standard] Checkpoint type, 0(dont create any checkpoint), 1(create checkpoint only for ion optimization restart if ION OPT is set to true. This option writes the current atomic coordinates and the cg ion relaxation solver state to checkpoint files. This option assumes CELL OPT is set to false. The checkpoint is created at the end of the last ground state solve.), 2(create checkpoint for scf restart. This option also creates checkpoint for ion optimization restart if ION OPT is set to true.)");
 
 	prm.declare_entry("RESTART FROM CHK", "false",
 			   Patterns::Bool(),
-			   "Boolean parameter specifying if the current job reads from a checkpoint. The nature of the restart corresponds to the CHK TYPE parameter. Hence, the checkpoint being read must have been created using the same value of the CHK TYPE parameter. RESTART FROM CHK is always false for CHK TYPE 0.");
+			   "[Standard] Boolean parameter specifying if the current job reads from a checkpoint. The nature of the restart corresponds to the CHK TYPE parameter. Hence, the checkpoint being read must have been created using the same value of the CHK TYPE parameter. RESTART FROM CHK is always false for CHK TYPE 0.");
     }
     prm.leave_subsection ();
 
@@ -76,46 +75,46 @@ namespace dftParameters
     {
 	prm.declare_entry("ATOMIC COORDINATES FILE", "",
 			  Patterns::Anything(),
-			  "Atomic-coordinates file. For fully non-periodic domain give cartesian coordinates of the atoms (in a.u) with respect to origin at the center of the domain. For periodic and semi-periodic give fractional coordinates of atoms. File format (example for two atoms): x1 y1 z1 (row1), x2 y2 z2 (row2).");
+			  "[Standard] Atomic-coordinates file. For fully non-periodic domain give cartesian coordinates of the atoms (in a.u) with respect to origin at the center of the domain. For periodic and semi-periodic give fractional coordinates of atoms. File format (example for two atoms): x1 y1 z1 (row1), x2 y2 z2 (row2).");
 
 	prm.declare_entry("DOMAIN BOUNDING VECTORS FILE", "",
 			  Patterns::Anything(),
-			  "Set file specifying the domain bounding vectors v1, v2 and v3 in a.u. with the following format: v1x v1y v1z (row1), v2x v2y v2z (row2), v3x v3y v3z (row3). Domain bounding vectors are the typical lattice vectors in a fully periodic calculation.");
+			  "[Standard] Set file specifying the domain bounding vectors v1, v2 and v3 in a.u. with the following format: v1x v1y v1z (row1), v2x v2y v2z (row2), v3x v3y v3z (row3). Domain bounding vectors are the typical lattice vectors in a fully periodic calculation.");
 
 	prm.enter_subsection ("Optimization");
 	{
 
 	    prm.declare_entry("ION FORCE", "false",
 			      Patterns::Bool(),
-			      "Boolean parameter specifying if atomic forces are to be computed. Automatically set to true if ION OPT is true.");
+			      "[Standard] Boolean parameter specifying if atomic forces are to be computed. Automatically set to true if ION OPT is true.");
 
 	    prm.declare_entry("ION OPT", "false",
 			      Patterns::Bool(),
-			      "Boolean parameter specifying if atomic forces are to be relaxed.");
+			      "[Standard] Boolean parameter specifying if atomic forces are to be relaxed.");
 
 	    prm.declare_entry("FORCE TOL", "5e-5",
-			      Patterns::Double(),
-			      "Sets the tolerance of the maximum force (in a.u.) on an ion when forces are considered to be relaxed.");
+			      Patterns::Double(0,1.0),
+			      "[Standard] Sets the tolerance of the maximum force (in a.u.) on an ion when forces are considered to be relaxed.");
 
 	    prm.declare_entry("ION RELAX FLAGS FILE", "",
 			      Patterns::Anything(),
-			      "File specifying the atomic position update permission flags. 1- update 0- no update. File format (example for two atoms with atom 1 fixed and atom 2 free): 0 0 0 (row1), 1 1 1 (row2).");
+			      "[Standard] File specifying the atomic position update permission flags. 1- update 0- no update. File format (example for two atoms with atom 1 fixed and atom 2 free): 0 0 0 (row1), 1 1 1 (row2).");
 
 	    prm.declare_entry("CELL STRESS", "false",
 			      Patterns::Bool(),
-			      "Boolean parameter specifying if cell stress is to be computed. Automatically set to true if CELL OPT is true.");
+			      "[Standard] Boolean parameter specifying if cell stress is to be computed. Automatically set to true if CELL OPT is true.");
 
 	    prm.declare_entry("CELL OPT", "false",
 			      Patterns::Bool(),
-			      "Boolean parameter specifying if cell stress is to be relaxed");
+			      "[Standard] Boolean parameter specifying if cell stress is to be relaxed");
 
 	    prm.declare_entry("STRESS TOL", "5e-7",
-			      Patterns::Double(),
-			      "Sets the tolerance of the cell stress (in a.u.) when cell stress is considered to be relaxed.");
+			      Patterns::Double(0,1.0),
+			      "[Standard] Sets the tolerance of the cell stress (in a.u.) when cell stress is considered to be relaxed.");
 
 	    prm.declare_entry("CELL CONSTRAINT TYPE", "12",
 			      Patterns::Integer(1,13),
-			      "Cell relaxation constraint type, 1(isotropic shape-fixed volume optimization), 2(volume-fixed shape optimization), 3(relax only cell component v1x), 4(relax only cell component v2x), 5(relax only cell component v3x), 6(relax only cell components v2x and v3x), 7(relax only cell components v1x and v3x), 8(relax only cell components v1x and v2x), 9(volume optimization- relax only v1x, v2x and v3x), 10(2D- relax only x and y components relaxed), 11(2D- relax only x and y shape components- inplane area fixed), 12(relax all cell components), 13 automatically decides the constraints based boundary conditions. CAUTION: A majority of these options only make sense in an orthorhombic cell geometry.");
+			      "[Standard] Cell relaxation constraint type, 1(isotropic shape-fixed volume optimization), 2(volume-fixed shape optimization), 3(relax only cell component v1x), 4(relax only cell component v2x), 5(relax only cell component v3x), 6(relax only cell components v2x and v3x), 7(relax only cell components v1x and v3x), 8(relax only cell components v1x and v2x), 9(volume optimization- relax only v1x, v2x and v3x), 10(2D- relax only x and y components relaxed), 11(2D- relax only x and y shape components- inplane area fixed), 12(relax all cell components), 13 automatically decides the constraints based boundary conditions. CAUTION: A majority of these options only make sense in an orthorhombic cell geometry.");
 
 	}
 	prm.leave_subsection ();
@@ -127,19 +126,19 @@ namespace dftParameters
     {
         prm.declare_entry("SELF POTENTIAL ATOM BALL RADIUS", "3.0",
                       Patterns::Double(1.5,10),
-                      "The radius (in a.u) of the ball around an atom on which self-potential of the associated nuclear charge is solved");
+                      "[Developer] The radius (in a.u) of the ball around an atom on which self-potential of the associated nuclear charge is solved");
 
 	prm.declare_entry("PERIODIC1", "false",
 			  Patterns::Bool(),
-			  "Periodicity along domain bounding vector, v1.");
+			  "[Standard] Periodicity along domain bounding vector, v1.");
 
 	prm.declare_entry("PERIODIC2", "false",
 			  Patterns::Bool(),
-			  "Periodicity along domain bounding vector, v2.");
+			  "[Standard] Periodicity along domain bounding vector, v2.");
 
 	prm.declare_entry("PERIODIC3", "false",
 			  Patterns::Bool(),
-			  "Periodicity along domain bounding vector, v3.");
+			  "[Standard] Periodicity along domain bounding vector, v3.");
     }
     prm.leave_subsection ();
 
@@ -149,34 +148,34 @@ namespace dftParameters
 
       prm.declare_entry("POLYNOMIAL ORDER", "4",
                         Patterns::Integer(1,12),
-                       "The degree of the finite-element interpolating polynomial");
+                       "[Standard] The degree of the finite-element interpolating polynomial");
 
       prm.declare_entry("MESH FILE", "",
                        Patterns::Anything(),
-                       "External mesh file path. If nothing is given auto mesh generation is performed");
+                       "[Developer] External mesh file path. If nothing is given auto mesh generation is performed");
 
       prm.enter_subsection ("Auto mesh generation parameters");
       {
 
 	prm.declare_entry("BASE MESH SIZE", "2.0",
 			  Patterns::Double(0,20),
-			  "Mesh size of the base mesh on which refinement is performed.");
+			  "[Developer] Mesh size of the base mesh on which refinement is performed.");
 
 	prm.declare_entry("ATOM BALL RADIUS","2.0",
 			  Patterns::Double(0,10),
-			  "Radius of ball enclosing atom");
+			  "[Developer] Radius of ball enclosing atom.");
 
 	prm.declare_entry("MESH SIZE ATOM BALL", "0.5",
 			  Patterns::Double(0,10),
-			  "Mesh size in a ball around atom");
+			  "[Developer] Mesh size in a ball around atom.");
 
 	prm.declare_entry("MESH SIZE NEAR ATOM", "0.5",
 			  Patterns::Double(0,10),
-			  "Mesh size near atom. Useful for all-electron case.");
+			  "[Developer] Mesh size near atom. Useful for all-electron case.");
 
         prm.declare_entry("MAX REFINEMENT STEPS", "10",
                         Patterns::Integer(1,10),
-                        "Maximum number of refinement steps to be used. The default value is good enough in most cases.");
+                        "[Developer] Maximum number of refinement steps to be used. The default value is good enough in most cases.");
 
 
       }
@@ -190,46 +189,46 @@ namespace dftParameters
         {
 	    prm.declare_entry("SAMPLING POINTS 1", "2",
 			      Patterns::Integer(1,100),
-			      "Number of Monkhorts-Pack grid points to be used along reciprocal latttice vector 1.");
+			      "[Standard] Number of Monkhorts-Pack grid points to be used along reciprocal latttice vector 1.");
 
 	    prm.declare_entry("SAMPLING POINTS 2", "2",
 			      Patterns::Integer(1,100),
-			      "Number of Monkhorts-Pack grid points to be used along reciprocal latttice vector 2.");
+			      "[Standard] Number of Monkhorts-Pack grid points to be used along reciprocal latttice vector 2.");
 
 	    prm.declare_entry("SAMPLING POINTS 3", "2",
 			      Patterns::Integer(1,100),
-			      "Number of Monkhorts-Pack grid points to be used along reciprocal latttice vector 3.");
+			      "[Standard] Number of Monkhorts-Pack grid points to be used along reciprocal latttice vector 3.");
 
 	    prm.declare_entry("SAMPLING SHIFT 1", "0.0",
 			      Patterns::Double(0.0,1.0),
-			      "Fractional shifting to be used along reciprocal latttice vector 1.");
+			      "[Standard] Fractional shifting to be used along reciprocal latttice vector 1.");
 
 	    prm.declare_entry("SAMPLING SHIFT 2", "0.0",
 			      Patterns::Double(0.0,1.0),
-			      "Fractional shifting to be used along reciprocal latttice vector 2.");
+			      "[Standard] Fractional shifting to be used along reciprocal latttice vector 2.");
 
 	    prm.declare_entry("SAMPLING SHIFT 3", "0.0",
 			      Patterns::Double(0.0,1.0),
-			      "Fractional shifting to be used along reciprocal latttice vector 3.");
+			      "[Standard] Fractional shifting to be used along reciprocal latttice vector 3.");
 
 	}
 	prm.leave_subsection ();
 
 	prm.declare_entry("kPOINT RULE FILE", "",
 			  Patterns::Anything(),
-			  "File specifying the k-Point quadrature rule to sample Brillouin zone. CAUTION: This option is only used for postprocessing, for example band structure calculation. To set k point rule for DFT solve use the Monkhorst-Pack (MP) grid generation.");
+			  "[Developer] File specifying the k-Point quadrature rule to sample Brillouin zone. CAUTION: This option is only used for postprocessing, for example band structure calculation. To set k point rule for DFT solve use the Monkhorst-Pack (MP) grid generation.");
 
 	prm.declare_entry("USE GROUP SYMMETRY", "false",
 			  Patterns::Bool(),
-			  "Flag to control whether to use point group symmetries (set to false for relaxation calculation)");
+			  "[Standard] Flag to control whether to use point group symmetries (set to false for relaxation calculation).");
 
 	prm.declare_entry("USE TIME REVERSAL SYMMETRY", "false",
 			  Patterns::Bool(),
-			  "Flag to control usage of time reversal symmetry ");
+			  "[Standard] Flag to control usage of time reversal symmetry.");
 
 	prm.declare_entry("NUMBER OF POOLS", "1",
 			  Patterns::Integer(1),
-			  "Number of pools the irreducible k-points to be split on should be a divisor of total number of procs and be less than or equal to the number of irreducible k-points");
+			  "[Standard] Number of pools the irreducible k-points to be split on should be a divisor of total number of procs and be less than or equal to the number of irreducible k-points.");
     }
     prm.leave_subsection ();
 
@@ -238,23 +237,23 @@ namespace dftParameters
 
 	prm.declare_entry("PSEUDOPOTENTIAL CALCULATION", "true",
 			  Patterns::Bool(),
-			  "Boolean Parameter specifying whether pseudopotential DFT calculation needs to be performed");
+			  "[Standard] Boolean Parameter specifying whether pseudopotential DFT calculation needs to be performed.");
 
 	prm.declare_entry("PSEUDOPOTENTIAL TYPE", "1",
 			  Patterns::Integer(1,2),
-			  "Type of nonlocal projector to be used: 1 for KB, 2 for ONCV, default is KB");
+			  "[Standard] Type of nonlocal projector to be used: 1 for KB, 2 for ONCV, default is KB.");
 
 	prm.declare_entry("EXCHANGE CORRELATION TYPE", "1",
 			  Patterns::Integer(1,4),
-			  "Parameter specifying the type of exchange-correlation to be used: 1(LDA: Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)]), 2(LDA: Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)]), 3(LDA: Vosko, Wilk \\& Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)]), 4(GGA: Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)])");
+			  "[Standard] Parameter specifying the type of exchange-correlation to be used: 1(LDA: Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)]), 2(LDA: Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)]), 3(LDA: Vosko, Wilk \\& Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)]), 4(GGA: Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)]).");
 
 	prm.declare_entry("SPIN POLARIZATION", "0",
 			  Patterns::Integer(0,1),
-			  "Spin polarization: 0 for no spin polarization and 1 for spin polarization");
+			  "[Standard] Spin polarization: 0 for no spin polarization and 1 for spin polarization.");
 
 	prm.declare_entry("START MAGNETIZATION", "0.0",
-			  Patterns::Double(),
-			  "Magnetization to start with (must be between -0.5 and +0.5)");
+			  Patterns::Double(-0.5,0.5),
+			  "[Standard] Magnetization to start with (must be between -0.5 and +0.5).");
     }
     prm.leave_subsection ();
 
@@ -263,23 +262,23 @@ namespace dftParameters
     {
 	prm.declare_entry("TEMPERATURE", "500.0",
 			  Patterns::Double(),
-			  "Fermi-Dirac smearing temperature (in Kelvin)");
+			  "[Standard] Fermi-Dirac smearing temperature (in Kelvin).");
 
 	prm.declare_entry("MAXIMUM ITERATIONS", "50",
 			  Patterns::Integer(1,1000),
-			  "Maximum number of iterations to be allowed for SCF convergence");
+			  "[Standard] Maximum number of iterations to be allowed for SCF convergence");
 
 	prm.declare_entry("TOLERANCE", "1e-08",
-			  Patterns::Double(),
-			  "SCF iterations stopping tolerance in terms of electron-density difference between two successive iterations");
+			  Patterns::Double(0,1.0),
+			  "[Standard] SCF iterations stopping tolerance in terms of electron-density difference between two successive iterations.");
 
 	prm.declare_entry("ANDERSON SCHEME MIXING HISTORY", "70",
 			  Patterns::Integer(1,1000),
-			  "Number of SCF iterations to be considered for mixing the electron-density");
+			  "[Standard] Number of SCF iterations to be considered for mixing the electron-density.");
 
 	prm.declare_entry("ANDERSON SCHEME MIXING PARAMETER", "0.5",
 			  Patterns::Double(0.0,1.0),
-			  "Mixing parameter to be used in Anderson scheme");
+			  "[Standard] Mixing parameter to be used in Anderson scheme.");
     }
     prm.leave_subsection ();
 
@@ -289,19 +288,19 @@ namespace dftParameters
 
 	prm.declare_entry("NUMBER OF KOHN-SHAM WAVEFUNCTIONS", "10",
 			  Patterns::Integer(0),
-			  "Number of Kohn-Sham wavefunctions to be computed. For insulators use N/2+(10-20) and for metals use 20 percent more than N/2 (atleast 10 more). N is the total number of electrons");
+			  "[Standard] Number of Kohn-Sham wavefunctions to be computed. For insulators use N/2+(10-20) and for metals use 20 percent more than N/2 (atleast 10 more). N is the total number of electrons.");
 
 	prm.declare_entry("LOWER BOUND WANTED SPECTRUM", "-10.0",
 			  Patterns::Double(),
-			  "The lower bound of the wanted eigen spectrum");
+			  "[Developer] The lower bound of the wanted eigen spectrum");
 
 	prm.declare_entry("CHEBYSHEV POLYNOMIAL DEGREE", "0",
 			  Patterns::Integer(0,2000),
-			  "The degree of the Chebyshev polynomial to be employed for filtering out the unwanted spectrum (Default value is used when the input parameter value is 0");
+			  "[Developer] The degree of the Chebyshev polynomial to be employed for filtering out the unwanted spectrum (Default value is used when the input parameter value is 0.");
 
 	prm.declare_entry("CHEBYSHEV FILTER PASSES", "1",
 			  Patterns::Integer(1,20),
-			  "The number of the Chebyshev filter passes per SCF  (Default value is used when the input parameter is not specified");
+			  "[Developer] The initial number of the Chebyshev filter passes per SCF. More Chebyshev filter passes beyond the value set in this parameter can still happen due to additional algorithms used in the code.");
 
     }
     prm.leave_subsection ();
@@ -311,11 +310,11 @@ namespace dftParameters
     {
 	prm.declare_entry("MAXIMUM ITERATIONS", "5000",
 			  Patterns::Integer(0,20000),
-			  "Maximum number of iterations to be allowed for Poisson problem convergence");
+			  "[Developer] Maximum number of iterations to be allowed for Poisson problem convergence.");
 
 	prm.declare_entry("TOLERANCE", "1e-12",
-			  Patterns::Double(),
-			  "Relative tolerance as stopping criterion for Poisson problem convergence");
+			  Patterns::Double(0,1.0),
+			  "[Developer] Relative tolerance as stopping criterion for Poisson problem convergence.");
     }
     prm.leave_subsection ();
 
