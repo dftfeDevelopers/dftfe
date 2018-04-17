@@ -75,37 +75,37 @@
 % \usepackage{textpos}
 
 \definecolor{dark_grey}{gray}{0.3}
-\definecolor{dftfe_blue}{rgb}{0.3125,0.6875,0.9375}
+\definecolor{dftfe_blue}{rgb}{0.0,0.39,0.76}
 
 %LINE 1%
 {
 \renewcommand{\familydefault}{\sfdefault}
 
 \pagenumbering{gobble}
-\begin{center}
-\resizebox{\textwidth}{!}{\textcolor{dark_grey}{\fontfamily{\sfdefault}\selectfont
-	\href{http://www-personal.umich.edu/~vikramg/}{COMPUTATIONAL MATERIAL PHYSICS GROUP}
-}}
-\vspace{0.05em}
-\hrule
+%\begin{center}
+%\resizebox{\textwidth}{!}{\textcolor{dark_grey}{\fontfamily{\sfdefault}\selectfont
+%	\href{http://www-personal.umich.edu/~vikramg/}{COMPUTATIONAL MATERIAL PHYSICS GROUP}
+%}}
+%\vspace{0.05em}
+%\hrule
 
 %LINE 2%
-\color{dark_grey}
-\rule{\textwidth}{2pt}
+%\color{dark_grey}
+%\rule{\textwidth}{2pt}
 
 %LINE 3%
-\color{dark_grey}
+%\color{dark_grey}
 % FILL: additional organizations
 % e.g.: {\Large Organization 1\\Organization 2}
-{\Large }
-\end{center}
+%{\Large }
+%\end{center}
 
 %COLOR AND CODENAME BLOCK%
 \begin{center}
 \resizebox{\textwidth}{!}{\colorbox
 % FILL: color of code name text box
 % e.g. blue
-{dftfe_blue}{\fontfamily{\rmdefault}\selectfont \textcolor{white} {
+{dftfe_blue}{\fontfamily{\rmdefault}\selectfont \textcolor{yellow} {
 % FILL: name of the code
 % You may want to add \hspace to both sides of the codename to better center it, such as:
 % \newcommand{\codename}{\hspace{0.1in}CodeName\hspace{0.1in}}
@@ -157,6 +157,10 @@
 {\fontfamily{\sfdefault}\selectfont \href{https://dftfe.org}{website of dftfe}}
 }
 
+\begin{textblock*}{0in}(5.25in,-0.8in)
+\includegraphics[height=0.8in]{CoE-vert.png}
+\end{textblock*}
+
 %LINE%
 {\noindent
 \color{dark_grey}
@@ -164,7 +168,7 @@
 }
 
 }
-Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors: Phani Motamarri, Sambit Das, Shiva Rudraraju, Krishnendu Ghosh, Denis Davydov, Vikram Gavini.
+Copyright (c) 2017-2018 The Regents of the University of Michigan and \hyperref[sec:authors]{DFT-FE authors}.
 \pagebreak
 \pagenumbering{arabic}
 
@@ -185,6 +189,7 @@ same framework while accomodating arbitrary boundary conditions. dft-fe code bui
 that has to do with finite elements, geometries, meshes, etc., and, through deal.II on p4est for parallel adaptive mesh handling.
 
 \subsection{Authors}
+\label{sec:authors}
 \dftfe{} is hosted by the \href{http://www-personal.umich.edu/~vikramg/}{Computational Materials Physics
 group at University of Michigan}, with Vikram Gavini, Associate Professor of Mechanical Engineering and Materials Science and Engineering as
 the principal investigator. The code is maintained by a group of principal developers, 
