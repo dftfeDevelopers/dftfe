@@ -524,10 +524,19 @@ namespace dftfe {
       vectorType vChebyshev, v0Chebyshev, fChebyshev;
 
 
-      void chebyshevSolver(const unsigned int s);
-      void computeResidualNorm(std::vector<vectorType>& X);
-      std::vector<std::vector<double> > d_tempResidualNormWaveFunctions;
-      double computeMaximumHighestOccupiedStateResidualNorm();
+      void chebyshevSolver(const unsigned int s,
+	                   std::vector<double > & residualNormWaveFunctions);
+
+      void computeResidualNorm(std::vector<vectorType>& X,
+	                       std::vector<double> & residualNormWaveFunctions);
+
+      /**
+       * @brief compute the maximum of the residual norm of the highest occupied state among all k points
+       */
+      double computeMaximumHighestOccupiedStateResidualNorm
+	     (const std::vector<std::vector<double> > & residualNormWaveFunctionsAllkPoints,
+	      const std::vector<std::vector<double> > & eigenValuesAllkPoints,
+	      const double _fermiEnergy);
 
       double upperBound();
 

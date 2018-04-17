@@ -513,6 +513,8 @@ void dftClass<FEOrder>::solve()
   //
   unsigned int scfIter=0;
   double norm = 1.0;
+  //CAUTION: Choosing a looser tolernace might lead to failed tests
+  const double adaptiveChebysevFilterPassesTol=1e-2;
 
 
   pcout<<std::endl;
@@ -584,6 +586,15 @@ void dftClass<FEOrder>::solve()
       //
       if (dftParameters::spinPolarized==1)
 	{
+
+	  std::vector<std::vector<std::vector<double> > > eigenValuesSpins(2,
+		                               std::vector<std::vector<double> >(d_maxkPoints,
+					       std::vector<double>(numEigenValues)));
+
+	  std::vector<std::vector<std::vector<double>>> residualNormWaveFunctionsAllkPointsSpins(2,
+		                               std::vector<std::vector<double> >(d_maxkPoints,
+					       std::vector<double>(numEigenValues)));
+
 	  for(unsigned int s=0; s<2; ++s)
 	    {
 	      if(dftParameters::xc_id < 4)
@@ -602,18 +613,79 @@ void dftClass<FEOrder>::solve()
 		      if (dftParameters::verbosity==2)
 			pcout<<"Beginning Chebyshev filter pass "<< j+1<< " for spin "<< s+1<<std::endl;
 
-		      chebyshevSolver(s);
+		      chebyshevSolver(s,
+			              residualNormWaveFunctionsAllkPointsSpins[s][kPoint]);
 	            }
 	        }
 	    }
 
+	  for(unsigned int s=0; s<2; ++s)
+            for (unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+		for (unsigned int i = 0; i<numEigenValues; ++i)
+		    eigenValuesSpins[s][kPoint][i]=eigenValues[kPoint][numEigenValues*s+i];
 	  //
 	  //fermi energy
 	  //
           compute_fermienergy();
+
+	  //maximum of the residual norm of the state closest to and below the Fermi level among all k points,
+	  //and also the maximum between the two spins
+	  double maxRes =std::max(computeMaximumHighestOccupiedStateResidualNorm
+	                (residualNormWaveFunctionsAllkPointsSpins[0],
+			 eigenValuesSpins[0],
+			 fermiEnergy),
+	                computeMaximumHighestOccupiedStateResidualNorm
+	                (residualNormWaveFunctionsAllkPointsSpins[1],
+			 eigenValuesSpins[1],
+			 fermiEnergy));
+
+	  if (dftParameters::verbosity==2)
+	    pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
+
+	  //if the residual norm is greater than adaptiveChebysevFilterPassesTol (a heuristic value)
+	  // do more passes of chebysev filter till the check passes.
+	  // This improves the scf convergence performance.
+	  unsigned int count=1;
+	  while (maxRes>adaptiveChebysevFilterPassesTol)
+	    {
+	      for(unsigned int s=0; s<2; ++s)
+	        for (unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+		{
+		  d_kPointIndex = kPoint;
+		  if (dftParameters::verbosity==2)
+		    pcout<< "Beginning Chebyshev filter pass "<< dftParameters::numPass+count<< " for spin "<< s+1<<std::endl;;
+
+		  chebyshevSolver(s,
+			          residualNormWaveFunctionsAllkPointsSpins[s][kPoint]);
+
+		}
+	      count++;
+	      for(unsigned int s=0; s<2; ++s)
+                for (unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+	 	  for (unsigned int i = 0; i<numEigenValues; ++i)
+		     eigenValuesSpins[s][kPoint][i]=eigenValues[kPoint][numEigenValues*s+i];
+
+	      compute_fermienergy();
+	      maxRes =std::max(computeMaximumHighestOccupiedStateResidualNorm
+	                (residualNormWaveFunctionsAllkPointsSpins[0],
+			 eigenValuesSpins[0],
+			 fermiEnergy),
+	                computeMaximumHighestOccupiedStateResidualNorm
+	                (residualNormWaveFunctionsAllkPointsSpins[1],
+			 eigenValuesSpins[1],
+			 fermiEnergy));
+	      if (dftParameters::verbosity==2)
+	        pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
+	    }
         }
       else
         {
+
+	  std::vector<std::vector<double>> residualNormWaveFunctionsAllkPoints;
+          residualNormWaveFunctionsAllkPoints.resize(d_maxkPoints);
+          for(unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+             residualNormWaveFunctionsAllkPoints[kPoint].resize(eigenVectors[kPoint].size());
+
 	  if(dftParameters::xc_id < 4)
 	    {
 	      eigenPtr->computeVEff(rhoInValues, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, pseudoValues);
@@ -631,7 +703,8 @@ void dftClass<FEOrder>::solve()
 		  if (dftParameters::verbosity==2)
 		    pcout<< "Beginning Chebyshev filter pass "<< j+1<<std::endl;
 
-		  chebyshevSolver(0);
+		  chebyshevSolver(0,
+			          residualNormWaveFunctionsAllkPoints[kPoint]);
 		}
 	    }
 
@@ -643,16 +716,18 @@ void dftClass<FEOrder>::solve()
 	  //
 	  //maximum of the residual norm of the state closest to and below the Fermi level among all k points
 	  //
-	  double maxRes = computeMaximumHighestOccupiedStateResidualNorm();
+	  double maxRes = computeMaximumHighestOccupiedStateResidualNorm
+			  (residualNormWaveFunctionsAllkPoints,
+			   eigenValues,
+			   fermiEnergy);
 	  if (dftParameters::verbosity==2)
 	    pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
 
-	  //if the residual norm is greater than 1e-1 (heuristic)
+	  //if the residual norm is greater than adaptiveChebysevFilterPassesTol (a heuristic value)
 	  // do more passes of chebysev filter till the check passes.
-	  // This improves the scf convergence performance. Currently this
-	  // approach is not implemented for spin-polarization case
+	  // This improves the scf convergence performance.
 	  unsigned int count=1;
-	  while (maxRes>1e-2)
+	  while (maxRes>adaptiveChebysevFilterPassesTol)
 	    {
 	      for (unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
 		{
@@ -660,11 +735,15 @@ void dftClass<FEOrder>::solve()
 		  if (dftParameters::verbosity==2)
 		    pcout<< "Beginning Chebyshev filter pass "<< dftParameters::numPass+count<<std::endl;
 
-		  chebyshevSolver(0);
+		  chebyshevSolver(0,
+			          residualNormWaveFunctionsAllkPoints[kPoint]);
 		}
 	      count++;
 	      compute_fermienergy();
-	      maxRes = computeMaximumHighestOccupiedStateResidualNorm();
+	      maxRes = computeMaximumHighestOccupiedStateResidualNorm
+		                                (residualNormWaveFunctionsAllkPoints,
+						 eigenValues,
+						 fermiEnergy);
 	      if (dftParameters::verbosity==2)
 	        pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
 	    }

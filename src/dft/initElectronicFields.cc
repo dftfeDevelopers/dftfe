@@ -29,21 +29,6 @@ void dftClass<FEOrder>::initElectronicFields(const bool usePreviousGroundStateFi
   fChebyshev.reinit(vChebyshev);
 
   //
-  //temp STL d_v and d_f vectors required for upper bound computation filled here
-  //
-
-  if(dftParameters::spinPolarized!=1)
-  {
-     d_tempResidualNormWaveFunctions.clear();
-     d_tempResidualNormWaveFunctions.resize(d_maxkPoints);
-     for(unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
-     {
-        d_tempResidualNormWaveFunctions[kPoint].resize(eigenVectors[kPoint].size());
-     }
-  }
-
-
-  //
   //initialize density and PSI/ interpolate from previous ground state solution
   //
   if (!usePreviousGroundStateFields)
