@@ -10,10 +10,12 @@
 
 \index[prmindex]{REPRODUCIBLE OUTPUT}
 \index[prmindexfull]{REPRODUCIBLE OUTPUT}
+
+
 {\it Default:} false
 
 
-{\it Description:} Limit output to that which is reprodicible, i.e. don't print timing or absolute paths.
+{\it Description:} [Developer] Limit output to that which is reprodicible, i.e. don't print timing or absolute paths. This parameter is only used for testing purposes.
 
 
 {\it Possible values:} A boolean value (true or false)
@@ -23,10 +25,12 @@
 
 \index[prmindex]{VERBOSITY}
 \index[prmindexfull]{VERBOSITY}
+
+
 {\it Default:} 1
 
 
-{\it Description:} Parameter to control verbosity of terminal output. 0 for low, 1 for medium, and 2 for high.
+{\it Description:} [Standard] Parameter to control verbosity of terminal output. 0 for low, 1 for medium, and 2 for high.
 
 
 {\it Possible values:} An integer $n$ such that $0\leq n \leq 2$
@@ -45,10 +49,12 @@
 
 \index[prmindex]{PERIODIC1}
 \index[prmindexfull]{Boundary conditions!PERIODIC1}
+
+
 {\it Default:} false
 
 
-{\it Description:} Periodicity along domain bounding vector, v1.
+{\it Description:} [Standard] Periodicity along domain bounding vector, v1.
 
 
 {\it Possible values:} A boolean value (true or false)
@@ -59,10 +65,12 @@
 
 \index[prmindex]{PERIODIC2}
 \index[prmindexfull]{Boundary conditions!PERIODIC2}
+
+
 {\it Default:} false
 
 
-{\it Description:} Periodicity along domain bounding vector, v2.
+{\it Description:} [Standard] Periodicity along domain bounding vector, v2.
 
 
 {\it Possible values:} A boolean value (true or false)
@@ -73,10 +81,12 @@
 
 \index[prmindex]{PERIODIC3}
 \index[prmindexfull]{Boundary conditions!PERIODIC3}
+
+
 {\it Default:} false
 
 
-{\it Description:} Periodicity along domain bounding vector, v3.
+{\it Description:} [Standard] Periodicity along domain bounding vector, v3.
 
 
 {\it Possible values:} A boolean value (true or false)
@@ -87,10 +97,12 @@
 
 \index[prmindex]{SELF POTENTIAL ATOM BALL RADIUS}
 \index[prmindexfull]{Boundary conditions!SELF POTENTIAL ATOM BALL RADIUS}
+
+
 {\it Default:} 3.0
 
 
-{\it Description:} The radius (in a.u) of the ball around an atom on which self-potential of the associated nuclear charge is solved
+{\it Description:} [Developer] The radius (in a.u) of the ball around an atom on which self-potential of the associated nuclear charge is solved
 
 
 {\it Possible values:} A floating point number $v$ such that $1.5 \leq v \leq 10$
@@ -107,10 +119,12 @@
 
 \index[prmindex]{NUMBER OF POOLS}
 \index[prmindexfull]{Brillouin zone k point sampling options!NUMBER OF POOLS}
+
+
 {\it Default:} 1
 
 
-{\it Description:} Number of pools the irreducible k-points to be split on should be a divisor of total number of procs and be less than or equal to the number of irreducible k-points
+{\it Description:} [Standard] Number of pools the irreducible k-points to be split on should be a divisor of total number of procs and be less than or equal to the number of irreducible k-points.
 
 
 {\it Possible values:} An integer $n$ such that $1\leq n \leq 2147483647$
@@ -121,10 +135,12 @@
 
 \index[prmindex]{USE GROUP SYMMETRY}
 \index[prmindexfull]{Brillouin zone k point sampling options!USE GROUP SYMMETRY}
+
+
 {\it Default:} false
 
 
-{\it Description:} Flag to control whether to use point group symmetries (set to false for relaxation calculation)
+{\it Description:} [Standard] Flag to control whether to use point group symmetries (set to false for relaxation calculation).
 
 
 {\it Possible values:} A boolean value (true or false)
@@ -135,10 +151,12 @@
 
 \index[prmindex]{USE TIME REVERSAL SYMMETRY}
 \index[prmindexfull]{Brillouin zone k point sampling options!USE TIME REVERSAL SYMMETRY}
+
+
 {\it Default:} false
 
 
-{\it Description:} Flag to control usage of time reversal symmetry 
+{\it Description:} [Standard] Flag to control usage of time reversal symmetry.
 
 
 {\it Possible values:} A boolean value (true or false)
@@ -149,10 +167,12 @@
 
 \index[prmindex]{kPOINT RULE FILE}
 \index[prmindexfull]{Brillouin zone k point sampling options!kPOINT RULE FILE}
+
+
 {\it Default:} 
 
 
-{\it Description:} File specifying the k-Point quadrature rule to sample Brillouin zone. CAUTION: This option is only used for postprocessing, for example band structure calculation. To set k point rule for DFT solve use the Monkhorst-Pack (MP) grid generation.
+{\it Description:} [Developer] File specifying the k-Point quadrature rule to sample Brillouin zone. CAUTION: This option is only used for postprocessing, for example band structure calculation. To set k point rule for DFT solve use the Monkhorst-Pack (MP) grid generation.
 
 
 {\it Possible values:} Any string
@@ -171,10 +191,12 @@
 
 \index[prmindex]{SAMPLING POINTS 1}
 \index[prmindexfull]{Brillouin zone k point sampling options!Monkhorst-Pack (MP) grid generation!SAMPLING POINTS 1}
+
+
 {\it Default:} 2
 
 
-{\it Description:} Number of Monkhorts-Pack grid points to be used along reciprocal latttice vector 1.
+{\it Description:} [Standard] Number of Monkhorts-Pack grid points to be used along reciprocal latttice vector 1.
 
 
 {\it Possible values:} An integer $n$ such that $1\leq n \leq 100$
@@ -185,10 +207,12 @@
 
 \index[prmindex]{SAMPLING POINTS 2}
 \index[prmindexfull]{Brillouin zone k point sampling options!Monkhorst-Pack (MP) grid generation!SAMPLING POINTS 2}
+
+
 {\it Default:} 2
 
 
-{\it Description:} Number of Monkhorts-Pack grid points to be used along reciprocal latttice vector 2.
+{\it Description:} [Standard] Number of Monkhorts-Pack grid points to be used along reciprocal latttice vector 2.
 
 
 {\it Possible values:} An integer $n$ such that $1\leq n \leq 100$
@@ -199,10 +223,12 @@
 
 \index[prmindex]{SAMPLING POINTS 3}
 \index[prmindexfull]{Brillouin zone k point sampling options!Monkhorst-Pack (MP) grid generation!SAMPLING POINTS 3}
+
+
 {\it Default:} 2
 
 
-{\it Description:} Number of Monkhorts-Pack grid points to be used along reciprocal latttice vector 3.
+{\it Description:} [Standard] Number of Monkhorts-Pack grid points to be used along reciprocal latttice vector 3.
 
 
 {\it Possible values:} An integer $n$ such that $1\leq n \leq 100$
@@ -213,10 +239,12 @@
 
 \index[prmindex]{SAMPLING SHIFT 1}
 \index[prmindexfull]{Brillouin zone k point sampling options!Monkhorst-Pack (MP) grid generation!SAMPLING SHIFT 1}
+
+
 {\it Default:} 0.0
 
 
-{\it Description:} Fractional shifting to be used along reciprocal latttice vector 1.
+{\it Description:} [Standard] Fractional shifting to be used along reciprocal latttice vector 1.
 
 
 {\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 1$
@@ -227,10 +255,12 @@
 
 \index[prmindex]{SAMPLING SHIFT 2}
 \index[prmindexfull]{Brillouin zone k point sampling options!Monkhorst-Pack (MP) grid generation!SAMPLING SHIFT 2}
+
+
 {\it Default:} 0.0
 
 
-{\it Description:} Fractional shifting to be used along reciprocal latttice vector 2.
+{\it Description:} [Standard] Fractional shifting to be used along reciprocal latttice vector 2.
 
 
 {\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 1$
@@ -241,10 +271,12 @@
 
 \index[prmindex]{SAMPLING SHIFT 3}
 \index[prmindexfull]{Brillouin zone k point sampling options!Monkhorst-Pack (MP) grid generation!SAMPLING SHIFT 3}
+
+
 {\it Default:} 0.0
 
 
-{\it Description:} Fractional shifting to be used along reciprocal latttice vector 3.
+{\it Description:} [Standard] Fractional shifting to be used along reciprocal latttice vector 3.
 
 
 {\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 1$
@@ -261,10 +293,12 @@
 
 \index[prmindex]{CHK TYPE}
 \index[prmindexfull]{Checkpointing and Restart!CHK TYPE}
+
+
 {\it Default:} 0
 
 
-{\it Description:} Checkpoint type, 0(dont create any checkpoint), 1(create checkpoint only for ion optimization restart if ION OPT is set to true. This option writes the current atomic coordinates and the cg ion relaxation solver state to checkpoint files. This option assumes CELL OPT is set to false. The checkpoint is created at the end of the last ground state solve.), 2(create checkpoint for scf restart. This option also creates checkpoint for ion optimization restart if ION OPT is set to true.)
+{\it Description:} [Standard] Checkpoint type, 0(dont create any checkpoint), 1(create checkpoint only for ion optimization restart if ION OPT is set to true. This option writes the current atomic coordinates and the cg ion relaxation solver state to checkpoint files. This option assumes CELL OPT is set to false. The checkpoint is created at the end of the last ground state solve.), 2(create checkpoint for scf restart. This option also creates checkpoint for ion optimization restart if ION OPT is set to true.)
 
 
 {\it Possible values:} An integer $n$ such that $0\leq n \leq 2$
@@ -275,10 +309,12 @@
 
 \index[prmindex]{RESTART FROM CHK}
 \index[prmindexfull]{Checkpointing and Restart!RESTART FROM CHK}
+
+
 {\it Default:} false
 
 
-{\it Description:} Boolean parameter specifying if the current job reads from a checkpoint. The nature of the restart corresponds to the CHK TYPE parameter. Hence, the checkpoint being read must have been created using the same value of the CHK TYPE parameter. RESTART FROM CHK is always false for CHK TYPE 0.
+{\it Description:} [Standard] Boolean parameter specifying if the current job reads from a checkpoint. The nature of the restart corresponds to the CHK TYPE parameter. Hence, the checkpoint being read must have been created using the same value of the CHK TYPE parameter. RESTART FROM CHK is always false for CHK TYPE 0.
 
 
 {\it Possible values:} A boolean value (true or false)
@@ -295,10 +331,12 @@
 
 \index[prmindex]{EXCHANGE CORRELATION TYPE}
 \index[prmindexfull]{DFT functional related parameters!EXCHANGE CORRELATION TYPE}
+
+
 {\it Default:} 1
 
 
-{\it Description:} Parameter specifying the type of exchange-correlation to be used: 1(LDA: Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)]), 2(LDA: Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)]), 3(LDA: Vosko, Wilk \& Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)]), 4(GGA: Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)])
+{\it Description:} [Standard] Parameter specifying the type of exchange-correlation to be used: 1(LDA: Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)]), 2(LDA: Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)]), 3(LDA: Vosko, Wilk \& Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)]), 4(GGA: Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)]).
 
 
 {\it Possible values:} An integer $n$ such that $1\leq n \leq 4$
@@ -309,10 +347,12 @@
 
 \index[prmindex]{PSEUDOPOTENTIAL CALCULATION}
 \index[prmindexfull]{DFT functional related parameters!PSEUDOPOTENTIAL CALCULATION}
+
+
 {\it Default:} true
 
 
-{\it Description:} Boolean Parameter specifying whether pseudopotential DFT calculation needs to be performed
+{\it Description:} [Standard] Boolean Parameter specifying whether pseudopotential DFT calculation needs to be performed.
 
 
 {\it Possible values:} A boolean value (true or false)
@@ -323,10 +363,12 @@
 
 \index[prmindex]{PSEUDOPOTENTIAL TYPE}
 \index[prmindexfull]{DFT functional related parameters!PSEUDOPOTENTIAL TYPE}
+
+
 {\it Default:} 1
 
 
-{\it Description:} Type of nonlocal projector to be used: 1 for KB, 2 for ONCV, default is KB
+{\it Description:} [Standard] Type of nonlocal projector to be used: 1 for KB, 2 for ONCV, default is KB.
 
 
 {\it Possible values:} An integer $n$ such that $1\leq n \leq 2$
@@ -337,10 +379,12 @@
 
 \index[prmindex]{SPIN POLARIZATION}
 \index[prmindexfull]{DFT functional related parameters!SPIN POLARIZATION}
+
+
 {\it Default:} 0
 
 
-{\it Description:} Spin polarization: 0 for no spin polarization and 1 for spin polarization
+{\it Description:} [Standard] Spin polarization: 0 for no spin polarization and 1 for spin polarization.
 
 
 {\it Possible values:} An integer $n$ such that $0\leq n \leq 1$
@@ -351,13 +395,15 @@
 
 \index[prmindex]{START MAGNETIZATION}
 \index[prmindexfull]{DFT functional related parameters!START MAGNETIZATION}
+
+
 {\it Default:} 0.0
 
 
-{\it Description:} Magnetization to start with (must be between -0.5 and +0.5)
+{\it Description:} [Standard] Magnetization to start with (must be between -0.5 and +0.5).
 
 
-{\it Possible values:} A floating point number $v$ such that $-\text{MAX\_DOUBLE} \leq v \leq \text{MAX\_DOUBLE}$
+{\it Possible values:} A floating point number $v$ such that $-0.5 \leq v \leq 0.5$
 \end{itemize}
 
 \subsection{Parameters in section \tt Eigen-solver/Chebyshev solver related parameters}
@@ -371,10 +417,12 @@
 
 \index[prmindex]{CHEBYSHEV FILTER PASSES}
 \index[prmindexfull]{Eigen-solver/Chebyshev solver related parameters!CHEBYSHEV FILTER PASSES}
+
+
 {\it Default:} 1
 
 
-{\it Description:} The number of the Chebyshev filter passes per SCF  (Default value is used when the input parameter is not specified
+{\it Description:} [Developer] The initial number of the Chebyshev filter passes per SCF. More Chebyshev filter passes beyond the value set in this parameter can still happen due to additional algorithms used in the code.
 
 
 {\it Possible values:} An integer $n$ such that $1\leq n \leq 20$
@@ -385,10 +433,12 @@
 
 \index[prmindex]{CHEBYSHEV POLYNOMIAL DEGREE}
 \index[prmindexfull]{Eigen-solver/Chebyshev solver related parameters!CHEBYSHEV POLYNOMIAL DEGREE}
+
+
 {\it Default:} 0
 
 
-{\it Description:} The degree of the Chebyshev polynomial to be employed for filtering out the unwanted spectrum (Default value is used when the input parameter value is 0
+{\it Description:} [Developer] The degree of the Chebyshev polynomial to be employed for filtering out the unwanted spectrum (Default value is used when the input parameter value is 0.
 
 
 {\it Possible values:} An integer $n$ such that $0\leq n \leq 2000$
@@ -399,10 +449,12 @@
 
 \index[prmindex]{LOWER BOUND WANTED SPECTRUM}
 \index[prmindexfull]{Eigen-solver/Chebyshev solver related parameters!LOWER BOUND WANTED SPECTRUM}
+
+
 {\it Default:} -10.0
 
 
-{\it Description:} The lower bound of the wanted eigen spectrum
+{\it Description:} [Developer] The lower bound of the wanted eigen spectrum
 
 
 {\it Possible values:} A floating point number $v$ such that $-\text{MAX\_DOUBLE} \leq v \leq \text{MAX\_DOUBLE}$
@@ -413,10 +465,12 @@
 
 \index[prmindex]{NUMBER OF KOHN-SHAM WAVEFUNCTIONS}
 \index[prmindexfull]{Eigen-solver/Chebyshev solver related parameters!NUMBER OF KOHN-SHAM WAVEFUNCTIONS}
+
+
 {\it Default:} 10
 
 
-{\it Description:} Number of Kohn-Sham wavefunctions to be computed. For insulators use N/2+(10-20) and for metals use 20 percent more than N/2 (atleast 10 more). N is the total number of electrons
+{\it Description:} [Standard] Number of Kohn-Sham wavefunctions to be computed. For insulators use N/2+(10-20) and for metals use 20 percent more than N/2 (atleast 10 more). N is the total number of electrons.
 
 
 {\it Possible values:} An integer $n$ such that $0\leq n \leq 2147483647$
@@ -433,10 +487,12 @@
 
 \index[prmindex]{MESH FILE}
 \index[prmindexfull]{Finite element mesh parameters!MESH FILE}
+
+
 {\it Default:} 
 
 
-{\it Description:} External mesh file path. If nothing is given auto mesh generation is performed
+{\it Description:} [Developer] External mesh file path. If nothing is given auto mesh generation is performed
 
 
 {\it Possible values:} Any string
@@ -447,10 +503,12 @@
 
 \index[prmindex]{POLYNOMIAL ORDER}
 \index[prmindexfull]{Finite element mesh parameters!POLYNOMIAL ORDER}
+
+
 {\it Default:} 4
 
 
-{\it Description:} The degree of the finite-element interpolating polynomial
+{\it Description:} [Standard] The degree of the finite-element interpolating polynomial
 
 
 {\it Possible values:} An integer $n$ such that $1\leq n \leq 12$
@@ -469,10 +527,12 @@
 
 \index[prmindex]{ATOM BALL RADIUS}
 \index[prmindexfull]{Finite element mesh parameters!Auto mesh generation parameters!ATOM BALL RADIUS}
+
+
 {\it Default:} 2.0
 
 
-{\it Description:} Radius of ball enclosing atom
+{\it Description:} [Developer] Radius of ball enclosing atom.
 
 
 {\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 10$
@@ -483,10 +543,12 @@
 
 \index[prmindex]{BASE MESH SIZE}
 \index[prmindexfull]{Finite element mesh parameters!Auto mesh generation parameters!BASE MESH SIZE}
+
+
 {\it Default:} 2.0
 
 
-{\it Description:} Mesh size of the base mesh on which refinement is performed.
+{\it Description:} [Developer] Mesh size of the base mesh on which refinement is performed.
 
 
 {\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 20$
@@ -497,10 +559,12 @@
 
 \index[prmindex]{MAX REFINEMENT STEPS}
 \index[prmindexfull]{Finite element mesh parameters!Auto mesh generation parameters!MAX REFINEMENT STEPS}
+
+
 {\it Default:} 10
 
 
-{\it Description:} Maximum number of refinement steps to be used. The default value is good enough in most cases.
+{\it Description:} [Developer] Maximum number of refinement steps to be used. The default value is good enough in most cases.
 
 
 {\it Possible values:} An integer $n$ such that $1\leq n \leq 10$
@@ -511,10 +575,12 @@
 
 \index[prmindex]{MESH SIZE ATOM BALL}
 \index[prmindexfull]{Finite element mesh parameters!Auto mesh generation parameters!MESH SIZE ATOM BALL}
+
+
 {\it Default:} 0.5
 
 
-{\it Description:} Mesh size in a ball around atom
+{\it Description:} [Developer] Mesh size in a ball around atom.
 
 
 {\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 10$
@@ -525,10 +591,12 @@
 
 \index[prmindex]{MESH SIZE NEAR ATOM}
 \index[prmindexfull]{Finite element mesh parameters!Auto mesh generation parameters!MESH SIZE NEAR ATOM}
+
+
 {\it Default:} 0.5
 
 
-{\it Description:} Mesh size near atom. Useful for all-electron case.
+{\it Description:} [Developer] Mesh size near atom. Useful for all-electron case.
 
 
 {\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 10$
@@ -545,10 +613,12 @@
 
 \index[prmindex]{ATOMIC COORDINATES FILE}
 \index[prmindexfull]{Geometry!ATOMIC COORDINATES FILE}
+
+
 {\it Default:} 
 
 
-{\it Description:} Atomic-coordinates file. For fully non-periodic domain give cartesian coordinates of the atoms (in a.u) with respect to origin at the center of the domain. For periodic and semi-periodic give fractional coordinates of atoms. File format (example for two atoms): x1 y1 z1 (row1), x2 y2 z2 (row2).
+{\it Description:} [Standard] Atomic-coordinates file. For fully non-periodic domain give cartesian coordinates of the atoms (in a.u) with respect to origin at the center of the domain. For periodic and semi-periodic give fractional coordinates of atoms. File format (example for two atoms): x1 y1 z1 (row1), x2 y2 z2 (row2).
 
 
 {\it Possible values:} Any string
@@ -559,10 +629,12 @@
 
 \index[prmindex]{DOMAIN BOUNDING VECTORS FILE}
 \index[prmindexfull]{Geometry!DOMAIN BOUNDING VECTORS FILE}
+
+
 {\it Default:} 
 
 
-{\it Description:} Set file specifying the domain bounding vectors v1, v2 and v3 in a.u. with the following format: v1x v1y v1z (row1), v2x v2y v2z (row2), v3x v3y v3z (row3). Domain bounding vectors are the typical lattice vectors in a fully periodic calculation.
+{\it Description:} [Standard] Set file specifying the domain bounding vectors v1, v2 and v3 in a.u. with the following format: v1x v1y v1z (row1), v2x v2y v2z (row2), v3x v3y v3z (row3). Domain bounding vectors are the typical lattice vectors in a fully periodic calculation.
 
 
 {\it Possible values:} Any string
@@ -581,7 +653,6 @@
 
 \index[prmindex]{CELL CONSTRAINT TYPE}
 \index[prmindexfull]{Geometry!Optimization!CELL CONSTRAINT TYPE}
-{\it Default:} 12
 
 
-{\it Description:} Cell relaxation constraint type, 1(isotropic shape-fixed volume optimization), 2(volume-fixed shape optimization), 3(relax only cell component v1x), 4(relax only cell component v2x), 5(relax only cell component v3x), 6(relax only cell components v2x and v3x), 7(relax only cell components v1x and v3x), 8(relax only cell components v1x and v2x), 9(volume optimization- relax only v1x, v2x and v3x), 10(2D- relax only x and y components relaxed), 11(2D- relax only x and y shape components- inplane area fixed), 12(relax all cell components), 13 automatically decides the constraints based boundary conditions. CAUTION: A majority of these options only make sense in an orthorhombic cell geometry.
+{\it Default:} 
