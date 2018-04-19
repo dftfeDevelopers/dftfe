@@ -1,53 +1,60 @@
-Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors
+DFT-FE is hosted by the Computational Materials Physics group at University 
+of Michigan (http://www-personal.umich.edu/~vikramg/), with Vikram Gavini, 
+Associate Professor of Mechanical Engineering and Materials Science and
+Engineering, as the principal investigator broadly overseeing the effort.
+'DFT-FE authors' is an all encompassing list of contributors to the DFT-FE code. 
 
-DFT-FE Authors
-==============
-DFT-FE is hosted by the Computational Materials Physics
-group at University of Michigan (http://www-personal.umich.edu/~vikramg/), 
-with Vikram Gavini, Associate Professor of Mechanical Engineering and Materials Science and Engineering as
-the principal investigator. The code is maintained by a group of principal developers, 
-who manage the architecture of the code and the core functionalities. Developers with
-significant contributions to core functionalities and code architecture in the past who are 
-no longer active principal developers, are listed under principal developers emeriti. 
-A subset of the principal developers and mentors are administrators. Finally, all contributors who have
-contributed major parts of the DFT-FE code or sent fixes and small enhancements are listed
-under contributors. All the underlying lists are in alphabetical order. DFT-FE is intended to be a community project. 
+The code is maintained by a group of principal developers, who manage the 
+architecture of the code and the core functionalities. Developers with
+significant contributions to core functionalities and code architecture
+in the past who are no longer active principal developers, are listed under
+principal developers emeriti. A subset of the principal developers and 
+mentors are administrators. Finally, all contributors who have contributed
+major parts of the DFT-FE code or sent fixes and small enhancements are listed
+under contributors. All the underlying lists are in alphabetical order. 
+ 
+Copyright (c) 2017-2018 The Regents of the University of Michigan
+
+    Principal developers
+    ====================
+    Sambit Das       - University of Michigan, USA
+    Phani Motamarri  - University of Michigan, USA
+
+    Principal developers emeriti
+    =============================
+    Krishnendu Ghosh - University of Michigan, USA
+    Shiva Rudraraju  - University of Michigan, USA
+
+    Contributors
+    ============
+    Sambit Das       - University of Michigan, USA
+    Krishnendu Ghosh - University of Michigan, USA
+    Phani Motamarri  - University of Michigan, USA
+
+    Administrators
+    ==============
+    Sambit Das       - University of Michigan, USA
+    Vikram Gavini    - University of Michigan, USA
+    Phani Motamarri  - University of Michigan, USA
+
+    Documentation
+    =============
+    Sambit Das      - University of Michigan, USA
+    Vikram Gavini   - University of Michigan, USA
+    Phani Motamarri - University of Michigan, USA
+
+    Mentors
+    =======
+    Vikram Gavini   - University of Michigan, USA
 
 
-Principal developers
-====================
-Sambit Das       - University of Michigan, USA
-Phani Motamarri  - University of Michigan, USA
+Authors affiliated to other institutions
 
+    Contributors
+    ============
+    Denis Davydov    - University of Erlangen-Nuremberg, Germany
+    Shiva Rudraraju  - University of Wisconsin Madison, USA
 
-Prinicipal developers emeriti
-=============================
-Krishnendu Ghosh - University of Michigan, USA
-Shiva Rudraraju  - University of Wisconsin Madison, USA
-
-
-Contributors
-============
-Sambit Das       - University of Michigan, USA
-Denis Davydov    - University of Erlangen-Nuremberg, Germany
-Krishnendu Ghosh - University of Michigan, USA
-Phani Motamarri  - University of Michigan, USA
-Shiva Rudraraju  - University of Wisconsin Madison, USA
-
-
-Administrators
-==============
-Sambit Das       - University of Michigan, USA
-Vikram Gavini    - University of Michigan, USA
-Phani Motamarri  - University of Michigan, USA
-
-
-Documentation
-=============
-Sambit Das      - University of Michigan, USA
-Phani Motamarri - University of Michigan, USA
-
-
-Mentors
-=======
-Vikram Gavini   - University of Michigan, USA
+    Documentation
+    =============
+    Shiva Rudraraju  - University of Wisconsin Madison, USA
