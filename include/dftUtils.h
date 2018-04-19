@@ -1,3 +1,8 @@
+// ---------------------------------------------------------------------
+//
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
+//
+// This file is part of the DFT-FE code.
 //
 // The DFT-FE code is free software; you can use it, redistribute
 // it, and/or modify it under the terms of the GNU Lesser General
@@ -92,7 +97,10 @@ namespace dftfe {
       };
 
       /// Exception handler for not implemented functionality
-      DeclExceptionMsg (ExcNotImplementedYet,"This functionality is not implemented yet or not needed to be implemented");
+      DeclExceptionMsg (ExcNotImplementedYet,"This functionality is not implemented yet or not needed to be implemented.");
+
+      /// Exception handler for DFT-FE internal error
+      DeclExceptionMsg (ExcInternalError,"DFT-FE internal error.");
     }
 
 }

@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -113,10 +113,10 @@ namespace dftfe  {
       const parallel::distributed::Triangulation<3> & getSerialMeshUnmoved() const;
 
     /**
-     * @brief returns constant reference to parallel moved triangulation
+     * @brief returns reference to parallel moved triangulation
      *
      */
-      const parallel::distributed::Triangulation<3> & getParallelMeshMoved() const;
+      parallel::distributed::Triangulation<3> & getParallelMeshMoved();
 
     /**
      * @brief returns constant reference to parallel unmoved triangulation
@@ -138,6 +138,13 @@ namespace dftfe  {
      *
      */
       const parallel::distributed::Triangulation<3> & getSerialMeshUnmovedPrevious() const;
+
+    /**
+     * @brief resets the vertices of parallel mesh moved to umoved. This is required before
+     * any mesh refinemen/coarsening operations are performed.
+     *
+     */
+     void resetParallelMeshMovedToUnmoved();
 
     /**
      * @brief serialize the triangulations and the associated solution vectors
