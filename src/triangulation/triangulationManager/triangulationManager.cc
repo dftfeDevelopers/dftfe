@@ -23,6 +23,7 @@
 
 #include <triangulationManager.h>
 #include <dftParameters.h>
+#include <dftUtils.h>
 #include <fileReaders.h>
 #include "meshGenUtils.cc"
 #include "generateMesh.cc"
@@ -158,8 +159,8 @@ triangulationManager::getSerialMeshUnmoved() const
 //
 //get moved parallel mesh
 //
-const parallel::distributed::Triangulation<3> &
-triangulationManager::getParallelMeshMoved() const
+parallel::distributed::Triangulation<3> &
+triangulationManager::getParallelMeshMoved()
 {
   return d_parallelTriangulationMoved;
 }
@@ -189,6 +190,36 @@ const parallel::distributed::Triangulation<3> &
 triangulationManager::getSerialMeshUnmovedPrevious() const
 {
   return d_serialTriangulationUnmovedPrevious;
+}
+
+//
+void
+triangulationManager::resetParallelMeshMovedToUnmoved()
+{
+  AssertThrow(d_parallelTriangulationUnmoved.n_global_active_cells()!=0, dftUtils::ExcInternalError());
+  AssertThrow(d_parallelTriangulationUnmoved.n_global_active_cells()
+	    ==d_parallelTriangulationMoved.n_global_active_cells(), dftUtils::ExcInternalError());
+
+  std::vector<bool> vertexTouched(d_parallelTriangulationMoved.n_vertices(),
+                                 false);
+  typename parallel::distributed::Triangulation<3>::cell_iterator cellUnmoved, endcUnmoved, cellMoved;
+  cellUnmoved = d_parallelTriangulationUnmoved.begin();
+  endcUnmoved = d_parallelTriangulationUnmoved.end();
+  cellMoved=d_parallelTriangulationMoved.begin();
+
+  for (; cellUnmoved!=endcUnmoved; ++cellUnmoved, ++cellMoved)
+    for (unsigned int vertexNo=0; vertexNo<dealii::GeometryInfo<3>::vertices_per_cell;++vertexNo)
+     {
+	 const unsigned int globalVertexNo= cellUnmoved->vertex_index(vertexNo);
+
+	 if (vertexTouched[globalVertexNo])
+	   continue;
+
+	 cellMoved->vertex(vertexNo) = cellUnmoved->vertex(vertexNo);
+
+	 vertexTouched[globalVertexNo] = true;
+      }
+
 }
 
 }

@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -17,7 +17,7 @@
 
 /** @file dftParameters.h
  *
- *  @author Phani Motamarri (2017), Sambit Das (2018)
+ *  @author Phani Motamarri, Sambit Das
  */
 
 #ifndef dftParameters_H_
@@ -55,6 +55,8 @@ namespace dftfe {
       extern bool restartFromChk;
 
       extern bool reproducible_output;
+
+      extern bool electrostaticMultigrid;
 
       /**
        * Declare parameters.

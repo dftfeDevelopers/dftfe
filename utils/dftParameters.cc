@@ -47,6 +47,7 @@ namespace dftParameters
   unsigned int verbosity=0; unsigned int chkType=0;
   bool restartFromChk=false;
   bool reproducible_output=false;
+  bool electrostaticMultigrid=false;
 
 
   void declare_parameters(ParameterHandler &prm)
@@ -315,6 +316,10 @@ namespace dftParameters
 	prm.declare_entry("TOLERANCE", "1e-12",
 			  Patterns::Double(0,1.0),
 			  "[Developer] Relative tolerance as stopping criterion for Poisson problem convergence.");
+
+	prm.declare_entry("MULTIGRID", "false",
+			  Patterns::Bool(),
+			  "[Standard] Boolean parameter specifying whether to project the ground-state electron density to a p refined mesh, and solve for the electrostatic fields on the p refined mesh. This step is not performed for each SCF, but only at the ground-state. The purpose is to improve the accuracy of the ground-state electrostatic energy.");
     }
     prm.leave_subsection ();
 
@@ -429,6 +434,7 @@ namespace dftParameters
     {
        dftParameters::maxLinearSolverIterations     = prm.get_integer("MAXIMUM ITERATIONS");
        dftParameters::relLinearSolverTolerance      = prm.get_double("TOLERANCE");
+       dftParameters::electrostaticMultigrid        = prm.get_bool("MULTIGRID");
     }
     prm.leave_subsection ();
 
