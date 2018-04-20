@@ -40,6 +40,8 @@
 #include <boost/math/distributions/normal.hpp>
 #include <boost/random/normal_distribution.hpp>
 #include <interpolateFieldsFromPreviousMesh.h>
+#include <linearAlgebraOperations.h>
+#include <vectorUtilities.h>
 
 namespace dftfe {
 
@@ -399,6 +401,9 @@ namespace dftfe {
     constraintsNoneEigenDataInfo.initialize(vChebyshev.get_partitioner(),
 					    constraintsNoneEigen);
 
+    constraintsNoneDataInfo.initialize(matrix_free_data.get_vector_partitioner(),
+				       constraintsNone);
+
     //
     //initialize pseudopotential data for both local and nonlocal part
     //
@@ -655,7 +660,7 @@ namespace dftfe {
 	    // This improves the scf convergence performance. Currently this
 	    // approach is not implemented for spin-polarization case
 	    int count=1;
-	    while(maxRes>1e-1)
+	    while(maxRes>7e-1)
 	      {
 		for(unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
 		  {

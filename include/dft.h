@@ -67,7 +67,7 @@ namespace dftfe {
   //
   //extern declarations for blas-lapack routines
   //
-  extern "C"{
+  /* extern "C"{
     void dgemv_(char* TRANS, const int* M, const int* N, double* alpha, double* A, const int* LDA, double* X, const int* INCX, double* beta, double* C, const int* INCY);
     void dgesv_( int* n, int* nrhs, double* a, int* lda, int* ipiv, double* b, int* ldb, int* info );
     void dscal_(int *n, double *alpha, double *x, int *incx);
@@ -78,7 +78,7 @@ namespace dftfe {
     void zheevd_(char *jobz, char *uplo,int *n,std::complex<double> *A,int *lda,double *w,std::complex<double> *work,int *lwork,double *rwork,int *lrwork,int *iwork,int *liwork,int *info);
     void zdotc_(std::complex<double> *C,int *N,const std::complex<double> *X,int *INCX,const std::complex<double> *Y,int *INCY);
     void zaxpy_(int *n,std::complex<double> *alpha,std::complex<double> *x,int *incx,std::complex<double> *y,int *incy);
-  }
+    }*/
 
   //
   //
@@ -191,6 +191,12 @@ namespace dftfe {
        *case else only hanging node constraints in non-periodic case (data stored in STL format)
        */
       const dftUtils::constraintMatrixInfo & getConstraintMatrixEigenDataInfo();
+
+
+      /**
+       *Get matrix free data object
+       */
+      const MatrixFree<3,double> & getMatrixFreeData();
   
 
     private:
@@ -410,6 +416,7 @@ namespace dftfe {
        * storage for constraintMatrices in terms of arrays (STL)
        */
       dftUtils::constraintMatrixInfo constraintsNoneEigenDataInfo;
+      dftUtils::constraintMatrixInfo constraintsNoneDataInfo;
 
       /// vector of constraint matrices for vself bins
       std::vector<ConstraintMatrix> d_vselfBinConstraintMatrices;

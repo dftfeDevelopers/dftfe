@@ -18,7 +18,6 @@
 
 //source file for all the mixing schemes
 
-#include "../../include/dftParameters.h"
 
 
 //implement simple mixing scheme 

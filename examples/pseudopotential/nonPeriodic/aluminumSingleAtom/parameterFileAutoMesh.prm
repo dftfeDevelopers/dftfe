@@ -1,3 +1,5 @@
+set VERBOSITY = 2
+
 subsection Geometry
   set ATOMIC COORDINATES FILE = coordinates.inp
   set DOMAIN BOUNDING VECTORS FILE = domainBoundingVectors.inp
@@ -23,7 +25,7 @@ subsection Finite element mesh parameters
   subsection Auto mesh generation parameters
     set BASE MESH SIZE = 10.0 
     set ATOM BALL RADIUS = 3.0
-    set MESH SIZE ATOM BALL = 0.5
+    set MESH SIZE ATOM BALL = 1.0
     set MESH SIZE NEAR ATOM = 1.0 
   end
 
@@ -38,7 +40,7 @@ end
 
 
 subsection SCF parameters
-  set MAXIMUM ITERATIONS = 100 
+  set MAXIMUM ITERATIONS = 1 
   set TOLERANCE          = 1e-7
   set ANDERSON SCHEME MIXING PARAMETER   = 0.5
   set ANDERSON SCHEME MIXING HISTORY     = 70
@@ -47,7 +49,7 @@ end
 
 
 subsection Eigen-solver/Chebyshev solver related parameters
-  set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 20
+  set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 9
   set LOWER BOUND WANTED SPECTRUM = -10.0
   set CHEBYSHEV POLYNOMIAL DEGREE = 0
 end

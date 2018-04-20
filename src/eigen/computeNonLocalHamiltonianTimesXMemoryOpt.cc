@@ -16,7 +16,6 @@
 // @author Sambit Das (2017)
 //
 
-namespace dftfe {
 
 template<unsigned int FEOrder>
 void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::vector<vectorType> &src,
@@ -158,14 +157,14 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::v
 
     }//element loop
 
-for (unsigned int i=0; i<numberWaveFunctions;++i)
-   {
+  for (unsigned int i=0; i<numberWaveFunctions;++i)
+    {
 #ifdef ENABLE_PERIODIC_BC
       dftPtr->d_projectorKetTimesVectorPar[i]=std::complex<double>(0.0,0.0);
 #else
       dftPtr->d_projectorKetTimesVectorPar[i]=0;
 #endif
-   }
+    }
 
 
 
@@ -178,16 +177,16 @@ for (unsigned int i=0; i<numberWaveFunctions;++i)
 	  for(unsigned int iPseudoAtomicWave = 0; iPseudoAtomicWave < numberPseudoWaveFunctions; ++iPseudoAtomicWave)
 	    {
 	      dftPtr->d_projectorKetTimesVectorPar[iWave][dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(atomId,iPseudoAtomicWave)]]
-		  =projectorKetTimesVector[atomId][numberPseudoWaveFunctions*iWave + iPseudoAtomicWave];
+		=projectorKetTimesVector[atomId][numberPseudoWaveFunctions*iWave + iPseudoAtomicWave];
 	    }
 	}
     }
 
-   for (unsigned int i=0; i<numberWaveFunctions;++i)
-   {
+  for (unsigned int i=0; i<numberWaveFunctions;++i)
+    {
       dftPtr->d_projectorKetTimesVectorPar[i].compress(VectorOperation::add);
       dftPtr->d_projectorKetTimesVectorPar[i].update_ghost_values();
-   }
+    }
 
   for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
     {
@@ -198,7 +197,7 @@ for (unsigned int i=0; i<numberWaveFunctions;++i)
 	  for(unsigned int iPseudoAtomicWave = 0; iPseudoAtomicWave < numberPseudoWaveFunctions; ++iPseudoAtomicWave)
 	    {
 	      projectorKetTimesVector[atomId][numberPseudoWaveFunctions*iWave + iPseudoAtomicWave]
-	           =dftPtr->d_projectorKetTimesVectorPar[iWave][dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(atomId,iPseudoAtomicWave)]];
+		=dftPtr->d_projectorKetTimesVectorPar[iWave][dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(atomId,iPseudoAtomicWave)]];
 
 	    }
 	}
@@ -317,4 +316,4 @@ for (unsigned int i=0; i<numberWaveFunctions;++i)
     }
 }
 
-}
+

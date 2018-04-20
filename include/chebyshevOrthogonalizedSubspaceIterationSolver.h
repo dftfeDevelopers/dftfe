@@ -83,7 +83,7 @@ namespace dftfe{
     double d_lowerBoundUnWantedSpectrum;
     const unsigned int d_numberEigenValues;
     dealii::ConditionalOStream   pcout;
-    TimerOutput computing_timer;
+    dealii::TimerOutput computing_timer;
   };
 }
 #endif

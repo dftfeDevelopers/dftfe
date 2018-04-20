@@ -24,9 +24,11 @@
 #include "headers.h"
 
 typedef dealii::parallel::distributed::Vector<double> vectorType;
-namespace dftfe{
+namespace dftfe
+{
 
-  class operatorClass {
+  class operatorClass 
+  {
 
     //
     // types
@@ -64,8 +66,32 @@ namespace dftfe{
      * @param X Vector of Vectors containing current values of X
      * @param Y Vector of Vectors containing operator times vectors product
      */
-    virtual void HX(std::vector<vectorType> & x,
-		    std::vector<vectorType> & y) = 0;
+    virtual void HX(std::vector<vectorType> & X,
+		    std::vector<vectorType> & Y) = 0;
+
+
+
+    /**
+     * @brief Compute operator times vector or operator times bunch of vectors
+     *
+     * @param X Vector containing multi-wavefunction fields (though X does not
+     * change inside the function it is scaled and rescaled back to
+     * avoid duplication of memory and hence is not const)
+     * @param numberComponents number of wavefunctions associated with a given node
+     * @param cellMap precomputed cell-localindex id map of the multi-wavefuncton field
+     * @param Y Vector containing multi-component fields after operator times vectors product
+     */
+#ifdef ENABLE_PERIODIC_BC
+    virtual void HX(dealii::parallel::distributed::Vector<std::complex<double> > & X,
+		    const unsigned int numberComponents,
+		    const std::vector<std::vector<dealii::types::global_dof_index> > & cellMap,
+		    dealii::parallel::distributed::Vector<std::complex<double> > & Y) = 0;
+#else
+    virtual void HX(dealii::parallel::distributed::Vector<double> & X,
+		    const unsigned int numberComponents,
+		    const std::vector<std::vector<dealii::types::global_dof_index> > & cellMap,
+		    dealii::parallel::distributed::Vector<double> & Y) = 0;
+#endif
 
 
     /**
@@ -119,6 +145,14 @@ namespace dftfe{
      */
     const dealii::ConstraintMatrix * getConstraintMatrixEigen();
 
+    
+    /**
+     * @brief Get matrix free data
+     *
+     * @return pointer to matrix free data
+     */
+    const dealii::MatrixFree<3,double> * getMatrixFreeData();
+
 
     /**
      * @brief Get relevant mpi communicator
@@ -140,6 +174,7 @@ namespace dftfe{
      * @brief Constructor.
      */
     operatorClass(const MPI_Comm & mpi_comm_replica,
+		  const dealii::MatrixFree<3,double> & matrix_free_data,
 		  const std::vector<unsigned int> & localDofIndicesReal,
 		  const std::vector<unsigned int> & localDofIndicesImag,
 		  const std::vector<unsigned int> & localProcDofIndicesReal,
@@ -149,12 +184,13 @@ namespace dftfe{
   protected:
 
     //data members
-    const std::vector<unsigned int> * d_localDofIndicesReal;
-    const std::vector<unsigned int> * d_localDofIndicesImag;
-    const std::vector<unsigned int> * d_localProcDofIndicesReal;
-    const std::vector<unsigned int> * d_localProcDofIndicesImag;
-    const dealii::ConstraintMatrix  * d_constraintMatrixEigen;
-    MPI_Comm                          d_mpi_communicator;
+    const std::vector<unsigned int>    * d_localDofIndicesReal;
+    const std::vector<unsigned int>    * d_localDofIndicesImag;
+    const std::vector<unsigned int>    * d_localProcDofIndicesReal;
+    const std::vector<unsigned int>    * d_localProcDofIndicesImag;
+    const dealii::MatrixFree<3,double> * d_matrix_free_data;
+    const dealii::ConstraintMatrix     * d_constraintMatrixEigen;
+    MPI_Comm                             d_mpi_communicator;
 
   };
 

@@ -24,7 +24,7 @@
 #include "operator.h"
 
 namespace dftfe{
-  using namespace dealii;
+
   typedef dealii::parallel::distributed::Vector<double> vectorType;
   template <unsigned int T> class dftClass;
 
@@ -45,11 +45,22 @@ namespace dftfe{
 
       void HX(std::vector<vectorType> &src, 
 	      std::vector<vectorType> &dst);
+      
 
 #ifdef ENABLE_PERIODIC_BC
+      void HX(dealii::parallel::distributed::Vector<std::complex<double> > & src,
+	      const unsigned int numberComponents,
+	      const std::vector<std::vector<dealii::types::global_dof_index> > & cellMap,
+	      dealii::parallel::distributed::Vector<std::complex<double> > & dst);
+
       void XtHX(std::vector<vectorType> &src,
 		std::vector<std::complex<double> > & ProjHam); 
 #else
+      void HX(dealii::parallel::distributed::Vector<double> & src,
+	      const unsigned int numberComponents,
+	      const std::vector<std::vector<dealii::types::global_dof_index> > & cellMap,
+	      dealii::parallel::distributed::Vector<double> & dst);
+
       void XtHX(std::vector<vectorType> &src,
 		std::vector<double> & ProjHam);
 #endif
@@ -86,9 +97,6 @@ namespace dftfe{
       //compute mass vector
       void computeMassVector();
 
-      //data structures
-      vectorType tempDealiiVector;
-
       //precompute shapefunction gradient integral
       void preComputeShapeFunctionGradientIntegrals();
 
@@ -97,21 +105,19 @@ namespace dftfe{
 
 
     private:
-      void implementHX(const dealii::MatrixFree<3,double>  &data,
-		       std::vector<vectorType>  &dst, 
-		       const std::vector<vectorType>  &src,
-		       const std::pair<unsigned int,unsigned int> &cell_range) const;
+      void computeLocalHamiltonianTimesXMF(const dealii::MatrixFree<3,double>  &data,
+					   std::vector<vectorType>  &dst, 
+					   const std::vector<vectorType>  &src,
+					   const std::pair<unsigned int,unsigned int> &cell_range) const;
 
       void computeNonLocalHamiltonianTimesX(const std::vector<vectorType> &src,
 					    std::vector<vectorType>       &dst);
  
       void computeNonLocalHamiltonianTimesXMemoryOpt(const std::vector<vectorType> &src,
 						     std::vector<vectorType>       &dst);  
-
   
       //pointer to dft class
       dftClass<FEOrder>* dftPtr;
-
 
       //FE data structres
       dealii::FE_Q<3>   FE;
@@ -119,20 +125,37 @@ namespace dftfe{
       //data structures
       vectorType invSqrtMassVector,sqrtMassVector;
 
-
       dealii::Table<2, dealii::VectorizedArray<double> > vEff;
       dealii::Table<3, dealii::VectorizedArray<double> > derExcWithSigmaTimesGradRho;
 
-
       //precomputed data for the Hamiltonian matrix
-      std::vector<std::vector<VectorizedArray<double> > > d_cellShapeFunctionGradientIntegral;
+      std::vector<std::vector<dealii::VectorizedArray<double> > > d_cellShapeFunctionGradientIntegral;
       std::vector<double> d_shapeFunctionValue;
 
 #ifdef ENABLE_PERIODIC_BC
       std::vector<std::vector<std::complex<double> > > d_cellHamiltonianMatrix;
+      
+      void computeLocalHamiltonianTimesX(const dealii::parallel::distributed::Vector<std::complex<double> > & src,
+					 const int numberWaveFunctions,
+					 const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap,
+					 dealii::parallel::distributed::Vector<std::complex<double> > & dst) const;
+
+
 #else
       std::vector<std::vector<double> > d_cellHamiltonianMatrix;
+
+      void computeLocalHamiltonianTimesX(const dealii::parallel::distributed::Vector<double> & src,
+					 const int numberWaveFunctions,
+					 const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap,
+					 dealii::parallel::distributed::Vector<double> & dst) const;
+
 #endif
+
+      //
+      //access to matrix-free cell data
+      //
+      const int d_numberNodesPerElement,d_numberMacroCells;
+      std::vector<unsigned int> d_macroCellSubCellMap;
 
       //parallel objects
       const MPI_Comm mpi_communicator;

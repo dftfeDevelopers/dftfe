@@ -47,8 +47,15 @@ const ConstraintMatrix & dftClass<FEOrder>::getConstraintMatrixEigen()
   return  constraintsNoneEigen;
 }
 
+
 template<unsigned int FEOrder>
 const dftUtils::constraintMatrixInfo & dftClass<FEOrder>::getConstraintMatrixEigenDataInfo()
 {
   return constraintsNoneEigenDataInfo;
+}
+
+template<unsigned int FEOrder>
+const MatrixFree<3,double> & dftClass<FEOrder>::getMatrixFreeData()
+{
+  return matrix_free_data;
 }

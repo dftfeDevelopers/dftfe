@@ -28,13 +28,15 @@
 //
 namespace dftfe {
 
-  operatorClass::operatorClass(const MPI_Comm                  & mpi_comm_replica,
-			       const std::vector<unsigned int> & localDofIndicesReal,
-			       const std::vector<unsigned int> & localDofIndicesImag,
-			       const std::vector<unsigned int> & localProcDofIndicesReal,
-			       const std::vector<unsigned int> & localProcDofIndicesImag,
-			       const dealii::ConstraintMatrix  & constraintMatrixEigen):
-    d_mpi_communicator   (mpi_comm_replica),
+  operatorClass::operatorClass(const MPI_Comm                     & mpi_comm_replica,
+			       const dealii::MatrixFree<3,double> & matrix_free_data,
+			       const std::vector<unsigned int>    & localDofIndicesReal,
+			       const std::vector<unsigned int>    & localDofIndicesImag,
+			       const std::vector<unsigned int>    & localProcDofIndicesReal,
+			       const std::vector<unsigned int>    & localProcDofIndicesImag,
+			       const dealii::ConstraintMatrix     & constraintMatrixEigen):
+    d_mpi_communicator(mpi_comm_replica),
+    d_matrix_free_data(&matrix_free_data),
     d_localDofIndicesReal(&localDofIndicesReal),
     d_localDofIndicesImag(&localDofIndicesImag),
     d_localProcDofIndicesReal(&localProcDofIndicesReal),
@@ -42,17 +44,7 @@ namespace dftfe {
     d_constraintMatrixEigen(&constraintMatrixEigen)
   {
 
-    //d_localDofIndicesReal = localDofIndicesReal;
-    //d_localDofIndicesImag = localDofIndicesImag;
-    //d_localProcDofIndicesReal = localProcDofIndicesReal;
-    //d_localProcDofIndicesImag = localProcDofIndicesImag;
-    //d_constraintMatrixEigen = constraintMatrixEigen;
-
-    //std::cout<<" Size of local dof indices real in Operator: "<<d_localDofIndicesReal->size()<<std::endl;
-    //std::cout<<" Size of ConstraintsNone Eigen in Operator: "<< d_constraintMatrixEigen->n_constraints()<<std::endl;
-
-    //d_constraintMatrixEigen
-
+   
   }
 
   //
@@ -107,6 +99,14 @@ namespace dftfe {
   const dealii::ConstraintMatrix * operatorClass::getConstraintMatrixEigen()
   {
     return d_constraintMatrixEigen;
+  }
+
+  //
+  //Get matrix free data
+  //
+  const dealii::MatrixFree<3,double> * operatorClass::getMatrixFreeData()
+  {
+    return d_matrix_free_data;
   }
 
   //

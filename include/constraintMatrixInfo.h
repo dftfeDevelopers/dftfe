@@ -62,6 +62,25 @@ namespace dftUtils
     void distribute(dealii::parallel::distributed::Vector<double> &fieldVector) const;
 
     /**
+     * overload dealii internal function distribute for flattened array
+     */
+    template<typename T>
+    void distribute(dealii::parallel::distributed::Vector<T> &fieldVector,
+		    const unsigned int blockSize) const;
+
+
+    /**
+     * distribute the contributions from slave to master nodes
+     */
+    template<typename T>
+    void distribute_slave_to_master(dealii::parallel::distributed::Vector<T> &fieldVector,
+				    const unsigned int blockSize) const;
+
+
+    
+    
+
+    /**
      * clear data members
      */
     void clear();
@@ -69,12 +88,13 @@ namespace dftUtils
 
   private:
 
-    std::vector<unsigned int> d_rowIdsGlobal;
-    std::vector<unsigned int> d_rowIdsLocal;
-    std::vector<unsigned int> d_columnIdsLocal;
+    std::vector<dealii::types::global_dof_index> d_rowIdsGlobal;
+    std::vector<dealii::types::global_dof_index> d_rowIdsLocal;
+    std::vector<dealii::types::global_dof_index> d_columnIdsLocal;
+    std::vector<dealii::types::global_dof_index> d_columnIdsGlobal;
     std::vector<double> d_columnValues;
     std::vector<double> d_inhomogenities;
-    std::vector<unsigned int> d_rowSizes;
+    std::vector<dealii::types::global_dof_index> d_rowSizes;
 
 
   };
