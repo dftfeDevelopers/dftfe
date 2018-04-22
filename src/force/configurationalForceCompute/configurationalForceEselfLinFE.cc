@@ -182,7 +182,7 @@ void forceClass<FEOrder>::computeConfigurationalForcePhiExtLinFE()
   for (unsigned int cell=0; cell<dftPtr->matrix_free_data.n_macro_cells(); ++cell){
     forceEval.reinit(cell);
     eshelbyEval.reinit(cell);
-    eshelbyEval.read_dof_values_plain(dftPtr->poissonPtr->phiExt);
+    eshelbyEval.read_dof_values_plain(dftPtr->d_phiExt);
     eshelbyEval.evaluate(true,true);
     for (unsigned int q=0; q<forceEval.n_q_points; ++q){
 	 VectorizedArray<double> phiExt_q =eshelbyEval.get_value(q);   

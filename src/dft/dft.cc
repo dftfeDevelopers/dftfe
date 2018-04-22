@@ -20,8 +20,9 @@
 
 #include <dft.h>
 #include <eigen.h>
-#include <poisson.h>
 #include <force.h>
+#include <poissonSolverFunction.h>
+#include <dealiiCGLinearSolver.h>
 #include <symmetry.h>
 #include <geoOptIon.h>
 #include <geoOptCell.h>
@@ -90,7 +91,6 @@ dftClass<FEOrder>::dftClass(const MPI_Comm &mpi_comm_replica,const MPI_Comm &_in
                    dftParameters::reproducible_output ? TimerOutput::never : TimerOutput::summary,
                    TimerOutput::wall_times)
 {
-  poissonPtr= new poissonClass<FEOrder>(this, mpi_comm_replica);
   eigenPtr= new eigenClass<FEOrder>(this, mpi_comm_replica);
   forcePtr= new forceClass<FEOrder>(this, mpi_comm_replica);
   symmetryPtr= new symmetryClass<FEOrder>(this, mpi_comm_replica, _interpoolcomm);
@@ -103,7 +103,6 @@ dftClass<FEOrder>::dftClass(const MPI_Comm &mpi_comm_replica,const MPI_Comm &_in
 template<unsigned int FEOrder>
 dftClass<FEOrder>::~dftClass()
 {
-  delete poissonPtr;
   delete eigenPtr;
   delete symmetryPtr;
   matrix_free_data.clear();
@@ -507,6 +506,9 @@ void dftClass<FEOrder>::solve()
   //
   computing_timer.enter_section("scf solve");
 
+  //set up poisson solver
+  dealiiCGLinearSolver dealiiCGSolver(mpi_communicator);
+  poissonSolverFunction<FEOrder> phiTotalSolverFunction(mpi_communicator);
 
   //
   //Begin SCF iteration
@@ -554,7 +556,7 @@ void dftClass<FEOrder>::solve()
 	        pcout<<"Anderson mixing: L2 norm of electron-density difference: "<< norm<< std::endl;
 	    }
 
-	  poissonPtr->phiTotRhoIn = poissonPtr->phiTotRhoOut;
+	    d_phiTotRhoIn = d_phiTotRhoOut;
 	}
       else if (dftParameters::restartFromChk && dftParameters::chkType==2)
         {
@@ -568,17 +570,29 @@ void dftClass<FEOrder>::solve()
 	  if (dftParameters::verbosity>=1)
 	    pcout<<"Anderson Mixing: L2 norm of electron-density difference: "<< norm<< std::endl;
 
-	  poissonPtr->phiTotRhoIn = poissonPtr->phiTotRhoOut;
+	    d_phiTotRhoIn = d_phiTotRhoOut;
        }
 
       //
       //phiTot with rhoIn
       //
-      int constraintMatrixId = phiTotDofHandlerIndex;
       if (dftParameters::verbosity==2)
         pcout<< std::endl<<"Poisson solve for total electrostatic potential (rhoIn+b): ";
       computing_timer.enter_section("phiTot solve");
-      poissonPtr->solve(poissonPtr->phiTotRhoIn,constraintMatrixId, rhoInValues);
+
+      phiTotalSolverFunction.reinit(matrix_free_data,
+	                            d_phiTotRhoIn,
+				    *d_constraintsVector[phiTotDofHandlerIndex],
+                                    phiTotDofHandlerIndex,
+	                            atoms,
+				    *rhoInValues);
+
+
+      dealiiCGSolver.solve(phiTotalSolverFunction,
+			   dftParameters::relLinearSolverTolerance,
+			   dftParameters::maxLinearSolverIterations,
+			   dftParameters::verbosity);
+
       computing_timer.exit_section("phiTot solve");
 
       //
@@ -599,11 +613,11 @@ void dftClass<FEOrder>::solve()
 	    {
 	      if(dftParameters::xc_id < 4)
 	        {
-		  eigenPtr->computeVEffSpinPolarized(rhoInValuesSpinPolarized, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, s, pseudoValues);
+		  eigenPtr->computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, pseudoValues);
                 }
 	      else if (dftParameters::xc_id == 4)
 	        {
-		  eigenPtr->computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, s, pseudoValues);
+		  eigenPtr->computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, pseudoValues);
 	        }
 	      for (unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
 	        {
@@ -688,11 +702,11 @@ void dftClass<FEOrder>::solve()
 
 	  if(dftParameters::xc_id < 4)
 	    {
-	      eigenPtr->computeVEff(rhoInValues, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, pseudoValues);
+	      eigenPtr->computeVEff(rhoInValues, d_phiTotRhoIn, d_phiExt, pseudoValues);
 	    }
 	  else if (dftParameters::xc_id == 4)
 	    {
-	      eigenPtr->computeVEff(rhoInValues, gradRhoInValues, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, pseudoValues);
+	      eigenPtr->computeVEff(rhoInValues, gradRhoInValues, d_phiTotRhoIn, d_phiExt, pseudoValues);
 	    }
 
 	  for (unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
@@ -774,7 +788,20 @@ void dftClass<FEOrder>::solve()
 	pcout<< std::endl<<"Poisson solve for total electrostatic potential (rhoOut+b): ";
 
       computing_timer.enter_section("phiTot solve");
-      poissonPtr->solve(poissonPtr->phiTotRhoOut,constraintMatrixId, rhoOutValues);
+
+      phiTotalSolverFunction.reinit(matrix_free_data,
+	                            d_phiTotRhoOut,
+				    *d_constraintsVector[phiTotDofHandlerIndex],
+                                    phiTotDofHandlerIndex,
+	                            atoms,
+				    *rhoOutValues);
+
+
+      dealiiCGSolver.solve(phiTotalSolverFunction,
+			   dftParameters::relLinearSolverTolerance,
+			   dftParameters::maxLinearSolverIterations,
+			   dftParameters::verbosity);
+
       computing_timer.exit_section("phiTot solve");
 
 

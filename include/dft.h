@@ -30,7 +30,6 @@
 #include "headers.h"
 #include "constants.h"
 
-#include "poisson.h"
 #include "eigen.h"
 #include "symmetry.h"
 #include "meshMovementAffineTransform.h"
@@ -53,7 +52,6 @@ namespace dftfe {
 
     typedef dealii::parallel::distributed::Vector<double> vectorType;
     //forward declarations
-    template <unsigned int T> class poissonClass;
     template <unsigned int T> class eigenClass;
     template <unsigned int T> class forceClass;
     template <unsigned int T> class symmetryClass;
@@ -95,9 +93,6 @@ namespace dftfe {
     template <unsigned int FEOrder>
     class dftClass
     {
-
-      template <unsigned int T>
-      friend class poissonClass;
 
       template <unsigned int T>
       friend class eigenClass;
@@ -364,7 +359,6 @@ namespace dftfe {
       std::vector<unsigned int> localProc_dof_indicesReal,localProc_dof_indicesImag;
       std::vector<bool> selectedDofsHanging;
 
-      poissonClass<FEOrder> * poissonPtr;
       eigenClass<FEOrder> * eigenPtr;
       forceClass<FEOrder> * forcePtr;
       symmetryClass<FEOrder> * symmetryPtr;
@@ -407,6 +401,14 @@ namespace dftfe {
       std::map<dealii::CellId, std::vector<double> > * gradRhoOutValues, *gradRhoOutValuesSpinPolarized;
       std::deque<std::map<dealii::CellId,std::vector<double> >> gradRhoInVals,gradRhoInValsSpinPolarized,gradRhoOutVals, gradRhoOutValsSpinPolarized;
 
+      // storage for total electrostatic potential solution vector corresponding to input scf electron density
+      vectorType d_phiTotRhoIn;
+
+      // storage for total electrostatic potential solution vector corresponding to output scf electron density
+      vectorType d_phiTotRhoOut;
+
+      // storage for sum of nuclear electrostatic potential
+      vectorType d_phiExt;
 
       double d_pspTail = 8.0;
       std::map<dealii::CellId, std::vector<double> > pseudoValues;

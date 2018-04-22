@@ -190,9 +190,9 @@ double dftClass<FEOrder>::compute_energy(const bool print)
 	    {
 	      // Compute values for current cell.
 	      fe_values.reinit (cell);
-	      fe_values.get_function_values(poissonPtr->phiTotRhoIn,cellPhiTotRhoIn);
-	      fe_values.get_function_values(poissonPtr->phiTotRhoOut,cellPhiTotRhoOut);
-	      fe_values.get_function_values(poissonPtr->phiExt,cellPhiExt);
+	      fe_values.get_function_values(d_phiTotRhoIn,cellPhiTotRhoIn);
+	      fe_values.get_function_values(d_phiTotRhoOut,cellPhiTotRhoOut);
+	      fe_values.get_function_values(d_phiExt,cellPhiExt);
 
 	      // Get exc
 	      std::vector<double> densityValueIn(num_quad_points), densityValueOut(num_quad_points);
@@ -252,9 +252,9 @@ double dftClass<FEOrder>::compute_energy(const bool print)
 	    {
 	      // Compute values for current cell.
 	      fe_values.reinit (cell);
-	      fe_values.get_function_values(poissonPtr->phiTotRhoIn,cellPhiTotRhoIn);
-	      fe_values.get_function_values(poissonPtr->phiTotRhoOut,cellPhiTotRhoOut);
-	      fe_values.get_function_values(poissonPtr->phiExt,cellPhiExt);
+	      fe_values.get_function_values(d_phiTotRhoIn,cellPhiTotRhoIn);
+	      fe_values.get_function_values(d_phiTotRhoOut,cellPhiTotRhoOut);
+	      fe_values.get_function_values(d_phiExt,cellPhiExt);
 
 	      // Get Exc
 	      std::vector<double> densityValueIn(num_quad_points), densityValueOut(num_quad_points);
@@ -304,7 +304,7 @@ double dftClass<FEOrder>::compute_energy(const bool print)
   double phiContribution = 0.0,vSelfContribution=0.0;
   for (std::map<unsigned int, double>::iterator it=atoms.begin(); it!=atoms.end(); ++it)
     {
-      phiContribution += (-it->second)*poissonPtr->phiTotRhoOut(it->first);//-charge*potential
+      phiContribution += (-it->second)*d_phiTotRhoOut(it->first);//-charge*potential
     }
 
   //
@@ -576,9 +576,9 @@ double dftClass<FEOrder>::compute_energy_spinPolarized(const bool print)
 	    {
 	      // Compute values for current cell.
 	      fe_values.reinit (cell);
-	      fe_values.get_function_values(poissonPtr->phiTotRhoIn,cellPhiTotRhoIn);
-	      fe_values.get_function_values(poissonPtr->phiTotRhoOut,cellPhiTotRhoOut);
-	      fe_values.get_function_values(poissonPtr->phiExt,cellPhiExt);
+	      fe_values.get_function_values(d_phiTotRhoIn,cellPhiTotRhoIn);
+	      fe_values.get_function_values(d_phiTotRhoOut,cellPhiTotRhoOut);
+	      fe_values.get_function_values(d_phiExt,cellPhiExt);
 
 	      // Get exc
 	      std::vector<double> densityValueIn(2*num_quad_points), densityValueOut(2*num_quad_points);
@@ -656,9 +656,9 @@ double dftClass<FEOrder>::compute_energy_spinPolarized(const bool print)
 	    {
 	      // Compute values for current cell.
 	      fe_values.reinit (cell);
-	      fe_values.get_function_values(poissonPtr->phiTotRhoIn,cellPhiTotRhoIn);
-	      fe_values.get_function_values(poissonPtr->phiTotRhoOut,cellPhiTotRhoOut);
-	      fe_values.get_function_values(poissonPtr->phiExt,cellPhiExt);
+	      fe_values.get_function_values(d_phiTotRhoIn,cellPhiTotRhoIn);
+	      fe_values.get_function_values(d_phiTotRhoOut,cellPhiTotRhoOut);
+	      fe_values.get_function_values(d_phiExt,cellPhiExt);
 
 	      // Get Exc
 	      std::vector<double> densityValueIn(2*num_quad_points), densityValueOut(2*num_quad_points);
@@ -717,7 +717,7 @@ double dftClass<FEOrder>::compute_energy_spinPolarized(const bool print)
   double phiContribution = 0.0,vSelfContribution=0.0;
   for (std::map<unsigned int, double>::iterator it=atoms.begin(); it!=atoms.end(); ++it)
     {
-      phiContribution += (-it->second)*poissonPtr->phiTotRhoOut(it->first);//-charge*potential
+      phiContribution += (-it->second)*d_phiTotRhoOut(it->first);//-charge*potential
     }
 
   //

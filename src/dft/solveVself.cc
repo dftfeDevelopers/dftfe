@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Shiva Rudraraju (2016), Phani Motamarri (2016)
+// @author Shiva Rudraraju, Phani Motamarri, Sambit Das
 //
 
 //source file for locating core atom nodes
@@ -21,15 +21,18 @@ template<unsigned int FEOrder>
 void dftClass<FEOrder>::solveVself()
 {
   d_localVselfs.clear();
-  d_vselfFieldBins.clear();    
+  d_vselfFieldBins.clear();
   //phiExt with nuclear charge
   //
   int numberBins = d_boundaryFlag.size();
   int numberGlobalCharges = atomLocations.size();
-  
-  matrix_free_data.initialize_dof_vector(poissonPtr->phiExt,phiExtDofHandlerIndex);
 
-  poissonPtr->phiExt = 0;
+  matrix_free_data.initialize_dof_vector(d_phiExt,phiExtDofHandlerIndex);
+  d_phiExt = 0;
+
+  //set up poisson solver
+  dealiiCGLinearSolver dealiiCGSolver(mpi_communicator);
+  poissonSolverFunction<FEOrder> vselfSolverFunction(mpi_communicator);
 
   //pcout<<"size of support points: "<<d_supportPoints.size()<<std::endl;
 
@@ -39,8 +42,9 @@ void dftClass<FEOrder>::solveVself()
   for(int iBin = 0; iBin < numberBins; ++iBin)
     {
       int constraintMatrixId = iBin + 2;
-      matrix_free_data.initialize_dof_vector(poissonPtr->vselfBinScratch,constraintMatrixId);
-      poissonPtr->vselfBinScratch = 0;
+      vectorType vselfBinScratch;
+      matrix_free_data.initialize_dof_vector(vselfBinScratch,constraintMatrixId);
+      vselfBinScratch = 0;
 
       std::map<types::global_dof_index,Point<3> >::iterator iterNodalCoorMap;
       std::map<dealii::types::global_dof_index, double> & vSelfBinNodeMap = d_vselfBinField[iBin];
@@ -50,27 +54,39 @@ void dftClass<FEOrder>::solveVself()
       //
       for(iterNodalCoorMap = d_supportPoints.begin(); iterNodalCoorMap != d_supportPoints.end(); ++iterNodalCoorMap)
 	{
-	  if(poissonPtr->vselfBinScratch.in_local_range(iterNodalCoorMap->first))
+	  if(vselfBinScratch.in_local_range(iterNodalCoorMap->first))
 	    {
 	      if(!d_noConstraints.is_constrained(iterNodalCoorMap->first))
 		{
 		  iterMapVal = vSelfBinNodeMap.find(iterNodalCoorMap->first);
 		  if(iterMapVal != vSelfBinNodeMap.end())
 		    {
-		      poissonPtr->vselfBinScratch(iterNodalCoorMap->first) = iterMapVal->second;
+		      vselfBinScratch(iterNodalCoorMap->first) = iterMapVal->second;
 		    }
 		}
-	      
+
 	    }
 	}
- 
-      poissonPtr->vselfBinScratch.compress(VectorOperation::insert);
-      //poissonPtr->vselfBinScratch.update_ghost_values();
-      d_constraintsVector[constraintMatrixId]->distribute(poissonPtr->vselfBinScratch);
+
+      vselfBinScratch.compress(VectorOperation::insert);
+      d_constraintsVector[constraintMatrixId]->distribute(vselfBinScratch);
+
       //
-      //call the poisson solver to compute vSelf in each bin
+      //call the poisson solver to compute vSelf in current bin
       //
-      poissonPtr->solve(poissonPtr->vselfBinScratch,constraintMatrixId);
+      vselfSolverFunction.reinit(matrix_free_data,
+	                         vselfBinScratch,
+				 *d_constraintsVector[constraintMatrixId],
+                                 constraintMatrixId,
+	                         d_atomsInBin[constraintMatrixId-2]);
+
+
+      dealiiCGSolver.solve(vselfSolverFunction,
+			   dftParameters::relLinearSolverTolerance,
+			   dftParameters::maxLinearSolverIterations,
+			   dftParameters::verbosity);
+
+      //poissonPtr->solve(vselfBinScratch,constraintMatrixId);
 
       std::set<int> & atomsInBinSet = d_bins[iBin];
       std::vector<int> atomsInCurrentBin(atomsInBinSet.begin(),atomsInBinSet.end());
@@ -80,14 +96,14 @@ void dftClass<FEOrder>::solveVself()
       int numberImageAtomsInBin = imageIdsOfAtomsInCurrentBin.size();
 
       std::map<dealii::types::global_dof_index, int> & boundaryNodeMap = d_boundaryFlag[iBin];
-       
 
-     
+
+
 
       int inNodes =0, outNodes = 0;
       for(iterNodalCoorMap = d_supportPoints.begin(); iterNodalCoorMap != d_supportPoints.end(); ++iterNodalCoorMap)
 	{
-	  if(poissonPtr->vselfBinScratch.in_local_range(iterNodalCoorMap->first))
+	  if(vselfBinScratch.in_local_range(iterNodalCoorMap->first))
 	    {
 	      if(!d_noConstraints.is_constrained(iterNodalCoorMap->first))
 		{
@@ -127,11 +143,11 @@ void dftClass<FEOrder>::solveVself()
 
 		      //std::cout<<"Charge Id in BinId: "<<chargeId<<" "<<iBin<<std::endl;
 
-		  
+
 		      double vSelf;
 		      if(boundaryFlag == chargeId)
 			{
-			  vSelf = poissonPtr->vselfBinScratch(iterNodalCoorMap->first);
+			  vSelf = vselfBinScratch(iterNodalCoorMap->first);
 			  inNodes++;
 			}
 		      else
@@ -143,12 +159,12 @@ void dftClass<FEOrder>::solveVself()
 			      atomCoor[0] = atomLocations[chargeId][2];
 			      atomCoor[1] = atomLocations[chargeId][3];
 			      atomCoor[2] = atomLocations[chargeId][4];
-			  
+
 			      if(dftParameters::isPseudopotential)
 				nuclearCharge = atomLocations[chargeId][1];
 			      else
 				nuclearCharge = atomLocations[chargeId][0];
-			  
+
 			    }
 			  else
 			    {
@@ -166,12 +182,12 @@ void dftClass<FEOrder>::solveVself()
 
 		      //store updated value in phiExt which is sumVself
 
-		      poissonPtr->phiExt(iterNodalCoorMap->first)+= vSelf;
+		      d_phiExt(iterNodalCoorMap->first)+= vSelf;
 
 		    }//charge loop
 
 		}//non-hanging node check
-	    
+
 	    }//local range loop
 
 	}//Vertexloop
@@ -183,7 +199,7 @@ void dftClass<FEOrder>::solveVself()
 	{
 	  std::vector<double> temp(2,0.0);
 	  temp[0] = it->second;//charge;
-	  temp[1] = poissonPtr->vselfBinScratch(it->first);//vself
+	  temp[1] = vselfBinScratch(it->first);//vself
 	  if (dftParameters::verbosity==2)
 	      std::cout<< "(only for debugging: peak value of Vself: "<< temp[1] << ")" <<std::endl;
 
@@ -192,16 +208,15 @@ void dftClass<FEOrder>::solveVself()
         //
         //store solved vselfBinScratch field
         //
-        d_vselfFieldBins[iBin]=poissonPtr->vselfBinScratch;
+        d_vselfFieldBins[iBin]=vselfBinScratch;
     }//bin loop
 
-  poissonPtr->phiExt.compress(VectorOperation::insert);
-  //poissonPtr->phiExt.update_ghost_values();
-  d_constraintsVector[phiExtDofHandlerIndex]->distribute(poissonPtr->phiExt); 
-  poissonPtr->phiExt.update_ghost_values();
+  d_phiExt.compress(VectorOperation::insert);
+  d_constraintsVector[phiExtDofHandlerIndex]->distribute(d_phiExt);
+  d_phiExt.update_ghost_values();
   //
   //print the norms of phiExt (in periodic case L2 norm of phiExt field does not match. check later)
   //
   if (dftParameters::verbosity==2)
-     pcout<<"L2 Norm Value of phiext: "<<poissonPtr->phiExt.l2_norm()<<std::endl;
+     pcout<<"L2 Norm Value of phiext: "<<d_phiExt.l2_norm()<<std::endl;
 }
