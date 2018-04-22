@@ -151,4 +151,7 @@ void dftClass<FEOrder>::initBoundaryConditions(){
 
   //compute volume of the domain
   computeVolume();
+
+  //initialize eigen solve related object
+  eigenPtr->init();
 }
