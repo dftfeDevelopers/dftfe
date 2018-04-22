@@ -14,28 +14,27 @@
 // ---------------------------------------------------------------------
 //
 
-/**
-* @brief Abstract class for linear solver functions.
-*
-* @author Sambit Das
-*/
-
 #include <headers.h>
 
-#ifndef dealiiLinearSolverFunction_H_
-#define dealiiLinearSolverFunction_H_
+#ifndef dealiiLinearSolverProblem_H_
+#define dealiiLinearSolverProblem_H_
 
 namespace dftfe {
 
   typedef dealii::parallel::distributed::Vector<double> vectorType;
 
-  class dealiiLinearSolverFunction {
+ /**
+  * @brief Abstract class for linear solve problems to be used with the dealiiLinearSolver interface.
+  *
+  * @author Sambit Das
+  */
+  class dealiiLinearSolverProblem {
 
      public:
         /**
          * @brief Constructor.
          */
-        dealiiLinearSolverFunction();
+        dealiiLinearSolverProblem();
 
 	/**
 	 * @brief get the reference to x field
@@ -72,20 +71,20 @@ namespace dftfe {
 	 */
 	virtual void distributeX() = 0;
 
-	// function needed by dealii to mimic SparseMatrix for Jacobi preconditioning
+	/// function needed by dealii to mimic SparseMatrix for Jacobi preconditioning
         virtual void subscribe (const char *identifier=0) const=0;
 
-	// function needed by dealii to mimic SparseMatrix for Jacobi preconditioning
+	/// function needed by dealii to mimic SparseMatrix for Jacobi preconditioning
         virtual void unsubscribe (const char *identifier=0) const=0;
 
-	// function needed by dealii to mimic SparseMatrix
+	/// function needed by dealii to mimic SparseMatrix
         virtual bool operator!= (double val) const =0;
 
      protected:
 
-	 // typedef declaration needed by dealii
+	 /// typedef declaration needed by dealii
 	 typedef dealii::types::global_dof_index size_type;
     };
 
 }
-#endif // dealiiLinearSolverFunction_H_
+#endif // dealiiLinearSolverProblem_H_

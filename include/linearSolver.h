@@ -14,31 +14,31 @@
 // ---------------------------------------------------------------------
 //
 
-/**
-* @brief abstract linear solver base class
-*
-* @author Sambit Das
-*/
 
-#include <dealiiLinearSolverFunction.h>
+#include <dealiiLinearSolverProblem.h>
 
 #ifndef linearSolver_H_
 #define linearSolver_H_
 
 namespace dftfe {
 
+   /**
+    * @brief Abstract linear solver base class.
+    *
+    * @author Sambit Das
+    */
     class linearSolver
     {
        public:
 
 
-	  // Constructor
+	  /// Constructor
 	  linearSolver();
 
 	  /**
 	   * @brief Solve linear system, A*x=Rhs
 	   *
-	   * @param function linearSolverFunction object (functor) to compute Rhs and A*x, and preconditioning
+	   * @param problem linearSolverProblem object (functor) to compute Rhs and A*x, and preconditioning
            * @param relTolerance Tolerance (relative) required for convergence.
            * @param maxNumberIterations Maximum number of iterations.
 	   * @param debugLevel Debug output level:
@@ -46,7 +46,7 @@ namespace dftfe {
 	   *                   1 - limited debug output
 	   *                   2 - all debug output.
 	   */
-	   virtual void solve(dealiiLinearSolverFunction & function,
+	   virtual void solve(dealiiLinearSolverProblem & problem,
 		              const double relTolerance,
 		              const unsigned int maxNumberIterations,
 		              const unsigned int  debugLevel = 0)=0;

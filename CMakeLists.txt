@@ -13,7 +13,7 @@ INCLUDE_DIRECTORIES(
 # Declare all source files the target consists of:
 SET(TARGET_SRC
   ./src/dft/dft.cc
-  ./src/poisson/poissonSolverFunction.cc
+  ./src/poisson/poissonSolverProblem.cc
   ./src/eigen/eigen.cc
   ./src/force/force.cc
   ./src/force/eshelbyTensor/eshelbyTensor.cc
@@ -29,8 +29,8 @@ SET(TARGET_SRC
   ./src/solvers/nonLinearSolver.cc
   ./src/solvers/linearSolver.cc
   ./src/solvers/cgSolvers/cgPRPNonLinearSolver.cc
-  ./src/solvers/cgSolvers/dealiiCGLinearSolver.cc
-  ./src/solvers/dealiiLinearSolverFunction.cc
+  ./src/solvers/dealiiLinearSolver.cc
+  ./src/solvers/dealiiLinearSolverProblem.cc
   ./utils/fileReaders.cc
   ./utils/dftParameters.cc
   ./utils/constraintMatrixInfo.cc

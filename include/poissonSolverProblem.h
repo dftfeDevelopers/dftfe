@@ -14,26 +14,27 @@
 // ---------------------------------------------------------------------
 //
 
-/**
-* @brief poisson solver function class
-*
-* @author Shiva Rudraraju, Phani Motamarri, Sambit Das
-*/
 
-#include <dealiiLinearSolverFunction.h>
+#include <dealiiLinearSolverProblem.h>
 
-#ifndef poissonSolverFunction_H_
-#define poissonSolverFunction_H_
+#ifndef poissonSolverProblem_H_
+#define poissonSolverProblem_H_
 
 namespace dftfe {
 
+ /**
+  * @brief poisson solver problem class template. template parameter FEOrder
+  * is the finite element polynomial order
+  *
+  * @author Shiva Rudraraju, Phani Motamarri, Sambit Das
+  */
   template<unsigned int FEOrder>
-  class poissonSolverFunction: public dealiiLinearSolverFunction {
+  class poissonSolverProblem: public dealiiLinearSolverProblem {
 
     public:
 
-	// Constructor
-	poissonSolverFunction(const  MPI_Comm &mpi_comm);
+	/// Constructor
+	poissonSolverProblem(const  MPI_Comm &mpi_comm);
 
 
 	/**
@@ -94,13 +95,13 @@ namespace dftfe {
 	 */
 	void distributeX();
 
-	// function needed by dealii to mimic SparseMatrix for Jacobi preconditioning
+	/// function needed by dealii to mimic SparseMatrix for Jacobi preconditioning
         void subscribe (const char *identifier=0) const{};
 
-	// function needed by dealii to mimic SparseMatrix for Jacobi preconditioning
+	/// function needed by dealii to mimic SparseMatrix for Jacobi preconditioning
         void unsubscribe (const char *identifier=0) const{};
 
-	// function needed by dealii to mimic SparseMatrix
+	/// function needed by dealii to mimic SparseMatrix
         bool operator!= (double val) const {return true;};
 
     private:
@@ -122,33 +123,33 @@ namespace dftfe {
 	void computeDiagonalA();
 
 
-	// storage for diagonal of the A matrix
+	/// storage for diagonal of the A matrix
 	vectorType d_diagonalA;
 
-	// pointer to dealii MatrixFree object
+	/// pointer to dealii MatrixFree object
         const dealii::MatrixFree<3,double>  * d_matrixFreeDataPtr;
 
-	// pointer to the x vector being solved for
+	/// pointer to the x vector being solved for
         vectorType * d_xPtr;
 
-	// pointer to dealii ConstraintMatrix object
+	/// pointer to dealii ConstraintMatrix object
         const dealii::ConstraintMatrix * d_constraintMatrixPtr;
 
-	// matrix free index required to access the DofHandler and ConstraintMatrix objects corresponding to the
-	// problem
+	/// matrix free index required to access the DofHandler and ConstraintMatrix objects corresponding to the
+	/// problem
         unsigned int d_matrixFreeVectorComponent;
 
-	// pointer to electron density cell quadrature data
+	/// pointer to electron density cell quadrature data
 	const std::map<dealii::CellId,std::vector<double> >* d_rhoValuesPtr;
 
-	// pointer to map between global dof index in current processor and the atomic charge on that dof
+	/// pointer to map between global dof index in current processor and the atomic charge on that dof
 	const std::map<unsigned int, double> * d_atomsPtr;
 
-        MPI_Comm mpi_communicator;
+        const MPI_Comm mpi_communicator;
         const unsigned int n_mpi_processes;
         const unsigned int this_mpi_process;
         dealii::ConditionalOStream   pcout;
   };
 
 }
-#endif // poissonSolverFunction_H_
+#endif // poissonSolverProblem_H_

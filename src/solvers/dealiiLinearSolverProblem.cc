@@ -15,11 +15,11 @@
 //
 // @author Sambit Das
 
-#include <dealiiLinearSolverFunction.h>
+#include <dealiiLinearSolverProblem.h>
 
 namespace dftfe {
   // Constructor.
-  dealiiLinearSolverFunction::dealiiLinearSolverFunction()
+  dealiiLinearSolverProblem::dealiiLinearSolverProblem()
   {
     return;
   }

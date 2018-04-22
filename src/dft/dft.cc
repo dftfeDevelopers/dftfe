@@ -21,8 +21,8 @@
 #include <dft.h>
 #include <eigen.h>
 #include <force.h>
-#include <poissonSolverFunction.h>
-#include <dealiiCGLinearSolver.h>
+#include <poissonSolverProblem.h>
+#include <dealiiLinearSolver.h>
 #include <symmetry.h>
 #include <geoOptIon.h>
 #include <geoOptCell.h>
@@ -507,8 +507,8 @@ void dftClass<FEOrder>::solve()
   computing_timer.enter_section("scf solve");
 
   //set up poisson solver
-  dealiiCGLinearSolver dealiiCGSolver(mpi_communicator);
-  poissonSolverFunction<FEOrder> phiTotalSolverFunction(mpi_communicator);
+  dealiiLinearSolver dealiiCGSolver(mpi_communicator, dealiiLinearSolver::CG);
+  poissonSolverProblem<FEOrder> phiTotalSolverProblem(mpi_communicator);
 
   //
   //Begin SCF iteration
@@ -580,7 +580,7 @@ void dftClass<FEOrder>::solve()
         pcout<< std::endl<<"Poisson solve for total electrostatic potential (rhoIn+b): ";
       computing_timer.enter_section("phiTot solve");
 
-      phiTotalSolverFunction.reinit(matrix_free_data,
+      phiTotalSolverProblem.reinit(matrix_free_data,
 	                            d_phiTotRhoIn,
 				    *d_constraintsVector[phiTotDofHandlerIndex],
                                     phiTotDofHandlerIndex,
@@ -588,7 +588,7 @@ void dftClass<FEOrder>::solve()
 				    *rhoInValues);
 
 
-      dealiiCGSolver.solve(phiTotalSolverFunction,
+      dealiiCGSolver.solve(phiTotalSolverProblem,
 			   dftParameters::relLinearSolverTolerance,
 			   dftParameters::maxLinearSolverIterations,
 			   dftParameters::verbosity);
@@ -789,7 +789,7 @@ void dftClass<FEOrder>::solve()
 
       computing_timer.enter_section("phiTot solve");
 
-      phiTotalSolverFunction.reinit(matrix_free_data,
+      phiTotalSolverProblem.reinit(matrix_free_data,
 	                            d_phiTotRhoOut,
 				    *d_constraintsVector[phiTotDofHandlerIndex],
                                     phiTotDofHandlerIndex,
@@ -797,7 +797,7 @@ void dftClass<FEOrder>::solve()
 				    *rhoOutValues);
 
 
-      dealiiCGSolver.solve(phiTotalSolverFunction,
+      dealiiCGSolver.solve(phiTotalSolverProblem,
 			   dftParameters::relLinearSolverTolerance,
 			   dftParameters::maxLinearSolverIterations,
 			   dftParameters::verbosity);

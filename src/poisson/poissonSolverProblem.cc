@@ -16,7 +16,7 @@
 // @author Shiva Rudraraju, Phani Motamarri, Sambit Das
 //
 
-#include <poissonSolverFunction.h>
+#include <poissonSolverProblem.h>
 #include <constants.h>
 
 namespace dftfe {
@@ -24,7 +24,7 @@ namespace dftfe {
     //constructor
     //
     template<unsigned int FEOrder>
-    poissonSolverFunction<FEOrder>::poissonSolverFunction(const  MPI_Comm &mpi_comm):
+    poissonSolverProblem<FEOrder>::poissonSolverProblem(const  MPI_Comm &mpi_comm):
       mpi_communicator (mpi_comm),
       n_mpi_processes (dealii::Utilities::MPI::n_mpi_processes(mpi_comm)),
       this_mpi_process (dealii::Utilities::MPI::this_mpi_process(mpi_comm)),
@@ -34,7 +34,7 @@ namespace dftfe {
     }
 
     template<unsigned int FEOrder>
-    void poissonSolverFunction<FEOrder>::reinit
+    void poissonSolverProblem<FEOrder>::reinit
                     (const dealii::MatrixFree<3,double> & matrixFreeData,
 		     vectorType & x,
 		     const dealii::ConstraintMatrix & constraintMatrix,
@@ -54,7 +54,7 @@ namespace dftfe {
 
 
     template<unsigned int FEOrder>
-    void poissonSolverFunction<FEOrder>::reinit
+    void poissonSolverProblem<FEOrder>::reinit
                           (const dealii::MatrixFree<3,double> & matrixFreeData,
 		           vectorType & x,
 		           const dealii::ConstraintMatrix & constraintMatrix,
@@ -73,19 +73,19 @@ namespace dftfe {
 
 
     template<unsigned int FEOrder>
-    void poissonSolverFunction<FEOrder>::distributeX()
+    void poissonSolverProblem<FEOrder>::distributeX()
     {
        d_constraintMatrixPtr->distribute(*d_xPtr);
     }
 
     template<unsigned int FEOrder>
-    vectorType & poissonSolverFunction<FEOrder>::getX()
+    vectorType & poissonSolverProblem<FEOrder>::getX()
     {
        return *d_xPtr;
     }
 
     template<unsigned int FEOrder>
-    void poissonSolverFunction<FEOrder>::computeRhs(vectorType  & rhs)
+    void poissonSolverProblem<FEOrder>::computeRhs(vectorType  & rhs)
     {
 
 	rhs.reinit(*d_xPtr);
@@ -175,7 +175,7 @@ namespace dftfe {
 
     //Matrix-Free Jacobi preconditioner application
     template<unsigned int FEOrder>
-    void  poissonSolverFunction<FEOrder>::precondition_Jacobi(vectorType& dst,
+    void  poissonSolverProblem<FEOrder>::precondition_Jacobi(vectorType& dst,
 	                                                      const vectorType& src,
 						              const double omega) const
     {
@@ -184,7 +184,7 @@ namespace dftfe {
     }
 
     template<unsigned int FEOrder>
-    void poissonSolverFunction<FEOrder>::computeDiagonalA()
+    void poissonSolverProblem<FEOrder>::computeDiagonalA()
     {
 	d_diagonalA.reinit(*d_xPtr);
 
@@ -230,7 +230,7 @@ namespace dftfe {
 
     //Ax
     template<unsigned int FEOrder>
-    void poissonSolverFunction<FEOrder>::AX (const dealii::MatrixFree<3,double>  &matrixFreeData,
+    void poissonSolverProblem<FEOrder>::AX (const dealii::MatrixFree<3,double>  &matrixFreeData,
 				     vectorType &dst,
 				     const vectorType &src,
 				     const std::pair<unsigned int,unsigned int> &cell_range) const
@@ -257,23 +257,23 @@ namespace dftfe {
 
 
     template<unsigned int FEOrder>
-    void poissonSolverFunction<FEOrder>::vmult(vectorType &Ax,const vectorType &x) const
+    void poissonSolverProblem<FEOrder>::vmult(vectorType &Ax,const vectorType &x) const
     {
       Ax=0.0;
-      d_matrixFreeDataPtr->cell_loop (&poissonSolverFunction<FEOrder>::AX, this, Ax, x);
+      d_matrixFreeDataPtr->cell_loop (&poissonSolverProblem<FEOrder>::AX, this, Ax, x);
     }
 
 
-    template class poissonSolverFunction<1>;
-    template class poissonSolverFunction<2>;
-    template class poissonSolverFunction<3>;
-    template class poissonSolverFunction<4>;
-    template class poissonSolverFunction<5>;
-    template class poissonSolverFunction<6>;
-    template class poissonSolverFunction<7>;
-    template class poissonSolverFunction<8>;
-    template class poissonSolverFunction<9>;
-    template class poissonSolverFunction<10>;
-    template class poissonSolverFunction<11>;
-    template class poissonSolverFunction<12>;
+    template class poissonSolverProblem<1>;
+    template class poissonSolverProblem<2>;
+    template class poissonSolverProblem<3>;
+    template class poissonSolverProblem<4>;
+    template class poissonSolverProblem<5>;
+    template class poissonSolverProblem<6>;
+    template class poissonSolverProblem<7>;
+    template class poissonSolverProblem<8>;
+    template class poissonSolverProblem<9>;
+    template class poissonSolverProblem<10>;
+    template class poissonSolverProblem<11>;
+    template class poissonSolverProblem<12>;
 }

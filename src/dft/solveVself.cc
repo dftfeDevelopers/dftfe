@@ -31,8 +31,8 @@ void dftClass<FEOrder>::solveVself()
   d_phiExt = 0;
 
   //set up poisson solver
-  dealiiCGLinearSolver dealiiCGSolver(mpi_communicator);
-  poissonSolverFunction<FEOrder> vselfSolverFunction(mpi_communicator);
+  dealiiLinearSolver dealiiCGSolver(mpi_communicator,dealiiLinearSolver::CG);
+  poissonSolverProblem<FEOrder> vselfSolverProblem(mpi_communicator);
 
   //pcout<<"size of support points: "<<d_supportPoints.size()<<std::endl;
 
@@ -74,19 +74,18 @@ void dftClass<FEOrder>::solveVself()
       //
       //call the poisson solver to compute vSelf in current bin
       //
-      vselfSolverFunction.reinit(matrix_free_data,
+      vselfSolverProblem.reinit(matrix_free_data,
 	                         vselfBinScratch,
 				 *d_constraintsVector[constraintMatrixId],
                                  constraintMatrixId,
 	                         d_atomsInBin[constraintMatrixId-2]);
 
 
-      dealiiCGSolver.solve(vselfSolverFunction,
+      dealiiCGSolver.solve(vselfSolverProblem,
 			   dftParameters::relLinearSolverTolerance,
 			   dftParameters::maxLinearSolverIterations,
 			   dftParameters::verbosity);
 
-      //poissonPtr->solve(vselfBinScratch,constraintMatrixId);
 
       std::set<int> & atomsInBinSet = d_bins[iBin];
       std::vector<int> atomsInCurrentBin(atomsInBinSet.begin(),atomsInBinSet.end());

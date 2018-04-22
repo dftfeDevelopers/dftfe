@@ -16,13 +16,15 @@
 // @author Sambit Das
 //
 
-#include <dealiiCGLinearSolver.h>
+#include <dealiiLinearSolver.h>
 
 namespace dftfe {
 
     //constructor
-    dealiiCGLinearSolver::dealiiCGLinearSolver(const MPI_Comm &mpi_comm):
+    dealiiLinearSolver::dealiiLinearSolver(const MPI_Comm &mpi_comm,
+	                                       const solverType type):
       mpi_communicator (mpi_comm),
+      d_type(type),
       n_mpi_processes (dealii::Utilities::MPI::n_mpi_processes(mpi_comm)),
       this_mpi_process (dealii::Utilities::MPI::this_mpi_process(mpi_comm)),
       pcout (std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
@@ -32,31 +34,39 @@ namespace dftfe {
 
 
     //solve
-    void dealiiCGLinearSolver::solve(dealiiLinearSolverFunction & function,
+    void dealiiLinearSolver::solve(dealiiLinearSolverProblem & problem,
 		                     const double relTolerance,
 		                     const unsigned int maxNumberIterations,
 		                     const unsigned int  debugLevel)
     {
       //compute RHS
       vectorType rhs;
-      function.computeRhs(rhs);
+      problem.computeRhs(rhs);
 
       //create dealii solver control object
       dealii::SolverControl solverControl(maxNumberIterations,relTolerance*rhs.l2_norm());
 
 
       //initialize preconditioner
-      dealii::PreconditionJacobi<dealiiLinearSolverFunction> preconditioner;
-      preconditioner.initialize (function, 0.3);
+      dealii::PreconditionJacobi<dealiiLinearSolverProblem> preconditioner;
+      preconditioner.initialize (problem, 0.3);
 
-      vectorType & x= function.getX();
+      vectorType & x= problem.getX();
       try{
 	x.update_ghost_values();
 
-	dealii::SolverCG<vectorType> solver(solverControl);
-	solver.solve(function,x, rhs, preconditioner);
+	if (d_type==CG)
+	{
+	  dealii::SolverCG<vectorType> solver(solverControl);
+	  solver.solve(problem,x, rhs, preconditioner);
+	}
+	else if (d_type==GMRES)
+	{
+	  dealii::SolverGMRES<vectorType> solver(solverControl);
+	  solver.solve(problem,x, rhs, preconditioner);
+	}
 
-	function.distributeX();
+	problem.distributeX();
 	x.update_ghost_values();
       }
       catch (...) {
