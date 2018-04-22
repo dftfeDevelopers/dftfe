@@ -148,13 +148,10 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   //locate atom core nodes and also locate atom nodes in each bin
   //
   locateAtomCoreNodes();
-  //
-  //
-  //initialize poisson and eigen problem related objects
-  //
-  poissonPtr->init();
-  eigenPtr->init();
 
   //compute volume of the domain
   computeVolume();
+
+  //initialize eigen solve related object
+  eigenPtr->init();
 }

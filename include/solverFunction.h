@@ -32,7 +32,6 @@ namespace dftfe {
 	 * @brief Constructor.
 	 */
 	solverFunction();
-	solverFunction( MPI_Comm &mpi_comm_replica);
 
 	/**
 	 * @brief Destructor.

@@ -14,20 +14,12 @@
 // ---------------------------------------------------------------------
 //
 // @author Sambit Das
-//
 
-#include <solverFunction.h>
+#include <dealiiLinearSolverProblem.h>
 
 namespace dftfe {
-
-  solverFunction::solverFunction()
-  {
-    return;
-  }
-
-
-  // Destructor.
-  solverFunction::~solverFunction()
+  // Constructor.
+  dealiiLinearSolverProblem::dealiiLinearSolverProblem()
   {
     return;
   }
