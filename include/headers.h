@@ -71,6 +71,10 @@
 #include <fstream>
 #include <iostream>
 
-typedef dealii::parallel::distributed::Vector<double> vectorType;
+//commonly used dealii typedefs used in dftfe go here
+namespace dftfe
+{
+  typedef dealii::parallel::distributed::Vector<double> vectorType;
+}
 
 #endif
