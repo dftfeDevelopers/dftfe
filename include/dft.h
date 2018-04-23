@@ -201,8 +201,29 @@ namespace dftfe {
       void initBoundaryConditions();
       void initElectronicFields(bool usePreviousGroundStateFields=false);
       void initPseudoPotentialAll();
-      void locateAtomCoreNodes();
-      void locatePeriodicPinnedNodes();
+
+     /**
+       * Finds the global dof ids of the nodes containing atoms.
+       *
+       * @param dofHandler[in]
+       * @param atomNodeIdToChargeValueMap[out] local map of global dof id to atom charge id
+       */
+      void locateAtomCoreNodes(const dealii::DoFHandler<3> & _dofHandler,
+	                       std::map<dealii::types::global_dof_index, double> & atomNodeIdToChargeValueMap);
+
+     /**
+       * Sets homogeneous dirichlet boundary conditions on a node farthest from
+       * all atoms (pinned node). This is only done in case of periodic boundary conditions
+       * to get an unique solution to the total electrostatic potential problem.
+       *
+       * @param dofHandler[in]
+       * @param constraintMatrixBase[in] base ConstraintMatrix object
+       * @param constraintMatrix[out] ConstraintMatrix object with homogeneous
+       * Dirichlet boundary condition entries added
+       */
+      void locatePeriodicPinnedNodes(const dealii::DoFHandler<3> & _dofHandler,
+	                             const dealii::ConstraintMatrix & constraintMatrixBase,
+	                             dealii::ConstraintMatrix & constraintMatrix);
       void initRho();
       void noRemeshRhoDataInit();
       void readPSI();
@@ -217,11 +238,15 @@ namespace dftfe {
 
 
       /**
-       * Sets dirichlet boundary conditions for total potential constraints on
-       * non-periodic boundary (boundary id==0). Currently setting homogeneous bc
+       * Sets homegeneous dirichlet boundary conditions for total potential constraints on
+       * non-periodic boundary (boundary id==0).
        *
+       * @param dofHandler[in]
+       * @param constraintMatrix[out] ConstraintMatrix object with homogeneous
+       * Dirichlet boundary condition entries added
        */
-      void applyTotalPotentialDirichletBC();
+      void applyHomogeneousDirichletBC(const dealii::DoFHandler<3> & _dofHandler,
+	                               dealii::ConstraintMatrix & constraintMatrix);
 
       void computeElementalOVProjectorKets();
 
@@ -267,7 +292,7 @@ namespace dftfe {
       /**
        * Computes the volume of the domain
        */
-      void computeVolume();
+      double computeVolume(const dealii::DoFHandler<3> & _dofHandler);
 
       /**
        * Deforms the domain by the given deformation gradient and reinitializes the
@@ -468,7 +493,7 @@ namespace dftfe {
       std::vector<double> d_outerMostPointPseudoPotData;
 
       //map of atom node number and atomic weight
-      std::map<unsigned int, double> atoms;
+      std::map<dealii::types::global_dof_index, double> atoms;
 
       /// vselfBinsManager object
       vselfBinsManager<FEOrder> d_vselfBinsManager;

@@ -59,7 +59,7 @@ namespace dftfe {
 	 void createAtomBins(std::vector<dealii::ConstraintMatrix * > & constraintsVector,
 		             const dealii::DoFHandler<3> & dofHandler,
 			     const dealii::ConstraintMatrix & constraintMatrix,
-			     const std::map<unsigned int, double> & atoms,
+			     const std::map<dealii::types::global_dof_index, double> & atoms,
 			     std::vector<std::vector<double> > & atomLocations,
 			     const std::vector<std::vector<double> > & imagePositions,
 			     const std::vector<int> & imageIds,
@@ -144,7 +144,7 @@ namespace dftfe {
 	std::vector<vectorType> d_vselfFieldBins;
 
 	/// Map of locally relevant global dof index and the atomic charge in each bin
-	std::vector<std::map<unsigned int, double> > d_atomsInBin;
+	std::vector<std::map<dealii::types::global_dof_index, double> > d_atomsInBin;
 
         const MPI_Comm mpi_communicator;
         const unsigned int n_mpi_processes;

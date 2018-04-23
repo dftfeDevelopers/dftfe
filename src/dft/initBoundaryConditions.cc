@@ -15,7 +15,7 @@
 //
 // @author Phani Motamarri, Shiva Rudraraju, Sambit Das
 //
-#include "applyTotalPotentialDirichletBC.cc"
+#include "applyHomogeneousDirichletBC.cc"
 #include "locatenodes.cc"
 
 #ifdef ENABLE_PERIODIC_BC
@@ -68,12 +68,9 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   d_constraintsForTotalPotential.reinit(locally_relevant_dofs);
 
 #ifdef ENABLE_PERIODIC_BC
-  locatePeriodicPinnedNodes();
+  locatePeriodicPinnedNodes(dofHandler,constraintsNone,d_constraintsForTotalPotential);
 #endif
-//#else
-  //VectorTools::interpolate_boundary_values(dofHandler, 0, ZeroFunction<3>(), d_constraintsForTotalPotential);
-  applyTotalPotentialDirichletBC();
-//#endif
+  applyHomogeneousDirichletBC(dofHandler,d_constraintsForTotalPotential);
   d_constraintsForTotalPotential.close ();
 
   //
@@ -153,10 +150,10 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   //
   //locate atom core nodes
   //
-  locateAtomCoreNodes();
+  locateAtomCoreNodes(dofHandler,atoms);
 
   //compute volume of the domain
-  computeVolume();
+  d_domainVolume=computeVolume(dofHandler);
 
   //initialize eigen solve related object
   eigenPtr->init();

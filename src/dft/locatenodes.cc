@@ -18,27 +18,32 @@
 
 //source file for locating core atom nodes
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::locateAtomCoreNodes(){
+void dftClass<FEOrder>::locateAtomCoreNodes(const dealii::DoFHandler<3> & _dofHandler,
+	                                    std::map<dealii::types::global_dof_index, double> & atomNodeIdToChargeValueMap){
   TimerOutput::Scope scope (computing_timer,"locate atom nodes");
-  atoms.clear();
-  unsigned int vertices_per_cell=GeometryInfo<3>::vertices_per_cell;
+  atomNodeIdToChargeValueMap.clear();
+  const unsigned int vertices_per_cell=GeometryInfo<3>::vertices_per_cell;
 
-  bool isPseudopotential = dftParameters::isPseudopotential;
+  const bool isPseudopotential = dftParameters::isPseudopotential;
 
   DoFHandler<3>::active_cell_iterator
-    cell = dofHandler.begin_active(),
-    endc = dofHandler.end();
-  //
-  //IndexSet locally_owned_elements=eigenVectors[0][0]->locally_owned_elements();
+    cell = _dofHandler.begin_active(),
+    endc = _dofHandler.end();
+
+  dealii::IndexSet locallyOwnedDofs = _dofHandler.locally_owned_dofs();
+
+  std::map<dealii::types::global_dof_index, dealii::Point<3> > supportPoints;
+  dealii::DoFTools::map_dofs_to_support_points(dealii::MappingQ1<3,3>(),_dofHandler, supportPoints);
+
   //locating atom nodes
-  unsigned int numAtoms=atomLocations.size();
+  const unsigned int numAtoms=atomLocations.size();
   std::set<unsigned int> atomsTolocate;
   for (unsigned int i = 0; i < numAtoms; i++) atomsTolocate.insert(i);
   //element loop
-  for (; cell!=endc; ++cell) {
-    if (cell->is_locally_owned()){
+  for (; cell!=endc; ++cell)
+    if (cell->is_locally_owned())
       for (unsigned int i=0; i<vertices_per_cell; ++i){
-	unsigned int nodeID=cell->vertex_dof_index(i,0);
+	const dealii::types::global_dof_index nodeID=cell->vertex_dof_index(i,0);
 	Point<3> feNodeGlobalCoord = cell->vertex(i);
 	//
 	//loop over all atoms to locate the corresponding nodes
@@ -60,11 +65,11 @@ void dftClass<FEOrder>::locateAtomCoreNodes(){
 		    std::cout << "atom core with charge " << atomLocations[*it][0] << " located with node id " << nodeID << " in processor " << this_mpi_process<<" nodal coor "<<feNodeGlobalCoord[0]<<" "<<feNodeGlobalCoord[1]<<" "<<feNodeGlobalCoord[2]<<std::endl;
 		 }
 	       }
-	     if (locally_owned_dofs.is_element(nodeID)){
+	     if (locallyOwnedDofs.is_element(nodeID)){
 	       if(isPseudopotential)
-		 atoms.insert(std::pair<unsigned int,double>(nodeID,atomLocations[*it][1]));
+		 atomNodeIdToChargeValueMap.insert(std::pair<dealii::types::global_dof_index,double>(nodeID,atomLocations[*it][1]));
 	       else
-		 atoms.insert(std::pair<unsigned int,double>(nodeID,atomLocations[*it][0]));
+		 atomNodeIdToChargeValueMap.insert(std::pair<dealii::types::global_dof_index,double>(nodeID,atomLocations[*it][0]));
 
 	       if (dftParameters::verbosity==2)
 	          std::cout << " and added \n";
@@ -78,36 +83,40 @@ void dftClass<FEOrder>::locateAtomCoreNodes(){
 	   }//tolerance check if loop
 	}//atomsTolocate loop
       }//vertices_per_cell loop
-    }//locally owned cell if loop
-  }//cell loop
   MPI_Barrier(mpi_communicator);
 
-  const unsigned int totalAtomNodesFound = Utilities::MPI::sum(atoms.size(), mpi_communicator);
+  const unsigned int totalAtomNodesFound = Utilities::MPI::sum(atomNodeIdToChargeValueMap.size(), mpi_communicator);
   AssertThrow(totalAtomNodesFound==numAtoms,ExcMessage("Atleast one atom doesn't lie on a triangulation vertex"));
 }
 
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::locatePeriodicPinnedNodes()
+void dftClass<FEOrder>::locatePeriodicPinnedNodes(const dealii::DoFHandler<3> & _dofHandler,
+	                                          const dealii::ConstraintMatrix & constraintsBase,
+	                                          dealii::ConstraintMatrix & constraints)
 {
   TimerOutput::Scope scope (computing_timer,"locate periodic pinned node");
   const int numberImageCharges = d_imageIds.size();
   const int numberGlobalAtoms = atomLocations.size();
   const int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
 
+  dealii::IndexSet locallyRelevantDofs;
+  dealii::DoFTools::extract_locally_relevant_dofs(_dofHandler, locallyRelevantDofs);
+  dealii::IndexSet locallyOwnedDofs = _dofHandler.locally_owned_dofs();
+
+  std::map<dealii::types::global_dof_index, dealii::Point<3> > supportPoints;
+  dealii::DoFTools::map_dofs_to_support_points(dealii::MappingQ1<3,3>(),_dofHandler, supportPoints);
 
   //
   //find vertex furthest from all nuclear charges
   //
   double maxDistance = -1.0;
-  unsigned int maxNode,minNode;
+  dealii::types::global_dof_index maxNode,minNode;
 
   std::map<types::global_dof_index,Point<3> >::iterator iterMap;
-  for(iterMap = d_supportPoints.begin(); iterMap != d_supportPoints.end(); ++iterMap)
-    {
-      if(locally_owned_dofs.is_element(iterMap->first))
-	{
-	  if(!(constraintsNone.is_constrained(iterMap->first)
-		      && !constraintsNone.is_identity_constrained(iterMap->first)))
+  for(iterMap = supportPoints.begin(); iterMap != supportPoints.end(); ++iterMap)
+      if(locallyOwnedDofs.is_element(iterMap->first) &&
+	  !(constraintsBase.is_constrained(iterMap->first)
+		      && !constraintsBase.is_identity_constrained(iterMap->first)))
 	    {
 	      double minDistance = 1e10;
 	      minNode = -1;
@@ -148,8 +157,6 @@ void dftClass<FEOrder>::locatePeriodicPinnedNodes()
 		  maxNode = iterMap->first;
 		}
 	    }
-	}
-    }
 
   double globalMaxDistance;
 
@@ -184,19 +191,19 @@ void dftClass<FEOrder>::locatePeriodicPinnedNodes()
     {
       if (dftParameters::verbosity==2)
           std::cout<<"Found Node locally on processor Id: "<<Utilities::MPI::this_mpi_process(mpi_communicator)<<std::endl;
-      if(locally_owned_dofs.is_element(maxNode))
+      if(locallyOwnedDofs.is_element(maxNode))
 	{
-	  if(constraintsNone.is_identity_constrained(maxNode))
+	  if(constraintsBase.is_identity_constrained(maxNode))
 	    {
-	      unsigned int masterNode = (*constraintsNone.get_constraint_entries(maxNode))[0].first;
-	      Point<3> nodalPointCoordinates = d_supportPoints.find(masterNode)->second;
+	      const dealii::types::global_dof_index masterNode = (*constraintsBase.get_constraint_entries(maxNode))[0].first;
+	      Point<3> nodalPointCoordinates = supportPoints.find(masterNode)->second;
 	      tempLocal[0] = nodalPointCoordinates[0];
 	      tempLocal[1] = nodalPointCoordinates[1];
 	      tempLocal[2] = nodalPointCoordinates[2];
 	    }
 	  else
 	    {
-	      Point<3> nodalPointCoordinates = d_supportPoints.find(maxNode)->second;
+	      Point<3> nodalPointCoordinates = supportPoints.find(maxNode)->second;
 	      tempLocal[0] = nodalPointCoordinates[0];
 	      tempLocal[1] = nodalPointCoordinates[1];
 	      tempLocal[2] = nodalPointCoordinates[2];
@@ -216,27 +223,26 @@ void dftClass<FEOrder>::locatePeriodicPinnedNodes()
   pinnedLocations.push_back(temp);
 
 
-  const unsigned int dofs_per_cell = FE.dofs_per_cell;
+  const unsigned int dofs_per_cell = _dofHandler.get_fe().dofs_per_cell;
   DoFHandler<3>::active_cell_iterator
-    cell = dofHandler.begin_active(),
-    endc = dofHandler.end();
+    cell = _dofHandler.begin_active(),
+    endc = _dofHandler.end();
 
-  unsigned int numberNodes = pinnedLocations.size();
+  const unsigned int numberNodes = pinnedLocations.size();
   std::set<unsigned int> nodesTolocate;
   for (unsigned int i = 0; i < numberNodes; i++) nodesTolocate.insert(i);
 
+  std::vector<types::global_dof_index> cell_dof_indices(dofs_per_cell);
   for (; cell!=endc; ++cell)
-    {
       if (cell->is_locally_owned())
 	{
-	  std::vector<types::global_dof_index> cell_dof_indices(dofs_per_cell);
 	  cell->get_dof_indices(cell_dof_indices);
 
 	  for (unsigned int i = 0; i < dofs_per_cell; ++i)
 	    {
 
-	      unsigned int nodeID = cell_dof_indices[i];
-	      Point<3> feNodeGlobalCoord = d_supportPoints[cell_dof_indices[i]];
+	      const dealii::types::global_dof_index nodeID = cell_dof_indices[i];
+	      Point<3> feNodeGlobalCoord = supportPoints[cell_dof_indices[i]];
 
 	      //
 	      //loop over all atoms to locate the corresponding nodes
@@ -249,10 +255,10 @@ void dftClass<FEOrder>::locatePeriodicPinnedNodes()
 		    {
 	              if (dftParameters::verbosity==2)
 		         std::cout << "Pinned core with nodal coordinates (" << pinnedLocations[*it][0] << " " << pinnedLocations[*it][1] << " "<<pinnedLocations[*it][2]<< ") located with node id " << nodeID << " in processor " << this_mpi_process;
-		      if (locally_relevant_dofs.is_element(nodeID))
+		      if (locallyRelevantDofs.is_element(nodeID))
 			{
-			  d_constraintsForTotalPotential.add_line(nodeID);
-			  d_constraintsForTotalPotential.set_inhomogeneity(nodeID,0.0);
+			  constraints.add_line(nodeID);
+			  constraints.set_inhomogeneity(nodeID,0.0);
 			  if (dftParameters::verbosity==2)
 			     std::cout << " and added \n";
 			}
@@ -270,8 +276,6 @@ void dftClass<FEOrder>::locatePeriodicPinnedNodes()
 	    }//vertices_per_cell loop
 
 	}//locally owned cell if loop
-
-    }//cell loop
 
   MPI_Barrier(mpi_communicator);
 }
