@@ -20,8 +20,6 @@
 #ifndef dealiiLinearSolver_H_
 #define dealiiLinearSolver_H_
 
-typedef dealii::parallel::distributed::Vector<double> vectorType;
-
 namespace dftfe {
 
     /**

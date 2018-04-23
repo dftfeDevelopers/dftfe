@@ -21,8 +21,6 @@
 
 namespace dftfe {
 
-  typedef dealii::parallel::distributed::Vector<double> vectorType;
-
  /**
   * @brief Abstract class for linear solve problems to be used with the dealiiLinearSolver interface.
   *

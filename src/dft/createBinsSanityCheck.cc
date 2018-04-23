@@ -25,29 +25,28 @@ namespace dftfe{
       const unsigned int faces_per_cell=dealii::GeometryInfo<3>::faces_per_cell;
       const unsigned int dofs_per_cell=dofHandler.get_fe().dofs_per_cell;
       const unsigned int dofs_per_face=dofHandler.get_fe().dofs_per_face;
-      const int numberBins=d_bins.size();
+      const unsigned int numberBins=d_bins.size();
 
-      for(int iBin = 0; iBin < numberBins; ++iBin)
+      std::vector<dealii::types::global_dof_index> cell_dof_indices(dofs_per_cell);
+
+      for(unsigned int iBin = 0; iBin < numberBins; ++iBin)
       {
 
 	 std::map<dealii::types::global_dof_index, int> & boundaryNodeMap = d_boundaryFlag[iBin];
 	 std::map<dealii::types::global_dof_index, int> & closestAtomBinMap = d_closestAtomBin[iBin];
 	 dealii::DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),endc = dofHandler.end();
 	 for(; cell!= endc; ++cell)
-	 {
 	    if(cell->is_locally_owned())
 	    {
-
-	      std::vector<dealii::types::global_dof_index> cell_dof_indices(dofs_per_cell);
 	      cell->get_dof_indices(cell_dof_indices);
 
 	      bool isSolvedNodePresent=false;
-	      int numSolvedNodes=0;
+	      unsigned int numSolvedNodes=0;
 	      int closestChargeIdSolvedSum=0;
 	      int closestChargeIdSolvedNode=-1;
 	      for(unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
 		{
-		  const int globalNodeId=cell_dof_indices[iNode];
+		  const dealii::types::global_dof_index globalNodeId=cell_dof_indices[iNode];
 		  if(!onlyHangingNodeConstraints.is_constrained(globalNodeId))
 		  {
 		    const int boundaryId=d_boundaryFlag[iBin][globalNodeId];
@@ -102,7 +101,6 @@ namespace dftfe{
 		  AssertThrow(closestAtomIdSum==closestAtomId*nonHangingNodeIdCountCell,dealii::ExcMessage("dofs of cells touching vself ball have different closest atom ids, remedy- increase separation between vself balls"));
 	       }
 	    }//cell locally owned
-	 }// cell loop
       }//Bin loop
 
     }

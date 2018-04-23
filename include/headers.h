@@ -71,4 +71,6 @@
 #include <fstream>
 #include <iostream>
 
+typedef dealii::parallel::distributed::Vector<double> vectorType;
+
 #endif
