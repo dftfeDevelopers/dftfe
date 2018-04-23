@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Shiva Rudraraju (2016), Phani Motamarri (2016)
+// @author Shiva Rudraraju, Phani Motamarri, Sambit Das
 //
 
 //source file for locating core atom nodes
@@ -21,7 +21,6 @@ template<unsigned int FEOrder>
 void dftClass<FEOrder>::locateAtomCoreNodes(){
   TimerOutput::Scope scope (computing_timer,"locate atom nodes");
   atoms.clear();
-  d_atomsInBin.clear();
   unsigned int vertices_per_cell=GeometryInfo<3>::vertices_per_cell;
 
   bool isPseudopotential = dftParameters::isPseudopotential;
@@ -85,68 +84,6 @@ void dftClass<FEOrder>::locateAtomCoreNodes(){
 
   const unsigned int totalAtomNodesFound = Utilities::MPI::sum(atoms.size(), mpi_communicator);
   AssertThrow(totalAtomNodesFound==numAtoms,ExcMessage("Atleast one atom doesn't lie on a triangulation vertex"));
-
-  int numberBins = d_boundaryFlag.size();
-  d_atomsInBin.resize(numberBins);
-
-
-  for(int iBin = 0; iBin < numberBins; ++iBin)
-    {
-      unsigned int vertices_per_cell=GeometryInfo<3>::vertices_per_cell;
-      DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),endc = dofHandler.end();
-
-      std::set<int> & atomsInBinSet = d_bins[iBin];
-      std::vector<int> atomsInCurrentBin(atomsInBinSet.begin(),atomsInBinSet.end());
-      unsigned int numberGlobalAtomsInBin = atomsInCurrentBin.size();
-      std::set<unsigned int> atomsTolocate;
-      for (unsigned int i = 0; i < numberGlobalAtomsInBin; i++) atomsTolocate.insert(i);
-
-      for (; cell!=endc; ++cell) {
-	if (cell->is_locally_owned()){
-	  for (unsigned int i=0; i<vertices_per_cell; ++i){
-	    unsigned int nodeID=cell->vertex_dof_index(i,0);
-	    Point<3> feNodeGlobalCoord = cell->vertex(i);
-	    //
-	    //loop over all atoms to locate the corresponding nodes
-	    //
-	    for (std::set<unsigned int>::iterator it=atomsTolocate.begin(); it!=atomsTolocate.end(); ++it)
-	      {
-		int chargeId = atomsInCurrentBin[*it];
-		Point<3> atomCoord(atomLocations[chargeId][2],atomLocations[chargeId][3],atomLocations[chargeId][4]);
-		if(feNodeGlobalCoord.distance(atomCoord) < 1.0e-5){
-		  if(isPseudopotential)
-		  {
-		    if (dftParameters::verbosity==2)
-		      std::cout << "atom core in bin " << iBin<<" with valence charge "<<atomLocations[chargeId][1] << " located with node id " << nodeID << " in processor " << this_mpi_process;
-		  }
-		  else
-		  {
-		    if (dftParameters::verbosity==2)
-		      std::cout << "atom core in bin " << iBin<<" with charge "<<atomLocations[chargeId][0] << " located with node id " << nodeID << " in processor " << this_mpi_process;
-		  }
-		  if (locally_owned_dofs.is_element(nodeID)){
-		    if(isPseudopotential)
-		      d_atomsInBin[iBin].insert(std::pair<unsigned int,double>(nodeID,atomLocations[chargeId][1]));
-		    else
-		      d_atomsInBin[iBin].insert(std::pair<unsigned int,double>(nodeID,atomLocations[chargeId][0]));
-		    if (dftParameters::verbosity==2)
-		       std::cout << " and added \n";
-		  }
-		  else
-		  {
-            	    if (dftParameters::verbosity==2)
-		       std::cout << " but skipped \n";
-		  }
-		  atomsTolocate.erase(*it);
-		  break;
-		}//tolerance check if loop
-	      }//atomsTolocate loop
-	  }//vertices_per_cell loop
-	}//locally owned cell if loop
-      }//cell loop
-      MPI_Barrier(mpi_communicator);
-    }//iBin loop
-
 }
 
 template<unsigned int FEOrder>

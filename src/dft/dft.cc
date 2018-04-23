@@ -61,7 +61,6 @@ namespace dftfe {
 #include "density.cc"
 #include "mixingschemes.cc"
 #include "chebyshev.cc"
-#include "solveVself.cc"
 #include "restart.cc"
 
 
@@ -86,6 +85,7 @@ dftClass<FEOrder>::dftClass(const MPI_Comm &mpi_comm_replica,const MPI_Comm &_in
   integralRhoValue(0),
   d_mesh(mpi_comm_replica,_interpoolcomm),
   d_affineTransformMesh(mpi_comm_replica),
+  d_vselfBinsManager(mpi_comm_replica),
   pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
   computing_timer (pcout,
                    dftParameters::reproducible_output ? TimerOutput::never : TimerOutput::summary,
@@ -495,10 +495,16 @@ void dftClass<FEOrder>::solve()
 {
 
   //
-  //solve vself
+  //solve vself in bins
   //
   computing_timer.enter_section("vself solve");
-  solveVself();
+
+
+  d_vselfBinsManager.solveVselfInBins(matrix_free_data,
+		                      2,
+	                              d_phiExt,
+				      d_noConstraints,
+	                              d_localVselfs);
   computing_timer.exit_section("vself solve");
 
   //

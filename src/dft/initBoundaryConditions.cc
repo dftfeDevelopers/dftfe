@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,12 +13,10 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Phani Motamarri (2018), Shiva Rudraraju (2016), Sambit Das (2017)
+// @author Phani Motamarri, Shiva Rudraraju, Sambit Das
 //
 #include "applyTotalPotentialDirichletBC.cc"
 #include "locatenodes.cc"
-#include "createBins.cc"
-#include "createBinsExtraSanityCheck.cc"
 
 #ifdef ENABLE_PERIODIC_BC
 #include "applyPeriodicBCHigherOrderNodes.cc"
@@ -103,8 +101,16 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   //used for computing self-potential (Vself) using Poisson problem
   //with atoms belonging to a given bin
   //
-  createAtomBins(d_constraintsVector);
-  createAtomBinsExtraSanityCheck();
+  d_vselfBinsManager.createAtomBins(d_constraintsVector,
+	                            dofHandler,
+				    constraintsNone,
+				    atoms,
+				    atomLocations,
+				    d_imagePositions,
+				    d_imageIds,
+				    d_imageCharges,
+				    dftParameters::radiusAtomBall);
+
   //
   //create matrix free structure
   //
@@ -145,7 +151,7 @@ void dftClass<FEOrder>::initBoundaryConditions(){
 
 
   //
-  //locate atom core nodes and also locate atom nodes in each bin
+  //locate atom core nodes
   //
   locateAtomCoreNodes();
 
