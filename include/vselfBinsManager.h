@@ -21,8 +21,6 @@
 
 namespace dftfe {
 
-  typedef dealii::parallel::distributed::Vector<double> vectorType;
-
  /**
   * @brief Categorizes atoms into bins for efficient solution of nuclear electrostatic self-potential.
   *
