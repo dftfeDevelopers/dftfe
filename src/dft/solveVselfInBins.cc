@@ -47,9 +47,9 @@ namespace dftfe
       std::map<dealii::types::global_dof_index, int>::iterator iterMap;
       std::map<dealii::types::global_dof_index, double>::iterator iterMapVal;
       d_vselfFieldBins.resize(numberBins);
-      for(int iBin = 0; iBin < numberBins; ++iBin)
+      for(unsigned int iBin = 0; iBin < numberBins; ++iBin)
 	{
-	  const int constraintMatrixId = iBin + offset;
+	  const unsigned int constraintMatrixId = iBin + offset;
 	  vectorType vselfBinScratch;
 	  matrix_free_data.initialize_dof_vector(vselfBinScratch,constraintMatrixId);
 	  vselfBinScratch = 0;
@@ -61,20 +61,14 @@ namespace dftfe
 	  //set initial guess to vSelfBinScratch
 	  //
 	  for(iterNodalCoorMap = supportPoints.begin(); iterNodalCoorMap != supportPoints.end(); ++iterNodalCoorMap)
-	    {
-	      if(vselfBinScratch.in_local_range(iterNodalCoorMap->first))
-		{
-		  if(!d_vselfBinConstraintMatrices[iBin].is_constrained(iterNodalCoorMap->first))
+	      if(vselfBinScratch.in_local_range(iterNodalCoorMap->first)
+		  && !d_vselfBinConstraintMatrices[iBin].is_constrained(iterNodalCoorMap->first))
 		    {
 		      iterMapVal = vSelfBinNodeMap.find(iterNodalCoorMap->first);
 		      if(iterMapVal != vSelfBinNodeMap.end())
-			{
 			  vselfBinScratch(iterNodalCoorMap->first) = iterMapVal->second;
-			}
 		    }
 
-		}
-	    }
 
 	  vselfBinScratch.compress(dealii::VectorOperation::insert);
 	  d_vselfBinConstraintMatrices[iBin].distribute(vselfBinScratch);
@@ -106,10 +100,8 @@ namespace dftfe
 
 	  int inNodes =0, outNodes = 0;
 	  for(iterNodalCoorMap = supportPoints.begin(); iterNodalCoorMap != supportPoints.end(); ++iterNodalCoorMap)
-	    {
-	      if(vselfBinScratch.in_local_range(iterNodalCoorMap->first))
-		{
-		  if(!phiExtConstraintMatrix.is_constrained(iterNodalCoorMap->first))
+	      if(vselfBinScratch.in_local_range(iterNodalCoorMap->first)
+		  && !phiExtConstraintMatrix.is_constrained(iterNodalCoorMap->first))
 		    {
 		      //
 		      //get the vertex Id
@@ -189,12 +181,7 @@ namespace dftfe
 			  phiExt(iterNodalCoorMap->first)+= vSelf;
 
 			}//charge loop
-
-		    }//non-hanging node check
-
-		}//local range loop
-
-	    }//Vertexloop
+		    }
 
 	  //
 	  //store Vselfs for atoms in bin

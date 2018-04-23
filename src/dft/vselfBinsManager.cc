@@ -54,12 +54,12 @@ namespace dftfe
 
 	    int numberGlobalNodeIdsOnLocalProc = localAtomToGlobalNodeIdList.size();
 
-	    int * atomToGlobalNodeIdListSizes = new int[numMeshPartitions];
+            std::vector<int> atomToGlobalNodeIdListSizes(numMeshPartitions);
 
 	    MPI_Allgather(&numberGlobalNodeIdsOnLocalProc,
 			  1,
 			  MPI_INT,
-			  atomToGlobalNodeIdListSizes,
+			  &(atomToGlobalNodeIdListSizes[0]),
 			  1,
 			  MPI_INT,
 			  mpi_communicator);
@@ -71,7 +71,7 @@ namespace dftfe
 
 	    std::vector<int> globalAtomToGlobalNodeIdList(newAtomToGlobalNodeIdListSize);
 
-	    int * mpiOffsets = new int[numMeshPartitions];
+	    std::vector<int> mpiOffsets(numMeshPartitions);
 
 	    mpiOffsets[0] = 0;
 
@@ -93,12 +93,7 @@ namespace dftfe
 	    for(int i = 0 ; i < globalAtomToGlobalNodeIdList.size(); ++i)
 	      (atomToGlobalNodeIdMap[iGlobal]).insert(globalAtomToGlobalNodeIdList[i]);
 
-	    delete [] atomToGlobalNodeIdListSizes;
-	    delete [] mpiOffsets;
-
 	  }
-	  return;
-
 	}
     }
 
@@ -181,13 +176,12 @@ namespace dftfe
 	  // std::cout<<"Atom Coor: "<<atomCoor[0]<<" "<<atomCoor[1]<<" "<<atomCoor[2]<<std::endl;
 
 	  dealii::DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),endc = dofHandler.end();
+          std::vector<dealii::types::global_dof_index> cell_dof_indices(dofs_per_cell);
 
 	  for(; cell!= endc; ++cell)
-	    {
 	      if(cell->is_locally_owned())
 		{
 		  int cutOffFlag = 0;
-		  std::vector<dealii::types::global_dof_index> cell_dof_indices(dofs_per_cell);
 		  cell->get_dof_indices(cell_dof_indices);
 
 		  for(unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
@@ -215,8 +209,6 @@ namespace dftfe
 		    }
 
 		}//cell locally owned if loop
-
-	    }//cell or element loop
 
 	  atomToGlobalNodeIdMap[iAtom] = tempNodalSet;
 

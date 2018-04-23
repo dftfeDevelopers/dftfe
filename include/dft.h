@@ -51,7 +51,6 @@ namespace dftfe {
     //
     using namespace dealii;
 
-    typedef dealii::parallel::distributed::Vector<double> vectorType;
     //forward declarations
     template <unsigned int T> class eigenClass;
     template <unsigned int T> class forceClass;
