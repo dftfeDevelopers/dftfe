@@ -34,22 +34,25 @@ void dftClass<FEOrder>::applyHomogeneousDirichletBC(const dealii::DoFHandler<3> 
   const unsigned int dofs_per_cell = _dofHandler.get_fe().dofs_per_cell;
   const unsigned int faces_per_cell=dealii::GeometryInfo<3>::faces_per_cell;
   const unsigned int dofs_per_face=_dofHandler.get_fe().dofs_per_face;
+
+  std::vector<types::global_dof_index> cellGlobalDofIndices(dofs_per_cell);
+  std::vector<types::global_dof_index> iFaceGlobalDofIndices(dofs_per_face);
+
   std::vector<bool> dofs_touched(_dofHandler.n_dofs(),false);
   dealii::DoFHandler<3>::active_cell_iterator cell = _dofHandler.begin_active(),endc = _dofHandler.end();
   for(; cell!= endc; ++cell)
-  {
    if(cell->is_locally_owned())
    {
-     std::vector<types::global_dof_index> cellGlobalDofIndices(dofs_per_cell);
      cell->get_dof_indices(cellGlobalDofIndices);
      for(unsigned int iFace = 0; iFace < faces_per_cell; ++iFace)
      {
         const unsigned int boundaryId=cell->face(iFace)->boundary_id();
-	if (boundaryId==0){
-	  std::vector<types::global_dof_index> iFaceGlobalDofIndices(dofs_per_face);
+	if (boundaryId==0)
+	{
 	  cell->face(iFace)->get_dof_indices(iFaceGlobalDofIndices);
-          for(unsigned int iFaceDof = 0; iFaceDof < dofs_per_face; ++iFaceDof){
-             const unsigned int nodeId=iFaceGlobalDofIndices[iFaceDof];
+          for(unsigned int iFaceDof = 0; iFaceDof < dofs_per_face; ++iFaceDof)
+	  {
+             const dealii::types::global_dof_index nodeId=iFaceGlobalDofIndices[iFaceDof];
 	     if (dofs_touched[nodeId])
 		 continue;
 	     dofs_touched[nodeId]=true;
@@ -62,8 +65,4 @@ void dftClass<FEOrder>::applyHomogeneousDirichletBC(const dealii::DoFHandler<3> 
 	}//non-periodic boundary id
      }//Face loop
     }//cell locally owned
-  }// cell loop
-
-  return;
-
 }
