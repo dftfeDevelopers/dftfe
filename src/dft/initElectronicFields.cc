@@ -24,7 +24,7 @@ void dftClass<FEOrder>::initElectronicFields(const bool usePreviousGroundStateFi
   //initialize electrostatics fields
   matrix_free_data.initialize_dof_vector(d_phiTotRhoIn,phiTotDofHandlerIndex);
   d_phiTotRhoOut.reinit(d_phiTotRhoIn);
-  d_phiExt.reinit(d_phiTotRhoIn);
+  matrix_free_data.initialize_dof_vector(d_phiExt,phiExtDofHandlerIndex);
 
   //
   //initialize eigen vectors

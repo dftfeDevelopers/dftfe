@@ -33,6 +33,7 @@
 #include "eigen.h"
 #include "symmetry.h"
 #include "meshMovementAffineTransform.h"
+#include <vselfBinsManager.h>
 
 #include <interpolation.h>
 #include <xc.h>
@@ -224,16 +225,6 @@ namespace dftfe {
 
       void computeElementalOVProjectorKets();
 
-
-      /**
-       * Categorizes atoms into bins based on self-potential ball radius around each atom such
-       * that no two atoms in each bin has overlapping balls
-       * and finally solves the self-potentials in each bin one-by-one.
-       */
-      void createAtomBins(std::vector<ConstraintMatrix * > & constraintsVector);
-      void createAtomBinsExtraSanityCheck();
-      void solveVself();
-
       /**
        * Computes total charge by integrating the electron-density
        */
@@ -370,9 +361,6 @@ namespace dftfe {
        */
       ConstraintMatrix constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_constraintsPeriodicWithDirichlet, d_noConstraints, d_noConstraintsEigen;
 
-      /// vector of constraint matrices for vself bins
-      std::vector<ConstraintMatrix> d_vselfBinConstraintMatrices;
-
       /**
        * data storage for Kohn-Sham wavefunctions
        */
@@ -481,15 +469,9 @@ namespace dftfe {
 
       //map of atom node number and atomic weight
       std::map<unsigned int, double> atoms;
-      std::vector<std::map<unsigned int, double> > d_atomsInBin;
 
-      //map of binIds and atomIds in it and other bin related information
-      std::map<int,std::set<int> > d_bins;
-      std::vector<std::vector<int> > d_imageIdsInBins;
-      std::vector<std::map<dealii::types::global_dof_index, int> > d_boundaryFlag;
-      std::vector<std::map<dealii::types::global_dof_index, double> > d_vselfBinField;
-      std::vector<std::map<dealii::types::global_dof_index, int> > d_closestAtomBin;
-      std::vector<vectorType> d_vselfFieldBins;//required for configurational force
+      /// vselfBinsManager object
+      vselfBinsManager<FEOrder> d_vselfBinsManager;
 
       /// kPoint cartesian coordinates
       std::vector<double> d_kPointCoordinates;
@@ -506,7 +488,8 @@ namespace dftfe {
       /// current k point index during the ground state solve
       int d_kPointIndex;
 
-      /** Recomputes the k point cartesian coordinates from the crystal k point coordinates
+      /**
+       * Recomputes the k point cartesian coordinates from the crystal k point coordinates
        * and the current lattice vectors, which can change in each ground state solve when
        * isCellOpt is true
        */
