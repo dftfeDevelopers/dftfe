@@ -82,14 +82,8 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   //clear existing constraints matrix vector
   d_constraintsVector.clear();
 
-  //
   //push back into Constraint Matrices
-  //
-#ifdef ENABLE_PERIODIC_BC
   d_constraintsVector.push_back(&constraintsNone);
-#else
-  d_constraintsVector.push_back(&constraintsNone);
-#endif
 
   d_constraintsVector.push_back(&d_constraintsForTotalPotential);
 
@@ -101,7 +95,6 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   d_vselfBinsManager.createAtomBins(d_constraintsVector,
 	                            dofHandler,
 				    constraintsNone,
-				    atoms,
 				    atomLocations,
 				    d_imagePositions,
 				    d_imageIds,
@@ -139,13 +132,7 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   forcePtr->d_forceDofHandlerIndex = dofHandlerVector.size()-1;
   d_constraintsVector.push_back(&(forcePtr->d_constraintsNoneForce));
 
-  std::vector<const ConstraintMatrix * > constraintsVectorTemp(d_constraintsVector.size());
-  for (unsigned int iconstraint=0; iconstraint< d_constraintsVector.size(); iconstraint++)
-  {
-     constraintsVectorTemp[iconstraint]=d_constraintsVector[iconstraint];
-  }
-  matrix_free_data.reinit(dofHandlerVector, constraintsVectorTemp, quadratureVector, additional_data);
-
+  matrix_free_data.reinit(dofHandlerVector, d_constraintsVector, quadratureVector, additional_data);
 
   //
   //locate atom core nodes

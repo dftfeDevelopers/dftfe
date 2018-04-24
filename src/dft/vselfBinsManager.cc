@@ -109,10 +109,9 @@ namespace dftfe
     }
 
     template<unsigned int FEOrder>
-    void vselfBinsManager<FEOrder>::createAtomBins(std::vector<dealii::ConstraintMatrix * > & constraintsVector,
+    void vselfBinsManager<FEOrder>::createAtomBins(std::vector<const dealii::ConstraintMatrix * > & constraintsVector,
 		                           const dealii::DoFHandler<3> &  dofHandler,
 			                   const dealii::ConstraintMatrix & constraintMatrix,
-			                   const std::map<dealii::types::global_dof_index, double> & atoms,
 			                   std::vector<std::vector<double> > & atomLocations,
 			                   const std::vector<std::vector<double> > & imagePositions,
 			                   const std::vector<int> & imageIds,
