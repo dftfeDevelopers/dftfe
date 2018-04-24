@@ -186,7 +186,7 @@ namespace dftfe {
       /**
        * moves the triangulation vertices using Gaussians such that the all atoms are on triangulation vertices
        */
-      void moveMeshToAtoms(const Triangulation<3,3> & triangulationMove,const bool reuse=false);
+      void moveMeshToAtoms(const Triangulation<3,3> & triangulationMove);
 
       /**
        * Initializes the guess of electron-density and single-atom wavefunctions on the mesh,
@@ -335,11 +335,6 @@ namespace dftfe {
       std::vector<orbital> waveFunctionsVector;
       std::map<unsigned int, std::map<unsigned int, std::map<unsigned int, alglib::spline1dinterpolant*> > > radValues;
       std::map<unsigned int, std::map<unsigned int, std::map <unsigned int, double> > >outerValues;
-      std::vector<Point<3>> closestTriaVertexToAtomsLocation;
-
-      std::vector<Tensor<1,3,double> > distanceClosestTriaVerticesToAtoms;
-      std::vector<Tensor<1,3,double> > dispClosestTriaVerticesToAtoms;
-
 
       /**
        * meshGenerator based object
