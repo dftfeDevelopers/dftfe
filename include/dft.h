@@ -355,7 +355,7 @@ namespace dftfe {
       unsigned int       eigenDofHandlerIndex,phiExtDofHandlerIndex,phiTotDofHandlerIndex,forceDofHandlerIndex;
       MatrixFree<3,double> matrix_free_data;
       std::map<types::global_dof_index, Point<3> > d_supportPoints, d_supportPointsEigen;
-      std::vector< ConstraintMatrix * > d_constraintsVector;
+      std::vector<const ConstraintMatrix * > d_constraintsVector;
 
       /**
        * parallel objects
@@ -367,7 +367,6 @@ namespace dftfe {
       IndexSet   locally_relevant_dofs, locally_relevant_dofsEigen;
       std::vector<unsigned int> local_dof_indicesReal, local_dof_indicesImag;
       std::vector<unsigned int> localProc_dof_indicesReal,localProc_dof_indicesImag;
-      std::vector<bool> selectedDofsHanging;
 
       eigenClass<FEOrder> * eigenPtr;
       forceClass<FEOrder> * forcePtr;
@@ -486,7 +485,7 @@ namespace dftfe {
       std::vector<double> d_outerMostPointPseudoWaveFunctionsData;
       std::vector<double> d_outerMostPointPseudoPotData;
 
-      //map of atom node number and atomic weight
+      /// map of atom node number and atomic weight
       std::map<dealii::types::global_dof_index, double> atoms;
 
       /// vselfBinsManager object
