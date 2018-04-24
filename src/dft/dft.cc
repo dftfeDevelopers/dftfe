@@ -588,7 +588,7 @@ void dftClass<FEOrder>::solve()
 	                            d_phiTotRhoIn,
 				    *d_constraintsVector[phiTotDofHandlerIndex],
                                     phiTotDofHandlerIndex,
-	                            atoms,
+	                            d_atomNodeIdToChargeMap,
 				    *rhoInValues);
 
 
@@ -797,7 +797,7 @@ void dftClass<FEOrder>::solve()
 	                            d_phiTotRhoOut,
 				    *d_constraintsVector[phiTotDofHandlerIndex],
                                     phiTotDofHandlerIndex,
-	                            atoms,
+	                            d_atomNodeIdToChargeMap,
 				    *rhoOutValues);
 
 

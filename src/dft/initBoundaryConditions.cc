@@ -137,7 +137,7 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   //
   //locate atom core nodes
   //
-  locateAtomCoreNodes(dofHandler,atoms);
+  locateAtomCoreNodes(dofHandler,d_atomNodeIdToChargeMap);
 
   //compute volume of the domain
   d_domainVolume=computeVolume(dofHandler);

@@ -486,7 +486,7 @@ namespace dftfe {
       std::vector<double> d_outerMostPointPseudoPotData;
 
       /// map of atom node number and atomic weight
-      std::map<dealii::types::global_dof_index, double> atoms;
+      std::map<dealii::types::global_dof_index, double> d_atomNodeIdToChargeMap;
 
       /// vselfBinsManager object
       vselfBinsManager<FEOrder> d_vselfBinsManager;

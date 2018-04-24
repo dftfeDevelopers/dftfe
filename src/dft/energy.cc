@@ -302,7 +302,7 @@ double dftClass<FEOrder>::compute_energy(const bool print)
   //First evaluate sum_I*(Z_I*phi_tot(RI)) on atoms belonging to current processor
   //
   double phiContribution = 0.0,vSelfContribution=0.0;
-  for (std::map<dealii::types::global_dof_index, double>::const_iterator it=atoms.begin(); it!=atoms.end(); ++it)
+  for (std::map<dealii::types::global_dof_index, double>::const_iterator it=d_atomNodeIdToChargeMap.begin(); it!=d_atomNodeIdToChargeMap.end(); ++it)
     {
       phiContribution += (-it->second)*d_phiTotRhoOut(it->first);//-charge*potential
     }
@@ -715,7 +715,7 @@ double dftClass<FEOrder>::compute_energy_spinPolarized(const bool print)
   //First evaluate sum_I*(Z_I*phi_tot(RI)) on atoms belonging to current processor
   //
   double phiContribution = 0.0,vSelfContribution=0.0;
-  for (std::map<dealii::types::global_dof_index, double>::const_iterator it=atoms.begin(); it!=atoms.end(); ++it)
+  for (std::map<dealii::types::global_dof_index, double>::const_iterator it=d_atomNodeIdToChargeMap.begin(); it!=d_atomNodeIdToChargeMap.end(); ++it)
     {
       phiContribution += (-it->second)*d_phiTotRhoOut(it->first);//-charge*potential
     }
