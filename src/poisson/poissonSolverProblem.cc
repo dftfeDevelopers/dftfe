@@ -39,7 +39,7 @@ namespace dftfe {
 		     vectorType & x,
 		     const dealii::ConstraintMatrix & constraintMatrix,
 		     const unsigned int matrixFreeVectorComponent,
-	             const std::map<unsigned int, double> & atoms,
+	             const std::map<dealii::types::global_dof_index, double> & atoms,
 		     const std::map<dealii::CellId,std::vector<double> > & rhoValues)
     {
         d_matrixFreeDataPtr=&matrixFreeData;
@@ -59,7 +59,7 @@ namespace dftfe {
 		           vectorType & x,
 		           const dealii::ConstraintMatrix & constraintMatrix,
 		           const unsigned int matrixFreeVectorComponent,
-	                   const std::map<unsigned int, double> & atoms)
+	                   const std::map<dealii::types::global_dof_index, double> & atoms)
     {
         d_matrixFreeDataPtr=&matrixFreeData;
 	d_xPtr=&x;
@@ -156,7 +156,7 @@ namespace dftfe {
 	}
 
 	//rhs contribution from atomic charge at fem nodes
-        for (std::map<unsigned int, double>::const_iterator it=(*d_atomsPtr).begin(); it!=(*d_atomsPtr).end(); ++it)
+        for (std::map<dealii::types::global_dof_index, double>::const_iterator it=(*d_atomsPtr).begin(); it!=(*d_atomsPtr).end(); ++it)
 	{
 	  std::vector<dealii::ConstraintMatrix::size_type> local_dof_indices_origin(1, it->first); //atomic node
 	  dealii::Vector<double> cell_rhs_origin (1);

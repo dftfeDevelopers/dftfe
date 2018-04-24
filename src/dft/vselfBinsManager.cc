@@ -109,10 +109,9 @@ namespace dftfe
     }
 
     template<unsigned int FEOrder>
-    void vselfBinsManager<FEOrder>::createAtomBins(std::vector<dealii::ConstraintMatrix * > & constraintsVector,
+    void vselfBinsManager<FEOrder>::createAtomBins(std::vector<const dealii::ConstraintMatrix * > & constraintsVector,
 		                           const dealii::DoFHandler<3> &  dofHandler,
 			                   const dealii::ConstraintMatrix & constraintMatrix,
-			                   const std::map<unsigned int, double> & atoms,
 			                   std::vector<std::vector<double> > & atomLocations,
 			                   const std::vector<std::vector<double> > & imagePositions,
 			                   const std::vector<int> & imageIds,
@@ -728,7 +727,7 @@ namespace dftfe
 	  for (; cell!=endc; ++cell) {
 	    if (cell->is_locally_owned()){
 	      for (unsigned int i=0; i<vertices_per_cell; ++i){
-		const unsigned int nodeID=cell->vertex_dof_index(i,0);
+		const dealii::types::global_dof_index nodeID=cell->vertex_dof_index(i,0);
 		dealii::Point<3> feNodeGlobalCoord = cell->vertex(i);
 		//
 		//loop over all atoms to locate the corresponding nodes
@@ -750,9 +749,9 @@ namespace dftfe
 		      }
 		      if (locally_owned_dofs.is_element(nodeID)){
 			if(dftParameters::isPseudopotential)
-			  d_atomsInBin[iBin].insert(std::pair<unsigned int,double>(nodeID,d_atomLocations[chargeId][1]));
+			  d_atomsInBin[iBin].insert(std::pair<dealii::types::global_dof_index,double>(nodeID,d_atomLocations[chargeId][1]));
 			else
-			  d_atomsInBin[iBin].insert(std::pair<unsigned int,double>(nodeID,d_atomLocations[chargeId][0]));
+			  d_atomsInBin[iBin].insert(std::pair<dealii::types::global_dof_index,double>(nodeID,d_atomLocations[chargeId][0]));
 			if (dftParameters::verbosity==2)
 			   std::cout << " and added \n";
 		      }

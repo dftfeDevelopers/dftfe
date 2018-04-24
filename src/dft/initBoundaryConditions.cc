@@ -15,7 +15,7 @@
 //
 // @author Phani Motamarri, Shiva Rudraraju, Sambit Das
 //
-#include "applyTotalPotentialDirichletBC.cc"
+#include "applyHomogeneousDirichletBC.cc"
 #include "locatenodes.cc"
 
 #ifdef ENABLE_PERIODIC_BC
@@ -68,12 +68,9 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   d_constraintsForTotalPotential.reinit(locally_relevant_dofs);
 
 #ifdef ENABLE_PERIODIC_BC
-  locatePeriodicPinnedNodes();
+  locatePeriodicPinnedNodes(dofHandler,constraintsNone,d_constraintsForTotalPotential);
 #endif
-//#else
-  //VectorTools::interpolate_boundary_values(dofHandler, 0, ZeroFunction<3>(), d_constraintsForTotalPotential);
-  applyTotalPotentialDirichletBC();
-//#endif
+  applyHomogeneousDirichletBC(dofHandler,d_constraintsForTotalPotential);
   d_constraintsForTotalPotential.close ();
 
   //
@@ -85,14 +82,8 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   //clear existing constraints matrix vector
   d_constraintsVector.clear();
 
-  //
   //push back into Constraint Matrices
-  //
-#ifdef ENABLE_PERIODIC_BC
   d_constraintsVector.push_back(&constraintsNone);
-#else
-  d_constraintsVector.push_back(&constraintsNone);
-#endif
 
   d_constraintsVector.push_back(&d_constraintsForTotalPotential);
 
@@ -104,7 +95,6 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   d_vselfBinsManager.createAtomBins(d_constraintsVector,
 	                            dofHandler,
 				    constraintsNone,
-				    atoms,
 				    atomLocations,
 				    d_imagePositions,
 				    d_imageIds,
@@ -142,21 +132,15 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   forcePtr->d_forceDofHandlerIndex = dofHandlerVector.size()-1;
   d_constraintsVector.push_back(&(forcePtr->d_constraintsNoneForce));
 
-  std::vector<const ConstraintMatrix * > constraintsVectorTemp(d_constraintsVector.size());
-  for (unsigned int iconstraint=0; iconstraint< d_constraintsVector.size(); iconstraint++)
-  {
-     constraintsVectorTemp[iconstraint]=d_constraintsVector[iconstraint];
-  }
-  matrix_free_data.reinit(dofHandlerVector, constraintsVectorTemp, quadratureVector, additional_data);
-
+  matrix_free_data.reinit(dofHandlerVector, d_constraintsVector, quadratureVector, additional_data);
 
   //
   //locate atom core nodes
   //
-  locateAtomCoreNodes();
+  locateAtomCoreNodes(dofHandler,d_atomNodeIdToChargeMap);
 
   //compute volume of the domain
-  computeVolume();
+  d_domainVolume=computeVolume(dofHandler);
 
   //initialize eigen solve related object
   eigenPtr->init();

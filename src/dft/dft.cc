@@ -150,27 +150,25 @@ namespace internaldft
 }
 
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::computeVolume()
+double dftClass<FEOrder>::computeVolume(const dealii::DoFHandler<3> & _dofHandler)
 {
-  d_domainVolume=0;
+  double domainVolume=0;
   QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
-  FEValues<3> fe_values (FE, quadrature, update_JxW_values);
+  FEValues<3> fe_values (_dofHandler.get_fe(), quadrature, update_JxW_values);
 
-  typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
+  typename DoFHandler<3>::active_cell_iterator cell = _dofHandler.begin_active(), endc = _dofHandler.end();
   for (; cell!=endc; ++cell)
-    {
       if (cell->is_locally_owned())
 	{
 	  fe_values.reinit (cell);
 	  for (unsigned int q_point = 0; q_point < quadrature.size(); ++q_point)
-	    {
-	      d_domainVolume+=fe_values.JxW (q_point);
-	    }
+	      domainVolume+=fe_values.JxW (q_point);
 	}
-    }
-  d_domainVolume= Utilities::MPI::sum(d_domainVolume, mpi_communicator);
+
+  domainVolume= Utilities::MPI::sum(domainVolume, mpi_communicator);
   if (dftParameters::verbosity>=1)
-    pcout<< "Volume of the domain (Bohr^3): "<< d_domainVolume<<std::endl;
+    pcout<< "Volume of the domain (Bohr^3): "<< domainVolume<<std::endl;
+  return domainVolume;
 }
 
 template<unsigned int FEOrder>
@@ -590,7 +588,7 @@ void dftClass<FEOrder>::solve()
 	                            d_phiTotRhoIn,
 				    *d_constraintsVector[phiTotDofHandlerIndex],
                                     phiTotDofHandlerIndex,
-	                            atoms,
+	                            d_atomNodeIdToChargeMap,
 				    *rhoInValues);
 
 
@@ -799,7 +797,7 @@ void dftClass<FEOrder>::solve()
 	                            d_phiTotRhoOut,
 				    *d_constraintsVector[phiTotDofHandlerIndex],
                                     phiTotDofHandlerIndex,
-	                            atoms,
+	                            d_atomNodeIdToChargeMap,
 				    *rhoOutValues);
 
 

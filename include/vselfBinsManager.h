@@ -47,17 +47,15 @@ namespace dftfe {
 	 * matrices will be pushed back
          * @param dofHandler[in] DofHandler object
 	 * @param constraintMatrix[in] ConstraintMatrix which was used for the total electrostatics solve
-	 * @param atoms[in] global atoms charge data
-	 * @param atomLocations[in] global atom locations data
+	 * @param atomLocations[in] global atom locations and charge values data
 	 * @param imagePositions[in] image atoms positions data
 	 * @param imageIds[in] image atoms Ids data
 	 * @param imageCharges[in] image atoms charge values data
 	 * @param radiusAtomBall[in] self-potential ball radius
 	 */
-	 void createAtomBins(std::vector<dealii::ConstraintMatrix * > & constraintsVector,
+	 void createAtomBins(std::vector<const dealii::ConstraintMatrix * > & constraintsVector,
 		             const dealii::DoFHandler<3> & dofHandler,
 			     const dealii::ConstraintMatrix & constraintMatrix,
-			     const std::map<unsigned int, double> & atoms,
 			     std::vector<std::vector<double> > & atomLocations,
 			     const std::vector<std::vector<double> > & imagePositions,
 			     const std::vector<int> & imageIds,
@@ -142,7 +140,7 @@ namespace dftfe {
 	std::vector<vectorType> d_vselfFieldBins;
 
 	/// Map of locally relevant global dof index and the atomic charge in each bin
-	std::vector<std::map<unsigned int, double> > d_atomsInBin;
+	std::vector<std::map<dealii::types::global_dof_index, double> > d_atomsInBin;
 
         const MPI_Comm mpi_communicator;
         const unsigned int n_mpi_processes;

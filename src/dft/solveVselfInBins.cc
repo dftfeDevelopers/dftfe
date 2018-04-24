@@ -186,7 +186,7 @@ namespace dftfe
 	  //
 	  //store Vselfs for atoms in bin
 	  //
-	  for(std::map<unsigned int, double>::iterator it = d_atomsInBin[iBin].begin(); it != d_atomsInBin[iBin].end(); ++it)
+	  for(std::map<dealii::types::global_dof_index, double>::iterator it = d_atomsInBin[iBin].begin(); it != d_atomsInBin[iBin].end(); ++it)
 	    {
 	      std::vector<double> temp(2,0.0);
 	      temp[0] = it->second;//charge;

@@ -47,7 +47,7 @@ namespace dftfe {
 		     vectorType & x,
 		     const dealii::ConstraintMatrix & constraintMatrix,
 		     const unsigned int matrixFreeVectorComponent,
-	             const std::map<unsigned int, double> & atoms,
+	             const std::map<dealii::types::global_dof_index, double> & atoms,
 		     const std::map<dealii::CellId,std::vector<double> > & rhoValues);
 
 	/**
@@ -58,7 +58,7 @@ namespace dftfe {
 		     vectorType & x,
 		     const dealii::ConstraintMatrix & constraintMatrix,
 		     const unsigned int matrixFreeVectorComponent,
-	             const std::map<unsigned int, double> & atoms);
+	             const std::map<dealii::types::global_dof_index, double> & atoms);
 
 	/**
 	 * @brief get the reference to x field
@@ -143,7 +143,7 @@ namespace dftfe {
 	const std::map<dealii::CellId,std::vector<double> >* d_rhoValuesPtr;
 
 	/// pointer to map between global dof index in current processor and the atomic charge on that dof
-	const std::map<unsigned int, double> * d_atomsPtr;
+	const std::map<dealii::types::global_dof_index, double> * d_atomsPtr;
 
         const MPI_Comm mpi_communicator;
         const unsigned int n_mpi_processes;
