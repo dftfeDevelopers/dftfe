@@ -93,11 +93,13 @@ namespace internal {
                       const double totalkineticEnergy,
 		      const double totalexchangeEnergy,
 		      const double totalcorrelationEnergy,
-		      const double totalElectrostaticEnergy,
+		      const double originalTotalElectrostaticEnergy,
+		      const double pRefinedTotalElectrostaticEnergy,
 		      const double totalEnergy,
-		      const double totalEnergyPerAtom,
+		      const unsigned int numberAtoms,
 		      const ConditionalOStream & pcout,
-		      const bool reproducibleOutput)
+		      const bool reproducibleOutput,
+		      const bool pRefinedElectrostatics)
     {
 
       if (reproducibleOutput)
@@ -106,9 +108,9 @@ namespace internal {
           const double totalkineticEnergyTrunc  = std::floor(1000000000 * (totalkineticEnergy)) / 1000000000.0;
           const double totalexchangeEnergyTrunc  = std::floor(1000000000 * (totalexchangeEnergy)) / 1000000000.0;
           const double totalcorrelationEnergyTrunc  = std::floor(1000000000 * (totalcorrelationEnergy)) / 1000000000.0;
-          const double totalElectrostaticEnergyTrunc  = std::floor(1000000000 * (totalElectrostaticEnergy)) / 1000000000.0;
+          const double totalElectrostaticEnergyTrunc  = std::floor(1000000000 * (originalTotalElectrostaticEnergy)) / 1000000000.0;
           const double totalEnergyTrunc  = std::floor(1000000000 * (totalEnergy)) / 1000000000.0;
-          const double totalEnergyPerAtomTrunc  = std::floor(1000000000 * (totalEnergyPerAtom)) / 1000000000.0;
+          const double totalEnergyPerAtomTrunc  = std::floor(1000000000 * (totalEnergy/numberAtoms)) / 1000000000.0;
 
 	  pcout <<std::endl<< "Energy computations (Hartree) "<<std::endl;
 	  pcout << "-------------------"<<std::endl;
@@ -125,14 +127,23 @@ namespace internal {
 	  pcout<<std::endl;
 	  char bufferEnergy[200];
 	  pcout << "Energy computations (Hartree)\n";
-	  pcout << "-------------------\n";
-	  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Band energy", bandEnergy); pcout << bufferEnergy;
-	  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Kinetic energy", totalkineticEnergy); pcout << bufferEnergy;
-	  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Exchange energy", totalexchangeEnergy); pcout << bufferEnergy;
-	  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Correlation energy", totalcorrelationEnergy); pcout << bufferEnergy;
-	  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Electrostatic energy", totalElectrostaticEnergy); pcout << bufferEnergy;
-	  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Total energy", totalEnergy); pcout << bufferEnergy;
-	  sprintf(bufferEnergy, "%-24s:%25.16e\n", "Total energy per atom", totalEnergyPerAtom); pcout << bufferEnergy;
+	  pcout << "-------------------------------------------------------------------------------\n";
+	  sprintf(bufferEnergy, "%-52s:%25.16e\n", "Band energy", bandEnergy); pcout << bufferEnergy;
+	  sprintf(bufferEnergy, "%-52s:%25.16e\n", "Kinetic energy", totalkineticEnergy); pcout << bufferEnergy;
+	  sprintf(bufferEnergy, "%-52s:%25.16e\n", "Exchange energy", totalexchangeEnergy); pcout << bufferEnergy;
+	  sprintf(bufferEnergy, "%-52s:%25.16e\n", "Correlation energy", totalcorrelationEnergy); pcout << bufferEnergy;
+	  sprintf(bufferEnergy, "%-52s:%25.16e\n", "Electrostatic energy", originalTotalElectrostaticEnergy); pcout << bufferEnergy;
+	  sprintf(bufferEnergy, "%-52s:%25.16e\n", "Total energy", totalEnergy); pcout << bufferEnergy;
+	  sprintf(bufferEnergy, "%-52s:%25.16e\n", "Total energy per atom", totalEnergy/numberAtoms); pcout << bufferEnergy;
+
+	  if (pRefinedElectrostatics)
+	  {
+	     sprintf(bufferEnergy, "%-52s:%25.16e\n", "Electrostatic energy p refined", pRefinedTotalElectrostaticEnergy); pcout << bufferEnergy;
+	     const double newTotalEnergy=totalEnergy- originalTotalElectrostaticEnergy+pRefinedTotalElectrostaticEnergy;
+	     sprintf(bufferEnergy, "%-52s:%25.16e\n", "Total energy with p refined electrostatics", newTotalEnergy); pcout << bufferEnergy;
+	     sprintf(bufferEnergy, "%-52s:%25.16e\n", "Total energy per atom with p refined electrostatics", newTotalEnergy/numberAtoms); pcout << bufferEnergy;
+	  }
+	  pcout << "-------------------------------------------------------------------------------\n";
       }
 
     }
@@ -141,7 +152,7 @@ namespace internal {
 
 //compute energies
 template<unsigned int FEOrder>
-double dftClass<FEOrder>::compute_energy(const bool print)
+double dftClass<FEOrder>::compute_energy(const bool print,const bool pRefinedElectrostatics)
 {
   QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
   FEValues<3> fe_values (FE, quadrature, update_values | update_gradients | update_JxW_values);
@@ -234,12 +245,7 @@ double dftClass<FEOrder>::compute_energy(const bool print)
 		  potentialTimesRho+=(Veff*((*rhoOutValues)[cell->id()][q_point])+VxcGrad)*fe_values.JxW (q_point);
 		  exchangeEnergy+=(exchangeEnergyDensity[q_point])*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
 		  correlationEnergy+=(corrEnergyDensity[q_point])*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
-#ifdef ENABLE_PERIODIC_BC
 		  electrostaticEnergyTotPot+=0.5*(Vtot)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
-#else
-		  //electrostaticEnergyTotPot+=0.5*(Vtot+Vext)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
-		  electrostaticEnergyTotPot+=0.5*(Vtot)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
-#endif
 		}
 	    }
 	}
@@ -279,12 +285,7 @@ double dftClass<FEOrder>::compute_energy(const bool print)
 		  potentialTimesRho+=Veff*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW (q_point);
 		  exchangeEnergy+=(exchangeEnergyVal[q_point])*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
 		  correlationEnergy+=(corrEnergyVal[q_point])*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
-#ifdef ENABLE_PERIODIC_BC
 		  electrostaticEnergyTotPot+=0.5*(Vtot)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
-#else
-		  //electrostaticEnergyTotPot+=0.5*(Vtot+Vext)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
-		  electrostaticEnergyTotPot+=0.5*(Vtot)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
-#endif
 		}
 	    }
 	}
@@ -334,12 +335,13 @@ double dftClass<FEOrder>::compute_energy(const bool print)
   totalEnergy+=bandEnergy;
 
 
-#ifdef ENABLE_PERIODIC_BC
   totalEnergy+=totalNuclearElectrostaticEnergy;
-#else
-  totalEnergy+=totalNuclearElectrostaticEnergy;//repulsiveEnergy();
-#endif
 
+  const double originalAllElectronElectrostaticEnergy=
+      (totalelectrostaticEnergyPot+totalNuclearElectrostaticEnergy);
+
+  const double pRefinedAllElectronElectrostaticEnergy=
+      pRefinedElectrostatics?computeElectrostaticEnergyPRefined():originalAllElectronElectrostaticEnergy;
 
   double totalkineticEnergy=-totalpotentialTimesRho+bandEnergy;
 
@@ -350,11 +352,13 @@ double dftClass<FEOrder>::compute_energy(const bool print)
 		            totalkineticEnergy,
 		            totalexchangeEnergy,
 		            totalcorrelationEnergy,
-		            totalelectrostaticEnergyPot+totalNuclearElectrostaticEnergy,
+		            originalAllElectronElectrostaticEnergy,
+			    pRefinedAllElectronElectrostaticEnergy,
 		            totalEnergy,
-		            totalEnergy/((double) atomLocations.size()),
+		            atomLocations.size(),
 			    pcout,
-			    dftParameters::reproducible_output);
+			    dftParameters::reproducible_output,
+			    pRefinedElectrostatics);
   }
 
   return totalEnergy;
@@ -525,7 +529,7 @@ double dftClass<FEOrder>::repulsiveEnergy()
 }
 //compute energies
 template<unsigned int FEOrder>
-double dftClass<FEOrder>::compute_energy_spinPolarized(const bool print)
+double dftClass<FEOrder>::compute_energy_spinPolarized(const bool print, const bool pRefinedElectrostatics)
 {
   QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
   FEValues<3> fe_values (FE, quadrature, update_values | update_gradients | update_JxW_values);
@@ -639,11 +643,7 @@ double dftClass<FEOrder>::compute_energy_spinPolarized(const bool print)
 		  // quad rule
 		  exchangeEnergy+=(exchangeEnergyDensity[q_point])*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
 		  correlationEnergy+=(corrEnergyDensity[q_point])*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
-#ifdef ENABLE_PERIODIC_BC
 		  electrostaticEnergyTotPot+=0.5*(Vtot)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
-#else
-		  electrostaticEnergyTotPot+=0.5*(Vtot+Vext)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
-#endif
 		}
 	    }
 	}
@@ -689,14 +689,8 @@ double dftClass<FEOrder>::compute_energy_spinPolarized(const bool print)
 		  potentialTimesRho+=Veff*((*rhoOutValuesSpinPolarized)[cell->id()][2*q_point+1])*fe_values.JxW (q_point);
 		  //
 		  exchangeEnergy+=(exchangeEnergyVal[q_point])*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
-                  //exchangeEnergy+=(exchangeEnergyVal[2*q_point+1])*((*rhoOutValuesSpinPolarized)[cell->id()][2*q_point+1])*fe_values.JxW(q_point) ;
 		  correlationEnergy+=(corrEnergyVal[q_point])*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point) ;
-		  //correlationEnergy+=(corrEnergyVal[2*q_point+1])*((*rhoOutValuesSpinPolarized)[cell->id()][2*q_point+1])*fe_values.JxW(q_point);
-#ifdef ENABLE_PERIODIC_BC
 		  electrostaticEnergyTotPot+=0.5*(Vtot)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
-#else
-		  electrostaticEnergyTotPot+=0.5*(Vtot+Vext)*((*rhoOutValues)[cell->id()][q_point])*fe_values.JxW(q_point);
-#endif
 		}
 	    }
 	}
@@ -746,12 +740,13 @@ double dftClass<FEOrder>::compute_energy_spinPolarized(const bool print)
   totalEnergy+=bandEnergy;
 
 
-#ifdef ENABLE_PERIODIC_BC
   totalEnergy+=totalNuclearElectrostaticEnergy;
-#else
-  totalEnergy+=repulsiveEnergy();
-#endif
 
+  const double originalAllElectronElectrostaticEnergy=
+      (totalelectrostaticEnergyPot+totalNuclearElectrostaticEnergy);
+
+  const double pRefinedAllElectronElectrostaticEnergy=
+      pRefinedElectrostatics?computeElectrostaticEnergyPRefined():originalAllElectronElectrostaticEnergy;
 
   double totalkineticEnergy=-totalpotentialTimesRho+bandEnergy;
 
@@ -762,11 +757,13 @@ double dftClass<FEOrder>::compute_energy_spinPolarized(const bool print)
 		            totalkineticEnergy,
 		            totalexchangeEnergy,
 		            totalcorrelationEnergy,
-		            totalelectrostaticEnergyPot+totalNuclearElectrostaticEnergy,
+		            originalAllElectronElectrostaticEnergy,
+			    pRefinedAllElectronElectrostaticEnergy,
 		            totalEnergy,
-		            totalEnergy/((double) atomLocations.size()),
+		            atomLocations.size(),
 			    pcout,
-			    dftParameters::reproducible_output);
+			    dftParameters::reproducible_output,
+			    pRefinedElectrostatics);
   }
 
   return totalEnergy;

@@ -62,6 +62,7 @@ namespace dftfe {
 #include "mixingschemes.cc"
 #include "chebyshev.cc"
 #include "restart.cc"
+#include "electrostaticPRefinedEnergy.cc"
 
 
 //
@@ -230,12 +231,7 @@ void dftClass<FEOrder>::set()
   determineOrbitalFilling();
 
 #ifdef ENABLE_PERIODIC_BC
-  if (dftParameters::isIonForce || dftParameters::isCellStress)
-    AssertThrow(!dftParameters::useSymm,ExcMessage("USE GROUP SYMMETRY must be set to false if either ION FORCE or CELL STRESS is set to true. This functionality will be added in a future release"));
-  //readkPointData();
   generateMPGrid();
-  //if (useSymm)
-  //symmetryPtr->test_spg_get_ir_reciprocal_mesh() ;
 #else
   d_maxkPoints = 1;
   d_kPointCoordinates.resize(3*d_maxkPoints,0.0);
@@ -810,8 +806,8 @@ void dftClass<FEOrder>::solve()
 
 
       const double totalEnergy = dftParameters::spinPolarized==1 ?
-	compute_energy_spinPolarized(dftParameters::verbosity==2) :
-	compute_energy(dftParameters::verbosity==2);
+	compute_energy_spinPolarized(dftParameters::verbosity==2,false) :
+	compute_energy(dftParameters::verbosity==2,false);
       if (dftParameters::verbosity==1)
 	{
 	  pcout<<"Total energy  : " << totalEnergy << std::endl;
@@ -839,9 +835,9 @@ void dftClass<FEOrder>::solve()
   // compute and print ground state energy or energy after max scf iterations
   //
   if (dftParameters::spinPolarized==1)
-    compute_energy_spinPolarized(true);
+    compute_energy_spinPolarized(true,dftParameters::electrostaticMultigrid);
   else
-    compute_energy (true);
+    compute_energy (true,dftParameters::electrostaticMultigrid);
 
   computing_timer.exit_section("scf solve");
 

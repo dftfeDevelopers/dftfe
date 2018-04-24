@@ -276,4 +276,8 @@ namespace dftfe {
     template class poissonSolverProblem<10>;
     template class poissonSolverProblem<11>;
     template class poissonSolverProblem<12>;
+    template class poissonSolverProblem<13>;
+    template class poissonSolverProblem<14>;
+    template class poissonSolverProblem<15>;
+    template class poissonSolverProblem<16>;
 }
