@@ -55,7 +55,7 @@ namespace internal
 	    }
 
       //
-      //get nuclear electrostatic energy 0.5*sum_I*(phi_tot(RI) - VselfI(RI))
+      //get nuclear electrostatic energy 0.5*sum_I*(Z_I*phi_tot(RI) - VselfI(RI))
       //
 
       //First evaluate sum_I*(Z_I*phi_tot(RI)) on atoms belonging to current processor
