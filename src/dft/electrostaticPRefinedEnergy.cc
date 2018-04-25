@@ -77,7 +77,7 @@ namespace internal
 template<unsigned int FEOrder>
 double dftClass<FEOrder>::computeElectrostaticEnergyPRefined()
 {
-#define FEOrder_PRefined FEOrder+3
+#define FEOrder_PRefined FEOrder+2
    if (dftParameters::verbosity>=2)
         pcout<< std::endl<<"-----------------Re computing electrostatics on p refined mesh with polynomial order: "<<FEOrder_PRefined <<"---------------"<<std::endl;
    d_mesh.resetParallelMeshMovedToUnmoved();
