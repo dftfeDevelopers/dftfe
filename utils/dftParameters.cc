@@ -47,7 +47,7 @@ namespace dftParameters
   unsigned int verbosity=0; unsigned int chkType=0;
   bool restartFromChk=false;
   bool reproducible_output=false;
-  bool electrostaticMultigrid=false;
+  bool electrostaticsPRefinement=false;
 
 
   void declare_parameters(ParameterHandler &prm)
@@ -317,7 +317,7 @@ namespace dftParameters
 			  Patterns::Double(0,1.0),
 			  "[Developer] Relative tolerance as stopping criterion for Poisson problem convergence.");
 
-	prm.declare_entry("MULTIGRID", "false",
+	prm.declare_entry("P REFINEMENT", "false",
 			  Patterns::Bool(),
 			  "[Standard] Boolean parameter specifying whether to project the ground-state electron density to a p refined mesh, and solve for the electrostatic fields on the p refined mesh. This step is not performed for each SCF, but only at the ground-state. The purpose is to improve the accuracy of the ground-state electrostatic energy.");
     }
@@ -434,7 +434,7 @@ namespace dftParameters
     {
        dftParameters::maxLinearSolverIterations     = prm.get_integer("MAXIMUM ITERATIONS");
        dftParameters::relLinearSolverTolerance      = prm.get_double("TOLERANCE");
-       dftParameters::electrostaticMultigrid        = prm.get_bool("MULTIGRID");
+       dftParameters::electrostaticsPRefinement        = prm.get_bool("P REFINEMENT");
     }
     prm.leave_subsection ();
 
@@ -459,8 +459,8 @@ namespace dftParameters
 #ifdef ENABLE_PERIODIC_BC
     AssertThrow(dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ,ExcMessage("Incorrect executable: periodic executable being used for non-periodic problem."));
 
-    if (dftParameters::electrostaticMultigrid)
-       AssertThrow(!dftParameters::useSymm,ExcMessage("MULTIGRID=true is not yet extended to USE GROUP SYMMETRY=true case"));
+    if (dftParameters::electrostaticsPRefinement)
+       AssertThrow(!dftParameters::useSymm,ExcMessage("P REFINEMENT=true is not yet extended to USE GROUP SYMMETRY=true case"));
 
     if (dftParameters::isIonForce || dftParameters::isCellStress)
        AssertThrow(!dftParameters::useSymm,ExcMessage("USE GROUP SYMMETRY must be set to false if either ION FORCE or CELL STRESS is set to true. This functionality will be added in a future release"));

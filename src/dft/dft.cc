@@ -835,9 +835,9 @@ void dftClass<FEOrder>::solve()
   // compute and print ground state energy or energy after max scf iterations
   //
   if (dftParameters::spinPolarized==1)
-    compute_energy_spinPolarized(true,dftParameters::electrostaticMultigrid);
+    compute_energy_spinPolarized(true,dftParameters::electrostaticsPRefinement);
   else
-    compute_energy (true,dftParameters::electrostaticMultigrid);
+    compute_energy (true,dftParameters::electrostaticsPRefinement);
 
   computing_timer.exit_section("scf solve");
 
