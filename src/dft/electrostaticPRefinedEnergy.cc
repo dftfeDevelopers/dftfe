@@ -45,12 +45,7 @@ namespace internal
 	      fe_values.get_function_values(phiTotRhoOut,cellPhiTotRho);
 	      fe_values.get_function_values(phiExt,cellPhiExt);
 	      for(unsigned int q_point = 0; q_point < num_quad_points; ++q_point)
-		{
-		  // Vtot, Vext computet with rhoOut
-		  double Vtot=cellPhiTotRho[q_point];
-		  double Vext=cellPhiExt[q_point];
-		  electrostaticEnergyTotPot+=0.5*(Vtot)*(rhoValues.find(cell->id())->second[q_point])*fe_values.JxW(q_point);
-		}
+		  electrostaticEnergyTotPot+=0.5*cellPhiTotRho[q_point]*(rhoValues.find(cell->id())->second[q_point])*fe_values.JxW(q_point);
 
 	    }
 
@@ -81,7 +76,7 @@ double dftClass<FEOrder>::computeElectrostaticEnergyPRefined()
    if (dftParameters::verbosity>=2)
         pcout<< std::endl<<"-----------------Re computing electrostatics on p refined mesh with polynomial order: "<<FEOrder_PRefined <<"---------------"<<std::endl;
    d_mesh.resetParallelMeshMovedToUnmoved();
-   dealii::parallel::distributed::Triangulation<3> & tria = d_mesh.getParallelMeshMoved();
+   const dealii::parallel::distributed::Triangulation<3> & tria = d_mesh.getParallelMeshMoved();
 
    dealii::DoFHandler<3> dofHandlerPRefined;
    dofHandlerPRefined.initialize(tria,dealii::FE_Q<3>(dealii::QGaussLobatto<1>(FEOrder_PRefined+1)));
