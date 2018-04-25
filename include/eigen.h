@@ -57,7 +57,10 @@ namespace dftfe {
 						     std::vector<vectorType>       &dst);
 
       void init ();
-      void computeMassVector();
+      void computeMassVector(const dealii::DoFHandler<3> & dofHandler,
+	                     const dealii::ConstraintMatrix & constraintMatrix,
+			     vectorType & sqrtMassVec,
+			     vectorType & invSqrtMassVec);
       void computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoValues,
 		       const vectorType & phi,
 		       const vectorType & phiExt,
