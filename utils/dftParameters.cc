@@ -459,10 +459,11 @@ namespace dftParameters
 #ifdef ENABLE_PERIODIC_BC
     AssertThrow(dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ,ExcMessage("Incorrect executable: periodic executable being used for non-periodic problem."));
 
-    AssertThrow(dftParameters::electrostaticMultigrid && !dftParameters::useSymm,ExcMessage("MULTIGRID=true is not yet extended to USE GROUP SYMMETRY=true case"));
+    if (dftParameters::electrostaticMultigrid)
+       AssertThrow(!dftParameters::useSymm,ExcMessage("MULTIGRID=true is not yet extended to USE GROUP SYMMETRY=true case"));
 
-    AssertThrow((dftParameters::isIonForce || dftParameters::isCellStress) &&
-	    !dftParameters::useSymm,ExcMessage("USE GROUP SYMMETRY must be set to false if either ION FORCE or CELL STRESS is set to true. This functionality will be added in a future release"));
+    if (dftParameters::isIonForce || dftParameters::isCellStress)
+       AssertThrow(!dftParameters::useSymm,ExcMessage("USE GROUP SYMMETRY must be set to false if either ION FORCE or CELL STRESS is set to true. This functionality will be added in a future release"));
 #else
     AssertThrow(!(dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ),ExcMessage("Incorrect executable: non-periodic executable being used for periodic problem."));
 #endif

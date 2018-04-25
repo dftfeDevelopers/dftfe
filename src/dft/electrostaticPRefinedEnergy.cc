@@ -22,7 +22,6 @@ namespace internal
 	                             const dealii::QGauss<3> & quadrature,
 	                             const std::map<dealii::CellId, std::vector<double> > &rhoValues,
 				     const dealii::parallel::distributed::Vector<double> & phiTotRhoOut,
-				     const dealii::parallel::distributed::Vector<double> & phiExt,
 				     const std::vector<std::vector<double> > & localVselfs,
 				     const std::map<dealii::types::global_dof_index, double> & atoms)
    {
@@ -30,7 +29,6 @@ namespace internal
       const unsigned int num_quad_points = quadrature.size();
 
       std::vector<double> cellPhiTotRho(num_quad_points);
-      std::vector<double> cellPhiExt(num_quad_points);
       double electrostaticEnergyTotPot = 0.0;
 
 
@@ -43,7 +41,6 @@ namespace internal
 	       // Compute values for current cell.
 	      fe_values.reinit(cell);
 	      fe_values.get_function_values(phiTotRhoOut,cellPhiTotRho);
-	      fe_values.get_function_values(phiExt,cellPhiExt);
 	      for(unsigned int q_point = 0; q_point < num_quad_points; ++q_point)
 		  electrostaticEnergyTotPot+=0.5*cellPhiTotRho[q_point]*(rhoValues.find(cell->id())->second[q_point])*fe_values.JxW(q_point);
 
@@ -316,7 +313,6 @@ double dftClass<FEOrder>::computeElectrostaticEnergyPRefined()
 	                                    quadraturePRefined,
 	                                    rhoQuadRefinedMeshValues,
 				            phiTotRhoOutPRefined,
-				            phiExtPRefined,
 				            localVselfsPRefined,
 				            atomPRefinedNodeIdToChargeMap), mpi_communicator);
 }
