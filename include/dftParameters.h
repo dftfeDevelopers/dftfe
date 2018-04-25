@@ -56,7 +56,7 @@ namespace dftfe {
 
       extern bool reproducible_output;
 
-      extern bool electrostaticMultigrid;
+      extern bool electrostaticsPRefinement;
 
       /**
        * Declare parameters.

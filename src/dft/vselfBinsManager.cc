@@ -798,4 +798,8 @@ namespace dftfe
     template class vselfBinsManager<10>;
     template class vselfBinsManager<11>;
     template class vselfBinsManager<12>;
+    template class vselfBinsManager<13>;
+    template class vselfBinsManager<14>;
+    template class vselfBinsManager<15>;
+    template class vselfBinsManager<16>;
 }
