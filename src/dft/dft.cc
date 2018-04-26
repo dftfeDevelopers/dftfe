@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Shiva Rudraraju (2016), Phani Motamarri (2018), Sambit Das (2018)
+// @author Shiva Rudraraju, Phani Motamarri, Sambit Das
 //
 
 //Include header files
@@ -23,6 +23,7 @@
 #include <force.h>
 #include <poissonSolverProblem.h>
 #include <dealiiLinearSolver.h>
+#include <energyCalculator.h>
 #include <symmetry.h>
 #include <geoOptIon.h>
 #include <geoOptCell.h>
@@ -56,7 +57,7 @@ namespace dftfe {
 #include "generateImageCharges.cc"
 #endif
 #include "psiInitialGuess.cc"
-#include "energy.cc"
+#include "fermiEnergy.cc"
 #include "charge.cc"
 #include "density.cc"
 #include "mixingschemes.cc"
@@ -83,7 +84,6 @@ dftClass<FEOrder>::dftClass(const MPI_Comm &mpi_comm_replica,const MPI_Comm &_in
   numElectrons(0),
   numLevels(0),
   d_maxkPoints(1),
-  integralRhoValue(0),
   d_mesh(mpi_comm_replica,_interpoolcomm),
   d_affineTransformMesh(mpi_comm_replica),
   d_vselfBinsManager(mpi_comm_replica),
@@ -501,6 +501,8 @@ void dftClass<FEOrder>::solve()
 	                              d_localVselfs);
   computing_timer.exit_section("vself solve");
 
+  energyCalculator energyCalc(mpi_communicator, interpoolcomm);
+
   //
   //solve
   //
@@ -779,8 +781,9 @@ void dftClass<FEOrder>::solve()
       //
       //compute integral rhoOut
       //
-      integralRhoValue=totalCharge(rhoOutValues);
-
+      const double integralRhoValue=totalCharge(rhoOutValues);
+      if (dftParameters::verbosity==2)
+	pcout<< std::endl<<"number of electrons: "<< integralRhoValue<<std::endl;
       //
       //phiTot with rhoOut
       //
@@ -804,10 +807,52 @@ void dftClass<FEOrder>::solve()
 
       computing_timer.exit_section("phiTot solve");
 
-
-      const double totalEnergy = dftParameters::spinPolarized==1 ?
-	compute_energy_spinPolarized(dftParameters::verbosity==2,false) :
-	compute_energy(dftParameters::verbosity==2,false);
+      QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
+      const double totalEnergy = dftParameters::spinPolarized==0 ?
+	   energyCalc.computeEnergy(dofHandler,
+		                    dofHandler,
+				     quadrature,
+				     quadrature,
+				     eigenValues,
+				     d_kPointWeights,
+				     fermiEnergy,
+				     funcX,
+				     funcC,
+				     d_phiTotRhoIn,
+				     d_phiTotRhoOut,
+				     *rhoInValues,
+				     *rhoOutValues,
+				     *rhoOutValues,
+				     *gradRhoInValues,
+				     *gradRhoOutValues,
+				     d_localVselfs,
+				     d_atomNodeIdToChargeMap,
+				     atomLocations.size(),
+				     dftParameters::verbosity==2) :
+	   energyCalc.computeEnergySpinPolarized(dofHandler,
+		                                dofHandler,
+						quadrature,
+						quadrature,
+						eigenValues,
+						d_kPointWeights,
+						fermiEnergy,
+						funcX,
+						funcC,
+						d_phiTotRhoIn,
+						d_phiTotRhoOut,
+						*rhoInValues,
+						*rhoOutValues,
+						*rhoOutValues,
+						*gradRhoInValues,
+						*gradRhoOutValues,
+						*rhoInValuesSpinPolarized,
+						*rhoOutValuesSpinPolarized,
+						*gradRhoInValuesSpinPolarized,
+						*gradRhoOutValuesSpinPolarized,
+						d_localVselfs,
+						d_atomNodeIdToChargeMap,
+						atomLocations.size(),
+						dftParameters::verbosity==2);
       if (dftParameters::verbosity==1)
 	{
 	  pcout<<"Total energy  : " << totalEnergy << std::endl;
@@ -834,10 +879,52 @@ void dftClass<FEOrder>::solve()
   //
   // compute and print ground state energy or energy after max scf iterations
   //
-  if (dftParameters::spinPolarized==1)
-    compute_energy_spinPolarized(true,dftParameters::electrostaticsPRefinement);
-  else
-    compute_energy (true,dftParameters::electrostaticsPRefinement);
+  QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
+  const double totalEnergy = dftParameters::spinPolarized==0 ?
+       energyCalc.computeEnergy(dofHandler,
+	                        dofHandler,
+				 quadrature,
+				 quadrature,
+				 eigenValues,
+				 d_kPointWeights,
+				 fermiEnergy,
+				 funcX,
+				 funcC,
+				 d_phiTotRhoIn,
+				 d_phiTotRhoOut,
+				 *rhoInValues,
+				 *rhoOutValues,
+				 *rhoOutValues,
+				 *gradRhoInValues,
+				 *gradRhoOutValues,
+				 d_localVselfs,
+				 d_atomNodeIdToChargeMap,
+				 atomLocations.size(),
+				 true) :
+       energyCalc.computeEnergySpinPolarized(dofHandler,
+	                                    dofHandler,
+					    quadrature,
+					    quadrature,
+					    eigenValues,
+					    d_kPointWeights,
+					    fermiEnergy,
+					    funcX,
+					    funcC,
+					    d_phiTotRhoIn,
+					    d_phiTotRhoOut,
+					    *rhoInValues,
+					    *rhoOutValues,
+					    *rhoOutValues,
+					    *gradRhoInValues,
+					    *gradRhoOutValues,
+					    *rhoInValuesSpinPolarized,
+					    *rhoOutValuesSpinPolarized,
+					    *gradRhoInValuesSpinPolarized,
+					    *gradRhoOutValuesSpinPolarized,
+					    d_localVselfs,
+					    d_atomNodeIdToChargeMap,
+					    atomLocations.size(),
+					    true);
 
   computing_timer.exit_section("scf solve");
 
@@ -858,6 +945,8 @@ void dftClass<FEOrder>::solve()
       computing_timer.exit_section("cell stress");
     }
 #endif
+    if (dftParameters::electrostaticsPRefinement)
+	computeElectrostaticEnergyPRefined();
 }
 
 //Output

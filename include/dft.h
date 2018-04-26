@@ -272,25 +272,18 @@ namespace dftfe {
       double mixing_simple_spinPolarized();
       double mixing_anderson_spinPolarized();
 
-      /**
-       * Computes ground-state energy in a given SCF iteration,
-       * computes repulsive energy explicity for a non-periodic system
-       */
-      double compute_energy(const bool print, const bool pRefinedElectrostatics);
-      double compute_energy_spinPolarized(const bool print, const bool pRefinedElectrostatics);
       double repulsiveEnergy();
 
       /**
-       * Re solves the all electron electrostatics on a p refined mesh, and computes
-       * the all electron electrostatic energy. This function
+       * Re solves the all electrostatics on a p refined mesh, and computes
+       * the corresponding energy. This function
        * is called after reaching the ground state electron density. Currently the p refinement
        * is hardcoded to FEOrder+2.
        * FIXME: The function is not yet extened to the case when point group symmetry is used.
        * However, it works for time reversal symmetry.
        *
-       * @return all electron electrostatics energy computed on the p refined mesh
        */
-      double computeElectrostaticEnergyPRefined();
+      void computeElectrostaticEnergyPRefined();
 
       /**
        * Computes Fermi-energy obtained by imposing constraint on the number of electrons
@@ -523,9 +516,6 @@ namespace dftfe {
        * isCellOpt is true
        */
       void recomputeKPointCoordinates();
-
-      /// integralRhoOut to store number of electrons
-      double integralRhoValue;
 
       /// fermi energy
       double fermiEnergy;

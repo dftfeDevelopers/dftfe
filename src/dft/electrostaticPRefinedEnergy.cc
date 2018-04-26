@@ -16,58 +16,9 @@
 // @author Sambit Das
 //
 
-namespace internal
-{
-   double computeLocalAllElectronElectroStaticEnergy(const dealii::DoFHandler<3> & dofHandler,
-	                             const dealii::QGauss<3> & quadrature,
-	                             const std::map<dealii::CellId, std::vector<double> > &rhoValues,
-				     const dealii::parallel::distributed::Vector<double> & phiTotRhoOut,
-				     const std::vector<std::vector<double> > & localVselfs,
-				     const std::map<dealii::types::global_dof_index, double> & atoms)
-   {
-      dealii::FEValues<3> fe_values (dofHandler.get_fe(), quadrature, dealii::update_values | dealii::update_JxW_values);
-      const unsigned int num_quad_points = quadrature.size();
-
-      std::vector<double> cellPhiTotRho(num_quad_points);
-      double electrostaticEnergyTotPot = 0.0;
-
-
-      //parallel loop over all elements
-      typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
-
-      for(; cell!=endc; ++cell)
-	  if(cell->is_locally_owned())
-	    {
-	       // Compute values for current cell.
-	      fe_values.reinit(cell);
-	      fe_values.get_function_values(phiTotRhoOut,cellPhiTotRho);
-	      for(unsigned int q_point = 0; q_point < num_quad_points; ++q_point)
-		  electrostaticEnergyTotPot+=0.5*cellPhiTotRho[q_point]*(rhoValues.find(cell->id())->second[q_point])*fe_values.JxW(q_point);
-
-	    }
-
-      //
-      //get nuclear electrostatic energy 0.5*sum_I*(Z_I*phi_tot(RI) - VselfI(RI))
-      //
-
-      //First evaluate sum_I*(Z_I*phi_tot(RI)) on atoms belonging to current processor
-      double phiContribution = 0.0,vSelfContribution=0.0;
-      for (std::map<dealii::types::global_dof_index, double>::const_iterator it=atoms.begin(); it!=atoms.end(); ++it)
-	  phiContribution += (-it->second)*phiTotRhoOut(it->first);//-charge*potential
-
-      //Then evaluate sum_I*(Z_I*Vself_I(R_I)) on atoms belonging to current processor
-      for(unsigned int i = 0; i < localVselfs.size(); ++i)
-	  vSelfContribution += (-localVselfs[i][0])*(localVselfs[i][1]);//-charge*potential
-
-      const double nuclearElectrostaticEnergy = 0.5*(phiContribution - vSelfContribution);
-
-      return electrostaticEnergyTotPot + nuclearElectrostaticEnergy;
-   }
-
-}
 
 template<unsigned int FEOrder>
-double dftClass<FEOrder>::computeElectrostaticEnergyPRefined()
+void dftClass<FEOrder>::computeElectrostaticEnergyPRefined()
 {
 #define FEOrder_PRefined FEOrder+2
    if (dftParameters::verbosity>=2)
@@ -195,12 +146,12 @@ double dftClass<FEOrder>::computeElectrostaticEnergyPRefined()
    dealii::FEValues<3> fe_values (dofHandlerEigen.get_fe(), quadraturePRefined, dealii::update_values | dealii::update_gradients);
    const unsigned int num_quad_points = quadraturePRefined.size();
 
-   std::map<dealii::CellId, std::vector<double> > rhoQuadRefinedMeshValues;
+   std::map<dealii::CellId, std::vector<double> > rhoOutPRefinedQuadValues;
    typename dealii::DoFHandler<3>::active_cell_iterator cellOld = dofHandlerEigen.begin_active(), endcOld = dofHandlerEigen.end();
    for(; cellOld!=endcOld; ++cellOld)
       if(cellOld->is_locally_owned())
       {
-	  rhoQuadRefinedMeshValues[cellOld->id()] = std::vector<double>(num_quad_points);
+	  rhoOutPRefinedQuadValues[cellOld->id()] = std::vector<double>(num_quad_points);
 
 	  fe_values.reinit (cellOld);
 #ifdef ENABLE_PERIODIC_BC
@@ -271,7 +222,7 @@ double dftClass<FEOrder>::computeElectrostaticEnergyPRefined()
 
 	      // gather density from all pools
 	      int numPoint = num_quad_points ;
-              MPI_Allreduce(&rhoTemp[0], &rhoQuadRefinedMeshValues[cellOld->id()][0], numPoint, MPI_DOUBLE, MPI_SUM, interpoolcomm) ;
+              MPI_Allreduce(&rhoTemp[0], &rhoOutPRefinedQuadValues[cellOld->id()][0], numPoint, MPI_DOUBLE, MPI_SUM, interpoolcomm) ;
       }//cell locally owned loop
 
    //solve vself in bins on p refined mesh
@@ -298,7 +249,7 @@ double dftClass<FEOrder>::computeElectrostaticEnergyPRefined()
 				*matrixFreeConstraintsInputVector[phiTotDofHandlerIndexPRefined],
                                 phiTotDofHandlerIndexPRefined,
 	                        atomPRefinedNodeIdToChargeMap,
-				rhoQuadRefinedMeshValues);
+				rhoOutPRefinedQuadValues);
 
    if (dftParameters::verbosity==2)
         pcout<< std::endl<<"Solving for total electrostatic potential (rhoIn+b) on p refined mesh: ";
@@ -307,12 +258,55 @@ double dftClass<FEOrder>::computeElectrostaticEnergyPRefined()
 			dftParameters::maxLinearSolverIterations,
 			dftParameters::verbosity);
 
-   //recompute all elctron electrostatic energy
-   return Utilities::MPI::sum(internal::computeLocalAllElectronElectroStaticEnergy
-                                           (dofHandlerPRefined,
-	                                    quadraturePRefined,
-	                                    rhoQuadRefinedMeshValues,
-				            phiTotRhoOutPRefined,
+  energyCalculator energyCalcPRefined(mpi_communicator, interpoolcomm);
+
+  QGauss<3>  quadratureElectronic(C_num1DQuad<FEOrder>());
+
+  const double totalEnergy = dftParameters::spinPolarized==0 ?
+       energyCalcPRefined.computeEnergy(dofHandlerPRefined,
+	                         dofHandler,
+				 quadraturePRefined,
+				 quadratureElectronic,
+				 eigenValues,
+				 d_kPointWeights,
+				 fermiEnergy,
+				 funcX,
+				 funcC,
+				 d_phiTotRhoIn,
+				 phiTotRhoOutPRefined,
+				 *rhoInValues,
+				 *rhoOutValues,
+				 rhoOutPRefinedQuadValues,
+				 *gradRhoInValues,
+				 *gradRhoOutValues,
+				 localVselfsPRefined,
+				 atomPRefinedNodeIdToChargeMap,
+				 atomLocations.size(),
+				 true) :
+       energyCalcPRefined.computeEnergySpinPolarized(dofHandlerPRefined,
+	                                    dofHandler,
+					    quadraturePRefined,
+					    quadratureElectronic,
+					    eigenValues,
+					    d_kPointWeights,
+					    fermiEnergy,
+					    funcX,
+					    funcC,
+					    d_phiTotRhoIn,
+					    phiTotRhoOutPRefined,
+					    *rhoInValues,
+					    *rhoOutValues,
+					    rhoOutPRefinedQuadValues,
+					    *gradRhoInValues,
+					    *gradRhoOutValues,
+					    *rhoInValuesSpinPolarized,
+					    *rhoOutValuesSpinPolarized,
+					    *gradRhoInValuesSpinPolarized,
+					    *gradRhoOutValuesSpinPolarized,
 				            localVselfsPRefined,
-				            atomPRefinedNodeIdToChargeMap), mpi_communicator);
+				            atomPRefinedNodeIdToChargeMap,
+					    atomLocations.size(),
+					    true);
+
+
 }
