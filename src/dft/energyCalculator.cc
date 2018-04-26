@@ -88,7 +88,6 @@ namespace dftfe
 			       const unsigned int verbosity)
 	{
 	  double bandEnergyLocal=0.0;
-	  double partialOccupancy, factor;
 	  for(unsigned int kPoint = 0; kPoint < kPointWeights.size(); ++kPoint)
 	    {
 	      if (verbosity==2)
@@ -122,7 +121,7 @@ namespace dftfe
 	  //
 	  //Then evaluate sum_I*(Z_I*Vself_I(R_I)) on atoms belonging to current processor
 	  //
-	  for(int i = 0; i < localVselfs.size(); ++i)
+	  for(unsigned int i = 0; i < localVselfs.size(); ++i)
 	      vSelfContribution += (-localVselfs[i][0])*(localVselfs[i][1]);//-charge*potential
 
 	  return 0.5*(phiContribution - vSelfContribution);
@@ -223,13 +222,11 @@ namespace dftfe
 	    {
 	      // Compute values for current cell.
 	      feValuesElectrostatic.reinit (cellElectrostatic);
-	      //feValuesElectrostatic.get_function_values(phiTotRhoIn,cellPhiTotRhoIn);
 	      feValuesElectrostatic.get_function_values(phiTotRhoOut,cellPhiTotRhoOut);
 
 	      feValuesElectronic.reinit (cellElectronic);
 	      feValuesElectronic.get_function_values(phiTotRhoIn,cellPhiTotRhoIn);
 
-	      // Compute electronic part
 	      if(dftParameters::xc_id == 4)
 	      {
 		  // Get exc
@@ -317,14 +314,8 @@ namespace dftfe
 		    }
 		}
 
-                //Compute electrostatic part
 	        for (unsigned int q_point = 0; q_point < num_quad_points_electrostatic; ++q_point)
-		{
-
-		  //electrostaticPotentialTimesRho+=cellPhiTotRhoIn[q_point]*(rhoOutValuesElectrostatic.find(cellElectrostatic->id())->second[q_point])*feValuesElectrostatic.JxW (q_point);
-
 		  electrostaticEnergyTotPot+=0.5*(cellPhiTotRhoOut[q_point])*(rhoOutValuesElectrostatic.find(cellElectrostatic->id())->second[q_point])*feValuesElectrostatic.JxW(q_point);
-		}
 	}
 
       const double potentialTimesRho=excCorrPotentialTimesRho+electrostaticPotentialTimesRho;
@@ -434,7 +425,6 @@ namespace dftfe
 	    {
 	      // Compute values for current cell.
 	      feValuesElectrostatic.reinit (cellElectrostatic);
-	      //feValuesElectrostatic.get_function_values(phiTotRhoIn,cellPhiTotRhoIn);
 	      feValuesElectrostatic.get_function_values(phiTotRhoOut,cellPhiTotRhoOut);
 
 	      feValuesElectronic.reinit (cellElectronic);
@@ -546,14 +536,8 @@ namespace dftfe
 		    }
 		}
 
-                //Compute electrostatic part
 	        for (unsigned int q_point = 0; q_point < num_quad_points_electrostatic; ++q_point)
-		{
-
-		  //electrostaticPotentialTimesRho+=cellPhiTotRhoIn[q_point]*(rhoOutValuesElectrostatic.find(cellElectrostatic->id())->second[q_point])*feValuesElectrostatic.JxW (q_point);
-
 		  electrostaticEnergyTotPot+=0.5*(cellPhiTotRhoOut[q_point])*(rhoOutValuesElectrostatic.find(cellElectrostatic->id())->second[q_point])*feValuesElectrostatic.JxW(q_point);
-		}
 	}
 
       const double potentialTimesRho=excCorrPotentialTimesRho+electrostaticPotentialTimesRho;
