@@ -128,7 +128,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyPRefined()
    matrixFreeConstraintsInputVector.push_back(&onlyHangingNodeConstraints);
 
    std::vector<Quadrature<1> > quadratureVector;
-   quadratureVector.push_back(QGauss<1>(FEOrder_PRefined+1));
+   quadratureVector.push_back(QGauss<1>(C_num1DQuad<FEOrder_PRefined>()));
 
    dealii::MatrixFree<3,double> matrixFreeDataPRefined;
 
@@ -142,7 +142,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyPRefined()
    locateAtomCoreNodes(dofHandlerPRefined,atomPRefinedNodeIdToChargeMap);
 
    //compute p refined quad density values from original eigenvectors (not p refined)
-   dealii::QGauss<3>  quadraturePRefined(FEOrder_PRefined+1);
+   dealii::QGauss<3>  quadraturePRefined(C_num1DQuad<FEOrder_PRefined>());
    dealii::FEValues<3> fe_values (dofHandlerEigen.get_fe(), quadraturePRefined, dealii::update_values | dealii::update_gradients);
    const unsigned int num_quad_points = quadraturePRefined.size();
 

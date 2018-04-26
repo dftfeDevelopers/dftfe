@@ -272,8 +272,6 @@ namespace dftfe {
       double mixing_simple_spinPolarized();
       double mixing_anderson_spinPolarized();
 
-      double repulsiveEnergy();
-
       /**
        * Re solves the all electrostatics on a p refined mesh, and computes
        * the corresponding energy. This function

@@ -21,6 +21,7 @@
 #include <dftParameters.h>
 #include <energyCalculator.h>
 #include <constants.h>
+#include <dftUtils.h>
 
 namespace dftfe
 {
@@ -50,13 +51,7 @@ namespace dftfe
 
 	      pcout <<std::endl<< "Energy computations (Hartree) "<<std::endl;
 	      pcout << "-------------------"<<std::endl;
-	      //pcout<<std::setw(25)<<"Band energy"<<": "<<std::fixed<<std::setprecision(8)<<std::setw(20) <<bandEnergyTrunc<< std::endl;
-	      //pcout<<std::setw(25)<<"Kinetic energy"<<": " <<std::fixed<<std::setprecision(8)<<std::setw(20)<<totalkineticEnergyTrunc<<std::endl;
-	      //pcout<<std::setw(25)<<"Exchange energy"<<": "<<std::fixed<<std::setprecision(8)<<std::setw(20)<< totalexchangeEnergyTrunc<< std::endl;
-	      //pcout<<std::setw(25)<<"Correlation energy"<<": "<<std::fixed<<std::setprecision(8)<<std::setw(20)<<totalcorrelationEnergyTrunc<<std::endl;
-	      //pcout<<std::setw(25)<<"Electrostatic energy"<<": "<<std::fixed<<std::setprecision(8)<<std::setw(20)<< totalElectrostaticEnergyTrunc<<std::endl;
 	      pcout<<std::setw(25)<<"Total energy"<<": "<<std::fixed<<std::setprecision(8)<<std::setw(20)<<totalEnergyTrunc<< std::endl;
-	      //pcout<<std::setw(25)<<"Total energy per atom"<<": "<< std::fixed<<std::setprecision(8)<<std::setw(20)<<totalEnergyPerAtomTrunc <<std::endl;
 	  }
 	  else
 	  {
@@ -100,9 +95,11 @@ namespace dftfe
 		 pcout << "kPoint: "<< kPoint <<std::endl;
 	      for (unsigned int i=0; i<eigenValues[0].size(); i++)
 		{
-		  factor=(eigenValues[kPoint][i]-fermiEnergy)/(C_kb*TVal);
-		  //partialOccupancy=1.0/(1.0+exp(temp));
-		  double partialOccupancy = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)) : 1.0/(1.0 + std::exp(factor));
+                  const double partialOccupancy=dftUtils::getPartialOccupancy
+                                                    (eigenValues[kPoint][i],
+                                                     fermiEnergy,
+                                                     C_kb,
+                                                     TVal);
 		  bandEnergyLocal+= (2-spinPolarized)*partialOccupancy*kPointWeights[kPoint]*eigenValues[kPoint][i];
 		  if (verbosity==2)
 		     pcout<<"fractional occupancy "<< i<<": "<< partialOccupancy<<std::endl;
