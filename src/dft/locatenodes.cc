@@ -94,6 +94,10 @@ void dftClass<FEOrder>::locatePeriodicPinnedNodes(const dealii::DoFHandler<3> & 
 	                                          const dealii::ConstraintMatrix & constraintsBase,
 	                                          dealii::ConstraintMatrix & constraints)
 {
+  // pin a node away from all atoms in case of full PBC for total electrostatic potential solve
+  if (!(dftParameters::periodicX && dftParameters::periodicY && dftParameters::periodicZ))
+      return;
+
   TimerOutput::Scope scope (computing_timer,"locate periodic pinned node");
   const int numberImageCharges = d_imageIds.size();
   const int numberGlobalAtoms = atomLocations.size();
