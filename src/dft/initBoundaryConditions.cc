@@ -68,7 +68,9 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   d_constraintsForTotalPotential.reinit(locally_relevant_dofs);
 
 #ifdef ENABLE_PERIODIC_BC
-  locatePeriodicPinnedNodes(dofHandler,constraintsNone,d_constraintsForTotalPotential);
+  // pin a node away from all atoms in case of full PBC for total electrostatic potential solve
+  if (dftParameters::periodicX && dftParameters::periodicY && dftParameters::periodicZ)
+     locatePeriodicPinnedNodes(dofHandler,constraintsNone,d_constraintsForTotalPotential);
 #endif
   applyHomogeneousDirichletBC(dofHandler,d_constraintsForTotalPotential);
   d_constraintsForTotalPotential.close ();
