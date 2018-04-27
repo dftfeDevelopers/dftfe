@@ -22,23 +22,16 @@
 #include "dftParameters.h"
 #include "eigen.h"
 
-/**
- * @brief Concrete class implementing Chebyshev filtered orthogonalized subspace
- * iteration solver.
- */
+
 namespace dftfe{
+
+  /**
+   * @brief Concrete class implementing Chebyshev filtered orthogonalized subspace
+   * iteration solver.
+   */
 
   class chebyshevOrthogonalizedSubspaceIterationSolver : public eigenSolverClass {
   
-    //
-    // types
-    //
-  public:
-
-    //
-    // methods
-    //
-  public:
 
     /**
      * @brief Constructor.
@@ -47,10 +40,6 @@ namespace dftfe{
      * @param lowerBoundUnWantedSpectrum Lower Bound of the UnWanted Spectrum.
      * @param numberEigenvalues Number of smallest eigenvalues to be
      * solved for.
-     * @param verbosityLevel Debug output level:
-     *                   0 - very limited debug output
-     *                   1 - limited debug output
-     *                   2 - all debug output.
      */
     chebyshevOrthogonalizedSubspaceIterationSolver(double lowerBoundWantedSpectrum,
 						   double lowerBoundUnWantedSpectrum,
@@ -65,7 +54,7 @@ namespace dftfe{
     /**
      * @brief Solve a generalized eigen problem. 
      */
-    eigenSolverClass::ReturnValueType solve(operatorClass * operatorMatrix,
+    eigenSolverClass::ReturnValueType solve(operatorDFTClass * operatorMatrix,
 					    std::vector<vectorType> & eigenVectors,
 					    std::vector<double> & eigenValues);
 
@@ -75,13 +64,26 @@ namespace dftfe{
     void reinitSpectrumBounds(double lowerBoundWantedSpectrum,
 			      double lowerBoundUnWantedSpectrum);
   
-    //
-    //data
-    //
+   
   private:
+    //
+    //stores lower bound of wanted spectrum
+    //
     double d_lowerBoundWantedSpectrum;
+
+    //
+    //stores lower bound of unwanted spectrum
+    //
     double d_lowerBoundUnWantedSpectrum;
+
+    //
+    //stores eigenvalues after the chebyshev subspace iteration procedure
+    //
     const unsigned int d_numberEigenValues;
+
+    //
+    //variables for printing out and timing
+    //
     dealii::ConditionalOStream   pcout;
     TimerOutput computing_timer;
   };

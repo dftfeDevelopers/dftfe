@@ -40,8 +40,8 @@ namespace dftfe{
       void dsyevd_(char* jobz, char* uplo, int* n, double* A, int *lda, double* w, double* work, int* lwork, int* iwork, int* liwork, int* info);
       void zgemm_(const char* transA, const char* transB, const int *m, const int *n, const int *k, const std::complex<double> *alpha, const std::complex<double> *A, const int *lda, const std::complex<double> *B, const int *ldb, const std::complex<double> *beta, std::complex<double> *C, const int *ldc);
       void zheevd_(char *jobz, char *uplo,int *n,std::complex<double> *A,int *lda,double *w,std::complex<double> *work,int *lwork,double *rwork,int *lrwork,int *iwork,int *liwork,int *info);
-      void zdotc_(std::complex<double> *C,int *N,const std::complex<double> *X,int *INCX,const std::complex<double> *Y,int *INCY);
-      void zaxpy_(int *n,std::complex<double> *alpha,std::complex<double> *x,int *incx,std::complex<double> *y,int *incy);
+      void zdotc_(std::complex<double> *C,const int *N,const std::complex<double> *X,const int *INCX,const std::complex<double> *Y,const int *INCY);
+      void zaxpy_(const int *n,std::complex<double> *alpha,std::complex<double> *x,const int *incx,std::complex<double> *y,const int *incy);
     }
 
 
@@ -54,7 +54,7 @@ namespace dftfe{
      *  @param  vect A dummy vector  
      *  @return double An estimate of the upper bound of the given matrix
      */
-    double lanczosUpperBoundEigenSpectrum(operatorClass * operatorMatrix,
+    double lanczosUpperBoundEigenSpectrum(operatorDFTClass * operatorMatrix,
 					  const vectorType    & vect);
 
 
@@ -68,7 +68,7 @@ namespace dftfe{
      *  @param  a0 lower bound of wanted spectrum
      *  @return X In-place update of the given subspace 
      */
-    void chebyshevFilter(operatorClass * operatorMatrix,
+    void chebyshevFilter(operatorDFTClass * operatorMatrix,
 			 std::vector<vectorType> & X,
 			 const unsigned int m,
 			 const double a,
@@ -83,7 +83,7 @@ namespace dftfe{
      *
      *  @return X In-place update of the given subspace 
      */
-    void gramSchmidtOrthogonalization(operatorClass * operatorMatrix,
+    void gramSchmidtOrthogonalization(operatorDFTClass * operatorMatrix,
 				      std::vector<vectorType> & X);
 
 
@@ -96,7 +96,7 @@ namespace dftfe{
      *  @return X In-place rotated subspace
      *  @return eigenValues of the Projected Hamiltonian
      */
-    void rayleighRitz(operatorClass           * operatorMatrix,
+    void rayleighRitz(operatorDFTClass           * operatorMatrix,
 		      std::vector<vectorType> & X,
 		      std::vector<double>     & eigenValues);
 

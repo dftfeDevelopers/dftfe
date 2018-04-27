@@ -17,7 +17,7 @@
 //
 template<unsigned int FEOrder>
 void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vectorType> &src,
-							   std::vector<vectorType>       &dst)
+							   std::vector<vectorType>       &dst) const
 {
 
   //

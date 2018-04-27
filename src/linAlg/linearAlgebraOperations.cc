@@ -32,7 +32,7 @@ namespace dftfe{
 namespace linearAlgebraOperations
 {
 #ifdef ENABLE_PERIODIC_BC
-  std::complex<double> innerProduct(operatorClass * operatorMatrix,
+  std::complex<double> innerProduct(operatorDFTClass * operatorMatrix,
 				    const vectorType & X,
 				    const vectorType & Y)
   {
@@ -67,8 +67,8 @@ namespace linearAlgebraOperations
 	ylocal[i].imag(yImag[i]);
       }
 
-    int inc = 1;
-    int n = dofs_per_proc;
+    const int inc = 1;
+    const int n = dofs_per_proc;
 
     std::complex<double>  localInnerProduct;
 
@@ -91,12 +91,12 @@ namespace linearAlgebraOperations
     return returnValue;
   }
 
-  void  alphaTimesXPlusY(operatorClass * operatorMatrix,
+  void  alphaTimesXPlusY(operatorDFTClass * operatorMatrix,
 			 std::complex<double> & alpha,
 			 vectorType & x,
 			 vectorType & y)
   {
-    unsigned int dofs_per_proc = x.local_size()/2; 
+    const unsigned int dofs_per_proc = x.local_size()/2; 
     std::vector<double> xReal(dofs_per_proc), xImag(dofs_per_proc);
     std::vector<double> yReal(dofs_per_proc), yImag(dofs_per_proc);
     std::vector<std::complex<double> > xlocal(dofs_per_proc);
@@ -118,7 +118,7 @@ namespace linearAlgebraOperations
 			   operatorMatrix->getLocalDofIndicesImag()->end(), 
 			   yImag.begin());
 
-    for(int i = 0; i < dofs_per_proc; ++i)
+    for(unsigned int i = 0; i < dofs_per_proc; ++i)
       {
 	xlocal[i].real(xReal[i]);
 	xlocal[i].imag(xImag[i]);
@@ -126,7 +126,7 @@ namespace linearAlgebraOperations
 	ylocal[i].imag(yImag[i]);
       }
 
-    int n = dofs_per_proc;int inc = 1;
+    const int n = dofs_per_proc;const int inc = 1;
 
     //call blas function
     zaxpy_(&n,
@@ -154,14 +154,14 @@ namespace linearAlgebraOperations
   //
   // evaluate upper bound of the spectrum using k-step Lanczos iteration
   //
-  double lanczosUpperBoundEigenSpectrum(operatorClass * operatorMatrix,
+  double lanczosUpperBoundEigenSpectrum(operatorDFTClass * operatorMatrix,
 					const vectorType    & vect)
   {
       
     const unsigned int this_mpi_process = Utilities::MPI::this_mpi_process(operatorMatrix->getMPICommunicator());
 
 
-    unsigned int lanczosIterations=10;
+    const unsigned int lanczosIterations=10;
     double beta;
 
 #ifdef ENABLE_PERIODIC_BC
@@ -282,7 +282,7 @@ namespace linearAlgebraOperations
   //
   //chebyshev filtering of given subspace X
   //
-  void chebyshevFilter(operatorClass * operatorMatrix,
+  void chebyshevFilter(operatorDFTClass * operatorMatrix,
 		       std::vector<vectorType> & X,
 		       const unsigned int m,
 		       const double a,
@@ -344,7 +344,7 @@ namespace linearAlgebraOperations
   //
   //Gram-Schmidt orthogonalization of given subspace X
   //
-  void gramSchmidtOrthogonalization(operatorClass * operatorMatrix,
+  void gramSchmidtOrthogonalization(operatorDFTClass * operatorMatrix,
 				    std::vector<vectorType> & X)
   {
     
@@ -450,7 +450,7 @@ namespace linearAlgebraOperations
   //
   //Rayleigh-Ritz projection of given subspace X
   //
-  void rayleighRitz(operatorClass           * operatorMatrix,
+  void rayleighRitz(operatorDFTClass           * operatorMatrix,
 		    std::vector<vectorType> & X,
 		    std::vector<double>     & eigenValues)
   {

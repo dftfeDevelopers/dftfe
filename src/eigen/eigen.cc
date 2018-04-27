@@ -28,7 +28,6 @@ namespace dftfe {
 template<unsigned int FEOrder>
 eigenClass<FEOrder>::eigenClass(dftClass<FEOrder>* _dftPtr,const MPI_Comm &mpi_comm_replica):
   dftPtr(_dftPtr),
-  FE (QGaussLobatto<1>(FEOrder+1)),
   d_kPointIndex(0),
   mpi_communicator (mpi_comm_replica),
   n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_comm_replica)),
@@ -135,10 +134,10 @@ void eigenClass<FEOrder>::reinitkPointIndex(unsigned int & kPointIndex)
 
 
 template<unsigned int FEOrder>
-void eigenClass<FEOrder>::computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoValues,
+void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				      const vectorType & phi,
 				      const vectorType & phiExt,
-				      const std::map<dealii::CellId,std::vector<double> > & pseudoValues)
+				      const std::map<dealii::CellId,std::vector<double> > & pseudoValues) const
 {
   const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
   const unsigned int n_array_elements = VectorizedArray<double>::n_array_elements;
@@ -213,11 +212,11 @@ void eigenClass<FEOrder>::computeVEff(std::map<dealii::CellId,std::vector<double
 }
 
 template<unsigned int FEOrder>
-void eigenClass<FEOrder>::computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoValues,
-				      std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
+void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
+				      const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
 				      const vectorType & phi,
 				      const vectorType & phiExt,
-				      const std::map<dealii::CellId,std::vector<double> > & pseudoValues)
+				      const std::map<dealii::CellId,std::vector<double> > & pseudoValues) const
 {
   const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
   const unsigned int n_array_elements = VectorizedArray<double>::n_array_elements;
@@ -732,11 +731,11 @@ void eigenClass<FEOrder>::XtHX(std::vector<vectorType> &src,
 #endif
 
 template<unsigned int FEOrder>
-void eigenClass<FEOrder>::computeVEffSpinPolarized(std::map<dealii::CellId,std::vector<double> >* rhoValues,
+void eigenClass<FEOrder>::computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 						   const vectorType & phi,
 						   const vectorType & phiExt,
 						   const unsigned int spinIndex,
-						   const std::map<dealii::CellId,std::vector<double> > & pseudoValues)
+						   const std::map<dealii::CellId,std::vector<double> > & pseudoValues) const
 
 {
   const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
@@ -815,12 +814,12 @@ void eigenClass<FEOrder>::computeVEffSpinPolarized(std::map<dealii::CellId,std::
 }
 
 template<unsigned int FEOrder>
-void eigenClass<FEOrder>::computeVEffSpinPolarized(std::map<dealii::CellId,std::vector<double> >* rhoValues,
-				      std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
-				      const vectorType & phi,
-				      const vectorType & phiExt,
-				      const unsigned int spinIndex,
-				      const std::map<dealii::CellId,std::vector<double> > & pseudoValues)
+void eigenClass<FEOrder>::computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
+						   const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
+						   const vectorType & phi,
+						   const vectorType & phiExt,
+						   const unsigned int spinIndex,
+						   const std::map<dealii::CellId,std::vector<double> > & pseudoValues) const
 {
   const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
   const unsigned int n_array_elements = VectorizedArray<double>::n_array_elements;

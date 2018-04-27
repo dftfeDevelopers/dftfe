@@ -25,8 +25,10 @@
 
 typedef dealii::parallel::distributed::Vector<double> vectorType;
 namespace dftfe{
-
-  class operatorClass {
+  /**
+   * @brief Base class for building the DFT operator and the action of operator on a vector
+   */
+  class operatorDFTClass {
 
     //
     // types
@@ -88,21 +90,21 @@ namespace dftfe{
      *
      * @return pointer to local dof indices real
      */
-    const std::vector<unsigned int> * getLocalDofIndicesReal();
+    const std::vector<unsigned int> * getLocalDofIndicesReal() const;
 
     /**
      * @brief Get local dof indices imag
      *
      * @return pointer to local dof indices real
      */
-    const std::vector<unsigned int> * getLocalDofIndicesImag();
+    const std::vector<unsigned int> * getLocalDofIndicesImag() const;
 
     /**
      * @brief Get local proc dof indices real
      *
      * @return pointer to local proc dof indices real
      */
-    const std::vector<unsigned int> * getLocalProcDofIndicesReal();
+    const std::vector<unsigned int> * getLocalProcDofIndicesReal() const;
 
 
     /**
@@ -110,14 +112,14 @@ namespace dftfe{
      *
      * @return pointer to local proc dof indices imag
      */
-    const std::vector<unsigned int> * getLocalProcDofIndicesImag();
+    const std::vector<unsigned int> * getLocalProcDofIndicesImag() const;
 
     /**
      * @brief Get constraint matrix eigen
      *
      * @return pointer to constraint matrix eigen
      */
-    const dealii::ConstraintMatrix * getConstraintMatrixEigen();
+    const dealii::ConstraintMatrix * getConstraintMatrixEigen() const;
 
 
     /**
@@ -125,7 +127,7 @@ namespace dftfe{
      *
      * @return mpi communicator
      */
-    const MPI_Comm & getMPICommunicator();
+    const MPI_Comm & getMPICommunicator() const;
   
 
   protected:
@@ -148,12 +150,35 @@ namespace dftfe{
 
   protected:
 
-    //data members
+
+    //
+    //global indices of degrees of freedom in the current processor which correspond to component-1 of 2-component dealii array
+    //
     const std::vector<unsigned int> * d_localDofIndicesReal;
+
+    //
+    //global indices of degrees of freedom in the current processor which correspond to component-2 of 2-component dealii array
+    //
     const std::vector<unsigned int> * d_localDofIndicesImag;
+
+    //
+    //local indices degrees of freedom in the current processor  which correspond to component-1 of 2-component dealii array
+    //
     const std::vector<unsigned int> * d_localProcDofIndicesReal;
+
+    //
+    //local indices degrees of freedom in the current processor  which correspond to component-2 of 2-component dealii array
+    //
     const std::vector<unsigned int> * d_localProcDofIndicesImag;
+
+    //
+    //constraint matrix used in eigen solve
+    //
     const dealii::ConstraintMatrix  * d_constraintMatrixEigen;
+
+    //
+    //mpi communicator
+    //
     MPI_Comm                          d_mpi_communicator;
 
   };

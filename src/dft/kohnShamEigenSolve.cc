@@ -38,7 +38,7 @@ void pointWiseScaleWithDiagonal(const vectorType & diagonal,
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 						  const unsigned int kPointIndex,
-						  chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver)
+						  chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver) const
 {
   computing_timer.enter_section("Chebyshev solve"); 
   
@@ -116,7 +116,7 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::computeResidualNorm(const std::vector<double> & eigenValuesTemp,
 					    std::vector<vectorType> & X,
-					    std::vector<double> & residualNorm)
+					    std::vector<double> & residualNorm) const
 {
   computing_timer.enter_section("computeResidualNorm"); 
 

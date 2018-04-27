@@ -24,25 +24,20 @@
 
 typedef dealii::parallel::distributed::Vector<double> vectorType;
 
-/**
- * @brief Base class for non-linear algebraic solver.
- */
+
 namespace dftfe{
+
+  /**
+   * @brief Base class for non-linear algebraic solver.
+   */
 
   class eigenSolverClass {
 
-    //
-    // types
-    //
+
   public:
-    enum ReturnValueType {SUCCESS = 0,
-			  FAILURE,
-			  MAX_ITER_REACHED};
+    enum class ReturnValueType {SUCCESS = 0,FAILURE,AX_ITER_REACHED};
 
     
-    //
-    // methods
-    //
   public:
 
     /**
@@ -55,7 +50,7 @@ namespace dftfe{
      *
      * @return Return value indicating success or failure.
      */
-    virtual ReturnValueType solve(operatorClass * operatorMatrix,
+    virtual ReturnValueType solve(operatorDFTClass * operatorMatrix,
 				  std::vector<vectorType> & eigenVectors,
 				  std::vector<double> & eigenValues) = 0;
 

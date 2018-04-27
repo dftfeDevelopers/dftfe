@@ -43,40 +43,91 @@ namespace dftfe{
     public:
       eigenClass(dftClass<FEOrder>* _dftPtr, const MPI_Comm &mpi_comm_replica);
 
+      /**
+       * @brief Compute operator times vector or operator times bunch of vectors
+       *
+       * @param X Vector of Vectors containing current values of X (non-const as
+         we scale src and rescale src to avoid creation of temporary vectors)
+       * @param Y Vector of Vectors containing operator times vectors product
+       */
       void HX(std::vector<vectorType> &src, 
 	      std::vector<vectorType> &dst);
 
+
+      /**
+       * @brief Compute projection of the operator into orthogonal basis
+       *
+       * @param X given orthogonal basis vectors 
+       * @return ProjMatrix projected small matrix 
+       */
 #ifdef ENABLE_PERIODIC_BC
-      void XtHX(std::vector<vectorType> &src,
+      void XtHX(const std::vector<vectorType> &src,
 		std::vector<std::complex<double> > & ProjHam); 
 #else
-      void XtHX(std::vector<vectorType> &src,
+      void XtHX(const std::vector<vectorType> &src,
 		std::vector<double> & ProjHam);
 #endif
-   
-      void computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoValues, 
+
+      /**
+       * @brief Computes effective potential involving local-density exchange-correlation functionals
+       *
+       * @param rhoValues electron-density
+       * @param phi electrostatic potential arising both from electron-density and nuclear charge
+       * @param phiExt electrostatic potential arising from nuclear charges
+       * @param pseudoValues quadrature data of pseudopotential values
+       */
+      void computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues, 
 		       const vectorType & phi,
 		       const vectorType & phiExt,
-		       const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
+		       const std::map<dealii::CellId,std::vector<double> > & pseudoValues) const;
 
-      void computeVEffSpinPolarized(std::map<dealii::CellId,std::vector<double> >* rhoValues, 
+      /**
+       * @brief Computes effective potential involving local spin density exchange-correlation functionals
+       *
+       * @param rhoValues electron-density
+       * @param phi electrostatic potential arising both from electron-density and nuclear charge
+       * @param phiExt electrostatic potential arising from nuclear charges
+       * @param spinIndex flag to toggle spin-up or spin-down
+       * @param pseudoValues quadrature data of pseudopotential values
+       */
+      void computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues, 
 				    const vectorType & phi,
 				    const vectorType & phiExt,
-				    unsigned int j,
-				    const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
+				    unsigned int spinIndex,
+				    const std::map<dealii::CellId,std::vector<double> > & pseudoValues) const;
 
-      void computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoValues,
-		       std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
+       /**
+       * @brief Computes effective potential involving gradient density type exchange-correlation functionals
+       *
+       * @param rhoValues electron-density
+       * @param gradRhoValues gradient of electron-density
+       * @param phi electrostatic potential arising both from electron-density and nuclear charge
+       * @param phiExt electrostatic potential arising from nuclear charges
+       * @param pseudoValues quadrature data of pseudopotential values
+       */
+      void computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
+		       const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
 		       const vectorType & phi,
 		       const vectorType & phiExt,
-		       const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
+		       const std::map<dealii::CellId,std::vector<double> > & pseudoValues) const;
 
-      void computeVEffSpinPolarized(std::map<dealii::CellId,std::vector<double> >* rhoValues, 
-				    std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
+      
+      /**
+       * @brief Computes effective potential for gradient-spin density type exchange-correlation functionals
+       *
+       * @param rhoValues electron-density
+       * @param gradRhoValues gradient of electron-density
+       * @param phi electrostatic potential arising both from electron-density and nuclear charge
+       * @param phiExt electrostatic potential arising from nuclear charges
+       * @param spinIndex flag to toggle spin-up or spin-down
+       * @param pseudoValues quadrature data of pseudopotential values
+       */
+      void computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues, 
+				    const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
 				    const vectorType & phi,
 				    const vectorType & phiExt,
-				    unsigned int j,
-				    const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
+				    unsigned int spinIndex,
+				    const std::map<dealii::CellId,std::vector<double> > & pseudoValues) const;
 
       void reinitkPointIndex(unsigned int & kPointIndex);
 
@@ -85,31 +136,34 @@ namespace dftfe{
 	    
       void computeMassVector();
 
-      //data structures
-      vectorType tempDealiiVector;
 
 
 
     private:
+      /**
+       * @brief implementation of matrix-free based matrix-vector product
+       * @param data matrix-free data
+       * @param dst Vector of Vectors containing matrix times vectors product
+       * @param src Vector of Vectors containing input vectors
+       * @param cell_range range of cell-blocks
+       */
       void implementHX(const dealii::MatrixFree<3,double>  &data,
 		       std::vector<vectorType>  &dst, 
 		       const std::vector<vectorType>  &src,
 		       const std::pair<unsigned int,unsigned int> &cell_range) const;
 
-      void computeNonLocalHamiltonianTimesX(const std::vector<vectorType> &src,
-					    std::vector<vectorType>       &dst);
- 
+      /**
+       * @brief implementation of  matrix-vector product for nonlocal Hamiltonian
+       * @param src Vector of Vectors containing input vectors
+       * @param dst Vector of Vectors containing matrix times vectors product
+       */
       void computeNonLocalHamiltonianTimesXMemoryOpt(const std::vector<vectorType> &src,
-						     std::vector<vectorType>       &dst);  
+						     std::vector<vectorType>       &dst) const;  
 
   
       //pointer to dft class
       dftClass<FEOrder>* dftPtr;
 
-
-      //FE data structres
-      dealii::FE_Q<3>   FE;
- 
       //data structures
       vectorType invSqrtMassVector,sqrtMassVector;
 
