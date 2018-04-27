@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Phani Motamarri (2018)
+// @author Phani Motamarri 
 
 #include <chebyshevOrthogonalizedSubspaceIterationSolver.h>
 #include <linearAlgebraOperations.h>
@@ -219,7 +219,7 @@ namespace dftfe{
 	//
 	//call Chebyshev filtering function only for the current block to be filtered
 	//and does in-place filtering
-	computing_timer.enter_section("Chebyshev New filtering"); 
+	computing_timer.enter_section("Chebyshev filtering opt"); 
 	linearAlgebraOperations::chebyshevFilter(operatorMatrix,
 						 eigenVectorsFlattenedArray, 
 						 numberWaveFunctionsPerCurrentBlock,
@@ -228,7 +228,7 @@ namespace dftfe{
 						 d_lowerBoundUnWantedSpectrum,
 						 upperBoundUnwantedSpectrum,
 						 d_lowerBoundWantedSpectrum);
-	computing_timer.exit_section("Chebyshev New filtering");
+	computing_timer.exit_section("Chebyshev filtering opt");
   
 
 	//

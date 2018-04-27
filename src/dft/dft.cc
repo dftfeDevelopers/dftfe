@@ -660,7 +660,7 @@ namespace dftfe {
 	    // This improves the scf convergence performance. Currently this
 	    // approach is not implemented for spin-polarization case
 	    int count=1;
-	    while(maxRes>7e-1)
+	    while(maxRes>7e+2)
 	      {
 		for(unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
 		  {

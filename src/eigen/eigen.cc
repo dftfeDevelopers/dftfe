@@ -352,7 +352,7 @@ namespace dftfe {
     //
     for(int i = 0; i < numberDofs; ++i)
       {
-	std::complex<double> scalingCoeff = invSqrtMassVector.local_element(i);
+	std::complex<double> scalingCoeff = invSqrtMassVector.local_element(dftPtr->localProc_dof_indicesReal[i]);
 	zscal_(&numberWaveFunctionsPerBlock,
 	       &scalingCoeff,
 	       src.begin()+i*numberWaveFunctionsPerBlock,
@@ -369,7 +369,7 @@ namespace dftfe {
     //update slave nodes before doing element-level matrix-vec multiplication
     //
     dftPtr->constraintsNoneDataInfo.distribute(src,
-					      numberWaveFunctionsPerBlock);
+    					       numberWaveFunctionsPerBlock);
 
 
     src.update_ghost_values();
@@ -391,7 +391,7 @@ namespace dftfe {
     //update master node contributions from its correponding slave nodes
     //
     dftPtr->constraintsNoneDataInfo.distribute_slave_to_master(dst,
-							      numberWaveFunctionsPerBlock);
+    							      numberWaveFunctionsPerBlock);
 
 
 
@@ -403,7 +403,7 @@ namespace dftfe {
     //
     for(int i = 0; i < numberDofs; ++i)
       {
-	std::complex<double> scalingCoeff = invSqrtMassVector.local_element(i);
+	std::complex<double> scalingCoeff = invSqrtMassVector.local_element(dftPtr->localProc_dof_indicesReal[i]);
 	zscal_(&numberWaveFunctionsPerBlock,
 	       &scalingCoeff,
 	       dst.begin()+i*numberWaveFunctionsPerBlock,
@@ -416,7 +416,7 @@ namespace dftfe {
     //
     for(int i = 0; i < numberDofs; ++i)
       {
-	std::complex<double> scalingCoeff = sqrtMassVector.local_element(i);
+	std::complex<double> scalingCoeff = sqrtMassVector.local_element(dftPtr->localProc_dof_indicesReal[i]);
 	zscal_(&numberWaveFunctionsPerBlock,
 	       &scalingCoeff,
 	       src.begin()+i*numberWaveFunctionsPerBlock,
