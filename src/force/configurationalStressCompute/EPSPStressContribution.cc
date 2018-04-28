@@ -15,7 +15,7 @@
 //
 // @author Sambit Das (2018)
 //
-#ifdef ENABLE_PERIODIC_BC   
+#ifdef ENABLE_PERIODIC_BC
 //compute EPSP contribution stress (local pseudopotential)
 template<unsigned int FEOrder>
 void forceClass<FEOrder>::addEPSPStressContribution
@@ -26,10 +26,10 @@ void forceClass<FEOrder>::addEPSPStressContribution
 {
   Tensor<1,C_DIM,VectorizedArray<double> > zeroTensor1;
   for (unsigned int idim=0; idim<C_DIM; idim++)
-    zeroTensor1[idim]=make_vectorized_array(0.0);  
+    zeroTensor1[idim]=make_vectorized_array(0.0);
   const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
   const unsigned int numberImageCharges = dftPtr->d_imageIds.size();
-  const unsigned int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;   
+  const unsigned int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
   const unsigned int numSubCells= dftPtr->matrix_free_data.n_components_filled(cell);
   const unsigned int numQuadPoints=forceEval.n_q_points;
   DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
@@ -43,7 +43,7 @@ void forceClass<FEOrder>::addEPSPStressContribution
     bool isLocalDomainOutsideVselfBall=false;
     bool isLocalDomainOutsidePspTail= false;
     if (d_gradPseudoVLocAtoms.find(iAtom)==d_gradPseudoVLocAtoms.end())
-       isLocalDomainOutsidePspTail=true;		  
+       isLocalDomainOutsidePspTail=true;
     if (d_AtomIdBinIdLocalDofHandler.find(iAtom)==d_AtomIdBinIdLocalDofHandler.end())
        isLocalDomainOutsideVselfBall=true;
     if (isLocalDomainOutsideVselfBall && isLocalDomainOutsidePspTail)
@@ -64,7 +64,7 @@ void forceClass<FEOrder>::addEPSPStressContribution
     }
     else{
        const int imageId=iAtom-numberGlobalAtoms;
-       atomId=dftPtr->d_imageIds[imageId];	
+       atomId=dftPtr->d_imageIds[imageId];
        atomCharge = dftPtr->d_imageCharges[imageId];
        atomLocation[0]=dftPtr->d_imagePositions[imageId][0];
        atomLocation[1]=dftPtr->d_imagePositions[imageId][1];
@@ -78,7 +78,7 @@ void forceClass<FEOrder>::addEPSPStressContribution
        feVselfValues.reinit(subCellPtr);
 
 	for (unsigned int q=0; q<numQuadPoints; ++q)
-	{  
+	{
 	   const Point<C_DIM> & quadPoint=feVselfValues.quadrature_point(q);
 	   const Tensor<1,C_DIM,double> dispAtom=quadPoint-atomLocation;
            for (unsigned int idim=0; idim<C_DIM; idim++)
@@ -90,13 +90,13 @@ void forceClass<FEOrder>::addEPSPStressContribution
        // get computed grad vself for iAtom
        bool isCellOutsideVselfBall=true;
        if (!isLocalDomainOutsideVselfBall){
-	  const unsigned int binIdiAtom=d_AtomIdBinIdLocalDofHandler[iAtom];	       
+	  const unsigned int binIdiAtom=d_AtomIdBinIdLocalDofHandler[iAtom];
 	  std::map<dealii::CellId, unsigned int >::const_iterator it=d_cellsVselfBallsClosestAtomIdDofHandler[binIdiAtom].find(subCellId);
 	  if (it!=d_cellsVselfBallsClosestAtomIdDofHandler[binIdiAtom].end()){
-            if(it->second ==iAtom){		  
-	     isCellOutsideVselfBall=false;			       
-  	     std::vector<Tensor<1,C_DIM,double> > gradVselfQuadsSubCell(numQuadPoints);		    
-	     feVselfValues.get_function_gradients(dftPtr->d_vselfFieldBins[binIdiAtom],gradVselfQuadsSubCell);
+            if(it->second ==iAtom){
+	     isCellOutsideVselfBall=false;
+  	     std::vector<Tensor<1,C_DIM,double> > gradVselfQuadsSubCell(numQuadPoints);
+	     feVselfValues.get_function_gradients(dftPtr->d_vselfBinsManager.getVselfFieldBins()[binIdiAtom],gradVselfQuadsSubCell);
 	     for (unsigned int q=0; q<numQuadPoints; ++q){
 	        gradVselfQuads[q][0][iSubCell]=gradVselfQuadsSubCell[q][0];
 	        gradVselfQuads[q][1][iSubCell]=gradVselfQuadsSubCell[q][1];
@@ -111,7 +111,7 @@ void forceClass<FEOrder>::addEPSPStressContribution
        if (!isLocalDomainOutsidePspTail){
 	  std::map<dealii::CellId, std::vector<double> >::const_iterator it=d_gradPseudoVLocAtoms[iAtom].find(subCellId);
 	  if (it!=d_gradPseudoVLocAtoms[iAtom].end()){
-	    isCellOutsidePspTail=false;		       
+	    isCellOutsidePspTail=false;
 	    for (unsigned int q=0; q<numQuadPoints; ++q){
 	       gradPseudoVLocAtomsQuads[q][0][iSubCell]=(it->second)[q*C_DIM];
 	       gradPseudoVLocAtomsQuads[q][1][iSubCell]=(it->second)[q*C_DIM+1];
@@ -121,9 +121,9 @@ void forceClass<FEOrder>::addEPSPStressContribution
        }
 
        // get exact solution (Z/r^2) for grad vself and grad pseudo VLoc for iAtom
-       if (isCellOutsideVselfBall || isCellOutsidePspTail){       
+       if (isCellOutsideVselfBall || isCellOutsidePspTail){
 	  for (unsigned int q=0; q<numQuadPoints; ++q)
-	  {  
+	  {
 	      const Point<C_DIM> & quadPoint=feVselfValues.quadrature_point(q);
 	      const Tensor<1,C_DIM,double> dispAtom=quadPoint-atomLocation;
 	      const double dist=dispAtom.norm();
@@ -133,7 +133,7 @@ void forceClass<FEOrder>::addEPSPStressContribution
 	      {
 	       for (unsigned int idim=0; idim< C_DIM; idim++)
 	       {
-		 gradVselfQuads[q][idim][iSubCell]=temp[idim]; 
+		 gradVselfQuads[q][idim][iSubCell]=temp[idim];
 	       }
 	      }
 
@@ -141,15 +141,15 @@ void forceClass<FEOrder>::addEPSPStressContribution
 	      {
 	       for (unsigned int idim=0; idim< C_DIM; idim++)
 	       {
-		 gradPseudoVLocAtomsQuads[q][idim][iSubCell]=temp[idim]; 
+		 gradPseudoVLocAtomsQuads[q][idim][iSubCell]=temp[idim];
 	       }
-	      }	      
+	      }
 	  }
        }
     }//subCell loop
 
     for (unsigned int q=0; q<numQuadPoints; ++q)
-    { 
+    {
         const Tensor<2,C_DIM,VectorizedArray<double> > EPSPStressContribution
 	           =outer_product(eshelbyTensor::getFPSPLocal(
 			                              rhoQuads[q],

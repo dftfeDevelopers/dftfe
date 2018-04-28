@@ -14,35 +14,29 @@
 //
 // --------------------------------------------------------------------------------------
 //
-// @author Phani Motamarri (2018)
+// @author Phani Motamarri 
 //
-#ifndef operatorClass_h
-#define operatorClass_h
+#ifndef operatorDFTClass_h
+#define operatorDFTClass_h
 
 #include <vector>
 
 #include "headers.h"
 
 typedef dealii::parallel::distributed::Vector<double> vectorType;
-namespace dftfe
-{
 
-  class operatorClass 
-  {
+namespace dftfe{
+  /**
+   * @brief Base class for building the DFT operator and the action of operator on a vector
+   */
+  class operatorDFTClass {
 
-    //
-    // types
-    //
-  public:
-    //
-    // methods
-    //
   public:
 
     /**
      * @brief Destructor.
      */
-    virtual ~operatorClass() = 0;
+    virtual ~operatorDFTClass() = 0;
 
 
     /**
@@ -53,11 +47,17 @@ namespace dftfe
 
 
     /**
-     * @brief compute M matrix
+     * @brief compute diagonal mass matrix
      *
-     * @return diagonal M matrix
+     * @param dofHandler dofHandler associated with the current mesh
+     * @param constraintMatrix constraints to be used
+     * @param sqrtMassVec output the value of square root of diagonal mass matrix 
+     * @param invSqrtMassVec output the value of inverse square root of diagonal mass matrix
      */
-    virtual void computeMassVector() = 0;
+    virtual void computeMassVector(const dealii::DoFHandler<3>    & dofHandler,
+				   const dealii::ConstraintMatrix & constraintMatrix,
+				   vectorType                     & sqrtMassVec,
+				   vectorType                     & invSqrtMassVec) = 0;
 
 
     /**
@@ -114,21 +114,21 @@ namespace dftfe
      *
      * @return pointer to local dof indices real
      */
-    const std::vector<unsigned int> * getLocalDofIndicesReal();
+    const std::vector<dealii::types::global_dof_index> * getLocalDofIndicesReal() const;
 
     /**
      * @brief Get local dof indices imag
      *
      * @return pointer to local dof indices real
      */
-    const std::vector<unsigned int> * getLocalDofIndicesImag();
+    const std::vector<dealii::types::global_dof_index> * getLocalDofIndicesImag() const;
 
     /**
      * @brief Get local proc dof indices real
      *
      * @return pointer to local proc dof indices real
      */
-    const std::vector<unsigned int> * getLocalProcDofIndicesReal();
+    const std::vector<dealii::types::global_dof_index> * getLocalProcDofIndicesReal() const;
 
 
     /**
@@ -136,14 +136,14 @@ namespace dftfe
      *
      * @return pointer to local proc dof indices imag
      */
-    const std::vector<unsigned int> * getLocalProcDofIndicesImag();
+    const std::vector<dealii::types::global_dof_index> * getLocalProcDofIndicesImag() const;
 
     /**
      * @brief Get constraint matrix eigen
      *
      * @return pointer to constraint matrix eigen
      */
-    const dealii::ConstraintMatrix * getConstraintMatrixEigen();
+    const dealii::ConstraintMatrix * getConstraintMatrixEigen() const;
 
     
     /**
@@ -151,7 +151,7 @@ namespace dftfe
      *
      * @return pointer to matrix free data
      */
-    const dealii::MatrixFree<3,double> * getMatrixFreeData();
+    const dealii::MatrixFree<3,double> * getMatrixFreeData() const;
 
 
     /**
@@ -159,7 +159,7 @@ namespace dftfe
      *
      * @return mpi communicator
      */
-    const MPI_Comm & getMPICommunicator();
+    const MPI_Comm & getMPICommunicator() const;
   
 
   protected:
@@ -167,31 +167,57 @@ namespace dftfe
     /**
      * @brief default Constructor.
      */
-    operatorClass();
+    operatorDFTClass();
 
 
     /**
      * @brief Constructor.
      */
-    operatorClass(const MPI_Comm & mpi_comm_replica,
-		  const dealii::MatrixFree<3,double> & matrix_free_data,
-		  const std::vector<unsigned int> & localDofIndicesReal,
-		  const std::vector<unsigned int> & localDofIndicesImag,
-		  const std::vector<unsigned int> & localProcDofIndicesReal,
-		  const std::vector<unsigned int> & localProcDofIndicesImag,
-		  const dealii::ConstraintMatrix  & constraintMatrixEigen);
+    operatorDFTClass(const MPI_Comm & mpi_comm_replica,
+		     const dealii::MatrixFree<3,double> & matrix_free_data,
+		     const std::vector<dealii::types::global_dof_index> & localDofIndicesReal,
+		     const std::vector<dealii::types::global_dof_index> & localDofIndicesImag,
+		     const std::vector<dealii::types::global_dof_index> & localProcDofIndicesReal,
+		     const std::vector<dealii::types::global_dof_index> & localProcDofIndicesImag,
+		     const dealii::ConstraintMatrix  & constraintMatrixEigen);
 
   protected:
 
-    //data members
-    const std::vector<unsigned int>    * d_localDofIndicesReal;
-    const std::vector<unsigned int>    * d_localDofIndicesImag;
-    const std::vector<unsigned int>    * d_localProcDofIndicesReal;
-    const std::vector<unsigned int>    * d_localProcDofIndicesImag;
-    const dealii::MatrixFree<3,double> * d_matrix_free_data;
-    const dealii::ConstraintMatrix     * d_constraintMatrixEigen;
-    MPI_Comm                             d_mpi_communicator;
 
+    //
+    //global indices of degrees of freedom in the current processor which correspond to component-1 of 2-component dealii array
+    //
+    const std::vector<dealii::types::global_dof_index> * d_localDofIndicesReal;
+
+    //
+    //global indices of degrees of freedom in the current processor which correspond to component-2 of 2-component dealii array
+    //
+    const std::vector<dealii::types::global_dof_index> * d_localDofIndicesImag;
+
+    //
+    //local indices degrees of freedom in the current processor  which correspond to component-1 of 2-component dealii array
+    //
+    const std::vector<dealii::types::global_dof_index> * d_localProcDofIndicesReal;
+
+    //
+    //local indices degrees of freedom in the current processor  which correspond to component-2 of 2-component dealii array
+    //
+    const std::vector<dealii::types::global_dof_index> * d_localProcDofIndicesImag;
+
+    //
+    //constraint matrix used in eigen solve
+    //
+    const dealii::ConstraintMatrix  * d_constraintMatrixEigen;
+
+    //
+    //matrix-free data
+    //
+    const dealii::MatrixFree<3,double> * d_matrix_free_data;
+
+    //
+    //mpi communicator
+    //
+    MPI_Comm                          d_mpi_communicator;
   };
 
 }

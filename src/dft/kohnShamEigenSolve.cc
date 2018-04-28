@@ -38,7 +38,8 @@ void pointWiseScaleWithDiagonal(const vectorType & diagonal,
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 						  const unsigned int kPointIndex,
-						  chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver)
+						  chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver,
+						  std::vector<double>                            & residualNormWaveFunctions) 
 {
   computing_timer.enter_section("Chebyshev solve"); 
   
@@ -52,7 +53,7 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
   //
   //scale the eigenVectors (initial guess of single atom wavefunctions or previous guess) to convert into Lowden Orthonormalized FE basis
   //multiply by M^{1/2}
-  pointWiseScaleWithDiagonal(eigenPtr->sqrtMassVector,
+  pointWiseScaleWithDiagonal(eigenPtr->d_sqrtMassVector,
 			     eigenVectors[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
 			     constraintsNoneEigenDataInfo);
 
@@ -72,16 +73,15 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
   //
   //Compute and print L2 norm
   //
-  std::vector<double> residualNorm(numEigenValues,0.0);
   computeResidualNorm(eigenValuesTemp,
 		      eigenVectors[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
-		      residualNorm);
+		      residualNormWaveFunctions);
   
   
   //
   //scale the eigenVectors with M^{-1/2} to represent the wavefunctions in the usual FE basis
   //
-  pointWiseScaleWithDiagonal(eigenPtr->invSqrtMassVector,
+  pointWiseScaleWithDiagonal(eigenPtr->d_invSqrtMassVector,
 			     eigenVectors[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
 			     constraintsNoneEigenDataInfo);
 
@@ -95,7 +95,6 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
           pcout<<"eigen value "<< std::setw(3) <<i <<": "<<eigenValuesTemp[i] <<std::endl;
 
       eigenValues[kPointIndex][spinType*numEigenValues + i] =  eigenValuesTemp[i];
-      d_tempResidualNormWaveFunctions[kPointIndex][i] = residualNorm[i];
     }
 
   if (dftParameters::verbosity==2)  
@@ -116,9 +115,9 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::computeResidualNorm(const std::vector<double> & eigenValuesTemp,
 					    std::vector<vectorType> & X,
-					    std::vector<double> & residualNorm)
+					    std::vector<double> & residualNorm) const
 {
-  computing_timer.enter_section("computeResidualNorm"); 
+  //computing_timer.enter_section("computeResidualNorm"); 
 
   std::vector<vectorType> PSI(X.size());
   
@@ -135,8 +134,7 @@ void dftClass<FEOrder>::computeResidualNorm(const std::vector<double> & eigenVal
     {
       (PSI[i]).add(-eigenValuesTemp[i],X[i]) ;
       const double resNorm= (PSI[i]).l2_norm();
-      if (dftParameters::spinPolarized!=1)
-	residualNorm[i]=resNorm;
+      residualNorm[i]=resNorm;
       
       if (dftParameters::verbosity==2)
 	pcout<<"eigen vector "<< i<<": "<<resNorm<<std::endl;
@@ -144,31 +142,32 @@ void dftClass<FEOrder>::computeResidualNorm(const std::vector<double> & eigenVal
   if (dftParameters::verbosity==2)  
     pcout <<std::endl;
 
-  computing_timer.exit_section("computeResidualNorm"); 
+  //computing_timer.exit_section("computeResidualNorm"); 
 }
 
 //compute the maximum of the residual norm of the highest occupied state among all k points 
 template<unsigned int FEOrder>
-double dftClass<FEOrder>::computeMaximumHighestOccupiedStateResidualNorm()
+double dftClass<FEOrder>::computeMaximumHighestOccupiedStateResidualNorm(const std::vector<std::vector<double> > & residualNormWaveFunctionsAllkPoints,
+									 const std::vector<std::vector<double> > & eigenValuesAllkPoints,
+									 const double fermiEnergy)
 {
   double maxHighestOccupiedStateResNorm=-1e+6;
-  for (int kPoint = 0; kPoint < d_maxkPoints; ++kPoint) 
+  for (int kPoint = 0; kPoint < eigenValuesAllkPoints.size(); ++kPoint) 
    {    
-
-      unsigned int highestOccupiedState=0;
-      unsigned int n = eigenValues[kPoint].size() ;
-      for(unsigned int i = 0; i < n; i++)
-      {
-         double factor=(eigenValues[kPoint][i]-fermiEnergy)/(C_kb*dftParameters::TVal);
+     unsigned int highestOccupiedState = 0;
+     
+     for(unsigned int i = 0; i < eigenValuesAllkPoints[kPoint].size(); i++)
+       {
+         const double factor=(eigenValuesAllkPoints[kPoint][i]-fermiEnergy)/(C_kb*dftParameters::TVal);
 	 if (factor<0)
-	 {
-	     highestOccupiedState=i;
-	 }	 
-      }
-      if (d_tempResidualNormWaveFunctions[kPoint][highestOccupiedState]>maxHighestOccupiedStateResNorm)
-      {
-         maxHighestOccupiedStateResNorm=d_tempResidualNormWaveFunctions[kPoint][highestOccupiedState];
-      }
+	   highestOccupiedState=i;
+       }
+
+     if(residualNormWaveFunctionsAllkPoints[kPoint][highestOccupiedState]>maxHighestOccupiedStateResNorm)
+       {
+         maxHighestOccupiedStateResNorm=residualNormWaveFunctionsAllkPoints[kPoint][highestOccupiedState];
+       }
+
    }
   maxHighestOccupiedStateResNorm= Utilities::MPI::max(maxHighestOccupiedStateResNorm, interpoolcomm);
   return maxHighestOccupiedStateResNorm;

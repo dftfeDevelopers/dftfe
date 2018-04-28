@@ -13,13 +13,13 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Sambit Das (2017)
+// @author Phani Motamarri, Sambit Das 
 //
 
 
 template<unsigned int FEOrder>
 void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::vector<vectorType> &src,
-								    std::vector<vectorType>       &dst)
+								    std::vector<vectorType>       &dst)const
 {
   //
   //get FE data

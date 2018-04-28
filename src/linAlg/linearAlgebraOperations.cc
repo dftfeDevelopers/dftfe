@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Phani Motamarri (2018)
+// @author Phani Motamarri 
 //
 
 
@@ -29,12 +29,13 @@
 
 namespace dftfe{
 
-  namespace linearAlgebraOperations
-  {
+
+namespace linearAlgebraOperations
+{
 #ifdef ENABLE_PERIODIC_BC
-    std::complex<double> innerProduct(operatorClass * operatorMatrix,
-				      const vectorType & X,
-				      const vectorType & Y)
+  std::complex<double> innerProduct(operatorDFTClass * operatorMatrix,
+				    const vectorType & X,
+				    const vectorType & Y)
     {
       unsigned int dofs_per_proc = X.local_size()/2; 
       std::vector<double> xReal(dofs_per_proc), xImag(dofs_per_proc);
@@ -59,6 +60,7 @@ namespace dftfe{
 			     operatorMatrix->getLocalDofIndicesImag()->end(), 
 			     yImag.begin());
 
+
       for(int i = 0; i < dofs_per_proc; ++i)
 	{
 	  xlocal[i].real(xReal[i]);
@@ -67,8 +69,8 @@ namespace dftfe{
 	  ylocal[i].imag(yImag[i]);
 	}
 
-      int inc = 1;
-      int n = dofs_per_proc;
+      const int inc = 1;
+      const int n = dofs_per_proc;
 
       std::complex<double>  localInnerProduct;
 
@@ -117,6 +119,44 @@ namespace dftfe{
       y.extract_subvector_to(operatorMatrix->getLocalDofIndicesImag()->begin(), 
 			     operatorMatrix->getLocalDofIndicesImag()->end(), 
 			     yImag.begin());
+=======
+  void  alphaTimesXPlusY(operatorDFTClass * operatorMatrix,
+			 std::complex<double> & alpha,
+			 vectorType & x,
+			 vectorType & y)
+  {
+    const unsigned int dofs_per_proc = x.local_size()/2; 
+    std::vector<double> xReal(dofs_per_proc), xImag(dofs_per_proc);
+    std::vector<double> yReal(dofs_per_proc), yImag(dofs_per_proc);
+    std::vector<std::complex<double> > xlocal(dofs_per_proc);
+    std::vector<std::complex<double> > ylocal(dofs_per_proc);
+
+    x.extract_subvector_to(operatorMatrix->getLocalDofIndicesReal()->begin(), 
+			   operatorMatrix->getLocalDofIndicesReal()->end(), 
+			   xReal.begin()); 
+
+    x.extract_subvector_to(operatorMatrix->getLocalDofIndicesImag()->begin(), 
+			   operatorMatrix->getLocalDofIndicesImag()->end(), 
+			   xImag.begin());
+  
+    y.extract_subvector_to(operatorMatrix->getLocalDofIndicesReal()->begin(), 
+			   operatorMatrix->getLocalDofIndicesReal()->end(), 
+			   yReal.begin()); 
+
+    y.extract_subvector_to(operatorMatrix->getLocalDofIndicesImag()->begin(), 
+			   operatorMatrix->getLocalDofIndicesImag()->end(), 
+			   yImag.begin());
+
+    for(unsigned int i = 0; i < dofs_per_proc; ++i)
+      {
+	xlocal[i].real(xReal[i]);
+	xlocal[i].imag(xImag[i]);
+	ylocal[i].real(yReal[i]);
+	ylocal[i].imag(yImag[i]);
+      }
+
+    const int n = dofs_per_proc;const int inc = 1;
+>>>>>>> isolateChebyshevMerged
 
       for(int i = 0; i < dofs_per_proc; ++i)
 	{
@@ -151,18 +191,20 @@ namespace dftfe{
     }
 #endif
 
-    //
-    // evaluate upper bound of the spectrum using k-step Lanczos iteration
-    //
-    double lanczosUpperBoundEigenSpectrum(operatorClass * operatorMatrix,
-					  const vectorType    & vect)
-    {
+  //
+  // evaluate upper bound of the spectrum using k-step Lanczos iteration
+  //
+  double lanczosUpperBoundEigenSpectrum(operatorDFTClass * operatorMatrix,
+					const vectorType    & vect)
+  {
       
       const unsigned int this_mpi_process = dealii::Utilities::MPI::this_mpi_process(operatorMatrix->getMPICommunicator());
 
 
-      unsigned int lanczosIterations=10;
-      double beta;
+
+    const unsigned int lanczosIterations=10;
+    double beta;
+
 
 #ifdef ENABLE_PERIODIC_BC
       std::complex<double> alpha,alphaNeg;
@@ -279,16 +321,17 @@ namespace dftfe{
     }
 
 
-    //
-    //chebyshev filtering of given subspace X
-    //
-    void chebyshevFilter(operatorClass * operatorMatrix,
-			 std::vector<vectorType> & X,
-			 const unsigned int m,
-			 const double a,
-			 const double b,
-			 const double a0)
-    {
+  //
+  //chebyshev filtering of given subspace X
+  //
+  void chebyshevFilter(operatorDFTClass * operatorMatrix,
+		       std::vector<vectorType> & X,
+		       const unsigned int m,
+		       const double a,
+		       const double b,
+		       const double a0)
+  {
+
 
       double e, c, sigma, sigma1, sigma2, gamma;
       e=(b-a)/2.0; c=(b+a)/2.0;
@@ -331,19 +374,20 @@ namespace dftfe{
 	  sigma=sigma2;
 	}
   
-      //copy back PSI to eigenVectors
-      for (std::vector<vectorType>::iterator y=PSI.begin(), x=X.begin(); y<PSI.end(); ++y, ++x)
-	{  
-	  *x=*y;
-	}   
-    }
+    //copy back PSI to eigenVectors
+    for (std::vector<vectorType>::iterator y=PSI.begin(), x=X.begin(); y<PSI.end(); ++y, ++x)
+      {  
+	*x=*y;
+      }   
+  }
 
-    //
-    //Gram-Schmidt orthogonalization of given subspace X
-    //
-    void gramSchmidtOrthogonalization(operatorClass * operatorMatrix,
-				      std::vector<vectorType> & X)
-    {
+  //
+  //Gram-Schmidt orthogonalization of given subspace X
+  //
+  void gramSchmidtOrthogonalization(operatorDFTClass * operatorMatrix,
+				    std::vector<vectorType> & X)
+  {
+
     
 #ifdef ENABLE_PERIODIC_BC
       unsigned int localSize = X[0].local_size()/2;
@@ -444,13 +488,13 @@ namespace dftfe{
     }//end of Gram-Schmidt
 
 
-    //
-    //Rayleigh-Ritz projection of given subspace X
-    //
-    void rayleighRitz(operatorClass           * operatorMatrix,
-		      std::vector<vectorType> & X,
-		      std::vector<double>     & eigenValues)
-    {
+  //
+  //Rayleigh-Ritz projection of given subspace X
+  //
+  void rayleighRitz(operatorDFTClass           * operatorMatrix,
+		    std::vector<vectorType> & X,
+		    std::vector<double>     & eigenValues)
+  {
 
 #ifdef ENABLE_PERIODIC_BC
       std::vector<std::complex<double> > ProjHam;

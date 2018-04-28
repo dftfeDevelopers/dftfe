@@ -16,14 +16,14 @@ Installation instructions
 -------------------------
 
 The steps to install the necessary dependencies and DFT-FE itself are described
-in the Installation instructions section of the DFT-FE [manual](give link).
+in the Installation instructions section of the DFT-FE manual(compile /doc/manual/manual.tex).
 
 
 
 Running DFT-FE
 --------------
 
-Instructions on how to run and DFT-FE can also be found in the DFT-FE [manual](give link). 
+Instructions on how to run and DFT-FE can also be found in the DFT-FE manual(compile /doc/manual/manual.tex). 
 
 
 
@@ -40,14 +40,17 @@ For more information see:
 
  - The official website at (give link)
  
- - The current [manual](give link)
+ - The current manual(compile /doc/manual/manual.tex)
+
+ - For questions about the source code of DFT-FE, portability, installation, etc., use the DFT-FE development mailing list (dft-fe.users@umich.edu).
  
- - DFT-FE is primarily based on the deal.II library. If you have particular questions about deal.II, contact the [deal.II discussion groups](https://groups.google.com/d/forum/dealii).
+ - DFT-FE is primarily based on the deal.II library. If you have particular questions about deal.II, contact the [deal.II mailist lists](https://www.dealii.org/mail.html).
  
- - If you have specific questions about DFT-FE that are not suitable for the public bitbucket issue list, you can contact the principal developers:
+ - If you have specific questions about DFT-FE that are not suitable for the public and archived mailing lists, you can contact the principal developers and mentors:
 
     - Phani Motamarri: phanim@umich.edu
     - Sambit Das: dsambit@umich.edu
+    - Vikram Gavini: vikramg@umich.edu (Mentor)
 
 
 

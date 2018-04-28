@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,17 +13,17 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Sambit Das (2017)
+// @author Sambit Das
 //
 
-#include "../../include/force.h"
-#include "../../include/dft.h"
-#include "../../include/dftUtils.h"
-#include "../../include/poisson.h"
-#include "../../include/constants.h"
-#include "../../include/eshelbyTensor.h"
-#include "../../include/eshelbyTensorSpinPolarized.h"
-#include "../../include/fileReaders.h"
+
+#include <force.h>
+#include <dft.h>
+#include <dftUtils.h>
+#include <constants.h>
+#include <eshelbyTensor.h>
+#include <eshelbyTensorSpinPolarized.h>
+#include <fileReaders.h>
 #include <linearAlgebraOperations.h>
 #include <boost/math/special_functions/spherical_harmonic.hpp>
 

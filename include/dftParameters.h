@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,8 +13,12 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Phani Motamarri (2017)
-//
+
+
+/** @file dftParameters.h
+ *
+ *  @author Phani Motamarri, Sambit Das
+ */
 
 #ifndef dftParameters_H_
 #define dftParameters_H_
@@ -38,7 +42,7 @@ namespace dftfe {
       extern double lowerEndWantedSpectrum,relLinearSolverTolerance,selfConsistentSolverTolerance,TVal, start_magnetization;
 
       extern bool isPseudopotential,periodicX,periodicY,periodicZ, useSymm, timeReversal;
-      extern std::string meshFileName,coordinatesFile,domainBoundingVectorsFile,kPointDataFile, ionRelaxFlagsFile, chkDirPath;
+      extern std::string meshFileName,coordinatesFile,domainBoundingVectorsFile,kPointDataFile, ionRelaxFlagsFile;
 
       extern double outerAtomBallRadius, meshSizeOuterDomain;
       extern double meshSizeInnerBall, meshSizeOuterBall;
@@ -51,6 +55,8 @@ namespace dftfe {
       extern bool restartFromChk;
 
       extern bool reproducible_output;
+
+      extern bool electrostaticsPRefinement;
 
       /**
        * Declare parameters.

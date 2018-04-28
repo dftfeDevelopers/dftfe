@@ -23,7 +23,7 @@ void forceClass<FEOrder>::createBinObjectsForce()
   const unsigned int faces_per_cell=GeometryInfo<C_DIM>::faces_per_cell;
   const unsigned int dofs_per_cell=dftPtr->FE.dofs_per_cell;
   const unsigned int dofs_per_face=dftPtr->FE.dofs_per_face;
-  const unsigned int numberBins=dftPtr->d_bins.size();
+  const unsigned int numberBins=dftPtr->d_vselfBinsManager.getAtomIdsBins().size();
   //clear exisitng data
   d_cellsVselfBallsDofHandler.clear();
   d_cellsVselfBallsDofHandlerForce.clear();
@@ -41,8 +41,8 @@ void forceClass<FEOrder>::createBinObjectsForce()
   for(unsigned int iBin = 0; iBin < numberBins; ++iBin)
   {
 
-     std::map<dealii::types::global_dof_index, int> & boundaryNodeMap = dftPtr->d_boundaryFlag[iBin];
-     std::map<dealii::types::global_dof_index, int> & closestAtomBinMap = dftPtr->d_closestAtomBin[iBin];
+     const std::map<dealii::types::global_dof_index, int> & boundaryNodeMap = dftPtr->d_vselfBinsManager.getBoundaryFlagsBins()[iBin];
+     const std::map<dealii::types::global_dof_index, int> & closestAtomBinMap =dftPtr->d_vselfBinsManager.getClosestAtomIdsBins()[iBin];
      DoFHandler<C_DIM>::active_cell_iterator cell = dftPtr->dofHandler.begin_active(),endc = dftPtr->dofHandler.end();
      DoFHandler<C_DIM>::active_cell_iterator cellForce = d_dofHandlerForce.begin_active();
      for(; cell!= endc; ++cell, ++cellForce)
@@ -50,8 +50,8 @@ void forceClass<FEOrder>::createBinObjectsForce()
 	if(cell->is_locally_owned())
 	{
 	   std::vector<unsigned int> dirichletFaceIds;
-	   std::vector<unsigned int> faceIdsWithAtleastOneSolvedNonHangingNode;	 
-	   std::vector<unsigned int> allFaceIdsOfCell;	
+	   std::vector<unsigned int> faceIdsWithAtleastOneSolvedNonHangingNode;
+	   std::vector<unsigned int> allFaceIdsOfCell;
 	   unsigned int closestAtomIdSum=0;
 	   unsigned int closestAtomId;
 	   unsigned int nonHangingNodeIdCountCell=0;
@@ -59,9 +59,9 @@ void forceClass<FEOrder>::createBinObjectsForce()
            {
               int dirichletDofCount=0;
 	      bool isSolvedDofPresent=false;
-	      int nonHangingNodeIdCountFace=0;	      
+	      int nonHangingNodeIdCountFace=0;
 	      std::vector<types::global_dof_index> iFaceGlobalDofIndices(dofs_per_face);
-	      cell->face(iFace)->get_dof_indices(iFaceGlobalDofIndices);		      
+	      cell->face(iFace)->get_dof_indices(iFaceGlobalDofIndices);
 	      for(unsigned int iFaceDof = 0; iFaceDof < dofs_per_face; ++iFaceDof)
 	      {
                  const types::global_dof_index nodeId=iFaceGlobalDofIndices[iFaceDof];
@@ -70,19 +70,19 @@ void forceClass<FEOrder>::createBinObjectsForce()
 	            Assert(boundaryNodeMap.find(nodeId)!=boundaryNodeMap.end(),ExcMessage("BUG"));
                     Assert(closestAtomBinMap.find(nodeId)!=closestAtomBinMap.end(),ExcMessage("BUG"));
 
-		    if (boundaryNodeMap[nodeId]!=-1)
+		    if (boundaryNodeMap.find(nodeId)->second!=-1)
 			isSolvedDofPresent=true;
 		    else
-			dirichletDofCount+=boundaryNodeMap[nodeId];
+			dirichletDofCount+=boundaryNodeMap.find(nodeId)->second;
 
-		    closestAtomId=closestAtomBinMap[nodeId];
+		    closestAtomId=closestAtomBinMap.find(nodeId)->second;
 		    closestAtomIdSum+=closestAtomId;
 		    nonHangingNodeIdCountCell++;
 		    nonHangingNodeIdCountFace++;
-	         }//non-hanging node check 
+	         }//non-hanging node check
 
 	      }//Face dof loop
-              
+
 	      if (isSolvedDofPresent)
 	      {
 	         faceIdsWithAtleastOneSolvedNonHangingNode.push_back(iFace);
@@ -90,18 +90,18 @@ void forceClass<FEOrder>::createBinObjectsForce()
 	      if (dirichletDofCount<0)
 	      {
 	         dirichletFaceIds.push_back(iFace);
-              } 
-              allFaceIdsOfCell.push_back(iFace);		      
-              
+              }
+              allFaceIdsOfCell.push_back(iFace);
+
 	   }//Face loop
-           
+
 	   //fill the target objects
 	   if (faceIdsWithAtleastOneSolvedNonHangingNode.size()>0){
 	      if (!(closestAtomIdSum==closestAtomId*nonHangingNodeIdCountCell))
 	      {
 		  std::cout << "closestAtomIdSum: "<<closestAtomIdSum<< ", closestAtomId: "<<closestAtomId<< ", nonHangingNodeIdCountCell: "<<nonHangingNodeIdCountCell<<std::endl;
 	      }
-	      AssertThrow(closestAtomIdSum==closestAtomId*nonHangingNodeIdCountCell,ExcMessage("cell dofs on vself ball surface have different closest atom ids, remedy- increase separation between vself balls"));		   
+	      AssertThrow(closestAtomIdSum==closestAtomId*nonHangingNodeIdCountCell,ExcMessage("cell dofs on vself ball surface have different closest atom ids, remedy- increase separation between vself balls"));
 	      d_cellsVselfBallsDofHandler[iBin].push_back(cell);
 	      d_cellsVselfBallsDofHandlerForce[iBin].push_back(cellForce);
 	      d_cellsVselfBallsClosestAtomIdDofHandler[iBin][cell->id()]=closestAtomId;

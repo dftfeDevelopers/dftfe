@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,12 +13,10 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Phani Motamarri (2018), Shiva Rudraraju (2016), Sambit Das (2017)
+// @author Phani Motamarri, Shiva Rudraraju, Sambit Das
 //
-#include "applyTotalPotentialDirichletBC.cc"
+#include "applyHomogeneousDirichletBC.cc"
 #include "locatenodes.cc"
-#include "createBins.cc"
-#include "createBinsExtraSanityCheck.cc"
 
 #ifdef ENABLE_PERIODIC_BC
 #include "applyPeriodicBCHigherOrderNodes.cc"
@@ -72,12 +70,9 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   d_constraintsForTotalPotential.reinit(locally_relevant_dofs);
 
 #ifdef ENABLE_PERIODIC_BC
-  locatePeriodicPinnedNodes();
+  locatePeriodicPinnedNodes(dofHandler,constraintsNone,d_constraintsForTotalPotential);
 #endif
-//#else
-  //VectorTools::interpolate_boundary_values(dofHandler, 0, ZeroFunction<3>(), d_constraintsForTotalPotential);
-  applyTotalPotentialDirichletBC();
-//#endif
+  applyHomogeneousDirichletBC(dofHandler,d_constraintsForTotalPotential);
   d_constraintsForTotalPotential.close ();
 
   //
@@ -89,14 +84,8 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   //clear existing constraints matrix vector
   d_constraintsVector.clear();
 
-  //
   //push back into Constraint Matrices
-  //
-#ifdef ENABLE_PERIODIC_BC
   d_constraintsVector.push_back(&constraintsNone);
-#else
-  d_constraintsVector.push_back(&constraintsNone);
-#endif
 
   d_constraintsVector.push_back(&d_constraintsForTotalPotential);
 
@@ -105,8 +94,15 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   //used for computing self-potential (Vself) using Poisson problem
   //with atoms belonging to a given bin
   //
-  createAtomBins(d_constraintsVector);
-  createAtomBinsExtraSanityCheck();
+  d_vselfBinsManager.createAtomBins(d_constraintsVector,
+	                            dofHandler,
+				    constraintsNone,
+				    atomLocations,
+				    d_imagePositions,
+				    d_imageIds,
+				    d_imageCharges,
+				    dftParameters::radiusAtomBall);
+
   //
   //create matrix free structure
   //
@@ -144,28 +140,20 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   forcePtr->d_forceDofHandlerIndex = dofHandlerVector.size()-1;
   d_constraintsVector.push_back(&(forcePtr->d_constraintsNoneForce));
 
-  std::vector<const ConstraintMatrix * > constraintsVectorTemp(d_constraintsVector.size());
-  for (unsigned int iconstraint=0; iconstraint< d_constraintsVector.size(); iconstraint++)
-    constraintsVectorTemp[iconstraint] = d_constraintsVector[iconstraint];
-    
-  matrix_free_data.reinit(dofHandlerVector, constraintsVectorTemp, quadratureVector, additional_data);
+  matrix_free_data.reinit(dofHandlerVector, d_constraintsVector, quadratureVector, additional_data);
 
 
   //
-  //locate atom core nodes and also locate atom nodes in each bin
+  //locate atom core nodes
   //
-  locateAtomCoreNodes();
+  locateAtomCoreNodes(dofHandler,d_atomNodeIdToChargeMap);
 
-  //
-  //initialize poisson and eigen problem related objects
-  //
-  poissonPtr->init();
 
+  //compute volume of the domain
+  d_domainVolume=computeVolume(dofHandler);
+
+  //initialize eigen solve related object
   eigenPtr= new eigenClass<FEOrder>(this, mpi_communicator);
   eigenPtr->init();
 
-  //
-  //compute volume of the domain
-  //
-  computeVolume();
 }

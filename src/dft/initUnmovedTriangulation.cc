@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -14,7 +14,7 @@
 // ---------------------------------------------------------------------
 //
 //
-// @author Shiva Rudraraju (2016), Phani Motamarri (2018), Sambit Das (2017)
+// @author Shiva Rudraraju, Phani Motamarri, Sambit Das
 //
 
 
@@ -22,15 +22,11 @@
 #ifdef ENABLE_PERIODIC_BC
 #include "initkPointData.cc"
 #endif
-#include "../../include/dftParameters.h"
-
-
 //
 //source file for dft class initializations
 //
 
 
-//init
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::initUnmovedTriangulation(const parallel::distributed::Triangulation<3> & triangulation)
 {
@@ -58,7 +54,7 @@ void dftClass<FEOrder>::initUnmovedTriangulation(const parallel::distributed::Tr
   DoFTools::extract_locally_relevant_dofs(dofHandlerEigen, locally_relevant_dofsEigen);
   DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), dofHandlerEigen, d_supportPointsEigen);
 
- 
+
   //
   //Extract real and imag DOF indices from the global vector - this will be needed in XHX operation, etc.
   //
@@ -160,7 +156,6 @@ void dftClass<FEOrder>::initUnmovedTriangulation(const parallel::distributed::Tr
   constraintsNone.close();
   constraintsNoneEigen.close();
 
-
   //
   //create a constraint matrix without only hanging node constraints
   //
@@ -180,25 +175,6 @@ void dftClass<FEOrder>::initUnmovedTriangulation(const parallel::distributed::Tr
       constraintsNone.close();
       constraintsNoneEigen.close();
     }
-  /*
-  //
-  //create a constraint matrix without only hanging node constraints
-  //
-  d_noConstraints.clear();d_noConstraintsEigen.clear();
-  d_noConstraints.reinit(locally_relevant_dofs); d_noConstraintsEigen.reinit(locally_relevant_dofsEigen);
-  DoFTools::make_hanging_node_constraints(dofHandler, d_noConstraints);
-  DoFTools::make_hanging_node_constraints(dofHandlerEigen,d_noConstraintsEigen);
-  d_noConstraints.close();d_noConstraintsEigen.close();
-
-
-  //
-  //merge hanging node constraint matrix with constrains None and constraints None eigen
-  //
-  constraintsNone.merge(d_noConstraints,ConstraintMatrix::MergeConflictBehavior::right_object_wins);
-  constraintsNoneEigen.merge(d_noConstraintsEigen,ConstraintMatrix::MergeConflictBehavior::right_object_wins);
-  constraintsNone.close();
-  constraintsNoneEigen.close();
-  */
 
   forcePtr->initUnmoved(triangulation);
 

@@ -18,38 +18,38 @@
 
 
 template<unsigned int FEOrder>
-const std::vector<unsigned int> & dftClass<FEOrder>::getLocalDofIndicesReal()
+const std::vector<dealii::types::global_dof_index> & dftClass<FEOrder>::getLocalDofIndicesReal() const
 {
   return  local_dof_indicesReal;
 }
 
 template<unsigned int FEOrder>
-const std::vector<unsigned int> & dftClass<FEOrder>::getLocalDofIndicesImag()
+const std::vector<dealii::types::global_dof_index> & dftClass<FEOrder>::getLocalDofIndicesImag() const
 {
   return  local_dof_indicesImag;
 }
 
 template<unsigned int FEOrder>
-const std::vector<unsigned int> & dftClass<FEOrder>::getLocalProcDofIndicesReal()
+const std::vector<dealii::types::global_dof_index> & dftClass<FEOrder>::getLocalProcDofIndicesReal() const
 {
   return  localProc_dof_indicesReal;
 }
 
 template<unsigned int FEOrder>
-const std::vector<unsigned int> & dftClass<FEOrder>::getLocalProcDofIndicesImag()
+const std::vector<dealii::types::global_dof_index> & dftClass<FEOrder>::getLocalProcDofIndicesImag() const
 {
   return  localProc_dof_indicesImag;
 }
 
 template<unsigned int FEOrder>
-const ConstraintMatrix & dftClass<FEOrder>::getConstraintMatrixEigen()
+const ConstraintMatrix & dftClass<FEOrder>::getConstraintMatrixEigen() const
 {
   return  constraintsNoneEigen;
 }
 
 
 template<unsigned int FEOrder>
-const dftUtils::constraintMatrixInfo & dftClass<FEOrder>::getConstraintMatrixEigenDataInfo()
+const dftUtils::constraintMatrixInfo & dftClass<FEOrder>::getConstraintMatrixEigenDataInfo() const
 {
   return constraintsNoneEigenDataInfo;
 }

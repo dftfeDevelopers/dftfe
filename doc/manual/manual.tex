@@ -1,0 +1,245 @@
+\documentclass{article}
+\usepackage[pdftex]{graphicx,color}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{subfigure}
+\usepackage{textpos}
+
+% use a larger page size; otherwise, it is difficult to have complete
+% code listings and output on a single page
+\usepackage{fullpage}
+
+% have an index. we use the imakeidx' replacement of the 'multind' package so
+% that we can have an index of all run-time parameters separate from other
+% items (if we ever wanted one)
+\usepackage{imakeidx}
+\makeindex[name=prmindex, title=Index of run-time parameter entries]
+\makeindex[name=prmindexfull, title=Index of run-time parameters with section names]
+
+% be able to use \note environments with a box around the text
+\usepackage{fancybox}
+\newcommand{\note}[1]{
+{\parindent0pt
+  \begin{center}
+    \shadowbox{
+      \begin{minipage}[c]{0.9\linewidth}
+        \textbf{Note:} #1
+      \end{minipage}
+    }
+  \end{center}
+}}
+
+% use the listings package for code snippets. define keywords for prm files
+% and for gnuplot
+\usepackage{listings}
+\lstset{
+  language=C++,
+  showstringspaces=false,
+  basicstyle=\small\ttfamily,
+  columns=fullflexible,
+  keepspaces=true,
+  frame=single,
+  breaklines=true,
+  postbreak=\raisebox{0ex}[0ex][0ex]{\hspace{5em}\ensuremath{\color{red}\hookrightarrow\space}}
+}
+\lstdefinelanguage{prmfile}{morekeywords={set,subsection,end},
+                            morecomment=[l]{\#},escapeinside={\%\%}{\%},}
+\lstdefinelanguage{gnuplot}{morekeywords={plot,using,title,with,set,replot},
+                            morecomment=[l]{\#},}
+
+
+% use the hyperref package; set the base for relative links to
+% the top-level \dftfe directory so that we can link to
+% files in the \dftfe tree without having to specify the
+% location relative to the directory where the pdf actually
+% resides
+\usepackage[colorlinks,linkcolor=blue,urlcolor=blue,citecolor=blue,baseurl=../]{hyperref}
+
+\newcommand{\dealii}{{\textsc{deal.II}}}
+\newcommand{\pfrst}{{\normalfont\textsc{p4est}}}
+\newcommand{\trilinos}{{\textsc{Trilinos}}}
+\newcommand{\petsc}{{\textsc{PETSc}}}
+\newcommand{\dftfe}{\textsc{DFT-FE}}
+
+\begin{document}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% START OF DFT-FE MANUAL COVER TEMPLATE %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% This should be pasted at the start of manuals and appropriate strings entered at locations indicated with FILL.
+% Be sure the TeX file includes the following packages.
+% \usepackage{graphicx}
+% \usepackage{times}
+% \usepackage{textpos}
+
+\definecolor{dark_grey}{gray}{0.3}
+\definecolor{dftfe_blue}{rgb}{0.0,0.39,0.76}
+
+%LINE 1%
+{
+\renewcommand{\familydefault}{\sfdefault}
+
+\pagenumbering{gobble}
+%\begin{center}
+%\resizebox{\textwidth}{!}{\textcolor{dark_grey}{\fontfamily{\sfdefault}\selectfont
+%	\href{http://www-personal.umich.edu/~vikramg/}{COMPUTATIONAL MATERIAL PHYSICS GROUP}
+%}}
+%\vspace{0.05em}
+%\hrule
+
+%LINE 2%
+%\color{dark_grey}
+%\rule{\textwidth}{2pt}
+
+%LINE 3%
+%\color{dark_grey}
+% FILL: additional organizations
+% e.g.: {\Large Organization 1\\Organization 2}
+%{\Large }
+%\end{center}
+
+%COLOR AND CODENAME BLOCK%
+\begin{center}
+\resizebox{\textwidth}{!}{\colorbox
+% FILL: color of code name text box
+% e.g. blue
+{dftfe_blue}{\fontfamily{\rmdefault}\selectfont \textcolor{yellow} {
+% FILL: name of the code
+% You may want to add \hspace to both sides of the codename to better center it, such as:
+% \newcommand{\codename}{\hspace{0.1in}CodeName\hspace{0.1in}}
+\hspace{0.1in}\dftfe{}\hspace{0.1in}
+}}}
+\\[12pt]
+{\Large Density Functional Theory With Finite-Elements}
+\end{center}
+
+%MAIN PICTURE%
+\begin{textblock*}{0in}(1.5in,0.3in)
+% FILL: image height
+% e.g. height=6.5in
+\begin{center}
+\vspace{1em}
+\includegraphics[height=2.5in]
+% FILL: image file name
+% e.g. cover_image.png
+{contour_5x5x5.pdf}
+\hspace{5em}
+\end{center}
+\end{textblock*}
+
+%USER MANUAL%
+\color{dark_grey}
+\hfill{\Huge \fontfamily{\sfdefault}\selectfont User Manual \\
+\raggedleft \huge \fontfamily{\sfdefault}\selectfont Version
+% keep the following line as is so that we can replace this using a script:
+0.5.0-pre %VERSION-INFO%
+\\\large(generated \today)\\
+{\Large Sambit Das\\Vikram Gavini\\Phani Motamarri\\ Shiva Rudraraju\\}
+}
+
+%WEBSITE%
+\null
+\vspace{17em}
+
+{\noindent
+{\fontfamily{\sfdefault}\selectfont \href{https://dftfe.org}{website of dftfe}}
+}
+
+%\begin{textblock*}{0in}(5.25in,-0.8in)
+%\includegraphics[height=0.8in]{CoE-vert.png}
+%\end{textblock*}
+
+%LINE%
+{\noindent
+\color{dark_grey}
+\rule{\textwidth}{2pt}
+}
+
+}
+Copyright (c) 2017-2018 The Regents of the University of Michigan and \hyperref[sec:authors]{DFT-FE authors}.
+\pagebreak
+\pagenumbering{arabic}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%   END OF DFT-FE MANUAL COVER TEMPLATE    %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\pagebreak
+
+\tableofcontents
+
+\pagebreak
+
+\section{Introduction}
+\label{sec:intro}
+\input{intro}
+
+\section{Overview of the formulation}
+\label{sec:intro}
+\input{formulation}
+
+\section{Installation}
+\label{sec:installation}
+\input{installation}
+
+\section{Running \dftfe}
+\label{sec:run}
+\input{rundftfe}
+
+\section{Contributing to \dftfe{}'s development}
+\label{sec:contributing}
+\input{contributing}
+
+
+\section{Future plans for \dftfe}
+\label{sec:future}
+\input{futurePlans}
+
+
+
+\section{Finding answers to more questions}
+\label{sec:questions-and-answers}
+\input{contacts}
+
+
+\appendix
+
+\section{Run-time input parameters}
+\label{sec:parameters}
+The underlying description of the input parameters also includes a Standard/Developer label, which signifies whether an input parameter is
+a standard one, or is an expert level one for development purposes. The default values of the development level parameters are good enough
+for almost all cases. Please contact the developers if just using standard parameters did not work for your problem.  
+% now include a file that describes all currently available run-time parameters
+\input{parameters}
+
+
+\pagebreak
+
+% print the list of references. make sure the page number in the index is
+% correct by putting the \addcontentsline inside the command that prints the
+% title of the page, see http://www.dfki.de/~loeckelt/latexbib.html
+
+\let\myRefname\refname
+\renewcommand\refname{%
+  \addcontentsline{toc}{section}{\numberline{}References}
+  \myRefname
+}
+\bibliographystyle{alpha}
+\bibliography{manual}
+
+
+\pagebreak
+
+
+\indexprologue{The following is a listing of all run-time parameters, sorted
+  by the section in which they appear. 
+  \addcontentsline{toc}{section}{\numberline{}Index of run-time parameters with
+    section names}
+  \label{sec:runtime-parameter-index-full}
+}
+\printindex[prmindexfull]
+\end{itemize}%Added this line as a temporary latex compilation error fix due to incorrect parameters.tex 
+
+\end{document}

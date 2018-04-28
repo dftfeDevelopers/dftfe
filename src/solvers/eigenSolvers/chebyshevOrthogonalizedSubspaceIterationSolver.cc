@@ -67,7 +67,7 @@ namespace dftfe{
   // initialize direction
   //
   eigenSolverClass::ReturnValueType
-  chebyshevOrthogonalizedSubspaceIterationSolver::solve(operatorClass              * operatorMatrix,
+  chebyshevOrthogonalizedSubspaceIterationSolver::solve(operatorDFTClass              * operatorMatrix,
 							std::vector<vectorType>    & eigenVectors,
 							std::vector<double>        & eigenValues)
   {
