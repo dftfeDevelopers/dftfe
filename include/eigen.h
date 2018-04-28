@@ -22,7 +22,6 @@
 #include <constants.h>
 #include <constraintMatrixInfo.h>
 #include <operator.h>
-#include <linearAlgebraOperations.h>
 
 namespace dftfe{
   using namespace dealii;

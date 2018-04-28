@@ -38,7 +38,7 @@ void pointWiseScaleWithDiagonal(const vectorType & diagonal,
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 						  const unsigned int kPointIndex,
-						  chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver) const
+						  chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver) 
 {
   computing_timer.enter_section("Chebyshev solve"); 
   
@@ -118,7 +118,7 @@ void dftClass<FEOrder>::computeResidualNorm(const std::vector<double> & eigenVal
 					    std::vector<vectorType> & X,
 					    std::vector<double> & residualNorm) const
 {
-  computing_timer.enter_section("computeResidualNorm"); 
+  //computing_timer.enter_section("computeResidualNorm"); 
 
   std::vector<vectorType> PSI(X.size());
   
@@ -144,7 +144,7 @@ void dftClass<FEOrder>::computeResidualNorm(const std::vector<double> & eigenVal
   if (dftParameters::verbosity==2)  
     pcout <<std::endl;
 
-  computing_timer.exit_section("computeResidualNorm"); 
+  //computing_timer.exit_section("computeResidualNorm"); 
 }
 
 //compute the maximum of the residual norm of the highest occupied state among all k points 

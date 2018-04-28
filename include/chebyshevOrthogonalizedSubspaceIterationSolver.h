@@ -32,7 +32,7 @@ namespace dftfe{
 
   class chebyshevOrthogonalizedSubspaceIterationSolver : public eigenSolverClass {
   
-
+  public:
     /**
      * @brief Constructor.
      *

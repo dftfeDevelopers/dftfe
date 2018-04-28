@@ -376,8 +376,8 @@ namespace dftfe {
       const unsigned int this_mpi_process;
       IndexSet   locally_owned_dofs, locally_owned_dofsEigen;
       IndexSet   locally_relevant_dofs, locally_relevant_dofsEigen;
-      std::vector<unsigned int> local_dof_indicesReal, local_dof_indicesImag;
-      std::vector<unsigned int> localProc_dof_indicesReal,localProc_dof_indicesImag;
+      std::vector<dealii::types::global_dof_index> local_dof_indicesReal, local_dof_indicesImag;
+      std::vector<dealii::types::global_dof_index> localProc_dof_indicesReal,localProc_dof_indicesImag;
       std::vector<bool> selectedDofsHanging;
 
       poissonClass<FEOrder> * poissonPtr;
@@ -539,7 +539,7 @@ namespace dftfe {
 
       void kohnShamEigenSpaceCompute(const unsigned int s,
 				     const unsigned int kPointIndex,
-				     chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver) const;
+				     chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver);
 
       void computeResidualNorm(const std::vector<double> & eigenValuesTemp,
 			       std::vector<vectorType> & X, 

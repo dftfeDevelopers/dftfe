@@ -18,7 +18,7 @@
 
 
 
-namespace dftfe {
+
 
 template<unsigned int FEOrder>
 void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::vector<vectorType> &src,
@@ -319,4 +319,4 @@ for (unsigned int i=0; i<numberWaveFunctions;++i)
     }
 }
 
-}
+

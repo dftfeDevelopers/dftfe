@@ -19,9 +19,14 @@
 #include <eigen.h>
 #include <dft.h>
 #include <dftParameters.h>
-#include "computeNonLocalHamiltonianTimesXMemoryOpt.cc"
+#include <linearAlgebraOperations.h>
+
+
 
 namespace dftfe {
+
+#include "computeNonLocalHamiltonianTimesXMemoryOpt.cc"
+
 //
 //constructor
 //
@@ -54,7 +59,6 @@ void eigenClass<FEOrder>::init()
 
   dftPtr->matrix_free_data.initialize_dof_vector(invSqrtMassVector,dftPtr->eigenDofHandlerIndex);
   sqrtMassVector.reinit(invSqrtMassVector);
-  tempDealiiVector.reinit(invSqrtMassVector);
 
   //
   //compute mass vector
@@ -177,8 +181,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 	  for (unsigned int v = 0; v < n_sub_cells; ++v)
 	    {
 	      cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
-	      //densityValue[v] = ((*rhoValues)[cellPtr->id()][q]);
-	      densityValue[v] = (*rhoValues).find(cellPtr->id())[q];
+	      densityValue[v] = (*rhoValues).find(cellPtr->id())->second[q];
 	    }
 
 	  xc_lda_vxc(&(dftPtr->funcX),n_sub_cells,&densityValue[0],&exchangePotentialVal[0]);
@@ -260,10 +263,10 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 	  for (unsigned int v = 0; v < n_sub_cells; ++v)
 	    {
 	      cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
-	      densityValue[v] = ((*rhoValues)[cellPtr->id()][q]);
-	      double gradRhoX = ((*gradRhoValues)[cellPtr->id()][3*q + 0]);
-	      double gradRhoY = ((*gradRhoValues)[cellPtr->id()][3*q + 1]);
-	      double gradRhoZ = ((*gradRhoValues)[cellPtr->id()][3*q + 2]);
+	      densityValue[v] = (*rhoValues).find(cellPtr->id())->second[q];
+	      double gradRhoX = (*gradRhoValues).find(cellPtr->id())->second[3*q + 0];
+	      double gradRhoY = (*gradRhoValues).find(cellPtr->id())->second[3*q + 1];
+	      double gradRhoZ = (*gradRhoValues).find(cellPtr->id())->second[3*q + 2];
 	      sigmaValue[v] = gradRhoX*gradRhoX + gradRhoY*gradRhoY + gradRhoZ*gradRhoZ;
 	    }
 
@@ -277,9 +280,9 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 	      cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
 	      derExchEnergyWithDensity[v]=derExchEnergyWithDensityVal[v];
 	      derCorrEnergyWithDensity[v]=derCorrEnergyWithDensityVal[v];
-	      double gradRhoX = ((*gradRhoValues)[cellPtr->id()][3*q + 0]);
-	      double gradRhoY = ((*gradRhoValues)[cellPtr->id()][3*q + 1]);
-	      double gradRhoZ = ((*gradRhoValues)[cellPtr->id()][3*q + 2]);
+	      double gradRhoX = (*gradRhoValues).find(cellPtr->id())->second[3*q + 0];
+	      double gradRhoY = (*gradRhoValues).find(cellPtr->id())->second[3*q + 1];
+	      double gradRhoZ = (*gradRhoValues).find(cellPtr->id())->second[3*q + 2];
 	      double term = derExchEnergyWithSigma[v]+derCorrEnergyWithSigma[v];
 	      derExcWithSigmaTimesGradRhoX[v] = term*gradRhoX;
 	      derExcWithSigmaTimesGradRhoY[v] = term*gradRhoY;
@@ -779,8 +782,8 @@ void eigenClass<FEOrder>::computeVEffSpinPolarized(const std::map<dealii::CellId
 	  for (unsigned int v = 0; v < n_sub_cells; ++v)
 	    {
 	      cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
-	      densityValue[2*v+1] = ((*rhoValues)[cellPtr->id()][2*q+1]);
-	      densityValue[2*v] = ((*rhoValues)[cellPtr->id()][2*q]);
+	      densityValue[2*v+1] = (*rhoValues).find(cellPtr->id())->second[2*q+1];
+	      densityValue[2*v] = (*rhoValues).find(cellPtr->id())->second[2*q];
 	    }
 
 	  xc_lda_vxc(&(dftPtr->funcX),n_sub_cells,&densityValue[0],&exchangePotentialVal[0]);
@@ -864,18 +867,19 @@ void eigenClass<FEOrder>::computeVEffSpinPolarized(const std::map<dealii::CellId
 	  for (unsigned int v = 0; v < n_sub_cells; ++v)
 	    {
 	      cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
-	      densityValue[2*v+1] = ((*rhoValues)[cellPtr->id()][2*q+1]);
-	      densityValue[2*v] = ((*rhoValues)[cellPtr->id()][2*q]);
-	      double gradRhoX1 = ((*gradRhoValues)[cellPtr->id()][6*q + 0]);
-	      double gradRhoY1 = ((*gradRhoValues)[cellPtr->id()][6*q + 1]);
-	      double gradRhoZ1 = ((*gradRhoValues)[cellPtr->id()][6*q + 2]);
-	      double gradRhoX2 = ((*gradRhoValues)[cellPtr->id()][6*q + 3]);
-	      double gradRhoY2 = ((*gradRhoValues)[cellPtr->id()][6*q + 4]);
-	      double gradRhoZ2 = ((*gradRhoValues)[cellPtr->id()][6*q + 5]);
+	      densityValue[2*v+1] = (*rhoValues).find(cellPtr->id())->second[2*q+1];
+	      densityValue[2*v] = (*rhoValues).find(cellPtr->id())->second[2*q];
+	      double gradRhoX1 = (*gradRhoValues).find(cellPtr->id())->second[6*q + 0];
+	      double gradRhoY1 = (*gradRhoValues).find(cellPtr->id())->second[6*q + 1];
+	      double gradRhoZ1 = (*gradRhoValues).find(cellPtr->id())->second[6*q + 2];
+	      double gradRhoX2 = (*gradRhoValues).find(cellPtr->id())->second[6*q + 3];
+	      double gradRhoY2 = (*gradRhoValues).find(cellPtr->id())->second[6*q + 4];
+	      double gradRhoZ2 = (*gradRhoValues).find(cellPtr->id())->second[6*q + 5];
 	      //
 	      sigmaValue[3*v+0] = gradRhoX1*gradRhoX1 + gradRhoY1*gradRhoY1 + gradRhoZ1*gradRhoZ1;
 	      sigmaValue[3*v+1] = gradRhoX1*gradRhoX2 + gradRhoY1*gradRhoY2 + gradRhoZ1*gradRhoZ2;
 	      sigmaValue[3*v+2] = gradRhoX2*gradRhoX2 + gradRhoY2*gradRhoY2 + gradRhoZ2*gradRhoZ2;
+
 	    }
 
 	  xc_gga_vxc(&(dftPtr->funcX),n_sub_cells,&densityValue[0],&sigmaValue[0],&derExchEnergyWithDensityVal[0],&derExchEnergyWithSigma[0]);
@@ -888,12 +892,12 @@ void eigenClass<FEOrder>::computeVEffSpinPolarized(const std::map<dealii::CellId
 	      cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
 	      derExchEnergyWithDensity[v]=derExchEnergyWithDensityVal[2*v+spinIndex];
 	      derCorrEnergyWithDensity[v]=derCorrEnergyWithDensityVal[2*v+spinIndex];
-	      double gradRhoX = ((*gradRhoValues)[cellPtr->id()][6*q + 0 + 3*spinIndex]);
-	      double gradRhoY = ((*gradRhoValues)[cellPtr->id()][6*q + 1 + 3*spinIndex]);
-	      double gradRhoZ = ((*gradRhoValues)[cellPtr->id()][6*q + 2 + 3*spinIndex]);
-	      double gradRhoOtherX = ((*gradRhoValues)[cellPtr->id()][6*q + 0 + 3*(1-spinIndex)]);
-	      double gradRhoOtherY = ((*gradRhoValues)[cellPtr->id()][6*q + 1 + 3*(1-spinIndex)]);
-	      double gradRhoOtherZ = ((*gradRhoValues)[cellPtr->id()][6*q + 2 + 3*(1-spinIndex)]);
+	      double gradRhoX = (*gradRhoValues).find(cellPtr->id())->second[6*q + 0 + 3*spinIndex];
+	      double gradRhoY = (*gradRhoValues).find(cellPtr->id())->second[6*q + 1 + 3*spinIndex];
+	      double gradRhoZ = (*gradRhoValues).find(cellPtr->id())->second[6*q + 2 + 3*spinIndex];
+	      double gradRhoOtherX = (*gradRhoValues).find(cellPtr->id())->second[6*q + 0 + 3*(1-spinIndex)];
+	      double gradRhoOtherY = (*gradRhoValues).find(cellPtr->id())->second[6*q + 1 + 3*(1-spinIndex)];
+	      double gradRhoOtherZ = (*gradRhoValues).find(cellPtr->id())->second[6*q + 2 + 3*(1-spinIndex)];
 	      double term = derExchEnergyWithSigma[3*v+2*spinIndex]+derCorrEnergyWithSigma[3*v+2*spinIndex];
 	      double termOff = derExchEnergyWithSigma[3*v+1]+derCorrEnergyWithSigma[3*v+1];
 	      derExcWithSigmaTimesGradRhoX[v] = term*gradRhoX + 0.5*termOff*gradRhoOtherX;

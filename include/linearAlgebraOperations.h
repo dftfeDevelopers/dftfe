@@ -26,8 +26,7 @@ using namespace dealii;
 typedef dealii::parallel::distributed::Vector<double> vectorType;
 
 namespace dftfe{
-  namespace linearAlgebraOperations
-  {
+
     //
     //extern declarations for blas-lapack routines
     //
@@ -45,7 +44,8 @@ namespace dftfe{
     }
 
 
-
+  namespace linearAlgebraOperations
+  {
   
     /** @brief Calculates an estimate of upper bound of a matrix using
      *  k-step Lanczos method.

@@ -40,6 +40,7 @@
 #include <boost/math/distributions/normal.hpp>
 #include <boost/random/normal_distribution.hpp>
 #include <interpolateFieldsFromPreviousMesh.h>
+#include <linearAlgebraOperations.h>
 
 namespace dftfe {
 
