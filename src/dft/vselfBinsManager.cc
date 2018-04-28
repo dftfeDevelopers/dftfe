@@ -342,7 +342,7 @@ namespace dftfe
       //create interaction maps by finding the intersection of global NodeIds of each atom
       std::map<int,std::set<int> > interactionMap;
 
-      double radiusAtomBallAdaptive=10.0;
+      double radiusAtomBallAdaptive=4.0;
 
       if (std::fabs(radiusAtomBall)<1e-6)
       {
