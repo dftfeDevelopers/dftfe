@@ -13,7 +13,9 @@ INCLUDE_DIRECTORIES(
 # Declare all source files the target consists of:
 SET(TARGET_SRC
   ./src/dft/dft.cc
-  ./src/poisson/poisson.cc
+  ./src/dft/vselfBinsManager.cc
+  ./src/dft/energyCalculator.cc
+  ./src/poisson/poissonSolverProblem.cc
   ./src/eigen/eigen.cc
   ./src/eigen/operator.cc
   ./src/force/force.cc
@@ -28,10 +30,13 @@ SET(TARGET_SRC
   ./src/geoOpt/geoOptCell.cc
   ./src/solvers/solverFunction.cc
   ./src/solvers/nonLinearSolver.cc
+  ./src/solvers/linearSolver.cc
   ./src/solvers/cgSolvers/cgPRPNonLinearSolver.cc
   ./src/solvers/eigenSolvers/chebyshevOrthogonalizedSubspaceIterationSolver.cc
   ./src/solvers/eigenSolver.cc
   ./src/linAlg/linearAlgebraOperations.cc
+  ./src/solvers/dealiiLinearSolver.cc
+  ./src/solvers/dealiiLinearSolverProblem.cc
   ./utils/fileReaders.cc
   ./utils/dftParameters.cc
   ./utils/constraintMatrixInfo.cc

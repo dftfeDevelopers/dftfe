@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Shiva Rudraraju (2016), Phani Motamarri (2016), Sambit Das (2017)
+// @author Shiva Rudraraju, Phani Motamarri, Sambit Das 
 //
 
 #ifndef dft_H_
@@ -25,30 +25,27 @@
 #include <complex>
 #include <deque>
 
+#include <headers.h>
+#include <constants.h>
+#include <constraintMatrixInfo.h>
 
-
-#include "headers.h"
-#include "constants.h"
-#include "constraintMatrixInfo.h"
-
-#include "poisson.h"
-#include "eigen.h"
-#include "symmetry.h"
-#include "meshMovementAffineTransform.h"
-#include "eigenSolver.h"
-#include "chebyshevOrthogonalizedSubspaceIterationSolver.h"
+#include <eigen.h>
+#include <symmetry.h>
+#include <meshMovementAffineTransform.h>
+#include <eigenSolver.h>
+#include <chebyshevOrthogonalizedSubspaceIterationSolver.h>
+#include <vselfBinsManager.h>
+#include <dftParameters.h>
+#include <triangulationManager.h>
 
 #include <interpolation.h>
 #include <xc.h>
 #include <petsc.h>
 #include <slepceps.h>
-
-#include "dftParameters.h"
-
-#include "triangulationManager.h"
 #include <spglib.h>
 
 namespace dftfe {
+<<<<<<< HEAD
   //
   //Initialize Namespace
   //
@@ -84,9 +81,6 @@ namespace dftfe {
   template <unsigned int FEOrder>
     class dftClass
     {
-
-      template <unsigned int T>
-	friend class poissonClass;
 
       template <unsigned int T>
 	friend class eigenClass;
@@ -194,6 +188,16 @@ namespace dftfe {
        */
       void projectPreviousGroundStateRho();
 
+      /**
+       * save triangulation information and rho quadrature data to checkpoint file for restarts
+       */
+      void saveTriaInfoAndRhoData();
+
+      /**
+       * load triangulation information rho quadrature data from checkpoint file for restarted run
+       */
+      void loadTriaInfoAndRhoData();
+
       void generateMPGrid();
       void writeMesh(std::string meshFileName);
       void generateImageCharges();
@@ -203,7 +207,7 @@ namespace dftfe {
       /**
        * moves the triangulation vertices using Gaussians such that the all atoms are on triangulation vertices
        */
-      void moveMeshToAtoms(const Triangulation<3,3> & triangulationMove,const bool reuse=false);
+      void moveMeshToAtoms(const Triangulation<3,3> & triangulationMove);
 
       /**
        * Initializes the guess of electron-density and single-atom wavefunctions on the mesh,
@@ -217,8 +221,29 @@ namespace dftfe {
       void initBoundaryConditions();
       void initElectronicFields(bool usePreviousGroundStateRho=false);
       void initPseudoPotentialAll();
-      void locateAtomCoreNodes();
-      void locatePeriodicPinnedNodes();
+
+     /**
+       * Finds the global dof ids of the nodes containing atoms.
+       *
+       * @param dofHandler[in]
+       * @param atomNodeIdToChargeValueMap[out] local map of global dof id to atom charge id
+       */
+      void locateAtomCoreNodes(const dealii::DoFHandler<3> & _dofHandler,
+	                       std::map<dealii::types::global_dof_index, double> & atomNodeIdToChargeValueMap);
+
+     /**
+       * Sets homogeneous dirichlet boundary conditions on a node farthest from
+       * all atoms (pinned node). This is only done in case of periodic boundary conditions
+       * to get an unique solution to the total electrostatic potential problem.
+       *
+       * @param dofHandler[in]
+       * @param constraintMatrixBase[in] base ConstraintMatrix object
+       * @param constraintMatrix[out] ConstraintMatrix object with homogeneous
+       * Dirichlet boundary condition entries added
+       */
+      void locatePeriodicPinnedNodes(const dealii::DoFHandler<3> & _dofHandler,
+	                             const dealii::ConstraintMatrix & constraintMatrixBase,
+	                             dealii::ConstraintMatrix & constraintMatrix);
       void initRho();
       void computeRhoInitialGuessFromPSI();
       void clearRhoData();
@@ -235,31 +260,25 @@ namespace dftfe {
 
 
       /**
-       * Sets dirichlet boundary conditions for total potential constraints on
-       * non-periodic boundary (boundary id==0). Currently setting homogeneous bc
+       * Sets homegeneous dirichlet boundary conditions for total potential constraints on
+       * non-periodic boundary (boundary id==0).
        *
+       * @param dofHandler[in]
+       * @param constraintMatrix[out] ConstraintMatrix object with homogeneous
+       * Dirichlet boundary condition entries added
        */
-      void applyTotalPotentialDirichletBC();
+      void applyHomogeneousDirichletBC(const dealii::DoFHandler<3> & _dofHandler,
+	                               dealii::ConstraintMatrix & constraintMatrix);
 
       void computeElementalOVProjectorKets();
-
-
-      /**
-       * Categorizes atoms into bins based on self-potential ball radius around each atom such
-       * that no two atoms in each bin has overlapping balls
-       * and finally solves the self-potentials in each bin one-by-one.
-       */
-      void createAtomBins(std::vector<ConstraintMatrix * > & constraintsVector);
-      void createAtomBinsExtraSanityCheck();
-      void solveVself();
 
       /**
        * Computes total charge by integrating the electron-density
        */
-      double totalCharge(std::map<dealii::CellId, std::vector<double> > *);
+      double totalCharge(const std::map<dealii::CellId, std::vector<double> > *rhoQuadValues);
 
       /**
-       * normalized the charge density
+       * normalize the electron density
        */
       void normalizeRho();
 
@@ -277,12 +296,15 @@ namespace dftfe {
       double mixing_anderson_spinPolarized();
 
       /**
-       * Computes ground-state energy in a given SCF iteration,
-       * computes repulsive energy explicity for a non-periodic system
+       * Re solves the all electrostatics on a p refined mesh, and computes
+       * the corresponding energy. This function
+       * is called after reaching the ground state electron density. Currently the p refinement
+       * is hardcoded to FEOrder+2.
+       * FIXME: The function is not yet extened to the case when point group symmetry is used.
+       * However, it works for time reversal symmetry.
+       *
        */
-      double compute_energy(const bool print);
-      double compute_energy_spinPolarized(const bool print);
-      double repulsiveEnergy();
+      void computeElectrostaticEnergyPRefined();
 
       /**
        * Computes Fermi-energy obtained by imposing constraint on the number of electrons
@@ -295,7 +317,7 @@ namespace dftfe {
       /**
        * Computes the volume of the domain
        */
-      void computeVolume();
+      double computeVolume(const dealii::DoFHandler<3> & _dofHandler);
 
       /**
        * Deforms the domain by the given deformation gradient and reinitializes the
@@ -340,11 +362,6 @@ namespace dftfe {
       std::vector<orbital> waveFunctionsVector;
       std::map<unsigned int, std::map<unsigned int, std::map<unsigned int, alglib::spline1dinterpolant*> > > radValues;
       std::map<unsigned int, std::map<unsigned int, std::map <unsigned int, double> > >outerValues;
-      std::vector<Point<3>> closestTriaVertexToAtomsLocation;
-
-      std::vector<Tensor<1,3,double> > distanceClosestTriaVerticesToAtoms;
-      std::vector<Tensor<1,3,double> > dispClosestTriaVerticesToAtoms;
-
 
       /**
        * meshGenerator based object
@@ -366,7 +383,7 @@ namespace dftfe {
       unsigned int       eigenDofHandlerIndex,phiExtDofHandlerIndex,phiTotDofHandlerIndex,forceDofHandlerIndex;
       MatrixFree<3,double> matrix_free_data;
       std::map<types::global_dof_index, Point<3> > d_supportPoints, d_supportPointsEigen;
-      std::vector< ConstraintMatrix * > d_constraintsVector;
+      std::vector<const ConstraintMatrix * > d_constraintsVector;
 
       /**
        * parallel objects
@@ -380,7 +397,7 @@ namespace dftfe {
       std::vector<dealii::types::global_dof_index> localProc_dof_indicesReal,localProc_dof_indicesImag;
       std::vector<bool> selectedDofsHanging;
 
-      poissonClass<FEOrder> * poissonPtr;
+
       eigenClass<FEOrder> * eigenPtr;
       forceClass<FEOrder> * forcePtr;
       symmetryClass<FEOrder> * symmetryPtr;
@@ -390,15 +407,13 @@ namespace dftfe {
       /**
        * constraint Matrices
        */
-      ConstraintMatrix constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_constraintsPeriodicWithDirichlet, d_noConstraints, d_noConstraintsEigen;
 
       /**
        * storage for constraintMatrices in terms of arrays (STL)
        */
       dftUtils::constraintMatrixInfo constraintsNoneEigenDataInfo;
+      ConstraintMatrix constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_noConstraints, d_noConstraintsEigen;
 
-      /// vector of constraint matrices for vself bins
-      std::vector<ConstraintMatrix> d_vselfBinConstraintMatrices;
 
       /**
        * data storage for Kohn-Sham wavefunctions
@@ -421,11 +436,18 @@ namespace dftfe {
       std::map<dealii::CellId, std::vector<double> > * gradRhoOutValues, *gradRhoOutValuesSpinPolarized;
       std::deque<std::map<dealii::CellId,std::vector<double> >> gradRhoInVals,gradRhoInValsSpinPolarized,gradRhoOutVals, gradRhoOutValsSpinPolarized;
 
+      // storage for total electrostatic potential solution vector corresponding to input scf electron density
+      vectorType d_phiTotRhoIn;
+
+      // storage for total electrostatic potential solution vector corresponding to output scf electron density
+      vectorType d_phiTotRhoOut;
+
+      // storage for sum of nuclear electrostatic potential
+      vectorType d_phiExt;
 
       double d_pspTail = 8.0;
       std::map<dealii::CellId, std::vector<double> > pseudoValues;
       std::vector<std::vector<double> > d_localVselfs;
-
 
       //nonlocal pseudopotential related objects used only for pseudopotential calculation
 
@@ -492,17 +514,11 @@ namespace dftfe {
       std::vector<double> d_outerMostPointPseudoWaveFunctionsData;
       std::vector<double> d_outerMostPointPseudoPotData;
 
-      //map of atom node number and atomic weight
-      std::map<unsigned int, double> atoms;
-      std::vector<std::map<unsigned int, double> > d_atomsInBin;
+      /// map of atom node number and atomic weight
+      std::map<dealii::types::global_dof_index, double> d_atomNodeIdToChargeMap;
 
-      //map of binIds and atomIds in it and other bin related information
-      std::map<int,std::set<int> > d_bins;
-      std::vector<std::vector<int> > d_imageIdsInBins;
-      std::vector<std::map<dealii::types::global_dof_index, int> > d_boundaryFlag;
-      std::vector<std::map<dealii::types::global_dof_index, double> > d_vselfBinField;
-      std::vector<std::map<dealii::types::global_dof_index, int> > d_closestAtomBin;
-      std::vector<vectorType> d_vselfFieldBins;//required for configurational force
+      /// vselfBinsManager object
+      vselfBinsManager<FEOrder> d_vselfBinsManager;
 
       /// kPoint cartesian coordinates
       std::vector<double> d_kPointCoordinates;
@@ -517,14 +533,12 @@ namespace dftfe {
       int d_maxkPoints;
 
 
-      /** Recomputes the k point cartesian coordinates from the crystal k point coordinates
+      /**
+       * Recomputes the k point cartesian coordinates from the crystal k point coordinates
        * and the current lattice vectors, which can change in each ground state solve when
        * isCellOpt is true
        */
       void recomputeKPointCoordinates();
-
-      /// integralRhoOut to store number of electrons
-      double integralRhoValue;
 
       /// fermi energy
       double fermiEnergy;
@@ -536,19 +550,23 @@ namespace dftfe {
       std::vector<double> bLow;
       vectorType vChebyshev;
 
+      /**
+       * @brief compute the maximum of the residual norm of the highest occupied state among all k points
+       */
+      double computeMaximumHighestOccupiedStateResidualNorm(const std::vector<std::vector<double> > & residualNormWaveFunctionsAllkPoints,
+							    const std::vector<std::vector<double> > & eigenValuesAllkPoints,
+							    const double _fermiEnergy);
+
 
       void kohnShamEigenSpaceCompute(const unsigned int s,
 				     const unsigned int kPointIndex,
-				     chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver);
+				     chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver,
+				     std::vector<double> & residualNormWaveFunctions);
 
       void computeResidualNorm(const std::vector<double> & eigenValuesTemp,
 			       std::vector<vectorType> & X, 
 			       std::vector<double> & residualNorm) const;
 
-      std::vector<std::vector<double> > d_tempResidualNormWaveFunctions;
-
-      double computeMaximumHighestOccupiedStateResidualNorm();
-		    
 
     };
 

@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Shiva Rudraraju (2016), Phani Motamarri (2016)
+// @author Shiva Rudraraju, Phani Motamarri
 //
 
 #ifndef eigen_H_
@@ -68,7 +68,8 @@ namespace dftfe{
 		std::vector<double> & ProjHam);
 #endif
 
-      /**
+     
+       /**
        * @brief Computes effective potential involving local-density exchange-correlation functionals
        *
        * @param rhoValues electron-density
@@ -76,10 +77,11 @@ namespace dftfe{
        * @param phiExt electrostatic potential arising from nuclear charges
        * @param pseudoValues quadrature data of pseudopotential values
        */
-      void computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues, 
+      void computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoValues,
 		       const vectorType & phi,
 		       const vectorType & phiExt,
 		       const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
+
 
       /**
        * @brief Computes effective potential involving local spin density exchange-correlation functionals
@@ -123,20 +125,42 @@ namespace dftfe{
        * @param pseudoValues quadrature data of pseudopotential values
        */
       void computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues, 
-				    const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
+	
+
+
+			    const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
 				    const vectorType & phi,
 				    const vectorType & phiExt,
 				    unsigned int spinIndex,
 				    const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
 
+      
+      /**
+       * @brief sets the data member to appropriate kPoint Index 
+       *
+       * @param kPointIndex  k-point Index to set
+       */
       void reinitkPointIndex(unsigned int & kPointIndex);
 
 
+      //
+      //initialize eigen class
+      //
       void init ();
 	    
-      void computeMassVector();
 
-
+      /**
+       * @brief Computes diagonal mass matrix using Lobatto rule
+       *
+       * @param dofHandler dofHandler associated with the current mesh
+       * @param constraintMatrix constraints to be used
+       * @param sqrtMassVec output the value of square root of diagonal mass matrix 
+       * @param invSqrtMassVec output the value of inverse square root of diagonal mass matrix
+       */
+      void computeMassVector(const dealii::DoFHandler<3> & dofHandler,
+	                     const dealii::ConstraintMatrix & constraintMatrix,
+			     vectorType & sqrtMassVec,
+			     vectorType & invSqrtMassVec);
 
 
     private:
@@ -165,7 +189,7 @@ namespace dftfe{
       dftClass<FEOrder>* dftPtr;
 
       //data structures
-      vectorType invSqrtMassVector,sqrtMassVector;
+      vectorType d_invSqrtMassVector,d_sqrtMassVector;
 
 
       dealii::Table<2, dealii::VectorizedArray<double> > vEff;

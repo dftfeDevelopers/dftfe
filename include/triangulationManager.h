@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -89,30 +89,47 @@ namespace dftfe  {
 		   const std::vector<std::vector<double> > & imageAtomLocations,
 		   const std::vector<std::vector<double> > & domainBoundingVectors);
 
+
+    /** @brief generates the coarse meshes for restart.
+     *
+     *  @param atomLocations vector containing cartesian coordinates at atoms with
+     *  respect to origin (center of domain).
+     *  @param imageAtomLocations vector containing cartesian coordinates of image
+     *  atoms with respect to origin.
+     *  @param domainBoundingVectors vector of domain bounding vectors (refer to
+     *  description of input parameters.
+     *  @param generateSerialMesh bool to toggle to generation of serial tria
+     */
+      void generateCoarseMeshesForRestart
+		  (const std::vector<std::vector<double> > & atomLocations,
+		   const std::vector<std::vector<double> > & imageAtomLocations,
+		   const std::vector<std::vector<double> > & domainBoundingVectors,
+		   const bool generateSerialTria);
+
     /**
      * @brief returns constant reference to serial unmoved triangulation
      *
      */
-      const parallel::distributed::Triangulation<3> & getSerialMeshUnmoved();
+      const parallel::distributed::Triangulation<3> & getSerialMeshUnmoved() const;
 
     /**
-     * @brief returns constant reference to parallel moved triangulation
+     * @brief returns reference to parallel moved triangulation
      *
      */
-      const parallel::distributed::Triangulation<3> & getParallelMeshMoved();
+      parallel::distributed::Triangulation<3> & getParallelMeshMoved();
 
     /**
      * @brief returns constant reference to parallel unmoved triangulation
      *
      */
-      const parallel::distributed::Triangulation<3> & getParallelMeshUnmoved();
+      const parallel::distributed::Triangulation<3> & getParallelMeshUnmoved() const;
 
     /**
      * @brief returns constant reference to parallel unmoved previous triangulation
      * (triangulation used in the last ground state solve during structure optimization).
      *
      */
-      const parallel::distributed::Triangulation<3> & getParallelMeshUnmovedPrevious();
+      const parallel::distributed::Triangulation<3> & getParallelMeshUnmovedPrevious() const;
 
     /**
      * @brief returns constant reference to serial unmoved previous triangulation
@@ -120,17 +137,28 @@ namespace dftfe  {
      * structure optimization).
      *
      */
-      const parallel::distributed::Triangulation<3> & getSerialMeshUnmovedPrevious();
+      const parallel::distributed::Triangulation<3> & getSerialMeshUnmovedPrevious() const;
+
+    /**
+     * @brief resets the vertices of parallel mesh moved to umoved. This is required before
+     * any mesh refinemen/coarsening operations are performed.
+     *
+     */
+     void resetParallelMeshMovedToUnmoved();
 
     /**
      * @brief serialize the triangulations and the associated solution vectors
      *
-     *  @param [input]dofHandler DofHandler object on which solution vectors are based
+     *  @param [input]feOrder finite element polynomial order of the dofHandler on which solution
+     *  vectors are based upon
+     *  @param [input]nComponents number of components of the dofHandler on which solution
+     *  vectors are based upon
      *  @param [input]solutionVectors vector of parallel distributed solution vectors to be serialized
      *  @param [input]interpoolComm interpool communicator to ensure serialization happens only in pool
      */
      void saveTriangulationsSolutionVectors
-	     (const dealii::DoFHandler<3> & dofHandler,
+	     (const unsigned int feOrder,
+	      const unsigned int nComponents,
 	      const std::vector< const dealii::parallel::distributed::Vector<double> * > & solutionVectors,
 	      const MPI_Comm & interpoolComm);
 
@@ -163,13 +191,12 @@ namespace dftfe  {
      *
      *  @param [output]cellQuadDataContainerOut container of output cell quadrature data. Must pass container
      *  of the same size used in the call to saveTriangulationsCellQuadData.
-     *  @param [input]cellDataSizeContainer
-     *  @param [input]offsetContainer
+     *  @param [input]cellDataSizeContainer vector of size of the per cell quadrature data. Must match the
+     *  size and the ordering used in saveTriangulationsCellQuadData
      */
      void loadTriangulationsCellQuadData
-	       (std::vector<std::map<dealii::CellId, std::vector<double> > *> & cellQuadDataContainerOut,
-		const std::vector<unsigned int>  & cellDataSizeContainer,
-		const std::vector<unsigned int>  & offsetContainer);
+	       (std::vector<std::map<dealii::CellId, std::vector<double> > > & cellQuadDataContainerOut,
+		const std::vector<unsigned int>  & cellDataSizeContainer);
 
      private:
 
@@ -186,6 +213,13 @@ namespace dftfe  {
       void generateMesh(parallel::distributed::Triangulation<3>& parallelTriangulation);
 
     /**
+     * @brief internal function which generates a coarse mesh which is required for the load function call in
+     * restarts.
+     *
+     */
+      void generateCoarseMesh(parallel::distributed::Triangulation<3>& parallelTriangulation);
+
+    /**
      * @brief internal function which refines the serial mesh based on refinement flags from parallel mesh.
      * This ensures that we get the same mesh in serial and parallel.
      *
@@ -195,6 +229,16 @@ namespace dftfe  {
 			    const std::vector<unsigned int>& localRefineFlag,
 			    const unsigned int n_global_cell,
 			    parallel::distributed::Triangulation<3>& serialTriangulation);
+
+     /**
+      * @brief internal function to serialize support triangulations. No solution data is attached to them
+      */
+      void saveSupportTriangulations();
+
+     /**
+      * @brief internal function to de-serialize support triangulations. No solution data is read from them
+      */
+      void loadSupportTriangulations();
 
       //
       //data members

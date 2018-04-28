@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,14 +13,16 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Shiva Rudraraju (2016), Phani Motamarri (2018), Sambit Das (2018)
+// @author Shiva Rudraraju, Phani Motamarri, Sambit Das
 //
 
 //Include header files
 #include <dft.h>
 #include <eigen.h>
-#include <poisson.h>
 #include <force.h>
+#include <poissonSolverProblem.h>
+#include <dealiiLinearSolver.h>
+#include <energyCalculator.h>
 #include <symmetry.h>
 #include <geoOptIon.h>
 #include <geoOptCell.h>
@@ -58,12 +60,14 @@ namespace dftfe {
 #include "generateImageCharges.cc"
 #endif
 #include "psiInitialGuess.cc"
-#include "energy.cc"
+#include "fermiEnergy.cc"
 #include "charge.cc"
 #include "density.cc"
 #include "mixingschemes.cc"
 #include "kohnShamEigenSolve.cc"
-#include "solveVself.cc"
+#include "restart.cc"
+#include "electrostaticPRefinedEnergy.cc"
+
 
   //
   //dft constructor
@@ -83,7 +87,6 @@ namespace dftfe {
     numElectrons(0),
     numLevels(0),
     d_maxkPoints(1),
-    integralRhoValue(0),
     d_mesh(mpi_comm_replica,_interpoolcomm),
     d_affineTransformMesh(mpi_comm_replica),
     pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
@@ -91,10 +94,10 @@ namespace dftfe {
 		     dftParameters::reproducible_output ? TimerOutput::never : TimerOutput::summary,
 		     TimerOutput::wall_times)
   {
-    poissonPtr= new poissonClass<FEOrder>(this, mpi_comm_replica);
     forcePtr= new forceClass<FEOrder>(this, mpi_comm_replica);
     symmetryPtr= new symmetryClass<FEOrder>(this, mpi_comm_replica, _interpoolcomm);
     geoOptIonPtr= new geoOptIon<FEOrder>(this, mpi_comm_replica);
+
 #ifdef ENABLE_PERIODIC_BC
     geoOptCellPtr= new geoOptCell<FEOrder>(this, mpi_comm_replica);
 #endif
@@ -103,7 +106,6 @@ namespace dftfe {
   template<unsigned int FEOrder>
   dftClass<FEOrder>::~dftClass()
   {
-    delete poissonPtr;
     delete eigenPtr;
     delete symmetryPtr;
     matrix_free_data.clear();
@@ -151,27 +153,25 @@ namespace dftfe {
   }
 
   template<unsigned int FEOrder>
-  void dftClass<FEOrder>::computeVolume()
+  double dftClass<FEOrder>::computeVolume(const dealii::DoFHandler<3> & _dofHandler)
   {
-    d_domainVolume=0;
+    double domainVolume=0;
     QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
-    FEValues<3> fe_values (FE, quadrature, update_JxW_values);
+    FEValues<3> fe_values (_dofHandler.get_fe(), quadrature, update_JxW_values);
 
-    typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
+    typename DoFHandler<3>::active_cell_iterator cell = _dofHandler.begin_active(), endc = _dofHandler.end();
     for (; cell!=endc; ++cell)
-      {
-	if (cell->is_locally_owned())
-	  {
-	    fe_values.reinit (cell);
-	    for (unsigned int q_point = 0; q_point < quadrature.size(); ++q_point)
-	      {
-		d_domainVolume+=fe_values.JxW (q_point);
-	      }
-	  }
-      }
-    d_domainVolume= Utilities::MPI::sum(d_domainVolume, mpi_communicator);
+      if (cell->is_locally_owned())
+	{
+	  fe_values.reinit (cell);
+	  for (unsigned int q_point = 0; q_point < quadrature.size(); ++q_point)
+	    domainVolume+=fe_values.JxW (q_point);
+	}
+
+    domainVolume= Utilities::MPI::sum(domainVolume, mpi_communicator);
     if (dftParameters::verbosity>=1)
-      pcout<< "Volume of the domain (Bohr^3): "<< d_domainVolume<<std::endl;
+      pcout<< "Volume of the domain (Bohr^3): "<< domainVolume<<std::endl;
+    return domainVolume;
   }
 
   template<unsigned int FEOrder>
@@ -233,12 +233,7 @@ namespace dftfe {
     determineOrbitalFilling();
 
 #ifdef ENABLE_PERIODIC_BC
-    if (dftParameters::isIonForce || dftParameters::isCellStress)
-      AssertThrow(!dftParameters::useSymm,ExcMessage("USE GROUP SYMMETRY must be set to false if either ION FORCE or CELL STRESS is set to true. This functionality will be added in a future release"));
-    //readkPointData();
     generateMPGrid();
-    //if (useSymm)
-    //symmetryPtr->test_spg_get_ir_reciprocal_mesh() ;
 #else
     d_maxkPoints = 1;
     d_kPointCoordinates.resize(3*d_maxkPoints,0.0);
@@ -353,10 +348,20 @@ namespace dftfe {
     //
     //generate mesh (both parallel and serial)
     //
-    d_mesh.generateSerialUnmovedAndParallelMovedUnmovedMesh(atomLocations,
-							    d_imagePositions,
-							    d_domainBoundingVectors,
-							    dftParameters::useSymm);
+    if (dftParameters::chkType>=1 && dftParameters::restartFromChk)
+      {
+	d_mesh.generateCoarseMeshesForRestart(atomLocations,
+					      d_imagePositions,
+					      d_domainBoundingVectors,
+					      dftParameters::useSymm);
+	if (dftParameters::chkType==2)
+	  loadTriaInfoAndRhoData();
+      }
+    else
+      d_mesh.generateSerialUnmovedAndParallelMovedUnmovedMesh(atomLocations,
+							      d_imagePositions,
+							      d_domainBoundingVectors,
+							      dftParameters::useSymm);
     computing_timer.exit_section("mesh generation");
 
 
@@ -486,11 +491,30 @@ namespace dftfe {
   {
 
     //
-    //solve vself
+    //solve vself in bins
     //
     computing_timer.enter_section("vself solve");
-    solveVself();
+
+
+    d_vselfBinsManager.solveVselfInBins(matrix_free_data,
+					2,
+					d_phiExt,
+					d_noConstraints,
+					d_localVselfs);
+
     computing_timer.exit_section("vself solve");
+
+    energyCalculator energyCalc(mpi_communicator, interpoolcomm);
+
+    //
+    //solve
+    //
+    computing_timer.enter_section("scf solve");
+
+
+    //set up poisson solver
+    dealiiLinearSolver dealiiCGSolver(mpi_communicator, dealiiLinearSolver::CG);
+    poissonSolverProblem<FEOrder> phiTotalSolverProblem(mpi_communicator);
 
 
     //
@@ -500,11 +524,13 @@ namespace dftfe {
 									   0.0,
 									   numEigenValues);
 
-    
     //
-    //solve
+    //Begin SCF iteration
     //
-    computing_timer.enter_section("scf solve");
+    unsigned int scfIter=0;
+    double norm = 1.0;
+    //CAUTION: Choosing a looser tolernace might lead to failed tests
+    const double adaptiveChebysevFilterPassesTol=1e-2;
 
 
     //
@@ -512,7 +538,6 @@ namespace dftfe {
     //
     unsigned int scfIter=0;
     double norm = 1.0;
-
 
     pcout<<std::endl;
     if (dftParameters::verbosity==0)
@@ -524,7 +549,7 @@ namespace dftfe {
 	//
 	//Mixing scheme
 	//
-	if(scfIter > 0)
+	if(scfIter > 0 && !(dftParameters::restartFromChk && dftParameters::chkType==2))
 	  {
 	    if (scfIter==1)
 	      {
@@ -534,6 +559,9 @@ namespace dftfe {
 		  }
 		else
 		  norm = mixing_simple();
+
+		if (dftParameters::verbosity>=1)
+		  pcout<<"Simple mixing: L2 norm of electron-density difference: "<< norm<< std::endl;
 	      }
 	    else
 	      {
@@ -543,22 +571,48 @@ namespace dftfe {
 		  }
 		else
 		  norm = sqrt(mixing_anderson());
+
+		if (dftParameters::verbosity>=1)
+		  pcout<<"Anderson mixing: L2 norm of electron-density difference: "<< norm<< std::endl;
 	      }
+
+	    d_phiTotRhoIn = d_phiTotRhoOut;
+	  }
+	else if (dftParameters::restartFromChk && dftParameters::chkType==2)
+	  {
+	    if (dftParameters::spinPolarized==1)
+	      {
+		norm = sqrt(mixing_anderson_spinPolarized());
+	      }
+	    else
+	      norm = sqrt(mixing_anderson());
 
 	    if (dftParameters::verbosity>=1)
 	      pcout<<"Anderson Mixing: L2 norm of electron-density difference: "<< norm<< std::endl;
 
-	    poissonPtr->phiTotRhoIn = poissonPtr->phiTotRhoOut;
+	    d_phiTotRhoIn = d_phiTotRhoOut;
 	  }
 
 	//
 	//phiTot with rhoIn
 	//
-	int constraintMatrixId = phiTotDofHandlerIndex;
 	if (dftParameters::verbosity==2)
 	  pcout<< std::endl<<"Poisson solve for total electrostatic potential (rhoIn+b): ";
 	computing_timer.enter_section("phiTot solve");
-	poissonPtr->solve(poissonPtr->phiTotRhoIn,constraintMatrixId, rhoInValues);
+
+	phiTotalSolverProblem.reinit(matrix_free_data,
+				     d_phiTotRhoIn,
+				     *d_constraintsVector[phiTotDofHandlerIndex],
+				     phiTotDofHandlerIndex,
+				     d_atomNodeIdToChargeMap,
+				     *rhoInValues);
+
+
+	dealiiCGSolver.solve(phiTotalSolverProblem,
+			     dftParameters::relLinearSolverTolerance,
+			     dftParameters::maxLinearSolverIterations,
+			     dftParameters::verbosity);
+
 	computing_timer.exit_section("phiTot solve");
 
 	//
@@ -566,54 +620,134 @@ namespace dftfe {
 	//
 	if (dftParameters::spinPolarized==1)
 	  {
+
+	    std::vector<std::vector<std::vector<double> > > eigenValuesSpins(2,
+									     std::vector<std::vector<double> >(d_maxkPoints,
+													       std::vector<double>(numEigenValues)));
+
+	    std::vector<std::vector<std::vector<double>>> residualNormWaveFunctionsAllkPointsSpins(2,
+												   std::vector<std::vector<double> >(d_maxkPoints,
+																     std::vector<double>(numEigenValues)));
+
 	    for(unsigned int s=0; s<2; ++s)
 	      {
 		if(dftParameters::xc_id < 4)
 		  {
-		    eigenPtr->computeVEffSpinPolarized(rhoInValuesSpinPolarized, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, s, pseudoValues);
+		    eigenPtr->computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, pseudoValues);
 		  }
 		else if (dftParameters::xc_id == 4)
 		  {
-		    eigenPtr->computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, s, pseudoValues);
+		    eigenPtr->computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, pseudoValues);
 		  }
-		for(unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+		for (unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
 		  {
 		    eigenPtr->reinitkPointIndex(kPoint);
-		    for(int j = 0; j < dftParameters::numPass; ++j)
+		    for(unsigned int j = 0; j < dftParameters::numPass; ++j)
 		      {
 			if (dftParameters::verbosity==2)
 			  pcout<<"Beginning Chebyshev filter pass "<< j+1<< " for spin "<< s+1<<std::endl;
 
-			kohnShamEigenSpaceCompute(s,kPoint,subspaceIterationSolver);
+			kohnShamEigenSpaceCompute(s,
+						  kPoint,
+						  subspaceIterationSolver,
+						  residualNormWaveFunctionsAllkPointsSpins[s][kPoint]);
 		      }
 		  }
 	      }
 
+	    for(unsigned int s=0; s<2; ++s)
+	      for (unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+		for (unsigned int i = 0; i<numEigenValues; ++i)
+		  eigenValuesSpins[s][kPoint][i]=eigenValues[kPoint][numEigenValues*s+i];
 	    //
 	    //fermi energy
 	    //
 	    compute_fermienergy();
+
+	    //maximum of the residual norm of the state closest to and below the Fermi level among all k points,
+	    //and also the maximum between the two spins
+	    double maxRes =std::max(computeMaximumHighestOccupiedStateResidualNorm
+				    (residualNormWaveFunctionsAllkPointsSpins[0],
+				     eigenValuesSpins[0],
+				     fermiEnergy),
+				    computeMaximumHighestOccupiedStateResidualNorm
+				    (residualNormWaveFunctionsAllkPointsSpins[1],
+				     eigenValuesSpins[1],
+				     fermiEnergy));
+
+	    if (dftParameters::verbosity==2)
+	      pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
+
+	    //if the residual norm is greater than adaptiveChebysevFilterPassesTol (a heuristic value)
+	    // do more passes of chebysev filter till the check passes.
+	    // This improves the scf convergence performance.
+	    unsigned int count=1;
+	    while (maxRes>adaptiveChebysevFilterPassesTol)
+	      {
+		for(unsigned int s=0; s<2; ++s)
+		  for (unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+		    {
+		      eigenPtr->reinitkPointIndex(kPoint);
+		      if (dftParameters::verbosity==2)
+			pcout<< "Beginning Chebyshev filter pass "<< dftParameters::numPass+count<< " for spin "<< s+1<<std::endl;;
+
+		 
+		      kohnShamEigenSpaceCompute(s,
+						kPoint,
+						subspaceIterationSolver,
+						residualNormWaveFunctionsAllkPointsSpins[s][kPoint]);
+
+		    }
+		count++;
+		for(unsigned int s=0; s<2; ++s)
+		  for (unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+		    for (unsigned int i = 0; i<numEigenValues; ++i)
+		      eigenValuesSpins[s][kPoint][i]=eigenValues[kPoint][numEigenValues*s+i];
+
+		compute_fermienergy();
+		maxRes =std::max(computeMaximumHighestOccupiedStateResidualNorm
+				 (residualNormWaveFunctionsAllkPointsSpins[0],
+				  eigenValuesSpins[0],
+				  fermiEnergy),
+				 computeMaximumHighestOccupiedStateResidualNorm
+				 (residualNormWaveFunctionsAllkPointsSpins[1],
+				  eigenValuesSpins[1],
+				  fermiEnergy));
+		if (dftParameters::verbosity==2)
+		  pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
+	      }
 	  }
 	else
 	  {
+
+	    std::vector<std::vector<double>> residualNormWaveFunctionsAllkPoints;
+	    residualNormWaveFunctionsAllkPoints.resize(d_maxkPoints);
+	    for(unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+	      residualNormWaveFunctionsAllkPoints[kPoint].resize(eigenVectors[kPoint].size());
+
 	    if(dftParameters::xc_id < 4)
 	      {
-		eigenPtr->computeVEff(rhoInValues, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, pseudoValues);
+		eigenPtr->computeVEff(rhoInValues, d_phiTotRhoIn, d_phiExt, pseudoValues);
 	      }
 	    else if (dftParameters::xc_id == 4)
 	      {
-		eigenPtr->computeVEff(rhoInValues, gradRhoInValues, poissonPtr->phiTotRhoIn, poissonPtr->phiExt, pseudoValues);
+		eigenPtr->computeVEff(rhoInValues, gradRhoInValues, d_phiTotRhoIn, d_phiExt, pseudoValues);
 	      }
 
 	    for (unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
 	      {
 		eigenPtr->reinitkPointIndex(kPoint);
-		for(int j = 0; j < dftParameters::numPass; ++j)
+		for(unsigned int j = 0; j < dftParameters::numPass; ++j)
 		  {
 		    if (dftParameters::verbosity==2)
 		      pcout<< "Beginning Chebyshev filter pass "<< j+1<<std::endl;
 
-		    kohnShamEigenSpaceCompute(0,kPoint,subspaceIterationSolver);
+
+		    kohnShamEigenSpaceCompute(0,
+					      kPoint,
+					      subspaceIterationSolver,
+					      residualNormWaveFunctionsAllkPoints[kPoint]);
+
 		  }
 	      }
 
@@ -625,16 +759,18 @@ namespace dftfe {
 	    //
 	    //maximum of the residual norm of the state closest to and below the Fermi level among all k points
 	    //
-	    double maxRes = computeMaximumHighestOccupiedStateResidualNorm();
+	    double maxRes = computeMaximumHighestOccupiedStateResidualNorm
+	      (residualNormWaveFunctionsAllkPoints,
+	       eigenValues,
+	       fermiEnergy);
 	    if (dftParameters::verbosity==2)
 	      pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
 
-	    //if the residual norm is greater than 1e-1 (heuristic)
+	    //if the residual norm is greater than adaptiveChebysevFilterPassesTol (a heuristic value)
 	    // do more passes of chebysev filter till the check passes.
-	    // This improves the scf convergence performance. Currently this
-	    // approach is not implemented for spin-polarization case
-	    int count=1;
-	    while (maxRes>1e-1)
+	    // This improves the scf convergence performance.
+	    unsigned int count=1;
+	    while (maxRes>adaptiveChebysevFilterPassesTol)
 	      {
 		for (unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
 		  {
@@ -642,11 +778,17 @@ namespace dftfe {
 		    if (dftParameters::verbosity==2)
 		      pcout<< "Beginning Chebyshev filter pass "<< dftParameters::numPass+count<<std::endl;
 
-		    kohnShamEigenSpaceCompute(0,kPoint,subspaceIterationSolver);
+		    kohnShamEigenSpaceCompute(0,
+					      kPoint,
+					      subspaceIterationSolver,
+					      residualNormWaveFunctionsAllkPoints[kPoint]);
 		  }
 		count++;
 		compute_fermienergy();
-		maxRes = computeMaximumHighestOccupiedStateResidualNorm();
+		maxRes = computeMaximumHighestOccupiedStateResidualNorm
+		  (residualNormWaveFunctionsAllkPoints,
+		   eigenValues,
+		   fermiEnergy);
 		if (dftParameters::verbosity==2)
 		  pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
 	      }
@@ -668,8 +810,9 @@ namespace dftfe {
 	//
 	//compute integral rhoOut
 	//
-	integralRhoValue=totalCharge(rhoOutValues);
-
+	const double integralRhoValue=totalCharge(rhoOutValues);
+	if (dftParameters::verbosity==2)
+	  pcout<< std::endl<<"number of electrons: "<< integralRhoValue<<std::endl;
 	//
 	//phiTot with rhoOut
 	//
@@ -677,13 +820,69 @@ namespace dftfe {
 	  pcout<< std::endl<<"Poisson solve for total electrostatic potential (rhoOut+b): ";
 
 	computing_timer.enter_section("phiTot solve");
-	poissonPtr->solve(poissonPtr->phiTotRhoOut,constraintMatrixId, rhoOutValues);
+
+
+	phiTotalSolverProblem.reinit(matrix_free_data,
+				     d_phiTotRhoOut,
+				     *d_constraintsVector[phiTotDofHandlerIndex],
+				     phiTotDofHandlerIndex,
+				     d_atomNodeIdToChargeMap,
+				     *rhoOutValues);
+
+
+	dealiiCGSolver.solve(phiTotalSolverProblem,
+			     dftParameters::relLinearSolverTolerance,
+			     dftParameters::maxLinearSolverIterations,
+			     dftParameters::verbosity);
+
 	computing_timer.exit_section("phiTot solve");
 
-
-	const double totalEnergy = dftParameters::spinPolarized==1 ?
-	  compute_energy_spinPolarized(dftParameters::verbosity==2) :
-	  compute_energy(dftParameters::verbosity==2);
+	QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
+	const double totalEnergy = dftParameters::spinPolarized==0 ?
+	  energyCalc.computeEnergy(dofHandler,
+				   dofHandler,
+				   quadrature,
+				   quadrature,
+				   eigenValues,
+				   d_kPointWeights,
+				   fermiEnergy,
+				   funcX,
+				   funcC,
+				   d_phiTotRhoIn,
+				   d_phiTotRhoOut,
+				   *rhoInValues,
+				   *rhoOutValues,
+				   *rhoOutValues,
+				   *gradRhoInValues,
+				   *gradRhoOutValues,
+				   d_localVselfs,
+				   d_atomNodeIdToChargeMap,
+				   atomLocations.size(),
+				   dftParameters::verbosity==2) :
+	  energyCalc.computeEnergySpinPolarized(dofHandler,
+						dofHandler,
+						quadrature,
+						quadrature,
+						eigenValues,
+						d_kPointWeights,
+						fermiEnergy,
+						funcX,
+						funcC,
+						d_phiTotRhoIn,
+						d_phiTotRhoOut,
+						*rhoInValues,
+						*rhoOutValues,
+						*rhoOutValues,
+						*gradRhoInValues,
+						*gradRhoOutValues,
+						*rhoInValuesSpinPolarized,
+						*rhoOutValuesSpinPolarized,
+						*gradRhoInValuesSpinPolarized,
+						*gradRhoOutValuesSpinPolarized,
+						d_localVselfs,
+						d_atomNodeIdToChargeMap,
+						atomLocations.size(),
+						dftParameters::verbosity==2);
 	if (dftParameters::verbosity==1)
 	  {
 	    pcout<<"Total energy  : " << totalEnergy << std::endl;
@@ -697,6 +896,9 @@ namespace dftfe {
 
 	//
 	scfIter++;
+
+	if (dftParameters::chkType==2)
+	  saveTriaInfoAndRhoData();
       }
 
     if(scfIter==dftParameters::numSCFIterations)
@@ -704,13 +906,56 @@ namespace dftfe {
     else
       pcout<< "SCF iteration converged to the specified tolerance after: "<<scfIter<<" iterations."<<std::endl;
 
+
     //
     // compute and print ground state energy or energy after max scf iterations
     //
-    if (dftParameters::spinPolarized==1)
-      compute_energy_spinPolarized(true);
-    else
-      compute_energy (true);
+    QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
+    const double totalEnergy = dftParameters::spinPolarized==0 ?
+      energyCalc.computeEnergy(dofHandler,
+			       dofHandler,
+			       quadrature,
+			       quadrature,
+			       eigenValues,
+			       d_kPointWeights,
+			       fermiEnergy,
+			       funcX,
+			       funcC,
+			       d_phiTotRhoIn,
+			       d_phiTotRhoOut,
+			       *rhoInValues,
+			       *rhoOutValues,
+			       *rhoOutValues,
+			       *gradRhoInValues,
+			       *gradRhoOutValues,
+			       d_localVselfs,
+			       d_atomNodeIdToChargeMap,
+			       atomLocations.size(),
+			       true) :
+      energyCalc.computeEnergySpinPolarized(dofHandler,
+					    dofHandler,
+					    quadrature,
+					    quadrature,
+					    eigenValues,
+					    d_kPointWeights,
+					    fermiEnergy,
+					    funcX,
+					    funcC,
+					    d_phiTotRhoIn,
+					    d_phiTotRhoOut,
+					    *rhoInValues,
+					    *rhoOutValues,
+					    *rhoOutValues,
+					    *gradRhoInValues,
+					    *gradRhoOutValues,
+					    *rhoInValuesSpinPolarized,
+					    *rhoOutValuesSpinPolarized,
+					    *gradRhoInValuesSpinPolarized,
+					    *gradRhoOutValuesSpinPolarized,
+					    d_localVselfs,
+					    d_atomNodeIdToChargeMap,
+					    atomLocations.size(),
+					    true);
 
     computing_timer.exit_section("scf solve");
 
@@ -731,6 +976,9 @@ namespace dftfe {
 	computing_timer.exit_section("cell stress");
       }
 #endif
+
+    if (dftParameters::electrostaticsPRefinement)
+      computeElectrostaticEnergyPRefined();
   }
 
   //Output

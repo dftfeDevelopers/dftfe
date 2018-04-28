@@ -21,26 +21,16 @@ template<unsigned int FEOrder>
 void dftClass<FEOrder>::initElectronicFields(const bool usePreviousGroundStateFields){
   TimerOutput::Scope scope (computing_timer,"init electronic fields");
 
+  //initialize electrostatics fields
+  matrix_free_data.initialize_dof_vector(d_phiTotRhoIn,phiTotDofHandlerIndex);
+  d_phiTotRhoOut.reinit(d_phiTotRhoIn);
+  matrix_free_data.initialize_dof_vector(d_phiExt,phiExtDofHandlerIndex);
+
   //
   //initialize eigen vectors
   //
   matrix_free_data.initialize_dof_vector(vChebyshev,eigenDofHandlerIndex);
   
-
-  //
-  //temp STL d_v and d_f vectors required for upper bound computation filled here
-  //
-
-  if(dftParameters::spinPolarized!=1)
-  {
-     d_tempResidualNormWaveFunctions.clear();
-     d_tempResidualNormWaveFunctions.resize(d_maxkPoints);
-     for(unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
-     {
-        d_tempResidualNormWaveFunctions[kPoint].resize(eigenVectors[kPoint].size());
-     }
-  }
-
 
   //
   //initialize density and PSI/ interpolate from previous ground state solution
@@ -54,7 +44,8 @@ void dftClass<FEOrder>::initElectronicFields(const bool usePreviousGroundStateFi
      pcout <<std::endl<< "Reading initial guess for PSI...."<<std::endl;
      readPSI();
 
-     initRho();
+     if (!(dftParameters::chkType==2 && dftParameters::restartFromChk))
+	initRho();
   }
   else
   {

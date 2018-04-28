@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,64 +13,23 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Sambit Das (2018)
+// @author Sambit Das
 //
 
-#include "../../include/solverFunction.h"
+#include <solverFunction.h>
 
 namespace dftfe {
-  //
-  // Constructor.
-  //
-  solverFunction::solverFunction(MPI_Comm &mpi_comm_replica)
-  {
 
-    //
-    //
-    //
-    return;
-
-  }
   solverFunction::solverFunction()
   {
-
-    //
-    //
-    //
-    return;
-
-  }
-  /*
-  void
-  solverFunction::getInitialGuessForBisectionMethod(std::vector<double> & solution) const
-  {
-
-
-    //
-    // firewalls
-    //
-    const std::string message("Method not used by "
-			      "SolverFunction.");
-    throw NotImplemented(message);
-
-    //
-    //
-    //
     return;
   }
-  */
 
-  //
+
   // Destructor.
-  //
   solverFunction::~solverFunction()
   {
-
-    //
-    //
-    //
     return;
-
   }
 
 }

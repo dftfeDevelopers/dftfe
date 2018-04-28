@@ -58,12 +58,15 @@ void eigenClass<FEOrder>::init()
   computing_timer.enter_section("eigenClass setup");
 
   dftPtr->matrix_free_data.initialize_dof_vector(invSqrtMassVector,dftPtr->eigenDofHandlerIndex);
-  sqrtMassVector.reinit(invSqrtMassVector);
+  d_sqrtMassVector.reinit(invSqrtMassVector);
 
   //
   //compute mass vector
   //
-  computeMassVector();
+  computeMassVector(dftPtr->dofHandlerEigen,
+	            dftPtr->constraintsNoneEigen,
+		    d_sqrtMassVector,
+		    d_invSqrtMassVector);
 
   computing_timer.exit_section("eigenClass setup");
 }
@@ -72,61 +75,60 @@ void eigenClass<FEOrder>::init()
 //compute mass Vector
 //
 template<unsigned int FEOrder>
-void eigenClass<FEOrder>::computeMassVector()
+void eigenClass<FEOrder>::computeMassVector(const dealii::DoFHandler<3> & dofHandler,
+	                                    const dealii::ConstraintMatrix & constraintMatrix,
+			                    vectorType & sqrtMassVec,
+			                    vectorType & invSqrtMassVec)
 {
   computing_timer.enter_section("eigenClass Mass assembly");
-  invSqrtMassVector = 0.0;
-  sqrtMassVector = 0.0;
+  invSqrtMassVec = 0.0;
+  sqrtMassVec = 0.0;
 
-#ifdef ENABLE_PERIODIC_BC
-  Tensor<1,2,VectorizedArray<double> > one;
-  one[0] =  make_vectorized_array (1.0);
-  one[1] =  make_vectorized_array (1.0);
-  FEEvaluation<3,FEOrder,FEOrder+1,2,double>  fe_eval(dftPtr->matrix_free_data, dftPtr->eigenDofHandlerIndex, 1);
-#else
-  VectorizedArray<double>  one = make_vectorized_array (1.0);
-  FEEvaluation<3,FEOrder,FEOrder+1,1,double>  fe_eval(dftPtr->matrix_free_data, dftPtr->eigenDofHandlerIndex, 1); //Selecting GL quadrature points
-#endif
-
+ //local data structures
   //
-  //first evaluate diagonal terms of mass matrix (\integral N_i*N_i) and store in dealii vector named invSqrtMassVector
-  //
-  const unsigned int n_q_points = fe_eval.n_q_points;
-  for(unsigned int cell=0; cell<dftPtr->matrix_free_data.n_macro_cells(); ++cell)
-    {
-      fe_eval.reinit(cell);
-      for (unsigned int q = 0; q < n_q_points; ++q)
-	fe_eval.submit_value(one,q);
-      fe_eval.integrate (true,false);
-      fe_eval.distribute_local_to_global(invSqrtMassVector);
-    }
+  QGaussLobatto<3>  quadrature(FEOrder+1);
+  FEValues<3> fe_values (dofHandler.get_fe(), quadrature, update_values | update_JxW_values);
+  const unsigned int   dofs_per_cell = (dofHandler.get_fe()).dofs_per_cell;
+  const unsigned int   num_quad_points = quadrature.size();
+  Vector<double>       massVectorLocal (dofs_per_cell) ;
+  std::vector<types::global_dof_index> local_dof_indices (dofs_per_cell);
 
-  invSqrtMassVector.compress(VectorOperation::add);
 
   //
-  //evaluate inverse square root of the diagonal mass matrix and store in the dealii vector "invSqrtMassVector"
+  //parallel loop over all elements
   //
-  for(types::global_dof_index i = 0; i < invSqrtMassVector.size(); ++i)
-    {
-      if(invSqrtMassVector.in_local_range(i))
+  typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
+  for(; cell!=endc; ++cell)
+      if (cell->is_locally_owned())
 	{
-	  if(!dftPtr->getConstraintMatrixEigen().is_constrained(i))
-	    {
+	  //compute values for the current element
+	  fe_values.reinit (cell);
+	  massVectorLocal=0.0;
+	  for (unsigned int i=0; i<dofs_per_cell; ++i)
+		  for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
+		      massVectorLocal(i) += fe_values.shape_value(i, q_point)*fe_values.shape_value(i, q_point)*fe_values.JxW (q_point);
 
-	      if(std::abs(invSqrtMassVector(i)) > 1.0e-15)
-		{
-		  sqrtMassVector(i) = std::sqrt(invSqrtMassVector(i));
-		  invSqrtMassVector(i) = 1.0/std::sqrt(invSqrtMassVector(i));
-		}
-	      AssertThrow(!std::isnan(invSqrtMassVector(i)),ExcMessage("Value of inverse square root of mass matrix on the unconstrained node is undefined"));
-
-	    }
+	  cell->get_dof_indices (local_dof_indices);
+	  constraintMatrix.distribute_local_to_global(massVectorLocal, local_dof_indices, invSqrtMassVec);
 	}
-    }
 
-  invSqrtMassVector.compress(VectorOperation::insert);
-  sqrtMassVector.compress(VectorOperation::insert);
-  computing_timer.exit_section("eigenClass Mass assembly");
+   invSqrtMassVec.compress(VectorOperation::add);
+
+
+   for(types::global_dof_index i = 0; i < invSqrtMassVec.size(); ++i)
+       if(invSqrtMassVec.in_local_range(i) && !constraintMatrix.is_constrained(i))
+	 {
+	   if(std::abs(invSqrtMassVec(i)) > 1.0e-15)
+	     {
+	       sqrtMassVec(i) = std::sqrt(invSqrtMassVec(i));
+	       invSqrtMassVec(i) = 1.0/std::sqrt(invSqrtMassVec(i));
+	     }
+	   AssertThrow(!std::isnan(invSqrtMassVec(i)),ExcMessage("Value of inverse square root of mass matrix on the unconstrained node is undefined"));
+	 }
+
+   invSqrtMassVec.compress(VectorOperation::insert);
+   sqrtMassVec.compress(VectorOperation::insert);
+   computing_timer.exit_section("eigenClass Mass assembly");
 }
 
 template<unsigned int FEOrder>
@@ -543,7 +545,7 @@ void eigenClass<FEOrder>::HX(std::vector<vectorType> &src,
   computing_timer.enter_section("eigenClass HX");
   for (unsigned int i = 0; i < src.size(); i++)
     {
-      src[i].scale(invSqrtMassVector); //M^{-1/2}*X
+      src[i].scale(d_invSqrtMassVector); //M^{-1/2}*X
       //dftPtr->constraintsNoneEigen.distribute(src[i]);
       dftPtr->getConstraintMatrixEigenDataInfo().distribute(src[i]);
       src[i].update_ghost_values();
@@ -567,7 +569,7 @@ void eigenClass<FEOrder>::HX(std::vector<vectorType> &src,
   //
   for (std::vector<vectorType>::iterator it=dst.begin(); it!=dst.end(); it++)
     {
-      (*it).scale(invSqrtMassVector);
+      (*it).scale(d_invSqrtMassVector);
     }
 
   //
@@ -575,7 +577,7 @@ void eigenClass<FEOrder>::HX(std::vector<vectorType> &src,
   //
   for (std::vector<vectorType>::iterator it=src.begin(); it!=src.end(); it++)
     {
-      (*it).scale(sqrtMassVector); //MHMX
+      (*it).scale(d_sqrtMassVector); //MHMX
     }
 
   computing_timer.exit_section("eigenClass HX");
