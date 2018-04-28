@@ -53,11 +53,17 @@ namespace dftfe{
 
 
     /**
-     * @brief compute M matrix
+     * @brief compute diagonal mass matrix
      *
-     * @return diagonal M matrix
+     * @param dofHandler dofHandler associated with the current mesh
+     * @param constraintMatrix constraints to be used
+     * @param sqrtMassVec output the value of square root of diagonal mass matrix 
+     * @param invSqrtMassVec output the value of inverse square root of diagonal mass matrix
      */
-    virtual void computeMassVector() = 0;
+    virtual void computeMassVector(const dealii::DoFHandler<3>    & dofHandler,
+				   const dealii::ConstraintMatrix & constraintMatrix,
+				   vectorType                     & sqrtMassVec,
+				   vectorType                     & invSqrtMassVec) = 0;
 
 
     /**

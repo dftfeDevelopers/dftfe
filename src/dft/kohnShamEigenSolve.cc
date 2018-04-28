@@ -158,7 +158,7 @@ double dftClass<FEOrder>::computeMaximumHighestOccupiedStateResidualNorm(const s
      
      for(unsigned int i = 0; i < eigenValuesAllkPoints[kPoint].size(); i++)
        {
-         const double factor=(eigenValuesAllkPoints[kPoint][i]-_fermiEnergy)/(C_kb*dftParameters::TVal);
+         const double factor=(eigenValuesAllkPoints[kPoint][i]-fermiEnergy)/(C_kb*dftParameters::TVal);
 	 if (factor<0)
 	   highestOccupiedState=i;
        }

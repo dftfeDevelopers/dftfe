@@ -57,8 +57,8 @@ void eigenClass<FEOrder>::init()
 {
   computing_timer.enter_section("eigenClass setup");
 
-  dftPtr->matrix_free_data.initialize_dof_vector(invSqrtMassVector,dftPtr->eigenDofHandlerIndex);
-  d_sqrtMassVector.reinit(invSqrtMassVector);
+  dftPtr->matrix_free_data.initialize_dof_vector(d_invSqrtMassVector,dftPtr->eigenDofHandlerIndex);
+  d_sqrtMassVector.reinit(d_invSqrtMassVector);
 
   //
   //compute mass vector

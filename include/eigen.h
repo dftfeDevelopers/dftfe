@@ -77,7 +77,7 @@ namespace dftfe{
        * @param phiExt electrostatic potential arising from nuclear charges
        * @param pseudoValues quadrature data of pseudopotential values
        */
-      void computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoValues,
+      void computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 		       const vectorType & phi,
 		       const vectorType & phiExt,
 		       const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
@@ -125,13 +125,10 @@ namespace dftfe{
        * @param pseudoValues quadrature data of pseudopotential values
        */
       void computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues, 
-	
-
-
-			    const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
+				    const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
 				    const vectorType & phi,
 				    const vectorType & phiExt,
-				    unsigned int spinIndex,
+				    const unsigned int spinIndex,
 				    const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
 
       
@@ -150,7 +147,7 @@ namespace dftfe{
 	    
 
       /**
-       * @brief Computes diagonal mass matrix using Lobatto rule
+       * @brief Computes diagonal mass matrix
        *
        * @param dofHandler dofHandler associated with the current mesh
        * @param constraintMatrix constraints to be used

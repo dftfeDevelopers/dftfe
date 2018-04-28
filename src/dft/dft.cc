@@ -89,6 +89,7 @@ namespace dftfe {
     d_maxkPoints(1),
     d_mesh(mpi_comm_replica,_interpoolcomm),
     d_affineTransformMesh(mpi_comm_replica),
+    d_vselfBinsManager(mpi_comm_replica),
     pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
     computing_timer (pcout,
 		     dftParameters::reproducible_output ? TimerOutput::never : TimerOutput::summary,
@@ -532,12 +533,6 @@ namespace dftfe {
     //CAUTION: Choosing a looser tolernace might lead to failed tests
     const double adaptiveChebysevFilterPassesTol=1e-2;
 
-
-    //
-    //Begin SCF iteration
-    //
-    unsigned int scfIter=0;
-    double norm = 1.0;
 
     pcout<<std::endl;
     if (dftParameters::verbosity==0)

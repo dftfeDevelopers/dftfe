@@ -45,7 +45,7 @@
 #include <spglib.h>
 
 namespace dftfe {
-<<<<<<< HEAD
+
   //
   //Initialize Namespace
   //
