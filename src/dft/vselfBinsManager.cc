@@ -19,7 +19,6 @@
 #include <vselfBinsManager.h>
 #include <dftParameters.h>
 
-
 #include "solveVselfInBins.cc"
 #include "createBinsSanityCheck.cc"
 namespace dftfe
@@ -27,32 +26,34 @@ namespace dftfe
 
     namespace internal
     {
-	void exchangeAtomToGlobalNodeIdMaps(const int totalNumberAtoms,
-					    std::map<int,std::set<int> > & atomToGlobalNodeIdMap,
-					    unsigned int numMeshPartitions,
+	void exchangeAtomToGlobalNodeIdMaps(const unsigned int totalNumberAtoms,
+					    std::map<int,std::set<dealii::types::global_dof_index> > & atomToGlobalNodeIdMap,
+					    const unsigned int numMeshPartitions,
 					    const MPI_Comm & mpi_communicator)
 
 	{
-	  std::map<int,std::set<int> >::iterator iter;
+	  std::map<int,std::set<dealii::types::global_dof_index> >::iterator iter;
 
-	  for(int iGlobal = 0; iGlobal < totalNumberAtoms; ++iGlobal){
+	  for(unsigned int iGlobal = 0; iGlobal < totalNumberAtoms; ++iGlobal)
+	  {
 
 	    //
 	    // for each charge, exchange its global list across all procs
 	    //
 	    iter = atomToGlobalNodeIdMap.find(iGlobal);
 
-	    std::vector<int> localAtomToGlobalNodeIdList;
+	    std::vector<dealii::types::global_dof_index> localAtomToGlobalNodeIdList;
 
-	    if(iter != atomToGlobalNodeIdMap.end()){
-	      std::set<int>  & localGlobalNodeIdSet = iter->second;
+	    if(iter != atomToGlobalNodeIdMap.end())
+	    {
+	      std::set<dealii::types::global_dof_index>  & localGlobalNodeIdSet = iter->second;
 	      std::copy(localGlobalNodeIdSet.begin(),
 			localGlobalNodeIdSet.end(),
 			std::back_inserter(localAtomToGlobalNodeIdList));
 
 	    }
 
-	    int numberGlobalNodeIdsOnLocalProc = localAtomToGlobalNodeIdList.size();
+	    const int numberGlobalNodeIdsOnLocalProc = localAtomToGlobalNodeIdList.size();
 
             std::vector<int> atomToGlobalNodeIdListSizes(numMeshPartitions);
 
@@ -64,36 +65,225 @@ namespace dftfe
 			  MPI_INT,
 			  mpi_communicator);
 
-	    int newAtomToGlobalNodeIdListSize =
-	      std::accumulate(&(atomToGlobalNodeIdListSizes[0]),
+	    const int newAtomToGlobalNodeIdListSize =
+	    std::accumulate(&(atomToGlobalNodeIdListSizes[0]),
 			      &(atomToGlobalNodeIdListSizes[numMeshPartitions]),
 			      0);
 
-	    std::vector<int> globalAtomToGlobalNodeIdList(newAtomToGlobalNodeIdListSize);
+	    std::vector<dealii::types::global_dof_index> globalAtomToGlobalNodeIdList(newAtomToGlobalNodeIdListSize);
 
 	    std::vector<int> mpiOffsets(numMeshPartitions);
 
 	    mpiOffsets[0] = 0;
 
-	    for(int i = 1; i < numMeshPartitions; ++i)
+	    for(unsigned int i = 1; i < numMeshPartitions; ++i)
 	      mpiOffsets[i] = atomToGlobalNodeIdListSizes[i-1]+ mpiOffsets[i-1];
 
 	    MPI_Allgatherv(&(localAtomToGlobalNodeIdList[0]),
 			   numberGlobalNodeIdsOnLocalProc,
-			   MPI_INT,
+			   DEAL_II_DOF_INDEX_MPI_TYPE,
 			   &(globalAtomToGlobalNodeIdList[0]),
 			   &(atomToGlobalNodeIdListSizes[0]),
 			   &(mpiOffsets[0]),
-			   MPI_INT,
+			   DEAL_II_DOF_INDEX_MPI_TYPE,
 			   mpi_communicator);
 
 	    //
 	    // over-write local interaction with items of globalInteractionList
 	    //
-	    for(int i = 0 ; i < globalAtomToGlobalNodeIdList.size(); ++i)
+	    for(unsigned int i = 0 ; i < globalAtomToGlobalNodeIdList.size(); ++i)
 	      (atomToGlobalNodeIdMap[iGlobal]).insert(globalAtomToGlobalNodeIdList[i]);
 
 	  }
+	}
+
+	//
+	unsigned int createAndCheckInteractionMap(std::map<int,std::set<int> > & interactionMap,
+		                         const dealii::DoFHandler<3> &  dofHandler,
+				         const std::map<dealii::types::global_dof_index, dealii::Point<3> >  & supportPoints,
+			                 const std::vector<std::vector<double> > & atomLocations,
+			                 const std::vector<std::vector<double> > & imagePositions,
+				         const std::vector<int> & imageIds,
+		                         const double radiusAtomBall,
+			                 const unsigned int n_mpi_processes,
+			                 const MPI_Comm & mpi_communicator)
+	{
+	  interactionMap.clear();
+          const unsigned int numberImageCharges = imageIds.size();
+          const unsigned int numberGlobalAtoms = atomLocations.size();
+          const unsigned int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
+
+          const unsigned int dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
+          const unsigned int vertices_per_cell=dealii::GeometryInfo<3>::vertices_per_cell;
+
+          std::map<int,std::set<dealii::types::global_dof_index> > atomToGlobalNodeIdMap;
+	  for(unsigned int iAtom = 0; iAtom < totalNumberAtoms  ; ++iAtom)
+	    {
+	      std::set<dealii::types::global_dof_index> tempNodalSet;
+	      dealii::Point<3> atomCoor;
+
+	      if(iAtom < numberGlobalAtoms)
+		{
+		  atomCoor[0] = atomLocations[iAtom][2];
+		  atomCoor[1] = atomLocations[iAtom][3];
+		  atomCoor[2] = atomLocations[iAtom][4];
+		}
+	      else
+		{
+		  //
+		  //Fill with ImageAtom Coors
+		  //
+		  atomCoor[0] = imagePositions[iAtom-numberGlobalAtoms][0];
+		  atomCoor[1] = imagePositions[iAtom-numberGlobalAtoms][1];
+		  atomCoor[2] = imagePositions[iAtom-numberGlobalAtoms][2];
+		}
+
+	      // std::cout<<"Atom Coor: "<<atomCoor[0]<<" "<<atomCoor[1]<<" "<<atomCoor[2]<<std::endl;
+
+	      dealii::DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),endc = dofHandler.end();
+	      std::vector<dealii::types::global_dof_index> cell_dof_indices(dofs_per_cell);
+
+	      for(; cell!= endc; ++cell)
+		  if(cell->is_locally_owned())
+		    {
+		      int cutOffFlag = 0;
+		      cell->get_dof_indices(cell_dof_indices);
+
+		      for(unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
+			{
+
+			  const dealii::Point<3> & feNodeGlobalCoord = supportPoints.find(cell_dof_indices[iNode])->second;
+			  const double distance = atomCoor.distance(feNodeGlobalCoord);
+
+			  if(distance < radiusAtomBall)
+			    {
+			      cutOffFlag = 1;
+			      break;
+			    }
+
+			}//element node loop
+
+		      if(cutOffFlag == 1)
+			{
+			  for(unsigned int iNode = 0; iNode < vertices_per_cell; ++iNode)
+			  {
+			      const dealii::types::global_dof_index nodeID=cell->vertex_dof_index(iNode,0);
+			      tempNodalSet.insert(nodeID);
+			  }
+
+			}
+
+		    }//cell locally owned if loop
+
+	      atomToGlobalNodeIdMap[iAtom] = tempNodalSet;
+
+	    }//atom loop
+
+	  //
+	  //exchange atomToGlobalNodeIdMap across all processors
+	  //
+	  internal::exchangeAtomToGlobalNodeIdMaps(totalNumberAtoms,
+						   atomToGlobalNodeIdMap,
+						   n_mpi_processes,
+						   mpi_communicator);
+
+	  //
+	  //erase keys which have empty values
+	  //
+	  for(unsigned int iAtom = numberGlobalAtoms; iAtom < totalNumberAtoms; ++iAtom)
+	      if(atomToGlobalNodeIdMap[iAtom].empty() == true)
+		  atomToGlobalNodeIdMap.erase(iAtom);
+
+	  for(unsigned int iAtom = 0; iAtom < totalNumberAtoms; ++iAtom)
+	    {
+	      //
+	      //Add iAtom to the interactionMap corresponding to the key iAtom
+	      //
+	      if(iAtom < numberGlobalAtoms)
+		interactionMap[iAtom].insert(iAtom);
+
+	      //std::cout<<"IAtom: "<<iAtom<<std::endl;
+
+	      for(int jAtom = iAtom - 1; jAtom > -1; jAtom--)
+		{
+		  //std::cout<<"JAtom: "<<jAtom<<std::endl;
+
+		  //
+		  //compute intersection between the atomGlobalNodeIdMap of iAtom and jAtom
+		  //
+		  std::vector<dealii::types::global_dof_index> nodesIntersection;
+
+		  std::set_intersection(atomToGlobalNodeIdMap[iAtom].begin(),
+					atomToGlobalNodeIdMap[iAtom].end(),
+					atomToGlobalNodeIdMap[jAtom].begin(),
+					atomToGlobalNodeIdMap[jAtom].end(),
+					std::back_inserter(nodesIntersection));
+
+		  //std::cout<<"Size of NodeIntersection: "<<nodesIntersection.size()<<std::endl;
+
+		  if(nodesIntersection.size() > 0)
+		    {
+		      if(iAtom < numberGlobalAtoms && jAtom < numberGlobalAtoms)
+			{
+			  //
+			  //if both iAtom and jAtom are actual atoms in unit-cell/domain,then iAtom and jAtom are interacting atoms
+			  //
+			  interactionMap[iAtom].insert(jAtom);
+			  interactionMap[jAtom].insert(iAtom);
+			}
+		      else if(iAtom < numberGlobalAtoms && jAtom >= numberGlobalAtoms)
+			{
+			  //
+			  //if iAtom is actual atom in unit-cell and jAtom is imageAtom, find the actual atom for which jAtom is
+			  //the image then create the interaction map between that atom and iAtom
+			  //
+			  const int masterAtomId = imageIds[jAtom - numberGlobalAtoms];
+			  if(masterAtomId == iAtom)
+			    {
+			      //std::cout<<"Atom and its own image is interacting decrease radius"<<std::endl;
+			      return 1;
+			    }
+			  interactionMap[iAtom].insert(masterAtomId);
+			  interactionMap[masterAtomId].insert(iAtom);
+			}
+		      else if(iAtom >= numberGlobalAtoms && jAtom < numberGlobalAtoms)
+			{
+			  //
+			  //if jAtom is actual atom in unit-cell and iAtom is imageAtom, find the actual atom for which iAtom is
+			  //the image and then create interaction map between that atom and jAtom
+			  //
+			  const int masterAtomId = imageIds[iAtom - numberGlobalAtoms];
+			  if(masterAtomId == jAtom)
+			    {
+			      //std::cout<<"Atom and its own image is interacting decrease radius"<<std::endl;
+			      return 1;
+			    }
+			  interactionMap[masterAtomId].insert(jAtom);
+			  interactionMap[jAtom].insert(masterAtomId);
+
+			}
+		      else if(iAtom >= numberGlobalAtoms && jAtom >= numberGlobalAtoms)
+			{
+			  //
+			  //if both iAtom and jAtom are image atoms in unit-cell iAtom and jAtom are interacting atoms
+			  //find the actual atoms for which iAtom and jAtoms are images and create interacting maps between them
+			  const int masteriAtomId = imageIds[iAtom - numberGlobalAtoms];
+			  const int masterjAtomId = imageIds[jAtom - numberGlobalAtoms];
+			  if(masteriAtomId == masterjAtomId)
+			    {
+			      //std::cout<<"Two Image Atoms corresponding to same parent Atoms are interacting decrease radius"<<std::endl;
+			      return 2;
+			    }
+			  interactionMap[masteriAtomId].insert(masterjAtomId);
+			  interactionMap[masterjAtomId].insert(masteriAtomId);
+			}
+
+		    }
+
+		}//end of jAtom loop
+
+	    }//end of iAtom loop
+	    return 0;
 	}
     }
 
@@ -112,7 +302,7 @@ namespace dftfe
     void vselfBinsManager<FEOrder>::createAtomBins(std::vector<const dealii::ConstraintMatrix * > & constraintsVector,
 		                           const dealii::DoFHandler<3> &  dofHandler,
 			                   const dealii::ConstraintMatrix & constraintMatrix,
-			                   std::vector<std::vector<double> > & atomLocations,
+			                   const std::vector<std::vector<double> > & atomLocations,
 			                   const std::vector<std::vector<double> > & imagePositions,
 			                   const std::vector<int> & imageIds,
 			                   const std::vector<double> & imageCharges,
@@ -149,185 +339,69 @@ namespace dftfe
       dealii::DoFTools::make_hanging_node_constraints(dofHandler, onlyHangingNodeConstraints);
       onlyHangingNodeConstraints.close();
 
-      std::map<int,std::set<int> > atomToGlobalNodeIdMap;
-
-      for(unsigned int iAtom = 0; iAtom < totalNumberAtoms; ++iAtom)
-	{
-	  std::set<int> tempNodalSet;
-	  dealii::Point<3> atomCoor;
-
-	  if(iAtom < numberGlobalAtoms)
-	    {
-	      atomCoor[0] = atomLocations[iAtom][2];
-	      atomCoor[1] = atomLocations[iAtom][3];
-	      atomCoor[2] = atomLocations[iAtom][4];
-	    }
-	  else
-	    {
-	      //
-	      //Fill with ImageAtom Coors
-	      //
-	      atomCoor[0] = imagePositions[iAtom-numberGlobalAtoms][0];
-	      atomCoor[1] = imagePositions[iAtom-numberGlobalAtoms][1];
-	      atomCoor[2] = imagePositions[iAtom-numberGlobalAtoms][2];
-	    }
-
-	  // std::cout<<"Atom Coor: "<<atomCoor[0]<<" "<<atomCoor[1]<<" "<<atomCoor[2]<<std::endl;
-
-	  dealii::DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),endc = dofHandler.end();
-          std::vector<dealii::types::global_dof_index> cell_dof_indices(dofs_per_cell);
-
-	  for(; cell!= endc; ++cell)
-	      if(cell->is_locally_owned())
-		{
-		  int cutOffFlag = 0;
-		  cell->get_dof_indices(cell_dof_indices);
-
-		  for(unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
-		    {
-
-		      dealii::Point<3> feNodeGlobalCoord = supportPoints[cell_dof_indices[iNode]];
-		      double distance = atomCoor.distance(feNodeGlobalCoord);
-
-		      if(distance < radiusAtomBall)
-			{
-			  cutOffFlag = 1;
-			  break;
-			}
-
-		    }//element node loop
-
-		  if(cutOffFlag == 1)
-		    {
-		      for(unsigned int iNode = 0; iNode < vertices_per_cell; ++iNode)
-			{
-			  unsigned int nodeID=cell->vertex_dof_index(iNode,0);
-			  tempNodalSet.insert(nodeID);
-			}
-
-		    }
-
-		}//cell locally owned if loop
-
-	  atomToGlobalNodeIdMap[iAtom] = tempNodalSet;
-
-	}//atom loop
-
-      //
-      //exchange atomToGlobalNodeIdMap across all processors
-      //
-      internal::exchangeAtomToGlobalNodeIdMaps(totalNumberAtoms,
-				               atomToGlobalNodeIdMap,
-				               n_mpi_processes,
-				               mpi_communicator);
-
-
-      //
-      //erase keys which have empty values
-      //
-      for(int iAtom = numberGlobalAtoms; iAtom < totalNumberAtoms; ++iAtom)
-	{
-	  if(atomToGlobalNodeIdMap[iAtom].empty() == true)
-	    {
-	      atomToGlobalNodeIdMap.erase(iAtom);
-	    }
-	}
-
-
-      //
       //create interaction maps by finding the intersection of global NodeIds of each atom
-      //
       std::map<int,std::set<int> > interactionMap;
 
-      for(int iAtom = 0; iAtom < totalNumberAtoms; ++iAtom)
-	{
-	  //
-	  //Add iAtom to the interactionMap corresponding to the key iAtom
-	  //
-	  if(iAtom < numberGlobalAtoms)
-	    interactionMap[iAtom].insert(iAtom);
+      double radiusAtomBallAdaptive=10.0;
 
-	  //std::cout<<"IAtom: "<<iAtom<<std::endl;
+      if (std::fabs(radiusAtomBall)<1e-6)
+      {
+	  if (dftParameters::verbosity==2)
+	      pcout<<"Adaptively setting vself ball radius... "<<std::endl;
+          unsigned int check=internal::createAndCheckInteractionMap(interactionMap,
+							            dofHandler,
+								    supportPoints,
+								    atomLocations,
+								    imagePositions,
+								    imageIds,
+								    radiusAtomBallAdaptive,
+								    n_mpi_processes,
+								    mpi_communicator);
+	  while (check!=0 && radiusAtomBallAdaptive>=3.0)
+	  {
+	      radiusAtomBallAdaptive-=0.25;
+              check=internal::createAndCheckInteractionMap(interactionMap,
+							   dofHandler,
+							   supportPoints,
+							   atomLocations,
+							   imagePositions,
+							   imageIds,
+							   radiusAtomBallAdaptive,
+							   n_mpi_processes,
+							   mpi_communicator);
+	  }
 
-	  for(int jAtom = iAtom - 1; jAtom > -1; jAtom--)
-	    {
-	      //std::cout<<"JAtom: "<<jAtom<<std::endl;
+	  if (dftParameters::verbosity==2)
+	      pcout<<"...Adaptively set vself solve ball radius: "<< radiusAtomBallAdaptive<<std::endl;
 
-	      //
-	      //compute intersection between the atomGlobalNodeIdMap of iAtom and jAtom
-	      //
-	      std::vector<int> nodesIntersection;
+	  if (radiusAtomBallAdaptive<3.0)
+	      pcout<<"DFT-FE warning: adaptively determined ball radius for nuclear self potential solve is less than 3.0, which can detoriate the accuracy of the KSDFT groundstate energy and forces. One approach to overcome this issue is to use a larger super cell with smallest dimension greater than 6.0 (twice of 3.0), assuming an orthorhombic domain. If that is not feasible, you may need more mesh refinement around the atoms to achieve the desired accuracy."<<std::endl;
+	  MPI_Barrier(mpi_communicator);
 
-	      std::set_intersection(atomToGlobalNodeIdMap[iAtom].begin(),
-				    atomToGlobalNodeIdMap[iAtom].end(),
-				    atomToGlobalNodeIdMap[jAtom].begin(),
-				    atomToGlobalNodeIdMap[jAtom].end(),
-				    std::back_inserter(nodesIntersection));
+      }
+      else
+      {
+	  if (dftParameters::verbosity==2)
+	      pcout<<"Setting vself ball radius from input parameters value: "<< radiusAtomBall<<std::endl;
 
-	      // std::cout<<"Size of NodeIntersection: "<<nodesIntersection.size()<<std::endl;
+	  radiusAtomBallAdaptive=radiusAtomBall;
+	  const unsigned int check=internal::createAndCheckInteractionMap(interactionMap,
+									  dofHandler,
+									  supportPoints,
+									  atomLocations,
+									  imagePositions,
+									  imageIds,
+									  radiusAtomBallAdaptive,
+									  n_mpi_processes,
+									  mpi_communicator);
+	  std::string message;
+	  if (check==1)
+	      message="DFT-FE Error: Atom and its own image is interacting decrease radius";
+	  else if (check==2)
+	      message="DFT-FE Error: Two Image Atoms corresponding to same parent Atoms are interacting decrease radius";
 
-	      if(nodesIntersection.size() > 0)
-		{
-		  if(iAtom < numberGlobalAtoms && jAtom < numberGlobalAtoms)
-		    {
-		      //
-		      //if both iAtom and jAtom are actual atoms in unit-cell/domain,then iAtom and jAtom are interacting atoms
-		      //
-		      interactionMap[iAtom].insert(jAtom);
-		      interactionMap[jAtom].insert(iAtom);
-		    }
-		  else if(iAtom < numberGlobalAtoms && jAtom >= numberGlobalAtoms)
-		    {
-		      //
-		      //if iAtom is actual atom in unit-cell and jAtom is imageAtom, find the actual atom for which jAtom is
-		      //the image then create the interaction map between that atom and iAtom
-		      //
-		      int masterAtomId = imageIds[jAtom - numberGlobalAtoms];
-		      if(masterAtomId == iAtom)
-			{
-			  std::cout<<"Atom and its own image is interacting decrease radius"<<std::endl;
-			  exit(-1);
-			}
-		      interactionMap[iAtom].insert(masterAtomId);
-		      interactionMap[masterAtomId].insert(iAtom);
-		    }
-		  else if(iAtom >= numberGlobalAtoms && jAtom < numberGlobalAtoms)
-		    {
-		      //
-		      //if jAtom is actual atom in unit-cell and iAtom is imageAtom, find the actual atom for which iAtom is
-		      //the image and then create interaction map between that atom and jAtom
-		      //
-		      int masterAtomId = imageIds[iAtom - numberGlobalAtoms];
-		      if(masterAtomId == jAtom)
-			{
-			  std::cout<<"Atom and its own image is interacting decrease radius"<<std::endl;
-			  exit(-1);
-			}
-		      interactionMap[masterAtomId].insert(jAtom);
-		      interactionMap[jAtom].insert(masterAtomId);
-
-		    }
-		  else if(iAtom >= numberGlobalAtoms && jAtom >= numberGlobalAtoms)
-		    {
-		      //
-		      //if both iAtom and jAtom are image atoms in unit-cell iAtom and jAtom are interacting atoms
-		      //find the actual atoms for which iAtom and jAtoms are images and create interacting maps between them
-		      int masteriAtomId = imageIds[iAtom - numberGlobalAtoms];
-		      int masterjAtomId = imageIds[jAtom - numberGlobalAtoms];
-		      if(masteriAtomId == masterjAtomId)
-			{
-			  std::cout<<"Two Image Atoms corresponding to same parent Atoms are interacting decrease radius"<<std::endl;
-			  exit(-1);
-			}
-		      interactionMap[masteriAtomId].insert(masterjAtomId);
-		      interactionMap[masterjAtomId].insert(masteriAtomId);
-		    }
-
-		}
-
-	    }//end of jAtom loop
-
-	}//end of iAtom loop
+	  AssertThrow(check==0,dealii::ExcMessage(message));
+      }
 
       std::map<int,std::set<int> >::iterator iter;
 
@@ -440,7 +514,7 @@ namespace dftfe
 
 
 	  unsigned int inNodes=0, outNodes=0;
-	  std::map<dealii::types::global_dof_index,dealii::Point<3> >::iterator iterMap;
+	  std::map<dealii::types::global_dof_index,dealii::Point<3> >::const_iterator iterMap;
 	  for(iterMap = supportPoints.begin(); iterMap != supportPoints.end(); ++iterMap)
 	    {
 	      if(locally_relevant_dofs.is_element(iterMap->first))
@@ -448,7 +522,7 @@ namespace dftfe
 		  if(!onlyHangingNodeConstraints.is_constrained(iterMap->first))
 		    {
 		      int overlapFlag = 0;
-		      dealii::Point<3> nodalCoor = iterMap->second;
+		      const dealii::Point<3> & nodalCoor = iterMap->second;
 		      std::vector<double> distanceFromNode;
 
 		      for(unsigned int iAtom = 0; iAtom < numberGlobalAtomsInBin+numberImageAtomsInBin; ++iAtom)
@@ -468,7 +542,7 @@ namespace dftfe
 
 			  double distance = nodalCoor.distance(atomCoor);
 
-			  if(distance < radiusAtomBall)
+			  if(distance < radiusAtomBallAdaptive)
 			    overlapFlag += 1;
 
 			  if(overlapFlag > 1)
@@ -503,7 +577,7 @@ namespace dftfe
 		      std::map<dealii::types::global_dof_index, int> & boundaryNodeMap = d_boundaryFlag[iBin];
 		      std::map<dealii::types::global_dof_index, double> & vSelfBinNodeMap = d_vselfBinField[iBin];
 
-		      if(minDistance < radiusAtomBall)
+		      if(minDistance < radiusAtomBallAdaptive)
 			{
 			  boundaryNodeMap[iterMap->first] = chargeId;
 			  inNodes++;
@@ -575,7 +649,7 @@ namespace dftfe
 		  int closestChargeIdSolvedSum=0;
 		  for(unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
 		    {
-		      const int globalNodeId=cell_dof_indices[iNode];
+		      const dealii::types::global_dof_index globalNodeId=cell_dof_indices[iNode];
 		      if(!onlyHangingNodeConstraints.is_constrained(globalNodeId))
 		      {
 			const int boundaryId=d_boundaryFlag[iBin][globalNodeId];
@@ -622,7 +696,7 @@ namespace dftfe
 		      for(unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
 			{
 
-			  const int globalNodeId=cell_dof_indices[iNode];
+			  const dealii::types::global_dof_index globalNodeId=cell_dof_indices[iNode];
 			  const int boundaryId=d_boundaryFlag[iBin][globalNodeId];
 			  if(!onlyHangingNodeConstraints.is_constrained(globalNodeId) && !d_vselfBinConstraintMatrices[iBin].is_constrained(globalNodeId) && boundaryId==-1)
 			  {
@@ -654,7 +728,7 @@ namespace dftfe
 		  bool isSolvedNodePresent=false;
 		  for(unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
 		    {
-		      const int globalNodeId=cell_dof_indices[iNode];
+		      const dealii::types::global_dof_index globalNodeId=cell_dof_indices[iNode];
 		      if(!onlyHangingNodeConstraints.is_constrained(globalNodeId))
 		      {
 			const int boundaryId=d_boundaryFlag[iBin][globalNodeId];
@@ -675,7 +749,7 @@ namespace dftfe
 		      for(unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
 			{
 
-			  const unsigned int globalNodeId=cell_dof_indices[iNode];
+			  const dealii::types::global_dof_index globalNodeId=cell_dof_indices[iNode];
 			  const int boundaryId=d_boundaryFlag[iBin][globalNodeId];
 			  if(!onlyHangingNodeConstraints.is_constrained(globalNodeId) && !d_vselfBinConstraintMatrices[iBin].is_constrained(globalNodeId) && boundaryId==-1)
 			  {

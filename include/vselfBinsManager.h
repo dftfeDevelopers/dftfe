@@ -56,7 +56,7 @@ namespace dftfe {
 	 void createAtomBins(std::vector<const dealii::ConstraintMatrix * > & constraintsVector,
 		             const dealii::DoFHandler<3> & dofHandler,
 			     const dealii::ConstraintMatrix & constraintMatrix,
-			     std::vector<std::vector<double> > & atomLocations,
+			     const std::vector<std::vector<double> > & atomLocations,
 			     const std::vector<std::vector<double> > & imagePositions,
 			     const std::vector<int> & imageIds,
 			     const std::vector<double> & imageCharges,
