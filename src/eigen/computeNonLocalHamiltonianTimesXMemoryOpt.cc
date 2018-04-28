@@ -16,7 +16,7 @@
 // @author Sambit Das (2017)
 //
 
-#include <linearAlgebraOperations.h>
+
 
 namespace dftfe {
 

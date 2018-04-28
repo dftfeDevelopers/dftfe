@@ -16,8 +16,8 @@
 //
 // @author Phani Motamarri (2018)
 //
-#ifndef operatorClass_h
-#define operatorClass_h
+#ifndef operatorDFTClass_h
+#define operatorDFTClass_h
 
 #include <vector>
 
@@ -42,7 +42,7 @@ namespace dftfe{
     /**
      * @brief Destructor.
      */
-    virtual ~operatorClass() = 0;
+    virtual ~operatorDFTClass() = 0;
 
 
     /**
@@ -90,21 +90,21 @@ namespace dftfe{
      *
      * @return pointer to local dof indices real
      */
-    const std::vector<unsigned int> * getLocalDofIndicesReal() const;
+    const std::vector<dealii::types::global_dof_index> * getLocalDofIndicesReal() const;
 
     /**
      * @brief Get local dof indices imag
      *
      * @return pointer to local dof indices real
      */
-    const std::vector<unsigned int> * getLocalDofIndicesImag() const;
+    const std::vector<dealii::types::global_dof_index> * getLocalDofIndicesImag() const;
 
     /**
      * @brief Get local proc dof indices real
      *
      * @return pointer to local proc dof indices real
      */
-    const std::vector<unsigned int> * getLocalProcDofIndicesReal() const;
+    const std::vector<dealii::types::global_dof_index> * getLocalProcDofIndicesReal() const;
 
 
     /**
@@ -112,7 +112,7 @@ namespace dftfe{
      *
      * @return pointer to local proc dof indices imag
      */
-    const std::vector<unsigned int> * getLocalProcDofIndicesImag() const;
+    const std::vector<dealii::types::global_dof_index> * getLocalProcDofIndicesImag() const;
 
     /**
      * @brief Get constraint matrix eigen
@@ -135,18 +135,18 @@ namespace dftfe{
     /**
      * @brief default Constructor.
      */
-    operatorClass();
+    operatorDFTClass();
 
 
     /**
      * @brief Constructor.
      */
-    operatorClass(const MPI_Comm & mpi_comm_replica,
-		  const std::vector<unsigned int> & localDofIndicesReal,
-		  const std::vector<unsigned int> & localDofIndicesImag,
-		  const std::vector<unsigned int> & localProcDofIndicesReal,
-		  const std::vector<unsigned int> & localProcDofIndicesImag,
-		  const dealii::ConstraintMatrix  & constraintMatrixEigen);
+    operatorDFTClass(const MPI_Comm & mpi_comm_replica,
+		     const std::vector<dealii::types::global_dof_index> & localDofIndicesReal,
+		     const std::vector<dealii::types::global_dof_index> & localDofIndicesImag,
+		     const std::vector<dealii::types::global_dof_index> & localProcDofIndicesReal,
+		     const std::vector<dealii::types::global_dof_index> & localProcDofIndicesImag,
+		     const dealii::ConstraintMatrix  & constraintMatrixEigen);
 
   protected:
 
@@ -154,22 +154,22 @@ namespace dftfe{
     //
     //global indices of degrees of freedom in the current processor which correspond to component-1 of 2-component dealii array
     //
-    const std::vector<unsigned int> * d_localDofIndicesReal;
+    const std::vector<dealii::types::global_dof_index> * d_localDofIndicesReal;
 
     //
     //global indices of degrees of freedom in the current processor which correspond to component-2 of 2-component dealii array
     //
-    const std::vector<unsigned int> * d_localDofIndicesImag;
+    const std::vector<dealii::types::global_dof_index> * d_localDofIndicesImag;
 
     //
     //local indices degrees of freedom in the current processor  which correspond to component-1 of 2-component dealii array
     //
-    const std::vector<unsigned int> * d_localProcDofIndicesReal;
+    const std::vector<dealii::types::global_dof_index> * d_localProcDofIndicesReal;
 
     //
     //local indices degrees of freedom in the current processor  which correspond to component-2 of 2-component dealii array
     //
-    const std::vector<unsigned int> * d_localProcDofIndicesImag;
+    const std::vector<dealii::types::global_dof_index> * d_localProcDofIndicesImag;
 
     //
     //constraint matrix used in eigen solve

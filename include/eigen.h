@@ -18,10 +18,11 @@
 
 #ifndef eigen_H_
 #define eigen_H_
-#include "headers.h"
-#include "constants.h"
-#include "constraintMatrixInfo.h"
-#include "operator.h"
+#include <headers.h>
+#include <constants.h>
+#include <constraintMatrixInfo.h>
+#include <operator.h>
+#include <linearAlgebraOperations.h>
 
 namespace dftfe{
   using namespace dealii;
@@ -32,7 +33,7 @@ namespace dftfe{
   //Define eigenClass class
   //
   template <unsigned int FEOrder>
-    class eigenClass : public operatorClass
+    class eigenClass : public operatorDFTClass
     {
       template <unsigned int T>
 	friend class dftClass;
@@ -61,10 +62,10 @@ namespace dftfe{
        * @return ProjMatrix projected small matrix 
        */
 #ifdef ENABLE_PERIODIC_BC
-      void XtHX(const std::vector<vectorType> &src,
+      void XtHX(std::vector<vectorType> &src,
 		std::vector<std::complex<double> > & ProjHam); 
 #else
-      void XtHX(const std::vector<vectorType> &src,
+      void XtHX(std::vector<vectorType> &src,
 		std::vector<double> & ProjHam);
 #endif
 
@@ -79,7 +80,7 @@ namespace dftfe{
       void computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues, 
 		       const vectorType & phi,
 		       const vectorType & phiExt,
-		       const std::map<dealii::CellId,std::vector<double> > & pseudoValues) const;
+		       const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
 
       /**
        * @brief Computes effective potential involving local spin density exchange-correlation functionals
@@ -94,7 +95,7 @@ namespace dftfe{
 				    const vectorType & phi,
 				    const vectorType & phiExt,
 				    unsigned int spinIndex,
-				    const std::map<dealii::CellId,std::vector<double> > & pseudoValues) const;
+				    const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
 
        /**
        * @brief Computes effective potential involving gradient density type exchange-correlation functionals
@@ -109,7 +110,7 @@ namespace dftfe{
 		       const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
 		       const vectorType & phi,
 		       const vectorType & phiExt,
-		       const std::map<dealii::CellId,std::vector<double> > & pseudoValues) const;
+		       const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
 
       
       /**
@@ -127,7 +128,7 @@ namespace dftfe{
 				    const vectorType & phi,
 				    const vectorType & phiExt,
 				    unsigned int spinIndex,
-				    const std::map<dealii::CellId,std::vector<double> > & pseudoValues) const;
+				    const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
 
       void reinitkPointIndex(unsigned int & kPointIndex);
 

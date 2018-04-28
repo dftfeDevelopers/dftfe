@@ -27,12 +27,12 @@
 // Constructor.
 //
 namespace dftfe {
-  operatorClass::operatorClass(const MPI_Comm                  & mpi_comm_replica,
-			       const std::vector<unsigned int> & localDofIndicesReal,
-			       const std::vector<unsigned int> & localDofIndicesImag,
-			       const std::vector<unsigned int> & localProcDofIndicesReal,
-			       const std::vector<unsigned int> & localProcDofIndicesImag,
-			       const dealii::ConstraintMatrix  & constraintMatrixEigen):
+  operatorDFTClass::operatorDFTClass(const MPI_Comm                  & mpi_comm_replica,
+				     const std::vector<dealii::types::global_dof_index> & localDofIndicesReal,
+				     const std::vector<dealii::types::global_dof_index> & localDofIndicesImag,
+				     const std::vector<dealii::types::global_dof_index> & localProcDofIndicesReal,
+				     const std::vector<dealii::types::global_dof_index> & localProcDofIndicesImag,
+				     const dealii::ConstraintMatrix  & constraintMatrixEigen):
     d_mpi_communicator   (mpi_comm_replica),
     d_localDofIndicesReal(&localDofIndicesReal),
     d_localDofIndicesImag(&localDofIndicesImag),
@@ -41,23 +41,14 @@ namespace dftfe {
     d_constraintMatrixEigen(&constraintMatrixEigen)
   {
 
-    //d_localDofIndicesReal = localDofIndicesReal;
-    //d_localDofIndicesImag = localDofIndicesImag;
-    //d_localProcDofIndicesReal = localProcDofIndicesReal;
-    //d_localProcDofIndicesImag = localProcDofIndicesImag;
-    //d_constraintMatrixEigen = constraintMatrixEigen;
-
-    //std::cout<<" Size of local dof indices real in Operator: "<<d_localDofIndicesReal->size()<<std::endl;
-    //std::cout<<" Size of ConstraintsNone Eigen in Operator: "<< d_constraintMatrixEigen->n_constraints()<<std::endl;
-
-    //d_constraintMatrixEigen
+   
 
   }
 
   //
   // Destructor.
   //
-  operatorClass::~operatorClass()
+  operatorDFTClass::~operatorDFTClass()
   {
 
     //
@@ -70,7 +61,7 @@ namespace dftfe {
   //
   //Get local dof indices real
   //
-  const std::vector<unsigned int> * operatorClass::getLocalDofIndicesReal()
+  const std::vector<dealii::types::global_dof_index> * operatorDFTClass::getLocalDofIndicesReal() const
   {
     return d_localDofIndicesReal;
   }
@@ -78,7 +69,7 @@ namespace dftfe {
   //
   //Get local dof indices imag
   //
-  const std::vector<unsigned int> * operatorClass::getLocalDofIndicesImag()
+  const std::vector<dealii::types::global_dof_index> * operatorDFTClass::getLocalDofIndicesImag() const
   {
     return d_localDofIndicesImag;
   }
@@ -86,7 +77,7 @@ namespace dftfe {
   //
   //Get local proc dof indices real
   //
-  const std::vector<unsigned int> * operatorClass::getLocalProcDofIndicesReal()
+  const std::vector<dealii::types::global_dof_index> * operatorDFTClass::getLocalProcDofIndicesReal() const
   {
     return d_localProcDofIndicesReal;
   }
@@ -95,7 +86,7 @@ namespace dftfe {
   //
   //Get local proc dof indices imag
   //
-  const std::vector<unsigned int> * operatorClass::getLocalProcDofIndicesImag()
+  const std::vector<dealii::types::global_dof_index> * operatorDFTClass::getLocalProcDofIndicesImag() const
   {
     return d_localProcDofIndicesImag;
   }
@@ -103,7 +94,7 @@ namespace dftfe {
   //
   //Get constraint matrix
   //
-  const dealii::ConstraintMatrix * operatorClass::getConstraintMatrixEigen()
+  const dealii::ConstraintMatrix * operatorDFTClass::getConstraintMatrixEigen() const
   {
     return d_constraintMatrixEigen;
   }
@@ -111,7 +102,7 @@ namespace dftfe {
   //
   //Get relevant mpi communicator
   //
-  const MPI_Comm & operatorClass::getMPICommunicator()
+  const MPI_Comm & operatorDFTClass::getMPICommunicator() const
   {
     return d_mpi_communicator;
   }

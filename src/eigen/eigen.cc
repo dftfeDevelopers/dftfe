@@ -16,9 +16,9 @@
 // @author Shiva Rudraraju (2016), Phani Motamarri (2016)
 //
 
-#include "../../include/eigen.h"
-#include "../../include/dft.h"
-#include "../../include/dftParameters.h"
+#include <eigen.h>
+#include <dft.h>
+#include <dftParameters.h>
 #include "computeNonLocalHamiltonianTimesXMemoryOpt.cc"
 
 namespace dftfe {
@@ -34,12 +34,12 @@ eigenClass<FEOrder>::eigenClass(dftClass<FEOrder>* _dftPtr,const MPI_Comm &mpi_c
   this_mpi_process (Utilities::MPI::this_mpi_process(mpi_comm_replica)),
   pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
   computing_timer (pcout, TimerOutput::never, TimerOutput::wall_times),
-  operatorClass(mpi_comm_replica,
-		_dftPtr->getLocalDofIndicesReal(),
-		_dftPtr->getLocalDofIndicesImag(),
-		_dftPtr->getLocalProcDofIndicesReal(),
-		_dftPtr->getLocalProcDofIndicesImag(),
-		_dftPtr->getConstraintMatrixEigen())
+  operatorDFTClass(mpi_comm_replica,
+		   _dftPtr->getLocalDofIndicesReal(),
+		   _dftPtr->getLocalDofIndicesImag(),
+		   _dftPtr->getLocalProcDofIndicesReal(),
+		   _dftPtr->getLocalProcDofIndicesImag(),
+		   _dftPtr->getConstraintMatrixEigen())
   {
     
   }
@@ -137,13 +137,13 @@ template<unsigned int FEOrder>
 void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				      const vectorType & phi,
 				      const vectorType & phiExt,
-				      const std::map<dealii::CellId,std::vector<double> > & pseudoValues) const
+				      const std::map<dealii::CellId,std::vector<double> > & pseudoValues) 
 {
   const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
   const unsigned int n_array_elements = VectorizedArray<double>::n_array_elements;
   FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>()> fe_eval_phi(dftPtr->matrix_free_data, 0 ,0);
   FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>()> fe_eval_phiExt(dftPtr->matrix_free_data, dftPtr->phiExtDofHandlerIndex, 0);
-  int numberQuadraturePoints = fe_eval_phi.n_q_points;
+  const int numberQuadraturePoints = fe_eval_phi.n_q_points;
   vEff.reinit (n_cells, numberQuadraturePoints);
   typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
 
@@ -177,7 +177,8 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 	  for (unsigned int v = 0; v < n_sub_cells; ++v)
 	    {
 	      cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
-	      densityValue[v] = ((*rhoValues)[cellPtr->id()][q]);
+	      //densityValue[v] = ((*rhoValues)[cellPtr->id()][q]);
+	      densityValue[v] = (*rhoValues).find(cellPtr->id())[q];
 	    }
 
 	  xc_lda_vxc(&(dftPtr->funcX),n_sub_cells,&densityValue[0],&exchangePotentialVal[0]);
@@ -216,7 +217,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 				      const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
 				      const vectorType & phi,
 				      const vectorType & phiExt,
-				      const std::map<dealii::CellId,std::vector<double> > & pseudoValues) const
+				      const std::map<dealii::CellId,std::vector<double> > & pseudoValues) 
 {
   const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
   const unsigned int n_array_elements = VectorizedArray<double>::n_array_elements;
@@ -735,7 +736,7 @@ void eigenClass<FEOrder>::computeVEffSpinPolarized(const std::map<dealii::CellId
 						   const vectorType & phi,
 						   const vectorType & phiExt,
 						   const unsigned int spinIndex,
-						   const std::map<dealii::CellId,std::vector<double> > & pseudoValues) const
+						   const std::map<dealii::CellId,std::vector<double> > & pseudoValues) 
 
 {
   const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
@@ -819,7 +820,7 @@ void eigenClass<FEOrder>::computeVEffSpinPolarized(const std::map<dealii::CellId
 						   const vectorType & phi,
 						   const vectorType & phiExt,
 						   const unsigned int spinIndex,
-						   const std::map<dealii::CellId,std::vector<double> > & pseudoValues) const
+						   const std::map<dealii::CellId,std::vector<double> > & pseudoValues) 
 {
   const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
   const unsigned int n_array_elements = VectorizedArray<double>::n_array_elements;
