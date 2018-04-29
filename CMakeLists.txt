@@ -17,6 +17,7 @@ SET(TARGET_SRC
   ./src/dft/energyCalculator.cc
   ./src/poisson/poissonSolverProblem.cc
   ./src/eigen/eigen.cc
+  ./src/eigen/operator.cc
   ./src/force/force.cc
   ./src/force/eshelbyTensor/eshelbyTensor.cc
   ./src/force/eshelbyTensor/eshelbyTensorSpinPolarized.cc
@@ -31,6 +32,9 @@ SET(TARGET_SRC
   ./src/solvers/nonLinearSolver.cc
   ./src/solvers/linearSolver.cc
   ./src/solvers/cgSolvers/cgPRPNonLinearSolver.cc
+  ./src/solvers/eigenSolvers/chebyshevOrthogonalizedSubspaceIterationSolver.cc
+  ./src/solvers/eigenSolver.cc
+  ./src/linAlg/linearAlgebraOperations.cc
   ./src/solvers/dealiiLinearSolver.cc
   ./src/solvers/dealiiLinearSolverProblem.cc
   ./utils/fileReaders.cc

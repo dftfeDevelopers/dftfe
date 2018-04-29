@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Sambit Das (2017)
+// @author Sambit Das 
 //
 
 #ifdef ENABLE_PERIODIC_BC
@@ -119,14 +119,6 @@ void forceClass<FEOrder>::computeStressEself()
 	}//face loop
      }//cell loop
   }//bin loop
-#ifdef DEBUG
-  dummyTest=Utilities::MPI::sum(dummyTest,mpi_communicator);
-  //pcout<< "dummyTest: "<<dummyTest<<std::endl;
-  dummyVec=Utilities::MPI::sum(dummyVec,mpi_communicator);
-  //pcout<< "dummyVec: "<<dummyVec<<std::endl;
-  dummyTensor=Utilities::MPI::sum(dummyTensor,mpi_communicator);
-  //pcout<< "dummyTensor: "<<dummyTensor<<std::endl;
-#endif
 
 }
 #endif

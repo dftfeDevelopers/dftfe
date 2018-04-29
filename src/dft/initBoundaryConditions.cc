@@ -33,6 +33,7 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   dofHandler.distribute_dofs (FE);
   dofHandlerEigen.distribute_dofs (FEEigen);
 
+
   //write mesh
   if (!dftParameters::reproducible_output)
   {
@@ -44,6 +45,7 @@ void dftClass<FEOrder>::initBoundaryConditions(){
 					     interpoolcomm,
 					     std::string("currentMesh"));
   }
+
 
   d_supportPoints.clear();
   DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), dofHandler, d_supportPoints);
@@ -114,6 +116,7 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   dofHandlerVector.push_back(&dofHandlerEigen); //DofHandler For Eigen
   eigenDofHandlerIndex = dofHandlerVector.size() - 1; //For Eigen
   d_constraintsVector.push_back(&constraintsNoneEigen); //For Eigen;
+
   //
   //push d_noConstraints into constraintsVector
   //
@@ -124,24 +127,33 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   std::vector<Quadrature<1> > quadratureVector;
   quadratureVector.push_back(QGauss<1>(C_num1DQuad<FEOrder>()));
   quadratureVector.push_back(QGaussLobatto<1>(FEOrder+1));
+
+  //
   //
   //
   forcePtr->initMoved();
+
+  //
   //push dofHandler and constraints for force
+  //
   dofHandlerVector.push_back(&(forcePtr->d_dofHandlerForce));
   forcePtr->d_forceDofHandlerIndex = dofHandlerVector.size()-1;
   d_constraintsVector.push_back(&(forcePtr->d_constraintsNoneForce));
 
   matrix_free_data.reinit(dofHandlerVector, d_constraintsVector, quadratureVector, additional_data);
 
+
   //
   //locate atom core nodes
   //
   locateAtomCoreNodes(dofHandler,d_atomNodeIdToChargeMap);
 
+
   //compute volume of the domain
   d_domainVolume=computeVolume(dofHandler);
 
   //initialize eigen solve related object
+  eigenPtr= new eigenClass<FEOrder>(this, mpi_communicator);
   eigenPtr->init();
+
 }

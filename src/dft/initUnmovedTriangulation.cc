@@ -54,6 +54,7 @@ void dftClass<FEOrder>::initUnmovedTriangulation(const parallel::distributed::Tr
   DoFTools::extract_locally_relevant_dofs(dofHandlerEigen, locally_relevant_dofsEigen);
   DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), dofHandlerEigen, d_supportPointsEigen);
 
+
   //
   //Extract real and imag DOF indices from the global vector - this will be needed in XHX operation, etc.
   //

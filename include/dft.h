@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Shiva Rudraraju (2016), Phani Motamarri (2016), Sambit Das (2017)
+// @author Shiva Rudraraju, Phani Motamarri, Sambit Das 
 //
 
 #ifndef dft_H_
@@ -25,96 +25,84 @@
 #include <complex>
 #include <deque>
 
+#include <headers.h>
+#include <constants.h>
+#include <constraintMatrixInfo.h>
 
-
-#include "headers.h"
-#include "constants.h"
-
-#include "eigen.h"
-#include "symmetry.h"
-#include "meshMovementAffineTransform.h"
+#include <eigen.h>
+#include <symmetry.h>
+#include <meshMovementAffineTransform.h>
+#include <eigenSolver.h>
+#include <chebyshevOrthogonalizedSubspaceIterationSolver.h>
 #include <vselfBinsManager.h>
+#include <dftParameters.h>
+#include <triangulationManager.h>
 
 #include <interpolation.h>
 #include <xc.h>
 #include <petsc.h>
 #include <slepceps.h>
-
-#include "dftParameters.h"
-#include "constraintMatrixInfo.h"
-#include "triangulationManager.h"
 #include <spglib.h>
 
 namespace dftfe {
-    //
-    //Initialize Namespace
-    //
-    using namespace dealii;
 
-    //forward declarations
-    template <unsigned int T> class eigenClass;
-    template <unsigned int T> class forceClass;
-    template <unsigned int T> class symmetryClass;
-    template <unsigned int T> class forceClass;
-    template <unsigned int T> class geoOptIon;
-    template <unsigned int T> class geoOptCell;
+  //
+  //Initialize Namespace
+  //
+  using namespace dealii;
 
-    //
-    //extern declarations for blas-lapack routines
-    //
-    extern "C"{
-      void dgemv_(char* TRANS, const int* M, const int* N, double* alpha, double* A, const int* LDA, double* X, const int* INCX, double* beta, double* C, const int* INCY);
-      void dgesv_( int* n, int* nrhs, double* a, int* lda, int* ipiv, double* b, int* ldb, int* info );
-      void dscal_(int *n, double *alpha, double *x, int *incx);
-      void daxpy_(int *n, double *alpha, double *x, int *incx, double *y, int *incy);
-      void dgemm_(const char* transA, const char* transB, const int *m, const int *n, const int *k, const double *alpha, const double *A, const int *lda, const double *B, const int *ldb, const double *beta, double *C, const int *ldc);
-      void dsyevd_(char* jobz, char* uplo, int* n, double* A, int *lda, double* w, double* work, int* lwork, int* iwork, int* liwork, int* info);
-      void zgemm_(const char* transA, const char* transB, const int *m, const int *n, const int *k, const std::complex<double> *alpha, const std::complex<double> *A, const int *lda, const std::complex<double> *B, const int *ldb, const std::complex<double> *beta, std::complex<double> *C, const int *ldc);
-      void zheevd_(char *jobz, char *uplo,int *n,std::complex<double> *A,int *lda,double *w,std::complex<double> *work,int *lwork,double *rwork,int *lrwork,int *iwork,int *liwork,int *info);
-      void zdotc_(std::complex<double> *C,int *N,const std::complex<double> *X,int *INCX,const std::complex<double> *Y,int *INCY);
-      void zaxpy_(int *n,std::complex<double> *alpha,std::complex<double> *x,int *incx,std::complex<double> *y,int *incy);
-    }
+  typedef dealii::parallel::distributed::Vector<double> vectorType;
+  //forward declarations
+  template <unsigned int T> class poissonClass;
+  template <unsigned int T> class eigenClass;
+  template <unsigned int T> class forceClass;
+  template <unsigned int T> class symmetryClass;
+  template <unsigned int T> class forceClass;
+  template <unsigned int T> class geoOptIon;
+  template <unsigned int T> class geoOptCell;
 
-    //
-    //
-    //
-    struct orbital
-    {
-      unsigned int atomID;
-      unsigned int Z, n, l;
-      int m;
-      alglib::spline1dinterpolant* psi;
-    };
+  
 
-    //
-    //dft class for initializing mesh, setting up guesses for initial electron-density and wavefunctions,
-    //solving individual vSelf problem after setting up bins, initializing pseudopotentials. Also
-    //has member functions which sets up the process of SCF iteration including mixing of the electron-density
-    template <unsigned int FEOrder>
+  //
+  //
+  //
+  struct orbital
+  {
+    unsigned int atomID;
+    unsigned int Z, n, l;
+    int m;
+    alglib::spline1dinterpolant* psi;
+  };
+
+  //
+  //dft class for initializing mesh, setting up guesses for initial electron-density and wavefunctions,
+  //solving individual vSelf problem after setting up bins, initializing pseudopotentials. Also
+  //has member functions which sets up the process of SCF iteration including mixing of the electron-density
+  template <unsigned int FEOrder>
     class dftClass
     {
 
       template <unsigned int T>
-      friend class eigenClass;
+	friend class eigenClass;
 
       template <unsigned int T>
-      friend class forceClass;
+	friend class forceClass;
 
       template <unsigned int T>
-      friend class geoOptIon;
+	friend class geoOptIon;
 
       template <unsigned int T>
-      friend class geoOptCell;
+	friend class geoOptCell;
 
       template <unsigned int T>
-      friend class symmetryClass;
+	friend class symmetryClass;
 
-     public:
+    public:
 
       /**
        * dftClass constructor
        */
-      dftClass(const MPI_Comm &mpi_comm_replica,const MPI_Comm &_interpoolcomm);
+      dftClass(const MPI_Comm &mpi_comm_replica, const MPI_Comm &interpoolcomm);
       /**
        * dftClass destructor
        */
@@ -129,19 +117,22 @@ namespace dftfe {
       /**
        * Does required pre-processing steps including mesh generation calls.
        */
-      void init(const bool usePreviousGroundStateFields=false);
+      void init(const bool usePreviousGroundStateRho=false);
       /**
        * Does required pre-processing steps but without remeshing.
        */
       void initNoRemesh();
+
       /**
        * Selects between only electronic field relaxation or combined electronic and geometry relxation
        */
       void run();
+
       /**
        *  Kohn-Sham ground solve using SCF iteration
        */
       void solve();
+
       /**
        * Number of Kohn-Sham eigen values to be computed
        */
@@ -149,7 +140,40 @@ namespace dftfe {
 
       void readkPointData();
 
-     private:
+      /**
+       *Get local dofs global indices real
+       */
+      const std::vector<dealii::types::global_dof_index> & getLocalDofIndicesReal() const;
+
+      /**
+       *Get local dofs global indices imag
+       */
+      const std::vector<dealii::types::global_dof_index> & getLocalDofIndicesImag() const;
+
+      /**
+       *Get local dofs local proc indices real
+       */
+      const std::vector<dealii::types::global_dof_index> & getLocalProcDofIndicesReal() const;
+
+      /**
+       *Get local dofs local proc indices imag
+       */
+      const std::vector<dealii::types::global_dof_index> & getLocalProcDofIndicesImag() const;
+
+      /**
+       *Get dealii constraint matrix involving periodic constraints and hanging node constraints in periodic  
+       *case else only hanging node constraints in non-periodic case
+       */
+      const ConstraintMatrix & getConstraintMatrixEigen() const;
+
+      /**
+       *Get overloaded constraint matrix information involving periodic constraints and hanging node constraints in periodic
+       *case else only hanging node constraints in non-periodic case (data stored in STL format)
+       */
+      const dftUtils::constraintMatrixInfo & getConstraintMatrixEigenDataInfo() const;
+  
+
+    private:
 
       /**
        * generate image charges and update k point cartesian coordinates based
@@ -159,14 +183,10 @@ namespace dftfe {
 
 
       /**
-       * Set rho initial guess from PSI.
+       * project ground state electron density from previous mesh into
+       * the new mesh to be used as initial guess for the new ground state solve
        */
-      void computeRhoInitialGuessFromPSI();
-
-      /**
-       * clear all exisitng electron density data structures.
-       */
-      void clearRhoData();
+      void projectPreviousGroundStateRho();
 
       /**
        * save triangulation information and rho quadrature data to checkpoint file for restarts
@@ -179,6 +199,7 @@ namespace dftfe {
       void loadTriaInfoAndRhoData();
 
       void generateMPGrid();
+      void writeMesh(std::string meshFileName);
       void generateImageCharges();
       void determineOrbitalFilling();
 
@@ -198,7 +219,7 @@ namespace dftfe {
        */
       void initUnmovedTriangulation(const parallel::distributed::Triangulation<3> & triangulation);
       void initBoundaryConditions();
-      void initElectronicFields(bool usePreviousGroundStateFields=false);
+      void initElectronicFields(bool usePreviousGroundStateRho=false);
       void initPseudoPotentialAll();
 
      /**
@@ -224,6 +245,8 @@ namespace dftfe {
 	                             const dealii::ConstraintMatrix & constraintMatrixBase,
 	                             dealii::ConstraintMatrix & constraintMatrix);
       void initRho();
+      void computeRhoInitialGuessFromPSI();
+      void clearRhoData();
       void noRemeshRhoDataInit();
       void readPSI();
       void readPSIRadialValues();
@@ -306,6 +329,7 @@ namespace dftfe {
        * Computes inner Product and Y = alpha*X + Y for complex vectors used during
        * periodic boundary conditions
        */
+
 #ifdef ENABLE_PERIODIC_BC
       std::complex<double> innerProduct(vectorType & a,
 					vectorType & b);
@@ -344,6 +368,7 @@ namespace dftfe {
        */
       triangulationManager d_mesh;
 
+
       /// affine transformation object
       meshMovementAffineTransform d_affineTransformMesh;
 
@@ -363,13 +388,15 @@ namespace dftfe {
       /**
        * parallel objects
        */
-      const MPI_Comm   mpi_communicator, interpoolcomm;
+      MPI_Comm   mpi_communicator, interpoolcomm;
       const unsigned int n_mpi_processes;
       const unsigned int this_mpi_process;
       IndexSet   locally_owned_dofs, locally_owned_dofsEigen;
       IndexSet   locally_relevant_dofs, locally_relevant_dofsEigen;
-      std::vector<unsigned int> local_dof_indicesReal, local_dof_indicesImag;
-      std::vector<unsigned int> localProc_dof_indicesReal,localProc_dof_indicesImag;
+      std::vector<dealii::types::global_dof_index> local_dof_indicesReal, local_dof_indicesImag;
+      std::vector<dealii::types::global_dof_index> localProc_dof_indicesReal,localProc_dof_indicesImag;
+      std::vector<bool> selectedDofsHanging;
+
 
       eigenClass<FEOrder> * eigenPtr;
       forceClass<FEOrder> * forcePtr;
@@ -380,20 +407,19 @@ namespace dftfe {
       /**
        * constraint Matrices
        */
-      ConstraintMatrix constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_noConstraints, d_noConstraintsEigen;
-
-      /**
-       * data storage for Kohn-Sham wavefunctions
-       */
-      std::vector<std::vector<double> > eigenValues, eigenValuesTemp;
-      std::vector<std::vector<vectorType> > eigenVectors;
 
       /**
        * storage for constraintMatrices in terms of arrays (STL)
        */
-     dftUtils::constraintMatrixInfo constraintsNoneEigenDataInfo;
+      dftUtils::constraintMatrixInfo constraintsNoneEigenDataInfo;
+      ConstraintMatrix constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_noConstraints, d_noConstraintsEigen;
 
 
+      /**
+       * data storage for Kohn-Sham wavefunctions
+       */
+      std::vector<std::vector<double> > eigenValues;
+      std::vector<std::vector<vectorType> > eigenVectors;
 
       /// parallel message stream
       ConditionalOStream  pcout;
@@ -460,6 +486,7 @@ namespace dftfe {
       std::vector<std::vector<std::vector<std::vector<double> > > > d_nonLocalProjectorElementMatrices;
       std::vector<dealii::parallel::distributed::Vector<double> > d_projectorKetTimesVectorPar;
 #endif
+
       //
       //storage for nonlocal pseudopotential constants
       //
@@ -505,8 +532,6 @@ namespace dftfe {
       /// total number of k points
       int d_maxkPoints;
 
-      /// current k point index during the ground state solve
-      int d_kPointIndex;
 
       /**
        * Recomputes the k point cartesian coordinates from the crystal k point coordinates
@@ -520,42 +545,31 @@ namespace dftfe {
 
       //chebyshev filter variables and functions
       //int numPass ; // number of filter passes
-      double bUp;
+
       std::vector<double> a0;
       std::vector<double> bLow;
-      vectorType vChebyshev, v0Chebyshev, fChebyshev;
-
-
-      void chebyshevSolver(const unsigned int s,
-	                   std::vector<double > & residualNormWaveFunctions);
-
-      void computeResidualNorm(std::vector<vectorType>& X,
-	                       std::vector<double> & residualNormWaveFunctions);
+      vectorType vChebyshev;
 
       /**
        * @brief compute the maximum of the residual norm of the highest occupied state among all k points
        */
-      double computeMaximumHighestOccupiedStateResidualNorm
-	     (const std::vector<std::vector<double> > & residualNormWaveFunctionsAllkPoints,
-	      const std::vector<std::vector<double> > & eigenValuesAllkPoints,
-	      const double _fermiEnergy);
+      double computeMaximumHighestOccupiedStateResidualNorm(const std::vector<std::vector<double> > & residualNormWaveFunctionsAllkPoints,
+							    const std::vector<std::vector<double> > & eigenValuesAllkPoints,
+							    const double _fermiEnergy);
 
-      double upperBound();
 
-      void gramSchmidt(std::vector<vectorType>& X);
+      void kohnShamEigenSpaceCompute(const unsigned int s,
+				     const unsigned int kPointIndex,
+				     chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver,
+				     std::vector<double> & residualNormWaveFunctions);
 
-      void chebyshevFilter(std::vector<vectorType>& X,
-			   const unsigned int m,
-			   const double a,
-			   const double b,
-			   const double a0);
+      void computeResidualNorm(const std::vector<double> & eigenValuesTemp,
+			       std::vector<vectorType> & X, 
+			       std::vector<double> & residualNorm) const;
 
-      void rayleighRitz(const unsigned int spinType,
-			std::vector<vectorType>& X);
-
-      void scale(const vectorType & diagonal,
-		 const unsigned int spinType);
 
     };
+
 }
+
 #endif

@@ -16,11 +16,13 @@
 // @author Sambit Das (2017)
 //
 
-namespace dftfe {
+
+
+
 
 template<unsigned int FEOrder>
 void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::vector<vectorType> &src,
-								    std::vector<vectorType>       &dst)
+								    std::vector<vectorType>       &dst)const
 {
   //
   //get FE data
@@ -30,7 +32,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::v
   //
   //get access to triangulation objects from meshGenerator class
   //
-  const int kPointIndex = dftPtr->d_kPointIndex;
+  const int kPointIndex = d_kPointIndex;
   const unsigned int dofs_per_cell = dftPtr->FEEigen.dofs_per_cell;
 
 #ifdef ENABLE_PERIODIC_BC
@@ -317,4 +319,4 @@ for (unsigned int i=0; i<numberWaveFunctions;++i)
     }
 }
 
-}
+

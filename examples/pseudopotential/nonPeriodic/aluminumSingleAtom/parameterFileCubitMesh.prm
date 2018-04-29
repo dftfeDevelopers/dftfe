@@ -1,3 +1,5 @@
+set VERBOSITY = 2
+
 subsection Geometry
   set ATOMIC COORDINATES FILE = coordinates.inp
   set DOMAIN BOUNDING VECTORS FILE = domainBoundingVectors.inp

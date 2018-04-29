@@ -30,8 +30,7 @@ void dftClass<FEOrder>::initElectronicFields(const bool usePreviousGroundStateFi
   //initialize eigen vectors
   //
   matrix_free_data.initialize_dof_vector(vChebyshev,eigenDofHandlerIndex);
-  v0Chebyshev.reinit(vChebyshev);
-  fChebyshev.reinit(vChebyshev);
+  
 
   //
   //initialize density and PSI/ interpolate from previous ground state solution

@@ -13,30 +13,41 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Shiva Rudraraju (2016), Phani Motamarri (2016)
+// @author Shiva Rudraraju, Phani Motamarri
 //
 
-#include "../../include/eigen.h"
-#include "../../include/dft.h"
-#include "../../include/dftParameters.h"
-#include "computeNonLocalHamiltonianTimesXMemoryOpt.cc"
+#include <eigen.h>
+#include <dft.h>
+#include <dftParameters.h>
+#include <linearAlgebraOperations.h>
+
+
 
 namespace dftfe {
+
+#include "computeNonLocalHamiltonianTimesXMemoryOpt.cc"
+
 //
 //constructor
 //
 template<unsigned int FEOrder>
 eigenClass<FEOrder>::eigenClass(dftClass<FEOrder>* _dftPtr,const MPI_Comm &mpi_comm_replica):
   dftPtr(_dftPtr),
-  FE (QGaussLobatto<1>(FEOrder+1)),
+  d_kPointIndex(0),
   mpi_communicator (mpi_comm_replica),
-  n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_communicator)),
-  this_mpi_process (Utilities::MPI::this_mpi_process(mpi_communicator)),
+  n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_comm_replica)),
+  this_mpi_process (Utilities::MPI::this_mpi_process(mpi_comm_replica)),
   pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
-  computing_timer (pcout, TimerOutput::never, TimerOutput::wall_times)
-{
-
-}
+  computing_timer (pcout, TimerOutput::never, TimerOutput::wall_times),
+  operatorDFTClass(mpi_comm_replica,
+		   _dftPtr->getLocalDofIndicesReal(),
+		   _dftPtr->getLocalDofIndicesImag(),
+		   _dftPtr->getLocalProcDofIndicesReal(),
+		   _dftPtr->getLocalProcDofIndicesImag(),
+		   _dftPtr->getConstraintMatrixEigen())
+  {
+    
+  }
 
 //
 //initialize eigenClass object
@@ -46,21 +57,16 @@ void eigenClass<FEOrder>::init()
 {
   computing_timer.enter_section("eigenClass setup");
 
-  dftPtr->matrix_free_data.initialize_dof_vector(invSqrtMassVector,dftPtr->eigenDofHandlerIndex);
-  sqrtMassVector.reinit(invSqrtMassVector);
+  dftPtr->matrix_free_data.initialize_dof_vector(d_invSqrtMassVector,dftPtr->eigenDofHandlerIndex);
+  d_sqrtMassVector.reinit(d_invSqrtMassVector);
 
   //
   //compute mass vector
   //
   computeMassVector(dftPtr->dofHandlerEigen,
 	            dftPtr->constraintsNoneEigen,
-		    sqrtMassVector,
-		    invSqrtMassVector);
-
-  //
-  //XHX size
-  //
-  XHXValue.resize(dftPtr->eigenVectors[0].size()*dftPtr->eigenVectors[0].size(),0.0);
+		    d_sqrtMassVector,
+		    d_invSqrtMassVector);
 
   computing_timer.exit_section("eigenClass setup");
 }
@@ -125,18 +131,25 @@ void eigenClass<FEOrder>::computeMassVector(const dealii::DoFHandler<3> & dofHan
    computing_timer.exit_section("eigenClass Mass assembly");
 }
 
+template<unsigned int FEOrder>
+void eigenClass<FEOrder>::reinitkPointIndex(unsigned int & kPointIndex)
+{
+  d_kPointIndex = kPointIndex;
+}
+
+
 
 template<unsigned int FEOrder>
-void eigenClass<FEOrder>::computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoValues,
+void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				      const vectorType & phi,
 				      const vectorType & phiExt,
-				      const std::map<dealii::CellId,std::vector<double> > & pseudoValues)
+				      const std::map<dealii::CellId,std::vector<double> > & pseudoValues) 
 {
   const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
   const unsigned int n_array_elements = VectorizedArray<double>::n_array_elements;
   FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>()> fe_eval_phi(dftPtr->matrix_free_data, 0 ,0);
   FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>()> fe_eval_phiExt(dftPtr->matrix_free_data, dftPtr->phiExtDofHandlerIndex, 0);
-  int numberQuadraturePoints = fe_eval_phi.n_q_points;
+  const int numberQuadraturePoints = fe_eval_phi.n_q_points;
   vEff.reinit (n_cells, numberQuadraturePoints);
   typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
 
@@ -160,8 +173,6 @@ void eigenClass<FEOrder>::computeVEff(std::map<dealii::CellId,std::vector<double
       fe_eval_phiExt.read_dof_values(phiExt);
       fe_eval_phiExt.evaluate(true, false, false);
 
-
-
       for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
 	{
 	  //
@@ -172,7 +183,7 @@ void eigenClass<FEOrder>::computeVEff(std::map<dealii::CellId,std::vector<double
 	  for (unsigned int v = 0; v < n_sub_cells; ++v)
 	    {
 	      cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
-	      densityValue[v] = ((*rhoValues)[cellPtr->id()][q]);
+	      densityValue[v] = (*rhoValues).find(cellPtr->id())->second[q];
 	    }
 
 	  xc_lda_vxc(&(dftPtr->funcX),n_sub_cells,&densityValue[0],&exchangePotentialVal[0]);
@@ -207,11 +218,11 @@ void eigenClass<FEOrder>::computeVEff(std::map<dealii::CellId,std::vector<double
 }
 
 template<unsigned int FEOrder>
-void eigenClass<FEOrder>::computeVEff(std::map<dealii::CellId,std::vector<double> >* rhoValues,
-				      std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
+void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
+				      const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
 				      const vectorType & phi,
 				      const vectorType & phiExt,
-				      const std::map<dealii::CellId,std::vector<double> > & pseudoValues)
+				      const std::map<dealii::CellId,std::vector<double> > & pseudoValues) 
 {
   const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
   const unsigned int n_array_elements = VectorizedArray<double>::n_array_elements;
@@ -254,10 +265,10 @@ void eigenClass<FEOrder>::computeVEff(std::map<dealii::CellId,std::vector<double
 	  for (unsigned int v = 0; v < n_sub_cells; ++v)
 	    {
 	      cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
-	      densityValue[v] = ((*rhoValues)[cellPtr->id()][q]);
-	      double gradRhoX = ((*gradRhoValues)[cellPtr->id()][3*q + 0]);
-	      double gradRhoY = ((*gradRhoValues)[cellPtr->id()][3*q + 1]);
-	      double gradRhoZ = ((*gradRhoValues)[cellPtr->id()][3*q + 2]);
+	      densityValue[v] = (*rhoValues).find(cellPtr->id())->second[q];
+	      double gradRhoX = (*gradRhoValues).find(cellPtr->id())->second[3*q + 0];
+	      double gradRhoY = (*gradRhoValues).find(cellPtr->id())->second[3*q + 1];
+	      double gradRhoZ = (*gradRhoValues).find(cellPtr->id())->second[3*q + 2];
 	      sigmaValue[v] = gradRhoX*gradRhoX + gradRhoY*gradRhoY + gradRhoZ*gradRhoZ;
 	    }
 
@@ -271,9 +282,9 @@ void eigenClass<FEOrder>::computeVEff(std::map<dealii::CellId,std::vector<double
 	      cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
 	      derExchEnergyWithDensity[v]=derExchEnergyWithDensityVal[v];
 	      derCorrEnergyWithDensity[v]=derCorrEnergyWithDensityVal[v];
-	      double gradRhoX = ((*gradRhoValues)[cellPtr->id()][3*q + 0]);
-	      double gradRhoY = ((*gradRhoValues)[cellPtr->id()][3*q + 1]);
-	      double gradRhoZ = ((*gradRhoValues)[cellPtr->id()][3*q + 2]);
+	      double gradRhoX = (*gradRhoValues).find(cellPtr->id())->second[3*q + 0];
+	      double gradRhoY = (*gradRhoValues).find(cellPtr->id())->second[3*q + 1];
+	      double gradRhoZ = (*gradRhoValues).find(cellPtr->id())->second[3*q + 2];
 	      double term = derExchEnergyWithSigma[v]+derCorrEnergyWithSigma[v];
 	      derExcWithSigmaTimesGradRhoX[v] = term*gradRhoX;
 	      derExcWithSigmaTimesGradRhoY[v] = term*gradRhoY;
@@ -320,7 +331,7 @@ void eigenClass<FEOrder>::implementHX (const dealii::MatrixFree<3,double>  &data
 
 
 #ifdef ENABLE_PERIODIC_BC
-  int kPointIndex = dftPtr->d_kPointIndex;
+  int kPointIndex = d_kPointIndex;
   FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>(), 2, double>  fe_eval(data, dftPtr->eigenDofHandlerIndex, 0);
   Tensor<1,2,VectorizedArray<double> > psiVal, vEffTerm, kSquareTerm, kDotGradientPsiTerm, derExchWithSigmaTimesGradRhoDotGradientPsiTerm;
   Tensor<1,2,Tensor<1,3,VectorizedArray<double> > > gradientPsiVal, gradientPsiTerm, derExchWithSigmaTimesGradRhoTimesPsi,sumGradientTerms;
@@ -534,9 +545,9 @@ void eigenClass<FEOrder>::HX(std::vector<vectorType> &src,
   computing_timer.enter_section("eigenClass HX");
   for (unsigned int i = 0; i < src.size(); i++)
     {
-      src[i].scale(invSqrtMassVector); //M^{-1/2}*X
-      //dftPtr->constraintsNoneEigen.distribute(*(dftPtr->tempPSI2[i]));
-      dftPtr->constraintsNoneEigenDataInfo.distribute(src[i]);
+      src[i].scale(d_invSqrtMassVector); //M^{-1/2}*X
+      //dftPtr->constraintsNoneEigen.distribute(src[i]);
+      dftPtr->getConstraintMatrixEigenDataInfo().distribute(src[i]);
       src[i].update_ghost_values();
       dst[i] = 0.0;
     }
@@ -546,17 +557,7 @@ void eigenClass<FEOrder>::HX(std::vector<vectorType> &src,
   //required if its a pseudopotential calculation and number of nonlocal atoms are greater than zero
   //H^{nloc}*M^{-1/2}*X
   if(dftParameters::isPseudopotential && dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0)
-    {
-
-
-      computeNonLocalHamiltonianTimesXMemoryOpt(src,
-						dst);
-
-      //computeNonLocalHamiltonianTimesX(dftPtr->tempPSI2,
-      //  dst);
-
-    }
-
+    computeNonLocalHamiltonianTimesXMemoryOpt(src,dst);
 
   //
   //First evaluate H^{loc}*M^{-1/2}*X and then add to H^{nloc}*M^{-1/2}*X
@@ -568,7 +569,7 @@ void eigenClass<FEOrder>::HX(std::vector<vectorType> &src,
   //
   for (std::vector<vectorType>::iterator it=dst.begin(); it!=dst.end(); it++)
     {
-      (*it).scale(invSqrtMassVector);
+      (*it).scale(d_invSqrtMassVector);
     }
 
   //
@@ -576,38 +577,39 @@ void eigenClass<FEOrder>::HX(std::vector<vectorType> &src,
   //
   for (std::vector<vectorType>::iterator it=src.begin(); it!=src.end(); it++)
     {
-      (*it).scale(sqrtMassVector); //MHMX
+      (*it).scale(d_sqrtMassVector); //MHMX
     }
 
   computing_timer.exit_section("eigenClass HX");
 }
 
 //XHX
+
+
+//XHX
+#ifdef ENABLE_PERIODIC_BC
 template<unsigned int FEOrder>
-void eigenClass<FEOrder>::XHX(std::vector<vectorType> &src)
+void eigenClass<FEOrder>::XtHX(std::vector<vectorType> & src,
+			       std::vector<std::complex<double> > & ProjHam)
 {
+  
+  //Resize ProjHam 
+  ProjHam.resize(src.size()*src.size(),0.0);
 
   std::vector<vectorType> tempPSI3(src.size());
 
   for(unsigned int i = 0; i < src.size(); ++i)
-    {
-      tempPSI3[i].reinit(src[0]);
-    }
+    tempPSI3[i].reinit(src[0]);
+
 
   computing_timer.enter_section("eigenClass XHX");
 
   //HX
   HX(src, tempPSI3);
   for (unsigned int i = 0; i < src.size(); i++)
-    {
-      tempPSI3[i].update_ghost_values();
-    }
-
-#ifdef ENABLE_PERIODIC_BC
-  unsigned int dofs_per_proc=src[0].local_size()/2;
-#else
-  unsigned int dofs_per_proc=src[0].local_size();
-#endif
+    tempPSI3[i].update_ghost_values();
+    
+  unsigned int dofs_per_proc=src[0].local_size()/2; 
 
   //
   //required for lapack functions
@@ -616,7 +618,7 @@ void eigenClass<FEOrder>::XHX(std::vector<vectorType> &src)
   int vectorSize = k*n;
   int lda=k, ldb=k, ldc=n;
 
-#ifdef ENABLE_PERIODIC_BC
+
   std::vector<double> hxReal(vectorSize), xReal(vectorSize);
   std::vector<double> hxImag(vectorSize), xImag(vectorSize);
 
@@ -626,22 +628,22 @@ void eigenClass<FEOrder>::XHX(std::vector<vectorType> &src)
   unsigned int index = 0;
   for (std::vector<vectorType>::const_iterator it = src.begin(); it != src.end(); it++)
     {
-      (*it).extract_subvector_to(dftPtr->local_dof_indicesReal.begin(),
-				  dftPtr->local_dof_indicesReal.end(),
-				  xReal.begin()+dofs_per_proc*index);
+      (*it).extract_subvector_to(dftPtr->getLocalDofIndicesReal().begin(), 
+				 dftPtr->getLocalDofIndicesReal().end(), 
+				 xReal.begin()+dofs_per_proc*index); 
 
-      (*it).extract_subvector_to(dftPtr->local_dof_indicesImag.begin(),
-				  dftPtr->local_dof_indicesImag.end(),
-				  xImag.begin()+dofs_per_proc*index);
+      (*it).extract_subvector_to(dftPtr->getLocalDofIndicesImag().begin(), 
+				 dftPtr->getLocalDofIndicesImag().end(), 
+				 xImag.begin()+dofs_per_proc*index);
 
-      tempPSI3[index].extract_subvector_to(dftPtr->local_dof_indicesReal.begin(),
-						    dftPtr->local_dof_indicesReal.end(),
-						    hxReal.begin()+dofs_per_proc*index);
+      tempPSI3[index].extract_subvector_to(dftPtr->getLocalDofIndicesReal().begin(),
+					   dftPtr->getLocalDofIndicesReal().end(),
+					   hxReal.begin()+dofs_per_proc*index);
 
-      tempPSI3[index].extract_subvector_to(dftPtr->local_dof_indicesImag.begin(),
-						    dftPtr->local_dof_indicesImag.end(),
-						    hxImag.begin()+dofs_per_proc*index);
-
+      tempPSI3[index].extract_subvector_to(dftPtr->getLocalDofIndicesImag().begin(),
+					   dftPtr->getLocalDofIndicesImag().end(),
+					   hxImag.begin()+dofs_per_proc*index);
+ 
       index++;
     }
 
@@ -664,12 +666,51 @@ void eigenClass<FEOrder>::XHX(std::vector<vectorType> &src)
   zgemm_(&transA, &transB, &n, &n, &k, &alpha, &x[0], &lda, &hx[0], &ldb, &beta, &XtHXValuelocal[0], &ldc);
 
   MPI_Allreduce(&XtHXValuelocal[0],
-		&XHXValue[0],
+		&ProjHam[0],
 		sizeXtHX,
 		MPI_C_DOUBLE_COMPLEX,
 		MPI_SUM,
 		mpi_communicator);
+  
+  computing_timer.exit_section("eigenClass XHX");
+ 
+}
 #else
+template<unsigned int FEOrder>
+void eigenClass<FEOrder>::XtHX(std::vector<vectorType> &src,
+			       std::vector<double> & ProjHam)
+{
+
+  //Resize ProjHam 
+  ProjHam.resize(src.size()*src.size(),0.0);
+
+  std::vector<vectorType> tempPSI3(src.size());
+
+  for(unsigned int i = 0; i < src.size(); ++i)
+    {
+      tempPSI3[i].reinit(src[0]);
+    }
+
+  computing_timer.enter_section("eigenClass XHX");
+
+  //HX
+  HX(src, tempPSI3);
+  for (unsigned int i = 0; i < src.size(); i++)
+    {
+      tempPSI3[i].update_ghost_values();
+    }
+
+  unsigned int dofs_per_proc=src[0].local_size(); 
+
+
+  //
+  //required for lapack functions
+  //
+  int k = dofs_per_proc, n = src.size(); 
+  int vectorSize = k*n;
+  int lda=k, ldb=k, ldc=n;
+
+
   std::vector<double> hx(dofs_per_proc*src.size()), x(dofs_per_proc*src.size());
 
   //
@@ -687,20 +728,20 @@ void eigenClass<FEOrder>::XHX(std::vector<vectorType> &src)
     }
   char transA  = 'T', transB  = 'N';
   double alpha = 1.0, beta  = 0.0;
-  dgemm_(&transA, &transB, &n, &n, &k, &alpha, &x[0], &lda, &hx[0], &ldb, &beta, &XHXValue[0], &ldc);
-  Utilities::MPI::sum(XHXValue, mpi_communicator, XHXValue);
-#endif
-
+  dgemm_(&transA, &transB, &n, &n, &k, &alpha, &x[0], &lda, &hx[0], &ldb, &beta, &ProjHam[0], &ldc);
+  Utilities::MPI::sum(ProjHam, mpi_communicator, ProjHam); 
+  
   computing_timer.exit_section("eigenClass XHX");
 
 }
+#endif
 
 template<unsigned int FEOrder>
-void eigenClass<FEOrder>::computeVEffSpinPolarized(std::map<dealii::CellId,std::vector<double> >* rhoValues,
+void eigenClass<FEOrder>::computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 						   const vectorType & phi,
 						   const vectorType & phiExt,
 						   const unsigned int spinIndex,
-						   const std::map<dealii::CellId,std::vector<double> > & pseudoValues)
+						   const std::map<dealii::CellId,std::vector<double> > & pseudoValues) 
 
 {
   const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
@@ -743,8 +784,8 @@ void eigenClass<FEOrder>::computeVEffSpinPolarized(std::map<dealii::CellId,std::
 	  for (unsigned int v = 0; v < n_sub_cells; ++v)
 	    {
 	      cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
-	      densityValue[2*v+1] = ((*rhoValues)[cellPtr->id()][2*q+1]);
-	      densityValue[2*v] = ((*rhoValues)[cellPtr->id()][2*q]);
+	      densityValue[2*v+1] = (*rhoValues).find(cellPtr->id())->second[2*q+1];
+	      densityValue[2*v] = (*rhoValues).find(cellPtr->id())->second[2*q];
 	    }
 
 	  xc_lda_vxc(&(dftPtr->funcX),n_sub_cells,&densityValue[0],&exchangePotentialVal[0]);
@@ -779,12 +820,12 @@ void eigenClass<FEOrder>::computeVEffSpinPolarized(std::map<dealii::CellId,std::
 }
 
 template<unsigned int FEOrder>
-void eigenClass<FEOrder>::computeVEffSpinPolarized(std::map<dealii::CellId,std::vector<double> >* rhoValues,
-				      std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
-				      const vectorType & phi,
-				      const vectorType & phiExt,
-				      const unsigned int spinIndex,
-				      const std::map<dealii::CellId,std::vector<double> > & pseudoValues)
+void eigenClass<FEOrder>::computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
+						   const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
+						   const vectorType & phi,
+						   const vectorType & phiExt,
+						   const unsigned int spinIndex,
+						   const std::map<dealii::CellId,std::vector<double> > & pseudoValues) 
 {
   const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
   const unsigned int n_array_elements = VectorizedArray<double>::n_array_elements;
@@ -828,18 +869,19 @@ void eigenClass<FEOrder>::computeVEffSpinPolarized(std::map<dealii::CellId,std::
 	  for (unsigned int v = 0; v < n_sub_cells; ++v)
 	    {
 	      cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
-	      densityValue[2*v+1] = ((*rhoValues)[cellPtr->id()][2*q+1]);
-	      densityValue[2*v] = ((*rhoValues)[cellPtr->id()][2*q]);
-	      double gradRhoX1 = ((*gradRhoValues)[cellPtr->id()][6*q + 0]);
-	      double gradRhoY1 = ((*gradRhoValues)[cellPtr->id()][6*q + 1]);
-	      double gradRhoZ1 = ((*gradRhoValues)[cellPtr->id()][6*q + 2]);
-	      double gradRhoX2 = ((*gradRhoValues)[cellPtr->id()][6*q + 3]);
-	      double gradRhoY2 = ((*gradRhoValues)[cellPtr->id()][6*q + 4]);
-	      double gradRhoZ2 = ((*gradRhoValues)[cellPtr->id()][6*q + 5]);
+	      densityValue[2*v+1] = (*rhoValues).find(cellPtr->id())->second[2*q+1];
+	      densityValue[2*v] = (*rhoValues).find(cellPtr->id())->second[2*q];
+	      double gradRhoX1 = (*gradRhoValues).find(cellPtr->id())->second[6*q + 0];
+	      double gradRhoY1 = (*gradRhoValues).find(cellPtr->id())->second[6*q + 1];
+	      double gradRhoZ1 = (*gradRhoValues).find(cellPtr->id())->second[6*q + 2];
+	      double gradRhoX2 = (*gradRhoValues).find(cellPtr->id())->second[6*q + 3];
+	      double gradRhoY2 = (*gradRhoValues).find(cellPtr->id())->second[6*q + 4];
+	      double gradRhoZ2 = (*gradRhoValues).find(cellPtr->id())->second[6*q + 5];
 	      //
 	      sigmaValue[3*v+0] = gradRhoX1*gradRhoX1 + gradRhoY1*gradRhoY1 + gradRhoZ1*gradRhoZ1;
 	      sigmaValue[3*v+1] = gradRhoX1*gradRhoX2 + gradRhoY1*gradRhoY2 + gradRhoZ1*gradRhoZ2;
 	      sigmaValue[3*v+2] = gradRhoX2*gradRhoX2 + gradRhoY2*gradRhoY2 + gradRhoZ2*gradRhoZ2;
+
 	    }
 
 	  xc_gga_vxc(&(dftPtr->funcX),n_sub_cells,&densityValue[0],&sigmaValue[0],&derExchEnergyWithDensityVal[0],&derExchEnergyWithSigma[0]);
@@ -852,12 +894,12 @@ void eigenClass<FEOrder>::computeVEffSpinPolarized(std::map<dealii::CellId,std::
 	      cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
 	      derExchEnergyWithDensity[v]=derExchEnergyWithDensityVal[2*v+spinIndex];
 	      derCorrEnergyWithDensity[v]=derCorrEnergyWithDensityVal[2*v+spinIndex];
-	      double gradRhoX = ((*gradRhoValues)[cellPtr->id()][6*q + 0 + 3*spinIndex]);
-	      double gradRhoY = ((*gradRhoValues)[cellPtr->id()][6*q + 1 + 3*spinIndex]);
-	      double gradRhoZ = ((*gradRhoValues)[cellPtr->id()][6*q + 2 + 3*spinIndex]);
-	      double gradRhoOtherX = ((*gradRhoValues)[cellPtr->id()][6*q + 0 + 3*(1-spinIndex)]);
-	      double gradRhoOtherY = ((*gradRhoValues)[cellPtr->id()][6*q + 1 + 3*(1-spinIndex)]);
-	      double gradRhoOtherZ = ((*gradRhoValues)[cellPtr->id()][6*q + 2 + 3*(1-spinIndex)]);
+	      double gradRhoX = (*gradRhoValues).find(cellPtr->id())->second[6*q + 0 + 3*spinIndex];
+	      double gradRhoY = (*gradRhoValues).find(cellPtr->id())->second[6*q + 1 + 3*spinIndex];
+	      double gradRhoZ = (*gradRhoValues).find(cellPtr->id())->second[6*q + 2 + 3*spinIndex];
+	      double gradRhoOtherX = (*gradRhoValues).find(cellPtr->id())->second[6*q + 0 + 3*(1-spinIndex)];
+	      double gradRhoOtherY = (*gradRhoValues).find(cellPtr->id())->second[6*q + 1 + 3*(1-spinIndex)];
+	      double gradRhoOtherZ = (*gradRhoValues).find(cellPtr->id())->second[6*q + 2 + 3*(1-spinIndex)];
 	      double term = derExchEnergyWithSigma[3*v+2*spinIndex]+derCorrEnergyWithSigma[3*v+2*spinIndex];
 	      double termOff = derExchEnergyWithSigma[3*v+1]+derCorrEnergyWithSigma[3*v+1];
 	      derExcWithSigmaTimesGradRhoX[v] = term*gradRhoX + 0.5*termOff*gradRhoOtherX;

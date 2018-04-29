@@ -23,6 +23,7 @@
 #include <eshelbyTensor.h>
 #include <eshelbyTensorSpinPolarized.h>
 #include <fileReaders.h>
+#include <linearAlgebraOperations.h>
 #include <boost/math/special_functions/spherical_harmonic.hpp>
 
 

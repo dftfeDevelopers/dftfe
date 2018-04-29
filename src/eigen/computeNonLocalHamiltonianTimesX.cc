@@ -17,7 +17,7 @@
 //
 template<unsigned int FEOrder>
 void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vectorType> &src,
-							   std::vector<vectorType>       &dst)
+							   std::vector<vectorType>       &dst) const
 {
 
   //
@@ -29,7 +29,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vec
   //
   //get access to triangulation objects from meshGenerator class
   //
-  const unsigned int kPointIndex = dftPtr->d_kPointIndex;
+  const unsigned int kPointIndex = d_kPointIndex;
   const unsigned int dofs_per_cell = dftPtr->FEEigen.dofs_per_cell;
 
 #ifdef ENABLE_PERIODIC_BC
