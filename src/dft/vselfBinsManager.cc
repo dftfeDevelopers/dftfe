@@ -357,7 +357,7 @@ namespace dftfe
 								    radiusAtomBallAdaptive,
 								    n_mpi_processes,
 								    mpi_communicator);
-	  while (check!=0 && radiusAtomBallAdaptive>=3.0)
+	  while (check!=0 && radiusAtomBallAdaptive>=1.0)
 	  {
 	      radiusAtomBallAdaptive-=0.25;
               check=internal::createAndCheckInteractionMap(interactionMap,
@@ -371,11 +371,17 @@ namespace dftfe
 							   mpi_communicator);
 	  }
 
+	  std::string message;
+	  if (check==1 || check==2)
+	      message="DFT-FE error: adaptively determined ball radius for nuclear self potential solve has reached the minimum allowed value of 1.0, which can severly detoriate the accuracy of the KSDFT groundstate energy and forces. Please use a larger periodic super cell which can accomodate a larger ball radius.";
+
+	  AssertThrow(check==0,dealii::ExcMessage(message));
+
 	  if (dftParameters::verbosity==2)
 	      pcout<<"...Adaptively set vself solve ball radius: "<< radiusAtomBallAdaptive<<std::endl;
 
 	  if (radiusAtomBallAdaptive<3.0)
-	      pcout<<"DFT-FE warning: adaptively determined ball radius for nuclear self potential solve is less than 3.0, which can detoriate the accuracy of the KSDFT groundstate energy and forces. One approach to overcome this issue is to use a larger super cell with smallest dimension greater than 6.0 (twice of 3.0), assuming an orthorhombic domain. If that is not feasible, you may need more mesh refinement around the atoms to achieve the desired accuracy."<<std::endl;
+	      pcout<<"DFT-FE warning: adaptively determined ball radius for nuclear self potential solve is less than 3.0, which can detoriate the accuracy of the KSDFT groundstate energy and forces. One approach to overcome this issue is to use a larger super cell with smallest periodic dimension greater than 6.0 (twice of 3.0), assuming an orthorhombic domain. If that is not feasible, you may need more h refinement of the finite element mesh around the atoms to achieve the desired accuracy."<<std::endl;
 	  MPI_Barrier(mpi_communicator);
 
       }
@@ -545,11 +551,7 @@ namespace dftfe
 			  if(distance < radiusAtomBallAdaptive)
 			    overlapFlag += 1;
 
-			  if(overlapFlag > 1)
-			    {
-			      std::cout<< "One of your Bins has a problem. It has interacting atoms" << std::endl;
-			      exit(-1);
-			    }
+			  AssertThrow(overlapFlag<=1,dealii::ExcMessage("One of your Bins has a problem. It has interacting atoms"));
 
 			  distanceFromNode.push_back(distance);
 
@@ -558,9 +560,8 @@ namespace dftfe
 		      std::vector<double>::iterator minDistanceIter = std::min_element(distanceFromNode.begin(),
 										       distanceFromNode.end());
 
-		      std::iterator_traits<std::vector<double>::iterator>::difference_type minDistanceAtomId = std::distance(distanceFromNode.begin(),
-															     minDistanceIter);
-
+		      std::iterator_traits<std::vector<double>::iterator>::difference_type minDistanceAtomId
+			  = std::distance(distanceFromNode.begin(),minDistanceIter);
 
 		      double minDistance = *minDistanceIter;
 
@@ -595,13 +596,9 @@ namespace dftfe
 			    atomCharge = imageCharges[imageIdsOfAtomsInCurrentBin[minDistanceAtomId-numberGlobalAtomsInBin]];
 
 			  if(minDistance <= 1e-05)
-			    {
 			      vSelfBinNodeMap[iterMap->first] = 0.0;
-			    }
 			  else
-			    {
 			      vSelfBinNodeMap[iterMap->first] = -atomCharge/minDistance;
-			    }
 
 			}
 		      else
