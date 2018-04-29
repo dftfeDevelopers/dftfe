@@ -46,7 +46,7 @@ namespace dftfe{
       /**
        * @brief Compute operator times vector or operator times bunch of vectors
        *
-       * @param src Vector of Vectors containing current values of X (non-const as
+       * @param src Vector of Vectors containing current values of source array (non-const as
          we scale src and rescale src to avoid creation of temporary vectors)
        * @param dst Vector of Vectors containing operator times vectors product
        */
