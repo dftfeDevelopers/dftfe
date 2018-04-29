@@ -46,9 +46,9 @@ namespace dftfe{
       /**
        * @brief Compute operator times vector or operator times bunch of vectors
        *
-       * @param X Vector of Vectors containing current values of X (non-const as
+       * @param src Vector of Vectors containing current values of X (non-const as
          we scale src and rescale src to avoid creation of temporary vectors)
-       * @param Y Vector of Vectors containing operator times vectors product
+       * @param dst Vector of Vectors containing operator times vectors product
        */
       void HX(std::vector<vectorType> &src, 
 	      std::vector<vectorType> &dst);
@@ -57,7 +57,7 @@ namespace dftfe{
       /**
        * @brief Compute projection of the operator into orthogonal basis
        *
-       * @param X given orthogonal basis vectors 
+       * @param src given orthogonal basis vectors 
        * @return ProjMatrix projected small matrix 
        */
 #ifdef ENABLE_PERIODIC_BC
