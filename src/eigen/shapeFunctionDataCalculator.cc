@@ -24,7 +24,7 @@ void eigenClass<FEOrder>::preComputeShapeFunctionGradientIntegrals()
   const unsigned int numberMacroCells = dftPtr->matrix_free_data.n_macro_cells();
   const unsigned int numberPhysicalCells = dftPtr->matrix_free_data.n_physical_cells();
 
-  std::cout<<"Number Physical and Macro: "<<numberPhysicalCells<<" "<<numberMacroCells<<std::endl;
+  //std::cout<<"Number Physical and Macro: "<<numberPhysicalCells<<" "<<numberMacroCells<<std::endl;
 
 
   d_cellShapeFunctionGradientIntegral.resize(numberMacroCells);

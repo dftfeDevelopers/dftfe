@@ -41,7 +41,7 @@ void eigenClass<FEOrder>::computeHamiltonianMatrix(unsigned int kPointIndex)
   
   const unsigned int numberDofsPerElement = dftPtr->FE.dofs_per_cell;
 
-  std::cout<<"Degrees of freedom in Ham Matrix Computation: "<<numberDofsPerElement<<std::endl;
+  //std::cout<<"Degrees of freedom in Ham Matrix Computation: "<<numberDofsPerElement<<std::endl;
 
   const unsigned int numberQuadraturePoints = quadrature.size();
   typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;

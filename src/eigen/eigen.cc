@@ -533,8 +533,8 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
     //
     //required if its a pseudopotential calculation and number of nonlocal atoms are greater than zero
     //H^{nloc}*M^{-1/2}*X
-    //if(dftParameters::isPseudopotential && dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0)
-    //computeNonLocalHamiltonianTimesXMemoryOpt(src,dst);
+    if(dftParameters::isPseudopotential && dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0)
+      computeNonLocalHamiltonianTimesXMemoryOpt(src,dst);
 
     //
     //First evaluate H^{loc}*M^{-1/2}*X and then add to H^{nloc}*M^{-1/2}*X
