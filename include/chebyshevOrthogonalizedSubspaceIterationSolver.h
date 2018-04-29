@@ -38,12 +38,10 @@ namespace dftfe{
      *
      * @param lowerBoundWantedSpectrum Lower Bound of the Wanted Spectrum.
      * @param lowerBoundUnWantedSpectrum Lower Bound of the UnWanted Spectrum.
-     * @param numberEigenvalues Number of smallest eigenvalues to be
-     * solved for.
      */
     chebyshevOrthogonalizedSubspaceIterationSolver(double lowerBoundWantedSpectrum,
-						   double lowerBoundUnWantedSpectrum,
-						   const unsigned int numberEigenvalues);
+						   double lowerBoundUnWantedSpectrum);
+
 
     /**
      * @brief Destructor.
@@ -75,11 +73,6 @@ namespace dftfe{
     //stores lower bound of unwanted spectrum
     //
     double d_lowerBoundUnWantedSpectrum;
-
-    //
-    //stores eigenvalues after the chebyshev subspace iteration procedure
-    //
-    const unsigned int d_numberEigenValues;
 
     //
     //variables for printing out and timing

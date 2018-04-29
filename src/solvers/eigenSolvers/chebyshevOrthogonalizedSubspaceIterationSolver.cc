@@ -24,11 +24,9 @@ namespace dftfe{
   // Constructor.
   //
   chebyshevOrthogonalizedSubspaceIterationSolver::chebyshevOrthogonalizedSubspaceIterationSolver(double lowerBoundWantedSpectrum,
-												 double lowerBoundUnWantedSpectrum,
-												 const unsigned int numberEigenValues):
+												 double lowerBoundUnWantedSpectrum):
     d_lowerBoundWantedSpectrum(lowerBoundWantedSpectrum),
     d_lowerBoundUnWantedSpectrum(lowerBoundUnWantedSpectrum),
-    d_numberEigenValues(numberEigenValues),
     pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
     computing_timer(pcout, 
 		    dftParameters::reproducible_output ? TimerOutput::never : TimerOutput::summary,
