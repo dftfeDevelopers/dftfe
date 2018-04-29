@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Shiva Rudraraju (2016), Phani Motamarri (2016)
+// @author Shiva Rudraraju, Phani Motamarri
 //
 
 #include <eigen.h>
