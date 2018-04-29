@@ -93,33 +93,6 @@ namespace linearAlgebraOperations
       return returnValue;
     }
 
-    void  alphaTimesXPlusY(operatorClass * operatorMatrix,
-			   std::complex<double> & alpha,
-			   vectorType & x,
-			   vectorType & y)
-    {
-      unsigned int dofs_per_proc = x.local_size()/2; 
-      std::vector<double> xReal(dofs_per_proc), xImag(dofs_per_proc);
-      std::vector<double> yReal(dofs_per_proc), yImag(dofs_per_proc);
-      std::vector<std::complex<double> > xlocal(dofs_per_proc);
-      std::vector<std::complex<double> > ylocal(dofs_per_proc);
-
-      x.extract_subvector_to(operatorMatrix->getLocalDofIndicesReal()->begin(), 
-			     operatorMatrix->getLocalDofIndicesReal()->end(), 
-			     xReal.begin()); 
-
-      x.extract_subvector_to(operatorMatrix->getLocalDofIndicesImag()->begin(), 
-			     operatorMatrix->getLocalDofIndicesImag()->end(), 
-			     xImag.begin());
-  
-      y.extract_subvector_to(operatorMatrix->getLocalDofIndicesReal()->begin(), 
-			     operatorMatrix->getLocalDofIndicesReal()->end(), 
-			     yReal.begin()); 
-
-      y.extract_subvector_to(operatorMatrix->getLocalDofIndicesImag()->begin(), 
-			     operatorMatrix->getLocalDofIndicesImag()->end(), 
-			     yImag.begin());
-=======
   void  alphaTimesXPlusY(operatorDFTClass * operatorMatrix,
 			 std::complex<double> & alpha,
 			 vectorType & x,
@@ -156,17 +129,6 @@ namespace linearAlgebraOperations
       }
 
     const int n = dofs_per_proc;const int inc = 1;
->>>>>>> isolateChebyshevMerged
-
-      for(int i = 0; i < dofs_per_proc; ++i)
-	{
-	  xlocal[i].real(xReal[i]);
-	  xlocal[i].imag(xImag[i]);
-	  ylocal[i].real(yReal[i]);
-	  ylocal[i].imag(yImag[i]);
-	}
-
-      int n = dofs_per_proc;int inc = 1;
 
       //call blas function
       zaxpy_(&n,

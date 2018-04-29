@@ -150,6 +150,11 @@ void eigenClass<FEOrder>::computeMassVector(const dealii::DoFHandler<3> & dofHan
 }
 
 
+template<unsigned int FEOrder>
+void eigenClass<FEOrder>::reinitkPointIndex(unsigned int & kPointIndex)
+{
+  d_kPointIndex = kPointIndex;
+}
 
 
 template<unsigned int FEOrder>

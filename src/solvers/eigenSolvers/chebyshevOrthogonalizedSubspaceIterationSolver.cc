@@ -155,7 +155,7 @@ namespace dftfe{
       d_numberWaveFunctionsBlock[totalNumberBlocks - 1] = numberWaveFunctionsLastBlock;
     
     
-    for(unsigned int nBlock = 0; nBlock < totalNumberBlocks; ++nBlock)
+    /*for(unsigned int nBlock = 0; nBlock < totalNumberBlocks; ++nBlock)
       {
 	//
 	//Get the current block data
@@ -249,12 +249,12 @@ namespace dftfe{
 	      }
 	  }
 
-      }//block loop
+      }//block loop*/
 
     //
     //call chebyshev filtering routine
     //
-    /*computing_timer.enter_section("Chebyshev filtering"); 
+    computing_timer.enter_section("Chebyshev filtering"); 
 
     linearAlgebraOperations::chebyshevFilter(operatorMatrix,
 					     eigenVectors, 
@@ -264,7 +264,7 @@ namespace dftfe{
 					     d_lowerBoundWantedSpectrum);
 
 
-					     computing_timer.exit_section("Chebyshev filtering");*/
+    computing_timer.exit_section("Chebyshev filtering");
   
 
 
