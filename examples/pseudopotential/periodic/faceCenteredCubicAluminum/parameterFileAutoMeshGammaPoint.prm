@@ -18,7 +18,7 @@ subsection Boundary conditions
 
   # The radius (in a.u) of the ball around an atom on which self-potential of
   # the associated nuclear charge is solved
-  set SELF POTENTIAL ATOM BALL RADIUS = 2.5   # default: 3.0
+  set SELF POTENTIAL ATOM BALL RADIUS = 0.0   # default: 3.0
 end
 
 

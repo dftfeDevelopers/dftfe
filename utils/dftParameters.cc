@@ -30,7 +30,7 @@ namespace dftParameters
   unsigned int finiteElementPolynomialOrder=1,n_refinement_steps=1,numberEigenValues=1,xc_id=1, spinPolarized=0, nkx=1,nky=1,nkz=1, pseudoProjector=1;
   unsigned int chebyshevOrder=1,numPass=1, numSCFIterations=1,maxLinearSolverIterations=1, mixingHistory=1, npool=1;
 
-  double radiusAtomBall=1.0, mixingParameter=0.5, dkx=0.0, dky=0.0, dkz=0.0;
+  double radiusAtomBall=0.0, mixingParameter=0.5, dkx=0.0, dky=0.0, dkz=0.0;
   double lowerEndWantedSpectrum=0.0,relLinearSolverTolerance=1e-10,selfConsistentSolverTolerance=1e-10,TVal=500, start_magnetization=0.0;
 
   bool isPseudopotential=false,periodicX=false,periodicY=false,periodicZ=false, useSymm=false, timeReversal=false;
@@ -125,9 +125,9 @@ namespace dftParameters
 
     prm.enter_subsection ("Boundary conditions");
     {
-        prm.declare_entry("SELF POTENTIAL ATOM BALL RADIUS", "3.0",
-                      Patterns::Double(1.5,10),
-                      "[Developer] The radius (in a.u) of the ball around an atom on which self-potential of the associated nuclear charge is solved");
+        prm.declare_entry("SELF POTENTIAL ATOM BALL RADIUS", "0.0",
+                      Patterns::Double(0.0,10),
+                      "[Developer] The radius (in a.u) of the ball around an atom on which self-potential of the associated nuclear charge is solved. For the default value of 0.0, the radius value is automatically determined to accomodate the largest radius possible for the given finite element mesh. The default approach works for most problems.");
 
 	prm.declare_entry("PERIODIC1", "false",
 			  Patterns::Bool(),

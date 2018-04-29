@@ -66,6 +66,7 @@
 #include <deal.II/lac/slepc_solver.h>
 #include <deal.II/base/config.h>
 #include <deal.II/base/smartpointer.h>
+#include <deal.II/base/types.h>
 
 //Include generic C++ headers
 #include <fstream>
