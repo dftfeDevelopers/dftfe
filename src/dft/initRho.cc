@@ -371,7 +371,7 @@ void dftClass<FEOrder>::computeRhoInitialGuessFromPSI()
 #endif
 
 
-	      for(int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+	      for(int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
 		{
 		  for(unsigned int i=0; i<numEigenValues; ++i)
 		    {
@@ -483,7 +483,7 @@ void dftClass<FEOrder>::computeRhoInitialGuessFromPSI()
 	    }
 	  else
 	    {
-	      for(int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+	      for(int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
 		{
 		  for(unsigned int i=0; i<numEigenValues; ++i)
 		    {

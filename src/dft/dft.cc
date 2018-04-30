@@ -86,7 +86,6 @@ namespace dftfe {
     this_mpi_process (Utilities::MPI::this_mpi_process(mpi_comm_replica)),
     numElectrons(0),
     numLevels(0),
-    d_maxkPoints(1),
     d_mesh(mpi_comm_replica,_interpoolcomm),
     d_affineTransformMesh(mpi_comm_replica),
     d_vselfBinsManager(mpi_comm_replica),
@@ -236,22 +235,21 @@ namespace dftfe {
 #ifdef ENABLE_PERIODIC_BC
     generateMPGrid();
 #else
-    d_maxkPoints = 1;
-    d_kPointCoordinates.resize(3*d_maxkPoints,0.0);
-    d_kPointWeights.resize(d_maxkPoints,1.0);
+    d_kPointCoordinates.resize(3,0.0);
+    d_kPointWeights.resize(1,1.0);
 #endif
 
     //set size of eigenvalues and eigenvectors data structures
-    eigenValues.resize(d_maxkPoints);
+    eigenValues.resize(d_kPointWeights.size());
 
-    a0.resize((dftParameters::spinPolarized+1)*d_maxkPoints,dftParameters::lowerEndWantedSpectrum);
-    bLow.resize((dftParameters::spinPolarized+1)*d_maxkPoints,0.0);
-    eigenVectors.resize((1+dftParameters::spinPolarized)*d_maxkPoints);
+    a0.resize((dftParameters::spinPolarized+1)*d_kPointWeights.size(),dftParameters::lowerEndWantedSpectrum);
+    bLow.resize((dftParameters::spinPolarized+1)*d_kPointWeights.size(),0.0);
+    eigenVectors.resize((1+dftParameters::spinPolarized)*d_kPointWeights.size());
 
-    for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_maxkPoints; ++kPoint)
+    for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
       eigenVectors[kPoint].resize(numEigenValues);
 
-    for(unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+    for(unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
       {
 	eigenValues[kPoint].resize((dftParameters::spinPolarized+1)*numEigenValues);
       }
@@ -319,7 +317,7 @@ namespace dftfe {
       {
 	//FIXME: Print all k points across all pools
 	pcout<<"-------------------k points cartesian coordinates and weights-----------------------------"<<std::endl;
-	for(unsigned int i = 0; i < d_maxkPoints; ++i)
+	for(unsigned int i = 0; i < d_kPointWeights.size(); ++i)
 	  {
 	    pcout<<" ["<< d_kPointCoordinates[3*i+0] <<", "<< d_kPointCoordinates[3*i+1]<<", "<< d_kPointCoordinates[3*i+2]<<"] "<<d_kPointWeights[i]<<std::endl;
 	  }
@@ -616,11 +614,11 @@ namespace dftfe {
 	  {
 
 	    std::vector<std::vector<std::vector<double> > > eigenValuesSpins(2,
-									     std::vector<std::vector<double> >(d_maxkPoints,
+									     std::vector<std::vector<double> >(d_kPointWeights.size(),
 													       std::vector<double>(numEigenValues)));
 
 	    std::vector<std::vector<std::vector<double>>> residualNormWaveFunctionsAllkPointsSpins(2,
-												   std::vector<std::vector<double> >(d_maxkPoints,
+												   std::vector<std::vector<double> >(d_kPointWeights.size(),
 																     std::vector<double>(numEigenValues)));
 
 	    for(unsigned int s=0; s<2; ++s)
@@ -633,7 +631,7 @@ namespace dftfe {
 		  {
 		    eigenPtr->computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, pseudoValues);
 		  }
-		for (unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+		for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
 		  {
 		    eigenPtr->reinitkPointIndex(kPoint);
 		    for(unsigned int j = 0; j < dftParameters::numPass; ++j)
@@ -650,7 +648,7 @@ namespace dftfe {
 	      }
 
 	    for(unsigned int s=0; s<2; ++s)
-	      for (unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+	      for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
 		for (unsigned int i = 0; i<numEigenValues; ++i)
 		  eigenValuesSpins[s][kPoint][i]=eigenValues[kPoint][numEigenValues*s+i];
 	    //
@@ -679,13 +677,13 @@ namespace dftfe {
 	    while (maxRes>adaptiveChebysevFilterPassesTol)
 	      {
 		for(unsigned int s=0; s<2; ++s)
-		  for (unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+		  for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
 		    {
 		      eigenPtr->reinitkPointIndex(kPoint);
 		      if (dftParameters::verbosity==2)
 			pcout<< "Beginning Chebyshev filter pass "<< dftParameters::numPass+count<< " for spin "<< s+1<<std::endl;;
 
-		 
+
 		      kohnShamEigenSpaceCompute(s,
 						kPoint,
 						subspaceIterationSolver,
@@ -694,7 +692,7 @@ namespace dftfe {
 		    }
 		count++;
 		for(unsigned int s=0; s<2; ++s)
-		  for (unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+		  for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
 		    for (unsigned int i = 0; i<numEigenValues; ++i)
 		      eigenValuesSpins[s][kPoint][i]=eigenValues[kPoint][numEigenValues*s+i];
 
@@ -715,8 +713,8 @@ namespace dftfe {
 	  {
 
 	    std::vector<std::vector<double>> residualNormWaveFunctionsAllkPoints;
-	    residualNormWaveFunctionsAllkPoints.resize(d_maxkPoints);
-	    for(unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+	    residualNormWaveFunctionsAllkPoints.resize(d_kPointWeights.size());
+	    for(unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
 	      residualNormWaveFunctionsAllkPoints[kPoint].resize(eigenVectors[kPoint].size());
 
 	    if(dftParameters::xc_id < 4)
@@ -728,7 +726,7 @@ namespace dftfe {
 		eigenPtr->computeVEff(rhoInValues, gradRhoInValues, d_phiTotRhoIn, d_phiExt, pseudoValues);
 	      }
 
-	    for (unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+	    for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
 	      {
 		eigenPtr->reinitkPointIndex(kPoint);
 		for(unsigned int j = 0; j < dftParameters::numPass; ++j)
@@ -766,7 +764,7 @@ namespace dftfe {
 	    unsigned int count=1;
 	    while (maxRes>adaptiveChebysevFilterPassesTol)
 	      {
-		for (unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+		for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
 		  {
 		    eigenPtr->reinitkPointIndex(kPoint);
 		    if (dftParameters::verbosity==2)
@@ -993,7 +991,7 @@ namespace dftfe {
 					       mpi_communicator,
 					       interpoolcomm,
 					       std::string("eigen"));
-     
+
     //
     //compute nodal electron-density from quad data
     //

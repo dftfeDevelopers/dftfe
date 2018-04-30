@@ -369,7 +369,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 
     }
 
-  for(int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_maxkPoints; ++kPoint)
+  for(int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
     {
       for (unsigned int i = 0; i < numEigenValues; ++i)
 	{
