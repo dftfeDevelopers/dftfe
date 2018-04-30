@@ -340,14 +340,14 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 #ifdef ENABLE_PERIODIC_BC
   template<unsigned int FEOrder>
   void eigenClass<FEOrder>::HX(dealii::parallel::distributed::Vector<std::complex<double> > & src,
-			       const unsigned int numberWaveFunctionsPerBlock,
+			       const unsigned int numberWaveFunctions,
 			       const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayMacroCellLocalProcIndexIdMap,
 			       const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap,
 			       dealii::parallel::distributed::Vector<std::complex<double> > & dst)
 
 
   {
-    const unsigned int numberDofs = src.local_size()/numberWaveFunctionsPerBlock;
+    const unsigned int numberDofs = src.local_size()/numberWaveFunctions;
     const unsigned int inc = 1;
 
     //
@@ -356,9 +356,9 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
     for(int i = 0; i < numberDofs; ++i)
       {
 	std::complex<double> scalingCoeff = d_invSqrtMassVector.local_element(dftPtr->localProc_dof_indicesReal[i]);
-	zscal_(&numberWaveFunctionsPerBlock,
+	zscal_(&numberWaveFunctions,
 	       &scalingCoeff,
-	       src.begin()+i*numberWaveFunctionsPerBlock,
+	       src.begin()+i*numberWaveFunctions,
 	       &inc);
       }
 
@@ -372,29 +372,36 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
     //update slave nodes before doing element-level matrix-vec multiplication
     //
     dftPtr->constraintsNoneDataInfo.distribute(src,
-    					       numberWaveFunctionsPerBlock);
+    					       numberWaveFunctions);
 
 
     src.update_ghost_values();
 
-
+    
     //
-    //nonlocal PSP
-    //
-
-    //
-    //H*M^{-1/2}*X
+    //Hloc*M^{-1/2}*X
     //
     computeLocalHamiltonianTimesX(src,
-				  numberWaveFunctionsPerBlock,
+				  numberWaveFunctions,
 				  flattenedArrayMacroCellLocalProcIndexIdMap,
 				  dst);
+
+
+    //
+    //required if its a pseudopotential calculation and number of nonlocal atoms are greater than zero
+    //H^{nloc}*M^{-1/2}*X
+    if(dftParameters::isPseudopotential && dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0)
+      computeNonLocalHamiltonianTimesX(src,
+				       numberWaveFunctions,
+				       flattenedArrayCellLocalProcIndexIdMap,
+				       dst);
+
 
     //
     //update master node contributions from its correponding slave nodes
     //
     dftPtr->constraintsNoneDataInfo.distribute_slave_to_master(dst,
-    							      numberWaveFunctionsPerBlock);
+    							      numberWaveFunctions);
 
 
 
@@ -407,9 +414,9 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
     for(int i = 0; i < numberDofs; ++i)
       {
 	std::complex<double> scalingCoeff = d_invSqrtMassVector.local_element(dftPtr->localProc_dof_indicesReal[i]);
-	zscal_(&numberWaveFunctionsPerBlock,
+	zscal_(&numberWaveFunctions,
 	       &scalingCoeff,
-	       dst.begin()+i*numberWaveFunctionsPerBlock,
+	       dst.begin()+i*numberWaveFunctions,
 	       &inc);
       }
       
@@ -420,9 +427,9 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
     for(int i = 0; i < numberDofs; ++i)
       {
 	std::complex<double> scalingCoeff = d_sqrtMassVector.local_element(dftPtr->localProc_dof_indicesReal[i]);
-	zscal_(&numberWaveFunctionsPerBlock,
+	zscal_(&numberWaveFunctions,
 	       &scalingCoeff,
-	       src.begin()+i*numberWaveFunctionsPerBlock,
+	       src.begin()+i*numberWaveFunctions,
 	       &inc);
       }
 
@@ -465,16 +472,22 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
     src.update_ghost_values();
 
     //
-    //nonlocal PSP
-    //
-
-    //
-    //H*M^{-1/2}*X
+    //Hloc*M^{-1/2}*X
     //
     computeLocalHamiltonianTimesX(src,
 				  numberWaveFunctions,
 				  flattenedArrayMacroCellLocalProcIndexIdMap,
 				  dst);
+
+    //
+    //required if its a pseudopotential calculation and number of nonlocal atoms are greater than zero
+    //H^{nloc}*M^{-1/2}*X
+    if(dftParameters::isPseudopotential && dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0)
+      computeNonLocalHamiltonianTimesX(src,
+				       numberWaveFunctions,
+				       flattenedArrayCellLocalProcIndexIdMap,
+				       dst);
+
 
 
     //

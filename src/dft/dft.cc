@@ -512,11 +512,7 @@ namespace dftfe {
 
     energyCalculator energyCalc(mpi_communicator, interpoolcomm);
 
-    //
-    //solve
-    //
-    computing_timer.enter_section("scf solve");
-
+   
 
     //set up poisson solver
     dealiiLinearSolver dealiiCGSolver(mpi_communicator, dealiiLinearSolver::CG);
@@ -551,7 +547,7 @@ namespace dftfe {
     unsigned int scfIter=0;
     double norm = 1.0;
     //CAUTION: Choosing a looser tolernace might lead to failed tests
-    const double adaptiveChebysevFilterPassesTol=1e-2;
+    const double adaptiveChebysevFilterPassesTol=7e+2;
 
 
     pcout<<std::endl;

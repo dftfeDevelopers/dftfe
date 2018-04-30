@@ -276,11 +276,19 @@ namespace dftfe{
        * @param flattenedArrayCellLocalProcIndexIdMap precomputed cell-localindex id map of the multi-wavefuncton field in the order of macrocells
        * @param dst Vector containing matrix times given multi-vectors product
        */
+
+#ifdef ENABLE_PERIODIC_BC
+      void computeNonLocalHamiltonianTimesX(const dealii::parallel::distributed::Vector<std::complex<double> > & src,
+					    const int numberWaveFunctions,
+					    const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap,
+					    dealii::parallel::distributed::Vector<std::complex<double> > & dst) const;
+
+#else
       void computeNonLocalHamiltonianTimesX(const dealii::parallel::distributed::Vector<double> & src,
 					    const int numberWaveFunctions,
 					    const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap,
 					    dealii::parallel::distributed::Vector<double> & dst) const;
-      
+#endif      
 
       //pointer to dft class
       dftClass<FEOrder>* dftPtr;
