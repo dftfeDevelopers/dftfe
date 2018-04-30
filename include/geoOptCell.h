@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,30 +13,27 @@
 //
 // ---------------------------------------------------------------------
 
-/** @file geoOptCell.h
- *
- *  @brief This calls the solver for the cell stress relaxation and acts as an interface between the
- *  solver and the force class. The Polak–Ribière nonlinear CG solver with secant based line search
- *  is used for the stress relaxation.
- *
- *  @author Sambit Das
- */
-
 #ifndef geoOptCell_H_
 #define geoOptCell_H_
 #ifdef ENABLE_PERIODIC_BC
-#include "solverFunction.h"
+#include "nonlinearSolverProblem.h"
 #include "constants.h"
 
 namespace dftfe {
 
     using namespace dealii;
     template <unsigned int FEOrder> class dftClass;
-    //
-    //Define geoOptCell class
-    //
+
+    /** @file geoOptCell.h
+     *
+     *  @brief This calls the solver for the cell stress relaxation and acts as an interface between the
+     *  solver and the force class. The Polak–Ribière nonlinear CG solver with secant based line search
+     *  is used for the stress relaxation.
+     *
+     *  @author Sambit Das
+     */
     template <unsigned int FEOrder>
-    class geoOptCell : public solverFunction
+    class geoOptCell : public nonlinearSolverProblem
     {
     public:
     /** @brief Constructor.
@@ -69,7 +66,7 @@ namespace dftfe {
      *
      * @return int Number of unknowns.
      */
-      int getNumberUnknowns() const;
+     unsigned int getNumberUnknowns() const;
 
     /**
      * @brief Compute function gradient (stress).
@@ -90,9 +87,6 @@ namespace dftfe {
       void update(const std::vector<double> & solution);
 
       /// Not implemented
-      double value() const;
-
-      /// Not implemented
       void value(std::vector<double> & functionValue);
 
       /// Not implemented
@@ -103,13 +97,13 @@ namespace dftfe {
       void solution(std::vector<double> & solution);
 
       /// Not implemented
-      std::vector<int> getUnknownCountFlag() const;
+      std::vector<unsigned int> getUnknownCountFlag() const;
 
     private:
 
       /// Relaxation flags which determine whether a particular stress component is to be relaxed or not.
       //  The relaxation flags are determined based on the stress relaxation constraint type.
-      std::vector<int> d_relaxationFlags;
+      std::vector<unsigned int> d_relaxationFlags;
 
       /// total number of calls to update()
       unsigned int d_totalUpdateCalls;

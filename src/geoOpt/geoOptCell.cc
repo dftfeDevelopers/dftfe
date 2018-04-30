@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Sambit Das (2018)
+// @author Sambit Das
 //
 
 #ifdef ENABLE_PERIODIC_BC
@@ -26,13 +26,6 @@
 #include <dftUtils.h>
 
 namespace dftfe {
-
-template<unsigned int FEOrder>
-void geoOptCell<FEOrder>::writeMesh(std::string meshFileName)
- {
-      //dftPtr->writeMesh(meshFileName);
-      AssertThrow(false,dftUtils::ExcNotImplementedYet());
- }
 
 //
 //constructor
@@ -221,17 +214,9 @@ void geoOptCell<FEOrder>::run()
 
 
 template<unsigned int FEOrder>
-int geoOptCell<FEOrder>::getNumberUnknowns() const
+unsigned int geoOptCell<FEOrder>::getNumberUnknowns() const
 {
     return std::accumulate(d_relaxationFlags.begin(), d_relaxationFlags.end(), 0 );
-}
-
-
-
-template<unsigned int FEOrder>
-double geoOptCell<FEOrder>::value() const
-{
-   AssertThrow(false,dftUtils::ExcNotImplementedYet());
 }
 
 template<unsigned int FEOrder>
@@ -361,7 +346,7 @@ void geoOptCell<FEOrder>::solution(std::vector<double> & solution)
 }
 
 template<unsigned int FEOrder>
-std::vector<int>  geoOptCell<FEOrder>::getUnknownCountFlag() const
+std::vector<unsigned int>  geoOptCell<FEOrder>::getUnknownCountFlag() const
 {
    AssertThrow(false,dftUtils::ExcNotImplementedYet());
 }

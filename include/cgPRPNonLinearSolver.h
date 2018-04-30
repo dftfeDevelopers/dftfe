@@ -72,7 +72,7 @@ namespace dftfe {
      * @return Return value indicating success or failure.
      */
      nonLinearSolver::ReturnValueType
-     solve(solverFunction & function);
+     solve(nonlinearSolverProblem & problem);
 
   private:
     /**
@@ -83,7 +83,7 @@ namespace dftfe {
     /**
      * @brief Perform line search.
      *
-     * @param function SolverFunction object (functor) to compute energy and
+     * @param problem nonlinearSolverProblem object (functor) to compute energy and
      *                 forces.
      * @param tolerance Tolerance (relative) required for convergence.
      * @param maxNumberIterations Maximum number of iterations.
@@ -95,7 +95,7 @@ namespace dftfe {
      * @return Return value indicating success or failure.
      */
     nonLinearSolver::ReturnValueType
-    lineSearch(solverFunction & function,
+    lineSearch(nonlinearSolverProblem & problem,
 	       const double                 tolerance,
 	       const unsigned int           maxNumberIterations,
 	       const unsigned int           debugLevel);
@@ -144,11 +144,11 @@ namespace dftfe {
      *
      * @param alpha Scalar value.
      * @param direction Direction vector.
-     * @param function solver function object.
+     * @param problem nonlinearSolverProblem object.
      */
     void updateSolution(const double                alpha,
 			const std::vector<double> & direction,
-			solverFunction            & function);
+			nonlinearSolverProblem    & problem);
 
     //
     // data
