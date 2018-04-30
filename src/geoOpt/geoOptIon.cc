@@ -26,13 +26,6 @@
 
 namespace dftfe {
 
-template<unsigned int FEOrder>
-void geoOptIon<FEOrder>::writeMesh(std::string meshFileName)
- {
-      //dftPtr->writeMesh(meshFileName);
-      AssertThrow(false,dftUtils::ExcNotImplementedYet());
- }
-
 //
 //constructor
 //
@@ -136,22 +129,14 @@ void geoOptIon<FEOrder>::run()
 
 
 template<unsigned int FEOrder>
-int geoOptIon<FEOrder>::getNumberUnknowns() const
+unsigned int geoOptIon<FEOrder>::getNumberUnknowns() const
 {
-   int count=0;
+   unsigned int count=0;
    for (unsigned int i=0; i< d_relaxationFlags.size(); ++i)
    {
       count+=d_relaxationFlags[i];
    }
    return count;
-}
-
-
-
-template<unsigned int FEOrder>
-double geoOptIon<FEOrder>::value() const
-{
-   AssertThrow(false,dftUtils::ExcNotImplementedYet());
 }
 
 template<unsigned int FEOrder>
@@ -242,7 +227,7 @@ void geoOptIon<FEOrder>::solution(std::vector<double> & solution)
 }
 
 template<unsigned int FEOrder>
-std::vector<int>  geoOptIon<FEOrder>::getUnknownCountFlag() const
+std::vector<unsigned int>  geoOptIon<FEOrder>::getUnknownCountFlag() const
 {
    AssertThrow(false,dftUtils::ExcNotImplementedYet());
 }
