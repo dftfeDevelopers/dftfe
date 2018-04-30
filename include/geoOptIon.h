@@ -25,9 +25,7 @@ namespace dftfe {
 
     /** @file geoOptIon.h
      *
-     *  @brief This calls the relaxation solver for the atomic relaxations and acts as an interface between the
-     *  solver and the force class. Currently we have option of one solver: Polak–Ribière nonlinear CG solver
-     *  with secant based line search. In future releases, we will have more options like BFGS solver.
+     *  @brief problem class for atomic force relaxation solver.
      *
      *  @author Sambit Das
      */
@@ -49,7 +47,10 @@ namespace dftfe {
       void init();
 
     /**
-     * @brief starts the atomic force relaxation.
+     * @brief calls the atomic force relaxation solver.
+     *
+     * Currently we have option of one solver: Polak–Ribière nonlinear CG solver
+     * with secant based line search. In future releases, we will have more options like BFGS solver.
      *
      */
       void run();

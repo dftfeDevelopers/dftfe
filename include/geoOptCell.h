@@ -26,9 +26,7 @@ namespace dftfe {
 
     /** @file geoOptCell.h
      *
-     *  @brief This calls the solver for the cell stress relaxation and acts as an interface between the
-     *  solver and the force class. The Polak–Ribière nonlinear CG solver with secant based line search
-     *  is used for the stress relaxation.
+     *  @brief problem class for cell stress relaxation solver.
      *
      *  @author Sambit Das
      */
@@ -50,7 +48,10 @@ namespace dftfe {
       void init();
 
     /**
-     * @brief starts the cell stress relaxation.
+     * @brief calls the cell stress relaxation solver.
+     *
+     * The Polak–Ribière nonlinear CG solver with secant based line search
+     * is used for the stress relaxation.
      *
      */
       void run();
