@@ -254,9 +254,9 @@ void eigenClass<FEOrder>::computeLocalHamiltonianTimesX(const dealii::parallel::
   //
   //element level matrix-vector multiplications
   //
-  char transA = 'N',transB = 'T';
-  std::complex<double> scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
-  int inc = 1;
+  const char transA = 'N',transB = 'T';
+  const std::complex<double> scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
+  const int inc = 1;
 
   std::vector<std::complex<double> > cellWaveFunctionMatrix(d_numberNodesPerElement*numberWaveFunctions,0.0);
   std::vector<std::complex<double> > cellHamMatrixTimesWaveMatrix(d_numberNodesPerElement*numberWaveFunctions,0.0);
@@ -316,14 +316,13 @@ void eigenClass<FEOrder>::computeLocalHamiltonianTimesX(const dealii::parallel::
   //
   //initialize dst to zeros. Will be changed later
   //
-  //dst = 0.0;
-
+ 
   //
   //element level matrix-vector multiplications
   //
-  char transA = 'N',transB = 'N';
-  double scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
-  int inc = 1;
+  const char transA = 'N',transB = 'N';
+  const double scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
+  const int inc = 1;
 
   std::vector<double> cellWaveFunctionMatrix(d_numberNodesPerElement*numberWaveFunctions,0.0);
   std::vector<double> cellHamMatrixTimesWaveMatrix(d_numberNodesPerElement*numberWaveFunctions,0.0);

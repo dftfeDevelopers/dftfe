@@ -37,6 +37,7 @@ namespace dftfe{
     void chebyshevFilter(operatorDFTClass * operatorMatrix,
 			 dealii::parallel::distributed::Vector<T> & XArray,
 			 const unsigned int numberWaveFunctions,
+			 const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayMacroCellLocalProcIndexIdMap,
 			 const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap,
 			 const unsigned int m,
 			 const double a,
@@ -68,6 +69,7 @@ namespace dftfe{
       //
       operatorMatrix->HX(XArray,
 			 numberWaveFunctions,
+			 flattenedArrayMacroCellLocalProcIndexIdMap,
 			 flattenedArrayCellLocalProcIndexIdMap,
 			 YArray);
 
@@ -94,6 +96,7 @@ namespace dftfe{
 	  //
 	  operatorMatrix->HX(YArray,
 			     numberWaveFunctions,
+			     flattenedArrayMacroCellLocalProcIndexIdMap,
 			     flattenedArrayCellLocalProcIndexIdMap,
 			     YNewArray);
 
@@ -131,6 +134,7 @@ namespace dftfe{
 				  dealii::parallel::distributed::Vector<std::complex<double> > & ,
 				  const unsigned int ,
 				  const std::vector<std::vector<dealii::types::global_dof_index> > & ,
+				  const std::vector<std::vector<dealii::types::global_dof_index> > & ,
 				  const unsigned int,
 				  const double ,
 				  const double ,
@@ -141,6 +145,7 @@ namespace dftfe{
 				  dealii::parallel::distributed::Vector<double> & ,
 				  const unsigned int ,
 				  const std::vector<std::vector<dealii::types::global_dof_index> > & ,
+  				  const std::vector<std::vector<dealii::types::global_dof_index> > & ,
 				  const unsigned int,
 				  const double ,
 				  const double ,

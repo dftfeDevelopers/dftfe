@@ -155,7 +155,7 @@ namespace dftfe{
       d_numberWaveFunctionsBlock[totalNumberBlocks - 1] = numberWaveFunctionsLastBlock;
     
     
-    /*for(unsigned int nBlock = 0; nBlock < totalNumberBlocks; ++nBlock)
+    for(unsigned int nBlock = 0; nBlock < totalNumberBlocks; ++nBlock)
       {
 	//
 	//Get the current block data
@@ -190,14 +190,15 @@ namespace dftfe{
 	//
 	//precompute certain maps
 	//
-	std::vector<std::vector<dealii::types::global_dof_index> > flattenedArrayCellLocalProcIndexIdMap;
+	std::vector<std::vector<dealii::types::global_dof_index> > flattenedArrayCellLocalProcIndexIdMap,flattenedArrayMacroCellLocalProcIndexIdMap;
 	vectorTools::computeCellLocalIndexSetMap(eigenVectorsFlattenedArray.get_partitioner(),
 						 operatorMatrix->getMatrixFreeData(),
 						 numberWaveFunctionsPerCurrentBlock,
+						 flattenedArrayMacroCellLocalProcIndexIdMap,
 						 flattenedArrayCellLocalProcIndexIdMap);
 				    
 	//
-	//copy the data from eigenVectors to eigenVectorsFlattened (this will be changed from flattened 
+	//copy the data from eigenVectors to eigenVectorsFlattened (this may have to be changed from flattened 
 	//to flattened array containing only block vectors eventually)
 	//
 	for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
@@ -223,6 +224,7 @@ namespace dftfe{
 	linearAlgebraOperations::chebyshevFilter(operatorMatrix,
 						 eigenVectorsFlattenedArray, 
 						 numberWaveFunctionsPerCurrentBlock,
+						 flattenedArrayMacroCellLocalProcIndexIdMap,
 						 flattenedArrayCellLocalProcIndexIdMap,
 						 chebyshevOrder, 
 						 d_lowerBoundUnWantedSpectrum,
@@ -249,12 +251,12 @@ namespace dftfe{
 	      }
 	  }
 
-      }//block loop*/
+      }//block loop
 
     //
     //call chebyshev filtering routine
     //
-    computing_timer.enter_section("Chebyshev filtering"); 
+    /*computing_timer.enter_section("Chebyshev filtering"); 
 
     linearAlgebraOperations::chebyshevFilter(operatorMatrix,
 					     eigenVectors, 
@@ -263,8 +265,7 @@ namespace dftfe{
 					     upperBoundUnwantedSpectrum,
 					     d_lowerBoundWantedSpectrum);
 
-
-    computing_timer.exit_section("Chebyshev filtering");
+					     computing_timer.exit_section("Chebyshev filtering");*/
   
 
 

@@ -72,23 +72,26 @@ namespace dftfe{
 
 
     /**
-     * @brief Compute operator times vector or operator times bunch of vectors
+     * @brief Compute operator times multi-field vectors
      *
      * @param X Vector containing multi-wavefunction fields (though X does not
      * change inside the function it is scaled and rescaled back to
      * avoid duplication of memory and hence is not const)
      * @param numberComponents number of wavefunctions associated with a given node
-     * @param cellMap precomputed cell-localindex id map of the multi-wavefuncton field
+     * @param macroCellMap precomputed cell-local index id map of the multi-wavefuncton field
+     * @param cellMap precomputed cell-local index id map of the multi-wavefunction field
      * @param Y Vector containing multi-component fields after operator times vectors product
      */
 #ifdef ENABLE_PERIODIC_BC
     virtual void HX(dealii::parallel::distributed::Vector<std::complex<double> > & X,
 		    const unsigned int numberComponents,
+		    const std::vector<std::vector<dealii::types::global_dof_index> > & macroCellMap,
 		    const std::vector<std::vector<dealii::types::global_dof_index> > & cellMap,
 		    dealii::parallel::distributed::Vector<std::complex<double> > & Y) = 0;
 #else
     virtual void HX(dealii::parallel::distributed::Vector<double> & X,
 		    const unsigned int numberComponents,
+		    const std::vector<std::vector<dealii::types::global_dof_index> > & macroCellMap,
 		    const std::vector<std::vector<dealii::types::global_dof_index> > & cellMap,
 		    dealii::parallel::distributed::Vector<double> & Y) = 0;
 #endif

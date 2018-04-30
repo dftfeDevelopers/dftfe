@@ -478,6 +478,7 @@ namespace dftfe {
       //
       std::vector<std::vector<int> > d_sparsityPattern;
       std::vector<std::vector<DoFHandler<3>::active_cell_iterator> > d_elementIteratorsInAtomCompactSupport;
+      std::vector<std::vector<int> > d_elementIdsInAtomCompactSupport;
       std::vector<std::vector<DoFHandler<3>::active_cell_iterator> > d_elementOneFieldIteratorsInAtomCompactSupport;
       std::vector<std::vector<int> > d_nonLocalAtomIdsInElement;
       std::vector<unsigned int> d_nonLocalAtomIdsInCurrentProcess;

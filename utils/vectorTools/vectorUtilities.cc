@@ -112,6 +112,7 @@ namespace dftfe
     void computeCellLocalIndexSetMap(const std::shared_ptr< const dealii::Utilities::MPI::Partitioner > & partitioner,
 				     const dealii::MatrixFree<3,double>                                 * matrix_free_data,
 				     const unsigned int                                                   blockSize,
+				     std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayMacroCellLocalProcIndexIdMap,
 				     std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap)
 
     {
@@ -138,8 +139,12 @@ namespace dftfe
 	    }
 	}
       
-      flattenedArrayCellLocalProcIndexIdMap.resize(totalLocallyOwnedCells);
+      flattenedArrayMacroCellLocalProcIndexIdMap.clear();
+      flattenedArrayMacroCellLocalProcIndexIdMap.resize(totalLocallyOwnedCells);
 
+      //
+      //create map for all locally owned cells in the order of macrocell, subcell order
+      //
       unsigned int iElem = 0;
       typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
       for(unsigned int iMacroCell = 0; iMacroCell < numberMacroCells; ++iMacroCell)
@@ -149,18 +154,47 @@ namespace dftfe
 	    {
 	      cellPtr = matrix_free_data->get_cell_iterator(iMacroCell,iCell);
 	      cellPtr->get_dof_indices(cell_dof_indicesGlobal);
-	      for(unsigned int idof = 0; idof < numberNodesPerElement; ++idof)
+	      for(unsigned int iNode = 0; iNode < numberNodesPerElement; ++iNode)
 		{
-		  dealii::types::global_dof_index globalIndex = cell_dof_indicesGlobal[idof];
+		  dealii::types::global_dof_index globalIndex = cell_dof_indicesGlobal[iNode];
 
-		  //Think about for variable blockSize
+		  //Think about variable blockSize
 		  dealii::types::global_dof_index globalIndexFlattenedArray = blockSize*globalIndex;
 		  dealii::types::global_dof_index localIndexFlattenedArray = partitioner->global_to_local(globalIndexFlattenedArray);
-		  flattenedArrayCellLocalProcIndexIdMap[iElem].push_back(localIndexFlattenedArray);
+		  flattenedArrayMacroCellLocalProcIndexIdMap[iElem].push_back(localIndexFlattenedArray);
 		}//idof loop
 	      ++iElem;
 	    }//subcell loop
 	}//macrocell loop
+
+
+      //
+      //create map for all locally owned cells in the same order 
+      //
+      typename dealii::DoFHandler<3>::active_cell_iterator cell = matrix_free_data->get_dof_handler().begin_active(), endc = matrix_free_data->get_dof_handler().end();
+      std::vector<dealii::types::global_dof_index> cell_dof_indices(numberNodesPerElement);
+
+      flattenedArrayCellLocalProcIndexIdMap.clear();
+      flattenedArrayCellLocalProcIndexIdMap.resize(totalLocallyOwnedCells);
+
+      unsigned int iElemCount = 0;
+      for(; cell!=endc; ++cell)
+	{
+	  if(cell->is_locally_owned())
+	    {
+	      cell->get_dof_indices(cell_dof_indices);
+	      for(unsigned int iNode = 0; iNode < numberNodesPerElement; ++iNode)
+		{
+		  dealii::types::global_dof_index globalIndex = cell_dof_indices[iNode];
+
+		  //Think about variable blockSize
+		  dealii::types::global_dof_index globalIndexFlattenedArray = blockSize*globalIndex;
+		  dealii::types::global_dof_index localIndexFlattenedArray = partitioner->global_to_local(globalIndexFlattenedArray);
+		  flattenedArrayCellLocalProcIndexIdMap[iElemCount].push_back(localIndexFlattenedArray);
+		}
+	      ++iElemCount;
+	    }
+	}
 
     }
 

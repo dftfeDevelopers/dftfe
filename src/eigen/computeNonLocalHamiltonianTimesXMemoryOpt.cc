@@ -18,13 +18,9 @@
 
 
 template<unsigned int FEOrder>
-void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::vector<vectorType> &src,
-								    std::vector<vectorType>       &dst)const
+void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vectorType> &src,
+							   std::vector<vectorType>       &dst)const
 {
-  //
-  //get FE data
-  //
-  QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
 
   //
   //get access to triangulation objects from meshGenerator class
@@ -315,5 +311,201 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXMemoryOpt(const std::v
 
     }
 }
+
+
+#ifdef ENABLE_PERIODIC_BC
+
+#else
+template<unsigned int FEOrder>
+void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::parallel::distributed::Vector<double> & src,
+							   const int numberWaveFunctions,
+							   const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap,
+							   dealii::parallel::distributed::Vector<double>       & dst) const
+{
+
+  
+  std::map<unsigned int, std::vector<double> > projectorKetTimesVector;
+  projectorKetTimesVector.clear();
+
+  //
+  //allocate memory for matrix-vector product
+  //
+  for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
+    {
+      const unsigned int atomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];
+      const int numberSingleAtomPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
+      projectorKetTimesVector[atomId].resize(numberWaveFunctions*numberSingleAtomPseudoWaveFunctions,0.0);
+    }
+
+  
+  std::vector<double> cellWaveFunctionMatrix(d_numberNodesPerElement*numberWaveFunctions,0.0);
+
+  //
+  //blas required settings
+  //
+  const char transA = 'N';
+  const char transB = 'N';
+  const double alpha = 1.0;
+  const double beta = 1.0;
+  const int inc = 1;
+
+
+  typename DoFHandler<3>::active_cell_iterator cell = dftPtr->dofHandler.begin_active(), endc = dftPtr->dofHandler.end();
+  int iElem = -1;
+  for(; cell!=endc; ++cell)
+    {
+      if(cell->is_locally_owned())
+	{
+	  iElem++;
+	  for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
+	    {
+	      int localNodeId = flattenedArrayCellLocalProcIndexIdMap[iElem][iNode];
+	      dcopy_(&numberWaveFunctions,
+		     src.begin()+localNodeId,
+		     &inc,
+		     &cellWaveFunctionMatrix[numberWaveFunctions*iNode],
+		     &inc);
+	    }
+
+	  for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInElement[iElem].size();++iAtom)
+	    {
+	      const unsigned int atomId = dftPtr->d_nonLocalAtomIdsInElement[iElem][iAtom];
+	      const int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
+	      const int nonZeroElementMatrixId = dftPtr->d_sparsityPattern[atomId][iElem];
+
+	      dgemm_(&transA,
+		     &transB,
+		     &numberWaveFunctions,
+		     &numberPseudoWaveFunctions,
+		     &d_numberNodesPerElement,
+		     &alpha,
+		     &cellWaveFunctionMatrix[0],
+		     &numberWaveFunctions,
+		     &dftPtr->d_nonLocalProjectorElementMatrices[atomId][nonZeroElementMatrixId][d_kPointIndex][0],
+		     &d_numberNodesPerElement,
+		     &beta,
+		     &projectorKetTimesVector[atomId][0],
+		     &numberWaveFunctions);
+	    }
+
+
+	}
+
+    }//cell loop
+  
+
+  for(unsigned int i=0; i<numberWaveFunctions;++i)
+    dftPtr->d_projectorKetTimesVectorPar[i] = 0.0;
+  
+
+
+  for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
+    {
+      const unsigned int atomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];
+      const unsigned int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
+      
+      for(unsigned int iPseudoAtomicWave = 0; iPseudoAtomicWave < numberPseudoWaveFunctions; ++iPseudoAtomicWave)
+	{
+	  for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
+	    {
+	      
+	      dftPtr->d_projectorKetTimesVectorPar[iWave][dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(atomId,iPseudoAtomicWave)]]=projectorKetTimesVector[atomId][numberWaveFunctions*iPseudoAtomicWave + iWave];
+
+	    }
+	}
+    }
+
+  for (unsigned int i=0; i<numberWaveFunctions;++i)
+    {
+      dftPtr->d_projectorKetTimesVectorPar[i].compress(VectorOperation::add);
+      dftPtr->d_projectorKetTimesVectorPar[i].update_ghost_values();
+    }
+
+
+  for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
+    {
+      const unsigned int atomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];
+      const unsigned int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
+      for(unsigned int iPseudoAtomicWave = 0; iPseudoAtomicWave < numberPseudoWaveFunctions; ++iPseudoAtomicWave)
+	{
+	  for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
+	    {
+	      projectorKetTimesVector[atomId][numberWaveFunctions*iPseudoAtomicWave + iWave] = dftPtr->d_projectorKetTimesVectorPar[iWave][dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(atomId,iPseudoAtomicWave)]];
+	    }
+
+	}
+
+    }
+  
+  //
+  //compute V*C^{T}*X
+  //
+  for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
+    {
+      const unsigned int atomId = dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];
+      const unsigned int numberPseudoWaveFunctions =  dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
+      for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
+	{
+	  for(unsigned int iPseudoAtomicWave = 0; iPseudoAtomicWave < numberPseudoWaveFunctions; ++iPseudoAtomicWave)
+	    projectorKetTimesVector[atomId][numberPseudoWaveFunctions*iWave + iPseudoAtomicWave] *= dftPtr->d_nonLocalPseudoPotentialConstants[atomId][iPseudoAtomicWave];
+	}
+    }
+
+
+  std::vector<double> cellNonLocalHamTimesWaveMatrix(d_numberNodesPerElement*numberWaveFunctions,0.0);
+
+  //blas required settings
+  const char transA1 = 'N';
+  const char transB1 = 'T';
+  const double alpha1 = 1.0;
+  const double beta1 = 0.0;
+  const int inc1 = 1;
+
+  //
+  //compute C*V*C^{T}*x
+  //
+  for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
+    {
+      const unsigned int atomId = dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];
+      const int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
+       for(unsigned int iElemComp = 0; iElemComp < dftPtr->d_elementIteratorsInAtomCompactSupport[atomId].size(); ++iElemComp)
+	{
+	 
+	  dgemm_(&transA1,
+	         &transB1,
+                 &numberWaveFunctions,
+                 &d_numberNodesPerElement,
+		 &numberPseudoWaveFunctions,
+		 &alpha1,
+		 &projectorKetTimesVector[atomId][0],
+		 &numberWaveFunctions,
+		 &dftPtr->d_nonLocalProjectorElementMatrices[atomId][iElemComp][d_kPointIndex][0],
+		 &d_numberNodesPerElement,
+		 &beta1,
+		 &cellNonLocalHamTimesWaveMatrix[0],
+		 &numberWaveFunctions);
+
+        unsigned int elementId =  dftPtr->d_elementIdsInAtomCompactSupport[atomId][iElemComp]; 		 
+
+	for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
+	    {
+	      int localNodeId = flattenedArrayCellLocalProcIndexIdMap[elementId][iNode];
+	      daxpy_(&numberWaveFunctions,
+		     &alpha1,
+		     &cellNonLocalHamTimesWaveMatrix[numberWaveFunctions*iNode],
+		     &inc1,
+		     dst.begin()+localNodeId,
+		     &inc1);
+	    }
+
+
+	}
+
+    }
+
+}
+#endif
+
+
 
 

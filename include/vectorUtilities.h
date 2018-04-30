@@ -52,11 +52,13 @@ namespace dftfe{
      *  @param partitioner associated with the flattened array
      *  @param matrix_free_data object pointer associated with the matrix free data structure
      *  @param blockSize number of components associated with each node
-     *  @return flattenedArrayCellLocalProcIndexId cell local proc index
+     *  @return flattenedArrayMacroCellLocalProcIndexId macrocell's subcell local proc index map
+     *  @return flattenedArrayCellLocalProcIndexId cell local proc index map
      */
     void computeCellLocalIndexSetMap(const std::shared_ptr< const dealii::Utilities::MPI::Partitioner > & partitioner,
 				     const dealii::MatrixFree<3,double>                                 * matrix_free_data,
 				     const unsigned int                                                   blockSize,
+				     std::vector<std::vector<dealii::types::global_dof_index> >         & flattenedArrayMacroCellLocalProcIndexId,
 				     std::vector<std::vector<dealii::types::global_dof_index> >         & flattenedArrayCellLocalProcIndexId);
 
 
