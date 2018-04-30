@@ -166,7 +166,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyPRefined()
 #endif
 	  std::vector<double> rhoTemp(num_quad_points);
 
-	  for(unsigned int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+	  for(unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
 	      for(unsigned int i=0; i<numEigenValues; ++i)
 	      {
 

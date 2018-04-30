@@ -1097,7 +1097,7 @@ void dftClass<FEOrder>::computeElementalProjectorKets()
   //
   //get number of kPoints
   //
-  int maxkPoints = d_maxkPoints;
+  const unsigned int maxkPoints = d_kPointWeights.size();
 
 
   //

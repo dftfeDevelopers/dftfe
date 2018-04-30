@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Shiva Rudraraju, Phani Motamarri, Sambit Das 
+// @author Shiva Rudraraju, Phani Motamarri, Sambit Das
 //
 
 #ifndef dft_H_
@@ -61,7 +61,7 @@ namespace dftfe {
   template <unsigned int T> class geoOptIon;
   template <unsigned int T> class geoOptCell;
 
-  
+
 
   //
   //
@@ -161,7 +161,7 @@ namespace dftfe {
       const std::vector<dealii::types::global_dof_index> & getLocalProcDofIndicesImag() const;
 
       /**
-       *Get dealii constraint matrix involving periodic constraints and hanging node constraints in periodic  
+       *Get dealii constraint matrix involving periodic constraints and hanging node constraints in periodic
        *case else only hanging node constraints in non-periodic case
        */
       const ConstraintMatrix & getConstraintMatrixEigen() const;
@@ -171,7 +171,7 @@ namespace dftfe {
        *case else only hanging node constraints in non-periodic case (data stored in STL format)
        */
       const dftUtils::constraintMatrixInfo & getConstraintMatrixEigenDataInfo() const;
-  
+
 
     private:
 
@@ -529,10 +529,6 @@ namespace dftfe {
       /// k point weights
       std::vector<double> d_kPointWeights;
 
-      /// total number of k points
-      int d_maxkPoints;
-
-
       /**
        * Recomputes the k point cartesian coordinates from the crystal k point coordinates
        * and the current lattice vectors, which can change in each ground state solve when
@@ -564,7 +560,7 @@ namespace dftfe {
 				     std::vector<double> & residualNormWaveFunctions);
 
       void computeResidualNorm(const std::vector<double> & eigenValuesTemp,
-			       std::vector<vectorType> & X, 
+			       std::vector<vectorType> & X,
 			       std::vector<double> & residualNorm) const;
 
 

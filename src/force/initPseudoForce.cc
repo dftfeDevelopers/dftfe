@@ -198,7 +198,7 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoDataForce()
   //
   //get number of kPoints
   //
-  const unsigned int numkPoints = dftPtr->d_maxkPoints;
+  const unsigned int numkPoints = dftPtr->d_kPointWeights.size();
 
   //
   //clear existing data
