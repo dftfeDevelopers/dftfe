@@ -31,6 +31,9 @@ namespace dftfe{
    */
   class operatorDFTClass {
 
+    //
+    // methods
+    //
   public:
 
     /**

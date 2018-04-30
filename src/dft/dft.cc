@@ -523,8 +523,7 @@ namespace dftfe {
     //create eigen solver object
     //
     chebyshevOrthogonalizedSubspaceIterationSolver subspaceIterationSolver(dftParameters::lowerEndWantedSpectrum,
-									   0.0,
-									   numEigenValues);
+									   0.0);
 
 
     //

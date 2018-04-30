@@ -98,7 +98,7 @@ namespace dftfe{
 		  {
 		      std::cout << "closestAtomIdSum: "<<closestAtomIdSum<< ", closestAtomId: "<<closestAtomId<< ", nonHangingNodeIdCountCell: "<<nonHangingNodeIdCountCell<< " cell center: "<< cell->center() << " is solved node present: "<< isSolvedNodePresent<< std::endl;
 		  }
-		  AssertThrow(closestAtomIdSum==closestAtomId*nonHangingNodeIdCountCell,dealii::ExcMessage("dofs of cells touching vself ball have different closest atom ids, remedy- increase separation between vself balls"));
+		  AssertThrow(closestAtomIdSum==closestAtomId*nonHangingNodeIdCountCell,dealii::ExcMessage("DFT-FE Error: dofs of cells touching vself ball have different closest atom ids, remedy- increase separation between vself balls"));
 	       }
 	    }//cell locally owned
       }//Bin loop
