@@ -199,9 +199,10 @@ namespace dftfe {
 	 void writeDataIntoFile(const std::vector<std::vector<double> > &data,
 			        const std::string & fileName)
 	 {
-	     if (std::ifstream(fileName) && dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+	     if (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
 	     {
-		 moveFile(fileName, fileName+".old");
+		 if (std::ifstream(fileName))    
+		    moveFile(fileName, fileName+".old");
 
 		 std::ofstream outFile(fileName);
 		 if (outFile.is_open())
