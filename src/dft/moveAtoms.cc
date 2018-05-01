@@ -209,7 +209,7 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point<C
 	  const double gaussianParameter=2.0;
 	  pcout << "Trying to Move using a wide Gaussian with Gaussian constant: "<<gaussianParameter<<" as max displacement magnitude: "<<maxDispAtom<< " is between "<< break2<<" and "<<break1<<" Bohr"<<std::endl;
 
-	  std::pair<bool,double> meshQualityMetrics= d_gaussianMovePar.moveMesh(controlPointLocations,controlPointDisplacements,gaussianParameter);
+	  const std::pair<bool,double> meshQualityMetrics= d_gaussianMovePar.moveMesh(controlPointLocations,controlPointDisplacements,gaussianParameter);
 
 	  unsigned int autoMesh=0;
 	  if (meshQualityMetrics.first || meshQualityMetrics.second>maxJacobianRatio)
@@ -239,7 +239,7 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point<C
       else
       {
 	   pcout << "Trying to Move using a narrow Gaussian with same Gaussian constant for computing the forces: "<<forcePtr->getGaussianGeneratorParameter()<<" as max displacement magnitude: "<< maxDispAtom<< " is below " << break2 <<" Bohr"<<std::endl;
-	  std::pair<bool,double> meshQualityMetrics=d_gaussianMovePar.moveMesh(controlPointLocations,controlPointDisplacements,forcePtr->getGaussianGeneratorParameter());
+	  const std::pair<bool,double> meshQualityMetrics=d_gaussianMovePar.moveMesh(controlPointLocations,controlPointDisplacements,forcePtr->getGaussianGeneratorParameter());
 	  unsigned int autoMesh=0;
 	  if (meshQualityMetrics.first || meshQualityMetrics.second>maxJacobianRatio)
 	      autoMesh=1;

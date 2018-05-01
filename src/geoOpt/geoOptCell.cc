@@ -330,6 +330,9 @@ void geoOptCell<FEOrder>::update(const std::vector<double> & solution)
    d_totalUpdateCalls+=1;
    dftPtr->deformDomain(deformationGradient);
 
+   if (dftParameters::chkType>=1)
+      dftPtr->writeDomainAndAtomCoordinates();
+
    dftPtr->solve();
    // if ion optimization is on, then for every cell relaxation also relax the atomic forces
    if (dftParameters::isIonOpt)

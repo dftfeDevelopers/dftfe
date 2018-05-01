@@ -186,6 +186,12 @@ namespace dftfe {
        */
       void updateAtomPositionsAndMoveMesh(const std::vector<Point<3> > & globalAtomsDisplacements);
 
+      /**
+       * writes the current domain bounding vectors and atom coordinates to files, which are required for
+       * geometry relaxation restart
+       */
+      void writeDomainAndAtomCoordinates() const;
+
     private:
 
       /**
