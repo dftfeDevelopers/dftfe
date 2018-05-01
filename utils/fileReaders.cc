@@ -200,23 +200,25 @@ namespace dftfe {
 			        const std::string & fileName)
 	 {
 	     if (std::ifstream(fileName) && dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+	     {
 		 moveFile(fileName, fileName+".old");
 
-	     std::ofstream outFile(fileName);
-	     if (outFile.is_open())
-	     {
-		for (unsigned int irow=0; irow < data.size(); ++irow)
-		{
-		     for (unsigned int icol=0; icol < data[irow].size(); ++icol)
-		     {
-			 outFile << std::setprecision(10)<< data[irow][icol];
-			 if (icol< data[irow].size()-1)
-			     outFile<<" ";
-		     }
-		     outFile<<std::endl;
-		}
+		 std::ofstream outFile(fileName);
+		 if (outFile.is_open())
+		 {
+		    for (unsigned int irow=0; irow < data.size(); ++irow)
+		    {
+			 for (unsigned int icol=0; icol < data[irow].size(); ++icol)
+			 {
+			     outFile << std::setprecision(10)<< data[irow][icol];
+			     if (icol< data[irow].size()-1)
+				 outFile<<" ";
+			 }
+			 outFile<<std::endl;
+		    }
 
-		outFile.close();
+		    outFile.close();
+		 }
 	     }
 	 }
 
