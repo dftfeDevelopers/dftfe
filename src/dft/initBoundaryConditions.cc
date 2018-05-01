@@ -156,4 +156,6 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   eigenPtr= new eigenClass<FEOrder>(this, mpi_communicator);
   eigenPtr->init();
 
+  //update gaussianMeshMovementClass object
+  d_gaussianMovePar.initMoved(d_domainBoundingVectors);
 }

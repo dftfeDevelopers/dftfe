@@ -32,6 +32,7 @@
 #include <eigen.h>
 #include <symmetry.h>
 #include <meshMovementAffineTransform.h>
+#include <meshMovementGaussian.h>
 #include <eigenSolver.h>
 #include <chebyshevOrthogonalizedSubspaceIterationSolver.h>
 #include <vselfBinsManager.h>
@@ -172,6 +173,18 @@ namespace dftfe {
        */
       const dftUtils::constraintMatrixInfo & getConstraintMatrixEigenDataInfo() const;
 
+
+      /** @brief Updates atom positions, remeshes/moves mesh and calls appropriate reinits.
+       *
+       *  Function to update the atom positions and mesh based on the provided displacement input.
+       *  Depending on the maximum displacement magnitude this function decides wether to do auto remeshing
+       *  or move mesh using Gaussian functions. Additionaly this function also wraps the atom position across the
+       *  periodic boundary if the atom moves across it.
+       *
+       *  @param globalAtomsDisplacements vector containing the displacements (from current position) of all atoms (global).
+       *  @return void.
+       */
+      void updateAtomPositionsAndMoveMesh(const std::vector<Point<3> > & globalAtomsDisplacements);
 
     private:
 
@@ -368,9 +381,11 @@ namespace dftfe {
        */
       triangulationManager d_mesh;
 
-
       /// affine transformation object
       meshMovementAffineTransform d_affineTransformMesh;
+
+      /// meshMovementGaussianClass object
+      meshMovementGaussianClass d_gaussianMovePar;
 
       /// volume of the domain
       double d_domainVolume;

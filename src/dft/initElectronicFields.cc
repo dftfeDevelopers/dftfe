@@ -100,4 +100,10 @@ void dftClass<FEOrder>::initElectronicFields(const bool usePreviousGroundStateFi
   d_mesh.generateSerialAndParallelUnmovedPreviousMesh(atomLocations,
 				                      d_imagePositions,
 				                      d_domainBoundingVectors);
+
+  //
+  //store constraintEigen Matrix entries into STL vector
+  //
+  constraintsNoneEigenDataInfo.initialize(vChebyshev.get_partitioner(),
+					  constraintsNoneEigen);
 }

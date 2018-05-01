@@ -32,6 +32,11 @@ void dftClass<FEOrder>::initUnmovedTriangulation(const parallel::distributed::Tr
 {
   computing_timer.enter_section("unmoved setup");
 
+  //initialize affine transformation object (must be done on unmoved triangulation)
+  d_affineTransformMesh.init(triangulation,d_domainBoundingVectors);
+
+  //initialize meshMovementGaussianClass object (must be done on unmoved triangulation)
+  d_gaussianMovePar.init(triangulation,d_domainBoundingVectors);
 
   //
   //initialize FE objects
