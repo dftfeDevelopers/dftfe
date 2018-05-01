@@ -300,9 +300,11 @@ namespace dftfe{
       dealii::Table<2, dealii::VectorizedArray<double> > vEff;
       dealii::Table<3, dealii::VectorizedArray<double> > derExcWithSigmaTimesGradRho;
 
+
       //precomputed data for the Hamiltonian matrix
       std::vector<std::vector<dealii::VectorizedArray<double> > > d_cellShapeFunctionGradientIntegral;
       std::vector<double> d_shapeFunctionValue;
+      dealii::Table<4, dealii::VectorizedArray<double> > d_cellShapeFunctionGradientValue;
 
 
       //

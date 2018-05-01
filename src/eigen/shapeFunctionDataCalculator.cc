@@ -21,22 +21,26 @@ template<unsigned int FEOrder>
 void eigenClass<FEOrder>::preComputeShapeFunctionGradientIntegrals()
 {
 
+  //
+  //get FE data
+  //
   const unsigned int numberMacroCells = dftPtr->matrix_free_data.n_macro_cells();
   const unsigned int numberPhysicalCells = dftPtr->matrix_free_data.n_physical_cells();
-
-  //std::cout<<"Number Physical and Macro: "<<numberPhysicalCells<<" "<<numberMacroCells<<std::endl;
-
-
-  d_cellShapeFunctionGradientIntegral.resize(numberMacroCells);
-
-
   QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
   FEValues<3> fe_values(dftPtr->FE, quadrature, update_values | update_gradients | update_JxW_values);
-  
   unsigned int numberDofsPerElement = dftPtr->FE.dofs_per_cell;
   const unsigned int numberQuadraturePoints = quadrature.size();
 
+  //
+  //resize data members
+  //
+  d_cellShapeFunctionGradientIntegral.resize(numberMacroCells);
+  d_cellShapeFunctionGradientValue.reinit(TableIndices<4>(numberMacroCells,numberDofsPerElement,numberQuadraturePoints,3));
   d_shapeFunctionValue.resize(numberQuadraturePoints*numberDofsPerElement,0.0);
+  std::vector<std::vector<std::vector<std::vector<std::vector<double> > > > > tempShapeFuncGradData;
+  tempShapeFuncGradData.resize(numberMacroCells);
+
+  
 
   typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
 
@@ -44,12 +48,16 @@ void eigenClass<FEOrder>::preComputeShapeFunctionGradientIntegrals()
     {
       std::vector<VectorizedArray<double> > & shapeFunctionGradients = d_cellShapeFunctionGradientIntegral[iMacroCell];
       shapeFunctionGradients.resize(numberDofsPerElement*numberDofsPerElement);
+
       unsigned int n_sub_cells=dftPtr->matrix_free_data.n_components_filled(iMacroCell);
+      tempShapeFuncGradData[iMacroCell].resize(n_sub_cells);
   
       for(unsigned int iCell = 0; iCell < n_sub_cells; ++iCell)
 	{
 	  cellPtr = dftPtr->matrix_free_data.get_cell_iterator(iMacroCell,iCell);
 	  fe_values.reinit(cellPtr);
+	  tempShapeFuncGradData[iMacroCell][iCell].resize(numberDofsPerElement);
+
 	  for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
 	    {
 	      for(unsigned int jNode = 0; jNode < numberDofsPerElement; ++jNode)
@@ -65,6 +73,21 @@ void eigenClass<FEOrder>::preComputeShapeFunctionGradientIntegrals()
 
 	    }//i node loop
 
+
+	  for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+	    {
+	      tempShapeFuncGradData[iMacroCell][iCell][iNode].resize(numberQuadraturePoints);
+	      for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
+		{
+		  tempShapeFuncGradData[iMacroCell][iCell][iNode][q_point].resize(3);
+		  tempShapeFuncGradData[iMacroCell][iCell][iNode][q_point][0] = fe_values.shape_grad(iNode,q_point)[0];
+		  tempShapeFuncGradData[iMacroCell][iCell][iNode][q_point][1] = fe_values.shape_grad(iNode,q_point)[1];
+		  tempShapeFuncGradData[iMacroCell][iCell][iNode][q_point][2] = fe_values.shape_grad(iNode,q_point)[2];
+		}
+
+	    }
+
+
 	  if(iMacroCell == 0 && iCell == 0)
 	    {
 	      for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
@@ -76,8 +99,27 @@ void eigenClass<FEOrder>::preComputeShapeFunctionGradientIntegrals()
 		}
 	    }
 
-
 	}//icell loop
+
+
+      for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+	{
+	  for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
+	    {
+	      VectorizedArray<double> gradX,gradY,gradZ;
+	      for(unsigned int iCell = 0; iCell < n_sub_cells; ++iCell)
+		{
+		  gradX[iCell] = tempShapeFuncGradData[iMacroCell][iCell][iNode][q_point][0];
+		  gradY[iCell] = tempShapeFuncGradData[iMacroCell][iCell][iNode][q_point][1];
+		  gradZ[iCell] = tempShapeFuncGradData[iMacroCell][iCell][iNode][q_point][2];
+		}
+
+	      d_cellShapeFunctionGradientValue(iMacroCell,iNode,q_point,0) = gradX;
+	      d_cellShapeFunctionGradientValue(iMacroCell,iNode,q_point,1) = gradY;
+	      d_cellShapeFunctionGradientValue(iMacroCell,iNode,q_point,2) = gradZ;
+
+	    }//q_point loop
+	}//iNodeloop
 
     }//macrocell loop
 
