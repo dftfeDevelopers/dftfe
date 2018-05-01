@@ -213,7 +213,7 @@ void geoOptIon<FEOrder>::update(const std::vector<double> & solution)
 
    pcout<<" -----------------------------" << std::endl;
    pcout<< "  Maximum force to be relaxed: "<<  d_maximumAtomForceToBeRelaxed <<std::endl;
-   dftPtr->forcePtr->updateAtomPositionsAndMoveMesh(globalAtomsDisplacements);
+   dftPtr->updateAtomPositionsAndMoveMesh(globalAtomsDisplacements);
    d_totalUpdateCalls+=1;
 
    dftPtr->solve();

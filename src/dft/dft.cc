@@ -67,7 +67,7 @@ namespace dftfe {
 #include "kohnShamEigenSolve.cc"
 #include "restart.cc"
 #include "electrostaticPRefinedEnergy.cc"
-
+#include "moveAtoms.cc"
 
   //
   //dft constructor
@@ -88,6 +88,7 @@ namespace dftfe {
     numLevels(0),
     d_mesh(mpi_comm_replica,_interpoolcomm),
     d_affineTransformMesh(mpi_comm_replica),
+    d_gaussianMovePar(mpi_comm_replica),
     d_vselfBinsManager(mpi_comm_replica),
     pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
     computing_timer (pcout,
@@ -370,11 +371,6 @@ namespace dftfe {
     const parallel::distributed::Triangulation<3> & triangulationPar = d_mesh.getParallelMeshMoved();
 
     //
-    //initialize affine transformation object (must be done on unmoved triangulation)
-    //
-    d_affineTransformMesh.init(d_mesh.getParallelMeshMoved(),d_domainBoundingVectors);
-
-    //
     //initialize dofHandlers and hanging-node constraints and periodic constraints on the unmoved Mesh
     //
     initUnmovedTriangulation(triangulationPar);
@@ -385,7 +381,6 @@ namespace dftfe {
     //
     //move triangulation to have atoms on triangulation vertices
     //
-
     moveMeshToAtoms(triangulationPar);
 
     //
@@ -397,12 +392,6 @@ namespace dftfe {
     //initialize guesses for electron-density and wavefunctions
     //
     initElectronicFields(usePreviousGroundStateFields);
-
-    //
-    //store constraintEigen Matrix entries into STL vector
-    //
-    constraintsNoneEigenDataInfo.initialize(vChebyshev.get_partitioner(),
-					    constraintsNoneEigen);
 
     //
     //initialize pseudopotential data for both local and nonlocal part
