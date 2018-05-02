@@ -46,12 +46,13 @@ namespace dftfe {
     pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
     computing_timer (pcout, TimerOutput::never, TimerOutput::wall_times),
     operatorDFTClass(mpi_comm_replica,
-		  _dftPtr->getMatrixFreeData(),
-		  _dftPtr->getLocalDofIndicesReal(),
-		  _dftPtr->getLocalDofIndicesImag(),
-		  _dftPtr->getLocalProcDofIndicesReal(),
-		  _dftPtr->getLocalProcDofIndicesImag(),
-		  _dftPtr->getConstraintMatrixEigen())
+		     _dftPtr->getMatrixFreeData(),
+		     _dftPtr->getLocalDofIndicesReal(),
+		     _dftPtr->getLocalDofIndicesImag(),
+		     _dftPtr->getLocalProcDofIndicesReal(),
+		     _dftPtr->getLocalProcDofIndicesImag(),
+		     _dftPtr->getConstraintMatrixEigen(),
+		     _dftPtr->constraintsNoneDataInfo)
   {
     
   }

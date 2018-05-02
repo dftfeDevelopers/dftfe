@@ -57,6 +57,13 @@ namespace dftUtils
 		    const dealii::ConstraintMatrix & constraintMatrixData);
 
     /**
+     * precompute certain maps from unflattened array to flattened array
+     */
+    void precomputeMaps(const std::shared_ptr<const dealii::Utilities::MPI::Partitioner> & partitioner1,
+			const std::shared_ptr<const dealii::Utilities::MPI::Partitioner> & partitioner2,
+			const unsigned int blockSize);
+
+    /**
      * overload dealii internal function distribute
      */
     void distribute(dealii::parallel::distributed::Vector<double> &fieldVector) const;
@@ -95,6 +102,7 @@ namespace dftUtils
     std::vector<double> d_columnValues;
     std::vector<double> d_inhomogenities;
     std::vector<dealii::types::global_dof_index> d_rowSizes;
+    std::vector<dealii::types::global_dof_index> d_localIndexMapUnflattenedToFlattened;
 
 
   };

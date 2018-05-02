@@ -185,7 +185,6 @@ namespace dftfe{
 						    eigenVectorsFlattenedArray);
 #endif
 
-
 	    //
 	    //precompute certain maps
 	    //
@@ -195,6 +194,11 @@ namespace dftfe{
 						     numberWaveFunctionsPerCurrentBlock,
 						     flattenedArrayMacroCellLocalProcIndexIdMap,
 						     flattenedArrayCellLocalProcIndexIdMap);
+
+
+	    operatorMatrix->getOverloadedConstraintMatrix()->precomputeMaps(eigenVectors[0].get_partitioner(),
+									    eigenVectorsFlattenedArray.get_partitioner(),
+									    numberWaveFunctionsPerCurrentBlock);
 				    
 	    //
 	    //copy the data from eigenVectors to eigenVectorsFlattened (this may have to be changed from flattened 

@@ -4,7 +4,7 @@
 
 # Parameter to control verbosity of terminal output. 0 for low, 1 for medium,
 # and 2 for high.
-set VERBOSITY = 1
+set VERBOSITY = 2
 
 subsection Boundary conditions
   # Periodicity along domain bounding vector, v1.

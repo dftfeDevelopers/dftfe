@@ -104,23 +104,31 @@ namespace dftUtils
   }
 
 
-  /* void constraintMatrixInfo::precomputeMaps(const std::shared_ptr< const dealii::Utilities::MPI::Partitioner> & unflattenedPartitioner,
-					    const std::shared_ptr< const dealii::Utilities::MPI::Partitioner> & flattenedPartitioner)
+  void constraintMatrixInfo::precomputeMaps(const std::shared_ptr< const dealii::Utilities::MPI::Partitioner> & unFlattenedPartitioner,
+					    const std::shared_ptr< const dealii::Utilities::MPI::Partitioner> & flattenedPartitioner,
+					    const unsigned int blockSize)
   {
 
-      //
-      //Get required sizes
-      //
-      unsigned int n_ghosts   = unflattenedPartitioner->n_ghost_indices();
-      unsigned int localSize  = flattenedPartitioner->local_size();
+    //
+    //Get required sizes
+    //
+    unsigned int n_ghosts   = unFlattenedPartitioner->n_ghost_indices();
+    unsigned int localSize  = unFlattenedPartitioner->local_size();
+    unsigned int totalSize = n_ghosts + localSize;
 
-      //
-      //fill the data array
-      //
-      
+    d_localIndexMapUnflattenedToFlattened.clear();
+    d_localIndexMapUnflattenedToFlattened.resize(totalSize);
 
+    //
+    //fill the data array
+    //
+    for(unsigned int ilocalDof = 0; ilocalDof < totalSize; ++ilocalDof)
+      {
+	const dealii::types::global_dof_index globalIndex = unFlattenedPartitioner->local_to_global(ilocalDof);
+	d_localIndexMapUnflattenedToFlattened[ilocalDof] = flattenedPartitioner->global_to_local(globalIndex*blockSize);
+      }
 
-      } */
+  } 
   
 
 
@@ -163,7 +171,8 @@ namespace dftUtils
 	    Assert(count<d_columnIdsGlobal.size(),
 	    	   dealii::ExcMessage("Overloaded distribute for flattened array has indices out of bounds")); 
 
-	    const dealii::types::global_dof_index startingLocalDofIndexColumn=fieldVector.get_partitioner()->global_to_local(d_columnIdsGlobal[count]*blockSize);
+	    const dealii::types::global_dof_index startingLocalDofIndexColumn = d_localIndexMapUnflattenedToFlattened[d_columnIdsLocal[count]];
+	      //fieldVector.get_partitioner()->global_to_local(d_columnIdsGlobal[count]*blockSize);
 
 	    for(unsigned int k = 0; k < blockSize; ++k)
 	      {
@@ -173,7 +182,8 @@ namespace dftUtils
 	    count++;
 	  }
 
-	const dealii::types::global_dof_index startingLocalDofIndexRow=fieldVector.get_partitioner()->global_to_local(d_rowIdsGlobal[i]*blockSize);
+	const dealii::types::global_dof_index startingLocalDofIndexRow = d_localIndexMapUnflattenedToFlattened[d_rowIdsLocal[i]];
+	  //fieldVector.get_partitioner()->global_to_local(d_rowIdsGlobal[i]*blockSize);
 	for(unsigned int k = 0; k < blockSize; ++k)
 	  {
 	    fieldVector.local_element(startingLocalDofIndexRow + k) = newValuesBlock[k];
@@ -196,10 +206,12 @@ namespace dftUtils
     unsigned int count = 0;
     for(unsigned int i = 0; i < d_rowIdsLocal.size(); ++i)
       {
-	const dealii::types::global_dof_index startingLocalDofIndexRow=fieldVector.get_partitioner()->global_to_local(d_rowIdsGlobal[i]*blockSize);
+	const dealii::types::global_dof_index startingLocalDofIndexRow=d_localIndexMapUnflattenedToFlattened[d_rowIdsLocal[i]];
+	  //fieldVector.get_partitioner()->global_to_local(d_rowIdsGlobal[i]*blockSize);
 	for(unsigned int j = 0; j < d_rowSizes[i]; ++j)
 	  {
-	    const dealii::types::global_dof_index startingLocalDofIndexColumn=fieldVector.get_partitioner()->global_to_local(d_columnIdsGlobal[count]*blockSize);
+	    const dealii::types::global_dof_index startingLocalDofIndexColumn=d_localIndexMapUnflattenedToFlattened[d_columnIdsLocal[count]];
+	      //fieldVector.get_partitioner()->global_to_local(d_columnIdsGlobal[count]*blockSize);
 	    for(unsigned int k = 0; k < blockSize; ++k)
 	      {
 
