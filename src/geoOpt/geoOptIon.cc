@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Sambit Das (2018)
+// @author Sambit Das
 //
 
 #include <geoOptIon.h>
@@ -215,6 +215,9 @@ void geoOptIon<FEOrder>::update(const std::vector<double> & solution)
    pcout<< "  Maximum force to be relaxed: "<<  d_maximumAtomForceToBeRelaxed <<std::endl;
    dftPtr->updateAtomPositionsAndMoveMesh(globalAtomsDisplacements);
    d_totalUpdateCalls+=1;
+
+   if (dftParameters::chkType>=1)
+      dftPtr->writeDomainAndAtomCoordinates();
 
    dftPtr->solve();
 
