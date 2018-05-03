@@ -15,7 +15,8 @@
 //
 // @author  Phani Motamarri (2018)
 //
-#include "../include/constraintMatrixInfo.h"
+#include <constraintMatrixInfo.h>
+#include <linearAlgebraOperations.h>
 
 namespace dftfe {
 //
@@ -23,6 +24,39 @@ namespace dftfe {
 //
 namespace dftUtils
 {
+
+
+  void callaxpy(const int *n,
+		const double *alpha,
+		double *x,
+		const int *incx,
+		double *y,
+		const int *incy)
+  {
+    daxpy_(n,
+	   alpha,
+	   x,
+	   incx,
+	   y,
+	   incy);
+  }
+
+  void callaxpy(const int *n,
+		const std::complex<double> *alpha,
+		std::complex<double> *x,
+		const int *incx,
+		std::complex<double> *y,
+		const int *incy)
+  {
+    zaxpy_(n,
+	   alpha,
+	   x,
+	   incx,
+	   y,
+	   incy);
+  }
+
+
 
   //
   //constructor
@@ -162,9 +196,14 @@ namespace dftUtils
 
 
     unsigned int count = 0;
+    const int inc = 1;
+    const int N = blockSize;
+    
     for(unsigned int i = 0; i < d_rowIdsLocal.size(); ++i)
       {
 	std::vector<T> newValuesBlock(blockSize,d_inhomogenities[i]);
+	const dealii::types::global_dof_index startingLocalDofIndexRow = d_localIndexMapUnflattenedToFlattened[d_rowIdsLocal[i]];
+
 	for(unsigned int j = 0; j < d_rowSizes[i]; ++j)
 	  {
 
@@ -172,18 +211,23 @@ namespace dftUtils
 	    	   dealii::ExcMessage("Overloaded distribute for flattened array has indices out of bounds")); 
 
 	    const dealii::types::global_dof_index startingLocalDofIndexColumn = d_localIndexMapUnflattenedToFlattened[d_columnIdsLocal[count]];
-	      //fieldVector.get_partitioner()->global_to_local(d_columnIdsGlobal[count]*blockSize);
-
-	    for(unsigned int k = 0; k < blockSize; ++k)
+	     
+	    /*for(unsigned int k = 0; k < blockSize; ++k)
 	      {
-		newValuesBlock[k] += fieldVector.local_element(startingLocalDofIndexColumn + k)*d_columnValues[count];
-	      }
+	      newValuesBlock[k] += fieldVector.local_element(startingLocalDofIndexColumn + k)*d_columnValues[count];
+	      }*/
 
+	    T alpha = d_columnValues[count];
+	    
+	    callaxpy(&N,
+		     &alpha,
+		     fieldVector.begin()+startingLocalDofIndexColumn,
+		     &inc,
+		     &newValuesBlock[0],
+		     &inc);
 	    count++;
 	  }
-
-	const dealii::types::global_dof_index startingLocalDofIndexRow = d_localIndexMapUnflattenedToFlattened[d_rowIdsLocal[i]];
-	  //fieldVector.get_partitioner()->global_to_local(d_rowIdsGlobal[i]*blockSize);
+	
 	for(unsigned int k = 0; k < blockSize; ++k)
 	  {
 	    fieldVector.local_element(startingLocalDofIndexRow + k) = newValuesBlock[k];
@@ -204,20 +248,25 @@ namespace dftUtils
 							const unsigned int blockSize) const
   {
     unsigned int count = 0;
+    const int N = blockSize;
+    const int inc = 1;
     for(unsigned int i = 0; i < d_rowIdsLocal.size(); ++i)
       {
-	const dealii::types::global_dof_index startingLocalDofIndexRow=d_localIndexMapUnflattenedToFlattened[d_rowIdsLocal[i]];
-	  //fieldVector.get_partitioner()->global_to_local(d_rowIdsGlobal[i]*blockSize);
+	const dealii::types::global_dof_index startingLocalDofIndexRow = d_localIndexMapUnflattenedToFlattened[d_rowIdsLocal[i]];
 	for(unsigned int j = 0; j < d_rowSizes[i]; ++j)
 	  {
+
 	    const dealii::types::global_dof_index startingLocalDofIndexColumn=d_localIndexMapUnflattenedToFlattened[d_columnIdsLocal[count]];
-	      //fieldVector.get_partitioner()->global_to_local(d_columnIdsGlobal[count]*blockSize);
-	    for(unsigned int k = 0; k < blockSize; ++k)
-	      {
 
-		fieldVector.local_element(startingLocalDofIndexColumn + k) += d_columnValues[count]*fieldVector.local_element(startingLocalDofIndexRow + k);
+	    T alpha = d_columnValues[count];
+	    callaxpy(&N,
+		     &alpha,
+		     fieldVector.begin()+startingLocalDofIndexRow,
+		     &inc,
+		     fieldVector.begin()+startingLocalDofIndexColumn,
+		     &inc);
+		     
 
-	      }
 	    count++;
 	  }
       }
