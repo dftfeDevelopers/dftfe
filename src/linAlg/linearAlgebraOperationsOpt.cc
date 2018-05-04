@@ -49,28 +49,32 @@ namespace dftfe{
       e = (b-a)/2.0; c = (b+a)/2.0;
       sigma = e/(a0-c); sigma1 = sigma; gamma = 2.0/sigma1;
 
-      dealii::parallel::distributed::Vector<T> YArray,YNewArray;
+      dealii::parallel::distributed::Vector<T> YArray;//,YNewArray;
 
       //
       //create YArray
       //
       YArray.reinit(XArray);
-      YNewArray.reinit(XArray);
+      //YNewArray.reinit(XArray);
 
       //
       //initialize to zeros.
       //
       const T zeroValue = 0.0;
       YArray = zeroValue;
-      YNewArray = zeroValue;
+      //YNewArray = zeroValue;
 
       //
       //call HX
       //
+      bool scaleFlag = false;
+      T scalar = 1.0;
       operatorMatrix->HX(XArray,
 			 numberWaveFunctions,
 			 flattenedArrayMacroCellLocalProcIndexIdMap,
 			 flattenedArrayCellLocalProcIndexIdMap,
+			 scaleFlag,
+			 scalar,
 			 YArray);
 
 
@@ -92,24 +96,34 @@ namespace dftfe{
 	  alpha1 = 2.0*sigma2/e, alpha2 = -(sigma*sigma2);
 
 	  //
+	  //multiply XArray with alpha2
+	  //
+	  XArray *= alpha2;
+	  XArray.add(-c*alpha1,YArray);
+
+
+	  //
 	  //call HX
 	  //
+	  bool scaleFlag = true;
 	  operatorMatrix->HX(YArray,
 			     numberWaveFunctions,
 			     flattenedArrayMacroCellLocalProcIndexIdMap,
 			     flattenedArrayCellLocalProcIndexIdMap,
-			     YNewArray);
+			     scaleFlag,
+			     alpha1,
+			     XArray);
 
 	  //
 	  //YNewArray = YNewArray - c*YArray and YNewArray = alpha1*YNewArray
 	  //
-	  YNewArray.add(-c, YArray);
-	  YNewArray *= alpha1;
+	  //YNewArray.add(-c, YArray);
+	  //YNewArray *= alpha1;
 	
 	  //
 	  //YNewArray = YNewArray + alpha2*XArray
 	  //
-	  YNewArray.add(alpha2,XArray);
+	  //YNewArray.add(alpha2,XArray);
 
 	  //
 	  //XArray = YArray
@@ -119,7 +133,7 @@ namespace dftfe{
 	  //
 	  //YArray = YNewArray
 	  //
-	  YArray.swap(YNewArray);
+	  //YArray.swap(YNewArray);
 
 	  sigma = sigma2;
 

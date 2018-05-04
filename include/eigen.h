@@ -72,6 +72,8 @@ namespace dftfe{
 	      const unsigned int numberComponents,
 	      const std::vector<std::vector<dealii::types::global_dof_index> > & macroCellMap,
 	      const std::vector<std::vector<dealii::types::global_dof_index> > & cellMap,
+	      bool scaleFlag,
+	      const std::complex<double> scalar,
 	      dealii::parallel::distributed::Vector<std::complex<double> > & dst);
 
 
@@ -100,6 +102,8 @@ namespace dftfe{
 	      const unsigned int numberComponents,
 	      const std::vector<std::vector<dealii::types::global_dof_index> > & macroCellMap,
 	      const std::vector<std::vector<dealii::types::global_dof_index> > & cellMap,
+	      bool scaleFlag,
+	      const double scalar,
 	      dealii::parallel::distributed::Vector<double> & dst);
 
       /**

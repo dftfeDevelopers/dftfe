@@ -91,12 +91,16 @@ namespace dftfe{
 		    const unsigned int numberComponents,
 		    const std::vector<std::vector<dealii::types::global_dof_index> > & macroCellMap,
 		    const std::vector<std::vector<dealii::types::global_dof_index> > & cellMap,
+		    bool scaleFlag,
+		    const std::complex<double> scalar,
 		    dealii::parallel::distributed::Vector<std::complex<double> > & Y) = 0;
 #else
     virtual void HX(dealii::parallel::distributed::Vector<double> & X,
 		    const unsigned int numberComponents,
 		    const std::vector<std::vector<dealii::types::global_dof_index> > & macroCellMap,
 		    const std::vector<std::vector<dealii::types::global_dof_index> > & cellMap,
+		    bool scaleFlag,
+		    const double scalar,
 		    dealii::parallel::distributed::Vector<double> & Y) = 0;
 #endif
 

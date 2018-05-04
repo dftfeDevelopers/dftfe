@@ -344,6 +344,8 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 			       const unsigned int numberWaveFunctions,
 			       const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayMacroCellLocalProcIndexIdMap,
 			       const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap,
+			       bool scaleFlag,
+			       std::complex<double> scalar,
 			       dealii::parallel::distributed::Vector<std::complex<double> > & dst)
 
 
@@ -356,18 +358,28 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
     //
     for(int i = 0; i < numberDofs; ++i)
       {
-	std::complex<double> scalingCoeff = d_invSqrtMassVector.local_element(dftPtr->localProc_dof_indicesReal[i]);
+	std::complex<double> scalingCoeff = d_invSqrtMassVector.local_element(dftPtr->localProc_dof_indicesReal[i])*scalar;
 	zscal_(&numberWaveFunctions,
 	       &scalingCoeff,
 	       src.begin()+i*numberWaveFunctions,
 	       &inc);
       }
 
-    //
-    //This may be removed when memory optimization
-    //
-    const std::complex<double> zeroValue = 0.0;
-    dst = zeroValue;
+    //const std::complex<double> zeroValue = 0.0;
+    //dst = zeroValue;
+
+    if(scaleFlag)
+      {
+	for(int i = 0; i < numberDofs; ++i)
+	  {
+	    std::complex<double> scalingCoeff = d_sqrtMassVector.local_element(dftPtr->localProc_dof_indicesReal[i]);
+	    zscal_(&numberWaveFunctions,
+		   &scalingCoeff,
+		   dst.begin()+i*numberWaveFunctions,
+		   &inc);
+
+	  }
+      }
 
     //
     //update slave nodes before doing element-level matrix-vec multiplication
@@ -427,7 +439,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
     //
     for(int i = 0; i < numberDofs; ++i)
       {
-	std::complex<double> scalingCoeff = d_sqrtMassVector.local_element(dftPtr->localProc_dof_indicesReal[i]);
+	std::complex<double> scalingCoeff = d_sqrtMassVector.local_element(dftPtr->localProc_dof_indicesReal[i])*(1.0/scalar);
 	zscal_(&numberWaveFunctions,
 	       &scalingCoeff,
 	       src.begin()+i*numberWaveFunctions,
@@ -441,6 +453,8 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 			       const unsigned int numberWaveFunctions,
 			       const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayMacroCellLocalProcIndexIdMap,
 			       const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap,
+			       bool scaleFlag,
+			       double scalar,
 			       dealii::parallel::distributed::Vector<double> & dst)
 
 
@@ -453,16 +467,31 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
     //
     for(int i = 0; i < numberDofs; ++i)
       {
+	double scalingCoeff = d_invSqrtMassVector.local_element(i)*scalar;
 	dscal_(&numberWaveFunctions,
-	       &d_invSqrtMassVector.local_element(i),
+	       &scalingCoeff,
 	       src.begin()+i*numberWaveFunctions,
 	       &inc);
+      }
+
+
+    if(scaleFlag)
+      {
+	for(int i = 0; i < numberDofs; ++i)
+	  {
+	    double scalingCoeff = d_sqrtMassVector.local_element(i);
+	    dscal_(&numberWaveFunctions,
+		   &scalingCoeff,
+		   dst.begin()+i*numberWaveFunctions,
+		   &inc);
+
+	  }
       }
 
     //
     //This may be removed when memory optimization
     //
-    dst = 0.0;
+    //dst = 0.0;
 
     //
     //update slave nodes before doing element-level matrix-vec multiplication
@@ -518,8 +547,9 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
     //
     for(int i = 0; i < numberDofs; ++i)
       {
+	double scalingCoeff = d_sqrtMassVector.local_element(i)*(1.0/scalar);
 	dscal_(&numberWaveFunctions,
-	       &d_sqrtMassVector.local_element(i),
+	       &scalingCoeff,
 	       src.begin()+i*numberWaveFunctions,
 	       &inc);
       }
