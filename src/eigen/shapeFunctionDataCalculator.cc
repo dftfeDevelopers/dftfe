@@ -44,6 +44,10 @@ void eigenClass<FEOrder>::preComputeShapeFunctionGradientIntegrals()
 
   typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
 
+  //
+  //compute cell-level shapefunctiongradientintegral generator by going over dealii macrocells 
+  //which allows efficient integration of cell-level matrix integrals
+  //using dealii vectorized arrays
   for(int iMacroCell = 0; iMacroCell < numberMacroCells; ++iMacroCell)
     {
       std::vector<VectorizedArray<double> > & shapeFunctionGradients = d_cellShapeFunctionGradientIntegral[iMacroCell];
