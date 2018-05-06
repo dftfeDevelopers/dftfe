@@ -55,27 +55,27 @@ namespace dftfe{
       //create YArray
       //
       YArray.reinit(XArray);
-      //YNewArray.reinit(XArray);
+
 
       //
       //initialize to zeros.
       //
       const T zeroValue = 0.0;
       YArray = zeroValue;
-      //YNewArray = zeroValue;
+
 
       //
       //call HX
       //
       bool scaleFlag = false;
       T scalar = 1.0;
-      operatorMatrix->HX(XArray,
-			 numberWaveFunctions,
-			 flattenedArrayMacroCellLocalProcIndexIdMap,
-			 flattenedArrayCellLocalProcIndexIdMap,
-			 scaleFlag,
-			 scalar,
-			 YArray);
+      operatorMatrix.HX(XArray,
+			numberWaveFunctions,
+			flattenedArrayMacroCellLocalProcIndexIdMap,
+			flattenedArrayCellLocalProcIndexIdMap,
+			scaleFlag,
+			scalar,
+			YArray);
 
 
       T alpha1 = sigma1/e, alpha2 = -c;
@@ -105,13 +105,13 @@ namespace dftfe{
 	  //call HX
 	  //
 	  bool scaleFlag = true;
-	  operatorMatrix->HX(YArray,
-			     numberWaveFunctions,
-			     flattenedArrayMacroCellLocalProcIndexIdMap,
-			     flattenedArrayCellLocalProcIndexIdMap,
-			     scaleFlag,
-			     alpha1,
-			     XArray);
+	  operatorMatrix.HX(YArray,
+			    numberWaveFunctions,
+			    flattenedArrayMacroCellLocalProcIndexIdMap,
+			    flattenedArrayCellLocalProcIndexIdMap,
+			    scaleFlag,
+			    alpha1,
+			    XArray);
 
 	  //
 	  //XArray = YArray

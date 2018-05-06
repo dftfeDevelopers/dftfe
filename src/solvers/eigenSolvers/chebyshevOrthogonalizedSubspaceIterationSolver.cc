@@ -196,9 +196,9 @@ namespace dftfe{
 						     flattenedArrayCellLocalProcIndexIdMap);
 
 
-	    operatorMatrix->getOverloadedConstraintMatrix()->precomputeMaps(operatorMatrix->getMatrixFreeData()->get_vector_partitioner(),
-									    eigenVectorsFlattenedArray.get_partitioner(),
-									    numberWaveFunctionsPerCurrentBlock);
+	    operatorMatrix.getOverloadedConstraintMatrix()->precomputeMaps(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
+									   eigenVectorsFlattenedArray.get_partitioner(),
+									   numberWaveFunctionsPerCurrentBlock);
 				    
 	    //
 	    //copy the data from eigenVectors to eigenVectorsFlattened (this may have to be changed from flattened 
