@@ -668,10 +668,12 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
   //
   d_sparsityPattern.clear();
   d_elementIteratorsInAtomCompactSupport.clear();
+  d_elementIdsInAtomCompactSupport.clear();
   d_elementOneFieldIteratorsInAtomCompactSupport.clear();
 
   d_sparsityPattern.resize(numberNonLocalAtoms);
   d_elementIteratorsInAtomCompactSupport.resize(numberNonLocalAtoms);
+  d_elementIdsInAtomCompactSupport.resize(numberNonLocalAtoms);
   d_elementOneFieldIteratorsInAtomCompactSupport.resize(numberNonLocalAtoms);
   d_nonLocalAtomIdsInCurrentProcess.clear();
 
@@ -823,6 +825,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
 	      if(sparseFlag==1) {
 		d_sparsityPattern[iAtom][iElem] = matCount;
 		d_elementIteratorsInAtomCompactSupport[iAtom].push_back(cellEigen);
+		d_elementIdsInAtomCompactSupport[iAtom].push_back(iElem);
 		d_elementOneFieldIteratorsInAtomCompactSupport[iAtom].push_back(cell);
 		matCount += 1;
                 isAtomIdInProcessor=true;
@@ -1104,8 +1107,10 @@ void dftClass<FEOrder>::computeElementalProjectorKets()
   //preallocate element Matrices
   //
   d_nonLocalProjectorElementMatrices.clear();
+  d_nonLocalProjectorElementMatricesConjugate.clear();
   d_nonLocalPseudoPotentialConstants.clear();
   d_nonLocalProjectorElementMatrices.resize(numberNonLocalAtoms);
+  d_nonLocalProjectorElementMatricesConjugate.resize(numberNonLocalAtoms);
   d_nonLocalPseudoPotentialConstants.resize(numberNonLocalAtoms);
   int cumulativePotSplineId = 0;
   int cumulativeWaveSplineId = 0;
@@ -1150,6 +1155,7 @@ void dftClass<FEOrder>::computeElementalProjectorKets()
       //allocate element Matrices
       //
       d_nonLocalProjectorElementMatrices[iAtom].resize(numberElementsInAtomCompactSupport);
+      d_nonLocalProjectorElementMatricesConjugate[iAtom].resize(numberElementsInAtomCompactSupport);
       d_nonLocalPseudoPotentialConstants[iAtom].resize(numberPseudoWaveFunctions,0.0);
 
       for(int iElemComp = 0; iElemComp < numberElementsInAtomCompactSupport; ++iElemComp)
@@ -1163,6 +1169,8 @@ void dftClass<FEOrder>::computeElementalProjectorKets()
 #ifdef ENABLE_PERIODIC_BC
 	  d_nonLocalProjectorElementMatrices[iAtom][iElemComp].resize(maxkPoints,
 								      std::vector<std::complex<double> > (numberNodesPerElement*numberPseudoWaveFunctions,0.0));
+	  d_nonLocalProjectorElementMatricesConjugate[iAtom][iElemComp].resize(maxkPoints,
+									       std::vector<std::complex<double> > (numberNodesPerElement*numberPseudoWaveFunctions,0.0));
 #else
 	  d_nonLocalProjectorElementMatrices[iAtom][iElemComp].resize(maxkPoints,
 								      std::vector<double> (numberNodesPerElement*numberPseudoWaveFunctions,0.0));
@@ -1330,6 +1338,8 @@ void dftClass<FEOrder>::computeElementalProjectorKets()
 #ifdef ENABLE_PERIODIC_BC
 		      d_nonLocalProjectorElementMatrices[iAtom][iElemComp][kPoint][numberNodesPerElement*iPseudoWave + iNode].real(tempReal);
 		      d_nonLocalProjectorElementMatrices[iAtom][iElemComp][kPoint][numberNodesPerElement*iPseudoWave + iNode].imag(tempImag);
+		      d_nonLocalProjectorElementMatricesConjugate[iAtom][iElemComp][kPoint][numberNodesPerElement*iPseudoWave + iNode].real(tempReal);
+		      d_nonLocalProjectorElementMatricesConjugate[iAtom][iElemComp][kPoint][numberNodesPerElement*iPseudoWave + iNode].imag(-tempImag);
 #endif
 		    }
 

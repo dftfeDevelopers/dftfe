@@ -35,6 +35,7 @@ SET(TARGET_SRC
   ./src/solvers/eigenSolvers/chebyshevOrthogonalizedSubspaceIterationSolver.cc
   ./src/solvers/eigenSolver.cc
   ./src/linAlg/linearAlgebraOperations.cc
+  ./src/linAlg/linearAlgebraOperationsOpt.cc
   ./src/solvers/dealiiLinearSolver.cc
   ./src/solvers/dealiiLinearSolverProblem.cc
   ./utils/fileReaders.cc
@@ -42,6 +43,7 @@ SET(TARGET_SRC
   ./utils/constraintMatrixInfo.cc
   ./utils/dftUtils.cc
   ./utils/vectorTools/interpolateFieldsFromPreviousMesh.cc
+  ./utils/vectorTools/vectorUtilities.cc
   # You can specify additional files here!
   )
 

@@ -54,6 +54,7 @@ namespace dftUtils
     clear();
 
     const dealii::IndexSet & locally_owned_dofs = partitioner->locally_owned_range();
+    const dealii::IndexSet & ghost_dofs = partitioner->ghost_indices();
 
     for(dealii::IndexSet::ElementIterator it = locally_owned_dofs.begin(); it != locally_owned_dofs.end();++it)
       {
@@ -61,16 +62,44 @@ namespace dftUtils
 	  {
 	    const dealii::types::global_dof_index lineDof = *it;
 	    d_rowIdsLocal.push_back(partitioner->global_to_local(lineDof));
+	    d_rowIdsGlobal.push_back(lineDof);
 	    d_inhomogenities.push_back(constraintMatrixData.get_inhomogeneity(lineDof));
 	    const std::vector<std::pair<dealii::types::global_dof_index, double > > * rowData=constraintMatrixData.get_constraint_entries(lineDof);
 	    d_rowSizes.push_back(rowData->size());
 	    for(unsigned int j = 0; j < rowData->size();++j)
 	      {
+		Assert((*rowData)[j].first<partitioner->size(),
+	    	   dealii::ExcMessage("Index out of bounds")); 
+		d_columnIdsGlobal.push_back((*rowData)[j].first);
 		d_columnIdsLocal.push_back(partitioner->global_to_local((*rowData)[j].first));
 		d_columnValues.push_back((*rowData)[j].second);
 	      }
 	  }
       }
+
+    
+    for(dealii::IndexSet::ElementIterator it = ghost_dofs.begin(); it != ghost_dofs.end();++it)
+      {
+	if(constraintMatrixData.is_constrained(*it))
+	  {
+	    const dealii::types::global_dof_index lineDof = *it;
+	    d_rowIdsLocal.push_back(partitioner->global_to_local(lineDof));
+	    d_rowIdsGlobal.push_back(lineDof);
+	    d_inhomogenities.push_back(constraintMatrixData.get_inhomogeneity(lineDof));
+	    const std::vector<std::pair<dealii::types::global_dof_index, double > > * rowData=constraintMatrixData.get_constraint_entries(lineDof);
+	    d_rowSizes.push_back(rowData->size());
+	    for(unsigned int j = 0; j < rowData->size();++j)
+	      {
+		Assert((*rowData)[j].first<partitioner->size(),
+		       dealii::ExcMessage("Index out of bounds")); 
+		d_columnIdsGlobal.push_back((*rowData)[j].first);
+		d_columnIdsLocal.push_back(partitioner->global_to_local((*rowData)[j].first));
+		d_columnValues.push_back((*rowData)[j].second);
+	      }
+	  }
+      }
+    
+
 
   }
 
@@ -79,6 +108,7 @@ namespace dftUtils
   //set the constrained degrees of freedom to values so that constraints
   //are satisfied
   //
+
   void constraintMatrixInfo::distribute(dealii::parallel::distributed::Vector<double> &fieldVector) const
   {
     fieldVector.update_ghost_values();
@@ -96,6 +126,68 @@ namespace dftUtils
   }
 
 
+  template<typename T>
+  void constraintMatrixInfo::distribute(dealii::parallel::distributed::Vector<T> &fieldVector,
+					const unsigned int blockSize) const
+  {
+    fieldVector.update_ghost_values();
+
+
+    unsigned int count = 0;
+    for(unsigned int i = 0; i < d_rowIdsLocal.size(); ++i)
+      {
+	std::vector<T> newValuesBlock(blockSize,d_inhomogenities[i]);
+	for(unsigned int j = 0; j < d_rowSizes[i]; ++j)
+	  {
+
+	    Assert(count<d_columnIdsGlobal.size(),
+	    	   dealii::ExcMessage("Overloaded distribute for flattened array has indices out of bounds")); 
+
+	    for(unsigned int k = 0; k < blockSize; ++k)
+	      {
+		newValuesBlock[k] += fieldVector.local_element(fieldVector.get_partitioner()->global_to_local(d_columnIdsGlobal[count]*blockSize + k))*d_columnValues[count];
+	      }
+
+	    count++;
+	  }
+	for(unsigned int k = 0; k < blockSize; ++k)
+	  {
+	    fieldVector.local_element(fieldVector.get_partitioner()->global_to_local(d_rowIdsGlobal[i]*blockSize + k)) = newValuesBlock[k];
+	  }
+      }
+  }
+
+
+  
+
+
+  //
+  //set the constrained degrees of freedom to values so that constraints
+  //are satisfied for flattened array
+  //
+  template<typename T>
+  void constraintMatrixInfo::distribute_slave_to_master(dealii::parallel::distributed::Vector<T> & fieldVector,
+							const unsigned int blockSize) const
+  {
+    unsigned int count = 0;
+    for(unsigned int i = 0; i < d_rowIdsLocal.size(); ++i)
+      {
+	for(unsigned int j = 0; j < d_rowSizes[i]; ++j)
+	  {
+	    for(unsigned int k = 0; k < blockSize; ++k)
+	      {
+
+		fieldVector.local_element(fieldVector.get_partitioner()->global_to_local(d_columnIdsGlobal[count]*blockSize + k)) += d_columnValues[count]*fieldVector.local_element(fieldVector.get_partitioner()->global_to_local(d_rowIdsGlobal[i]*blockSize + k));
+
+	      }
+	    count++;
+	  }
+      }
+  }
+							
+
+
+  //
   //
   //clear the data variables
   //
@@ -104,10 +196,27 @@ namespace dftUtils
     d_rowIdsGlobal.clear();
     d_rowIdsLocal.clear();
     d_columnIdsLocal.clear();
+    d_columnIdsGlobal.clear();
     d_columnValues.clear();
     d_inhomogenities.clear();
     d_rowSizes.clear();
   }
+
+
+#ifdef ENABLE_PERIODIC_BC
+  template void constraintMatrixInfo::distribute(dealii::parallel::distributed::Vector<std::complex<double> > & fieldVector,
+						 const unsigned int blockSize) const;
+
+  template void constraintMatrixInfo::distribute_slave_to_master(dealii::parallel::distributed::Vector<std::complex<double> > & fieldVector,
+						 const unsigned int blockSize) const;
+
+#else
+  template void constraintMatrixInfo::distribute(dealii::parallel::distributed::Vector<double> & fieldVector,
+						 const unsigned int blockSize) const;
+
+  template void constraintMatrixInfo::distribute_slave_to_master(dealii::parallel::distributed::Vector<double> & fieldVector,
+						 const unsigned int blockSize) const;
+#endif
 
 
 }

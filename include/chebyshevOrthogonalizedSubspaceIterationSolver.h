@@ -52,7 +52,7 @@ namespace dftfe{
     /**
      * @brief Solve a generalized eigen problem. 
      */
-    eigenSolverClass::ReturnValueType solve(operatorDFTClass * operatorMatrix,
+    eigenSolverClass::ReturnValueType solve(operatorDFTClass & operatorMatrix,
 					    std::vector<vectorType> & eigenVectors,
 					    std::vector<double> & eigenValues);
 
@@ -78,7 +78,7 @@ namespace dftfe{
     //variables for printing out and timing
     //
     dealii::ConditionalOStream   pcout;
-    TimerOutput computing_timer;
+    dealii::TimerOutput computing_timer;
   };
 }
 #endif

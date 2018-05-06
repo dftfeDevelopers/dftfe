@@ -1,3 +1,4 @@
+
 //
 // File:      operator.cc
 // Package:   dft
@@ -27,13 +28,16 @@
 // Constructor.
 //
 namespace dftfe {
-  operatorDFTClass::operatorDFTClass(const MPI_Comm                  & mpi_comm_replica,
-				     const std::vector<dealii::types::global_dof_index> & localDofIndicesReal,
-				     const std::vector<dealii::types::global_dof_index> & localDofIndicesImag,
-				     const std::vector<dealii::types::global_dof_index> & localProcDofIndicesReal,
-				     const std::vector<dealii::types::global_dof_index> & localProcDofIndicesImag,
-				     const dealii::ConstraintMatrix  & constraintMatrixEigen):
-    d_mpi_communicator   (mpi_comm_replica),
+
+  operatorDFTClass::operatorDFTClass(const MPI_Comm                     & mpi_comm_replica,
+				     const dealii::MatrixFree<3,double> & matrix_free_data,
+				     const std::vector<dealii::types::global_dof_index>    & localDofIndicesReal,
+				     const std::vector<dealii::types::global_dof_index>    & localDofIndicesImag,
+				     const std::vector<dealii::types::global_dof_index>    & localProcDofIndicesReal,
+				     const std::vector<dealii::types::global_dof_index>    & localProcDofIndicesImag,
+				     const dealii::ConstraintMatrix     & constraintMatrixEigen):
+    d_mpi_communicator(mpi_comm_replica),
+    d_matrix_free_data(&matrix_free_data),
     d_localDofIndicesReal(&localDofIndicesReal),
     d_localDofIndicesImag(&localDofIndicesImag),
     d_localProcDofIndicesReal(&localProcDofIndicesReal),
@@ -41,7 +45,6 @@ namespace dftfe {
     d_constraintMatrixEigen(&constraintMatrixEigen)
   {
 
-   
 
   }
 
@@ -97,6 +100,14 @@ namespace dftfe {
   const dealii::ConstraintMatrix * operatorDFTClass::getConstraintMatrixEigen() const
   {
     return d_constraintMatrixEigen;
+  }
+
+  //
+  //Get matrix free data
+  //
+  const dealii::MatrixFree<3,double> * operatorDFTClass::getMatrixFreeData() const
+  {
+    return d_matrix_free_data;
   }
 
   //

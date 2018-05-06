@@ -56,7 +56,9 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
   //preallocate element Matrices
   //
   d_nonLocalProjectorElementMatrices.clear();
+  d_nonLocalProjectorElementMatricesConjugate.clear();
   d_nonLocalProjectorElementMatrices.resize(numberNonLocalAtoms);
+  d_nonLocalProjectorElementMatricesConjugate.resize(numberNonLocalAtoms);
   int cumulativeWaveSplineId = 0;
   int waveFunctionId;
   //
@@ -100,7 +102,8 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
       //allocate element Matrices
       //
       d_nonLocalProjectorElementMatrices[iAtom].resize(numberElementsInAtomCompactSupport);
-
+      d_nonLocalProjectorElementMatricesConjugate[iAtom].resize(numberElementsInAtomCompactSupport);
+	
       for(int iElemComp = 0; iElemComp < numberElementsInAtomCompactSupport; ++iElemComp)
 	{
 
@@ -112,6 +115,9 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
 #ifdef ENABLE_PERIODIC_BC
 	  d_nonLocalProjectorElementMatrices[iAtom][iElemComp].resize(maxkPoints,
 								      std::vector<std::complex<double> > (numberNodesPerElement*numberPseudoWaveFunctions,0.0));
+	  d_nonLocalProjectorElementMatricesConjugate[iAtom][iElemComp].resize(maxkPoints,
+									       std::vector<std::complex<double> > (numberNodesPerElement*numberPseudoWaveFunctions,0.0));
+
 #else
 	  d_nonLocalProjectorElementMatrices[iAtom][iElemComp].resize(maxkPoints,
 								      std::vector<double> (numberNodesPerElement*numberPseudoWaveFunctions,0.0));
@@ -254,7 +260,9 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
 #ifdef ENABLE_PERIODIC_BC
 		      d_nonLocalProjectorElementMatrices[iAtom][iElemComp][kPoint][numberNodesPerElement*iPseudoWave + iNode].real(tempReal);
 		      d_nonLocalProjectorElementMatrices[iAtom][iElemComp][kPoint][numberNodesPerElement*iPseudoWave + iNode].imag(tempImag);
-#endif
+		      d_nonLocalProjectorElementMatricesConjugate[iAtom][iElemComp][kPoint][numberNodesPerElement*iPseudoWave + iNode].real(tempReal);
+		      d_nonLocalProjectorElementMatricesConjugate[iAtom][iElemComp][kPoint][numberNodesPerElement*iPseudoWave + iNode].imag(-tempImag);
+#endif		      
 		    }
 
 		}
@@ -699,10 +707,12 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
   //
   d_sparsityPattern.clear();
   d_elementIteratorsInAtomCompactSupport.clear();
+  d_elementIdsInAtomCompactSupport.clear();
   d_elementOneFieldIteratorsInAtomCompactSupport.clear();
 
   d_sparsityPattern.resize(numberNonLocalAtoms);
   d_elementIteratorsInAtomCompactSupport.resize(numberNonLocalAtoms);
+  d_elementIdsInAtomCompactSupport.resize(numberNonLocalAtoms);
   d_elementOneFieldIteratorsInAtomCompactSupport.resize(numberNonLocalAtoms);
   d_nonLocalAtomIdsInCurrentProcess.clear();
 
@@ -856,6 +866,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
 	      if(sparseFlag==1) {
 		d_sparsityPattern[iAtom][iElem] = matCount;
 		d_elementIteratorsInAtomCompactSupport[iAtom].push_back(cellEigen);
+		d_elementIdsInAtomCompactSupport[iAtom].push_back(iElem);
 		d_elementOneFieldIteratorsInAtomCompactSupport[iAtom].push_back(cell);
 		matCount += 1;
 		isAtomIdInProcessor=true;

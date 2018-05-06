@@ -52,7 +52,7 @@ namespace dftfe {
   //
   using namespace dealii;
 
-  typedef dealii::parallel::distributed::Vector<double> vectorType;
+
   //forward declarations
   template <unsigned int T> class poissonClass;
   template <unsigned int T> class eigenClass;
@@ -61,8 +61,6 @@ namespace dftfe {
   template <unsigned int T> class forceClass;
   template <unsigned int T> class geoOptIon;
   template <unsigned int T> class geoOptCell;
-
-
 
   //
   //
@@ -174,6 +172,12 @@ namespace dftfe {
       const dftUtils::constraintMatrixInfo & getConstraintMatrixEigenDataInfo() const;
 
 
+      /**
+       *Get matrix free data object
+       */
+      const MatrixFree<3,double> & getMatrixFreeData() const;
+
+
       /** @brief Updates atom positions, remeshes/moves mesh and calls appropriate reinits.
        *
        *  Function to update the atom positions and mesh based on the provided displacement input.
@@ -191,6 +195,7 @@ namespace dftfe {
        * geometry relaxation restart
        */
       void writeDomainAndAtomCoordinates() const;
+
 
     private:
 
@@ -419,7 +424,7 @@ namespace dftfe {
       std::vector<bool> selectedDofsHanging;
 
 
-      eigenClass<FEOrder> * eigenPtr;
+      
       forceClass<FEOrder> * forcePtr;
       symmetryClass<FEOrder> * symmetryPtr;
       geoOptIon<FEOrder> * geoOptIonPtr;
@@ -430,9 +435,21 @@ namespace dftfe {
        */
 
       /**
-       * storage for constraintMatrices in terms of arrays (STL)
+       *object which is used to store dealii constraint matrix information
+       *using STL vectors. The relevant dealii constraint matrix
+       *has hanging node constraints and periodic constraints(for periodic problems)  
+       *used in eigen solve
        */
       dftUtils::constraintMatrixInfo constraintsNoneEigenDataInfo;
+
+      /**
+       *object which is used to store dealii constraint matrix information
+       *using STL vectors. The relevant dealii constraint matrix
+       *has hanging node constraints used in Poisson problem solution
+       *
+       */
+      dftUtils::constraintMatrixInfo constraintsNoneDataInfo;
+
       ConstraintMatrix constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_noConstraints, d_noConstraintsEigen;
 
 
@@ -494,6 +511,7 @@ namespace dftfe {
       //
       std::vector<std::vector<int> > d_sparsityPattern;
       std::vector<std::vector<DoFHandler<3>::active_cell_iterator> > d_elementIteratorsInAtomCompactSupport;
+      std::vector<std::vector<unsigned int> > d_elementIdsInAtomCompactSupport;
       std::vector<std::vector<DoFHandler<3>::active_cell_iterator> > d_elementOneFieldIteratorsInAtomCompactSupport;
       std::vector<std::vector<int> > d_nonLocalAtomIdsInElement;
       std::vector<unsigned int> d_nonLocalAtomIdsInCurrentProcess;
@@ -501,10 +519,10 @@ namespace dftfe {
       IndexSet d_ghostProjectorIdsCurrentProcess;
       std::map<std::pair<unsigned int,unsigned int>, unsigned int> d_projectorIdsNumberingMapCurrentProcess;
 #ifdef ENABLE_PERIODIC_BC
-      std::vector<std::vector<std::vector<std::vector<std::complex<double> > > > > d_nonLocalProjectorElementMatrices;
+      std::vector<std::vector<std::vector<std::vector<std::complex<double> > > > > d_nonLocalProjectorElementMatrices,d_nonLocalProjectorElementMatricesConjugate;
       std::vector<dealii::parallel::distributed::Vector<std::complex<double> > > d_projectorKetTimesVectorPar;
 #else
-      std::vector<std::vector<std::vector<std::vector<double> > > > d_nonLocalProjectorElementMatrices;
+      std::vector<std::vector<std::vector<std::vector<double> > > > d_nonLocalProjectorElementMatrices,d_nonLocalProjectorElementMatricesConjugate;
       std::vector<dealii::parallel::distributed::Vector<double> > d_projectorKetTimesVectorPar;
 #endif
 
@@ -577,10 +595,12 @@ namespace dftfe {
 
       void kohnShamEigenSpaceCompute(const unsigned int s,
 				     const unsigned int kPointIndex,
+				     eigenClass<FEOrder> & kohnShamDFTEigenOperator,
 				     chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver,
 				     std::vector<double> & residualNormWaveFunctions);
 
       void computeResidualNorm(const std::vector<double> & eigenValuesTemp,
+			       eigenClass<FEOrder> & kohnShamDFTEigenOperator,
 			       std::vector<vectorType> & X,
 			       std::vector<double> & residualNorm) const;
 

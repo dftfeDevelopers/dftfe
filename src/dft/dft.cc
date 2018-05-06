@@ -43,6 +43,8 @@
 #include <boost/random/normal_distribution.hpp>
 #include <interpolateFieldsFromPreviousMesh.h>
 #include <linearAlgebraOperations.h>
+#include <vectorUtilities.h>
+
 
 namespace dftfe {
 
@@ -107,7 +109,6 @@ namespace dftfe {
   template<unsigned int FEOrder>
   dftClass<FEOrder>::~dftClass()
   {
-    delete eigenPtr;
     delete symmetryPtr;
     matrix_free_data.clear();
     delete forcePtr;
@@ -394,6 +395,15 @@ namespace dftfe {
     initElectronicFields(usePreviousGroundStateFields);
 
     //
+    //store constraintEigen Matrix entries into STL vector
+    //
+    constraintsNoneEigenDataInfo.initialize(vChebyshev.get_partitioner(),
+					    constraintsNoneEigen);
+
+    constraintsNoneDataInfo.initialize(matrix_free_data.get_vector_partitioner(),
+				       constraintsNone);
+
+    //
     //initialize pseudopotential data for both local and nonlocal part
     //
     initPseudoPotentialAll();
@@ -494,15 +504,18 @@ namespace dftfe {
 
     energyCalculator energyCalc(mpi_communicator, interpoolcomm);
 
-    //
-    //solve
-    //
-    computing_timer.enter_section("scf solve");
-
+   
 
     //set up poisson solver
     dealiiLinearSolver dealiiCGSolver(mpi_communicator, dealiiLinearSolver::CG);
     poissonSolverProblem<FEOrder> phiTotalSolverProblem(mpi_communicator);
+
+
+    //
+    //create eigenClass object
+    //
+    eigenClass<FEOrder> kohnShamDFTEigenOperator(this,mpi_communicator);
+    kohnShamDFTEigenOperator.init();
 
 
     //
@@ -511,13 +524,28 @@ namespace dftfe {
     chebyshevOrthogonalizedSubspaceIterationSolver subspaceIterationSolver(dftParameters::lowerEndWantedSpectrum,
 									   0.0);
 
+
+    //
+    //precompute shapeFunctions and shapeFunctionGradients and shapeFunctionGradientIntegrals
+    //
+    computing_timer.enter_section("shapefunction data");
+    kohnShamDFTEigenOperator.preComputeShapeFunctionGradientIntegrals();
+    computing_timer.exit_section("shapefunction data");
+
+    
+    //
+    //solve
+    //
+    computing_timer.enter_section("scf solve");
+
+
     //
     //Begin SCF iteration
     //
     unsigned int scfIter=0;
     double norm = 1.0;
     //CAUTION: Choosing a looser tolernace might lead to failed tests
-    const double adaptiveChebysevFilterPassesTol=1e-2;
+    const double adaptiveChebysevFilterPassesTol=1e-02;
 
 
     pcout<<std::endl;
@@ -596,6 +624,10 @@ namespace dftfe {
 
 	computing_timer.exit_section("phiTot solve");
 
+
+	
+
+
 	//
 	//eigen solve
 	//
@@ -614,15 +646,22 @@ namespace dftfe {
 	      {
 		if(dftParameters::xc_id < 4)
 		  {
-		    eigenPtr->computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, pseudoValues);
+		    kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, pseudoValues);
 		  }
 		else if (dftParameters::xc_id == 4)
 		  {
-		    eigenPtr->computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, pseudoValues);
+		    kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, pseudoValues);
 		  }
 		for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
 		  {
-		    eigenPtr->reinitkPointIndex(kPoint);
+		    kohnShamDFTEigenOperator.reinitkPointIndex(kPoint);
+
+
+		    computing_timer.enter_section("Hamiltonian Matrix Computation"); 
+		    kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint);
+		    computing_timer.exit_section("Hamiltonian Matrix Computation");
+
+
 		    for(unsigned int j = 0; j < dftParameters::numPass; ++j)
 		      {
 			if (dftParameters::verbosity==2)
@@ -630,6 +669,7 @@ namespace dftfe {
 
 			kohnShamEigenSpaceCompute(s,
 						  kPoint,
+						  kohnShamDFTEigenOperator,
 						  subspaceIterationSolver,
 						  residualNormWaveFunctionsAllkPointsSpins[s][kPoint]);
 		      }
@@ -668,13 +708,14 @@ namespace dftfe {
 		for(unsigned int s=0; s<2; ++s)
 		  for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
 		    {
-		      eigenPtr->reinitkPointIndex(kPoint);
+		      kohnShamDFTEigenOperator.reinitkPointIndex(kPoint);
 		      if (dftParameters::verbosity==2)
 			pcout<< "Beginning Chebyshev filter pass "<< dftParameters::numPass+count<< " for spin "<< s+1<<std::endl;;
 
 
 		      kohnShamEigenSpaceCompute(s,
 						kPoint,
+						kohnShamDFTEigenOperator,
 						subspaceIterationSolver,
 						residualNormWaveFunctionsAllkPointsSpins[s][kPoint]);
 
@@ -708,16 +749,21 @@ namespace dftfe {
 
 	    if(dftParameters::xc_id < 4)
 	      {
-		eigenPtr->computeVEff(rhoInValues, d_phiTotRhoIn, d_phiExt, pseudoValues);
+		kohnShamDFTEigenOperator.computeVEff(rhoInValues, d_phiTotRhoIn, d_phiExt, pseudoValues);
 	      }
 	    else if (dftParameters::xc_id == 4)
 	      {
-		eigenPtr->computeVEff(rhoInValues, gradRhoInValues, d_phiTotRhoIn, d_phiExt, pseudoValues);
+		kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, d_phiTotRhoIn, d_phiExt, pseudoValues);
 	      }
 
 	    for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
 	      {
-		eigenPtr->reinitkPointIndex(kPoint);
+		kohnShamDFTEigenOperator.reinitkPointIndex(kPoint);
+		
+		computing_timer.enter_section("Hamiltonian Matrix Computation"); 
+		kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint);
+		computing_timer.exit_section("Hamiltonian Matrix Computation");
+
 		for(unsigned int j = 0; j < dftParameters::numPass; ++j)
 		  {
 		    if (dftParameters::verbosity==2)
@@ -726,6 +772,7 @@ namespace dftfe {
 
 		    kohnShamEigenSpaceCompute(0,
 					      kPoint,
+					      kohnShamDFTEigenOperator,
 					      subspaceIterationSolver,
 					      residualNormWaveFunctionsAllkPoints[kPoint]);
 
@@ -753,14 +800,16 @@ namespace dftfe {
 	    unsigned int count=1;
 	    while (maxRes>adaptiveChebysevFilterPassesTol)
 	      {
+
 		for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
 		  {
-		    eigenPtr->reinitkPointIndex(kPoint);
+		    kohnShamDFTEigenOperator.reinitkPointIndex(kPoint);
 		    if (dftParameters::verbosity==2)
 		      pcout<< "Beginning Chebyshev filter pass "<< dftParameters::numPass+count<<std::endl;
 
 		    kohnShamEigenSpaceCompute(0,
 					      kPoint,
+					      kohnShamDFTEigenOperator,
 					      subspaceIterationSolver,
 					      residualNormWaveFunctionsAllkPoints[kPoint]);
 		  }

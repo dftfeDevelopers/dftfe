@@ -188,15 +188,15 @@ namespace dftParameters
     {
         prm.enter_subsection ("Monkhorst-Pack (MP) grid generation");
         {
-	    prm.declare_entry("SAMPLING POINTS 1", "2",
+	    prm.declare_entry("SAMPLING POINTS 1", "1",
 			      Patterns::Integer(1,100),
 			      "[Standard] Number of Monkhorts-Pack grid points to be used along reciprocal latttice vector 1.");
 
-	    prm.declare_entry("SAMPLING POINTS 2", "2",
+	    prm.declare_entry("SAMPLING POINTS 2", "1",
 			      Patterns::Integer(1,100),
 			      "[Standard] Number of Monkhorts-Pack grid points to be used along reciprocal latttice vector 2.");
 
-	    prm.declare_entry("SAMPLING POINTS 3", "2",
+	    prm.declare_entry("SAMPLING POINTS 3", "1",
 			      Patterns::Integer(1,100),
 			      "[Standard] Number of Monkhorts-Pack grid points to be used along reciprocal latttice vector 3.");
 
