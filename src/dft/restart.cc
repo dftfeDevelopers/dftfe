@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Sambit Das(2018)
+// @author Sambit Das
 //
 
 //source file for restart functionality in dftClass
@@ -228,4 +228,19 @@ void dftClass<FEOrder>::loadTriaInfoAndRhoData()
 	 gradRhoOutValuesSpinPolarized=&(gradRhoOutValsSpinPolarized.back());
      }
      pcout<< "...Reading from checkpoint done." << std::endl;
+}
+
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::writeDomainAndAtomCoordinates() const
+{
+     dftUtils::writeDataIntoFile(d_domainBoundingVectors,
+			        "domainBoundingVectors.chk");
+
+#ifdef ENABLE_PERIODIC_BC
+     dftUtils::writeDataIntoFile(atomLocationsFractional,
+			        "atomsFracCoord.chk");
+#else
+     dftUtils::writeDataIntoFile(atomLocations,
+			        "atomsCartCoord.chk");
+#endif
 }

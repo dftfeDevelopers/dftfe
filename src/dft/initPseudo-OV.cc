@@ -41,16 +41,16 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
   //
   QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
   //FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values);
-  FEValues<3> fe_values(FE, quadrature, update_values | update_JxW_values| update_quadrature_points);  
+  FEValues<3> fe_values(FE, quadrature, update_values | update_JxW_values| update_quadrature_points);
   const unsigned int numberNodesPerElement  = FE.dofs_per_cell;
   const unsigned int numberQuadraturePoints = quadrature.size();
-  
+
 
   //
   //get number of kPoints
   //
-  int maxkPoints = d_maxkPoints;
-  
+  const unsigned int maxkPoints = d_kPointWeights.size();
+
 
   //
   //preallocate element Matrices
@@ -156,12 +156,12 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
 		    {
 
 		      int chargeId = imageIdsList[iImageAtomCount];
-			
+
 		      //const Point & chargePoint = chargeId < numberGlobalCharges? d_nuclearContainer.getGlobalPoint(chargeId,meshId):
 		      //d_nuclearContainer.getImagePoint(chargeId-numberGlobalCharges,meshId);
 
 		      Point<3> chargePoint(0.0,0.0,0.0);
-			
+
 		      if(chargeId < numberGlobalCharges)
 			{
 			  chargePoint[0] = atomLocations[chargeId][2];
@@ -181,13 +181,13 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
 		      x[0] = quadPoint[0] - chargePoint[0];
 		      x[1] = quadPoint[1] - chargePoint[1];
 		      x[2] = quadPoint[2] - chargePoint[2];
-		    
+
 		      //
 		      // get the spherical coordinates from cartesian
 		      //
 		      double r,theta,phi;
 		      pseudoUtils::convertCartesianToSpherical(x,r,theta,phi);
-		    
+
 
 		      double sphericalHarmonicVal, radialProjVal, projectorFunctionValue;
 		      if(r <= d_pspTail)//d_outerMostPointPseudoWaveFunctionsData[globalWaveSplineId])
@@ -197,7 +197,7 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
 					       &d_pseudoWaveFunctionSplines[globalWaveSplineId]);
 
 			  pseudoUtils::getSphericalHarmonicVal(theta,phi,lQuantumNumber,mQuantumNumber,sphericalHarmonicVal);
-			
+
 			  projectorFunctionValue = radialProjVal*sphericalHarmonicVal;
 
 			}
@@ -235,7 +235,7 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
 		    }//image atom loop
 
 		}//end of quad loop
-	
+
 
 	      //
 	      // access shape functions values at quad points
@@ -262,14 +262,13 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
 		      d_nonLocalProjectorElementMatrices[iAtom][iElemComp][kPoint][numberNodesPerElement*iPseudoWave + iNode].imag(tempImag);
 		      d_nonLocalProjectorElementMatricesConjugate[iAtom][iElemComp][kPoint][numberNodesPerElement*iPseudoWave + iNode].real(tempReal);
 		      d_nonLocalProjectorElementMatricesConjugate[iAtom][iElemComp][kPoint][numberNodesPerElement*iPseudoWave + iNode].imag(-tempImag);
-
 #endif		      
 		    }
 
 		}
 
 	    }//end of iPseudoWave loop
-	
+
 
 	}//element loop
 
@@ -292,16 +291,16 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
   d_pseudoWaveFunctionSplines.clear();
   d_nonLocalPseudoPotentialConstants.clear();
   // Store the Map between the atomic number and the waveFunction details
-  // (i.e. map from atomicNumber to a 2D vector storing atom specific wavefunction Id and its corresponding 
+  // (i.e. map from atomicNumber to a 2D vector storing atom specific wavefunction Id and its corresponding
   // radial and angular Ids)
   // (atomicNumber->[atomicWaveFunctionId][Global Spline Id, l quantum number, m quantum number]
   //
   std::map<unsigned int, std::vector<std::vector<int> > > atomicNumberToWaveFunctionIdDetails;
   std::map<unsigned int, std::vector<std::vector<int> > > atomicNumberToPotentialIdMap;
   std::map<unsigned int, std::vector< std::vector<double> >> denominatorData;
-  
+
   //
-  // Store the number of unique splines encountered so far 
+  // Store the number of unique splines encountered so far
   //
   unsigned int cumulativeSplineId    = 0;
   unsigned int cumulativePotSplineId = 0;
@@ -352,7 +351,7 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
       // Skip the rest in the first line and proceed to next line
       //
       readPseudoDataFileNames.ignore();
-      
+
       if (dftParameters::verbosity==2)
               pcout << "Number of projectors for atom with Z: " << atomicNumber<<" is " << numberAtomicWaveFunctions << std::endl;
 
@@ -360,7 +359,7 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
       //string to store each line of the file
       //
       std::string readLine;
-  
+
       //
       // set to store the radial(spline) function Ids
       //
@@ -371,17 +370,17 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
       //
       for(unsigned int i = 0; i < numberAtomicWaveFunctions; ++i)
 	{
-  
+
 	  std::vector<int>  & radAndAngularFunctionId = atomicFunctionIdDetails[i];
-      
+
 	  radAndAngularFunctionId.resize(3,0);
-      
+
 	  //
-	  // get the next line 
+	  // get the next line
 	  //
-	  std::getline(readPseudoDataFileNames, readLine);       
+	  std::getline(readPseudoDataFileNames, readLine);
 	  std::istringstream lineString(readLine);
-     
+
 	  unsigned int count = 0;
 	  int Id;
 	  double mollifierRadius;
@@ -391,21 +390,21 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
 	      if(count < 3)
 		{
 
-		  Id = atoi(dummyString.c_str()); 
+		  Id = atoi(dummyString.c_str());
 		  //
 		  // insert the radial(spline) Id to the splineIds set
 		  //
-		  if(count == 1) 
-		    radFunctionIds.insert(Id); 
+		  if(count == 1)
+		    radFunctionIds.insert(Id);
 
-                  if(count == 0) 
-		    splineFunctionIds.insert(Id); 
+                  if(count == 0)
+		    splineFunctionIds.insert(Id);
 
 		  radAndAngularFunctionId[count] = Id;
-	
+
 		}
 	      if (count==3) {
-		 Id = atoi(dummyString.c_str()); 
+		 Id = atoi(dummyString.c_str());
 		 projector[(*it)][i] = Id ;
 		 }
 	      if (count>3)
@@ -414,11 +413,11 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
 		  std::cerr<<"Invalid argument in the SingleAtomData file"<<std::endl;
 		  exit(-1);
 		}
- 	
-	      count++;     
-   
-	    } 
-       
+
+	      count++;
+
+	    }
+
 	  //
 	  // Add the cumulativeSplineId to radialId
 	  //
@@ -432,9 +431,9 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
 		projector[(*it)][i] = projector[(*it)][i-1]+1;
 	  if (i>0 && lquantum[i]==lquantum[i-1] && mquantum[i]!=mquantum[i-1])
 		projector[(*it)][i] = projector[(*it)][i-1];*/
-		
+
 	  radAndAngularFunctionId[0] += cumulativeSplineId;
-	  
+
 	  if (dftParameters::verbosity==2)
 	  {
 	    pcout << "Radial and Angular Functions Ids: " << radAndAngularFunctionId[0] << " " << radAndAngularFunctionId[1] << " " << radAndAngularFunctionId[2] << std::endl;
@@ -463,21 +462,21 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
       std::vector<alglib::real_1d_array> atomicRadialNodes(splineFunctionIds.size());
       std::vector<alglib::real_1d_array> atomicRadialFunctionNodalValues(splineFunctionIds.size());
       std::vector<double> outerMostRadialPointWaveFunction(splineFunctionIds.size());
-      
-      //pcout << "Number radial Pseudo wavefunctions for atomic number " << atomicNumber << " is: " << radFunctionIds.size() << std::endl; 
+
+      //pcout << "Number radial Pseudo wavefunctions for atomic number " << atomicNumber << " is: " << radFunctionIds.size() << std::endl;
 
       //
       // string to store the radial function file name
       //
       std::string tempProjRadialFunctionFileName;
-  
+
       unsigned int projId = 0, numProj ;
 
       for(unsigned int i = 0; i < radFunctionIds.size(); ++i)
 	{
-          
+
 	  //
-	  // get the radial function file name (name local to the directory) 
+	  // get the radial function file name (name local to the directory)
 	  //
 	  readPseudoDataFileNames >> tempProjRadialFunctionFileName;
           readPseudoDataFileNames >> numProj;
@@ -490,21 +489,21 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
 	  // 2D vector to store the radial coordinate and its corresponding
 	  // function value
 	  std::vector< std::vector<double> > radialFunctionData(0);
-         
+
 	  //
 	  //read the radial function file
 	  //
 	  dftUtils::readFile(numProj+1,radialFunctionData,projRadialFunctionFileName);
 
-        
+
 	  int numRows = radialFunctionData.size();
-   
+
 	  //std::cout << "Number of Rows: " << numRows << std::endl;
-    
+
           for (int iProj = 0; iProj<numProj; ++iProj) {
 	  double xData[numRows];
 	  double yData[numRows];
-  
+
 	  for (int iRow = 0; iRow < numRows; ++iRow)
 	    {
 	      xData[iRow] = radialFunctionData[iRow][0];
@@ -512,13 +511,13 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
 	    }
 
 	  outerMostRadialPointWaveFunction[projId] = xData[numRows - 1];
-  
+
 	  alglib::real_1d_array & x = atomicRadialNodes[projId];
 	  atomicRadialNodes[projId].setcontent(numRows, xData);
-  
+
 	  alglib::real_1d_array & y = atomicRadialFunctionNodalValues[projId];
 	  atomicRadialFunctionNodalValues[projId].setcontent(numRows, yData);
-  
+
 	  alglib::ae_int_t natural_bound_type = 1;
 	  alglib::spline1dbuildcubic(atomicRadialNodes[projId],
 				     atomicRadialFunctionNodalValues[projId],
@@ -532,14 +531,14 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
   	  projId++ ;
 	  }
 	}
-        d_pseudoWaveFunctionSplines.insert(d_pseudoWaveFunctionSplines.end(), atomicSplines.begin(), atomicSplines.end()); 
+        d_pseudoWaveFunctionSplines.insert(d_pseudoWaveFunctionSplines.end(), atomicSplines.begin(), atomicSplines.end());
         //
-     
+
 	  //
 	  // 2D vector to store the radial coordinate and its corresponding
 	  // function value
 	  std::vector< std::vector<double> > denominator(0);
-         
+
 	  //
 	  //read the radial function file
 	  //
@@ -553,12 +552,12 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
 
         readPseudoDataFileNames.close() ;
   }
-   
+
   //
   // Get the number of charges present in the system
   //
   unsigned int numberGlobalCharges  = atomLocations.size();
-  
+
   //
   //store information for non-local atoms
   //
@@ -570,16 +569,16 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
 
   for(unsigned int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
     {
-  
+
       //
       // Get the atomic number for current nucleus
       //
       unsigned int atomicNumber =  atomLocations[iCharge][0];
-  
+
       //
       // Get the function id details for the current nucleus
       //
-      std::vector<std::vector<int> > & atomicFunctionIdDetails = 
+      std::vector<std::vector<int> > & atomicFunctionIdDetails =
 	atomicNumberToWaveFunctionIdDetails[atomicNumber];
 
 
@@ -593,8 +592,8 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
 	  nonLocalAtomGlobalChargeIds.push_back(iCharge);
 	  d_numberPseudoAtomicWaveFunctions.push_back(numberAtomicWaveFunctions);
 	}
-	  
-  
+
+
       //
       // Add the atomic wave function details to the global wave function vectors
       //
@@ -608,13 +607,13 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
       // insert the master charge Id into the map first
       //
       globalChargeIdToImageIdMap[iCharge].push_back(iCharge);
-  
+
     }//end of iCharge loop
 
   d_nonLocalAtomGlobalChargeIds = nonLocalAtomGlobalChargeIds;
   int numberNonLocalAtoms = d_nonLocalAtomGlobalChargeIds.size();
-  
-  if (dftParameters::verbosity==2)  
+
+  if (dftParameters::verbosity==2)
      pcout<<"Number of Nonlocal Atoms: " <<d_nonLocalAtomGlobalChargeIds.size()<<std::endl;
   //
   //fill up global charge image Id map by inserting the image atoms
@@ -640,7 +639,7 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
 
     for(int iAtom = 0; iAtom < numberNonLocalAtoms; ++iAtom)
     {
-		
+
           int numberPseudoWaveFunctions = d_numberPseudoAtomicWaveFunctions[iAtom];
 	   d_nonLocalPseudoPotentialConstants[iAtom].resize(numberPseudoWaveFunctions,0.0);
 	  /*
@@ -651,9 +650,9 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
 	  std::ifstream readPseudoDataFileNames(pseudoAtomDataFile);
           if(readPseudoDataFileNames.is_open()){
 	  while (!readPseudoDataFileNames.eof()) {
-	     std::getline(readPseudoDataFileNames, readLine);       
-	     std::istringstream lineString(readLine);  
-	     while(lineString >> tempDenominatorDataFileName)               
+	     std::getline(readPseudoDataFileNames, readLine);
+	     std::istringstream lineString(readLine);
+	     while(lineString >> tempDenominatorDataFileName)
 	            pcout << tempDenominatorDataFileName.c_str() << std::endl ;
 	  }
 	  }
@@ -663,25 +662,25 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
 	  pcout << tempDenominatorDataFileName.c_str() << std::endl ;
 	  char denominatorDataFileName[256];
 	  sprintf(denominatorDataFileName, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/%s", DFT_PATH.c_str(),atomLocations[iAtom][0], tempDenominatorDataFileName.c_str());
-     
+
 	  //
 	  // 2D vector to store the radial coordinate and its corresponding
 	  // function value
 	  std::vector< std::vector<double> > denominatorData(0);
-         
+
 	  //
 	  //read the radial function file
 	  //
 	  readFile(numberPseudoWaveFunctions,denominatorData,denominatorDataFileName);*/
-      
+
       for(int iPseudoWave = 0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
 	{
 	  d_nonLocalPseudoPotentialConstants[iAtom][iPseudoWave] = denominatorData[atomLocations[iAtom][0]][projector[atomLocations[iAtom][0]][iPseudoWave]][projector[atomLocations[iAtom][0]][iPseudoWave]];
 	  //d_nonLocalPseudoPotentialConstants[iAtom][iPseudoWave] = 1.0/d_nonLocalPseudoPotentialConstants[iAtom][iPseudoWave];
 	  if (dftParameters::verbosity==2)
 	     pcout<<"The value of 1/nlpConst corresponding to atom and lCount "<<iAtom<<' '<<
-	      iPseudoWave<<" is "<<d_nonLocalPseudoPotentialConstants[iAtom][iPseudoWave]<<std::endl;	
-	  
+	      iPseudoWave<<" is "<<d_nonLocalPseudoPotentialConstants[iAtom][iPseudoWave]<<std::endl;
+
 	}
 
 
@@ -715,7 +714,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
   d_elementIteratorsInAtomCompactSupport.resize(numberNonLocalAtoms);
   d_elementIdsInAtomCompactSupport.resize(numberNonLocalAtoms);
   d_elementOneFieldIteratorsInAtomCompactSupport.resize(numberNonLocalAtoms);
-  d_nonLocalAtomIdsInCurrentProcess.clear();  
+  d_nonLocalAtomIdsInCurrentProcess.clear();
 
   //
   //loop over nonlocal atoms
@@ -735,7 +734,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
   //
   QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
   //FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values);
-  FEValues<3> fe_values(FE, quadrature, update_quadrature_points);  
+  FEValues<3> fe_values(FE, quadrature, update_quadrature_points);
   const unsigned int numberQuadraturePoints = quadrature.size();
   //const unsigned int numberElements         = triangulation.n_locally_owned_active_cells();
    typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
@@ -798,7 +797,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
 
 	      iElem += 1;
 	      int lTemp = 1000 ;
-	      
+
 	      for(int iPsp = 0; iPsp < numberPseudoWaveFunctions; ++iPsp)
 		{
 		  sparseFlag = 0;
@@ -818,7 +817,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
 			{
 
 			  int chargeId = imageIdsList[iImageAtomCount];
-			
+
 			  //const Point & chargePoint = chargeId < numberGlobalCharges? d_nuclearContainer.getGlobalPoint(chargeId,meshId):
 			  //d_nuclearContainer.getImagePoint(chargeId-numberGlobalCharges,meshId);
 
@@ -844,7 +843,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
 			      pseudoUtils::getRadialFunctionVal( r, radialProjVal, &d_pseudoWaveFunctionSplines[globalWaveSplineId] );
 			  else
 			      radialProjVal = 0.0;
-		      
+
 			  if(fabs(radialProjVal) >= nlpTolerance)
 			    {
 			      sparseFlag = 1;
@@ -856,14 +855,14 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
 			break;
 
 		    }//quadrature loop
-		
+
 		  }
 
 		  if(sparseFlag == 1)
 		    break;
 
-		}//iPsp loop ("l" loop) 
-	        
+		}//iPsp loop ("l" loop)
+
 	      if(sparseFlag==1) {
 		d_sparsityPattern[iAtom][iElem] = matCount;
 		d_elementIteratorsInAtomCompactSupport[iAtom].push_back(cellEigen);
@@ -882,11 +881,11 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
          pcout<<"No.of non zero elements in the compact support of atom "<<iAtom<<" is "<<d_elementIteratorsInAtomCompactSupport[iAtom].size()<<std::endl;
 
       if (isAtomIdInProcessor)
-          d_nonLocalAtomIdsInCurrentProcess.push_back(iAtom);      
+          d_nonLocalAtomIdsInCurrentProcess.push_back(iAtom);
 
     }//atom loop
 
-  d_nonLocalAtomIdsInElement.clear();  
+  d_nonLocalAtomIdsInElement.clear();
   d_nonLocalAtomIdsInElement.resize(numberElements);
 
 
@@ -902,7 +901,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
    //
    //data structures for memory optimization of projectorKetTimesVector
    //
-   std::vector<unsigned int> nonLocalAtomIdsAllProcessFlattened; 
+   std::vector<unsigned int> nonLocalAtomIdsAllProcessFlattened;
    pseudoUtils::exchangeLocalList(d_nonLocalAtomIdsInCurrentProcess,
                                   nonLocalAtomIdsAllProcessFlattened,
                                   n_mpi_processes,
@@ -926,7 +925,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
      }
    }
    nonLocalAtomIdsAllProcessFlattened.clear();
-   
+
    IndexSet nonLocalOwnedAtomIdsInCurrentProcess; nonLocalOwnedAtomIdsInCurrentProcess.set_size(numberNonLocalAtoms);
    nonLocalOwnedAtomIdsInCurrentProcess.add_indices(d_nonLocalAtomIdsInCurrentProcess.begin(),d_nonLocalAtomIdsInCurrentProcess.end());
    IndexSet nonLocalGhostAtomIdsInCurrentProcess(nonLocalOwnedAtomIdsInCurrentProcess);
@@ -950,7 +949,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
                                   mpi_communicator);
    //renumbering to make contiguous set of nonLocal atomIds
    std::map<int, int> oldToNewNonLocalAtomIds;
-   std::map<int, int> newToOldNonLocalAtomIds;   
+   std::map<int, int> newToOldNonLocalAtomIds;
    unsigned int startingCount=0;
    for (unsigned int iProc=0; iProc< n_mpi_processes; iProc++)
    {
@@ -959,7 +958,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
         startingCount+=ownedNonLocalAtomIdsSizesAllProcess[iProc];
       }
    }
-    
+
    IndexSet nonLocalOwnedAtomIdsInCurrentProcessRenum, nonLocalGhostAtomIdsInCurrentProcessRenum;
    nonLocalOwnedAtomIdsInCurrentProcessRenum.set_size(numberNonLocalAtoms);
    nonLocalGhostAtomIdsInCurrentProcessRenum.set_size(numberNonLocalAtoms);
@@ -968,7 +967,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
        oldToNewNonLocalAtomIds[*it]=startingCount;
        newToOldNonLocalAtomIds[startingCount]=*it;
        nonLocalOwnedAtomIdsInCurrentProcessRenum.add_index(startingCount);
-       startingCount++; 
+       startingCount++;
    }
 
    pseudoUtils::exchangeNumberingMap(oldToNewNonLocalAtomIds,
@@ -977,7 +976,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
    pseudoUtils::exchangeNumberingMap(newToOldNonLocalAtomIds,
                                      n_mpi_processes,
                                      mpi_communicator);
-   
+
    for (IndexSet::ElementIterator it=nonLocalGhostAtomIdsInCurrentProcess.begin(); it!=nonLocalGhostAtomIdsInCurrentProcess.end(); it++)
    {
        unsigned int newAtomId=oldToNewNonLocalAtomIds[*it];
@@ -1004,7 +1003,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
      std::string s3(ss3.str());s3.pop_back(); std::string s4(ss4.str());s4.pop_back();
      std::cout<<"procId: "<< this_mpi_process<< " new owned: "<< s3<<" new ghost: "<< s4<< std::endl;
    }
-   AssertThrow(nonLocalOwnedAtomIdsInCurrentProcessRenum.is_ascending_and_one_to_one(mpi_communicator),ExcMessage("Incorrect renumbering and/or partitioning of non local atom ids"));    
+   AssertThrow(nonLocalOwnedAtomIdsInCurrentProcessRenum.is_ascending_and_one_to_one(mpi_communicator),ExcMessage("Incorrect renumbering and/or partitioning of non local atom ids"));
 
    int numberLocallyOwnedProjectors=0;
    int numberGhostProjectors=0;
@@ -1012,18 +1011,18 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
    for (IndexSet::ElementIterator it=nonLocalOwnedAtomIdsInCurrentProcessRenum.begin(); it!=nonLocalOwnedAtomIdsInCurrentProcessRenum.end(); it++)
    {
        coarseNodeIdsCurrentProcess.push_back(numberLocallyOwnedProjectors);
-       numberLocallyOwnedProjectors += d_numberPseudoAtomicWaveFunctions[newToOldNonLocalAtomIds[*it]];  
-       
+       numberLocallyOwnedProjectors += d_numberPseudoAtomicWaveFunctions[newToOldNonLocalAtomIds[*it]];
+
    }
 
    std::vector<unsigned int> ghostAtomIdNumberPseudoWaveFunctions;
    for (IndexSet::ElementIterator it=nonLocalGhostAtomIdsInCurrentProcessRenum.begin(); it!=nonLocalGhostAtomIdsInCurrentProcessRenum.end(); it++)
    {
-       const unsigned temp=d_numberPseudoAtomicWaveFunctions[newToOldNonLocalAtomIds[*it]]; 
+       const unsigned temp=d_numberPseudoAtomicWaveFunctions[newToOldNonLocalAtomIds[*it]];
        numberGhostProjectors += temp;
        ghostAtomIdNumberPseudoWaveFunctions.push_back(temp);
    }
-  
+
    std::vector<unsigned int> numberLocallyOwnedProjectorsCurrentProcess(1); numberLocallyOwnedProjectorsCurrentProcess[0]=numberLocallyOwnedProjectors;
    std::vector<unsigned int> numberLocallyOwnedProjectorsAllProcess;
    pseudoUtils::exchangeLocalList(numberLocallyOwnedProjectorsCurrentProcess,
@@ -1038,10 +1037,10 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
       {
 	 startingCount+=numberLocallyOwnedProjectorsAllProcess[iProc];
       }
-   }   
-  
+   }
+
    d_locallyOwnedProjectorIdsCurrentProcess.clear(); d_locallyOwnedProjectorIdsCurrentProcess.set_size(std::accumulate(numberLocallyOwnedProjectorsAllProcess.begin(),numberLocallyOwnedProjectorsAllProcess.end(),0));
-   std::vector<unsigned int> v(numberLocallyOwnedProjectors) ; 
+   std::vector<unsigned int> v(numberLocallyOwnedProjectors) ;
    std::iota (std::begin(v), std::end(v), startingCount);
    d_locallyOwnedProjectorIdsCurrentProcess.add_indices(v.begin(),v.end());
 
@@ -1051,13 +1050,13 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
    pseudoUtils::exchangeLocalList(coarseNodeIdsCurrentProcess,
                                   coarseNodeIdsAllProcess,
                                   n_mpi_processes,
-                                  mpi_communicator);  
+                                  mpi_communicator);
 
    d_ghostProjectorIdsCurrentProcess.clear(); d_ghostProjectorIdsCurrentProcess.set_size(std::accumulate(numberLocallyOwnedProjectorsAllProcess.begin(),numberLocallyOwnedProjectorsAllProcess.end(),0));
    unsigned int localGhostCount=0;
    for (IndexSet::ElementIterator it=nonLocalGhostAtomIdsInCurrentProcessRenum.begin(); it!=nonLocalGhostAtomIdsInCurrentProcessRenum.end(); it++)
    {
-      std::vector<unsigned int> g(ghostAtomIdNumberPseudoWaveFunctions[localGhostCount]); 
+      std::vector<unsigned int> g(ghostAtomIdNumberPseudoWaveFunctions[localGhostCount]);
       std::iota (std::begin(g), std::end(g), coarseNodeIdsAllProcess[*it]);
       d_ghostProjectorIdsCurrentProcess.add_indices(g.begin(),g.end());
       localGhostCount++;
@@ -1068,7 +1067,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
      std::stringstream ss2;d_ghostProjectorIdsCurrentProcess.print(ss2);
      std::string s1(ss1.str());s1.pop_back(); std::string s2(ss2.str());s2.pop_back();
      std::cout<<"procId: "<< this_mpi_process<< " projectors owned: "<< s1<< " projectors ghost: "<< s2<<std::endl;
-   }   
+   }
    AssertThrow(d_locallyOwnedProjectorIdsCurrentProcess.is_ascending_and_one_to_one(mpi_communicator),ExcMessage("Incorrect numbering and/or partitioning of non local projectors"));
 
    d_projectorIdsNumberingMapCurrentProcess.clear();
@@ -1081,7 +1080,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
        {
 	   d_projectorIdsNumberingMapCurrentProcess[std::make_pair(*it,i)]=coarseNodeIdsAllProcess[oldToNewNonLocalAtomIds[*it]]+i;
        }
-   } 
+   }
 
    for (IndexSet::ElementIterator it=nonLocalGhostAtomIdsInCurrentProcess.begin(); it!=nonLocalGhostAtomIdsInCurrentProcess.end(); it++)
    {
@@ -1091,12 +1090,12 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
        {
 	   d_projectorIdsNumberingMapCurrentProcess[std::make_pair(*it,i)]=coarseNodeIdsAllProcess[oldToNewNonLocalAtomIds[*it]]+i;
        }
-   }    
+   }
 
    if (false){
      for (std::map<std::pair<unsigned int,unsigned int>, unsigned int>::const_iterator it=d_projectorIdsNumberingMapCurrentProcess.begin(); it!=d_projectorIdsNumberingMapCurrentProcess.end();++it)
      {
-        std::cout << "procId: "<< this_mpi_process<<" ["<<it->first.first << "," << it->first.second << "] " << it->second<< std::endl;       
+        std::cout << "procId: "<< this_mpi_process<<" ["<<it->first.first << "," << it->first.second << "] " << it->second<< std::endl;
      }
    }
 
@@ -1107,14 +1106,14 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
 #else
   dealii::parallel::distributed::Vector<double > vec(d_locallyOwnedProjectorIdsCurrentProcess,
                                                      d_ghostProjectorIdsCurrentProcess,
-                                                     mpi_communicator);   
-#endif     
+                                                     mpi_communicator);
+#endif
   vec.update_ghost_values();
   d_projectorKetTimesVectorPar.resize(eigenVectors[0].size());
   for (unsigned int i=0; i<eigenVectors[0].size();++i)
   {
-      d_projectorKetTimesVectorPar[i].reinit(vec);    
-  }   
-   
+      d_projectorKetTimesVectorPar[i].reinit(vec);
+  }
+
 
 }

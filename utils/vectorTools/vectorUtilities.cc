@@ -37,9 +37,9 @@ namespace dftfe
       //
       //Get required sizes
       //
-      unsigned int n_ghosts   = partitioner->n_ghost_indices();
-      unsigned int localSize  = partitioner->local_size();
-      unsigned int totalSize  = localSize + n_ghosts;
+      const unsigned int n_ghosts   = partitioner->n_ghost_indices();
+      const unsigned int localSize  = partitioner->local_size();
+      const unsigned int totalSize  = localSize + n_ghosts;
 
       //
       //create data for new parallel layout
@@ -149,7 +149,7 @@ namespace dftfe
       typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
       for(unsigned int iMacroCell = 0; iMacroCell < numberMacroCells; ++iMacroCell)
 	{
-	  unsigned int n_sub_cells = matrix_free_data->n_components_filled(iMacroCell);
+	  const unsigned int n_sub_cells = matrix_free_data->n_components_filled(iMacroCell);
 	  for(unsigned int iCell = 0; iCell < n_sub_cells; ++iCell)
 	    {
 	      cellPtr = matrix_free_data->get_cell_iterator(iMacroCell,iCell);

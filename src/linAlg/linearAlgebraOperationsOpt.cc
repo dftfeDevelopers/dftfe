@@ -34,7 +34,7 @@ namespace dftfe{
     //chebyshev filtering of given subspace XArray
     //
     template<typename T>
-    void chebyshevFilter(operatorDFTClass * operatorMatrix,
+    void chebyshevFilter(operatorDFTClass & operatorMatrix,
 			 dealii::parallel::distributed::Vector<T> & XArray,
 			 const unsigned int numberWaveFunctions,
 			 const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayMacroCellLocalProcIndexIdMap,
@@ -78,7 +78,6 @@ namespace dftfe{
 			 YArray);
 
 
-
       T alpha1 = sigma1/e, alpha2 = -c;
 
       //
@@ -115,17 +114,6 @@ namespace dftfe{
 			     XArray);
 
 	  //
-	  //YNewArray = YNewArray - c*YArray and YNewArray = alpha1*YNewArray
-	  //
-	  //YNewArray.add(-c, YArray);
-	  //YNewArray *= alpha1;
-	
-	  //
-	  //YNewArray = YNewArray + alpha2*XArray
-	  //
-	  //YNewArray.add(alpha2,XArray);
-
-	  //
 	  //XArray = YArray
 	  //
 	  XArray.swap(YArray);
@@ -133,8 +121,6 @@ namespace dftfe{
 	  //
 	  //YArray = YNewArray
 	  //
-	  //YArray.swap(YNewArray);
-
 	  sigma = sigma2;
 
 	}
@@ -144,7 +130,7 @@ namespace dftfe{
     }
 
 #ifdef ENABLE_PERIODIC_BC
-    template void chebyshevFilter(operatorDFTClass * operatorMatrix,
+    template void chebyshevFilter(operatorDFTClass & operatorMatrix,
 				  dealii::parallel::distributed::Vector<std::complex<double> > & ,
 				  const unsigned int ,
 				  const std::vector<std::vector<dealii::types::global_dof_index> > & ,
@@ -155,7 +141,7 @@ namespace dftfe{
 				  const double );
 
 #else
-    template void chebyshevFilter(operatorDFTClass * operatorMatrix,
+    template void chebyshevFilter(operatorDFTClass & operatorMatrix,
 				  dealii::parallel::distributed::Vector<double> & ,
 				  const unsigned int ,
 				  const std::vector<std::vector<dealii::types::global_dof_index> > & ,

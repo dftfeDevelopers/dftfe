@@ -50,7 +50,7 @@ namespace dftfe{
      *
      * @return Return value indicating success or failure.
      */
-    virtual ReturnValueType solve(operatorDFTClass * operatorMatrix,
+    virtual ReturnValueType solve(operatorDFTClass & operatorMatrix,
 				  std::vector<vectorType> & eigenVectors,
 				  std::vector<double> & eigenValues) = 0;
 

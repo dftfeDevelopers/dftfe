@@ -369,7 +369,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 
     }
 
-  for(int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_maxkPoints; ++kPoint)
+  for(int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
     {
       for (unsigned int i = 0; i < numEigenValues; ++i)
 	{
@@ -398,36 +398,6 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 	  eigenVectors[kPoint][i].update_ghost_values();
 	}
     }
-
-
-  //
-  //multiply by M^0.5
-  //
-  /*for(int kPoint = 0; kPoint < (1+spinPolarized)*d_maxkPoints; ++kPoint)
-    {
-      for (unsigned int i = 0; i < eigenVectors[kPoint].size(); ++i)
-	{
-	  for(types::global_dof_index j = 0; j < eigenVectors[kPoint][i].size(); ++j)
-	     {
-	       if(eigenVectors[kPoint][i].in_local_range(j))
-		  {
-		    if(!constraintsNoneEigen.is_constrained(j) && std::abs(eigenPtr->invSqrtMassVector(j))>1.0e-15)
-		      (eigenVectors[kPoint][i])(j) /= eigenPtr->invSqrtMassVector(j);
-		  }
-	     }
-
-
-	  char buffer[100];
-	  sprintf(buffer, "norm %u: l1: %14.8e  l2:%14.8e\n",i, eigenVectors[kPoint][i].l1_norm(), eigenVectors[kPoint][i].l2_norm());
-
-	  eigenVectors[kPoint][i].zero_out_ghosts();
-	  eigenVectors[kPoint][i].compress(VectorOperation::insert);
-	  eigenVectors[kPoint][i].update_ghost_values();
-	  constraintsNoneEigen.distribute(eigenVectors[kPoint][i]);
-	  eigenVectors[kPoint][i].update_ghost_values();
-	}
-	}*/
-
 }
 
 //

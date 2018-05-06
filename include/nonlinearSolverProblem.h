@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,37 +13,37 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Sambit Das (2018)
-//
 
-#ifndef solverFunction_H_
-#define solverFunction_H_
+#ifndef nonlinearSolverProblem_H_
+#define nonlinearSolverProblem_H_
 #include "headers.h"
 
 namespace dftfe {
     /**
     * @brief Abstract class for solver functions.
+    *
+    * @author Sambit Das
     */
-    class solverFunction {
+    class nonlinearSolverProblem {
 
 	public:
 
 	/**
 	 * @brief Constructor.
 	 */
-	solverFunction();
+	nonlinearSolverProblem();
 
 	/**
 	 * @brief Destructor.
 	 */
-	virtual ~solverFunction() = 0;
+	virtual ~nonlinearSolverProblem() = 0;
 
 	/**
 	 * @brief Obtain number of unknowns.
 	 *
 	 * @return Number of unknowns.
 	 */
-	virtual int getNumberUnknowns() const = 0;
+	virtual unsigned int getNumberUnknowns() const = 0;
 
 	/**
 	 * @brief Compute function value (aka energy).
@@ -51,7 +51,6 @@ namespace dftfe {
 	 *
 	 * @return Function value.
 	 */
-	virtual double value() const = 0;
 	virtual void value(std::vector<double> & functionValue) = 0;
 
 
@@ -96,12 +95,10 @@ namespace dftfe {
 	 * @return A vector of int values for each unknown. Value of 1
 	 * indicates that the unknown should be counted and 0 otherwise.
 	 */
-	virtual std::vector<int>
+	virtual std::vector<unsigned int>
 	getUnknownCountFlag() const = 0;
-
-	virtual void writeMesh(std::string meshFileName)=0;
 
     };
 
 }
-#endif // solverFunction_H_
+#endif // nonlinearSolverProblem_H_

@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author  Phani Motamarri (2018)
+// @author  Phani Motamarri
 //
 
 
@@ -27,8 +27,8 @@ void eigenClass<FEOrder>::preComputeShapeFunctionGradientIntegrals()
   const unsigned int numberMacroCells = dftPtr->matrix_free_data.n_macro_cells();
   const unsigned int numberPhysicalCells = dftPtr->matrix_free_data.n_physical_cells();
   QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
-  FEValues<3> fe_values(dftPtr->FE, quadrature, update_values | update_gradients | update_JxW_values);
-  unsigned int numberDofsPerElement = dftPtr->FE.dofs_per_cell;
+  FEValues<3> fe_values(dftPtr->matrix_free_data.get_dof_handler().get_fe(), quadrature, update_values | update_gradients | update_JxW_values);
+  const unsigned int numberDofsPerElement = dftPtr->matrix_free_data.get_dof_handler().get_fe().dofs_per_cell;
   const unsigned int numberQuadraturePoints = quadrature.size();
 
   //

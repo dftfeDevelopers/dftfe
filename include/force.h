@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,16 +13,6 @@
 //
 // ---------------------------------------------------------------------
 
-/** @file force.h
- *  @brief computes configurational forces in KSDFT
- *
- *  This class computes and stores the configurational forces corresponding to geometry optimization.
- *  It uses the formulation in the paper by Motamarri et.al. (https://arxiv.org/abs/1712.05535)
- *  which provides an unified approach to atomic forces corresponding to internal atomic relaxation
- *  and cell stress corresponding to cell relaxation.
- *
- *  @author Sambit Das
- */
 
 #ifndef force_H_
 #define force_H_
@@ -35,10 +25,19 @@ using namespace dealii;
 
 namespace dftfe {
 
-
-    typedef dealii::parallel::distributed::Vector<double> vectorType;
+    // forward declaration
     template <unsigned int T> class dftClass;
 
+    /** @file force.h
+     *  @brief computes configurational forces in KSDFT
+     *
+     *  This class computes and stores the configurational forces corresponding to geometry optimization.
+     *  It uses the formulation in the paper by Motamarri et.al. (doi = {10.1103/PhysRevB.97.165132})
+     *  which provides an unified approach to atomic forces corresponding to internal atomic relaxation
+     *  and cell stress corresponding to cell relaxation.
+     *
+     *  @author Sambit Das
+     */
     template <unsigned int FEOrder>
     class forceClass
     {
@@ -139,17 +138,11 @@ namespace dftfe {
       void printStress();
 #endif
 
-    /** @brief Updates atom positions, remeshes/moves mesh and calls appropriate reinits.
-     *
-     *  Function to update the atom positions and mesh based on the provided displacement input.
-     *  Depending on the maximum displacement magnitude this function decides wether to do auto remeshing
-     *  or move mesh using Gaussian functions. Additionaly this function also wraps the atom position across the
-     *  periodic boundary if the atom moves across it.
-     *
-     *  @param globalAtomsDisplacements vector containing the displacements (from current position) of all atoms (global).
-     *  @return void.
-     */
-      void updateAtomPositionsAndMoveMesh(const std::vector<Point<C_DIM> > & globalAtomsDisplacements);
+     /** @brief get the value of Gaussian generator parameter (d_gaussianConstant).
+      * Gaussian generator: Gamma(r)= exp(-d_gaussianConstant*r^2).
+      *
+      */
+      double getGaussianGeneratorParameter() const;
 
     private:
 
@@ -334,9 +327,6 @@ namespace dftfe {
       /// whose psp tail intersects the local domain.
       std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > d_gradPseudoVLocAtoms;
 
-      /// meshMovementGaussianClass object
-      meshMovementGaussianClass gaussianMovePar;
-
       /// Gaussian generator constant. Gaussian generator: Gamma(r)= exp(-d_gaussianConstant*r^2)
       /// FIXME: Until the hanging nodes surface integral issue is fixed use a value >=4.0
       const double d_gaussianConstant=5.0;
@@ -383,9 +373,6 @@ namespace dftfe {
 
       /// Index of the d_dofHandlerForce in the MatrixFree object stored in dftClass. This is required to correctly use FEEvaluation class.
       unsigned int d_forceDofHandlerIndex;
-
-      /// Map of locally relevant global dof index in dofHandlerForce to the cartesian coordinates of the dof
-      std::map<types::global_dof_index, Point<C_DIM> > d_supportPointsForce;
 
       /// IndexSet of locally owned dofs of in d_dofHandlerForce the current processor
       IndexSet   d_locally_owned_dofsForce;

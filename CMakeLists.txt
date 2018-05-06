@@ -28,7 +28,7 @@ SET(TARGET_SRC
   ./src/symmetry/initGroupSymmetry.cc
   ./src/geoOpt/geoOptIon.cc
   ./src/geoOpt/geoOptCell.cc
-  ./src/solvers/solverFunction.cc
+  ./src/solvers/nonlinearSolverProblem.cc
   ./src/solvers/nonLinearSolver.cc
   ./src/solvers/linearSolver.cc
   ./src/solvers/cgSolvers/cgPRPNonLinearSolver.cc

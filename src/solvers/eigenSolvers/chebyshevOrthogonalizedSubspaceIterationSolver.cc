@@ -65,7 +65,7 @@ namespace dftfe{
   // initialize direction
   //
   eigenSolverClass::ReturnValueType
-  chebyshevOrthogonalizedSubspaceIterationSolver::solve(operatorDFTClass              * operatorMatrix,
+  chebyshevOrthogonalizedSubspaceIterationSolver::solve(operatorDFTClass           & operatorMatrix,
 							std::vector<vectorType>    & eigenVectors,
 							std::vector<double>        & eigenValues)
   {
@@ -135,7 +135,7 @@ namespace dftfe{
     //Set the constraints to zero
     //
     for(unsigned int i = 0; i < eigenVectors.size(); ++i)
-      operatorMatrix->getConstraintMatrixEigen()->set_zero(eigenVectors[i]);
+      operatorMatrix.getConstraintMatrixEigen()->set_zero(eigenVectors[i]);
 
     //
     //Split the complete wavefunctions into multiple blocks.
@@ -170,17 +170,17 @@ namespace dftfe{
 	    unsigned int localVectorSize = eigenVectors[0].local_size()/2;
 	    dealii::parallel::distributed::Vector<std::complex<double> > eigenVectorsFlattenedArray;
 
-	    vectorTools::createDealiiVector<std::complex<double> >(operatorMatrix->getMatrixFreeData()->get_vector_partitioner(),
-								   operatorMatrix->getMPICommunicator(),
-								   operatorMatrix->getMatrixFreeData()->get_dof_handler().n_dofs(),
+	    vectorTools::createDealiiVector<std::complex<double> >(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
+								   operatorMatrix.getMPICommunicator(),
+								   operatorMatrix.getMatrixFreeData()->get_dof_handler().n_dofs(),
 								   numberWaveFunctionsPerCurrentBlock,
 								   eigenVectorsFlattenedArray);
 #else
 	    unsigned int localVectorSize = eigenVectors[0].local_size();
 	    dealii::parallel::distributed::Vector<double> eigenVectorsFlattenedArray;
-	    vectorTools::createDealiiVector<double>(operatorMatrix->getMatrixFreeData()->get_vector_partitioner(),
-						    operatorMatrix->getMPICommunicator(),
-						    operatorMatrix->getMatrixFreeData()->get_dof_handler().n_dofs(),
+	    vectorTools::createDealiiVector<double>(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
+						    operatorMatrix.getMPICommunicator(),
+						    operatorMatrix.getMatrixFreeData()->get_dof_handler().n_dofs(),
 						    numberWaveFunctionsPerCurrentBlock,
 						    eigenVectorsFlattenedArray);
 #endif
@@ -190,7 +190,7 @@ namespace dftfe{
 	    //
 	    std::vector<std::vector<dealii::types::global_dof_index> > flattenedArrayCellLocalProcIndexIdMap,flattenedArrayMacroCellLocalProcIndexIdMap;
 	    vectorTools::computeCellLocalIndexSetMap(eigenVectorsFlattenedArray.get_partitioner(),
-						     operatorMatrix->getMatrixFreeData(),
+						     operatorMatrix.getMatrixFreeData(),
 						     numberWaveFunctionsPerCurrentBlock,
 						     flattenedArrayMacroCellLocalProcIndexIdMap,
 						     flattenedArrayCellLocalProcIndexIdMap);
@@ -208,11 +208,11 @@ namespace dftfe{
 	      {
 		for (unsigned int iWave = 0; iWave < numberWaveFunctionsPerCurrentBlock; ++iWave)
 		  {
-		    unsigned int flattenedArrayGlobalIndex = (numberWaveFunctionsPerCurrentBlock*(iNode + (operatorMatrix->getMatrixFreeData()->get_vector_partitioner()->local_range()).first) + iWave);
+		    unsigned int flattenedArrayGlobalIndex = (numberWaveFunctionsPerCurrentBlock*(iNode + (operatorMatrix.getMatrixFreeData()->get_vector_partitioner()->local_range()).first) + iWave);
 		    unsigned int flattenedArrayLocalIndex = flattenedArrayGlobalIndex - eigenVectorsFlattenedArray.get_partitioner()->local_range().first;
 #ifdef ENABLE_PERIODIC_BC
-		    eigenVectorsFlattenedArray.local_element(flattenedArrayLocalIndex).real(eigenVectors[iWave+lowIndex].local_element((*operatorMatrix->getLocalProcDofIndicesReal())[iNode]));
-		    eigenVectorsFlattenedArray.local_element(flattenedArrayLocalIndex).imag(eigenVectors[iWave+lowIndex].local_element((*operatorMatrix->getLocalProcDofIndicesImag())[iNode]));
+		    eigenVectorsFlattenedArray.local_element(flattenedArrayLocalIndex).real(eigenVectors[iWave+lowIndex].local_element((*operatorMatrix.getLocalProcDofIndicesReal())[iNode]));
+		    eigenVectorsFlattenedArray.local_element(flattenedArrayLocalIndex).imag(eigenVectors[iWave+lowIndex].local_element((*operatorMatrix.getLocalProcDofIndicesImag())[iNode]));
 #else
 		    eigenVectorsFlattenedArray.local_element(flattenedArrayLocalIndex) = eigenVectors[iWave+lowIndex].local_element(iNode);	
 #endif
@@ -243,11 +243,11 @@ namespace dftfe{
 	      {
 		for(unsigned int iWave = 0; iWave < numberWaveFunctionsPerCurrentBlock; ++iWave)
 		  {
-		    unsigned int flattenedArrayGlobalIndex = (numberWaveFunctionsPerCurrentBlock*(iNode + (operatorMatrix->getMatrixFreeData()->get_vector_partitioner()->local_range()).first) + iWave);
+		    unsigned int flattenedArrayGlobalIndex = (numberWaveFunctionsPerCurrentBlock*(iNode + (operatorMatrix.getMatrixFreeData()->get_vector_partitioner()->local_range()).first) + iWave);
 		    unsigned int flattenedArrayLocalIndex = flattenedArrayGlobalIndex - eigenVectorsFlattenedArray.get_partitioner()->local_range().first;
 #ifdef ENABLE_PERIODIC_BC	
-		    eigenVectors[iWave+lowIndex].local_element((*operatorMatrix->getLocalProcDofIndicesReal())[iNode]) = eigenVectorsFlattenedArray.local_element(flattenedArrayLocalIndex).real();
-		    eigenVectors[iWave+lowIndex].local_element((*operatorMatrix->getLocalProcDofIndicesImag())[iNode]) = eigenVectorsFlattenedArray.local_element(flattenedArrayLocalIndex).imag();
+		    eigenVectors[iWave+lowIndex].local_element((*operatorMatrix.getLocalProcDofIndicesReal())[iNode]) = eigenVectorsFlattenedArray.local_element(flattenedArrayLocalIndex).real();
+		    eigenVectors[iWave+lowIndex].local_element((*operatorMatrix.getLocalProcDofIndicesImag())[iNode]) = eigenVectorsFlattenedArray.local_element(flattenedArrayLocalIndex).imag();
 #else
 		    eigenVectors[iWave+lowIndex].local_element(iNode) = eigenVectorsFlattenedArray.local_element(flattenedArrayLocalIndex);
 #endif

@@ -24,11 +24,12 @@
 #include <headers.h>
 #include <constraintMatrixInfo.h>
 
-typedef dealii::parallel::distributed::Vector<double> vectorType;
 
 namespace dftfe{
   /**
    * @brief Base class for building the DFT operator and the action of operator on a vector
+   *
+   * @author Phani Motamarri
    */
   class operatorDFTClass {
 

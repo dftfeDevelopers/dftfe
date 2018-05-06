@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,29 +13,24 @@
 //
 // ---------------------------------------------------------------------
 
-/** @file geoOptIon.h
- *
- *  @brief This calls the relaxation solver for the atomic relaxations and acts as an interface between the
- *  solver and the force class. Currently we have option of one solver: Polak–Ribière nonlinear CG solver
- *  with secant based line search. In future releases, we will have more options like BFGS solver.
- *
- *  @author Sambit Das
- */
-
 #ifndef geoOptIon_H_
 #define geoOptIon_H_
-#include "solverFunction.h"
+#include "nonlinearSolverProblem.h"
 #include "constants.h"
 
 namespace dftfe {
 
     using namespace dealii;
     template <unsigned int FEOrder> class dftClass;
-    //
-    //Define geoOptIon class
-    //
+
+    /** @file geoOptIon.h
+     *
+     *  @brief problem class for atomic force relaxation solver.
+     *
+     *  @author Sambit Das
+     */
     template <unsigned int FEOrder>
-    class geoOptIon : public solverFunction
+    class geoOptIon : public nonlinearSolverProblem
     {
     public:
     /** @brief Constructor.
@@ -52,23 +47,20 @@ namespace dftfe {
       void init();
 
     /**
-     * @brief starts the atomic force relaxation.
+     * @brief calls the atomic force relaxation solver.
+     *
+     * Currently we have option of one solver: Polak–Ribière nonlinear CG solver
+     * with secant based line search. In future releases, we will have more options like BFGS solver.
      *
      */
       void run();
-
-    /**
-     * @brief writes the current fem mesh. The mesh changes as atoms move.
-     *
-     */
-      void writeMesh(std::string meshFileName);
 
     /**
      * @brief Obtain number of unknowns (total number of force components to be relaxed).
      *
      * @return int Number of unknowns.
      */
-      int getNumberUnknowns() const ;
+     unsigned int getNumberUnknowns() const ;
 
     /**
      * @brief Compute function gradient (aka forces).
@@ -86,9 +78,6 @@ namespace dftfe {
       void update(const std::vector<double> & solution);
 
       /// not implemented
-      double value() const;
-
-      /// not implemented
       void value(std::vector<double> & functionValue);
 
       /// not implemented
@@ -99,19 +88,19 @@ namespace dftfe {
       void solution(std::vector<double> & solution);
 
       /// not implemented
-      std::vector<int> getUnknownCountFlag() const;
+      std::vector<unsigned int> getUnknownCountFlag() const;
 
     private:
 
       /// storage for relaxation flags for each global atom.
       /// each atom has three flags corresponding to three components (0- no relax, 1- relax)
-      std::vector<int> d_relaxationFlags;
+      std::vector<unsigned int> d_relaxationFlags;
 
       /// maximum force component to be relaxed
       double d_maximumAtomForceToBeRelaxed;
 
       /// total number of calls to update()
-      int d_totalUpdateCalls;
+      unsigned int d_totalUpdateCalls;
 
       /// pointer to dft class
       dftClass<FEOrder>* dftPtr;

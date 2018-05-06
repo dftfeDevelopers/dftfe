@@ -249,7 +249,7 @@ void symmetryClass<FEOrder>::computeLocalrhoOut()
      //
      //pcout << " check 1.1 " << std::endl;
      //
-     for(unsigned int kPoint = 0; kPoint < (dftPtr->d_maxkPoints); ++kPoint)
+     for(unsigned int kPoint = 0; kPoint < (dftPtr->d_kPointWeights.size()); ++kPoint)
          {
          if (symmUnderGroup[kPoint][iSymm] ==1) {
 	     for(unsigned int i=0; i<(dftPtr->numEigenValues); ++i)

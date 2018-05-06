@@ -52,7 +52,7 @@ namespace  dftfe {
 #include "initPseudoOVForce.cc"
 #include "createBinObjectsForce.cc"
 #include "locateAtomCoreNodesForce.cc"
-#include "moveAtoms.cc"
+
 //
 //constructor
 //
@@ -61,7 +61,6 @@ forceClass<FEOrder>::forceClass(dftClass<FEOrder>* _dftPtr,const MPI_Comm &mpi_c
   dftPtr(_dftPtr),
   FEForce (FE_Q<3>(QGaussLobatto<1>(2)), 3), //linear shape function
   mpi_communicator (mpi_comm_replica),
-  gaussianMovePar(mpi_comm_replica),
   n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_comm_replica)),
   this_mpi_process (Utilities::MPI::this_mpi_process(mpi_comm_replica)),
   pcout(std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
@@ -121,7 +120,6 @@ void forceClass<FEOrder>::initUnmoved(const Triangulation<3,3> & triangulation)
 #else
   d_constraintsNoneForce.close();
 #endif
-  gaussianMovePar.init(triangulation,dftPtr->d_domainBoundingVectors);
 }
 
 //reinitialize force class object after mesh update
@@ -129,12 +127,8 @@ template<unsigned int FEOrder>
 void forceClass<FEOrder>::initMoved()
 {
   d_dofHandlerForce.distribute_dofs(FEForce);
-  d_supportPointsForce.clear();
-  DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), d_dofHandlerForce, d_supportPointsForce);
-
   createBinObjectsForce();
   locateAtomCoreNodesForce();
-  gaussianMovePar.initMoved(dftPtr->d_domainBoundingVectors);
 }
 
 //
@@ -246,6 +240,12 @@ Tensor<2,C_DIM,double>  forceClass<FEOrder>::getStress()
     return d_stress;
 }
 #endif
+
+template<unsigned int FEOrder>
+double  forceClass<FEOrder>::getGaussianGeneratorParameter() const
+{
+    return d_gaussianConstant;
+}
 
 template class forceClass<1>;
 template class forceClass<2>;
