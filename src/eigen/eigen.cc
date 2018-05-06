@@ -353,7 +353,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
     //
     //scale src vector with M^{-1/2}
     //
-    for(int i = 0; i < numberDofs; ++i)
+    for(unsigned int i = 0; i < numberDofs; ++i)
       {
 	std::complex<double> scalingCoeff = d_invSqrtMassVector.local_element(dftPtr->localProc_dof_indicesReal[i]);
 	zscal_(&numberWaveFunctions,
@@ -411,7 +411,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
     //
     //M^{-1/2}*H*M^{-1/2}*X
     //
-    for(int i = 0; i < numberDofs; ++i)
+    for(unsigned int i = 0; i < numberDofs; ++i)
       {
 	std::complex<double> scalingCoeff = d_invSqrtMassVector.local_element(dftPtr->localProc_dof_indicesReal[i]);
 	zscal_(&numberWaveFunctions,
@@ -424,7 +424,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
     //
     //unscale src M^{1/2}*X
     //
-    for(int i = 0; i < numberDofs; ++i)
+    for(unsigned int i = 0; i < numberDofs; ++i)
       {
 	std::complex<double> scalingCoeff = d_sqrtMassVector.local_element(dftPtr->localProc_dof_indicesReal[i]);
 	zscal_(&numberWaveFunctions,
@@ -450,7 +450,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
     //
     //scale src vector with M^{-1/2}
     //
-    for(int i = 0; i < numberDofs; ++i)
+    for(unsigned int i = 0; i < numberDofs; ++i)
       {
 	dscal_(&numberWaveFunctions,
 	       &d_invSqrtMassVector.local_element(i),
@@ -503,7 +503,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
     //
     //M^{-1/2}*H*M^{-1/2}*X
     //
-    for(int i = 0; i < numberDofs; ++i)
+    for(unsigned int i = 0; i < numberDofs; ++i)
       {
 	dscal_(&numberWaveFunctions,
 	       &d_invSqrtMassVector.local_element(i),
@@ -515,7 +515,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
     //
     //unscale src M^{1/2}*X
     //
-    for(int i = 0; i < numberDofs; ++i)
+    for(unsigned int i = 0; i < numberDofs; ++i)
       {
 	dscal_(&numberWaveFunctions,
 	       &d_sqrtMassVector.local_element(i),
@@ -534,7 +534,6 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 			       std::vector<vectorType> &dst)
   {
 
-    computing_timer.enter_section("eigenClass HX");
     for (unsigned int i = 0; i < src.size(); i++)
       {
 	src[i].scale(d_invSqrtMassVector); //M^{-1/2}*X
@@ -572,7 +571,6 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 	(*it).scale(d_sqrtMassVector); //MHMX
       }
 
-    computing_timer.exit_section("eigenClass HX");
   }
 
   //XHX
@@ -593,8 +591,6 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
     for(unsigned int i = 0; i < src.size(); ++i)
       tempPSI3[i].reinit(src[0]);
 
-
-    computing_timer.enter_section("eigenClass XHX");
 
     //HX
     HX(src, tempPSI3);
@@ -663,8 +659,6 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 		  MPI_C_DOUBLE_COMPLEX,
 		  MPI_SUM,
 		  mpi_communicator);
-  
-    computing_timer.exit_section("eigenClass XHX");
  
   }
 #else

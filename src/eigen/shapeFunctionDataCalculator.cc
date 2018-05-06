@@ -26,9 +26,9 @@ void eigenClass<FEOrder>::preComputeShapeFunctionGradientIntegrals()
 
 
   QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
-  FEValues<3> fe_values(dftPtr->FE, quadrature, update_values | update_gradients | update_JxW_values);
+  FEValues<3> fe_values(dftPtr->matrix_free_data.get_dof_handler().get_fe().dofs_per_cell, quadrature, update_values | update_gradients | update_JxW_values);
   
-  unsigned int numberDofsPerElement = dftPtr->matrix_free_data.get_dof_handler().get_fe().dofs_per_cell;
+  const unsigned int numberDofsPerElement = dftPtr->matrix_free_data.get_dof_handler().get_fe().dofs_per_cell;
   const unsigned int numberQuadraturePoints = quadrature.size();
 
   d_shapeFunctionValue.resize(numberQuadraturePoints*numberDofsPerElement,0.0);
