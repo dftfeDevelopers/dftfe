@@ -40,7 +40,7 @@ void eigenClass<FEOrder>::computeHamiltonianMatrix(unsigned int kPointIndex)
   //
   //compute cell-level stiffness matrix by going over dealii macrocells 
   //which allows efficient integration of cell-level stiffness matrix integrals
-  //
+  //using dealii vectorized arrays
   unsigned int iElem = 0;
   for(unsigned int iMacroCell = 0; iMacroCell < numberMacroCells; ++iMacroCell)
     {

@@ -26,7 +26,7 @@ void eigenClass<FEOrder>::preComputeShapeFunctionGradientIntegrals()
 
 
   QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
-  FEValues<3> fe_values(dftPtr->matrix_free_data.get_dof_handler().get_fe().dofs_per_cell, quadrature, update_values | update_gradients | update_JxW_values);
+  FEValues<3> fe_values(dftPtr->matrix_free_data.get_dof_handler().get_fe(), quadrature, update_values | update_gradients | update_JxW_values);
   
   const unsigned int numberDofsPerElement = dftPtr->matrix_free_data.get_dof_handler().get_fe().dofs_per_cell;
   const unsigned int numberQuadraturePoints = quadrature.size();
@@ -35,6 +35,10 @@ void eigenClass<FEOrder>::preComputeShapeFunctionGradientIntegrals()
 
   typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
 
+  //
+  //compute cell-level shapefunctiongradientintegral generator by going over dealii macrocells 
+  //which allows efficient integration of cell-level matrix integrals
+  //using dealii vectorized arrays
   for(int iMacroCell = 0; iMacroCell < numberMacroCells; ++iMacroCell)
     {
       std::vector<VectorizedArray<double> > & shapeFunctionGradients = d_cellShapeFunctionGradientIntegral[iMacroCell];
