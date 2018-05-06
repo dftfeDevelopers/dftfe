@@ -34,7 +34,7 @@ namespace dftfe{
     //chebyshev filtering of given subspace XArray
     //
     template<typename T>
-    void chebyshevFilter(operatorDFTClass * operatorMatrix,
+    void chebyshevFilter(operatorDFTClass & operatorMatrix,
 			 dealii::parallel::distributed::Vector<T> & XArray,
 			 const unsigned int numberWaveFunctions,
 			 const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayMacroCellLocalProcIndexIdMap,
@@ -67,11 +67,11 @@ namespace dftfe{
       //
       //call HX
       //
-      operatorMatrix->HX(XArray,
-			 numberWaveFunctions,
-			 flattenedArrayMacroCellLocalProcIndexIdMap,
-			 flattenedArrayCellLocalProcIndexIdMap,
-			 YArray);
+      operatorMatrix.HX(XArray,
+			numberWaveFunctions,
+			flattenedArrayMacroCellLocalProcIndexIdMap,
+			flattenedArrayCellLocalProcIndexIdMap,
+			YArray);
 
 
 
@@ -94,11 +94,11 @@ namespace dftfe{
 	  //
 	  //call HX
 	  //
-	  operatorMatrix->HX(YArray,
-			     numberWaveFunctions,
-			     flattenedArrayMacroCellLocalProcIndexIdMap,
-			     flattenedArrayCellLocalProcIndexIdMap,
-			     YNewArray);
+	  operatorMatrix.HX(YArray,
+			    numberWaveFunctions,
+			    flattenedArrayMacroCellLocalProcIndexIdMap,
+			    flattenedArrayCellLocalProcIndexIdMap,
+			    YNewArray);
 
 	  //
 	  //YNewArray = YNewArray - c*YArray and YNewArray = alpha1*YNewArray
@@ -130,7 +130,7 @@ namespace dftfe{
     }
 
 #ifdef ENABLE_PERIODIC_BC
-    template void chebyshevFilter(operatorDFTClass * operatorMatrix,
+    template void chebyshevFilter(operatorDFTClass & operatorMatrix,
 				  dealii::parallel::distributed::Vector<std::complex<double> > & ,
 				  const unsigned int ,
 				  const std::vector<std::vector<dealii::types::global_dof_index> > & ,
@@ -141,7 +141,7 @@ namespace dftfe{
 				  const double );
 
 #else
-    template void chebyshevFilter(operatorDFTClass * operatorMatrix,
+    template void chebyshevFilter(operatorDFTClass & operatorMatrix,
 				  dealii::parallel::distributed::Vector<double> & ,
 				  const unsigned int ,
 				  const std::vector<std::vector<dealii::types::global_dof_index> > & ,

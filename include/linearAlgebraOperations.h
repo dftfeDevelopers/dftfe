@@ -57,8 +57,8 @@ namespace dftfe
      *  @param  vect A dummy vector  
      *  @return double An estimate of the upper bound of the given matrix
      */
-    double lanczosUpperBoundEigenSpectrum(operatorDFTClass * operatorMatrix,
-					  const vectorType    & vect);
+    double lanczosUpperBoundEigenSpectrum(operatorDFTClass & operatorMatrix,
+					  const vectorType & vect);
 
 
     /** @brief Apply Chebyshev filter to a given subspace
@@ -71,7 +71,7 @@ namespace dftfe
      *  @param  a0 lower bound of wanted spectrum
      *  @return X In-place update of the given subspace 
      */
-    void chebyshevFilter(operatorDFTClass * operatorMatrix,
+    void chebyshevFilter(operatorDFTClass & operatorMatrix,
 			 std::vector<vectorType> & X,
 			 const unsigned int m,
 			 const double a,
@@ -93,7 +93,7 @@ namespace dftfe
      *  @return X In-place update of the given subspace 
      */
     template<typename T>
-    void chebyshevFilter(operatorDFTClass * operatorMatrix,
+    void chebyshevFilter(operatorDFTClass & operatorMatrix,
 			 dealii::parallel::distributed::Vector<T> & X,
 			 const unsigned int numberComponents,
 			 const std::vector<std::vector<dealii::types::global_dof_index> > & macroCellMap,
@@ -112,7 +112,7 @@ namespace dftfe
      *
      *  @return X In-place update of the given subspace 
      */
-    void gramSchmidtOrthogonalization(operatorDFTClass * operatorMatrix,
+    void gramSchmidtOrthogonalization(operatorDFTClass & operatorMatrix,
 				      std::vector<vectorType> & X);
 
 
@@ -125,7 +125,7 @@ namespace dftfe
      *  @return X In-place rotated subspace
      *  @return eigenValues of the Projected Hamiltonian
      */
-    void rayleighRitz(operatorDFTClass           * operatorMatrix,
+    void rayleighRitz(operatorDFTClass        & operatorMatrix,
 		      std::vector<vectorType> & X,
 		      std::vector<double>     & eigenValues);
   }

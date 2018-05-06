@@ -38,6 +38,7 @@ void pointWiseScaleWithDiagonal(const vectorType & diagonal,
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 						  const unsigned int kPointIndex,
+						  eigenClass<FEOrder> & kohnShamDFTEigenOperator,
 						  chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver,
 						  std::vector<double>                            & residualNormWaveFunctions) 
 {
@@ -53,7 +54,7 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
   //
   //scale the eigenVectors (initial guess of single atom wavefunctions or previous guess) to convert into Lowden Orthonormalized FE basis
   //multiply by M^{1/2}
-  pointWiseScaleWithDiagonal(eigenPtr->d_sqrtMassVector,
+  pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_sqrtMassVector,
 			     eigenVectors[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
 			     constraintsNoneEigenDataInfo);
 
@@ -65,7 +66,7 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
   subspaceIterationSolver.reinitSpectrumBounds(a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
 					       bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
 
-  subspaceIterationSolver.solve(eigenPtr,
+  subspaceIterationSolver.solve(kohnShamDFTEigenOperator,
   				eigenVectors[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
   				eigenValuesTemp);
  
@@ -74,6 +75,7 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
   //Compute and print L2 norm
   //
   computeResidualNorm(eigenValuesTemp,
+		      kohnShamDFTEigenOperator,
 		      eigenVectors[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
 		      residualNormWaveFunctions);
   
@@ -81,7 +83,7 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
   //
   //scale the eigenVectors with M^{-1/2} to represent the wavefunctions in the usual FE basis
   //
-  pointWiseScaleWithDiagonal(eigenPtr->d_invSqrtMassVector,
+  pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_invSqrtMassVector,
 			     eigenVectors[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
 			     constraintsNoneEigenDataInfo);
 
@@ -114,6 +116,7 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::computeResidualNorm(const std::vector<double> & eigenValuesTemp,
+					    eigenClass<FEOrder> & kohnShamDFTEigenOperator,
 					    std::vector<vectorType> & X,
 					    std::vector<double> & residualNorm) const
 {
@@ -125,7 +128,7 @@ void dftClass<FEOrder>::computeResidualNorm(const std::vector<double> & eigenVal
       PSI[i].reinit(X[0]);
 
 
-  eigenPtr->HX(X, PSI);
+  kohnShamDFTEigenOperator.HX(X, PSI);
 
   if (dftParameters::verbosity==2)
      pcout<<"L-2 Norm of residue   :"<<std::endl;

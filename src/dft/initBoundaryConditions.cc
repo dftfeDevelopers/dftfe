@@ -153,8 +153,8 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   d_domainVolume=computeVolume(dofHandler);
 
   //initialize eigen solve related object
-  eigenPtr= new eigenClass<FEOrder>(this, mpi_communicator);
-  eigenPtr->init();
+  //eigenPtr= new eigenClass<FEOrder>(this, mpi_communicator);
+  //eigenPtr->init();
 
   //update gaussianMeshMovementClass object
   d_gaussianMovePar.initMoved(d_domainBoundingVectors);

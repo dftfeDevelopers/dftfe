@@ -424,7 +424,7 @@ namespace dftfe {
       std::vector<bool> selectedDofsHanging;
 
 
-      eigenClass<FEOrder> * eigenPtr;
+      
       forceClass<FEOrder> * forcePtr;
       symmetryClass<FEOrder> * symmetryPtr;
       geoOptIon<FEOrder> * geoOptIonPtr;
@@ -595,10 +595,12 @@ namespace dftfe {
 
       void kohnShamEigenSpaceCompute(const unsigned int s,
 				     const unsigned int kPointIndex,
+				     eigenClass<FEOrder> & kohnShamDFTEigenOperator,
 				     chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver,
 				     std::vector<double> & residualNormWaveFunctions);
 
       void computeResidualNorm(const std::vector<double> & eigenValuesTemp,
+			       eigenClass<FEOrder> & kohnShamDFTEigenOperator,
 			       std::vector<vectorType> & X,
 			       std::vector<double> & residualNorm) const;
 
