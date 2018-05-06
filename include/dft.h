@@ -174,7 +174,7 @@ namespace dftfe {
       /**
        *Get matrix free data object
        */
-      const MatrixFree<3,double> & getMatrixFreeData();
+      const MatrixFree<3,double> & getMatrixFreeData() const;
 
     private:
 
@@ -412,9 +412,19 @@ namespace dftfe {
        */
 
       /**
-       * storage for constraintMatrices in terms of arrays (STL)
+       *object which is used to store dealii constraint matrix information
+       *using STL vectors. The relevant dealii constraint matrix
+       *has hanging node constraints and periodic constraints(for periodic problems)  
+       *used in eigen solve
        */
       dftUtils::constraintMatrixInfo constraintsNoneEigenDataInfo;
+
+      /**
+       *object which is used to store dealii constraint matrix information
+       *using STL vectors. The relevant dealii constraint matrix
+       *has hanging node constraints used in Poisson problem solution
+       *
+       */
       dftUtils::constraintMatrixInfo constraintsNoneDataInfo;
 
       ConstraintMatrix constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_noConstraints, d_noConstraintsEigen;
@@ -478,7 +488,7 @@ namespace dftfe {
       //
       std::vector<std::vector<int> > d_sparsityPattern;
       std::vector<std::vector<DoFHandler<3>::active_cell_iterator> > d_elementIteratorsInAtomCompactSupport;
-      std::vector<std::vector<int> > d_elementIdsInAtomCompactSupport;
+      std::vector<std::vector<unsigned int> > d_elementIdsInAtomCompactSupport;
       std::vector<std::vector<DoFHandler<3>::active_cell_iterator> > d_elementOneFieldIteratorsInAtomCompactSupport;
       std::vector<std::vector<int> > d_nonLocalAtomIdsInElement;
       std::vector<unsigned int> d_nonLocalAtomIdsInCurrentProcess;

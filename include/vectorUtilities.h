@@ -23,7 +23,6 @@
 #include <operator.h>
 
 
-typedef dealii::parallel::distributed::Vector<double> vectorType;
 
 namespace dftfe{
   namespace vectorTools
@@ -36,6 +35,7 @@ namespace dftfe{
      *  @param mpi_communicator communicator to be used for the new parallel vector  
      *  @param globalNumberDegreesOfFreedom total number of nodes in mesh
      *  @param blockSize number of components associated with each node
+     *
      *  @return flattenedArray custom partitioned dealii vector
      */
     template<typename T>
@@ -52,6 +52,7 @@ namespace dftfe{
      *  @param partitioner associated with the flattened array
      *  @param matrix_free_data object pointer associated with the matrix free data structure
      *  @param blockSize number of components associated with each node
+     *
      *  @return flattenedArrayMacroCellLocalProcIndexId macrocell's subcell local proc index map
      *  @return flattenedArrayCellLocalProcIndexId cell local proc index map
      */

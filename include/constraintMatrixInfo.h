@@ -51,34 +51,44 @@ namespace dftUtils
     ~constraintMatrixInfo();
 
     /**
-     * convert a given constraintMatrix to simple arrays (STL) for fast access
+     * @brief convert a given constraintMatrix to simple arrays (STL) for fast access
+     * 
+     * @param partitioner associated with the dealii vector
+     * @param constraintMatrixData dealii constraint matrix from which the data is extracted
      */
     void initialize(const std::shared_ptr<const dealii::Utilities::MPI::Partitioner> & partitioner,
 		    const dealii::ConstraintMatrix & constraintMatrixData);
 
     /**
-     * overload dealii internal function distribute
+     * @brief overloaded dealii internal function "distribute" which sets the slave node 
+     * field values from master nodes
+     *
+     * @param fieldVector parallel dealii vector
      */
     void distribute(dealii::parallel::distributed::Vector<double> &fieldVector) const;
 
     /**
-     * overload dealii internal function distribute for flattened array
+     * @brief overloaded dealii internal function distribute for flattened dealii array  which sets 
+     * the slave node field values from master nodes
+     *
+     * @param blockSize number of components for a given node
      */
     template<typename T>
     void distribute(dealii::parallel::distributed::Vector<T> &fieldVector,
 		    const unsigned int blockSize) const;
 
-
     /**
-     * distribute the contributions from slave to master nodes
+     * @brief transfers the contributions of slave nodes to master nodes using the constraint equation
+     * slave nodes are the nodes which are to the right of the constraint equation and master nodes
+     * are the nodes which are left of the constraint equation.
+     *
+     * @param fieldVector parallel dealii vector which is the result of matrix-vector product(vmult) withot taking 
+     * care of constraints
+     * @param blockSize number of components for a given node
      */
     template<typename T>
     void distribute_slave_to_master(dealii::parallel::distributed::Vector<T> &fieldVector,
 				    const unsigned int blockSize) const;
-
-
-    
-    
 
     /**
      * clear data members

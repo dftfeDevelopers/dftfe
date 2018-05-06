@@ -55,7 +55,7 @@ const dftUtils::constraintMatrixInfo & dftClass<FEOrder>::getConstraintMatrixEig
 }
 
 template<unsigned int FEOrder>
-const MatrixFree<3,double> & dftClass<FEOrder>::getMatrixFreeData()
+const MatrixFree<3,double> & dftClass<FEOrder>::getMatrixFreeData() const
 {
   return matrix_free_data;
 }

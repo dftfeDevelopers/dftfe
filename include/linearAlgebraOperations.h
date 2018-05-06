@@ -23,7 +23,7 @@
 #include <operator.h>
 
 
-typedef dealii::parallel::distributed::Vector<double> vectorType;
+
 
 namespace dftfe
 {
@@ -94,7 +94,7 @@ namespace dftfe
      */
     template<typename T>
     void chebyshevFilter(operatorDFTClass * operatorMatrix,
-			 dealii::parallel::distributed::Vector<T> & XArray,
+			 dealii::parallel::distributed::Vector<T> & X,
 			 const unsigned int numberComponents,
 			 const std::vector<std::vector<dealii::types::global_dof_index> > & macroCellMap,
 			 const std::vector<std::vector<dealii::types::global_dof_index> > & cellMap,

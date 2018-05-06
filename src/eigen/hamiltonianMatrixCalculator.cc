@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author  Phani Motamarri (2018)
+// @author  Phani Motamarri
 //
 
 
@@ -23,31 +23,25 @@ void eigenClass<FEOrder>::computeHamiltonianMatrix(unsigned int kPointIndex)
 {
 
   const unsigned int numberMacroCells = dftPtr->matrix_free_data.n_macro_cells();
-  int totalLocallyOwnedCells = 0;
-  for(unsigned int iMacroCell = 0; iMacroCell < numberMacroCells; ++iMacroCell)
-    {
-      const  unsigned int n_sub_cells = dftPtr->matrix_free_data.n_components_filled(iMacroCell);
-      for(unsigned int iSubCell = 0; iSubCell < n_sub_cells; ++iSubCell)
-	{
-	  totalLocallyOwnedCells++;
-	}
-    }
+  const unsigned int totalLocallyOwnedCells = dftPtr->matrix_free_data.n_physical_cells();
 
+
+  d_cellHamiltonianMatrix.clear();
   d_cellHamiltonianMatrix.resize(totalLocallyOwnedCells);
 
   QGauss<3> quadrature(C_num1DQuad<FEOrder>());
 
   FEEvaluation<3, FEOrder, C_num1DQuad<FEOrder>(), 1, double>  fe_eval(dftPtr->matrix_free_data, 0, 0); //
   
-  const unsigned int numberDofsPerElement = dftPtr->FE.dofs_per_cell;
+  const unsigned int numberDofsPerElement = dftPtr->matrix_free_data.get_dof_handler().get_fe().dofs_per_cell;
 
   //std::cout<<"Degrees of freedom in Ham Matrix Computation: "<<numberDofsPerElement<<std::endl;
 
   const unsigned int numberQuadraturePoints = quadrature.size();
   typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
 
-  int iElem = 0;
-  for(int iMacroCell = 0; iMacroCell < numberMacroCells; ++iMacroCell)
+  unsigned int iElem = 0;
+  for(unsigned int iMacroCell = 0; iMacroCell < numberMacroCells; ++iMacroCell)
     {
       std::vector<VectorizedArray<double> > elementHamiltonianMatrix;
       elementHamiltonianMatrix.resize(numberDofsPerElement*numberDofsPerElement);
