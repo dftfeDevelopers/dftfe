@@ -102,7 +102,7 @@ void dftClass<FEOrder>::compute_rhoOut()
 #endif
 
 
-	      for(int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+	      for(int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
 		{
 		  for(unsigned int i=0; i<numEigenValues; ++i)
 		    {
@@ -214,7 +214,7 @@ void dftClass<FEOrder>::compute_rhoOut()
 	    }
 	  else
 	    {
-	      for(int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+	      for(int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
 		{
 		  for(unsigned int i=0; i<numEigenValues; ++i)
 		    {

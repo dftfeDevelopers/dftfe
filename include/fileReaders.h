@@ -28,37 +28,42 @@ namespace dftfe {
     namespace dftUtils
     {
 
-  /**
-   * @brief Read from file containing only double data in columns.
-   */
-    void readFile(const unsigned int numColumns,
-		  std::vector<std::vector<double> > &data,
-		  const std::string & fileName);
+      /**
+       * @brief Read from file containing only double data in columns.
+       */
+	void readFile(const unsigned int numColumns,
+		      std::vector<std::vector<double> > &data,
+		      const std::string & fileName);
+      /**
+       * @brief Read from file containing only double data in columns.
+       */
+	int readPsiFile(const unsigned int numColumns,
+			std::vector<std::vector<double> > &data,
+			const std::string & fileName);
 
-  /**
-   * @brief Read from file containing only double data in columns.
-   */
-    int readPsiFile(const unsigned int numColumns,
-		    std::vector<std::vector<double> > &data,
-		    const std::string & fileName);
+      /**
+       * @brief Write data into file containing only double data in rows and columns.
+       */
+	void writeDataIntoFile(const std::vector<std::vector<double> > &data,
+			       const std::string & fileName);
 
-  /**
-   * @brief Read from file containing only integer data in columns.
-   */
-    void readRelaxationFlagsFile(const unsigned int numColumns,
-				 std::vector<std::vector<int> > &data,
-				 const std::string & fileName);
+      /**
+       * @brief Read from file containing only integer data in columns.
+       */
+	void readRelaxationFlagsFile(const unsigned int numColumns,
+				     std::vector<std::vector<int> > &data,
+				     const std::string & fileName);
 
-  /**
-   * @brief Move/rename checkpoint file.
-   */
-    void moveFile(const std::string &old_name,
-	          const std::string &new_name);
+      /**
+       * @brief Move/rename checkpoint file.
+       */
+	void moveFile(const std::string &old_name,
+		      const std::string &new_name);
 
-  /**
-   * @brief Verify if checkpoint file exists.
-   */
-    void verifyCheckpointFileExists(const std::string & filename);
+      /**
+       * @brief Verify if checkpoint file exists.
+       */
+	void verifyCheckpointFileExists(const std::string & filename);
     };
 
 }

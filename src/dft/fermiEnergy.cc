@@ -98,7 +98,7 @@ void dftClass<FEOrder>::compute_fermienergy()
 
 
   std::vector<double> eigenValuesAllkPoints;
-  for(int kPoint = 0; kPoint < d_maxkPoints; ++kPoint)
+  for(int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
     {
       for(int statesIter = 0; statesIter < eigenValues[0].size(); ++statesIter)
 	{
@@ -180,7 +180,7 @@ void dftClass<FEOrder>::compute_fermienergy()
     if (dftParameters::verbosity==2)
       pcout<< "Fermi energy constraint residual (bisection): "<< R << std::endl;
 #else
-   fe = eigenValuesAllkPoints[d_maxkPoints*count - 1];
+   fe = eigenValuesAllkPoints[d_kPointWeights.size()*count - 1];
 #endif
   //
   //compute residual and find FermiEnergy using Newton-Raphson solve

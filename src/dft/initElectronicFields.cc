@@ -30,14 +30,14 @@ void dftClass<FEOrder>::initElectronicFields(const bool usePreviousGroundStateFi
   //initialize eigen vectors
   //
   matrix_free_data.initialize_dof_vector(vChebyshev,eigenDofHandlerIndex);
-  
+
 
   //
   //initialize density and PSI/ interpolate from previous ground state solution
   //
   if (!usePreviousGroundStateFields)
   {
-     for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_maxkPoints; ++kPoint)
+     for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
         for(unsigned int i = 0; i < eigenVectors[kPoint].size(); ++i)
 	  eigenVectors[kPoint][i].reinit(vChebyshev);
 
@@ -49,12 +49,12 @@ void dftClass<FEOrder>::initElectronicFields(const bool usePreviousGroundStateFi
   }
   else
   {
-     const unsigned int totalNumEigenVectors=(1+dftParameters::spinPolarized)*d_maxkPoints*eigenVectors[0].size();
+     const unsigned int totalNumEigenVectors=(1+dftParameters::spinPolarized)*d_kPointWeights.size()*eigenVectors[0].size();
      std::vector<vectorType> eigenVectorsPrevious(totalNumEigenVectors);
      std::vector<vectorType* > eigenVectorsPreviousPtrs(totalNumEigenVectors);
      std::vector<vectorType* > eigenVectorsCurrentPtrs(totalNumEigenVectors);
 
-     for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_maxkPoints; ++kPoint)
+     for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
         for(unsigned int i = 0; i < eigenVectors[kPoint].size(); ++i)
 	{
 	  eigenVectorsPrevious[kPoint* eigenVectors[0].size()+i]=eigenVectors[kPoint][i];
@@ -80,7 +80,7 @@ void dftClass<FEOrder>::initElectronicFields(const bool usePreviousGroundStateFi
 
      computing_timer.exit_section("interpolate previous PSI");
 
-     for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_maxkPoints; ++kPoint)
+     for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
         for(unsigned int i = 0; i < eigenVectors[kPoint].size(); ++i)
 	{
 	  constraintsNoneEigenDataInfo.distribute(eigenVectors[kPoint][i]);
@@ -100,4 +100,10 @@ void dftClass<FEOrder>::initElectronicFields(const bool usePreviousGroundStateFi
   d_mesh.generateSerialAndParallelUnmovedPreviousMesh(atomLocations,
 				                      d_imagePositions,
 				                      d_domainBoundingVectors);
+
+  //
+  //store constraintEigen Matrix entries into STL vector
+  //
+  constraintsNoneEigenDataInfo.initialize(vChebyshev.get_partitioner(),
+					  constraintsNoneEigen);
 }

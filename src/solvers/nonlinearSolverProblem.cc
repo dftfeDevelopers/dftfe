@@ -16,18 +16,18 @@
 // @author Sambit Das
 //
 
-#include <solverFunction.h>
+#include <nonlinearSolverProblem.h>
 
 namespace dftfe {
 
-  solverFunction::solverFunction()
+  nonlinearSolverProblem::nonlinearSolverProblem()
   {
     return;
   }
 
 
   // Destructor.
-  solverFunction::~solverFunction()
+  nonlinearSolverProblem::~nonlinearSolverProblem()
   {
     return;
   }

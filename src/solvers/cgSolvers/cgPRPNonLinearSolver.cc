@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,10 +13,10 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Sambit Das (2018)
+// @author Sambit Das
 
 #include <cgPRPNonLinearSolver.h>
-#include <solverFunction.h>
+#include <nonlinearSolverProblem.h>
 
 namespace dftfe {
 
@@ -292,7 +292,7 @@ namespace dftfe {
   void
   cgPRPNonLinearSolver::updateSolution(const double                      alpha,
 				       const std::vector<double> & direction,
-				       solverFunction            & function)
+				       nonlinearSolverProblem            & problem)
   {
 
 
@@ -309,9 +309,9 @@ namespace dftfe {
       incrementVector[i] = alpha*direction[i];
 
     //
-    // call solver function update
+    // call solver problem update
     //
-    function.update(incrementVector);
+    problem.update(incrementVector);
 
     //
     //
@@ -324,7 +324,7 @@ namespace dftfe {
   // Perform line search.
   //
   nonLinearSolver::ReturnValueType
-  cgPRPNonLinearSolver::lineSearch(solverFunction &       function,
+  cgPRPNonLinearSolver::lineSearch(nonlinearSolverProblem &       problem,
 				   const double           tolerance,
 				   const unsigned int     maxNumberIterations,
 				   const unsigned int     debugLevel)
@@ -341,9 +341,9 @@ namespace dftfe {
     double alpha = d_lineSearchDampingParameter;
 
     //
-    // evaluate function gradient
+    // evaluate problem gradient
     //
-    function.gradient(d_gradient);
+    problem.gradient(d_gradient);
 
     //
     // compute delta_d and eta_p
@@ -360,16 +360,16 @@ namespace dftfe {
     //
     updateSolution(alpha-alphaP,
 		   d_direction,
-		   function);
+		   problem);
     //
     // begin iteration (using secant method)
     //
     for (unsigned int iter = 0; iter < maxNumberIterations; ++iter) {
 
       //
-      // evaluate function gradient
+      // evaluate problem gradient
       //
-      function.gradient(d_gradient);
+      problem.gradient(d_gradient);
 
 
       //
@@ -404,7 +404,7 @@ namespace dftfe {
       //
       updateSolution(alphaNew-alpha,
 		     d_direction,
-		     function);
+		     problem);
 
       //
       // update etaP, alphaP and alpha
@@ -424,10 +424,10 @@ namespace dftfe {
 
 
   //
-  // Perform function minimization.
+  // Perform problem minimization.
   //
   nonLinearSolver::ReturnValueType
-  cgPRPNonLinearSolver::solve(solverFunction & function)
+  cgPRPNonLinearSolver::solve(nonlinearSolverProblem & problem)
   {
 
     //
@@ -438,7 +438,7 @@ namespace dftfe {
     //
     // get total number of unknowns in the problem.
     //
-    d_numberUnknowns = function.getNumberUnknowns();
+    d_numberUnknowns = problem.getNumberUnknowns();
 
     //
     //resize d_unknownCountFlag with numberUnknown and initialize to 1
@@ -460,14 +460,14 @@ namespace dftfe {
     d_s.resize(d_numberUnknowns);
 
     //
-    // compute initial values of function and function gradient
+    // compute initial values of problem and problem gradient
     //
-    function.gradient(d_gradient);
+    problem.gradient(d_gradient);
 
     //
     // apply preconditioner
     //
-    //function.precondition(d_s,
+    //problem.precondition(d_s,
     //			  d_gradient);
     for(int i = 0; i < d_s.size(); ++i)
       {
@@ -528,7 +528,7 @@ namespace dftfe {
       // perform line search along direction
       //
       ReturnValueType lineSearchReturnValue =
-	                   lineSearch(function,
+	                   lineSearch(problem,
 				      d_lineSearchTolerance,
 				      d_lineSearchMaxIterations,
 				      d_debugLevel);
@@ -536,16 +536,16 @@ namespace dftfe {
       //write mesh
       std::string meshFileName="mesh_geo";
       meshFileName+=std::to_string(d_iter);
-      //function.writeMesh(meshFileName);
+      //problem.writeMesh(meshFileName);
       //
       // evaluate gradient
       //
-      function.gradient(d_gradient);
+      problem.gradient(d_gradient);
 
       //
       // apply preconditioner
       //
-      //function.precondition(d_s,
+      //problem.precondition(d_s,
       //			    d_gradient);
 
       for(int i = 0; i < d_s.size(); ++i)
@@ -611,11 +611,6 @@ namespace dftfe {
       returnValue = MAX_ITER_REACHED;
 
     //
-    // compute function value
-    //
-    //functionValue = function.value();
-
-    //
     // final output
     //
     if (d_debugLevel >= 1)
@@ -630,9 +625,6 @@ namespace dftfe {
         pcout << "Conjugate Gradient failed to converge after "
 		<< d_iter << " iterations." << std::endl;
       }
-
-      //std::cout << "Final function value: " << functionValue
-      //	  << std::endl;
 
     }
 

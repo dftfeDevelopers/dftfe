@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Sambit Das (2018)
+// @author Sambit Das
 //
 
 #include <geoOptIon.h>
@@ -25,13 +25,6 @@
 #include <dftUtils.h>
 
 namespace dftfe {
-
-template<unsigned int FEOrder>
-void geoOptIon<FEOrder>::writeMesh(std::string meshFileName)
- {
-      //dftPtr->writeMesh(meshFileName);
-      AssertThrow(false,dftUtils::ExcNotImplementedYet());
- }
 
 //
 //constructor
@@ -136,22 +129,14 @@ void geoOptIon<FEOrder>::run()
 
 
 template<unsigned int FEOrder>
-int geoOptIon<FEOrder>::getNumberUnknowns() const
+unsigned int geoOptIon<FEOrder>::getNumberUnknowns() const
 {
-   int count=0;
+   unsigned int count=0;
    for (unsigned int i=0; i< d_relaxationFlags.size(); ++i)
    {
       count+=d_relaxationFlags[i];
    }
    return count;
-}
-
-
-
-template<unsigned int FEOrder>
-double geoOptIon<FEOrder>::value() const
-{
-   AssertThrow(false,dftUtils::ExcNotImplementedYet());
 }
 
 template<unsigned int FEOrder>
@@ -228,8 +213,11 @@ void geoOptIon<FEOrder>::update(const std::vector<double> & solution)
 
    pcout<<" -----------------------------" << std::endl;
    pcout<< "  Maximum force to be relaxed: "<<  d_maximumAtomForceToBeRelaxed <<std::endl;
-   dftPtr->forcePtr->updateAtomPositionsAndMoveMesh(globalAtomsDisplacements);
+   dftPtr->updateAtomPositionsAndMoveMesh(globalAtomsDisplacements);
    d_totalUpdateCalls+=1;
+
+   if (dftParameters::chkType>=1)
+      dftPtr->writeDomainAndAtomCoordinates();
 
    dftPtr->solve();
 
@@ -242,7 +230,7 @@ void geoOptIon<FEOrder>::solution(std::vector<double> & solution)
 }
 
 template<unsigned int FEOrder>
-std::vector<int>  geoOptIon<FEOrder>::getUnknownCountFlag() const
+std::vector<unsigned int>  geoOptIon<FEOrder>::getUnknownCountFlag() const
 {
    AssertThrow(false,dftUtils::ExcNotImplementedYet());
 }

@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,10 +13,10 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Sambit Das(2017)
+// @author Sambit Das
 //
 
-namespace internalforce{
+namespace internal{
 
   extern "C"{
       //
@@ -84,26 +84,23 @@ namespace internalforce{
 // Depending on the maximum displacement magnitude this function decides wether to do auto remeshing
 // or move mesh using Gaussian functions.
 template<unsigned int FEOrder>
-void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point<C_DIM> > & globalAtomsDisplacements)
+void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point<C_DIM> > & globalAtomsDisplacements)
 {
-  std::vector<std::vector<double> > & atomLocations=dftPtr->atomLocations;
-  std::vector<std::vector<double> > & imagePositions=dftPtr->d_imagePositions;
-  const std::vector<int > & imageIds=dftPtr->d_imageIds;
   const int numberGlobalAtoms = atomLocations.size();
-  const int numberImageCharges = imageIds.size();
+  const int numberImageCharges = d_imageIds.size();
   const int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
 
 #ifdef ENABLE_PERIODIC_BC
   std::vector<double> latticeVectorsFlattened(9,0.0);
   for (unsigned int idim=0; idim<3; idim++)
       for(unsigned int jdim=0; jdim<3; jdim++)
-          latticeVectorsFlattened[3*idim+jdim]=dftPtr->d_domainBoundingVectors[idim][jdim];
+          latticeVectorsFlattened[3*idim+jdim]=d_domainBoundingVectors[idim][jdim];
   Point<3> corner;
   for (unsigned int idim=0; idim<3; idim++)
   {
       corner[idim]=0;
       for(unsigned int jdim=0; jdim<3; jdim++)
-          corner[idim]-=dftPtr->d_domainBoundingVectors[jdim][idim]/2.0;
+          corner[idim]-=d_domainBoundingVectors[jdim][idim]/2.0;
   }
   std::vector<bool> periodicBc(3,false);
   periodicBc[0]=dftParameters::periodicX;periodicBc[1]=dftParameters::periodicY;periodicBc[2]=dftParameters::periodicZ;
@@ -127,7 +124,7 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
 	Point<C_DIM> newCoord;
 	for (unsigned int idim=0; idim<C_DIM; ++idim)
 	    newCoord[idim]=atomCoor[idim]+globalAtomsDisplacements[atomId][idim];
-        std::vector<double> newFracCoord=internalforce::wrapAtomsAcrossPeriodicBc(newCoord,
+        std::vector<double> newFracCoord=internal::wrapAtomsAcrossPeriodicBc(newCoord,
 	                                                                          corner,
 					                                          latticeVectorsFlattened,
 						                                  periodicBc);
@@ -138,9 +135,9 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
 	         0,
 	         MPI_COMM_WORLD);
 
-        dftPtr->atomLocationsFractional[iAtom][2]=newFracCoord[0];
-        dftPtr->atomLocationsFractional[iAtom][3]=newFracCoord[1];
-        dftPtr->atomLocationsFractional[iAtom][4]=newFracCoord[2];
+        atomLocationsFractional[iAtom][2]=newFracCoord[0];
+        atomLocationsFractional[iAtom][3]=newFracCoord[1];
+        atomLocationsFractional[iAtom][4]=newFracCoord[2];
 #else
         atomLocations[iAtom][2]+=globalAtomsDisplacements[atomId][0];
         atomLocations[iAtom][3]+=globalAtomsDisplacements[atomId][1];
@@ -152,10 +149,10 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
      }
      else
      {
-	atomCoor[0] = imagePositions[iAtom-numberGlobalAtoms][0];
-	atomCoor[1] = imagePositions[iAtom-numberGlobalAtoms][1];
-	atomCoor[2] = imagePositions[iAtom-numberGlobalAtoms][2];
-	atomId=imageIds[iAtom-numberGlobalAtoms];
+	atomCoor[0] = d_imagePositions[iAtom-numberGlobalAtoms][0];
+	atomCoor[1] = d_imagePositions[iAtom-numberGlobalAtoms][1];
+	atomCoor[2] = d_imagePositions[iAtom-numberGlobalAtoms][2];
+	atomId=d_imageIds[iAtom-numberGlobalAtoms];
      }
      controlPointLocations.push_back(atomCoor);
      controlPointDisplacements.push_back(globalAtomsDisplacements[atomId]);
@@ -167,7 +164,7 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
   if (!useHybridMeshUpdateScheme)//always remesh
   {
 	  pcout << "Auto remeshing and reinitialization of dft problem for new atom coordinates" << std::endl;
-	  dftPtr->init(true);
+	  init(true);
 	  pcout << "...Reinitialization end" << std::endl;
   }
   else
@@ -203,7 +200,7 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
       if (updateCase==0)
       {
 	  pcout << "Auto remeshing and reinitialization of dft problem for new atom coordinates as max displacement magnitude: "<<maxDispAtom<< " is greater than: "<< break1 << " Bohr..." << std::endl;
-	  dftPtr->init(true);
+	  init(true);
 	  pcout << "...Reinitialization end" << std::endl;
       }
       else if (updateCase==1)
@@ -212,7 +209,7 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
 	  const double gaussianParameter=2.0;
 	  pcout << "Trying to Move using a wide Gaussian with Gaussian constant: "<<gaussianParameter<<" as max displacement magnitude: "<<maxDispAtom<< " is between "<< break2<<" and "<<break1<<" Bohr"<<std::endl;
 
-	  std::pair<bool,double> meshQualityMetrics= gaussianMovePar.moveMesh(controlPointLocations,controlPointDisplacements,gaussianParameter);
+	  const std::pair<bool,double> meshQualityMetrics= d_gaussianMovePar.moveMesh(controlPointLocations,controlPointDisplacements,gaussianParameter);
 
 	  unsigned int autoMesh=0;
 	  if (meshQualityMetrics.first || meshQualityMetrics.second>maxJacobianRatio)
@@ -228,21 +225,21 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
 		 pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to negative jacobian after Gaussian mesh movement using Gaussian constant: "<< gaussianParameter<<std::endl;
 	      else
 		 pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to maximum jacobian ratio: "<< meshQualityMetrics.second<< " exceeding set bound of: "<< maxJacobianRatio<<" after Gaussian mesh movement using Gaussian constant: "<< gaussianParameter<<std::endl;
-	      dftPtr->init(true);
+	      init(true);
 	      pcout << "...Reinitialization end" << std::endl;
 	  }
 	  else
 	  {
 	      pcout<< " Mesh quality check: maximum jacobian ratio after movement: "<< meshQualityMetrics.second<<std::endl;
 	      pcout<<"Now reinitializing all moved triangulation dependent objects..." << std::endl;
-	      dftPtr->initNoRemesh();
+	      initNoRemesh();
 	      pcout << "...Reinitialization end" << std::endl;
 	  }
       }
       else
       {
-	   pcout << "Trying to Move using a narrow Gaussian with same Gaussian constant for computing the forces: "<<d_gaussianConstant<<" as max displacement magnitude: "<< maxDispAtom<< " is below " << break2 <<" Bohr"<<std::endl;
-	  std::pair<bool,double> meshQualityMetrics=gaussianMovePar.moveMesh(controlPointLocations,controlPointDisplacements,d_gaussianConstant);
+	   pcout << "Trying to Move using a narrow Gaussian with same Gaussian constant for computing the forces: "<<forcePtr->getGaussianGeneratorParameter()<<" as max displacement magnitude: "<< maxDispAtom<< " is below " << break2 <<" Bohr"<<std::endl;
+	  const std::pair<bool,double> meshQualityMetrics=d_gaussianMovePar.moveMesh(controlPointLocations,controlPointDisplacements,forcePtr->getGaussianGeneratorParameter());
 	  unsigned int autoMesh=0;
 	  if (meshQualityMetrics.first || meshQualityMetrics.second>maxJacobianRatio)
 	      autoMesh=1;
@@ -254,17 +251,17 @@ void forceClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point
 	  if (autoMesh==1)
 	  {
 	      if (meshQualityMetrics.first)
-		 pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to negative jacobian after Gaussian mesh movement using Gaussian constant: "<< d_gaussianConstant<<std::endl;
+		 pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to negative jacobian after Gaussian mesh movement using Gaussian constant: "<< forcePtr->getGaussianGeneratorParameter()<<std::endl;
 	      else
-		 pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to maximum jacobian ratio: "<< meshQualityMetrics.second<< " exceeding set bound of: "<< maxJacobianRatio<<" after Gaussian mesh movement using Gaussian constant: "<< d_gaussianConstant<<std::endl;
-	      dftPtr->init(true);
+		 pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to maximum jacobian ratio: "<< meshQualityMetrics.second<< " exceeding set bound of: "<< maxJacobianRatio<<" after Gaussian mesh movement using Gaussian constant: "<< forcePtr->getGaussianGeneratorParameter()<<std::endl;
+	      init(true);
 	      pcout << "...Reinitialization end" << std::endl;
 	  }
 	  else
 	  {
 	      pcout<< " Mesh quality check: maximum jacobian ratio after movement: "<< meshQualityMetrics.second<<std::endl;
 	      pcout << "Now Reinitializing all moved triangulation dependent objects..." << std::endl;
-	      dftPtr->initNoRemesh();
+	      initNoRemesh();
 	      pcout << "...Reinitialization end" << std::endl;
 	  }
       }

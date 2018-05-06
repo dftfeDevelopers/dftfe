@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Shiva Rudraraju, Phani Motamarri, Sambit Das 
+// @author Shiva Rudraraju, Phani Motamarri, Sambit Das
 //
 
 #ifndef dft_H_
@@ -32,6 +32,7 @@
 #include <eigen.h>
 #include <symmetry.h>
 #include <meshMovementAffineTransform.h>
+#include <meshMovementGaussian.h>
 #include <eigenSolver.h>
 #include <chebyshevOrthogonalizedSubspaceIterationSolver.h>
 #include <vselfBinsManager.h>
@@ -51,7 +52,7 @@ namespace dftfe {
   //
   using namespace dealii;
 
-  typedef dealii::parallel::distributed::Vector<double> vectorType;
+
   //forward declarations
   template <unsigned int T> class poissonClass;
   template <unsigned int T> class eigenClass;
@@ -60,7 +61,6 @@ namespace dftfe {
   template <unsigned int T> class forceClass;
   template <unsigned int T> class geoOptIon;
   template <unsigned int T> class geoOptCell;
-
 
   //
   //
@@ -160,7 +160,7 @@ namespace dftfe {
       const std::vector<dealii::types::global_dof_index> & getLocalProcDofIndicesImag() const;
 
       /**
-       *Get dealii constraint matrix involving periodic constraints and hanging node constraints in periodic  
+       *Get dealii constraint matrix involving periodic constraints and hanging node constraints in periodic
        *case else only hanging node constraints in non-periodic case
        */
       const ConstraintMatrix & getConstraintMatrixEigen() const;
@@ -171,10 +171,31 @@ namespace dftfe {
        */
       const dftUtils::constraintMatrixInfo & getConstraintMatrixEigenDataInfo() const;
 
+
       /**
        *Get matrix free data object
        */
       const MatrixFree<3,double> & getMatrixFreeData() const;
+
+
+      /** @brief Updates atom positions, remeshes/moves mesh and calls appropriate reinits.
+       *
+       *  Function to update the atom positions and mesh based on the provided displacement input.
+       *  Depending on the maximum displacement magnitude this function decides wether to do auto remeshing
+       *  or move mesh using Gaussian functions. Additionaly this function also wraps the atom position across the
+       *  periodic boundary if the atom moves across it.
+       *
+       *  @param globalAtomsDisplacements vector containing the displacements (from current position) of all atoms (global).
+       *  @return void.
+       */
+      void updateAtomPositionsAndMoveMesh(const std::vector<Point<3> > & globalAtomsDisplacements);
+
+      /**
+       * writes the current domain bounding vectors and atom coordinates to files, which are required for
+       * geometry relaxation restart
+       */
+      void writeDomainAndAtomCoordinates() const;
+
 
     private:
 
@@ -371,9 +392,11 @@ namespace dftfe {
        */
       triangulationManager d_mesh;
 
-
       /// affine transformation object
       meshMovementAffineTransform d_affineTransformMesh;
+
+      /// meshMovementGaussianClass object
+      meshMovementGaussianClass d_gaussianMovePar;
 
       /// volume of the domain
       double d_domainVolume;
@@ -545,10 +568,6 @@ namespace dftfe {
       /// k point weights
       std::vector<double> d_kPointWeights;
 
-      /// total number of k points
-      int d_maxkPoints;
-
-
       /**
        * Recomputes the k point cartesian coordinates from the crystal k point coordinates
        * and the current lattice vectors, which can change in each ground state solve when
@@ -580,7 +599,7 @@ namespace dftfe {
 				     std::vector<double> & residualNormWaveFunctions);
 
       void computeResidualNorm(const std::vector<double> & eigenValuesTemp,
-			       std::vector<vectorType> & X, 
+			       std::vector<vectorType> & X,
 			       std::vector<double> & residualNorm) const;
 
 

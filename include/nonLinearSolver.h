@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Sambit Das (2018)
+
 
 
 #ifndef NonLinearSolver_h
@@ -26,10 +26,12 @@ namespace dftfe {
   //
   // forward declarations
   //
-  class solverFunction;
+  class nonlinearSolverProblem;
 
   /**
    * @brief Base class for non-linear algebraic solver.
+   *
+   * @author Sambit Das
    */
   class nonLinearSolver {
 
@@ -58,7 +60,7 @@ namespace dftfe {
      *
      * @return Return value indicating success or failure.
      */
-     virtual ReturnValueType solve(solverFunction & function) = 0;
+     virtual ReturnValueType solve(nonlinearSolverProblem & problem) = 0;
 
   protected:
 

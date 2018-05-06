@@ -70,13 +70,13 @@ void dftClass<FEOrder>::readkPointData()
   dftUtils::readFile(numberColumnskPointDataFile, kPointData, kPointRuleFile);
   d_kPointCoordinates.clear() ;
   d_kPointWeights.clear();
-  d_maxkPoints = kPointData.size();
-  d_kPointCoordinates.resize(d_maxkPoints*3,0.0);
-  d_kPointWeights.resize(d_maxkPoints,0.0);
+  const unsigned int maxkPoints = kPointData.size();
+  d_kPointCoordinates.resize(maxkPoints*3,0.0);
+  d_kPointWeights.resize(maxkPoints,0.0);
 
   kPointReducedCoordinates = d_kPointCoordinates;
 
-  for(unsigned int i = 0; i < d_maxkPoints; ++i)
+  for(unsigned int i = 0; i < maxkPoints; ++i)
     {
       for (unsigned int d = 0; d < 3; ++d)
         kPointReducedCoordinates[3*i + d] = kPointData[i][d];
@@ -85,11 +85,11 @@ void dftClass<FEOrder>::readkPointData()
 
   pcout<<"Reduced k-Point-coordinates and weights: "<<std::endl;
 
-  for(unsigned int i = 0; i < d_maxkPoints; ++i)
+  for(unsigned int i = 0; i < maxkPoints; ++i)
     pcout<<kPointReducedCoordinates[3*i + 0]<<" "<<kPointReducedCoordinates[3*i + 1]<<" "<<kPointReducedCoordinates[3*i + 2]<<" "<<d_kPointWeights[i]<<std::endl;
 
 
-  for(unsigned int i = 0; i < d_maxkPoints; ++i)
+  for(unsigned int i = 0; i < maxkPoints; ++i)
     {
       for (unsigned int d1 = 0; d1 < 3; ++d1)
         d_kPointCoordinates[3*i + d1] = kPointReducedCoordinates[3*i+0]*d_reciprocalLatticeVectors[0][d1] +
@@ -107,7 +107,7 @@ void dftClass<FEOrder>::recomputeKPointCoordinates()
   // Get the reciprocal lattice vectors
   d_reciprocalLatticeVectors=internaldft::getReciprocalLatticeVectors(d_domainBoundingVectors);
   // Convert from crystal to Cartesian coordinates
-  for(unsigned int i = 0; i < d_maxkPoints; ++i)
+  for(unsigned int i = 0; i < d_kPointWeights.size(); ++i)
     for (unsigned int d=0; d < 3; ++d)
       d_kPointCoordinates[3*i + d] = kPointReducedCoordinates[3*i+0]*d_reciprocalLatticeVectors[0][d] +
                                      kPointReducedCoordinates[3*i+1]*d_reciprocalLatticeVectors[1][d] +
@@ -126,8 +126,8 @@ void dftClass<FEOrder>::generateMPGrid()
   const double dkz = dftParameters::dkz;
 
   std::vector<double> del(3);
-  d_maxkPoints = (nkx * nky) * nkz;
-  pcout<<"Total number of k-points " << d_maxkPoints << std::endl;
+  unsigned int maxkPoints = (nkx * nky) * nkz;
+  pcout<<"Total number of k-points " << maxkPoints << std::endl;
   //
   del[0] = 1.0/double(nkx); del[1] = 1.0/double(nky); del[2] = 1.0/double(nkz);
   if (nkx==1)
@@ -137,12 +137,12 @@ void dftClass<FEOrder>::generateMPGrid()
   if (nkz==1)
     del[2]=0.0;
   //
-  d_kPointCoordinates.resize(d_maxkPoints*3,0.0);
-  d_kPointWeights.resize(d_maxkPoints,0.0);
+  d_kPointCoordinates.resize(maxkPoints*3,0.0);
+  d_kPointWeights.resize(maxkPoints,0.0);
 
   kPointReducedCoordinates = d_kPointCoordinates;
 
-  for(unsigned int i = 0; i < d_maxkPoints; ++i)
+  for(unsigned int i = 0; i < maxkPoints; ++i)
     {
       kPointReducedCoordinates[3*i + 2] = del[2]*(i%nkz) + dkz;
       kPointReducedCoordinates[3*i + 1] = del[1]*(std::floor( ( i%(nkz*nky) ) / nkz) ) + dky;
@@ -151,7 +151,7 @@ void dftClass<FEOrder>::generateMPGrid()
          if(kPointReducedCoordinates[3*i + dir] > ( 0.5 + 1.0E-10 ) )
               kPointReducedCoordinates[3*i + dir] = kPointReducedCoordinates[3*i + dir] - 1.0 ;
       }
-      d_kPointWeights[i] = 1.0/d_maxkPoints ;
+      d_kPointWeights[i] = 1.0/maxkPoints ;
     }
 
   // Get the reciprocal lattice vectors
@@ -262,10 +262,10 @@ void dftClass<FEOrder>::generateMPGrid()
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //
   std::vector<double> kPointAllCoordinates, kPointTemp(3);
-  std::vector<int> discard(d_maxkPoints, 0), countedSymm(symmetryPtr->numSymm, 0), usedSymmNum(symmetryPtr->numSymm, 1);
+  std::vector<int> discard(maxkPoints, 0), countedSymm(symmetryPtr->numSymm, 0), usedSymmNum(symmetryPtr->numSymm, 1);
   kPointAllCoordinates = kPointReducedCoordinates;
-  const int nk = d_maxkPoints ;
-  d_maxkPoints = 0;
+  const int nk = maxkPoints ;
+  maxkPoints = 0;
 
   double translationTemp[symmetryPtr->numSymm][3];
   for (unsigned int i=0; i<(symmetryPtr->numSymm); ++i) {
@@ -281,9 +281,9 @@ void dftClass<FEOrder>::generateMPGrid()
   while( ik < nk ) {
     //
     for (unsigned int d=0; d < 3; ++d)
-      kPointReducedCoordinates[3*d_maxkPoints + d] = kPointAllCoordinates[3*ik+d];
+      kPointReducedCoordinates[3*maxkPoints + d] = kPointAllCoordinates[3*ik+d];
 
-    d_maxkPoints = d_maxkPoints + 1;
+    maxkPoints = maxkPoints + 1;
     //
     for (unsigned int iSymm = 1; iSymm < symmetryPtr->numSymm; ++iSymm) // iSymm begins from 1. because identity is always present and is taken care of.
 	{
@@ -304,7 +304,7 @@ void dftClass<FEOrder>::generateMPGrid()
         //
         const unsigned int jk =  round(kPointTemp[0]*nkx)*nky*nkz + round(kPointTemp[1]*nky)*nkz + round( kPointTemp[2]*nkz);
         if( jk!=ik && jk<nk && discard[jk]!=1) {
-           d_kPointWeights[d_maxkPoints-1] = d_kPointWeights[d_maxkPoints-1] + 1.0/nk;
+           d_kPointWeights[maxkPoints-1] = d_kPointWeights[maxkPoints-1] + 1.0/nk;
            discard[jk] = 1;
 	   if (dftParameters::verbosity==2)
 	        pcout<< "    " << ik << "     " << jk << std::endl ;
@@ -317,7 +317,7 @@ void dftClass<FEOrder>::generateMPGrid()
 	       usedSymm++ ;
 	       countedSymm[iSymm] = 1;
              }
-	   symmUnderGroupTemp[usedSymmNum[iSymm]].push_back(d_maxkPoints-1) ;
+	   symmUnderGroupTemp[usedSymmNum[iSymm]].push_back(maxkPoints-1) ;
 	   }
        }
     //
@@ -333,9 +333,9 @@ void dftClass<FEOrder>::generateMPGrid()
   }
   //
   symmetryPtr->numSymm = usedSymm;
-  symmetryPtr->symmUnderGroup.resize (d_maxkPoints, std::vector<int>(symmetryPtr->numSymm,0));
-  symmetryPtr->numSymmUnderGroup.resize(d_maxkPoints,1) ; // minimum should be 1, because identity is always present
-  for (unsigned int i=0; i<d_maxkPoints; ++i)
+  symmetryPtr->symmUnderGroup.resize (maxkPoints, std::vector<int>(symmetryPtr->numSymm,0));
+  symmetryPtr->numSymmUnderGroup.resize(maxkPoints,1) ; // minimum should be 1, because identity is always present
+  for (unsigned int i=0; i<maxkPoints; ++i)
   {
       symmetryPtr->symmUnderGroup[i][0] = 1;
       for (unsigned int iSymm = 1; iSymm<(symmetryPtr->numSymm); ++iSymm)
@@ -358,11 +358,11 @@ void dftClass<FEOrder>::generateMPGrid()
 		  if (dftParameters::verbosity==2)
 		     pcout << symmetryPtr->symmMat[iSymm][ipol][0] << "  " << symmetryPtr->symmMat[iSymm][ipol][1] << "  " << symmetryPtr->symmMat[iSymm][ipol][2] << std::endl;
 	     }
-      pcout<<" number of irreducible k-points " << d_maxkPoints << std::endl;
+      pcout<<" number of irreducible k-points " << maxkPoints << std::endl;
 
       pcout<<"Reduced k-Point-coordinates and weights: "<<std::endl;
       char buffer[100];
-      for(int i = 0; i < d_maxkPoints; ++i)
+      for(int i = 0; i < maxkPoints; ++i)
       {
 	sprintf(buffer, "  %5u:  %12.5f  %12.5f %12.5f %12.5f\n", i+1, kPointReducedCoordinates[3*i+0], kPointReducedCoordinates[3*i+1], kPointReducedCoordinates[3*i+2],d_kPointWeights[i]);
 	pcout << buffer;
@@ -373,7 +373,7 @@ void dftClass<FEOrder>::generateMPGrid()
 
  // Convert from crystal to Cartesian coordinates
 
-  for(int i = 0; i < d_maxkPoints; ++i)
+  for(int i = 0; i < maxkPoints; ++i)
     for (unsigned int d=0; d < 3; ++d)
       d_kPointCoordinates[3*i + d] = kPointReducedCoordinates[3*i+0]*d_reciprocalLatticeVectors[0][d] +
                                      kPointReducedCoordinates[3*i+1]*d_reciprocalLatticeVectors[1][d] +
@@ -381,12 +381,12 @@ void dftClass<FEOrder>::generateMPGrid()
    //
    // Split k-points over pools
    //
-  AssertThrow(d_maxkPoints>=dftParameters::npool,ExcMessage("Number of k-points should be higher than or equal to number of pools"));
+  AssertThrow(maxkPoints>=dftParameters::npool,ExcMessage("Number of k-points should be higher than or equal to number of pools"));
    const unsigned int this_mpi_pool (Utilities::MPI::this_mpi_process(interpoolcomm)) ;
-   std::vector<double> d_kPointCoordinatesGlobal(3*d_maxkPoints, 0.0) ;
-   std::vector<double> d_kPointWeightsGlobal(d_maxkPoints, 0.0) ;
-   std::vector<double> kPointReducedCoordinatesGlobal(3*d_maxkPoints, 0.0) ;
-   for(unsigned int i = 0; i < d_maxkPoints; ++i)
+   std::vector<double> d_kPointCoordinatesGlobal(3*maxkPoints, 0.0) ;
+   std::vector<double> d_kPointWeightsGlobal(maxkPoints, 0.0) ;
+   std::vector<double> kPointReducedCoordinatesGlobal(3*maxkPoints, 0.0) ;
+   for(unsigned int i = 0; i < maxkPoints; ++i)
     {
        for (unsigned int d=0; d < 3; ++d)
        {
@@ -396,26 +396,26 @@ void dftClass<FEOrder>::generateMPGrid()
      d_kPointWeightsGlobal[i] = d_kPointWeights[i] ;
     }
    //
-   const unsigned int d_maxkPointsGlobal = d_maxkPoints ;
+   const unsigned int maxkPointsGlobal = maxkPoints ;
    d_kPointCoordinates.clear() ;
    kPointReducedCoordinates.clear();
    d_kPointWeights.clear() ;
-   d_maxkPoints = d_maxkPointsGlobal / dftParameters::npool ;
-   const unsigned int rest = d_maxkPointsGlobal%dftParameters::npool ;
+   maxkPoints = maxkPointsGlobal / dftParameters::npool ;
+   const unsigned int rest = maxkPointsGlobal%dftParameters::npool ;
    if (this_mpi_pool < rest)
-       d_maxkPoints = d_maxkPoints + 1 ;
+       maxkPoints = maxkPoints + 1 ;
    //
-   d_kPointCoordinates.resize(3*d_maxkPoints, 0.0) ;
-   kPointReducedCoordinates.resize(3*d_maxkPoints, 0.0);
-   d_kPointWeights.resize(d_maxkPoints, 0.0) ;
+   d_kPointCoordinates.resize(3*maxkPoints, 0.0) ;
+   kPointReducedCoordinates.resize(3*maxkPoints, 0.0);
+   d_kPointWeights.resize(maxkPoints, 0.0) ;
    //
    std::vector<int> sendSizekPoints1(dftParameters::npool, 0), mpiOffsetskPoints1(dftParameters::npool, 0) ;
    std::vector<int> sendSizekPoints2(dftParameters::npool, 0), mpiOffsetskPoints2(dftParameters::npool, 0) ;
    if (this_mpi_pool==0) {
    //
      for (unsigned int i=0; i < dftParameters::npool; ++i) {
-       sendSizekPoints1[i] = 3*(d_maxkPointsGlobal / dftParameters::npool) ;
-       sendSizekPoints2[i] = d_maxkPointsGlobal / dftParameters::npool ;
+       sendSizekPoints1[i] = 3*(maxkPointsGlobal / dftParameters::npool) ;
+       sendSizekPoints2[i] = maxkPointsGlobal / dftParameters::npool ;
 	if (i < rest){
 	   sendSizekPoints1[i] = sendSizekPoints1[i] + 3 ;
 	   sendSizekPoints2[i] = sendSizekPoints2[i] + 1 ;
@@ -426,10 +426,10 @@ void dftClass<FEOrder>::generateMPGrid()
     }
    }
    }
-   //pcout << sendSizekPoints[0] << "  " << sendSizekPoints[1] << " " << d_maxkPoints << std::endl;
+   //pcout << sendSizekPoints[0] << "  " << sendSizekPoints[1] << " " << maxkPoints << std::endl;
    //
-   MPI_Scatterv(&(d_kPointCoordinatesGlobal[0]),&(sendSizekPoints1[0]), &(mpiOffsetskPoints1[0]), MPI_DOUBLE, &(d_kPointCoordinates[0]), 3*d_maxkPoints, MPI_DOUBLE, 0, interpoolcomm);
-   MPI_Scatterv(&(d_kPointWeightsGlobal[0]),&(sendSizekPoints2[0]), &(mpiOffsetskPoints2[0]), MPI_DOUBLE, &(d_kPointWeights[0]), d_maxkPoints, MPI_DOUBLE, 0, interpoolcomm);
-   MPI_Scatterv(&(kPointReducedCoordinatesGlobal[0]),&(sendSizekPoints1[0]), &(mpiOffsetskPoints1[0]), MPI_DOUBLE, &(kPointReducedCoordinates[0]), 3*d_maxkPoints, MPI_DOUBLE, 0, interpoolcomm);
+   MPI_Scatterv(&(d_kPointCoordinatesGlobal[0]),&(sendSizekPoints1[0]), &(mpiOffsetskPoints1[0]), MPI_DOUBLE, &(d_kPointCoordinates[0]), 3*maxkPoints, MPI_DOUBLE, 0, interpoolcomm);
+   MPI_Scatterv(&(d_kPointWeightsGlobal[0]),&(sendSizekPoints2[0]), &(mpiOffsetskPoints2[0]), MPI_DOUBLE, &(d_kPointWeights[0]), maxkPoints, MPI_DOUBLE, 0, interpoolcomm);
+   MPI_Scatterv(&(kPointReducedCoordinatesGlobal[0]),&(sendSizekPoints1[0]), &(mpiOffsetskPoints1[0]), MPI_DOUBLE, &(kPointReducedCoordinates[0]), 3*maxkPoints, MPI_DOUBLE, 0, interpoolcomm);
 
 }
