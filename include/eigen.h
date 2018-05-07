@@ -58,7 +58,7 @@ namespace dftfe{
      
 #ifdef ENABLE_PERIODIC_BC
       /**
-       * @brief Compute discretized operator matrix times multi-vectors
+       * @brief Compute discretized operator matrix times complex type multi-vectors and add it to the existing dst vector
        *
        * @param src Vector containing current values of source array with multi-vector array stored 
        * in a flattened format with all the wavefunction value corresponding to a given node is stored 
@@ -66,12 +66,17 @@ namespace dftfe{
        * @param numberComponents Number of multi-fields(vectors)
        * @param macroCellMap precomputed cell-localindex id map of the multi-wavefuncton field in the order of macrocells
        * @param cellMap precomputed cell-localindex id map of the multi-wavefuncton field in the order of local active cells
-       * @param dst Vector containing operator times given multi-vectors product
+       * @param scaleFlag which decides whether dst has to be scaled square root of diagonal mass matrix before evaluating
+       * matrix times src vector
+       * @param scalar which multiplies src before evaluating matrix times src vector
+       * @param dst Vector containing sum of dst vector and operator times given multi-vectors product 
        */
       void HX(dealii::parallel::distributed::Vector<std::complex<double> > & src,
 	      const unsigned int numberComponents,
 	      const std::vector<std::vector<dealii::types::global_dof_index> > & macroCellMap,
 	      const std::vector<std::vector<dealii::types::global_dof_index> > & cellMap,
+	      const bool scaleFlag,
+	      const std::complex<double> scalar,
 	      dealii::parallel::distributed::Vector<std::complex<double> > & dst);
 
 
@@ -86,7 +91,7 @@ namespace dftfe{
 #else
       
       /**
-       * @brief Compute discretized operator matrix times multi-vectors
+       * @brief Compute discretized operator matrix times double type multi-vectors and add it to the existing dft vector
        *
        * @param src Vector containing current values of source array with multi-vector array stored 
        * in a flattened format with all the wavefunction value corresponding to a given node is stored 
@@ -94,12 +99,16 @@ namespace dftfe{
        * @param numberComponents Number of multi-fields(vectors)
        * @param macroCellMap precomputed cell-localindex id map of the multi-wavefuncton field in the order of macrocells
        * @param cellMap precomputed cell-localindex id map of the multi-wavefuncton field in the order of local active cells
+       * @param scaleFlag which decides whether dst has to be scaled square root of diagonal mass matrix before evaluating
+       * matrix times src vector
        * @param dst Vector containing operator times given multi-vectors product
        */
       void HX(dealii::parallel::distributed::Vector<double> & src,
 	      const unsigned int numberComponents,
 	      const std::vector<std::vector<dealii::types::global_dof_index> > & macroCellMap,
 	      const std::vector<std::vector<dealii::types::global_dof_index> > & cellMap,
+	      const bool scaleFlag,
+	      const double scalar,
 	      dealii::parallel::distributed::Vector<double> & dst);
 
       /**
@@ -328,6 +337,7 @@ namespace dftfe{
       dealii::Table<2, dealii::VectorizedArray<double> > vEff;
       dealii::Table<3, dealii::VectorizedArray<double> > derExcWithSigmaTimesGradRho;
 
+
        /**
        * @brief finite-element cell level matrix to store dot product between shapeFunction gradients (\int(del N_i \dot \del N_j))
        * with first dimension traversing the macro cell id
@@ -337,6 +347,7 @@ namespace dftfe{
 
       ///storage for shapefunctions
       std::vector<double> d_shapeFunctionValue;
+      dealii::Table<4, dealii::VectorizedArray<double> > d_cellShapeFunctionGradientValue;
 
 
 

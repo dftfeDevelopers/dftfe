@@ -152,7 +152,7 @@ namespace dftfe{
     if(totalNumberBlocks > 1)
       d_numberWaveFunctionsBlock[totalNumberBlocks - 1] = numberWaveFunctionsLastBlock;
     
-    if(dftParameters::xc_id < 4 && (dftParameters::nkx*dftParameters::nky*dftParameters::nkz) == 1 && (dftParameters::dkx*dftParameters::dky*dftParameters::dkz) <= 1e-10)
+    if((dftParameters::nkx*dftParameters::nky*dftParameters::nkz) == 1 && (dftParameters::dkx*dftParameters::dky*dftParameters::dkz) <= 1e-10)
       { 
 	for(unsigned int nBlock = 0; nBlock < totalNumberBlocks; ++nBlock)
 	  {
@@ -185,7 +185,6 @@ namespace dftfe{
 						    eigenVectorsFlattenedArray);
 #endif
 
-
 	    //
 	    //precompute certain maps
 	    //
@@ -195,6 +194,11 @@ namespace dftfe{
 						     numberWaveFunctionsPerCurrentBlock,
 						     flattenedArrayMacroCellLocalProcIndexIdMap,
 						     flattenedArrayCellLocalProcIndexIdMap);
+
+
+	    operatorMatrix.getOverloadedConstraintMatrix()->precomputeMaps(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
+									   eigenVectorsFlattenedArray.get_partitioner(),
+									   numberWaveFunctionsPerCurrentBlock);
 				    
 	    //
 	    //copy the data from eigenVectors to eigenVectorsFlattened (this may have to be changed from flattened 

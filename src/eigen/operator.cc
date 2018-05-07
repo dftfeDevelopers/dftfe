@@ -22,27 +22,29 @@
 //
 // @author Phani Motamarri (2018)
 //
-#include "../../include/operator.h"
+#include <operator.h>
 
 //
 // Constructor.
 //
 namespace dftfe {
 
-  operatorDFTClass::operatorDFTClass(const MPI_Comm                     & mpi_comm_replica,
-				     const dealii::MatrixFree<3,double> & matrix_free_data,
+  operatorDFTClass::operatorDFTClass(const MPI_Comm                                        & mpi_comm_replica,
+				     const dealii::MatrixFree<3,double>                    & matrix_free_data,
 				     const std::vector<dealii::types::global_dof_index>    & localDofIndicesReal,
 				     const std::vector<dealii::types::global_dof_index>    & localDofIndicesImag,
 				     const std::vector<dealii::types::global_dof_index>    & localProcDofIndicesReal,
 				     const std::vector<dealii::types::global_dof_index>    & localProcDofIndicesImag,
-				     const dealii::ConstraintMatrix     & constraintMatrixEigen):
+				     const dealii::ConstraintMatrix                        & constraintMatrixEigen,
+				     dftUtils::constraintMatrixInfo                        & constraintMatrixNone):
     d_mpi_communicator(mpi_comm_replica),
     d_matrix_free_data(&matrix_free_data),
     d_localDofIndicesReal(&localDofIndicesReal),
     d_localDofIndicesImag(&localDofIndicesImag),
     d_localProcDofIndicesReal(&localProcDofIndicesReal),
     d_localProcDofIndicesImag(&localProcDofIndicesImag),
-    d_constraintMatrixEigen(&constraintMatrixEigen)
+    d_constraintMatrixEigen(&constraintMatrixEigen),
+    d_constraintMatrixData(&constraintMatrixNone)
   {
 
 
@@ -95,11 +97,19 @@ namespace dftfe {
   }
 
   //
-  //Get constraint matrix
+  //Get dealii constraint matrix used for the eigen problem (2-component FE Object for Periodic, 1-component FE object for non-periodic)
   //
   const dealii::ConstraintMatrix * operatorDFTClass::getConstraintMatrixEigen() const
   {
     return d_constraintMatrixEigen;
+  }
+
+  //
+  //Get overloaded constraint matrix object constructed using 1-component FE object 
+  //
+  dftUtils::constraintMatrixInfo * operatorDFTClass::getOverloadedConstraintMatrix() const
+  {
+    return d_constraintMatrixData;
   }
 
   //

@@ -60,6 +60,17 @@ namespace dftUtils
 		    const dealii::ConstraintMatrix & constraintMatrixData);
 
     /**
+     * @brief precompute map between local processor index of unflattened deallii array to the local processor index of       
+     * the first field associated with the multi-field flattened dealii array
+     *
+     * @param partitioner1 associated with unflattened dealii vector
+     * @param partitioner2 associated with flattened dealii vector storing multi-fields
+     */
+    void precomputeMaps(const std::shared_ptr<const dealii::Utilities::MPI::Partitioner> & partitioner1,
+			const std::shared_ptr<const dealii::Utilities::MPI::Partitioner> & partitioner2,
+			const unsigned int blockSize);
+
+    /**
      * @brief overloaded dealii internal function "distribute" which sets the slave node 
      * field values from master nodes
      *
@@ -105,6 +116,7 @@ namespace dftUtils
     std::vector<double> d_columnValues;
     std::vector<double> d_inhomogenities;
     std::vector<dealii::types::global_dof_index> d_rowSizes;
+    std::vector<dealii::types::global_dof_index> d_localIndexMapUnflattenedToFlattened;
 
 
   };

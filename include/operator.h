@@ -21,7 +21,8 @@
 
 #include <vector>
 
-#include "headers.h"
+#include <headers.h>
+#include <constraintMatrixInfo.h>
 
 
 namespace dftfe{
@@ -91,12 +92,16 @@ namespace dftfe{
 		    const unsigned int numberComponents,
 		    const std::vector<std::vector<dealii::types::global_dof_index> > & macroCellMap,
 		    const std::vector<std::vector<dealii::types::global_dof_index> > & cellMap,
+		    bool scaleFlag,
+		    const std::complex<double> scalar,
 		    dealii::parallel::distributed::Vector<std::complex<double> > & Y) = 0;
 #else
     virtual void HX(dealii::parallel::distributed::Vector<double> & X,
 		    const unsigned int numberComponents,
 		    const std::vector<std::vector<dealii::types::global_dof_index> > & macroCellMap,
 		    const std::vector<std::vector<dealii::types::global_dof_index> > & cellMap,
+		    bool scaleFlag,
+		    const double scalar,
 		    dealii::parallel::distributed::Vector<double> & Y) = 0;
 #endif
 
@@ -152,6 +157,14 @@ namespace dftfe{
      */
     const dealii::ConstraintMatrix * getConstraintMatrixEigen() const;
 
+
+    /**
+     * @brief Get constraint matrix eigen
+     *
+     * @return pointer to constraint matrix eigen
+     */
+    dftUtils::constraintMatrixInfo * getOverloadedConstraintMatrix() const;
+
     
     /**
      * @brief Get matrix free data
@@ -186,7 +199,8 @@ namespace dftfe{
 		     const std::vector<dealii::types::global_dof_index> & localDofIndicesImag,
 		     const std::vector<dealii::types::global_dof_index> & localProcDofIndicesReal,
 		     const std::vector<dealii::types::global_dof_index> & localProcDofIndicesImag,
-		     const dealii::ConstraintMatrix  & constraintMatrixEigen);
+		     const dealii::ConstraintMatrix  & constraintMatrixEigen,
+		     dftUtils::constraintMatrixInfo & constraintMatrixNone);
 
   protected:
 
@@ -212,10 +226,14 @@ namespace dftfe{
     const std::vector<dealii::types::global_dof_index> * d_localProcDofIndicesImag;
 
     //
-    //constraint matrix used in eigen solve
+    //constraint matrix used for the eigen problem (2-component FE Object for Periodic, 1-component FE object for non-periodic)
     //
     const dealii::ConstraintMatrix  * d_constraintMatrixEigen;
 
+    //
+    //Get overloaded constraint matrix object constructed using 1-component FE object
+    //
+    dftUtils::constraintMatrixInfo * d_constraintMatrixData;
     //
     //matrix-free data
     //
