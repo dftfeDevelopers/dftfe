@@ -488,10 +488,6 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 	  }
       }
 
-    //
-    //This may be removed when memory optimization
-    //
-    //dst = 0.0;
 
     //
     //update slave nodes before doing element-level matrix-vec multiplication

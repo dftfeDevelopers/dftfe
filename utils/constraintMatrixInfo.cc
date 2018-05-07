@@ -25,7 +25,10 @@ namespace dftfe {
 namespace dftUtils
 {
 
-
+  //
+  //wrapper function to call blas function daxpy or zapxy depending
+  //on the data type (complex or double)
+  //
   void callaxpy(const int *n,
 		const double *alpha,
 		double *x,
@@ -146,9 +149,9 @@ namespace dftUtils
     //
     //Get required sizes
     //
-    unsigned int n_ghosts   = unFlattenedPartitioner->n_ghost_indices();
-    unsigned int localSize  = unFlattenedPartitioner->local_size();
-    unsigned int totalSize = n_ghosts + localSize;
+    const unsigned int n_ghosts   = unFlattenedPartitioner->n_ghost_indices();
+    const unsigned int localSize  = unFlattenedPartitioner->local_size();
+    const unsigned int totalSize = n_ghosts + localSize;
 
     d_localIndexMapUnflattenedToFlattened.clear();
     d_localIndexMapUnflattenedToFlattened.resize(totalSize);
@@ -212,11 +215,6 @@ namespace dftUtils
 
 	    const dealii::types::global_dof_index startingLocalDofIndexColumn = d_localIndexMapUnflattenedToFlattened[d_columnIdsLocal[count]];
 	     
-	    /*for(unsigned int k = 0; k < blockSize; ++k)
-	      {
-	      newValuesBlock[k] += fieldVector.local_element(startingLocalDofIndexColumn + k)*d_columnValues[count];
-	      }*/
-
 	    T alpha = d_columnValues[count];
 	    
 	    callaxpy(&N,

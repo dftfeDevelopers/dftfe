@@ -58,7 +58,7 @@ namespace dftfe{
      
 #ifdef ENABLE_PERIODIC_BC
       /**
-       * @brief Compute discretized operator matrix times multi-vectors
+       * @brief Compute discretized operator matrix times complex type multi-vectors and add it to the existing dst vector
        *
        * @param src Vector containing current values of source array with multi-vector array stored 
        * in a flattened format with all the wavefunction value corresponding to a given node is stored 
@@ -66,7 +66,10 @@ namespace dftfe{
        * @param numberComponents Number of multi-fields(vectors)
        * @param macroCellMap precomputed cell-localindex id map of the multi-wavefuncton field in the order of macrocells
        * @param cellMap precomputed cell-localindex id map of the multi-wavefuncton field in the order of local active cells
-       * @param dst Vector containing operator times given multi-vectors product
+       * @param scaleFlag which decides whether dst has to be scaled square root of diagonal mass matrix before evaluating
+       * matrix times src vector
+       * @param scalar which multiplies src before evaluating matrix times src vector
+       * @param dst Vector containing sum of dst vector and operator times given multi-vectors product 
        */
       void HX(dealii::parallel::distributed::Vector<std::complex<double> > & src,
 	      const unsigned int numberComponents,
@@ -88,7 +91,7 @@ namespace dftfe{
 #else
       
       /**
-       * @brief Compute discretized operator matrix times multi-vectors
+       * @brief Compute discretized operator matrix times double type multi-vectors and add it to the existing dft vector
        *
        * @param src Vector containing current values of source array with multi-vector array stored 
        * in a flattened format with all the wavefunction value corresponding to a given node is stored 
@@ -96,6 +99,8 @@ namespace dftfe{
        * @param numberComponents Number of multi-fields(vectors)
        * @param macroCellMap precomputed cell-localindex id map of the multi-wavefuncton field in the order of macrocells
        * @param cellMap precomputed cell-localindex id map of the multi-wavefuncton field in the order of local active cells
+       * @param scaleFlag which decides whether dst has to be scaled square root of diagonal mass matrix before evaluating
+       * matrix times src vector
        * @param dst Vector containing operator times given multi-vectors product
        */
       void HX(dealii::parallel::distributed::Vector<double> & src,
