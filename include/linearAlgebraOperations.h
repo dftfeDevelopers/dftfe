@@ -108,13 +108,26 @@ namespace dftfe
     /** @brief Orthogonalize given subspace using GramSchmidt orthogonalization
      *  
      *  @param operatorMatrix An object which has access to the given matrix
-     *  @param  X Given subspace
+     *  @param  X Given subspace as vector of dealii vectors
      *
      *  @return X In-place update of the given subspace 
      */
     void gramSchmidtOrthogonalization(operatorDFTClass & operatorMatrix,
 				      std::vector<vectorType> & X);
 
+
+    
+     /** @brief Orthogonalize given subspace using GramSchmidt orthogonalization
+     *  
+     *  @param operatorMatrix An object which has access to the given matrix
+     *  @param  X Given subspace as flattened array of multi-vectors
+     *  @param numberComponents Number of multiple-fields
+     *  @return X In-place update of the given subspace 
+     */
+    template<typename T>
+    void gramSchmidtOrthogonalization(operatorDFTClass & operatorMatrix,
+				      dealii::parallel::distributed::Vector<T> & X,
+				      const unsigned int numberComponents);
 
 
     /** @brief Compute Rayleigh-Ritz projection
