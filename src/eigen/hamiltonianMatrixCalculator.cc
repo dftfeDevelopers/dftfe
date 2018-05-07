@@ -39,7 +39,7 @@ void eigenClass<FEOrder>::computeHamiltonianMatrix(unsigned int kPointIndex)
   //
   QGauss<3> quadrature(C_num1DQuad<FEOrder>());
   FEEvaluation<3, FEOrder, C_num1DQuad<FEOrder>(), 1, double>  fe_eval(dftPtr->matrix_free_data, 0, 0); 
-  FEEvaluation<3, FEOrder, C_num1DQuad<FEOrder>(), 1, double>  fe_eval1(dftPtr->matrix_free_data, 0, 0);
+  //FEEvaluation<3, FEOrder, C_num1DQuad<FEOrder>(), 1, double>  fe_eval1(dftPtr->matrix_free_data, 0, 0);
   const unsigned int numberDofsPerElement = dftPtr->matrix_free_data.get_dof_handler().get_fe().dofs_per_cell;
   const unsigned int numberQuadraturePoints = quadrature.size();
   typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
@@ -54,7 +54,7 @@ void eigenClass<FEOrder>::computeHamiltonianMatrix(unsigned int kPointIndex)
       std::vector<VectorizedArray<double> > elementHamiltonianMatrix;
       elementHamiltonianMatrix.resize(numberDofsPerElement*numberDofsPerElement);
       fe_eval.reinit(iMacroCell);
-      fe_eval1.reinit(iMacroCell);
+      //fe_eval1.reinit(iMacroCell);
       for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
 	{
 	  for(unsigned int jNode = 0; jNode < numberDofsPerElement; ++jNode)
@@ -89,10 +89,10 @@ void eigenClass<FEOrder>::computeHamiltonianMatrix(unsigned int kPointIndex)
 
 		      VectorizedArray<double> temp = derExcWithSigmaTimesGradRho(iMacroCell,q_point,0)*tempx + derExcWithSigmaTimesGradRho(iMacroCell,q_point,1)*tempy + derExcWithSigmaTimesGradRho(iMacroCell,q_point,2)*tempz;
 
-		      fe_eval1.submit_value(make_vectorized_array(2.0)*temp,q_point);
+		      fe_eval.submit_value(make_vectorized_array(2.0)*temp,q_point);
 		    }
 	      
-		  elementHamiltonianMatrix[numberDofsPerElement*iNode + jNode] +=  fe_eval1.integrate_value();
+		  elementHamiltonianMatrix[numberDofsPerElement*iNode + jNode] +=  fe_eval.integrate_value();
 
 		}//jNode loop
 

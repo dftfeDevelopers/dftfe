@@ -344,7 +344,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 			       const unsigned int numberWaveFunctions,
 			       const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayMacroCellLocalProcIndexIdMap,
 			       const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap,
-			       bool scaleFlag,
+			       const bool scaleFlag,
 			       std::complex<double> scalar,
 			       dealii::parallel::distributed::Vector<std::complex<double> > & dst)
 
@@ -453,7 +453,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 			       const unsigned int numberWaveFunctions,
 			       const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayMacroCellLocalProcIndexIdMap,
 			       const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap,
-			       bool scaleFlag,
+			       const bool scaleFlag,
 			       double scalar,
 			       dealii::parallel::distributed::Vector<double> & dst)
 
