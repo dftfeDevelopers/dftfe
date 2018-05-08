@@ -128,7 +128,7 @@ namespace linearAlgebraOperations
 	ylocal[i].imag(yImag[i]);
       }
 
-    const int n = dofs_per_proc;const int inc = 1;
+    const unsigned int n = dofs_per_proc;const unsigned int inc = 1;
 
       //call blas function
       zaxpy_(&n,
@@ -254,12 +254,13 @@ namespace linearAlgebraOperations
       //eigen decomposition to find max eigen value of T matrix
       std::vector<double> eigenValuesT(lanczosIterations);
       char jobz='N', uplo='L';
-      int n = lanczosIterations, lda = lanczosIterations, info;
-      int lwork = 1 + 6*n + 2*n*n, liwork = 3 + 5*n;
+      const unsigned int n = lanczosIterations, lda = lanczosIterations;
+      int info;
+      const unsigned int lwork = 1 + 6*n + 2*n*n, liwork = 3 + 5*n;
       std::vector<int> iwork(liwork, 0);
  
 #ifdef ENABLE_PERIODIC_BC
-      int lrwork = 1 + 5*n + 2*n*n;
+      const unsigned int lrwork = 1 + 5*n + 2*n*n;
       std::vector<double> rwork(lrwork,0.0); 
       std::vector<std::complex<double> > work(lwork);
       zheevd_(&jobz, &uplo, &n, &T[0], &lda, &eigenValuesT[0], &work[0], &lwork, &rwork[0], &lrwork, &iwork[0], &liwork, &info);
@@ -468,13 +469,14 @@ namespace linearAlgebraOperations
       operatorMatrix.XtHX(X,ProjHam);
 
       //compute the eigen decomposition of ProjHam
-      int n = X.size(), lda = X.size(), info;
-      int lwork = 1 + 6*n + 2*n*n, liwork = 3 + 5*n;
+      const unsigned int n = X.size(), lda = X.size();
+      int info;
+      const unsigned int lwork = 1 + 6*n + 2*n*n, liwork = 3 + 5*n;
       std::vector<int> iwork(liwork,0);
       char jobz='V', uplo='U';
 
 #ifdef ENABLE_PERIODIC_BC
-      int lrwork = 1 + 5*n + 2*n*n;
+      const unsigned int lrwork = 1 + 5*n + 2*n*n;
       std::vector<double> rwork(lrwork,0.0); 
       std::vector<std::complex<double> > work(lwork);
       zheevd_(&jobz, &uplo, &n, &ProjHam[0],&lda,&eigenValues[0], &work[0], &lwork, &rwork[0], &lrwork, &iwork[0], &liwork, &info);
@@ -484,9 +486,9 @@ namespace linearAlgebraOperations
 #endif
 
       //rotate the basis PSI = PSI*Q
-      int m = X.size();
+      const unsigned int m = X.size();
 #ifdef ENABLE_PERIODIC_BC
-      int n1 = X[0].local_size()/2;
+      const unsigned int n1 = X[0].local_size()/2;
       std::vector<std::complex<double> > Xbar(n1*m), Xlocal(n1*m); //Xbar=Xlocal*Q
       std::vector<std::complex<double> >::iterator val = Xlocal.begin();
       for(std::vector<vectorType>::iterator x=X.begin(); x<X.end(); ++x)
@@ -499,7 +501,7 @@ namespace linearAlgebraOperations
 	    }
 	}
 #else
-      int n1 = X[0].local_size();
+      const unsigned int n1 = X[0].local_size();
       std::vector<double> Xbar(n1*m), Xlocal(n1*m); //Xbar=Xlocal*Q
       std::vector<double>::iterator val = Xlocal.begin();
       for (std::vector<vectorType>::iterator x = X.begin(); x < X.end(); ++x)
@@ -513,14 +515,15 @@ namespace linearAlgebraOperations
 #endif
 
       const char transA  = 'N', transB  = 'N';
-      lda=n1; int ldb=m, ldc=n1;
+      const unsigned int lda1=n1; 
+      const unsigned int ldb=m, ldc=n1;
 
 #ifdef ENABLE_PERIODIC_BC
       const std::complex<double> alpha = 1.0, beta  = 0.0;
-      zgemm_(&transA, &transB, &n1, &m, &m, &alpha, &Xlocal[0], &lda, &ProjHam[0], &ldb, &beta, &Xbar[0], &ldc);
+      zgemm_(&transA, &transB, &n1, &m, &m, &alpha, &Xlocal[0], &lda1, &ProjHam[0], &ldb, &beta, &Xbar[0], &ldc);
 #else
       const double alpha = 1.0, beta  = 0.0;
-      dgemm_(&transA, &transB, &n1, &m, &m, &alpha, &Xlocal[0], &lda, &ProjHam[0], &ldb, &beta, &Xbar[0], &ldc);
+      dgemm_(&transA, &transB, &n1, &m, &m, &alpha, &Xlocal[0], &lda1, &ProjHam[0], &ldb, &beta, &Xbar[0], &ldc);
 #endif
 
 

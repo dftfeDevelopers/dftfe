@@ -25,13 +25,13 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vec
   //
   //get access to triangulation objects from meshGenerator class
   //
-  const int kPointIndex = d_kPointIndex;
+  const unsigned int kPointIndex = d_kPointIndex;
   const unsigned int dofs_per_cell = dftPtr->FEEigen.dofs_per_cell;
 
 #ifdef ENABLE_PERIODIC_BC
-  const int numberNodesPerElement = dftPtr->FEEigen.dofs_per_cell/2;//GeometryInfo<3>::vertices_per_cell;
+  const unsigned int numberNodesPerElement = dftPtr->FEEigen.dofs_per_cell/2;//GeometryInfo<3>::vertices_per_cell;
 #else
-  const int numberNodesPerElement = dftPtr->FEEigen.dofs_per_cell;
+  const unsigned int numberNodesPerElement = dftPtr->FEEigen.dofs_per_cell;
 #endif
 
   //
@@ -44,7 +44,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vec
   std::map<unsigned int, std::vector<double> > projectorKetTimesVector;
 #endif
 
-  const int numberWaveFunctions = src.size();
+  const unsigned int numberWaveFunctions = src.size();
   projectorKetTimesVector.clear();
 
   //
@@ -52,8 +52,8 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vec
   //
   for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
     {
-      const int atomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];
-      const int numberSingleAtomPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
+      const unsigned int atomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];
+      const unsigned int numberSingleAtomPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
       projectorKetTimesVector[atomId].resize(numberWaveFunctions*numberSingleAtomPseudoWaveFunctions,0.0);
     }
 
@@ -108,7 +108,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vec
 	  for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInElement[iElem].size();++iAtom)
 	    {
 	      const int atomId = dftPtr->d_nonLocalAtomIdsInElement[iElem][iAtom];
-	      const int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
+	      const unsigned int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
 	      const int nonZeroElementMatrixId = dftPtr->d_sparsityPattern[atomId][iElem];
 #ifdef ENABLE_PERIODIC_BC
 	      const char transA = 'C';
@@ -235,7 +235,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vec
   for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
     {
       const unsigned int atomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];
-      int numberPseudoWaveFunctions =  dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
+      const unsigned int numberPseudoWaveFunctions =  dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
       for(unsigned int iElemComp = 0; iElemComp < dftPtr->d_elementIteratorsInAtomCompactSupport[atomId].size(); ++iElemComp)
 	{
 
@@ -316,7 +316,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vec
 #ifdef ENABLE_PERIODIC_BC
 template<unsigned int FEOrder>
 void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::parallel::distributed::Vector<std::complex<double> > & src,
-							   const int numberWaveFunctions,
+							   const unsigned int numberWaveFunctions,
 							   const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap,
 							   dealii::parallel::distributed::Vector<std::complex<double> >       & dst) const
 {
@@ -344,7 +344,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::paralle
   const char transB = 'N';
   const std::complex<double> alpha = 1.0;
   const std::complex<double> beta = 1.0;
-  const int inc = 1;
+  const unsigned int inc = 1;
 
 
   typename DoFHandler<3>::active_cell_iterator cell = dftPtr->dofHandler.begin_active(), endc = dftPtr->dofHandler.end();
@@ -367,7 +367,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::paralle
 	  for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInElement[iElem].size();++iAtom)
 	    {
 	      const unsigned int atomId = dftPtr->d_nonLocalAtomIdsInElement[iElem][iAtom];
-	      const int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
+	      const unsigned int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
 	      const int nonZeroElementMatrixId = dftPtr->d_sparsityPattern[atomId][iElem];
 
 	      zgemm_(&transA,
@@ -456,7 +456,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::paralle
   const char transB1 = 'T';
   const std::complex<double> alpha1 = 1.0;
   const std::complex<double> beta1 = 0.0;
-  const int inc1 = 1;
+  const unsigned int inc1 = 1;
 
   //
   //compute C*V*C^{T}*x
@@ -464,7 +464,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::paralle
   for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
     {
       const unsigned int atomId = dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];
-      const int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
+      const unsigned int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
        for(unsigned int iElemComp = 0; iElemComp < dftPtr->d_elementIteratorsInAtomCompactSupport[atomId].size(); ++iElemComp)
 	{
 	 
@@ -504,7 +504,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::paralle
 #else
 template<unsigned int FEOrder>
 void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::parallel::distributed::Vector<double> & src,
-							   const int numberWaveFunctions,
+							   const unsigned int numberWaveFunctions,
 							   const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap,
 							   dealii::parallel::distributed::Vector<double>       & dst) const
 {
@@ -533,7 +533,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::paralle
   const char transB = 'N';
   const double alpha = 1.0;
   const double beta = 1.0;
-  const int inc = 1;
+  const unsigned int inc = 1;
 
 
   typename DoFHandler<3>::active_cell_iterator cell = dftPtr->dofHandler.begin_active(), endc = dftPtr->dofHandler.end();
@@ -556,7 +556,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::paralle
 	  for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInElement[iElem].size();++iAtom)
 	    {
 	      const unsigned int atomId = dftPtr->d_nonLocalAtomIdsInElement[iElem][iAtom];
-	      const int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
+	      const unsigned int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
 	      const int nonZeroElementMatrixId = dftPtr->d_sparsityPattern[atomId][iElem];
 
 	      dgemm_(&transA,
@@ -648,7 +648,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::paralle
   const char transB1 = 'T';
   const double alpha1 = 1.0;
   const double beta1 = 0.0;
-  const int inc1 = 1;
+  const unsigned int inc1 = 1;
 
   //
   //compute C*V*C^{T}*x
@@ -656,7 +656,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::paralle
   for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
     {
       const unsigned int atomId = dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];
-      const int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
+      const unsigned int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
        for(unsigned int iElemComp = 0; iElemComp < dftPtr->d_elementIteratorsInAtomCompactSupport[atomId].size(); ++iElemComp)
 	{
 	 

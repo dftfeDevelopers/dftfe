@@ -200,6 +200,9 @@ namespace dftfe{
 
 	if(totalNumberBlocks > 1)
 	  d_numberWaveFunctionsBlock[totalNumberBlocks - 1] = numberWaveFunctionsLastBlock;
+
+
+	std::vector<std::vector<dealii::types::global_dof_index> > flattenedArrayCellLocalProcIndexIdMap,flattenedArrayMacroCellLocalProcIndexIdMap;
     
 	for(unsigned int nBlock = 0; nBlock < totalNumberBlocks; ++nBlock)
 	  {
@@ -213,7 +216,7 @@ namespace dftfe{
 	    //
 	    //create custom partitioned dealii array by storing wavefunctions(no need to createDealii vector if block size does not change)
 	    //
-	    std::vector<std::vector<dealii::types::global_dof_index> > flattenedArrayCellLocalProcIndexIdMap,flattenedArrayMacroCellLocalProcIndexIdMap;
+	  
 
 	    if(totalNumberBlocks > 1)
 	      {
@@ -311,11 +314,21 @@ namespace dftfe{
 
 	  }//block loop
 
-	computing_timer.enter_section("Gram-Schmidt Orthogonalization Opt"); 
+	computing_timer.enter_section("Gram-Schmidt Orthogn Opt"); 
 	linearAlgebraOperations::gramSchmidtOrthogonalization(operatorMatrix,
 							      eigenVectorsFlattenedArray,
 							      totalNumberWaveFunctions);
-	computing_timer.exit_section("Gram-Schmidt Orthogonalization Opt");
+	computing_timer.exit_section("Gram-Schmidt Orthogn Opt");
+
+
+	computing_timer.enter_section("Rayleigh-Ritz proj Opt"); 
+	linearAlgebraOperations::rayleighRitz(operatorMatrix,
+					      eigenVectorsFlattenedArray,
+					      totalNumberWaveFunctions,
+					      flattenedArrayMacroCellLocalProcIndexIdMap,
+					      flattenedArrayCellLocalProcIndexIdMap,
+					      eigenValues);
+	computing_timer.exit_section("Rayleigh-Ritz proj Opt");
 
 
 	//
@@ -335,14 +348,6 @@ namespace dftfe{
 #endif
 	      }
 	  }
-
-	/*computing_timer.enter_section("Gram-Schmidt Orthogonalization"); 
-
-	linearAlgebraOperations::gramSchmidtOrthogonalization(operatorMatrix,
-							      eigenVectors);
-
-							      computing_timer.exit_section("Gram-Schmidt Orthogonalization");*/
-
 
 
       }
@@ -370,17 +375,20 @@ namespace dftfe{
 
 	computing_timer.exit_section("Gram-Schmidt Orthogonalization");
 
+
+	computing_timer.enter_section("Rayleigh Ritz Projection"); 
+
+	linearAlgebraOperations::rayleighRitz(operatorMatrix,
+					      eigenVectors,
+					      eigenValues);
+
+
+	computing_timer.exit_section("Rayleigh Ritz Projection");
+
       }
   
 
-    computing_timer.enter_section("Rayleigh Ritz Projection"); 
-
-    linearAlgebraOperations::rayleighRitz(operatorMatrix,
-					  eigenVectors,
-					  eigenValues);
-
-
-    computing_timer.exit_section("Rayleigh Ritz Projection");
+   
   
 
 

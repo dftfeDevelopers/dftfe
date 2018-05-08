@@ -240,28 +240,24 @@ void eigenClass<FEOrder>::computeLocalHamiltonianTimesXMF (const dealii::MatrixF
 #ifdef ENABLE_PERIODIC_BC
 template<unsigned int FEOrder>
 void eigenClass<FEOrder>::computeLocalHamiltonianTimesX(const dealii::parallel::distributed::Vector<std::complex<double> > & src,
-							const int numberWaveFunctions,
+							const unsigned int numberWaveFunctions,
 							const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap,
 							dealii::parallel::distributed::Vector<std::complex<double> > & dst) const
 {
 
-  //
-  //initialize dst to zeros. Will be changed later
-  //
-  //const std::complex<double> zeroValue = 0.0;
-  //dst = zeroValue;
+  
 
   //
   //element level matrix-vector multiplications
   //
   const char transA = 'N',transB = 'T';
   const std::complex<double> scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
-  const int inc = 1;
+  const unsigned int inc = 1;
 
   std::vector<std::complex<double> > cellWaveFunctionMatrix(d_numberNodesPerElement*numberWaveFunctions,0.0);
   std::vector<std::complex<double> > cellHamMatrixTimesWaveMatrix(d_numberNodesPerElement*numberWaveFunctions,0.0);
 
-  int iElem = 0;
+  unsigned int iElem = 0;
   for(unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells; ++iMacroCell)
     {
       for(unsigned int iCell = 0; iCell < d_macroCellSubCellMap[iMacroCell]; ++iCell)
@@ -309,25 +305,22 @@ void eigenClass<FEOrder>::computeLocalHamiltonianTimesX(const dealii::parallel::
 #else
 template<unsigned int FEOrder>
 void eigenClass<FEOrder>::computeLocalHamiltonianTimesX(const dealii::parallel::distributed::Vector<double> & src,
-							const int numberWaveFunctions,
+							const unsigned int numberWaveFunctions,
 							const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap,
 							dealii::parallel::distributed::Vector<double> & dst) const
 {
-  //
-  //initialize dst to zeros. Will be changed later
-  //
- 
+   
   //
   //element level matrix-vector multiplications
   //
   const char transA = 'N',transB = 'N';
   const double scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
-  const int inc = 1;
+  const unsigned int inc = 1;
 
   std::vector<double> cellWaveFunctionMatrix(d_numberNodesPerElement*numberWaveFunctions,0.0);
   std::vector<double> cellHamMatrixTimesWaveMatrix(d_numberNodesPerElement*numberWaveFunctions,0.0);
 
-  int iElem = 0;
+  unsigned int iElem = 0;
   for(unsigned int iMacroCell = 0; iMacroCell < d_numberMacroCells; ++iMacroCell)
     {
       for(unsigned int iCell = 0; iCell < d_macroCellSubCellMap[iMacroCell]; ++iCell)

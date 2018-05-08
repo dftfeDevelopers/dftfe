@@ -26,12 +26,12 @@ namespace dftUtils
 {
 
 
-  void callaxpy(const int *n,
+  void callaxpy(const unsigned int *n,
 		const double *alpha,
 		double *x,
-		const int *incx,
+		const unsigned int *incx,
 		double *y,
-		const int *incy)
+		const unsigned int *incy)
   {
     daxpy_(n,
 	   alpha,
@@ -41,12 +41,12 @@ namespace dftUtils
 	   incy);
   }
 
-  void callaxpy(const int *n,
+  void callaxpy(const unsigned int *n,
 		const std::complex<double> *alpha,
 		std::complex<double> *x,
-		const int *incx,
+		const unsigned int *incx,
 		std::complex<double> *y,
-		const int *incy)
+		const unsigned int *incy)
   {
     zaxpy_(n,
 	   alpha,
@@ -196,8 +196,7 @@ namespace dftUtils
 
 
     unsigned int count = 0;
-    const int inc = 1;
-    const int N = blockSize;
+    const unsigned int inc = 1;
     
     for(unsigned int i = 0; i < d_rowIdsLocal.size(); ++i)
       {
@@ -219,7 +218,7 @@ namespace dftUtils
 
 	    T alpha = d_columnValues[count];
 	    
-	    callaxpy(&N,
+	    callaxpy(&blockSize,
 		     &alpha,
 		     fieldVector.begin()+startingLocalDofIndexColumn,
 		     &inc,
@@ -248,8 +247,7 @@ namespace dftUtils
 							const unsigned int blockSize) const
   {
     unsigned int count = 0;
-    const int N = blockSize;
-    const int inc = 1;
+    const unsigned int inc = 1;
     for(unsigned int i = 0; i < d_rowIdsLocal.size(); ++i)
       {
 	const dealii::types::global_dof_index startingLocalDofIndexRow = d_localIndexMapUnflattenedToFlattened[d_rowIdsLocal[i]];
@@ -259,7 +257,7 @@ namespace dftUtils
 	    const dealii::types::global_dof_index startingLocalDofIndexColumn=d_localIndexMapUnflattenedToFlattened[d_columnIdsLocal[count]];
 
 	    T alpha = d_columnValues[count];
-	    callaxpy(&N,
+	    callaxpy(&blockSize,
 		     &alpha,
 		     fieldVector.begin()+startingLocalDofIndexRow,
 		     &inc,

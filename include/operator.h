@@ -113,10 +113,22 @@ namespace dftfe{
      * @return ProjMatrix projected small matrix 
      */
 #ifdef ENABLE_PERIODIC_BC
+    virtual void XtHX(dealii::parallel::distributed::Vector<std::complex<double> > & src,
+		      const unsigned int numberComponents,
+		      const std::vector<std::vector<dealii::types::global_dof_index> > & macroCellMap,
+		      const std::vector<std::vector<dealii::types::global_dof_index> > & cellMap,
+		      std::vector<std::complex<double> > & ProjHam) = 0;
+
     virtual void XtHX(std::vector<vectorType> & X,
 		      std::vector<std::complex<double> > & ProjHam) = 0;
 #else
     virtual void XtHX(std::vector<vectorType> & X,
+		      std::vector<double> & ProjHam) = 0;
+
+    virtual void XtHX(dealii::parallel::distributed::Vector<double> & src,
+		      const unsigned int numberComponents,
+		      const std::vector<std::vector<dealii::types::global_dof_index> > & macroCellMap,
+		      const std::vector<std::vector<dealii::types::global_dof_index> > & cellMap,
 		      std::vector<double> & ProjHam) = 0;
 #endif
 

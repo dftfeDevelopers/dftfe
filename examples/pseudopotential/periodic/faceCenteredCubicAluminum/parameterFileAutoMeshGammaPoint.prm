@@ -216,7 +216,7 @@ subsection SCF parameters
   set ANDERSON SCHEME MIXING PARAMETER = 0.5
 
   # Maximum number of iterations to be allowed for SCF convergence
-  set MAXIMUM ITERATIONS               = 100  # default: 50
+  set MAXIMUM ITERATIONS               = 1 # default: 50
 
   # Fermi-Dirac smearing temperature (in Kelvin)
   set TEMPERATURE                      = 500  # default: 500.0

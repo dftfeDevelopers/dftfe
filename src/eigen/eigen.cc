@@ -488,11 +488,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 	  }
       }
 
-    //
-    //This may be removed when memory optimization
-    //
-    //dst = 0.0;
-
+    
     //
     //update slave nodes before doing element-level matrix-vec multiplication
     //
@@ -633,9 +629,9 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
     //
     //required for lapack functions
     //
-    int k = dofs_per_proc, n = src.size();
-    int vectorSize = k*n;
-    int lda=k, ldb=k, ldc=n;
+    const unsigned int k = dofs_per_proc, n = src.size();
+    const unsigned int vectorSize = k*n;
+    const unsigned int lda=k, ldb=k, ldc=n;
 
 
     std::vector<double> hxReal(vectorSize), xReal(vectorSize);
@@ -679,8 +675,8 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 	x[i].imag(xImag[i]);
       }
     char transA  = 'C', transB  = 'N';
-    std::complex<double> alpha = 1.0, beta  = 0.0;
-    int sizeXtHX = n*n;
+    const std::complex<double> alpha = 1.0, beta  = 0.0;
+    const unsigned int sizeXtHX = n*n;
     std::vector<std::complex<double> > XtHXValuelocal(sizeXtHX,0.0);
     zgemm_(&transA, &transB, &n, &n, &k, &alpha, &x[0], &lda, &hx[0], &ldb, &beta, &XtHXValuelocal[0], &ldc);
 
@@ -691,6 +687,87 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 		  MPI_SUM,
 		  mpi_communicator);
  
+  }
+
+  template<unsigned int FEOrder>
+  void eigenClass<FEOrder>::XtHX(dealii::parallel::distributed::Vector<std::complex<double> > & X,
+				 const unsigned int numberWaveFunctions,
+				 const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayMacroCellLocalProcIndexIdMap,
+				 const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap,
+				 std::vector<std::complex<double> > & ProjHam)
+  {
+
+    //
+    //Get access to number of locally owned nodes on the current processor
+    //
+    const unsigned int numberDofs = X.local_size()/numberWaveFunctions;
+
+    //
+    //Resize ProjHam
+    //
+    ProjHam.clear();
+    ProjHam.resize(numberWaveFunctions*numberWaveFunctions,0.0);
+
+    //
+    //create temporary array Y
+    //
+    dealii::parallel::distributed::Vector<std::complex<double> > Y;
+    Y.reinit(X);
+    std::complex<double> zeroValue = 0.0;
+    Y = zeroValue;
+
+
+    //
+    //evaluate H times X and store in Y
+    //
+    const bool scaleFlag = false;
+    const double scalar = 1.0;
+    HX(X,
+       numberWaveFunctions,
+       flattenedArrayMacroCellLocalProcIndexIdMap,
+       flattenedArrayCellLocalProcIndexIdMap,
+       scaleFlag,
+       scalar,
+       Y);
+
+    for(unsigned int i = 0; i < Y.local_size(); ++i)
+      Y.local_element(i) = std::conj(Y.local_element(i));
+
+    
+    char transA = 'N';
+    char transB = 'T';
+    const std::complex<double> alpha = 1.0, beta = 0.0;
+
+    std::vector<std::complex<double> > XtHXValuelocal(numberWaveFunctions*numberWaveFunctions,0.0);
+
+    //
+    //evaluates Z = Yc*Xt
+    //
+    zgemm_(&transA,
+	   &transB,
+	   &numberWaveFunctions,
+	   &numberWaveFunctions,
+	   &numberDofs,
+	   &alpha,
+	   Y.begin(),
+	   &numberWaveFunctions,
+           X.begin(),
+	   &numberWaveFunctions,
+	   &beta,
+	   &XtHXValuelocal[0],
+	   &numberWaveFunctions);
+
+    const unsigned int size = numberWaveFunctions*numberWaveFunctions;
+	   
+    MPI_Allreduce(&XtHXValuelocal[0],
+		  &ProjHam[0],
+		  size,
+		  MPI_C_DOUBLE_COMPLEX,
+		  MPI_SUM,
+		  mpi_communicator);
+
+    
+
   }
 #else
   template<unsigned int FEOrder>
@@ -708,8 +785,6 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 	tempPSI3[i].reinit(src[0]);
       }
 
-    computing_timer.enter_section("eigenClass XHX");
-
     //HX
     HX(src, tempPSI3);
     for (unsigned int i = 0; i < src.size(); i++)
@@ -717,15 +792,15 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 	tempPSI3[i].update_ghost_values();
       }
 
-    unsigned int dofs_per_proc=src[0].local_size(); 
+    const unsigned int dofs_per_proc=src[0].local_size(); 
 
 
     //
     //required for lapack functions
     //
-    int k = dofs_per_proc, n = src.size(); 
-    int vectorSize = k*n;
-    int lda=k, ldb=k, ldc=n;
+    const unsigned int k = dofs_per_proc, n = src.size(); 
+    const unsigned int vectorSize = k*n;
+    const unsigned int lda=k, ldb=k, ldc=n;
 
 
     std::vector<double> hx(dofs_per_proc*src.size()), x(dofs_per_proc*src.size());
@@ -744,13 +819,72 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 	index++;
       }
     char transA  = 'T', transB  = 'N';
-    double alpha = 1.0, beta  = 0.0;
+    const double alpha = 1.0, beta  = 0.0;
     dgemm_(&transA, &transB, &n, &n, &k, &alpha, &x[0], &lda, &hx[0], &ldb, &beta, &ProjHam[0], &ldc);
     Utilities::MPI::sum(ProjHam, mpi_communicator, ProjHam); 
-  
-    computing_timer.exit_section("eigenClass XHX");
-
   }
+
+  template<unsigned int FEOrder>
+  void eigenClass<FEOrder>::XtHX(dealii::parallel::distributed::Vector<double> & X,
+				 const unsigned int numberWaveFunctions,
+				 const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayMacroCellLocalProcIndexIdMap,
+				 const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap,
+				 std::vector<double> & ProjHam)
+  {
+
+    //
+    //Get access to number of locally owned nodes on the current processor
+    //
+    const unsigned int numberDofs = X.local_size()/numberWaveFunctions;
+
+    //
+    //Resize ProjHam
+    //
+    ProjHam.clear();
+    ProjHam.resize(numberWaveFunctions*numberWaveFunctions,0.0);
+
+    //
+    //create temporary array Y
+    //
+    dealii::parallel::distributed::Vector<double> Y;
+    Y.reinit(X);
+   
+    //
+    //evaluate H times X and store in Y
+    //
+    bool scaleFlag = false;
+    double scalar = 1.0;
+    HX(X,
+       numberWaveFunctions,
+       flattenedArrayMacroCellLocalProcIndexIdMap,
+       flattenedArrayCellLocalProcIndexIdMap,
+       scaleFlag,
+       scalar,
+       Y);
+    
+    char transA = 'N';
+    char transB = 'T';
+    const double alpha = 1.0, beta = 0.0;
+
+    dgemm_(&transA,
+	   &transB,
+	   &numberWaveFunctions,
+	   &numberWaveFunctions,
+	   &numberDofs,
+	   &alpha,
+	   X.begin(),
+	   &numberWaveFunctions,
+           Y.begin(),
+	   &numberWaveFunctions,
+	   &beta,
+	   &ProjHam[0],
+	   &numberWaveFunctions);
+	   
+    Utilities::MPI::sum(ProjHam, mpi_communicator, ProjHam);
+  }
+
+
+
 #endif
 
 template<unsigned int FEOrder>

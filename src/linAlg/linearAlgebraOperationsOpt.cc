@@ -30,6 +30,116 @@ namespace dftfe{
 
   namespace linearAlgebraOperations
   {
+
+    void callevd(const unsigned int dimensionMatrix,
+		 double *matrix,
+		 double *eigenValues)
+    {
+      
+      int info;
+      const unsigned int lwork = 1 + 6*dimensionMatrix + 2*dimensionMatrix*dimensionMatrix, liwork = 3 + 5*dimensionMatrix;
+      std::vector<int> iwork(liwork,0);
+      char jobz='V', uplo='U';
+      std::vector<double> work(lwork);
+
+      dsyevd_(&jobz, 
+	      &uplo, 
+	      &dimensionMatrix, 
+	      matrix, 
+	      &dimensionMatrix, 
+	      eigenValues, 
+	      &work[0], 
+	      &lwork, 
+	      &iwork[0], 
+	      &liwork, 
+	      &info);
+    }
+
+    
+    void callevd(const unsigned int dimensionMatrix,
+		 std::complex<double> *matrix,
+		 double *eigenValues)
+    {
+      int info;
+      const unsigned int lwork = 1 + 6*dimensionMatrix + 2*dimensionMatrix*dimensionMatrix, liwork = 3 + 5*dimensionMatrix;
+      std::vector<int> iwork(liwork,0);
+      char jobz='V', uplo='U';
+      const unsigned int lrwork = 1 + 5*dimensionMatrix + 2*dimensionMatrix*dimensionMatrix;
+      std::vector<double> rwork(lrwork,0.0); 
+      std::vector<std::complex<double> > work(lwork);
+
+
+      zheevd_(&jobz, 
+	      &uplo, 
+	      &dimensionMatrix, 
+	      matrix,
+	      &dimensionMatrix,
+	      eigenValues, 
+	      &work[0], 
+	      &lwork, 
+	      &rwork[0], 
+	      &lrwork, 
+	      &iwork[0], 
+	      &liwork, 
+	      &info);
+    }
+
+
+    void callgemm(const unsigned int numberEigenValues,
+		  const unsigned int localVectorSize,
+		  const std::vector<double> & eigenVectorSubspaceMatrix,
+		  const dealii::parallel::distributed::Vector<double> & X,
+		  dealii::parallel::distributed::Vector<double> & Y)
+
+    {
+
+      const char transA  = 'T', transB  = 'N';
+      const double alpha = 1.0, beta = 0.0;
+      dgemm_(&transA,
+	     &transB,
+	     &numberEigenValues,
+	     &localVectorSize,
+	     &numberEigenValues,
+	     &alpha,
+	     &eigenVectorSubspaceMatrix[0],
+	     &numberEigenValues,
+	     X.begin(),
+	     &numberEigenValues,
+	     &beta,
+	     Y.begin(),
+	     &numberEigenValues);
+
+    }
+
+
+    void callgemm(const unsigned int numberEigenValues,
+		  const unsigned int localVectorSize,
+		  const std::vector<std::complex<double> > & eigenVectorSubspaceMatrix,
+		  const dealii::parallel::distributed::Vector<std::complex<double> > & X,
+		  dealii::parallel::distributed::Vector<std::complex<double> > & Y)
+
+    {
+
+      const char transA  = 'T', transB  = 'N';
+      const std::complex<double> alpha = 1.0, beta = 0.0;
+      zgemm_(&transA,
+	     &transB,
+	     &numberEigenValues,
+	     &localVectorSize,
+	     &numberEigenValues,
+	     &alpha,
+	     &eigenVectorSubspaceMatrix[0],
+	     &numberEigenValues,
+	     X.begin(),
+	     &numberEigenValues,
+	     &beta,
+	     Y.begin(),
+	     &numberEigenValues);
+
+    }
+
+
+
     //
     //chebyshev filtering of given subspace XArray
     //
@@ -234,6 +344,52 @@ namespace dftfe{
 
     }
 
+    template<typename T>
+    void rayleighRitz(operatorDFTClass & operatorMatrix,
+		      dealii::parallel::distributed::Vector<T> & X,
+		      const unsigned int numberWaveFunctions,
+		      const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayMacroCellLocalProcIndexIdMap,
+		      const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap,
+		      std::vector<double> & eigenValues)
+    {
+
+      //
+      //compute projected Hamiltonian
+      //
+      std::vector<T> ProjHam;
+      const unsigned int numberEigenValues = eigenValues.size();
+      operatorMatrix.XtHX(X,
+			  numberEigenValues,
+			  flattenedArrayMacroCellLocalProcIndexIdMap,
+			  flattenedArrayCellLocalProcIndexIdMap,
+			  ProjHam);
+
+      //
+      //compute eigendecomposition of ProjHam
+      //
+      callevd(numberEigenValues,
+	      &ProjHam[0],
+	      &eigenValues[0]);
+
+      
+      //
+      //rotate the basis in the subspace X = X*Q
+      //
+      const unsigned int localVectorSize = X.local_size()/numberEigenValues;
+      dealii::parallel::distributed::Vector<T> rotatedBasis;
+      rotatedBasis.reinit(X);
+
+      callgemm(numberEigenValues,
+	       localVectorSize,
+	       ProjHam,
+	       X,
+	       rotatedBasis);
+	       
+	
+      X = rotatedBasis;
+      
+    }
+
 
 
 
@@ -250,8 +406,15 @@ namespace dftfe{
 
 
     template void gramSchmidtOrthogonalization(operatorDFTClass & operatorMatrix,
-					  dealii::parallel::distributed::Vector<std::complex<double> > &,
-					  const unsigned int );
+					       dealii::parallel::distributed::Vector<std::complex<double> > &,
+					       const unsigned int );
+
+    template void rayleighRitz(operatorDFTClass  & operatorMatrix,
+			       dealii::parallel::distributed::Vector<std::complex<double> > &,
+			       const unsigned int numberWaveFunctions,
+			       const std::vector<std::vector<dealii::types::global_dof_index> > &,
+			       const std::vector<std::vector<dealii::types::global_dof_index> > &,
+			       std::vector<double>     & eigenValues);
 
 
 #else
@@ -266,8 +429,15 @@ namespace dftfe{
 				  const double );
 
     template void gramSchmidtOrthogonalization(operatorDFTClass & operatorMatrix,
-					  dealii::parallel::distributed::Vector<double> &,
-					  const unsigned int );
+					       dealii::parallel::distributed::Vector<double> &,
+					       const unsigned int );
+
+    template void rayleighRitz(operatorDFTClass  & operatorMatrix,
+			       dealii::parallel::distributed::Vector<double> &,
+			       const unsigned int numberWaveFunctions,
+			       const std::vector<std::vector<dealii::types::global_dof_index> > &,
+			       const std::vector<std::vector<dealii::types::global_dof_index> > &,
+			       std::vector<double>     & eigenValues);
 #endif
   
   }//end of namespace
