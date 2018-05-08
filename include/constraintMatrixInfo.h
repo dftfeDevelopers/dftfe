@@ -60,7 +60,8 @@ namespace dftUtils
 		    const dealii::ConstraintMatrix & constraintMatrixData);
 
     /**
-     * @brief precompute local proc index map of unflattened deallii array to local proc index of flattened deallii      * array for the first component
+     * @brief precompute map between local processor index of unflattened deallii array to the local processor index of       
+     * the first field associated with the multi-field flattened dealii array
      *
      * @param partitioner1 associated with unflattened dealii vector
      * @param partitioner2 associated with flattened dealii vector storing multi-fields

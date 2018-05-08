@@ -344,7 +344,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 			       const unsigned int numberWaveFunctions,
 			       const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayMacroCellLocalProcIndexIdMap,
 			       const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap,
-			       bool scaleFlag,
+			       const bool scaleFlag,
 			       std::complex<double> scalar,
 			       dealii::parallel::distributed::Vector<std::complex<double> > & dst)
 
@@ -453,7 +453,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 			       const unsigned int numberWaveFunctions,
 			       const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayMacroCellLocalProcIndexIdMap,
 			       const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap,
-			       bool scaleFlag,
+			       const bool scaleFlag,
 			       double scalar,
 			       dealii::parallel::distributed::Vector<double> & dst)
 
@@ -488,7 +488,6 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 	  }
       }
 
-    
     //
     //update slave nodes before doing element-level matrix-vec multiplication
     //
@@ -696,7 +695,6 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 				 const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap,
 				 std::vector<std::complex<double> > & ProjHam)
   {
-
     //
     //Get access to number of locally owned nodes on the current processor
     //
@@ -765,9 +763,6 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 		  MPI_C_DOUBLE_COMPLEX,
 		  MPI_SUM,
 		  mpi_communicator);
-
-    
-
   }
 #else
   template<unsigned int FEOrder>
@@ -882,9 +877,6 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 	   
     Utilities::MPI::sum(ProjHam, mpi_communicator, ProjHam);
   }
-
-
-
 #endif
 
 template<unsigned int FEOrder>
