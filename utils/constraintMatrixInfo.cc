@@ -268,6 +268,13 @@ namespace dftUtils
 	    count++;
 	  }
 
+	//
+	//set slave contribution to zero
+	//
+	for(unsigned int k = 0; k < blockSize; ++k)
+	  {
+	    fieldVector.local_element(startingLocalDofIndexRow + k) = 0.0;
+	  }
       }
   }
 							
