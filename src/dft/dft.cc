@@ -349,14 +349,13 @@ namespace dftfe {
     //
     //generate mesh (both parallel and serial)
     //
-    if (dftParameters::chkType>=1 && dftParameters::restartFromChk)
+    if (dftParameters::chkType==2 && dftParameters::restartFromChk)
       {
 	d_mesh.generateCoarseMeshesForRestart(atomLocations,
 					      d_imagePositions,
 					      d_domainBoundingVectors,
 					      dftParameters::useSymm);
-	if (dftParameters::chkType==2)
-	  loadTriaInfoAndRhoData();
+	loadTriaInfoAndRhoData();
       }
     else
       d_mesh.generateSerialUnmovedAndParallelMovedUnmovedMesh(atomLocations,
@@ -504,7 +503,7 @@ namespace dftfe {
 
     energyCalculator energyCalc(mpi_communicator, interpoolcomm);
 
-   
+
 
     //set up poisson solver
     dealiiLinearSolver dealiiCGSolver(mpi_communicator, dealiiLinearSolver::CG);
@@ -532,7 +531,7 @@ namespace dftfe {
     kohnShamDFTEigenOperator.preComputeShapeFunctionGradientIntegrals();
     computing_timer.exit_section("shapefunction data");
 
-    
+
     //
     //solve
     //
@@ -625,7 +624,7 @@ namespace dftfe {
 	computing_timer.exit_section("phiTot solve");
 
 
-	
+
 
 
 	//
@@ -657,7 +656,7 @@ namespace dftfe {
 		    kohnShamDFTEigenOperator.reinitkPointIndex(kPoint);
 
 
-		    computing_timer.enter_section("Hamiltonian Matrix Computation"); 
+		    computing_timer.enter_section("Hamiltonian Matrix Computation");
 		    kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint);
 		    computing_timer.exit_section("Hamiltonian Matrix Computation");
 
@@ -759,8 +758,8 @@ namespace dftfe {
 	    for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
 	      {
 		kohnShamDFTEigenOperator.reinitkPointIndex(kPoint);
-		
-		computing_timer.enter_section("Hamiltonian Matrix Computation"); 
+
+		computing_timer.enter_section("Hamiltonian Matrix Computation");
 		kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint);
 		computing_timer.exit_section("Hamiltonian Matrix Computation");
 

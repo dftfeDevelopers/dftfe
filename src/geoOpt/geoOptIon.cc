@@ -73,8 +73,6 @@ void geoOptIon<FEOrder>::run()
    const double lineSearchDampingParameter=0.7;
    const unsigned int maxLineSearchIter=4;
    const unsigned int debugLevel=Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) ==0?1:0;
-   const unsigned int maxRestarts=2;
-   unsigned int restartCount=0;
 
    d_totalUpdateCalls=0;
    cgPRPNonLinearSolver cgSolver(tol,
@@ -85,7 +83,10 @@ void geoOptIon<FEOrder>::run()
 				maxLineSearchIter,
 				lineSearchDampingParameter);
 
-   pcout<<" Starting CG Ion force relaxation... "<<std::endl;
+   if (dftParameters::chkType>=1 && dftParameters::restartFromChk)
+     pcout<<" Re starting Ion force relaxation using CG solver... "<<std::endl;
+   else
+     pcout<<" Starting Ion force relaxation using CG solver... "<<std::endl;
    pcout<<"   ---CG Parameters--------------  "<<std::endl;
    pcout<<"      stopping tol: "<< tol<<std::endl;
    pcout<<"      maxIter: "<< maxIter<<std::endl;
@@ -96,13 +97,14 @@ void geoOptIon<FEOrder>::run()
 
    if  (getNumberUnknowns()>0)
    {
-       nonLinearSolver::ReturnValueType cgReturn=cgSolver.solve(*this);
-       if (cgReturn == nonLinearSolver::RESTART && restartCount<maxRestarts )
-       {
-	   pcout<< " ...Restarting CG, restartCount: "<<restartCount<<std::endl;
-	   cgReturn=cgSolver.solve(*this);
-	   restartCount++;
-       }
+       nonLinearSolver::ReturnValueType cgReturn=nonLinearSolver::FAILURE;
+
+       if (dftParameters::chkType>=1 && dftParameters::restartFromChk)
+           cgReturn=cgSolver.restartSolve(*this,std::string("ionRelax"));
+       else if (dftParameters::chkType>=1 && !dftParameters::restartFromChk)
+           cgReturn=cgSolver.solve(*this,std::string("ionRelax"));
+       else
+           cgReturn=cgSolver.solve(*this);
 
        if (cgReturn == nonLinearSolver::SUCCESS )
        {
@@ -116,11 +118,6 @@ void geoOptIon<FEOrder>::run()
        else if (cgReturn == nonLinearSolver::MAX_ITER_REACHED)
        {
 	    pcout<< " ...Maximum CG iterations reached "<<std::endl;
-
-       }
-       else if (cgReturn == nonLinearSolver::RESTART)
-       {
-	    pcout<< " ...Maximum restarts reached "<<std::endl;
 
        }
 
@@ -188,7 +185,7 @@ void geoOptIon<FEOrder>::update(const std::vector<double> & solution)
    const unsigned int numberGlobalAtoms=dftPtr->atomLocations.size();
    std::vector<Point<3> > globalAtomsDisplacements(numberGlobalAtoms);
    int count=0;
-   pcout<<" ----CG atom displacement update-----" << std::endl;
+   //pcout<<" ----CG atom displacement update-----" << std::endl;
    for (unsigned int i=0; i< numberGlobalAtoms; ++i)
    {
       for (unsigned int j=0; j< 3; ++j)
@@ -211,16 +208,19 @@ void geoOptIon<FEOrder>::update(const std::vector<double> & solution)
 	        MPI_COMM_WORLD);
    }
 
-   pcout<<" -----------------------------" << std::endl;
+   //pcout<<" -----------------------------" << std::endl;
    pcout<< "  Maximum force to be relaxed: "<<  d_maximumAtomForceToBeRelaxed <<std::endl;
    dftPtr->updateAtomPositionsAndMoveMesh(globalAtomsDisplacements);
    d_totalUpdateCalls+=1;
 
-   if (dftParameters::chkType>=1)
-      dftPtr->writeDomainAndAtomCoordinates();
-
    dftPtr->solve();
 
+}
+
+template<unsigned int FEOrder>
+void geoOptIon<FEOrder>::save()
+{
+   dftPtr->writeDomainAndAtomCoordinates();
 }
 
 template<unsigned int FEOrder>

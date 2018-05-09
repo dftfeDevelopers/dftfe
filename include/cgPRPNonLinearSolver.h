@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,7 +13,6 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Sambit Das (2018)
 
 #ifndef CGPRPNonLinearSolver_h
 #define CGPRPNonLinearSolver_h
@@ -23,19 +22,13 @@
 
 namespace dftfe {
   /**
-   * @brief Concrete class implementing PRP Conjugate Gradient non-linear
+   * @brief Concrete class implementing Polak-Ribiere-Polyak Conjugate Gradient non-linear
    * algebraic solver.
+   *
+   * @author Sambit Das
    */
   class cgPRPNonLinearSolver : public nonLinearSolver {
 
-    //
-    // types
-    //
-  public:
-
-    //
-    // methods
-    //
   public:
 
     /**
@@ -67,12 +60,29 @@ namespace dftfe {
     ~cgPRPNonLinearSolver();
 
     /**
-     * @brief Solve non-linear algebraic equation.
+     * @brief Solve non-linear problem using Polak-Ribiere-Polyak nonlinar conjugate gradient method.
      *
+     * @param problem[in] nonlinearSolverProblem object.
+     * @param checkpointFileName[in] if string is non-empty, creates checkpoint file
+     * with starting label checkpointFileName for every nonlinear iteration.
      * @return Return value indicating success or failure.
      */
      nonLinearSolver::ReturnValueType
-     solve(nonlinearSolverProblem & problem);
+     solve(nonlinearSolverProblem & problem,
+	   const std::string checkpointFileName="");
+
+    /**
+     * @brief Restart solve non-linear problem using Polak-Ribiere-Polyak nonlinar conjugate gradient method
+     * from last saved checkpoint.
+     *
+     * @param problem[in] nonlinearSolverProblem object.
+     * @param checkpointFileName[in] must match the checkpointFileName used in the solve call. Empty string
+     * will throw an error.
+     * @return Return value indicating success or failure.
+     */
+     nonLinearSolver::ReturnValueType
+     restartSolve(nonlinearSolverProblem & problem,
+	          const std::string checkpointFileName);
 
   private:
     /**
@@ -103,7 +113,7 @@ namespace dftfe {
     /**
      * @brief Compute delta_d and eta_p.
      *
-     & @return Pair containing delta_d and eta_p.
+     * @return Pair containing delta_d and eta_p.
     */
     std::pair<double, double> computeDeltaD();
 
@@ -150,30 +160,64 @@ namespace dftfe {
 			const std::vector<double> & direction,
 			nonlinearSolverProblem    & problem);
 
-    //
-    // data
-    //
-  private:
-    std::vector<double> d_solution;
-    std::vector<double> d_direction;
+    /**
+     * @brief Create checkpoint file for current state of the cg solver.
+     *
+     */
+     void save(const std::string & checkpointFileName);
+
+    /**
+     * @brief Load cg solver state from checkpoint file.
+     *
+     */
+     void load(const std::string & checkpointFileName);
+
+    /// storage for conjugate direction
+    std::vector<double> d_conjugateDirection;
+
+    /// storage for the gradient of the nonlinear problem in the current cg step
     std::vector<double> d_gradient;
-    std::vector<double> d_s;
-    std::vector<double> d_sOld;
+
+    /// storage for the steepest descent direction of the nonlinear problem in the previous cg step
+    std::vector<double> d_steepestDirectionOld;
+
+    /// intermediate variable for beta computation
     double              d_deltaNew;
+
+    /// intermediate variable for beta computation
     double              d_deltaMid;
+
+    /// intermediate variable for beta computation
     double              d_deltaOld;
+
+    /// storage for beta- the parameter for updating the conjugate direction
+    /// d_beta = (d_deltaNew - d_deltaMid)/d_deltaOld
     double              d_beta;
-    unsigned int                 d_numberUnknowns;
-    unsigned int                 d_iter;
+
+    /// storage for number of unknowns to be solved for in the nonlinear problem
+    unsigned int   d_numberUnknowns;
+
+    /// storage for current nonlinear cg iteration count
+    unsigned int    d_iter;
+
+    /**
+     * Storage for vector of flags (0 or 1) with size equal to the size of the solution vector of the
+     * nonlinear problem. If the flag value is 1 for an index in the vector, the corresponding
+     * entry in the solution vector is allowed to be updated and vice-versa if flag value is 0 for
+     * an index.
+     */
     std::vector<unsigned int>    d_unknownCountFlag;
+
+    /// line search stopping tolerance
     const double              d_lineSearchTolerance;
+
+    /// maximum number of line search iterations
     const unsigned int        d_lineSearchMaxIterations;
+
+    /// damping parameter (0,1] to be multiplied with the steepest descent direction,
+    /// which controls the initial guess to the line search iteration.
     const double              d_lineSearchDampingParameter;
 
-    //
-    // data
-    //
-  private:
     //parallel objects
     MPI_Comm mpi_communicator;
     const unsigned int n_mpi_processes;

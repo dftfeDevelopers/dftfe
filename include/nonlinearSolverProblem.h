@@ -98,6 +98,12 @@ namespace dftfe {
 	virtual std::vector<unsigned int>
 	getUnknownCountFlag() const = 0;
 
+	/**
+	 * @brief create checkpoint for the current state of the problem i.e problem domain and solution.
+	 *
+	 */
+	virtual void save() = 0;
+
     };
 
 }

@@ -60,7 +60,16 @@ namespace dftfe {
      *
      * @return Return value indicating success or failure.
      */
-     virtual ReturnValueType solve(nonlinearSolverProblem & problem) = 0;
+     virtual ReturnValueType solve(nonlinearSolverProblem & problem,
+	                           const std::string checkpointFileName="") = 0;
+
+    /**
+     * @brief Solve non-linear algebraic equation from last saved checkpoint.
+     *
+     * @return Return value indicating success or failure.
+     */
+     virtual ReturnValueType restartSolve(nonlinearSolverProblem & problem,
+	                                  const std::string checkpointFileName) = 0;
 
   protected:
 
@@ -97,9 +106,13 @@ namespace dftfe {
     unsigned int getDebugLevel() const;
 
 
-
+    /// controls the verbosity of the printing
     const unsigned int    d_debugLevel;
+
+    /// maximum number of nonlinear solve iterations
     const unsigned int    d_maxNumberIterations;
+
+    /// nonlinear solve stopping tolerance
     const double d_tolerance;
 
   };
