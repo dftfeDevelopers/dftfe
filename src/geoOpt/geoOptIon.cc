@@ -185,7 +185,6 @@ void geoOptIon<FEOrder>::update(const std::vector<double> & solution)
    const unsigned int numberGlobalAtoms=dftPtr->atomLocations.size();
    std::vector<Point<3> > globalAtomsDisplacements(numberGlobalAtoms);
    int count=0;
-   //pcout<<" ----CG atom displacement update-----" << std::endl;
    for (unsigned int i=0; i< numberGlobalAtoms; ++i)
    {
       for (unsigned int j=0; j< 3; ++j)
@@ -208,7 +207,6 @@ void geoOptIon<FEOrder>::update(const std::vector<double> & solution)
 	        MPI_COMM_WORLD);
    }
 
-   //pcout<<" -----------------------------" << std::endl;
    pcout<< "  Maximum force to be relaxed: "<<  d_maximumAtomForceToBeRelaxed <<std::endl;
    dftPtr->updateAtomPositionsAndMoveMesh(globalAtomsDisplacements);
    d_totalUpdateCalls+=1;

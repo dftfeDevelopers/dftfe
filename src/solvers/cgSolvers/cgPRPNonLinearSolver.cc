@@ -619,11 +619,11 @@ namespace dftfe {
       if (returnValue == SUCCESS)
       {
         pcout << "Conjugate Gradient converged after "
-		<< d_iter << " iterations." << std::endl;
+		<< d_iter+1 << " iterations." << std::endl;
       } else
       {
         pcout << "Conjugate Gradient failed to converge after "
-		<< d_iter+1 << " iterations." << std::endl;
+		<< d_iter << " iterations." << std::endl;
       }
 
     }
@@ -722,7 +722,7 @@ namespace dftfe {
       // output at the begining of the iteration
       //
       if (d_debugLevel >= 1)
-	  pcout << d_iter << " "
+	  pcout << d_iter+1 << " "
 		    << d_deltaNew << " "
 		    << residualNorm << " "
 		    << residualNorm/d_numberUnknowns << " "
@@ -809,7 +809,7 @@ namespace dftfe {
       if (returnValue == SUCCESS)
       {
         pcout << "Conjugate Gradient converged after "
-		<< d_iter << " iterations." << std::endl;
+		<< d_iter+1<< " iterations." << std::endl;
       } else
       {
         pcout << "Conjugate Gradient failed to converge after "
