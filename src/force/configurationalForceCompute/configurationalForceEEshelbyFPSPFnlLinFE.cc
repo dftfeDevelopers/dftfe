@@ -64,7 +64,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(
   const unsigned int numVectorizedArrayElements=VectorizedArray<double>::n_array_elements;
   const MatrixFree<3,double> & matrix_free_data=dftPtr->matrix_free_data;
   FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  forceEval(matrix_free_data,d_forceDofHandlerIndex, 0);
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
   FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  forceEvalKPoints(matrix_free_data,d_forceDofHandlerIndex, 0);
 #endif
   FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> phiTotEval(matrix_free_data,dftPtr->phiTotDofHandlerIndex, 0);
@@ -124,7 +124,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(
   for (unsigned int cell=0; cell<matrix_free_data.n_macro_cells(); ++cell)
   {
     forceEval.reinit(cell);
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
     forceEvalKPoints.reinit(cell);
 #endif
     phiTotEval.reinit(cell);
@@ -155,7 +155,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(
 	 vEffRhoInQuads[q]=phiTotInEval.get_value(q);
 	 vEffRhoOutQuads[q]=phiTotEval.get_value(q);
     }
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
     //vector of quadPoints, nonlocal atom id, pseudo wave, k point
     //FIXME: flatten nonlocal atomid id and pseudo wave and k point
     std::vector<std::vector<std::vector<std::vector<Tensor<1,2,VectorizedArray<double> > > > > >ZetaDeltaVQuads;
@@ -171,7 +171,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(
     {
 	ZetaDeltaVQuads.resize(numQuadPoints);
 	gradZetaDeltaVQuads.resize(numQuadPoints);
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 	pspnlGammaAtomsQuads.resize(numQuadPoints);
 #endif
 
@@ -179,13 +179,13 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(
 	{
 	  ZetaDeltaVQuads[q].resize(d_nonLocalPSP_ZetalmDeltaVl.size());
 	  gradZetaDeltaVQuads[q].resize(d_nonLocalPSP_ZetalmDeltaVl.size());
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 	  pspnlGammaAtomsQuads[q].resize(d_nonLocalPSP_ZetalmDeltaVl.size());
 #endif
 	  for (unsigned int i=0; i < d_nonLocalPSP_ZetalmDeltaVl.size(); ++i)
 	  {
 	    const int numberPseudoWaveFunctions = d_nonLocalPSP_ZetalmDeltaVl[i].size();
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 	    ZetaDeltaVQuads[q][i].resize(numberPseudoWaveFunctions);
 	    gradZetaDeltaVQuads[q][i].resize(numberPseudoWaveFunctions);
 	    pspnlGammaAtomsQuads[q][i].resize(numberPseudoWaveFunctions);
@@ -279,7 +279,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(
        }
     }
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
     std::vector<Tensor<1,2,VectorizedArray<double> > > psiQuads(numQuadPoints*numEigenVectors*numKPoints,zeroTensor1);
     std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > > gradPsiQuads(numQuadPoints*numEigenVectors*numKPoints,zeroTensor2);
     std::vector<Vector<double> > tempPsi(numQuadPoints);
@@ -314,7 +314,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(
           for (unsigned int q=0; q<numQuadPoints; ++q)
           {
 	     const int id=q*numEigenVectors*numKPoints+numEigenVectors*ikPoint+iEigenVec;
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 	     for (unsigned int icomp=0;icomp<2;++icomp)
 	     {
 		 psiQuads[id][icomp][iSubCell]=tempPsi[q][icomp];
@@ -387,7 +387,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(
 	      {
 		if (d_nonLocalPSP_ZetalmDeltaVl[i][iPseudoWave].find(subCellId)!=d_nonLocalPSP_ZetalmDeltaVl[i][iPseudoWave].end())
 		{
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
                    for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
 		   {
                       ZetaDeltaVQuads[q][i][iPseudoWave][ikPoint][0][iSubCell]=d_nonLocalPSP_ZetalmDeltaVl[i][iPseudoWave][subCellId][ikPoint*numQuadPoints*2+q*2+0];
@@ -416,7 +416,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(
 			                        forceEval,
 					        cell,
 					        rhoQuads);
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 
        FnlGammaAtomsElementalContributionPeriodic(forceContributionFnlGammaAtoms,
 			                          forceEval,
@@ -440,7 +440,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(
        VectorizedArray<double> phiTot_q =phiTotEval.get_value(q);
        Tensor<1,C_DIM,VectorizedArray<double> > gradPhiTot_q =phiTotEval.get_gradient(q);
        VectorizedArray<double> phiExt_q =phiExtEval.get_value(q)*phiExtFactor;
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
        Tensor<2,C_DIM,VectorizedArray<double> > E=eshelbyTensor::getELocEshelbyTensorPeriodicNoKPoints
 	                                                     (phiTot_q,
 			                                      gradPhiTot_q,
@@ -482,7 +482,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(
 		                          gradPseudoVLocQuads[q],
 			                  gradPhiExt_q);
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
            Tensor<1,C_DIM,VectorizedArray<double> > FKPoints;
            FKPoints+=eshelbyTensor::getFnlPeriodic(gradZetaDeltaVQuads[q],
 					    projectorKetTimesPsiTimesVComplexKPoints,
@@ -529,26 +529,26 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(
 
        forceEval.submit_value(F,q);
        forceEval.submit_gradient(E,q);
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
        forceEvalKPoints.submit_gradient(EKPoints,q);
 #endif
     }//quad point loop
     if(isPseudopotential)
     {
       forceEval.integrate(true,true);
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
       forceEvalKPoints.integrate(true,true);
 #endif
     }
     else
     {
       forceEval.integrate (false,true);
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
       forceEvalKPoints.integrate(false,true);
 #endif
     }
     forceEval.distribute_local_to_global(d_configForceVectorLinFE);//also takes care of constraints
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
     forceEvalKPoints.distribute_local_to_global(d_configForceVectorLinFEKPoints);
 #endif
   }

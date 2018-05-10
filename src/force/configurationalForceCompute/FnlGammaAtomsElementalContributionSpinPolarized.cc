@@ -16,7 +16,7 @@
 // @author Sambit Das (2018)
 //
 
-#ifdef ENABLE_PERIODIC_BC 
+#ifdef USE_COMPLEX 
 //(locally used function) compute Fnl contibution due to Gamma(Rj) for given set of cells  
 template<unsigned int FEOrder>
 void forceClass<FEOrder>::FnlGammaAtomsElementalContributionPeriodicSpinPolarized

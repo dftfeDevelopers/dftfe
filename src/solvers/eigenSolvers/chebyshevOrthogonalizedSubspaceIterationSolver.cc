@@ -166,7 +166,7 @@ namespace dftfe{
 	    //
 	    //create custom partitioned dealii array by storing wavefunctions
 	    //
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 	    unsigned int localVectorSize = eigenVectors[0].local_size()/2;
 	    dealii::parallel::distributed::Vector<std::complex<double> > eigenVectorsFlattenedArray;
 
@@ -210,7 +210,7 @@ namespace dftfe{
 		  {
 		    unsigned int flattenedArrayGlobalIndex = (numberWaveFunctionsPerCurrentBlock*(iNode + (operatorMatrix.getMatrixFreeData()->get_vector_partitioner()->local_range()).first) + iWave);
 		    unsigned int flattenedArrayLocalIndex = flattenedArrayGlobalIndex - eigenVectorsFlattenedArray.get_partitioner()->local_range().first;
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 		    eigenVectorsFlattenedArray.local_element(flattenedArrayLocalIndex).real(eigenVectors[iWave+lowIndex].local_element((*operatorMatrix.getLocalProcDofIndicesReal())[iNode]));
 		    eigenVectorsFlattenedArray.local_element(flattenedArrayLocalIndex).imag(eigenVectors[iWave+lowIndex].local_element((*operatorMatrix.getLocalProcDofIndicesImag())[iNode]));
 #else
@@ -245,7 +245,7 @@ namespace dftfe{
 		  {
 		    unsigned int flattenedArrayGlobalIndex = (numberWaveFunctionsPerCurrentBlock*(iNode + (operatorMatrix.getMatrixFreeData()->get_vector_partitioner()->local_range()).first) + iWave);
 		    unsigned int flattenedArrayLocalIndex = flattenedArrayGlobalIndex - eigenVectorsFlattenedArray.get_partitioner()->local_range().first;
-#ifdef ENABLE_PERIODIC_BC	
+#ifdef USE_COMPLEX	
 		    eigenVectors[iWave+lowIndex].local_element((*operatorMatrix.getLocalProcDofIndicesReal())[iNode]) = eigenVectorsFlattenedArray.local_element(flattenedArrayLocalIndex).real();
 		    eigenVectors[iWave+lowIndex].local_element((*operatorMatrix.getLocalProcDofIndicesImag())[iNode]) = eigenVectorsFlattenedArray.local_element(flattenedArrayLocalIndex).imag();
 #else

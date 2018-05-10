@@ -365,7 +365,7 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
   std::vector<double> globalAtomsGaussianForcesLocalPart(numberGlobalAtoms*C_DIM,0);
   d_globalAtomsGaussianForces.clear();
   d_globalAtomsGaussianForces.resize(numberGlobalAtoms*C_DIM,0.0);
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
   std::vector<double> globalAtomsGaussianForcesKPointsLocalPart(numberGlobalAtoms*C_DIM,0);
   d_globalAtomsGaussianForcesKPoints.clear();
   d_globalAtomsGaussianForcesKPoints.resize(numberGlobalAtoms*C_DIM,0.0);
@@ -438,7 +438,7 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
 	          if (!d_constraintsNoneForce.is_constrained(globalDofIndex) && d_locally_owned_dofsForce.is_element(globalDofIndex))
 		  {
 	              globalAtomsGaussianForcesLocalPart[C_DIM*atomId+idim]+=gaussianWeight*d_configForceVectorLinFE[globalDofIndex];
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
                       globalAtomsGaussianForcesKPointsLocalPart[C_DIM*atomId+idim]+=gaussianWeight*d_configForceVectorLinFEKPoints[globalDofIndex];
 #endif
 		  }
@@ -456,7 +456,7 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
 		MPI_DOUBLE,
 		MPI_SUM,
                 mpi_communicator);
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
   //Sum all processor contributions and distribute to all processors
   MPI_Allreduce(&(globalAtomsGaussianForcesKPointsLocalPart[0]),
 		&(d_globalAtomsGaussianForcesKPoints[0]),

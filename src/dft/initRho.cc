@@ -337,7 +337,7 @@ void dftClass<FEOrder>::computeRhoInitialGuessFromPSI()
 		std::fill(rhoTempSpinPolarized.begin(),rhoTempSpinPolarized.end(),0.0);
 	     }
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 	  std::vector<Vector<double> > tempPsi(num_quad_points), tempPsi2(num_quad_points);
  	  for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
 	    {
@@ -359,7 +359,7 @@ void dftClass<FEOrder>::computeRhoInitialGuessFromPSI()
 	       	   (*gradRhoInValuesSpinPolarized)[cell->id()] = std::vector<double>(6*num_quad_points);
 	            std::fill(gradRhoTempSpinPolarized.begin(),gradRhoTempSpinPolarized.end(),0.0);
 	        }
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 	      std::vector<std::vector<Tensor<1,3,double> > > tempGradPsi(num_quad_points), tempGradPsi2(num_quad_points);
 	      for(unsigned int q_point = 0; q_point < num_quad_points; ++q_point)
 	         {
@@ -390,7 +390,7 @@ void dftClass<FEOrder>::computeRhoInitialGuessFromPSI()
 			  //
 			  factor=(eigenValues[kPoint][i+dftParameters::spinPolarized*numEigenValues]-fermiEnergy)/(C_kb*dftParameters::TVal);
 			  double partialOccupancy2 = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)):1.0/(1.0 + std::exp(factor));
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 			  if(dftParameters::spinPolarized==1)
 			    {
 			      rhoTempSpinPolarized[2*q_point] += partialOccupancy*d_kPointWeights[kPoint]*(tempPsi[q_point](0)*tempPsi[q_point](0) + tempPsi[q_point](1)*tempPsi[q_point](1));
@@ -498,7 +498,7 @@ void dftClass<FEOrder>::computeRhoInitialGuessFromPSI()
 			  //
 			  factor=(eigenValues[kPoint][i+dftParameters::spinPolarized*numEigenValues]-fermiEnergy)/(C_kb*dftParameters::TVal);
 			  double partialOccupancy2 = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)):1.0/(1.0 + std::exp(factor));
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 			   if(dftParameters::spinPolarized==1)
 			    {
 			      rhoTempSpinPolarized[2*q_point] += partialOccupancy*d_kPointWeights[kPoint]*(tempPsi[q_point](0)*tempPsi[q_point](0) + tempPsi[q_point](1)*tempPsi[q_point](1));

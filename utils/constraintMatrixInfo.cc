@@ -296,7 +296,7 @@ namespace dftUtils
   }
 
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
   template void constraintMatrixInfo::distribute(dealii::parallel::distributed::Vector<std::complex<double> > & fieldVector,
 						 const unsigned int blockSize) const;
 

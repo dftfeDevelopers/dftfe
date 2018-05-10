@@ -41,7 +41,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyPRefined()
    dealii::ConstraintMatrix constraintsPRefined;
    constraintsPRefined.reinit(locallyRelevantDofs);
    dealii::DoFTools::make_hanging_node_constraints(dofHandlerPRefined, constraintsPRefined);
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
    std::vector<std::vector<double> > unitVectorsXYZ;
    unitVectorsXYZ.resize(3);
 
@@ -84,7 +84,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyPRefined()
    dealii::ConstraintMatrix constraintsForTotalPotential;
    constraintsForTotalPotential.reinit(locallyRelevantDofs);
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
    locatePeriodicPinnedNodes(dofHandlerPRefined,
 	                     constraintsPRefined,
 	                     constraintsForTotalPotential);
@@ -154,7 +154,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyPRefined()
 	  rhoOutPRefinedQuadValues[cellOld->id()] = std::vector<double>(num_quad_points);
 
 	  fe_values.reinit (cellOld);
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 	  std::vector<dealii::Vector<double> > tempPsi(num_quad_points), tempPsi2(num_quad_points);
 	  for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
 	    {
@@ -192,7 +192,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyPRefined()
 
 		      for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
 		      {
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 			   if(dftParameters::spinPolarized==1)
 			   {
 			       const double temp1 = partialOccupancy*d_kPointWeights[kPoint]*(tempPsi[q_point](0)*tempPsi[q_point](0) + tempPsi[q_point](1)*tempPsi[q_point](1));

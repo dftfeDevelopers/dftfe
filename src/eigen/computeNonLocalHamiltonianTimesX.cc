@@ -32,7 +32,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vec
   const unsigned int kPointIndex = d_kPointIndex;
   const unsigned int dofs_per_cell = dftPtr->FEEigen.dofs_per_cell;
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
   const int numberNodesPerElement = dftPtr->FEEigen.dofs_per_cell/2;
 #else
   const int numberNodesPerElement = dftPtr->FEEigen.dofs_per_cell;
@@ -42,7 +42,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vec
   //compute nonlocal projector ket times x i.e C^{T}*X 
   //
   std::vector<dealii::types::global_dof_index> local_dof_indices(dofs_per_cell);
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
   std::vector<std::vector<std::complex<double> > > projectorKetTimesVector;
 #else
   std::vector<std::vector<double> > projectorKetTimesVector;
@@ -68,7 +68,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vec
   //
   //some useful vectors
   //
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
   std::vector<std::complex<double> > inputVectors(numberNodesPerElement*numberWaveFunctions,0.0);
 #else
   std::vector<double> inputVectors(numberNodesPerElement*numberWaveFunctions,0.0);
@@ -92,7 +92,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vec
 	  std::vector<double> temp(dofs_per_cell,0.0);
 	  for (std::vector<vectorType>::const_iterator it=src.begin(); it!=src.end(); it++)
 	    {
-#ifdef ENABLE_PERIODIC_BC	      
+#ifdef USE_COMPLEX	      
 	      (*it).extract_subvector_to(local_dof_indices.begin(), local_dof_indices.end(), temp.begin());
 	      for(unsigned int idof = 0; idof < dofs_per_cell; ++idof)
 		{
@@ -118,7 +118,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vec
 	      const int atomId = dftPtr->d_nonLocalAtomIdsInElement[iElem][iAtom];
 	      const int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
 	      const int nonZeroElementMatrixId = dftPtr->d_sparsityPattern[atomId][iElem];
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 	      const char transA = 'C';
 	      const char transB = 'N';
 	      const std::complex<double> alpha = 1.0;
@@ -161,7 +161,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vec
 
     }//element loop
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
   std::vector<std::complex<double> > tempVectorloc;
   std::vector<std::complex<double> > tempVector;
 #else
@@ -175,7 +175,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vec
 	{
 	  for(unsigned int iPseudoAtomicWave = 0; iPseudoAtomicWave < numberPseudoWaveFunctions; ++iPseudoAtomicWave)
 	    {
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 	      tempVectorloc.push_back(projectorKetTimesVector[iAtom][numberPseudoWaveFunctions*iWave + iPseudoAtomicWave]);
 #else
 	      tempVector.push_back(projectorKetTimesVector[iAtom][numberPseudoWaveFunctions*iWave + iPseudoAtomicWave]);
@@ -188,7 +188,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vec
 
 
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
   const int size = tempVectorloc.size();
   tempVector.resize(size);
   MPI_Allreduce(&tempVectorloc[0],
@@ -239,7 +239,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vec
   //access elementIdsInAtomCompactSupport
   //
   
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
   std::vector<std::complex<double> > outputVectors(numberNodesPerElement*numberWaveFunctions,0.0);
 #else
   std::vector<double> outputVectors(numberNodesPerElement*numberWaveFunctions,0.0);
@@ -256,7 +256,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vec
 
 	  DoFHandler<3>::active_cell_iterator cell = dftPtr->d_elementIteratorsInAtomCompactSupport[iAtom][iElemComp];
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 	  const std::complex<double> alpha1 = 1.0;
 	  const std::complex<double> beta1 = 0.0;
 
@@ -294,7 +294,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vec
 
 	  cell->get_dof_indices(local_dof_indices);
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 	  unsigned int index = 0;
 	  std::vector<double> temp(dofs_per_cell,0.0);
 	  for(std::vector<vectorType>::iterator it = dst.begin(); it != dst.end(); ++it)

@@ -112,7 +112,7 @@ void dftClass<FEOrder>::compute_fermienergy()
   double fe;
   double R = 1.0;
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
   //
   //compute Fermi-energy first by bisection method
   //

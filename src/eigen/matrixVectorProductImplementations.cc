@@ -33,7 +33,7 @@ void eigenClass<FEOrder>::computeLocalHamiltonianTimesXMF (const dealii::MatrixF
   VectorizedArray<double>  two = make_vectorized_array(2.0);
 
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
   int kPointIndex = d_kPointIndex;
   FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>(), 2, double>  fe_eval(data, dftPtr->eigenDofHandlerIndex, 0);
   Tensor<1,2,VectorizedArray<double> > psiVal, vEffTerm, kSquareTerm, kDotGradientPsiTerm, derExchWithSigmaTimesGradRhoDotGradientPsiTerm;
@@ -237,7 +237,7 @@ void eigenClass<FEOrder>::computeLocalHamiltonianTimesXMF (const dealii::MatrixF
 }
 
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 template<unsigned int FEOrder>
 void eigenClass<FEOrder>::computeLocalHamiltonianTimesX(const dealii::parallel::distributed::Vector<std::complex<double> > & src,
 							const int numberWaveFunctions,

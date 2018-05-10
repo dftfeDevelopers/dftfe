@@ -16,7 +16,7 @@
 // @author Sambit Das(2018)
 //
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 template<unsigned int FEOrder>
 void forceClass<FEOrder>::computeStress()
 {

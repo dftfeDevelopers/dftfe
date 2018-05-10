@@ -129,7 +129,7 @@ namespace dftfe{
       XArray = YArray;
     }
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
     template void chebyshevFilter(operatorDFTClass & operatorMatrix,
 				  dealii::parallel::distributed::Vector<std::complex<double> > & ,
 				  const unsigned int ,
