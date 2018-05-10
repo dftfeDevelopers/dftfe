@@ -198,9 +198,9 @@ void geoOptCell<FEOrder>::run()
        nonLinearSolver::ReturnValueType cgReturn=nonLinearSolver::FAILURE;
 
        if (dftParameters::chkType>=1 && dftParameters::restartFromChk)
-           cgReturn=cgSolver.restartSolve(*this,std::string("cellRelax"));
+           cgReturn=cgSolver.solve(*this,std::string("cellRelaxCG.chk"),true);
        else if (dftParameters::chkType>=1 && !dftParameters::restartFromChk)
-           cgReturn=cgSolver.solve(*this,std::string("cellRelax"));
+           cgReturn=cgSolver.solve(*this,std::string("cellRelaxCG.chk"));
        else
            cgReturn=cgSolver.solve(*this);
 

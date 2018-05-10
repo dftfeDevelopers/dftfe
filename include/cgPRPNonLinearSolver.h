@@ -64,25 +64,17 @@ namespace dftfe {
      *
      * @param problem[in] nonlinearSolverProblem object.
      * @param checkpointFileName[in] if string is non-empty, creates checkpoint file
-     * with starting label checkpointFileName for every nonlinear iteration.
+     * named checkpointFileName for every nonlinear iteration. If restart is set to true,
+     * checkpointFileName must match the name of the checkpoint file. Empty string
+     * will throw an error.
+     * @param restart[in] boolean specifying whether this is a restart solve using the checkpoint file
+     * specified by checkpointFileName.
      * @return Return value indicating success or failure.
      */
      nonLinearSolver::ReturnValueType
      solve(nonlinearSolverProblem & problem,
-	   const std::string checkpointFileName="");
-
-    /**
-     * @brief Restart solve non-linear problem using Polak-Ribiere-Polyak nonlinar conjugate gradient method
-     * from last saved checkpoint.
-     *
-     * @param problem[in] nonlinearSolverProblem object.
-     * @param checkpointFileName[in] must match the checkpointFileName used in the solve call. Empty string
-     * will throw an error.
-     * @return Return value indicating success or failure.
-     */
-     nonLinearSolver::ReturnValueType
-     restartSolve(nonlinearSolverProblem & problem,
-	          const std::string checkpointFileName);
+	   const std::string checkpointFileName="",
+	   const bool restart=false);
 
   private:
     /**

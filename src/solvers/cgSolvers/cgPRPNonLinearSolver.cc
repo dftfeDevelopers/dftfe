@@ -224,7 +224,7 @@ namespace dftfe {
         data.push_back(std::vector<double>(1,d_conjugateDirection[i]));
 
       dftUtils::writeDataIntoFile(data,
-                                  checkpointFileName+"_CGDirection.chk");
+                                  checkpointFileName);
   }
 
   //
@@ -235,7 +235,7 @@ namespace dftfe {
   {
 
       std::vector<std::vector<double>> data;
-      dftUtils::readFile(1,data,checkpointFileName+"_CGDirection.chk");
+      dftUtils::readFile(1,data,checkpointFileName);
 
       d_conjugateDirection.clear();
       for (unsigned int i=0; i< d_numberUnknowns;++i)
@@ -454,7 +454,8 @@ namespace dftfe {
   //
   nonLinearSolver::ReturnValueType
   cgPRPNonLinearSolver::solve(nonlinearSolverProblem & problem,
-	                      const std::string checkpointFileName)
+	                      const std::string checkpointFileName,
+			      const bool restart)
   {
     //
     // method const data
@@ -487,8 +488,21 @@ namespace dftfe {
     //
     // initialize delta new and direction
     //
-    initializeDirection();
+    if (!restart)
+      initializeDirection();
+    else
+    {
+      load(checkpointFileName);
 
+      // compute deltaNew, and initialize steepestDirectionOld to current steepest direction
+      d_deltaNew = 0.0;
+      for (unsigned int i = 0; i < d_numberUnknowns; ++i)
+      {
+         const double r = -d_gradient[i];
+         d_steepestDirectionOld[i]  =r;
+         d_deltaNew += d_unknownCountFlag[i]*r*r;
+      }
+    }
     //
     // check for convergence
     //
@@ -634,191 +648,4 @@ namespace dftfe {
     return returnValue;
 
   }
-
-  nonLinearSolver::ReturnValueType
-  cgPRPNonLinearSolver::restartSolve(nonlinearSolverProblem & problem,
-	                             const std::string checkpointFileName)
-  {
-    AssertThrow (!checkpointFileName.empty(),
-	   dealii::ExcMessage (std::string("DFT-FE Error: empty checkpoint file provided")));
-
-    //
-    // method const data
-    //
-    const double toleranceSqr = d_tolerance*d_tolerance;
-
-    //
-    // get total number of unknowns in the problem.
-    //
-    d_numberUnknowns = problem.getNumberUnknowns();
-
-    //
-    //resize d_unknownCountFlag with numberUnknown and initialize to 1
-    //
-    d_unknownCountFlag.resize(d_numberUnknowns,1);
-
-    //
-    // allocate space for conjugate direction, gradient and old steepest direction
-    // values.
-    //
-    d_conjugateDirection.resize(d_numberUnknowns);
-    d_gradient.resize(d_numberUnknowns);
-    d_steepestDirectionOld.resize(d_numberUnknowns);
-
-    load(checkpointFileName);
-
-    //
-    // compute initial values of problem and problem gradient
-    //
-    problem.gradient(d_gradient);
-
-    //
-    // compute deltaNew at checkpoint, and initialize steepestDirectionOld to current steepest direction
-    //
-    d_deltaNew = 0.0;
-    for (unsigned int i = 0; i < d_numberUnknowns; ++i)
-    {
-      const double r = -d_gradient[i];
-      d_steepestDirectionOld[i]  =r;
-      d_deltaNew += d_unknownCountFlag[i]*r*r;
-    }
-
-    //
-    // check for convergence
-    //
-    unsigned int isSuccess=0;
-    if ( d_deltaNew < toleranceSqr*d_numberUnknowns)
-        isSuccess=1;
-
-    MPI_Bcast(&(isSuccess),
-	       1,
-	       MPI_INT,
-	       0,
-	       MPI_COMM_WORLD);
-    if (isSuccess==1)
-       return SUCCESS;
-
-
-
-    for (d_iter = 0; d_iter < d_maxNumberIterations; ++d_iter) {
-
-      for(unsigned int i = 0; i < d_gradient.size(); ++i)
-      {
-	  pcout<<"d_gradient: "<<d_gradient[i]<<std::endl;
-      }
-
-
-      //
-      // compute L2-norm of the residual (gradient)
-      //
-      const double residualNorm = computeResidualL2Norm();
-
-
-      if (d_debugLevel >= 1)
-      std::cout << "Iteration no. | delta new | residual norm "
-	"| residual norm avg" << std::endl;
-
-      //
-      // output at the begining of the iteration
-      //
-      if (d_debugLevel >= 1)
-	  pcout << d_iter+1 << " "
-		    << d_deltaNew << " "
-		    << residualNorm << " "
-		    << residualNorm/d_numberUnknowns << " "
-		    << std::endl;
-
-      //
-      // perform line search along direction
-      //
-      ReturnValueType lineSearchReturnValue =
-	                   lineSearch(problem,
-				      d_lineSearchTolerance,
-				      d_lineSearchMaxIterations,
-				      d_debugLevel);
-
-      //
-      // evaluate gradient
-      //
-      problem.gradient(d_gradient);
-
-      //
-      // update values of delta_new and delta_mid
-      //
-      d_deltaOld = d_deltaNew;
-      computeDeltas();
-
-      //
-      // compute PRP beta
-      //
-
-      d_beta = (d_deltaNew - d_deltaMid)/d_deltaOld;
-
-      pcout<<" CG- d_beta: "<<d_beta<<std::endl;
-
-      unsigned int isBetaZero=0;
-      if(d_beta <= 0)
-      {
-	  pcout<<" Negative d_beta- setting it to zero "<<std::endl;
-	  isBetaZero=1;
-      }
-      MPI_Bcast(&(isBetaZero),
-		   1,
-		   MPI_INT,
-		   0,
-		   MPI_COMM_WORLD);
-      if (isBetaZero==1)
-	  d_beta=0;
-      //
-      // update direction
-      //
-      updateDirection();
-
-      save(checkpointFileName);
-      problem.save();
-
-      //
-      // check for convergence
-      //
-      unsigned int isBreak=0;
-      if (d_deltaNew < toleranceSqr*d_numberUnknowns)
-	isBreak=1;
-      MPI_Bcast(&(isSuccess),
-		   1,
-		   MPI_INT,
-		   0,
-		   MPI_COMM_WORLD);
-      if (isBreak==1)
-	  break;
-    }
-
-    //
-    // set error condition
-    //
-    ReturnValueType returnValue = SUCCESS;
-
-    if(d_iter == d_maxNumberIterations)
-      returnValue = MAX_ITER_REACHED;
-
-    //
-    // final output
-    //
-    if (d_debugLevel >= 1)
-    {
-
-      if (returnValue == SUCCESS)
-      {
-        pcout << "Conjugate Gradient converged after "
-		<< d_iter+1<< " iterations." << std::endl;
-      } else
-      {
-        pcout << "Conjugate Gradient failed to converge after "
-		<< d_iter << " iterations." << std::endl;
-      }
-
-    }
-
-    return returnValue;
-  }
-
 }

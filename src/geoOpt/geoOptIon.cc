@@ -100,9 +100,9 @@ void geoOptIon<FEOrder>::run()
        nonLinearSolver::ReturnValueType cgReturn=nonLinearSolver::FAILURE;
 
        if (dftParameters::chkType>=1 && dftParameters::restartFromChk)
-           cgReturn=cgSolver.restartSolve(*this,std::string("ionRelax"));
+           cgReturn=cgSolver.solve(*this,std::string("ionRelaxCG.chk"),true);
        else if (dftParameters::chkType>=1 && !dftParameters::restartFromChk)
-           cgReturn=cgSolver.solve(*this,std::string("ionRelax"));
+           cgReturn=cgSolver.solve(*this,std::string("ionRelaxCG.chk"));
        else
            cgReturn=cgSolver.solve(*this);
 
