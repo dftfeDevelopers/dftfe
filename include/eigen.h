@@ -56,7 +56,7 @@ namespace dftfe{
 
       
      
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
       /**
        * @brief Compute discretized operator matrix times complex type multi-vectors and add it to the existing dst vector
        *
@@ -247,7 +247,7 @@ namespace dftfe{
 
      
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 
       /**
        * @brief finite-element cell level stiffness matrix with first dimension traversing the cell id(in the order of macro-cell and subcell)
@@ -296,7 +296,7 @@ namespace dftfe{
 #endif
 
     
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
       /**
        * @brief implementation of non-local Hamiltonian matrix-vector product using non-local discretized projectors at cell-level for complex data type
        * @param src Vector containing current values of source array with multi-vector array stored 

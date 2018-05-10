@@ -49,7 +49,7 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoOVDataForce()
   //clear existing data
   //
   d_nonLocalPSP_ZetalmDeltaVl.clear();
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
   d_nonLocalPSP_gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint.clear();
   d_nonLocalPSP_gradZetalmDeltaVl_KPoint.clear();
   d_nonLocalPSP_gradZetalmDeltaVlDyadicDistImageAtoms_KPoint.clear();
@@ -63,7 +63,7 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoOVDataForce()
   unsigned int count=0;
   const unsigned int numNonLocalAtomsCurrentProcess= dftPtr->d_nonLocalAtomIdsInCurrentProcess.size();
   d_nonLocalPSP_ZetalmDeltaVl.resize(numNonLocalAtomsCurrentProcess);
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
   d_nonLocalPSP_gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint.resize(numNonLocalAtomsCurrentProcess);
   d_nonLocalPSP_gradZetalmDeltaVl_KPoint.resize(numNonLocalAtomsCurrentProcess);
   d_nonLocalPSP_gradZetalmDeltaVlDyadicDistImageAtoms_KPoint.resize(numNonLocalAtomsCurrentProcess);
@@ -100,7 +100,7 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoOVDataForce()
       if (numberElementsInAtomCompactSupport !=0)
       {
             d_nonLocalPSP_ZetalmDeltaVl[count].resize(numberPseudoWaveFunctions);
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
             d_nonLocalPSP_gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint[count].resize(numberPseudoWaveFunctions);
             d_nonLocalPSP_gradZetalmDeltaVl_KPoint[count].resize(numberPseudoWaveFunctions);
 	    d_nonLocalPSP_gradZetalmDeltaVlDyadicDistImageAtoms_KPoint[count].resize(numberPseudoWaveFunctions);
@@ -122,7 +122,7 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoOVDataForce()
 
 	  for(unsigned int iPseudoWave = 0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
 	    {
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 	      d_nonLocalPSP_ZetalmDeltaVl[count][iPseudoWave][cell->id()]=std::vector<double>(numkPoints*numberQuadraturePoints*2);
 	      d_nonLocalPSP_gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint[count][iPseudoWave][cell->id()]=std::vector<double>(numkPoints*numberQuadraturePoints*C_DIM*2);
 	      d_nonLocalPSP_gradZetalmDeltaVl_KPoint[count][iPseudoWave][cell->id()]=std::vector<double>(numkPoints*numberQuadraturePoints*C_DIM*2);
@@ -144,7 +144,7 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoOVDataForce()
 		iPsp += 1;
 	      lTemp = lQuantumNumber;
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 	      std::vector<double>  ZetalmDeltaVl_KPoint(numkPoints*numberQuadraturePoints*2,0.0);
 	      std::vector<double> gradZetalmDeltaVl_KPoint(numkPoints*numberQuadraturePoints*C_DIM*2,0.0);
 	      std::vector<double> gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint(numkPoints*numberQuadraturePoints*C_DIM*2,0.0);
@@ -224,7 +224,7 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoOVDataForce()
 			  {
 				tempDer[iDim]=projectorFunctionDerivatives[iDim];
 			  }
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
                           for (unsigned int ik=0; ik < numkPoints; ++ik)
 			  {
 
@@ -261,7 +261,7 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoOVDataForce()
 		    }//image atom loop (contribution added)
 
 		}//end of quad loop
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 	        d_nonLocalPSP_ZetalmDeltaVl[count][iPseudoWave][cell->id()]=ZetalmDeltaVl_KPoint;
 		d_nonLocalPSP_gradZetalmDeltaVl_KPoint[count][iPseudoWave][cell->id()]=gradZetalmDeltaVl_KPoint;
 		d_nonLocalPSP_gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint[count][iPseudoWave][cell->id()]=gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint;

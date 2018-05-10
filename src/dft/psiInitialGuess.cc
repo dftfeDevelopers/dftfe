@@ -250,7 +250,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
   locallyOwnedSet.fill_index_vector(locallyOwnedDOFs);
 
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
   unsigned int numberDofs = locallyOwnedDOFs.size()/2;
 #else
   unsigned int numberDofs = locallyOwnedDOFs.size();
@@ -266,7 +266,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
   bool pp=false;
   for(unsigned int dof=0; dof<numberDofs; dof++)
     {
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
       unsigned int dofID = local_dof_indicesReal[dof];
 #else
       unsigned int dofID = locallyOwnedDOFs[dof];
@@ -282,7 +282,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 
 	  //get the imageIdmap information corresponding to globalChargeId
 	  //
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 	  std::vector<int> & imageIdsList = d_globalChargeIdToImageIdMap[it->atomID];
 #else
 	  std::vector<int> imageIdsList;
@@ -373,7 +373,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
     {
       for (unsigned int i = 0; i < numEigenValues; ++i)
 	{
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 	 for(unsigned int j = 0; j < numberDofs; ++j)
 	    {
 	      unsigned int dofID = local_dof_indicesReal[j];

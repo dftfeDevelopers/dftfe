@@ -15,7 +15,7 @@
 
 #ifndef geoOptCell_H_
 #define geoOptCell_H_
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 #include "nonlinearSolverProblem.h"
 #include "constants.h"
 

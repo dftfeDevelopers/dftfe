@@ -75,7 +75,7 @@ namespace dftfe {
   template<unsigned int FEOrder>
   dftClass<FEOrder>::dftClass(const MPI_Comm &mpi_comm_replica,const MPI_Comm &_interpoolcomm):
     FE (FE_Q<3>(QGaussLobatto<1>(FEOrder+1)), 1),
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
     FEEigen (FE_Q<3>(QGaussLobatto<1>(FEOrder+1)), 2),
 #else
     FEEigen (FE_Q<3>(QGaussLobatto<1>(FEOrder+1)), 1),
@@ -99,7 +99,7 @@ namespace dftfe {
     symmetryPtr= new symmetryClass<FEOrder>(this, mpi_comm_replica, _interpoolcomm);
     geoOptIonPtr= new geoOptIon<FEOrder>(this, mpi_comm_replica);
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
     geoOptCellPtr= new geoOptCell<FEOrder>(this, mpi_comm_replica);
 #endif
   }
@@ -111,7 +111,7 @@ namespace dftfe {
     matrix_free_data.clear();
     delete forcePtr;
     delete geoOptIonPtr;
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
     delete geoOptCellPtr;
 #endif
   }
@@ -235,7 +235,7 @@ namespace dftfe {
     //estimate total number of wave functions
     determineOrbitalFilling();
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
     generateMPGrid();
 #else
     d_kPointCoordinates.resize(3,0.0);
@@ -316,7 +316,7 @@ namespace dftfe {
 
 	internaldft::convertToCellCenteredCartesianCoordinates(atomLocations,
 							       d_domainBoundingVectors);
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 	recomputeKPointCoordinates();
 #endif
 	if (dftParameters::verbosity==2)
@@ -380,7 +380,7 @@ namespace dftfe {
     //initialize dofHandlers and hanging-node constraints and periodic constraints on the unmoved Mesh
     //
     initUnmovedTriangulation(triangulationPar);
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
     if (dftParameters::useSymm)
       symmetryPtr->initSymmetry() ;
 #endif
@@ -463,7 +463,7 @@ namespace dftfe {
       }
     else if (!dftParameters::isIonOpt && dftParameters::isCellOpt)
       {
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 	geoOptCellPtr->init();
 	geoOptCellPtr->run();
 #else
@@ -472,7 +472,7 @@ namespace dftfe {
       }
     else if (dftParameters::isIonOpt && dftParameters::isCellOpt)
       {
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 	//first relax ion positions in the starting cell configuration
 	geoOptIonPtr->init();
 	geoOptIonPtr->run();
@@ -830,7 +830,7 @@ namespace dftfe {
 
 	  }
 	computing_timer.enter_section("compute rho");
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 	if(dftParameters::useSymm){
 	  symmetryPtr->computeLocalrhoOut();
 	  symmetryPtr->computeAndSymmetrize_rhoOut();
@@ -1002,7 +1002,7 @@ namespace dftfe {
 	forcePtr->printAtomsForces();
 	computing_timer.exit_section("ion force");
       }
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
     if (dftParameters::isCellStress)
       {
 	computing_timer.enter_section("cell stress");

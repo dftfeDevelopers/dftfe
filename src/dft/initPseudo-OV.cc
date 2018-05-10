@@ -112,7 +112,7 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
 	  //compute values for the current elements
 	  fe_values.reinit(cell);
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 	  d_nonLocalProjectorElementMatrices[iAtom][iElemComp].resize(maxkPoints,
 								      std::vector<std::complex<double> > (numberNodesPerElement*numberPseudoWaveFunctions,0.0));
 	  d_nonLocalProjectorElementMatricesConjugate[iAtom][iElemComp].resize(maxkPoints,
@@ -227,7 +227,7 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
 			{
 			  double angle = d_kPointCoordinates[3*kPoint+0]*pointMinusLatticeVector[0] + d_kPointCoordinates[3*kPoint+1]*pointMinusLatticeVector[1] + d_kPointCoordinates[3*kPoint+2]*pointMinusLatticeVector[2];
 			  nonLocalProjectorBasisReal[maxkPoints*iQuadPoint + kPoint] += cos(angle)*projectorFunctionValue;
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 			  nonLocalProjectorBasisImag[maxkPoints*iQuadPoint + kPoint] += -sin(angle)*projectorFunctionValue;
 #endif
 			}
@@ -250,14 +250,14 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
 		      double tempImag = 0;
 		      for(int iQuadPoint = 0; iQuadPoint < numberQuadraturePoints; ++iQuadPoint)
 			{
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 			  tempReal += nonLocalProjectorBasisReal[maxkPoints*iQuadPoint+kPoint]*fe_values.shape_value(iNode,iQuadPoint)*fe_values.JxW(iQuadPoint);
 			  tempImag += nonLocalProjectorBasisImag[maxkPoints*iQuadPoint+kPoint]*fe_values.shape_value(iNode,iQuadPoint)*fe_values.JxW(iQuadPoint);
 #else
 			  d_nonLocalProjectorElementMatrices[iAtom][iElemComp][kPoint][numberNodesPerElement*iPseudoWave + iNode] += nonLocalProjectorBasisReal[maxkPoints*iQuadPoint+kPoint]*fe_values.shape_value(iNode,iQuadPoint)*fe_values.JxW(iQuadPoint);
 #endif
 			}
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 		      d_nonLocalProjectorElementMatrices[iAtom][iElemComp][kPoint][numberNodesPerElement*iPseudoWave + iNode].real(tempReal);
 		      d_nonLocalProjectorElementMatrices[iAtom][iElemComp][kPoint][numberNodesPerElement*iPseudoWave + iNode].imag(tempImag);
 		      d_nonLocalProjectorElementMatricesConjugate[iAtom][iElemComp][kPoint][numberNodesPerElement*iPseudoWave + iNode].real(tempReal);
@@ -1099,7 +1099,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
      }
    }
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
   dealii::parallel::distributed::Vector<std::complex<double> > vec(d_locallyOwnedProjectorIdsCurrentProcess,
                                                                    d_ghostProjectorIdsCurrentProcess,
                                                                    mpi_communicator);

@@ -15,7 +15,7 @@
 //
 // @author Sambit Das (2017)
 //
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 //compute configurational stress contribution from all terms except the nuclear self energy
 template<unsigned int FEOrder>
 void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk()

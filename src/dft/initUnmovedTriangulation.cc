@@ -19,7 +19,7 @@
 
 
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 #include "initkPointData.cc"
 #endif
 //
@@ -63,7 +63,7 @@ void dftClass<FEOrder>::initUnmovedTriangulation(const parallel::distributed::Tr
   //
   //Extract real and imag DOF indices from the global vector - this will be needed in XHX operation, etc.
   //
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
   FEValuesExtractors::Scalar real(0); //For Eigen
   ComponentMask componentMaskForRealDOF = FEEigen.component_mask (real);
   std::vector<bool> selectedDofsReal(locally_owned_dofsEigen.n_elements(), false);

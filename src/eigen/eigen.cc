@@ -338,7 +338,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 }
 
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
   template<unsigned int FEOrder>
   void eigenClass<FEOrder>::HX(dealii::parallel::distributed::Vector<std::complex<double> > & src,
 			       const unsigned int numberWaveFunctions,
@@ -604,7 +604,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 
 
   //XHX
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
   template<unsigned int FEOrder>
   void eigenClass<FEOrder>::XtHX(std::vector<vectorType> & src,
 				 std::vector<std::complex<double> > & ProjHam)

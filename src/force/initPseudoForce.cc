@@ -206,7 +206,7 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoDataForce()
   //clear existing data
   //
   d_nonLocalPSP_ZetalmDeltaVl.clear();
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
   d_nonLocalPSP_gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint.clear();
   d_nonLocalPSP_gradZetalmDeltaVl_KPoint.clear();
   d_nonLocalPSP_gradZetalmDeltaVlDyadicDistImageAtoms_KPoint.clear();
@@ -222,7 +222,7 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoDataForce()
   unsigned int count=0;
   const unsigned int numNonLocalAtomsCurrentProcess= dftPtr->d_nonLocalAtomIdsInCurrentProcess.size();
   d_nonLocalPSP_ZetalmDeltaVl.resize(numNonLocalAtomsCurrentProcess);
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
   d_nonLocalPSP_gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint.resize(numNonLocalAtomsCurrentProcess);
   d_nonLocalPSP_gradZetalmDeltaVl_KPoint.resize(numNonLocalAtomsCurrentProcess);
   d_nonLocalPSP_gradZetalmDeltaVlDyadicDistImageAtoms_KPoint.resize(numNonLocalAtomsCurrentProcess);
@@ -259,7 +259,7 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoDataForce()
       if (numberElementsInAtomCompactSupport !=0)
       {
             d_nonLocalPSP_ZetalmDeltaVl[count].resize(numberPseudoWaveFunctions);
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
             d_nonLocalPSP_gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint[count].resize(numberPseudoWaveFunctions);
             d_nonLocalPSP_gradZetalmDeltaVl_KPoint[count].resize(numberPseudoWaveFunctions);
 	    d_nonLocalPSP_gradZetalmDeltaVlDyadicDistImageAtoms_KPoint[count].resize(numberPseudoWaveFunctions);
@@ -281,7 +281,7 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoDataForce()
 
 	  for(unsigned int iPseudoWave = 0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
 	    {
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 	      d_nonLocalPSP_ZetalmDeltaVl[count][iPseudoWave][cell->id()]=std::vector<double>(numkPoints*numberQuadraturePoints*2);
 	      d_nonLocalPSP_gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint[count][iPseudoWave][cell->id()]=std::vector<double>(numkPoints*numberQuadraturePoints*C_DIM*2);
 	      d_nonLocalPSP_gradZetalmDeltaVl_KPoint[count][iPseudoWave][cell->id()]=std::vector<double>(numkPoints*numberQuadraturePoints*C_DIM*2);
@@ -306,7 +306,7 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoDataForce()
 
 	      const int globalPotSplineId = dftPtr->d_deltaVlIdToFunctionIdDetails[pseudoPotentialId][0];
 	      assert(lQuantumNumber == dftPtr->d_deltaVlIdToFunctionIdDetails[pseudoPotentialId][1]);
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 	      std::vector<double>  ZetalmDeltaVl_KPoint(numkPoints*numberQuadraturePoints*2,0.0);
 	      std::vector<double> gradZetalmDeltaVl_KPoint(numkPoints*numberQuadraturePoints*C_DIM*2,0.0);
 	      std::vector<double> gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint(numkPoints*numberQuadraturePoints*C_DIM*2,0.0);
@@ -393,7 +393,7 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoDataForce()
 			  {
 				tempDer[iDim]=pseudoWaveFunctionDerivatives[iDim]*radialPotFunVal + pseudoWaveFunctionValue*deltaVlDerivatives[iDim];
 			  }
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
                           for (unsigned int ik=0; ik < numkPoints; ++ik)
 			  {
 
@@ -430,7 +430,7 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoDataForce()
 		    }//image atom loop (contribution added)
 
 		}//end of quad loop
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 	        d_nonLocalPSP_ZetalmDeltaVl[count][iPseudoWave][cell->id()]=ZetalmDeltaVl_KPoint;
 		d_nonLocalPSP_gradZetalmDeltaVl_KPoint[count][iPseudoWave][cell->id()]=gradZetalmDeltaVl_KPoint;
 		d_nonLocalPSP_gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint[count][iPseudoWave][cell->id()]=gradZetalmDeltaVl_minusZetalmDeltaVl_KPoint;
@@ -469,7 +469,7 @@ void forceClass<FEOrder>::computeNonLocalProjectorKetTimesPsiTimesV(const std::v
   const unsigned int dofs_per_cell = dftPtr->FEEigen.dofs_per_cell;
 
   int numberNodesPerElement;
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
   numberNodesPerElement = dftPtr->FEEigen.dofs_per_cell/2;//GeometryInfo<3>::vertices_per_cell;
 #else
   numberNodesPerElement = dftPtr->FEEigen.dofs_per_cell;
@@ -479,7 +479,7 @@ void forceClass<FEOrder>::computeNonLocalProjectorKetTimesPsiTimesV(const std::v
   //compute nonlocal projector ket times x i.e C^{T}*X
   //
   std::vector<dealii::types::global_dof_index> local_dof_indices(dofs_per_cell);
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
   std::vector<std::vector<std::complex<double> > > & projectorKetTimesVector=projectorKetTimesPsiTimesVComplex;
 #else
   std::vector<std::vector<double> > & projectorKetTimesVector=projectorKetTimesPsiTimesVReal;
@@ -504,7 +504,7 @@ void forceClass<FEOrder>::computeNonLocalProjectorKetTimesPsiTimesV(const std::v
   //
   //some useful vectors
   //
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
   std::vector<std::complex<double> > inputVectors(numberNodesPerElement*numberWaveFunctions,0.0);
 #else
   std::vector<double> inputVectors(numberNodesPerElement*numberWaveFunctions,0.0);
@@ -524,7 +524,7 @@ void forceClass<FEOrder>::computeNonLocalProjectorKetTimesPsiTimesV(const std::v
 	  cell->get_dof_indices(local_dof_indices);
 
 	  unsigned int index=0;
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 	  std::vector<double> temp(dofs_per_cell,0.0);
 	  for (std::vector<vectorType>::const_iterator it=src.begin(); it!=src.end(); it++)
 	    {
@@ -558,7 +558,7 @@ void forceClass<FEOrder>::computeNonLocalProjectorKetTimesPsiTimesV(const std::v
 	      int atomId = dftPtr->d_nonLocalAtomIdsInElement[iElem][iAtom];
 	      int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
 	      int nonZeroElementMatrixId = dftPtr->d_sparsityPattern[atomId][iElem];
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 	      char transA = 'C';
 	      char transB = 'N';
 	      std::complex<double> alpha = 1.0;
@@ -602,12 +602,12 @@ void forceClass<FEOrder>::computeNonLocalProjectorKetTimesPsiTimesV(const std::v
     }//element loop
 
   //std::cout<<"Finished Element Loop"<<std::endl;
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
   std::vector<dealii::parallel::distributed::Vector<std::complex<double> > > projectorKetTimesVectorPar(numberWaveFunctions);
 #else
   std::vector<dealii::parallel::distributed::Vector<double> > projectorKetTimesVectorPar(numberWaveFunctions);
 #endif
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
   dealii::parallel::distributed::Vector<std::complex<double> > vec(dftPtr->d_locallyOwnedProjectorIdsCurrentProcess,
                                                                    dftPtr->d_ghostProjectorIdsCurrentProcess,
                                                                    mpi_communicator);
@@ -619,7 +619,7 @@ void forceClass<FEOrder>::computeNonLocalProjectorKetTimesPsiTimesV(const std::v
   vec.update_ghost_values();
   for (unsigned int i=0; i<numberWaveFunctions;++i)
   {
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
       projectorKetTimesVectorPar[i].reinit(vec);
 #else
       projectorKetTimesVectorPar[i].reinit(vec);
