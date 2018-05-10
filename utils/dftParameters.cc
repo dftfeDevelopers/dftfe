@@ -64,7 +64,7 @@ namespace dftParameters
     {
 	prm.declare_entry("CHK TYPE", "0",
 			   Patterns::Integer(0,2),
-			   "[Standard] Checkpoint type, 0(dont create any checkpoint), 1(create checkpoint only for ion optimization restart if ION OPT is set to true. This option writes the current atomic coordinates and the cg ion relaxation solver state to checkpoint files. This option assumes CELL OPT is set to false. The checkpoint is created at the end of the last ground state solve.), 2(create checkpoint for scf restart. This option also creates checkpoint for ion optimization restart if ION OPT is set to true.)");
+			   "[Standard] Checkpoint type, 0(dont create any checkpoint), 1(create checkpoint for geometry optimization restart if ION OPT or CELL OPT is set to true. Currently, checkpointing and restart framework doesn't work if both ION OPT and CELL OPT are set to true- the code will throw an error if attempted.), 2(create checkpoint for scf restart. Currently, this option cannot be used if geometry optimization is being performed. The code will throw an error if this option is used in conjunction with geometry optimization.)");
 
 	prm.declare_entry("RESTART FROM CHK", "false",
 			   Patterns::Bool(),
@@ -458,13 +458,16 @@ namespace dftParameters
     }
 #ifdef ENABLE_PERIODIC_BC
     if (dftParameters::electrostaticsPRefinement)
-       AssertThrow(!dftParameters::useSymm,ExcMessage("P REFINEMENT=true is not yet extended to USE GROUP SYMMETRY=true case"));
+       AssertThrow(!dftParameters::useSymm,ExcMessage("DFT-FE Error: P REFINEMENT=true is not yet extended to USE GROUP SYMMETRY=true case"));
 
     if (dftParameters::isIonForce || dftParameters::isCellStress)
-       AssertThrow(!dftParameters::useSymm,ExcMessage("USE GROUP SYMMETRY must be set to false if either ION FORCE or CELL STRESS is set to true. This functionality will be added in a future release"));
+       AssertThrow(!dftParameters::useSymm,ExcMessage("DFT-FE Error: USE GROUP SYMMETRY must be set to false if either ION FORCE or CELL STRESS is set to true. This functionality will be added in a future release"));
 #else
     AssertThrow(!dftParameters::isCellStress,ExcMessage("DFT-FE Error: Currently CELL STRESS cannot be set true in double mode for periodic Gamma point problems. This functionality will be added soon."));
 #endif
+    AssertThrow(!(dftParameters::chkType==2 && (dftParameters::isIonOpt || dftParameters::isCellOpt)),ExcMessage("DFT-FE Error: CHK TYPE=2 cannot be used if geometry optimization is being performed."));
+
+    AssertThrow(!(dftParameters::chkType==1 && (dftParameters::isIonOpt && dftParameters::isCellOpt)),ExcMessage("DFT-FE Error: CHK TYPE=1 cannot be used if both ION OPT and CELL OPT are set to true."));
   }
 
 }

@@ -355,14 +355,13 @@ namespace dftfe {
     //
     //generate mesh (both parallel and serial)
     //
-    if (dftParameters::chkType>=1 && dftParameters::restartFromChk)
+    if (dftParameters::chkType==2 && dftParameters::restartFromChk)
       {
 	d_mesh.generateCoarseMeshesForRestart(atomLocations,
 					      d_imagePositions,
 					      d_domainBoundingVectors,
 					      dftParameters::useSymm);
-	if (dftParameters::chkType==2)
-	  loadTriaInfoAndRhoData();
+	loadTriaInfoAndRhoData();
       }
     else
       d_mesh.generateSerialUnmovedAndParallelMovedUnmovedMesh(atomLocations,
