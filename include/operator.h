@@ -87,7 +87,7 @@ namespace dftfe{
      * @param cellMap precomputed cell-local index id map of the multi-wavefunction field
      * @param Y Vector containing multi-component fields after operator times vectors product
      */
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
     virtual void HX(dealii::parallel::distributed::Vector<std::complex<double> > & X,
 		    const unsigned int numberComponents,
 		    const std::vector<std::vector<dealii::types::global_dof_index> > & macroCellMap,
@@ -112,7 +112,7 @@ namespace dftfe{
      * @param X given orthogonal basis vectors
      * @return ProjMatrix projected small matrix 
      */
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
     virtual void XtHX(dealii::parallel::distributed::Vector<std::complex<double> > & src,
 		      const unsigned int numberComponents,
 		      const std::vector<std::vector<dealii::types::global_dof_index> > & macroCellMap,

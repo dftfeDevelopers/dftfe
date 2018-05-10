@@ -354,7 +354,7 @@ namespace dftfe {
        * periodic boundary conditions
        */
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
       std::complex<double> innerProduct(vectorType & a,
 					vectorType & b);
 
@@ -517,7 +517,7 @@ namespace dftfe {
       IndexSet d_locallyOwnedProjectorIdsCurrentProcess;
       IndexSet d_ghostProjectorIdsCurrentProcess;
       std::map<std::pair<unsigned int,unsigned int>, unsigned int> d_projectorIdsNumberingMapCurrentProcess;
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
       std::vector<std::vector<std::vector<std::vector<std::complex<double> > > > > d_nonLocalProjectorElementMatrices,d_nonLocalProjectorElementMatricesConjugate;
       std::vector<dealii::parallel::distributed::Vector<std::complex<double> > > d_projectorKetTimesVectorPar;
 #else

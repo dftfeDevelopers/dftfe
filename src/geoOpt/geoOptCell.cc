@@ -16,7 +16,7 @@
 // @author Sambit Das
 //
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 #include <geoOptCell.h>
 #include <cgPRPNonLinearSolver.h>
 #include <force.h>

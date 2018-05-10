@@ -394,7 +394,7 @@ namespace dftfe{
 
     }
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
     void lowdenOrthogonalization(const MPI_Comm & mpi_communicator,
 				 dealii::parallel::distributed::Vector<std::complex<double> > & X,
 				 const unsigned int numberVectors)
@@ -691,7 +691,7 @@ namespace dftfe{
 #endif
 
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
     template void chebyshevFilter(operatorDFTClass & operatorMatrix,
 				  dealii::parallel::distributed::Vector<std::complex<double> > & ,
 				  const unsigned int ,

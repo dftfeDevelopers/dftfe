@@ -461,7 +461,7 @@ namespace dftParameters
 	prm.print_parameters (output, ParameterHandler::OutputStyle::LaTeX);
 	exit(0);
     }
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
     if (dftParameters::electrostaticsPRefinement)
        AssertThrow(!dftParameters::useSymm,ExcMessage("DFT-FE Error: P REFINEMENT=true is not yet extended to USE GROUP SYMMETRY=true case"));
 

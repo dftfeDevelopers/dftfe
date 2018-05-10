@@ -236,7 +236,7 @@ void dftClass<FEOrder>::writeDomainAndAtomCoordinates() const
      dftUtils::writeDataIntoFile(d_domainBoundingVectors,
 			        "domainBoundingVectors.chk");
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
      dftUtils::writeDataIntoFile(atomLocationsFractional,
 			        "atomsFracCoord.chk");
 #else

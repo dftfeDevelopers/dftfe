@@ -164,7 +164,7 @@ void forceClass<FEOrder>::configForceLinFEInit()
 
   dftPtr->matrix_free_data.initialize_dof_vector(d_configForceVectorLinFE,d_forceDofHandlerIndex);
   d_configForceVectorLinFE=0;//also zeros out the ghost vectors
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
   dftPtr->matrix_free_data.initialize_dof_vector(d_configForceVectorLinFEKPoints,d_forceDofHandlerIndex);
   d_configForceVectorLinFEKPoints=0;
 #endif
@@ -177,7 +177,7 @@ void forceClass<FEOrder>::configForceLinFEFinalize()
   //d_configForceVectorLinFE.update_ghost_values();
   d_constraintsNoneForce.distribute(d_configForceVectorLinFE);//distribute to constrained degrees of freedom (for example periodic)
   d_configForceVectorLinFE.update_ghost_values();
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
   d_configForceVectorLinFEKPoints.compress(VectorOperation::add);//copies the ghost element cache to the owning element
   //d_configForceVectorLinFEKPoints.update_ghost_values();
   d_constraintsNoneForce.distribute(d_configForceVectorLinFEKPoints);//distribute to constrained degrees of freedom (for example periodic)
@@ -214,7 +214,7 @@ void forceClass<FEOrder>::computeConfigurationalForceTotalLinFE()
 	 const unsigned int atomForceDof=it->second;
 	 if (dftParameters::verbosity==2)
 	   std::cout<<"procid: "<< this_mpi_process<<" atomId: "<< atomIdPair.first << ", force component: "<<atomIdPair.second << ", force: "<<d_configForceVectorLinFE[atomForceDof] << std::endl;
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 	 if (dftParameters::verbosity==2)
 	   std::cout<<"procid: "<< this_mpi_process<<" atomId: "<< atomIdPair.first << ", force component: "<<atomIdPair.second << ", forceKPoints: "<<d_configForceVectorLinFEKPoints[atomForceDof] << std::endl;
 #endif
@@ -230,7 +230,7 @@ std::vector<double>  forceClass<FEOrder>::getAtomsForces()
    return  d_globalAtomsGaussianForces;
 }
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 template<unsigned int FEOrder>
 Tensor<2,C_DIM,double>  forceClass<FEOrder>::getStress()
 {

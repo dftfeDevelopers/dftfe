@@ -198,7 +198,7 @@ namespace dftfe
 
     }
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
     template void createDealiiVector(const std::shared_ptr<const dealii::Utilities::MPI::Partitioner> &,
 				     const MPI_Comm                                                   &,
 				     const dealii::types::global_dof_index                            &,

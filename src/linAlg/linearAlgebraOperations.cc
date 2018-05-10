@@ -32,7 +32,7 @@ namespace dftfe{
 
 namespace linearAlgebraOperations
 {
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
   std::complex<double> innerProduct(operatorDFTClass & operatorMatrix,
 				    const vectorType & X,
 				    const vectorType & Y)
@@ -168,7 +168,7 @@ namespace linearAlgebraOperations
     double beta;
 
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
       std::complex<double> alpha,alphaNeg;
 #else
       double alpha;
@@ -213,7 +213,7 @@ namespace linearAlgebraOperations
       operatorMatrix.HX(v,f);
       fVector = f[0];
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
       //evaluate fVector^{H}*vVector
       alpha=innerProduct(operatorMatrix,fVector,vVector);
       alphaNeg = -alpha;
@@ -237,7 +237,7 @@ namespace linearAlgebraOperations
 	  operatorMatrix.HX(v,f); 
 	  fVector = f[0];
 	  fVector.add(-1.0*beta,v0Vector);//beta is real
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 	  alpha = innerProduct(operatorMatrix,fVector,vVector);
 	  alphaNeg = -alpha;
 	  alphaTimesXPlusY(operatorMatrix,alphaNeg,vVector,fVector);
@@ -259,7 +259,7 @@ namespace linearAlgebraOperations
       const unsigned int lwork = 1 + 6*n + 2*n*n, liwork = 3 + 5*n;
       std::vector<int> iwork(liwork, 0);
  
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
       const unsigned int lrwork = 1 + 5*n + 2*n*n;
       std::vector<double> rwork(lrwork,0.0); 
       std::vector<std::complex<double> > work(lwork);
@@ -352,7 +352,7 @@ namespace linearAlgebraOperations
   {
 
     
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
       unsigned int localSize = X[0].local_size()/2;
 #else
       unsigned int localSize = X[0].local_size();
@@ -370,7 +370,7 @@ namespace linearAlgebraOperations
       VecDestroy(&vec);
 
       //copy into petsc vectors
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
       PetscScalar ** columnSpacePointer;
       VecGetArrays(petscColumnSpace, numVectors, &columnSpacePointer);
       for(int i = 0; i < numVectors; ++i)
@@ -421,7 +421,7 @@ namespace linearAlgebraOperations
       BVDestroy(&slepcColumnSpace);
       //
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
       VecGetArrays(petscColumnSpace, numVectors, &columnSpacePointer);
       for (int i = 0; i < numVectors; ++i)
 	{
@@ -459,7 +459,7 @@ namespace linearAlgebraOperations
 		    std::vector<double>     & eigenValues)
   {
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
       std::vector<std::complex<double> > ProjHam;
 #else
       std::vector<double> ProjHam;
@@ -475,7 +475,7 @@ namespace linearAlgebraOperations
       std::vector<int> iwork(liwork,0);
       char jobz='V', uplo='U';
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
       const unsigned int lrwork = 1 + 5*n + 2*n*n;
       std::vector<double> rwork(lrwork,0.0); 
       std::vector<std::complex<double> > work(lwork);
@@ -487,7 +487,7 @@ namespace linearAlgebraOperations
 
       //rotate the basis PSI = PSI*Q
       const unsigned int m = X.size();
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
       const unsigned int n1 = X[0].local_size()/2;
       std::vector<std::complex<double> > Xbar(n1*m), Xlocal(n1*m); //Xbar=Xlocal*Q
       std::vector<std::complex<double> >::iterator val = Xlocal.begin();
@@ -518,7 +518,7 @@ namespace linearAlgebraOperations
       const unsigned int lda1=n1; 
       const unsigned int ldb=m, ldc=n1;
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
       const std::complex<double> alpha = 1.0, beta  = 0.0;
       zgemm_(&transA, &transB, &n1, &m, &m, &alpha, &Xlocal[0], &lda1, &ProjHam[0], &ldb, &beta, &Xbar[0], &ldc);
 #else
@@ -527,7 +527,7 @@ namespace linearAlgebraOperations
 #endif
 
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
       //copy back Xbar to X
       val = Xbar.begin();
       for(std::vector<vectorType>::iterator x = X.begin(); x < X.end(); ++x)

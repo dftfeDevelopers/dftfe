@@ -15,7 +15,7 @@
 //
 // @author Sambit Das (2017)
 //
-#ifdef ENABLE_PERIODIC_BC  
+#ifdef USE_COMPLEX  
 //(locally used function) compute Fnl contibution due to Gamma(Rj) for given set of cells  
 template<unsigned int FEOrder>
 void forceClass<FEOrder>::FnlGammaAtomsElementalContributionPeriodic(std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
@@ -171,7 +171,7 @@ void forceClass<FEOrder>::distributeForceContributionFnlGammaAtoms(const std::ma
         std::vector<types::global_dof_index> forceLocalDofIndices(C_DIM);
         for (unsigned int idim=0; idim<C_DIM; idim++)
 	    forceLocalDofIndices[idim]=d_atomsForceDofs[std::pair<unsigned int,unsigned int>(iAtom,idim)];
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
         d_constraintsNoneForce.distribute_local_to_global(forceContributionFnlGammaiAtomGlobal,forceLocalDofIndices,d_configForceVectorLinFEKPoints); 	
 #else
         d_constraintsNoneForce.distribute_local_to_global(forceContributionFnlGammaiAtomGlobal,forceLocalDofIndices,d_configForceVectorLinFE); 

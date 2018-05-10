@@ -110,7 +110,7 @@ void eigenClass<FEOrder>::computeHamiltonianMatrix(unsigned int kPointIndex)
 	    {
 	      for(unsigned int jNode = 0; jNode < numberDofsPerElement; ++jNode)
 		{
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 		  d_cellHamiltonianMatrix[iElem][numberDofsPerElement*iNode + jNode].real(elementHamiltonianMatrix[numberDofsPerElement*iNode + jNode][iSubCell]);
 		  d_cellHamiltonianMatrix[iElem][numberDofsPerElement*iNode + jNode].imag(0.0);
 #else

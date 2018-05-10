@@ -113,7 +113,7 @@ namespace dftfe {
      */
       void printAtomsForces();
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
     /** @brief computes the configurational stress on the domain corresponding to
      *  affine deformation of the periodic cell.
      *
@@ -179,7 +179,7 @@ namespace dftfe {
 
       void distributeForceContributionFPSPLocalGammaAtoms(const std::map<unsigned int, std::vector<double> > & forceContributionFPSPLocalGammaAtoms);
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
       void FnlGammaAtomsElementalContributionPeriodic
 	  (std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
 	   FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
@@ -223,7 +223,7 @@ namespace dftfe {
 
       void computeAtomsForcesGaussianGenerator(bool allowGaussianOverlapOnAtoms=false);
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
       void computeStressEself();
 
       void computeStressEEshelbyEPSPEnlEk();
@@ -254,7 +254,7 @@ namespace dftfe {
       /// This vector doesn't contain contribution from terms which have sums over k points.
       vectorType d_configForceVectorLinFE;
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
       /// Parallel distributed vector field which stores the configurational force for each fem node corresponding
       /// to linear shape function generator (see equations 52-53 in (https://arxiv.org/abs/1712.05535)).
       /// This vector only contains contribution from terms which have sums over k points.
@@ -262,7 +262,7 @@ namespace dftfe {
 #endif
 
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
       /* Storage for precomputed nonlocal pseudopotential quadrature data. This is to speedup the
        * configurational force computation. Data format: vector(numNonLocalAtomsCurrentProcess with
        * non-zero compact support, vector(number pseudo wave functions,map<cellid,num_quad_points*2>)).
@@ -334,7 +334,7 @@ namespace dftfe {
       /// Storage for configurational force on all global atoms.
       std::vector<double> d_globalAtomsGaussianForces;
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
       /* Part of the configurational force which is summed over k points.
        * It is a temporary data structure required for force evaluation (d_globalAtomsGaussianForces)
        * when parallization over k points is on.
@@ -342,7 +342,7 @@ namespace dftfe {
       std::vector<double> d_globalAtomsGaussianForcesKPoints;
 #endif
 
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 
       /// Storage for configurational stress tensor
       Tensor<2,C_DIM,double> d_stress;

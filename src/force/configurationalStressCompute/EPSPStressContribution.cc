@@ -15,7 +15,7 @@
 //
 // @author Sambit Das (2018)
 //
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
 //compute EPSP contribution stress (local pseudopotential)
 template<unsigned int FEOrder>
 void forceClass<FEOrder>::addEPSPStressContribution
