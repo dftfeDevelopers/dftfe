@@ -240,7 +240,11 @@ void dftClass<FEOrder>::writeDomainAndAtomCoordinates() const
      dftUtils::writeDataIntoFile(atomLocationsFractional,
 			        "atomsFracCoord.chk");
 #else
-     dftUtils::writeDataIntoFile(atomLocations,
-			        "atomsCartCoord.chk");
+    if (dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ)
+       dftUtils::writeDataIntoFile(atomLocationsFractional,
+			           "atomsFracCoord.chk");
+    else
+       dftUtils::writeDataIntoFile(atomLocations,
+			         "atomsCartCoord.chk");
 #endif
 }
