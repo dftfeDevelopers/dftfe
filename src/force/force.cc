@@ -84,7 +84,7 @@ void forceClass<FEOrder>::initUnmoved(const Triangulation<3,3> & triangulation)
   ///
   d_constraintsNoneForce.clear(); d_constraintsNoneForce.reinit(d_locally_relevant_dofsForce);
   DoFTools::make_hanging_node_constraints(d_dofHandlerForce, d_constraintsNoneForce);
-#ifdef ENABLE_PERIODIC_BC
+
   //create unitVectorsXYZ
   std::vector<std::vector<double> > unitVectorsXYZ;
   unitVectorsXYZ.resize(3);
@@ -117,9 +117,6 @@ void forceClass<FEOrder>::initUnmoved(const Triangulation<3,3> & triangulation)
 
   DoFTools::make_periodicity_constraints<DoFHandler<C_DIM> >(periodicity_vectorForce, d_constraintsNoneForce);
   d_constraintsNoneForce.close();
-#else
-  d_constraintsNoneForce.close();
-#endif
 }
 
 //reinitialize force class object after mesh update

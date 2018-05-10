@@ -17,10 +17,7 @@
 //
 #include "applyHomogeneousDirichletBC.cc"
 #include "locatenodes.cc"
-
-#ifdef ENABLE_PERIODIC_BC
 #include "applyPeriodicBCHigherOrderNodes.cc"
-#endif
 
 
 //init
@@ -69,9 +66,7 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   d_constraintsForTotalPotential.clear();
   d_constraintsForTotalPotential.reinit(locally_relevant_dofs);
 
-#ifdef ENABLE_PERIODIC_BC
   locatePeriodicPinnedNodes(dofHandler,constraintsNone,d_constraintsForTotalPotential);
-#endif
   applyHomogeneousDirichletBC(dofHandler,d_constraintsForTotalPotential);
   d_constraintsForTotalPotential.close ();
 

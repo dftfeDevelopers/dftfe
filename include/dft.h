@@ -362,14 +362,13 @@ namespace dftfe {
 			    vectorType           & x,
 			    vectorType           & y);
 
-
+#endif
       /**
        * Sets dirichlet boundary conditions for total potential constraints on
        * non-periodic boundary (boundary id==0). Currently setting homogeneous bc
        *
        */
       void applyPeriodicBCHigherOrderNodes();
-#endif
 
       /// objects for various exchange-correlations (from libxc package)
       xc_func_type funcX, funcC;
