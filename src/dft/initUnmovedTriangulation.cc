@@ -116,7 +116,6 @@ void dftClass<FEOrder>::initUnmovedTriangulation(const parallel::distributed::Tr
       DoFTools::make_hanging_node_constraints(dofHandlerEigen,constraintsNoneEigen);
   }
 
-#ifdef ENABLE_PERIODIC_BC
   //create unitVectorsXYZ
   std::vector<std::vector<double> > unitVectorsXYZ;
   unitVectorsXYZ.resize(3);
@@ -155,8 +154,6 @@ void dftClass<FEOrder>::initUnmovedTriangulation(const parallel::distributed::Tr
     {
       applyPeriodicBCHigherOrderNodes();
     }
-
-#endif
 
   constraintsNone.close();
   constraintsNoneEigen.close();

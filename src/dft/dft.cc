@@ -58,9 +58,7 @@ namespace dftfe {
 #include "initPseudo-OV.cc"
 #include "initRho.cc"
 #include "publicMethods.cc"
-#ifdef ENABLE_PERIODIC_BC
 #include "generateImageCharges.cc"
-#endif
 #include "psiInitialGuess.cc"
 #include "fermiEnergy.cc"
 #include "charge.cc"
@@ -188,40 +186,43 @@ namespace dftfe {
     //
     unsigned int numberColumnsCoordinatesFile = 5;
 
-#ifdef ENABLE_PERIODIC_BC
-    //
-    //read fractionalCoordinates of atoms in periodic case
-    //
-    dftUtils::readFile(numberColumnsCoordinatesFile, atomLocations, dftParameters::coordinatesFile);
-    pcout << "number of atoms: " << atomLocations.size() << "\n";
-    atomLocationsFractional.resize(atomLocations.size()) ;
-    //
-    //find unique atom types
-    //
-    for (std::vector<std::vector<double> >::iterator it=atomLocations.begin(); it<atomLocations.end(); it++)
-      {
-	atomTypes.insert((unsigned int)((*it)[0]));
-      }
+    if (dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ)
+    {
+	//
+	//read fractionalCoordinates of atoms in periodic case
+	//
+	dftUtils::readFile(numberColumnsCoordinatesFile, atomLocations, dftParameters::coordinatesFile);
+	pcout << "number of atoms: " << atomLocations.size() << "\n";
+	atomLocationsFractional.resize(atomLocations.size()) ;
+	//
+	//find unique atom types
+	//
+	for (std::vector<std::vector<double> >::iterator it=atomLocations.begin(); it<atomLocations.end(); it++)
+	  {
+	    atomTypes.insert((unsigned int)((*it)[0]));
+	  }
 
-    //
-    //print fractional coordinates
-    //
-    for(int i = 0; i < atomLocations.size(); ++i)
-      {
-	atomLocationsFractional[i] = atomLocations[i] ;
-      }
-#else
-    dftUtils::readFile(numberColumnsCoordinatesFile, atomLocations, dftParameters::coordinatesFile);
-    pcout << "number of atoms: " << atomLocations.size() << "\n";
+	//
+	//print fractional coordinates
+	//
+	for(int i = 0; i < atomLocations.size(); ++i)
+	  {
+	    atomLocationsFractional[i] = atomLocations[i] ;
+	  }
+    }
+    else
+    {
+	dftUtils::readFile(numberColumnsCoordinatesFile, atomLocations, dftParameters::coordinatesFile);
+	pcout << "number of atoms: " << atomLocations.size() << "\n";
 
-    //
-    //find unique atom types
-    //
-    for (std::vector<std::vector<double> >::iterator it=atomLocations.begin(); it<atomLocations.end(); it++)
-      {
-	atomTypes.insert((unsigned int)((*it)[0]));
-      }
-#endif
+	//
+	//find unique atom types
+	//
+	for (std::vector<std::vector<double> >::iterator it=atomLocations.begin(); it<atomLocations.end(); it++)
+	  {
+	    atomTypes.insert((unsigned int)((*it)[0]));
+	  }
+    }
 
     //
     //read domain bounding Vectors
@@ -301,41 +302,46 @@ namespace dftfe {
 	pcout<<"v"<< i+1<<" : "<< d_domainBoundingVectors[i][0]<<" "<<d_domainBoundingVectors[i][1]<<" "<<d_domainBoundingVectors[i][2]<<std::endl;
       }
     pcout<<"-----------------------------------------------------------------------------------------"<<std::endl;
-#ifdef ENABLE_PERIODIC_BC
-    pcout<<"-----Fractional coordinates of atoms------ "<<std::endl;
-    for(unsigned int i = 0; i < atomLocations.size(); ++i)
-      {
-	atomLocations[i] = atomLocationsFractional[i] ;
-	pcout<<"AtomId "<<i <<":  "<<atomLocationsFractional[i][2]<<" "<<atomLocationsFractional[i][3]<<" "<<atomLocationsFractional[i][4]<<"\n";
-      }
-    pcout<<"-----------------------------------------------------------------------------------------"<<std::endl;
-    generateImageCharges();
 
-    internaldft::convertToCellCenteredCartesianCoordinates(atomLocations,
-							   d_domainBoundingVectors);
-    recomputeKPointCoordinates();
-
-    if (dftParameters::verbosity==2)
-      {
-	//FIXME: Print all k points across all pools
-	pcout<<"-------------------k points cartesian coordinates and weights-----------------------------"<<std::endl;
-	for(unsigned int i = 0; i < d_kPointWeights.size(); ++i)
+    if (dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ)
+    {
+	pcout<<"-----Fractional coordinates of atoms------ "<<std::endl;
+	for(unsigned int i = 0; i < atomLocations.size(); ++i)
 	  {
-	    pcout<<" ["<< d_kPointCoordinates[3*i+0] <<", "<< d_kPointCoordinates[3*i+1]<<", "<< d_kPointCoordinates[3*i+2]<<"] "<<d_kPointWeights[i]<<std::endl;
+	    atomLocations[i] = atomLocationsFractional[i] ;
+	    pcout<<"AtomId "<<i <<":  "<<atomLocationsFractional[i][2]<<" "<<atomLocationsFractional[i][3]<<" "<<atomLocationsFractional[i][4]<<"\n";
 	  }
 	pcout<<"-----------------------------------------------------------------------------------------"<<std::endl;
-      }
-#else
-    //
-    //print cartesian coordinates
-    //
-    pcout<<"------------Cartesian coordinates of atoms (origin at center of domain)------------------"<<std::endl;
-    for(unsigned int i = 0; i < atomLocations.size(); ++i)
-      {
-	pcout<<"AtomId "<<i <<":  "<<atomLocations[i][2]<<" "<<atomLocations[i][3]<<" "<<atomLocations[i][4]<<"\n";
-      }
-    pcout<<"-----------------------------------------------------------------------------------------"<<std::endl;
+	generateImageCharges();
+
+	internaldft::convertToCellCenteredCartesianCoordinates(atomLocations,
+							       d_domainBoundingVectors);
+#ifdef ENABLE_PERIODIC_BC
+	recomputeKPointCoordinates();
 #endif
+	if (dftParameters::verbosity==2)
+	  {
+	    //FIXME: Print all k points across all pools
+	    pcout<<"-------------------k points cartesian coordinates and weights-----------------------------"<<std::endl;
+	    for(unsigned int i = 0; i < d_kPointWeights.size(); ++i)
+	      {
+		pcout<<" ["<< d_kPointCoordinates[3*i+0] <<", "<< d_kPointCoordinates[3*i+1]<<", "<< d_kPointCoordinates[3*i+2]<<"] "<<d_kPointWeights[i]<<std::endl;
+	      }
+	    pcout<<"-----------------------------------------------------------------------------------------"<<std::endl;
+	  }
+    }
+    else
+    {
+	//
+	//print cartesian coordinates
+	//
+	pcout<<"------------Cartesian coordinates of atoms (origin at center of domain)------------------"<<std::endl;
+	for(unsigned int i = 0; i < atomLocations.size(); ++i)
+	  {
+	    pcout<<"AtomId "<<i <<":  "<<atomLocations[i][2]<<" "<<atomLocations[i][3]<<" "<<atomLocations[i][4]<<"\n";
+	  }
+	pcout<<"-----------------------------------------------------------------------------------------"<<std::endl;
+    }
   }
 
   //dft init

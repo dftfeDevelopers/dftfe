@@ -68,9 +68,7 @@ namespace dftfe {
 	  //
 	  //collect periodic faces of the first level mesh to set up periodic boundary conditions later
 	  //
-#ifdef ENABLE_PERIODIC_BC
 	  meshGenUtils::markPeriodicFacesNonOrthogonal(parallelTriangulation,d_domainBoundingVectors);
-#endif
 
 	  if (dftParameters::verbosity>=1)
 	    pcout<<std::endl<< "Coarse triangulation number of elements: "<< parallelTriangulation.n_global_active_cells()<<std::endl;
@@ -92,9 +90,7 @@ namespace dftfe {
 	  std::ifstream f1(dftParameters::meshFileName.c_str());
 	  gridinParallel.read_ucd(f1);
 
-#ifdef ENABLE_PERIODIC_BC
 	  meshGenUtils::markPeriodicFacesNonOrthogonal(parallelTriangulation,d_domainBoundingVectors);
-#endif
 	}
       else
 	{
@@ -149,9 +145,7 @@ namespace dftfe {
 	  //
 	  //collect periodic faces of the first level mesh to set up periodic boundary conditions later
 	  //
-#ifdef ENABLE_PERIODIC_BC
 	  meshGenUtils::markPeriodicFacesNonOrthogonal(parallelTriangulation,d_domainBoundingVectors);
-#endif
 
 	  if (dftParameters::verbosity>=1)
 	    pcout<<std::endl<< "Base uniform number of elements: "<< parallelTriangulation.n_global_active_cells()<<std::endl;
@@ -323,10 +317,8 @@ namespace dftfe {
 	  gridinParallel.read_ucd(f1);
 	  gridinSerial.read_ucd(f2);
 
-#ifdef ENABLE_PERIODIC_BC
 	  meshGenUtils::markPeriodicFacesNonOrthogonal(parallelTriangulation,d_domainBoundingVectors);
 	  meshGenUtils::markPeriodicFacesNonOrthogonal(serialTriangulation,d_domainBoundingVectors);
-#endif
 	}
       else
 	{
@@ -390,10 +382,8 @@ namespace dftfe {
 	  //
 	  //collect periodic faces of the first level mesh to set up periodic boundary conditions later
 	  //
-#ifdef ENABLE_PERIODIC_BC
 	  meshGenUtils::markPeriodicFacesNonOrthogonal(parallelTriangulation,d_domainBoundingVectors);
 	  meshGenUtils::markPeriodicFacesNonOrthogonal(serialTriangulation,d_domainBoundingVectors);
-#endif
 
 	  if (dftParameters::verbosity>=1)
 	    pcout<<std::endl<< "Base uniform number of elements: "<< parallelTriangulation.n_global_active_cells()<<std::endl;

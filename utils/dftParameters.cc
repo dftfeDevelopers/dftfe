@@ -457,15 +457,13 @@ namespace dftParameters
 	exit(0);
     }
 #ifdef ENABLE_PERIODIC_BC
-    AssertThrow(dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ,ExcMessage("DFT-FE Error: Incorrect executable: periodic executable being used for non-periodic problem."));
-
     if (dftParameters::electrostaticsPRefinement)
        AssertThrow(!dftParameters::useSymm,ExcMessage("DFT-FE Error: P REFINEMENT=true is not yet extended to USE GROUP SYMMETRY=true case"));
 
     if (dftParameters::isIonForce || dftParameters::isCellStress)
        AssertThrow(!dftParameters::useSymm,ExcMessage("DFT-FE Error: USE GROUP SYMMETRY must be set to false if either ION FORCE or CELL STRESS is set to true. This functionality will be added in a future release"));
 #else
-    AssertThrow(!(dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ),ExcMessage("DFT-FE Error: Incorrect executable: non-periodic executable being used for periodic problem."));
+    AssertThrow(!dftParameters::isCellStress,ExcMessage("DFT-FE Error: Currently CELL STRESS cannot be set true in double mode for periodic Gamma point problems. This functionality will be added soon."));
 #endif
     AssertThrow(!(dftParameters::chkType==2 && (dftParameters::isIonOpt || dftParameters::isCellOpt)),ExcMessage("DFT-FE Error: CHK TYPE=2 cannot be used if geometry optimization is being performed."));
 
