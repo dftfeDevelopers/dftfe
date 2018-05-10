@@ -180,7 +180,7 @@ subsection Geometry
 
     # Boolean parameter specifying if atomic forces are to be computed.
     # Automatically set to true if ION OPT is true.
-    set ION FORCE            = true  # default: false
+    set ION FORCE            = false  # default: false
 
     # Boolean parameter specifying if atomic forces are to be relaxed.
     set ION OPT              = false
