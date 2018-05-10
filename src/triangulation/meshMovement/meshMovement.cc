@@ -100,7 +100,7 @@ void meshMovementClass::init(const Triangulation<3,3> & triangulation, const std
   d_constraintsMoveMesh.clear();  d_constraintsMoveMesh.reinit(d_locally_relevant_dofs);
   DoFTools::make_hanging_node_constraints(d_dofHandlerMoveMesh, d_constraintsMoveMesh);
   d_periodicity_vector.clear();
-#ifdef ENABLE_PERIODIC_BC
+
   //create unitVectorsXYZ
   std::vector<std::vector<double> > unitVectorsXYZ;
   unitVectorsXYZ.resize(3);
@@ -131,9 +131,6 @@ void meshMovementClass::init(const Triangulation<3,3> & triangulation, const std
 
   DoFTools::make_periodicity_constraints<DoFHandler<C_DIM> >(d_periodicity_vector, d_constraintsMoveMesh);
   d_constraintsMoveMesh.close();
-#else
-  d_constraintsMoveMesh.close();
-#endif
 }
 
 void meshMovementClass::initMoved(const std::vector<std::vector<double> > & domainBoundingVectors)
@@ -244,7 +241,7 @@ std::pair<bool,double> meshMovementClass::movedMeshCheck()
 {
   //sanity check to make sure periodic boundary conditions are maintained
   MPI_Barrier(mpi_communicator);
-#ifdef ENABLE_PERIODIC_BC
+
   //create unitVectorsXYZ
   std::vector<std::vector<double> > unitVectorsXYZ;
   unitVectorsXYZ.resize(3);
@@ -285,7 +282,6 @@ std::pair<bool,double> meshMovementClass::movedMeshCheck()
   MPI_Barrier(mpi_communicator);
   if (dftParameters::verbosity==2)
     pcout << "...Sanity check passed" << std::endl;
-#endif
 
   //print out mesh metrics
   typename Triangulation<3,3>::active_cell_iterator cell, endc;

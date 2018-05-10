@@ -181,7 +181,10 @@ void geoOptCell<FEOrder>::run()
 				maxLineSearchIter,
 				lineSearchDampingParameter);
 
-   pcout<<" Starting CG Cell stress relaxation... "<<std::endl;
+   if (dftParameters::chkType>=1 && dftParameters::restartFromChk)
+     pcout<<" Re starting Cell stress relaxation using CG solver... "<<std::endl;
+   else
+     pcout<<" Starting Cell stress relaxation using CG solver... "<<std::endl;
    pcout<<"   ---CG Parameters--------------  "<<std::endl;
    pcout<<"      stopping tol: "<< tol<<std::endl;
    pcout<<"      maxIter: "<< maxIter<<std::endl;
@@ -192,7 +195,14 @@ void geoOptCell<FEOrder>::run()
 
    if  (getNumberUnknowns()>0)
    {
-       nonLinearSolver::ReturnValueType cgReturn=cgSolver.solve(*this);
+       nonLinearSolver::ReturnValueType cgReturn=nonLinearSolver::FAILURE;
+
+       if (dftParameters::chkType>=1 && dftParameters::restartFromChk)
+           cgReturn=cgSolver.solve(*this,std::string("cellRelaxCG.chk"),true);
+       else if (dftParameters::chkType>=1 && !dftParameters::restartFromChk)
+           cgReturn=cgSolver.solve(*this,std::string("cellRelaxCG.chk"));
+       else
+           cgReturn=cgSolver.solve(*this);
 
        if (cgReturn == nonLinearSolver::SUCCESS )
        {
@@ -330,9 +340,6 @@ void geoOptCell<FEOrder>::update(const std::vector<double> & solution)
    d_totalUpdateCalls+=1;
    dftPtr->deformDomain(deformationGradient);
 
-   if (dftParameters::chkType>=1)
-      dftPtr->writeDomainAndAtomCoordinates();
-
    dftPtr->solve();
    // if ion optimization is on, then for every cell relaxation also relax the atomic forces
    if (dftParameters::isIonOpt)
@@ -340,6 +347,12 @@ void geoOptCell<FEOrder>::update(const std::vector<double> & solution)
       dftPtr->geoOptIonPtr->init();
       dftPtr->geoOptIonPtr->run();
    }
+}
+
+template<unsigned int FEOrder>
+void geoOptCell<FEOrder>::save()
+{
+   dftPtr->writeDomainAndAtomCoordinates();
 }
 
 template<unsigned int FEOrder>

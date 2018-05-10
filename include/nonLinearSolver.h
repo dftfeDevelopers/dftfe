@@ -58,9 +58,16 @@ namespace dftfe {
     /**
      * @brief Solve non-linear algebraic equation.
      *
+     * @param problem[in] nonlinearSolverProblem object.
+     * @param checkpointFileName[in] if string is non-empty, creates checkpoint file
+     * named checkpointFileName for every nonlinear iteration.
+     * @param restart[in] boolean specifying whether this is a restart solve.
      * @return Return value indicating success or failure.
      */
-     virtual ReturnValueType solve(nonlinearSolverProblem & problem) = 0;
+     virtual ReturnValueType solve(nonlinearSolverProblem & problem,
+	                           const std::string checkpointFileName="",
+				   const bool restart=false) = 0;
+
 
   protected:
 
@@ -97,9 +104,13 @@ namespace dftfe {
     unsigned int getDebugLevel() const;
 
 
-
+    /// controls the verbosity of the printing
     const unsigned int    d_debugLevel;
+
+    /// maximum number of nonlinear solve iterations
     const unsigned int    d_maxNumberIterations;
+
+    /// nonlinear solve stopping tolerance
     const double d_tolerance;
 
   };

@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -30,6 +30,10 @@ namespace dftfe {
 
       /**
        * @brief Read from file containing only double data in columns.
+       *
+       * @param numColumns[in] number of data columsn in the file to be read
+       * @param data[out] output double data in [rows][columns] format
+       * @param fileName[in]
        */
 	void readFile(const unsigned int numColumns,
 		      std::vector<std::vector<double> > &data,
@@ -43,6 +47,9 @@ namespace dftfe {
 
       /**
        * @brief Write data into file containing only double data in rows and columns.
+       *
+       * @param data[in] input double data in [rows][columns] format
+       * @param fileName[in]
        */
 	void writeDataIntoFile(const std::vector<std::vector<double> > &data,
 			       const std::string & fileName);

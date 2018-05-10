@@ -87,6 +87,12 @@ namespace dftfe {
      */
       void update(const std::vector<double> & solution);
 
+     /**
+      * @brief create checkpoint file for current domain bounding vectors and atomic coordinates.
+      *
+      */
+      void save();
+
       /// Not implemented
       void value(std::vector<double> & functionValue);
 

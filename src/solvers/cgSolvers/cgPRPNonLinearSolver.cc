@@ -17,6 +17,7 @@
 
 #include <cgPRPNonLinearSolver.h>
 #include <nonlinearSolverProblem.h>
+#include <fileReaders.h>
 
 namespace dftfe {
 
@@ -73,14 +74,12 @@ namespace dftfe {
 
       const double factor = d_unknownCountFlag[i];
       const double r = -d_gradient[i];
-      const double s = r;//d_s[i];
 
-      d_sOld[i]        = s;
-      d_direction[i]   = s;
-      d_deltaNew      += factor*r*d_direction[i];
+      d_steepestDirectionOld[i]  =r;
+      d_conjugateDirection[i]   = r;
+      d_deltaNew      += factor*r*d_conjugateDirection[i];
 
     }
-
     //
     //
     return;
@@ -105,7 +104,7 @@ namespace dftfe {
     for (unsigned int i = 0; i < d_numberUnknowns; ++i) {
 
       const double factor = d_unknownCountFlag[i];
-      const double direction = d_direction[i];
+      const double direction = d_conjugateDirection[i];
 
       deltaD += factor*direction*direction;
       etaP   += factor*d_gradient[i]*direction;
@@ -138,7 +137,7 @@ namespace dftfe {
     for (unsigned int i = 0; i < d_numberUnknowns; ++i) {
 
       const double factor = d_unknownCountFlag[i];
-      const double direction = d_direction[i];
+      const double direction = d_conjugateDirection[i];
       eta += factor*d_gradient[i]*direction;
 
     }
@@ -169,8 +168,7 @@ namespace dftfe {
 
       const double factor = d_unknownCountFlag[i];
       const double r    = -d_gradient[i];
-      const double s    = r;//d_s[i];
-      const double sOld = d_sOld[i];
+      const double sOld = d_steepestDirectionOld[i];
 
       //
       // compute delta mid
@@ -180,12 +178,12 @@ namespace dftfe {
       //
       // save gradient old
       //
-      d_sOld[i] = s;
+      d_steepestDirectionOld[i] = r;
 
       //
       // compute delta new
       //
-      d_deltaNew += factor*r*s;
+      d_deltaNew += factor*r*r;
 
     }
     //
@@ -207,16 +205,44 @@ namespace dftfe {
     //
     for (unsigned int i = 0; i < d_numberUnknowns; ++i) {
 
-      d_direction[i] *= d_beta;
-      d_direction[i] += d_s[i];
+      d_conjugateDirection[i] *= d_beta;
+      d_conjugateDirection[i] += -d_gradient[i];
 
     }
 
-    //
-    //
-    //
-    return;
+  }
 
+  //
+  // save checkpoint files.
+  //
+  void
+  cgPRPNonLinearSolver::save(const std::string & checkpointFileName)
+  {
+
+      std::vector<std::vector<double>> data;
+      for (unsigned int i=0; i< d_conjugateDirection.size();++i)
+        data.push_back(std::vector<double>(1,d_conjugateDirection[i]));
+
+      dftUtils::writeDataIntoFile(data,
+                                  checkpointFileName);
+  }
+
+  //
+  // load from checkpoint files.
+  //
+  void
+  cgPRPNonLinearSolver::load(const std::string & checkpointFileName)
+  {
+
+      std::vector<std::vector<double>> data;
+      dftUtils::readFile(1,data,checkpointFileName);
+
+      d_conjugateDirection.clear();
+      for (unsigned int i=0; i< d_numberUnknowns;++i)
+        d_conjugateDirection.push_back(data[i][0]);
+
+      AssertThrow (d_conjugateDirection.size()== d_numberUnknowns,
+	    dealii::ExcMessage (std::string("DFT-FE Error: data size of cg solver checkpoint file doesn't match with number of unknowns in the problem.")));
   }
 
   //
@@ -359,7 +385,7 @@ namespace dftfe {
     // update unknowns removing earlier update
     //
     updateSolution(alpha-alphaP,
-		   d_direction,
+		   d_conjugateDirection,
 		   problem);
     //
     // begin iteration (using secant method)
@@ -403,7 +429,7 @@ namespace dftfe {
       // update unknowns
       //
       updateSolution(alphaNew-alpha,
-		     d_direction,
+		     d_conjugateDirection,
 		     problem);
 
       //
@@ -427,9 +453,10 @@ namespace dftfe {
   // Perform problem minimization.
   //
   nonLinearSolver::ReturnValueType
-  cgPRPNonLinearSolver::solve(nonlinearSolverProblem & problem)
+  cgPRPNonLinearSolver::solve(nonlinearSolverProblem & problem,
+	                      const std::string checkpointFileName,
+			      const bool restart)
   {
-
     //
     // method const data
     //
@@ -446,18 +473,12 @@ namespace dftfe {
     d_unknownCountFlag.resize(d_numberUnknowns,1);
 
     //
-    // get total number of unknowns
-    //
-    const int totalnumberUnknowns = d_numberUnknowns;
-
-    //
-    // allocate space for direction, gradient and old gradient
+    // allocate space for conjugate direction, gradient and old steepest direction
     // values.
     //
-    d_direction.resize(d_numberUnknowns);
+    d_conjugateDirection.resize(d_numberUnknowns);
     d_gradient.resize(d_numberUnknowns);
-    d_sOld.resize(d_numberUnknowns);
-    d_s.resize(d_numberUnknowns);
+    d_steepestDirectionOld.resize(d_numberUnknowns);
 
     //
     // compute initial values of problem and problem gradient
@@ -465,25 +486,28 @@ namespace dftfe {
     problem.gradient(d_gradient);
 
     //
-    // apply preconditioner
-    //
-    //problem.precondition(d_s,
-    //			  d_gradient);
-    for(int i = 0; i < d_s.size(); ++i)
-      {
-	d_s[i] = -d_gradient[i];
-      }
-
-    //
     // initialize delta new and direction
     //
-    initializeDirection();
+    if (!restart)
+      initializeDirection();
+    else
+    {
+      load(checkpointFileName);
 
+      // compute deltaNew, and initialize steepestDirectionOld to current steepest direction
+      d_deltaNew = 0.0;
+      for (unsigned int i = 0; i < d_numberUnknowns; ++i)
+      {
+         const double r = -d_gradient[i];
+         d_steepestDirectionOld[i]  =r;
+         d_deltaNew += d_unknownCountFlag[i]*r*r;
+      }
+    }
     //
     // check for convergence
     //
     unsigned int isSuccess=0;
-    if ( d_deltaNew < toleranceSqr*totalnumberUnknowns)
+    if ( d_deltaNew < toleranceSqr*d_numberUnknowns)
         isSuccess=1;
 
     MPI_Bcast(&(isSuccess),
@@ -518,10 +542,10 @@ namespace dftfe {
       // output at the begining of the iteration
       //
       if (d_debugLevel >= 1)
-	  pcout << d_iter << " "
+	  pcout << d_iter+1 << " "
 		    << d_deltaNew << " "
 		    << residualNorm << " "
-		    << residualNorm/totalnumberUnknowns << " "
+		    << residualNorm/d_numberUnknowns << " "
 		    << std::endl;
 
       //
@@ -533,25 +557,10 @@ namespace dftfe {
 				      d_lineSearchMaxIterations,
 				      d_debugLevel);
 
-      //write mesh
-      std::string meshFileName="mesh_geo";
-      meshFileName+=std::to_string(d_iter);
-      //problem.writeMesh(meshFileName);
       //
       // evaluate gradient
       //
       problem.gradient(d_gradient);
-
-      //
-      // apply preconditioner
-      //
-      //problem.precondition(d_s,
-      //			    d_gradient);
-
-      for(int i = 0; i < d_s.size(); ++i)
-	{
-	  d_s[i] = -d_gradient[i];
-	}
 
       //
       // update values of delta_new and delta_mid
@@ -572,8 +581,6 @@ namespace dftfe {
       {
 	  pcout<<" Negative d_beta- setting it to zero "<<std::endl;
 	  isBetaZero=1;
-	  //d_beta=0;
-	  //return RESTART;
       }
       MPI_Bcast(&(isBetaZero),
 		   1,
@@ -587,11 +594,17 @@ namespace dftfe {
       //
       updateDirection();
 
+      if (!checkpointFileName.empty())
+      {
+           save(checkpointFileName);
+           problem.save();
+      }
+
       //
       // check for convergence
       //
       unsigned int isBreak=0;
-      if (d_deltaNew < toleranceSqr*totalnumberUnknowns)
+      if (d_deltaNew < toleranceSqr*d_numberUnknowns)
 	isBreak=1;
       MPI_Bcast(&(isSuccess),
 		   1,
@@ -600,6 +613,7 @@ namespace dftfe {
 		   MPI_COMM_WORLD);
       if (isBreak==1)
 	  break;
+
     }
 
     //
@@ -619,7 +633,7 @@ namespace dftfe {
       if (returnValue == SUCCESS)
       {
         pcout << "Conjugate Gradient converged after "
-		<< d_iter << " iterations." << std::endl;
+		<< d_iter+1 << " iterations." << std::endl;
       } else
       {
         pcout << "Conjugate Gradient failed to converge after "
@@ -634,5 +648,4 @@ namespace dftfe {
     return returnValue;
 
   }
-
 }
