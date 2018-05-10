@@ -110,6 +110,9 @@ subsection Eigen-solver/Chebyshev solver related parameters
   # N/2+(10-20) and for metals use 20 percent more than N/2 (atleast 10 more).
   # N is the total number of electrons
   set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 20    # default: 10
+
+  #Parameter specifying the type of orthogonalization to be used: 1(Gram-Schmidt Orthogonalization), 2(Lowden Orthogonalization)"
+  set ORTHOGONALIZATION TYPE = 2
 end
 
 subsection Finite element mesh parameters
