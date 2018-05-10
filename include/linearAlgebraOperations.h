@@ -138,7 +138,7 @@ namespace dftfe
      *  @param numberComponents Number of multiple-fields
      *  @return X In-place update of the given subspace 
      */
-#ifdef ENABLE_PERIODIC_BC
+#ifdef USE_COMPLEX
     void lowdenOrthogonalization(const MPI_Comm & communicator,
 				 dealii::parallel::distributed::Vector<std::complex<double> > & X,
 				 const unsigned int numberComponents);
