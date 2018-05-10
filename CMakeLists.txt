@@ -114,14 +114,14 @@ SET(WARNINGSLIST  "-w -Wno-sign-compare -Wno-ignored-qualifiers -Wno-deprecated-
 SET(DEAL_II_CXX_FLAGS  "${DEAL_II_CXX_FLAGS} ${WARNINGSLIST}" )
 
 #
-#Set use complex/use double flag
+#Set use complex/use real flag
 #
 IF (DEAL_II_PETSC_WITH_COMPLEX)
    ADD_DEFINITIONS(-DUSE_COMPLEX)
    MESSAGE(STATUS "Using complex")
 ELSE()
    ADD_DEFINITIONS(-DUSE_DOUBLE)
-   MESSAGE(STATUS "Using double")
+   MESSAGE(STATUS "Using real")
 ENDIF()
 
 ADD_LIBRARY(${TARGETLIB} SHARED
@@ -222,5 +222,5 @@ SET (TEST_TIME_LIMIT 3600)
 IF (DEAL_II_PETSC_WITH_COMPLEX)
    ADD_SUBDIRECTORY(tests/dft/pseudopotential/complex)
 ELSE()
-   ADD_SUBDIRECTORY(tests/dft/pseudopotential/double)
+   ADD_SUBDIRECTORY(tests/dft/pseudopotential/real)
 ENDIF()
