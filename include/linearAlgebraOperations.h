@@ -37,11 +37,12 @@ namespace dftfe
       void zscal_(const unsigned int *n, std::complex<double> *alpha, std::complex<double> *x, const unsigned int *inc);
       void daxpy_(const unsigned int *n, const double *alpha, double *x, const unsigned int *incx, double *y, const unsigned int *incy);
       void dgemm_(const char* transA, const char* transB, const unsigned int *m, const unsigned int *n, const unsigned int *k, const double *alpha, const double *A, const unsigned int *lda, const double *B, const unsigned int *ldb, const double *beta, double *C, const unsigned int *ldc);
-      void dsyevd_(char* jobz, char* uplo, const unsigned int* n, double* A, const unsigned int *lda, double* w, double* work, const unsigned int* lwork, int* iwork, const unsigned int* liwork, int* info);
-     
+      void dsyevd_(const char* jobz, const char* uplo, const unsigned int* n, double* A, const unsigned int *lda, double* w, double* work, const unsigned int* lwork, int* iwork, const unsigned int* liwork, int* info);
+      void dsyrk_(const char *uplo, const char *trans, const unsigned int *n, const unsigned int *k, const double *alpha, const double *A, const unsigned int *lda, const double *beta, double *C, const unsigned int * ldc);
       void dcopy_(const unsigned int *n,const double *x,const unsigned int *incx,double *y,const unsigned int *incy);
       void zgemm_(const char* transA, const char* transB, const unsigned int *m, const unsigned int *n, const unsigned int *k, const std::complex<double> *alpha, const std::complex<double> *A, const unsigned int *lda, const std::complex<double> *B, const unsigned int *ldb, const std::complex<double> *beta, std::complex<double> *C, const unsigned int *ldc);
-      void zheevd_(char *jobz, char *uplo, const unsigned int *n,std::complex<double> *A,const unsigned int *lda,double *w,std::complex<double> *work, const unsigned int *lwork,double *rwork, const unsigned int *lrwork, int *iwork,const unsigned int *liwork, int *info);
+      void zheevd_(const char *jobz, const char *uplo, const unsigned int *n,std::complex<double> *A,const unsigned int *lda,double *w,std::complex<double> *work, const unsigned int *lwork,double *rwork, const unsigned int *lrwork, int *iwork,const unsigned int *liwork, int *info);
+      void zsyrk_(const char *uplo, const char *trans, const unsigned int *n, const unsigned int *k, const std::complex<double> *alpha, const std::complex<double> *A, const unsigned int *lda, const std::complex<double> *beta, std::complex<double> *C, const unsigned int * ldc);
       void zcopy_(const unsigned int *n, const std::complex<double> *x, const unsigned int *incx, std::complex<double> *y, const unsigned int *incy);
       void zdotc_(std::complex<double> *C,const int *N,const std::complex<double> *X,const int *INCX,const std::complex<double> *Y,const int *INCY);
       void zaxpy_(const unsigned int *n,const std::complex<double> *alpha,std::complex<double> *x,const unsigned int *incx,std::complex<double> *y,const unsigned int *incy);
@@ -120,16 +121,32 @@ namespace dftfe
     
      /** @brief Orthogonalize given subspace using GramSchmidt orthogonalization
      *  
-     *  @param operatorMatrix An object which has access to the given matrix
+     *  @param communicator the MPI communicator to use
      *  @param  X Given subspace as flattened array of multi-vectors
      *  @param numberComponents Number of multiple-fields
      *  @return X In-place update of the given subspace 
      */
     template<typename T>
-    void gramSchmidtOrthogonalization(operatorDFTClass & operatorMatrix,
+    void gramSchmidtOrthogonalization(const MPI_Comm & communicator,
 				      dealii::parallel::distributed::Vector<T> & X,
 				      const unsigned int numberComponents);
 
+
+    /** @brief Orthogonalize given subspace using Lowden orthogonalization for double data-type
+     *  
+     *  @param  X Given subspace as flattened array of multi-vectors
+     *  @param numberComponents Number of multiple-fields
+     *  @return X In-place update of the given subspace 
+     */
+#ifdef ENABLE_PERIODIC_BC
+    void lowdenOrthogonalization(const MPI_Comm & communicator,
+				 dealii::parallel::distributed::Vector<std::complex<double> > & X,
+				 const unsigned int numberComponents);
+#else
+    void lowdenOrthogonalization(const MPI_Comm & communicator,
+				 dealii::parallel::distributed::Vector<double> & X,
+				 const unsigned int numberComponents);
+#endif
 
     /** @brief Compute Rayleigh-Ritz projection
      *  
@@ -145,10 +162,13 @@ namespace dftfe
 
 
 
-     /** @brief Compute Rayleigh-Ritz projection
+    /** @brief Compute Rayleigh-Ritz projection
      *  
      *  @param operatorMatrix An object which has access to the given matrix
      *  @param  X Given subspace as flattened array of multi-vectors
+     *  @param  numberComponents Number of multiple-fields
+     *  @param  macroCellMap precomputed cell-localindex id map of the multi-wavefuncton field in the order of macrocells
+     *  @param  cellMap precomputed cell-localindex id map of the multi-wavefuncton field in the order of local active cells
      *
      *  @return X In-place rotated subspace
      *  @return eigenValues of the Projected Hamiltonian
@@ -160,6 +180,9 @@ namespace dftfe
 		      const std::vector<std::vector<dealii::types::global_dof_index> > & macroCellMap,
 		      const std::vector<std::vector<dealii::types::global_dof_index> > & cellMap,
 		      std::vector<double>     & eigenValues);
+
+
+    
 
   }
 

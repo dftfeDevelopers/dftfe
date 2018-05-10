@@ -35,27 +35,27 @@ namespace dftfe{
 		 double *matrix,
 		 double *eigenValues)
     {
-      
+
       int info;
       const unsigned int lwork = 1 + 6*dimensionMatrix + 2*dimensionMatrix*dimensionMatrix, liwork = 3 + 5*dimensionMatrix;
       std::vector<int> iwork(liwork,0);
-      char jobz='V', uplo='U';
+      const char jobz='V', uplo='U';
       std::vector<double> work(lwork);
 
-      dsyevd_(&jobz, 
-	      &uplo, 
-	      &dimensionMatrix, 
-	      matrix, 
-	      &dimensionMatrix, 
-	      eigenValues, 
-	      &work[0], 
-	      &lwork, 
-	      &iwork[0], 
-	      &liwork, 
+      dsyevd_(&jobz,
+	      &uplo,
+	      &dimensionMatrix,
+	      matrix,
+	      &dimensionMatrix,
+	      eigenValues,
+	      &work[0],
+	      &lwork,
+	      &iwork[0],
+	      &liwork,
 	      &info);
     }
 
-    
+
     void callevd(const unsigned int dimensionMatrix,
 		 std::complex<double> *matrix,
 		 double *eigenValues)
@@ -63,24 +63,24 @@ namespace dftfe{
       int info;
       const unsigned int lwork = 1 + 6*dimensionMatrix + 2*dimensionMatrix*dimensionMatrix, liwork = 3 + 5*dimensionMatrix;
       std::vector<int> iwork(liwork,0);
-      char jobz='V', uplo='U';
+      const char jobz='V', uplo='U';
       const unsigned int lrwork = 1 + 5*dimensionMatrix + 2*dimensionMatrix*dimensionMatrix;
-      std::vector<double> rwork(lrwork,0.0); 
+      std::vector<double> rwork(lrwork,0.0);
       std::vector<std::complex<double> > work(lwork);
 
 
-      zheevd_(&jobz, 
-	      &uplo, 
-	      &dimensionMatrix, 
+      zheevd_(&jobz,
+	      &uplo,
+	      &dimensionMatrix,
 	      matrix,
 	      &dimensionMatrix,
-	      eigenValues, 
-	      &work[0], 
-	      &lwork, 
-	      &rwork[0], 
-	      &lrwork, 
-	      &iwork[0], 
-	      &liwork, 
+	      eigenValues,
+	      &work[0],
+	      &lwork,
+	      &rwork[0],
+	      &lrwork,
+	      &iwork[0],
+	      &liwork,
 	      &info);
     }
 
@@ -234,13 +234,13 @@ namespace dftfe{
 	  sigma = sigma2;
 
 	}
-      
+
       //copy back YArray to XArray
       XArray = YArray;
     }
 
     template<typename T>
-    void gramSchmidtOrthogonalization(operatorDFTClass & operatorMatrix,
+    void gramSchmidtOrthogonalization(const MPI_Comm & communicator,
 				      dealii::parallel::distributed::Vector<T> & X,
 				      const unsigned int numberVectors)
     {
@@ -251,18 +251,18 @@ namespace dftfe{
       //Create template PETSc vector to create BV object later
       //
       Vec templateVec;
-      VecCreateMPI(operatorMatrix.getMPICommunicator(),
+      VecCreateMPI(communicator,
 		   localVectorSize,
 		   PETSC_DETERMINE,
 		   &templateVec);
       VecSetFromOptions(templateVec);
-		   
-      
+
+
       //
       //Set BV options after creating BV object
       //
       BV columnSpaceOfVectors;
-      BVCreate(operatorMatrix.getMPICommunicator(),&columnSpaceOfVectors);
+      BVCreate(communicator,&columnSpaceOfVectors);
       BVSetSizesFromVec(columnSpaceOfVectors,
 			templateVec,
 			numberVectors);
@@ -280,10 +280,12 @@ namespace dftfe{
       VecGetOwnershipRange(templateVec,
 			   &low,
 			   &high);
-			   
+
 
       for(PetscInt index = 0;index < localVectorSize; ++index)
 	indices[index] = low+index;
+
+      VecDestroy(&templateVec);
 
       //
       //Fill in data into BV object
@@ -311,12 +313,12 @@ namespace dftfe{
 			  iColumn,
 			  &v);
 	}
-      
+
       //
       //orthogonalize
       //
       BVOrthogonalize(columnSpaceOfVectors,NULL);
-      
+
       //
       //Copy data back into X
       //
@@ -341,6 +343,8 @@ namespace dftfe{
 			  iColumn,
 			  &v1);
 	}
+
+      BVDestroy(&columnSpaceOfVectors);
 
     }
 
@@ -371,7 +375,7 @@ namespace dftfe{
 	      &ProjHam[0],
 	      &eigenValues[0]);
 
-      
+
       //
       //rotate the basis in the subspace X = X*Q
       //
@@ -384,13 +388,307 @@ namespace dftfe{
 	       ProjHam,
 	       X,
 	       rotatedBasis);
-	       
-	
+
+
       X = rotatedBasis;
-      
+
     }
 
+#ifdef ENABLE_PERIODIC_BC
+    void lowdenOrthogonalization(const MPI_Comm & mpi_communicator,
+				 dealii::parallel::distributed::Vector<std::complex<double> > & X,
+				 const unsigned int numberVectors)
+    {
 
+      const unsigned int localVectorSize = X.local_size()/numberVectors;
+      std::vector<std::complex<double> > overlapMatrix(numberVectors*numberVectors,0.0);
+
+      //
+      //blas level 3 dgemm flags
+      //
+      const std::complex<double> alpha = 1.0, beta = 0.0;
+      const unsigned int numberEigenValues = numberVectors;
+
+      //
+      //compute overlap matrix S = {(Zc)^T}*Z on local proc
+      //where Z is a matrix with size number of degrees of freedom times number of column vectors
+      //and (Zc)^T is conjugate transpose of Z
+      //Since input "X" is stored as number of column vectors times number of degrees of freedom matrix
+      //corresponding to column-major format required for blas, we compute
+      //the transpose of overlap matrix i.e S^{T} = X*{(Xc)^T} here
+      //
+      const char uplo = 'U';
+      const char trans = 'N';
+
+      zsyrk_(&uplo,
+	     &trans,
+	     &numberVectors,
+	     &localVectorSize,
+	     &alpha,
+	     X.begin(),
+	     &numberVectors,
+	     &beta,
+	     &overlapMatrix[0],
+	     &numberVectors);
+
+
+      dealii::Utilities::MPI::sum(overlapMatrix, mpi_communicator, overlapMatrix); 
+
+      //
+      //evaluate the conjugate of {S^T} to get actual overlap matrix
+      //
+      for(unsigned int i = 0; i < overlapMatrix.size(); ++i)
+	overlapMatrix[i] = std::conj(overlapMatrix[i]);
+
+
+      //
+      //set lapack eigen decomposition flags and compute eigendecomposition of S = Q*D*Q^{H}
+      //
+      int info;
+      const unsigned int lwork = 1 + 6*numberVectors + 2*numberVectors*numberVectors, liwork = 3 + 5*numberVectors;
+      std::vector<int> iwork(liwork,0);
+      const char jobz='V';
+      const unsigned int lrwork = 1 + 5*numberVectors + 2*numberVectors*numberVectors;
+      std::vector<double> rwork(lrwork,0.0);
+      std::vector<std::complex<double> > work(lwork);
+      std::vector<double> eigenValuesOverlap(numberVectors,0.0);
+
+      zheevd_(&jobz,
+	      &uplo,
+	      &numberVectors,
+	      &overlapMatrix[0],
+	      &numberVectors,
+	      &eigenValuesOverlap[0],
+	      &work[0],
+	      &lwork,
+	      &rwork[0],
+	      &lrwork,
+	      &iwork[0],
+	      &liwork,
+	      &info);
+
+       //
+       //free up memory associated with work
+       //
+       work.clear();
+       iwork.clear();
+       rwork.clear();
+       std::vector<std::complex<double> >().swap(work);
+       std::vector<double>().swap(rwork);
+       std::vector<int>().swap(iwork);
+
+       //
+       //compute D^{-1/4} where S = Q*D*Q^{H}
+       //
+       std::vector<double> invFourthRootEigenValuesMatrix(numberEigenValues,0.0);
+
+       for(unsigned i = 0; i < numberEigenValues; ++i)
+	 invFourthRootEigenValuesMatrix[i] = 1.0/pow(eigenValuesOverlap[i],1.0/4);
+
+       //
+       //Q*D^{-1/4} and note that "Q" is stored in overlapMatrix after calling "zheevd"
+       //
+       const unsigned int inc = 1;
+       for(unsigned int i = 0; i < numberEigenValues; ++i)
+	 {
+	   std::complex<double> scalingCoeff = invFourthRootEigenValuesMatrix[i];
+	   zscal_(&numberEigenValues,
+		  &scalingCoeff,
+		  &overlapMatrix[0]+i*numberEigenValues,
+                  &inc);
+	 }
+
+       //
+       //Evaluate S^{-1/2} = Q*D^{-1/2}*Q^{H} = (Q*D^{-1/4})*(Q*D^{-1/4))^{H}
+       //
+       std::vector<std::complex<double> > invSqrtOverlapMatrix(numberEigenValues*numberEigenValues,0.0);
+       const char transA1 = 'N';
+       const char transB1 = 'C';
+       zgemm_(&transA1,
+	      &transB1,
+	      &numberEigenValues,
+	      &numberEigenValues,
+	      &numberEigenValues,
+	      &alpha,
+	      &overlapMatrix[0],
+	      &numberEigenValues,
+	      &overlapMatrix[0],
+	      &numberEigenValues,
+	      &beta,
+	      &invSqrtOverlapMatrix[0],
+	      &numberEigenValues);
+
+       //
+       //free up memory associated with overlapMatrix
+       //
+       overlapMatrix.clear();
+       std::vector<std::complex<double> >().swap(overlapMatrix);
+
+       //
+       //Rotate the given vectors using S^{-1/2} i.e Y = X*S^{-1/2} but implemented as Y^T = {S^{-1/2}}^T*{X^T}
+       //using the column major format of blas
+       //
+       const char transA2  = 'T', transB2  = 'N';
+       dealii::parallel::distributed::Vector<std::complex<double> > orthoNormalizedBasis;
+       orthoNormalizedBasis.reinit(X);
+       zgemm_(&transA2,
+	     &transB2,
+	     &numberEigenValues,
+             &localVectorSize,
+	     &numberEigenValues,
+	     &alpha,
+	     &invSqrtOverlapMatrix[0],
+	     &numberEigenValues,
+	     X.begin(),
+	     &numberEigenValues,
+	     &beta,
+	     orthoNormalizedBasis.begin(),
+	     &numberEigenValues);
+
+       
+       X = orthoNormalizedBasis;
+    }
+#else
+    void lowdenOrthogonalization(const MPI_Comm & mpi_communicator,
+				 dealii::parallel::distributed::Vector<double> & X,
+				 const unsigned int numberVectors)
+    {
+
+      const unsigned int localVectorSize = X.local_size()/numberVectors;
+      std::vector<double> overlapMatrix(numberVectors*numberVectors,0.0);
+
+      //
+      //blas level 3 dgemm flags
+      //
+      const double alpha = 1.0, beta = 0.0;
+      const unsigned int numberEigenValues = numberVectors;
+      const char uplo = 'U';
+      const char trans = 'N';
+
+      //
+      //compute overlap matrix S = {(Z)^T}*Z on local proc
+      //where Z is a matrix with size number of degrees of freedom times number of column vectors
+      //and (Z)^T is transpose of Z
+      //Since input "X" is stored as number of column vectors times number of degrees of freedom matrix
+      //corresponding to column-major format required for blas, we compute
+      //the overlap matrix as S = S^{T} = X*{X^T} here
+      //
+      dsyrk_(&uplo,
+	     &trans,
+	     &numberVectors,
+	     &localVectorSize,
+	     &alpha,
+	     X.begin(),
+	     &numberVectors,
+	     &beta,
+	     &overlapMatrix[0],
+	     &numberVectors);
+
+
+      dealii::Utilities::MPI::sum(overlapMatrix, mpi_communicator, overlapMatrix); 
+
+
+      //
+      //set lapack eigen decomposition flags and compute eigendecomposition of S = Q*D*Q^{H}
+      //
+      int info;
+      const unsigned int lwork = 1 + 6*numberVectors + 2*numberVectors*numberVectors, liwork = 3 + 5*numberVectors;
+      std::vector<int> iwork(liwork,0);
+      const char jobz='V';
+      std::vector<double> work(lwork);
+      std::vector<double> eigenValuesOverlap(numberVectors,0.0);
+       dsyevd_(&jobz,
+	       &uplo,
+	       &numberVectors,
+	       &overlapMatrix[0],
+	       &numberVectors,
+	       &eigenValuesOverlap[0],
+	       &work[0],
+	       &lwork,
+	       &iwork[0],
+	       &liwork,
+	       &info);
+
+       //
+       //free up memory associated with work
+       //
+       work.clear();
+       iwork.clear();
+       std::vector<double>().swap(work);
+       std::vector<int>().swap(iwork);
+
+       //
+       //compute D^{-1/4} where S = Q*D*Q^{T}
+       //
+       std::vector<double> invFourthRootEigenValuesMatrix(numberEigenValues,0.0);
+
+       for(unsigned i = 0; i < numberEigenValues; ++i)
+	 invFourthRootEigenValuesMatrix[i] = 1.0/pow(eigenValuesOverlap[i],1.0/4);
+
+       //
+       //Q*D^{-1/4} and note that "Q" is stored in overlapMatrix after calling "dsyevd"
+       //
+       const unsigned int inc = 1;
+       for(unsigned int i = 0; i < numberEigenValues; ++i)
+	 {
+	   double scalingCoeff = invFourthRootEigenValuesMatrix[i];
+	   dscal_(&numberEigenValues,
+		  &scalingCoeff,
+		  &overlapMatrix[0]+i*numberEigenValues,
+                  &inc);
+	 }
+
+       //
+       //Evaluate S^{-1/2} = Q*D^{-1/2}*Q^{T} = (Q*D^{-1/4})*(Q*D^{-1/4))^{T}
+       //
+       std::vector<double> invSqrtOverlapMatrix(numberEigenValues*numberEigenValues,0.0);
+       const char transA1 = 'N';
+       const char transB1 = 'T';
+       dgemm_(&transA1,
+	      &transB1,
+	      &numberEigenValues,
+	      &numberEigenValues,
+	      &numberEigenValues,
+	      &alpha,
+	      &overlapMatrix[0],
+	      &numberEigenValues,
+	      &overlapMatrix[0],
+	      &numberEigenValues,
+	      &beta,
+	      &invSqrtOverlapMatrix[0],
+	      &numberEigenValues);
+
+       //
+       //free up memory associated with overlapMatrix
+       //
+       overlapMatrix.clear();
+       std::vector<double>().swap(overlapMatrix);
+
+       //
+       //Rotate the given vectors using S^{-1/2} i.e Y = X*S^{-1/2} but implemented as Yt = S^{-1/2}*Xt
+       //using the column major format of blas
+       //
+       const char transA2  = 'N', transB2  = 'N';
+       dealii::parallel::distributed::Vector<double> orthoNormalizedBasis;
+       orthoNormalizedBasis.reinit(X);
+       dgemm_(&transA2,
+	     &transB2,
+	     &numberEigenValues,
+             &localVectorSize,
+	     &numberEigenValues,
+	     &alpha,
+	     &invSqrtOverlapMatrix[0],
+	     &numberEigenValues,
+	     X.begin(),
+	     &numberEigenValues,
+	     &beta,
+	     orthoNormalizedBasis.begin(),
+	     &numberEigenValues);
+
+       
+       X = orthoNormalizedBasis;
+    }
+#endif
 
 
 #ifdef ENABLE_PERIODIC_BC
@@ -405,7 +703,7 @@ namespace dftfe{
 				  const double );
 
 
-    template void gramSchmidtOrthogonalization(operatorDFTClass & operatorMatrix,
+    template void gramSchmidtOrthogonalization(const MPI_Comm & communicator,
 					       dealii::parallel::distributed::Vector<std::complex<double> > &,
 					       const unsigned int );
 
@@ -428,7 +726,7 @@ namespace dftfe{
 				  const double ,
 				  const double );
 
-    template void gramSchmidtOrthogonalization(operatorDFTClass & operatorMatrix,
+    template void gramSchmidtOrthogonalization(const MPI_Comm & communicator,
 					       dealii::parallel::distributed::Vector<double> &,
 					       const unsigned int );
 
@@ -439,7 +737,7 @@ namespace dftfe{
 			       const std::vector<std::vector<dealii::types::global_dof_index> > &,
 			       std::vector<double>     & eigenValues);
 #endif
-  
+
   }//end of namespace
 
 }

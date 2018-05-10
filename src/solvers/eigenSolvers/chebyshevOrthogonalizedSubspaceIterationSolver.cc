@@ -314,11 +314,17 @@ namespace dftfe{
 
 	  }//block loop
 
-	computing_timer.enter_section("Gram-Schmidt Orthogn Opt"); 
-	linearAlgebraOperations::gramSchmidtOrthogonalization(operatorMatrix,
+	/*computing_timer.enter_section("Gram-Schmidt Orthogn Opt"); 
+	linearAlgebraOperations::gramSchmidtOrthogonalization(operatorMatrix.getMPICommunicator(),
 							      eigenVectorsFlattenedArray,
 							      totalNumberWaveFunctions);
-	computing_timer.exit_section("Gram-Schmidt Orthogn Opt");
+							      computing_timer.exit_section("Gram-Schmidt Orthogn Opt");*/
+
+	computing_timer.enter_section("Lowden Orthogn Opt"); 
+	linearAlgebraOperations::lowdenOrthogonalization(operatorMatrix.getMPICommunicator(),
+							 eigenVectorsFlattenedArray,
+							 totalNumberWaveFunctions);
+	computing_timer.exit_section("Lowden Orthogn Opt");
 
 
 	computing_timer.enter_section("Rayleigh-Ritz proj Opt"); 
