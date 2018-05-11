@@ -280,15 +280,21 @@ void dftClass<FEOrder>::readPSIRadialValues(){
       for (std::vector<orbital>::iterator it = waveFunctionsVector.begin(); it < waveFunctionsVector.end(); it++)
 	{
 
-	  //get the imageIdmap information corresponding to globalChargeId
 	  //
-#ifdef USE_COMPLEX
-	  std::vector<int> & imageIdsList = d_globalChargeIdToImageIdMap[it->atomID];
-#else
+	  //get the imageIdmap information corresponding to globalChargeId
+	  //(Fix me: Examine whether periodic image contributions have to be included or not)
+	  //currently not including
 	  std::vector<int> imageIdsList;
-	  imageIdsList.push_back(it->atomID);
-#endif
+	  //if(dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ)
+	  //{
+	  //  imageIdsList = d_globalChargeIdToImageIdMap[it->atomID];
+	  // }
+	  //else
+	  //{
+	      imageIdsList.push_back(it->atomID);
+	      // }
 
+      
 	  for(int iImageAtomCount = 0; iImageAtomCount < imageIdsList.size();++iImageAtomCount)
 	    {
 
