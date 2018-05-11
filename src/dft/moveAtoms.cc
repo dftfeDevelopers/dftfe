@@ -90,7 +90,6 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point<C
   const int numberImageCharges = d_imageIds.size();
   const int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
 
-#ifdef USE_COMPLEX
   std::vector<double> latticeVectorsFlattened(9,0.0);
   for (unsigned int idim=0; idim<3; idim++)
       for(unsigned int jdim=0; jdim<3; jdim++)
@@ -104,7 +103,6 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point<C
   }
   std::vector<bool> periodicBc(3,false);
   periodicBc[0]=dftParameters::periodicX;periodicBc[1]=dftParameters::periodicY;periodicBc[2]=dftParameters::periodicZ;
-#endif
 
   std::vector<Point<C_DIM> > controlPointLocations;
   std::vector<Tensor<1,C_DIM,double> > controlPointDisplacements;
@@ -120,29 +118,33 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point<C
         atomCoor[1] = atomLocations[iAtom][3];
         atomCoor[2] = atomLocations[iAtom][4];
 	const double temp=globalAtomsDisplacements[atomId].norm();
-#ifdef USE_COMPLEX
-	Point<C_DIM> newCoord;
-	for (unsigned int idim=0; idim<C_DIM; ++idim)
-	    newCoord[idim]=atomCoor[idim]+globalAtomsDisplacements[atomId][idim];
-        std::vector<double> newFracCoord=internal::wrapAtomsAcrossPeriodicBc(newCoord,
-	                                                                          corner,
-					                                          latticeVectorsFlattened,
-						                                  periodicBc);
-        //for synchrozination
-        MPI_Bcast(&(newFracCoord[0]),
-	         3,
-	         MPI_DOUBLE,
-	         0,
-	         MPI_COMM_WORLD);
 
-        atomLocationsFractional[iAtom][2]=newFracCoord[0];
-        atomLocationsFractional[iAtom][3]=newFracCoord[1];
-        atomLocationsFractional[iAtom][4]=newFracCoord[2];
-#else
-        atomLocations[iAtom][2]+=globalAtomsDisplacements[atomId][0];
-        atomLocations[iAtom][3]+=globalAtomsDisplacements[atomId][1];
-        atomLocations[iAtom][4]+=globalAtomsDisplacements[atomId][2];
-#endif
+	if (dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ)
+        {
+	    Point<C_DIM> newCoord;
+	    for (unsigned int idim=0; idim<C_DIM; ++idim)
+		newCoord[idim]=atomCoor[idim]+globalAtomsDisplacements[atomId][idim];
+	    std::vector<double> newFracCoord=internal::wrapAtomsAcrossPeriodicBc(newCoord,
+										      corner,
+										      latticeVectorsFlattened,
+										      periodicBc);
+	    //for synchrozination
+	    MPI_Bcast(&(newFracCoord[0]),
+		     3,
+		     MPI_DOUBLE,
+		     0,
+		     MPI_COMM_WORLD);
+
+	    atomLocationsFractional[iAtom][2]=newFracCoord[0];
+	    atomLocationsFractional[iAtom][3]=newFracCoord[1];
+	    atomLocationsFractional[iAtom][4]=newFracCoord[2];
+        }
+	else
+	{
+	    atomLocations[iAtom][2]+=globalAtomsDisplacements[atomId][0];
+	    atomLocations[iAtom][3]+=globalAtomsDisplacements[atomId][1];
+	    atomLocations[iAtom][4]+=globalAtomsDisplacements[atomId][2];
+        }
 
 	if (temp>maxDispAtom)
 	    maxDispAtom=temp;
