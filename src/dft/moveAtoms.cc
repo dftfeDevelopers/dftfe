@@ -60,7 +60,7 @@ namespace internal{
 					        const std::vector<double> & latticeVectors,
 						const std::vector<bool> & periodicBc)
   {
-     const double tol=1e-6;
+     const double tol=1e-8;
      std::vector<double> fracCoord= getFractionalCoordinates(latticeVectors,
 	                                                     cellCenteredCoord,                                                                                                corner);
      //wrap fractional coordinate

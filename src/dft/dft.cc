@@ -312,6 +312,17 @@ namespace dftfe {
 	    pcout<<"AtomId "<<i <<":  "<<atomLocationsFractional[i][2]<<" "<<atomLocationsFractional[i][3]<<" "<<atomLocationsFractional[i][4]<<"\n";
 	  }
 	pcout<<"-----------------------------------------------------------------------------------------"<<std::endl;
+	//sanity check on fractional coordinates
+	std::vector<bool> periodicBc(3,false);
+  periodicBc[0]=dftParameters::periodicX;periodicBc[1]=dftParameters::periodicY;periodicBc[2]=dftParameters::periodicZ;
+        const double tol=1e-6;
+  	for(unsigned int i = 0; i < atomLocationsFractional.size(); ++i)
+	{
+	   for(unsigned int idim = 0; idim < 3; ++idim)
+	     if (periodicBc[idim])
+	        AssertThrow(atomLocationsFractional[i][2+idim]>-tol && atomLocationsFractional[i][2+idim]<1.0+tol,ExcMessage("DFT-FE Error: periodic direction fractional coordinates doesn't lie in [0,1]. Please check input fractional coordinates, or if this is an ionic relaxation step, please check the corresponding algorithm."));
+	}
+
 	generateImageCharges();
 
 	internaldft::convertToCellCenteredCartesianCoordinates(atomLocations,
