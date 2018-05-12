@@ -121,15 +121,13 @@ namespace dftfe
     
      /** @brief Orthogonalize given subspace using GramSchmidt orthogonalization
      *  
-     *  @param communicator the MPI communicator to use
      *  @param  X Given subspace as flattened array of multi-vectors
      *  @param numberComponents Number of multiple-fields
      *  @return X In-place update of the given subspace 
      */
     template<typename T>
-    void gramSchmidtOrthogonalization(const MPI_Comm & communicator,
-				      dealii::parallel::distributed::Vector<T> & X,
-				      const unsigned int numberComponents);
+      void gramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<T> & X,
+					const unsigned int numberComponents);
 
 
     /** @brief Orthogonalize given subspace using Lowden orthogonalization for double data-type
@@ -139,12 +137,10 @@ namespace dftfe
      *  @return X In-place update of the given subspace 
      */
 #ifdef USE_COMPLEX
-    void lowdenOrthogonalization(const MPI_Comm & communicator,
-				 dealii::parallel::distributed::Vector<std::complex<double> > & X,
+    void lowdenOrthogonalization(dealii::parallel::distributed::Vector<std::complex<double> > & X,
 				 const unsigned int numberComponents);
 #else
-    void lowdenOrthogonalization(const MPI_Comm & communicator,
-				 dealii::parallel::distributed::Vector<double> & X,
+    void lowdenOrthogonalization(dealii::parallel::distributed::Vector<double> & X,
 				 const unsigned int numberComponents);
 #endif
 

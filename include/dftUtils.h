@@ -27,7 +27,7 @@
 
 namespace dftfe {
 
-    namespace dftUtils
+  namespace dftUtils
     {
       /** @brief Calculates partial occupancy of the atomic orbital using
        *  Fermi-Dirac smearing.

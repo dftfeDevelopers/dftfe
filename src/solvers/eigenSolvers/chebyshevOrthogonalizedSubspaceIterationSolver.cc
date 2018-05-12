@@ -314,21 +314,19 @@ namespace dftfe{
 
 	  }//block loop
 
-	if(dftParameters::orthogType == 1)
+	if(dftParameters::orthogType.compare("lowden") == 0)
 	  {
-	    computing_timer.enter_section("Gram-Schmidt Orthogn Opt"); 
-	    linearAlgebraOperations::gramSchmidtOrthogonalization(operatorMatrix.getMPICommunicator(),
-								  eigenVectorsFlattenedArray,
-								  totalNumberWaveFunctions);
-	    computing_timer.exit_section("Gram-Schmidt Orthogn Opt");
+	    computing_timer.enter_section("Lowden Orthogn Opt"); 
+	    linearAlgebraOperations::lowdenOrthogonalization(eigenVectorsFlattenedArray,
+							     totalNumberWaveFunctions);
+	    computing_timer.exit_section("Lowden Orthogn Opt");
 	  }
 	else
 	  {
-	    computing_timer.enter_section("Lowden Orthogn Opt"); 
-	    linearAlgebraOperations::lowdenOrthogonalization(operatorMatrix.getMPICommunicator(),
-							     eigenVectorsFlattenedArray,
-							     totalNumberWaveFunctions);
-	    computing_timer.exit_section("Lowden Orthogn Opt");
+	    computing_timer.enter_section("Gram-Schmidt Orthogn Opt"); 
+	    linearAlgebraOperations::gramSchmidtOrthogonalization(eigenVectorsFlattenedArray,
+								  totalNumberWaveFunctions);
+	    computing_timer.exit_section("Gram-Schmidt Orthogn Opt");
 	  }
 
 

@@ -25,7 +25,6 @@
 
 namespace dftfe{
 
-  typedef dealii::parallel::distributed::Vector<double> vectorType;
   template <unsigned int T> class dftClass;
 
   //

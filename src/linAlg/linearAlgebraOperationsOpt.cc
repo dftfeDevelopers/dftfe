@@ -240,8 +240,7 @@ namespace dftfe{
     }
 
     template<typename T>
-    void gramSchmidtOrthogonalization(const MPI_Comm & communicator,
-				      dealii::parallel::distributed::Vector<T> & X,
+    void gramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<T> & X,
 				      const unsigned int numberVectors)
     {
 
@@ -251,7 +250,7 @@ namespace dftfe{
       //Create template PETSc vector to create BV object later
       //
       Vec templateVec;
-      VecCreateMPI(communicator,
+      VecCreateMPI(X.get_mpi_communicator(),
 		   localVectorSize,
 		   PETSC_DETERMINE,
 		   &templateVec);
@@ -262,7 +261,7 @@ namespace dftfe{
       //Set BV options after creating BV object
       //
       BV columnSpaceOfVectors;
-      BVCreate(communicator,&columnSpaceOfVectors);
+      BVCreate(X.get_mpi_communicator(),&columnSpaceOfVectors);
       BVSetSizesFromVec(columnSpaceOfVectors,
 			templateVec,
 			numberVectors);
@@ -395,8 +394,7 @@ namespace dftfe{
     }
 
 #ifdef USE_COMPLEX
-    void lowdenOrthogonalization(const MPI_Comm & mpi_communicator,
-				 dealii::parallel::distributed::Vector<std::complex<double> > & X,
+    void lowdenOrthogonalization(dealii::parallel::distributed::Vector<std::complex<double> > & X,
 				 const unsigned int numberVectors)
     {
 
@@ -432,7 +430,7 @@ namespace dftfe{
 	     &numberVectors);
 
 
-      dealii::Utilities::MPI::sum(overlapMatrix, mpi_communicator, overlapMatrix); 
+      dealii::Utilities::MPI::sum(overlapMatrix, X.get_mpi_communicator(), overlapMatrix); 
 
       //
       //evaluate the conjugate of {S^T} to get actual overlap matrix
@@ -549,8 +547,7 @@ namespace dftfe{
        X = orthoNormalizedBasis;
     }
 #else
-    void lowdenOrthogonalization(const MPI_Comm & mpi_communicator,
-				 dealii::parallel::distributed::Vector<double> & X,
+    void lowdenOrthogonalization(dealii::parallel::distributed::Vector<double> & X,
 				 const unsigned int numberVectors)
     {
 
@@ -585,7 +582,7 @@ namespace dftfe{
 	     &numberVectors);
 
 
-      dealii::Utilities::MPI::sum(overlapMatrix, mpi_communicator, overlapMatrix); 
+      dealii::Utilities::MPI::sum(overlapMatrix, X.get_mpi_communicator(), overlapMatrix); 
 
 
       //
@@ -703,8 +700,7 @@ namespace dftfe{
 				  const double );
 
 
-    template void gramSchmidtOrthogonalization(const MPI_Comm & communicator,
-					       dealii::parallel::distributed::Vector<std::complex<double> > &,
+    template void gramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<std::complex<double> > &,
 					       const unsigned int );
 
     template void rayleighRitz(operatorDFTClass  & operatorMatrix,
@@ -726,8 +722,7 @@ namespace dftfe{
 				  const double ,
 				  const double );
 
-    template void gramSchmidtOrthogonalization(const MPI_Comm & communicator,
-					       dealii::parallel::distributed::Vector<double> &,
+    template void gramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<double> &,
 					       const unsigned int );
 
     template void rayleighRitz(operatorDFTClass  & operatorMatrix,

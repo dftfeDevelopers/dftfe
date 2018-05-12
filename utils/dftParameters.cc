@@ -28,13 +28,13 @@ namespace dftParameters
 {
 
   unsigned int finiteElementPolynomialOrder=1,n_refinement_steps=1,numberEigenValues=1,xc_id=1, spinPolarized=0, nkx=1,nky=1,nkz=1, pseudoProjector=1;
-  unsigned int chebyshevOrder=1,numPass=1, numSCFIterations=1,maxLinearSolverIterations=1, mixingHistory=1, npool=1, orthogType=1;
+  unsigned int chebyshevOrder=1,numPass=1, numSCFIterations=1,maxLinearSolverIterations=1, mixingHistory=1, npool=1;
 
   double radiusAtomBall=0.0, mixingParameter=0.5, dkx=0.0, dky=0.0, dkz=0.0;
   double lowerEndWantedSpectrum=0.0,relLinearSolverTolerance=1e-10,selfConsistentSolverTolerance=1e-10,TVal=500, start_magnetization=0.0;
 
   bool isPseudopotential=false,periodicX=false,periodicY=false,periodicZ=false, useSymm=false, timeReversal=false;
-  std::string meshFileName="",coordinatesFile="",domainBoundingVectorsFile="",kPointDataFile="", ionRelaxFlagsFile="";
+  std::string meshFileName="",coordinatesFile="",domainBoundingVectorsFile="",kPointDataFile="", ionRelaxFlagsFile="",orthogType="";
 
   double outerAtomBallRadius=2.0, meshSizeOuterDomain=10.0;
   double meshSizeInnerBall=1.0, meshSizeOuterBall=1.0;
@@ -303,9 +303,9 @@ namespace dftParameters
 			  Patterns::Integer(1,20),
 			  "[Developer] The initial number of the Chebyshev filter passes per SCF. More Chebyshev filter passes beyond the value set in this parameter can still happen due to additional algorithms used in the code.");
 
-	prm.declare_entry("ORTHOGONALIZATION TYPE","1",
-			  Patterns::Integer(1,2),
-			  "[Standard] Parameter specifying the type of orthogonalization to be used: 1(Gram-Schmidt Orthogonalization), 2(Lowden Orthogonalization)");
+	prm.declare_entry("ORTHOGONALIZATION TYPE","GS",
+			  Patterns::Anything(),
+			  "[Standard] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization), Lowden(Lowden Orthogonalization)");
 
     }
     prm.leave_subsection ();
@@ -431,7 +431,7 @@ namespace dftParameters
        dftParameters::lowerEndWantedSpectrum        = prm.get_double("LOWER BOUND WANTED SPECTRUM");
        dftParameters::chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
        dftParameters::numPass           = prm.get_integer("CHEBYSHEV FILTER PASSES");
-       dftParameters::orthogType        = prm.get_integer("ORTHOGONALIZATION TYPE");
+       dftParameters::orthogType        = prm.get("ORTHOGONALIZATION TYPE");
     }
     prm.leave_subsection ();
 

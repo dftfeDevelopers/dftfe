@@ -31,6 +31,8 @@ namespace dftfe{
    *
    * @author Phani Motamarri
    */
+
+ 
   class operatorDFTClass {
 
     //
@@ -87,23 +89,13 @@ namespace dftfe{
      * @param cellMap precomputed cell-local index id map of the multi-wavefunction field
      * @param Y Vector containing multi-component fields after operator times vectors product
      */
-#ifdef USE_COMPLEX
-    virtual void HX(dealii::parallel::distributed::Vector<std::complex<double> > & X,
+    virtual void HX(dealii::parallel::distributed::Vector<dftfe::dataTypes::number> & X,
 		    const unsigned int numberComponents,
 		    const std::vector<std::vector<dealii::types::global_dof_index> > & macroCellMap,
 		    const std::vector<std::vector<dealii::types::global_dof_index> > & cellMap,
-		    bool scaleFlag,
-		    const std::complex<double> scalar,
-		    dealii::parallel::distributed::Vector<std::complex<double> > & Y) = 0;
-#else
-    virtual void HX(dealii::parallel::distributed::Vector<double> & X,
-		    const unsigned int numberComponents,
-		    const std::vector<std::vector<dealii::types::global_dof_index> > & macroCellMap,
-		    const std::vector<std::vector<dealii::types::global_dof_index> > & cellMap,
-		    bool scaleFlag,
-		    const double scalar,
-		    dealii::parallel::distributed::Vector<double> & Y) = 0;
-#endif
+		    const bool scaleFlag,
+		    const dftfe::dataTypes::number scalar,
+		    dealii::parallel::distributed::Vector<dftfe::dataTypes::number> & Y) = 0;
 
 
     /**
