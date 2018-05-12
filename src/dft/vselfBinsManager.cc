@@ -346,7 +346,7 @@ namespace dftfe
 
       if (std::fabs(radiusAtomBall)<1e-6)
       {
-	  if (dftParameters::verbosity==2)
+	  if (dftParameters::verbosity>=1)
 	      pcout<<"Adaptively setting vself ball radius... "<<std::endl;
           unsigned int check=internal::createAndCheckInteractionMap(interactionMap,
 							            dofHandler,
@@ -377,7 +377,7 @@ namespace dftfe
 
 	  AssertThrow(check==0,dealii::ExcMessage(message));
 
-	  if (dftParameters::verbosity==2)
+	  if (dftParameters::verbosity>=1)
 	      pcout<<"...Adaptively set vself solve ball radius: "<< radiusAtomBallAdaptive<<std::endl;
 
 	  if (radiusAtomBallAdaptive<3.0)
