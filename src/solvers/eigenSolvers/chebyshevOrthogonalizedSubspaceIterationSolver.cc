@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Phani Motamarri 
+// @author Phani Motamarri
 
 #include <chebyshevOrthogonalizedSubspaceIterationSolver.h>
 #include <linearAlgebraOperations.h>
@@ -30,7 +30,7 @@ namespace dftfe{
     d_lowerBoundWantedSpectrum(lowerBoundWantedSpectrum),
     d_lowerBoundUnWantedSpectrum(lowerBoundUnWantedSpectrum),
     pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
-    computing_timer(pcout, 
+    computing_timer(pcout,
 		    dftParameters::reproducible_output ? dealii::TimerOutput::never : dealii::TimerOutput::summary,
 		    dealii::TimerOutput::wall_times)
   {
@@ -71,7 +71,7 @@ namespace dftfe{
   {
 
 
-    computing_timer.enter_section("Lanczos k-step Upper Bound"); 
+    computing_timer.enter_section("Lanczos k-step Upper Bound");
     double upperBoundUnwantedSpectrum = linearAlgebraOperations::lanczosUpperBoundEigenSpectrum(operatorMatrix,
 												eigenVectors[0]);
 
@@ -118,7 +118,7 @@ namespace dftfe{
     //
     //output statements
     //
-    if (dftParameters::verbosity==2)
+    if (dftParameters::verbosity>=1)
       {
 	char buffer[100];
 
@@ -151,9 +151,9 @@ namespace dftfe{
 
     if(totalNumberBlocks > 1)
       d_numberWaveFunctionsBlock[totalNumberBlocks - 1] = numberWaveFunctionsLastBlock;
-    
+
     if((dftParameters::nkx*dftParameters::nky*dftParameters::nkz) == 1 && (dftParameters::dkx*dftParameters::dky*dftParameters::dkz) <= 1e-10)
-      { 
+      {
 	for(unsigned int nBlock = 0; nBlock < totalNumberBlocks; ++nBlock)
 	  {
 	    //
@@ -199,9 +199,9 @@ namespace dftfe{
 	    operatorMatrix.getOverloadedConstraintMatrix()->precomputeMaps(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
 									   eigenVectorsFlattenedArray.get_partitioner(),
 									   numberWaveFunctionsPerCurrentBlock);
-				    
+
 	    //
-	    //copy the data from eigenVectors to eigenVectorsFlattened (this may have to be changed from flattened 
+	    //copy the data from eigenVectors to eigenVectorsFlattened (this may have to be changed from flattened
 	    //to flattened array containing only block vectors eventually)
 	    //
 	    for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
@@ -214,7 +214,7 @@ namespace dftfe{
 		    eigenVectorsFlattenedArray.local_element(flattenedArrayLocalIndex).real(eigenVectors[iWave+lowIndex].local_element((*operatorMatrix.getLocalProcDofIndicesReal())[iNode]));
 		    eigenVectorsFlattenedArray.local_element(flattenedArrayLocalIndex).imag(eigenVectors[iWave+lowIndex].local_element((*operatorMatrix.getLocalProcDofIndicesImag())[iNode]));
 #else
-		    eigenVectorsFlattenedArray.local_element(flattenedArrayLocalIndex) = eigenVectors[iWave+lowIndex].local_element(iNode);	
+		    eigenVectorsFlattenedArray.local_element(flattenedArrayLocalIndex) = eigenVectors[iWave+lowIndex].local_element(iNode);
 #endif
 		  }
 	      }
@@ -223,21 +223,21 @@ namespace dftfe{
 	    //
 	    //call Chebyshev filtering function only for the current block to be filtered
 	    //and does in-place filtering
-	    computing_timer.enter_section("Chebyshev filtering opt"); 
+	    computing_timer.enter_section("Chebyshev filtering opt");
 	    linearAlgebraOperations::chebyshevFilter(operatorMatrix,
-						     eigenVectorsFlattenedArray, 
+						     eigenVectorsFlattenedArray,
 						     numberWaveFunctionsPerCurrentBlock,
 						     flattenedArrayMacroCellLocalProcIndexIdMap,
 						     flattenedArrayCellLocalProcIndexIdMap,
-						     chebyshevOrder, 
+						     chebyshevOrder,
 						     d_lowerBoundUnWantedSpectrum,
 						     upperBoundUnwantedSpectrum,
 						     d_lowerBoundWantedSpectrum);
 	    computing_timer.exit_section("Chebyshev filtering opt");
-  
+
 
 	    //
-	    //copy back to eigenVectors array 
+	    //copy back to eigenVectors array
 	    //
 	    for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
 	      {
@@ -245,7 +245,7 @@ namespace dftfe{
 		  {
 		    unsigned int flattenedArrayGlobalIndex = (numberWaveFunctionsPerCurrentBlock*(iNode + (operatorMatrix.getMatrixFreeData()->get_vector_partitioner()->local_range()).first) + iWave);
 		    unsigned int flattenedArrayLocalIndex = flattenedArrayGlobalIndex - eigenVectorsFlattenedArray.get_partitioner()->local_range().first;
-#ifdef USE_COMPLEX	
+#ifdef USE_COMPLEX
 		    eigenVectors[iWave+lowIndex].local_element((*operatorMatrix.getLocalProcDofIndicesReal())[iNode]) = eigenVectorsFlattenedArray.local_element(flattenedArrayLocalIndex).real();
 		    eigenVectors[iWave+lowIndex].local_element((*operatorMatrix.getLocalProcDofIndicesImag())[iNode]) = eigenVectorsFlattenedArray.local_element(flattenedArrayLocalIndex).imag();
 #else
@@ -261,21 +261,21 @@ namespace dftfe{
 	//
 	//call chebyshev filtering routine
 	//
-	computing_timer.enter_section("Chebyshev filtering"); 
+	computing_timer.enter_section("Chebyshev filtering");
 
 	linearAlgebraOperations::chebyshevFilter(operatorMatrix,
-						 eigenVectors, 
-						 chebyshevOrder, 
+						 eigenVectors,
+						 chebyshevOrder,
 						 d_lowerBoundUnWantedSpectrum,
 						 upperBoundUnwantedSpectrum,
 						 d_lowerBoundWantedSpectrum);
 
 	computing_timer.exit_section("Chebyshev filtering");
       }
-  
 
 
-    computing_timer.enter_section("Gram-Schmidt Orthogonalization"); 
+
+    computing_timer.enter_section("Gram-Schmidt Orthogonalization");
 
     linearAlgebraOperations::gramSchmidtOrthogonalization(operatorMatrix,
 							  eigenVectors);
@@ -284,7 +284,7 @@ namespace dftfe{
     computing_timer.exit_section("Gram-Schmidt Orthogonalization");
 
 
-    computing_timer.enter_section("Rayleigh Ritz Projection"); 
+    computing_timer.enter_section("Rayleigh Ritz Projection");
 
     linearAlgebraOperations::rayleighRitz(operatorMatrix,
 					  eigenVectors,
@@ -292,7 +292,7 @@ namespace dftfe{
 
 
     computing_timer.exit_section("Rayleigh Ritz Projection");
-  
+
 
 
     //
