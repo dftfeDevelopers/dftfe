@@ -120,7 +120,7 @@ namespace dftfe{
     //
     //output statements
     //
-    if (dftParameters::verbosity>=1)
+    if (dftParameters::verbosity>=2)
       {
 	char buffer[100];
 
