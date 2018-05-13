@@ -74,11 +74,12 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
   //
   //Compute and print L2 norm
   //
+  computing_timer.enter_section("compute Residual Norm"); 
   computeResidualNorm(eigenValuesTemp,
 		      kohnShamDFTEigenOperator,
 		      eigenVectors[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
 		      residualNormWaveFunctions);
-  
+  computing_timer.exit_section("compute Residual Norm");
   
   //
   //scale the eigenVectors with M^{-1/2} to represent the wavefunctions in the usual FE basis
@@ -120,7 +121,7 @@ void dftClass<FEOrder>::computeResidualNorm(const std::vector<double> & eigenVal
 					    std::vector<vectorType> & X,
 					    std::vector<double> & residualNorm) const
 {
-  //computing_timer.enter_section("computeResidualNorm"); 
+  
 
   std::vector<vectorType> PSI(X.size());
   
@@ -145,7 +146,7 @@ void dftClass<FEOrder>::computeResidualNorm(const std::vector<double> & eigenVal
   if (dftParameters::verbosity==2)  
     pcout <<std::endl;
 
-  //computing_timer.exit_section("computeResidualNorm"); 
+  
 }
 
 //compute the maximum of the residual norm of the highest occupied state among all k points 
