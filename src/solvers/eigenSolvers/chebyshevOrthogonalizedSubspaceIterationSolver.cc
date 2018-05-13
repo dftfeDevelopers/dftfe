@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Phani Motamarri 
+// @author Phani Motamarri
 
 #include <chebyshevOrthogonalizedSubspaceIterationSolver.h>
 #include <linearAlgebraOperations.h>
@@ -30,7 +30,7 @@ namespace dftfe{
     d_lowerBoundWantedSpectrum(lowerBoundWantedSpectrum),
     d_lowerBoundUnWantedSpectrum(lowerBoundUnWantedSpectrum),
     pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
-    computing_timer(pcout, 
+    computing_timer(pcout,
 		    dftParameters::reproducible_output ? dealii::TimerOutput::never : dealii::TimerOutput::summary,
 		    dealii::TimerOutput::wall_times)
   {
@@ -71,7 +71,7 @@ namespace dftfe{
   {
 
 
-    computing_timer.enter_section("Lanczos k-step Upper Bound"); 
+    computing_timer.enter_section("Lanczos k-step Upper Bound");
     double upperBoundUnwantedSpectrum = linearAlgebraOperations::lanczosUpperBoundEigenSpectrum(operatorMatrix,
 												eigenVectors[0]);
 
@@ -120,7 +120,7 @@ namespace dftfe{
     //
     //output statements
     //
-    if (dftParameters::verbosity==2)
+    if (dftParameters::verbosity>=1)
       {
 	char buffer[100];
 
@@ -140,10 +140,11 @@ namespace dftfe{
       operatorMatrix.getConstraintMatrixEigen()->set_zero(eigenVectors[i]);
 
     if((dftParameters::nkx*dftParameters::nky*dftParameters::nkz) == 1 && (dftParameters::dkx*dftParameters::dky*dftParameters::dkz) <= 1e-10)
-      { 
+      {
 	//
 	//create custom partitioned dealii array by storing wave functions at a given node contiguously
 	//
+	computing_timer.enter_section("Custom Partitioned Array Creation"); 
 #ifdef USE_COMPLEX
 	unsigned int localVectorSize = eigenVectors[0].local_size()/2;
 	dealii::parallel::distributed::Vector<std::complex<double> > eigenVectorsFlattenedArray;
@@ -162,11 +163,12 @@ namespace dftfe{
 						totalNumberWaveFunctions,
 						eigenVectorsFlattenedArray);
 #endif
-
+	computing_timer.exit_section("Custom Partitioned Array Creation"); 
 
 	//
 	//copy the data from eigenVectors to eigenVectorsFlattened
 	//
+	computing_timer.enter_section("Copy to flattened array");
 	for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
 	  {
 	    for (unsigned int iWave = 0; iWave < totalNumberWaveFunctions; ++iWave)
@@ -177,15 +179,15 @@ namespace dftfe{
 		eigenVectorsFlattenedArray.local_element(flattenedArrayLocalIndex).real(eigenVectors[iWave].local_element((*operatorMatrix.getLocalProcDofIndicesReal())[iNode]));
 		eigenVectorsFlattenedArray.local_element(flattenedArrayLocalIndex).imag(eigenVectors[iWave].local_element((*operatorMatrix.getLocalProcDofIndicesImag())[iNode]));
 #else
-		eigenVectorsFlattenedArray.local_element(flattenedArrayLocalIndex) = eigenVectors[iWave].local_element(iNode);	
+		eigenVectorsFlattenedArray.local_element(flattenedArrayLocalIndex) = eigenVectors[iWave].local_element(iNode);
 #endif
 	      }
 	  }
-
+	computing_timer.exit_section("Copy to flattened array");
 	//
 	//Free the memory of eigenVectors array
 	//
-    
+
 
 	//
 	//Split the complete wavefunctions into multiple blocks.
@@ -203,7 +205,7 @@ namespace dftfe{
 
 
 	std::vector<std::vector<dealii::types::global_dof_index> > flattenedArrayCellLocalProcIndexIdMap,flattenedArrayMacroCellLocalProcIndexIdMap;
-    
+
 	for(unsigned int nBlock = 0; nBlock < totalNumberBlocks; ++nBlock)
 	  {
 	    //
@@ -216,7 +218,6 @@ namespace dftfe{
 	    //
 	    //create custom partitioned dealii array by storing wavefunctions(no need to createDealii vector if block size does not change)
 	    //
-	  
 
 	    if(totalNumberBlocks > 1)
 	      {
@@ -237,6 +238,7 @@ namespace dftfe{
 							operatorMatrix.getMatrixFreeData()->get_dof_handler().n_dofs(),
 							numberWaveFunctionsPerCurrentBlock,
 							eigenVectorsFlattenedArrayBlock);
+
 #endif
 
 		//
@@ -258,17 +260,17 @@ namespace dftfe{
 		//fill the eigenVectorsFlattenedArrayBlock from eigenVectorsFlattenedArray(to be coded)
 		//
 
-		
+
 		//
 		//call Chebyshev filtering function only for the current block to be filtered
 		//and does in-place filtering
-		computing_timer.enter_section("Chebyshev filtering opt"); 
+		computing_timer.enter_section("Chebyshev filtering opt");
 		linearAlgebraOperations::chebyshevFilter(operatorMatrix,
-							 eigenVectorsFlattenedArrayBlock, 
+							 eigenVectorsFlattenedArrayBlock,
 							 numberWaveFunctionsPerCurrentBlock,
 							 flattenedArrayMacroCellLocalProcIndexIdMap,
 							 flattenedArrayCellLocalProcIndexIdMap,
-							 chebyshevOrder, 
+							 chebyshevOrder,
 							 d_lowerBoundUnWantedSpectrum,
 							 upperBoundUnwantedSpectrum,
 							 d_lowerBoundWantedSpectrum);
@@ -278,7 +280,7 @@ namespace dftfe{
 		//copy the eigenVectorsFlattenedArrayBlock into eigenVectorsFlattenedArray after filtering(to be coded)
 		//
 
-	  
+
 	      }
 	    else
 	      {
@@ -299,13 +301,13 @@ namespace dftfe{
 		//
 		//call Chebyshev filtering function only for the current block to be filtered
 		//and does in-place filtering
-		computing_timer.enter_section("Chebyshev filtering opt"); 
+		computing_timer.enter_section("Chebyshev filtering opt");
 		linearAlgebraOperations::chebyshevFilter(operatorMatrix,
-							 eigenVectorsFlattenedArray, 
+							 eigenVectorsFlattenedArray,
 							 numberWaveFunctionsPerCurrentBlock,
 							 flattenedArrayMacroCellLocalProcIndexIdMap,
 							 flattenedArrayCellLocalProcIndexIdMap,
-							 chebyshevOrder, 
+							 chebyshevOrder,
 							 d_lowerBoundUnWantedSpectrum,
 							 upperBoundUnwantedSpectrum,
 							 d_lowerBoundWantedSpectrum);
@@ -314,23 +316,24 @@ namespace dftfe{
 
 	  }//block loop
 
+
 	if(dftParameters::orthogType.compare("lowden") == 0)
 	  {
-	    computing_timer.enter_section("Lowden Orthogn Opt"); 
+	    computing_timer.enter_section("Lowden Orthogn Opt");
 	    linearAlgebraOperations::lowdenOrthogonalization(eigenVectorsFlattenedArray,
 							     totalNumberWaveFunctions);
 	    computing_timer.exit_section("Lowden Orthogn Opt");
 	  }
 	else
 	  {
-	    computing_timer.enter_section("Gram-Schmidt Orthogn Opt"); 
+	    computing_timer.enter_section("Gram-Schmidt Orthogn Opt");
 	    linearAlgebraOperations::gramSchmidtOrthogonalization(eigenVectorsFlattenedArray,
 								  totalNumberWaveFunctions);
 	    computing_timer.exit_section("Gram-Schmidt Orthogn Opt");
 	  }
 
 
-	computing_timer.enter_section("Rayleigh-Ritz proj Opt"); 
+	computing_timer.enter_section("Rayleigh-Ritz proj Opt");
 	linearAlgebraOperations::rayleighRitz(operatorMatrix,
 					      eigenVectorsFlattenedArray,
 					      totalNumberWaveFunctions,
@@ -343,20 +346,23 @@ namespace dftfe{
 	//
 	//copy back to eigenVectors array from eigenVectors Flattened Array
 	//
+	computing_timer.enter_section("Copy to flattened array");
 	for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
 	  {
 	    for(unsigned int iWave = 0; iWave < totalNumberWaveFunctions; ++iWave)
 	      {
 		unsigned int flattenedArrayGlobalIndex = (totalNumberWaveFunctions*(iNode + (operatorMatrix.getMatrixFreeData()->get_vector_partitioner()->local_range()).first) + iWave);
 		unsigned int flattenedArrayLocalIndex = flattenedArrayGlobalIndex - eigenVectorsFlattenedArray.get_partitioner()->local_range().first;
-#ifdef USE_COMPLEX	
+#ifdef USE_COMPLEX
 		eigenVectors[iWave].local_element((*operatorMatrix.getLocalProcDofIndicesReal())[iNode]) = eigenVectorsFlattenedArray.local_element(flattenedArrayLocalIndex).real();
 		eigenVectors[iWave].local_element((*operatorMatrix.getLocalProcDofIndicesImag())[iNode]) = eigenVectorsFlattenedArray.local_element(flattenedArrayLocalIndex).imag();
-#else		
+#else
 		eigenVectors[iWave].local_element(iNode) = eigenVectorsFlattenedArray.local_element(flattenedArrayLocalIndex);
+
 #endif
 	      }
 	  }
+	computing_timer.exit_section("Copy to flattened array");
 
 
       }
@@ -365,11 +371,11 @@ namespace dftfe{
 	//
 	//call chebyshev filtering routine
 	//
-	computing_timer.enter_section("Chebyshev filtering"); 
+	computing_timer.enter_section("Chebyshev filtering");
 
 	linearAlgebraOperations::chebyshevFilter(operatorMatrix,
-						 eigenVectors, 
-						 chebyshevOrder, 
+						 eigenVectors,
+						 chebyshevOrder,
 						 d_lowerBoundUnWantedSpectrum,
 						 upperBoundUnwantedSpectrum,
 						 d_lowerBoundWantedSpectrum);
@@ -377,30 +383,24 @@ namespace dftfe{
 	computing_timer.exit_section("Chebyshev filtering");
 
 
-	computing_timer.enter_section("Gram-Schmidt Orthogonalization"); 
+	computing_timer.enter_section("Gram-Schmidt Orthogonalization");
 
 	linearAlgebraOperations::gramSchmidtOrthogonalization(operatorMatrix,
 							      eigenVectors);
 
+
 	computing_timer.exit_section("Gram-Schmidt Orthogonalization");
 
 
-	computing_timer.enter_section("Rayleigh Ritz Projection"); 
+	computing_timer.enter_section("Rayleigh Ritz Projection");
 
 	linearAlgebraOperations::rayleighRitz(operatorMatrix,
 					      eigenVectors,
 					      eigenValues);
 
-
 	computing_timer.exit_section("Rayleigh Ritz Projection");
 
       }
-  
-
-   
-  
-
-
     //
     //
     return;
