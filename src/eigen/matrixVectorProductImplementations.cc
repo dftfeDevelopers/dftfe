@@ -264,7 +264,7 @@ void eigenClass<FEOrder>::computeLocalHamiltonianTimesX(const dealii::parallel::
 	{
 	  for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
 	    {
-	      int localNodeId = flattenedArrayCellLocalProcIndexIdMap[iElem][iNode];
+	      dealii::types::global_dof_index localNodeId = flattenedArrayCellLocalProcIndexIdMap[iElem][iNode];
 	      zcopy_(&numberWaveFunctions,
 		     src.begin()+localNodeId,
 		     &inc,
@@ -327,7 +327,7 @@ void eigenClass<FEOrder>::computeLocalHamiltonianTimesX(const dealii::parallel::
 	{
 	  for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
 	    {
-	      int localNodeId = flattenedArrayCellLocalProcIndexIdMap[iElem][iNode];
+	      dealii::types::global_dof_index localNodeId = flattenedArrayCellLocalProcIndexIdMap[iElem][iNode];
 	      dcopy_(&numberWaveFunctions,
 		     src.begin()+localNodeId,
 		     &inc,
