@@ -245,7 +245,7 @@ void eigenClass<FEOrder>::computeLocalHamiltonianTimesX(const dealii::parallel::
 							dealii::parallel::distributed::Vector<std::complex<double> > & dst) const
 {
 
-  
+
 
   //
   //element level matrix-vector multiplications
@@ -309,7 +309,7 @@ void eigenClass<FEOrder>::computeLocalHamiltonianTimesX(const dealii::parallel::
 							const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap,
 							dealii::parallel::distributed::Vector<double> & dst) const
 {
-   
+
   //
   //element level matrix-vector multiplications
   //
@@ -366,4 +366,3 @@ void eigenClass<FEOrder>::computeLocalHamiltonianTimesX(const dealii::parallel::
 
 }
 #endif
-
