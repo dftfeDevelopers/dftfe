@@ -83,7 +83,9 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vec
 	  unsigned int index=0;
 
 	  std::vector<double> temp(dofs_per_cell,0.0);
-	  for (std::vector<vectorType>::const_iterator it=src.begin(); it!=src.end(); it++)
+	  if (dftPtr->d_nonLocalAtomIdsInElement[iElem].size()>0)
+	  {
+	    for (std::vector<vectorType>::const_iterator it=src.begin(); it!=src.end(); it++)
 	    {
 #ifdef USE_COMPLEX
 	      (*it).extract_subvector_to(local_dof_indices.begin(), local_dof_indices.end(), temp.begin());
@@ -104,6 +106,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vec
 #endif
 	      index++;
 	    }
+	  }
 
 
 	  for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInElement[iElem].size();++iAtom)
@@ -355,7 +358,9 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::paralle
       if(cell->is_locally_owned())
 	{
 	  iElem++;
-	  for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
+	  if (dftPtr->d_nonLocalAtomIdsInElement[iElem].size()>0)
+	  {
+	    for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
 	    {
 	      dealii::types::global_dof_index localNodeId = flattenedArrayCellLocalProcIndexIdMap[iElem][iNode];
 	      zcopy_(&numberWaveFunctions,
@@ -364,6 +369,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::paralle
 		     &cellWaveFunctionMatrix[numberWaveFunctions*iNode],
 		     &inc);
 	    }
+	  }
 
 	  for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInElement[iElem].size();++iAtom)
 	    {
@@ -544,7 +550,9 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::paralle
       if(cell->is_locally_owned())
 	{
 	  iElem++;
-	  for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
+	  if (dftPtr->d_nonLocalAtomIdsInElement[iElem].size()>0)
+	  {
+	    for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
 	    {
 	      dealii::types::global_dof_index localNodeId = flattenedArrayCellLocalProcIndexIdMap[iElem][iNode];
 	      dcopy_(&numberWaveFunctions,
@@ -553,6 +561,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::paralle
 		     &cellWaveFunctionMatrix[numberWaveFunctions*iNode],
 		     &inc);
 	    }
+	  }
 
 	  for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInElement[iElem].size();++iAtom)
 	    {
