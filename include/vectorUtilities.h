@@ -27,21 +27,17 @@
 namespace dftfe{
   namespace vectorTools
   {
-  
+
     /** @brief Creates a custom partitioned flattened dealii vector.
      *  stores multiple components asociated with a node sequentially.
      *
      *  @param partitioner associated with single component vector
-     *  @param mpi_communicator communicator to be used for the new parallel vector  
-     *  @param globalNumberDegreesOfFreedom total number of nodes in mesh
      *  @param blockSize number of components associated with each node
      *
      *  @return flattenedArray custom partitioned dealii vector
      */
     template<typename T>
       void createDealiiVector(const std::shared_ptr< const dealii::Utilities::MPI::Partitioner > & partitioner,
-			      const MPI_Comm                                             & mpi_communicator,
-			      const dealii::types::global_dof_index                      & globalNumberDegreesOfFreedom,
 			      const unsigned int                                           blockSize,
 			      dealii::parallel::distributed::Vector<T>                   & flattenedArray);
 
