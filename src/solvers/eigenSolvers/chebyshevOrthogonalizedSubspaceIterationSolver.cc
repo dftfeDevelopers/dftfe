@@ -171,16 +171,12 @@ namespace dftfe{
 	    dealii::parallel::distributed::Vector<std::complex<double> > eigenVectorsFlattenedArray;
 
 	    vectorTools::createDealiiVector<std::complex<double> >(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
-								   operatorMatrix.getMPICommunicator(),
-								   operatorMatrix.getMatrixFreeData()->get_dof_handler().n_dofs(),
 								   numberWaveFunctionsPerCurrentBlock,
 								   eigenVectorsFlattenedArray);
 #else
 	    unsigned int localVectorSize = eigenVectors[0].local_size();
 	    dealii::parallel::distributed::Vector<double> eigenVectorsFlattenedArray;
 	    vectorTools::createDealiiVector<double>(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
-						    operatorMatrix.getMPICommunicator(),
-						    operatorMatrix.getMatrixFreeData()->get_dof_handler().n_dofs(),
 						    numberWaveFunctionsPerCurrentBlock,
 						    eigenVectorsFlattenedArray);
 #endif
