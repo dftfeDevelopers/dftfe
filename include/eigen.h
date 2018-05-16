@@ -53,12 +53,10 @@ namespace dftfe{
 	      std::vector<vectorType> &dst);
       
 
-      
-     
-#ifdef USE_COMPLEX
+
       /**
-       * @brief Compute discretized operator matrix times complex type multi-vectors and add it to the existing dst vector
-       *
+       * @brief Compute discretized operator matrix times multi-vectors and add it to the existing dst vector
+       * works for both real and complex data types
        * @param src Vector containing current values of source array with multi-vector array stored 
        * in a flattened format with all the wavefunction value corresponding to a given node is stored 
        * contiguously (non-const as we scale src and rescale src to avoid creation of temporary vectors)
@@ -70,13 +68,13 @@ namespace dftfe{
        * @param scalar which multiplies src before evaluating matrix times src vector
        * @param dst Vector containing sum of dst vector and operator times given multi-vectors product 
        */
-      void HX(dealii::parallel::distributed::Vector<std::complex<double> > & src,
+      void HX(dealii::parallel::distributed::Vector<dataTypes::number> & src,
 	      const unsigned int numberComponents,
 	      const std::vector<std::vector<dealii::types::global_dof_index> > & macroCellMap,
 	      const std::vector<std::vector<dealii::types::global_dof_index> > & cellMap,
 	      const bool scaleFlag,
-	      const std::complex<double> scalar,
-	      dealii::parallel::distributed::Vector<std::complex<double> > & dst);
+	      const dataTypes::number scalar,
+	      dealii::parallel::distributed::Vector<dataTypes::number> & dst);
 
 
       /**
@@ -85,11 +83,11 @@ namespace dftfe{
        * @param src given orthogonal basis vectors 
        * @return ProjMatrix projected small matrix 
        */
-      void XtHX(dealii::parallel::distributed::Vector<std::complex<double> > & src,
+      void XtHX(dealii::parallel::distributed::Vector<dataTypes::number> & src,
 		const unsigned int numberComponents,
 		const std::vector<std::vector<dealii::types::global_dof_index> > & macroCellMap,
 		const std::vector<std::vector<dealii::types::global_dof_index> > & cellMap,
-		std::vector<std::complex<double> > & ProjHam);
+		std::vector<dataTypes::number> & ProjHam);
 
 
 
@@ -100,54 +98,8 @@ namespace dftfe{
        * @return ProjMatrix projected small matrix 
        */
       void XtHX(std::vector<vectorType> &src,
-		std::vector<std::complex<double> > & ProjHam); 
-#else
-      
-      /**
-       * @brief Compute discretized operator matrix times double type multi-vectors and add it to the existing dft vector
-       *
-       * @param src Vector containing current values of source array with multi-vector array stored 
-       * in a flattened format with all the wavefunction value corresponding to a given node is stored 
-       * contiguously (non-const as we scale src and rescale src to avoid creation of temporary vectors)
-       * @param numberComponents Number of multi-fields(vectors)
-       * @param macroCellMap precomputed cell-localindex id map of the multi-wavefuncton field in the order of macrocells
-       * @param cellMap precomputed cell-localindex id map of the multi-wavefuncton field in the order of local active cells
-       * @param scaleFlag which decides whether dst has to be scaled square root of diagonal mass matrix before evaluating
-       * matrix times src vector
-       * @param dst Vector containing operator times given multi-vectors product
-       */
-      void HX(dealii::parallel::distributed::Vector<double> & src,
-	      const unsigned int numberComponents,
-	      const std::vector<std::vector<dealii::types::global_dof_index> > & macroCellMap,
-	      const std::vector<std::vector<dealii::types::global_dof_index> > & cellMap,
-	      const bool scaleFlag,
-	      const double scalar,
-	      dealii::parallel::distributed::Vector<double> & dst);
+		std::vector<dataTypes::number> & ProjHam); 
 
-
-      /**
-       * @brief Compute projection of the operator into orthogonal basis
-       *
-       * @param src given orthogonal basis vectors 
-       * @return ProjMatrix projected small matrix 
-       */
-      void XtHX(dealii::parallel::distributed::Vector<double> & src,
-		const unsigned int numberComponents,
-		const std::vector<std::vector<dealii::types::global_dof_index> > & macroCellMap,
-		const std::vector<std::vector<dealii::types::global_dof_index> > & cellMap,
-		std::vector<double> & ProjHam);
-
-
-
-      /**
-       * @brief Compute projection of the operator into orthogonal basis
-       *
-       * @param X given orthogonal basis vectors 
-       * @return ProjMatrix projected small matrix 
-       */
-      void XtHX(std::vector<vectorType> &X,
-		std::vector<double> & ProjHam);
-#endif
 
      
        /**
@@ -273,19 +225,16 @@ namespace dftfe{
   
      
 
-     
-
-#ifdef USE_COMPLEX
-
       /**
        * @brief finite-element cell level stiffness matrix with first dimension traversing the cell id(in the order of macro-cell and subcell)
        * and second dimension storing the stiffness matrix of size numberNodesPerElement x numberNodesPerElement in a flattened 1D array
        * of complex data type
        */
-      std::vector<std::vector<std::complex<double> > > d_cellHamiltonianMatrix;
+      std::vector<std::vector<dataTypes::number> > d_cellHamiltonianMatrix;
 
       /**
-       * @brief implementation of matrix-vector product using cell-level stiffness matrices for complex-data type
+       * @brief implementation of matrix-vector product using cell-level stiffness matrices.
+       * works for both real and complex data type  
        * @param src Vector containing current values of source array with multi-vector array stored 
        * in a flattened format with all the wavefunction value corresponding to a given node is stored 
        * contiguously.
@@ -293,55 +242,19 @@ namespace dftfe{
        * @param flattenedArrayCellLocalProcIndexIdMap precomputed cell-localindex id map of the multi-wavefuncton field in the order of macrocells
        * @param dst Vector containing matrix times given multi-vectors product
        */
-      void computeLocalHamiltonianTimesX(const dealii::parallel::distributed::Vector<std::complex<double> > & src,
+      void computeLocalHamiltonianTimesX(const dealii::parallel::distributed::Vector<dataTypes::number> & src,
 					 const unsigned int numberWaveFunctions,
 					 const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap,
-					 dealii::parallel::distributed::Vector<std::complex<double> > & dst) const;
+					 dealii::parallel::distributed::Vector<dataTypes::number> & dst) const;
 
 
-#else
-      /**
-       * @brief finite-element cell level stiffness matrix with first dimension traversing the cell id(in the order of macro-cell and subcell)
-       * and second dimension storing the stiffness matrix of size numberNodesPerElement x numberNodesPerElement in a flattened 1D array
-       * of double data type
-       */
-      std::vector<std::vector<double> > d_cellHamiltonianMatrix;
 
-      /**
-       * @brief implementation of matrix-vector product using cell-level stiffness matrices for double data type
-       * @param src Vector containing current values of source array with multi-vector array stored 
-       * in a flattened format with all the wavefunction value corresponding to a given node is stored 
-       * contiguously.
-       * @param numberWaveFunctions Number of wavefunctions at a given node.
-       * @param flattenedArrayCellLocalProcIndexIdMap precomputed cell-localindex id map of the multi-wavefuncton field in the order of macrocells
-       * @param dst Vector containing matrix times given multi-vectors product
-       */
-      void computeLocalHamiltonianTimesX(const dealii::parallel::distributed::Vector<double> & src,
-					 const unsigned int numberWaveFunctions,
-					 const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap,
-					 dealii::parallel::distributed::Vector<double> & dst) const;
-
-#endif
 
     
-#ifdef USE_COMPLEX
-      /**
-       * @brief implementation of non-local Hamiltonian matrix-vector product using non-local discretized projectors at cell-level for complex data type
-       * @param src Vector containing current values of source array with multi-vector array stored 
-       * in a flattened format with all the wavefunction value corresponding to a given node is stored 
-       * contiguously.
-       * @param numberWaveFunctions Number of wavefunctions at a given node.
-       * @param flattenedArrayCellLocalProcIndexIdMap precomputed cell-localindex id map of the multi-wavefuncton field in the order of macrocells
-       * @param dst Vector containing matrix times given multi-vectors product
-       */
-      void computeNonLocalHamiltonianTimesX(const dealii::parallel::distributed::Vector<std::complex<double> > & src,
-					    const unsigned int numberWaveFunctions,
-					    const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap,
-					    dealii::parallel::distributed::Vector<std::complex<double> > & dst) const;
 
-#else
       /**
-       * @brief implementation of non-local Hamiltonian matrix-vector product using non-local discretized projectors at cell-level for double data type
+       * @brief implementation of non-local Hamiltonian matrix-vector product using non-local discretized projectors at cell-level 
+       * works for both complex and real data type
        * @param src Vector containing current values of source array with multi-vector array stored 
        * in a flattened format with all the wavefunction value corresponding to a given node is stored 
        * contiguously.
@@ -349,11 +262,12 @@ namespace dftfe{
        * @param flattenedArrayCellLocalProcIndexIdMap precomputed cell-localindex id map of the multi-wavefuncton field in the order of macrocells
        * @param dst Vector containing matrix times given multi-vectors product
        */
-      void computeNonLocalHamiltonianTimesX(const dealii::parallel::distributed::Vector<double> & src,
+      void computeNonLocalHamiltonianTimesX(const dealii::parallel::distributed::Vector<dataTypes::number> & src,
 					    const unsigned int numberWaveFunctions,
 					    const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap,
-					    dealii::parallel::distributed::Vector<double> & dst) const;
-#endif      
+					    dealii::parallel::distributed::Vector<dataTypes::number> & dst) const;
+
+
 
       ///pointer to dft class
       dftClass<FEOrder>* dftPtr;

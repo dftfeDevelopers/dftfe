@@ -136,13 +136,9 @@ namespace dftfe
      *  @param numberComponents Number of multiple-fields
      *  @return X In-place update of the given subspace 
      */
-#ifdef USE_COMPLEX
-    void lowdenOrthogonalization(dealii::parallel::distributed::Vector<std::complex<double> > & X,
+    void lowdenOrthogonalization(dealii::parallel::distributed::Vector<dataTypes::number> & X,
 				 const unsigned int numberComponents);
-#else
-    void lowdenOrthogonalization(dealii::parallel::distributed::Vector<double> & X,
-				 const unsigned int numberComponents);
-#endif
+
 
     /** @brief Compute Rayleigh-Ritz projection
      *  

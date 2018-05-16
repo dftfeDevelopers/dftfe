@@ -89,40 +89,42 @@ namespace dftfe{
      * @param cellMap precomputed cell-local index id map of the multi-wavefunction field
      * @param Y Vector containing multi-component fields after operator times vectors product
      */
-    virtual void HX(dealii::parallel::distributed::Vector<dftfe::dataTypes::number> & X,
+    virtual void HX(dealii::parallel::distributed::Vector<dataTypes::number> & X,
 		    const unsigned int numberComponents,
 		    const std::vector<std::vector<dealii::types::global_dof_index> > & macroCellMap,
 		    const std::vector<std::vector<dealii::types::global_dof_index> > & cellMap,
 		    const bool scaleFlag,
-		    const dftfe::dataTypes::number scalar,
-		    dealii::parallel::distributed::Vector<dftfe::dataTypes::number> & Y) = 0;
+		    const dataTypes::number scalar,
+		    dealii::parallel::distributed::Vector<dataTypes::number> & Y) = 0;
 
+
+   
+    /**
+     * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
+     *
+     * @param X Vector of Vectors containing multi-wavefunction fields (though X does not
+     * change inside the function it is scaled inside HX function and rescaled back to
+     * avoid duplication of memory and hence is not const)
+     * @param numberComponents number of wavefunctions associated with a given node
+     * @param macroCellMap precomputed cell-local index id map of the multi-wavefuncton field
+     * @param cellMap precomputed cell-local index id map of the multi-wavefunction field
+     * @param ProjMatrix projected small matrix 
+     */
+    virtual void XtHX(dealii::parallel::distributed::Vector<dataTypes::number> & X,
+		      const unsigned int numberComponents,
+		      const std::vector<std::vector<dealii::types::global_dof_index> > & macroCellMap,
+		      const std::vector<std::vector<dealii::types::global_dof_index> > & cellMap,
+		      std::vector<dataTypes::number> & ProjHam) = 0;
 
     /**
-     * @brief Compute projection of the operator into orthogonal basis
+     * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
      *
-     * @param X given orthogonal basis vectors
+     * @param  X Vector of Vectors containing the basis vectors spanning the subspace
      * @return ProjMatrix projected small matrix 
      */
-#ifdef USE_COMPLEX
-    virtual void XtHX(dealii::parallel::distributed::Vector<std::complex<double> > & src,
-		      const unsigned int numberComponents,
-		      const std::vector<std::vector<dealii::types::global_dof_index> > & macroCellMap,
-		      const std::vector<std::vector<dealii::types::global_dof_index> > & cellMap,
-		      std::vector<std::complex<double> > & ProjHam) = 0;
-
     virtual void XtHX(std::vector<vectorType> & X,
-		      std::vector<std::complex<double> > & ProjHam) = 0;
-#else
-    virtual void XtHX(std::vector<vectorType> & X,
-		      std::vector<double> & ProjHam) = 0;
+		      std::vector<dataTypes::number> & ProjHam) = 0;
 
-    virtual void XtHX(dealii::parallel::distributed::Vector<double> & src,
-		      const unsigned int numberComponents,
-		      const std::vector<std::vector<dealii::types::global_dof_index> > & macroCellMap,
-		      const std::vector<std::vector<dealii::types::global_dof_index> > & cellMap,
-		      std::vector<double> & ProjHam) = 0;
-#endif
 
 
     /**

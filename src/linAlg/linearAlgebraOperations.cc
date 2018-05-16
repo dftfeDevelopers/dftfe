@@ -164,15 +164,11 @@ namespace linearAlgebraOperations
 
 
 
-    const unsigned int lanczosIterations=10;
-    double beta;
+      const unsigned int lanczosIterations=10;
+      double beta;
 
 
-#ifdef USE_COMPLEX
-      std::complex<double> alpha,alphaNeg;
-#else
-      double alpha;
-#endif
+      dataTypes::number alpha,alphaNeg;
 
       //
       //generate random vector v
