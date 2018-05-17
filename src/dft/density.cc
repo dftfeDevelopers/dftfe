@@ -114,13 +114,15 @@ void dftClass<FEOrder>::compute_rhoOut()
 		      if(dftParameters::spinPolarized==1)
 			fe_values.get_function_gradients(eigenVectors[(1+dftParameters::spinPolarized)*kPoint+1][i], tempGradPsi2);
 
+		      double factor = (eigenValues[kPoint][i]-fermiEnergy)/(C_kb*dftParameters::TVal);
+		      double partialOccupancy = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)):1.0/(1.0 + std::exp(factor));
+		      //
+		      factor=(eigenValues[kPoint][i+dftParameters::spinPolarized*numEigenValues]-fermiEnergy)/(C_kb*dftParameters::TVal);
+		      double partialOccupancy2 = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)):1.0/(1.0 + std::exp(factor));
+
 		      for(unsigned int q_point=0; q_point<num_quad_points; ++q_point)
 			{
-			  double factor = (eigenValues[kPoint][i]-fermiEnergy)/(C_kb*dftParameters::TVal);
-			  double partialOccupancy = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)):1.0/(1.0 + std::exp(factor));
-			  //
-			  factor=(eigenValues[kPoint][i+dftParameters::spinPolarized*numEigenValues]-fermiEnergy)/(C_kb*dftParameters::TVal);
-			  double partialOccupancy2 = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)):1.0/(1.0 + std::exp(factor));
+			  
 #ifdef USE_COMPLEX
 			  if(dftParameters::spinPolarized==1)
 			    {
@@ -222,13 +224,15 @@ void dftClass<FEOrder>::compute_rhoOut()
 		      if(dftParameters::spinPolarized==1)
 		         fe_values.get_function_values(eigenVectors[(1+dftParameters::spinPolarized)*kPoint+1][i], tempPsi2);
 
+		      double factor=(eigenValues[kPoint][i]-fermiEnergy)/(C_kb*dftParameters::TVal);
+		      double partialOccupancy = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)):1.0/(1.0 + std::exp(factor));
+		      //
+		      factor=(eigenValues[kPoint][i+dftParameters::spinPolarized*numEigenValues]-fermiEnergy)/(C_kb*dftParameters::TVal);
+		      double partialOccupancy2 = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)):1.0/(1.0 + std::exp(factor));
+
 		      for(unsigned int q_point=0; q_point<num_quad_points; ++q_point)
 			{
-			  double factor=(eigenValues[kPoint][i]-fermiEnergy)/(C_kb*dftParameters::TVal);
-			  double partialOccupancy = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)):1.0/(1.0 + std::exp(factor));
-			  //
-			  factor=(eigenValues[kPoint][i+dftParameters::spinPolarized*numEigenValues]-fermiEnergy)/(C_kb*dftParameters::TVal);
-			  double partialOccupancy2 = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)):1.0/(1.0 + std::exp(factor));
+			  
 #ifdef USE_COMPLEX
 			   if(dftParameters::spinPolarized==1)
 			    {
