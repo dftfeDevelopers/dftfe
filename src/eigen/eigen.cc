@@ -20,7 +20,7 @@
 #include <dft.h>
 #include <dftParameters.h>
 #include <linearAlgebraOperations.h>
-
+#include <vectorUtilities.h>
 
 
 namespace dftfe {
@@ -54,7 +54,7 @@ namespace dftfe {
 		     _dftPtr->getConstraintMatrixEigen(),
 		     _dftPtr->constraintsNoneDataInfo)
   {
-    
+
   }
 
 
@@ -69,7 +69,7 @@ namespace dftfe {
 
     dftPtr->matrix_free_data.initialize_dof_vector(d_invSqrtMassVector,dftPtr->eigenDofHandlerIndex);
     d_sqrtMassVector.reinit(d_invSqrtMassVector);
-    
+
 
     //
     //create macro cell map to subcells
@@ -91,6 +91,16 @@ namespace dftfe {
 
     computing_timer.exit_section("eigenClass setup");
   }
+
+  template<unsigned int FEOrder>
+  void eigenClass<FEOrder>::reinit(const unsigned int wavefunBlockSize)
+  {
+    vectorTools::createDealiiVector<dataTypes::number>
+	(dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
+	 wavefunBlockSize,
+	 dftPtr->d_projectorKetTimesVectorParFlattened);
+  }
+
 
 //
 //compute mass Vector
@@ -162,7 +172,7 @@ template<unsigned int FEOrder>
 void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				      const vectorType & phi,
 				      const vectorType & phiExt,
-				      const std::map<dealii::CellId,std::vector<double> > & pseudoValues) 
+				      const std::map<dealii::CellId,std::vector<double> > & pseudoValues)
 {
   const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
   const unsigned int n_array_elements = VectorizedArray<double>::n_array_elements;
@@ -241,7 +251,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 				      const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
 				      const vectorType & phi,
 				      const vectorType & phiExt,
-				      const std::map<dealii::CellId,std::vector<double> > & pseudoValues) 
+				      const std::map<dealii::CellId,std::vector<double> > & pseudoValues)
 {
   const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
   const unsigned int n_array_elements = VectorizedArray<double>::n_array_elements;
@@ -390,7 +400,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 
     src.update_ghost_values();
 
-    
+
     //
     //Hloc*M^{-1/2}*X
     //
@@ -432,7 +442,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 	       dst.begin()+i*numberWaveFunctions,
 	       &inc);
       }
-      
+
 
     //
     //unscale src M^{1/2}*X
@@ -535,7 +545,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 	       dst.begin()+i*numberWaveFunctions,
 	       &inc);
       }
-      
+
 
     //
     //unscale src M^{1/2}*X
@@ -608,8 +618,8 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
   void eigenClass<FEOrder>::XtHX(std::vector<vectorType> & src,
 				 std::vector<std::complex<double> > & ProjHam)
   {
-  
-    //Resize ProjHam 
+
+    //Resize ProjHam
     ProjHam.resize(src.size()*src.size(),0.0);
 
     std::vector<vectorType> tempPSI3(src.size());
@@ -622,8 +632,8 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
     HX(src, tempPSI3);
     for (unsigned int i = 0; i < src.size(); i++)
       tempPSI3[i].update_ghost_values();
-    
-    unsigned int dofs_per_proc=src[0].local_size()/2; 
+
+    unsigned int dofs_per_proc=src[0].local_size()/2;
 
     //
     //required for lapack functions
@@ -642,12 +652,12 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
     unsigned int index = 0;
     for (std::vector<vectorType>::const_iterator it = src.begin(); it != src.end(); it++)
       {
-	(*it).extract_subvector_to(dftPtr->getLocalDofIndicesReal().begin(), 
-				   dftPtr->getLocalDofIndicesReal().end(), 
-				   xReal.begin()+dofs_per_proc*index); 
+	(*it).extract_subvector_to(dftPtr->getLocalDofIndicesReal().begin(),
+				   dftPtr->getLocalDofIndicesReal().end(),
+				   xReal.begin()+dofs_per_proc*index);
 
-	(*it).extract_subvector_to(dftPtr->getLocalDofIndicesImag().begin(), 
-				   dftPtr->getLocalDofIndicesImag().end(), 
+	(*it).extract_subvector_to(dftPtr->getLocalDofIndicesImag().begin(),
+				   dftPtr->getLocalDofIndicesImag().end(),
 				   xImag.begin()+dofs_per_proc*index);
 
 	tempPSI3[index].extract_subvector_to(dftPtr->getLocalDofIndicesReal().begin(),
@@ -657,7 +667,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 	tempPSI3[index].extract_subvector_to(dftPtr->getLocalDofIndicesImag().begin(),
 					     dftPtr->getLocalDofIndicesImag().end(),
 					     hxImag.begin()+dofs_per_proc*index);
- 
+
 	index++;
       }
 
@@ -685,7 +695,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 		  MPI_C_DOUBLE_COMPLEX,
 		  MPI_SUM,
 		  mpi_communicator);
- 
+
   }
 
   template<unsigned int FEOrder>
@@ -731,7 +741,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
     for(unsigned int i = 0; i < Y.local_size(); ++i)
       Y.local_element(i) = std::conj(Y.local_element(i));
 
-    
+
     char transA = 'N';
     char transB = 'T';
     const std::complex<double> alpha = 1.0, beta = 0.0;
@@ -756,7 +766,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 	   &numberWaveFunctions);
 
     const unsigned int size = numberWaveFunctions*numberWaveFunctions;
-	   
+
     MPI_Allreduce(&XtHXValuelocal[0],
 		  &ProjHam[0],
 		  size,
@@ -770,7 +780,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 				 std::vector<double> & ProjHam)
   {
 
-    //Resize ProjHam 
+    //Resize ProjHam
     ProjHam.resize(src.size()*src.size(),0.0);
 
     std::vector<vectorType> tempPSI3(src.size());
@@ -787,13 +797,13 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 	tempPSI3[i].update_ghost_values();
       }
 
-    const unsigned int dofs_per_proc=src[0].local_size(); 
+    const unsigned int dofs_per_proc=src[0].local_size();
 
 
     //
     //required for lapack functions
     //
-    const unsigned int k = dofs_per_proc, n = src.size(); 
+    const unsigned int k = dofs_per_proc, n = src.size();
     const unsigned int vectorSize = k*n;
     const unsigned int lda=k, ldb=k, ldc=n;
 
@@ -816,7 +826,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
     char transA  = 'T', transB  = 'N';
     const double alpha = 1.0, beta  = 0.0;
     dgemm_(&transA, &transB, &n, &n, &k, &alpha, &x[0], &lda, &hx[0], &ldb, &beta, &ProjHam[0], &ldc);
-    Utilities::MPI::sum(ProjHam, mpi_communicator, ProjHam); 
+    Utilities::MPI::sum(ProjHam, mpi_communicator, ProjHam);
   }
 
   template<unsigned int FEOrder>
@@ -843,7 +853,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
     //
     dealii::parallel::distributed::Vector<double> Y;
     Y.reinit(X);
-   
+
     //
     //evaluate H times X and store in Y
     //
@@ -856,7 +866,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
        scaleFlag,
        scalar,
        Y);
-    
+
     char transA = 'N';
     char transB = 'T';
     const double alpha = 1.0, beta = 0.0;
@@ -874,7 +884,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 	   &beta,
 	   &ProjHam[0],
 	   &numberWaveFunctions);
-	   
+
     Utilities::MPI::sum(ProjHam, mpi_communicator, ProjHam);
   }
 #endif
@@ -884,7 +894,7 @@ void eigenClass<FEOrder>::computeVEffSpinPolarized(const std::map<dealii::CellId
 						   const vectorType & phi,
 						   const vectorType & phiExt,
 						   const unsigned int spinIndex,
-						   const std::map<dealii::CellId,std::vector<double> > & pseudoValues) 
+						   const std::map<dealii::CellId,std::vector<double> > & pseudoValues)
 
 {
   const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
@@ -968,7 +978,7 @@ void eigenClass<FEOrder>::computeVEffSpinPolarized(const std::map<dealii::CellId
 						   const vectorType & phi,
 						   const vectorType & phiExt,
 						   const unsigned int spinIndex,
-						   const std::map<dealii::CellId,std::vector<double> > & pseudoValues) 
+						   const std::map<dealii::CellId,std::vector<double> > & pseudoValues)
 {
   const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
   const unsigned int n_array_elements = VectorizedArray<double>::n_array_elements;

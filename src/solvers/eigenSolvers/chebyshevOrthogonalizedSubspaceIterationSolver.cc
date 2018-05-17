@@ -72,6 +72,7 @@ namespace dftfe{
 
 
     computing_timer.enter_section("Lanczos k-step Upper Bound");
+    operatorMatrix.reinit(1);
     double upperBoundUnwantedSpectrum = linearAlgebraOperations::lanczosUpperBoundEigenSpectrum(operatorMatrix,
 												eigenVectors[0]);
 
@@ -207,9 +208,11 @@ namespace dftfe{
 	    //
 	    //Get the current block data
 	    //
-	    unsigned int numberWaveFunctionsPerCurrentBlock = d_numberWaveFunctionsBlock[nBlock];
-	    unsigned int lowIndex = equalNumberWaveFunctionsPerBlock*nBlock;
-	    unsigned int highIndexPlusOne = lowIndex + numberWaveFunctionsPerCurrentBlock;
+	    const unsigned int numberWaveFunctionsPerCurrentBlock = d_numberWaveFunctionsBlock[nBlock];
+	    const unsigned int lowIndex = equalNumberWaveFunctionsPerBlock*nBlock;
+	    const unsigned int highIndexPlusOne = lowIndex + numberWaveFunctionsPerCurrentBlock;
+
+	    operatorMatrix.reinit(numberWaveFunctionsPerCurrentBlock);
 
 	    //
 	    //create custom partitioned dealii array by storing wavefunctions(no need to createDealii vector if block size does not change)
@@ -231,6 +234,7 @@ namespace dftfe{
 		vectorTools::createDealiiVector<double>(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
 							numberWaveFunctionsPerCurrentBlock,
 							eigenVectorsFlattenedArrayBlock);
+
 #endif
 
 		//
@@ -360,6 +364,7 @@ namespace dftfe{
       }
     else
       {
+	operatorMatrix.reinit(totalNumberWaveFunctions);
 	//
 	//call chebyshev filtering routine
 	//

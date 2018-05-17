@@ -14,7 +14,7 @@
 //
 // --------------------------------------------------------------------------------------
 //
-// @author Phani Motamarri 
+// @author Phani Motamarri
 //
 #ifndef operatorDFTClass_h
 #define operatorDFTClass_h
@@ -26,13 +26,12 @@
 
 
 namespace dftfe{
+
   /**
    * @brief Base class for building the DFT operator and the action of operator on a vector
    *
    * @author Phani Motamarri
    */
-
- 
   class operatorDFTClass {
 
     //
@@ -52,13 +51,19 @@ namespace dftfe{
      */
     virtual void init() = 0;
 
+   /**
+    * @brief initializes datastructures for HX, XtHX.
+    *
+    * @param wavefunBlockSize number of wavefunction vector (block size of X).
+    */
+    virtual void reinit(const unsigned int wavefunBlockSize)=0;
 
     /**
      * @brief compute diagonal mass matrix
      *
      * @param dofHandler dofHandler associated with the current mesh
      * @param constraintMatrix constraints to be used
-     * @param sqrtMassVec output the value of square root of diagonal mass matrix 
+     * @param sqrtMassVec output the value of square root of diagonal mass matrix
      * @param invSqrtMassVec output the value of inverse square root of diagonal mass matrix
      */
     virtual void computeMassVector(const dealii::DoFHandler<3>    & dofHandler,
@@ -98,7 +103,7 @@ namespace dftfe{
 		    dealii::parallel::distributed::Vector<dataTypes::number> & Y) = 0;
 
 
-   
+
     /**
      * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
      *
@@ -108,7 +113,7 @@ namespace dftfe{
      * @param numberComponents number of wavefunctions associated with a given node
      * @param macroCellMap precomputed cell-local index id map of the multi-wavefuncton field
      * @param cellMap precomputed cell-local index id map of the multi-wavefunction field
-     * @param ProjMatrix projected small matrix 
+     * @param ProjMatrix projected small matrix
      */
     virtual void XtHX(dealii::parallel::distributed::Vector<dataTypes::number> & X,
 		      const unsigned int numberComponents,
@@ -121,7 +126,7 @@ namespace dftfe{
      * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
      *
      * @param  X Vector of Vectors containing the basis vectors spanning the subspace
-     * @return ProjMatrix projected small matrix 
+     * @return ProjMatrix projected small matrix
      */
     virtual void XtHX(std::vector<vectorType> & X,
 		      std::vector<dataTypes::number> & ProjHam) = 0;
@@ -172,7 +177,7 @@ namespace dftfe{
      */
     dftUtils::constraintMatrixInfo * getOverloadedConstraintMatrix() const;
 
-    
+
     /**
      * @brief Get matrix free data
      *
@@ -187,10 +192,10 @@ namespace dftfe{
      * @return mpi communicator
      */
     const MPI_Comm & getMPICommunicator() const;
-  
+
 
   protected:
-    
+
     /**
      * @brief default Constructor.
      */
