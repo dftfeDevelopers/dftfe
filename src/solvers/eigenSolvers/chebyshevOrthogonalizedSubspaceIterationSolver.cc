@@ -144,26 +144,22 @@ namespace dftfe{
 	//
 	//create custom partitioned dealii array by storing wave functions at a given node contiguously
 	//
-	computing_timer.enter_section("Custom Partitioned Array Creation"); 
+	computing_timer.enter_section("Custom Partitioned Array Creation");
 #ifdef USE_COMPLEX
-	unsigned int localVectorSize = eigenVectors[0].local_size()/2;
+	const unsigned int localVectorSize = eigenVectors[0].local_size()/2;
 	dealii::parallel::distributed::Vector<std::complex<double> > eigenVectorsFlattenedArray;
 
 	vectorTools::createDealiiVector<std::complex<double> >(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
-							       operatorMatrix.getMPICommunicator(),
-							       operatorMatrix.getMatrixFreeData()->get_dof_handler().n_dofs(),
 							       totalNumberWaveFunctions,
 							       eigenVectorsFlattenedArray);
 #else
-	unsigned int localVectorSize = eigenVectors[0].local_size();
+	const unsigned int localVectorSize = eigenVectors[0].local_size();
 	dealii::parallel::distributed::Vector<double> eigenVectorsFlattenedArray;
 	vectorTools::createDealiiVector<double>(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
-						operatorMatrix.getMPICommunicator(),
-						operatorMatrix.getMatrixFreeData()->get_dof_handler().n_dofs(),
 						totalNumberWaveFunctions,
 						eigenVectorsFlattenedArray);
 #endif
-	computing_timer.exit_section("Custom Partitioned Array Creation"); 
+	computing_timer.exit_section("Custom Partitioned Array Creation");
 
 	//
 	//copy the data from eigenVectors to eigenVectorsFlattened
@@ -223,22 +219,18 @@ namespace dftfe{
 	      {
 
 #ifdef USE_COMPLEX
-		unsigned int localVectorSize = eigenVectors[0].local_size()/2;
+		const unsigned int localVectorSize = eigenVectors[0].local_size()/2;
 		dealii::parallel::distributed::Vector<std::complex<double> > eigenVectorsFlattenedArrayBlock;
+
 		vectorTools::createDealiiVector<std::complex<double> >(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
-								       operatorMatrix.getMPICommunicator(),
-								       operatorMatrix.getMatrixFreeData()->get_dof_handler().n_dofs(),
 								       numberWaveFunctionsPerCurrentBlock,
 								       eigenVectorsFlattenedArrayBlock);
 #else
-		unsigned int localVectorSize = eigenVectors[0].local_size();
+		const unsigned int localVectorSize = eigenVectors[0].local_size();
 		dealii::parallel::distributed::Vector<double> eigenVectorsFlattenedArrayBlock;
 		vectorTools::createDealiiVector<double>(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
-							operatorMatrix.getMPICommunicator(),
-							operatorMatrix.getMatrixFreeData()->get_dof_handler().n_dofs(),
 							numberWaveFunctionsPerCurrentBlock,
 							eigenVectorsFlattenedArrayBlock);
-
 #endif
 
 		//
