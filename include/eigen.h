@@ -49,16 +49,16 @@ namespace dftfe{
          we scale src and rescale src to avoid creation of temporary vectors)
        * @param dst Vector of Vectors containing operator times vectors product
        */
-      void HX(std::vector<vectorType> &src, 
+      void HX(std::vector<vectorType> &src,
 	      std::vector<vectorType> &dst);
-      
+
 
 
       /**
        * @brief Compute discretized operator matrix times multi-vectors and add it to the existing dst vector
        * works for both real and complex data types
-       * @param src Vector containing current values of source array with multi-vector array stored 
-       * in a flattened format with all the wavefunction value corresponding to a given node is stored 
+       * @param src Vector containing current values of source array with multi-vector array stored
+       * in a flattened format with all the wavefunction value corresponding to a given node is stored
        * contiguously (non-const as we scale src and rescale src to avoid creation of temporary vectors)
        * @param numberComponents Number of multi-fields(vectors)
        * @param macroCellMap precomputed cell-localindex id map of the multi-wavefuncton field in the order of macrocells
@@ -66,7 +66,7 @@ namespace dftfe{
        * @param scaleFlag which decides whether dst has to be scaled square root of diagonal mass matrix before evaluating
        * matrix times src vector
        * @param scalar which multiplies src before evaluating matrix times src vector
-       * @param dst Vector containing sum of dst vector and operator times given multi-vectors product 
+       * @param dst Vector containing sum of dst vector and operator times given multi-vectors product
        */
       void HX(dealii::parallel::distributed::Vector<dataTypes::number> & src,
 	      const unsigned int numberComponents,
@@ -80,8 +80,8 @@ namespace dftfe{
       /**
        * @brief Compute projection of the operator into orthogonal basis
        *
-       * @param src given orthogonal basis vectors 
-       * @return ProjMatrix projected small matrix 
+       * @param src given orthogonal basis vectors
+       * @return ProjMatrix projected small matrix
        */
       void XtHX(dealii::parallel::distributed::Vector<dataTypes::number> & src,
 		const unsigned int numberComponents,
@@ -94,14 +94,14 @@ namespace dftfe{
       /**
        * @brief Compute projection of the operator into orthogonal basis
        *
-       * @param src given orthogonal basis vectors 
-       * @return ProjMatrix projected small matrix 
+       * @param src given orthogonal basis vectors
+       * @return ProjMatrix projected small matrix
        */
       void XtHX(std::vector<vectorType> &src,
-		std::vector<dataTypes::number> & ProjHam); 
+		std::vector<dataTypes::number> & ProjHam);
 
 
-     
+
        /**
        * @brief Computes effective potential involving local-density exchange-correlation functionals
        *
@@ -125,7 +125,7 @@ namespace dftfe{
        * @param spinIndex flag to toggle spin-up or spin-down
        * @param pseudoValues quadrature data of pseudopotential values
        */
-      void computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues, 
+      void computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				    const vectorType & phi,
 				    const vectorType & phiExt,
 				    unsigned int spinIndex,
@@ -146,7 +146,7 @@ namespace dftfe{
 		       const vectorType & phiExt,
 		       const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
 
-      
+
       /**
        * @brief Computes effective potential for gradient-spin density type exchange-correlation functionals
        *
@@ -157,16 +157,16 @@ namespace dftfe{
        * @param spinIndex flag to toggle spin-up or spin-down
        * @param pseudoValues quadrature data of pseudopotential values
        */
-      void computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues, 
+      void computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				    const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
 				    const vectorType & phi,
 				    const vectorType & phiExt,
 				    const unsigned int spinIndex,
 				    const std::map<dealii::CellId,std::vector<double> > & pseudoValues);
 
-      
+
       /**
-       * @brief sets the data member to appropriate kPoint Index 
+       * @brief sets the data member to appropriate kPoint Index
        *
        * @param kPointIndex  k-point Index to set
        */
@@ -176,14 +176,22 @@ namespace dftfe{
       //initialize eigen class
       //
       void init ();
-	    
+
+      /**
+       * @brief initializes parallel layouts and index maps required for HX, XtHX.
+       *
+       * @param wavefunBlockSize number of wavefunction vectors to which the parallel layouts and
+       * index maps correspond to. The same number of wavefunction vectors must be used
+       * in subsequent calls to HX, XtHX.
+       */
+      void reinit(const unsigned int wavefunBlockSize);
 
       /**
        * @brief Computes diagonal mass matrix
        *
        * @param dofHandler dofHandler associated with the current mesh
        * @param constraintMatrix constraints to be used
-       * @param sqrtMassVec output the value of square root of diagonal mass matrix 
+       * @param sqrtMassVec output the value of square root of diagonal mass matrix
        * @param invSqrtMassVec output the value of inverse square root of diagonal mass matrix
        */
       void computeMassVector(const dealii::DoFHandler<3> & dofHandler,
@@ -210,7 +218,7 @@ namespace dftfe{
        * @param cell_range range of cell-blocks
        */
       void computeLocalHamiltonianTimesXMF(const dealii::MatrixFree<3,double>  &data,
-					   std::vector<vectorType>  &dst, 
+					   std::vector<vectorType>  &dst,
 					   const std::vector<vectorType>  &src,
 					   const std::pair<unsigned int,unsigned int> &cell_range) const;
 
@@ -220,10 +228,10 @@ namespace dftfe{
        * @param dst Vector of Vectors containing matrix times vectors product
        */
       void computeNonLocalHamiltonianTimesX(const std::vector<vectorType> &src,
-					    std::vector<vectorType>       &dst) const;  
+					    std::vector<vectorType>       &dst) const;
 
-  
-     
+
+
 
       /**
        * @brief finite-element cell level stiffness matrix with first dimension traversing the cell id(in the order of macro-cell and subcell)
@@ -234,9 +242,9 @@ namespace dftfe{
 
       /**
        * @brief implementation of matrix-vector product using cell-level stiffness matrices.
-       * works for both real and complex data type  
-       * @param src Vector containing current values of source array with multi-vector array stored 
-       * in a flattened format with all the wavefunction value corresponding to a given node is stored 
+       * works for both real and complex data type
+       * @param src Vector containing current values of source array with multi-vector array stored
+       * in a flattened format with all the wavefunction value corresponding to a given node is stored
        * contiguously.
        * @param numberWaveFunctions Number of wavefunctions at a given node.
        * @param flattenedArrayCellLocalProcIndexIdMap precomputed cell-localindex id map of the multi-wavefuncton field in the order of macrocells
@@ -250,13 +258,13 @@ namespace dftfe{
 
 
 
-    
+
 
       /**
-       * @brief implementation of non-local Hamiltonian matrix-vector product using non-local discretized projectors at cell-level 
+       * @brief implementation of non-local Hamiltonian matrix-vector product using non-local discretized projectors at cell-level
        * works for both complex and real data type
-       * @param src Vector containing current values of source array with multi-vector array stored 
-       * in a flattened format with all the wavefunction value corresponding to a given node is stored 
+       * @param src Vector containing current values of source array with multi-vector array stored
+       * in a flattened format with all the wavefunction value corresponding to a given node is stored
        * contiguously.
        * @param numberWaveFunctions Number of wavefunctions at a given node.
        * @param flattenedArrayCellLocalProcIndexIdMap precomputed cell-localindex id map of the multi-wavefuncton field in the order of macrocells
@@ -312,7 +320,6 @@ namespace dftfe{
 
       //d_kpoint index for which Hamiltonian is computed
       unsigned int d_kPointIndex;
-
     };
 
 

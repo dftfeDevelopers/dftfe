@@ -423,7 +423,7 @@ namespace dftfe {
       std::vector<bool> selectedDofsHanging;
 
 
-      
+
       forceClass<FEOrder> * forcePtr;
       symmetryClass<FEOrder> * symmetryPtr;
       geoOptIon<FEOrder> * geoOptIonPtr;
@@ -436,7 +436,7 @@ namespace dftfe {
       /**
        *object which is used to store dealii constraint matrix information
        *using STL vectors. The relevant dealii constraint matrix
-       *has hanging node constraints and periodic constraints(for periodic problems)  
+       *has hanging node constraints and periodic constraints(for periodic problems)
        *used in eigen solve
        */
       dftUtils::constraintMatrixInfo constraintsNoneEigenDataInfo;
@@ -520,9 +520,19 @@ namespace dftfe {
 #ifdef USE_COMPLEX
       std::vector<std::vector<std::vector<std::vector<std::complex<double> > > > > d_nonLocalProjectorElementMatrices,d_nonLocalProjectorElementMatricesConjugate;
       std::vector<dealii::parallel::distributed::Vector<std::complex<double> > > d_projectorKetTimesVectorPar;
+
+      /// parallel vector used in nonLocalHamiltionian times wavefunction vector computation
+      /// pre-initialization of the parallel layout is more efficient than creating the parallel
+      /// layout for every nonLocalHamiltionan times wavefunction computation
+      dealii::parallel::distributed::Vector<std::complex<double> >  d_projectorKetTimesVectorParFlattened;
 #else
       std::vector<std::vector<std::vector<std::vector<double> > > > d_nonLocalProjectorElementMatrices,d_nonLocalProjectorElementMatricesConjugate;
       std::vector<dealii::parallel::distributed::Vector<double> > d_projectorKetTimesVectorPar;
+
+      /// parallel vector used in nonLocalHamiltionian times wavefunction vector computation
+      /// pre-initialization of the parallel layout is more efficient than creating the parallel
+      /// layout for every nonLocalHamiltionan times wavefunction computation
+      dealii::parallel::distributed::Vector<double> d_projectorKetTimesVectorParFlattened;
 #endif
 
       //
