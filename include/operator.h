@@ -116,6 +116,7 @@ namespace dftfe{
 		      const std::vector<std::vector<dealii::types::global_dof_index> > & cellMap,
 		      std::vector<dataTypes::number> & ProjHam) = 0;
 
+
     /**
      * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
      *
