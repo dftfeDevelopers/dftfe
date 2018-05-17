@@ -318,6 +318,7 @@ namespace dftfe {
 	  gridinSerial.read_ucd(f2);
 
 	  meshGenUtils::markPeriodicFacesNonOrthogonal(parallelTriangulation,d_domainBoundingVectors);
+	  meshGenUtils::markPeriodicFacesNonOrthogonal(serialTriangulation,d_domainBoundingVectors);
 	}
       else
 	{
@@ -382,6 +383,7 @@ namespace dftfe {
 	  //collect periodic faces of the first level mesh to set up periodic boundary conditions later
 	  //
 	  meshGenUtils::markPeriodicFacesNonOrthogonal(parallelTriangulation,d_domainBoundingVectors);
+	  meshGenUtils::markPeriodicFacesNonOrthogonal(serialTriangulation,d_domainBoundingVectors);
 
 	  if (dftParameters::verbosity>=1)
 	    pcout<<std::endl<< "Base uniform number of elements: "<< parallelTriangulation.n_global_active_cells()<<std::endl;

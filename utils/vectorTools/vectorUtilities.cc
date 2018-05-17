@@ -28,19 +28,18 @@ namespace dftfe
 
     template<typename T>
     void createDealiiVector(const std::shared_ptr< const dealii::Utilities::MPI::Partitioner > & partitioner,
-			    const MPI_Comm                                                     & mpi_communicator,
-			    const dealii::types::global_dof_index                              & globalNumberDegreesOfFreedom,
 			    const unsigned int                                                   blockSize,
 			    dealii::parallel::distributed::Vector<T>                           & flattenedArray)
     {
 
+      const MPI_Comm & mpi_communicator=partitioner->get_communicator();	
       //
       //Get required sizes
       //
       const unsigned int n_ghosts   = partitioner->n_ghost_indices();
       const unsigned int localSize  = partitioner->local_size();
       const unsigned int totalSize  = localSize + n_ghosts;
-
+      const  dealii::types::global_dof_index globalNumberDegreesOfFreedom=partitioner->size(); 
       //
       //create data for new parallel layout
       //
@@ -200,14 +199,10 @@ namespace dftfe
 
 #ifdef USE_COMPLEX
     template void createDealiiVector(const std::shared_ptr<const dealii::Utilities::MPI::Partitioner> &,
-				     const MPI_Comm                                                   &,
-				     const dealii::types::global_dof_index                            &,
 				     const unsigned int                                                ,
 				     dealii::parallel::distributed::Vector<std::complex<double> >     &);
 #else
     template void createDealiiVector(const std::shared_ptr<const dealii::Utilities::MPI::Partitioner> &,
-				     const MPI_Comm                                                   &,
-				     const dealii::types::global_dof_index                            &,
 				     const unsigned int                                                ,
 				     dealii::parallel::distributed::Vector<double>                    &);
 #endif
