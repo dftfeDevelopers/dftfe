@@ -143,7 +143,7 @@ namespace dftfe
     /** @brief Compute Rayleigh-Ritz projection
      *  
      *  @param operatorMatrix An object which has access to the given matrix
-     *  @param  X Given subspace
+     *  @param  X Given subspace as STL vector dealii vectors
      *
      *  @return X In-place rotated subspace
      *  @return eigenValues of the Projected Hamiltonian
@@ -174,7 +174,41 @@ namespace dftfe
 		      std::vector<double>     & eigenValues);
 
 
+     /** @brief Compute Compute residual norm associated with eigenValue problem of the given operator
+     *  
+     *  @param operatorMatrix An object which has access to the given matrix
+     *  @param  X Given subspace as STL vector of dealii vectors
+     *  @param  eigenValues eigenValues of the operator
+     *
+     *  @return residualNorms of the eigen Value problem
+     */
+    void computeEigenResidualNorm(operatorDFTClass        & operatorMatrix,
+				  std::vector<vectorType> & X,
+				  const std::vector<double>     & eigenValues,
+				  std::vector<double> & residualNorm);
+
+
+     /** @brief Compute residual norm associated with eigenValue problem of the given operator
+     *  
+     *  @param operatorMatrix An object which has access to the given matrix
+     *  @param  X Given eigenvector subspace as flattened array of multi-vectors
+     *  @param  eigenValues eigenValues of the operator
+     *  @param  macroCellMap precomputed cell-localindex id map of the multi-wavefuncton field in the order of macrocells
+     *  @param  cellMap precomputed cell-localindex id map of the multi-wavefuncton field in the order of local active cells
+     *
+     *  @return residualNorms of the eigen Value problem
+     */
+    template<typename T>
+    void computeEigenResidualNorm(operatorDFTClass        & operatorMatrix,
+				  dealii::parallel::distributed::Vector<T> & X,
+				  const std::vector<double> & eigenValues,
+				  const std::vector<std::vector<dealii::types::global_dof_index> > & macroCellMap,
+				  const std::vector<std::vector<dealii::types::global_dof_index> > & cellMap,
+				  std::vector<double>     & residualNorm);
+
     
+    
+
 
   }
 

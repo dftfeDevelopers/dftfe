@@ -68,18 +68,19 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 
   subspaceIterationSolver.solve(kohnShamDFTEigenOperator,
   				eigenVectors[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
-  				eigenValuesTemp);
+  				eigenValuesTemp,
+				residualNormWaveFunctions);
  
 
   //
   //Compute and print L2 norm
   //
-  computing_timer.enter_section("compute Residual Norm"); 
+  /* computing_timer.enter_section("compute Residual Norm"); 
   computeResidualNorm(eigenValuesTemp,
 		      kohnShamDFTEigenOperator,
 		      eigenVectors[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
 		      residualNormWaveFunctions);
-  computing_timer.exit_section("compute Residual Norm");
+		      computing_timer.exit_section("compute Residual Norm");*/
   
   //
   //scale the eigenVectors with M^{-1/2} to represent the wavefunctions in the usual FE basis

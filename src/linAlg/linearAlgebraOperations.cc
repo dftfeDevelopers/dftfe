@@ -551,8 +551,50 @@ namespace linearAlgebraOperations
 	}
 #endif
 
-    }
+  }
 
-  }//end of namespace
+  void computeEigenResidualNorm(operatorDFTClass & operatorMatrix,
+				std::vector<vectorType> & X,
+				const std::vector<double> & eigenValues,
+				std::vector<double> & residualNorm)
+
+  {
+    //
+    //create a temp array
+    //
+    std::vector<vectorType> PSI(X.size());
+    for(unsigned int i = 0; i < X.size(); ++i)
+      PSI[i].reinit(X[0]);
+
+    operatorMatrix.HX(X,PSI);
+
+    if (dftParameters::verbosity==2)
+      {
+	if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+	  std::cout<<"L-2 Norm of residue   :"<<std::endl;
+      }
+
+    for(unsigned int i = 0; i < eigenValues.size(); i++)
+      {
+	(PSI[i]).add(-eigenValues[i],X[i]) ;
+	const double resNorm= (PSI[i]).l2_norm();
+	residualNorm[i]=resNorm;
+      
+	if(dftParameters::verbosity==2)
+	  {
+	    if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+	      std::cout<<"eigen vector "<< i<<": "<<resNorm<<std::endl;
+	  }
+      }
+    if(dftParameters::verbosity==2)  
+      {
+	if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+	  std::cout <<std::endl;
+      }
+
+  }
+
+
+}//end of namespace
 
 }

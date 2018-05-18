@@ -54,7 +54,8 @@ namespace dftfe{
      */
     eigenSolverClass::ReturnValueType solve(operatorDFTClass & operatorMatrix,
 					    std::vector<vectorType> & eigenVectors,
-					    std::vector<double> & eigenValues);
+					    std::vector<double> & eigenValues,
+					    std::vector<double> & residuals);
 
     /**
      * @brief reinit spectrum bounds
