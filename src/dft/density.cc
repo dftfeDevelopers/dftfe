@@ -32,7 +32,9 @@ void dftClass<FEOrder>::compute_rhoOut()
 #endif
   const unsigned int numQuadPoints=psiEval.n_q_points;
 
-  Tensor<1,2,VectorizedArray<double> > zeroTensor1;zeroTensor1[0]=make_vectorized_array(0.0);zeroTensor1[1]=make_vectorized_array(0.0);
+  Tensor<1,2,VectorizedArray<double> > zeroTensor1;
+  zeroTensor1[0]=make_vectorized_array(0.0);
+  zeroTensor1[1]=make_vectorized_array(0.0);
   Tensor<1,2, Tensor<1,3,VectorizedArray<double> > > zeroTensor2;
   Tensor<1,3,VectorizedArray<double> > zeroTensor3;
   for (unsigned int idim=0; idim<3; idim++)
@@ -51,7 +53,6 @@ void dftClass<FEOrder>::compute_rhoOut()
     rhoOutValuesSpinPolarized = &(rhoOutValsSpinPolarized.back());
     }
 
-  //pcout<<"check 6.1: "<<std::endl;
   if(dftParameters::xc_id == 4)
     {
       gradRhoOutVals.push_back(std::map<dealii::CellId, std::vector<double> >());
