@@ -67,7 +67,8 @@ namespace dftfe{
   eigenSolverClass::ReturnValueType
   chebyshevOrthogonalizedSubspaceIterationSolver::solve(operatorDFTClass           & operatorMatrix,
 							std::vector<vectorType>    & eigenVectors,
-							std::vector<double>        & eigenValues)
+							std::vector<double>        & eigenValues,
+							std::vector<double>        & residualNorms)
   {
 
 
@@ -339,6 +340,16 @@ namespace dftfe{
 	computing_timer.exit_section("Rayleigh-Ritz proj Opt");
 
 
+	computing_timer.enter_section("eigen vectors residuals opt");
+	linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
+							  eigenVectorsFlattenedArray,
+							  eigenValues,
+							  flattenedArrayMacroCellLocalProcIndexIdMap,
+							  flattenedArrayCellLocalProcIndexIdMap,
+							  residualNorms);
+	computing_timer.exit_section("eigen vectors residuals opt");
+
+
 	//
 	//copy back to eigenVectors array from eigenVectors Flattened Array
 	//
@@ -359,6 +370,14 @@ namespace dftfe{
 	      }
 	  }
 	computing_timer.exit_section("Copy to flattened array");
+
+
+	/*computing_timer.enter_section("compute eigen vectors residuals");
+	linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
+							  eigenVectors,
+							  eigenValues,
+							  residualNorms);
+							  computing_timer.exit_section("compute eigen vectors residuals");*/
 
 
       }
@@ -396,6 +415,14 @@ namespace dftfe{
 					      eigenValues);
 
 	computing_timer.exit_section("Rayleigh Ritz Projection");
+
+
+	computing_timer.enter_section("compute eigen vectors residuals");
+	linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
+							  eigenVectors,
+							  eigenValues,
+							  residualNorms);
+	computing_timer.exit_section("compute eigen vectors residuals");
 
       }
     //

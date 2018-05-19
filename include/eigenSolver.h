@@ -52,7 +52,8 @@ namespace dftfe{
      */
     virtual ReturnValueType solve(operatorDFTClass & operatorMatrix,
 				  std::vector<vectorType> & eigenVectors,
-				  std::vector<double> & eigenValues) = 0;
+				  std::vector<double> & eigenValues,
+				  std::vector<double> & residuals) = 0;
 
   protected:
 

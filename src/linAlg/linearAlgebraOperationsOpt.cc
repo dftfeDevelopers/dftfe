@@ -55,6 +55,9 @@ namespace dftfe{
 	      &info);
     }
 
+    
+   
+
 
     void callevd(const unsigned int dimensionMatrix,
 		 std::complex<double> *matrix,
@@ -169,7 +172,7 @@ namespace dftfe{
 
       //
       //initialize to zeros.
-      //
+      //x
       const T zeroValue = 0.0;
       YArray = zeroValue;
 
@@ -392,6 +395,106 @@ namespace dftfe{
       X = rotatedBasis;
 
     }
+
+    template<typename T>
+    void computeEigenResidualNorm(operatorDFTClass & operatorMatrix,
+				  dealii::parallel::distributed::Vector<T> & X,
+				  const std::vector<double> & eigenValues,
+				  const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayMacroCellLocalProcIndexIdMap,
+				  const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap,
+				
+				  std::vector<double> & residualNorm)
+
+    {
+      
+      //
+      //get the number of eigenVectors
+      //
+      const unsigned int numberVectors = eigenValues.size();
+
+      //
+      //reinit blockSize require for HX later
+      //
+      operatorMatrix.reinit(numberVectors);
+
+      //
+      //create temp Array
+      //
+      dealii::parallel::distributed::Vector<T> Y;
+      Y.reinit(X);
+
+      //
+      //initialize to zero
+      //
+      const T zeroValue = 0.0;
+      Y = zeroValue;
+
+      //
+      //compute operator times X
+      //
+      bool scaleFlag = false;
+      T scalar = 1.0;
+      operatorMatrix.HX(X,
+			numberVectors,
+			flattenedArrayMacroCellLocalProcIndexIdMap,
+			flattenedArrayCellLocalProcIndexIdMap,
+			scaleFlag,
+			scalar,
+			Y);
+
+      if(dftParameters::verbosity==2)
+	{
+	  if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+	    std::cout<<"L-2 Norm of residue   :"<<std::endl;
+	}
+      
+      
+      const unsigned int localVectorSize = X.local_size()/numberVectors;
+
+      //
+      //compute residual norms
+      //
+      std::vector<T> residualNormSquare(numberVectors,0.0);
+      for(unsigned int iDof = 0; iDof < localVectorSize; ++iDof)
+	{
+	  for(unsigned int iWave = 0; iWave < numberVectors; iWave++)
+	    {
+	      T value = Y.local_element(numberVectors*iDof + iWave) - eigenValues[iWave]*X.local_element(numberVectors*iDof + iWave);
+	      residualNormSquare[iWave] += std::abs(value)*std::abs(value);
+	    }
+	}
+
+
+      dealii::Utilities::MPI::sum(residualNormSquare,X.get_mpi_communicator(),residualNormSquare);
+
+      
+      for(unsigned int iWave = 0; iWave < numberVectors; ++iWave)
+	{
+#ifdef USE_COMPLEX
+	  double value = residualNormSquare[iWave].real();
+#else
+	  double value = residualNormSquare[iWave];
+#endif
+	  residualNorm[iWave] = sqrt(value);
+
+	  if(dftParameters::verbosity==2)
+	    {
+	      if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+		std::cout<<"eigen vector "<< iWave<<": "<<residualNorm[iWave]<<std::endl;
+	    }
+	}
+
+      if(dftParameters::verbosity==2)  
+      {
+	if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+	  std::cout <<std::endl;
+      }
+	       
+    }
+			     
+
+
+
 
 #ifdef USE_COMPLEX
     void lowdenOrthogonalization(dealii::parallel::distributed::Vector<std::complex<double> > & X,
@@ -688,9 +791,9 @@ namespace dftfe{
 #endif
 
 
-#ifdef USE_COMPLEX
+
     template void chebyshevFilter(operatorDFTClass & operatorMatrix,
-				  dealii::parallel::distributed::Vector<std::complex<double> > & ,
+				  dealii::parallel::distributed::Vector<dataTypes::number> & ,
 				  const unsigned int ,
 				  const std::vector<std::vector<dealii::types::global_dof_index> > & ,
 				  const std::vector<std::vector<dealii::types::global_dof_index> > & ,
@@ -700,38 +803,25 @@ namespace dftfe{
 				  const double );
 
 
-    template void gramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<std::complex<double> > &,
+    template void gramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<dataTypes::number> &,
 					       const unsigned int );
 
     template void rayleighRitz(operatorDFTClass  & operatorMatrix,
-			       dealii::parallel::distributed::Vector<std::complex<double> > &,
+			       dealii::parallel::distributed::Vector<dataTypes::number> &,
 			       const unsigned int numberWaveFunctions,
 			       const std::vector<std::vector<dealii::types::global_dof_index> > &,
 			       const std::vector<std::vector<dealii::types::global_dof_index> > &,
 			       std::vector<double>     & eigenValues);
 
+    template void computeEigenResidualNorm(operatorDFTClass        & operatorMatrix,
+					   dealii::parallel::distributed::Vector<dataTypes::number> & X,
+					   const std::vector<double> & eigenValues,
+					   const std::vector<std::vector<dealii::types::global_dof_index> > & macroCellMap,
+					   const std::vector<std::vector<dealii::types::global_dof_index> > & cellMap,
+					   std::vector<double>     & residualNorm);
 
-#else
-    template void chebyshevFilter(operatorDFTClass & operatorMatrix,
-				  dealii::parallel::distributed::Vector<double> & ,
-				  const unsigned int ,
-				  const std::vector<std::vector<dealii::types::global_dof_index> > & ,
-  				  const std::vector<std::vector<dealii::types::global_dof_index> > & ,
-				  const unsigned int,
-				  const double ,
-				  const double ,
-				  const double );
 
-    template void gramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<double> &,
-					       const unsigned int );
 
-    template void rayleighRitz(operatorDFTClass  & operatorMatrix,
-			       dealii::parallel::distributed::Vector<double> &,
-			       const unsigned int numberWaveFunctions,
-			       const std::vector<std::vector<dealii::types::global_dof_index> > &,
-			       const std::vector<std::vector<dealii::types::global_dof_index> > &,
-			       std::vector<double>     & eigenValues);
-#endif
 
   }//end of namespace
 
