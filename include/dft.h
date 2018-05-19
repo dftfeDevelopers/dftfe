@@ -539,7 +539,6 @@ namespace dftfe {
       //storage for nonlocal pseudopotential constants
       //
       std::vector<std::vector<double> > d_nonLocalPseudoPotentialConstants;
-      std::vector<std::vector<std::vector<double> >> d_nonLocalPseudoPotentialConstants_OV;
 
       //
       //globalChargeId to ImageChargeId Map

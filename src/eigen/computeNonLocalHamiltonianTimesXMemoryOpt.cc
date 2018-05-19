@@ -403,29 +403,20 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::paralle
   dftPtr->d_projectorKetTimesVectorParFlattened.compress(VectorOperation::add);
   dftPtr->d_projectorKetTimesVectorParFlattened.update_ghost_values();
 
-
-  for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
-    {
-      const unsigned int atomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];
-      const unsigned int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
-      for(unsigned int iPseudoAtomicWave = 0; iPseudoAtomicWave < numberPseudoWaveFunctions; ++iPseudoAtomicWave)
-	  for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
-              projectorKetTimesVector[atomId][numberWaveFunctions*iPseudoAtomicWave + iWave] =dftPtr->d_projectorKetTimesVectorParFlattened[dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(atomId,iPseudoAtomicWave)]*numberWaveFunctions+iWave];
-
-    }
-
   //
   //compute V*C^{T}*X
   //
   for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
     {
-      const unsigned int atomId = dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];
-      const unsigned int numberPseudoWaveFunctions =  dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
+      const unsigned int atomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];
+      const unsigned int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
       for(unsigned int iPseudoAtomicWave = 0; iPseudoAtomicWave < numberPseudoWaveFunctions; ++iPseudoAtomicWave)
-	{
+      {
+	  const double nonlocalConstantV=dftPtr->d_nonLocalPseudoPotentialConstants[atomId][iPseudoAtomicWave];
 	  for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
-	    projectorKetTimesVector[atomId][numberWaveFunctions*iPseudoAtomicWave + iWave] *= dftPtr->d_nonLocalPseudoPotentialConstants[atomId][iPseudoAtomicWave];
-	}
+              projectorKetTimesVector[atomId][numberWaveFunctions*iPseudoAtomicWave + iWave] =nonlocalConstantV*dftPtr->d_projectorKetTimesVectorParFlattened[dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(atomId,iPseudoAtomicWave)]*numberWaveFunctions+iWave];
+      }
+
     }
 
 
@@ -577,37 +568,25 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::paralle
   dftPtr->d_projectorKetTimesVectorParFlattened.compress(VectorOperation::add);
   dftPtr->d_projectorKetTimesVectorParFlattened.update_ghost_values();
 
+  //
+  //compute V*C^{T}*X
+  //
   for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
     {
       const unsigned int atomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];
       const unsigned int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
       for(unsigned int iPseudoAtomicWave = 0; iPseudoAtomicWave < numberPseudoWaveFunctions; ++iPseudoAtomicWave)
 	{
+	  const double nonlocalConstantV=dftPtr->d_nonLocalPseudoPotentialConstants[atomId][iPseudoAtomicWave];
 	  for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
 	    {
-	      projectorKetTimesVector[atomId][numberWaveFunctions*iPseudoAtomicWave + iWave] =dftPtr->d_projectorKetTimesVectorParFlattened[dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(atomId,iPseudoAtomicWave)]*numberWaveFunctions+iWave];
+	      projectorKetTimesVector[atomId][numberWaveFunctions*iPseudoAtomicWave + iWave]
+		  =nonlocalConstantV*dftPtr->d_projectorKetTimesVectorParFlattened[dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(atomId,iPseudoAtomicWave)]*numberWaveFunctions+iWave];
 	    }
 
 	}
 
     }
-
-
-  //
-  //compute V*C^{T}*X
-  //
-  for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
-    {
-      const unsigned int atomId = dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];
-      const unsigned int numberPseudoWaveFunctions =  dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
-      for(unsigned int iPseudoAtomicWave = 0; iPseudoAtomicWave < numberPseudoWaveFunctions; ++iPseudoAtomicWave)
-	{
-	  for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
-	    projectorKetTimesVector[atomId][numberWaveFunctions*iPseudoAtomicWave + iWave] *= dftPtr->d_nonLocalPseudoPotentialConstants[atomId][iPseudoAtomicWave];
-	}
-    }
-
-
 
 
   std::vector<double> cellNonLocalHamTimesWaveMatrix(d_numberNodesPerElement*numberWaveFunctions,0.0);
