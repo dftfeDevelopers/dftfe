@@ -625,15 +625,24 @@ namespace dftfe {
 	  pcout<< std::endl<<"Poisson solve for total electrostatic potential (rhoIn+b): ";
 	computing_timer.enter_section("phiTot solve");
 
-	phiTotalSolverProblem.reinit(matrix_free_data,
-				     d_phiTotRhoIn,
-				     *d_constraintsVector[phiTotDofHandlerIndex],
-				     phiTotDofHandlerIndex,
-				     d_atomNodeIdToChargeMap,
-				     *rhoInValues);
-
+	if (scfIter>0)
+	    phiTotalSolverProblem.reinit(matrix_free_data,
+				         d_phiTotRhoIn,
+				        *d_constraintsVector[phiTotDofHandlerIndex],
+				         phiTotDofHandlerIndex,
+				         d_atomNodeIdToChargeMap,
+				         *rhoInValues,
+					 false);
+	else
+	    phiTotalSolverProblem.reinit(matrix_free_data,
+				         d_phiTotRhoIn,
+				        *d_constraintsVector[phiTotDofHandlerIndex],
+				         phiTotDofHandlerIndex,
+				         d_atomNodeIdToChargeMap,
+				         *rhoInValues);
 
 	dealiiCGSolver.solve(phiTotalSolverProblem,
+
 			     dftParameters::relLinearSolverTolerance,
 			     dftParameters::maxLinearSolverIterations,
 			     dftParameters::verbosity);
@@ -873,7 +882,8 @@ namespace dftfe {
 				     *d_constraintsVector[phiTotDofHandlerIndex],
 				     phiTotDofHandlerIndex,
 				     d_atomNodeIdToChargeMap,
-				     *rhoOutValues);
+				     *rhoOutValues,
+				     false);
 
 
 	dealiiCGSolver.solve(phiTotalSolverProblem,

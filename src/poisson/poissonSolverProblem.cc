@@ -40,7 +40,8 @@ namespace dftfe {
 		     const dealii::ConstraintMatrix & constraintMatrix,
 		     const unsigned int matrixFreeVectorComponent,
 	             const std::map<dealii::types::global_dof_index, double> & atoms,
-		     const std::map<dealii::CellId,std::vector<double> > & rhoValues)
+		     const std::map<dealii::CellId,std::vector<double> > & rhoValues,
+		     const bool isComputeDiagonalA)
     {
         d_matrixFreeDataPtr=&matrixFreeData;
 	d_xPtr=&x;
@@ -49,7 +50,8 @@ namespace dftfe {
 	d_rhoValuesPtr=&rhoValues;
 	d_atomsPtr=&atoms;
 
-	computeDiagonalA();
+	if (isComputeDiagonalA)
+	  computeDiagonalA();
     }
 
 
@@ -59,7 +61,8 @@ namespace dftfe {
 		           vectorType & x,
 		           const dealii::ConstraintMatrix & constraintMatrix,
 		           const unsigned int matrixFreeVectorComponent,
-	                   const std::map<dealii::types::global_dof_index, double> & atoms)
+	                   const std::map<dealii::types::global_dof_index, double> & atoms,
+			   const bool isComputeDiagonalA)
     {
         d_matrixFreeDataPtr=&matrixFreeData;
 	d_xPtr=&x;
@@ -68,7 +71,8 @@ namespace dftfe {
 	d_rhoValuesPtr=NULL;
 	d_atomsPtr=&atoms;
 
-	computeDiagonalA();
+	if (isComputeDiagonalA)
+	  computeDiagonalA();
     }
 
 
