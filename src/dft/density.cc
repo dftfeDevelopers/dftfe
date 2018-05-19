@@ -122,8 +122,7 @@ void dftClass<FEOrder>::compute_rhoOut()
 
 	  for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
 	  {
-	        dealii::DoFHandler<3>::active_cell_iterator subCellPtr= matrix_free_data.get_cell_iterator(cell,iSubCell);
-	        const dealii::CellId subCellId=subCellPtr->id();
+	        const dealii::CellId subCellId=matrix_free_data.get_cell_iterator(cell,iSubCell)->id();
 
 	        (*rhoOutValues)[subCellId] = std::vector<double>(numQuadPoints);
 	        std::fill(rhoTemp.begin(),rhoTemp.end(),0.0); std::fill(rhoOut.begin(),rhoOut.end(),0.0);
