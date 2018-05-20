@@ -182,10 +182,15 @@ namespace dftfe{
 	      }
 	  }
 	computing_timer.exit_section("Copy to flattened array");
+
 	//
 	//Free the memory of eigenVectors array
 	//
-
+	for(unsigned int iWave = 0; iWave < totalNumberWaveFunctions; ++iWave)
+         {
+            vectorType d_tempDealiiVector;
+	    eigenVectors[iWave].swap(d_tempDealiiVector);
+         }
 
 	//
 	//Split the complete wavefunctions into multiple blocks.
@@ -309,6 +314,10 @@ namespace dftfe{
 							 upperBoundUnwantedSpectrum,
 							 d_lowerBoundWantedSpectrum);
 		computing_timer.exit_section("Chebyshev filtering opt");
+
+		if(dftParameters::verbosity >= 2)
+		  pcout<<"ChebyShev Filtering Done: "<<std::endl;
+
 	      }
 
 	  }//block loop
@@ -329,6 +338,8 @@ namespace dftfe{
 	    computing_timer.exit_section("Gram-Schmidt Orthogn Opt");
 	  }
 
+	if(dftParameters::verbosity >= 2)
+	  pcout<<"Orthogonalization Done: "<<std::endl;
 
 	computing_timer.enter_section("Rayleigh-Ritz proj Opt");
 	linearAlgebraOperations::rayleighRitz(operatorMatrix,
@@ -339,7 +350,12 @@ namespace dftfe{
 					      eigenValues);
 	computing_timer.exit_section("Rayleigh-Ritz proj Opt");
 
-
+	if(dftParameters::verbosity >= 2)
+	  {
+	    pcout<<"Rayleigh-Ritz Done: "<<std::endl;
+	    pcout<<std::endl;
+	  }
+	
 	computing_timer.enter_section("eigen vectors residuals opt");
 	linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
 							  eigenVectorsFlattenedArray,
@@ -349,6 +365,21 @@ namespace dftfe{
 							  residualNorms);
 	computing_timer.exit_section("eigen vectors residuals opt");
 
+	if(dftParameters::verbosity >= 2)
+	  {
+	    pcout<<"EigenVector Residual Computation Done: "<<std::endl;
+	    pcout<<std::endl;
+	  }
+
+
+	//
+        //allocate back the memory of eigenVectors array
+        //
+	vectorType d_tempDealiiVector;
+        operatorMatrix.getMatrixFreeData()->initialize_dof_vector(d_tempDealiiVector);
+
+	for(unsigned int iWave = 0; iWave < totalNumberWaveFunctions; ++iWave)
+	  eigenVectors[iWave].reinit(d_tempDealiiVector);
 
 	//
 	//copy back to eigenVectors array from eigenVectors Flattened Array
@@ -370,15 +401,6 @@ namespace dftfe{
 	      }
 	  }
 	computing_timer.exit_section("Copy to flattened array");
-
-
-	/*computing_timer.enter_section("compute eigen vectors residuals");
-	linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
-							  eigenVectors,
-							  eigenValues,
-							  residualNorms);
-							  computing_timer.exit_section("compute eigen vectors residuals");*/
-
 
       }
     else
