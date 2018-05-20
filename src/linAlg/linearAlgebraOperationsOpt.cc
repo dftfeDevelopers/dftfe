@@ -723,7 +723,10 @@ namespace dftfe{
        std::vector<double> invFourthRootEigenValuesMatrix(numberEigenValues,0.0);
 
        for(unsigned i = 0; i < numberEigenValues; ++i)
-	 invFourthRootEigenValuesMatrix[i] = 1.0/pow(eigenValuesOverlap[i],1.0/4);
+	 {
+	   invFourthRootEigenValuesMatrix[i] = 1.0/pow(eigenValuesOverlap[i],1.0/4);
+	   AssertThrow(!std::isnan(invFourthRootEigenValuesMatrix[i]),dealii::ExcMessage("Eigen values of overlap matrix during Lowden Orthonormalization are very small and close to zero"));
+	 }
 
        //
        //Q*D^{-1/4} and note that "Q" is stored in overlapMatrix after calling "dsyevd"
