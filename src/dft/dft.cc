@@ -731,20 +731,31 @@ namespace dftfe {
 	    while (maxRes>adaptiveChebysevFilterPassesTol)
 	      {
 		for(unsigned int s=0; s<2; ++s)
-		  for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-		    {
-		      kohnShamDFTEigenOperator.reinitkPointIndex(kPoint);
-		      if (dftParameters::verbosity==2)
-			pcout<< "Beginning Chebyshev filter pass "<< dftParameters::numPass+count<< " for spin "<< s+1<<std::endl;;
+		  {
+		    if(dftParameters::xc_id < 4)
+		      {
+			kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, pseudoValues);
+		      }
+		    else if (dftParameters::xc_id == 4)
+		      {
+			kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, pseudoValues);
+		      }
+
+		    for(unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
+		      {
+			kohnShamDFTEigenOperator.reinitkPointIndex(kPoint);
+			if (dftParameters::verbosity==2)
+			  pcout<< "Beginning Chebyshev filter pass "<< dftParameters::numPass+count<< " for spin "<< s+1<<std::endl;;
 
 
-		      kohnShamEigenSpaceCompute(s,
-						kPoint,
-						kohnShamDFTEigenOperator,
-						subspaceIterationSolver,
-						residualNormWaveFunctionsAllkPointsSpins[s][kPoint]);
+			kohnShamEigenSpaceCompute(s,
+						  kPoint,
+						  kohnShamDFTEigenOperator,
+						  subspaceIterationSolver,
+						  residualNormWaveFunctionsAllkPointsSpins[s][kPoint]);
 
-		    }
+		      }
+		  }
 		count++;
 		for(unsigned int s=0; s<2; ++s)
 		  for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
