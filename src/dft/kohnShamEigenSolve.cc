@@ -62,9 +62,16 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
   //orthogonalize the random wavefunctions
   //
   if(d_nonAtomicWaveFunctions > 0)
-    linearAlgebraOperations::gramSchmidtOrthogonalization(kohnShamDFTEigenOperator,
-							  eigenVectors[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
-							  numEigenValues - d_nonAtomicWaveFunctions);
+    {
+       if(dftParameters::verbosity >= 2)
+	 {
+	   pcout<<"Orthogonalizing Random Wavefunctions: "<<std::endl;
+	 }
+
+      linearAlgebraOperations::gramSchmidtOrthogonalization(kohnShamDFTEigenOperator,
+							    eigenVectors[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
+							    numEigenValues - d_nonAtomicWaveFunctions);
+    }
   
 
   std::vector<double> eigenValuesTemp(numEigenValues,0.0);
