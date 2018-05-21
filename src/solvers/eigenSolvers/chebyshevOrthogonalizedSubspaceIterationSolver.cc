@@ -162,6 +162,12 @@ namespace dftfe{
 						eigenVectorsFlattenedArray);
 #endif
 	computing_timer.exit_section("Custom Partitioned Array Creation");
+	
+	if(dftParameters::verbosity >= 3)
+	  {
+	    pcout<<"Custom Partioned Array Creation Done: "<<std::endl;
+	    pcout<<std::endl;
+	  }
 
 	//
 	//copy the data from eigenVectors to eigenVectorsFlattened
@@ -191,6 +197,7 @@ namespace dftfe{
             vectorType d_tempDealiiVector;
 	    eigenVectors[iWave].swap(d_tempDealiiVector);
          }
+
 
 	//
 	//Split the complete wavefunctions into multiple blocks.
@@ -296,9 +303,25 @@ namespace dftfe{
 							 flattenedArrayCellLocalProcIndexIdMap);
 
 
+		if(dftParameters::verbosity >= 3)
+		  {
+		    pcout<<"Cell Local Index Set Map Done: "<<std::endl;
+		    pcout<<std::endl;
+		  }
+
+
 		operatorMatrix.getOverloadedConstraintMatrix()->precomputeMaps(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
 									       eigenVectorsFlattenedArray.get_partitioner(),
 									       numberWaveFunctionsPerCurrentBlock);
+
+
+
+		if(dftParameters::verbosity >= 3)
+		  {
+		    pcout<<"Precomputing Maps for Constraint Matrix Distribute functions: "<<std::endl;
+		    pcout<<std::endl;
+		  }
+
 
 		//
 		//call Chebyshev filtering function only for the current block to be filtered

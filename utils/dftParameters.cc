@@ -57,7 +57,7 @@ namespace dftParameters
                       "[Developer] Limit output to that which is reprodicible, i.e. don't print timing or absolute paths. This parameter is only used for testing purposes.");
 
     prm.declare_entry("VERBOSITY", "1",
-                      Patterns::Integer(0,2),
+                      Patterns::Integer(0,3),
                       "[Standard] Parameter to control verbosity of terminal output. 0 for low, 1 for medium, and 2 for high.");
 
     prm.enter_subsection ("Checkpointing and Restart");
