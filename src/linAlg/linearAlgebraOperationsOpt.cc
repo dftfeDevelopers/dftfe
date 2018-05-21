@@ -686,14 +686,6 @@ namespace dftfe{
 
 
       dealii::Utilities::MPI::sum(overlapMatrix, X.get_mpi_communicator(), overlapMatrix); 
-      //std::vector<double> overlapMatrix(numberVectors*numberVectors,0.0);
-      //const unsigned int sizeEntries = numberEigenValues*numberEigenValues;
-      /*MPI_Allreduce(&overlapMatrixLocal[0],
-		    &overlapMatrix[0],
-		    sizeEntries,
-		    MPI_DOUBLE,
-		    MPI_SUM,
-		    X.get_mpi_communicator());*/
 
       //
       //Free up memory
