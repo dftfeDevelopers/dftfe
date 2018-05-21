@@ -20,7 +20,7 @@ end
 
 
 subsection Finite element mesh parameters
-  set POLYNOMIAL ORDER = 2
+  set POLYNOMIAL ORDER = 4
  
   subsection Auto mesh generation parameters
     set BASE MESH SIZE = 10.0 
@@ -49,7 +49,7 @@ end
 
 
 subsection Eigen-solver/Chebyshev solver related parameters
-  set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 9
+  set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 15
   set LOWER BOUND WANTED SPECTRUM = -10.0
   set CHEBYSHEV POLYNOMIAL DEGREE = 0
   set ORTHOGONALIZATION TYPE = 2

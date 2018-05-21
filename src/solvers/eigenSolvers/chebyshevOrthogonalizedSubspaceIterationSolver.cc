@@ -141,6 +141,17 @@ namespace dftfe{
     for(unsigned int i = 0; i < totalNumberWaveFunctions; ++i)
       operatorMatrix.getConstraintMatrixEigen()->set_zero(eigenVectors[i]);
 
+
+     if(dftParameters::verbosity >= 4)
+       {
+	 PetscLogDouble bytes;
+	 PetscMemoryGetCurrentUsage(&bytes);
+	 FILE *dummy;
+	 unsigned int this_mpi_process = dealii::Utilities::MPI::this_mpi_process(operatorMatrix.getMPICommunicator());
+	 PetscSynchronizedPrintf(operatorMatrix.getMPICommunicator(),"[%d] Memory Usage before starting eigen solution  %e\n",this_mpi_process,bytes);
+	 PetscSynchronizedFlush(operatorMatrix.getMPICommunicator(),dummy);
+       }
+
     if((dftParameters::nkx*dftParameters::nky*dftParameters::nkz) == 1 && (dftParameters::dkx*dftParameters::dky*dftParameters::dkz) <= 1e-10)
       {
 	//
@@ -193,10 +204,19 @@ namespace dftfe{
 	//Free the memory of eigenVectors array
 	//
 	for(unsigned int iWave = 0; iWave < totalNumberWaveFunctions; ++iWave)
-         {
-            vectorType d_tempDealiiVector;
-	    eigenVectors[iWave].swap(d_tempDealiiVector);
-         }
+	  eigenVectors[iWave].reinit(0);
+
+
+	if(dftParameters::verbosity >= 4)
+	  {
+	    PetscLogDouble bytes;
+	    PetscMemoryGetCurrentUsage(&bytes);
+	    FILE *dummy;
+	    unsigned int this_mpi_process = dealii::Utilities::MPI::this_mpi_process(operatorMatrix.getMPICommunicator());
+	    PetscSynchronizedPrintf(operatorMatrix.getMPICommunicator(),"[%d] Memory after creating eigen vector flattened and freeing STL memory   %e\n",this_mpi_process,bytes);
+	    PetscSynchronizedFlush(operatorMatrix.getMPICommunicator(),dummy);
+	  }
+
 
 
 	//
@@ -394,6 +414,16 @@ namespace dftfe{
 	    pcout<<std::endl;
 	  }
 
+	if(dftParameters::verbosity >= 4)
+	  {
+	    PetscLogDouble bytes;
+	    PetscMemoryGetCurrentUsage(&bytes);
+	    FILE *dummy;
+	    unsigned int this_mpi_process = dealii::Utilities::MPI::this_mpi_process(operatorMatrix.getMPICommunicator());
+	    PetscSynchronizedPrintf(operatorMatrix.getMPICommunicator(),"[%d] Memory after all steps of subspace iteration before recreating STL vector  %e\n",this_mpi_process,bytes);
+	    PetscSynchronizedFlush(operatorMatrix.getMPICommunicator(),dummy);
+	  }
+
 
 	//
         //allocate back the memory of eigenVectors array
@@ -424,6 +454,10 @@ namespace dftfe{
 	      }
 	  }
 	computing_timer.exit_section("Copy to flattened array");
+
+
+	
+
 
       }
     else

@@ -44,6 +44,16 @@ void dftClass<FEOrder>::initElectronicFields(const bool usePreviousGroundStateFi
      pcout <<std::endl<< "Reading initial guess for PSI...."<<std::endl;
      readPSI();
 
+     if(dftParameters::verbosity >= 4)
+       {
+	 PetscLogDouble bytes;
+	 PetscMemoryGetCurrentUsage(&bytes);
+	 FILE *dummy;
+	 unsigned int this_mpi_process = dealii::Utilities::MPI::this_mpi_process(mpi_communicator);
+	 PetscSynchronizedPrintf(mpi_communicator,"[%d] Memory Usage after creating STL vector of eigenVectors  %e\n",this_mpi_process,bytes);
+	 PetscSynchronizedFlush(mpi_communicator,dummy);
+       }
+
      if (!(dftParameters::chkType==2 && dftParameters::restartFromChk))
 	initRho();
   }

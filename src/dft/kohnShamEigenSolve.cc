@@ -58,7 +58,13 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 			     eigenVectors[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
 			     constraintsNoneEigenDataInfo);
 
-
+  //
+  //orthogonalize the random wavefunctions
+  //
+  if(d_nonAtomicWaveFunctions > 0)
+    linearAlgebraOperations::gramSchmidtOrthogonalization(kohnShamDFTEigenOperator,
+							  eigenVectors[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
+							  numEigenValues - d_nonAtomicWaveFunctions);
   
 
   std::vector<double> eigenValuesTemp(numEigenValues,0.0);
@@ -71,16 +77,15 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
   				eigenValuesTemp,
 				residualNormWaveFunctions);
  
-
-  //
-  //Compute and print L2 norm
-  //
-  /* computing_timer.enter_section("compute Residual Norm"); 
-  computeResidualNorm(eigenValuesTemp,
-		      kohnShamDFTEigenOperator,
-		      eigenVectors[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
-		      residualNormWaveFunctions);
-		      computing_timer.exit_section("compute Residual Norm");*/
+  if(dftParameters::verbosity >= 4)
+    {
+      PetscLogDouble bytes;
+      PetscMemoryGetCurrentUsage(&bytes);
+      FILE *dummy;
+      unsigned int this_mpi_process = dealii::Utilities::MPI::this_mpi_process(mpi_communicator);
+      PetscSynchronizedPrintf(mpi_communicator,"[%d] Memory after recreating STL vector and exiting from subspaceIteration solver  %e\n",this_mpi_process,bytes);
+      PetscSynchronizedFlush(mpi_communicator,dummy);
+    }
   
   //
   //scale the eigenVectors with M^{-1/2} to represent the wavefunctions in the usual FE basis

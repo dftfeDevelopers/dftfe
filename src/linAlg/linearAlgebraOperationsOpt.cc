@@ -655,7 +655,7 @@ namespace dftfe{
     {
 
       const unsigned int localVectorSize = X.local_size()/numberVectors;
-      std::vector<double> overlapMatrix(numberVectors*numberVectors,0.0);
+      std::vector<double> overlapMatrixLocal(numberVectors*numberVectors,0.0);
 
       //
       //blas level 3 dgemm flags
@@ -681,12 +681,25 @@ namespace dftfe{
 	     X.begin(),
 	     &numberVectors,
 	     &beta,
-	     &overlapMatrix[0],
+	     &overlapMatrixLocal[0],
 	     &numberVectors);
 
 
-      dealii::Utilities::MPI::sum(overlapMatrix, X.get_mpi_communicator(), overlapMatrix); 
+      //dealii::Utilities::MPI::sum(overlapMatrix, X.get_mpi_communicator(), overlapMatrix); 
+      std::vector<double> overlapMatrix(numberVectors*numberVectors,0.0);
+      const unsigned int sizeEntries = numberEigenValues*numberEigenValues;
+      MPI_Allreduce(&overlapMatrixLocal[0],
+		    &overlapMatrix[0],
+		    sizeEntries,
+		    MPI_DOUBLE,
+		    MPI_SUM,
+		    X.get_mpi_communicator());
 
+      //
+      //Free up memory
+      //
+      overlapMatrixLocal.clear();
+      std::vector<double>().swap(overlapMatrixLocal);
 
       //
       //set lapack eigen decomposition flags and compute eigendecomposition of S = Q*D*Q^{H}

@@ -137,6 +137,11 @@ namespace dftfe {
        */
       unsigned int numEigenValues;
 
+      /**
+       * Number of random wavefunctions
+       */
+      unsigned int d_nonAtomicWaveFunctions;
+
       void readkPointData();
 
       /**

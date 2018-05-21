@@ -344,7 +344,8 @@ namespace linearAlgebraOperations
   //Gram-Schmidt orthogonalization of given subspace X
   //
   void gramSchmidtOrthogonalization(operatorDFTClass & operatorMatrix,
-				    std::vector<vectorType> & X)
+				    std::vector<vectorType> & X,
+				    unsigned int startingIndex)
   {
 
     
@@ -356,7 +357,7 @@ namespace linearAlgebraOperations
 
   
       //copy to petsc vectors
-      unsigned int numVectors = X.size();
+      unsigned int numVectors = X.size() - startingIndex;
       Vec vec;
       VecCreateMPI(operatorMatrix.getMPICommunicator(), localSize, PETSC_DETERMINE, &vec);
       VecSetFromOptions(vec);
@@ -373,11 +374,11 @@ namespace linearAlgebraOperations
 	{
 	  std::vector<std::complex<double> > localData(localSize);
 	  std::vector<double> tempReal(localSize),tempImag(localSize);
-	  X[i].extract_subvector_to(operatorMatrix.getLocalDofIndicesReal()->begin(),
+	  X[i+startingIndex].extract_subvector_to(operatorMatrix.getLocalDofIndicesReal()->begin(),
 				    operatorMatrix.getLocalDofIndicesReal()->end(),
 				    tempReal.begin());
 
-	  X[i].extract_subvector_to(operatorMatrix.getLocalDofIndicesImag()->begin(),
+	  X[i+startingIndex].extract_subvector_to(operatorMatrix.getLocalDofIndicesImag()->begin(),
 				    operatorMatrix.getLocalDofIndicesImag()->end(),
 				    tempImag.begin());
 
@@ -395,7 +396,7 @@ namespace linearAlgebraOperations
       for(int i = 0; i < numVectors; ++i)
 	{
 	  std::vector<double> localData(localSize);
-	  std::copy(X[i].begin(),X[i].end(),localData.begin());
+	  std::copy(X[i+startingIndex].begin(),X[i+startingIndex].end(),localData.begin());
 	  std::copy(localData.begin(),localData.end(), &(columnSpacePointer[i][0])); 
 	}
       VecRestoreArrays(petscColumnSpace, numVectors, &columnSpacePointer);
@@ -425,10 +426,10 @@ namespace linearAlgebraOperations
 	  std::copy(&(columnSpacePointer[i][0]),&(columnSpacePointer[i][localSize]), localData.begin()); 
 	  for(int j = 0; j < localSize; ++j)
 	    {
-	      X[i].local_element((*operatorMatrix.getLocalProcDofIndicesReal())[j]) = localData[j].real();
-	      X[i].local_element((*operatorMatrix.getLocalProcDofIndicesImag())[j]) = localData[j].imag();
+	      X[i+startingIndex].local_element((*operatorMatrix.getLocalProcDofIndicesReal())[j]) = localData[j].real();
+	      X[i+startingIndex].local_element((*operatorMatrix.getLocalProcDofIndicesImag())[j]) = localData[j].imag();
 	    }
-	  X[i].update_ghost_values();
+	  X[i+startingIndex].update_ghost_values();
 	}
       VecRestoreArrays(petscColumnSpace, numVectors, &columnSpacePointer);
 #else
@@ -437,8 +438,8 @@ namespace linearAlgebraOperations
 	{
 	  std::vector<double> localData(localSize);
 	  std::copy(&(columnSpacePointer[i][0]),&(columnSpacePointer[i][localSize]), localData.begin()); 
-	  std::copy(localData.begin(), localData.end(), X[i].begin());
-	  X[i].update_ghost_values();
+	  std::copy(localData.begin(), localData.end(), X[i+startingIndex].begin());
+	  X[i+startingIndex].update_ghost_values();
 	}
       VecRestoreArrays(petscColumnSpace, numVectors, &columnSpacePointer);
 #endif

@@ -110,12 +110,14 @@ namespace dftfe
     /** @brief Orthogonalize given subspace using GramSchmidt orthogonalization
      *  
      *  @param operatorMatrix An object which has access to the given matrix
-     *  @param  X Given subspace as vector of dealii vectors
+     *  @param  X Given subspace as vector of dealii column vectors
+     *  @param startingIndex dealii column vector index to start the orthogonalization procedure
      *
      *  @return X In-place update of the given subspace 
      */
     void gramSchmidtOrthogonalization(operatorDFTClass & operatorMatrix,
-				      std::vector<vectorType> & X);
+				      std::vector<vectorType> & X,
+				      unsigned int startingIndex = 0);
 
 
     
