@@ -683,7 +683,7 @@ namespace dftfe{
       //the overlap matrix as S = S^{T} = X*{X^T} here
       //
 
-      computing_timer.enter_section("Computing local overlap matrix");
+      computing_timer.enter_section("local overlap matrix");
       dsyrk_(&uplo,
 	     &trans,
 	     &numberVectors,
@@ -694,7 +694,7 @@ namespace dftfe{
 	     &beta,
 	     &overlapMatrix[0],
 	     &numberVectors);
-      computing_timer.exit_section("Computing local overlap matrix");
+      computing_timer.exit_section("local overlap matrix");
 
 
       dealii::Utilities::MPI::sum(overlapMatrix, X.get_mpi_communicator(), overlapMatrix); 
@@ -710,7 +710,7 @@ namespace dftfe{
       std::vector<double> work(lwork);
       std::vector<double> eigenValuesOverlap(numberVectors,0.0);
 
-      computing_timer.enter_section("Computing eigen decomposition of overlap matrix");
+      computing_timer.enter_section("eigen decomp. of overlap matrix");
       dsyevd_(&jobz,
 	      &uplo,
 	      &numberVectors,
@@ -722,7 +722,7 @@ namespace dftfe{
 	      &iwork[0],
 	      &liwork,
 	      &info);
-      computing_timer.exit_section("Computing eigen decomposition of overlap matrix");
+      computing_timer.exit_section("eigen decomp. of overlap matrix");
 
        //
        //free up memory associated with work

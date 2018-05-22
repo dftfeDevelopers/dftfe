@@ -796,11 +796,15 @@ namespace dftfe {
 
 	    if(dftParameters::xc_id < 4)
 	      {
+		computing_timer.enter_section("VEff Computation");
 		kohnShamDFTEigenOperator.computeVEff(rhoInValues, d_phiTotRhoIn, d_phiExt, pseudoValues);
+		computing_timer.exit_section("VEff Computation");
 	      }
 	    else if (dftParameters::xc_id == 4)
 	      {
+		computing_timer.enter_section("VEff Computation");
 		kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, d_phiTotRhoIn, d_phiExt, pseudoValues);
+		computing_timer.exit_section("VEff Computation");
 	      }
 
 	    for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
