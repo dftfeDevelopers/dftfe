@@ -60,6 +60,8 @@ namespace dftfe {
 
       extern bool electrostaticsPRefinement;
 
+      extern unsigned int chebyshevBlockSize;
+
       /**
        * Declare parameters.
        */

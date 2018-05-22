@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Phani Motamarri (2017), Sambit Das (2018)
+// @author Phani Motamarri, Sambit Das
 //
 #include <dftParameters.h>
 #include <iostream>
@@ -49,6 +49,8 @@ namespace dftParameters
   bool restartFromChk=false;
   bool reproducible_output=false;
   bool electrostaticsPRefinement=false;
+
+  unsigned int chebyshevBlockSize=1000;
 
 
   void declare_parameters(ParameterHandler &prm)
@@ -304,9 +306,15 @@ namespace dftParameters
 			  Patterns::Integer(1,20),
 			  "[Developer] The initial number of the Chebyshev filter passes per SCF. More Chebyshev filter passes beyond the value set in this parameter can still happen due to additional algorithms used in the code.");
 
+
 	prm.declare_entry("CHEBYSHEV FILTER TOLERANCE","5e-02",
 			  Patterns::Double(0,1.0),
 			  "[Developer] Parameter specifying the tolerance to which eigenvectors need to computed using chebyshev filtering approach");
+
+	prm.declare_entry("CHEBYSHEV FILTER BLOCK SIZE", "1000",
+			  Patterns::Integer(1),
+			  "[Developer] The maximum number of wavefunctions which are handled by one call to the Chebyshev filter. This is useful for optimization purposes. The optimum value is dependent on the computing architecture.");
+
 
 	prm.declare_entry("ORTHOGONALIZATION TYPE","GS",
 			  Patterns::Anything(),
@@ -436,6 +444,7 @@ namespace dftParameters
        dftParameters::lowerEndWantedSpectrum        = prm.get_double("LOWER BOUND WANTED SPECTRUM");
        dftParameters::chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
        dftParameters::numPass           = prm.get_integer("CHEBYSHEV FILTER PASSES");
+       dftParameters::chebyshevBlockSize= prm.get_integer("CHEBYSHEV FILTER BLOCK SIZE");
        dftParameters::orthogType        = prm.get("ORTHOGONALIZATION TYPE");
        dftParameters::chebyshevTolerance = prm.get_double("CHEBYSHEV FILTER TOLERANCE");
     }
