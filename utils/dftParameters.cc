@@ -32,7 +32,8 @@ namespace dftParameters
 
   double radiusAtomBall=0.0, mixingParameter=0.5, dkx=0.0, dky=0.0, dkz=0.0;
   double lowerEndWantedSpectrum=0.0,relLinearSolverTolerance=1e-10,selfConsistentSolverTolerance=1e-10,TVal=500, start_magnetization=0.0;
-
+  double chebyshevTolerance = 1e-02;
+  
   bool isPseudopotential=false,periodicX=false,periodicY=false,periodicZ=false, useSymm=false, timeReversal=false;
   std::string meshFileName="",coordinatesFile="",domainBoundingVectorsFile="",kPointDataFile="", ionRelaxFlagsFile="",orthogType="";
 
@@ -303,6 +304,10 @@ namespace dftParameters
 			  Patterns::Integer(1,20),
 			  "[Developer] The initial number of the Chebyshev filter passes per SCF. More Chebyshev filter passes beyond the value set in this parameter can still happen due to additional algorithms used in the code.");
 
+	prm.declare_entry("CHEBYSHEV FILTER TOLERANCE","5e-02",
+			  Patterns::Double(0,1.0),
+			  "[Developer] Parameter specifying the tolerance to which eigenvectors need to computed using chebyshev filtering approach");
+
 	prm.declare_entry("ORTHOGONALIZATION TYPE","GS",
 			  Patterns::Anything(),
 			  "[Standard] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization), Lowden(Lowden Orthogonalization)");
@@ -432,6 +437,7 @@ namespace dftParameters
        dftParameters::chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
        dftParameters::numPass           = prm.get_integer("CHEBYSHEV FILTER PASSES");
        dftParameters::orthogType        = prm.get("ORTHOGONALIZATION TYPE");
+       dftParameters::chebyshevTolerance = prm.get_double("CHEBYSHEV FILTER TOLERANCE");
     }
     prm.leave_subsection ();
 

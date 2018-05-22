@@ -46,6 +46,8 @@ namespace dftfe {
 
       extern double outerAtomBallRadius, meshSizeOuterDomain;
       extern double meshSizeInnerBall, meshSizeOuterBall;
+      extern double chebyshevTolerance;
+
 
       extern bool isIonOpt, isCellOpt, isIonForce, isCellStress;
       extern double forceRelaxTol, stressRelaxTol;

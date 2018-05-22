@@ -656,6 +656,15 @@ namespace dftfe{
 
       const unsigned int localVectorSize = X.local_size()/numberVectors;
       std::vector<double> overlapMatrix(numberVectors*numberVectors,0.0);
+      
+      dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
+
+      dealii::TimerOutput computing_timer(pcout,
+					  dftParameters::reproducible_output ? dealii::TimerOutput::never : dealii::TimerOutput::summary,
+					  dealii::TimerOutput::wall_times);
+
+      
+      
 
       //
       //blas level 3 dgemm flags
@@ -673,6 +682,8 @@ namespace dftfe{
       //corresponding to column-major format required for blas, we compute
       //the overlap matrix as S = S^{T} = X*{X^T} here
       //
+
+      computing_timer.enter_section("Computing local overlap matrix");
       dsyrk_(&uplo,
 	     &trans,
 	     &numberVectors,
@@ -683,6 +694,7 @@ namespace dftfe{
 	     &beta,
 	     &overlapMatrix[0],
 	     &numberVectors);
+      computing_timer.exit_section("Computing local overlap matrix");
 
 
       dealii::Utilities::MPI::sum(overlapMatrix, X.get_mpi_communicator(), overlapMatrix); 
@@ -697,17 +709,20 @@ namespace dftfe{
       const char jobz='V';
       std::vector<double> work(lwork);
       std::vector<double> eigenValuesOverlap(numberVectors,0.0);
-       dsyevd_(&jobz,
-	       &uplo,
-	       &numberVectors,
-	       &overlapMatrix[0],
-	       &numberVectors,
-	       &eigenValuesOverlap[0],
-	       &work[0],
-	       &lwork,
-	       &iwork[0],
-	       &liwork,
-	       &info);
+
+      computing_timer.enter_section("Computing eigen decomposition of overlap matrix");
+      dsyevd_(&jobz,
+	      &uplo,
+	      &numberVectors,
+	      &overlapMatrix[0],
+	      &numberVectors,
+	      &eigenValuesOverlap[0],
+	      &work[0],
+	      &lwork,
+	      &iwork[0],
+	      &liwork,
+	      &info);
+      computing_timer.exit_section("Computing eigen decomposition of overlap matrix");
 
        //
        //free up memory associated with work
