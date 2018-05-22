@@ -223,7 +223,7 @@ namespace dftfe{
 	//Split the complete wavefunctions into multiple blocks.
 	//Create the size of vectors in each block
 	//
-	const unsigned int equalNumberWaveFunctionsPerBlock = std::min(totalNumberWaveFunctions,(unsigned int)1000);
+	const unsigned int equalNumberWaveFunctionsPerBlock = std::min(totalNumberWaveFunctions,dftParameters::chebyshevBlockSize);
 	const double temp = (double)totalNumberWaveFunctions/(double)equalNumberWaveFunctionsPerBlock;
 	const unsigned int totalNumberBlocks = std::ceil(temp);
 	const unsigned int numberWaveFunctionsLastBlock = totalNumberWaveFunctions - equalNumberWaveFunctionsPerBlock*(totalNumberBlocks-1);
@@ -397,6 +397,22 @@ namespace dftfe{
 
 	computing_timer.enter_section("Rayleigh-Ritz proj Opt");
 	operatorMatrix.reinit(totalNumberWaveFunctions);
+
+	//
+	//precompute certain maps
+	//
+	vectorTools::computeCellLocalIndexSetMap(eigenVectorsFlattenedArray.get_partitioner(),
+						 operatorMatrix.getMatrixFreeData(),
+						 totalNumberWaveFunctions,
+						 flattenedArrayMacroCellLocalProcIndexIdMap,
+						 flattenedArrayCellLocalProcIndexIdMap);
+
+
+	operatorMatrix.getOverloadedConstraintMatrix()
+	    ->precomputeMaps(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
+	  	             eigenVectorsFlattenedArray.get_partitioner(),
+			     totalNumberWaveFunctions);
+
 	linearAlgebraOperations::rayleighRitz(operatorMatrix,
 					      eigenVectorsFlattenedArray,
 					      totalNumberWaveFunctions,
