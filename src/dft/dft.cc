@@ -561,7 +561,7 @@ namespace dftfe {
     unsigned int scfIter=0;
     double norm = 1.0;
     //CAUTION: Choosing a looser tolerance might lead to failed tests
-    const double adaptiveChebysevFilterPassesTol=1e-02;
+    const double adaptiveChebysevFilterPassesTol=5e-02;
 
 
     pcout<<std::endl;
@@ -888,8 +888,14 @@ namespace dftfe {
 	//compute integral rhoOut
 	//
 	const double integralRhoValue=totalCharge(rhoOutValues);
-	if (dftParameters::verbosity==2)
+	double totMagnetization = 0.0 ;
+	if (dftParameters::spinPolarized==1)
+	   totMagnetization=totalMagnetization(rhoOutValuesSpinPolarized);
+	if (dftParameters::verbosity==2){
 	  pcout<< std::endl<<"number of electrons: "<< integralRhoValue<<std::endl;
+	  if (dftParameters::spinPolarized==1)
+		pcout<< std::endl<<"net magnetization: "<< totMagnetization<<std::endl;
+	}
 	//
 	//phiTot with rhoOut
 	//

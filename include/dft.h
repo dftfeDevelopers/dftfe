@@ -305,6 +305,7 @@ namespace dftfe {
        * Computes total charge by integrating the electron-density
        */
       double totalCharge(const std::map<dealii::CellId, std::vector<double> > *rhoQuadValues);
+      double totalMagnetization(const std::map<dealii::CellId, std::vector<double> > *rhoQuadValues) ;
 
       /**
        * normalize the electron density
