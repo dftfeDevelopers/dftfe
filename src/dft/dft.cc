@@ -693,7 +693,7 @@ namespace dftfe {
 
 		    for(unsigned int j = 0; j < dftParameters::numPass; ++j)
 		      {
-			if (dftParameters::verbosity==2)
+			if (dftParameters::verbosity>=2)
 			  pcout<<"Beginning Chebyshev filter pass "<< j+1<< " for spin "<< s+1<<std::endl;
 
 			kohnShamEigenSpaceCompute(s,
@@ -752,7 +752,7 @@ namespace dftfe {
 		    for(unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
 		      {
 			kohnShamDFTEigenOperator.reinitkPointIndex(kPoint);
-			if (dftParameters::verbosity==2)
+			if (dftParameters::verbosity>=2)
 			  pcout<< "Beginning Chebyshev filter pass "<< dftParameters::numPass+count<< " for spin "<< s+1<<std::endl;;
 
 			computing_timer.enter_section("Hamiltonian Matrix Computation");
@@ -813,7 +813,7 @@ namespace dftfe {
 
 		for(unsigned int j = 0; j < dftParameters::numPass; ++j)
 		  {
-		    if (dftParameters::verbosity==2)
+		    if (dftParameters::verbosity>=2)
 		      pcout<< "Beginning Chebyshev filter pass "<< j+1<<std::endl;
 
 
@@ -851,7 +851,7 @@ namespace dftfe {
 		for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
 		  {
 		    kohnShamDFTEigenOperator.reinitkPointIndex(kPoint);
-		    if (dftParameters::verbosity==2)
+		    if (dftParameters::verbosity>=2)
 		      pcout<< "Beginning Chebyshev filter pass "<< dftParameters::numPass+count<<std::endl;
 
 		    kohnShamEigenSpaceCompute(0,
