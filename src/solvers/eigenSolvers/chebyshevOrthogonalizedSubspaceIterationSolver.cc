@@ -173,7 +173,7 @@ namespace dftfe{
 						eigenVectorsFlattenedArray);
 #endif
 	computing_timer.exit_section("Custom Partitioned Array Creation");
-	
+
 	if(dftParameters::verbosity >= 3)
 	  {
 	    pcout<<"Custom Partioned Array Creation Done: "<<std::endl;
@@ -223,7 +223,7 @@ namespace dftfe{
 	//Split the complete wavefunctions into multiple blocks.
 	//Create the size of vectors in each block
 	//
-	const unsigned int equalNumberWaveFunctionsPerBlock = totalNumberWaveFunctions; //1000;
+	const unsigned int equalNumberWaveFunctionsPerBlock = std::min(totalNumberWaveFunctions,(unsigned int)1000);
 	const double temp = (double)totalNumberWaveFunctions/(double)equalNumberWaveFunctionsPerBlock;
 	const unsigned int totalNumberBlocks = std::ceil(temp);
 	const unsigned int numberWaveFunctionsLastBlock = totalNumberWaveFunctions - equalNumberWaveFunctionsPerBlock*(totalNumberBlocks-1);
@@ -255,14 +255,12 @@ namespace dftfe{
 	      {
 
 #ifdef USE_COMPLEX
-		const unsigned int localVectorSize = eigenVectors[0].local_size()/2;
 		dealii::parallel::distributed::Vector<std::complex<double> > eigenVectorsFlattenedArrayBlock;
 
 		vectorTools::createDealiiVector<std::complex<double> >(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
 								       numberWaveFunctionsPerCurrentBlock,
 								       eigenVectorsFlattenedArrayBlock);
 #else
-		const unsigned int localVectorSize = eigenVectors[0].local_size();
 		dealii::parallel::distributed::Vector<double> eigenVectorsFlattenedArrayBlock;
 		vectorTools::createDealiiVector<double>(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
 							numberWaveFunctionsPerCurrentBlock,
@@ -289,6 +287,14 @@ namespace dftfe{
 		//fill the eigenVectorsFlattenedArrayBlock from eigenVectorsFlattenedArray(to be coded)
 		//
 
+		computing_timer.enter_section("Copy from full to block flattened array");
+		for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
+		    for(unsigned int iWave = 0; iWave < numberWaveFunctionsPerCurrentBlock; ++iWave)
+                        eigenVectorsFlattenedArrayBlock.local_element(iNode*numberWaveFunctionsPerCurrentBlock
+				 +iWave)
+			     =eigenVectorsFlattenedArray.local_element(iNode*totalNumberWaveFunctions+lowIndex+iWave);
+
+	        computing_timer.exit_section("Copy from full to block flattened array");
 
 		//
 		//call Chebyshev filtering function only for the current block to be filtered
@@ -309,7 +315,14 @@ namespace dftfe{
 		//copy the eigenVectorsFlattenedArrayBlock into eigenVectorsFlattenedArray after filtering(to be coded)
 		//
 
+		computing_timer.enter_section("Copy from block to full flattened array");
+		for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
+		    for(unsigned int iWave = 0; iWave < numberWaveFunctionsPerCurrentBlock; ++iWave)
+			  eigenVectorsFlattenedArray.local_element(iNode*totalNumberWaveFunctions+lowIndex+iWave)
+			  = eigenVectorsFlattenedArrayBlock.local_element(iNode*numberWaveFunctionsPerCurrentBlock
+				 +iWave);
 
+	        computing_timer.exit_section("Copy from block to full flattened array");
 	      }
 	    else
 	      {
@@ -358,13 +371,11 @@ namespace dftfe{
 							 d_lowerBoundWantedSpectrum);
 		computing_timer.exit_section("Chebyshev filtering opt");
 
-		if(dftParameters::verbosity >= 2)
-		  pcout<<"ChebyShev Filtering Done: "<<std::endl;
-
 	      }
 
 	  }//block loop
-
+	if(dftParameters::verbosity >= 2)
+	  pcout<<"ChebyShev Filtering Done: "<<std::endl;
 
 	if(dftParameters::orthogType.compare("lowden") == 0)
 	  {
@@ -385,6 +396,7 @@ namespace dftfe{
 	  pcout<<"Orthogonalization Done: "<<std::endl;
 
 	computing_timer.enter_section("Rayleigh-Ritz proj Opt");
+	operatorMatrix.reinit(totalNumberWaveFunctions);
 	linearAlgebraOperations::rayleighRitz(operatorMatrix,
 					      eigenVectorsFlattenedArray,
 					      totalNumberWaveFunctions,
@@ -398,7 +410,7 @@ namespace dftfe{
 	    pcout<<"Rayleigh-Ritz Done: "<<std::endl;
 	    pcout<<std::endl;
 	  }
-	
+
 	computing_timer.enter_section("eigen vectors residuals opt");
 	linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
 							  eigenVectorsFlattenedArray,
@@ -456,7 +468,7 @@ namespace dftfe{
 	computing_timer.exit_section("Copy to flattened array");
 
 
-	
+
 
 
       }
