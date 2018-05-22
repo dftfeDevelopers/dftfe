@@ -671,11 +671,15 @@ namespace dftfe {
 	      {
 		if(dftParameters::xc_id < 4)
 		  {
+		    computing_timer.enter_section("VEff Computation");
 		    kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, pseudoValues);
+		    computing_timer.exit_section("VEff Computation");
 		  }
 		else if (dftParameters::xc_id == 4)
 		  {
+		    computing_timer.enter_section("VEff Computation");
 		    kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, pseudoValues);
+		    computing_timer.exit_section("VEff Computation");
 		  }
 		for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
 		  {
@@ -734,11 +738,15 @@ namespace dftfe {
 		  {
 		    if(dftParameters::xc_id < 4)
 		      {
+			computing_timer.enter_section("VEff Computation");
 			kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, pseudoValues);
+			computing_timer.exit_section("VEff Computation");
 		      }
 		    else if (dftParameters::xc_id == 4)
 		      {
+			computing_timer.enter_section("VEff Computation");
 			kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, pseudoValues);
+			computing_timer.exit_section("VEff Computation");
 		      }
 
 		    for(unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
@@ -747,6 +755,9 @@ namespace dftfe {
 			if (dftParameters::verbosity==2)
 			  pcout<< "Beginning Chebyshev filter pass "<< dftParameters::numPass+count<< " for spin "<< s+1<<std::endl;;
 
+			computing_timer.enter_section("Hamiltonian Matrix Computation");
+			kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint);
+			computing_timer.exit_section("Hamiltonian Matrix Computation");
 
 			kohnShamEigenSpaceCompute(s,
 						  kPoint,
