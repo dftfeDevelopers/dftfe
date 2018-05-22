@@ -687,12 +687,7 @@ namespace dftfe{
 
       dealii::Utilities::MPI::sum(overlapMatrix, X.get_mpi_communicator(), overlapMatrix); 
 
-      //
-      //Free up memory
-      //
-      overlapMatrix.clear();
-      std::vector<double>().swap(overlapMatrix);
-
+    
       //
       //set lapack eigen decomposition flags and compute eigendecomposition of S = Q*D*Q^{H}
       //
