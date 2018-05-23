@@ -203,6 +203,8 @@ namespace dftfe{
 	//
 	//Free the memory of eigenVectors array
 	//
+	vectorType d_tempDealiiVector;
+	d_tempDealiiVector.reinit(eigenVectors[0]);
 	for(unsigned int iWave = 0; iWave < totalNumberWaveFunctions; ++iWave)
 	  eigenVectors[iWave].reinit(0);
 
@@ -456,16 +458,13 @@ namespace dftfe{
 	//
         //allocate back the memory of eigenVectors array
         //
-	vectorType d_tempDealiiVector;
-        operatorMatrix.getMatrixFreeData()->initialize_dof_vector(d_tempDealiiVector);
-
 	for(unsigned int iWave = 0; iWave < totalNumberWaveFunctions; ++iWave)
 	  eigenVectors[iWave].reinit(d_tempDealiiVector);
 
 	//
 	//copy back to eigenVectors array from eigenVectors Flattened Array
 	//
-	computing_timer.enter_section("Copy to flattened array");
+	computing_timer.enter_section("Copy to eigen vectors array");
 	for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
 	  {
 	    for(unsigned int iWave = 0; iWave < totalNumberWaveFunctions; ++iWave)
@@ -481,7 +480,7 @@ namespace dftfe{
 #endif
 	      }
 	  }
-	computing_timer.exit_section("Copy to flattened array");
+	computing_timer.exit_section("Copy to eigen vectors array");
 
 
 
