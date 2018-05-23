@@ -62,6 +62,8 @@ namespace dftfe {
 
       extern unsigned int chebyshevBlockSize;
 
+      extern bool useBatchGEMM;
+
       /**
        * Declare parameters.
        */

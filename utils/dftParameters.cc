@@ -33,7 +33,7 @@ namespace dftParameters
   double radiusAtomBall=0.0, mixingParameter=0.5, dkx=0.0, dky=0.0, dkz=0.0;
   double lowerEndWantedSpectrum=0.0,relLinearSolverTolerance=1e-10,selfConsistentSolverTolerance=1e-10,TVal=500, start_magnetization=0.0;
   double chebyshevTolerance = 1e-02;
-  
+
   bool isPseudopotential=false,periodicX=false,periodicY=false,periodicZ=false, useSymm=false, timeReversal=false;
   std::string meshFileName="",coordinatesFile="",domainBoundingVectorsFile="",kPointDataFile="", ionRelaxFlagsFile="",orthogType="";
 
@@ -51,6 +51,7 @@ namespace dftParameters
   bool electrostaticsPRefinement=false;
 
   unsigned int chebyshevBlockSize=1000;
+  bool useBatchGEMM=false;
 
 
   void declare_parameters(ParameterHandler &prm)
@@ -315,6 +316,10 @@ namespace dftParameters
 			  Patterns::Integer(1),
 			  "[Developer] The maximum number of wavefunctions which are handled by one call to the Chebyshev filter. This is useful for optimization purposes. The optimum value is dependent on the computing architecture.");
 
+	prm.declare_entry("BATCH GEMM", "false",
+			  Patterns::Bool(),
+			  "[Developer] Boolean parameter specifying whether to use gemm_batch blas routines to perform matrix-matrix multiplication operations with groups of matrices, processing a number of groups at once using threads instead of the standard serial route.");
+
 
 	prm.declare_entry("ORTHOGONALIZATION TYPE","GS",
 			  Patterns::Anything(),
@@ -445,6 +450,7 @@ namespace dftParameters
        dftParameters::chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
        dftParameters::numPass           = prm.get_integer("CHEBYSHEV FILTER PASSES");
        dftParameters::chebyshevBlockSize= prm.get_integer("CHEBYSHEV FILTER BLOCK SIZE");
+       dftParameters::useBatchGEMM= prm.get_bool("BATCH GEMM");
        dftParameters::orthogType        = prm.get("ORTHOGONALIZATION TYPE");
        dftParameters::chebyshevTolerance = prm.get_double("CHEBYSHEV FILTER TOLERANCE");
     }
