@@ -50,61 +50,46 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXBatchGEMM
   const std::complex<double> beta = 1.0;
   const unsigned int inc = 1;
 
-  for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
-    {
-       const unsigned int atomId = dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];
-       const unsigned int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
-
-       const unsigned int groupCount=1;
-       const unsigned int groupSize=dftPtr->d_elementIteratorsInAtomCompactSupport[atomId].size();
-       std::complex<double> ** cellWaveFunctionMatrixBatch = new std::complex<double>*[groupSize];
-       std::complex<double> ** cellProjectorKetTimesVectorMatrixBatch = new std::complex<double>*[groupSize];
-       const std::complex<double> ** cellNonLocalProjectorKetBatch = new std::complex<double>*[groupSize];
-       for(unsigned int i = 0; i < groupSize; i++)
-	    cellWaveFunctionMatrixBatch[i] = new std::complex<double>[d_numberNodesPerElement*numberWaveFunctions];
-
-       for(unsigned int iElemComp = 0; iElemComp < dftPtr->d_elementIteratorsInAtomCompactSupport[atomId].size(); ++iElemComp)
+  std::vector<std::complex<double> > cellWaveFunctionMatrix(d_numberNodesPerElement*numberWaveFunctions,0.0);
+  typename DoFHandler<3>::active_cell_iterator cell = dftPtr->dofHandler.begin_active(), endc = dftPtr->dofHandler.end();
+  int iElem = -1;
+  for(; cell!=endc; ++cell)
+      if(cell->is_locally_owned())
 	{
-	    const unsigned int elementId =  dftPtr->d_elementIdsInAtomCompactSupport[atomId][iElemComp];
+	  iElem++;
+	  if (dftPtr->d_nonLocalAtomIdsInElement[iElem].size()>0)
 	    for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
 	    {
-	      dealii::types::global_dof_index localNodeId = flattenedArrayCellLocalProcIndexIdMap[elementId][iNode];
+	      dealii::types::global_dof_index localNodeId = flattenedArrayCellLocalProcIndexIdMap[iElem][iNode];
 	      zcopy_(&numberWaveFunctions,
 		     src.begin()+localNodeId,
 		     &inc,
-		     &cellWaveFunctionMatrixBatch[iElemComp][numberWaveFunctions*iNode],
+		     &cellWaveFunctionMatrix[numberWaveFunctions*iNode],
 		     &inc);
 	    }
-	    cellProjectorKetTimesVectorMatrixBatch[iElemComp]
-		=&projectorKetTimesVector[atomId][0];
-	    cellNonLocalProjectorKetBatch[iElemComp]
-		=&dftPtr->d_nonLocalProjectorElementMatrices[atomId][iElemComp][d_kPointIndex][0];
-	}
 
-        zgemm_batch_(&transA,
+	  for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInElement[iElem].size();++iAtom)
+	    {
+	      const unsigned int atomId = dftPtr->d_nonLocalAtomIdsInElement[iElem][iAtom];
+	      const unsigned int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
+	      const int nonZeroElementMatrixId = dftPtr->d_sparsityPattern[atomId][iElem];
+
+	      zgemm_(&transA,
 		     &transB,
 		     &numberWaveFunctions,
 		     &numberPseudoWaveFunctions,
 		     &d_numberNodesPerElement,
 		     &alpha,
-		     cellWaveFunctionMatrixBatch,
+		     &cellWaveFunctionMatrix[0],
 		     &numberWaveFunctions,
-		     cellNonLocalProjectorKetBatch,
+		     &dftPtr->d_nonLocalProjectorElementMatricesConjugate[atomId][nonZeroElementMatrixId][d_kPointIndex][0],
 		     &d_numberNodesPerElement,
 		     &beta,
-		     cellProjectorKetTimesVectorMatrixBatch,
-		     &numberWaveFunctions,
-		     &groupCount,
-		     &groupSize);
+		     &projectorKetTimesVector[atomId][0],
+		     &numberWaveFunctions);
+	    }
+	}
 
-	for(unsigned int i = 0; i < groupSize; i++)
-	   delete [] cellWaveFunctionMatrixBatch[i];
-
-	delete [] cellProjectorKetTimesVectorMatrixBatch;
-        delete [] cellNonLocalProjectorKetBatch;
-        delete [] cellWaveFunctionMatrixBatch;
-
-    }//non local atomid loop
 
 
 
@@ -249,61 +234,46 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXBatchGEMM
   const double beta = 1.0;
   const unsigned int inc = 1;
 
-  for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
-    {
-       const unsigned int atomId = dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];
-       const unsigned int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
-
-       const unsigned int groupCount=1;
-       const unsigned int groupSize=dftPtr->d_elementIteratorsInAtomCompactSupport[atomId].size();
-       double ** cellWaveFunctionMatrixBatch = new double*[groupSize];
-       double ** cellProjectorKetTimesVectorMatrixBatch = new double*[groupSize];
-       const double ** cellNonLocalProjectorKetBatch = new double*[groupSize];
-       for(unsigned int i = 0; i < groupSize; i++)
-	    cellWaveFunctionMatrixBatch[i] = new double[d_numberNodesPerElement*numberWaveFunctions];
-
-       for(unsigned int iElemComp = 0; iElemComp < dftPtr->d_elementIteratorsInAtomCompactSupport[atomId].size(); ++iElemComp)
+  std::vector<double> cellWaveFunctionMatrix(d_numberNodesPerElement*numberWaveFunctions,0.0);
+  typename DoFHandler<3>::active_cell_iterator cell = dftPtr->dofHandler.begin_active(), endc = dftPtr->dofHandler.end();
+  int iElem = -1;
+  for(; cell!=endc; ++cell)
+      if(cell->is_locally_owned())
 	{
-	    const unsigned int elementId =  dftPtr->d_elementIdsInAtomCompactSupport[atomId][iElemComp];
+	  iElem++;
+	  if (dftPtr->d_nonLocalAtomIdsInElement[iElem].size()>0)
 	    for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
 	    {
-	      dealii::types::global_dof_index localNodeId = flattenedArrayCellLocalProcIndexIdMap[elementId][iNode];
+	      dealii::types::global_dof_index localNodeId = flattenedArrayCellLocalProcIndexIdMap[iElem][iNode];
 	      dcopy_(&numberWaveFunctions,
 		     src.begin()+localNodeId,
 		     &inc,
-		     &cellWaveFunctionMatrixBatch[iElemComp][numberWaveFunctions*iNode],
+		     &cellWaveFunctionMatrix[numberWaveFunctions*iNode],
 		     &inc);
 	    }
-	    cellProjectorKetTimesVectorMatrixBatch[iElemComp]
-		=&projectorKetTimesVector[atomId][0];
-	    cellNonLocalProjectorKetBatch[iElemComp]
-		=&dftPtr->d_nonLocalProjectorElementMatrices[atomId][iElemComp][d_kPointIndex][0];
-	}
 
-        dgemm_batch_(&transA,
+	  for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInElement[iElem].size();++iAtom)
+	    {
+	      const unsigned int atomId = dftPtr->d_nonLocalAtomIdsInElement[iElem][iAtom];
+	      const unsigned int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
+	      const int nonZeroElementMatrixId = dftPtr->d_sparsityPattern[atomId][iElem];
+
+	      dgemm_(&transA,
 		     &transB,
 		     &numberWaveFunctions,
 		     &numberPseudoWaveFunctions,
 		     &d_numberNodesPerElement,
 		     &alpha,
-		     cellWaveFunctionMatrixBatch,
+		     &cellWaveFunctionMatrix[0],
 		     &numberWaveFunctions,
-		     cellNonLocalProjectorKetBatch,
+		     &dftPtr->d_nonLocalProjectorElementMatrices[atomId][nonZeroElementMatrixId][d_kPointIndex][0],
 		     &d_numberNodesPerElement,
 		     &beta,
-		     cellProjectorKetTimesVectorMatrixBatch,
-		     &numberWaveFunctions,
-		     &groupCount,
-		     &groupSize);
+		     &projectorKetTimesVector[atomId][0],
+		     &numberWaveFunctions);
+	    }
+	}
 
-	for(unsigned int i = 0; i < groupSize; i++)
-	   delete [] cellWaveFunctionMatrixBatch[i];
-
-	delete [] cellProjectorKetTimesVectorMatrixBatch;
-        delete [] cellNonLocalProjectorKetBatch;
-        delete [] cellWaveFunctionMatrixBatch;
-
-    }//non local atomid loop
 
 
   dftPtr->d_projectorKetTimesVectorParFlattened=0.0;

@@ -422,10 +422,10 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
     if(dftParameters::isPseudopotential && dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0)
     {
       if (dftParameters::useBatchGEMM)
-        computeNonLocalHamiltonianTimesX(src,
-				         numberWaveFunctions,
-				         flattenedArrayCellLocalProcIndexIdMap,
-				         dst);
+        computeNonLocalHamiltonianTimesXBatchGEMM(src,
+				                  numberWaveFunctions,
+				                  flattenedArrayCellLocalProcIndexIdMap,
+				                  dst);
       else
         computeNonLocalHamiltonianTimesX(src,
 				         numberWaveFunctions,
@@ -542,10 +542,10 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
     if(dftParameters::isPseudopotential && dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0)
     {
       if (dftParameters::useBatchGEMM)
-        computeNonLocalHamiltonianTimesX(src,
-				         numberWaveFunctions,
-				         flattenedArrayCellLocalProcIndexIdMap,
-				         dst);
+        computeNonLocalHamiltonianTimesXBatchGEMM(src,
+				                  numberWaveFunctions,
+				                  flattenedArrayCellLocalProcIndexIdMap,
+				                  dst);
       else
         computeNonLocalHamiltonianTimesX(src,
 				         numberWaveFunctions,

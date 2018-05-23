@@ -309,7 +309,7 @@ namespace dftParameters
 
 
 	prm.declare_entry("CHEBYSHEV FILTER TOLERANCE","5e-02",
-			  Patterns::Double(0,1.0),
+			  Patterns::Double(0),
 			  "[Developer] Parameter specifying the tolerance to which eigenvectors need to computed using chebyshev filtering approach");
 
 	prm.declare_entry("CHEBYSHEV FILTER BLOCK SIZE", "1000",
