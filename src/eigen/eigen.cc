@@ -509,10 +509,20 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
     //
     //Hloc*M^{-1/2}*X
     //
+
+    /*
     computeLocalHamiltonianTimesX(src,
 				  numberWaveFunctions,
 				  flattenedArrayMacroCellLocalProcIndexIdMap,
 				  dst);
+    */
+
+
+    computeLocalHamiltonianTimesXBatchMKL(src,
+				          numberWaveFunctions,
+				          flattenedArrayMacroCellLocalProcIndexIdMap,
+ 				          dst);
+
 
     //
     //required if its a pseudopotential calculation and number of nonlocal atoms are greater than zero
