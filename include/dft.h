@@ -523,7 +523,7 @@ namespace dftfe {
       IndexSet d_ghostProjectorIdsCurrentProcess;
       std::map<std::pair<unsigned int,unsigned int>, unsigned int> d_projectorIdsNumberingMapCurrentProcess;
 #ifdef USE_COMPLEX
-      std::vector<std::vector<std::vector<std::vector<std::complex<double> > > > > d_nonLocalProjectorElementMatrices,d_nonLocalProjectorElementMatricesConjugate;
+      std::vector<std::vector<std::vector<std::vector<std::complex<double> > > > > d_nonLocalProjectorElementMatrices,d_nonLocalProjectorElementMatricesConjugate,d_nonLocalProjectorElementMatricesTranspose;
       std::vector<dealii::parallel::distributed::Vector<std::complex<double> > > d_projectorKetTimesVectorPar;
 
       /// parallel vector used in nonLocalHamiltionian times wavefunction vector computation
@@ -531,7 +531,7 @@ namespace dftfe {
       /// layout for every nonLocalHamiltionan times wavefunction computation
       dealii::parallel::distributed::Vector<std::complex<double> >  d_projectorKetTimesVectorParFlattened;
 #else
-      std::vector<std::vector<std::vector<std::vector<double> > > > d_nonLocalProjectorElementMatrices,d_nonLocalProjectorElementMatricesConjugate;
+      std::vector<std::vector<std::vector<std::vector<double> > > > d_nonLocalProjectorElementMatrices,d_nonLocalProjectorElementMatricesConjugate,d_nonLocalProjectorElementMatricesTranspose;
       std::vector<dealii::parallel::distributed::Vector<double> > d_projectorKetTimesVectorPar;
 
       /// parallel vector used in nonLocalHamiltionian times wavefunction vector computation

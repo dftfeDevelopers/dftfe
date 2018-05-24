@@ -131,7 +131,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXBatchGEMM
 
   //blas required settings
   const char transA1 = 'N';
-  const char transB1 = 'T';
+  const char transB1 = 'N';
   const std::complex<double> alpha1 = 1.0;
   const std::complex<double> beta1 = 0.0;
   const unsigned int inc1 = 1;
@@ -157,7 +157,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXBatchGEMM
 	    cellProjectorKetTimesVectorMatrixBatch[iElemComp]
 		=&projectorKetTimesVector[atomId][0];
 	    cellNonLocalProjectorKetBatch[iElemComp]
-		=&dftPtr->d_nonLocalProjectorElementMatrices[atomId][iElemComp][d_kPointIndex][0];
+		=&dftPtr->d_nonLocalProjectorElementMatricesTranspose[atomId][iElemComp][d_kPointIndex][0];
 	}
 
         zgemm_batch_(&transA1,
@@ -169,7 +169,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXBatchGEMM
 		     cellProjectorKetTimesVectorMatrixBatch,
 		     &numberWaveFunctions,
 		     cellNonLocalProjectorKetBatch,
-		     &d_numberNodesPerElement,
+		     &numberPseudoWaveFunctions,
 		     &beta1,
 		     cellNonLocalHamTimesWaveMatrixBatch,
 		     &numberWaveFunctions,
@@ -314,7 +314,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXBatchGEMM
 
   //blas required settings
   const char transA1 = 'N';
-  const char transB1 = 'T';
+  const char transB1 = 'N';
   const double alpha1 = 1.0;
   const double beta1 = 0.0;
   const unsigned int inc1 = 1;
@@ -340,7 +340,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXBatchGEMM
 	    cellProjectorKetTimesVectorMatrixBatch[iElemComp]
 		=&projectorKetTimesVector[atomId][0];
 	    cellNonLocalProjectorKetBatch[iElemComp]
-		=&dftPtr->d_nonLocalProjectorElementMatrices[atomId][iElemComp][d_kPointIndex][0];
+		=&dftPtr->d_nonLocalProjectorElementMatricesTranspose[atomId][iElemComp][d_kPointIndex][0];
 	}
 
         dgemm_batch_(&transA1,
@@ -352,7 +352,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXBatchGEMM
 		     cellProjectorKetTimesVectorMatrixBatch,
 		     &numberWaveFunctions,
 		     cellNonLocalProjectorKetBatch,
-		     &d_numberNodesPerElement,
+		     &numberPseudoWaveFunctions,
 		     &beta1,
 		     cellNonLocalHamTimesWaveMatrixBatch,
 		     &numberWaveFunctions,
