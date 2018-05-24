@@ -383,6 +383,8 @@ namespace dftfe{
 	      }
 
 	  }//block loop
+
+	eigenVectorsFlattenedArrayBlock.reinit(0);
 	if(dftParameters::verbosity >= 2)
 	  pcout<<"ChebyShev Filtering Done: "<<std::endl;
 
