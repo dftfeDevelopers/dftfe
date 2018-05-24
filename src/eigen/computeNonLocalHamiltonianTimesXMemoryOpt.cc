@@ -424,7 +424,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::paralle
 
   //blas required settings
   const char transA1 = 'N';
-  const char transB1 = 'T';
+  const char transB1 = 'N';
   const std::complex<double> alpha1 = 1.0;
   const std::complex<double> beta1 = 0.0;
   const unsigned int inc1 = 1;
@@ -447,8 +447,8 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::paralle
 		 &alpha1,
 		 &projectorKetTimesVector[atomId][0],
 		 &numberWaveFunctions,
-		 &dftPtr->d_nonLocalProjectorElementMatrices[atomId][iElemComp][d_kPointIndex][0],
-		 &d_numberNodesPerElement,
+		 &dftPtr->d_nonLocalProjectorElementMatricesTranspose[atomId][iElemComp][d_kPointIndex][0],
+		 &numberPseudoWaveFunctions,
 		 &beta1,
 		 &cellNonLocalHamTimesWaveMatrix[0],
 		 &numberWaveFunctions);
@@ -593,7 +593,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::paralle
 
   //blas required settings
   const char transA1 = 'N';
-  const char transB1 = 'T';
+  const char transB1 = 'N';
   const double alpha1 = 1.0;
   const double beta1 = 0.0;
   const unsigned int inc1 = 1;
@@ -616,8 +616,8 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::paralle
 		 &alpha1,
 		 &projectorKetTimesVector[atomId][0],
 		 &numberWaveFunctions,
-		 &dftPtr->d_nonLocalProjectorElementMatrices[atomId][iElemComp][d_kPointIndex][0],
-		 &d_numberNodesPerElement,
+		 &dftPtr->d_nonLocalProjectorElementMatricesTranspose[atomId][iElemComp][d_kPointIndex][0],
+		 &numberPseudoWaveFunctions,
 		 &beta1,
 		 &cellNonLocalHamTimesWaveMatrix[0],
 		 &numberWaveFunctions);
