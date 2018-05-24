@@ -39,14 +39,14 @@ subsection Brillouin zone k point sampling options
   subsection Monkhorst-Pack (MP) grid generation
     set SAMPLING POINTS 1 = 1
     set SAMPLING POINTS 2 = 1
-    set SAMPLING POINTS 3 = 2
+    set SAMPLING POINTS 3 = 1
     set SAMPLING SHIFT 1 = 0.0
     set SAMPLING SHIFT 2 = 0.0
-    set SAMPLING SHIFT 3 = 0.25
+    set SAMPLING SHIFT 3 = 0.0
   end
 
   set USE GROUP SYMMETRY =false
-  set USE TIME REVERSAL SYMMETRY = true
+  set USE TIME REVERSAL SYMMETRY = false
   set NUMBER OF POOLS = 1
 end
 
@@ -56,8 +56,6 @@ subsection DFT functional related parameters
   set PSEUDOPOTENTIAL CALCULATION =true
   set PSEUDOPOTENTIAL TYPE = 2
   set EXCHANGE CORRELATION TYPE = 4
-  set SPIN POLARIZATION=0
-  set START MAGNETIZATION=0.0
 end
 
 
