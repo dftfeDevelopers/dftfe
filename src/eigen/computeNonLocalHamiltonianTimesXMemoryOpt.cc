@@ -315,7 +315,6 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::paralle
 {
 
   std::map<unsigned int, std::vector<std::complex<double> > > projectorKetTimesVector;
-  projectorKetTimesVector.clear();
 
   //
   //allocate memory for matrix-vector product
@@ -395,8 +394,14 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::paralle
       const unsigned int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
 
       for(unsigned int iPseudoAtomicWave = 0; iPseudoAtomicWave < numberPseudoWaveFunctions; ++iPseudoAtomicWave)
-	  for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
-	      dftPtr->d_projectorKetTimesVectorParFlattened[dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(atomId,iPseudoAtomicWave)]*numberWaveFunctions+iWave]=projectorKetTimesVector[atomId][numberWaveFunctions*iPseudoAtomicWave + iWave];
+      {
+        const unsigned int id=dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(atomId,iPseudoAtomicWave)];
+	zcopy_(&numberWaveFunctions,
+                &projectorKetTimesVector[atomId][numberWaveFunctions*iPseudoAtomicWave],
+                &inc,
+                &dftPtr->d_projectorKetTimesVectorParFlattened[id*numberWaveFunctions],
+                &inc);
+      }
     }
 
 
@@ -412,9 +417,22 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::paralle
       const unsigned int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
       for(unsigned int iPseudoAtomicWave = 0; iPseudoAtomicWave < numberPseudoWaveFunctions; ++iPseudoAtomicWave)
       {
-	  const double nonlocalConstantV=dftPtr->d_nonLocalPseudoPotentialConstants[atomId][iPseudoAtomicWave];
-	  for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
-              projectorKetTimesVector[atomId][numberWaveFunctions*iPseudoAtomicWave + iWave] =nonlocalConstantV*dftPtr->d_projectorKetTimesVectorParFlattened[dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(atomId,iPseudoAtomicWave)]*numberWaveFunctions+iWave];
+	  std::complex<double> nonlocalConstantV;
+	  nonlocalConstantV.real(dftPtr->d_nonLocalPseudoPotentialConstants[atomId][iPseudoAtomicWave]);
+	  nonlocalConstantV.imag(0);
+
+          const unsigned int id=dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(atomId,iPseudoAtomicWave)];
+
+	  zscal_(&numberWaveFunctions,
+		 &nonlocalConstantV,
+		 &dftPtr->d_projectorKetTimesVectorParFlattened[id*numberWaveFunctions],
+		 &inc);
+
+	  zcopy_(&numberWaveFunctions,
+		 &dftPtr->d_projectorKetTimesVectorParFlattened[id*numberWaveFunctions],
+		 &inc,
+		 &projectorKetTimesVector[atomId][numberWaveFunctions*iPseudoAtomicWave],
+		 &inc);
       }
 
     }
@@ -482,7 +500,6 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::paralle
 
 
   std::map<unsigned int, std::vector<double> > projectorKetTimesVector;
-  projectorKetTimesVector.clear();
 
   //
   //allocate memory for matrix-vector product
@@ -561,8 +578,16 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::paralle
       const unsigned int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
 
       for(unsigned int iPseudoAtomicWave = 0; iPseudoAtomicWave < numberPseudoWaveFunctions; ++iPseudoAtomicWave)
-	  for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
-	       dftPtr->d_projectorKetTimesVectorParFlattened[dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(atomId,iPseudoAtomicWave)]*numberWaveFunctions+iWave]=projectorKetTimesVector[atomId][numberWaveFunctions*iPseudoAtomicWave + iWave];
+      {
+          const unsigned int id=dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(atomId,iPseudoAtomicWave)];
+
+          dcopy_(&numberWaveFunctions,
+                &projectorKetTimesVector[atomId][numberWaveFunctions*iPseudoAtomicWave],
+                &inc,
+                &dftPtr->d_projectorKetTimesVectorParFlattened[id*numberWaveFunctions],
+                &inc);
+
+      }
     }
 
   dftPtr->d_projectorKetTimesVectorParFlattened.compress(VectorOperation::add);
@@ -577,12 +602,20 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::paralle
       const unsigned int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
       for(unsigned int iPseudoAtomicWave = 0; iPseudoAtomicWave < numberPseudoWaveFunctions; ++iPseudoAtomicWave)
 	{
-	  const double nonlocalConstantV=dftPtr->d_nonLocalPseudoPotentialConstants[atomId][iPseudoAtomicWave];
-	  for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
-	    {
-	      projectorKetTimesVector[atomId][numberWaveFunctions*iPseudoAtomicWave + iWave]
-		  =nonlocalConstantV*dftPtr->d_projectorKetTimesVectorParFlattened[dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(atomId,iPseudoAtomicWave)]*numberWaveFunctions+iWave];
-	    }
+	  double nonlocalConstantV=dftPtr->d_nonLocalPseudoPotentialConstants[atomId][iPseudoAtomicWave];
+
+          const unsigned int id=dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(atomId,iPseudoAtomicWave)];
+
+	  dscal_(&numberWaveFunctions,
+		 &nonlocalConstantV,
+		 &dftPtr->d_projectorKetTimesVectorParFlattened[id*numberWaveFunctions],
+		 &inc);
+
+	  dcopy_(&numberWaveFunctions,
+		 &dftPtr->d_projectorKetTimesVectorParFlattened[id*numberWaveFunctions],
+		 &inc,
+		 &projectorKetTimesVector[atomId][numberWaveFunctions*iPseudoAtomicWave],
+		 &inc);
 
 	}
 
