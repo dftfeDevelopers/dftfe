@@ -865,31 +865,57 @@ namespace dftfe{
       iwork.clear();
       std::vector<double>().swap(work);
       std::vector<int>().swap(iwork);*/
-      
-      std::vector<double> eigenValuesOverlap(numberVectors,0.0);
-      std::vector<double> overlapMatrixEigenVectors(numberVectors*numberVectors,0.0);
+
+      std::vector<double> eigenValuesOverlap(numberVectors);
       computing_timer.enter_section("eigen decomp. of overlap matrix");
-      callevr(numberVectors,
+      callevd(numberVectors,
 	      &overlapMatrix[0],
-	      &overlapMatrixEigenVectors[0],
 	      &eigenValuesOverlap[0]);
       computing_timer.exit_section("eigen decomp. of overlap matrix");
+
+      //
+      //compute D^{-1/4} where S = Q*D*Q^{T}
+      //
+      std::vector<double> invFourthRootEigenValuesMatrix(numberEigenValues);
+      unsigned int nanFlag = 0;
+      for(unsigned i = 0; i < numberEigenValues; ++i)
+	{
+	  invFourthRootEigenValuesMatrix[i] = 1.0/pow(eigenValuesOverlap[i],1.0/4);
+	  if(std::isnan(invFourthRootEigenValuesMatrix[i]))
+	    {
+	      nanflag = 1;
+	      std::cout<<"Nan obtained in proc: "<<dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)<<" and switching to more robust dsyevr for eigen decomposition "<<std::endl;
+	      break;
+	    }
+	}
+
+      if(nanFlag == 1)
+	{
+	  std::vector<double> overlapMatrixEigenVectors(numberVectors*numberVectors,0.0);
+	  eigenValuesOverlap.clear();
+	  eigenValuesOverlap.resize(numberVectors);
+	  invFourthRootEigenValuesMatrix.clear();
+	  invFourthRootEigenValuesMatrix.resize(numberVectors);
+	  computing_timer.enter_section("eigen decomp. of overlap matrix");
+	  callevr(numberVectors,
+		  &overlapMatrix[0],
+		  &overlapMatrixEigenVectors[0],
+		  &eigenValuesOverlap[0]);
+	  computing_timer.exit_section("eigen decomp. of overlap matrix");
 	      
-      overlapMatrix = overlapMatrixEigenVectors;
-      overlapMatrixEigenVectors.clear();
-      std::vector<double>().swap(overlapMatrixEigenVectors);
+	  overlapMatrix = overlapMatrixEigenVectors;
+	  overlapMatrixEigenVectors.clear();
+	  std::vector<double>().swap(overlapMatrixEigenVectors);
 
-
-       //
-       //compute D^{-1/4} where S = Q*D*Q^{T}
-       //
-       std::vector<double> invFourthRootEigenValuesMatrix(numberEigenValues,0.0);
-
-       for(unsigned i = 0; i < numberEigenValues; ++i)
-	 {
-	   invFourthRootEigenValuesMatrix[i] = 1.0/pow(eigenValuesOverlap[i],1.0/4);
-	   AssertThrow(!std::isnan(invFourthRootEigenValuesMatrix[i]),dealii::ExcMessage("Eigen values of overlap matrix during Lowden Orthonormalization are very small and close to zero or negative"));
-	 }
+	  //
+	  //compute D^{-1/4} where S = Q*D*Q^{T}
+	  //
+	  for(unsigned i = 0; i < numberEigenValues; ++i)
+	    {
+	      invFourthRootEigenValuesMatrix[i] = 1.0/pow(eigenValuesOverlap[i],(1.0/4.0));
+	      AssertThrow(!std::isnan(invFourthRootEigenValuesMatrix[i]),dealii::ExcMessage("Eigen values of overlap matrix during Lowden Orthonormalization are very small and close to zero or negative"));
+	    }
+	}
 
        //
        //Q*D^{-1/4} and note that "Q" is stored in overlapMatrix after calling "dsyevd"
