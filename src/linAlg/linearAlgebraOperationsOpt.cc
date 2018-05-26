@@ -772,7 +772,6 @@ namespace dftfe{
       const unsigned int localVectorSize = X.local_size()/numberVectors;
 
       std::vector<double> overlapMatrixLocal(numberVectors*numberVectors,0.0);
-      std::vector<double> overlapMatrix(numberVectors*numberVectors,0.0);
 
 
       dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
