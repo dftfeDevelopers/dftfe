@@ -55,11 +55,8 @@ namespace dftfe{
 	      &info);
     }
 
-    
-   
 
-
-    void callevd(const unsigned int dimensionMatrix,
+     void callevd(const unsigned int dimensionMatrix,
 		 std::complex<double> *matrix,
 		 double *eigenValues)
     {
@@ -68,7 +65,7 @@ namespace dftfe{
       std::vector<int> iwork(liwork,0);
       const char jobz='V', uplo='U';
       const unsigned int lrwork = 1 + 5*dimensionMatrix + 2*dimensionMatrix*dimensionMatrix;
-      std::vector<double> rwork(lrwork,0.0);
+      std::vector<double> rwork(lrwork);
       std::vector<std::complex<double> > work(lwork);
 
 
@@ -87,6 +84,98 @@ namespace dftfe{
 	      &info);
     }
 
+
+    void callevr(const unsigned int dimensionMatrix,
+		 std::complex<double> *matrixInput,
+		 std::complex<double> *eigenVectorMatrixOutput,
+		 double *eigenValues)
+    {
+      char jobz = 'V', uplo = 'U', range = 'A';
+      const double vl=0.0,vu=0.0;
+      const unsigned int il=0,iu = 0;
+      const double abstol = 1e-08;
+      std::vector<unsigned int> isuppz(2*dimensionMatrix);
+      const int lwork = 2*dimensionMatrix;
+      std::vector<std::complex<double> > work(lwork);
+      const int liwork = 10*dimensionMatrix;
+      std::vector<int> iwork(liwork);
+      const int lrwork = 24*dimensionMatrix;
+      std::vector<double> rwork(lrwork);
+      int info;
+
+      zheevr_(&jobz,
+	      &range,
+	      &uplo,
+	      &dimensionMatrix,
+	      matrixInput,
+	      &dimensionMatrix,
+	      &vl,
+	      &vu,
+	      &il,
+	      &iu,
+	      &abstol,
+	      &dimensionMatrix,
+	      eigenValues,
+	      eigenVectorMatrixOutput,
+	      &dimensionMatrix,
+	      &isuppz[0],
+	      &work[0],
+	      &lwork,
+	      &rwork[0],
+	      &lrwork,
+	      &iwork[0],
+	      &liwork,
+	      &info);
+    }
+
+
+
+    
+    void callevr(const unsigned int dimensionMatrix,
+		 double *matrixInput,
+		 double *eigenVectorMatrixOutput,
+		 double *eigenValues)
+    {
+      char jobz = 'V', uplo = 'U', range = 'A';
+      const double vl=0.0,vu = 0.0;
+      const unsigned int il=0,iu=0;
+      const double abstol = 1e-08;
+      std::vector<unsigned int> isuppz(2*dimensionMatrix);
+      const int lwork = 40*dimensionMatrix;
+      std::vector<double> work(lwork);
+      const int liwork = 10*dimensionMatrix;
+      std::vector<int> iwork(liwork);
+      int info;
+
+      dsyevr_(&jobz,
+	      &range,
+	      &uplo,
+	      &dimensionMatrix,
+	      matrixInput,
+	      &dimensionMatrix,
+	      &vl,
+	      &vu,
+	      &il,
+	      &iu,
+	      &abstol,
+	      &dimensionMatrix,
+	      eigenValues,
+	      eigenVectorMatrixOutput,
+	      &dimensionMatrix,
+	      &isuppz[0],
+	      &work[0],
+	      &lwork,
+	      &iwork[0],
+	      &liwork,
+	      &info);
+	     
+      AssertThrow(info==0,dealii::ExcMessage("Error in dsyevr"));
+      
+
+    }
+
+
+   
 
     void callgemm(const unsigned int numberEigenValues,
 		  const unsigned int localVectorSize,
@@ -373,9 +462,20 @@ namespace dftfe{
       //
       //compute eigendecomposition of ProjHam
       //
-      callevd(numberEigenValues,
+      /*callevd(numberEigenValues,
 	      &ProjHam[0],
+	      &eigenValues[0]);*/
+
+
+      std::vector<T> ProjHamEigenVectors(numberWaveFunctions*numberWaveFunctions);
+      callevr(numberEigenValues,
+	      &ProjHam[0],
+	      &ProjHamEigenVectors[0],
 	      &eigenValues[0]);
+
+      ProjHam = ProjHamEigenVectors;
+      ProjHamEigenVectors.clear();
+      std::vector<T>().swap(ProjHamEigenVectors);
 
 
       //
@@ -683,7 +783,7 @@ namespace dftfe{
       //the overlap matrix as S = S^{T} = X*{X^T} here
       //
 
-      computing_timer.enter_section("local overlap matrix");
+      computing_timer.enter_section("local overlap matrix for lowden");
       dsyrk_(&uplo,
 	     &trans,
 	     &numberVectors,
@@ -694,16 +794,16 @@ namespace dftfe{
 	     &beta,
 	     &overlapMatrix[0],
 	     &numberVectors);
-      computing_timer.exit_section("local overlap matrix");
+      computing_timer.exit_section("local overlap matrix for lowden");
 
-
+      computing_timer.enter_section("utils mpi sum in lowden");
       dealii::Utilities::MPI::sum(overlapMatrix, X.get_mpi_communicator(), overlapMatrix); 
-
+      computing_timer.exit_section("utils mpi sum in lowden");
     
       //
       //set lapack eigen decomposition flags and compute eigendecomposition of S = Q*D*Q^{H}
       //
-      int info;
+      /*int info;
       const unsigned int lwork = 1 + 6*numberVectors + 2*numberVectors*numberVectors, liwork = 3 + 5*numberVectors;
       std::vector<int> iwork(liwork,0);
       const char jobz='V';
@@ -722,15 +822,27 @@ namespace dftfe{
 	      &iwork[0],
 	      &liwork,
 	      &info);
-      computing_timer.exit_section("eigen decomp. of overlap matrix");
+	      computing_timer.exit_section("eigen decomp. of overlap matrix");
 
-       //
-       //free up memory associated with work
-       //
-       work.clear();
-       iwork.clear();
-       std::vector<double>().swap(work);
-       std::vector<int>().swap(iwork);
+      //
+      //free up memory associated with work
+      //
+      work.clear();
+      iwork.clear();
+      std::vector<double>().swap(work);
+      std::vector<int>().swap(iwork);*/
+      
+      std::vector<double> eigenValuesOverlap(numberVectors,0.0);
+      std::vector<double> overlapMatrixEigenVectors(numberVectors*numberVectors,0.0);
+      callevr(numberVectors,
+	      &overlapMatrix[0],
+	      &overlapMatrixEigenVectors[0],
+	      &eigenValuesOverlap[0]);
+	      
+      overlapMatrix = overlapMatrixEigenVectors;
+      overlapMatrixEigenVectors.clear();
+      std::vector<double>().swap(overlapMatrixEigenVectors);
+
 
        //
        //compute D^{-1/4} where S = Q*D*Q^{T}
@@ -740,7 +852,7 @@ namespace dftfe{
        for(unsigned i = 0; i < numberEigenValues; ++i)
 	 {
 	   invFourthRootEigenValuesMatrix[i] = 1.0/pow(eigenValuesOverlap[i],1.0/4);
-	   AssertThrow(!std::isnan(invFourthRootEigenValuesMatrix[i]),dealii::ExcMessage("Eigen values of overlap matrix during Lowden Orthonormalization are very small and close to zero"));
+	   AssertThrow(!std::isnan(invFourthRootEigenValuesMatrix[i]),dealii::ExcMessage("Eigen values of overlap matrix during Lowden Orthonormalization are very small and close to zero or negative"));
 	 }
 
        //
