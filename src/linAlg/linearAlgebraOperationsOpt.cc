@@ -462,12 +462,12 @@ namespace dftfe{
       //
       //compute eigendecomposition of ProjHam
       //
-      /*callevd(numberEigenValues,
+      callevd(numberEigenValues,
 	      &ProjHam[0],
-	      &eigenValues[0]);*/
+	      &eigenValues[0]);
 
 
-      std::vector<T> ProjHamEigenVectors(numberWaveFunctions*numberWaveFunctions);
+      /*std::vector<T> ProjHamEigenVectors(numberWaveFunctions*numberWaveFunctions);
       callevr(numberEigenValues,
 	      &ProjHam[0],
 	      &ProjHamEigenVectors[0],
@@ -475,7 +475,7 @@ namespace dftfe{
 
       ProjHam = ProjHamEigenVectors;
       ProjHamEigenVectors.clear();
-      std::vector<T>().swap(ProjHamEigenVectors);
+      std::vector<T>().swap(ProjHamEigenVectors);*/
 
 
       //
