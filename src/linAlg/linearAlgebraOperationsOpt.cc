@@ -139,9 +139,9 @@ namespace dftfe{
       char jobz = 'V', uplo = 'U', range = 'A';
       const double vl=0.0,vu = 0.0;
       const unsigned int il=0,iu=0;
-      const double abstol = 1e-08;
+      const double abstol = 0.0;
       std::vector<unsigned int> isuppz(2*dimensionMatrix);
-      const int lwork = 40*dimensionMatrix;
+      const int lwork = 26*dimensionMatrix;
       std::vector<double> work(lwork);
       const int liwork = 10*dimensionMatrix;
       std::vector<int> iwork(liwork);
@@ -868,10 +868,12 @@ namespace dftfe{
       
       std::vector<double> eigenValuesOverlap(numberVectors,0.0);
       std::vector<double> overlapMatrixEigenVectors(numberVectors*numberVectors,0.0);
+      computing_timer.enter_section("eigen decomp. of overlap matrix");
       callevr(numberVectors,
 	      &overlapMatrix[0],
 	      &overlapMatrixEigenVectors[0],
 	      &eigenValuesOverlap[0]);
+      computing_timer.exit_section("eigen decomp. of overlap matrix");
 	      
       overlapMatrix = overlapMatrixEigenVectors;
       overlapMatrixEigenVectors.clear();
