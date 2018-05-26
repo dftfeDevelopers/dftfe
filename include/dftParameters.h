@@ -61,8 +61,9 @@ namespace dftfe {
       extern bool electrostaticsPRefinement;
 
       extern unsigned int chebyshevBlockSize;
-
       extern bool useBatchGEMM;
+      extern unsigned int chebyshevOMPThreads;
+      extern unsigned int orthoRROMPThreads;
 
       /**
        * Declare parameters.
