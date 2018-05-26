@@ -883,7 +883,7 @@ namespace dftfe{
 	  invFourthRootEigenValuesMatrix[i] = 1.0/pow(eigenValuesOverlap[i],1.0/4);
 	  if(std::isnan(invFourthRootEigenValuesMatrix[i]))
 	    {
-	      nanflag = 1;
+	      nanFlag = 1;
 	      std::cout<<"Nan obtained in proc: "<<dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)<<" and switching to more robust dsyevr for eigen decomposition "<<std::endl;
 	      break;
 	    }
