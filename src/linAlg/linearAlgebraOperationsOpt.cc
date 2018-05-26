@@ -24,7 +24,7 @@
 
 #include <linearAlgebraOperations.h>
 #include <dftParameters.h>
-
+#include "mkl.h"
 
 namespace dftfe{
 
@@ -55,8 +55,8 @@ namespace dftfe{
 	      &info);
     }
 
-    
-   
+
+
 
 
     void callevd(const unsigned int dimensionMatrix,
@@ -157,6 +157,8 @@ namespace dftfe{
 			 const double b,
 			 const double a0)
     {
+      if (dftParameters::chebyshevOMPThreads!=0)
+	  mkl_set_num_threads(dftParameters::chebyshevOMPThreads);
 
       double e, c, sigma, sigma1, sigma2, gamma;
       e = (b-a)/2.0; c = (b+a)/2.0;
@@ -240,6 +242,9 @@ namespace dftfe{
 
       //copy back YArray to XArray
       XArray = YArray;
+
+      if (dftParameters::chebyshevOMPThreads!=0)
+	  mkl_set_num_threads(1);
     }
 
     template<typename T>
@@ -358,7 +363,8 @@ namespace dftfe{
 		      const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap,
 		      std::vector<double> & eigenValues)
     {
-
+      if (dftParameters::orthoRROMPThreads!=0)
+	  mkl_set_num_threads(dftParameters::orthoRROMPThreads);
       //
       //compute projected Hamiltonian
       //
@@ -394,6 +400,8 @@ namespace dftfe{
 
       X = rotatedBasis;
 
+      if (dftParameters::orthoRROMPThreads!=0)
+	  mkl_set_num_threads(1);
     }
 
     template<typename T>
@@ -402,11 +410,11 @@ namespace dftfe{
 				  const std::vector<double> & eigenValues,
 				  const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayMacroCellLocalProcIndexIdMap,
 				  const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap,
-				
+
 				  std::vector<double> & residualNorm)
 
     {
-      
+
       //
       //get the number of eigenVectors
       //
@@ -447,8 +455,8 @@ namespace dftfe{
 	  if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
 	    std::cout<<"L-2 Norm of residue   :"<<std::endl;
 	}
-      
-      
+
+
       const unsigned int localVectorSize = X.local_size()/numberVectors;
 
       //
@@ -467,7 +475,7 @@ namespace dftfe{
 
       dealii::Utilities::MPI::sum(residualNormSquare,X.get_mpi_communicator(),residualNormSquare);
 
-      
+
       for(unsigned int iWave = 0; iWave < numberVectors; ++iWave)
 	{
 #ifdef USE_COMPLEX
@@ -484,14 +492,14 @@ namespace dftfe{
 	    }
 	}
 
-      if(dftParameters::verbosity==2)  
+      if(dftParameters::verbosity==2)
       {
 	if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
 	  std::cout <<std::endl;
       }
-	       
+
     }
-			     
+
 
 
 
@@ -500,6 +508,8 @@ namespace dftfe{
     void lowdenOrthogonalization(dealii::parallel::distributed::Vector<std::complex<double> > & X,
 				 const unsigned int numberVectors)
     {
+      if (dftParameters::orthoRROMPThreads!=0)
+	  mkl_set_num_threads(dftParameters::orthoRROMPThreads);
 
       const unsigned int localVectorSize = X.local_size()/numberVectors;
       std::vector<std::complex<double> > overlapMatrix(numberVectors*numberVectors,0.0);
@@ -533,7 +543,7 @@ namespace dftfe{
 	     &numberVectors);
 
 
-      dealii::Utilities::MPI::sum(overlapMatrix, X.get_mpi_communicator(), overlapMatrix); 
+      dealii::Utilities::MPI::sum(overlapMatrix, X.get_mpi_communicator(), overlapMatrix);
 
       //
       //evaluate the conjugate of {S^T} to get actual overlap matrix
@@ -646,25 +656,30 @@ namespace dftfe{
 	     orthoNormalizedBasis.begin(),
 	     &numberEigenValues);
 
-       
+
        X = orthoNormalizedBasis;
+
+       if (dftParameters::orthoRROMPThreads!=0)
+	  mkl_set_num_threads(1);
     }
 #else
     void lowdenOrthogonalization(dealii::parallel::distributed::Vector<double> & X,
 				 const unsigned int numberVectors)
     {
+      if (dftParameters::orthoRROMPThreads!=0)
+	  mkl_set_num_threads(dftParameters::orthoRROMPThreads);
 
       const unsigned int localVectorSize = X.local_size()/numberVectors;
       std::vector<double> overlapMatrix(numberVectors*numberVectors,0.0);
-      
+
       dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
 
       dealii::TimerOutput computing_timer(pcout,
 					  dftParameters::reproducible_output ? dealii::TimerOutput::never : dealii::TimerOutput::summary,
 					  dealii::TimerOutput::wall_times);
 
-      
-      
+
+
 
       //
       //blas level 3 dgemm flags
@@ -697,9 +712,9 @@ namespace dftfe{
       computing_timer.exit_section("local overlap matrix");
 
 
-      dealii::Utilities::MPI::sum(overlapMatrix, X.get_mpi_communicator(), overlapMatrix); 
+      dealii::Utilities::MPI::sum(overlapMatrix, X.get_mpi_communicator(), overlapMatrix);
 
-    
+
       //
       //set lapack eigen decomposition flags and compute eigendecomposition of S = Q*D*Q^{H}
       //
@@ -803,8 +818,11 @@ namespace dftfe{
 	     orthoNormalizedBasis.begin(),
 	     &numberEigenValues);
 
-       
+
        X = orthoNormalizedBasis;
+
+       if (dftParameters::orthoRROMPThreads!=0)
+	  mkl_set_num_threads(1);
     }
 #endif
 
