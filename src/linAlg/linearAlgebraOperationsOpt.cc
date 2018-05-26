@@ -242,6 +242,9 @@ namespace dftfe{
 
       //copy back YArray to XArray
       XArray = YArray;
+
+      if (dftParameters::chebyshevOMPThreads!=0)
+	  mkl_set_num_threads(1);
     }
 
     template<typename T>
@@ -397,6 +400,8 @@ namespace dftfe{
 
       X = rotatedBasis;
 
+      if (dftParameters::orthoRROMPThreads!=0)
+	  mkl_set_num_threads(1);
     }
 
     template<typename T>
@@ -653,6 +658,9 @@ namespace dftfe{
 
 
        X = orthoNormalizedBasis;
+
+       if (dftParameters::orthoRROMPThreads!=0)
+	  mkl_set_num_threads(1);
     }
 #else
     void lowdenOrthogonalization(dealii::parallel::distributed::Vector<double> & X,
@@ -812,6 +820,9 @@ namespace dftfe{
 
 
        X = orthoNormalizedBasis;
+
+       if (dftParameters::orthoRROMPThreads!=0)
+	  mkl_set_num_threads(1);
     }
 #endif
 
