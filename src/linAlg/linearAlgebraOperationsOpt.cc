@@ -454,6 +454,12 @@ namespace dftfe{
     {
       if (dftParameters::orthoRROMPThreads!=0)
 	  mkl_set_num_threads(dftParameters::orthoRROMPThreads);
+
+      dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
+
+      dealii::TimerOutput computing_timer(pcout,
+					  dftParameters::reproducible_output ? dealii::TimerOutput::never : dealii::TimerOutput::summary,
+					  dealii::TimerOutput::wall_times);
       //
       //compute projected Hamiltonian
       //
