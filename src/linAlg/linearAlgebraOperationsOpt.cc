@@ -459,18 +459,23 @@ namespace dftfe{
       //
       std::vector<T> ProjHam;
       const unsigned int numberEigenValues = eigenValues.size();
+
+      computing_timer.enter_section("XtHX");
       operatorMatrix.XtHX(X,
 			  numberEigenValues,
 			  flattenedArrayMacroCellLocalProcIndexIdMap,
 			  flattenedArrayCellLocalProcIndexIdMap,
 			  ProjHam);
+      computing_timer.exit_section("XtHX");
 
       //
       //compute eigendecomposition of ProjHam
       //
+      computing_timer.enter_section("eigen decomp in RR");
       callevd(numberEigenValues,
 	      &ProjHam[0],
 	      &eigenValues[0]);
+      computing_timer.exit_section("eigen decomp in RR");
 
 
       /*std::vector<T> ProjHamEigenVectors(numberWaveFunctions*numberWaveFunctions);
@@ -491,12 +496,13 @@ namespace dftfe{
       dealii::parallel::distributed::Vector<T> rotatedBasis;
       rotatedBasis.reinit(X);
 
+      computing_timer.enter_section("subspace rotation in RR");
       callgemm(numberEigenValues,
 	       localVectorSize,
 	       ProjHam,
 	       X,
 	       rotatedBasis);
-
+      computing_timer.exit_section("subspace rotation in RR");
 
       X = rotatedBasis;
 
@@ -938,15 +944,17 @@ namespace dftfe{
        //
        //Q*D^{-1/4} and note that "Q" is stored in overlapMatrix after calling "dsyevd"
        //
-       const unsigned int inc = 1;
-       for(unsigned int i = 0; i < numberEigenValues; ++i)
-	 {
-	   double scalingCoeff = invFourthRootEigenValuesMatrix[i];
-	   dscal_(&numberEigenValues,
-		  &scalingCoeff,
-		  &overlapMatrix[0]+i*numberEigenValues,
-                  &inc);
-	 }
+      computing_timer.enter_section("scaling in Lowden");
+      const unsigned int inc = 1;
+      for(unsigned int i = 0; i < numberEigenValues; ++i)
+	{
+	  double scalingCoeff = invFourthRootEigenValuesMatrix[i];
+	  dscal_(&numberEigenValues,
+		 &scalingCoeff,
+		 &overlapMatrix[0]+i*numberEigenValues,
+		 &inc);
+	}
+      computing_timer.exit_section("scaling in Lowden");
 
        //
        //Evaluate S^{-1/2} = Q*D^{-1/2}*Q^{T} = (Q*D^{-1/4})*(Q*D^{-1/4))^{T}
@@ -954,6 +962,7 @@ namespace dftfe{
        std::vector<double> invSqrtOverlapMatrix(numberEigenValues*numberEigenValues,0.0);
        const char transA1 = 'N';
        const char transB1 = 'T';
+       computing_timer.enter_section("inverse sqrt overlap");
        dgemm_(&transA1,
 	      &transB1,
 	      &numberEigenValues,
@@ -967,6 +976,7 @@ namespace dftfe{
 	      &beta,
 	      &invSqrtOverlapMatrix[0],
 	      &numberEigenValues);
+       computing_timer.exit_section("inverse sqrt overlap");
 
        //
        //free up memory associated with overlapMatrix
@@ -981,19 +991,21 @@ namespace dftfe{
        const char transA2  = 'N', transB2  = 'N';
        dealii::parallel::distributed::Vector<double> orthoNormalizedBasis;
        orthoNormalizedBasis.reinit(X);
+       computing_timer.enter_section("subspace rotation in lowden");
        dgemm_(&transA2,
-	     &transB2,
-	     &numberEigenValues,
-             &localVectorSize,
-	     &numberEigenValues,
-	     &alpha,
-	     &invSqrtOverlapMatrix[0],
-	     &numberEigenValues,
-	     X.begin(),
-	     &numberEigenValues,
-	     &beta,
-	     orthoNormalizedBasis.begin(),
-	     &numberEigenValues);
+	      &transB2,
+	      &numberEigenValues,
+	      &localVectorSize,
+	      &numberEigenValues,
+	      &alpha,
+	      &invSqrtOverlapMatrix[0],
+	      &numberEigenValues,
+	      X.begin(),
+	      &numberEigenValues,
+	      &beta,
+	      orthoNormalizedBasis.begin(),
+	      &numberEigenValues);
+       computing_timer.exit_section("subspace rotation in lowden");
 
 
        X = orthoNormalizedBasis;
