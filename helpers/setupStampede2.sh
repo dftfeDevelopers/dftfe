@@ -3,8 +3,8 @@ set -e
 set -o pipefail
 #script to setup and build DFT-FE
 #Provide paths for external libraries and optimization flag (0 for Debug, 1 for Release)
-dealiiPetscRealDir="/work/05316/dsambit/groupSoftwaresStampede2/dealiiDev/intel_18.0.1_petscReal_64Bit"
-dealiiPetscComplexDir="/work/05316/dsambit/groupSoftwaresStampede2/dealiiDev/intel_18.0.1_petsccomplex_64Bit"
+dealiiPetscRealDir="/work/05316/dsambit/groupSoftwaresStampede2/dealiiExpt/intel_18.0.1_petscReal_64Bit_scalapack"
+dealiiPetscComplexDir="/work/05316/dsambit/groupSoftwaresStampede2/dealiiExpt/intel_18.0.1_petscComplex_64Bit_scalapack"
 alglibDir="/work/05316/dsambit/groupSoftwaresStampede2/alglib/cpp/src"
 libxcDir="/work/05316/dsambit/groupSoftwaresStampede2/libxc/libxc-4.0.4_install_intel"
 spglibDir="/work/05316/dsambit/groupSoftwaresStampede2/spglibInstall"
@@ -21,7 +21,7 @@ if [ $optimizedMode == 1 ]; then
     cd build
     cd release
     echo -e "${Blu}Building Real executable in Optimized (Release) mode...${RCol}"
-    mkdir -p real && cd real && cmake -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_CXX_FLAGS_RELEASE="-O3" -DCMAKE_BUILD_TYPE=Release -DDEAL_II_DIR=$dealiiPetscRealDir -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir -DSPGLIB_DIR=$spglibDir ../../../. && make -j 4 && cd ..
+    mkdir -p real && cd real && cmake -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_CXX_FLAGS_RELEASE="-O3 -qopenmp -xMIC-AVX512 -qopt-zmm-usage=high -qopt-report -qopt-report-phase=vec" -DCMAKE_BUILD_TYPE=Release -DDEAL_II_DIR=$dealiiPetscRealDir -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir -DSPGLIB_DIR=$spglibDir ../../../. && make -j 4 && cd ..
     echo -e "${Blu}Building Complex executable in Optimized (Release) mode...${RCol}"
     mkdir -p complex && cd complex && cmake -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_CXX_FLAGS_RELEASE="-O3" -DCMAKE_BUILD_TYPE=Release -DDEAL_II_DIR=$dealiiPetscComplexDir -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir -DSPGLIB_DIR=$spglibDir  ../../../. && make -j 4 && cd ../..
   else
@@ -30,7 +30,7 @@ if [ $optimizedMode == 1 ]; then
     mkdir -p build && cd build
     mkdir -p release && cd release
     echo -e "${Blu}Building Real executable in Optimized (Release) mode...${RCol}"
-    mkdir -p real && cd real && cmake -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_CXX_FLAGS_RELEASE="-O3" -DCMAKE_BUILD_TYPE=Release -DDEAL_II_DIR=$dealiiPetscRealDir -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir -DSPGLIB_DIR=$spglibDir ../../../. && make -j 4 && cd ..
+    mkdir -p real && cd real && cmake -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_CXX_FLAGS_RELEASE="-O3 -qopenmp -xMIC-AVX512 -qopt-zmm-usage=high -qopt-report -qopt-report-phase=vec" -DCMAKE_BUILD_TYPE=Release -DDEAL_II_DIR=$dealiiPetscRealDir -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir -DSPGLIB_DIR=$spglibDir ../../../. && make -j 4 && cd ..
     echo -e "${Blu}Building Complex executable in Optimized (Release) mode...${RCol}"
     mkdir -p complex && cd complex && cmake -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_CXX_FLAGS_RELEASE="-O3" -DCMAKE_BUILD_TYPE=Release -DDEAL_II_DIR=$dealiiPetscComplexDir -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir -DSPGLIB_DIR=$spglibDir ../../../. && make -j 4 && cd ../..
   fi

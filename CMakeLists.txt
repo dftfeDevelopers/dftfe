@@ -124,6 +124,13 @@ ELSE()
    MESSAGE(STATUS "Using real")
 ENDIF()
 
+#Set use scalapack flag
+IF (DEAL_II_WITH_SCALAPACK)
+   ADD_DEFINITIONS(-DWITH_SCALAPACK)
+   MESSAGE(STATUS "Using scalapack")
+ENDIF()
+
+
 ADD_LIBRARY(${TARGETLIB} SHARED
     ${TARGET_SRC}
   )

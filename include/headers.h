@@ -46,12 +46,13 @@
 #include <deal.II/base/point.h>
 #include <deal.II/base/conditional_ostream.h>
 #include <deal.II/base/utilities.h>
+#include <deal.II/base/process_grid.h>
 #include <deal.II/lac/lapack_full_matrix.h>
+#include <deal.II/lac/scalapack.h>
 #include <deal.II/numerics/matrix_tools.h>
 #include <deal.II/numerics/error_estimator.h>
 #include <deal.II/base/parameter_handler.h>
 #include <deal.II/grid/grid_refinement.h>
-#include <deal.II/grid/tria_boundary_lib.h>
 #include <deal.II/grid/grid_tools.h>
 #include <deal.II/grid/grid_in.h>
 #include <deal.II/grid/grid_out.h>

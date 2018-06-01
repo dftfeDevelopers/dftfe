@@ -407,6 +407,7 @@ namespace dftfe{
 	  pcout<<"Orthogonalization Done: "<<std::endl;
 
 	computing_timer.enter_section("Rayleigh-Ritz proj Opt");
+        computing_timer.enter_section("Rayleigh-Ritz overhead");
 	operatorMatrix.reinit(totalNumberWaveFunctions);
 
 	//
@@ -423,7 +424,7 @@ namespace dftfe{
 	    ->precomputeMaps(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
 	  	             eigenVectorsFlattenedArray.get_partitioner(),
 			     totalNumberWaveFunctions);
-
+        computing_timer.exit_section("Rayleigh-Ritz overhead");
 	linearAlgebraOperations::rayleighRitz(operatorMatrix,
 					      eigenVectorsFlattenedArray,
 					      totalNumberWaveFunctions,

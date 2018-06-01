@@ -464,7 +464,8 @@ namespace dftfe{
       //compute projected Hamiltonian
       //
       std::vector<T> ProjHam;
-      const unsigned int numberEigenValues = eigenValues.size();
+      const unsigned int numberEigenValues = numberWaveFunctions;
+      eigenValues.resize(numberEigenValues);
 
       computing_timer.enter_section("XtHX");
       operatorMatrix.XtHX(X,
@@ -478,9 +479,61 @@ namespace dftfe{
       //compute eigendecomposition of ProjHam
       //
       computing_timer.enter_section("eigen decomp in RR");
+#if(defined WITH_SCALAPACK && !USE_COMPLEX)
+      const unsigned int numberProcs = dealii::Utilities::MPI::n_mpi_processes(X.get_mpi_communicator());
+      const unsigned int rowsBlockSize=50;      
+      const unsigned int blocksPerProc=4;
+      const unsigned int rowProcs=std::min(std::floor(std::sqrt(numberProcs)),
+                        std::ceil((double)numberWaveFunctions/(double)(blocksPerProc*rowsBlockSize)));
+      if(dftParameters::verbosity==2)
+         pcout<<"rowsBlockSize: "<<rowsBlockSize<<", blocksPerProc: "<<blocksPerProc<<", row procs: "<< rowProcs<<std::endl;
+
+      std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> processGrid
+              =std::make_shared<const dealii::Utilities::MPI::ProcessGrid>(X.get_mpi_communicator(),
+                                                                           rowProcs,
+                                                                           rowProcs);
+      
+      dealii::ScaLAPACKMatrix<T> projHamPar(numberWaveFunctions,
+                                            processGrid,
+                                            rowsBlockSize);
+      computing_timer.enter_section("scalapack copy");
+      if (processGrid->is_process_active())
+         for (unsigned int i = 0; i < projHamPar.local_n(); ++i)
+           {
+             const unsigned int glob_i = projHamPar.global_column(i);
+             for (unsigned int j = 0; j < projHamPar.local_m(); ++j)
+               {
+                 const unsigned int glob_j = projHamPar.global_row(j);
+                 projHamPar.local_el(j, i)   = ProjHam[glob_i*numberWaveFunctions+glob_j];
+               }
+           }
+      computing_timer.exit_section("scalapack copy");
+
+      computing_timer.enter_section("scalapack eigen decomp");
+      eigenValues=projHamPar.eigenpairs_symmetric_by_index_MRRR(std::make_pair(0,numberWaveFunctions-1),true);
+      computing_timer.exit_section("scalapack eigen decomp");
+
+      computing_timer.enter_section("scalapack copy");
+      std::fill(ProjHam.begin(),ProjHam.end(),T(0));
+      if (processGrid->is_process_active())
+         for (unsigned int i = 0; i < projHamPar.local_n(); ++i)
+           {
+             const unsigned int glob_i = projHamPar.global_column(i);
+             for (unsigned int j = 0; j < projHamPar.local_m(); ++j)
+               {
+                 const unsigned int glob_j = projHamPar.global_row(j);
+                 ProjHam[glob_i*numberWaveFunctions+glob_j]=projHamPar.local_el(j, i);
+               }
+           }
+      dealii::Utilities::MPI::sum(ProjHam, X.get_mpi_communicator(), ProjHam);
+      computing_timer.exit_section("scalapack copy");
+
+#else
       callevd(numberEigenValues,
 	      &ProjHam[0],
 	      &eigenValues[0]);
+
+#endif
       computing_timer.exit_section("eigen decomp in RR");
 
 
