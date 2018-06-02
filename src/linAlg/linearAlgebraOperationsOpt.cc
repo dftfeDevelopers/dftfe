@@ -24,7 +24,7 @@
 
 #include <linearAlgebraOperations.h>
 #include <dftParameters.h>
-#include "mkl.h"
+#include <omp.h>
 
 namespace dftfe{
 
@@ -247,7 +247,7 @@ namespace dftfe{
 			 const double a0)
     {
       if (dftParameters::chebyshevOMPThreads!=0)
-	  mkl_set_num_threads(dftParameters::chebyshevOMPThreads);
+	  omp_set_num_threads(dftParameters::chebyshevOMPThreads);
 
       double e, c, sigma, sigma1, sigma2, gamma;
       e = (b-a)/2.0; c = (b+a)/2.0;
@@ -333,7 +333,7 @@ namespace dftfe{
       XArray = YArray;
 
       if (dftParameters::chebyshevOMPThreads!=0)
-	  mkl_set_num_threads(1);
+	  omp_set_num_threads(1);
     }
 
     template<typename T>
@@ -453,7 +453,7 @@ namespace dftfe{
 		      std::vector<double> & eigenValues)
     {
       if (dftParameters::orthoRROMPThreads!=0)
-	  mkl_set_num_threads(dftParameters::orthoRROMPThreads);
+	  omp_set_num_threads(dftParameters::orthoRROMPThreads);
 
       dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
 
@@ -566,7 +566,7 @@ namespace dftfe{
       X = rotatedBasis;
 
       if (dftParameters::orthoRROMPThreads!=0)
-	  mkl_set_num_threads(1);
+	  omp_set_num_threads(1);
     }
 
     template<typename T>
@@ -674,7 +674,7 @@ namespace dftfe{
 				 const unsigned int numberVectors)
     {
       if (dftParameters::orthoRROMPThreads!=0)
-	  mkl_set_num_threads(dftParameters::orthoRROMPThreads);
+	  omp_set_num_threads(dftParameters::orthoRROMPThreads);
 
       const unsigned int localVectorSize = X.local_size()/numberVectors;
       std::vector<std::complex<double> > overlapMatrix(numberVectors*numberVectors,0.0);
@@ -825,14 +825,14 @@ namespace dftfe{
        X = orthoNormalizedBasis;
 
        if (dftParameters::orthoRROMPThreads!=0)
-	  mkl_set_num_threads(1);
+	  omp_set_num_threads(1);
     }
 #else
     void lowdenOrthogonalization(dealii::parallel::distributed::Vector<double> & X,
 				 const unsigned int numberVectors)
     {
       if (dftParameters::orthoRROMPThreads!=0)
-	  mkl_set_num_threads(dftParameters::orthoRROMPThreads);
+	  omp_set_num_threads(dftParameters::orthoRROMPThreads);
 
       const unsigned int localVectorSize = X.local_size()/numberVectors;
 
@@ -1070,7 +1070,7 @@ namespace dftfe{
        X = orthoNormalizedBasis;
 
        if (dftParameters::orthoRROMPThreads!=0)
-	  mkl_set_num_threads(1);
+	  omp_set_num_threads(1);
     }
 #endif
 
