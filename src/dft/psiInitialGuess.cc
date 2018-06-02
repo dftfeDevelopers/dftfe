@@ -360,7 +360,8 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 		    {
 
 		      d_nonAtomicWaveFunctions = numEigenValues - waveFunctionsVector.size();
-		      pcout << "Number of wavefunctions generated randomly to be used as initial guess for starting the SCF : " << d_nonAtomicWaveFunctions << std::endl;
+                      if (dftParameters::verbosity>=1 && dof==0)
+		         pcout << "Number of wavefunctions generated randomly to be used as initial guess for starting the SCF : " << d_nonAtomicWaveFunctions << std::endl;
 
 		      //
 		      // assign the rest of the wavefunctions using a standard normal distribution
