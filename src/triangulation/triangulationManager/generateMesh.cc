@@ -394,15 +394,11 @@ namespace dftfe {
 	  dealii::Point<3> origin;
 	  unsigned int numLevels=0;
 	  bool refineFlag = true;
-
-	  std::vector<double> centroid ;
-	  unsigned int n_cell ;
-
+          std::map<dealii::CellId,unsigned int> cellIdToCellRefineFlagMapLocal;
 	  typename parallel::distributed::Triangulation<3>::active_cell_iterator cell, endc;
 
 	  while(refineFlag)
 	    {
-	      n_cell = 0; centroid.clear();
 	      refineFlag = false;
 	      std::vector<unsigned int> locallyOwnedCellsRefineFlags;
 	      cell = parallelTriangulation.begin_active();
@@ -470,22 +466,20 @@ namespace dftfe {
 		      catch(MappingQ1<3>::ExcTransformationFailed)
 			{
 			}
-		      //
-		      n_cell++ ;
-		      Point<3> currentCentroid=cell->center();
-		      centroid.push_back(currentCentroid[0]) ;
-		      centroid.push_back(currentCentroid[1]) ;
-		      centroid.push_back(currentCentroid[2]) ;
 
 		      //
 		      //set refine flags
 		      if(cellRefineFlag)
 			{
 			  locallyOwnedCellsRefineFlags.push_back(1);
+			  cellIdToCellRefineFlagMapLocal[cell->id()]=1;
 			  cell->set_refine_flag();
 			}
 		       else
+		       {
+			  cellIdToCellRefineFlagMapLocal[cell->id()]=0;
 			  locallyOwnedCellsRefineFlags.push_back(0);
+		       }
 		    }
 
 	      //This sets the global refinement sweep flag
@@ -496,6 +490,12 @@ namespace dftfe {
 	      //Refine
 	      if (refineFlag)
 		{
+
+		  //First refine serial mesh
+		  refineSerialMesh(cellIdToCellRefineFlagMapLocal,
+			           mpi_communicator,
+				   serialTriangulation) ;
+
 		  if(numLevels<dftParameters::n_refinement_steps)
 		    {
 		      if (dftParameters::verbosity>=1)
@@ -509,14 +509,6 @@ namespace dftfe {
 		      refineFlag=false;
 		    }
 		}
-
-	      // Refine serial mesh
-		refineSerialMesh(n_cell,
-				 centroid,
-				 locallyOwnedCellsRefineFlags,
-				 parallelTriangulation.n_global_active_cells(),
-				 serialTriangulation) ;
-		serialTriangulation.execute_coarsening_and_refinement();
 
 	    }
 	  //
@@ -571,91 +563,31 @@ namespace dftfe {
 
 
     //
-    void triangulationManager::refineSerialMesh(const unsigned int n_cell,
-					      const std::vector<double>& centroid,
-					      const std::vector<unsigned int>& localRefineFlag,
-					      const unsigned int n_global_cell,
-					      parallel::distributed::Triangulation<3>& serialTriangulation)
+    void triangulationManager::refineSerialMesh
+	                            (const std::map<dealii::CellId,unsigned int> cellIdToCellRefineFlagMapLocal,
+				     const MPI_Comm &mpi_comm,
+				     parallel::distributed::Triangulation<3>& serialTriangulation)
 
     {
-
-      std::vector<unsigned int> globalRefineFlag(n_global_cell) ;
-      std::vector<Point<3>> centroidGlobal(n_global_cell) ;
-      std::vector<double> centroidGlobalData(3*n_global_cell) ;
-      std::vector<int> localSize(n_mpi_processes, 0), localSizeAllProc(n_mpi_processes, 0), mpi_offsets(n_mpi_processes, 0) ;
-
-      for (unsigned int i=0; i<n_mpi_processes; ++i)
-	{
-	  if (this_mpi_process==i)
-	    localSize[i] = n_cell ;
-	}
-      MPI_Allreduce(&localSize[0],
-		    &localSizeAllProc[0],
-		    n_mpi_processes,
-		    MPI_INT,
-		    MPI_SUM,
-		    mpi_communicator) ;
-
-
-      for (unsigned int i=1; i<n_mpi_processes; ++i)
-	mpi_offsets[i] = mpi_offsets[i-1] + localSizeAllProc[i-1] ;
-
-
-      MPI_Allgatherv(&localRefineFlag[0],
-		     n_cell,
-		     MPI_INT,
-		     &globalRefineFlag[0],
-		     &localSizeAllProc[0],
-		     &mpi_offsets[0],
-		     MPI_INT,
-		     mpi_communicator) ;
-
-      for (unsigned int i=0; i<n_mpi_processes; ++i)
-	localSizeAllProc[i] = 3*localSizeAllProc[i];
-
-
-      mpi_offsets.resize(n_mpi_processes, 0) ;
-      for (unsigned int i=1; i<n_mpi_processes; ++i)
-	mpi_offsets[i] = mpi_offsets[i-1] + localSizeAllProc[i-1] ;
-
-      MPI_Allgatherv(&centroid[0],
-		     3*n_cell,
-		     MPI_DOUBLE,
-		     &centroidGlobalData[0],
-		     &localSizeAllProc[0],
-		     &mpi_offsets[0],
-		     MPI_DOUBLE,
-		     mpi_communicator) ;
-
-      for ( unsigned int i = 0; i < n_global_cell ; ++i ) {
-	Point<3> p1 (centroidGlobalData[3*i+0], centroidGlobalData[3*i+1], centroidGlobalData[3*i+2]) ;
-	centroidGlobal[i] = p1  ;
-      }
-
-      //
-      Triangulation<3>::active_cell_iterator cell = serialTriangulation.begin_active();
-      Triangulation<3>::active_cell_iterator endc = serialTriangulation.end();
-
+      typename parallel::distributed::Triangulation<3>::active_cell_iterator cell, endc;
+      cell = serialTriangulation.begin_active();
+      endc = serialTriangulation.end();
       for(;cell != endc; ++cell)
-	{
 	  if(cell->is_locally_owned())
 	    {
-	      Point<3> p1 = cell->center() ;
-	      unsigned int index = 0 ;
-	      for(unsigned int i = 0; i < n_global_cell ; ++i )
-		{
-		  Point<3> p2 = centroidGlobal[i] ;
-		  double dist = (p1[0]-p2[0])*(p1[0]-p2[0]) + (p1[1]-p2[1])*(p1[1]-p2[1]) + (p1[2]-p2[2])*(p1[2]-p2[2]) ;
-		  if (dist < 1.0E-10)
-		    {
-		      index = i ;
-		      break;
-		    }
-		}
-	      if(globalRefineFlag[index]==1)
-		cell->set_refine_flag();
+	      unsigned int refineFlag =0;
+
+	      std::map<dealii::CellId,unsigned int>::const_iterator
+		  iter=cellIdToCellRefineFlagMapLocal.find(cell->id());
+	      if (iter!=cellIdToCellRefineFlagMapLocal.end())
+		  refineFlag=iter->second;
+
+	      refineFlag = Utilities::MPI::sum(refineFlag,mpi_comm);
+              if (refineFlag==1)
+	         cell->set_refine_flag();
 	    }
-	}
+
+      serialTriangulation.execute_coarsening_and_refinement();
     }
 
 }
