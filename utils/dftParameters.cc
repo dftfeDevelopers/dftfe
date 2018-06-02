@@ -324,11 +324,11 @@ namespace dftParameters
 
         prm.declare_entry("CHEBYSHEV FILTER NUM OMP THREADS", "0",
 			  Patterns::Integer(0,300),
-			  "[Developer] Sets the number of OpenMP threads to be used in the blas linear algebra calls inside the Chebyshev filtering. The default value is 0, for which no action is taken. CAUTION: For non zero values, CHEBYSHEV FILTER NUM OMP THREADS takes precedence over the OMP_NUM_THREADS/MKL_NUM_THREADS environment variable.");
+			  "[Developer] Sets the number of OpenMP threads to be used in the blas linear algebra calls inside the Chebyshev filtering. The default value is 0, for which no action is taken. CAUTION: For non zero values, CHEBYSHEV FILTER NUM OMP THREADS takes precedence over the OMP_NUM_THREADS environment variable.");
 
 	prm.declare_entry("ORTHO RR NUM OMP THREADS", "0",
 			  Patterns::Integer(0,300),
-			  "[Developer] Sets the number of OpenMP threads to be used in the blas linear algebra calls inside Lowden Orthogonalization and Rayleigh-Ritz projection steps. The default value is 0, for which no action is taken. CAUTION: For non-zero values, CHEBYSHEV FILTER NUM OMP THREADS takes precedence over the OMP_NUM_THREADS/MKL_NUM_THREADS environment variable.");
+			  "[Developer] Sets the number of OpenMP threads to be used in the blas linear algebra calls inside Lowden Orthogonalization and Rayleigh-Ritz projection steps. The default value is 0, for which no action is taken. CAUTION: For non-zero values, CHEBYSHEV FILTER NUM OMP THREADS takes precedence over the OMP_NUM_THREADS environment variable.");
 
 
 	prm.declare_entry("ORTHOGONALIZATION TYPE","GS",
