@@ -15,7 +15,39 @@
 //
 // @author Sambit Das (2017)
 //
+namespace internalforce
+{
+   //for real valued eigenvectors
+   Tensor<1,C_DIM,double > computeGradRhoContribution(const double psi,
+	                                              const Tensor<1,C_DIM,double > & gradPsi)
+   {
+       return 2.0*(gradPsi*psi);
+   }
 
+   //for complex valued eigenvectors
+   Tensor<1,C_DIM,double > computeGradRhoContribution(const Vector<double> & psi,
+	                                              const std::vector<Tensor<1,C_DIM,double > >  & gradPsi)
+   {
+       return 2.0*(gradPsi[0]*psi[0]+ gradPsi[1]*psi[1]);
+   }
+
+   //for real valued eigenvectors
+   Tensor<2,C_DIM,double > computeHessianRhoContribution(const double psi,
+	                                                 const Tensor<1,C_DIM,double > & gradPsi,
+                                                         const Tensor<2,C_DIM,double > & hessianPsi)
+   {
+       return 2.0*(hessianPsi*psi+outer_product(gradPsi,gradPsi));
+   }
+
+   //for complex valued eigenvectors
+   Tensor<2,C_DIM,double > computeHessianRhoContribution(const Vector<double> & psi,
+	                                                 const std::vector<Tensor<1,C_DIM,double > >  & gradPsi,
+                                                         const std::vector<Tensor<2,C_DIM,double > >  & hessianPsi)
+   {
+       return 2.0*(hessianPsi[0]*psi[0]+ hessianPsi[1]*psi[1]+ outer_product(gradPsi[0],gradPsi[0])+outer_product(gradPsi[1],gradPsi[1]));
+   }
+
+}
 template<unsigned int FEOrder>
 void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensorFPSPFnlLinFE()
 {
