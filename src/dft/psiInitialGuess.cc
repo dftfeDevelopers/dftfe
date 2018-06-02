@@ -38,9 +38,9 @@ void dftClass<FEOrder>::loadPSIFiles(unsigned int Z,
 
   if(dftParameters::isPseudopotential)
     if(dftParameters::pseudoProjector==2)
-	sprintf(psiFile, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/singleAtomData/psi%u%u.inp", DFT_PATH, Z, n, l);
+      sprintf(psiFile, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/singleAtomData/psi%u%u.inp", DFT_PATH, Z, n, l);
     else
-        sprintf(psiFile, "%s/data/electronicStructure/pseudoPotential/z%u/singleAtomData/psi%u%u.inp", DFT_PATH, Z, n, l);
+      sprintf(psiFile, "%s/data/electronicStructure/pseudoPotential/z%u/singleAtomData/psi%u%u.inp", DFT_PATH, Z, n, l);
 
   else
     sprintf(psiFile, "%s/data/electronicStructure/allElectron/z%u/singleAtomData/psi%u%u.inp", DFT_PATH, Z, n, l);
@@ -236,7 +236,7 @@ void dftClass<FEOrder>::determineOrbitalFilling()
   pcout << "number of eigen values: " << numEigenValues << std::endl;
 
   if (dftParameters::verbosity>=1)
-     pcout<<"number of wavefunctions computed using single atom data to be used as initial guess for starting the SCF: " <<waveFunctionCount<<std::endl;
+    pcout<<"number of wavefunctions computed using single atom data to be used as initial guess for starting the SCF: " <<waveFunctionCount<<std::endl;
   pcout<<"============================================================================================================================="<<std::endl;
 }
 
@@ -272,139 +272,158 @@ void dftClass<FEOrder>::readPSIRadialValues(){
       unsigned int dofID = locallyOwnedDOFs[dof];
 #endif
       Point<3> node = d_supportPointsEigen[dofID];
-
-      //
-      //loop over wave functions
-      //
-      unsigned int waveFunction=0;
-      for (std::vector<orbital>::iterator it = waveFunctionsVector.begin(); it < waveFunctionsVector.end(); it++)
+      if(eigenVectors[0][0].in_local_range(dofID))
 	{
-
-	  //
-	  //get the imageIdmap information corresponding to globalChargeId
-	  //(Fix me: Examine whether periodic image contributions have to be included or not)
-	  //currently not including
-	  std::vector<int> imageIdsList;
-	  //if(dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ)
-	  //{
-	  //  imageIdsList = d_globalChargeIdToImageIdMap[it->atomID];
-	  // }
-	  //else
-	  //{
-	      imageIdsList.push_back(it->atomID);
-	      // }
+	  if(!constraintsNoneEigen.is_constrained(dofID))
+	    {
+	      //
+	      //loop over wave functions
+	      //
+	      for(int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+		{
+		  unsigned int waveFunction=0;
+		  for (std::vector<orbital>::iterator it = waveFunctionsVector.begin(); it < waveFunctionsVector.end(); it++)
+		    {
+		      //
+		      //get the imageIdmap information corresponding to globalChargeId
+		      //(Fix me: Examine whether periodic image contributions have to be included or not)
+		      //currently not including
+		      std::vector<int> imageIdsList;
+		      //if(dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ)
+		      //{
+		      //  imageIdsList = d_globalChargeIdToImageIdMap[it->atomID];
+		      // }
+		      //else
+		      //{
+		      imageIdsList.push_back(it->atomID);
+		      // }
 
       
-	  for(int iImageAtomCount = 0; iImageAtomCount < imageIdsList.size();++iImageAtomCount)
-	    {
+		      for(int iImageAtomCount = 0; iImageAtomCount < imageIdsList.size();++iImageAtomCount)
+			{
 
-	      //
-	      //find coordinates of atom correspoding to this wave function and imageAtom
-	      //
-	      int chargeId = imageIdsList[iImageAtomCount];
-	      Point<3> atomCoord;
+			  //
+			  //find coordinates of atom correspoding to this wave function and imageAtom
+			  //
+			  int chargeId = imageIdsList[iImageAtomCount];
+			  Point<3> atomCoord;
 
-	      if(chargeId < numberGlobalAtoms)
-		{
-		  atomCoord[0] = atomLocations[chargeId][2];
-		  atomCoord[1] = atomLocations[chargeId][3];
-		  atomCoord[2] = atomLocations[chargeId][4];
-		}
-	      else
-		{
-		  atomCoord[0] = d_imagePositions[chargeId-numberGlobalAtoms][0];
-		  atomCoord[1] = d_imagePositions[chargeId-numberGlobalAtoms][1];
-		  atomCoord[2] = d_imagePositions[chargeId-numberGlobalAtoms][2];
-		}
+			  if(chargeId < numberGlobalAtoms)
+			    {
+			      atomCoord[0] = atomLocations[chargeId][2];
+			      atomCoord[1] = atomLocations[chargeId][3];
+			      atomCoord[2] = atomLocations[chargeId][4];
+			    }
+			  else
+			    {
+			      atomCoord[0] = d_imagePositions[chargeId-numberGlobalAtoms][0];
+			      atomCoord[1] = d_imagePositions[chargeId-numberGlobalAtoms][1];
+			      atomCoord[2] = d_imagePositions[chargeId-numberGlobalAtoms][2];
+			    }
 
-	      double x = node[0]-atomCoord[0];
-	      double y = node[1]-atomCoord[1];
-	      double z = node[2]-atomCoord[2];
-
-
-	      double r = sqrt(x*x + y*y + z*z);
-	      double theta = acos(z/r);
-	      double phi = atan2(y,x);
+			  double x = node[0]-atomCoord[0];
+			  double y = node[1]-atomCoord[1];
+			  double z = node[2]-atomCoord[2];
 
 
-	      if (r==0){theta=0; phi=0;}
-	      //radial part
-	      double R=0.0;
-	      if (r<=outerValues[it->Z][it->n][it->l]) R = alglib::spline1dcalc(*(it->psi),r);
-	      //spherical part
-	      if (it->m > 0)
-		{
-		  local_dof_values[waveFunction][dof] +=  R*std::sqrt(2)*boost::math::spherical_harmonic_r(it->l,it->m,theta,phi);
-		}
-	      else if (it->m == 0)
-		{
-		  local_dof_values[waveFunction][dof] +=  R*boost::math::spherical_harmonic_r(it->l,it->m,theta,phi);
-		}
-	      else
-		{
-		  local_dof_values[waveFunction][dof] +=  R*std::sqrt(2)*boost::math::spherical_harmonic_i(it->l,-(it->m),theta,phi);
+			  double r = sqrt(x*x + y*y + z*z);
+			  double theta = acos(z/r);
+			  double phi = atan2(y,x);
+
+
+			  if (r==0){theta=0; phi=0;}
+			  //radial part
+			  double R=0.0;
+			  if (r<=outerValues[it->Z][it->n][it->l]) R = alglib::spline1dcalc(*(it->psi),r);
+			  //spherical part
+			  if (it->m > 0)
+			    {
+			      //local_dof_values[waveFunction][dof] +=  R*std::sqrt(2)*boost::math::spherical_harmonic_r(it->l,it->m,theta,phi);
+			      (eigenVectors[kPoint][waveFunction])(dofID) += R*std::sqrt(2)*boost::math::spherical_harmonic_r(it->l,it->m,theta,phi);
+			    }
+			  else if (it->m == 0)
+			    {
+			      //local_dof_values[waveFunction][dof] +=  R*boost::math::spherical_harmonic_r(it->l,it->m,theta,phi);
+			      (eigenVectors[kPoint][waveFunction])(dofID) += R*boost::math::spherical_harmonic_r(it->l,it->m,theta,phi);
+			    }
+			  else
+			    {
+			      //local_dof_values[waveFunction][dof] +=  R*std::sqrt(2)*boost::math::spherical_harmonic_i(it->l,-(it->m),theta,phi);
+			      (eigenVectors[kPoint][waveFunction])(dofID) += R*std::sqrt(2)*boost::math::spherical_harmonic_i(it->l,-(it->m),theta,phi);
+			    }
+			}
+		      waveFunction++;
+		    }
+
+		  d_nonAtomicWaveFunctions = 0;
+		  if(waveFunctionsVector.size() < numEigenValues)
+		    {
+
+		      d_nonAtomicWaveFunctions = numEigenValues - waveFunctionsVector.size();
+		      pcout << "Number of wavefunctions generated randomly to be used as initial guess for starting the SCF : " << d_nonAtomicWaveFunctions << std::endl;
+
+		      //
+		      // assign the rest of the wavefunctions using a standard normal distribution
+		      //
+		      boost::math::normal normDist;
+
+		      for(unsigned int iWave = waveFunctionsVector.size(); iWave < numEigenValues; ++iWave)
+			{
+			  //for(unsigned int dof=0; dof<numberDofs; dof++)
+			  //{
+			  double z = (-0.5 + (rand()+ 0.0)/(RAND_MAX))*3.0;
+			  double value =  boost::math::pdf(normDist, z);
+			  if(rand()%2 == 0)
+			    value = -1.0*value;
+
+			  eigenVectors[kPoint][iWave][dofID] = value;
+			  //}
+			}
+		    }
+
 		}
 	    }
-	  waveFunction++;
 	}
     }
-
-  d_nonAtomicWaveFunctions = 0;
-  if(waveFunctionsVector.size() < numEigenValues)
-    {
-
-      d_nonAtomicWaveFunctions = numEigenValues - waveFunctionsVector.size();
-      pcout << "Number of wavefunctions generated randomly to be used as initial guess for starting the SCF : " << d_nonAtomicWaveFunctions << std::endl;
-
-      //
-      // assign the rest of the wavefunctions using a standard normal distribution
-      //
-      boost::math::normal normDist;
-
-      for(unsigned int iWave = waveFunctionsVector.size(); iWave < numEigenValues; ++iWave)
-	{
-	  for(unsigned int dof=0; dof<numberDofs; dof++)
-	    {
-	      double z = (-0.5 + (rand()+ 0.0)/(RAND_MAX))*3.0;
-	      double value =  boost::math::pdf(normDist, z);
-	      if(rand()%2 == 0)
-		value = -1.0*value;
-
-	      local_dof_values[iWave][dof] = value;
-	    }
-	}
-
-    }
-
+    
   for(int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
     {
-      for (unsigned int i = 0; i < numEigenValues; ++i)
+      for(unsigned int i = 0; i < numEigenValues; ++i)
 	{
-#ifdef USE_COMPLEX
-	 for(unsigned int j = 0; j < numberDofs; ++j)
-	    {
-	      unsigned int dofID = local_dof_indicesReal[j];
-	      if(eigenVectors[kPoint][i].in_local_range(dofID))
-		{
-		  if(!constraintsNoneEigen.is_constrained(dofID))
-		    (eigenVectors[kPoint][i])(dofID) = local_dof_values[i][j];
-		}
-	    }
-#else
-	  for(unsigned int j = 0; j < numberDofs; ++j)
-	    {
-	      unsigned int dofID = locallyOwnedDOFs[j];
-	      if(eigenVectors[kPoint][i].in_local_range(dofID))
-		{
-		  if(!constraintsNoneEigen.is_constrained(dofID))
-		    (eigenVectors[kPoint][i])(dofID) = local_dof_values[i][j];
-		}
-	    }
-#endif
 	  eigenVectors[kPoint][i].compress(VectorOperation::insert);
 	  eigenVectors[kPoint][i].update_ghost_values();
 	}
     }
+
+  /*for(int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+    {
+    for (unsigned int i = 0; i < numEigenValues; ++i)
+    {
+    #ifdef USE_COMPLEX
+    for(unsigned int j = 0; j < numberDofs; ++j)
+    {
+    unsigned int dofID = local_dof_indicesReal[j];
+    if(eigenVectors[kPoint][i].in_local_range(dofID))
+    {
+    if(!constraintsNoneEigen.is_constrained(dofID))
+    (eigenVectors[kPoint][i])(dofID) = local_dof_values[i][j];
+    }
+    }
+    #else
+    for(unsigned int j = 0; j < numberDofs; ++j)
+    {
+    unsigned int dofID = locallyOwnedDOFs[j];
+    if(eigenVectors[kPoint][i].in_local_range(dofID))
+    {
+    if(!constraintsNoneEigen.is_constrained(dofID))
+    (eigenVectors[kPoint][i])(dofID) = local_dof_values[i][j];
+    }
+    }
+    #endif
+    eigenVectors[kPoint][i].compress(VectorOperation::insert);
+    eigenVectors[kPoint][i].update_ghost_values();
+    }
+    }*/
 }
 
 //
