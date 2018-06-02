@@ -224,7 +224,7 @@ namespace dftfe  {
      * This ensures that we get the same mesh in serial and parallel.
      *
      */
-      void refineSerialMesh(const std::map<dealii::CellId,unsigned int> cellIdToCellRefineFlagMapLocal,
+      void refineSerialMesh(const std::map<dealii::CellId,unsigned int> & cellIdToCellRefineFlagMapLocal,
 	                    const MPI_Comm &mpi_comm,
 			    parallel::distributed::Triangulation<3>& serialTriangulation);
 
