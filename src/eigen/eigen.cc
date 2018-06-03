@@ -920,36 +920,40 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
     //Utilities::MPI::sum(ProjHam, mpi_communicator, ProjHam);
 
     const unsigned int numberProcs = dealii::Utilities::MPI::n_mpi_processes(X.get_mpi_communicator());
-    const double networkSpeed = 12.5*0.3*1e9;
-    double numberBlocksDouble = (numberWaveFunctions*numberWaveFunctions*8*(numberProcs - 1))/networkSpeed;
-    unsigned int numberBlocks = std::ceil(numberBlocksDouble);
-    unsigned int totalSize = numberWaveFunctions*numberWaveFunctions;
-    std::vector<double> ProjHamGlobal(numberWaveFunctions*numberWaveFunctions,0.0);
-    const double temp = (double)totalSize/(double)numberBlocks;
-    const unsigned int equalBlockSize = std::ceil(temp);
-    const unsigned int unequalBlockSize = totalSize - equalBlockSize*(numberBlocks-1);
-    if(unequalBlockSize == 0)
-      numberBlocks = numberBlocks - 1;
 
-    std::vector<unsigned int> d_blockSize(numberBlocks,equalBlockSize);
-    if(numberBlocks > 1 && unequalBlockSize != 0)
-      d_blockSize[numberBlocks-1] = unequalBlockSize;
-
-    unsigned int offset = 0;
-
-    for(unsigned int i = 0; i < numberBlocks; ++i)
+    if(numberProcs > 1)
       {
-	unsigned int sizeBlock = d_blockSize[i];
-	MPI_Allreduce(&ProjHam[0]+i*offset,
-		      &ProjHamGlobal[0]+i*offset,
-		      sizeBlock,
-		      MPI_DOUBLE,
-		      MPI_SUM,
-		      mpi_communicator);
-	unsigned int offset = sizeBlock;
-      }
+	const double networkSpeed = 12.5*0.3*1e9;
+	double numberBlocksDouble = (numberWaveFunctions*numberWaveFunctions*8*(numberProcs - 1))/networkSpeed;
+	unsigned int numberBlocks = std::ceil(numberBlocksDouble);
+	unsigned int totalSize = numberWaveFunctions*numberWaveFunctions;
+	std::vector<double> ProjHamGlobal(numberWaveFunctions*numberWaveFunctions,0.0);
+	const double temp = (double)totalSize/(double)numberBlocks;
+	const unsigned int equalBlockSize = std::ceil(temp);
+	const unsigned int unequalBlockSize = totalSize - equalBlockSize*(numberBlocks-1);
+	if(unequalBlockSize == 0)
+	  numberBlocks = numberBlocks - 1;
 
-    ProjHam = ProjHamGlobal;
+	std::vector<unsigned int> d_blockSize(numberBlocks,equalBlockSize);
+	if(numberBlocks > 1 && unequalBlockSize != 0)
+	  d_blockSize[numberBlocks-1] = unequalBlockSize;
+
+	unsigned int offset = 0;
+
+	for(unsigned int i = 0; i < numberBlocks; ++i)
+	  {
+	    unsigned int sizeBlock = d_blockSize[i];
+	    MPI_Allreduce(&ProjHam[0]+i*offset,
+			  &ProjHamGlobal[0]+i*offset,
+			  sizeBlock,
+			  MPI_DOUBLE,
+			  MPI_SUM,
+			  mpi_communicator);
+	    unsigned int offset = sizeBlock;
+	  }
+
+	ProjHam = ProjHamGlobal;
+      }
 
   }
 #endif
