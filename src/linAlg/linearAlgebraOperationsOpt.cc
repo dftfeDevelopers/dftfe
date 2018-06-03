@@ -825,40 +825,46 @@ namespace dftfe{
 	     &numberVectors);
       computing_timer.exit_section("local overlap matrix for lowden");
 
-      computing_timer.enter_section("utils mpi sum in lowden");
       const unsigned int numberProcs = dealii::Utilities::MPI::n_mpi_processes(X.get_mpi_communicator());
-      const double networkSpeed = 12.5*0.3*1e9;
-      double numberBlocksDouble = (numberVectors*numberVectors*8*(numberProcs - 1))/networkSpeed;
-      unsigned int numberBlocks = std::ceil(numberBlocksDouble);
-      unsigned int totalSize = numberVectors*numberVectors;
       std::vector<double> overlapMatrix(numberVectors*numberVectors,0.0);
-      const double temp = (double)totalSize/(double)numberBlocks;
-      const unsigned int equalBlockSize = std::ceil(temp);
-      const unsigned int unequalBlockSize = totalSize - equalBlockSize*(numberBlocks-1);
-      if(unequalBlockSize == 0)
-	numberBlocks = numberBlocks - 1;
 
-      std::vector<unsigned int> d_blockSize(numberBlocks,equalBlockSize);
-
-      if(numberBlocks > 1 && unequalBlockSize != 0)
-	d_blockSize[numberBlocks-1] = unequalBlockSize;
-
-      unsigned int offset = 0;
-      //dealii::Utilities::MPI::sum(overlapMatrix, X.get_mpi_communicator(), overlapMatrix); 
-      for(unsigned int i = 0; i < numberBlocks; ++i)
+      if(numberProcs > 1)
 	{
-	  unsigned int sizeBlock = d_blockSize[i];
-	  MPI_Allreduce(&overlapMatrixLocal[0]+i*offset,
-			&overlapMatrix[0]+i*offset,
-			sizeBlock,
-			MPI_DOUBLE,
-			MPI_SUM,
-			X.get_mpi_communicator());
-	  unsigned int offset = sizeBlock;
+	  computing_timer.enter_section("utils mpi sum in lowden");
+	  const double networkSpeed = 12.5*0.3*1e9;
+	  double numberBlocksDouble = (numberVectors*numberVectors*8*(numberProcs - 1))/networkSpeed;
+	  unsigned int numberBlocks = std::ceil(numberBlocksDouble);
+	  unsigned int totalSize = numberVectors*numberVectors;
+	  const double temp = (double)totalSize/(double)numberBlocks;
+	  const unsigned int equalBlockSize = std::ceil(temp);
+	  const unsigned int unequalBlockSize = totalSize - equalBlockSize*(numberBlocks-1);
+	  if(unequalBlockSize == 0)
+	    numberBlocks = numberBlocks - 1;
+
+	  std::vector<unsigned int> d_blockSize(numberBlocks,equalBlockSize);
+
+	  if(numberBlocks > 1 && unequalBlockSize != 0)
+	    d_blockSize[numberBlocks-1] = unequalBlockSize;
+
+	  unsigned int offset = 0;
+	  //dealii::Utilities::MPI::sum(overlapMatrix, X.get_mpi_communicator(), overlapMatrix); 
+	  for(unsigned int i = 0; i < numberBlocks; ++i)
+	    {
+	      unsigned int sizeBlock = d_blockSize[i];
+	      MPI_Allreduce(&overlapMatrixLocal[0]+i*offset,
+			    &overlapMatrix[0]+i*offset,
+			    sizeBlock,
+			    MPI_DOUBLE,
+			    MPI_SUM,
+			    X.get_mpi_communicator());
+	      unsigned int offset = sizeBlock;
 	  
 			
+	    }
+	  computing_timer.exit_section("utils mpi sum in lowden");
 	}
-      computing_timer.exit_section("utils mpi sum in lowden");
+
+      overlapMatrix = overlapMatrixLocal;
 
       overlapMatrixLocal.clear();
       std::vector<double>().swap(overlapMatrixLocal);
