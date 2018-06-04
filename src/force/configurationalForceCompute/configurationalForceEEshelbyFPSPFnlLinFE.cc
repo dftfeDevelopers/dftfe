@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-18 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,38 +13,42 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Sambit Das (2017)
+// @author Sambit Das
 //
 namespace internalforce
 {
    //for real valued eigenvectors
-   Tensor<1,C_DIM,double > computeGradRhoContribution(const double psi,
-	                                              const Tensor<1,C_DIM,double > & gradPsi)
+   Tensor<1,C_DIM,VectorizedArray<double> > computeGradRhoContribution
+                                                     (const VectorizedArray<double> &  psi,
+	                                              const Tensor<1,C_DIM,VectorizedArray<double>> & gradPsi)
    {
-       return 2.0*(gradPsi*psi);
+       return make_vectorized_array(2.0)*(gradPsi*psi);
    }
 
    //for complex valued eigenvectors
-   Tensor<1,C_DIM,double > computeGradRhoContribution(const Vector<double> & psi,
-	                                              const std::vector<Tensor<1,C_DIM,double > >  & gradPsi)
+   Tensor<1,C_DIM,VectorizedArray<double> > computeGradRhoContribution
+                                     (const Tensor<1,2,VectorizedArray<double> > & psi,
+	                              const Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > >  & gradPsi)
    {
-       return 2.0*(gradPsi[0]*psi[0]+ gradPsi[1]*psi[1]);
+       return make_vectorized_array(2.0)*(gradPsi[0]*psi[0]+ gradPsi[1]*psi[1]);
    }
 
    //for real valued eigenvectors
-   Tensor<2,C_DIM,double > computeHessianRhoContribution(const double psi,
-	                                                 const Tensor<1,C_DIM,double > & gradPsi,
-                                                         const Tensor<2,C_DIM,double > & hessianPsi)
+   Tensor<2,C_DIM,VectorizedArray<double> > computeHessianRhoContribution
+                                      (const VectorizedArray<double> psi,
+	                               const Tensor<1,C_DIM,VectorizedArray<double> > & gradPsi,
+                                       const Tensor<2,C_DIM,VectorizedArray<double> > & hessianPsi)
    {
-       return 2.0*(hessianPsi*psi+outer_product(gradPsi,gradPsi));
+       return make_vectorized_array(2.0)*(hessianPsi*psi+outer_product(gradPsi,gradPsi));
    }
 
    //for complex valued eigenvectors
-   Tensor<2,C_DIM,double > computeHessianRhoContribution(const Vector<double> & psi,
-	                                                 const std::vector<Tensor<1,C_DIM,double > >  & gradPsi,
-                                                         const std::vector<Tensor<2,C_DIM,double > >  & hessianPsi)
+   Tensor<2,C_DIM,VectorizedArray<double> > computeHessianRhoContribution
+                                            (const Tensor<1,2,VectorizedArray<double> > & psi,
+	                                     const Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > >  & gradPsi,
+                                             const Tensor<1,2,Tensor<2,C_DIM,VectorizedArray<double> > >  & hessianPsi)
    {
-       return 2.0*(hessianPsi[0]*psi[0]+ hessianPsi[1]*psi[1]+ outer_product(gradPsi[0],gradPsi[0])+outer_product(gradPsi[1],gradPsi[1]));
+       return make_vectorized_array(2.0)*(hessianPsi[0]*psi[0]+ hessianPsi[1]*psi[1]+ outer_product(gradPsi[0],gradPsi[0])+outer_product(gradPsi[1],gradPsi[1]));
    }
 
 }
@@ -67,12 +71,18 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(
 #ifdef USE_COMPLEX
   FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  forceEvalKPoints(matrix_free_data,d_forceDofHandlerIndex, 0);
 #endif
+
+#ifdef USE_COMPLEX
+  FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),2> psiEval(matrix_free_data,dftPtr->eigenDofHandlerIndex , 0);
+#else
+  FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> psiEval(matrix_free_data,dftPtr->eigenDofHandlerIndex , 0);
+#endif
+
   FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> phiTotEval(matrix_free_data,dftPtr->phiTotDofHandlerIndex, 0);
   FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> phiTotInEval(matrix_free_data,dftPtr->phiTotDofHandlerIndex, 0);
   FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> phiExtEval(matrix_free_data, dftPtr->phiExtDofHandlerIndex, 0);
   QGauss<C_DIM>  quadrature(C_num1DQuad<FEOrder>());
   FEValues<C_DIM> feVselfValues (dftPtr->FE, quadrature, update_gradients | update_quadrature_points);
-  FEValues<C_DIM> psiValues(dftPtr->FEEigen, quadrature, update_values | update_gradients| update_hessians);
 
   const unsigned int numQuadPoints=forceEval.n_q_points;
   const unsigned int numEigenVectors=dftPtr->eigenVectors[0].size();
@@ -127,6 +137,8 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(
 #ifdef USE_COMPLEX
     forceEvalKPoints.reinit(cell);
 #endif
+    psiEval.reinit(cell);
+
     phiTotEval.reinit(cell);
     phiTotEval.read_dof_values_plain(dftPtr->d_phiTotRhoOut);//read without taking constraints into account
     phiTotEval.evaluate(true,true);
@@ -278,91 +290,57 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(
          rhoQuads[q][iSubCell]=(*dftPtr->rhoOutValues)[subCellId][q];
        }
     }
-
 #ifdef USE_COMPLEX
     std::vector<Tensor<1,2,VectorizedArray<double> > > psiQuads(numQuadPoints*numEigenVectors*numKPoints,zeroTensor1);
     std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > > gradPsiQuads(numQuadPoints*numEigenVectors*numKPoints,zeroTensor2);
-    std::vector<Vector<double> > tempPsi(numQuadPoints);
-    std::vector<std::vector<Tensor<1,C_DIM,double > > >  tempGradPsi(numQuadPoints);
-    std::vector<std::vector<Tensor<2,C_DIM,double > > >  tempHessianPsi(numQuadPoints);
-    for (unsigned int q=0; q<numQuadPoints; ++q)
-    {
-	  tempPsi[q].reinit(2);
-	  tempGradPsi[q].resize(2);
-	  tempHessianPsi[q].resize(2);
-    }
+    Tensor<1,2,Tensor<2,C_DIM,VectorizedArray<double> > >  tempHessianPsi;
+    tempHessianPsi[0]=zeroTensor4;tempHessianPsi[1]=zeroTensor4;
 #else
     std::vector< VectorizedArray<double> > psiQuads(numQuadPoints*numEigenVectors,make_vectorized_array(0.0));
     std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradPsiQuads(numQuadPoints*numEigenVectors,zeroTensor3);
-    std::vector<double>  tempPsi(numQuadPoints);
-    std::vector<Tensor<1,C_DIM,double > >   tempGradPsi(numQuadPoints);
-    std::vector<Tensor<2,C_DIM,double > >   tempHessianPsi(numQuadPoints);
+    Tensor<2,C_DIM,VectorizedArray<double> >  tempHessianPsi=zeroTensor4;
 #endif
 
-    for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
-    {
-      subCellPtr= dftPtr->matrix_free_data.get_cell_iterator(cell,iSubCell,dftPtr->eigenDofHandlerIndex);
-      psiValues.reinit(subCellPtr);
-      for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
-      {
+    for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
         for (unsigned int iEigenVec=0; iEigenVec<numEigenVectors; ++iEigenVec)
         {
+          psiEval.read_dof_values_plain(dftPtr->eigenVectors[ikPoint][iEigenVec]);
+	  if (dftParameters::nonSelfConsistentForce)
+             psiEval.evaluate(true,true,true);
+	  else
+             psiEval.evaluate(true,true);
 
-	  psiValues.get_function_values((dftPtr->eigenVectors[ikPoint][iEigenVec]), tempPsi);
-          psiValues.get_function_gradients((dftPtr->eigenVectors[ikPoint][iEigenVec]), tempGradPsi);
-          psiValues.get_function_hessians((dftPtr->eigenVectors[ikPoint][iEigenVec]), tempHessianPsi);
           for (unsigned int q=0; q<numQuadPoints; ++q)
           {
-	     const int id=q*numEigenVectors*numKPoints+numEigenVectors*ikPoint+iEigenVec;
-#ifdef USE_COMPLEX
-	     for (unsigned int icomp=0;icomp<2;++icomp)
-	     {
-		 psiQuads[id][icomp][iSubCell]=tempPsi[q][icomp];
-		 for (unsigned int idim=0; idim<C_DIM; idim++)
-		 {
-		     gradPsiQuads[id][icomp][idim][iSubCell]=tempGradPsi[q][icomp][idim];
-		 }
-	     }
-#else
-             psiQuads[id][iSubCell]=tempPsi[q];
-	     for (unsigned int idim=0; idim<C_DIM; idim++)
-	     {
-		 gradPsiQuads[id][idim][iSubCell]=tempGradPsi[q][idim];
-	     }
-#endif
-             const double partOcc =dftUtils::getPartialOccupancy(dftPtr->eigenValues[ikPoint][iEigenVec],
+	     const unsigned int id=q*numEigenVectors*numKPoints+numEigenVectors*ikPoint+iEigenVec;
+             psiQuads[id]=psiEval.get_value(q);
+             gradPsiQuads[id]=psiEval.get_gradient(q);
+	     if (dftParameters::nonSelfConsistentForce)
+	        tempHessianPsi=psiEval.get_hessian(q);
+
+	     const double partOcc =dftUtils::getPartialOccupancy(dftPtr->eigenValues[ikPoint][iEigenVec],
 		                                                 dftPtr->fermiEnergy,
 							         C_kb,
 							         dftParameters::TVal);
-	     Tensor<1,C_DIM,double > tempGradRhoContribution=2.0*dftPtr->d_kPointWeights[ikPoint]*partOcc*internalforce::computeGradRhoContribution(tempPsi[q], tempGradPsi[q]);
-	     Tensor<2,C_DIM,double > tempHessianRhoContribution=2.0*dftPtr->d_kPointWeights[ikPoint]*partOcc*internalforce::computeHessianRhoContribution(tempPsi[q], tempGradPsi[q], tempHessianPsi[q]);
+	     const VectorizedArray<double> factor=make_vectorized_array(2.0*dftPtr->d_kPointWeights[ikPoint]*partOcc);
+	     gradRhoQuads[q]+=factor*internalforce::computeGradRhoContribution(psiQuads[id],gradPsiQuads[id]);
 
-	     for (unsigned int idim=0; idim<C_DIM; idim++)
-	     {
-	       gradRhoQuads[q][idim][iSubCell]+=tempGradRhoContribution[idim];
-
-	       for (unsigned int jdim=0; jdim<C_DIM; jdim++)
-	       {
-	         hessianRhoQuads[q][idim][jdim][iSubCell]+=tempHessianRhoContribution[idim][jdim];
-	       }
-	     }
+	     if (dftParameters::nonSelfConsistentForce)
+		 hessianRhoQuads[q]+=factor*internalforce::computeHessianRhoContribution(psiQuads[id],gradPsiQuads[id], tempHessianPsi);
           }//quad point loop
         } //eigenvector loop
-      }//k point loop
-      //accumulate hessian rho quad point contribution from all pools
-      for (unsigned int q=0; q<numQuadPoints; ++q)
-      {
-	for (unsigned int idim=0; idim<C_DIM; idim++)
-	{
-	  gradRhoQuads[q][idim][iSubCell]=Utilities::MPI::sum(gradRhoQuads[q][idim][iSubCell],dftPtr->interpoolcomm);
-	  for (unsigned int jdim=0; jdim<C_DIM; jdim++)
-	  {
-	    hessianRhoQuads[q][idim][jdim][iSubCell]=Utilities::MPI::sum(hessianRhoQuads[q][idim][jdim][iSubCell],dftPtr->interpoolcomm);
+
+    //accumulate gradRho and hessian rho quad point contribution from all pools
+    for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
+        for (unsigned int q=0; q<numQuadPoints; ++q)
+	   for (unsigned int idim=0; idim<C_DIM; idim++)
+	   {
+	      gradRhoQuads[q][idim][iSubCell]=Utilities::MPI::sum(gradRhoQuads[q][idim][iSubCell],dftPtr->interpoolcomm);
+	      if (dftParameters::nonSelfConsistentForce)
+	         for (unsigned int jdim=0; jdim<C_DIM; jdim++)
+	            hessianRhoQuads[q][idim][jdim][iSubCell]=Utilities::MPI::sum(hessianRhoQuads[q][idim][jdim][iSubCell],dftPtr->interpoolcomm);
 ;
-	  }
-	}
-      }
-    }//subcell loop
+	   }
 
     if(isPseudopotential)
     {
@@ -519,12 +497,13 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(
 
        }
 
-       F+=eshelbyTensor::getNonSelfConsistentForce(vEffRhoInQuads[q],
-				                   vEffRhoOutQuads[q],
-					           gradRhoQuads[q],
-					           derExchCorrEnergyWithGradRhoInQuads[q],
-						   derExchCorrEnergyWithGradRhoOutQuads[q],
-						   hessianRhoQuads[q]);
+       if (dftParameters::nonSelfConsistentForce)
+	   F+=eshelbyTensor::getNonSelfConsistentForce(vEffRhoInQuads[q],
+						       vEffRhoOutQuads[q],
+						       gradRhoQuads[q],
+						       derExchCorrEnergyWithGradRhoInQuads[q],
+						       derExchCorrEnergyWithGradRhoOutQuads[q],
+						       hessianRhoQuads[q]);
 
 
        forceEval.submit_value(F,q);
