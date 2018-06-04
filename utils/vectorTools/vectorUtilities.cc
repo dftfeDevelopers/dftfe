@@ -40,6 +40,7 @@ namespace dftfe
       const unsigned int localSize  = partitioner->local_size();
       const unsigned int totalSize  = localSize + n_ghosts;
       const  dealii::types::global_dof_index globalNumberDegreesOfFreedom=partitioner->size(); 
+
       //
       //create data for new parallel layout
       //

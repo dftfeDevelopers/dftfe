@@ -53,6 +53,15 @@ namespace dftfe{
 	      &iwork[0],
 	      &liwork,
 	      &info);
+
+      //
+      //free up memory associated with work
+      //
+      work.clear();
+      iwork.clear();
+      std::vector<double>().swap(work);
+      std::vector<int>().swap(iwork);
+
     }
 
 
@@ -82,6 +91,16 @@ namespace dftfe{
 	      &iwork[0],
 	      &liwork,
 	      &info);
+
+      //
+      //free up memory associated with work
+      //
+      work.clear();
+      iwork.clear();
+      std::vector<std::complex<double> >().swap(work);
+      std::vector<int>().swap(iwork);
+
+           
     }
 
 
@@ -484,17 +503,6 @@ namespace dftfe{
       computing_timer.exit_section("eigen decomp in RR");
 
 
-      /*std::vector<T> ProjHamEigenVectors(numberWaveFunctions*numberWaveFunctions);
-      callevr(numberEigenValues,
-	      &ProjHam[0],
-	      &ProjHamEigenVectors[0],
-	      &eigenValues[0]);
-
-      ProjHam = ProjHamEigenVectors;
-      ProjHamEigenVectors.clear();
-      std::vector<T>().swap(ProjHamEigenVectors);*/
-
-
       //
       //rotate the basis in the subspace X = X*Q
       //
@@ -783,7 +791,7 @@ namespace dftfe{
 
       const unsigned int localVectorSize = X.local_size()/numberVectors;
 
-      std::vector<double> overlapMatrixLocal(numberVectors*numberVectors,0.0);
+      std::vector<double> overlapMatrix(numberVectors*numberVectors,0.0);
 
 
       dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
@@ -821,86 +829,11 @@ namespace dftfe{
 	     X.begin(),
 	     &numberVectors,
 	     &beta,
-	     &overlapMatrixLocal[0],
+	     &overlapMatrix[0],
 	     &numberVectors);
       computing_timer.exit_section("local overlap matrix for lowden");
 
-      const unsigned int numberProcs = dealii::Utilities::MPI::n_mpi_processes(X.get_mpi_communicator());
-      std::vector<double> overlapMatrix(numberVectors*numberVectors,0.0);
-
-      if(numberProcs > 1)
-	{
-	  computing_timer.enter_section("utils mpi sum in lowden");
-	  const double networkSpeed = 12.5*0.3*1e9;
-	  double numberBlocksDouble = (numberVectors*numberVectors*8*(numberProcs - 1))/networkSpeed;
-	  unsigned int numberBlocks = std::ceil(numberBlocksDouble);
-	  unsigned int totalSize = numberVectors*numberVectors;
-	  const double temp = (double)totalSize/(double)numberBlocks;
-	  const unsigned int equalBlockSize = std::ceil(temp);
-	  const unsigned int unequalBlockSize = totalSize - equalBlockSize*(numberBlocks-1);
-	  if(unequalBlockSize == 0)
-	    numberBlocks = numberBlocks - 1;
-
-	  std::vector<unsigned int> d_blockSize(numberBlocks,equalBlockSize);
-
-	  if(numberBlocks > 1 && unequalBlockSize != 0)
-	    d_blockSize[numberBlocks-1] = unequalBlockSize;
-
-	  unsigned int offset = 0;
-	  //dealii::Utilities::MPI::sum(overlapMatrix, X.get_mpi_communicator(), overlapMatrix); 
-	  for(unsigned int i = 0; i < numberBlocks; ++i)
-	    {
-	      unsigned int sizeBlock = d_blockSize[i];
-	      MPI_Allreduce(&overlapMatrixLocal[0]+i*offset,
-			    &overlapMatrix[0]+i*offset,
-			    sizeBlock,
-			    MPI_DOUBLE,
-			    MPI_SUM,
-			    X.get_mpi_communicator());
-	      unsigned int offset = sizeBlock;
-	  
-			
-	    }
-	  computing_timer.exit_section("utils mpi sum in lowden");
-	}
-
-      overlapMatrix = overlapMatrixLocal;
-
-      overlapMatrixLocal.clear();
-      std::vector<double>().swap(overlapMatrixLocal);
-    
-
-      //
-      //set lapack eigen decomposition flags and compute eigendecomposition of S = Q*D*Q^{H}
-      //
-      /*int info;
-      const unsigned int lwork = 1 + 6*numberVectors + 2*numberVectors*numberVectors, liwork = 3 + 5*numberVectors;
-      std::vector<int> iwork(liwork,0);
-      const char jobz='V';
-      std::vector<double> work(lwork);
-      std::vector<double> eigenValuesOverlap(numberVectors,0.0);
-
-      computing_timer.enter_section("eigen decomp. of overlap matrix");
-      dsyevd_(&jobz,
-	      &uplo,
-	      &numberVectors,
-	      &overlapMatrix[0],
-	      &numberVectors,
-	      &eigenValuesOverlap[0],
-	      &work[0],
-	      &lwork,
-	      &iwork[0],
-	      &liwork,
-	      &info);
-	      computing_timer.exit_section("eigen decomp. of overlap matrix");
-
-      //
-      //free up memory associated with work
-      //
-      work.clear();
-      iwork.clear();
-      std::vector<double>().swap(work);
-      std::vector<int>().swap(iwork);*/
+      dealii::Utilities::MPI::sum(overlapMatrix, X.get_mpi_communicator(), overlapMatrix); 
 
       std::vector<double> eigenValuesOverlap(numberVectors);
       computing_timer.enter_section("eigen decomp. of overlap matrix");
