@@ -915,7 +915,10 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 	   &ProjHam[0],
 	   &numberWaveFunctions);
 
+    Y.reinit(0);
+
     Utilities::MPI::sum(ProjHam, mpi_communicator, ProjHam);
+
   }
 #endif
 

@@ -53,13 +53,19 @@ namespace dftfe{
 	      &iwork[0],
 	      &liwork,
 	      &info);
+
+      //
+      //free up memory associated with work
+      //
+      work.clear();
+      iwork.clear();
+      std::vector<double>().swap(work);
+      std::vector<int>().swap(iwork);
+
     }
 
 
-
-
-
-    void callevd(const unsigned int dimensionMatrix,
+     void callevd(const unsigned int dimensionMatrix,
 		 std::complex<double> *matrix,
 		 double *eigenValues)
     {
@@ -68,7 +74,7 @@ namespace dftfe{
       std::vector<int> iwork(liwork,0);
       const char jobz='V', uplo='U';
       const unsigned int lrwork = 1 + 5*dimensionMatrix + 2*dimensionMatrix*dimensionMatrix;
-      std::vector<double> rwork(lrwork,0.0);
+      std::vector<double> rwork(lrwork);
       std::vector<std::complex<double> > work(lwork);
 
 
@@ -85,8 +91,110 @@ namespace dftfe{
 	      &iwork[0],
 	      &liwork,
 	      &info);
+
+      //
+      //free up memory associated with work
+      //
+      work.clear();
+      iwork.clear();
+      std::vector<std::complex<double> >().swap(work);
+      std::vector<int>().swap(iwork);
+
+           
     }
 
+
+    void callevr(const unsigned int dimensionMatrix,
+		 std::complex<double> *matrixInput,
+		 std::complex<double> *eigenVectorMatrixOutput,
+		 double *eigenValues)
+    {
+      char jobz = 'V', uplo = 'U', range = 'A';
+      const double vl=0.0,vu=0.0;
+      const unsigned int il=0,iu = 0;
+      const double abstol = 1e-08;
+      std::vector<unsigned int> isuppz(2*dimensionMatrix);
+      const int lwork = 2*dimensionMatrix;
+      std::vector<std::complex<double> > work(lwork);
+      const int liwork = 10*dimensionMatrix;
+      std::vector<int> iwork(liwork);
+      const int lrwork = 24*dimensionMatrix;
+      std::vector<double> rwork(lrwork);
+      int info;
+
+      zheevr_(&jobz,
+	      &range,
+	      &uplo,
+	      &dimensionMatrix,
+	      matrixInput,
+	      &dimensionMatrix,
+	      &vl,
+	      &vu,
+	      &il,
+	      &iu,
+	      &abstol,
+	      &dimensionMatrix,
+	      eigenValues,
+	      eigenVectorMatrixOutput,
+	      &dimensionMatrix,
+	      &isuppz[0],
+	      &work[0],
+	      &lwork,
+	      &rwork[0],
+	      &lrwork,
+	      &iwork[0],
+	      &liwork,
+	      &info);
+    }
+
+
+
+    
+    void callevr(const unsigned int dimensionMatrix,
+		 double *matrixInput,
+		 double *eigenVectorMatrixOutput,
+		 double *eigenValues)
+    {
+      char jobz = 'V', uplo = 'U', range = 'A';
+      const double vl=0.0,vu = 0.0;
+      const unsigned int il=0,iu=0;
+      const double abstol = 0.0;
+      std::vector<unsigned int> isuppz(2*dimensionMatrix);
+      const int lwork = 26*dimensionMatrix;
+      std::vector<double> work(lwork);
+      const int liwork = 10*dimensionMatrix;
+      std::vector<int> iwork(liwork);
+      int info;
+
+      dsyevr_(&jobz,
+	      &range,
+	      &uplo,
+	      &dimensionMatrix,
+	      matrixInput,
+	      &dimensionMatrix,
+	      &vl,
+	      &vu,
+	      &il,
+	      &iu,
+	      &abstol,
+	      &dimensionMatrix,
+	      eigenValues,
+	      eigenVectorMatrixOutput,
+	      &dimensionMatrix,
+	      &isuppz[0],
+	      &work[0],
+	      &lwork,
+	      &iwork[0],
+	      &liwork,
+	      &info);
+	     
+      AssertThrow(info==0,dealii::ExcMessage("Error in dsyevr"));
+      
+
+    }
+
+
+   
 
     void callgemm(const unsigned int numberEigenValues,
 		  const unsigned int localVectorSize,
@@ -365,23 +473,34 @@ namespace dftfe{
     {
       if (dftParameters::orthoRROMPThreads!=0)
 	  omp_set_num_threads(dftParameters::orthoRROMPThreads);
+
+      dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
+
+      dealii::TimerOutput computing_timer(pcout,
+					  dftParameters::reproducible_output ? dealii::TimerOutput::never : dealii::TimerOutput::summary,
+					  dealii::TimerOutput::wall_times);
       //
       //compute projected Hamiltonian
       //
       std::vector<T> ProjHam;
       const unsigned int numberEigenValues = eigenValues.size();
+
+      computing_timer.enter_section("XtHX");
       operatorMatrix.XtHX(X,
 			  numberEigenValues,
 			  flattenedArrayMacroCellLocalProcIndexIdMap,
 			  flattenedArrayCellLocalProcIndexIdMap,
 			  ProjHam);
+      computing_timer.exit_section("XtHX");
 
       //
       //compute eigendecomposition of ProjHam
       //
+      computing_timer.enter_section("eigen decomp in RR");
       callevd(numberEigenValues,
 	      &ProjHam[0],
 	      &eigenValues[0]);
+      computing_timer.exit_section("eigen decomp in RR");
 
 
       //
@@ -391,12 +510,13 @@ namespace dftfe{
       dealii::parallel::distributed::Vector<T> rotatedBasis;
       rotatedBasis.reinit(X);
 
+      computing_timer.enter_section("subspace rotation in RR");
       callgemm(numberEigenValues,
 	       localVectorSize,
 	       ProjHam,
 	       X,
 	       rotatedBasis);
-
+      computing_timer.exit_section("subspace rotation in RR");
 
       X = rotatedBasis;
 
@@ -670,7 +790,9 @@ namespace dftfe{
 	  omp_set_num_threads(dftParameters::orthoRROMPThreads);
 
       const unsigned int localVectorSize = X.local_size()/numberVectors;
+
       std::vector<double> overlapMatrix(numberVectors*numberVectors,0.0);
+
 
       dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
 
@@ -698,7 +820,7 @@ namespace dftfe{
       //the overlap matrix as S = S^{T} = X*{X^T} here
       //
 
-      computing_timer.enter_section("local overlap matrix");
+      computing_timer.enter_section("local overlap matrix for lowden");
       dsyrk_(&uplo,
 	     &trans,
 	     &numberVectors,
@@ -709,67 +831,75 @@ namespace dftfe{
 	     &beta,
 	     &overlapMatrix[0],
 	     &numberVectors);
-      computing_timer.exit_section("local overlap matrix");
+      computing_timer.exit_section("local overlap matrix for lowden");
 
+      dealii::Utilities::MPI::sum(overlapMatrix, X.get_mpi_communicator(), overlapMatrix); 
 
-      dealii::Utilities::MPI::sum(overlapMatrix, X.get_mpi_communicator(), overlapMatrix);
-
-
-      //
-      //set lapack eigen decomposition flags and compute eigendecomposition of S = Q*D*Q^{H}
-      //
-      int info;
-      const unsigned int lwork = 1 + 6*numberVectors + 2*numberVectors*numberVectors, liwork = 3 + 5*numberVectors;
-      std::vector<int> iwork(liwork,0);
-      const char jobz='V';
-      std::vector<double> work(lwork);
-      std::vector<double> eigenValuesOverlap(numberVectors,0.0);
-
+      std::vector<double> eigenValuesOverlap(numberVectors);
       computing_timer.enter_section("eigen decomp. of overlap matrix");
-      dsyevd_(&jobz,
-	      &uplo,
-	      &numberVectors,
+      callevd(numberVectors,
 	      &overlapMatrix[0],
-	      &numberVectors,
-	      &eigenValuesOverlap[0],
-	      &work[0],
-	      &lwork,
-	      &iwork[0],
-	      &liwork,
-	      &info);
+	      &eigenValuesOverlap[0]);
       computing_timer.exit_section("eigen decomp. of overlap matrix");
 
-       //
-       //free up memory associated with work
-       //
-       work.clear();
-       iwork.clear();
-       std::vector<double>().swap(work);
-       std::vector<int>().swap(iwork);
+      //
+      //compute D^{-1/4} where S = Q*D*Q^{T}
+      //
+      std::vector<double> invFourthRootEigenValuesMatrix(numberEigenValues);
+      unsigned int nanFlag = 0;
+      for(unsigned i = 0; i < numberEigenValues; ++i)
+	{
+	  invFourthRootEigenValuesMatrix[i] = 1.0/pow(eigenValuesOverlap[i],1.0/4);
+	  if(std::isnan(invFourthRootEigenValuesMatrix[i]))
+	    {
+	      nanFlag = 1;
+	      std::cout<<"Nan obtained in proc: "<<dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)<<" and switching to more robust dsyevr for eigen decomposition "<<std::endl;
+	      break;
+	    }
+	}
 
-       //
-       //compute D^{-1/4} where S = Q*D*Q^{T}
-       //
-       std::vector<double> invFourthRootEigenValuesMatrix(numberEigenValues,0.0);
+      if(nanFlag == 1)
+	{
+	  std::vector<double> overlapMatrixEigenVectors(numberVectors*numberVectors,0.0);
+	  eigenValuesOverlap.clear();
+	  eigenValuesOverlap.resize(numberVectors);
+	  invFourthRootEigenValuesMatrix.clear();
+	  invFourthRootEigenValuesMatrix.resize(numberVectors);
+	  computing_timer.enter_section("eigen decomp. of overlap matrix");
+	  callevr(numberVectors,
+		  &overlapMatrix[0],
+		  &overlapMatrixEigenVectors[0],
+		  &eigenValuesOverlap[0]);
+	  computing_timer.exit_section("eigen decomp. of overlap matrix");
+	      
+	  overlapMatrix = overlapMatrixEigenVectors;
+	  overlapMatrixEigenVectors.clear();
+	  std::vector<double>().swap(overlapMatrixEigenVectors);
 
-       for(unsigned i = 0; i < numberEigenValues; ++i)
-	 {
-	   invFourthRootEigenValuesMatrix[i] = 1.0/pow(eigenValuesOverlap[i],1.0/4);
-	   AssertThrow(!std::isnan(invFourthRootEigenValuesMatrix[i]),dealii::ExcMessage("Eigen values of overlap matrix during Lowden Orthonormalization are very small and close to zero"));
-	 }
+	  //
+	  //compute D^{-1/4} where S = Q*D*Q^{T}
+	  //
+	  for(unsigned i = 0; i < numberEigenValues; ++i)
+	    {
+	      invFourthRootEigenValuesMatrix[i] = 1.0/pow(eigenValuesOverlap[i],(1.0/4.0));
+	      AssertThrow(!std::isnan(invFourthRootEigenValuesMatrix[i]),dealii::ExcMessage("Eigen values of overlap matrix during Lowden Orthonormalization are very small and close to zero or negative"));
+	    }
+	}
 
        //
        //Q*D^{-1/4} and note that "Q" is stored in overlapMatrix after calling "dsyevd"
        //
-       const unsigned int inc = 1;
-       for(unsigned int i = 0; i < numberEigenValues; ++i)
-	 {
-	   double scalingCoeff = invFourthRootEigenValuesMatrix[i];
-	   dscal_(&numberEigenValues,
-		  &scalingCoeff,
-		  &overlapMatrix[0]+i*numberEigenValues,
-                  &inc);
-	 }
+      computing_timer.enter_section("scaling in Lowden");
+      const unsigned int inc = 1;
+      for(unsigned int i = 0; i < numberEigenValues; ++i)
+	{
+	  double scalingCoeff = invFourthRootEigenValuesMatrix[i];
+	  dscal_(&numberEigenValues,
+		 &scalingCoeff,
+		 &overlapMatrix[0]+i*numberEigenValues,
+		 &inc);
+	}
+      computing_timer.exit_section("scaling in Lowden");
 
        //
        //Evaluate S^{-1/2} = Q*D^{-1/2}*Q^{T} = (Q*D^{-1/4})*(Q*D^{-1/4))^{T}
@@ -777,6 +907,7 @@ namespace dftfe{
        std::vector<double> invSqrtOverlapMatrix(numberEigenValues*numberEigenValues,0.0);
        const char transA1 = 'N';
        const char transB1 = 'T';
+       computing_timer.enter_section("inverse sqrt overlap");
        dgemm_(&transA1,
 	      &transB1,
 	      &numberEigenValues,
@@ -790,6 +921,7 @@ namespace dftfe{
 	      &beta,
 	      &invSqrtOverlapMatrix[0],
 	      &numberEigenValues);
+       computing_timer.exit_section("inverse sqrt overlap");
 
        //
        //free up memory associated with overlapMatrix
@@ -804,19 +936,21 @@ namespace dftfe{
        const char transA2  = 'N', transB2  = 'N';
        dealii::parallel::distributed::Vector<double> orthoNormalizedBasis;
        orthoNormalizedBasis.reinit(X);
+       computing_timer.enter_section("subspace rotation in lowden");
        dgemm_(&transA2,
-	     &transB2,
-	     &numberEigenValues,
-             &localVectorSize,
-	     &numberEigenValues,
-	     &alpha,
-	     &invSqrtOverlapMatrix[0],
-	     &numberEigenValues,
-	     X.begin(),
-	     &numberEigenValues,
-	     &beta,
-	     orthoNormalizedBasis.begin(),
-	     &numberEigenValues);
+	      &transB2,
+	      &numberEigenValues,
+	      &localVectorSize,
+	      &numberEigenValues,
+	      &alpha,
+	      &invSqrtOverlapMatrix[0],
+	      &numberEigenValues,
+	      X.begin(),
+	      &numberEigenValues,
+	      &beta,
+	      orthoNormalizedBasis.begin(),
+	      &numberEigenValues);
+       computing_timer.exit_section("subspace rotation in lowden");
 
 
        X = orthoNormalizedBasis;
