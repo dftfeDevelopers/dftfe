@@ -256,7 +256,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
   unsigned int numberDofs = locallyOwnedDOFs.size();
 #endif
 
-  //std::vector<std::vector<double> > local_dof_values(numEigenValues, std::vector<double>(numberDofs, 0.0));
+
   const unsigned int numberGlobalAtoms = atomLocations.size();
 
 
@@ -338,17 +338,14 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 			  //spherical part
 			  if (it->m > 0)
 			    {
-			      //local_dof_values[waveFunction][dof] +=  R*std::sqrt(2)*boost::math::spherical_harmonic_r(it->l,it->m,theta,phi);
 			      (eigenVectors[kPoint][waveFunction])(dofID) += R*std::sqrt(2)*boost::math::spherical_harmonic_r(it->l,it->m,theta,phi);
 			    }
 			  else if (it->m == 0)
 			    {
-			      //local_dof_values[waveFunction][dof] +=  R*boost::math::spherical_harmonic_r(it->l,it->m,theta,phi);
 			      (eigenVectors[kPoint][waveFunction])(dofID) += R*boost::math::spherical_harmonic_r(it->l,it->m,theta,phi);
 			    }
 			  else
 			    {
-			      //local_dof_values[waveFunction][dof] +=  R*std::sqrt(2)*boost::math::spherical_harmonic_i(it->l,-(it->m),theta,phi);
 			      (eigenVectors[kPoint][waveFunction])(dofID) += R*std::sqrt(2)*boost::math::spherical_harmonic_i(it->l,-(it->m),theta,phi);
 			    }
 			}
@@ -370,15 +367,14 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 
 		      for(unsigned int iWave = waveFunctionsVector.size(); iWave < numEigenValues; ++iWave)
 			{
-			  //for(unsigned int dof=0; dof<numberDofs; dof++)
-			  //{
+
 			  double z = (-0.5 + (rand()+ 0.0)/(RAND_MAX))*3.0;
 			  double value =  boost::math::pdf(normDist, z);
 			  if(rand()%2 == 0)
 			    value = -1.0*value;
 
 			  eigenVectors[kPoint][iWave][dofID] = value;
-			  //}
+
 			}
 		    }
 
@@ -395,36 +391,6 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 	  eigenVectors[kPoint][i].update_ghost_values();
 	}
     }
-
-  /*for(int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
-    {
-    for (unsigned int i = 0; i < numEigenValues; ++i)
-    {
-    #ifdef USE_COMPLEX
-    for(unsigned int j = 0; j < numberDofs; ++j)
-    {
-    unsigned int dofID = local_dof_indicesReal[j];
-    if(eigenVectors[kPoint][i].in_local_range(dofID))
-    {
-    if(!constraintsNoneEigen.is_constrained(dofID))
-    (eigenVectors[kPoint][i])(dofID) = local_dof_values[i][j];
-    }
-    }
-    #else
-    for(unsigned int j = 0; j < numberDofs; ++j)
-    {
-    unsigned int dofID = locallyOwnedDOFs[j];
-    if(eigenVectors[kPoint][i].in_local_range(dofID))
-    {
-    if(!constraintsNoneEigen.is_constrained(dofID))
-    (eigenVectors[kPoint][i])(dofID) = local_dof_values[i][j];
-    }
-    }
-    #endif
-    eigenVectors[kPoint][i].compress(VectorOperation::insert);
-    eigenVectors[kPoint][i].update_ghost_values();
-    }
-    }*/
 }
 
 //
