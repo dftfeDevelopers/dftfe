@@ -35,7 +35,7 @@ void eigenClass<FEOrder>::preComputeShapeFunctionGradientIntegrals()
   //resize data members
   //
   d_cellShapeFunctionGradientIntegral.resize(numberMacroCells);
-  d_cellShapeFunctionGradientValue.reinit(TableIndices<4>(numberMacroCells,numberDofsPerElement,numberQuadraturePoints,3));
+  d_cellShapeFunctionGradientValue.reinit(TableIndices<3>(numberMacroCells,numberDofsPerElement,numberQuadraturePoints*3));
   d_shapeFunctionValue.resize(numberQuadraturePoints*numberDofsPerElement,0.0);
   std::vector<std::vector<std::vector<std::vector<double> > > > tempShapeFuncGradData;
   tempShapeFuncGradData.resize(numberMacroCells);
@@ -118,9 +118,9 @@ void eigenClass<FEOrder>::preComputeShapeFunctionGradientIntegrals()
 		  gradZ[iCell] = tempShapeFuncGradData[iCell][iNode][q_point][2];
 		}
 
-	      d_cellShapeFunctionGradientValue(iMacroCell,iNode,q_point,0) = gradX;
-	      d_cellShapeFunctionGradientValue(iMacroCell,iNode,q_point,1) = gradY;
-	      d_cellShapeFunctionGradientValue(iMacroCell,iNode,q_point,2) = gradZ;
+	      d_cellShapeFunctionGradientValue(iMacroCell,iNode,3*q_point) = gradX;
+	      d_cellShapeFunctionGradientValue(iMacroCell,iNode,3*q_point+1) = gradY;
+	      d_cellShapeFunctionGradientValue(iMacroCell,iNode,3*q_point+2) = gradZ;
 
 	    }//q_point loop
 	}//iNodeloop
