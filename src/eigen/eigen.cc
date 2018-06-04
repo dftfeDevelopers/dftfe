@@ -26,6 +26,7 @@
 namespace dftfe {
 
 #include "computeNonLocalHamiltonianTimesXMemoryOpt.cc"
+#include "computeNonLocalHamiltonianTimesXMemoryOptBatchGEMM.cc"
 #include "matrixVectorProductImplementations.cc"
 #include "shapeFunctionDataCalculator.cc"
 #include "hamiltonianMatrixCalculator.cc"
@@ -404,20 +405,33 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
     //
     //Hloc*M^{-1/2}*X
     //
-    computeLocalHamiltonianTimesX(src,
-				  numberWaveFunctions,
-				  flattenedArrayMacroCellLocalProcIndexIdMap,
-				  dst);
+    if (dftParameters::useBatchGEMM && numberWaveFunctions<1000)
+       computeLocalHamiltonianTimesXBatchGEMM(src,
+				             numberWaveFunctions,
+				             flattenedArrayMacroCellLocalProcIndexIdMap,
+				             dst);
 
-
+    else
+       computeLocalHamiltonianTimesX(src,
+				     numberWaveFunctions,
+				     flattenedArrayMacroCellLocalProcIndexIdMap,
+ 				     dst);
     //
     //required if its a pseudopotential calculation and number of nonlocal atoms are greater than zero
     //H^{nloc}*M^{-1/2}*X
     if(dftParameters::isPseudopotential && dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0)
-      computeNonLocalHamiltonianTimesX(src,
-				       numberWaveFunctions,
-				       flattenedArrayCellLocalProcIndexIdMap,
-				       dst);
+    {
+      if (dftParameters::useBatchGEMM && numberWaveFunctions<1000) 
+        computeNonLocalHamiltonianTimesXBatchGEMM(src,
+				                  numberWaveFunctions,
+				                  flattenedArrayCellLocalProcIndexIdMap,
+				                  dst);
+      else
+        computeNonLocalHamiltonianTimesX(src,
+				         numberWaveFunctions,
+				         flattenedArrayCellLocalProcIndexIdMap,
+				         dst);
+    }
 
 
     //
@@ -509,19 +523,35 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
     //
     //Hloc*M^{-1/2}*X
     //
-    computeLocalHamiltonianTimesX(src,
-				  numberWaveFunctions,
-				  flattenedArrayMacroCellLocalProcIndexIdMap,
-				  dst);
+    if (dftParameters::useBatchGEMM && numberWaveFunctions<1000)
+       computeLocalHamiltonianTimesXBatchGEMM(src,
+				              numberWaveFunctions,
+				              flattenedArrayMacroCellLocalProcIndexIdMap,
+				              dst);
+
+    else
+       computeLocalHamiltonianTimesX(src,
+				     numberWaveFunctions,
+				     flattenedArrayMacroCellLocalProcIndexIdMap,
+ 				     dst);
+
 
     //
     //required if its a pseudopotential calculation and number of nonlocal atoms are greater than zero
     //H^{nloc}*M^{-1/2}*X
     if(dftParameters::isPseudopotential && dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0)
-      computeNonLocalHamiltonianTimesX(src,
-				       numberWaveFunctions,
-				       flattenedArrayCellLocalProcIndexIdMap,
-				       dst);
+    {
+      if (dftParameters::useBatchGEMM && numberWaveFunctions<1000)
+        computeNonLocalHamiltonianTimesXBatchGEMM(src,
+				                  numberWaveFunctions,
+				                  flattenedArrayCellLocalProcIndexIdMap,
+				                  dst);
+      else
+        computeNonLocalHamiltonianTimesX(src,
+				         numberWaveFunctions,
+				         flattenedArrayCellLocalProcIndexIdMap,
+				         dst);
+    }
 
 
 
@@ -885,7 +915,10 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 	   &ProjHam[0],
 	   &numberWaveFunctions);
 
+    Y.reinit(0);
+
     Utilities::MPI::sum(ProjHam, mpi_communicator, ProjHam);
+
   }
 #endif
 

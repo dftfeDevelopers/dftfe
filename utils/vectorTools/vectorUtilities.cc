@@ -40,6 +40,7 @@ namespace dftfe
       const unsigned int localSize  = partitioner->local_size();
       const unsigned int totalSize  = localSize + n_ghosts;
       const  dealii::types::global_dof_index globalNumberDegreesOfFreedom=partitioner->size(); 
+
       //
       //create data for new parallel layout
       //
@@ -53,10 +54,10 @@ namespace dftfe
       ghostFlattenedNodesSet.set_size(globalNumberDegreesOfFreedom*blockSize);
 
       
-      std::vector<dealii::types::global_dof_index> newLocallyOwnedGlobalNodeIds;
-      std::vector<dealii::types::global_dof_index> newGhostGlobalNodeIds;
       for(unsigned int ilocaldof = 0; ilocaldof < totalSize; ++ilocaldof)
 	{
+          std::vector<dealii::types::global_dof_index> newLocallyOwnedGlobalNodeIds;
+          std::vector<dealii::types::global_dof_index> newGhostGlobalNodeIds;
 	  const dealii::types::global_dof_index globalIndex = partitioner->local_to_global(ilocaldof);
 	  const bool isGhost = partitioner->is_ghost_entry(globalIndex);
 	  if(isGhost)
@@ -73,14 +74,16 @@ namespace dftfe
 		  newLocallyOwnedGlobalNodeIds.push_back(blockSize*globalIndex+iwave);	 
 		}	
 	    }
+            
+            //insert into dealii index sets
+            locallyOwnedFlattenedNodesSet.add_indices(newLocallyOwnedGlobalNodeIds.begin(),newLocallyOwnedGlobalNodeIds.end());
+            ghostFlattenedNodesSet.add_indices(newGhostGlobalNodeIds.begin(),newGhostGlobalNodeIds.end());
+
 	}
 
-      
-      //
-      //insert into dealii index sets
-      //
-      locallyOwnedFlattenedNodesSet.add_indices(newLocallyOwnedGlobalNodeIds.begin(),newLocallyOwnedGlobalNodeIds.end());
-      ghostFlattenedNodesSet.add_indices(newGhostGlobalNodeIds.begin(),newGhostGlobalNodeIds.end());
+      //compress index set ranges
+      locallyOwnedFlattenedNodesSet.compress();
+      ghostFlattenedNodesSet.compress();
 
       bool print = false;
       if(print)

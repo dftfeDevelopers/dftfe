@@ -24,7 +24,6 @@ number of degrees of freedom: 10699
 -------------------------------------------------
 
 Reading initial guess for PSI....
-Number of wavefunctions generated randomly to be used as initial guess for starting the SCF : 12
 
 Reading initial guess for rho.....
 
@@ -35,7 +34,7 @@ SCF iteration converged to the specified tolerance after: 13 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:        -108.71470458
+             Total energy:        -108.71470445
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------

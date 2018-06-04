@@ -257,11 +257,26 @@ namespace dftfe{
 
 
 
-
+      /**
+       * @brief implementation of matrix-vector product using cell-level stiffness matrices.
+       * works for both real and complex data type. blas gemm_batch routines are used.
+       * @param src Vector containing current values of source array with multi-vector array stored
+       * in a flattened format with all the wavefunction value corresponding to a given node is stored
+       * contiguously.
+       * @param numberWaveFunctions Number of wavefunctions at a given node.
+       * @param flattenedArrayCellLocalProcIndexIdMap precomputed cell-localindex id map of the multi-wavefuncton field in the order of macrocells
+       * @param dst Vector containing matrix times given multi-vectors product
+       */
+      void computeLocalHamiltonianTimesXBatchGEMM
+	           (const dealii::parallel::distributed::Vector<dataTypes::number> & src,
+		    const unsigned int numberWaveFunctions,
+		    const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap,
+		    dealii::parallel::distributed::Vector<dataTypes::number> & dst) const;
 
 
       /**
-       * @brief implementation of non-local Hamiltonian matrix-vector product using non-local discretized projectors at cell-level
+       * @brief implementation of non-local Hamiltonian matrix-vector product
+       * using non-local discretized projectors at cell-level.
        * works for both complex and real data type
        * @param src Vector containing current values of source array with multi-vector array stored
        * in a flattened format with all the wavefunction value corresponding to a given node is stored
@@ -276,6 +291,22 @@ namespace dftfe{
 					    dealii::parallel::distributed::Vector<dataTypes::number> & dst) const;
 
 
+      /**
+       * @brief implementation of non-local Hamiltonian matrix-vector product using
+       * non-local discretized projectors at cell-level. blas gemm_batch routines are used.
+       * works for both complex and real data type
+       * @param src Vector containing current values of source array with multi-vector array stored
+       * in a flattened format with all the wavefunction value corresponding to a given node is stored
+       * contiguously.
+       * @param numberWaveFunctions Number of wavefunctions at a given node.
+       * @param flattenedArrayCellLocalProcIndexIdMap precomputed cell-localindex id map of the multi-wavefuncton field in the order of macrocells
+       * @param dst Vector containing matrix times given multi-vectors product
+       */
+      void computeNonLocalHamiltonianTimesXBatchGEMM
+	                                   (const dealii::parallel::distributed::Vector<dataTypes::number> & src,
+					    const unsigned int numberWaveFunctions,
+					    const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap,
+					    dealii::parallel::distributed::Vector<dataTypes::number> & dst) const;
 
       ///pointer to dft class
       dftClass<FEOrder>* dftPtr;
@@ -297,7 +328,7 @@ namespace dftfe{
 
       ///storage for shapefunctions
       std::vector<double> d_shapeFunctionValue;
-      dealii::Table<4, dealii::VectorizedArray<double> > d_cellShapeFunctionGradientValue;
+      dealii::Table<3, dealii::VectorizedArray<double> > d_cellShapeFunctionGradientValue;
 
 
 

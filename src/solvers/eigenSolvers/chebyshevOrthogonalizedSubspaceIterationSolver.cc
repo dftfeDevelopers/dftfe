@@ -238,7 +238,11 @@ namespace dftfe{
 
 
 	std::vector<std::vector<dealii::types::global_dof_index> > flattenedArrayCellLocalProcIndexIdMap,flattenedArrayMacroCellLocalProcIndexIdMap;
-
+#ifdef USE_COMPLEX
+	dealii::parallel::distributed::Vector<std::complex<double> > eigenVectorsFlattenedArrayBlock;
+#else
+	dealii::parallel::distributed::Vector<double> eigenVectorsFlattenedArrayBlock;
+#endif
 	for(unsigned int nBlock = 0; nBlock < totalNumberBlocks; ++nBlock)
 	  {
 	    //
@@ -248,8 +252,6 @@ namespace dftfe{
 	    const unsigned int lowIndex = equalNumberWaveFunctionsPerBlock*nBlock;
 	    const unsigned int highIndexPlusOne = lowIndex + numberWaveFunctionsPerCurrentBlock;
 
-	    operatorMatrix.reinit(numberWaveFunctionsPerCurrentBlock);
-
 	    //
 	    //create custom partitioned dealii array by storing wavefunctions(no need to createDealii vector if block size does not change)
 	    //
@@ -257,33 +259,36 @@ namespace dftfe{
 	    if(totalNumberBlocks > 1)
 	      {
 
+		if (nBlock==0 || nBlock==totalNumberBlocks-1)
+		{
+		    operatorMatrix.reinit(numberWaveFunctionsPerCurrentBlock);
 #ifdef USE_COMPLEX
-		dealii::parallel::distributed::Vector<std::complex<double> > eigenVectorsFlattenedArrayBlock;
-
-		vectorTools::createDealiiVector<std::complex<double> >(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
-								       numberWaveFunctionsPerCurrentBlock,
-								       eigenVectorsFlattenedArrayBlock);
+		    vectorTools::createDealiiVector<std::complex<double> >(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
+									   numberWaveFunctionsPerCurrentBlock,
+									   eigenVectorsFlattenedArrayBlock);
 #else
-		dealii::parallel::distributed::Vector<double> eigenVectorsFlattenedArrayBlock;
-		vectorTools::createDealiiVector<double>(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
-							numberWaveFunctionsPerCurrentBlock,
-							eigenVectorsFlattenedArrayBlock);
+		    vectorTools::createDealiiVector<double>(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
+							    numberWaveFunctionsPerCurrentBlock,
+							    eigenVectorsFlattenedArrayBlock);
 
 #endif
 
-		//
-		//precompute certain maps
-		//
-		vectorTools::computeCellLocalIndexSetMap(eigenVectorsFlattenedArrayBlock.get_partitioner(),
-							 operatorMatrix.getMatrixFreeData(),
-							 numberWaveFunctionsPerCurrentBlock,
-							 flattenedArrayMacroCellLocalProcIndexIdMap,
-							 flattenedArrayCellLocalProcIndexIdMap);
+
+		    //
+		    //precompute certain maps
+		    //
+		    vectorTools::computeCellLocalIndexSetMap(eigenVectorsFlattenedArrayBlock.get_partitioner(),
+							     operatorMatrix.getMatrixFreeData(),
+							     numberWaveFunctionsPerCurrentBlock,
+							     flattenedArrayMacroCellLocalProcIndexIdMap,
+							     flattenedArrayCellLocalProcIndexIdMap);
 
 
-		operatorMatrix.getOverloadedConstraintMatrix()->precomputeMaps(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
-									       eigenVectorsFlattenedArrayBlock.get_partitioner(),
-									       numberWaveFunctionsPerCurrentBlock);
+		    operatorMatrix.getOverloadedConstraintMatrix()
+			->precomputeMaps(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
+			  	         eigenVectorsFlattenedArrayBlock.get_partitioner(),
+			 	         numberWaveFunctionsPerCurrentBlock);
+		}
 
 
 		//
@@ -329,6 +334,7 @@ namespace dftfe{
 	      }
 	    else
 	      {
+		operatorMatrix.reinit(numberWaveFunctionsPerCurrentBlock);
 		//
 		//precompute certain maps
 		//
@@ -377,6 +383,8 @@ namespace dftfe{
 	      }
 
 	  }//block loop
+
+	eigenVectorsFlattenedArrayBlock.reinit(0);
 	if(dftParameters::verbosity >= 2)
 	  pcout<<"ChebyShev Filtering Done: "<<std::endl;
 
