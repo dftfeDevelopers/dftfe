@@ -48,6 +48,7 @@ namespace dftfe {
       extern double meshSizeInnerBall, meshSizeOuterBall;
 
       extern bool isIonOpt, isCellOpt, isIonForce, isCellStress;
+      extern bool nonSelfConsistentForce;
       extern double forceRelaxTol, stressRelaxTol;
       extern unsigned int cellConstraintType;
 

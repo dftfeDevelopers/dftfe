@@ -40,6 +40,7 @@ namespace dftParameters
   double meshSizeInnerBall=1.0, meshSizeOuterBall=1.0;
 
   bool isIonOpt=false, isCellOpt=false, isIonForce=false, isCellStress=false;
+  bool nonSelfConsistentForce=false;
   double forceRelaxTol  = 5e-5;//Hartree/Bohr
   double stressRelaxTol = 5e-7;//Hartree/Bohr^3
   unsigned int cellConstraintType=12;// all cell components to be relaxed
@@ -88,6 +89,10 @@ namespace dftParameters
 	    prm.declare_entry("ION FORCE", "false",
 			      Patterns::Bool(),
 			      "[Standard] Boolean parameter specifying if atomic forces are to be computed. Automatically set to true if ION OPT is true.");
+
+	    prm.declare_entry("NON SELF CONSISTENT FORCE", "false",
+			      Patterns::Bool(),
+			      "[Developer] Boolean parameter specfiying whether to add the force terms arising due to the non self-consistency error. Currently non self-consistent force computation is still in developmental phase. The default option is false.");
 
 	    prm.declare_entry("ION OPT", "false",
 			      Patterns::Bool(),
@@ -344,6 +349,7 @@ namespace dftParameters
 	prm.enter_subsection ("Optimization");
 	{
 	    dftParameters::isIonOpt                      = prm.get_bool("ION OPT");
+	    dftParameters::nonSelfConsistentForce        = prm.get_bool("NON SELF CONSISTENT FORCE");
 	    dftParameters::isIonForce                    = dftParameters::isIonOpt || prm.get_bool("ION FORCE");
 	    dftParameters::forceRelaxTol                 = prm.get_double("FORCE TOL");
 	    dftParameters::ionRelaxFlagsFile             = prm.get("ION RELAX FLAGS FILE");

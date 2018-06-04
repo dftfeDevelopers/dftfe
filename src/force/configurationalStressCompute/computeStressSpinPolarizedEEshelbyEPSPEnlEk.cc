@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Sambit Das (2017)
+// @author Sambit Das
 //
 #ifdef USE_COMPLEX
 //compute configurational stress contribution from all terms except the nuclear self energy
@@ -28,12 +28,13 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk()
   const MatrixFree<3,double> & matrix_free_data=dftPtr->matrix_free_data;
 
   FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  forceEval(matrix_free_data,d_forceDofHandlerIndex, 0);
+  FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),2> psiEvalSpin0(matrix_free_data,dftPtr->eigenDofHandlerIndex , 0);
+  FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),2> psiEvalSpin1(matrix_free_data,dftPtr->eigenDofHandlerIndex , 0);
   FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> phiTotEval(matrix_free_data,dftPtr->phiTotDofHandlerIndex, 0);
   FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> phiTotInEval(matrix_free_data,dftPtr->phiTotDofHandlerIndex, 0);
   FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> phiExtEval(matrix_free_data, dftPtr->phiExtDofHandlerIndex, 0);
   QGauss<C_DIM>  quadrature(C_num1DQuad<FEOrder>());
   FEValues<C_DIM> feVselfValues (dftPtr->FE, quadrature, update_gradients | update_quadrature_points);
-  FEValues<C_DIM> psiValues(dftPtr->FEEigen, quadrature, update_values | update_gradients| update_hessians);
 
   const unsigned int numQuadPoints=forceEval.n_q_points;
   const unsigned int numEigenVectors=dftPtr->eigenVectors[0].size();
@@ -87,8 +88,6 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk()
   std::vector<VectorizedArray<double> > rhoQuads(numQuadPoints,make_vectorized_array(0.0));
   std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradRhoSpin0Quads(numQuadPoints,zeroTensor3);
   std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradRhoSpin1Quads(numQuadPoints,zeroTensor3);
-  std::vector<Tensor<2,C_DIM,VectorizedArray<double> > > hessianRhoSpin0Quads(numQuadPoints,zeroTensor4);
-  std::vector<Tensor<2,C_DIM,VectorizedArray<double> > > hessianRhoSpin1Quads(numQuadPoints,zeroTensor4);
   std::vector<VectorizedArray<double> > excQuads(numQuadPoints,make_vectorized_array(0.0));
   std::vector<VectorizedArray<double> > pseudoVLocQuads(numQuadPoints,make_vectorized_array(0.0));
   std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradPseudoVLocQuads(numQuadPoints,zeroTensor3);
@@ -104,6 +103,8 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk()
   for (unsigned int cell=0; cell<matrix_free_data.n_macro_cells(); ++cell)
   {
     forceEval.reinit(cell);
+    psiEvalSpin0.reinit(cell);
+    psiEvalSpin1.reinit(cell);
 
     phiTotEval.reinit(cell);
     phiTotEval.read_dof_values_plain(dftPtr->d_phiTotRhoOut);//read without taking constraints into account
@@ -120,8 +121,6 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk()
     std::fill(rhoQuads.begin(),rhoQuads.end(),make_vectorized_array(0.0));
     std::fill(gradRhoSpin0Quads.begin(),gradRhoSpin0Quads.end(),zeroTensor3);
     std::fill(gradRhoSpin1Quads.begin(),gradRhoSpin1Quads.end(),zeroTensor3);
-    std::fill(hessianRhoSpin0Quads.begin(),hessianRhoSpin0Quads.end(),zeroTensor4);
-    std::fill(hessianRhoSpin1Quads.begin(),hessianRhoSpin1Quads.end(),zeroTensor4);
     std::fill(excQuads.begin(),excQuads.end(),make_vectorized_array(0.0));
     std::fill(pseudoVLocQuads.begin(),pseudoVLocQuads.end(),make_vectorized_array(0.0));
     std::fill(gradPseudoVLocQuads.begin(),gradPseudoVLocQuads.end(),zeroTensor3);
@@ -270,50 +269,24 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk()
     std::vector<Tensor<1,2,VectorizedArray<double> > > psiSpin1Quads(numQuadPoints*numEigenVectors*numKPoints,zeroTensor1);
     std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > > gradPsiSpin0Quads(numQuadPoints*numEigenVectors*numKPoints,zeroTensor2);
     std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > > gradPsiSpin1Quads(numQuadPoints*numEigenVectors*numKPoints,zeroTensor2);
-    std::vector<Vector<double> > tempPsiSpin0(numQuadPoints);
-    std::vector<Vector<double> > tempPsiSpin1(numQuadPoints);
-    std::vector<std::vector<Tensor<1,C_DIM,double > > >  tempGradPsiSpin0(numQuadPoints);
-    std::vector<std::vector<Tensor<1,C_DIM,double > > >  tempGradPsiSpin1(numQuadPoints);
-    std::vector<std::vector<Tensor<2,C_DIM,double > > >  tempHessianPsiSpin0(numQuadPoints);
-    std::vector<std::vector<Tensor<2,C_DIM,double > > >  tempHessianPsiSpin1(numQuadPoints);
-    for (unsigned int q=0; q<numQuadPoints; ++q)
-    {
-	  tempPsiSpin0[q].reinit(2);
-	  tempPsiSpin1[q].reinit(2);
-	  tempGradPsiSpin0[q].resize(2);
-	  tempGradPsiSpin1[q].resize(2);
-	  tempHessianPsiSpin0[q].resize(2);
-	  tempHessianPsiSpin1[q].resize(2);
 
-    }
-
-    for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
-    {
-      subCellPtr= dftPtr->matrix_free_data.get_cell_iterator(cell,iSubCell,dftPtr->eigenDofHandlerIndex);
-      psiValues.reinit(subCellPtr);
-      for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
-      {
+    for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
         for (unsigned int iEigenVec=0; iEigenVec<numEigenVectors; ++iEigenVec)
         {
-	  psiValues.get_function_values((dftPtr->eigenVectors[2*ikPoint][iEigenVec]), tempPsiSpin0);
-	  psiValues.get_function_values((dftPtr->eigenVectors[2*ikPoint+1][iEigenVec]), tempPsiSpin1);
-          psiValues.get_function_gradients((dftPtr->eigenVectors[2*ikPoint][iEigenVec]), tempGradPsiSpin0);
-          psiValues.get_function_gradients((dftPtr->eigenVectors[2*ikPoint+1][iEigenVec]), tempGradPsiSpin1);
-          psiValues.get_function_hessians((dftPtr->eigenVectors[2*ikPoint][iEigenVec]), tempHessianPsiSpin0);
-          psiValues.get_function_hessians((dftPtr->eigenVectors[2*ikPoint+1][iEigenVec]), tempHessianPsiSpin1);
+          psiEvalSpin0.read_dof_values_plain(dftPtr->eigenVectors[2*ikPoint][iEigenVec]);
+          psiEvalSpin0.evaluate(true,true);
+
+          psiEvalSpin1.read_dof_values_plain(dftPtr->eigenVectors[2*ikPoint+1][iEigenVec]);
+          psiEvalSpin1.evaluate(true,true);
+
           for (unsigned int q=0; q<numQuadPoints; ++q)
           {
 	     const int id=q*numEigenVectors*numKPoints+numEigenVectors*ikPoint+iEigenVec;
-	     for (unsigned int icomp=0;icomp<2;++icomp)
-	     {
-		 psiSpin0Quads[id][icomp][iSubCell]=tempPsiSpin0[q][icomp];
-		 psiSpin1Quads[id][icomp][iSubCell]=tempPsiSpin1[q][icomp];
-		 for (unsigned int idim=0; idim<C_DIM; idim++)
-		 {
-		     gradPsiSpin0Quads[id][icomp][idim][iSubCell]=tempGradPsiSpin0[q][icomp][idim];
-		     gradPsiSpin1Quads[id][icomp][idim][iSubCell]=tempGradPsiSpin1[q][icomp][idim];
-		 }
-	     }
+             psiSpin0Quads[id]=psiEvalSpin0.get_value(q);
+	     psiSpin1Quads[id]=psiEvalSpin1.get_value(q);
+             gradPsiSpin0Quads[id]=psiEvalSpin0.get_gradient(q);
+	     gradPsiSpin1Quads[id]=psiEvalSpin1.get_gradient(q);
+
              const double partOccSpin0 =dftUtils::getPartialOccupancy
 		                                                     (dftPtr->eigenValues[ikPoint][iEigenVec],
 		                                                      dftPtr->fermiEnergy,
@@ -324,40 +297,23 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk()
 		                                                      dftPtr->fermiEnergy,
 								      C_kb,
 								      dftParameters::TVal);
-	     const Tensor<1,C_DIM,double > tempGradRhoSpin0Contribution=dftPtr->d_kPointWeights[ikPoint]*partOccSpin0*internalforce::computeGradRhoContribution(tempPsiSpin0[q], tempGradPsiSpin0[q]);
-	     const Tensor<1,C_DIM,double > tempGradRhoSpin1Contribution=dftPtr->d_kPointWeights[ikPoint]*partOccSpin1*internalforce::computeGradRhoContribution(tempPsiSpin1[q], tempGradPsiSpin1[q]);
-	     const Tensor<2,C_DIM,double > tempHessianRhoSpin0Contribution=dftPtr->d_kPointWeights[ikPoint]*partOccSpin0*internalforce::computeHessianRhoContribution(tempPsiSpin0[q], tempGradPsiSpin0[q], tempHessianPsiSpin0[q]);
-	     const Tensor<2,C_DIM,double > tempHessianRhoSpin1Contribution=dftPtr->d_kPointWeights[ikPoint]*partOccSpin1*internalforce::computeHessianRhoContribution(tempPsiSpin1[q], tempGradPsiSpin1[q], tempHessianPsiSpin1[q]);
+	     const VectorizedArray<double> factor0=make_vectorized_array(dftPtr->d_kPointWeights[ikPoint]*partOccSpin0);
+	     const VectorizedArray<double> factor1=make_vectorized_array(dftPtr->d_kPointWeights[ikPoint]*partOccSpin1);
 
-	     for (unsigned int idim=0; idim<C_DIM; idim++)
-	     {
-	       gradRhoSpin0Quads[q][idim][iSubCell]+=tempGradRhoSpin0Contribution[idim];
-	       gradRhoSpin1Quads[q][idim][iSubCell]+=tempGradRhoSpin1Contribution[idim];
-	       for (unsigned int jdim=0; jdim<C_DIM; jdim++)
-	       {
-	         hessianRhoSpin0Quads[q][idim][jdim][iSubCell]+=tempHessianRhoSpin0Contribution[idim][jdim];
-	         hessianRhoSpin1Quads[q][idim][jdim][iSubCell]+=tempHessianRhoSpin1Contribution[idim][jdim];
-	       }
-	     }
+	     gradRhoSpin0Quads[q]+=factor0*internalforce::computeGradRhoContribution(psiSpin0Quads[id],gradPsiSpin0Quads[id]);
+	     gradRhoSpin1Quads[q]+=factor1*internalforce::computeGradRhoContribution(psiSpin1Quads[id],gradPsiSpin1Quads[id]);
+
           }//quad point loop
         } //eigenvector loop
-      }//k point loop
-      //accumulate hessian rho quad point contribution from all pools
+
+    //accumulate grad rho quad point contribution from all pools
+    for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
       for (unsigned int q=0; q<numQuadPoints; ++q)
-      {
 	for (unsigned int idim=0; idim<C_DIM; idim++)
 	{
 	  gradRhoSpin0Quads[q][idim][iSubCell]=Utilities::MPI::sum(gradRhoSpin0Quads[q][idim][iSubCell],dftPtr->interpoolcomm);
 	  gradRhoSpin1Quads[q][idim][iSubCell]=Utilities::MPI::sum(gradRhoSpin1Quads[q][idim][iSubCell],dftPtr->interpoolcomm);
-	  for (unsigned int jdim=0; jdim<C_DIM; jdim++)
-	  {
-	    hessianRhoSpin0Quads[q][idim][jdim][iSubCell]=Utilities::MPI::sum(hessianRhoSpin0Quads[q][idim][jdim][iSubCell],dftPtr->interpoolcomm);
-;
-	    hessianRhoSpin1Quads[q][idim][jdim][iSubCell]=Utilities::MPI::sum(hessianRhoSpin1Quads[q][idim][jdim][iSubCell],dftPtr->interpoolcomm);
-	  }
 	}
-      }
-    }//subcell loop
 
     if(isPseudopotential)
     {
