@@ -338,7 +338,7 @@ namespace dftParameters
 
 	prm.declare_entry("ORTHOGONALIZATION TYPE","GS",
 			  Patterns::Selection("GS|LW|PGS"),
-			  "[Standard] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization), LW(Lowden Orthogonalization), PGS(Pseudo Gram-Schmidt Orthogonalization). GS is the default option.");
+			  "[Standard] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization using SLEPc library), LW(Lowden Orthogonalization using LAPACK, extension to ScaLAPACK not implemented yet), PGS(Pseudo Gram-Schmidt Orthogonalization using ScaLAPACK, cannot be used if dealii library is not linked to ScaLAPACK). GS is the default option.");
 
     }
     prm.leave_subsection ();
