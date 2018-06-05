@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -16,7 +16,7 @@
 /** @file linearAlgebraOperations.h
  *  @brief Contains linear algebra functions used in the implementation of an eigen solver
  *
- *  @author Phani Motamarri (2018)
+ *  @author Phani Motamarri, Sambit Das
  */
 
 #include <headers.h>
@@ -144,6 +144,17 @@ namespace dftfe
      */
     void lowdenOrthogonalization(dealii::parallel::distributed::Vector<dataTypes::number> & X,
 				 const unsigned int numberComponents);
+
+
+     /** @brief Orthogonalize given subspace using Pseudo-Gram-Schmidt orthogonalization
+     *
+     *  @param  X Given subspace as flattened array of multi-vectors
+     *  @param numberComponents Number of multiple-fields
+     *  @return X In-place update of the given subspace
+     */
+    template<typename T>
+      void pseudoGramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<T> & X,
+					      const unsigned int numberComponents);
 
 
     /** @brief Compute Rayleigh-Ritz projection

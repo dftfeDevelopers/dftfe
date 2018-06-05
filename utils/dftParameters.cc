@@ -319,7 +319,7 @@ namespace dftParameters
 			  Patterns::Double(0),
 			  "[Developer] Parameter specifying the tolerance to which eigenvectors need to computed using chebyshev filtering approach");
 
-	prm.declare_entry("CHEBYSHEV FILTER BLOCK SIZE", "1000",
+	prm.declare_entry("CHEBYSHEV FILTER BLOCK SIZE", "512",
 			  Patterns::Integer(1),
 			  "[Developer] The maximum number of wavefunctions which are handled by one call to the Chebyshev filter. This is useful for optimization purposes. The optimum value is dependent on the computing architecture.");
 

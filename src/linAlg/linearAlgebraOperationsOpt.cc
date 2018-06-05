@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Phani Motamarri (2018)
+// @author Phani Motamarri, Sambit Das
 //
 
 
@@ -24,6 +24,7 @@
 
 #include <linearAlgebraOperations.h>
 #include <dftParameters.h>
+#include <dftUtils.h>
 #include <omp.h>
 
 namespace dftfe{
@@ -31,6 +32,30 @@ namespace dftfe{
   namespace linearAlgebraOperations
   {
 
+    namespace internal
+    {
+#ifdef WITH_SCALAPACK
+	void createProcessGridSquareMatrix(const MPI_Comm & mpi_communicator,
+		                      const unsigned size,
+		                      std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+				      const unsigned int rowsBlockSize)
+	{
+	      const unsigned int numberProcs = dealii::Utilities::MPI::n_mpi_processes(mpi_communicator);
+	      const unsigned int blocksPerProc=4;
+	      const unsigned int rowProcs=std::min(std::floor(std::sqrt(numberProcs)),
+				std::ceil((double)size/(double)(blocksPerProc*rowsBlockSize)));
+	      if(dftParameters::verbosity>=2)
+	      {
+		 dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
+		 pcout<<"Scalapack Matrix created: "<<",rowsBlockSize: "<<rowsBlockSize<<", blocksPerProc: "<<blocksPerProc<<", row procs: "<< rowProcs<<std::endl;
+	      }
+
+	      processGrid=std::make_shared<const dealii::Utilities::MPI::ProcessGrid>(mpi_communicator,
+										      rowProcs,
+										      rowProcs);
+	}
+#endif
+    }
     void callevd(const unsigned int dimensionMatrix,
 		 double *matrix,
 		 double *eigenValues)
@@ -100,7 +125,7 @@ namespace dftfe{
       std::vector<std::complex<double> >().swap(work);
       std::vector<int>().swap(iwork);
 
-           
+
     }
 
 
@@ -149,7 +174,7 @@ namespace dftfe{
 
 
 
-    
+
     void callevr(const unsigned int dimensionMatrix,
 		 double *matrixInput,
 		 double *eigenVectorMatrixOutput,
@@ -187,14 +212,14 @@ namespace dftfe{
 	      &iwork[0],
 	      &liwork,
 	      &info);
-	     
+
       AssertThrow(info==0,dealii::ExcMessage("Error in dsyevr"));
-      
+
 
     }
 
 
-   
+
 
     void callgemm(const unsigned int numberEigenValues,
 		  const unsigned int localVectorSize,
@@ -464,6 +489,149 @@ namespace dftfe{
     }
 
     template<typename T>
+    void pseudoGramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<T> & X,
+				            const unsigned int numberVectors)
+    {
+#if(defined WITH_SCALAPACK && !USE_COMPLEX)
+      if (dftParameters::orthoRROMPThreads!=0)
+	  omp_set_num_threads(dftParameters::orthoRROMPThreads);
+
+      const unsigned int localVectorSize = X.local_size()/numberVectors;
+
+      std::vector<T> overlapMatrix(numberVectors*numberVectors,0.0);
+
+
+      dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
+
+      dealii::TimerOutput computing_timer(pcout,
+					  dftParameters::reproducible_output ? dealii::TimerOutput::never : dealii::TimerOutput::summary,
+					  dealii::TimerOutput::wall_times);
+
+      //
+      //blas level 3 dgemm flags
+      //
+      const double alpha = 1.0, beta = 0.0;
+      const unsigned int numberEigenValues = numberVectors;
+      const char uplo = 'L';
+      const char trans = 'N';
+
+      //
+      //compute overlap matrix S = {(Z)^T}*Z on local proc
+      //where Z is a matrix with size number of degrees of freedom times number of column vectors
+      //and (Z)^T is transpose of Z
+      //Since input "X" is stored as number of column vectors times number of degrees of freedom matrix
+      //corresponding to column-major format required for blas, we compute
+      //the overlap matrix as S = S^{T} = X*{X^T} here
+      //
+
+      computing_timer.enter_section("serial overlap matrix for PGS");
+      dsyrk_(&uplo,
+	     &trans,
+	     &numberVectors,
+	     &localVectorSize,
+	     &alpha,
+	     X.begin(),
+	     &numberVectors,
+	     &beta,
+	     &overlapMatrix[0],
+	     &numberVectors);
+      dealii::Utilities::MPI::sum(overlapMatrix, X.get_mpi_communicator(), overlapMatrix);
+      computing_timer.exit_section("serial overlap matrix for PGS");
+
+      const unsigned rowsBlockSize=50;
+      std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  processGrid;
+      internal::createProcessGridSquareMatrix(X.get_mpi_communicator(),
+		                    numberVectors,
+		                    processGrid,
+				    rowsBlockSize);
+
+      dealii::ScaLAPACKMatrix<T> overlapMatPar(numberVectors,
+                                               processGrid,
+                                               rowsBlockSize);
+      computing_timer.enter_section("scalapack copy");
+      if (processGrid->is_process_active())
+         for (unsigned int i = 0; i < overlapMatPar.local_n(); ++i)
+           {
+             const unsigned int glob_i = overlapMatPar.global_column(i);
+             for (unsigned int j = 0; j < overlapMatPar.local_m(); ++j)
+               {
+                 const unsigned int glob_j = overlapMatPar.global_row(j);
+                 overlapMatPar.local_el(j, i)   = overlapMatrix[glob_i*numberVectors+glob_j];
+               }
+           }
+      computing_timer.exit_section("scalapack copy");
+
+      computing_timer.enter_section("PGS cholesky, copy, lu and invert");
+      overlapMatPar.compute_cholesky_factorization();
+
+      dealii::ScaLAPACKMatrix<T> LMatPar(numberVectors,
+                                         processGrid,
+                                         rowsBlockSize,
+					 dealii::LAPACKSupport::Property::general);
+      //copy lower triangular part of projHamPar into LMatPar
+      if (processGrid->is_process_active())
+         for (unsigned int i = 0; i < overlapMatPar.local_n(); ++i)
+           {
+             const unsigned int glob_i = overlapMatPar.global_column(i);
+             for (unsigned int j = 0; j < overlapMatPar.local_m(); ++j)
+               {
+                 const unsigned int glob_j = overlapMatPar.global_row(j);
+		 if (glob_i <= glob_j)
+                    LMatPar.local_el(j, i)=overlapMatPar.local_el(j, i);
+		 else
+		    LMatPar.local_el(j, i)=0;
+               }
+           }
+      LMatPar.invert();
+      computing_timer.exit_section("PGS cholesky, copy, lu and invert");
+
+      computing_timer.enter_section("scalapack copy");
+      std::fill(overlapMatrix.begin(),overlapMatrix.end(),T(0));
+      if (processGrid->is_process_active())
+         for (unsigned int i = 0; i < LMatPar.local_n(); ++i)
+           {
+             const unsigned int glob_i = LMatPar.global_column(i);
+             for (unsigned int j = 0; j < LMatPar.local_m(); ++j)
+               {
+                 const unsigned int glob_j = LMatPar.global_row(j);
+                 overlapMatrix[glob_i*numberVectors+glob_j]=LMatPar.local_el(j, i);
+               }
+           }
+      dealii::Utilities::MPI::sum(overlapMatrix, X.get_mpi_communicator(), overlapMatrix);
+      computing_timer.exit_section("scalapack copy");
+
+      computing_timer.enter_section("subspace rotation in PGS");
+      //
+      //Rotate the given vectors using L^{-1}^{T} i.e Y = X*L^{-1}^{T} but implemented as Yt = L^{-1}*Xt
+      //using the column major format of blas
+      //
+      const char transA2  = 'N', transB2  = 'N';
+      dealii::parallel::distributed::Vector<T> orthoNormalizedBasis;
+      orthoNormalizedBasis.reinit(X);
+      dgemm_(&transA2,
+	     &transB2,
+	     &numberEigenValues,
+	     &localVectorSize,
+	     &numberEigenValues,
+	     &alpha,
+	     &overlapMatrix[0],
+	     &numberEigenValues,
+	     X.begin(),
+	     &numberEigenValues,
+	     &beta,
+	     orthoNormalizedBasis.begin(),
+	     &numberEigenValues);
+      X = orthoNormalizedBasis;
+      computing_timer.exit_section("subspace rotation in PGS");
+
+      if (dftParameters::orthoRROMPThreads!=0)
+	  omp_set_num_threads(1);
+#else
+      AssertThrow(false,dftUtils::ExcNotImplementedYet());
+#endif
+    }
+
+    template<typename T>
     void rayleighRitz(operatorDFTClass & operatorMatrix,
 		      dealii::parallel::distributed::Vector<T> & X,
 		      const unsigned int numberWaveFunctions,
@@ -500,7 +668,7 @@ namespace dftfe{
       computing_timer.enter_section("eigen decomp in RR");
 #if(defined WITH_SCALAPACK && !USE_COMPLEX)
       const unsigned int numberProcs = dealii::Utilities::MPI::n_mpi_processes(X.get_mpi_communicator());
-      const unsigned int rowsBlockSize=50;      
+      const unsigned int rowsBlockSize=50;
       const unsigned int blocksPerProc=4;
       const unsigned int rowProcs=std::min(std::floor(std::sqrt(numberProcs)),
                         std::ceil((double)numberWaveFunctions/(double)(blocksPerProc*rowsBlockSize)));
@@ -511,7 +679,7 @@ namespace dftfe{
               =std::make_shared<const dealii::Utilities::MPI::ProcessGrid>(X.get_mpi_communicator(),
                                                                            rowProcs,
                                                                            rowProcs);
-      
+
       dealii::ScaLAPACKMatrix<T> projHamPar(numberWaveFunctions,
                                             processGrid,
                                             rowsBlockSize);
@@ -886,7 +1054,7 @@ namespace dftfe{
 	     &numberVectors);
       computing_timer.exit_section("local overlap matrix for lowden");
 
-      dealii::Utilities::MPI::sum(overlapMatrix, X.get_mpi_communicator(), overlapMatrix); 
+      dealii::Utilities::MPI::sum(overlapMatrix, X.get_mpi_communicator(), overlapMatrix);
 
       std::vector<double> eigenValuesOverlap(numberVectors);
       computing_timer.enter_section("eigen decomp. of overlap matrix");
@@ -924,7 +1092,7 @@ namespace dftfe{
 		  &overlapMatrixEigenVectors[0],
 		  &eigenValuesOverlap[0]);
 	  computing_timer.exit_section("eigen decomp. of overlap matrix");
-	      
+
 	  overlapMatrix = overlapMatrixEigenVectors;
 	  overlapMatrixEigenVectors.clear();
 	  std::vector<double>().swap(overlapMatrixEigenVectors);
@@ -1027,7 +1195,10 @@ namespace dftfe{
 
 
     template void gramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<dataTypes::number> &,
-					       const unsigned int );
+					       const unsigned int);
+
+    template void pseudoGramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<dataTypes::number> &,
+					             const unsigned int);
 
     template void rayleighRitz(operatorDFTClass  & operatorMatrix,
 			       dealii::parallel::distributed::Vector<dataTypes::number> &,

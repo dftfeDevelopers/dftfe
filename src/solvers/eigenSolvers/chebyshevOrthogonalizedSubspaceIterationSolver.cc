@@ -395,7 +395,14 @@ namespace dftfe{
 							     totalNumberWaveFunctions);
 	    computing_timer.exit_section("Lowden Orthogn Opt");
 	  }
-	else
+	else if (dftParameters::orthogType.compare("PGS") == 0)
+	{
+	    computing_timer.enter_section("Pseudo-Gram-Schmidt");
+	    linearAlgebraOperations::pseudoGramSchmidtOrthogonalization(eigenVectorsFlattenedArray,
+							                totalNumberWaveFunctions);
+	    computing_timer.exit_section("Pseudo-Gram-Schmidt");
+	}
+	else if (dftParameters::orthogType.compare("GS") == 0)
 	  {
 	    computing_timer.enter_section("Gram-Schmidt Orthogn Opt");
 	    linearAlgebraOperations::gramSchmidtOrthogonalization(eigenVectorsFlattenedArray,
