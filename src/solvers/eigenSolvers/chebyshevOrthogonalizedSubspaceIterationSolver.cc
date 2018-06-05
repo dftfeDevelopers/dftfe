@@ -388,7 +388,7 @@ namespace dftfe{
 	if(dftParameters::verbosity >= 2)
 	  pcout<<"ChebyShev Filtering Done: "<<std::endl;
 
-	if(dftParameters::orthogType.compare("lowden") == 0)
+	if(dftParameters::orthogType.compare("LW") == 0)
 	  {
 	    computing_timer.enter_section("Lowden Orthogn Opt");
 	    linearAlgebraOperations::lowdenOrthogonalization(eigenVectorsFlattenedArray,
