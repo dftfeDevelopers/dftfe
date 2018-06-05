@@ -83,6 +83,8 @@ namespace dftfe{
 
     const unsigned int totalNumberWaveFunctions = eigenVectors.size();
 
+    bool matrixFree = false;
+
     //
     //set Chebyshev order
     //
@@ -152,7 +154,7 @@ namespace dftfe{
 	 PetscSynchronizedFlush(operatorMatrix.getMPICommunicator(),dummy);
        }
 
-    if((dftParameters::nkx*dftParameters::nky*dftParameters::nkz) == 1 && (dftParameters::dkx*dftParameters::dky*dftParameters::dkz) <= 1e-10)
+    if(!matrixFree)
       {
 	//
 	//create custom partitioned dealii array by storing wave functions at a given node contiguously
@@ -188,8 +190,6 @@ namespace dftfe{
 	  {
 	    for (unsigned int iWave = 0; iWave < totalNumberWaveFunctions; ++iWave)
 	      {
-		//unsigned int flattenedArrayGlobalIndex = (totalNumberWaveFunctions*(iNode + (operatorMatrix.getMatrixFreeData()->get_vector_partitioner()->local_range()).first) + iWave);
-		//unsigned int flattenedArrayLocalIndex = flattenedArrayGlobalIndex - eigenVectorsFlattenedArray.get_partitioner()->local_range().first;
 		unsigned int flattenedArrayLocalIndex = totalNumberWaveFunctions*iNode + iWave;
 #ifdef USE_COMPLEX
 		eigenVectorsFlattenedArray.local_element(flattenedArrayLocalIndex).real(eigenVectors[iWave].local_element((*operatorMatrix.getLocalProcDofIndicesReal())[iNode]));
