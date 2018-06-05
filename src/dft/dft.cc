@@ -858,6 +858,10 @@ namespace dftfe {
 		    if (dftParameters::verbosity>=2)
 		      pcout<< "Beginning Chebyshev filter pass "<< dftParameters::numPass+count<<std::endl;
 
+		    computing_timer.enter_section("Hamiltonian Matrix Computation");
+		    kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint);
+		    computing_timer.exit_section("Hamiltonian Matrix Computation");
+
 		    kohnShamEigenSpaceCompute(0,
 					      kPoint,
 					      kohnShamDFTEigenOperator,

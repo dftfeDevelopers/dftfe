@@ -44,6 +44,18 @@ void eigenClass<FEOrder>::computeHamiltonianMatrix(unsigned int kPointIndex)
   typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
 
   //
+  //access the kPoint coordinates
+  //
+#ifdef USE_COMPLEX
+  Tensor<1,3,VectorizedArray<double> > kPointCoors;
+  kPointCoors[0] = make_vectorized_array(dftPtr->d_kPointCoordinates[3*kPointIndex+0]);
+  kPointCoors[1] = make_vectorized_array(dftPtr->d_kPointCoordinates[3*kPointIndex+1]);
+  kPointCoors[2] = make_vectorized_array(dftPtr->d_kPointCoordinates[3*kPointIndex+2]);
+  double kSquareTimesHalf =  0.5*(dftPtr->d_kPointCoordinates[3*kPointIndex+0]*dftPtr->d_kPointCoordinates[3*kPointIndex+0] + dftPtr->d_kPointCoordinates[3*kPointIndex+1]*dftPtr->d_kPointCoordinates[3*kPointIndex+1] + dftPtr->d_kPointCoordinates[3*kPointIndex+2]*dftPtr->d_kPointCoordinates[3*kPointIndex+2]);
+  VectorizedArray<double> halfkSquare = make_vectorized_array(kSquareTimesHalf);
+#endif
+
+  //
   //compute cell-level stiffness matrix by going over dealii macrocells
   //which allows efficient integration of cell-level stiffness matrix integrals
   //using dealii vectorized arrays
@@ -60,8 +72,12 @@ void eigenClass<FEOrder>::computeHamiltonianMatrix(unsigned int kPointIndex)
 	    {
 	      for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
 		{
-		  VectorizedArray<double> temp = vEff(iMacroCell,q_point)*make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*iNode+q_point])*make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*jNode+q_point]);
 
+#ifdef USE_COMPLEX
+		  VectorizedArray<double> temp = (vEff(iMacroCell,q_point)+halfkSquare)*make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*iNode+q_point])*make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*jNode+q_point]);
+#else
+		 VectorizedArray<double> temp = vEff(iMacroCell,q_point)*make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*iNode+q_point])*make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*jNode+q_point]); 
+#endif
 		  fe_eval.submit_value(temp,q_point);
 		}
 
@@ -70,6 +86,30 @@ void eigenClass<FEOrder>::computeHamiltonianMatrix(unsigned int kPointIndex)
 	    }//jNode loop
 
 	}//iNode loop
+
+
+#ifdef USE_COMPLEX     
+      std::vector<VectorizedArray<double> > elementHamiltonianMatrixImag;
+      elementHamiltonianMatrixImag.resize(numberDofsPerElement*numberDofsPerElement);
+      //
+      for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+	{
+	  for(unsigned int jNode = 0; jNode < numberDofsPerElement; ++jNode)
+	    {
+	      for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
+		{
+		  VectorizedArray<double> temp = ((d_cellShapeFunctionGradientValue(iMacroCell,iNode,3*q_point))*(-kPointCoors[0])+(d_cellShapeFunctionGradientValue(iMacroCell,iNode,3*q_point+1))*(-kPointCoors[1])+(d_cellShapeFunctionGradientValue(iMacroCell,iNode,3*q_point+2))*(-kPointCoors[2]))*make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*jNode+q_point]) ;
+
+		  fe_eval.submit_value(temp,q_point);
+		}
+	      
+	      elementHamiltonianMatrixImag[numberDofsPerElement*iNode + jNode] =  fe_eval.integrate_value();
+
+	    }//jNode loop
+
+	}//iNode loop
+#endif
+
 
 
       if(dftParameters::xc_id == 4)
@@ -112,7 +152,7 @@ void eigenClass<FEOrder>::computeHamiltonianMatrix(unsigned int kPointIndex)
 		{
 #ifdef USE_COMPLEX
 		  d_cellHamiltonianMatrix[iElem][numberDofsPerElement*iNode + jNode].real(elementHamiltonianMatrix[numberDofsPerElement*iNode + jNode][iSubCell]);
-		  d_cellHamiltonianMatrix[iElem][numberDofsPerElement*iNode + jNode].imag(0.0);
+		  d_cellHamiltonianMatrix[iElem][numberDofsPerElement*iNode + jNode].imag(elementHamiltonianMatrixImag[numberDofsPerElement*iNode + jNode][iSubCell]);
 #else
 		  d_cellHamiltonianMatrix[iElem][numberDofsPerElement*iNode + jNode] = elementHamiltonianMatrix[numberDofsPerElement*iNode + jNode][iSubCell];
 #endif
