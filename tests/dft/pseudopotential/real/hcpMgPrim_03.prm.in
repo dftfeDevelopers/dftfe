@@ -2,8 +2,8 @@ set VERBOSITY= 0
 set REPRODUCIBLE OUTPUT=true
 
 subsection Geometry
-  set ATOMIC COORDINATES FILE = /home/dsambit/dftfe/pullreq/tests/dft/pseudopotential/real/hcpMgPrim_coordinates.inp
-  set DOMAIN BOUNDING VECTORS FILE = /home/dsambit/dftfe/pullreq/tests/dft/pseudopotential/real/hcpMgPrim_domainBoundingVectors.inp
+  set ATOMIC COORDINATES FILE = @SOURCE_DIR@/hcpMgPrim_coordinates.inp
+  set DOMAIN BOUNDING VECTORS FILE = @SOURCE_DIR@/hcpMgPrim_domainBoundingVectors.inp
   
   subsection Optimization
     set ION FORCE=true
