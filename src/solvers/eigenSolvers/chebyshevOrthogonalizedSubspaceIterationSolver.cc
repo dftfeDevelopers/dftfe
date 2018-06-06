@@ -83,7 +83,7 @@ namespace dftfe{
 
     const unsigned int totalNumberWaveFunctions = eigenVectors.size();
 
-    bool matrixFree = false;
+    const bool matrixFree = false;
 
     //
     //set Chebyshev order
