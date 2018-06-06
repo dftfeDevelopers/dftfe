@@ -561,7 +561,7 @@ namespace dftfe {
     unsigned int scfIter=0;
     double norm = 1.0;
     //CAUTION: Choosing a looser tolerance might lead to failed tests
-    const double adaptiveChebysevFilterPassesTol=5e-02;
+    const double adaptiveChebysevFilterPassesTol=1e+05;
 
 
     pcout<<std::endl;
