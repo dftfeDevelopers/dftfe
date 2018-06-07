@@ -36,6 +36,7 @@ SET(TARGET_SRC
   ./src/solvers/eigenSolver.cc
   ./src/linAlg/linearAlgebraOperations.cc
   ./src/linAlg/linearAlgebraOperationsOpt.cc
+  ./src/linAlg/linearAlgebraOperationsUtils.cc
   ./src/solvers/dealiiLinearSolver.cc
   ./src/solvers/dealiiLinearSolverProblem.cc
   ./utils/fileReaders.cc

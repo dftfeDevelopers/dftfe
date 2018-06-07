@@ -13,17 +13,12 @@
 //
 // ---------------------------------------------------------------------
 
-/** @file linearAlgebraOperations.h
- *  @brief Contains linear algebra functions used in the implementation of an eigen solver
- *
- *  @author Phani Motamarri, Sambit Das
- */
+
+#ifndef linearAlgebraOperations_h
+#define linearAlgebraOperations_h
 
 #include <headers.h>
 #include <operator.h>
-
-
-
 
 namespace dftfe
 {
@@ -52,7 +47,11 @@ namespace dftfe
       void zaxpy_(const unsigned int *n,const std::complex<double> *alpha,std::complex<double> *x,const unsigned int *incx,std::complex<double> *y,const unsigned int *incy);
     }
 
-
+/** @file linearAlgebraOperations.h
+ *  @brief Contains linear algebra functions used in the implementation of an eigen solver
+ *
+ *  @author Phani Motamarri, Sambit Das
+ */
   namespace linearAlgebraOperations
   {
 
@@ -137,6 +136,7 @@ namespace dftfe
 
 
     /** @brief Orthogonalize given subspace using Lowden orthogonalization for double data-type
+     *  (serial version using LAPACK)
      *
      *  @param  X Given subspace as flattened array of multi-vectors
      *  @param numberComponents Number of multiple-fields
@@ -147,14 +147,40 @@ namespace dftfe
 
 
      /** @brief Orthogonalize given subspace using Pseudo-Gram-Schmidt orthogonalization
-     *
-     *  @param  X Given subspace as flattened array of multi-vectors
-     *  @param numberComponents Number of multiple-fields
-     *  @return X In-place update of the given subspace
-     */
+      *
+      *  This is a wrapper to the serial and parallel versions. The parallel version is
+      *  called if dealii is linked to ScaLAPACK, otherwise the serial version is called.
+      *
+      *  @param  X Given subspace as flattened array of multi-vectors
+      *  @param numberComponents Number of multiple-fields
+      *  @return X In-place update of the given subspace
+      */
     template<typename T>
       void pseudoGramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<T> & X,
 					      const unsigned int numberComponents);
+
+     /** @brief Orthogonalize given subspace using Pseudo-Gram-Schmidt orthogonalization
+      *  (serial version using LAPACK)
+      *
+      *  @param  X Given subspace as flattened array of multi-vectors
+      *  @param numberComponents Number of multiple-fields
+      *  @return X In-place update of the given subspace
+      */
+    template<typename T>
+      void pseudoGramSchmidtOrthogonalizationSerial(dealii::parallel::distributed::Vector<T> & X,
+					            const unsigned int numberComponents);
+
+
+     /** @brief Orthogonalize given subspace using Pseudo-Gram-Schmidt orthogonalization
+      *  (parallel version using ScaLAPACK)
+      *
+      *  @param  X Given subspace as flattened array of multi-vectors
+      *  @param numberComponents Number of multiple-fields
+      *  @return X In-place update of the given subspace
+      */
+    template<typename T>
+      void pseudoGramSchmidtOrthogonalizationParallel(dealii::parallel::distributed::Vector<T> & X,
+					              const unsigned int numberComponents);
 
 
     /** @brief Compute Rayleigh-Ritz projection
@@ -230,3 +256,4 @@ namespace dftfe
   }
 
 }
+#endif
