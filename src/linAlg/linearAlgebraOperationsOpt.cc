@@ -688,7 +688,7 @@ namespace dftfe{
       //
       //blas level 3 dgemm flags
       //
-      const std::complex<double> alpha = 1.0, beta = 0.0;
+      const double alpha = 1.0, beta = 0.0;
       const unsigned int numberEigenValues = numberVectors;
 
       //
@@ -702,7 +702,7 @@ namespace dftfe{
       const char uplo = 'U';
       const char trans = 'N';
 
-      zsyrk_(&uplo,
+      zherk_(&uplo,
 	     &trans,
 	     &numberVectors,
 	     &localVectorSize,
@@ -786,17 +786,20 @@ namespace dftfe{
        std::vector<std::complex<double> > invSqrtOverlapMatrix(numberEigenValues*numberEigenValues,0.0);
        const char transA1 = 'N';
        const char transB1 = 'C';
+       const std::complex<double> alpha1 = 1.0, beta1 = 0.0;
+
+
        zgemm_(&transA1,
 	      &transB1,
 	      &numberEigenValues,
 	      &numberEigenValues,
 	      &numberEigenValues,
-	      &alpha,
+	      &alpha1,
 	      &overlapMatrix[0],
 	      &numberEigenValues,
 	      &overlapMatrix[0],
 	      &numberEigenValues,
-	      &beta,
+	      &beta1,
 	      &invSqrtOverlapMatrix[0],
 	      &numberEigenValues);
 
@@ -818,12 +821,12 @@ namespace dftfe{
 	     &numberEigenValues,
              &localVectorSize,
 	     &numberEigenValues,
-	     &alpha,
+	     &alpha1,
 	     &invSqrtOverlapMatrix[0],
 	     &numberEigenValues,
 	     X.begin(),
 	     &numberEigenValues,
-	     &beta,
+	     &beta1,
 	     orthoNormalizedBasis.begin(),
 	     &numberEigenValues);
 
