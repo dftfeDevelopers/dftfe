@@ -45,8 +45,8 @@ namespace dftfe {
 	  Point<3> basisVectors[3] = {vector1,vector2,vector3};
 
 
-	  for (unsigned int i=0; i<3;i++){
-
+	  for (unsigned int i=0; i<3;i++)
+	  {
 	    const double temp = numberIntervalsEachDirection[i]-std::floor(numberIntervalsEachDirection[i]);
 	    if(temp >= 0.5)
 	      subdivisions[i] = std::ceil(numberIntervalsEachDirection[i]);
@@ -70,7 +70,7 @@ namespace dftfe {
 	  //
 	  meshGenUtils::markPeriodicFacesNonOrthogonal(parallelTriangulation,d_domainBoundingVectors);
 
-	  if (dftParameters::verbosity>=1)
+	  if (dftParameters::verbosity>=2)
 	    pcout<<std::endl<< "Coarse triangulation number of elements: "<< parallelTriangulation.n_global_active_cells()<<std::endl;
     }
     //
@@ -101,54 +101,7 @@ namespace dftfe {
 	  const double domainBoundingVectorMag2 = sqrt(d_domainBoundingVectors[1][0]*d_domainBoundingVectors[1][0] + d_domainBoundingVectors[1][1]*d_domainBoundingVectors[1][1] +  d_domainBoundingVectors[1][2]*d_domainBoundingVectors[1][2]);
 	  const double domainBoundingVectorMag3 = sqrt(d_domainBoundingVectors[2][0]*d_domainBoundingVectors[2][0] + d_domainBoundingVectors[2][1]*d_domainBoundingVectors[2][1] +  d_domainBoundingVectors[2][2]*d_domainBoundingVectors[2][2]);
 
-	  unsigned int subdivisions[3];subdivisions[0]=1.0;subdivisions[1]=1.0;subdivisions[2]=1.0;
-
-
-
-	  std::vector<double> numberIntervalsEachDirection;
-	  numberIntervalsEachDirection.push_back(domainBoundingVectorMag1/dftParameters::meshSizeOuterDomain);
-	  numberIntervalsEachDirection.push_back(domainBoundingVectorMag2/dftParameters::meshSizeOuterDomain);
-	  numberIntervalsEachDirection.push_back(domainBoundingVectorMag3/dftParameters::meshSizeOuterDomain);
-
-
-	  Point<3> vector1(d_domainBoundingVectors[0][0],d_domainBoundingVectors[0][1],d_domainBoundingVectors[0][2]);
-	  Point<3> vector2(d_domainBoundingVectors[1][0],d_domainBoundingVectors[1][1],d_domainBoundingVectors[1][2]);
-	  Point<3> vector3(d_domainBoundingVectors[2][0],d_domainBoundingVectors[2][1],d_domainBoundingVectors[2][2]);
-
-	  //
-	  //Generate coarse mesh
-	  //
-	  Point<3> basisVectors[3] = {vector1,vector2,vector3};
-
-
-
-	  for (unsigned int i=0; i<3;i++){
-
-	    const double temp = numberIntervalsEachDirection[i]-std::floor(numberIntervalsEachDirection[i]);
-	    if(temp >= 0.5)
-	      subdivisions[i] = std::ceil(numberIntervalsEachDirection[i]);
-	    else
-	      subdivisions[i] = std::floor(numberIntervalsEachDirection[i]);
-	  }
-
-
-	  GridGenerator::subdivided_parallelepiped<3>(parallelTriangulation,
-						      subdivisions,
-						      basisVectors);
-
-	  //
-	  //Translate the main grid so that midpoint is at center
-	  //
-	  const Point<3> translation = 0.5*(vector1+vector2+vector3);
-	  GridTools::shift(-translation,parallelTriangulation);
-
-	  //
-	  //collect periodic faces of the first level mesh to set up periodic boundary conditions later
-	  //
-	  meshGenUtils::markPeriodicFacesNonOrthogonal(parallelTriangulation,d_domainBoundingVectors);
-
-	  if (dftParameters::verbosity>=1)
-	    pcout<<std::endl<< "Base uniform number of elements: "<< parallelTriangulation.n_global_active_cells()<<std::endl;
+          generateCoarseMesh(parallelTriangulation);
 
 	  //
 	  //Multilayer refinement
@@ -247,7 +200,7 @@ namespace dftfe {
 		{
 		  if(numLevels<dftParameters::n_refinement_steps)
 		    {
-		      if (dftParameters::verbosity>=1)
+		      if (dftParameters::verbosity>=2)
 			 pcout<< "refinement in progress, level: "<< numLevels<<std::endl;
 
 		      parallelTriangulation.execute_coarsening_and_refinement();
@@ -322,7 +275,6 @@ namespace dftfe {
 	}
       else
 	{
-
 	  //
 	  //compute magnitudes of domainBounding Vectors
 	  //
@@ -330,63 +282,9 @@ namespace dftfe {
 	  const double domainBoundingVectorMag2 = sqrt(d_domainBoundingVectors[1][0]*d_domainBoundingVectors[1][0] + d_domainBoundingVectors[1][1]*d_domainBoundingVectors[1][1] +  d_domainBoundingVectors[1][2]*d_domainBoundingVectors[1][2]);
 	  const double domainBoundingVectorMag3 = sqrt(d_domainBoundingVectors[2][0]*d_domainBoundingVectors[2][0] + d_domainBoundingVectors[2][1]*d_domainBoundingVectors[2][1] +  d_domainBoundingVectors[2][2]*d_domainBoundingVectors[2][2]);
 
-	  //
-	  //generate base level refinement
-	  //
-	  unsigned int subdivisions[3];subdivisions[0]=1.0;subdivisions[1]=1.0;subdivisions[2]=1.0;
-
-
-
-	  std::vector<double> numberIntervalsEachDirection;
-	  numberIntervalsEachDirection.push_back(domainBoundingVectorMag1/dftParameters::meshSizeOuterDomain);
-	  numberIntervalsEachDirection.push_back(domainBoundingVectorMag2/dftParameters::meshSizeOuterDomain);
-	  numberIntervalsEachDirection.push_back(domainBoundingVectorMag3/dftParameters::meshSizeOuterDomain);
-
-
-	  Point<3> vector1(d_domainBoundingVectors[0][0],d_domainBoundingVectors[0][1],d_domainBoundingVectors[0][2]);
-	  Point<3> vector2(d_domainBoundingVectors[1][0],d_domainBoundingVectors[1][1],d_domainBoundingVectors[1][2]);
-	  Point<3> vector3(d_domainBoundingVectors[2][0],d_domainBoundingVectors[2][1],d_domainBoundingVectors[2][2]);
-
-	  //
-	  //Generate coarse mesh
-	  //
-	  Point<3> basisVectors[3] = {vector1,vector2,vector3};
-
-
-
-	  for (unsigned int i=0; i<3;i++){
-
-	    const double temp = numberIntervalsEachDirection[i]-std::floor(numberIntervalsEachDirection[i]);
-	    if(temp >= 0.5)
-	      subdivisions[i] = std::ceil(numberIntervalsEachDirection[i]);
-	    else
-	      subdivisions[i] = std::floor(numberIntervalsEachDirection[i]);
-	  }
-
-
-	  GridGenerator::subdivided_parallelepiped<3>(parallelTriangulation,
-						      subdivisions,
-						      basisVectors);
-	  GridGenerator::subdivided_parallelepiped<3>(serialTriangulation,
-							subdivisions,
-							basisVectors);
-
-
-	  //
-	  //Translate the main grid so that midpoint is at center
-	  //
-	  const Point<3> translation = 0.5*(vector1+vector2+vector3);
-	  GridTools::shift(-translation,parallelTriangulation);
-	  GridTools::shift(-translation,serialTriangulation);
-
-	  //
-	  //collect periodic faces of the first level mesh to set up periodic boundary conditions later
-	  //
-	  meshGenUtils::markPeriodicFacesNonOrthogonal(parallelTriangulation,d_domainBoundingVectors);
-	  meshGenUtils::markPeriodicFacesNonOrthogonal(serialTriangulation,d_domainBoundingVectors);
-
-	  if (dftParameters::verbosity>=1)
-	    pcout<<std::endl<< "Base uniform number of elements: "<< parallelTriangulation.n_global_active_cells()<<std::endl;
+          generateCoarseMesh(parallelTriangulation);
+	  generateCoarseMesh(serialTriangulation);
+	  AssertThrow(parallelTriangulation.n_global_active_cells()==serialTriangulation.n_global_active_cells(),ExcMessage("Number of coarse mesh cells are different in serial and parallel triangulations."));
 
 	  //
 	  //Multilayer refinement
@@ -498,7 +396,7 @@ namespace dftfe {
 
 		  if(numLevels<dftParameters::n_refinement_steps)
 		    {
-		      if (dftParameters::verbosity>=1)
+		      if (dftParameters::verbosity>=2)
 			 pcout<< "refinement in progress, level: "<< numLevels<<std::endl;
 
 		      parallelTriangulation.execute_coarsening_and_refinement();
