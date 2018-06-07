@@ -96,10 +96,9 @@ namespace dftfe {
   template<unsigned int FEOrder>
   void eigenClass<FEOrder>::reinit(const unsigned int wavefunBlockSize)
   {
-    vectorTools::createDealiiVector<dataTypes::number>
-	(dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
-	 wavefunBlockSize,
-	 dftPtr->d_projectorKetTimesVectorParFlattened);
+    vectorTools::createDealiiVector<dataTypes::number>(dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
+						       wavefunBlockSize,
+						       dftPtr->d_projectorKetTimesVectorParFlattened);
   }
 
 
