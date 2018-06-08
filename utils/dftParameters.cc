@@ -51,6 +51,7 @@ namespace dftParameters
   bool reproducible_output=false;
   bool electrostaticsPRefinement=false;
 
+  extern std::string startingWFCType="";
   unsigned int chebyshevBlockSize=1000;
   bool useBatchGEMM=false;
   unsigned int chebyshevOMPThreads=0;
@@ -291,58 +292,60 @@ namespace dftParameters
 	prm.declare_entry("ANDERSON SCHEME MIXING PARAMETER", "0.5",
 			  Patterns::Double(0.0,1.0),
 			  "[Standard] Mixing parameter to be used in Anderson scheme.");
+
+	prm.declare_entry("STARTING WFC","RANDOM",
+			  Patterns::Selection("ATOMIC|RANDOM"),
+			  "[Standard] Sets the type of the starting Kohn-Sham wavefunctions guess: Atomic(Superposition of single atom atomic orbitals. Wavefunctions for which atomic orbitals are not available, random wavefunctions are taken. Currently, atomic orbitals data is not available for all atoms.), Random(The starting guess for all wavefunctions are taken to be random). Default: RANDOM.");
+
+	prm.enter_subsection ("Eigen-solver/Chebyshev solver related parameters");
+	{
+
+	    prm.declare_entry("NUMBER OF KOHN-SHAM WAVEFUNCTIONS", "10",
+			      Patterns::Integer(0),
+			      "[Standard] Number of Kohn-Sham wavefunctions to be computed. For insulators use N/2+(10-20) and for metals use 20 percent more than N/2 (atleast 10 more). N is the total number of electrons.");
+
+	    prm.declare_entry("LOWER BOUND WANTED SPECTRUM", "-10.0",
+			      Patterns::Double(),
+			      "[Developer] The lower bound of the wanted eigen spectrum");
+
+	    prm.declare_entry("CHEBYSHEV POLYNOMIAL DEGREE", "0",
+			      Patterns::Integer(0,2000),
+			      "[Developer] The degree of the Chebyshev polynomial to be employed for filtering out the unwanted spectrum (Default value is used when the input parameter value is 0.");
+
+	    prm.declare_entry("CHEBYSHEV FILTER PASSES", "1",
+			      Patterns::Integer(1,20),
+			      "[Developer] The initial number of the Chebyshev filter passes per SCF. More Chebyshev filter passes beyond the value set in this parameter can still happen due to additional algorithms used in the code.");
+
+
+	    prm.declare_entry("CHEBYSHEV FILTER TOLERANCE","5e-02",
+			      Patterns::Double(0),
+			      "[Developer] Parameter specifying the tolerance to which eigenvectors need to computed using chebyshev filtering approach");
+
+	    prm.declare_entry("CHEBYSHEV FILTER BLOCK SIZE", "1000",
+			      Patterns::Integer(1),
+			      "[Developer] The maximum number of wavefunctions which are handled by one call to the Chebyshev filter. This is useful for optimization purposes. The optimum value is dependent on the computing architecture.");
+
+	    prm.declare_entry("BATCH GEMM", "false",
+			      Patterns::Bool(),
+			      "[Developer] Boolean parameter specifying whether to use gemm_batch blas routines to perform matrix-matrix multiplication operations with groups of matrices, processing a number of groups at once using threads instead of the standard serial route. CAUTION: batch blas routines will only be activated if the CHEBYSHEV FILTER BLOCK SIZE is less than 1000.");
+
+	    prm.declare_entry("CHEBYSHEV FILTER NUM OMP THREADS", "0",
+			      Patterns::Integer(0,300),
+			      "[Developer] Sets the number of OpenMP threads to be used in the blas linear algebra calls inside the Chebyshev filtering. The default value is 0, for which no action is taken. CAUTION: For non zero values, CHEBYSHEV FILTER NUM OMP THREADS takes precedence over the OMP_NUM_THREADS environment variable.");
+
+	    prm.declare_entry("ORTHO RR NUM OMP THREADS", "0",
+			      Patterns::Integer(0,300),
+			      "[Developer] Sets the number of OpenMP threads to be used in the blas linear algebra calls inside Lowden Orthogonalization and Rayleigh-Ritz projection steps. The default value is 0, for which no action is taken. CAUTION: For non-zero values, CHEBYSHEV FILTER NUM OMP THREADS takes precedence over the OMP_NUM_THREADS environment variable.");
+
+
+	    prm.declare_entry("ORTHOGONALIZATION TYPE","GS",
+			      Patterns::Selection("GS|LW|PGS"),
+			      "[Standard] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization), LW(Lowden Orthogonalization), PGS(Pseudo Gram-Schmidt Orthogonalization). GS is the default option.");
+
+	}
+	prm.leave_subsection ();
     }
     prm.leave_subsection ();
-
-
-    prm.enter_subsection ("Eigen-solver/Chebyshev solver related parameters");
-    {
-
-	prm.declare_entry("NUMBER OF KOHN-SHAM WAVEFUNCTIONS", "10",
-			  Patterns::Integer(0),
-			  "[Standard] Number of Kohn-Sham wavefunctions to be computed. For insulators use N/2+(10-20) and for metals use 20 percent more than N/2 (atleast 10 more). N is the total number of electrons.");
-
-	prm.declare_entry("LOWER BOUND WANTED SPECTRUM", "-10.0",
-			  Patterns::Double(),
-			  "[Developer] The lower bound of the wanted eigen spectrum");
-
-	prm.declare_entry("CHEBYSHEV POLYNOMIAL DEGREE", "0",
-			  Patterns::Integer(0,2000),
-			  "[Developer] The degree of the Chebyshev polynomial to be employed for filtering out the unwanted spectrum (Default value is used when the input parameter value is 0.");
-
-	prm.declare_entry("CHEBYSHEV FILTER PASSES", "1",
-			  Patterns::Integer(1,20),
-			  "[Developer] The initial number of the Chebyshev filter passes per SCF. More Chebyshev filter passes beyond the value set in this parameter can still happen due to additional algorithms used in the code.");
-
-
-	prm.declare_entry("CHEBYSHEV FILTER TOLERANCE","5e-02",
-			  Patterns::Double(0),
-			  "[Developer] Parameter specifying the tolerance to which eigenvectors need to computed using chebyshev filtering approach");
-
-	prm.declare_entry("CHEBYSHEV FILTER BLOCK SIZE", "1000",
-			  Patterns::Integer(1),
-			  "[Developer] The maximum number of wavefunctions which are handled by one call to the Chebyshev filter. This is useful for optimization purposes. The optimum value is dependent on the computing architecture.");
-
-	prm.declare_entry("BATCH GEMM", "false",
-			  Patterns::Bool(),
-			  "[Developer] Boolean parameter specifying whether to use gemm_batch blas routines to perform matrix-matrix multiplication operations with groups of matrices, processing a number of groups at once using threads instead of the standard serial route. CAUTION: batch blas routines will only be activated if the CHEBYSHEV FILTER BLOCK SIZE is less than 1000.");
-
-        prm.declare_entry("CHEBYSHEV FILTER NUM OMP THREADS", "0",
-			  Patterns::Integer(0,300),
-			  "[Developer] Sets the number of OpenMP threads to be used in the blas linear algebra calls inside the Chebyshev filtering. The default value is 0, for which no action is taken. CAUTION: For non zero values, CHEBYSHEV FILTER NUM OMP THREADS takes precedence over the OMP_NUM_THREADS environment variable.");
-
-	prm.declare_entry("ORTHO RR NUM OMP THREADS", "0",
-			  Patterns::Integer(0,300),
-			  "[Developer] Sets the number of OpenMP threads to be used in the blas linear algebra calls inside Lowden Orthogonalization and Rayleigh-Ritz projection steps. The default value is 0, for which no action is taken. CAUTION: For non-zero values, CHEBYSHEV FILTER NUM OMP THREADS takes precedence over the OMP_NUM_THREADS environment variable.");
-
-
-	prm.declare_entry("ORTHOGONALIZATION TYPE","GS",
-			  Patterns::Selection("GS|LW|PGS"),
-			  "[Standard] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization), LW(Lowden Orthogonalization), PGS(Pseudo Gram-Schmidt Orthogonalization). GS is the default option.");
-
-    }
-    prm.leave_subsection ();
-
 
     prm.enter_subsection ("Poisson problem paramters");
     {
@@ -456,21 +459,22 @@ namespace dftParameters
 	dftParameters::selfConsistentSolverTolerance = prm.get_double("TOLERANCE");
 	dftParameters::mixingHistory                 = prm.get_integer("ANDERSON SCHEME MIXING HISTORY");
 	dftParameters::mixingParameter               = prm.get_double("ANDERSON SCHEME MIXING PARAMETER");
-    }
-    prm.leave_subsection ();
+        dftParameters::startingWFCType        = prm.get("STARTING WFC");
 
-    prm.enter_subsection ("Eigen-solver/Chebyshev solver related parameters");
-    {
-       dftParameters::numberEigenValues             = prm.get_integer("NUMBER OF KOHN-SHAM WAVEFUNCTIONS");
-       dftParameters::lowerEndWantedSpectrum        = prm.get_double("LOWER BOUND WANTED SPECTRUM");
-       dftParameters::chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
-       dftParameters::numPass           = prm.get_integer("CHEBYSHEV FILTER PASSES");
-       dftParameters::chebyshevBlockSize= prm.get_integer("CHEBYSHEV FILTER BLOCK SIZE");
-       dftParameters::useBatchGEMM= prm.get_bool("BATCH GEMM");
-       dftParameters::orthogType        = prm.get("ORTHOGONALIZATION TYPE");
-       dftParameters::chebyshevTolerance = prm.get_double("CHEBYSHEV FILTER TOLERANCE");
-       dftParameters::chebyshevOMPThreads = prm.get_integer("CHEBYSHEV FILTER NUM OMP THREADS");
-       dftParameters::orthoRROMPThreads= prm.get_integer("ORTHO RR NUM OMP THREADS");
+	prm.enter_subsection ("Eigen-solver/Chebyshev solver related parameters");
+	{
+	   dftParameters::numberEigenValues             = prm.get_integer("NUMBER OF KOHN-SHAM WAVEFUNCTIONS");
+	   dftParameters::lowerEndWantedSpectrum        = prm.get_double("LOWER BOUND WANTED SPECTRUM");
+	   dftParameters::chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
+	   dftParameters::numPass           = prm.get_integer("CHEBYSHEV FILTER PASSES");
+	   dftParameters::chebyshevBlockSize= prm.get_integer("CHEBYSHEV FILTER BLOCK SIZE");
+	   dftParameters::useBatchGEMM= prm.get_bool("BATCH GEMM");
+	   dftParameters::orthogType        = prm.get("ORTHOGONALIZATION TYPE");
+	   dftParameters::chebyshevTolerance = prm.get_double("CHEBYSHEV FILTER TOLERANCE");
+	   dftParameters::chebyshevOMPThreads = prm.get_integer("CHEBYSHEV FILTER NUM OMP THREADS");
+	   dftParameters::orthoRROMPThreads= prm.get_integer("ORTHO RR NUM OMP THREADS");
+	}
+	prm.leave_subsection ();
     }
     prm.leave_subsection ();
 

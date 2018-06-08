@@ -154,27 +154,6 @@ void dftClass<FEOrder>::determineOrbitalFilling()
   unsigned int waveFunctionCount = 0;
   unsigned int totalNumberWaveFunctions = numEigenValues;
 
-  //
-  //loop over atoms
-  //
-  for(unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
-    {
-      unsigned int Z = atomLocations[iAtom][0];
-      unsigned int valenceZ = atomLocations[iAtom][1];
-      unsigned int numberAtomFunctions;
-
-      if(dftParameters::isPseudopotential)
-	{
-	  numElectrons += valenceZ;
-	}
-      else
-	{
-	  numElectrons += Z;
-	}
-
-    }
-
-
   for (std::vector<std::vector<unsigned int> >::iterator it = stencil.begin(); it < stencil.end(); it++)
     {
       unsigned int n = (*it)[0], l = (*it)[1];
@@ -229,7 +208,6 @@ void dftClass<FEOrder>::determineOrbitalFilling()
     {
       numEigenValues = waveFunctionsVector.size();
     }
-
 
   pcout<<"============================================================================================================================="<<std::endl;
   pcout<<"number of electrons: "<<numElectrons<<std::endl;
@@ -298,7 +276,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 		      imageIdsList.push_back(it->atomID);
 		      // }
 
-      
+
 		      for(int iImageAtomCount = 0; iImageAtomCount < imageIdsList.size();++iImageAtomCount)
 			{
 
@@ -382,7 +360,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 	    }
 	}
     }
-    
+
   for(int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
     {
       for(unsigned int i = 0; i < numEigenValues; ++i)

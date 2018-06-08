@@ -44,7 +44,7 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 {
   computing_timer.enter_section("Chebyshev solve"); 
   
-  if (dftParameters::verbosity==2)
+  if (dftParameters::verbosity>=2)
     {
       pcout << "kPoint: "<< kPointIndex<<std::endl;
       pcout << "spin: "<< spinType+1 <<std::endl;

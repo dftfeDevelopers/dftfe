@@ -53,14 +53,14 @@ void dftClass<FEOrder>::locateAtomCoreNodes(const dealii::DoFHandler<3> & _dofHa
 	   if(feNodeGlobalCoord.distance(atomCoord) < 1.0e-5){
 	     if(isPseudopotential)
 	       {
-		 if (dftParameters::verbosity==2)
+		 if (dftParameters::verbosity>=3)
                  {
 		   std::cout << "atom core with valence charge " << atomLocations[*it][1] << " located with node id " << nodeID << " in processor " << this_mpi_process<<" nodal coor "<<feNodeGlobalCoord[0]<<" "<<feNodeGlobalCoord[1]<<" "<<feNodeGlobalCoord[2]<<std::endl;
 		 }
 	       }
 	     else
 	       {
-		 if (dftParameters::verbosity==2)
+		 if (dftParameters::verbosity>=3)
                  {
 		    std::cout << "atom core with charge " << atomLocations[*it][0] << " located with node id " << nodeID << " in processor " << this_mpi_process<<" nodal coor "<<feNodeGlobalCoord[0]<<" "<<feNodeGlobalCoord[1]<<" "<<feNodeGlobalCoord[2]<<std::endl;
 		 }
@@ -71,11 +71,11 @@ void dftClass<FEOrder>::locateAtomCoreNodes(const dealii::DoFHandler<3> & _dofHa
 	       else
 		 atomNodeIdToChargeValueMap.insert(std::pair<dealii::types::global_dof_index,double>(nodeID,atomLocations[*it][0]));
 
-	       if (dftParameters::verbosity==2)
+	       if (dftParameters::verbosity>=3)
 	          std::cout << " and added \n";
 	     }
 	     else{
-	       if (dftParameters::verbosity==2)
+	       if (dftParameters::verbosity>=3)
 	         std::cout << " but skipped \n";
 	     }
 	     atomsTolocate.erase(*it);
@@ -193,7 +193,7 @@ void dftClass<FEOrder>::locatePeriodicPinnedNodes(const dealii::DoFHandler<3> & 
 
   if(Utilities::MPI::this_mpi_process(mpi_communicator) == maxTaskId)
     {
-      if (dftParameters::verbosity==2)
+      if (dftParameters::verbosity>=3)
           std::cout<<"Found Node locally on processor Id: "<<Utilities::MPI::this_mpi_process(mpi_communicator)<<std::endl;
       if(locallyOwnedDofs.is_element(maxNode))
 	{
@@ -257,18 +257,18 @@ void dftClass<FEOrder>::locatePeriodicPinnedNodes(const dealii::DoFHandler<3> & 
 		  Point<3> pinnedNodeCoord(pinnedLocations[*it][0],pinnedLocations[*it][1],pinnedLocations[*it][2]);
 		  if(feNodeGlobalCoord.distance(pinnedNodeCoord) < 1.0e-5)
 		    {
-	              if (dftParameters::verbosity==2)
+	              if (dftParameters::verbosity>=3)
 		         std::cout << "Pinned core with nodal coordinates (" << pinnedLocations[*it][0] << " " << pinnedLocations[*it][1] << " "<<pinnedLocations[*it][2]<< ") located with node id " << nodeID << " in processor " << this_mpi_process;
 		      if (locallyRelevantDofs.is_element(nodeID))
 			{
 			  constraints.add_line(nodeID);
 			  constraints.set_inhomogeneity(nodeID,0.0);
-			  if (dftParameters::verbosity==2)
+			  if (dftParameters::verbosity>=3)
 			     std::cout << " and added \n";
 			}
 		      else
 			{
-			  if (dftParameters::verbosity==2)
+			  if (dftParameters::verbosity>=3)
 			     std::cout << " but skipped \n";
 			}
 		      nodesTolocate.erase(*it);
