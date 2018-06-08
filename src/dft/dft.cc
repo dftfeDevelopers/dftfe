@@ -1078,6 +1078,9 @@ namespace dftfe {
 
     if (dftParameters::electrostaticsPRefinement)
       computeElectrostaticEnergyPRefined();
+
+    if (dftParameters::writeSolutionFields)
+      output();
   }
 
   //Output
@@ -1111,6 +1114,8 @@ namespace dftfe {
 										   QGauss<3>(C_num1DQuad<FEOrder>()),
 										   [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell , const unsigned int q) -> double {return (*rhoOutValues).find(cell->id())->second[q];},
 										   rhoNodalField);
+    rhoNodalField.update_ghost_values();
+
     //
     //only generate output for electron-density
     //
