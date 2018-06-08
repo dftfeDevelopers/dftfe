@@ -305,7 +305,7 @@ namespace dftParameters
 
 	prm.declare_entry("STARTING WFC","RANDOM",
 			  Patterns::Selection("ATOMIC|RANDOM"),
-			  "[Standard] Sets the type of the starting Kohn-Sham wavefunctions guess: Atomic(Superposition of single atom atomic orbitals. Wavefunctions for which atomic orbitals are not available, random wavefunctions are taken. Currently, atomic orbitals data is not available for all atoms.), Random(The starting guess for all wavefunctions are taken to be random). Default: Random.");
+			  "[Standard] Sets the type of the starting Kohn-Sham wavefunctions guess: Atomic(Superposition of single atom atomic orbitals. Wavefunctions for which atomic orbitals are not available, random wavefunctions are taken. Currently, atomic orbitals data is not available for all atoms.), Random(The starting guess for all wavefunctions are taken to be random). Default: RANDOM.");
 
 	prm.declare_entry("LOWER BOUND WANTED SPECTRUM", "-10.0",
 			  Patterns::Double(),
