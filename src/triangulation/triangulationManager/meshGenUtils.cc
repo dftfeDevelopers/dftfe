@@ -113,7 +113,7 @@ void markPeriodicFacesNonOrthogonal(Triangulation<3,3> &triangulation,
   computeOffsetVectors(latticeVectors,
 		       offsetVectors);
 
-  if (dftParameters::verbosity==2)
+  if (dftParameters::verbosity>=3)
   {
     pcout<<"Periodic Face Normals 1: "<<periodicFaceNormals[0][0]<<" "<<periodicFaceNormals[0][1]<<" "<<periodicFaceNormals[0][2]<<std::endl;
     pcout<<"Periodic Face Normals 2: "<<periodicFaceNormals[1][0]<<" "<<periodicFaceNormals[1][1]<<" "<<periodicFaceNormals[1][2]<<std::endl;
@@ -204,7 +204,7 @@ void markPeriodicFacesNonOrthogonal(Triangulation<3,3> &triangulation,
     }
   triangulation.add_periodicity(periodicity_vector);
 
-  if (dftParameters::verbosity==2)
+  if (dftParameters::verbosity>=3)
      pcout << "Periodic Facepairs size: " << periodicity_vector.size() << std::endl;
   /*
   for(unsigned int i=0; i< periodicity_vector.size(); ++i)

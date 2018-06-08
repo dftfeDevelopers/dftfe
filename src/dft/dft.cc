@@ -177,7 +177,7 @@ namespace dftfe {
   template<unsigned int FEOrder>
   void dftClass<FEOrder>::set()
   {
-    if (dftParameters::verbosity==2)
+    if (dftParameters::verbosity>=2)
       pcout << std::endl << "number of MPI processes: "
 	    << Utilities::MPI::n_mpi_processes(mpi_communicator)
 	    << std::endl;
@@ -232,8 +232,21 @@ namespace dftfe {
 
     pcout << "number of atoms types: " << atomTypes.size() << "\n";
 
-    //estimate total number of wave functions
-    determineOrbitalFilling();
+    //determine number of electrons
+    for(unsigned int iAtom = 0; iAtom < atomLocations.size(); iAtom++)
+    {
+      const unsigned int Z = atomLocations[iAtom][0];
+      const unsigned int valenceZ = atomLocations[iAtom][1];
+
+      if(dftParameters::isPseudopotential)
+	  numElectrons += valenceZ;
+      else
+	  numElectrons += Z;
+    }
+
+    //estimate total number of wave functions from atomic orbital filling
+    if (dftParameters::startingWFCType=="ATOMIC")
+      determineOrbitalFilling();
 
 #ifdef USE_COMPLEX
     generateMPGrid();
@@ -330,7 +343,7 @@ namespace dftfe {
 #ifdef USE_COMPLEX
 	recomputeKPointCoordinates();
 #endif
-	if (dftParameters::verbosity==2)
+	if (dftParameters::verbosity>=2)
 	  {
 	    //FIXME: Print all k points across all pools
 	    pcout<<"-------------------k points cartesian coordinates and weights-----------------------------"<<std::endl;
@@ -621,7 +634,7 @@ namespace dftfe {
 	//
 	//phiTot with rhoIn
 	//
-	if (dftParameters::verbosity==2)
+	if (dftParameters::verbosity>=2)
 	  pcout<< std::endl<<"Poisson solve for total electrostatic potential (rhoIn+b): ";
 	computing_timer.enter_section("phiTot solve");
 
@@ -725,7 +738,7 @@ namespace dftfe {
 				     eigenValuesSpins[1],
 				     fermiEnergy));
 
-	    if (dftParameters::verbosity==2)
+	    if (dftParameters::verbosity>=2)
 	      pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
 
 	    //if the residual norm is greater than adaptiveChebysevFilterPassesTol (a heuristic value)
@@ -782,7 +795,7 @@ namespace dftfe {
 				 (residualNormWaveFunctionsAllkPointsSpins[1],
 				  eigenValuesSpins[1],
 				  fermiEnergy));
-		if (dftParameters::verbosity==2)
+		if (dftParameters::verbosity>=2)
 		  pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
 	      }
 	  }
@@ -842,7 +855,7 @@ namespace dftfe {
 	      (residualNormWaveFunctionsAllkPoints,
 	       eigenValues,
 	       fermiEnergy);
-	    if (dftParameters::verbosity==2)
+	    if (dftParameters::verbosity>=2)
 	      pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
 
 	    //if the residual norm is greater than adaptiveChebysevFilterPassesTol (a heuristic value)
@@ -874,7 +887,7 @@ namespace dftfe {
 		  (residualNormWaveFunctionsAllkPoints,
 		   eigenValues,
 		   fermiEnergy);
-		if (dftParameters::verbosity==2)
+		if (dftParameters::verbosity>=2)
 		  pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
 	      }
 
@@ -896,12 +909,12 @@ namespace dftfe {
 	//compute integral rhoOut
 	//
 	const double integralRhoValue=totalCharge(rhoOutValues);
-	if (dftParameters::verbosity==2)
+	if (dftParameters::verbosity>=2)
 	  pcout<< std::endl<<"number of electrons: "<< integralRhoValue<<std::endl;
 	//
 	//phiTot with rhoOut
 	//
-	if(dftParameters::verbosity==2)
+	if(dftParameters::verbosity>=2)
 	  pcout<< std::endl<<"Poisson solve for total electrostatic potential (rhoOut+b): ";
 
 	computing_timer.enter_section("phiTot solve");
@@ -944,7 +957,7 @@ namespace dftfe {
 				   d_localVselfs,
 				   d_atomNodeIdToChargeMap,
 				   atomLocations.size(),
-				   dftParameters::verbosity==2) :
+				   dftParameters::verbosity>=2) :
 	  energyCalc.computeEnergySpinPolarized(dofHandler,
 						dofHandler,
 						quadrature,
@@ -968,7 +981,7 @@ namespace dftfe {
 						d_localVselfs,
 						d_atomNodeIdToChargeMap,
 						atomLocations.size(),
-						dftParameters::verbosity==2);
+						dftParameters::verbosity>=2);
 	if (dftParameters::verbosity==1)
 	  {
 	    pcout<<"Total energy  : " << totalEnergy << std::endl;
