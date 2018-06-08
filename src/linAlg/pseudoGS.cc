@@ -54,21 +54,21 @@ namespace dftfe
 				                    const unsigned int numberVectors)
     {
 #if(defined WITH_SCALAPACK && !USE_COMPLEX)
-      const unsigned int localVectorSize = X.local_size()/numberVectors;
-
-      std::vector<T> overlapMatrix(numberVectors*numberVectors,0.0);
-
+      const unsigned int numLocalDofs = X.local_size()/numberVectors;
 
       dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
       dealii::TimerOutput computing_timer(pcout,
 					  dftParameters::reproducible_output ? dealii::TimerOutput::never : dealii::TimerOutput::summary,
 					  dealii::TimerOutput::wall_times);
 
+
+      computing_timer.enter_section("serial overlap matrix for PGS");
+      std::vector<T> overlapMatrix(numberVectors*numberVectors,0.0);
+
       //
       //blas level 3 dgemm flags
       //
       const double alpha = 1.0, beta = 0.0;
-      const unsigned int numberEigenValues = numberVectors;
       const char uplo = 'L';
       const char trans = 'N';
 
@@ -80,12 +80,10 @@ namespace dftfe
       //corresponding to column-major format required for blas, we compute
       //the overlap matrix as S = S^{T} = X*{X^T} here
       //
-
-      computing_timer.enter_section("serial overlap matrix for PGS");
       dsyrk_(&uplo,
 	     &trans,
 	     &numberVectors,
-	     &localVectorSize,
+	     &numLocalDofs,
 	     &alpha,
 	     X.begin(),
 	     &numberVectors,
@@ -106,6 +104,7 @@ namespace dftfe
       dealii::ScaLAPACKMatrix<T> overlapMatPar(numberVectors,
                                                processGrid,
                                                rowsBlockSize);
+
       computing_timer.enter_section("scalapack copy old");
       if (processGrid->is_process_active())
          for (unsigned int i = 0; i < overlapMatPar.local_n(); ++i)
@@ -135,13 +134,73 @@ namespace dftfe
 
        }
 
+       const unsigned int vectorsBlockSize=400;
+
+       std::vector<T> overlapMatrixBlock(numberVectors*vectorsBlockSize,0.0);
+       std::vector<T> overlapMatrixRemainderBlock(1);
+       if (numberVectors%vectorsBlockSize!=0)
+	   overlapMatrixRemainderBlock.resize(numberVectors*(numberVectors%vectorsBlockSize));
+
+       for (unsigned int ivec = 0; ivec < numberVectors; ivec += vectorsBlockSize)
+       {
+	  // Correct block dimensions if block "goes off edge of" the matrix
+	  const unsigned int B = std::min(vectorsBlockSize, numberVectors-ivec);
+
+          const char transA = 'N',transB = 'T';
+          const double scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
+	  if (B!=vectorsBlockSize)
+	  {
+	      dgemm_(&transA,
+		     &transB,
+		     &numberVectors,
+		     &numLocalDofs,
+		     &B,
+		     &scalarCoeffAlpha,
+		     X.begin(),
+		     &numberVectors,
+		     X.begin(),
+		     &numberVectors,
+		     &scalarCoeffBeta,
+		     &overlapMatrixRemainderBlock[0],
+		     &numberVectors);
+
+              for (unsigned int i = 0; i <numberVectors; ++i)
+		  for (unsigned int j = 0; j <B; ++j)
+		     if (globalToLocalRowIdMap.find(i)!=globalToLocalRowIdMap.end())
+			 if(globalToLocalColumnIdMap.find(j+ivec)!=globalToLocalColumnIdMap.end())
+			     overlapMatPar.local_el(globalToLocalRowIdMap[i], globalToLocalColumnIdMap[j+ivec])=overlapMatrixRemainderBlock[(j+ivec)*numberVectors+i];
+	  }
+	  else
+	  {
+	      dgemm_(&transA,
+		     &transB,
+		     &numberVectors,
+		     &numLocalDofs,
+		     &B,
+		     &scalarCoeffAlpha,
+		     X.begin(),
+		     &numberVectors,
+		     X.begin(),
+		     &numberVectors,
+		     &scalarCoeffBeta,
+		     &overlapMatrixBlock[0],
+		     &numberVectors);
+
+              for (unsigned int i = 0; i <numberVectors; ++i)
+		  for (unsigned int j = 0; j <B; ++j)
+		     if (globalToLocalRowIdMap.find(i)!=globalToLocalRowIdMap.end())
+			 if(globalToLocalColumnIdMap.find(j+ivec)!=globalToLocalColumnIdMap.end())
+			     overlapMatPar.local_el(globalToLocalRowIdMap[i], globalToLocalColumnIdMap[j+ivec])=overlapMatrixBlock[(j+ivec)*numberVectors+i];
+	  }
+       }
+       /*
        for (unsigned int i = 0; i < numberVectors/2; ++i)
        {
 	     std::vector<T> tempVec1(2*i+1);
 	     std::vector<T> tempVec2(2*i+2);
 	     T * beginPtrX=X.begin();
 
-	     for (unsigned int dof = 0; dof < localVectorSize; ++dof)
+	     for (unsigned int dof = 0; dof < numLocalDofs; ++dof)
 	     {
 	       const double temp1=*(beginPtrX+dof*numberVectors+2*i);
 	       const double temp2=*(beginPtrX+dof*numberVectors+2*i+1);
@@ -167,6 +226,7 @@ namespace dftfe
 			 overlapMatPar.local_el(globalToLocalRowIdMap[2*i+1], globalToLocalColumnIdMap[j])=tempVec2[j];
 
        }
+       */
        computing_timer.exit_section("scalapack copy new");
 
 
@@ -219,17 +279,17 @@ namespace dftfe
       orthoNormalizedBasis.reinit(X);
       dgemm_(&transA2,
 	     &transB2,
-	     &numberEigenValues,
-	     &localVectorSize,
-	     &numberEigenValues,
+	     &numberVectors,
+	     &numLocalDofs,
+	     &numberVectors,
 	     &alpha,
 	     &overlapMatrix[0],
-	     &numberEigenValues,
+	     &numberVectors,
 	     X.begin(),
-	     &numberEigenValues,
+	     &numberVectors,
 	     &beta,
 	     orthoNormalizedBasis.begin(),
-	     &numberEigenValues);
+	     &numberVectors);
       X = orthoNormalizedBasis;
       computing_timer.exit_section("subspace rotation in PGS");
 

@@ -51,7 +51,7 @@ namespace dftParameters
   bool reproducible_output=false;
   bool electrostaticsPRefinement=false;
 
-  unsigned int chebyshevBlockSize=1000;
+  unsigned int chebyshevBlockSize=512;
   bool useBatchGEMM=false;
   unsigned int chebyshevOMPThreads=0;
   unsigned int orthoRROMPThreads=0;
