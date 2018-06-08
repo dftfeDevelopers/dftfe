@@ -51,11 +51,12 @@ namespace dftParameters
   bool reproducible_output=false;
   bool electrostaticsPRefinement=false;
 
-  extern std::string startingWFCType="";
+  std::string startingWFCType="";
   unsigned int chebyshevBlockSize=1000;
   bool useBatchGEMM=false;
   unsigned int chebyshevOMPThreads=0;
   unsigned int orthoRROMPThreads=0;
+  bool writeSolutionFields=false;
 
 
   void declare_parameters(ParameterHandler &prm)
@@ -67,6 +68,10 @@ namespace dftParameters
     prm.declare_entry("VERBOSITY", "1",
                       Patterns::Integer(0,4),
                       "[Standard] Parameter to control verbosity of terminal output. 0 for low, 1 for medium, and 2 for high.");
+
+    prm.declare_entry("WRITE SOLUTION FIELDS", "false",
+                      Patterns::Bool(),
+                      "[Standard] Writes wavefunction and electron-density solution fields to .vtu files for visualization purposes. Default: false.");
 
     prm.enter_subsection ("Checkpointing and Restart");
     {
@@ -369,6 +374,7 @@ namespace dftParameters
   {
     dftParameters::verbosity                     = prm.get_integer("VERBOSITY");
     dftParameters::reproducible_output           = prm.get_bool("REPRODUCIBLE OUTPUT");
+    dftParameters::writeSolutionFields           = prm.get_bool("WRITE SOLUTION FIELDS");
 
     prm.enter_subsection ("Checkpointing and Restart");
     {
