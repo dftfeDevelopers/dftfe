@@ -200,7 +200,7 @@ namespace dftfe {
 		{
 		  if(numLevels<dftParameters::n_refinement_steps)
 		    {
-		      if (dftParameters::verbosity>=2)
+		      if (dftParameters::verbosity>=3)
 			 pcout<< "refinement in progress, level: "<< numLevels<<std::endl;
 
 		      parallelTriangulation.execute_coarsening_and_refinement();
@@ -396,7 +396,7 @@ namespace dftfe {
 
 		  if(numLevels<dftParameters::n_refinement_steps)
 		    {
-		      if (dftParameters::verbosity>=2)
+		      if (dftParameters::verbosity>=3)
 			 pcout<< "refinement in progress, level: "<< numLevels<<std::endl;
 
 		      parallelTriangulation.execute_coarsening_and_refinement();
@@ -451,7 +451,7 @@ namespace dftfe {
 
 	  const unsigned int numberGlobalCellsSerial = serialTriangulation.n_global_active_cells();
 
-	  if (dftParameters::verbosity==2)
+	  if (dftParameters::verbosity>=2)
 	       pcout<<" numParallelCells: "<< numberGlobalCellsParallel<<", numSerialCells: "<< numberGlobalCellsSerial<<std::endl;
 
 	  AssertThrow(numberGlobalCellsParallel==numberGlobalCellsSerial,ExcMessage("Number of cells are different for parallel and serial triangulations"));

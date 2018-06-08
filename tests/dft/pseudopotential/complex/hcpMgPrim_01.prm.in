@@ -75,6 +75,7 @@ subsection Eigen-solver/Chebyshev solver related parameters
   set LOWER BOUND WANTED SPECTRUM = -10.0
   set CHEBYSHEV POLYNOMIAL DEGREE = 0
   set CHEBYSHEV FILTER TOLERANCE=5e-3
+  set STARTING WFC=ATOMIC
 end
 
 

@@ -51,6 +51,7 @@ namespace dftParameters
   bool reproducible_output=false;
   bool electrostaticsPRefinement=false;
 
+  extern std::string startingWFCType="";
   unsigned int chebyshevBlockSize=1000;
   bool useBatchGEMM=false;
   unsigned int chebyshevOMPThreads=0;
@@ -302,6 +303,10 @@ namespace dftParameters
 			  Patterns::Integer(0),
 			  "[Standard] Number of Kohn-Sham wavefunctions to be computed. For insulators use N/2+(10-20) and for metals use 20 percent more than N/2 (atleast 10 more). N is the total number of electrons.");
 
+	prm.declare_entry("STARTING WFC","RANDOM",
+			  Patterns::Selection("ATOMIC|RANDOM"),
+			  "[Standard] Sets the type of the starting Kohn-Sham wavefunctions guess: Atomic(Superposition of single atom atomic orbitals. Wavefunctions for which atomic orbitals are not available, random wavefunctions are taken. Currently, atomic orbitals data is not available for all atoms.), Random(The starting guess for all wavefunctions are taken to be random). Default: Random.");
+
 	prm.declare_entry("LOWER BOUND WANTED SPECTRUM", "-10.0",
 			  Patterns::Double(),
 			  "[Developer] The lower bound of the wanted eigen spectrum");
@@ -462,6 +467,7 @@ namespace dftParameters
     prm.enter_subsection ("Eigen-solver/Chebyshev solver related parameters");
     {
        dftParameters::numberEigenValues             = prm.get_integer("NUMBER OF KOHN-SHAM WAVEFUNCTIONS");
+       dftParameters::startingWFCType        = prm.get("STARTING WFC");
        dftParameters::lowerEndWantedSpectrum        = prm.get_double("LOWER BOUND WANTED SPECTRUM");
        dftParameters::chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
        dftParameters::numPass           = prm.get_integer("CHEBYSHEV FILTER PASSES");

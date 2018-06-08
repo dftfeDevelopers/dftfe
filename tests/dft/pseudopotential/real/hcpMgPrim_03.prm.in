@@ -70,6 +70,7 @@ subsection Eigen-solver/Chebyshev solver related parameters
   set CHEBYSHEV POLYNOMIAL DEGREE = 0
   set CHEBYSHEV FILTER TOLERANCE=5e-3
   set ORTHOGONALIZATION TYPE=LW
+  set STARTING WFC=ATOMIC
 end
 
 

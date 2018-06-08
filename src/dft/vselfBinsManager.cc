@@ -387,7 +387,7 @@ namespace dftfe
       }
       else
       {
-	  if (dftParameters::verbosity==2)
+	  if (dftParameters::verbosity>=2)
 	      pcout<<"Setting vself ball radius from input parameters value: "<< radiusAtomBall<<std::endl;
 
 	  radiusAtomBallAdaptive=radiusAtomBall;
@@ -465,7 +465,7 @@ namespace dftfe
 
 
       const int numberBins = binCount + 1;
-      if (dftParameters::verbosity==2)
+      if (dftParameters::verbosity>=2)
 	pcout<<"number bins: "<<numberBins<<std::endl;
 
       d_imageIdsInBins.resize(numberBins);
@@ -487,7 +487,7 @@ namespace dftfe
 	  std::vector<int> &imageIdsOfAtomsInCurrentBin = d_imageIdsInBins[iBin];
 	  std::vector<std::vector<double> > imagePositionsOfAtomsInCurrentBin;
 
-	  if (dftParameters::verbosity==2)
+	  if (dftParameters::verbosity>=2)
 	   pcout<<"bin "<<iBin<< ": number of global atoms: "<<numberGlobalAtomsInBin<<std::endl;
 
 	  for(int index = 0; index < numberGlobalAtomsInBin; ++index)
@@ -810,12 +810,12 @@ namespace dftfe
 		    if(feNodeGlobalCoord.distance(atomCoord) < 1.0e-5){
 		      if(dftParameters::isPseudopotential)
 		      {
-			if (dftParameters::verbosity==2)
+			if (dftParameters::verbosity>=3)
 			  std::cout << "atom core in bin " << iBin<<" with valence charge "<<d_atomLocations[chargeId][1] << " located with node id " << nodeID << " in processor " << this_mpi_process;
 		      }
 		      else
 		      {
-			if (dftParameters::verbosity==2)
+			if (dftParameters::verbosity>=3)
 			  std::cout << "atom core in bin " << iBin<<" with charge "<<d_atomLocations[chargeId][0] << " located with node id " << nodeID << " in processor " << this_mpi_process;
 		      }
 		      if (locally_owned_dofs.is_element(nodeID)){
@@ -823,12 +823,12 @@ namespace dftfe
 			  d_atomsInBin[iBin].insert(std::pair<dealii::types::global_dof_index,double>(nodeID,d_atomLocations[chargeId][1]));
 			else
 			  d_atomsInBin[iBin].insert(std::pair<dealii::types::global_dof_index,double>(nodeID,d_atomLocations[chargeId][0]));
-			if (dftParameters::verbosity==2)
+			if (dftParameters::verbosity>=3)
 			   std::cout << " and added \n";
 		      }
 		      else
 		      {
-			if (dftParameters::verbosity==2)
+			if (dftParameters::verbosity>=3)
 			   std::cout << " but skipped \n";
 		      }
 		      atomsTolocate.erase(*it);
