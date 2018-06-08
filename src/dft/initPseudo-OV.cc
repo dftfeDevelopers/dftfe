@@ -64,8 +64,6 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
   int cumulativeWaveSplineId = 0;
   int waveFunctionId;
   //
-  if (dftParameters::verbosity>=2)
-     pcout << " d_pspTail  " << d_pspTail << std::endl ;
   //
   for(int iAtom = 0; iAtom < numberNonLocalAtoms; ++iAtom)
     {
@@ -758,7 +756,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
     }
 
   const unsigned int numberElements = iElemCount;
-
+      
 
   for(int iAtom = 0; iAtom < numberNonLocalAtoms; ++iAtom)
     {
@@ -795,9 +793,6 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
       typename DoFHandler<3>::active_cell_iterator cellEigen = dofHandlerEigen.begin_active();
 
       int iElem = -1;
-
-      if (dftParameters::verbosity>=2)
-         pcout << " d_pspTail adjusted to " << d_pspTail << std::endl ;
 
       for(; cell != endc; ++cell,++cellEigen)
 	{
