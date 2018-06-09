@@ -909,8 +909,12 @@ namespace dftfe {
 	//compute integral rhoOut
 	//
 	const double integralRhoValue=totalCharge(rhoOutValues);
-	if (dftParameters::verbosity>=2)
+
+	if (dftParameters::verbosity>=2){
 	  pcout<< std::endl<<"number of electrons: "<< integralRhoValue<<std::endl;
+	  if (dftParameters::spinPolarized==1)
+		pcout<< std::endl<<"net magnetization: "<< totalMagnetization(rhoOutValuesSpinPolarized) << std::endl;
+	}
 	//
 	//phiTot with rhoOut
 	//
