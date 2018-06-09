@@ -61,6 +61,9 @@ namespace dftfe {
 
       extern bool electrostaticsPRefinement;
 
+      extern bool writeSolutionFields;
+
+      extern std::string startingWFCType;
       extern unsigned int chebyshevBlockSize;
       extern bool useBatchGEMM;
       extern unsigned int chebyshevOMPThreads;
