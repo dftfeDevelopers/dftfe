@@ -58,7 +58,7 @@ void dftClass<FEOrder>::initElectronicFields(const bool usePreviousGroundStateFi
 	initRho();
      if (dftParameters::verbosity==2){
 	 if (dftParameters::spinPolarized==1)
-		pcout<< std::endl<<"net magnetization: "<< totalMagnetization(rhoInValuesSpinPolarized)<std::endl;
+		pcout<< std::endl<<"net magnetization: "<< totalMagnetization(rhoInValuesSpinPolarized) <<std::endl;
      }
   }
   else

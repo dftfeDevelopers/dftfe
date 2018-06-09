@@ -305,6 +305,10 @@ namespace dftfe {
        * Computes total charge by integrating the electron-density
        */
       double totalCharge(const std::map<dealii::CellId, std::vector<double> > *rhoQuadValues);
+
+      /**
+       * Computes net magnetization from the difference of local spin densities
+       */
       double totalMagnetization(const std::map<dealii::CellId, std::vector<double> > *rhoQuadValues) ;
 
       /**
