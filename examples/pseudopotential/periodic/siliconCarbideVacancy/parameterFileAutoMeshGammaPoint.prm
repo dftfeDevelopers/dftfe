@@ -6,6 +6,13 @@
 # and 2 for high.
 set VERBOSITY = 2
 
+subsection Checkpointing and Restart
+
+set CHK TYPE = 0
+
+end
+
+
 subsection Boundary conditions
   # Periodicity along domain bounding vector, v1.
   set PERIODIC1                       = true
@@ -110,6 +117,10 @@ subsection Eigen-solver/Chebyshev solver related parameters
   # N/2+(10-20) and for metals use 20 percent more than N/2 (atleast 10 more).
   # N is the total number of electrons
   set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 1800    # default: 10
+  # [Standard] Parameter specifying the type of orthogonalization to be used:
+  # GS(Gram-Schmidt Orthogonalization), LW(Lowden Orthogonalization),
+  # PGS(Pseudo Gram-Schmidt Orthogonalization). GS is the default option.
+  set ORTHOGONALIZATION TYPE            = LW
 end
 
 subsection Finite element mesh parameters
@@ -123,7 +134,7 @@ subsection Finite element mesh parameters
 
   subsection Auto mesh generation parameters
     # Radius of ball enclosing atom
-    set ATOM BALL RADIUS     = 4.0
+    set ATOM BALL RADIUS     = 2.0
 
     # Mesh size of the base mesh on which refinement is performed.
     set BASE MESH SIZE       = 2.0 # default: 2.0
@@ -133,10 +144,10 @@ subsection Finite element mesh parameters
     set MAX REFINEMENT STEPS = 10
 
     # Mesh size in a ball around atom
-    set MESH SIZE ATOM BALL  = 1.0
+    set MESH SIZE ATOM BALL  = 0.62
 
     # Mesh size near atom. Useful for all-electron case.
-    set MESH SIZE NEAR ATOM  = 0.5
+    set MESH SIZE NEAR ATOM  = 0.62
   end
 
 end
@@ -210,10 +221,10 @@ end
 
 subsection SCF parameters
   # Number of SCF iterations to be considered for mixing the electron-density
-  set ANDERSON SCHEME MIXING HISTORY   = 70
+  set ANDERSON SCHEME MIXING HISTORY   = 10
 
   # Mixing parameter to be used in Anderson scheme
-  set ANDERSON SCHEME MIXING PARAMETER = 0.8
+  set ANDERSON SCHEME MIXING PARAMETER = 0.1
 
   # Maximum number of iterations to be allowed for SCF convergence
   set MAXIMUM ITERATIONS               = 200  # default: 50

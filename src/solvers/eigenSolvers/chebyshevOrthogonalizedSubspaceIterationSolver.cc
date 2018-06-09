@@ -173,7 +173,7 @@ namespace dftfe{
 						eigenVectorsFlattenedArray);
 #endif
 	computing_timer.exit_section("Custom Partitioned Array Creation");
-	
+
 	if(dftParameters::verbosity >= 3)
 	  {
 	    pcout<<"Custom Partioned Array Creation Done: "<<std::endl;
@@ -188,8 +188,9 @@ namespace dftfe{
 	  {
 	    for (unsigned int iWave = 0; iWave < totalNumberWaveFunctions; ++iWave)
 	      {
-		unsigned int flattenedArrayGlobalIndex = (totalNumberWaveFunctions*(iNode + (operatorMatrix.getMatrixFreeData()->get_vector_partitioner()->local_range()).first) + iWave);
-		unsigned int flattenedArrayLocalIndex = flattenedArrayGlobalIndex - eigenVectorsFlattenedArray.get_partitioner()->local_range().first;
+		//unsigned int flattenedArrayGlobalIndex = (totalNumberWaveFunctions*(iNode + (operatorMatrix.getMatrixFreeData()->get_vector_partitioner()->local_range()).first) + iWave);
+		//unsigned int flattenedArrayLocalIndex = flattenedArrayGlobalIndex - eigenVectorsFlattenedArray.get_partitioner()->local_range().first;
+		unsigned int flattenedArrayLocalIndex = totalNumberWaveFunctions*iNode + iWave;
 #ifdef USE_COMPLEX
 		eigenVectorsFlattenedArray.local_element(flattenedArrayLocalIndex).real(eigenVectors[iWave].local_element((*operatorMatrix.getLocalProcDofIndicesReal())[iNode]));
 		eigenVectorsFlattenedArray.local_element(flattenedArrayLocalIndex).imag(eigenVectors[iWave].local_element((*operatorMatrix.getLocalProcDofIndicesImag())[iNode]));
@@ -203,6 +204,8 @@ namespace dftfe{
 	//
 	//Free the memory of eigenVectors array
 	//
+	vectorType d_tempDealiiVector;
+	d_tempDealiiVector.reinit(eigenVectors[0]);
 	for(unsigned int iWave = 0; iWave < totalNumberWaveFunctions; ++iWave)
 	  eigenVectors[iWave].reinit(0);
 
@@ -223,7 +226,7 @@ namespace dftfe{
 	//Split the complete wavefunctions into multiple blocks.
 	//Create the size of vectors in each block
 	//
-	const unsigned int equalNumberWaveFunctionsPerBlock = totalNumberWaveFunctions; //1000;
+	const unsigned int equalNumberWaveFunctionsPerBlock = std::min(totalNumberWaveFunctions,dftParameters::chebyshevBlockSize);
 	const double temp = (double)totalNumberWaveFunctions/(double)equalNumberWaveFunctionsPerBlock;
 	const unsigned int totalNumberBlocks = std::ceil(temp);
 	const unsigned int numberWaveFunctionsLastBlock = totalNumberWaveFunctions - equalNumberWaveFunctionsPerBlock*(totalNumberBlocks-1);
@@ -235,7 +238,11 @@ namespace dftfe{
 
 
 	std::vector<std::vector<dealii::types::global_dof_index> > flattenedArrayCellLocalProcIndexIdMap,flattenedArrayMacroCellLocalProcIndexIdMap;
-
+#ifdef USE_COMPLEX
+	dealii::parallel::distributed::Vector<std::complex<double> > eigenVectorsFlattenedArrayBlock;
+#else
+	dealii::parallel::distributed::Vector<double> eigenVectorsFlattenedArrayBlock;
+#endif
 	for(unsigned int nBlock = 0; nBlock < totalNumberBlocks; ++nBlock)
 	  {
 	    //
@@ -245,8 +252,6 @@ namespace dftfe{
 	    const unsigned int lowIndex = equalNumberWaveFunctionsPerBlock*nBlock;
 	    const unsigned int highIndexPlusOne = lowIndex + numberWaveFunctionsPerCurrentBlock;
 
-	    operatorMatrix.reinit(numberWaveFunctionsPerCurrentBlock);
-
 	    //
 	    //create custom partitioned dealii array by storing wavefunctions(no need to createDealii vector if block size does not change)
 	    //
@@ -254,41 +259,50 @@ namespace dftfe{
 	    if(totalNumberBlocks > 1)
 	      {
 
+		if (nBlock==0 || nBlock==totalNumberBlocks-1)
+		{
+		    operatorMatrix.reinit(numberWaveFunctionsPerCurrentBlock);
 #ifdef USE_COMPLEX
-		const unsigned int localVectorSize = eigenVectors[0].local_size()/2;
-		dealii::parallel::distributed::Vector<std::complex<double> > eigenVectorsFlattenedArrayBlock;
-
-		vectorTools::createDealiiVector<std::complex<double> >(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
-								       numberWaveFunctionsPerCurrentBlock,
-								       eigenVectorsFlattenedArrayBlock);
+		    vectorTools::createDealiiVector<std::complex<double> >(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
+									   numberWaveFunctionsPerCurrentBlock,
+									   eigenVectorsFlattenedArrayBlock);
 #else
-		const unsigned int localVectorSize = eigenVectors[0].local_size();
-		dealii::parallel::distributed::Vector<double> eigenVectorsFlattenedArrayBlock;
-		vectorTools::createDealiiVector<double>(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
-							numberWaveFunctionsPerCurrentBlock,
-							eigenVectorsFlattenedArrayBlock);
+		    vectorTools::createDealiiVector<double>(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
+							    numberWaveFunctionsPerCurrentBlock,
+							    eigenVectorsFlattenedArrayBlock);
 
 #endif
 
-		//
-		//precompute certain maps
-		//
-		vectorTools::computeCellLocalIndexSetMap(eigenVectorsFlattenedArrayBlock.get_partitioner(),
-							 operatorMatrix.getMatrixFreeData(),
-							 numberWaveFunctionsPerCurrentBlock,
-							 flattenedArrayMacroCellLocalProcIndexIdMap,
-							 flattenedArrayCellLocalProcIndexIdMap);
+
+		    //
+		    //precompute certain maps
+		    //
+		    vectorTools::computeCellLocalIndexSetMap(eigenVectorsFlattenedArrayBlock.get_partitioner(),
+							     operatorMatrix.getMatrixFreeData(),
+							     numberWaveFunctionsPerCurrentBlock,
+							     flattenedArrayMacroCellLocalProcIndexIdMap,
+							     flattenedArrayCellLocalProcIndexIdMap);
 
 
-		operatorMatrix.getOverloadedConstraintMatrix()->precomputeMaps(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
-									       eigenVectorsFlattenedArrayBlock.get_partitioner(),
-									       numberWaveFunctionsPerCurrentBlock);
+		    operatorMatrix.getOverloadedConstraintMatrix()
+			->precomputeMaps(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
+			  	         eigenVectorsFlattenedArrayBlock.get_partitioner(),
+			 	         numberWaveFunctionsPerCurrentBlock);
+		}
 
 
 		//
 		//fill the eigenVectorsFlattenedArrayBlock from eigenVectorsFlattenedArray(to be coded)
 		//
 
+		computing_timer.enter_section("Copy from full to block flattened array");
+		for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
+		    for(unsigned int iWave = 0; iWave < numberWaveFunctionsPerCurrentBlock; ++iWave)
+                        eigenVectorsFlattenedArrayBlock.local_element(iNode*numberWaveFunctionsPerCurrentBlock
+				 +iWave)
+			     =eigenVectorsFlattenedArray.local_element(iNode*totalNumberWaveFunctions+lowIndex+iWave);
+
+	        computing_timer.exit_section("Copy from full to block flattened array");
 
 		//
 		//call Chebyshev filtering function only for the current block to be filtered
@@ -309,10 +323,18 @@ namespace dftfe{
 		//copy the eigenVectorsFlattenedArrayBlock into eigenVectorsFlattenedArray after filtering(to be coded)
 		//
 
+		computing_timer.enter_section("Copy from block to full flattened array");
+		for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
+		    for(unsigned int iWave = 0; iWave < numberWaveFunctionsPerCurrentBlock; ++iWave)
+			  eigenVectorsFlattenedArray.local_element(iNode*totalNumberWaveFunctions+lowIndex+iWave)
+			  = eigenVectorsFlattenedArrayBlock.local_element(iNode*numberWaveFunctionsPerCurrentBlock
+				 +iWave);
 
+	        computing_timer.exit_section("Copy from block to full flattened array");
 	      }
 	    else
 	      {
+		operatorMatrix.reinit(numberWaveFunctionsPerCurrentBlock);
 		//
 		//precompute certain maps
 		//
@@ -358,15 +380,15 @@ namespace dftfe{
 							 d_lowerBoundWantedSpectrum);
 		computing_timer.exit_section("Chebyshev filtering opt");
 
-		if(dftParameters::verbosity >= 2)
-		  pcout<<"ChebyShev Filtering Done: "<<std::endl;
-
 	      }
 
 	  }//block loop
 
+	eigenVectorsFlattenedArrayBlock.reinit(0);
+	if(dftParameters::verbosity >= 2)
+	  pcout<<"ChebyShev Filtering Done: "<<std::endl;
 
-	if(dftParameters::orthogType.compare("lowden") == 0)
+	if(dftParameters::orthogType.compare("LW") == 0)
 	  {
 	    computing_timer.enter_section("Lowden Orthogn Opt");
 	    linearAlgebraOperations::lowdenOrthogonalization(eigenVectorsFlattenedArray,
@@ -385,6 +407,23 @@ namespace dftfe{
 	  pcout<<"Orthogonalization Done: "<<std::endl;
 
 	computing_timer.enter_section("Rayleigh-Ritz proj Opt");
+	operatorMatrix.reinit(totalNumberWaveFunctions);
+
+	//
+	//precompute certain maps
+	//
+	vectorTools::computeCellLocalIndexSetMap(eigenVectorsFlattenedArray.get_partitioner(),
+						 operatorMatrix.getMatrixFreeData(),
+						 totalNumberWaveFunctions,
+						 flattenedArrayMacroCellLocalProcIndexIdMap,
+						 flattenedArrayCellLocalProcIndexIdMap);
+
+
+	operatorMatrix.getOverloadedConstraintMatrix()
+	    ->precomputeMaps(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
+	  	             eigenVectorsFlattenedArray.get_partitioner(),
+			     totalNumberWaveFunctions);
+
 	linearAlgebraOperations::rayleighRitz(operatorMatrix,
 					      eigenVectorsFlattenedArray,
 					      totalNumberWaveFunctions,
@@ -398,7 +437,7 @@ namespace dftfe{
 	    pcout<<"Rayleigh-Ritz Done: "<<std::endl;
 	    pcout<<std::endl;
 	  }
-	
+
 	computing_timer.enter_section("eigen vectors residuals opt");
 	linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
 							  eigenVectorsFlattenedArray,
@@ -428,22 +467,20 @@ namespace dftfe{
 	//
         //allocate back the memory of eigenVectors array
         //
-	vectorType d_tempDealiiVector;
-        operatorMatrix.getMatrixFreeData()->initialize_dof_vector(d_tempDealiiVector);
-
 	for(unsigned int iWave = 0; iWave < totalNumberWaveFunctions; ++iWave)
 	  eigenVectors[iWave].reinit(d_tempDealiiVector);
 
 	//
 	//copy back to eigenVectors array from eigenVectors Flattened Array
 	//
-	computing_timer.enter_section("Copy to flattened array");
+	computing_timer.enter_section("Copy to eigen vectors array");
 	for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
 	  {
 	    for(unsigned int iWave = 0; iWave < totalNumberWaveFunctions; ++iWave)
 	      {
-		unsigned int flattenedArrayGlobalIndex = (totalNumberWaveFunctions*(iNode + (operatorMatrix.getMatrixFreeData()->get_vector_partitioner()->local_range()).first) + iWave);
-		unsigned int flattenedArrayLocalIndex = flattenedArrayGlobalIndex - eigenVectorsFlattenedArray.get_partitioner()->local_range().first;
+		//unsigned int flattenedArrayGlobalIndex = (totalNumberWaveFunctions*(iNode + (operatorMatrix.getMatrixFreeData()->get_vector_partitioner()->local_range()).first) + iWave);
+		//unsigned int flattenedArrayLocalIndex = flattenedArrayGlobalIndex - eigenVectorsFlattenedArray.get_partitioner()->local_range().first;
+		unsigned int flattenedArrayLocalIndex = totalNumberWaveFunctions*iNode + iWave;
 #ifdef USE_COMPLEX
 		eigenVectors[iWave].local_element((*operatorMatrix.getLocalProcDofIndicesReal())[iNode]) = eigenVectorsFlattenedArray.local_element(flattenedArrayLocalIndex).real();
 		eigenVectors[iWave].local_element((*operatorMatrix.getLocalProcDofIndicesImag())[iNode]) = eigenVectorsFlattenedArray.local_element(flattenedArrayLocalIndex).imag();
@@ -453,10 +490,10 @@ namespace dftfe{
 #endif
 	      }
 	  }
-	computing_timer.exit_section("Copy to flattened array");
+	computing_timer.exit_section("Copy to eigen vectors array");
 
 
-	
+
 
 
       }

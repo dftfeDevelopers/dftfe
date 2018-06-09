@@ -56,7 +56,9 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   typename MatrixFree<3>::AdditionalData additional_data;
   //comment this if using deal ii version 9
   //additional_data.mpi_communicator = MPI_COMM_WORLD;
-  additional_data.tasks_parallel_scheme = MatrixFree<3>::AdditionalData::partition_partition;
+  additional_data.tasks_parallel_scheme =MatrixFree<3>::AdditionalData::partition_partition;
+  if (dftParameters::nonSelfConsistentForce)
+     additional_data.mapping_update_flags = update_values|update_gradients|update_JxW_values|update_hessians;
 
   //
   //Zero Dirichlet BC constraints on the boundary of the domain

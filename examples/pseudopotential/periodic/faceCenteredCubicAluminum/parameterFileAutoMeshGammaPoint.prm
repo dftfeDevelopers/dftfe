@@ -112,7 +112,7 @@ subsection Eigen-solver/Chebyshev solver related parameters
   set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 20    # default: 10
 
   #Parameter specifying the type of orthogonalization to be used: 1(Gram-Schmidt Orthogonalization), 2(Lowden Orthogonalization)"
-  set ORTHOGONALIZATION TYPE = GS
+  set ORTHOGONALIZATION TYPE = lowden
 end
 
 subsection Finite element mesh parameters

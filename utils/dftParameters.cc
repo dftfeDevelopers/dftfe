@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Phani Motamarri (2017), Sambit Das (2018)
+// @author Phani Motamarri, Sambit Das
 //
 #include <dftParameters.h>
 #include <iostream>
@@ -32,6 +32,7 @@ namespace dftParameters
 
   double radiusAtomBall=0.0, mixingParameter=0.5, dkx=0.0, dky=0.0, dkz=0.0;
   double lowerEndWantedSpectrum=0.0,relLinearSolverTolerance=1e-10,selfConsistentSolverTolerance=1e-10,TVal=500, start_magnetization=0.0;
+  double chebyshevTolerance = 1e-02;
 
   bool isPseudopotential=false,periodicX=false,periodicY=false,periodicZ=false, useSymm=false, timeReversal=false;
   std::string meshFileName="",coordinatesFile="",domainBoundingVectorsFile="",kPointDataFile="", ionRelaxFlagsFile="",orthogType="";
@@ -40,6 +41,7 @@ namespace dftParameters
   double meshSizeInnerBall=1.0, meshSizeOuterBall=1.0;
 
   bool isIonOpt=false, isCellOpt=false, isIonForce=false, isCellStress=false;
+  bool nonSelfConsistentForce=false;
   double forceRelaxTol  = 5e-5;//Hartree/Bohr
   double stressRelaxTol = 5e-7;//Hartree/Bohr^3
   unsigned int cellConstraintType=12;// all cell components to be relaxed
@@ -48,6 +50,11 @@ namespace dftParameters
   bool restartFromChk=false;
   bool reproducible_output=false;
   bool electrostaticsPRefinement=false;
+
+  unsigned int chebyshevBlockSize=1000;
+  bool useBatchGEMM=false;
+  unsigned int chebyshevOMPThreads=0;
+  unsigned int orthoRROMPThreads=0;
 
 
   void declare_parameters(ParameterHandler &prm)
@@ -88,6 +95,10 @@ namespace dftParameters
 	    prm.declare_entry("ION FORCE", "false",
 			      Patterns::Bool(),
 			      "[Standard] Boolean parameter specifying if atomic forces are to be computed. Automatically set to true if ION OPT is true.");
+
+	    prm.declare_entry("NON SELF CONSISTENT FORCE", "false",
+			      Patterns::Bool(),
+			      "[Developer] Boolean parameter specfiying whether to add the force terms arising due to the non self-consistency error. Currently non self-consistent force computation is still in developmental phase. The default option is false.");
 
 	    prm.declare_entry("ION OPT", "false",
 			      Patterns::Bool(),
@@ -303,9 +314,31 @@ namespace dftParameters
 			  Patterns::Integer(1,20),
 			  "[Developer] The initial number of the Chebyshev filter passes per SCF. More Chebyshev filter passes beyond the value set in this parameter can still happen due to additional algorithms used in the code.");
 
+
+	prm.declare_entry("CHEBYSHEV FILTER TOLERANCE","5e-02",
+			  Patterns::Double(0),
+			  "[Developer] Parameter specifying the tolerance to which eigenvectors need to computed using chebyshev filtering approach");
+
+	prm.declare_entry("CHEBYSHEV FILTER BLOCK SIZE", "1000",
+			  Patterns::Integer(1),
+			  "[Developer] The maximum number of wavefunctions which are handled by one call to the Chebyshev filter. This is useful for optimization purposes. The optimum value is dependent on the computing architecture.");
+
+	prm.declare_entry("BATCH GEMM", "false",
+			  Patterns::Bool(),
+			  "[Developer] Boolean parameter specifying whether to use gemm_batch blas routines to perform matrix-matrix multiplication operations with groups of matrices, processing a number of groups at once using threads instead of the standard serial route. CAUTION: batch blas routines will only be activated if the CHEBYSHEV FILTER BLOCK SIZE is less than 1000.");
+
+        prm.declare_entry("CHEBYSHEV FILTER NUM OMP THREADS", "0",
+			  Patterns::Integer(0,300),
+			  "[Developer] Sets the number of OpenMP threads to be used in the blas linear algebra calls inside the Chebyshev filtering. The default value is 0, for which no action is taken. CAUTION: For non zero values, CHEBYSHEV FILTER NUM OMP THREADS takes precedence over the OMP_NUM_THREADS environment variable.");
+
+	prm.declare_entry("ORTHO RR NUM OMP THREADS", "0",
+			  Patterns::Integer(0,300),
+			  "[Developer] Sets the number of OpenMP threads to be used in the blas linear algebra calls inside Lowden Orthogonalization and Rayleigh-Ritz projection steps. The default value is 0, for which no action is taken. CAUTION: For non-zero values, CHEBYSHEV FILTER NUM OMP THREADS takes precedence over the OMP_NUM_THREADS environment variable.");
+
+
 	prm.declare_entry("ORTHOGONALIZATION TYPE","GS",
-			  Patterns::Anything(),
-			  "[Standard] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization), Lowden(Lowden Orthogonalization)");
+			  Patterns::Selection("GS|LW|PGS"),
+			  "[Standard] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization), LW(Lowden Orthogonalization), PGS(Pseudo Gram-Schmidt Orthogonalization). GS is the default option.");
 
     }
     prm.leave_subsection ();
@@ -348,6 +381,7 @@ namespace dftParameters
 	prm.enter_subsection ("Optimization");
 	{
 	    dftParameters::isIonOpt                      = prm.get_bool("ION OPT");
+	    dftParameters::nonSelfConsistentForce        = prm.get_bool("NON SELF CONSISTENT FORCE");
 	    dftParameters::isIonForce                    = dftParameters::isIonOpt || prm.get_bool("ION FORCE");
 	    dftParameters::forceRelaxTol                 = prm.get_double("FORCE TOL");
 	    dftParameters::ionRelaxFlagsFile             = prm.get("ION RELAX FLAGS FILE");
@@ -431,7 +465,12 @@ namespace dftParameters
        dftParameters::lowerEndWantedSpectrum        = prm.get_double("LOWER BOUND WANTED SPECTRUM");
        dftParameters::chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
        dftParameters::numPass           = prm.get_integer("CHEBYSHEV FILTER PASSES");
+       dftParameters::chebyshevBlockSize= prm.get_integer("CHEBYSHEV FILTER BLOCK SIZE");
+       dftParameters::useBatchGEMM= prm.get_bool("BATCH GEMM");
        dftParameters::orthogType        = prm.get("ORTHOGONALIZATION TYPE");
+       dftParameters::chebyshevTolerance = prm.get_double("CHEBYSHEV FILTER TOLERANCE");
+       dftParameters::chebyshevOMPThreads = prm.get_integer("CHEBYSHEV FILTER NUM OMP THREADS");
+       dftParameters::orthoRROMPThreads= prm.get_integer("ORTHO RR NUM OMP THREADS");
     }
     prm.leave_subsection ();
 
@@ -445,6 +484,7 @@ namespace dftParameters
 
     check_print_parameters(prm);
   }
+
 
 
   void check_print_parameters(const dealii::ParameterHandler &prm)

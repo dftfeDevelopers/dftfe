@@ -46,8 +46,11 @@ namespace dftfe {
 
       extern double outerAtomBallRadius, meshSizeOuterDomain;
       extern double meshSizeInnerBall, meshSizeOuterBall;
+      extern double chebyshevTolerance;
+
 
       extern bool isIonOpt, isCellOpt, isIonForce, isCellStress;
+      extern bool nonSelfConsistentForce;
       extern double forceRelaxTol, stressRelaxTol;
       extern unsigned int cellConstraintType;
 
@@ -57,6 +60,11 @@ namespace dftfe {
       extern bool reproducible_output;
 
       extern bool electrostaticsPRefinement;
+
+      extern unsigned int chebyshevBlockSize;
+      extern bool useBatchGEMM;
+      extern unsigned int chebyshevOMPThreads;
+      extern unsigned int orthoRROMPThreads;
 
       /**
        * Declare parameters.

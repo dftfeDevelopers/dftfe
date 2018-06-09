@@ -187,7 +187,7 @@ namespace dftfe {
     unsigned int numberColumnsCoordinatesFile = 5;
 
     if (dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ)
-    {
+      {
 	//
 	//read fractionalCoordinates of atoms in periodic case
 	//
@@ -209,9 +209,9 @@ namespace dftfe {
 	  {
 	    atomLocationsFractional[i] = atomLocations[i] ;
 	  }
-    }
+      }
     else
-    {
+      {
 	dftUtils::readFile(numberColumnsCoordinatesFile, atomLocations, dftParameters::coordinatesFile);
 	pcout << "number of atoms: " << atomLocations.size() << "\n";
 
@@ -222,7 +222,7 @@ namespace dftfe {
 	  {
 	    atomTypes.insert((unsigned int)((*it)[0]));
 	  }
-    }
+      }
 
     //
     //read domain bounding Vectors
@@ -304,7 +304,7 @@ namespace dftfe {
     pcout<<"-----------------------------------------------------------------------------------------"<<std::endl;
 
     if (dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ)
-    {
+      {
 	pcout<<"-----Fractional coordinates of atoms------ "<<std::endl;
 	for(unsigned int i = 0; i < atomLocations.size(); ++i)
 	  {
@@ -314,14 +314,14 @@ namespace dftfe {
 	pcout<<"-----------------------------------------------------------------------------------------"<<std::endl;
 	//sanity check on fractional coordinates
 	std::vector<bool> periodicBc(3,false);
-  periodicBc[0]=dftParameters::periodicX;periodicBc[1]=dftParameters::periodicY;periodicBc[2]=dftParameters::periodicZ;
+	periodicBc[0]=dftParameters::periodicX;periodicBc[1]=dftParameters::periodicY;periodicBc[2]=dftParameters::periodicZ;
         const double tol=1e-6;
   	for(unsigned int i = 0; i < atomLocationsFractional.size(); ++i)
-	{
-	   for(unsigned int idim = 0; idim < 3; ++idim)
-	     if (periodicBc[idim])
+	  {
+	    for(unsigned int idim = 0; idim < 3; ++idim)
+	      if (periodicBc[idim])
 	        AssertThrow(atomLocationsFractional[i][2+idim]>-tol && atomLocationsFractional[i][2+idim]<1.0+tol,ExcMessage("DFT-FE Error: periodic direction fractional coordinates doesn't lie in [0,1]. Please check input fractional coordinates, or if this is an ionic relaxation step, please check the corresponding algorithm."));
-	}
+	  }
 
 	generateImageCharges();
 
@@ -340,9 +340,9 @@ namespace dftfe {
 	      }
 	    pcout<<"-----------------------------------------------------------------------------------------"<<std::endl;
 	  }
-    }
+      }
     else
-    {
+      {
 	//
 	//print cartesian coordinates
 	//
@@ -352,7 +352,7 @@ namespace dftfe {
 	    pcout<<"AtomId "<<i <<":  "<<atomLocations[i][2]<<" "<<atomLocations[i][3]<<" "<<atomLocations[i][4]<<"\n";
 	  }
 	pcout<<"-----------------------------------------------------------------------------------------"<<std::endl;
-    }
+      }
   }
 
   //dft init
@@ -561,7 +561,7 @@ namespace dftfe {
     unsigned int scfIter=0;
     double norm = 1.0;
     //CAUTION: Choosing a looser tolerance might lead to failed tests
-    const double adaptiveChebysevFilterPassesTol=1e+05;
+    const double adaptiveChebysevFilterPassesTol = dftParameters::chebyshevTolerance;
 
 
     pcout<<std::endl;
@@ -626,20 +626,20 @@ namespace dftfe {
 	computing_timer.enter_section("phiTot solve");
 
 	if (scfIter>0)
-	    phiTotalSolverProblem.reinit(matrix_free_data,
-				         d_phiTotRhoIn,
-				        *d_constraintsVector[phiTotDofHandlerIndex],
-				         phiTotDofHandlerIndex,
-				         d_atomNodeIdToChargeMap,
-				         *rhoInValues,
-					 false);
+	  phiTotalSolverProblem.reinit(matrix_free_data,
+				       d_phiTotRhoIn,
+				       *d_constraintsVector[phiTotDofHandlerIndex],
+				       phiTotDofHandlerIndex,
+				       d_atomNodeIdToChargeMap,
+				       *rhoInValues,
+				       false);
 	else
-	    phiTotalSolverProblem.reinit(matrix_free_data,
-				         d_phiTotRhoIn,
-				        *d_constraintsVector[phiTotDofHandlerIndex],
-				         phiTotDofHandlerIndex,
-				         d_atomNodeIdToChargeMap,
-				         *rhoInValues);
+	  phiTotalSolverProblem.reinit(matrix_free_data,
+				       d_phiTotRhoIn,
+				       *d_constraintsVector[phiTotDofHandlerIndex],
+				       phiTotDofHandlerIndex,
+				       d_atomNodeIdToChargeMap,
+				       *rhoInValues);
 
 	dealiiCGSolver.solve(phiTotalSolverProblem,
 
@@ -796,11 +796,15 @@ namespace dftfe {
 
 	    if(dftParameters::xc_id < 4)
 	      {
+		computing_timer.enter_section("VEff Computation");
 		kohnShamDFTEigenOperator.computeVEff(rhoInValues, d_phiTotRhoIn, d_phiExt, pseudoValues);
+		computing_timer.exit_section("VEff Computation");
 	      }
 	    else if (dftParameters::xc_id == 4)
 	      {
+		computing_timer.enter_section("VEff Computation");
 		kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, d_phiTotRhoIn, d_phiExt, pseudoValues);
+		computing_timer.exit_section("VEff Computation");
 	      }
 
 	    for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
@@ -888,13 +892,10 @@ namespace dftfe {
 	//compute integral rhoOut
 	//
 	const double integralRhoValue=totalCharge(rhoOutValues);
-	double totMagnetization = 0.0 ;
-	if (dftParameters::spinPolarized==1)
-	   totMagnetization=totalMagnetization(rhoOutValuesSpinPolarized);
 	if (dftParameters::verbosity==2){
 	  pcout<< std::endl<<"number of electrons: "<< integralRhoValue<<std::endl;
 	  if (dftParameters::spinPolarized==1)
-		pcout<< std::endl<<"net magnetization: "<< totMagnetization<<std::endl;
+		pcout<< std::endl<<"net magnetization: "<< totalMagnetization(rhoOutValuesSpinPolarized)<std::endl;
 	}
 	//
 	//phiTot with rhoOut
