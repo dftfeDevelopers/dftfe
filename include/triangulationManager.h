@@ -220,6 +220,14 @@ namespace dftfe  {
       void generateCoarseMesh(parallel::distributed::Triangulation<3>& parallelTriangulation);
 
     /**
+     * @brief internal function which sets refinement flags based on a custom created algorithm
+     *
+     */
+      void refinementAlgorithmA(parallel::distributed::Triangulation<3>& parallelTriangulation,
+	                        std::vector<unsigned int> & locallyOwnedCellsRefineFlags,
+				std::map<dealii::CellId,unsigned int> & cellIdToCellRefineFlagMapLocal);
+
+    /**
      * @brief internal function which refines the serial mesh based on refinement flags from parallel mesh.
      * This ensures that we get the same mesh in serial and parallel.
      *

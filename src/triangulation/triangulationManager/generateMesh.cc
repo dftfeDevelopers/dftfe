@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -73,6 +73,104 @@ namespace dftfe {
 	  if (dftParameters::verbosity>=2)
 	    pcout<<std::endl<< "Coarse triangulation number of elements: "<< parallelTriangulation.n_global_active_cells()<<std::endl;
     }
+
+    void triangulationManager::refinementAlgorithmA(parallel::distributed::Triangulation<3>& parallelTriangulation,
+	                      std::vector<unsigned int> & locallyOwnedCellsRefineFlags,
+		              std::map<dealii::CellId,unsigned int> & cellIdToCellRefineFlagMapLocal)
+    {
+	  //
+	  //compute magnitudes of domainBounding Vectors
+	  //
+	  const double domainBoundingVectorMag1 = sqrt(d_domainBoundingVectors[0][0]*d_domainBoundingVectors[0][0] + d_domainBoundingVectors[0][1]*d_domainBoundingVectors[0][1] +  d_domainBoundingVectors[0][2]*d_domainBoundingVectors[0][2]);
+	  const double domainBoundingVectorMag2 = sqrt(d_domainBoundingVectors[1][0]*d_domainBoundingVectors[1][0] + d_domainBoundingVectors[1][1]*d_domainBoundingVectors[1][1] +  d_domainBoundingVectors[1][2]*d_domainBoundingVectors[1][2]);
+	  const double domainBoundingVectorMag3 = sqrt(d_domainBoundingVectors[2][0]*d_domainBoundingVectors[2][0] + d_domainBoundingVectors[2][1]*d_domainBoundingVectors[2][1] +  d_domainBoundingVectors[2][2]*d_domainBoundingVectors[2][2]);
+
+	  locallyOwnedCellsRefineFlags.clear();
+	  cellIdToCellRefineFlagMapLocal.clear();
+	  typename parallel::distributed::Triangulation<3>::active_cell_iterator cell, endc;
+	  cell = parallelTriangulation.begin_active();
+	  endc = parallelTriangulation.end();
+	  //
+	  for(;cell != endc; ++cell)
+	      if(cell->is_locally_owned())
+		{
+		  const dealii::Point<3> center(cell->center());
+		  double currentMeshSize = cell->minimum_vertex_distance();
+
+		  //
+		  //compute projection of the vector joining the center of domain and centroid of cell onto
+		  //each of the domain bounding vectors
+		  //
+		  double projComponent_1 = (center[0]*d_domainBoundingVectors[0][0]+center[1]*d_domainBoundingVectors[0][1]+center[2]*d_domainBoundingVectors[0][2])/domainBoundingVectorMag1;
+		  double projComponent_2 = (center[0]*d_domainBoundingVectors[1][0]+center[1]*d_domainBoundingVectors[1][1]+center[2]*d_domainBoundingVectors[1][2])/domainBoundingVectorMag2;
+		  double projComponent_3 = (center[0]*d_domainBoundingVectors[2][0]+center[1]*d_domainBoundingVectors[2][1]+center[2]*d_domainBoundingVectors[2][2])/domainBoundingVectorMag3;
+
+
+		  bool cellRefineFlag = false;
+
+
+		  //loop over all atoms
+		  double distanceToClosestAtom = 1e8;
+		  Point<3> closestAtom;
+		  for (unsigned int n=0; n<d_atomPositions.size(); n++)
+		    {
+		      Point<3> atom(d_atomPositions[n][2],d_atomPositions[n][3],d_atomPositions[n][4]);
+		      if(center.distance(atom) < distanceToClosestAtom)
+			{
+			  distanceToClosestAtom = center.distance(atom);
+			  closestAtom = atom;
+			}
+		    }
+
+		  for(unsigned int iImageCharge=0; iImageCharge < d_imageAtomPositions.size(); ++iImageCharge)
+		    {
+		      Point<3> imageAtom(d_imageAtomPositions[iImageCharge][0],d_imageAtomPositions[iImageCharge][1],d_imageAtomPositions[iImageCharge][2]);
+		      if(center.distance(imageAtom) < distanceToClosestAtom)
+			{
+			  distanceToClosestAtom = center.distance(imageAtom);
+			  closestAtom = imageAtom;
+			}
+		    }
+
+		  bool inOuterAtomBall = false;
+
+		  if(distanceToClosestAtom <= dftParameters::outerAtomBallRadius)
+		    inOuterAtomBall = true;
+
+		  if(inOuterAtomBall && currentMeshSize > dftParameters::meshSizeOuterBall)
+		    cellRefineFlag = true;
+
+		  MappingQ1<3,3> mapping;
+		  try
+		    {
+		      Point<3> p_cell = mapping.transform_real_to_unit_cell(cell,closestAtom);
+		      double dist = GeometryInfo<3>::distance_to_unit_cell(p_cell);
+
+		      if(dist < 1e-08 && currentMeshSize > dftParameters::meshSizeInnerBall)
+			cellRefineFlag = true;
+
+		    }
+		  catch(MappingQ1<3>::ExcTransformationFailed)
+		    {
+		    }
+		    //
+		    //set refine flags
+		    if(cellRefineFlag)
+		      {
+			  locallyOwnedCellsRefineFlags.push_back(1);
+			  cellIdToCellRefineFlagMapLocal[cell->id()]=1;
+			  cell->set_refine_flag();
+		      }
+		    else
+		      {
+			  cellIdToCellRefineFlagMapLocal[cell->id()]=0;
+			  locallyOwnedCellsRefineFlags.push_back(0);
+		      }
+		}
+
+
+    }
+
     //
     //generate adaptive mesh
     //
@@ -94,102 +192,24 @@ namespace dftfe {
 	}
       else
 	{
-	  //
-	  //compute magnitudes of domainBounding Vectors
-	  //
-	  const double domainBoundingVectorMag1 = sqrt(d_domainBoundingVectors[0][0]*d_domainBoundingVectors[0][0] + d_domainBoundingVectors[0][1]*d_domainBoundingVectors[0][1] +  d_domainBoundingVectors[0][2]*d_domainBoundingVectors[0][2]);
-	  const double domainBoundingVectorMag2 = sqrt(d_domainBoundingVectors[1][0]*d_domainBoundingVectors[1][0] + d_domainBoundingVectors[1][1]*d_domainBoundingVectors[1][1] +  d_domainBoundingVectors[1][2]*d_domainBoundingVectors[1][2]);
-	  const double domainBoundingVectorMag3 = sqrt(d_domainBoundingVectors[2][0]*d_domainBoundingVectors[2][0] + d_domainBoundingVectors[2][1]*d_domainBoundingVectors[2][1] +  d_domainBoundingVectors[2][2]*d_domainBoundingVectors[2][2]);
 
           generateCoarseMesh(parallelTriangulation);
 
 	  //
 	  //Multilayer refinement
 	  //
-	  dealii::Point<3> origin;
 	  unsigned int numLevels=0;
 	  bool refineFlag = true;
-	  typename parallel::distributed::Triangulation<3>::active_cell_iterator cell, endc;
 
 	  while(refineFlag)
 	    {
 	      refineFlag = false;
+
 	      std::vector<unsigned int> locallyOwnedCellsRefineFlags;
-	      cell = parallelTriangulation.begin_active();
-	      endc = parallelTriangulation.end();
-	      //
-	      for(;cell != endc; ++cell)
-		  if(cell->is_locally_owned())
-		    {
-		      const dealii::Point<3> center(cell->center());
-		      double currentMeshSize = cell->minimum_vertex_distance();
-
-		      //
-		      //compute projection of the vector joining the center of domain and centroid of cell onto
-		      //each of the domain bounding vectors
-		      //
-		      double projComponent_1 = (center[0]*d_domainBoundingVectors[0][0]+center[1]*d_domainBoundingVectors[0][1]+center[2]*d_domainBoundingVectors[0][2])/domainBoundingVectorMag1;
-		      double projComponent_2 = (center[0]*d_domainBoundingVectors[1][0]+center[1]*d_domainBoundingVectors[1][1]+center[2]*d_domainBoundingVectors[1][2])/domainBoundingVectorMag2;
-		      double projComponent_3 = (center[0]*d_domainBoundingVectors[2][0]+center[1]*d_domainBoundingVectors[2][1]+center[2]*d_domainBoundingVectors[2][2])/domainBoundingVectorMag3;
-
-
-		      bool cellRefineFlag = false;
-
-
-		      //loop over all atoms
-		      double distanceToClosestAtom = 1e8;
-		      Point<3> closestAtom;
-		      for (unsigned int n=0; n<d_atomPositions.size(); n++)
-			{
-			  Point<3> atom(d_atomPositions[n][2],d_atomPositions[n][3],d_atomPositions[n][4]);
-			  if(center.distance(atom) < distanceToClosestAtom)
-			    {
-			      distanceToClosestAtom = center.distance(atom);
-			      closestAtom = atom;
-			    }
-			}
-
-		      for(unsigned int iImageCharge=0; iImageCharge < d_imageAtomPositions.size(); ++iImageCharge)
-			{
-			  Point<3> imageAtom(d_imageAtomPositions[iImageCharge][0],d_imageAtomPositions[iImageCharge][1],d_imageAtomPositions[iImageCharge][2]);
-			  if(center.distance(imageAtom) < distanceToClosestAtom)
-			    {
-			      distanceToClosestAtom = center.distance(imageAtom);
-			      closestAtom = imageAtom;
-			    }
-			}
-
-		      bool inOuterAtomBall = false;
-
-		      if(distanceToClosestAtom <= dftParameters::outerAtomBallRadius)
-			inOuterAtomBall = true;
-
-		      if(inOuterAtomBall && currentMeshSize > dftParameters::meshSizeOuterBall)
-			cellRefineFlag = true;
-
-		      MappingQ1<3,3> mapping;
-		      try
-			{
-			  Point<3> p_cell = mapping.transform_real_to_unit_cell(cell,closestAtom);
-			  double dist = GeometryInfo<3>::distance_to_unit_cell(p_cell);
-
-			  if(dist < 1e-08 && currentMeshSize > dftParameters::meshSizeInnerBall)
-			    cellRefineFlag = true;
-
-			}
-		      catch(MappingQ1<3>::ExcTransformationFailed)
-			{
-			}
-		      //
-		      //set refine flags
-		      if(cellRefineFlag)
-			{
-			  locallyOwnedCellsRefineFlags.push_back(1);
-			  cell->set_refine_flag();
-			}
-		       else
-			  locallyOwnedCellsRefineFlags.push_back(0);
-		    }
+	      std::map<dealii::CellId,unsigned int> cellIdToCellRefineFlagMapLocal;
+	      refinementAlgorithmA(parallelTriangulation,
+	                           locallyOwnedCellsRefineFlags,
+				   cellIdToCellRefineFlagMapLocal);
 
 	      //This sets the global refinement sweep flag
 	      refineFlag = std::accumulate(locallyOwnedCellsRefineFlags.begin(),
@@ -217,6 +237,7 @@ namespace dftfe {
 	  //
 	  double minElemLength = dftParameters::meshSizeOuterDomain;
 	  unsigned int numLocallyOwnedCells=0;
+	  typename parallel::distributed::Triangulation<3>::active_cell_iterator cell, endc;
 	  cell = parallelTriangulation.begin_active();
 	  endc = parallelTriangulation.end();
 	  for( ; cell != endc; ++cell)
@@ -275,12 +296,6 @@ namespace dftfe {
 	}
       else
 	{
-	  //
-	  //compute magnitudes of domainBounding Vectors
-	  //
-	  const double domainBoundingVectorMag1 = sqrt(d_domainBoundingVectors[0][0]*d_domainBoundingVectors[0][0] + d_domainBoundingVectors[0][1]*d_domainBoundingVectors[0][1] +  d_domainBoundingVectors[0][2]*d_domainBoundingVectors[0][2]);
-	  const double domainBoundingVectorMag2 = sqrt(d_domainBoundingVectors[1][0]*d_domainBoundingVectors[1][0] + d_domainBoundingVectors[1][1]*d_domainBoundingVectors[1][1] +  d_domainBoundingVectors[1][2]*d_domainBoundingVectors[1][2]);
-	  const double domainBoundingVectorMag3 = sqrt(d_domainBoundingVectors[2][0]*d_domainBoundingVectors[2][0] + d_domainBoundingVectors[2][1]*d_domainBoundingVectors[2][1] +  d_domainBoundingVectors[2][2]*d_domainBoundingVectors[2][2]);
 
           generateCoarseMesh(parallelTriangulation);
 	  generateCoarseMesh(serialTriangulation);
@@ -289,96 +304,17 @@ namespace dftfe {
 	  //
 	  //Multilayer refinement
 	  //
-	  dealii::Point<3> origin;
 	  unsigned int numLevels=0;
 	  bool refineFlag = true;
-          std::map<dealii::CellId,unsigned int> cellIdToCellRefineFlagMapLocal;
-	  typename parallel::distributed::Triangulation<3>::active_cell_iterator cell, endc;
-
 	  while(refineFlag)
 	    {
 	      refineFlag = false;
 	      std::vector<unsigned int> locallyOwnedCellsRefineFlags;
-	      cell = parallelTriangulation.begin_active();
-	      endc = parallelTriangulation.end();
-	      //
-	      for(;cell != endc; ++cell)
-		  if(cell->is_locally_owned())
-		    {
-		      dealii::Point<3> center(cell->center());
-		      double currentMeshSize = cell->minimum_vertex_distance();
+	      std::map<dealii::CellId,unsigned int> cellIdToCellRefineFlagMapLocal;
+	      refinementAlgorithmA(parallelTriangulation,
+	                           locallyOwnedCellsRefineFlags,
+				   cellIdToCellRefineFlagMapLocal);
 
-		      //
-		      //compute projection of the vector joining the center of domain and centroid of cell onto
-		      //each of the domain bounding vectors
-		      //
-		      double projComponent_1 = (center[0]*d_domainBoundingVectors[0][0]+center[1]*d_domainBoundingVectors[0][1]+center[2]*d_domainBoundingVectors[0][2])/domainBoundingVectorMag1;
-		      double projComponent_2 = (center[0]*d_domainBoundingVectors[1][0]+center[1]*d_domainBoundingVectors[1][1]+center[2]*d_domainBoundingVectors[1][2])/domainBoundingVectorMag2;
-		      double projComponent_3 = (center[0]*d_domainBoundingVectors[2][0]+center[1]*d_domainBoundingVectors[2][1]+center[2]*d_domainBoundingVectors[2][2])/domainBoundingVectorMag3;
-
-
-		      bool cellRefineFlag = false;
-
-
-		      //loop over all atoms
-		      double distanceToClosestAtom = 1e8;
-		      Point<3> closestAtom;
-		      for (unsigned int n=0; n<d_atomPositions.size(); n++)
-			{
-			  Point<3> atom(d_atomPositions[n][2],d_atomPositions[n][3],d_atomPositions[n][4]);
-			  if(center.distance(atom) < distanceToClosestAtom)
-			    {
-			      distanceToClosestAtom = center.distance(atom);
-			      closestAtom = atom;
-			    }
-			}
-
-		      for(unsigned int iImageCharge=0; iImageCharge < d_imageAtomPositions.size(); ++iImageCharge)
-			{
-			  Point<3> imageAtom(d_imageAtomPositions[iImageCharge][0],d_imageAtomPositions[iImageCharge][1],d_imageAtomPositions[iImageCharge][2]);
-			  if(center.distance(imageAtom) < distanceToClosestAtom)
-			    {
-			      distanceToClosestAtom = center.distance(imageAtom);
-			      closestAtom = imageAtom;
-			    }
-			}
-
-		      bool inOuterAtomBall = false;
-
-		      if(distanceToClosestAtom <= dftParameters::outerAtomBallRadius)
-			inOuterAtomBall = true;
-
-		      if(inOuterAtomBall && currentMeshSize > dftParameters::meshSizeOuterBall)
-			cellRefineFlag = true;
-
-		      MappingQ1<3,3> mapping;
-		      try
-			{
-			  Point<3> p_cell = mapping.transform_real_to_unit_cell(cell,closestAtom);
-			  double dist = GeometryInfo<3>::distance_to_unit_cell(p_cell);
-
-			  if(dist < 1e-08 && currentMeshSize > dftParameters::meshSizeInnerBall)
-			    cellRefineFlag = true;
-
-			}
-		      catch(MappingQ1<3>::ExcTransformationFailed)
-			{
-			}
-
-		      //
-		      //set refine flags
-		      if(cellRefineFlag)
-			{
-			  locallyOwnedCellsRefineFlags.push_back(1);
-			  cellIdToCellRefineFlagMapLocal[cell->id()]=1;
-			  cell->set_refine_flag();
-			}
-		       else
-		       {
-			  cellIdToCellRefineFlagMapLocal[cell->id()]=0;
-			  locallyOwnedCellsRefineFlags.push_back(0);
-		       }
-		    }
 
 	      //This sets the global refinement sweep flag
 	      refineFlag = std::accumulate(locallyOwnedCellsRefineFlags.begin(),
@@ -413,6 +349,7 @@ namespace dftfe {
 	  //compute some adaptive mesh metrics
 	  //
 	  double minElemLength = dftParameters::meshSizeOuterDomain;
+	  typename parallel::distributed::Triangulation<3>::active_cell_iterator cell, endc;
 	  cell = parallelTriangulation.begin_active();
 	  endc = parallelTriangulation.end();
 	  unsigned int numLocallyOwnedCells=0;
