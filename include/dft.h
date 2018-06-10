@@ -307,6 +307,11 @@ namespace dftfe {
       double totalCharge(const std::map<dealii::CellId, std::vector<double> > *rhoQuadValues);
 
       /**
+       * Computes net magnetization from the difference of local spin densities
+       */
+      double totalMagnetization(const std::map<dealii::CellId, std::vector<double> > *rhoQuadValues) ;
+
+      /**
        * normalize the electron density
        */
       void normalizeRho();
