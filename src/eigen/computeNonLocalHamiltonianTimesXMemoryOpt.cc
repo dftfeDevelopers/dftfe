@@ -310,7 +310,6 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vec
 template<unsigned int FEOrder>
 void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::parallel::distributed::Vector<std::complex<double> > & src,
 							   const unsigned int numberWaveFunctions,
-							   const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap,
 							   dealii::parallel::distributed::Vector<std::complex<double> >       & dst) const
 {
 
@@ -350,7 +349,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::paralle
 	  {
 	    for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
 	    {
-	      dealii::types::global_dof_index localNodeId = flattenedArrayCellLocalProcIndexIdMap[iElem][iNode];
+	      dealii::types::global_dof_index localNodeId = d_flattenedArrayCellLocalProcIndexIdMap[iElem][iNode];
 	      zcopy_(&numberWaveFunctions,
 		     src.begin()+localNodeId,
 		     &inc,
@@ -475,7 +474,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::paralle
 
 	for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
 	    {
-	      int localNodeId = flattenedArrayCellLocalProcIndexIdMap[elementId][iNode];
+	      dealii::types::global_dof_index localNodeId = d_flattenedArrayCellLocalProcIndexIdMap[elementId][iNode];
 	      zaxpy_(&numberWaveFunctions,
 		     &alpha1,
 		     &cellNonLocalHamTimesWaveMatrix[numberWaveFunctions*iNode],
@@ -494,7 +493,6 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::paralle
 template<unsigned int FEOrder>
 void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::parallel::distributed::Vector<double> & src,
 							   const unsigned int numberWaveFunctions,
-							   const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap,
 							   dealii::parallel::distributed::Vector<double>       & dst) const
 {
 
@@ -535,7 +533,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::paralle
 	  {
 	    for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
 	    {
-	      dealii::types::global_dof_index localNodeId = flattenedArrayCellLocalProcIndexIdMap[iElem][iNode];
+	      dealii::types::global_dof_index localNodeId = d_flattenedArrayCellLocalProcIndexIdMap[iElem][iNode];
 	      dcopy_(&numberWaveFunctions,
 		     src.begin()+localNodeId,
 		     &inc,
@@ -659,7 +657,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::paralle
 
 	for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
 	    {
-	      int localNodeId = flattenedArrayCellLocalProcIndexIdMap[elementId][iNode];
+	      dealii::types::global_dof_index localNodeId = d_flattenedArrayCellLocalProcIndexIdMap[elementId][iNode];
 	      daxpy_(&numberWaveFunctions,
 		     &alpha1,
 		     &cellNonLocalHamTimesWaveMatrix[numberWaveFunctions*iNode],
