@@ -23,7 +23,7 @@
  */
 
 #include <linearAlgebraOperations.h>
-#include <linearAlgebraOperationsUtils.h>
+#include <linearAlgebraOperationsInternal.h>
 #include <dftParameters.h>
 #include <dftUtils.h>
 #include <omp.h>
@@ -503,9 +503,9 @@ namespace dftfe{
       //
       computing_timer.enter_section("eigen decomp in RR");
 #if(defined WITH_SCALAPACK && !USE_COMPLEX)
-      const unsigned rowsBlockSize=50;
+      const unsigned rowsBlockSize=std::min((unsigned int)50,numberWaveFunctions);
       std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  processGrid;
-      utils::createProcessGridSquareMatrix(X.get_mpi_communicator(),
+      internal::createProcessGridSquareMatrix(X.get_mpi_communicator(),
 		                              numberWaveFunctions,
 		                              processGrid,
 				              rowsBlockSize);
@@ -1032,6 +1032,14 @@ namespace dftfe{
 
     template void pseudoGramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<dataTypes::number> &,
 					             const unsigned int);
+
+    template void pseudoGramSchmidtOrthogonalizationSerial
+	                                           (dealii::parallel::distributed::Vector<dataTypes::number> &,
+					            const unsigned int);
+
+    template void pseudoGramSchmidtOrthogonalizationParallel
+	                                           (dealii::parallel::distributed::Vector<dataTypes::number> &,
+					            const unsigned int);
 
     template void rayleighRitz(operatorDFTClass  & operatorMatrix,
 			       dealii::parallel::distributed::Vector<dataTypes::number> &,

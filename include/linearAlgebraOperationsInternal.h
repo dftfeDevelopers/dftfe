@@ -13,29 +13,42 @@
 //
 // ---------------------------------------------------------------------
 
-#ifndef linearAlgebraOperationsUtils_h
-#define linearAlgebraOperationsUtils_h
+#ifndef linearAlgebraOperationsInternal_h
+#define linearAlgebraOperationsInternal_h
 
 #include <headers.h>
-#include <dftParameters.h>
 
 namespace dftfe
 {
 
   namespace linearAlgebraOperations
   {
-    /** @file linearAlgebraOperationsUtils.h
-     *  @brief Contains small utils functions used in linearAlgebraOperations
+    /** @file linearAlgebraOperationsInternal.h
+     *  @brief Contains small internal functions used in linearAlgebraOperations
      *
      *  @author Sambit Das
      */
-    namespace utils
+    namespace internal
     {
 #ifdef WITH_SCALAPACK
 	void createProcessGridSquareMatrix(const MPI_Comm & mpi_communicator,
 		                           const unsigned size,
 		                           std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 				           const unsigned int rowsBlockSize);
+
+
+	template<typename T>
+	void fillParallelOverlapMatrix(const dealii::parallel::distributed::Vector<T> & X,
+		                       const unsigned int numberVectors,
+		                       const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+				       dealii::ScaLAPACKMatrix<T> & overlapMatPar);
+
+	template<typename T>
+	void subspaceRotation(dealii::parallel::distributed::Vector<T> & subspaceVectorsArray,
+		              const unsigned int numberSubspaceVectors,
+		              const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+			      const dealii::ScaLAPACKMatrix<T> & rotationMatPar);
+
 #endif
     }
   }
