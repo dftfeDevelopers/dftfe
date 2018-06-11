@@ -321,7 +321,7 @@ namespace dftfe{
       vectorType d_invSqrtMassVector,d_sqrtMassVector;
 
       dealii::Table<2, dealii::VectorizedArray<double> > vEff;
-      dealii::Table<3, dealii::VectorizedArray<double> > derExcWithSigmaTimesGradRho;
+      dealii::Table<2, dealii::Tensor<1,3,dealii::VectorizedArray<double> > > derExcWithSigmaTimesGradRho;
 
 
        /**
@@ -333,7 +333,7 @@ namespace dftfe{
 
       ///storage for shapefunctions
       std::vector<double> d_shapeFunctionValue;
-      dealii::Table<3, dealii::VectorizedArray<double> > d_cellShapeFunctionGradientValue;
+      dealii::Table<3, dealii::Tensor<1,3,dealii::VectorizedArray<double> > > d_cellShapeFunctionGradientValue;
 
 
 

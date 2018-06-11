@@ -68,6 +68,7 @@ namespace dftfe {
       extern bool useBatchGEMM;
       extern unsigned int chebyshevOMPThreads;
       extern unsigned int orthoRROMPThreads;
+      extern bool cacheShapeGradData;
 
       /**
        * Declare parameters.
