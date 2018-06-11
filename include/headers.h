@@ -51,7 +51,6 @@
 #include <deal.II/numerics/error_estimator.h>
 #include <deal.II/base/parameter_handler.h>
 #include <deal.II/grid/grid_refinement.h>
-#include <deal.II/grid/tria_boundary_lib.h>
 #include <deal.II/grid/grid_tools.h>
 #include <deal.II/grid/grid_in.h>
 #include <deal.II/grid/grid_out.h>
