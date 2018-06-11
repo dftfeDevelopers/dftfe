@@ -52,11 +52,21 @@ namespace dftfe{
     virtual void init() = 0;
 
    /**
-    * @brief initializes datastructures for HX, XtHX.
+    * @brief initializes parallel layouts and index maps for HX, XtHX and creates a flattened array format for X
     *
     * @param wavefunBlockSize number of wavefunction vector (block size of X).
+    * @param flag controls the creation of flattened array format and index maps or only index maps
+    *
+    * @return X format to store a multi-vector array 
+    * in a flattened format with all the wavefunction values corresponding to a given node being stored
+    * contiguously 
+    *
     */
-    virtual void reinit(const unsigned int wavefunBlockSize)=0;
+    virtual void reinit(const unsigned int wavefunBlockSize,
+			dealii::parallel::distributed::Vector<dataTypes::number> & X,
+			bool flag) = 0;
+
+    virtual void reinit(const unsigned int wavefunBlockSize) = 0;
 
     /**
      * @brief compute diagonal mass matrix
@@ -96,8 +106,6 @@ namespace dftfe{
      */
     virtual void HX(dealii::parallel::distributed::Vector<dataTypes::number> & X,
 		    const unsigned int numberComponents,
-		    const std::vector<std::vector<dealii::types::global_dof_index> > & macroCellMap,
-		    const std::vector<std::vector<dealii::types::global_dof_index> > & cellMap,
 		    const bool scaleFlag,
 		    const dataTypes::number scalar,
 		    dealii::parallel::distributed::Vector<dataTypes::number> & Y) = 0;
@@ -117,8 +125,6 @@ namespace dftfe{
      */
     virtual void XtHX(dealii::parallel::distributed::Vector<dataTypes::number> & X,
 		      const unsigned int numberComponents,
-		      const std::vector<std::vector<dealii::types::global_dof_index> > & macroCellMap,
-		      const std::vector<std::vector<dealii::types::global_dof_index> > & cellMap,
 		      std::vector<dataTypes::number> & ProjHam) = 0;
 
 
