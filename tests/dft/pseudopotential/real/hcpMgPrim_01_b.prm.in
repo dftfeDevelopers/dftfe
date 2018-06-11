@@ -23,7 +23,7 @@ end
 
 subsection Finite element mesh parameters
   set POLYNOMIAL ORDER = 2
-  set CACHE SHAPE GRAD=false  
+  set CACHE SHAPE GRAD=true  
   subsection Auto mesh generation parameters
     set BASE MESH SIZE = 1.0 
     set ATOM BALL RADIUS = 2.0

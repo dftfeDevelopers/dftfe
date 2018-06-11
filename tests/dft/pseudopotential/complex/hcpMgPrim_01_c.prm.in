@@ -23,7 +23,7 @@ end
 
 subsection Finite element mesh parameters
   set POLYNOMIAL ORDER = 2
-  set CACHE SHAPE GRAD=true  
+  
   subsection Auto mesh generation parameters
     set BASE MESH SIZE = 1.0 
     set ATOM BALL RADIUS = 2.0
@@ -73,6 +73,8 @@ subsection SCF parameters
       set LOWER BOUND WANTED SPECTRUM = -10.0
       set CHEBYSHEV POLYNOMIAL DEGREE = 0
       set CHEBYSHEV FILTER TOLERANCE=5e-3
+      set CHEBYSHEV FILTER BLOCK SIZE=7
+      set BATCH GEMM=true
   end
 end
 
