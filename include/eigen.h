@@ -70,8 +70,6 @@ namespace dftfe{
        */
       void HX(dealii::parallel::distributed::Vector<dataTypes::number> & src,
 	      const unsigned int numberComponents,
-	      const std::vector<std::vector<dealii::types::global_dof_index> > & macroCellMap,
-	      const std::vector<std::vector<dealii::types::global_dof_index> > & cellMap,
 	      const bool scaleFlag,
 	      const dataTypes::number scalar,
 	      dealii::parallel::distributed::Vector<dataTypes::number> & dst);
@@ -85,8 +83,6 @@ namespace dftfe{
        */
       void XtHX(dealii::parallel::distributed::Vector<dataTypes::number> & src,
 		const unsigned int numberComponents,
-		const std::vector<std::vector<dealii::types::global_dof_index> > & macroCellMap,
-		const std::vector<std::vector<dealii::types::global_dof_index> > & cellMap,
 		std::vector<dataTypes::number> & ProjHam);
 
 
@@ -178,13 +174,27 @@ namespace dftfe{
       void init ();
 
       /**
-       * @brief initializes parallel layouts and index maps required for HX, XtHX.
+       * @brief initializes parallel layouts and index maps required for HX, XtHX and creates a flattened array
+       * format for X
        *
        * @param wavefunBlockSize number of wavefunction vectors to which the parallel layouts and
        * index maps correspond to. The same number of wavefunction vectors must be used
        * in subsequent calls to HX, XtHX.
+       * @param flag controls the creation of flattened array format and index maps or only index maps
+       *
+       *
+       * @return X format to store a multi-vector array 
+       * in a flattened format with all the wavefunction values corresponding to a given node being stored
+       * contiguously 
+       *
        */
+      void reinit(const unsigned int wavefunBlockSize,
+		  dealii::parallel::distributed::Vector<dataTypes::number> & X,
+		  bool flag);
+
       void reinit(const unsigned int wavefunBlockSize);
+
+
 
       /**
        * @brief Computes diagonal mass matrix
@@ -252,7 +262,6 @@ namespace dftfe{
        */
       void computeLocalHamiltonianTimesX(const dealii::parallel::distributed::Vector<dataTypes::number> & src,
 					 const unsigned int numberWaveFunctions,
-					 const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap,
 					 dealii::parallel::distributed::Vector<dataTypes::number> & dst) const;
 
 
@@ -270,7 +279,6 @@ namespace dftfe{
       void computeLocalHamiltonianTimesXBatchGEMM
 	           (const dealii::parallel::distributed::Vector<dataTypes::number> & src,
 		    const unsigned int numberWaveFunctions,
-		    const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap,
 		    dealii::parallel::distributed::Vector<dataTypes::number> & dst) const;
 
 
@@ -287,7 +295,6 @@ namespace dftfe{
        */
       void computeNonLocalHamiltonianTimesX(const dealii::parallel::distributed::Vector<dataTypes::number> & src,
 					    const unsigned int numberWaveFunctions,
-					    const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap,
 					    dealii::parallel::distributed::Vector<dataTypes::number> & dst) const;
 
 
@@ -302,11 +309,9 @@ namespace dftfe{
        * @param flattenedArrayCellLocalProcIndexIdMap precomputed cell-localindex id map of the multi-wavefuncton field in the order of macrocells
        * @param dst Vector containing matrix times given multi-vectors product
        */
-      void computeNonLocalHamiltonianTimesXBatchGEMM
-	                                   (const dealii::parallel::distributed::Vector<dataTypes::number> & src,
-					    const unsigned int numberWaveFunctions,
-					    const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap,
-					    dealii::parallel::distributed::Vector<dataTypes::number> & dst) const;
+      void computeNonLocalHamiltonianTimesXBatchGEMM(const dealii::parallel::distributed::Vector<dataTypes::number> & src,
+						     const unsigned int numberWaveFunctions,
+						     dealii::parallel::distributed::Vector<dataTypes::number> & dst) const;
 
       ///pointer to dft class
       dftClass<FEOrder>* dftPtr;
@@ -316,7 +321,7 @@ namespace dftfe{
       vectorType d_invSqrtMassVector,d_sqrtMassVector;
 
       dealii::Table<2, dealii::VectorizedArray<double> > vEff;
-      dealii::Table<3, dealii::VectorizedArray<double> > derExcWithSigmaTimesGradRho;
+      dealii::Table<2, dealii::Tensor<1,3,dealii::VectorizedArray<double> > > derExcWithSigmaTimesGradRho;
 
 
        /**
@@ -328,7 +333,7 @@ namespace dftfe{
 
       ///storage for shapefunctions
       std::vector<double> d_shapeFunctionValue;
-      dealii::Table<3, dealii::VectorizedArray<double> > d_cellShapeFunctionGradientValue;
+      dealii::Table<3, dealii::Tensor<1,3,dealii::VectorizedArray<double> > > d_cellShapeFunctionGradientValue;
 
 
 
@@ -351,6 +356,11 @@ namespace dftfe{
 
       //d_kpoint index for which Hamiltonian is computed
       unsigned int d_kPointIndex;
+      
+      //storage for precomputing index maps
+      std::vector<std::vector<dealii::types::global_dof_index> > d_flattenedArrayMacroCellLocalProcIndexIdMap, d_flattenedArrayCellLocalProcIndexIdMap;
+
+
     };
 
 

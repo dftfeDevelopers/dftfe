@@ -89,8 +89,6 @@ namespace dftfe
      *  @param operatorMatrix An object which has access to the given matrix
      *  @param  X Given subspace as a dealii array representing multiple fields as a flattened array
      *  @param  numberComponents Number of multiple-fields
-     *  @param  macroCellMap precomputed cell-localindex id map of the multi-wavefuncton field in the order of macrocells
-     *  @param  cellMap precomputed cell-localindex id map of the multi-wavefuncton field in the order of local active cells
      *  @param  m Chebyshev polynomial degree
      *  @param  a lower bound of unwanted spectrum
      *  @param  b upper bound of unwanted spectrum
@@ -101,8 +99,6 @@ namespace dftfe
     void chebyshevFilter(operatorDFTClass & operatorMatrix,
 			 dealii::parallel::distributed::Vector<T> & X,
 			 const unsigned int numberComponents,
-			 const std::vector<std::vector<dealii::types::global_dof_index> > & macroCellMap,
-			 const std::vector<std::vector<dealii::types::global_dof_index> > & cellMap,
 			 const unsigned int m,
 			 const double a,
 			 const double b,
@@ -212,8 +208,6 @@ namespace dftfe
     void rayleighRitz(operatorDFTClass        & operatorMatrix,
 		      dealii::parallel::distributed::Vector<T> & X,
 		      const unsigned int numberComponents,
-		      const std::vector<std::vector<dealii::types::global_dof_index> > & macroCellMap,
-		      const std::vector<std::vector<dealii::types::global_dof_index> > & cellMap,
 		      std::vector<double>     & eigenValues);
 
 
@@ -245,8 +239,6 @@ namespace dftfe
     void computeEigenResidualNorm(operatorDFTClass        & operatorMatrix,
 				  dealii::parallel::distributed::Vector<T> & X,
 				  const std::vector<double> & eigenValues,
-				  const std::vector<std::vector<dealii::types::global_dof_index> > & macroCellMap,
-				  const std::vector<std::vector<dealii::types::global_dof_index> > & cellMap,
 				  std::vector<double>     & residualNorm);
 
 

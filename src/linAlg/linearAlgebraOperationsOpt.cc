@@ -262,8 +262,6 @@ namespace dftfe{
     void chebyshevFilter(operatorDFTClass & operatorMatrix,
 			 dealii::parallel::distributed::Vector<T> & XArray,
 			 const unsigned int numberWaveFunctions,
-			 const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayMacroCellLocalProcIndexIdMap,
-			 const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap,
 			 const unsigned int m,
 			 const double a,
 			 const double b,
@@ -298,8 +296,6 @@ namespace dftfe{
       T scalar = 1.0;
       operatorMatrix.HX(XArray,
 			numberWaveFunctions,
-			flattenedArrayMacroCellLocalProcIndexIdMap,
-			flattenedArrayCellLocalProcIndexIdMap,
 			scaleFlag,
 			scalar,
 			YArray);
@@ -334,8 +330,6 @@ namespace dftfe{
 	  bool scaleFlag = true;
 	  operatorMatrix.HX(YArray,
 			    numberWaveFunctions,
-			    flattenedArrayMacroCellLocalProcIndexIdMap,
-			    flattenedArrayCellLocalProcIndexIdMap,
 			    scaleFlag,
 			    alpha1,
 			    XArray);
@@ -471,8 +465,6 @@ namespace dftfe{
     void rayleighRitz(operatorDFTClass & operatorMatrix,
 		      dealii::parallel::distributed::Vector<T> & X,
 		      const unsigned int numberWaveFunctions,
-		      const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayMacroCellLocalProcIndexIdMap,
-		      const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap,
 		      std::vector<double> & eigenValues)
     {
       if (dftParameters::orthoRROMPThreads!=0)
@@ -493,8 +485,6 @@ namespace dftfe{
       computing_timer.enter_section("XtHX");
       operatorMatrix.XtHX(X,
 			  numberEigenValues,
-			  flattenedArrayMacroCellLocalProcIndexIdMap,
-			  flattenedArrayCellLocalProcIndexIdMap,
 			  ProjHam);
       computing_timer.exit_section("XtHX");
 
@@ -579,9 +569,6 @@ namespace dftfe{
     void computeEigenResidualNorm(operatorDFTClass & operatorMatrix,
 				  dealii::parallel::distributed::Vector<T> & X,
 				  const std::vector<double> & eigenValues,
-				  const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayMacroCellLocalProcIndexIdMap,
-				  const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap,
-
 				  std::vector<double> & residualNorm)
 
     {
@@ -615,8 +602,6 @@ namespace dftfe{
       T scalar = 1.0;
       operatorMatrix.HX(X,
 			numberVectors,
-			flattenedArrayMacroCellLocalProcIndexIdMap,
-			flattenedArrayCellLocalProcIndexIdMap,
 			scaleFlag,
 			scalar,
 			Y);
@@ -1019,8 +1004,6 @@ namespace dftfe{
     template void chebyshevFilter(operatorDFTClass & operatorMatrix,
 				  dealii::parallel::distributed::Vector<dataTypes::number> & ,
 				  const unsigned int ,
-				  const std::vector<std::vector<dealii::types::global_dof_index> > & ,
-				  const std::vector<std::vector<dealii::types::global_dof_index> > & ,
 				  const unsigned int,
 				  const double ,
 				  const double ,
@@ -1044,19 +1027,12 @@ namespace dftfe{
     template void rayleighRitz(operatorDFTClass  & operatorMatrix,
 			       dealii::parallel::distributed::Vector<dataTypes::number> &,
 			       const unsigned int numberWaveFunctions,
-			       const std::vector<std::vector<dealii::types::global_dof_index> > &,
-			       const std::vector<std::vector<dealii::types::global_dof_index> > &,
 			       std::vector<double>     & eigenValues);
 
     template void computeEigenResidualNorm(operatorDFTClass        & operatorMatrix,
 					   dealii::parallel::distributed::Vector<dataTypes::number> & X,
 					   const std::vector<double> & eigenValues,
-					   const std::vector<std::vector<dealii::types::global_dof_index> > & macroCellMap,
-					   const std::vector<std::vector<dealii::types::global_dof_index> > & cellMap,
 					   std::vector<double>     & residualNorm);
-
-
-
 
   }//end of namespace
 

@@ -57,6 +57,7 @@ namespace dftParameters
   unsigned int chebyshevOMPThreads=0;
   unsigned int orthoRROMPThreads=0;
   bool writeSolutionFields=false;
+  bool cacheShapeGradData=false;
 
 
   void declare_parameters(ParameterHandler &prm)
@@ -171,6 +172,10 @@ namespace dftParameters
       prm.declare_entry("MESH FILE", "",
                        Patterns::Anything(),
                        "[Developer] External mesh file path. If nothing is given auto mesh generation is performed");
+
+      prm.declare_entry("CACHE SHAPE GRAD","false",
+			 Patterns::Bool(),
+			 "[Developer] Boolean parameter which controls precomputation of FEM shape function gradients for each cell. This helps optimize discrete Hamiltonian matrix computation but at the cost of carrying some extra memory. Default value is false.");
 
       prm.enter_subsection ("Auto mesh generation parameters");
       {
@@ -416,6 +421,7 @@ namespace dftParameters
     {
         dftParameters::finiteElementPolynomialOrder  = prm.get_integer("POLYNOMIAL ORDER");
         dftParameters::meshFileName                  = prm.get("MESH FILE");
+	dftParameters::cacheShapeGradData            = prm.get_bool("CACHE SHAPE GRAD");
 	prm.enter_subsection ("Auto mesh generation parameters");
 	{
 	    dftParameters::outerAtomBallRadius           = prm.get_double("ATOM BALL RADIUS");

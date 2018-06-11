@@ -57,7 +57,7 @@ namespace dftfe{
      *  @return flattenedArrayCellLocalProcIndexId cell local proc index map
      */
     void computeCellLocalIndexSetMap(const std::shared_ptr< const dealii::Utilities::MPI::Partitioner > & partitioner,
-				     const dealii::MatrixFree<3,double>                                 * matrix_free_data,
+				     const dealii::MatrixFree<3,double>                                 & matrix_free_data,
 				     const unsigned int                                                   blockSize,
 				     std::vector<std::vector<dealii::types::global_dof_index> >         & flattenedArrayMacroCellLocalProcIndexId,
 				     std::vector<std::vector<dealii::types::global_dof_index> >         & flattenedArrayCellLocalProcIndexId);

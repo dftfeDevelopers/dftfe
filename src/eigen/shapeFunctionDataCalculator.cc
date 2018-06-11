@@ -35,12 +35,12 @@ void eigenClass<FEOrder>::preComputeShapeFunctionGradientIntegrals()
   //resize data members
   //
   d_cellShapeFunctionGradientIntegral.resize(numberMacroCells);
-  d_cellShapeFunctionGradientValue.reinit(TableIndices<3>(numberMacroCells,numberDofsPerElement,numberQuadraturePoints*3));
+
+  if (dftParameters::cacheShapeGradData)
+    d_cellShapeFunctionGradientValue.reinit(TableIndices<3>(numberMacroCells,numberDofsPerElement,numberQuadraturePoints));
+
   d_shapeFunctionValue.resize(numberQuadraturePoints*numberDofsPerElement,0.0);
-  std::vector<std::vector<std::vector<std::vector<double> > > > tempShapeFuncGradData;
-  tempShapeFuncGradData.resize(numberMacroCells);
-
-
+  std::vector<std::vector<std::vector<Tensor<1,3,double > > > > tempShapeFuncGradData;
 
   typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
 
@@ -60,7 +60,6 @@ void eigenClass<FEOrder>::preComputeShapeFunctionGradientIntegrals()
 	{
 	  cellPtr = dftPtr->matrix_free_data.get_cell_iterator(iMacroCell,iCell);
 	  fe_values.reinit(cellPtr);
-	  tempShapeFuncGradData[iCell].resize(numberDofsPerElement);
 
 	  for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
 	    {
@@ -77,53 +76,37 @@ void eigenClass<FEOrder>::preComputeShapeFunctionGradientIntegrals()
 
 	    }//i node loop
 
-
-	  for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+          if (dftParameters::cacheShapeGradData)
 	    {
-	      tempShapeFuncGradData[iCell][iNode].resize(numberQuadraturePoints);
-	      for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
+	      tempShapeFuncGradData[iCell].resize(numberDofsPerElement);
+	      for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
 		{
-		  tempShapeFuncGradData[iCell][iNode][q_point].resize(3);
-		  tempShapeFuncGradData[iCell][iNode][q_point][0] = fe_values.shape_grad(iNode,q_point)[0];
-		  tempShapeFuncGradData[iCell][iNode][q_point][1] = fe_values.shape_grad(iNode,q_point)[1];
-		  tempShapeFuncGradData[iCell][iNode][q_point][2] = fe_values.shape_grad(iNode,q_point)[2];
+		  tempShapeFuncGradData[iCell][iNode].resize(numberQuadraturePoints);
+		  for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
+		      tempShapeFuncGradData[iCell][iNode][q_point] = fe_values.shape_grad(iNode,q_point);
 		}
-
 	    }
 
 
 	  if(iMacroCell == 0 && iCell == 0)
-	    {
 	      for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
-		{
 		  for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
-		    {
 		      d_shapeFunctionValue[numberQuadraturePoints*iNode + q_point] = fe_values.shape_value(iNode,q_point);
-		    }
-		}
-	    }
 
 	}//icell loop
 
-
-      for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
-	{
-	  for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
-	    {
-	      VectorizedArray<double> gradX,gradY,gradZ;
-	      for(unsigned int iCell = 0; iCell < n_sub_cells; ++iCell)
+        if (dftParameters::cacheShapeGradData)
+	  for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+	      for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
 		{
-		  gradX[iCell] = tempShapeFuncGradData[iCell][iNode][q_point][0];
-		  gradY[iCell] = tempShapeFuncGradData[iCell][iNode][q_point][1];
-		  gradZ[iCell] = tempShapeFuncGradData[iCell][iNode][q_point][2];
-		}
+		  Tensor<1,3,VectorizedArray<double> > gradTemp;
+		  for(unsigned int iCell = 0; iCell < n_sub_cells; ++iCell)
+		     for(unsigned int idim = 0; idim < 3; ++idim)
+		        gradTemp[idim][iCell] = tempShapeFuncGradData[iCell][iNode][q_point][idim];
 
-	      d_cellShapeFunctionGradientValue(iMacroCell,iNode,3*q_point) = gradX;
-	      d_cellShapeFunctionGradientValue(iMacroCell,iNode,3*q_point+1) = gradY;
-	      d_cellShapeFunctionGradientValue(iMacroCell,iNode,3*q_point+2) = gradZ;
+		  d_cellShapeFunctionGradientValue(iMacroCell,iNode,q_point) = gradTemp;
 
-	    }//q_point loop
-	}//iNodeloop
+		}//q_point loop
 
     }//macrocell loop
 
