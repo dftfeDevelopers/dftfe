@@ -346,9 +346,9 @@ namespace dftfe{
 		  }
 
 
-		operatorMatrix.getOverloadedConstraintMatrix()->precomputeMaps(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
+		/*operatorMatrix.getOverloadedConstraintMatrix()->precomputeMaps(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
 									       eigenVectorsFlattenedArray.get_partitioner(),
-									       numberWaveFunctionsPerCurrentBlock);
+									       numberWaveFunctionsPerCurrentBlock);*/
 
 
 
@@ -400,12 +400,12 @@ namespace dftfe{
 
 	computing_timer.enter_section("Rayleigh-Ritz proj Opt");
 
-	//if(totalNumberBlocks > 1)
-	//{
-	    operatorMatrix.reinit(totalNumberWaveFunctions,
-				  eigenVectorsFlattenedArray,
-				  false);
-	    //}
+	if(totalNumberBlocks > 1)
+	{
+	  operatorMatrix.reinit(totalNumberWaveFunctions,
+				eigenVectorsFlattenedArray,
+				false);
+	}
 			      
 
 	//
@@ -418,10 +418,10 @@ namespace dftfe{
 						 flattenedArrayCellLocalProcIndexIdMap);*/
 
 
-	operatorMatrix.getOverloadedConstraintMatrix()
+	/*operatorMatrix.getOverloadedConstraintMatrix()
 	    ->precomputeMaps(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
 	  	             eigenVectorsFlattenedArray.get_partitioner(),
-			     totalNumberWaveFunctions);
+			     totalNumberWaveFunctions);*/
 
 	linearAlgebraOperations::rayleighRitz(operatorMatrix,
 					      eigenVectorsFlattenedArray,

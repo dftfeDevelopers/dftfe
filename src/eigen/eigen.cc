@@ -116,15 +116,15 @@ namespace dftfe {
 						 d_flattenedArrayMacroCellLocalProcIndexIdMap,
 						 d_flattenedArrayCellLocalProcIndexIdMap);
 
-	//getOverloadedConstraintMatrix()->precomputeMaps(dftPtr->matrix_free_data.get_vector_partitioner(),
-	//						flattenedArray.get_partitioner(),
-	//						numberWaveFunctions);
+	getOverloadedConstraintMatrix()->precomputeMaps(dftPtr->matrix_free_data.get_vector_partitioner(),
+							flattenedArray.get_partitioner(),
+							numberWaveFunctions);
 
 
       }
     else
       {
-	
+
 	vectorTools::createDealiiVector<dataTypes::number>(dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
 							   numberWaveFunctions,
 							   dftPtr->d_projectorKetTimesVectorParFlattened);
@@ -136,9 +136,10 @@ namespace dftfe {
 						 d_flattenedArrayMacroCellLocalProcIndexIdMap,
 						 d_flattenedArrayCellLocalProcIndexIdMap);
 
-	//getOverloadedConstraintMatrix()->precomputeMaps(dftPtr->matrix_free_data.get_vector_partitioner(),
-	//						flattenedArray.get_partitioner(),
-	//						numberWaveFunctions);
+
+	getOverloadedConstraintMatrix()->precomputeMaps(dftPtr->matrix_free_data.get_vector_partitioner(),
+							flattenedArray.get_partitioner(),
+							numberWaveFunctions);
       }
 					     
   }
@@ -528,6 +529,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
   {
     const unsigned int numberDofs = src.local_size()/numberWaveFunctions;
     const unsigned int inc = 1;
+
 
     //
     //scale src vector with M^{-1/2}

@@ -395,6 +395,7 @@ void eigenClass<FEOrder>::computeLocalHamiltonianTimesX(const dealii::parallel::
 							dealii::parallel::distributed::Vector<double> & dst) const
 {
 
+
   //
   //element level matrix-vector multiplications
   //
@@ -436,7 +437,7 @@ void eigenClass<FEOrder>::computeLocalHamiltonianTimesX(const dealii::parallel::
 
 	  for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
 	    {
-	      int localNodeId = d_flattenedArrayCellLocalProcIndexIdMap[iElem][iNode];
+	      dealii::types::global_dof_index localNodeId = d_flattenedArrayMacroCellLocalProcIndexIdMap[iElem][iNode];
 	      daxpy_(&numberWaveFunctions,
 		     &scalarCoeffAlpha,
 		     &cellHamMatrixTimesWaveMatrix[numberWaveFunctions*iNode],
