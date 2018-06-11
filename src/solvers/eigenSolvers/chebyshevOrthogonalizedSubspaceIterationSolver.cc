@@ -263,26 +263,11 @@ namespace dftfe{
 	      {
 
 		if (nBlock==0 || nBlock==totalNumberBlocks-1)
-		{
-		  operatorMatrix.reinit(numberWaveFunctionsPerCurrentBlock,
-					eigenVectorsFlattenedArrayBlock,
-					true);
-
-		    //
-		    //precompute certain maps
-		    //
-		    /*vectorTools::computeCellLocalIndexSetMap(eigenVectorsFlattenedArrayBlock.get_partitioner(),
-							     operatorMatrix.getMatrixFreeData(),
-							     numberWaveFunctionsPerCurrentBlock,
-							     flattenedArrayMacroCellLocalProcIndexIdMap,
-							     flattenedArrayCellLocalProcIndexIdMap);*/
-
-
-		    /*operatorMatrix.getOverloadedConstraintMatrix()
-			->precomputeMaps(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
-			  	         eigenVectorsFlattenedArrayBlock.get_partitioner(),
-			 	         numberWaveFunctionsPerCurrentBlock);*/
-		}
+		  {
+		    operatorMatrix.reinit(numberWaveFunctionsPerCurrentBlock,
+					  eigenVectorsFlattenedArrayBlock,
+					  true);
+		  }
 
 
 		//
@@ -329,14 +314,6 @@ namespace dftfe{
 		operatorMatrix.reinit(numberWaveFunctionsPerCurrentBlock,
 				      eigenVectorsFlattenedArray,
 				      false);
-		//
-		//precompute certain maps
-		//
-		/*vectorTools::computeCellLocalIndexSetMap(eigenVectorsFlattenedArray.get_partitioner(),
-							 operatorMatrix.getMatrixFreeData(),
-							 numberWaveFunctionsPerCurrentBlock,
-							 flattenedArrayMacroCellLocalProcIndexIdMap,
-							 flattenedArrayCellLocalProcIndexIdMap);*/
 
 
 		if(dftParameters::verbosity >= 3)
@@ -344,11 +321,6 @@ namespace dftfe{
 		    pcout<<"Cell Local Index Set Map Done: "<<std::endl;
 		    pcout<<std::endl;
 		  }
-
-
-		/*operatorMatrix.getOverloadedConstraintMatrix()->precomputeMaps(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
-									       eigenVectorsFlattenedArray.get_partitioner(),
-									       numberWaveFunctionsPerCurrentBlock);*/
 
 
 
@@ -398,8 +370,7 @@ namespace dftfe{
 	if(dftParameters::verbosity >= 2)
 	  pcout<<"Orthogonalization Done: "<<std::endl;
 
-	computing_timer.enter_section("Rayleigh-Ritz proj Opt");
-
+	
 	if(totalNumberBlocks > 1)
 	{
 	  operatorMatrix.reinit(totalNumberWaveFunctions,
@@ -407,22 +378,7 @@ namespace dftfe{
 				false);
 	}
 			      
-
-	//
-	//precompute certain maps
-	//
-	/*vectorTools::computeCellLocalIndexSetMap(eigenVectorsFlattenedArray.get_partitioner(),
-						 operatorMatrix.getMatrixFreeData(),
-						 totalNumberWaveFunctions,
-						 flattenedArrayMacroCellLocalProcIndexIdMap,
-						 flattenedArrayCellLocalProcIndexIdMap);*/
-
-
-	/*operatorMatrix.getOverloadedConstraintMatrix()
-	    ->precomputeMaps(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
-	  	             eigenVectorsFlattenedArray.get_partitioner(),
-			     totalNumberWaveFunctions);*/
-
+	computing_timer.enter_section("Rayleigh-Ritz proj Opt");
 	linearAlgebraOperations::rayleighRitz(operatorMatrix,
 					      eigenVectorsFlattenedArray,
 					      totalNumberWaveFunctions,
@@ -458,7 +414,6 @@ namespace dftfe{
 	    PetscSynchronizedFlush(operatorMatrix.getMPICommunicator(),dummy);
 	  }
 
-
 	//
         //allocate back the memory of eigenVectors array
         //
@@ -484,15 +439,11 @@ namespace dftfe{
 	      }
 	  }
 	computing_timer.exit_section("Copy to eigen vectors array");
-
-
-
-
-
       }
     else
       {
 	operatorMatrix.reinit(totalNumberWaveFunctions);
+
 	//
 	//call chebyshev filtering routine
 	//
@@ -534,8 +485,7 @@ namespace dftfe{
 	computing_timer.exit_section("compute eigen vectors residuals");
 
       }
-    //
-    //
+
     return;
 
   }
