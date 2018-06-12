@@ -143,6 +143,7 @@ namespace dftfe
 
 
      /** @brief Orthogonalize given subspace using Pseudo-Gram-Schmidt orthogonalization
+      * (serial version using LAPACK, parallel version using ScaLAPACK)
       *
       *  This is a wrapper to the serial and parallel versions. The parallel version is
       *  called if dealii is linked to ScaLAPACK, otherwise the serial version is called.
@@ -154,30 +155,6 @@ namespace dftfe
     template<typename T>
       void pseudoGramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<T> & X,
 					      const unsigned int numberComponents);
-
-     /** @brief Orthogonalize given subspace using Pseudo-Gram-Schmidt orthogonalization
-      *  (serial version using LAPACK)
-      *
-      *  @param  X Given subspace as flattened array of multi-vectors
-      *  @param numberComponents Number of multiple-fields
-      *  @return X In-place update of the given subspace
-      */
-    template<typename T>
-      void pseudoGramSchmidtOrthogonalizationSerial(dealii::parallel::distributed::Vector<T> & X,
-					            const unsigned int numberComponents);
-
-
-     /** @brief Orthogonalize given subspace using Pseudo-Gram-Schmidt orthogonalization
-      *  (parallel version using ScaLAPACK)
-      *
-      *  @param  X Given subspace as flattened array of multi-vectors
-      *  @param numberComponents Number of multiple-fields
-      *  @return X In-place update of the given subspace
-      */
-    template<typename T>
-      void pseudoGramSchmidtOrthogonalizationParallel(dealii::parallel::distributed::Vector<T> & X,
-					              const unsigned int numberComponents);
-
 
     /** @brief Compute Rayleigh-Ritz projection
      *
@@ -194,12 +171,11 @@ namespace dftfe
 
 
     /** @brief Compute Rayleigh-Ritz projection
+     *  (serial version using LAPACK, parallel version using ScaLAPACK)
      *
      *  @param operatorMatrix An object which has access to the given matrix
      *  @param  X Given subspace as flattened array of multi-vectors
      *  @param  numberComponents Number of multiple-fields
-     *  @param  macroCellMap precomputed cell-localindex id map of the multi-wavefuncton field in the order of macrocells
-     *  @param  cellMap precomputed cell-localindex id map of the multi-wavefuncton field in the order of local active cells
      *
      *  @return X In-place rotated subspace
      *  @return eigenValues of the Projected Hamiltonian
@@ -210,8 +186,7 @@ namespace dftfe
 		      const unsigned int numberComponents,
 		      std::vector<double>     & eigenValues);
 
-
-     /** @brief Compute Compute residual norm associated with eigenValue problem of the given operator
+    /** @brief Compute Compute residual norm associated with eigenValue problem of the given operator
      *
      *  @param operatorMatrix An object which has access to the given matrix
      *  @param  X Given subspace as STL vector of dealii vectors
@@ -225,13 +200,11 @@ namespace dftfe
 				  std::vector<double> & residualNorm);
 
 
-     /** @brief Compute residual norm associated with eigenValue problem of the given operator
+    /** @brief Compute residual norm associated with eigenValue problem of the given operator
      *
      *  @param operatorMatrix An object which has access to the given matrix
      *  @param  X Given eigenvector subspace as flattened array of multi-vectors
      *  @param  eigenValues eigenValues of the operator
-     *  @param  macroCellMap precomputed cell-localindex id map of the multi-wavefuncton field in the order of macrocells
-     *  @param  cellMap precomputed cell-localindex id map of the multi-wavefuncton field in the order of local active cells
      *
      *  @return residualNorms of the eigen Value problem
      */

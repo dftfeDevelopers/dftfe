@@ -21,6 +21,7 @@
 #include <dftParameters.h>
 #include <linearAlgebraOperations.h>
 #include <vectorUtilities.h>
+#include <dftUtils.h>
 
 
 namespace dftfe {
@@ -129,7 +130,7 @@ namespace dftfe {
 							   numberWaveFunctions,
 							   dftPtr->d_projectorKetTimesVectorParFlattened);
 
-	
+
 	vectorTools::computeCellLocalIndexSetMap(flattenedArray.get_partitioner(),
 						 dftPtr->matrix_free_data,
 						 numberWaveFunctions,
@@ -141,7 +142,7 @@ namespace dftfe {
 							flattenedArray.get_partitioner(),
 							numberWaveFunctions);
       }
-					     
+
   }
 
 template<unsigned int FEOrder>
@@ -789,7 +790,9 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
     //create temporary array Y
     //
     dealii::parallel::distributed::Vector<std::complex<double> > Y;
-    Y.reinit(X);
+    reinit(numberWaveFunctions,
+	   Y,
+	   true);
     std::complex<double> zeroValue = 0.0;
     Y = zeroValue;
 
@@ -917,7 +920,9 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
     //create temporary array Y
     //
     dealii::parallel::distributed::Vector<double> Y;
-    Y.reinit(X);
+    reinit(numberWaveFunctions,
+	   Y,
+	   true);
 
     //
     //evaluate H times X and store in Y
@@ -952,6 +957,104 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 
     Utilities::MPI::sum(ProjHam, mpi_communicator, ProjHam);
 
+  }
+#endif
+
+#ifdef WITH_SCALAPACK
+  template<unsigned int FEOrder>
+  void eigenClass<FEOrder>::XtHX(const dealii::parallel::distributed::Vector<dataTypes::number> & X,
+				 const unsigned int numberWaveFunctions,
+				 const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+				 dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar)
+  {
+#ifdef USE_COMPLEX
+    AssertThrow(false,dftUtils::ExcNotImplementedYet());
+#else
+    //
+    //Get access to number of locally owned nodes on the current processor
+    //
+    const unsigned int numberDofs = X.local_size()/numberWaveFunctions;
+
+    //create temporary arrays XBlock,Hx
+    dealii::parallel::distributed::Vector<dataTypes::number> XBlock,HXBlock;
+
+    std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
+    std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
+    if (processGrid->is_process_active())
+    {
+	 for (unsigned int i = 0; i < projHamPar.local_m(); ++i)
+	     globalToLocalRowIdMap[projHamPar.global_row(i)]=i;
+
+	 for (unsigned int j = 0; j < projHamPar.local_n(); ++j)
+	     globalToLocalColumnIdMap[projHamPar.global_column(j)]=j;
+
+    }
+
+    const unsigned int vectorsBlockSize=dftParameters::orthoRRWaveFuncBlockSize;
+
+    std::vector<dataTypes::number> projHamBlock(numberWaveFunctions*vectorsBlockSize,0.0);
+
+    for (unsigned int jvec = 0; jvec < numberWaveFunctions; jvec += vectorsBlockSize)
+    {
+	  // Correct block dimensions if block "goes off edge of" the matrix
+	  const unsigned int B = std::min(vectorsBlockSize, numberWaveFunctions-jvec);
+	  if (jvec==0 || B!=vectorsBlockSize)
+	  {
+	     reinit(B,
+		    XBlock,
+		    true);
+	     HXBlock.reinit(XBlock);
+	  }
+
+          XBlock=0;
+	  //fill XBlock from X:
+	  for(unsigned int iNode = 0; iNode<numberDofs; ++iNode)
+	      for(unsigned int iWave = 0; iWave < B; ++iWave)
+		    XBlock.local_element(iNode*B
+			     +iWave)
+			 =X.local_element(iNode*numberWaveFunctions+jvec+iWave);
+
+
+	  //evaluate H times XBlock and store in HXBlock
+	  HXBlock=0;
+	  const bool scaleFlag = false;
+	  const dataTypes::number scalar = 1.0;
+	  HX(XBlock,
+	     B,
+	     scaleFlag,
+	     scalar,
+	     HXBlock);
+
+
+	  const char transA = 'N',transB = 'T';
+	  const dataTypes::number alpha = 1.0,beta = 0.0;
+	  std::fill(projHamBlock.begin(),projHamBlock.end(),0.);
+	  dgemm_(&transA,
+	         &transB,
+	         &numberWaveFunctions,
+	         &B,
+	         &numberDofs,
+	         &alpha,
+	         X.begin(),
+	         &numberWaveFunctions,
+	         HXBlock.begin(),
+	         &B,
+	         &beta,
+	         &projHamBlock[0],
+	         &numberWaveFunctions);
+
+
+	  dealii::Utilities::MPI::sum(projHamBlock,
+				      X.get_mpi_communicator(),
+				      projHamBlock);
+
+	  for (unsigned int i = 0; i <numberWaveFunctions; ++i)
+	      for (unsigned int j = 0; j <B; ++j)
+		 if (globalToLocalRowIdMap.find(i)!=globalToLocalRowIdMap.end())
+		     if(globalToLocalColumnIdMap.find(j+jvec)!=globalToLocalColumnIdMap.end())
+			 projHamPar.local_el(globalToLocalRowIdMap[i], globalToLocalColumnIdMap[j+jvec])=projHamBlock[j*numberWaveFunctions+i];
+    }
+#endif
   }
 #endif
 

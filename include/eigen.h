@@ -85,7 +85,25 @@ namespace dftfe{
 		const unsigned int numberComponents,
 		std::vector<dataTypes::number> & ProjHam);
 
-
+#ifdef WITH_SCALAPACK
+    /**
+     * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
+     *
+     * @param X Vector of Vectors containing multi-wavefunction fields
+     * @param numberComponents number of wavefunctions associated with a given node
+     * @param processGrid two-dimensional processor grid corresponding to the parallel projHamPar
+     * @param projHamPar parallel ScaLAPACKMatrix which stores the computed projection
+     * of the operation into the given subspace
+     *
+     * The XtHX and filling into projHamPar is done in a blocked approach
+     * which avoids creation of full projected Hamiltonian matrix memory, and also avoids creation
+     * of another full X memory.
+     */
+      void XtHX(const dealii::parallel::distributed::Vector<dataTypes::number> & X,
+		const unsigned int numberComponents,
+		const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+		dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar);
+#endif
 
       /**
        * @brief Compute projection of the operator into orthogonal basis
@@ -183,9 +201,9 @@ namespace dftfe{
        * @param flag controls the creation of flattened array format and index maps or only index maps
        *
        *
-       * @return X format to store a multi-vector array 
+       * @return X format to store a multi-vector array
        * in a flattened format with all the wavefunction values corresponding to a given node being stored
-       * contiguously 
+       * contiguously
        *
        */
       void reinit(const unsigned int wavefunBlockSize,
@@ -356,7 +374,7 @@ namespace dftfe{
 
       //d_kpoint index for which Hamiltonian is computed
       unsigned int d_kPointIndex;
-      
+
       //storage for precomputing index maps
       std::vector<std::vector<dealii::types::global_dof_index> > d_flattenedArrayMacroCellLocalProcIndexIdMap, d_flattenedArrayCellLocalProcIndexIdMap;
 

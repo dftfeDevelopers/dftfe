@@ -57,9 +57,9 @@ namespace dftfe{
     * @param wavefunBlockSize number of wavefunction vector (block size of X).
     * @param flag controls the creation of flattened array format and index maps or only index maps
     *
-    * @return X format to store a multi-vector array 
+    * @return X format to store a multi-vector array
     * in a flattened format with all the wavefunction values corresponding to a given node being stored
-    * contiguously 
+    * contiguously
     *
     */
     virtual void reinit(const unsigned int wavefunBlockSize,
@@ -100,8 +100,6 @@ namespace dftfe{
      * change inside the function it is scaled and rescaled back to
      * avoid duplication of memory and hence is not const)
      * @param numberComponents number of wavefunctions associated with a given node
-     * @param macroCellMap precomputed cell-local index id map of the multi-wavefuncton field
-     * @param cellMap precomputed cell-local index id map of the multi-wavefunction field
      * @param Y Vector containing multi-component fields after operator times vectors product
      */
     virtual void HX(dealii::parallel::distributed::Vector<dataTypes::number> & X,
@@ -119,15 +117,28 @@ namespace dftfe{
      * change inside the function it is scaled inside HX function and rescaled back to
      * avoid duplication of memory and hence is not const)
      * @param numberComponents number of wavefunctions associated with a given node
-     * @param macroCellMap precomputed cell-local index id map of the multi-wavefuncton field
-     * @param cellMap precomputed cell-local index id map of the multi-wavefunction field
      * @param ProjMatrix projected small matrix
      */
     virtual void XtHX(dealii::parallel::distributed::Vector<dataTypes::number> & X,
 		      const unsigned int numberComponents,
 		      std::vector<dataTypes::number> & ProjHam) = 0;
 
+#ifdef WITH_SCALAPACK
+    /**
+     * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
+     *
+     * @param X Vector of Vectors containing multi-wavefunction fields
+     * @param numberComponents number of wavefunctions associated with a given node
+     * @param processGrid two-dimensional processor grid corresponding to the parallel projHamPar
+     * @param projHamPar parallel ScaLAPACKMatrix which stores the computed projection
+     * of the operation into the given subspace
+     */
+    virtual void XtHX(const dealii::parallel::distributed::Vector<dataTypes::number> & X,
+		      const unsigned int numberComponents,
+		      const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+		      dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar) = 0;
 
+#endif
     /**
      * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
      *

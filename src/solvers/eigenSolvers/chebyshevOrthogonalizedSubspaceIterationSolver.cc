@@ -242,10 +242,6 @@ namespace dftfe{
 	//
 	dealii::parallel::distributed::Vector<dataTypes::number> eigenVectorsFlattenedArrayBlock;
 
-
-
-	//std::vector<std::vector<dealii::types::global_dof_index> > flattenedArrayCellLocalProcIndexIdMap,flattenedArrayMacroCellLocalProcIndexIdMap;
-
 	for(unsigned int nBlock = 0; nBlock < totalNumberBlocks; ++nBlock)
 	  {
 	    //
@@ -376,14 +372,6 @@ namespace dftfe{
 
 	if(dftParameters::verbosity >= 2)
 	  pcout<<"Orthogonalization Done: "<<std::endl;
-
-
-	if(totalNumberBlocks > 1)
-	{
-	  operatorMatrix.reinit(totalNumberWaveFunctions,
-				eigenVectorsFlattenedArray,
-				false);
-	}
 
 	computing_timer.enter_section("Rayleigh-Ritz proj Opt");
 	linearAlgebraOperations::rayleighRitz(operatorMatrix,

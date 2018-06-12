@@ -35,9 +35,9 @@ namespace dftfe
     {
 #ifdef WITH_SCALAPACK
 	void createProcessGridSquareMatrix(const MPI_Comm & mpi_communicator,
-		                      const unsigned size,
-		                      std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-				      const unsigned int rowsBlockSize)
+		                           const unsigned size,
+				           const unsigned int rowsBlockSize,
+				           std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid)
 	{
 	      const unsigned int numberProcs = dealii::Utilities::MPI::n_mpi_processes(mpi_communicator);
 	      const unsigned int blocksPerProc=4;
@@ -77,7 +77,7 @@ namespace dftfe
 
 	  }
 
-	  const unsigned int vectorsBlockSize=200;
+	  const unsigned int vectorsBlockSize=dftParameters::orthoRRWaveFuncBlockSize;
 
 	  std::vector<T> overlapMatrixBlock(numberVectors*vectorsBlockSize,0.0);
 	  std::vector<T> blockVectorsMatrix(numLocalDofs*vectorsBlockSize,0.0);
@@ -87,7 +87,7 @@ namespace dftfe
 	      // Correct block dimensions if block "goes off edge of" the matrix
 	      const unsigned int B = std::min(vectorsBlockSize, numberVectors-ivec);
 	      const char transA = 'N',transB = 'N';
-	      const double scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
+	      const T scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
 
 	      std::fill(overlapMatrixBlock.begin(),overlapMatrixBlock.end(),0.);
 
@@ -127,7 +127,8 @@ namespace dftfe
 	void subspaceRotation(dealii::parallel::distributed::Vector<T> & subspaceVectorsArray,
 		              const unsigned int numberSubspaceVectors,
 		              const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-			      const dealii::ScaLAPACKMatrix<T> & rotationMatPar)
+			      const dealii::ScaLAPACKMatrix<T> & rotationMatPar,
+			      const bool rotationMatTranspose)
 	{
 #ifdef USE_COMPLEX
 	  AssertThrow(false,dftUtils::ExcNotImplementedYet());
@@ -150,7 +151,7 @@ namespace dftfe
 	  }
 
 
-	  const unsigned int vectorsBlockSize=200;
+	  const unsigned int vectorsBlockSize=dftParameters::orthoRRWaveFuncBlockSize;
 	  const unsigned int dofsBlockSize=200;
 
 	  std::vector<T> rotationMatBlock(vectorsBlockSize*numberSubspaceVectors,0.0);
@@ -170,15 +171,26 @@ namespace dftfe
 		  const unsigned int BVec = std::min(vectorsBlockSize, numberSubspaceVectors-jvec);
 
 		  const char transA = 'N',transB = 'N';
-		  const double scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
+		  const T scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
 
 		  std::fill(rotationMatBlock.begin(),rotationMatBlock.end(),0.);
 
-		  for (unsigned int i = 0; i <numberSubspaceVectors; ++i)
-		      for (unsigned int j = 0; j <BVec; ++j)
-			 if (globalToLocalRowIdMap.find(j+jvec)!=globalToLocalRowIdMap.end())
-			     if(globalToLocalColumnIdMap.find(i)!=globalToLocalColumnIdMap.end())
-				 rotationMatBlock[i*BVec+j]=rotationMatPar.local_el(globalToLocalRowIdMap[j+jvec], globalToLocalColumnIdMap[i]);
+		  if (rotationMatTranspose)
+		  {
+		      for (unsigned int i = 0; i <numberSubspaceVectors; ++i)
+			  for (unsigned int j = 0; j <BVec; ++j)
+				 if (globalToLocalRowIdMap.find(i)!=globalToLocalRowIdMap.end())
+				     if(globalToLocalColumnIdMap.find(j+jvec)!=globalToLocalColumnIdMap.end())
+					 rotationMatBlock[i*BVec+j]=rotationMatPar.local_el(globalToLocalRowIdMap[i], globalToLocalColumnIdMap[j+jvec]);
+		  }
+		  else
+		  {
+		      for (unsigned int i = 0; i <numberSubspaceVectors; ++i)
+			  for (unsigned int j = 0; j <BVec; ++j)
+				 if (globalToLocalRowIdMap.find(j+jvec)!=globalToLocalRowIdMap.end())
+				     if(globalToLocalColumnIdMap.find(i)!=globalToLocalColumnIdMap.end())
+					 rotationMatBlock[i*BVec+j]=rotationMatPar.local_el(globalToLocalRowIdMap[j+jvec], globalToLocalColumnIdMap[i]);
+                  }
 
 		  dealii::Utilities::MPI::sum(rotationMatBlock,
 					      subspaceVectorsArray.get_mpi_communicator(),
@@ -229,7 +241,8 @@ namespace dftfe
 	void subspaceRotation(dealii::parallel::distributed::Vector<dataTypes::number> & subspaceVectorsArray,
 		              const unsigned int numberSubspaceVectors,
 		              const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-			      const dealii::ScaLAPACKMatrix<dataTypes::number> & rotationMatPar);
+			      const dealii::ScaLAPACKMatrix<dataTypes::number> & rotationMatPar,
+			      const bool rotationMatTranpose);
 
 #endif
     }

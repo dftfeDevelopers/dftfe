@@ -31,23 +31,43 @@ namespace dftfe
     namespace internal
     {
 #ifdef WITH_SCALAPACK
+	/** @brief Wrapper function to create a two dimensional processor grid for a square matrix in
+	 * dealii::ScaLAPACKMatrix storage format.
+	 *
+	 */
 	void createProcessGridSquareMatrix(const MPI_Comm & mpi_communicator,
 		                           const unsigned size,
-		                           std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-				           const unsigned int rowsBlockSize);
+				           const unsigned int rowsBlockSize,
+					   std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid);
 
-
+	/** @brief S=X^{T}*X. X^{T} is the subspaceVectorsArray in the column major format. S is the
+	 * overlapMatPar.
+	 *
+	 * The overlap matrix computation and filling is done in a blocked approach
+	 * which avoids creation of full serial overlap matrix memory, and also avoids creation
+	 * of another full X memory.
+	 *
+	 */
 	template<typename T>
 	void fillParallelOverlapMatrix(const dealii::parallel::distributed::Vector<T> & X,
 		                       const unsigned int numberVectors,
 		                       const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 				       dealii::ScaLAPACKMatrix<T> & overlapMatPar);
 
+	/** @brief X^{T}=Q*X^{T}. X^{T} is the subspaceVectorsArray in the column major
+	 * format. Q is rotationMatPar.
+	 *
+	 * The subspace rotation inside this function is done in a blocked approach
+	 * which avoids creation of full serial rotation matrix memory, and also avoids creation
+	 * of another full subspaceVectorsArray memory.
+	 *
+	 */
 	template<typename T>
 	void subspaceRotation(dealii::parallel::distributed::Vector<T> & subspaceVectorsArray,
 		              const unsigned int numberSubspaceVectors,
 		              const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-			      const dealii::ScaLAPACKMatrix<T> & rotationMatPar);
+			      const dealii::ScaLAPACKMatrix<T> & rotationMatPar,
+			      const bool rotationMatTranspose=false);
 
 #endif
     }

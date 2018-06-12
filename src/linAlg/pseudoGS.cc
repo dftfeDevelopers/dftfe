@@ -26,39 +26,20 @@ namespace dftfe
 
   namespace linearAlgebraOperations
   {
+#if(defined WITH_SCALAPACK && !USE_COMPLEX)
     template<typename T>
     void pseudoGramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<T> & X,
 				            const unsigned int numberVectors)
     {
       if (dftParameters::orthoRROMPThreads!=0)
 	  omp_set_num_threads(dftParameters::orthoRROMPThreads);
-#ifdef WITH_SCALAPACK
-      pseudoGramSchmidtOrthogonalizationParallel(X,numberVectors);
-#else
-      pseudoGramSchmidtOrthogonalizationSerial(X,numberVectors);
-#endif
-      if (dftParameters::orthoRROMPThreads!=0)
-	  omp_set_num_threads(1);
-    }
 
-    template<typename T>
-    void pseudoGramSchmidtOrthogonalizationSerial(dealii::parallel::distributed::Vector<T> & X,
-				                  const unsigned int numberVectors)
-    {
-      AssertThrow(false,dftUtils::ExcNotImplementedYet());
-    }
-
-
-    template<typename T>
-    void pseudoGramSchmidtOrthogonalizationParallel(dealii::parallel::distributed::Vector<T> & X,
-				                    const unsigned int numberVectors)
-    {
-#if(defined WITH_SCALAPACK && !USE_COMPLEX)
       const unsigned int numLocalDofs = X.local_size()/numberVectors;
 
       dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
       dealii::TimerOutput computing_timer(pcout,
-					  dftParameters::reproducible_output ? dealii::TimerOutput::never : dealii::TimerOutput::summary,
+					  dftParameters::reproducible_output ||
+					  dftParameters::verbosity<2 ? dealii::TimerOutput::never : dealii::TimerOutput::summary,
 					  dealii::TimerOutput::wall_times);
 
 
@@ -66,22 +47,22 @@ namespace dftfe
       std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  processGrid;
       internal::createProcessGridSquareMatrix(X.get_mpi_communicator(),
 		                           numberVectors,
-		                           processGrid,
-				           rowsBlockSize);
+				           rowsBlockSize,
+					   processGrid);
 
       dealii::ScaLAPACKMatrix<T> overlapMatPar(numberVectors,
                                                processGrid,
                                                rowsBlockSize);
 
-
-      computing_timer.enter_section("scalapack fill overlap matrix for PGS");
+      //S=X*X^{T}. Implemented as S=X^{T}*X with X^{T} stored in the column major format
+      computing_timer.enter_section("Fill overlap matrix for PGS");
       internal::fillParallelOverlapMatrix(X,
 	                                  numberVectors,
 		                          processGrid,
 				          overlapMatPar);
-      computing_timer.exit_section("scalapack fill overlap matrix for PGS");
+      computing_timer.exit_section("Fill overlap matrix for PGS");
 
-
+      //S=L*L^{T}
       computing_timer.enter_section("PGS cholesky, copy, and triangular matrix invert");
       overlapMatPar.compute_cholesky_factorization();
 
@@ -106,19 +87,25 @@ namespace dftfe
       LMatPar.invert();
       computing_timer.exit_section("PGS cholesky, copy, and triangular matrix invert");
 
-
-      computing_timer.enter_section("subspace rotation PGS");
-
+      //X=X*L^{-1}^{T} implemented as X^{T}=L^{-1}*X^{T} with X^{T} stored in the column major format
+      computing_timer.enter_section("Subspace rotation PGS");
       internal::subspaceRotation(X,
 		                 numberVectors,
 		                 processGrid,
 			         LMatPar);
 
-      computing_timer.exit_section("subspace rotation PGS");
-#else
-      AssertThrow(false,dftUtils::ExcNotImplementedYet());
-#endif
+      computing_timer.exit_section("Subspace rotation PGS");
+      if (dftParameters::orthoRROMPThreads!=0)
+	  omp_set_num_threads(1);
     }
+#else
+    template<typename T>
+    void pseudoGramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<T> & X,
+				            const unsigned int numberVectors)
+    {
+      AssertThrow(false,dftUtils::ExcNotImplementedYet());
+    }
+#endif
 
   }
 }
