@@ -355,7 +355,7 @@ namespace dftParameters
 
 	    prm.declare_entry("ORTHO RR BLOCK SIZE", "200",
 			       Patterns::Integer(1),
-			       "[Developer] This block size is primararly required for memory optimization purposes in the orthogonalization and Rayleigh-Ritz steps. This optimization is only activated if dealii library is compiled with ScaLAPACK. Default value is 200.");
+			       "[Developer] This block size is primarily required for memory optimization purposes in the orthogonalization and Rayleigh-Ritz steps. This optimization is only activated if dealii library is compiled with ScaLAPACK. Default value is 200.");
 
 	}
 	prm.leave_subsection ();
