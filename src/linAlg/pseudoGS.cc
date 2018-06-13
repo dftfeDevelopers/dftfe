@@ -75,7 +75,7 @@ namespace dftfe
       dealii::ScaLAPACKMatrix<T> LMatPar(numberVectors,
                                          processGrid,
                                          rowsBlockSize,
-					 overlapMatPar.get_property());
+					 overlapMatPropertyPostCholesky);
 
       //copy triangular part of projHamPar into LMatPar
       if (processGrid->is_process_active())
