@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,11 +13,9 @@
 //
 // ---------------------------------------------------------------------
 
-/** @file linearAlgebraOperations.h
- *  @brief Contains linear algebra functions used in the implementation of an eigen solver
- *
- *  @author Phani Motamarri (2018)
- */
+
+#ifndef vectorUtilities_h
+#define vectorUtilities_h
 
 #include <headers.h>
 #include <operator.h>
@@ -26,7 +24,11 @@
 
 namespace dftfe{
 
-
+/** @file vectorUtilities.h
+ *  @brief Contains generic utils functions related to custom partitioned flattened dealii vector
+ *
+ *  @author Phani Motamarri
+ */
   namespace vectorTools
   {
 
@@ -64,3 +66,4 @@ namespace dftfe{
 
   }
 }
+#endif
