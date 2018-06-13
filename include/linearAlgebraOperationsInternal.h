@@ -30,7 +30,7 @@ namespace dftfe
      */
     namespace internal
     {
-#ifdef WITH_SCALAPACK
+#ifdef DEAL_II_WITH_SCALAPACK
 	/** @brief Wrapper function to create a two dimensional processor grid for a square matrix in
 	 * dealii::ScaLAPACKMatrix storage format.
 	 *
@@ -40,7 +40,18 @@ namespace dftfe
 				           const unsigned int rowsBlockSize,
 					   std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid);
 
-	/** @brief S=X^{T}*X. X^{T} is the subspaceVectorsArray in the column major format. S is the
+
+	/** @brief Creates global row/column id to local row/column ids for dealii::ScaLAPACKMatrix
+	 *
+	 */
+        template<typename T>
+	void createGlobalToLocalIdMapsScaLAPACKMat(const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+		                                   const dealii::ScaLAPACKMatrix<T> & mat,
+				                   std::map<unsigned int, unsigned int> & globalToLocalRowIdMap,
+					           std::map<unsigned int, unsigned int> & globalToLocalColumnIdMap);
+
+	/** @brief Computes S=X^{T}*X and stores in a parallel ScaLAPACK matrix.
+	 * X^{T} is the subspaceVectorsArray in the column major format. S is the
 	 * overlapMatPar.
 	 *
 	 * The overlap matrix computation and filling is done in a blocked approach
@@ -54,7 +65,7 @@ namespace dftfe
 		                       const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 				       dealii::ScaLAPACKMatrix<T> & overlapMatPar);
 
-	/** @brief X^{T}=Q*X^{T}. X^{T} is the subspaceVectorsArray in the column major
+	/** @brief Computes X^{T}=Q*X^{T} inplace. X^{T} is the subspaceVectorsArray in the column major
 	 * format. Q is rotationMatPar.
 	 *
 	 * The subspace rotation inside this function is done in a blocked approach

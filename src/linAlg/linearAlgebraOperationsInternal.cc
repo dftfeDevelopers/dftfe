@@ -33,7 +33,7 @@ namespace dftfe
 
     namespace internal
     {
-#ifdef WITH_SCALAPACK
+#ifdef DEAL_II_WITH_SCALAPACK
 	void createProcessGridSquareMatrix(const MPI_Comm & mpi_communicator,
 		                           const unsigned size,
 				           const unsigned int rowsBlockSize,
@@ -54,6 +54,31 @@ namespace dftfe
 										      rowProcs);
 	}
 
+
+	template<typename T>
+	void createGlobalToLocalIdMapsScaLAPACKMat(const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+		                                   const dealii::ScaLAPACKMatrix<T> & mat,
+				                   std::map<unsigned int, unsigned int> & globalToLocalRowIdMap,
+					           std::map<unsigned int, unsigned int> & globalToLocalColumnIdMap)
+	{
+#ifdef USE_COMPLEX
+	  AssertThrow(false,dftUtils::ExcNotImplementedYet());
+#else
+	  globalToLocalRowIdMap.clear();
+          globalToLocalColumnIdMap.clear();
+	  if (processGrid->is_process_active())
+	  {
+	     for (unsigned int i = 0; i < mat.local_m(); ++i)
+		 globalToLocalRowIdMap[mat.global_row(i)]=i;
+
+	     for (unsigned int j = 0; j < mat.local_n(); ++j)
+		 globalToLocalColumnIdMap[mat.global_column(j)]=j;
+
+	  }
+#endif
+	}
+
+
 	template<typename T>
 	void fillParallelOverlapMatrix(const dealii::parallel::distributed::Vector<T> & X,
 		                       const unsigned int numberVectors,
@@ -67,15 +92,10 @@ namespace dftfe
 
 	  std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
 	  std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
-	  if (processGrid->is_process_active())
-	  {
-	     for (unsigned int i = 0; i < overlapMatPar.local_m(); ++i)
-		 globalToLocalRowIdMap[overlapMatPar.global_row(i)]=i;
-
-	     for (unsigned int j = 0; j < overlapMatPar.local_n(); ++j)
-		 globalToLocalColumnIdMap[overlapMatPar.global_column(j)]=j;
-
-	  }
+	  internal::createGlobalToLocalIdMapsScaLAPACKMat(processGrid,
+		                                          overlapMatPar,
+				                          globalToLocalRowIdMap,
+					                  globalToLocalColumnIdMap);
 
 	  const unsigned int vectorsBlockSize=dftParameters::orthoRRWaveFuncBlockSize;
 
@@ -140,15 +160,10 @@ namespace dftfe
 
 	  std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
 	  std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
-	  if (processGrid->is_process_active())
-	  {
-	     for (unsigned int i = 0; i < rotationMatPar.local_m(); ++i)
-		 globalToLocalRowIdMap[rotationMatPar.global_row(i)]=i;
-
-	     for (unsigned int j = 0; j < rotationMatPar.local_n(); ++j)
-		 globalToLocalColumnIdMap[rotationMatPar.global_column(j)]=j;
-
-	  }
+	  internal::createGlobalToLocalIdMapsScaLAPACKMat(processGrid,
+		                                          rotationMatPar,
+				                          globalToLocalRowIdMap,
+					                  globalToLocalColumnIdMap);
 
 
 	  const unsigned int vectorsBlockSize=dftParameters::orthoRRWaveFuncBlockSize;
@@ -230,7 +245,13 @@ namespace dftfe
 	}
 #endif
 
-#ifdef WITH_SCALAPACK
+#ifdef DEAL_II_WITH_SCALAPACK
+	template
+	void createGlobalToLocalIdMapsScaLAPACKMat(const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+		                                   const dealii::ScaLAPACKMatrix<dataTypes::number> & mat,
+				                   std::map<unsigned int, unsigned int> & globalToLocalRowIdMap,
+					           std::map<unsigned int, unsigned int> & globalToLocalColumnIdMap);
+
         template
 	void fillParallelOverlapMatrix(const dealii::parallel::distributed::Vector<dataTypes::number> & X,
 		                       const unsigned int numberVectors,

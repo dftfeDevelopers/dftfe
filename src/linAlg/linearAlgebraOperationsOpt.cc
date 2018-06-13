@@ -461,7 +461,7 @@ namespace dftfe{
 
     }
 
-#if(defined WITH_SCALAPACK && !USE_COMPLEX)
+#if(defined DEAL_II_WITH_SCALAPACK && !USE_COMPLEX)
     template<typename T>
     void rayleighRitz(operatorDFTClass & operatorMatrix,
 		      dealii::parallel::distributed::Vector<T> & X,

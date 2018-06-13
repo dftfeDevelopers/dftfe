@@ -85,7 +85,7 @@ namespace dftfe{
 		const unsigned int numberComponents,
 		std::vector<dataTypes::number> & ProjHam);
 
-#ifdef WITH_SCALAPACK
+#ifdef DEAL_II_WITH_SCALAPACK
     /**
      * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
      *

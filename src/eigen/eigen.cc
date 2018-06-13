@@ -20,6 +20,7 @@
 #include <dft.h>
 #include <dftParameters.h>
 #include <linearAlgebraOperations.h>
+#include <linearAlgebraOperationsInternal.h>
 #include <vectorUtilities.h>
 #include <dftUtils.h>
 
@@ -960,7 +961,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
   }
 #endif
 
-#ifdef WITH_SCALAPACK
+#ifdef DEAL_II_WITH_SCALAPACK
   template<unsigned int FEOrder>
   void eigenClass<FEOrder>::XtHX(const dealii::parallel::distributed::Vector<dataTypes::number> & X,
 				 const unsigned int numberWaveFunctions,
@@ -980,15 +981,16 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 
     std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
     std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
-    if (processGrid->is_process_active())
-    {
-	 for (unsigned int i = 0; i < projHamPar.local_m(); ++i)
-	     globalToLocalRowIdMap[projHamPar.global_row(i)]=i;
+    linearAlgebraOperations::internal::createGlobalToLocalIdMapsScaLAPACKMat(processGrid,
+						    projHamPar,
+						    globalToLocalRowIdMap,
+						    globalToLocalColumnIdMap);
 
-	 for (unsigned int j = 0; j < projHamPar.local_n(); ++j)
-	     globalToLocalColumnIdMap[projHamPar.global_column(j)]=j;
-
-    }
+   //X^{T}*H*X is done in a blocked approach for memory optimization:
+   //Sum_{blocks} X^{T}*H*XBlock. The result of each X^{T}*H*XBlock
+   //has a much smaller memory compared to X^{T}*H*X. Think about the
+   //memory for 50k wavefunctions. The parallel
+   //ScaLapack matrix is directly filled from the X^{T}*H*XBlock result
 
     const unsigned int vectorsBlockSize=dftParameters::orthoRRWaveFuncBlockSize;
 

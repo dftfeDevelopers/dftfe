@@ -26,7 +26,7 @@ namespace dftfe
 
   namespace linearAlgebraOperations
   {
-#if(defined WITH_SCALAPACK && !USE_COMPLEX)
+#if(defined DEAL_II_WITH_SCALAPACK && !USE_COMPLEX)
     template<typename T>
     void pseudoGramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<T> & X,
 				            const unsigned int numberVectors)
@@ -66,22 +66,39 @@ namespace dftfe
       computing_timer.enter_section("PGS cholesky, copy, and triangular matrix invert");
       overlapMatPar.compute_cholesky_factorization();
 
+      dealii::LAPACKSupport::Property overlapMatPropertyPostCholesky=overlapMatPar.get_property();
+
+      AssertThrow(overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::lower_triangular
+		  ||overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::upper_triangular
+	           ,dealii::ExcMessage("DFT-FE Error: overlap matrix property after cholesky factorization incorrect"));
+
       dealii::ScaLAPACKMatrix<T> LMatPar(numberVectors,
                                          processGrid,
                                          rowsBlockSize,
-					 dealii::LAPACKSupport::Property::lower_triangular);
-      //copy lower triangular part of projHamPar into LMatPar
+					 overlapMatPar.get_property());
+
+      //copy triangular part of projHamPar into LMatPar
       if (processGrid->is_process_active())
          for (unsigned int i = 0; i < overlapMatPar.local_n(); ++i)
            {
              const unsigned int glob_i = overlapMatPar.global_column(i);
              for (unsigned int j = 0; j < overlapMatPar.local_m(); ++j)
                {
-                 const unsigned int glob_j = overlapMatPar.global_row(j);
-		 if (glob_i <= glob_j)
-                    LMatPar.local_el(j, i)=overlapMatPar.local_el(j, i);
+		 const unsigned int glob_j = overlapMatPar.global_row(j);
+		 if (overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::lower_triangular)
+		 {
+		     if (glob_i <= glob_j)
+			LMatPar.local_el(j, i)=overlapMatPar.local_el(j, i);
+		     else
+			LMatPar.local_el(j, i)=0;
+		 }
 		 else
-		    LMatPar.local_el(j, i)=0;
+		 {
+		     if (glob_j <= glob_i)
+			LMatPar.local_el(j, i)=overlapMatPar.local_el(j, i);
+		     else
+			LMatPar.local_el(j, i)=0;
+		 }
                }
            }
       LMatPar.invert();
@@ -92,7 +109,8 @@ namespace dftfe
       internal::subspaceRotation(X,
 		                 numberVectors,
 		                 processGrid,
-			         LMatPar);
+			         LMatPar,
+				 overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::upper_triangular?true:false);
 
       computing_timer.exit_section("Subspace rotation PGS");
       if (dftParameters::orthoRROMPThreads!=0)
