@@ -167,7 +167,7 @@ namespace dftfe
 
 
 	  const unsigned int vectorsBlockSize=dftParameters::orthoRRWaveFuncBlockSize;
-	  const unsigned int dofsBlockSize=200;
+	  const unsigned int dofsBlockSize=800;
 
 	  std::vector<T> rotationMatBlock(vectorsBlockSize*numberSubspaceVectors,0.0);
 	  std::vector<T> rotatedVectorsMatBlock(numberSubspaceVectors*dofsBlockSize,0.0);
