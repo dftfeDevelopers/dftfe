@@ -586,6 +586,94 @@ namespace dftfe{
     }
 #endif
 
+#ifdef DEAL_II_WITH_SCALAPACK
+    template<typename T>
+    void computeEigenResidualNorm(operatorDFTClass & operatorMatrix,
+				  dealii::parallel::distributed::Vector<T> & X,
+				  const std::vector<double> & eigenValues,
+				  std::vector<double> & residualNorm)
+
+    {
+
+      //
+      //get the number of eigenVectors
+      //
+      const unsigned int totalNumberVectors = eigenValues.size();
+      const unsigned int localVectorSize = X.local_size()/totalNumberVectors;
+      std::vector<double> residualNormSquare(totalNumberVectors,0.0);
+
+      //create temporary arrays XBlock,HXBlock
+      dealii::parallel::distributed::Vector<dataTypes::number> XBlock,HXBlock;
+
+      // Do H*X using a blocked approach and compute
+      // the residual norms: H*XBlock-XBlock*D, where
+      // D is the eigenvalues matrix.
+      // The blocked approach avoids additional full
+      // wavefunction matrix memory
+      const unsigned int vectorsBlockSize=dftParameters::orthoRRWaveFuncBlockSize;
+      for (unsigned int jvec = 0; jvec < totalNumberVectors; jvec += vectorsBlockSize)
+      {
+	  // Correct block dimensions if block "goes off edge"
+	  const unsigned int B = std::min(vectorsBlockSize, totalNumberVectors-jvec);
+	  if (jvec==0 || B!=vectorsBlockSize)
+	  {
+	     operatorMatrix.reinit(B,
+		                   XBlock,
+		                   true);
+	     HXBlock.reinit(XBlock);
+	  }
+
+          XBlock=T(0.);
+	  //fill XBlock from X:
+	  for(unsigned int iNode = 0; iNode<localVectorSize; ++iNode)
+	      for(unsigned int iWave = 0; iWave < B; ++iWave)
+		    XBlock.local_element(iNode*B
+			     +iWave)
+			 =X.local_element(iNode*totalNumberVectors+jvec+iWave);
+
+
+	  //evaluate H times XBlock and store in HXBlock
+	  HXBlock=T(0.);
+	  const bool scaleFlag = false;
+	  const T scalar = 1.0;
+	  operatorMatrix.HX(XBlock,
+	                    B,
+	                    scaleFlag,
+	                    scalar,
+	                    HXBlock);
+
+	  //compute residual norms:
+	  for(unsigned int iDof = 0; iDof < localVectorSize; ++iDof)
+	      for(unsigned int iWave = 0; iWave < B; iWave++)
+		{
+		  const double temp =std::abs(HXBlock.local_element(B*iDof + iWave) -
+		      eigenValues[jvec+iWave]*XBlock.local_element(B*iDof + iWave));
+		  residualNormSquare[jvec+iWave] += temp*temp;
+		}
+      }
+
+
+      dealii::Utilities::MPI::sum(residualNormSquare,X.get_mpi_communicator(),residualNormSquare);
+      if(dftParameters::verbosity>=2)
+	{
+	  if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+	    std::cout<<"L-2 Norm of residue   :"<<std::endl;
+	}
+      for(unsigned int iWave = 0; iWave < totalNumberVectors; ++iWave)
+	{
+	  residualNorm[iWave] = sqrt(residualNormSquare[iWave]);
+
+	  if(dftParameters::verbosity>=2)
+	      if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+		std::cout<<"eigen vector "<< iWave<<": "<<residualNorm[iWave]<<std::endl;
+	}
+
+      if(dftParameters::verbosity>=2)
+	if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+	  std::cout <<std::endl;
+
+    }
+#else
     template<typename T>
     void computeEigenResidualNorm(operatorDFTClass & operatorMatrix,
 				  dealii::parallel::distributed::Vector<T> & X,
@@ -671,10 +759,7 @@ namespace dftfe{
       }
 
     }
-
-
-
-
+#endif
 
 #ifdef USE_COMPLEX
     void lowdenOrthogonalization(dealii::parallel::distributed::Vector<std::complex<double> > & X,
