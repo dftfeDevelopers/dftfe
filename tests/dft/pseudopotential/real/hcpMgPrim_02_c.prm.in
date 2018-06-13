@@ -69,7 +69,7 @@ subsection SCF parameters
       set CHEBYSHEV POLYNOMIAL DEGREE = 0
       set CHEBYSHEV FILTER TOLERANCE=5e-3
       set CHEBYSHEV FILTER BLOCK SIZE=7
-      set ORTHO RR BLOCK SIZE=7
+      set ORTHO RR WFC BLOCK SIZE=7
       set BATCH GEMM=true
   end
 end
