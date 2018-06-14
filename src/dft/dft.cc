@@ -424,15 +424,6 @@ namespace dftfe {
     initElectronicFields(usePreviousGroundStateFields);
 
     //
-    //store constraintEigen Matrix entries into STL vector
-    //
-    constraintsNoneEigenDataInfo.initialize(vChebyshev.get_partitioner(),
-					    constraintsNoneEigen);
-
-    constraintsNoneDataInfo.initialize(matrix_free_data.get_vector_partitioner(),
-				       constraintsNone);
-
-    //
     //initialize pseudopotential data for both local and nonlocal part
     //
     initPseudoPotentialAll();

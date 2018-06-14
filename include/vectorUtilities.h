@@ -63,6 +63,22 @@ namespace dftfe{
 				     std::vector<std::vector<dealii::types::global_dof_index> >         & flattenedArrayCellLocalProcIndexId);
 
 
+    /** @brief Creates a
+     *
+     */
+#ifdef USE_COMPLEX
+     void copyFlattenedDealiiVectorToSingleComp
+                             (dealii::parallel::distributed::Vector<std::complex<double>>  & flattenedArray,
+			      const unsigned int                        totalNumberComponents,
+			      const unsigned int                        componentIndex,
+			      dealii::parallel::distributed::Vector<double>  & componentVector);
+#else
+     void copyFlattenedDealiiVectorToSingleComp
+                             (dealii::parallel::distributed::Vector<double>  & flattenedArray,
+			      const unsigned int                        totalNumberComponents,
+			      const unsigned int                        componentIndex,
+			      dealii::parallel::distributed::Vector<double>  & componentVector);
+#endif
 
   }
 }

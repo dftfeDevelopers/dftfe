@@ -16,7 +16,6 @@
 // @author Phani Motamarri (2018)
 //
 
-#include <headers.h>
 #include <vectorUtilities.h>
 #include <exception>
 
@@ -32,14 +31,14 @@ namespace dftfe
 			    dealii::parallel::distributed::Vector<T>                           & flattenedArray)
     {
 
-      const MPI_Comm & mpi_communicator=partitioner->get_communicator();	
+      const MPI_Comm & mpi_communicator=partitioner->get_communicator();
       //
       //Get required sizes
       //
       const unsigned int n_ghosts   = partitioner->n_ghost_indices();
       const unsigned int localSize  = partitioner->local_size();
       const unsigned int totalSize  = localSize + n_ghosts;
-      const  dealii::types::global_dof_index globalNumberDegreesOfFreedom=partitioner->size(); 
+      const  dealii::types::global_dof_index globalNumberDegreesOfFreedom=partitioner->size();
 
       //
       //create data for new parallel layout
@@ -53,7 +52,7 @@ namespace dftfe
       locallyOwnedFlattenedNodesSet.set_size(globalNumberDegreesOfFreedom*blockSize);
       ghostFlattenedNodesSet.set_size(globalNumberDegreesOfFreedom*blockSize);
 
-      
+
       for(unsigned int ilocaldof = 0; ilocaldof < totalSize; ++ilocaldof)
 	{
           std::vector<dealii::types::global_dof_index> newLocallyOwnedGlobalNodeIds;
@@ -71,10 +70,10 @@ namespace dftfe
 	    {
 	      for(unsigned int iwave = 0; iwave < blockSize; ++iwave)
 		{
-		  newLocallyOwnedGlobalNodeIds.push_back(blockSize*globalIndex+iwave);	 
-		}	
+		  newLocallyOwnedGlobalNodeIds.push_back(blockSize*globalIndex+iwave);
+		}
 	    }
-            
+
             //insert into dealii index sets
             locallyOwnedFlattenedNodesSet.add_indices(newLocallyOwnedGlobalNodeIds.begin(),newLocallyOwnedGlobalNodeIds.end());
             ghostFlattenedNodesSet.add_indices(newGhostGlobalNodeIds.begin(),newGhostGlobalNodeIds.end());
@@ -99,10 +98,10 @@ namespace dftfe
       //sanity check
       //
       AssertThrow(locallyOwnedFlattenedNodesSet.is_ascending_and_one_to_one(mpi_communicator),
-		  dealii::ExcMessage("Incorrect renumbering and/or partitioning of flattened wave function matrix"));  
+		  dealii::ExcMessage("Incorrect renumbering and/or partitioning of flattened wave function matrix"));
 
       //
-      //create flattened wave function matrix 
+      //create flattened wave function matrix
       //
       flattenedArray.reinit(locallyOwnedFlattenedNodesSet,
 			    ghostFlattenedNodesSet,
@@ -140,7 +139,7 @@ namespace dftfe
 	      totalLocallyOwnedCells++;
 	    }
 	}
-      
+
       flattenedArrayMacroCellLocalProcIndexIdMap.clear();
       flattenedArrayMacroCellLocalProcIndexIdMap.resize(totalLocallyOwnedCells);
 
@@ -171,7 +170,7 @@ namespace dftfe
 
 
       //
-      //create map for all locally owned cells in the same order 
+      //create map for all locally owned cells in the same order
       //
       typename dealii::DoFHandler<3>::active_cell_iterator cell = matrix_free_data.get_dof_handler().begin_active(), endc = matrix_free_data.get_dof_handler().end();
       std::vector<dealii::types::global_dof_index> cell_dof_indices(numberNodesPerElement);
@@ -200,15 +199,28 @@ namespace dftfe
 
     }
 
+
 #ifdef USE_COMPLEX
-    template void createDealiiVector(const std::shared_ptr<const dealii::Utilities::MPI::Partitioner> &,
-				     const unsigned int                                                ,
-				     dealii::parallel::distributed::Vector<std::complex<double> >     &);
+     void copyFlattenedDealiiVectorToSingleComp
+                             (dealii::parallel::distributed::Vector<std::complex<double>>  & flattenedArray,
+			      const unsigned int                        totalNumberComponents,
+			      const unsigned int                        componentIndex,
+			      dealii::parallel::distributed::Vector<double>  & componentVector)
+    {
+    }
 #else
+     void copyFlattenedDealiiVectorToSingleComp
+                             (dealii::parallel::distributed::Vector<double>  & flattenedArray,
+			      const unsigned int                        totalNumberComponents,
+			      const unsigned int                        componentIndex,
+			      dealii::parallel::distributed::Vector<double>  & componentVector)
+    {
+    }
+#endif
+
     template void createDealiiVector(const std::shared_ptr<const dealii::Utilities::MPI::Partitioner> &,
 				     const unsigned int                                                ,
-				     dealii::parallel::distributed::Vector<double>                    &);
-#endif
+				     dealii::parallel::distributed::Vector<dataTypes::number>     &);
 
 
   }//end of namespace

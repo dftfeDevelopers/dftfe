@@ -31,7 +31,7 @@ namespace dftfe{
    */
 
   class chebyshevOrthogonalizedSubspaceIterationSolver : public eigenSolverClass {
-  
+
   public:
     /**
      * @brief Constructor.
@@ -50,10 +50,19 @@ namespace dftfe{
 
 
     /**
-     * @brief Solve a generalized eigen problem. 
+     * @brief Solve a generalized eigen problem.
      */
     eigenSolverClass::ReturnValueType solve(operatorDFTClass & operatorMatrix,
-					    std::vector<vectorType> & eigenVectors,
+	                                    dealii::parallel::distributed::Vector<dataTypes::number> & eigenVectorsFlattened,
+					    const unsigned int totalNumberWaveFunctions,
+					    std::vector<double> & eigenValues,
+					    std::vector<double> & residuals);
+
+    /**
+     * @brief Solve a generalized eigen problem.
+     */
+    eigenSolverClass::ReturnValueType solve(operatorDFTClass & operatorMatrix,
+	                                    std::vector<vectorType> & eigenVectors,
 					    std::vector<double> & eigenValues,
 					    std::vector<double> & residuals);
 
@@ -62,8 +71,8 @@ namespace dftfe{
      */
     void reinitSpectrumBounds(double lowerBoundWantedSpectrum,
 			      double lowerBoundUnWantedSpectrum);
-  
-   
+
+
   private:
     //
     //stores lower bound of wanted spectrum

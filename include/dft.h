@@ -466,6 +466,7 @@ namespace dftfe {
        * data storage for Kohn-Sham wavefunctions
        */
       std::vector<std::vector<double> > eigenValues;
+      std::vector<dealii::parallel::distributed::Vector<dataTypes::number>> eigenVectorsFlattened;
       std::vector<std::vector<vectorType> > eigenVectors;
 
       /// parallel message stream

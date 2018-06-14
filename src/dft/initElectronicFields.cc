@@ -37,9 +37,15 @@ void dftClass<FEOrder>::initElectronicFields(const bool usePreviousGroundStateFi
   //
   if (!usePreviousGroundStateFields)
   {
+     //for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+     //   for(unsigned int i = 0; i < eigenVectors[kPoint].size(); ++i)
+     //	  eigenVectors[kPoint][i].reinit(vChebyshev);
+
      for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
-        for(unsigned int i = 0; i < eigenVectors[kPoint].size(); ++i)
-	  eigenVectors[kPoint][i].reinit(vChebyshev);
+	  vectorTools::createDealiiVector<dataTypes::number>
+		     (matrix_free_data.get_vector_partitioner(eigenDofHandlerIndex),
+		      numEigenValues,
+		      eigenVectorsFlattened[kPoint]);
 
      pcout <<std::endl<< "Reading initial guess for PSI...."<<std::endl;
      readPSI();
@@ -120,4 +126,7 @@ void dftClass<FEOrder>::initElectronicFields(const bool usePreviousGroundStateFi
   //
   constraintsNoneEigenDataInfo.initialize(vChebyshev.get_partitioner(),
 					  constraintsNoneEigen);
+
+  constraintsNoneDataInfo.initialize(matrix_free_data.get_vector_partitioner(),
+				     constraintsNone);
 }
