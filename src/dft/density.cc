@@ -89,7 +89,7 @@ void dftClass<FEOrder>::compute_rhoOut()
 	  for(unsigned int kPoint = 0; kPoint < numKPoints; ++kPoint)
 	      for(unsigned int iEigenVec=0; iEigenVec<numEigenVectors; ++iEigenVec)
 		{
-		   psiEval.read_dof_values_plain(eigenVectors[kPoint][iEigenVec]);
+		   psiEval.read_dof_values_plain(eigenVectors[(1+dftParameters::spinPolarized)*kPoint][iEigenVec]);
 
 		   if(dftParameters::xc_id == 4)
 		      psiEval.evaluate(true,true);
@@ -105,7 +105,7 @@ void dftClass<FEOrder>::compute_rhoOut()
 
 		    if(dftParameters::spinPolarized==1)
 		    {
-		       psiEval.read_dof_values_plain(eigenVectors[(1+dftParameters::spinPolarized)*kPoint][iEigenVec]);
+		       psiEval.read_dof_values_plain(eigenVectors[(1+dftParameters::spinPolarized)*kPoint+1][iEigenVec]);
 
 		       if(dftParameters::xc_id == 4)
 		          psiEval.evaluate(true,true);
