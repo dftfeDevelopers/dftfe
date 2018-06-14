@@ -89,7 +89,7 @@ void dftClass<FEOrder>::compute_rhoOut()
 	  for(unsigned int kPoint = 0; kPoint < numKPoints; ++kPoint)
 	      for(unsigned int iEigenVec=0; iEigenVec<numEigenVectors; ++iEigenVec)
 		{
-		   psiEval.read_dof_values_plain(eigenVectors[kPoint][iEigenVec]);
+		   psiEval.read_dof_values_plain(eigenVectors[(1+dftParameters::spinPolarized)*kPoint][iEigenVec]);
 
 		   if(dftParameters::xc_id == 4)
 		      psiEval.evaluate(true,true);
@@ -105,7 +105,7 @@ void dftClass<FEOrder>::compute_rhoOut()
 
 		    if(dftParameters::spinPolarized==1)
 		    {
-		       psiEval.read_dof_values_plain(eigenVectors[(1+dftParameters::spinPolarized)*kPoint][iEigenVec]);
+		       psiEval.read_dof_values_plain(eigenVectors[(1+dftParameters::spinPolarized)*kPoint+1][iEigenVec]);
 
 		       if(dftParameters::xc_id == 4)
 		          psiEval.evaluate(true,true);
@@ -270,32 +270,30 @@ void dftClass<FEOrder>::compute_rhoOut()
 		     MPI_Allreduce(&gradRhoTempSpinPolarized[0], &gradRhoOutSpinPolarized[0], 6*numPoint, MPI_DOUBLE, MPI_SUM, interpoolcomm) ;
 		}
 
-		for (unsigned int q=0; q<numQuadPoints; ++q)
+
+		if(dftParameters::spinPolarized==1)
 		{
-		  if(dftParameters::spinPolarized==1)
-		  {
-			(*rhoOutValuesSpinPolarized)[subCellId][2*q]=rhoOutSpinPolarized[2*q] ;
-			(*rhoOutValuesSpinPolarized)[subCellId][2*q+1]=rhoOutSpinPolarized[2*q+1];
+			(*rhoOutValuesSpinPolarized)[subCellId]=rhoOutSpinPolarized ;
 
 			if(dftParameters::xc_id == 4)
 			    (*gradRhoOutValuesSpinPolarized)[subCellId]= gradRhoOutSpinPolarized;
 
+			for (unsigned int q=0; q<numQuadPoints; ++q)
+			{
+			    (*rhoOutValues)[subCellId][q]= rhoOutSpinPolarized[2*q] + rhoOutSpinPolarized[2*q+1];
 
-			(*rhoOutValues)[subCellId][q]= rhoOutSpinPolarized[2*q] + rhoOutSpinPolarized[2*q+1];
-
-			if(dftParameters::xc_id == 4)
-			  for(unsigned int idim=0; idim<3; ++idim)
-			    (*gradRhoOutValues)[subCellId][3*q + idim] = gradRhoOutSpinPolarized[6*q + idim] + gradRhoOutSpinPolarized[6*q + 3+idim];
-		  }
-		  else
-		  {
-			(*rhoOutValues)[subCellId][q]  = rhoOut[q];
+			    if(dftParameters::xc_id == 4)
+			      for(unsigned int idim=0; idim<3; ++idim)
+				(*gradRhoOutValues)[subCellId][3*q + idim] = gradRhoOutSpinPolarized[6*q + idim] + gradRhoOutSpinPolarized[6*q + 3+idim];
+			}
+		 }
+		 else
+		 {
+			(*rhoOutValues)[subCellId]  = rhoOut;
 
 			 if(dftParameters::xc_id == 4)
 			     (*gradRhoOutValues)[subCellId] = gradRhoOut;
-
-		   }
-		 }//quad point loop
+		 }
 	  }//subcell loop
    }//macro cell loop
 
