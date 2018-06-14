@@ -54,6 +54,7 @@ namespace dftfe{
      */
     eigenSolverClass::ReturnValueType solve(operatorDFTClass & operatorMatrix,
 	                                    dealii::parallel::distributed::Vector<dataTypes::number> & eigenVectorsFlattened,
+					    vectorType & tempEigenVec,
 					    const unsigned int totalNumberWaveFunctions,
 					    std::vector<double> & eigenValues,
 					    std::vector<double> & residuals);

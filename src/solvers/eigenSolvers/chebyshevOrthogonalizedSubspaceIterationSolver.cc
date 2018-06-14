@@ -106,6 +106,7 @@ namespace dftfe{
   eigenSolverClass::ReturnValueType
   chebyshevOrthogonalizedSubspaceIterationSolver::solve(operatorDFTClass           & operatorMatrix,
 							dealii::parallel::distributed::Vector<dataTypes::number>    & eigenVectorsFlattened,
+							vectorType  & tempEigenVec,
 							const unsigned int totalNumberWaveFunctions,
 							std::vector<double>        & eigenValues,
 							std::vector<double>        & residualNorms)
@@ -114,10 +115,24 @@ namespace dftfe{
 
     computing_timer.enter_section("Lanczos k-step Upper Bound");
     operatorMatrix.reinit(1);
-    const double upperBoundUnwantedSpectrum =0;//
-    //linearAlgebraOperations::lanczosUpperBoundEigenSpectrum(operatorMatrix,
-    //		   					eigenVectors[0]);
-
+#ifdef USE_COMPLEX
+    vectorTools::copyFlattenedDealiiVectorToSingleComp
+	     (eigenVectorsFlattened,
+	      totalNumberWaveFunctions,
+	      0,
+	      *operatorMatrix.getLocalProcDofIndicesReal(),
+	      *operatorMatrix.getLocalProcDofIndicesImag(),
+	      tempEigenVec);
+#else
+    vectorTools::copyFlattenedDealiiVectorToSingleComp
+	     (eigenVectorsFlattened,
+	      totalNumberWaveFunctions,
+	      0,
+	      tempEigenVec);
+#endif
+    const double upperBoundUnwantedSpectrum
+	=linearAlgebraOperations::lanczosUpperBoundEigenSpectrum(operatorMatrix,
+    		   					         tempEigenVec);
     computing_timer.exit_section("Lanczos k-step Upper Bound");
 
     unsigned int chebyshevOrder = dftParameters::chebyshevOrder;

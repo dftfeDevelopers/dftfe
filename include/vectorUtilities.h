@@ -71,6 +71,8 @@ namespace dftfe{
                              (dealii::parallel::distributed::Vector<std::complex<double>>  & flattenedArray,
 			      const unsigned int                        totalNumberComponents,
 			      const unsigned int                        componentIndex,
+			      const std::vector<dealii::types::global_dof_index> & localProcDofIndicesReal,
+                              const std::vector<dealii::types::global_dof_index> & localProcDofIndicesImag,
 			      dealii::parallel::distributed::Vector<double>  & componentVector);
 #else
      void copyFlattenedDealiiVectorToSingleComp

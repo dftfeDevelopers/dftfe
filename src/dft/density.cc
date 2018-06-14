@@ -22,8 +22,10 @@
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::compute_rhoOut()
 {
-  const unsigned int numEigenVectors=eigenVectors[0].size();
+  const unsigned int numEigenVectors=numEigenValues;
   const unsigned int numKPoints=d_kPointWeights.size();
+  const unsigned int numberNodesPerElement = matrix_free_data.get_dofs_per_cell();
+  std::vector<dealii::types::global_dof_index> cell_dof_indicesGlobal(numberNodesPerElement);
 
 #ifdef USE_COMPLEX
   FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>(),2> psiEval(matrix_free_data,eigenDofHandlerIndex , 0);
@@ -89,7 +91,31 @@ void dftClass<FEOrder>::compute_rhoOut()
 	  for(unsigned int kPoint = 0; kPoint < numKPoints; ++kPoint)
 	      for(unsigned int iEigenVec=0; iEigenVec<numEigenVectors; ++iEigenVec)
 		{
-		   psiEval.read_dof_values_plain(eigenVectors[(1+dftParameters::spinPolarized)*kPoint][iEigenVec]);
+	           for(unsigned int iSubCell = 0; iSubCell < numSubCells; ++iSubCell)
+	   	   {
+		     typename dealii::DoFHandler<3>::active_cell_iterator cellPtr = matrix_free_data.get_cell_iterator(cell,iSubCell);
+		     cellPtr->get_dof_indices(cell_dof_indicesGlobal);
+		     for(unsigned int iNode = 0; iNode < numberNodesPerElement; ++iNode)
+		     {
+		        dealii::types::global_dof_index globalIndex = cell_dof_indicesGlobal[iNode];
+		        dealii::types::global_dof_index globalIndexFlattenedArray
+			    = numEigenVectors*globalIndex+iEigenVec;
+#ifdef USE_COMPLEX
+			dealii::types::global_dof_index localIndex
+			    = matrix_free_data.get_vector_partitioner()->global_to_local(globalIndex);
+			tempEigenVec[localProc_dof_indicesReal[localIndex]]
+			    =eigenVectorsFlattened[(1+dftParameters::spinPolarized)*kPoint][globalIndexFlattenedArray].real();
+			tempEigenVec[localProc_dof_indicesImag[localIndex]]
+			    =eigenVectorsFlattened[(1+dftParameters::spinPolarized)*kPoint][globalIndexFlattenedArray].imag();
+#else
+			tempEigenVec[globalIndex]
+			    =eigenVectorsFlattened[(1+dftParameters::spinPolarized)*kPoint][globalIndexFlattenedArray];
+#endif
+		     }
+		   }
+
+		   //psiEval.read_dof_values_plain(eigenVectors[(1+dftParameters::spinPolarized)*kPoint][iEigenVec]);
+		   psiEval.read_dof_values_plain(tempEigenVec);
 
 		   if(dftParameters::xc_id == 4)
 		      psiEval.evaluate(true,true);
@@ -103,9 +129,13 @@ void dftClass<FEOrder>::compute_rhoOut()
 		        gradPsiQuads[q*numEigenVectors*numKPoints+numEigenVectors*kPoint+iEigenVec]=psiEval.get_gradient(q);
 		   }
 
-		    if(dftParameters::spinPolarized==1)
-		    {
-		       psiEval.read_dof_values_plain(eigenVectors[(1+dftParameters::spinPolarized)*kPoint+1][iEigenVec]);
+		   if(dftParameters::spinPolarized==1)
+		   {
+#ifdef USE_COMPLEX
+#else
+#endif
+		       //psiEval.read_dof_values_plain(tempEigenVec);
+		       //psiEval.read_dof_values_plain(eigenVectors[(1+dftParameters::spinPolarized)*kPoint+1][iEigenVec]);
 
 		       if(dftParameters::xc_id == 4)
 		          psiEval.evaluate(true,true);
@@ -118,7 +148,7 @@ void dftClass<FEOrder>::compute_rhoOut()
 			 if(dftParameters::xc_id == 4)
 			    gradPsiQuads2[q*numEigenVectors*numKPoints+numEigenVectors*kPoint+iEigenVec]=psiEval.get_gradient(q);
 		       }
-		    }
+		   }
 		}//eigenvector per k point
 
 	  for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)

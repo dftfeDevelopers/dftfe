@@ -205,8 +205,22 @@ namespace dftfe
                              (dealii::parallel::distributed::Vector<std::complex<double>>  & flattenedArray,
 			      const unsigned int                        totalNumberComponents,
 			      const unsigned int                        componentIndex,
+			      const std::vector<dealii::types::global_dof_index> & localProcDofIndicesReal,
+                              const std::vector<dealii::types::global_dof_index> & localProcDofIndicesImag,
 			      dealii::parallel::distributed::Vector<double>  & componentVector)
     {
+	const unsigned int localVectorSize = flattenedArray.local_size()/totalNumberComponents;
+	for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
+	  {
+	      const unsigned int flattenedArrayLocalIndex =
+		  totalNumberComponents*iNode + componentIndex;
+
+	      componentVector.local_element(localProcDofIndicesReal[iNode])
+		    = flattenedArray.local_element(flattenedArrayLocalIndex).real();
+	      componentVector.local_element(localProcDofIndicesImag[iNode])
+		    = flattenedArray.local_element(flattenedArrayLocalIndex).imag();
+	  }
+	componentVector.update_ghost_values();
     }
 #else
      void copyFlattenedDealiiVectorToSingleComp
@@ -215,6 +229,16 @@ namespace dftfe
 			      const unsigned int                        componentIndex,
 			      dealii::parallel::distributed::Vector<double>  & componentVector)
     {
+	const unsigned int localVectorSize = flattenedArray.local_size()/totalNumberComponents;
+	for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
+	  {
+	      const unsigned int flattenedArrayLocalIndex =
+		  totalNumberComponents*iNode + componentIndex;
+
+	      componentVector.local_element(iNode)
+		    = flattenedArray.local_element(flattenedArrayLocalIndex);
+	  }
+	componentVector.update_ghost_values();
     }
 #endif
 

@@ -260,16 +260,10 @@ namespace dftfe {
 
     a0.resize((dftParameters::spinPolarized+1)*d_kPointWeights.size(),dftParameters::lowerEndWantedSpectrum);
     bLow.resize((dftParameters::spinPolarized+1)*d_kPointWeights.size(),0.0);
-    eigenVectors.resize((1+dftParameters::spinPolarized)*d_kPointWeights.size());
-
-    for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
-      eigenVectors[kPoint].resize(numEigenValues);
+    eigenVectorsFlattened.resize((1+dftParameters::spinPolarized)*d_kPointWeights.size());
 
     for(unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-      {
-	eigenValues[kPoint].resize((dftParameters::spinPolarized+1)*numEigenValues);
-      }
-
+        eigenValues[kPoint].resize((dftParameters::spinPolarized+1)*numEigenValues);
   }
 
   //dft pseudopotential init
@@ -796,7 +790,7 @@ namespace dftfe {
 	    std::vector<std::vector<double>> residualNormWaveFunctionsAllkPoints;
 	    residualNormWaveFunctionsAllkPoints.resize(d_kPointWeights.size());
 	    for(unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-	      residualNormWaveFunctionsAllkPoints[kPoint].resize(eigenVectors[kPoint].size());
+	      residualNormWaveFunctionsAllkPoints[kPoint].resize(numEigenValues);
 
 	    if(dftParameters::xc_id < 4)
 	      {
@@ -1084,10 +1078,25 @@ namespace dftfe {
   {
     DataOut<3> data_outEigen;
     data_outEigen.attach_dof_handler (dofHandlerEigen);
-    for(unsigned int i=0; i<eigenVectors[0].size(); ++i)
+    for(unsigned int i=0; i<numEigenValues; ++i)
       {
 	char buffer[100]; sprintf(buffer,"eigen%u", i);
-	data_outEigen.add_data_vector (eigenVectors[0][i], buffer);
+#ifdef USE_COMPLEX
+        vectorTools::copyFlattenedDealiiVectorToSingleComp
+		 (eigenVectorsFlattened[0],
+		  numEigenValues,
+		  i,
+		  localProc_dof_indicesReal,
+		  localProc_dof_indicesImag,
+		  tempEigenVec);
+#else
+        vectorTools::copyFlattenedDealiiVectorToSingleComp
+		 (eigenVectorsFlattened[0],
+		  numEigenValues,
+		  i,
+		  tempEigenVec);
+#endif
+	data_outEigen.add_data_vector (tempEigenVec, buffer);
       }
     data_outEigen.build_patches (C_num1DQuad<FEOrder>());
 

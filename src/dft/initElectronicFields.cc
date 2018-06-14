@@ -29,7 +29,7 @@ void dftClass<FEOrder>::initElectronicFields(const bool usePreviousGroundStateFi
   //
   //initialize eigen vectors
   //
-  matrix_free_data.initialize_dof_vector(vChebyshev,eigenDofHandlerIndex);
+  matrix_free_data.initialize_dof_vector(tempEigenVec,eigenDofHandlerIndex);
 
 
   //
@@ -39,11 +39,11 @@ void dftClass<FEOrder>::initElectronicFields(const bool usePreviousGroundStateFi
   {
      //for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
      //   for(unsigned int i = 0; i < eigenVectors[kPoint].size(); ++i)
-     //	  eigenVectors[kPoint][i].reinit(vChebyshev);
+     //	  eigenVectors[kPoint][i].reinit(tempEigenVec);
 
      for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
 	  vectorTools::createDealiiVector<dataTypes::number>
-		     (matrix_free_data.get_vector_partitioner(eigenDofHandlerIndex),
+		     (matrix_free_data.get_vector_partitioner(),
 		      numEigenValues,
 		      eigenVectorsFlattened[kPoint]);
 
@@ -79,7 +79,7 @@ void dftClass<FEOrder>::initElectronicFields(const bool usePreviousGroundStateFi
 	{
 	  eigenVectorsPrevious[kPoint* eigenVectors[0].size()+i]=eigenVectors[kPoint][i];
 	  eigenVectorsPreviousPtrs[kPoint* eigenVectors[0].size()+i]=&(eigenVectorsPrevious[kPoint* eigenVectors[0].size()+i]);
-	  eigenVectors[kPoint][i].reinit(vChebyshev);
+	  eigenVectors[kPoint][i].reinit(tempEigenVec);
 	  eigenVectorsCurrentPtrs[kPoint* eigenVectors[0].size()+i]=&(eigenVectors[kPoint][i]);
 	}
 
@@ -124,7 +124,7 @@ void dftClass<FEOrder>::initElectronicFields(const bool usePreviousGroundStateFi
   //
   //store constraintEigen Matrix entries into STL vector
   //
-  constraintsNoneEigenDataInfo.initialize(vChebyshev.get_partitioner(),
+  constraintsNoneEigenDataInfo.initialize(tempEigenVec.get_partitioner(),
 					  constraintsNoneEigen);
 
   constraintsNoneDataInfo.initialize(matrix_free_data.get_vector_partitioner(),
