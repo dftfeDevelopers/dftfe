@@ -116,7 +116,7 @@ namespace dftfe{
     computing_timer.enter_section("Lanczos k-step Upper Bound");
     operatorMatrix.reinit(1);
 #ifdef USE_COMPLEX
-    vectorTools::copyFlattenedDealiiVectorToSingleComp
+    vectorTools::copyFlattenedDealiiVecToSingleCompVec
 	     (eigenVectorsFlattened,
 	      totalNumberWaveFunctions,
 	      0,
@@ -124,7 +124,7 @@ namespace dftfe{
 	      *operatorMatrix.getLocalProcDofIndicesImag(),
 	      tempEigenVec);
 #else
-    vectorTools::copyFlattenedDealiiVectorToSingleComp
+    vectorTools::copyFlattenedDealiiVecToSingleCompVec
 	     (eigenVectorsFlattened,
 	      totalNumberWaveFunctions,
 	      0,

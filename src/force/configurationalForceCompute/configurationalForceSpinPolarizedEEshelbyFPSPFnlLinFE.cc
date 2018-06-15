@@ -19,6 +19,31 @@
 template<unsigned int FEOrder>
 void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensorFPSPFnlLinFE()
 {
+  std::vector<std::vector<vectorType>> eigenVectors((1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size());
+  for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size(); ++kPoint)
+  {
+        eigenVectors[kPoint].resize(dftPtr->numEigenValues);
+        for(unsigned int i = 0; i < dftPtr->numEigenValues; ++i)
+	{
+          eigenVectors[kPoint][i].reinit(dftPtr->d_tempEigenVec);
+#ifdef USE_COMPLEX
+	    vectorTools::copyFlattenedDealiiVecToSingleCompVec
+		     (dftPtr->d_eigenVectorsFlattened[kPoint],
+		      dftPtr->numEigenValues,
+		      i,
+		      dftPtr->localProc_dof_indicesReal,
+		      dftPtr->localProc_dof_indicesImag,
+		      eigenVectors[kPoint][i]);
+#else
+	    vectorTools::copyFlattenedDealiiVecToSingleCompVec
+		     (dftPtr->d_eigenVectorsFlattened[kPoint],
+		      dftPtr->numEigenValues,
+		      i,
+		      eigenVectors[kPoint][i]);
+#endif
+	}
+  }
+
   const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
   const unsigned int numberImageCharges = dftPtr->d_imageIds.size();
   const unsigned int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
@@ -49,7 +74,7 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
   FEValues<C_DIM> feVselfValues (dftPtr->FE, quadrature, update_gradients | update_quadrature_points);
 
   const unsigned int numQuadPoints=forceEval.n_q_points;
-  const unsigned int numEigenVectors=dftPtr->eigenVectors[0].size();
+  const unsigned int numEigenVectors=dftPtr->numEigenValues;
   const unsigned int numKPoints=dftPtr->d_kPointWeights.size();
   DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
   Tensor<1,2,VectorizedArray<double> > zeroTensor1;zeroTensor1[0]=make_vectorized_array(0.0);zeroTensor1[1]=make_vectorized_array(0.0);
@@ -70,25 +95,23 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
     }
   }
   VectorizedArray<double> phiExtFactor=make_vectorized_array(0.0);
-  std::vector<std::vector<double> > projectorKetTimesPsiSpin0TimesVReal;
-  std::vector<std::vector<std::vector<std::complex<double> > > > projectorKetTimesPsiSpin0TimesVComplexKPoints(numKPoints);
-  std::vector<std::vector<double> > projectorKetTimesPsiSpin1TimesVReal;
-  std::vector<std::vector<std::vector<std::complex<double> > > > projectorKetTimesPsiSpin1TimesVComplexKPoints(numKPoints);
+  std::vector<std::vector<std::vector<dataTypes::number > > > projectorKetTimesPsiSpin0TimesV(numKPoints);
+  std::vector<std::vector<std::vector<dataTypes::number > > > projectorKetTimesPsiSpin1TimesV(numKPoints);
   if (isPseudopotential)
   {
     phiExtFactor=make_vectorized_array(1.0);
     for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
     {
-         computeNonLocalProjectorKetTimesPsiTimesV(dftPtr->eigenVectors[2*ikPoint],
-			                           projectorKetTimesPsiSpin0TimesVReal,
-                                                   projectorKetTimesPsiSpin0TimesVComplexKPoints[ikPoint],
+         computeNonLocalProjectorKetTimesPsiTimesVFlattened(dftPtr->d_eigenVectorsFlattened[2*ikPoint],
+		                                   numEigenVectors,
+                                                   projectorKetTimesPsiSpin0TimesV[ikPoint],
 						   ikPoint);
     }
     for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
     {
-         computeNonLocalProjectorKetTimesPsiTimesV(dftPtr->eigenVectors[2*ikPoint+1],
-			                           projectorKetTimesPsiSpin1TimesVReal,
-                                                   projectorKetTimesPsiSpin1TimesVComplexKPoints[ikPoint],
+         computeNonLocalProjectorKetTimesPsiTimesVFlattened(dftPtr->d_eigenVectorsFlattened[2*ikPoint+1],
+		                                   numEigenVectors,
+                                                   projectorKetTimesPsiSpin1TimesV[ikPoint],
 						   ikPoint);
     }
   }
@@ -319,13 +342,13 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
     for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
         for (unsigned int iEigenVec=0; iEigenVec<numEigenVectors; ++iEigenVec)
         {
-          psiEvalSpin0.read_dof_values_plain(dftPtr->eigenVectors[2*ikPoint][iEigenVec]);
+          psiEvalSpin0.read_dof_values_plain(eigenVectors[2*ikPoint][iEigenVec]);
 	  if (dftParameters::nonSelfConsistentForce)
              psiEvalSpin0.evaluate(true,true,true);
 	  else
              psiEvalSpin0.evaluate(true,true);
 
-          psiEvalSpin1.read_dof_values_plain(dftPtr->eigenVectors[2*ikPoint+1][iEigenVec]);
+          psiEvalSpin1.read_dof_values_plain(eigenVectors[2*ikPoint+1][iEigenVec]);
 	  if (dftParameters::nonSelfConsistentForce)
              psiEvalSpin1.evaluate(true,true,true);
 	  else
@@ -444,8 +467,8 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 			                          forceEval,
 					          cell,
 					          pspnlGammaAtomsQuads,
-						  projectorKetTimesPsiSpin0TimesVComplexKPoints,
-                                                  projectorKetTimesPsiSpin1TimesVComplexKPoints,
+						  projectorKetTimesPsiSpin0TimesV,
+                                                  projectorKetTimesPsiSpin1TimesV,
 						  psiSpin0Quads,
 						  psiSpin1Quads);
 
@@ -455,8 +478,8 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 			                             forceEval,
 					             cell,
 					             gradZetaDeltaVQuads,
-					             projectorKetTimesPsiSpin0TimesVReal,
-						     projectorKetTimesPsiSpin1TimesVReal,
+					             projectorKetTimesPsiSpin0TimesV[0],
+						     projectorKetTimesPsiSpin1TimesV[0],
 					             psiSpin0Quads,
 						     psiSpin1Quads);
 #endif
@@ -522,8 +545,8 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
            Tensor<1,C_DIM,VectorizedArray<double> > FKPoints;
            FKPoints+=eshelbyTensorSP::getFnlPeriodic
 	                                   (gradZetaDeltaVQuads[q],
-					    projectorKetTimesPsiSpin0TimesVComplexKPoints,
-					    projectorKetTimesPsiSpin1TimesVComplexKPoints,
+					    projectorKetTimesPsiSpin0TimesV,
+					    projectorKetTimesPsiSpin1TimesV,
 					    psiSpin0Quads.begin()+q*numEigenVectors*numKPoints,
 					    psiSpin1Quads.begin()+q*numEigenVectors*numKPoints,
 					    dftPtr->d_kPointWeights,
@@ -534,8 +557,8 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 
            EKPoints+=eshelbyTensorSP::getEnlEshelbyTensorPeriodic
 	                                                (ZetaDeltaVQuads[q],
-		                                         projectorKetTimesPsiSpin0TimesVComplexKPoints,
-		                                         projectorKetTimesPsiSpin1TimesVComplexKPoints,
+		                                         projectorKetTimesPsiSpin0TimesV,
+		                                         projectorKetTimesPsiSpin1TimesV,
 						         psiSpin0Quads.begin()+q*numEigenVectors*numKPoints,
 						         psiSpin1Quads.begin()+q*numEigenVectors*numKPoints,
 							 dftPtr->d_kPointWeights,
@@ -546,8 +569,8 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 #else
            F+=eshelbyTensorSP::getFnlNonPeriodic
 	                                      (gradZetaDeltaVQuads[q],
-					       projectorKetTimesPsiSpin0TimesVReal,
-					       projectorKetTimesPsiSpin1TimesVReal,
+					       projectorKetTimesPsiSpin0TimesV[0],
+					       projectorKetTimesPsiSpin1TimesV[0],
 					       psiSpin0Quads.begin()+q*numEigenVectors,
 					       psiSpin1Quads.begin()+q*numEigenVectors,
 					       (dftPtr->eigenValues)[0],
@@ -555,8 +578,8 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 					       dftParameters::TVal);
 
            E+=eshelbyTensorSP::getEnlEshelbyTensorNonPeriodic(ZetaDeltaVQuads[q],
-		                                            projectorKetTimesPsiSpin0TimesVReal,
-							    projectorKetTimesPsiSpin1TimesVReal,
+		                                            projectorKetTimesPsiSpin0TimesV[0],
+							    projectorKetTimesPsiSpin1TimesV[0],
 						            psiSpin0Quads.begin()+q*numEigenVectors,
 							    psiSpin1Quads.begin()+q*numEigenVectors,
 						            (dftPtr->eigenValues)[0],

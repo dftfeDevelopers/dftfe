@@ -21,6 +21,7 @@
 #include "../../include/dftParameters.h"
 #include "../../include/symmetry.h"
 #include "../../include/dft.h"
+#include <vectorUtilities.h>
 
 namespace dftfe {
 
@@ -167,6 +168,31 @@ void symmetryClass<FEOrder>::computeAndSymmetrize_rhoOut()
 template<unsigned int FEOrder>
 void symmetryClass<FEOrder>::computeLocalrhoOut()
 {
+  std::vector<std::vector<vectorType>> eigenVectors((1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size());
+  for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size(); ++kPoint)
+  {
+        eigenVectors[kPoint].resize(dftPtr->numEigenValues);
+        for(unsigned int i = 0; i < dftPtr->numEigenValues; ++i)
+	{
+          eigenVectors[kPoint][i].reinit(dftPtr->d_tempEigenVec);
+#ifdef USE_COMPLEX
+	    vectorTools::copyFlattenedDealiiVecToSingleCompVec
+		     (dftPtr->d_eigenVectorsFlattened[kPoint],
+		      dftPtr->numEigenValues,
+		      i,
+		      dftPtr->localProc_dof_indicesReal,
+		      dftPtr->localProc_dof_indicesImag,
+		      eigenVectors[kPoint][i]);
+#else
+	    vectorTools::copyFlattenedDealiiVecToSingleCompVec
+		     (dftPtr->d_eigenVectorsFlattened[kPoint],
+		      dftPtr->numEigenValues,
+		      i,
+		      eigenVectors[kPoint][i]);
+#endif
+	}
+  }
+
   QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
   const unsigned int num_quad_points = quadrature.size();
   totPoints = recvdData1[0].size() ;
@@ -260,14 +286,14 @@ void symmetryClass<FEOrder>::computeLocalrhoOut()
 		       factor=((dftPtr->eigenValues)[kPoint][i+dftParameters::spinPolarized*(dftPtr->numEigenValues)]-(dftPtr->fermiEnergy))/(C_kb*dftParameters::TVal);
 		       const double partialOccupancyBeta = getOccupancy(factor) ;
 		       //
-		       fe_values.get_function_values((dftPtr->eigenVectors[(1+dftParameters::spinPolarized)*kPoint][i]), tempPsiAlpha);
+		       fe_values.get_function_values((eigenVectors[(1+dftParameters::spinPolarized)*kPoint][i]), tempPsiAlpha);
 		       if (dftParameters::spinPolarized==1)
-			 fe_values.get_function_values((dftPtr->eigenVectors[(1+dftParameters::spinPolarized)*kPoint+1][i]), tempPsiBeta);
+			 fe_values.get_function_values((eigenVectors[(1+dftParameters::spinPolarized)*kPoint+1][i]), tempPsiBeta);
 		       //
 		       if(dftParameters::xc_id == 4){
-			   fe_values.get_function_gradients((dftPtr->eigenVectors[(1+dftParameters::spinPolarized)*kPoint][i]),tempGradPsiTempAlpha);
+			   fe_values.get_function_gradients((eigenVectors[(1+dftParameters::spinPolarized)*kPoint][i]),tempGradPsiTempAlpha);
 			   if (dftParameters::spinPolarized==1)
-			   fe_values.get_function_gradients((dftPtr->eigenVectors[(1+dftParameters::spinPolarized)*kPoint+1][i]),tempGradPsiTempBeta);
+			   fe_values.get_function_gradients((eigenVectors[(1+dftParameters::spinPolarized)*kPoint+1][i]),tempGradPsiTempBeta);
 			}
 		       //
 		       for (unsigned int iList=0; iList<numPoint; ++iList){

@@ -116,7 +116,7 @@ namespace dftfe {
       /**
        * Does required pre-processing steps including mesh generation calls.
        */
-      void init(const bool usePreviousGroundStateRho=false);
+      void init(const unsigned int usePreviousGroundStateFields=0);
       /**
        * Does required pre-processing steps but without remeshing.
        */
@@ -210,6 +210,15 @@ namespace dftfe {
        */
       void initImageChargesUpdateKPoints();
 
+      /**
+       */
+      void initPsiAndRhoFromPreviousGroundStatePsi(std::vector<std::vector<vectorType>> eigenVectors);
+
+
+      /**
+       */
+      void initRhoFromPreviousGroundStateRho();
+
 
       /**
        * project ground state electron density from previous mesh into
@@ -248,7 +257,7 @@ namespace dftfe {
        */
       void initUnmovedTriangulation(const parallel::distributed::Triangulation<3> & triangulation);
       void initBoundaryConditions();
-      void initElectronicFields(bool usePreviousGroundStateRho=false);
+      void initElectronicFields(const unsigned int usePreviousGroundStateFields=0);
       void initPseudoPotentialAll();
 
      /**
@@ -274,7 +283,7 @@ namespace dftfe {
 	                             const dealii::ConstraintMatrix & constraintMatrixBase,
 	                             dealii::ConstraintMatrix & constraintMatrix);
       void initRho();
-      void computeRhoInitialGuessFromPSI();
+      void computeRhoInitialGuessFromPSI(std::vector<std::vector<vectorType>> eigenVectors);
       void clearRhoData();
       void noRemeshRhoDataInit();
       void readPSI();
@@ -338,7 +347,7 @@ namespace dftfe {
        * However, it works for time reversal symmetry.
        *
        */
-      void computeElectrostaticEnergyPRefined();
+      //void computeElectrostaticEnergyPRefined();
 
       /**
        * Computes Fermi-energy obtained by imposing constraint on the number of electrons
@@ -432,8 +441,6 @@ namespace dftfe {
       std::vector<dealii::types::global_dof_index> localProc_dof_indicesReal,localProc_dof_indicesImag;
       std::vector<bool> selectedDofsHanging;
 
-
-
       forceClass<FEOrder> * forcePtr;
       symmetryClass<FEOrder> * symmetryPtr;
       geoOptIon<FEOrder> * geoOptIonPtr;
@@ -466,8 +473,7 @@ namespace dftfe {
        * data storage for Kohn-Sham wavefunctions
        */
       std::vector<std::vector<double> > eigenValues;
-      std::vector<dealii::parallel::distributed::Vector<dataTypes::number>> eigenVectorsFlattened;
-      std::vector<std::vector<vectorType> > eigenVectors;
+      std::vector<dealii::parallel::distributed::Vector<dataTypes::number>> d_eigenVectorsFlattened;
 
       /// parallel message stream
       ConditionalOStream  pcout;
@@ -602,7 +608,7 @@ namespace dftfe {
 
       std::vector<double> a0;
       std::vector<double> bLow;
-      vectorType tempEigenVec;
+      vectorType d_tempEigenVec;
 
       /**
        * @brief compute the maximum of the residual norm of the highest occupied state among all k points

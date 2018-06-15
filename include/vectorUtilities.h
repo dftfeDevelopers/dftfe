@@ -27,7 +27,7 @@ namespace dftfe{
 /** @file vectorUtilities.h
  *  @brief Contains generic utils functions related to custom partitioned flattened dealii vector
  *
- *  @author Phani Motamarri
+ *  @author Phani Motamarri, Sambit Das
  */
   namespace vectorTools
   {
@@ -63,23 +63,48 @@ namespace dftfe{
 				     std::vector<std::vector<dealii::types::global_dof_index> >         & flattenedArrayCellLocalProcIndexId);
 
 
-    /** @brief Creates a
-     *
-     */
 #ifdef USE_COMPLEX
-     void copyFlattenedDealiiVectorToSingleComp
-                             (dealii::parallel::distributed::Vector<std::complex<double>>  & flattenedArray,
+    /** @brief Copies a single field component from a flattenedArray parallel distributed
+     * vector containing multiple component fields to a 2-component field (real and complex)
+     * parallel distributed vector.
+     *
+     *  @param[in] flattenedArray flattened parallel distributed vector with multiple component fields
+     *  @param[in] totalNumberComponents total number of component fiels in flattenedArray
+     *  @param[in] componentIndex desired single field component
+     *  @param[in] localProcDofIndicesReal local dof indices in the current processor
+     *  which correspond to component-1 of 2-component parallel distributed array
+     *  @param[in] localProcDofIndicesImag local dof indices in the current processor
+     *  which correspond to component-2 of 2-component parallel distributed array
+     *  @param[out] componentVector two component field parallel distributed vector with
+     *  the values corresponding to componentIndex field of flattenedArray.
+     *  componentVector is assumed to be already initialized with the 2-component version of the
+     *  same single component partitioner used in the creation of the flattenedArray partitioner.
+     */
+     void copyFlattenedDealiiVecToSingleCompVec
+                             (const dealii::parallel::distributed::Vector<std::complex<double>>  & flattenedArray,
 			      const unsigned int                        totalNumberComponents,
 			      const unsigned int                        componentIndex,
 			      const std::vector<dealii::types::global_dof_index> & localProcDofIndicesReal,
                               const std::vector<dealii::types::global_dof_index> & localProcDofIndicesImag,
 			      dealii::parallel::distributed::Vector<double>  & componentVector);
+
 #else
-     void copyFlattenedDealiiVectorToSingleComp
-                             (dealii::parallel::distributed::Vector<double>  & flattenedArray,
+    /** @brief Copies a single field component from a flattenedArray parallel distributed
+     * vector containing multiple component fields to a single field parallel distributed vector.
+     *
+     *  @param[in] flattenedArray flattened parallel distributed vector with multiple component fields
+     *  @param[in] totalNumberComponents total number of component fiels in flattenedArray
+     *  @param[in] componentIndex desired single field component
+     *  @param[out] componentVector parallel distributed vector with field corresponding to
+     *  componentIndex. componentVector is assumed to be already initialized with the
+     *  same single component partitioner used in the creation of the flattenedArray partitioner.
+     */
+     void copyFlattenedDealiiVecToSingleCompVec
+                             (const dealii::parallel::distributed::Vector<double>  & flattenedArray,
 			      const unsigned int                        totalNumberComponents,
 			      const unsigned int                        componentIndex,
 			      dealii::parallel::distributed::Vector<double>  & componentVector);
+
 #endif
 
   }

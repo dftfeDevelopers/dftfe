@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Phani Motamarri (2018)
+// @author Phani Motamarri, Sambit Das
 //
 
 #include <vectorUtilities.h>
@@ -201,8 +201,8 @@ namespace dftfe
 
 
 #ifdef USE_COMPLEX
-     void copyFlattenedDealiiVectorToSingleComp
-                             (dealii::parallel::distributed::Vector<std::complex<double>>  & flattenedArray,
+    void copyFlattenedDealiiVecToSingleCompVec
+                             (const dealii::parallel::distributed::Vector<std::complex<double>>  & flattenedArray,
 			      const unsigned int                        totalNumberComponents,
 			      const unsigned int                        componentIndex,
 			      const std::vector<dealii::types::global_dof_index> & localProcDofIndicesReal,
@@ -223,8 +223,8 @@ namespace dftfe
 	componentVector.update_ghost_values();
     }
 #else
-     void copyFlattenedDealiiVectorToSingleComp
-                             (dealii::parallel::distributed::Vector<double>  & flattenedArray,
+     void copyFlattenedDealiiVecToSingleCompVec
+                             (const dealii::parallel::distributed::Vector<double>  & flattenedArray,
 			      const unsigned int                        totalNumberComponents,
 			      const unsigned int                        componentIndex,
 			      dealii::parallel::distributed::Vector<double>  & componentVector)

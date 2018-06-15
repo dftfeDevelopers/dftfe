@@ -541,6 +541,12 @@ namespace dftParameters
     AssertThrow(!(dftParameters::chkType==2 && (dftParameters::isIonOpt || dftParameters::isCellOpt)),ExcMessage("DFT-FE Error: CHK TYPE=2 cannot be used if geometry optimization is being performed."));
 
     AssertThrow(!(dftParameters::chkType==1 && (dftParameters::isIonOpt && dftParameters::isCellOpt)),ExcMessage("DFT-FE Error: CHK TYPE=1 cannot be used if both ION OPT and CELL OPT are set to true."));
+
+    if (dftParameters::electrostaticsPRefinement)
+       AssertThrow(false,ExcMessage("DFT-FE Error: Implemenation of this feature is not completed yet."));
+
+    if (dftParameters::nonSelfConsistentForce)
+       AssertThrow(false,ExcMessage("DFT-FE Error: Implemenation of this feature is not completed yet."));
   }
 
 }

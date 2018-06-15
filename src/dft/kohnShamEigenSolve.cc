@@ -94,14 +94,11 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
   //
   //scale the eigenVectors (initial guess of single atom wavefunctions or previous guess) to convert into Lowden Orthonormalized FE basis
   //multiply by M^{1/2}
-  //internal::pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_sqrtMassVector,
-  //			               eigenVectors[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
-  //			               constraintsNoneEigenDataInfo);
   internal::pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_sqrtMassVector,
 				       matrix_free_data.get_vector_partitioner(),
 				       numEigenValues,
 				       localProc_dof_indicesReal,
-				       eigenVectorsFlattened[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
+				       d_eigenVectorsFlattened[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
 				       constraintsNoneDataInfo);
 
   std::vector<double> eigenValuesTemp(numEigenValues,0.0);
@@ -110,8 +107,8 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 					       bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
 
   subspaceIterationSolver.solve(kohnShamDFTEigenOperator,
-  				eigenVectorsFlattened[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
-				tempEigenVec,
+  				d_eigenVectorsFlattened[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
+				d_tempEigenVec,
 				numEigenValues,
   				eigenValuesTemp,
 				residualNormWaveFunctions);
@@ -129,14 +126,11 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
   //
   //scale the eigenVectors with M^{-1/2} to represent the wavefunctions in the usual FE basis
   //
-  //pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_invSqrtMassVector,
-  //			     eigenVectors[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
-  //			     constraintsNoneEigenDataInfo);
   internal::pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_invSqrtMassVector,
 				       matrix_free_data.get_vector_partitioner(),
 				       numEigenValues,
 				       localProc_dof_indicesReal,
-				       eigenVectorsFlattened[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
+				       d_eigenVectorsFlattened[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
 				       constraintsNoneDataInfo);
 
   //

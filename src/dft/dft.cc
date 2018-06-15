@@ -66,7 +66,7 @@ namespace dftfe {
 #include "mixingschemes.cc"
 #include "kohnShamEigenSolve.cc"
 #include "restart.cc"
-#include "electrostaticPRefinedEnergy.cc"
+//#include "electrostaticPRefinedEnergy.cc"
 #include "moveAtoms.cc"
 
   //
@@ -260,7 +260,7 @@ namespace dftfe {
 
     a0.resize((dftParameters::spinPolarized+1)*d_kPointWeights.size(),dftParameters::lowerEndWantedSpectrum);
     bLow.resize((dftParameters::spinPolarized+1)*d_kPointWeights.size(),0.0);
-    eigenVectorsFlattened.resize((1+dftParameters::spinPolarized)*d_kPointWeights.size());
+    d_eigenVectorsFlattened.resize((1+dftParameters::spinPolarized)*d_kPointWeights.size());
 
     for(unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
         eigenValues[kPoint].resize((dftParameters::spinPolarized+1)*numEigenValues);
@@ -364,7 +364,7 @@ namespace dftfe {
 
   //dft init
   template<unsigned int FEOrder>
-  void dftClass<FEOrder>::init (const bool usePreviousGroundStateFields)
+  void dftClass<FEOrder>::init (const unsigned int usePreviousGroundStateFields)
   {
 
     initImageChargesUpdateKPoints();
@@ -730,7 +730,7 @@ namespace dftfe {
 	    // do more passes of chebysev filter till the check passes.
 	    // This improves the scf convergence performance.
 	    unsigned int count=1;
-	    while (maxRes>adaptiveChebysevFilterPassesTol)
+	    while (maxRes>adaptiveChebysevFilterPassesTol && count<20)
 	      {
 		for(unsigned int s=0; s<2; ++s)
 		  {
@@ -847,7 +847,7 @@ namespace dftfe {
 	    // do more passes of chebysev filter till the check passes.
 	    // This improves the scf convergence performance.
 	    unsigned int count=1;
-	    while (maxRes>adaptiveChebysevFilterPassesTol)
+	    while (maxRes>adaptiveChebysevFilterPassesTol && count<20)
 	      {
 
 		for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
@@ -1065,8 +1065,8 @@ namespace dftfe {
       }
 #endif
 
-    if (dftParameters::electrostaticsPRefinement)
-      computeElectrostaticEnergyPRefined();
+    //if (dftParameters::electrostaticsPRefinement)
+    //  computeElectrostaticEnergyPRefined();
 
     if (dftParameters::writeSolutionFields)
       output();
@@ -1082,21 +1082,21 @@ namespace dftfe {
       {
 	char buffer[100]; sprintf(buffer,"eigen%u", i);
 #ifdef USE_COMPLEX
-        vectorTools::copyFlattenedDealiiVectorToSingleComp
-		 (eigenVectorsFlattened[0],
+        vectorTools::copyFlattenedDealiiVecToSingleCompVec
+		 (d_eigenVectorsFlattened[0],
 		  numEigenValues,
 		  i,
 		  localProc_dof_indicesReal,
 		  localProc_dof_indicesImag,
-		  tempEigenVec);
+		  d_tempEigenVec);
 #else
-        vectorTools::copyFlattenedDealiiVectorToSingleComp
-		 (eigenVectorsFlattened[0],
+        vectorTools::copyFlattenedDealiiVecToSingleCompVec
+		 (d_eigenVectorsFlattened[0],
 		  numEigenValues,
 		  i,
-		  tempEigenVec);
+		  d_tempEigenVec);
 #endif
-	data_outEigen.add_data_vector (tempEigenVec, buffer);
+	data_outEigen.add_data_vector (d_tempEigenVec, buffer);
       }
     data_outEigen.build_patches (C_num1DQuad<FEOrder>());
 
