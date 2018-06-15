@@ -20,11 +20,9 @@
 
 #ifdef USE_COMPLEX
 template<unsigned int FEOrder>
-void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXBatchGEMM
-       (const dealii::parallel::distributed::Vector<std::complex<double> > & src,
-        const unsigned int numberWaveFunctions,
-        const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap,
-        dealii::parallel::distributed::Vector<std::complex<double> >       & dst) const
+void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXBatchGEMM(const dealii::parallel::distributed::Vector<std::complex<double> > & src,
+								    const unsigned int numberWaveFunctions,
+								    dealii::parallel::distributed::Vector<std::complex<double> >       & dst) const
 {
 
   std::map<unsigned int, std::vector<std::complex<double> > > projectorKetTimesVector;
@@ -59,7 +57,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXBatchGEMM
 	  if (dftPtr->d_nonLocalAtomIdsInElement[iElem].size()>0)
 	    for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
 	    {
-	      dealii::types::global_dof_index localNodeId = flattenedArrayCellLocalProcIndexIdMap[iElem][iNode];
+	      dealii::types::global_dof_index localNodeId = d_flattenedArrayCellLocalProcIndexIdMap[iElem][iNode];
 	      zcopy_(&numberWaveFunctions,
 		     src.begin()+localNodeId,
 		     &inc,
@@ -199,7 +197,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXBatchGEMM
 	    const unsigned int elementId =  dftPtr->d_elementIdsInAtomCompactSupport[atomId][iElemComp];
 	    for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
 	    {
-	      int localNodeId = flattenedArrayCellLocalProcIndexIdMap[elementId][iNode];
+	      dealii::types::global_dof_index localNodeId = d_flattenedArrayCellLocalProcIndexIdMap[elementId][iNode];
 	      zaxpy_(&numberWaveFunctions,
 		     &alpha1,
 		     &cellNonLocalHamTimesWaveMatrixBatch[iElemComp][numberWaveFunctions*iNode],
@@ -221,11 +219,9 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXBatchGEMM
 }
 #else
 template<unsigned int FEOrder>
-void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXBatchGEMM
-               (const dealii::parallel::distributed::Vector<double> & src,
-	        const unsigned int numberWaveFunctions,
-	        const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap,
-	        dealii::parallel::distributed::Vector<double>       & dst) const
+void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXBatchGEMM(const dealii::parallel::distributed::Vector<double> & src,
+								    const unsigned int numberWaveFunctions,
+								    dealii::parallel::distributed::Vector<double>       & dst) const
 {
 
 
@@ -261,7 +257,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXBatchGEMM
 	  if (dftPtr->d_nonLocalAtomIdsInElement[iElem].size()>0)
 	    for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
 	    {
-	      dealii::types::global_dof_index localNodeId = flattenedArrayCellLocalProcIndexIdMap[iElem][iNode];
+	      dealii::types::global_dof_index localNodeId = d_flattenedArrayCellLocalProcIndexIdMap[iElem][iNode];
 	      dcopy_(&numberWaveFunctions,
 		     src.begin()+localNodeId,
 		     &inc,
@@ -397,7 +393,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXBatchGEMM
 	    const unsigned int elementId =  dftPtr->d_elementIdsInAtomCompactSupport[atomId][iElemComp];
 	    for(unsigned int iNode = 0; iNode < d_numberNodesPerElement; ++iNode)
 	    {
-	      int localNodeId = flattenedArrayCellLocalProcIndexIdMap[elementId][iNode];
+	      dealii::types::global_dof_index localNodeId = d_flattenedArrayCellLocalProcIndexIdMap[elementId][iNode];
 	      daxpy_(&numberWaveFunctions,
 		     &alpha1,
 		     &cellNonLocalHamTimesWaveMatrixBatch[iElemComp][numberWaveFunctions*iNode],

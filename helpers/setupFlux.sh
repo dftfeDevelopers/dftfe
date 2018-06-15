@@ -3,8 +3,8 @@ set -e
 set -o pipefail
 #script to setup and build DFT-FE
 #Provide paths for external libraries and optimization flag (0 for Debug, 1 for Release)
-dealiiPetscRealDir="/home/vikramg/DFT-FE-softwares/softwareCentos/dealiiDev/intel_18.0.1_petscReal_noavx_64bit_thread_master2"
-dealiiPetscComplexDir="/home/vikramg/DFT-FE-softwares/softwareCentos/dealiiDev/intel_18.0.1_petscComplex_noavx_64bit_thread_master2"
+dealiiPetscRealDir="/home/vikramg/DFT-FE-softwares/softwareCentos/dealiiDev/intel_18.0.1_petscReal_avx_64bit_mklthread_scalapack"
+dealiiPetscComplexDir="/home/vikramg/DFT-FE-softwares/softwareCentos/dealiiDev/intel_18.0.1_petscComplex_avx_64bit_mklthread_scalapack"
 alglibDir="/nfs/mcfs_comp/home/rudraa/software/alglib/cpp/src"
 libxcDir="/home/vikramg/DFT-FE-softwares/softwareCentos/libxcNew/install_intel18"
 spglibDir="/home/vikramg/DFT-FE-softwares/softwareCentos/spglib"
