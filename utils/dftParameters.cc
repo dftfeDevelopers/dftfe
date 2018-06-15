@@ -51,13 +51,15 @@ namespace dftParameters
   bool reproducible_output=false;
   bool electrostaticsPRefinement=false;
 
+  unsigned int chebyshevBlockSize=512;
   std::string startingWFCType="";
-  unsigned int chebyshevBlockSize=1000;
   bool useBatchGEMM=false;
   unsigned int chebyshevOMPThreads=0;
   unsigned int orthoRROMPThreads=0;
   bool writeSolutionFields=false;
   bool cacheShapeGradData=false;
+  unsigned int orthoRRWaveFuncBlockSize=200;
+  unsigned int subspaceRotDofsBlockSize=800;
 
 
   void declare_parameters(ParameterHandler &prm)
@@ -331,9 +333,9 @@ namespace dftParameters
 			      Patterns::Double(0),
 			      "[Developer] Parameter specifying the tolerance to which eigenvectors need to computed using chebyshev filtering approach");
 
-	    prm.declare_entry("CHEBYSHEV FILTER BLOCK SIZE", "1000",
-			      Patterns::Integer(1),
-			      "[Developer] The maximum number of wavefunctions which are handled by one call to the Chebyshev filter. This is useful for optimization purposes. The optimum value is dependent on the computing architecture.");
+	    prm.declare_entry("CHEBYSHEV FILTER BLOCK SIZE", "512",
+			       Patterns::Integer(1),
+			       "[Developer] The maximum number of wavefunctions which are handled by one call to the Chebyshev filter. This is useful for optimization purposes. The optimum value is dependent on the computing architecture.");
 
 	    prm.declare_entry("BATCH GEMM", "false",
 			      Patterns::Bool(),
@@ -345,12 +347,20 @@ namespace dftParameters
 
 	    prm.declare_entry("ORTHO RR NUM OMP THREADS", "0",
 			      Patterns::Integer(0,300),
-			      "[Developer] Sets the number of OpenMP threads to be used in the blas linear algebra calls inside Lowden Orthogonalization and Rayleigh-Ritz projection steps. The default value is 0, for which no action is taken. CAUTION: For non-zero values, CHEBYSHEV FILTER NUM OMP THREADS takes precedence over the OMP_NUM_THREADS environment variable.");
+			      "[Developer] Sets the number of OpenMP threads to be used in the blas linear algebra calls inside orthogonalization and Rayleigh-Ritz steps. The default value is 0, for which no action is taken. CAUTION: For non-zero values, CHEBYSHEV FILTER NUM OMP THREADS takes precedence over the OMP_NUM_THREADS environment variable.");
 
 
 	    prm.declare_entry("ORTHOGONALIZATION TYPE","GS",
 			      Patterns::Selection("GS|LW|PGS"),
-			      "[Standard] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization), LW(Lowden Orthogonalization), PGS(Pseudo Gram-Schmidt Orthogonalization). GS is the default option.");
+			      "[Standard] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization using SLEPc library), LW(Lowden Orthogonalization using LAPACK, extension to ScaLAPACK not implemented yet), PGS(Pseudo Gram-Schmidt Orthogonalization using ScaLAPACK, cannot be used if dealii library is not compiled with ScaLAPACK. PGS option is also not available for the complex executable yet). GS is the default option.");
+
+	    prm.declare_entry("ORTHO RR WFC BLOCK SIZE", "200",
+			       Patterns::Integer(1),
+			       "[Developer] This block size is used for memory optimization purposes in the orthogonalization and Rayleigh-Ritz steps. This optimization is only activated if dealii library is compiled with ScaLAPACK. Default value is 200.");
+
+	    prm.declare_entry("SUBSPACE ROT DOFS BLOCK SIZE", "800",
+			       Patterns::Integer(1),
+			       "[Developer] This block size is used for memory optimization purposes in subspace rotation step in Pseudo-Gram-Schmidt orthogonalization and Rayleigh-Ritz steps. This optimization is only activated if dealii library is compiled with ScaLAPACK. Default value is 800.");
 
 	}
 	prm.leave_subsection ();
@@ -485,6 +495,8 @@ namespace dftParameters
 	   dftParameters::chebyshevTolerance = prm.get_double("CHEBYSHEV FILTER TOLERANCE");
 	   dftParameters::chebyshevOMPThreads = prm.get_integer("CHEBYSHEV FILTER NUM OMP THREADS");
 	   dftParameters::orthoRROMPThreads= prm.get_integer("ORTHO RR NUM OMP THREADS");
+	   dftParameters::orthoRRWaveFuncBlockSize= prm.get_integer("ORTHO RR WFC BLOCK SIZE");
+	   dftParameters::subspaceRotDofsBlockSize= prm.get_integer("SUBSPACE ROT DOFS BLOCK SIZE");
 	}
 	prm.leave_subsection ();
     }

@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Phani Motamarri (2018)
+// @author Phani Motamarri, Sambit Das
 //
 
 
@@ -23,8 +23,12 @@
  */
 
 #include <linearAlgebraOperations.h>
+#include <linearAlgebraOperationsInternal.h>
 #include <dftParameters.h>
+#include <dftUtils.h>
 #include <omp.h>
+
+#include "pseudoGS.cc"
 
 namespace dftfe{
 
@@ -100,7 +104,7 @@ namespace dftfe{
       std::vector<std::complex<double> >().swap(work);
       std::vector<int>().swap(iwork);
 
-           
+
     }
 
 
@@ -149,7 +153,7 @@ namespace dftfe{
 
 
 
-    
+
     void callevr(const unsigned int dimensionMatrix,
 		 double *matrixInput,
 		 double *eigenVectorMatrixOutput,
@@ -187,14 +191,14 @@ namespace dftfe{
 	      &iwork[0],
 	      &liwork,
 	      &info);
-	     
+
       AssertThrow(info==0,dealii::ExcMessage("Error in dsyevr"));
-      
+
 
     }
 
 
-   
+
 
     void callgemm(const unsigned int numberEigenValues,
 		  const unsigned int localVectorSize,
@@ -457,6 +461,70 @@ namespace dftfe{
 
     }
 
+#if(defined DEAL_II_WITH_SCALAPACK && !USE_COMPLEX)
+    template<typename T>
+    void rayleighRitz(operatorDFTClass & operatorMatrix,
+		      dealii::parallel::distributed::Vector<T> & X,
+		      const unsigned int numberWaveFunctions,
+		      std::vector<double> & eigenValues)
+
+    {
+      if (dftParameters::orthoRROMPThreads!=0)
+	  omp_set_num_threads(dftParameters::orthoRROMPThreads);
+
+      dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
+
+      dealii::TimerOutput computing_timer(pcout,
+					  dftParameters::reproducible_output ||
+					  dftParameters::verbosity<2 ? dealii::TimerOutput::never : dealii::TimerOutput::summary,
+					  dealii::TimerOutput::wall_times);
+      //
+      //compute projected Hamiltonian
+      //
+      const unsigned rowsBlockSize=std::min((unsigned int)50,numberWaveFunctions);
+      std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  processGrid;
+      internal::createProcessGridSquareMatrix(X.get_mpi_communicator(),
+		                              numberWaveFunctions,
+				              rowsBlockSize,
+					      processGrid);
+
+      dealii::ScaLAPACKMatrix<T> projHamPar(numberWaveFunctions,
+                                            processGrid,
+                                            rowsBlockSize);
+
+      computing_timer.enter_section("Blocked XtHX, RR step");
+      operatorMatrix.XtHX(X,
+			  numberWaveFunctions,
+			  processGrid,
+			  projHamPar);
+      computing_timer.exit_section("Blocked XtHX, RR step");
+
+      //
+      //compute eigendecomposition of ProjHam
+      //
+      computing_timer.enter_section("ScaLAPACK eigen decomp, RR step");
+      const unsigned int numberEigenValues = numberWaveFunctions;
+      eigenValues.resize(numberEigenValues);
+      eigenValues=projHamPar.eigenpairs_symmetric_by_index_MRRR(std::make_pair(0,numberWaveFunctions-1),true);
+      computing_timer.exit_section("ScaLAPACK eigen decomp, RR step");
+
+      //
+      //rotate the basis in the subspace X = X*Q, implemented as X^{T}=Q^{T}*X^{T} with X^{T}
+      //stored in the column major format
+      //
+      computing_timer.enter_section("Blocked subspace rotation, RR step");
+      internal::subspaceRotation(X,
+		                 numberWaveFunctions,
+		                 processGrid,
+			         projHamPar,
+				 true);
+      computing_timer.exit_section("Blocked subspace rotation, RR step");
+
+      if (dftParameters::orthoRROMPThreads!=0)
+	  omp_set_num_threads(1);
+    }
+#else
+
     template<typename T>
     void rayleighRitz(operatorDFTClass & operatorMatrix,
 		      dealii::parallel::distributed::Vector<T> & X,
@@ -469,13 +537,15 @@ namespace dftfe{
       dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
 
       dealii::TimerOutput computing_timer(pcout,
-					  dftParameters::reproducible_output ? dealii::TimerOutput::never : dealii::TimerOutput::summary,
+					  dftParameters::reproducible_output ||
+					  dftParameters::verbosity<2 ? dealii::TimerOutput::never : dealii::TimerOutput::summary,
 					  dealii::TimerOutput::wall_times);
       //
       //compute projected Hamiltonian
       //
       std::vector<T> ProjHam;
-      const unsigned int numberEigenValues = eigenValues.size();
+      const unsigned int numberEigenValues = numberWaveFunctions;
+      eigenValues.resize(numberEigenValues);
 
       computing_timer.enter_section("XtHX");
       operatorMatrix.XtHX(X,
@@ -490,6 +560,7 @@ namespace dftfe{
       callevd(numberEigenValues,
 	      &ProjHam[0],
 	      &eigenValues[0]);
+
       computing_timer.exit_section("eigen decomp in RR");
 
 
@@ -513,7 +584,9 @@ namespace dftfe{
       if (dftParameters::orthoRROMPThreads!=0)
 	  omp_set_num_threads(1);
     }
+#endif
 
+#ifdef DEAL_II_WITH_SCALAPACK
     template<typename T>
     void computeEigenResidualNorm(operatorDFTClass & operatorMatrix,
 				  dealii::parallel::distributed::Vector<T> & X,
@@ -525,12 +598,102 @@ namespace dftfe{
       //
       //get the number of eigenVectors
       //
-      const unsigned int numberVectors = eigenValues.size();
+      const unsigned int totalNumberVectors = eigenValues.size();
+      const unsigned int localVectorSize = X.local_size()/totalNumberVectors;
+      std::vector<double> residualNormSquare(totalNumberVectors,0.0);
+
+      //create temporary arrays XBlock,HXBlock
+      dealii::parallel::distributed::Vector<dataTypes::number> XBlock,HXBlock;
+
+      // Do H*X using a blocked approach and compute
+      // the residual norms: H*XBlock-XBlock*D, where
+      // D is the eigenvalues matrix.
+      // The blocked approach avoids additional full
+      // wavefunction matrix memory
+      const unsigned int vectorsBlockSize=dftParameters::orthoRRWaveFuncBlockSize;
+      for (unsigned int jvec = 0; jvec < totalNumberVectors; jvec += vectorsBlockSize)
+      {
+	  // Correct block dimensions if block "goes off edge"
+	  const unsigned int B = std::min(vectorsBlockSize, totalNumberVectors-jvec);
+	  if (jvec==0 || B!=vectorsBlockSize)
+	  {
+	     operatorMatrix.reinit(B,
+		                   XBlock,
+		                   true);
+	     HXBlock.reinit(XBlock);
+	  }
+
+          XBlock=T(0.);
+	  //fill XBlock from X:
+	  for(unsigned int iNode = 0; iNode<localVectorSize; ++iNode)
+	      for(unsigned int iWave = 0; iWave < B; ++iWave)
+		    XBlock.local_element(iNode*B
+			     +iWave)
+			 =X.local_element(iNode*totalNumberVectors+jvec+iWave);
+
+
+	  //evaluate H times XBlock and store in HXBlock
+	  HXBlock=T(0.);
+	  const bool scaleFlag = false;
+	  const T scalar = 1.0;
+	  operatorMatrix.HX(XBlock,
+	                    B,
+	                    scaleFlag,
+	                    scalar,
+	                    HXBlock);
+
+	  //compute residual norms:
+	  for(unsigned int iDof = 0; iDof < localVectorSize; ++iDof)
+	      for(unsigned int iWave = 0; iWave < B; iWave++)
+		{
+		  const double temp =std::abs(HXBlock.local_element(B*iDof + iWave) -
+		      eigenValues[jvec+iWave]*XBlock.local_element(B*iDof + iWave));
+		  residualNormSquare[jvec+iWave] += temp*temp;
+		}
+      }
+
+
+      dealii::Utilities::MPI::sum(residualNormSquare,X.get_mpi_communicator(),residualNormSquare);
+      if(dftParameters::verbosity>=2)
+	{
+	  if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+	    std::cout<<"L-2 Norm of residue   :"<<std::endl;
+	}
+      for(unsigned int iWave = 0; iWave < totalNumberVectors; ++iWave)
+	{
+	  residualNorm[iWave] = sqrt(residualNormSquare[iWave]);
+
+	  if(dftParameters::verbosity>=2)
+	      if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+		std::cout<<"eigen vector "<< iWave<<": "<<residualNorm[iWave]<<std::endl;
+	}
+
+      if(dftParameters::verbosity>=2)
+	if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+	  std::cout <<std::endl;
+
+    }
+#else
+    template<typename T>
+    void computeEigenResidualNorm(operatorDFTClass & operatorMatrix,
+				  dealii::parallel::distributed::Vector<T> & X,
+				  const std::vector<double> & eigenValues,
+				  std::vector<double> & residualNorm)
+
+    {
+
+      //
+      //get the number of eigenVectors
+      //
+      const unsigned int totalNumberVectors = eigenValues.size();
+      std::vector<double> residualNormSquare(totalNumberVectors,0.0);
 
       //
       //reinit blockSize require for HX later
       //
-      operatorMatrix.reinit(numberVectors);
+      operatorMatrix.reinit(totalNumberVectors,
+	      		    X,
+		            false);
 
       //
       //create temp Array
@@ -550,7 +713,7 @@ namespace dftfe{
       bool scaleFlag = false;
       T scalar = 1.0;
       operatorMatrix.HX(X,
-			numberVectors,
+			totalNumberVectors,
 			scaleFlag,
 			scalar,
 			Y);
@@ -562,33 +725,25 @@ namespace dftfe{
 	}
 
 
-      const unsigned int localVectorSize = X.local_size()/numberVectors;
+      const unsigned int localVectorSize = X.local_size()/totalNumberVectors;
 
       //
       //compute residual norms
       //
-      std::vector<T> residualNormSquare(numberVectors,0.0);
       for(unsigned int iDof = 0; iDof < localVectorSize; ++iDof)
 	{
-	  for(unsigned int iWave = 0; iWave < numberVectors; iWave++)
+	  for(unsigned int iWave = 0; iWave < totalNumberVectors; iWave++)
 	    {
-	      T value = Y.local_element(numberVectors*iDof + iWave) - eigenValues[iWave]*X.local_element(numberVectors*iDof + iWave);
+	      T value = Y.local_element(totalNumberVectors*iDof + iWave) - eigenValues[iWave]*X.local_element(totalNumberVectors*iDof + iWave);
 	      residualNormSquare[iWave] += std::abs(value)*std::abs(value);
 	    }
 	}
 
 
       dealii::Utilities::MPI::sum(residualNormSquare,X.get_mpi_communicator(),residualNormSquare);
-
-
-      for(unsigned int iWave = 0; iWave < numberVectors; ++iWave)
+      for(unsigned int iWave = 0; iWave < totalNumberVectors; ++iWave)
 	{
-#ifdef USE_COMPLEX
-	  double value = residualNormSquare[iWave].real();
-#else
-	  double value = residualNormSquare[iWave];
-#endif
-	  residualNorm[iWave] = sqrt(value);
+	  residualNorm[iWave] = sqrt(residualNormSquare[iWave]);
 
 	  if(dftParameters::verbosity>=2)
 	    {
@@ -604,10 +759,7 @@ namespace dftfe{
       }
 
     }
-
-
-
-
+#endif
 
 #ifdef USE_COMPLEX
     void lowdenOrthogonalization(dealii::parallel::distributed::Vector<std::complex<double> > & X,
@@ -821,7 +973,7 @@ namespace dftfe{
 	     &numberVectors);
       computing_timer.exit_section("local overlap matrix for lowden");
 
-      dealii::Utilities::MPI::sum(overlapMatrix, X.get_mpi_communicator(), overlapMatrix); 
+      dealii::Utilities::MPI::sum(overlapMatrix, X.get_mpi_communicator(), overlapMatrix);
 
       std::vector<double> eigenValuesOverlap(numberVectors);
       computing_timer.enter_section("eigen decomp. of overlap matrix");
@@ -859,7 +1011,7 @@ namespace dftfe{
 		  &overlapMatrixEigenVectors[0],
 		  &eigenValuesOverlap[0]);
 	  computing_timer.exit_section("eigen decomp. of overlap matrix");
-	      
+
 	  overlapMatrix = overlapMatrixEigenVectors;
 	  overlapMatrixEigenVectors.clear();
 	  std::vector<double>().swap(overlapMatrixEigenVectors);
@@ -960,7 +1112,10 @@ namespace dftfe{
 
 
     template void gramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<dataTypes::number> &,
-					       const unsigned int );
+					       const unsigned int);
+
+    template void pseudoGramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<dataTypes::number> &,
+					             const unsigned int);
 
     template void rayleighRitz(operatorDFTClass  & operatorMatrix,
 			       dealii::parallel::distributed::Vector<dataTypes::number> &,
