@@ -237,7 +237,8 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 
   const unsigned int numberGlobalAtoms = atomLocations.size();
 
-
+  if (dftParameters::verbosity>=1)
+      pcout << "Number of wavefunctions generated randomly to be used as initial guess for starting the SCF : " << numEigenValues - waveFunctionsVector.size()<< std::endl;
   //
   //loop over nodes
   //
@@ -338,8 +339,6 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 		    {
 
 		      d_nonAtomicWaveFunctions = numEigenValues - waveFunctionsVector.size();
-                      if (dftParameters::verbosity>=1 && dof==0)
-		         pcout << "Number of wavefunctions generated randomly to be used as initial guess for starting the SCF : " << d_nonAtomicWaveFunctions << std::endl;
 
 		      //
 		      // assign the rest of the wavefunctions using a standard normal distribution
