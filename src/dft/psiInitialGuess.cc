@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Shiva Rudraraju (2016), Phani Motamarri (2016)
+// @author Shiva Rudraraju, Phani Motamarri, Sambit Das
 //
 
 
@@ -245,14 +245,14 @@ void dftClass<FEOrder>::readPSIRadialValues(){
   for(unsigned int dof=0; dof<numberDofs; dof++)
     {
 #ifdef USE_COMPLEX
-      unsigned int dofID = local_dof_indicesReal[dof];
+      const dealii::types::global_dof_index dofID = local_dof_indicesReal[dof];
 #else
-      unsigned int dofID = locallyOwnedDOFs[dof];
+      const dealii::types::global_dof_index dofID = locallyOwnedDOFs[dof];
 #endif
       Point<3> node = d_supportPointsEigen[dofID];
-      if(eigenVectors[0][0].in_local_range(dofID))
+      if(d_eigenVectorsFlattened[0].in_local_range(dofID*numEigenValues))
 	{
-	  if(!constraintsNoneEigen.is_constrained(dofID))
+	  if(!constraintsNone.is_constrained(dofID))
 	    {
 	      //
 	      //loop over wave functions
@@ -316,15 +316,18 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 			  //spherical part
 			  if (it->m > 0)
 			    {
-			      (eigenVectors[kPoint][waveFunction])(dofID) += R*std::sqrt(2)*boost::math::spherical_harmonic_r(it->l,it->m,theta,phi);
+			      d_eigenVectorsFlattened[kPoint][dofID*numEigenValues+waveFunction] +=
+				  dataTypes::number(R*std::sqrt(2)*boost::math::spherical_harmonic_r(it->l,it->m,theta,phi));
 			    }
 			  else if (it->m == 0)
 			    {
-			      (eigenVectors[kPoint][waveFunction])(dofID) += R*boost::math::spherical_harmonic_r(it->l,it->m,theta,phi);
+			      d_eigenVectorsFlattened[kPoint][dofID*numEigenValues+waveFunction] +=
+				  dataTypes::number(R*boost::math::spherical_harmonic_r(it->l,it->m,theta,phi));
 			    }
 			  else
 			    {
-			      (eigenVectors[kPoint][waveFunction])(dofID) += R*std::sqrt(2)*boost::math::spherical_harmonic_i(it->l,-(it->m),theta,phi);
+			      d_eigenVectorsFlattened[kPoint][dofID*numEigenValues+waveFunction] +=
+				  dataTypes::number(R*std::sqrt(2)*boost::math::spherical_harmonic_i(it->l,-(it->m),theta,phi));
 			    }
 			}
 		      waveFunction++;
@@ -351,7 +354,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 			  if(rand()%2 == 0)
 			    value = -1.0*value;
 
-			  eigenVectors[kPoint][iWave][dofID] = value;
+			  d_eigenVectorsFlattened[kPoint][dofID*numEigenValues+iWave] = dataTypes::number(value);
 
 			}
 		    }
@@ -363,11 +366,8 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 
   for(int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
     {
-      for(unsigned int i = 0; i < numEigenValues; ++i)
-	{
-	  eigenVectors[kPoint][i].compress(VectorOperation::insert);
-	  eigenVectors[kPoint][i].update_ghost_values();
-	}
+	d_eigenVectorsFlattened[kPoint].compress(VectorOperation::insert);
+	d_eigenVectorsFlattened[kPoint].update_ghost_values();
     }
 }
 

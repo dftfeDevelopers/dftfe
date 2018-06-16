@@ -166,7 +166,7 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point<C
   if (!useHybridMeshUpdateScheme)//always remesh
   {
 	  pcout << "Auto remeshing and reinitialization of dft problem for new atom coordinates" << std::endl;
-	  init(true);
+	  init(0);
 	  pcout << "...Reinitialization end" << std::endl;
   }
   else
@@ -202,7 +202,7 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point<C
       if (updateCase==0)
       {
 	  pcout << "Auto remeshing and reinitialization of dft problem for new atom coordinates as max displacement magnitude: "<<maxDispAtom<< " is greater than: "<< break1 << " Bohr..." << std::endl;
-	  init(true);
+	  init(0);
 	  pcout << "...Reinitialization end" << std::endl;
       }
       else if (updateCase==1)
@@ -227,7 +227,7 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point<C
 		 pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to negative jacobian after Gaussian mesh movement using Gaussian constant: "<< gaussianParameter<<std::endl;
 	      else
 		 pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to maximum jacobian ratio: "<< meshQualityMetrics.second<< " exceeding set bound of: "<< maxJacobianRatio<<" after Gaussian mesh movement using Gaussian constant: "<< gaussianParameter<<std::endl;
-	      init(true);
+	      init(0);
 	      pcout << "...Reinitialization end" << std::endl;
 	  }
 	  else
@@ -256,7 +256,7 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point<C
 		 pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to negative jacobian after Gaussian mesh movement using Gaussian constant: "<< forcePtr->getGaussianGeneratorParameter()<<std::endl;
 	      else
 		 pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to maximum jacobian ratio: "<< meshQualityMetrics.second<< " exceeding set bound of: "<< maxJacobianRatio<<" after Gaussian mesh movement using Gaussian constant: "<< forcePtr->getGaussianGeneratorParameter()<<std::endl;
-	      init(true);
+	      init(0);
 	      pcout << "...Reinitialization end" << std::endl;
 	  }
 	  else

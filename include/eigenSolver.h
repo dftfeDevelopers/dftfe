@@ -37,13 +37,14 @@ namespace dftfe{
   public:
     enum class ReturnValueType {SUCCESS = 0,FAILURE,MAX_ITER_REACHED};
 
-    
+
   public:
 
     /**
      * @brief Destructor.
      */
     virtual ~eigenSolverClass() = 0;
+
 
     /**
      * @brief Solve eigen problem.

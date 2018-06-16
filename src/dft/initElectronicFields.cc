@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,56 +13,12 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author  Phani Motamarri (2018), Sambit Das (2018)
+// @author  Phani Motamarri, Sambit Das
 //
 
-//init
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::initElectronicFields(const bool usePreviousGroundStateFields){
-  TimerOutput::Scope scope (computing_timer,"init electronic fields");
-
-  //initialize electrostatics fields
-  matrix_free_data.initialize_dof_vector(d_phiTotRhoIn,phiTotDofHandlerIndex);
-  d_phiTotRhoOut.reinit(d_phiTotRhoIn);
-  matrix_free_data.initialize_dof_vector(d_phiExt,phiExtDofHandlerIndex);
-
-  //
-  //initialize eigen vectors
-  //
-  matrix_free_data.initialize_dof_vector(vChebyshev,eigenDofHandlerIndex);
-
-
-  //
-  //initialize density and PSI/ interpolate from previous ground state solution
-  //
-  if (!usePreviousGroundStateFields)
-  {
-     for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
-        for(unsigned int i = 0; i < eigenVectors[kPoint].size(); ++i)
-	  eigenVectors[kPoint][i].reinit(vChebyshev);
-
-     pcout <<std::endl<< "Reading initial guess for PSI...."<<std::endl;
-     readPSI();
-
-     if(dftParameters::verbosity >= 4)
-       {
-	 PetscLogDouble bytes;
-	 PetscMemoryGetCurrentUsage(&bytes);
-	 FILE *dummy;
-	 unsigned int this_mpi_process = dealii::Utilities::MPI::this_mpi_process(mpi_communicator);
-	 PetscSynchronizedPrintf(mpi_communicator,"[%d] Memory Usage after creating STL vector of eigenVectors  %e\n",this_mpi_process,bytes);
-	 PetscSynchronizedFlush(mpi_communicator,dummy);
-       }
-
-     if (!(dftParameters::chkType==2 && dftParameters::restartFromChk))
-	initRho();
-     if (dftParameters::verbosity>=2){
-	 if (dftParameters::spinPolarized==1)
-		pcout<< std::endl<<"net magnetization: "<< totalMagnetization(rhoInValuesSpinPolarized) <<std::endl;
-     }
-  }
-  else
-  {
+void initPsiAndRhoFromPreviousGroundStatePsi(std::vector<std::vector<vectorType>> eigenVectors)
+{
      const unsigned int totalNumEigenVectors=(1+dftParameters::spinPolarized)*d_kPointWeights.size()*eigenVectors[0].size();
      std::vector<vectorType> eigenVectorsPrevious(totalNumEigenVectors);
      std::vector<vectorType* > eigenVectorsPreviousPtrs(totalNumEigenVectors);
@@ -73,7 +29,7 @@ void dftClass<FEOrder>::initElectronicFields(const bool usePreviousGroundStateFi
 	{
 	  eigenVectorsPrevious[kPoint* eigenVectors[0].size()+i]=eigenVectors[kPoint][i];
 	  eigenVectorsPreviousPtrs[kPoint* eigenVectors[0].size()+i]=&(eigenVectorsPrevious[kPoint* eigenVectors[0].size()+i]);
-	  eigenVectors[kPoint][i].reinit(vChebyshev);
+	  eigenVectors[kPoint][i].reinit(tempEigenVec);
 	  eigenVectorsCurrentPtrs[kPoint* eigenVectors[0].size()+i]=&(eigenVectors[kPoint][i]);
 	}
 
@@ -105,7 +61,59 @@ void dftClass<FEOrder>::initElectronicFields(const bool usePreviousGroundStateFi
       pcout<<"L2 Norm Value of interpolated eigenvector 0: "<<eigenVectorsCurrentPtrs[0]->l2_norm()<<std::endl;
 
      pcout <<std::endl<< "Computing rho initial guess from previous ground state PSI...."<<std::endl;
-     computeRhoInitialGuessFromPSI();
+     computeRhoInitialGuessFromPSI(eigenVectors);
+}
+
+//init
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroundStateFields){
+  TimerOutput::Scope scope (computing_timer,"init electronic fields");
+
+  //initialize electrostatics fields
+  matrix_free_data.initialize_dof_vector(d_phiTotRhoIn,phiTotDofHandlerIndex);
+  d_phiTotRhoOut.reinit(d_phiTotRhoIn);
+  matrix_free_data.initialize_dof_vector(d_phiExt,phiExtDofHandlerIndex);
+
+  //
+  //initialize eigen vectors
+  //
+  matrix_free_data.initialize_dof_vector(d_tempEigenVec,eigenDofHandlerIndex);
+
+
+  //
+  //initialize density and PSI/ interpolate from previous ground state solution
+  //
+  if (usePreviousGroundStateFields==0)
+  {
+     for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+	  vectorTools::createDealiiVector<dataTypes::number>
+		     (matrix_free_data.get_vector_partitioner(),
+		      numEigenValues,
+		      d_eigenVectorsFlattened[kPoint]);
+
+     pcout <<std::endl<< "Reading initial guess for PSI...."<<std::endl;
+     readPSI();
+
+     if(dftParameters::verbosity >= 4)
+       {
+	 PetscLogDouble bytes;
+	 PetscMemoryGetCurrentUsage(&bytes);
+	 FILE *dummy;
+	 unsigned int this_mpi_process = dealii::Utilities::MPI::this_mpi_process(mpi_communicator);
+	 PetscSynchronizedPrintf(mpi_communicator,"[%d] Memory Usage after creating STL vector of eigenVectors  %e\n",this_mpi_process,bytes);
+	 PetscSynchronizedFlush(mpi_communicator,dummy);
+       }
+
+     if (!(dftParameters::chkType==2 && dftParameters::restartFromChk))
+	initRho();
+     if (dftParameters::verbosity>=2){
+	 if (dftParameters::spinPolarized==1)
+		pcout<< std::endl<<"net magnetization: "<< totalMagnetization(rhoInValuesSpinPolarized) <<std::endl;
+     }
+  }
+  else if (usePreviousGroundStateFields==2)
+  {
+      //initPsiAndRhoFromPreviousGroundStatePsi(eigenVectors);
   }
 
   //
@@ -118,6 +126,9 @@ void dftClass<FEOrder>::initElectronicFields(const bool usePreviousGroundStateFi
   //
   //store constraintEigen Matrix entries into STL vector
   //
-  constraintsNoneEigenDataInfo.initialize(vChebyshev.get_partitioner(),
+  constraintsNoneEigenDataInfo.initialize(d_tempEigenVec.get_partitioner(),
 					  constraintsNoneEigen);
+
+  constraintsNoneDataInfo.initialize(matrix_free_data.get_vector_partitioner(),
+				     constraintsNone);
 }
