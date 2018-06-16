@@ -25,24 +25,23 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk()
   {
         eigenVectors[kPoint].resize(dftPtr->numEigenValues);
         for(unsigned int i = 0; i < dftPtr->numEigenValues; ++i)
-	{
           eigenVectors[kPoint][i].reinit(dftPtr->d_tempEigenVec);
+
 #ifdef USE_COMPLEX
-	    vectorTools::copyFlattenedDealiiVecToSingleCompVec
-		     (dftPtr->d_eigenVectorsFlattened[kPoint],
-		      dftPtr->numEigenValues,
-		      i,
-		      dftPtr->localProc_dof_indicesReal,
-		      dftPtr->localProc_dof_indicesImag,
-		      eigenVectors[kPoint][i]);
+	vectorTools::copyFlattenedDealiiVecToSingleCompVec
+		 (dftPtr->d_eigenVectorsFlattened[kPoint],
+		  dftPtr->numEigenValues,
+		  std::make_pair(0,dftPtr->numEigenValues),
+		  dftPtr->localProc_dof_indicesReal,
+		  dftPtr->localProc_dof_indicesImag,
+		  eigenVectors[kPoint]);
 #else
-	    vectorTools::copyFlattenedDealiiVecToSingleCompVec
-		     (dftPtr->d_eigenVectorsFlattened[kPoint],
-		      dftPtr->numEigenValues,
-		      i,
-		      eigenVectors[kPoint][i]);
+	vectorTools::copyFlattenedDealiiVecToSingleCompVec
+		 (dftPtr->d_eigenVectorsFlattened[kPoint],
+		  dftPtr->numEigenValues,
+		  std::make_pair(0,dftPtr->numEigenValues),
+		  eigenVectors[kPoint]);
 #endif
-	}
   }
 
   const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();

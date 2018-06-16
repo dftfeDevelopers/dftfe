@@ -90,30 +90,54 @@ void dftClass<FEOrder>::compute_rhoOut()
    std::vector<double> gradRhoTemp(3*numQuadPoints), gradRhoTempSpinPolarized(6*numQuadPoints),gradRhoOut(3*numQuadPoints), gradRhoOutSpinPolarized(6*numQuadPoints);
 
 
-   const unsigned int numBlockEigenVec=1;
-   std::vector<vectorType> eigenVectors((1+dftParameters::spinPolarized)*d_kPointWeights.size());
-   for(unsigned int ivec = 0; ivec < numEigenValues; ++ivec)
+   const unsigned int eigenVectorsBlockSize=200;
+   std::vector<std::vector<vectorType>> eigenVectors((1+dftParameters::spinPolarized)*d_kPointWeights.size());
+
+   for(unsigned int ivec = 0; ivec < numEigenValues; ivec+=eigenVectorsBlockSize)
    {
+      const unsigned int currentBlockSize=std::min(eigenVectorsBlockSize,numEigenValues-ivec);
+
+      if (currentBlockSize!=eigenVectorsBlockSize || ivec==0)
+      {
+	   for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+	   {
+	      eigenVectors[kPoint].resize(currentBlockSize);
+	      for(unsigned int i= 0; i < currentBlockSize; ++i)
+		  eigenVectors[kPoint][i].reinit(d_tempEigenVec);
+	   }
+      }
+
       for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
       {
-
-          eigenVectors[kPoint].reinit(d_tempEigenVec);
 #ifdef USE_COMPLEX
-	    vectorTools::copyFlattenedDealiiVecToSingleCompVec
+	     vectorTools::copyFlattenedDealiiVecToSingleCompVec
 		     (d_eigenVectorsFlattened[kPoint],
 		      numEigenValues,
-		      ivec,
+		      std::make_pair(ivec,ivec+currentBlockSize),
 		      localProc_dof_indicesReal,
 		      localProc_dof_indicesImag,
 		      eigenVectors[kPoint]);
 #else
-	    vectorTools::copyFlattenedDealiiVecToSingleCompVec
+	     vectorTools::copyFlattenedDealiiVecToSingleCompVec
 		     (d_eigenVectorsFlattened[kPoint],
 		      numEigenValues,
-		      ivec,
+		      std::make_pair(ivec,ivec+currentBlockSize),
 		      eigenVectors[kPoint]);
+
 #endif
       }
+
+#ifdef USE_COMPLEX
+      std::vector<Tensor<1,2,VectorizedArray<double> > > psiQuads(numQuadPoints*currentBlockSize*numKPoints,zeroTensor1);
+      std::vector<Tensor<1,2,VectorizedArray<double> > > psiQuads2(numQuadPoints*currentBlockSize*numKPoints,zeroTensor1);
+      std::vector<Tensor<1,2,Tensor<1,3,VectorizedArray<double> > > > gradPsiQuads(numQuadPoints*currentBlockSize*numKPoints,zeroTensor2);
+      std::vector<Tensor<1,2,Tensor<1,3,VectorizedArray<double> > > > gradPsiQuads2(numQuadPoints*currentBlockSize*numKPoints,zeroTensor2);
+#else
+      std::vector< VectorizedArray<double> > psiQuads(numQuadPoints*currentBlockSize,make_vectorized_array(0.0));
+      std::vector< VectorizedArray<double> > psiQuads2(numQuadPoints*currentBlockSize,make_vectorized_array(0.0));
+      std::vector<Tensor<1,3,VectorizedArray<double> > > gradPsiQuads(numQuadPoints*currentBlockSize,zeroTensor3);
+      std::vector<Tensor<1,3,VectorizedArray<double> > > gradPsiQuads2(numQuadPoints*currentBlockSize,zeroTensor3);
+#endif
 
       for (unsigned int cell=0; cell<matrix_free_data.n_macro_cells(); ++cell)
       {
@@ -121,23 +145,12 @@ void dftClass<FEOrder>::compute_rhoOut()
 
 	      const unsigned int numSubCells=matrix_free_data.n_components_filled(cell);
 
-#ifdef USE_COMPLEX
-	      std::vector<Tensor<1,2,VectorizedArray<double> > > psiQuads(numQuadPoints*numBlockEigenVec*numKPoints,zeroTensor1);
-	      std::vector<Tensor<1,2,VectorizedArray<double> > > psiQuads2(numQuadPoints*numBlockEigenVec*numKPoints,zeroTensor1);
-	      std::vector<Tensor<1,2,Tensor<1,3,VectorizedArray<double> > > > gradPsiQuads(numQuadPoints*numBlockEigenVec*numKPoints,zeroTensor2);
-	      std::vector<Tensor<1,2,Tensor<1,3,VectorizedArray<double> > > > gradPsiQuads2(numQuadPoints*numBlockEigenVec*numKPoints,zeroTensor2);
-#else
-	      std::vector< VectorizedArray<double> > psiQuads(numQuadPoints*numBlockEigenVec,make_vectorized_array(0.0));
-	      std::vector< VectorizedArray<double> > psiQuads2(numQuadPoints*numBlockEigenVec,make_vectorized_array(0.0));
-	      std::vector<Tensor<1,3,VectorizedArray<double> > > gradPsiQuads(numQuadPoints*numBlockEigenVec,zeroTensor3);
-	      std::vector<Tensor<1,3,VectorizedArray<double> > > gradPsiQuads2(numQuadPoints*numBlockEigenVec,zeroTensor3);
-#endif
-
 	      for(unsigned int kPoint = 0; kPoint < numKPoints; ++kPoint)
-		  for(unsigned int iEigenVec=0; iEigenVec<numBlockEigenVec; ++iEigenVec)
+		  for(unsigned int iEigenVec=0; iEigenVec<currentBlockSize; ++iEigenVec)
 		    {
 
-		       psiEval.read_dof_values_plain(eigenVectors[(1+dftParameters::spinPolarized)*kPoint]);
+		       psiEval.read_dof_values_plain
+			   (eigenVectors[(1+dftParameters::spinPolarized)*kPoint][iEigenVec]);
 
 		       if(dftParameters::xc_id == 4)
 			  psiEval.evaluate(true,true);
@@ -146,15 +159,16 @@ void dftClass<FEOrder>::compute_rhoOut()
 
 		       for (unsigned int q=0; q<numQuadPoints; ++q)
 		       {
-			 psiQuads[q*numBlockEigenVec*numKPoints+numBlockEigenVec*kPoint+iEigenVec]=psiEval.get_value(q);
+			 psiQuads[q*currentBlockSize*numKPoints+currentBlockSize*kPoint+iEigenVec]=psiEval.get_value(q);
 			 if(dftParameters::xc_id == 4)
-			    gradPsiQuads[q*numBlockEigenVec*numKPoints+numBlockEigenVec*kPoint+iEigenVec]=psiEval.get_gradient(q);
+			    gradPsiQuads[q*currentBlockSize*numKPoints+currentBlockSize*kPoint+iEigenVec]=psiEval.get_gradient(q);
 		       }
 
 		       if(dftParameters::spinPolarized==1)
 		       {
 
-			   psiEval.read_dof_values_plain(eigenVectors[(1+dftParameters::spinPolarized)*kPoint+1]);
+			   psiEval.read_dof_values_plain
+			       (eigenVectors[(1+dftParameters::spinPolarized)*kPoint+1][iEigenVec]);
 
 			   if(dftParameters::xc_id == 4)
 			      psiEval.evaluate(true,true);
@@ -163,9 +177,9 @@ void dftClass<FEOrder>::compute_rhoOut()
 
 			   for (unsigned int q=0; q<numQuadPoints; ++q)
 			   {
-			     psiQuads2[q*numBlockEigenVec*numKPoints+numBlockEigenVec*kPoint+iEigenVec]=psiEval.get_value(q);
+			     psiQuads2[q*currentBlockSize*numKPoints+currentBlockSize*kPoint+iEigenVec]=psiEval.get_value(q);
 			     if(dftParameters::xc_id == 4)
-				gradPsiQuads2[q*numBlockEigenVec*numKPoints+numBlockEigenVec*kPoint+iEigenVec]=psiEval.get_gradient(q);
+				gradPsiQuads2[q*currentBlockSize*numKPoints+currentBlockSize*kPoint+iEigenVec]=psiEval.get_gradient(q);
 			   }
 		       }
 		    }//eigenvector per k point
@@ -187,7 +201,7 @@ void dftClass<FEOrder>::compute_rhoOut()
 		    }
 
 		    for(unsigned int kPoint = 0; kPoint < numKPoints; ++kPoint)
-		      for(unsigned int iEigenVec=0; iEigenVec<numBlockEigenVec; ++iEigenVec)
+		      for(unsigned int iEigenVec=0; iEigenVec<currentBlockSize; ++iEigenVec)
 			{
 
 			  const double partialOccupancy=dftUtils::getPartialOccupancy
@@ -204,7 +218,7 @@ void dftClass<FEOrder>::compute_rhoOut()
 
 			  for(unsigned int q=0; q<numQuadPoints; ++q)
 			    {
-			      const unsigned int id=q*numBlockEigenVec*numKPoints+numBlockEigenVec*kPoint+iEigenVec;
+			      const unsigned int id=q*currentBlockSize*numKPoints+currentBlockSize*kPoint+iEigenVec;
 #ifdef USE_COMPLEX
 			      Vector<double> psi, psi2;
 			      psi.reinit(2); psi2.reinit(2);

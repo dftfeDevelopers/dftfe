@@ -115,21 +115,6 @@ namespace dftfe{
 
     computing_timer.enter_section("Lanczos k-step Upper Bound");
     operatorMatrix.reinit(1);
-#ifdef USE_COMPLEX
-    vectorTools::copyFlattenedDealiiVecToSingleCompVec
-	     (eigenVectorsFlattened,
-	      totalNumberWaveFunctions,
-	      0,
-	      *operatorMatrix.getLocalProcDofIndicesReal(),
-	      *operatorMatrix.getLocalProcDofIndicesImag(),
-	      tempEigenVec);
-#else
-    vectorTools::copyFlattenedDealiiVecToSingleCompVec
-	     (eigenVectorsFlattened,
-	      totalNumberWaveFunctions,
-	      0,
-	      tempEigenVec);
-#endif
     const double upperBoundUnwantedSpectrum
 	=linearAlgebraOperations::lanczosUpperBoundEigenSpectrum(operatorMatrix,
     		   					         tempEigenVec);

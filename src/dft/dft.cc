@@ -1078,6 +1078,8 @@ namespace dftfe {
   {
     DataOut<3> data_outEigen;
     data_outEigen.attach_dof_handler (dofHandlerEigen);
+    std::vector<vectorType> tempVec(1);
+    tempVec[0].reinit(d_tempEigenVec);
     for(unsigned int i=0; i<numEigenValues; ++i)
       {
 	char buffer[100]; sprintf(buffer,"eigen%u", i);
@@ -1085,16 +1087,16 @@ namespace dftfe {
         vectorTools::copyFlattenedDealiiVecToSingleCompVec
 		 (d_eigenVectorsFlattened[0],
 		  numEigenValues,
-		  i,
+		  std::make_pair(i,i+1),
 		  localProc_dof_indicesReal,
 		  localProc_dof_indicesImag,
-		  d_tempEigenVec);
+		  tempVec);
 #else
         vectorTools::copyFlattenedDealiiVecToSingleCompVec
 		 (d_eigenVectorsFlattened[0],
 		  numEigenValues,
-		  i,
-		  d_tempEigenVec);
+		  std::make_pair(i,i+1),
+		  tempVec);
 #endif
 	data_outEigen.add_data_vector (d_tempEigenVec, buffer);
       }
