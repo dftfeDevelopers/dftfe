@@ -284,7 +284,7 @@ void dftClass<FEOrder>::initRho()
 //
 //
 template <unsigned int FEOrder>
-void dftClass<FEOrder>::computeRhoInitialGuessFromPSI()
+void dftClass<FEOrder>::computeRhoInitialGuessFromPSI(std::vector<std::vector<vectorType>> eigenVectors)
 
 {
   computing_timer.enter_section("initialize density");

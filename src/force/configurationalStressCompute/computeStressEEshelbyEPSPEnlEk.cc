@@ -20,6 +20,30 @@
 template<unsigned int FEOrder>
 void forceClass<FEOrder>::computeStressEEshelbyEPSPEnlEk()
 {
+  std::vector<std::vector<vectorType>> eigenVectors((1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size());
+  for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size(); ++kPoint)
+  {
+        eigenVectors[kPoint].resize(dftPtr->numEigenValues);
+        for(unsigned int i = 0; i < dftPtr->numEigenValues; ++i)
+          eigenVectors[kPoint][i].reinit(dftPtr->d_tempEigenVec);
+
+#ifdef USE_COMPLEX
+	vectorTools::copyFlattenedDealiiVecToSingleCompVec
+		 (dftPtr->d_eigenVectorsFlattened[kPoint],
+		  dftPtr->numEigenValues,
+		  std::make_pair(0,dftPtr->numEigenValues),
+		  dftPtr->localProc_dof_indicesReal,
+		  dftPtr->localProc_dof_indicesImag,
+		  eigenVectors[kPoint]);
+#else
+	vectorTools::copyFlattenedDealiiVecToSingleCompVec
+		 (dftPtr->d_eigenVectorsFlattened[kPoint],
+		  dftPtr->numEigenValues,
+		  std::make_pair(0,dftPtr->numEigenValues),
+		  eigenVectors[kPoint]);
+#endif
+  }
+
   const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
   const unsigned int numberImageCharges = dftPtr->d_imageIds.size();
   const unsigned int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
@@ -36,7 +60,7 @@ void forceClass<FEOrder>::computeStressEEshelbyEPSPEnlEk()
   FEValues<C_DIM> feVselfValues (dftPtr->FE, quadrature, update_gradients | update_quadrature_points);
 
   const unsigned int numQuadPoints=forceEval.n_q_points;
-  const unsigned int numEigenVectors=dftPtr->eigenVectors[0].size();
+  const unsigned int numEigenVectors=dftPtr->numEigenValues;
   const unsigned int numKPoints=dftPtr->d_kPointWeights.size();
 
   DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
@@ -61,16 +85,15 @@ void forceClass<FEOrder>::computeStressEEshelbyEPSPEnlEk()
   zeroTensor5[1]=zeroTensor4;
 
   VectorizedArray<double> phiExtFactor=make_vectorized_array(0.0);
-  std::vector<std::vector<double> > projectorKetTimesPsiTimesVReal;
-  std::vector<std::vector<std::vector<std::complex<double> > > > projectorKetTimesPsiTimesVComplexKPoints(numKPoints);
+  std::vector<std::vector<std::vector<dataTypes::number > > > projectorKetTimesPsiTimesV(numKPoints);
   if (isPseudopotential){
     phiExtFactor=make_vectorized_array(1.0);
-    for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint){
-         computeNonLocalProjectorKetTimesPsiTimesV(dftPtr->eigenVectors[ikPoint],
-			                           projectorKetTimesPsiTimesVReal,
-                                                   projectorKetTimesPsiTimesVComplexKPoints[ikPoint],
-						   ikPoint);
-    }
+    for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
+         computeNonLocalProjectorKetTimesPsiTimesVFlattened
+	                (dftPtr->d_eigenVectorsFlattened[ikPoint],
+			 numEigenVectors,
+                         projectorKetTimesPsiTimesV[ikPoint],
+			 ikPoint);
   }
 
   std::vector<VectorizedArray<double> > rhoQuads(numQuadPoints,make_vectorized_array(0.0));
@@ -223,7 +246,7 @@ void forceClass<FEOrder>::computeStressEEshelbyEPSPEnlEk()
     for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
         for (unsigned int iEigenVec=0; iEigenVec<numEigenVectors; ++iEigenVec)
         {
-          psiEval.read_dof_values_plain(dftPtr->eigenVectors[ikPoint][iEigenVec]);
+	  psiEval.read_dof_values_plain(eigenVectors[ikPoint][iEigenVec]);
           psiEval.evaluate(true,true);
 
           for (unsigned int q=0; q<numQuadPoints; ++q)
@@ -333,7 +356,7 @@ void forceClass<FEOrder>::computeStressEEshelbyEPSPEnlEk()
        if(isPseudopotential)
        {
           EKPoints+=eshelbyTensor::getEnlEshelbyTensorPeriodic(ZetaDeltaVQuads[q],
-		                                         projectorKetTimesPsiTimesVComplexKPoints,
+		                                         projectorKetTimesPsiTimesV,
 						         psiQuads.begin()+q*numEigenVectors*numKPoints,
 							 dftPtr->d_kPointWeights,
 						         dftPtr->eigenValues,
@@ -341,7 +364,7 @@ void forceClass<FEOrder>::computeStressEEshelbyEPSPEnlEk()
 						         dftParameters::TVal);
 
           EKPoints+=eshelbyTensor::getEnlStress(gradZetalmDeltaVlDyadicDistImageAtomsQuads[q],
-		                                 projectorKetTimesPsiTimesVComplexKPoints,
+		                                 projectorKetTimesPsiTimesV,
 						 psiQuads.begin()+q*numEigenVectors*numKPoints,
 					         dftPtr->d_kPointWeights,
 						 dftPtr->eigenValues,

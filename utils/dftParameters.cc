@@ -535,12 +535,21 @@ namespace dftParameters
 
     if (dftParameters::isIonForce || dftParameters::isCellStress)
        AssertThrow(!dftParameters::useSymm,ExcMessage("DFT-FE Error: USE GROUP SYMMETRY must be set to false if either ION FORCE or CELL STRESS is set to true. This functionality will be added in a future release"));
+
+    if (dftParameters::orthogType=="PGS")
+       AssertThrow(false,ExcMessage("DFT-FE Error: Implementation PGS orthogonalization in complex mode is not added yet."));
 #else
     AssertThrow(!dftParameters::isCellStress,ExcMessage("DFT-FE Error: Currently CELL STRESS cannot be set true in double mode for periodic Gamma point problems. This functionality will be added soon."));
 #endif
     AssertThrow(!(dftParameters::chkType==2 && (dftParameters::isIonOpt || dftParameters::isCellOpt)),ExcMessage("DFT-FE Error: CHK TYPE=2 cannot be used if geometry optimization is being performed."));
 
     AssertThrow(!(dftParameters::chkType==1 && (dftParameters::isIonOpt && dftParameters::isCellOpt)),ExcMessage("DFT-FE Error: CHK TYPE=1 cannot be used if both ION OPT and CELL OPT are set to true."));
+
+    if (dftParameters::electrostaticsPRefinement)
+       AssertThrow(false,ExcMessage("DFT-FE Error: Implemenation of this feature is not completed yet."));
+
+    if (dftParameters::nonSelfConsistentForce)
+       AssertThrow(false,ExcMessage("DFT-FE Error: Implemenation of this feature is not completed yet."));
   }
 
 }
