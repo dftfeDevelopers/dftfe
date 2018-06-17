@@ -138,8 +138,8 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
   //
   for(unsigned int i = 0; i < (unsigned int)numEigenValues; i++)
     {
-      if(dftParameters::verbosity>=2)
-          pcout<<"eigen value "<< std::setw(3) <<i <<": "<<eigenValuesTemp[i] <<std::endl;
+      //if(dftParameters::verbosity>=2)
+      //    pcout<<"eigen value "<< std::setw(3) <<i <<": "<<eigenValuesTemp[i] <<std::endl;
 
       eigenValues[kPointIndex][spinType*numEigenValues + i] =  eigenValuesTemp[i];
     }
@@ -175,7 +175,7 @@ void dftClass<FEOrder>::computeResidualNorm(const std::vector<double> & eigenVal
 
   kohnShamDFTEigenOperator.HX(X, PSI);
 
-  if (dftParameters::verbosity>=2)
+  if (dftParameters::verbosity>=3)
      pcout<<"L-2 Norm of residue   :"<<std::endl;
 
   for(unsigned int i = 0; i < eigenValuesTemp.size(); i++)
@@ -183,11 +183,11 @@ void dftClass<FEOrder>::computeResidualNorm(const std::vector<double> & eigenVal
       (PSI[i]).add(-eigenValuesTemp[i],X[i]) ;
       const double resNorm= (PSI[i]).l2_norm();
       residualNorm[i]=resNorm;
-
-      if (dftParameters::verbosity>=2)
+      
+      if (dftParameters::verbosity>=3)
 	pcout<<"eigen vector "<< i<<": "<<resNorm<<std::endl;
     }
-  if (dftParameters::verbosity>=2)
+  if (dftParameters::verbosity>=3)  
     pcout <<std::endl;
 
 

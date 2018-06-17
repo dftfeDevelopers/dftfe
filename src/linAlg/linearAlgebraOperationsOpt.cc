@@ -654,7 +654,7 @@ namespace dftfe{
 
 
       dealii::Utilities::MPI::sum(residualNormSquare,X.get_mpi_communicator(),residualNormSquare);
-      if(dftParameters::verbosity>=2)
+      if(dftParameters::verbosity>=3)
 	{
 	  if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
 	    std::cout<<"L-2 Norm of residue   :"<<std::endl;
@@ -663,12 +663,12 @@ namespace dftfe{
 	{
 	  residualNorm[iWave] = sqrt(residualNormSquare[iWave]);
 
-	  if(dftParameters::verbosity>=2)
+	  if(dftParameters::verbosity>=3)
 	      if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
 		std::cout<<"eigen vector "<< iWave<<": "<<residualNorm[iWave]<<std::endl;
 	}
 
-      if(dftParameters::verbosity>=2)
+      if(dftParameters::verbosity>=3)
 	if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
 	  std::cout <<std::endl;
 
@@ -718,7 +718,7 @@ namespace dftfe{
 			scalar,
 			Y);
 
-      if(dftParameters::verbosity>=2)
+      if(dftParameters::verbosity>=3)
 	{
 	  if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
 	    std::cout<<"L-2 Norm of residue   :"<<std::endl;
@@ -745,14 +745,14 @@ namespace dftfe{
 	{
 	  residualNorm[iWave] = sqrt(residualNormSquare[iWave]);
 
-	  if(dftParameters::verbosity>=2)
+	  if(dftParameters::verbosity>=3)
 	    {
 	      if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
 		std::cout<<"eigen vector "<< iWave<<": "<<residualNorm[iWave]<<std::endl;
 	    }
 	}
 
-      if(dftParameters::verbosity>=2)
+      if(dftParameters::verbosity>=3)
       {
 	if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
 	  std::cout <<std::endl;

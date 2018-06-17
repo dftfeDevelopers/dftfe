@@ -88,11 +88,15 @@ namespace dftfe
 			       const unsigned int verbosity)
 	{
 	  double bandEnergyLocal=0.0;
+	  unsigned int numEigenValues = eigenValues[0].size()/(1+spinPolarized) ;
 	  for(unsigned int kPoint = 0; kPoint < kPointWeights.size(); ++kPoint)
 	    {
 	      if (verbosity==2)
-		 pcout << "kPoint: "<< kPoint <<std::endl;
-	      for (unsigned int i=0; i<eigenValues[0].size(); i++)
+		{
+		  pcout<<" Printing KS eigen values (spin split if this is a spin polarized calculation ) and fractional occupancies for kPoint " << kPoint << std::endl;
+	          pcout << "  " << std::endl ; 
+		}
+	      for (unsigned int i=0; i<numEigenValues; i++)
 		{
                   const double partialOccupancy=dftUtils::getPartialOccupancy
                                                     (eigenValues[kPoint][i],
@@ -100,10 +104,29 @@ namespace dftfe
                                                      C_kb,
                                                      TVal);
 		  bandEnergyLocal+= (2-spinPolarized)*partialOccupancy*kPointWeights[kPoint]*eigenValues[kPoint][i];
+		  //
+		  if (spinPolarized==0)
+	 	     if (verbosity==2) 
+		        pcout << i<<" : "<< eigenValues[kPoint][i] << "       " << partialOccupancy<<std::endl;
+		  //
+		  if (spinPolarized==1){
+		  const double partialOccupancy2=dftUtils::getPartialOccupancy
+                                                    (eigenValues[kPoint][i+numEigenValues],
+                                                     fermiEnergy,
+                                                     C_kb,
+                                                     TVal);
+		  bandEnergyLocal+= (2-spinPolarized)*partialOccupancy2*kPointWeights[kPoint]*eigenValues[kPoint][i+numEigenValues];
+		  //
 		  if (verbosity==2)
-		     pcout<<"fractional occupancy "<< i<<": "<< partialOccupancy<<std::endl;
-		}
-	    }
+			pcout<< i<<" : "<< eigenValues[kPoint][i] << "       " << eigenValues[kPoint][i] << "       " <<
+					partialOccupancy << "       " << partialOccupancy2 << std::endl;		  
+		 }
+	       }  // eigen state 
+	       //
+	       if (verbosity==2)
+		 pcout << "======================================================================================================================================================================" << std::endl ;
+	   }  // kpoint
+	  
 	   return bandEnergyLocal;
 	}
 

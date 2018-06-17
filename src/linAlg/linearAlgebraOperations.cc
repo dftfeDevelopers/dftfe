@@ -569,7 +569,7 @@ namespace linearAlgebraOperations
 
     operatorMatrix.HX(X,PSI);
 
-    if (dftParameters::verbosity==2)
+    if (dftParameters::verbosity>=3)
       {
 	if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
 	  std::cout<<"L-2 Norm of residue   :"<<std::endl;
@@ -581,13 +581,13 @@ namespace linearAlgebraOperations
 	const double resNorm= (PSI[i]).l2_norm();
 	residualNorm[i]=resNorm;
       
-	if(dftParameters::verbosity==2)
+	if(dftParameters::verbosity>=3)
 	  {
 	    if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
 	      std::cout<<"eigen vector "<< i<<": "<<resNorm<<std::endl;
 	  }
       }
-    if(dftParameters::verbosity==2)  
+    if(dftParameters::verbosity>=3)  
       {
 	if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
 	  std::cout <<std::endl;
