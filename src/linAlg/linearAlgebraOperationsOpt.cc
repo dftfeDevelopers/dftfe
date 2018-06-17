@@ -851,7 +851,10 @@ namespace dftfe{
        std::vector<double> invFourthRootEigenValuesMatrix(numberEigenValues,0.0);
 
        for(unsigned i = 0; i < numberEigenValues; ++i)
+       {
 	 invFourthRootEigenValuesMatrix[i] = 1.0/pow(eigenValuesOverlap[i],1.0/4);
+	 AssertThrow(!std::isnan(invFourthRootEigenValuesMatrix[i]),dealii::ExcMessage("Eigen values of overlap matrix during Lowden Orthonormalization are very small and close to zero or negative"));
+       }
 
        //
        //Q*D^{-1/4} and note that "Q" is stored in overlapMatrix after calling "zheevd"
@@ -937,7 +940,8 @@ namespace dftfe{
       dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
 
       dealii::TimerOutput computing_timer(pcout,
-					  dftParameters::reproducible_output ? dealii::TimerOutput::never : dealii::TimerOutput::summary,
+					  dftParameters::reproducible_output ||
+					  dftParameters::verbosity<2? dealii::TimerOutput::never : dealii::TimerOutput::summary,
 					  dealii::TimerOutput::wall_times);
 
 
