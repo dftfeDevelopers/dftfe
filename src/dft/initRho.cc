@@ -79,8 +79,9 @@ void dftClass<FEOrder>::initRho()
       x.setcontent(numRows,&xData[0]);
       alglib::real_1d_array y;
       y.setcontent(numRows,&yData[0]);
-      alglib::ae_int_t natural_bound_type = 1;
-      spline1dbuildcubic(x, y, numRows, natural_bound_type, 0.0, natural_bound_type, 0.0, denSpline[*it]);
+      alglib::ae_int_t natural_bound_type_L = 1;
+      alglib::ae_int_t natural_bound_type_R = 1;
+      spline1dbuildcubic(x, y, numRows, natural_bound_type_L, 0.0, natural_bound_type_R, 0.0, denSpline[*it]);
       outerMostPointDen[*it]= xData[numRows-1];
     }
 
@@ -256,8 +257,12 @@ void dftClass<FEOrder>::initRho()
 			}
 
 		    }
-
-		  int signRho = (*rhoInValues)[cell->id()][q]/std::abs((*rhoInValues)[cell->id()][q]);
+	
+		  int signRho = 0 ;
+		  if (std::abs((*rhoInValues)[cell->id()][q] ) > 1.0E-7)
+		      int signRho = (*rhoInValues)[cell->id()][q]/std::abs((*rhoInValues)[cell->id()][q]);
+		  // KG: the fact that we are forcing gradRho to zero whenever rho is zero is valid. Because rho is always positive, so whenever it is zero, it must have a local minima.
+		  //
 		  gradRhoInValuesPtr[3*q+0] = signRho*gradRhoXValueAtQuadPt;
 		  gradRhoInValuesPtr[3*q+1] = signRho*gradRhoYValueAtQuadPt;
 		  gradRhoInValuesPtr[3*q+2] = signRho*gradRhoZValueAtQuadPt;
