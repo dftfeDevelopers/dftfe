@@ -93,6 +93,7 @@ namespace dftfe
 	  unsigned int numEigenValues = eigenValues[0].size()/(1+spinPolarized) ;
 	  //
 	  for (unsigned int ipool = 0 ;  ipool < dealii::Utilities::MPI::n_mpi_processes(interpoolcomm) ; ++ipool) {
+	  MPI_Barrier(interpoolcomm) ;
 	  if (ipool==dealii::Utilities::MPI::this_mpi_process(interpoolcomm)) {
 	  for(unsigned int kPoint = 0; kPoint < kPointWeights.size(); ++kPoint)
 	    {
