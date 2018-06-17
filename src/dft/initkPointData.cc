@@ -428,6 +428,10 @@ void dftClass<FEOrder>::generateMPGrid()
    }
    //pcout << sendSizekPoints[0] << "  " << sendSizekPoints[1] << " " << maxkPoints << std::endl;
    //
+   std::vector<int> arrayOfOne(dftParameters::npool, 1), arrayOffsetOne(dftParameters::npool, 1) ;
+   for (unsigned int ipool=0; ipool<dftParameters::npool; ++ipool)
+	arrayOffsetOne[ipool] = ipool ;
+   MPI_Scatterv(&(mpiOffsetskPoints2[0]),&(arrayOfOne[0]), (&arrayOffsetOne[0]), MPI_INT, &lowerBoundKindex, 1, MPI_INT, 0, interpoolcomm);
    MPI_Scatterv(&(d_kPointCoordinatesGlobal[0]),&(sendSizekPoints1[0]), &(mpiOffsetskPoints1[0]), MPI_DOUBLE, &(d_kPointCoordinates[0]), 3*maxkPoints, MPI_DOUBLE, 0, interpoolcomm);
    MPI_Scatterv(&(d_kPointWeightsGlobal[0]),&(sendSizekPoints2[0]), &(mpiOffsetskPoints2[0]), MPI_DOUBLE, &(d_kPointWeights[0]), maxkPoints, MPI_DOUBLE, 0, interpoolcomm);
    MPI_Scatterv(&(kPointReducedCoordinatesGlobal[0]),&(sendSizekPoints1[0]), &(mpiOffsetskPoints1[0]), MPI_DOUBLE, &(kPointReducedCoordinates[0]), 3*maxkPoints, MPI_DOUBLE, 0, interpoolcomm);

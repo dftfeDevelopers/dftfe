@@ -592,7 +592,9 @@ namespace dftfe {
 
       /// k point weights
       std::vector<double> d_kPointWeights;
-
+    
+      /// global k index of lower bound of the local k point set
+      unsigned int lowerBoundKindex ; 
       /**
        * Recomputes the k point cartesian coordinates from the crystal k point coordinates
        * and the current lattice vectors, which can change in each ground state solve when
