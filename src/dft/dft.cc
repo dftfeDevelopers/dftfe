@@ -730,7 +730,11 @@ namespace dftfe {
 	    // do more passes of chebysev filter till the check passes.
 	    // This improves the scf convergence performance.
 	    unsigned int count=1;
-	    while (maxRes>adaptiveChebysevFilterPassesTol && count<20)
+	    const double filterPassTol=(scfIter==0
+		                       && dftParameters::restartFromChk
+				       && dftParameters::chkType==2)? 1.0e-4
+		                       :adaptiveChebysevFilterPassesTol;
+	    while (maxRes>filterPassTol && count<20)
 	      {
 		for(unsigned int s=0; s<2; ++s)
 		  {
@@ -847,7 +851,11 @@ namespace dftfe {
 	    // do more passes of chebysev filter till the check passes.
 	    // This improves the scf convergence performance.
 	    unsigned int count=1;
-	    while (maxRes>adaptiveChebysevFilterPassesTol && count<20)
+	    const double filterPassTol=(scfIter==0
+		                       && dftParameters::restartFromChk
+				       && dftParameters::chkType==2)? 1.0e-4
+		                       :adaptiveChebysevFilterPassesTol;
+	    while (maxRes>filterPassTol && count<20)
 	      {
 
 		for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
