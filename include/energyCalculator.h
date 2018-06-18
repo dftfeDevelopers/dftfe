@@ -74,6 +74,7 @@ namespace dftfe {
 	 * @param atomElectrostaticNodeIdToChargeMap[in] map between locally processor atom global node ids
 	 * of dofHandlerElectrostatic to atom charge value.
 	 * @param numberGlobalAtoms[in]
+	 * @param lowerBoundKindex global k index of lower bound of the local k point set in the current pool
 	 * @param print[in]
 	 *
 	 * @return total energy
@@ -97,6 +98,7 @@ namespace dftfe {
 		             const std::vector<std::vector<double> > & localVselfs,
 		             const std::map<dealii::types::global_dof_index, double> & atomElectrostaticNodeIdToChargeMap,
 			     const unsigned int numberGlobalAtoms,
+			     const unsigned int lowerBoundKindex,
 		             const bool print) const;
 
 	/**
@@ -141,6 +143,7 @@ namespace dftfe {
 	 * @param atomElectrostaticNodeIdToChargeMap[in] map between locally processor atom global node ids
 	 * of dofHandlerElectrostatic to atom charge value.
 	 * @param numberGlobalAtoms[in]
+	 * @param lowerBoundKindex global k index of lower bound of the local k point set in the current pool
 	 * @param print[in]
 	 *
 	 * @return total energy
@@ -169,6 +172,7 @@ namespace dftfe {
 			     const std::vector<std::vector<double> > & localVselfs,
 			     const std::map<dealii::types::global_dof_index, double> & atomElectrostaticNodeIdToChargeMap,
 			     const unsigned int numberGlobalAtoms,
+			     const unsigned int lowerBoundKindex,
 			     const bool print) const;
 
      private:

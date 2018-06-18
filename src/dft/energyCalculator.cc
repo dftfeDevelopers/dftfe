@@ -84,17 +84,23 @@ namespace dftfe
 		               const double fermiEnergy,
 			       const double TVal,
 			       const unsigned int spinPolarized,
-			       const dealii::ConditionalOStream & pcout,
+			       const dealii::ConditionalOStream & scout,
+			       const MPI_Comm & interpoolcomm,
+			       const unsigned int lowerBoundKindex,
 			       const unsigned int verbosity)
 	{
 	  double bandEnergyLocal=0.0;
 	  unsigned int numEigenValues = eigenValues[0].size()/(1+spinPolarized) ;
+	  //
+	  for (unsigned int ipool = 0 ;  ipool < dealii::Utilities::MPI::n_mpi_processes(interpoolcomm) ; ++ipool) {
+	  MPI_Barrier(interpoolcomm) ;
+	  if (ipool==dealii::Utilities::MPI::this_mpi_process(interpoolcomm)) {
 	  for(unsigned int kPoint = 0; kPoint < kPointWeights.size(); ++kPoint)
 	    {
-	      if (verbosity==2)
+	      if (verbosity>=2)
 		{
-		  pcout<<" Printing KS eigen values (spin split if this is a spin polarized calculation ) and fractional occupancies for kPoint " << kPoint << std::endl;
-	          pcout << "  " << std::endl ; 
+		  scout<<" Printing KS eigen values (spin split if this is a spin polarized calculation ) and fractional occupancies for kPoint " << (lowerBoundKindex + kPoint) << std::endl;
+	          scout << "  " << std::endl ; 
 		}
 	      for (unsigned int i=0; i<numEigenValues; i++)
 		{
@@ -106,8 +112,8 @@ namespace dftfe
 		  bandEnergyLocal+= (2-spinPolarized)*partialOccupancy*kPointWeights[kPoint]*eigenValues[kPoint][i];
 		  //
 		  if (spinPolarized==0)
-	 	     if (verbosity==2) 
-		        pcout << i<<" : "<< eigenValues[kPoint][i] << "       " << partialOccupancy<<std::endl;
+	 	     if (verbosity>=2) 
+		        scout << i<<" : "<< eigenValues[kPoint][i] << "       " << partialOccupancy<<std::endl;
 		  //
 		  if (spinPolarized==1){
 		  const double partialOccupancy2=dftUtils::getPartialOccupancy
@@ -117,15 +123,20 @@ namespace dftfe
                                                      TVal);
 		  bandEnergyLocal+= (2-spinPolarized)*partialOccupancy2*kPointWeights[kPoint]*eigenValues[kPoint][i+numEigenValues];
 		  //
-		  if (verbosity==2)
-			pcout<< i<<" : "<< eigenValues[kPoint][i] << "       " << eigenValues[kPoint][i] << "       " <<
+		  if (verbosity>=2)
+			scout<< i<<" : "<< eigenValues[kPoint][i] << "       " << eigenValues[kPoint][i] << "       " <<
 					partialOccupancy << "       " << partialOccupancy2 << std::endl;		  
 		 }
 	       }  // eigen state 
 	       //
-	       if (verbosity==2)
-		 pcout << "======================================================================================================================================================================" << std::endl ;
+	       if (verbosity>=2)
+		 scout << "======================================================================================================================================================================" << std::endl ;
 	   }  // kpoint
+	   } // is it current pool
+	   //
+	   MPI_Barrier(interpoolcomm) ;
+	   //
+	   } // loop over pool
 	  
 	   return bandEnergyLocal;
 	}
@@ -211,6 +222,7 @@ namespace dftfe
 		             const std::vector<std::vector<double> > & localVselfs,
 		             const std::map<dealii::types::global_dof_index, double> & atomElectrostaticNodeIdToChargeMap,
 			     const unsigned int numberGlobalAtoms,
+			     const unsigned int lowerBoundKindex,
 		             const bool print) const
     {
       dealii::FEValues<3> feValuesElectrostatic (dofHandlerElectrostatic.get_fe(), quadratureElectrostatic, dealii::update_values | dealii::update_JxW_values);
@@ -223,14 +235,16 @@ namespace dftfe
       std::vector<double> cellPhiTotRhoIn(num_quad_points_electronic);
       std::vector<double> cellPhiTotRhoOut(num_quad_points_electrostatic);
 
-
+      const dealii::ConditionalOStream scout (std::cout, (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) == 0)) ;
       const double bandEnergy=
 	  dealii::Utilities::MPI::sum(internal::localBandEnergy(eigenValues,
 			                              kPointWeights,
 		                                      fermiEnergy,
 						      dftParameters::TVal,
 						      dftParameters::spinPolarized,
-						      pcout,
+						      scout,
+						      interpoolcomm,
+						      lowerBoundKindex,
 			                              dftParameters::verbosity), interpoolcomm);
 
       double excCorrPotentialTimesRho=0.0, electrostaticPotentialTimesRho=0.0, exchangeEnergy = 0.0, correlationEnergy = 0.0, electrostaticEnergyTotPot = 0.0;
@@ -416,6 +430,7 @@ namespace dftfe
 			     const std::vector<std::vector<double> > & localVselfs,
 			     const std::map<dealii::types::global_dof_index, double> & atomElectrostaticNodeIdToChargeMap,
 			     const unsigned int numberGlobalAtoms,
+			     const unsigned int lowerBoundKindex,
 			     const bool print) const
     {
       dealii::FEValues<3> feValuesElectrostatic (dofHandlerElectrostatic.get_fe(), quadratureElectrostatic, dealii::update_values | dealii::update_JxW_values);
@@ -426,14 +441,17 @@ namespace dftfe
 
       std::vector<double> cellPhiTotRhoIn(num_quad_points_electronic);
       std::vector<double> cellPhiTotRhoOut(num_quad_points_electrostatic);
-
+      //
+      const dealii::ConditionalOStream scout (std::cout, (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) == 0)) ;
       const double bandEnergy=
 	  dealii::Utilities::MPI::sum(internal::localBandEnergy(eigenValues,
 			                              kPointWeights,
 		                                      fermiEnergy,
 						      dftParameters::TVal,
 						      dftParameters::spinPolarized,
-						      pcout,
+						      scout,
+						      interpoolcomm,
+						      lowerBoundKindex,
 			                              dftParameters::verbosity), interpoolcomm);
 
       double excCorrPotentialTimesRho=0.0, electrostaticPotentialTimesRho=0.0 , exchangeEnergy = 0.0, correlationEnergy = 0.0, electrostaticEnergyTotPot = 0.0;

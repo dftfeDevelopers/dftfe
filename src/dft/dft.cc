@@ -954,6 +954,7 @@ namespace dftfe {
 				   d_localVselfs,
 				   d_atomNodeIdToChargeMap,
 				   atomLocations.size(),
+				   lowerBoundKindex,
 				   dftParameters::verbosity>=2) :
 	  energyCalc.computeEnergySpinPolarized(dofHandler,
 						dofHandler,
@@ -978,6 +979,7 @@ namespace dftfe {
 						d_localVselfs,
 						d_atomNodeIdToChargeMap,
 						atomLocations.size(),
+						lowerBoundKindex,
 						dftParameters::verbosity>=2);
 	if (dftParameters::verbosity==1)
 	  {
@@ -1027,6 +1029,7 @@ namespace dftfe {
 			       d_localVselfs,
 			       d_atomNodeIdToChargeMap,
 			       atomLocations.size(),
+			       lowerBoundKindex,
 			       true) :
       energyCalc.computeEnergySpinPolarized(dofHandler,
 					    dofHandler,
@@ -1051,6 +1054,7 @@ namespace dftfe {
 					    d_localVselfs,
 					    d_atomNodeIdToChargeMap,
 					    atomLocations.size(),
+					    lowerBoundKindex,
 					    true);
 
     computing_timer.exit_section("scf solve");
