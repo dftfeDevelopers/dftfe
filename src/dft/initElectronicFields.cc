@@ -33,12 +33,12 @@ void initPsiAndRhoFromPreviousGroundStatePsi(std::vector<std::vector<vectorType>
 	  eigenVectorsCurrentPtrs[kPoint* eigenVectors[0].size()+i]=&(eigenVectors[kPoint][i]);
 	}
 
-     if (dftParameters::verbosity==2)
+     if (dftParameters::verbosity>=2)
        pcout<<"L2 Norm Value of previous eigenvector 0: "<<eigenVectorsPreviousPtrs[0]->l2_norm()<<std::endl;
 
      computing_timer.enter_section("interpolate previous PSI");
 
-     pcout <<std::endl<< "Interpolating previous grounstate PSI into the new finite element mesh...."<<std::endl;
+     pcout <<std::endl<< "Interpolating previous groundstate PSI into the new finite element mesh...."<<std::endl;
      vectorTools::interpolateFieldsFromPreviousMesh interpolateEigenVecPrev(mpi_communicator);
      interpolateEigenVecPrev.interpolate(d_mesh.getSerialMeshUnmovedPrevious(),
 	                         d_mesh.getParallelMeshUnmovedPrevious(),
@@ -57,7 +57,7 @@ void initPsiAndRhoFromPreviousGroundStatePsi(std::vector<std::vector<vectorType>
 	  eigenVectors[kPoint][i].update_ghost_values();
 	}
 
-     if (dftParameters::verbosity==2)
+     if (dftParameters::verbosity>=2)
       pcout<<"L2 Norm Value of interpolated eigenvector 0: "<<eigenVectorsCurrentPtrs[0]->l2_norm()<<std::endl;
 
      pcout <<std::endl<< "Computing rho initial guess from previous ground state PSI...."<<std::endl;
@@ -100,21 +100,35 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
 	 PetscMemoryGetCurrentUsage(&bytes);
 	 FILE *dummy;
 	 unsigned int this_mpi_process = dealii::Utilities::MPI::this_mpi_process(mpi_communicator);
-	 PetscSynchronizedPrintf(mpi_communicator,"[%d] Memory Usage after creating STL vector of eigenVectors  %e\n",this_mpi_process,bytes);
+	 PetscSynchronizedPrintf(mpi_communicator,"[%d] Memory Usage after creating flattened eigenvectors %e\n",this_mpi_process,bytes);
 	 PetscSynchronizedFlush(mpi_communicator,dummy);
        }
 
      if (!(dftParameters::chkType==2 && dftParameters::restartFromChk))
 	initRho();
-     if (dftParameters::verbosity>=2){
-	 if (dftParameters::spinPolarized==1)
-		pcout<< std::endl<<"net magnetization: "<< totalMagnetization(rhoInValuesSpinPolarized) <<std::endl;
-     }
+
+  }
+  else if (usePreviousGroundStateFields==1)
+  {
+     for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+	  vectorTools::createDealiiVector<dataTypes::number>
+		     (matrix_free_data.get_vector_partitioner(),
+		      numEigenValues,
+		      d_eigenVectorsFlattened[kPoint]);
+
+     pcout <<std::endl<< "Reading initial guess for PSI...."<<std::endl;
+     readPSI();
+
+     initRhoFromPreviousGroundStateRho();
   }
   else if (usePreviousGroundStateFields==2)
   {
       //initPsiAndRhoFromPreviousGroundStatePsi(eigenVectors);
   }
+
+   if (dftParameters::verbosity>=2)
+       if (dftParameters::spinPolarized==1)
+	pcout<< std::endl<<"net magnetization: "<< totalMagnetization(rhoInValuesSpinPolarized) <<std::endl;
 
   //
   //update serial and parallel unmoved previous mesh

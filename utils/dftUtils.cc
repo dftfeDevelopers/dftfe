@@ -123,7 +123,7 @@ namespace dftUtils
       {
         if (taskId==i)
 	{
-           if (dftParameters::verbosity>=2)
+           if (dftParameters::verbosity>=3)
              std::cout << " My global id is " << taskId << " , pool id is " << dealii::Utilities::MPI::this_mpi_process(interpoolcomm)  <<
                     " , intrapool id is " << dealii::Utilities::MPI::this_mpi_process(intrapoolcomm) << std::endl;
 	}
