@@ -540,6 +540,10 @@ namespace dftParameters
        AssertThrow(false,ExcMessage("DFT-FE Error: Implementation PGS orthogonalization in complex mode is not added yet."));
 #else
     AssertThrow(!dftParameters::isCellStress,ExcMessage("DFT-FE Error: Currently CELL STRESS cannot be set true in double mode for periodic Gamma point problems. This functionality will be added soon."));
+
+    AssertThrow( dftParameters::nkx==1 &&  dftParameters::nky==1 &&  dftParameters::nkz==1
+             && dftParameters::dkx==0 &&  dftParameters::dky==0 &&  dftParameters::dkz==0
+	    ,ExcMessage("DFT-FE Error: Real executable cannot be used for non-zero k point."));
 #endif
     AssertThrow(!(dftParameters::chkType==2 && (dftParameters::isIonOpt || dftParameters::isCellOpt)),ExcMessage("DFT-FE Error: CHK TYPE=2 cannot be used if geometry optimization is being performed."));
 
