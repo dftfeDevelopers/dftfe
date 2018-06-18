@@ -1076,6 +1076,8 @@ namespace dftfe {
     //if (dftParameters::electrostaticsPRefinement)
     //  computeElectrostaticEnergyPRefined();
 
+    computeNodalRhoFromQuadData();
+
     if (dftParameters::writeSolutionFields)
       output();
   }
@@ -1120,7 +1122,7 @@ namespace dftfe {
     //compute nodal electron-density from quad data
     //
     dealii::parallel::distributed::Vector<double>  rhoNodalField;
-    matrix_free_data.initialize_dof_vector(rhoNodalField);
+    matrix_free_data.initialize_dof_vector(rhoNodalField,densityDofHandlerIndex);
     rhoNodalField=0;
     dealii::VectorTools::project<3,dealii::parallel::distributed::Vector<double>> (dealii::MappingQ1<3,3>(),
 										   dofHandler,

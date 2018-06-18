@@ -94,6 +94,7 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   for(int i = 0; i < d_constraintsVector.size(); ++i)
     dofHandlerVector.push_back(&dofHandler);
 
+  densityDofHandlerIndex=0;
   phiTotDofHandlerIndex = 1;
 
   dofHandlerVector.push_back(&dofHandlerEigen); //DofHandler For Eigen
@@ -134,10 +135,6 @@ void dftClass<FEOrder>::initBoundaryConditions(){
 
   //compute volume of the domain
   d_domainVolume=computeVolume(dofHandler);
-
-  //initialize eigen solve related object
-  //eigenPtr= new eigenClass<FEOrder>(this, mpi_communicator);
-  //eigenPtr->init();
 
   //update gaussianMeshMovementClass object
   d_gaussianMovePar.initMoved(d_domainBoundingVectors);

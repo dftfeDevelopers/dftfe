@@ -102,48 +102,25 @@ namespace dftfe {
   {
 
     if(flag)
-      {
-
-	vectorTools::createDealiiVector<dataTypes::number>(dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
-							   numberWaveFunctions,
-							   dftPtr->d_projectorKetTimesVectorParFlattened);
-
 	vectorTools::createDealiiVector<dataTypes::number>(dftPtr->matrix_free_data.get_vector_partitioner(),
 							   numberWaveFunctions,
 							   flattenedArray);
 
-	vectorTools::computeCellLocalIndexSetMap(flattenedArray.get_partitioner(),
-						 dftPtr->matrix_free_data,
-						 numberWaveFunctions,
-						 d_flattenedArrayMacroCellLocalProcIndexIdMap,
-						 d_flattenedArrayCellLocalProcIndexIdMap);
-
-	getOverloadedConstraintMatrix()->precomputeMaps(dftPtr->matrix_free_data.get_vector_partitioner(),
-							flattenedArray.get_partitioner(),
-							numberWaveFunctions);
+    vectorTools::createDealiiVector<dataTypes::number>(dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
+						       numberWaveFunctions,
+						       dftPtr->d_projectorKetTimesVectorParFlattened);
 
 
-      }
-    else
-      {
 
-	vectorTools::createDealiiVector<dataTypes::number>(dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
-							   numberWaveFunctions,
-							   dftPtr->d_projectorKetTimesVectorParFlattened);
+    vectorTools::computeCellLocalIndexSetMap(flattenedArray.get_partitioner(),
+					     dftPtr->matrix_free_data,
+					     numberWaveFunctions,
+					     d_flattenedArrayMacroCellLocalProcIndexIdMap,
+					     d_flattenedArrayCellLocalProcIndexIdMap);
 
-
-	vectorTools::computeCellLocalIndexSetMap(flattenedArray.get_partitioner(),
-						 dftPtr->matrix_free_data,
-						 numberWaveFunctions,
-						 d_flattenedArrayMacroCellLocalProcIndexIdMap,
-						 d_flattenedArrayCellLocalProcIndexIdMap);
-
-
-	getOverloadedConstraintMatrix()->precomputeMaps(dftPtr->matrix_free_data.get_vector_partitioner(),
-							flattenedArray.get_partitioner(),
-							numberWaveFunctions);
-      }
-
+    getOverloadedConstraintMatrix()->precomputeMaps(dftPtr->matrix_free_data.get_vector_partitioner(),
+						    flattenedArray.get_partitioner(),
+						    numberWaveFunctions);
   }
 
 template<unsigned int FEOrder>

@@ -44,46 +44,22 @@ void dftClass<FEOrder>::compute_rhoOut()
     zeroTensor3[idim]=make_vectorized_array(0.0);
   }
 
-  //create new rhoValue tables
-  rhoOutVals.push_back(std::map<dealii::CellId,std::vector<double> > ());
+  resizeAndAllocateRhoTableStorage
+		    (rhoOutVals,
+		     gradRhoOutVals,
+		     rhoOutValsSpinPolarized,
+		     gradRhoOutValsSpinPolarized);
+
   rhoOutValues = &(rhoOutVals.back());
   if (dftParameters::spinPolarized==1)
-    {
-    rhoOutValsSpinPolarized.push_back(std::map<dealii::CellId,std::vector<double> > ());
     rhoOutValuesSpinPolarized = &(rhoOutValsSpinPolarized.back());
-    }
 
   if(dftParameters::xc_id == 4)
     {
-      gradRhoOutVals.push_back(std::map<dealii::CellId, std::vector<double> >());
       gradRhoOutValues = &(gradRhoOutVals.back());
       if (dftParameters::spinPolarized==1)
-       {
-         gradRhoOutValsSpinPolarized.push_back(std::map<dealii::CellId, std::vector<double> >());
          gradRhoOutValuesSpinPolarized = &(gradRhoOutValsSpinPolarized.back());
-       }
     }
-
-   for (unsigned int cell=0; cell<matrix_free_data.n_macro_cells(); ++cell)
-   {
-	  const unsigned int numSubCells=matrix_free_data.n_components_filled(cell);
-
-	  for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
-	  {
-		const dealii::CellId subCellId=matrix_free_data.get_cell_iterator(cell,iSubCell)->id();
-		(*rhoOutValues)[subCellId] = std::vector<double>(numQuadPoints,0.0);
-		if(dftParameters::xc_id == 4)
-		    (*gradRhoOutValues)[subCellId] = std::vector<double>(3*numQuadPoints,0.0);
-
-		if (dftParameters::spinPolarized==1)
-		{
-		    (*rhoOutValuesSpinPolarized)[subCellId] = std::vector<double>(2*numQuadPoints,0.0);
-		     if(dftParameters::xc_id == 4)
-		        (*gradRhoOutValuesSpinPolarized)[subCellId]
-			 = std::vector<double>(6*numQuadPoints,0.0);
-		}
-	  }
-   }
 
    //temp arrays
    std::vector<double> rhoTemp(numQuadPoints), rhoTempSpinPolarized(2*numQuadPoints), rhoOut(numQuadPoints), rhoOutSpinPolarized(2*numQuadPoints);
@@ -348,37 +324,11 @@ void dftClass<FEOrder>::compute_rhoOut()
        }//macro cell loop
    }//eigenvectors block loop
 
-
    //gather density from all pools
-   if (dftParameters::npool>1)
-       for (unsigned int cell=0; cell<matrix_free_data.n_macro_cells(); ++cell)
-       {
-	      const unsigned int numSubCells=matrix_free_data.n_components_filled(cell);
-
-	      for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
-	      {
-		    const dealii::CellId subCellId=matrix_free_data.get_cell_iterator(cell,iSubCell)->id();
-
-		    dealii::Utilities::MPI::sum((*rhoOutValues)[subCellId],
-						interpoolcomm,
-						(*rhoOutValues)[subCellId]);
-		    if(dftParameters::xc_id == 4)
-		       dealii::Utilities::MPI::sum((*gradRhoOutValues)[subCellId],
-						   interpoolcomm,
-						   (*gradRhoOutValues)[subCellId]);
-
-		    if (dftParameters::spinPolarized==1)
-		    {
-			dealii::Utilities::MPI::sum((*rhoOutValuesSpinPolarized)[subCellId],
-						     interpoolcomm,
-						     (*rhoOutValuesSpinPolarized)[subCellId]);
-			if(dftParameters::xc_id == 4)
-			   dealii::Utilities::MPI::sum((*gradRhoOutValuesSpinPolarized)[subCellId],
-						       interpoolcomm,
-						       (*gradRhoOutValuesSpinPolarized)[subCellId]);
-		    }
-	      }
-       }
+   sumRhoDataKPointPools(rhoOutValues,
+	                 gradRhoOutValues,
+		         rhoOutValuesSpinPolarized,
+		         gradRhoOutValuesSpinPolarized);
 
   //pop out rhoInVals and rhoOutVals if their size exceeds mixing history size
   if(rhoInVals.size() == dftParameters::mixingHistory)
@@ -407,6 +357,82 @@ void dftClass<FEOrder>::compute_rhoOut()
 
 }
 
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::resizeAndAllocateRhoTableStorage
+		    (std::deque<std::map<dealii::CellId,std::vector<double> >> & rhoVals,
+		     std::deque<std::map<dealii::CellId,std::vector<double> >> & gradRhoVals,
+		     std::deque<std::map<dealii::CellId,std::vector<double> >> & rhoValsSpinPolarized,
+		     std::deque<std::map<dealii::CellId,std::vector<double> >> & gradRhoValsSpinPolarized)
+{
+  const unsigned int numQuadPoints = matrix_free_data.get_n_q_points(0);;
+
+  //create new rhoValue tables
+  rhoVals.push_back(std::map<dealii::CellId,std::vector<double> > ());
+  if (dftParameters::spinPolarized==1)
+	rhoValsSpinPolarized.push_back(std::map<dealii::CellId,std::vector<double> > ());
+
+  if(dftParameters::xc_id == 4)
+    {
+      gradRhoVals.push_back(std::map<dealii::CellId, std::vector<double> >());
+      if (dftParameters::spinPolarized==1)
+         gradRhoValsSpinPolarized.push_back(std::map<dealii::CellId, std::vector<double> >());
+    }
+
+
+   typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
+   for (; cell!=endc; ++cell)
+      if (cell->is_locally_owned())
+	{
+	    const dealii::CellId cellId=cell->id();
+	    rhoVals.back()[cellId] = std::vector<double>(numQuadPoints,0.0);
+	    if(dftParameters::xc_id == 4)
+		gradRhoVals.back()[cellId] = std::vector<double>(3*numQuadPoints,0.0);
+
+	    if (dftParameters::spinPolarized==1)
+	    {
+		 rhoValsSpinPolarized.back()[cellId] = std::vector<double>(2*numQuadPoints,0.0);
+		 if(dftParameters::xc_id == 4)
+		    gradRhoValsSpinPolarized.back()[cellId]
+		     = std::vector<double>(6*numQuadPoints,0.0);
+	    }
+	}
+}
+
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::sumRhoDataKPointPools(std::map<dealii::CellId, std::vector<double> > * rhoValues,
+	                         std::map<dealii::CellId, std::vector<double> > * gradRhoValues,
+				 std::map<dealii::CellId, std::vector<double> > * rhoValuesSpinPolarized,
+				 std::map<dealii::CellId, std::vector<double> > * gradRhoValuesSpinPolarized)
+{
+   typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
+
+   //gather density from all pools
+   if (dftParameters::npool>1)
+      for (; cell!=endc; ++cell)
+	  if (cell->is_locally_owned())
+	    {
+		    const dealii::CellId cellId=cell->id();
+
+		    dealii::Utilities::MPI::sum((*rhoValues)[cellId],
+						interpoolcomm,
+						(*rhoValues)[cellId]);
+		    if(dftParameters::xc_id == 4)
+		       dealii::Utilities::MPI::sum((*gradRhoValues)[cellId],
+						   interpoolcomm,
+						   (*gradRhoValues)[cellId]);
+
+		    if (dftParameters::spinPolarized==1)
+		    {
+			dealii::Utilities::MPI::sum((*rhoValuesSpinPolarized)[cellId],
+						    interpoolcomm,
+						    (*rhoValuesSpinPolarized)[cellId]);
+			if(dftParameters::xc_id == 4)
+			   dealii::Utilities::MPI::sum((*gradRhoValuesSpinPolarized)[cellId],
+						       interpoolcomm,
+						       (*gradRhoValuesSpinPolarized)[cellId]);
+		    }
+	      }
+}
 
 //rho data reinitilization without remeshing. The rho out of last ground state solve is made the rho in of the new solve
 template<unsigned int FEOrder>

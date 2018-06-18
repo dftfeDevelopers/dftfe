@@ -216,6 +216,8 @@ namespace dftfe {
 
 
       /**
+       * interpolate rho quadrature data on current mesh from the ground state rho on previous mesh.
+       * This is used whenver the mesh is changed due to atom movement.
        */
       void initRhoFromPreviousGroundStateRho();
 
@@ -285,6 +287,29 @@ namespace dftfe {
       void initRho();
       void computeRhoInitialGuessFromPSI(std::vector<std::vector<vectorType>> eigenVectors);
       void clearRhoData();
+
+      /**
+       * computes nodal electron-density from cell quadrature data using project function of dealii
+       */
+      void computeNodalRhoFromQuadData();
+
+      /**
+       * sums rho cell quadratrure data from all kpoint pools
+       */
+      void sumRhoDataKPointPools(std::map<dealii::CellId, std::vector<double> > * rhoValues,
+	                         std::map<dealii::CellId, std::vector<double> > * gradRhoValues,
+				 std::map<dealii::CellId, std::vector<double> > * rhoValuesSpinPolarized,
+				 std::map<dealii::CellId, std::vector<double> > * gradRhoValuesSpinPolarized);
+
+      /**
+       * resize and allocate table storage for rho cell quadratrue data
+       */
+      void resizeAndAllocateRhoTableStorage
+			    (std::deque<std::map<dealii::CellId,std::vector<double> >> & rhoVals,
+			     std::deque<std::map<dealii::CellId,std::vector<double> >> & gradRhoVals,
+			     std::deque<std::map<dealii::CellId,std::vector<double> >> & rhoValsSpinPolarized,
+			     std::deque<std::map<dealii::CellId,std::vector<double> >> & gradRhoValsSpinPolarized);
+
       void noRemeshRhoDataInit();
       void readPSI();
       void readPSIRadialValues();
@@ -425,6 +450,7 @@ namespace dftfe {
       FESystem<3>        FE, FEEigen;
       DoFHandler<3>      dofHandler, dofHandlerEigen;
       unsigned int       eigenDofHandlerIndex,phiExtDofHandlerIndex,phiTotDofHandlerIndex,forceDofHandlerIndex;
+      unsigned int       densityDofHandlerIndex;
       MatrixFree<3,double> matrix_free_data;
       std::map<types::global_dof_index, Point<3> > d_supportPoints, d_supportPointsEigen;
       std::vector<const ConstraintMatrix * > d_constraintsVector;
@@ -498,6 +524,15 @@ namespace dftfe {
 
       // storage for sum of nuclear electrostatic potential
       vectorType d_phiExt;
+
+      // storage for projection of rho cell quadrature data to nodal field
+      vectorType d_rhoNodalField;
+
+      // storage for projection of rho cell quadrature data to nodal field
+      vectorType d_rhoNodalFieldSpin0;
+
+      // storage for projection of rho cell quadrature data to nodal field
+      vectorType d_rhoNodalFieldSpin1;
 
       double d_pspTail = 8.0;
       std::map<dealii::CellId, std::vector<double> > pseudoValues;
