@@ -44,6 +44,7 @@
 #include <interpolateFieldsFromPreviousMesh.h>
 #include <linearAlgebraOperations.h>
 #include <vectorUtilities.h>
+#include <pseudoConverter.h>
 
 
 namespace dftfe {
@@ -278,6 +279,9 @@ namespace dftfe {
   {
     if(dftParameters::isPseudopotential)
       {
+	//std::string fileName = "sample_text";
+	pseudoUtils::convert(dftParameters::pseudoPotentialFile);
+
 	TimerOutput::Scope scope (computing_timer, "psp init");
 	pcout<<std::endl<<"Pseuodopotential initalization...."<<std::endl;
 	initLocalPseudoPotential();
@@ -301,6 +305,8 @@ namespace dftfe {
 
 	forcePtr->initPseudoData();
       }
+
+    //exit(0);
   }
 
 
@@ -370,7 +376,7 @@ namespace dftfe {
 
   //dft init
   template<unsigned int FEOrder>
-  void dftClass<FEOrder>::init (const bool usePreviousGroundStateFields)
+  void dftClass<FEOrder>::init(const bool usePreviousGroundStateFields)
   {
 
     initImageChargesUpdateKPoints();

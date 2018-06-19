@@ -35,7 +35,7 @@ namespace dftParameters
   double chebyshevTolerance = 1e-02;
 
   bool isPseudopotential=false,periodicX=false,periodicY=false,periodicZ=false, useSymm=false, timeReversal=false;
-  std::string meshFileName="",coordinatesFile="",domainBoundingVectorsFile="",kPointDataFile="", ionRelaxFlagsFile="",orthogType="";
+  std::string meshFileName="",coordinatesFile="",domainBoundingVectorsFile="",kPointDataFile="", ionRelaxFlagsFile="",orthogType="",pseudoPotentialFile="";
 
   double outerAtomBallRadius=2.0, meshSizeOuterDomain=10.0;
   double meshSizeInnerBall=1.0, meshSizeOuterBall=1.0;
@@ -268,6 +268,10 @@ namespace dftParameters
 			  Patterns::Integer(1,2),
 			  "[Standard] Type of nonlocal projector to be used: 1 for KB, 2 for ONCV, default is KB.");
 
+	prm.declare_entry("PSEUDOPOTENTIAL FILE NAMES LIST", "",
+			  Patterns::Anything(),
+			  "[Standard] Pseudopotential file. This file contains the list of pseudopotential file names in UPF format corresponding to the atoms involved in the calculations. File format (example for two atoms Mg(z=12), Al(z=13)): 12 filename1.upf(row1), 13 filename2.upf (row2)");
+
 	prm.declare_entry("EXCHANGE CORRELATION TYPE", "1",
 			  Patterns::Integer(1,4),
 			  "[Standard] Parameter specifying the type of exchange-correlation to be used: 1(LDA: Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)]), 2(LDA: Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)]), 3(LDA: Vosko, Wilk \\& Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)]), 4(GGA: Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)]).");
@@ -457,10 +461,10 @@ namespace dftParameters
 	}
 	prm.leave_subsection ();
 
-	dftParameters::useSymm                  = prm.get_bool("USE GROUP SYMMETRY");
-	dftParameters::timeReversal                   = prm.get_bool("USE TIME REVERSAL SYMMETRY");
-	dftParameters::npool             = prm.get_integer("NUMBER OF POOLS");
-	dftParameters::kPointDataFile                = prm.get("kPOINT RULE FILE");
+	dftParameters::useSymm                 = prm.get_bool("USE GROUP SYMMETRY");
+	dftParameters::timeReversal            = prm.get_bool("USE TIME REVERSAL SYMMETRY");
+	dftParameters::npool                   = prm.get_integer("NUMBER OF POOLS");
+	dftParameters::kPointDataFile          = prm.get("kPOINT RULE FILE");
     }
     prm.leave_subsection ();
 
@@ -468,6 +472,7 @@ namespace dftParameters
     {
 	dftParameters::isPseudopotential             = prm.get_bool("PSEUDOPOTENTIAL CALCULATION");
 	dftParameters::pseudoProjector               = prm.get_integer("PSEUDOPOTENTIAL TYPE");
+	dftParameters::pseudoPotentialFile           = prm.get("PSEUDOPOTENTIAL FILE");
 	dftParameters::xc_id                         = prm.get_integer("EXCHANGE CORRELATION TYPE");
 	dftParameters::spinPolarized                 = prm.get_integer("SPIN POLARIZATION");
 	dftParameters::start_magnetization           = prm.get_double("START MAGNETIZATION");
@@ -481,22 +486,22 @@ namespace dftParameters
 	dftParameters::selfConsistentSolverTolerance = prm.get_double("TOLERANCE");
 	dftParameters::mixingHistory                 = prm.get_integer("ANDERSON SCHEME MIXING HISTORY");
 	dftParameters::mixingParameter               = prm.get_double("ANDERSON SCHEME MIXING PARAMETER");
-        dftParameters::startingWFCType        = prm.get("STARTING WFC");
+        dftParameters::startingWFCType               = prm.get("STARTING WFC");
 
 	prm.enter_subsection ("Eigen-solver/Chebyshev solver related parameters");
 	{
 	   dftParameters::numberEigenValues             = prm.get_integer("NUMBER OF KOHN-SHAM WAVEFUNCTIONS");
 	   dftParameters::lowerEndWantedSpectrum        = prm.get_double("LOWER BOUND WANTED SPECTRUM");
 	   dftParameters::chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
-	   dftParameters::numPass           = prm.get_integer("CHEBYSHEV FILTER PASSES");
-	   dftParameters::chebyshevBlockSize= prm.get_integer("CHEBYSHEV FILTER BLOCK SIZE");
-	   dftParameters::useBatchGEMM= prm.get_bool("BATCH GEMM");
-	   dftParameters::orthogType        = prm.get("ORTHOGONALIZATION TYPE");
-	   dftParameters::chebyshevTolerance = prm.get_double("CHEBYSHEV FILTER TOLERANCE");
-	   dftParameters::chebyshevOMPThreads = prm.get_integer("CHEBYSHEV FILTER NUM OMP THREADS");
-	   dftParameters::orthoRROMPThreads= prm.get_integer("ORTHO RR NUM OMP THREADS");
-	   dftParameters::orthoRRWaveFuncBlockSize= prm.get_integer("ORTHO RR WFC BLOCK SIZE");
-	   dftParameters::subspaceRotDofsBlockSize= prm.get_integer("SUBSPACE ROT DOFS BLOCK SIZE");
+	   dftParameters::numPass                       = prm.get_integer("CHEBYSHEV FILTER PASSES");
+	   dftParameters::chebyshevBlockSize            = prm.get_integer("CHEBYSHEV FILTER BLOCK SIZE");
+	   dftParameters::useBatchGEMM                  = prm.get_bool("BATCH GEMM");
+	   dftParameters::orthogType                    = prm.get("ORTHOGONALIZATION TYPE");
+	   dftParameters::chebyshevTolerance            = prm.get_double("CHEBYSHEV FILTER TOLERANCE");
+	   dftParameters::chebyshevOMPThreads           = prm.get_integer("CHEBYSHEV FILTER NUM OMP THREADS");
+	   dftParameters::orthoRROMPThreads             = prm.get_integer("ORTHO RR NUM OMP THREADS");
+	   dftParameters::orthoRRWaveFuncBlockSize      = prm.get_integer("ORTHO RR WFC BLOCK SIZE");
+	   dftParameters::subspaceRotDofsBlockSize      = prm.get_integer("SUBSPACE ROT DOFS BLOCK SIZE");
 	}
 	prm.leave_subsection ();
     }
@@ -506,7 +511,7 @@ namespace dftParameters
     {
        dftParameters::maxLinearSolverIterations     = prm.get_integer("MAXIMUM ITERATIONS");
        dftParameters::relLinearSolverTolerance      = prm.get_double("TOLERANCE");
-       dftParameters::electrostaticsPRefinement        = prm.get_bool("P REFINEMENT");
+       dftParameters::electrostaticsPRefinement     = prm.get_bool("P REFINEMENT");
     }
     prm.leave_subsection ();
 

@@ -149,6 +149,8 @@ namespace dftfe{
 	      &iwork[0],
 	      &liwork,
 	      &info);
+
+      AssertThrow(info==0,dealii::ExcMessage("Error in zheevr"));
     }
 
 

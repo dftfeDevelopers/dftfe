@@ -40,19 +40,19 @@ end
 
 
 subsection SCF parameters
-  set MAXIMUM ITERATIONS = 1 
+  set MAXIMUM ITERATIONS = 30 
   set TOLERANCE          = 1e-7
   set ANDERSON SCHEME MIXING PARAMETER   = 0.5
   set ANDERSON SCHEME MIXING HISTORY     = 70
   set TEMPERATURE                        = 500
-  set STARTING WFC=ATOMIC
+  set STARTING WFC=RANDOM
 
   subsection Eigen-solver/Chebyshev solver related parameters
       set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 15
       set LOWER BOUND WANTED SPECTRUM = -10.0
       set CHEBYSHEV POLYNOMIAL DEGREE = 0
       set ORTHOGONALIZATION TYPE = GS
-      set CHEBYSHEV FILTER TOLERANCE = 5e-02
+      set CHEBYSHEV FILTER TOLERANCE = 1e-02
   end
 end
 

@@ -94,7 +94,7 @@ void dftClass<FEOrder>::initRho()
 
   rhoInVals.push_back(std::map<dealii::CellId, std::vector<double> >());
   rhoInValues=&(rhoInVals.back());
-  if (dftParameters::spinPolarized==1)
+  if(dftParameters::spinPolarized==1)
     {
       rhoInValsSpinPolarized.push_back(std::map<dealii::CellId, std::vector<double> >());
       rhoInValuesSpinPolarized=&(rhoInValsSpinPolarized.back());
@@ -264,11 +264,11 @@ void dftClass<FEOrder>::initRho()
 		  if(dftParameters::spinPolarized==1)
 	           {
 	             gradRhoInValuesSpinPolarizedPtr[6*q+0] =( 0.5 + dftParameters::start_magnetization)*signRho*gradRhoXValueAtQuadPt;
-	             gradRhoInValuesSpinPolarizedPtr[6*q+1] = ( 0.5 + dftParameters::start_magnetization)*signRho*gradRhoYValueAtQuadPt ;
-		     gradRhoInValuesSpinPolarizedPtr[6*q+2] =  ( 0.5 + dftParameters::start_magnetization)*signRho*gradRhoZValueAtQuadPt ;
+	             gradRhoInValuesSpinPolarizedPtr[6*q+1] = ( 0.5 + dftParameters::start_magnetization)*signRho*gradRhoYValueAtQuadPt;
+		     gradRhoInValuesSpinPolarizedPtr[6*q+2] =  ( 0.5 + dftParameters::start_magnetization)*signRho*gradRhoZValueAtQuadPt;
 		     gradRhoInValuesSpinPolarizedPtr[6*q+3] =( 0.5 - dftParameters::start_magnetization)*signRho*gradRhoXValueAtQuadPt;
-	             gradRhoInValuesSpinPolarizedPtr[6*q+4] = ( 0.5 - dftParameters::start_magnetization)*signRho*gradRhoYValueAtQuadPt ;
-		     gradRhoInValuesSpinPolarizedPtr[6*q+5] =  ( 0.5 - dftParameters::start_magnetization)*signRho*gradRhoZValueAtQuadPt ;
+	             gradRhoInValuesSpinPolarizedPtr[6*q+4] = ( 0.5 - dftParameters::start_magnetization)*signRho*gradRhoYValueAtQuadPt;
+		     gradRhoInValuesSpinPolarizedPtr[6*q+5] =  ( 0.5 - dftParameters::start_magnetization)*signRho*gradRhoZValueAtQuadPt;
 		   }
 		}
 	    }

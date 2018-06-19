@@ -17,8 +17,8 @@
 //
 
 #include "stdafx.h"
-#include "linalg.h"
-#include "../../include/dftParameters.h"
+#include <linalg.h>
+#include <dftParameters.h>
 
 
 template<unsigned int FEOrder>
@@ -320,7 +320,8 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
   for(std::set<unsigned int>::iterator it = atomTypes.begin(); it != atomTypes.end(); ++it)
     {
       char pseudoAtomDataFile[256];
-      sprintf(pseudoAtomDataFile, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/PseudoAtomDat", DFT_PATH, *it);
+      //sprintf(pseudoAtomDataFile, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/PseudoAtomDat", DFT_PATH, *it);
+      sprintf(pseudoAtomDataFile, "/tmp/z%u/PseudoAtomDat",*it);
 
 
       unsigned int atomicNumber = *it;
@@ -493,7 +494,8 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
 	  //readPseudoDataFileNames >> numProj ;
 
 	  char projRadialFunctionFileName[512];
-	  sprintf(projRadialFunctionFileName, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/%s", DFT_PATH,*it,tempProjRadialFunctionFileName.c_str());
+	  //sprintf(projRadialFunctionFileName, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/%s", DFT_PATH,*it,tempProjRadialFunctionFileName.c_str());
+	  sprintf(projRadialFunctionFileName, "/tmp/z%u/%s",*it,tempProjRadialFunctionFileName.c_str());
 
 	  //
 	  // 2D vector to store the radial coordinate and its corresponding
@@ -542,7 +544,7 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
 	  }
 	}
         d_pseudoWaveFunctionSplines.insert(d_pseudoWaveFunctionSplines.end(), atomicSplines.begin(), atomicSplines.end());
-        //
+
 
 	  //
 	  // 2D vector to store the radial coordinate and its corresponding
@@ -556,7 +558,8 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
 	  char denominatorDataFileName[256];
 	  //
 	  readPseudoDataFileNames >> tempDenominatorDataFileName ;
-	  sprintf(denominatorDataFileName, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/%s", DFT_PATH,*it, tempDenominatorDataFileName.c_str());
+	  //sprintf(denominatorDataFileName, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/%s", DFT_PATH,*it, tempDenominatorDataFileName.c_str());
+	  sprintf(denominatorDataFileName, "/tmp/z%u/%s", *it, tempDenominatorDataFileName.c_str());
 	  dftUtils::readFile(projId,denominator,denominatorDataFileName);
 	  denominatorData[(*it)] = denominator ;
 
