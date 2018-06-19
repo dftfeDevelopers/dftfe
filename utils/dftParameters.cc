@@ -169,7 +169,7 @@ namespace dftParameters
 
       prm.declare_entry("POLYNOMIAL ORDER", "4",
                         Patterns::Integer(1,12),
-                       "[Standard] The degree of the finite-element interpolating polynomial. Default value is 4.");
+                       "[Standard] The degree of the finite-element interpolating polynomial. Default value is 4. The default value of 4 is usually a good choice for most pseudopotential as well as all-electron problems.");
 
       prm.declare_entry("MESH FILE", "",
                        Patterns::Anything(),
@@ -177,26 +177,26 @@ namespace dftParameters
 
       prm.declare_entry("CACHE SHAPE GRAD","false",
 			 Patterns::Bool(),
-			 "[Developer] Boolean parameter which controls precomputation of FEM shape function gradients for each cell. This helps optimize discrete Hamiltonian matrix computation but at the cost of carrying some extra memory. Default value is false.");
+			 "[Developer] Boolean parameter which controls precomputation of FEM shape function gradients for each cell. This helps optimize discrete Hamiltonian matrix computation but at the cost of carrying some extra memory. Default option is false.");
 
       prm.enter_subsection ("Auto mesh generation parameters");
       {
 
 	prm.declare_entry("BASE MESH SIZE", "4.0",
 			  Patterns::Double(0,20),
-			  "[Standard] Mesh size of the base mesh on which refinement is performed.");
+			  "[Standard] Mesh size of the base mesh on which refinement is performed. Default value is good enough for most cases.");
 
 	prm.declare_entry("ATOM BALL RADIUS","2.25",
 			  Patterns::Double(0,10),
-			  "[Standarad] Radius of ball enclosing atom.");
+			  "[Standarad] Radius of ball enclosing every atom inside which the mesh size is set close to MESH SIZE ATOM BALL. A value between 2.0 to 3.0 is usually a good choice.");
 
 	prm.declare_entry("MESH SIZE ATOM BALL", "0.5",
 			  Patterns::Double(0,10),
-			  "[Standard] Mesh size in a ball around atom.");
+			  "[Standard] Mesh size in a ball of radius ATOM BALL RADIUS around every atom. For pseudopotential calculations, a value between 0.5 to 1.0 is usually a good choice. For all-electron calculations, a value between 0.1 to 0.3 would be a good starting choice.");
 
 	prm.declare_entry("MESH SIZE NEAR ATOM", "0.5",
 			  Patterns::Double(0,10),
-			  "[Standard] Mesh size near atom. Useful for all-electron case.");
+			  "[Standard] Mesh size of the finite elements in the immediate vicinity of the atoms. For pseudopotential calculations, this value is usually taken to be the same as the MESH SIZE ATOM BALL. For all-electron case, a value smaller than MESH SIZE ATOM BALL, typically between 0.05 to 0.1 would be a good starting choice.");
 
         prm.declare_entry("MAX REFINEMENT STEPS", "10",
                         Patterns::Integer(1,10),
@@ -266,7 +266,7 @@ namespace dftParameters
 
 	prm.declare_entry("PSEUDOPOTENTIAL TYPE", "1",
 			  Patterns::Integer(1,2),
-			  "[Standard] Type of nonlocal projector to be used: 1 for KB, 2 for ONCV, default is KB.");
+			  "[Standard] Type of nonlocal projector to be used: 1 for KB [PRL. 48, 1425 (1982); PRL. 43, 1993 (1991)], 2 for ONCV [PRB. 88, 085117 (2013)]. Default option is 1.");
 
 	prm.declare_entry("EXCHANGE CORRELATION TYPE", "1",
 			  Patterns::Integer(1,4),
@@ -274,7 +274,7 @@ namespace dftParameters
 
 	prm.declare_entry("SPIN POLARIZATION", "0",
 			  Patterns::Integer(0,1),
-			  "[Standard] Spin polarization: 0 for no spin polarization and 1 for spin polarization.");
+			  "[Standard] Spin polarization: 0 for no spin polarization and 1 for spin polarization. Default option is 0.");
 
 	prm.declare_entry("START MAGNETIZATION", "0.0",
 			  Patterns::Double(-0.5,0.5),

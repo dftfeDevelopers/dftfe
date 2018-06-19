@@ -850,11 +850,17 @@ namespace dftfe{
        //
        std::vector<double> invFourthRootEigenValuesMatrix(numberEigenValues,0.0);
 
+       unsigned int nanFlag = 0;
        for(unsigned i = 0; i < numberEigenValues; ++i)
-       {
-	 invFourthRootEigenValuesMatrix[i] = 1.0/pow(eigenValuesOverlap[i],1.0/4);
-	 AssertThrow(!std::isnan(invFourthRootEigenValuesMatrix[i]),dealii::ExcMessage("Eigen values of overlap matrix during Lowden Orthonormalization are close to zero."));
-       }
+	{
+	  invFourthRootEigenValuesMatrix[i] = 1.0/pow(eigenValuesOverlap[i],1.0/4);
+	  if(std::isnan(invFourthRootEigenValuesMatrix[i]) || eigenValuesOverlap[i]<1e-4)
+	    {
+	      nanFlag = 1;
+	      break;
+	    }
+	}
+       return dealii::Utilities::MPI::max(nanFlag,X.get_mpi_communicator());
 
        //
        //Q*D^{-1/4} and note that "Q" is stored in overlapMatrix after calling "zheevd"
@@ -996,14 +1002,14 @@ namespace dftfe{
       for(unsigned i = 0; i < numberEigenValues; ++i)
 	{
 	  invFourthRootEigenValuesMatrix[i] = 1.0/pow(eigenValuesOverlap[i],1.0/4);
-	  if(std::isnan(invFourthRootEigenValuesMatrix[i]))
+	  if(std::isnan(invFourthRootEigenValuesMatrix[i]) || eigenValuesOverlap[i]<1e-4)
 	    {
 	      nanFlag = 1;
-	      std::cout<<"Nan obtained in proc: "<<dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)<<" and switching to more robust dsyevr for eigen decomposition "<<std::endl;
+	      //std::cout<<"Nan obtained in proc: "<<dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)<<" and switching to more robust dsyevr for eigen decomposition "<<std::endl;
 	      break;
 	    }
 	}
-
+      return dealii::Utilities::MPI::max(nanFlag,X.get_mpi_communicator());
       if(nanFlag == 1)
 	{
 	  std::vector<double> overlapMatrixEigenVectors(numberVectors*numberVectors,0.0);
