@@ -57,7 +57,7 @@ int main (int argc, char *argv[])
 
   deallog.depth_console(0);
 
-  dftfe::dftUtils::Pool pool(MPI_COMM_WORLD, dftfe::dftParameters::npool);
+  dftfe::dftUtils::Pool kPointPool(MPI_COMM_WORLD, dftfe::dftParameters::npool);
 
   // set stdout precision
   std::cout << std::scientific << std::setprecision(18);
@@ -67,7 +67,7 @@ int main (int argc, char *argv[])
 
     case 1:
     {
-      dftfe::dftClass<1> problemFEOrder1(pool.get_replica_comm(), pool.get_interpool_comm());
+      dftfe::dftClass<1> problemFEOrder1(kPointPool.get_intrapool_comm(), kPointPool.get_interpool_comm());
       problemFEOrder1.numEigenValues = dftfe::dftParameters::numberEigenValues;
       problemFEOrder1.set();
       problemFEOrder1.init();
@@ -77,7 +77,7 @@ int main (int argc, char *argv[])
 
     case 2:
     {
-      dftfe::dftClass<2> problemFEOrder2(pool.get_replica_comm(), pool.get_interpool_comm());
+      dftfe::dftClass<2> problemFEOrder2(kPointPool.get_intrapool_comm(), kPointPool.get_interpool_comm());
       problemFEOrder2.numEigenValues = dftfe::dftParameters::numberEigenValues;
       problemFEOrder2.set();
       problemFEOrder2.init();
@@ -87,7 +87,7 @@ int main (int argc, char *argv[])
 
     case 3:
     {
-      dftfe::dftClass<3> problemFEOrder3(pool.get_replica_comm(), pool.get_interpool_comm());
+      dftfe::dftClass<3> problemFEOrder3(kPointPool.get_intrapool_comm(), kPointPool.get_interpool_comm());
       problemFEOrder3.numEigenValues = dftfe::dftParameters::numberEigenValues;
       problemFEOrder3.set();
       problemFEOrder3.init();
@@ -97,7 +97,7 @@ int main (int argc, char *argv[])
 
     case 4:
     {
-      dftfe::dftClass<4> problemFEOrder4(pool.get_replica_comm(), pool.get_interpool_comm());
+      dftfe::dftClass<4> problemFEOrder4(kPointPool.get_intrapool_comm(), kPointPool.get_interpool_comm());
       problemFEOrder4.numEigenValues = dftfe::dftParameters::numberEigenValues;
       problemFEOrder4.set();
       problemFEOrder4.init();
@@ -107,7 +107,7 @@ int main (int argc, char *argv[])
 
     case 5:
     {
-      dftfe::dftClass<5> problemFEOrder5(pool.get_replica_comm(), pool.get_interpool_comm());
+      dftfe::dftClass<5> problemFEOrder5(kPointPool.get_intrapool_comm(), kPointPool.get_interpool_comm());
       problemFEOrder5.numEigenValues = dftfe::dftParameters::numberEigenValues;
       problemFEOrder5.set();
       problemFEOrder5.init();
@@ -117,7 +117,7 @@ int main (int argc, char *argv[])
 
     case 6:
     {
-      dftfe::dftClass<6> problemFEOrder6(pool.get_replica_comm(), pool.get_interpool_comm());
+      dftfe::dftClass<6> problemFEOrder6(kPointPool.get_intrapool_comm(), kPointPool.get_interpool_comm());
       problemFEOrder6.numEigenValues = dftfe::dftParameters::numberEigenValues;
       problemFEOrder6.set();
       problemFEOrder6.init();
@@ -127,7 +127,7 @@ int main (int argc, char *argv[])
 
     case 7:
     {
-      dftfe::dftClass<7> problemFEOrder7(pool.get_replica_comm(), pool.get_interpool_comm());
+      dftfe::dftClass<7> problemFEOrder7(kPointPool.get_intrapool_comm(), kPointPool.get_interpool_comm());
       problemFEOrder7.numEigenValues = dftfe::dftParameters::numberEigenValues;
       problemFEOrder7.set();
       problemFEOrder7.init();
@@ -137,7 +137,7 @@ int main (int argc, char *argv[])
 
     case 8:
     {
-      dftfe::dftClass<8> problemFEOrder8(pool.get_replica_comm(), pool.get_interpool_comm());
+      dftfe::dftClass<8> problemFEOrder8(kPointPool.get_intrapool_comm(), kPointPool.get_interpool_comm());
       problemFEOrder8.numEigenValues = dftfe::dftParameters::numberEigenValues;
       problemFEOrder8.set();
       problemFEOrder8.init();
@@ -147,7 +147,7 @@ int main (int argc, char *argv[])
 
     case 9:
     {
-      dftfe::dftClass<9> problemFEOrder9(pool.get_replica_comm(), pool.get_interpool_comm());
+      dftfe::dftClass<9> problemFEOrder9(kPointPool.get_intrapool_comm(), kPointPool.get_interpool_comm());
       problemFEOrder9.numEigenValues = dftfe::dftParameters::numberEigenValues;
       problemFEOrder9.set();
       problemFEOrder9.init();
@@ -157,7 +157,7 @@ int main (int argc, char *argv[])
 
     case 10:
     {
-      dftfe::dftClass<10> problemFEOrder10(pool.get_replica_comm(), pool.get_interpool_comm());
+      dftfe::dftClass<10> problemFEOrder10(kPointPool.get_intrapool_comm(), kPointPool.get_interpool_comm());
       problemFEOrder10.numEigenValues = dftfe::dftParameters::numberEigenValues;
       problemFEOrder10.set();
       problemFEOrder10.init();
@@ -167,7 +167,7 @@ int main (int argc, char *argv[])
 
     case 11:
     {
-      dftfe::dftClass<11> problemFEOrder11(pool.get_replica_comm(), pool.get_interpool_comm());
+      dftfe::dftClass<11> problemFEOrder11(kPointPool.get_intrapool_comm(), kPointPool.get_interpool_comm());
       problemFEOrder11.numEigenValues = dftfe::dftParameters::numberEigenValues;
       problemFEOrder11.set();
       problemFEOrder11.init();
@@ -177,7 +177,7 @@ int main (int argc, char *argv[])
 
     case 12:
     {
-      dftfe::dftClass<12> problemFEOrder12(pool.get_replica_comm(), pool.get_interpool_comm());
+      dftfe::dftClass<12> problemFEOrder12(kPointPool.get_intrapool_comm(), kPointPool.get_interpool_comm());
       problemFEOrder12.numEigenValues = dftfe::dftParameters::numberEigenValues;
       problemFEOrder12.set();
       problemFEOrder12.init();

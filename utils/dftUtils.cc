@@ -115,9 +115,6 @@ namespace dftUtils
                    0,
                    &intrapoolcomm);
 
-    // FIXME: why do we need a duplicate?
-    MPI_Comm_dup(intrapoolcomm , &mpi_comm_replica);
-
     // FIXME: output should be optional
     for (unsigned int i=0; i<n_mpi_processes; ++i)
       {
@@ -129,11 +126,6 @@ namespace dftUtils
 	}
         MPI_Barrier(mpi_communicator);
       }
-  }
-
-  MPI_Comm &Pool::get_replica_comm()
-  {
-    return mpi_comm_replica;
   }
 
   MPI_Comm &Pool::get_interpool_comm()
