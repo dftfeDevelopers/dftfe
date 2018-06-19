@@ -101,6 +101,32 @@ namespace dftfe
 		 }
                }
            }
+
+      //Check if any of the diagonal entries of LMat are close to zero. If yes break off PGS and return flag=1
+
+      unsigned int flag=0;
+      if (processGrid->is_process_active())
+         for (unsigned int i = 0; i < overlapMatPar.local_n(); ++i)
+           {
+             const unsigned int glob_i = overlapMatPar.global_column(i);
+             for (unsigned int j = 0; j < overlapMatPar.local_m(); ++j)
+               {
+		 const unsigned int glob_j = overlapMatPar.global_row(j);
+		 if (glob_i==glob_j)
+		    if (std::fabs(LMatPar.local_el(j, i))<1e-14)
+			flag=1;
+		 if (flag==1)
+		     break;
+               }
+	     if (flag==1)
+		 break;
+           }
+
+      flag=dealii::Utilities::MPI::max(flag,X.get_mpi_communicator());
+      if (dftParameters::enableSwitchToGS && flag==1)
+          return flag;
+
+      //invert triangular matrix
       LMatPar.invert();
       computing_timer.exit_section("PGS cholesky, copy, and triangular matrix invert");
 

@@ -290,15 +290,38 @@ namespace dftfe{
     if(dftParameters::orthogType.compare("LW") == 0)
       {
 	computing_timer.enter_section("Lowden Orthogn Opt");
-	linearAlgebraOperations::lowdenOrthogonalization(eigenVectorsFlattened,
+	const unsigned int flag=linearAlgebraOperations::lowdenOrthogonalization
+	                                                (eigenVectorsFlattened,
 							 totalNumberWaveFunctions);
+
+	if (flag==1)
+	{
+	    if(dftParameters::verbosity >= 1)
+		pcout<<"Switching to Gram-Schimdt orthogonalization as Lowden orthogonalization was not successful"<<std::endl;
+
+	    computing_timer.enter_section("Gram-Schmidt Orthogn Opt");
+	    linearAlgebraOperations::gramSchmidtOrthogonalization(eigenVectorsFlattened,
+								  totalNumberWaveFunctions);
+	    computing_timer.exit_section("Gram-Schmidt Orthogn Opt");
+	}
 	computing_timer.exit_section("Lowden Orthogn Opt");
       }
     else if (dftParameters::orthogType.compare("PGS") == 0)
     {
 	computing_timer.enter_section("Pseudo-Gram-Schmidt");
-	linearAlgebraOperations::pseudoGramSchmidtOrthogonalization(eigenVectorsFlattened,
+	const unsigned int flag=linearAlgebraOperations::pseudoGramSchmidtOrthogonalization
+	                                                           (eigenVectorsFlattened,
 								    totalNumberWaveFunctions);
+	if (flag==1)
+	{
+	    if(dftParameters::verbosity >= 1)
+		pcout<<"Switching to Gram-Schimdt orthogonalization as Pseudo-Gram-Schimdt orthogonalization was not successful"<<std::endl;
+
+	    computing_timer.enter_section("Gram-Schmidt Orthogn Opt");
+	    linearAlgebraOperations::gramSchmidtOrthogonalization(eigenVectorsFlattened,
+								  totalNumberWaveFunctions);
+	    computing_timer.exit_section("Gram-Schmidt Orthogn Opt");
+	}
 	computing_timer.exit_section("Pseudo-Gram-Schmidt");
     }
     else if (dftParameters::orthogType.compare("GS") == 0)
