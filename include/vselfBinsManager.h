@@ -43,15 +43,15 @@ namespace dftfe {
 	 * @brief Categorize atoms into bins based on self-potential ball radius
          * around each atom such that no two atoms in each bin has overlapping balls.
 	 *
-         * @param constraintsVector[out] constraintsVector to which the vself bins solve constraint
+         * @param[out] constraintsVector constraintsVector to which the vself bins solve constraint
 	 * matrices will be pushed back
-         * @param dofHandler[in] DofHandler object
-	 * @param constraintMatrix[in] ConstraintMatrix which was used for the total electrostatics solve
-	 * @param atomLocations[in] global atom locations and charge values data
-	 * @param imagePositions[in] image atoms positions data
-	 * @param imageIds[in] image atoms Ids data
-	 * @param imageCharges[in] image atoms charge values data
-	 * @param radiusAtomBall[in] self-potential ball radius
+         * @param[in] dofHandler DofHandler object
+	 * @param[in] constraintMatrix ConstraintMatrix which was used for the total electrostatics solve
+	 * @param[in] atomLocations global atom locations and charge values data
+	 * @param[in] imagePositions image atoms positions data
+	 * @param[in] imageIds image atoms Ids data
+	 * @param[in] imageCharges image atoms charge values data
+	 * @param[in] radiusAtomBall self-potential ball radius
 	 */
 	 void createAtomBins(std::vector<const dealii::ConstraintMatrix * > & constraintsVector,
 		             const dealii::DoFHandler<3> & dofHandler,
@@ -66,11 +66,11 @@ namespace dftfe {
 	  /**
 	   * @brief Solve nuclear electrostatic self-potential of atoms in each bin one-by-one
 	   *
-           * @param matrix_free_data[in] MatrixFree object
-           * @param offset[in] MatrixFree object starting offset for vself bins solve
-	   * @param phiExt[out] sum of the self-potential fields of all atoms and image atoms
-	   * @param phiExtConstraintMatrix[in] constraintMatrix corresponding to phiExt
-	   * @param localVselfs[out] peak self-potential values of atoms in the local processor
+           * @param[in] matrix_free_data MatrixFree object
+           * @param[in] offset MatrixFree object starting offset for vself bins solve
+	   * @param[out] phiExt sum of the self-potential fields of all atoms and image atoms
+	   * @param[in] phiExtConstraintMatrix constraintMatrix corresponding to phiExt
+	   * @param[out] localVselfs peak self-potential values of atoms in the local processor
 	   */
 	  void vselfBinsManager::solveVselfInBins(const dealii::MatrixFree<3,double> & matrix_free_data,
 		                                  const unsigned int offset,

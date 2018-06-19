@@ -29,33 +29,35 @@ namespace dftfe{
       {
 	unsigned int chebyshevOrder;
 	if(upperBoundUnwantedSpectrum <= 500)
-	  chebyshevOrder = 40;
+	  chebyshevOrder = 20;
 	else if(upperBoundUnwantedSpectrum > 500  && upperBoundUnwantedSpectrum <= 1000)
-	  chebyshevOrder = 50;
+	  chebyshevOrder = 30;
 	else if(upperBoundUnwantedSpectrum > 1000 && upperBoundUnwantedSpectrum <= 2000)
-	  chebyshevOrder = 80;
-	else if(upperBoundUnwantedSpectrum > 2000 && upperBoundUnwantedSpectrum <= 5000)
-	  chebyshevOrder = 150;
+	  chebyshevOrder = 40;
+	else if(upperBoundUnwantedSpectrum > 2000 && upperBoundUnwantedSpectrum <= 3000)
+	  chebyshevOrder = 50;
+	else if(upperBoundUnwantedSpectrum > 3000 && upperBoundUnwantedSpectrum <= 5000)
+	  chebyshevOrder = 65;
 	else if(upperBoundUnwantedSpectrum > 5000 && upperBoundUnwantedSpectrum <= 9000)
-	  chebyshevOrder = 200;
+	  chebyshevOrder = 80;
 	else if(upperBoundUnwantedSpectrum > 9000 && upperBoundUnwantedSpectrum <= 14000)
-	  chebyshevOrder = 250;
+	  chebyshevOrder = 125;
 	else if(upperBoundUnwantedSpectrum > 14000 && upperBoundUnwantedSpectrum <= 20000)
-	  chebyshevOrder = 300;
+	  chebyshevOrder = 150;
 	else if(upperBoundUnwantedSpectrum > 20000 && upperBoundUnwantedSpectrum <= 30000)
-	  chebyshevOrder = 350;
+	  chebyshevOrder = 200;
 	else if(upperBoundUnwantedSpectrum > 30000 && upperBoundUnwantedSpectrum <= 50000)
-	  chebyshevOrder = 450;
+	  chebyshevOrder = 300;
 	else if(upperBoundUnwantedSpectrum > 50000 && upperBoundUnwantedSpectrum <= 80000)
-	  chebyshevOrder = 550;
+	  chebyshevOrder = 450;
 	else if(upperBoundUnwantedSpectrum > 80000 && upperBoundUnwantedSpectrum <= 1e5)
-	  chebyshevOrder = 800;
+	  chebyshevOrder = 550;
 	else if(upperBoundUnwantedSpectrum > 1e5 && upperBoundUnwantedSpectrum <= 2e5)
-	  chebyshevOrder = 1000;
+	  chebyshevOrder = 700;
 	else if(upperBoundUnwantedSpectrum > 2e5 && upperBoundUnwantedSpectrum <= 5e5)
-	  chebyshevOrder = 1250;
+	  chebyshevOrder = 1000;
 	else if(upperBoundUnwantedSpectrum > 5e5)
-	  chebyshevOrder = 1500;
+	  chebyshevOrder = 1250;
 
 	return chebyshevOrder;
       }

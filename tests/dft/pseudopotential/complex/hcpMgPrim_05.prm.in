@@ -69,13 +69,14 @@ subsection SCF parameters
   subsection Eigen-solver/Chebyshev solver related parameters
      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 20
      set LOWER BOUND WANTED SPECTRUM = -10.0
-     set CHEBYSHEV POLYNOMIAL DEGREE = 0
+     set CHEBYSHEV POLYNOMIAL DEGREE = 40
      set CHEBYSHEV FILTER TOLERANCE=5e-3
+     set ORTHOGONALIZATION TYPE=GS
   end
 end
 
 
-subsection Poisson problem paramters
+subsection Poisson problem parameters
   set MAXIMUM ITERATIONS = 10000
   set TOLERANCE          = 1e-12
 end

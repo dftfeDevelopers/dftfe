@@ -28,7 +28,7 @@ namespace dftfe
   {
 #if(defined DEAL_II_WITH_SCALAPACK && !USE_COMPLEX)
     template<typename T>
-    void pseudoGramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<T> & X,
+    unsigned int pseudoGramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<T> & X,
 				            const unsigned int numberVectors)
     {
       if (dftParameters::orthoRROMPThreads!=0)
@@ -115,13 +115,16 @@ namespace dftfe
       computing_timer.exit_section("Subspace rotation PGS");
       if (dftParameters::orthoRROMPThreads!=0)
 	  omp_set_num_threads(1);
+
+      return 0;
     }
 #else
     template<typename T>
-    void pseudoGramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<T> & X,
+    unsigned int pseudoGramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<T> & X,
 				            const unsigned int numberVectors)
     {
       AssertThrow(false,dftUtils::ExcNotImplementedYet());
+      return 0;
     }
 #endif
 
