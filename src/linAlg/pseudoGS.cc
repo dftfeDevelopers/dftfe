@@ -113,19 +113,18 @@ namespace dftfe
                {
 		 const unsigned int glob_j = overlapMatPar.global_row(j);
 		 if (glob_i==glob_j)
-		    if (std::fabs(LMatPar.local_el(j, i))<1e-2)
-		    {
+		    if (std::fabs(LMatPar.local_el(j, i))<1e-14)
 			flag=1;
-			break;
-		    }
 		 if (flag==1)
 		     break;
                }
 	     if (flag==1)
 		 break;
            }
-      return dealii::Utilities::MPI::max(flag,X.get_mpi_communicator());
 
+      flag=dealii::Utilities::MPI::max(flag,X.get_mpi_communicator());
+      if (dftParameters::enableSwitchToGS && flag==1)
+          return flag;
 
       //invert triangular matrix
       LMatPar.invert();

@@ -854,13 +854,15 @@ namespace dftfe{
        for(unsigned i = 0; i < numberEigenValues; ++i)
 	{
 	  invFourthRootEigenValuesMatrix[i] = 1.0/pow(eigenValuesOverlap[i],1.0/4);
-	  if(std::isnan(invFourthRootEigenValuesMatrix[i]) || eigenValuesOverlap[i]<1e-4)
+	  if(std::isnan(invFourthRootEigenValuesMatrix[i]) || eigenValuesOverlap[i]<1e-14)
 	    {
 	      nanFlag = 1;
 	      break;
 	    }
 	}
-       return dealii::Utilities::MPI::max(nanFlag,X.get_mpi_communicator());
+       nanFlag=dealii::Utilities::MPI::max(nanFlag,X.get_mpi_communicator());
+       if (dftParameters::enableSwitchToGS && nanFlag==1)
+          return nanFlag;
 
        //
        //Q*D^{-1/4} and note that "Q" is stored in overlapMatrix after calling "zheevd"
@@ -1002,16 +1004,20 @@ namespace dftfe{
       for(unsigned i = 0; i < numberEigenValues; ++i)
 	{
 	  invFourthRootEigenValuesMatrix[i] = 1.0/pow(eigenValuesOverlap[i],1.0/4);
-	  if(std::isnan(invFourthRootEigenValuesMatrix[i]) || eigenValuesOverlap[i]<1e-4)
+	  if(std::isnan(invFourthRootEigenValuesMatrix[i]) || eigenValuesOverlap[i]<1e-14)
 	    {
 	      nanFlag = 1;
-	      //std::cout<<"Nan obtained in proc: "<<dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)<<" and switching to more robust dsyevr for eigen decomposition "<<std::endl;
 	      break;
 	    }
 	}
-      return dealii::Utilities::MPI::max(nanFlag,X.get_mpi_communicator());
+
+      nanFlag=dealii::Utilities::MPI::max(nanFlag,X.get_mpi_communicator());
+      if (dftParameters::enableSwitchToGS && nanFlag==1)
+          return nanFlag;
+
       if(nanFlag == 1)
 	{
+	  std::cout<<"Nan obtained: switching to more robust dsyevr for eigen decomposition "<<std::endl;
 	  std::vector<double> overlapMatrixEigenVectors(numberVectors*numberVectors,0.0);
 	  eigenValuesOverlap.clear();
 	  eigenValuesOverlap.resize(numberVectors);

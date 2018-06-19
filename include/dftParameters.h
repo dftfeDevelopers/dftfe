@@ -71,6 +71,7 @@ namespace dftfe {
       extern bool cacheShapeGradData;
       extern unsigned int orthoRRWaveFuncBlockSize;
       extern unsigned int subspaceRotDofsBlockSize;
+      extern bool enableSwitchToGS;
 
       /**
        * Declare parameters.
