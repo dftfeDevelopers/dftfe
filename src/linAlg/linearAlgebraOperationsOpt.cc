@@ -762,7 +762,7 @@ namespace dftfe{
 #endif
 
 #ifdef USE_COMPLEX
-    void lowdenOrthogonalization(dealii::parallel::distributed::Vector<std::complex<double> > & X,
+    unsigned int lowdenOrthogonalization(dealii::parallel::distributed::Vector<std::complex<double> > & X,
 				 const unsigned int numberVectors)
     {
       if (dftParameters::orthoRROMPThreads!=0)
@@ -853,7 +853,7 @@ namespace dftfe{
        for(unsigned i = 0; i < numberEigenValues; ++i)
        {
 	 invFourthRootEigenValuesMatrix[i] = 1.0/pow(eigenValuesOverlap[i],1.0/4);
-	 AssertThrow(!std::isnan(invFourthRootEigenValuesMatrix[i]),dealii::ExcMessage("Eigen values of overlap matrix during Lowden Orthonormalization are very small and close to zero or negative"));
+	 AssertThrow(!std::isnan(invFourthRootEigenValuesMatrix[i]),dealii::ExcMessage("Eigen values of overlap matrix during Lowden Orthonormalization are close to zero."));
        }
 
        //
@@ -924,9 +924,11 @@ namespace dftfe{
 
        if (dftParameters::orthoRROMPThreads!=0)
 	  omp_set_num_threads(1);
+
+       return 0;
     }
 #else
-    void lowdenOrthogonalization(dealii::parallel::distributed::Vector<double> & X,
+    unsigned int lowdenOrthogonalization(dealii::parallel::distributed::Vector<double> & X,
 				 const unsigned int numberVectors)
     {
       if (dftParameters::orthoRROMPThreads!=0)
@@ -1026,7 +1028,7 @@ namespace dftfe{
 	  for(unsigned i = 0; i < numberEigenValues; ++i)
 	    {
 	      invFourthRootEigenValuesMatrix[i] = 1.0/pow(eigenValuesOverlap[i],(1.0/4.0));
-	      AssertThrow(!std::isnan(invFourthRootEigenValuesMatrix[i]),dealii::ExcMessage("Eigen values of overlap matrix during Lowden Orthonormalization are very small and close to zero or negative"));
+	      AssertThrow(!std::isnan(invFourthRootEigenValuesMatrix[i]),dealii::ExcMessage("Eigen values of overlap matrix during Lowden Orthonormalization are close to zero."));
 	    }
 	}
 
@@ -1101,6 +1103,8 @@ namespace dftfe{
 
        if (dftParameters::orthoRROMPThreads!=0)
 	  omp_set_num_threads(1);
+
+       return 0;
     }
 #endif
 
@@ -1118,7 +1122,7 @@ namespace dftfe{
     template void gramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<dataTypes::number> &,
 					       const unsigned int);
 
-    template void pseudoGramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<dataTypes::number> &,
+    template unsigned int pseudoGramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<dataTypes::number> &,
 					             const unsigned int);
 
     template void rayleighRitz(operatorDFTClass  & operatorMatrix,

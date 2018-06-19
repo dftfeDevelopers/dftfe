@@ -197,12 +197,6 @@ void dftClass<FEOrder>::determineOrbitalFilling()
 	errorReadFile += 1;
     }
 
-  if(errorReadFile == stencil.size())
-    {
-      std::cerr<< "Error: Require single-atom wavefunctions as initial guess for starting the SCF."<< std::endl;
-      std::cerr<< "Error: Could not find single-atom wavefunctions for any atom: "<< std::endl;
-      exit(-1);
-    }
 
   if(waveFunctionsVector.size() > numEigenValues)
     {
@@ -215,6 +209,15 @@ void dftClass<FEOrder>::determineOrbitalFilling()
 
   if (dftParameters::verbosity>=1)
     pcout<<"number of wavefunctions computed using single atom data to be used as initial guess for starting the SCF: " <<waveFunctionCount<<std::endl;
+
+  if(errorReadFile == stencil.size())
+    {
+      //std::cerr<< "Error: Require single-atom wavefunctions as initial guess for starting the SCF."<< std::endl;
+      //std::cerr<< "Error: Could not find single-atom wavefunctions for any atom: "<< std::endl;
+      if (dftParameters::verbosity>=1)
+        pcout<< "CAUTION: Could not find single-atom wavefunctions for any atom- the starting guess for all wavefunctions will be random."<< std::endl;
+      //exit(-1);
+    }
   pcout<<"============================================================================================================================="<<std::endl;
 }
 
