@@ -510,6 +510,35 @@ namespace dftParameters
     }
     prm.leave_subsection ();
 
+  //
+  if(dftParameters::verbosity >=1)
+   {
+     int rank ;
+     MPI_Comm_rank (MPI_COMM_WORLD, &rank);
+     if (rank==0)
+     {
+        std::cout << "==========================================================================================================" << std::endl ;
+        std::cout << "==========================================================================================================" << std::endl ;
+        std::cout << "					 Welcome to the Open Source program DFT-FE			        " << std::endl ;
+        std::cout << "This is a C++ code for materials modeling from first principles using Kohn-Sham density functional theory " << std::endl ;
+        std::cout << "				   It is based on adaptive finite-element based methodologies.		        " << std::endl ;
+        std::cout << "For details and citing please refer: P.Motamarri et. al., Comp. Phys. Comm., Vol xx, Issue xx, pp xx, 2018" << std::endl ;
+	std::cout << "==========================================================================================================" << std::endl ;
+	std::cout << " DFT-FE Authors (alphabetically) :									" << std::endl ;
+	std::cout << "														" << std::endl ;
+	std::cout << " Sambit Das       	- University of Michigan							" << std::endl ;
+	std::cout << " Denis Davydov    	- University of Erlangen-Nuremberg						" << std::endl ;
+	std::cout << " Vikram Gavini (Mentor)	- University of Michigan							" << std::endl ;
+	std::cout << " Krishnendu Ghosh 	- University of Michigan							" << std::endl ;
+	std::cout << " Phani Motamarri		- University of Michigan							" << std::endl ;
+	std::cout << " Shiva Rudraraju		- University of Wisconsin							" << std::endl ;
+        std::cout << "==========================================================================================================" << std::endl ;
+        std::cout << " 			Copyright (c) 2018 The Regents of the University of Michigan and DFT-FE authors         " << std::endl ;
+        std::cout << " 				       DFT-FE is published under [LGPL v2.1 or newer] 				" << std::endl ;
+        std::cout << "==========================================================================================================" << std::endl ;
+        std::cout << "==========================================================================================================" << std::endl ;
+     }
+   }
     check_print_parameters(prm);
   }
 
