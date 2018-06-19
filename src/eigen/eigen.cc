@@ -1027,11 +1027,21 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 				      X.get_mpi_communicator(),
 				      projHamBlock);
 
-	  for (unsigned int i = 0; i <numberWaveFunctions; ++i)
+	  if (processGrid->is_process_active())
 	      for (unsigned int j = 0; j <B; ++j)
-		 if (globalToLocalRowIdMap.find(i)!=globalToLocalRowIdMap.end())
-		     if(globalToLocalColumnIdMap.find(j+jvec)!=globalToLocalColumnIdMap.end())
-			 projHamPar.local_el(globalToLocalRowIdMap[i], globalToLocalColumnIdMap[j+jvec])=projHamBlock[j*numberWaveFunctions+i];
+		 if(globalToLocalColumnIdMap.find(j+jvec)!=globalToLocalColumnIdMap.end())
+		 {
+		   const unsigned int localColumnId=globalToLocalColumnIdMap[j+jvec];
+	           for (unsigned int i = 0; i <numberWaveFunctions; ++i)
+		   {
+		     std::map<unsigned int, unsigned int>::iterator it=
+					  globalToLocalRowIdMap.find(i);
+		     if (it!=globalToLocalRowIdMap.end())
+			     projHamPar.local_el(it->second,
+				                 localColumnId)
+				                 =projHamBlock[j*numberWaveFunctions+i];
+		   }
+		 }
     }
 #endif
   }
