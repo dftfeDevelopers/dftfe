@@ -55,7 +55,7 @@ int main (int argc, char *argv[])
   {
      std::cout << "	" << std::endl ;
      std::cout << "	" << std::endl ;
-     std::cout << "					Welcome to the open-source program DFT-FE			" << std::endl;
+     std::cout << "					Welcome to the Open Source program DFT-FE			" << std::endl;
      std::cout << "This is a C++ code for material modeling from first principles using Kohn-Sham density functional theory" << std::endl;
      std::cout << "				It is based on adaptive finite-element based methodologies.		" << std::endl ;
      std::cout << "For details and citing please refer: P.Motamarri et. al., Comp. Phys. Comm., Vol xx, Issue xx, pp xx, 2018" << std::endl ;
