@@ -523,17 +523,16 @@ namespace dftParameters
 
   void check_print_parameters(const dealii::ParameterHandler &prm)
   {
-    if (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0 &&  dftParameters::verbosity>=1)
-    {
-      prm.print_parameters (std::cout, ParameterHandler::Text);
-    }
-
     const bool printParametersToFile=false;
     if (printParametersToFile && Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)
     {
-	std::ofstream output ("parameterFile.tex");
-	prm.print_parameters (output, ParameterHandler::OutputStyle::LaTeX);
+	prm.print_parameters (std::cout, ParameterHandler::OutputStyle::LaTeX);
 	exit(0);
+    }
+
+    if (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0 &&  dftParameters::verbosity>=1)
+    {
+      prm.print_parameters (std::cout, ParameterHandler::Text);
     }
 #ifdef USE_COMPLEX
     if (dftParameters::electrostaticsPRefinement)
