@@ -80,11 +80,6 @@ namespace dftfe {
 	 */
 	MPI_Comm &get_intrapool_comm();
 
-	/**
-	 * FIXME: document
-	 */
-	MPI_Comm &get_replica_comm();
-
       private:
 	/// FIXME: document
 	MPI_Comm interpoolcomm;
@@ -92,8 +87,6 @@ namespace dftfe {
 	/// FIXME: document
 	MPI_Comm intrapoolcomm;
 
-	/// FIXME: document
-	MPI_Comm mpi_comm_replica;
       };
 
       /// Exception handler for not implemented functionality
