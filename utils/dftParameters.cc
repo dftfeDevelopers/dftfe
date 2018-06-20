@@ -319,11 +319,11 @@ namespace dftParameters
 
 	    prm.declare_entry("LOWER BOUND WANTED SPECTRUM", "-10.0",
 			      Patterns::Double(),
-			      "[Developer] The lower bound of the wanted eigen spectrum");
+			      "[Developer] The lower bound of the wanted eigen spectrum.");
 
 	    prm.declare_entry("CHEBYSHEV POLYNOMIAL DEGREE", "0",
 			      Patterns::Integer(0,2000),
-			      "[Developer] The degree of the Chebyshev polynomial to be employed for filtering out the unwanted spectrum (Default value is used when the input parameter value is 0.");
+			      "[Developer] The degree of the Chebyshev polynomial to be employed for filtering out the unwanted spectrum. A heuristics value depending upon the upper bound of the eigen spectrum is used when the parameter value is 0, which is the default option.");
 
 	    prm.declare_entry("CHEBYSHEV FILTER PASSES", "1",
 			      Patterns::Integer(1,20),
