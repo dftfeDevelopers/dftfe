@@ -321,12 +321,12 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
     {
       char pseudoAtomDataFile[256];
       //sprintf(pseudoAtomDataFile, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/PseudoAtomDat", DFT_PATH, *it);
-      sprintf(pseudoAtomDataFile, "/tmp/z%u/PseudoAtomDat",*it);
+      sprintf(pseudoAtomDataFile, "temp/z%u/PseudoAtomDat",*it);
 
 
       unsigned int atomicNumber = *it;
 
-      //pcout<<"Reading data from file: "<<pseudoAtomDataFile<<std::endl;
+      pcout<<"Reading data from file: "<<pseudoAtomDataFile<<std::endl;
 
       //
       // open the testFunctionFileName
@@ -409,18 +409,20 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
 		    radFunctionIds.insert(Id);
 
                   if(count == 0)
-		    splineFunctionIds.insert(Id);
+		    {
+		      splineFunctionIds.insert(Id);
+		      projector[(*it)][i] = Id ;
+		    }
 
 		  radAndAngularFunctionId[count] = Id;
 
 		}
-	      if (count==3) {
-		 Id = atoi(dummyString.c_str());
-		 projector[(*it)][i] = Id ;
-		 }
-	      if (count>3)
+	      //if (count==3) {
+	      // Id = atoi(dummyString.c_str());
+	      // projector[(*it)][i] = Id ;
+	      // }
+	      if(count>3)
 		{
-
 		  std::cerr<<"Invalid argument in the SingleAtomData file"<<std::endl;
 		  exit(-1);
 		}
@@ -495,7 +497,7 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
 
 	  char projRadialFunctionFileName[512];
 	  //sprintf(projRadialFunctionFileName, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/%s", DFT_PATH,*it,tempProjRadialFunctionFileName.c_str());
-	  sprintf(projRadialFunctionFileName, "/tmp/z%u/%s",*it,tempProjRadialFunctionFileName.c_str());
+	  sprintf(projRadialFunctionFileName, "temp/z%u/%s",*it,tempProjRadialFunctionFileName.c_str());
 
 	  //
 	  // 2D vector to store the radial coordinate and its corresponding
@@ -559,7 +561,7 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
 	  //
 	  readPseudoDataFileNames >> tempDenominatorDataFileName ;
 	  //sprintf(denominatorDataFileName, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/%s", DFT_PATH,*it, tempDenominatorDataFileName.c_str());
-	  sprintf(denominatorDataFileName, "/tmp/z%u/%s", *it, tempDenominatorDataFileName.c_str());
+	  sprintf(denominatorDataFileName, "temp/z%u/%s", *it, tempDenominatorDataFileName.c_str());
 	  dftUtils::readFile(projId,denominator,denominatorDataFileName);
 	  denominatorData[(*it)] = denominator ;
 
@@ -690,7 +692,7 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
 	{
 	  d_nonLocalPseudoPotentialConstants[iAtom][iPseudoWave] = denominatorData[atomLocations[iAtom][0]][projector[atomLocations[iAtom][0]][iPseudoWave]][projector[atomLocations[iAtom][0]][iPseudoWave]];
 	  //d_nonLocalPseudoPotentialConstants[iAtom][iPseudoWave] = 1.0/d_nonLocalPseudoPotentialConstants[iAtom][iPseudoWave];
-	  if (dftParameters::verbosity>=3)
+	  if (dftParameters::verbosity>=2)
 	     pcout<<"The value of 1/nlpConst corresponding to atom and lCount "<<iAtom<<' '<<
 	      iPseudoWave<<" is "<<d_nonLocalPseudoPotentialConstants[iAtom][iPseudoWave]<<std::endl;
 

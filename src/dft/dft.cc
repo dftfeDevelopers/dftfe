@@ -271,6 +271,10 @@ namespace dftfe {
 	eigenValues[kPoint].resize((dftParameters::spinPolarized+1)*numEigenValues);
       }
 
+    //convert pseudopotential files in upf format to dftfe format
+    pcout<<std::endl<<"Reading Pseudo-potential data for each atom from the list given in : " <<dftParameters::pseudoPotentialFile<<std::endl;
+    pseudoUtils::convert(dftParameters::pseudoPotentialFile);
+    
   }
 
   //dft pseudopotential init
@@ -280,28 +284,24 @@ namespace dftfe {
     if(dftParameters::isPseudopotential)
       {
 	//std::string fileName = "sample_text";
-	pseudoUtils::convert(dftParameters::pseudoPotentialFile);
+	
 
 	TimerOutput::Scope scope (computing_timer, "psp init");
-	pcout<<std::endl<<"Pseuodopotential initalization...."<<std::endl;
+	pcout<<std::endl<<"Pseudopotential initalization...."<<std::endl;
 	initLocalPseudoPotential();
-	//
-	if(dftParameters::pseudoProjector == 2)
-	  initNonLocalPseudoPotential_OV();
-	else
-	  initNonLocalPseudoPotential();
+
 	//
 	//
-	if(dftParameters::pseudoProjector == 2)
-	  {
+	//if(dftParameters::pseudoProjector == 2)
+	//{
 	    computeSparseStructureNonLocalProjectors_OV();
 	    computeElementalOVProjectorKets();
-	  }
-	else
-	  {
-	    computeSparseStructureNonLocalProjectors();
-	    computeElementalProjectorKets();
-	  }
+	    //}
+	    //else
+	    //{
+	    //computeSparseStructureNonLocalProjectors();
+	    //computeElementalProjectorKets();
+	    //}
 
 	forcePtr->initPseudoData();
       }

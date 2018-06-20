@@ -472,7 +472,7 @@ namespace dftParameters
     {
 	dftParameters::isPseudopotential             = prm.get_bool("PSEUDOPOTENTIAL CALCULATION");
 	dftParameters::pseudoProjector               = prm.get_integer("PSEUDOPOTENTIAL TYPE");
-	dftParameters::pseudoPotentialFile           = prm.get("PSEUDOPOTENTIAL FILE");
+	dftParameters::pseudoPotentialFile           = prm.get("PSEUDOPOTENTIAL FILE NAMES LIST");
 	dftParameters::xc_id                         = prm.get_integer("EXCHANGE CORRELATION TYPE");
 	dftParameters::spinPolarized                 = prm.get_integer("SPIN POLARIZATION");
 	dftParameters::start_magnetization           = prm.get_double("START MAGNETIZATION");

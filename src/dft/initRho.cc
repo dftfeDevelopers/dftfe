@@ -57,7 +57,8 @@ void dftClass<FEOrder>::initRho()
 	  if(dftParameters::pseudoProjector==1)
 	     sprintf(densityFile, "%s/data/electronicStructure/pseudoPotential/z%u/singleAtomData/density.inp", DFT_PATH, *it);
 	  else
-	     sprintf(densityFile, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/singleAtomData/density.inp", DFT_PATH, *it);
+	     sprintf(densityFile,"temp/z%u/density.inp",*it);
+	    //sprintf(densityFile, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/singleAtomData/density.inp", DFT_PATH, *it);
 
 	}
       else
