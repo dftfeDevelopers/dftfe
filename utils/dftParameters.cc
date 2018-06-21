@@ -62,7 +62,7 @@ namespace dftParameters
   unsigned int subspaceRotDofsBlockSize=800;
   bool enableSwitchToGS=true;
   unsigned int nbandGrps=1;
-
+  bool computeEnergyEverySCF=true;
 
   void declare_parameters(ParameterHandler &prm)
   {
@@ -320,6 +320,10 @@ namespace dftParameters
 			  Patterns::Selection("ATOMIC|RANDOM"),
 			  "[Standard] Sets the type of the starting Kohn-Sham wavefunctions guess: Atomic(Superposition of single atom atomic orbitals. Wavefunctions for which atomic orbitals are not available, random wavefunctions are taken. Currently, atomic orbitals data is not available for all atoms.), Random(The starting guess for all wavefunctions are taken to be random). Default: RANDOM.");
 
+	prm.declare_entry("COMPUTE ENERGY EACH ITER", "true",
+			  Patterns::Bool(),
+			  "[Standard] Boolean parameter specifying whether to compute the total energy at the end of every scf. Setting it to false can lead to some time savings.");
+
 	prm.enter_subsection ("Eigen-solver/Chebyshev solver related parameters");
 	{
 
@@ -501,7 +505,8 @@ namespace dftParameters
 	dftParameters::selfConsistentSolverTolerance = prm.get_double("TOLERANCE");
 	dftParameters::mixingHistory                 = prm.get_integer("ANDERSON SCHEME MIXING HISTORY");
 	dftParameters::mixingParameter               = prm.get_double("ANDERSON SCHEME MIXING PARAMETER");
-        dftParameters::startingWFCType        = prm.get("STARTING WFC");
+        dftParameters::startingWFCType               = prm.get("STARTING WFC");
+	dftParameters::computeEnergyEverySCF         = prm.get_bool("COMPUTE ENERGY EACH ITER");
 
 	prm.enter_subsection ("Eigen-solver/Chebyshev solver related parameters");
 	{

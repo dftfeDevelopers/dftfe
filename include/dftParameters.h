@@ -73,6 +73,7 @@ namespace dftfe {
       extern unsigned int subspaceRotDofsBlockSize;
       extern bool enableSwitchToGS;
       extern unsigned int nbandGrps;
+      extern bool computeEnergyEverySCF;
 
       /**
        * Declare parameters.

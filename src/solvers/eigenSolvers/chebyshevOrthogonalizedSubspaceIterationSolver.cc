@@ -280,7 +280,6 @@ namespace dftfe{
 	    if (numberBandGroups>1)
 	    {
 	        //set to zero wavefunctions which wont go through chebyshev filtering inside a given band group
-	        computing_timer.enter_section("Band parallelization set to zero");
 		const unsigned int leftLowIndex=blockLowIndices[ibgrp*numChebyshevFilterBlocksInsideBandGroup];
 		const unsigned int rightHighIndexPlusOne
 			  =ibgrp==(numberBandGroups-1)?
@@ -302,7 +301,6 @@ namespace dftfe{
                 if (dftParameters::verbosity>=2)
 		   std::cout<<"ibgrp: "<<ibgrp<< ", leftLowIndex: "<<leftLowIndex<<", rightHighIndexPlusOne: "<<rightHighIndexPlusOne<<std::endl;
 #endif
-		computing_timer.exit_section("Band parallelization set to zero");
 	    }
 	}//band group
 
