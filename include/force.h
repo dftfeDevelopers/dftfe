@@ -248,6 +248,11 @@ namespace dftfe {
 						     std::vector<std::vector<std::complex<double> > > & projectorKetTimesPsiTimesVComplex,
 						     const unsigned int kPointIndex);
 
+      void computeNonLocalProjectorKetTimesPsiTimesVFlattened
+                           (const dealii::parallel::distributed::Vector<dataTypes::number> &src,
+			    const unsigned int numberWaveFunctions,
+			    std::vector<std::vector<dataTypes::number> > & projectorKetTimesPsiTimesV,
+			    const unsigned int kPointIndex);
 
       /// Parallel distributed vector field which stores the configurational force for each fem node corresponding
       /// to linear shape function generator (see equations 52-53 in (https://arxiv.org/abs/1712.05535)).

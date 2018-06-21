@@ -26,13 +26,13 @@
 
 \index[prmindex]{VERBOSITY}
 \index[prmindexfull]{VERBOSITY}
-{\it Value:} 1
+{\it Value:} 2
 
 
 {\it Default:} 1
 
 
-{\it Description:} [Standard] Parameter to control verbosity of terminal output. 0 for low, 1 for medium, and 2 for high.
+{\it Description:} [Standard] Parameter to control verbosity of terminal output. Ranging from 0 for low to 4 for code development purposes. Standard users wouldn't need verbosity beyond 2.
 
 
 {\it Possible values:} An integer $n$ such that $0\leq n \leq 4$
@@ -68,7 +68,7 @@
 
 \index[prmindex]{PERIODIC1}
 \index[prmindexfull]{Boundary conditions!PERIODIC1}
-{\it Value:} false
+{\it Value:} true
 
 
 {\it Default:} false
@@ -85,7 +85,7 @@
 
 \index[prmindex]{PERIODIC2}
 \index[prmindexfull]{Boundary conditions!PERIODIC2}
-{\it Value:} false
+{\it Value:} true
 
 
 {\it Default:} false
@@ -102,7 +102,7 @@
 
 \index[prmindex]{PERIODIC3}
 \index[prmindexfull]{Boundary conditions!PERIODIC3}
-{\it Value:} false
+{\it Value:} true
 
 
 {\it Default:} false
@@ -389,7 +389,7 @@
 {\it Default:} true
 
 
-{\it Description:} [Standard] Boolean Parameter specifying whether pseudopotential DFT calculation needs to be performed.
+{\it Description:} [Standard] Boolean Parameter specifying whether pseudopotential DFT calculation needs to be performed. For all-electron DFT calculation set to false.
 
 
 {\it Possible values:} A boolean value (true or false)
@@ -406,7 +406,7 @@
 {\it Default:} 1
 
 
-{\it Description:} [Standard] Type of nonlocal projector to be used: 1 for KB, 2 for ONCV, default is KB.
+{\it Description:} [Standard] Type of nonlocal projector to be used: 1 for KB [PRL. 48, 1425 (1982); PRL. 43, 1993 (1991)], 2 for ONCV [PRB. 88, 085117 (2013)]. Default option is 1.
 
 
 {\it Possible values:} An integer $n$ such that $1\leq n \leq 2$
@@ -423,7 +423,7 @@
 {\it Default:} 0
 
 
-{\it Description:} [Standard] Spin polarization: 0 for no spin polarization and 1 for spin polarization.
+{\it Description:} [Standard] Spin polarization: 0 for no spin polarization and 1 for spin polarization. Default option is 0.
 
 
 {\it Possible values:} An integer $n$ such that $0\leq n \leq 1$
@@ -434,7 +434,7 @@
 
 \index[prmindex]{START MAGNETIZATION}
 \index[prmindexfull]{DFT functional related parameters!START MAGNETIZATION}
-{\it Value:} 0.0
+{\it Value:} 0
 
 
 {\it Default:} 0.0
@@ -463,7 +463,7 @@
 {\it Default:} false
 
 
-{\it Description:} [Developer] Boolean parameter which controls precomputation of FEM shape function gradients for each cell. This helps optimize discrete Hamiltonian matrix computation but at the cost of carrying some extra memory. Default value is false.
+{\it Description:} [Developer] Boolean parameter which controls precomputation of FEM shape function gradients for each cell. This helps optimize discrete Hamiltonian matrix computation but at the cost of carrying some extra memory. Default option is false.
 
 
 {\it Possible values:} A boolean value (true or false)
@@ -480,7 +480,7 @@
 {\it Default:} 
 
 
-{\it Description:} [Developer] External mesh file path. If nothing is given auto mesh generation is performed
+{\it Description:} [Developer] External mesh file path. If nothing is given auto mesh generation is performed. The option is only for testing purposes.
 
 
 {\it Possible values:} Any string
@@ -497,7 +497,7 @@
 {\it Default:} 4
 
 
-{\it Description:} [Standard] The degree of the finite-element interpolating polynomial
+{\it Description:} [Standard] The degree of the finite-element interpolating polynomial. Default value is 4. The default value of 4 is usually a good choice for most pseudopotential as well as all-electron problems.
 
 
 {\it Possible values:} An integer $n$ such that $1\leq n \leq 12$
@@ -519,10 +519,10 @@
 {\it Value:} 3.0
 
 
-{\it Default:} 2.0
+{\it Default:} 2.25
 
 
-{\it Description:} [Developer] Radius of ball enclosing atom.
+{\it Description:} [Standarad] Radius of ball enclosing every atom inside which the mesh size is set close to MESH SIZE ATOM BALL. A value between 2.0 to 3.0 is usually a good choice.
 
 
 {\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 10$
@@ -536,10 +536,10 @@
 {\it Value:} 10.0
 
 
-{\it Default:} 2.0
+{\it Default:} 4.0
 
 
-{\it Description:} [Developer] Mesh size of the base mesh on which refinement is performed.
+{\it Description:} [Standard] Mesh size of the base mesh on which refinement is performed. Default value is good enough for most cases.
 
 
 {\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 20$
@@ -573,7 +573,7 @@
 {\it Default:} 0.5
 
 
-{\it Description:} [Developer] Mesh size in a ball around atom.
+{\it Description:} [Standard] Mesh size in a ball of radius ATOM BALL RADIUS around every atom. For pseudopotential calculations, a value between 0.5 to 1.0 is usually a good choice. For all-electron calculations, a value between 0.1 to 0.3 would be a good starting choice.
 
 
 {\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 10$
@@ -590,7 +590,7 @@
 {\it Default:} 0.5
 
 
-{\it Description:} [Developer] Mesh size near atom. Useful for all-electron case.
+{\it Description:} [Standard] Mesh size of the finite elements in the immediate vicinity of the atoms. For pseudopotential calculations, this value is usually taken to be the same as the MESH SIZE ATOM BALL. For all-electron case, a value smaller than MESH SIZE ATOM BALL, typically between 0.05 to 0.1 would be a good starting choice.
 
 
 {\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 10$
@@ -607,13 +607,13 @@
 
 \index[prmindex]{ATOMIC COORDINATES FILE}
 \index[prmindexfull]{Geometry!ATOMIC COORDINATES FILE}
-{\it Value:} coordinates.inp
+{\it Value:} coordinatesFrac.inp
 
 
 {\it Default:} 
 
 
-{\it Description:} [Standard] Atomic-coordinates file. For fully non-periodic domain give cartesian coordinates of the atoms (in a.u) with respect to origin at the center of the domain. For periodic and semi-periodic give fractional coordinates of atoms. File format (example for two atoms): x1 y1 z1 (row1), x2 y2 z2 (row2).
+{\it Description:} [Standard] Atomic-coordinates file. For fully non-periodic domain give cartesian coordinates of the atoms (in a.u) with respect to origin at the center of the domain. For periodic and semi-periodic give fractional coordinates of atoms. File format (example for two atoms): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 (row2).
 
 
 {\it Possible values:} Any string
@@ -797,17 +797,17 @@
 {\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 1$
 \end{itemize}
 
-\subsection{Parameters in section \tt Poisson problem paramters}
-\label{parameters:Poisson_20problem_20paramters}
+\subsection{Parameters in section \tt Poisson problem parameters}
+\label{parameters:Poisson_20problem_20parameters}
 
 \begin{itemize}
 \item {\it Parameter name:} {\tt MAXIMUM ITERATIONS}
-\phantomsection\label{parameters:Poisson problem paramters/MAXIMUM ITERATIONS}
-\label{parameters:Poisson_20problem_20paramters/MAXIMUM_20ITERATIONS}
+\phantomsection\label{parameters:Poisson problem parameters/MAXIMUM ITERATIONS}
+\label{parameters:Poisson_20problem_20parameters/MAXIMUM_20ITERATIONS}
 
 
 \index[prmindex]{MAXIMUM ITERATIONS}
-\index[prmindexfull]{Poisson problem paramters!MAXIMUM ITERATIONS}
+\index[prmindexfull]{Poisson problem parameters!MAXIMUM ITERATIONS}
 {\it Value:} 10000
 
 
@@ -819,29 +819,29 @@
 
 {\it Possible values:} An integer $n$ such that $0\leq n \leq 20000$
 \item {\it Parameter name:} {\tt P REFINEMENT}
-\phantomsection\label{parameters:Poisson problem paramters/P REFINEMENT}
-\label{parameters:Poisson_20problem_20paramters/P_20REFINEMENT}
+\phantomsection\label{parameters:Poisson problem parameters/P REFINEMENT}
+\label{parameters:Poisson_20problem_20parameters/P_20REFINEMENT}
 
 
 \index[prmindex]{P REFINEMENT}
-\index[prmindexfull]{Poisson problem paramters!P REFINEMENT}
+\index[prmindexfull]{Poisson problem parameters!P REFINEMENT}
 {\it Value:} false
 
 
 {\it Default:} false
 
 
-{\it Description:} [Standard] Boolean parameter specifying whether to project the ground-state electron density to a p refined mesh, and solve for the electrostatic fields on the p refined mesh. This step is not performed for each SCF, but only at the ground-state. The purpose is to improve the accuracy of the ground-state electrostatic energy.
+{\it Description:} [Developer] Boolean parameter specifying whether to project the ground-state electron density to a p refined mesh, and solve for the electrostatic fields on the p refined mesh. This step is not performed for each SCF, but only at the ground-state. The purpose is to improve the accuracy of the ground-state electrostatic energy. This feature is not fully implemented.
 
 
 {\it Possible values:} A boolean value (true or false)
 \item {\it Parameter name:} {\tt TOLERANCE}
-\phantomsection\label{parameters:Poisson problem paramters/TOLERANCE}
-\label{parameters:Poisson_20problem_20paramters/TOLERANCE}
+\phantomsection\label{parameters:Poisson problem parameters/TOLERANCE}
+\label{parameters:Poisson_20problem_20parameters/TOLERANCE}
 
 
 \index[prmindex]{TOLERANCE}
-\index[prmindexfull]{Poisson problem paramters!TOLERANCE}
+\index[prmindexfull]{Poisson problem parameters!TOLERANCE}
 {\it Value:} 1e-12
 
 
@@ -882,7 +882,7 @@
 
 \index[prmindex]{ANDERSON SCHEME MIXING PARAMETER}
 \index[prmindexfull]{SCF parameters!ANDERSON SCHEME MIXING PARAMETER}
-{\it Value:} 0.5
+{\it Value:} 0.2
 
 
 {\it Default:} 0.5
@@ -899,7 +899,7 @@
 
 \index[prmindex]{MAXIMUM ITERATIONS}
 \index[prmindexfull]{SCF parameters!MAXIMUM ITERATIONS}
-{\it Value:} 100
+{\it Value:} 10
 
 
 {\it Default:} 50
@@ -953,7 +953,7 @@
 {\it Value:} 1e-7
 
 
-{\it Default:} 1e-08
+{\it Default:} 1e-07
 
 
 {\it Description:} [Standard] SCF iterations stopping tolerance in terms of electron-density difference between two successive iterations.
@@ -975,13 +975,13 @@
 
 \index[prmindex]{BATCH GEMM}
 \index[prmindexfull]{SCF parameters!Eigen-solver/Chebyshev solver related parameters!BATCH GEMM}
-{\it Value:} false
+{\it Value:} true
 
 
-{\it Default:} false
+{\it Default:} true
 
 
-{\it Description:} [Developer] Boolean parameter specifying whether to use gemm\_batch blas routines to perform matrix-matrix multiplication operations with groups of matrices, processing a number of groups at once using threads instead of the standard serial route. CAUTION: batch blas routines will only be activated if the CHEBYSHEV FILTER BLOCK SIZE is less than 1000.
+{\it Description:} [Developer] Boolean parameter specifying whether to use gemm\_batch blas routines to perform matrix-matrix multiplication operations with groups of matrices, processing a number of groups at once using threads instead of the standard serial route. CAUTION: batch blas routines will only be activated if the CHEBYSHEV FILTER BLOCK SIZE is less than 1000. Default option is true.
 
 
 {\it Possible values:} A boolean value (true or false)
@@ -992,10 +992,10 @@
 
 \index[prmindex]{CHEBYSHEV FILTER BLOCK SIZE}
 \index[prmindexfull]{SCF parameters!Eigen-solver/Chebyshev solver related parameters!CHEBYSHEV FILTER BLOCK SIZE}
-{\it Value:} 7
+{\it Value:} 50
 
 
-{\it Default:} 1000
+{\it Default:} 400
 
 
 {\it Description:} [Developer] The maximum number of wavefunctions which are handled by one call to the Chebyshev filter. This is useful for optimization purposes. The optimum value is dependent on the computing architecture.
@@ -1043,13 +1043,13 @@
 
 \index[prmindex]{CHEBYSHEV FILTER TOLERANCE}
 \index[prmindexfull]{SCF parameters!Eigen-solver/Chebyshev solver related parameters!CHEBYSHEV FILTER TOLERANCE}
-{\it Value:} 5e-02
+{\it Value:} 5e-2
 
 
 {\it Default:} 5e-02
 
 
-{\it Description:} [Developer] Parameter specifying the tolerance to which eigenvectors need to computed using chebyshev filtering approach
+{\it Description:} [Developer] Parameter specifying the tolerance to which eigenvectors need to computed using chebyshev filtering approach.
 
 
 {\it Possible values:} A floating point number $v$ such that $0 \leq v \leq \text{MAX\_DOUBLE}$
@@ -1060,16 +1060,33 @@
 
 \index[prmindex]{CHEBYSHEV POLYNOMIAL DEGREE}
 \index[prmindexfull]{SCF parameters!Eigen-solver/Chebyshev solver related parameters!CHEBYSHEV POLYNOMIAL DEGREE}
-{\it Value:} 0
+{\it Value:} 125
 
 
 {\it Default:} 0
 
 
-{\it Description:} [Developer] The degree of the Chebyshev polynomial to be employed for filtering out the unwanted spectrum (Default value is used when the input parameter value is 0.
+{\it Description:} [Developer] The degree of the Chebyshev polynomial to be employed for filtering out the unwanted spectrum. A heuristics value depending upon the upper bound of the eigen spectrum is used when the parameter value is 0, which is the default option.
 
 
 {\it Possible values:} An integer $n$ such that $0\leq n \leq 2000$
+\item {\it Parameter name:} {\tt ENABLE SWITCH TO GS}
+\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver_2fChebyshev solver related parameters/ENABLE SWITCH TO GS}
+\label{parameters:SCF_20parameters/Eigen_2dsolver_2fChebyshev_20solver_20related_20parameters/ENABLE_20SWITCH_20TO_20GS}
+
+
+\index[prmindex]{ENABLE SWITCH TO GS}
+\index[prmindexfull]{SCF parameters!Eigen-solver/Chebyshev solver related parameters!ENABLE SWITCH TO GS}
+{\it Value:} true
+
+
+{\it Default:} true
+
+
+{\it Description:} [Developer] Controls automatic switching to Gram-Schimdt orthogonalization if Lowden Orthogonalization or Pseudo-Gram-Schimdt orthogonalization are unstable. Default option is true.
+
+
+{\it Possible values:} A boolean value (true or false)
 \item {\it Parameter name:} {\tt LOWER BOUND WANTED SPECTRUM}
 \phantomsection\label{parameters:SCF parameters/Eigen_2dsolver_2fChebyshev solver related parameters/LOWER BOUND WANTED SPECTRUM}
 \label{parameters:SCF_20parameters/Eigen_2dsolver_2fChebyshev_20solver_20related_20parameters/LOWER_20BOUND_20WANTED_20SPECTRUM}
@@ -1083,7 +1100,7 @@
 {\it Default:} -10.0
 
 
-{\it Description:} [Developer] The lower bound of the wanted eigen spectrum
+{\it Description:} [Developer] The lower bound of the wanted eigen spectrum.
 
 
 {\it Possible values:} A floating point number $v$ such that $-\text{MAX\_DOUBLE} \leq v \leq \text{MAX\_DOUBLE}$
@@ -1114,10 +1131,10 @@
 {\it Value:} LW
 
 
-{\it Default:} GS
+{\it Default:} LW
 
 
-{\it Description:} [Standard] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization), LW(Lowden Orthogonalization), PGS(Pseudo Gram-Schmidt Orthogonalization). GS is the default option.
+{\it Description:} [Standard] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization using SLEPc library), LW(Lowden Orthogonalization using LAPACK, extension to ScaLAPACK not implemented yet), PGS(Pseudo-Gram-Schmidt Orthogonalization using ScaLAPACK, cannot be used if dealii library is not compiled with ScaLAPACK. PGS option is also not available for the complex executable yet). LW is the default option.
 
 
 {\it Possible values:} Any one of GS, LW, PGS
@@ -1134,4 +1151,42 @@
 {\it Default:} 0
 
 
-{\it Description:} [Developer] Sets the number of OpenMP threads to be used in the blas linear algebra calls inside Lowden Orthogonalization and Rayleigh-Ritz projection steps. The default value is 0, for which no action is taken. CAUTION: For non-zero values, CHEBYSHEV FILTER NUM OMP THREADS takes precedence over the OMP\_NUM\_THREADS environment variable.
+{\it Description:} [Developer] Sets the number of OpenMP threads to be used in the blas linear algebra calls inside orthogonalization and Rayleigh-Ritz steps. The default value is 0, for which no action is taken. CAUTION: For non-zero values, CHEBYSHEV FILTER NUM OMP THREADS takes precedence over the OMP\_NUM\_THREADS environment variable.
+
+
+{\it Possible values:} An integer $n$ such that $0\leq n \leq 300$
+\item {\it Parameter name:} {\tt ORTHO RR WFC BLOCK SIZE}
+\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver_2fChebyshev solver related parameters/ORTHO RR WFC BLOCK SIZE}
+\label{parameters:SCF_20parameters/Eigen_2dsolver_2fChebyshev_20solver_20related_20parameters/ORTHO_20RR_20WFC_20BLOCK_20SIZE}
+
+
+\index[prmindex]{ORTHO RR WFC BLOCK SIZE}
+\index[prmindexfull]{SCF parameters!Eigen-solver/Chebyshev solver related parameters!ORTHO RR WFC BLOCK SIZE}
+{\it Value:} 200
+
+
+{\it Default:} 200
+
+
+{\it Description:} [Developer] This block size is used for memory optimization purposes in the orthogonalization and Rayleigh-Ritz steps. This optimization is only activated if dealii library is compiled with ScaLAPACK. Default value is 200.
+
+
+{\it Possible values:} An integer $n$ such that $1\leq n \leq 2147483647$
+\item {\it Parameter name:} {\tt SUBSPACE ROT DOFS BLOCK SIZE}
+\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver_2fChebyshev solver related parameters/SUBSPACE ROT DOFS BLOCK SIZE}
+\label{parameters:SCF_20parameters/Eigen_2dsolver_2fChebyshev_20solver_20related_20parameters/SUBSPACE_20ROT_20DOFS_20BLOCK_20SIZE}
+
+
+\index[prmindex]{SUBSPACE ROT DOFS BLOCK SIZE}
+\index[prmindexfull]{SCF parameters!Eigen-solver/Chebyshev solver related parameters!SUBSPACE ROT DOFS BLOCK SIZE}
+{\it Value:} 800
+
+
+{\it Default:} 800
+
+
+{\it Description:} [Developer] This block size is used for memory optimization purposes in subspace rotation step in Pseudo-Gram-Schmidt orthogonalization and Rayleigh-Ritz steps. This optimization is only activated if dealii library is compiled with ScaLAPACK. Default value is 800.
+
+
+{\it Possible values:} An integer $n$ such that $1\leq n \leq 2147483647$
+\end{itemize}

@@ -102,48 +102,25 @@ namespace dftfe {
   {
 
     if(flag)
-      {
-
-	vectorTools::createDealiiVector<dataTypes::number>(dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
-							   numberWaveFunctions,
-							   dftPtr->d_projectorKetTimesVectorParFlattened);
-
 	vectorTools::createDealiiVector<dataTypes::number>(dftPtr->matrix_free_data.get_vector_partitioner(),
 							   numberWaveFunctions,
 							   flattenedArray);
 
-	vectorTools::computeCellLocalIndexSetMap(flattenedArray.get_partitioner(),
-						 dftPtr->matrix_free_data,
-						 numberWaveFunctions,
-						 d_flattenedArrayMacroCellLocalProcIndexIdMap,
-						 d_flattenedArrayCellLocalProcIndexIdMap);
-
-	getOverloadedConstraintMatrix()->precomputeMaps(dftPtr->matrix_free_data.get_vector_partitioner(),
-							flattenedArray.get_partitioner(),
-							numberWaveFunctions);
+    vectorTools::createDealiiVector<dataTypes::number>(dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
+						       numberWaveFunctions,
+						       dftPtr->d_projectorKetTimesVectorParFlattened);
 
 
-      }
-    else
-      {
 
-	vectorTools::createDealiiVector<dataTypes::number>(dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
-							   numberWaveFunctions,
-							   dftPtr->d_projectorKetTimesVectorParFlattened);
+    vectorTools::computeCellLocalIndexSetMap(flattenedArray.get_partitioner(),
+					     dftPtr->matrix_free_data,
+					     numberWaveFunctions,
+					     d_flattenedArrayMacroCellLocalProcIndexIdMap,
+					     d_flattenedArrayCellLocalProcIndexIdMap);
 
-
-	vectorTools::computeCellLocalIndexSetMap(flattenedArray.get_partitioner(),
-						 dftPtr->matrix_free_data,
-						 numberWaveFunctions,
-						 d_flattenedArrayMacroCellLocalProcIndexIdMap,
-						 d_flattenedArrayCellLocalProcIndexIdMap);
-
-
-	getOverloadedConstraintMatrix()->precomputeMaps(dftPtr->matrix_free_data.get_vector_partitioner(),
-							flattenedArray.get_partitioner(),
-							numberWaveFunctions);
-      }
-
+    getOverloadedConstraintMatrix()->precomputeMaps(dftPtr->matrix_free_data.get_vector_partitioner(),
+						    flattenedArray.get_partitioner(),
+						    numberWaveFunctions);
   }
 
 template<unsigned int FEOrder>
@@ -1050,11 +1027,21 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 				      X.get_mpi_communicator(),
 				      projHamBlock);
 
-	  for (unsigned int i = 0; i <numberWaveFunctions; ++i)
+	  if (processGrid->is_process_active())
 	      for (unsigned int j = 0; j <B; ++j)
-		 if (globalToLocalRowIdMap.find(i)!=globalToLocalRowIdMap.end())
-		     if(globalToLocalColumnIdMap.find(j+jvec)!=globalToLocalColumnIdMap.end())
-			 projHamPar.local_el(globalToLocalRowIdMap[i], globalToLocalColumnIdMap[j+jvec])=projHamBlock[j*numberWaveFunctions+i];
+		 if(globalToLocalColumnIdMap.find(j+jvec)!=globalToLocalColumnIdMap.end())
+		 {
+		   const unsigned int localColumnId=globalToLocalColumnIdMap[j+jvec];
+	           for (unsigned int i = 0; i <numberWaveFunctions; ++i)
+		   {
+		     std::map<unsigned int, unsigned int>::iterator it=
+					  globalToLocalRowIdMap.find(i);
+		     if (it!=globalToLocalRowIdMap.end())
+			     projHamPar.local_el(it->second,
+				                 localColumnId)
+				                 =projHamBlock[j*numberWaveFunctions+i];
+		   }
+		 }
     }
 #endif
   }

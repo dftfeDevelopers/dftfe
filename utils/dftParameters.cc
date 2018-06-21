@@ -60,6 +60,7 @@ namespace dftParameters
   bool cacheShapeGradData=false;
   unsigned int orthoRRWaveFuncBlockSize=200;
   unsigned int subspaceRotDofsBlockSize=800;
+  bool enableSwitchToGS=true;
 
 
   void declare_parameters(ParameterHandler &prm)
@@ -70,7 +71,7 @@ namespace dftParameters
 
     prm.declare_entry("VERBOSITY", "1",
                       Patterns::Integer(0,4),
-                      "[Standard] Parameter to control verbosity of terminal output. 0 for low, 1 for medium, and 2 for high.");
+                      "[Standard] Parameter to control verbosity of terminal output. Ranging from 0 for low to 4 for code development purposes. Standard users wouldn't need verbosity beyond 2.");
 
     prm.declare_entry("WRITE SOLUTION FIELDS", "false",
                       Patterns::Bool(),
@@ -92,7 +93,7 @@ namespace dftParameters
     {
 	prm.declare_entry("ATOMIC COORDINATES FILE", "",
 			  Patterns::Anything(),
-			  "[Standard] Atomic-coordinates file. For fully non-periodic domain give cartesian coordinates of the atoms (in a.u) with respect to origin at the center of the domain. For periodic and semi-periodic give fractional coordinates of atoms. File format (example for two atoms): x1 y1 z1 (row1), x2 y2 z2 (row2).");
+			  "[Standard] Atomic-coordinates file. For fully non-periodic domain give cartesian coordinates of the atoms (in a.u) with respect to origin at the center of the domain. For periodic and semi-periodic give fractional coordinates of atoms. File format (example for two atoms): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 (row2).");
 
 	prm.declare_entry("DOMAIN BOUNDING VECTORS FILE", "",
 			  Patterns::Anything(),
@@ -169,34 +170,34 @@ namespace dftParameters
 
       prm.declare_entry("POLYNOMIAL ORDER", "4",
                         Patterns::Integer(1,12),
-                       "[Standard] The degree of the finite-element interpolating polynomial");
+                       "[Standard] The degree of the finite-element interpolating polynomial. Default value is 4. The default value of 4 is usually a good choice for most pseudopotential as well as all-electron problems.");
 
       prm.declare_entry("MESH FILE", "",
                        Patterns::Anything(),
-                       "[Developer] External mesh file path. If nothing is given auto mesh generation is performed");
+                       "[Developer] External mesh file path. If nothing is given auto mesh generation is performed. The option is only for testing purposes.");
 
       prm.declare_entry("CACHE SHAPE GRAD","false",
 			 Patterns::Bool(),
-			 "[Developer] Boolean parameter which controls precomputation of FEM shape function gradients for each cell. This helps optimize discrete Hamiltonian matrix computation but at the cost of carrying some extra memory. Default value is false.");
+			 "[Developer] Boolean parameter which controls precomputation of FEM shape function gradients for each cell. This helps optimize discrete Hamiltonian matrix computation but at the cost of carrying some extra memory. Default option is false.");
 
       prm.enter_subsection ("Auto mesh generation parameters");
       {
 
-	prm.declare_entry("BASE MESH SIZE", "2.0",
+	prm.declare_entry("BASE MESH SIZE", "4.0",
 			  Patterns::Double(0,20),
-			  "[Developer] Mesh size of the base mesh on which refinement is performed.");
+			  "[Standard] Mesh size of the base mesh on which refinement is performed. Default value is good enough for most cases.");
 
-	prm.declare_entry("ATOM BALL RADIUS","2.0",
+	prm.declare_entry("ATOM BALL RADIUS","2.25",
 			  Patterns::Double(0,10),
-			  "[Developer] Radius of ball enclosing atom.");
+			  "[Standarad] Radius of ball enclosing every atom inside which the mesh size is set close to MESH SIZE ATOM BALL. A value between 2.0 to 3.0 is usually a good choice.");
 
 	prm.declare_entry("MESH SIZE ATOM BALL", "0.5",
 			  Patterns::Double(0,10),
-			  "[Developer] Mesh size in a ball around atom.");
+			  "[Standard] Mesh size in a ball of radius ATOM BALL RADIUS around every atom. For pseudopotential calculations, a value between 0.5 to 1.0 is usually a good choice. For all-electron calculations, a value between 0.1 to 0.3 would be a good starting choice.");
 
 	prm.declare_entry("MESH SIZE NEAR ATOM", "0.5",
 			  Patterns::Double(0,10),
-			  "[Developer] Mesh size near atom. Useful for all-electron case.");
+			  "[Standard] Mesh size of the finite elements in the immediate vicinity of the atoms. For pseudopotential calculations, this value is usually taken to be the same as the MESH SIZE ATOM BALL. For all-electron case, a value smaller than MESH SIZE ATOM BALL, typically between 0.05 to 0.1 would be a good starting choice.");
 
         prm.declare_entry("MAX REFINEMENT STEPS", "10",
                         Patterns::Integer(1,10),
@@ -262,11 +263,11 @@ namespace dftParameters
 
 	prm.declare_entry("PSEUDOPOTENTIAL CALCULATION", "true",
 			  Patterns::Bool(),
-			  "[Standard] Boolean Parameter specifying whether pseudopotential DFT calculation needs to be performed.");
+			  "[Standard] Boolean Parameter specifying whether pseudopotential DFT calculation needs to be performed. For all-electron DFT calculation set to false.");
 
 	prm.declare_entry("PSEUDOPOTENTIAL TYPE", "1",
 			  Patterns::Integer(1,2),
-			  "[Standard] Type of nonlocal projector to be used: 1 for KB, 2 for ONCV, default is KB.");
+			  "[Standard] Type of nonlocal projector to be used: 1 for KB [PRL. 48, 1425 (1982); PRL. 43, 1993 (1991)], 2 for ONCV [PRB. 88, 085117 (2013)]. Default option is 1.");
 
 	prm.declare_entry("PSEUDOPOTENTIAL FILE NAMES LIST", "",
 			  Patterns::Anything(),
@@ -278,7 +279,7 @@ namespace dftParameters
 
 	prm.declare_entry("SPIN POLARIZATION", "0",
 			  Patterns::Integer(0,1),
-			  "[Standard] Spin polarization: 0 for no spin polarization and 1 for spin polarization.");
+			  "[Standard] Spin polarization: 0 for no spin polarization and 1 for spin polarization. Default option is 0.");
 
 	prm.declare_entry("START MAGNETIZATION", "0.0",
 			  Patterns::Double(-0.5,0.5),
@@ -297,7 +298,7 @@ namespace dftParameters
 			  Patterns::Integer(1,1000),
 			  "[Standard] Maximum number of iterations to be allowed for SCF convergence");
 
-	prm.declare_entry("TOLERANCE", "1e-08",
+	prm.declare_entry("TOLERANCE", "1e-07",
 			  Patterns::Double(0,1.0),
 			  "[Standard] SCF iterations stopping tolerance in terms of electron-density difference between two successive iterations.");
 
@@ -322,11 +323,11 @@ namespace dftParameters
 
 	    prm.declare_entry("LOWER BOUND WANTED SPECTRUM", "-10.0",
 			      Patterns::Double(),
-			      "[Developer] The lower bound of the wanted eigen spectrum");
+			      "[Developer] The lower bound of the wanted eigen spectrum.");
 
 	    prm.declare_entry("CHEBYSHEV POLYNOMIAL DEGREE", "0",
 			      Patterns::Integer(0,2000),
-			      "[Developer] The degree of the Chebyshev polynomial to be employed for filtering out the unwanted spectrum (Default value is used when the input parameter value is 0.");
+			      "[Developer] The degree of the Chebyshev polynomial to be employed for filtering out the unwanted spectrum. A heuristics value depending upon the upper bound of the eigen spectrum is used when the parameter value is 0, which is the default option.");
 
 	    prm.declare_entry("CHEBYSHEV FILTER PASSES", "1",
 			      Patterns::Integer(1,20),
@@ -335,15 +336,15 @@ namespace dftParameters
 
 	    prm.declare_entry("CHEBYSHEV FILTER TOLERANCE","5e-02",
 			      Patterns::Double(0),
-			      "[Developer] Parameter specifying the tolerance to which eigenvectors need to computed using chebyshev filtering approach");
+			      "[Developer] Parameter specifying the tolerance to which eigenvectors need to computed using chebyshev filtering approach.");
 
-	    prm.declare_entry("CHEBYSHEV FILTER BLOCK SIZE", "512",
+	    prm.declare_entry("CHEBYSHEV FILTER BLOCK SIZE", "400",
 			       Patterns::Integer(1),
 			       "[Developer] The maximum number of wavefunctions which are handled by one call to the Chebyshev filter. This is useful for optimization purposes. The optimum value is dependent on the computing architecture.");
 
-	    prm.declare_entry("BATCH GEMM", "false",
+	    prm.declare_entry("BATCH GEMM", "true",
 			      Patterns::Bool(),
-			      "[Developer] Boolean parameter specifying whether to use gemm_batch blas routines to perform matrix-matrix multiplication operations with groups of matrices, processing a number of groups at once using threads instead of the standard serial route. CAUTION: batch blas routines will only be activated if the CHEBYSHEV FILTER BLOCK SIZE is less than 1000.");
+			      "[Developer] Boolean parameter specifying whether to use gemm_batch blas routines to perform matrix-matrix multiplication operations with groups of matrices, processing a number of groups at once using threads instead of the standard serial route. CAUTION: batch blas routines will only be activated if the CHEBYSHEV FILTER BLOCK SIZE is less than 1000. Default option is true.");
 
 	    prm.declare_entry("CHEBYSHEV FILTER NUM OMP THREADS", "0",
 			      Patterns::Integer(0,300),
@@ -354,9 +355,13 @@ namespace dftParameters
 			      "[Developer] Sets the number of OpenMP threads to be used in the blas linear algebra calls inside orthogonalization and Rayleigh-Ritz steps. The default value is 0, for which no action is taken. CAUTION: For non-zero values, CHEBYSHEV FILTER NUM OMP THREADS takes precedence over the OMP_NUM_THREADS environment variable.");
 
 
-	    prm.declare_entry("ORTHOGONALIZATION TYPE","GS",
+	    prm.declare_entry("ORTHOGONALIZATION TYPE","LW",
 			      Patterns::Selection("GS|LW|PGS"),
-			      "[Standard] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization using SLEPc library), LW(Lowden Orthogonalization using LAPACK, extension to ScaLAPACK not implemented yet), PGS(Pseudo Gram-Schmidt Orthogonalization using ScaLAPACK, cannot be used if dealii library is not compiled with ScaLAPACK. PGS option is also not available for the complex executable yet). GS is the default option.");
+			      "[Standard] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization using SLEPc library), LW(Lowden Orthogonalization using LAPACK, extension to ScaLAPACK not implemented yet), PGS(Pseudo-Gram-Schmidt Orthogonalization using ScaLAPACK, cannot be used if dealii library is not compiled with ScaLAPACK. PGS option is also not available for the complex executable yet). LW is the default option.");
+
+	    prm.declare_entry("ENABLE SWITCH TO GS", "true",
+			      Patterns::Bool(),
+			      "[Developer] Controls automatic switching to Gram-Schimdt orthogonalization if Lowden Orthogonalization or Pseudo-Gram-Schimdt orthogonalization are unstable. Default option is true.");
 
 	    prm.declare_entry("ORTHO RR WFC BLOCK SIZE", "200",
 			       Patterns::Integer(1),
@@ -371,7 +376,7 @@ namespace dftParameters
     }
     prm.leave_subsection ();
 
-    prm.enter_subsection ("Poisson problem paramters");
+    prm.enter_subsection ("Poisson problem parameters");
     {
 	prm.declare_entry("MAXIMUM ITERATIONS", "5000",
 			  Patterns::Integer(0,20000),
@@ -383,7 +388,7 @@ namespace dftParameters
 
 	prm.declare_entry("P REFINEMENT", "false",
 			  Patterns::Bool(),
-			  "[Standard] Boolean parameter specifying whether to project the ground-state electron density to a p refined mesh, and solve for the electrostatic fields on the p refined mesh. This step is not performed for each SCF, but only at the ground-state. The purpose is to improve the accuracy of the ground-state electrostatic energy.");
+			  "[Developer] Boolean parameter specifying whether to project the ground-state electron density to a p refined mesh, and solve for the electrostatic fields on the p refined mesh. This step is not performed for each SCF, but only at the ground-state. The purpose is to improve the accuracy of the ground-state electrostatic energy. This feature is not fully implemented.");
     }
     prm.leave_subsection ();
 
@@ -493,21 +498,22 @@ namespace dftParameters
 	   dftParameters::numberEigenValues             = prm.get_integer("NUMBER OF KOHN-SHAM WAVEFUNCTIONS");
 	   dftParameters::lowerEndWantedSpectrum        = prm.get_double("LOWER BOUND WANTED SPECTRUM");
 	   dftParameters::chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
-	   dftParameters::numPass                       = prm.get_integer("CHEBYSHEV FILTER PASSES");
-	   dftParameters::chebyshevBlockSize            = prm.get_integer("CHEBYSHEV FILTER BLOCK SIZE");
-	   dftParameters::useBatchGEMM                  = prm.get_bool("BATCH GEMM");
-	   dftParameters::orthogType                    = prm.get("ORTHOGONALIZATION TYPE");
-	   dftParameters::chebyshevTolerance            = prm.get_double("CHEBYSHEV FILTER TOLERANCE");
-	   dftParameters::chebyshevOMPThreads           = prm.get_integer("CHEBYSHEV FILTER NUM OMP THREADS");
-	   dftParameters::orthoRROMPThreads             = prm.get_integer("ORTHO RR NUM OMP THREADS");
-	   dftParameters::orthoRRWaveFuncBlockSize      = prm.get_integer("ORTHO RR WFC BLOCK SIZE");
-	   dftParameters::subspaceRotDofsBlockSize      = prm.get_integer("SUBSPACE ROT DOFS BLOCK SIZE");
+	   dftParameters::numPass           = prm.get_integer("CHEBYSHEV FILTER PASSES");
+	   dftParameters::chebyshevBlockSize= prm.get_integer("CHEBYSHEV FILTER BLOCK SIZE");
+	   dftParameters::useBatchGEMM= prm.get_bool("BATCH GEMM");
+	   dftParameters::orthogType        = prm.get("ORTHOGONALIZATION TYPE");
+	   dftParameters::chebyshevTolerance = prm.get_double("CHEBYSHEV FILTER TOLERANCE");
+	   dftParameters::chebyshevOMPThreads = prm.get_integer("CHEBYSHEV FILTER NUM OMP THREADS");
+	   dftParameters::orthoRROMPThreads= prm.get_integer("ORTHO RR NUM OMP THREADS");
+	   dftParameters::orthoRRWaveFuncBlockSize= prm.get_integer("ORTHO RR WFC BLOCK SIZE");
+	   dftParameters::subspaceRotDofsBlockSize= prm.get_integer("SUBSPACE ROT DOFS BLOCK SIZE");
+	   dftParameters::enableSwitchToGS= prm.get_bool("ENABLE SWITCH TO GS");
 	}
 	prm.leave_subsection ();
     }
     prm.leave_subsection ();
 
-    prm.enter_subsection ("Poisson problem paramters");
+    prm.enter_subsection ("Poisson problem parameters");
     {
        dftParameters::maxLinearSolverIterations     = prm.get_integer("MAXIMUM ITERATIONS");
        dftParameters::relLinearSolverTolerance      = prm.get_double("TOLERANCE");
@@ -522,17 +528,16 @@ namespace dftParameters
 
   void check_print_parameters(const dealii::ParameterHandler &prm)
   {
-    if (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0 &&  dftParameters::verbosity>=1)
-    {
-      prm.print_parameters (std::cout, ParameterHandler::Text);
-    }
-
     const bool printParametersToFile=false;
     if (printParametersToFile && Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)
     {
-	std::ofstream output ("parameterFile.tex");
-	prm.print_parameters (output, ParameterHandler::OutputStyle::LaTeX);
+	prm.print_parameters (std::cout, ParameterHandler::OutputStyle::LaTeX);
 	exit(0);
+    }
+
+    if (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0 &&  dftParameters::verbosity>=1)
+    {
+      prm.print_parameters (std::cout, ParameterHandler::Text);
     }
 #ifdef USE_COMPLEX
     if (dftParameters::electrostaticsPRefinement)
@@ -540,12 +545,25 @@ namespace dftParameters
 
     if (dftParameters::isIonForce || dftParameters::isCellStress)
        AssertThrow(!dftParameters::useSymm,ExcMessage("DFT-FE Error: USE GROUP SYMMETRY must be set to false if either ION FORCE or CELL STRESS is set to true. This functionality will be added in a future release"));
+
+    if (dftParameters::orthogType=="PGS")
+       AssertThrow(false,ExcMessage("DFT-FE Error: Implementation PGS orthogonalization in complex mode is not added yet."));
 #else
     AssertThrow(!dftParameters::isCellStress,ExcMessage("DFT-FE Error: Currently CELL STRESS cannot be set true in double mode for periodic Gamma point problems. This functionality will be added soon."));
+
+    AssertThrow( dftParameters::nkx==1 &&  dftParameters::nky==1 &&  dftParameters::nkz==1
+             && dftParameters::dkx==0 &&  dftParameters::dky==0 &&  dftParameters::dkz==0
+	    ,ExcMessage("DFT-FE Error: Real executable cannot be used for non-zero k point."));
 #endif
     AssertThrow(!(dftParameters::chkType==2 && (dftParameters::isIonOpt || dftParameters::isCellOpt)),ExcMessage("DFT-FE Error: CHK TYPE=2 cannot be used if geometry optimization is being performed."));
 
     AssertThrow(!(dftParameters::chkType==1 && (dftParameters::isIonOpt && dftParameters::isCellOpt)),ExcMessage("DFT-FE Error: CHK TYPE=1 cannot be used if both ION OPT and CELL OPT are set to true."));
+
+    if (dftParameters::electrostaticsPRefinement)
+       AssertThrow(false,ExcMessage("DFT-FE Error: Implemenation of this feature is not completed yet."));
+
+    if (dftParameters::nonSelfConsistentForce)
+       AssertThrow(false,ExcMessage("DFT-FE Error: Implemenation of this feature is not completed yet."));
   }
 
 }

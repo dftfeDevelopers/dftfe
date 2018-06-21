@@ -358,6 +358,7 @@ void interpolateFieldsFromPreviousMesh::interpolate
   ///////////////////////////////////////////////////////////
 
   computing_timer.enter_section("interpolate:step4");
+  AssertThrow(fieldsPreviousMesh.size()==fieldsCurrentMesh.size(),dealii::ExcMessage("Size of fieldsPreviousMesh and fieldsCurrentMesh are no the same."));
   const unsigned int fieldsBlockSize=fieldsPreviousMesh.size();
 
   for(unsigned int ifield = 0; ifield < fieldsBlockSize; ++ifield)

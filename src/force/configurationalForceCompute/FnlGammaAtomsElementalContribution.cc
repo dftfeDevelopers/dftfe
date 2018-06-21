@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,21 +13,21 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Sambit Das (2017)
+// @author Sambit Das
 //
-#ifdef USE_COMPLEX  
-//(locally used function) compute Fnl contibution due to Gamma(Rj) for given set of cells  
+#ifdef USE_COMPLEX
+//(locally used function) compute Fnl contibution due to Gamma(Rj) for given set of cells
 template<unsigned int FEOrder>
 void forceClass<FEOrder>::FnlGammaAtomsElementalContributionPeriodic(std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
 							              FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
 							              const unsigned int cell,
 							              const std::vector<std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > > & pspnlGammaAtomsQuads,
-                                                                      const std::vector<std::vector<std::vector<std::complex<double> > > > & projectorKetTimesPsiTimesV,							       
+                                                                      const std::vector<std::vector<std::vector<std::complex<double> > > > & projectorKetTimesPsiTimesV,
 							              const std::vector<Tensor<1,2,VectorizedArray<double> > > & psiQuads)
 {
- 
+
   const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
-  const unsigned int numEigenVectors=dftPtr->eigenVectors[0].size(); 
+  const unsigned int numEigenVectors=dftPtr->numEigenValues;
   const unsigned int numKPoints=dftPtr->d_kPointWeights.size();
   const unsigned int numSubCells= dftPtr->matrix_free_data.n_components_filled(cell);
   const unsigned int numQuadPoints=forceEval.n_q_points;
@@ -48,13 +48,13 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionPeriodic(std::map<un
 	  temp2[ikPoint].resize(1);
 	  temp2[ikPoint][0]=projectorKetTimesPsiTimesV[ikPoint][iAtom];
 
-      }        
+      }
       for (unsigned int q=0; q<numQuadPoints; ++q)
-      {  	  
+      {
 	   std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > temp1(1);
-	   temp1[0]=pspnlGammaAtomsQuads[q][iAtom];	
-   
-           const Tensor<1,C_DIM,VectorizedArray<double> > 
+	   temp1[0]=pspnlGammaAtomsQuads[q][iAtom];
+
+           const Tensor<1,C_DIM,VectorizedArray<double> >
 	       F=-eshelbyTensor::getFnlPeriodic(temp1,
 						temp2,
 						psiQuads.begin()+q*numEigenVectors*numKPoints,
@@ -62,7 +62,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionPeriodic(std::map<un
 						dftPtr->eigenValues,
 						dftPtr->fermiEnergy,
 						dftParameters::TVal);
- 
+
 
            forceEval.submit_value(F,q);
       }
@@ -89,12 +89,12 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodic(std::map
 							                FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
 							                const unsigned int cell,
 							                const std::vector<std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > > pspnlGammaAtomQuads,
-                                                                        const std::vector<std::vector<double> >  & projectorKetTimesPsiTimesV,							       
+                                                                        const std::vector<std::vector<double> >  & projectorKetTimesPsiTimesV,
 							                const std::vector< VectorizedArray<double> > & psiQuads)
 {
- 
+
   const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
-  const unsigned int numEigenVectors=dftPtr->eigenVectors[0].size(); 
+  const unsigned int numEigenVectors=dftPtr->numEigenValues;
   const unsigned int numSubCells= dftPtr->matrix_free_data.n_components_filled(cell);
   const unsigned int numQuadPoints=forceEval.n_q_points;
   DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
@@ -111,7 +111,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodic(std::map
       std::vector<std::vector<double> >  temp2(1);
       temp2[0]=projectorKetTimesPsiTimesV[iAtom];
       for (unsigned int q=0; q<numQuadPoints; ++q)
-      {  	  
+      {
 	   std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > temp1(1);
 	   temp1[0]=pspnlGammaAtomQuads[q][iAtom];
 
@@ -121,9 +121,9 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodic(std::map
 					                    psiQuads.begin()+q*numEigenVectors,
 					                    (dftPtr->eigenValues)[0],
 					                    dftPtr->fermiEnergy,
-					                    dftParameters::TVal);  
-	   
-            							    
+					                    dftParameters::TVal);
+
+
            forceEval.submit_value(F,q);
       }
       const Tensor<1,C_DIM,VectorizedArray<double> > forceContributionFnlGammaiAtomCells
@@ -151,7 +151,7 @@ void forceClass<FEOrder>::distributeForceContributionFnlGammaAtoms(const std::ma
 
       bool doesAtomIdExistOnLocallyOwnedNode=false;
       if (d_atomsForceDofs.find(std::pair<unsigned int,unsigned int>(iAtom,0))!=d_atomsForceDofs.end()){
-        doesAtomIdExistOnLocallyOwnedNode=true;		  
+        doesAtomIdExistOnLocallyOwnedNode=true;
       }
 
       std::vector<double> forceContributionFnlGammaiAtomGlobal(C_DIM);
@@ -165,17 +165,17 @@ void forceClass<FEOrder>::distributeForceContributionFnlGammaAtoms(const std::ma
 		  3,
 		  MPI_DOUBLE,
 		  MPI_SUM,
-		  mpi_communicator); 
+		  mpi_communicator);
 
       if (doesAtomIdExistOnLocallyOwnedNode){
         std::vector<types::global_dof_index> forceLocalDofIndices(C_DIM);
         for (unsigned int idim=0; idim<C_DIM; idim++)
 	    forceLocalDofIndices[idim]=d_atomsForceDofs[std::pair<unsigned int,unsigned int>(iAtom,idim)];
 #ifdef USE_COMPLEX
-        d_constraintsNoneForce.distribute_local_to_global(forceContributionFnlGammaiAtomGlobal,forceLocalDofIndices,d_configForceVectorLinFEKPoints); 	
+        d_constraintsNoneForce.distribute_local_to_global(forceContributionFnlGammaiAtomGlobal,forceLocalDofIndices,d_configForceVectorLinFEKPoints);
 #else
-        d_constraintsNoneForce.distribute_local_to_global(forceContributionFnlGammaiAtomGlobal,forceLocalDofIndices,d_configForceVectorLinFE); 
+        d_constraintsNoneForce.distribute_local_to_global(forceContributionFnlGammaiAtomGlobal,forceLocalDofIndices,d_configForceVectorLinFE);
 #endif
       }
-    }	
+    }
 }

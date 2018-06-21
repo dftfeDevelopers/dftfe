@@ -95,7 +95,7 @@ namespace dftUtils
     const unsigned int taskId = dealii::Utilities::MPI::this_mpi_process(mpi_communicator);
 
     // FIXME: any and all terminal output should be optional
-    if (taskId == 0 && dftParameters::verbosity>=2)
+    if (taskId == 0 && dftParameters::verbosity>3)
       {
         std::cout<<"Number of pools: "<<npool<<std::endl;
         std::cout<<"Pool size (number of MPI processes for domain decomposition): "<<poolSize<<std::endl;
@@ -115,25 +115,17 @@ namespace dftUtils
                    0,
                    &intrapoolcomm);
 
-    // FIXME: why do we need a duplicate?
-    MPI_Comm_dup(intrapoolcomm , &mpi_comm_replica);
-
     // FIXME: output should be optional
     for (unsigned int i=0; i<n_mpi_processes; ++i)
       {
         if (taskId==i)
 	{
-           if (dftParameters::verbosity==1)
+           if (dftParameters::verbosity>3)
              std::cout << " My global id is " << taskId << " , pool id is " << dealii::Utilities::MPI::this_mpi_process(interpoolcomm)  <<
                     " , intrapool id is " << dealii::Utilities::MPI::this_mpi_process(intrapoolcomm) << std::endl;
 	}
         MPI_Barrier(mpi_communicator);
       }
-  }
-
-  MPI_Comm &Pool::get_replica_comm()
-  {
-    return mpi_comm_replica;
   }
 
   MPI_Comm &Pool::get_interpool_comm()

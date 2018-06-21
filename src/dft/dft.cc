@@ -67,7 +67,7 @@ namespace dftfe {
 #include "mixingschemes.cc"
 #include "kohnShamEigenSolve.cc"
 #include "restart.cc"
-#include "electrostaticPRefinedEnergy.cc"
+//#include "electrostaticPRefinedEnergy.cc"
 #include "moveAtoms.cc"
 
   //
@@ -261,10 +261,7 @@ namespace dftfe {
 
     a0.resize((dftParameters::spinPolarized+1)*d_kPointWeights.size(),dftParameters::lowerEndWantedSpectrum);
     bLow.resize((dftParameters::spinPolarized+1)*d_kPointWeights.size(),0.0);
-    eigenVectors.resize((1+dftParameters::spinPolarized)*d_kPointWeights.size());
-
-    for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
-      eigenVectors[kPoint].resize(numEigenValues);
+    d_eigenVectorsFlattened.resize((1+dftParameters::spinPolarized)*d_kPointWeights.size());
 
     for(unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
       {
@@ -277,7 +274,6 @@ namespace dftfe {
 	pcout<<std::endl<<"Reading Pseudo-potential data for each atom from the list given in : " <<dftParameters::pseudoPotentialFile<<std::endl;
       }
     pseudoUtils::convert(dftParameters::pseudoPotentialFile);
-    
   }
 
   //dft pseudopotential init
@@ -379,7 +375,7 @@ namespace dftfe {
 
   //dft init
   template<unsigned int FEOrder>
-  void dftClass<FEOrder>::init(const bool usePreviousGroundStateFields)
+  void dftClass<FEOrder>::init (const unsigned int usePreviousGroundStateFields)
   {
 
     initImageChargesUpdateKPoints();
@@ -431,15 +427,6 @@ namespace dftfe {
     //initialize guesses for electron-density and wavefunctions
     //
     initElectronicFields(usePreviousGroundStateFields);
-
-    //
-    //store constraintEigen Matrix entries into STL vector
-    //
-    constraintsNoneEigenDataInfo.initialize(vChebyshev.get_partitioner(),
-					    constraintsNoneEigen);
-
-    constraintsNoneDataInfo.initialize(matrix_free_data.get_vector_partitioner(),
-				       constraintsNone);
 
     //
     //initialize pseudopotential data for both local and nonlocal part
@@ -754,7 +741,11 @@ namespace dftfe {
 	    // do more passes of chebysev filter till the check passes.
 	    // This improves the scf convergence performance.
 	    unsigned int count=1;
-	    while (maxRes>adaptiveChebysevFilterPassesTol)
+	    const double filterPassTol=(scfIter==0
+		                       && dftParameters::restartFromChk
+				       && dftParameters::chkType==2)? 1.0e-4
+		                       :adaptiveChebysevFilterPassesTol;
+	    while (maxRes>filterPassTol && count<20)
 	      {
 		for(unsigned int s=0; s<2; ++s)
 		  {
@@ -814,7 +805,7 @@ namespace dftfe {
 	    std::vector<std::vector<double>> residualNormWaveFunctionsAllkPoints;
 	    residualNormWaveFunctionsAllkPoints.resize(d_kPointWeights.size());
 	    for(unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-	      residualNormWaveFunctionsAllkPoints[kPoint].resize(eigenVectors[kPoint].size());
+	      residualNormWaveFunctionsAllkPoints[kPoint].resize(numEigenValues);
 
 	    if(dftParameters::xc_id < 4)
 	      {
@@ -871,7 +862,11 @@ namespace dftfe {
 	    // do more passes of chebysev filter till the check passes.
 	    // This improves the scf convergence performance.
 	    unsigned int count=1;
-	    while (maxRes>adaptiveChebysevFilterPassesTol)
+	    const double filterPassTol=(scfIter==0
+		                       && dftParameters::restartFromChk
+				       && dftParameters::chkType==2)? 1.0e-4
+		                       :adaptiveChebysevFilterPassesTol;
+	    while (maxRes>filterPassTol && count<20)
 	      {
 
 		for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
@@ -970,6 +965,7 @@ namespace dftfe {
 				   d_localVselfs,
 				   d_atomNodeIdToChargeMap,
 				   atomLocations.size(),
+				   lowerBoundKindex,
 				   dftParameters::verbosity>=2) :
 	  energyCalc.computeEnergySpinPolarized(dofHandler,
 						dofHandler,
@@ -994,6 +990,7 @@ namespace dftfe {
 						d_localVselfs,
 						d_atomNodeIdToChargeMap,
 						atomLocations.size(),
+						lowerBoundKindex,
 						dftParameters::verbosity>=2);
 	if (dftParameters::verbosity==1)
 	  {
@@ -1043,6 +1040,7 @@ namespace dftfe {
 			       d_localVselfs,
 			       d_atomNodeIdToChargeMap,
 			       atomLocations.size(),
+			       lowerBoundKindex,
 			       true) :
       energyCalc.computeEnergySpinPolarized(dofHandler,
 					    dofHandler,
@@ -1067,6 +1065,7 @@ namespace dftfe {
 					    d_localVselfs,
 					    d_atomNodeIdToChargeMap,
 					    atomLocations.size(),
+					    lowerBoundKindex,
 					    true);
 
     computing_timer.exit_section("scf solve");
@@ -1089,8 +1088,10 @@ namespace dftfe {
       }
 #endif
 
-    if (dftParameters::electrostaticsPRefinement)
-      computeElectrostaticEnergyPRefined();
+    //if (dftParameters::electrostaticsPRefinement)
+    //  computeElectrostaticEnergyPRefined();
+
+    computeNodalRhoFromQuadData();
 
     if (dftParameters::writeSolutionFields)
       output();
@@ -1102,10 +1103,27 @@ namespace dftfe {
   {
     DataOut<3> data_outEigen;
     data_outEigen.attach_dof_handler (dofHandlerEigen);
-    for(unsigned int i=0; i<eigenVectors[0].size(); ++i)
+    std::vector<vectorType> tempVec(1);
+    tempVec[0].reinit(d_tempEigenVec);
+    for(unsigned int i=0; i<numEigenValues; ++i)
       {
 	char buffer[100]; sprintf(buffer,"eigen%u", i);
-	data_outEigen.add_data_vector (eigenVectors[0][i], buffer);
+#ifdef USE_COMPLEX
+        vectorTools::copyFlattenedDealiiVecToSingleCompVec
+		 (d_eigenVectorsFlattened[0],
+		  numEigenValues,
+		  std::make_pair(i,i+1),
+		  localProc_dof_indicesReal,
+		  localProc_dof_indicesImag,
+		  tempVec);
+#else
+        vectorTools::copyFlattenedDealiiVecToSingleCompVec
+		 (d_eigenVectorsFlattened[0],
+		  numEigenValues,
+		  std::make_pair(i,i+1),
+		  tempVec);
+#endif
+	data_outEigen.add_data_vector (d_tempEigenVec, buffer);
       }
     data_outEigen.build_patches (C_num1DQuad<FEOrder>());
 
@@ -1119,7 +1137,7 @@ namespace dftfe {
     //compute nodal electron-density from quad data
     //
     dealii::parallel::distributed::Vector<double>  rhoNodalField;
-    matrix_free_data.initialize_dof_vector(rhoNodalField);
+    matrix_free_data.initialize_dof_vector(rhoNodalField,densityDofHandlerIndex);
     rhoNodalField=0;
     dealii::VectorTools::project<3,dealii::parallel::distributed::Vector<double>> (dealii::MappingQ1<3,3>(),
 										   dofHandler,

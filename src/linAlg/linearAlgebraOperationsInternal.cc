@@ -133,11 +133,22 @@ namespace dftfe
 					  X.get_mpi_communicator(),
 					  overlapMatrixBlock);
 
-	      for (unsigned int i = 0; i <numberVectors; ++i)
-		  for (unsigned int j = 0; j <B; ++j)
-		     if (globalToLocalRowIdMap.find(i)!=globalToLocalRowIdMap.end())
-			 if(globalToLocalColumnIdMap.find(j+ivec)!=globalToLocalColumnIdMap.end())
-			     overlapMatPar.local_el(globalToLocalRowIdMap[i], globalToLocalColumnIdMap[j+ivec])=overlapMatrixBlock[j*numberVectors+i];
+
+	      if (processGrid->is_process_active())
+		  for(unsigned int i = 0; i <B; ++i)
+	              if (globalToLocalColumnIdMap.find(i+ivec)!=globalToLocalColumnIdMap.end())
+		      {
+		          const unsigned int localColumnId=globalToLocalColumnIdMap[i+ivec];
+		          for (unsigned int j = 0; j <numberVectors; ++j)
+			  {
+			     std::map<unsigned int, unsigned int>::iterator it=
+					  globalToLocalRowIdMap.find(j);
+			     if(it!=globalToLocalRowIdMap.end())
+				 overlapMatPar.local_el(it->second,
+					                localColumnId)
+				                        =overlapMatrixBlock[i*numberVectors+j];
+			  }
+		      }
 	  }
 #endif
 	}
@@ -192,19 +203,41 @@ namespace dftfe
 
 		  if (rotationMatTranspose)
 		  {
-		      for (unsigned int i = 0; i <numberSubspaceVectors; ++i)
-			  for (unsigned int j = 0; j <BVec; ++j)
-				 if (globalToLocalRowIdMap.find(i)!=globalToLocalRowIdMap.end())
-				     if(globalToLocalColumnIdMap.find(j+jvec)!=globalToLocalColumnIdMap.end())
-					 rotationMatBlock[i*BVec+j]=rotationMatPar.local_el(globalToLocalRowIdMap[i], globalToLocalColumnIdMap[j+jvec]);
+	              if (processGrid->is_process_active())
+			  for (unsigned int i = 0; i <numberSubspaceVectors; ++i)
+			      if (globalToLocalRowIdMap.find(i)
+				      !=globalToLocalRowIdMap.end())
+			      {
+				 const unsigned int localRowId=globalToLocalRowIdMap[i];
+			         for (unsigned int j = 0; j <BVec; ++j)
+				 {
+				    std::map<unsigned int, unsigned int>::iterator it=
+					  globalToLocalColumnIdMap.find(j+jvec);
+			            if(it!=globalToLocalColumnIdMap.end())
+					     rotationMatBlock[i*BVec+j]=
+						 rotationMatPar.local_el(localRowId,
+							                 it->second);
+				 }
+			      }
 		  }
 		  else
 		  {
-		      for (unsigned int i = 0; i <numberSubspaceVectors; ++i)
-			  for (unsigned int j = 0; j <BVec; ++j)
-				 if (globalToLocalRowIdMap.find(j+jvec)!=globalToLocalRowIdMap.end())
-				     if(globalToLocalColumnIdMap.find(i)!=globalToLocalColumnIdMap.end())
-					 rotationMatBlock[i*BVec+j]=rotationMatPar.local_el(globalToLocalRowIdMap[j+jvec], globalToLocalColumnIdMap[i]);
+	              if (processGrid->is_process_active())
+			  for (unsigned int i = 0; i <numberSubspaceVectors; ++i)
+			      if(globalToLocalColumnIdMap.find(i)
+				      !=globalToLocalColumnIdMap.end())
+			      {
+				  const unsigned int localColumnId=globalToLocalColumnIdMap[i];
+			          for (unsigned int j = 0; j <BVec; ++j)
+				  {
+				     std::map<unsigned int, unsigned int>::iterator it=
+					   globalToLocalRowIdMap.find(j+jvec);
+				     if (it!=globalToLocalRowIdMap.end())
+					   rotationMatBlock[i*BVec+j]=
+					       rotationMatPar.local_el(it->second,
+						                       localColumnId);
+				  }
+			      }
                   }
 
 		  dealii::Utilities::MPI::sum(rotationMatBlock,

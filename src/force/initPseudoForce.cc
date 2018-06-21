@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,11 +13,12 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Sambit Das (2017)
+// @author Sambit Das
 //
 
 
 #include "pseudoForceUtils.cc"
+#include "nonlocalProjectorKetTimesEigenVectors.cc"
 
 //
 //Initialize rho by reading in single-atom electron-density and fit a spline

@@ -656,7 +656,7 @@ namespace dftfe{
 
 
       dealii::Utilities::MPI::sum(residualNormSquare,X.get_mpi_communicator(),residualNormSquare);
-      if(dftParameters::verbosity>=2)
+      if(dftParameters::verbosity>=3)
 	{
 	  if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
 	    std::cout<<"L-2 Norm of residue   :"<<std::endl;
@@ -665,12 +665,12 @@ namespace dftfe{
 	{
 	  residualNorm[iWave] = sqrt(residualNormSquare[iWave]);
 
-	  if(dftParameters::verbosity>=2)
+	  if(dftParameters::verbosity>=3)
 	      if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
 		std::cout<<"eigen vector "<< iWave<<": "<<residualNorm[iWave]<<std::endl;
 	}
 
-      if(dftParameters::verbosity>=2)
+      if(dftParameters::verbosity>=3)
 	if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
 	  std::cout <<std::endl;
 
@@ -720,7 +720,7 @@ namespace dftfe{
 			scalar,
 			Y);
 
-      if(dftParameters::verbosity>=2)
+      if(dftParameters::verbosity>=3)
 	{
 	  if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
 	    std::cout<<"L-2 Norm of residue   :"<<std::endl;
@@ -747,14 +747,14 @@ namespace dftfe{
 	{
 	  residualNorm[iWave] = sqrt(residualNormSquare[iWave]);
 
-	  if(dftParameters::verbosity>=2)
+	  if(dftParameters::verbosity>=3)
 	    {
 	      if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
 		std::cout<<"eigen vector "<< iWave<<": "<<residualNorm[iWave]<<std::endl;
 	    }
 	}
 
-      if(dftParameters::verbosity>=2)
+      if(dftParameters::verbosity>=3)
       {
 	if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
 	  std::cout <<std::endl;
@@ -764,7 +764,7 @@ namespace dftfe{
 #endif
 
 #ifdef USE_COMPLEX
-    void lowdenOrthogonalization(dealii::parallel::distributed::Vector<std::complex<double> > & X,
+    unsigned int lowdenOrthogonalization(dealii::parallel::distributed::Vector<std::complex<double> > & X,
 				 const unsigned int numberVectors)
     {
       if (dftParameters::orthoRROMPThreads!=0)
@@ -852,8 +852,19 @@ namespace dftfe{
        //
        std::vector<double> invFourthRootEigenValuesMatrix(numberEigenValues,0.0);
 
+       unsigned int nanFlag = 0;
        for(unsigned i = 0; i < numberEigenValues; ++i)
-	 invFourthRootEigenValuesMatrix[i] = 1.0/pow(eigenValuesOverlap[i],1.0/4);
+	{
+	  invFourthRootEigenValuesMatrix[i] = 1.0/pow(eigenValuesOverlap[i],1.0/4);
+	  if(std::isnan(invFourthRootEigenValuesMatrix[i]) || eigenValuesOverlap[i]<1e-14)
+	    {
+	      nanFlag = 1;
+	      break;
+	    }
+	}
+       nanFlag=dealii::Utilities::MPI::max(nanFlag,X.get_mpi_communicator());
+       if (dftParameters::enableSwitchToGS && nanFlag==1)
+          return nanFlag;
 
        //
        //Q*D^{-1/4} and note that "Q" is stored in overlapMatrix after calling "zheevd"
@@ -923,9 +934,11 @@ namespace dftfe{
 
        if (dftParameters::orthoRROMPThreads!=0)
 	  omp_set_num_threads(1);
+
+       return 0;
     }
 #else
-    void lowdenOrthogonalization(dealii::parallel::distributed::Vector<double> & X,
+    unsigned int lowdenOrthogonalization(dealii::parallel::distributed::Vector<double> & X,
 				 const unsigned int numberVectors)
     {
       if (dftParameters::orthoRROMPThreads!=0)
@@ -939,7 +952,8 @@ namespace dftfe{
       dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
 
       dealii::TimerOutput computing_timer(pcout,
-					  dftParameters::reproducible_output ? dealii::TimerOutput::never : dealii::TimerOutput::summary,
+					  dftParameters::reproducible_output ||
+					  dftParameters::verbosity<2? dealii::TimerOutput::never : dealii::TimerOutput::summary,
 					  dealii::TimerOutput::wall_times);
 
 
@@ -992,16 +1006,20 @@ namespace dftfe{
       for(unsigned i = 0; i < numberEigenValues; ++i)
 	{
 	  invFourthRootEigenValuesMatrix[i] = 1.0/pow(eigenValuesOverlap[i],1.0/4);
-	  if(std::isnan(invFourthRootEigenValuesMatrix[i]))
+	  if(std::isnan(invFourthRootEigenValuesMatrix[i]) || eigenValuesOverlap[i]<1e-14)
 	    {
 	      nanFlag = 1;
-	      std::cout<<"Nan obtained in proc: "<<dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)<<" and switching to more robust dsyevr for eigen decomposition "<<std::endl;
 	      break;
 	    }
 	}
 
+      nanFlag=dealii::Utilities::MPI::max(nanFlag,X.get_mpi_communicator());
+      if (dftParameters::enableSwitchToGS && nanFlag==1)
+          return nanFlag;
+
       if(nanFlag == 1)
 	{
+	  std::cout<<"Nan obtained: switching to more robust dsyevr for eigen decomposition "<<std::endl;
 	  std::vector<double> overlapMatrixEigenVectors(numberVectors*numberVectors,0.0);
 	  eigenValuesOverlap.clear();
 	  eigenValuesOverlap.resize(numberVectors);
@@ -1024,7 +1042,7 @@ namespace dftfe{
 	  for(unsigned i = 0; i < numberEigenValues; ++i)
 	    {
 	      invFourthRootEigenValuesMatrix[i] = 1.0/pow(eigenValuesOverlap[i],(1.0/4.0));
-	      AssertThrow(!std::isnan(invFourthRootEigenValuesMatrix[i]),dealii::ExcMessage("Eigen values of overlap matrix during Lowden Orthonormalization are very small and close to zero or negative"));
+	      AssertThrow(!std::isnan(invFourthRootEigenValuesMatrix[i]),dealii::ExcMessage("Eigen values of overlap matrix during Lowden Orthonormalization are close to zero."));
 	    }
 	}
 
@@ -1099,6 +1117,8 @@ namespace dftfe{
 
        if (dftParameters::orthoRROMPThreads!=0)
 	  omp_set_num_threads(1);
+
+       return 0;
     }
 #endif
 
@@ -1116,7 +1136,7 @@ namespace dftfe{
     template void gramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<dataTypes::number> &,
 					       const unsigned int);
 
-    template void pseudoGramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<dataTypes::number> &,
+    template unsigned int pseudoGramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<dataTypes::number> &,
 					             const unsigned int);
 
     template void rayleighRitz(operatorDFTClass  & operatorMatrix,
