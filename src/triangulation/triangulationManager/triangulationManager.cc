@@ -33,12 +33,15 @@ namespace dftfe {
 //
 //constructor
 //
-triangulationManager::triangulationManager(const MPI_Comm &mpi_comm_replica,const MPI_Comm &interpoolcomm):
+triangulationManager::triangulationManager(const MPI_Comm &mpi_comm_replica,
+	                                   const MPI_Comm &interpoolcomm,
+					   const MPI_Comm &interbandgroup_comm):
   d_parallelTriangulationUnmoved(mpi_comm_replica),
   d_parallelTriangulationUnmovedPrevious(mpi_comm_replica),
   d_parallelTriangulationMoved(mpi_comm_replica),
   mpi_communicator (mpi_comm_replica),
   interpoolcomm(interpoolcomm),
+  interBandGroupComm(interbandgroup_comm),
   d_serialTriangulationUnmoved(MPI_COMM_SELF),
   d_serialTriangulationUnmovedPrevious(MPI_COMM_SELF),
   this_mpi_process (Utilities::MPI::this_mpi_process(mpi_comm_replica)),

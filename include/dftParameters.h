@@ -72,6 +72,7 @@ namespace dftfe {
       extern unsigned int orthoRRWaveFuncBlockSize;
       extern unsigned int subspaceRotDofsBlockSize;
       extern bool enableSwitchToGS;
+      extern unsigned int nbandGrps;
 
       /**
        * Declare parameters.

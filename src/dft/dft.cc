@@ -73,7 +73,9 @@ namespace dftfe {
   //dft constructor
   //
   template<unsigned int FEOrder>
-  dftClass<FEOrder>::dftClass(const MPI_Comm &mpi_comm_replica,const MPI_Comm &_interpoolcomm):
+  dftClass<FEOrder>::dftClass(const MPI_Comm &mpi_comm_replica,
+	                      const MPI_Comm &_interpoolcomm,
+			      const MPI_Comm & _interBandGroupComm):
     FE (FE_Q<3>(QGaussLobatto<1>(FEOrder+1)), 1),
 #ifdef USE_COMPLEX
     FEEigen (FE_Q<3>(QGaussLobatto<1>(FEOrder+1)), 2),
@@ -82,11 +84,12 @@ namespace dftfe {
 #endif
     mpi_communicator (mpi_comm_replica),
     interpoolcomm (_interpoolcomm),
+    interBandGroupComm(_interBandGroupComm),
     n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_comm_replica)),
     this_mpi_process (Utilities::MPI::this_mpi_process(mpi_comm_replica)),
     numElectrons(0),
     numLevels(0),
-    d_mesh(mpi_comm_replica,_interpoolcomm),
+    d_mesh(mpi_comm_replica,_interpoolcomm,_interBandGroupComm),
     d_affineTransformMesh(mpi_comm_replica),
     d_gaussianMovePar(mpi_comm_replica),
     d_vselfBinsManager(mpi_comm_replica),
@@ -177,10 +180,6 @@ namespace dftfe {
   template<unsigned int FEOrder>
   void dftClass<FEOrder>::set()
   {
-    if (dftParameters::verbosity>=2)
-      pcout << std::endl << "number of MPI processes: "
-	    << Utilities::MPI::n_mpi_processes(mpi_communicator)
-	    << std::endl;
     //
     //read coordinates
     //
@@ -516,7 +515,7 @@ namespace dftfe {
 
     computing_timer.exit_section("vself solve");
 
-    energyCalculator energyCalc(mpi_communicator, interpoolcomm);
+    energyCalculator energyCalc(mpi_communicator, interpoolcomm,interBandGroupComm);
 
 
 

@@ -1,6 +1,10 @@
 set VERBOSITY= 0
 set REPRODUCIBLE OUTPUT=true
 
+subsection Parallelization
+  set NPKPT=2
+end
+
 subsection Geometry
   set ATOMIC COORDINATES FILE = @SOURCE_DIR@/hcpMgPrim_coordinates.inp
   set DOMAIN BOUNDING VECTORS FILE = @SOURCE_DIR@/hcpMgPrim_domainBoundingVectors.inp
@@ -47,7 +51,6 @@ subsection Brillouin zone k point sampling options
 
   set USE GROUP SYMMETRY =false
   set USE TIME REVERSAL SYMMETRY =false
-  set NUMBER OF POOLS = 2
 end
 
 

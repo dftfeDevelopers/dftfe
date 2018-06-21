@@ -45,10 +45,13 @@ namespace dftfe  {
      public:
     /** @brief Constructor.
      *
-     *  @param mpi_comm_replica mpi_communicator of the current pool
-     *  @param interpoolcomm mpi_communicator across pools (required to synchronize mesh generation)
+     * @param mpi_comm_replica mpi_communicator of the current pool
+     * @param interpool_comm mpi interpool communicator over k points
+     * @param interBandGroupComm mpi interpool communicator over band groups
      */
-      triangulationManager(const MPI_Comm &mpi_comm_replica,const MPI_Comm &interpoolcomm);
+      triangulationManager(const MPI_Comm &mpi_comm_replica,
+	                   const MPI_Comm &interpoolcomm,
+			   const MPI_Comm &interBandGroupComm);
 
 
       /**
@@ -264,6 +267,7 @@ namespace dftfe  {
       //
       const MPI_Comm mpi_communicator;
       const MPI_Comm interpoolcomm;
+      const MPI_Comm interBandGroupComm;
       const unsigned int this_mpi_process;
       const unsigned int n_mpi_processes;
       dealii::ConditionalOStream   pcout;

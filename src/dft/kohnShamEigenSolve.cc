@@ -111,7 +111,8 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 				d_tempEigenVec,
 				numEigenValues,
   				eigenValuesTemp,
-				residualNormWaveFunctions);
+				residualNormWaveFunctions,
+				interBandGroupComm);
 
   if(dftParameters::verbosity >= 4)
     {
@@ -183,11 +184,11 @@ void dftClass<FEOrder>::computeResidualNorm(const std::vector<double> & eigenVal
       (PSI[i]).add(-eigenValuesTemp[i],X[i]) ;
       const double resNorm= (PSI[i]).l2_norm();
       residualNorm[i]=resNorm;
-      
+
       if (dftParameters::verbosity>=3)
 	pcout<<"eigen vector "<< i<<": "<<resNorm<<std::endl;
     }
-  if (dftParameters::verbosity>=3)  
+  if (dftParameters::verbosity>=3)
     pcout <<std::endl;
 
 
