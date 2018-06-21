@@ -59,9 +59,9 @@ void dftClass<FEOrder>::initLocalPseudoPotential()
       x.setcontent(numRows,&xData[0]);
       alglib::real_1d_array y;
       y.setcontent(numRows,&yData[0]);
-      alglib::ae_int_t bound_type_l = 0;
+      alglib::ae_int_t bound_type_l = 2;
       alglib::ae_int_t bound_type_r = 1;
-      const double slopeL= (pseudoPotentialData[*it][1][1]-pseudoPotentialData[*it][0][1])/(pseudoPotentialData[*it][1][0]-pseudoPotentialData[*it][0][0]);
+      const double slopeL= 0;//(pseudoPotentialData[*it][1][1]-pseudoPotentialData[*it][0][1])/(pseudoPotentialData[*it][1][0]-pseudoPotentialData[*it][0][0]);
       const double slopeR=-pseudoPotentialData[*it][numRows-1][1]/pseudoPotentialData[*it][numRows-1][0];
       spline1dbuildcubic(x, y, numRows, bound_type_l, slopeL, bound_type_r, slopeR, pseudoSpline[*it]);
       outerMostPointPseudo[*it]= xData[numRows-1];
@@ -69,7 +69,7 @@ void dftClass<FEOrder>::initLocalPseudoPotential()
       if(outerMostPointPseudo[*it] < d_pspTail)
 	 d_pspTail = outerMostPointPseudo[*it] ;
     }
-   if (dftParameters::verbosity>=2)
+   if(dftParameters::verbosity>=2)
       pcout << " d_pspTail adjusted to " << d_pspTail << std::endl ;
   //
   //Initialize pseudopotential

@@ -272,7 +272,10 @@ namespace dftfe {
       }
 
     //convert pseudopotential files in upf format to dftfe format
-    pcout<<std::endl<<"Reading Pseudo-potential data for each atom from the list given in : " <<dftParameters::pseudoPotentialFile<<std::endl;
+    if(dftParameters::verbosity>=1)
+      {
+	pcout<<std::endl<<"Reading Pseudo-potential data for each atom from the list given in : " <<dftParameters::pseudoPotentialFile<<std::endl;
+      }
     pseudoUtils::convert(dftParameters::pseudoPotentialFile);
     
   }

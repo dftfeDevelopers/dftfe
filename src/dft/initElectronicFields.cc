@@ -23,10 +23,10 @@ void dftClass<FEOrder>::initElectronicFields(const bool usePreviousGroundStateFi
   TimerOutput::Scope scope (computing_timer,"init electronic fields");
 
   //reading data from pseudopotential files and fitting splines
-  if(dftParameters::pseudoProjector == 2)
+  //if(dftParameters::pseudoProjector == 2)
     initNonLocalPseudoPotential_OV();
-  else
-    initNonLocalPseudoPotential();
+    //else
+    //initNonLocalPseudoPotential();
 
   //initialize electrostatics fields
   matrix_free_data.initialize_dof_vector(d_phiTotRhoIn,phiTotDofHandlerIndex);

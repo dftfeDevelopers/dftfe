@@ -35,7 +35,7 @@ end
 
 subsection DFT functional related parameters
   set PSEUDOPOTENTIAL CALCULATION =true
-  set PSEUDOPOTENTIAL TYPE = 1
+  set PSEUDOPOTENTIAL FILE NAMES LIST = pseudokb.inp
   set EXCHANGE CORRELATION TYPE = 1
 end
 

@@ -137,14 +137,14 @@ void forceClass<FEOrder>::initPseudoData(){
   if(dftParameters::isPseudopotential)
     {
       initLocalPseudoPotentialForce();
-      if (dftParameters::pseudoProjector==2)
-      {
+      //if (dftParameters::pseudoProjector==2)
+      //{
         computeElementalNonLocalPseudoOVDataForce();
-      }
-      else
-      {
-        computeElementalNonLocalPseudoDataForce();
-      }
+	//}
+	//else
+	//{
+        //computeElementalNonLocalPseudoDataForce();
+	//}
     }
 }
 

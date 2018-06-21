@@ -37,9 +37,9 @@ void dftClass<FEOrder>::loadPSIFiles(unsigned int Z,
   char psiFile[256];
 
   if(dftParameters::isPseudopotential)
-    if(dftParameters::pseudoProjector==2)
-      sprintf(psiFile, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/singleAtomData/psi%u%u.inp", DFT_PATH, Z, n, l);
-    else
+    //if(dftParameters::pseudoProjector==2)
+    //sprintf(psiFile, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/singleAtomData/psi%u%u.inp", DFT_PATH, Z, n, l);
+    //else
       sprintf(psiFile, "%s/data/electronicStructure/pseudoPotential/z%u/singleAtomData/psi%u%u.inp", DFT_PATH, Z, n, l);
 
   else
