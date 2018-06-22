@@ -80,6 +80,42 @@ namespace dftfe
 
 
 	template<typename T>
+        void sumAcrossInterCommScaLAPACKMat(const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+		                            dealii::ScaLAPACKMatrix<T> & mat,
+				            const MPI_Comm &interComm)
+	{
+#ifdef USE_COMPLEX
+	  AssertThrow(false,dftUtils::ExcNotImplementedYet());
+#else
+  	  //sum across all inter communicator groups
+	  //FIXME: It would be faster to do this all reduce operation in one go over all local elements
+	  //without copying into a temp vector
+	  //This which might require writing a function inside dealii
+
+	  if (processGrid->is_process_active() &&
+	      dealii::Utilities::MPI::n_mpi_processes(interComm)>1)
+	  {
+		const unsigned int local_m=mat.local_m();
+		const unsigned int local_n=mat.local_n();
+		std::vector<dataTypes::number> temp(local_n*local_m,0.0);
+
+		for (unsigned int i = 0; i < local_m; ++i)
+		    for (unsigned int j = 0; j < local_n; ++j)
+		       temp[i*local_m+j]= mat.local_el(i,j);
+
+		dealii::Utilities::MPI::sum(temp,
+					    interComm,
+					    temp);
+
+		 for (unsigned int i = 0; i < local_m; ++i)
+		     for (unsigned int j = 0; j < local_n; ++j)
+			   mat.local_el(i,j)
+			     =temp[i*local_n+j];
+	   }
+#endif
+	}
+
+	template<typename T>
 	void fillParallelOverlapMatrix(const dealii::parallel::distributed::Vector<T> & X,
 		                       const unsigned int numberVectors,
 		                       const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
@@ -168,15 +204,10 @@ namespace dftfe
 		}//band parallelization
 	  }//block loop
 
-	  //accumulate from all band groups (only one band group has non-zero value for a given entry)
-	  //FIXME: It would be faster to do this all reduce operation in one go over all local elements
-	  //, which might require writing a function inside dealii
-	  if (processGrid->is_process_active() && numberBandGroups>1)
-	     for (unsigned int i = 0; i < overlapMatPar.local_n(); ++i)
-		 for (unsigned int j = 0; j < overlapMatPar.local_m(); ++j)
-			 overlapMatPar.local_el(j,i)
-			 =dealii::Utilities::MPI::sum(overlapMatPar.local_el(j,i),
-						      interBandGroupComm);
+          linearAlgebraOperations::internal::sumAcrossInterCommScaLAPACKMat
+	                                          (processGrid,
+						   overlapMatPar,
+						   interBandGroupComm);
 #endif
 	}
 
@@ -350,6 +381,10 @@ namespace dftfe
 			      const dealii::ScaLAPACKMatrix<dataTypes::number> & rotationMatPar,
 			      const bool rotationMatTranpose);
 
+        template
+	void sumAcrossInterCommScaLAPACKMat(const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+		                            dealii::ScaLAPACKMatrix<dataTypes::number> & mat,
+				            const MPI_Comm &interComm);
 #endif
     }
   }

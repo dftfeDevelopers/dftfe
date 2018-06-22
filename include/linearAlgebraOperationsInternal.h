@@ -49,6 +49,16 @@ namespace dftfe
 				                   std::map<unsigned int, unsigned int> & globalToLocalRowIdMap,
 					           std::map<unsigned int, unsigned int> & globalToLocalColumnIdMap);
 
+
+	/** @brief Mpi all reduce of ScaLAPACKMat across a given inter communicator.
+	 * Used for band parallelization.
+	 *
+	 */
+        template<typename T>
+	void sumAcrossInterCommScaLAPACKMat(const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+		                            dealii::ScaLAPACKMatrix<T> & mat,
+				            const MPI_Comm &interComm);
+
 	/** @brief Computes S=X^{T}*X and stores in a parallel ScaLAPACK matrix.
 	 * X^{T} is the subspaceVectorsArray in the column major format. S is the
 	 * overlapMatPar.

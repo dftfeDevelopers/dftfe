@@ -1059,15 +1059,9 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 
     }//block loop
 
-    //accumulate from all band groups (only one band group has non-zero value for a given entry)
-    //FIXME: It would be faster to do this all reduce operation in one go over all local elements
-    //, which might require writing a function inside dealii
-    if (processGrid->is_process_active() && numberBandGroups>1)
-         for (unsigned int i = 0; i < projHamPar.local_n(); ++i)
-             for (unsigned int j = 0; j < projHamPar.local_m(); ++j)
-		     projHamPar.local_el(j,i)
-		     =dealii::Utilities::MPI::sum(projHamPar.local_el(j,i),
-				                  dftPtr->interBandGroupComm);
+    linearAlgebraOperations::internal::sumAcrossInterCommScaLAPACKMat(processGrid,
+						                      projHamPar,
+						                      dftPtr->interBandGroupComm);
 #endif
   }
 #endif
