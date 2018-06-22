@@ -1144,6 +1144,7 @@ namespace dftfe {
     dftUtils::writeDataVTUParallelLowestPoolId(data_outEigen,
 					       mpi_communicator,
 					       interpoolcomm,
+					       interBandGroupComm,
 					       std::string("eigen"));
 
     //
@@ -1171,6 +1172,7 @@ namespace dftfe {
     dftUtils::writeDataVTUParallelLowestPoolId(dataOutRho,
 					       mpi_communicator,
 					       interpoolcomm,
+					       interBandGroupComm,
 					       std::string("rhoField"));
 
   }

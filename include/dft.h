@@ -296,12 +296,13 @@ namespace dftfe {
       void computeNodalRhoFromQuadData();
 
       /**
-       * sums rho cell quadratrure data from all kpoint pools
+       * sums rho cell quadratrure data from  inter communicator
        */
-      void sumRhoDataKPointPools(std::map<dealii::CellId, std::vector<double> > * rhoValues,
-	                         std::map<dealii::CellId, std::vector<double> > * gradRhoValues,
-				 std::map<dealii::CellId, std::vector<double> > * rhoValuesSpinPolarized,
-				 std::map<dealii::CellId, std::vector<double> > * gradRhoValuesSpinPolarized);
+      void sumRhoData(std::map<dealii::CellId, std::vector<double> > * rhoValues,
+	              std::map<dealii::CellId, std::vector<double> > * gradRhoValues,
+	              std::map<dealii::CellId, std::vector<double> > * rhoValuesSpinPolarized,
+		      std::map<dealii::CellId, std::vector<double> > * gradRhoValuesSpinPolarized,
+		      const MPI_Comm &interComm);
 
       /**
        * resize and allocate table storage for rho cell quadratrue data

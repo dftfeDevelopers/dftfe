@@ -115,13 +115,16 @@ namespace dftfe {
 				 (const unsigned int feOrder,
 				  const unsigned int nComponents,
 				  const std::vector< const dealii::parallel::distributed::Vector<double> * > & solutionVectors,
-	                          const MPI_Comm & interpoolComm)
+	                          const MPI_Comm & interpoolComm,
+				  const MPI_Comm &interBandGroupComm)
     {
 
       const unsigned int poolId=dealii::Utilities::MPI::this_mpi_process(interpoolComm);
+      const unsigned int bandGroupId=dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
       const unsigned int minPoolId=dealii::Utilities::MPI::min(poolId,interpoolComm);
+      const unsigned int minBandGroupId=dealii::Utilities::MPI::min(bandGroupId,interBandGroupComm);
 
-      if (poolId==minPoolId)
+      if (poolId==minPoolId && bandGroupId==minBandGroupId)
       {
          dealii::FESystem<3> FE(dealii::FE_Q<3>(dealii::QGaussLobatto<1>(feOrder+1)), nComponents); //linear shape function
          DoFHandler<3> dofHandler (d_parallelTriangulationUnmoved);
@@ -199,13 +202,16 @@ namespace dftfe {
     void
     triangulationManager::saveTriangulationsCellQuadData
 	      (const std::vector<const std::map<dealii::CellId, std::vector<double> > *> & cellQuadDataContainerIn,
-	       const MPI_Comm & interpoolComm)
+	       const MPI_Comm & interpoolComm,
+	       const MPI_Comm &interBandGroupComm)
     {
 
       const unsigned int poolId=dealii::Utilities::MPI::this_mpi_process(interpoolComm);
+      const unsigned int bandGroupId=dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
       const unsigned int minPoolId=dealii::Utilities::MPI::min(poolId,interpoolComm);
+      const unsigned int minBandGroupId=dealii::Utilities::MPI::min(bandGroupId,interBandGroupComm);
 
-      if (poolId==minPoolId)
+      if (poolId==minPoolId && bandGroupId==minBandGroupId)
       {
 	 const unsigned int containerSize=cellQuadDataContainerIn.size();
          AssertThrow(containerSize!=0,ExcInternalError());

@@ -74,6 +74,7 @@ namespace dftfe {
       extern bool enableSwitchToGS;
       extern unsigned int nbandGrps;
       extern bool computeEnergyEverySCF;
+      extern unsigned int scalapackParalProcs;
 
       /**
        * Declare parameters.
