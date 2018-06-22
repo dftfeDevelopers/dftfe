@@ -100,7 +100,7 @@ namespace dftfe
 	      if (verbosity>=2)
 		{
 		  scout<<" Printing KS eigen values (spin split if this is a spin polarized calculation ) and fractional occupancies for kPoint " << (lowerBoundKindex + kPoint) << std::endl;
-	          scout << "  " << std::endl ; 
+	          scout << "  " << std::endl ;
 		}
 	      for (unsigned int i=0; i<numEigenValues; i++)
 		{
@@ -112,7 +112,7 @@ namespace dftfe
 		  bandEnergyLocal+= (2-spinPolarized)*partialOccupancy*kPointWeights[kPoint]*eigenValues[kPoint][i];
 		  //
 		  if (spinPolarized==0)
-	 	     if (verbosity>=2) 
+	 	     if (verbosity>=2)
 		        scout << i<<" : "<< eigenValues[kPoint][i] << "       " << partialOccupancy<<std::endl;
 		  //
 		  if (spinPolarized==1){
@@ -125,19 +125,19 @@ namespace dftfe
 		  //
 		  if (verbosity>=2)
 			scout<< i<<" : "<< eigenValues[kPoint][i] << "       " << eigenValues[kPoint][i] << "       " <<
-					partialOccupancy << "       " << partialOccupancy2 << std::endl;		  
+					partialOccupancy << "       " << partialOccupancy2 << std::endl;
 		 }
-	       }  // eigen state 
+	       }  // eigen state
 	       //
 	       if (verbosity>=2)
-		 scout << "======================================================================================================================================================================" << std::endl ;
+		 scout << "============================================================================================================" << std::endl ;
 	   }  // kpoint
 	   } // is it current pool
 	   //
 	   MPI_Barrier(interpoolcomm) ;
 	   //
 	   } // loop over pool
-	  
+
 	   return bandEnergyLocal;
 	}
 
@@ -193,9 +193,12 @@ namespace dftfe
 
     }
 
-    energyCalculator::energyCalculator(const MPI_Comm &mpi_comm,const MPI_Comm &interpool_comm):
+    energyCalculator::energyCalculator(const MPI_Comm &mpi_comm,
+	                               const MPI_Comm &interpool_comm,
+				       const MPI_Comm & interbandgroup_comm):
       mpi_communicator (mpi_comm),
       interpoolcomm(interpool_comm),
+      interBandGroupComm(interbandgroup_comm),
       pcout (std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
     {
 
@@ -235,7 +238,9 @@ namespace dftfe
       std::vector<double> cellPhiTotRhoIn(num_quad_points_electronic);
       std::vector<double> cellPhiTotRhoOut(num_quad_points_electrostatic);
 
-      const dealii::ConditionalOStream scout (std::cout, (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) == 0)) ;
+      const dealii::ConditionalOStream scout (std::cout,
+	         (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) == 0 &&
+		  dealii::Utilities::MPI::this_mpi_process(interBandGroupComm)==0)) ;
       const double bandEnergy=
 	  dealii::Utilities::MPI::sum(internal::localBandEnergy(eigenValues,
 			                              kPointWeights,

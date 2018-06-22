@@ -8,9 +8,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// ---------------------------------------------------------------------
-//
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -23,7 +21,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Sambit Das (2018), Denis Davydov (2018)
+// @author Sambit Das, Denis Davydov
 //
 
 
@@ -90,15 +88,15 @@ namespace dftUtils
   {
     const unsigned int n_mpi_processes = dealii::Utilities::MPI::n_mpi_processes(mpi_communicator);
     AssertThrow(n_mpi_processes % npool == 0,
-                dealii::ExcMessage("Number of mpi processes must be a multiple of NUMBER OF POOLS"));
+                dealii::ExcMessage("DFT-FE Error: Total number of mpi processes must be a multiple of npool. Please check that total number of mpi processes is a multiple of NPKPT*NPBAND."));
     const unsigned int poolSize= n_mpi_processes/npool;
     const unsigned int taskId = dealii::Utilities::MPI::this_mpi_process(mpi_communicator);
 
     // FIXME: any and all terminal output should be optional
-    if (taskId == 0 && dftParameters::verbosity>3)
+    if (taskId == 0 && dftParameters::verbosity>4)
       {
         std::cout<<"Number of pools: "<<npool<<std::endl;
-        std::cout<<"Pool size (number of MPI processes for domain decomposition): "<<poolSize<<std::endl;
+        std::cout<<"Pool size: "<<poolSize<<std::endl;
       }
     MPI_Barrier(mpi_communicator);
 
@@ -120,7 +118,7 @@ namespace dftUtils
       {
         if (taskId==i)
 	{
-           if (dftParameters::verbosity>3)
+           if (dftParameters::verbosity>4)
              std::cout << " My global id is " << taskId << " , pool id is " << dealii::Utilities::MPI::this_mpi_process(interpoolcomm)  <<
                     " , intrapool id is " << dealii::Utilities::MPI::this_mpi_process(intrapoolcomm) << std::endl;
 	}

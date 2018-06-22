@@ -61,7 +61,8 @@ namespace dftParameters
   unsigned int orthoRRWaveFuncBlockSize=200;
   unsigned int subspaceRotDofsBlockSize=800;
   bool enableSwitchToGS=true;
-
+  unsigned int nbandGrps=1;
+  bool computeEnergyEverySCF=true;
 
   void declare_parameters(ParameterHandler &prm)
   {
@@ -76,6 +77,18 @@ namespace dftParameters
     prm.declare_entry("WRITE SOLUTION FIELDS", "false",
                       Patterns::Bool(),
                       "[Standard] Writes wavefunction and electron-density solution fields to .vtu files for visualization purposes. Default: false.");
+
+    prm.enter_subsection ("Parallelization");
+    {
+	prm.declare_entry("NPKPT", "1",
+			  Patterns::Integer(1),
+			  "[Standard] Number of pools of MPI processors across which the work load of the irreducible k-points is parallelised. NPKPT times NPBAND must be a divisor of total number of MPI tasks. Further, NPKPT must be less than or equal to the number of irreducible k-points.");
+
+	prm.declare_entry("NPBAND", "1",
+			   Patterns::Integer(1),
+			   "[Standard] Number of pools of MPI processors across which the work load of the bands is parallelised. NPKPT times NPBAND must be a divisor of total number of MPI tasks. Further, NPBAND must be less than or equal to NUMBER OF KOHN-SHAM WAVEFUNCTIONS.");
+    }
+    prm.leave_subsection ();
 
     prm.enter_subsection ("Checkpointing and Restart");
     {
@@ -252,9 +265,6 @@ namespace dftParameters
 			  Patterns::Bool(),
 			  "[Standard] Flag to control usage of time reversal symmetry.");
 
-	prm.declare_entry("NUMBER OF POOLS", "1",
-			  Patterns::Integer(1),
-			  "[Standard] Number of pools the irreducible k-points to be split on should be a divisor of total number of procs and be less than or equal to the number of irreducible k-points.");
     }
     prm.leave_subsection ();
 
@@ -309,6 +319,10 @@ namespace dftParameters
 	prm.declare_entry("STARTING WFC","RANDOM",
 			  Patterns::Selection("ATOMIC|RANDOM"),
 			  "[Standard] Sets the type of the starting Kohn-Sham wavefunctions guess: Atomic(Superposition of single atom atomic orbitals. Wavefunctions for which atomic orbitals are not available, random wavefunctions are taken. Currently, atomic orbitals data is not available for all atoms.), Random(The starting guess for all wavefunctions are taken to be random). Default: RANDOM.");
+
+	prm.declare_entry("COMPUTE ENERGY EACH ITER", "true",
+			  Patterns::Bool(),
+			  "[Standard] Boolean parameter specifying whether to compute the total energy at the end of every scf. Setting it to false can lead to some time savings.");
 
 	prm.enter_subsection ("Eigen-solver/Chebyshev solver related parameters");
 	{
@@ -366,7 +380,6 @@ namespace dftParameters
 	    prm.declare_entry("SUBSPACE ROT DOFS BLOCK SIZE", "800",
 			       Patterns::Integer(1),
 			       "[Developer] This block size is used for memory optimization purposes in subspace rotation step in Pseudo-Gram-Schmidt orthogonalization and Rayleigh-Ritz steps. This optimization is only activated if dealii library is compiled with ScaLAPACK. Default value is 800.");
-
 	}
 	prm.leave_subsection ();
     }
@@ -395,6 +408,13 @@ namespace dftParameters
     dftParameters::verbosity                     = prm.get_integer("VERBOSITY");
     dftParameters::reproducible_output           = prm.get_bool("REPRODUCIBLE OUTPUT");
     dftParameters::writeSolutionFields           = prm.get_bool("WRITE SOLUTION FIELDS");
+
+    prm.enter_subsection ("Parallelization");
+    {
+	dftParameters::npool             = prm.get_integer("NPKPT");
+	dftParameters::nbandGrps         = prm.get_integer("NPBAND");
+    }
+    prm.leave_subsection ();
 
     prm.enter_subsection ("Checkpointing and Restart");
     {
@@ -464,7 +484,6 @@ namespace dftParameters
 
 	dftParameters::useSymm                  = prm.get_bool("USE GROUP SYMMETRY");
 	dftParameters::timeReversal                   = prm.get_bool("USE TIME REVERSAL SYMMETRY");
-	dftParameters::npool             = prm.get_integer("NUMBER OF POOLS");
 	dftParameters::kPointDataFile                = prm.get("kPOINT RULE FILE");
     }
     prm.leave_subsection ();
@@ -486,7 +505,8 @@ namespace dftParameters
 	dftParameters::selfConsistentSolverTolerance = prm.get_double("TOLERANCE");
 	dftParameters::mixingHistory                 = prm.get_integer("ANDERSON SCHEME MIXING HISTORY");
 	dftParameters::mixingParameter               = prm.get_double("ANDERSON SCHEME MIXING PARAMETER");
-        dftParameters::startingWFCType        = prm.get("STARTING WFC");
+        dftParameters::startingWFCType               = prm.get("STARTING WFC");
+	dftParameters::computeEnergyEverySCF         = prm.get_bool("COMPUTE ENERGY EACH ITER");
 
 	prm.enter_subsection ("Eigen-solver/Chebyshev solver related parameters");
 	{
@@ -532,7 +552,7 @@ namespace dftParameters
 
     if (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0 &&  dftParameters::verbosity>=1)
     {
-      prm.print_parameters (std::cout, ParameterHandler::Text);
+      prm.print_parameters (std::cout, ParameterHandler::ShortText);
     }
 #ifdef USE_COMPLEX
     if (dftParameters::electrostaticsPRefinement)
@@ -553,6 +573,9 @@ namespace dftParameters
     AssertThrow(!(dftParameters::chkType==2 && (dftParameters::isIonOpt || dftParameters::isCellOpt)),ExcMessage("DFT-FE Error: CHK TYPE=2 cannot be used if geometry optimization is being performed."));
 
     AssertThrow(!(dftParameters::chkType==1 && (dftParameters::isIonOpt && dftParameters::isCellOpt)),ExcMessage("DFT-FE Error: CHK TYPE=1 cannot be used if both ION OPT and CELL OPT are set to true."));
+
+    AssertThrow(dftParameters::nbandGrps<=dftParameters::numberEigenValues
+	    ,ExcMessage("DFT-FE Error: NPBAND is greater than NUMBER OF KOHN-SHAM WAVEFUNCTIONS."));
 
     if (dftParameters::electrostaticsPRefinement)
        AssertThrow(false,ExcMessage("DFT-FE Error: Implemenation of this feature is not completed yet."));

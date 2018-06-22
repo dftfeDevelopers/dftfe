@@ -16,6 +16,28 @@
 
 namespace dftfe {
 
+    namespace internal
+    {
+	void checkTriangulationEqualityAcrossProcessorPools
+			      (const parallel::distributed::Triangulation<3>& parallelTriangulation,
+			       const unsigned int numLocallyOwnedCells,
+			       const MPI_Comm & interpool_comm)
+	{
+
+	      const unsigned int numberGlobalCellsParallelMinPools =
+			       Utilities::MPI::min(parallelTriangulation.n_global_active_cells(), interpool_comm);
+	      const unsigned int numberGlobalCellsParallelMaxPools =
+			       Utilities::MPI::max(parallelTriangulation.n_global_active_cells(), interpool_comm);
+	      AssertThrow(numberGlobalCellsParallelMinPools==numberGlobalCellsParallelMaxPools,ExcMessage("Number of global cells are different across pools."));
+
+	      const unsigned int numberLocalCellsMinPools =
+			       Utilities::MPI::min(numLocallyOwnedCells, interpool_comm);
+	      const unsigned int numberLocalCellsMaxPools =
+			       Utilities::MPI::max(numLocallyOwnedCells, interpool_comm);
+	      AssertThrow(numberLocalCellsMinPools==numberLocalCellsMaxPools,ExcMessage("Number of local cells are different across pools or in other words the physical partitions don't have the same ordering across pools."));
+	}
+    }
+
     void triangulationManager::generateCoarseMesh(parallel::distributed::Triangulation<3>& parallelTriangulation)
     {
 	  //
@@ -259,17 +281,12 @@ namespace dftfe {
 	    pcout<< "Adaptivity summary: "<<std::endl<<" numCells: "<<parallelTriangulation.n_global_active_cells()<<", num refinement levels: "<<numLevels<<", h_min: "<<minElemLength<<std::endl;
 	  }
 
-	  const unsigned int numberGlobalCellsParallelMinPools =
-			   Utilities::MPI::min(parallelTriangulation.n_global_active_cells(), interpoolcomm);
-	  const unsigned int numberGlobalCellsParallelMaxPools =
-			   Utilities::MPI::max(parallelTriangulation.n_global_active_cells(), interpoolcomm);
-	  AssertThrow(numberGlobalCellsParallelMinPools==numberGlobalCellsParallelMaxPools,ExcMessage("Number of global cells are different across pools."));
-
-	  const unsigned int numberLocalCellsMinPools =
-			   Utilities::MPI::min(numLocallyOwnedCells, interpoolcomm);
-	  const unsigned int numberLocalCellsMaxPools =
-			   Utilities::MPI::max(numLocallyOwnedCells, interpoolcomm);
-	  AssertThrow(numberLocalCellsMinPools==numberLocalCellsMaxPools,ExcMessage("Number of local cells are different across pools or in other words the physical partitions don't have the same ordering across pools."));
+	  internal::checkTriangulationEqualityAcrossProcessorPools(parallelTriangulation,
+		                                                   numLocallyOwnedCells,
+								   interpoolcomm);
+	  internal::checkTriangulationEqualityAcrossProcessorPools(parallelTriangulation,
+		                                                   numLocallyOwnedCells,
+								   interBandGroupComm);
 	}
     }
 
@@ -372,20 +389,14 @@ namespace dftfe {
 	    pcout<< "Adaptivity summary: "<<std::endl<<" numCells: "<<parallelTriangulation.n_global_active_cells()<<", num refinement levels: "<<numLevels<<", h_min: "<<minElemLength<<std::endl;
 	  }
 
+	  internal::checkTriangulationEqualityAcrossProcessorPools(parallelTriangulation,
+		                                                   numLocallyOwnedCells,
+								   interpoolcomm);
+	  internal::checkTriangulationEqualityAcrossProcessorPools(parallelTriangulation,
+		                                                   numLocallyOwnedCells,
+								   interBandGroupComm);
+
 	  const unsigned int numberGlobalCellsParallel = parallelTriangulation.n_global_active_cells();
-
-	  const unsigned int numberGlobalCellsParallelMinPools =
-			   Utilities::MPI::min(numberGlobalCellsParallel, interpoolcomm);
-	  const unsigned int numberGlobalCellsParallelMaxPools =
-			   Utilities::MPI::max(numberGlobalCellsParallel, interpoolcomm);
-	  AssertThrow(numberGlobalCellsParallelMinPools==numberGlobalCellsParallelMaxPools,ExcMessage("Number of global cells are different across pools."));
-
-	  const unsigned int numberLocalCellsMinPools =
-			   Utilities::MPI::min(numLocallyOwnedCells, interpoolcomm);
-	  const unsigned int numberLocalCellsMaxPools =
-			   Utilities::MPI::max(numLocallyOwnedCells, interpoolcomm);
-	  AssertThrow(numberLocalCellsMinPools==numberLocalCellsMaxPools,ExcMessage("Number of local cells are different across pools or in other words the physical partitions don't have the same ordering across pools."));
-
 	  const unsigned int numberGlobalCellsSerial = serialTriangulation.n_global_active_cells();
 
 	  if (dftParameters::verbosity>=2)

@@ -57,7 +57,8 @@ namespace dftfe{
 					    vectorType & tempEigenVec,
 					    const unsigned int totalNumberWaveFunctions,
 					    std::vector<double> & eigenValues,
-					    std::vector<double> & residuals);
+					    std::vector<double> & residuals,
+					    const MPI_Comm &interBandGroupComm);
 
     /**
      * @brief Solve a generalized eigen problem.
