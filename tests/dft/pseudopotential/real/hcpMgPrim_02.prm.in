@@ -50,7 +50,8 @@ end
 
 subsection DFT functional related parameters
   set PSEUDOPOTENTIAL CALCULATION =true
-  set PSEUDOPOTENTIAL FILE NAMES LIST = pseudooncv.inp
+  set PSEUDOPOTENTIAL FILE NAMES LIST = @SOURCE_DIR@/pseudoMgONCV.inp
+  set PSEUDO TESTS FLAG = true 
   set EXCHANGE CORRELATION TYPE = 4
 end
 

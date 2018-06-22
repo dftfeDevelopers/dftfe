@@ -326,7 +326,8 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
 
       unsigned int atomicNumber = *it;
 
-      pcout<<"Reading data from file: "<<pseudoAtomDataFile<<std::endl;
+      if(dftParameters::verbosity >= 2)
+	pcout<<"Reading data from file: "<<pseudoAtomDataFile<<std::endl;
 
       //
       // open the testFunctionFileName

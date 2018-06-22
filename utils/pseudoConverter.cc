@@ -65,9 +65,22 @@ namespace dftfe
 	  
 	  if(isupf(toParse))
 	    {
-	      std::string xmlFileName = newFolder + "/" + toParse.substr(0, toParse.find(".upf"));
-	      int errorFlag = upfToxml(toParse,
+	      //std::string xmlFileName = newFolder + "/" + toParse.substr(0, toParse.find(".upf"));
+	      std::string xmlFileName = newFolder + "/" + "z" + z + ".xml";
+	      int errorFlag;
+	      if(dftParameters::pseudoTestsFlag)
+		{
+		  std::string dftPath = DFT_PATH;
+		  std::string newPath =  dftPath + "/tests/dft/pseudopotential/real/" + toParse;
+		  //std::cout<<newPath<<std::endl;
+		  errorFlag = upfToxml(newPath,
 				       xmlFileName);
+		}
+	      else
+		{
+		  errorFlag = upfToxml(toParse,
+				       xmlFileName);
+		}
 
 	      AssertThrow(errorFlag==0,dealii::ExcMessage("Error in reading upf format"));
 

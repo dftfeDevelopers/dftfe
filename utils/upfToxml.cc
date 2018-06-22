@@ -149,7 +149,7 @@ namespace dftfe
       std::ofstream xmlFile(outputFileName.c_str()); 
       std::ifstream upfFile(inputFileName.c_str());
       if(dftParameters::verbosity>=2)
-	std::cout << "Converting upf pseudopotential file to xml format" <<std::endl;
+	pcout << "Converting upf pseudopotential file to xml format" <<std::endl;
 
 
       PeriodicTable pt;

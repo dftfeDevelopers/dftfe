@@ -43,7 +43,7 @@ void dftClass<FEOrder>::initLocalPseudoPotential()
 	//else
 	//sprintf(pseudoFile,"%s/data/electronicStructure/pseudoPotential/z%u/pseudoAtomData/locPot.dat", DFT_PATH,*it);
 
-      if (!dftParameters::reproducible_output)
+      if (dftParameters::verbosity>=2)
         pcout<<"Reading Local Pseudo-potential data from: " <<pseudoFile<<std::endl;
       dftUtils::readFile(2, pseudoPotentialData[*it], pseudoFile);
       unsigned int numRows = pseudoPotentialData[*it].size()-1;
@@ -59,9 +59,9 @@ void dftClass<FEOrder>::initLocalPseudoPotential()
       x.setcontent(numRows,&xData[0]);
       alglib::real_1d_array y;
       y.setcontent(numRows,&yData[0]);
-      alglib::ae_int_t bound_type_l = 2;
+      alglib::ae_int_t bound_type_l = 0;
       alglib::ae_int_t bound_type_r = 1;
-      const double slopeL= 0;//(pseudoPotentialData[*it][1][1]-pseudoPotentialData[*it][0][1])/(pseudoPotentialData[*it][1][0]-pseudoPotentialData[*it][0][0]);
+      const double slopeL= (pseudoPotentialData[*it][1][1]-pseudoPotentialData[*it][0][1])/(pseudoPotentialData[*it][1][0]-pseudoPotentialData[*it][0][0]);
       const double slopeR=-pseudoPotentialData[*it][numRows-1][1]/pseudoPotentialData[*it][numRows-1][0];
       spline1dbuildcubic(x, y, numRows, bound_type_l, slopeL, bound_type_r, slopeR, pseudoSpline[*it]);
       outerMostPointPseudo[*it]= xData[numRows-1];
