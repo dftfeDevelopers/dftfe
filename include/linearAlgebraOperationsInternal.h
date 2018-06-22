@@ -63,6 +63,7 @@ namespace dftfe
 	void fillParallelOverlapMatrix(const dealii::parallel::distributed::Vector<T> & X,
 		                       const unsigned int numberVectors,
 		                       const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+				       const MPI_Comm &interBandGroupComm,
 				       dealii::ScaLAPACKMatrix<T> & overlapMatPar);
 
 	/** @brief Computes X^{T}=Q*X^{T} inplace. X^{T} is the subspaceVectorsArray in the column major
@@ -77,6 +78,7 @@ namespace dftfe
 	void subspaceRotation(dealii::parallel::distributed::Vector<T> & subspaceVectorsArray,
 		              const unsigned int numberSubspaceVectors,
 		              const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+			      const MPI_Comm &interBandGroupComm,
 			      const dealii::ScaLAPACKMatrix<T> & rotationMatPar,
 			      const bool rotationMatTranspose=false);
 

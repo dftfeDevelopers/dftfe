@@ -382,7 +382,8 @@ namespace dftfe{
 	computing_timer.enter_section("Pseudo-Gram-Schmidt");
 	const unsigned int flag=linearAlgebraOperations::pseudoGramSchmidtOrthogonalization
 	                                                           (eigenVectorsFlattened,
-								    totalNumberWaveFunctions);
+								    totalNumberWaveFunctions,
+								    interBandGroupComm);
 	if (flag==1)
 	{
 	    if(dftParameters::verbosity >= 1)
@@ -410,6 +411,7 @@ namespace dftfe{
     linearAlgebraOperations::rayleighRitz(operatorMatrix,
 					  eigenVectorsFlattened,
 					  totalNumberWaveFunctions,
+					  interBandGroupComm,
 					  eigenValues);
     computing_timer.exit_section("Rayleigh-Ritz proj Opt");
 

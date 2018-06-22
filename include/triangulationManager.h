@@ -157,13 +157,17 @@ namespace dftfe  {
      *  @param [input]nComponents number of components of the dofHandler on which solution
      *  vectors are based upon
      *  @param [input]solutionVectors vector of parallel distributed solution vectors to be serialized
-     *  @param [input]interpoolComm interpool communicator to ensure serialization happens only in pool
+     *  @param [input]interpoolComm This communicator is used to ensure serialization
+     *  happens only in k point pool
+     *  @param [input]interBandGroupComm This communicator to ensure serialization happens
+     *  only in band group
      */
      void saveTriangulationsSolutionVectors
 	     (const unsigned int feOrder,
 	      const unsigned int nComponents,
 	      const std::vector< const dealii::parallel::distributed::Vector<double> * > & solutionVectors,
-	      const MPI_Comm & interpoolComm);
+	      const MPI_Comm & interpoolComm,
+	      const MPI_Comm &interBandGroupComm);
 
     /**
      * @brief de-serialize the triangulations and the associated solution vectors
@@ -183,11 +187,15 @@ namespace dftfe  {
      * @brief serialize the triangulations and the associated cell quadrature data container
      *
      *  @param [input]cellQuadDataContainerIn container of input cell quadrature data to be serialized
-     *  @param [input]interpoolComm interpool communicator to ensure serialization happens only in pool
+     *  @param [input]interpoolComm This communicator is used to ensure serialization
+     *  happens only in k point pool
+     *  @param [input]interBandGroupComm This communicator to ensure serialization happens
+     *  only in band group
      */
      void saveTriangulationsCellQuadData
 	      (const std::vector<const std::map<dealii::CellId, std::vector<double> > *> & cellQuadDataContainerIn,
-	       const MPI_Comm & interpoolComm);
+	       const MPI_Comm & interpoolComm,
+	       const MPI_Comm &interBandGroupComm);
 
     /**
      * @brief de-serialize the triangulations and the associated cell quadrature data container

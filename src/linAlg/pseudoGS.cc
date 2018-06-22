@@ -29,7 +29,8 @@ namespace dftfe
 #if(defined DEAL_II_WITH_SCALAPACK && !USE_COMPLEX)
     template<typename T>
     unsigned int pseudoGramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<T> & X,
-				            const unsigned int numberVectors)
+				            const unsigned int numberVectors,
+					    const MPI_Comm &interBandGroupComm)
     {
       if (dftParameters::orthoRROMPThreads!=0)
 	  omp_set_num_threads(dftParameters::orthoRROMPThreads);
@@ -59,6 +60,7 @@ namespace dftfe
       internal::fillParallelOverlapMatrix(X,
 	                                  numberVectors,
 		                          processGrid,
+					  interBandGroupComm,
 				          overlapMatPar);
       computing_timer.exit_section("Fill overlap matrix for PGS");
 
@@ -135,6 +137,7 @@ namespace dftfe
       internal::subspaceRotation(X,
 		                 numberVectors,
 		                 processGrid,
+				 interBandGroupComm,
 			         LMatPar,
 				 overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::upper_triangular?true:false);
 
@@ -147,7 +150,8 @@ namespace dftfe
 #else
     template<typename T>
     unsigned int pseudoGramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<T> & X,
-				            const unsigned int numberVectors)
+				            const unsigned int numberVectors,
+					    const MPI_Comm &interBandGroupComm)
     {
       AssertThrow(false,dftUtils::ExcNotImplementedYet());
       return 0;
