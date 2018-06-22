@@ -63,6 +63,7 @@ namespace dftParameters
   bool enableSwitchToGS=true;
   unsigned int nbandGrps=1;
   bool computeEnergyEverySCF=true;
+  unsigned int scalapackParalProcs=0;
 
   void declare_parameters(ParameterHandler &prm)
   {
@@ -380,6 +381,10 @@ namespace dftParameters
 	    prm.declare_entry("SUBSPACE ROT DOFS BLOCK SIZE", "800",
 			       Patterns::Integer(1),
 			       "[Developer] This block size is used for memory optimization purposes in subspace rotation step in Pseudo-Gram-Schmidt orthogonalization and Rayleigh-Ritz steps. This optimization is only activated if dealii library is compiled with ScaLAPACK. Default value is 800.");
+
+	    prm.declare_entry("SCALAPACKPROCS", "0",
+			      Patterns::Integer(0,300),
+			      "[Standard] Uses a processor grid of SCALAPACKPROCS times SCALAPACKPROCS for parallel distribution of the subspace projected matrix in the Rayleigh-Ritz step and the overlap matrix in the Pseudo-Gram-Schmidt step. Default value is 0 for which a thumb rule is used (see http://netlib.org/scalapack/slug/node106.html#SECTION04511000000000000000). This parameter is only used if dealii library is compiled with ScaLAPACK.");
 	}
 	prm.leave_subsection ();
     }
@@ -523,6 +528,7 @@ namespace dftParameters
 	   dftParameters::orthoRRWaveFuncBlockSize= prm.get_integer("ORTHO RR WFC BLOCK SIZE");
 	   dftParameters::subspaceRotDofsBlockSize= prm.get_integer("SUBSPACE ROT DOFS BLOCK SIZE");
 	   dftParameters::enableSwitchToGS= prm.get_bool("ENABLE SWITCH TO GS");
+	   dftParameters::scalapackParalProcs= prm.get_integer("SCALAPACKPROCS");
 	}
 	prm.leave_subsection ();
     }

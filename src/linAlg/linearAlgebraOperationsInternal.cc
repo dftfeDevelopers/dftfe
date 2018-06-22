@@ -41,8 +41,11 @@ namespace dftfe
 	      const unsigned int numberProcs = dealii::Utilities::MPI::n_mpi_processes(mpi_communicator);
 
 	      //Rule of thumb from http://netlib.org/scalapack/slug/node106.html#SECTION04511000000000000000
-	      const unsigned int rowProcs=std::min(std::floor(std::sqrt(numberProcs)),
-				std::ceil((double)size/(double)(1000)));
+	      const unsigned int rowProcs=dftParameters::scalapackParalProcs==0?
+		                std::min(std::floor(std::sqrt(numberProcs)),
+				std::ceil((double)size/(double)(1000))):
+				std::min((unsigned int)std::floor(std::sqrt(numberProcs)),
+				         dftParameters::scalapackParalProcs);
 	      if(dftParameters::verbosity>=3)
 	      {
 		 dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
