@@ -16,7 +16,8 @@
 // @author  Phani Motamarri, Sambit Das
 //
 
-void initPsiAndRhoFromPreviousGroundStatePsi(std::vector<std::vector<vectorType>> eigenVectors)
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::initPsiAndRhoFromPreviousGroundStatePsi(std::vector<std::vector<vectorType>> eigenVectors)
 {
      const unsigned int totalNumEigenVectors=(1+dftParameters::spinPolarized)*d_kPointWeights.size()*eigenVectors[0].size();
      std::vector<vectorType> eigenVectorsPrevious(totalNumEigenVectors);
@@ -28,7 +29,7 @@ void initPsiAndRhoFromPreviousGroundStatePsi(std::vector<std::vector<vectorType>
 	{
 	  eigenVectorsPrevious[kPoint* eigenVectors[0].size()+i]=eigenVectors[kPoint][i];
 	  eigenVectorsPreviousPtrs[kPoint* eigenVectors[0].size()+i]=&(eigenVectorsPrevious[kPoint* eigenVectors[0].size()+i]);
-	  eigenVectors[kPoint][i].reinit(tempEigenVec);
+	  eigenVectors[kPoint][i].reinit(d_tempEigenVec);
 	  eigenVectorsCurrentPtrs[kPoint* eigenVectors[0].size()+i]=&(eigenVectors[kPoint][i]);
 	}
 

@@ -75,7 +75,7 @@ subsection DFT functional related parameters
   # 45, 13244 (1992)]), 3(LDA: Vosko, Wilk & Nusair with Slater Exchange[Can.
   # J. Phys. 58, 1200 (1980)]), 4(GGA: Perdew-Burke-Ernzerhof functional [PRL.
   # 77, 3865 (1996)])
-  set EXCHANGE CORRELATION TYPE   = 1
+  set EXCHANGE CORRELATION TYPE   = 4
 
   # Boolean Parameter specifying whether pseudopotential DFT calculation needs
   # to be performed
@@ -180,7 +180,7 @@ subsection Geometry
 end
 
 
-subsection Poisson problem paramters
+subsection Poisson problem parameters
   # Maximum number of iterations to be allowed for Poisson problem
   # convergence
   set MAXIMUM ITERATIONS = 10000 # default: 5000
