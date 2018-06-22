@@ -101,7 +101,7 @@ namespace dftfe
 
 		for (unsigned int i = 0; i < local_m; ++i)
 		    for (unsigned int j = 0; j < local_n; ++j)
-		       temp[i*local_m+j]= mat.local_el(i,j);
+		       temp[i*local_n+j]= mat.local_el(i,j);
 
 		dealii::Utilities::MPI::sum(temp,
 					    interComm,
