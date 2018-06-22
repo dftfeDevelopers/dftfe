@@ -37,7 +37,6 @@ namespace dftfe
 	 */
 	void createProcessGridSquareMatrix(const MPI_Comm & mpi_communicator,
 		                           const unsigned size,
-				           const unsigned int rowsBlockSize,
 					   std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid);
 
 

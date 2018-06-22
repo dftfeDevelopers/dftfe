@@ -36,17 +36,17 @@ namespace dftfe
 #ifdef DEAL_II_WITH_SCALAPACK
 	void createProcessGridSquareMatrix(const MPI_Comm & mpi_communicator,
 		                           const unsigned size,
-				           const unsigned int rowsBlockSize,
 				           std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid)
 	{
 	      const unsigned int numberProcs = dealii::Utilities::MPI::n_mpi_processes(mpi_communicator);
-	      const unsigned int blocksPerProc=4;
+
+	      //Rule of thumb from http://netlib.org/scalapack/slug/node106.html#SECTION04511000000000000000
 	      const unsigned int rowProcs=std::min(std::floor(std::sqrt(numberProcs)),
-				std::ceil((double)size/(double)(blocksPerProc*rowsBlockSize)));
+				std::ceil((double)size/(double)(1000)));
 	      if(dftParameters::verbosity>=3)
 	      {
 		 dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
-		 pcout<<"Scalapack Matrix created, "<<"rowsBlockSize: "<<rowsBlockSize<<", blocksPerProc: "<<blocksPerProc<<", row procs: "<< rowProcs<<std::endl;
+		 pcout<<"Scalapack Matrix created, row procs: "<< rowProcs<<std::endl;
 	      }
 
 	      processGrid=std::make_shared<const dealii::Utilities::MPI::ProcessGrid>(mpi_communicator,

@@ -48,7 +48,6 @@ namespace dftfe
       std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  processGrid;
       internal::createProcessGridSquareMatrix(X.get_mpi_communicator(),
 		                           numberVectors,
-				           rowsBlockSize,
 					   processGrid);
 
       dealii::ScaLAPACKMatrix<T> overlapMatPar(numberVectors,
