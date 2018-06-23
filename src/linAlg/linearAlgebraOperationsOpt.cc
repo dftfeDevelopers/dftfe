@@ -858,7 +858,7 @@ namespace dftfe{
        for(unsigned i = 0; i < numberEigenValues; ++i)
 	{
 	  invFourthRootEigenValuesMatrix[i] = 1.0/pow(eigenValuesOverlap[i],1.0/4);
-	  if(std::isnan(invFourthRootEigenValuesMatrix[i]) || eigenValuesOverlap[i]<1e-14)
+	  if(std::isnan(invFourthRootEigenValuesMatrix[i]) || eigenValuesOverlap[i]<1e-13)
 	    {
 	      nanFlag = 1;
 	      break;
