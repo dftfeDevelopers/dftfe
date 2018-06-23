@@ -1,4 +1,4 @@
-set VERBOSITY = 2
+set VERBOSITY = 1
 
 subsection Parallelization
   set NPKPT=2
@@ -13,15 +13,14 @@ end
 
 
 subsection Brillouin zone k point sampling options
-  set USE GROUP SYMMETRY         = true
   set USE TIME REVERSAL SYMMETRY = true
   subsection Monkhorst-Pack (MP) grid generation
     set SAMPLING POINTS 1 = 2
     set SAMPLING POINTS 2 = 2
     set SAMPLING POINTS 3 = 2
-    set SAMPLING SHIFT 1  = 0.0
-    set SAMPLING SHIFT 2  = 0.0
-    set SAMPLING SHIFT 3  = 0.0
+    set SAMPLING SHIFT 1  = 0.25
+    set SAMPLING SHIFT 2  = 0.25
+    set SAMPLING SHIFT 3  = 0.25
   end
 end
 
@@ -44,7 +43,11 @@ end
 
 subsection Geometry
   set ATOMIC COORDINATES FILE      = coordinates.inp           
-  set DOMAIN BOUNDING VECTORS FILE = domainBoundingVectors.inp  
+  set DOMAIN BOUNDING VECTORS FILE = domainBoundingVectors.inp
+  subsection Optimization
+      set ION FORCE=true
+      set CELL STRESS=true
+  end 
 end
 
 
