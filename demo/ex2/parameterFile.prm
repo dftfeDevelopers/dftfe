@@ -1,0 +1,56 @@
+set VERBOSITY = 1
+
+#subsection Parallelization
+#  set NPBAND=2
+#end
+
+
+subsection Boundary conditions
+  set PERIODIC1                       = false
+  set PERIODIC2                       = false
+  set PERIODIC3                       = false
+  set SELF POTENTIAL ATOM BALL RADIUS = 8.0   # default: 3.0
+end
+
+
+subsection DFT functional related parameters
+  set EXCHANGE CORRELATION TYPE   = 4
+  set PSEUDOPOTENTIAL CALCULATION = true
+  set PSEUDOPOTENTIAL FILE NAMES LIST = pseudo.inp
+end
+
+subsection Finite element mesh parameters
+  set POLYNOMIAL ORDER = 3
+  subsection Auto mesh generation parameters
+    set ATOM BALL RADIUS     = 3.0
+    set BASE MESH SIZE       = 10.0 # default: 2.0
+    set MESH SIZE ATOM BALL  = 0.7
+    set MESH SIZE NEAR ATOM  = 0.7
+  end
+end
+
+subsection Geometry
+  set ATOMIC COORDINATES FILE      = coordinates.inp           # default: 
+  set DOMAIN BOUNDING VECTORS FILE = domainVectors.inp # default: 
+  subsection Optimization
+    set FORCE TOL            = 5e-5
+    set ION OPT              = true
+    set ION RELAX FLAGS FILE = relaxationFlags.inp
+  end
+
+end
+
+subsection SCF parameters
+  set ANDERSON SCHEME MIXING HISTORY   = 70
+  set ANDERSON SCHEME MIXING PARAMETER = 0.5
+  set MAXIMUM ITERATIONS               = 40 # default: 50
+  set TEMPERATURE                      = 500  # default: 500.0
+  set TOLERANCE                        = 5e-6 # default: 1e-08
+
+  subsection Eigen-solver/Chebyshev solver related parameters
+      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 12
+      set LOWER BOUND WANTED SPECTRUM = -0.5
+  end
+end
+
+
