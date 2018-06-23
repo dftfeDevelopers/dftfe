@@ -101,7 +101,9 @@ namespace dftfe {
       /**
        * dftClass constructor
        */
-      dftClass(const MPI_Comm &mpi_comm_replica, const MPI_Comm &interpoolcomm);
+      dftClass(const MPI_Comm &mpi_comm_replica,
+	       const MPI_Comm &interpoolcomm,
+	       const MPI_Comm &interBandGroupComm);
       /**
        * dftClass destructor
        */
@@ -294,12 +296,13 @@ namespace dftfe {
       void computeNodalRhoFromQuadData();
 
       /**
-       * sums rho cell quadratrure data from all kpoint pools
+       * sums rho cell quadratrure data from  inter communicator
        */
-      void sumRhoDataKPointPools(std::map<dealii::CellId, std::vector<double> > * rhoValues,
-	                         std::map<dealii::CellId, std::vector<double> > * gradRhoValues,
-				 std::map<dealii::CellId, std::vector<double> > * rhoValuesSpinPolarized,
-				 std::map<dealii::CellId, std::vector<double> > * gradRhoValuesSpinPolarized);
+      void sumRhoData(std::map<dealii::CellId, std::vector<double> > * rhoValues,
+	              std::map<dealii::CellId, std::vector<double> > * gradRhoValues,
+	              std::map<dealii::CellId, std::vector<double> > * rhoValuesSpinPolarized,
+		      std::map<dealii::CellId, std::vector<double> > * gradRhoValuesSpinPolarized,
+		      const MPI_Comm &interComm);
 
       /**
        * resize and allocate table storage for rho cell quadratrue data
@@ -458,7 +461,9 @@ namespace dftfe {
       /**
        * parallel objects
        */
-      MPI_Comm   mpi_communicator, interpoolcomm;
+      const MPI_Comm   mpi_communicator;
+      const MPI_Comm   interpoolcomm;
+      const MPI_Comm   interBandGroupComm;
       const unsigned int n_mpi_processes;
       const unsigned int this_mpi_process;
       IndexSet   locally_owned_dofs, locally_owned_dofsEigen;
@@ -627,9 +632,9 @@ namespace dftfe {
 
       /// k point weights
       std::vector<double> d_kPointWeights;
-    
+
       /// global k index of lower bound of the local k point set
-      unsigned int lowerBoundKindex ; 
+      unsigned int lowerBoundKindex ;
       /**
        * Recomputes the k point cartesian coordinates from the crystal k point coordinates
        * and the current lattice vectors, which can change in each ground state solve when

@@ -468,6 +468,7 @@ namespace dftfe{
     void rayleighRitz(operatorDFTClass & operatorMatrix,
 		      dealii::parallel::distributed::Vector<T> & X,
 		      const unsigned int numberWaveFunctions,
+		      const MPI_Comm &interBandGroupComm,
 		      std::vector<double> & eigenValues)
 
     {
@@ -487,7 +488,6 @@ namespace dftfe{
       std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  processGrid;
       internal::createProcessGridSquareMatrix(X.get_mpi_communicator(),
 		                              numberWaveFunctions,
-				              rowsBlockSize,
 					      processGrid);
 
       dealii::ScaLAPACKMatrix<T> projHamPar(numberWaveFunctions,
@@ -518,6 +518,7 @@ namespace dftfe{
       internal::subspaceRotation(X,
 		                 numberWaveFunctions,
 		                 processGrid,
+				 interBandGroupComm,
 			         projHamPar,
 				 true);
       computing_timer.exit_section("Blocked subspace rotation, RR step");
@@ -531,6 +532,7 @@ namespace dftfe{
     void rayleighRitz(operatorDFTClass & operatorMatrix,
 		      dealii::parallel::distributed::Vector<T> & X,
 		      const unsigned int numberWaveFunctions,
+		      const MPI_Comm &interBandGroupComm,
 		      std::vector<double> & eigenValues)
     {
       if (dftParameters::orthoRROMPThreads!=0)
@@ -1137,11 +1139,13 @@ namespace dftfe{
 					       const unsigned int);
 
     template unsigned int pseudoGramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<dataTypes::number> &,
-					             const unsigned int);
+					             const unsigned int,
+						     const MPI_Comm &);
 
     template void rayleighRitz(operatorDFTClass  & operatorMatrix,
 			       dealii::parallel::distributed::Vector<dataTypes::number> &,
 			       const unsigned int numberWaveFunctions,
+			       const MPI_Comm &,
 			       std::vector<double>     & eigenValues);
 
     template void computeEigenResidualNorm(operatorDFTClass        & operatorMatrix,

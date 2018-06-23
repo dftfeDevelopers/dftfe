@@ -149,12 +149,14 @@ namespace dftfe
       *  @param[in,out]  X Given subspace as flattened array of multi-vectors.
       *  In-place update of the given subspace
       *  @param[in] numberComponents Number of multiple-fields
+      *  @param[in] interBandGroupComm interpool communicator for parallelization over band groups
       *
       *  @return flag indicating success/failure. 1 for failure, 0 for success
       */
     template<typename T>
       unsigned int pseudoGramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<T> & X,
-					      const unsigned int numberComponents);
+					      const unsigned int numberComponents,
+					      const MPI_Comm &interBandGroupComm);
 
     /** @brief Compute Rayleigh-Ritz projection
      *
@@ -176,12 +178,14 @@ namespace dftfe
      *  @param[in,out]  X Given subspace as flattened array of multi-vectors.
      *  In-place rotated subspace
      *  @param[in] numberComponents Number of multiple-fields
+     *  @param[in] interBandGroupComm interpool communicator for parallelization over band groups
      *  @param[out] eigenValues of the Projected Hamiltonian
      */
     template<typename T>
     void rayleighRitz(operatorDFTClass        & operatorMatrix,
 		      dealii::parallel::distributed::Vector<T> & X,
 		      const unsigned int numberComponents,
+		      const MPI_Comm &interBandGroupComm,
 		      std::vector<double>     & eigenValues);
 
     /** @brief Compute Compute residual norm associated with eigenValue problem of the given operator

@@ -10,7 +10,6 @@ end
 
 
 subsection Brillouin zone k point sampling options
-  set NUMBER OF POOLS            = 1
   set USE GROUP SYMMETRY         = true
   set USE TIME REVERSAL SYMMETRY = true
   subsection Monkhorst-Pack (MP) grid generation

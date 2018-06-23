@@ -72,6 +72,9 @@ namespace dftfe {
       extern unsigned int orthoRRWaveFuncBlockSize;
       extern unsigned int subspaceRotDofsBlockSize;
       extern bool enableSwitchToGS;
+      extern unsigned int nbandGrps;
+      extern bool computeEnergyEverySCF;
+      extern unsigned int scalapackParalProcs;
 
       /**
        * Declare parameters.

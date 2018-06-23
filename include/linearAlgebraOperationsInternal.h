@@ -37,7 +37,6 @@ namespace dftfe
 	 */
 	void createProcessGridSquareMatrix(const MPI_Comm & mpi_communicator,
 		                           const unsigned size,
-				           const unsigned int rowsBlockSize,
 					   std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid);
 
 
@@ -49,6 +48,16 @@ namespace dftfe
 		                                   const dealii::ScaLAPACKMatrix<T> & mat,
 				                   std::map<unsigned int, unsigned int> & globalToLocalRowIdMap,
 					           std::map<unsigned int, unsigned int> & globalToLocalColumnIdMap);
+
+
+	/** @brief Mpi all reduce of ScaLAPACKMat across a given inter communicator.
+	 * Used for band parallelization.
+	 *
+	 */
+        template<typename T>
+	void sumAcrossInterCommScaLAPACKMat(const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+		                            dealii::ScaLAPACKMatrix<T> & mat,
+				            const MPI_Comm &interComm);
 
 	/** @brief Computes S=X^{T}*X and stores in a parallel ScaLAPACK matrix.
 	 * X^{T} is the subspaceVectorsArray in the column major format. S is the
@@ -63,6 +72,7 @@ namespace dftfe
 	void fillParallelOverlapMatrix(const dealii::parallel::distributed::Vector<T> & X,
 		                       const unsigned int numberVectors,
 		                       const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+				       const MPI_Comm &interBandGroupComm,
 				       dealii::ScaLAPACKMatrix<T> & overlapMatPar);
 
 	/** @brief Computes X^{T}=Q*X^{T} inplace. X^{T} is the subspaceVectorsArray in the column major
@@ -77,6 +87,7 @@ namespace dftfe
 	void subspaceRotation(dealii::parallel::distributed::Vector<T> & subspaceVectorsArray,
 		              const unsigned int numberSubspaceVectors,
 		              const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+			      const MPI_Comm &interBandGroupComm,
 			      const dealii::ScaLAPACKMatrix<T> & rotationMatPar,
 			      const bool rotationMatTranspose=false);
 

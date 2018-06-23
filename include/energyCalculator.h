@@ -35,10 +35,12 @@ namespace dftfe {
 	 * @brief Constructor
 	 *
 	 * @param mpi_comm mpi communicator of domain decomposition
-	 * @param interpool_comm mpi communicator of interpool communicator
+	 * @param interpool_comm mpi interpool communicator over k points
+	 * @param interBandGroupComm mpi interpool communicator over band groups
 	 */
 	energyCalculator(const  MPI_Comm &mpi_comm,
-		         const  MPI_Comm &interpool_comm);
+		         const  MPI_Comm &interpool_comm,
+			 const MPI_Comm &interBandGroupComm);
 
 	/**
 	 * Computes total energy of the ksdft problem in the current state and also prints the
@@ -179,6 +181,7 @@ namespace dftfe {
 
          const MPI_Comm mpi_communicator;
 	 const MPI_Comm interpoolcomm;
+	 const MPI_Comm interBandGroupComm;
 
 	 /// parallel message stream
          dealii::ConditionalOStream  pcout;
