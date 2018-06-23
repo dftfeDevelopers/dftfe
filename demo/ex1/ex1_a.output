@@ -25,7 +25,7 @@ subsection Checkpointing and Restart
   set RESTART FROM CHK = false
 end
 subsection DFT functional related parameters
-  set EXCHANGE CORRELATION TYPE       = 4
+  set EXCHANGE CORRELATION TYPE       = 1
   set PSEUDOPOTENTIAL CALCULATION     = true
   set PSEUDOPOTENTIAL FILE NAMES LIST = pseudo.inp
   set PSEUDO TESTS FLAG               = false
@@ -1689,118 +1689,118 @@ Adaptivity summary:
 Pseudopotential initalization....
 
 ************************Begin Self-Consistent-Field Iteration:  1 ***********************
-Total energy  : -8.310462302434885373e+00
+Total energy  : -8.309040672454715448e+00
 ***********************Self-Consistent-Field Iteration:  1 complete**********************
-Scf iteration 1 took: 1.807403722800000168e+01 seconds, with 6 Chebyshev eigen solve passes.
+Scf iteration 1 took: 1.413133785399999987e+01 seconds, with 6 Chebyshev eigen solve passes.
 
 ************************Begin Self-Consistent-Field Iteration:  2 ***********************
-Simple mixing: L2 norm of electron-density difference: 6.303348261523893103e-03
-Total energy  : -8.323402271255254448e+00
+Simple mixing: L2 norm of electron-density difference: 6.234196817409626973e-03
+Total energy  : -8.323654892050212695e+00
 ***********************Self-Consistent-Field Iteration:  2 complete**********************
-Scf iteration 2 took: 4.029541645000000116e+00 seconds, with 1 Chebyshev eigen solve passes.
+Scf iteration 2 took: 3.072999750999999780e+00 seconds, with 1 Chebyshev eigen solve passes.
 
 ************************Begin Self-Consistent-Field Iteration:  3 ***********************
-Anderson mixing: L2 norm of electron-density difference: 3.863111108527953613e-02
-Total energy  : -8.325625258230767045e+00
+Anderson mixing: L2 norm of electron-density difference: 3.881789060816305537e-02
+Total energy  : -8.324619620638291195e+00
 ***********************Self-Consistent-Field Iteration:  3 complete**********************
-Scf iteration 3 took: 4.152908702999999591e+00 seconds, with 1 Chebyshev eigen solve passes.
+Scf iteration 3 took: 2.973974329999999888e+00 seconds, with 1 Chebyshev eigen solve passes.
 
 ************************Begin Self-Consistent-Field Iteration:  4 ***********************
-Anderson mixing: L2 norm of electron-density difference: 6.694394166057653951e-03
-Total energy  : -8.325851775122160348e+00
+Anderson mixing: L2 norm of electron-density difference: 6.393541742357925980e-03
+Total energy  : -8.324751906681676417e+00
 ***********************Self-Consistent-Field Iteration:  4 complete**********************
-Scf iteration 4 took: 4.086693527999999631e+00 seconds, with 1 Chebyshev eigen solve passes.
+Scf iteration 4 took: 2.979909146999999869e+00 seconds, with 1 Chebyshev eigen solve passes.
 
 ************************Begin Self-Consistent-Field Iteration:  5 ***********************
-Anderson mixing: L2 norm of electron-density difference: 2.393195924138971815e-03
-Total energy  : -8.325867178744893238e+00
+Anderson mixing: L2 norm of electron-density difference: 2.504933618198226970e-03
+Total energy  : -8.324774883155971139e+00
 ***********************Self-Consistent-Field Iteration:  5 complete**********************
-Scf iteration 5 took: 4.182195867999999983e+00 seconds, with 1 Chebyshev eigen solve passes.
+Scf iteration 5 took: 3.127852193999999919e+00 seconds, with 1 Chebyshev eigen solve passes.
 
 ************************Begin Self-Consistent-Field Iteration:  6 ***********************
-Anderson mixing: L2 norm of electron-density difference: 1.260791749332043936e-03
-Total energy  : -8.325869984316803141e+00
+Anderson mixing: L2 norm of electron-density difference: 7.964870598298102880e-04
+Total energy  : -8.324777355597042572e+00
 ***********************Self-Consistent-Field Iteration:  6 complete**********************
-Scf iteration 6 took: 4.154209930999999578e+00 seconds, with 1 Chebyshev eigen solve passes.
+Scf iteration 6 took: 3.052391822999999782e+00 seconds, with 1 Chebyshev eigen solve passes.
 
 ************************Begin Self-Consistent-Field Iteration:  7 ***********************
-Anderson mixing: L2 norm of electron-density difference: 3.588437530083118661e-04
-Total energy  : -8.325870392264667075e+00
+Anderson mixing: L2 norm of electron-density difference: 2.822195907047997474e-04
+Total energy  : -8.324778098926152836e+00
 ***********************Self-Consistent-Field Iteration:  7 complete**********************
-Scf iteration 7 took: 4.145303345000000306e+00 seconds, with 1 Chebyshev eigen solve passes.
+Scf iteration 7 took: 3.196417875999999936e+00 seconds, with 1 Chebyshev eigen solve passes.
 
 ************************Begin Self-Consistent-Field Iteration:  8 ***********************
-Anderson mixing: L2 norm of electron-density difference: 6.146896079724261698e-05
-Total energy  : -8.325870449292150255e+00
+Anderson mixing: L2 norm of electron-density difference: 4.644953203862892799e-05
+Total energy  : -8.324778192349043593e+00
 ***********************Self-Consistent-Field Iteration:  8 complete**********************
-Scf iteration 8 took: 4.234394932999999916e+00 seconds, with 1 Chebyshev eigen solve passes.
+Scf iteration 8 took: 4.417037592999999873e+00 seconds, with 1 Chebyshev eigen solve passes.
 
 ************************Begin Self-Consistent-Field Iteration:  9 ***********************
-Anderson mixing: L2 norm of electron-density difference: 1.690364936220739469e-05
-Total energy  : -8.325870457377028799e+00
+Anderson mixing: L2 norm of electron-density difference: 1.774441847325299634e-05
+Total energy  : -8.324778220142681207e+00
 ***********************Self-Consistent-Field Iteration:  9 complete**********************
-Scf iteration 9 took: 4.237410724000000073e+00 seconds, with 1 Chebyshev eigen solve passes.
+Scf iteration 9 took: 3.109594421000000164e+00 seconds, with 1 Chebyshev eigen solve passes.
 
 ************************Begin Self-Consistent-Field Iteration: 10 ***********************
-Anderson mixing: L2 norm of electron-density difference: 5.569502564789156225e-06
-Total energy  : -8.325870460450204291e+00
+Anderson mixing: L2 norm of electron-density difference: 5.046027920474521522e-06
+Total energy  : -8.324778223916096564e+00
 ***********************Self-Consistent-Field Iteration: 10 complete**********************
-Scf iteration 10 took: 4.349473803999999610e+00 seconds, with 1 Chebyshev eigen solve passes.
+Scf iteration 10 took: 3.066523627000000030e+00 seconds, with 1 Chebyshev eigen solve passes.
 
 ************************Begin Self-Consistent-Field Iteration: 11 ***********************
-Anderson mixing: L2 norm of electron-density difference: 1.616801188999264878e-06
-Total energy  : -8.325870460832083708e+00
+Anderson mixing: L2 norm of electron-density difference: 1.676737225884379699e-06
+Total energy  : -8.324778223599587079e+00
 ***********************Self-Consistent-Field Iteration: 11 complete**********************
-Scf iteration 11 took: 4.315794372000000045e+00 seconds, with 1 Chebyshev eigen solve passes.
+Scf iteration 11 took: 3.271283345000000065e+00 seconds, with 1 Chebyshev eigen solve passes.
 
 SCF iteration converged to the specified tolerance after: 11 iterations.
 
 Energy computations (Hartree)
 -------------------------------------------------------------------------------
-Band energy                                         :  -3.1692630700975770e+00
-Exchange energy                                     :  -2.7182713832862344e+00
-Correlation energy                                  :  -5.0838550890693479e-01
-Total energy                                        :  -8.3258704608320837e+00
-Total energy per atom                               :  -2.0814676152080209e+00
+Band energy                                         :  -3.1702271552170611e+00
+Exchange energy                                     :  -2.6889328868340998e+00
+Correlation energy                                  :  -5.3547847850025487e-01
+Total energy                                        :  -8.3247782235995871e+00
+Total energy per atom                               :  -2.0811945558998968e+00
 -------------------------------------------------------------------------------
 
 
 +---------------------------------------------+------------+------------+
-| Total wallclock time elapsed since start    | 6.014e+01s |            |
+| Total wallclock time elapsed since start    | 4.656e+01s |            |
 |                                             |            |            |
 | Section                         | no. calls |  wall time | % of total |
 +---------------------------------+-----------+------------+------------+
-| Chebyshev filtering opt         |        32 | 1.708e+01s |  2.84e+01% |
-| Lanczos k-step Upper Bound      |        32 | 1.899e+00s |  3.16e+00% |
-| Lowden Orthogn Opt              |        32 | 1.781e-01s |  2.96e-01% |
-| Rayleigh-Ritz proj Opt          |        32 | 1.139e+00s |  1.89e+00% |
-| eigen vectors residuals opt     |        32 | 1.082e+00s |  1.80e+00% |
+| Chebyshev filtering opt         |        32 | 1.705e+01s |  3.66e+01% |
+| Lanczos k-step Upper Bound      |        32 | 1.915e+00s |  4.11e+00% |
+| Lowden Orthogn Opt              |        32 | 1.837e-01s |  3.95e-01% |
+| Rayleigh-Ritz proj Opt          |        32 | 1.005e+00s |  2.16e+00% |
+| eigen vectors residuals opt     |        32 | 1.047e+00s |  2.25e+00% |
 +---------------------------------+-----------+------------+------------+
 
 
 
 +---------------------------------------------+------------+------------+
-| Total wallclock time elapsed since start    | 1.287e+02s |            |
+| Total wallclock time elapsed since start    | 1.105e+02s |            |
 |                                             |            |            |
 | Section                         | no. calls |  wall time | % of total |
 +---------------------------------+-----------+------------+------------+
-| Chebyshev solve                 |        32 | 2.223e+01s |  1.73e+01% |
-| Hamiltonian Matrix Computation  |        32 | 1.751e+01s |  1.36e+01% |
-| VEff Computation                |        11 | 1.791e-01s |  1.39e-01% |
-| compute rho                     |        11 | 1.267e+01s |  9.85e+00% |
-| density mixing                  |        11 | 1.277e+00s |  9.92e-01% |
-| init electronic fields          |         1 | 8.653e+00s |  6.73e+00% |
-| initialize density              |         1 | 8.085e+00s |  6.28e+00% |
-| initialize wave functions       |         1 | 9.297e-03s | 0.000e+00% |
-| locate atom nodes               |         1 | 5.772e-03s | 0.000e+00% |
-| locate periodic pinned node     |         1 | 1.437e-01s |  1.12e-01% |
-| mesh generation                 |         1 | 1.946e-01s |  1.51e-01% |
-| moved setup                     |         1 | 1.981e+01s |  1.54e+01% |
-| phiTot solve                    |        22 | 3.823e+00s |  2.97e+00% |
-| psp init                        |         1 | 3.425e+01s |  2.66e+01% |
-| scf solve                       |         1 | 5.996e+01s |  4.66e+01% |
-| shapefunction data              |         1 | 8.871e-02s | 0.000e+00% |
-| unmoved setup                   |         1 | 1.453e+00s |  1.13e+00% |
-| vself solve                     |         1 | 1.253e+00s |  9.74e-01% |
+| Chebyshev solve                 |        32 | 2.180e+01s |  1.97e+01% |
+| Hamiltonian Matrix Computation  |        32 | 1.077e+01s |  9.75e+00% |
+| VEff Computation                |        11 | 5.851e-02s | 0.000e+00% |
+| compute rho                     |        11 | 6.459e+00s |  5.85e+00% |
+| density mixing                  |        11 | 8.785e-01s |  7.95e-01% |
+| init electronic fields          |         1 | 4.303e+00s |  3.90e+00% |
+| initialize density              |         1 | 3.755e+00s |  3.40e+00% |
+| initialize wave functions       |         1 | 9.489e-03s | 0.000e+00% |
+| locate atom nodes               |         1 | 5.751e-03s | 0.000e+00% |
+| locate periodic pinned node     |         1 | 1.438e-01s |  1.30e-01% |
+| mesh generation                 |         1 | 1.355e-01s |  1.23e-01% |
+| moved setup                     |         1 | 1.996e+01s |  1.81e+01% |
+| phiTot solve                    |        22 | 3.963e+00s |  3.59e+00% |
+| psp init                        |         1 | 3.476e+01s |  3.15e+01% |
+| scf solve                       |         1 | 4.640e+01s |  4.20e+01% |
+| shapefunction data              |         1 | 9.137e-02s | 0.000e+00% |
+| unmoved setup                   |         1 | 1.542e+00s |  1.40e+00% |
+| vself solve                     |         1 | 8.716e-01s |  7.89e-01% |
 +---------------------------------+-----------+------------+------------+
 
