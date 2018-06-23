@@ -91,29 +91,19 @@ namespace dftfe
 	  AssertThrow(false,dftUtils::ExcNotImplementedYet());
 #else
   	  //sum across all inter communicator groups
-	  //FIXME: It would be faster to do this all reduce operation in one go over all local elements
-	  //without copying into a temp vector
-	  //This which might require writing a function inside dealii
-
 	  if (processGrid->is_process_active() &&
 	      dealii::Utilities::MPI::n_mpi_processes(interComm)>1)
 	  {
 		const unsigned int local_m=mat.local_m();
 		const unsigned int local_n=mat.local_n();
-		std::vector<dataTypes::number> temp(local_n*local_m,0.0);
 
-		for (unsigned int i = 0; i < local_m; ++i)
-		    for (unsigned int j = 0; j < local_n; ++j)
-		       temp[i*local_n+j]= mat.local_el(i,j);
+                MPI_Allreduce(MPI_IN_PLACE,
+                              &mat.local_el(0,0),
+                              local_m*local_n,
+                              MPI_DOUBLE,
+                              MPI_SUM,
+                              interComm);
 
-		dealii::Utilities::MPI::sum(temp,
-					    interComm,
-					    temp);
-
-		 for (unsigned int i = 0; i < local_m; ++i)
-		     for (unsigned int j = 0; j < local_n; ++j)
-			   mat.local_el(i,j)
-			     =temp[i*local_n+j];
 	   }
 #endif
 	}
