@@ -1,9 +1,22 @@
+// ---------------------------------------------------------------------
 //
-//  xmlTodftfeParser.cc
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
-//  Created by Shukan Parekh on 5/12/18.
-//  Copyright © 2018 Shukan Parekh. All rights reserved.
+// This file is part of the DFT-FE code.
 //
+// The DFT-FE code is free software; you can use it, redistribute
+// it, and/or modify it under the terms of the GNU Lesser General
+// Public License as published by the Free Software Foundation; either
+// version 2.1 of the License, or (at your option) any later version.
+// The full text of the license can be found in the file LICENSE at
+// the top level of the DFT-FE distribution.
+//
+// ---------------------------------------------------------------------
+//
+// @author Shukan Parekh, Phani Motamarri
+//
+
+
 
 #include <xmlTodftfeParser.h>
 #include <fstream>
@@ -35,8 +48,10 @@ namespace pseudoUtils
 
   }
 
-
-bool xmlTodftfeParser::parseFile(std::string & filePath){
+  //
+  //parse the xml file to convert to dftfe file format
+  //
+bool xmlTodftfeParser::parseFile(const std::string & filePath){
     
     std::cout << std::scientific << std::setprecision(18);
      
@@ -223,7 +238,7 @@ bool xmlTodftfeParser::parseFile(std::string & filePath){
 
 
 
-bool xmlTodftfeParser::outputData(std::string & baseOutputPath)
+bool xmlTodftfeParser::outputData(const std::string & baseOutputPath)
 {
     // Open filestreams
     std::ofstream loc_pot;
@@ -326,7 +341,7 @@ bool xmlTodftfeParser::outputData(std::string & baseOutputPath)
       {
 	double di = atof(i.c_str());
 	double radius = atof(mesh[jd].c_str());
-	if (radius == 0.0)
+	if(std::fabs(radius - 0.0) <= 1e-14)
 	  {
 	    ad_file << std::fixed << std::setprecision(14) << mesh[jd] << " " << 0.00 << std::endl;
 	  }

@@ -71,7 +71,11 @@ namespace dftfe
 	      if(dftParameters::pseudoTestsFlag)
 		{
 		  std::string dftPath = DFT_PATH;
+#ifdef USE_COMPLEX
+		  std::string newPath =  dftPath + "/tests/dft/pseudopotential/complex/" + toParse;
+#else
 		  std::string newPath =  dftPath + "/tests/dft/pseudopotential/real/" + toParse;
+#endif
 		  //std::cout<<newPath<<std::endl;
 		  errorFlag = upfToxml(newPath,
 				       xmlFileName);

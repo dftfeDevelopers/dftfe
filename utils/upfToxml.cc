@@ -140,8 +140,8 @@ namespace dftfe
     }
 
    
-    int upfToxml(std::string & inputFileName, 
-		 std::string & outputFileName)
+    int upfToxml(const std::string & inputFileName, 
+		 const std::string & outputFileName)
     {
 
        dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));

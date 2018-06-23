@@ -37,6 +37,15 @@ namespace dftfe{
   //
   //Declare pseudoUtils function
   //
+
+  /** @file xmlTodftfeParser.h
+   *  @brief converts pseudopotential file from xml format to dftfe format
+   *
+   *  This class parses the xmlfile and identifies appropriate tags and converts
+   *  into file formats which can be read by dftfe code
+   *
+   *  @author Shukan Parekh, Phani Motamarri
+   */
 namespace pseudoUtils
 {
 
@@ -77,14 +86,14 @@ public:
      * 
      * @param filePath location of the xml file
      */
-    bool parseFile(std::string & filePath);
+    bool parseFile(const std::string & filePath);
 
     /**
      * @brief output the parsed xml pseudopotential file into dat files required by dftfe code
      * 
      * @param filePath location to write the data
      */
-    bool outputData(std::string & filePath);
+    bool outputData(const std::string & filePath);
 
 };
 

@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Phani Motamarri (2018)
+// @author Phani Motamarri
 //
 
 #ifndef converter_h
@@ -22,9 +22,22 @@
 #include "string.h"
 namespace dftfe
 {
- namespace pseudoUtils
- {
-   void convert(std::string & file);
- }
+  //
+  //Declare pseudoUtils function
+  //
+
+  /** @file pseudoConverter.h
+   *  @brief wrapper to convert pseudopotential file from upf to dftfe format
+   *
+   *  The functionality reads a file containing list of pseudopotential files in upf format and converts into 
+   *  into dftfe format -via- xml file format
+   *
+   *  @author Phani Motamarri
+   */
+
+  namespace pseudoUtils
+  {
+    void convert(std::string & file);
+  }
 }
 #endif 

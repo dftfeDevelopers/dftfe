@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Phani Motamarri (2018)
+// @author Phani Motamarri
 //
 
 #ifndef upfToxml_h
@@ -25,10 +25,30 @@
 
 namespace dftfe
 {
+  //
+  //Declare pseudoUtils function
+  //
+
+  /** @file upfxml.h
+   *  @brief converts pseudopotential file from upf to xml format
+   *
+   *  The functionality reads the upfile and identifies appropriate tags and converts
+   *  into xml file format
+   *
+   *  @author Phani Motamarri
+   */
  namespace pseudoUtils
  {
-   int upfToxml(std::string &inputFile,
-		std::string &outputFile);
+   /**
+    * @brief read a given upf pseudopotential file name in upf format  and convert to xml format
+    * 
+    * @param inputFile filePath location of the upf file
+    * @param outputFile filePath location of xml file
+    *
+    * @return int errorCode indicating success or failure of conversion
+    */
+   int upfToxml(const std::string &inputFile,
+		const std::string &outputFile);
  }
 }
 #endif 
