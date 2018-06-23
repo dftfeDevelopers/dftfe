@@ -282,7 +282,7 @@ namespace dftParameters
 
 	prm.declare_entry("PSEUDOPOTENTIAL FILE NAMES LIST", "",
 			  Patterns::Anything(),
-			  "[Standard] Pseudopotential file. This file contains the list of pseudopotential file names in UPF format corresponding to the atoms involved in the calculations. File format (example for two atoms Mg(z=12), Al(z=13)): 12 filename1.upf(row1), 13 filename2.upf (row2)");
+			  "[Standard] Pseudopotential file. This file contains the list of pseudopotential file names in UPF format corresponding to the atoms involved in the calculations. UPF version greater than 2.0 and norm-conserving pseudopotentials in UPF format are only accepted. File format (example for two atoms Mg(z=12), Al(z=13)): 12 filename1.upf(row1), 13 filename2.upf (row2)");
 
 	prm.declare_entry("EXCHANGE CORRELATION TYPE", "1",
 			  Patterns::Integer(1,4),
