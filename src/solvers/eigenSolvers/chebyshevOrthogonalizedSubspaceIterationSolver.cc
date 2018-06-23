@@ -29,7 +29,7 @@ namespace dftfe{
       {
 	unsigned int chebyshevOrder;
 	if(upperBoundUnwantedSpectrum <= 500)
-	  chebyshevOrder = 20;
+	  chebyshevOrder = 25;
 	else if(upperBoundUnwantedSpectrum > 500  && upperBoundUnwantedSpectrum <= 1000)
 	  chebyshevOrder = 30;
 	else if(upperBoundUnwantedSpectrum > 1000 && upperBoundUnwantedSpectrum <= 2000)
