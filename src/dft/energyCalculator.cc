@@ -124,7 +124,7 @@ namespace dftfe
 		  bandEnergyLocal+= (2-spinPolarized)*partialOccupancy2*kPointWeights[kPoint]*eigenValues[kPoint][i+numEigenValues];
 		  //
 		  if (verbosity>=2)
-			scout<< i<<" : "<< eigenValues[kPoint][i] << "       " << eigenValues[kPoint][i] << "       " <<
+			scout<< i<<" : "<< eigenValues[kPoint][i] << "       " << eigenValues[kPoint][i+numEigenValues] << "       " <<
 					partialOccupancy << "       " << partialOccupancy2 << std::endl;
 		 }
 	       }  // eigen state
