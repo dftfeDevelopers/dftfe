@@ -26,14 +26,14 @@ Reading initial guess for PSI....
 
 Reading initial guess for rho.....
 
-Pseuodopotential initalization....
+Pseudopotential initalization....
 
 Starting SCF iteration....
 SCF iteration converged to the specified tolerance after: 15 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:        -108.57429040
+             Total energy:        -108.57428130
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------

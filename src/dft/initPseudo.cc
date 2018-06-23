@@ -37,12 +37,13 @@ void dftClass<FEOrder>::initLocalPseudoPotential()
   for(std::set<unsigned int>::iterator it=atomTypes.begin(); it!=atomTypes.end(); it++)
     {
       char pseudoFile[256];
-      if (dftParameters::pseudoProjector==2)
-	  sprintf(pseudoFile, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/locPot.dat", DFT_PATH,*it);
-      else
-          sprintf(pseudoFile, "%s/data/electronicStructure/pseudoPotential/z%u/pseudoAtomData/locPot.dat", DFT_PATH,*it);
+      //if (dftParameters::pseudoProjector==2)
+	//sprintf(pseudoFile, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/locPot.dat", DFT_PATH,*it);
+	sprintf(pseudoFile,"temp/z%u/locPot.dat",*it);
+	//else
+	//sprintf(pseudoFile,"%s/data/electronicStructure/pseudoPotential/z%u/pseudoAtomData/locPot.dat", DFT_PATH,*it);
 
-      if (!dftParameters::reproducible_output)
+      if (dftParameters::verbosity>=2)
         pcout<<"Reading Local Pseudo-potential data from: " <<pseudoFile<<std::endl;
       dftUtils::readFile(2, pseudoPotentialData[*it], pseudoFile);
       unsigned int numRows = pseudoPotentialData[*it].size()-1;
@@ -68,7 +69,7 @@ void dftClass<FEOrder>::initLocalPseudoPotential()
       if(outerMostPointPseudo[*it] < d_pspTail)
 	 d_pspTail = outerMostPointPseudo[*it] ;
     }
-   if (dftParameters::verbosity>=2)
+   if(dftParameters::verbosity>=2)
       pcout << " d_pspTail adjusted to " << d_pspTail << std::endl ;
   //
   //Initialize pseudopotential

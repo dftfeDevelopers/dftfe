@@ -27,15 +27,15 @@ namespace dftfe {
 namespace dftParameters
 {
 
-  unsigned int finiteElementPolynomialOrder=1,n_refinement_steps=1,numberEigenValues=1,xc_id=1, spinPolarized=0, nkx=1,nky=1,nkz=1, pseudoProjector=1;
+  unsigned int finiteElementPolynomialOrder=1,n_refinement_steps=1,numberEigenValues=1,xc_id=1, spinPolarized=0, nkx=1,nky=1,nkz=1; 
   unsigned int chebyshevOrder=1,numPass=1, numSCFIterations=1,maxLinearSolverIterations=1, mixingHistory=1, npool=1;
 
   double radiusAtomBall=0.0, mixingParameter=0.5, dkx=0.0, dky=0.0, dkz=0.0;
   double lowerEndWantedSpectrum=0.0,relLinearSolverTolerance=1e-10,selfConsistentSolverTolerance=1e-10,TVal=500, start_magnetization=0.0;
   double chebyshevTolerance = 1e-02;
 
-  bool isPseudopotential=false,periodicX=false,periodicY=false,periodicZ=false, useSymm=false, timeReversal=false;
-  std::string meshFileName="",coordinatesFile="",domainBoundingVectorsFile="",kPointDataFile="", ionRelaxFlagsFile="",orthogType="";
+  bool isPseudopotential=false,periodicX=false,periodicY=false,periodicZ=false, useSymm=false, timeReversal=false,pseudoTestsFlag=false;
+  std::string meshFileName="",coordinatesFile="",domainBoundingVectorsFile="",kPointDataFile="", ionRelaxFlagsFile="",orthogType="",pseudoPotentialFile="";
 
   double outerAtomBallRadius=2.0, meshSizeOuterDomain=10.0;
   double meshSizeInnerBall=1.0, meshSizeOuterBall=1.0;
@@ -276,9 +276,13 @@ namespace dftParameters
 			  Patterns::Bool(),
 			  "[Standard] Boolean Parameter specifying whether pseudopotential DFT calculation needs to be performed. For all-electron DFT calculation set to false.");
 
-	prm.declare_entry("PSEUDOPOTENTIAL TYPE", "1",
-			  Patterns::Integer(1,2),
-			  "[Standard] Type of nonlocal projector to be used: 1 for KB [PRL. 48, 1425 (1982); PRL. 43, 1993 (1991)], 2 for ONCV [PRB. 88, 085117 (2013)]. Default option is 1.");
+	prm.declare_entry("PSEUDO TESTS FLAG", "false",
+			  Patterns::Bool(),
+			  "[Developer] Boolean parameter specifying the explicit path of pseudopotential upf format files used for ctests");
+
+	prm.declare_entry("PSEUDOPOTENTIAL FILE NAMES LIST", "",
+			  Patterns::Anything(),
+			  "[Standard] Pseudopotential file. This file contains the list of pseudopotential file names in UPF format corresponding to the atoms involved in the calculations. File format (example for two atoms Mg(z=12), Al(z=13)): 12 filename1.upf(row1), 13 filename2.upf (row2)");
 
 	prm.declare_entry("EXCHANGE CORRELATION TYPE", "1",
 			  Patterns::Integer(1,4),
@@ -490,13 +494,15 @@ namespace dftParameters
 	dftParameters::useSymm                  = prm.get_bool("USE GROUP SYMMETRY");
 	dftParameters::timeReversal                   = prm.get_bool("USE TIME REVERSAL SYMMETRY");
 	dftParameters::kPointDataFile                = prm.get("kPOINT RULE FILE");
+
     }
     prm.leave_subsection ();
 
     prm.enter_subsection ("DFT functional related parameters");
     {
 	dftParameters::isPseudopotential             = prm.get_bool("PSEUDOPOTENTIAL CALCULATION");
-	dftParameters::pseudoProjector               = prm.get_integer("PSEUDOPOTENTIAL TYPE");
+	dftParameters::pseudoTestsFlag               = prm.get_bool("PSEUDO TESTS FLAG");
+	dftParameters::pseudoPotentialFile           = prm.get("PSEUDOPOTENTIAL FILE NAMES LIST");
 	dftParameters::xc_id                         = prm.get_integer("EXCHANGE CORRELATION TYPE");
 	dftParameters::spinPolarized                 = prm.get_integer("SPIN POLARIZATION");
 	dftParameters::start_magnetization           = prm.get_double("START MAGNETIZATION");
@@ -512,6 +518,7 @@ namespace dftParameters
 	dftParameters::mixingParameter               = prm.get_double("ANDERSON SCHEME MIXING PARAMETER");
         dftParameters::startingWFCType               = prm.get("STARTING WFC");
 	dftParameters::computeEnergyEverySCF         = prm.get_bool("COMPUTE ENERGY EACH ITER");
+
 
 	prm.enter_subsection ("Eigen-solver/Chebyshev solver related parameters");
 	{
@@ -538,7 +545,7 @@ namespace dftParameters
     {
        dftParameters::maxLinearSolverIterations     = prm.get_integer("MAXIMUM ITERATIONS");
        dftParameters::relLinearSolverTolerance      = prm.get_double("TOLERANCE");
-       dftParameters::electrostaticsPRefinement        = prm.get_bool("P REFINEMENT");
+       dftParameters::electrostaticsPRefinement     = prm.get_bool("P REFINEMENT");
     }
     prm.leave_subsection ();
 

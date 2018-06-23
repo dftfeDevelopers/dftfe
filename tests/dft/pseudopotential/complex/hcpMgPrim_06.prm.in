@@ -53,7 +53,8 @@ end
 
 subsection DFT functional related parameters
   set PSEUDOPOTENTIAL CALCULATION =true
-  set PSEUDOPOTENTIAL TYPE = 2
+  set PSEUDOPOTENTIAL FILE NAMES LIST = @SOURCE_DIR@/pseudoMgONCV.inp 
+  set PSEUDO TESTS FLAG = true
   set EXCHANGE CORRELATION TYPE = 4
   set SPIN POLARIZATION=1
   set START MAGNETIZATION=0.4
@@ -73,7 +74,7 @@ subsection SCF parameters
       set CHEBYSHEV POLYNOMIAL DEGREE = 40
       set CHEBYSHEV FILTER TOLERANCE=1e-2
       set ORTHOGONALIZATION TYPE=LW
-      set ENABLE SWITCH TO GS=false
+      set ENABLE SWITCH TO GS=true
   end
 end
 

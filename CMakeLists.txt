@@ -45,6 +45,10 @@ SET(TARGET_SRC
   ./utils/dftUtils.cc
   ./utils/vectorTools/interpolateFieldsFromPreviousMesh.cc
   ./utils/vectorTools/vectorUtilities.cc
+  ./utils/pseudoConverter.cc
+  ./utils/upfToxml.cc
+  ./utils/PeriodicTable.cc
+  ./utils/xmlTodftfeParser.cc
   # You can specify additional files here!
   )
 
@@ -187,6 +191,28 @@ IF (DEFINED LIBXC_DIR)
 ELSE()
   MESSAGE(FATAL_ERROR "-- Provide path to prefix of LibXC: -DLIBXC_DIR=/path/to/prefix")
 ENDIF (DEFINED LIBXC_DIR)
+
+#
+# XML. Set with -DXML_DIR=/path/to/xml
+#
+IF (DEFINED XML_INCLUDE_DIR)
+  FIND_LIBRARY(XML_LIBRARY
+    NAMES xml2
+    HINTS ${XML_LIB_DIR}
+    NO_DEFAULT_PATH
+  )
+  IF(XML_LIBRARY STREQUAL "XML_LIBRARY-NOTFOUND")
+      MESSAGE(FATAL_ERROR "-- XML was not found in ${XML_LIB_DIR}")
+  ENDIF()
+  MESSAGE("-- Use Xml from ${XML_LIB_DIR}")
+  TARGET_LINK_LIBRARIES(${TARGETLIB}
+	    "${XML_LIBRARY}"
+  )
+  INCLUDE_DIRECTORIES ("${XML_INCLUDE_DIR}")
+ELSE()
+  MESSAGE(FATAL_ERROR "-- Provide path of XML: -DXML_DIR=/path/to/xml")
+ENDIF (DEFINED XML_INCLUDE_DIR)
+
 
 
 #

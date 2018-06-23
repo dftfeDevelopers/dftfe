@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Phani Motamarri (2018)
+// @author Phani Motamarri
 //
 
 #ifndef constraintMatrixInfo_H_
@@ -132,7 +132,7 @@ namespace dftUtils
 
   };
 
-};
+}
 
 }
 #endif

@@ -26,7 +26,8 @@ end
 subsection DFT functional related parameters
   set EXCHANGE CORRELATION TYPE   = 1
   set PSEUDOPOTENTIAL CALCULATION = true
-  set PSEUDOPOTENTIAL TYPE        = 1
+  set PSEUDOPOTENTIAL FILE NAMES LIST = @SOURCE_DIR@/pseudoAlKB.inp
+  set PSEUDO TESTS FLAG        = true
 end
 
 

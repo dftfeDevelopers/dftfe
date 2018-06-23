@@ -1,1 +1,0 @@
-If the 64bit dealii is not correctly installed this example gave BVOrthogonalize error (ran on 32 procs).
