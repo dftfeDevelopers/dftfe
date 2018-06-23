@@ -25,6 +25,16 @@
 
 namespace dftfe
 {
+  //
+  //Declare pseudoUtils function
+  //
+
+  /** @file PeriodicTable.h
+   *  @brief stores a map between atomic number and atomic symbol and atomic mass
+   *
+   *
+   *  @author Phani Motamarri
+   */
   namespace pseudoUtils
   {
     struct Element
