@@ -28,6 +28,7 @@
 #include <stdexcept>
 #include <PeriodicTable.h>
 #include <upfToxml.h>
+#include <boost/algorithm/string/trim.hpp>
 
 ////////////////////////////////////////////////////////////////////////////////
 namespace dftfe
@@ -220,6 +221,7 @@ namespace dftfe
 
 	  // get attribute "element"
 	  std::string upf_symbol = get_attr(tag,"element");
+	  boost::algorithm::trim(upf_symbol);
 	  //std::cerr << " upf_symbol: " << upf_symbol << std::endl;
 
 	  // get atomic number and mass
