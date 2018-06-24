@@ -97,7 +97,7 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
 		      numEigenValues,
 		      d_eigenVectorsFlattened[kPoint]);
 
-     pcout <<std::endl<< "Reading initial guess for PSI...."<<std::endl;
+     pcout <<std::endl<< "Setting initial guess for wavefunctions...."<<std::endl;
      readPSI();
 
      if(dftParameters::verbosity >= 4)

@@ -43,7 +43,7 @@ void dftClass<FEOrder>::initRho()
   clearRhoData();
 
   //Reading single atom rho initial guess
-  pcout <<std::endl<< "Reading initial guess for rho....."<<std::endl;
+  pcout <<std::endl<< "Reading initial guess for electron-density....."<<std::endl;
   std::map<unsigned int, alglib::spline1dinterpolant> denSpline;
   std::map<unsigned int, std::vector<std::vector<double> > > singleAtomElectronDensity;
   std::map<unsigned int, double> outerMostPointDen;
@@ -786,8 +786,8 @@ void dftClass<FEOrder>::normalizeRho()
   const double charge = totalCharge(rhoInValues);
   const double scaling=((double)numElectrons)/charge;
 
-  if (dftParameters::verbosity>=1)
-     pcout<< "initial total charge: "<< charge<<std::endl;
+  if (dftParameters::verbosity>=2)
+     pcout<< "initial total charge before normalizing to number of electrons: "<< charge<<std::endl;
 
   //scaling rho
   typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
@@ -816,5 +816,5 @@ void dftClass<FEOrder>::normalizeRho()
   double chargeAfterScaling = totalCharge(rhoInValues);
 
   if (dftParameters::verbosity>=1)
-     pcout<<"initial total charge after scaling: "<< chargeAfterScaling<<std::endl;
+     pcout<<"Initial total charge: "<< chargeAfterScaling<<std::endl;
 }

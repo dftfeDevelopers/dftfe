@@ -68,13 +68,13 @@ int main (int argc, char *argv[])
       pcout << "Total number of MPI tasks: "
 	    << Utilities::MPI::n_mpi_processes(MPI_COMM_WORLD)
 	    << std::endl;
-      pcout << "k points parallelization pools: "
+      pcout << "k-point parallelization processor groups: "
 	    << Utilities::MPI::n_mpi_processes(kPointPool.get_interpool_comm())
 	    << std::endl;
-      pcout << "Band parallelization pools: "
+      pcout << "Band parallelization processor groups: "
 	    << Utilities::MPI::n_mpi_processes(bandGroupsPool.get_interpool_comm())
 	    << std::endl;
-      pcout << "Number of MPI tasks for domain decomposition: "
+      pcout << "Number of MPI tasks for finite-element domain decomposition: "
 	    << Utilities::MPI::n_mpi_processes(bandGroupsPool.get_intrapool_comm())
 	    << std::endl;
       pcout <<"============================================================================================" << std::endl ;

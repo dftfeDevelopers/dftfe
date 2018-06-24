@@ -97,7 +97,7 @@ namespace dftfe
 	  if (ipool==dealii::Utilities::MPI::this_mpi_process(interpoolcomm)) {
 	  for(unsigned int kPoint = 0; kPoint < kPointWeights.size(); ++kPoint)
 	    {
-	      if (verbosity > 2)
+	      if (verbosity >= 2)
 		{
 		  scout<<" Printing KS eigen values (spin split if this is a spin polarized calculation ) and fractional occupancies for kPoint " << (lowerBoundKindex + kPoint) << std::endl;
 	          scout << "  " << std::endl ;
@@ -112,7 +112,7 @@ namespace dftfe
 		  bandEnergyLocal+= (2-spinPolarized)*partialOccupancy*kPointWeights[kPoint]*eigenValues[kPoint][i];
 		  //
 		  if (spinPolarized==0)
-	 	     if (verbosity>=2)
+	 	     if (verbosity>2)
 		        scout << i<<" : "<< eigenValues[kPoint][i] << "       " << partialOccupancy<<std::endl;
 		  //
 		  if (spinPolarized==1){
@@ -123,7 +123,7 @@ namespace dftfe
                                                      TVal);
 		  bandEnergyLocal+= (2-spinPolarized)*partialOccupancy2*kPointWeights[kPoint]*eigenValues[kPoint][i+numEigenValues];
 		  //
-		  if (verbosity>=2)
+		  if (verbosity>2)
 			scout<< i<<" : "<< eigenValues[kPoint][i] << "       " << eigenValues[kPoint][i+numEigenValues] << "       " <<
 					partialOccupancy << "       " << partialOccupancy2 << std::endl;
 		 }

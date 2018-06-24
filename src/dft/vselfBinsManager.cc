@@ -347,7 +347,7 @@ namespace dftfe
       if (std::fabs(radiusAtomBall)<1e-6)
       {
 	  if (dftParameters::verbosity>=1)
-	      pcout<<"Adaptively setting nuclear charge electrostatic self-potential solve ball radius... "<<std::endl;
+	      pcout<<"Determining the ball radius around the atom for nuclear self-potential solve... "<<std::endl;
           unsigned int check=internal::createAndCheckInteractionMap(interactionMap,
 							            dofHandler,
 								    supportPoints,
@@ -373,7 +373,7 @@ namespace dftfe
 
 	  std::string message;
 	  if (check==1 || check==2)
-	      message="DFT-FE error: adaptively determined ball radius for nuclear charge electrostatic self-potential solve has reached the minimum allowed value of 1.0, which can severly detoriate the accuracy of the KSDFT groundstate energy and forces. Please use a larger periodic super cell which can accomodate a larger ball radius.";
+	      message="DFT-FE error: Tried to adaptively determine the ball radius for nuclear self-potential solve and it has reached the minimum allowed value of 1.0, which can severly detoriate the accuracy of the KSDFT groundstate energy and forces. Please use a larger periodic super cell which can accomodate a larger ball radius.";
 
 	  AssertThrow(check==0,dealii::ExcMessage(message));
 
@@ -381,14 +381,14 @@ namespace dftfe
 	      pcout<<"...Adaptively set ball radius: "<< radiusAtomBallAdaptive<<std::endl;
 
 	  if (radiusAtomBallAdaptive<3.0)
-	      pcout<<"DFT-FE warning: adaptively determined ball radius for nuclear charge electrostatic self-potential solve is less than 3.0, which can detoriate the accuracy of the KSDFT groundstate energy and forces. One approach to overcome this issue is to use a larger super cell with smallest periodic dimension greater than 6.0 (twice of 3.0), assuming an orthorhombic domain. If that is not feasible, you may need more h refinement of the finite element mesh around the atoms to achieve the desired accuracy."<<std::endl;
+	      pcout<<"DFT-FE warning: Tried to adaptively determine the ball radius for nuclear self-potential solve and was found to be less than 3.0, which can detoriate the accuracy of the KSDFT groundstate energy and forces. One approach to overcome this issue is to use a larger super cell with smallest periodic dimension greater than 6.0 (twice of 3.0), assuming an orthorhombic domain. If that is not feasible, you may need more h refinement of the finite element mesh around the atoms to achieve the desired accuracy."<<std::endl;
 	  MPI_Barrier(mpi_communicator);
 
       }
       else
       {
 	  if (dftParameters::verbosity>=2)
-	      pcout<<"Setting nuclear charge electrostatic self-potential solve ball radius from input parameters value: "<< radiusAtomBall<<std::endl;
+	      pcout<<"Setting the ball radius for nuclear self-potential solve from input parameters value: "<< radiusAtomBall<<std::endl;
 
 	  radiusAtomBallAdaptive=radiusAtomBall;
 	  const unsigned int check=internal::createAndCheckInteractionMap(interactionMap,

@@ -323,7 +323,7 @@ namespace dftfe {
   void dftClass<FEOrder>::initImageChargesUpdateKPoints()
   {
 
-    pcout<<"-----------Domain bounding vectors (lattice vectors in fully periodic case)-------------"<<std::endl;
+    pcout<<"-----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------"<<std::endl;
     for(int i = 0; i < d_domainBoundingVectors.size(); ++i)
       {
 	pcout<<"v"<< i+1<<" : "<< d_domainBoundingVectors[i][0]<<" "<<d_domainBoundingVectors[i][1]<<" "<<d_domainBoundingVectors[i][2]<<std::endl;
@@ -529,15 +529,15 @@ namespace dftfe {
     //
     //solve vself in bins
     //
-    computing_timer.enter_section("Nuclear charge electrostatic self-potential solve");
-    computingTimerStandard.enter_section("Nuclear charge electrostatic self-potential solve");
+    computing_timer.enter_section("Nuclear self-potential solve");
+    computingTimerStandard.enter_section("Nuclear self-potential solve");
     d_vselfBinsManager.solveVselfInBins(matrix_free_data,
 					2,
 					d_phiExt,
 					d_noConstraints,
 					d_localVselfs);
-    computingTimerStandard.exit_section("Nuclear charge electrostatic self-potential solve");
-    computing_timer.exit_section("Nuclear charge electrostatic self-potential solve");
+    computingTimerStandard.exit_section("Nuclear self-potential solve");
+    computing_timer.exit_section("Nuclear self-potential solve");
 
     computingTimerStandard.enter_section("Total scf solve");
     energyCalculator energyCalc(mpi_communicator, interpoolcomm,interBandGroupComm);
@@ -1021,8 +1021,8 @@ namespace dftfe {
 
 	local_timer.stop();
 	if (dftParameters::verbosity>=1)
-           pcout << "Wall time for scf: " << local_timer.wall_time() << " seconds\n"<<
-	        "Chebyshev subspace iterations: "<< numberChebyshevSolvePasses<<std::endl<<std::endl;
+           pcout << "Wall time for the above scf iteration: " << local_timer.wall_time() << " seconds\n"<<
+	        "Number of Chebyshev filtered subspace iterations: "<< numberChebyshevSolvePasses<<std::endl<<std::endl;
 	//
 	scfIter++;
 

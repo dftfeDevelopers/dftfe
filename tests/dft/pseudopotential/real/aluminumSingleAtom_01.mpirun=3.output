@@ -5,7 +5,7 @@ Z:13
 number of electrons: 3
 number of eigen values: 20
 =============================================================================================================================
------------Domain bounding vectors (lattice vectors in fully periodic case)-------------
+-----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
 v1 : 4.000000000000000000e+01 0.000000000000000000e+00 0.000000000000000000e+00
 v2 : 0.000000000000000000e+00 4.000000000000000000e+01 0.000000000000000000e+00
 v3 : 0.000000000000000000e+00 0.000000000000000000e+00 4.000000000000000000e+01
@@ -20,9 +20,9 @@ number of elements: 288
 number of degrees of freedom: 10381
 -------------------------------------------------
 
-Reading initial guess for PSI....
+Setting initial guess for wavefunctions....
 
-Reading initial guess for rho.....
+Reading initial guess for electron-density.....
 
 Pseudopotential initalization....
 

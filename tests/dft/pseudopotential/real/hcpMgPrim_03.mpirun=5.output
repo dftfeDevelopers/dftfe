@@ -5,7 +5,7 @@ Z:12
 number of electrons: 20
 number of eigen values: 20
 =============================================================================================================================
------------Domain bounding vectors (lattice vectors in fully periodic case)-------------
+-----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
 v1 : 5.882191053999999752e+00 0.000000000000000000e+00 0.000000000000000000e+00
 v2 : -2.941095526999999876e+00 5.094126882677563195e+00 0.000000000000000000e+00
 v3 : 0.000000000000000000e+00 0.000000000000000000e+00 9.585777736000000715e+00
@@ -22,14 +22,14 @@ number of elements: 976
 number of degrees of freedom: 32917
 -------------------------------------------------
 
-Reading initial guess for PSI....
+Setting initial guess for wavefunctions....
 
-Reading initial guess for rho.....
+Reading initial guess for electron-density.....
 
 Pseudopotential initalization....
 
 Starting SCF iteration....
-SCF iteration converged to the specified tolerance after: 14 iterations.
+SCF iteration converged to the specified tolerance after: 13 iterations.
 
 Energy computations (Hartree) 
 -------------------

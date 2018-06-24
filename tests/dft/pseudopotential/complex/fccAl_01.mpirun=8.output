@@ -6,7 +6,7 @@ number of electrons: 12
 number of eigen values: 20
 =============================================================================================================================
 Total number of k-points 64
------------Domain bounding vectors (lattice vectors in fully periodic case)-------------
+-----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
 v1 : 7.599999999999999645e+00 0.000000000000000000e+00 0.000000000000000000e+00
 v2 : 0.000000000000000000e+00 7.599999999999999645e+00 0.000000000000000000e+00
 v3 : 0.000000000000000000e+00 0.000000000000000000e+00 7.599999999999999645e+00
@@ -25,9 +25,9 @@ number of elements: 1331
 number of degrees of freedom: 12167
 -------------------------------------------------
 
-Reading initial guess for PSI....
+Setting initial guess for wavefunctions....
 
-Reading initial guess for rho.....
+Reading initial guess for electron-density.....
 
 Pseudopotential initalization....
 
