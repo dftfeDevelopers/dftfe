@@ -69,7 +69,7 @@ subsection SCF parameters
       set CHEBYSHEV POLYNOMIAL DEGREE = 40
       set CHEBYSHEV FILTER TOLERANCE=5e-3
       set ORTHOGONALIZATION TYPE=LW
-      set ENABLE SWITCH TO GS=false
+      set ENABLE SWITCH TO GS=true
   end
 end
 

@@ -272,7 +272,12 @@ namespace dftfe {
       {
 	pcout<<std::endl<<"Reading Pseudo-potential data for each atom from the list given in : " <<dftParameters::pseudoPotentialFile<<std::endl;
       }
-    pseudoUtils::convert(dftParameters::pseudoPotentialFile);
+    
+    if(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+      pseudoUtils::convert(dftParameters::pseudoPotentialFile);
+
+    MPI_Barrier(MPI_COMM_WORLD);
+
   }
 
   //dft pseudopotential init
