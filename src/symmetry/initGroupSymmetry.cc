@@ -277,6 +277,7 @@ void symmetryClass<FEOrder>::initSymmetry()
 		 mappedPoint[1] = pointTemp.operator()(1);
 		 mappedPoint[2] = pointTemp.operator()(2);
 		//
+	        if (dftParameters::verbosity > 3) {
 	        for (unsigned int i = 0; i<3; ++i) {
 		     if (mappedPoint[i] < 1.0E-10){
 			pcout << mappedPoint[i] << "  " << p[0] << "  " << p[1] << "  " << p[2] << std::endl ;
@@ -287,6 +288,7 @@ void symmetryClass<FEOrder>::initSymmetry()
 			mappedPoint[i] = double (1.0) ;
 			}
                 }
+	        }
 		ownerProcId = ownerProcGlobal[globalCellId[mapped_cell.first->id()]] ;
 		//
 		tupleTemp = std::make_tuple(ownerProcId,mappedPoint,q_point);
