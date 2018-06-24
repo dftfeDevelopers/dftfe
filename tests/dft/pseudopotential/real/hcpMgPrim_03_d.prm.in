@@ -1,0 +1,84 @@
+set VERBOSITY= 0
+set REPRODUCIBLE OUTPUT=true
+
+subsection Geometry
+  set ATOMIC COORDINATES FILE = @SOURCE_DIR@/hcpMgPrim_coordinates.inp
+  set DOMAIN BOUNDING VECTORS FILE = @SOURCE_DIR@/hcpMgPrim_domainBoundingVectors.inp
+  
+  subsection Optimization
+    set ION FORCE=true
+    set CELL STRESS=false
+  end 
+ 
+end
+
+
+subsection Boundary conditions
+  set SELF POTENTIAL ATOM BALL RADIUS = 1.6
+  set PERIODIC1 = true
+  set PERIODIC2 = true
+  set PERIODIC3 = true
+end
+
+
+subsection Finite element mesh parameters
+  set POLYNOMIAL ORDER = 3
+  
+  subsection Auto mesh generation parameters
+    set BASE MESH SIZE = 1.0 
+    set ATOM BALL RADIUS = 2.0
+    set MESH SIZE ATOM BALL = 0.5
+    set MESH SIZE NEAR ATOM = 0.5 
+  end
+
+end
+
+
+subsection Brillouin zone k point sampling options
+
+  subsection Monkhorst-Pack (MP) grid generation
+    set SAMPLING POINTS 1 = 1
+    set SAMPLING POINTS 2 = 1
+    set SAMPLING POINTS 3 = 1
+    set SAMPLING SHIFT 1 = 0.0
+    set SAMPLING SHIFT 2 = 0.0
+    set SAMPLING SHIFT 3 = 0.0
+  end
+end
+
+
+
+subsection DFT functional related parameters
+  set PSEUDOPOTENTIAL CALCULATION =true
+  set PSEUDOPOTENTIAL FILE NAMES LIST = @SOURCE_DIR@/pseudoMgONCV.inp
+  set PSEUDO TESTS FLAG = true
+  set EXCHANGE CORRELATION TYPE = 4
+end
+
+subsection Parallelization
+  set NPBAND=2
+end
+
+subsection SCF parameters
+  set MAXIMUM ITERATIONS = 100 
+  set TOLERANCE          = 1e-7
+  set ANDERSON SCHEME MIXING PARAMETER   = 0.5
+  set ANDERSON SCHEME MIXING HISTORY     = 70
+  set TEMPERATURE                        = 500
+  set STARTING WFC=ATOMIC
+  subsection Eigen-solver/Chebyshev solver related parameters
+      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 23
+      set LOWER BOUND WANTED SPECTRUM = -10.0
+      set CHEBYSHEV POLYNOMIAL DEGREE = 40
+      set CHEBYSHEV FILTER TOLERANCE=5e-3
+      set ORTHOGONALIZATION TYPE=PGS
+      set ENABLE SWITCH TO GS=false
+      set ORTHO RR WFC BLOCK SIZE=3
+      set SCALAPACKPROCS=2
+  end
+end
+
+subsection Poisson problem parameters
+  set MAXIMUM ITERATIONS = 10000
+  set TOLERANCE          = 1e-12
+end

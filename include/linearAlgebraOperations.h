@@ -68,13 +68,13 @@ namespace dftfe
 
     /** @brief Apply Chebyshev filter to a given subspace
      *
-     *  @param operatorMatrix An object which has access to the given matrix
-     *  @param  X Given subspace as STL vector of dealii vectors
-     *  @param  m Chebyshev polynomial degree
-     *  @param  a lower bound of unwanted spectrum
-     *  @param  b upper bound of unwanted spectrum
-     *  @param  a0 lower bound of wanted spectrum
-     *  @return X In-place update of the given subspace
+     *  @param[in] operatorMatrix An object which has access to the given matrix
+     *  @param[in,out]  X Given subspace as STL vector of dealii vectors.
+     *  In-place update of the given subspace
+     *  @param[in]  m Chebyshev polynomial degree
+     *  @param[in]  a lower bound of unwanted spectrum
+     *  @param[in]  b upper bound of unwanted spectrum
+     *  @param[in]  a0 lower bound of wanted spectrum
      */
     void chebyshevFilter(operatorDFTClass & operatorMatrix,
 			 std::vector<vectorType> & X,
@@ -86,14 +86,14 @@ namespace dftfe
 
     /** @brief Apply Chebyshev filter to a given subspace
      *
-     *  @param operatorMatrix An object which has access to the given matrix
-     *  @param  X Given subspace as a dealii array representing multiple fields as a flattened array
-     *  @param  numberComponents Number of multiple-fields
-     *  @param  m Chebyshev polynomial degree
-     *  @param  a lower bound of unwanted spectrum
-     *  @param  b upper bound of unwanted spectrum
-     *  @param  a0 lower bound of wanted spectrum
-     *  @return X In-place update of the given subspace
+     *  @param[in] operatorMatrix An object which has access to the given matrix
+     *  @param[in,out]  X Given subspace as a dealii array representing multiple fields
+     *  as a flattened array. In-place update of the given subspace.
+     *  @param[in]  numberComponents Number of multiple-fields
+     *  @param[in]  m Chebyshev polynomial degree
+     *  @param[in]  a lower bound of unwanted spectrum
+     *  @param[in]  b upper bound of unwanted spectrum
+     *  @param[in]  a0 lower bound of wanted spectrum
      */
     template<typename T>
     void chebyshevFilter(operatorDFTClass & operatorMatrix,
@@ -108,11 +108,10 @@ namespace dftfe
 
     /** @brief Orthogonalize given subspace using GramSchmidt orthogonalization
      *
-     *  @param operatorMatrix An object which has access to the given matrix
-     *  @param  X Given subspace as vector of dealii column vectors
-     *  @param startingIndex dealii column vector index to start the orthogonalization procedure
-     *
-     *  @return X In-place update of the given subspace
+     *  @param[in] operatorMatrix An object which has access to the given matrix
+     *  @param[in,out]  X Given subspace as vector of dealii column vectors.
+     *  In-place update of the given subspace
+     *  @param[in] startingIndex dealii column vector index to start the orthogonalization procedure
      */
     void gramSchmidtOrthogonalization(operatorDFTClass & operatorMatrix,
 				      std::vector<vectorType> & X,
@@ -122,9 +121,9 @@ namespace dftfe
 
      /** @brief Orthogonalize given subspace using GramSchmidt orthogonalization
      *
-     *  @param  X Given subspace as flattened array of multi-vectors
-     *  @param numberComponents Number of multiple-fields
-     *  @return X In-place update of the given subspace
+     *  @param[in,out]  X Given subspace as flattened array of multi-vectors.
+     *  In-place update of the given subspace
+     *  @param[in] numberComponents Number of multiple-fields
      */
     template<typename T>
       void gramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<T> & X,
@@ -134,35 +133,37 @@ namespace dftfe
     /** @brief Orthogonalize given subspace using Lowden orthogonalization for double data-type
      *  (serial version using LAPACK)
      *
-     *  @param  X Given subspace as flattened array of multi-vectors
-     *  @param numberComponents Number of multiple-fields
-     *  @return X In-place update of the given subspace
+     *  @param[in,out]  X Given subspace as flattened array of multi-vectors.
+     *  In-place update of the given subspace
+     *  @param[in] numberComponents Number of multiple-fields
+     *
+     *  @return flag indicating success/failure. 1 for failure, 0 for success
      */
-    void lowdenOrthogonalization(dealii::parallel::distributed::Vector<dataTypes::number> & X,
+    unsigned int lowdenOrthogonalization(dealii::parallel::distributed::Vector<dataTypes::number> & X,
 				 const unsigned int numberComponents);
 
 
      /** @brief Orthogonalize given subspace using Pseudo-Gram-Schmidt orthogonalization
       * (serial version using LAPACK, parallel version using ScaLAPACK)
       *
-      *  This is a wrapper to the serial and parallel versions. The parallel version is
-      *  called if dealii is linked to ScaLAPACK, otherwise the serial version is called.
+      *  @param[in,out]  X Given subspace as flattened array of multi-vectors.
+      *  In-place update of the given subspace
+      *  @param[in] numberComponents Number of multiple-fields
+      *  @param[in] interBandGroupComm interpool communicator for parallelization over band groups
       *
-      *  @param  X Given subspace as flattened array of multi-vectors
-      *  @param numberComponents Number of multiple-fields
-      *  @return X In-place update of the given subspace
+      *  @return flag indicating success/failure. 1 for failure, 0 for success
       */
     template<typename T>
-      void pseudoGramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<T> & X,
-					      const unsigned int numberComponents);
+      unsigned int pseudoGramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<T> & X,
+					      const unsigned int numberComponents,
+					      const MPI_Comm &interBandGroupComm);
 
     /** @brief Compute Rayleigh-Ritz projection
      *
-     *  @param operatorMatrix An object which has access to the given matrix
-     *  @param  X Given subspace as STL vector dealii vectors
-     *
-     *  @return X In-place rotated subspace
-     *  @return eigenValues of the Projected Hamiltonian
+     *  @param[in] operatorMatrix An object which has access to the given matrix
+     *  @param[in,out]  X Given subspace as STL vector dealii vectors.
+     *  In-place rotated subspace
+     *  @param[out] eigenValues of the Projected Hamiltonian
      */
     void rayleighRitz(operatorDFTClass        & operatorMatrix,
 		      std::vector<vectorType> & X,
@@ -173,26 +174,26 @@ namespace dftfe
     /** @brief Compute Rayleigh-Ritz projection
      *  (serial version using LAPACK, parallel version using ScaLAPACK)
      *
-     *  @param operatorMatrix An object which has access to the given matrix
-     *  @param  X Given subspace as flattened array of multi-vectors
-     *  @param  numberComponents Number of multiple-fields
-     *
-     *  @return X In-place rotated subspace
-     *  @return eigenValues of the Projected Hamiltonian
+     *  @param[in] operatorMatrix An object which has access to the given matrix
+     *  @param[in,out]  X Given subspace as flattened array of multi-vectors.
+     *  In-place rotated subspace
+     *  @param[in] numberComponents Number of multiple-fields
+     *  @param[in] interBandGroupComm interpool communicator for parallelization over band groups
+     *  @param[out] eigenValues of the Projected Hamiltonian
      */
     template<typename T>
     void rayleighRitz(operatorDFTClass        & operatorMatrix,
 		      dealii::parallel::distributed::Vector<T> & X,
 		      const unsigned int numberComponents,
+		      const MPI_Comm &interBandGroupComm,
 		      std::vector<double>     & eigenValues);
 
     /** @brief Compute Compute residual norm associated with eigenValue problem of the given operator
      *
-     *  @param operatorMatrix An object which has access to the given matrix
-     *  @param  X Given subspace as STL vector of dealii vectors
-     *  @param  eigenValues eigenValues of the operator
-     *
-     *  @return residualNorms of the eigen Value problem
+     *  @param[in] operatorMatrix An object which has access to the given matrix
+     *  @param[in]  X Given subspace as STL vector of dealii vectors
+     *  @param[in]  eigenValues eigenValues of the operator
+     *  @param[out] residualNorms of the eigen Value problem
      */
     void computeEigenResidualNorm(operatorDFTClass        & operatorMatrix,
 				  std::vector<vectorType> & X,
@@ -202,21 +203,16 @@ namespace dftfe
 
     /** @brief Compute residual norm associated with eigenValue problem of the given operator
      *
-     *  @param operatorMatrix An object which has access to the given matrix
-     *  @param  X Given eigenvector subspace as flattened array of multi-vectors
-     *  @param  eigenValues eigenValues of the operator
-     *
-     *  @return residualNorms of the eigen Value problem
+     *  @param[in] operatorMatrix An object which has access to the given matrix
+     *  @param[in]  X Given eigenvector subspace as flattened array of multi-vectors
+     *  @param[in]  eigenValues eigenValues of the operator
+     *  @param[out] residualNorms of the eigen Value problem
      */
     template<typename T>
     void computeEigenResidualNorm(operatorDFTClass        & operatorMatrix,
 				  dealii::parallel::distributed::Vector<T> & X,
 				  const std::vector<double> & eigenValues,
 				  std::vector<double>     & residualNorm);
-
-
-
-
 
   }
 

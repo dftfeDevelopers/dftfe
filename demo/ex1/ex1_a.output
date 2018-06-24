@@ -1,0 +1,1806 @@
+set REPRODUCIBLE OUTPUT   = false
+set VERBOSITY             = 1
+set WRITE SOLUTION FIELDS = false
+subsection Boundary conditions
+  set PERIODIC1                       = true
+  set PERIODIC2                       = true
+  set PERIODIC3                       = true
+  set SELF POTENTIAL ATOM BALL RADIUS = 0.0
+end
+subsection Brillouin zone k point sampling options
+  set USE GROUP SYMMETRY         = true
+  set USE TIME REVERSAL SYMMETRY = true
+  set kPOINT RULE FILE           = 
+  subsection Monkhorst-Pack (MP) grid generation
+    set SAMPLING POINTS 1 = 2
+    set SAMPLING POINTS 2 = 2
+    set SAMPLING POINTS 3 = 2
+    set SAMPLING SHIFT 1  = 0.0
+    set SAMPLING SHIFT 2  = 0.0
+    set SAMPLING SHIFT 3  = 0.0
+  end
+end
+subsection Checkpointing and Restart
+  set CHK TYPE         = 0
+  set RESTART FROM CHK = false
+end
+subsection DFT functional related parameters
+  set EXCHANGE CORRELATION TYPE       = 1
+  set PSEUDOPOTENTIAL CALCULATION     = true
+  set PSEUDOPOTENTIAL FILE NAMES LIST = pseudo.inp
+  set PSEUDO TESTS FLAG               = false
+  set SPIN POLARIZATION               = 0
+  set START MAGNETIZATION             = 0.0
+end
+subsection Finite element mesh parameters
+  set CACHE SHAPE GRAD = false
+  set MESH FILE        = 
+  set POLYNOMIAL ORDER = 3
+  subsection Auto mesh generation parameters
+    set ATOM BALL RADIUS     = 2.0
+    set BASE MESH SIZE       = 4.0
+    set MAX REFINEMENT STEPS = 10
+    set MESH SIZE ATOM BALL  = 0.5
+    set MESH SIZE NEAR ATOM  = 0.5
+  end
+end
+subsection Geometry
+  set ATOMIC COORDINATES FILE      = coordinates.inp
+  set DOMAIN BOUNDING VECTORS FILE = domainBoundingVectors.inp
+  subsection Optimization
+    set CELL CONSTRAINT TYPE      = 12
+    set CELL OPT                  = false
+    set CELL STRESS               = false
+    set FORCE TOL                 = 5e-5
+    set ION FORCE                 = false
+    set ION OPT                   = false
+    set ION RELAX FLAGS FILE      = 
+    set NON SELF CONSISTENT FORCE = false
+    set STRESS TOL                = 5e-7
+  end
+end
+subsection Parallelization
+  set NPBAND = 1
+  set NPKPT  = 2
+end
+subsection Poisson problem parameters
+  set MAXIMUM ITERATIONS = 5000
+  set P REFINEMENT       = false
+  set TOLERANCE          = 1e-12
+end
+subsection SCF parameters
+  set ANDERSON SCHEME MIXING HISTORY   = 70
+  set ANDERSON SCHEME MIXING PARAMETER = 0.5
+  set COMPUTE ENERGY EACH ITER         = true
+  set MAXIMUM ITERATIONS               = 50
+  set STARTING WFC                     = RANDOM
+  set TEMPERATURE                      = 500
+  set TOLERANCE                        = 5e-6
+  subsection Eigen-solver/Chebyshev solver related parameters
+    set BATCH GEMM                        = true
+    set CHEBYSHEV FILTER BLOCK SIZE       = 400
+    set CHEBYSHEV FILTER NUM OMP THREADS  = 0
+    set CHEBYSHEV FILTER PASSES           = 1
+    set CHEBYSHEV FILTER TOLERANCE        = 5e-02
+    set CHEBYSHEV POLYNOMIAL DEGREE       = 0
+    set ENABLE SWITCH TO GS               = true
+    set LOWER BOUND WANTED SPECTRUM       = -10.0
+    set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 20
+    set ORTHOGONALIZATION TYPE            = LW
+    set ORTHO RR NUM OMP THREADS          = 0
+    set ORTHO RR WFC BLOCK SIZE           = 200
+    set SCALAPACKPROCS                    = 0
+    set SUBSPACE ROT DOFS BLOCK SIZE      = 800
+  end
+end
+=================================MPI Parallelization=========================================
+Total number of MPI tasks: 16
+k points parallelization pools: 2
+Band parallelization pools: 1
+Number of MPI tasks for domain decomposition: 8
+============================================================================================
+number of atoms: 4
+number of atoms types: 1
+Total number of k-points 8
+ getting space group symmetries from spg 
+ number of symmetries allowed for the lattice 192
+ Symmetry 1
+ Rotation 
+1  0  0
+0  1  0
+0  0  1
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 2
+ Rotation 
+-1  0  0
+0  -1  0
+0  0  -1
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 3
+ Rotation 
+0  0  1
+0  1  0
+-1  0  0
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 4
+ Rotation 
+0  0  -1
+0  -1  0
+1  0  0
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 5
+ Rotation 
+-1  0  0
+0  1  0
+0  0  -1
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 6
+ Rotation 
+1  0  0
+0  -1  0
+0  0  1
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 7
+ Rotation 
+0  0  -1
+0  1  0
+1  0  0
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 8
+ Rotation 
+0  0  1
+0  -1  0
+-1  0  0
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 9
+ Rotation 
+1  0  0
+0  -1  0
+0  0  -1
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 10
+ Rotation 
+-1  0  0
+0  1  0
+0  0  1
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 11
+ Rotation 
+0  0  1
+0  -1  0
+1  0  0
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 12
+ Rotation 
+0  0  -1
+0  1  0
+-1  0  0
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 13
+ Rotation 
+-1  0  0
+0  -1  0
+0  0  1
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 14
+ Rotation 
+1  0  0
+0  1  0
+0  0  -1
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 15
+ Rotation 
+0  0  -1
+0  -1  0
+-1  0  0
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 16
+ Rotation 
+0  0  1
+0  1  0
+1  0  0
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 17
+ Rotation 
+0  1  0
+0  0  -1
+-1  0  0
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 18
+ Rotation 
+0  -1  0
+0  0  1
+1  0  0
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 19
+ Rotation 
+0  1  0
+1  0  0
+0  0  -1
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 20
+ Rotation 
+0  -1  0
+-1  0  0
+0  0  1
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 21
+ Rotation 
+0  1  0
+0  0  1
+1  0  0
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 22
+ Rotation 
+0  -1  0
+0  0  -1
+-1  0  0
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 23
+ Rotation 
+0  1  0
+-1  0  0
+0  0  1
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 24
+ Rotation 
+0  -1  0
+1  0  0
+0  0  -1
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 25
+ Rotation 
+0  -1  0
+0  0  1
+-1  0  0
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 26
+ Rotation 
+0  1  0
+0  0  -1
+1  0  0
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 27
+ Rotation 
+0  -1  0
+-1  0  0
+0  0  -1
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 28
+ Rotation 
+0  1  0
+1  0  0
+0  0  1
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 29
+ Rotation 
+0  -1  0
+0  0  -1
+1  0  0
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 30
+ Rotation 
+0  1  0
+0  0  1
+-1  0  0
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 31
+ Rotation 
+0  -1  0
+1  0  0
+0  0  1
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 32
+ Rotation 
+0  1  0
+-1  0  0
+0  0  -1
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 33
+ Rotation 
+0  0  -1
+1  0  0
+0  -1  0
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 34
+ Rotation 
+0  0  1
+-1  0  0
+0  1  0
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 35
+ Rotation 
+1  0  0
+0  0  1
+0  -1  0
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 36
+ Rotation 
+-1  0  0
+0  0  -1
+0  1  0
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 37
+ Rotation 
+0  0  1
+-1  0  0
+0  -1  0
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 38
+ Rotation 
+0  0  -1
+1  0  0
+0  1  0
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 39
+ Rotation 
+-1  0  0
+0  0  -1
+0  -1  0
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 40
+ Rotation 
+1  0  0
+0  0  1
+0  1  0
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 41
+ Rotation 
+0  0  1
+1  0  0
+0  1  0
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 42
+ Rotation 
+0  0  -1
+-1  0  0
+0  -1  0
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 43
+ Rotation 
+-1  0  0
+0  0  1
+0  1  0
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 44
+ Rotation 
+1  0  0
+0  0  -1
+0  -1  0
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 45
+ Rotation 
+0  0  -1
+-1  0  0
+0  1  0
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 46
+ Rotation 
+0  0  1
+1  0  0
+0  -1  0
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 47
+ Rotation 
+1  0  0
+0  0  -1
+0  1  0
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 48
+ Rotation 
+-1  0  0
+0  0  1
+0  -1  0
+ translation 
+0.000000000000000000e+00  0.000000000000000000e+00  0.000000000000000000e+00
+	
+ Symmetry 49
+ Rotation 
+1  0  0
+0  1  0
+0  0  1
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 50
+ Rotation 
+-1  0  0
+0  -1  0
+0  0  -1
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 51
+ Rotation 
+0  0  1
+0  1  0
+-1  0  0
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 52
+ Rotation 
+0  0  -1
+0  -1  0
+1  0  0
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 53
+ Rotation 
+-1  0  0
+0  1  0
+0  0  -1
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 54
+ Rotation 
+1  0  0
+0  -1  0
+0  0  1
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 55
+ Rotation 
+0  0  -1
+0  1  0
+1  0  0
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 56
+ Rotation 
+0  0  1
+0  -1  0
+-1  0  0
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 57
+ Rotation 
+1  0  0
+0  -1  0
+0  0  -1
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 58
+ Rotation 
+-1  0  0
+0  1  0
+0  0  1
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 59
+ Rotation 
+0  0  1
+0  -1  0
+1  0  0
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 60
+ Rotation 
+0  0  -1
+0  1  0
+-1  0  0
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 61
+ Rotation 
+-1  0  0
+0  -1  0
+0  0  1
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 62
+ Rotation 
+1  0  0
+0  1  0
+0  0  -1
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 63
+ Rotation 
+0  0  -1
+0  -1  0
+-1  0  0
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 64
+ Rotation 
+0  0  1
+0  1  0
+1  0  0
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 65
+ Rotation 
+0  1  0
+0  0  -1
+-1  0  0
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 66
+ Rotation 
+0  -1  0
+0  0  1
+1  0  0
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 67
+ Rotation 
+0  1  0
+1  0  0
+0  0  -1
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 68
+ Rotation 
+0  -1  0
+-1  0  0
+0  0  1
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 69
+ Rotation 
+0  1  0
+0  0  1
+1  0  0
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 70
+ Rotation 
+0  -1  0
+0  0  -1
+-1  0  0
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 71
+ Rotation 
+0  1  0
+-1  0  0
+0  0  1
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 72
+ Rotation 
+0  -1  0
+1  0  0
+0  0  -1
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 73
+ Rotation 
+0  -1  0
+0  0  1
+-1  0  0
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 74
+ Rotation 
+0  1  0
+0  0  -1
+1  0  0
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 75
+ Rotation 
+0  -1  0
+-1  0  0
+0  0  -1
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 76
+ Rotation 
+0  1  0
+1  0  0
+0  0  1
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 77
+ Rotation 
+0  -1  0
+0  0  -1
+1  0  0
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 78
+ Rotation 
+0  1  0
+0  0  1
+-1  0  0
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 79
+ Rotation 
+0  -1  0
+1  0  0
+0  0  1
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 80
+ Rotation 
+0  1  0
+-1  0  0
+0  0  -1
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 81
+ Rotation 
+0  0  -1
+1  0  0
+0  -1  0
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 82
+ Rotation 
+0  0  1
+-1  0  0
+0  1  0
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 83
+ Rotation 
+1  0  0
+0  0  1
+0  -1  0
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 84
+ Rotation 
+-1  0  0
+0  0  -1
+0  1  0
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 85
+ Rotation 
+0  0  1
+-1  0  0
+0  -1  0
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 86
+ Rotation 
+0  0  -1
+1  0  0
+0  1  0
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 87
+ Rotation 
+-1  0  0
+0  0  -1
+0  -1  0
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 88
+ Rotation 
+1  0  0
+0  0  1
+0  1  0
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 89
+ Rotation 
+0  0  1
+1  0  0
+0  1  0
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 90
+ Rotation 
+0  0  -1
+-1  0  0
+0  -1  0
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 91
+ Rotation 
+-1  0  0
+0  0  1
+0  1  0
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 92
+ Rotation 
+1  0  0
+0  0  -1
+0  -1  0
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 93
+ Rotation 
+0  0  -1
+-1  0  0
+0  1  0
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 94
+ Rotation 
+0  0  1
+1  0  0
+0  -1  0
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 95
+ Rotation 
+1  0  0
+0  0  -1
+0  1  0
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 96
+ Rotation 
+-1  0  0
+0  0  1
+0  -1  0
+ translation 
+5.000000000000000000e-01  5.000000000000000000e-01  0.000000000000000000e+00
+	
+ Symmetry 97
+ Rotation 
+1  0  0
+0  1  0
+0  0  1
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 98
+ Rotation 
+-1  0  0
+0  -1  0
+0  0  -1
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 99
+ Rotation 
+0  0  1
+0  1  0
+-1  0  0
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 100
+ Rotation 
+0  0  -1
+0  -1  0
+1  0  0
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 101
+ Rotation 
+-1  0  0
+0  1  0
+0  0  -1
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 102
+ Rotation 
+1  0  0
+0  -1  0
+0  0  1
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 103
+ Rotation 
+0  0  -1
+0  1  0
+1  0  0
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 104
+ Rotation 
+0  0  1
+0  -1  0
+-1  0  0
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 105
+ Rotation 
+1  0  0
+0  -1  0
+0  0  -1
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 106
+ Rotation 
+-1  0  0
+0  1  0
+0  0  1
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 107
+ Rotation 
+0  0  1
+0  -1  0
+1  0  0
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 108
+ Rotation 
+0  0  -1
+0  1  0
+-1  0  0
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 109
+ Rotation 
+-1  0  0
+0  -1  0
+0  0  1
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 110
+ Rotation 
+1  0  0
+0  1  0
+0  0  -1
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 111
+ Rotation 
+0  0  -1
+0  -1  0
+-1  0  0
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 112
+ Rotation 
+0  0  1
+0  1  0
+1  0  0
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 113
+ Rotation 
+0  1  0
+0  0  -1
+-1  0  0
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 114
+ Rotation 
+0  -1  0
+0  0  1
+1  0  0
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 115
+ Rotation 
+0  1  0
+1  0  0
+0  0  -1
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 116
+ Rotation 
+0  -1  0
+-1  0  0
+0  0  1
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 117
+ Rotation 
+0  1  0
+0  0  1
+1  0  0
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 118
+ Rotation 
+0  -1  0
+0  0  -1
+-1  0  0
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 119
+ Rotation 
+0  1  0
+-1  0  0
+0  0  1
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 120
+ Rotation 
+0  -1  0
+1  0  0
+0  0  -1
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 121
+ Rotation 
+0  -1  0
+0  0  1
+-1  0  0
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 122
+ Rotation 
+0  1  0
+0  0  -1
+1  0  0
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 123
+ Rotation 
+0  -1  0
+-1  0  0
+0  0  -1
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 124
+ Rotation 
+0  1  0
+1  0  0
+0  0  1
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 125
+ Rotation 
+0  -1  0
+0  0  -1
+1  0  0
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 126
+ Rotation 
+0  1  0
+0  0  1
+-1  0  0
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 127
+ Rotation 
+0  -1  0
+1  0  0
+0  0  1
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 128
+ Rotation 
+0  1  0
+-1  0  0
+0  0  -1
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 129
+ Rotation 
+0  0  -1
+1  0  0
+0  -1  0
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 130
+ Rotation 
+0  0  1
+-1  0  0
+0  1  0
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 131
+ Rotation 
+1  0  0
+0  0  1
+0  -1  0
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 132
+ Rotation 
+-1  0  0
+0  0  -1
+0  1  0
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 133
+ Rotation 
+0  0  1
+-1  0  0
+0  -1  0
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 134
+ Rotation 
+0  0  -1
+1  0  0
+0  1  0
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 135
+ Rotation 
+-1  0  0
+0  0  -1
+0  -1  0
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 136
+ Rotation 
+1  0  0
+0  0  1
+0  1  0
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 137
+ Rotation 
+0  0  1
+1  0  0
+0  1  0
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 138
+ Rotation 
+0  0  -1
+-1  0  0
+0  -1  0
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 139
+ Rotation 
+-1  0  0
+0  0  1
+0  1  0
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 140
+ Rotation 
+1  0  0
+0  0  -1
+0  -1  0
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 141
+ Rotation 
+0  0  -1
+-1  0  0
+0  1  0
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 142
+ Rotation 
+0  0  1
+1  0  0
+0  -1  0
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 143
+ Rotation 
+1  0  0
+0  0  -1
+0  1  0
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 144
+ Rotation 
+-1  0  0
+0  0  1
+0  -1  0
+ translation 
+5.000000000000000000e-01  0.000000000000000000e+00  5.000000000000000000e-01
+	
+ Symmetry 145
+ Rotation 
+1  0  0
+0  1  0
+0  0  1
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 146
+ Rotation 
+-1  0  0
+0  -1  0
+0  0  -1
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 147
+ Rotation 
+0  0  1
+0  1  0
+-1  0  0
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 148
+ Rotation 
+0  0  -1
+0  -1  0
+1  0  0
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 149
+ Rotation 
+-1  0  0
+0  1  0
+0  0  -1
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 150
+ Rotation 
+1  0  0
+0  -1  0
+0  0  1
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 151
+ Rotation 
+0  0  -1
+0  1  0
+1  0  0
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 152
+ Rotation 
+0  0  1
+0  -1  0
+-1  0  0
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 153
+ Rotation 
+1  0  0
+0  -1  0
+0  0  -1
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 154
+ Rotation 
+-1  0  0
+0  1  0
+0  0  1
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 155
+ Rotation 
+0  0  1
+0  -1  0
+1  0  0
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 156
+ Rotation 
+0  0  -1
+0  1  0
+-1  0  0
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 157
+ Rotation 
+-1  0  0
+0  -1  0
+0  0  1
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 158
+ Rotation 
+1  0  0
+0  1  0
+0  0  -1
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 159
+ Rotation 
+0  0  -1
+0  -1  0
+-1  0  0
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 160
+ Rotation 
+0  0  1
+0  1  0
+1  0  0
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 161
+ Rotation 
+0  1  0
+0  0  -1
+-1  0  0
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 162
+ Rotation 
+0  -1  0
+0  0  1
+1  0  0
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 163
+ Rotation 
+0  1  0
+1  0  0
+0  0  -1
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 164
+ Rotation 
+0  -1  0
+-1  0  0
+0  0  1
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 165
+ Rotation 
+0  1  0
+0  0  1
+1  0  0
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 166
+ Rotation 
+0  -1  0
+0  0  -1
+-1  0  0
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 167
+ Rotation 
+0  1  0
+-1  0  0
+0  0  1
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 168
+ Rotation 
+0  -1  0
+1  0  0
+0  0  -1
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 169
+ Rotation 
+0  -1  0
+0  0  1
+-1  0  0
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 170
+ Rotation 
+0  1  0
+0  0  -1
+1  0  0
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 171
+ Rotation 
+0  -1  0
+-1  0  0
+0  0  -1
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 172
+ Rotation 
+0  1  0
+1  0  0
+0  0  1
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 173
+ Rotation 
+0  -1  0
+0  0  -1
+1  0  0
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 174
+ Rotation 
+0  1  0
+0  0  1
+-1  0  0
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 175
+ Rotation 
+0  -1  0
+1  0  0
+0  0  1
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 176
+ Rotation 
+0  1  0
+-1  0  0
+0  0  -1
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 177
+ Rotation 
+0  0  -1
+1  0  0
+0  -1  0
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 178
+ Rotation 
+0  0  1
+-1  0  0
+0  1  0
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 179
+ Rotation 
+1  0  0
+0  0  1
+0  -1  0
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 180
+ Rotation 
+-1  0  0
+0  0  -1
+0  1  0
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 181
+ Rotation 
+0  0  1
+-1  0  0
+0  -1  0
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 182
+ Rotation 
+0  0  -1
+1  0  0
+0  1  0
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 183
+ Rotation 
+-1  0  0
+0  0  -1
+0  -1  0
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 184
+ Rotation 
+1  0  0
+0  0  1
+0  1  0
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 185
+ Rotation 
+0  0  1
+1  0  0
+0  1  0
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 186
+ Rotation 
+0  0  -1
+-1  0  0
+0  -1  0
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 187
+ Rotation 
+-1  0  0
+0  0  1
+0  1  0
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 188
+ Rotation 
+1  0  0
+0  0  -1
+0  -1  0
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 189
+ Rotation 
+0  0  -1
+-1  0  0
+0  1  0
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 190
+ Rotation 
+0  0  1
+1  0  0
+0  -1  0
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 191
+ Rotation 
+1  0  0
+0  0  -1
+0  1  0
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ Symmetry 192
+ Rotation 
+-1  0  0
+0  0  1
+0  -1  0
+ translation 
+0.000000000000000000e+00  5.000000000000000000e-01  5.000000000000000000e-01
+	
+ 4 symmetries used to reduce BZ 
+ number of irreducible k-points 4
+Reduced k-Point-coordinates and weights: 
+      1:       0.00000       0.00000      0.00000      0.12500
+      2:       0.00000       0.00000      0.50000      0.37500
+      3:       0.00000       0.50000      0.50000      0.37500
+      4:       0.50000       0.50000      0.50000      0.12500
+
+Reading Pseudo-potential data for each atom from the list given in : pseudo.inp
+-----------Domain bounding vectors (lattice vectors in fully periodic case)-------------
+v1 : 7.599999999999999645e+00 0.000000000000000000e+00 0.000000000000000000e+00
+v2 : 0.000000000000000000e+00 7.599999999999999645e+00 0.000000000000000000e+00
+v3 : 0.000000000000000000e+00 0.000000000000000000e+00 7.599999999999999645e+00
+-----------------------------------------------------------------------------------------
+-----Fractional coordinates of atoms------ 
+AtomId 0:  0.000000000000000000e+00 0.000000000000000000e+00 0.000000000000000000e+00
+AtomId 1:  0.000000000000000000e+00 5.000000000000000000e-01 5.000000000000000000e-01
+AtomId 2:  5.000000000000000000e-01 0.000000000000000000e+00 5.000000000000000000e-01
+AtomId 3:  5.000000000000000000e-01 5.000000000000000000e-01 0.000000000000000000e+00
+-----------------------------------------------------------------------------------------
+Number Image Charges  3664
+Adaptivity summary: 
+ numCells: 1408, num refinement levels: 3, h_min: 4.749999999999983125e-01
+Adaptivity summary: 
+ numCells: 1408, num refinement levels: 3, h_min: 4.749999999999983125e-01
+
+Finite element mesh information
+-------------------------------------------------
+number of elements: 1408
+number of degrees of freedom: 48469
+-------------------------------------------------
+Mesh quality check after mesh movement, maximum jacobian ratio: 1.000000000000000000e+00
+Adaptively setting vself ball radius... 
+...Adaptively set vself solve ball radius: 2.750000000000000000e+00
+DFT-FE warning: adaptively determined ball radius for nuclear self potential solve is less than 3.0, which can detoriate the accuracy of the KSDFT groundstate energy and forces. One approach to overcome this issue is to use a larger super cell with smallest periodic dimension greater than 6.0 (twice of 3.0), assuming an orthorhombic domain. If that is not feasible, you may need more h refinement of the finite element mesh around the atoms to achieve the desired accuracy.
+Volume of the domain (Bohr^3): 4.389759999999453726e+02
+
+Reading initial guess for PSI....
+Number of wavefunctions generated randomly to be used as initial guess for starting the SCF : 20
+
+Reading initial guess for rho.....
+initial total charge: 1.200000093479834362e+01
+initial total charge after scaling: 1.199999999999941380e+01
+Adaptivity summary: 
+ numCells: 1408, num refinement levels: 3, h_min: 4.749999999999983125e-01
+
+Pseudopotential initalization....
+
+************************Begin Self-Consistent-Field Iteration:  1 ***********************
+Total energy  : -8.309040672454715448e+00
+***********************Self-Consistent-Field Iteration:  1 complete**********************
+Scf iteration 1 took: 1.413133785399999987e+01 seconds, with 6 Chebyshev eigen solve passes.
+
+************************Begin Self-Consistent-Field Iteration:  2 ***********************
+Simple mixing: L2 norm of electron-density difference: 6.234196817409626973e-03
+Total energy  : -8.323654892050212695e+00
+***********************Self-Consistent-Field Iteration:  2 complete**********************
+Scf iteration 2 took: 3.072999750999999780e+00 seconds, with 1 Chebyshev eigen solve passes.
+
+************************Begin Self-Consistent-Field Iteration:  3 ***********************
+Anderson mixing: L2 norm of electron-density difference: 3.881789060816305537e-02
+Total energy  : -8.324619620638291195e+00
+***********************Self-Consistent-Field Iteration:  3 complete**********************
+Scf iteration 3 took: 2.973974329999999888e+00 seconds, with 1 Chebyshev eigen solve passes.
+
+************************Begin Self-Consistent-Field Iteration:  4 ***********************
+Anderson mixing: L2 norm of electron-density difference: 6.393541742357925980e-03
+Total energy  : -8.324751906681676417e+00
+***********************Self-Consistent-Field Iteration:  4 complete**********************
+Scf iteration 4 took: 2.979909146999999869e+00 seconds, with 1 Chebyshev eigen solve passes.
+
+************************Begin Self-Consistent-Field Iteration:  5 ***********************
+Anderson mixing: L2 norm of electron-density difference: 2.504933618198226970e-03
+Total energy  : -8.324774883155971139e+00
+***********************Self-Consistent-Field Iteration:  5 complete**********************
+Scf iteration 5 took: 3.127852193999999919e+00 seconds, with 1 Chebyshev eigen solve passes.
+
+************************Begin Self-Consistent-Field Iteration:  6 ***********************
+Anderson mixing: L2 norm of electron-density difference: 7.964870598298102880e-04
+Total energy  : -8.324777355597042572e+00
+***********************Self-Consistent-Field Iteration:  6 complete**********************
+Scf iteration 6 took: 3.052391822999999782e+00 seconds, with 1 Chebyshev eigen solve passes.
+
+************************Begin Self-Consistent-Field Iteration:  7 ***********************
+Anderson mixing: L2 norm of electron-density difference: 2.822195907047997474e-04
+Total energy  : -8.324778098926152836e+00
+***********************Self-Consistent-Field Iteration:  7 complete**********************
+Scf iteration 7 took: 3.196417875999999936e+00 seconds, with 1 Chebyshev eigen solve passes.
+
+************************Begin Self-Consistent-Field Iteration:  8 ***********************
+Anderson mixing: L2 norm of electron-density difference: 4.644953203862892799e-05
+Total energy  : -8.324778192349043593e+00
+***********************Self-Consistent-Field Iteration:  8 complete**********************
+Scf iteration 8 took: 4.417037592999999873e+00 seconds, with 1 Chebyshev eigen solve passes.
+
+************************Begin Self-Consistent-Field Iteration:  9 ***********************
+Anderson mixing: L2 norm of electron-density difference: 1.774441847325299634e-05
+Total energy  : -8.324778220142681207e+00
+***********************Self-Consistent-Field Iteration:  9 complete**********************
+Scf iteration 9 took: 3.109594421000000164e+00 seconds, with 1 Chebyshev eigen solve passes.
+
+************************Begin Self-Consistent-Field Iteration: 10 ***********************
+Anderson mixing: L2 norm of electron-density difference: 5.046027920474521522e-06
+Total energy  : -8.324778223916096564e+00
+***********************Self-Consistent-Field Iteration: 10 complete**********************
+Scf iteration 10 took: 3.066523627000000030e+00 seconds, with 1 Chebyshev eigen solve passes.
+
+************************Begin Self-Consistent-Field Iteration: 11 ***********************
+Anderson mixing: L2 norm of electron-density difference: 1.676737225884379699e-06
+Total energy  : -8.324778223599587079e+00
+***********************Self-Consistent-Field Iteration: 11 complete**********************
+Scf iteration 11 took: 3.271283345000000065e+00 seconds, with 1 Chebyshev eigen solve passes.
+
+SCF iteration converged to the specified tolerance after: 11 iterations.
+
+Energy computations (Hartree)
+-------------------------------------------------------------------------------
+Band energy                                         :  -3.1702271552170611e+00
+Exchange energy                                     :  -2.6889328868340998e+00
+Correlation energy                                  :  -5.3547847850025487e-01
+Total energy                                        :  -8.3247782235995871e+00
+Total energy per atom                               :  -2.0811945558998968e+00
+-------------------------------------------------------------------------------
+
+
++---------------------------------------------+------------+------------+
+| Total wallclock time elapsed since start    | 4.656e+01s |            |
+|                                             |            |            |
+| Section                         | no. calls |  wall time | % of total |
++---------------------------------+-----------+------------+------------+
+| Chebyshev filtering opt         |        32 | 1.705e+01s |  3.66e+01% |
+| Lanczos k-step Upper Bound      |        32 | 1.915e+00s |  4.11e+00% |
+| Lowden Orthogn Opt              |        32 | 1.837e-01s |  3.95e-01% |
+| Rayleigh-Ritz proj Opt          |        32 | 1.005e+00s |  2.16e+00% |
+| eigen vectors residuals opt     |        32 | 1.047e+00s |  2.25e+00% |
++---------------------------------+-----------+------------+------------+
+
+
+
++---------------------------------------------+------------+------------+
+| Total wallclock time elapsed since start    | 1.105e+02s |            |
+|                                             |            |            |
+| Section                         | no. calls |  wall time | % of total |
++---------------------------------+-----------+------------+------------+
+| Chebyshev solve                 |        32 | 2.180e+01s |  1.97e+01% |
+| Hamiltonian Matrix Computation  |        32 | 1.077e+01s |  9.75e+00% |
+| VEff Computation                |        11 | 5.851e-02s | 0.000e+00% |
+| compute rho                     |        11 | 6.459e+00s |  5.85e+00% |
+| density mixing                  |        11 | 8.785e-01s |  7.95e-01% |
+| init electronic fields          |         1 | 4.303e+00s |  3.90e+00% |
+| initialize density              |         1 | 3.755e+00s |  3.40e+00% |
+| initialize wave functions       |         1 | 9.489e-03s | 0.000e+00% |
+| locate atom nodes               |         1 | 5.751e-03s | 0.000e+00% |
+| locate periodic pinned node     |         1 | 1.438e-01s |  1.30e-01% |
+| mesh generation                 |         1 | 1.355e-01s |  1.23e-01% |
+| moved setup                     |         1 | 1.996e+01s |  1.81e+01% |
+| phiTot solve                    |        22 | 3.963e+00s |  3.59e+00% |
+| psp init                        |         1 | 3.476e+01s |  3.15e+01% |
+| scf solve                       |         1 | 4.640e+01s |  4.20e+01% |
+| shapefunction data              |         1 | 9.137e-02s | 0.000e+00% |
+| unmoved setup                   |         1 | 1.542e+00s |  1.40e+00% |
+| vself solve                     |         1 | 8.716e-01s |  7.89e-01% |
++---------------------------------+-----------+------------+------------+
+

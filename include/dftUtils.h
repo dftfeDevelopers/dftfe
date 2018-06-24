@@ -53,13 +53,25 @@ namespace dftfe {
        *
        *  @param  dataOut  DataOut class object
        *  @param  intralpoolcomm mpi communicator of domain decomposition inside each pool
-       *  @param  interpoolcomm  mpi communicator across pools
+       *  @param  interpoolcomm  mpi communicator across k point pools
+       *  @param  interBandGroupComm  mpi communicator across band groups
        *  @param  fileName
        */
        void writeDataVTUParallelLowestPoolId(const dealii::DataOut<3> & dataOut,
 					     const MPI_Comm & intrapoolcomm,
 					     const MPI_Comm & interpoolcomm,
+					     const MPI_Comm &interBandGroupComm,
 					     const std::string & fileName);
+
+      /** @brief Create index vector which is used for band parallelization
+       *
+       *  @[in]param  interBandGroupComm  mpi communicator across band groups
+       *  @[in]param  numBands
+       *  @[out]param bandGroupLowHighPlusOneIndices
+       */
+       void createBandParallelizationIndices(const MPI_Comm &interBandGroupComm,
+	                                     const unsigned int numBands,
+					     std::vector<unsigned int> & bandGroupLowHighPlusOneIndices);
 
       /**
        * A class to split the given communicator into a number of pools
@@ -80,11 +92,6 @@ namespace dftfe {
 	 */
 	MPI_Comm &get_intrapool_comm();
 
-	/**
-	 * FIXME: document
-	 */
-	MPI_Comm &get_replica_comm();
-
       private:
 	/// FIXME: document
 	MPI_Comm interpoolcomm;
@@ -92,8 +99,6 @@ namespace dftfe {
 	/// FIXME: document
 	MPI_Comm intrapoolcomm;
 
-	/// FIXME: document
-	MPI_Comm mpi_comm_replica;
       };
 
       /// Exception handler for not implemented functionality

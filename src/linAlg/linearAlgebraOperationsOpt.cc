@@ -149,6 +149,8 @@ namespace dftfe{
 	      &iwork[0],
 	      &liwork,
 	      &info);
+
+      AssertThrow(info==0,dealii::ExcMessage("Error in zheevr"));
     }
 
 
@@ -466,6 +468,7 @@ namespace dftfe{
     void rayleighRitz(operatorDFTClass & operatorMatrix,
 		      dealii::parallel::distributed::Vector<T> & X,
 		      const unsigned int numberWaveFunctions,
+		      const MPI_Comm &interBandGroupComm,
 		      std::vector<double> & eigenValues)
 
     {
@@ -485,7 +488,6 @@ namespace dftfe{
       std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  processGrid;
       internal::createProcessGridSquareMatrix(X.get_mpi_communicator(),
 		                              numberWaveFunctions,
-				              rowsBlockSize,
 					      processGrid);
 
       dealii::ScaLAPACKMatrix<T> projHamPar(numberWaveFunctions,
@@ -516,6 +518,7 @@ namespace dftfe{
       internal::subspaceRotation(X,
 		                 numberWaveFunctions,
 		                 processGrid,
+				 interBandGroupComm,
 			         projHamPar,
 				 true);
       computing_timer.exit_section("Blocked subspace rotation, RR step");
@@ -529,6 +532,7 @@ namespace dftfe{
     void rayleighRitz(operatorDFTClass & operatorMatrix,
 		      dealii::parallel::distributed::Vector<T> & X,
 		      const unsigned int numberWaveFunctions,
+		      const MPI_Comm &interBandGroupComm,
 		      std::vector<double> & eigenValues)
     {
       if (dftParameters::orthoRROMPThreads!=0)
@@ -762,7 +766,7 @@ namespace dftfe{
 #endif
 
 #ifdef USE_COMPLEX
-    void lowdenOrthogonalization(dealii::parallel::distributed::Vector<std::complex<double> > & X,
+    unsigned int lowdenOrthogonalization(dealii::parallel::distributed::Vector<std::complex<double> > & X,
 				 const unsigned int numberVectors)
     {
       if (dftParameters::orthoRROMPThreads!=0)
@@ -850,11 +854,19 @@ namespace dftfe{
        //
        std::vector<double> invFourthRootEigenValuesMatrix(numberEigenValues,0.0);
 
+       unsigned int nanFlag = 0;
        for(unsigned i = 0; i < numberEigenValues; ++i)
-       {
-	 invFourthRootEigenValuesMatrix[i] = 1.0/pow(eigenValuesOverlap[i],1.0/4);
-	 AssertThrow(!std::isnan(invFourthRootEigenValuesMatrix[i]),dealii::ExcMessage("Eigen values of overlap matrix during Lowden Orthonormalization are very small and close to zero or negative"));
-       }
+	{
+	  invFourthRootEigenValuesMatrix[i] = 1.0/pow(eigenValuesOverlap[i],1.0/4);
+	  if(std::isnan(invFourthRootEigenValuesMatrix[i]) || eigenValuesOverlap[i]<1e-13)
+	    {
+	      nanFlag = 1;
+	      break;
+	    }
+	}
+       nanFlag=dealii::Utilities::MPI::max(nanFlag,X.get_mpi_communicator());
+       if (dftParameters::enableSwitchToGS && nanFlag==1)
+          return nanFlag;
 
        //
        //Q*D^{-1/4} and note that "Q" is stored in overlapMatrix after calling "zheevd"
@@ -924,9 +936,11 @@ namespace dftfe{
 
        if (dftParameters::orthoRROMPThreads!=0)
 	  omp_set_num_threads(1);
+
+       return 0;
     }
 #else
-    void lowdenOrthogonalization(dealii::parallel::distributed::Vector<double> & X,
+    unsigned int lowdenOrthogonalization(dealii::parallel::distributed::Vector<double> & X,
 				 const unsigned int numberVectors)
     {
       if (dftParameters::orthoRROMPThreads!=0)
@@ -994,16 +1008,20 @@ namespace dftfe{
       for(unsigned i = 0; i < numberEigenValues; ++i)
 	{
 	  invFourthRootEigenValuesMatrix[i] = 1.0/pow(eigenValuesOverlap[i],1.0/4);
-	  if(std::isnan(invFourthRootEigenValuesMatrix[i]))
+	  if(std::isnan(invFourthRootEigenValuesMatrix[i]) || eigenValuesOverlap[i]<1e-10)
 	    {
 	      nanFlag = 1;
-	      std::cout<<"Nan obtained in proc: "<<dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)<<" and switching to more robust dsyevr for eigen decomposition "<<std::endl;
 	      break;
 	    }
 	}
 
+      nanFlag=dealii::Utilities::MPI::max(nanFlag,X.get_mpi_communicator());
+      if (dftParameters::enableSwitchToGS && nanFlag==1)
+          return nanFlag;
+
       if(nanFlag == 1)
 	{
+	  std::cout<<"Nan obtained: switching to more robust dsyevr for eigen decomposition "<<std::endl;
 	  std::vector<double> overlapMatrixEigenVectors(numberVectors*numberVectors,0.0);
 	  eigenValuesOverlap.clear();
 	  eigenValuesOverlap.resize(numberVectors);
@@ -1026,7 +1044,7 @@ namespace dftfe{
 	  for(unsigned i = 0; i < numberEigenValues; ++i)
 	    {
 	      invFourthRootEigenValuesMatrix[i] = 1.0/pow(eigenValuesOverlap[i],(1.0/4.0));
-	      AssertThrow(!std::isnan(invFourthRootEigenValuesMatrix[i]),dealii::ExcMessage("Eigen values of overlap matrix during Lowden Orthonormalization are very small and close to zero or negative"));
+	      AssertThrow(!std::isnan(invFourthRootEigenValuesMatrix[i]),dealii::ExcMessage("Eigen values of overlap matrix during Lowden Orthonormalization are close to zero."));
 	    }
 	}
 
@@ -1101,6 +1119,8 @@ namespace dftfe{
 
        if (dftParameters::orthoRROMPThreads!=0)
 	  omp_set_num_threads(1);
+
+       return 0;
     }
 #endif
 
@@ -1118,12 +1138,14 @@ namespace dftfe{
     template void gramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<dataTypes::number> &,
 					       const unsigned int);
 
-    template void pseudoGramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<dataTypes::number> &,
-					             const unsigned int);
+    template unsigned int pseudoGramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<dataTypes::number> &,
+					             const unsigned int,
+						     const MPI_Comm &);
 
     template void rayleighRitz(operatorDFTClass  & operatorMatrix,
 			       dealii::parallel::distributed::Vector<dataTypes::number> &,
 			       const unsigned int numberWaveFunctions,
+			       const MPI_Comm &,
 			       std::vector<double>     & eigenValues);
 
     template void computeEigenResidualNorm(operatorDFTClass        & operatorMatrix,

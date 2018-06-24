@@ -17,7 +17,7 @@
 //
 
 template<unsigned int FEOrder>
-void initPsiAndRhoFromPreviousGroundStatePsi(std::vector<std::vector<vectorType>> eigenVectors)
+void dftClass<FEOrder>::initPsiAndRhoFromPreviousGroundStatePsi(std::vector<std::vector<vectorType>> eigenVectors)
 {
      const unsigned int totalNumEigenVectors=(1+dftParameters::spinPolarized)*d_kPointWeights.size()*eigenVectors[0].size();
      std::vector<vectorType> eigenVectorsPrevious(totalNumEigenVectors);
@@ -29,7 +29,7 @@ void initPsiAndRhoFromPreviousGroundStatePsi(std::vector<std::vector<vectorType>
 	{
 	  eigenVectorsPrevious[kPoint* eigenVectors[0].size()+i]=eigenVectors[kPoint][i];
 	  eigenVectorsPreviousPtrs[kPoint* eigenVectors[0].size()+i]=&(eigenVectorsPrevious[kPoint* eigenVectors[0].size()+i]);
-	  eigenVectors[kPoint][i].reinit(tempEigenVec);
+	  eigenVectors[kPoint][i].reinit(d_tempEigenVec);
 	  eigenVectorsCurrentPtrs[kPoint* eigenVectors[0].size()+i]=&(eigenVectors[kPoint][i]);
 	}
 
@@ -68,6 +68,12 @@ void initPsiAndRhoFromPreviousGroundStatePsi(std::vector<std::vector<vectorType>
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroundStateFields){
   TimerOutput::Scope scope (computing_timer,"init electronic fields");
+
+  //reading data from pseudopotential files and fitting splines
+  //if(dftParameters::pseudoProjector == 2)
+    initNonLocalPseudoPotential_OV();
+    //else
+    //initNonLocalPseudoPotential();
 
   //initialize electrostatics fields
   matrix_free_data.initialize_dof_vector(d_phiTotRhoIn,phiTotDofHandlerIndex);

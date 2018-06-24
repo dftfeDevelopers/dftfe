@@ -54,10 +54,11 @@ void dftClass<FEOrder>::initRho()
       char densityFile[256];
       if(dftParameters::isPseudopotential)
 	{
-	  if(dftParameters::pseudoProjector==1)
-	     sprintf(densityFile, "%s/data/electronicStructure/pseudoPotential/z%u/singleAtomData/density.inp", DFT_PATH, *it);
-	  else
-	     sprintf(densityFile, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/singleAtomData/density.inp", DFT_PATH, *it);
+	  //if(dftParameters::pseudoProjector==1)
+	  // sprintf(densityFile, "%s/data/electronicStructure/pseudoPotential/z%u/singleAtomData/density.inp", DFT_PATH, *it);
+	  //else
+	     sprintf(densityFile,"temp/z%u/density.inp",*it);
+	    //sprintf(densityFile, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/singleAtomData/density.inp", DFT_PATH, *it);
 
 	}
       else
@@ -95,7 +96,7 @@ void dftClass<FEOrder>::initRho()
 
   rhoInVals.push_back(std::map<dealii::CellId, std::vector<double> >());
   rhoInValues=&(rhoInVals.back());
-  if (dftParameters::spinPolarized==1)
+  if(dftParameters::spinPolarized==1)
     {
       rhoInValsSpinPolarized.push_back(std::map<dealii::CellId, std::vector<double> >());
       rhoInValuesSpinPolarized=&(rhoInValsSpinPolarized.back());
@@ -269,11 +270,11 @@ void dftClass<FEOrder>::initRho()
 		  if(dftParameters::spinPolarized==1)
 	           {
 	             gradRhoInValuesSpinPolarizedPtr[6*q+0] =( 0.5 + dftParameters::start_magnetization)*signRho*gradRhoXValueAtQuadPt;
-	             gradRhoInValuesSpinPolarizedPtr[6*q+1] = ( 0.5 + dftParameters::start_magnetization)*signRho*gradRhoYValueAtQuadPt ;
-		     gradRhoInValuesSpinPolarizedPtr[6*q+2] =  ( 0.5 + dftParameters::start_magnetization)*signRho*gradRhoZValueAtQuadPt ;
+	             gradRhoInValuesSpinPolarizedPtr[6*q+1] = ( 0.5 + dftParameters::start_magnetization)*signRho*gradRhoYValueAtQuadPt;
+		     gradRhoInValuesSpinPolarizedPtr[6*q+2] =  ( 0.5 + dftParameters::start_magnetization)*signRho*gradRhoZValueAtQuadPt;
 		     gradRhoInValuesSpinPolarizedPtr[6*q+3] =( 0.5 - dftParameters::start_magnetization)*signRho*gradRhoXValueAtQuadPt;
-	             gradRhoInValuesSpinPolarizedPtr[6*q+4] = ( 0.5 - dftParameters::start_magnetization)*signRho*gradRhoYValueAtQuadPt ;
-		     gradRhoInValuesSpinPolarizedPtr[6*q+5] =  ( 0.5 - dftParameters::start_magnetization)*signRho*gradRhoZValueAtQuadPt ;
+	             gradRhoInValuesSpinPolarizedPtr[6*q+4] = ( 0.5 - dftParameters::start_magnetization)*signRho*gradRhoYValueAtQuadPt;
+		     gradRhoInValuesSpinPolarizedPtr[6*q+5] =  ( 0.5 - dftParameters::start_magnetization)*signRho*gradRhoZValueAtQuadPt;
 		   }
 		}
 	    }
@@ -762,10 +763,11 @@ void dftClass<FEOrder>::initRhoFromPreviousGroundStateRho()
   }//macro cell loop
 
   //gather density from all pools
-  sumRhoDataKPointPools(rhoInValues,
-	                gradRhoInValues,
-		        rhoInValuesSpinPolarized,
-		        gradRhoInValuesSpinPolarized);
+  sumRhoData(rhoInValues,
+	     gradRhoInValues,
+	     rhoInValuesSpinPolarized,
+	     gradRhoInValuesSpinPolarized,
+	     interpoolcomm);
 
   //normalize density
   normalizeRho();

@@ -28,8 +28,9 @@ namespace dftfe
   {
 #if(defined DEAL_II_WITH_SCALAPACK && !USE_COMPLEX)
     template<typename T>
-    void pseudoGramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<T> & X,
-				            const unsigned int numberVectors)
+    unsigned int pseudoGramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<T> & X,
+				            const unsigned int numberVectors,
+					    const MPI_Comm &interBandGroupComm)
     {
       if (dftParameters::orthoRROMPThreads!=0)
 	  omp_set_num_threads(dftParameters::orthoRROMPThreads);
@@ -47,7 +48,6 @@ namespace dftfe
       std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  processGrid;
       internal::createProcessGridSquareMatrix(X.get_mpi_communicator(),
 		                           numberVectors,
-				           rowsBlockSize,
 					   processGrid);
 
       dealii::ScaLAPACKMatrix<T> overlapMatPar(numberVectors,
@@ -59,6 +59,7 @@ namespace dftfe
       internal::fillParallelOverlapMatrix(X,
 	                                  numberVectors,
 		                          processGrid,
+					  interBandGroupComm,
 				          overlapMatPar);
       computing_timer.exit_section("Fill overlap matrix for PGS");
 
@@ -101,6 +102,32 @@ namespace dftfe
 		 }
                }
            }
+
+      //Check if any of the diagonal entries of LMat are close to zero. If yes break off PGS and return flag=1
+
+      unsigned int flag=0;
+      if (processGrid->is_process_active())
+         for (unsigned int i = 0; i < overlapMatPar.local_n(); ++i)
+           {
+             const unsigned int glob_i = overlapMatPar.global_column(i);
+             for (unsigned int j = 0; j < overlapMatPar.local_m(); ++j)
+               {
+		 const unsigned int glob_j = overlapMatPar.global_row(j);
+		 if (glob_i==glob_j)
+		    if (std::fabs(LMatPar.local_el(j, i))<1e-14)
+			flag=1;
+		 if (flag==1)
+		     break;
+               }
+	     if (flag==1)
+		 break;
+           }
+
+      flag=dealii::Utilities::MPI::max(flag,X.get_mpi_communicator());
+      if (dftParameters::enableSwitchToGS && flag==1)
+          return flag;
+
+      //invert triangular matrix
       LMatPar.invert();
       computing_timer.exit_section("PGS cholesky, copy, and triangular matrix invert");
 
@@ -109,19 +136,24 @@ namespace dftfe
       internal::subspaceRotation(X,
 		                 numberVectors,
 		                 processGrid,
+				 interBandGroupComm,
 			         LMatPar,
 				 overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::upper_triangular?true:false);
 
       computing_timer.exit_section("Subspace rotation PGS");
       if (dftParameters::orthoRROMPThreads!=0)
 	  omp_set_num_threads(1);
+
+      return 0;
     }
 #else
     template<typename T>
-    void pseudoGramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<T> & X,
-				            const unsigned int numberVectors)
+    unsigned int pseudoGramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<T> & X,
+				            const unsigned int numberVectors,
+					    const MPI_Comm &interBandGroupComm)
     {
       AssertThrow(false,dftUtils::ExcNotImplementedYet());
+      return 0;
     }
 #endif
 
