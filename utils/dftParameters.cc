@@ -27,7 +27,7 @@ namespace dftfe {
 namespace dftParameters
 {
 
-  unsigned int finiteElementPolynomialOrder=1,n_refinement_steps=1,numberEigenValues=1,xc_id=1, spinPolarized=0, nkx=1,nky=1,nkz=1; 
+  unsigned int finiteElementPolynomialOrder=1,n_refinement_steps=1,numberEigenValues=1,xc_id=1, spinPolarized=0, nkx=1,nky=1,nkz=1;
   unsigned int chebyshevOrder=1,numPass=1, numSCFIterations=1,maxLinearSolverIterations=1, mixingHistory=1, npool=1;
 
   double radiusAtomBall=0.0, mixingParameter=0.5, dkx=0.0, dky=0.0, dkz=0.0;
@@ -578,7 +578,7 @@ namespace dftParameters
     if (dftParameters::orthogType=="PGS")
        AssertThrow(false,ExcMessage("DFT-FE Error: Implementation PGS orthogonalization in complex mode is not added yet."));
 #else
-    AssertThrow(!dftParameters::isCellStress,ExcMessage("DFT-FE Error: Currently CELL STRESS cannot be set true in double mode for periodic Gamma point problems. This functionality will be added soon."));
+    AssertThrow(!dftParameters::isCellStress,ExcMessage("DFT-FE Error: Currently CELL STRESS cannot be set true in real mode for periodic Gamma point problems. This functionality will be added soon."));
 
     AssertThrow( dftParameters::nkx==1 &&  dftParameters::nky==1 &&  dftParameters::nkz==1
              && dftParameters::dkx==0 &&  dftParameters::dky==0 &&  dftParameters::dkz==0
@@ -596,6 +596,16 @@ namespace dftParameters
 
     if (dftParameters::nonSelfConsistentForce)
        AssertThrow(false,ExcMessage("DFT-FE Error: Implemenation of this feature is not completed yet."));
+
+    AssertThrow(!dftParameters::coordinatesFile.empty()
+	        ,ExcMessage("DFT-FE Error: ATOMIC COORDINATES FILE not given."));
+
+    AssertThrow(!dftParameters::domainBoundingVectorsFile.empty()
+	        ,ExcMessage("DFT-FE Error: DOMAIN BOUNDING VECTORS FILE not given."));
+
+    if (dftParameters::isPseudopotential)
+      AssertThrow(!dftParameters::pseudoPotentialFile.empty(),
+	        ExcMessage("DFT-FE Error: PSEUDOPOTENTIAL FILE NAMES LIST not given."));
   }
 
 }
