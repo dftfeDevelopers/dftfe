@@ -72,7 +72,7 @@ void geoOptIon<FEOrder>::run()
    const double lineSearchTol=tol*2.0;
    const double lineSearchDampingParameter=0.7;
    const unsigned int maxLineSearchIter=4;
-   const unsigned int debugLevel=Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) ==0?1:0;
+   const unsigned int debugLevel=Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) ==0?dftParameters::verbosity:0;
 
    d_totalUpdateCalls=0;
    cgPRPNonLinearSolver cgSolver(tol,
@@ -84,16 +84,19 @@ void geoOptIon<FEOrder>::run()
 				lineSearchDampingParameter);
 
    if (dftParameters::chkType>=1 && dftParameters::restartFromChk)
-     pcout<<" Re starting Ion force relaxation using CG solver... "<<std::endl;
+     pcout<<" Re starting Ion force relaxation using nonlinear CG solver... "<<std::endl;
    else
-     pcout<<" Starting Ion force relaxation using CG solver... "<<std::endl;
-   pcout<<"   ---CG Parameters--------------  "<<std::endl;
-   pcout<<"      stopping tol: "<< tol<<std::endl;
-   pcout<<"      maxIter: "<< maxIter<<std::endl;
-   pcout<<"      lineSearch tol: "<< lineSearchTol<<std::endl;
-   pcout<<"      lineSearch maxIter: "<< maxLineSearchIter<<std::endl;
-   pcout<<"      lineSearch damping parameter: "<< lineSearchDampingParameter<<std::endl;
-   pcout<<"   ------------------------------  "<<std::endl;
+     pcout<<" Starting Ion force relaxation using nonlinear CG solver... "<<std::endl;
+   if (dftParameters::verbosity>=2)
+   {
+       pcout<<"   ---Non-linear CG Parameters--------------  "<<std::endl;
+       pcout<<"      stopping tol: "<< tol<<std::endl;
+       pcout<<"      maxIter: "<< maxIter<<std::endl;
+       pcout<<"      lineSearch tol: "<< lineSearchTol<<std::endl;
+       pcout<<"      lineSearch maxIter: "<< maxLineSearchIter<<std::endl;
+       pcout<<"      lineSearch damping parameter: "<< lineSearchDampingParameter<<std::endl;
+       pcout<<"   ------------------------------  "<<std::endl;
+   }
 
    if  (getNumberUnknowns()>0)
    {
@@ -108,16 +111,16 @@ void geoOptIon<FEOrder>::run()
 
        if (cgReturn == nonLinearSolver::SUCCESS )
        {
-	    pcout<< " ...CG Ion force relaxation completed as maximum force magnitude is less than force relaxation tolerance: "<< dftParameters::forceRelaxTol<<", total number of ion position updates: "<<d_totalUpdateCalls<<std::endl;
+	    pcout<< " ...Ion force relaxation completed as maximum force magnitude is less than FORCE TOL: "<< dftParameters::forceRelaxTol<<", total number of ion position updates: "<<d_totalUpdateCalls<<std::endl;
        }
        else if (cgReturn == nonLinearSolver::FAILURE)
        {
-	    pcout<< " ...CG Ion force relaxation failed "<<std::endl;
+	    pcout<< " ...Ion force relaxation failed "<<std::endl;
 
        }
        else if (cgReturn == nonLinearSolver::MAX_ITER_REACHED)
        {
-	    pcout<< " ...Maximum CG iterations reached "<<std::endl;
+	    pcout<< " ...Maximum iterations reached "<<std::endl;
 
        }
 
@@ -207,7 +210,8 @@ void geoOptIon<FEOrder>::update(const std::vector<double> & solution)
 	        MPI_COMM_WORLD);
    }
 
-   pcout<< "  Maximum force to be relaxed: "<<  d_maximumAtomForceToBeRelaxed <<std::endl;
+   if (dftParameters::verbosity>=2)
+     pcout<< "  Maximum force to be relaxed: "<<  d_maximumAtomForceToBeRelaxed <<std::endl;
    dftPtr->updateAtomPositionsAndMoveMesh(globalAtomsDisplacements);
    d_totalUpdateCalls+=1;
 

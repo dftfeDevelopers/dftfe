@@ -276,7 +276,7 @@ namespace dftfe {
 	  //
 	  //print out adaptive mesh metrics
 	  //
-	  if (dftParameters::verbosity>=1)
+	  if (dftParameters::verbosity>=2)
 	  {
 	    pcout<< "Adaptivity summary: "<<std::endl<<" numCells: "<<parallelTriangulation.n_global_active_cells()<<", num refinement levels: "<<numLevels<<", h_min: "<<minElemLength<<std::endl;
 	  }
@@ -384,7 +384,7 @@ namespace dftfe {
 	  //
 	  //print out adaptive mesh metrics and check mesh generation synchronization across pools
 	  //
-	  if (dftParameters::verbosity>=1)
+	  if (dftParameters::verbosity>=2)
 	  {
 	    pcout<< "Adaptivity summary: "<<std::endl<<" numCells: "<<parallelTriangulation.n_global_active_cells()<<", num refinement levels: "<<numLevels<<", h_min: "<<minElemLength<<std::endl;
 	  }

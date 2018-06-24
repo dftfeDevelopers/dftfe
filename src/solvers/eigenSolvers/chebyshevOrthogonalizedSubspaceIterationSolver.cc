@@ -72,7 +72,8 @@ namespace dftfe{
     d_lowerBoundUnWantedSpectrum(lowerBoundUnWantedSpectrum),
     pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
     computing_timer(pcout,
-		    dftParameters::reproducible_output ? dealii::TimerOutput::never : dealii::TimerOutput::summary,
+		    dftParameters::reproducible_output ||
+		    dftParameters::verbosity<2? dealii::TimerOutput::never : dealii::TimerOutput::summary,
 		    dealii::TimerOutput::wall_times)
   {
 

@@ -19,6 +19,7 @@
 
 
 #include <interpolateFieldsFromPreviousMesh.h>
+#include <dftParameters.h>
 
 namespace dftfe
 {
@@ -53,7 +54,11 @@ void interpolateFieldsFromPreviousMesh::interpolate
   const unsigned int base_indices_per_cell_current = dofs_per_cell_current/fe_components;
 
   /// compute-time logger
-  dealii::TimerOutput computing_timer(pcout, dealii::TimerOutput::summary, dealii::TimerOutput::wall_times);
+  dealii::TimerOutput computing_timer(pcout,
+		                     dftParameters::reproducible_output ||
+				     dftParameters::verbosity<2 ? dealii::TimerOutput::never:
+				     dealii::TimerOutput::summary,dealii::TimerOutput::wall_times);
+
   ///////////////////////////////////////////////////////////////////////////////
   //Step1: create maps which will be used for the MPI calls in the later steps///
   ///////////////////////////////////////////////////////////////////////////////

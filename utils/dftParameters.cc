@@ -42,8 +42,8 @@ namespace dftParameters
 
   bool isIonOpt=false, isCellOpt=false, isIonForce=false, isCellStress=false;
   bool nonSelfConsistentForce=false;
-  double forceRelaxTol  = 5e-5;//Hartree/Bohr
-  double stressRelaxTol = 5e-7;//Hartree/Bohr^3
+  double forceRelaxTol  = 1e-4;//Hartree/Bohr
+  double stressRelaxTol = 1e-6;//Hartree/Bohr^3
   unsigned int cellConstraintType=12;// all cell components to be relaxed
 
   unsigned int verbosity=0; unsigned int chkType=0;
@@ -128,7 +128,7 @@ namespace dftParameters
 			      Patterns::Bool(),
 			      "[Standard] Boolean parameter specifying if atomic forces are to be relaxed.");
 
-	    prm.declare_entry("FORCE TOL", "5e-5",
+	    prm.declare_entry("FORCE TOL", "1e-4",
 			      Patterns::Double(0,1.0),
 			      "[Standard] Sets the tolerance of the maximum force (in a.u.) on an ion when forces are considered to be relaxed.");
 
@@ -144,7 +144,7 @@ namespace dftParameters
 			      Patterns::Bool(),
 			      "[Standard] Boolean parameter specifying if cell stress is to be relaxed");
 
-	    prm.declare_entry("STRESS TOL", "5e-7",
+	    prm.declare_entry("STRESS TOL", "1e-6",
 			      Patterns::Double(0,1.0),
 			      "[Standard] Sets the tolerance of the cell stress (in a.u.) when cell stress is considered to be relaxed.");
 
@@ -549,6 +549,7 @@ namespace dftParameters
     }
     prm.leave_subsection ();
 
+  //
     check_print_parameters(prm);
   }
 

@@ -47,9 +47,9 @@ int main (int argc, char *argv[])
               ExcMessage("Usage:\n"
                          "mpirun -np nProcs executable parameterfile.prm\n"
                          "\n"));
-
+  //
   Utilities::MPI::MPI_InitFinalize mpi_initialization (argc, argv);
-
+  //          
   ParameterHandler prm;
   dftfe::dftParameters::declare_parameters (prm);
   const std::string parameter_file = argv[1];
