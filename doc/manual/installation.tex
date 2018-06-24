@@ -3,7 +3,7 @@ The development version of \dftfe{} can be downloaded by executing the following
 \begin{verbatim}
    git clone https://userid@bitbucket.org/dftfedevelopers/dftfe.git
 \end{verbatim}
-For internal group testing, use the internalGroupTesting
+For internal group testing, use the \verb|internalGroupTesting| branch.
 \begin{verbatim}
    git checkout internalGroupTesting
 \end{verbatim}
@@ -12,6 +12,7 @@ For internal group testing, use the internalGroupTesting
 Not required for internal group testing if trying to run \dftfe{} on flux.
 
 \subsection{Compiling \dftfe{}}
+Following are the steps to compile DFT-FE (only for flux)
 \begin{enumerate}
 \item   \begin{verbatim}
 cd dftfe
@@ -31,11 +32,22 @@ and run
 ./setup.sh
 \end{verbatim} 
 \end{enumerate}
-If \dftfe{} compiled successfully, the following executables will be created in the \verb|build| directory:
+, which by default compiles in the release mode (the fast version). If \dftfe{} compiled successfully, the following executables will be created in the \verb|build| directory:
 \begin{verbatim}
 /build/release/real/main
 /build/release/complex/main
+\end{verbatim}
+One could also set
+\begin{verbatim}
+optimizedFlag=0
+\end{verbatim}
+inside \verb|setup.sh|, and run
+\begin{verbatim}
+./setup.sh
+\end{verbatim}
+, which will create debug mode executables (useful for debugging purposes but much slower than the release mode executable) in the folders
+\begin{verbatim}
 /build/debug/real/main
 /build/debug/complex/main
 \end{verbatim}
-Among the above executables, the ones in the \verb|build/release/| folder are the fast version, which are meant for production runs. For debugging crashes and bugs, use the executables in the \verb|build/debug/| folder. 
+ 

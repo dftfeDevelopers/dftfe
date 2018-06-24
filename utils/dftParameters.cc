@@ -59,7 +59,7 @@ namespace dftParameters
   bool writeSolutionFields=false;
   bool cacheShapeGradData=false;
   unsigned int orthoRRWaveFuncBlockSize=200;
-  unsigned int subspaceRotDofsBlockSize=800;
+  unsigned int subspaceRotDofsBlockSize=2000;
   bool enableSwitchToGS=true;
   unsigned int nbandGrps=1;
   bool computeEnergyEverySCF=true;
@@ -382,9 +382,9 @@ namespace dftParameters
 			       Patterns::Integer(1),
 			       "[Developer] This block size is used for memory optimization purposes in the orthogonalization and Rayleigh-Ritz steps. This optimization is only activated if dealii library is compiled with ScaLAPACK. Default value is 200.");
 
-	    prm.declare_entry("SUBSPACE ROT DOFS BLOCK SIZE", "800",
+	    prm.declare_entry("SUBSPACE ROT DOFS BLOCK SIZE", "2000",
 			       Patterns::Integer(1),
-			       "[Developer] This block size is used for memory optimization purposes in subspace rotation step in Pseudo-Gram-Schmidt orthogonalization and Rayleigh-Ritz steps. This optimization is only activated if dealii library is compiled with ScaLAPACK. Default value is 800.");
+			       "[Developer] This block size is used for memory optimization purposes in subspace rotation step in Pseudo-Gram-Schmidt orthogonalization and Rayleigh-Ritz steps. This optimization is only activated if dealii library is compiled with ScaLAPACK. Default value is 2000.");
 
 	    prm.declare_entry("SCALAPACKPROCS", "0",
 			      Patterns::Integer(0,300),

@@ -97,7 +97,7 @@ namespace dftfe
 	  if (ipool==dealii::Utilities::MPI::this_mpi_process(interpoolcomm)) {
 	  for(unsigned int kPoint = 0; kPoint < kPointWeights.size(); ++kPoint)
 	    {
-	      if (verbosity >= 2)
+	      if (verbosity > 2)
 		{
 		  scout<<" Printing KS eigen values (spin split if this is a spin polarized calculation ) and fractional occupancies for kPoint " << (lowerBoundKindex + kPoint) << std::endl;
 	          scout << "  " << std::endl ;
