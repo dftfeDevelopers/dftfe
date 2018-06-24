@@ -969,6 +969,7 @@ namespace dftfe {
 				       d_atomNodeIdToChargeMap,
 				       atomLocations.size(),
 				       lowerBoundKindex,
+				       0,
 				       dftParameters::verbosity>=2) :
 	      energyCalc.computeEnergySpinPolarized(dofHandler,
 						    dofHandler,
@@ -994,6 +995,7 @@ namespace dftfe {
 						    d_atomNodeIdToChargeMap,
 						    atomLocations.size(),
 						    lowerBoundKindex,
+						    0,
 						    dftParameters::verbosity>=2);
 	    if (dftParameters::verbosity==1)
 	      {
@@ -1067,6 +1069,7 @@ namespace dftfe {
 			       d_atomNodeIdToChargeMap,
 			       atomLocations.size(),
 			       lowerBoundKindex,
+			       1,
 			       true) :
       energyCalc.computeEnergySpinPolarized(dofHandler,
 					    dofHandler,
@@ -1092,6 +1095,7 @@ namespace dftfe {
 					    d_atomNodeIdToChargeMap,
 					    atomLocations.size(),
 					    lowerBoundKindex,
+					    1,
 					    true);
 
     MPI_Barrier(interpoolcomm) ;

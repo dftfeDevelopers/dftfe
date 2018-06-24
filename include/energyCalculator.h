@@ -77,6 +77,7 @@ namespace dftfe {
 	 * of dofHandlerElectrostatic to atom charge value.
 	 * @param numberGlobalAtoms
 	 * @param lowerBoundKindex global k index of lower bound of the local k point set in the current pool
+	 * @param if scf is converged
 	 * @param print
 	 *
 	 * @return total energy
@@ -101,6 +102,7 @@ namespace dftfe {
 		             const std::map<dealii::types::global_dof_index, double> & atomElectrostaticNodeIdToChargeMap,
 			     const unsigned int numberGlobalAtoms,
 			     const unsigned int lowerBoundKindex,
+			     const unsigned int scfConverged,
 		             const bool print) const;
 
 	/**
@@ -146,6 +148,7 @@ namespace dftfe {
 	 * of dofHandlerElectrostatic to atom charge value.
 	 * @param numberGlobalAtoms
 	 * @param lowerBoundKindex global k index of lower bound of the local k point set in the current pool
+	 * @param if scf is converged
 	 * @param print
 	 *
 	 * @return total energy
@@ -175,6 +178,7 @@ namespace dftfe {
 			     const std::map<dealii::types::global_dof_index, double> & atomElectrostaticNodeIdToChargeMap,
 			     const unsigned int numberGlobalAtoms,
 			     const unsigned int lowerBoundKindex,
+			     const unsigned int scfConverged,
 			     const bool print) const;
 
      private:
