@@ -311,7 +311,7 @@ namespace dftfe{
 	{
 	    computing_timer.enter_section("MPI All Reduce wavefunctions across all band groups");
 
-	    const unsigned int dofsBlockSize=800;
+	    const unsigned int dofsBlockSize=4000;
 
 	    for(unsigned int iNode = 0; iNode < localVectorSize; iNode+=dofsBlockSize)
 	    {
