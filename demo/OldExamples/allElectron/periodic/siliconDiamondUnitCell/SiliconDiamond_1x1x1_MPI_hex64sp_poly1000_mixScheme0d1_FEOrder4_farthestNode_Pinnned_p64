@@ -1,0 +1,4442 @@
+Usage:
+./dftRun parameterfile.prm (OR) mpirun -np nProcs ./dftRun parameterfile.prm
+
+# Listing of Parameters
+# ---------------------
+# Number of SCF iterations to be considered for mixing the electron-density
+set ANDERSON SCHEME MIXING HISTORY                = 70
+
+# Mixing parameter to be used in Anderson scheme
+set ANDERSON SCHEME MIXING PARAMETER              = 0.5
+
+# File specifying the coordinates of the atoms in the given material system
+set ATOMIC COORDINATES FILE                       = coordinates.inp    # default: 
+
+# The degree of the Chebyshev polynomial to be employed for filtering out the
+# unwanted spectrum (Default value is used when the input parameter value is
+# 0
+set CHEBYSHEV POLYNOMIAL DEGREE                   = 1000               # default: 0
+
+# Path specifying the location of the build directory
+set DFT PATH                                      = "../../../.."      # default: 
+
+# Size of the domain in X-direction
+set DOMAIN SIZE X                                 = 10.2631            # default: 0.0
+
+# Size of the domain in Y-direction
+set DOMAIN SIZE Y                                 = 10.2631            # default: 0.0
+
+# Size of the domain in Z-direction
+set DOMAIN SIZE Z                                 = 10.2631            # default: 0.0
+
+# Parameter specifying the type of exchange-correlation to be used
+set EXCHANGE CORRELATION TYPE                     = 1
+
+# The degree of the finite-element interpolating polynomial
+set FINITE ELEMENT POLYNOMIAL ORDER               = 3                  # default: 2
+
+# File specifying the lattice vectors associated with the unit-cell
+set LATTICE VECTORS FILE                          = latticeVectors.inp # default: 
+
+# The lower bound of the wanted eigen spectrum
+set LOWER BOUND WANTED SPECTRUM                   = -70.0              # default: -10.0
+
+# Finite-element mesh file to be used for the given problem
+set MESH FILE                                     = meshDiamondNew.inp # default: 
+
+# Number of Kohn-Sham wavefunctions to be computed
+set NUMBER OF KOHN-SHAM WAVEFUNCTIONS             = 72                 # default: 10
+
+# Number of refinement steps to be used
+set NUMBER OF REFINEMENT STEPS                    = 4
+
+# Flag to control optimized/debug modes
+set OPTIMIZED MODE                                = true
+
+# Periodicity in X-direction
+set PERIODIC BOUNDARY CONDITION X                 = true               # default: false
+
+# Periodicity in Y-direction
+set PERIODIC BOUNDARY CONDITION Y                 = true               # default: false
+
+# Periodicity in Z-direction
+set PERIODIC BOUNDARY CONDITION Z                 = true               # default: false
+
+# Maximum number of iterations to be allowed for Poisson problem convergence
+set POISSON SOLVER CONVERGENCE MAXIMUM ITERATIONS = 5000
+
+# Relative tolerance as stopping criterion for Poisson problem convergence
+set POISSON SOLVER CONVERGENCE TOLERANCE          = 1e-12
+
+# Boolean Parameter specifying whether pseudopotential DFT calculation needs
+# to be performed
+set PSEUDOPOTENTIAL CALCULATION                   = false
+
+# The radius of the ball around an atom on which self-potential of the
+# associated nuclear charge is solved
+set RADIUS ATOM BALL                              = 3.0
+
+# Maximum number of iterations to be allowed for SCF convergence
+set SCF CONVERGENCE MAXIMUM ITERATIONS            = 200                # default: 50
+
+# SCF iterations stopping tolerance in terms of electron-density difference
+# between two successive iterations
+set SCF CONVERGENCE TOLERANCE                     = 1e-9               # default: 1e-08
+
+# Fermi-Dirac smearing temperature
+set TEMPERATURE                                   = 500                # default: 500.0
+
+# File specifying the k-Point quadrature rule to sample Brillouin zone
+set kPOINT RULE FILE                              = GammaPoint.inp     # default: 
+
+number of MPI processes: 64
+number of atoms: 8
+fractional coordinates of atom: 0.000000000000000000e+00 0.000000000000000000e+00 0.000000000000000000e+00
+fractional coordinates of atom: 5.000000000000000000e-01 5.000000000000000000e-01 0.000000000000000000e+00
+fractional coordinates of atom: 0.000000000000000000e+00 5.000000000000000000e-01 5.000000000000000000e-01
+fractional coordinates of atom: 5.000000000000000000e-01 0.000000000000000000e+00 5.000000000000000000e-01
+fractional coordinates of atom: 2.500000000000000000e-01 2.500000000000000000e-01 2.500000000000000000e-01
+fractional coordinates of atom: 7.500000000000000000e-01 7.500000000000000000e-01 2.500000000000000000e-01
+fractional coordinates of atom: 2.500000000000000000e-01 7.500000000000000000e-01 7.500000000000000000e-01
+fractional coordinates of atom: 7.500000000000000000e-01 2.500000000000000000e-01 7.500000000000000000e-01
+lattice vectors: 1.026309999999999967e+01 0.000000000000000000e+00 0.000000000000000000e+00
+lattice vectors: 0.000000000000000000e+00 1.026309999999999967e+01 0.000000000000000000e+00
+lattice vectors: 0.000000000000000000e+00 0.000000000000000000e+00 1.026309999999999967e+01
+Number Image Charges  656
+Cartesian coordinates of atoms: -5.131549999999999834e+00 -5.131549999999999834e+00 -5.131549999999999834e+00
+Cartesian coordinates of atoms: 0.000000000000000000e+00 0.000000000000000000e+00 -5.131549999999999834e+00
+Cartesian coordinates of atoms: -5.131549999999999834e+00 0.000000000000000000e+00 0.000000000000000000e+00
+Cartesian coordinates of atoms: 0.000000000000000000e+00 -5.131549999999999834e+00 0.000000000000000000e+00
+Cartesian coordinates of atoms: -2.565774999999999917e+00 -2.565774999999999917e+00 -2.565774999999999917e+00
+Cartesian coordinates of atoms: 2.565774999999999473e+00 2.565774999999999473e+00 -2.565774999999999917e+00
+Cartesian coordinates of atoms: -2.565774999999999917e+00 2.565774999999999473e+00 2.565774999999999473e+00
+Cartesian coordinates of atoms: 2.565774999999999473e+00 -2.565774999999999917e+00 2.565774999999999473e+00
+number of atoms types: 1
+Z:14
+reading data from file: ../../../../data/electronicStructure/allElectron/z14/singleAtomData/psi10.inp
+reading data from file: ../../../../data/electronicStructure/allElectron/z14/singleAtomData/psi20.inp
+reading data from file: ../../../../data/electronicStructure/allElectron/z14/singleAtomData/psi21.inp
+reading data from file: ../../../../data/electronicStructure/allElectron/z14/singleAtomData/psi30.inp
+reading data from file: ../../../../data/electronicStructure/allElectron/z14/singleAtomData/psi31.inp
+=============================================================================================================================
+number of electrons: 112
+number of wavefunctions computed using single atom data to be used as initial guess for starting the SCF: 72
+=============================================================================================================================
+number of eigen values: 72
+Reduced k-Point-coordinates and weights: 
+0.000000000000000000e+00 0.000000000000000000e+00 0.000000000000000000e+00 1.000000000000000000e+00
+actual k-Point-coordinates and weights: 
+0.000000000000000000e+00 0.000000000000000000e+00 0.000000000000000000e+00 1.000000000000000000e+00
+number of elements: 15936
+number of degrees of freedom: 444313
+Global Max Distance: 4.444052660790036136e+00maxDistance 4.444052660790036136e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 4.444052660790036136e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 4.209850458042176946e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 1.682433619051100449e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 8.552583333300006752e-01
+Global Max Distance: 4.444052660790036136e+00maxDistance 5.314237602341380651e-01
+Global Max Distance: 4.444052660790036136e+00maxDistance 5.479622368796158716e-01
+Global Max Distance: 4.444052660790036136e+00maxDistance 3.200083660517527573e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 4.444052660790036136e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 4.444052660790036136e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 4.189893029859671714e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 4.444052660790036136e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 4.011517165387128436e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 4.444052660790036136e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 4.013161002568829794e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 2.836570990489365673e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 4.324836019363599959e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 1.042015076690821829e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 2.557442770130828880e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 6.949111112051284955e-01
+Global Max Distance: 4.444052660790036136e+00maxDistance 2.756646920508237564e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 4.444052660790036136e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 4.011517165387128436e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 1.710516666669999797e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 3.916562170755527816e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 2.756646920508236676e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 8.510888195185258853e-01
+Global Max Distance: 4.444052660790036136e+00maxDistance 1.682433619051100226e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 4.209850458042176946e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 1.809189800219325850e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 4.398700748057500776e-01
+Global Max Distance: 4.444052660790036136e+00maxDistance 4.444052660790036136e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 4.444052660790035247e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 8.323150799917508058e-01
+Global Max Distance: 4.444052660790036136e+00maxDistance 3.806321266787088931e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 3.916562170755526484e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 2.257622072170934580e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 7.939967971120620582e-01
+Global Max Distance: 4.444052660790036136e+00maxDistance 3.145166071154139154e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 3.126045230078995374e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 7.939967971120619472e-01
+Global Max Distance: 4.444052660790036136e+00maxDistance 4.444052660790036136e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 3.473383588980849535e-01
+Global Max Distance: 4.444052660790036136e+00maxDistance 2.756646920508236676e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 3.916562170755526928e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 2.756646920507793919e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 2.836962731754240075e-01
+Global Max Distance: 4.444052660790036136e+00maxDistance 2.583334206312283499e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 3.023120719444862825e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 2.488382547626593500e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 2.696660961125366907e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 2.010058477070896465e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 2.341351063099363916e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 2.714875183103377498e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 1.876535929197404418e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 3.023120719444862381e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 4.444052660790036136e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 1.805303195355976165e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 1.066694553501388310e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 1.809189800220731836e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 3.244220940574978229e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 2.756646920508236676e+00
+Global Max Distance: 4.444052660790036136e+00maxDistance 3.765939935123745030e+00
+Found Node locally on: 57
+Global Max Distance: 4.444052660790036136e+00maxDistance 3.244220940574978229e+00
+Pinned core with nodal coordinates (-2.565774999999999917e+00 2.565774999999999917e+00 -2.565774999999999917e+00) located with node id 402100 in processor 57 and added 
+number image charges: 656
+number bins: 8
+bin 0: number of global atoms: 1
+bin 1: number of global atoms: 1
+bin 2: number of global atoms: 1
+bin 3: number of global atoms: 1
+bin 4: number of global atoms: 1
+bin 5: number of global atoms: 1
+bin 6: number of global atoms: 1
+bin 7: number of global atoms: 1
+atom core with charge 1.400000000000000000e+01 located with node id 9440 in processor 1 nodal coor 2.565774999999999917e+00 -2.565774999999999917e+00 2.565774999999999917e+00
+ and added 
+atom core with charge 1.400000000000000000e+01 located with node id 338980 in processor 62 nodal coor 2.565774999999999917e+00 2.565774999999999917e+00 -2.565774999999999917e+00
+ but skipped 
+atom core with charge 1.400000000000000000e+01 located with node id 9440 in processor 2 nodal coor 2.565774999999999917e+00 -2.565774999999999917e+00 2.565774999999999917e+00
+ but skipped 
+atom core with charge 1.400000000000000000e+01 located with node id 411733 in processor 58 nodal coor -2.565774999999999917e+00 -2.565774999999999917e+00 -2.565774999999999917e+00
+ and added 
+atom core with charge 1.400000000000000000e+01 located with node id 411733 in processor 59 nodal coor -2.565774999999999917e+00 -2.565774999999999917e+00 -2.565774999999999917e+00
+ but skipped 
+atom core with charge 1.400000000000000000e+01 located with node id 244867 in processor 37 nodal coor -2.565774999999999917e+00 2.565774999999999917e+00 2.565774999999999917e+00
+atom core with charge 1.400000000000000000e+01 located with node id 244867 in processor 38 nodal coor -2.565774999999999917e+00 2.565774999999999917e+00 2.565774999999999917e+00
+ but skipped 
+ but skipped 
+atom core with charge 1.400000000000000000e+01 located with node id 244867 in processor 36 nodal coor -2.565774999999999917e+00 2.565774999999999917e+00 2.565774999999999917e+00
+ but skipped 
+atom core with charge 1.400000000000000000e+01 located with node id 338980 in processor 61 nodal coor 2.565774999999999917e+00 2.565774999999999917e+00 -2.565774999999999917e+00
+ but skipped 
+atom core with charge 1.400000000000000000e+01 located with node id 364648 in processor 52 nodal coor -5.131549999999999834e+00 0.000000000000000000e+00 0.000000000000000000e+00
+ but skipped 
+atom core with charge 1.400000000000000000e+01 located with node id 375467 in processor 53 nodal coor 0.000000000000000000e+00 0.000000000000000000e+00 -5.131549999999999834e+00
+ and added 
+atom core with charge 1.400000000000000000e+01 located with node id 244867 in processor 33 nodal coor -2.565774999999999917e+00 2.565774999999999917e+00 2.565774999999999917e+00
+ and added 
+atom core with charge 1.400000000000000000e+01 located with node id 119482 in processor 16 nodal coor 0.000000000000000000e+00 -5.131549999999999834e+00 0.000000000000000000e+00
+ and added 
+atom core with charge 1.400000000000000000e+01 located with node id 338980 in processor 47 nodal coor 2.565774999999999917e+00 2.565774999999999917e+00 -2.565774999999999917e+00
+ and added 
+atom core with charge 1.400000000000000000e+01 located with node id 375467 in processor 54 nodal coor 0.000000000000000000e+00 0.000000000000000000e+00 -5.131549999999999834e+00
+ but skipped 
+atom core with charge 1.400000000000000000e+01 located with node id 364648 in processor 51 nodal coor -5.131549999999999834e+00 0.000000000000000000e+00 0.000000000000000000e+00
+ and added 
+atom core with charge 1.400000000000000000e+01 located with node id 7773 in processor 0 nodal coor -5.131549999999999834e+00 -5.131549999999999834e+00 -5.131549999999999834e+00
+ and added 
+atom core in bin 0 with charge 1.400000000000000000e+01 located with node id 7773 in processor 0 and added 
+atom core in bin 1 with charge 1.400000000000000000e+01 located with node id 375467 in processor 53 and added 
+atom core in bin 1 with charge 1.400000000000000000e+01 located with node id 375467 in processor 54 but skipped 
+atom core in bin 2 with charge 1.400000000000000000e+01 located with node id 364648 in processor 51 and added 
+atom core in bin 2 with charge 1.400000000000000000e+01 located with node id 364648 in processor 52 but skipped 
+atom core in bin 3 with charge 1.400000000000000000e+01 located with node id 119482 in processor 16 and added 
+atom core in bin 4 with charge 1.400000000000000000e+01 located with node id 411733 in processor 58 and added 
+atom core in bin 4 with charge 1.400000000000000000e+01 located with node id 411733 in processor 59 but skipped 
+atom core in bin 5 with charge 1.400000000000000000e+01 located with node id 338980 in processor 62 but skipped 
+atom core in bin 5 with charge 1.400000000000000000e+01 located with node id 338980 in processor 47 and added 
+atom core in bin 5 with charge 1.400000000000000000e+01 located with node id 338980 in processor 61 but skipped 
+atom core in bin 6 with charge 1.400000000000000000e+01 located with node id 244867 in processor 37 but skipped 
+atom core in bin 6 with charge 1.400000000000000000e+01 located with node id 244867 in processor 33 and added 
+atom core in bin 6 with charge 1.400000000000000000e+01 located with node id 244867 in processor 36 but skipped 
+atom core in bin 6 with charge 1.400000000000000000e+01 located with node id 244867 in processor 38 but skipped 
+atom core in bin 7 with charge 1.400000000000000000e+01 located with node id 9440 in processor 2 but skipped 
+atom core in bin 7 with charge 1.400000000000000000e+01 located with node id 9440 in processor 1 and added 
+reading initial guess for rho
+initial total charge:   1.1204457257e+02 
+initial total charge after scaling:   1.1200000000e+02 
+reading initial guess for PSI
+initial abs. residual: 1.704005e+03, current abs. residual: 1.418816e-09, nsteps: 256, abs. tolerance criterion: 1.704005e-09
+
+(only for debugging: peak value of Vself: -1.236520839264333517e+04)
+initial abs. residual: 1.705241e+03, current abs. residual: 1.577115e-09, nsteps: 257, abs. tolerance criterion: 1.705241e-09
+
+(only for debugging: peak value of Vself: -1.236520839334079392e+04)
+initial abs. residual: 1.705241e+03, current abs. residual: 1.623014e-09, nsteps: 256, abs. tolerance criterion: 1.705241e-09
+
+(only for debugging: peak value of Vself: -1.236520839334025186e+04)
+initial abs. residual: 1.705241e+03, current abs. residual: 1.466548e-09, nsteps: 257, abs. tolerance criterion: 1.705241e-09
+
+(only for debugging: peak value of Vself: -1.236520839319044171e+04)
+initial abs. residual: 1.726565e+03, current abs. residual: 1.596152e-09, nsteps: 225, abs. tolerance criterion: 1.726565e-09
+
+(only for debugging: peak value of Vself: -1.236520839382607301e+04)
+initial abs. residual: 1.726569e+03, current abs. residual: 1.577049e-09, nsteps: 226, abs. tolerance criterion: 1.726569e-09
+
+(only for debugging: peak value of Vself: -1.236520839382855229e+04)
+initial abs. residual: 1.726569e+03, current abs. residual: 1.574889e-09, nsteps: 226, abs. tolerance criterion: 1.726569e-09
+
+(only for debugging: peak value of Vself: -1.236520839382854138e+04)
+initial abs. residual: 1.726573e+03, current abs. residual: 1.664618e-09, nsteps: 225, abs. tolerance criterion: 1.726573e-09
+
+(only for debugging: peak value of Vself: -1.236520839382605664e+04)
+L2 Norm Value of phiext: 3.671056854321026476e+05
+
+
+**** Begin Self-Consistent-Field Iteration: 1 ****
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 3.959860e+01, current abs. residual: 3.531897e-11, nsteps: 627, abs. tolerance criterion: 3.959860e-11
+
+upper bound of unwanted spectrum:  1.8747224965e+05
+lower bound of unwanted spectrum:  0.0000000000e+00
+Chebyshev polynomial degree: 1000
+
+kPoint: 0
+eigen value   0: -6.5147583800764252e+01
+eigen value   1: -6.5147583796989878e+01
+eigen value   2: -6.5147583796937283e+01
+eigen value   3: -6.5147583793346683e+01
+eigen value   4: -6.5147582987877243e+01
+eigen value   5: -6.5147582987837524e+01
+eigen value   6: -6.5147582872492336e+01
+eigen value   7: -6.5147582872449945e+01
+eigen value   8: -5.0589033373711878e+00
+eigen value   9: -5.0587732758417872e+00
+eigen value  10: -5.0587732730950625e+00
+eigen value  11: -5.0587732705246173e+00
+eigen value  12: -5.0587527482780414e+00
+eigen value  13: -5.0587527184550636e+00
+eigen value  14: -5.0586521438726502e+00
+eigen value  15: -5.0584918081969921e+00
+eigen value  16: -3.4978900406391453e+00
+eigen value  17: -3.4978820331935099e+00
+eigen value  18: -3.4978784652538808e+00
+eigen value  19: -3.4977311977619503e+00
+eigen value  20: -3.4977073986604079e+00
+eigen value  21: -3.4976996527724746e+00
+eigen value  22: -3.4976010122319789e+00
+eigen value  23: -3.4975806766991142e+00
+eigen value  24: -3.4975699937415250e+00
+eigen value  25: -3.4974944457619763e+00
+eigen value  26: -3.4974642943272198e+00
+eigen value  27: -3.4974505496828763e+00
+eigen value  28: -3.4972683950323118e+00
+eigen value  29: -3.4972463870724222e+00
+eigen value  30: -3.4972394769450958e+00
+eigen value  31: -3.4970524123864033e+00
+eigen value  32: -3.4970456225922266e+00
+eigen value  33: -3.4970421499944062e+00
+eigen value  34: -3.4965333523830857e+00
+eigen value  35: -3.4965176053628708e+00
+eigen value  36: -3.4963617729564103e+00
+eigen value  37: -3.4942105033679609e+00
+eigen value  38: -3.4924827837082391e+00
+eigen value  39: -3.4924436281411135e+00
+eigen value  40: -5.3861179298142925e-01
+eigen value  41: -3.4638954151912743e-01
+eigen value  42: -3.4411388195035647e-01
+eigen value  43: -3.0354627362972325e-01
+eigen value  44: -6.1341724570462108e-02
+eigen value  45: -5.4323709052948178e-02
+eigen value  46: 1.9119336547059951e-01
+eigen value  47: 7.3227310997038819e-01
+eigen value  48: 7.4519671477068661e-01
+eigen value  49: 7.5469133610329697e-01
+eigen value  50: 1.1753032347410564e+01
+eigen value  51: 1.1908979852932829e+01
+eigen value  52: 1.8783831218346968e+01
+eigen value  53: 1.8974717783634738e+01
+eigen value  54: 2.0971148304737671e+01
+eigen value  55: 5.6595425352045275e+01
+eigen value  56: 5.7195737759960693e+01
+eigen value  57: 5.8541796686074655e+01
+eigen value  58: 1.6230356182126573e+02
+eigen value  59: 4.8741744931150544e+02
+eigen value  60: 4.9330286756181175e+02
+eigen value  61: 7.5926704939323815e+02
+eigen value  62: 1.2010638258759357e+03
+eigen value  63: 2.6508187875440890e+03
+eigen value  64: 2.6702637835365581e+03
+eigen value  65: 2.8822590341132795e+03
+eigen value  66: 3.6543431419114122e+03
+eigen value  67: 3.7179250540198545e+03
+eigen value  68: 8.0169771298604146e+03
+eigen value  69: 8.1768219932043894e+03
+eigen value  70: 1.0508525835092432e+04
+eigen value  71: 1.1424474111168203e+04
+
+Fermi energy constraint residual (bisection)      :    0.0000000000000000e+00
+Fermi energy constraint residual (Newton-Raphson) :    0.0000000000000000e+00
+Fermi energy                                      :    5.6873545039848558e+01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 3.959813e+01, current abs. residual: 3.646292e-11, nsteps: 639, abs. tolerance criterion: 3.959813e-11
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 1.00000000000000
+fractional occupancy 5: 1.00000000000000
+fractional occupancy 6: 1.00000000000000
+fractional occupancy 7: 1.00000000000000
+fractional occupancy 8: 1.00000000000000
+fractional occupancy 9: 1.00000000000000
+fractional occupancy 10: 1.00000000000000
+fractional occupancy 11: 1.00000000000000
+fractional occupancy 12: 1.00000000000000
+fractional occupancy 13: 1.00000000000000
+fractional occupancy 14: 1.00000000000000
+fractional occupancy 15: 1.00000000000000
+fractional occupancy 16: 1.00000000000000
+fractional occupancy 17: 1.00000000000000
+fractional occupancy 18: 1.00000000000000
+fractional occupancy 19: 1.00000000000000
+fractional occupancy 20: 1.00000000000000
+fractional occupancy 21: 1.00000000000000
+fractional occupancy 22: 1.00000000000000
+fractional occupancy 23: 1.00000000000000
+fractional occupancy 24: 1.00000000000000
+fractional occupancy 25: 1.00000000000000
+fractional occupancy 26: 1.00000000000000
+fractional occupancy 27: 1.00000000000000
+fractional occupancy 28: 1.00000000000000
+fractional occupancy 29: 1.00000000000000
+fractional occupancy 30: 1.00000000000000
+fractional occupancy 31: 1.00000000000000
+fractional occupancy 32: 1.00000000000000
+fractional occupancy 33: 1.00000000000000
+fractional occupancy 34: 1.00000000000000
+fractional occupancy 35: 1.00000000000000
+fractional occupancy 36: 1.00000000000000
+fractional occupancy 37: 1.00000000000000
+fractional occupancy 38: 1.00000000000000
+fractional occupancy 39: 1.00000000000000
+fractional occupancy 40: 1.00000000000000
+fractional occupancy 41: 1.00000000000000
+fractional occupancy 42: 1.00000000000000
+fractional occupancy 43: 1.00000000000000
+fractional occupancy 44: 1.00000000000000
+fractional occupancy 45: 1.00000000000000
+fractional occupancy 46: 1.00000000000000
+fractional occupancy 47: 1.00000000000000
+fractional occupancy 48: 1.00000000000000
+fractional occupancy 49: 1.00000000000000
+fractional occupancy 50: 1.00000000000000
+fractional occupancy 51: 1.00000000000000
+fractional occupancy 52: 1.00000000000000
+fractional occupancy 53: 1.00000000000000
+fractional occupancy 54: 1.00000000000000
+fractional occupancy 55: 1.00000000000000
+fractional occupancy 56: 0.00000000000000
+fractional occupancy 57: 0.00000000000000
+fractional occupancy 58: 0.00000000000000
+fractional occupancy 59: 0.00000000000000
+fractional occupancy 60: 0.00000000000000
+fractional occupancy 61: 0.00000000000000
+fractional occupancy 62: 0.00000000000000
+fractional occupancy 63: 0.00000000000000
+fractional occupancy 64: 0.00000000000000
+fractional occupancy 65: 0.00000000000000
+fractional occupancy 66: 0.00000000000000
+fractional occupancy 67: 0.00000000000000
+fractional occupancy 68: 0.00000000000000
+fractional occupancy 69: 0.00000000000000
+fractional occupancy 70: 0.00000000000000
+fractional occupancy 71: 0.00000000000000
+
+number of electrons: 1.1198722444998171e+02 
+
+Energy computations
+-------------------
+Band energy             :  -1.0116235417465600e+03
+Kinetic energy          :   2.5918626488783507e+03
+Exchange energy         :  -1.4956306631859098e+02
+Correlation energy      :  -8.5554951518910620e+00
+Electrostatic energy    :  -4.4486083901274224e+03
+Total energy            :  -2.0148643027195544e+03
+Total energy per atom   :  -2.5185803783994430e+02
+SCF iteration 1 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 2 ****
+Anderson Mixing: L2 norm of electron-density difference: 3.421154e+00
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 3.959836e+01, current abs. residual: 3.643957e-11, nsteps: 635, abs. tolerance criterion: 3.959836e-11
+
+upper bound of unwanted spectrum:  1.8747211189e+05
+lower bound of unwanted spectrum:  1.1424474111e+04
+Chebyshev polynomial degree: 1000
+
+kPoint: 0
+eigen value   0: -6.5662781835491487e+01
+eigen value   1: -6.5546793337511573e+01
+eigen value   2: -6.5492545818145899e+01
+eigen value   3: -6.5416732354015068e+01
+eigen value   4: -6.5366749077831614e+01
+eigen value   5: -6.5365807468664940e+01
+eigen value   6: -6.5363570166751302e+01
+eigen value   7: -6.5244295434231859e+01
+eigen value   8: -5.5308092367986994e+00
+eigen value   9: -5.4316583003039760e+00
+eigen value  10: -5.3844160923088111e+00
+eigen value  11: -5.3162611597983682e+00
+eigen value  12: -5.2706089160434910e+00
+eigen value  13: -5.2673065297546735e+00
+eigen value  14: -5.2657686200199469e+00
+eigen value  15: -5.1618860713321668e+00
+eigen value  16: -3.9758139214617882e+00
+eigen value  17: -3.9712607216178539e+00
+eigen value  18: -3.9690191550046272e+00
+eigen value  19: -3.8750562394054984e+00
+eigen value  20: -3.8705599770323409e+00
+eigen value  21: -3.8693537434604206e+00
+eigen value  22: -3.8260428613989430e+00
+eigen value  23: -3.8234771534142227e+00
+eigen value  24: -3.8224501119755838e+00
+eigen value  25: -3.7571382622288207e+00
+eigen value  26: -3.7548465787037761e+00
+eigen value  27: -3.7537028603078748e+00
+eigen value  28: -3.7118674460604701e+00
+eigen value  29: -3.7085934452782161e+00
+eigen value  30: -3.7085409398414186e+00
+eigen value  31: -3.7076058566203258e+00
+eigen value  32: -3.7071634590439073e+00
+eigen value  33: -3.7056341406818158e+00
+eigen value  34: -3.7042018805909462e+00
+eigen value  35: -3.7041538287157718e+00
+eigen value  36: -3.7023253090503139e+00
+eigen value  37: -3.6015798682301403e+00
+eigen value  38: -3.5988350985784674e+00
+eigen value  39: -3.5987288623397236e+00
+eigen value  40: -9.1803785845552011e-01
+eigen value  41: -8.0348360434646282e-01
+eigen value  42: -7.6605401740385692e-01
+eigen value  43: -7.6000707155857139e-01
+eigen value  44: -7.2236154413262643e-01
+eigen value  45: -7.1846430580266196e-01
+eigen value  46: -6.6912655221903472e-01
+eigen value  47: -5.9436803951911077e-01
+eigen value  48: -5.6472610220061170e-01
+eigen value  49: -5.5831855257153040e-01
+eigen value  50: -5.4240400775183695e-01
+eigen value  51: -5.3376677264403105e-01
+eigen value  52: -5.1467431118741780e-01
+eigen value  53: -4.2033283152580336e-01
+eigen value  54: -4.1022096385144657e-01
+eigen value  55: -4.0285491616076213e-01
+eigen value  56: -3.5990081576813288e-01
+eigen value  57: -3.4690071372337083e-01
+eigen value  58: -3.2450495775389376e-01
+eigen value  59: -3.0164474998279783e-01
+eigen value  60: -2.8767174151357849e-01
+eigen value  61: -2.7582674755556152e-01
+eigen value  62: -1.7039736052259527e-01
+eigen value  63: 7.5343472801440103e-01
+eigen value  64: 8.1096693019584420e-01
+eigen value  65: 1.7780007863940976e+00
+eigen value  66: 1.8042592202845127e+00
+eigen value  67: 2.1157603064159423e+00
+eigen value  68: 2.7551962771701159e+00
+eigen value  69: 2.8485624175051427e+00
+eigen value  70: 4.2472136171232240e+00
+eigen value  71: 8.6471779969057128e+00
+
+Fermi energy constraint residual (bisection)      :    7.7778850027243607e-10
+Fermi energy constraint residual (Newton-Raphson) :    1.4210854715202004e-14
+Fermi energy                                      :   -3.8137054974212725e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 3.959815e+01, current abs. residual: 3.943949e-11, nsteps: 639, abs. tolerance criterion: 3.959815e-11
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 1.00000000000000
+fractional occupancy 5: 1.00000000000000
+fractional occupancy 6: 1.00000000000000
+fractional occupancy 7: 1.00000000000000
+fractional occupancy 8: 1.00000000000000
+fractional occupancy 9: 1.00000000000000
+fractional occupancy 10: 1.00000000000000
+fractional occupancy 11: 1.00000000000000
+fractional occupancy 12: 1.00000000000000
+fractional occupancy 13: 1.00000000000000
+fractional occupancy 14: 1.00000000000000
+fractional occupancy 15: 1.00000000000000
+fractional occupancy 16: 1.00000000000000
+fractional occupancy 17: 1.00000000000000
+fractional occupancy 18: 1.00000000000000
+fractional occupancy 19: 1.00000000000000
+fractional occupancy 20: 1.00000000000000
+fractional occupancy 21: 1.00000000000000
+fractional occupancy 22: 1.00000000000000
+fractional occupancy 23: 1.00000000000000
+fractional occupancy 24: 1.00000000000000
+fractional occupancy 25: 1.00000000000000
+fractional occupancy 26: 1.00000000000000
+fractional occupancy 27: 1.00000000000000
+fractional occupancy 28: 1.00000000000000
+fractional occupancy 29: 1.00000000000000
+fractional occupancy 30: 1.00000000000000
+fractional occupancy 31: 1.00000000000000
+fractional occupancy 32: 1.00000000000000
+fractional occupancy 33: 1.00000000000000
+fractional occupancy 34: 1.00000000000000
+fractional occupancy 35: 1.00000000000000
+fractional occupancy 36: 1.00000000000000
+fractional occupancy 37: 1.00000000000000
+fractional occupancy 38: 1.00000000000000
+fractional occupancy 39: 1.00000000000000
+fractional occupancy 40: 1.00000000000000
+fractional occupancy 41: 1.00000000000000
+fractional occupancy 42: 1.00000000000000
+fractional occupancy 43: 1.00000000000000
+fractional occupancy 44: 1.00000000000000
+fractional occupancy 45: 1.00000000000000
+fractional occupancy 46: 1.00000000000000
+fractional occupancy 47: 1.00000000000000
+fractional occupancy 48: 1.00000000000000
+fractional occupancy 49: 1.00000000000000
+fractional occupancy 50: 1.00000000000000
+fractional occupancy 51: 1.00000000000000
+fractional occupancy 52: 1.00000000000000
+fractional occupancy 53: 0.99999999997942
+fractional occupancy 54: 0.99999998778354
+fractional occupancy 55: 0.99999871974916
+fractional occupancy 56: 0.00000129213661
+fractional occupancy 57: 0.00000000035128
+fractional occupancy 58: 0.00000000000000
+fractional occupancy 59: 0.00000000000000
+fractional occupancy 60: 0.00000000000000
+fractional occupancy 61: 0.00000000000000
+fractional occupancy 62: 0.00000000000000
+fractional occupancy 63: 0.00000000000000
+fractional occupancy 64: 0.00000000000000
+fractional occupancy 65: 0.00000000000000
+fractional occupancy 66: 0.00000000000000
+fractional occupancy 67: 0.00000000000000
+fractional occupancy 68: 0.00000000000000
+fractional occupancy 69: 0.00000000000000
+fractional occupancy 70: 0.00000000000000
+fractional occupancy 71: 0.00000000000000
+
+number of electrons: 1.1199836047165849e+02 
+
+Energy computations
+-------------------
+Band energy             :  -1.3328302870715322e+03
+Kinetic energy          :   2.3018809833345413e+03
+Exchange energy         :  -1.4987535787738256e+02
+Correlation energy      :  -8.5730534451904852e+00
+Electrostatic energy    :  -4.4496973395438972e+03
+Total energy            :  -2.3062647675319281e+03
+Total energy per atom   :  -2.8828309594149101e+02
+SCF iteration 2 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 3 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 9.595894e-01
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 3.959818e+01, current abs. residual: 3.818664e-11, nsteps: 639, abs. tolerance criterion: 3.959818e-11
+
+upper bound of unwanted spectrum:  1.8747227286e+05
+lower bound of unwanted spectrum:  8.6471779969e+00
+Chebyshev polynomial degree: 1000
+
+kPoint: 0
+eigen value   0: -6.5227697460186917e+01
+eigen value   1: -6.5182283753215103e+01
+eigen value   2: -6.5155838594865173e+01
+eigen value   3: -6.5155316005725439e+01
+eigen value   4: -6.5146067625881841e+01
+eigen value   5: -6.5102102752025175e+01
+eigen value   6: -6.5067915651919634e+01
+eigen value   7: -6.5054810546417286e+01
+eigen value   8: -5.1113843690559628e+00
+eigen value   9: -5.0597682849002990e+00
+eigen value  10: -5.0483472450981930e+00
+eigen value  11: -5.0406635158549520e+00
+eigen value  12: -5.0276403515312289e+00
+eigen value  13: -5.0016081349729875e+00
+eigen value  14: -4.9739165769034646e+00
+eigen value  15: -4.9609454591072080e+00
+eigen value  16: -3.5519590591349268e+00
+eigen value  17: -3.5505829632614678e+00
+eigen value  18: -3.5503856890129613e+00
+eigen value  19: -3.5022938910376276e+00
+eigen value  20: -3.4986638152436358e+00
+eigen value  21: -3.4974763458087823e+00
+eigen value  22: -3.4894809195068155e+00
+eigen value  23: -3.4864878133896031e+00
+eigen value  24: -3.4853673348092684e+00
+eigen value  25: -3.4827734014150811e+00
+eigen value  26: -3.4787186386134512e+00
+eigen value  27: -3.4782780118825021e+00
+eigen value  28: -3.4680987411447899e+00
+eigen value  29: -3.4671165236046586e+00
+eigen value  30: -3.4666860323811410e+00
+eigen value  31: -3.4420702091102013e+00
+eigen value  32: -3.4402224628632641e+00
+eigen value  33: -3.4379420348773473e+00
+eigen value  34: -3.4137690897274293e+00
+eigen value  35: -3.4121191103498814e+00
+eigen value  36: -3.4099702667305323e+00
+eigen value  37: -3.4004723715721061e+00
+eigen value  38: -3.3993913280487664e+00
+eigen value  39: -3.3971553486651835e+00
+eigen value  40: -6.2267814845313296e-01
+eigen value  41: -4.8774797862747477e-01
+eigen value  42: -4.7768111978527972e-01
+eigen value  43: -4.7184245217176585e-01
+eigen value  44: -4.4678146799974738e-01
+eigen value  45: -4.4340021065106366e-01
+eigen value  46: -4.3581759315155022e-01
+eigen value  47: -2.9052540002688759e-01
+eigen value  48: -2.8906481695938840e-01
+eigen value  49: -2.8269258533148173e-01
+eigen value  50: -2.7306960067984704e-01
+eigen value  51: -2.7070908041681030e-01
+eigen value  52: -2.6745523357183809e-01
+eigen value  53: -1.7063481106493983e-01
+eigen value  54: -1.6788843805841761e-01
+eigen value  55: -1.6456284337082352e-01
+eigen value  56: -1.6083811956148902e-01
+eigen value  57: -1.5640792669815343e-01
+eigen value  58: -1.5267300564841099e-01
+eigen value  59: -1.3508374694299444e-01
+eigen value  60: -1.2888025156004659e-01
+eigen value  61: -1.0890003135588086e-01
+eigen value  62: -5.8715512493663066e-02
+eigen value  63: 3.6411388242978356e-03
+eigen value  64: 6.7504138992077805e-03
+eigen value  65: 2.2981075974434315e-01
+eigen value  66: 3.5498114953877791e-01
+eigen value  67: 3.5928220237189712e-01
+eigen value  68: 3.6278125168970593e-01
+eigen value  69: 4.4705491761993260e-01
+eigen value  70: 4.4963137271837755e-01
+eigen value  71: 5.7282687377399510e-01
+
+Fermi energy constraint residual (bisection)      :    9.0501828253763961e-10
+Fermi energy constraint residual (Newton-Raphson) :    1.4210854715202004e-14
+Fermi energy                                      :   -1.6261485483402377e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 3.959815e+01, current abs. residual: 3.800311e-11, nsteps: 638, abs. tolerance criterion: 3.959815e-11
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 1.00000000000000
+fractional occupancy 5: 1.00000000000000
+fractional occupancy 6: 1.00000000000000
+fractional occupancy 7: 1.00000000000000
+fractional occupancy 8: 1.00000000000000
+fractional occupancy 9: 1.00000000000000
+fractional occupancy 10: 1.00000000000000
+fractional occupancy 11: 1.00000000000000
+fractional occupancy 12: 1.00000000000000
+fractional occupancy 13: 1.00000000000000
+fractional occupancy 14: 1.00000000000000
+fractional occupancy 15: 1.00000000000000
+fractional occupancy 16: 1.00000000000000
+fractional occupancy 17: 1.00000000000000
+fractional occupancy 18: 1.00000000000000
+fractional occupancy 19: 1.00000000000000
+fractional occupancy 20: 1.00000000000000
+fractional occupancy 21: 1.00000000000000
+fractional occupancy 22: 1.00000000000000
+fractional occupancy 23: 1.00000000000000
+fractional occupancy 24: 1.00000000000000
+fractional occupancy 25: 1.00000000000000
+fractional occupancy 26: 1.00000000000000
+fractional occupancy 27: 1.00000000000000
+fractional occupancy 28: 1.00000000000000
+fractional occupancy 29: 1.00000000000000
+fractional occupancy 30: 1.00000000000000
+fractional occupancy 31: 1.00000000000000
+fractional occupancy 32: 1.00000000000000
+fractional occupancy 33: 1.00000000000000
+fractional occupancy 34: 1.00000000000000
+fractional occupancy 35: 1.00000000000000
+fractional occupancy 36: 1.00000000000000
+fractional occupancy 37: 1.00000000000000
+fractional occupancy 38: 1.00000000000000
+fractional occupancy 39: 1.00000000000000
+fractional occupancy 40: 1.00000000000000
+fractional occupancy 41: 1.00000000000000
+fractional occupancy 42: 1.00000000000000
+fractional occupancy 43: 1.00000000000000
+fractional occupancy 44: 1.00000000000000
+fractional occupancy 45: 1.00000000000000
+fractional occupancy 46: 1.00000000000000
+fractional occupancy 47: 1.00000000000000
+fractional occupancy 48: 1.00000000000000
+fractional occupancy 49: 1.00000000000000
+fractional occupancy 50: 1.00000000000000
+fractional occupancy 51: 1.00000000000000
+fractional occupancy 52: 1.00000000000000
+fractional occupancy 53: 0.99372572919631
+fractional occupancy 54: 0.96546151023342
+fractional occupancy 55: 0.77386273124465
+fractional occupancy 56: 0.24562246372755
+fractional occupancy 57: 0.01945535281431
+fractional occupancy 58: 0.00187218411862
+fractional occupancy 59: 0.00000002810627
+fractional occupancy 60: 0.00000000055888
+fractional occupancy 61: 0.00000000000000
+fractional occupancy 62: 0.00000000000000
+fractional occupancy 63: 0.00000000000000
+fractional occupancy 64: 0.00000000000000
+fractional occupancy 65: 0.00000000000000
+fractional occupancy 66: 0.00000000000000
+fractional occupancy 67: 0.00000000000000
+fractional occupancy 68: 0.00000000000000
+fractional occupancy 69: 0.00000000000000
+fractional occupancy 70: 0.00000000000000
+fractional occupancy 71: 0.00000000000000
+
+number of electrons: 1.1199913002461015e+02 
+
+Energy computations
+-------------------
+Band energy             :  -1.3001701815171027e+03
+Kinetic energy          :   2.3018672869542766e+03
+Exchange energy         :  -1.4982049450129423e+02
+Correlation energy      :  -8.5676799311105469e+00
+Electrostatic energy    :  -4.4501071604542694e+03
+Total energy            :  -2.3066280479323973e+03
+Total energy per atom   :  -2.8832850599154966e+02
+SCF iteration 3 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 4 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 2.895690e-01
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 3.959815e+01, current abs. residual: 3.646218e-11, nsteps: 638, abs. tolerance criterion: 3.959815e-11
+
+upper bound of unwanted spectrum:  1.8747226631e+05
+lower bound of unwanted spectrum:  5.7282687377e-01
+Chebyshev polynomial degree: 1000
+
+kPoint: 0
+eigen value   0: -6.5170930338424498e+01
+eigen value   1: -6.5146453564894856e+01
+eigen value   2: -6.5143168288108399e+01
+eigen value   3: -6.5139379798152120e+01
+eigen value   4: -6.5135878871441307e+01
+eigen value   5: -6.5135279949622799e+01
+eigen value   6: -6.5131046938095068e+01
+eigen value   7: -6.5130638141677366e+01
+eigen value   8: -5.0613554984363676e+00
+eigen value   9: -5.0378955522220430e+00
+eigen value  10: -5.0333758871768666e+00
+eigen value  11: -5.0327018818072888e+00
+eigen value  12: -5.0297315801582654e+00
+eigen value  13: -5.0290912402134724e+00
+eigen value  14: -5.0260478089599188e+00
+eigen value  15: -5.0258170747763078e+00
+eigen value  16: -3.5010279857099276e+00
+eigen value  17: -3.5000918873766378e+00
+eigen value  18: -3.4993576188165516e+00
+eigen value  19: -3.4772533201694502e+00
+eigen value  20: -3.4770684341780176e+00
+eigen value  21: -3.4763893725948303e+00
+eigen value  22: -3.4738246279985194e+00
+eigen value  23: -3.4723677310171417e+00
+eigen value  24: -3.4722120788498687e+00
+eigen value  25: -3.4719486005873725e+00
+eigen value  26: -3.4710426385012623e+00
+eigen value  27: -3.4706695082514103e+00
+eigen value  28: -3.4699437745168114e+00
+eigen value  29: -3.4684872254909394e+00
+eigen value  30: -3.4682128215791237e+00
+eigen value  31: -3.4679522966442793e+00
+eigen value  32: -3.4675620652365589e+00
+eigen value  33: -3.4671774017987724e+00
+eigen value  34: -3.4660004486092775e+00
+eigen value  35: -3.4652601722501459e+00
+eigen value  36: -3.4650585418657851e+00
+eigen value  37: -3.4644790901361895e+00
+eigen value  38: -3.4640022959505621e+00
+eigen value  39: -3.4633267309321103e+00
+eigen value  40: -6.1819572126721278e-01
+eigen value  41: -4.7451635431772737e-01
+eigen value  42: -4.6750881522042587e-01
+eigen value  43: -4.6715013575879194e-01
+eigen value  44: -4.6155987808800231e-01
+eigen value  45: -4.5988850218763849e-01
+eigen value  46: -4.5749572174981623e-01
+eigen value  47: -2.8614894948027186e-01
+eigen value  48: -2.8584809917184256e-01
+eigen value  49: -2.8463370371394636e-01
+eigen value  50: -2.8363504535620104e-01
+eigen value  51: -2.8285055585930241e-01
+eigen value  52: -2.8095248185155242e-01
+eigen value  53: -1.7847503691156288e-01
+eigen value  54: -1.7787157027374570e-01
+eigen value  55: -1.7705574381862280e-01
+eigen value  56: -1.6121996916760628e-01
+eigen value  57: -1.6038855406961766e-01
+eigen value  58: -1.5817463875610238e-01
+eigen value  59: -1.5446099731034510e-01
+eigen value  60: -1.5251551164261290e-01
+eigen value  61: -1.5001942974003835e-01
+eigen value  62: -8.4658410909824816e-02
+eigen value  63: -8.4389384786864627e-02
+eigen value  64: -7.8231430993975240e-02
+eigen value  65: -1.2899291285789902e-02
+eigen value  66: 2.0411773775348532e-01
+eigen value  67: 2.3121854896921959e-01
+eigen value  68: 2.3234273369865488e-01
+eigen value  69: 2.3394158285374661e-01
+eigen value  70: 2.6648127275360972e-01
+eigen value  71: 2.6711727906796373e-01
+
+Fermi energy constraint residual (bisection)      :    3.2029845442593796e-10
+Fermi energy constraint residual (Newton-Raphson) :    1.4210854715202004e-14
+Fermi energy                                      :   -1.6903231445632594e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 3.959815e+01, current abs. residual: 3.712328e-11, nsteps: 631, abs. tolerance criterion: 3.959815e-11
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 1.00000000000000
+fractional occupancy 5: 1.00000000000000
+fractional occupancy 6: 1.00000000000000
+fractional occupancy 7: 1.00000000000000
+fractional occupancy 8: 1.00000000000000
+fractional occupancy 9: 1.00000000000000
+fractional occupancy 10: 1.00000000000000
+fractional occupancy 11: 1.00000000000000
+fractional occupancy 12: 1.00000000000000
+fractional occupancy 13: 1.00000000000000
+fractional occupancy 14: 1.00000000000000
+fractional occupancy 15: 1.00000000000000
+fractional occupancy 16: 1.00000000000000
+fractional occupancy 17: 1.00000000000000
+fractional occupancy 18: 1.00000000000000
+fractional occupancy 19: 1.00000000000000
+fractional occupancy 20: 1.00000000000000
+fractional occupancy 21: 1.00000000000000
+fractional occupancy 22: 1.00000000000000
+fractional occupancy 23: 1.00000000000000
+fractional occupancy 24: 1.00000000000000
+fractional occupancy 25: 1.00000000000000
+fractional occupancy 26: 1.00000000000000
+fractional occupancy 27: 1.00000000000000
+fractional occupancy 28: 1.00000000000000
+fractional occupancy 29: 1.00000000000000
+fractional occupancy 30: 1.00000000000000
+fractional occupancy 31: 1.00000000000000
+fractional occupancy 32: 1.00000000000000
+fractional occupancy 33: 1.00000000000000
+fractional occupancy 34: 1.00000000000000
+fractional occupancy 35: 1.00000000000000
+fractional occupancy 36: 1.00000000000000
+fractional occupancy 37: 1.00000000000000
+fractional occupancy 38: 1.00000000000000
+fractional occupancy 39: 1.00000000000000
+fractional occupancy 40: 1.00000000000000
+fractional occupancy 41: 1.00000000000000
+fractional occupancy 42: 1.00000000000000
+fractional occupancy 43: 1.00000000000000
+fractional occupancy 44: 1.00000000000000
+fractional occupancy 45: 1.00000000000000
+fractional occupancy 46: 1.00000000000000
+fractional occupancy 47: 1.00000000000000
+fractional occupancy 48: 1.00000000000000
+fractional occupancy 49: 1.00000000000000
+fractional occupancy 50: 1.00000000000000
+fractional occupancy 51: 1.00000000000000
+fractional occupancy 52: 1.00000000000000
+fractional occupancy 53: 0.99743582772856
+fractional occupancy 54: 0.99625071087014
+fractional occupancy 55: 0.99373939038697
+fractional occupancy 56: 0.00714701890687
+fractional occupancy 57: 0.00423989640401
+fractional occupancy 58: 0.00105078554519
+fractional occupancy 59: 0.00010077530348
+fractional occupancy 60: 0.00002949713031
+fractional occupancy 61: 0.00000609772447
+fractional occupancy 62: 0.00000000000000
+fractional occupancy 63: 0.00000000000000
+fractional occupancy 64: 0.00000000000000
+fractional occupancy 65: 0.00000000000000
+fractional occupancy 66: 0.00000000000000
+fractional occupancy 67: 0.00000000000000
+fractional occupancy 68: 0.00000000000000
+fractional occupancy 69: 0.00000000000000
+fractional occupancy 70: 0.00000000000000
+fractional occupancy 71: 0.00000000000000
+
+number of electrons: 1.1199912716537446e+02 
+
+Energy computations
+-------------------
+Band energy             :  -1.3008261636974471e+03
+Kinetic energy          :   2.3028025234373495e+03
+Exchange energy         :  -1.4996678908509054e+02
+Correlation energy      :  -8.5755165351945539e+00
+Electrostatic energy    :  -4.4511633113280732e+03
+Total energy            :  -2.3069030935110081e+03
+Total energy per atom   :  -2.8836288668887602e+02
+SCF iteration 4 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 5 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 1.235480e-01
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 3.959815e+01, current abs. residual: 3.861231e-11, nsteps: 633, abs. tolerance criterion: 3.959815e-11
+
+upper bound of unwanted spectrum:  1.8747228218e+05
+lower bound of unwanted spectrum:  2.6711727907e-01
+Chebyshev polynomial degree: 1000
+
+kPoint: 0
+eigen value   0: -6.5112533583480939e+01
+eigen value   1: -6.5103585286431567e+01
+eigen value   2: -6.5103473551338681e+01
+eigen value   3: -6.5102407461785944e+01
+eigen value   4: -6.5102207149056369e+01
+eigen value   5: -6.5102084651673366e+01
+eigen value   6: -6.5101447955117820e+01
+eigen value   7: -6.5101360122178562e+01
+eigen value   8: -5.0093204071553323e+00
+eigen value   9: -4.9994486878819524e+00
+eigen value  10: -4.9993925452433112e+00
+eigen value  11: -4.9991716500190604e+00
+eigen value  12: -4.9989059040478629e+00
+eigen value  13: -4.9987365403950523e+00
+eigen value  14: -4.9973718512559211e+00
+eigen value  15: -4.9967992511362578e+00
+eigen value  16: -3.4481014641073799e+00
+eigen value  17: -3.4478059503291396e+00
+eigen value  18: -3.4477235905978780e+00
+eigen value  19: -3.4385308752431447e+00
+eigen value  20: -3.4384619360706687e+00
+eigen value  21: -3.4381427430084894e+00
+eigen value  22: -3.4380846077243468e+00
+eigen value  23: -3.4380635834816999e+00
+eigen value  24: -3.4379242990079728e+00
+eigen value  25: -3.4379142400089369e+00
+eigen value  26: -3.4377926123543827e+00
+eigen value  27: -3.4376787492762499e+00
+eigen value  28: -3.4376221749264233e+00
+eigen value  29: -3.4373799691985751e+00
+eigen value  30: -3.4373327402127418e+00
+eigen value  31: -3.4372873806725130e+00
+eigen value  32: -3.4370729289785071e+00
+eigen value  33: -3.4368475768377502e+00
+eigen value  34: -3.4363596651471799e+00
+eigen value  35: -3.4362333870115753e+00
+eigen value  36: -3.4358402156983594e+00
+eigen value  37: -3.4356708494710326e+00
+eigen value  38: -3.4355177531700152e+00
+eigen value  39: -3.4348190387709319e+00
+eigen value  40: -5.8661386779134739e-01
+eigen value  41: -4.3649566756946617e-01
+eigen value  42: -4.3425677603125307e-01
+eigen value  43: -4.3416324526902694e-01
+eigen value  44: -4.3225051419476329e-01
+eigen value  45: -4.3164713360692913e-01
+eigen value  46: -4.3123271754714548e-01
+eigen value  47: -2.5463580091004157e-01
+eigen value  48: -2.5440579641904421e-01
+eigen value  49: -2.5407068065595589e-01
+eigen value  50: -2.5248561098391181e-01
+eigen value  51: -2.5193003334279973e-01
+eigen value  52: -2.5180304414084104e-01
+eigen value  53: -1.4660182190240992e-01
+eigen value  54: -1.4608928786646760e-01
+eigen value  55: -1.4575498343475971e-01
+eigen value  56: -1.2957630837324949e-01
+eigen value  57: -1.2925284790234232e-01
+eigen value  58: -1.2922071683067568e-01
+eigen value  59: -1.2899349856569234e-01
+eigen value  60: -1.2881649488983196e-01
+eigen value  61: -1.2866808400175769e-01
+eigen value  62: -5.7231751827225695e-02
+eigen value  63: -5.7062394742658958e-02
+eigen value  64: -5.6475140371120475e-02
+eigen value  65: -2.4459038568416712e-02
+eigen value  66: 1.6361928327048511e-01
+eigen value  67: 2.0642191443455826e-01
+eigen value  68: 2.0709914540009827e-01
+eigen value  69: 2.2555247925168728e-01
+eigen value  70: 2.5938196381336742e-01
+eigen value  71: 2.6126010523435134e-01
+
+Fermi energy constraint residual (bisection)      :    9.9696251254499657e-10
+Fermi energy constraint residual (Newton-Raphson) :    1.4210854715202004e-14
+Fermi energy                                      :   -1.3816555215382523e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 3.959815e+01, current abs. residual: 3.702723e-11, nsteps: 631, abs. tolerance criterion: 3.959815e-11
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 1.00000000000000
+fractional occupancy 5: 1.00000000000000
+fractional occupancy 6: 1.00000000000000
+fractional occupancy 7: 1.00000000000000
+fractional occupancy 8: 1.00000000000000
+fractional occupancy 9: 1.00000000000000
+fractional occupancy 10: 1.00000000000000
+fractional occupancy 11: 1.00000000000000
+fractional occupancy 12: 1.00000000000000
+fractional occupancy 13: 1.00000000000000
+fractional occupancy 14: 1.00000000000000
+fractional occupancy 15: 1.00000000000000
+fractional occupancy 16: 1.00000000000000
+fractional occupancy 17: 1.00000000000000
+fractional occupancy 18: 1.00000000000000
+fractional occupancy 19: 1.00000000000000
+fractional occupancy 20: 1.00000000000000
+fractional occupancy 21: 1.00000000000000
+fractional occupancy 22: 1.00000000000000
+fractional occupancy 23: 1.00000000000000
+fractional occupancy 24: 1.00000000000000
+fractional occupancy 25: 1.00000000000000
+fractional occupancy 26: 1.00000000000000
+fractional occupancy 27: 1.00000000000000
+fractional occupancy 28: 1.00000000000000
+fractional occupancy 29: 1.00000000000000
+fractional occupancy 30: 1.00000000000000
+fractional occupancy 31: 1.00000000000000
+fractional occupancy 32: 1.00000000000000
+fractional occupancy 33: 1.00000000000000
+fractional occupancy 34: 1.00000000000000
+fractional occupancy 35: 1.00000000000000
+fractional occupancy 36: 1.00000000000000
+fractional occupancy 37: 1.00000000000000
+fractional occupancy 38: 1.00000000000000
+fractional occupancy 39: 1.00000000000000
+fractional occupancy 40: 1.00000000000000
+fractional occupancy 41: 1.00000000000000
+fractional occupancy 42: 1.00000000000000
+fractional occupancy 43: 1.00000000000000
+fractional occupancy 44: 1.00000000000000
+fractional occupancy 45: 1.00000000000000
+fractional occupancy 46: 1.00000000000000
+fractional occupancy 47: 1.00000000000000
+fractional occupancy 48: 1.00000000000000
+fractional occupancy 49: 1.00000000000000
+fractional occupancy 50: 1.00000000000000
+fractional occupancy 51: 1.00000000000000
+fractional occupancy 52: 1.00000000000000
+fractional occupancy 53: 0.99516932555444
+fractional occupancy 54: 0.99333525078159
+fractional occupancy 55: 0.99178142497185
+fractional occupancy 56: 0.00438776634388
+fractional occupancy 57: 0.00357995364076
+fractional occupancy 58: 0.00350829226995
+fractional occupancy 59: 0.00304073349792
+fractional occupancy 60: 0.00272000505413
+fractional occupancy 61: 0.00247724788549
+fractional occupancy 62: 0.00000000000000
+fractional occupancy 63: 0.00000000000000
+fractional occupancy 64: 0.00000000000000
+fractional occupancy 65: 0.00000000000000
+fractional occupancy 66: 0.00000000000000
+fractional occupancy 67: 0.00000000000000
+fractional occupancy 68: 0.00000000000000
+fractional occupancy 69: 0.00000000000000
+fractional occupancy 70: 0.00000000000000
+fractional occupancy 71: 0.00000000000000
+
+number of electrons: 1.1199912744061184e+02 
+
+Energy computations
+-------------------
+Band energy             :  -1.2969931163033589e+03
+Kinetic energy          :   2.3025200230292739e+03
+Exchange energy         :  -1.4995142828546432e+02
+Correlation energy      :  -8.5752778609765095e+00
+Electrostatic energy    :  -4.4509365779243280e+03
+Total energy            :  -2.3069432610414942e+03
+Total energy per atom   :  -2.8836790763018678e+02
+SCF iteration 5 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 6 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 5.694299e-02
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 3.959815e+01, current abs. residual: 3.922185e-11, nsteps: 626, abs. tolerance criterion: 3.959815e-11
+
+upper bound of unwanted spectrum:  1.8747229213e+05
+lower bound of unwanted spectrum:  2.6126010523e-01
+Chebyshev polynomial degree: 1000
+
+kPoint: 0
+eigen value   0: -6.5090427754026862e+01
+eigen value   1: -6.5088527555497308e+01
+eigen value   2: -6.5087839368969114e+01
+eigen value   3: -6.5087526001423541e+01
+eigen value   4: -6.5086840160577168e+01
+eigen value   5: -6.5086424220702938e+01
+eigen value   6: -6.5084833492162602e+01
+eigen value   7: -6.5081904840143380e+01
+eigen value   8: -4.9880868734770392e+00
+eigen value   9: -4.9867144884930417e+00
+eigen value  10: -4.9860700281073163e+00
+eigen value  11: -4.9854474648900435e+00
+eigen value  12: -4.9852632310233469e+00
+eigen value  13: -4.9847707860373962e+00
+eigen value  14: -4.9842970863901845e+00
+eigen value  15: -4.9820698563677821e+00
+eigen value  16: -3.4267866025281766e+00
+eigen value  17: -3.4266308786010726e+00
+eigen value  18: -3.4264253532597633e+00
+eigen value  19: -3.4253797101109105e+00
+eigen value  20: -3.4252617520679589e+00
+eigen value  21: -3.4250452292200042e+00
+eigen value  22: -3.4248158882533675e+00
+eigen value  23: -3.4245938158032980e+00
+eigen value  24: -3.4244224421622245e+00
+eigen value  25: -3.4239864578435530e+00
+eigen value  26: -3.4238457133151070e+00
+eigen value  27: -3.4238299171627822e+00
+eigen value  28: -3.4237861600159949e+00
+eigen value  29: -3.4236552592092462e+00
+eigen value  30: -3.4235812081217132e+00
+eigen value  31: -3.4233272706563942e+00
+eigen value  32: -3.4232115713646758e+00
+eigen value  33: -3.4230994389982863e+00
+eigen value  34: -3.4227672740267958e+00
+eigen value  35: -3.4225337882804001e+00
+eigen value  36: -3.4224383163650587e+00
+eigen value  37: -3.4204072742284781e+00
+eigen value  38: -3.4203619239287102e+00
+eigen value  39: -3.4202218229470271e+00
+eigen value  40: -5.7567393872330630e-01
+eigen value  41: -4.2294216477744939e-01
+eigen value  42: -4.2266452958073031e-01
+eigen value  43: -4.2221067223984510e-01
+eigen value  44: -4.2209151267678657e-01
+eigen value  45: -4.2191189749982894e-01
+eigen value  46: -4.2095913319153261e-01
+eigen value  47: -2.4290221019808542e-01
+eigen value  48: -2.4263648645799940e-01
+eigen value  49: -2.4247247912466660e-01
+eigen value  50: -2.4209836573310020e-01
+eigen value  51: -2.4193348322950045e-01
+eigen value  52: -2.4187746727806916e-01
+eigen value  53: -1.3463032473998865e-01
+eigen value  54: -1.3457994146981064e-01
+eigen value  55: -1.3453052158708589e-01
+eigen value  56: -1.1955751489943024e-01
+eigen value  57: -1.1950617881624569e-01
+eigen value  58: -1.1944823291362747e-01
+eigen value  59: -1.1918147071191224e-01
+eigen value  60: -1.1877604921881606e-01
+eigen value  61: -1.1850690048486399e-01
+eigen value  62: -4.6858162715518847e-02
+eigen value  63: -4.6831138738255458e-02
+eigen value  64: -4.6794867643363845e-02
+eigen value  65: -1.3750413005875945e-02
+eigen value  66: 1.4743966977205070e-01
+eigen value  67: 1.7302628174621279e-01
+eigen value  68: 1.7452812654251604e-01
+eigen value  69: 2.3424387088626972e-01
+eigen value  70: 2.4285010376444552e-01
+eigen value  71: 2.4382509778050454e-01
+
+Fermi energy constraint residual (bisection)      :    7.2130035277950810e-10
+Fermi energy constraint residual (Newton-Raphson) :    1.4210854715202004e-14
+Fermi energy                                      :   -1.2744742877407278e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 3.959815e+01, current abs. residual: 3.635023e-11, nsteps: 627, abs. tolerance criterion: 3.959815e-11
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 1.00000000000000
+fractional occupancy 5: 1.00000000000000
+fractional occupancy 6: 1.00000000000000
+fractional occupancy 7: 1.00000000000000
+fractional occupancy 8: 1.00000000000000
+fractional occupancy 9: 1.00000000000000
+fractional occupancy 10: 1.00000000000000
+fractional occupancy 11: 1.00000000000000
+fractional occupancy 12: 1.00000000000000
+fractional occupancy 13: 1.00000000000000
+fractional occupancy 14: 1.00000000000000
+fractional occupancy 15: 1.00000000000000
+fractional occupancy 16: 1.00000000000000
+fractional occupancy 17: 1.00000000000000
+fractional occupancy 18: 1.00000000000000
+fractional occupancy 19: 1.00000000000000
+fractional occupancy 20: 1.00000000000000
+fractional occupancy 21: 1.00000000000000
+fractional occupancy 22: 1.00000000000000
+fractional occupancy 23: 1.00000000000000
+fractional occupancy 24: 1.00000000000000
+fractional occupancy 25: 1.00000000000000
+fractional occupancy 26: 1.00000000000000
+fractional occupancy 27: 1.00000000000000
+fractional occupancy 28: 1.00000000000000
+fractional occupancy 29: 1.00000000000000
+fractional occupancy 30: 1.00000000000000
+fractional occupancy 31: 1.00000000000000
+fractional occupancy 32: 1.00000000000000
+fractional occupancy 33: 1.00000000000000
+fractional occupancy 34: 1.00000000000000
+fractional occupancy 35: 1.00000000000000
+fractional occupancy 36: 1.00000000000000
+fractional occupancy 37: 1.00000000000000
+fractional occupancy 38: 1.00000000000000
+fractional occupancy 39: 1.00000000000000
+fractional occupancy 40: 1.00000000000000
+fractional occupancy 41: 1.00000000000000
+fractional occupancy 42: 1.00000000000000
+fractional occupancy 43: 1.00000000000000
+fractional occupancy 44: 1.00000000000000
+fractional occupancy 45: 1.00000000000000
+fractional occupancy 46: 1.00000000000000
+fractional occupancy 47: 1.00000000000000
+fractional occupancy 48: 1.00000000000000
+fractional occupancy 49: 1.00000000000000
+fractional occupancy 50: 1.00000000000000
+fractional occupancy 51: 1.00000000000000
+fractional occupancy 52: 1.00000000000000
+fractional occupancy 53: 0.98940119341157
+fractional occupancy 54: 0.98906226919818
+fractional occupancy 55: 0.98871941866035
+fractional occupancy 56: 0.00680766122978
+fractional occupancy 57: 0.00659191909603
+fractional occupancy 58: 0.00635654940484
+fractional occupancy 59: 0.00537628729233
+fractional occupancy 60: 0.00416688712974
+fractional occupancy 61: 0.00351781457717
+fractional occupancy 62: 0.00000000000000
+fractional occupancy 63: 0.00000000000000
+fractional occupancy 64: 0.00000000000000
+fractional occupancy 65: 0.00000000000000
+fractional occupancy 66: 0.00000000000000
+fractional occupancy 67: 0.00000000000000
+fractional occupancy 68: 0.00000000000000
+fractional occupancy 69: 0.00000000000000
+fractional occupancy 70: 0.00000000000000
+fractional occupancy 71: 0.00000000000000
+
+number of electrons: 1.1199912805141680e+02 
+
+Energy computations
+-------------------
+Band energy             :  -1.2954261408581340e+03
+Kinetic energy          :   2.3021393808587027e+03
+Exchange energy         :  -1.4991857786644402e+02
+Correlation energy      :  -8.5739882210570997e+00
+Electrostatic energy    :  -4.4505916332834167e+03
+Total energy            :  -2.3069448185122146e+03
+Total energy per atom   :  -2.8836810231402683e+02
+SCF iteration 6 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 7 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 1.890347e-02
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 3.959815e+01, current abs. residual: 3.595967e-11, nsteps: 627, abs. tolerance criterion: 3.959815e-11
+
+upper bound of unwanted spectrum:  1.8747229505e+05
+lower bound of unwanted spectrum:  2.4382509778e-01
+Chebyshev polynomial degree: 1000
+
+kPoint: 0
+eigen value   0: -6.5085192948830638e+01
+eigen value   1: -6.5084259722277523e+01
+eigen value   2: -6.5083566794868332e+01
+eigen value   3: -6.5083404198342876e+01
+eigen value   4: -6.5083064221514121e+01
+eigen value   5: -6.5082758382025247e+01
+eigen value   6: -6.5082683040709355e+01
+eigen value   7: -6.5081447948532357e+01
+eigen value   8: -4.9825191243288867e+00
+eigen value   9: -4.9822701411436849e+00
+eigen value  10: -4.9815848175856319e+00
+eigen value  11: -4.9814119427757024e+00
+eigen value  12: -4.9809683560841149e+00
+eigen value  13: -4.9808973185948240e+00
+eigen value  14: -4.9807353386757569e+00
+eigen value  15: -4.9798810152619062e+00
+eigen value  16: -3.4212221222858301e+00
+eigen value  17: -3.4211152904218243e+00
+eigen value  18: -3.4210683641483652e+00
+eigen value  19: -3.4207908804898985e+00
+eigen value  20: -3.4207694919286595e+00
+eigen value  21: -3.4206318177436619e+00
+eigen value  22: -3.4202830311083674e+00
+eigen value  23: -3.4201892810717633e+00
+eigen value  24: -3.4200617934554720e+00
+eigen value  25: -3.4199592728660462e+00
+eigen value  26: -3.4198309651041141e+00
+eigen value  27: -3.4196746440687869e+00
+eigen value  28: -3.4196581900757539e+00
+eigen value  29: -3.4195458524702733e+00
+eigen value  30: -3.4194784639331686e+00
+eigen value  31: -3.4193904807889868e+00
+eigen value  32: -3.4192756999282601e+00
+eigen value  33: -3.4191970535915943e+00
+eigen value  34: -3.4191244658867626e+00
+eigen value  35: -3.4189994171111371e+00
+eigen value  36: -3.4189662489478438e+00
+eigen value  37: -3.4183130224165148e+00
+eigen value  38: -3.4182465635906181e+00
+eigen value  39: -3.4181672176324267e+00
+eigen value  40: -5.7112942536096367e-01
+eigen value  41: -4.1818878440269525e-01
+eigen value  42: -4.1782003847894106e-01
+eigen value  43: -4.1773600084331197e-01
+eigen value  44: -4.1744846669388008e-01
+eigen value  45: -4.1731656627528468e-01
+eigen value  46: -4.1702401275769357e-01
+eigen value  47: -2.3800872365404074e-01
+eigen value  48: -2.3792834979719465e-01
+eigen value  49: -2.3783186728585581e-01
+eigen value  50: -2.3777526985071210e-01
+eigen value  51: -2.3769770565353360e-01
+eigen value  52: -2.3752533027428008e-01
+eigen value  53: -1.3005694572481341e-01
+eigen value  54: -1.3001594199204222e-01
+eigen value  55: -1.2998842791491516e-01
+eigen value  56: -1.1494649911076861e-01
+eigen value  57: -1.1474370674290979e-01
+eigen value  58: -1.1465386950354614e-01
+eigen value  59: -1.1445011904913371e-01
+eigen value  60: -1.1442915703877304e-01
+eigen value  61: -1.1432899860638272e-01
+eigen value  62: -4.2369487893296871e-02
+eigen value  63: -4.2354157593860901e-02
+eigen value  64: -4.2334061236951624e-02
+eigen value  65: -9.2750416021350635e-03
+eigen value  66: 1.4677649422470587e-01
+eigen value  67: 1.5646458486377399e-01
+eigen value  68: 1.5708432254503651e-01
+eigen value  69: 2.3623998923311679e-01
+eigen value  70: 2.3986348579621575e-01
+eigen value  71: 2.4044154765957143e-01
+
+Fermi energy constraint residual (bisection)      :    7.1069905516196741e-10
+Fermi energy constraint residual (Newton-Raphson) :    1.4210854715202004e-14
+Fermi energy                                      :   -1.2286629487392742e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 3.959815e+01, current abs. residual: 3.566855e-11, nsteps: 627, abs. tolerance criterion: 3.959815e-11
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 1.00000000000000
+fractional occupancy 5: 1.00000000000000
+fractional occupancy 6: 1.00000000000000
+fractional occupancy 7: 1.00000000000000
+fractional occupancy 8: 1.00000000000000
+fractional occupancy 9: 1.00000000000000
+fractional occupancy 10: 1.00000000000000
+fractional occupancy 11: 1.00000000000000
+fractional occupancy 12: 1.00000000000000
+fractional occupancy 13: 1.00000000000000
+fractional occupancy 14: 1.00000000000000
+fractional occupancy 15: 1.00000000000000
+fractional occupancy 16: 1.00000000000000
+fractional occupancy 17: 1.00000000000000
+fractional occupancy 18: 1.00000000000000
+fractional occupancy 19: 1.00000000000000
+fractional occupancy 20: 1.00000000000000
+fractional occupancy 21: 1.00000000000000
+fractional occupancy 22: 1.00000000000000
+fractional occupancy 23: 1.00000000000000
+fractional occupancy 24: 1.00000000000000
+fractional occupancy 25: 1.00000000000000
+fractional occupancy 26: 1.00000000000000
+fractional occupancy 27: 1.00000000000000
+fractional occupancy 28: 1.00000000000000
+fractional occupancy 29: 1.00000000000000
+fractional occupancy 30: 1.00000000000000
+fractional occupancy 31: 1.00000000000000
+fractional occupancy 32: 1.00000000000000
+fractional occupancy 33: 1.00000000000000
+fractional occupancy 34: 1.00000000000000
+fractional occupancy 35: 1.00000000000000
+fractional occupancy 36: 1.00000000000000
+fractional occupancy 37: 1.00000000000000
+fractional occupancy 38: 1.00000000000000
+fractional occupancy 39: 1.00000000000000
+fractional occupancy 40: 1.00000000000000
+fractional occupancy 41: 1.00000000000000
+fractional occupancy 42: 1.00000000000000
+fractional occupancy 43: 1.00000000000000
+fractional occupancy 44: 1.00000000000000
+fractional occupancy 45: 1.00000000000000
+fractional occupancy 46: 1.00000000000000
+fractional occupancy 47: 1.00000000000000
+fractional occupancy 48: 1.00000000000000
+fractional occupancy 49: 1.00000000000000
+fractional occupancy 50: 1.00000000000000
+fractional occupancy 51: 1.00000000000000
+fractional occupancy 52: 1.00000000000000
+fractional occupancy 53: 0.98945242902879
+fractional occupancy 54: 0.98917871707372
+fractional occupancy 55: 0.98899112580712
+fractional occupancy 56: 0.00668124266159
+fractional occupancy 57: 0.00588280651030
+fractional occupancy 58: 0.00556013151700
+fractional occupancy 59: 0.00489206606415
+fractional occupancy 60: 0.00482803958470
+fractional occupancy 61: 0.00453344175264
+fractional occupancy 62: 0.00000000000000
+fractional occupancy 63: 0.00000000000000
+fractional occupancy 64: 0.00000000000000
+fractional occupancy 65: 0.00000000000000
+fractional occupancy 66: 0.00000000000000
+fractional occupancy 67: 0.00000000000000
+fractional occupancy 68: 0.00000000000000
+fractional occupancy 69: 0.00000000000000
+fractional occupancy 70: 0.00000000000000
+fractional occupancy 71: 0.00000000000000
+
+number of electrons: 1.1199912800772725e+02 
+
+Energy computations
+-------------------
+Band energy             :  -1.2949671964202805e+03
+Kinetic energy          :   2.3021899883796905e+03
+Exchange energy         :  -1.4992133896917369e+02
+Correlation energy      :  -8.5740374948761513e+00
+Electrostatic energy    :  -4.4506395799185566e+03
+Total energy            :  -2.3069449680029156e+03
+Total energy per atom   :  -2.8836812100036445e+02
+SCF iteration 7 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 8 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 1.214356e-02
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 3.959815e+01, current abs. residual: 3.553085e-11, nsteps: 627, abs. tolerance criterion: 3.959815e-11
+
+upper bound of unwanted spectrum:  1.8747229592e+05
+lower bound of unwanted spectrum:  2.4044154766e-01
+Chebyshev polynomial degree: 1000
+
+kPoint: 0
+eigen value   0: -6.5082074034678840e+01
+eigen value   1: -6.5081951916865876e+01
+eigen value   2: -6.5081502573841846e+01
+eigen value   3: -6.5081410931270383e+01
+eigen value   4: -6.5081389962866268e+01
+eigen value   5: -6.5081379465905655e+01
+eigen value   6: -6.5081292543537757e+01
+eigen value   7: -6.5080818183101215e+01
+eigen value   8: -4.9800448478141810e+00
+eigen value   9: -4.9799414816974359e+00
+eigen value  10: -4.9796255034328478e+00
+eigen value  11: -4.9795733513158531e+00
+eigen value  12: -4.9794777653271005e+00
+eigen value  13: -4.9793659179617453e+00
+eigen value  14: -4.9792699044467721e+00
+eigen value  15: -4.9789555975730231e+00
+eigen value  16: -3.4187662553986402e+00
+eigen value  17: -3.4186738076663543e+00
+eigen value  18: -3.4186458304677640e+00
+eigen value  19: -3.4185788195418954e+00
+eigen value  20: -3.4185384176237381e+00
+eigen value  21: -3.4183530910760997e+00
+eigen value  22: -3.4183101660868607e+00
+eigen value  23: -3.4182685167809272e+00
+eigen value  24: -3.4182131447749824e+00
+eigen value  25: -3.4181989076604418e+00
+eigen value  26: -3.4180202076919874e+00
+eigen value  27: -3.4180067197931701e+00
+eigen value  28: -3.4179594500978685e+00
+eigen value  29: -3.4179005675082532e+00
+eigen value  30: -3.4178255008074570e+00
+eigen value  31: -3.4177750033751875e+00
+eigen value  32: -3.4176938268757873e+00
+eigen value  33: -3.4176264535291212e+00
+eigen value  34: -3.4175723431168019e+00
+eigen value  35: -3.4175414067771124e+00
+eigen value  36: -3.4174859512242883e+00
+eigen value  37: -3.4172966833906631e+00
+eigen value  38: -3.4172404466026713e+00
+eigen value  39: -3.4172031706823591e+00
+eigen value  40: -5.6949902066665326e-01
+eigen value  41: -4.1613062148478841e-01
+eigen value  42: -4.1608808765701971e-01
+eigen value  43: -4.1600310091945569e-01
+eigen value  44: -4.1588971749070219e-01
+eigen value  45: -4.1581369518741618e-01
+eigen value  46: -4.1570530331084687e-01
+eigen value  47: -2.3622662037319281e-01
+eigen value  48: -2.3621334805327843e-01
+eigen value  49: -2.3618679907513973e-01
+eigen value  50: -2.3616771807172368e-01
+eigen value  51: -2.3614158555735476e-01
+eigen value  52: -2.3612418627096479e-01
+eigen value  53: -1.2833414344161084e-01
+eigen value  54: -1.2833117011820508e-01
+eigen value  55: -1.2832326196429170e-01
+eigen value  56: -1.1327043749954487e-01
+eigen value  57: -1.1313398541144409e-01
+eigen value  58: -1.1306212262163344e-01
+eigen value  59: -1.1289601798045275e-01
+eigen value  60: -1.1286898653554207e-01
+eigen value  61: -1.1279379715961667e-01
+eigen value  62: -4.0794270808863636e-02
+eigen value  63: -4.0790377471807970e-02
+eigen value  64: -4.0788605021129798e-02
+eigen value  65: -7.5705679306681574e-03
+eigen value  66: 1.4739795344390572e-01
+eigen value  67: 1.5186010114998383e-01
+eigen value  68: 1.5202140425717287e-01
+eigen value  69: 2.3671488745668584e-01
+eigen value  70: 2.3913355689742338e-01
+eigen value  71: 2.3932384159546391e-01
+
+Fermi energy constraint residual (bisection)      :    6.2104277276375797e-10
+Fermi energy constraint residual (Newton-Raphson) :    1.4210854715202004e-14
+Fermi energy                                      :   -1.2122442081411744e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 3.959815e+01, current abs. residual: 3.557172e-11, nsteps: 627, abs. tolerance criterion: 3.959815e-11
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 1.00000000000000
+fractional occupancy 5: 1.00000000000000
+fractional occupancy 6: 1.00000000000000
+fractional occupancy 7: 1.00000000000000
+fractional occupancy 8: 1.00000000000000
+fractional occupancy 9: 1.00000000000000
+fractional occupancy 10: 1.00000000000000
+fractional occupancy 11: 1.00000000000000
+fractional occupancy 12: 1.00000000000000
+fractional occupancy 13: 1.00000000000000
+fractional occupancy 14: 1.00000000000000
+fractional occupancy 15: 1.00000000000000
+fractional occupancy 16: 1.00000000000000
+fractional occupancy 17: 1.00000000000000
+fractional occupancy 18: 1.00000000000000
+fractional occupancy 19: 1.00000000000000
+fractional occupancy 20: 1.00000000000000
+fractional occupancy 21: 1.00000000000000
+fractional occupancy 22: 1.00000000000000
+fractional occupancy 23: 1.00000000000000
+fractional occupancy 24: 1.00000000000000
+fractional occupancy 25: 1.00000000000000
+fractional occupancy 26: 1.00000000000000
+fractional occupancy 27: 1.00000000000000
+fractional occupancy 28: 1.00000000000000
+fractional occupancy 29: 1.00000000000000
+fractional occupancy 30: 1.00000000000000
+fractional occupancy 31: 1.00000000000000
+fractional occupancy 32: 1.00000000000000
+fractional occupancy 33: 1.00000000000000
+fractional occupancy 34: 1.00000000000000
+fractional occupancy 35: 1.00000000000000
+fractional occupancy 36: 1.00000000000000
+fractional occupancy 37: 1.00000000000000
+fractional occupancy 38: 1.00000000000000
+fractional occupancy 39: 1.00000000000000
+fractional occupancy 40: 1.00000000000000
+fractional occupancy 41: 1.00000000000000
+fractional occupancy 42: 1.00000000000000
+fractional occupancy 43: 1.00000000000000
+fractional occupancy 44: 1.00000000000000
+fractional occupancy 45: 1.00000000000000
+fractional occupancy 46: 1.00000000000000
+fractional occupancy 47: 1.00000000000000
+fractional occupancy 48: 1.00000000000000
+fractional occupancy 49: 1.00000000000000
+fractional occupancy 50: 1.00000000000000
+fractional occupancy 51: 1.00000000000000
+fractional occupancy 52: 1.00000000000000
+fractional occupancy 53: 0.98890546250803
+fractional occupancy 54: 0.98888484136726
+fractional occupancy 55: 0.98882981066034
+fractional occupancy 56: 0.00653946636418
+fractional occupancy 57: 0.00600275981911
+fractional occupancy 58: 0.00573794288455
+fractional occupancy 59: 0.00516946375778
+fractional occupancy 60: 0.00508240592384
+fractional occupancy 61: 0.00484784671491
+fractional occupancy 62: 0.00000000000000
+fractional occupancy 63: 0.00000000000000
+fractional occupancy 64: 0.00000000000000
+fractional occupancy 65: 0.00000000000000
+fractional occupancy 66: 0.00000000000000
+fractional occupancy 67: 0.00000000000000
+fractional occupancy 68: 0.00000000000000
+fractional occupancy 69: 0.00000000000000
+fractional occupancy 70: 0.00000000000000
+fractional occupancy 71: 0.00000000000000
+
+number of electrons: 1.1199912804874988e+02 
+
+Energy computations
+-------------------
+Band energy             :  -1.2947728721573915e+03
+Kinetic energy          :   2.3021724628495240e+03
+Exchange energy         :  -1.4991944165250888e+02
+Correlation energy      :  -8.5739482715807984e+00
+Electrostatic energy    :  -4.4506241515040474e+03
+Total energy            :  -2.3069450785786139e+03
+Total energy per atom   :  -2.8836813482232674e+02
+SCF iteration 8 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 9 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 4.236431e-03
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 3.959815e+01, current abs. residual: 3.544250e-11, nsteps: 627, abs. tolerance criterion: 3.959815e-11
+
+upper bound of unwanted spectrum:  1.8747229643e+05
+lower bound of unwanted spectrum:  2.3932384160e-01
+Chebyshev polynomial degree: 1000
+
+kPoint: 0
+eigen value   0: -6.5080830438321954e+01
+eigen value   1: -6.5080817239675909e+01
+eigen value   2: -6.5080789347765446e+01
+eigen value   3: -6.5080773729653245e+01
+eigen value   4: -6.5080765991032578e+01
+eigen value   5: -6.5080528968737454e+01
+eigen value   6: -6.5080525885894815e+01
+eigen value   7: -6.5080171968073742e+01
+eigen value   8: -4.9789958484351171e+00
+eigen value   9: -4.9788832775378102e+00
+eigen value  10: -4.9788301112956468e+00
+eigen value  11: -4.9788067856112512e+00
+eigen value  12: -4.9787721370982689e+00
+eigen value  13: -4.9786316199327105e+00
+eigen value  14: -4.9785370693358102e+00
+eigen value  15: -4.9782539216082045e+00
+eigen value  16: -3.4177224883966120e+00
+eigen value  17: -3.4176993590420683e+00
+eigen value  18: -3.4176639561467832e+00
+eigen value  19: -3.4176349656330527e+00
+eigen value  20: -3.4176170122015797e+00
+eigen value  21: -3.4175646141220195e+00
+eigen value  22: -3.4175283185876655e+00
+eigen value  23: -3.4174994141309836e+00
+eigen value  24: -3.4174306338440701e+00
+eigen value  25: -3.4172405402562727e+00
+eigen value  26: -3.4172159058207794e+00
+eigen value  27: -3.4171943596296495e+00
+eigen value  28: -3.4171837798228437e+00
+eigen value  29: -3.4171288129791968e+00
+eigen value  30: -3.4170757510856933e+00
+eigen value  31: -3.4169560078915087e+00
+eigen value  32: -3.4169063372558166e+00
+eigen value  33: -3.4168476761831741e+00
+eigen value  34: -3.4168096652050024e+00
+eigen value  35: -3.4167665860806062e+00
+eigen value  36: -3.4167294978641856e+00
+eigen value  37: -3.4165734741354785e+00
+eigen value  38: -3.4165328541922597e+00
+eigen value  39: -3.4164912428020431e+00
+eigen value  40: -5.6863808657005510e-01
+eigen value  41: -4.1521341708823839e-01
+eigen value  42: -4.1514079454508190e-01
+eigen value  43: -4.1512605608838032e-01
+eigen value  44: -4.1507127023399598e-01
+eigen value  45: -4.1500713992709193e-01
+eigen value  46: -4.1491815718655745e-01
+eigen value  47: -2.3537719683698544e-01
+eigen value  48: -2.3533893862295174e-01
+eigen value  49: -2.3532940200854838e-01
+eigen value  50: -2.3531054533659762e-01
+eigen value  51: -2.3529879843629367e-01
+eigen value  52: -2.3527118414804093e-01
+eigen value  53: -1.2747473320222111e-01
+eigen value  54: -1.2746936232682693e-01
+eigen value  55: -1.2745865050406047e-01
+eigen value  56: -1.1224120092695301e-01
+eigen value  57: -1.1220442452596154e-01
+eigen value  58: -1.1213303917925788e-01
+eigen value  59: -1.1211683838809562e-01
+eigen value  60: -1.1208100149450692e-01
+eigen value  61: -1.1200843912989258e-01
+eigen value  62: -3.9943694542593867e-02
+eigen value  63: -3.9941127746551154e-02
+eigen value  64: -3.9938904036731157e-02
+eigen value  65: -6.7053084647109764e-03
+eigen value  66: 1.4808994813245960e-01
+eigen value  67: 1.5124318991483973e-01
+eigen value  68: 1.5128147700103431e-01
+eigen value  69: 2.3699761281473297e-01
+eigen value  70: 2.3883329669556216e-01
+eigen value  71: 2.3901681814098741e-01
+
+Fermi energy constraint residual (bisection)      :    9.9649355433939490e-10
+Fermi energy constraint residual (Newton-Raphson) :    0.0000000000000000e+00
+Fermi energy                                      :   -1.2035329492250343e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 3.959815e+01, current abs. residual: 3.558082e-11, nsteps: 627, abs. tolerance criterion: 3.959815e-11
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 1.00000000000000
+fractional occupancy 5: 1.00000000000000
+fractional occupancy 6: 1.00000000000000
+fractional occupancy 7: 1.00000000000000
+fractional occupancy 8: 1.00000000000000
+fractional occupancy 9: 1.00000000000000
+fractional occupancy 10: 1.00000000000000
+fractional occupancy 11: 1.00000000000000
+fractional occupancy 12: 1.00000000000000
+fractional occupancy 13: 1.00000000000000
+fractional occupancy 14: 1.00000000000000
+fractional occupancy 15: 1.00000000000000
+fractional occupancy 16: 1.00000000000000
+fractional occupancy 17: 1.00000000000000
+fractional occupancy 18: 1.00000000000000
+fractional occupancy 19: 1.00000000000000
+fractional occupancy 20: 1.00000000000000
+fractional occupancy 21: 1.00000000000000
+fractional occupancy 22: 1.00000000000000
+fractional occupancy 23: 1.00000000000000
+fractional occupancy 24: 1.00000000000000
+fractional occupancy 25: 1.00000000000000
+fractional occupancy 26: 1.00000000000000
+fractional occupancy 27: 1.00000000000000
+fractional occupancy 28: 1.00000000000000
+fractional occupancy 29: 1.00000000000000
+fractional occupancy 30: 1.00000000000000
+fractional occupancy 31: 1.00000000000000
+fractional occupancy 32: 1.00000000000000
+fractional occupancy 33: 1.00000000000000
+fractional occupancy 34: 1.00000000000000
+fractional occupancy 35: 1.00000000000000
+fractional occupancy 36: 1.00000000000000
+fractional occupancy 37: 1.00000000000000
+fractional occupancy 38: 1.00000000000000
+fractional occupancy 39: 1.00000000000000
+fractional occupancy 40: 1.00000000000000
+fractional occupancy 41: 1.00000000000000
+fractional occupancy 42: 1.00000000000000
+fractional occupancy 43: 1.00000000000000
+fractional occupancy 44: 1.00000000000000
+fractional occupancy 45: 1.00000000000000
+fractional occupancy 46: 1.00000000000000
+fractional occupancy 47: 1.00000000000000
+fractional occupancy 48: 1.00000000000000
+fractional occupancy 49: 1.00000000000000
+fractional occupancy 50: 1.00000000000000
+fractional occupancy 51: 1.00000000000000
+fractional occupancy 52: 1.00000000000000
+fractional occupancy 53: 0.98898634752398
+fractional occupancy 54: 0.98894933957227
+fractional occupancy 55: 0.98887516232480
+fractional occupancy 56: 0.00592169307450
+fractional occupancy 57: 0.00578652664992
+fractional occupancy 58: 0.00553285478549
+fractional occupancy 59: 0.00547684185221
+fractional occupancy 60: 0.00535493416191
+fractional occupancy 61: 0.00511630005492
+fractional occupancy 62: 0.00000000000000
+fractional occupancy 63: 0.00000000000000
+fractional occupancy 64: 0.00000000000000
+fractional occupancy 65: 0.00000000000000
+fractional occupancy 66: 0.00000000000000
+fractional occupancy 67: 0.00000000000000
+fractional occupancy 68: 0.00000000000000
+fractional occupancy 69: 0.00000000000000
+fractional occupancy 70: 0.00000000000000
+fractional occupancy 71: 0.00000000000000
+
+number of electrons: 1.1199912804386265e+02 
+
+Energy computations
+-------------------
+Band energy             :  -1.2946797248711052e+03
+Kinetic energy          :   2.3021733459932666e+03
+Exchange energy         :  -1.4991953392968961e+02
+Correlation energy      :  -8.5739523347081068e+00
+Electrostatic energy    :  -4.4506249923628648e+03
+Total energy            :  -2.3069451326339963e+03
+Total energy per atom   :  -2.8836814157924954e+02
+SCF iteration 9 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 10 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 2.043543e-03
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 3.959815e+01, current abs. residual: 3.546660e-11, nsteps: 627, abs. tolerance criterion: 3.959815e-11
+
+upper bound of unwanted spectrum:  1.8747229637e+05
+lower bound of unwanted spectrum:  2.3901681814e-01
+Chebyshev polynomial degree: 1000
+
+kPoint: 0
+eigen value   0: -6.5080759149188253e+01
+eigen value   1: -6.5080751397048047e+01
+eigen value   2: -6.5080751352262524e+01
+eigen value   3: -6.5080743547345037e+01
+eigen value   4: -6.5080728674900200e+01
+eigen value   5: -6.5080725274482205e+01
+eigen value   6: -6.5080717686193012e+01
+eigen value   7: -6.5080708598144113e+01
+eigen value   8: -4.9789398121226105e+00
+eigen value   9: -4.9788040792580297e+00
+eigen value  10: -4.9787956730928951e+00
+eigen value  11: -4.9787914664315949e+00
+eigen value  12: -4.9787775963735550e+00
+eigen value  13: -4.9787685254007767e+00
+eigen value  14: -4.9787612159152870e+00
+eigen value  15: -4.9786262094301019e+00
+eigen value  16: -3.4176651345192508e+00
+eigen value  17: -3.4176605756877620e+00
+eigen value  18: -3.4176566563774591e+00
+eigen value  19: -3.4176452512932602e+00
+eigen value  20: -3.4176399288693311e+00
+eigen value  21: -3.4176330043520573e+00
+eigen value  22: -3.4175694201915805e+00
+eigen value  23: -3.4175450382668568e+00
+eigen value  24: -3.4175377685078012e+00
+eigen value  25: -3.4172708450307718e+00
+eigen value  26: -3.4172429592813316e+00
+eigen value  27: -3.4172385005378549e+00
+eigen value  28: -3.4172274694828189e+00
+eigen value  29: -3.4172251183739939e+00
+eigen value  30: -3.4172207840782041e+00
+eigen value  31: -3.4169408687747334e+00
+eigen value  32: -3.4169177814174341e+00
+eigen value  33: -3.4169065144585553e+00
+eigen value  34: -3.4168393829476558e+00
+eigen value  35: -3.4168319856221316e+00
+eigen value  36: -3.4168290850971186e+00
+eigen value  37: -3.4168187720428849e+00
+eigen value  38: -3.4168148526884510e+00
+eigen value  39: -3.4168090953086594e+00
+eigen value  40: -5.6862556114399287e-01
+eigen value  41: -4.1508383405420252e-01
+eigen value  42: -4.1507966882387565e-01
+eigen value  43: -4.1507438948484365e-01
+eigen value  44: -4.1507133832340015e-01
+eigen value  45: -4.1506827073736174e-01
+eigen value  46: -4.1506234633334577e-01
+eigen value  47: -2.3532081729521689e-01
+eigen value  48: -2.3531283846704140e-01
+eigen value  49: -2.3531260547443866e-01
+eigen value  50: -2.3531153892543785e-01
+eigen value  51: -2.3531034875691617e-01
+eigen value  52: -2.3530123685900925e-01
+eigen value  53: -1.2746809362446321e-01
+eigen value  54: -1.2746684456817073e-01
+eigen value  55: -1.2746502582552635e-01
+eigen value  56: -1.1211123735563323e-01
+eigen value  57: -1.1211056006538037e-01
+eigen value  58: -1.1210809979782142e-01
+eigen value  59: -1.1210727583767054e-01
+eigen value  60: -1.1210535729723574e-01
+eigen value  61: -1.1202681250676093e-01
+eigen value  62: -3.9927856526496226e-02
+eigen value  63: -3.9926196905826494e-02
+eigen value  64: -3.9925018050695184e-02
+eigen value  65: -6.7034309241192774e-03
+eigen value  66: 1.4810462007766886e-01
+eigen value  67: 1.5091751901721198e-01
+eigen value  68: 1.5092627827303987e-01
+eigen value  69: 2.3671341372341057e-01
+eigen value  70: 2.3819995280001555e-01
+eigen value  71: 2.3831740811497901e-01
+
+Fermi energy constraint residual (bisection)      :    3.0571811748814071e-10
+Fermi energy constraint residual (Newton-Raphson) :    2.8421709430404007e-14
+Fermi energy                                      :   -1.2033404795618190e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 3.959815e+01, current abs. residual: 3.548032e-11, nsteps: 627, abs. tolerance criterion: 3.959815e-11
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 1.00000000000000
+fractional occupancy 5: 1.00000000000000
+fractional occupancy 6: 1.00000000000000
+fractional occupancy 7: 1.00000000000000
+fractional occupancy 8: 1.00000000000000
+fractional occupancy 9: 1.00000000000000
+fractional occupancy 10: 1.00000000000000
+fractional occupancy 11: 1.00000000000000
+fractional occupancy 12: 1.00000000000000
+fractional occupancy 13: 1.00000000000000
+fractional occupancy 14: 1.00000000000000
+fractional occupancy 15: 1.00000000000000
+fractional occupancy 16: 1.00000000000000
+fractional occupancy 17: 1.00000000000000
+fractional occupancy 18: 1.00000000000000
+fractional occupancy 19: 1.00000000000000
+fractional occupancy 20: 1.00000000000000
+fractional occupancy 21: 1.00000000000000
+fractional occupancy 22: 1.00000000000000
+fractional occupancy 23: 1.00000000000000
+fractional occupancy 24: 1.00000000000000
+fractional occupancy 25: 1.00000000000000
+fractional occupancy 26: 1.00000000000000
+fractional occupancy 27: 1.00000000000000
+fractional occupancy 28: 1.00000000000000
+fractional occupancy 29: 1.00000000000000
+fractional occupancy 30: 1.00000000000000
+fractional occupancy 31: 1.00000000000000
+fractional occupancy 32: 1.00000000000000
+fractional occupancy 33: 1.00000000000000
+fractional occupancy 34: 1.00000000000000
+fractional occupancy 35: 1.00000000000000
+fractional occupancy 36: 1.00000000000000
+fractional occupancy 37: 1.00000000000000
+fractional occupancy 38: 1.00000000000000
+fractional occupancy 39: 1.00000000000000
+fractional occupancy 40: 1.00000000000000
+fractional occupancy 41: 1.00000000000000
+fractional occupancy 42: 1.00000000000000
+fractional occupancy 43: 1.00000000000000
+fractional occupancy 44: 1.00000000000000
+fractional occupancy 45: 1.00000000000000
+fractional occupancy 46: 1.00000000000000
+fractional occupancy 47: 1.00000000000000
+fractional occupancy 48: 1.00000000000000
+fractional occupancy 49: 1.00000000000000
+fractional occupancy 50: 1.00000000000000
+fractional occupancy 51: 1.00000000000000
+fractional occupancy 52: 1.00000000000000
+fractional occupancy 53: 0.98907273776950
+fractional occupancy 54: 0.98906420879215
+fractional occupancy 55: 0.98905177803091
+fractional occupancy 56: 0.00552398388512
+fractional occupancy 57: 0.00552163459052
+fractional occupancy 58: 0.00551310909753
+fractional occupancy 59: 0.00551025677979
+fractional occupancy 60: 0.00550362101916
+fractional occupancy 61: 0.00523867003531
+fractional occupancy 62: 0.00000000000000
+fractional occupancy 63: 0.00000000000000
+fractional occupancy 64: 0.00000000000000
+fractional occupancy 65: 0.00000000000000
+fractional occupancy 66: 0.00000000000000
+fractional occupancy 67: 0.00000000000000
+fractional occupancy 68: 0.00000000000000
+fractional occupancy 69: 0.00000000000000
+fractional occupancy 70: 0.00000000000000
+fractional occupancy 71: 0.00000000000000
+
+number of electrons: 1.1199912803451470e+02 
+
+Energy computations
+-------------------
+Band energy             :  -1.2946853349223948e+03
+Kinetic energy          :   2.3021789020530305e+03
+Exchange energy         :  -1.4992006448692044e+02
+Correlation energy      :  -8.5739748775946989e+00
+Electrostatic energy    :  -4.4506300224381966e+03
+Total energy            :  -2.3069451597496818e+03
+Total energy per atom   :  -2.8836814496871023e+02
+SCF iteration 10 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 11 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 3.611904e-04
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 3.959815e+01, current abs. residual: 3.547163e-11, nsteps: 627, abs. tolerance criterion: 3.959815e-11
+
+upper bound of unwanted spectrum:  1.8747229640e+05
+lower bound of unwanted spectrum:  2.3831740811e-01
+Chebyshev polynomial degree: 1000
+
+kPoint: 0
+eigen value   0: -6.5080737823583775e+01
+eigen value   1: -6.5080708621371599e+01
+eigen value   2: -6.5080705205635994e+01
+eigen value   3: -6.5080704430315166e+01
+eigen value   4: -6.5080699777323076e+01
+eigen value   5: -6.5080681392939724e+01
+eigen value   6: -6.5080680261953731e+01
+eigen value   7: -6.5080664616278256e+01
+eigen value   8: -4.9789153702469511e+00
+eigen value   9: -4.9787816786578016e+00
+eigen value  10: -4.9787653585935994e+00
+eigen value  11: -4.9787644942746176e+00
+eigen value  12: -4.9787543318774468e+00
+eigen value  13: -4.9787522157333832e+00
+eigen value  14: -4.9787352150129536e+00
+eigen value  15: -4.9786024475279405e+00
+eigen value  16: -3.4176387812688307e+00
+eigen value  17: -3.4176360926826237e+00
+eigen value  18: -3.4176335952318877e+00
+eigen value  19: -3.4176174553223104e+00
+eigen value  20: -3.4176097283549187e+00
+eigen value  21: -3.4176089449096367e+00
+eigen value  22: -3.4175457886809557e+00
+eigen value  23: -3.4175193473203489e+00
+eigen value  24: -3.4175132509043911e+00
+eigen value  25: -3.4172321606546618e+00
+eigen value  26: -3.4172312372893039e+00
+eigen value  27: -3.4172143811358913e+00
+eigen value  28: -3.4172142832935011e+00
+eigen value  29: -3.4171991870834497e+00
+eigen value  30: -3.4171821935137254e+00
+eigen value  31: -3.4169148314947990e+00
+eigen value  32: -3.4168918901078302e+00
+eigen value  33: -3.4168804562321475e+00
+eigen value  34: -3.4168139344650639e+00
+eigen value  35: -3.4168086069498194e+00
+eigen value  36: -3.4168075964637401e+00
+eigen value  37: -3.4167930614858886e+00
+eigen value  38: -3.4167857239618726e+00
+eigen value  39: -3.4167835034120579e+00
+eigen value  40: -5.6859147119614484e-01
+eigen value  41: -4.1504935388641434e-01
+eigen value  42: -4.1504660805410970e-01
+eigen value  43: -4.1504239427779072e-01
+eigen value  44: -4.1503983130078403e-01
+eigen value  45: -4.1503626832991541e-01
+eigen value  46: -4.1503173359750734e-01
+eigen value  47: -2.3528590344680925e-01
+eigen value  48: -2.3528227134856275e-01
+eigen value  49: -2.3528010469234439e-01
+eigen value  50: -2.3527668709816676e-01
+eigen value  51: -2.3527410784905631e-01
+eigen value  52: -2.3527060667058608e-01
+eigen value  53: -1.2743775769805007e-01
+eigen value  54: -1.2743587665032088e-01
+eigen value  55: -1.2743519976056339e-01
+eigen value  56: -1.1207315616621016e-01
+eigen value  57: -1.1206807645779245e-01
+eigen value  58: -1.1206559197397489e-01
+eigen value  59: -1.1206304810444949e-01
+eigen value  60: -1.1206203669149312e-01
+eigen value  61: -1.1198946212000359e-01
+eigen value  62: -3.9892050893780319e-02
+eigen value  63: -3.9890827617964392e-02
+eigen value  64: -3.9890095112639370e-02
+eigen value  65: -6.6714161019927791e-03
+eigen value  66: 1.4814291522373757e-01
+eigen value  67: 1.5087132577256507e-01
+eigen value  68: 1.5087299002716958e-01
+eigen value  69: 2.3662928862994487e-01
+eigen value  70: 2.3785371997657917e-01
+eigen value  71: 2.3795110879760212e-01
+
+Fermi energy constraint residual (bisection)      :    2.5566748718119925e-10
+Fermi energy constraint residual (Newton-Raphson) :    0.0000000000000000e+00
+Fermi energy                                      :   -1.2029816563410653e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 3.959815e+01, current abs. residual: 3.546996e-11, nsteps: 627, abs. tolerance criterion: 3.959815e-11
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 1.00000000000000
+fractional occupancy 5: 1.00000000000000
+fractional occupancy 6: 1.00000000000000
+fractional occupancy 7: 1.00000000000000
+fractional occupancy 8: 1.00000000000000
+fractional occupancy 9: 1.00000000000000
+fractional occupancy 10: 1.00000000000000
+fractional occupancy 11: 1.00000000000000
+fractional occupancy 12: 1.00000000000000
+fractional occupancy 13: 1.00000000000000
+fractional occupancy 14: 1.00000000000000
+fractional occupancy 15: 1.00000000000000
+fractional occupancy 16: 1.00000000000000
+fractional occupancy 17: 1.00000000000000
+fractional occupancy 18: 1.00000000000000
+fractional occupancy 19: 1.00000000000000
+fractional occupancy 20: 1.00000000000000
+fractional occupancy 21: 1.00000000000000
+fractional occupancy 22: 1.00000000000000
+fractional occupancy 23: 1.00000000000000
+fractional occupancy 24: 1.00000000000000
+fractional occupancy 25: 1.00000000000000
+fractional occupancy 26: 1.00000000000000
+fractional occupancy 27: 1.00000000000000
+fractional occupancy 28: 1.00000000000000
+fractional occupancy 29: 1.00000000000000
+fractional occupancy 30: 1.00000000000000
+fractional occupancy 31: 1.00000000000000
+fractional occupancy 32: 1.00000000000000
+fractional occupancy 33: 1.00000000000000
+fractional occupancy 34: 1.00000000000000
+fractional occupancy 35: 1.00000000000000
+fractional occupancy 36: 1.00000000000000
+fractional occupancy 37: 1.00000000000000
+fractional occupancy 38: 1.00000000000000
+fractional occupancy 39: 1.00000000000000
+fractional occupancy 40: 1.00000000000000
+fractional occupancy 41: 1.00000000000000
+fractional occupancy 42: 1.00000000000000
+fractional occupancy 43: 1.00000000000000
+fractional occupancy 44: 1.00000000000000
+fractional occupancy 45: 1.00000000000000
+fractional occupancy 46: 1.00000000000000
+fractional occupancy 47: 1.00000000000000
+fractional occupancy 48: 1.00000000000000
+fractional occupancy 49: 1.00000000000000
+fractional occupancy 50: 1.00000000000000
+fractional occupancy 51: 1.00000000000000
+fractional occupancy 52: 1.00000000000000
+fractional occupancy 53: 0.98911053103545
+fractional occupancy 54: 0.98909772804256
+fractional occupancy 55: 0.98909311728001
+fractional occupancy 56: 0.00551636036850
+fractional occupancy 57: 0.00549878889911
+fractional occupancy 58: 0.00549021497971
+fractional occupancy 59: 0.00548144989646
+fractional occupancy 60: 0.00547796886888
+fractional occupancy 61: 0.00523384062933
+fractional occupancy 62: 0.00000000000000
+fractional occupancy 63: 0.00000000000000
+fractional occupancy 64: 0.00000000000000
+fractional occupancy 65: 0.00000000000000
+fractional occupancy 66: 0.00000000000000
+fractional occupancy 67: 0.00000000000000
+fractional occupancy 68: 0.00000000000000
+fractional occupancy 69: 0.00000000000000
+fractional occupancy 70: 0.00000000000000
+fractional occupancy 71: 0.00000000000000
+
+number of electrons: 1.1199912803283283e+02 
+
+Energy computations
+-------------------
+Band energy             :  -1.2946820849453295e+03
+Kinetic energy          :   2.3021787644259830e+03
+Exchange energy         :  -1.4992011849302355e+02
+Correlation energy      :  -8.5739794208963396e+00
+Electrostatic energy    :  -4.4506298297838512e+03
+Total energy            :  -2.3069451632717883e+03
+Total energy per atom   :  -2.8836814540897353e+02
+SCF iteration 11 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 12 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 1.188721e-04
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 3.959815e+01, current abs. residual: 3.547156e-11, nsteps: 627, abs. tolerance criterion: 3.959815e-11
+
+upper bound of unwanted spectrum:  1.8747229641e+05
+lower bound of unwanted spectrum:  2.3795110880e-01
+Chebyshev polynomial degree: 1000
+
+kPoint: 0
+eigen value   0: -6.5080687170246307e+01
+eigen value   1: -6.5080681835309775e+01
+eigen value   2: -6.5080681290504629e+01
+eigen value   3: -6.5080679238274371e+01
+eigen value   4: -6.5080678449620649e+01
+eigen value   5: -6.5080677294378319e+01
+eigen value   6: -6.5080671392179767e+01
+eigen value   7: -6.5080667556715042e+01
+eigen value   8: -4.9788961438074564e+00
+eigen value   9: -4.9787452215195076e+00
+eigen value  10: -4.9787449556813366e+00
+eigen value  11: -4.9787430390236320e+00
+eigen value  12: -4.9787424664289741e+00
+eigen value  13: -4.9787376895057784e+00
+eigen value  14: -4.9787333190232737e+00
+eigen value  15: -4.9785861732514878e+00
+eigen value  16: -3.4176252772835753e+00
+eigen value  17: -3.4176116634799181e+00
+eigen value  18: -3.4176100669777787e+00
+eigen value  19: -3.4175999826027947e+00
+eigen value  20: -3.4175954154182628e+00
+eigen value  21: -3.4175898666861095e+00
+eigen value  22: -3.4175273397610431e+00
+eigen value  23: -3.4175031493700194e+00
+eigen value  24: -3.4174955438523136e+00
+eigen value  25: -3.4172209195982819e+00
+eigen value  26: -3.4172064017733645e+00
+eigen value  27: -3.4171896585927204e+00
+eigen value  28: -3.4171892277410922e+00
+eigen value  29: -3.4171878763195247e+00
+eigen value  30: -3.4171711442972650e+00
+eigen value  31: -3.4168971615025927e+00
+eigen value  32: -3.4168716548781233e+00
+eigen value  33: -3.4168625418454099e+00
+eigen value  34: -3.4168021550048846e+00
+eigen value  35: -3.4167874632108681e+00
+eigen value  36: -3.4167812882280306e+00
+eigen value  37: -3.4167777577993221e+00
+eigen value  38: -3.4167733100000266e+00
+eigen value  39: -3.4167679130094215e+00
+eigen value  40: -5.6857475731957052e-01
+eigen value  41: -4.1502957540853841e-01
+eigen value  42: -4.1502665455113341e-01
+eigen value  43: -4.1502471752729081e-01
+eigen value  44: -4.1502446639733964e-01
+eigen value  45: -4.1502165541385577e-01
+eigen value  46: -4.1501920417757360e-01
+eigen value  47: -2.3526820658858824e-01
+eigen value  48: -2.3526632753390542e-01
+eigen value  49: -2.3526458257982247e-01
+eigen value  50: -2.3525765089882394e-01
+eigen value  51: -2.3525709311941814e-01
+eigen value  52: -2.3525672575012763e-01
+eigen value  53: -1.2742108710510525e-01
+eigen value  54: -1.2741919400343885e-01
+eigen value  55: -1.2741854420626020e-01
+eigen value  56: -1.1205399442832727e-01
+eigen value  57: -1.1205046697663655e-01
+eigen value  58: -1.1204800061979742e-01
+eigen value  59: -1.1204716778657671e-01
+eigen value  60: -1.1204573251242021e-01
+eigen value  61: -1.1197211483907343e-01
+eigen value  62: -3.9875627063982712e-02
+eigen value  63: -3.9874340419452370e-02
+eigen value  64: -3.9873795586931535e-02
+eigen value  65: -6.6542436588122493e-03
+eigen value  66: 1.4815979859300601e-01
+eigen value  67: 1.5086821591685537e-01
+eigen value  68: 1.5086832564119163e-01
+eigen value  69: 2.3659099085736837e-01
+eigen value  70: 2.3762746857502326e-01
+eigen value  71: 2.3771450760878693e-01
+
+Fermi energy constraint residual (bisection)      :    9.8739860732166562e-10
+Fermi energy constraint residual (Newton-Raphson) :    0.0000000000000000e+00
+Fermi energy                                      :   -1.2028117123000043e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 3.959815e+01, current abs. residual: 3.546799e-11, nsteps: 627, abs. tolerance criterion: 3.959815e-11
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 1.00000000000000
+fractional occupancy 5: 1.00000000000000
+fractional occupancy 6: 1.00000000000000
+fractional occupancy 7: 1.00000000000000
+fractional occupancy 8: 1.00000000000000
+fractional occupancy 9: 1.00000000000000
+fractional occupancy 10: 1.00000000000000
+fractional occupancy 11: 1.00000000000000
+fractional occupancy 12: 1.00000000000000
+fractional occupancy 13: 1.00000000000000
+fractional occupancy 14: 1.00000000000000
+fractional occupancy 15: 1.00000000000000
+fractional occupancy 16: 1.00000000000000
+fractional occupancy 17: 1.00000000000000
+fractional occupancy 18: 1.00000000000000
+fractional occupancy 19: 1.00000000000000
+fractional occupancy 20: 1.00000000000000
+fractional occupancy 21: 1.00000000000000
+fractional occupancy 22: 1.00000000000000
+fractional occupancy 23: 1.00000000000000
+fractional occupancy 24: 1.00000000000000
+fractional occupancy 25: 1.00000000000000
+fractional occupancy 26: 1.00000000000000
+fractional occupancy 27: 1.00000000000000
+fractional occupancy 28: 1.00000000000000
+fractional occupancy 29: 1.00000000000000
+fractional occupancy 30: 1.00000000000000
+fractional occupancy 31: 1.00000000000000
+fractional occupancy 32: 1.00000000000000
+fractional occupancy 33: 1.00000000000000
+fractional occupancy 34: 1.00000000000000
+fractional occupancy 35: 1.00000000000000
+fractional occupancy 36: 1.00000000000000
+fractional occupancy 37: 1.00000000000000
+fractional occupancy 38: 1.00000000000000
+fractional occupancy 39: 1.00000000000000
+fractional occupancy 40: 1.00000000000000
+fractional occupancy 41: 1.00000000000000
+fractional occupancy 42: 1.00000000000000
+fractional occupancy 43: 1.00000000000000
+fractional occupancy 44: 1.00000000000000
+fractional occupancy 45: 1.00000000000000
+fractional occupancy 46: 1.00000000000000
+fractional occupancy 47: 1.00000000000000
+fractional occupancy 48: 1.00000000000000
+fractional occupancy 49: 1.00000000000000
+fractional occupancy 50: 1.00000000000000
+fractional occupancy 51: 1.00000000000000
+fractional occupancy 52: 1.00000000000000
+fractional occupancy 53: 0.98911273349375
+fractional occupancy 54: 0.98909985098741
+fractional occupancy 55: 0.98909542566051
+fractional occupancy 56: 0.00550885641821
+fractional occupancy 57: 0.00549666503729
+fractional occupancy 58: 0.00548815689500
+fractional occupancy 59: 0.00548528684572
+fractional occupancy 60: 0.00548034421056
+fractional occupancy 61: 0.00523268045156
+fractional occupancy 62: 0.00000000000000
+fractional occupancy 63: 0.00000000000000
+fractional occupancy 64: 0.00000000000000
+fractional occupancy 65: 0.00000000000000
+fractional occupancy 66: 0.00000000000000
+fractional occupancy 67: 0.00000000000000
+fractional occupancy 68: 0.00000000000000
+fractional occupancy 69: 0.00000000000000
+fractional occupancy 70: 0.00000000000000
+fractional occupancy 71: 0.00000000000000
+
+number of electrons: 1.1199912803296669e+02 
+
+Energy computations
+-------------------
+Band energy             :  -1.2946800911227042e+03
+Kinetic energy          :   2.3021785587310587e+03
+Exchange energy         :  -1.4992010688366031e+02
+Correlation energy      :  -8.5739792115309932e+00
+Electrostatic energy    :  -4.4506296361385912e+03
+Total energy            :  -2.3069451635027244e+03
+Total energy per atom   :  -2.8836814543784055e+02
+SCF iteration 12 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 13 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 6.751061e-05
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 3.959815e+01, current abs. residual: 3.547127e-11, nsteps: 627, abs. tolerance criterion: 3.959815e-11
+
+upper bound of unwanted spectrum:  1.8747229641e+05
+lower bound of unwanted spectrum:  2.3771450761e-01
+Chebyshev polynomial degree: 1000
+
+kPoint: 0
+eigen value   0: -6.5080677640053196e+01
+eigen value   1: -6.5080671914226244e+01
+eigen value   2: -6.5080671295786559e+01
+eigen value   3: -6.5080671084325374e+01
+eigen value   4: -6.5080670302400463e+01
+eigen value   5: -6.5080669438521483e+01
+eigen value   6: -6.5080665585757799e+01
+eigen value   7: -6.5080657678288532e+01
+eigen value   8: -4.9788875716049539e+00
+eigen value   9: -4.9787363961522439e+00
+eigen value  10: -4.9787353269653458e+00
+eigen value  11: -4.9787340635890258e+00
+eigen value  12: -4.9787332911075177e+00
+eigen value  13: -4.9787297308589720e+00
+eigen value  14: -4.9787268390689672e+00
+eigen value  15: -4.9785777420587127e+00
+eigen value  16: -3.4176144777565773e+00
+eigen value  17: -3.4176049165368911e+00
+eigen value  18: -3.4176028258760698e+00
+eigen value  19: -3.4175912086657823e+00
+eigen value  20: -3.4175860969497984e+00
+eigen value  21: -3.4175816541000184e+00
+eigen value  22: -3.4175190076250512e+00
+eigen value  23: -3.4174941607307865e+00
+eigen value  24: -3.4174869448799403e+00
+eigen value  25: -3.4172135534804169e+00
+eigen value  26: -3.4171967631376572e+00
+eigen value  27: -3.4171805142405769e+00
+eigen value  28: -3.4171798678421506e+00
+eigen value  29: -3.4171796275955075e+00
+eigen value  30: -3.4171637252185683e+00
+eigen value  31: -3.4168884468686298e+00
+eigen value  32: -3.4168634932724062e+00
+eigen value  33: -3.4168540556446669e+00
+eigen value  34: -3.4167916572214443e+00
+eigen value  35: -3.4167788777048687e+00
+eigen value  36: -3.4167753782123564e+00
+eigen value  37: -3.4167688061691930e+00
+eigen value  38: -3.4167637202492691e+00
+eigen value  39: -3.4167600675297298e+00
+eigen value  40: -5.6856711185781206e-01
+eigen value  41: -4.1502014937608417e-01
+eigen value  42: -4.1501844564011692e-01
+eigen value  43: -4.1501793383801894e-01
+eigen value  44: -4.1501684006171385e-01
+eigen value  45: -4.1501434385713304e-01
+eigen value  46: -4.1501256592012326e-01
+eigen value  47: -2.3525993577306806e-01
+eigen value  48: -2.3525873255450785e-01
+eigen value  49: -2.3525790073304276e-01
+eigen value  50: -2.3525024168159267e-01
+eigen value  51: -2.3524959817342833e-01
+eigen value  52: -2.3524878694002757e-01
+eigen value  53: -1.2741337136320910e-01
+eigen value  54: -1.2741146607049278e-01
+eigen value  55: -1.2741082542819882e-01
+eigen value  56: -1.1204418081930057e-01
+eigen value  57: -1.1204247559828565e-01
+eigen value  58: -1.1204084396931556e-01
+eigen value  59: -1.1203994350835828e-01
+eigen value  60: -1.1203908740493118e-01
+eigen value  61: -1.1196447766475873e-01
+eigen value  62: -3.9868166895109462e-02
+eigen value  63: -3.9866854226233414e-02
+eigen value  64: -3.9866368587276456e-02
+eigen value  65: -6.6462965337255224e-03
+eigen value  66: 1.4816781261325171e-01
+eigen value  67: 1.5087063425488956e-01
+eigen value  68: 1.5087105718686733e-01
+eigen value  69: 2.3657560159381250e-01
+eigen value  70: 2.3746656935479177e-01
+eigen value  71: 2.3754487981265959e-01
+
+Fermi energy constraint residual (bisection)      :    3.8383518585760612e-11
+Fermi energy constraint residual (Newton-Raphson) :    1.4210854715202004e-14
+Fermi energy                                      :   -1.2027343734245534e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 3.959815e+01, current abs. residual: 3.547238e-11, nsteps: 627, abs. tolerance criterion: 3.959815e-11
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 1.00000000000000
+fractional occupancy 5: 1.00000000000000
+fractional occupancy 6: 1.00000000000000
+fractional occupancy 7: 1.00000000000000
+fractional occupancy 8: 1.00000000000000
+fractional occupancy 9: 1.00000000000000
+fractional occupancy 10: 1.00000000000000
+fractional occupancy 11: 1.00000000000000
+fractional occupancy 12: 1.00000000000000
+fractional occupancy 13: 1.00000000000000
+fractional occupancy 14: 1.00000000000000
+fractional occupancy 15: 1.00000000000000
+fractional occupancy 16: 1.00000000000000
+fractional occupancy 17: 1.00000000000000
+fractional occupancy 18: 1.00000000000000
+fractional occupancy 19: 1.00000000000000
+fractional occupancy 20: 1.00000000000000
+fractional occupancy 21: 1.00000000000000
+fractional occupancy 22: 1.00000000000000
+fractional occupancy 23: 1.00000000000000
+fractional occupancy 24: 1.00000000000000
+fractional occupancy 25: 1.00000000000000
+fractional occupancy 26: 1.00000000000000
+fractional occupancy 27: 1.00000000000000
+fractional occupancy 28: 1.00000000000000
+fractional occupancy 29: 1.00000000000000
+fractional occupancy 30: 1.00000000000000
+fractional occupancy 31: 1.00000000000000
+fractional occupancy 32: 1.00000000000000
+fractional occupancy 33: 1.00000000000000
+fractional occupancy 34: 1.00000000000000
+fractional occupancy 35: 1.00000000000000
+fractional occupancy 36: 1.00000000000000
+fractional occupancy 37: 1.00000000000000
+fractional occupancy 38: 1.00000000000000
+fractional occupancy 39: 1.00000000000000
+fractional occupancy 40: 1.00000000000000
+fractional occupancy 41: 1.00000000000000
+fractional occupancy 42: 1.00000000000000
+fractional occupancy 43: 1.00000000000000
+fractional occupancy 44: 1.00000000000000
+fractional occupancy 45: 1.00000000000000
+fractional occupancy 46: 1.00000000000000
+fractional occupancy 47: 1.00000000000000
+fractional occupancy 48: 1.00000000000000
+fractional occupancy 49: 1.00000000000000
+fractional occupancy 50: 1.00000000000000
+fractional occupancy 51: 1.00000000000000
+fractional occupancy 52: 1.00000000000000
+fractional occupancy 53: 0.98911285690152
+fractional occupancy 54: 0.98909989153192
+fractional occupancy 55: 0.98909552858110
+fractional occupancy 56: 0.00550166535175
+fractional occupancy 57: 0.00549577616348
+fractional occupancy 58: 0.00549014700359
+fractional occupancy 59: 0.00548704284704
+fractional occupancy 60: 0.00548409322267
+fractional occupancy 61: 0.00523299839695
+fractional occupancy 62: 0.00000000000000
+fractional occupancy 63: 0.00000000000000
+fractional occupancy 64: 0.00000000000000
+fractional occupancy 65: 0.00000000000000
+fractional occupancy 66: 0.00000000000000
+fractional occupancy 67: 0.00000000000000
+fractional occupancy 68: 0.00000000000000
+fractional occupancy 69: 0.00000000000000
+fractional occupancy 70: 0.00000000000000
+fractional occupancy 71: 0.00000000000000
+
+number of electrons: 1.1199912803307325e+02 
+
+Energy computations
+-------------------
+Band energy             :  -1.2946791622095836e+03
+Kinetic energy          :   2.3021784804822673e+03
+Exchange energy         :  -1.4992010059591297e+02
+Correlation energy      :  -8.5739790009823391e+00
+Electrostatic energy    :  -4.4506295644099519e+03
+Total energy            :  -2.3069451635245805e+03
+Total energy per atom   :  -2.8836814544057256e+02
+SCF iteration 13 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 14 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 2.771703e-05
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 3.959815e+01, current abs. residual: 3.547102e-11, nsteps: 627, abs. tolerance criterion: 3.959815e-11
+
+upper bound of unwanted spectrum:  1.8747229641e+05
+lower bound of unwanted spectrum:  2.3754487981e-01
+Chebyshev polynomial degree: 1000
+
+kPoint: 0
+eigen value   0: -6.5080675453127299e+01
+eigen value   1: -6.5080669707571644e+01
+eigen value   2: -6.5080669366597832e+01
+eigen value   3: -6.5080668994958899e+01
+eigen value   4: -6.5080668065524208e+01
+eigen value   5: -6.5080666480106942e+01
+eigen value   6: -6.5080665262631456e+01
+eigen value   7: -6.5080664623792401e+01
+eigen value   8: -4.9788861062369900e+00
+eigen value   9: -4.9787339582964618e+00
+eigen value  10: -4.9787324262091497e+00
+eigen value  11: -4.9787321035868617e+00
+eigen value  12: -4.9787316535156725e+00
+eigen value  13: -4.9787290730265790e+00
+eigen value  14: -4.9787280359836172e+00
+eigen value  15: -4.9785764158178294e+00
+eigen value  16: -3.4176129073840684e+00
+eigen value  17: -3.4176034859842490e+00
+eigen value  18: -3.4176015200074623e+00
+eigen value  19: -3.4175895437138202e+00
+eigen value  20: -3.4175848804498035e+00
+eigen value  21: -3.4175803398581990e+00
+eigen value  22: -3.4175176734265982e+00
+eigen value  23: -3.4174928078178204e+00
+eigen value  24: -3.4174857034209900e+00
+eigen value  25: -3.4172107557407130e+00
+eigen value  26: -3.4171968771549688e+00
+eigen value  27: -3.4171800661448080e+00
+eigen value  28: -3.4171796544690611e+00
+eigen value  29: -3.4171776162429217e+00
+eigen value  30: -3.4171609146832389e+00
+eigen value  31: -3.4168871343118932e+00
+eigen value  32: -3.4168620596152062e+00
+eigen value  33: -3.4168525815460473e+00
+eigen value  34: -3.4167902294280461e+00
+eigen value  35: -3.4167777389930203e+00
+eigen value  36: -3.4167741522927306e+00
+eigen value  37: -3.4167673447706091e+00
+eigen value  38: -3.4167625258444674e+00
+eigen value  39: -3.4167585589672891e+00
+eigen value  40: -5.6856560867337747e-01
+eigen value  41: -4.1501768003420153e-01
+eigen value  42: -4.1501717261464433e-01
+eigen value  43: -4.1501556817481117e-01
+eigen value  44: -4.1501503374917670e-01
+eigen value  45: -4.1501483511028114e-01
+eigen value  46: -4.1501114469057765e-01
+eigen value  47: -2.3525820881976847e-01
+eigen value  48: -2.3525743387596024e-01
+eigen value  49: -2.3525624711684803e-01
+eigen value  50: -2.3524879583457953e-01
+eigen value  51: -2.3524796446996871e-01
+eigen value  52: -2.3524775966907441e-01
+eigen value  53: -1.2741193070818976e-01
+eigen value  54: -1.2741000676139319e-01
+eigen value  55: -1.2740938467848012e-01
+eigen value  56: -1.1204182204012639e-01
+eigen value  57: -1.1204174433424867e-01
+eigen value  58: -1.1203843589724773e-01
+eigen value  59: -1.1203822800693305e-01
+eigen value  60: -1.1203800953943351e-01
+eigen value  61: -1.1196281501928367e-01
+eigen value  62: -3.9866689219515042e-02
+eigen value  63: -3.9865358765545526e-02
+eigen value  64: -3.9864894424031211e-02
+eigen value  65: -6.6447573723597136e-03
+eigen value  66: 1.4816969650702227e-01
+eigen value  67: 1.5087090417068211e-01
+eigen value  68: 1.5087142392453617e-01
+eigen value  69: 2.3656668577915504e-01
+eigen value  70: 2.3734215418365021e-01
+eigen value  71: 2.3741360365324851e-01
+
+Fermi energy constraint residual (bisection)      :    4.6392756303248461e-10
+Fermi energy constraint residual (Newton-Raphson) :    1.4210854715202004e-14
+Fermi energy                                      :   -1.2027188406669166e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 3.959815e+01, current abs. residual: 3.547192e-11, nsteps: 627, abs. tolerance criterion: 3.959815e-11
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 1.00000000000000
+fractional occupancy 5: 1.00000000000000
+fractional occupancy 6: 1.00000000000000
+fractional occupancy 7: 1.00000000000000
+fractional occupancy 8: 1.00000000000000
+fractional occupancy 9: 1.00000000000000
+fractional occupancy 10: 1.00000000000000
+fractional occupancy 11: 1.00000000000000
+fractional occupancy 12: 1.00000000000000
+fractional occupancy 13: 1.00000000000000
+fractional occupancy 14: 1.00000000000000
+fractional occupancy 15: 1.00000000000000
+fractional occupancy 16: 1.00000000000000
+fractional occupancy 17: 1.00000000000000
+fractional occupancy 18: 1.00000000000000
+fractional occupancy 19: 1.00000000000000
+fractional occupancy 20: 1.00000000000000
+fractional occupancy 21: 1.00000000000000
+fractional occupancy 22: 1.00000000000000
+fractional occupancy 23: 1.00000000000000
+fractional occupancy 24: 1.00000000000000
+fractional occupancy 25: 1.00000000000000
+fractional occupancy 26: 1.00000000000000
+fractional occupancy 27: 1.00000000000000
+fractional occupancy 28: 1.00000000000000
+fractional occupancy 29: 1.00000000000000
+fractional occupancy 30: 1.00000000000000
+fractional occupancy 31: 1.00000000000000
+fractional occupancy 32: 1.00000000000000
+fractional occupancy 33: 1.00000000000000
+fractional occupancy 34: 1.00000000000000
+fractional occupancy 35: 1.00000000000000
+fractional occupancy 36: 1.00000000000000
+fractional occupancy 37: 1.00000000000000
+fractional occupancy 38: 1.00000000000000
+fractional occupancy 39: 1.00000000000000
+fractional occupancy 40: 1.00000000000000
+fractional occupancy 41: 1.00000000000000
+fractional occupancy 42: 1.00000000000000
+fractional occupancy 43: 1.00000000000000
+fractional occupancy 44: 1.00000000000000
+fractional occupancy 45: 1.00000000000000
+fractional occupancy 46: 1.00000000000000
+fractional occupancy 47: 1.00000000000000
+fractional occupancy 48: 1.00000000000000
+fractional occupancy 49: 1.00000000000000
+fractional occupancy 50: 1.00000000000000
+fractional occupancy 51: 1.00000000000000
+fractional occupancy 52: 1.00000000000000
+fractional occupancy 53: 0.98911362279938
+fractional occupancy 54: 0.98910053132563
+fractional occupancy 55: 0.98909629503954
+fractional occupancy 56: 0.00549888266603
+fractional occupancy 57: 0.00549861429795
+fractional occupancy 58: 0.00548720022465
+fractional occupancy 59: 0.00548648379255
+fractional occupancy 60: 0.00548573100957
+fractional occupancy 61: 0.00523263884471
+fractional occupancy 62: 0.00000000000000
+fractional occupancy 63: 0.00000000000000
+fractional occupancy 64: 0.00000000000000
+fractional occupancy 65: 0.00000000000000
+fractional occupancy 66: 0.00000000000000
+fractional occupancy 67: 0.00000000000000
+fractional occupancy 68: 0.00000000000000
+fractional occupancy 69: 0.00000000000000
+fractional occupancy 70: 0.00000000000000
+fractional occupancy 71: 0.00000000000000
+
+number of electrons: 1.1199912803305813e+02 
+
+Energy computations
+-------------------
+Band energy             :  -1.2946790134159194e+03
+Kinetic energy          :   2.3021785107063779e+03
+Exchange energy         :  -1.4992010282482565e+02
+Correlation energy      :  -8.5739790866805023e+00
+Electrostatic energy    :  -4.4506295923881207e+03
+Total energy            :  -2.3069451635932501e+03
+Total energy per atom   :  -2.8836814544915626e+02
+SCF iteration 14 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 15 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 6.910281e-06
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 3.959815e+01, current abs. residual: 3.547128e-11, nsteps: 627, abs. tolerance criterion: 3.959815e-11
+
+upper bound of unwanted spectrum:  1.8747229641e+05
+lower bound of unwanted spectrum:  2.3741360365e-01
+Chebyshev polynomial degree: 1000
+
+kPoint: 0
+eigen value   0: -6.5080673864660170e+01
+eigen value   1: -6.5080668148696816e+01
+eigen value   2: -6.5080667851137520e+01
+eigen value   3: -6.5080667794763855e+01
+eigen value   4: -6.5080667764438346e+01
+eigen value   5: -6.5080664173424253e+01
+eigen value   6: -6.5080663926825608e+01
+eigen value   7: -6.5080663645076172e+01
+eigen value   8: -4.9788844461552264e+00
+eigen value   9: -4.9787321417251675e+00
+eigen value  10: -4.9787305609470032e+00
+eigen value  11: -4.9787304512148198e+00
+eigen value  12: -4.9787303377716299e+00
+eigen value  13: -4.9787270328645672e+00
+eigen value  14: -4.9787267833600097e+00
+eigen value  15: -4.9785747616579350e+00
+eigen value  16: -3.4176115598859251e+00
+eigen value  17: -3.4176016766625472e+00
+eigen value  18: -3.4175996753297695e+00
+eigen value  19: -3.4175879505723659e+00
+eigen value  20: -3.4175832806169608e+00
+eigen value  21: -3.4175786545506788e+00
+eigen value  22: -3.4175160348125915e+00
+eigen value  23: -3.4174912311336954e+00
+eigen value  24: -3.4174840796359378e+00
+eigen value  25: -3.4172090609264285e+00
+eigen value  26: -3.4171953061529443e+00
+eigen value  27: -3.4171785091578322e+00
+eigen value  28: -3.4171780468739792e+00
+eigen value  29: -3.4171759182447206e+00
+eigen value  30: -3.4171592251033363e+00
+eigen value  31: -3.4168855108289162e+00
+eigen value  32: -3.4168603520112493e+00
+eigen value  33: -3.4168509404617580e+00
+eigen value  34: -3.4167888489916209e+00
+eigen value  35: -3.4167761490758601e+00
+eigen value  36: -3.4167722219555872e+00
+eigen value  37: -3.4167657633822390e+00
+eigen value  38: -3.4167609561018581e+00
+eigen value  39: -3.4167568758091034e+00
+eigen value  40: -5.6856397747389997e-01
+eigen value  41: -4.1501588844175630e-01
+eigen value  42: -4.1501576423019559e-01
+eigen value  43: -4.1501391963694273e-01
+eigen value  44: -4.1501345769774761e-01
+eigen value  45: -4.1501320966235139e-01
+eigen value  46: -4.1500941709745759e-01
+eigen value  47: -2.3525665691335942e-01
+eigen value  48: -2.3525575518675704e-01
+eigen value  49: -2.3525457833653216e-01
+eigen value  50: -2.3524711063096618e-01
+eigen value  51: -2.3524639781115186e-01
+eigen value  52: -2.3524622776422074e-01
+eigen value  53: -1.2741030023117059e-01
+eigen value  54: -1.2740837080566242e-01
+eigen value  55: -1.2740775380247948e-01
+eigen value  56: -1.1204031865281859e-01
+eigen value  57: -1.1203979360298917e-01
+eigen value  58: -1.1203673511701037e-01
+eigen value  59: -1.1203650980171326e-01
+eigen value  60: -1.1203635554570525e-01
+eigen value  61: -1.1196135214098883e-01
+eigen value  62: -3.9865088099755495e-02
+eigen value  63: -3.9863751714475495e-02
+eigen value  64: -3.9863294382373633e-02
+eigen value  65: -6.6430837681291186e-03
+eigen value  66: 1.4817149396641036e-01
+eigen value  67: 1.5087220620250522e-01
+eigen value  68: 1.5087274898774669e-01
+eigen value  69: 2.3656340174012502e-01
+eigen value  70: 2.3724474425526007e-01
+eigen value  71: 2.3731014182379831e-01
+
+Fermi energy constraint residual (bisection)      :    3.2002844818634912e-11
+Fermi energy constraint residual (Newton-Raphson) :    1.4210854715202004e-14
+Fermi energy                                      :   -1.2027023450398705e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 3.959815e+01, current abs. residual: 3.547134e-11, nsteps: 627, abs. tolerance criterion: 3.959815e-11
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 1.00000000000000
+fractional occupancy 5: 1.00000000000000
+fractional occupancy 6: 1.00000000000000
+fractional occupancy 7: 1.00000000000000
+fractional occupancy 8: 1.00000000000000
+fractional occupancy 9: 1.00000000000000
+fractional occupancy 10: 1.00000000000000
+fractional occupancy 11: 1.00000000000000
+fractional occupancy 12: 1.00000000000000
+fractional occupancy 13: 1.00000000000000
+fractional occupancy 14: 1.00000000000000
+fractional occupancy 15: 1.00000000000000
+fractional occupancy 16: 1.00000000000000
+fractional occupancy 17: 1.00000000000000
+fractional occupancy 18: 1.00000000000000
+fractional occupancy 19: 1.00000000000000
+fractional occupancy 20: 1.00000000000000
+fractional occupancy 21: 1.00000000000000
+fractional occupancy 22: 1.00000000000000
+fractional occupancy 23: 1.00000000000000
+fractional occupancy 24: 1.00000000000000
+fractional occupancy 25: 1.00000000000000
+fractional occupancy 26: 1.00000000000000
+fractional occupancy 27: 1.00000000000000
+fractional occupancy 28: 1.00000000000000
+fractional occupancy 29: 1.00000000000000
+fractional occupancy 30: 1.00000000000000
+fractional occupancy 31: 1.00000000000000
+fractional occupancy 32: 1.00000000000000
+fractional occupancy 33: 1.00000000000000
+fractional occupancy 34: 1.00000000000000
+fractional occupancy 35: 1.00000000000000
+fractional occupancy 36: 1.00000000000000
+fractional occupancy 37: 1.00000000000000
+fractional occupancy 38: 1.00000000000000
+fractional occupancy 39: 1.00000000000000
+fractional occupancy 40: 1.00000000000000
+fractional occupancy 41: 1.00000000000000
+fractional occupancy 42: 1.00000000000000
+fractional occupancy 43: 1.00000000000000
+fractional occupancy 44: 1.00000000000000
+fractional occupancy 45: 1.00000000000000
+fractional occupancy 46: 1.00000000000000
+fractional occupancy 47: 1.00000000000000
+fractional occupancy 48: 1.00000000000000
+fractional occupancy 49: 1.00000000000000
+fractional occupancy 50: 1.00000000000000
+fractional occupancy 51: 1.00000000000000
+fractional occupancy 52: 1.00000000000000
+fractional occupancy 53: 0.98911375258977
+fractional occupancy 54: 0.98910062396878
+fractional occupancy 55: 0.98909642231675
+fractional occupancy 56: 0.00549938753843
+fractional occupancy 57: 0.00549757429345
+fractional occupancy 58: 0.00548702371003
+fractional occupancy 59: 0.00548624725698
+fractional occupancy 60: 0.00548571574246
+fractional occupancy 61: 0.00523325258335
+fractional occupancy 62: 0.00000000000000
+fractional occupancy 63: 0.00000000000000
+fractional occupancy 64: 0.00000000000000
+fractional occupancy 65: 0.00000000000000
+fractional occupancy 66: 0.00000000000000
+fractional occupancy 67: 0.00000000000000
+fractional occupancy 68: 0.00000000000000
+fractional occupancy 69: 0.00000000000000
+fractional occupancy 70: 0.00000000000000
+fractional occupancy 71: 0.00000000000000
+
+number of electrons: 1.1199912803306326e+02 
+
+Energy computations
+-------------------
+Band energy             :  -1.2946788348733155e+03
+Kinetic energy          :   2.3021785229315610e+03
+Exchange energy         :  -1.4992010329344384e+02
+Correlation energy      :  -8.5739790887160598e+00
+Electrostatic energy    :  -4.4506296041534515e+03
+Total energy            :  -2.3069451636040508e+03
+Total energy per atom   :  -2.8836814545050635e+02
+SCF iteration 15 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 16 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 1.804744e-06
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 3.959815e+01, current abs. residual: 3.547110e-11, nsteps: 627, abs. tolerance criterion: 3.959815e-11
+
+upper bound of unwanted spectrum:  1.8747229641e+05
+lower bound of unwanted spectrum:  2.3731014182e-01
+Chebyshev polynomial degree: 1000
+
+kPoint: 0
+eigen value   0: -6.5080673822742810e+01
+eigen value   1: -6.5080668129378893e+01
+eigen value   2: -6.5080667912139816e+01
+eigen value   3: -6.5080667889177761e+01
+eigen value   4: -6.5080667883140421e+01
+eigen value   5: -6.5080664239115237e+01
+eigen value   6: -6.5080664091856093e+01
+eigen value   7: -6.5080663948287381e+01
+eigen value   8: -4.9788844734540554e+00
+eigen value   9: -4.9787321033967551e+00
+eigen value  10: -4.9787305289401891e+00
+eigen value  11: -4.9787304691869076e+00
+eigen value  12: -4.9787303860020327e+00
+eigen value  13: -4.9787270890140345e+00
+eigen value  14: -4.9787269047190259e+00
+eigen value  15: -4.9785747920936192e+00
+eigen value  16: -3.4176115665369164e+00
+eigen value  17: -3.4176018157801078e+00
+eigen value  18: -3.4175997090428121e+00
+eigen value  19: -3.4175879583242685e+00
+eigen value  20: -3.4175832418557102e+00
+eigen value  21: -3.4175786892300244e+00
+eigen value  22: -3.4175160844186898e+00
+eigen value  23: -3.4174912653364480e+00
+eigen value  24: -3.4174841178427391e+00
+eigen value  25: -3.4172091147044164e+00
+eigen value  26: -3.4171953216665401e+00
+eigen value  27: -3.4171785270606811e+00
+eigen value  28: -3.4171780610229345e+00
+eigen value  29: -3.4171759707812885e+00
+eigen value  30: -3.4171592767644023e+00
+eigen value  31: -3.4168855332490327e+00
+eigen value  32: -3.4168603831496056e+00
+eigen value  33: -3.4168509691261502e+00
+eigen value  34: -3.4167888565247599e+00
+eigen value  35: -3.4167762713368539e+00
+eigen value  36: -3.4167723123979101e+00
+eigen value  37: -3.4167657846439647e+00
+eigen value  38: -3.4167609143230111e+00
+eigen value  39: -3.4167569000869391e+00
+eigen value  40: -5.6856396934339004e-01
+eigen value  41: -4.1501593997578146e-01
+eigen value  42: -4.1501571613152854e-01
+eigen value  43: -4.1501391521482234e-01
+eigen value  44: -4.1501344343505270e-01
+eigen value  45: -4.1501321091085913e-01
+eigen value  46: -4.1500939709853923e-01
+eigen value  47: -2.3525664342897454e-01
+eigen value  48: -2.3525580727981726e-01
+eigen value  49: -2.3525456076993370e-01
+eigen value  50: -2.3524711741896895e-01
+eigen value  51: -2.3524637605714885e-01
+eigen value  52: -2.3524619227684360e-01
+eigen value  53: -1.2741029620796010e-01
+eigen value  54: -1.2740836668082028e-01
+eigen value  55: -1.2740774962087029e-01
+eigen value  56: -1.1204027296576342e-01
+eigen value  57: -1.1203984256683833e-01
+eigen value  58: -1.1203670891650049e-01
+eigen value  59: -1.1203647174132224e-01
+eigen value  60: -1.1203634559129902e-01
+eigen value  61: -1.1196129894184229e-01
+eigen value  62: -3.9865082516135436e-02
+eigen value  63: -3.9863745987455686e-02
+eigen value  64: -3.9863288869274802e-02
+eigen value  65: -6.6430748288461971e-03
+eigen value  66: 1.4817153817972417e-01
+eigen value  67: 1.5087214372343050e-01
+eigen value  68: 1.5087269164518657e-01
+eigen value  69: 2.3656086400835372e-01
+eigen value  70: 2.3716393247062037e-01
+eigen value  71: 2.3722414712058720e-01
+
+Fermi energy constraint residual (bisection)      :    2.5892177291098051e-10
+Fermi energy constraint residual (Newton-Raphson) :    2.8421709430404007e-14
+Fermi energy                                      :   -1.2027022221398835e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 3.959815e+01, current abs. residual: 3.547198e-11, nsteps: 627, abs. tolerance criterion: 3.959815e-11
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 1.00000000000000
+fractional occupancy 5: 1.00000000000000
+fractional occupancy 6: 1.00000000000000
+fractional occupancy 7: 1.00000000000000
+fractional occupancy 8: 1.00000000000000
+fractional occupancy 9: 1.00000000000000
+fractional occupancy 10: 1.00000000000000
+fractional occupancy 11: 1.00000000000000
+fractional occupancy 12: 1.00000000000000
+fractional occupancy 13: 1.00000000000000
+fractional occupancy 14: 1.00000000000000
+fractional occupancy 15: 1.00000000000000
+fractional occupancy 16: 1.00000000000000
+fractional occupancy 17: 1.00000000000000
+fractional occupancy 18: 1.00000000000000
+fractional occupancy 19: 1.00000000000000
+fractional occupancy 20: 1.00000000000000
+fractional occupancy 21: 1.00000000000000
+fractional occupancy 22: 1.00000000000000
+fractional occupancy 23: 1.00000000000000
+fractional occupancy 24: 1.00000000000000
+fractional occupancy 25: 1.00000000000000
+fractional occupancy 26: 1.00000000000000
+fractional occupancy 27: 1.00000000000000
+fractional occupancy 28: 1.00000000000000
+fractional occupancy 29: 1.00000000000000
+fractional occupancy 30: 1.00000000000000
+fractional occupancy 31: 1.00000000000000
+fractional occupancy 32: 1.00000000000000
+fractional occupancy 33: 1.00000000000000
+fractional occupancy 34: 1.00000000000000
+fractional occupancy 35: 1.00000000000000
+fractional occupancy 36: 1.00000000000000
+fractional occupancy 37: 1.00000000000000
+fractional occupancy 38: 1.00000000000000
+fractional occupancy 39: 1.00000000000000
+fractional occupancy 40: 1.00000000000000
+fractional occupancy 41: 1.00000000000000
+fractional occupancy 42: 1.00000000000000
+fractional occupancy 43: 1.00000000000000
+fractional occupancy 44: 1.00000000000000
+fractional occupancy 45: 1.00000000000000
+fractional occupancy 46: 1.00000000000000
+fractional occupancy 47: 1.00000000000000
+fractional occupancy 48: 1.00000000000000
+fractional occupancy 49: 1.00000000000000
+fractional occupancy 50: 1.00000000000000
+fractional occupancy 51: 1.00000000000000
+fractional occupancy 52: 1.00000000000000
+fractional occupancy 53: 0.98911380880681
+fractional occupancy 54: 0.98910067956091
+fractional occupancy 55: 0.98909647754344
+fractional occupancy 56: 0.00549927218491
+fractional occupancy 57: 0.00549778580127
+fractional occupancy 58: 0.00548697577022
+fractional occupancy 59: 0.00548615845728
+fractional occupancy 60: 0.00548572378975
+fractional occupancy 61: 0.00523311808541
+fractional occupancy 62: 0.00000000000000
+fractional occupancy 63: 0.00000000000000
+fractional occupancy 64: 0.00000000000000
+fractional occupancy 65: 0.00000000000000
+fractional occupancy 66: 0.00000000000000
+fractional occupancy 67: 0.00000000000000
+fractional occupancy 68: 0.00000000000000
+fractional occupancy 69: 0.00000000000000
+fractional occupancy 70: 0.00000000000000
+fractional occupancy 71: 0.00000000000000
+
+number of electrons: 1.1199912803306063e+02 
+
+Energy computations
+-------------------
+Band energy             :  -1.2946788382993693e+03
+Kinetic energy          :   2.3021785282791043e+03
+Exchange energy         :  -1.4992010364705007e+02
+Correlation energy      :  -8.5739790991357143e+00
+Electrostatic energy    :  -4.4506296091423319e+03
+Total energy            :  -2.3069451636094145e+03
+Total energy per atom   :  -2.8836814545117682e+02
+SCF iteration 16 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 17 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 6.455552e-07
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 3.959815e+01, current abs. residual: 3.547055e-11, nsteps: 627, abs. tolerance criterion: 3.959815e-11
+
+upper bound of unwanted spectrum:  1.8747229641e+05
+lower bound of unwanted spectrum:  2.3722414712e-01
+Chebyshev polynomial degree: 1000
+
+kPoint: 0
+eigen value   0: -6.5080673919282006e+01
+eigen value   1: -6.5080668091951054e+01
+eigen value   2: -6.5080668038910090e+01
+eigen value   3: -6.5080667848490563e+01
+eigen value   4: -6.5080667828594699e+01
+eigen value   5: -6.5080664133060921e+01
+eigen value   6: -6.5080664056675914e+01
+eigen value   7: -6.5080664041280912e+01
+eigen value   8: -4.9788844802531758e+00
+eigen value   9: -4.9787321547822483e+00
+eigen value  10: -4.9787305120874725e+00
+eigen value  11: -4.9787304548148654e+00
+eigen value  12: -4.9787304285338490e+00
+eigen value  13: -4.9787270214426398e+00
+eigen value  14: -4.9787269462565948e+00
+eigen value  15: -4.9785747975604959e+00
+eigen value  16: -3.4176115505998994e+00
+eigen value  17: -3.4176018038898044e+00
+eigen value  18: -3.4175997401203326e+00
+eigen value  19: -3.4175879736981178e+00
+eigen value  20: -3.4175832665793053e+00
+eigen value  21: -3.4175786979370635e+00
+eigen value  22: -3.4175160852234061e+00
+eigen value  23: -3.4174912660166523e+00
+eigen value  24: -3.4174841210014781e+00
+eigen value  25: -3.4172091234163364e+00
+eigen value  26: -3.4171953252242946e+00
+eigen value  27: -3.4171785308835543e+00
+eigen value  28: -3.4171780645644616e+00
+eigen value  29: -3.4171759802089396e+00
+eigen value  30: -3.4171592853742911e+00
+eigen value  31: -3.4168855431793563e+00
+eigen value  32: -3.4168603965086608e+00
+eigen value  33: -3.4168509783508840e+00
+eigen value  34: -3.4167888430346629e+00
+eigen value  35: -3.4167762447380983e+00
+eigen value  36: -3.4167723305966620e+00
+eigen value  37: -3.4167657935440769e+00
+eigen value  38: -3.4167609356452235e+00
+eigen value  39: -3.4167569147022223e+00
+eigen value  40: -5.6856397419602778e-01
+eigen value  41: -4.1501592598951409e-01
+eigen value  42: -4.1501571977542251e-01
+eigen value  43: -4.1501392002164766e-01
+eigen value  44: -4.1501344572417409e-01
+eigen value  45: -4.1501322030703164e-01
+eigen value  46: -4.1500942338074065e-01
+eigen value  47: -2.3525664174351177e-01
+eigen value  48: -2.3525580055141984e-01
+eigen value  49: -2.3525457476057829e-01
+eigen value  50: -2.3524713104234582e-01
+eigen value  51: -2.3524638330431658e-01
+eigen value  52: -2.3524620159934356e-01
+eigen value  53: -1.2741030181522175e-01
+eigen value  54: -1.2740837233174002e-01
+eigen value  55: -1.2740775514899119e-01
+eigen value  56: -1.1204027045462456e-01
+eigen value  57: -1.1203986341782696e-01
+eigen value  58: -1.1203670766468318e-01
+eigen value  59: -1.1203646878162762e-01
+eigen value  60: -1.1203634848054493e-01
+eigen value  61: -1.1196128833236069e-01
+eigen value  62: -3.9865088698086769e-02
+eigen value  63: -3.9863752187807210e-02
+eigen value  64: -3.9863295069166534e-02
+eigen value  65: -6.6430780426239028e-03
+eigen value  66: 1.4817154730793897e-01
+eigen value  67: 1.5087212042367612e-01
+eigen value  68: 1.5087266955464074e-01
+eigen value  69: 2.3655941069899702e-01
+eigen value  70: 2.3709655162486076e-01
+eigen value  71: 2.3715219780405841e-01
+
+Fermi energy constraint residual (bisection)      :    5.2638426950579742e-10
+Fermi energy constraint residual (Newton-Raphson) :    2.8421709430404007e-14
+Fermi energy                                      :   -1.2027022558733902e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 3.959815e+01, current abs. residual: 3.547143e-11, nsteps: 627, abs. tolerance criterion: 3.959815e-11
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 1.00000000000000
+fractional occupancy 5: 1.00000000000000
+fractional occupancy 6: 1.00000000000000
+fractional occupancy 7: 1.00000000000000
+fractional occupancy 8: 1.00000000000000
+fractional occupancy 9: 1.00000000000000
+fractional occupancy 10: 1.00000000000000
+fractional occupancy 11: 1.00000000000000
+fractional occupancy 12: 1.00000000000000
+fractional occupancy 13: 1.00000000000000
+fractional occupancy 14: 1.00000000000000
+fractional occupancy 15: 1.00000000000000
+fractional occupancy 16: 1.00000000000000
+fractional occupancy 17: 1.00000000000000
+fractional occupancy 18: 1.00000000000000
+fractional occupancy 19: 1.00000000000000
+fractional occupancy 20: 1.00000000000000
+fractional occupancy 21: 1.00000000000000
+fractional occupancy 22: 1.00000000000000
+fractional occupancy 23: 1.00000000000000
+fractional occupancy 24: 1.00000000000000
+fractional occupancy 25: 1.00000000000000
+fractional occupancy 26: 1.00000000000000
+fractional occupancy 27: 1.00000000000000
+fractional occupancy 28: 1.00000000000000
+fractional occupancy 29: 1.00000000000000
+fractional occupancy 30: 1.00000000000000
+fractional occupancy 31: 1.00000000000000
+fractional occupancy 32: 1.00000000000000
+fractional occupancy 33: 1.00000000000000
+fractional occupancy 34: 1.00000000000000
+fractional occupancy 35: 1.00000000000000
+fractional occupancy 36: 1.00000000000000
+fractional occupancy 37: 1.00000000000000
+fractional occupancy 38: 1.00000000000000
+fractional occupancy 39: 1.00000000000000
+fractional occupancy 40: 1.00000000000000
+fractional occupancy 41: 1.00000000000000
+fractional occupancy 42: 1.00000000000000
+fractional occupancy 43: 1.00000000000000
+fractional occupancy 44: 1.00000000000000
+fractional occupancy 45: 1.00000000000000
+fractional occupancy 46: 1.00000000000000
+fractional occupancy 47: 1.00000000000000
+fractional occupancy 48: 1.00000000000000
+fractional occupancy 49: 1.00000000000000
+fractional occupancy 50: 1.00000000000000
+fractional occupancy 51: 1.00000000000000
+fractional occupancy 52: 1.00000000000000
+fractional occupancy 53: 0.98911382399813
+fractional occupancy 54: 0.98910069506759
+fractional occupancy 55: 0.98909649221965
+fractional occupancy 56: 0.00549925186012
+fractional occupancy 57: 0.00549784615255
+fractional occupancy 58: 0.00548695983059
+fractional occupancy 59: 0.00548613663507
+fractional occupancy 60: 0.00548572212177
+fractional occupancy 61: 0.00523307211452
+fractional occupancy 62: 0.00000000000000
+fractional occupancy 63: 0.00000000000000
+fractional occupancy 64: 0.00000000000000
+fractional occupancy 65: 0.00000000000000
+fractional occupancy 66: 0.00000000000000
+fractional occupancy 67: 0.00000000000000
+fractional occupancy 68: 0.00000000000000
+fractional occupancy 69: 0.00000000000000
+fractional occupancy 70: 0.00000000000000
+fractional occupancy 71: 0.00000000000000
+
+number of electrons: 1.1199912803306151e+02 
+
+Energy computations
+-------------------
+Band energy             :  -1.2946788389624930e+03
+Kinetic energy          :   2.3021785282374126e+03
+Exchange energy         :  -1.4992010365272958e+02
+Correlation energy      :  -8.5739790997426155e+00
+Electrostatic energy    :  -4.4506296090956730e+03
+Total energy            :  -2.3069451636107324e+03
+Total energy per atom   :  -2.8836814545134155e+02
+SCF iteration 17 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 18 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 4.089521e-07
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 3.959815e+01, current abs. residual: 3.547175e-11, nsteps: 627, abs. tolerance criterion: 3.959815e-11
+
+upper bound of unwanted spectrum:  1.8747229641e+05
+lower bound of unwanted spectrum:  2.3715219780e-01
+Chebyshev polynomial degree: 1000
+
+kPoint: 0
+eigen value   0: -6.5080673893403883e+01
+eigen value   1: -6.5080668008288924e+01
+eigen value   2: -6.5080668000861294e+01
+eigen value   3: -6.5080667810232242e+01
+eigen value   4: -6.5080667797724445e+01
+eigen value   5: -6.5080664066141793e+01
+eigen value   6: -6.5080664041268506e+01
+eigen value   7: -6.5080663965836422e+01
+eigen value   8: -4.9788844389520737e+00
+eigen value   9: -4.9787321208527384e+00
+eigen value  10: -4.9787304486448054e+00
+eigen value  11: -4.9787304241868604e+00
+eigen value  12: -4.9787303986275298e+00
+eigen value  13: -4.9787269545441548e+00
+eigen value  14: -4.9787269225099857e+00
+eigen value  15: -4.9785747560186646e+00
+eigen value  16: -3.4176115152261710e+00
+eigen value  17: -3.4176017463497828e+00
+eigen value  18: -3.4175996963608126e+00
+eigen value  19: -3.4175879292866638e+00
+eigen value  20: -3.4175832398522163e+00
+eigen value  21: -3.4175786583675776e+00
+eigen value  22: -3.4175160419987773e+00
+eigen value  23: -3.4174912225193443e+00
+eigen value  24: -3.4174840795930534e+00
+eigen value  25: -3.4172090812961868e+00
+eigen value  26: -3.4171952835215440e+00
+eigen value  27: -3.4171784897525890e+00
+eigen value  28: -3.4171780224431925e+00
+eigen value  29: -3.4171759384291773e+00
+eigen value  30: -3.4171592435090505e+00
+eigen value  31: -3.4168855025369980e+00
+eigen value  32: -3.4168603570319580e+00
+eigen value  33: -3.4168509364213304e+00
+eigen value  34: -3.4167888067769048e+00
+eigen value  35: -3.4167761888241892e+00
+eigen value  36: -3.4167722796069393e+00
+eigen value  37: -3.4167657486776126e+00
+eigen value  38: -3.4167609113432307e+00
+eigen value  39: -3.4167568736699292e+00
+eigen value  40: -5.6856393493382174e-01
+eigen value  41: -4.1501587238475784e-01
+eigen value  42: -4.1501569547093442e-01
+eigen value  43: -4.1501388041856280e-01
+eigen value  44: -4.1501340589221669e-01
+eigen value  45: -4.1501318217423083e-01
+eigen value  46: -4.1500938387760322e-01
+eigen value  47: -2.3525660384850497e-01
+eigen value  48: -2.3525575401334198e-01
+eigen value  49: -2.3525453814745470e-01
+eigen value  50: -2.3524709113815159e-01
+eigen value  51: -2.3524634364906530e-01
+eigen value  52: -2.3524616901170134e-01
+eigen value  53: -1.2741026257648425e-01
+eigen value  54: -1.2740833314179281e-01
+eigen value  55: -1.2740771590012584e-01
+eigen value  56: -1.1204023162317227e-01
+eigen value  57: -1.1203981529034600e-01
+eigen value  58: -1.1203666585868019e-01
+eigen value  59: -1.1203642561648895e-01
+eigen value  60: -1.1203631075158069e-01
+eigen value  61: -1.1196125566461985e-01
+eigen value  62: -3.9865050068929930e-02
+eigen value  63: -3.9863713594326160e-02
+eigen value  64: -3.9863256463853462e-02
+eigen value  65: -6.6430378300111415e-03
+eigen value  66: 1.4817159186520315e-01
+eigen value  67: 1.5087215463292805e-01
+eigen value  68: 1.5087270402999273e-01
+eigen value  69: 2.3655851683857024e-01
+eigen value  70: 2.3703951986098026e-01
+eigen value  71: 2.3709114995769048e-01
+
+Fermi energy constraint residual (bisection)      :    5.3930193644191604e-11
+Fermi energy constraint residual (Newton-Raphson) :    0.0000000000000000e+00
+Fermi energy                                      :   -1.2027018574801328e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 3.959815e+01, current abs. residual: 3.547115e-11, nsteps: 627, abs. tolerance criterion: 3.959815e-11
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 1.00000000000000
+fractional occupancy 5: 1.00000000000000
+fractional occupancy 6: 1.00000000000000
+fractional occupancy 7: 1.00000000000000
+fractional occupancy 8: 1.00000000000000
+fractional occupancy 9: 1.00000000000000
+fractional occupancy 10: 1.00000000000000
+fractional occupancy 11: 1.00000000000000
+fractional occupancy 12: 1.00000000000000
+fractional occupancy 13: 1.00000000000000
+fractional occupancy 14: 1.00000000000000
+fractional occupancy 15: 1.00000000000000
+fractional occupancy 16: 1.00000000000000
+fractional occupancy 17: 1.00000000000000
+fractional occupancy 18: 1.00000000000000
+fractional occupancy 19: 1.00000000000000
+fractional occupancy 20: 1.00000000000000
+fractional occupancy 21: 1.00000000000000
+fractional occupancy 22: 1.00000000000000
+fractional occupancy 23: 1.00000000000000
+fractional occupancy 24: 1.00000000000000
+fractional occupancy 25: 1.00000000000000
+fractional occupancy 26: 1.00000000000000
+fractional occupancy 27: 1.00000000000000
+fractional occupancy 28: 1.00000000000000
+fractional occupancy 29: 1.00000000000000
+fractional occupancy 30: 1.00000000000000
+fractional occupancy 31: 1.00000000000000
+fractional occupancy 32: 1.00000000000000
+fractional occupancy 33: 1.00000000000000
+fractional occupancy 34: 1.00000000000000
+fractional occupancy 35: 1.00000000000000
+fractional occupancy 36: 1.00000000000000
+fractional occupancy 37: 1.00000000000000
+fractional occupancy 38: 1.00000000000000
+fractional occupancy 39: 1.00000000000000
+fractional occupancy 40: 1.00000000000000
+fractional occupancy 41: 1.00000000000000
+fractional occupancy 42: 1.00000000000000
+fractional occupancy 43: 1.00000000000000
+fractional occupancy 44: 1.00000000000000
+fractional occupancy 45: 1.00000000000000
+fractional occupancy 46: 1.00000000000000
+fractional occupancy 47: 1.00000000000000
+fractional occupancy 48: 1.00000000000000
+fractional occupancy 49: 1.00000000000000
+fractional occupancy 50: 1.00000000000000
+fractional occupancy 51: 1.00000000000000
+fractional occupancy 52: 1.00000000000000
+fractional occupancy 53: 0.98911382808232
+fractional occupancy 54: 0.98910069948884
+fractional occupancy 55: 0.98909649624129
+fractional occupancy 56: 0.00549925534127
+fractional occupancy 57: 0.00549781753299
+fractional occupancy 58: 0.00548695305288
+fractional occupancy 59: 0.00548612517512
+fractional occupancy 60: 0.00548572939303
+fractional occupancy 61: 0.00523309569225
+fractional occupancy 62: 0.00000000000000
+fractional occupancy 63: 0.00000000000000
+fractional occupancy 64: 0.00000000000000
+fractional occupancy 65: 0.00000000000000
+fractional occupancy 66: 0.00000000000000
+fractional occupancy 67: 0.00000000000000
+fractional occupancy 68: 0.00000000000000
+fractional occupancy 69: 0.00000000000000
+fractional occupancy 70: 0.00000000000000
+fractional occupancy 71: 0.00000000000000
+
+number of electrons: 1.1199912803306205e+02 
+
+Energy computations
+-------------------
+Band energy             :  -1.2946788342975151e+03
+Kinetic energy          :   2.3021785278043858e+03
+Exchange energy         :  -1.4992010362859457e+02
+Correlation energy      :  -8.5739790992662002e+00
+Electrostatic energy    :  -4.4506296086875855e+03
+Total energy            :  -2.3069451636110607e+03
+Total energy per atom   :  -2.8836814545138259e+02
+SCF iteration 18 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 19 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 8.553493e-08
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 3.959815e+01, current abs. residual: 3.547087e-11, nsteps: 627, abs. tolerance criterion: 3.959815e-11
+
+upper bound of unwanted spectrum:  1.8747229641e+05
+lower bound of unwanted spectrum:  2.3709114996e-01
+Chebyshev polynomial degree: 1000
+
+kPoint: 0
+eigen value   0: -6.5080673872838162e+01
+eigen value   1: -6.5080667987596101e+01
+eigen value   2: -6.5080667987107759e+01
+eigen value   3: -6.5080667793011415e+01
+eigen value   4: -6.5080667785502641e+01
+eigen value   5: -6.5080664036049583e+01
+eigen value   6: -6.5080664032773868e+01
+eigen value   7: -6.5080664016798480e+01
+eigen value   8: -4.9788844336904088e+00
+eigen value   9: -4.9787321120590171e+00
+eigen value  10: -4.9787304387340230e+00
+eigen value  11: -4.9787304144852378e+00
+eigen value  12: -4.9787303895996970e+00
+eigen value  13: -4.9787269721920815e+00
+eigen value  14: -4.9787269116917319e+00
+eigen value  15: -4.9785747510752243e+00
+eigen value  16: -3.4176115144616750e+00
+eigen value  17: -3.4176017456015910e+00
+eigen value  18: -3.4175996862922924e+00
+eigen value  19: -3.4175879248564982e+00
+eigen value  20: -3.4175832278104767e+00
+eigen value  21: -3.4175786513142157e+00
+eigen value  22: -3.4175160375449356e+00
+eigen value  23: -3.4174912193253140e+00
+eigen value  24: -3.4174840742625130e+00
+eigen value  25: -3.4172090804139938e+00
+eigen value  26: -3.4171952735750004e+00
+eigen value  27: -3.4171784797721942e+00
+eigen value  28: -3.4171780126372600e+00
+eigen value  29: -3.4171759376691200e+00
+eigen value  30: -3.4171592427690229e+00
+eigen value  31: -3.4168854963365716e+00
+eigen value  32: -3.4168603494918974e+00
+eigen value  33: -3.4168509309324193e+00
+eigen value  34: -3.4167888050611888e+00
+eigen value  35: -3.4167761918467483e+00
+eigen value  36: -3.4167722715607334e+00
+eigen value  37: -3.4167657454979077e+00
+eigen value  38: -3.4167608994925196e+00
+eigen value  39: -3.4167568669295383e+00
+eigen value  40: -5.6856392998994754e-01
+eigen value  41: -4.1501587439857746e-01
+eigen value  42: -4.1501568859390436e-01
+eigen value  43: -4.1501387476860752e-01
+eigen value  44: -4.1501340027555672e-01
+eigen value  45: -4.1501317657559167e-01
+eigen value  46: -4.1500937663544135e-01
+eigen value  47: -2.3525660081989763e-01
+eigen value  48: -2.3525575199420082e-01
+eigen value  49: -2.3525453155405651e-01
+eigen value  50: -2.3524708452677781e-01
+eigen value  51: -2.3524633993026148e-01
+eigen value  52: -2.3524616228156539e-01
+eigen value  53: -1.2741025778474996e-01
+eigen value  54: -1.2740832838755570e-01
+eigen value  55: -1.2740771111363472e-01
+eigen value  56: -1.1204022682138669e-01
+eigen value  57: -1.1203980836724071e-01
+eigen value  58: -1.1203666014442812e-01
+eigen value  59: -1.1203641986105860e-01
+eigen value  60: -1.1203630501511171e-01
+eigen value  61: -1.1196125071273005e-01
+eigen value  62: -3.9865045271139835e-02
+eigen value  63: -3.9863708831488216e-02
+eigen value  64: -3.9863251686787116e-02
+eigen value  65: -6.6430326961576629e-03
+eigen value  66: 1.4817159936175775e-01
+eigen value  67: 1.5087215826128419e-01
+eigen value  68: 1.5087270770316819e-01
+eigen value  69: 2.3655784600243487e-01
+eigen value  70: 2.3699066634827071e-01
+eigen value  71: 2.3703874186409787e-01
+
+Fermi energy constraint residual (bisection)      :    6.8136785102979047e-10
+Fermi energy constraint residual (Newton-Raphson) :    1.4210854715202004e-14
+Fermi energy                                      :   -1.2027018053175759e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 3.959815e+01, current abs. residual: 3.547051e-11, nsteps: 627, abs. tolerance criterion: 3.959815e-11
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 1.00000000000000
+fractional occupancy 5: 1.00000000000000
+fractional occupancy 6: 1.00000000000000
+fractional occupancy 7: 1.00000000000000
+fractional occupancy 8: 1.00000000000000
+fractional occupancy 9: 1.00000000000000
+fractional occupancy 10: 1.00000000000000
+fractional occupancy 11: 1.00000000000000
+fractional occupancy 12: 1.00000000000000
+fractional occupancy 13: 1.00000000000000
+fractional occupancy 14: 1.00000000000000
+fractional occupancy 15: 1.00000000000000
+fractional occupancy 16: 1.00000000000000
+fractional occupancy 17: 1.00000000000000
+fractional occupancy 18: 1.00000000000000
+fractional occupancy 19: 1.00000000000000
+fractional occupancy 20: 1.00000000000000
+fractional occupancy 21: 1.00000000000000
+fractional occupancy 22: 1.00000000000000
+fractional occupancy 23: 1.00000000000000
+fractional occupancy 24: 1.00000000000000
+fractional occupancy 25: 1.00000000000000
+fractional occupancy 26: 1.00000000000000
+fractional occupancy 27: 1.00000000000000
+fractional occupancy 28: 1.00000000000000
+fractional occupancy 29: 1.00000000000000
+fractional occupancy 30: 1.00000000000000
+fractional occupancy 31: 1.00000000000000
+fractional occupancy 32: 1.00000000000000
+fractional occupancy 33: 1.00000000000000
+fractional occupancy 34: 1.00000000000000
+fractional occupancy 35: 1.00000000000000
+fractional occupancy 36: 1.00000000000000
+fractional occupancy 37: 1.00000000000000
+fractional occupancy 38: 1.00000000000000
+fractional occupancy 39: 1.00000000000000
+fractional occupancy 40: 1.00000000000000
+fractional occupancy 41: 1.00000000000000
+fractional occupancy 42: 1.00000000000000
+fractional occupancy 43: 1.00000000000000
+fractional occupancy 44: 1.00000000000000
+fractional occupancy 45: 1.00000000000000
+fractional occupancy 46: 1.00000000000000
+fractional occupancy 47: 1.00000000000000
+fractional occupancy 48: 1.00000000000000
+fractional occupancy 49: 1.00000000000000
+fractional occupancy 50: 1.00000000000000
+fractional occupancy 51: 1.00000000000000
+fractional occupancy 52: 1.00000000000000
+fractional occupancy 53: 0.98911383096920
+fractional occupancy 54: 0.98910070263446
+fractional occupancy 55: 0.98909649916843
+fractional occupancy 56: 0.00549925677283
+fractional occupancy 57: 0.00549781163915
+fractional occupancy 58: 0.00548695133665
+fractional occupancy 59: 0.00548612331726
+fractional occupancy 60: 0.00548572760063
+fractional occupancy 61: 0.00523309656140
+fractional occupancy 62: 0.00000000000000
+fractional occupancy 63: 0.00000000000000
+fractional occupancy 64: 0.00000000000000
+fractional occupancy 65: 0.00000000000000
+fractional occupancy 66: 0.00000000000000
+fractional occupancy 67: 0.00000000000000
+fractional occupancy 68: 0.00000000000000
+fractional occupancy 69: 0.00000000000000
+fractional occupancy 70: 0.00000000000000
+fractional occupancy 71: 0.00000000000000
+
+number of electrons: 1.1199912803306228e+02 
+
+Energy computations
+-------------------
+Band energy             :  -1.2946788336621801e+03
+Kinetic energy          :   2.3021785275941493e+03
+Exchange energy         :  -1.4992010362025621e+02
+Correlation energy      :  -8.5739790992653013e+00
+Electrostatic energy    :  -4.4506296084856831e+03
+Total energy            :  -2.3069451636110552e+03
+Total energy per atom   :  -2.8836814545138191e+02
+SCF iteration 19 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 20 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 2.145995e-08
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 3.959815e+01, current abs. residual: 3.547096e-11, nsteps: 627, abs. tolerance criterion: 3.959815e-11
+
+upper bound of unwanted spectrum:  1.8747229641e+05
+lower bound of unwanted spectrum:  2.3703874186e-01
+Chebyshev polynomial degree: 1000
+
+kPoint: 0
+eigen value   0: -6.5080673873007385e+01
+eigen value   1: -6.5080667994998549e+01
+eigen value   2: -6.5080667994167783e+01
+eigen value   3: -6.5080667796275577e+01
+eigen value   4: -6.5080667796182595e+01
+eigen value   5: -6.5080664035772401e+01
+eigen value   6: -6.5080664034662689e+01
+eigen value   7: -6.5080664013979558e+01
+eigen value   8: -4.9788844368339582e+00
+eigen value   9: -4.9787321131869966e+00
+eigen value  10: -4.9787304442986660e+00
+eigen value  11: -4.9787304199144033e+00
+eigen value  12: -4.9787303955349147e+00
+eigen value  13: -4.9787269713235283e+00
+eigen value  14: -4.9787269132342438e+00
+eigen value  15: -4.9785747541733478e+00
+eigen value  16: -3.4176115166689285e+00
+eigen value  17: -3.4176017491478401e+00
+eigen value  18: -3.4175996899859138e+00
+eigen value  19: -3.4175879278285781e+00
+eigen value  20: -3.4175832311273058e+00
+eigen value  21: -3.4175786547047751e+00
+eigen value  22: -3.4175160406688030e+00
+eigen value  23: -3.4174912222741640e+00
+eigen value  24: -3.4174840775126967e+00
+eigen value  25: -3.4172090810041142e+00
+eigen value  26: -3.4171952793377787e+00
+eigen value  27: -3.4171784854899876e+00
+eigen value  28: -3.4171780184401634e+00
+eigen value  29: -3.4171759382644660e+00
+eigen value  30: -3.4171592433060405e+00
+eigen value  31: -3.4168854995661686e+00
+eigen value  32: -3.4168603528800459e+00
+eigen value  33: -3.4168509339966224e+00
+eigen value  34: -3.4167888076280031e+00
+eigen value  35: -3.4167761948100255e+00
+eigen value  36: -3.4167722755594374e+00
+eigen value  37: -3.4167657482237406e+00
+eigen value  38: -3.4167609026418884e+00
+eigen value  39: -3.4167568701150510e+00
+eigen value  40: -5.6856393260931337e-01
+eigen value  41: -4.1501587637594639e-01
+eigen value  42: -4.1501569068253236e-01
+eigen value  43: -4.1501387785144889e-01
+eigen value  44: -4.1501340335480730e-01
+eigen value  45: -4.1501317962875672e-01
+eigen value  46: -4.1500937931111331e-01
+eigen value  47: -2.3525660325289824e-01
+eigen value  48: -2.3525575482912714e-01
+eigen value  49: -2.3525453433160323e-01
+eigen value  50: -2.3524708741634365e-01
+eigen value  51: -2.3524634237574205e-01
+eigen value  52: -2.3524616486520131e-01
+eigen value  53: -1.2741026047054937e-01
+eigen value  54: -1.2740833107439278e-01
+eigen value  55: -1.2740771379657395e-01
+eigen value  56: -1.1204022915656890e-01
+eigen value  57: -1.1203981174957596e-01
+eigen value  58: -1.1203666249153356e-01
+eigen value  59: -1.1203642220563216e-01
+eigen value  60: -1.1203630736726689e-01
+eigen value  61: -1.1196125250684257e-01
+eigen value  62: -3.9865047915227665e-02
+eigen value  63: -3.9863711475924789e-02
+eigen value  64: -3.9863254331029760e-02
+eigen value  65: -6.6430353251507738e-03
+eigen value  66: 1.4817159734663657e-01
+eigen value  67: 1.5087215537201287e-01
+eigen value  68: 1.5087270483062856e-01
+eigen value  69: 2.3655730638458447e-01
+eigen value  70: 2.3694851195491626e-01
+eigen value  71: 2.3699343247425003e-01
+
+Fermi energy constraint residual (bisection)      :    1.4073009424464544e-10
+Fermi energy constraint residual (Newton-Raphson) :    1.4210854715202004e-14
+Fermi energy                                      :   -1.2027018308954320e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 3.959815e+01, current abs. residual: 3.547068e-11, nsteps: 627, abs. tolerance criterion: 3.959815e-11
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 1.00000000000000
+fractional occupancy 5: 1.00000000000000
+fractional occupancy 6: 1.00000000000000
+fractional occupancy 7: 1.00000000000000
+fractional occupancy 8: 1.00000000000000
+fractional occupancy 9: 1.00000000000000
+fractional occupancy 10: 1.00000000000000
+fractional occupancy 11: 1.00000000000000
+fractional occupancy 12: 1.00000000000000
+fractional occupancy 13: 1.00000000000000
+fractional occupancy 14: 1.00000000000000
+fractional occupancy 15: 1.00000000000000
+fractional occupancy 16: 1.00000000000000
+fractional occupancy 17: 1.00000000000000
+fractional occupancy 18: 1.00000000000000
+fractional occupancy 19: 1.00000000000000
+fractional occupancy 20: 1.00000000000000
+fractional occupancy 21: 1.00000000000000
+fractional occupancy 22: 1.00000000000000
+fractional occupancy 23: 1.00000000000000
+fractional occupancy 24: 1.00000000000000
+fractional occupancy 25: 1.00000000000000
+fractional occupancy 26: 1.00000000000000
+fractional occupancy 27: 1.00000000000000
+fractional occupancy 28: 1.00000000000000
+fractional occupancy 29: 1.00000000000000
+fractional occupancy 30: 1.00000000000000
+fractional occupancy 31: 1.00000000000000
+fractional occupancy 32: 1.00000000000000
+fractional occupancy 33: 1.00000000000000
+fractional occupancy 34: 1.00000000000000
+fractional occupancy 35: 1.00000000000000
+fractional occupancy 36: 1.00000000000000
+fractional occupancy 37: 1.00000000000000
+fractional occupancy 38: 1.00000000000000
+fractional occupancy 39: 1.00000000000000
+fractional occupancy 40: 1.00000000000000
+fractional occupancy 41: 1.00000000000000
+fractional occupancy 42: 1.00000000000000
+fractional occupancy 43: 1.00000000000000
+fractional occupancy 44: 1.00000000000000
+fractional occupancy 45: 1.00000000000000
+fractional occupancy 46: 1.00000000000000
+fractional occupancy 47: 1.00000000000000
+fractional occupancy 48: 1.00000000000000
+fractional occupancy 49: 1.00000000000000
+fractional occupancy 50: 1.00000000000000
+fractional occupancy 51: 1.00000000000000
+fractional occupancy 52: 1.00000000000000
+fractional occupancy 53: 0.98911383183974
+fractional occupancy 54: 0.98910070351310
+fractional occupancy 55: 0.98909650002085
+fractional occupancy 56: 0.00549925600397
+fractional occupancy 57: 0.00549781448636
+fractional occupancy 58: 0.00548695061059
+fractional occupancy 59: 0.00548612258258
+fractional occupancy 60: 0.00548572689213
+fractional occupancy 61: 0.00523309405070
+fractional occupancy 62: 0.00000000000000
+fractional occupancy 63: 0.00000000000000
+fractional occupancy 64: 0.00000000000000
+fractional occupancy 65: 0.00000000000000
+fractional occupancy 66: 0.00000000000000
+fractional occupancy 67: 0.00000000000000
+fractional occupancy 68: 0.00000000000000
+fractional occupancy 69: 0.00000000000000
+fractional occupancy 70: 0.00000000000000
+fractional occupancy 71: 0.00000000000000
+
+number of electrons: 1.1199912803306231e+02 
+
+Energy computations
+-------------------
+Band energy             :  -1.2946788340035714e+03
+Kinetic energy          :   2.3021785276387468e+03
+Exchange energy         :  -1.4992010362385355e+02
+Correlation energy      :  -8.5739790993964391e+00
+Electrostatic energy    :  -4.4506296085265649e+03
+Total energy            :  -2.3069451636110680e+03
+Total energy per atom   :  -2.8836814545138350e+02
+SCF iteration 20 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 21 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 7.838425e-09
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 3.959815e+01, current abs. residual: 3.547060e-11, nsteps: 627, abs. tolerance criterion: 3.959815e-11
+
+upper bound of unwanted spectrum:  1.8747229641e+05
+lower bound of unwanted spectrum:  2.3699343247e-01
+Chebyshev polynomial degree: 1000
+
+kPoint: 0
+eigen value   0: -6.5080673871582960e+01
+eigen value   1: -6.5080667992431771e+01
+eigen value   2: -6.5080667992067632e+01
+eigen value   3: -6.5080667795247976e+01
+eigen value   4: -6.5080667794497501e+01
+eigen value   5: -6.5080664035099787e+01
+eigen value   6: -6.5080664033283568e+01
+eigen value   7: -6.5080664011251400e+01
+eigen value   8: -4.9788844351827173e+00
+eigen value   9: -4.9787321116579850e+00
+eigen value  10: -4.9787304420005762e+00
+eigen value  11: -4.9787304181654068e+00
+eigen value  12: -4.9787303943250150e+00
+eigen value  13: -4.9787269691766820e+00
+eigen value  14: -4.9787269122616609e+00
+eigen value  15: -4.9785747525229622e+00
+eigen value  16: -3.4176115147660173e+00
+eigen value  17: -3.4176017475771046e+00
+eigen value  18: -3.4175996885065634e+00
+eigen value  19: -3.4175879260476094e+00
+eigen value  20: -3.4175832295599315e+00
+eigen value  21: -3.4175786531452679e+00
+eigen value  22: -3.4175160390500277e+00
+eigen value  23: -3.4174912205288677e+00
+eigen value  24: -3.4174840758572538e+00
+eigen value  25: -3.4172090794571686e+00
+eigen value  26: -3.4171952775779433e+00
+eigen value  27: -3.4171784837215298e+00
+eigen value  28: -3.4171780167044954e+00
+eigen value  29: -3.4171759367221242e+00
+eigen value  30: -3.4171592417547312e+00
+eigen value  31: -3.4168854978844325e+00
+eigen value  32: -3.4168603513449010e+00
+eigen value  33: -3.4168509323468297e+00
+eigen value  34: -3.4167888057297628e+00
+eigen value  35: -3.4167761929803961e+00
+eigen value  36: -3.4167722742220183e+00
+eigen value  37: -3.4167657464566181e+00
+eigen value  38: -3.4167609010790998e+00
+eigen value  39: -3.4167568685229326e+00
+eigen value  40: -5.6856393109189174e-01
+eigen value  41: -4.1501587491762976e-01
+eigen value  42: -4.1501568928967242e-01
+eigen value  43: -4.1501387625988850e-01
+eigen value  44: -4.1501340177367352e-01
+eigen value  45: -4.1501317804558974e-01
+eigen value  46: -4.1500937768991741e-01
+eigen value  47: -2.3525660160813985e-01
+eigen value  48: -2.3525575328522519e-01
+eigen value  49: -2.3525453293202428e-01
+eigen value  50: -2.3524708603945843e-01
+eigen value  51: -2.3524634074459963e-01
+eigen value  52: -2.3524616340736609e-01
+eigen value  53: -1.2741025889490976e-01
+eigen value  54: -1.2740832950431866e-01
+eigen value  55: -1.2740771222112884e-01
+eigen value  56: -1.1204022744483967e-01
+eigen value  57: -1.1203981018073868e-01
+eigen value  58: -1.1203666101675842e-01
+eigen value  59: -1.1203642073579471e-01
+eigen value  60: -1.1203630589462163e-01
+eigen value  61: -1.1196125137465426e-01
+eigen value  62: -3.9865046453349574e-02
+eigen value  63: -3.9863710019597758e-02
+eigen value  64: -3.9863252870267811e-02
+eigen value  65: -6.6430337401954453e-03
+eigen value  66: 1.4817159893318260e-01
+eigen value  67: 1.5087215676219060e-01
+eigen value  68: 1.5087270622225687e-01
+eigen value  69: 2.3655685831781131e-01
+eigen value  70: 2.3691192697024460e-01
+eigen value  71: 2.3695403588989458e-01
+
+Fermi energy constraint residual (bisection)      :    9.0746254954865435e-10
+Fermi energy constraint residual (Newton-Raphson) :    1.4210854715202004e-14
+Fermi energy                                      :   -1.2027018156561395e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 3.959815e+01, current abs. residual: 3.547049e-11, nsteps: 627, abs. tolerance criterion: 3.959815e-11
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 1.00000000000000
+fractional occupancy 5: 1.00000000000000
+fractional occupancy 6: 1.00000000000000
+fractional occupancy 7: 1.00000000000000
+fractional occupancy 8: 1.00000000000000
+fractional occupancy 9: 1.00000000000000
+fractional occupancy 10: 1.00000000000000
+fractional occupancy 11: 1.00000000000000
+fractional occupancy 12: 1.00000000000000
+fractional occupancy 13: 1.00000000000000
+fractional occupancy 14: 1.00000000000000
+fractional occupancy 15: 1.00000000000000
+fractional occupancy 16: 1.00000000000000
+fractional occupancy 17: 1.00000000000000
+fractional occupancy 18: 1.00000000000000
+fractional occupancy 19: 1.00000000000000
+fractional occupancy 20: 1.00000000000000
+fractional occupancy 21: 1.00000000000000
+fractional occupancy 22: 1.00000000000000
+fractional occupancy 23: 1.00000000000000
+fractional occupancy 24: 1.00000000000000
+fractional occupancy 25: 1.00000000000000
+fractional occupancy 26: 1.00000000000000
+fractional occupancy 27: 1.00000000000000
+fractional occupancy 28: 1.00000000000000
+fractional occupancy 29: 1.00000000000000
+fractional occupancy 30: 1.00000000000000
+fractional occupancy 31: 1.00000000000000
+fractional occupancy 32: 1.00000000000000
+fractional occupancy 33: 1.00000000000000
+fractional occupancy 34: 1.00000000000000
+fractional occupancy 35: 1.00000000000000
+fractional occupancy 36: 1.00000000000000
+fractional occupancy 37: 1.00000000000000
+fractional occupancy 38: 1.00000000000000
+fractional occupancy 39: 1.00000000000000
+fractional occupancy 40: 1.00000000000000
+fractional occupancy 41: 1.00000000000000
+fractional occupancy 42: 1.00000000000000
+fractional occupancy 43: 1.00000000000000
+fractional occupancy 44: 1.00000000000000
+fractional occupancy 45: 1.00000000000000
+fractional occupancy 46: 1.00000000000000
+fractional occupancy 47: 1.00000000000000
+fractional occupancy 48: 1.00000000000000
+fractional occupancy 49: 1.00000000000000
+fractional occupancy 50: 1.00000000000000
+fractional occupancy 51: 1.00000000000000
+fractional occupancy 52: 1.00000000000000
+fractional occupancy 53: 0.98911383148809
+fractional occupancy 54: 0.98910070319893
+fractional occupancy 55: 0.98909649966998
+fractional occupancy 56: 0.00549925535531
+fractional occupancy 57: 0.00549781433129
+fractional occupancy 58: 0.00548695077999
+fractional occupancy 59: 0.00548612276897
+fractional occupancy 60: 0.00548572706883
+fractional occupancy 61: 0.00523309533861
+fractional occupancy 62: 0.00000000000000
+fractional occupancy 63: 0.00000000000000
+fractional occupancy 64: 0.00000000000000
+fractional occupancy 65: 0.00000000000000
+fractional occupancy 66: 0.00000000000000
+fractional occupancy 67: 0.00000000000000
+fractional occupancy 68: 0.00000000000000
+fractional occupancy 69: 0.00000000000000
+fractional occupancy 70: 0.00000000000000
+fractional occupancy 71: 0.00000000000000
+
+number of electrons: 1.1199912803306225e+02 
+
+Energy computations
+-------------------
+Band energy             :  -1.2946788338216450e+03
+Kinetic energy          :   2.3021785276244045e+03
+Exchange energy         :  -1.4992010362215953e+02
+Correlation energy      :  -8.5739790993112646e+00
+Electrostatic energy    :  -4.4506296085140384e+03
+Total energy            :  -2.3069451636111053e+03
+Total energy per atom   :  -2.8836814545138816e+02
+SCF iteration 21 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 22 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 3.920105e-09
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 3.959815e+01, current abs. residual: 3.547116e-11, nsteps: 627, abs. tolerance criterion: 3.959815e-11
+
+upper bound of unwanted spectrum:  1.8747229641e+05
+lower bound of unwanted spectrum:  2.3695403589e-01
+Chebyshev polynomial degree: 1000
+
+kPoint: 0
+eigen value   0: -6.5080673872864210e+01
+eigen value   1: -6.5080667993322436e+01
+eigen value   2: -6.5080667993046504e+01
+eigen value   3: -6.5080667795116824e+01
+eigen value   4: -6.5080667795078199e+01
+eigen value   5: -6.5080664035387358e+01
+eigen value   6: -6.5080664034275486e+01
+eigen value   7: -6.5080664012042888e+01
+eigen value   8: -4.9788844359275286e+00
+eigen value   9: -4.9787321128079762e+00
+eigen value  10: -4.9787304429773513e+00
+eigen value  11: -4.9787304188237602e+00
+eigen value  12: -4.9787303946701638e+00
+eigen value  13: -4.9787269698661243e+00
+eigen value  14: -4.9787269128788596e+00
+eigen value  15: -4.9785747532574973e+00
+eigen value  16: -3.4176115155108788e+00
+eigen value  17: -3.4176017481603496e+00
+eigen value  18: -3.4175996893271146e+00
+eigen value  19: -3.4175879268386313e+00
+eigen value  20: -3.4175832304012146e+00
+eigen value  21: -3.4175786538514528e+00
+eigen value  22: -3.4175160397318400e+00
+eigen value  23: -3.4174912212801627e+00
+eigen value  24: -3.4174840765871184e+00
+eigen value  25: -3.4172090802727002e+00
+eigen value  26: -3.4171952782304524e+00
+eigen value  27: -3.4171784843723443e+00
+eigen value  28: -3.4171780173667923e+00
+eigen value  29: -3.4171759375424156e+00
+eigen value  30: -3.4171592425752175e+00
+eigen value  31: -3.4168854986599686e+00
+eigen value  32: -3.4168603520680816e+00
+eigen value  33: -3.4168509330921624e+00
+eigen value  34: -3.4167888064747132e+00
+eigen value  35: -3.4167761936472649e+00
+eigen value  36: -3.4167722748666773e+00
+eigen value  37: -3.4167657472373825e+00
+eigen value  38: -3.4167609019126410e+00
+eigen value  39: -3.4167568692449626e+00
+eigen value  40: -5.6856393186361931e-01
+eigen value  41: -4.1501587555364666e-01
+eigen value  42: -4.1501569002324573e-01
+eigen value  43: -4.1501387700731301e-01
+eigen value  44: -4.1501340251754404e-01
+eigen value  45: -4.1501317879296246e-01
+eigen value  46: -4.1500937868343979e-01
+eigen value  47: -2.3525660238802443e-01
+eigen value  48: -2.3525575400727344e-01
+eigen value  49: -2.3525453369409469e-01
+eigen value  50: -2.3524708680704146e-01
+eigen value  51: -2.3524634155574428e-01
+eigen value  52: -2.3524616420850936e-01
+eigen value  53: -1.2741025965262057e-01
+eigen value  54: -1.2740833026353307e-01
+eigen value  55: -1.2740771297894762e-01
+eigen value  56: -1.1204022844293778e-01
+eigen value  57: -1.1203981098227929e-01
+eigen value  58: -1.1203666179914300e-01
+eigen value  59: -1.1203642151760107e-01
+eigen value  60: -1.1203630667626409e-01
+eigen value  61: -1.1196125191664880e-01
+eigen value  62: -3.9865047238862056e-02
+eigen value  63: -3.9863710806604301e-02
+eigen value  64: -3.9863253656084147e-02
+eigen value  65: -6.6430344954249675e-03
+eigen value  66: 1.4817159818428452e-01
+eigen value  67: 1.5087215595894782e-01
+eigen value  68: 1.5087270541934533e-01
+eigen value  69: 2.3655646827760396e-01
+eigen value  70: 2.3688001356531377e-01
+eigen value  71: 2.3691960925703576e-01
+
+Fermi energy constraint residual (bisection)      :    9.5542418421246111e-10
+Fermi energy constraint residual (Newton-Raphson) :    1.4210854715202004e-14
+Fermi energy                                      :   -1.2027018233636232e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 3.959815e+01, current abs. residual: 3.547157e-11, nsteps: 627, abs. tolerance criterion: 3.959815e-11
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 1.00000000000000
+fractional occupancy 5: 1.00000000000000
+fractional occupancy 6: 1.00000000000000
+fractional occupancy 7: 1.00000000000000
+fractional occupancy 8: 1.00000000000000
+fractional occupancy 9: 1.00000000000000
+fractional occupancy 10: 1.00000000000000
+fractional occupancy 11: 1.00000000000000
+fractional occupancy 12: 1.00000000000000
+fractional occupancy 13: 1.00000000000000
+fractional occupancy 14: 1.00000000000000
+fractional occupancy 15: 1.00000000000000
+fractional occupancy 16: 1.00000000000000
+fractional occupancy 17: 1.00000000000000
+fractional occupancy 18: 1.00000000000000
+fractional occupancy 19: 1.00000000000000
+fractional occupancy 20: 1.00000000000000
+fractional occupancy 21: 1.00000000000000
+fractional occupancy 22: 1.00000000000000
+fractional occupancy 23: 1.00000000000000
+fractional occupancy 24: 1.00000000000000
+fractional occupancy 25: 1.00000000000000
+fractional occupancy 26: 1.00000000000000
+fractional occupancy 27: 1.00000000000000
+fractional occupancy 28: 1.00000000000000
+fractional occupancy 29: 1.00000000000000
+fractional occupancy 30: 1.00000000000000
+fractional occupancy 31: 1.00000000000000
+fractional occupancy 32: 1.00000000000000
+fractional occupancy 33: 1.00000000000000
+fractional occupancy 34: 1.00000000000000
+fractional occupancy 35: 1.00000000000000
+fractional occupancy 36: 1.00000000000000
+fractional occupancy 37: 1.00000000000000
+fractional occupancy 38: 1.00000000000000
+fractional occupancy 39: 1.00000000000000
+fractional occupancy 40: 1.00000000000000
+fractional occupancy 41: 1.00000000000000
+fractional occupancy 42: 1.00000000000000
+fractional occupancy 43: 1.00000000000000
+fractional occupancy 44: 1.00000000000000
+fractional occupancy 45: 1.00000000000000
+fractional occupancy 46: 1.00000000000000
+fractional occupancy 47: 1.00000000000000
+fractional occupancy 48: 1.00000000000000
+fractional occupancy 49: 1.00000000000000
+fractional occupancy 50: 1.00000000000000
+fractional occupancy 51: 1.00000000000000
+fractional occupancy 52: 1.00000000000000
+fractional occupancy 53: 0.98911383139943
+fractional occupancy 54: 0.98910070312040
+fractional occupancy 55: 0.98909649958191
+fractional occupancy 56: 0.00549925614057
+fractional occupancy 57: 0.00549781443762
+fractional occupancy 58: 0.00548695082009
+fractional occupancy 59: 0.00548612280707
+fractional occupancy 60: 0.00548572710636
+fractional occupancy 61: 0.00523309458655
+fractional occupancy 62: 0.00000000000000
+fractional occupancy 63: 0.00000000000000
+fractional occupancy 64: 0.00000000000000
+fractional occupancy 65: 0.00000000000000
+fractional occupancy 66: 0.00000000000000
+fractional occupancy 67: 0.00000000000000
+fractional occupancy 68: 0.00000000000000
+fractional occupancy 69: 0.00000000000000
+fractional occupancy 70: 0.00000000000000
+fractional occupancy 71: 0.00000000000000
+
+number of electrons: 1.1199912803306232e+02 
+
+Energy computations
+-------------------
+Band energy             :  -1.2946788339048164e+03
+Kinetic energy          :   2.3021785276198707e+03
+Exchange energy         :  -1.4992010362169825e+02
+Correlation energy      :  -8.5739790992901010e+00
+Electrostatic energy    :  -4.4506296085100439e+03
+Total energy            :  -2.3069451636111617e+03
+Total energy per atom   :  -2.8836814545139521e+02
+SCF iteration 22 complete
+
+
+**** Begin Self-Consistent-Field Iteration: 23 ****
+
+Anderson Mixing: L2 norm of electron-density difference: 9.494318e-10
+
+Poisson solve for total electrostatic potential (rhoIn+b):
+initial abs. residual: 3.959815e+01, current abs. residual: 3.547053e-11, nsteps: 627, abs. tolerance criterion: 3.959815e-11
+
+upper bound of unwanted spectrum:  1.8747229641e+05
+lower bound of unwanted spectrum:  2.3691960926e-01
+Chebyshev polynomial degree: 1000
+
+kPoint: 0
+eigen value   0: -6.5080673872511483e+01
+eigen value   1: -6.5080667993270339e+01
+eigen value   2: -6.5080667993075579e+01
+eigen value   3: -6.5080667795169092e+01
+eigen value   4: -6.5080667794528452e+01
+eigen value   5: -6.5080664035233298e+01
+eigen value   6: -6.5080664034353291e+01
+eigen value   7: -6.5080664012171468e+01
+eigen value   8: -4.9788844358266857e+00
+eigen value   9: -4.9787321125571564e+00
+eigen value  10: -4.9787304429628554e+00
+eigen value  11: -4.9787304187181727e+00
+eigen value  12: -4.9787303944699417e+00
+eigen value  13: -4.9787269699033878e+00
+eigen value  14: -4.9787269128244693e+00
+eigen value  15: -4.9785747531621043e+00
+eigen value  16: -3.4176115154895332e+00
+eigen value  17: -3.4176017480674239e+00
+eigen value  18: -3.4175996891400500e+00
+eigen value  19: -3.4175879267659379e+00
+eigen value  20: -3.4175832302558011e+00
+eigen value  21: -3.4175786537470350e+00
+eigen value  22: -3.4175160396467623e+00
+eigen value  23: -3.4174912212029502e+00
+eigen value  24: -3.4174840764841008e+00
+eigen value  25: -3.4172090801845334e+00
+eigen value  26: -3.4171952781217914e+00
+eigen value  27: -3.4171784842636117e+00
+eigen value  28: -3.4171780172586081e+00
+eigen value  29: -3.4171759374532327e+00
+eigen value  30: -3.4171592424870543e+00
+eigen value  31: -3.4168854985499024e+00
+eigen value  32: -3.4168603519501315e+00
+eigen value  33: -3.4168509329972157e+00
+eigen value  34: -3.4167888064466272e+00
+eigen value  35: -3.4167761935743806e+00
+eigen value  36: -3.4167722747082920e+00
+eigen value  37: -3.4167657471623754e+00
+eigen value  38: -3.4167609017744875e+00
+eigen value  39: -3.4167568691593182e+00
+eigen value  40: -5.6856393175334663e-01
+eigen value  41: -4.1501587548435070e-01
+eigen value  42: -4.1501568995875276e-01
+eigen value  43: -4.1501387689676461e-01
+eigen value  44: -4.1501340240574675e-01
+eigen value  45: -4.1501317868204213e-01
+eigen value  46: -4.1500937849408620e-01
+eigen value  47: -2.3525660231407475e-01
+eigen value  48: -2.3525575390521164e-01
+eigen value  49: -2.3525453358997273e-01
+eigen value  50: -2.3524708666274760e-01
+eigen value  51: -2.3524634146068316e-01
+eigen value  52: -2.3524616407117582e-01
+eigen value  53: -1.2741025954352536e-01
+eigen value  54: -1.2740833015450825e-01
+eigen value  55: -1.2740771286976310e-01
+eigen value  56: -1.1204022829315714e-01
+eigen value  57: -1.1203981085192943e-01
+eigen value  58: -1.1203666168421071e-01
+eigen value  59: -1.1203642140291362e-01
+eigen value  60: -1.1203630656135607e-01
+eigen value  61: -1.1196125185424251e-01
+eigen value  62: -3.9865047129263184e-02
+eigen value  63: -3.9863710697174204e-02
+eigen value  64: -3.9863253546465680e-02
+eigen value  65: -6.6430343858011609e-03
+eigen value  66: 1.4817159830857959e-01
+eigen value  67: 1.5087215606503598e-01
+eigen value  68: 1.5087270552566062e-01
+eigen value  69: 2.3655612498370565e-01
+eigen value  70: 2.3685206154754959e-01
+eigen value  71: 2.3688940366534275e-01
+
+Fermi energy constraint residual (bisection)      :    5.4637894209008664e-10
+Fermi energy constraint residual (Newton-Raphson) :    0.0000000000000000e+00
+Fermi energy                                      :   -1.2027018222433779e-01
+
+Poisson solve for total electrostatic potential (rhoOut+b):
+initial abs. residual: 3.959815e+01, current abs. residual: 3.547155e-11, nsteps: 627, abs. tolerance criterion: 3.959815e-11
+
+kPoint: 0
+fractional occupancy 0: 1.00000000000000
+fractional occupancy 1: 1.00000000000000
+fractional occupancy 2: 1.00000000000000
+fractional occupancy 3: 1.00000000000000
+fractional occupancy 4: 1.00000000000000
+fractional occupancy 5: 1.00000000000000
+fractional occupancy 6: 1.00000000000000
+fractional occupancy 7: 1.00000000000000
+fractional occupancy 8: 1.00000000000000
+fractional occupancy 9: 1.00000000000000
+fractional occupancy 10: 1.00000000000000
+fractional occupancy 11: 1.00000000000000
+fractional occupancy 12: 1.00000000000000
+fractional occupancy 13: 1.00000000000000
+fractional occupancy 14: 1.00000000000000
+fractional occupancy 15: 1.00000000000000
+fractional occupancy 16: 1.00000000000000
+fractional occupancy 17: 1.00000000000000
+fractional occupancy 18: 1.00000000000000
+fractional occupancy 19: 1.00000000000000
+fractional occupancy 20: 1.00000000000000
+fractional occupancy 21: 1.00000000000000
+fractional occupancy 22: 1.00000000000000
+fractional occupancy 23: 1.00000000000000
+fractional occupancy 24: 1.00000000000000
+fractional occupancy 25: 1.00000000000000
+fractional occupancy 26: 1.00000000000000
+fractional occupancy 27: 1.00000000000000
+fractional occupancy 28: 1.00000000000000
+fractional occupancy 29: 1.00000000000000
+fractional occupancy 30: 1.00000000000000
+fractional occupancy 31: 1.00000000000000
+fractional occupancy 32: 1.00000000000000
+fractional occupancy 33: 1.00000000000000
+fractional occupancy 34: 1.00000000000000
+fractional occupancy 35: 1.00000000000000
+fractional occupancy 36: 1.00000000000000
+fractional occupancy 37: 1.00000000000000
+fractional occupancy 38: 1.00000000000000
+fractional occupancy 39: 1.00000000000000
+fractional occupancy 40: 1.00000000000000
+fractional occupancy 41: 1.00000000000000
+fractional occupancy 42: 1.00000000000000
+fractional occupancy 43: 1.00000000000000
+fractional occupancy 44: 1.00000000000000
+fractional occupancy 45: 1.00000000000000
+fractional occupancy 46: 1.00000000000000
+fractional occupancy 47: 1.00000000000000
+fractional occupancy 48: 1.00000000000000
+fractional occupancy 49: 1.00000000000000
+fractional occupancy 50: 1.00000000000000
+fractional occupancy 51: 1.00000000000000
+fractional occupancy 52: 1.00000000000000
+fractional occupancy 53: 0.98911383141935
+fractional occupancy 54: 0.98910070314082
+fractional occupancy 55: 0.98909649960125
+fractional occupancy 56: 0.00549925601016
+fractional occupancy 57: 0.00549781437434
+fractional occupancy 58: 0.00548695081007
+fractional occupancy 59: 0.00548612279790
+fractional occupancy 60: 0.00548572709643
+fractional occupancy 61: 0.00523309474967
+fractional occupancy 62: 0.00000000000000
+fractional occupancy 63: 0.00000000000000
+fractional occupancy 64: 0.00000000000000
+fractional occupancy 65: 0.00000000000000
+fractional occupancy 66: 0.00000000000000
+fractional occupancy 67: 0.00000000000000
+fractional occupancy 68: 0.00000000000000
+fractional occupancy 69: 0.00000000000000
+fractional occupancy 70: 0.00000000000000
+fractional occupancy 71: 0.00000000000000
+
+number of electrons: 1.1199912803306226e+02 
+
+Energy computations
+-------------------
+Band energy             :  -1.2946788338933823e+03
+Kinetic energy          :   2.3021785276202381e+03
+Exchange energy         :  -1.4992010362174398e+02
+Correlation energy      :  -8.5739790992923339e+00
+Electrostatic energy    :  -4.4506296085103077e+03
+Total energy            :  -2.3069451636111062e+03
+Total energy per atom   :  -2.8836814545138827e+02
+SCF iteration 23 complete
+
+
++---------------------------------------------+------------+------------+
+| Total wallclock time elapsed since start    | 7.672e+03s |            |
+|                                             |            |            |
+| Section                         | no. calls |  wall time | % of total |
++---------------------------------+-----------+------------+------------+
+| Chebyshev GS orthonormalization |        23 | 8.391e+00s |  1.09e-01% |
+| Chebyshev Rayleigh Ritz         |        23 | 1.165e+01s |  1.52e-01% |
+| Chebyshev filtering             |        23 | 7.558e+03s |  9.85e+01% |
+| Chebyshev solve                 |        23 | 7.585e+03s |  9.89e+01% |
+| Chebyshev upper bound           |        23 | 6.825e+00s |  8.90e-02% |
+| initialize density              |         1 | 1.725e+00s |  2.25e-02% |
+| initialize wave functions       |         1 | 1.569e+00s |  2.05e-02% |
+| mesh                            |         1 | 1.249e+00s |  1.63e-02% |
+| setup                           |         1 | 8.431e+00s |  1.10e-01% |
+| solve                           |         1 | 7.655e+03s |  9.98e+01% |
++---------------------------------+-----------+------------+------------+
+
