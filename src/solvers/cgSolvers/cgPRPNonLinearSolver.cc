@@ -379,7 +379,7 @@ namespace dftfe {
     double deltaD = deltaDReturnValue.first;
     double etaP   = deltaDReturnValue.second;
     double alphaP=0;
-    if (debugLevel >= 1)
+    if (debugLevel >= 2)
        std::cout << "Initial guess for secant line search iteration, alpha: " << alpha << std::endl;
     //
     // update unknowns removing earlier update
@@ -423,7 +423,7 @@ namespace dftfe {
       //
       // output
       //
-      if (debugLevel >= 1)
+      if (debugLevel >= 2)
 	std::cout << "Line search iteration: " << iter << " alphaNew: " << alphaNew << " alpha: "<<alpha<< " alphaP: "<<alphaP <<"  eta: "<< eta << " etaP: "<<etaP << std::endl;
       //
       // update unknowns
@@ -522,10 +522,9 @@ namespace dftfe {
 
     for (d_iter = 0; d_iter < d_maxNumberIterations; ++d_iter) {
 
-      for(unsigned int i = 0; i < d_gradient.size(); ++i)
-      {
+      if (d_debugLevel >= 2)
+        for(unsigned int i = 0; i < d_gradient.size(); ++i)
 	  pcout<<"d_gradient: "<<d_gradient[i]<<std::endl;
-      }
 
 
       //
@@ -534,14 +533,14 @@ namespace dftfe {
       const double residualNorm = computeResidualL2Norm();
 
 
-      if (d_debugLevel >= 1)
+      if (d_debugLevel >= 2)
       std::cout << "Iteration no. | delta new | residual norm "
 	"| residual norm avg" << std::endl;
 
       //
       // output at the begining of the iteration
       //
-      if (d_debugLevel >= 1)
+      if (d_debugLevel >= 2)
 	  pcout << d_iter+1 << " "
 		    << d_deltaNew << " "
 		    << residualNorm << " "
@@ -574,12 +573,14 @@ namespace dftfe {
 
       d_beta = (d_deltaNew - d_deltaMid)/d_deltaOld;
 
-      pcout<<" CG- d_beta: "<<d_beta<<std::endl;
+      if (d_debugLevel >= 2)
+         pcout<<" CG- d_beta: "<<d_beta<<std::endl;
 
       unsigned int isBetaZero=0;
       if(d_beta <= 0)
       {
-	  pcout<<" Negative d_beta- setting it to zero "<<std::endl;
+	  if (d_debugLevel >= 2)
+	     pcout<<" Negative d_beta- setting it to zero "<<std::endl;
 	  isBetaZero=1;
       }
       MPI_Bcast(&(isBetaZero),
@@ -632,11 +633,11 @@ namespace dftfe {
 
       if (returnValue == SUCCESS)
       {
-        pcout << "Conjugate Gradient converged after "
+        pcout << "Non-linerar Conjugate Gradient solver converged after "
 		<< d_iter+1 << " iterations." << std::endl;
       } else
       {
-        pcout << "Conjugate Gradient failed to converge after "
+        pcout << "Non-linear Conjugate Gradient solver failed to converge after "
 		<< d_iter << " iterations." << std::endl;
       }
 

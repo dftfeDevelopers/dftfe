@@ -96,7 +96,12 @@ namespace dftfe {
     d_vselfBinsManager(mpi_comm_replica),
     pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
     computing_timer (pcout,
-		     dftParameters::reproducible_output ? TimerOutput::never : TimerOutput::summary,
+		     dftParameters::reproducible_output
+		     || dftParameters::verbosity<2? TimerOutput::never : TimerOutput::summary,
+		     TimerOutput::wall_times),
+    computingTimerStandard(pcout,
+		     dftParameters::reproducible_output
+		     || dftParameters::verbosity<1? TimerOutput::never : TimerOutput::every_call_and_summary,
 		     TimerOutput::wall_times)
   {
     forcePtr= new forceClass<FEOrder>(this, mpi_comm_replica);
@@ -282,7 +287,7 @@ namespace dftfe {
     if(dftParameters::isPseudopotential)
       {
 	//std::string fileName = "sample_text";
-	
+
 
 	TimerOutput::Scope scope (computing_timer, "psp init");
 	pcout<<std::endl<<"Pseudopotential initalization...."<<std::endl;
@@ -376,6 +381,7 @@ namespace dftfe {
   template<unsigned int FEOrder>
   void dftClass<FEOrder>::init (const unsigned int usePreviousGroundStateFields)
   {
+    computingTimerStandard.enter_section("Pre-processing steps");
 
     initImageChargesUpdateKPoints();
 
@@ -431,11 +437,13 @@ namespace dftfe {
     //initialize pseudopotential data for both local and nonlocal part
     //
     initPseudoPotentialAll();
+    computingTimerStandard.exit_section("Pre-processing steps");
   }
 
   template<unsigned int FEOrder>
   void dftClass<FEOrder>::initNoRemesh()
   {
+    computingTimerStandard.enter_section("Pre-processing steps");
     initImageChargesUpdateKPoints();
 
     //
@@ -451,6 +459,7 @@ namespace dftfe {
     //reinitialize pseudopotential related data structures
     //
     initPseudoPotentialAll();
+    computingTimerStandard.exit_section("Pre-processing steps");
   }
 
   //
@@ -515,17 +524,17 @@ namespace dftfe {
     //
     //solve vself in bins
     //
-    computing_timer.enter_section("vself solve");
-
-
+    computing_timer.enter_section("Nuclear charge electrostatic self-potential solve");
+    computingTimerStandard.enter_section("Nuclear charge electrostatic self-potential solve");
     d_vselfBinsManager.solveVselfInBins(matrix_free_data,
 					2,
 					d_phiExt,
 					d_noConstraints,
 					d_localVselfs);
+    computingTimerStandard.exit_section("Nuclear charge electrostatic self-potential solve");
+    computing_timer.exit_section("Nuclear charge electrostatic self-potential solve");
 
-    computing_timer.exit_section("vself solve");
-
+    computingTimerStandard.enter_section("Total scf solve");
     energyCalculator energyCalc(mpi_communicator, interpoolcomm,interBandGroupComm);
 
 
@@ -597,7 +606,7 @@ namespace dftfe {
 		  norm = mixing_simple();
 
 		if (dftParameters::verbosity>=1)
-		  pcout<<"Simple mixing: L2 norm of electron-density difference: "<< norm<< std::endl;
+		  pcout<<"Simple mixing, L2 norm of electron-density difference: "<< norm<< std::endl;
 	      }
 	    else
 	      {
@@ -609,7 +618,7 @@ namespace dftfe {
 		  norm = sqrt(mixing_anderson());
 
 		if (dftParameters::verbosity>=1)
-		  pcout<<"Anderson mixing: L2 norm of electron-density difference: "<< norm<< std::endl;
+		  pcout<<"Anderson mixing, L2 norm of electron-density difference: "<< norm<< std::endl;
 	      }
 
 	    d_phiTotRhoIn = d_phiTotRhoOut;
@@ -624,7 +633,7 @@ namespace dftfe {
 	      norm = sqrt(mixing_anderson());
 
 	    if (dftParameters::verbosity>=1)
-	      pcout<<"Anderson Mixing: L2 norm of electron-density difference: "<< norm<< std::endl;
+	      pcout<<"Anderson Mixing, L2 norm of electron-density difference: "<< norm<< std::endl;
 
 	    d_phiTotRhoIn = d_phiTotRhoOut;
 	  }
@@ -1005,7 +1014,8 @@ namespace dftfe {
 
 	local_timer.stop();
 	if (dftParameters::verbosity>=1)
-           pcout << "Scf iteration "+std::to_string(scfIter+1)+" took: " << local_timer.wall_time() << " seconds, with "<<numberChebyshevSolvePasses<<" Chebyshev eigen solve passes."<<std::endl<<std::endl;
+           pcout << "Wall time for scf: " << local_timer.wall_time() << " seconds\n"<<
+	        "Chebyshev subspace iterations: "<< numberChebyshevSolvePasses<<std::endl<<std::endl;
 	//
 	scfIter++;
 
@@ -1094,31 +1104,41 @@ namespace dftfe {
 					    lowerBoundKindex,
 					    true);
 
-    MPI_Barrier(interpoolcomm) ;
+    MPI_Barrier(interpoolcomm);
+
+    //This step is required for interpolating rho from current mesh to the new
+    //mesh in case of atomic relaxation
+    computeNodalRhoFromQuadData();
+
+    computingTimerStandard.exit_section("Total scf solve");
+
     if (dftParameters::isIonForce)
       {
-	computing_timer.enter_section("ion force");
+	computing_timer.enter_section("Ion force computation");
+	computingTimerStandard.enter_section("Ion force computation");
 	forcePtr->computeAtomsForces();
 	forcePtr->printAtomsForces();
-	computing_timer.exit_section("ion force");
+	computingTimerStandard.exit_section("Ion force computation");
+	computing_timer.exit_section("Ion force computation");
       }
 #ifdef USE_COMPLEX
     if (dftParameters::isCellStress)
       {
-	computing_timer.enter_section("cell stress");
+	computing_timer.enter_section("Cell stress computation");
+	computingTimerStandard.enter_section("Cell stress computation");
 	forcePtr->computeStress();
 	forcePtr->printStress();
-	computing_timer.exit_section("cell stress");
+	computingTimerStandard.exit_section("Cell stress computation");
+	computing_timer.exit_section("Cell stress computation");
       }
 #endif
 
     //if (dftParameters::electrostaticsPRefinement)
     //  computeElectrostaticEnergyPRefined();
 
-    computeNodalRhoFromQuadData();
-
     if (dftParameters::writeSolutionFields)
       output();
+
   }
 
   //Output

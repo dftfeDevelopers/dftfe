@@ -155,11 +155,14 @@ void geoOptCell<FEOrder>::init()
 	AssertThrow(false,ExcMessage("The given value for CELL CONSTRAINT TYPE doesn't match with any available options (1-13)."));
     }
 
-   pcout<<" --------------Cell relaxation flags----------------"<<std::endl;
-   pcout<<" [0,0] " <<d_relaxationFlags[0] << ", [0,1] " <<d_relaxationFlags[1] <<
+   if (dftParameters::verbosity>=2)
+   {
+     pcout<<" --------------Cell relaxation flags----------------"<<std::endl;
+     pcout<<" [0,0] " <<d_relaxationFlags[0] << ", [0,1] " <<d_relaxationFlags[1] <<
           " [0,2] " <<d_relaxationFlags[2] << ", [1,1] " <<d_relaxationFlags[3] <<
 	  ", [1,2] " <<d_relaxationFlags[4] << ", [2,2] " <<d_relaxationFlags[5] <<std::endl;
-   pcout<<" --------------------------------------------------"<<std::endl;
+     pcout<<" --------------------------------------------------"<<std::endl;
+   }
 }
 
 template<unsigned int FEOrder>
@@ -170,7 +173,7 @@ void geoOptCell<FEOrder>::run()
    const double lineSearchTol=tol*2.0;
    const double lineSearchDampingParameter=0.1;
    const unsigned int maxLineSearchIter=4;
-   const unsigned int debugLevel=Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) ==0?1:0;
+   const unsigned int debugLevel=Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) ==0?dftParameters::verbosity:0;
 
    d_totalUpdateCalls=0;
    cgPRPNonLinearSolver cgSolver(tol,
@@ -182,16 +185,19 @@ void geoOptCell<FEOrder>::run()
 				lineSearchDampingParameter);
 
    if (dftParameters::chkType>=1 && dftParameters::restartFromChk)
-     pcout<<" Re starting Cell stress relaxation using CG solver... "<<std::endl;
+     pcout<<" Re starting Cell stress relaxation using nonlinear CG solver... "<<std::endl;
    else
-     pcout<<" Starting Cell stress relaxation using CG solver... "<<std::endl;
-   pcout<<"   ---CG Parameters--------------  "<<std::endl;
-   pcout<<"      stopping tol: "<< tol<<std::endl;
-   pcout<<"      maxIter: "<< maxIter<<std::endl;
-   pcout<<"      lineSearch tol: "<< lineSearchTol<<std::endl;
-   pcout<<"      lineSearch maxIter: "<< maxLineSearchIter<<std::endl;
-   pcout<<"      lineSearch damping parameter: "<< lineSearchDampingParameter<<std::endl;
-   pcout<<"   ------------------------------  "<<std::endl;
+     pcout<<" Starting Cell stress relaxation using nonlinear CG solver... "<<std::endl;
+   if (dftParameters::verbosity>=2)
+   {
+       pcout<<"   ---Non-linear CG Parameters--------------  "<<std::endl;
+       pcout<<"      stopping tol: "<< tol<<std::endl;
+       pcout<<"      maxIter: "<< maxIter<<std::endl;
+       pcout<<"      lineSearch tol: "<< lineSearchTol<<std::endl;
+       pcout<<"      lineSearch maxIter: "<< maxLineSearchIter<<std::endl;
+       pcout<<"      lineSearch damping parameter: "<< lineSearchDampingParameter<<std::endl;
+       pcout<<"   ------------------------------  "<<std::endl;
+   }
 
    if  (getNumberUnknowns()>0)
    {
@@ -206,16 +212,16 @@ void geoOptCell<FEOrder>::run()
 
        if (cgReturn == nonLinearSolver::SUCCESS )
        {
-	    pcout<< " ...CG cell stress relaxation completed as maximum stress magnitude is less than stress relaxation tolerance: "<< dftParameters::stressRelaxTol<<", total number of cell geometry updates: "<<d_totalUpdateCalls<<std::endl;
+	    pcout<< " ...Cell stress relaxation completed as maximum stress magnitude is less than STRESS TOL: "<< dftParameters::stressRelaxTol<<", total number of cell geometry updates: "<<d_totalUpdateCalls<<std::endl;
        }
        else if (cgReturn == nonLinearSolver::MAX_ITER_REACHED)
        {
-	    pcout<< " ...Maximum CG iterations reached "<<std::endl;
+	    pcout<< " ...Maximum iterations reached "<<std::endl;
 
        }
        else if(cgReturn == nonLinearSolver::FAILURE)
        {
-	    pcout<< " ...CG cell stress relaxation failed "<<std::endl;
+	    pcout<< " ...Cell stress relaxation failed "<<std::endl;
 
        }
 

@@ -511,6 +511,7 @@ namespace dftfe {
 
       /// compute-time logger
       TimerOutput computing_timer;
+      TimerOutput computingTimerStandard;
 
       //dft related objects
       std::map<dealii::CellId, std::vector<double> > *rhoInValues, *rhoOutValues, *rhoInValuesSpinPolarized, *rhoOutValuesSpinPolarized;

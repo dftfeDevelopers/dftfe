@@ -463,7 +463,8 @@ void dftClass<FEOrder>::generateImageCharges()
     }
 
   const int numImageCharges = d_imageIds.size();
-  pcout<<"Number Image Charges  "<<numImageCharges<<std::endl;
+  if (dftParameters::verbosity>=3 || dftParameters::reproducible_output)
+    pcout<<"Number Image Charges  "<<numImageCharges<<std::endl;
 
   for(int i = 0; i < numImageCharges; ++i)
     {

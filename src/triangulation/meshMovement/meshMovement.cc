@@ -295,7 +295,7 @@ std::pair<bool,double> meshMovementClass::movedMeshCheck()
   }
   minElemLength=Utilities::MPI::min(minElemLength, mpi_communicator);
 
-  if (dftParameters::verbosity==2)
+  if (dftParameters::verbosity>=2)
     pcout<< "Mesh movement quality metric, h_min: "<<minElemLength<<std::endl;
 
   std::pair<bool,double> meshQualityMetrics;
