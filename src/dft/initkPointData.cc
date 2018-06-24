@@ -197,7 +197,7 @@ void dftClass<FEOrder>::generateMPGrid()
                      types,
                      num_atom,
                      1e-5);
-     if (!dftParameters::reproducible_output)
+     if (!dftParameters::reproducible_output && dftParameters::verbosity>3)
      {
 	 pcout<<" number of symmetries allowed for the lattice " <<symmetryPtr->numSymm << std::endl;
 	 for (unsigned int iSymm=0; iSymm<symmetryPtr->numSymm; ++iSymm)
@@ -225,7 +225,7 @@ void dftClass<FEOrder>::generateMPGrid()
           }
 	  symmetryPtr->translation[0][j] = 0.0 ;
       }
-      if (!dftParameters::reproducible_output)
+      if (!dftParameters::reproducible_output && dftParameters::verbosity>3)
           pcout<<" Only time reversal symmetry to be used " << std::endl;
     }
 
@@ -306,7 +306,7 @@ void dftClass<FEOrder>::generateMPGrid()
         if( jk!=ik && jk<nk && discard[jk]!=1) {
            d_kPointWeights[maxkPoints-1] = d_kPointWeights[maxkPoints-1] + 1.0/nk;
            discard[jk] = 1;
-	   if (dftParameters::verbosity>=2)
+	   if (dftParameters::verbosity>3)
 	        pcout<< "    " << ik << "     " << jk << std::endl ;
 
            if (countedSymm[iSymm]==0) {
@@ -345,12 +345,14 @@ void dftClass<FEOrder>::generateMPGrid()
 	    symmetryPtr->numSymmUnderGroup[i] += 1 ;
           }
       }
-      if (dftParameters::verbosity>=2)
+      if (dftParameters::verbosity > 3)
          pcout << " kpoint " << i << " numSymmUnderGroup " << symmetryPtr->numSymmUnderGroup[i] << std::endl;
   }
   //
   if (!dftParameters::reproducible_output)
   {
+     if (dftParameters::verbosity > 3)
+     {
       pcout<<" " << usedSymm << " symmetries used to reduce BZ "  << std::endl;
       for (unsigned int iSymm = 0; iSymm < symmetryPtr->numSymm; ++iSymm)
 	     for ( unsigned int ipol = 0; ipol<3; ++ipol)
@@ -358,6 +360,7 @@ void dftClass<FEOrder>::generateMPGrid()
 		  if (dftParameters::verbosity>=2)
 		     pcout << symmetryPtr->symmMat[iSymm][ipol][0] << "  " << symmetryPtr->symmMat[iSymm][ipol][1] << "  " << symmetryPtr->symmMat[iSymm][ipol][2] << std::endl;
 	     }
+      }
       pcout<<" number of irreducible k-points " << maxkPoints << std::endl;
 
       pcout<<"Reduced k-Point-coordinates and weights: "<<std::endl;

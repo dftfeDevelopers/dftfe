@@ -97,7 +97,7 @@ namespace dftfe
 	  if (ipool==dealii::Utilities::MPI::this_mpi_process(interpoolcomm)) {
 	  for(unsigned int kPoint = 0; kPoint < kPointWeights.size(); ++kPoint)
 	    {
-	      if (verbosity>=2)
+	      if (verbosity > 2)
 		{
 		  scout<<" Printing KS eigen values (spin split if this is a spin polarized calculation ) and fractional occupancies for kPoint " << (lowerBoundKindex + kPoint) << std::endl;
 	          scout << "  " << std::endl ;
@@ -129,7 +129,7 @@ namespace dftfe
 		 }
 	       }  // eigen state
 	       //
-	       if (verbosity>=2)
+	       if (verbosity > 2)
 		 scout << "============================================================================================================" << std::endl ;
 	   }  // kpoint
 	   } // is it current pool
@@ -226,6 +226,7 @@ namespace dftfe
 		             const std::map<dealii::types::global_dof_index, double> & atomElectrostaticNodeIdToChargeMap,
 			     const unsigned int numberGlobalAtoms,
 			     const unsigned int lowerBoundKindex,
+			     const unsigned int scfConverged,
 		             const bool print) const
     {
       dealii::FEValues<3> feValuesElectrostatic (dofHandlerElectrostatic.get_fe(), quadratureElectrostatic, dealii::update_values | dealii::update_JxW_values);
@@ -250,7 +251,7 @@ namespace dftfe
 						      scout,
 						      interpoolcomm,
 						      lowerBoundKindex,
-			                              dftParameters::verbosity), interpoolcomm);
+			                              (dftParameters::verbosity+scfConverged)), interpoolcomm);
 
       double excCorrPotentialTimesRho=0.0, electrostaticPotentialTimesRho=0.0, exchangeEnergy = 0.0, correlationEnergy = 0.0, electrostaticEnergyTotPot = 0.0;
 
@@ -436,6 +437,7 @@ namespace dftfe
 			     const std::map<dealii::types::global_dof_index, double> & atomElectrostaticNodeIdToChargeMap,
 			     const unsigned int numberGlobalAtoms,
 			     const unsigned int lowerBoundKindex,
+			     const unsigned int scfConverged,
 			     const bool print) const
     {
       dealii::FEValues<3> feValuesElectrostatic (dofHandlerElectrostatic.get_fe(), quadratureElectrostatic, dealii::update_values | dealii::update_JxW_values);
@@ -457,7 +459,7 @@ namespace dftfe
 						      scout,
 						      interpoolcomm,
 						      lowerBoundKindex,
-			                              dftParameters::verbosity), interpoolcomm);
+			                              (dftParameters::verbosity+scfConverged)), interpoolcomm);
 
       double excCorrPotentialTimesRho=0.0, electrostaticPotentialTimesRho=0.0 , exchangeEnergy = 0.0, correlationEnergy = 0.0, electrostaticEnergyTotPot = 0.0;
 
