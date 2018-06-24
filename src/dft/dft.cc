@@ -278,7 +278,7 @@ namespace dftfe {
 	pcout<<std::endl<<"Reading Pseudo-potential data for each atom from the list given in : " <<dftParameters::pseudoPotentialFile<<std::endl;
       }
     
-    if(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+    if(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0 && dftParameters::isPseudopotential == true)
       pseudoUtils::convert(dftParameters::pseudoPotentialFile);
 
     MPI_Barrier(MPI_COMM_WORLD);

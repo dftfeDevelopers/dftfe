@@ -52,6 +52,8 @@ namespace dftfe
       std::ifstream input_file;
       input_file.open(fileName);
 
+      AssertThrow(!input_file.fail(),dealii::ExcMessage("Not a valid list of pseudopotential files "));
+
       std::string z;
       std::string toParse;
 
