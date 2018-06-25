@@ -38,6 +38,9 @@ void dftClass<FEOrder>::initUnmovedTriangulation(const parallel::distributed::Tr
   //initialize meshMovementGaussianClass object (must be done on unmoved triangulation)
   d_gaussianMovePar.init(triangulation,d_domainBoundingVectors);
 
+  if (dftParameters::verbosity>=4)
+     dftUtils::printCurrentMemoryUsage(mpi_communicator,
+			  "Inititialization of meshmovement class objects completed");
   //
   //initialize FE objects
   //
@@ -47,6 +50,9 @@ void dftClass<FEOrder>::initUnmovedTriangulation(const parallel::distributed::Tr
   dofHandler.distribute_dofs (FE);
   dofHandlerEigen.distribute_dofs (FEEigen);
 
+  if (dftParameters::verbosity>=4)
+     dftUtils::printCurrentMemoryUsage(mpi_communicator,
+			  "Distributed dofs");
   //
   //extract locally owned dofs
   //
@@ -89,6 +95,9 @@ void dftClass<FEOrder>::initUnmovedTriangulation(const parallel::distributed::Tr
     }
 #endif
 
+  if (dftParameters::verbosity>=4)
+     dftUtils::printCurrentMemoryUsage(mpi_communicator,
+			  "Extracted indices");
 
   pcout << std::endl<<"Finite element mesh information"<<std::endl;
   pcout<<"-------------------------------------------------"<<std::endl;
@@ -179,8 +188,15 @@ void dftClass<FEOrder>::initUnmovedTriangulation(const parallel::distributed::Tr
       constraintsNoneEigen.close();
     }
 
+  if (dftParameters::verbosity>=4)
+     dftUtils::printCurrentMemoryUsage(mpi_communicator,
+			  "Created the basic constraint matrices");
+
   forcePtr->initUnmoved(triangulation);
 
+  if (dftParameters::verbosity>=4)
+     dftUtils::printCurrentMemoryUsage(mpi_communicator,
+			  "Force initUnmoved");
  //
   //Initialize libxc (exchange-correlation)
   //

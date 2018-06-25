@@ -246,6 +246,10 @@ namespace dftfe
 	  std::vector<T> rotatedVectorsMatBlock(numberSubspaceVectors*dofsBlockSize,0.0);
           std::vector<T> rotatedVectorsMatBlockTemp(vectorsBlockSize*dofsBlockSize,0.0);
 
+          if (dftParameters::verbosity>=4)
+                   dftUtils::printCurrentMemoryUsage(subspaceVectorsArray.get_mpi_communicator(),
+	                      "Inside Blocked susbpace rotation");
+
 	  for (unsigned int idof = 0; idof < maxNumLocalDofs; idof += dofsBlockSize)
 	  {
 	      // Correct block dimensions if block "goes off edge of" the matrix

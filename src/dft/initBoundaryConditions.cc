@@ -30,12 +30,18 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   dofHandler.distribute_dofs (FE);
   dofHandlerEigen.distribute_dofs (FEEigen);
 
+  if (dftParameters::verbosity>=4)
+      dftUtils::printCurrentMemoryUsage(mpi_communicator,
+	                      "Dofs distributed again");
   d_supportPoints.clear();
   DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), dofHandler, d_supportPoints);
 
   d_supportPointsEigen.clear();
   DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), dofHandlerEigen, d_supportPointsEigen);
 
+  if (dftParameters::verbosity>=4)
+      dftUtils::printCurrentMemoryUsage(mpi_communicator,
+	                      "Created support points");
   //
   //matrix free data structure
   //
@@ -72,6 +78,9 @@ void dftClass<FEOrder>::initBoundaryConditions(){
 
   d_constraintsVector.push_back(&d_constraintsForTotalPotential);
 
+  if (dftParameters::verbosity>=4)
+      dftUtils::printCurrentMemoryUsage(mpi_communicator,
+	                      "Created total potential constraint matrices");
   //
   //Dirichlet BC constraints on the boundary of fictitious ball
   //used for computing self-potential (Vself) using Poisson problem
@@ -85,6 +94,10 @@ void dftClass<FEOrder>::initBoundaryConditions(){
 				    d_imageIds,
 				    d_imageCharges,
 				    dftParameters::radiusAtomBall);
+
+  if (dftParameters::verbosity>=4)
+      dftUtils::printCurrentMemoryUsage(mpi_communicator,
+	                      "Created vself bins and constraint matrices");
 
   //
   //create matrix free structure
@@ -117,6 +130,9 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   //
   forcePtr->initMoved();
 
+  if (dftParameters::verbosity>=4)
+      dftUtils::printCurrentMemoryUsage(mpi_communicator,
+	                      "Called force init moved");
   //
   //push dofHandler and constraints for force
   //
@@ -126,7 +142,9 @@ void dftClass<FEOrder>::initBoundaryConditions(){
 
   matrix_free_data.reinit(dofHandlerVector, d_constraintsVector, quadratureVector, additional_data);
 
-
+  if (dftParameters::verbosity>=4)
+      dftUtils::printCurrentMemoryUsage(mpi_communicator,
+	                      "Called matrix free reinit");
   //
   //locate atom core nodes
   //

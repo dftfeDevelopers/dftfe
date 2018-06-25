@@ -73,6 +73,16 @@ namespace dftfe {
 	                                     const unsigned int numBands,
 					     std::vector<unsigned int> & bandGroupLowHighPlusOneIndices);
 
+      /** @brief Wrapper to print current memory usage (prints only the maximum across mpiComm)
+       * using PetscMemoryGetCurrentUsage
+       *
+       *  @[in]param mpiComm  mpi communicator across which the memory printing will
+       *  be synchronized
+       *  @[in]param message message to be printed alongwith the memory usage
+       */
+       void printCurrentMemoryUsage(const MPI_Comm &mpiComm,
+	                            const std::string message);
+
       /**
        * A class to split the given communicator into a number of pools
        */
