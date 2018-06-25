@@ -2,6 +2,8 @@ set VERBOSITY = 0
 set REPRODUCIBLE OUTPUT = true
 
 subsection Geometry
+  set NATOMS=1
+  set NATOM TYPES=1
   set ATOMIC COORDINATES FILE = @SOURCE_DIR@/aluminumSingleAtom_coordinates.inp
   set DOMAIN BOUNDING VECTORS FILE = @SOURCE_DIR@/aluminumSingleAtom_domainBoundingVectors.inp
 
