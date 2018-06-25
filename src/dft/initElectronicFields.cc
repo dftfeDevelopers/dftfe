@@ -70,7 +70,7 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
   TimerOutput::Scope scope (computing_timer,"init electronic fields");
 
   //reading data from pseudopotential files and fitting splines
-  //if(dftParameters::pseudoProjector == 2)
+  if(dftParameters::isPseudopotential)
     initNonLocalPseudoPotential_OV();
     //else
     //initNonLocalPseudoPotential();
@@ -84,7 +84,6 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
   //initialize eigen vectors
   //
   matrix_free_data.initialize_dof_vector(d_tempEigenVec,eigenDofHandlerIndex);
-
 
   //
   //initialize density and PSI/ interpolate from previous ground state solution

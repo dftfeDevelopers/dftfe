@@ -106,9 +106,10 @@ namespace dftfe {
 							   numberWaveFunctions,
 							   flattenedArray);
 
-    vectorTools::createDealiiVector<dataTypes::number>(dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
-						       numberWaveFunctions,
-						       dftPtr->d_projectorKetTimesVectorParFlattened);
+    if(dftParameters::isPseudopotential)
+      vectorTools::createDealiiVector<dataTypes::number>(dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
+							 numberWaveFunctions,
+							 dftPtr->d_projectorKetTimesVectorParFlattened);
 
 
 
@@ -127,9 +128,10 @@ template<unsigned int FEOrder>
 void eigenClass<FEOrder>::reinit(const unsigned int numberWaveFunctions)
 {
 
-  vectorTools::createDealiiVector<dataTypes::number>(dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
-						     numberWaveFunctions,
-						     dftPtr->d_projectorKetTimesVectorParFlattened);
+  if(dftParameters::isPseudopotential)
+    vectorTools::createDealiiVector<dataTypes::number>(dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
+						       numberWaveFunctions,
+						       dftPtr->d_projectorKetTimesVectorParFlattened);
 
 }
 
