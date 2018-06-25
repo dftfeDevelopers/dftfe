@@ -811,8 +811,8 @@ namespace dftfe {
 		if (dftParameters::verbosity>=2)
 		  pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
 
-		numberChebyshevSolvePasses=dftParameters::numPass+count-1;
 	      }
+	      numberChebyshevSolvePasses=dftParameters::numPass+count-1;
 	  }
 	else
 	  {

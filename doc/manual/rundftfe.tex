@@ -1,1 +1,43 @@
-The \verb|real/main| executable uses only real data-structures, which are sufficient for fully non-periodic problems, and periodic and semi-periodic problems with only one Brillouin zone sampling point at the origin. The \verb|complex/main| executable uses complex data-structrues which are required for periodic and semi-periodic problems with multiple Brillouin zone sampling points.
+After compiling \dftfe{} as described above, we have now the \verb|real/main| executable, which uses real data-structures for the Kohn-Sham DFT eigen solve. This is sufficient for fully non-periodic problems, and periodic and semi-periodic problems with only one Brillouin zone sampling point at the origin. The other executable is \verb|complex/main|, which uses complex data-structrues for the Kohn-Sham DFT eigen solve. This is required for periodic and semi-periodic problems with multiple Brillouin zone sampling points. These executables are to be used as follows:
+\begin{verbatim}
+  ./main parameterFile.prm
+\end{verbatim}
+or, for a parallel program:
+\begin{verbatim}
+  mpirun -n N ./main parameterFile.prm
+\end{verbatim}
+to run with N processors. 
+\subsection{Structuring the input file}
+In the above, an input file with \verb|.prm| extension is used. This file contains input parameters as described in Section~\ref{sec:parameters}. All input parameters are also conveniently indexed at the end of this manual in Section~\ref{sec:runtime-parameter-index-full}. There are two types of parameters: ``{\it Global parameters}" and ``{\it Parameters in section A/B/..}". This can be seen directly in Section~\ref{sec:parameters}, where each parameter belongs to a group of parameters under the headings: ``{\it Global parameters}" or ``{\it Parameters in section A/B/..}". In ``{\it Parameters in section A/B/..}", {\it A} refers to the primary subsection name, {\it B} if present refers to a subsection inside {\it A}, and so on. 
+
+First, lets consider how to use a parameter named \verb|PARAMETER GLOBAL| under the heading ``{\it Global parameters}". To set it to a value, say \verb|value|  in the  \verb|.prm| file, directly use
+\begin{verbatim}
+  set PARAMETER GLOBAL=value
+\end{verbatim}
+Next consider a parameter named \verb|PARAMETER SUBSECTION| under the heading ``{\it Parameters in section A}". To set it to a value, say \verb|value|  in the  \verb|.prm| file, use 
+\begin{verbatim}
+subsection A
+  set PARAMETER SUBSECTION=value
+end
+\end{verbatim}
+Finally, consider a nested parameter named  \verb|PARAMETER SUBSUBSECTION| under the heading ``{\it Parameters in section A/B}". To set it to a value, say \verb|value|  in the  \verb|.prm| file, use 
+\begin{verbatim}
+subsection A
+  subsection B
+    set PARAMETER SUBSUBSECTION=value
+  end
+end
+\end{verbatim}
+One final note- more than one parameter could be used inside the same \verb|subsection|. For example
+\begin{verbatim}
+subsection A
+  set PARAMETER SUBSECTION 1=value1
+  set PARAMETER SUBSECTION 2=value2
+  subsection B
+    set PARAMETER SUBSUBSECTION 1=value1
+    set PARAMETER SUBSUBSECTION 2=value2
+  end
+end
+\end{verbatim}
+\subsection{Running a demo example}
+Please follow the examples in the \verb|/dftfe/demo/| folder.
