@@ -807,7 +807,9 @@ namespace dftfe
 		  {
 		    const int chargeId = atomsInCurrentBin[*it];
 		    dealii::Point<3> atomCoord(d_atomLocations[chargeId][2],d_atomLocations[chargeId][3],d_atomLocations[chargeId][4]);
-		    if(feNodeGlobalCoord.distance(atomCoord) < 1.0e-5){
+		    if(feNodeGlobalCoord.distance(atomCoord) < 1.0e-5)
+		    {
+#ifdef DEBUG
 		      if(dftParameters::isPseudopotential)
 		      {
 			if (dftParameters::verbosity>=4)
@@ -818,18 +820,23 @@ namespace dftfe
 			if (dftParameters::verbosity>=4)
 			  std::cout << "atom core in bin " << iBin<<" with charge "<<d_atomLocations[chargeId][0] << " located with node id " << nodeID << " in processor " << this_mpi_process;
 		      }
+#endif
 		      if (locally_owned_dofs.is_element(nodeID)){
 			if(dftParameters::isPseudopotential)
 			  d_atomsInBin[iBin].insert(std::pair<dealii::types::global_dof_index,double>(nodeID,d_atomLocations[chargeId][1]));
 			else
 			  d_atomsInBin[iBin].insert(std::pair<dealii::types::global_dof_index,double>(nodeID,d_atomLocations[chargeId][0]));
+#ifdef DEBUG
 			if (dftParameters::verbosity>=4)
 			   std::cout << " and added \n";
+#endif
 		      }
 		      else
 		      {
+#ifdef DEBUG
 			if (dftParameters::verbosity>=4)
 			   std::cout << " but skipped \n";
+#endif
 		      }
 		      atomsTolocate.erase(*it);
 		      break;
