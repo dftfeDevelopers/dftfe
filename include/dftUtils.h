@@ -76,9 +76,9 @@ namespace dftfe {
       /** @brief Wrapper to print current memory usage (prints only the maximum across mpiComm)
        * using PetscMemoryGetCurrentUsage
        *
-       *  @[in]param mpiComm  mpi communicator across which the memory
+       *  @[in]param mpiComm  mpi communicator across which the memory printing will
+       *  be synchronized
        *  @[in]param message message to be printed alongwith the memory usage
-       *  printing will be synchronized
        */
        void printCurrentMemoryUsage(const MPI_Comm &mpiComm,
 	                            const std::string message);
