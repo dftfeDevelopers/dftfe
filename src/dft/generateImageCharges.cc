@@ -31,9 +31,9 @@ double roundToCell(double frac){
     returnValue = frac;
   else
     returnValue = 1;
-    
+
   return returnValue;
-    
+
 }
 
 //
@@ -51,7 +51,7 @@ std::vector<double> cross(const std::vector<double> & v1,
   returnValue[1]= -v1[0]*v2[2]+v2[0]*v1[2];
   returnValue[2]=  v1[0]*v2[1]-v2[0]*v1[1];
   return returnValue;
-      
+
 }
 
 //
@@ -59,7 +59,7 @@ std::vector<double> cross(const std::vector<double> & v1,
 // find the point on this surface closest to an arbitrary point = xred1
 // return fractional coordinates of nearest point
 //
-std::vector<double> 
+std::vector<double>
 getNearestPointOnGivenSurface(std::vector<double>  latticeVectors,
 			      const std::vector<double> & xred1,
 			      const std::vector<double> & xred2,
@@ -76,12 +76,12 @@ getNearestPointOnGivenSurface(std::vector<double>  latticeVectors,
 
   for (int i = 0; i < 3; ++i){
     for(int j = 0; j < 3;++j){
-      P[i] += latticeVectors[3*j +i]*xred1[j]; 
+      P[i] += latticeVectors[3*j +i]*xred1[j];
       Q[i] += latticeVectors[3*j +i]*xred2[j];
     }
     R[i] = Q[i] - P[i];
   }
-    
+
   //
   // fine nearest point on the plane defined by surfaceNormal and xred2
   //
@@ -89,11 +89,11 @@ getNearestPointOnGivenSurface(std::vector<double>  latticeVectors,
   double denom = surfaceNormal[0]*surfaceNormal[0]+surfaceNormal[1]*surfaceNormal[1]+surfaceNormal[2]*surfaceNormal[2];
   const double t = num/denom;
 
-      
+
   std::vector<double> nearestPtCoords(3);
   for(int i = 0; i < 3; ++i)
     nearestPtCoords[i] = P[i]+t*surfaceNormal[i];
-    
+
   //
   // get fractional coordinates for the nearest point : solve a system
   // of equations
@@ -103,17 +103,17 @@ getNearestPointOnGivenSurface(std::vector<double>  latticeVectors,
   int IPIV[3];
   int info;
 
-  
+
   dgesv_(&N, &NRHS, &latticeVectors[0], &LDA, &IPIV[0], &nearestPtCoords[0], &LDA,&info);
 
-         
+
   if (info != 0) {
 
     std::cout<<"LU solve in conversion of frac to real coords failed."<<std::endl;
     exit(-1);
 
   }
-   
+
   //
   // nearestPtCoords is overwritten with the solution = frac coords
   //
@@ -131,7 +131,7 @@ getNearestPointOnGivenSurface(std::vector<double>  latticeVectors,
 // input : xreduced = frac coords of image charge
 // output : min distance to any of the cel surfaces
 //
-double 
+double
 getMinDistanceFromImageToCell(const std::vector<double> & latticeVectors,
 			      const std::vector<double> & xreduced)
 {
@@ -164,8 +164,8 @@ getMinDistanceFromImageToCell(const std::vector<double> & latticeVectors,
       //
       //find closest distance to surface 1
       //
-      surfacePoint[0] = 0; 
-      surfacePoint[1] = yfrac; 
+      surfacePoint[0] = 0;
+      surfacePoint[1] = yfrac;
       surfacePoint[2] = zfrac;
 
       std::vector<double> fracPtA = getNearestPointOnGivenSurface(latticeVectors,
@@ -180,18 +180,18 @@ getMinDistanceFromImageToCell(const std::vector<double> & latticeVectors,
 
       for (int i = 0; i < 3; ++i)
 	for(int j = 0; j < 3;++j)
-	  dReal[i] += latticeVectors[3*j +i]*dFrac[j]; 
-      
+	  dReal[i] += latticeVectors[3*j +i]*dFrac[j];
+
       double distA = dReal[0]*dReal[0]+dReal[1]*dReal[1]+dReal[2]*dReal[2];
       distA = sqrt(distA);
 
       //
       // find closest distance to surface 2
       //
-      surfacePoint[0] = xfrac; 
-      surfacePoint[1] = 0; 
+      surfacePoint[0] = xfrac;
+      surfacePoint[1] = 0;
       surfacePoint[2] = zfrac;
-	  
+
       std::vector<double> fracPtB = getNearestPointOnGivenSurface(latticeVectors,
 								  xreduced,
 								  surfacePoint,
@@ -201,10 +201,10 @@ getMinDistanceFromImageToCell(const std::vector<double> & latticeVectors,
 	dFrac[i] = xreduced[i] - fracPtB[i];
 	dReal[i] = 0.0;
       }
-      
+
       for (int i = 0; i < 3; ++i)
 	for(int j = 0; j < 3;++j)
-	  dReal[i] += latticeVectors[3*j +i]*dFrac[j]; 
+	  dReal[i] += latticeVectors[3*j +i]*dFrac[j];
 
       double distB =  dReal[0]*dReal[0]+dReal[1]*dReal[1]+dReal[2]*dReal[2];
       distB = sqrt(distB);
@@ -212,10 +212,10 @@ getMinDistanceFromImageToCell(const std::vector<double> & latticeVectors,
       //
       // find min distance to surface 3
       //
-      surfacePoint[0] = xfrac; 
-      surfacePoint[1] = yfrac; 
+      surfacePoint[0] = xfrac;
+      surfacePoint[1] = yfrac;
       surfacePoint[2] = 0;
-	  
+
       std::vector<double> fracPtC = getNearestPointOnGivenSurface(latticeVectors,
 								  xreduced,
 								  surfacePoint,
@@ -228,7 +228,7 @@ getMinDistanceFromImageToCell(const std::vector<double> & latticeVectors,
 
       for (int i = 0; i < 3; ++i)
 	for(int j = 0; j < 3;++j)
-	  dReal[i] += latticeVectors[3*j +i]*dFrac[j]; 
+	  dReal[i] += latticeVectors[3*j +i]*dFrac[j];
 
       double distC = dReal[0]*dReal[0]+dReal[1]*dReal[1]+dReal[2]*dReal[2];
       distC = sqrt(distC);
@@ -236,8 +236,8 @@ getMinDistanceFromImageToCell(const std::vector<double> & latticeVectors,
       //
       // fine min distance to surface 4
       //
-      surfacePoint[0] = 1; 
-      surfacePoint[1] = yfrac; 
+      surfacePoint[0] = 1;
+      surfacePoint[1] = yfrac;
       surfacePoint[2] = zfrac;
 
       std::vector<double> fracPtD = getNearestPointOnGivenSurface(latticeVectors,
@@ -252,21 +252,21 @@ getMinDistanceFromImageToCell(const std::vector<double> & latticeVectors,
 
       for (int i = 0; i < 3; ++i)
 	for(int j = 0; j < 3;++j)
-	  dReal[i] += latticeVectors[3*j +i]*dFrac[j]; 
+	  dReal[i] += latticeVectors[3*j +i]*dFrac[j];
 
       double distD =  dReal[0]*dReal[0]+dReal[1]*dReal[1]+dReal[2]*dReal[2];
       distD = sqrt(distD);
-      
+
       //
       // find min distance to surface 5
       //
-      surfacePoint[0] = xfrac; 
-      surfacePoint[1] = 1; 
+      surfacePoint[0] = xfrac;
+      surfacePoint[1] = 1;
       surfacePoint[2] = zfrac;
-      
+
       std::vector<double> fracPtE = getNearestPointOnGivenSurface(latticeVectors,
 								  xreduced,
-								  surfacePoint,	
+								  surfacePoint,
 								  surface2Normal);
 
       for(int i = 0; i < 3; ++i){
@@ -285,13 +285,13 @@ getMinDistanceFromImageToCell(const std::vector<double> & latticeVectors,
       //
       // find min distance to surface 6
       //
-      surfacePoint[0] = xfrac; 
-      surfacePoint[1] = yfrac; 
+      surfacePoint[0] = xfrac;
+      surfacePoint[1] = yfrac;
       surfacePoint[2] = 1;
-      
+
       std::vector<double> fracPtF = getNearestPointOnGivenSurface(latticeVectors,
 								  xreduced,
-								  surfacePoint,	
+								  surfacePoint,
 								  surface3Normal);
 
       for(int i = 0; i < 3; ++i){
@@ -305,9 +305,9 @@ getMinDistanceFromImageToCell(const std::vector<double> & latticeVectors,
 
       double distF = dReal[0]*dReal[0]+dReal[1]*dReal[1]+dReal[2]*dReal[2];
       distF = sqrt(distF);
-      
+
       return std::min(distF, std::min(distE, std::min( distD, std::min(distC, std::min(distB,distA)))));
-	 
+
     }
 
 
@@ -315,7 +315,7 @@ getMinDistanceFromImageToCell(const std::vector<double> & latticeVectors,
 
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::generateImageCharges()
-{ 
+{
 
   const double pspCutOff = 40.0;
   const double tol = 1e-4;
@@ -348,7 +348,7 @@ void dftClass<FEOrder>::generateImageCharges()
   //
   double ratio = pspCutOff/minMagnitude;
   int numberLayers = std::ceil(ratio*2);
-  
+
 
 
   //
@@ -359,7 +359,7 @@ void dftClass<FEOrder>::generateImageCharges()
   for(int i = 0; i < 3; ++i)
     {
       for(int j = 0; j < 3; ++j){
-	shift[i] += d_domainBoundingVectors[j][i]/2.0; 
+	shift[i] += d_domainBoundingVectors[j][i]/2.0;
       }
     }
 
@@ -373,11 +373,11 @@ void dftClass<FEOrder>::generateImageCharges()
 	  count++;
 	}
     }
-  
+
   d_imageIds.clear();
   d_imagePositions.clear();
   d_imageCharges.clear();
-  
+
   for(int i = 0; i < atomLocations.size(); ++i)
     {
       const int iCharge = i;
@@ -392,7 +392,7 @@ void dftClass<FEOrder>::generateImageCharges()
       int izmax = numberLayers+1;
       int iymax = numberLayers+1;
       int ixmax = numberLayers+1;
-     
+
 
 
       for(int iz = izmin; iz < izmax; ++iz)
@@ -421,7 +421,7 @@ void dftClass<FEOrder>::generateImageCharges()
 
 		      bool outsideCell = true;
 		      bool withinCutoff = false;
-		     
+
 
 		      if(outsideCell)
 			{
@@ -438,14 +438,14 @@ void dftClass<FEOrder>::generateImageCharges()
 
 		      if(outsideCell && withinCutoff){
 			d_imageIds.push_back(iCharge);
-		
+
 			for (int ii = 0; ii < 3; ++ii)
 			  for(int jj = 0; jj < 3;++jj)
 			    currentImageChargePosition[ii] += d_domainBoundingVectors[jj][ii]*newFrac[jj];
- 
+
 			for(int ii = 0; ii < 3; ++ii)
 			  currentImageChargePosition[ii] -= shift[ii];
-		
+
 			d_imagePositions.push_back(currentImageChargePosition);
 
 			/*if((newFracX >= -tol && newFracX <= 1+tol) &&
@@ -454,7 +454,7 @@ void dftClass<FEOrder>::generateImageCharges()
 			  outsideCell = false;*/
 
 		      }
-		
+
 		    }
 		}
 	    }
@@ -463,7 +463,8 @@ void dftClass<FEOrder>::generateImageCharges()
     }
 
   const int numImageCharges = d_imageIds.size();
-  if (dftParameters::verbosity>=3 || dftParameters::reproducible_output)
+  if ((dftParameters::verbosity>=4 || dftParameters::reproducible_output)
+       && (dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ))
     pcout<<"Number Image Charges  "<<numImageCharges<<std::endl;
 
   for(int i = 0; i < numImageCharges; ++i)
@@ -511,7 +512,7 @@ void dftClass<FEOrder>::generateImageCharges()
 
   d_globalChargeIdToImageIdMap.clear();
   d_globalChargeIdToImageIdMap = globalChargeIdToImageIdMap;
-  
+
 }
 
 
