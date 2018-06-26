@@ -293,7 +293,8 @@ namespace dftfe
       mpi_communicator (mpi_comm),
       n_mpi_processes (dealii::Utilities::MPI::n_mpi_processes(mpi_comm)),
       this_mpi_process (dealii::Utilities::MPI::this_mpi_process(mpi_comm)),
-      pcout (std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
+      pcout (std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
+      d_storedAdaptiveBallRadius(0)
     {
 
     }
@@ -342,7 +343,8 @@ namespace dftfe
       //create interaction maps by finding the intersection of global NodeIds of each atom
       std::map<int,std::set<int> > interactionMap;
 
-      double radiusAtomBallAdaptive=4.0;
+      double radiusAtomBallAdaptive=(d_storedAdaptiveBallRadius>1e-6)?
+	                             d_storedAdaptiveBallRadius:4.0;
 
       if (std::fabs(radiusAtomBall)<1e-6)
       {
@@ -384,6 +386,7 @@ namespace dftfe
 	      pcout<<"DFT-FE warning: Tried to adaptively determine the ball radius for nuclear self-potential solve and was found to be less than 3.0, which can detoriate the accuracy of the KSDFT groundstate energy and forces. One approach to overcome this issue is to use a larger super cell with smallest periodic dimension greater than 6.0 (twice of 3.0), assuming an orthorhombic domain. If that is not feasible, you may need more h refinement of the finite element mesh around the atoms to achieve the desired accuracy."<<std::endl;
 	  MPI_Barrier(mpi_communicator);
 
+	  d_storedAdaptiveBallRadius=radiusAtomBallAdaptive;
       }
       else
       {
