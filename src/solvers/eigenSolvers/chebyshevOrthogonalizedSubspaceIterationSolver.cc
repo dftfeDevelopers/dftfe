@@ -18,6 +18,7 @@
 #include <chebyshevOrthogonalizedSubspaceIterationSolver.h>
 #include <linearAlgebraOperations.h>
 #include <vectorUtilities.h>
+#include <dftUtils.h>
 
 
 namespace dftfe{
@@ -117,11 +118,15 @@ namespace dftfe{
   {
 
 
+    if (dftParameters::verbosity>=4)
+      dftUtils::printCurrentMemoryUsage(eigenVectorsFlattened.get_mpi_communicator(),
+	                      "Before Lanczos k-step upper Bound");
+
     computing_timer.enter_section("Lanczos k-step Upper Bound");
     operatorMatrix.reinit(1);
     const double upperBoundUnwantedSpectrum
 	=linearAlgebraOperations::lanczosUpperBoundEigenSpectrum(operatorMatrix,
-    		   					         tempEigenVec);
+    		   					            tempEigenVec);
     computing_timer.exit_section("Lanczos k-step Upper Bound");
 
     unsigned int chebyshevOrder = dftParameters::chebyshevOrder;
@@ -129,6 +134,8 @@ namespace dftfe{
     if(chebyshevOrder == 0)
       chebyshevOrder=internal::setChebyshevOrder(upperBoundUnwantedSpectrum);
 
+    if (dftParameters::lowerBoundUnwantedFracUpper>1e-6)
+       d_lowerBoundUnWantedSpectrum=dftParameters::lowerBoundUnwantedFracUpper*upperBoundUnwantedSpectrum;
     //
     //output statements
     //
@@ -152,15 +159,9 @@ namespace dftfe{
 	                                                    totalNumberWaveFunctions);
 
 
-    if(dftParameters::verbosity >= 4)
-       {
-	 PetscLogDouble bytes;
-	 PetscMemoryGetCurrentUsage(&bytes);
-	 FILE *dummy;
-	 unsigned int this_mpi_process = dealii::Utilities::MPI::this_mpi_process(operatorMatrix.getMPICommunicator());
-	 PetscSynchronizedPrintf(operatorMatrix.getMPICommunicator(),"[%d] Memory Usage before starting eigen solution  %e\n",this_mpi_process,bytes);
-	 PetscSynchronizedFlush(operatorMatrix.getMPICommunicator(),dummy);
-       }
+    if (dftParameters::verbosity>=4)
+      dftUtils::printCurrentMemoryUsage(eigenVectorsFlattened.get_mpi_communicator(),
+	                      "Before starting chebyshev filtering");
 
     const unsigned int localVectorSize = eigenVectorsFlattened.local_size()/totalNumberWaveFunctions;
 
@@ -266,6 +267,10 @@ namespace dftfe{
 							 upperBoundUnwantedSpectrum,
 							 d_lowerBoundWantedSpectrum);
 		computing_timer.exit_section("Chebyshev filtering opt");
+
+		if (dftParameters::verbosity>=4)
+		  dftUtils::printCurrentMemoryUsage(eigenVectorsFlattened.get_mpi_communicator(),
+					  "During blocked chebyshev filtering");
 
 		//copy the eigenVectorsFlattenedArrayBlock into eigenVectorsFlattenedArray after filtering
 		computing_timer.enter_section("Copy from block to full flattened array");
@@ -435,15 +440,9 @@ namespace dftfe{
 	pcout<<std::endl;
       }
 
-    if(dftParameters::verbosity >= 4)
-      {
-	PetscLogDouble bytes;
-	PetscMemoryGetCurrentUsage(&bytes);
-	FILE *dummy;
-	unsigned int this_mpi_process = dealii::Utilities::MPI::this_mpi_process(operatorMatrix.getMPICommunicator());
-	PetscSynchronizedPrintf(operatorMatrix.getMPICommunicator(),"[%d] Memory after all steps of subspace iteration before recreating STL vector  %e\n",this_mpi_process,bytes);
-	PetscSynchronizedFlush(operatorMatrix.getMPICommunicator(),dummy);
-      }
+    if (dftParameters::verbosity>=4)
+      dftUtils::printCurrentMemoryUsage(eigenVectorsFlattened.get_mpi_communicator(),
+	                      "After all steps of subspace iteration");
 
     return;
 

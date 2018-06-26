@@ -186,6 +186,9 @@ namespace dftfe {
   template<unsigned int FEOrder>
   void dftClass<FEOrder>::set()
   {
+    if (dftParameters::verbosity>=4)
+      dftUtils::printCurrentMemoryUsage(mpi_communicator,
+			      "Entered call to set");
     //
     //read coordinates
     //
@@ -197,6 +200,7 @@ namespace dftfe {
 	//read fractionalCoordinates of atoms in periodic case
 	//
 	dftUtils::readFile(numberColumnsCoordinatesFile, atomLocations, dftParameters::coordinatesFile);
+	AssertThrow(dftParameters::natoms==atomLocations.size(),ExcMessage("DFT-FE Error: The number atoms read from the atomic coordinates file (input through ATOMIC COORDINATES FILE) doesn't match the NATOMS input. Please check your atomic coordinates file. Sometimes an extra blank row at the end can cause this issue too."));
 	pcout << "number of atoms: " << atomLocations.size() << "\n";
 	atomLocationsFractional.resize(atomLocations.size()) ;
 	//
@@ -218,6 +222,8 @@ namespace dftfe {
     else
       {
 	dftUtils::readFile(numberColumnsCoordinatesFile, atomLocations, dftParameters::coordinatesFile);
+
+	AssertThrow(dftParameters::natoms==atomLocations.size(),ExcMessage("DFT-FE Error: The number atoms read from the atomic coordinates file (input through ATOMIC COORDINATES FILE) doesn't match the NATOMS input. Please check your atomic coordinates file. Sometimes an extra blank row at the end can cause this issue too."));
 	pcout << "number of atoms: " << atomLocations.size() << "\n";
 
 	//
@@ -235,6 +241,7 @@ namespace dftfe {
     unsigned int numberColumnsLatticeVectorsFile = 3;
     dftUtils::readFile(numberColumnsLatticeVectorsFile,d_domainBoundingVectors,dftParameters::domainBoundingVectorsFile);
 
+    AssertThrow(dftParameters::natomTypes==atomTypes.size(),ExcMessage("DFT-FE Error: The number atom types read from the atomic coordinates file (input through ATOMIC COORDINATES FILE) doesn't match the NATOM TYPES input. Please check your atomic coordinates file."));
     pcout << "number of atoms types: " << atomTypes.size() << "\n";
 
     //determine number of electrons
@@ -277,7 +284,7 @@ namespace dftfe {
       {
 	pcout<<std::endl<<"Reading Pseudo-potential data for each atom from the list given in : " <<dftParameters::pseudoPotentialFile<<std::endl;
       }
-    
+
     if(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0 && dftParameters::isPseudopotential == true)
       pseudoUtils::convert(dftParameters::pseudoPotentialFile);
 
@@ -388,6 +395,10 @@ namespace dftfe {
   {
     computingTimerStandard.enter_section("Pre-processing steps");
 
+    if (dftParameters::verbosity>=4)
+      dftUtils::printCurrentMemoryUsage(mpi_communicator,
+	                      "Entering init");
+
     initImageChargesUpdateKPoints();
 
     computing_timer.enter_section("mesh generation");
@@ -409,7 +420,9 @@ namespace dftfe {
 							      dftParameters::useSymm);
     computing_timer.exit_section("mesh generation");
 
-
+    if (dftParameters::verbosity>=4)
+      dftUtils::printCurrentMemoryUsage(mpi_communicator,
+	                      "Mesh generation completed");
     //
     //get access to triangulation objects from meshGenerator class
     //
@@ -419,6 +432,10 @@ namespace dftfe {
     //initialize dofHandlers and hanging-node constraints and periodic constraints on the unmoved Mesh
     //
     initUnmovedTriangulation(triangulationPar);
+
+    if (dftParameters::verbosity>=4)
+      dftUtils::printCurrentMemoryUsage(mpi_communicator,
+	                      "initUnmovedTriangulation completed");
 #ifdef USE_COMPLEX
     if (dftParameters::useSymm)
       symmetryPtr->initSymmetry() ;
@@ -428,20 +445,33 @@ namespace dftfe {
     //
     moveMeshToAtoms(triangulationPar);
 
+    if (dftParameters::verbosity>=4)
+      dftUtils::printCurrentMemoryUsage(mpi_communicator,
+	                      "moveMeshToAtoms completed");
     //
     //initialize dirichlet BCs for total potential and vSelf poisson solutions
     //
     initBoundaryConditions();
 
+    if (dftParameters::verbosity>=4)
+      dftUtils::printCurrentMemoryUsage(mpi_communicator,
+	                      "initBoundaryConditions completed");
     //
     //initialize guesses for electron-density and wavefunctions
     //
     initElectronicFields(usePreviousGroundStateFields);
 
+    if (dftParameters::verbosity>=4)
+      dftUtils::printCurrentMemoryUsage(mpi_communicator,
+	                      "initElectronicFields completed");
     //
     //initialize pseudopotential data for both local and nonlocal part
     //
     initPseudoPotentialAll();
+
+    if (dftParameters::verbosity>=4)
+      dftUtils::printCurrentMemoryUsage(mpi_communicator,
+	                      "initPseudopotential completed");
     computingTimerStandard.exit_section("Pre-processing steps");
   }
 
@@ -555,7 +585,9 @@ namespace dftfe {
     eigenClass<FEOrder> kohnShamDFTEigenOperator(this,mpi_communicator);
     kohnShamDFTEigenOperator.init();
 
-
+    if (dftParameters::verbosity>=4)
+      dftUtils::printCurrentMemoryUsage(mpi_communicator,
+	                      "Kohn-sham dft operator init called");
     //
     //create eigen solver object
     //
@@ -570,7 +602,9 @@ namespace dftfe {
     kohnShamDFTEigenOperator.preComputeShapeFunctionGradientIntegrals();
     computing_timer.exit_section("shapefunction data");
 
-
+    if (dftParameters::verbosity>=4)
+      dftUtils::printCurrentMemoryUsage(mpi_communicator,
+	                      "Precompute shapefunction grad integrals, just before starting scf solve");
     //
     //solve
     //
@@ -712,6 +746,9 @@ namespace dftfe {
 		    kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint);
 		    computing_timer.exit_section("Hamiltonian Matrix Computation");
 
+		    if (dftParameters::verbosity>=4)
+		      dftUtils::printCurrentMemoryUsage(mpi_communicator,
+					      "Hamiltonian Matrix computed");
 
 		    for(unsigned int j = 0; j < dftParameters::numPass; ++j)
 		      {
@@ -758,7 +795,7 @@ namespace dftfe {
 		                       && dftParameters::restartFromChk
 				       && dftParameters::chkType==2)? 1.0e-4
 		                       :adaptiveChebysevFilterPassesTol;
-	    while (maxRes>filterPassTol && count<20)
+	    while (maxRes>filterPassTol && count<100)
 	      {
 		for(unsigned int s=0; s<2; ++s)
 		  {
@@ -784,6 +821,10 @@ namespace dftfe {
 			computing_timer.enter_section("Hamiltonian Matrix Computation");
 			kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint);
 			computing_timer.exit_section("Hamiltonian Matrix Computation");
+
+			if (dftParameters::verbosity>=4)
+			  dftUtils::printCurrentMemoryUsage(mpi_communicator,
+						  "Hamiltonian Matrix computed");
 
 			kohnShamEigenSpaceCompute(s,
 						  kPoint,
@@ -843,6 +884,9 @@ namespace dftfe {
 		kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint);
 		computing_timer.exit_section("Hamiltonian Matrix Computation");
 
+		if (dftParameters::verbosity>=4)
+		      dftUtils::printCurrentMemoryUsage(mpi_communicator,
+					      "Hamiltonian Matrix computed");
 		for(unsigned int j = 0; j < dftParameters::numPass; ++j)
 		  {
 		    if (dftParameters::verbosity>=2)
@@ -881,7 +925,7 @@ namespace dftfe {
 		                       && dftParameters::restartFromChk
 				       && dftParameters::chkType==2)? 1.0e-4
 		                       :adaptiveChebysevFilterPassesTol;
-	    while (maxRes>filterPassTol && count<20)
+	    while (maxRes>filterPassTol && count<100)
 	      {
 
 		for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
@@ -894,6 +938,9 @@ namespace dftfe {
 		    kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint);
 		    computing_timer.exit_section("Hamiltonian Matrix Computation");
 
+		    if (dftParameters::verbosity>=4)
+		      dftUtils::printCurrentMemoryUsage(mpi_communicator,
+					      "Hamiltonian Matrix computed");
 		    kohnShamEigenSpaceCompute(0,
 					      kPoint,
 					      kohnShamDFTEigenOperator,

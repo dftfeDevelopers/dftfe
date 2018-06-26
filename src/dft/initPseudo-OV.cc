@@ -693,10 +693,11 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
 	{
 	  d_nonLocalPseudoPotentialConstants[iAtom][iPseudoWave] = denominatorData[atomLocations[iAtom][0]][projector[atomLocations[iAtom][0]][iPseudoWave]][projector[atomLocations[iAtom][0]][iPseudoWave]];
 	  //d_nonLocalPseudoPotentialConstants[iAtom][iPseudoWave] = 1.0/d_nonLocalPseudoPotentialConstants[iAtom][iPseudoWave];
+#ifdef DEBUG
 	  if (dftParameters::verbosity>=2)
 	     pcout<<"The value of 1/nlpConst corresponding to atom and lCount "<<iAtom<<' '<<
 	      iPseudoWave<<" is "<<d_nonLocalPseudoPotentialConstants[iAtom][iPseudoWave]<<std::endl;
-
+#endif
 	}
 
 
@@ -762,7 +763,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
     }
 
   const unsigned int numberElements = iElemCount;
-      
+
 
   for(int iAtom = 0; iAtom < numberNonLocalAtoms; ++iAtom)
     {
@@ -889,9 +890,10 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
 	}//cell loop
 
       cumulativeSplineId += numberPseudoWaveFunctions;
-
+#ifdef DEBUG
       if (dftParameters::verbosity>=3)
          pcout<<"No.of non zero elements in the compact support of atom "<<iAtom<<" is "<<d_elementIteratorsInAtomCompactSupport[iAtom].size()<<std::endl;
+#endif
 
       if (isAtomIdInProcessor)
           d_nonLocalAtomIdsInCurrentProcess.push_back(iAtom);

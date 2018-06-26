@@ -47,6 +47,8 @@ namespace dftfe
     void convert(std::string & fileName)
     {
 
+      dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
+
       xmlTodftfeParser xmlParse;
 
       std::ifstream input_file;
@@ -56,6 +58,7 @@ namespace dftfe
 
       std::string z;
       std::string toParse;
+      std::vector<std::string> atomTypes;
 
       while(input_file >> z >> toParse)
 	{
@@ -64,6 +67,8 @@ namespace dftfe
           std::string newFolder = tempFolder + "/" + "z" + z;
 	  mkdir(newFolder.c_str(),ACCESSPERMS);
 	  AssertThrow(isupf(toParse),dealii::ExcMessage("Not a valid pseudopotential format and upf format only is currently supported"));
+
+	  atomTypes.push_back(z);
 	  
 	  if(isupf(toParse))
 	    {
@@ -78,7 +83,10 @@ namespace dftfe
 #else
 		  std::string newPath =  dftPath + "/tests/dft/pseudopotential/real/" + toParse;
 #endif
-		  //std::cout<<newPath<<std::endl;
+
+		  if(dftParameters::verbosity >= 1)
+		    pcout<< " Reading Pseudopotential File: "<<newPath<<std::endl;
+
 		  errorFlag = upfToxml(newPath,
 				       xmlFileName);
 		}
@@ -94,8 +102,9 @@ namespace dftfe
 	      xmlParse.outputData(newFolder);
 
 	    }
-
 	}
+
+      AssertThrow(atomTypes.size()==dftParameters::natomTypes,dealii::ExcMessage("Number of atom types in your pseudopotential file does not match with that given in the parameter file"));
 
     }
 

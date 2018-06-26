@@ -2,6 +2,8 @@ set VERBOSITY= 0
 set REPRODUCIBLE OUTPUT=true
 
 subsection Geometry
+  set NATOMS=2
+  set NATOM TYPES=1
   set ATOMIC COORDINATES FILE = @SOURCE_DIR@/hcpMgPrim_coordinates.inp
   set DOMAIN BOUNDING VECTORS FILE = @SOURCE_DIR@/hcpMgPrim_domainBoundingVectors.inp
   

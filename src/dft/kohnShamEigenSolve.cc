@@ -114,16 +114,6 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 				residualNormWaveFunctions,
 				interBandGroupComm);
 
-  if(dftParameters::verbosity >= 4)
-    {
-      PetscLogDouble bytes;
-      PetscMemoryGetCurrentUsage(&bytes);
-      FILE *dummy;
-      unsigned int this_mpi_process = dealii::Utilities::MPI::this_mpi_process(mpi_communicator);
-      PetscSynchronizedPrintf(mpi_communicator,"[%d] Memory after recreating STL vector and exiting from subspaceIteration solver  %e\n",this_mpi_process,bytes);
-      PetscSynchronizedFlush(mpi_communicator,dummy);
-    }
-
   //
   //scale the eigenVectors with M^{-1/2} to represent the wavefunctions in the usual FE basis
   //

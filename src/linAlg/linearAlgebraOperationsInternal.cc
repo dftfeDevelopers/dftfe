@@ -94,15 +94,37 @@ namespace dftfe
 	  if (processGrid->is_process_active() &&
 	      dealii::Utilities::MPI::n_mpi_processes(interComm)>1)
 	  {
-		const unsigned int local_m=mat.local_m();
-		const unsigned int local_n=mat.local_n();
 
                 MPI_Allreduce(MPI_IN_PLACE,
                               &mat.local_el(0,0),
-                              local_m*local_n,
+                              mat.local_m()*mat.local_n(),
                               MPI_DOUBLE,
                               MPI_SUM,
                               interComm);
+
+	   }
+#endif
+	}
+
+	template<typename T>
+        void broadcastAcrossInterCommScaLAPACKMat
+	                                   (const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+		                            dealii::ScaLAPACKMatrix<T> & mat,
+				            const MPI_Comm &interComm,
+					    const unsigned int broadcastRoot)
+	{
+#ifdef USE_COMPLEX
+	  AssertThrow(false,dftUtils::ExcNotImplementedYet());
+#else
+  	  //sum across all inter communicator groups
+	  if (processGrid->is_process_active() &&
+	      dealii::Utilities::MPI::n_mpi_processes(interComm)>1)
+	  {
+                MPI_Bcast(&mat.local_el(0,0),
+                           mat.local_m()*mat.local_n(),
+                           MPI_DOUBLE,
+                           broadcastRoot,
+                           interComm);
 
 	   }
 #endif
@@ -246,6 +268,10 @@ namespace dftfe
 	  std::vector<T> rotatedVectorsMatBlock(numberSubspaceVectors*dofsBlockSize,0.0);
           std::vector<T> rotatedVectorsMatBlockTemp(vectorsBlockSize*dofsBlockSize,0.0);
 
+          if (dftParameters::verbosity>=4)
+                   dftUtils::printCurrentMemoryUsage(subspaceVectorsArray.get_mpi_communicator(),
+	                      "Inside Blocked susbpace rotation");
+
 	  for (unsigned int idof = 0; idof < maxNumLocalDofs; idof += dofsBlockSize)
 	  {
 	      // Correct block dimensions if block "goes off edge of" the matrix
@@ -378,6 +404,12 @@ namespace dftfe
 	void sumAcrossInterCommScaLAPACKMat(const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 		                            dealii::ScaLAPACKMatrix<dataTypes::number> & mat,
 				            const MPI_Comm &interComm);
+	template
+        void broadcastAcrossInterCommScaLAPACKMat
+	                                   (const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+		                            dealii::ScaLAPACKMatrix<dataTypes::number> & mat,
+				            const MPI_Comm &interComm,
+					    const unsigned int broadcastRoot);
 #endif
     }
   }

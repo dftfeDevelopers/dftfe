@@ -64,6 +64,9 @@ namespace dftParameters
   unsigned int nbandGrps=1;
   bool computeEnergyEverySCF=true;
   unsigned int scalapackParalProcs=0;
+  unsigned int natoms=0;
+  unsigned int natomTypes=0;
+  double lowerBoundUnwantedFracUpper=0;
 
   void declare_parameters(ParameterHandler &prm)
   {
@@ -73,7 +76,7 @@ namespace dftParameters
 
     prm.declare_entry("VERBOSITY", "1",
                       Patterns::Integer(0,4),
-                      "[Standard] Parameter to control verbosity of terminal output. Ranging from 0 for low to 4 for code development purposes. Standard users wouldn't need verbosity beyond 2.");
+                      "[Standard] Parameter to control verbosity of terminal output. Ranging from 1 for low, 2 for medium (prints eigenvalues and fractional occupancies at the end of each ground-state solve), 3 for high (prints eigenvalues and fractional occupancies at the end of each self-consistent field iteration), and 4 for very high, which is only meant for code development purposes. VERBOSITY=0 is only used for unit testing and shouldn't be used by standard users.");
 
     prm.declare_entry("WRITE SOLUTION FIELDS", "false",
                       Patterns::Bool(),
@@ -105,9 +108,17 @@ namespace dftParameters
 
     prm.enter_subsection ("Geometry");
     {
+        prm.declare_entry("NATOMS", "0",
+                        Patterns::Integer(0),
+                       "[Standard] Total number of atoms. This parameter requires a mandatory non-zero input which is equal to the number of rows in the file passed to ATOMIC COORDINATES FILE.");
+
+        prm.declare_entry("NATOM TYPES", "0",
+                        Patterns::Integer(0),
+                       "[Standard] Total number of atom types. This parameter requires a mandatory non-zero input which is equal to the number of unique atom types in the file passed to ATOMIC COORDINATES FILE.");
+
 	prm.declare_entry("ATOMIC COORDINATES FILE", "",
 			  Patterns::Anything(),
-			  "[Standard] Atomic-coordinates file. For fully non-periodic domain give cartesian coordinates of the atoms (in a.u) with respect to origin at the center of the domain. For periodic and semi-periodic give fractional coordinates of atoms. File format (example for two atoms): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 (row2).");
+			  "[Standard] Atomic-coordinates file. For fully non-periodic domain give cartesian coordinates of the atoms (in a.u) with respect to origin at the center of the domain. For periodic and semi-periodic give fractional coordinates of atoms. File format (example for two atoms): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 (row2). The number of rows must be equal to NATOMS, and number of unique atoms must be equal to NATOM TYPES.");
 
 	prm.declare_entry("DOMAIN BOUNDING VECTORS FILE", "",
 			  Patterns::Anything(),
@@ -344,6 +355,10 @@ namespace dftParameters
 			      Patterns::Integer(0,2000),
 			      "[Developer] The degree of the Chebyshev polynomial to be employed for filtering out the unwanted spectrum. A heuristics value depending upon the upper bound of the eigen spectrum is used when the parameter value is 0, which is the default option.");
 
+	    prm.declare_entry("LOWER BOUND UNWANTED FRAC UPPER", "0",
+			      Patterns::Double(0,1),
+			      "[Developer] The value of the fraction of the upper bound of the unwanted spectrum, the lower bound of the unwanted spectrum will be set. Default value is 0.");
+
 	    prm.declare_entry("CHEBYSHEV FILTER PASSES", "1",
 			      Patterns::Integer(1,20),
 			      "[Developer] The initial number of the Chebyshev filter passes per SCF. More Chebyshev filter passes beyond the value set in this parameter can still happen due to additional algorithms used in the code.");
@@ -434,6 +449,8 @@ namespace dftParameters
 
     prm.enter_subsection ("Geometry");
     {
+        dftParameters::natoms                        = prm.get_integer("NATOMS");
+        dftParameters::natomTypes                    = prm.get_integer("NATOM TYPES");
         dftParameters::coordinatesFile               = prm.get("ATOMIC COORDINATES FILE");
         dftParameters::domainBoundingVectorsFile     = prm.get("DOMAIN BOUNDING VECTORS FILE");
 	prm.enter_subsection ("Optimization");
@@ -524,6 +541,7 @@ namespace dftParameters
 	{
 	   dftParameters::numberEigenValues             = prm.get_integer("NUMBER OF KOHN-SHAM WAVEFUNCTIONS");
 	   dftParameters::lowerEndWantedSpectrum        = prm.get_double("LOWER BOUND WANTED SPECTRUM");
+	   dftParameters::lowerBoundUnwantedFracUpper   = prm.get_double("LOWER BOUND UNWANTED FRAC UPPER");
 	   dftParameters::chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
 	   dftParameters::numPass           = prm.get_integer("CHEBYSHEV FILTER PASSES");
 	   dftParameters::chebyshevBlockSize= prm.get_integer("CHEBYSHEV FILTER BLOCK SIZE");
@@ -557,6 +575,30 @@ namespace dftParameters
 
   void check_print_parameters(const dealii::ParameterHandler &prm)
   {
+     if (dftParameters::verbosity >=1 && Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)
+     {
+        std::cout << "==========================================================================================================" << std::endl ;
+        std::cout << "==========================================================================================================" << std::endl ;
+        std::cout << "			Welcome to the Open Source program DFT-FE v0.5.0-pre			        " << std::endl ;
+        std::cout << "This is a C++ code for materials modeling from first principles using Kohn-Sham density functional theory " << std::endl ;
+        std::cout << "It is based on adaptive finite-element based methodologies.		        " << std::endl ;
+        std::cout << "For details and citing please refer: P.Motamarri et. al., Comp. Phys. Comm., Vol xx, Issue xx, pp xx, 2018" << std::endl ;
+	std::cout << "==========================================================================================================" << std::endl ;
+	std::cout << " DFT-FE Authors (alphabetically) :									" << std::endl ;
+	std::cout << "														" << std::endl ;
+	std::cout << " Sambit Das               - University of Michigan           " << std::endl ;
+	std::cout << " Denis Davydov            - University of Erlangen-Nuremberg " << std::endl ;
+	std::cout << " Vikram Gavini (Mentor)   - University of Michigan, Ann Arbor" << std::endl ;
+	std::cout << " Krishnendu Ghosh         - University of Michigan, Ann Arbor" << std::endl ;
+	std::cout << " Phani Motamarri          - University of Michigan, Ann Arbor" << std::endl ;
+	std::cout << " Shiva Rudraraju          - University of Wisconsin-Madison  " << std::endl ;
+        std::cout << "==========================================================================================================" << std::endl ;
+        std::cout << " 	     Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors         " << std::endl ;
+        std::cout << " 			DFT-FE is published under [LGPL v2.1 or newer] 				" << std::endl ;
+        std::cout << "==========================================================================================================" << std::endl ;
+        std::cout << "==========================================================================================================" << std::endl ;
+    }
+
     const bool printParametersToFile=false;
     if (printParametersToFile && Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)
     {
@@ -606,6 +648,12 @@ namespace dftParameters
     if (dftParameters::isPseudopotential)
       AssertThrow(!dftParameters::pseudoPotentialFile.empty(),
 	        ExcMessage("DFT-FE Error: PSEUDOPOTENTIAL FILE NAMES LIST not given."));
+
+    AssertThrow(dftParameters::natoms!=0
+	        ,ExcMessage("DFT-FE Error: NATOMS not given or given a value of zero which is not allowed."));
+
+    AssertThrow(dftParameters::natomTypes!=0
+	        ,ExcMessage("DFT-FE Error: NATOM TYPES not given or given a value of zero which is not allowed."));
   }
 
 }

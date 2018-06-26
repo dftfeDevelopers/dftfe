@@ -1,4 +1,6 @@
 subsection Geometry
+  set NATOMS=2
+  set NATOM TYPES=1
   set ATOMIC COORDINATES FILE      = coordinates.inp 
   set DOMAIN BOUNDING VECTORS FILE = domainVectors.inp
 end
