@@ -984,6 +984,10 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 
     std::vector<dataTypes::number> projHamBlock(numberWaveFunctions*vectorsBlockSize,0.0);
 
+    if (dftParameters::verbosity>=4)
+      dftUtils::printCurrentMemoryUsage(mpi_communicator,
+	                      "Inside Blocked XtHX with parallel projected Ham matrix");
+
     for (unsigned int jvec = 0; jvec < numberWaveFunctions; jvec += vectorsBlockSize)
     {
 	  // Correct block dimensions if block "goes off edge of" the matrix

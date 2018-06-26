@@ -75,6 +75,8 @@ namespace dftfe {
       extern unsigned int nbandGrps;
       extern bool computeEnergyEverySCF;
       extern unsigned int scalapackParalProcs;
+      extern unsigned int natoms;
+      extern unsigned int natomTypes;
 
       /**
        * Declare parameters.

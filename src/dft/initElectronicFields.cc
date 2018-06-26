@@ -99,18 +99,16 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
      pcout <<std::endl<< "Setting initial guess for wavefunctions...."<<std::endl;
      readPSI();
 
-     if(dftParameters::verbosity >= 4)
-       {
-	 PetscLogDouble bytes;
-	 PetscMemoryGetCurrentUsage(&bytes);
-	 FILE *dummy;
-	 unsigned int this_mpi_process = dealii::Utilities::MPI::this_mpi_process(mpi_communicator);
-	 PetscSynchronizedPrintf(mpi_communicator,"[%d] Memory Usage after creating flattened eigenvectors %e\n",this_mpi_process,bytes);
-	 PetscSynchronizedFlush(mpi_communicator,dummy);
-       }
+     if (dftParameters::verbosity>=4)
+       dftUtils::printCurrentMemoryUsage(mpi_communicator,
+	                      "Created flattened array eigenvectors");
 
      if (!(dftParameters::chkType==2 && dftParameters::restartFromChk))
 	initRho();
+
+     if (dftParameters::verbosity>=4)
+       dftUtils::printCurrentMemoryUsage(mpi_communicator,
+	                      "initRho called");
 
   }
   else if (usePreviousGroundStateFields==1)
@@ -138,10 +136,15 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
   //
   //update serial and parallel unmoved previous mesh
   //
-  d_mesh.generateSerialAndParallelUnmovedPreviousMesh(atomLocations,
-				                      d_imagePositions,
-				                      d_domainBoundingVectors);
+  if  (dftParameters::isIonOpt || dftParameters::isCellOpt)
+    d_mesh.generateSerialAndParallelUnmovedPreviousMesh(atomLocations,
+				                        d_imagePositions,
+				                        d_domainBoundingVectors);
 
+
+ if (dftParameters::verbosity>=4)
+   dftUtils::printCurrentMemoryUsage(mpi_communicator,
+			  "Serial and parallel prev mesh generated");
   //
   //store constraintEigen Matrix entries into STL vector
   //
@@ -150,4 +153,8 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
 
   constraintsNoneDataInfo.initialize(matrix_free_data.get_vector_partitioner(),
 				     constraintsNone);
+
+ if (dftParameters::verbosity>=4)
+   dftUtils::printCurrentMemoryUsage(mpi_communicator,
+			  "Overloaded constraint matrices initialized");
 }

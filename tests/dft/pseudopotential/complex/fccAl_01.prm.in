@@ -44,6 +44,8 @@ subsection Finite element mesh parameters
 end
 
 subsection Geometry
+  set NATOMS=4
+  set NATOM TYPES=1
   set ATOMIC COORDINATES FILE      = @SOURCE_DIR@/fccAl_coordinates.inp
   set DOMAIN BOUNDING VECTORS FILE = @SOURCE_DIR@/fccAl_domainBoundingVectors.inp 
 end

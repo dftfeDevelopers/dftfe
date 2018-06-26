@@ -50,7 +50,9 @@ void dftClass<FEOrder>::locateAtomCoreNodes(const dealii::DoFHandler<3> & _dofHa
 	//
 	for (std::set<unsigned int>::iterator it=atomsTolocate.begin(); it!=atomsTolocate.end(); ++it){
 	  Point<3> atomCoord(atomLocations[*it][2],atomLocations[*it][3],atomLocations[*it][4]);
-	   if(feNodeGlobalCoord.distance(atomCoord) < 1.0e-5){
+	   if(feNodeGlobalCoord.distance(atomCoord) < 1.0e-5)
+	   {
+#ifdef DEBUG
 	     if(isPseudopotential)
 	       {
 		 if (dftParameters::verbosity>=4)
@@ -65,18 +67,22 @@ void dftClass<FEOrder>::locateAtomCoreNodes(const dealii::DoFHandler<3> & _dofHa
 		    std::cout << "atom core with charge " << atomLocations[*it][0] << " located with node id " << nodeID << " in processor " << this_mpi_process<<" nodal coor "<<feNodeGlobalCoord[0]<<" "<<feNodeGlobalCoord[1]<<" "<<feNodeGlobalCoord[2]<<std::endl;
 		 }
 	       }
+#endif
 	     if (locallyOwnedDofs.is_element(nodeID)){
 	       if(isPseudopotential)
 		 atomNodeIdToChargeValueMap.insert(std::pair<dealii::types::global_dof_index,double>(nodeID,atomLocations[*it][1]));
 	       else
 		 atomNodeIdToChargeValueMap.insert(std::pair<dealii::types::global_dof_index,double>(nodeID,atomLocations[*it][0]));
-
+#ifdef DEBUG
 	       if (dftParameters::verbosity>=4)
 	          std::cout << " and added \n";
+#endif
 	     }
 	     else{
+#ifdef DEBUG
 	       if (dftParameters::verbosity>=4)
 	         std::cout << " but skipped \n";
+#endif
 	     }
 	     atomsTolocate.erase(*it);
 	     break;
@@ -193,8 +199,10 @@ void dftClass<FEOrder>::locatePeriodicPinnedNodes(const dealii::DoFHandler<3> & 
 
   if(Utilities::MPI::this_mpi_process(mpi_communicator) == maxTaskId)
     {
+#ifdef DEBUG
       if (dftParameters::verbosity>=4)
           std::cout<<"Found Node locally on processor Id: "<<Utilities::MPI::this_mpi_process(mpi_communicator)<<std::endl;
+#endif
       if(locallyOwnedDofs.is_element(maxNode))
 	{
 	  if(constraintsBase.is_identity_constrained(maxNode))
@@ -263,13 +271,6 @@ void dftClass<FEOrder>::locatePeriodicPinnedNodes(const dealii::DoFHandler<3> & 
 			{
 			  constraints.add_line(nodeID);
 			  constraints.set_inhomogeneity(nodeID,0.0);
-			  if (dftParameters::verbosity>=4)
-			     std::cout << " and added \n";
-			}
-		      else
-			{
-			  if (dftParameters::verbosity>=4)
-			     std::cout << " but skipped \n";
 			}
 		      nodesTolocate.erase(*it);
 		      break;
