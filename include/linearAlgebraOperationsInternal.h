@@ -59,6 +59,17 @@ namespace dftfe
 		                            dealii::ScaLAPACKMatrix<T> & mat,
 				            const MPI_Comm &interComm);
 
+	/** @brief MPI_Bcast of ScaLAPACKMat across a given inter communicator from a given broadcast root.
+	 * Used for band parallelization.
+	 *
+	 */
+        template<typename T>
+	void broadcastAcrossInterCommScaLAPACKMat
+	                                   (const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+		                            dealii::ScaLAPACKMatrix<T> & mat,
+				            const MPI_Comm &interComm,
+					    const unsigned int broadcastRoot);
+
 	/** @brief Computes S=X^{T}*X and stores in a parallel ScaLAPACK matrix.
 	 * X^{T} is the subspaceVectorsArray in the column major format. S is the
 	 * overlapMatPar.

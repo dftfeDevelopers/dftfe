@@ -795,7 +795,7 @@ namespace dftfe {
 		                       && dftParameters::restartFromChk
 				       && dftParameters::chkType==2)? 1.0e-4
 		                       :adaptiveChebysevFilterPassesTol;
-	    while (maxRes>filterPassTol && count<20)
+	    while (maxRes>filterPassTol && count<100)
 	      {
 		for(unsigned int s=0; s<2; ++s)
 		  {
@@ -925,7 +925,7 @@ namespace dftfe {
 		                       && dftParameters::restartFromChk
 				       && dftParameters::chkType==2)? 1.0e-4
 		                       :adaptiveChebysevFilterPassesTol;
-	    while (maxRes>filterPassTol && count<20)
+	    while (maxRes>filterPassTol && count<100)
 	      {
 
 		for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)

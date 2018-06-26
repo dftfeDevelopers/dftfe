@@ -66,6 +66,7 @@ namespace dftParameters
   unsigned int scalapackParalProcs=0;
   unsigned int natoms=0;
   unsigned int natomTypes=0;
+  double lowerBoundUnwantedFracUpper=0;
 
   void declare_parameters(ParameterHandler &prm)
   {
@@ -354,6 +355,10 @@ namespace dftParameters
 			      Patterns::Integer(0,2000),
 			      "[Developer] The degree of the Chebyshev polynomial to be employed for filtering out the unwanted spectrum. A heuristics value depending upon the upper bound of the eigen spectrum is used when the parameter value is 0, which is the default option.");
 
+	    prm.declare_entry("LOWER BOUND UNWANTED FRAC UPPER", "0",
+			      Patterns::Double(0,1),
+			      "[Developer] The value of the fraction of the upper bound of the unwanted spectrum, the lower bound of the unwanted spectrum will be set. Default value is 0.");
+
 	    prm.declare_entry("CHEBYSHEV FILTER PASSES", "1",
 			      Patterns::Integer(1,20),
 			      "[Developer] The initial number of the Chebyshev filter passes per SCF. More Chebyshev filter passes beyond the value set in this parameter can still happen due to additional algorithms used in the code.");
@@ -536,6 +541,7 @@ namespace dftParameters
 	{
 	   dftParameters::numberEigenValues             = prm.get_integer("NUMBER OF KOHN-SHAM WAVEFUNCTIONS");
 	   dftParameters::lowerEndWantedSpectrum        = prm.get_double("LOWER BOUND WANTED SPECTRUM");
+	   dftParameters::lowerBoundUnwantedFracUpper   = prm.get_double("LOWER BOUND UNWANTED FRAC UPPER");
 	   dftParameters::chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
 	   dftParameters::numPass           = prm.get_integer("CHEBYSHEV FILTER PASSES");
 	   dftParameters::chebyshevBlockSize= prm.get_integer("CHEBYSHEV FILTER BLOCK SIZE");
