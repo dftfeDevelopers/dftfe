@@ -357,7 +357,7 @@ namespace dftParameters
 
 	    prm.declare_entry("LOWER BOUND UNWANTED FRAC UPPER", "0",
 			      Patterns::Double(0,1),
-			      "[Developer] The value of the fraction of the upper bound of the unwanted spectrum, the lower bound will be set. Default value is 0.");
+			      "[Developer] The value of the fraction of the upper bound of the unwanted spectrum, the lower bound of the unwanted spectrum will be set. Default value is 0.");
 
 	    prm.declare_entry("CHEBYSHEV FILTER PASSES", "1",
 			      Patterns::Integer(1,20),
