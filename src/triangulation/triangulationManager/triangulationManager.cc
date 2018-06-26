@@ -146,8 +146,11 @@ void triangulationManager::generateCoarseMeshesForRestart
 
   generateCoarseMesh(d_parallelTriangulationUnmoved);
   generateCoarseMesh(d_parallelTriangulationMoved);
-  generateCoarseMesh(d_parallelTriangulationUnmovedPrevious);
-  generateCoarseMesh(d_serialTriangulationUnmovedPrevious);
+  if (dftParameters::isIonOpt || dftParameters::isCellOpt)
+  {
+    generateCoarseMesh(d_parallelTriangulationUnmovedPrevious);
+    generateCoarseMesh(d_serialTriangulationUnmovedPrevious);
+  }
 }
 
 //

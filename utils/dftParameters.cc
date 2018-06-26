@@ -75,7 +75,7 @@ namespace dftParameters
 
     prm.declare_entry("VERBOSITY", "1",
                       Patterns::Integer(0,4),
-                      "[Standard] Parameter to control verbosity of terminal output. Ranging from 0 for low to 4 for code development purposes. Standard users wouldn't need verbosity beyond 2.");
+                      "[Standard] Parameter to control verbosity of terminal output. Ranging from 1 for low, 2 for medium (prints eigenvalues and fractional occupancies at the end of each ground-state solve), 3 for high (prints eigenvalues and fractional occupancies at the end of each self-consistent field iteration), and 4 for very high, which is only meant for code development purposes. VERBOSITY=0 is only used for unit testing and shouldn't be used by standard users.");
 
     prm.declare_entry("WRITE SOLUTION FIELDS", "false",
                       Patterns::Bool(),

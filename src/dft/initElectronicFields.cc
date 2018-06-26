@@ -136,9 +136,10 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
   //
   //update serial and parallel unmoved previous mesh
   //
-  d_mesh.generateSerialAndParallelUnmovedPreviousMesh(atomLocations,
-				                      d_imagePositions,
-				                      d_domainBoundingVectors);
+  if  (dftParameters::isIonOpt || dftParameters::isCellOpt)
+    d_mesh.generateSerialAndParallelUnmovedPreviousMesh(atomLocations,
+				                        d_imagePositions,
+				                        d_domainBoundingVectors);
 
 
  if (dftParameters::verbosity>=4)
