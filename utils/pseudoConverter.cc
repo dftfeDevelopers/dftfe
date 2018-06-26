@@ -102,7 +102,7 @@ namespace dftfe
 	    }
 	}
 
-      AssertThrow(atomTypes.size()==dftParameters::natomTypes,dealii::ExcMessage("Not a valid pseudopotential format and upf format only is currently supported"));
+      AssertThrow(atomTypes.size()==dftParameters::natomTypes,dealii::ExcMessage("Number of atom types in your pseudopotential file does not match with that given in the parameter file"));
 
     }
 
