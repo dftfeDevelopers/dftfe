@@ -126,7 +126,7 @@ namespace dftfe{
     operatorMatrix.reinit(1);
     const double upperBoundUnwantedSpectrum
 	=linearAlgebraOperations::lanczosUpperBoundEigenSpectrum(operatorMatrix,
-    		   					         tempEigenVec);
+    		   					            tempEigenVec);
     computing_timer.exit_section("Lanczos k-step Upper Bound");
 
     unsigned int chebyshevOrder = dftParameters::chebyshevOrder;
@@ -134,6 +134,8 @@ namespace dftfe{
     if(chebyshevOrder == 0)
       chebyshevOrder=internal::setChebyshevOrder(upperBoundUnwantedSpectrum);
 
+    if (dftParameters::lowerBoundUnwantedFracUpper>1e-6)
+       d_lowerBoundUnWantedSpectrum=dftParameters::lowerBoundUnwantedFracUpper*upperBoundUnwantedSpectrum;
     //
     //output statements
     //

@@ -510,6 +510,13 @@ namespace dftfe{
       eigenValues=projHamPar.eigenpairs_symmetric_by_index_MRRR(std::make_pair(0,numberWaveFunctions-1),true);
       computing_timer.exit_section("ScaLAPACK eigen decomp, RR step");
 
+      computing_timer.enter_section("Broadcast eigvec across band groups, RR step");
+      internal::broadcastAcrossInterCommScaLAPACKMat
+	                                   (processGrid,
+		                            projHamPar,
+				            interBandGroupComm,
+					    0);
+      computing_timer.enter_section("Broadcast eigvec across band groups, RR step");
       //
       //rotate the basis in the subspace X = X*Q, implemented as X^{T}=Q^{T}*X^{T} with X^{T}
       //stored in the column major format

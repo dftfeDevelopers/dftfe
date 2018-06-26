@@ -77,6 +77,7 @@ namespace dftfe {
       extern unsigned int scalapackParalProcs;
       extern unsigned int natoms;
       extern unsigned int natomTypes;
+      extern double lowerBoundUnwantedFracUpper;
 
       /**
        * Declare parameters.
