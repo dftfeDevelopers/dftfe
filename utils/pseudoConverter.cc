@@ -47,6 +47,8 @@ namespace dftfe
     void convert(std::string & fileName)
     {
 
+      dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
+
       xmlTodftfeParser xmlParse;
 
       std::ifstream input_file;
