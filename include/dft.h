@@ -552,6 +552,9 @@ namespace dftfe {
       TimerOutput computing_timer;
       TimerOutput computingTimerStandard;
 
+      /// A plain global timer to track only the total elapsed time after every ground-state solve
+      dealii::Timer d_globalTimer;
+
       //dft related objects
       std::map<dealii::CellId, std::vector<double> > *rhoInValues, *rhoOutValues, *rhoInValuesSpinPolarized, *rhoOutValuesSpinPolarized;
       std::deque<std::map<dealii::CellId,std::vector<double> >> rhoInVals, rhoOutVals, rhoInValsSpinPolarized, rhoOutValsSpinPolarized;

@@ -1219,6 +1219,8 @@ namespace dftfe {
     if (dftParameters::writeSolutionFields)
       output();
 
+    if (dftParameters::verbosity>=1)
+       pcout << std::endl<< "Elapsed wall time since start of the program: " << d_globalTimer.wall_time() << " seconds\n"<<std::endl;
   }
 
   //Output
