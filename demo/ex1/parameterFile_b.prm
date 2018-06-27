@@ -26,7 +26,7 @@ subsection Finite element mesh parameters
   end
 end
 
-subsection DFT functional related parameters
+subsection DFT functional parameters
   set EXCHANGE CORRELATION TYPE   = 4
   set PSEUDOPOTENTIAL CALCULATION = true
   set PSEUDOPOTENTIAL FILE NAMES LIST = pseudo.inp
@@ -39,7 +39,7 @@ subsection SCF parameters
   set TEMPERATURE                      = 500
   set TOLERANCE                        = 5e-6
 
-  subsection Eigen-solver/Chebyshev solver related parameters
+  subsection Eigen-solver parameters
       set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 12
   end
 end

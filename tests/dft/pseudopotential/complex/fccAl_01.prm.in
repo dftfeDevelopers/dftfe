@@ -23,7 +23,7 @@ subsection Brillouin zone k point sampling options
 end
 
 
-subsection DFT functional related parameters
+subsection DFT functional parameters
   set EXCHANGE CORRELATION TYPE   = 1
   set PSEUDOPOTENTIAL CALCULATION = true
   set PSEUDOPOTENTIAL FILE NAMES LIST = @SOURCE_DIR@/pseudoAlKB.inp
@@ -64,7 +64,7 @@ subsection SCF parameters
   set TEMPERATURE                      = 500 
   set TOLERANCE                        = 1e-7
   set STARTING WFC=ATOMIC
-  subsection Eigen-solver/Chebyshev solver related parameters
+  subsection Eigen-solver parameters
      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 20
      set CHEBYSHEV FILTER TOLERANCE=5e-3
      set ORTHOGONALIZATION TYPE=GS
