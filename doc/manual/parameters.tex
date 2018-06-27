@@ -320,17 +320,17 @@
 {\it Possible values:} A boolean value (true or false)
 \end{itemize}
 
-\subsection{Parameters in section \tt DFT functional related parameters}
-\label{parameters:DFT_20functional_20related_20parameters}
+\subsection{Parameters in section \tt DFT functional parameters}
+\label{parameters:DFT_20functional_20parameters}
 
 \begin{itemize}
 \item {\it Parameter name:} {\tt EXCHANGE CORRELATION TYPE}
-\phantomsection\label{parameters:DFT functional related parameters/EXCHANGE CORRELATION TYPE}
-\label{parameters:DFT_20functional_20related_20parameters/EXCHANGE_20CORRELATION_20TYPE}
+\phantomsection\label{parameters:DFT functional parameters/EXCHANGE CORRELATION TYPE}
+\label{parameters:DFT_20functional_20parameters/EXCHANGE_20CORRELATION_20TYPE}
 
 
 \index[prmindex]{EXCHANGE CORRELATION TYPE}
-\index[prmindexfull]{DFT functional related parameters!EXCHANGE CORRELATION TYPE}
+\index[prmindexfull]{DFT functional parameters!EXCHANGE CORRELATION TYPE}
 
 
 {\it Default:} 1
@@ -341,12 +341,12 @@
 
 {\it Possible values:} An integer $n$ such that $1\leq n \leq 4$
 \item {\it Parameter name:} {\tt PSEUDOPOTENTIAL CALCULATION}
-\phantomsection\label{parameters:DFT functional related parameters/PSEUDOPOTENTIAL CALCULATION}
-\label{parameters:DFT_20functional_20related_20parameters/PSEUDOPOTENTIAL_20CALCULATION}
+\phantomsection\label{parameters:DFT functional parameters/PSEUDOPOTENTIAL CALCULATION}
+\label{parameters:DFT_20functional_20parameters/PSEUDOPOTENTIAL_20CALCULATION}
 
 
 \index[prmindex]{PSEUDOPOTENTIAL CALCULATION}
-\index[prmindexfull]{DFT functional related parameters!PSEUDOPOTENTIAL CALCULATION}
+\index[prmindexfull]{DFT functional parameters!PSEUDOPOTENTIAL CALCULATION}
 
 
 {\it Default:} true
@@ -357,12 +357,12 @@
 
 {\it Possible values:} A boolean value (true or false)
 \item {\it Parameter name:} {\tt PSEUDOPOTENTIAL FILE NAMES LIST}
-\phantomsection\label{parameters:DFT functional related parameters/PSEUDOPOTENTIAL FILE NAMES LIST}
-\label{parameters:DFT_20functional_20related_20parameters/PSEUDOPOTENTIAL_20FILE_20NAMES_20LIST}
+\phantomsection\label{parameters:DFT functional parameters/PSEUDOPOTENTIAL FILE NAMES LIST}
+\label{parameters:DFT_20functional_20parameters/PSEUDOPOTENTIAL_20FILE_20NAMES_20LIST}
 
 
 \index[prmindex]{PSEUDOPOTENTIAL FILE NAMES LIST}
-\index[prmindexfull]{DFT functional related parameters!PSEUDOPOTENTIAL FILE NAMES LIST}
+\index[prmindexfull]{DFT functional parameters!PSEUDOPOTENTIAL FILE NAMES LIST}
 
 
 {\it Default:} 
@@ -373,12 +373,12 @@
 
 {\it Possible values:} Any string
 \item {\it Parameter name:} {\tt PSEUDO TESTS FLAG}
-\phantomsection\label{parameters:DFT functional related parameters/PSEUDO TESTS FLAG}
-\label{parameters:DFT_20functional_20related_20parameters/PSEUDO_20TESTS_20FLAG}
+\phantomsection\label{parameters:DFT functional parameters/PSEUDO TESTS FLAG}
+\label{parameters:DFT_20functional_20parameters/PSEUDO_20TESTS_20FLAG}
 
 
 \index[prmindex]{PSEUDO TESTS FLAG}
-\index[prmindexfull]{DFT functional related parameters!PSEUDO TESTS FLAG}
+\index[prmindexfull]{DFT functional parameters!PSEUDO TESTS FLAG}
 
 
 {\it Default:} false
@@ -389,12 +389,12 @@
 
 {\it Possible values:} A boolean value (true or false)
 \item {\it Parameter name:} {\tt SPIN POLARIZATION}
-\phantomsection\label{parameters:DFT functional related parameters/SPIN POLARIZATION}
-\label{parameters:DFT_20functional_20related_20parameters/SPIN_20POLARIZATION}
+\phantomsection\label{parameters:DFT functional parameters/SPIN POLARIZATION}
+\label{parameters:DFT_20functional_20parameters/SPIN_20POLARIZATION}
 
 
 \index[prmindex]{SPIN POLARIZATION}
-\index[prmindexfull]{DFT functional related parameters!SPIN POLARIZATION}
+\index[prmindexfull]{DFT functional parameters!SPIN POLARIZATION}
 
 
 {\it Default:} 0
@@ -405,12 +405,12 @@
 
 {\it Possible values:} An integer $n$ such that $0\leq n \leq 1$
 \item {\it Parameter name:} {\tt START MAGNETIZATION}
-\phantomsection\label{parameters:DFT functional related parameters/START MAGNETIZATION}
-\label{parameters:DFT_20functional_20related_20parameters/START_20MAGNETIZATION}
+\phantomsection\label{parameters:DFT functional parameters/START MAGNETIZATION}
+\label{parameters:DFT_20functional_20parameters/START_20MAGNETIZATION}
 
 
 \index[prmindex]{START MAGNETIZATION}
-\index[prmindexfull]{DFT functional related parameters!START MAGNETIZATION}
+\index[prmindexfull]{DFT functional parameters!START MAGNETIZATION}
 
 
 {\it Default:} 0.0
@@ -984,10 +984,10 @@
 \index[prmindexfull]{SCF parameters!TOLERANCE}
 
 
-{\it Default:} 1e-07
+{\it Default:} 1e-06
 
 
-{\it Description:} [Standard] SCF iterations stopping tolerance in terms of electron-density difference between two successive iterations.
+{\it Description:} [Standard] SCF iterations stopping tolerance in terms of L2 norm of the electron-density difference between two successive iterations. CAUTION: A tolerance close to 1e-7 or lower can detoriate the SCF convergence due to the round-off errors.
 
 
 {\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 1$
@@ -995,17 +995,17 @@
 
 
 
-\subsection{Parameters in section \tt SCF parameters/Eigen-solver/Chebyshev solver related parameters}
-\label{parameters:SCF_20parameters/Eigen_2dsolver_2fChebyshev_20solver_20related_20parameters}
+\subsection{Parameters in section \tt SCF parameters/Eigen-solver parameters}
+\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters}
 
 \begin{itemize}
 \item {\it Parameter name:} {\tt BATCH GEMM}
-\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver_2fChebyshev solver related parameters/BATCH GEMM}
-\label{parameters:SCF_20parameters/Eigen_2dsolver_2fChebyshev_20solver_20related_20parameters/BATCH_20GEMM}
+\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/BATCH GEMM}
+\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/BATCH_20GEMM}
 
 
 \index[prmindex]{BATCH GEMM}
-\index[prmindexfull]{SCF parameters!Eigen-solver/Chebyshev solver related parameters!BATCH GEMM}
+\index[prmindexfull]{SCF parameters!Eigen-solver parameters!BATCH GEMM}
 
 
 {\it Default:} true
@@ -1016,12 +1016,12 @@
 
 {\it Possible values:} A boolean value (true or false)
 \item {\it Parameter name:} {\tt CHEBYSHEV FILTER BLOCK SIZE}
-\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver_2fChebyshev solver related parameters/CHEBYSHEV FILTER BLOCK SIZE}
-\label{parameters:SCF_20parameters/Eigen_2dsolver_2fChebyshev_20solver_20related_20parameters/CHEBYSHEV_20FILTER_20BLOCK_20SIZE}
+\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/CHEBYSHEV FILTER BLOCK SIZE}
+\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/CHEBYSHEV_20FILTER_20BLOCK_20SIZE}
 
 
 \index[prmindex]{CHEBYSHEV FILTER BLOCK SIZE}
-\index[prmindexfull]{SCF parameters!Eigen-solver/Chebyshev solver related parameters!CHEBYSHEV FILTER BLOCK SIZE}
+\index[prmindexfull]{SCF parameters!Eigen-solver parameters!CHEBYSHEV FILTER BLOCK SIZE}
 
 
 {\it Default:} 400
@@ -1032,12 +1032,12 @@
 
 {\it Possible values:} An integer $n$ such that $1\leq n \leq 2147483647$
 \item {\it Parameter name:} {\tt CHEBYSHEV FILTER NUM OMP THREADS}
-\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver_2fChebyshev solver related parameters/CHEBYSHEV FILTER NUM OMP THREADS}
-\label{parameters:SCF_20parameters/Eigen_2dsolver_2fChebyshev_20solver_20related_20parameters/CHEBYSHEV_20FILTER_20NUM_20OMP_20THREADS}
+\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/CHEBYSHEV FILTER NUM OMP THREADS}
+\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/CHEBYSHEV_20FILTER_20NUM_20OMP_20THREADS}
 
 
 \index[prmindex]{CHEBYSHEV FILTER NUM OMP THREADS}
-\index[prmindexfull]{SCF parameters!Eigen-solver/Chebyshev solver related parameters!CHEBYSHEV FILTER NUM OMP THREADS}
+\index[prmindexfull]{SCF parameters!Eigen-solver parameters!CHEBYSHEV FILTER NUM OMP THREADS}
 
 
 {\it Default:} 0
@@ -1048,12 +1048,12 @@
 
 {\it Possible values:} An integer $n$ such that $0\leq n \leq 300$
 \item {\it Parameter name:} {\tt CHEBYSHEV FILTER PASSES}
-\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver_2fChebyshev solver related parameters/CHEBYSHEV FILTER PASSES}
-\label{parameters:SCF_20parameters/Eigen_2dsolver_2fChebyshev_20solver_20related_20parameters/CHEBYSHEV_20FILTER_20PASSES}
+\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/CHEBYSHEV FILTER PASSES}
+\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/CHEBYSHEV_20FILTER_20PASSES}
 
 
 \index[prmindex]{CHEBYSHEV FILTER PASSES}
-\index[prmindexfull]{SCF parameters!Eigen-solver/Chebyshev solver related parameters!CHEBYSHEV FILTER PASSES}
+\index[prmindexfull]{SCF parameters!Eigen-solver parameters!CHEBYSHEV FILTER PASSES}
 
 
 {\it Default:} 1
@@ -1064,12 +1064,12 @@
 
 {\it Possible values:} An integer $n$ such that $1\leq n \leq 20$
 \item {\it Parameter name:} {\tt CHEBYSHEV FILTER TOLERANCE}
-\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver_2fChebyshev solver related parameters/CHEBYSHEV FILTER TOLERANCE}
-\label{parameters:SCF_20parameters/Eigen_2dsolver_2fChebyshev_20solver_20related_20parameters/CHEBYSHEV_20FILTER_20TOLERANCE}
+\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/CHEBYSHEV FILTER TOLERANCE}
+\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/CHEBYSHEV_20FILTER_20TOLERANCE}
 
 
 \index[prmindex]{CHEBYSHEV FILTER TOLERANCE}
-\index[prmindexfull]{SCF parameters!Eigen-solver/Chebyshev solver related parameters!CHEBYSHEV FILTER TOLERANCE}
+\index[prmindexfull]{SCF parameters!Eigen-solver parameters!CHEBYSHEV FILTER TOLERANCE}
 
 
 {\it Default:} 5e-02
@@ -1080,12 +1080,12 @@
 
 {\it Possible values:} A floating point number $v$ such that $0 \leq v \leq \text{MAX\_DOUBLE}$
 \item {\it Parameter name:} {\tt CHEBYSHEV POLYNOMIAL DEGREE}
-\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver_2fChebyshev solver related parameters/CHEBYSHEV POLYNOMIAL DEGREE}
-\label{parameters:SCF_20parameters/Eigen_2dsolver_2fChebyshev_20solver_20related_20parameters/CHEBYSHEV_20POLYNOMIAL_20DEGREE}
+\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/CHEBYSHEV POLYNOMIAL DEGREE}
+\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/CHEBYSHEV_20POLYNOMIAL_20DEGREE}
 
 
 \index[prmindex]{CHEBYSHEV POLYNOMIAL DEGREE}
-\index[prmindexfull]{SCF parameters!Eigen-solver/Chebyshev solver related parameters!CHEBYSHEV POLYNOMIAL DEGREE}
+\index[prmindexfull]{SCF parameters!Eigen-solver parameters!CHEBYSHEV POLYNOMIAL DEGREE}
 
 
 {\it Default:} 0
@@ -1096,12 +1096,12 @@
 
 {\it Possible values:} An integer $n$ such that $0\leq n \leq 2000$
 \item {\it Parameter name:} {\tt ENABLE SWITCH TO GS}
-\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver_2fChebyshev solver related parameters/ENABLE SWITCH TO GS}
-\label{parameters:SCF_20parameters/Eigen_2dsolver_2fChebyshev_20solver_20related_20parameters/ENABLE_20SWITCH_20TO_20GS}
+\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/ENABLE SWITCH TO GS}
+\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/ENABLE_20SWITCH_20TO_20GS}
 
 
 \index[prmindex]{ENABLE SWITCH TO GS}
-\index[prmindexfull]{SCF parameters!Eigen-solver/Chebyshev solver related parameters!ENABLE SWITCH TO GS}
+\index[prmindexfull]{SCF parameters!Eigen-solver parameters!ENABLE SWITCH TO GS}
 
 
 {\it Default:} true
@@ -1112,12 +1112,12 @@
 
 {\it Possible values:} A boolean value (true or false)
 \item {\it Parameter name:} {\tt LOWER BOUND UNWANTED FRAC UPPER}
-\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver_2fChebyshev solver related parameters/LOWER BOUND UNWANTED FRAC UPPER}
-\label{parameters:SCF_20parameters/Eigen_2dsolver_2fChebyshev_20solver_20related_20parameters/LOWER_20BOUND_20UNWANTED_20FRAC_20UPPER}
+\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/LOWER BOUND UNWANTED FRAC UPPER}
+\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/LOWER_20BOUND_20UNWANTED_20FRAC_20UPPER}
 
 
 \index[prmindex]{LOWER BOUND UNWANTED FRAC UPPER}
-\index[prmindexfull]{SCF parameters!Eigen-solver/Chebyshev solver related parameters!LOWER BOUND UNWANTED FRAC UPPER}
+\index[prmindexfull]{SCF parameters!Eigen-solver parameters!LOWER BOUND UNWANTED FRAC UPPER}
 
 
 {\it Default:} 0
@@ -1128,12 +1128,12 @@
 
 {\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 1$
 \item {\it Parameter name:} {\tt LOWER BOUND WANTED SPECTRUM}
-\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver_2fChebyshev solver related parameters/LOWER BOUND WANTED SPECTRUM}
-\label{parameters:SCF_20parameters/Eigen_2dsolver_2fChebyshev_20solver_20related_20parameters/LOWER_20BOUND_20WANTED_20SPECTRUM}
+\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/LOWER BOUND WANTED SPECTRUM}
+\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/LOWER_20BOUND_20WANTED_20SPECTRUM}
 
 
 \index[prmindex]{LOWER BOUND WANTED SPECTRUM}
-\index[prmindexfull]{SCF parameters!Eigen-solver/Chebyshev solver related parameters!LOWER BOUND WANTED SPECTRUM}
+\index[prmindexfull]{SCF parameters!Eigen-solver parameters!LOWER BOUND WANTED SPECTRUM}
 
 
 {\it Default:} -10.0
@@ -1144,28 +1144,28 @@
 
 {\it Possible values:} A floating point number $v$ such that $-\text{MAX\_DOUBLE} \leq v \leq \text{MAX\_DOUBLE}$
 \item {\it Parameter name:} {\tt NUMBER OF KOHN-SHAM WAVEFUNCTIONS}
-\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver_2fChebyshev solver related parameters/NUMBER OF KOHN_2dSHAM WAVEFUNCTIONS}
-\label{parameters:SCF_20parameters/Eigen_2dsolver_2fChebyshev_20solver_20related_20parameters/NUMBER_20OF_20KOHN_2dSHAM_20WAVEFUNCTIONS}
+\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/NUMBER OF KOHN_2dSHAM WAVEFUNCTIONS}
+\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/NUMBER_20OF_20KOHN_2dSHAM_20WAVEFUNCTIONS}
 
 
 \index[prmindex]{NUMBER OF KOHN-SHAM WAVEFUNCTIONS}
-\index[prmindexfull]{SCF parameters!Eigen-solver/Chebyshev solver related parameters!NUMBER OF KOHN-SHAM WAVEFUNCTIONS}
+\index[prmindexfull]{SCF parameters!Eigen-solver parameters!NUMBER OF KOHN-SHAM WAVEFUNCTIONS}
 
 
 {\it Default:} 10
 
 
-{\it Description:} [Standard] Number of Kohn-Sham wavefunctions to be computed. For insulators use N/2+(10-20) and for metals use 20 percent more than N/2 (atleast 10 more). N is the total number of electrons.
+{\it Description:} [Standard] Number of Kohn-Sham wavefunctions to be computed. For insulators use N/2+(10-20) and for metals use 20 percent more than N/2 (atleast 10 more). N is the total number of electrons. For spin-polarized calculations this parameter denotes the number of Kohn-Sham wavefunctions to be computed for each spin.
 
 
 {\it Possible values:} An integer $n$ such that $0\leq n \leq 2147483647$
 \item {\it Parameter name:} {\tt ORTHOGONALIZATION TYPE}
-\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver_2fChebyshev solver related parameters/ORTHOGONALIZATION TYPE}
-\label{parameters:SCF_20parameters/Eigen_2dsolver_2fChebyshev_20solver_20related_20parameters/ORTHOGONALIZATION_20TYPE}
+\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/ORTHOGONALIZATION TYPE}
+\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/ORTHOGONALIZATION_20TYPE}
 
 
 \index[prmindex]{ORTHOGONALIZATION TYPE}
-\index[prmindexfull]{SCF parameters!Eigen-solver/Chebyshev solver related parameters!ORTHOGONALIZATION TYPE}
+\index[prmindexfull]{SCF parameters!Eigen-solver parameters!ORTHOGONALIZATION TYPE}
 
 
 {\it Default:} LW
@@ -1176,12 +1176,12 @@
 
 {\it Possible values:} Any one of GS, LW, PGS
 \item {\it Parameter name:} {\tt ORTHO RR NUM OMP THREADS}
-\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver_2fChebyshev solver related parameters/ORTHO RR NUM OMP THREADS}
-\label{parameters:SCF_20parameters/Eigen_2dsolver_2fChebyshev_20solver_20related_20parameters/ORTHO_20RR_20NUM_20OMP_20THREADS}
+\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/ORTHO RR NUM OMP THREADS}
+\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/ORTHO_20RR_20NUM_20OMP_20THREADS}
 
 
 \index[prmindex]{ORTHO RR NUM OMP THREADS}
-\index[prmindexfull]{SCF parameters!Eigen-solver/Chebyshev solver related parameters!ORTHO RR NUM OMP THREADS}
+\index[prmindexfull]{SCF parameters!Eigen-solver parameters!ORTHO RR NUM OMP THREADS}
 
 
 {\it Default:} 0
@@ -1192,12 +1192,12 @@
 
 {\it Possible values:} An integer $n$ such that $0\leq n \leq 300$
 \item {\it Parameter name:} {\tt ORTHO RR WFC BLOCK SIZE}
-\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver_2fChebyshev solver related parameters/ORTHO RR WFC BLOCK SIZE}
-\label{parameters:SCF_20parameters/Eigen_2dsolver_2fChebyshev_20solver_20related_20parameters/ORTHO_20RR_20WFC_20BLOCK_20SIZE}
+\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/ORTHO RR WFC BLOCK SIZE}
+\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/ORTHO_20RR_20WFC_20BLOCK_20SIZE}
 
 
 \index[prmindex]{ORTHO RR WFC BLOCK SIZE}
-\index[prmindexfull]{SCF parameters!Eigen-solver/Chebyshev solver related parameters!ORTHO RR WFC BLOCK SIZE}
+\index[prmindexfull]{SCF parameters!Eigen-solver parameters!ORTHO RR WFC BLOCK SIZE}
 
 
 {\it Default:} 200
@@ -1208,12 +1208,12 @@
 
 {\it Possible values:} An integer $n$ such that $1\leq n \leq 2147483647$
 \item {\it Parameter name:} {\tt SCALAPACKPROCS}
-\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver_2fChebyshev solver related parameters/SCALAPACKPROCS}
-\label{parameters:SCF_20parameters/Eigen_2dsolver_2fChebyshev_20solver_20related_20parameters/SCALAPACKPROCS}
+\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/SCALAPACKPROCS}
+\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/SCALAPACKPROCS}
 
 
 \index[prmindex]{SCALAPACKPROCS}
-\index[prmindexfull]{SCF parameters!Eigen-solver/Chebyshev solver related parameters!SCALAPACKPROCS}
+\index[prmindexfull]{SCF parameters!Eigen-solver parameters!SCALAPACKPROCS}
 
 
 {\it Default:} 0
@@ -1224,12 +1224,12 @@
 
 {\it Possible values:} An integer $n$ such that $0\leq n \leq 300$
 \item {\it Parameter name:} {\tt SUBSPACE ROT DOFS BLOCK SIZE}
-\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver_2fChebyshev solver related parameters/SUBSPACE ROT DOFS BLOCK SIZE}
-\label{parameters:SCF_20parameters/Eigen_2dsolver_2fChebyshev_20solver_20related_20parameters/SUBSPACE_20ROT_20DOFS_20BLOCK_20SIZE}
+\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/SUBSPACE ROT DOFS BLOCK SIZE}
+\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/SUBSPACE_20ROT_20DOFS_20BLOCK_20SIZE}
 
 
 \index[prmindex]{SUBSPACE ROT DOFS BLOCK SIZE}
-\index[prmindexfull]{SCF parameters!Eigen-solver/Chebyshev solver related parameters!SUBSPACE ROT DOFS BLOCK SIZE}
+\index[prmindexfull]{SCF parameters!Eigen-solver parameters!SUBSPACE ROT DOFS BLOCK SIZE}
 
 
 {\it Default:} 2000

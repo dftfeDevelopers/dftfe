@@ -646,7 +646,7 @@ namespace dftfe {
 
     pcout<<std::endl;
     if (dftParameters::verbosity==0)
-      pcout<<"Starting SCF iteration...."<<std::endl;
+      pcout<<"Starting SCF iterations...."<<std::endl;
     while ((norm > dftParameters::selfConsistentSolverTolerance) && (scfIter < dftParameters::numSCFIterations))
       {
 
@@ -1102,9 +1102,9 @@ namespace dftfe {
       }
     computing_timer.exit_section("scf solve");
     if(scfIter==dftParameters::numSCFIterations)
-      pcout<<"SCF iteration did not converge to the specified tolerance after: "<<scfIter<<" iterations."<<std::endl;
+      pcout<<"DFT-FE Warning: SCF iterations did not converge to the specified tolerance after: "<<scfIter<<" iterations."<<std::endl;
     else
-      pcout<<"SCF iteration converged to the specified tolerance after: "<<scfIter<<" iterations."<<std::endl;
+      pcout<<"SCF iterations converged to the specified tolerance after: "<<scfIter<<" iterations."<<std::endl;
 
     if (!dftParameters::computeEnergyEverySCF)
     {
@@ -1194,7 +1194,10 @@ namespace dftfe {
 
     if (dftParameters::isIonForce)
       {
-	computing_timer.enter_section("Ion force computation");
+        if(dftParameters::selfConsistentSolverTolerance>1e-5 && dftParameters::verbosity>=1)
+            pcout<<"DFT-FE Warning: Ion force accuracy may be affected for the given scf iteration solve tolerance: "<<dftParameters::selfConsistentSolverTolerance<<", recommended to use TOLERANCE below 1e-5."<<std::endl;
+
+ 	computing_timer.enter_section("Ion force computation");
 	computingTimerStandard.enter_section("Ion force computation");
 	forcePtr->computeAtomsForces();
 	forcePtr->printAtomsForces();
@@ -1204,6 +1207,9 @@ namespace dftfe {
 #ifdef USE_COMPLEX
     if (dftParameters::isCellStress)
       {
+        if(dftParameters::selfConsistentSolverTolerance>1e-5 && dftParameters::verbosity>=1)
+            pcout<<"DFT-FE Warning: Cell stress accuracy may be affected for the given scf iteration solve tolerance: "<<dftParameters::selfConsistentSolverTolerance<<", recommended to use TOLERANCE below 1e-5."<<std::endl;
+
 	computing_timer.enter_section("Cell stress computation");
 	computingTimerStandard.enter_section("Cell stress computation");
 	forcePtr->computeStress();

@@ -316,27 +316,21 @@ namespace dftfe{
 	{
 	    computing_timer.enter_section("MPI All Reduce wavefunctions across all band groups");
 
-	    const unsigned int dofsBlockSize=4000;
-
-	    for(unsigned int iNode = 0; iNode < localVectorSize; iNode+=dofsBlockSize)
-	    {
-		const unsigned int currentDofsBlockSize=std::min(dofsBlockSize,localVectorSize-iNode);
 #ifdef USE_COMPLEX
-		MPI_Allreduce(MPI_IN_PLACE,
-			      eigenVectorsFlattened.begin()+iNode*totalNumberWaveFunctions,
-			      totalNumberWaveFunctions*currentDofsBlockSize,
-			      MPI_C_DOUBLE_COMPLEX,
-			      MPI_SUM,
-			      interBandGroupComm);
+	    MPI_Allreduce(MPI_IN_PLACE,
+			  eigenVectorsFlattened.begin(),
+			  totalNumberWaveFunctions*localVectorSize,
+			  MPI_C_DOUBLE_COMPLEX,
+			  MPI_SUM,
+			  interBandGroupComm);
 #else
-		MPI_Allreduce(MPI_IN_PLACE,
-			      eigenVectorsFlattened.begin()+iNode*totalNumberWaveFunctions,
-			      totalNumberWaveFunctions*currentDofsBlockSize,
-			      MPI_DOUBLE,
-			      MPI_SUM,
-			      interBandGroupComm);
+	    MPI_Allreduce(MPI_IN_PLACE,
+			  eigenVectorsFlattened.begin(),
+			  totalNumberWaveFunctions*localVectorSize,
+			  MPI_DOUBLE,
+			  MPI_SUM,
+			  interBandGroupComm);
 #endif
-	    }
 
 	    computing_timer.exit_section("MPI All Reduce wavefunctions across all band groups");
 	}
