@@ -242,7 +242,14 @@ namespace dftfe {
 
       void generateMPGrid();
       void writeMesh(std::string meshFileName);
-      void generateImageCharges();
+
+      /// creates datastructures related to periodic image charges
+      void generateImageCharges(const double pspCutOff,
+	                        std::vector<int> & imageIds,
+				std::vector<double> & imageCharges,
+				std::vector<std::vector<double> > & imagePositions,
+				std::vector<std::vector<int> > & globalChargeIdToImageIdMap);
+
       void determineOrbitalFilling();
 
 
@@ -425,10 +432,42 @@ namespace dftfe {
        */
       unsigned int numElectrons, numLevels;
       std::set<unsigned int> atomTypes;
-      std::vector<std::vector<double> > atomLocations,atomLocationsFractional,d_reciprocalLatticeVectors, d_imagePositions, d_domainBoundingVectors;
+      std::vector<std::vector<double> > atomLocations,atomLocationsFractional,d_reciprocalLatticeVectors, d_domainBoundingVectors;
 
+      /// vector of lendth number of periodic image charges with corresponding master chargeIds
       std::vector<int> d_imageIds;
+
+      /// vector of length number of periodic image charges with corresponding charge values
       std::vector<double> d_imageCharges;
+
+      /// vector of length number of periodic image charges with corresponding
+      /// positions in cartesian coordinates
+      std::vector<std::vector<double> > d_imagePositions;
+
+      /// globalChargeId to ImageChargeId Map
+      std::vector<std::vector<int> > d_globalChargeIdToImageIdMap;
+
+      /// vector of lendth number of periodic image charges with corresponding master chargeIds
+      /// , generated with a truncated pspCutoff
+      std::vector<int> d_imageIdsTrunc;
+
+      /// vector of length number of periodic image charges with corresponding charge values
+      /// , generated with a truncated pspCutoff
+      std::vector<double> d_imageChargesTrunc;
+
+      /// vector of length number of periodic image charges with corresponding
+      /// positions in cartesian coordinates, generated with a truncated pspCutOff
+      std::vector<std::vector<double> > d_imagePositionsTrunc;
+
+      /// globalChargeId to ImageChargeId Map generated with a truncated pspCutOff
+      std::vector<std::vector<int> > d_globalChargeIdToImageIdMapTrunc;
+
+      /// distance from the domain till which periodic images will be considered
+      const double d_pspCutOff=40.0;
+
+      /// distance from the domain till which periodic images will be considered
+      const double d_pspCutOffTrunc=8.0;
+
       std::vector<orbital> waveFunctionsVector;
       std::map<unsigned int, std::map<unsigned int, std::map<unsigned int, alglib::spline1dinterpolant*> > > radValues;
       std::map<unsigned int, std::map<unsigned int, std::map <unsigned int, double> > >outerValues;
@@ -597,11 +636,6 @@ namespace dftfe {
       //storage for nonlocal pseudopotential constants
       //
       std::vector<std::vector<double> > d_nonLocalPseudoPotentialConstants;
-
-      //
-      //globalChargeId to ImageChargeId Map
-      //
-      std::vector<std::vector<int> > d_globalChargeIdToImageIdMap;
 
       //
       // spline vector for data corresponding to each spline of pseudo wavefunctions

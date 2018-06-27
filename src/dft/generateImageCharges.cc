@@ -314,12 +314,17 @@ getMinDistanceFromImageToCell(const std::vector<double> & latticeVectors,
 }
 
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::generateImageCharges()
+void dftClass<FEOrder>::generateImageCharges
+                               (const double pspCutOff,
+	                        std::vector<int> & imageIds,
+				std::vector<double> & imageCharges,
+				std::vector<std::vector<double> > & imagePositions,
+				std::vector<std::vector<int> > & globalChargeIdToImageIdMap)
 {
-
-  const double pspCutOff = 40.0;
   const double tol = 1e-4;
-  bool periodicX = dftParameters::periodicX,periodicY = dftParameters::periodicY,periodicZ = dftParameters::periodicZ;
+  const bool periodicX = dftParameters::periodicX;
+  const bool periodicY = dftParameters::periodicY;
+  const bool periodicZ = dftParameters::periodicZ;
 
   //
   //get the magnitude of lattice Vectors
@@ -374,9 +379,9 @@ void dftClass<FEOrder>::generateImageCharges()
 	}
     }
 
-  d_imageIds.clear();
-  d_imagePositions.clear();
-  d_imageCharges.clear();
+  imageIds.clear();
+  imagePositions.clear();
+  imageCharges.clear();
 
   for(int i = 0; i < atomLocations.size(); ++i)
     {
@@ -437,7 +442,7 @@ void dftClass<FEOrder>::generateImageCharges()
 		      std::vector<double> currentImageChargePosition(3,0.0);
 
 		      if(outsideCell && withinCutoff){
-			d_imageIds.push_back(iCharge);
+			imageIds.push_back(iCharge);
 
 			for (int ii = 0; ii < 3; ++ii)
 			  for(int jj = 0; jj < 3;++jj)
@@ -446,7 +451,7 @@ void dftClass<FEOrder>::generateImageCharges()
 			for(int ii = 0; ii < 3; ++ii)
 			  currentImageChargePosition[ii] -= shift[ii];
 
-			d_imagePositions.push_back(currentImageChargePosition);
+			imagePositions.push_back(currentImageChargePosition);
 
 			/*if((newFracX >= -tol && newFracX <= 1+tol) &&
 			  (newFracY >= -tol && newFracY <= 1+tol) &&
@@ -462,46 +467,36 @@ void dftClass<FEOrder>::generateImageCharges()
 
     }
 
-  const int numImageCharges = d_imageIds.size();
-  if ((dftParameters::verbosity>=4 || dftParameters::reproducible_output)
-       && (dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ))
-    pcout<<"Number Image Charges  "<<numImageCharges<<std::endl;
+  const int numImageCharges = imageIds.size();
 
   for(int i = 0; i < numImageCharges; ++i)
     {
       double atomCharge;
       if(dftParameters::isPseudopotential)
-	atomCharge = atomLocations[d_imageIds[i]][1];
+	atomCharge = atomLocations[imageIds[i]][1];
       else
-	atomCharge = atomLocations[d_imageIds[i]][0];
+	atomCharge = atomLocations[imageIds[i]][0];
 
-      d_imageCharges.push_back(atomCharge);
+      imageCharges.push_back(atomCharge);
 
     }
 
 
-  /*for(int i = 0; i < d_imagePositions.size();++i){
-    std::cout<<"i "<<i<<std::endl;
-    for(int  j= 0;  j<  3;++j)
-      std::cout<<d_imagePositions[i][j]<<" ";
-    std::cout<<'\n';
-    }*/
-  unsigned int numberGlobalCharges  = atomLocations.size();
-  std::vector<std::vector<int> > globalChargeIdToImageIdMap;
+
+  const unsigned int numberGlobalCharges  = atomLocations.size();
+  globalChargeIdToImageIdMap.clear();
   globalChargeIdToImageIdMap.resize(numberGlobalCharges);
 
 
   for(int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
-    {
       globalChargeIdToImageIdMap[iCharge].push_back(iCharge);
-    }
 
   for(int iImage = 0; iImage < numImageCharges; ++iImage)
     {
       //
       //Get the masterChargeId corresponding to the current image atom
       //
-      const int masterChargeId = d_imageIds[iImage];
+      const int masterChargeId = imageIds[iImage];
 
       //
       //insert into the map
@@ -509,9 +504,6 @@ void dftClass<FEOrder>::generateImageCharges()
       globalChargeIdToImageIdMap[masterChargeId].push_back(iImage+numberGlobalCharges);
 
     }
-
-  d_globalChargeIdToImageIdMap.clear();
-  d_globalChargeIdToImageIdMap = globalChargeIdToImageIdMap;
 
 }
 

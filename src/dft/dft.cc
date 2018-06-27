@@ -357,7 +357,20 @@ namespace dftfe {
 	        AssertThrow(atomLocationsFractional[i][2+idim]>-tol && atomLocationsFractional[i][2+idim]<1.0+tol,ExcMessage("DFT-FE Error: periodic direction fractional coordinates doesn't lie in [0,1]. Please check input fractional coordinates, or if this is an ionic relaxation step, please check the corresponding algorithm."));
 	  }
 
-	generateImageCharges();
+	generateImageCharges(d_pspCutOff,
+	                     d_imageIds,
+		             d_imageCharges,
+		             d_imagePositions,
+		             d_globalChargeIdToImageIdMap);
+
+	generateImageCharges(d_pspCutOffTrunc,
+	                     d_imageIdsTrunc,
+		             d_imageChargesTrunc,
+		             d_imagePositionsTrunc,
+		             d_globalChargeIdToImageIdMapTrunc);
+
+        if ((dftParameters::verbosity>=4 || dftParameters::reproducible_output))
+              pcout<<"Number Image Charges  "<<d_imageIds.size()<<std::endl;
 
 	internaldft::convertToCellCenteredCartesianCoordinates(atomLocations,
 							       d_domainBoundingVectors);
@@ -386,7 +399,17 @@ namespace dftfe {
 	    pcout<<"AtomId "<<i <<":  "<<atomLocations[i][2]<<" "<<atomLocations[i][3]<<" "<<atomLocations[i][4]<<"\n";
 	  }
 	pcout<<"-----------------------------------------------------------------------------------------"<<std::endl;
-	generateImageCharges();
+	generateImageCharges(d_pspCutOff,
+	                     d_imageIds,
+		             d_imageCharges,
+		             d_imagePositions,
+		             d_globalChargeIdToImageIdMap);
+
+	generateImageCharges(d_pspCutOffTrunc,
+	                     d_imageIdsTrunc,
+		             d_imageChargesTrunc,
+		             d_imagePositionsTrunc,
+		             d_globalChargeIdToImageIdMapTrunc);
       }
   }
 
