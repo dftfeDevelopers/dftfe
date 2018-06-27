@@ -584,9 +584,9 @@ namespace dftParameters
         std::cout << "It is based on adaptive finite-element based methodologies.		        " << std::endl ;
         std::cout << "For details and citing please refer: P.Motamarri et. al., Comp. Phys. Comm., Vol xx, Issue xx, pp xx, 2018" << std::endl ;
 	std::cout << "==========================================================================================================" << std::endl ;
-	std::cout << " DFT-FE Authors (alphabetically) :									" << std::endl ;
+	std::cout << " DFT-FE authors (alphabetically) :									" << std::endl ;
 	std::cout << "														" << std::endl ;
-	std::cout << " Sambit Das               - University of Michigan           " << std::endl ;
+	std::cout << " Sambit Das               - University of Michigan, Ann Arbor" << std::endl ;
 	std::cout << " Denis Davydov            - University of Erlangen-Nuremberg " << std::endl ;
 	std::cout << " Vikram Gavini (Mentor)   - University of Michigan, Ann Arbor" << std::endl ;
 	std::cout << " Krishnendu Ghosh         - University of Michigan, Ann Arbor" << std::endl ;

@@ -142,6 +142,10 @@ namespace dftfe {
 	/// Map of locally relevant global dof index and the atomic charge in each bin
 	std::vector<std::map<dealii::types::global_dof_index, double> > d_atomsInBin;
 
+	/// Vself ball radius. This is stored after the first call to createAtomBins
+	/// and reused for subsequent calls
+	double d_storedAdaptiveBallRadius;
+
         const MPI_Comm mpi_communicator;
         const unsigned int n_mpi_processes;
         const unsigned int this_mpi_process;

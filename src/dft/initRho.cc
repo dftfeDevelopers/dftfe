@@ -104,7 +104,7 @@ void dftClass<FEOrder>::initRho()
   //
   //get number of image charges used only for periodic
   //
-  const int numberImageCharges = d_imageIds.size();
+  const int numberImageCharges = d_imageIdsTrunc.size();
 
   //loop over elements
   typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
@@ -145,9 +145,11 @@ void dftClass<FEOrder>::initRho()
 	      //loop over image charges
 	      for(int iImageCharge = 0; iImageCharge < numberImageCharges; ++iImageCharge)
 		{
-		  Point<3> imageAtom(d_imagePositions[iImageCharge][0],d_imagePositions[iImageCharge][1],d_imagePositions[iImageCharge][2]);
+		  Point<3> imageAtom(d_imagePositionsTrunc[iImageCharge][0],
+			             d_imagePositionsTrunc[iImageCharge][1],
+				     d_imagePositionsTrunc[iImageCharge][2]);
 		  double distanceToAtom = quadPoint.distance(imageAtom);
-		  int masterAtomId = d_imageIds[iImageCharge];
+		  int masterAtomId = d_imageIdsTrunc[iImageCharge];
 		  if(distanceToAtom <= outerMostPointDen[atomLocations[masterAtomId][0]])//outerMostPointPseudo[atomLocations[masterAtomId][0]])
 		    {
 		      rhoValueAtQuadPt += alglib::spline1dcalc(denSpline[atomLocations[masterAtomId][0]], distanceToAtom);
@@ -233,9 +235,11 @@ void dftClass<FEOrder>::initRho()
 
 		  for(int iImageCharge = 0; iImageCharge < numberImageCharges; ++iImageCharge)
 		    {
-		      Point<3> imageAtom(d_imagePositions[iImageCharge][0],d_imagePositions[iImageCharge][1],d_imagePositions[iImageCharge][2]);
+		      Point<3> imageAtom(d_imagePositionsTrunc[iImageCharge][0],
+			                 d_imagePositionsTrunc[iImageCharge][1],
+					 d_imagePositionsTrunc[iImageCharge][2]);
 		      double distanceToAtom = quadPoint.distance(imageAtom);
-		      int masterAtomId = d_imageIds[iImageCharge];
+		      int masterAtomId = d_imageIdsTrunc[iImageCharge];
 		      if(distanceToAtom <= outerMostPointDen[atomLocations[masterAtomId][0]])//outerMostPointPseudo[atomLocations[masterAtomId][0]])
 			{
 			  double value,radialDensityFirstDerivative,radialDensitySecondDerivative;
@@ -245,9 +249,9 @@ void dftClass<FEOrder>::initRho()
 					       radialDensityFirstDerivative,
 					       radialDensitySecondDerivative);
 
-			  gradRhoXValueAtQuadPt += radialDensityFirstDerivative*((quadPoint[0] - d_imagePositions[iImageCharge][0])/distanceToAtom);
-			  gradRhoYValueAtQuadPt += radialDensityFirstDerivative*((quadPoint[1] - d_imagePositions[iImageCharge][1])/distanceToAtom);
-			  gradRhoZValueAtQuadPt += radialDensityFirstDerivative*((quadPoint[2] - d_imagePositions[iImageCharge][2])/distanceToAtom);
+			  gradRhoXValueAtQuadPt += radialDensityFirstDerivative*((quadPoint[0] - d_imagePositionsTrunc[iImageCharge][0])/distanceToAtom);
+			  gradRhoYValueAtQuadPt += radialDensityFirstDerivative*((quadPoint[1] - d_imagePositionsTrunc[iImageCharge][1])/distanceToAtom);
+			  gradRhoZValueAtQuadPt += radialDensityFirstDerivative*((quadPoint[2] - d_imagePositionsTrunc[iImageCharge][2])/distanceToAtom);
 
 			}
 		      else

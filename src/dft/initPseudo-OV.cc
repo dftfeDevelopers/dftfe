@@ -75,7 +75,7 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
 
       Point<3> nuclearCoordinates(atomLocations[globalChargeIdNonLocalAtom][2],atomLocations[globalChargeIdNonLocalAtom][3],atomLocations[globalChargeIdNonLocalAtom][4]);
 
-      std::vector<int> & imageIdsList = d_globalChargeIdToImageIdMap[globalChargeIdNonLocalAtom];
+      std::vector<int> & imageIdsList = d_globalChargeIdToImageIdMapTrunc[globalChargeIdNonLocalAtom];
 
       //
       //get the number of elements in the compact support of the current nonlocal atom
@@ -175,9 +175,9 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
 			}
 		      else
 			{
-			  chargePoint[0] = d_imagePositions[chargeId-numberGlobalCharges][0];
-			  chargePoint[1] = d_imagePositions[chargeId-numberGlobalCharges][1];
-			  chargePoint[2] = d_imagePositions[chargeId-numberGlobalCharges][2];
+			  chargePoint[0] = d_imagePositionsTrunc[chargeId-numberGlobalCharges][0];
+			  chargePoint[1] = d_imagePositionsTrunc[chargeId-numberGlobalCharges][1];
+			  chargePoint[2] = d_imagePositionsTrunc[chargeId-numberGlobalCharges][2];
 			}
 
 
@@ -297,7 +297,6 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
   d_pseudoWaveFunctionIdToFunctionIdDetails.clear();
   d_numberPseudoAtomicWaveFunctions.clear();
   d_nonLocalAtomGlobalChargeIds.clear();
-  d_globalChargeIdToImageIdMap.clear();
   d_pseudoWaveFunctionSplines.clear();
   d_nonLocalPseudoPotentialConstants.clear();
   // Store the Map between the atomic number and the waveFunction details
@@ -578,9 +577,6 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
   //store information for non-local atoms
   //
   std::vector<int> nonLocalAtomGlobalChargeIds;
-  std::vector<std::vector<int> > globalChargeIdToImageIdMap;
-
-  globalChargeIdToImageIdMap.resize(numberGlobalCharges);
 
 
   for(unsigned int iCharge = 0; iCharge < numberGlobalCharges; ++iCharge)
@@ -618,12 +614,6 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
 	  d_pseudoWaveFunctionIdToFunctionIdDetails.push_back(atomicFunctionIdDetails[iAtomWave]);
 	}
 
-
-      //
-      // insert the master charge Id into the map first
-      //
-      globalChargeIdToImageIdMap[iCharge].push_back(iCharge);
-
     }//end of iCharge loop
 
   d_nonLocalAtomGlobalChargeIds = nonLocalAtomGlobalChargeIds;
@@ -631,26 +621,7 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
 
   if (dftParameters::verbosity>=2)
      pcout<<"Number of Nonlocal Atoms: " <<d_nonLocalAtomGlobalChargeIds.size()<<std::endl;
-  //
-  //fill up global charge image Id map by inserting the image atoms
-  //corresponding to the master chargeId
-  const int numberImageCharges = d_imageIds.size();
 
-  for(int iImage = 0; iImage < numberImageCharges; ++iImage)
-    {
-      //
-      //Get the masterChargeId corresponding to the current image atom
-      //
-      const int masterChargeId = d_imageIds[iImage];
-
-      //
-      //insert into the map
-      //
-      globalChargeIdToImageIdMap[masterChargeId].push_back(iImage+numberGlobalCharges);
-
-    }
-
-  d_globalChargeIdToImageIdMap = globalChargeIdToImageIdMap;
   d_nonLocalPseudoPotentialConstants.resize(numberNonLocalAtoms);
 
     for(int iAtom = 0; iAtom < numberNonLocalAtoms; ++iAtom)
@@ -786,7 +757,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
       //
       //get the imageIdmap information corresponding to globalChargeIdNonLocalAtom
       //
-      std::vector<int> & imageIdsList = d_globalChargeIdToImageIdMap[globalChargeIdNonLocalAtom];
+      std::vector<int> & imageIdsList = d_globalChargeIdToImageIdMapTrunc[globalChargeIdNonLocalAtom];
 
       //
       //resize the data structure corresponding to sparsity pattern
@@ -823,17 +794,12 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
 		     lTemp = lQuantumNumber ;
 		  for(int iQuadPoint = 0; iQuadPoint < numberQuadraturePoints; ++iQuadPoint)
 		    {
-		      //MappingQ1<3,3> test;
-		      //Point<3> quadPoint(test.transform_unit_to_real_cell(cell, fe_values.get_quadrature().point(iQuadPoint)));
 		      Point<3> quadPoint=fe_values.quadrature_point(iQuadPoint);
 
 		      for(int iImageAtomCount = 0; iImageAtomCount < imageIdsList.size(); ++iImageAtomCount)
 			{
 
 			  int chargeId = imageIdsList[iImageAtomCount];
-
-			  //const Point & chargePoint = chargeId < numberGlobalCharges? d_nuclearContainer.getGlobalPoint(chargeId,meshId):
-			  //d_nuclearContainer.getImagePoint(chargeId-numberGlobalCharges,meshId);
 
 			  Point<3> chargePoint(0.0,0.0,0.0);
 
@@ -845,9 +811,9 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
 			    }
 			  else
 			    {
-			      chargePoint[0] = d_imagePositions[chargeId-numberGlobalCharges][0];
-			      chargePoint[1] = d_imagePositions[chargeId-numberGlobalCharges][1];
-			      chargePoint[2] = d_imagePositions[chargeId-numberGlobalCharges][2];
+			      chargePoint[0] = d_imagePositionsTrunc[chargeId-numberGlobalCharges][0];
+			      chargePoint[1] = d_imagePositionsTrunc[chargeId-numberGlobalCharges][1];
+			      chargePoint[2] = d_imagePositionsTrunc[chargeId-numberGlobalCharges][2];
 			    }
 
 			  double r = quadPoint.distance(chargePoint);

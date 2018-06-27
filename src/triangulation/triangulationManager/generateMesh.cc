@@ -278,7 +278,7 @@ namespace dftfe {
 	  //
 	  if (dftParameters::verbosity>=2)
 	  {
-	    pcout<< "Adaptivity summary: "<<std::endl<<" numCells: "<<parallelTriangulation.n_global_active_cells()<<", num refinement levels: "<<numLevels<<", h_min: "<<minElemLength<<std::endl;
+            pcout<< "Triangulation generation summary: "<<std::endl<<" num elements: "<<parallelTriangulation.n_global_active_cells()<<", num refinement levels: "<<numLevels<<", min element length: "<<minElemLength<<std::endl;		  
 	  }
 
 	  internal::checkTriangulationEqualityAcrossProcessorPools(parallelTriangulation,
@@ -386,7 +386,7 @@ namespace dftfe {
 	  //
 	  if (dftParameters::verbosity>=2)
 	  {
-	    pcout<< "Adaptivity summary: "<<std::endl<<" numCells: "<<parallelTriangulation.n_global_active_cells()<<", num refinement levels: "<<numLevels<<", h_min: "<<minElemLength<<std::endl;
+	    pcout<< "Triangulation generation summary: "<<std::endl<<" num elements: "<<parallelTriangulation.n_global_active_cells()<<", num refinement levels: "<<numLevels<<", min element length: "<<minElemLength<<std::endl;
 	  }
 
 	  internal::checkTriangulationEqualityAcrossProcessorPools(parallelTriangulation,
