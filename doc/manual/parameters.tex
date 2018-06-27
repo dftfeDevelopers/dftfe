@@ -30,7 +30,7 @@
 {\it Default:} 1
 
 
-{\it Description:} [Standard] Parameter to control verbosity of terminal output. Ranging from 0 for low to 4 for code development purposes. Standard users wouldn't need verbosity beyond 2.
+{\it Description:} [Standard] Parameter to control verbosity of terminal output. Ranging from 1 for low, 2 for medium (prints eigenvalues and fractional occupancies at the end of each ground-state solve), 3 for high (prints eigenvalues and fractional occupancies at the end of each self-consistent field iteration), and 4 for very high, which is only meant for code development purposes. VERBOSITY=0 is only used for unit testing and shouldn't be used by standard users.
 
 
 {\it Possible values:} An integer $n$ such that $0\leq n \leq 4$
@@ -580,7 +580,7 @@
 {\it Default:} 
 
 
-{\it Description:} [Standard] Atomic-coordinates file. For fully non-periodic domain give cartesian coordinates of the atoms (in a.u) with respect to origin at the center of the domain. For periodic and semi-periodic give fractional coordinates of atoms. File format (example for two atoms): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 (row2).
+{\it Description:} [Standard] Atomic-coordinates file. For fully non-periodic domain give cartesian coordinates of the atoms (in a.u) with respect to origin at the center of the domain. For periodic and semi-periodic give fractional coordinates of atoms. File format (example for two atoms): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 (row2). The number of rows must be equal to NATOMS, and number of unique atoms must be equal to NATOM TYPES.
 
 
 {\it Possible values:} Any string
@@ -600,6 +600,37 @@
 
 
 {\it Possible values:} Any string
+\item {\it Parameter name:} {\tt NATOMS}
+\phantomsection\label{parameters:Geometry/NATOMS}
+
+
+\index[prmindex]{NATOMS}
+\index[prmindexfull]{Geometry!NATOMS}
+
+
+{\it Default:} 0
+
+
+{\it Description:} [Standard] Total number of atoms. This parameter requires a mandatory non-zero input which is equal to the number of rows in the file passed to ATOMIC COORDINATES FILE.
+
+
+{\it Possible values:} An integer $n$ such that $0\leq n \leq 2147483647$
+\item {\it Parameter name:} {\tt NATOM TYPES}
+\phantomsection\label{parameters:Geometry/NATOM TYPES}
+\label{parameters:Geometry/NATOM_20TYPES}
+
+
+\index[prmindex]{NATOM TYPES}
+\index[prmindexfull]{Geometry!NATOM TYPES}
+
+
+{\it Default:} 0
+
+
+{\it Description:} [Standard] Total number of atom types. This parameter requires a mandatory non-zero input which is equal to the number of unique atom types in the file passed to ATOMIC COORDINATES FILE.
+
+
+{\it Possible values:} An integer $n$ such that $0\leq n \leq 2147483647$
 \end{itemize}
 
 
@@ -620,7 +651,7 @@
 {\it Default:} 12
 
 
-{\it Description:} [Standard] Cell relaxation constraint type, 1(isotropic shape-fixed volume optimization), 2(volume-fixed shape optimization), 3(relax only cell component v1x), 4(relax only cell component v2x), 5(relax only cell component v3x), 6(relax only cell components v2x and v3x), 7(relax only cell components v1x and v3x), 8(relax only cell components v1x and v2x), 9(volume optimization- relax only v1x, v2x and v3x), 10(2D- relax only x and y components relaxed), 11(2D- relax only x and y shape components- inplane area fixed), 12(relax all cell components), 13 automatically decides the constraints based boundary conditions. CAUTION: A majority of these options only make sense in an orthorhombic cell geometry.
+{\it Description:} [Standard] Cell relaxation constraint type, 1(isotropic shape-fixed volume optimization), 2(volume-fixed shape optimization), 3(relax only cell component v1x), 4(relax only cell component v2x), 5(relax only cell component v3x), 6(relax only cell components v2x and v3x), 7(relax only cell components v1x and v3x), 8(relax only cell components v1x and v2x), 9(volume optimization- relax only v1x, v2x and v3x), 10(2D- relax only x and y components relaxed), 11(2D- relax only x and y shape components- inplane area fixed), 12(relax all cell components), 13 automatically decides the constraints based on boundary conditions. CAUTION: A majority of these options only make sense in an orthorhombic cell geometry.
 
 
 {\it Possible values:} An integer $n$ such that $1\leq n \leq 13$
@@ -1080,6 +1111,22 @@
 
 
 {\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt LOWER BOUND UNWANTED FRAC UPPER}
+\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver_2fChebyshev solver related parameters/LOWER BOUND UNWANTED FRAC UPPER}
+\label{parameters:SCF_20parameters/Eigen_2dsolver_2fChebyshev_20solver_20related_20parameters/LOWER_20BOUND_20UNWANTED_20FRAC_20UPPER}
+
+
+\index[prmindex]{LOWER BOUND UNWANTED FRAC UPPER}
+\index[prmindexfull]{SCF parameters!Eigen-solver/Chebyshev solver related parameters!LOWER BOUND UNWANTED FRAC UPPER}
+
+
+{\it Default:} 0
+
+
+{\it Description:} [Developer] The value of the fraction of the upper bound of the unwanted spectrum, the lower bound of the unwanted spectrum will be set. Default value is 0.
+
+
+{\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 1$
 \item {\it Parameter name:} {\tt LOWER BOUND WANTED SPECTRUM}
 \phantomsection\label{parameters:SCF parameters/Eigen_2dsolver_2fChebyshev solver related parameters/LOWER BOUND WANTED SPECTRUM}
 \label{parameters:SCF_20parameters/Eigen_2dsolver_2fChebyshev_20solver_20related_20parameters/LOWER_20BOUND_20WANTED_20SPECTRUM}
@@ -1185,10 +1232,10 @@
 \index[prmindexfull]{SCF parameters!Eigen-solver/Chebyshev solver related parameters!SUBSPACE ROT DOFS BLOCK SIZE}
 
 
-{\it Default:} 800
+{\it Default:} 2000
 
 
-{\it Description:} [Developer] This block size is used for memory optimization purposes in subspace rotation step in Pseudo-Gram-Schmidt orthogonalization and Rayleigh-Ritz steps. This optimization is only activated if dealii library is compiled with ScaLAPACK. Default value is 800.
+{\it Description:} [Developer] This block size is used for memory optimization purposes in subspace rotation step in Pseudo-Gram-Schmidt orthogonalization and Rayleigh-Ritz steps. This optimization is only activated if dealii library is compiled with ScaLAPACK. Default value is 2000.
 
 
 {\it Possible values:} An integer $n$ such that $1\leq n \leq 2147483647$
