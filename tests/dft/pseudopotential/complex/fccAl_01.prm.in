@@ -37,7 +37,6 @@ subsection Finite element mesh parameters
   subsection Auto mesh generation parameters
     set ATOM BALL RADIUS     = 0.0
     set BASE MESH SIZE       = 0.7
-    set MESH SIZE ATOM BALL  = 0.0
     set MESH SIZE NEAR ATOM  = 0.7
   end
 
