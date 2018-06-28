@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Phani Motamarri 
+// @author Phani Motamarri
 //
 
 
@@ -37,27 +37,27 @@ namespace linearAlgebraOperations
 				    const vectorType & X,
 				    const vectorType & Y)
     {
-      unsigned int dofs_per_proc = X.local_size()/2; 
+      unsigned int dofs_per_proc = X.local_size()/2;
       std::vector<double> xReal(dofs_per_proc), xImag(dofs_per_proc);
       std::vector<double> yReal(dofs_per_proc), yImag(dofs_per_proc);
       std::vector<std::complex<double> > xlocal(dofs_per_proc);
       std::vector<std::complex<double> > ylocal(dofs_per_proc);
 
-   
-      X.extract_subvector_to(operatorMatrix.getLocalDofIndicesReal()->begin(), 
-			     operatorMatrix.getLocalDofIndicesReal()->end(), 
-			     xReal.begin()); 
 
-      X.extract_subvector_to(operatorMatrix.getLocalDofIndicesImag()->begin(), 
-			     operatorMatrix.getLocalDofIndicesImag()->end(), 
+      X.extract_subvector_to(operatorMatrix.getLocalDofIndicesReal()->begin(),
+			     operatorMatrix.getLocalDofIndicesReal()->end(),
+			     xReal.begin());
+
+      X.extract_subvector_to(operatorMatrix.getLocalDofIndicesImag()->begin(),
+			     operatorMatrix.getLocalDofIndicesImag()->end(),
 			     xImag.begin());
-  
-      Y.extract_subvector_to(operatorMatrix.getLocalDofIndicesReal()->begin(), 
-			     operatorMatrix.getLocalDofIndicesReal()->end(), 
-			     yReal.begin()); 
 
-      Y.extract_subvector_to(operatorMatrix.getLocalDofIndicesImag()->begin(), 
-			     operatorMatrix.getLocalDofIndicesImag()->end(), 
+      Y.extract_subvector_to(operatorMatrix.getLocalDofIndicesReal()->begin(),
+			     operatorMatrix.getLocalDofIndicesReal()->end(),
+			     yReal.begin());
+
+      Y.extract_subvector_to(operatorMatrix.getLocalDofIndicesImag()->begin(),
+			     operatorMatrix.getLocalDofIndicesImag()->end(),
 			     yImag.begin());
 
 
@@ -98,26 +98,26 @@ namespace linearAlgebraOperations
 			 vectorType & x,
 			 vectorType & y)
   {
-    const unsigned int dofs_per_proc = x.local_size()/2; 
+    const unsigned int dofs_per_proc = x.local_size()/2;
     std::vector<double> xReal(dofs_per_proc), xImag(dofs_per_proc);
     std::vector<double> yReal(dofs_per_proc), yImag(dofs_per_proc);
     std::vector<std::complex<double> > xlocal(dofs_per_proc);
     std::vector<std::complex<double> > ylocal(dofs_per_proc);
 
-    x.extract_subvector_to(operatorMatrix.getLocalDofIndicesReal()->begin(), 
-			   operatorMatrix.getLocalDofIndicesReal()->end(), 
-			   xReal.begin()); 
+    x.extract_subvector_to(operatorMatrix.getLocalDofIndicesReal()->begin(),
+			   operatorMatrix.getLocalDofIndicesReal()->end(),
+			   xReal.begin());
 
-    x.extract_subvector_to(operatorMatrix.getLocalDofIndicesImag()->begin(), 
-			   operatorMatrix.getLocalDofIndicesImag()->end(), 
+    x.extract_subvector_to(operatorMatrix.getLocalDofIndicesImag()->begin(),
+			   operatorMatrix.getLocalDofIndicesImag()->end(),
 			   xImag.begin());
-  
-    y.extract_subvector_to(operatorMatrix.getLocalDofIndicesReal()->begin(), 
-			   operatorMatrix.getLocalDofIndicesReal()->end(), 
-			   yReal.begin()); 
 
-    y.extract_subvector_to(operatorMatrix.getLocalDofIndicesImag()->begin(), 
-			   operatorMatrix.getLocalDofIndicesImag()->end(), 
+    y.extract_subvector_to(operatorMatrix.getLocalDofIndicesReal()->begin(),
+			   operatorMatrix.getLocalDofIndicesReal()->end(),
+			   yReal.begin());
+
+    y.extract_subvector_to(operatorMatrix.getLocalDofIndicesImag()->begin(),
+			   operatorMatrix.getLocalDofIndicesImag()->end(),
 			   yImag.begin());
 
     for(unsigned int i = 0; i < dofs_per_proc; ++i)
@@ -159,7 +159,7 @@ namespace linearAlgebraOperations
   double lanczosUpperBoundEigenSpectrum(operatorDFTClass & operatorMatrix,
 					const vectorType & vect)
   {
-      
+
       const unsigned int this_mpi_process = dealii::Utilities::MPI::this_mpi_process(operatorMatrix.getMPICommunicator());
 
 
@@ -178,22 +178,22 @@ namespace linearAlgebraOperations
       fVector.reinit(vect);
 
       vVector = 0.0,fVector = 0.0;
-      std::srand(this_mpi_process);
+      //std::srand(this_mpi_process);
       const unsigned int local_size = vVector.local_size();
       std::vector<dealii::IndexSet::size_type> local_dof_indices(local_size);
       vVector.locally_owned_elements().fill_index_vector(local_dof_indices);
       std::vector<double> local_values(local_size, 0.0);
 
-      for (unsigned int i = 0; i < local_size; i++) 
+      for (unsigned int i = 0; i < local_size; i++)
 	{
 	  local_values[i] = ((double)std::rand())/((double)RAND_MAX);
 	}
- 
-      operatorMatrix.getConstraintMatrixEigen()->distribute_local_to_global(local_values, 
-									     local_dof_indices, 
+
+      operatorMatrix.getConstraintMatrixEigen()->distribute_local_to_global(local_values,
+									     local_dof_indices,
 									     vVector);
       vVector.compress(dealii::VectorOperation::add);
-    
+
       //
       //evaluate l2 norm
       //
@@ -203,7 +203,7 @@ namespace linearAlgebraOperations
       //
       //call matrix times X
       //
-      std::vector<vectorType> v(1),f(1); 
+      std::vector<vectorType> v(1),f(1);
       v[0] = vVector;
       f[0] = fVector;
       operatorMatrix.HX(v,f);
@@ -218,7 +218,7 @@ namespace linearAlgebraOperations
 #else
       alpha=fVector*vVector;
       fVector.add(-1.0*alpha,vVector);
-      std::vector<double> T(lanczosIterations*lanczosIterations,0.0); 
+      std::vector<double> T(lanczosIterations*lanczosIterations,0.0);
 #endif
 
       T[0]=alpha;
@@ -230,19 +230,19 @@ namespace linearAlgebraOperations
 	  beta=fVector.l2_norm();
 	  v0Vector = vVector; vVector.equ(1.0/beta,fVector);
 	  v[0] = vVector,f[0] = fVector;
-	  operatorMatrix.HX(v,f); 
+	  operatorMatrix.HX(v,f);
 	  fVector = f[0];
 	  fVector.add(-1.0*beta,v0Vector);//beta is real
 #ifdef USE_COMPLEX
 	  alpha = innerProduct(operatorMatrix,fVector,vVector);
 	  alphaNeg = -alpha;
 	  alphaTimesXPlusY(operatorMatrix,alphaNeg,vVector,fVector);
-#else      
-	  alpha = fVector*vVector;  
+#else
+	  alpha = fVector*vVector;
 	  fVector.add(-1.0*alpha,vVector);
 #endif
 	  index+=1;
-	  T[index]=beta; 
+	  T[index]=beta;
 	  index+=lanczosIterations;
 	  T[index]=alpha;
 	}
@@ -254,10 +254,10 @@ namespace linearAlgebraOperations
       int info;
       const unsigned int lwork = 1 + 6*n + 2*n*n, liwork = 3 + 5*n;
       std::vector<int> iwork(liwork, 0);
- 
+
 #ifdef USE_COMPLEX
       const unsigned int lrwork = 1 + 5*n + 2*n*n;
-      std::vector<double> rwork(lrwork,0.0); 
+      std::vector<double> rwork(lrwork,0.0);
       std::vector<std::complex<double> > work(lwork);
       zheevd_(&jobz, &uplo, &n, &T[0], &lda, &eigenValuesT[0], &work[0], &lwork, &rwork[0], &lrwork, &iwork[0], &liwork, &info);
 #else
@@ -265,9 +265,9 @@ namespace linearAlgebraOperations
       dsyevd_(&jobz, &uplo, &n, &T[0], &lda, &eigenValuesT[0], &work[0], &lwork, &iwork[0], &liwork, &info);
 #endif
 
-  
+
       for (unsigned int i=0; i<eigenValuesT.size(); i++){eigenValuesT[i]=std::abs(eigenValuesT[i]);}
-      std::sort(eigenValuesT.begin(),eigenValuesT.end()); 
+      std::sort(eigenValuesT.begin(),eigenValuesT.end());
       //
       if (dftParameters::verbosity==2)
 	{
@@ -298,22 +298,22 @@ namespace linearAlgebraOperations
 
       std::vector<vectorType> PSI(X.size());
       std::vector<vectorType> tempPSI(X.size());
-  
+
       for(unsigned int i = 0; i < X.size(); ++i)
 	{
 	  PSI[i].reinit(X[0]);
 	  tempPSI[i].reinit(X[0]);
 	}
-    
+
       //Y=alpha1*(HX+alpha2*X)
       double alpha1=sigma1/e, alpha2=-c;
       operatorMatrix.HX(X, PSI);
 
       for (std::vector<vectorType>::iterator y=PSI.begin(), x=X.begin(); y<PSI.end(); ++y, ++x)
-	{  
+	{
 	  (*y).add(alpha2,*x);
 	  (*y)*=alpha1;
-	} 
+	}
 
       //loop over polynomial order
       for(unsigned int i=2; i<m+1; i++)
@@ -323,7 +323,7 @@ namespace linearAlgebraOperations
 	  alpha1=2.0*sigma2/e, alpha2=-(sigma*sigma2);
 	  operatorMatrix.HX(PSI, tempPSI);
 	  for(std::vector<vectorType>::iterator ynew=tempPSI.begin(), y=PSI.begin(), x=X.begin(); ynew<tempPSI.end(); ++ynew, ++y, ++x)
-	    {  
+	    {
 	      (*ynew).add(-c,*y);
 	      (*ynew)*=alpha1;
 	      (*ynew).add(alpha2,*x);
@@ -332,12 +332,12 @@ namespace linearAlgebraOperations
 	    }
 	  sigma=sigma2;
 	}
-  
+
     //copy back PSI to eigenVectors
     for (std::vector<vectorType>::iterator y=PSI.begin(), x=X.begin(); y<PSI.end(); ++y, ++x)
-      {  
+      {
 	*x=*y;
-      }   
+      }
   }
 
   //
@@ -348,14 +348,14 @@ namespace linearAlgebraOperations
 				    unsigned int startingIndex)
   {
 
-    
+
 #ifdef USE_COMPLEX
       unsigned int localSize = X[0].local_size()/2;
 #else
       unsigned int localSize = X[0].local_size();
 #endif
 
-  
+
       //copy to petsc vectors
       unsigned int numVectors = X.size() - startingIndex;
       Vec vec;
@@ -387,7 +387,7 @@ namespace linearAlgebraOperations
 	      localData[j].real(tempReal[j]);
 	      localData[j].imag(tempImag[j]);
 	    }
-	  std::copy(localData.begin(),localData.end(), &(columnSpacePointer[i][0])); 
+	  std::copy(localData.begin(),localData.end(), &(columnSpacePointer[i][0]));
 	}
       VecRestoreArrays(petscColumnSpace, numVectors, &columnSpacePointer);
 #else
@@ -397,7 +397,7 @@ namespace linearAlgebraOperations
 	{
 	  std::vector<double> localData(localSize);
 	  std::copy(X[i+startingIndex].begin(),X[i+startingIndex].end(),localData.begin());
-	  std::copy(localData.begin(),localData.end(), &(columnSpacePointer[i][0])); 
+	  std::copy(localData.begin(),localData.end(), &(columnSpacePointer[i][0]));
 	}
       VecRestoreArrays(petscColumnSpace, numVectors, &columnSpacePointer);
 #endif
@@ -423,7 +423,7 @@ namespace linearAlgebraOperations
       for (int i = 0; i < numVectors; ++i)
 	{
 	  std::vector<std::complex<double> > localData(localSize);
-	  std::copy(&(columnSpacePointer[i][0]),&(columnSpacePointer[i][localSize]), localData.begin()); 
+	  std::copy(&(columnSpacePointer[i][0]),&(columnSpacePointer[i][localSize]), localData.begin());
 	  for(int j = 0; j < localSize; ++j)
 	    {
 	      X[i+startingIndex].local_element((*operatorMatrix.getLocalProcDofIndicesReal())[j]) = localData[j].real();
@@ -437,7 +437,7 @@ namespace linearAlgebraOperations
       for (int i = 0; i < numVectors; ++i)
 	{
 	  std::vector<double> localData(localSize);
-	  std::copy(&(columnSpacePointer[i][0]),&(columnSpacePointer[i][localSize]), localData.begin()); 
+	  std::copy(&(columnSpacePointer[i][0]),&(columnSpacePointer[i][localSize]), localData.begin());
 	  std::copy(localData.begin(), localData.end(), X[i+startingIndex].begin());
 	  X[i+startingIndex].update_ghost_values();
 	}
@@ -474,7 +474,7 @@ namespace linearAlgebraOperations
 
 #ifdef USE_COMPLEX
       const unsigned int lrwork = 1 + 5*n + 2*n*n;
-      std::vector<double> rwork(lrwork,0.0); 
+      std::vector<double> rwork(lrwork,0.0);
       std::vector<std::complex<double> > work(lwork);
       zheevd_(&jobz, &uplo, &n, &ProjHam[0],&lda,&eigenValues[0], &work[0], &lwork, &rwork[0], &lrwork, &iwork[0], &liwork, &info);
 #else
@@ -505,14 +505,14 @@ namespace linearAlgebraOperations
 	{
 	  for (unsigned int i=0; i<(unsigned int)n1; i++)
 	    {
-	      *val=(*x).local_element(i); 
+	      *val=(*x).local_element(i);
 	      val++;
 	    }
 	}
 #endif
 
       const char transA  = 'N', transB  = 'N';
-      const unsigned int lda1=n1; 
+      const unsigned int lda1=n1;
       const unsigned int ldb=m, ldc=n1;
 
 #ifdef USE_COMPLEX
@@ -532,8 +532,8 @@ namespace linearAlgebraOperations
 	  *x=0.0;
 	  for(unsigned int i=0; i<(unsigned int)n1; i++)
 	    {
-	      (*x).local_element((*operatorMatrix.getLocalProcDofIndicesReal())[i]) = (*val).real(); 
-	      (*x).local_element((*operatorMatrix.getLocalProcDofIndicesImag())[i]) = (*val).imag(); 
+	      (*x).local_element((*operatorMatrix.getLocalProcDofIndicesReal())[i]) = (*val).real();
+	      (*x).local_element((*operatorMatrix.getLocalProcDofIndicesImag())[i]) = (*val).imag();
 	      val++;
 	    }
 	  (*x).update_ghost_values();
@@ -580,14 +580,14 @@ namespace linearAlgebraOperations
 	(PSI[i]).add(-eigenValues[i],X[i]) ;
 	const double resNorm= (PSI[i]).l2_norm();
 	residualNorm[i]=resNorm;
-      
+
 	if(dftParameters::verbosity>=3)
 	  {
 	    if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
 	      std::cout<<"eigen vector "<< i<<": "<<resNorm<<std::endl;
 	  }
       }
-    if(dftParameters::verbosity>=3)  
+    if(dftParameters::verbosity>=3)
       {
 	if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
 	  std::cout <<std::endl;

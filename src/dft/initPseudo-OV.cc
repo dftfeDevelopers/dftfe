@@ -75,7 +75,7 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
 
       Point<3> nuclearCoordinates(atomLocations[globalChargeIdNonLocalAtom][2],atomLocations[globalChargeIdNonLocalAtom][3],atomLocations[globalChargeIdNonLocalAtom][4]);
 
-      std::vector<int> & imageIdsList = d_globalChargeIdToImageIdMap[globalChargeIdNonLocalAtom];
+      std::vector<int> & imageIdsList = d_globalChargeIdToImageIdMapTrunc[globalChargeIdNonLocalAtom];
 
       //
       //get the number of elements in the compact support of the current nonlocal atom
@@ -175,9 +175,9 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
 			}
 		      else
 			{
-			  chargePoint[0] = d_imagePositions[chargeId-numberGlobalCharges][0];
-			  chargePoint[1] = d_imagePositions[chargeId-numberGlobalCharges][1];
-			  chargePoint[2] = d_imagePositions[chargeId-numberGlobalCharges][2];
+			  chargePoint[0] = d_imagePositionsTrunc[chargeId-numberGlobalCharges][0];
+			  chargePoint[1] = d_imagePositionsTrunc[chargeId-numberGlobalCharges][1];
+			  chargePoint[2] = d_imagePositionsTrunc[chargeId-numberGlobalCharges][2];
 			}
 
 
@@ -757,7 +757,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
       //
       //get the imageIdmap information corresponding to globalChargeIdNonLocalAtom
       //
-      std::vector<int> & imageIdsList = d_globalChargeIdToImageIdMap[globalChargeIdNonLocalAtom];
+      std::vector<int> & imageIdsList = d_globalChargeIdToImageIdMapTrunc[globalChargeIdNonLocalAtom];
 
       //
       //resize the data structure corresponding to sparsity pattern
@@ -811,9 +811,9 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
 			    }
 			  else
 			    {
-			      chargePoint[0] = d_imagePositions[chargeId-numberGlobalCharges][0];
-			      chargePoint[1] = d_imagePositions[chargeId-numberGlobalCharges][1];
-			      chargePoint[2] = d_imagePositions[chargeId-numberGlobalCharges][2];
+			      chargePoint[0] = d_imagePositionsTrunc[chargeId-numberGlobalCharges][0];
+			      chargePoint[1] = d_imagePositionsTrunc[chargeId-numberGlobalCharges][1];
+			      chargePoint[2] = d_imagePositionsTrunc[chargeId-numberGlobalCharges][2];
 			    }
 
 			  double r = quadPoint.distance(chargePoint);

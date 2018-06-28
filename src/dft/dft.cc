@@ -357,7 +357,20 @@ namespace dftfe {
 	        AssertThrow(atomLocationsFractional[i][2+idim]>-tol && atomLocationsFractional[i][2+idim]<1.0+tol,ExcMessage("DFT-FE Error: periodic direction fractional coordinates doesn't lie in [0,1]. Please check input fractional coordinates, or if this is an ionic relaxation step, please check the corresponding algorithm."));
 	  }
 
-	generateImageCharges();
+	generateImageCharges(d_pspCutOff,
+	                     d_imageIds,
+		             d_imageCharges,
+		             d_imagePositions,
+		             d_globalChargeIdToImageIdMap);
+
+	generateImageCharges(d_pspCutOffTrunc,
+	                     d_imageIdsTrunc,
+		             d_imageChargesTrunc,
+		             d_imagePositionsTrunc,
+		             d_globalChargeIdToImageIdMapTrunc);
+
+        if ((dftParameters::verbosity>=4 || dftParameters::reproducible_output))
+              pcout<<"Number Image Charges  "<<d_imageIds.size()<<std::endl;
 
 	internaldft::convertToCellCenteredCartesianCoordinates(atomLocations,
 							       d_domainBoundingVectors);
@@ -386,7 +399,17 @@ namespace dftfe {
 	    pcout<<"AtomId "<<i <<":  "<<atomLocations[i][2]<<" "<<atomLocations[i][3]<<" "<<atomLocations[i][4]<<"\n";
 	  }
 	pcout<<"-----------------------------------------------------------------------------------------"<<std::endl;
-	generateImageCharges();
+	generateImageCharges(d_pspCutOff,
+	                     d_imageIds,
+		             d_imageCharges,
+		             d_imagePositions,
+		             d_globalChargeIdToImageIdMap);
+
+	generateImageCharges(d_pspCutOffTrunc,
+	                     d_imageIdsTrunc,
+		             d_imageChargesTrunc,
+		             d_imagePositionsTrunc,
+		             d_globalChargeIdToImageIdMapTrunc);
       }
   }
 
@@ -623,7 +646,7 @@ namespace dftfe {
 
     pcout<<std::endl;
     if (dftParameters::verbosity==0)
-      pcout<<"Starting SCF iteration...."<<std::endl;
+      pcout<<"Starting SCF iterations...."<<std::endl;
     while ((norm > dftParameters::selfConsistentSolverTolerance) && (scfIter < dftParameters::numSCFIterations))
       {
 
@@ -1079,9 +1102,9 @@ namespace dftfe {
       }
     computing_timer.exit_section("scf solve");
     if(scfIter==dftParameters::numSCFIterations)
-      pcout<<"SCF iteration did not converge to the specified tolerance after: "<<scfIter<<" iterations."<<std::endl;
+      pcout<<"DFT-FE Warning: SCF iterations did not converge to the specified tolerance after: "<<scfIter<<" iterations."<<std::endl;
     else
-      pcout<<"SCF iteration converged to the specified tolerance after: "<<scfIter<<" iterations."<<std::endl;
+      pcout<<"SCF iterations converged to the specified tolerance after: "<<scfIter<<" iterations."<<std::endl;
 
     if (!dftParameters::computeEnergyEverySCF)
     {
@@ -1171,7 +1194,10 @@ namespace dftfe {
 
     if (dftParameters::isIonForce)
       {
-	computing_timer.enter_section("Ion force computation");
+        if(dftParameters::selfConsistentSolverTolerance>1e-5 && dftParameters::verbosity>=1)
+            pcout<<"DFT-FE Warning: Ion force accuracy may be affected for the given scf iteration solve tolerance: "<<dftParameters::selfConsistentSolverTolerance<<", recommended to use TOLERANCE below 1e-5."<<std::endl;
+
+ 	computing_timer.enter_section("Ion force computation");
 	computingTimerStandard.enter_section("Ion force computation");
 	forcePtr->computeAtomsForces();
 	forcePtr->printAtomsForces();
@@ -1181,6 +1207,9 @@ namespace dftfe {
 #ifdef USE_COMPLEX
     if (dftParameters::isCellStress)
       {
+        if(dftParameters::selfConsistentSolverTolerance>1e-5 && dftParameters::verbosity>=1)
+            pcout<<"DFT-FE Warning: Cell stress accuracy may be affected for the given scf iteration solve tolerance: "<<dftParameters::selfConsistentSolverTolerance<<", recommended to use TOLERANCE below 1e-5."<<std::endl;
+
 	computing_timer.enter_section("Cell stress computation");
 	computingTimerStandard.enter_section("Cell stress computation");
 	forcePtr->computeStress();
@@ -1196,6 +1225,8 @@ namespace dftfe {
     if (dftParameters::writeSolutionFields)
       output();
 
+    if (dftParameters::verbosity>=1)
+       pcout << std::endl<< "Elapsed wall time since start of the program: " << d_globalTimer.wall_time() << " seconds\n"<<std::endl;
   }
 
   //Output

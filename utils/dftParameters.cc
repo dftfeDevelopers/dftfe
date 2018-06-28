@@ -280,7 +280,7 @@ namespace dftParameters
     }
     prm.leave_subsection ();
 
-    prm.enter_subsection ("DFT functional related parameters");
+    prm.enter_subsection ("DFT functional parameters");
     {
 
 	prm.declare_entry("PSEUDOPOTENTIAL CALCULATION", "true",
@@ -320,13 +320,13 @@ namespace dftParameters
 			  Patterns::Integer(1,1000),
 			  "[Standard] Maximum number of iterations to be allowed for SCF convergence");
 
-	prm.declare_entry("TOLERANCE", "1e-07",
+	prm.declare_entry("TOLERANCE", "1e-06",
 			  Patterns::Double(1e-12,1.0),
-			  "[Standard] SCF iterations stopping tolerance in terms of electron-density difference between two successive iterations.");
+			  "[Standard] SCF iterations stopping tolerance in terms of L2 norm of the electron-density difference between two successive iterations. CAUTION: A tolerance close to 1e-7 or lower can detoriate the SCF convergence due to the round-off errors.");
 
 	prm.declare_entry("ANDERSON SCHEME MIXING HISTORY", "10",
 			  Patterns::Integer(1,1000),
-			  "[Standard] Number of SCF iterations to be considered for mixing the electron-density.");
+			  "[Standard] Number of SCF iteration history to be considered for mixing the electron-density.");
 
 	prm.declare_entry("ANDERSON SCHEME MIXING PARAMETER", "0.5",
 			  Patterns::Double(0.0,1.0),
@@ -340,12 +340,12 @@ namespace dftParameters
 			  Patterns::Bool(),
 			  "[Developer] Boolean parameter specifying whether to compute the total energy at the end of every scf. Setting it to false can lead to some time savings.");
 
-	prm.enter_subsection ("Eigen-solver/Chebyshev solver related parameters");
+	prm.enter_subsection ("Eigen-solver parameters");
 	{
 
 	    prm.declare_entry("NUMBER OF KOHN-SHAM WAVEFUNCTIONS", "10",
 			      Patterns::Integer(0),
-			      "[Standard] Number of Kohn-Sham wavefunctions to be computed. For insulators use N/2+(10-20) and for metals use 20 percent more than N/2 (atleast 10 more). N is the total number of electrons.");
+			      "[Standard] Number of Kohn-Sham wavefunctions to be computed. For insulators use N/2+(10-20) and for metals use 20 percent more than N/2 (atleast 10 more). N is the total number of electrons. For spin-polarized calculations this parameter denotes the number of Kohn-Sham wavefunctions to be computed for each spin.");
 
 	    prm.declare_entry("LOWER BOUND WANTED SPECTRUM", "-10.0",
 			      Patterns::Double(),
@@ -515,7 +515,7 @@ namespace dftParameters
     }
     prm.leave_subsection ();
 
-    prm.enter_subsection ("DFT functional related parameters");
+    prm.enter_subsection ("DFT functional parameters");
     {
 	dftParameters::isPseudopotential             = prm.get_bool("PSEUDOPOTENTIAL CALCULATION");
 	dftParameters::pseudoTestsFlag               = prm.get_bool("PSEUDO TESTS FLAG");
@@ -537,7 +537,7 @@ namespace dftParameters
 	dftParameters::computeEnergyEverySCF         = prm.get_bool("COMPUTE ENERGY EACH ITER");
 
 
-	prm.enter_subsection ("Eigen-solver/Chebyshev solver related parameters");
+	prm.enter_subsection ("Eigen-solver parameters");
 	{
 	   dftParameters::numberEigenValues             = prm.get_integer("NUMBER OF KOHN-SHAM WAVEFUNCTIONS");
 	   dftParameters::lowerEndWantedSpectrum        = prm.get_double("LOWER BOUND WANTED SPECTRUM");
@@ -584,9 +584,9 @@ namespace dftParameters
         std::cout << "It is based on adaptive finite-element based methodologies.		        " << std::endl ;
         std::cout << "For details and citing please refer: P.Motamarri et. al., Comp. Phys. Comm., Vol xx, Issue xx, pp xx, 2018" << std::endl ;
 	std::cout << "==========================================================================================================" << std::endl ;
-	std::cout << " DFT-FE Authors (alphabetically) :									" << std::endl ;
+	std::cout << " DFT-FE authors (alphabetically) :									" << std::endl ;
 	std::cout << "														" << std::endl ;
-	std::cout << " Sambit Das               - University of Michigan           " << std::endl ;
+	std::cout << " Sambit Das               - University of Michigan, Ann Arbor" << std::endl ;
 	std::cout << " Denis Davydov            - University of Erlangen-Nuremberg " << std::endl ;
 	std::cout << " Vikram Gavini (Mentor)   - University of Michigan, Ann Arbor" << std::endl ;
 	std::cout << " Krishnendu Ghosh         - University of Michigan, Ann Arbor" << std::endl ;
