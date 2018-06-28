@@ -209,20 +209,20 @@ namespace dftParameters
       {
 
 	prm.declare_entry("BASE MESH SIZE", "4.0",
-			  Patterns::Double(0,20),
+			  Patterns::Double(0.0001,20),
 			  "[Standard] Mesh size of the base mesh on which refinement is performed. Default value is good enough for most cases.");
 
-	prm.declare_entry("ATOM BALL RADIUS","2.25",
-			  Patterns::Double(0,10),
-			  "[Standarad] Radius of ball enclosing every atom inside which the mesh size is set close to MESH SIZE ATOM BALL. A value between 2.0 to 3.0 is usually a good choice.");
+	prm.declare_entry("ATOM BALL RADIUS","2.5",
+			  Patterns::Double(0,3),
+			  "[Developer] Radius of ball enclosing every atom inside which the mesh size is set close to MESH SIZE ATOM BALL. A value between 2.0 to 3.0 is usually a good choice.");
 
-	prm.declare_entry("MESH SIZE ATOM BALL", "0.5",
-			  Patterns::Double(0,10),
+	prm.declare_entry("MESH SIZE ATOM BALL", "1.0",
+			  Patterns::Double(0.0001,10),
 			  "[Standard] Mesh size in a ball of radius ATOM BALL RADIUS around every atom. For pseudopotential calculations, a value between 0.5 to 1.0 is usually a good choice. For all-electron calculations, a value between 0.1 to 0.3 would be a good starting choice.");
 
 	prm.declare_entry("MESH SIZE NEAR ATOM", "0.5",
-			  Patterns::Double(0,10),
-			  "[Standard] Mesh size of the finite elements in the immediate vicinity of the atoms. For pseudopotential calculations, this value is usually taken to be the same as the MESH SIZE ATOM BALL. For all-electron case, a value smaller than MESH SIZE ATOM BALL, typically between 0.05 to 0.1 would be a good starting choice.");
+			  Patterns::Double(0.0,10),
+			  "[Developer] Mesh size of the finite elements in the immediate vicinity of the atoms. For pseudopotential calculations, the value of MESH SIZE ATOM BALL is good enough. For all-electron case, a value smaller than MESH SIZE ATOM BALL, typically between 0.05 to 0.1 would be a good starting choice.");
 
         prm.declare_entry("MAX REFINEMENT STEPS", "10",
                         Patterns::Integer(1,10),
@@ -239,15 +239,15 @@ namespace dftParameters
         prm.enter_subsection ("Monkhorst-Pack (MP) grid generation");
         {
 	    prm.declare_entry("SAMPLING POINTS 1", "1",
-			      Patterns::Integer(1,100),
+			      Patterns::Integer(1,1000),
 			      "[Standard] Number of Monkhorts-Pack grid points to be used along reciprocal latttice vector 1.");
 
 	    prm.declare_entry("SAMPLING POINTS 2", "1",
-			      Patterns::Integer(1,100),
+			      Patterns::Integer(1,1000),
 			      "[Standard] Number of Monkhorts-Pack grid points to be used along reciprocal latttice vector 2.");
 
 	    prm.declare_entry("SAMPLING POINTS 3", "1",
-			      Patterns::Integer(1,100),
+			      Patterns::Integer(1,1000),
 			      "[Standard] Number of Monkhorts-Pack grid points to be used along reciprocal latttice vector 3.");
 
 	    prm.declare_entry("SAMPLING SHIFT 1", "0.0",
@@ -313,7 +313,7 @@ namespace dftParameters
     prm.enter_subsection ("SCF parameters");
     {
 	prm.declare_entry("TEMPERATURE", "500.0",
-			  Patterns::Double(),
+			  Patterns::Double(0.0),
 			  "[Standard] Fermi-Dirac smearing temperature (in Kelvin).");
 
 	prm.declare_entry("MAXIMUM ITERATIONS", "50",
@@ -321,10 +321,10 @@ namespace dftParameters
 			  "[Standard] Maximum number of iterations to be allowed for SCF convergence");
 
 	prm.declare_entry("TOLERANCE", "1e-07",
-			  Patterns::Double(0,1.0),
+			  Patterns::Double(1e-12,1.0),
 			  "[Standard] SCF iterations stopping tolerance in terms of electron-density difference between two successive iterations.");
 
-	prm.declare_entry("ANDERSON SCHEME MIXING HISTORY", "70",
+	prm.declare_entry("ANDERSON SCHEME MIXING HISTORY", "10",
 			  Patterns::Integer(1,1000),
 			  "[Standard] Number of SCF iterations to be considered for mixing the electron-density.");
 
@@ -338,7 +338,7 @@ namespace dftParameters
 
 	prm.declare_entry("COMPUTE ENERGY EACH ITER", "true",
 			  Patterns::Bool(),
-			  "[Standard] Boolean parameter specifying whether to compute the total energy at the end of every scf. Setting it to false can lead to some time savings.");
+			  "[Developer] Boolean parameter specifying whether to compute the total energy at the end of every scf. Setting it to false can lead to some time savings.");
 
 	prm.enter_subsection ("Eigen-solver/Chebyshev solver related parameters");
 	{
@@ -349,11 +349,11 @@ namespace dftParameters
 
 	    prm.declare_entry("LOWER BOUND WANTED SPECTRUM", "-10.0",
 			      Patterns::Double(),
-			      "[Developer] The lower bound of the wanted eigen spectrum.");
+			      "[Developer] The lower bound of the wanted eigen spectrum. It is only used for the first iteration of the Chebyshev filtered subspace iteration procedure. A rough estimate based on single atom eigen values can be used here. Default value is good enough for most problems.");
 
 	    prm.declare_entry("CHEBYSHEV POLYNOMIAL DEGREE", "0",
 			      Patterns::Integer(0,2000),
-			      "[Developer] The degree of the Chebyshev polynomial to be employed for filtering out the unwanted spectrum. A heuristics value depending upon the upper bound of the eigen spectrum is used when the parameter value is 0, which is the default option.");
+			      "[Developer] Chebyshev polynomial degree to be employed for the Chebyshev filtering subspace iteration procedure to dampen the unwanted spectrum of the Kohn-Sham Hamiltonian. If set to 0, a default value depending on the upper bound of the eigen-spectrum is used.");
 
 	    prm.declare_entry("LOWER BOUND UNWANTED FRAC UPPER", "0",
 			      Patterns::Double(0,1),
@@ -364,8 +364,8 @@ namespace dftParameters
 			      "[Developer] The initial number of the Chebyshev filter passes per SCF. More Chebyshev filter passes beyond the value set in this parameter can still happen due to additional algorithms used in the code.");
 
 
-	    prm.declare_entry("CHEBYSHEV FILTER TOLERANCE","5e-02",
-			      Patterns::Double(0),
+	    prm.declare_entry("CHEBYSHEV FILTER TOLERANCE","3e-02",
+			      Patterns::Double(0.0001),
 			      "[Developer] Parameter specifying the tolerance to which eigenvectors need to computed using chebyshev filtering approach.");
 
 	    prm.declare_entry("CHEBYSHEV FILTER BLOCK SIZE", "400",
@@ -403,7 +403,7 @@ namespace dftParameters
 
 	    prm.declare_entry("SCALAPACKPROCS", "0",
 			      Patterns::Integer(0,300),
-			      "[Standard] Uses a processor grid of SCALAPACKPROCS times SCALAPACKPROCS for parallel distribution of the subspace projected matrix in the Rayleigh-Ritz step and the overlap matrix in the Pseudo-Gram-Schmidt step. Default value is 0 for which a thumb rule is used (see http://netlib.org/scalapack/slug/node106.html#SECTION04511000000000000000). This parameter is only used if dealii library is compiled with ScaLAPACK.");
+			      "[Developer] Uses a processor grid of SCALAPACKPROCS times SCALAPACKPROCS for parallel distribution of the subspace projected matrix in the Rayleigh-Ritz step and the overlap matrix in the Pseudo-Gram-Schmidt step. Default value is 0 for which a thumb rule is used (see http://netlib.org/scalapack/slug/node106.html#SECTION04511000000000000000). This parameter is only used if dealii library is compiled with ScaLAPACK.");
 	}
 	prm.leave_subsection ();
     }
