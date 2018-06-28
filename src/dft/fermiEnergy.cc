@@ -177,7 +177,7 @@ void dftClass<FEOrder>::compute_fermienergy()
 	}
 
     }
-    if (dftParameters::verbosity>=2)
+    if (dftParameters::verbosity>=4)
       pcout<< "Fermi energy constraint residual (bisection): "<< R << std::endl;
 #else
    fe = eigenValuesAllkPoints[d_kPointWeights.size()*count - 1];
@@ -220,7 +220,7 @@ void dftClass<FEOrder>::compute_fermienergy()
   //set Fermi energy
   fermiEnergy = fe;
 
-  if (dftParameters::verbosity>=2)
+  if (dftParameters::verbosity>=4)
      pcout<< "Fermi energy constraint residual (Newton-Raphson): "<< std::abs(R)<<std::endl;
 
   if (dftParameters::verbosity>=2)
