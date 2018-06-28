@@ -186,6 +186,7 @@ namespace dftfe {
   template<unsigned int FEOrder>
   void dftClass<FEOrder>::set()
   {
+    computingTimerStandard.enter_section("Pre-processing step 1");
     if (dftParameters::verbosity>=4)
       dftUtils::printCurrentMemoryUsage(mpi_communicator,
 			      "Entered call to set");
@@ -289,7 +290,7 @@ namespace dftfe {
       pseudoUtils::convert(dftParameters::pseudoPotentialFile);
 
     MPI_Barrier(MPI_COMM_WORLD);
-
+    computingTimerStandard.exit_section("Pre-processing step 1");
   }
 
   //dft pseudopotential init
@@ -417,7 +418,7 @@ namespace dftfe {
   template<unsigned int FEOrder>
   void dftClass<FEOrder>::init (const unsigned int usePreviousGroundStateFields)
   {
-    computingTimerStandard.enter_section("Pre-processing steps");
+    computingTimerStandard.enter_section("Pre-processing step 2");
 
     if (dftParameters::verbosity>=4)
       dftUtils::printCurrentMemoryUsage(mpi_communicator,
@@ -496,13 +497,13 @@ namespace dftfe {
     if (dftParameters::verbosity>=4)
       dftUtils::printCurrentMemoryUsage(mpi_communicator,
 	                      "initPseudopotential completed");
-    computingTimerStandard.exit_section("Pre-processing steps");
+    computingTimerStandard.exit_section("Pre-processing step 2");
   }
 
   template<unsigned int FEOrder>
   void dftClass<FEOrder>::initNoRemesh()
   {
-    computingTimerStandard.enter_section("Pre-processing steps");
+    computingTimerStandard.enter_section("Pre-processing step 2");
     initImageChargesUpdateKPoints();
 
     //
@@ -518,7 +519,7 @@ namespace dftfe {
     //reinitialize pseudopotential related data structures
     //
     initPseudoPotentialAll();
-    computingTimerStandard.exit_section("Pre-processing steps");
+    computingTimerStandard.exit_section("Pre-processing step 2");
   }
 
   //
