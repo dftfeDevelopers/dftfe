@@ -97,7 +97,7 @@ namespace dftfe {
     pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
     computing_timer (pcout,
 		     dftParameters::reproducible_output
-		     || dftParameters::verbosity<2? TimerOutput::never : TimerOutput::summary,
+		     || dftParameters::verbosity<4? TimerOutput::never : TimerOutput::summary,
 		     TimerOutput::wall_times),
     computingTimerStandard(pcout,
 		     dftParameters::reproducible_output
@@ -378,7 +378,7 @@ namespace dftfe {
 #ifdef USE_COMPLEX
 	recomputeKPointCoordinates();
 #endif
-	if (dftParameters::verbosity>=2)
+	if (dftParameters::verbosity>=4)
 	  {
 	    //FIXME: Print all k points across all pools
 	    pcout<<"-------------------k points cartesian coordinates and weights-----------------------------"<<std::endl;

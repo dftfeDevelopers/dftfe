@@ -40,7 +40,7 @@ namespace dftfe
       dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
       dealii::TimerOutput computing_timer(pcout,
 					  dftParameters::reproducible_output ||
-					  dftParameters::verbosity<2 ? dealii::TimerOutput::never : dealii::TimerOutput::summary,
+					  dftParameters::verbosity<4 ? dealii::TimerOutput::never : dealii::TimerOutput::summary,
 					  dealii::TimerOutput::wall_times);
 
 
