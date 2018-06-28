@@ -634,10 +634,10 @@ namespace dftParameters
 	    ,ExcMessage("DFT-FE Error: NPBAND is greater than NUMBER OF KOHN-SHAM WAVEFUNCTIONS."));
 
     if (dftParameters::electrostaticsPRefinement)
-       AssertThrow(false,ExcMessage("DFT-FE Error: Implemenation of this feature is not completed yet."));
+       AssertThrow(false,ExcMessage("DFT-FE Error: Implementation of this feature is not completed yet."));
 
     if (dftParameters::nonSelfConsistentForce)
-       AssertThrow(false,ExcMessage("DFT-FE Error: Implemenation of this feature is not completed yet."));
+       AssertThrow(false,ExcMessage("DFT-FE Error: Implementation of this feature is not completed yet."));
 
     AssertThrow(!dftParameters::coordinatesFile.empty()
 	        ,ExcMessage("DFT-FE Error: ATOMIC COORDINATES FILE not given."));
@@ -649,11 +649,14 @@ namespace dftParameters
       AssertThrow(!dftParameters::pseudoPotentialFile.empty(),
 	        ExcMessage("DFT-FE Error: PSEUDOPOTENTIAL FILE NAMES LIST not given."));
 
+    AssertThrow(dftParameters::numberEigenValues!=0
+	        ,ExcMessage("DFT-FE Error: Number of wavefunctions not specified or given value of zero is not allowed."));
+
     AssertThrow(dftParameters::natoms!=0
-	        ,ExcMessage("DFT-FE Error: NATOMS not given or given a value of zero which is not allowed."));
+	        ,ExcMessage("DFT-FE Error: Number of atoms not specified or given a value of zero is not allowed."));
 
     AssertThrow(dftParameters::natomTypes!=0
-	        ,ExcMessage("DFT-FE Error: NATOM TYPES not given or given a value of zero which is not allowed."));
+	        ,ExcMessage("DFT-FE Error: Number of atom types not specified or given a value of zero is not allowed."));
   }
 
 }
