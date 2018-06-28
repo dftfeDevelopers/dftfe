@@ -201,10 +201,13 @@ namespace dftUtils
 
     unsigned int count = 0;
     const unsigned int inc = 1;
-
+    std::vector<T> newValuesBlock(blockSize,0.0);
     for(unsigned int i = 0; i < d_rowIdsLocal.size(); ++i)
       {
-	std::vector<T> newValuesBlock(blockSize,d_inhomogenities[i]);
+        std::fill(newValuesBlock.begin(),
+	          newValuesBlock.end(),
+		  d_inhomogenities[i]);
+
 	const dealii::types::global_dof_index startingLocalDofIndexRow = d_localIndexMapUnflattenedToFlattened[d_rowIdsLocal[i]];
 
 	for(unsigned int j = 0; j < d_rowSizes[i]; ++j)
@@ -226,10 +229,9 @@ namespace dftUtils
 	    count++;
 	  }
 
-	for(unsigned int k = 0; k < blockSize; ++k)
-	  {
-	    fieldVector.local_element(startingLocalDofIndexRow + k) = newValuesBlock[k];
-	  }
+	  std::copy(&newValuesBlock[0],
+	            &newValuesBlock[0]+blockSize,
+		    fieldVector.begin()+startingLocalDofIndexRow);
       }
   }
 
@@ -270,10 +272,9 @@ namespace dftUtils
 	//
 	//set slave contribution to zero
 	//
-	for(unsigned int k = 0; k < blockSize; ++k)
-	  {
-	    fieldVector.local_element(startingLocalDofIndexRow + k) = 0.0;
-	  }
+	std::fill(fieldVector.begin()+startingLocalDofIndexRow,
+		  fieldVector.begin()+startingLocalDofIndexRow+blockSize,
+		  0.0);
       }
   }
 
@@ -286,10 +287,9 @@ namespace dftUtils
 	const dealii::types::global_dof_index startingLocalDofIndexRow = d_localIndexMapUnflattenedToFlattened[d_rowIdsLocal[i]];
 
 	//set constrained nodes to zero
-	for(unsigned int k = 0; k < blockSize; ++k)
-	  {
-	    fieldVector.local_element(startingLocalDofIndexRow + k) = 0.0;
-	  }
+	std::fill(fieldVector.begin()+startingLocalDofIndexRow,
+		  fieldVector.begin()+startingLocalDofIndexRow+blockSize,
+		  0.0);
       }
   }
 
