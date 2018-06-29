@@ -27,7 +27,7 @@ namespace dftfe {
 namespace dftParameters
 {
 
-  unsigned int finiteElementPolynomialOrder=1,n_refinement_steps=1,numberEigenValues=1,xc_id=1, spinPolarized=0, nkx=1,nky=1,nkz=1;
+  unsigned int finiteElementPolynomialOrder=1,n_refinement_steps=1,numberEigenValues=1,xc_id=1, spinPolarized=0, nkx=1,nky=1,nkz=1, offsetFlagX=0,offsetFlagY=0,offsetFlagZ=0;
   unsigned int chebyshevOrder=1,numPass=1, numSCFIterations=1,maxLinearSolverIterations=1, mixingHistory=1, npool=1;
 
   double radiusAtomBall=0.0, mixingParameter=0.5, dkx=0.0, dky=0.0, dkz=0.0;
@@ -250,16 +250,16 @@ namespace dftParameters
 			      Patterns::Integer(1,100),
 			      "[Standard] Number of Monkhorts-Pack grid points to be used along reciprocal latttice vector 3.");
 
-	    prm.declare_entry("SAMPLING SHIFT 1", "0.0",
-			      Patterns::Double(0.0,1.0),
+	    prm.declare_entry("SAMPLING SHIFT 1", "0",
+			      Patterns::Integer(0,1),
 			      "[Standard] Fractional shifting to be used along reciprocal latttice vector 1.");
 
-	    prm.declare_entry("SAMPLING SHIFT 2", "0.0",
-			      Patterns::Double(0.0,1.0),
+	    prm.declare_entry("SAMPLING SHIFT 2", "0",
+			      Patterns::Integer(0,1),
 			      "[Standard] Fractional shifting to be used along reciprocal latttice vector 2.");
 
-	    prm.declare_entry("SAMPLING SHIFT 3", "0.0",
-			      Patterns::Double(0.0,1.0),
+	    prm.declare_entry("SAMPLING SHIFT 3", "0",
+			      Patterns::Integer(0,1),
 			      "[Standard] Fractional shifting to be used along reciprocal latttice vector 3.");
 
 	}
@@ -502,9 +502,9 @@ namespace dftParameters
 	    dftParameters::nkx        = prm.get_integer("SAMPLING POINTS 1");
 	    dftParameters::nky        = prm.get_integer("SAMPLING POINTS 2");
 	    dftParameters::nkz        = prm.get_integer("SAMPLING POINTS 3");
-	    dftParameters::dkx        = prm.get_double("SAMPLING SHIFT 1");
-	    dftParameters::dky        = prm.get_double("SAMPLING SHIFT 2");
-	    dftParameters::dkz        = prm.get_double("SAMPLING SHIFT 3");
+	    dftParameters::offsetFlagX        = prm.get_integer("SAMPLING SHIFT 1");
+	    dftParameters::offsetFlagY        = prm.get_integer("SAMPLING SHIFT 2");
+	    dftParameters::offsetFlagZ        = prm.get_integer("SAMPLING SHIFT 3");
 	}
 	prm.leave_subsection ();
 

@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -11,23 +11,25 @@
 // The full text of the license can be found in the file LICENSE at
 // the top level of the DFT-FE distribution.
 //
-// ---------------------------------------------------------------------
+//================================================================================================================================================
+//================================================================================================================================================
+//    This is the source file for generating and communicating mapping tables between real space points and their symmetry transformed points.
+//	            Only relevant for calculations using multiple k-points and when USE GROUP SYMMETRY = true
 //
-// @author Krishnendu Ghosh (2017)
+//                                              Author : Krishnendu Ghosh, krisg@umich.edu
 //
-
-//source file for initializing space group symmetries, generating and communicating mapping tables
-
+//================================================================================================================================================
+//================================================================================================================================================
+//
 #include "../../include/dftParameters.h"
 #include "../../include/symmetry.h"
 #include "../../include/dft.h"
 #include "symmetrizeRho.cc"
-
-
+//
 namespace dftfe {
-//
-//constructor
-//
+//================================================================================================================================================
+//							Class constructor
+//================================================================================================================================================
 template<unsigned int FEOrder>
 symmetryClass<FEOrder>::symmetryClass(dftClass<FEOrder>* _dftPtr,const MPI_Comm &mpi_comm_replica,const MPI_Comm &_interpoolcomm):
   dftPtr(_dftPtr),
@@ -41,7 +43,9 @@ symmetryClass<FEOrder>::symmetryClass(dftClass<FEOrder>* _dftPtr,const MPI_Comm 
 {
 
 }
-
+//================================================================================================================================================
+//					Wiping out mapping tables; needed between relaxation steps
+//================================================================================================================================================
 template<unsigned int FEOrder>
 void symmetryClass<FEOrder>::clearMaps()
 {
@@ -58,76 +62,66 @@ void symmetryClass<FEOrder>::clearMaps()
  groupOffsets.clear() ;
  if (dftParameters::xc_id==4)
  gradRhoRecvd.clear() ;
-
-
 }
-
-
+//================================================================================================================================================
+//================================================================================================================================================
+//			     The following is the main driver routine to generate and communicate mapping tables
+//================================================================================================================================================
+//================================================================================================================================================
 template<unsigned int FEOrder>
 void symmetryClass<FEOrder>::initSymmetry()
 {
-//
-  //dftPtr= new dftClass<FEOrder>(this);
+  //
   QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
   FEValues<3> fe_values (dftPtr->FEEigen, quadrature, update_values | update_gradients| update_JxW_values | update_quadrature_points);
   const unsigned int num_quad_points = quadrature.size();
   Point<3> p, ptemp, p0 ;
   MappingQ1<3> mapping;
   char buffer[100];
- //
- std::pair<typename parallel::distributed::Triangulation<3>::active_cell_iterator, Point<3> > mapped_cell;
- std::tuple<int, std::vector<double>, int> tupleTemp ;
- std::tuple< int, int, int> tupleTemp2 ;
- std::map<CellId,int> groupId  ;
- std::vector<double> mappedPoint(3) ;
- std::vector<int> countGroupPerProc(dftPtr->n_mpi_processes), countPointPerProc(dftPtr->n_mpi_processes)  ;
- std::vector<std::vector<int>> countPointsPerGroupPerProc(dftPtr->n_mpi_processes) ;
- std::vector<std::vector<int>> tailofGroup(dftPtr->n_mpi_processes);
- //
- unsigned int count = 0, cell_id=0, ownerProcId ;
- //typename DoFHandler<3>::active_cell_iterator cellTemp = (dftPtr->dofHandlerEigen).begin_active();
- // for (; cellTemp!=endc; ++cellTemp)
- //     n_cell++ ;
- //std::cout << this_mpi_process << " total number of cells " << n_cell << std::endl;
- unsigned int mappedPointId ;
- std::map<CellId, int> globalCellId_parallel ;
- //
- clearMaps() ;
- //
- mappedGroup.resize(numSymm) ;
- mappedGroupSend0.resize(numSymm) ;
- mappedGroupSend1.resize(numSymm) ;
- mappedGroupSend2.resize(numSymm) ;
- mappedGroupRecvd0.resize(numSymm) ;
- mappedGroupRecvd2.resize(numSymm) ;
- mappedGroupRecvd1.resize(numSymm) ;
- send_buf_size.resize(numSymm) ;
- recv_buf_size.resize(numSymm) ;
- rhoRecvd.resize(numSymm) ;
- groupOffsets.resize(numSymm) ;
- if (dftParameters::xc_id==4)
- gradRhoRecvd.resize(numSymm) ;
- //
- //unsigned int n_vertices = sort_vertex((dftPtr->dofHandlerEigen)) ;
- //unsigned int min_index=0 ;
- //vertex2cell.resize(n_vertices) ;
- //
- //FEEigen_serial(FE_Q<3>(QGaussLobatto<1>(FEOrder+1)), 2);
- //(dftPtr->dofHandlerEigen)_serial(triangulation_serial) ;
- //(dftPtr->dofHandlerEigen)_serial.distribute_dofs(FEEigen_serial);
- //FEValues<3> fe_values (FEEigen_serial, quadrature, update_values | update_gradients| update_JxW_values | update_quadrature_points);
- const parallel::distributed::Triangulation<3> & triangulationSer = (dftPtr->d_mesh).getSerialMeshUnmoved();
- typename parallel::distributed::Triangulation<3>::active_cell_iterator cellTemp = triangulationSer.begin_active(), endcTemp = triangulationSer.end();
+  //
+  std::pair<typename parallel::distributed::Triangulation<3>::active_cell_iterator, Point<3> > mapped_cell;
+  std::tuple<int, std::vector<double>, int> tupleTemp ;
+  std::tuple< int, int, int> tupleTemp2 ;
+  std::map<CellId,int> groupId  ;
+  std::vector<double> mappedPoint(3) ;
+  std::vector<int> countGroupPerProc(dftPtr->n_mpi_processes), countPointPerProc(dftPtr->n_mpi_processes)  ;
+  std::vector<std::vector<int>> countPointsPerGroupPerProc(dftPtr->n_mpi_processes) ;
+  std::vector<std::vector<int>> tailofGroup(dftPtr->n_mpi_processes);
+  //
+  unsigned int count = 0, cell_id=0, ownerProcId ;
+  unsigned int mappedPointId ;
+  std::map<CellId, int> globalCellId_parallel ;
+  //
+  clearMaps() ;
+//================================================================================================================================================
+//							Allocate memory for the mapping tables
+//================================================================================================================================================
+  mappedGroup.resize(numSymm) ;
+  mappedGroupSend0.resize(numSymm) ;
+  mappedGroupSend1.resize(numSymm) ;
+  mappedGroupSend2.resize(numSymm) ;
+  mappedGroupRecvd0.resize(numSymm) ;
+  mappedGroupRecvd2.resize(numSymm) ;
+  mappedGroupRecvd1.resize(numSymm) ;
+  send_buf_size.resize(numSymm) ;
+  recv_buf_size.resize(numSymm) ;
+  rhoRecvd.resize(numSymm) ;
+  groupOffsets.resize(numSymm) ;
+  if (dftParameters::xc_id==4)
+    gradRhoRecvd.resize(numSymm) ;
+  //
+  const parallel::distributed::Triangulation<3> & triangulationSer = (dftPtr->d_mesh).getSerialMeshUnmoved();
+  typename parallel::distributed::Triangulation<3>::active_cell_iterator cellTemp = triangulationSer.begin_active(), endcTemp = triangulationSer.end();
   for (; cellTemp!=endcTemp; ++cellTemp)
     {
       globalCellId[cellTemp->id()] = cell_id;
-      //dealIICellId [cell_id] = cellTemp;
       cell_id++ ;
     }
   //
-    ownerProcGlobal.resize(cell_id) ;
-    std::vector<int> ownerProc(cell_id,0);
-   for (unsigned int iSymm = 0; iSymm < numSymm; ++iSymm){
+  ownerProcGlobal.resize(cell_id) ;
+  std::vector<int> ownerProc(cell_id,0);
+  for (unsigned int iSymm = 0; iSymm < numSymm; ++iSymm)
+  {
     mappedGroup[iSymm] = std::vector<std::vector<std::tuple<int, int, int> >>(cell_id);
     mappedGroupSend0[iSymm]=std::vector<std::vector<std::vector<int> >>(cell_id);
     mappedGroupSend2[iSymm]=std::vector<std::vector<std::vector<int> >>(cell_id);
@@ -142,7 +136,9 @@ void symmetryClass<FEOrder>::initSymmetry()
     if (dftParameters::xc_id==4)
     gradRhoRecvd[iSymm]=std::vector<std::vector<std::vector<double>> >(cell_id);
   }
- //
+//================================================================================================================================================
+//					     Create local and global maps to locate cells on their hosting processors
+//================================================================================================================================================
   typename DoFHandler<3>::active_cell_iterator cell = (dftPtr->dofHandlerEigen).begin_active(), endc = (dftPtr->dofHandlerEigen).end();
   dealii::Tensor<1, 3, double> center_diff ;
   for(; cell!=endc; ++cell)
@@ -170,60 +166,53 @@ void symmetryClass<FEOrder>::initSymmetry()
 		MPI_INT,
 		MPI_SUM,
 		mpi_communicator) ;
-  //
-  /*Point<3> p1(0.0155, 0.0155, 0.0155) ;
-  unsigned int vertex_id = find_cell (p1) ;
-  pcout << " vertex id of given point " << vertex_id << std::endl ;
-  pcout << " cell_iterator of the cell containing the point " << vertex2cell[vertex_id] << std::endl ;
-  mapped_cell = GridTools::find_active_cell_around_point ( mapping, (dftPtr->dofHandlerEigen), p1 ) ;
-  pcout << " cell_iterator of the cell containing the point from dealii routine " << mapped_cell.first << std::endl ;*/
-  //
-  int exception = 0 ;
+//================================================================================================================================================
+//			Now enter each local cell to apply each of the symmetry operations on the quad points relevant to the cell.
+//			Then find out which cell and processor the transformed point belongs to.
+//			Next create maps of points based on symmetry operation, cell address, and processor id.  
+//================================================================================================================================================ 
   cell = (dftPtr->dofHandlerEigen).begin_active(); endc = (dftPtr->dofHandlerEigen).end();
   for (; cell!=endc; ++cell)
     {
-    if (cell->is_locally_owned()) {
-          for (unsigned int iSymm = 0; iSymm < numSymm; ++iSymm) {
-		mappedGroup[iSymm][globalCellId_parallel[cell->id()]] = std::vector<std::tuple<int, int, int> >(num_quad_points);
-		mappedGroupRecvd1[iSymm][globalCellId_parallel[cell->id()]]=std::vector<std::vector<double>>(3);
-		rhoRecvd[iSymm][globalCellId_parallel[cell->id()]] = std::vector<std::vector<double>>(dftPtr->n_mpi_processes) ;
+    if (cell->is_locally_owned()) 
+      {
+        for (unsigned int iSymm = 0; iSymm < numSymm; ++iSymm) 
+          {
+	   mappedGroup[iSymm][globalCellId_parallel[cell->id()]] = std::vector<std::tuple<int, int, int> >(num_quad_points);
+	   mappedGroupRecvd1[iSymm][globalCellId_parallel[cell->id()]]=std::vector<std::vector<double>>(3);
+	   rhoRecvd[iSymm][globalCellId_parallel[cell->id()]] = std::vector<std::vector<double>>(dftPtr->n_mpi_processes) ;
 	  }
-
-	  //
-	  for (unsigned int iSymm = 0; iSymm < numSymm; ++iSymm) {
-	     count = 0;
-	     std::fill(countGroupPerProc.begin(),countGroupPerProc.end(),0);
-	     //
-	     send_buf_size[iSymm][globalCellId_parallel[cell->id()]] = std::vector<std::vector<int>>(dftPtr->n_mpi_processes);
-	     //
-	     mappedGroupSend0[iSymm][globalCellId_parallel[cell->id()]] = std::vector<std::vector<int> >(dftPtr->n_mpi_processes);
-	     mappedGroupSend2[iSymm][globalCellId_parallel[cell->id()]] = std::vector<std::vector<int> >(dftPtr->n_mpi_processes);
-	     mappedGroupSend1[iSymm][globalCellId_parallel[cell->id()]] = std::vector<std::vector<std::vector<double>> >(dftPtr->n_mpi_processes);
-	     //
-	     for(int i = 0; i < dftPtr->n_mpi_processes; ++i) {
+	  for (unsigned int iSymm = 0; iSymm < numSymm; ++iSymm) 
+              {
+	      count = 0;
+	      std::fill(countGroupPerProc.begin(),countGroupPerProc.end(),0);
+	      //
+	      send_buf_size[iSymm][globalCellId_parallel[cell->id()]] = std::vector<std::vector<int>>(dftPtr->n_mpi_processes);
+	      //
+	      mappedGroupSend0[iSymm][globalCellId_parallel[cell->id()]] = std::vector<std::vector<int> >(dftPtr->n_mpi_processes);
+	      mappedGroupSend2[iSymm][globalCellId_parallel[cell->id()]] = std::vector<std::vector<int> >(dftPtr->n_mpi_processes);
+	      mappedGroupSend1[iSymm][globalCellId_parallel[cell->id()]] = std::vector<std::vector<std::vector<double>> >(dftPtr->n_mpi_processes);
+	      //
+	      for(int i = 0; i < dftPtr->n_mpi_processes; ++i) 
+		{
 		 send_buf_size[iSymm][globalCellId_parallel[cell->id()]][i] = std::vector<int>(3, 0);
 		 mappedGroupSend1[iSymm][globalCellId_parallel[cell->id()]][i] = std::vector<std::vector<double>>(3);
 		}
-             recv_buf_size[iSymm][globalCellId_parallel[cell->id()]] = std::vector<std::vector<int>>(3);
-             recv_buf_size[iSymm][globalCellId_parallel[cell->id()]][0] = std::vector<int>(dftPtr->n_mpi_processes);
-	     recv_buf_size[iSymm][globalCellId_parallel[cell->id()]][1] = std::vector<int>(dftPtr->n_mpi_processes);
-	     recv_buf_size[iSymm][globalCellId_parallel[cell->id()]][2] = std::vector<int>(dftPtr->n_mpi_processes);
-	     //
-	     groupOffsets[iSymm][globalCellId_parallel[cell->id()]] = std::vector<std::vector<int>>(3);
-	     groupOffsets[iSymm][globalCellId_parallel[cell->id()]][0] = std::vector<int>(dftPtr->n_mpi_processes);
-	     groupOffsets[iSymm][globalCellId_parallel[cell->id()]][1] = std::vector<int>(dftPtr->n_mpi_processes);
-	     groupOffsets[iSymm][globalCellId_parallel[cell->id()]][2] = std::vector<int>(dftPtr->n_mpi_processes);
-             //
-	     //
-	     //if (cell->is_locally_owned()) {
-		fe_values.reinit (cell);
-             for(unsigned int q_point=0; q_point<num_quad_points; ++q_point) {
+              recv_buf_size[iSymm][globalCellId_parallel[cell->id()]] = std::vector<std::vector<int>>(3);
+              recv_buf_size[iSymm][globalCellId_parallel[cell->id()]][0] = std::vector<int>(dftPtr->n_mpi_processes);
+	      recv_buf_size[iSymm][globalCellId_parallel[cell->id()]][1] = std::vector<int>(dftPtr->n_mpi_processes);
+	      recv_buf_size[iSymm][globalCellId_parallel[cell->id()]][2] = std::vector<int>(dftPtr->n_mpi_processes);
+	      //
+	      groupOffsets[iSymm][globalCellId_parallel[cell->id()]] = std::vector<std::vector<int>>(3);
+	      groupOffsets[iSymm][globalCellId_parallel[cell->id()]][0] = std::vector<int>(dftPtr->n_mpi_processes);
+	      groupOffsets[iSymm][globalCellId_parallel[cell->id()]][1] = std::vector<int>(dftPtr->n_mpi_processes);
+	      groupOffsets[iSymm][globalCellId_parallel[cell->id()]][2] = std::vector<int>(dftPtr->n_mpi_processes);
+              //
+	      fe_values.reinit (cell);
+              for(unsigned int q_point=0; q_point<num_quad_points; ++q_point) 
+		 {
                  p = fe_values.quadrature_point(q_point) ;
 	         p0 = crys2cart(p,-1) ;
-	         //
-		 //ptemp[0] = p0[0]*symmMat[iSymm][0][0] + p0[1]*symmMat[iSymm][1][0] + p0[2]*symmMat[iSymm][2][0] ;
-                 //ptemp[1] = p0[0]*symmMat[iSymm][0][1] + p0[1]*symmMat[iSymm][1][1] + p0[2]*symmMat[iSymm][2][1] ;
-                 //ptemp[2] = p0[0]*symmMat[iSymm][0][2] + p0[1]*symmMat[iSymm][1][2] + p0[2]*symmMat[iSymm][2][2] ;
 	         //
                  ptemp[0] = p0[0]*symmMat[iSymm][0][0] + p0[1]*symmMat[iSymm][0][1] + p0[2]*symmMat[iSymm][0][2] ;
                  ptemp[1] = p0[0]*symmMat[iSymm][1][0] + p0[1]*symmMat[iSymm][1][1] + p0[2]*symmMat[iSymm][1][2] ;
@@ -233,75 +222,53 @@ void symmetryClass<FEOrder>::initSymmetry()
 		 ptemp[1] = ptemp[1] + translation[iSymm][1] ;
 		 ptemp[2] = ptemp[2] + translation[iSymm][2] ;
 		 //
-		 for (unsigned int i=0; i<3; ++i){
+		 for (unsigned int i=0; i<3; ++i)
+		 {
 		    while (ptemp[i] > 0.5)
 			ptemp[i] = ptemp[i] - 1.0 ;
-		   while (ptemp[i] < -0.5)
+		    while (ptemp[i] < -0.5)
 			ptemp[i] = ptemp[i] + 1.0 ;
 		 }
                  p = crys2cart(ptemp,1) ;
-		 //p = p + originShift ;
-                 //mapped_cell = GridTools::find_active_cell_around_point ( mapping, (dftPtr->dofHandlerEigen), p ) ;
-		 if (q_point==0){
-			  //vertex_id = find_cell (p) ;
-			  //std::cout << this_mpi_process << " " << vertex_id << "  " << p.operator()(0) << p.operator()(1) << p.operator()(2) << std::endl ;
-		          //mapped_cell.first = vertex2cell[vertex_id ] ;
-			  //mapped_cell = find_active_cell_around_point_custom ( mapping, (dftPtr->dofHandlerEigen), p ) ;
-			  mapped_cell = GridTools::find_active_cell_around_point ( mapping, triangulationSer, p ) ;
-		}
-		else {
-		  double dist = 1.0E+06 ;
-		 try {
-		    Point<3> p_cell =  mapping.transform_real_to_unit_cell( mapped_cell.first, p ) ;
-		    dist = GeometryInfo<3>::distance_to_unit_cell(p_cell);
-		    if (dist < 1.0E-10)
-			mapped_cell.second = p_cell ;
-		 }
-		 catch (MappingQ1<3>::ExcTransformationFailed)
-		   {
+		 //
+		 if (q_point==0)
+		     mapped_cell = GridTools::find_active_cell_around_point ( mapping, triangulationSer, p ) ;
+		 else 
+		    {
+		     double dist = 1.0E+06 ;
+		     try 
+		       {
+		       Point<3> p_cell =  mapping.transform_real_to_unit_cell( mapped_cell.first, p ) ;
+		       dist = GeometryInfo<3>::distance_to_unit_cell(p_cell);
+		       if (dist < 1.0E-10)
+			  mapped_cell.second = p_cell ;
+		       }
+		    catch (MappingQ1<3>::ExcTransformationFailed)
+		       {
 
-		   }
-		 if (dist > 1.0E-10)
-		    mapped_cell = GridTools::find_active_cell_around_point ( mapping, triangulationSer, p ) ;
-		 }
-	        /* if (exception==1) {
-		     mapped_cell = GridTools::find_active_cell_around_point ( mapping, (dftPtr->dofHandlerEigen), p ) ;
-		     pcout << " entered exception loop "  << p[0] << "  " << p[1] << "  " << p[2] << std::endl ;
-		     pcout << " epoint inside cell "  << mapped_cell.second[0] << "  " << mapped_cell.second[1] << "  " << mapped_cell.second[2] << std::endl ;
-		     exception = 0;
-		 }*/
+		       } 
+		    if (dist > 1.0E-10)
+		       mapped_cell = GridTools::find_active_cell_around_point ( mapping, triangulationSer, p ) ;
+		     }
 		 Point<3> pointTemp = mapped_cell.second;
-		 //Point<3> pointTemp = GeometryInfo<3>::project_to_unit_cell (mapped_cell.second);
 		 //
 		 mappedPoint[0] = pointTemp.operator()(0);
 		 mappedPoint[1] = pointTemp.operator()(1);
 		 mappedPoint[2] = pointTemp.operator()(2);
-		//
-	        if (dftParameters::verbosity > 3) {
-	        for (unsigned int i = 0; i<3; ++i) {
-		     if (mappedPoint[i] < 1.0E-10){
-			pcout << mappedPoint[i] << "  " << p[0] << "  " << p[1] << "  " << p[2] << std::endl ;
-			mappedPoint[i] = double (0.0) ;
-			}
-		      if (mappedPoint[i] > ( 1.00-1.0E-10) ) {
-			pcout << mappedPoint[i] << "  " << p[0] << "  " << p[1] << "  " << p[2] << std::endl ;
-			mappedPoint[i] = double (1.0) ;
-			}
-                }
-	        }
-		ownerProcId = ownerProcGlobal[globalCellId[mapped_cell.first->id()]] ;
-		//
-		tupleTemp = std::make_tuple(ownerProcId,mappedPoint,q_point);
-		cellMapTable[mapped_cell.first->id()].push_back(tupleTemp) ;
-		//
-		//
-		send_buf_size[iSymm][globalCellId_parallel[cell->id()]][ownerProcId][1] = send_buf_size[iSymm][globalCellId_parallel[cell->id()]][ownerProcId][1] + 1;
-		send_buf_size[iSymm][globalCellId_parallel[cell->id()]][ownerProcId][2] = send_buf_size[iSymm][globalCellId_parallel[cell->id()]][ownerProcId][2] + 1;
-		//
-
+		 //
+		 ownerProcId = ownerProcGlobal[globalCellId[mapped_cell.first->id()]] ;
+		 //
+		 tupleTemp = std::make_tuple(ownerProcId,mappedPoint,q_point);
+		 cellMapTable[mapped_cell.first->id()].push_back(tupleTemp) ;
+		 //
+		 //
+		 send_buf_size[iSymm][globalCellId_parallel[cell->id()]][ownerProcId][1] = send_buf_size[iSymm][globalCellId_parallel[cell->id()]][ownerProcId][1] + 1;
+		 send_buf_size[iSymm][globalCellId_parallel[cell->id()]][ownerProcId][2] = send_buf_size[iSymm][globalCellId_parallel[cell->id()]][ownerProcId][2] + 1;
+		 //
 	     }
 	     std::fill(countPointPerProc.begin(),countPointPerProc.end(),0);
-	     for(std::map<CellId,std::vector<std::tuple<int, std::vector<double>, int> >>::iterator iter = cellMapTable.begin(); iter != cellMapTable.end(); ++iter) {
+	     for(std::map<CellId,std::vector<std::tuple<int, std::vector<double>, int> >>::iterator iter = cellMapTable.begin(); iter != cellMapTable.end(); ++iter) 
+		 {
 		 std::vector<std::tuple<int, std::vector<double>, int> > value = iter->second;
 		 CellId key = iter->first;
 		 ownerProcId = ownerProcGlobal[globalCellId[key]] ;
@@ -309,182 +276,178 @@ void symmetryClass<FEOrder>::initSymmetry()
 		 mappedGroupSend2[iSymm][globalCellId_parallel[cell->id()]][ownerProcId].push_back(value.size()) ;
 		 send_buf_size[iSymm][globalCellId_parallel[cell->id()]][ownerProcId][0] = send_buf_size[iSymm][globalCellId_parallel[cell->id()]][ownerProcId][0] + 1;
 		 //
-		 for (unsigned int i=0; i<value.size(); ++i) {
-		   //ownerProcId = std::get<0>(value[i]) ;
-		   mappedPoint = std::get<1>(value[i]) ;
-                   int q_point = std::get<2>(value[i]) ;
-		   //
-                   tupleTemp2 = std::make_tuple(ownerProcId, 0,countPointPerProc[ownerProcId]);
-		   mappedGroup[iSymm][globalCellId_parallel[cell->id()]][q_point] = tupleTemp2 ;
-		   countPointPerProc[ownerProcId] += 1 ;
-		   //
-		   mappedGroupSend1[iSymm][globalCellId_parallel[cell->id()]][ownerProcId][0].push_back(mappedPoint[0]) ;
-		   mappedGroupSend1[iSymm][globalCellId_parallel[cell->id()]][ownerProcId][1].push_back(mappedPoint[1]) ;
-		   mappedGroupSend1[iSymm][globalCellId_parallel[cell->id()]][ownerProcId][2].push_back(mappedPoint[2]) ;
-		 }
-             }
-	     /*for (unsigned int proc=0; proc < dftPtr->n_mpi_processes; ++proc){
-	        for ( unsigned int i=0; i < countPointsPerGroupPerProc[proc].size(); ++i)
-	            mappedGroupSend2[iSymm][globalCellId[cell->id()]][proc].push_back(countPointsPerGroupPerProc[proc][i]) ;
-	        countPointsPerGroupPerProc[proc].clear();
-		tailofGroup[proc].clear();
-	    }*/
-	    cellMapTable.clear() ;
-          }
-	  //tailofGroup.clear() ;
-        }
-     }
-     //
-     MPI_Barrier(mpi_communicator) ;
-     int recvDataSize0=0, recvDataSize1=0, send_size0, send_size1, send_size2 ;
-     std::vector<int> send_data0, send_data2, send_data3;
-     std::vector<std::vector<double>> send_data1;
-     std::vector<double>  send_data, recvdData ;
-     mpi_offsets0.resize(dftPtr->n_mpi_processes, 0) ;
-     mpi_offsets1.resize(dftPtr->n_mpi_processes, 0) ;
-     mpiGrad_offsets1.resize(dftPtr->n_mpi_processes, 0) ;
-     recv_size0.resize(dftPtr->n_mpi_processes, 0) ;
-     recv_size1.resize(dftPtr->n_mpi_processes, 0) ;
-     recvGrad_size1.resize(dftPtr->n_mpi_processes, 0) ;
-     //recvSize.resize(dftPtr->n_mpi_processes, 0) ;
-     recvdData1.resize(3);
-     send_data1.resize(3);
-     //
-     for ( unsigned int proc = 0; proc < dftPtr->n_mpi_processes; ++proc) {
-	send_size1 = 0 ; send_size0 = 0 ;
-	cell = (dftPtr->dofHandlerEigen).begin_active();
-  	for (; cell!=endc; ++cell)
-    	 {
-          if (cell->is_locally_owned()) {
-	 for (unsigned int iSymm = 0; iSymm < numSymm; iSymm++)
-	    {
-	     for (unsigned int iPoint = 0; iPoint < send_buf_size[iSymm][globalCellId_parallel[cell->id()]][proc][1]; ++iPoint) {
+		 for (unsigned int i=0; i<value.size(); ++i) 
+		    {
+		    mappedPoint = std::get<1>(value[i]) ;
+                    int q_point = std::get<2>(value[i]) ;
+		    //
+                    tupleTemp2 = std::make_tuple(ownerProcId, 0,countPointPerProc[ownerProcId]);
+		    mappedGroup[iSymm][globalCellId_parallel[cell->id()]][q_point] = tupleTemp2 ;
+		    countPointPerProc[ownerProcId] += 1 ;
+		    //
+		    mappedGroupSend1[iSymm][globalCellId_parallel[cell->id()]][ownerProcId][0].push_back(mappedPoint[0]) ;
+		    mappedGroupSend1[iSymm][globalCellId_parallel[cell->id()]][ownerProcId][1].push_back(mappedPoint[1]) ;
+		    mappedGroupSend1[iSymm][globalCellId_parallel[cell->id()]][ownerProcId][2].push_back(mappedPoint[2]) ;
+		    }
+              }
+	      cellMapTable.clear() ;
+           }  // symmetry loop
+        }  // is cell locally owned condition
+     }  // cell loop
+  //
+  MPI_Barrier(mpi_communicator) ;
+//================================================================================================================================================
+//			      Now first prepare the flattened sending and receiving vectors and then MPI gather.
+//		     The essential idea here is that each processor collects the transformed points from all other processors.
+//			 In symmetrizeRho.cc each processor locally computes density on its transformed points and 
+//			     then scatters them back to the processors from which the points came from. 
+//================================================================================================================================================ 
+  int recvDataSize0=0, recvDataSize1=0, send_size0, send_size1, send_size2 ;
+  std::vector<int> send_data0, send_data2, send_data3;
+  std::vector<std::vector<double>> send_data1;
+  std::vector<double>  send_data, recvdData ;
+  mpi_offsets0.resize(dftPtr->n_mpi_processes, 0) ;
+  mpi_offsets1.resize(dftPtr->n_mpi_processes, 0) ;
+  mpiGrad_offsets1.resize(dftPtr->n_mpi_processes, 0) ;
+  recv_size0.resize(dftPtr->n_mpi_processes, 0) ;
+  recv_size1.resize(dftPtr->n_mpi_processes, 0) ;
+  recvGrad_size1.resize(dftPtr->n_mpi_processes, 0) ;
+  recvdData1.resize(3);
+  send_data1.resize(3);
+  //
+  for ( unsigned int proc = 0; proc < dftPtr->n_mpi_processes; ++proc) 
+     {
+     send_size1 = 0 ; send_size0 = 0 ;
+     cell = (dftPtr->dofHandlerEigen).begin_active();
+     for (; cell!=endc; ++cell)
+    	{
+        if (cell->is_locally_owned()) 
+	   {
+	   for (unsigned int iSymm = 0; iSymm < numSymm; iSymm++)
+	      {
+	      for (unsigned int iPoint = 0; iPoint < send_buf_size[iSymm][globalCellId_parallel[cell->id()]][proc][1]; ++iPoint) 
+		 {
 		 //
 	         send_data1[0].push_back(mappedGroupSend1[iSymm][globalCellId_parallel[cell->id()]][proc][0][iPoint])  ;
 		 send_data1[1].push_back(mappedGroupSend1[iSymm][globalCellId_parallel[cell->id()]][proc][1][iPoint])  ;
 		 send_data1[2].push_back(mappedGroupSend1[iSymm][globalCellId_parallel[cell->id()]][proc][2][iPoint])  ;
 		 }
-	     send_size1 += send_buf_size[iSymm][globalCellId_parallel[cell->id()]][proc][1] ;
-	     //
-	     for (unsigned int i = 0; i < send_buf_size[iSymm][globalCellId_parallel[cell->id()]][proc][0]; ++i) {
-		 //
+	      send_size1 += send_buf_size[iSymm][globalCellId_parallel[cell->id()]][proc][1] ;
+	      //
+	      for (unsigned int i = 0; i < send_buf_size[iSymm][globalCellId_parallel[cell->id()]][proc][0]; ++i) 
+		 {
 	         send_data0.push_back(mappedGroupSend0[iSymm][globalCellId_parallel[cell->id()]][proc][i])  ;
 		 send_data2.push_back(mappedGroupSend2[iSymm][globalCellId_parallel[cell->id()]][proc][i])  ;
 		 send_data3.push_back(iSymm)  ;
 		 }
-	     send_size0 += send_buf_size[iSymm][globalCellId_parallel[cell->id()]][proc][0] ;
-	     //
-	     rhoRecvd[iSymm][globalCellId_parallel[cell->id()]][proc].resize((1+dftParameters::spinPolarized)*send_buf_size[iSymm][globalCellId_parallel[cell->id()]][proc][1]) ; // to be used later to recv symmetrized rho
-	     }
-	   }
-	 }
-	 //
-	 //recvSize[proc] = send_size1 ; // to be used later to recv symmetrized rho
-         //
-	 MPI_Gather(&send_size0,1,MPI_INT, &(recv_size0[0]),1, MPI_INT,proc,mpi_communicator);
-	 MPI_Gather(&send_size1,1,MPI_INT, &(recv_size1[0]),1, MPI_INT,proc,mpi_communicator);
-	 //
-	 if (proc==this_mpi_process)
-	  {
- 	  //
-	   for(int i = 1; i < dftPtr->n_mpi_processes; i++) {
-  	       mpi_offsets0[i] = recv_size0[i-1]+ mpi_offsets0[i-1];
-	       mpi_offsets1[i] = recv_size1[i-1]+ mpi_offsets1[i-1];
-	   }
-	   //
-           recvDataSize0 = std::accumulate(&recv_size0[0], &recv_size0[dftPtr->n_mpi_processes], 0);
-           recvdData0.resize(recvDataSize0,0);
-	   recvdData2.resize(recvDataSize0,0);
-	   recvdData3.resize(recvDataSize0,0);
-           //
-           recvDataSize1 = std::accumulate(&recv_size1[0], &recv_size1[dftPtr->n_mpi_processes], 0);
-	   recvdData.resize(recvDataSize1,0.0) ;
-	   for (unsigned int ipol=0; ipol<3; ++ipol)
-             recvdData1[ipol].resize(recvDataSize1,0.0) ;
-	  }
-	  //
-	  MPI_Gatherv(&(send_data0[0]),send_size0,MPI_INT, &(recvdData0[0]),&(recv_size0[0]), &(mpi_offsets0[0]), MPI_INT,proc,mpi_communicator);
-	  MPI_Gatherv(&(send_data2[0]),send_size0,MPI_INT, &(recvdData2[0]),&(recv_size0[0]), &(mpi_offsets0[0]), MPI_INT,proc,mpi_communicator);
-	  MPI_Gatherv(&(send_data3[0]),send_size0,MPI_INT, &(recvdData3[0]),&(recv_size0[0]), &(mpi_offsets0[0]), MPI_INT,proc,mpi_communicator);
-	  for (unsigned int ipol=0; ipol<3; ++ipol) {
-	      send_data = send_data1[ipol] ;
-	      MPI_Gatherv(&(send_data[0]),send_size1,MPI_DOUBLE, &(recvdData[0]),&(recv_size1[0]), &(mpi_offsets1[0]),  MPI_DOUBLE,proc,mpi_communicator);
-	      if (proc==this_mpi_process)
-	          recvdData1[ipol] = recvdData ;
+	      send_size0 += send_buf_size[iSymm][globalCellId_parallel[cell->id()]][proc][0] ;
+	      //
+	      rhoRecvd[iSymm][globalCellId_parallel[cell->id()]][proc].resize((1+dftParameters::spinPolarized)*send_buf_size[iSymm][globalCellId_parallel[cell->id()]][proc][1]) ; // to be used later to recv symmetrized rho
 	      }
-          send_data0.clear() ; send_data.clear() ; recvdData.clear() ;
-          send_data1[0].clear(); send_data1[1].clear(); send_data1[2].clear();
-	  send_data2.clear() ;
-	  send_data3.clear();
-     }
-
-     MPI_Barrier(mpi_communicator) ;
-
-    //
-   cell = (dftPtr->dofHandlerEigen).begin_active();
-   totPoints = 0;
-   //mpi_scatter_offset.resize(dftPtr->n_mpi_processes,0);
-   //send_scatter_size.resize(dftPtr->n_mpi_processes,0);
-   recv_size.resize(dftPtr->n_mpi_processes,0) ;
-   //
-   for (; cell!=endc; ++cell)
-    {
-      if (cell->is_locally_owned()) {
-     for (unsigned int iSymm=0; iSymm<numSymm; ++iSymm)
+	   }
+	}
+     //
+     //
+     MPI_Gather(&send_size0,1,MPI_INT, &(recv_size0[0]),1, MPI_INT,proc,mpi_communicator);
+     MPI_Gather(&send_size1,1,MPI_INT, &(recv_size1[0]),1, MPI_INT,proc,mpi_communicator);
+     //
+     if (proc==this_mpi_process)
 	{
-	 rhoRecvd[iSymm][globalCellId_parallel[cell->id()]] = std::vector<std::vector<double>>(dftPtr->n_mpi_processes) ;
-	 for (unsigned int proc=0; proc<dftPtr->n_mpi_processes; ++proc){
-		//totPoints += (1+spinPolarized)*recv_buf_size[iSymm][globalCellId_parallel[cell->id()]][1][proc] ;
-		//mpi_scatter_offset[proc] += (1+spinPolarized)*groupOffsets[iSymm][globalCellId_parallel[cell->id()]][1][proc];
-		//send_scatter_size[proc] += (1+spinPolarized)*recv_buf_size[iSymm][globalCellId_parallel[cell->id()]][1][proc];
-	   recv_size[proc] = recv_size[proc] + (1+dftParameters::spinPolarized)*send_buf_size[iSymm][globalCellId_parallel[cell->id()]][proc][1] ;
-	   rhoRecvd[iSymm][globalCellId_parallel[cell->id()]][proc].resize((1+dftParameters::spinPolarized)*send_buf_size[iSymm][globalCellId_parallel[cell->id()]][proc][1]) ;
-		}
-	 }
-     }
-    }
-   /*for(int i = 0; i < dftPtr->n_mpi_processes; i++) {
-		if (this_mpi_process==i)
-	           std::cout << this_mpi_process << " " << recv_size[i] << std::endl;
-	        MPI_Barrier(mpi_communicator);
-    }*/
-   //
-     for(int i = 0; i < dftPtr->n_mpi_processes; i++) {
-       recv_size1[i] = (1 + dftParameters::spinPolarized)*recv_size1[i] ;
-       mpi_offsets1[i] = (1 + dftParameters::spinPolarized)*mpi_offsets1[i] ;
-   }
-   /*for(int i = 0; i < dftPtr->n_mpi_processes; i++) {
-		if (this_mpi_process==i)
-	           std::cout << this_mpi_process << " " << recv_size1[i] << std::endl;
-	        MPI_Barrier(mpi_communicator);
-    }*/
-     if (dftParameters::xc_id==4){
-   cell = (dftPtr->dofHandlerEigen).begin_active();
-   for(int i = 0; i < dftPtr->n_mpi_processes; i++) {
-       recvGrad_size1[i] = 3*recv_size1[i] ;
-      mpiGrad_offsets1[i] = 3*mpi_offsets1[i] ;
-    }
-   //mpi_scatterGrad_offset.resize(dftPtr->n_mpi_processes,0);
-   //send_scatterGrad_size.resize(dftPtr->n_mpi_processes,0);
-   //
-   for (; cell!=endc; ++cell)
-    {
-      if (cell->is_locally_owned()) {
-     for (unsigned int iSymm=0; iSymm<numSymm; ++iSymm)
+	for(int i = 1; i < dftPtr->n_mpi_processes; i++) 
+	   {
+           mpi_offsets0[i] = recv_size0[i-1]+ mpi_offsets0[i-1];
+	   mpi_offsets1[i] = recv_size1[i-1]+ mpi_offsets1[i-1];
+	   }
+	//
+        recvDataSize0 = std::accumulate(&recv_size0[0], &recv_size0[dftPtr->n_mpi_processes], 0);
+        recvdData0.resize(recvDataSize0,0);
+	recvdData2.resize(recvDataSize0,0);
+	recvdData3.resize(recvDataSize0,0);
+        //
+        recvDataSize1 = std::accumulate(&recv_size1[0], &recv_size1[dftPtr->n_mpi_processes], 0);
+	recvdData.resize(recvDataSize1,0.0) ;
+	for (unsigned int ipol=0; ipol<3; ++ipol)
+           recvdData1[ipol].resize(recvDataSize1,0.0) ;
+	}
+	//
+     MPI_Gatherv(&(send_data0[0]),send_size0,MPI_INT, &(recvdData0[0]),&(recv_size0[0]), &(mpi_offsets0[0]), MPI_INT,proc,mpi_communicator);
+     MPI_Gatherv(&(send_data2[0]),send_size0,MPI_INT, &(recvdData2[0]),&(recv_size0[0]), &(mpi_offsets0[0]), MPI_INT,proc,mpi_communicator);
+     MPI_Gatherv(&(send_data3[0]),send_size0,MPI_INT, &(recvdData3[0]),&(recv_size0[0]), &(mpi_offsets0[0]), MPI_INT,proc,mpi_communicator);
+     for (unsigned int ipol=0; ipol<3; ++ipol) 
 	{
-	 gradRhoRecvd[iSymm][globalCellId_parallel[cell->id()]] = std::vector<std::vector<double>>(dftPtr->n_mpi_processes) ;
-	 for (unsigned int proc=0; proc<dftPtr->n_mpi_processes; ++proc){
-		//mpi_scatterGrad_offset[proc] += (1+spinPolarized)*3*groupOffsets[iSymm][globalCellId_parallel[cell->id()]][1][proc];
-		//send_scatterGrad_size[proc] += (1+spinPolarized)*3*recv_buf_size[iSymm][globalCellId_parallel[cell->id()]][1][proc];
-	   gradRhoRecvd[iSymm][globalCellId_parallel[cell->id()]][proc].resize((1+dftParameters::spinPolarized)*3*send_buf_size[iSymm][globalCellId_parallel[cell->id()]][proc][1]) ;
-		}
-	 }
-       }
-    }
-  }
-
+	send_data = send_data1[ipol] ;
+	MPI_Gatherv(&(send_data[0]),send_size1,MPI_DOUBLE, &(recvdData[0]),&(recv_size1[0]), &(mpi_offsets1[0]),  MPI_DOUBLE,proc,mpi_communicator);
+	if (proc==this_mpi_process)
+	   recvdData1[ipol] = recvdData ;
+	}
+     send_data0.clear() ; send_data.clear() ; recvdData.clear() ;
+     send_data1[0].clear(); send_data1[1].clear(); send_data1[2].clear();
+     send_data2.clear() ;
+     send_data3.clear();
+     }
+  //
+  MPI_Barrier(mpi_communicator) ;
+//================================================================================================================================================
+//			     Prepare the receiving vectors on which computed density is to be received in symmetrizeRho.cc
+//		We do this here instead of doing in symmetrizeRho.cc, because symmetrizeRho.cc is to be called during each SCF iteration
+//							So this better be a one time cost
+//================================================================================================================================================ 
+  cell = (dftPtr->dofHandlerEigen).begin_active();
+  totPoints = 0;
+  recv_size.resize(dftPtr->n_mpi_processes,0) ;
+  //
+  for (; cell!=endc; ++cell)
+     {
+     if (cell->is_locally_owned()) 
+	{
+        for (unsigned int iSymm=0; iSymm<numSymm; ++iSymm)
+	   {
+	   rhoRecvd[iSymm][globalCellId_parallel[cell->id()]] = std::vector<std::vector<double>>(dftPtr->n_mpi_processes) ;
+	   for (unsigned int proc=0; proc<dftPtr->n_mpi_processes; ++proc)
+	      {
+	      recv_size[proc] = recv_size[proc] + (1+dftParameters::spinPolarized)*send_buf_size[iSymm][globalCellId_parallel[cell->id()]][proc][1] ;
+	      rhoRecvd[iSymm][globalCellId_parallel[cell->id()]][proc].resize((1+dftParameters::spinPolarized)*send_buf_size[iSymm][globalCellId_parallel[cell->id()]][proc][1]) ;
+	      }
+	   }
+        }
+     }
+  //
+  for(int i = 0; i < dftPtr->n_mpi_processes; i++) 
+     {
+     recv_size1[i] = (1 + dftParameters::spinPolarized)*recv_size1[i] ;
+     mpi_offsets1[i] = (1 + dftParameters::spinPolarized)*mpi_offsets1[i] ;
+     }
+  //
+  if (dftParameters::xc_id==4)
+     {
+     cell = (dftPtr->dofHandlerEigen).begin_active();
+     for(int i = 0; i < dftPtr->n_mpi_processes; i++) 
+        {
+        recvGrad_size1[i] = 3*recv_size1[i] ;
+        mpiGrad_offsets1[i] = 3*mpi_offsets1[i] ;
+        }
+     //
+     for (; cell!=endc; ++cell)
+        {
+        if (cell->is_locally_owned()) 
+           {
+           for (unsigned int iSymm=0; iSymm<numSymm; ++iSymm)
+	      {
+	      gradRhoRecvd[iSymm][globalCellId_parallel[cell->id()]] = std::vector<std::vector<double>>(dftPtr->n_mpi_processes) ;
+	      for (unsigned int proc=0; proc<dftPtr->n_mpi_processes; ++proc)
+	         gradRhoRecvd[iSymm][globalCellId_parallel[cell->id()]][proc].resize((1+dftParameters::spinPolarized)*3*send_buf_size[iSymm][globalCellId_parallel[cell->id()]][proc][1]) ;
+	      }
+           }
+        }
+     }
+  //
 }
-
+//================================================================================================================================================
+//================================================================================================================================================
+//			           Just a quick snippet to go back and forth between crystal and cartesian coordinates.
+//			              flag==1 takes crystal to cartesian and flag==-1 does the other way around.
+//================================================================================================================================================
+//================================================================================================================================================ 
 template<unsigned int FEOrder>
 Point<3> symmetryClass<FEOrder>::crys2cart(Point<3> p, int flag)
 {
@@ -503,58 +466,7 @@ Point<3> symmetryClass<FEOrder>::crys2cart(Point<3> p, int flag)
 
   return ptemp;
 }
-template<unsigned int FEOrder>
-void symmetryClass<FEOrder>:: test_spg_get_ir_reciprocal_mesh()
-{
-  double lattice[3][3], position[(dftPtr->atomLocations).size()][3];
-  int num_atom = (dftPtr->atomLocations).size();
-  int types[num_atom] ;
-  int mesh[3] = {static_cast<int>(dftParameters::nkx), static_cast<int>(dftParameters::nky), static_cast<int>(dftParameters::nkz)};
-  int is_shift[] = {(int)ceil(dftParameters::dkx), (int)ceil(dftParameters::dky), (int)ceil(dftParameters::dkz)};
-  int grid_address[dftParameters::nkx * dftParameters::nky * dftParameters::nkz][3];
-  int grid_mapping_table[dftParameters::nkx * dftParameters::nky * dftParameters::nkz];
-  int max_size = 50;
-  //
-  for (unsigned int i=0; i<3; ++i) {
-     for (unsigned int j=0; j<3; ++j)
-         lattice[i][j] = (dftPtr->d_domainBoundingVectors)[i][j];
-  }
-  //
-  std::set<unsigned int>::iterator it = (dftPtr->atomTypes).begin();
-  for (unsigned int i=0; i<(dftPtr->atomLocations).size(); ++i){
-      std::advance(it, i);
-      types[i] = (int)(*it);
-      for (unsigned int j=0; j<3; ++j)
-      position[i][j] = (dftPtr->atomLocationsFractional)[i][j+2] ;
-   }
-  //
-  pcout << "*** Testing irreducible BZ with SPG ***" << std:: endl;
-
-  int num_ir = spg_get_ir_reciprocal_mesh(grid_address,
-					  grid_mapping_table,
-					  mesh,
-					  is_shift,
-					  1,
-					  lattice,
-					  position,
-					  types,
-					  num_atom,
-					  1e-5);
-
-  char buffer[100];
-  //
-  std::vector<int> v(grid_mapping_table, grid_mapping_table + sizeof grid_mapping_table / sizeof grid_mapping_table[0]);
-  std::sort(v.begin(), v.end());
-  v.erase(std::unique(v.begin(), v.end()), v.end());
-  //
-  pcout << "Number of irreducible BZ points using SPG " << num_ir <<std:: endl;
-  for (unsigned int i=0; i<v.size(); ++i) {
-    sprintf(buffer, "  %5u:  %12.5f  %12.5f %12.5f\n", i+1, float(grid_address[v[i]][0])/float(dftParameters::nkx), float(grid_address[v[i]][1])/float(dftParameters::nky), float(grid_address[v[i]][2])/float(dftParameters::nkz));
-     pcout << buffer;
-  }
-   pcout << "*** Make sure previously given k-points are same as the one above ***" << std:: endl;
-}
-
+//================================================================================================================================================
 template class symmetryClass<1>;
 template class symmetryClass<2>;
 template class symmetryClass<3>;
@@ -567,5 +479,5 @@ template class symmetryClass<9>;
 template class symmetryClass<10>;
 template class symmetryClass<11>;
 template class symmetryClass<12>;
-
+//=================================================================================================================================================
 }
