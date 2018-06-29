@@ -187,9 +187,10 @@ void dftClass<FEOrder>::compute_fermienergy()
   //
   //double R = 1.0;
   unsigned int iter = 0;
+  const double newtonIterTol=1e-12;
   double  functionValue, functionDerivativeValue;
 
-  while((std::abs(R) > 1.0e-12) && (iter < maxNumberFermiEnergySolveIterations))
+  while((std::abs(R) > newtonIterTol) && (iter < maxNumberFermiEnergySolveIterations))
     {
 
       double functionValueLocal = internal::FermiDiracFunctionValue(fe,
@@ -211,10 +212,9 @@ void dftClass<FEOrder>::compute_fermienergy()
       iter++;
     }
 
-  if(std::abs(R) > 1.0e-12)
+  if(std::abs(R) > newtonIterTol)
     {
-      pcout << "Fermi Energy computation: Newton iterations failed to converge\n";
-      //exit(-1);
+      AssertThrow(false,ExcMessage("DFT-FE Error: Newton-Raphson iterations failed to converge in Fermi energy computation. Hint: Number of wavefunctions are probably insufficient- try increasing the NUMBER OF KOHN-SHAM WAVEFUNCTIONS input parameter."));     
     }
 
   //set Fermi energy
