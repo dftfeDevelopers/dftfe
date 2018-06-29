@@ -187,7 +187,7 @@ void dftClass<FEOrder>::compute_fermienergy()
   //
   //double R = 1.0;
   unsigned int iter = 0;
-  const double newtonIterTol=1e-12;
+  const double newtonIterTol=1e-10;
   double  functionValue, functionDerivativeValue;
 
   while((std::abs(R) > newtonIterTol) && (iter < maxNumberFermiEnergySolveIterations))
