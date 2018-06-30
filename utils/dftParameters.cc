@@ -118,7 +118,7 @@ namespace dftParameters
 
 	prm.declare_entry("DOMAIN VECTORS FILE", "",
 			  Patterns::Anything(),
-			  "[Standard] Domain vectors input file name. Domain vectors describe the edges of the 3D parallelepiped computational domain. File format: v1x v1y v1z (row1), v2x v2y v2z (row2), v3x v3y v3z (row3). Units: a.u. CAUTION: please ensure that the domain vectors form a right-handed coordinate system i.e. dot_product(cross_product(v1,v2),v3)>0. Domain vectors are the typical lattice vectors in a fully periodic calculation.");
+			  "[Standard] Domain vectors input file name. Domain vectors describe the edges of the 3D parallelepiped computational domain. File format: v1x v1y v1z (row1), v2x v2y v2z (row2), v3x v3y v3z (row3). Units: a.u. CAUTION: please ensure that the domain vectors form a right-handed coordinate system i.e. dotProduct(crossProduct(v1,v2),v3)>0. Domain vectors are the typical lattice vectors in a fully periodic calculation.");
 
 	prm.enter_subsection ("Optimization");
 	{
@@ -202,7 +202,7 @@ namespace dftParameters
 
 	prm.declare_entry("BASE MESH SIZE", "0.0",
 			  Patterns::Double(0,20),
-			  "[Developer] Mesh size of the base mesh on which refinement is performed. For the default value of 0.0, a heuristically determined base mesh size is used, which is good enough for most cases.Standard users do not need to tune this parameter. Units: a.u.");
+			  "[Developer] Mesh size of the base mesh on which refinement is performed. For the default value of 0.0, a heuristically determined base mesh size is used, which is good enough for most cases. Standard users do not need to tune this parameter. Units: a.u.");
 
 	prm.declare_entry("ATOM BALL RADIUS","2.0",
 			  Patterns::Double(0,3),
