@@ -52,19 +52,6 @@ namespace dftfe {
   //
   using namespace dealii;
 
-
-  //forward declarations
-  template <unsigned int T> class poissonClass;
-  template <unsigned int T> class eigenClass;
-  template <unsigned int T> class forceClass;
-  template <unsigned int T> class symmetryClass;
-  template <unsigned int T> class forceClass;
-  template <unsigned int T> class geoOptIon;
-  template <unsigned int T> class geoOptCell;
-
-  //
-  //
-  //
   struct orbital
   {
     unsigned int atomID;
@@ -73,6 +60,14 @@ namespace dftfe {
     alglib::spline1dinterpolant* psi;
   };
 
+  //forward declarations
+  template <unsigned int T> class eigenClass;
+  template <unsigned int T> class forceClass;
+  template <unsigned int T> class symmetryClass;
+  template <unsigned int T> class forceClass;
+  template <unsigned int T> class geoOptIon;
+  template <unsigned int T> class geoOptCell;
+
   //
   //dft class for initializing mesh, setting up guesses for initial electron-density and wavefunctions,
   //solving individual vSelf problem after setting up bins, initializing pseudopotentials. Also
@@ -80,7 +75,6 @@ namespace dftfe {
   template <unsigned int FEOrder>
     class dftClass
     {
-
       template <unsigned int T>
 	friend class eigenClass;
 
@@ -708,7 +702,6 @@ namespace dftfe {
 			       eigenClass<FEOrder> & kohnShamDFTEigenOperator,
 			       std::vector<vectorType> & X,
 			       std::vector<double> & residualNorm) const;
-
 
     };
 

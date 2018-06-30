@@ -5,7 +5,7 @@ subsection Boundary conditions
   set PERIODIC1                       = true
   set PERIODIC2                       = true
   set PERIODIC3                       = true
-  set SELF POTENTIAL ATOM BALL RADIUS = 2.8
+  set SELF POTENTIAL RADIUS = 2.8
 end
 
 
@@ -37,7 +37,7 @@ subsection Finite element mesh parameters
   subsection Auto mesh generation parameters
     set ATOM BALL RADIUS     = 0.0
     set BASE MESH SIZE       = 0.7
-    set MESH SIZE NEAR ATOM  = 0.7
+    set MESH SIZE AT ATOM  = 0.7
   end
 
 end
@@ -46,7 +46,7 @@ subsection Geometry
   set NATOMS=4
   set NATOM TYPES=1
   set ATOMIC COORDINATES FILE      = @SOURCE_DIR@/fccAl_coordinates.inp
-  set DOMAIN BOUNDING VECTORS FILE = @SOURCE_DIR@/fccAl_domainBoundingVectors.inp 
+  set DOMAIN VECTORS FILE = @SOURCE_DIR@/fccAl_domainBoundingVectors.inp 
 end
 
 

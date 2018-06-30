@@ -28,15 +28,15 @@ namespace dftfe {
     // forward declaration
     template <unsigned int T> class dftClass;
 
-    /** @file force.h
-     *  @brief computes configurational forces in KSDFT
+    /**
+     * @brief computes configurational forces in KSDFT
      *
-     *  This class computes and stores the configurational forces corresponding to geometry optimization.
-     *  It uses the formulation in the paper by Motamarri et.al. (doi = {10.1103/PhysRevB.97.165132})
-     *  which provides an unified approach to atomic forces corresponding to internal atomic relaxation
-     *  and cell stress corresponding to cell relaxation.
+     * This class computes and stores the configurational forces corresponding to geometry optimization.
+     * It uses the formulation in the paper by Motamarri et.al. (doi = {10.1103/PhysRevB.97.165132})
+     * which provides an unified approach to atomic forces corresponding to internal atomic relaxation
+     * and cell stress corresponding to cell relaxation.
      *
-     *  @author Sambit Das
+     * @author Sambit Das
      */
     template <unsigned int FEOrder>
     class forceClass

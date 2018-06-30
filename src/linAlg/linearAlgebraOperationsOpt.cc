@@ -26,7 +26,6 @@
 #include <linearAlgebraOperationsInternal.h>
 #include <dftParameters.h>
 #include <dftUtils.h>
-#include <omp.h>
 
 #include "pseudoGS.cc"
 
@@ -269,9 +268,6 @@ namespace dftfe{
 			 const double b,
 			 const double a0)
     {
-      if (dftParameters::chebyshevOMPThreads!=0)
-	  omp_set_num_threads(dftParameters::chebyshevOMPThreads);
-
       double e, c, sigma, sigma1, sigma2, gamma;
       e = (b-a)/2.0; c = (b+a)/2.0;
       sigma = e/(a0-c); sigma1 = sigma; gamma = 2.0/sigma1;
@@ -351,8 +347,6 @@ namespace dftfe{
       //copy back YArray to XArray
       XArray = YArray;
 
-      if (dftParameters::chebyshevOMPThreads!=0)
-	  omp_set_num_threads(1);
     }
 
     template<typename T>
@@ -472,9 +466,6 @@ namespace dftfe{
 		      std::vector<double> & eigenValues)
 
     {
-      if (dftParameters::orthoRROMPThreads!=0)
-	  omp_set_num_threads(dftParameters::orthoRROMPThreads);
-
       dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
 
       dealii::TimerOutput computing_timer(pcout,
@@ -530,8 +521,6 @@ namespace dftfe{
 				 true);
       computing_timer.exit_section("Blocked subspace rotation, RR step");
 
-      if (dftParameters::orthoRROMPThreads!=0)
-	  omp_set_num_threads(1);
     }
 #else
 
@@ -542,9 +531,6 @@ namespace dftfe{
 		      const MPI_Comm &interBandGroupComm,
 		      std::vector<double> & eigenValues)
     {
-      if (dftParameters::orthoRROMPThreads!=0)
-	  omp_set_num_threads(dftParameters::orthoRROMPThreads);
-
       dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
 
       dealii::TimerOutput computing_timer(pcout,
@@ -572,6 +558,20 @@ namespace dftfe{
 	      &ProjHam[0],
 	      &eigenValues[0]);
 
+#ifdef USE_COMPLEX
+      MPI_Bcast(&ProjHam[0],
+	        numberEigenValues*numberEigenValues,
+                MPI_C_DOUBLE_COMPLEX,
+	        0,
+	        X.get_mpi_communicator());
+#else
+      MPI_Bcast(&ProjHam[0],
+	        numberEigenValues*numberEigenValues,
+	        MPI_DOUBLE,
+	        0,
+	        X.get_mpi_communicator());
+#endif
+
       computing_timer.exit_section("eigen decomp in RR");
 
 
@@ -591,9 +591,6 @@ namespace dftfe{
       computing_timer.exit_section("subspace rotation in RR");
 
       X = rotatedBasis;
-
-      if (dftParameters::orthoRROMPThreads!=0)
-	  omp_set_num_threads(1);
     }
 #endif
 
@@ -776,9 +773,6 @@ namespace dftfe{
     unsigned int lowdenOrthogonalization(dealii::parallel::distributed::Vector<std::complex<double> > & X,
 				 const unsigned int numberVectors)
     {
-      if (dftParameters::orthoRROMPThreads!=0)
-	  omp_set_num_threads(dftParameters::orthoRROMPThreads);
-
       const unsigned int localVectorSize = X.local_size()/numberVectors;
       std::vector<std::complex<double> > overlapMatrix(numberVectors*numberVectors,0.0);
 
@@ -941,18 +935,12 @@ namespace dftfe{
 
        X = orthoNormalizedBasis;
 
-       if (dftParameters::orthoRROMPThreads!=0)
-	  omp_set_num_threads(1);
-
        return 0;
     }
 #else
     unsigned int lowdenOrthogonalization(dealii::parallel::distributed::Vector<double> & X,
 				 const unsigned int numberVectors)
     {
-      if (dftParameters::orthoRROMPThreads!=0)
-	  omp_set_num_threads(dftParameters::orthoRROMPThreads);
-
       const unsigned int localVectorSize = X.local_size()/numberVectors;
 
       std::vector<double> overlapMatrix(numberVectors*numberVectors,0.0);
@@ -1123,9 +1111,6 @@ namespace dftfe{
 
 
        X = orthoNormalizedBasis;
-
-       if (dftParameters::orthoRROMPThreads!=0)
-	  omp_set_num_threads(1);
 
        return 0;
     }

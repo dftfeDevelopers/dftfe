@@ -23,11 +23,10 @@ namespace dftfe {
     using namespace dealii;
     template <unsigned int FEOrder> class dftClass;
 
-    /** @file geoOptIon.h
+    /**
+     * @brief problem class for atomic force relaxation solver.
      *
-     *  @brief problem class for atomic force relaxation solver.
-     *
-     *  @author Sambit Das
+     * @author Sambit Das
      */
     template <unsigned int FEOrder>
     class geoOptIon : public nonlinearSolverProblem

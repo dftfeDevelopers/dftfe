@@ -13,23 +13,6 @@
 //
 // ---------------------------------------------------------------------
 
-/** @file triangulationManager.h
- *
- *  @brief This class generates and stores adaptive finite element meshes for the real-space dft problem.
- *
- *  The class uses an adpative mesh generation strategy to generate finite element mesh for given domain
- *  based on five input parameters: BASE MESH SIZE, ATOM BALL RADIUS, MESH SIZE ATOM BALL, MESH SIZE NEAR ATOM
- *  and MAX REFINEMENT STEPS (Refer to utils/dftParameters.cc for their corresponding internal variable names).
- *  Additionaly, this class also applies periodicity to mesh. The class stores two types of meshes: moved
- *  and unmoved. They are essentially the same meshes, except that we move the nodes of the moved mesh
- *  (in the meshMovement class) such that the atoms lie on the nodes. However, once the mesh is moved, dealii
- *  has issues using that mesh for further refinement, which is why we also carry an unmoved triangulation.
- *  There are other places where we require an unmoved triangulation, for example in projection of solution
- *  fields from the previous ground state in stucture optimization.
- *
- *  @author Phani Motamarri, Sambit Das, Krishnendu Ghosh
- */
-
 #ifndef triangulationManager_H_
 #define triangulationManager_H_
 #include "headers.h"
@@ -38,7 +21,21 @@ namespace dftfe  {
 
     using namespace dealii;
 
-
+    /**
+     * @brief This class generates and stores adaptive finite element meshes for the real-space dft problem.
+     *
+     *  The class uses an adpative mesh generation strategy to generate finite element mesh for given domain
+     *  based on five input parameters: BASE MESH SIZE, ATOM BALL RADIUS, MESH SIZE ATOM BALL, MESH SIZE NEAR ATOM
+     *  and MAX REFINEMENT STEPS (Refer to utils/dftParameters.cc for their corresponding internal variable names).
+     *  Additionaly, this class also applies periodicity to mesh. The class stores two types of meshes: moved
+     *  and unmoved. They are essentially the same meshes, except that we move the nodes of the moved mesh
+     *  (in the meshMovement class) such that the atoms lie on the nodes. However, once the mesh is moved, dealii
+     *  has issues using that mesh for further refinement, which is why we also carry an unmoved triangulation.
+     *  There are other places where we require an unmoved triangulation, for example in projection of solution
+     *  fields from the previous ground state in stucture optimization.
+     *
+     *  @author Phani Motamarri, Sambit Das, Krishnendu Ghosh
+     */
     class triangulationManager
     {
 
@@ -269,6 +266,7 @@ namespace dftfe  {
       std::vector<std::vector<double> > d_atomPositions;
       std::vector<std::vector<double> > d_imageAtomPositions;
       std::vector<std::vector<double> > d_domainBoundingVectors;
+      const unsigned int d_max_refinement_steps=20;
 
       //
       //parallel objects

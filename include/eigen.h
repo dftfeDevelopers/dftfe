@@ -351,8 +351,6 @@ namespace dftfe{
 
       ///storage for shapefunctions
       std::vector<double> d_shapeFunctionValue;
-      dealii::Table<3, dealii::Tensor<1,3,dealii::VectorizedArray<double> > > d_cellShapeFunctionGradientValue;
-
 
 
       ///storage for  matrix-free cell data

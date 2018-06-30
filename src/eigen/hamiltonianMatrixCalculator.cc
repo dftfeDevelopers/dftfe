@@ -90,11 +90,10 @@ void eigenClass<FEOrder>::computeHamiltonianMatrix(unsigned int kPointIndex)
 	}//iNode loop
 
       std::vector<Tensor<1,3,VectorizedArray<double> > > nonCachedShapeGrad;
-      if (!dftParameters::cacheShapeGradData)
+
+      nonCachedShapeGrad.resize(numberDofsPerElement*numberQuadraturePoints);
+      for(unsigned int iCell = 0; iCell < n_sub_cells; ++iCell)
       {
-	nonCachedShapeGrad.resize(numberDofsPerElement*numberQuadraturePoints);
-        for(unsigned int iCell = 0; iCell < n_sub_cells; ++iCell)
-	{
 	      cellPtr = dftPtr->matrix_free_data.get_cell_iterator(iMacroCell,iCell);
 	      fe_values.reinit(cellPtr);
 
@@ -105,7 +104,6 @@ void eigenClass<FEOrder>::computeHamiltonianMatrix(unsigned int kPointIndex)
 		      for(unsigned int idim = 0; idim < 3; ++idim)
 		        nonCachedShapeGrad[iNode*numberQuadraturePoints+q_point][idim][iCell] =tempGrad[idim];
 		  }
-	}
       }
 
 #ifdef USE_COMPLEX
@@ -118,8 +116,8 @@ void eigenClass<FEOrder>::computeHamiltonianMatrix(unsigned int kPointIndex)
 	      for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
 		{
 		  const VectorizedArray<double> temp =
-		      dftParameters::cacheShapeGradData?scalar_product(d_cellShapeFunctionGradientValue(iMacroCell,iNode,q_point),-kPointCoors)*make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*jNode+q_point])
-		      : scalar_product(nonCachedShapeGrad[iNode*numberQuadraturePoints+q_point],-kPointCoors)*make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*jNode+q_point]);
+		       scalar_product(nonCachedShapeGrad[iNode*numberQuadraturePoints+q_point],-kPointCoors)
+		       *make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*jNode+q_point]);
 
 		  fe_eval.submit_value(temp,q_point);
 		}
@@ -138,9 +136,10 @@ void eigenClass<FEOrder>::computeHamiltonianMatrix(unsigned int kPointIndex)
 		  for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
 		    {
 		      const Tensor<1,3, VectorizedArray<double> > tempVec =
-			  dftParameters::cacheShapeGradData? d_cellShapeFunctionGradientValue(iMacroCell,iNode,q_point)*make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*jNode+q_point])+ d_cellShapeFunctionGradientValue(iMacroCell,jNode,q_point)*make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*iNode+q_point])
-			  :nonCachedShapeGrad[iNode*numberQuadraturePoints+q_point]*make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*jNode+q_point])
-			  + nonCachedShapeGrad[jNode*numberQuadraturePoints+q_point]*make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*iNode+q_point]);
+			  nonCachedShapeGrad[iNode*numberQuadraturePoints+q_point]
+			  *make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*jNode+q_point])
+			  + nonCachedShapeGrad[jNode*numberQuadraturePoints+q_point]
+			    *make_vectorized_array(d_shapeFunctionValue[numberQuadraturePoints*iNode+q_point]);
 
 		      const VectorizedArray<double> temp =
 			  make_vectorized_array(2.0)*scalar_product(derExcWithSigmaTimesGradRho(iMacroCell,q_point),tempVec);

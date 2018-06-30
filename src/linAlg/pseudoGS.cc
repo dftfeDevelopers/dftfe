@@ -32,9 +32,6 @@ namespace dftfe
 				            const unsigned int numberVectors,
 					    const MPI_Comm &interBandGroupComm)
     {
-      if (dftParameters::orthoRROMPThreads!=0)
-	  omp_set_num_threads(dftParameters::orthoRROMPThreads);
-
       const unsigned int numLocalDofs = X.local_size()/numberVectors;
 
       dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
@@ -141,8 +138,6 @@ namespace dftfe
 				 overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::upper_triangular?true:false);
 
       computing_timer.exit_section("Subspace rotation PGS");
-      if (dftParameters::orthoRROMPThreads!=0)
-	  omp_set_num_threads(1);
 
       return 0;
     }

@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,11 +13,6 @@
 //
 // ---------------------------------------------------------------------
 
-/** @file meshMovementGaussian.h
- *  @brief Class to move triangulation nodes using Gaussian functions attached to control points
- *
- *  @author Sambit Das
- */
 
 #ifndef meshMovementGaussian_H_
 #define meshMovementGaussian_H_
@@ -25,6 +20,11 @@
 
 namespace dftfe {
 
+    /**
+     * @brief Class to move triangulation nodes using Gaussian functions attached to control points
+     *
+     * @author Sambit Das
+     */
     class meshMovementGaussianClass : public meshMovementClass
     {
 

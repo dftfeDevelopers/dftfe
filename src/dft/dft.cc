@@ -775,7 +775,7 @@ namespace dftfe {
 		      dftUtils::printCurrentMemoryUsage(mpi_communicator,
 					      "Hamiltonian Matrix computed");
 
-		    for(unsigned int j = 0; j < dftParameters::numPass; ++j)
+		    for(unsigned int j = 0; j < 1; ++j)
 		      {
 			if (dftParameters::verbosity>=2)
 			  pcout<<"Beginning Chebyshev filter pass "<< j+1<< " for spin "<< s+1<<std::endl;
@@ -841,7 +841,7 @@ namespace dftfe {
 		      {
 			kohnShamDFTEigenOperator.reinitkPointIndex(kPoint);
 			if (dftParameters::verbosity>=2)
-			  pcout<< "Beginning Chebyshev filter pass "<< dftParameters::numPass+count<< " for spin "<< s+1<<std::endl;;
+			  pcout<< "Beginning Chebyshev filter pass "<< 1+count<< " for spin "<< s+1<<std::endl;;
 
 			computing_timer.enter_section("Hamiltonian Matrix Computation");
 			kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint);
@@ -878,7 +878,7 @@ namespace dftfe {
 		  pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
 
 	      }
-	      numberChebyshevSolvePasses=dftParameters::numPass+count-1;
+	      numberChebyshevSolvePasses=count;
 	  }
 	else
 	  {
@@ -912,7 +912,7 @@ namespace dftfe {
 		if (dftParameters::verbosity>=4)
 		      dftUtils::printCurrentMemoryUsage(mpi_communicator,
 					      "Hamiltonian Matrix computed");
-		for(unsigned int j = 0; j < dftParameters::numPass; ++j)
+		for(unsigned int j = 0; j < 1; ++j)
 		  {
 		    if (dftParameters::verbosity>=2)
 		      pcout<< "Beginning Chebyshev filter pass "<< j+1<<std::endl;
@@ -957,7 +957,7 @@ namespace dftfe {
 		  {
 		    kohnShamDFTEigenOperator.reinitkPointIndex(kPoint);
 		    if (dftParameters::verbosity>=2)
-		      pcout<< "Beginning Chebyshev filter pass "<< dftParameters::numPass+count<<std::endl;
+		      pcout<< "Beginning Chebyshev filter pass "<< 1+count<<std::endl;
 
 		    computing_timer.enter_section("Hamiltonian Matrix Computation");
 		    kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint);
@@ -981,7 +981,7 @@ namespace dftfe {
 		if (dftParameters::verbosity>=2)
 		  pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
 	      }
-              numberChebyshevSolvePasses=dftParameters::numPass+count-1;
+              numberChebyshevSolvePasses=count;
 	  }
 	computing_timer.enter_section("compute rho");
 #ifdef USE_COMPLEX

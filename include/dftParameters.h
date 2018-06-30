@@ -35,8 +35,8 @@ namespace dftfe {
     namespace dftParameters
     {
 
-      extern unsigned int finiteElementPolynomialOrder,n_refinement_steps,numberEigenValues,xc_id, spinPolarized, nkx,nky,nkz;
-      extern unsigned int chebyshevOrder,numPass,numSCFIterations,maxLinearSolverIterations, mixingHistory, npool;
+      extern unsigned int finiteElementPolynomialOrder,numberEigenValues,xc_id, spinPolarized, nkx,nky,nkz;
+      extern unsigned int chebyshevOrder,numSCFIterations,maxLinearSolverIterations, mixingHistory, npool;
 
       extern double radiusAtomBall, mixingParameter, dkx, dky, dkz;
       extern double lowerEndWantedSpectrum,relLinearSolverTolerance,selfConsistentSolverTolerance,TVal, start_magnetization;
@@ -59,16 +59,11 @@ namespace dftfe {
 
       extern bool reproducible_output;
 
-      extern bool electrostaticsPRefinement;
-
       extern bool writeSolutionFields;
 
       extern std::string startingWFCType;
       extern unsigned int chebyshevBlockSize;
       extern bool useBatchGEMM;
-      extern unsigned int chebyshevOMPThreads;
-      extern unsigned int orthoRROMPThreads;
-      extern bool cacheShapeGradData;
       extern unsigned int orthoRRWaveFuncBlockSize;
       extern unsigned int subspaceRotDofsBlockSize;
       extern bool enableSwitchToGS;
@@ -93,6 +88,11 @@ namespace dftfe {
        * Check and print parameters
        */
       void check_print_parameters(const dealii::ParameterHandler &prm);
+
+      /**
+       * Check and print parameters
+       */
+      void setHeuristicParameters();
 
     };
 

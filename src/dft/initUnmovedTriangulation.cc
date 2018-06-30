@@ -99,15 +99,6 @@ void dftClass<FEOrder>::initUnmovedTriangulation(const parallel::distributed::Tr
      dftUtils::printCurrentMemoryUsage(mpi_communicator,
 			  "Extracted indices");
 
-  pcout << std::endl<<"Finite element mesh information"<<std::endl;
-  pcout<<"-------------------------------------------------"<<std::endl;
-  pcout << "number of elements: "
-	<< triangulation.n_global_active_cells()
-	<< std::endl
-	<< "number of degrees of freedom: "
-	<< dofHandler.n_dofs()
-	<< std::endl;
-  pcout<<"-------------------------------------------------"<<std::endl;
   //std::cout<< " procId: "<< this_mpi_process << " ,locallly_owned_dofs: "<<dofHandler.n_locally_owned_dofs()<<std::endl;
 
   //

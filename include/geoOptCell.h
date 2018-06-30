@@ -24,11 +24,10 @@ namespace dftfe {
     using namespace dealii;
     template <unsigned int FEOrder> class dftClass;
 
-    /** @file geoOptCell.h
+    /**
+     * @brief problem class for cell stress relaxation solver.
      *
-     *  @brief problem class for cell stress relaxation solver.
-     *
-     *  @author Sambit Das
+     * @author Sambit Das
      */
     template <unsigned int FEOrder>
     class geoOptCell : public nonlinearSolverProblem

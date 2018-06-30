@@ -2,7 +2,7 @@ subsection Geometry
   set NATOMS=2
   set NATOM TYPES=1
   set ATOMIC COORDINATES FILE      = coordinates.inp 
-  set DOMAIN BOUNDING VECTORS FILE = domainVectors.inp
+  set DOMAIN VECTORS FILE = domainVectors.inp
   subsection Optimization
     set FORCE TOL            = 1e-4
     set ION OPT              = true
@@ -17,12 +17,9 @@ subsection Boundary conditions
 end
 
 subsection Finite element mesh parameters
-  set POLYNOMIAL ORDER = 3
+  set POLYNOMIAL ORDER=3
   subsection Auto mesh generation parameters
-    set ATOM BALL RADIUS     = 3.0
-    set BASE MESH SIZE       = 10.0
-    set MESH SIZE ATOM BALL  = 0.7
-    set MESH SIZE NEAR ATOM  = 0.7
+    set MESH SIZE AROUND ATOM = 0.7
   end
 end
 

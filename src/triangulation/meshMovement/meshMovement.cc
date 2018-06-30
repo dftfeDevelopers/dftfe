@@ -201,7 +201,7 @@ void meshMovementClass::finalizeIncrementField()
 void meshMovementClass::updateTriangulationVertices()
 {
   MPI_Barrier(mpi_communicator);
-  if (dftParameters::verbosity==2)
+  if (dftParameters::verbosity>=4)
     pcout << "Start moving triangulation..." << std::endl;
   std::vector<bool> vertex_moved(d_dofHandlerMoveMesh.get_triangulation().n_vertices(),
                                  false);
@@ -232,7 +232,7 @@ void meshMovementClass::updateTriangulationVertices()
       }
   }
   d_dofHandlerMoveMesh.distribute_dofs(FEMoveMesh);
-  if (dftParameters::verbosity==2)
+  if (dftParameters::verbosity>=4)
     pcout << "...End moving triangulation" << std::endl;
   //dftPtr->triangulation.communicate_locally_moved_vertices(locally_owned_vertices);
 }
@@ -263,7 +263,7 @@ std::pair<bool,double> meshMovementClass::movedMeshCheck()
 	  offsetVectors[i][j] = unitVectorsXYZ[i][j] - d_domainBoundingVectors[i][j];
 	}
     }
-  if (dftParameters::verbosity==2)
+  if (dftParameters::verbosity>=4)
     pcout << "Sanity check for periodic matched faces on moved triangulation..." << std::endl;
   for(unsigned int i=0; i< d_periodicity_vector.size(); ++i)
   {
@@ -280,7 +280,7 @@ std::pair<bool,double> meshMovementClass::movedMeshCheck()
     AssertThrow(isPeriodicFace[0]==true || isPeriodicFace[1]==true || isPeriodicFace[2]==true,ExcMessage("Previously periodic matched face pairs not matching periodically for any directions after mesh movement"));
   }
   MPI_Barrier(mpi_communicator);
-  if (dftParameters::verbosity==2)
+  if (dftParameters::verbosity>=4)
     pcout << "...Sanity check passed" << std::endl;
 
   //print out mesh metrics
@@ -295,7 +295,7 @@ std::pair<bool,double> meshMovementClass::movedMeshCheck()
   }
   minElemLength=Utilities::MPI::min(minElemLength, mpi_communicator);
 
-  if (dftParameters::verbosity>=2)
+  if (dftParameters::verbosity>=4)
     pcout<< "Mesh movement quality metric, h_min: "<<minElemLength<<std::endl;
 
   std::pair<bool,double> meshQualityMetrics;
