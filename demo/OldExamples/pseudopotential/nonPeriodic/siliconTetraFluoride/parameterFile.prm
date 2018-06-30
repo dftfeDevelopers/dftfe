@@ -1,0 +1,87 @@
+#
+#path specifying the location of the "build" directory which is usually the location of "src" folder 
+#
+set DFT PATH = "../../../../"
+
+#
+#finite-element related parameters
+#
+set MESH FILE = mesh.inp 
+set FINITE ELEMENT POLYNOMIAL ORDER = 4
+
+#
+#Atomic-coordinates file
+#
+set ATOMIC COORDINATES FILE = coordinates.inp
+
+#
+#Geometry related parameters
+#
+#
+
+#Radius of the atom-centered ball in which self-potential of the associated nuclear charge is solved
+set RADIUS ATOM BALL = 3.0
+#Simulation domain sizes 
+#Values listed here are not relevant if external mesh is used for non-periodic calculations
+set DOMAIN SIZE X    = 7.6
+set DOMAIN SIZE Y    = 7.6
+set DOMAIN SIZE Z    = 7.6
+
+#
+#set boundary conditions in three directions
+#
+set PERIODIC BOUNDARY CONDITION X = false
+set PERIODIC BOUNDARY CONDITION Y = false
+set PERIODIC BOUNDARY CONDITION Z = false
+
+#
+#Lattice Vectors file specifying the lattice vectors associated with the unit-cell(used only for periodic calculation)
+#
+set LATTICE VECTORS FILE = latticeVectors.inp
+
+#
+#kPoint Quadrature Rule file for sampling the Brillouin zone (used only in Periodic calculation)
+#(Located in $DFT PATH/data/kPointList)
+#
+set kPOINT RULE FILE = GammaPoint.inp
+
+#
+#DFT functional related parameters
+#
+
+#Pseudopotential calculation or all-electron calculation
+set PSEUDOPOTENTIAL CALCULATION = true
+
+#Exhchange-correlation functional
+# 1 (LDA: Perdew Zunger Ceperley Alder correlation with Slater Exchange[PRB. 23, 5048 (1981)])
+# 2 (LDA: Perdew-Wang 92 functional with Slater Exchange [PRB. 45, 13244 (1992)])
+# 3 (LDA: Vosko, Wilk & Nusair with Slater Exchange[Can. J. Phys. 58, 1200 (1980)])
+# 4 (GGA: Perdew-Burke-Ernzerhof functional [PRL. 77, 3865 (1996)])*/
+set EXCHANGE CORRELATION TYPE = 4
+#spin polarization
+set SPIN POLARIZATION = 1
+set START MAGNETIZATION = 0.05
+
+#
+#Eigen-solver/Chebyshev solver related parameters
+#
+
+#Parameter indicating number of eigenfunctions to be solved
+set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 24
+#Approximate estimate of lower bound of the wanted spectrum
+set LOWER BOUND WANTED SPECTRUM = -10.0
+#Chebyshev Filter polynomial degree
+set CHEBYSHEV POLYNOMIAL DEGREE = 0
+
+#
+#SCF parameters
+#
+set SCF CONVERGENCE MAXIMUM ITERATIONS = 100
+set SCF CONVERGENCE TOLERANCE          = 1e-8
+set TEMPERATURE                        = 500
+
+#
+#Poisson problem paramters
+#
+set POISSON SOLVER CONVERGENCE MAXIMUM ITERATIONS = 50000
+set POISSON SOLVER CONVERGENCE TOLERANCE          = 1e-12
