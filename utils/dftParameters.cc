@@ -346,7 +346,7 @@ namespace dftParameters
 			      Patterns::Double(0,1),
 			      "[Developer] The value of the fraction of the upper bound of the unwanted spectrum, the lower bound of the unwanted spectrum will be set. Default value is 0.");
 
-	    prm.declare_entry("CHEBYSHEV FILTER TOLERANCE","3e-02",
+	    prm.declare_entry("CHEBYSHEV FILTER TOLERANCE","1e-03",
 			      Patterns::Double(0.0001),
 			      "[Developer] Parameter specifying the tolerance to which eigenvectors need to computed using chebyshev filtering approach.");
 
@@ -631,7 +631,7 @@ namespace dftParameters
        if (dftParameters::isPseudopotential)
 	   dftParameters::meshSizeInnerBall=dftParameters::meshSizeOuterBall;
        else
-	   dftParameters::meshSizeInnerBall=0.1;
+	   dftParameters::meshSizeInnerBall=0.1*dftParameters::meshSizeOuterBall;
   }
 
 }
