@@ -111,7 +111,7 @@ namespace dftfe
                {
 		 const unsigned int glob_j = overlapMatPar.global_row(j);
 		 if (glob_i==glob_j)
-		    if (std::fabs(LMatPar.local_el(j, i))<1e-14)
+		    if (std::abs(LMatPar.local_el(j, i))<1e-14)
 			flag=1;
 		 if (flag==1)
 		     break;
@@ -147,8 +147,160 @@ namespace dftfe
 				            const unsigned int numberVectors,
 					    const MPI_Comm &interBandGroupComm)
     {
-      AssertThrow(false,dftUtils::ExcNotImplementedYet());
-      return 0;
+       const unsigned int localVectorSize = X.local_size()/numberVectors;
+
+       std::vector<T> overlapMatrix(numberVectors*numberVectors,0.0);
+
+
+       dealii::ConditionalOStream   pcout(std::cout,
+	                                 (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
+
+       dealii::TimerOutput computing_timer(pcout,
+					  dftParameters::reproducible_output ||
+					  dftParameters::verbosity<4? dealii::TimerOutput::never : dealii::TimerOutput::summary,
+					  dealii::TimerOutput::wall_times);
+
+       //
+       //compute overlap matrix S = {(Zc)^T}*Z on local proc
+       //where Z is a matrix with size number of degrees of freedom times number of column vectors
+       //and (Zc)^T is conjugate transpose of Z
+
+       computing_timer.enter_section("local overlap matrix for pgs");
+
+       //Since input "X" is stored as number of column vectors times number of degrees of freedom matrix
+       //corresponding to column-major format required for blas, we compute
+       //the transpose of overlap matrix i.e Sc = X^{T}*(Xc) here
+       const char uplo1 = 'L';
+       const char trans1 = 'N';
+       const double alpha1 = 1.0, beta1 = 0.0;
+#ifdef USE_COMPLEX
+       zherk_(&uplo1,
+	     &trans1,
+	     &numberVectors,
+	     &localVectorSize,
+	     &alpha1,
+	     X.begin(),
+	     &numberVectors,
+	     &beta1,
+	     &overlapMatrix[0],
+	     &numberVectors);
+#else
+       dsyrk_(&uplo1,
+	     &trans1,
+	     &numberVectors,
+	     &localVectorSize,
+	     &alpha1,
+	     X.begin(),
+	     &numberVectors,
+	     &beta1,
+	     &overlapMatrix[0],
+	     &numberVectors);
+#endif
+       dealii::Utilities::MPI::sum(overlapMatrix, X.get_mpi_communicator(), overlapMatrix);
+       computing_timer.exit_section("local overlap matrix for pgs");
+
+       computing_timer.enter_section("PGS cholesky and triangular matrix invert");
+
+       //Sc=Lc*L^{T}, Lc is L conjugate
+       int info2;
+       const char uplo2 = 'L';
+#ifdef USE_COMPLEX
+       zpotrf_(&uplo2,
+	       &numberVectors,
+	       &overlapMatrix[0],
+	       &numberVectors,
+	       &info2);
+
+#else
+       dpotrf_(&uplo2,
+	       &numberVectors,
+	       &overlapMatrix[0],
+	       &numberVectors,
+	       &info2);
+#endif
+       unsigned int flag=0;
+       if (info2!=0)
+	  flag=1;
+       else
+       {
+	  for (unsigned int i = 0; i < numberVectors; ++i)
+	    if (std::abs(overlapMatrix[i*numberVectors])<1e-14)
+	    {
+		flag=1;
+		break;
+	    }
+       }
+
+       if (dftParameters::enableSwitchToGS && flag==1)
+           return flag;
+
+       AssertThrow(info2==0,dealii::ExcMessage("Error in dpotrf/zpotrf"));
+
+       //Compute Lc^{-1}
+       int info3;
+       const char uplo3 = 'L';
+       const char diag3 = 'N';
+#ifdef USE_COMPLEX
+       ztrtri_(&uplo3,
+	       &diag3,
+	       &numberVectors,
+	       &overlapMatrix[0],
+	       &numberVectors,
+	       &info3);
+
+#else
+       dtrtri_(&uplo3,
+	       &diag3,
+	       &numberVectors,
+	       &overlapMatrix[0],
+	       &numberVectors,
+	       &info3);
+#endif
+       AssertThrow(info3==0,dealii::ExcMessage("Error in dtrtri/ztrtri"));
+       computing_timer.exit_section("PGS cholesky and triangular matrix invert");
+
+       //X=X*Lc^{-1}^{T} implemented as X^{T}=Lc^{-1}*X^{T} with X^{T} stored in the column major format
+
+       computing_timer.enter_section("subspace rotation in pgs");
+       dealii::parallel::distributed::Vector<T> orthoNormalizedBasis;
+       orthoNormalizedBasis.reinit(X);
+       const char transA4  = 'N', transB4  = 'N';
+       const T alpha4 = 1.0, beta4 = 0.0;
+#ifdef USE_COMPLEX
+       zgemm_(&transA4,
+	     &transB4,
+	     &numberVectors,
+             &localVectorSize,
+	     &numberVectors,
+	     &alpha4,
+	     &overlapMatrix[0],
+	     &numberVectors,
+	     X.begin(),
+	     &numberVectors,
+	     &beta4,
+	     orthoNormalizedBasis.begin(),
+	     &numberVectors);
+#else
+       dgemm_(&transA4,
+	      &transB4,
+	      &numberVectors,
+	      &localVectorSize,
+	      &numberVectors,
+	      &alpha4,
+	      &overlapMatrix[0],
+	      &numberVectors,
+	      X.begin(),
+	      &numberVectors,
+	      &beta4,
+	      orthoNormalizedBasis.begin(),
+	      &numberVectors);
+#endif
+       computing_timer.exit_section("subspace rotation in pgs");
+
+
+       X = orthoNormalizedBasis;
+
+       return 0;
     }
 #endif
 

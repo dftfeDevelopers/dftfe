@@ -1059,7 +1059,7 @@ namespace dftfe{
       computing_timer.exit_section("scaling in Lowden");
 
        //
-       //Evaluate S^{-1/2} = Q*D^{-1/2}*Q^{T} = (Q*D^{-1/4})*(Q*D^{-1/4))^{T}
+       //Evaluate S^{-1/2} = Q*D^{-1/2}*Q^{T} = (Q*D^{-1/4})*(Q*D^{-1/4}))^{T}
        //
        std::vector<double> invSqrtOverlapMatrix(numberEigenValues*numberEigenValues,0.0);
        const char transA1 = 'N';

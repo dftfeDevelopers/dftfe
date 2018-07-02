@@ -360,7 +360,7 @@ namespace dftParameters
 
 	    prm.declare_entry("ORTHOGONALIZATION TYPE","LW",
 			      Patterns::Selection("GS|LW|PGS"),
-			      "[Standard] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization using SLEPc library), LW(Lowden Orthogonalization using LAPACK, extension to ScaLAPACK not implemented yet), PGS(Pseudo-Gram-Schmidt Orthogonalization using ScaLAPACK, cannot be used if dealii library is not compiled with ScaLAPACK. PGS option is also not available for the complex executable yet). LW is the default option.");
+			      "[Standard] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization using SLEPc library), LW(Lowden Orthogonalization using LAPACK, extension to ScaLAPACK not implemented yet), PGS(Pseudo-Gram-Schmidt Orthogonalization, if dealii library is compiled with ScaLAPACK, ScaLAPACK functions are used otherwise LAPACK functions are used). LW is the default option.");
 
 	    prm.declare_entry("ENABLE SWITCH TO GS", "true",
 			      Patterns::Bool(),
@@ -578,8 +578,6 @@ namespace dftParameters
     if (dftParameters::isIonForce || dftParameters::isCellStress)
        AssertThrow(!dftParameters::useSymm,ExcMessage("DFT-FE Error: USE GROUP SYMMETRY must be set to false if either ION FORCE or CELL STRESS is set to true. This functionality will be added in a future release"));
 
-    if (dftParameters::orthogType=="PGS")
-       AssertThrow(false,ExcMessage("DFT-FE Error: Implementation PGS orthogonalization in complex mode is not added yet."));
 #else
     AssertThrow(!dftParameters::isCellStress,ExcMessage("DFT-FE Error: Currently CELL STRESS cannot be set true in real mode for periodic Gamma point problems. This functionality will be added soon."));
 

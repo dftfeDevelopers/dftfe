@@ -45,6 +45,28 @@ namespace dftfe
       void zcopy_(const unsigned int *n, const std::complex<double> *x, const unsigned int *incx, std::complex<double> *y, const unsigned int *incy);
       void zdotc_(std::complex<double> *C,const int *N,const std::complex<double> *X,const int *INCX,const std::complex<double> *Y,const int *INCY);
       void zaxpy_(const unsigned int *n,const std::complex<double> *alpha,std::complex<double> *x,const unsigned int *incx,std::complex<double> *y,const unsigned int *incy);
+      void dpotrf_(const char * uplo,
+	           const unsigned int *n,
+		   double *  a,
+		   const unsigned int *lda,
+                   int * info);
+      void zpotrf_(const char * uplo,
+	           const unsigned int *n,
+		   std::complex<double> * a,
+		   const unsigned int *lda,
+                   int * info);
+      void dtrtri_(const char * uplo,
+	           const char * diag,
+	           const unsigned int *n,
+		   double *  a,
+		   const unsigned int *lda,
+                   int * info);
+      void ztrtri_(const char * uplo,
+	           const char * diag,
+	           const unsigned int *n,
+		   std::complex<double> * a,
+		   const unsigned int *lda,
+                   int * info);
     }
 
 /** @file linearAlgebraOperations.h
