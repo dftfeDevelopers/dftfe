@@ -1,1 +1,53 @@
-Installation instructions go here
+\subsection{Obtaining \dftfe{}}
+The development version of \dftfe{} can be downloaded by executing the following command
+\begin{verbatim}
+   git clone https://userid@bitbucket.org/dftfedevelopers/dftfe.git
+\end{verbatim}
+For internal group testing, use the \verb|internalGroupTesting| branch.
+\begin{verbatim}
+   git checkout internalGroupTesting
+\end{verbatim}
+
+\subsection{Compiling required external libraries}
+Not required for internal group testing if trying to run \dftfe{} on flux.
+
+\subsection{Compiling \dftfe{}}
+Following are the steps to compile DFT-FE (only for flux)
+\begin{enumerate}
+\item   \begin{verbatim}
+cd dftfe
+\end{verbatim}
+\item \begin{verbatim}
+git checkout internalGroupTesting
+\end{verbatim}
+\item  If compiling on flux, do
+\begin{verbatim}
+module purge
+module load cmake
+module load intel/18.0.1
+module load openmpi/3.0.0/intel/18.0.1
+\end{verbatim}
+and run
+\begin{verbatim}
+./setup.sh
+\end{verbatim} 
+\end{enumerate}
+, which by default compiles in the release mode (the fast version). If \dftfe{} compiled successfully, the following executables will be created in the \verb|build| directory:
+\begin{verbatim}
+/build/release/real/main
+/build/release/complex/main
+\end{verbatim}
+One could also set
+\begin{verbatim}
+optimizedFlag=0
+\end{verbatim}
+inside \verb|setup.sh|, and run
+\begin{verbatim}
+./setup.sh
+\end{verbatim}
+, which will create debug mode executables (useful for debugging purposes but much slower than the release mode executable) in the folders
+\begin{verbatim}
+/build/debug/real/main
+/build/debug/complex/main
+\end{verbatim}
+ 

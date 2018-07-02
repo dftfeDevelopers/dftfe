@@ -38,6 +38,9 @@ void dftClass<FEOrder>::initUnmovedTriangulation(const parallel::distributed::Tr
   //initialize meshMovementGaussianClass object (must be done on unmoved triangulation)
   d_gaussianMovePar.init(triangulation,d_domainBoundingVectors);
 
+  if (dftParameters::verbosity>=4)
+     dftUtils::printCurrentMemoryUsage(mpi_communicator,
+			  "Inititialization of meshmovement class objects completed");
   //
   //initialize FE objects
   //
@@ -47,6 +50,9 @@ void dftClass<FEOrder>::initUnmovedTriangulation(const parallel::distributed::Tr
   dofHandler.distribute_dofs (FE);
   dofHandlerEigen.distribute_dofs (FEEigen);
 
+  if (dftParameters::verbosity>=4)
+     dftUtils::printCurrentMemoryUsage(mpi_communicator,
+			  "Distributed dofs");
   //
   //extract locally owned dofs
   //
@@ -89,16 +95,10 @@ void dftClass<FEOrder>::initUnmovedTriangulation(const parallel::distributed::Tr
     }
 #endif
 
+  if (dftParameters::verbosity>=4)
+     dftUtils::printCurrentMemoryUsage(mpi_communicator,
+			  "Extracted indices");
 
-  pcout << std::endl<<"Finite element mesh information"<<std::endl;
-  pcout<<"-------------------------------------------------"<<std::endl;
-  pcout << "number of elements: "
-	<< triangulation.n_global_active_cells()
-	<< std::endl
-	<< "number of degrees of freedom: "
-	<< dofHandler.n_dofs()
-	<< std::endl;
-  pcout<<"-------------------------------------------------"<<std::endl;
   //std::cout<< " procId: "<< this_mpi_process << " ,locallly_owned_dofs: "<<dofHandler.n_locally_owned_dofs()<<std::endl;
 
   //
@@ -161,11 +161,12 @@ void dftClass<FEOrder>::initUnmovedTriangulation(const parallel::distributed::Tr
   //
   //create a constraint matrix without only hanging node constraints
   //
-  d_noConstraints.clear();d_noConstraintsEigen.clear();
-  d_noConstraints.reinit(locally_relevant_dofs); d_noConstraintsEigen.reinit(locally_relevant_dofsEigen);
+  d_noConstraints.clear();
+  ConstraintMatrix noConstraintsEigen;
+  d_noConstraints.reinit(locally_relevant_dofs); noConstraintsEigen.reinit(locally_relevant_dofsEigen);
   DoFTools::make_hanging_node_constraints(dofHandler, d_noConstraints);
-  DoFTools::make_hanging_node_constraints(dofHandlerEigen,d_noConstraintsEigen);
-  d_noConstraints.close();d_noConstraintsEigen.close();
+  DoFTools::make_hanging_node_constraints(dofHandlerEigen,noConstraintsEigen);
+  d_noConstraints.close();noConstraintsEigen.close();
 
   if(!dftParameters::meshFileName.empty())
     {
@@ -173,13 +174,20 @@ void dftClass<FEOrder>::initUnmovedTriangulation(const parallel::distributed::Tr
       //merge hanging node constraint matrix with constrains None and constraints None eigen
       //
       constraintsNone.merge(d_noConstraints,ConstraintMatrix::MergeConflictBehavior::right_object_wins);
-      constraintsNoneEigen.merge(d_noConstraintsEigen,ConstraintMatrix::MergeConflictBehavior::right_object_wins);
+      constraintsNoneEigen.merge(noConstraintsEigen,ConstraintMatrix::MergeConflictBehavior::right_object_wins);
       constraintsNone.close();
       constraintsNoneEigen.close();
     }
 
+  if (dftParameters::verbosity>=4)
+     dftUtils::printCurrentMemoryUsage(mpi_communicator,
+			  "Created the basic constraint matrices");
+
   forcePtr->initUnmoved(triangulation);
 
+  if (dftParameters::verbosity>=4)
+     dftUtils::printCurrentMemoryUsage(mpi_communicator,
+			  "Force initUnmoved");
  //
   //Initialize libxc (exchange-correlation)
   //

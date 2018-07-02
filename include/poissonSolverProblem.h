@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018  The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -48,7 +48,8 @@ namespace dftfe {
 		     const dealii::ConstraintMatrix & constraintMatrix,
 		     const unsigned int matrixFreeVectorComponent,
 	             const std::map<dealii::types::global_dof_index, double> & atoms,
-		     const std::map<dealii::CellId,std::vector<double> > & rhoValues);
+		     const std::map<dealii::CellId,std::vector<double> > & rhoValues,
+		     const bool isComputeDiagonalA=true);
 
 	/**
 	 * @brief reinitialize data structures for nuclear electrostatic potential solve
@@ -58,7 +59,8 @@ namespace dftfe {
 		     vectorType & x,
 		     const dealii::ConstraintMatrix & constraintMatrix,
 		     const unsigned int matrixFreeVectorComponent,
-	             const std::map<dealii::types::global_dof_index, double> & atoms);
+	             const std::map<dealii::types::global_dof_index, double> & atoms,
+		     const bool isComputeDiagonalA=true);
 
 	/**
 	 * @brief get the reference to x field

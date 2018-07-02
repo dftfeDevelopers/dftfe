@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -46,12 +46,13 @@
 #include <deal.II/base/point.h>
 #include <deal.II/base/conditional_ostream.h>
 #include <deal.II/base/utilities.h>
+#include <deal.II/base/process_grid.h>
 #include <deal.II/lac/lapack_full_matrix.h>
+#include <deal.II/lac/scalapack.h>
 #include <deal.II/numerics/matrix_tools.h>
 #include <deal.II/numerics/error_estimator.h>
 #include <deal.II/base/parameter_handler.h>
 #include <deal.II/grid/grid_refinement.h>
-#include <deal.II/grid/tria_boundary_lib.h>
 #include <deal.II/grid/grid_tools.h>
 #include <deal.II/grid/grid_in.h>
 #include <deal.II/grid/grid_out.h>
@@ -73,10 +74,21 @@
 #include <fstream>
 #include <iostream>
 
-//commonly used dealii typedefs used in dftfe go here
+//commonly used  typedefs used in dftfe go here
 namespace dftfe
 {
   typedef dealii::parallel::distributed::Vector<double> vectorType;
+
+  namespace dataTypes
+  {
+#ifdef USE_COMPLEX
+    typedef std::complex<double> number;
+#else
+    typedef double number;
+#endif
+  }
+
+
 }
 
 #endif

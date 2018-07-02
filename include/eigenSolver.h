@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -37,13 +37,14 @@ namespace dftfe{
   public:
     enum class ReturnValueType {SUCCESS = 0,FAILURE,MAX_ITER_REACHED};
 
-    
+
   public:
 
     /**
      * @brief Destructor.
      */
     virtual ~eigenSolverClass() = 0;
+
 
     /**
      * @brief Solve eigen problem.
@@ -52,7 +53,8 @@ namespace dftfe{
      */
     virtual ReturnValueType solve(operatorDFTClass & operatorMatrix,
 				  std::vector<vectorType> & eigenVectors,
-				  std::vector<double> & eigenValues) = 0;
+				  std::vector<double> & eigenValues,
+				  std::vector<double> & residuals) = 0;
 
   protected:
 

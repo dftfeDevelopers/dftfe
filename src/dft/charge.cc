@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -35,6 +35,29 @@ double dftClass<FEOrder>::totalCharge(const std::map<dealii::CellId, std::vector
       fe_values.reinit (cell);
       for (unsigned int q_point=0; q_point<n_q_points; ++q_point){
         normValue+=(*rhoQuadValues).find(cell->id())->second[q_point]*fe_values.JxW(q_point);
+      }
+    }
+  }
+  return Utilities::MPI::sum(normValue, mpi_communicator);
+}
+
+//compute total charge
+template <unsigned int FEOrder>
+double dftClass<FEOrder>::totalMagnetization(const std::map<dealii::CellId, std::vector<double> > *rhoQuadValues){
+  double normValue=0.0;
+  QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
+  FEValues<3> fe_values (FE, quadrature_formula, update_JxW_values);
+  const unsigned int   dofs_per_cell = FE.dofs_per_cell;
+  const unsigned int   n_q_points    = quadrature_formula.size();
+
+  DoFHandler<3>::active_cell_iterator
+    cell = dofHandler.begin_active(),
+    endc = dofHandler.end();
+  for (; cell!=endc; ++cell) {
+    if (cell->is_locally_owned()){
+      fe_values.reinit (cell);
+      for (unsigned int q_point=0; q_point<n_q_points; ++q_point){
+        normValue+=((*rhoQuadValues).find(cell->id())->second[2*q_point]-(*rhoQuadValues).find(cell->id())->second[2*q_point+1])*fe_values.JxW(q_point);
       }
     }
   }

@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,11 +13,11 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Sambit Das (2018)
+// @author Sambit Das
 //
 
-#ifdef USE_COMPLEX 
-//(locally used function) compute Fnl contibution due to Gamma(Rj) for given set of cells  
+#ifdef USE_COMPLEX
+//(locally used function) compute Fnl contibution due to Gamma(Rj) for given set of cells
 template<unsigned int FEOrder>
 void forceClass<FEOrder>::FnlGammaAtomsElementalContributionPeriodicSpinPolarized
                                   (std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
@@ -25,13 +25,13 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionPeriodicSpinPolarize
 				   const unsigned int cell,
 				   const std::vector<std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > > & pspnlGammaAtomsQuads,
                                    const std::vector<std::vector<std::vector<std::complex<double> > > > & projectorKetTimesPsiSpin0TimesV,
-                                   const std::vector<std::vector<std::vector<std::complex<double> > > > & projectorKetTimesPsiSpin1TimesV,					   
+                                   const std::vector<std::vector<std::vector<std::complex<double> > > > & projectorKetTimesPsiSpin1TimesV,
 				   const std::vector<Tensor<1,2,VectorizedArray<double> > > & psiSpin0Quads,
 				   const std::vector<Tensor<1,2,VectorizedArray<double> > > & psiSpin1Quads)
 {
- 
+
   const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
-  const unsigned int numEigenVectors=dftPtr->eigenVectors[0].size(); 
+  const unsigned int numEigenVectors=dftPtr->numEigenValues;
   const unsigned int numKPoints=dftPtr->d_kPointWeights.size();
   const unsigned int numSubCells= dftPtr->matrix_free_data.n_components_filled(cell);
   const unsigned int numQuadPoints=forceEval.n_q_points;
@@ -47,25 +47,25 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionPeriodicSpinPolarize
       const int nonLocalAtomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];
       const int globalChargeIdNonLocalAtom =  dftPtr->d_nonLocalAtomGlobalChargeIds[nonLocalAtomId];
       std::vector<std::vector<std::vector<std::complex<double> > > >   temp2Spin0(numKPoints);
-      std::vector<std::vector<std::vector<std::complex<double> > > >   temp2Spin1(numKPoints);      
+      std::vector<std::vector<std::vector<std::complex<double> > > >   temp2Spin1(numKPoints);
       for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
       {
 	  temp2Spin0[ikPoint].resize(1);
 	  temp2Spin0[ikPoint][0]=projectorKetTimesPsiSpin0TimesV[ikPoint][iAtom];
 	  temp2Spin1[ikPoint].resize(1);
 	  temp2Spin1[ikPoint][0]=projectorKetTimesPsiSpin1TimesV[ikPoint][iAtom];
-      }        
+      }
       for (unsigned int q=0; q<numQuadPoints; ++q)
-      {  	  
+      {
 	   std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > temp1(1);
-	   temp1[0]=pspnlGammaAtomsQuads[q][iAtom];	
-   
-           const Tensor<1,C_DIM,VectorizedArray<double> > 
+	   temp1[0]=pspnlGammaAtomsQuads[q][iAtom];
+
+           const Tensor<1,C_DIM,VectorizedArray<double> >
 	       F=-eshelbyTensorSP::getFnlPeriodic(temp1,
 						temp2Spin0,
 						temp2Spin1,
 						psiSpin0Quads.begin()+q*numEigenVectors*numKPoints,
-                                                psiSpin1Quads.begin()+q*numEigenVectors*numKPoints,		
+                                                psiSpin1Quads.begin()+q*numEigenVectors*numKPoints,
 						dftPtr->d_kPointWeights,
 						dftPtr->eigenValues,
 						dftPtr->fermiEnergy,
@@ -101,9 +101,9 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodicSpinPolar
 				   const std::vector< VectorizedArray<double> > & psiSpin0Quads,
 				   const std::vector< VectorizedArray<double> > & psiSpin1Quads)
 {
- 
+
   const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
-  const unsigned int numEigenVectors=dftPtr->eigenVectors[0].size(); 
+  const unsigned int numEigenVectors=dftPtr->numEigenValues;
   const unsigned int numSubCells= dftPtr->matrix_free_data.n_components_filled(cell);
   const unsigned int numQuadPoints=forceEval.n_q_points;
   DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
@@ -120,9 +120,9 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodicSpinPolar
       std::vector<std::vector<double> >  temp2Spin0(1);
       temp2Spin0[0]=projectorKetTimesPsiSpin0TimesV[iAtom];
       std::vector<std::vector<double> >  temp2Spin1(1);
-      temp2Spin1[0]=projectorKetTimesPsiSpin1TimesV[iAtom];      
+      temp2Spin1[0]=projectorKetTimesPsiSpin1TimesV[iAtom];
       for (unsigned int q=0; q<numQuadPoints; ++q)
-      {  	  
+      {
 	   std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > temp1(1);
 	   temp1[0]=pspnlGammaAtomQuads[q][iAtom];
 
@@ -134,7 +134,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodicSpinPolar
 							    psiSpin1Quads.begin()+q*numEigenVectors,
 					                    (dftPtr->eigenValues)[0],
 					                    dftPtr->fermiEnergy,
-					                    dftParameters::TVal);  
+					                    dftParameters::TVal);
            forceEval.submit_value(F,q);
       }
       const Tensor<1,C_DIM,VectorizedArray<double> > forceContributionFnlGammaiAtomCells

@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018  The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -35,17 +35,19 @@ namespace dftfe {
     namespace dftParameters
     {
 
-      extern unsigned int finiteElementPolynomialOrder,n_refinement_steps,numberEigenValues,xc_id, spinPolarized, nkx,nky,nkz, pseudoProjector;
-      extern unsigned int chebyshevOrder,numPass,numSCFIterations,maxLinearSolverIterations, mixingHistory, npool;
+      extern unsigned int finiteElementPolynomialOrder,numberEigenValues,xc_id, spinPolarized, nkx,nky,nkz;
+      extern unsigned int chebyshevOrder,numSCFIterations,maxLinearSolverIterations, mixingHistory, npool;
 
       extern double radiusAtomBall, mixingParameter, dkx, dky, dkz;
       extern double lowerEndWantedSpectrum,relLinearSolverTolerance,selfConsistentSolverTolerance,TVal, start_magnetization;
 
-      extern bool isPseudopotential,periodicX,periodicY,periodicZ, useSymm, timeReversal;
-      extern std::string meshFileName,coordinatesFile,domainBoundingVectorsFile,kPointDataFile, ionRelaxFlagsFile;
+      extern bool isPseudopotential, periodicX, periodicY, periodicZ, useSymm, timeReversal,pseudoTestsFlag;
+      extern std::string meshFileName,coordinatesFile,domainBoundingVectorsFile,kPointDataFile, ionRelaxFlagsFile, orthogType,pseudoPotentialFile;
 
       extern double outerAtomBallRadius, meshSizeOuterDomain;
       extern double meshSizeInnerBall, meshSizeOuterBall;
+      extern double chebyshevTolerance;
+
 
       extern bool isIonOpt, isCellOpt, isIonForce, isCellStress;
       extern bool nonSelfConsistentForce;
@@ -57,7 +59,20 @@ namespace dftfe {
 
       extern bool reproducible_output;
 
-      extern bool electrostaticsPRefinement;
+      extern bool writeSolutionFields;
+
+      extern std::string startingWFCType;
+      extern unsigned int chebyshevBlockSize;
+      extern bool useBatchGEMM;
+      extern unsigned int orthoRRWaveFuncBlockSize;
+      extern unsigned int subspaceRotDofsBlockSize;
+      extern bool enableSwitchToGS;
+      extern unsigned int nbandGrps;
+      extern bool computeEnergyEverySCF;
+      extern unsigned int scalapackParalProcs;
+      extern unsigned int natoms;
+      extern unsigned int natomTypes;
+      extern double lowerBoundUnwantedFracUpper;
 
       /**
        * Declare parameters.
@@ -73,6 +88,11 @@ namespace dftfe {
        * Check and print parameters
        */
       void check_print_parameters(const dealii::ParameterHandler &prm);
+
+      /**
+       * Check and print parameters
+       */
+      void setHeuristicParameters();
 
     };
 

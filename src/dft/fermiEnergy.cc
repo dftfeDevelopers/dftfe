@@ -177,7 +177,7 @@ void dftClass<FEOrder>::compute_fermienergy()
 	}
 
     }
-    if (dftParameters::verbosity==2)
+    if (dftParameters::verbosity>=4)
       pcout<< "Fermi energy constraint residual (bisection): "<< R << std::endl;
 #else
    fe = eigenValuesAllkPoints[d_kPointWeights.size()*count - 1];
@@ -187,9 +187,10 @@ void dftClass<FEOrder>::compute_fermienergy()
   //
   //double R = 1.0;
   unsigned int iter = 0;
+  const double newtonIterTol=1e-10;
   double  functionValue, functionDerivativeValue;
 
-  while((std::abs(R) > 1.0e-12) && (iter < maxNumberFermiEnergySolveIterations))
+  while((std::abs(R) > newtonIterTol) && (iter < maxNumberFermiEnergySolveIterations))
     {
 
       double functionValueLocal = internal::FermiDiracFunctionValue(fe,
@@ -211,18 +212,17 @@ void dftClass<FEOrder>::compute_fermienergy()
       iter++;
     }
 
-  if(std::abs(R) > 1.0e-12)
+  if(std::abs(R) > newtonIterTol)
     {
-      pcout << "Fermi Energy computation: Newton iterations failed to converge\n";
-      //exit(-1);
+      AssertThrow(false,ExcMessage("DFT-FE Error: Newton-Raphson iterations failed to converge in Fermi energy computation. Hint: Number of wavefunctions are probably insufficient- try increasing the NUMBER OF KOHN-SHAM WAVEFUNCTIONS input parameter."));     
     }
 
   //set Fermi energy
   fermiEnergy = fe;
 
-  if (dftParameters::verbosity==2)
+  if (dftParameters::verbosity>=4)
      pcout<< "Fermi energy constraint residual (Newton-Raphson): "<< std::abs(R)<<std::endl;
 
-  if (dftParameters::verbosity==2)
+  if (dftParameters::verbosity>=2)
      pcout<< "Fermi energy                                     : "<< fermiEnergy<<std::endl;
 }

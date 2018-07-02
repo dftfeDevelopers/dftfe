@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Phani Motamarri (2018)
+// @author Phani Motamarri
 //
 
 #ifndef constraintMatrixInfo_H_
@@ -52,7 +52,7 @@ namespace dftUtils
 
     /**
      * @brief convert a given constraintMatrix to simple arrays (STL) for fast access
-     * 
+     *
      * @param partitioner associated with the dealii vector
      * @param constraintMatrixData dealii constraint matrix from which the data is extracted
      */
@@ -60,7 +60,7 @@ namespace dftUtils
 		    const dealii::ConstraintMatrix & constraintMatrixData);
 
     /**
-     * @brief precompute map between local processor index of unflattened deallii array to the local processor index of       
+     * @brief precompute map between local processor index of unflattened deallii array to the local processor index of
      * the first field associated with the multi-field flattened dealii array
      *
      * @param partitioner1 associated with unflattened dealii vector
@@ -71,7 +71,7 @@ namespace dftUtils
 			const unsigned int blockSize);
 
     /**
-     * @brief overloaded dealii internal function "distribute" which sets the slave node 
+     * @brief overloaded dealii internal function "distribute" which sets the slave node
      * field values from master nodes
      *
      * @param fieldVector parallel dealii vector
@@ -79,7 +79,7 @@ namespace dftUtils
     void distribute(dealii::parallel::distributed::Vector<double> &fieldVector) const;
 
     /**
-     * @brief overloaded dealii internal function distribute for flattened dealii array  which sets 
+     * @brief overloaded dealii internal function distribute for flattened dealii array  which sets
      * the slave node field values from master nodes
      *
      * @param blockSize number of components for a given node
@@ -93,13 +93,24 @@ namespace dftUtils
      * slave nodes are the nodes which are to the right of the constraint equation and master nodes
      * are the nodes which are left of the constraint equation.
      *
-     * @param fieldVector parallel dealii vector which is the result of matrix-vector product(vmult) withot taking 
+     * @param fieldVector parallel dealii vector which is the result of matrix-vector product(vmult) withot taking
      * care of constraints
      * @param blockSize number of components for a given node
      */
     template<typename T>
     void distribute_slave_to_master(dealii::parallel::distributed::Vector<T> &fieldVector,
 				    const unsigned int blockSize) const;
+
+
+    /**
+     * @brief sets field values at constrained nodes to be zero
+     *
+     * @param fieldVector parallel dealii vector with fields stored in a flattened format
+     * @param blockSize number of field components for a given node
+     */
+    template<typename T>
+    void set_zero(dealii::parallel::distributed::Vector<T> &fieldVector,
+	          const unsigned int blockSize) const;
 
     /**
      * clear data members
@@ -121,7 +132,7 @@ namespace dftUtils
 
   };
 
-};
+}
 
 }
 #endif

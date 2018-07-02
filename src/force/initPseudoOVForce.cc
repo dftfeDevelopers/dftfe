@@ -82,7 +82,7 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoOVDataForce()
 
       Point<3> nuclearCoordinates(dftPtr->atomLocations[globalChargeIdNonLocalAtom][2],dftPtr->atomLocations[globalChargeIdNonLocalAtom][3],dftPtr->atomLocations[globalChargeIdNonLocalAtom][4]);
 
-      std::vector<int> & imageIdsList = dftPtr->d_globalChargeIdToImageIdMap[globalChargeIdNonLocalAtom];
+      std::vector<int> & imageIdsList = dftPtr->d_globalChargeIdToImageIdMapTrunc[globalChargeIdNonLocalAtom];
 
       //
       //get the number of elements in the compact support of the current nonlocal atom
@@ -175,9 +175,9 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoOVDataForce()
 			}
 		      else
 			{
-			  chargePoint[0] = dftPtr->d_imagePositions[chargeId-numberGlobalCharges][0];
-			  chargePoint[1] = dftPtr->d_imagePositions[chargeId-numberGlobalCharges][1];
-			  chargePoint[2] = dftPtr->d_imagePositions[chargeId-numberGlobalCharges][2];
+			  chargePoint[0] = dftPtr->d_imagePositionsTrunc[chargeId-numberGlobalCharges][0];
+			  chargePoint[1] = dftPtr->d_imagePositionsTrunc[chargeId-numberGlobalCharges][1];
+			  chargePoint[2] = dftPtr->d_imagePositionsTrunc[chargeId-numberGlobalCharges][2];
 			}
 
 

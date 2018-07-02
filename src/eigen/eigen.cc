@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -20,12 +20,15 @@
 #include <dft.h>
 #include <dftParameters.h>
 #include <linearAlgebraOperations.h>
-
+#include <linearAlgebraOperationsInternal.h>
+#include <vectorUtilities.h>
+#include <dftUtils.h>
 
 
 namespace dftfe {
 
 #include "computeNonLocalHamiltonianTimesXMemoryOpt.cc"
+#include "computeNonLocalHamiltonianTimesXMemoryOptBatchGEMM.cc"
 #include "matrixVectorProductImplementations.cc"
 #include "shapeFunctionDataCalculator.cc"
 #include "hamiltonianMatrixCalculator.cc"
@@ -54,7 +57,7 @@ namespace dftfe {
 		     _dftPtr->getConstraintMatrixEigen(),
 		     _dftPtr->constraintsNoneDataInfo)
   {
-    
+
   }
 
 
@@ -69,7 +72,7 @@ namespace dftfe {
 
     dftPtr->matrix_free_data.initialize_dof_vector(d_invSqrtMassVector,dftPtr->eigenDofHandlerIndex);
     d_sqrtMassVector.reinit(d_invSqrtMassVector);
-    
+
 
     //
     //create macro cell map to subcells
@@ -91,6 +94,47 @@ namespace dftfe {
 
     computing_timer.exit_section("eigenClass setup");
   }
+
+  template<unsigned int FEOrder>
+  void eigenClass<FEOrder>::reinit(const unsigned int numberWaveFunctions,
+				   dealii::parallel::distributed::Vector<dataTypes::number> & flattenedArray,
+				   bool flag)
+  {
+
+    if(flag)
+	vectorTools::createDealiiVector<dataTypes::number>(dftPtr->matrix_free_data.get_vector_partitioner(),
+							   numberWaveFunctions,
+							   flattenedArray);
+
+    if(dftParameters::isPseudopotential)
+      vectorTools::createDealiiVector<dataTypes::number>(dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
+							 numberWaveFunctions,
+							 dftPtr->d_projectorKetTimesVectorParFlattened);
+
+
+
+    vectorTools::computeCellLocalIndexSetMap(flattenedArray.get_partitioner(),
+					     dftPtr->matrix_free_data,
+					     numberWaveFunctions,
+					     d_flattenedArrayMacroCellLocalProcIndexIdMap,
+					     d_flattenedArrayCellLocalProcIndexIdMap);
+
+    getOverloadedConstraintMatrix()->precomputeMaps(dftPtr->matrix_free_data.get_vector_partitioner(),
+						    flattenedArray.get_partitioner(),
+						    numberWaveFunctions);
+  }
+
+template<unsigned int FEOrder>
+void eigenClass<FEOrder>::reinit(const unsigned int numberWaveFunctions)
+{
+
+  if(dftParameters::isPseudopotential)
+    vectorTools::createDealiiVector<dataTypes::number>(dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
+						       numberWaveFunctions,
+						       dftPtr->d_projectorKetTimesVectorParFlattened);
+
+}
+
 
 //
 //compute mass Vector
@@ -162,7 +206,7 @@ template<unsigned int FEOrder>
 void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				      const vectorType & phi,
 				      const vectorType & phiExt,
-				      const std::map<dealii::CellId,std::vector<double> > & pseudoValues) 
+				      const std::map<dealii::CellId,std::vector<double> > & pseudoValues)
 {
   const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
   const unsigned int n_array_elements = VectorizedArray<double>::n_array_elements;
@@ -241,7 +285,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 				      const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
 				      const vectorType & phi,
 				      const vectorType & phiExt,
-				      const std::map<dealii::CellId,std::vector<double> > & pseudoValues) 
+				      const std::map<dealii::CellId,std::vector<double> > & pseudoValues)
 {
   const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
   const unsigned int n_array_elements = VectorizedArray<double>::n_array_elements;
@@ -249,7 +293,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
   FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>()> fe_eval_phiExt(dftPtr->matrix_free_data, dftPtr->phiExtDofHandlerIndex ,0);
   int numberQuadraturePoints = fe_eval_phi.n_q_points;
   vEff.reinit (n_cells, numberQuadraturePoints);
-  derExcWithSigmaTimesGradRho.reinit(TableIndices<3>(n_cells, numberQuadraturePoints, 3));
+  derExcWithSigmaTimesGradRho.reinit(TableIndices<2>(n_cells, numberQuadraturePoints));
   typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
 
   //
@@ -322,16 +366,16 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 		  pseudoPotential[v]=pseudoValues.find(cellPtr->id())->second[q];
 		}
 	      vEff(cell,q)=fe_eval_phi.get_value(q)+derExchEnergyWithDensity+derCorrEnergyWithDensity+(pseudoPotential-fe_eval_phiExt.get_value(q));
-	      derExcWithSigmaTimesGradRho(cell,q,0) = derExcWithSigmaTimesGradRhoX;
-	      derExcWithSigmaTimesGradRho(cell,q,1) = derExcWithSigmaTimesGradRhoY;
-	      derExcWithSigmaTimesGradRho(cell,q,2) = derExcWithSigmaTimesGradRhoZ;
+	      derExcWithSigmaTimesGradRho(cell,q)[0] = derExcWithSigmaTimesGradRhoX;
+	      derExcWithSigmaTimesGradRho(cell,q)[1] = derExcWithSigmaTimesGradRhoY;
+	      derExcWithSigmaTimesGradRho(cell,q)[2] = derExcWithSigmaTimesGradRhoZ;
 	    }
 	  else
 	    {
 	      vEff(cell,q)=fe_eval_phi.get_value(q)+derExchEnergyWithDensity+derCorrEnergyWithDensity;
-	      derExcWithSigmaTimesGradRho(cell,q,0) = derExcWithSigmaTimesGradRhoX;
-	      derExcWithSigmaTimesGradRho(cell,q,1) = derExcWithSigmaTimesGradRhoY;
-	      derExcWithSigmaTimesGradRho(cell,q,2) = derExcWithSigmaTimesGradRhoZ;
+	      derExcWithSigmaTimesGradRho(cell,q)[0] = derExcWithSigmaTimesGradRhoX;
+	      derExcWithSigmaTimesGradRho(cell,q)[1] = derExcWithSigmaTimesGradRhoY;
+	      derExcWithSigmaTimesGradRho(cell,q)[2] = derExcWithSigmaTimesGradRhoZ;
 	    }
 	}
     }
@@ -342,8 +386,6 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
   template<unsigned int FEOrder>
   void eigenClass<FEOrder>::HX(dealii::parallel::distributed::Vector<std::complex<double> > & src,
 			       const unsigned int numberWaveFunctions,
-			       const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayMacroCellLocalProcIndexIdMap,
-			       const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap,
 			       const bool scaleFlag,
 			       std::complex<double> scalar,
 			       dealii::parallel::distributed::Vector<std::complex<double> > & dst)
@@ -390,24 +432,33 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 
     src.update_ghost_values();
 
-    
+
     //
     //Hloc*M^{-1/2}*X
     //
-    computeLocalHamiltonianTimesX(src,
-				  numberWaveFunctions,
-				  flattenedArrayMacroCellLocalProcIndexIdMap,
-				  dst);
+    if (dftParameters::useBatchGEMM && numberWaveFunctions<1000)
+       computeLocalHamiltonianTimesXBatchGEMM(src,
+				             numberWaveFunctions,
+				             dst);
 
-
+    else
+       computeLocalHamiltonianTimesX(src,
+				     numberWaveFunctions,
+ 				     dst);
     //
     //required if its a pseudopotential calculation and number of nonlocal atoms are greater than zero
     //H^{nloc}*M^{-1/2}*X
     if(dftParameters::isPseudopotential && dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0)
-      computeNonLocalHamiltonianTimesX(src,
-				       numberWaveFunctions,
-				       flattenedArrayCellLocalProcIndexIdMap,
-				       dst);
+    {
+      if (dftParameters::useBatchGEMM && numberWaveFunctions<1000)
+        computeNonLocalHamiltonianTimesXBatchGEMM(src,
+				                  numberWaveFunctions,
+				                  dst);
+      else
+        computeNonLocalHamiltonianTimesX(src,
+				         numberWaveFunctions,
+				         dst);
+    }
 
 
     //
@@ -432,7 +483,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 	       dst.begin()+i*numberWaveFunctions,
 	       &inc);
       }
-      
+
 
     //
     //unscale src M^{1/2}*X
@@ -451,8 +502,6 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
  template<unsigned int FEOrder>
   void eigenClass<FEOrder>::HX(dealii::parallel::distributed::Vector<double> & src,
 			       const unsigned int numberWaveFunctions,
-			       const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayMacroCellLocalProcIndexIdMap,
-			       const std::vector<std::vector<dealii::types::global_dof_index> > & flattenedArrayCellLocalProcIndexIdMap,
 			       const bool scaleFlag,
 			       double scalar,
 			       dealii::parallel::distributed::Vector<double> & dst)
@@ -461,6 +510,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
   {
     const unsigned int numberDofs = src.local_size()/numberWaveFunctions;
     const unsigned int inc = 1;
+
 
     //
     //scale src vector with M^{-1/2}
@@ -488,7 +538,6 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 	  }
       }
 
-
     //
     //update slave nodes before doing element-level matrix-vec multiplication
     //
@@ -500,19 +549,31 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
     //
     //Hloc*M^{-1/2}*X
     //
-    computeLocalHamiltonianTimesX(src,
-				  numberWaveFunctions,
-				  flattenedArrayMacroCellLocalProcIndexIdMap,
-				  dst);
+    if (dftParameters::useBatchGEMM && numberWaveFunctions<1000)
+       computeLocalHamiltonianTimesXBatchGEMM(src,
+				              numberWaveFunctions,
+				              dst);
+
+    else
+       computeLocalHamiltonianTimesX(src,
+				     numberWaveFunctions,
+ 				     dst);
+
 
     //
     //required if its a pseudopotential calculation and number of nonlocal atoms are greater than zero
     //H^{nloc}*M^{-1/2}*X
     if(dftParameters::isPseudopotential && dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0)
-      computeNonLocalHamiltonianTimesX(src,
-				       numberWaveFunctions,
-				       flattenedArrayCellLocalProcIndexIdMap,
-				       dst);
+    {
+      if (dftParameters::useBatchGEMM && numberWaveFunctions<1000)
+        computeNonLocalHamiltonianTimesXBatchGEMM(src,
+				                  numberWaveFunctions,
+				                  dst);
+      else
+        computeNonLocalHamiltonianTimesX(src,
+				         numberWaveFunctions,
+				         dst);
+    }
 
 
 
@@ -536,7 +597,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 	       dst.begin()+i*numberWaveFunctions,
 	       &inc);
       }
-      
+
 
     //
     //unscale src M^{1/2}*X
@@ -609,8 +670,8 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
   void eigenClass<FEOrder>::XtHX(std::vector<vectorType> & src,
 				 std::vector<std::complex<double> > & ProjHam)
   {
-  
-    //Resize ProjHam 
+
+    //Resize ProjHam
     ProjHam.resize(src.size()*src.size(),0.0);
 
     std::vector<vectorType> tempPSI3(src.size());
@@ -623,15 +684,15 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
     HX(src, tempPSI3);
     for (unsigned int i = 0; i < src.size(); i++)
       tempPSI3[i].update_ghost_values();
-    
-    unsigned int dofs_per_proc=src[0].local_size()/2; 
+
+    unsigned int dofs_per_proc=src[0].local_size()/2;
 
     //
     //required for lapack functions
     //
-    int k = dofs_per_proc, n = src.size();
-    int vectorSize = k*n;
-    int lda=k, ldb=k, ldc=n;
+    const unsigned int k = dofs_per_proc, n = src.size();
+    const unsigned int vectorSize = k*n;
+    const unsigned int lda=k, ldb=k, ldc=n;
 
 
     std::vector<double> hxReal(vectorSize), xReal(vectorSize);
@@ -643,12 +704,12 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
     unsigned int index = 0;
     for (std::vector<vectorType>::const_iterator it = src.begin(); it != src.end(); it++)
       {
-	(*it).extract_subvector_to(dftPtr->getLocalDofIndicesReal().begin(), 
-				   dftPtr->getLocalDofIndicesReal().end(), 
-				   xReal.begin()+dofs_per_proc*index); 
+	(*it).extract_subvector_to(dftPtr->getLocalDofIndicesReal().begin(),
+				   dftPtr->getLocalDofIndicesReal().end(),
+				   xReal.begin()+dofs_per_proc*index);
 
-	(*it).extract_subvector_to(dftPtr->getLocalDofIndicesImag().begin(), 
-				   dftPtr->getLocalDofIndicesImag().end(), 
+	(*it).extract_subvector_to(dftPtr->getLocalDofIndicesImag().begin(),
+				   dftPtr->getLocalDofIndicesImag().end(),
 				   xImag.begin()+dofs_per_proc*index);
 
 	tempPSI3[index].extract_subvector_to(dftPtr->getLocalDofIndicesReal().begin(),
@@ -658,7 +719,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 	tempPSI3[index].extract_subvector_to(dftPtr->getLocalDofIndicesImag().begin(),
 					     dftPtr->getLocalDofIndicesImag().end(),
 					     hxImag.begin()+dofs_per_proc*index);
- 
+
 	index++;
       }
 
@@ -675,8 +736,8 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 	x[i].imag(xImag[i]);
       }
     char transA  = 'C', transB  = 'N';
-    std::complex<double> alpha = 1.0, beta  = 0.0;
-    int sizeXtHX = n*n;
+    const std::complex<double> alpha = 1.0, beta  = 0.0;
+    const unsigned int sizeXtHX = n*n;
     std::vector<std::complex<double> > XtHXValuelocal(sizeXtHX,0.0);
     zgemm_(&transA, &transB, &n, &n, &k, &alpha, &x[0], &lda, &hx[0], &ldb, &beta, &XtHXValuelocal[0], &ldc);
 
@@ -686,7 +747,82 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 		  MPI_C_DOUBLE_COMPLEX,
 		  MPI_SUM,
 		  mpi_communicator);
- 
+
+  }
+
+  template<unsigned int FEOrder>
+  void eigenClass<FEOrder>::XtHX(dealii::parallel::distributed::Vector<std::complex<double> > & X,
+				 const unsigned int numberWaveFunctions,
+				 std::vector<std::complex<double> > & ProjHam)
+  {
+    //
+    //Get access to number of locally owned nodes on the current processor
+    //
+    const unsigned int numberDofs = X.local_size()/numberWaveFunctions;
+
+    //
+    //Resize ProjHam
+    //
+    ProjHam.clear();
+    ProjHam.resize(numberWaveFunctions*numberWaveFunctions,0.0);
+
+    //
+    //create temporary array Y
+    //
+    dealii::parallel::distributed::Vector<std::complex<double> > Y;
+    reinit(numberWaveFunctions,
+	   Y,
+	   true);
+    std::complex<double> zeroValue = 0.0;
+    Y = zeroValue;
+
+
+    //
+    //evaluate H times X and store in Y
+    //
+    const bool scaleFlag = false;
+    const double scalar = 1.0;
+    HX(X,
+       numberWaveFunctions,
+       scaleFlag,
+       scalar,
+       Y);
+
+    for(unsigned int i = 0; i < Y.local_size(); ++i)
+      Y.local_element(i) = std::conj(Y.local_element(i));
+
+
+    char transA = 'N';
+    char transB = 'T';
+    const std::complex<double> alpha = 1.0, beta = 0.0;
+
+    std::vector<std::complex<double> > XtHXValuelocal(numberWaveFunctions*numberWaveFunctions,0.0);
+
+    //
+    //evaluates Z = Yc*Xt
+    //
+    zgemm_(&transA,
+	   &transB,
+	   &numberWaveFunctions,
+	   &numberWaveFunctions,
+	   &numberDofs,
+	   &alpha,
+	   Y.begin(),
+	   &numberWaveFunctions,
+           X.begin(),
+	   &numberWaveFunctions,
+	   &beta,
+	   &XtHXValuelocal[0],
+	   &numberWaveFunctions);
+
+    const unsigned int size = numberWaveFunctions*numberWaveFunctions;
+
+    MPI_Allreduce(&XtHXValuelocal[0],
+		  &ProjHam[0],
+		  size,
+		  MPI_C_DOUBLE_COMPLEX,
+		  MPI_SUM,
+		  mpi_communicator);
   }
 #else
   template<unsigned int FEOrder>
@@ -694,7 +830,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 				 std::vector<double> & ProjHam)
   {
 
-    //Resize ProjHam 
+    //Resize ProjHam
     ProjHam.resize(src.size()*src.size(),0.0);
 
     std::vector<vectorType> tempPSI3(src.size());
@@ -704,8 +840,6 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 	tempPSI3[i].reinit(src[0]);
       }
 
-    computing_timer.enter_section("eigenClass XHX");
-
     //HX
     HX(src, tempPSI3);
     for (unsigned int i = 0; i < src.size(); i++)
@@ -713,15 +847,15 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 	tempPSI3[i].update_ghost_values();
       }
 
-    unsigned int dofs_per_proc=src[0].local_size(); 
+    const unsigned int dofs_per_proc=src[0].local_size();
 
 
     //
     //required for lapack functions
     //
-    int k = dofs_per_proc, n = src.size(); 
-    int vectorSize = k*n;
-    int lda=k, ldb=k, ldc=n;
+    const unsigned int k = dofs_per_proc, n = src.size();
+    const unsigned int vectorSize = k*n;
+    const unsigned int lda=k, ldb=k, ldc=n;
 
 
     std::vector<double> hx(dofs_per_proc*src.size()), x(dofs_per_proc*src.size());
@@ -740,12 +874,201 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 	index++;
       }
     char transA  = 'T', transB  = 'N';
-    double alpha = 1.0, beta  = 0.0;
+    const double alpha = 1.0, beta  = 0.0;
     dgemm_(&transA, &transB, &n, &n, &k, &alpha, &x[0], &lda, &hx[0], &ldb, &beta, &ProjHam[0], &ldc);
-    Utilities::MPI::sum(ProjHam, mpi_communicator, ProjHam); 
-  
-    computing_timer.exit_section("eigenClass XHX");
+    Utilities::MPI::sum(ProjHam, mpi_communicator, ProjHam);
+  }
 
+  template<unsigned int FEOrder>
+  void eigenClass<FEOrder>::XtHX(dealii::parallel::distributed::Vector<double> & X,
+				 const unsigned int numberWaveFunctions,
+				 std::vector<double> & ProjHam)
+  {
+
+    //
+    //Get access to number of locally owned nodes on the current processor
+    //
+    const unsigned int numberDofs = X.local_size()/numberWaveFunctions;
+
+    //
+    //Resize ProjHam
+    //
+    ProjHam.clear();
+    ProjHam.resize(numberWaveFunctions*numberWaveFunctions,0.0);
+
+    //
+    //create temporary array Y
+    //
+    dealii::parallel::distributed::Vector<double> Y;
+    reinit(numberWaveFunctions,
+	   Y,
+	   true);
+
+    //
+    //evaluate H times X and store in Y
+    //
+    bool scaleFlag = false;
+    double scalar = 1.0;
+    HX(X,
+       numberWaveFunctions,
+       scaleFlag,
+       scalar,
+       Y);
+
+    char transA = 'N';
+    char transB = 'T';
+    const double alpha = 1.0, beta = 0.0;
+
+    dgemm_(&transA,
+	   &transB,
+	   &numberWaveFunctions,
+	   &numberWaveFunctions,
+	   &numberDofs,
+	   &alpha,
+	   X.begin(),
+	   &numberWaveFunctions,
+           Y.begin(),
+	   &numberWaveFunctions,
+	   &beta,
+	   &ProjHam[0],
+	   &numberWaveFunctions);
+
+    Y.reinit(0);
+
+    Utilities::MPI::sum(ProjHam, mpi_communicator, ProjHam);
+
+  }
+#endif
+
+#ifdef DEAL_II_WITH_SCALAPACK
+  template<unsigned int FEOrder>
+  void eigenClass<FEOrder>::XtHX(const dealii::parallel::distributed::Vector<dataTypes::number> & X,
+				 const unsigned int numberWaveFunctions,
+				 const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+				 dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar)
+  {
+#ifdef USE_COMPLEX
+    AssertThrow(false,dftUtils::ExcNotImplementedYet());
+#else
+    //
+    //Get access to number of locally owned nodes on the current processor
+    //
+    const unsigned int numberDofs = X.local_size()/numberWaveFunctions;
+
+    //create temporary arrays XBlock,Hx
+    dealii::parallel::distributed::Vector<dataTypes::number> XBlock,HXBlock;
+
+    std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
+    std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
+    linearAlgebraOperations::internal::createGlobalToLocalIdMapsScaLAPACKMat(processGrid,
+						    projHamPar,
+						    globalToLocalRowIdMap,
+						    globalToLocalColumnIdMap);
+   //band group parallelization data structures
+   const unsigned int numberBandGroups=
+	dealii::Utilities::MPI::n_mpi_processes(dftPtr->interBandGroupComm);
+   const unsigned int bandGroupTaskId = dealii::Utilities::MPI::this_mpi_process(dftPtr->interBandGroupComm);
+   std::vector<unsigned int> bandGroupLowHighPlusOneIndices;
+   dftUtils::createBandParallelizationIndices(dftPtr->interBandGroupComm,
+					      numberWaveFunctions,
+					      bandGroupLowHighPlusOneIndices);
+
+   //X^{T}*H*X is done in a blocked approach for memory optimization:
+   //Sum_{blocks} X^{T}*H*XBlock. The result of each X^{T}*H*XBlock
+   //has a much smaller memory compared to X^{T}*H*X. Think about the
+   //memory for 50k wavefunctions. The parallel
+   //ScaLapack matrix is directly filled from the X^{T}*H*XBlock result
+
+    const unsigned int vectorsBlockSize=std::min(dftParameters::orthoRRWaveFuncBlockSize,
+	                                         bandGroupLowHighPlusOneIndices[1]);
+
+    std::vector<dataTypes::number> projHamBlock(numberWaveFunctions*vectorsBlockSize,0.0);
+
+    if (dftParameters::verbosity>=4)
+      dftUtils::printCurrentMemoryUsage(mpi_communicator,
+	                      "Inside Blocked XtHX with parallel projected Ham matrix");
+
+    for (unsigned int jvec = 0; jvec < numberWaveFunctions; jvec += vectorsBlockSize)
+    {
+	  // Correct block dimensions if block "goes off edge of" the matrix
+	  const unsigned int B = std::min(vectorsBlockSize, numberWaveFunctions-jvec);
+	  if (jvec==0 || B!=vectorsBlockSize)
+	  {
+	     reinit(B,
+		    XBlock,
+		    true);
+	     HXBlock.reinit(XBlock);
+	  }
+
+	  if ((jvec+B)<=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1] &&
+	      (jvec+B)>bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
+	  {
+	      XBlock=0;
+	      //fill XBlock from X:
+	      for(unsigned int iNode = 0; iNode<numberDofs; ++iNode)
+		  for(unsigned int iWave = 0; iWave < B; ++iWave)
+			XBlock.local_element(iNode*B
+				 +iWave)
+			     =X.local_element(iNode*numberWaveFunctions+jvec+iWave);
+
+
+	      //evaluate H times XBlock and store in HXBlock
+	      HXBlock=0;
+	      const bool scaleFlag = false;
+	      const dataTypes::number scalar = 1.0;
+	      HX(XBlock,
+		 B,
+		 scaleFlag,
+		 scalar,
+		 HXBlock);
+
+
+	      const char transA = 'N',transB = 'T';
+	      const dataTypes::number alpha = 1.0,beta = 0.0;
+	      std::fill(projHamBlock.begin(),projHamBlock.end(),0.);
+	      dgemm_(&transA,
+		     &transB,
+		     &numberWaveFunctions,
+		     &B,
+		     &numberDofs,
+		     &alpha,
+		     X.begin(),
+		     &numberWaveFunctions,
+		     HXBlock.begin(),
+		     &B,
+		     &beta,
+		     &projHamBlock[0],
+		     &numberWaveFunctions);
+
+
+	      dealii::Utilities::MPI::sum(projHamBlock,
+					  X.get_mpi_communicator(),
+					  projHamBlock);
+
+	      if (processGrid->is_process_active())
+		  for (unsigned int j = 0; j <B; ++j)
+		     if(globalToLocalColumnIdMap.find(j+jvec)!=globalToLocalColumnIdMap.end())
+		     {
+		       const unsigned int localColumnId=globalToLocalColumnIdMap[j+jvec];
+		       for (unsigned int i = 0; i <numberWaveFunctions; ++i)
+		       {
+			 std::map<unsigned int, unsigned int>::iterator it=
+					      globalToLocalRowIdMap.find(i);
+			 if (it!=globalToLocalRowIdMap.end())
+				 projHamPar.local_el(it->second,
+						     localColumnId)
+						     =projHamBlock[j*numberWaveFunctions+i];
+		       }
+		     }
+
+	  }//band parallelization
+
+    }//block loop
+
+    linearAlgebraOperations::internal::sumAcrossInterCommScaLAPACKMat(processGrid,
+						                      projHamPar,
+						                      dftPtr->interBandGroupComm);
+#endif
   }
 #endif
 
@@ -754,7 +1077,7 @@ void eigenClass<FEOrder>::computeVEffSpinPolarized(const std::map<dealii::CellId
 						   const vectorType & phi,
 						   const vectorType & phiExt,
 						   const unsigned int spinIndex,
-						   const std::map<dealii::CellId,std::vector<double> > & pseudoValues) 
+						   const std::map<dealii::CellId,std::vector<double> > & pseudoValues)
 
 {
   const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
@@ -838,7 +1161,7 @@ void eigenClass<FEOrder>::computeVEffSpinPolarized(const std::map<dealii::CellId
 						   const vectorType & phi,
 						   const vectorType & phiExt,
 						   const unsigned int spinIndex,
-						   const std::map<dealii::CellId,std::vector<double> > & pseudoValues) 
+						   const std::map<dealii::CellId,std::vector<double> > & pseudoValues)
 {
   const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
   const unsigned int n_array_elements = VectorizedArray<double>::n_array_elements;
@@ -846,7 +1169,7 @@ void eigenClass<FEOrder>::computeVEffSpinPolarized(const std::map<dealii::CellId
   FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>()> fe_eval_phiExt(dftPtr->matrix_free_data, dftPtr->phiExtDofHandlerIndex ,0);
   int numberQuadraturePoints = fe_eval_phi.n_q_points;
   vEff.reinit (n_cells, numberQuadraturePoints);
-  derExcWithSigmaTimesGradRho.reinit(TableIndices<3>(n_cells, numberQuadraturePoints, 3));
+  derExcWithSigmaTimesGradRho.reinit(TableIndices<2>(n_cells, numberQuadraturePoints));
   typename dealii::DoFHandler<3>::active_cell_iterator cellPtr;
 
   //
@@ -932,16 +1255,16 @@ void eigenClass<FEOrder>::computeVEffSpinPolarized(const std::map<dealii::CellId
 		  pseudoPotential[v]=pseudoValues.find(cellPtr->id())->second[q];
 		}
 	      vEff(cell,q)=fe_eval_phi.get_value(q)+derExchEnergyWithDensity+derCorrEnergyWithDensity+(pseudoPotential-fe_eval_phiExt.get_value(q));
-	      derExcWithSigmaTimesGradRho(cell,q,0) = derExcWithSigmaTimesGradRhoX;
-	      derExcWithSigmaTimesGradRho(cell,q,1) = derExcWithSigmaTimesGradRhoY;
-	      derExcWithSigmaTimesGradRho(cell,q,2) = derExcWithSigmaTimesGradRhoZ;
+	      derExcWithSigmaTimesGradRho(cell,q)[0] = derExcWithSigmaTimesGradRhoX;
+	      derExcWithSigmaTimesGradRho(cell,q)[1] = derExcWithSigmaTimesGradRhoY;
+	      derExcWithSigmaTimesGradRho(cell,q)[2] = derExcWithSigmaTimesGradRhoZ;
 	    }
 	  else
 	    {
 	      vEff(cell,q)=fe_eval_phi.get_value(q)+derExchEnergyWithDensity+derCorrEnergyWithDensity;
-	      derExcWithSigmaTimesGradRho(cell,q,0) = derExcWithSigmaTimesGradRhoX;
-	      derExcWithSigmaTimesGradRho(cell,q,1) = derExcWithSigmaTimesGradRhoY;
-	      derExcWithSigmaTimesGradRho(cell,q,2) = derExcWithSigmaTimesGradRhoZ;
+	      derExcWithSigmaTimesGradRho(cell,q)[0] = derExcWithSigmaTimesGradRhoX;
+	      derExcWithSigmaTimesGradRho(cell,q)[1] = derExcWithSigmaTimesGradRhoY;
+	      derExcWithSigmaTimesGradRho(cell,q)[2] = derExcWithSigmaTimesGradRhoZ;
 	    }
 	}
     }

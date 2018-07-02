@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -31,7 +31,7 @@ namespace dftfe{
    */
 
   class chebyshevOrthogonalizedSubspaceIterationSolver : public eigenSolverClass {
-  
+
   public:
     /**
      * @brief Constructor.
@@ -50,19 +50,31 @@ namespace dftfe{
 
 
     /**
-     * @brief Solve a generalized eigen problem. 
+     * @brief Solve a generalized eigen problem.
      */
     eigenSolverClass::ReturnValueType solve(operatorDFTClass & operatorMatrix,
-					    std::vector<vectorType> & eigenVectors,
-					    std::vector<double> & eigenValues);
+	                                    dealii::parallel::distributed::Vector<dataTypes::number> & eigenVectorsFlattened,
+					    vectorType & tempEigenVec,
+					    const unsigned int totalNumberWaveFunctions,
+					    std::vector<double> & eigenValues,
+					    std::vector<double> & residuals,
+					    const MPI_Comm &interBandGroupComm);
+
+    /**
+     * @brief Solve a generalized eigen problem.
+     */
+    eigenSolverClass::ReturnValueType solve(operatorDFTClass & operatorMatrix,
+	                                    std::vector<vectorType> & eigenVectors,
+					    std::vector<double> & eigenValues,
+					    std::vector<double> & residuals);
 
     /**
      * @brief reinit spectrum bounds
      */
     void reinitSpectrumBounds(double lowerBoundWantedSpectrum,
 			      double lowerBoundUnWantedSpectrum);
-  
-   
+
+
   private:
     //
     //stores lower bound of wanted spectrum

@@ -63,7 +63,8 @@ void dftClass<FEOrder>::saveTriaInfoAndRhoData()
      }
 
      d_mesh.saveTriangulationsCellQuadData(cellQuadDataContainerIn,
-	                                   interpoolcomm);
+	                                   interpoolcomm,
+					   interBandGroupComm);
 
      //write size of current mixing history into an additional .txt file
      const std::string extraInfoFileName="rhoDataExtraInfo.chk";

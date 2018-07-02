@@ -293,7 +293,8 @@ namespace dftfe
       mpi_communicator (mpi_comm),
       n_mpi_processes (dealii::Utilities::MPI::n_mpi_processes(mpi_comm)),
       this_mpi_process (dealii::Utilities::MPI::this_mpi_process(mpi_comm)),
-      pcout (std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
+      pcout (std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
+      d_storedAdaptiveBallRadius(0)
     {
 
     }
@@ -342,12 +343,13 @@ namespace dftfe
       //create interaction maps by finding the intersection of global NodeIds of each atom
       std::map<int,std::set<int> > interactionMap;
 
-      double radiusAtomBallAdaptive=4.0;
+      double radiusAtomBallAdaptive=(d_storedAdaptiveBallRadius>1e-6)?
+	                             d_storedAdaptiveBallRadius:4.0;
 
       if (std::fabs(radiusAtomBall)<1e-6)
       {
 	  if (dftParameters::verbosity>=1)
-	      pcout<<"Adaptively setting vself ball radius... "<<std::endl;
+	      pcout<<"Determining the ball radius around the atom for nuclear self-potential solve... "<<std::endl;
           unsigned int check=internal::createAndCheckInteractionMap(interactionMap,
 							            dofHandler,
 								    supportPoints,
@@ -373,22 +375,24 @@ namespace dftfe
 
 	  std::string message;
 	  if (check==1 || check==2)
-	      message="DFT-FE error: adaptively determined ball radius for nuclear self potential solve has reached the minimum allowed value of 1.0, which can severly detoriate the accuracy of the KSDFT groundstate energy and forces. Please use a larger periodic super cell which can accomodate a larger ball radius.";
+	      message="DFT-FE error: Tried to adaptively determine the ball radius for nuclear self-potential solve and it has reached the minimum allowed value of 1.0, which can severly detoriate the accuracy of the KSDFT groundstate energy and forces. Please use a larger periodic super cell which can accomodate a larger ball radius.";
 
 	  AssertThrow(check==0,dealii::ExcMessage(message));
 
-	  if (dftParameters::verbosity>=1)
-	      pcout<<"...Adaptively set vself solve ball radius: "<< radiusAtomBallAdaptive<<std::endl;
+	  if (dftParameters::verbosity>=1 && !dftParameters::reproducible_output)
+	      pcout<<"...Adaptively set ball radius: "<< radiusAtomBallAdaptive<<std::endl;
 
 	  if (radiusAtomBallAdaptive<3.0)
-	      pcout<<"DFT-FE warning: adaptively determined ball radius for nuclear self potential solve is less than 3.0, which can detoriate the accuracy of the KSDFT groundstate energy and forces. One approach to overcome this issue is to use a larger super cell with smallest periodic dimension greater than 6.0 (twice of 3.0), assuming an orthorhombic domain. If that is not feasible, you may need more h refinement of the finite element mesh around the atoms to achieve the desired accuracy."<<std::endl;
+             if (dftParameters::verbosity>=1 && !dftParameters::reproducible_output)		 
+	        pcout<<"DFT-FE warning: Tried to adaptively determine the ball radius for nuclear self-potential solve and was found to be less than 3.0, which can detoriate the accuracy of the KSDFT groundstate energy and forces. One approach to overcome this issue is to use a larger super cell with smallest periodic dimension greater than 6.0 (twice of 3.0), assuming an orthorhombic domain. If that is not feasible, you may need more h refinement of the finite element mesh around the atoms to achieve the desired accuracy."<<std::endl;
 	  MPI_Barrier(mpi_communicator);
 
+	  d_storedAdaptiveBallRadius=radiusAtomBallAdaptive;
       }
       else
       {
-	  if (dftParameters::verbosity==2)
-	      pcout<<"Setting vself ball radius from input parameters value: "<< radiusAtomBall<<std::endl;
+	  if (dftParameters::verbosity>=1)
+	      pcout<<"Setting the ball radius for nuclear self-potential solve from input parameters value: "<< radiusAtomBall<<std::endl;
 
 	  radiusAtomBallAdaptive=radiusAtomBall;
 	  const unsigned int check=internal::createAndCheckInteractionMap(interactionMap,
@@ -465,7 +469,7 @@ namespace dftfe
 
 
       const int numberBins = binCount + 1;
-      if (dftParameters::verbosity==2)
+      if (dftParameters::verbosity>=2)
 	pcout<<"number bins: "<<numberBins<<std::endl;
 
       d_imageIdsInBins.resize(numberBins);
@@ -487,7 +491,7 @@ namespace dftfe
 	  std::vector<int> &imageIdsOfAtomsInCurrentBin = d_imageIdsInBins[iBin];
 	  std::vector<std::vector<double> > imagePositionsOfAtomsInCurrentBin;
 
-	  if (dftParameters::verbosity==2)
+	  if (dftParameters::verbosity>=2)
 	   pcout<<"bin "<<iBin<< ": number of global atoms: "<<numberGlobalAtomsInBin<<std::endl;
 
 	  for(int index = 0; index < numberGlobalAtomsInBin; ++index)
@@ -807,29 +811,36 @@ namespace dftfe
 		  {
 		    const int chargeId = atomsInCurrentBin[*it];
 		    dealii::Point<3> atomCoord(d_atomLocations[chargeId][2],d_atomLocations[chargeId][3],d_atomLocations[chargeId][4]);
-		    if(feNodeGlobalCoord.distance(atomCoord) < 1.0e-5){
+		    if(feNodeGlobalCoord.distance(atomCoord) < 1.0e-5)
+		    {
+#ifdef DEBUG
 		      if(dftParameters::isPseudopotential)
 		      {
-			if (dftParameters::verbosity==2)
+			if (dftParameters::verbosity>=4)
 			  std::cout << "atom core in bin " << iBin<<" with valence charge "<<d_atomLocations[chargeId][1] << " located with node id " << nodeID << " in processor " << this_mpi_process;
 		      }
 		      else
 		      {
-			if (dftParameters::verbosity==2)
+			if (dftParameters::verbosity>=4)
 			  std::cout << "atom core in bin " << iBin<<" with charge "<<d_atomLocations[chargeId][0] << " located with node id " << nodeID << " in processor " << this_mpi_process;
 		      }
+#endif
 		      if (locally_owned_dofs.is_element(nodeID)){
 			if(dftParameters::isPseudopotential)
 			  d_atomsInBin[iBin].insert(std::pair<dealii::types::global_dof_index,double>(nodeID,d_atomLocations[chargeId][1]));
 			else
 			  d_atomsInBin[iBin].insert(std::pair<dealii::types::global_dof_index,double>(nodeID,d_atomLocations[chargeId][0]));
-			if (dftParameters::verbosity==2)
+#ifdef DEBUG
+			if (dftParameters::verbosity>=4)
 			   std::cout << " and added \n";
+#endif
 		      }
 		      else
 		      {
-			if (dftParameters::verbosity==2)
+#ifdef DEBUG
+			if (dftParameters::verbosity>=4)
 			   std::cout << " but skipped \n";
+#endif
 		      }
 		      atomsTolocate.erase(*it);
 		      break;

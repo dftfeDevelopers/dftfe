@@ -1,0 +1,57 @@
+subsection Geometry
+  set NATOMS=4
+  set NATOM TYPES=1
+  set ATOMIC COORDINATES FILE      = coordinates.inp           
+  set DOMAIN VECTORS FILE = domainBoundingVectors.inp 
+  subsection Optimization
+    set CELL STRESS              = true
+  end
+end
+
+
+subsection Boundary conditions
+  set PERIODIC1                       = true
+  set PERIODIC2                       = true
+  set PERIODIC3                       = true
+end
+
+subsection Finite element mesh parameters
+  set POLYNOMIAL ORDER=4
+  subsection Auto mesh generation parameters
+    set MESH SIZE AROUND ATOM  = 0.6
+  end
+end
+
+subsection Parallelization
+  set NPKPT=4
+end
+
+subsection Brillouin zone k point sampling options
+  set USE TIME REVERSAL SYMMETRY = true
+  subsection Monkhorst-Pack (MP) grid generation
+    set SAMPLING POINTS 1 = 2
+    set SAMPLING POINTS 2 = 2
+    set SAMPLING POINTS 3 = 2
+    set SAMPLING SHIFT 1  = 0.0
+    set SAMPLING SHIFT 2  = 0.0
+    set SAMPLING SHIFT 3  = 0.0
+  end
+end
+
+
+subsection DFT functional parameters
+  set EXCHANGE CORRELATION TYPE   = 1
+  set PSEUDOPOTENTIAL CALCULATION = true
+  set PSEUDOPOTENTIAL FILE NAMES LIST = pseudo.inp
+end
+
+subsection SCF parameters
+  set ANDERSON SCHEME MIXING HISTORY   = 70
+  set ANDERSON SCHEME MIXING PARAMETER = 0.5
+  set MAXIMUM ITERATIONS               = 50
+  set TEMPERATURE                      = 500
+  set TOLERANCE                        = 5e-6 
+  subsection Eigen-solver parameters
+      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 20
+  end
+end

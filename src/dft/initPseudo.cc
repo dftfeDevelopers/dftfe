@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -37,12 +37,13 @@ void dftClass<FEOrder>::initLocalPseudoPotential()
   for(std::set<unsigned int>::iterator it=atomTypes.begin(); it!=atomTypes.end(); it++)
     {
       char pseudoFile[256];
-      if (dftParameters::pseudoProjector==2)
-	  sprintf(pseudoFile, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/locPot.dat", DFT_PATH,*it);
-      else
-          sprintf(pseudoFile, "%s/data/electronicStructure/pseudoPotential/z%u/pseudoAtomData/locPot.dat", DFT_PATH,*it);
+      //if (dftParameters::pseudoProjector==2)
+	//sprintf(pseudoFile, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/locPot.dat", DFT_PATH,*it);
+	sprintf(pseudoFile,"temp/z%u/locPot.dat",*it);
+	//else
+	//sprintf(pseudoFile,"%s/data/electronicStructure/pseudoPotential/z%u/pseudoAtomData/locPot.dat", DFT_PATH,*it);
 
-      if (!dftParameters::reproducible_output)
+      if (dftParameters::verbosity>=2)
         pcout<<"Reading Local Pseudo-potential data from: " <<pseudoFile<<std::endl;
       dftUtils::readFile(2, pseudoPotentialData[*it], pseudoFile);
       unsigned int numRows = pseudoPotentialData[*it].size()-1;
@@ -68,7 +69,7 @@ void dftClass<FEOrder>::initLocalPseudoPotential()
       if(outerMostPointPseudo[*it] < d_pspTail)
 	 d_pspTail = outerMostPointPseudo[*it] ;
     }
-   if (dftParameters::verbosity==2)
+   if(dftParameters::verbosity>=2)
       pcout << " d_pspTail adjusted to " << d_pspTail << std::endl ;
   //
   //Initialize pseudopotential
@@ -208,7 +209,7 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential()
       // Skip the rest in the first line and proceed to next line
       //
       readPseudoDataFileNames.ignore();
-      if (dftParameters::verbosity==2)
+      if (dftParameters::verbosity>=2)
          pcout << "Number of Pseudo Wave Functions for atom with Z: " << atomicNumber<<" is "<<numberAtomicWaveFunctions << std::endl;
 
       //
@@ -271,7 +272,7 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential()
 	  //
 	  radAndAngularFunctionId[0] += cumulativeSplineId;
 
-	  if (dftParameters::verbosity==2)
+	  if (dftParameters::verbosity>=2)
 	      pcout << "Radial and Angular Functions Ids: " << radAndAngularFunctionId[0] << " " << radAndAngularFunctionId[1] << " " << radAndAngularFunctionId[2] << std::endl;
 
 	}
@@ -408,7 +409,7 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential()
       //
       readPseudoDataFileNames.ignore();
 
-      if (dftParameters::verbosity==2)
+      if (dftParameters::verbosity>=2)
          pcout << "Number of Angular momentum specific potentials: " << numberAngularMomentumSpecificPotentials<< std::endl;
 
       std::string readPotLine;
@@ -470,7 +471,7 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential()
 	  // Add the cumulativeSplineId to radialId
 	  //
 	  radAndAngularFunctionId[0] += cumulativePotSplineId;
-	  if (dftParameters::verbosity==2)
+	  if (dftParameters::verbosity>=2)
 	     pcout << "Radial and Angular Function Potential Ids: " << radAndAngularFunctionId[0] << " " << radAndAngularFunctionId[1] << std::endl;
 
 	}
@@ -626,7 +627,7 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential()
 
   d_nonLocalAtomGlobalChargeIds = nonLocalAtomGlobalChargeIds;
 
-  if (dftParameters::verbosity==2)
+  if (dftParameters::verbosity>=2)
      pcout<<"Number of Nonlocal Atoms: " <<d_nonLocalAtomGlobalChargeIds.size()<<std::endl;
   //
   //fill up global charge image Id map by inserting the image atoms
@@ -836,7 +837,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
 
       cumulativePotSplineId += numberAngularMomentumSpecificPotentials;
 
-      if (dftParameters::verbosity==2)
+      if (dftParameters::verbosity>=3)
          pcout<<"No.of non zero elements in the compact support of atom "<<iAtom<<" is "<<d_elementIteratorsInAtomCompactSupport[iAtom].size()<<std::endl;
       if (isAtomIdInProcessor)
           d_nonLocalAtomIdsInCurrentProcess.push_back(iAtom);
@@ -1066,8 +1067,8 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
                                                      mpi_communicator);
 #endif
 
-  d_projectorKetTimesVectorPar.resize(eigenVectors[0].size());
-  for (unsigned int i = 0; i < eigenVectors[0].size(); ++i)
+  d_projectorKetTimesVectorPar.resize(numEigenValues);
+  for (unsigned int i = 0; i < numEigenValues; ++i)
     d_projectorKetTimesVectorPar[i].reinit(vec);
 
 }
@@ -1108,9 +1109,11 @@ void dftClass<FEOrder>::computeElementalProjectorKets()
   //
   d_nonLocalProjectorElementMatrices.clear();
   d_nonLocalProjectorElementMatricesConjugate.clear();
+  d_nonLocalProjectorElementMatricesTranspose.clear();
   d_nonLocalPseudoPotentialConstants.clear();
   d_nonLocalProjectorElementMatrices.resize(numberNonLocalAtoms);
   d_nonLocalProjectorElementMatricesConjugate.resize(numberNonLocalAtoms);
+  d_nonLocalProjectorElementMatricesTranspose.resize(numberNonLocalAtoms);
   d_nonLocalPseudoPotentialConstants.resize(numberNonLocalAtoms);
   int cumulativePotSplineId = 0;
   int cumulativeWaveSplineId = 0;
@@ -1145,7 +1148,7 @@ void dftClass<FEOrder>::computeElementalProjectorKets()
       int numberPseudoWaveFunctions = d_numberPseudoAtomicWaveFunctions[iAtom];
       int numberAngularMomentumSpecificPotentials = d_numberPseudoPotentials[iAtom];
 
-      if (dftParameters::verbosity==2)
+      if (dftParameters::verbosity>=3)
       {
         pcout<<"Number of Pseudo wavefunctions: "<<std::endl;
         pcout<<numberPseudoWaveFunctions<<std::endl;
@@ -1156,6 +1159,7 @@ void dftClass<FEOrder>::computeElementalProjectorKets()
       //
       d_nonLocalProjectorElementMatrices[iAtom].resize(numberElementsInAtomCompactSupport);
       d_nonLocalProjectorElementMatricesConjugate[iAtom].resize(numberElementsInAtomCompactSupport);
+      d_nonLocalProjectorElementMatricesTranspose[iAtom].resize(numberElementsInAtomCompactSupport);
       d_nonLocalPseudoPotentialConstants[iAtom].resize(numberPseudoWaveFunctions,0.0);
 
       for(int iElemComp = 0; iElemComp < numberElementsInAtomCompactSupport; ++iElemComp)
@@ -1171,8 +1175,12 @@ void dftClass<FEOrder>::computeElementalProjectorKets()
 								      std::vector<std::complex<double> > (numberNodesPerElement*numberPseudoWaveFunctions,0.0));
 	  d_nonLocalProjectorElementMatricesConjugate[iAtom][iElemComp].resize(maxkPoints,
 									       std::vector<std::complex<double> > (numberNodesPerElement*numberPseudoWaveFunctions,0.0));
+	  d_nonLocalProjectorElementMatricesTranspose[iAtom][iElemComp].resize(maxkPoints,
+									       std::vector<std::complex<double> > (numberNodesPerElement*numberPseudoWaveFunctions,0.0));
 #else
 	  d_nonLocalProjectorElementMatrices[iAtom][iElemComp].resize(maxkPoints,
+								      std::vector<double> (numberNodesPerElement*numberPseudoWaveFunctions,0.0));
+	  d_nonLocalProjectorElementMatricesTranspose[iAtom][iElemComp].resize(maxkPoints,
 								      std::vector<double> (numberNodesPerElement*numberPseudoWaveFunctions,0.0));
 #endif
 
@@ -1333,13 +1341,18 @@ void dftClass<FEOrder>::computeElementalProjectorKets()
 			  tempImag += nonLocalProjectorBasisImag[maxkPoints*iQuadPoint+kPoint]*fe_values.shape_value(iNode,iQuadPoint)*fe_values.JxW(iQuadPoint);
 #else
 			  d_nonLocalProjectorElementMatrices[iAtom][iElemComp][kPoint][numberNodesPerElement*iPseudoWave + iNode] += nonLocalProjectorBasisReal[maxkPoints*iQuadPoint+kPoint]*fe_values.shape_value(iNode,iQuadPoint)*fe_values.JxW(iQuadPoint);
+
+			d_nonLocalProjectorElementMatricesTranspose[iAtom][iElemComp][kPoint][numberPseudoWaveFunctions*iNode+iPseudoWave ] += nonLocalProjectorBasisReal[maxkPoints*iQuadPoint+kPoint]*fe_values.shape_value(iNode,iQuadPoint)*fe_values.JxW(iQuadPoint);
 #endif
 			}
 #ifdef USE_COMPLEX
 		      d_nonLocalProjectorElementMatrices[iAtom][iElemComp][kPoint][numberNodesPerElement*iPseudoWave + iNode].real(tempReal);
 		      d_nonLocalProjectorElementMatrices[iAtom][iElemComp][kPoint][numberNodesPerElement*iPseudoWave + iNode].imag(tempImag);
+
 		      d_nonLocalProjectorElementMatricesConjugate[iAtom][iElemComp][kPoint][numberNodesPerElement*iPseudoWave + iNode].real(tempReal);
 		      d_nonLocalProjectorElementMatricesConjugate[iAtom][iElemComp][kPoint][numberNodesPerElement*iPseudoWave + iNode].imag(-tempImag);
+			  d_nonLocalProjectorElementMatricesTranspose[iAtom][iElemComp][kPoint][numberPseudoWaveFunctions*iNode+iPseudoWave].real(tempReal);
+		     d_nonLocalProjectorElementMatricesTranspose[iAtom][iElemComp][kPoint][numberPseudoWaveFunctions*iNode+iPseudoWave].imag(tempImag);
 #endif
 		    }
 
@@ -1368,7 +1381,7 @@ void dftClass<FEOrder>::computeElementalProjectorKets()
 	  d_nonLocalPseudoPotentialConstants[iAtom][iPseudoWave] = Utilities::MPI::sum(d_nonLocalPseudoPotentialConstants[iAtom][iPseudoWave],mpi_communicator);
 
 	  d_nonLocalPseudoPotentialConstants[iAtom][iPseudoWave] = 1.0/d_nonLocalPseudoPotentialConstants[iAtom][iPseudoWave];
-	  if (dftParameters::verbosity==2)
+	  if (dftParameters::verbosity>=3)
 	     pcout<<"The value of 1/nlpConst corresponding to atom and lCount "<<iAtom<<' '<<
 	    iPseudoWave<<" is "<<d_nonLocalPseudoPotentialConstants[iAtom][iPseudoWave]<<std::endl;
 

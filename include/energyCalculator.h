@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018  The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -35,46 +35,50 @@ namespace dftfe {
 	 * @brief Constructor
 	 *
 	 * @param mpi_comm mpi communicator of domain decomposition
-	 * @param interpool_comm mpi communicator of interpool communicator
+	 * @param interpool_comm mpi interpool communicator over k points
+	 * @param interBandGroupComm mpi interpool communicator over band groups
 	 */
 	energyCalculator(const  MPI_Comm &mpi_comm,
-		         const  MPI_Comm &interpool_comm);
+		         const  MPI_Comm &interpool_comm,
+			 const MPI_Comm &interBandGroupComm);
 
 	/**
 	 * Computes total energy of the ksdft problem in the current state and also prints the
 	 * individual components of the energy
 	 *
-	 * @param dofHandlerElectrostatic[in] p refined DoFHandler object used for re-computing
+	 * @param dofHandlerElectrostatic p refined DoFHandler object used for re-computing
 	 * the electrostatic fields using the ground state electron density. If electrostatics is
 	 * not recomputed on p refined mesh, use dofHandlerElectronic for this argument.
-	 * @param dofHandlerElectronic[in] DoFHandler object on which the electrostatics for the
+	 * @param dofHandlerElectronic DoFHandler object on which the electrostatics for the
 	 * eigen solve are computed.
-	 * @param quadratureElectrostatic[in] qudarature object for dofHandlerElectrostatic.
-	 * @param quadratureElectronic[in] qudarature object for dofHandlerElectronic.
-	 * @param eigenValues[in] eigenValues for each k point.
-	 * @param kPointWeights[in]
-	 * @param fermiEnergy[in]
-	 * @param funcX[in] exchange functional object.
-	 * @param funcC[in] correlation functional object.
-	 * @param phiTotRhoIn[in] nodal vector field of total electrostatic potential using input
+	 * @param quadratureElectrostatic qudarature object for dofHandlerElectrostatic.
+	 * @param quadratureElectronic qudarature object for dofHandlerElectronic.
+	 * @param eigenValues eigenValues for each k point.
+	 * @param kPointWeights
+	 * @param fermiEnergy
+	 * @param funcX exchange functional object.
+	 * @param funcC correlation functional object.
+	 * @param phiTotRhoIn nodal vector field of total electrostatic potential using input
 	 * electron density to an eigensolve. This vector field is based on dofHandlerElectronic.
-	 * @param phiTotRhoOut[in] nodal vector field of total electrostatic potential using output
+	 * @param phiTotRhoOut nodal vector field of total electrostatic potential using output
 	 * electron density to an eigensolve. This vector field is based on dofHandlerElectrostatic.
-	 * @param rhoInValues[in] cell quadrature data of input electron density to an eigensolve. This
+	 * @param rhoInValues cell quadrature data of input electron density to an eigensolve. This
 	 * data must correspond to quadratureElectronic.
-	 * @param rhoOutValues[in] cell quadrature data of output electron density of an eigensolve. This
+	 * @param rhoOutValues cell quadrature data of output electron density of an eigensolve. This
 	 * data must correspond to quadratureElectronic.
-	 * @param rhoOutValuesElectrostatic[in] cell quadrature data of output electron density of an eigensolve
+	 * @param rhoOutValuesElectrostatic cell quadrature data of output electron density of an eigensolve
 	 * evaluated on a p refined mesh. This data corresponds to quadratureElectrostatic.
-	 * @param gradRhoInValues[in] cell quadrature data of input gradient electron density
+	 * @param gradRhoInValues cell quadrature data of input gradient electron density
 	 * to an eigensolve. This data must correspond to quadratureElectronic.
-	 * @param gradRhoOutValues[in] cell quadrature data of output gradient electron density
+	 * @param gradRhoOutValues cell quadrature data of output gradient electron density
 	 * of an eigensolve. This data must correspond to quadratureElectronic.
-	 * @param localVselfs[in] peak vselfs of local atoms in each vself bin
-	 * @param atomElectrostaticNodeIdToChargeMap[in] map between locally processor atom global node ids
+	 * @param localVselfs peak vselfs of local atoms in each vself bin
+	 * @param atomElectrostaticNodeIdToChargeMap map between locally processor atom global node ids
 	 * of dofHandlerElectrostatic to atom charge value.
-	 * @param numberGlobalAtoms[in]
-	 * @param print[in]
+	 * @param numberGlobalAtoms
+	 * @param lowerBoundKindex global k index of lower bound of the local k point set in the current pool
+	 * @param if scf is converged
+	 * @param print
 	 *
 	 * @return total energy
 	 */
@@ -97,51 +101,55 @@ namespace dftfe {
 		             const std::vector<std::vector<double> > & localVselfs,
 		             const std::map<dealii::types::global_dof_index, double> & atomElectrostaticNodeIdToChargeMap,
 			     const unsigned int numberGlobalAtoms,
+			     const unsigned int lowerBoundKindex,
+			     const unsigned int scfConverged,
 		             const bool print) const;
 
 	/**
 	 * Computes total energy of the spin polarized ksdft problem in the current state and also prints the
 	 * individual components of the energy
 	 *
-	 * @param dofHandlerElectrostatic[in] p refined DoFHandler object used for re-computing
+	 * @param dofHandlerElectrostatic p refined DoFHandler object used for re-computing
 	 * the electrostatic fields using the ground state electron density. If electrostatics is
 	 * not recomputed on p refined mesh, use dofHandlerElectronic for this argument.
-	 * @param dofHandlerElectronic[in] DoFHandler object on which the electrostatics for the
+	 * @param dofHandlerElectronic DoFHandler object on which the electrostatics for the
 	 * eigen solve are computed.
-	 * @param quadratureElectrostatic[in] qudarature object for dofHandlerElectrostatic.
-	 * @param quadratureElectronic[in] qudarature object for dofHandlerElectronic.
-	 * @param eigenValues[in] eigenValues for each k point.
-	 * @param kPointWeights[in]
-	 * @param fermiEnergy[in]
-	 * @param funcX[in] exchange functional object.
-	 * @param funcC[in] correlation functional object.
-	 * @param phiTotRhoIn[in] nodal vector field of total electrostatic potential using input
+	 * @param quadratureElectrostatic qudarature object for dofHandlerElectrostatic.
+	 * @param quadratureElectronic qudarature object for dofHandlerElectronic.
+	 * @param eigenValues eigenValues for each k point.
+	 * @param kPointWeights
+	 * @param fermiEnergy
+	 * @param funcX exchange functional object.
+	 * @param funcC correlation functional object.
+	 * @param phiTotRhoIn nodal vector field of total electrostatic potential using input
 	 * electron density to an eigensolve. This vector field is based on dofHandlerElectronic.
-	 * @param phiTotRhoOut[in] nodal vector field of total electrostatic potential using output
+	 * @param phiTotRhoOut nodal vector field of total electrostatic potential using output
 	 * electron density to an eigensolve. This vector field is based on dofHandlerElectrostatic.
-	 * @param rhoInValues[in] cell quadrature data of input electron density to an eigensolve. This
+	 * @param rhoInValues cell quadrature data of input electron density to an eigensolve. This
 	 * data must correspond to quadratureElectronic.
-	 * @param rhoOutValues[in] cell quadrature data of output electron density of an eigensolve. This
+	 * @param rhoOutValues cell quadrature data of output electron density of an eigensolve. This
 	 * data must correspond to quadratureElectronic.
-	 * @param rhoOutValuesElectrostatic[in] cell quadrature data of output electron density of an eigensolve
+	 * @param rhoOutValuesElectrostatic cell quadrature data of output electron density of an eigensolve
 	 * evaluated on a p refined mesh. This data corresponds to quadratureElectrostatic.
-	 * @param gradRhoInValues[in] cell quadrature data of input gradient electron density
+	 * @param gradRhoInValues cell quadrature data of input gradient electron density
 	 * to an eigensolve. This data must correspond to quadratureElectronic.
-	 * @param gradRhoOutValues[in] cell quadrature data of output gradient electron density
+	 * @param gradRhoOutValues cell quadrature data of output gradient electron density
 	 * of an eigensolve. This data must correspond to quadratureElectronic.
-	 * @param rhoInValuesSpinPolarized[in] cell quadrature data of input spin polarized
+	 * @param rhoInValuesSpinPolarized cell quadrature data of input spin polarized
 	 * electron density to an eigensolve. This data must correspond to quadratureElectronic.
-	 * @param rhoOutValuesSpinPolarized[in] cell quadrature data of output spin polarized
+	 * @param rhoOutValuesSpinPolarized cell quadrature data of output spin polarized
 	 * electron density of an eigensolve. This data must correspond to quadratureElectronic.
-	 * @param gradRhoInValuesSpinPolarized[in] cell quadrature data of input gradient spin polarized
+	 * @param gradRhoInValuesSpinPolarized cell quadrature data of input gradient spin polarized
 	 * electron density to an eigensolve. This data must correspond to quadratureElectronic.
-	 * @param gradRhoOutValuesSpinPolarized[in] cell quadrature data of output gradient spin polarized
+	 * @param gradRhoOutValuesSpinPolarized cell quadrature data of output gradient spin polarized
 	 * electron density of an eigensolve. This data must correspond to quadratureElectronic.
-	 * @param localVselfs[in] peak vselfs of local atoms in each vself bin
-	 * @param atomElectrostaticNodeIdToChargeMap[in] map between locally processor atom global node ids
+	 * @param localVselfs peak vselfs of local atoms in each vself bin
+	 * @param atomElectrostaticNodeIdToChargeMap map between locally processor atom global node ids
 	 * of dofHandlerElectrostatic to atom charge value.
-	 * @param numberGlobalAtoms[in]
-	 * @param print[in]
+	 * @param numberGlobalAtoms
+	 * @param lowerBoundKindex global k index of lower bound of the local k point set in the current pool
+	 * @param if scf is converged
+	 * @param print
 	 *
 	 * @return total energy
 	 */
@@ -169,12 +177,15 @@ namespace dftfe {
 			     const std::vector<std::vector<double> > & localVselfs,
 			     const std::map<dealii::types::global_dof_index, double> & atomElectrostaticNodeIdToChargeMap,
 			     const unsigned int numberGlobalAtoms,
+			     const unsigned int lowerBoundKindex,
+			     const unsigned int scfConverged,
 			     const bool print) const;
 
      private:
 
          const MPI_Comm mpi_communicator;
 	 const MPI_Comm interpoolcomm;
+	 const MPI_Comm interBandGroupComm;
 
 	 /// parallel message stream
          dealii::ConditionalOStream  pcout;

@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -52,19 +52,6 @@ namespace dftfe {
   //
   using namespace dealii;
 
-
-  //forward declarations
-  template <unsigned int T> class poissonClass;
-  template <unsigned int T> class eigenClass;
-  template <unsigned int T> class forceClass;
-  template <unsigned int T> class symmetryClass;
-  template <unsigned int T> class forceClass;
-  template <unsigned int T> class geoOptIon;
-  template <unsigned int T> class geoOptCell;
-
-  //
-  //
-  //
   struct orbital
   {
     unsigned int atomID;
@@ -73,6 +60,14 @@ namespace dftfe {
     alglib::spline1dinterpolant* psi;
   };
 
+  //forward declarations
+  template <unsigned int T> class eigenClass;
+  template <unsigned int T> class forceClass;
+  template <unsigned int T> class symmetryClass;
+  template <unsigned int T> class forceClass;
+  template <unsigned int T> class geoOptIon;
+  template <unsigned int T> class geoOptCell;
+
   //
   //dft class for initializing mesh, setting up guesses for initial electron-density and wavefunctions,
   //solving individual vSelf problem after setting up bins, initializing pseudopotentials. Also
@@ -80,7 +75,6 @@ namespace dftfe {
   template <unsigned int FEOrder>
     class dftClass
     {
-
       template <unsigned int T>
 	friend class eigenClass;
 
@@ -101,7 +95,9 @@ namespace dftfe {
       /**
        * dftClass constructor
        */
-      dftClass(const MPI_Comm &mpi_comm_replica, const MPI_Comm &interpoolcomm);
+      dftClass(const MPI_Comm &mpi_comm_replica,
+	       const MPI_Comm &interpoolcomm,
+	       const MPI_Comm &interBandGroupComm);
       /**
        * dftClass destructor
        */
@@ -116,7 +112,7 @@ namespace dftfe {
       /**
        * Does required pre-processing steps including mesh generation calls.
        */
-      void init(const bool usePreviousGroundStateRho=false);
+      void init(const unsigned int usePreviousGroundStateFields=0);
       /**
        * Does required pre-processing steps but without remeshing.
        */
@@ -136,6 +132,11 @@ namespace dftfe {
        * Number of Kohn-Sham eigen values to be computed
        */
       unsigned int numEigenValues;
+
+      /**
+       * Number of random wavefunctions
+       */
+      unsigned int d_nonAtomicWaveFunctions;
 
       void readkPointData();
 
@@ -205,6 +206,17 @@ namespace dftfe {
        */
       void initImageChargesUpdateKPoints();
 
+      /**
+       */
+      void initPsiAndRhoFromPreviousGroundStatePsi(std::vector<std::vector<vectorType>> eigenVectors);
+
+
+      /**
+       * interpolate rho quadrature data on current mesh from the ground state rho on previous mesh.
+       * This is used whenver the mesh is changed due to atom movement.
+       */
+      void initRhoFromPreviousGroundStateRho();
+
 
       /**
        * project ground state electron density from previous mesh into
@@ -224,7 +236,14 @@ namespace dftfe {
 
       void generateMPGrid();
       void writeMesh(std::string meshFileName);
-      void generateImageCharges();
+
+      /// creates datastructures related to periodic image charges
+      void generateImageCharges(const double pspCutOff,
+	                        std::vector<int> & imageIds,
+				std::vector<double> & imageCharges,
+				std::vector<std::vector<double> > & imagePositions,
+				std::vector<std::vector<int> > & globalChargeIdToImageIdMap);
+
       void determineOrbitalFilling();
 
 
@@ -243,7 +262,7 @@ namespace dftfe {
        */
       void initUnmovedTriangulation(const parallel::distributed::Triangulation<3> & triangulation);
       void initBoundaryConditions();
-      void initElectronicFields(bool usePreviousGroundStateRho=false);
+      void initElectronicFields(const unsigned int usePreviousGroundStateFields=0);
       void initPseudoPotentialAll();
 
      /**
@@ -269,8 +288,32 @@ namespace dftfe {
 	                             const dealii::ConstraintMatrix & constraintMatrixBase,
 	                             dealii::ConstraintMatrix & constraintMatrix);
       void initRho();
-      void computeRhoInitialGuessFromPSI();
+      void computeRhoInitialGuessFromPSI(std::vector<std::vector<vectorType>> eigenVectors);
       void clearRhoData();
+
+      /**
+       * computes nodal electron-density from cell quadrature data using project function of dealii
+       */
+      void computeNodalRhoFromQuadData();
+
+      /**
+       * sums rho cell quadratrure data from  inter communicator
+       */
+      void sumRhoData(std::map<dealii::CellId, std::vector<double> > * rhoValues,
+	              std::map<dealii::CellId, std::vector<double> > * gradRhoValues,
+	              std::map<dealii::CellId, std::vector<double> > * rhoValuesSpinPolarized,
+		      std::map<dealii::CellId, std::vector<double> > * gradRhoValuesSpinPolarized,
+		      const MPI_Comm &interComm);
+
+      /**
+       * resize and allocate table storage for rho cell quadratrue data
+       */
+      void resizeAndAllocateRhoTableStorage
+			    (std::deque<std::map<dealii::CellId,std::vector<double> >> & rhoVals,
+			     std::deque<std::map<dealii::CellId,std::vector<double> >> & gradRhoVals,
+			     std::deque<std::map<dealii::CellId,std::vector<double> >> & rhoValsSpinPolarized,
+			     std::deque<std::map<dealii::CellId,std::vector<double> >> & gradRhoValsSpinPolarized);
+
       void noRemeshRhoDataInit();
       void readPSI();
       void readPSIRadialValues();
@@ -302,6 +345,11 @@ namespace dftfe {
       double totalCharge(const std::map<dealii::CellId, std::vector<double> > *rhoQuadValues);
 
       /**
+       * Computes net magnetization from the difference of local spin densities
+       */
+      double totalMagnetization(const std::map<dealii::CellId, std::vector<double> > *rhoQuadValues) ;
+
+      /**
        * normalize the electron density
        */
       void normalizeRho();
@@ -328,7 +376,7 @@ namespace dftfe {
        * However, it works for time reversal symmetry.
        *
        */
-      void computeElectrostaticEnergyPRefined();
+      //void computeElectrostaticEnergyPRefined();
 
       /**
        * Computes Fermi-energy obtained by imposing constraint on the number of electrons
@@ -378,10 +426,42 @@ namespace dftfe {
        */
       unsigned int numElectrons, numLevels;
       std::set<unsigned int> atomTypes;
-      std::vector<std::vector<double> > atomLocations,atomLocationsFractional,d_reciprocalLatticeVectors, d_imagePositions, d_domainBoundingVectors;
+      std::vector<std::vector<double> > atomLocations,atomLocationsFractional,d_reciprocalLatticeVectors, d_domainBoundingVectors;
 
+      /// vector of lendth number of periodic image charges with corresponding master chargeIds
       std::vector<int> d_imageIds;
+
+      /// vector of length number of periodic image charges with corresponding charge values
       std::vector<double> d_imageCharges;
+
+      /// vector of length number of periodic image charges with corresponding
+      /// positions in cartesian coordinates
+      std::vector<std::vector<double> > d_imagePositions;
+
+      /// globalChargeId to ImageChargeId Map
+      std::vector<std::vector<int> > d_globalChargeIdToImageIdMap;
+
+      /// vector of lendth number of periodic image charges with corresponding master chargeIds
+      /// , generated with a truncated pspCutoff
+      std::vector<int> d_imageIdsTrunc;
+
+      /// vector of length number of periodic image charges with corresponding charge values
+      /// , generated with a truncated pspCutoff
+      std::vector<double> d_imageChargesTrunc;
+
+      /// vector of length number of periodic image charges with corresponding
+      /// positions in cartesian coordinates, generated with a truncated pspCutOff
+      std::vector<std::vector<double> > d_imagePositionsTrunc;
+
+      /// globalChargeId to ImageChargeId Map generated with a truncated pspCutOff
+      std::vector<std::vector<int> > d_globalChargeIdToImageIdMapTrunc;
+
+      /// distance from the domain till which periodic images will be considered
+      const double d_pspCutOff=40.0;
+
+      /// distance from the domain till which periodic images will be considered
+      const double d_pspCutOffTrunc=8.0;
+
       std::vector<orbital> waveFunctionsVector;
       std::map<unsigned int, std::map<unsigned int, std::map<unsigned int, alglib::spline1dinterpolant*> > > radValues;
       std::map<unsigned int, std::map<unsigned int, std::map <unsigned int, double> > >outerValues;
@@ -406,6 +486,7 @@ namespace dftfe {
       FESystem<3>        FE, FEEigen;
       DoFHandler<3>      dofHandler, dofHandlerEigen;
       unsigned int       eigenDofHandlerIndex,phiExtDofHandlerIndex,phiTotDofHandlerIndex,forceDofHandlerIndex;
+      unsigned int       densityDofHandlerIndex;
       MatrixFree<3,double> matrix_free_data;
       std::map<types::global_dof_index, Point<3> > d_supportPoints, d_supportPointsEigen;
       std::vector<const ConstraintMatrix * > d_constraintsVector;
@@ -413,7 +494,9 @@ namespace dftfe {
       /**
        * parallel objects
        */
-      MPI_Comm   mpi_communicator, interpoolcomm;
+      const MPI_Comm   mpi_communicator;
+      const MPI_Comm   interpoolcomm;
+      const MPI_Comm   interBandGroupComm;
       const unsigned int n_mpi_processes;
       const unsigned int this_mpi_process;
       IndexSet   locally_owned_dofs, locally_owned_dofsEigen;
@@ -422,8 +505,6 @@ namespace dftfe {
       std::vector<dealii::types::global_dof_index> localProc_dof_indicesReal,localProc_dof_indicesImag;
       std::vector<bool> selectedDofsHanging;
 
-
-      
       forceClass<FEOrder> * forcePtr;
       symmetryClass<FEOrder> * symmetryPtr;
       geoOptIon<FEOrder> * geoOptIonPtr;
@@ -436,7 +517,7 @@ namespace dftfe {
       /**
        *object which is used to store dealii constraint matrix information
        *using STL vectors. The relevant dealii constraint matrix
-       *has hanging node constraints and periodic constraints(for periodic problems)  
+       *has hanging node constraints and periodic constraints(for periodic problems)
        *used in eigen solve
        */
       dftUtils::constraintMatrixInfo constraintsNoneEigenDataInfo;
@@ -449,20 +530,24 @@ namespace dftfe {
        */
       dftUtils::constraintMatrixInfo constraintsNoneDataInfo;
 
-      ConstraintMatrix constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_noConstraints, d_noConstraintsEigen;
+      ConstraintMatrix constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_noConstraints;
 
 
       /**
        * data storage for Kohn-Sham wavefunctions
        */
       std::vector<std::vector<double> > eigenValues;
-      std::vector<std::vector<vectorType> > eigenVectors;
+      std::vector<dealii::parallel::distributed::Vector<dataTypes::number>> d_eigenVectorsFlattened;
 
       /// parallel message stream
       ConditionalOStream  pcout;
 
       /// compute-time logger
       TimerOutput computing_timer;
+      TimerOutput computingTimerStandard;
+
+      /// A plain global timer to track only the total elapsed time after every ground-state solve
+      dealii::Timer d_globalTimer;
 
       //dft related objects
       std::map<dealii::CellId, std::vector<double> > *rhoInValues, *rhoOutValues, *rhoInValuesSpinPolarized, *rhoOutValuesSpinPolarized;
@@ -481,6 +566,15 @@ namespace dftfe {
 
       // storage for sum of nuclear electrostatic potential
       vectorType d_phiExt;
+
+      // storage for projection of rho cell quadrature data to nodal field
+      vectorType d_rhoNodalField;
+
+      // storage for projection of rho cell quadrature data to nodal field
+      vectorType d_rhoNodalFieldSpin0;
+
+      // storage for projection of rho cell quadrature data to nodal field
+      vectorType d_rhoNodalFieldSpin1;
 
       double d_pspTail = 8.0;
       std::map<dealii::CellId, std::vector<double> > pseudoValues;
@@ -518,23 +612,27 @@ namespace dftfe {
       IndexSet d_ghostProjectorIdsCurrentProcess;
       std::map<std::pair<unsigned int,unsigned int>, unsigned int> d_projectorIdsNumberingMapCurrentProcess;
 #ifdef USE_COMPLEX
-      std::vector<std::vector<std::vector<std::vector<std::complex<double> > > > > d_nonLocalProjectorElementMatrices,d_nonLocalProjectorElementMatricesConjugate;
+      std::vector<std::vector<std::vector<std::vector<std::complex<double> > > > > d_nonLocalProjectorElementMatrices,d_nonLocalProjectorElementMatricesConjugate,d_nonLocalProjectorElementMatricesTranspose;
       std::vector<dealii::parallel::distributed::Vector<std::complex<double> > > d_projectorKetTimesVectorPar;
+
+      /// parallel vector used in nonLocalHamiltionian times wavefunction vector computation
+      /// pre-initialization of the parallel layout is more efficient than creating the parallel
+      /// layout for every nonLocalHamiltionan times wavefunction computation
+      dealii::parallel::distributed::Vector<std::complex<double> >  d_projectorKetTimesVectorParFlattened;
 #else
-      std::vector<std::vector<std::vector<std::vector<double> > > > d_nonLocalProjectorElementMatrices,d_nonLocalProjectorElementMatricesConjugate;
+      std::vector<std::vector<std::vector<std::vector<double> > > > d_nonLocalProjectorElementMatrices,d_nonLocalProjectorElementMatricesConjugate,d_nonLocalProjectorElementMatricesTranspose;
       std::vector<dealii::parallel::distributed::Vector<double> > d_projectorKetTimesVectorPar;
+
+      /// parallel vector used in nonLocalHamiltionian times wavefunction vector computation
+      /// pre-initialization of the parallel layout is more efficient than creating the parallel
+      /// layout for every nonLocalHamiltionan times wavefunction computation
+      dealii::parallel::distributed::Vector<double> d_projectorKetTimesVectorParFlattened;
 #endif
 
       //
       //storage for nonlocal pseudopotential constants
       //
       std::vector<std::vector<double> > d_nonLocalPseudoPotentialConstants;
-      std::vector<std::vector<std::vector<double> >> d_nonLocalPseudoPotentialConstants_OV;
-
-      //
-      //globalChargeId to ImageChargeId Map
-      //
-      std::vector<std::vector<int> > d_globalChargeIdToImageIdMap;
 
       //
       // spline vector for data corresponding to each spline of pseudo wavefunctions
@@ -567,6 +665,8 @@ namespace dftfe {
       /// k point weights
       std::vector<double> d_kPointWeights;
 
+      /// global k index of lower bound of the local k point set
+      unsigned int lowerBoundKindex ;
       /**
        * Recomputes the k point cartesian coordinates from the crystal k point coordinates
        * and the current lattice vectors, which can change in each ground state solve when
@@ -582,7 +682,7 @@ namespace dftfe {
 
       std::vector<double> a0;
       std::vector<double> bLow;
-      vectorType vChebyshev;
+      vectorType d_tempEigenVec;
 
       /**
        * @brief compute the maximum of the residual norm of the highest occupied state among all k points
@@ -602,7 +702,6 @@ namespace dftfe {
 			       eigenClass<FEOrder> & kohnShamDFTEigenOperator,
 			       std::vector<vectorType> & X,
 			       std::vector<double> & residualNorm) const;
-
 
     };
 

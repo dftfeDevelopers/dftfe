@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018  The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,11 +13,6 @@
 //
 // ---------------------------------------------------------------------
 
-/** @file meshMovementAffineTransform.h
- *  @brief Class to update triangulation under affine transformation
- *
- *  @author Sambit Das
- */
 
 #ifndef meshMovementAffineTransform_H_
 #define meshMovementAffineTransform_H_
@@ -25,6 +20,11 @@
 
 namespace dftfe {
 
+    /**
+     *  @brief Class to update triangulation under affine transformation
+     *
+     *  @author Sambit Das
+     */
     class meshMovementAffineTransform : public meshMovementClass
     {
 

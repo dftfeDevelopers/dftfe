@@ -25,6 +25,7 @@
 #include <eshelbyTensorSpinPolarized.h>
 #include <fileReaders.h>
 #include <linearAlgebraOperations.h>
+#include <vectorUtilities.h>
 #include <boost/math/special_functions/spherical_harmonic.hpp>
 
 
@@ -137,14 +138,14 @@ void forceClass<FEOrder>::initPseudoData(){
   if(dftParameters::isPseudopotential)
     {
       initLocalPseudoPotentialForce();
-      if (dftParameters::pseudoProjector==2)
-      {
+      //if (dftParameters::pseudoProjector==2)
+      //{
         computeElementalNonLocalPseudoOVDataForce();
-      }
-      else
-      {
-        computeElementalNonLocalPseudoDataForce();
-      }
+	//}
+	//else
+	//{
+        //computeElementalNonLocalPseudoDataForce();
+	//}
     }
 }
 

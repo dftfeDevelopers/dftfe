@@ -30,26 +30,39 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   dofHandler.distribute_dofs (FE);
   dofHandlerEigen.distribute_dofs (FEEigen);
 
+  pcout << std::endl<<"Finite element mesh information"<<std::endl;
+  pcout<<"-------------------------------------------------"<<std::endl;
+  pcout << "number of elements: "
+	<< dofHandler.get_triangulation().n_global_active_cells()
+	<< std::endl
+	<< "number of degrees of freedom: "
+	<< dofHandler.n_dofs()
+	<< std::endl;
 
-  //write mesh
-  if (!dftParameters::reproducible_output)
-  {
-    DataOut<3> dataOut;
-    dataOut.attach_dof_handler(dofHandler);
-    dataOut.build_patches(C_num1DQuad<FEOrder>());
-    dftUtils::writeDataVTUParallelLowestPoolId(dataOut,
-	                                     mpi_communicator,
-					     interpoolcomm,
-					     std::string("currentMesh"));
-  }
+  double minElemLength=1e+6;
+  for (const auto &cell :  dofHandler.get_triangulation().active_cell_iterators() )
+    if (cell->is_locally_owned())
+      if (cell->minimum_vertex_distance()<minElemLength)
+	  minElemLength = cell->minimum_vertex_distance();
 
+  minElemLength=Utilities::MPI::min(minElemLength, mpi_communicator);
 
+  if (dftParameters::verbosity>=1)
+    pcout<< "Minimum mesh size: "<<minElemLength<<std::endl;
+  pcout<<"-------------------------------------------------"<<std::endl;
+
+  if (dftParameters::verbosity>=4)
+      dftUtils::printCurrentMemoryUsage(mpi_communicator,
+	                      "Dofs distributed again");
   d_supportPoints.clear();
   DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), dofHandler, d_supportPoints);
 
   d_supportPointsEigen.clear();
   DoFTools::map_dofs_to_support_points(MappingQ1<3,3>(), dofHandlerEigen, d_supportPointsEigen);
 
+  if (dftParameters::verbosity>=4)
+      dftUtils::printCurrentMemoryUsage(mpi_communicator,
+	                      "Created support points");
   //
   //matrix free data structure
   //
@@ -86,6 +99,9 @@ void dftClass<FEOrder>::initBoundaryConditions(){
 
   d_constraintsVector.push_back(&d_constraintsForTotalPotential);
 
+  if (dftParameters::verbosity>=4)
+      dftUtils::printCurrentMemoryUsage(mpi_communicator,
+	                      "Created total potential constraint matrices");
   //
   //Dirichlet BC constraints on the boundary of fictitious ball
   //used for computing self-potential (Vself) using Poisson problem
@@ -100,6 +116,10 @@ void dftClass<FEOrder>::initBoundaryConditions(){
 				    d_imageCharges,
 				    dftParameters::radiusAtomBall);
 
+  if (dftParameters::verbosity>=4)
+      dftUtils::printCurrentMemoryUsage(mpi_communicator,
+	                      "Created vself bins and constraint matrices");
+
   //
   //create matrix free structure
   //
@@ -108,6 +128,7 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   for(int i = 0; i < d_constraintsVector.size(); ++i)
     dofHandlerVector.push_back(&dofHandler);
 
+  densityDofHandlerIndex=0;
   phiTotDofHandlerIndex = 1;
 
   dofHandlerVector.push_back(&dofHandlerEigen); //DofHandler For Eigen
@@ -130,6 +151,9 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   //
   forcePtr->initMoved();
 
+  if (dftParameters::verbosity>=4)
+      dftUtils::printCurrentMemoryUsage(mpi_communicator,
+	                      "Called force init moved");
   //
   //push dofHandler and constraints for force
   //
@@ -139,7 +163,9 @@ void dftClass<FEOrder>::initBoundaryConditions(){
 
   matrix_free_data.reinit(dofHandlerVector, d_constraintsVector, quadratureVector, additional_data);
 
-
+  if (dftParameters::verbosity>=4)
+      dftUtils::printCurrentMemoryUsage(mpi_communicator,
+	                      "Called matrix free reinit");
   //
   //locate atom core nodes
   //
@@ -148,10 +174,6 @@ void dftClass<FEOrder>::initBoundaryConditions(){
 
   //compute volume of the domain
   d_domainVolume=computeVolume(dofHandler);
-
-  //initialize eigen solve related object
-  //eigenPtr= new eigenClass<FEOrder>(this, mpi_communicator);
-  //eigenPtr->init();
 
   //update gaussianMeshMovementClass object
   d_gaussianMovePar.initMoved(d_domainBoundingVectors);

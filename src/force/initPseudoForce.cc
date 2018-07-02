@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,11 +13,12 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Sambit Das (2017)
+// @author Sambit Das
 //
 
 
 #include "pseudoForceUtils.cc"
+#include "nonlocalProjectorKetTimesEigenVectors.cc"
 
 //
 //Initialize rho by reading in single-atom electron-density and fit a spline
@@ -42,10 +43,11 @@ void forceClass<FEOrder>::initLocalPseudoPotentialForce()
   for(std::set<unsigned int>::iterator it=dftPtr->atomTypes.begin(); it!=dftPtr->atomTypes.end(); it++)
     {
       char pseudoFile[256];
-      if (dftParameters::pseudoProjector==2)
-	  sprintf(pseudoFile, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/locPot.dat", DFT_PATH,*it);
-      else
-          sprintf(pseudoFile, "%s/data/electronicStructure/pseudoPotential/z%u/pseudoAtomData/locPot.dat", DFT_PATH,*it);
+      //if (dftParameters::pseudoProjector==2)
+	//sprintf(pseudoFile, "%s/data/electronicStructure/pseudoPotential/z%u/oncv/pseudoAtomData/locPot.dat", DFT_PATH,*it);
+	sprintf(pseudoFile,"temp/z%u/locPot.dat",*it);
+	//else
+	//sprintf(pseudoFile, "%s/data/electronicStructure/pseudoPotential/z%u/pseudoAtomData/locPot.dat", DFT_PATH,*it);
       //pcout<<"Reading Local Pseudo-potential data from: " <<pseudoFile<<std::endl;
       dftUtils::readFile(2, pseudoPotentialData[*it], pseudoFile);
       unsigned int numRows = pseudoPotentialData[*it].size()-1;
@@ -468,11 +470,10 @@ void forceClass<FEOrder>::computeNonLocalProjectorKetTimesPsiTimesV(const std::v
 
   const unsigned int dofs_per_cell = dftPtr->FEEigen.dofs_per_cell;
 
-  int numberNodesPerElement;
 #ifdef USE_COMPLEX
-  numberNodesPerElement = dftPtr->FEEigen.dofs_per_cell/2;//GeometryInfo<3>::vertices_per_cell;
+  const unsigned int numberNodesPerElement = dftPtr->FEEigen.dofs_per_cell/2;//GeometryInfo<3>::vertices_per_cell;
 #else
-  numberNodesPerElement = dftPtr->FEEigen.dofs_per_cell;
+  const unsigned int numberNodesPerElement = dftPtr->FEEigen.dofs_per_cell;
 #endif
 
   //
@@ -485,7 +486,7 @@ void forceClass<FEOrder>::computeNonLocalProjectorKetTimesPsiTimesV(const std::v
   std::vector<std::vector<double> > & projectorKetTimesVector=projectorKetTimesPsiTimesVReal;
 #endif
 
-  int numberWaveFunctions = src.size();
+  const unsigned int numberWaveFunctions = src.size();
   projectorKetTimesVector.clear();
   projectorKetTimesVector.resize(dftPtr->d_nonLocalAtomIdsInCurrentProcess.size());
 
@@ -556,7 +557,7 @@ void forceClass<FEOrder>::computeNonLocalProjectorKetTimesPsiTimesV(const std::v
 	  for(int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInElement[iElem].size();++iAtom)
 	    {
 	      int atomId = dftPtr->d_nonLocalAtomIdsInElement[iElem][iAtom];
-	      int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
+	      const unsigned int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
 	      int nonZeroElementMatrixId = dftPtr->d_sparsityPattern[atomId][iElem];
 #ifdef USE_COMPLEX
 	      char transA = 'C';
@@ -626,13 +627,13 @@ void forceClass<FEOrder>::computeNonLocalProjectorKetTimesPsiTimesV(const std::v
 #endif
   }
 
-  for(int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
+  for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
     {
       const int atomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];
-      int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
-      for(int iWave = 0; iWave < numberWaveFunctions; ++iWave)
+      const unsigned int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
+      for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
 	{
-	  for(int iPseudoAtomicWave = 0; iPseudoAtomicWave < numberPseudoWaveFunctions; ++iPseudoAtomicWave)
+	  for(unsigned int iPseudoAtomicWave = 0; iPseudoAtomicWave < numberPseudoWaveFunctions; ++iPseudoAtomicWave)
 	    {
 	       projectorKetTimesVectorPar[iWave][dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(atomId,iPseudoAtomicWave)]]
 		  =projectorKetTimesVector[iAtom][numberPseudoWaveFunctions*iWave + iPseudoAtomicWave];
@@ -646,13 +647,13 @@ void forceClass<FEOrder>::computeNonLocalProjectorKetTimesPsiTimesV(const std::v
       projectorKetTimesVectorPar[i].update_ghost_values();
    }
 
-  for(int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
+  for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
     {
       const int atomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];
-      int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
-      for(int iWave = 0; iWave < numberWaveFunctions; ++iWave)
+      const unsigned int numberPseudoWaveFunctions = dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
+      for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
 	{
-	  for(int iPseudoAtomicWave = 0; iPseudoAtomicWave < numberPseudoWaveFunctions; ++iPseudoAtomicWave)
+	  for(unsigned int iPseudoAtomicWave = 0; iPseudoAtomicWave < numberPseudoWaveFunctions; ++iPseudoAtomicWave)
 	    {
 	      projectorKetTimesVector[iAtom][numberPseudoWaveFunctions*iWave + iPseudoAtomicWave]
 	           =projectorKetTimesVectorPar[iWave][dftPtr->d_projectorIdsNumberingMapCurrentProcess[std::make_pair(atomId,iPseudoAtomicWave)]];
@@ -665,13 +666,13 @@ void forceClass<FEOrder>::computeNonLocalProjectorKetTimesPsiTimesV(const std::v
   //
   //compute V*C^{T}*X
   //
-  for(int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
+  for(unsigned int iAtom = 0; iAtom < dftPtr->d_nonLocalAtomIdsInCurrentProcess.size(); ++iAtom)
     {
       const int atomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];
-      int numberPseudoWaveFunctions =  dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
-      for(int iWave = 0; iWave < numberWaveFunctions; ++iWave)
+      const unsigned int numberPseudoWaveFunctions =  dftPtr->d_numberPseudoAtomicWaveFunctions[atomId];
+      for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
 	{
-	  for(int iPseudoAtomicWave = 0; iPseudoAtomicWave < numberPseudoWaveFunctions; ++iPseudoAtomicWave)
+	  for(unsigned int iPseudoAtomicWave = 0; iPseudoAtomicWave < numberPseudoWaveFunctions; ++iPseudoAtomicWave)
 	    projectorKetTimesVector[iAtom][numberPseudoWaveFunctions*iWave + iPseudoAtomicWave] *= dftPtr->d_nonLocalPseudoPotentialConstants[atomId][iPseudoAtomicWave];
 	}
     }

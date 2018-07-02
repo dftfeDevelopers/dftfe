@@ -1,7 +1,7 @@
 //
 // -------------------------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -14,7 +14,7 @@
 //
 // --------------------------------------------------------------------------------------
 //
-// @author Phani Motamarri 
+// @author Phani Motamarri
 //
 #ifndef operatorDFTClass_h
 #define operatorDFTClass_h
@@ -26,6 +26,7 @@
 
 
 namespace dftfe{
+
   /**
    * @brief Base class for building the DFT operator and the action of operator on a vector
    *
@@ -50,13 +51,29 @@ namespace dftfe{
      */
     virtual void init() = 0;
 
+   /**
+    * @brief initializes parallel layouts and index maps for HX, XtHX and creates a flattened array format for X
+    *
+    * @param wavefunBlockSize number of wavefunction vector (block size of X).
+    * @param flag controls the creation of flattened array format and index maps or only index maps
+    *
+    * @return X format to store a multi-vector array
+    * in a flattened format with all the wavefunction values corresponding to a given node being stored
+    * contiguously
+    *
+    */
+    virtual void reinit(const unsigned int wavefunBlockSize,
+			dealii::parallel::distributed::Vector<dataTypes::number> & X,
+			bool flag) = 0;
+
+    virtual void reinit(const unsigned int wavefunBlockSize) = 0;
 
     /**
      * @brief compute diagonal mass matrix
      *
      * @param dofHandler dofHandler associated with the current mesh
      * @param constraintMatrix constraints to be used
-     * @param sqrtMassVec output the value of square root of diagonal mass matrix 
+     * @param sqrtMassVec output the value of square root of diagonal mass matrix
      * @param invSqrtMassVec output the value of inverse square root of diagonal mass matrix
      */
     virtual void computeMassVector(const dealii::DoFHandler<3>    & dofHandler,
@@ -83,42 +100,54 @@ namespace dftfe{
      * change inside the function it is scaled and rescaled back to
      * avoid duplication of memory and hence is not const)
      * @param numberComponents number of wavefunctions associated with a given node
-     * @param macroCellMap precomputed cell-local index id map of the multi-wavefuncton field
-     * @param cellMap precomputed cell-local index id map of the multi-wavefunction field
      * @param Y Vector containing multi-component fields after operator times vectors product
      */
-#ifdef USE_COMPLEX
-    virtual void HX(dealii::parallel::distributed::Vector<std::complex<double> > & X,
+    virtual void HX(dealii::parallel::distributed::Vector<dataTypes::number> & X,
 		    const unsigned int numberComponents,
-		    const std::vector<std::vector<dealii::types::global_dof_index> > & macroCellMap,
-		    const std::vector<std::vector<dealii::types::global_dof_index> > & cellMap,
-		    bool scaleFlag,
-		    const std::complex<double> scalar,
-		    dealii::parallel::distributed::Vector<std::complex<double> > & Y) = 0;
-#else
-    virtual void HX(dealii::parallel::distributed::Vector<double> & X,
-		    const unsigned int numberComponents,
-		    const std::vector<std::vector<dealii::types::global_dof_index> > & macroCellMap,
-		    const std::vector<std::vector<dealii::types::global_dof_index> > & cellMap,
-		    bool scaleFlag,
-		    const double scalar,
-		    dealii::parallel::distributed::Vector<double> & Y) = 0;
-#endif
+		    const bool scaleFlag,
+		    const dataTypes::number scalar,
+		    dealii::parallel::distributed::Vector<dataTypes::number> & Y) = 0;
+
 
 
     /**
-     * @brief Compute projection of the operator into orthogonal basis
+     * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
      *
-     * @param X given orthogonal basis vectors
-     * @return ProjMatrix projected small matrix 
+     * @param X Vector of Vectors containing multi-wavefunction fields (though X does not
+     * change inside the function it is scaled inside HX function and rescaled back to
+     * avoid duplication of memory and hence is not const)
+     * @param numberComponents number of wavefunctions associated with a given node
+     * @param ProjMatrix projected small matrix
      */
-#ifdef USE_COMPLEX
-    virtual void XtHX(std::vector<vectorType> & X,
-		      std::vector<std::complex<double> > & ProjHam) = 0;
-#else
-    virtual void XtHX(std::vector<vectorType> & X,
-		      std::vector<double> & ProjHam) = 0;
+    virtual void XtHX(dealii::parallel::distributed::Vector<dataTypes::number> & X,
+		      const unsigned int numberComponents,
+		      std::vector<dataTypes::number> & ProjHam) = 0;
+
+#ifdef DEAL_II_WITH_SCALAPACK
+    /**
+     * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
+     *
+     * @param X Vector of Vectors containing multi-wavefunction fields
+     * @param numberComponents number of wavefunctions associated with a given node
+     * @param processGrid two-dimensional processor grid corresponding to the parallel projHamPar
+     * @param projHamPar parallel ScaLAPACKMatrix which stores the computed projection
+     * of the operation into the given subspace
+     */
+    virtual void XtHX(const dealii::parallel::distributed::Vector<dataTypes::number> & X,
+		      const unsigned int numberComponents,
+		      const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+		      dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar) = 0;
+
 #endif
+    /**
+     * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
+     *
+     * @param  X Vector of Vectors containing the basis vectors spanning the subspace
+     * @return ProjMatrix projected small matrix
+     */
+    virtual void XtHX(std::vector<vectorType> & X,
+		      std::vector<dataTypes::number> & ProjHam) = 0;
+
 
 
     /**
@@ -165,7 +194,7 @@ namespace dftfe{
      */
     dftUtils::constraintMatrixInfo * getOverloadedConstraintMatrix() const;
 
-    
+
     /**
      * @brief Get matrix free data
      *
@@ -180,10 +209,10 @@ namespace dftfe{
      * @return mpi communicator
      */
     const MPI_Comm & getMPICommunicator() const;
-  
+
 
   protected:
-    
+
     /**
      * @brief default Constructor.
      */

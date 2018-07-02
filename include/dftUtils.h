@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018  The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -27,7 +27,7 @@
 
 namespace dftfe {
 
-    namespace dftUtils
+  namespace dftUtils
     {
       /** @brief Calculates partial occupancy of the atomic orbital using
        *  Fermi-Dirac smearing.
@@ -53,13 +53,35 @@ namespace dftfe {
        *
        *  @param  dataOut  DataOut class object
        *  @param  intralpoolcomm mpi communicator of domain decomposition inside each pool
-       *  @param  interpoolcomm  mpi communicator across pools
+       *  @param  interpoolcomm  mpi communicator across k point pools
+       *  @param  interBandGroupComm  mpi communicator across band groups
        *  @param  fileName
        */
        void writeDataVTUParallelLowestPoolId(const dealii::DataOut<3> & dataOut,
 					     const MPI_Comm & intrapoolcomm,
 					     const MPI_Comm & interpoolcomm,
+					     const MPI_Comm &interBandGroupComm,
 					     const std::string & fileName);
+
+      /** @brief Create index vector which is used for band parallelization
+       *
+       *  @[in]param  interBandGroupComm  mpi communicator across band groups
+       *  @[in]param  numBands
+       *  @[out]param bandGroupLowHighPlusOneIndices
+       */
+       void createBandParallelizationIndices(const MPI_Comm &interBandGroupComm,
+	                                     const unsigned int numBands,
+					     std::vector<unsigned int> & bandGroupLowHighPlusOneIndices);
+
+      /** @brief Wrapper to print current memory usage (prints only the maximum across mpiComm)
+       * using PetscMemoryGetCurrentUsage
+       *
+       *  @[in]param mpiComm  mpi communicator across which the memory printing will
+       *  be synchronized
+       *  @[in]param message message to be printed alongwith the memory usage
+       */
+       void printCurrentMemoryUsage(const MPI_Comm &mpiComm,
+	                            const std::string message);
 
       /**
        * A class to split the given communicator into a number of pools
@@ -80,11 +102,6 @@ namespace dftfe {
 	 */
 	MPI_Comm &get_intrapool_comm();
 
-	/**
-	 * FIXME: document
-	 */
-	MPI_Comm &get_replica_comm();
-
       private:
 	/// FIXME: document
 	MPI_Comm interpoolcomm;
@@ -92,8 +109,6 @@ namespace dftfe {
 	/// FIXME: document
 	MPI_Comm intrapoolcomm;
 
-	/// FIXME: document
-	MPI_Comm mpi_comm_replica;
       };
 
       /// Exception handler for not implemented functionality

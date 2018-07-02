@@ -41,7 +41,6 @@ void dftClass<FEOrder>::computeElectrostaticEnergyPRefined()
    dealii::ConstraintMatrix constraintsPRefined;
    constraintsPRefined.reinit(locallyRelevantDofs);
    dealii::DoFTools::make_hanging_node_constraints(dofHandlerPRefined, constraintsPRefined);
-#ifdef USE_COMPLEX
    std::vector<std::vector<double> > unitVectorsXYZ;
    unitVectorsXYZ.resize(3);
 
@@ -66,7 +65,6 @@ void dftClass<FEOrder>::computeElectrostaticEnergyPRefined()
          GridTools::collect_periodic_faces(dofHandlerPRefined, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector2,offsetVectors[i]);
 
    dealii::DoFTools::make_periodicity_constraints<dealii::DoFHandler<3> >(periodicity_vector2, constraintsPRefined);
-#endif
    constraintsPRefined.close();
 
    moveMeshToAtoms(tria);
@@ -84,11 +82,9 @@ void dftClass<FEOrder>::computeElectrostaticEnergyPRefined()
    dealii::ConstraintMatrix constraintsForTotalPotential;
    constraintsForTotalPotential.reinit(locallyRelevantDofs);
 
-#ifdef USE_COMPLEX
    locatePeriodicPinnedNodes(dofHandlerPRefined,
 	                     constraintsPRefined,
 	                     constraintsForTotalPotential);
-#endif
    applyHomogeneousDirichletBC(dofHandlerPRefined,constraintsForTotalPotential);
    constraintsForTotalPotential.close();
 

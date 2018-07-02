@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author  Phani Motamarri (2018)
+// @author  Phani Motamarri
 //
 #include <constraintMatrixInfo.h>
 #include <linearAlgebraOperations.h>
@@ -29,12 +29,13 @@ namespace dftUtils
   //wrapper function to call blas function daxpy or zapxy depending
   //on the data type (complex or double)
   //
-  void callaxpy(const int *n,
+
+  void callaxpy(const unsigned int *n,
 		const double *alpha,
 		double *x,
-		const int *incx,
+		const unsigned int *incx,
 		double *y,
-		const int *incy)
+		const unsigned int *incy)
   {
     daxpy_(n,
 	   alpha,
@@ -44,12 +45,12 @@ namespace dftUtils
 	   incy);
   }
 
-  void callaxpy(const int *n,
+  void callaxpy(const unsigned int *n,
 		const std::complex<double> *alpha,
 		std::complex<double> *x,
-		const int *incx,
+		const unsigned int *incx,
 		std::complex<double> *y,
-		const int *incy)
+		const unsigned int *incy)
   {
     zaxpy_(n,
 	   alpha,
@@ -106,7 +107,7 @@ namespace dftUtils
 	    for(unsigned int j = 0; j < rowData->size();++j)
 	      {
 		Assert((*rowData)[j].first<partitioner->size(),
-	    	   dealii::ExcMessage("Index out of bounds")); 
+	    	   dealii::ExcMessage("Index out of bounds"));
 		d_columnIdsGlobal.push_back((*rowData)[j].first);
 		d_columnIdsLocal.push_back(partitioner->global_to_local((*rowData)[j].first));
 		d_columnValues.push_back((*rowData)[j].second);
@@ -114,7 +115,7 @@ namespace dftUtils
 	  }
       }
 
-    
+
     for(dealii::IndexSet::ElementIterator it = ghost_dofs.begin(); it != ghost_dofs.end();++it)
       {
 	if(constraintMatrixData.is_constrained(*it))
@@ -128,14 +129,14 @@ namespace dftUtils
 	    for(unsigned int j = 0; j < rowData->size();++j)
 	      {
 		Assert((*rowData)[j].first<partitioner->size(),
-		       dealii::ExcMessage("Index out of bounds")); 
+		       dealii::ExcMessage("Index out of bounds"));
 		d_columnIdsGlobal.push_back((*rowData)[j].first);
 		d_columnIdsLocal.push_back(partitioner->global_to_local((*rowData)[j].first));
 		d_columnValues.push_back((*rowData)[j].second);
 	      }
 	  }
       }
-    
+
 
 
   }
@@ -165,8 +166,8 @@ namespace dftUtils
 	d_localIndexMapUnflattenedToFlattened[ilocalDof] = flattenedPartitioner->global_to_local(globalIndex*blockSize);
       }
 
-  } 
-  
+  }
+
 
 
 
@@ -199,25 +200,27 @@ namespace dftUtils
 
 
     unsigned int count = 0;
-    const int inc = 1;
-    const int N = blockSize;
-    
+    const unsigned int inc = 1;
+    std::vector<T> newValuesBlock(blockSize,0.0);
     for(unsigned int i = 0; i < d_rowIdsLocal.size(); ++i)
       {
-	std::vector<T> newValuesBlock(blockSize,d_inhomogenities[i]);
+        std::fill(newValuesBlock.begin(),
+	          newValuesBlock.end(),
+		  d_inhomogenities[i]);
+
 	const dealii::types::global_dof_index startingLocalDofIndexRow = d_localIndexMapUnflattenedToFlattened[d_rowIdsLocal[i]];
 
 	for(unsigned int j = 0; j < d_rowSizes[i]; ++j)
 	  {
 
 	    Assert(count<d_columnIdsGlobal.size(),
-	    	   dealii::ExcMessage("Overloaded distribute for flattened array has indices out of bounds")); 
+	    	   dealii::ExcMessage("Overloaded distribute for flattened array has indices out of bounds"));
 
 	    const dealii::types::global_dof_index startingLocalDofIndexColumn = d_localIndexMapUnflattenedToFlattened[d_columnIdsLocal[count]];
-	     
+
 	    T alpha = d_columnValues[count];
-	    
-	    callaxpy(&N,
+
+	    callaxpy(&blockSize,
 		     &alpha,
 		     fieldVector.begin()+startingLocalDofIndexColumn,
 		     &inc,
@@ -225,16 +228,15 @@ namespace dftUtils
 		     &inc);
 	    count++;
 	  }
-	
-	for(unsigned int k = 0; k < blockSize; ++k)
-	  {
-	    fieldVector.local_element(startingLocalDofIndexRow + k) = newValuesBlock[k];
-	  }
+
+	  std::copy(&newValuesBlock[0],
+	            &newValuesBlock[0]+blockSize,
+		    fieldVector.begin()+startingLocalDofIndexRow);
       }
   }
 
 
-  
+
 
 
   //
@@ -246,8 +248,7 @@ namespace dftUtils
 							const unsigned int blockSize) const
   {
     unsigned int count = 0;
-    const int N = blockSize;
-    const int inc = 1;
+    const unsigned int inc = 1;
     for(unsigned int i = 0; i < d_rowIdsLocal.size(); ++i)
       {
 	const dealii::types::global_dof_index startingLocalDofIndexRow = d_localIndexMapUnflattenedToFlattened[d_rowIdsLocal[i]];
@@ -257,13 +258,13 @@ namespace dftUtils
 	    const dealii::types::global_dof_index startingLocalDofIndexColumn=d_localIndexMapUnflattenedToFlattened[d_columnIdsLocal[count]];
 
 	    T alpha = d_columnValues[count];
-	    callaxpy(&N,
+	    callaxpy(&blockSize,
 		     &alpha,
 		     fieldVector.begin()+startingLocalDofIndexRow,
 		     &inc,
 		     fieldVector.begin()+startingLocalDofIndexColumn,
 		     &inc);
-		     
+
 
 	    count++;
 	  }
@@ -271,14 +272,26 @@ namespace dftUtils
 	//
 	//set slave contribution to zero
 	//
-	for(unsigned int k = 0; k < blockSize; ++k)
-	  {
-	    fieldVector.local_element(startingLocalDofIndexRow + k) = 0.0;
-	  }
+	std::fill(fieldVector.begin()+startingLocalDofIndexRow,
+		  fieldVector.begin()+startingLocalDofIndexRow+blockSize,
+		  0.0);
       }
   }
-							
 
+  template<typename T>
+  void constraintMatrixInfo::set_zero(dealii::parallel::distributed::Vector<T> & fieldVector,
+				      const unsigned int blockSize) const
+  {
+    for(unsigned int i = 0; i < d_rowIdsLocal.size(); ++i)
+      {
+	const dealii::types::global_dof_index startingLocalDofIndexRow = d_localIndexMapUnflattenedToFlattened[d_rowIdsLocal[i]];
+
+	//set constrained nodes to zero
+	std::fill(fieldVector.begin()+startingLocalDofIndexRow,
+		  fieldVector.begin()+startingLocalDofIndexRow+blockSize,
+		  0.0);
+      }
+  }
 
   //
   //
@@ -296,21 +309,14 @@ namespace dftUtils
   }
 
 
-#ifdef USE_COMPLEX
-  template void constraintMatrixInfo::distribute(dealii::parallel::distributed::Vector<std::complex<double> > & fieldVector,
+  template void constraintMatrixInfo::distribute(dealii::parallel::distributed::Vector<dataTypes::number> & fieldVector,
 						 const unsigned int blockSize) const;
 
-  template void constraintMatrixInfo::distribute_slave_to_master(dealii::parallel::distributed::Vector<std::complex<double> > & fieldVector,
+  template void constraintMatrixInfo::distribute_slave_to_master(dealii::parallel::distributed::Vector<dataTypes::number> & fieldVector,
 						 const unsigned int blockSize) const;
 
-#else
-  template void constraintMatrixInfo::distribute(dealii::parallel::distributed::Vector<double> & fieldVector,
+  template void constraintMatrixInfo::set_zero(dealii::parallel::distributed::Vector<dataTypes::number> & fieldVector,
 						 const unsigned int blockSize) const;
-
-  template void constraintMatrixInfo::distribute_slave_to_master(dealii::parallel::distributed::Vector<double> & fieldVector,
-						 const unsigned int blockSize) const;
-#endif
-
 
 }
 

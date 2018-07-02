@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -27,7 +27,7 @@ double dftClass<FEOrder>::mixing_simple()
 {
   double normValue=0.0;
   QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
-  FEValues<3> fe_values (FE, quadrature, update_values | update_JxW_values | update_quadrature_points);
+  FEValues<3> fe_values (FE, quadrature, update_JxW_values);
   const unsigned int num_quad_points = quadrature.size();
 
 
@@ -91,7 +91,7 @@ template<unsigned int FEOrder>
 double dftClass<FEOrder>::mixing_anderson(){
   double normValue=0.0;
   QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
-  FEValues<3> fe_values (FE, quadrature, update_values | update_JxW_values | update_quadrature_points);
+  FEValues<3> fe_values (FE, quadrature, update_JxW_values);
   const unsigned int num_quad_points = quadrature.size();
 
 
@@ -229,7 +229,7 @@ double dftClass<FEOrder>::mixing_simple_spinPolarized()
 {
   double normValue=0.0;
   QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
-  FEValues<3> fe_values (FE, quadrature, update_values | update_JxW_values | update_quadrature_points);
+  FEValues<3> fe_values (FE, quadrature,update_JxW_values);
   const unsigned int num_quad_points = quadrature.size();
 
    //create new rhoValue tables
@@ -320,7 +320,7 @@ template<unsigned int FEOrder>
 double dftClass<FEOrder>::mixing_anderson_spinPolarized(){
   double normValue=0.0;
   QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
-  FEValues<3> fe_values (FE, quadrature, update_values | update_JxW_values | update_quadrature_points);
+  FEValues<3> fe_values (FE, quadrature,update_JxW_values);
   const unsigned int num_quad_points = quadrature.size();
 
 

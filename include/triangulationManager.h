@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018  The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,23 +13,6 @@
 //
 // ---------------------------------------------------------------------
 
-/** @file triangulationManager.h
- *
- *  @brief This class generates and stores adaptive finite element meshes for the real-space dft problem.
- *
- *  The class uses an adpative mesh generation strategy to generate finite element mesh for given domain
- *  based on five input parameters: BASE MESH SIZE, ATOM BALL RADIUS, MESH SIZE ATOM BALL, MESH SIZE NEAR ATOM
- *  and MAX REFINEMENT STEPS (Refer to utils/dftParameters.cc for their corresponding internal variable names).
- *  Additionaly, this class also applies periodicity to mesh. The class stores two types of meshes: moved
- *  and unmoved. They are essentially the same meshes, except that we move the nodes of the moved mesh
- *  (in the meshMovement class) such that the atoms lie on the nodes. However, once the mesh is moved, dealii
- *  has issues using that mesh for further refinement, which is why we also carry an unmoved triangulation.
- *  There are other places where we require an unmoved triangulation, for example in projection of solution
- *  fields from the previous ground state in stucture optimization.
- *
- *  @author Phani Motamarri, Sambit Das, Krishnendu Ghosh
- */
-
 #ifndef triangulationManager_H_
 #define triangulationManager_H_
 #include "headers.h"
@@ -38,17 +21,34 @@ namespace dftfe  {
 
     using namespace dealii;
 
-
+    /**
+     * @brief This class generates and stores adaptive finite element meshes for the real-space dft problem.
+     *
+     *  The class uses an adpative mesh generation strategy to generate finite element mesh for given domain
+     *  based on five input parameters: BASE MESH SIZE, ATOM BALL RADIUS, MESH SIZE ATOM BALL, MESH SIZE NEAR ATOM
+     *  and MAX REFINEMENT STEPS (Refer to utils/dftParameters.cc for their corresponding internal variable names).
+     *  Additionaly, this class also applies periodicity to mesh. The class stores two types of meshes: moved
+     *  and unmoved. They are essentially the same meshes, except that we move the nodes of the moved mesh
+     *  (in the meshMovement class) such that the atoms lie on the nodes. However, once the mesh is moved, dealii
+     *  has issues using that mesh for further refinement, which is why we also carry an unmoved triangulation.
+     *  There are other places where we require an unmoved triangulation, for example in projection of solution
+     *  fields from the previous ground state in stucture optimization.
+     *
+     *  @author Phani Motamarri, Sambit Das, Krishnendu Ghosh
+     */
     class triangulationManager
     {
 
      public:
     /** @brief Constructor.
      *
-     *  @param mpi_comm_replica mpi_communicator of the current pool
-     *  @param interpoolcomm mpi_communicator across pools (required to synchronize mesh generation)
+     * @param mpi_comm_replica mpi_communicator of the current pool
+     * @param interpool_comm mpi interpool communicator over k points
+     * @param interBandGroupComm mpi interpool communicator over band groups
      */
-      triangulationManager(const MPI_Comm &mpi_comm_replica,const MPI_Comm &interpoolcomm);
+      triangulationManager(const MPI_Comm &mpi_comm_replica,
+	                   const MPI_Comm &interpoolcomm,
+			   const MPI_Comm &interBandGroupComm);
 
 
       /**
@@ -154,13 +154,17 @@ namespace dftfe  {
      *  @param [input]nComponents number of components of the dofHandler on which solution
      *  vectors are based upon
      *  @param [input]solutionVectors vector of parallel distributed solution vectors to be serialized
-     *  @param [input]interpoolComm interpool communicator to ensure serialization happens only in pool
+     *  @param [input]interpoolComm This communicator is used to ensure serialization
+     *  happens only in k point pool
+     *  @param [input]interBandGroupComm This communicator to ensure serialization happens
+     *  only in band group
      */
      void saveTriangulationsSolutionVectors
 	     (const unsigned int feOrder,
 	      const unsigned int nComponents,
 	      const std::vector< const dealii::parallel::distributed::Vector<double> * > & solutionVectors,
-	      const MPI_Comm & interpoolComm);
+	      const MPI_Comm & interpoolComm,
+	      const MPI_Comm &interBandGroupComm);
 
     /**
      * @brief de-serialize the triangulations and the associated solution vectors
@@ -180,11 +184,15 @@ namespace dftfe  {
      * @brief serialize the triangulations and the associated cell quadrature data container
      *
      *  @param [input]cellQuadDataContainerIn container of input cell quadrature data to be serialized
-     *  @param [input]interpoolComm interpool communicator to ensure serialization happens only in pool
+     *  @param [input]interpoolComm This communicator is used to ensure serialization
+     *  happens only in k point pool
+     *  @param [input]interBandGroupComm This communicator to ensure serialization happens
+     *  only in band group
      */
      void saveTriangulationsCellQuadData
 	      (const std::vector<const std::map<dealii::CellId, std::vector<double> > *> & cellQuadDataContainerIn,
-	       const MPI_Comm & interpoolComm);
+	       const MPI_Comm & interpoolComm,
+	       const MPI_Comm &interBandGroupComm);
 
     /**
      * @brief de-serialize the triangulations and the associated cell quadrature data container
@@ -220,6 +228,14 @@ namespace dftfe  {
       void generateCoarseMesh(parallel::distributed::Triangulation<3>& parallelTriangulation);
 
     /**
+     * @brief internal function which sets refinement flags based on a custom created algorithm
+     *
+     */
+      void refinementAlgorithmA(parallel::distributed::Triangulation<3>& parallelTriangulation,
+	                        std::vector<unsigned int> & locallyOwnedCellsRefineFlags,
+				std::map<dealii::CellId,unsigned int> & cellIdToCellRefineFlagMapLocal);
+
+    /**
      * @brief internal function which refines the serial mesh based on refinement flags from parallel mesh.
      * This ensures that we get the same mesh in serial and parallel.
      *
@@ -250,12 +266,14 @@ namespace dftfe  {
       std::vector<std::vector<double> > d_atomPositions;
       std::vector<std::vector<double> > d_imageAtomPositions;
       std::vector<std::vector<double> > d_domainBoundingVectors;
+      const unsigned int d_max_refinement_steps=20;
 
       //
       //parallel objects
       //
       const MPI_Comm mpi_communicator;
       const MPI_Comm interpoolcomm;
+      const MPI_Comm interBandGroupComm;
       const unsigned int this_mpi_process;
       const unsigned int n_mpi_processes;
       dealii::ConditionalOStream   pcout;

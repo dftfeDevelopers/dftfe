@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018  The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -28,15 +28,15 @@ namespace dftfe {
     // forward declaration
     template <unsigned int T> class dftClass;
 
-    /** @file force.h
-     *  @brief computes configurational forces in KSDFT
+    /**
+     * @brief computes configurational forces in KSDFT
      *
-     *  This class computes and stores the configurational forces corresponding to geometry optimization.
-     *  It uses the formulation in the paper by Motamarri et.al. (doi = {10.1103/PhysRevB.97.165132})
-     *  which provides an unified approach to atomic forces corresponding to internal atomic relaxation
-     *  and cell stress corresponding to cell relaxation.
+     * This class computes and stores the configurational forces corresponding to geometry optimization.
+     * It uses the formulation in the paper by Motamarri et.al. (doi = {10.1103/PhysRevB.97.165132})
+     * which provides an unified approach to atomic forces corresponding to internal atomic relaxation
+     * and cell stress corresponding to cell relaxation.
      *
-     *  @author Sambit Das
+     * @author Sambit Das
      */
     template <unsigned int FEOrder>
     class forceClass
@@ -248,6 +248,11 @@ namespace dftfe {
 						     std::vector<std::vector<std::complex<double> > > & projectorKetTimesPsiTimesVComplex,
 						     const unsigned int kPointIndex);
 
+      void computeNonLocalProjectorKetTimesPsiTimesVFlattened
+                           (const dealii::parallel::distributed::Vector<dataTypes::number> &src,
+			    const unsigned int numberWaveFunctions,
+			    std::vector<std::vector<dataTypes::number> > & projectorKetTimesPsiTimesV,
+			    const unsigned int kPointIndex);
 
       /// Parallel distributed vector field which stores the configurational force for each fem node corresponding
       /// to linear shape function generator (see equations 52-53 in (https://arxiv.org/abs/1712.05535)).
