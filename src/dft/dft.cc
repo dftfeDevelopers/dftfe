@@ -354,8 +354,12 @@ namespace dftfe {
   	for(unsigned int i = 0; i < atomLocationsFractional.size(); ++i)
 	  {
 	    for(unsigned int idim = 0; idim < 3; ++idim)
+	    {
 	      if (periodicBc[idim])
 	        AssertThrow(atomLocationsFractional[i][2+idim]>-tol && atomLocationsFractional[i][2+idim]<1.0+tol,ExcMessage("DFT-FE Error: periodic direction fractional coordinates doesn't lie in [0,1]. Please check input fractional coordinates, or if this is an ionic relaxation step, please check the corresponding algorithm."));
+              if (!periodicBc[idim])
+		AssertThrow(atomLocationsFractional[i][2+idim]>tol && atomLocationsFractional[i][2+idim]<1.0-tol,ExcMessage("DFT-FE Error: non-periodic direction fractional coordinates doesn't lie in (0,1). Please check input fractional coordinates, or if this is an ionic relaxation step, please check the corresponding algorithm."));
+	    }
 	  }
 
 	generateImageCharges(d_pspCutOff,
