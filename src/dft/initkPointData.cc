@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -50,15 +50,13 @@ std::vector<std::vector<double> > getReciprocalLatticeVectors(const std::vector<
   unsigned int periodicitySum = 0 ;
   std::vector<double> cross(3,0.0) ;
   std::vector<std::vector<double> > latticeVectorsToBeUsed ;
-  std::vector<unsigned int> j ;
-  unsigned int jNot ;
+  std::vector<unsigned int> latticeVectorsToBeUsedIndex ;
   double scalarConst ;
   std::vector<double> unitVectorOutOfPlane(3, 0.0) ;
   //
   for(unsigned int i = 0; i < 3; ++i)
      periodicitySum += periodicity[i] ;
   //
-  //pcout << periodicitySum << std::endl ; 
   switch (periodicitySum)
   {
   //=========================================================================================================================================
@@ -84,10 +82,8 @@ std::vector<std::vector<double> > getReciprocalLatticeVectors(const std::vector<
      {
       if (periodicity[i]==1) {
         latticeVectorsToBeUsed.push_back(latticeVectors [i] ) ;
-        j.push_back(i) ;
+        latticeVectorsToBeUsedIndex.push_back(i) ;
         }
-      else
-	jNot = i ;
      }
   //
   cross=internaldft::cross_product(latticeVectorsToBeUsed[0],latticeVectorsToBeUsed[1]);	
@@ -99,11 +95,8 @@ std::vector<std::vector<double> > getReciprocalLatticeVectors(const std::vector<
      cross=internaldft::cross_product(latticeVectorsToBeUsed[1-i], unitVectorOutOfPlane);
      scalarConst = latticeVectorsToBeUsed[i][0]*cross[0] + latticeVectorsToBeUsed[i][1]*cross[1] + latticeVectorsToBeUsed[i][2]*cross[2];
      for (unsigned int d = 0; d < 3; ++d)
-	reciprocalLatticeVectors[j[i]][d] = (2.*M_PI/scalarConst)*cross[d];
+	reciprocalLatticeVectors[latticeVectorsToBeUsedIndex[i]][d] = (2.*M_PI/scalarConst)*cross[d];
      }
-  // setting the third reciprocal vector here is redundant; still we set it to be the unit vector along out of plane
-  for (unsigned int d = 0; d < 3; ++d)
-         reciprocalLatticeVectors[jNot][d] = unitVectorOutOfPlane[d] ;
   break ;
   //============================================================================================================================================
   case 1 : //				two directions non-periodic, one direction periodic

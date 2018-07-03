@@ -97,7 +97,7 @@ namespace dftfe {
     pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
     computing_timer (pcout,
 		     dftParameters::reproducible_output
-		     || dftParameters::verbosity<2? TimerOutput::never : TimerOutput::summary,
+		     || dftParameters::verbosity<4? TimerOutput::never : TimerOutput::summary,
 		     TimerOutput::wall_times),
     computingTimerStandard(pcout,
 		     dftParameters::reproducible_output
@@ -186,6 +186,7 @@ namespace dftfe {
   template<unsigned int FEOrder>
   void dftClass<FEOrder>::set()
   {
+    computingTimerStandard.enter_section("Pre-processing step 1");
     if (dftParameters::verbosity>=4)
       dftUtils::printCurrentMemoryUsage(mpi_communicator,
 			      "Entered call to set");
@@ -289,7 +290,7 @@ namespace dftfe {
       pseudoUtils::convert(dftParameters::pseudoPotentialFile);
 
     MPI_Barrier(MPI_COMM_WORLD);
-
+    computingTimerStandard.exit_section("Pre-processing step 1");
   }
 
   //dft pseudopotential init
@@ -377,7 +378,7 @@ namespace dftfe {
 #ifdef USE_COMPLEX
 	recomputeKPointCoordinates();
 #endif
-	if (dftParameters::verbosity>=2)
+	if (dftParameters::verbosity>=4)
 	  {
 	    //FIXME: Print all k points across all pools
 	    pcout<<"-------------------k points cartesian coordinates and weights-----------------------------"<<std::endl;
@@ -417,7 +418,7 @@ namespace dftfe {
   template<unsigned int FEOrder>
   void dftClass<FEOrder>::init (const unsigned int usePreviousGroundStateFields)
   {
-    computingTimerStandard.enter_section("Pre-processing steps");
+    computingTimerStandard.enter_section("Pre-processing step 2");
 
     if (dftParameters::verbosity>=4)
       dftUtils::printCurrentMemoryUsage(mpi_communicator,
@@ -496,13 +497,13 @@ namespace dftfe {
     if (dftParameters::verbosity>=4)
       dftUtils::printCurrentMemoryUsage(mpi_communicator,
 	                      "initPseudopotential completed");
-    computingTimerStandard.exit_section("Pre-processing steps");
+    computingTimerStandard.exit_section("Pre-processing step 2");
   }
 
   template<unsigned int FEOrder>
   void dftClass<FEOrder>::initNoRemesh()
   {
-    computingTimerStandard.enter_section("Pre-processing steps");
+    computingTimerStandard.enter_section("Pre-processing step 2");
     initImageChargesUpdateKPoints();
 
     //
@@ -518,7 +519,7 @@ namespace dftfe {
     //reinitialize pseudopotential related data structures
     //
     initPseudoPotentialAll();
-    computingTimerStandard.exit_section("Pre-processing steps");
+    computingTimerStandard.exit_section("Pre-processing step 2");
   }
 
   //
@@ -774,7 +775,7 @@ namespace dftfe {
 		      dftUtils::printCurrentMemoryUsage(mpi_communicator,
 					      "Hamiltonian Matrix computed");
 
-		    for(unsigned int j = 0; j < dftParameters::numPass; ++j)
+		    for(unsigned int j = 0; j < 1; ++j)
 		      {
 			if (dftParameters::verbosity>=2)
 			  pcout<<"Beginning Chebyshev filter pass "<< j+1<< " for spin "<< s+1<<std::endl;
@@ -840,7 +841,7 @@ namespace dftfe {
 		      {
 			kohnShamDFTEigenOperator.reinitkPointIndex(kPoint);
 			if (dftParameters::verbosity>=2)
-			  pcout<< "Beginning Chebyshev filter pass "<< dftParameters::numPass+count<< " for spin "<< s+1<<std::endl;;
+			  pcout<< "Beginning Chebyshev filter pass "<< 1+count<< " for spin "<< s+1<<std::endl;;
 
 			computing_timer.enter_section("Hamiltonian Matrix Computation");
 			kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint);
@@ -877,7 +878,7 @@ namespace dftfe {
 		  pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
 
 	      }
-	      numberChebyshevSolvePasses=dftParameters::numPass+count-1;
+	      numberChebyshevSolvePasses=count;
 	  }
 	else
 	  {
@@ -911,7 +912,7 @@ namespace dftfe {
 		if (dftParameters::verbosity>=4)
 		      dftUtils::printCurrentMemoryUsage(mpi_communicator,
 					      "Hamiltonian Matrix computed");
-		for(unsigned int j = 0; j < dftParameters::numPass; ++j)
+		for(unsigned int j = 0; j < 1; ++j)
 		  {
 		    if (dftParameters::verbosity>=2)
 		      pcout<< "Beginning Chebyshev filter pass "<< j+1<<std::endl;
@@ -956,7 +957,7 @@ namespace dftfe {
 		  {
 		    kohnShamDFTEigenOperator.reinitkPointIndex(kPoint);
 		    if (dftParameters::verbosity>=2)
-		      pcout<< "Beginning Chebyshev filter pass "<< dftParameters::numPass+count<<std::endl;
+		      pcout<< "Beginning Chebyshev filter pass "<< 1+count<<std::endl;
 
 		    computing_timer.enter_section("Hamiltonian Matrix Computation");
 		    kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint);
@@ -980,7 +981,7 @@ namespace dftfe {
 		if (dftParameters::verbosity>=2)
 		  pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
 	      }
-              numberChebyshevSolvePasses=dftParameters::numPass+count-1;
+              numberChebyshevSolvePasses=count;
 	  }
 	computing_timer.enter_section("compute rho");
 #ifdef USE_COMPLEX

@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -35,9 +35,6 @@ void eigenClass<FEOrder>::preComputeShapeFunctionGradientIntegrals()
   //resize data members
   //
   d_cellShapeFunctionGradientIntegral.resize(numberMacroCells);
-
-  if (dftParameters::cacheShapeGradData)
-    d_cellShapeFunctionGradientValue.reinit(TableIndices<3>(numberMacroCells,numberDofsPerElement,numberQuadraturePoints));
 
   d_shapeFunctionValue.resize(numberQuadraturePoints*numberDofsPerElement,0.0);
   std::vector<std::vector<std::vector<Tensor<1,3,double > > > > tempShapeFuncGradData;
@@ -76,16 +73,6 @@ void eigenClass<FEOrder>::preComputeShapeFunctionGradientIntegrals()
 
 	    }//i node loop
 
-          if (dftParameters::cacheShapeGradData)
-	    {
-	      tempShapeFuncGradData[iCell].resize(numberDofsPerElement);
-	      for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
-		{
-		  tempShapeFuncGradData[iCell][iNode].resize(numberQuadraturePoints);
-		  for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
-		      tempShapeFuncGradData[iCell][iNode][q_point] = fe_values.shape_grad(iNode,q_point);
-		}
-	    }
 
 
 	  if(iMacroCell == 0 && iCell == 0)
@@ -95,21 +82,6 @@ void eigenClass<FEOrder>::preComputeShapeFunctionGradientIntegrals()
 
 	}//icell loop
 
-        if (dftParameters::cacheShapeGradData)
-	  for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
-	      for(unsigned int q_point = 0; q_point < numberQuadraturePoints; ++q_point)
-		{
-		  Tensor<1,3,VectorizedArray<double> > gradTemp;
-		  for(unsigned int iCell = 0; iCell < n_sub_cells; ++iCell)
-		     for(unsigned int idim = 0; idim < 3; ++idim)
-		        gradTemp[idim][iCell] = tempShapeFuncGradData[iCell][iNode][q_point][idim];
-
-		  d_cellShapeFunctionGradientValue(iMacroCell,iNode,q_point) = gradTemp;
-
-		}//q_point loop
-
     }//macrocell loop
 
 }
-
-

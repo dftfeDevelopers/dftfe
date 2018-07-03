@@ -9,7 +9,7 @@ subsection Geometry
   set NATOMS=2
   set NATOM TYPES=1
   set ATOMIC COORDINATES FILE = @SOURCE_DIR@/hcpMgPrim_coordinates.inp
-  set DOMAIN BOUNDING VECTORS FILE = @SOURCE_DIR@/hcpMgPrim_domainBoundingVectors.inp
+  set DOMAIN VECTORS FILE = @SOURCE_DIR@/hcpMgPrim_domainBoundingVectors.inp
   
   subsection Optimization
     set ION FORCE=true
@@ -20,7 +20,7 @@ end
 
 
 subsection Boundary conditions
-  set SELF POTENTIAL ATOM BALL RADIUS = 1.6
+  set SELF POTENTIAL RADIUS = 1.6
   set PERIODIC1 = true
   set PERIODIC2 = true
   set PERIODIC3 = true
@@ -33,8 +33,8 @@ subsection Finite element mesh parameters
   subsection Auto mesh generation parameters
     set BASE MESH SIZE = 1.0 
     set ATOM BALL RADIUS = 2.0
-    set MESH SIZE ATOM BALL = 0.5
-    set MESH SIZE NEAR ATOM = 0.5 
+    set MESH SIZE AROUND ATOM = 0.5
+    set MESH SIZE AT ATOM = 0.5 
   end
 
 end
@@ -78,7 +78,7 @@ subsection SCF parameters
       set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 20
       set LOWER BOUND WANTED SPECTRUM = -10.0
       set CHEBYSHEV POLYNOMIAL DEGREE = 40
-      set CHEBYSHEV FILTER TOLERANCE=5e-3
+      set CHEBYSHEV FILTER TOLERANCE=1e-3
       set ORTHOGONALIZATION TYPE=GS
   end
 end

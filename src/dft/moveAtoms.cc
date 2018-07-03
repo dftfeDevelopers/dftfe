@@ -165,9 +165,13 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point<C
 
   if (!useHybridMeshUpdateScheme)//always remesh
   {
-	  pcout << "Auto remeshing and reinitialization of dft problem for new atom coordinates" << std::endl;
+          if (!dftParameters::reproducible_output)
+	    pcout << "Auto remeshing and reinitialization of dft problem for new atom coordinates" << std::endl;
+
 	  init(1);
-	  pcout << "...Reinitialization end" << std::endl;
+
+	  if (!dftParameters::reproducible_output)
+	    pcout << "...Reinitialization end" << std::endl;
   }
   else
   {

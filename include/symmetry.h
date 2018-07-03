@@ -11,15 +11,6 @@
 // The full text of the license can be found in the file LICENSE at
 // the top level of the DFT-FE distribution.
 //
-//============================================================================================================================================
-//============================================================================================================================================
-//               This is the header file for density symmetrization based on irreducible Brillouin zone calculation
-//	            Only relevant for calculations using multiple k-points and when USE GROUP SYMMETRY = true
-//
-//                                         Author : Krishnendu Ghosh, krisg@umich.edu
-//
-//============================================================================================================================================
-//============================================================================================================================================
 
 #ifndef symmetry_H_
 #define symmetry_H_
@@ -36,7 +27,13 @@
 
 namespace dftfe {
 
-    using namespace dealii;
+  using namespace dealii;
+
+ /**
+  * @brief density symmetrization based on irreducible Brillouin zone calculation, only relevant for calculations using point group symmetries
+  *
+  * @author Krishnendu Ghosh, krisg@umich.edu
+  */
 
     template <unsigned int FEOrder>
     class symmetryClass
@@ -71,8 +68,8 @@ namespace dftfe {
       void clearMaps();
       /**
        * quick snippet to go back and forth between crystal and cartesian coordinates
-       * @param p[in] point that is to be transformed
-       * @param flag[in] type of coordinate transformation, 1 takes crys. to cart. -1 takes cart. to crys. 
+       * @param [in] p  point that is to be transformed
+       * @param [in] flag type of coordinate transformation, 1 takes crys. to cart. -1 takes cart. to crys. 
        */
       Point<3> crys2cart(Point<3> p, int flag);
 

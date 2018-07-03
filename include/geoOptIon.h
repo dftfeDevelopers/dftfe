@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018  The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -23,11 +23,10 @@ namespace dftfe {
     using namespace dealii;
     template <unsigned int FEOrder> class dftClass;
 
-    /** @file geoOptIon.h
+    /**
+     * @brief problem class for atomic force relaxation solver.
      *
-     *  @brief problem class for atomic force relaxation solver.
-     *
-     *  @author Sambit Das
+     * @author Sambit Das
      */
     template <unsigned int FEOrder>
     class geoOptIon : public nonlinearSolverProblem

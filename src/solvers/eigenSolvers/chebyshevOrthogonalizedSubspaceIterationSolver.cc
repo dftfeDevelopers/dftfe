@@ -74,7 +74,7 @@ namespace dftfe{
     pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
     computing_timer(pcout,
 		    dftParameters::reproducible_output ||
-		    dftParameters::verbosity<2? dealii::TimerOutput::never : dealii::TimerOutput::summary,
+		    dftParameters::verbosity<4? dealii::TimerOutput::never : dealii::TimerOutput::summary,
 		    dealii::TimerOutput::wall_times)
   {
 
@@ -196,7 +196,7 @@ namespace dftfe{
     std::vector<int> blockLowIndices(totalNumberBlocks,0);
 
 #ifdef DEBUG
-    if (dftParameters::verbosity>=2)
+    if (dftParameters::verbosity>=4)
       pcout<<"numChebyshevFilterBlocksInsideBandGroup: "<<numChebyshevFilterBlocksInsideBandGroup<<std::endl;
 #endif
     unsigned int sizeCount=0;
@@ -205,7 +205,7 @@ namespace dftfe{
 	blockLowIndices[i]=sizeCount;
         sizeCount+=actualBlockSizes[i];
 #ifdef DEBUG
-        if (dftParameters::verbosity>=2)
+        if (dftParameters::verbosity>=4)
 	   pcout<< "blockId: "<< i << ", blockSize: "<< actualBlockSizes[i]<<", lowindex: "<<blockLowIndices[i]<<std::endl;
 #endif
     }
@@ -304,7 +304,7 @@ namespace dftfe{
 			  = dataTypes::number(0.0);
 		}
 #ifdef DEBUG
-                if (dftParameters::verbosity>=2)
+                if (dftParameters::verbosity>=4)
 		   std::cout<<"ibgrp: "<<ibgrp<< ", leftLowIndex: "<<leftLowIndex<<", rightHighIndexPlusOne: "<<rightHighIndexPlusOne<<std::endl;
 #endif
 	    }
@@ -355,7 +355,7 @@ namespace dftfe{
 
     }
 
-    if(dftParameters::verbosity >= 2)
+    if(dftParameters::verbosity >= 4)
       pcout<<"ChebyShev Filtering Done: "<<std::endl;
 
     if(dftParameters::orthogType.compare("LW") == 0)
@@ -404,7 +404,7 @@ namespace dftfe{
 	computing_timer.exit_section("Gram-Schmidt Orthogn Opt");
       }
 
-    if(dftParameters::verbosity >= 2)
+    if(dftParameters::verbosity >= 4)
       pcout<<"Orthogonalization Done: "<<std::endl;
 
     computing_timer.enter_section("Rayleigh-Ritz proj Opt");
@@ -415,7 +415,7 @@ namespace dftfe{
 					  eigenValues);
     computing_timer.exit_section("Rayleigh-Ritz proj Opt");
 
-    if(dftParameters::verbosity >= 2)
+    if(dftParameters::verbosity >= 4)
       {
 	pcout<<"Rayleigh-Ritz Done: "<<std::endl;
 	pcout<<std::endl;
@@ -428,7 +428,7 @@ namespace dftfe{
 						      residualNorms);
     computing_timer.exit_section("eigen vectors residuals opt");
 
-    if(dftParameters::verbosity >= 2)
+    if(dftParameters::verbosity >= 4)
       {
 	pcout<<"EigenVector Residual Computation Done: "<<std::endl;
 	pcout<<std::endl;

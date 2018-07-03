@@ -30,6 +30,27 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   dofHandler.distribute_dofs (FE);
   dofHandlerEigen.distribute_dofs (FEEigen);
 
+  pcout << std::endl<<"Finite element mesh information"<<std::endl;
+  pcout<<"-------------------------------------------------"<<std::endl;
+  pcout << "number of elements: "
+	<< dofHandler.get_triangulation().n_global_active_cells()
+	<< std::endl
+	<< "number of degrees of freedom: "
+	<< dofHandler.n_dofs()
+	<< std::endl;
+
+  double minElemLength=1e+6;
+  for (const auto &cell :  dofHandler.get_triangulation().active_cell_iterators() )
+    if (cell->is_locally_owned())
+      if (cell->minimum_vertex_distance()<minElemLength)
+	  minElemLength = cell->minimum_vertex_distance();
+
+  minElemLength=Utilities::MPI::min(minElemLength, mpi_communicator);
+
+  if (dftParameters::verbosity>=1)
+    pcout<< "Minimum mesh size: "<<minElemLength<<std::endl;
+  pcout<<"-------------------------------------------------"<<std::endl;
+
   if (dftParameters::verbosity>=4)
       dftUtils::printCurrentMemoryUsage(mpi_communicator,
 	                      "Dofs distributed again");

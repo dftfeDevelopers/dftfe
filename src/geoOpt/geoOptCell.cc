@@ -36,7 +36,7 @@ geoOptCell<FEOrder>::geoOptCell(dftClass<FEOrder>* _dftPtr,const MPI_Comm &mpi_c
   mpi_communicator (mpi_comm_replica),
   n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_comm_replica)),
   this_mpi_process (Utilities::MPI::this_mpi_process(mpi_comm_replica)),
-  pcout(std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
+  pcout(std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0 && !dftParameters::reproducible_output))
 {
 
 }

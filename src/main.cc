@@ -49,7 +49,7 @@ int main (int argc, char *argv[])
                          "\n"));
   //
   Utilities::MPI::MPI_InitFinalize mpi_initialization (argc, argv);
-  //          
+  //
   ParameterHandler prm;
   dftfe::dftParameters::declare_parameters (prm);
   const std::string parameter_file = argv[1];
@@ -61,6 +61,7 @@ int main (int argc, char *argv[])
   dftfe::dftUtils::Pool kPointPool(MPI_COMM_WORLD, dftfe::dftParameters::npool);
   dftfe::dftUtils::Pool bandGroupsPool(kPointPool.get_intrapool_comm(), dftfe::dftParameters::nbandGrps);
 
+  std::srand(dealii::Utilities::MPI::this_mpi_process(bandGroupsPool.get_intrapool_comm()));
   if (dftfe::dftParameters::verbosity>=1)
   {
       dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));

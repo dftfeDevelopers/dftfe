@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -92,7 +92,7 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
       //
       int numberPseudoWaveFunctions = d_numberPseudoAtomicWaveFunctions[iAtom];
 
-      if (dftParameters::verbosity>=3)
+      if (dftParameters::verbosity>=4)
       {
        pcout<<"Number of Pseudo wavefunctions: "<<std::endl;
        pcout<<numberPseudoWaveFunctions<<std::endl;
@@ -665,7 +665,7 @@ void dftClass<FEOrder>::initNonLocalPseudoPotential_OV()
 	  d_nonLocalPseudoPotentialConstants[iAtom][iPseudoWave] = denominatorData[atomLocations[iAtom][0]][projector[atomLocations[iAtom][0]][iPseudoWave]][projector[atomLocations[iAtom][0]][iPseudoWave]];
 	  //d_nonLocalPseudoPotentialConstants[iAtom][iPseudoWave] = 1.0/d_nonLocalPseudoPotentialConstants[iAtom][iPseudoWave];
 #ifdef DEBUG
-	  if (dftParameters::verbosity>=2)
+	  if (dftParameters::verbosity>=4)
 	     pcout<<"The value of 1/nlpConst corresponding to atom and lCount "<<iAtom<<' '<<
 	      iPseudoWave<<" is "<<d_nonLocalPseudoPotentialConstants[iAtom][iPseudoWave]<<std::endl;
 #endif
@@ -857,7 +857,7 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
 
       cumulativeSplineId += numberPseudoWaveFunctions;
 #ifdef DEBUG
-      if (dftParameters::verbosity>=3)
+      if (dftParameters::verbosity>=4)
          pcout<<"No.of non zero elements in the compact support of atom "<<iAtom<<" is "<<d_elementIteratorsInAtomCompactSupport[iAtom].size()<<std::endl;
 #endif
 

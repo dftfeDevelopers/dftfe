@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -351,8 +351,6 @@ namespace dftfe{
 
       ///storage for shapefunctions
       std::vector<double> d_shapeFunctionValue;
-      dealii::Table<3, dealii::Tensor<1,3,dealii::VectorizedArray<double> > > d_cellShapeFunctionGradientValue;
-
 
 
       ///storage for  matrix-free cell data

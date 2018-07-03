@@ -2,7 +2,7 @@ subsection Geometry
   set NATOMS=4
   set NATOM TYPES=1
   set ATOMIC COORDINATES FILE      = coordinates.inp           
-  set DOMAIN BOUNDING VECTORS FILE = domainBoundingVectors.inp
+  set DOMAIN VECTORS FILE = domainBoundingVectors.inp
   subsection Optimization
     set STRESS TOL            = 1e-6
     set CELL OPT              = true
@@ -18,17 +18,14 @@ subsection Boundary conditions
 end
 
 subsection Finite element mesh parameters
-  set POLYNOMIAL ORDER = 4
+  set POLYNOMIAL ORDER=4
   subsection Auto mesh generation parameters
-    set ATOM BALL RADIUS     = 2.0
-    set BASE MESH SIZE       = 4.0
-    set MESH SIZE ATOM BALL  = 0.5
-    set MESH SIZE NEAR ATOM  = 0.5
+    set MESH SIZE AROUND ATOM  = 0.6
   end
 end
 
 subsection Parallelization
-  set NPKPT=2
+  set NPKPT=4
 end
 
 subsection Brillouin zone k point sampling options

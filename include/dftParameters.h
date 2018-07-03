@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018  The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -59,16 +59,11 @@ namespace dftfe {
 
       extern bool reproducible_output;
 
-      extern bool electrostaticsPRefinement;
-
       extern bool writeSolutionFields;
 
       extern std::string startingWFCType;
       extern unsigned int chebyshevBlockSize;
       extern bool useBatchGEMM;
-      extern unsigned int chebyshevOMPThreads;
-      extern unsigned int orthoRROMPThreads;
-      extern bool cacheShapeGradData;
       extern unsigned int orthoRRWaveFuncBlockSize;
       extern unsigned int subspaceRotDofsBlockSize;
       extern bool enableSwitchToGS;
@@ -93,6 +88,11 @@ namespace dftfe {
        * Check and print parameters
        */
       void check_print_parameters(const dealii::ParameterHandler &prm);
+
+      /**
+       * Check and print parameters
+       */
+      void setHeuristicParameters();
 
     };
 

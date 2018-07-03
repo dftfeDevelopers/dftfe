@@ -92,7 +92,7 @@ namespace dftfe {
 	  //
 	  meshGenUtils::markPeriodicFacesNonOrthogonal(parallelTriangulation,d_domainBoundingVectors);
 
-	  if (dftParameters::verbosity>=2)
+	  if (dftParameters::verbosity>=4)
 	    pcout<<std::endl<< "Coarse triangulation number of elements: "<< parallelTriangulation.n_global_active_cells()<<std::endl;
     }
 
@@ -240,9 +240,9 @@ namespace dftfe {
 
 	      if (refineFlag)
 		{
-		  if(numLevels<dftParameters::n_refinement_steps)
+		  if(numLevels<d_max_refinement_steps)
 		    {
-		      if (dftParameters::verbosity>=3)
+		      if (dftParameters::verbosity>=4)
 			 pcout<< "refinement in progress, level: "<< numLevels<<std::endl;
 
 		      parallelTriangulation.execute_coarsening_and_refinement();
@@ -276,7 +276,7 @@ namespace dftfe {
 	  //
 	  //print out adaptive mesh metrics
 	  //
-	  if (dftParameters::verbosity>=2)
+	  if (dftParameters::verbosity>=4)
 	  {
             pcout<< "Triangulation generation summary: "<<std::endl<<" num elements: "<<parallelTriangulation.n_global_active_cells()<<", num refinement levels: "<<numLevels<<", min element length: "<<minElemLength<<std::endl;		  
 	  }
@@ -347,9 +347,9 @@ namespace dftfe {
 			           mpi_communicator,
 				   serialTriangulation) ;
 
-		  if(numLevels<dftParameters::n_refinement_steps)
+		  if(numLevels<d_max_refinement_steps)
 		    {
-		      if (dftParameters::verbosity>=3)
+		      if (dftParameters::verbosity>=4)
 			 pcout<< "refinement in progress, level: "<< numLevels<<std::endl;
 
 		      parallelTriangulation.execute_coarsening_and_refinement();
@@ -384,7 +384,7 @@ namespace dftfe {
 	  //
 	  //print out adaptive mesh metrics and check mesh generation synchronization across pools
 	  //
-	  if (dftParameters::verbosity>=2)
+	  if (dftParameters::verbosity>=4)
 	  {
 	    pcout<< "Triangulation generation summary: "<<std::endl<<" num elements: "<<parallelTriangulation.n_global_active_cells()<<", num refinement levels: "<<numLevels<<", min element length: "<<minElemLength<<std::endl;
 	  }
@@ -399,7 +399,7 @@ namespace dftfe {
 	  const unsigned int numberGlobalCellsParallel = parallelTriangulation.n_global_active_cells();
 	  const unsigned int numberGlobalCellsSerial = serialTriangulation.n_global_active_cells();
 
-	  if (dftParameters::verbosity>=2)
+	  if (dftParameters::verbosity>=4)
 	       pcout<<" numParallelCells: "<< numberGlobalCellsParallel<<", numSerialCells: "<< numberGlobalCellsSerial<<std::endl;
 
 	  AssertThrow(numberGlobalCellsParallel==numberGlobalCellsSerial,ExcMessage("Number of cells are different for parallel and serial triangulations"));

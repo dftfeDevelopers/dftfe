@@ -30,7 +30,7 @@ namespace dftParameters
   unsigned int finiteElementPolynomialOrder=1,n_refinement_steps=1,numberEigenValues=1,xc_id=1, spinPolarized=0, nkx=1,nky=1,nkz=1, offsetFlagX=0,offsetFlagY=0,offsetFlagZ=0;
   unsigned int chebyshevOrder=1,numPass=1, numSCFIterations=1,maxLinearSolverIterations=1, mixingHistory=1, npool=1;
 
-  double radiusAtomBall=0.0, mixingParameter=0.5, dkx=0.0, dky=0.0, dkz=0.0;
+  double radiusAtomBall=0.0, mixingParameter=0.5;
   double lowerEndWantedSpectrum=0.0,relLinearSolverTolerance=1e-10,selfConsistentSolverTolerance=1e-10,TVal=500, start_magnetization=0.0;
   double chebyshevTolerance = 1e-02;
 
@@ -49,15 +49,11 @@ namespace dftParameters
   unsigned int verbosity=0; unsigned int chkType=0;
   bool restartFromChk=false;
   bool reproducible_output=false;
-  bool electrostaticsPRefinement=false;
 
   unsigned int chebyshevBlockSize=512;
   std::string startingWFCType="";
   bool useBatchGEMM=false;
-  unsigned int chebyshevOMPThreads=0;
-  unsigned int orthoRROMPThreads=0;
   bool writeSolutionFields=false;
-  bool cacheShapeGradData=false;
   unsigned int orthoRRWaveFuncBlockSize=200;
   unsigned int subspaceRotDofsBlockSize=2000;
   bool enableSwitchToGS=true;
@@ -118,11 +114,11 @@ namespace dftParameters
 
 	prm.declare_entry("ATOMIC COORDINATES FILE", "",
 			  Patterns::Anything(),
-			  "[Standard] Atomic-coordinates file. For fully non-periodic domain give cartesian coordinates of the atoms (in a.u) with respect to origin at the center of the domain. For periodic and semi-periodic give fractional coordinates of atoms. File format (example for two atoms): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 (row2). The number of rows must be equal to NATOMS, and number of unique atoms must be equal to NATOM TYPES.");
+			  "[Standard] Atomic-coordinates input file name. For fully non-periodic domain give cartesian coordinates of the atoms (in a.u) with respect to origin at the center of the domain. For periodic and semi-periodic give fractional coordinates of atoms. File format (example for two atoms): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 (row2). The number of rows must be equal to NATOMS, and number of unique atoms must be equal to NATOM TYPES.");
 
-	prm.declare_entry("DOMAIN BOUNDING VECTORS FILE", "",
+	prm.declare_entry("DOMAIN VECTORS FILE", "",
 			  Patterns::Anything(),
-			  "[Standard] Set file specifying the domain bounding vectors v1, v2 and v3 in a.u. with the following format: v1x v1y v1z (row1), v2x v2y v2z (row2), v3x v3y v3z (row3). Domain bounding vectors are the typical lattice vectors in a fully periodic calculation.");
+			  "[Standard] Domain vectors input file name. Domain vectors describe the edges of the 3D parallelepiped computational domain. File format: v1x v1y v1z (row1), v2x v2y v2z (row2), v3x v3y v3z (row3). Units: a.u. CAUTION: please ensure that the domain vectors form a right-handed coordinate system i.e. dotProduct(crossProduct(v1,v2),v3)>0. Domain vectors are the typical lattice vectors in a fully periodic calculation.");
 
 	prm.enter_subsection ("Optimization");
 	{
@@ -171,21 +167,21 @@ namespace dftParameters
 
     prm.enter_subsection ("Boundary conditions");
     {
-        prm.declare_entry("SELF POTENTIAL ATOM BALL RADIUS", "0.0",
+        prm.declare_entry("SELF POTENTIAL RADIUS", "0.0",
                       Patterns::Double(0.0,10),
                       "[Developer] The radius (in a.u) of the ball around an atom on which self-potential of the associated nuclear charge is solved. For the default value of 0.0, the radius value is automatically determined to accomodate the largest radius possible for the given finite element mesh. The default approach works for most problems.");
 
 	prm.declare_entry("PERIODIC1", "false",
 			  Patterns::Bool(),
-			  "[Standard] Periodicity along domain bounding vector, v1.");
+			  "[Standard] Periodicity along the first domain bounding vector.");
 
 	prm.declare_entry("PERIODIC2", "false",
 			  Patterns::Bool(),
-			  "[Standard] Periodicity along domain bounding vector, v2.");
+			  "[Standard] Periodicity along the second domain bounding vector.");
 
 	prm.declare_entry("PERIODIC3", "false",
 			  Patterns::Bool(),
-			  "[Standard] Periodicity along domain bounding vector, v3.");
+			  "[Standard] Periodicity along the third domain bounding vector.");
     }
     prm.leave_subsection ();
 
@@ -201,33 +197,24 @@ namespace dftParameters
                        Patterns::Anything(),
                        "[Developer] External mesh file path. If nothing is given auto mesh generation is performed. The option is only for testing purposes.");
 
-      prm.declare_entry("CACHE SHAPE GRAD","false",
-			 Patterns::Bool(),
-			 "[Developer] Boolean parameter which controls precomputation of FEM shape function gradients for each cell. This helps optimize discrete Hamiltonian matrix computation but at the cost of carrying some extra memory. Default option is false.");
-
       prm.enter_subsection ("Auto mesh generation parameters");
       {
 
-	prm.declare_entry("BASE MESH SIZE", "4.0",
+	prm.declare_entry("BASE MESH SIZE", "0.0",
 			  Patterns::Double(0,20),
-			  "[Standard] Mesh size of the base mesh on which refinement is performed. Default value is good enough for most cases.");
+			  "[Developer] Mesh size of the base mesh on which refinement is performed. For the default value of 0.0, a heuristically determined base mesh size is used, which is good enough for most cases. Standard users do not need to tune this parameter. Units: a.u.");
 
-	prm.declare_entry("ATOM BALL RADIUS","2.25",
-			  Patterns::Double(0,10),
-			  "[Standarad] Radius of ball enclosing every atom inside which the mesh size is set close to MESH SIZE ATOM BALL. A value between 2.0 to 3.0 is usually a good choice.");
+	prm.declare_entry("ATOM BALL RADIUS","2.0",
+			  Patterns::Double(0,3),
+			  "[Developer] Radius of ball enclosing every atom inside which the mesh size is set close to MESH SIZE AROUND ATOM. The default value of 2.0 is good enough for most cases. On rare cases, where the nonlocal pseudopotential projectors have a compact supportbeyond 2.0, a slightly larger ATOM BALL RADIUS between 2.0 to 2.5 may be required. Standard users do not need to tune this parameter. Units: a.u.");
 
-	prm.declare_entry("MESH SIZE ATOM BALL", "0.5",
-			  Patterns::Double(0,10),
-			  "[Standard] Mesh size in a ball of radius ATOM BALL RADIUS around every atom. For pseudopotential calculations, a value between 0.5 to 1.0 is usually a good choice. For all-electron calculations, a value between 0.1 to 0.3 would be a good starting choice.");
+	prm.declare_entry("MESH SIZE AROUND ATOM", "1.0",
+			  Patterns::Double(0.0001,10),
+			  "[Standard] Mesh size in a ball of radius ATOM BALL RADIUS around every atom. For pseudopotential calculations, a value between 0.5 to 1.0 is usually a good choice. For all-electron calculations, a value between 0.1 to 0.3 would be a good starting choice. MESH SIZE AROUND ATOM is the only parameter standard users need to tune to achieve the desired accuracy in their results with respect to the mesh refinement. Units: a.u.");
 
-	prm.declare_entry("MESH SIZE NEAR ATOM", "0.5",
-			  Patterns::Double(0,10),
-			  "[Standard] Mesh size of the finite elements in the immediate vicinity of the atoms. For pseudopotential calculations, this value is usually taken to be the same as the MESH SIZE ATOM BALL. For all-electron case, a value smaller than MESH SIZE ATOM BALL, typically between 0.05 to 0.1 would be a good starting choice.");
-
-        prm.declare_entry("MAX REFINEMENT STEPS", "10",
-                        Patterns::Integer(1,10),
-                        "[Developer] Maximum number of refinement steps to be used. The default value is good enough in most cases.");
-
+	prm.declare_entry("MESH SIZE AT ATOM", "0.0",
+			  Patterns::Double(0.0,10),
+			  "[Developer] Mesh size of the finite elements in the immediate vicinity of the atom. For the default value of 0.0, a heuristically determined MESH SIZE AT ATOM is used, which is good enough for most cases. Standard users do not need to tune this parameter. Units: a.u.");
 
       }
       prm.leave_subsection ();
@@ -239,28 +226,28 @@ namespace dftParameters
         prm.enter_subsection ("Monkhorst-Pack (MP) grid generation");
         {
 	    prm.declare_entry("SAMPLING POINTS 1", "1",
-			      Patterns::Integer(1,100),
-			      "[Standard] Number of Monkhorts-Pack grid points to be used along reciprocal latttice vector 1.");
+			      Patterns::Integer(1,1000),
+			      "[Standard] Number of Monkhorst-Pack grid points to be used along reciprocal latttice vector 1.");
 
 	    prm.declare_entry("SAMPLING POINTS 2", "1",
-			      Patterns::Integer(1,100),
-			      "[Standard] Number of Monkhorts-Pack grid points to be used along reciprocal latttice vector 2.");
+			      Patterns::Integer(1,1000),
+			      "[Standard] Number of Monkhorst-Pack grid points to be used along reciprocal latttice vector 2.");
 
 	    prm.declare_entry("SAMPLING POINTS 3", "1",
-			      Patterns::Integer(1,100),
-			      "[Standard] Number of Monkhorts-Pack grid points to be used along reciprocal latttice vector 3.");
+			      Patterns::Integer(1,1000),
+			      "[Standard] Number of Monkhorst-Pack grid points to be used along reciprocal latttice vector 3.");
 
 	    prm.declare_entry("SAMPLING SHIFT 1", "0",
 			      Patterns::Integer(0,1),
-			      "[Standard] Fractional shifting to be used along reciprocal latttice vector 1.");
+			      "[Standard] If fractional shifting to be used (0 for no shift, 1 for shift) along reciprocal latttice vector 1.");
 
 	    prm.declare_entry("SAMPLING SHIFT 2", "0",
 			      Patterns::Integer(0,1),
-			      "[Standard] Fractional shifting to be used along reciprocal latttice vector 2.");
+			      "[Standard] If fractional shifting to be used (0 for no shift, 1 for shift) along reciprocal latttice vector 2.");
 
 	    prm.declare_entry("SAMPLING SHIFT 3", "0",
 			      Patterns::Integer(0,1),
-			      "[Standard] Fractional shifting to be used along reciprocal latttice vector 3.");
+			      "[Standard] If fractional shifting to be used (0 for no shift, 1 for shift) along reciprocal latttice vector 3.");
 
 	}
 	prm.leave_subsection ();
@@ -271,7 +258,7 @@ namespace dftParameters
 
 	prm.declare_entry("USE GROUP SYMMETRY", "false",
 			  Patterns::Bool(),
-			  "[Standard] Flag to control whether to use point group symmetries (set to false for relaxation calculation).");
+			  "[Standard] Flag to control whether to use point group symmetries. Currently this feature cannot be used if ION FORCE or CELL STRESS input parameters are set to true.");
 
 	prm.declare_entry("USE TIME REVERSAL SYMMETRY", "false",
 			  Patterns::Bool(),
@@ -305,7 +292,7 @@ namespace dftParameters
 
 	prm.declare_entry("START MAGNETIZATION", "0.0",
 			  Patterns::Double(-0.5,0.5),
-			  "[Standard] Magnetization to start with (must be between -0.5 and +0.5).");
+			  "[Standard] Magnetization to start with (must be between -0.5 and +0.5). Corresponding magnetization per unit cell will be (2 x START MAGNETIZATION x Ne) a.u. , where Ne is the number of electrons in the unit cell ");
     }
     prm.leave_subsection ();
 
@@ -313,7 +300,7 @@ namespace dftParameters
     prm.enter_subsection ("SCF parameters");
     {
 	prm.declare_entry("TEMPERATURE", "500.0",
-			  Patterns::Double(),
+			  Patterns::Double(0.0),
 			  "[Standard] Fermi-Dirac smearing temperature (in Kelvin).");
 
 	prm.declare_entry("MAXIMUM ITERATIONS", "50",
@@ -321,12 +308,12 @@ namespace dftParameters
 			  "[Standard] Maximum number of iterations to be allowed for SCF convergence");
 
 	prm.declare_entry("TOLERANCE", "1e-06",
-			  Patterns::Double(0,1.0),
+			  Patterns::Double(1e-12,1.0),
 			  "[Standard] SCF iterations stopping tolerance in terms of L2 norm of the electron-density difference between two successive iterations. CAUTION: A tolerance close to 1e-7 or lower can detoriate the SCF convergence due to the round-off errors.");
 
-	prm.declare_entry("ANDERSON SCHEME MIXING HISTORY", "70",
+	prm.declare_entry("ANDERSON SCHEME MIXING HISTORY", "10",
 			  Patterns::Integer(1,1000),
-			  "[Standard] Number of SCF iterations to be considered for mixing the electron-density.");
+			  "[Standard] Number of SCF iteration history to be considered for mixing the electron-density. For metallic systems, typically a mixing history larger than the default value provides better scf convergence.");
 
 	prm.declare_entry("ANDERSON SCHEME MIXING PARAMETER", "0.5",
 			  Patterns::Double(0.0,1.0),
@@ -338,7 +325,7 @@ namespace dftParameters
 
 	prm.declare_entry("COMPUTE ENERGY EACH ITER", "true",
 			  Patterns::Bool(),
-			  "[Standard] Boolean parameter specifying whether to compute the total energy at the end of every scf. Setting it to false can lead to some time savings.");
+			  "[Developer] Boolean parameter specifying whether to compute the total energy at the end of every scf. Setting it to false can lead to some time savings.");
 
 	prm.enter_subsection ("Eigen-solver parameters");
 	{
@@ -349,23 +336,18 @@ namespace dftParameters
 
 	    prm.declare_entry("LOWER BOUND WANTED SPECTRUM", "-10.0",
 			      Patterns::Double(),
-			      "[Developer] The lower bound of the wanted eigen spectrum.");
+			      "[Developer] The lower bound of the wanted eigen spectrum. It is only used for the first iteration of the Chebyshev filtered subspace iteration procedure. A rough estimate based on single atom eigen values can be used here. Default value is good enough for most problems.");
 
 	    prm.declare_entry("CHEBYSHEV POLYNOMIAL DEGREE", "0",
 			      Patterns::Integer(0,2000),
-			      "[Developer] The degree of the Chebyshev polynomial to be employed for filtering out the unwanted spectrum. A heuristics value depending upon the upper bound of the eigen spectrum is used when the parameter value is 0, which is the default option.");
+			      "[Developer] Chebyshev polynomial degree to be employed for the Chebyshev filtering subspace iteration procedure to dampen the unwanted spectrum of the Kohn-Sham Hamiltonian. If set to 0, a default value depending on the upper bound of the eigen-spectrum is used.");
 
 	    prm.declare_entry("LOWER BOUND UNWANTED FRAC UPPER", "0",
 			      Patterns::Double(0,1),
 			      "[Developer] The value of the fraction of the upper bound of the unwanted spectrum, the lower bound of the unwanted spectrum will be set. Default value is 0.");
 
-	    prm.declare_entry("CHEBYSHEV FILTER PASSES", "1",
-			      Patterns::Integer(1,20),
-			      "[Developer] The initial number of the Chebyshev filter passes per SCF. More Chebyshev filter passes beyond the value set in this parameter can still happen due to additional algorithms used in the code.");
-
-
-	    prm.declare_entry("CHEBYSHEV FILTER TOLERANCE","5e-02",
-			      Patterns::Double(0),
+	    prm.declare_entry("CHEBYSHEV FILTER TOLERANCE","1e-03",
+			      Patterns::Double(0.0001),
 			      "[Developer] Parameter specifying the tolerance to which eigenvectors need to computed using chebyshev filtering approach.");
 
 	    prm.declare_entry("CHEBYSHEV FILTER BLOCK SIZE", "400",
@@ -374,20 +356,11 @@ namespace dftParameters
 
 	    prm.declare_entry("BATCH GEMM", "true",
 			      Patterns::Bool(),
-			      "[Developer] Boolean parameter specifying whether to use gemm_batch blas routines to perform matrix-matrix multiplication operations with groups of matrices, processing a number of groups at once using threads instead of the standard serial route. CAUTION: batch blas routines will only be activated if the CHEBYSHEV FILTER BLOCK SIZE is less than 1000. Default option is true.");
-
-	    prm.declare_entry("CHEBYSHEV FILTER NUM OMP THREADS", "0",
-			      Patterns::Integer(0,300),
-			      "[Developer] Sets the number of OpenMP threads to be used in the blas linear algebra calls inside the Chebyshev filtering. The default value is 0, for which no action is taken. CAUTION: For non zero values, CHEBYSHEV FILTER NUM OMP THREADS takes precedence over the OMP_NUM_THREADS environment variable.");
-
-	    prm.declare_entry("ORTHO RR NUM OMP THREADS", "0",
-			      Patterns::Integer(0,300),
-			      "[Developer] Sets the number of OpenMP threads to be used in the blas linear algebra calls inside orthogonalization and Rayleigh-Ritz steps. The default value is 0, for which no action is taken. CAUTION: For non-zero values, CHEBYSHEV FILTER NUM OMP THREADS takes precedence over the OMP_NUM_THREADS environment variable.");
-
+			      "[Developer] Boolean parameter specifying whether to use gemm batch blas routines to perform matrix-matrix multiplication operations with groups of matrices, processing a number of groups at once using threads instead of the standard serial route. CAUTION: batch blas routines will only be activated if the CHEBYSHEV FILTER BLOCK SIZE is less than 1000. Default option is true.");
 
 	    prm.declare_entry("ORTHOGONALIZATION TYPE","LW",
 			      Patterns::Selection("GS|LW|PGS"),
-			      "[Standard] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization using SLEPc library), LW(Lowden Orthogonalization using LAPACK, extension to ScaLAPACK not implemented yet), PGS(Pseudo-Gram-Schmidt Orthogonalization using ScaLAPACK, cannot be used if dealii library is not compiled with ScaLAPACK. PGS option is also not available for the complex executable yet). LW is the default option.");
+			      "[Standard] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization using SLEPc library), LW(Lowden Orthogonalization using LAPACK, extension to ScaLAPACK not implemented yet), PGS(Pseudo-Gram-Schmidt Orthogonalization, if dealii library is compiled with ScaLAPACK, ScaLAPACK functions are used otherwise LAPACK functions are used). LW is the default option.");
 
 	    prm.declare_entry("ENABLE SWITCH TO GS", "true",
 			      Patterns::Bool(),
@@ -403,7 +376,7 @@ namespace dftParameters
 
 	    prm.declare_entry("SCALAPACKPROCS", "0",
 			      Patterns::Integer(0,300),
-			      "[Standard] Uses a processor grid of SCALAPACKPROCS times SCALAPACKPROCS for parallel distribution of the subspace projected matrix in the Rayleigh-Ritz step and the overlap matrix in the Pseudo-Gram-Schmidt step. Default value is 0 for which a thumb rule is used (see http://netlib.org/scalapack/slug/node106.html#SECTION04511000000000000000). This parameter is only used if dealii library is compiled with ScaLAPACK.");
+			      "[Developer] Uses a processor grid of SCALAPACKPROCS times SCALAPACKPROCS for parallel distribution of the subspace projected matrix in the Rayleigh-Ritz step and the overlap matrix in the Pseudo-Gram-Schmidt step. Default value is 0 for which a thumb rule is used (see http://netlib.org/scalapack/slug/node106.html\\#SECTION04511000000000000000). This parameter is only used if dealii library is compiled with ScaLAPACK.");
 	}
 	prm.leave_subsection ();
     }
@@ -418,10 +391,6 @@ namespace dftParameters
 	prm.declare_entry("TOLERANCE", "1e-12",
 			  Patterns::Double(0,1.0),
 			  "[Developer] Relative tolerance as stopping criterion for Poisson problem convergence.");
-
-	prm.declare_entry("P REFINEMENT", "false",
-			  Patterns::Bool(),
-			  "[Developer] Boolean parameter specifying whether to project the ground-state electron density to a p refined mesh, and solve for the electrostatic fields on the p refined mesh. This step is not performed for each SCF, but only at the ground-state. The purpose is to improve the accuracy of the ground-state electrostatic energy. This feature is not fully implemented.");
     }
     prm.leave_subsection ();
 
@@ -452,7 +421,7 @@ namespace dftParameters
         dftParameters::natoms                        = prm.get_integer("NATOMS");
         dftParameters::natomTypes                    = prm.get_integer("NATOM TYPES");
         dftParameters::coordinatesFile               = prm.get("ATOMIC COORDINATES FILE");
-        dftParameters::domainBoundingVectorsFile     = prm.get("DOMAIN BOUNDING VECTORS FILE");
+        dftParameters::domainBoundingVectorsFile     = prm.get("DOMAIN VECTORS FILE");
 	prm.enter_subsection ("Optimization");
 	{
 	    dftParameters::isIonOpt                      = prm.get_bool("ION OPT");
@@ -471,7 +440,7 @@ namespace dftParameters
 
     prm.enter_subsection ("Boundary conditions");
     {
-        dftParameters::radiusAtomBall                = prm.get_double("SELF POTENTIAL ATOM BALL RADIUS");
+        dftParameters::radiusAtomBall                = prm.get_double("SELF POTENTIAL RADIUS");
 	dftParameters::periodicX                     = prm.get_bool("PERIODIC1");
 	dftParameters::periodicY                     = prm.get_bool("PERIODIC2");
 	dftParameters::periodicZ                     = prm.get_bool("PERIODIC3");
@@ -482,14 +451,12 @@ namespace dftParameters
     {
         dftParameters::finiteElementPolynomialOrder  = prm.get_integer("POLYNOMIAL ORDER");
         dftParameters::meshFileName                  = prm.get("MESH FILE");
-	dftParameters::cacheShapeGradData            = prm.get_bool("CACHE SHAPE GRAD");
 	prm.enter_subsection ("Auto mesh generation parameters");
 	{
 	    dftParameters::outerAtomBallRadius           = prm.get_double("ATOM BALL RADIUS");
 	    dftParameters::meshSizeOuterDomain           = prm.get_double("BASE MESH SIZE");
-	    dftParameters::meshSizeInnerBall             = prm.get_double("MESH SIZE NEAR ATOM");
-	    dftParameters::meshSizeOuterBall             = prm.get_double("MESH SIZE ATOM BALL");
-	    dftParameters::n_refinement_steps            = prm.get_integer("MAX REFINEMENT STEPS");
+	    dftParameters::meshSizeInnerBall             = prm.get_double("MESH SIZE AT ATOM");
+	    dftParameters::meshSizeOuterBall             = prm.get_double("MESH SIZE AROUND ATOM");
 	}
         prm.leave_subsection ();
     }
@@ -543,13 +510,10 @@ namespace dftParameters
 	   dftParameters::lowerEndWantedSpectrum        = prm.get_double("LOWER BOUND WANTED SPECTRUM");
 	   dftParameters::lowerBoundUnwantedFracUpper   = prm.get_double("LOWER BOUND UNWANTED FRAC UPPER");
 	   dftParameters::chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
-	   dftParameters::numPass           = prm.get_integer("CHEBYSHEV FILTER PASSES");
 	   dftParameters::chebyshevBlockSize= prm.get_integer("CHEBYSHEV FILTER BLOCK SIZE");
 	   dftParameters::useBatchGEMM= prm.get_bool("BATCH GEMM");
 	   dftParameters::orthogType        = prm.get("ORTHOGONALIZATION TYPE");
 	   dftParameters::chebyshevTolerance = prm.get_double("CHEBYSHEV FILTER TOLERANCE");
-	   dftParameters::chebyshevOMPThreads = prm.get_integer("CHEBYSHEV FILTER NUM OMP THREADS");
-	   dftParameters::orthoRROMPThreads= prm.get_integer("ORTHO RR NUM OMP THREADS");
 	   dftParameters::orthoRRWaveFuncBlockSize= prm.get_integer("ORTHO RR WFC BLOCK SIZE");
 	   dftParameters::subspaceRotDofsBlockSize= prm.get_integer("SUBSPACE ROT DOFS BLOCK SIZE");
 	   dftParameters::enableSwitchToGS= prm.get_bool("ENABLE SWITCH TO GS");
@@ -563,12 +527,12 @@ namespace dftParameters
     {
        dftParameters::maxLinearSolverIterations     = prm.get_integer("MAXIMUM ITERATIONS");
        dftParameters::relLinearSolverTolerance      = prm.get_double("TOLERANCE");
-       dftParameters::electrostaticsPRefinement     = prm.get_bool("P REFINEMENT");
     }
     prm.leave_subsection ();
 
   //
     check_print_parameters(prm);
+    setHeuristicParameters();
   }
 
 
@@ -611,19 +575,14 @@ namespace dftParameters
       prm.print_parameters (std::cout, ParameterHandler::ShortText);
     }
 #ifdef USE_COMPLEX
-    if (dftParameters::electrostaticsPRefinement)
-       AssertThrow(!dftParameters::useSymm,ExcMessage("DFT-FE Error: P REFINEMENT=true is not yet extended to USE GROUP SYMMETRY=true case"));
-
     if (dftParameters::isIonForce || dftParameters::isCellStress)
        AssertThrow(!dftParameters::useSymm,ExcMessage("DFT-FE Error: USE GROUP SYMMETRY must be set to false if either ION FORCE or CELL STRESS is set to true. This functionality will be added in a future release"));
 
-    if (dftParameters::orthogType=="PGS")
-       AssertThrow(false,ExcMessage("DFT-FE Error: Implementation PGS orthogonalization in complex mode is not added yet."));
 #else
     AssertThrow(!dftParameters::isCellStress,ExcMessage("DFT-FE Error: Currently CELL STRESS cannot be set true in real mode for periodic Gamma point problems. This functionality will be added soon."));
 
     AssertThrow( dftParameters::nkx==1 &&  dftParameters::nky==1 &&  dftParameters::nkz==1
-             && dftParameters::dkx==0 &&  dftParameters::dky==0 &&  dftParameters::dkz==0
+             && dftParameters::offsetFlagX==0 &&  dftParameters::offsetFlagY==0 &&  dftParameters::offsetFlagZ==0
 	    ,ExcMessage("DFT-FE Error: Real executable cannot be used for non-zero k point."));
 #endif
     AssertThrow(!(dftParameters::chkType==2 && (dftParameters::isIonOpt || dftParameters::isCellOpt)),ExcMessage("DFT-FE Error: CHK TYPE=2 cannot be used if geometry optimization is being performed."));
@@ -633,27 +592,44 @@ namespace dftParameters
     AssertThrow(dftParameters::nbandGrps<=dftParameters::numberEigenValues
 	    ,ExcMessage("DFT-FE Error: NPBAND is greater than NUMBER OF KOHN-SHAM WAVEFUNCTIONS."));
 
-    if (dftParameters::electrostaticsPRefinement)
-       AssertThrow(false,ExcMessage("DFT-FE Error: Implemenation of this feature is not completed yet."));
-
     if (dftParameters::nonSelfConsistentForce)
-       AssertThrow(false,ExcMessage("DFT-FE Error: Implemenation of this feature is not completed yet."));
+       AssertThrow(false,ExcMessage("DFT-FE Error: Implementation of this feature is not completed yet."));
 
     AssertThrow(!dftParameters::coordinatesFile.empty()
 	        ,ExcMessage("DFT-FE Error: ATOMIC COORDINATES FILE not given."));
 
     AssertThrow(!dftParameters::domainBoundingVectorsFile.empty()
-	        ,ExcMessage("DFT-FE Error: DOMAIN BOUNDING VECTORS FILE not given."));
+	        ,ExcMessage("DFT-FE Error: DOMAIN VECTORS FILE not given."));
 
     if (dftParameters::isPseudopotential)
       AssertThrow(!dftParameters::pseudoPotentialFile.empty(),
 	        ExcMessage("DFT-FE Error: PSEUDOPOTENTIAL FILE NAMES LIST not given."));
 
+    AssertThrow(dftParameters::numberEigenValues!=0
+	        ,ExcMessage("DFT-FE Error: Number of wavefunctions not specified or given value of zero is not allowed."));
+
     AssertThrow(dftParameters::natoms!=0
-	        ,ExcMessage("DFT-FE Error: NATOMS not given or given a value of zero which is not allowed."));
+	        ,ExcMessage("DFT-FE Error: Number of atoms not specified or given a value of zero is not allowed."));
 
     AssertThrow(dftParameters::natomTypes!=0
-	        ,ExcMessage("DFT-FE Error: NATOM TYPES not given or given a value of zero which is not allowed."));
+	        ,ExcMessage("DFT-FE Error: Number of atom types not specified or given a value of zero is not allowed."));
+  }
+
+  //FIXME: move this to triangulation manager, and set data members there
+  //without changing the global dftParameters
+  void setHeuristicParameters()
+  {
+    if (dftParameters::meshSizeOuterDomain<1.0e-6)
+       if (dftParameters::periodicX ||dftParameters::periodicY ||dftParameters::periodicZ)
+	   dftParameters::meshSizeOuterDomain=4.0;
+       else
+	   dftParameters::meshSizeOuterDomain=10.0;
+
+    if (dftParameters::meshSizeInnerBall<1.0e-6)
+       if (dftParameters::isPseudopotential)
+	   dftParameters::meshSizeInnerBall=dftParameters::meshSizeOuterBall;
+       else
+	   dftParameters::meshSizeInnerBall=0.1*dftParameters::meshSizeOuterBall;
   }
 
 }

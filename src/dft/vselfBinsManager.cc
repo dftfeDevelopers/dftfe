@@ -379,18 +379,19 @@ namespace dftfe
 
 	  AssertThrow(check==0,dealii::ExcMessage(message));
 
-	  if (dftParameters::verbosity>=1)
+	  if (dftParameters::verbosity>=1 && !dftParameters::reproducible_output)
 	      pcout<<"...Adaptively set ball radius: "<< radiusAtomBallAdaptive<<std::endl;
 
 	  if (radiusAtomBallAdaptive<3.0)
-	      pcout<<"DFT-FE warning: Tried to adaptively determine the ball radius for nuclear self-potential solve and was found to be less than 3.0, which can detoriate the accuracy of the KSDFT groundstate energy and forces. One approach to overcome this issue is to use a larger super cell with smallest periodic dimension greater than 6.0 (twice of 3.0), assuming an orthorhombic domain. If that is not feasible, you may need more h refinement of the finite element mesh around the atoms to achieve the desired accuracy."<<std::endl;
+             if (dftParameters::verbosity>=1 && !dftParameters::reproducible_output)		 
+	        pcout<<"DFT-FE warning: Tried to adaptively determine the ball radius for nuclear self-potential solve and was found to be less than 3.0, which can detoriate the accuracy of the KSDFT groundstate energy and forces. One approach to overcome this issue is to use a larger super cell with smallest periodic dimension greater than 6.0 (twice of 3.0), assuming an orthorhombic domain. If that is not feasible, you may need more h refinement of the finite element mesh around the atoms to achieve the desired accuracy."<<std::endl;
 	  MPI_Barrier(mpi_communicator);
 
 	  d_storedAdaptiveBallRadius=radiusAtomBallAdaptive;
       }
       else
       {
-	  if (dftParameters::verbosity>=2)
+	  if (dftParameters::verbosity>=1)
 	      pcout<<"Setting the ball radius for nuclear self-potential solve from input parameters value: "<< radiusAtomBall<<std::endl;
 
 	  radiusAtomBallAdaptive=radiusAtomBall;
