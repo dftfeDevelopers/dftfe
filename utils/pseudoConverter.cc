@@ -17,7 +17,7 @@
 //
 #include <pseudoConverter.h>
 #include <headers.h>
-#include <upfToxml.h>
+#include "../pseudoConverters/upfToxml.h"
 #include <xmlTodftfeParser.h>
 #include <fstream>
 #include <iostream>

@@ -46,7 +46,7 @@ SET(TARGET_SRC
   ./utils/vectorTools/interpolateFieldsFromPreviousMesh.cc
   ./utils/vectorTools/vectorUtilities.cc
   ./utils/pseudoConverter.cc
-  ./utils/upfToxml.cc
+  ./pseudoConverters/upfToxml.cc
   ./utils/PeriodicTable.cc
   ./utils/xmlTodftfeParser.cc
   # You can specify additional files here!

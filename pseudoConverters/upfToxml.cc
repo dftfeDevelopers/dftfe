@@ -1,19 +1,18 @@
 // --------------------------------------------------------------------------------------
 //
-// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
+// 
+// This file is adapted from upf2qso.C which is a part of Qbox 
+// (https://github.com/qboxcode/qbox-public/blob/master/util/upf2qso/src/upf2qso.C)
+//  
+// Qbox is distributed under the terms of the GNU General Public License
+// as published by the Free Software Foundation, either version 2 of
+// the License, or (at your option) any later version.
+// See the file COPYING in the root directory of this distribution
+// or <http://www.gnu.org/licenses/>.
 //
-// This file is part of the DFT-FE code.
-//
-// The DFT-FE code is free software; you can use it, redistribute
-// it, and/or modify it under the terms of the GNU Lesser General
-// Public License as published by the Free Software Foundation; either
-// version 2.1 of the License, or (at your option) any later version.
-// The full text of the license can be found in the file LICENSE at
-// the top level of the DFT-FE distribution.
-//
+// This file is modified by Phani Motamarri to integrate with DFT-FE code
 // -------------------------------------------------------------------------------------
 //
-// @author Phani Motamarri
 //
 
 #include <iostream>
@@ -27,7 +26,7 @@
 #include <cstdlib>
 #include <stdexcept>
 #include <PeriodicTable.h>
-#include <upfToxml.h>
+#include "upfToxml.h"
 #include <boost/algorithm/string/trim.hpp>
 
 ////////////////////////////////////////////////////////////////////////////////
