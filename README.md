@@ -44,7 +44,7 @@ For more information see:
 
  - For questions about the source code of DFT-FE, portability, installation, etc., use the DFT-FE development mailing list (dft-fe.users@umich.edu).
  
- - DFT-FE is primarily based on the [deal.II library](http://www.dealii.org/). If you have particular questions about deal.II, contact the [deal.II mailist lists](https://www.dealii.org/mail.html).
+ - DFT-FE is primarily based on the [deal.II library](http://www.dealii.org/). If you have particular questions about deal.II, contact the [deal.II mailing lists](https://www.dealii.org/mail.html).
  
  - If you have specific questions about DFT-FE that are not suitable for the public and archived mailing lists, you can contact the principal developers and mentors:
 
