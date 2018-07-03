@@ -35,10 +35,10 @@ namespace dftfe {
     namespace dftParameters
     {
 
-      extern unsigned int finiteElementPolynomialOrder,numberEigenValues,xc_id, spinPolarized, nkx,nky,nkz;
-      extern unsigned int chebyshevOrder,numSCFIterations,maxLinearSolverIterations, mixingHistory, npool;
+      extern unsigned int finiteElementPolynomialOrder,n_refinement_steps,numberEigenValues,xc_id, spinPolarized, nkx,nky,nkz , offsetFlagX,offsetFlagY,offsetFlagZ;
+      extern unsigned int chebyshevOrder,numPass,numSCFIterations,maxLinearSolverIterations, mixingHistory, npool;
 
-      extern double radiusAtomBall, mixingParameter, dkx, dky, dkz;
+      extern double radiusAtomBall, mixingParameter;
       extern double lowerEndWantedSpectrum,relLinearSolverTolerance,selfConsistentSolverTolerance,TVal, start_magnetization;
 
       extern bool isPseudopotential, periodicX, periodicY, periodicZ, useSymm, timeReversal,pseudoTestsFlag;

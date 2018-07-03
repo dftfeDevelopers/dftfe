@@ -27,10 +27,10 @@ namespace dftfe {
 namespace dftParameters
 {
 
-  unsigned int finiteElementPolynomialOrder=1,numberEigenValues=1,xc_id=1, spinPolarized=0, nkx=1,nky=1,nkz=1;
-  unsigned int chebyshevOrder=1,numSCFIterations=1,maxLinearSolverIterations=1, mixingHistory=1, npool=1;
+  unsigned int finiteElementPolynomialOrder=1,n_refinement_steps=1,numberEigenValues=1,xc_id=1, spinPolarized=0, nkx=1,nky=1,nkz=1, offsetFlagX=0,offsetFlagY=0,offsetFlagZ=0;
+  unsigned int chebyshevOrder=1,numPass=1, numSCFIterations=1,maxLinearSolverIterations=1, mixingHistory=1, npool=1;
 
-  double radiusAtomBall=0.0, mixingParameter=0.5, dkx=0.0, dky=0.0, dkz=0.0;
+  double radiusAtomBall=0.0, mixingParameter=0.5;
   double lowerEndWantedSpectrum=0.0,relLinearSolverTolerance=1e-10,selfConsistentSolverTolerance=1e-10,TVal=500, start_magnetization=0.0;
   double chebyshevTolerance = 1e-02;
 
@@ -227,27 +227,27 @@ namespace dftParameters
         {
 	    prm.declare_entry("SAMPLING POINTS 1", "1",
 			      Patterns::Integer(1,1000),
-			      "[Standard] Number of Monkhorts-Pack grid points to be used along reciprocal latttice vector 1.");
+			      "[Standard] Number of Monkhorst-Pack grid points to be used along reciprocal latttice vector 1.");
 
 	    prm.declare_entry("SAMPLING POINTS 2", "1",
 			      Patterns::Integer(1,1000),
-			      "[Standard] Number of Monkhorts-Pack grid points to be used along reciprocal latttice vector 2.");
+			      "[Standard] Number of Monkhorst-Pack grid points to be used along reciprocal latttice vector 2.");
 
 	    prm.declare_entry("SAMPLING POINTS 3", "1",
 			      Patterns::Integer(1,1000),
-			      "[Standard] Number of Monkhorts-Pack grid points to be used along reciprocal latttice vector 3.");
+			      "[Standard] Number of Monkhorst-Pack grid points to be used along reciprocal latttice vector 3.");
 
-	    prm.declare_entry("SAMPLING SHIFT 1", "0.0",
-			      Patterns::Double(0.0,1.0),
-			      "[Standard] Fractional shifting to be used along reciprocal latttice vector 1.");
+	    prm.declare_entry("SAMPLING SHIFT 1", "0",
+			      Patterns::Integer(0,1),
+			      "[Standard] If fractional shifting to be used (0 for no shift, 1 for shift) along reciprocal latttice vector 1.");
 
-	    prm.declare_entry("SAMPLING SHIFT 2", "0.0",
-			      Patterns::Double(0.0,1.0),
-			      "[Standard] Fractional shifting to be used along reciprocal latttice vector 2.");
+	    prm.declare_entry("SAMPLING SHIFT 2", "0",
+			      Patterns::Integer(0,1),
+			      "[Standard] If fractional shifting to be used (0 for no shift, 1 for shift) along reciprocal latttice vector 2.");
 
-	    prm.declare_entry("SAMPLING SHIFT 3", "0.0",
-			      Patterns::Double(0.0,1.0),
-			      "[Standard] Fractional shifting to be used along reciprocal latttice vector 3.");
+	    prm.declare_entry("SAMPLING SHIFT 3", "0",
+			      Patterns::Integer(0,1),
+			      "[Standard] If fractional shifting to be used (0 for no shift, 1 for shift) along reciprocal latttice vector 3.");
 
 	}
 	prm.leave_subsection ();
@@ -292,7 +292,7 @@ namespace dftParameters
 
 	prm.declare_entry("START MAGNETIZATION", "0.0",
 			  Patterns::Double(-0.5,0.5),
-			  "[Standard] Magnetization to start with (must be between -0.5 and +0.5).");
+			  "[Standard] Magnetization to start with (must be between -0.5 and +0.5). Corresponding magnetization per unit cell will be (2 x START MAGNETIZATION x Ne) a.u. , where Ne is the number of electrons in the unit cell ");
     }
     prm.leave_subsection ();
 
@@ -469,9 +469,9 @@ namespace dftParameters
 	    dftParameters::nkx        = prm.get_integer("SAMPLING POINTS 1");
 	    dftParameters::nky        = prm.get_integer("SAMPLING POINTS 2");
 	    dftParameters::nkz        = prm.get_integer("SAMPLING POINTS 3");
-	    dftParameters::dkx        = prm.get_double("SAMPLING SHIFT 1");
-	    dftParameters::dky        = prm.get_double("SAMPLING SHIFT 2");
-	    dftParameters::dkz        = prm.get_double("SAMPLING SHIFT 3");
+	    dftParameters::offsetFlagX        = prm.get_integer("SAMPLING SHIFT 1");
+	    dftParameters::offsetFlagY        = prm.get_integer("SAMPLING SHIFT 2");
+	    dftParameters::offsetFlagZ        = prm.get_integer("SAMPLING SHIFT 3");
 	}
 	prm.leave_subsection ();
 
@@ -582,7 +582,7 @@ namespace dftParameters
     AssertThrow(!dftParameters::isCellStress,ExcMessage("DFT-FE Error: Currently CELL STRESS cannot be set true in real mode for periodic Gamma point problems. This functionality will be added soon."));
 
     AssertThrow( dftParameters::nkx==1 &&  dftParameters::nky==1 &&  dftParameters::nkz==1
-             && dftParameters::dkx==0 &&  dftParameters::dky==0 &&  dftParameters::dkz==0
+             && dftParameters::offsetFlagX==0 &&  dftParameters::offsetFlagY==0 &&  dftParameters::offsetFlagZ==0
 	    ,ExcMessage("DFT-FE Error: Real executable cannot be used for non-zero k point."));
 #endif
     AssertThrow(!(dftParameters::chkType==2 && (dftParameters::isIonOpt || dftParameters::isCellOpt)),ExcMessage("DFT-FE Error: CHK TYPE=2 cannot be used if geometry optimization is being performed."));

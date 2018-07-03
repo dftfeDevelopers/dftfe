@@ -4,12 +4,12 @@ set REPRODUCIBLE OUTPUT=true
 subsection Geometry
   set NATOMS=2
   set NATOM TYPES=1
-  set ATOMIC COORDINATES FILE = @SOURCE_DIR@/hcpMgPrim_coordinates.inp
-  set DOMAIN VECTORS FILE = @SOURCE_DIR@/hcpMgPrim_domainBoundingVectors.inp
+  set ATOMIC COORDINATES FILE = @SOURCE_DIR@/graphene_coordinates.inp
+  set DOMAIN VECTORS FILE = @SOURCE_DIR@/graphene_domainBoundingVectors.inp
   
   subsection Optimization
-    set ION FORCE=true
-    set CELL STRESS=true
+    set ION FORCE=false
+    set CELL STRESS=false
   end 
  
 end
@@ -19,7 +19,7 @@ subsection Boundary conditions
   set SELF POTENTIAL RADIUS = 1.6
   set PERIODIC1 = true
   set PERIODIC2 = true
-  set PERIODIC3 = true
+  set PERIODIC3 = false
 end
 
 
@@ -39,15 +39,15 @@ end
 subsection Brillouin zone k point sampling options
 
   subsection Monkhorst-Pack (MP) grid generation
-    set SAMPLING POINTS 1 = 1
-    set SAMPLING POINTS 2 = 1
-    set SAMPLING POINTS 3 = 2
-    set SAMPLING SHIFT 1 = 0
-    set SAMPLING SHIFT 2 = 0
-    set SAMPLING SHIFT 3 = 1
+    set SAMPLING POINTS 1 = 2
+    set SAMPLING POINTS 2 = 2
+    set SAMPLING POINTS 3 = 1
+    set SAMPLING SHIFT 1 = 1
+    set SAMPLING SHIFT 2 = 1
+    set SAMPLING SHIFT 3 = 0
   end
 
-  set USE GROUP SYMMETRY =false
+  set USE GROUP SYMMETRY =true
   set USE TIME REVERSAL SYMMETRY =true
 end
 
@@ -55,9 +55,9 @@ end
 
 subsection DFT functional parameters
   set PSEUDOPOTENTIAL CALCULATION =true
-  set PSEUDOPOTENTIAL FILE NAMES LIST = @SOURCE_DIR@/pseudoMgONCV.inp 
-  set PSEUDO TESTS FLAG = true
+  set PSEUDOPOTENTIAL FILE NAMES LIST = @SOURCE_DIR@/pseudoCarbon.inp
   set EXCHANGE CORRELATION TYPE = 4
+  set PSEUDO TESTS FLAG = true
   set SPIN POLARIZATION=1
   set START MAGNETIZATION=0.4
 end
