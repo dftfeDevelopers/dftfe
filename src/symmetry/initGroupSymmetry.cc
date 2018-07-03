@@ -442,6 +442,20 @@ void symmetryClass<FEOrder>::initSymmetry()
      }
   //
 }
+//============================================================================================================================================
+//============================================================================================================================================
+//			           Just a quick snippet to compute cross product of two vectors
+//============================================================================================================================================
+//============================================================================================================================================ 
+std::vector<double>  cross_product(const std::vector<double> &a,
+		                     const std::vector<double> &b)
+{
+  std::vector<double> crossProduct(a.size(),0.0);
+  crossProduct[0] = a[1]*b[2]-a[2]*b[1];
+  crossProduct[1] = a[2]*b[0]-a[0]*b[2];
+  crossProduct[2] = a[0]*b[1]-a[1]*b[0];
+  return crossProduct;
+}
 //================================================================================================================================================
 //================================================================================================================================================
 //			           Just a quick snippet to go back and forth between crystal and cartesian coordinates.
@@ -458,10 +472,30 @@ Point<3> symmetryClass<FEOrder>::crys2cart(Point<3> p, int flag)
     ptemp[2] = p[0]*(dftPtr->d_domainBoundingVectors)[0][2] + p[1]*(dftPtr->d_domainBoundingVectors)[1][2] + p[2]*(dftPtr->d_domainBoundingVectors)[2][2] ;
   }
   if (flag==-1){
-    ptemp[0] = p[0]*(dftPtr->d_reciprocalLatticeVectors)[0][0] + p[1]*(dftPtr->d_reciprocalLatticeVectors)[0][1] + p[2]*(dftPtr->d_reciprocalLatticeVectors)[0][2] ;
-    ptemp[1] = p[0]*(dftPtr->d_reciprocalLatticeVectors)[1][0] + p[1]*(dftPtr->d_reciprocalLatticeVectors)[1][1] + p[2]*(dftPtr->d_reciprocalLatticeVectors)[1][2] ;
-    ptemp[2] = p[0]*(dftPtr->d_reciprocalLatticeVectors)[2][0] + p[1]*(dftPtr->d_reciprocalLatticeVectors)[2][1] + p[2]*(dftPtr->d_reciprocalLatticeVectors)[2][2] ;
-    ptemp = 1.0 / (2.0*M_PI) * ptemp ;
+    //----------------------------------- Here we compute the reciprocal of the domain bounding vectors needed to transfer --------------------------
+    //------------------------------------ points from cartesian to crystal coordinates. They are same as the reciprocal ----------------------------
+    //------------------------------------ vectors for fully periodic case, but different for mix boundaries ----------------------------------------
+    std::vector<std::vector<double> > reciprocalLatticeVectors(3,std::vector<double> (3,0.0));
+    unsigned int periodicitySum = 0 ;
+    std::vector<double> cross(3,0.0) ;
+    double scalarConst ;
+    for(unsigned int i = 0; i < 2; ++i)
+     {
+     cross=cross_product((dftPtr->d_domainBoundingVectors)[i+1], (dftPtr->d_domainBoundingVectors)[3 - (2*i + 1)]);
+     scalarConst = (dftPtr->d_domainBoundingVectors)[i][0]*cross[0] + (dftPtr->d_domainBoundingVectors)[i][1]*cross[1] + (dftPtr->d_domainBoundingVectors)[i][2]*cross[2];
+     for (unsigned int d = 0; d < 3; ++d)
+	reciprocalLatticeVectors[i][d] = (1.0/scalarConst)*cross[d];
+     }
+    //
+    cross=cross_product((dftPtr->d_domainBoundingVectors)[0],(dftPtr->d_domainBoundingVectors)[1]);
+    scalarConst = (dftPtr->d_domainBoundingVectors)[2][0]*cross[0] + (dftPtr->d_domainBoundingVectors)[2][1]*cross[1] + (dftPtr->d_domainBoundingVectors)[2][2]*cross[2];
+    for (unsigned int d = 0; d < 3; ++d)
+      reciprocalLatticeVectors[2][d] = (1.0/scalarConst)*cross[d];
+    //
+    ptemp[0] = p[0]*reciprocalLatticeVectors[0][0] + p[1]*reciprocalLatticeVectors[0][1] + p[2]*reciprocalLatticeVectors[0][2] ;
+    ptemp[1] = p[0]*reciprocalLatticeVectors[1][0] + p[1]*reciprocalLatticeVectors[1][1] + p[2]*reciprocalLatticeVectors[1][2] ;
+    ptemp[2] = p[0]*reciprocalLatticeVectors[2][0] + p[1]*reciprocalLatticeVectors[2][1] + p[2]*reciprocalLatticeVectors[2][2] ;
+    ptemp =  ptemp ;
   }
 
   return ptemp;
