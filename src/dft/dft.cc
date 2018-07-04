@@ -242,7 +242,16 @@ namespace dftfe {
     unsigned int numberColumnsLatticeVectorsFile = 3;
     dftUtils::readFile(numberColumnsLatticeVectorsFile,d_domainBoundingVectors,dftParameters::domainBoundingVectorsFile);
 
-    AssertThrow(dftParameters::natomTypes==atomTypes.size(),ExcMessage("DFT-FE Error: The number atom types read from the atomic coordinates file (input through ATOMIC COORDINATES FILE) doesn't match the NATOM TYPES input. Please check your atomic coordinates file."));
+    AssertThrow(d_domainBoundingVectors.size()==3,ExcMessage("DFT-FE Error: The number of domain bounding vectors read from input file (input through DOMAIN VECTORS FILE) should be 3. Please check your domain vectors file. Sometimes an extra blank row at the end can cause this issue too."));
+
+    //
+    //evaluate cross product of 
+    //
+    std::vector<double> cross(3,0.0);
+    cross = internaldft::cross_product(d_domainBoundingVectors[0],d_domainBoundingVectors[1]);
+    double scalarConst = d_domainBoundingVectors[2][0]*cross[0] + d_domainBoundingVectors[2][1]*cross[1] + d_domainBoundingVectors[2][2]*cross[2];
+   AssertThrow(scalarConst>0,ExcMessage("DFT-FE Error: Domain bounding vectors or lattice vectors read from input file (input through DOMAIN VECTORS FILE) should form a right-handed coordinate system. Please check your domain vectors file. This is usually fixed by changing the order of the vectors in the domain vectors file."));
+
     pcout << "number of atoms types: " << atomTypes.size() << "\n";
 
     //
