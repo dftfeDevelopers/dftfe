@@ -22,6 +22,7 @@
 #include <fstream>
 #include <iomanip>
 #include <algorithm>
+#include <cmath>
 
 namespace dftfe{
   //
