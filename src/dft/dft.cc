@@ -245,7 +245,9 @@ namespace dftfe {
     AssertThrow(dftParameters::natomTypes==atomTypes.size(),ExcMessage("DFT-FE Error: The number atom types read from the atomic coordinates file (input through ATOMIC COORDINATES FILE) doesn't match the NATOM TYPES input. Please check your atomic coordinates file."));
     pcout << "number of atoms types: " << atomTypes.size() << "\n";
 
+    //
     //determine number of electrons
+    //
     for(unsigned int iAtom = 0; iAtom < atomLocations.size(); iAtom++)
     {
       const unsigned int Z = atomLocations[iAtom][0];
@@ -256,6 +258,15 @@ namespace dftfe {
       else
 	  numElectrons += Z;
     }
+
+    if(dftParameters::numberEigenValues <= numElectrons/2.0)
+      {
+	if(dftParameters::verbosity >= 1)
+	  {
+	    pcout <<" Warning: User has requested the number of Kohn-Sham wavefunctions to be less than or equal to half the number of electrons in the system. Setting the Kohn-Sham wavefunctions to half the number of electrons with a 10 percent buffer to avoid convergence issues in SCF iterations"<<std::endl;
+	  }
+	dftParameters::numberEigenValues = (numElectrons/2.0) + 0.1*(numElectrons/2.0);
+      }
 
     //estimate total number of wave functions from atomic orbital filling
     if (dftParameters::startingWFCType=="ATOMIC")
