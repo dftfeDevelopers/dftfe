@@ -67,7 +67,6 @@ namespace dftfe {
 #include "mixingschemes.cc"
 #include "kohnShamEigenSolve.cc"
 #include "restart.cc"
-//#include "electrostaticPRefinedEnergy.cc"
 #include "moveAtoms.cc"
 
   //
@@ -247,12 +246,15 @@ namespace dftfe {
     //
     //evaluate cross product of 
     //
-    std::vector<double> cross(3,0.0);
-    cross = internaldft::cross_product(d_domainBoundingVectors[0],d_domainBoundingVectors[1]);
+    std::vector<double> cross;
+    dftUtils::cross_product(d_domainBoundingVectors[0],
+			    d_domainBoundingVectors[1],
+			    cross);
     double scalarConst = d_domainBoundingVectors[2][0]*cross[0] + d_domainBoundingVectors[2][1]*cross[1] + d_domainBoundingVectors[2][2]*cross[2];
    AssertThrow(scalarConst>0,ExcMessage("DFT-FE Error: Domain bounding vectors or lattice vectors read from input file (input through DOMAIN VECTORS FILE) should form a right-handed coordinate system. Please check your domain vectors file. This is usually fixed by changing the order of the vectors in the domain vectors file."));
 
     pcout << "number of atoms types: " << atomTypes.size() << "\n";
+
 
     //
     //determine number of electrons

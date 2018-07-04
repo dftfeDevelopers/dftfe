@@ -40,6 +40,19 @@ namespace dftfe {
        */
       double getPartialOccupancy(const double eigenValue,const double fermiEnergy,const double kb,const double T);
 
+      
+      /** @brief Calculates cross product of two vectors
+       *
+       *  @param  a first vector
+       *  @param  b second vector
+       *  @param  crossProductVector cross product of a and b
+       *  @return void
+       */
+      void cross_product(const std::vector<double> & a,
+			 const std::vector<double> & b,
+			 std::vector<double> & crossProductVector);
+     
+
       /** @brief Applies an affine transformation to the domain bounding vectors
        *
        *  @param  d_domainBoundingVectors the bounding vectors of the domain given as a 2d array
