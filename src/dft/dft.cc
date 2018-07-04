@@ -262,7 +262,14 @@ namespace dftfe {
       determineOrbitalFilling();
 
 #ifdef USE_COMPLEX
-    generateMPGrid();
+    if(dftParameters::kPointDataFile == "")
+      generateMPGrid();
+    else
+      {
+	AssertThrow(dftParameters::npool=1
+		    ,ExcMessage("DFT-FE Error: k-Point parallelization is not implemented for external k-point file"));
+	readkPointData();
+      }
 #else
     d_kPointCoordinates.resize(3,0.0);
     d_kPointWeights.resize(1,1.0);
@@ -306,18 +313,9 @@ namespace dftfe {
 	pcout<<std::endl<<"Pseudopotential initalization...."<<std::endl;
 	initLocalPseudoPotential();
 
-	//
-	//
-	//if(dftParameters::pseudoProjector == 2)
-	//{
-	    computeSparseStructureNonLocalProjectors_OV();
-	    computeElementalOVProjectorKets();
-	    //}
-	    //else
-	    //{
-	    //computeSparseStructureNonLocalProjectors();
-	    //computeElementalProjectorKets();
-	    //}
+
+	computeSparseStructureNonLocalProjectors_OV();
+	computeElementalOVProjectorKets();
 
 	forcePtr->initPseudoData();
       }
