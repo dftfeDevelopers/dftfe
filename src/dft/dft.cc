@@ -250,6 +250,7 @@ namespace dftfe {
     dftUtils::cross_product(d_domainBoundingVectors[0],
 			    d_domainBoundingVectors[1],
 			    cross);
+
     double scalarConst = d_domainBoundingVectors[2][0]*cross[0] + d_domainBoundingVectors[2][1]*cross[1] + d_domainBoundingVectors[2][2]*cross[2];
    AssertThrow(scalarConst>0,ExcMessage("DFT-FE Error: Domain bounding vectors or lattice vectors read from input file (input through DOMAIN VECTORS FILE) should form a right-handed coordinate system. Please check your domain vectors file. This is usually fixed by changing the order of the vectors in the domain vectors file."));
 
