@@ -71,9 +71,10 @@ namespace dftfe {
       }
       catch (...) {
 	pcout << "\nWarning: solver did not converge as per set tolerances. consider increasing maxLinearSolverIterations or decreasing relLinearSolverTolerance.\n";
+	pcout << "Current abs. residual: "<<solverControl.last_value()<<std::endl;
       }
 
-      if (debugLevel==2)
+      if (debugLevel>=2)
       {
 	pcout<<std::endl;
 	char buffer[200];

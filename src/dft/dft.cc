@@ -835,7 +835,9 @@ namespace dftfe {
 				     fermiEnergy));
 
 	    if (dftParameters::verbosity>=2)
-	      pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
+	      {
+		pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
+	      }
 
 	    //if the residual norm is greater than adaptiveChebysevFilterPassesTol (a heuristic value)
 	    // do more passes of chebysev filter till the check passes.
@@ -903,6 +905,12 @@ namespace dftfe {
 		  pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
 
 	      }
+	    
+	    if(dftParameters::verbosity>=2)
+	      {
+		pcout  << "Fermi Energy computed: "<<fermiEnergy<<std::endl;
+	      }
+
 	      numberChebyshevSolvePasses=count;
 	  }
 	else
@@ -988,9 +996,9 @@ namespace dftfe {
 		    kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint);
 		    computing_timer.exit_section("Hamiltonian Matrix Computation");
 
-		    if (dftParameters::verbosity>=4)
+		    if(dftParameters::verbosity>=4)
 		      dftUtils::printCurrentMemoryUsage(mpi_communicator,
-					      "Hamiltonian Matrix computed");
+							"Hamiltonian Matrix computed");
 		    kohnShamEigenSpaceCompute(0,
 					      kPoint,
 					      kohnShamDFTEigenOperator,
@@ -1006,7 +1014,13 @@ namespace dftfe {
 		if (dftParameters::verbosity>=2)
 		  pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
 	      }
+
               numberChebyshevSolvePasses=count;
+
+	      if(dftParameters::verbosity>=2)
+		{
+		  pcout  << "Fermi Energy computed: "<<fermiEnergy<<std::endl;
+		}
 	  }
 	computing_timer.enter_section("compute rho");
 #ifdef USE_COMPLEX
