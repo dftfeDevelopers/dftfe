@@ -382,7 +382,7 @@ namespace dftfe{
       //create list of indices
       //
       std::vector<PetscInt> indices(localVectorSize);
-      std::vector<PetscScalar> data(localVectorSize);
+      std::vector<PetscScalar> data(localVectorSize,0.0);
 
       PetscInt low,high;
 

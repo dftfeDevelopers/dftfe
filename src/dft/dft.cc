@@ -67,7 +67,6 @@ namespace dftfe {
 #include "mixingschemes.cc"
 #include "kohnShamEigenSolve.cc"
 #include "restart.cc"
-//#include "electrostaticPRefinedEnergy.cc"
 #include "moveAtoms.cc"
 
   //
@@ -242,10 +241,25 @@ namespace dftfe {
     unsigned int numberColumnsLatticeVectorsFile = 3;
     dftUtils::readFile(numberColumnsLatticeVectorsFile,d_domainBoundingVectors,dftParameters::domainBoundingVectorsFile);
 
-    AssertThrow(dftParameters::natomTypes==atomTypes.size(),ExcMessage("DFT-FE Error: The number atom types read from the atomic coordinates file (input through ATOMIC COORDINATES FILE) doesn't match the NATOM TYPES input. Please check your atomic coordinates file."));
+    AssertThrow(d_domainBoundingVectors.size()==3,ExcMessage("DFT-FE Error: The number of domain bounding vectors read from input file (input through DOMAIN VECTORS FILE) should be 3. Please check your domain vectors file. Sometimes an extra blank row at the end can cause this issue too."));
+
+    //
+    //evaluate cross product of 
+    //
+    std::vector<double> cross;
+    dftUtils::cross_product(d_domainBoundingVectors[0],
+			    d_domainBoundingVectors[1],
+			    cross);
+
+    double scalarConst = d_domainBoundingVectors[2][0]*cross[0] + d_domainBoundingVectors[2][1]*cross[1] + d_domainBoundingVectors[2][2]*cross[2];
+   AssertThrow(scalarConst>0,ExcMessage("DFT-FE Error: Domain bounding vectors or lattice vectors read from input file (input through DOMAIN VECTORS FILE) should form a right-handed coordinate system. Please check your domain vectors file. This is usually fixed by changing the order of the vectors in the domain vectors file."));
+
     pcout << "number of atoms types: " << atomTypes.size() << "\n";
 
+
+    //
     //determine number of electrons
+    //
     for(unsigned int iAtom = 0; iAtom < atomLocations.size(); iAtom++)
     {
       const unsigned int Z = atomLocations[iAtom][0];
@@ -257,12 +271,28 @@ namespace dftfe {
 	  numElectrons += Z;
     }
 
+    if(dftParameters::numberEigenValues <= numElectrons/2.0)
+      {
+	if(dftParameters::verbosity >= 1)
+	  {
+	    pcout <<" Warning: User has requested the number of Kohn-Sham wavefunctions to be less than or equal to half the number of electrons in the system. Setting the Kohn-Sham wavefunctions to half the number of electrons with a 10 percent buffer to avoid convergence issues in SCF iterations"<<std::endl;
+	  }
+	dftParameters::numberEigenValues = (numElectrons/2.0) + 0.1*(numElectrons/2.0);
+      }
+
     //estimate total number of wave functions from atomic orbital filling
     if (dftParameters::startingWFCType=="ATOMIC")
       determineOrbitalFilling();
 
 #ifdef USE_COMPLEX
-    generateMPGrid();
+    if(dftParameters::kPointDataFile == "")
+      generateMPGrid();
+    else
+      {
+	AssertThrow(dftParameters::npool=1
+		    ,ExcMessage("DFT-FE Error: k-Point parallelization is not implemented for external k-point file"));
+	readkPointData();
+      }
 #else
     d_kPointCoordinates.resize(3,0.0);
     d_kPointWeights.resize(1,1.0);
@@ -306,18 +336,9 @@ namespace dftfe {
 	pcout<<std::endl<<"Pseudopotential initalization...."<<std::endl;
 	initLocalPseudoPotential();
 
-	//
-	//
-	//if(dftParameters::pseudoProjector == 2)
-	//{
-	    computeSparseStructureNonLocalProjectors_OV();
-	    computeElementalOVProjectorKets();
-	    //}
-	    //else
-	    //{
-	    //computeSparseStructureNonLocalProjectors();
-	    //computeElementalProjectorKets();
-	    //}
+
+	computeSparseStructureNonLocalProjectors_OV();
+	computeElementalOVProjectorKets();
 
 	forcePtr->initPseudoData();
       }

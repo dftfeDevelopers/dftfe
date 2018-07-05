@@ -347,7 +347,7 @@ namespace dftParameters
 			      "[Developer] The value of the fraction of the upper bound of the unwanted spectrum, the lower bound of the unwanted spectrum will be set. Default value is 0.");
 
 	    prm.declare_entry("CHEBYSHEV FILTER TOLERANCE","1e-03",
-			      Patterns::Double(0.0001),
+			      Patterns::Double(1e-10),
 			      "[Developer] Parameter specifying the tolerance to which eigenvectors need to computed using chebyshev filtering approach.");
 
 	    prm.declare_entry("CHEBYSHEV FILTER BLOCK SIZE", "400",
