@@ -84,9 +84,7 @@ namespace dftfe
 		  std::string newPath =  dftPath + "/tests/dft/pseudopotential/real/" + toParse;
 #endif
 
-		  if(dftParameters::verbosity >= 1)
-		    pcout<< " Reading Pseudopotential File: "<<newPath<<std::endl;
-
+		 
 		  errorFlag = upfToxml(newPath,
 				       xmlFileName);
 		}
@@ -94,6 +92,11 @@ namespace dftfe
 		{
 		  errorFlag = upfToxml(toParse,
 				       xmlFileName);
+
+		  if(dftParameters::verbosity >= 1)
+		    pcout<< " Reading Pseudopotential File: "<<toParse<<std::endl;
+
+		  
 		}
 
 	      AssertThrow(errorFlag==0,dealii::ExcMessage("Error in reading upf format"));
