@@ -18,7 +18,6 @@
 #define force_H_
 #include "headers.h"
 #include "constants.h"
-#include "geoOptIon.h"
 #include "meshMovementGaussian.h"
 
 using namespace dealii;
@@ -42,7 +41,6 @@ namespace dftfe {
     class forceClass
     {
       template <unsigned int T>  friend class dftClass;
-      template <unsigned int T>  friend class geoOptIon;
     public:
     /** @brief Constructor.
      *
