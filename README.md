@@ -59,4 +59,4 @@ For more information see:
 License
 -------
 
-DFT-FE is published under [LGPL v2.1 or newer](LICENSE).
+DFT-FE is published under [LGPL v2.1 or newer](https://github.com/dftfeDevelopers/dftfe/blob/master/LICENSE).
