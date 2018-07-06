@@ -30,7 +30,6 @@
 #include <constraintMatrixInfo.h>
 
 #include <eigen.h>
-#include <symmetry.h>
 #include <meshMovementAffineTransform.h>
 #include <meshMovementGaussian.h>
 #include <eigenSolver.h>
@@ -60,13 +59,16 @@ namespace dftfe {
     alglib::spline1dinterpolant* psi;
   };
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+  /* code that must be skipped by Doxygen */
   //forward declarations
-  template <unsigned int T> class eigenClass;
   template <unsigned int T> class forceClass;
   template <unsigned int T> class symmetryClass;
   template <unsigned int T> class forceClass;
   template <unsigned int T> class geoOptIon;
   template <unsigned int T> class geoOptCell;
+
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
   //
   //dft class for initializing mesh, setting up guesses for initial electron-density and wavefunctions,
