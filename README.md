@@ -16,14 +16,14 @@ Installation instructions
 -------------------------
 
 The steps to install the necessary dependencies and DFT-FE itself are described
-in the Installation instructions section of the DFT-FE [manual](https://github.com/dftfeDevelopers/dftfe/blob/gh-pages/manual.pdf).
+in the Installation instructions section of the DFT-FE [manual](dftfewebsite/manual.pdf).
 
 
 
 Running DFT-FE
 --------------
 
-Instructions on how to run DFT-FE can also be found in the DFT-FE [manual](https://github.com/dftfeDevelopers/dftfe/blob/gh-pages/manual.pdf). 
+Instructions on how to run DFT-FE can also be found in the DFT-FE [manual](dftfewebsite/manual.pdf). 
 
 
 
@@ -38,11 +38,11 @@ More information
 
 For more information see:
 
- - The official website at (give link)
+ - The official website at (give link).
  
- - The current [manual](https://github.com/dftfeDevelopers/dftfe/blob/gh-pages/manual.pdf)
+ - The current [manual](dftfewebsite/manual.pdf).
 
- - DFT-FE [documentation](https://dftfedevelopers.github.io/dftfe/)
+ - DFT-FE [documentation](https://dftfedevelopers.github.io/dftfe/).
 
  - For questions about the source code of DFT-FE, portability, installation, etc., use the DFT-FE development mailing list (dft-fe.users@umich.edu).
  
