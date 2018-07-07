@@ -249,6 +249,7 @@ SET (TEST_TIME_LIMIT 3600)
 #
 IF (DEAL_II_PETSC_WITH_COMPLEX)
    ADD_SUBDIRECTORY(tests/dft/pseudopotential/complex)
+   ADD_SUBDIRECTORY(tests/dft/allElectron/complex)
 ELSE()
    ADD_SUBDIRECTORY(tests/dft/pseudopotential/real)
    ADD_SUBDIRECTORY(tests/dft/allElectron/real)
