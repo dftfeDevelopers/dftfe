@@ -226,16 +226,11 @@ template<unsigned int FEOrder>
 void dftClass<FEOrder>::readPSIRadialValues(){
 
   IndexSet locallyOwnedSet;
-  DoFTools::extract_locally_owned_dofs(dofHandlerEigen, locallyOwnedSet);
+  DoFTools::extract_locally_owned_dofs(dofHandler,locallyOwnedSet);
   std::vector<IndexSet::size_type> locallyOwnedDOFs;
   locallyOwnedSet.fill_index_vector(locallyOwnedDOFs);
-
-
-#ifdef USE_COMPLEX
-  unsigned int numberDofs = locallyOwnedDOFs.size()/2;
-#else
   unsigned int numberDofs = locallyOwnedDOFs.size();
-#endif
+
 
 
   const unsigned int numberGlobalAtoms = atomLocations.size();
@@ -248,12 +243,9 @@ void dftClass<FEOrder>::readPSIRadialValues(){
   bool pp=false;
   for(unsigned int dof=0; dof<numberDofs; dof++)
     {
-#ifdef USE_COMPLEX
-      const dealii::types::global_dof_index dofID = local_dof_indicesReal[dof];
-#else
+
       const dealii::types::global_dof_index dofID = locallyOwnedDOFs[dof];
-#endif
-      Point<3> node = d_supportPointsEigen[dofID];
+      Point<3> node = d_supportPoints[dofID];
       if(d_eigenVectorsFlattened[0].in_local_range(dofID*numEigenValues))
 	{
 	  if(!constraintsNone.is_constrained(dofID))
@@ -371,6 +363,16 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 	d_eigenVectorsFlattened[kPoint].compress(VectorOperation::insert);
 	d_eigenVectorsFlattened[kPoint].update_ghost_values();
     }
+
+  if (dftParameters::startingWFCType=="RANDOM")
+    {
+      pcout<<"============================================================================================================================="<<std::endl;
+      pcout<<"number of electrons: "<<numElectrons<<std::endl;
+      pcout << "number of eigen values: " << numEigenValues << std::endl;
+      pcout<<"============================================================================================================================="<<std::endl;
+    }
+
+
 }
 
 //
