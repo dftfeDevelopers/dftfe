@@ -231,13 +231,11 @@ std::vector<double>  forceClass<FEOrder>::getAtomsForces()
    return  d_globalAtomsGaussianForces;
 }
 
-#ifdef USE_COMPLEX
 template<unsigned int FEOrder>
 Tensor<2,C_DIM,double>  forceClass<FEOrder>::getStress()
 {
     return d_stress;
 }
-#endif
 
 template<unsigned int FEOrder>
 double  forceClass<FEOrder>::getGaussianGeneratorParameter() const

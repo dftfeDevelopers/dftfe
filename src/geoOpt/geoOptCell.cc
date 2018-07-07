@@ -16,7 +16,6 @@
 // @author Sambit Das
 //
 
-#ifdef USE_COMPLEX
 #include <geoOptCell.h>
 #include <cgPRPNonLinearSolver.h>
 #include <force.h>
@@ -388,4 +387,3 @@ template class geoOptCell<10>;
 template class geoOptCell<11>;
 template class geoOptCell<12>;
 }
-#endif
