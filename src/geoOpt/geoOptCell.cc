@@ -21,6 +21,7 @@
 #include <cgPRPNonLinearSolver.h>
 #include <force.h>
 #include <dft.h>
+#include <geoOptIon.h>
 #include <fileReaders.h>
 #include <dftParameters.h>
 #include <dftUtils.h>
