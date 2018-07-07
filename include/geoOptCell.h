@@ -15,7 +15,6 @@
 
 #ifndef geoOptCell_H_
 #define geoOptCell_H_
-#ifdef USE_COMPLEX
 #include "nonlinearSolverProblem.h"
 #include "constants.h"
 
@@ -131,5 +130,4 @@ namespace dftfe {
 
 }
 
-#endif
 #endif
