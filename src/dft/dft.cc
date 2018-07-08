@@ -200,7 +200,10 @@ namespace dftfe {
 	//read fractionalCoordinates of atoms in periodic case
 	//
 	dftUtils::readFile(numberColumnsCoordinatesFile, atomLocations, dftParameters::coordinatesFile);
-	AssertThrow(dftParameters::natoms==atomLocations.size(),ExcMessage("DFT-FE Error: The number atoms read from the atomic coordinates file (input through ATOMIC COORDINATES FILE) doesn't match the NATOMS input. Please check your atomic coordinates file. Sometimes an extra blank row at the end can cause this issue too."));
+	AssertThrow(dftParameters::natoms==atomLocations.size(),ExcMessage("DFT-FE Error: The number atoms"
+		    "read from the atomic coordinates file (input through ATOMIC COORDINATES FILE) doesn't"
+		    "match the NATOMS input. Please check your atomic coordinates file. Sometimes an extra"
+		    "blank row at the end can cause this issue too."));
 	pcout << "number of atoms: " << atomLocations.size() << "\n";
 	atomLocationsFractional.resize(atomLocations.size()) ;
 	//
@@ -211,7 +214,12 @@ namespace dftfe {
 	    atomTypes.insert((unsigned int)((*it)[0]));
 
 	    if (!dftParameters::isPseudopotential)
-	      AssertThrow((*it)[0]<=50,ExcMessage("DFT-FE Error: One of the atomic numbers exceeds 50. Currently, for all-electron calculations we have single atom wavefunction and electron-density initial guess data till atomic number 50 only. Data for the remaining atomic numbers will be added in the next release. You could also contact the developers of DFT-FE, who can provide you with the code to generate the single atom wavefunction and electron-density data for atomic numbers beyond 50."));
+	      AssertThrow((*it)[0]<=50,ExcMessage("DFT-FE Error: One of the atomic numbers exceeds 50."
+	      "Currently, for all-electron calculations we have single atom wavefunction and electron-density"
+	      "initial guess data till atomic number 50 only. Data for the remaining atomic numbers will be"
+	      "added in the next release. You could also contact the developers of DFT-FE, who can provide"
+	      "you with the code to generate the single atom wavefunction and electron-density data for"
+	      "atomic numbers beyond 50."));
 	  }
 
 	//
@@ -226,7 +234,10 @@ namespace dftfe {
       {
 	dftUtils::readFile(numberColumnsCoordinatesFile, atomLocations, dftParameters::coordinatesFile);
 
-	AssertThrow(dftParameters::natoms==atomLocations.size(),ExcMessage("DFT-FE Error: The number atoms read from the atomic coordinates file (input through ATOMIC COORDINATES FILE) doesn't match the NATOMS input. Please check your atomic coordinates file. Sometimes an extra blank row at the end can cause this issue too."));
+	AssertThrow(dftParameters::natoms==atomLocations.size(),ExcMessage("DFT-FE Error: The number atoms"
+		    "read from the atomic coordinates file (input through ATOMIC COORDINATES FILE) doesn't"
+		    "match the NATOMS input. Please check your atomic coordinates file. Sometimes an extra"
+		    "blank row at the end can cause this issue too."));
 	pcout << "number of atoms: " << atomLocations.size() << "\n";
 
 	//
@@ -237,7 +248,12 @@ namespace dftfe {
 	    atomTypes.insert((unsigned int)((*it)[0]));
 
 	    if (!dftParameters::isPseudopotential)
-	      AssertThrow((*it)[0]<=50,ExcMessage("DFT-FE Error: One of the atomic numbers exceeds 50. Currently, for all-electron calculations we have single atom wavefunction and electron-density initial guess data till atomic number 50 only. Data for the remaining atomic numbers will be added in the next release. You could also contact the developers of DFT-FE, who can provide you with the code to generate the single atom wavefunction and electron-density data for atomic numbers beyond 50."));
+	      AssertThrow((*it)[0]<=50,ExcMessage("DFT-FE Error: One of the atomic numbers exceeds 50."
+	      "Currently, for all-electron calculations we have single atom wavefunction and electron-density"
+	      "initial guess data till atomic number 50 only. Data for the remaining atomic numbers will be"
+	      "added in the next release. You could also contact the developers of DFT-FE, who can provide"
+	      "you with the code to generate the single atom wavefunction and electron-density data for"
+	      "atomic numbers beyond 50."));
 	  }
       }
 
@@ -247,7 +263,9 @@ namespace dftfe {
     unsigned int numberColumnsLatticeVectorsFile = 3;
     dftUtils::readFile(numberColumnsLatticeVectorsFile,d_domainBoundingVectors,dftParameters::domainBoundingVectorsFile);
 
-    AssertThrow(d_domainBoundingVectors.size()==3,ExcMessage("DFT-FE Error: The number of domain bounding vectors read from input file (input through DOMAIN VECTORS FILE) should be 3. Please check your domain vectors file. Sometimes an extra blank row at the end can cause this issue too."));
+    AssertThrow(d_domainBoundingVectors.size()==3,ExcMessage("DFT-FE Error: The number of domain bounding"
+		"vectors read from input file (input through DOMAIN VECTORS FILE) should be 3. Please check"
+		"your domain vectors file. Sometimes an extra blank row at the end can cause this issue too."));
 
     //
     //evaluate cross product of
@@ -258,7 +276,10 @@ namespace dftfe {
 			    cross);
 
     double scalarConst = d_domainBoundingVectors[2][0]*cross[0] + d_domainBoundingVectors[2][1]*cross[1] + d_domainBoundingVectors[2][2]*cross[2];
-   AssertThrow(scalarConst>0,ExcMessage("DFT-FE Error: Domain bounding vectors or lattice vectors read from input file (input through DOMAIN VECTORS FILE) should form a right-handed coordinate system. Please check your domain vectors file. This is usually fixed by changing the order of the vectors in the domain vectors file."));
+   AssertThrow(scalarConst>0,ExcMessage("DFT-FE Error: Domain bounding vectors or lattice vectors read from"
+	       "input file (input through DOMAIN VECTORS FILE) should form a right-handed coordinate system."
+	       "Please check your domain vectors file. This is usually fixed by changing the order of the"
+	       "vectors in the domain vectors file."));
 
     pcout << "number of atoms types: " << atomTypes.size() << "\n";
 
@@ -281,7 +302,10 @@ namespace dftfe {
       {
 	if(dftParameters::verbosity >= 1)
 	  {
-	    pcout <<" Warning: User has requested the number of Kohn-Sham wavefunctions to be less than or equal to half the number of electrons in the system. Setting the Kohn-Sham wavefunctions to half the number of electrons with a 10 percent buffer to avoid convergence issues in SCF iterations"<<std::endl;
+	    pcout <<" Warning: User has requested the number of Kohn-Sham wavefunctions to be less than or"
+		    "equal to half the number of electrons in the system. Setting the Kohn-Sham wavefunctions"
+		    "to half the number of electrons with a 10 percent buffer to avoid convergence issues in"
+		    "SCF iterations"<<std::endl;
 	  }
 	dftParameters::numberEigenValues = (numElectrons/2.0) + 0.1*(numElectrons/2.0);
       }
@@ -383,9 +407,13 @@ namespace dftfe {
 	    for(unsigned int idim = 0; idim < 3; ++idim)
 	    {
 	      if (periodicBc[idim])
-	        AssertThrow(atomLocationsFractional[i][2+idim]>-tol && atomLocationsFractional[i][2+idim]<1.0+tol,ExcMessage("DFT-FE Error: periodic direction fractional coordinates doesn't lie in [0,1]. Please check input fractional coordinates, or if this is an ionic relaxation step, please check the corresponding algorithm."));
+	        AssertThrow(atomLocationsFractional[i][2+idim]>-tol && atomLocationsFractional[i][2+idim]<1.0+tol,ExcMessage("DFT-FE Error: periodic direction fractional coordinates doesn't lie in [0,1]. Please check input"
+	        "fractional coordinates, or if this is an ionic relaxation step, please check the corresponding"
+		"algorithm."));
               if (!periodicBc[idim])
-		AssertThrow(atomLocationsFractional[i][2+idim]>tol && atomLocationsFractional[i][2+idim]<1.0-tol,ExcMessage("DFT-FE Error: non-periodic direction fractional coordinates doesn't lie in (0,1). Please check input fractional coordinates, or if this is an ionic relaxation step, please check the corresponding algorithm."));
+		AssertThrow(atomLocationsFractional[i][2+idim]>tol && atomLocationsFractional[i][2+idim]<1.0-tol,ExcMessage("DFT-FE Error: non-periodic direction fractional coordinates doesn't lie in (0,1). Please check"
+	       "input fractional coordinates, or if this is an ionic relaxation step, please check the"
+	       "corresponding algorithm."));
 	    }
 	  }
 
