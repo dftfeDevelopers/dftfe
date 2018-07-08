@@ -209,6 +209,9 @@ namespace dftfe {
 	for (std::vector<std::vector<double> >::iterator it=atomLocations.begin(); it<atomLocations.end(); it++)
 	  {
 	    atomTypes.insert((unsigned int)((*it)[0]));
+
+	    if (!dftParameters::isPseudopotential)
+	      AssertThrow((*it)[0]<=50,ExcMessage("DFT-FE Error: One of the atomic numbers exceeds 50. Currently, for all-electron calculations we have single atom wavefunction and electron-density initial guess data till atomic number 50 only. Data for the remaining atomic numbers will be added in the next release. You could also contact the developers of DFT-FE, who can provide you with the code to generate the single atom wavefunction and electron-density data for atomic numbers beyond 50."));
 	  }
 
 	//
@@ -232,6 +235,9 @@ namespace dftfe {
 	for (std::vector<std::vector<double> >::iterator it=atomLocations.begin(); it<atomLocations.end(); it++)
 	  {
 	    atomTypes.insert((unsigned int)((*it)[0]));
+
+	    if (!dftParameters::isPseudopotential)
+	      AssertThrow((*it)[0]<=50,ExcMessage("DFT-FE Error: One of the atomic numbers exceeds 50. Currently, for all-electron calculations we have single atom wavefunction and electron-density initial guess data till atomic number 50 only. Data for the remaining atomic numbers will be added in the next release. You could also contact the developers of DFT-FE, who can provide you with the code to generate the single atom wavefunction and electron-density data for atomic numbers beyond 50."));
 	  }
       }
 
@@ -244,7 +250,7 @@ namespace dftfe {
     AssertThrow(d_domainBoundingVectors.size()==3,ExcMessage("DFT-FE Error: The number of domain bounding vectors read from input file (input through DOMAIN VECTORS FILE) should be 3. Please check your domain vectors file. Sometimes an extra blank row at the end can cause this issue too."));
 
     //
-    //evaluate cross product of 
+    //evaluate cross product of
     //
     std::vector<double> cross;
     dftUtils::cross_product(d_domainBoundingVectors[0],
@@ -905,7 +911,7 @@ namespace dftfe {
 		  pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
 
 	      }
-	    
+
 	    if(dftParameters::verbosity>=2)
 	      {
 		pcout  << "Fermi Energy computed: "<<fermiEnergy<<std::endl;

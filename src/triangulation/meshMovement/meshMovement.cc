@@ -139,28 +139,6 @@ void meshMovementClass::initMoved(const std::vector<std::vector<double> > & doma
    d_domainBoundingVectors=domainBoundingVectors;
 }
 
-void meshMovementClass::writeMesh(std::string meshFileName)
-{
-  //write mesh to vtk file
-  //
-  if (this_mpi_process==0 && d_dofHandlerMoveMesh.get_triangulation().locally_owned_subdomain()==numbers::invalid_subdomain_id)
-    {
-      DataOut<3> data_out;
-      data_out.attach_dof_handler(d_dofHandlerMoveMesh);
-      data_out.build_patches ();
-      //std::ofstream output ("meshFinal.vtu");
-      std::ofstream output(meshFileName);
-      data_out.write_vtu (output);
-    }
-
-
-  /*DataOut<3> data_out;
-  data_out.attach_dof_handler(d_dofHandlerMoveMesh);
-  data_out.build_patches ();
-  data_out.write_vtu_in_parallel(std::string("mesh.vtu").c_str(),mpi_communicator);*/
-
-}
-
 void meshMovementClass::initIncrementField()
 {
   //dftPtr->matrix_free_data.initialize_dof_vector(d_incrementalDisplacement,d_forceDofHandlerIndex);
