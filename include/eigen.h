@@ -13,8 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Shiva Rudraraju, Phani Motamarri, Sambit Das
-//
+
 
 #ifndef eigen_H_
 #define eigen_H_

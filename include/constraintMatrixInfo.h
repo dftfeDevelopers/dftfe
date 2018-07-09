@@ -13,8 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Phani Motamarri
-//
+
 
 #ifndef constraintMatrixInfo_H_
 #define constraintMatrixInfo_H_

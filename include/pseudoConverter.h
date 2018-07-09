@@ -13,7 +13,6 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Phani Motamarri
 //
 
 #ifndef converter_h
@@ -26,7 +25,7 @@ namespace dftfe
   //Declare pseudoUtils function
   //
 
-  /** @file pseudoConverter.h
+  /** 
    *  @brief wrapper to convert pseudopotential file from upf to dftfe format
    *
    *  The functionality reads a file containing list of pseudopotential files in upf format and converts into 

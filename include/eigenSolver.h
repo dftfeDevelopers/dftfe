@@ -13,7 +13,6 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Phani Motamarri (2018)
 
 
 #ifndef eigenSolver_h
@@ -29,6 +28,8 @@ namespace dftfe{
 
   /**
    * @brief Base class for non-linear algebraic solver.
+   *
+   * @author Phani Motamarri
    */
 
   class eigenSolverClass {

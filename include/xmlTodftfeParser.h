@@ -13,8 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Shukan Parekh, Phani Motamarri
-//
+
 
 #include <vector>
 #include <string>
@@ -42,7 +41,7 @@ namespace dftfe{
 namespace pseudoUtils
 {
 
-  /** @file xmlTodftfeParser.h
+  /** 
    *  @brief converts pseudopotential file from xml format to dftfe format
    *
    *  This class parses the xmlfile and identifies appropriate tags and converts
