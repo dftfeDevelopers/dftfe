@@ -23,7 +23,7 @@
 
 namespace dftfe {
 
-  /** @file dftUtils.h
+  /** 
    *  @brief Contains repeatedly used functions in the KSDFT calculations
    *
    *  @author Sambit Das, Krishnendu Ghosh, Phani Motamarri
