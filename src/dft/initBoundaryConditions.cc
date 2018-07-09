@@ -110,6 +110,7 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   //used for computing self-potential (Vself) using Poisson problem
   //with atoms belonging to a given bin
   //
+  computing_timer.enter_section("Create atom bins");
   d_vselfBinsManager.createAtomBins(d_constraintsVector,
 	                            dofHandler,
 				    constraintsNone,
@@ -118,6 +119,7 @@ void dftClass<FEOrder>::initBoundaryConditions(){
 				    d_imageIds,
 				    d_imageCharges,
 				    dftParameters::radiusAtomBall);
+  computing_timer.exit_section("Create atom bins");
 
   if (dftParameters::verbosity>=4)
       dftUtils::printCurrentMemoryUsage(mpi_communicator,

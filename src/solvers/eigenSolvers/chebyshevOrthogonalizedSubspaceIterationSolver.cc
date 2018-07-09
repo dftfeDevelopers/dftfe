@@ -30,23 +30,23 @@ namespace dftfe{
       {
 	unsigned int chebyshevOrder;
 	if(upperBoundUnwantedSpectrum <= 500)
-	  chebyshevOrder = 25;
+	  chebyshevOrder = 30;
 	else if(upperBoundUnwantedSpectrum > 500  && upperBoundUnwantedSpectrum <= 1000)
-	  chebyshevOrder = 35;
+	  chebyshevOrder = 40;
 	else if(upperBoundUnwantedSpectrum > 1000 && upperBoundUnwantedSpectrum <= 2000)
-	  chebyshevOrder = 45;
+	  chebyshevOrder = 50;
 	else if(upperBoundUnwantedSpectrum > 2000 && upperBoundUnwantedSpectrum <= 3000)
-	  chebyshevOrder = 55;
+	  chebyshevOrder = 60;
 	else if(upperBoundUnwantedSpectrum > 3000 && upperBoundUnwantedSpectrum <= 5000)
-	  chebyshevOrder = 70;
+	  chebyshevOrder = 75;
 	else if(upperBoundUnwantedSpectrum > 5000 && upperBoundUnwantedSpectrum <= 9000)
-	  chebyshevOrder = 85;
+	  chebyshevOrder = 90;
 	else if(upperBoundUnwantedSpectrum > 9000 && upperBoundUnwantedSpectrum <= 14000)
-	  chebyshevOrder = 130;
+	  chebyshevOrder = 140;
 	else if(upperBoundUnwantedSpectrum > 14000 && upperBoundUnwantedSpectrum <= 20000)
-	  chebyshevOrder = 150;
+	  chebyshevOrder = 160;
 	else if(upperBoundUnwantedSpectrum > 20000 && upperBoundUnwantedSpectrum <= 30000)
-	  chebyshevOrder = 200;
+	  chebyshevOrder = 210;
 	else if(upperBoundUnwantedSpectrum > 30000 && upperBoundUnwantedSpectrum <= 50000)
 	  chebyshevOrder = 300;
 	else if(upperBoundUnwantedSpectrum > 50000 && upperBoundUnwantedSpectrum <= 80000)

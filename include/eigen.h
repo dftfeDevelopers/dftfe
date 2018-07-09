@@ -282,7 +282,7 @@ namespace dftfe{
 					 const unsigned int numberWaveFunctions,
 					 dealii::parallel::distributed::Vector<dataTypes::number> & dst) const;
 
-
+#ifdef WITH_MKL
 
       /**
        * @brief implementation of matrix-vector product using cell-level stiffness matrices.
@@ -299,7 +299,7 @@ namespace dftfe{
 		    const unsigned int numberWaveFunctions,
 		    dealii::parallel::distributed::Vector<dataTypes::number> & dst) const;
 
-
+#endif
       /**
        * @brief implementation of non-local Hamiltonian matrix-vector product
        * using non-local discretized projectors at cell-level.
@@ -315,7 +315,7 @@ namespace dftfe{
 					    const unsigned int numberWaveFunctions,
 					    dealii::parallel::distributed::Vector<dataTypes::number> & dst) const;
 
-
+#ifdef WITH_MKL
       /**
        * @brief implementation of non-local Hamiltonian matrix-vector product using
        * non-local discretized projectors at cell-level. blas gemm_batch routines are used.
@@ -330,6 +330,7 @@ namespace dftfe{
       void computeNonLocalHamiltonianTimesXBatchGEMM(const dealii::parallel::distributed::Vector<dataTypes::number> & src,
 						     const unsigned int numberWaveFunctions,
 						     dealii::parallel::distributed::Vector<dataTypes::number> & dst) const;
+#endif
 
       ///pointer to dft class
       dftClass<FEOrder>* dftPtr;

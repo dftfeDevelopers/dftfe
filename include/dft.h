@@ -13,8 +13,6 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Shiva Rudraraju, Phani Motamarri, Sambit Das
-//
 
 #ifndef dft_H_
 #define dft_H_
@@ -70,10 +68,12 @@ namespace dftfe {
 
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 
-  //
-  //dft class for initializing mesh, setting up guesses for initial electron-density and wavefunctions,
-  //solving individual vSelf problem after setting up bins, initializing pseudopotentials. Also
-  //has member functions which sets up the process of SCF iteration including mixing of the electron-density
+ /**
+  * @brief This class is the primary interface location of all other parts of the DFT-FE code
+  * for all steps involved in obtaining the Kohn-Sham DFT ground-state solution.
+  *
+  * @author Shiva Rudraraju, Phani Motamarri, Sambit Das
+  */
   template <unsigned int FEOrder>
     class dftClass
     {
