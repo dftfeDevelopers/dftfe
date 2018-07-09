@@ -13,11 +13,7 @@
 //
 // ---------------------------------------------------------------------
 
-/** @file dftUtils.h
- *  @brief Contains repeatedly used functions in the KSDFT calculations
- *
- *  @author Sambit Das
- */
+
 
 #ifndef dftUtils_H_
 #define dftUtils_H_
@@ -26,6 +22,12 @@
 #include <headers.h>
 
 namespace dftfe {
+
+  /** @file dftUtils.h
+   *  @brief Contains repeatedly used functions in the KSDFT calculations
+   *
+   *  @author Sambit Das, Krishnendu Ghosh, Phani Motamarri
+   */
 
   namespace dftUtils
     {
@@ -106,20 +108,18 @@ namespace dftfe {
 	     const unsigned int n_pools);
 
 	/**
-	 * FIXME: document
+	 * @brief get the communicator across the processor groups
 	 */
 	MPI_Comm &get_interpool_comm();
 
 	/**
-	 * FIXME: document
+	 * @brief get the communicator associated with processor group
 	 */
 	MPI_Comm &get_intrapool_comm();
 
       private:
-	/// FIXME: document
+	
 	MPI_Comm interpoolcomm;
-
-	/// FIXME: document
 	MPI_Comm intrapoolcomm;
 
       };

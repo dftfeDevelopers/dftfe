@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Shiva Rudraraju, Phani Motamarri
+// @author Shiva Rudraraju, Phani Motamarri, Sambit Das
 //
 
 #ifndef eigen_H_
@@ -25,7 +25,15 @@
 
 namespace dftfe{
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
   template <unsigned int T> class dftClass;
+#endif
+
+   /**
+   * @brief Implementation class for building the Kohn-Sham DFT discrete operator and the action of the discrete operator on a single vector or multiple vectors
+   *
+   * @author Phani Motamarri, 
+   */
 
   //
   //Define eigenClass class

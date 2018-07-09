@@ -38,6 +38,10 @@ namespace dftfe{
   //Declare pseudoUtils function
   //
 
+  
+namespace pseudoUtils
+{
+
   /** @file xmlTodftfeParser.h
    *  @brief converts pseudopotential file from xml format to dftfe format
    *
@@ -46,9 +50,6 @@ namespace dftfe{
    *
    *  @author Shukan Parekh, Phani Motamarri
    */
-namespace pseudoUtils
-{
-
 class xmlTodftfeParser{
 
 private:
