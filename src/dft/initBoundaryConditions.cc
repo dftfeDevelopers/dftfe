@@ -17,10 +17,10 @@
 //
 #include "applyHomogeneousDirichletBC.cc"
 #include "locatenodes.cc"
-#include "applyPeriodicBCHigherOrderNodes.cc"
 
 
-//init
+
+
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::initBoundaryConditions(){
   TimerOutput::Scope scope (computing_timer,"moved setup");

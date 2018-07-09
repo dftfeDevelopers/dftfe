@@ -13,8 +13,9 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author  Phani Motamarri (2018)
+// @author  Phani Motamarri 
 //
+
 
 
 void exchangeMasterNodesList(std::set<unsigned int> & masterNodeIdSet,
