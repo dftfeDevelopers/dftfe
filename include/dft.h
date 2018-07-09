@@ -49,6 +49,10 @@ namespace dftfe {
   //
   using namespace dealii;
 
+ 
+
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+
   struct orbital
   {
     unsigned int atomID;
@@ -57,7 +61,6 @@ namespace dftfe {
     alglib::spline1dinterpolant* psi;
   };
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
   /* code that must be skipped by Doxygen */
   //forward declarations
   template <unsigned int T> class forceClass;
