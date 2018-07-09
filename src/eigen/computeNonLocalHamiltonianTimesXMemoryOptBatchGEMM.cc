@@ -20,7 +20,7 @@
 #ifdef WITH_MKL
 #ifdef USE_COMPLEX
 template<unsigned int FEOrder>
-void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXBatchGEMM(const dealii::parallel::distributed::Vector<std::complex<double> > & src,
+void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesXBatchGEMM(const dealii::parallel::distributed::Vector<std::complex<double> > & src,
 								    const unsigned int numberWaveFunctions,
 								    dealii::parallel::distributed::Vector<std::complex<double> >       & dst) const
 {
@@ -219,7 +219,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXBatchGEMM(const dealii
 }
 #else
 template<unsigned int FEOrder>
-void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXBatchGEMM(const dealii::parallel::distributed::Vector<double> & src,
+void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesXBatchGEMM(const dealii::parallel::distributed::Vector<double> & src,
 								    const unsigned int numberWaveFunctions,
 								    dealii::parallel::distributed::Vector<double>       & dst) const
 {

@@ -18,7 +18,7 @@
 
 
 template<unsigned int FEOrder>
-void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vectorType> &src,
+void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vectorType> &src,
 							   std::vector<vectorType>       &dst)const
 {
 
@@ -308,7 +308,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const std::vector<vec
 
 #ifdef USE_COMPLEX
 template<unsigned int FEOrder>
-void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::parallel::distributed::Vector<std::complex<double> > & src,
+void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::parallel::distributed::Vector<std::complex<double> > & src,
 							   const unsigned int numberWaveFunctions,
 							   dealii::parallel::distributed::Vector<std::complex<double> >       & dst) const
 {
@@ -491,7 +491,7 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::paralle
 }
 #else
 template<unsigned int FEOrder>
-void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::parallel::distributed::Vector<double> & src,
+void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::parallel::distributed::Vector<double> & src,
 							   const unsigned int numberWaveFunctions,
 							   dealii::parallel::distributed::Vector<double>       & dst) const
 {

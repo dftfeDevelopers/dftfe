@@ -20,7 +20,7 @@
 
 #include "eigenSolver.h"
 #include "dftParameters.h"
-#include "eigen.h"
+#include "operator.h"
 
 
 namespace dftfe{

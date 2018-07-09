@@ -1,10 +1,5 @@
 
 //
-// File:      operator.cc
-// Package:   dft
-//
-// Density Functional Theory
-//
 // -------------------------------------------------------------------------------------
 //
 // Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
@@ -20,7 +15,7 @@
 //
 // --------------------------------------------------------------------------------------
 //
-// @author Phani Motamarri (2018)
+// @author Phani Motamarri
 //
 #include <operator.h>
 

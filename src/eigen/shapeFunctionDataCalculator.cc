@@ -18,7 +18,7 @@
 
 
 template<unsigned int FEOrder>
-void eigenClass<FEOrder>::preComputeShapeFunctionGradientIntegrals()
+void kohnShamDFTOperatorClass<FEOrder>::preComputeShapeFunctionGradientIntegrals()
 {
 
   //

@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Krishnendu Ghosh(2017), adapted from initPseudo.cc
+// @author Krishnendu Ghosh
 //
 
 #include "stdafx.h"
