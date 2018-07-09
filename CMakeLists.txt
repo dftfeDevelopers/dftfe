@@ -129,6 +129,14 @@ ELSE()
    MESSAGE(STATUS "Using real")
 ENDIF()
 
+#
+#Set use intel mkl flag
+#
+IF (WITH_INTEL_MKL)
+   ADD_DEFINITIONS(-DWITH_MKL)
+   MESSAGE(STATUS "With intel mkl")
+ENDIF()
+
 
 ADD_LIBRARY(${TARGETLIB} SHARED
     ${TARGET_SRC}

@@ -17,7 +17,7 @@
 //
 
 
-
+#ifdef WITH_MKL
 #ifdef USE_COMPLEX
 template<unsigned int FEOrder>
 void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXBatchGEMM(const dealii::parallel::distributed::Vector<std::complex<double> > & src,
@@ -413,4 +413,5 @@ void eigenClass<FEOrder>::computeNonLocalHamiltonianTimesXBatchGEMM(const dealii
     }//non local atomid loop
 
 }
+#endif
 #endif

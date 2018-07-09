@@ -75,6 +75,10 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
     //else
     //initNonLocalPseudoPotential();
 
+  if (dftParameters::verbosity>=4)
+     dftUtils::printCurrentMemoryUsage(mpi_communicator,
+	                      "Call to initNonLocalPseudoPotential");
+
   //initialize electrostatics fields
   matrix_free_data.initialize_dof_vector(d_phiTotRhoIn,phiTotDofHandlerIndex);
   d_phiTotRhoOut.reinit(d_phiTotRhoIn);

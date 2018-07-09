@@ -302,6 +302,7 @@ void eigenClass<FEOrder>::computeLocalHamiltonianTimesX(const dealii::parallel::
 
 }
 
+#ifdef WITH_MKL
 template<unsigned int FEOrder>
 void eigenClass<FEOrder>::computeLocalHamiltonianTimesXBatchGEMM (const dealii::parallel::distributed::Vector<std::complex<double> > & src,
 								  const unsigned int numberWaveFunctions,
@@ -388,6 +389,7 @@ void eigenClass<FEOrder>::computeLocalHamiltonianTimesXBatchGEMM (const dealii::
   delete []  cellHamMatrixTimesWaveMatrixBatch;
   delete []  cellHamMatrixBatch;
 }
+#endif
 #else
 template<unsigned int FEOrder>
 void eigenClass<FEOrder>::computeLocalHamiltonianTimesX(const dealii::parallel::distributed::Vector<double> & src,
@@ -452,6 +454,7 @@ void eigenClass<FEOrder>::computeLocalHamiltonianTimesX(const dealii::parallel::
 
 }
 
+#ifdef WITH_MKL
 template<unsigned int FEOrder>
 void eigenClass<FEOrder>::computeLocalHamiltonianTimesXBatchGEMM (const dealii::parallel::distributed::Vector<double> & src,
 								  const unsigned int numberWaveFunctions,
@@ -537,4 +540,5 @@ void eigenClass<FEOrder>::computeLocalHamiltonianTimesXBatchGEMM (const dealii::
   delete []  cellHamMatrixTimesWaveMatrixBatch;
   delete []  cellHamMatrixBatch;
 }
+#endif
 #endif

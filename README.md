@@ -44,7 +44,7 @@ For more information see:
  
  - The current [manual](https://dftfewebsite/manual.pdf).
 
- - DFT-FE [documentation](https://dftfedevelopers.github.io/dftfe/).
+ - Doxygen generated [documentation](https://dftfedevelopers.github.io/dftfe/).
 
  - For questions about the source code of DFT-FE, portability, installation, etc., use the DFT-FE development mailing list (dft-fe.users@umich.edu).
  
