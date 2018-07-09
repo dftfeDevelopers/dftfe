@@ -196,7 +196,7 @@
 {\it Default:} 1
 
 
-{\it Description:} [Standard] Number of Monkhorts-Pack grid points to be used along reciprocal latttice vector 1.
+{\it Description:} [Standard] Number of Monkhorst-Pack grid points to be used along reciprocal latttice vector 1.
 
 
 {\it Possible values:} An integer $n$ such that $1\leq n \leq 1000$
@@ -212,7 +212,7 @@
 {\it Default:} 1
 
 
-{\it Description:} [Standard] Number of Monkhorts-Pack grid points to be used along reciprocal latttice vector 2.
+{\it Description:} [Standard] Number of Monkhorst-Pack grid points to be used along reciprocal latttice vector 2.
 
 
 {\it Possible values:} An integer $n$ such that $1\leq n \leq 1000$
@@ -228,7 +228,7 @@
 {\it Default:} 1
 
 
-{\it Description:} [Standard] Number of Monkhorts-Pack grid points to be used along reciprocal latttice vector 3.
+{\it Description:} [Standard] Number of Monkhorst-Pack grid points to be used along reciprocal latttice vector 3.
 
 
 {\it Possible values:} An integer $n$ such that $1\leq n \leq 1000$
@@ -241,13 +241,13 @@
 \index[prmindexfull]{Brillouin zone k point sampling options!Monkhorst-Pack (MP) grid generation!SAMPLING SHIFT 1}
 
 
-{\it Default:} 0.0
+{\it Default:} 0
 
 
-{\it Description:} [Standard] Fractional shifting to be used along reciprocal latttice vector 1.
+{\it Description:} [Standard] If fractional shifting to be used (0 for no shift, 1 for shift) along reciprocal latttice vector 1.
 
 
-{\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 1$
+{\it Possible values:} An integer $n$ such that $0\leq n \leq 1$
 \item {\it Parameter name:} {\tt SAMPLING SHIFT 2}
 \phantomsection\label{parameters:Brillouin zone k point sampling options/Monkhorst_2dPack _28MP_29 grid generation/SAMPLING SHIFT 2}
 \label{parameters:Brillouin_20zone_20k_20point_20sampling_20options/Monkhorst_2dPack_20_28MP_29_20grid_20generation/SAMPLING_20SHIFT_202}
@@ -257,13 +257,13 @@
 \index[prmindexfull]{Brillouin zone k point sampling options!Monkhorst-Pack (MP) grid generation!SAMPLING SHIFT 2}
 
 
-{\it Default:} 0.0
+{\it Default:} 0
 
 
-{\it Description:} [Standard] Fractional shifting to be used along reciprocal latttice vector 2.
+{\it Description:} [Standard] If fractional shifting to be used (0 for no shift, 1 for shift) along reciprocal latttice vector 2.
 
 
-{\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 1$
+{\it Possible values:} An integer $n$ such that $0\leq n \leq 1$
 \item {\it Parameter name:} {\tt SAMPLING SHIFT 3}
 \phantomsection\label{parameters:Brillouin zone k point sampling options/Monkhorst_2dPack _28MP_29 grid generation/SAMPLING SHIFT 3}
 \label{parameters:Brillouin_20zone_20k_20point_20sampling_20options/Monkhorst_2dPack_20_28MP_29_20grid_20generation/SAMPLING_20SHIFT_203}
@@ -273,13 +273,13 @@
 \index[prmindexfull]{Brillouin zone k point sampling options!Monkhorst-Pack (MP) grid generation!SAMPLING SHIFT 3}
 
 
-{\it Default:} 0.0
+{\it Default:} 0
 
 
-{\it Description:} [Standard] Fractional shifting to be used along reciprocal latttice vector 3.
+{\it Description:} [Standard] If fractional shifting to be used (0 for no shift, 1 for shift) along reciprocal latttice vector 3.
 
 
-{\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 1$
+{\it Possible values:} An integer $n$ such that $0\leq n \leq 1$
 \end{itemize}
 
 \subsection{Parameters in section \tt Checkpointing and Restart}
@@ -416,7 +416,7 @@
 {\it Default:} 0.0
 
 
-{\it Description:} [Standard] Magnetization to start with (must be between -0.5 and +0.5).
+{\it Description:} [Standard] Magnetization to start with (must be between -0.5 and +0.5). Corresponding magnetization per unit cell will be (2 x START MAGNETIZATION x Ne) a.u. , where Ne is the number of electrons in the unit cell 
 
 
 {\it Possible values:} A floating point number $v$ such that $-0.5 \leq v \leq 0.5$
@@ -454,7 +454,7 @@
 {\it Default:} 4
 
 
-{\it Description:} [Standard] The degree of the finite-element interpolating polynomial. Default value is 4. The default value of 4 is usually a good choice for most pseudopotential as well as all-electron problems.
+{\it Description:} [Standard] The degree of the finite-element interpolating polynomial. Default value is 4. POLYNOMIAL ORDER= 4 or 5 is usually a good choice for most pseudopotential as well as all-electron problems.
 
 
 {\it Possible values:} An integer $n$ such that $1\leq n \leq 12$
@@ -494,7 +494,7 @@
 {\it Default:} 0.0
 
 
-{\it Description:} [Developer] Mesh size of the base mesh on which refinement is performed. For the default value of 0.0, a heuristically determined base mesh size is used, which is good enough for most cases.Standard users do not need to tune this parameter. Units: a.u.
+{\it Description:} [Developer] Mesh size of the base mesh on which refinement is performed. For the default value of 0.0, a heuristically determined base mesh size is used, which is good enough for most cases. Standard users do not need to tune this parameter. Units: a.u.
 
 
 {\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 20$
@@ -963,7 +963,7 @@
 {\it Default:} true
 
 
-{\it Description:} [Developer] Boolean parameter specifying whether to use gemm batch blas routines to perform matrix-matrix multiplication operations with groups of matrices, processing a number of groups at once using threads instead of the standard serial route. CAUTION: batch blas routines will only be activated if the CHEBYSHEV FILTER BLOCK SIZE is less than 1000. Default option is true.
+{\it Description:} [Developer] Boolean parameter specifying whether to use gemm batch blas routines to perform matrix-matrix multiplication operations with groups of matrices, processing a number of groups at once using threads instead of the standard serial route. CAUTION: gemm batch blas routines will only be activated if the CHEBYSHEV FILTER BLOCK SIZE is less than 1000, and intel mkl blas library linked with the dealii installation. Default option is true.
 
 
 {\it Possible values:} A boolean value (true or false)
@@ -992,13 +992,13 @@
 \index[prmindexfull]{SCF parameters!Eigen-solver parameters!CHEBYSHEV FILTER TOLERANCE}
 
 
-{\it Default:} 3e-02
+{\it Default:} 1e-02
 
 
 {\it Description:} [Developer] Parameter specifying the tolerance to which eigenvectors need to computed using chebyshev filtering approach.
 
 
-{\it Possible values:} A floating point number $v$ such that $0.0001 \leq v \leq \text{MAX\_DOUBLE}$
+{\it Possible values:} A floating point number $v$ such that $1e-10 \leq v \leq \text{MAX\_DOUBLE}$
 \item {\it Parameter name:} {\tt CHEBYSHEV POLYNOMIAL DEGREE}
 \phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/CHEBYSHEV POLYNOMIAL DEGREE}
 \label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/CHEBYSHEV_20POLYNOMIAL_20DEGREE}
@@ -1091,7 +1091,7 @@
 {\it Default:} LW
 
 
-{\it Description:} [Standard] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization using SLEPc library), LW(Lowden Orthogonalization using LAPACK, extension to ScaLAPACK not implemented yet), PGS(Pseudo-Gram-Schmidt Orthogonalization using ScaLAPACK, cannot be used if dealii library is not compiled with ScaLAPACK. PGS option is also not available for the complex executable yet). LW is the default option.
+{\it Description:} [Standard] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization using SLEPc library), LW(Lowden Orthogonalization using LAPACK, extension to ScaLAPACK not implemented yet), PGS(Pseudo-Gram-Schmidt Orthogonalization, if dealii library is compiled with ScaLAPACK, ScaLAPACK functions are used otherwise LAPACK functions are used). LW is the default option.
 
 
 {\it Possible values:} Any one of GS, LW, PGS
