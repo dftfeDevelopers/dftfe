@@ -16,8 +16,8 @@ SET(TARGET_SRC
   ./src/dft/vselfBinsManager.cc
   ./src/dft/energyCalculator.cc
   ./src/poisson/poissonSolverProblem.cc
-  ./src/eigen/kohnShamDFTOperator.cc
-  ./src/eigen/operator.cc
+  ./src/dftOperator/kohnShamDFTOperator.cc
+  ./src/dftOperator/operator.cc
   ./src/force/force.cc
   ./src/force/eshelbyTensor/eshelbyTensor.cc
   ./src/force/eshelbyTensor/eshelbyTensorSpinPolarized.cc
