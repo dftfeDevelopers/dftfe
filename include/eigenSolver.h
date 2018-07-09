@@ -22,9 +22,6 @@
 #include "headers.h"
 #include "operator.h"
 
-typedef dealii::parallel::distributed::Vector<double> vectorType;
-
-
 namespace dftfe{
 
   /**
