@@ -46,7 +46,7 @@ For more information see:
 
  - Doxygen generated [documentation](https://dftfedevelopers.github.io/dftfe/).
 
- - For questions about the source code of DFT-FE, portability, installation, etc., use the DFT-FE development mailing list (dft-fe.users@umich.edu).
+ - For questions about the source code of DFT-FE, portability, installation, etc., use the DFT-FE mailing list (dft-fe.users@umich.edu).
  
  - DFT-FE is primarily based on the [deal.II library](http://www.dealii.org/). If you have particular questions about deal.II, contact the [deal.II mailing lists](https://www.dealii.org/mail.html).
  
