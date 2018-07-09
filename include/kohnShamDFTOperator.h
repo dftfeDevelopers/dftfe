@@ -13,11 +13,10 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Shiva Rudraraju, Phani Motamarri
-//
 
-#ifndef eigen_H_
-#define eigen_H_
+
+#ifndef kohnShamDFTOperatorClass_H_
+#define kohnShamDFTOperatorClass_H_
 #include <headers.h>
 #include <constants.h>
 #include <constraintMatrixInfo.h>
@@ -25,13 +24,21 @@
 
 namespace dftfe{
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
   template <unsigned int T> class dftClass;
+#endif
+
+   /**
+   * @brief Implementation class for building the Kohn-Sham DFT discrete operator and the action of the discrete operator on a single vector or multiple vectors
+   *
+   * @author Phani Motamarri, 
+   */
 
   //
-  //Define eigenClass class
+  //Define kohnShamDFTOperatorClass class
   //
   template <unsigned int FEOrder>
-    class eigenClass : public operatorDFTClass
+    class kohnShamDFTOperatorClass : public operatorDFTClass
     {
       template <unsigned int T>
 	friend class dftClass;
@@ -40,7 +47,7 @@ namespace dftfe{
 	friend class symmetryClass;
 
     public:
-      eigenClass(dftClass<FEOrder>* _dftPtr, const MPI_Comm &mpi_comm_replica);
+      kohnShamDFTOperatorClass(dftClass<FEOrder>* _dftPtr, const MPI_Comm &mpi_comm_replica);
 
       /**
        * @brief Compute operator times vector or operator times bunch of vectors
@@ -376,10 +383,6 @@ namespace dftfe{
 
       //storage for precomputing index maps
       std::vector<std::vector<dealii::types::global_dof_index> > d_flattenedArrayMacroCellLocalProcIndexIdMap, d_flattenedArrayCellLocalProcIndexIdMap;
-
-
     };
-
-
 }
 #endif

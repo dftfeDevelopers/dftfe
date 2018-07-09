@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author  Phani Motamarri (2018)
+// @author  Phani Motamarri
 //
 #include <complex>
 #include <vector>
@@ -78,7 +78,7 @@ namespace internal
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 						  const unsigned int kPointIndex,
-						  eigenClass<FEOrder> & kohnShamDFTEigenOperator,
+						  kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
 						  chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver,
 						  std::vector<double>                            & residualNormWaveFunctions)
 {
@@ -152,7 +152,7 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::computeResidualNorm(const std::vector<double> & eigenValuesTemp,
-					    eigenClass<FEOrder> & kohnShamDFTEigenOperator,
+					    kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
 					    std::vector<vectorType> & X,
 					    std::vector<double> & residualNorm) const
 {

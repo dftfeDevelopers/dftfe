@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Shiva Rudraraju (2016), Phani Motamarri (2016), Krishnendu Ghosh(2017)
+// @author Shiva Rudraraju, Phani Motamarri, Krishnendu Ghosh
 //
 
 //source file for all the mixing schemes

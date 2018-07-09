@@ -44,7 +44,7 @@ PROJECT_NUMBER         = "0.5.0"
 # for a project that appears at the top of each page and should give viewer a
 # quick idea about the purpose of the project. Keep the description short.
 
-PROJECT_BRIEF          = 
+PROJECT_BRIEF          = "Density Functional Theory With Finite-Elements" 
 
 # With the PROJECT_LOGO tag one can specify a logo or an icon that is included
 # in the documentation. The maximum height of the logo should not exceed 55
@@ -2036,7 +2036,7 @@ SKIP_FUNCTION_MACROS   = YES
 
 #TAGFILES = deal.tag 
 
-TAGFILES  = deal.tag=http://www.dealii.org/8.5.0/doxygen/deal.tag 
+TAGFILES  = deal.tag=http://www.dealii.org/9.0.0/doxygen/deal.II 
 
 # When a file name is specified after GENERATE_TAGFILE, doxygen will create a
 # tag file that is based on the input files it reads. See section "Linking to
@@ -2056,7 +2056,7 @@ ALLEXTERNALS           = NO
 # listed.
 # The default value is: YES.
 
-EXTERNAL_GROUPS        = YES
+EXTERNAL_GROUPS        = NO
 
 # If the EXTERNAL_PAGES tag is set to YES, all external pages will be listed in
 # the related pages index. If set to NO, only the current project's pages will

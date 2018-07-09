@@ -18,7 +18,7 @@
 
 //Include header files
 #include <dft.h>
-#include <eigen.h>
+#include <kohnShamDFTOperator.h>
 #include <force.h>
 #include <poissonSolverProblem.h>
 #include <dealiiLinearSolver.h>
@@ -664,9 +664,9 @@ namespace dftfe {
 
 
     //
-    //create eigenClass object
+    //create kohnShamDFTOperatorClass object
     //
-    eigenClass<FEOrder> kohnShamDFTEigenOperator(this,mpi_communicator);
+    kohnShamDFTOperatorClass<FEOrder> kohnShamDFTEigenOperator(this,mpi_communicator);
     kohnShamDFTEigenOperator.init();
 
     if (dftParameters::verbosity>=4)

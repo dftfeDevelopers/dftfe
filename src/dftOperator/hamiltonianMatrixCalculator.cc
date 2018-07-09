@@ -19,7 +19,7 @@
 
 
 template<unsigned int FEOrder>
-void eigenClass<FEOrder>::computeHamiltonianMatrix(unsigned int kPointIndex)
+void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(unsigned int kPointIndex)
 {
 
   //

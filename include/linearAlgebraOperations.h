@@ -25,6 +25,7 @@ namespace dftfe
     //
     //extern declarations for blas-lapack routines
     //
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
     extern "C"{
       void dgemv_(char* TRANS, const int* M, const int* N, double* alpha, double* A, const int* LDA, double* X, const int* INCX, double* beta, double* C, const int* INCY);
       void dgesv_( int* n, int* nrhs, double* a, int* lda, int* ipiv, double* b, int* ldb, int* info );
@@ -72,8 +73,8 @@ namespace dftfe
 		   const unsigned int *lda,
                    int * info);
     }
-
-/** @file linearAlgebraOperations.h
+#endif
+/** 
  *  @brief Contains linear algebra functions used in the implementation of an eigen solver
  *
  *  @author Phani Motamarri, Sambit Das

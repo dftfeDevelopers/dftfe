@@ -16,7 +16,7 @@
 // @author Shiva Rudraraju, Phani Motamarri
 //
 
-#include <eigen.h>
+#include <kohnShamDFTOperator.h>
 #include <dft.h>
 #include <dftParameters.h>
 #include <linearAlgebraOperations.h>
@@ -38,7 +38,7 @@ namespace dftfe {
   //constructor
   //
   template<unsigned int FEOrder>
-  eigenClass<FEOrder>::eigenClass(dftClass<FEOrder>* _dftPtr,const MPI_Comm &mpi_comm_replica):
+  kohnShamDFTOperatorClass<FEOrder>::kohnShamDFTOperatorClass(dftClass<FEOrder>* _dftPtr,const MPI_Comm &mpi_comm_replica):
     dftPtr(_dftPtr),
     d_kPointIndex(0),
     d_numberNodesPerElement(_dftPtr->matrix_free_data.get_dofs_per_cell()),
@@ -62,12 +62,12 @@ namespace dftfe {
 
 
   //
-  //initialize eigenClass object
+  //initialize kohnShamDFTOperatorClass object
   //
   template<unsigned int FEOrder>
-  void eigenClass<FEOrder>::init()
+  void kohnShamDFTOperatorClass<FEOrder>::init()
   {
-    computing_timer.enter_section("eigenClass setup");
+    computing_timer.enter_section("kohnShamDFTOperatorClass setup");
 
 
     dftPtr->matrix_free_data.initialize_dof_vector(d_invSqrtMassVector,dftPtr->eigenDofHandlerIndex);
@@ -92,11 +92,11 @@ namespace dftfe {
 		      d_sqrtMassVector,
 		      d_invSqrtMassVector);
 
-    computing_timer.exit_section("eigenClass setup");
+    computing_timer.exit_section("kohnShamDFTOperatorClass setup");
   }
 
   template<unsigned int FEOrder>
-  void eigenClass<FEOrder>::reinit(const unsigned int numberWaveFunctions,
+  void kohnShamDFTOperatorClass<FEOrder>::reinit(const unsigned int numberWaveFunctions,
 				   dealii::parallel::distributed::Vector<dataTypes::number> & flattenedArray,
 				   bool flag)
   {
@@ -125,7 +125,7 @@ namespace dftfe {
   }
 
 template<unsigned int FEOrder>
-void eigenClass<FEOrder>::reinit(const unsigned int numberWaveFunctions)
+void kohnShamDFTOperatorClass<FEOrder>::reinit(const unsigned int numberWaveFunctions)
 {
 
   if(dftParameters::isPseudopotential)
@@ -140,12 +140,12 @@ void eigenClass<FEOrder>::reinit(const unsigned int numberWaveFunctions)
 //compute mass Vector
 //
 template<unsigned int FEOrder>
-void eigenClass<FEOrder>::computeMassVector(const dealii::DoFHandler<3> & dofHandler,
+void kohnShamDFTOperatorClass<FEOrder>::computeMassVector(const dealii::DoFHandler<3> & dofHandler,
 	                                    const dealii::ConstraintMatrix & constraintMatrix,
 			                    vectorType & sqrtMassVec,
 			                    vectorType & invSqrtMassVec)
 {
-  computing_timer.enter_section("eigenClass Mass assembly");
+  computing_timer.enter_section("kohnShamDFTOperatorClass Mass assembly");
   invSqrtMassVec = 0.0;
   sqrtMassVec = 0.0;
 
@@ -191,19 +191,19 @@ void eigenClass<FEOrder>::computeMassVector(const dealii::DoFHandler<3> & dofHan
 
    invSqrtMassVec.compress(VectorOperation::insert);
    sqrtMassVec.compress(VectorOperation::insert);
-   computing_timer.exit_section("eigenClass Mass assembly");
+   computing_timer.exit_section("kohnShamDFTOperatorClass Mass assembly");
 }
 
 
 template<unsigned int FEOrder>
-void eigenClass<FEOrder>::reinitkPointIndex(unsigned int & kPointIndex)
+void kohnShamDFTOperatorClass<FEOrder>::reinitkPointIndex(unsigned int & kPointIndex)
 {
   d_kPointIndex = kPointIndex;
 }
 
 
 template<unsigned int FEOrder>
-void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
+void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				      const vectorType & phi,
 				      const vectorType & phiExt,
 				      const std::map<dealii::CellId,std::vector<double> > & pseudoValues)
@@ -281,7 +281,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 }
 
 template<unsigned int FEOrder>
-void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
+void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 				      const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
 				      const vectorType & phi,
 				      const vectorType & phiExt,
@@ -384,7 +384,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 
 #ifdef USE_COMPLEX
   template<unsigned int FEOrder>
-  void eigenClass<FEOrder>::HX(dealii::parallel::distributed::Vector<std::complex<double> > & src,
+  void kohnShamDFTOperatorClass<FEOrder>::HX(dealii::parallel::distributed::Vector<std::complex<double> > & src,
 			       const unsigned int numberWaveFunctions,
 			       const bool scaleFlag,
 			       std::complex<double> scalar,
@@ -512,7 +512,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
   }
 #else
  template<unsigned int FEOrder>
-  void eigenClass<FEOrder>::HX(dealii::parallel::distributed::Vector<double> & src,
+  void kohnShamDFTOperatorClass<FEOrder>::HX(dealii::parallel::distributed::Vector<double> & src,
 			       const unsigned int numberWaveFunctions,
 			       const bool scaleFlag,
 			       double scalar,
@@ -640,7 +640,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 
   //HX
   template<unsigned int FEOrder>
-  void eigenClass<FEOrder>::HX(std::vector<vectorType> &src,
+  void kohnShamDFTOperatorClass<FEOrder>::HX(std::vector<vectorType> &src,
 			       std::vector<vectorType> &dst)
   {
 
@@ -663,7 +663,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
     //
     //First evaluate H^{loc}*M^{-1/2}*X and then add to H^{nloc}*M^{-1/2}*X
     //
-    dftPtr->matrix_free_data.cell_loop(&eigenClass<FEOrder>::computeLocalHamiltonianTimesXMF, this, dst, src); //HMX
+    dftPtr->matrix_free_data.cell_loop(&kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesXMF, this, dst, src); //HMX
 
     //
     //Finally evaluate M^{-1/2}*H*M^{-1/2}*X
@@ -689,7 +689,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
   //XHX
 #ifdef USE_COMPLEX
   template<unsigned int FEOrder>
-  void eigenClass<FEOrder>::XtHX(std::vector<vectorType> & src,
+  void kohnShamDFTOperatorClass<FEOrder>::XtHX(std::vector<vectorType> & src,
 				 std::vector<std::complex<double> > & ProjHam)
   {
 
@@ -773,7 +773,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
   }
 
   template<unsigned int FEOrder>
-  void eigenClass<FEOrder>::XtHX(dealii::parallel::distributed::Vector<std::complex<double> > & X,
+  void kohnShamDFTOperatorClass<FEOrder>::XtHX(dealii::parallel::distributed::Vector<std::complex<double> > & X,
 				 const unsigned int numberWaveFunctions,
 				 std::vector<std::complex<double> > & ProjHam)
   {
@@ -848,7 +848,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
   }
 #else
   template<unsigned int FEOrder>
-  void eigenClass<FEOrder>::XtHX(std::vector<vectorType> &src,
+  void kohnShamDFTOperatorClass<FEOrder>::XtHX(std::vector<vectorType> &src,
 				 std::vector<double> & ProjHam)
   {
 
@@ -902,7 +902,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
   }
 
   template<unsigned int FEOrder>
-  void eigenClass<FEOrder>::XtHX(dealii::parallel::distributed::Vector<double> & X,
+  void kohnShamDFTOperatorClass<FEOrder>::XtHX(dealii::parallel::distributed::Vector<double> & X,
 				 const unsigned int numberWaveFunctions,
 				 std::vector<double> & ProjHam)
   {
@@ -964,7 +964,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 
 #ifdef DEAL_II_WITH_SCALAPACK
   template<unsigned int FEOrder>
-  void eigenClass<FEOrder>::XtHX(const dealii::parallel::distributed::Vector<dataTypes::number> & X,
+  void kohnShamDFTOperatorClass<FEOrder>::XtHX(const dealii::parallel::distributed::Vector<dataTypes::number> & X,
 				 const unsigned int numberWaveFunctions,
 				 const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 				 dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar)
@@ -1095,7 +1095,7 @@ void eigenClass<FEOrder>::computeVEff(const std::map<dealii::CellId,std::vector<
 #endif
 
 template<unsigned int FEOrder>
-void eigenClass<FEOrder>::computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
+void kohnShamDFTOperatorClass<FEOrder>::computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 						   const vectorType & phi,
 						   const vectorType & phiExt,
 						   const unsigned int spinIndex,
@@ -1178,7 +1178,7 @@ void eigenClass<FEOrder>::computeVEffSpinPolarized(const std::map<dealii::CellId
 }
 
 template<unsigned int FEOrder>
-void eigenClass<FEOrder>::computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
+void kohnShamDFTOperatorClass<FEOrder>::computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,
 						   const std::map<dealii::CellId,std::vector<double> >* gradRhoValues,
 						   const vectorType & phi,
 						   const vectorType & phiExt,
@@ -1293,17 +1293,17 @@ void eigenClass<FEOrder>::computeVEffSpinPolarized(const std::map<dealii::CellId
 }
 
 
-  template class eigenClass<1>;
-  template class eigenClass<2>;
-  template class eigenClass<3>;
-  template class eigenClass<4>;
-  template class eigenClass<5>;
-  template class eigenClass<6>;
-  template class eigenClass<7>;
-  template class eigenClass<8>;
-  template class eigenClass<9>;
-  template class eigenClass<10>;
-  template class eigenClass<11>;
-  template class eigenClass<12>;
+  template class kohnShamDFTOperatorClass<1>;
+  template class kohnShamDFTOperatorClass<2>;
+  template class kohnShamDFTOperatorClass<3>;
+  template class kohnShamDFTOperatorClass<4>;
+  template class kohnShamDFTOperatorClass<5>;
+  template class kohnShamDFTOperatorClass<6>;
+  template class kohnShamDFTOperatorClass<7>;
+  template class kohnShamDFTOperatorClass<8>;
+  template class kohnShamDFTOperatorClass<9>;
+  template class kohnShamDFTOperatorClass<10>;
+  template class kohnShamDFTOperatorClass<11>;
+  template class kohnShamDFTOperatorClass<12>;
 
 }

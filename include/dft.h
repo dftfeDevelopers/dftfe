@@ -27,7 +27,7 @@
 #include <constants.h>
 #include <constraintMatrixInfo.h>
 
-#include <eigen.h>
+#include <kohnShamDFTOperator.h>
 #include <meshMovementAffineTransform.h>
 #include <meshMovementGaussian.h>
 #include <eigenSolver.h>
@@ -49,6 +49,10 @@ namespace dftfe {
   //
   using namespace dealii;
 
+ 
+
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+
   struct orbital
   {
     unsigned int atomID;
@@ -57,7 +61,6 @@ namespace dftfe {
     alglib::spline1dinterpolant* psi;
   };
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
   /* code that must be skipped by Doxygen */
   //forward declarations
   template <unsigned int T> class forceClass;
@@ -78,7 +81,7 @@ namespace dftfe {
     class dftClass
     {
       template <unsigned int T>
-	friend class eigenClass;
+	friend class kohnShamDFTOperatorClass;
 
       template <unsigned int T>
 	friend class forceClass;
@@ -696,12 +699,12 @@ namespace dftfe {
 
       void kohnShamEigenSpaceCompute(const unsigned int s,
 				     const unsigned int kPointIndex,
-				     eigenClass<FEOrder> & kohnShamDFTEigenOperator,
+				     kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
 				     chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver,
 				     std::vector<double> & residualNormWaveFunctions);
 
       void computeResidualNorm(const std::vector<double> & eigenValuesTemp,
-			       eigenClass<FEOrder> & kohnShamDFTEigenOperator,
+			       kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
 			       std::vector<vectorType> & X,
 			       std::vector<double> & residualNorm) const;
 

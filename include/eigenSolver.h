@@ -13,7 +13,6 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Phani Motamarri (2018)
 
 
 #ifndef eigenSolver_h
@@ -22,13 +21,12 @@
 #include "headers.h"
 #include "operator.h"
 
-typedef dealii::parallel::distributed::Vector<double> vectorType;
-
-
 namespace dftfe{
 
   /**
    * @brief Base class for non-linear algebraic solver.
+   *
+   * @author Phani Motamarri
    */
 
   class eigenSolverClass {

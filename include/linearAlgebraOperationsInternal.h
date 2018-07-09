@@ -23,7 +23,7 @@ namespace dftfe
 
   namespace linearAlgebraOperations
   {
-    /** @file linearAlgebraOperationsInternal.h
+    /** 
      *  @brief Contains small internal functions used in linearAlgebraOperations
      *
      *  @author Sambit Das
