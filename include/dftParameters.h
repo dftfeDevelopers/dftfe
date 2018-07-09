@@ -15,10 +15,6 @@
 //
 
 
-/** @file dftParameters.h
- *
- *  @author Phani Motamarri, Sambit Das
- */
 
 #ifndef dftParameters_H_
 #define dftParameters_H_
@@ -29,9 +25,12 @@
 namespace dftfe {
     // FIXME: document Parameters
     // FIXME: this should really be an object, not global values
-    //
-    //Declare dftUtils functions
-    //
+    /**
+     * @brief Namespace which declares the input parameters and the functions to parse them
+     *  from the input parameter file
+     *
+     *  @author Phani Motamarri, Sambit Das
+     */
     namespace dftParameters
     {
 

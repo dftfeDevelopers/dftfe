@@ -13,10 +13,21 @@
 //
 // ---------------------------------------------------------------------
 
-/** @file eshelbyTensor.h
+
+
+#ifndef eshelby_H_
+#define eshelby_H_
+#include "headers.h"
+#include "constants.h"
+
+namespace dftfe {
+
+    using namespace dealii;
+/**
+  * @brief The functions in this namespace contain the expressions for the various terms of the configurational force (https://arxiv.org/abs/1712.05535)
+  * for both periodic (see Eq. 38) and non-periodic (see Eqs. 28-29) case.
   *
-  * This functions in this namespace contain the expressions for the various terms of the configurational force (https://arxiv.org/abs/1712.05535)
-  * for both periodic (see Eq. 38) and non-periodic (see Eqs. 28-29) case. Basically, the configurational force is the Gateaux derivative
+  * Basically, the configurational force is the Gateaux derivative
   * of the Kohn-Sham saddle point problem with respect to perturbations of the underlying space due to generic generator (which can be affine perturbation in
   * case of stress computation or an atom centered generator with a compact support for computing the forces). The terms in the configurational force can be
   * grouped into two types: one type can be written as contraction of Eshelby tensors (second order tensor) with the gradient of the Generator. Another type involves
@@ -43,16 +54,6 @@
   *
   * @author Sambit Das
   */
-
-#ifndef eshelby_H_
-#define eshelby_H_
-#include "headers.h"
-#include "constants.h"
-
-namespace dftfe {
-
-    using namespace dealii;
-
     namespace eshelbyTensor
     {
       /// Eshelby tensor from sum of electrostatic potential from all nuclear charges (only used for testing purpose)
