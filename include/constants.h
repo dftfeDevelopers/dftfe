@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Sambit Das (2017)
+// @author Sambit Das
 //
 
 #ifndef constants_H_
@@ -23,10 +23,14 @@ namespace dftfe {
     //
     //Add prefic C_ to all constants
     //
-    //Boltzmann constant
+    
+    /// Boltzmann constant
     const double C_kb =3.166811429e-06;
-    //problem space dimensions
+    
+    /// problem space dimensions
     const int C_DIM=3;
+
+    /// 1d quadrature rule order
     template <unsigned int FEOrder> constexpr unsigned int C_num1DQuad(){return FEOrder+1;}
 }
 #endif
