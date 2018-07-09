@@ -16,20 +16,20 @@ Installation instructions
 -------------------------
 
 The steps to install the necessary dependencies and DFT-FE itself are described
-in the *Installation* section of the DFT-FE [manual](https://dftfewebsite/manual.pdf).
+in the *Installation* section of the DFT-FE [manual](https://bitbucket.org/dftfedevelopers/dftfe/downloads/manual.pdf).
 
 
 
 Running DFT-FE
 --------------
 
-Instructions on how to run DFT-FE can also be found in the *Running DFT-FE* section of the [manual](https://dftfewebsite/manual.pdf). 
+Instructions on how to run DFT-FE can also be found in the *Running DFT-FE* section of the [manual](https://bitbucket.org/dftfedevelopers/dftfe/downloads/manual.pdf). 
 
 
 
 Contributing to DFT-FE
 ----------------------
-Learn more about contributing in the *Contributing to DFT-FE's development* section of the [manual](https://dftfewebsite/manual.pdf).
+Learn more about contributing in the *Contributing to DFT-FE's development* section of the [manual](https://bitbucket.org/dftfedevelopers/dftfe/downloads/manual.pdf).
 
 
 
@@ -42,7 +42,7 @@ For more information see:
 
  - DFT-FE [authors](https://github.com/dftfeDevelopers/dftfe/blob/master/authors).
  
- - The current [manual](https://dftfewebsite/manual.pdf).
+ - The current [manual](https://bitbucket.org/dftfedevelopers/dftfe/downloads/manual.pdf).
 
  - Doxygen generated [documentation](https://dftfedevelopers.github.io/dftfe/).
 
