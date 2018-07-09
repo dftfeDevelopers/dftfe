@@ -121,6 +121,13 @@ namespace dftfe {
      */
       void computeStress();
 
+    /** @brief prints the currently stored configurational stress tensor.
+     *
+     *  @return void.
+     */
+      void printStress();
+#endif
+
     /** @brief returns a copy of the current stress tensor value.
      *
      *  computeStress must be call prior to this function call.
@@ -128,13 +135,6 @@ namespace dftfe {
      *  @return Tensor<2,C_DIM,double>  second order stress Tensor in Hartree/Bohr^3
      */
       Tensor<2,C_DIM,double> getStress();
-
-    /** @brief prints the currently stored configurational stress tensor.
-     *
-     *  @return void.
-     */
-      void printStress();
-#endif
 
      /** @brief get the value of Gaussian generator parameter (d_gaussianConstant).
       * Gaussian generator: Gamma(r)= exp(-d_gaussianConstant*r^2).
@@ -345,11 +345,10 @@ namespace dftfe {
       std::vector<double> d_globalAtomsGaussianForcesKPoints;
 #endif
 
-#ifdef USE_COMPLEX
-
       /// Storage for configurational stress tensor
       Tensor<2,C_DIM,double> d_stress;
 
+#ifdef USE_COMPLEX
       /* Part of the stress tensor which is summed over k points.
        * It is a temporary data structure required for stress evaluation (d_stress)
        * when parallization over k points is on.

@@ -13,8 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Phani Motamarri
-//
+
 
 #ifndef constraintMatrixInfo_H_
 #define constraintMatrixInfo_H_
@@ -29,12 +28,14 @@ namespace dftfe {
 //
 namespace dftUtils
 {
-  //
-  //method which overloads dealii's constraints.distribute. Stores the constraintMatrix data
-  //into STL vectors and then sets all constrained degrees of freedom to values so that constraints
-  //are satisfied using these STL vectors
-  //
 
+  /** 
+   *  @brief Overloads dealii's distribute and distribute_local_to_global functions associated with constraints class.
+   *  Stores the dealii's constraint matrix data into STL vectors for faster memory access costs
+   *  
+   *  @author Phani Motamarri
+   *
+   */
   class constraintMatrixInfo
   {
 

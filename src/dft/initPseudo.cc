@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Shiva Rudraraju (2016), Phani Motamarri (2016), Sambit Das (2018)
+// @author Shiva Rudraraju, Phani Motamarri, Sambit Das
 //
 
 //

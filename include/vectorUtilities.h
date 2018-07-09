@@ -24,11 +24,11 @@
 
 namespace dftfe{
 
-/** @file vectorUtilities.h
- *  @brief Contains generic utils functions related to custom partitioned flattened dealii vector
- *
- *  @author Phani Motamarri, Sambit Das
- */
+  /** 
+   *  @brief Contains generic utils functions related to custom partitioned flattened dealii vector
+   *
+   *  @author Phani Motamarri, Sambit Das
+   */
   namespace vectorTools
   {
 

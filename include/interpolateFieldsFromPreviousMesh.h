@@ -13,19 +13,6 @@
 //
 // ---------------------------------------------------------------------
 
-/** @file interpolateFieldsFromPreviousMesh.h
- *
- *  @brief Interpolate solutions fields from one finite element mesh to another.
- *
- *   Unlike the dealii function  VectorTools::interpolate_to_different_mesh, this function
- *   doesn't assume that the parallel partitioning of the two meshes are same.
- *   Further the two meshes can be arbitraririly refined. The only constraint is that they
- *   must discretize the same real-space domain.
- *
- *  @author Sambit Das
- */
-
-
 
 #ifndef interpolateFields_H_
 #define interpolateFields_H_
@@ -42,10 +29,20 @@ namespace dftfe
 {
   namespace vectorTools
   {
-    typedef dealii::parallel::distributed::Vector<double> vectorType;
 
+/**
+ *  @brief Interpolate solutions fields from one finite element mesh to another.
+ *
+ *   Unlike the dealii function  VectorTools::interpolate_to_different_mesh, this function
+ *   doesn't assume that the parallel partitioning of the two meshes are same.
+ *   Further the two meshes can be arbitraririly refined. The only constraint is that they
+ *   must discretize the same real-space domain.
+ *
+ *  @author Sambit Das
+ */
     class interpolateFieldsFromPreviousMesh
     {
+     typedef dealii::parallel::distributed::Vector<double> vectorType;
      public:
     /** @brief Constructor.
      *

@@ -191,7 +191,7 @@ namespace dftParameters
 
       prm.declare_entry("POLYNOMIAL ORDER", "4",
                         Patterns::Integer(1,12),
-                       "[Standard] The degree of the finite-element interpolating polynomial. Default value is 4. The default value of 4 is usually a good choice for most pseudopotential as well as all-electron problems.");
+                       "[Standard] The degree of the finite-element interpolating polynomial. Default value is 4. POLYNOMIAL ORDER= 4 or 5 is usually a good choice for most pseudopotential as well as all-electron problems.");
 
       prm.declare_entry("MESH FILE", "",
                        Patterns::Anything(),
@@ -346,7 +346,7 @@ namespace dftParameters
 			      Patterns::Double(0,1),
 			      "[Developer] The value of the fraction of the upper bound of the unwanted spectrum, the lower bound of the unwanted spectrum will be set. Default value is 0.");
 
-	    prm.declare_entry("CHEBYSHEV FILTER TOLERANCE","1e-03",
+	    prm.declare_entry("CHEBYSHEV FILTER TOLERANCE","1e-02",
 			      Patterns::Double(1e-10),
 			      "[Developer] Parameter specifying the tolerance to which eigenvectors need to computed using chebyshev filtering approach.");
 
@@ -356,7 +356,7 @@ namespace dftParameters
 
 	    prm.declare_entry("BATCH GEMM", "true",
 			      Patterns::Bool(),
-			      "[Developer] Boolean parameter specifying whether to use gemm batch blas routines to perform matrix-matrix multiplication operations with groups of matrices, processing a number of groups at once using threads instead of the standard serial route. CAUTION: batch blas routines will only be activated if the CHEBYSHEV FILTER BLOCK SIZE is less than 1000. Default option is true.");
+			      "[Developer] Boolean parameter specifying whether to use gemm batch blas routines to perform matrix-matrix multiplication operations with groups of matrices, processing a number of groups at once using threads instead of the standard serial route. CAUTION: gemm batch blas routines will only be activated if the CHEBYSHEV FILTER BLOCK SIZE is less than 1000, and intel mkl blas library linked with the dealii installation. Default option is true.");
 
 	    prm.declare_entry("ORTHOGONALIZATION TYPE","LW",
 			      Patterns::Selection("GS|LW|PGS"),
@@ -613,7 +613,15 @@ namespace dftParameters
 
     AssertThrow(dftParameters::natomTypes!=0
 	        ,ExcMessage("DFT-FE Error: Number of atom types not specified or given a value of zero is not allowed."));
+
+#ifndef WITH_MKL;
+    dftParameters::useBatchGEMM=false;
+    if (dftParameters::verbosity >=1 && Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)
+        std::cout <<"Setting USE BATCH GEMM=false as intel mkl blas library is not being linked to."<<std::endl;
+
+#endif
   }
+
 
   //FIXME: move this to triangulation manager, and set data members there
   //without changing the global dftParameters

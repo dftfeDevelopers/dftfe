@@ -13,9 +13,6 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Sambit Das (2017)
-//
-
 #ifndef eshelbySP_H_
 #define eshelbySP_H_
 #include "headers.h"
@@ -25,8 +22,11 @@ namespace dftfe {
 
     using namespace dealii;
     /**
-     * The functions in this namespace contain the expressions for the various terms of the configurational force (https://arxiv.org/abs/1712.05535)
-     * for both periodic and non-periodic case. The nature of the terms are similar to the ones in eshelbyTensor.h except the ones here are specialized
+     * @brief The functions in this namespace contain the expressions for the various terms of the configurational force (https://arxiv.org/abs/1712.05535)
+     * for both periodic and non-periodic case.
+     *
+     * The functions in this namespace are similar to the ones in eshelbyTensor.h
+     * except the ones here are specialized
      * for spin polarized case. Spin0 and Spin1 refer to up and down spins respectively.
      * General nomenclature of the input arguments:
      * a) phiTot- total electrostatic potential
@@ -47,6 +47,8 @@ namespace dftfe {
      * o) projectorKetTimesPsiTimesV- nonlocal pseudopotential projector ket times eigenvectors
      * which are precomputed. The nonlocal pseudopotential constants are also multiplied to this quantity.
      * (see Eq. 11 in https://arxiv.org/abs/1712.05535)
+     *
+     * @author Sambit Das
      */
     namespace eshelbyTensorSP
     {

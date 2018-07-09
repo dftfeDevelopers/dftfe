@@ -13,14 +13,14 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Phani Motamarri (2018)
+
 
 #ifndef chebyshevOrthogonalizedSubspaceIterationSolver_h
 #define chebyshevOrthogonalizedSubspaceIterationSolver_h
 
 #include "eigenSolver.h"
 #include "dftParameters.h"
-#include "eigen.h"
+#include "operator.h"
 
 
 namespace dftfe{
@@ -28,6 +28,7 @@ namespace dftfe{
   /**
    * @brief Concrete class implementing Chebyshev filtered orthogonalized subspace
    * iteration solver.
+   * @author Phani Motamarri 
    */
 
   class chebyshevOrthogonalizedSubspaceIterationSolver : public eigenSolverClass {

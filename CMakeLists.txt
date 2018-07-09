@@ -16,8 +16,8 @@ SET(TARGET_SRC
   ./src/dft/vselfBinsManager.cc
   ./src/dft/energyCalculator.cc
   ./src/poisson/poissonSolverProblem.cc
-  ./src/eigen/eigen.cc
-  ./src/eigen/operator.cc
+  ./src/dftOperator/kohnShamDFTOperator.cc
+  ./src/dftOperator/operator.cc
   ./src/force/force.cc
   ./src/force/eshelbyTensor/eshelbyTensor.cc
   ./src/force/eshelbyTensor/eshelbyTensorSpinPolarized.cc
@@ -127,6 +127,14 @@ IF (DEAL_II_PETSC_WITH_COMPLEX)
 ELSE()
    ADD_DEFINITIONS(-DUSE_REAL)
    MESSAGE(STATUS "Using real")
+ENDIF()
+
+#
+#Set use intel mkl flag
+#
+IF (WITH_INTEL_MKL)
+   ADD_DEFINITIONS(-DWITH_MKL)
+   MESSAGE(STATUS "With intel mkl")
 ENDIF()
 
 
@@ -249,6 +257,8 @@ SET (TEST_TIME_LIMIT 3600)
 #
 IF (DEAL_II_PETSC_WITH_COMPLEX)
    ADD_SUBDIRECTORY(tests/dft/pseudopotential/complex)
+   ADD_SUBDIRECTORY(tests/dft/allElectron/complex)
 ELSE()
    ADD_SUBDIRECTORY(tests/dft/pseudopotential/real)
+   ADD_SUBDIRECTORY(tests/dft/allElectron/real)
 ENDIF()

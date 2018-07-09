@@ -31,7 +31,7 @@ namespace dftfe {
     public:
       /** @brief Constructor
        *
-       *  @param mpi_comm_replica mpi communicator in the current pool
+       *  @param mpi_comm_replica mpi communicator for domain decomposition
        */
       meshMovementGaussianClass(const MPI_Comm &mpi_comm_replica);
 
