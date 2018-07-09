@@ -150,10 +150,6 @@ void dftClass<FEOrder>::initUnmovedTriangulation(const parallel::distributed::Tr
   DoFTools::make_periodicity_constraints<DoFHandler<3> >(periodicity_vector2Eigen, constraintsNoneEigen);
 
 
-  if(!dftParameters::meshFileName.empty())
-    {
-      applyPeriodicBCHigherOrderNodes();
-    }
 
   constraintsNone.close();
   constraintsNoneEigen.close();

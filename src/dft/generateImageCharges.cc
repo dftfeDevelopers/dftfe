@@ -435,8 +435,8 @@ void dftClass<FEOrder>::generateImageCharges
 		      if(outsideCell)
 			{
 
-			  const double distanceFromCell = getMinDistanceFromImageToCell(latticeVectors,
-											newFrac);
+			  const double distanceFromCell = internaldft::getMinDistanceFromImageToCell(latticeVectors,
+												     newFrac);
 
 			  if (distanceFromCell < pspCutOff)
 			    withinCutoff = true;
