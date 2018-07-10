@@ -612,7 +612,7 @@ namespace dftParameters
 	        ,ExcMessage("DFT-FE Error: Number of atoms not specified or given a value of zero, which is not allowed."));
 
     AssertThrow(dftParameters::natomTypes!=0
-	        ,ExcMessage("DFT-FE Error: Number of atom types not specified or given a value of zero is not allowed."));
+	        ,ExcMessage("DFT-FE Error: Number of atom types not specified or given a value of zero, which is not allowed."));
 
 #ifndef WITH_MKL;
     dftParameters::useBatchGEMM=false;
