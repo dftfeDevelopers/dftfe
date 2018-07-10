@@ -291,7 +291,7 @@ namespace dftfe{
       //call HX
       //
       bool scaleFlag = false;
-      T scalar = 1.0;
+      double scalar = 1.0;
       operatorMatrix.HX(XArray,
 			numberWaveFunctions,
 			scaleFlag,
@@ -299,7 +299,7 @@ namespace dftfe{
 			YArray);
 
 
-      T alpha1 = sigma1/e, alpha2 = -c;
+      double alpha1 = sigma1/e, alpha2 = -c;
 
       //
       //YArray = YArray + alpha2*XArray and YArray = alpha1*YArray
@@ -643,7 +643,7 @@ namespace dftfe{
 	  //evaluate H times XBlock and store in HXBlock
 	  HXBlock=T(0.);
 	  const bool scaleFlag = false;
-	  const T scalar = 1.0;
+	  const double scalar = 1.0;
 	  operatorMatrix.HX(XBlock,
 	                    B,
 	                    scaleFlag,
@@ -875,8 +875,8 @@ namespace dftfe{
        const unsigned int inc = 1;
        for(unsigned int i = 0; i < numberEigenValues; ++i)
 	 {
-	   std::complex<double> scalingCoeff = invFourthRootEigenValuesMatrix[i];
-	   zscal_(&numberEigenValues,
+	   const double scalingCoeff = invFourthRootEigenValuesMatrix[i];
+	   zdscal_(&numberEigenValues,
 		  &scalingCoeff,
 		  &overlapMatrix[0]+i*numberEigenValues,
                   &inc);
