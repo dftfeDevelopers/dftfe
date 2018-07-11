@@ -98,88 +98,98 @@ namespace dftfe {
     public:
 
       /**
-       * dftClass constructor
+       * @brief dftClass constructor
+       *
+       *  @param[in] mpi_comm_replica  mpi_communicator for domain decomposition parallelization
+       *  @param[in] interpoolcomm  mpi_communicator for parallelization over k points
+       *  @param[in] interBandGroupComm  mpi_communicator for parallelization over bands
        */
       dftClass(const MPI_Comm &mpi_comm_replica,
 	       const MPI_Comm &interpoolcomm,
 	       const MPI_Comm &interBandGroupComm);
+
       /**
-       * dftClass destructor
+       * @brief dftClass destructor
        */
       ~dftClass();
+
       /**
+       * @brief atomic system pre-processing steps.
+       *
        * Reads the coordinates of the atoms.
        * If periodic calculation, reads fractional coordinates of atoms in the unit-cell,
        * lattice vectors, kPoint quadrature rules to be used and also generates image atoms.
        * Also determines orbital-ordering
        */
       void set();
+
       /**
-       * Does required pre-processing steps including mesh generation calls.
+       * @brief Does KSDFT problem pre-processing steps including mesh generation calls.
        */
       void init(const unsigned int usePreviousGroundStateFields=0);
+
       /**
-       * Does required pre-processing steps but without remeshing.
+       * @brief Does KSDFT problem pre-processing steps but without remeshing.
        */
       void initNoRemesh();
 
       /**
-       * Selects between only electronic field relaxation or combined electronic and geometry relxation
+       * @brief Selects between only electronic field relaxation or combined electronic and geometry relxation
        */
       void run();
 
       /**
-       *  Kohn-Sham ground solve using SCF iteration
+       * @brief Kohn-Sham ground solve using SCF iteration
        */
       void solve();
 
       /**
-       * Number of Kohn-Sham eigen values to be computed
+       * @brief Number of Kohn-Sham eigen values to be computed
        */
       unsigned int numEigenValues;
 
       /**
-       * Number of random wavefunctions
+       * @brief Number of random wavefunctions
        */
       unsigned int d_nonAtomicWaveFunctions;
 
       void readkPointData();
 
       /**
-       *Get local dofs global indices real
+       *@brief Get local dofs global indices real
        */
       const std::vector<dealii::types::global_dof_index> & getLocalDofIndicesReal() const;
 
       /**
-       *Get local dofs global indices imag
+       *@brief Get local dofs global indices imag
        */
       const std::vector<dealii::types::global_dof_index> & getLocalDofIndicesImag() const;
 
       /**
-       *Get local dofs local proc indices real
+       *@brief Get local dofs local proc indices real
        */
       const std::vector<dealii::types::global_dof_index> & getLocalProcDofIndicesReal() const;
 
       /**
-       *Get local dofs local proc indices imag
+       *@brief Get local dofs local proc indices imag
        */
       const std::vector<dealii::types::global_dof_index> & getLocalProcDofIndicesImag() const;
 
       /**
-       *Get dealii constraint matrix involving periodic constraints and hanging node constraints in periodic
+       *@brief Get dealii constraint matrix involving periodic constraints and hanging node constraints in periodic
        *case else only hanging node constraints in non-periodic case
        */
       const ConstraintMatrix & getConstraintMatrixEigen() const;
 
       /**
-       *Get overloaded constraint matrix information involving periodic constraints and hanging node constraints in periodic
+       *@brief Get overloaded constraint matrix information involving periodic constraints and hanging node constraints in periodic
        *case else only hanging node constraints in non-periodic case (data stored in STL format)
        */
       const dftUtils::constraintMatrixInfo & getConstraintMatrixEigenDataInfo() const;
 
 
       /**
-       *Get matrix free data object
+       *@brief Get matrix free data object
        */
       const MatrixFree<3,double> & getMatrixFreeData() const;
 
@@ -191,13 +201,13 @@ namespace dftfe {
        *  or move mesh using Gaussian functions. Additionaly this function also wraps the atom position across the
        *  periodic boundary if the atom moves across it.
        *
-       *  @param globalAtomsDisplacements vector containing the displacements (from current position) of all atoms (global).
+       *  @param[in] globalAtomsDisplacements vector containing the displacements (from current position) of all atoms (global).
        *  @return void.
        */
       void updateAtomPositionsAndMoveMesh(const std::vector<Point<3> > & globalAtomsDisplacements);
 
       /**
-       * writes the current domain bounding vectors and atom coordinates to files, which are required for
+       * @brief writes the current domain bounding vectors and atom coordinates to files, which are required for
        * geometry relaxation restart
        */
       void writeDomainAndAtomCoordinates() const;
@@ -206,7 +216,7 @@ namespace dftfe {
     private:
 
       /**
-       * generate image charges and update k point cartesian coordinates based
+       * @brief generate image charges and update k point cartesian coordinates based
        * on current lattice vectors
        */
       void initImageChargesUpdateKPoints();
@@ -217,25 +227,25 @@ namespace dftfe {
 
 
       /**
-       * interpolate rho quadrature data on current mesh from the ground state rho on previous mesh.
+       * @brief interpolate rho quadrature data on current mesh from the ground state rho on previous mesh.
        * This is used whenver the mesh is changed due to atom movement.
        */
       void initRhoFromPreviousGroundStateRho();
 
 
       /**
-       * project ground state electron density from previous mesh into
+       *@brief project ground state electron density from previous mesh into
        * the new mesh to be used as initial guess for the new ground state solve
        */
       void projectPreviousGroundStateRho();
 
       /**
-       * save triangulation information and rho quadrature data to checkpoint file for restarts
+       *@brief save triangulation information and rho quadrature data to checkpoint file for restarts
        */
       void saveTriaInfoAndRhoData();
 
       /**
-       * load triangulation information rho quadrature data from checkpoint file for restarted run
+       *@brief load triangulation information rho quadrature data from checkpoint file for restarted run
        */
       void loadTriaInfoAndRhoData();
 
@@ -253,7 +263,7 @@ namespace dftfe {
 
 
       /**
-       * moves the triangulation vertices using Gaussians such that the all atoms are on triangulation vertices
+       *@brief  moves the triangulation vertices using Gaussians such that the all atoms are on triangulation vertices
        */
       void moveMeshToAtoms(const Triangulation<3,3> & triangulationMove);
 
@@ -271,24 +281,24 @@ namespace dftfe {
       void initPseudoPotentialAll();
 
      /**
-       * Finds the global dof ids of the nodes containing atoms.
-       *
-       * @param dofHandler[in]
-       * @param atomNodeIdToChargeValueMap[out] local map of global dof id to atom charge id
-       */
+      *@brief Finds the global dof ids of the nodes containing atoms.
+      *
+      * @param[in] dofHandler
+      * @param[out] atomNodeIdToChargeValueMap local map of global dof id to atom charge id
+      */
       void locateAtomCoreNodes(const dealii::DoFHandler<3> & _dofHandler,
 	                       std::map<dealii::types::global_dof_index, double> & atomNodeIdToChargeValueMap);
 
      /**
-       * Sets homogeneous dirichlet boundary conditions on a node farthest from
-       * all atoms (pinned node). This is only done in case of periodic boundary conditions
-       * to get an unique solution to the total electrostatic potential problem.
-       *
-       * @param dofHandler[in]
-       * @param constraintMatrixBase[in] base ConstraintMatrix object
-       * @param constraintMatrix[out] ConstraintMatrix object with homogeneous
-       * Dirichlet boundary condition entries added
-       */
+      *@brief Sets homogeneous dirichlet boundary conditions on a node farthest from
+      * all atoms (pinned node). This is only done in case of periodic boundary conditions
+      * to get an unique solution to the total electrostatic potential problem.
+      *
+      * @param[in] dofHandler
+      * @param[in] constraintMatrixBase base ConstraintMatrix object
+      * @param[out] constraintMatrix ConstraintMatrix object with homogeneous
+      * Dirichlet boundary condition entries added
+      */
       void locatePeriodicPinnedNodes(const dealii::DoFHandler<3> & _dofHandler,
 	                             const dealii::ConstraintMatrix & constraintMatrixBase,
 	                             dealii::ConstraintMatrix & constraintMatrix);
@@ -297,12 +307,12 @@ namespace dftfe {
       void clearRhoData();
 
       /**
-       * computes nodal electron-density from cell quadrature data using project function of dealii
+       *@brief computes nodal electron-density from cell quadrature data using project function of dealii
        */
       void computeNodalRhoFromQuadData();
 
       /**
-       * sums rho cell quadratrure data from  inter communicator
+       *@brief sums rho cell quadratrure data from  inter communicator
        */
       void sumRhoData(std::map<dealii::CellId, std::vector<double> > * rhoValues,
 	              std::map<dealii::CellId, std::vector<double> > * gradRhoValues,
@@ -311,7 +321,7 @@ namespace dftfe {
 		      const MPI_Comm &interComm);
 
       /**
-       * resize and allocate table storage for rho cell quadratrue data
+       *@brief resize and allocate table storage for rho cell quadratrue data
        */
       void resizeAndAllocateRhoTableStorage
 			    (std::deque<std::map<dealii::CellId,std::vector<double> >> & rhoVals,
@@ -332,11 +342,11 @@ namespace dftfe {
 
 
       /**
-       * Sets homegeneous dirichlet boundary conditions for total potential constraints on
+       *@brief Sets homegeneous dirichlet boundary conditions for total potential constraints on
        * non-periodic boundary (boundary id==0).
        *
-       * @param dofHandler[in]
-       * @param constraintMatrix[out] ConstraintMatrix object with homogeneous
+       * @param[in] dofHandler
+       * @param[out] constraintMatrix ConstraintMatrix object with homogeneous
        * Dirichlet boundary condition entries added
        */
       void applyHomogeneousDirichletBC(const dealii::DoFHandler<3> & _dofHandler,
@@ -345,27 +355,27 @@ namespace dftfe {
       void computeElementalOVProjectorKets();
 
       /**
-       * Computes total charge by integrating the electron-density
+       *@brief Computes total charge by integrating the electron-density
        */
       double totalCharge(const std::map<dealii::CellId, std::vector<double> > *rhoQuadValues);
 
       /**
-       * Computes net magnetization from the difference of local spin densities
+       *@brief Computes net magnetization from the difference of local spin densities
        */
       double totalMagnetization(const std::map<dealii::CellId, std::vector<double> > *rhoQuadValues) ;
 
       /**
-       * normalize the electron density
+       *@brief normalize the electron density
        */
       void normalizeRho();
 
       /**
-       * Computes output electron-density from wavefunctions
+       *@brief Computes output electron-density from wavefunctions
        */
       void compute_rhoOut();
 
       /**
-       * Mixing schemes for mixing electron-density
+       *@brief Mixing schemes for mixing electron-density
        */
       double mixing_simple();
       double mixing_anderson();
@@ -384,7 +394,7 @@ namespace dftfe {
       //void computeElectrostaticEnergyPRefined();
 
       /**
-       * Computes Fermi-energy obtained by imposing constraint on the number of electrons
+       *@brief Computes Fermi-energy obtained by imposing constraint on the number of electrons
        */
       void compute_fermienergy();
 
@@ -392,18 +402,18 @@ namespace dftfe {
 
 
       /**
-       * Computes the volume of the domain
+       *@brief Computes the volume of the domain
        */
       double computeVolume(const dealii::DoFHandler<3> & _dofHandler);
 
       /**
-       * Deforms the domain by the given deformation gradient and reinitializes the
+       *@brief Deforms the domain by the given deformation gradient and reinitializes the
        * dftClass datastructures.
        */
       void deformDomain(const Tensor<2,3,double> & deformationGradient);
 
       /**
-       * Computes inner Product and Y = alpha*X + Y for complex vectors used during
+       *@brief Computes inner Product and Y = alpha*X + Y for complex vectors used during
        * periodic boundary conditions
        */
 
@@ -417,7 +427,7 @@ namespace dftfe {
 
 #endif
       /**
-       * Sets dirichlet boundary conditions for total potential constraints on
+       *@brief Sets dirichlet boundary conditions for total potential constraints on
        * non-periodic boundary (boundary id==0). Currently setting homogeneous bc
        *
        */
