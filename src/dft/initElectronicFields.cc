@@ -105,6 +105,11 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
        }
 
      pcout <<std::endl<< "Setting initial guess for wavefunctions...."<<std::endl;
+
+     if (dftParameters::verbosity>=4)
+       dftUtils::printCurrentMemoryUsage(mpi_communicator,
+	                      "Created flattened array eigenvectors before update ghost values");
+
      readPSI();
 
      if (dftParameters::verbosity>=4)
