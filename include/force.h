@@ -31,7 +31,7 @@ namespace dftfe {
      * @brief computes configurational forces in KSDFT
      *
      * This class computes and stores the configurational forces corresponding to geometry optimization.
-     * It uses the formulation in the paper by Motamarri et.al. (doi = {10.1103/PhysRevB.97.165132})
+     * It uses the formulation in the paper by Motamarri et.al. (https://link.aps.org/doi/10.1103/PhysRevB.97.165132)
      * which provides an unified approach to atomic forces corresponding to internal atomic relaxation
      * and cell stress corresponding to cell relaxation.
      *
@@ -253,13 +253,13 @@ namespace dftfe {
 			    const unsigned int kPointIndex);
 
       /// Parallel distributed vector field which stores the configurational force for each fem node corresponding
-      /// to linear shape function generator (see equations 52-53 in (https://arxiv.org/abs/1712.05535)).
+      /// to linear shape function generator (see equations 52-53 in (https://link.aps.org/doi/10.1103/PhysRevB.97.165132)).
       /// This vector doesn't contain contribution from terms which have sums over k points.
       vectorType d_configForceVectorLinFE;
 
 #ifdef USE_COMPLEX
       /// Parallel distributed vector field which stores the configurational force for each fem node corresponding
-      /// to linear shape function generator (see equations 52-53 in (https://arxiv.org/abs/1712.05535)).
+      /// to linear shape function generator (see equations 52-53 in (https://link.aps.org/doi/10.1103/PhysRevB.97.165132)).
       /// This vector only contains contribution from terms which have sums over k points.
       vectorType d_configForceVectorLinFEKPoints;
 #endif
@@ -269,7 +269,7 @@ namespace dftfe {
       /* Storage for precomputed nonlocal pseudopotential quadrature data. This is to speedup the
        * configurational force computation. Data format: vector(numNonLocalAtomsCurrentProcess with
        * non-zero compact support, vector(number pseudo wave functions,map<cellid,num_quad_points*2>)).
-       * Refer to (https://arxiv.org/abs/1712.05535) for details of the expression of the configurational force terms
+       * Refer to (https://link.aps.org/doi/10.1103/PhysRevB.97.165132) for details of the expression of the configurational force terms
        * for the norm-conserving Troullier-Martins pseudopotential in the Kleinman-Bylander form.
        * The same expressions also extend to the Optimized Norm-Conserving Vanderbilt (ONCV) pseudopotentials.
        */
@@ -278,7 +278,7 @@ namespace dftfe {
       /* Storage for precomputed nonlocal pseudopotential quadrature data. This is to speedup the
        * configurational force computation. Data format: vector(numNonLocalAtomsCurrentProcess with
        * non-zero compact support, vector(number pseudo wave functions,map<cellid,num_quad_points*num_k_points*3*2>)).
-       * Refer to (https://arxiv.org/abs/1712.05535) for details of the expression of the configurational force terms
+       * Refer to (https://link.aps.org/doi/10.1103/PhysRevB.97.165132) for details of the expression of the configurational force terms
        * for the norm-conserving Troullier-Martins pseudopotential in the Kleinman-Bylander form.
        * The same expressions also extend to the Optimized Norm-Conserving Vanderbilt (ONCV) pseudopotentials.
        */
@@ -287,7 +287,7 @@ namespace dftfe {
       /* Storage for precomputed nonlocal pseudopotential quadrature data. This is to speedup the
        * configurational force computation. Data format: vector(numNonLocalAtomsCurrentProcess with
        * non-zero compact support, vector(number pseudo wave functions,map<cellid,num_quad_points*num_k_points*3*2>)).
-       * Refer to (https://arxiv.org/abs/1712.05535) for details of the expression of the configurational force terms
+       * Refer to (https://link.aps.org/doi/10.1103/PhysRevB.97.165132) for details of the expression of the configurational force terms
        * for the norm-conserving Troullier-Martins pseudopotential in the Kleinman-Bylander form.
        * The same expressions also extend to the Optimized Norm-Conserving Vanderbilt (ONCV) pseudopotentials.
        */
@@ -296,7 +296,7 @@ namespace dftfe {
       /* Storage for precomputed nonlocal pseudopotential quadrature data. This is to speedup the
        * configurational stress computation. Data format: vector(numNonLocalAtomsCurrentProcess with
        * non-zero compact support, vector(number pseudo wave functions,map<cellid,num_quad_points*num_k_points*3*3*2>)).
-       * Refer to (https://arxiv.org/abs/1712.05535) for details of the expression of the configurational force terms
+       * Refer to (https://link.aps.org/doi/10.1103/PhysRevB.97.165132) for details of the expression of the configurational force terms
        * for the norm-conserving Troullier-Martins pseudopotential in the Kleinman-Bylander form.
        * The same expressions also extend to the Optimized Norm-Conserving Vanderbilt (ONCV) pseudopotentials.
        */
@@ -307,7 +307,7 @@ namespace dftfe {
       /* Storage for precomputed nonlocal pseudopotential quadrature data. This is to speedup the
        * configurational stress computation. Data format: vector(numNonLocalAtomsCurrentProcess with
        * non-zero compact support, vector(number pseudo wave functions,map<cellid,num_quad_points>)).
-       * Refer to (https://arxiv.org/abs/1712.05535) for details of the expression of the configurational force terms
+       * Refer to (https://link.aps.org/doi/10.1103/PhysRevB.97.165132) for details of the expression of the configurational force terms
        * for the norm-conserving Troullier-Martins pseudopotential in the Kleinman-Bylander form.
        * The same expressions also extend to the Optimized Norm-Conserving Vanderbilt (ONCV) pseudopotentials.
        */
@@ -316,7 +316,7 @@ namespace dftfe {
       /* Storage for precomputed nonlocal pseudopotential quadrature data. This is to speedup the
        * configurational stress computation. Data format: vector(numNonLocalAtomsCurrentProcess with
        * non-zero compact support, vector(number pseudo wave functions,map<cellid,num_quad_points*3>)).
-       * Refer to (https://arxiv.org/abs/1712.05535) for details of the expression of the configurational force terms
+       * Refer to (https://link.aps.org/doi/10.1103/PhysRevB.97.165132) for details of the expression of the configurational force terms
        * for the norm-conserving Troullier-Martins pseudopotential in the Kleinman-Bylander form.
        * The same expressions also extend to the Optimized Norm-Conserving Vanderbilt (ONCV) pseudopotentials.
        */
