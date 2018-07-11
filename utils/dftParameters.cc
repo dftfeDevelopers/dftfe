@@ -606,13 +606,13 @@ namespace dftParameters
 	        ExcMessage("DFT-FE Error: PSEUDOPOTENTIAL FILE NAMES LIST not given."));
 
     AssertThrow(dftParameters::numberEigenValues!=0
-	        ,ExcMessage("DFT-FE Error: Number of wavefunctions not specified or given value of zero is not allowed."));
+	        ,ExcMessage("DFT-FE Error: Number of wavefunctions not specified or given value of zero, which is not allowed."));
 
     AssertThrow(dftParameters::natoms!=0
-	        ,ExcMessage("DFT-FE Error: Number of atoms not specified or given a value of zero is not allowed."));
+	        ,ExcMessage("DFT-FE Error: Number of atoms not specified or given a value of zero, which is not allowed."));
 
     AssertThrow(dftParameters::natomTypes!=0
-	        ,ExcMessage("DFT-FE Error: Number of atom types not specified or given a value of zero is not allowed."));
+	        ,ExcMessage("DFT-FE Error: Number of atom types not specified or given a value of zero, which is not allowed."));
 
 #ifndef WITH_MKL;
     dftParameters::useBatchGEMM=false;

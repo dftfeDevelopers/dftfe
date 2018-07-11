@@ -68,8 +68,7 @@ namespace dftfe{
        * in a flattened format with all the wavefunction value corresponding to a given node is stored
        * contiguously (non-const as we scale src and rescale src to avoid creation of temporary vectors)
        * @param numberComponents Number of multi-fields(vectors)
-       * @param macroCellMap precomputed cell-localindex id map of the multi-wavefuncton field in the order of macrocells
-       * @param cellMap precomputed cell-localindex id map of the multi-wavefuncton field in the order of local active cells
+
        * @param scaleFlag which decides whether dst has to be scaled square root of diagonal mass matrix before evaluating
        * matrix times src vector
        * @param scalar which multiplies src before evaluating matrix times src vector
@@ -78,7 +77,7 @@ namespace dftfe{
       void HX(dealii::parallel::distributed::Vector<dataTypes::number> & src,
 	      const unsigned int numberComponents,
 	      const bool scaleFlag,
-	      const dataTypes::number scalar,
+	      const double scalar,
 	      dealii::parallel::distributed::Vector<dataTypes::number> & dst);
 
 
@@ -282,7 +281,6 @@ namespace dftfe{
        * in a flattened format with all the wavefunction value corresponding to a given node is stored
        * contiguously.
        * @param numberWaveFunctions Number of wavefunctions at a given node.
-       * @param flattenedArrayCellLocalProcIndexIdMap precomputed cell-localindex id map of the multi-wavefuncton field in the order of macrocells
        * @param dst Vector containing matrix times given multi-vectors product
        */
       void computeLocalHamiltonianTimesX(const dealii::parallel::distributed::Vector<dataTypes::number> & src,
@@ -298,7 +296,6 @@ namespace dftfe{
        * in a flattened format with all the wavefunction value corresponding to a given node is stored
        * contiguously.
        * @param numberWaveFunctions Number of wavefunctions at a given node.
-       * @param flattenedArrayCellLocalProcIndexIdMap precomputed cell-localindex id map of the multi-wavefuncton field in the order of macrocells
        * @param dst Vector containing matrix times given multi-vectors product
        */
       void computeLocalHamiltonianTimesXBatchGEMM
@@ -315,7 +312,6 @@ namespace dftfe{
        * in a flattened format with all the wavefunction value corresponding to a given node is stored
        * contiguously.
        * @param numberWaveFunctions Number of wavefunctions at a given node.
-       * @param flattenedArrayCellLocalProcIndexIdMap precomputed cell-localindex id map of the multi-wavefuncton field in the order of macrocells
        * @param dst Vector containing matrix times given multi-vectors product
        */
       void computeNonLocalHamiltonianTimesX(const dealii::parallel::distributed::Vector<dataTypes::number> & src,
@@ -331,7 +327,6 @@ namespace dftfe{
        * in a flattened format with all the wavefunction value corresponding to a given node is stored
        * contiguously.
        * @param numberWaveFunctions Number of wavefunctions at a given node.
-       * @param flattenedArrayCellLocalProcIndexIdMap precomputed cell-localindex id map of the multi-wavefuncton field in the order of macrocells
        * @param dst Vector containing matrix times given multi-vectors product
        */
       void computeNonLocalHamiltonianTimesXBatchGEMM(const dealii::parallel::distributed::Vector<dataTypes::number> & src,

@@ -360,8 +360,8 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 
   for(int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
     {
-	d_eigenVectorsFlattened[kPoint].compress(VectorOperation::insert);
-	d_eigenVectorsFlattened[kPoint].update_ghost_values();
+      d_eigenVectorsFlattened[kPoint].compress(VectorOperation::insert);
+      d_eigenVectorsFlattened[kPoint].update_ghost_values();
     }
 
   if (dftParameters::startingWFCType=="RANDOM")
@@ -377,7 +377,8 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 
 //
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::readPSI(){
+void dftClass<FEOrder>::readPSI()
+{
   computing_timer.enter_section("initialize wave functions");
   readPSIRadialValues();
   computing_timer.exit_section("initialize wave functions");

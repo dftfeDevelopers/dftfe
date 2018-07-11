@@ -52,9 +52,9 @@ namespace internal
         for(unsigned int i = 0; i < numberDofs; ++i)
         {
 #ifdef USE_COMPLEX
-	    std::complex<double> scalingCoeff =
+	    double scalingCoeff =
 		diagonal.local_element(localProc_dof_indicesReal[i]);
-	    zscal_(&numberFields,
+	    zdscal_(&numberFields,
 	           &scalingCoeff,
 	           fieldsArrayFlattened.begin()+i*numberFields,
 	           &inc);
