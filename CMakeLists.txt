@@ -52,7 +52,7 @@ SET(TARGET_SRC
   # You can specify additional files here!
   )
 
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8.8)
+CMAKE_MINIMUM_REQUIRED(VERSION 2.8.12)
 
 FIND_PACKAGE(deal.II 8.4.0 QUIET
   HINTS ${deal.II_DIR} ${DEAL_II_DIR} ../ ../../ $ENV{DEAL_II_DIR}
@@ -65,17 +65,30 @@ IF(NOT ${deal.II_FOUND})
     )
 ENDIF()
 
+if (deal.II_FOUND)
+    if (deal.II_VERSION VERSION_LESS 9.0.0)
+        message(FATAL_ERROR "Minimum supported deal.ii version is 9.0.0!")
+    endif()
+endif()
+MESSAGE("-- Use deal.ii from ${DEAL_II_DIR}")
+
 #
 # Are all dependencies fullfilled?
 #
 IF(NOT DEAL_II_WITH_LAPACK OR
    NOT DEAL_II_WITH_PETSC OR
-   NOT DEAL_II_WITH_SLEPC)
+   NOT DEAL_II_WITH_SLEPC OR
+   NOT DEAL_II_WITH_P4EST OR
+   NOT DEAL_II_WITH_64BIT_INDICES OR
+   NOT DEAL_II_WITH_MPI)
   MESSAGE(FATAL_ERROR "
 Error! The deal.II library found at ${DEAL_II_PATH} was not configured with
     DEAL_II_WITH_LAPACK = ON
     DEAL_II_WITH_PETSC = ON
     DEAL_II_WITH_SLEPC = ON
+    DEAL_II_WITH_P4EST = ON
+    DEAL_II_WITH_64BIT_INDICES = ON
+    DEAL_II_WITH_MPI = ON
 which is required."
     )
 ENDIF()
