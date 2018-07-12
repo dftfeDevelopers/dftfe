@@ -67,7 +67,13 @@ ENDIF()
 
 #
 # Are all dependencies fullfilled?
-#
+# DEAL_II_WITH_64BIT_INDICES is a requirement because of
+# the choice of the parallel storage datastructure for
+# wavefunctions in DFT-FE. The maximum global index of this
+# parallel storage datastucture is equal to
+# total number of dofs times total number of wavefunctions,
+# which can cross the 32 bit integer limits even for a moderate
+# problem size.
 IF(NOT DEAL_II_WITH_LAPACK OR
    NOT DEAL_II_WITH_PETSC OR
    NOT DEAL_II_WITH_SLEPC OR
