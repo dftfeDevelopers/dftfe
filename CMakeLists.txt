@@ -54,7 +54,7 @@ SET(TARGET_SRC
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8.12)
 
-FIND_PACKAGE(deal.II 8.4.0 QUIET
+FIND_PACKAGE(deal.II 9.0.0 REQUIRED
   HINTS ${deal.II_DIR} ${DEAL_II_DIR} ../ ../../ $ENV{DEAL_II_DIR}
   )
 IF(NOT ${deal.II_FOUND})
@@ -64,13 +64,6 @@ IF(NOT ${deal.II_FOUND})
     "or set an environment variable \"DEAL_II_DIR\" that contains this path."
     )
 ENDIF()
-
-if (deal.II_FOUND)
-    if (deal.II_VERSION VERSION_LESS 9.0.0)
-        message(FATAL_ERROR "Minimum supported deal.ii version is 9.0.0!")
-    endif()
-endif()
-MESSAGE("-- Use deal.ii from ${DEAL_II_DIR}")
 
 #
 # Are all dependencies fullfilled?
