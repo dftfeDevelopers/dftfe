@@ -77,11 +77,11 @@ namespace dftParameters
 
     prm.declare_entry("WRITE WFC", "false",
                       Patterns::Bool(),
-                      "[Standard] Writes wavefunction solution fields (FEM mesh nodal values) to wfcOutput.vtu file for visualization purposes. The wavefunction solution fields in wfcOutput.vtu are named wfc_s_k_i in case of spin-polarized calculations and wfc_k_i otherwise, where s denotes the spin index (0 or 1), k denotes the k point index starting from 0, and i denotes the Kohn-Sham wavefunction index starting from 0. Default: false.");
+                      "[Standard] Writes KSDFT ground state (last ground state solve in case of geometry optimization) wavefunction solution fields (FEM mesh nodal values) to wfcOutput.vtu file for visualization purposes. The wavefunction solution fields in wfcOutput.vtu are named wfc_s_k_i in case of spin-polarized calculations and wfc_k_i otherwise, where s denotes the spin index (0 or 1), k denotes the k point index starting from 0, and i denotes the Kohn-Sham wavefunction index starting from 0. Default: false.");
 
     prm.declare_entry("WRITE DENSITY", "false",
                       Patterns::Bool(),
-                      "[Standard] Writes electron-density solution fields (FEM mesh nodal values) to densityOutput.vtu file for visualization purposes. The electron-density solution field in densityOutput.vtu is named density. In case of spin-polarized calculation, two additional solution fields- density_0 and density_1 are also written where 0 and 1 denote the spin indices. Default: false.");
+                      "[Standard] Writes KSDFT ground state (last ground state solve in case of geometry optimization) electron-density solution fields (FEM mesh nodal values) to densityOutput.vtu file for visualization purposes. The electron-density solution field in densityOutput.vtu is named density. In case of spin-polarized calculation, two additional solution fields- density_0 and density_1 are also written where 0 and 1 denote the spin indices. Default: false.");
 
     prm.enter_subsection ("Parallelization");
     {
