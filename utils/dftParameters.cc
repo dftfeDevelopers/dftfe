@@ -53,7 +53,8 @@ namespace dftParameters
   unsigned int chebyshevBlockSize=512;
   std::string startingWFCType="";
   bool useBatchGEMM=false;
-  bool writeSolutionFields=false;
+  bool writeWfcSolutionFields=false;
+  bool writeDensitySolutionFields=false;
   unsigned int orthoRRWaveFuncBlockSize=200;
   unsigned int subspaceRotDofsBlockSize=2000;
   bool enableSwitchToGS=true;
@@ -74,9 +75,13 @@ namespace dftParameters
                       Patterns::Integer(0,4),
                       "[Standard] Parameter to control verbosity of terminal output. Ranging from 1 for low, 2 for medium (prints eigenvalues and fractional occupancies at the end of each ground-state solve), 3 for high (prints eigenvalues and fractional occupancies at the end of each self-consistent field iteration), and 4 for very high, which is only meant for code development purposes. VERBOSITY=0 is only used for unit testing and shouldn't be used by standard users.");
 
-    prm.declare_entry("WRITE SOLUTION FIELDS", "false",
+    prm.declare_entry("WRITE WFC", "false",
                       Patterns::Bool(),
-                      "[Standard] Writes wavefunction and electron-density solution fields to .vtu files for visualization purposes. Default: false.");
+                      "[Standard] Writes wavefunction solution fields (FEM mesh nodal values) to wfcOutput.vtu file for visualization purposes. The wavefunction solution fields in wfcOutput.vtu are named wfc_s_k_i in case of spin-polarized calculations and wfc_k_i otherwise, where s denotes the spin index (0 or 1), k denotes the k point index starting from 0, and i denotes the Kohn-Sham wavefunction index starting from 0. Default: false.");
+
+    prm.declare_entry("WRITE DENSITY", "false",
+                      Patterns::Bool(),
+                      "[Standard] Writes electron-density solution fields (FEM mesh nodal values) to densityOutput.vtu file for visualization purposes. The electron-density solution field in densityOutput.vtu is named density. In case of spin-polarized calculation, two additional solution fields- density_0 and density_1 are also written where 0 and 1 denote the spin indices. Default: false.");
 
     prm.enter_subsection ("Parallelization");
     {
@@ -400,7 +405,8 @@ namespace dftParameters
   {
     dftParameters::verbosity                     = prm.get_integer("VERBOSITY");
     dftParameters::reproducible_output           = prm.get_bool("REPRODUCIBLE OUTPUT");
-    dftParameters::writeSolutionFields           = prm.get_bool("WRITE SOLUTION FIELDS");
+    dftParameters::writeWfcSolutionFields           = prm.get_bool("WRITE WFC");
+    dftParameters::writeDensitySolutionFields           = prm.get_bool("WRITE DENSITY");
 
     prm.enter_subsection ("Parallelization");
     {
