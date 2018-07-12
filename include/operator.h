@@ -105,7 +105,7 @@ namespace dftfe{
     virtual void HX(dealii::parallel::distributed::Vector<dataTypes::number> & X,
 		    const unsigned int numberComponents,
 		    const bool scaleFlag,
-		    const dataTypes::number scalar,
+		    const double scalar,
 		    dealii::parallel::distributed::Vector<dataTypes::number> & Y) = 0;
 
 

@@ -29,8 +29,9 @@ namespace dftfe
     extern "C"{
       void dgemv_(char* TRANS, const int* M, const int* N, double* alpha, double* A, const int* LDA, double* X, const int* INCX, double* beta, double* C, const int* INCY);
       void dgesv_( int* n, int* nrhs, double* a, int* lda, int* ipiv, double* b, int* ldb, int* info );
-      void dscal_(const unsigned int *n, double *alpha, double *x, const unsigned int *inc);
+      void dscal_(const unsigned int *n, const double *alpha, double *x, const unsigned int *inc);
       void zscal_(const unsigned int *n, std::complex<double> *alpha, std::complex<double> *x, const unsigned int *inc);
+      void zdscal_(const unsigned int *n, const double *alpha, std::complex<double> *x, const unsigned int *inc);
       void daxpy_(const unsigned int *n, const double *alpha, double *x, const unsigned int *incx, double *y, const unsigned int *incy);
       void dgemm_(const char* transA, const char* transB, const unsigned int *m, const unsigned int *n, const unsigned int *k, const double *alpha, const double *A, const unsigned int *lda, const double *B, const unsigned int *ldb, const double *beta, double *C, const unsigned int *ldc);
 #ifdef WITH_MKL

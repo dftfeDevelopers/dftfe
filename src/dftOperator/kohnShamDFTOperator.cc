@@ -387,7 +387,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
   void kohnShamDFTOperatorClass<FEOrder>::HX(dealii::parallel::distributed::Vector<std::complex<double> > & src,
 			       const unsigned int numberWaveFunctions,
 			       const bool scaleFlag,
-			       std::complex<double> scalar,
+			       const double scalar,
 			       dealii::parallel::distributed::Vector<std::complex<double> > & dst)
 
 
@@ -400,8 +400,8 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
     //
     for(unsigned int i = 0; i < numberDofs; ++i)
       {
-	std::complex<double> scalingCoeff = d_invSqrtMassVector.local_element(dftPtr->localProc_dof_indicesReal[i])*scalar;
-	zscal_(&numberWaveFunctions,
+	const double scalingCoeff = d_invSqrtMassVector.local_element(dftPtr->localProc_dof_indicesReal[i])*scalar;
+	zdscal_(&numberWaveFunctions,
 	       &scalingCoeff,
 	       src.begin()+i*numberWaveFunctions,
 	       &inc);
@@ -414,8 +414,8 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
       {
 	for(int i = 0; i < numberDofs; ++i)
 	  {
-	    std::complex<double> scalingCoeff = d_sqrtMassVector.local_element(dftPtr->localProc_dof_indicesReal[i]);
-	    zscal_(&numberWaveFunctions,
+	    const double scalingCoeff = d_sqrtMassVector.local_element(dftPtr->localProc_dof_indicesReal[i]);
+	    zdscal_(&numberWaveFunctions,
 		   &scalingCoeff,
 		   dst.begin()+i*numberWaveFunctions,
 		   &inc);
@@ -489,8 +489,8 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
     //
     for(unsigned int i = 0; i < numberDofs; ++i)
       {
-	std::complex<double> scalingCoeff = d_invSqrtMassVector.local_element(dftPtr->localProc_dof_indicesReal[i]);
-	zscal_(&numberWaveFunctions,
+	const double scalingCoeff = d_invSqrtMassVector.local_element(dftPtr->localProc_dof_indicesReal[i]);
+	zdscal_(&numberWaveFunctions,
 	       &scalingCoeff,
 	       dst.begin()+i*numberWaveFunctions,
 	       &inc);
@@ -502,8 +502,8 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
     //
     for(unsigned int i = 0; i < numberDofs; ++i)
       {
-	std::complex<double> scalingCoeff = d_sqrtMassVector.local_element(dftPtr->localProc_dof_indicesReal[i])*(1.0/scalar);
-	zscal_(&numberWaveFunctions,
+	const double scalingCoeff = d_sqrtMassVector.local_element(dftPtr->localProc_dof_indicesReal[i])*(1.0/scalar);
+	zdscal_(&numberWaveFunctions,
 	       &scalingCoeff,
 	       src.begin()+i*numberWaveFunctions,
 	       &inc);
@@ -515,7 +515,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
   void kohnShamDFTOperatorClass<FEOrder>::HX(dealii::parallel::distributed::Vector<double> & src,
 			       const unsigned int numberWaveFunctions,
 			       const bool scaleFlag,
-			       double scalar,
+			       const double scalar,
 			       dealii::parallel::distributed::Vector<double> & dst)
 
 
@@ -529,7 +529,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
     //
     for(unsigned int i = 0; i < numberDofs; ++i)
       {
-	double scalingCoeff = d_invSqrtMassVector.local_element(i)*scalar;
+	const double scalingCoeff = d_invSqrtMassVector.local_element(i)*scalar;
 	dscal_(&numberWaveFunctions,
 	       &scalingCoeff,
 	       src.begin()+i*numberWaveFunctions,
@@ -541,7 +541,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
       {
 	for(int i = 0; i < numberDofs; ++i)
 	  {
-	    double scalingCoeff = d_sqrtMassVector.local_element(i);
+	    const double scalingCoeff = d_sqrtMassVector.local_element(i);
 	    dscal_(&numberWaveFunctions,
 		   &scalingCoeff,
 		   dst.begin()+i*numberWaveFunctions,

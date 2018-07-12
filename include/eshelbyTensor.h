@@ -24,7 +24,7 @@ namespace dftfe {
 
     using namespace dealii;
 /**
-  * @brief The functions in this namespace contain the expressions for the various terms of the configurational force (https://arxiv.org/abs/1712.05535)
+  * @brief The functions in this namespace contain the expressions for the various terms of the configurational force (https://link.aps.org/doi/10.1103/PhysRevB.97.165132)
   * for both periodic (see Eq. 38) and non-periodic (see Eqs. 28-29) case.
   *
   * Basically, the configurational force is the Gateaux derivative
@@ -47,10 +47,10 @@ namespace dftfe {
   * j) tVal- smearing temperature in K
   * k) pseudoVLoc- local part of the pseuodopotential
   * l) gradPseudoVLoc- gradient of local part of pseudopotential
-  * m) ZetaDeltaV- nonlocal pseudowavefunctions times deltaV (see Eq. 11 in https://arxiv.org/abs/1712.05535)
+  * m) ZetaDeltaV- nonlocal pseudowavefunctions times deltaV (see Eq. 11 in https://link.aps.org/doi/10.1103/PhysRevB.97.165132)
   * n) gradZetaDeltaV- gradient of ZetaDeltaV
   * o) projectorKetTimesPsiTimesV- nonlocal pseudopotential projector ket times eigenvectors which are precomputed.
-  * The nonlocal pseudopotential constants are also multiplied to this quantity. (see Eq. 11 in https://arxiv.org/abs/1712.05535)
+  * The nonlocal pseudopotential constants are also multiplied to this quantity. (see Eq. 11 in https://link.aps.org/doi/10.1103/PhysRevB.97.165132)
   *
   * @author Sambit Das
   */

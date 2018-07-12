@@ -19,6 +19,7 @@
 #ifndef headers_H_
 #define headers_H_
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 //Include all deal.II header file
 #include <deal.II/base/quadrature.h>
 #include <deal.II/base/quadrature_point_data.h>
@@ -74,6 +75,7 @@
 #include <fstream>
 #include <iostream>
 
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
 //commonly used  typedefs used in dftfe go here
 namespace dftfe
 {
