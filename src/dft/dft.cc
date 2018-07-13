@@ -1306,7 +1306,10 @@ namespace dftfe {
     if (dftParameters::writeDensitySolutionFields)
       outputDensity();
 
-    writeBands() ;
+#ifdef USE_COMPLEX
+    if (dftParameters::verbosity>=1)
+       writeBands() ;
+#endif
 
     if (dftParameters::verbosity>=1)
        pcout << std::endl<< "Elapsed wall time since start of the program: " << d_globalTimer.wall_time() << " seconds\n"<<std::endl;
