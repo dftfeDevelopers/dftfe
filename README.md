@@ -40,7 +40,7 @@ For more information see:
 
  - The official [website](https://dftfewebsite).
 
- - DFT-FE [authors](https://github.com/dftfeDevelopers/dftfe/blob/master/authors).
+ - DFT-FE [authors](https://github.com/dftfeDevelopers/dftfe/blob/publicGithubDevelop/authors).
  
  - The current [manual](https://dftfewebsite/manual.pdf).
 
@@ -61,4 +61,4 @@ For more information see:
 License
 -------
 
-DFT-FE is published under [LGPL v2.1 or newer](https://github.com/dftfeDevelopers/dftfe/blob/master/LICENSE).
+DFT-FE is published under [LGPL v2.1 or newer](https://github.com/dftfeDevelopers/dftfe/blob/publicGithubDevelop/LICENSE).
