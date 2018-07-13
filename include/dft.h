@@ -399,6 +399,7 @@ namespace dftfe {
       void compute_fermienergy();
 
       void output();
+      void writeBands();
 
 
       /**

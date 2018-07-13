@@ -1299,6 +1299,8 @@ namespace dftfe {
     if (dftParameters::writeSolutionFields)
       output();
 
+    writeBands() ;
+
     if (dftParameters::verbosity>=1)
        pcout << std::endl<< "Elapsed wall time since start of the program: " << d_globalTimer.wall_time() << " seconds\n"<<std::endl;
   }
@@ -1368,6 +1370,53 @@ namespace dftfe {
 					       interBandGroupComm,
 					       std::string("rhoField"));
 
+  }
+
+  template <unsigned int FEOrder>
+  void dftClass<FEOrder>::writeBands()
+  {
+  int numkPoints = (1+dftParameters::spinPolarized)*d_kPointWeights.size();
+  std::vector<double> eigenValuesFlattened ;
+  //
+  for (unsigned int kPoint = 0; kPoint < numkPoints; ++kPoint)
+      for(unsigned int iWave = 0; iWave < numEigenValues; ++iWave)
+	  eigenValuesFlattened.push_back(eigenValues[kPoint][iWave]) ;
+  //
+  //
+  //
+  int totkPoints = Utilities::MPI::sum(numkPoints, interpoolcomm);
+  std::vector<int> numkPointsArray(dftParameters::npool), mpi_offsets(dftParameters::npool, 0);
+  std::vector<double> eigenValuesFlattenedGlobal(totkPoints*numEigenValues,0.0);
+  //
+  MPI_Gather(&numkPoints,1,MPI_INT, &(numkPointsArray[0]),1, MPI_INT,0,interpoolcomm);
+  //
+  numkPointsArray[0] = numEigenValues * numkPointsArray[0] ;
+  for (unsigned int ipool=1; ipool < dftParameters::npool ; ++ipool)
+      {
+	numkPointsArray[ipool] =  numEigenValues * numkPointsArray[ipool] ;
+	mpi_offsets[ipool] = mpi_offsets[ipool-1] + numkPointsArray[ipool -1] ;
+      }
+  //
+  MPI_Gatherv(&(eigenValuesFlattened[0]), numkPoints*numEigenValues, MPI_DOUBLE, &(eigenValuesFlattenedGlobal[0]),&(numkPointsArray[0]), &(mpi_offsets[0]), MPI_DOUBLE, 0 ,interpoolcomm);
+  //
+  if (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) ==0)
+     {
+     FILE * pFile;
+     pFile = fopen ("bands.out","w");
+     fprintf (pFile, "%d %d\n", totkPoints, numEigenValues );
+     for (unsigned int kPoint = 0; kPoint < totkPoints/(1+dftParameters::spinPolarized); ++kPoint) 
+	 {
+	 for(unsigned int iWave = 0; iWave < numEigenValues; ++iWave)
+	    { 
+	    if (dftParameters::spinPolarized)	    
+		fprintf (pFile, "%d  %d   %g   %g\n",  kPoint, iWave, eigenValuesFlattenedGlobal[2*kPoint*numEigenValues+iWave], eigenValuesFlattenedGlobal[(2*kPoint+1)*numEigenValues+iWave]);
+            else
+		fprintf (pFile, "%d  %d %g\n",  kPoint, iWave, eigenValuesFlattenedGlobal[kPoint*numEigenValues+iWave]);
+	    }
+	}
+     }
+  MPI_Barrier(MPI_COMM_WORLD);
+  //
   }
 
   template class dftClass<1>;
