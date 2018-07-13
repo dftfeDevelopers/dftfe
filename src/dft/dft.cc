@@ -565,6 +565,10 @@ namespace dftfe {
     computingTimerStandard.enter_section("KSDFT problem initialization");
     initImageChargesUpdateKPoints();
 
+    //update serial and parallel unmoved previous mesh
+    d_mesh.generateSerialAndParallelUnmovedPreviousMesh(atomLocations,
+				                        d_imagePositions,
+				                        d_domainBoundingVectors);
     //
     //reinitialize dirichlet BCs for total potential and vSelf poisson solutions
     //
@@ -1296,50 +1300,63 @@ namespace dftfe {
     //if (dftParameters::electrostaticsPRefinement)
     //  computeElectrostaticEnergyPRefined();
 
-    if (dftParameters::writeSolutionFields)
-      output();
+    if (dftParameters::writeWfcSolutionFields)
+      outputWfc();
+
+    if (dftParameters::writeDensitySolutionFields)
+      outputDensity();
 
     if (dftParameters::verbosity>=1)
        pcout << std::endl<< "Elapsed wall time since start of the program: " << d_globalTimer.wall_time() << " seconds\n"<<std::endl;
   }
 
-  //Output
+  //Output wfc
   template <unsigned int FEOrder>
-  void dftClass<FEOrder>::output()
+  void dftClass<FEOrder>::outputWfc()
   {
     DataOut<3> data_outEigen;
     data_outEigen.attach_dof_handler (dofHandlerEigen);
     std::vector<vectorType> tempVec(1);
     tempVec[0].reinit(d_tempEigenVec);
-    for(unsigned int i=0; i<numEigenValues; ++i)
-      {
-	char buffer[100]; sprintf(buffer,"eigen%u", i);
+    for (unsigned int s=0; s<1+dftParameters::spinPolarized; ++s)
+      for (unsigned int k=0; k<d_kPointWeights.size(); ++k)
+	for(unsigned int i=0; i<numEigenValues; ++i)
+	  {
 #ifdef USE_COMPLEX
-        vectorTools::copyFlattenedDealiiVecToSingleCompVec
-		 (d_eigenVectorsFlattened[0],
-		  numEigenValues,
-		  std::make_pair(i,i+1),
-		  localProc_dof_indicesReal,
-		  localProc_dof_indicesImag,
-		  tempVec);
+	    vectorTools::copyFlattenedDealiiVecToSingleCompVec
+		     (d_eigenVectorsFlattened[k*(1+dftParameters::spinPolarized)+s],
+		      numEigenValues,
+		      std::make_pair(i,i+1),
+		      localProc_dof_indicesReal,
+		      localProc_dof_indicesImag,
+		      tempVec);
 #else
-        vectorTools::copyFlattenedDealiiVecToSingleCompVec
-		 (d_eigenVectorsFlattened[0],
-		  numEigenValues,
-		  std::make_pair(i,i+1),
-		  tempVec);
+	    vectorTools::copyFlattenedDealiiVecToSingleCompVec
+		     (d_eigenVectorsFlattened[k*(1+dftParameters::spinPolarized)+s],
+		      numEigenValues,
+		      std::make_pair(i,i+1),
+		      tempVec);
 #endif
-	data_outEigen.add_data_vector (d_tempEigenVec, buffer);
-      }
+	    if (dftParameters::spinPolarized==1)
+	      data_outEigen.add_data_vector (d_tempEigenVec,"wfc_"+std::to_string(s)+"_"+std::to_string(k)+"_"+std::to_string(i));
+	    else
+	      data_outEigen.add_data_vector (d_tempEigenVec,"wfc_"+std::to_string(k)+"_"+std::to_string(i));
+	  }
+
     data_outEigen.build_patches (C_num1DQuad<FEOrder>());
 
-    std::ofstream output ("eigen.vtu");
     dftUtils::writeDataVTUParallelLowestPoolId(data_outEigen,
 					       mpi_communicator,
 					       interpoolcomm,
 					       interBandGroupComm,
-					       std::string("eigen"));
+					       "wfcOutput");
+  }
 
+
+  //Output density
+  template <unsigned int FEOrder>
+  void dftClass<FEOrder>::outputDensity()
+  {
     //
     //compute nodal electron-density from quad data
     //
@@ -1354,19 +1371,49 @@ namespace dftfe {
 										   rhoNodalField);
     rhoNodalField.update_ghost_values();
 
+    dealii::parallel::distributed::Vector<double>  rhoNodalFieldSpin0;
+    dealii::parallel::distributed::Vector<double>  rhoNodalFieldSpin1;
+    if (dftParameters::spinPolarized==1)
+    {
+	matrix_free_data.initialize_dof_vector(rhoNodalFieldSpin0,densityDofHandlerIndex);
+	rhoNodalFieldSpin0=0;
+	dealii::VectorTools::project<3,dealii::parallel::distributed::Vector<double>> (dealii::MappingQ1<3,3>(),
+										       dofHandler,
+										       constraintsNone,
+										       QGauss<3>(C_num1DQuad<FEOrder>()),
+										       [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell , const unsigned int q) -> double {return (*rhoOutValuesSpinPolarized).find(cell->id())->second[2*q];},
+										       rhoNodalFieldSpin0);
+	rhoNodalFieldSpin0.update_ghost_values();
+
+
+	matrix_free_data.initialize_dof_vector(rhoNodalFieldSpin1,densityDofHandlerIndex);
+	rhoNodalFieldSpin1=0;
+	dealii::VectorTools::project<3,dealii::parallel::distributed::Vector<double>> (dealii::MappingQ1<3,3>(),
+										       dofHandler,
+										       constraintsNone,
+										       QGauss<3>(C_num1DQuad<FEOrder>()),
+										       [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell , const unsigned int q) -> double {return (*rhoOutValuesSpinPolarized).find(cell->id())->second[2*q+1];},
+										       rhoNodalFieldSpin1);
+	rhoNodalFieldSpin1.update_ghost_values();
+    }
+
     //
     //only generate output for electron-density
     //
     DataOut<3> dataOutRho;
     dataOutRho.attach_dof_handler(dofHandler);
-    char buffer[100]; sprintf(buffer,"rhoField");
-    dataOutRho.add_data_vector(rhoNodalField, buffer);
+    dataOutRho.add_data_vector(rhoNodalField, std::string("density"));
+    if (dftParameters::spinPolarized==1)
+    {
+      dataOutRho.add_data_vector(rhoNodalFieldSpin0, std::string("density_0"));
+      dataOutRho.add_data_vector(rhoNodalFieldSpin1, std::string("density_1"));
+    }
     dataOutRho.build_patches(C_num1DQuad<FEOrder>());
     dftUtils::writeDataVTUParallelLowestPoolId(dataOutRho,
 					       mpi_communicator,
 					       interpoolcomm,
 					       interBandGroupComm,
-					       std::string("rhoField"));
+					       "densityOutput");
 
   }
 

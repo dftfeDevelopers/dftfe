@@ -58,7 +58,9 @@ namespace dftfe {
 
       extern bool reproducible_output;
 
-      extern bool writeSolutionFields;
+      extern bool writeWfcSolutionFields;
+
+      extern bool writeDensitySolutionFields;
 
       extern std::string startingWFCType;
       extern unsigned int chebyshevBlockSize;

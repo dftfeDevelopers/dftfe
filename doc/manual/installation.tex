@@ -1,53 +1,81 @@
-\subsection{Obtaining \dftfe{}}
-The development version of \dftfe{} can be downloaded by executing the following command
-\begin{verbatim}
-   git clone https://userid@bitbucket.org/dftfedevelopers/dftfe.git
-\end{verbatim}
-For internal group testing, use the \verb|internalGroupTesting| branch.
-\begin{verbatim}
-   git checkout internalGroupTesting
-\end{verbatim}
+All the underlying installation instructions assume a Linux operating system.
+\subsection{Compiling and installing external libraries}
+\dftfe{} is primarily based on the open source finite element library \href{http://www.dealii.org/}{deal.ii}, through which external dependencies
+on \href{http://p4est.org/}{p4est}, \href{https://www.mcs.anl.gov/petsc/}{PETSc}, \href{http://slepc.upv.es/}{SLEPc}, and \href{http://www.netlib.org/scalapack/}{ScaLAPACK}. ScaLAPACK is an optional requirement, but strongly recommended for large problem sizes with 10,000 electrons or more. The other required external libraries, which are
+not interfaced via deal.ii are \href{http://www.alglib.net/}{ALGLIB}, \href{http://www.tddft.org/programs/libxc/}{Libxc}, \href{https://atztogo.github.io/spglib/}{spglib}, and \href{http://www.xmlsoft.org/}{Libxml2}. Some of the above libraries (PETSc, SLEPc, ScaLAPACK, and Libxml2) are already installed on most high-performance computers. Below, we give brief installation and/or linking instructions for each of the above libraries.
 
-\subsection{Compiling required external libraries}
-Not required for internal group testing if trying to run \dftfe{} on flux.
-
-\subsection{Compiling \dftfe{}}
-Following are the steps to compile DFT-FE (only for flux)
+\subsubsection{Instructions for deal.ii and its dependencies p4est, PETSc, SLEPc, and ScaLAPACK}
+First, the installation instructions for the dependencies:
 \begin{enumerate}
+	\item   {\bf p4est}: This library is used by deal.ii to distribute create and distribute finite-element meshes across multiple processors. Download the latest release tarball of p4est from \url{http://www.p4est.org/}. 
+
+\item {\bf PETSc}: 
+
+\item {\bf SLEPc}:
+
+\item {\bf ScaLAPACK}: Installation of ScaLAPACK will not be required in most cases, as most high-performance computers would have ScaLAPACK already installed in the system. For example 	
+\end{enumerate}
+
+Assuming the above dependencies are installed, we now briefly discuss the installation instructions for the deal.ii library.
+
+It is {\bf very important} to ensure that deal.ii and its dependencies (p4est, PETSc, SLEPc, and ScaLAPACK), and the \dftfe{} source code are compiled with the same compilers and MPI libraries, to prevent occurence of crashes and runtime slowdown.  
+
+\subsubsection{Instructions for ALGLIB, Libxc, spglib, and Libxml2}
+\begin{enumerate}
+	\item   {\bf ALGLIB}: Used by \dftfe{} for spline fitting. Download the latest release of the Alglib free C++ edition from \url{http://www.alglib.net/download.ph}. After downloading and unpacking, go to \verb|cpp/src|, and create a shared library using a C++ compiler. For example, using g++ compiler do
+\begin{verbatim}
+g++ -c -fPIC *.cpp
+g++ *.o -shared -o libAlglib.so
+\end{verbatim}
+\item {\bf Libxc}: Used by \dftfe{} for exchange-correlation functionals. Download the latest release from \url{http://www.tddft.org/programs/libxc/download/}, and follow the recommended installation procedure (using \verb|./configure|) described in \url{http://www.tddft.org/programs/libxc/installation/}.
+
+\item {\bf spglib}: Used by \dftfe{} to find and handle crystal symmetries. Obtain the source code of the development, and follow the installation procedure described in \url{https://atztogo.github.io/spglib/install.html}.   	
+
+\item {\bf Libxml2}: Libxml2 is used by \dftfe{} to read \verb|.xml| files. Usually, Libxml2 is already installed on most high-performance computers. It is usually installed in the default locations like \verb|/usr/lib64| (library path) and \verb|/usr/include/libxml2| (include path). Libxml2 can also be installed by doing
+\begin{verbatim}
+git clone git://git.gnome.org/libxml2	
+\end{verbatim}
+and following the installation instructions in the README.
+\end{enumerate}
+
+\subsection{Obtaining and Compiling \dftfe{}}
+Assume that you have already installed the above external dependencies, next follow the steps below to obtain and compile \dftfe{}.
+\begin{enumerate}
+\item Download the source code of the latest release of \dftfe{} from \href{wesbite}{here}. After downloading, unpack the file using the command
+\begin{verbatim}
+tar -xvzf dftfe-0.5.0.tar.gz
+\end{verbatim}
+
 \item   \begin{verbatim}
 cd dftfe
 \end{verbatim}
-\item \begin{verbatim}
-git checkout internalGroupTesting
-\end{verbatim}
-\item  If compiling on flux, do
+
+
+\item Make sure the Environment Variables for \href{http://www.cmake.org/}{CMake} (version 2.8.12 or later), C and C++ compilers, and MPI libraries are correctly set to the desired choices. In most high-performance computers the paths for these can be set using \href{http://modules.sourceforge.net/}{Environment Modules}. For example, on one of the high-performance computers we develop and test the DFT-FE code, we use the following commands to set the environment
 \begin{verbatim}
-module purge
 module load cmake
 module load intel/18.0.1
 module load openmpi/3.0.0/intel/18.0.1
 \end{verbatim}
-and run
+
+\item Set paths to external libraries (deal.ii, ALGLIB, Libxc, spglib, and Libxml2), compiler options, and compiler flags in \verb|setup.sh|, which is a script to compile \dftfe{}. A few example \verb|setup.sh| scripts are provided in the \verb|/helpers| folder for your reference. 
+
+\item Set \verb|optimizedFlag=1| in \verb|setup.sh| and do
 \begin{verbatim}
 ./setup.sh
 \end{verbatim} 
-\end{enumerate}
-, which by default compiles in the release mode (the fast version). If \dftfe{} compiled successfully, the following executables will be created in the \verb|build| directory:
+which compiles \dftfe{} in the release mode (the fast version). If compilation is successful, a \verb|/build| directory will be created with the following executables:
 \begin{verbatim}
 /build/release/real/main
 /build/release/complex/main
 \end{verbatim}
-One could also set
-\begin{verbatim}
-optimizedFlag=0
-\end{verbatim}
-inside \verb|setup.sh|, and run
+One could also set \verb|optimizedFlag=0| in \verb|setup.sh| and do
 \begin{verbatim}
 ./setup.sh
 \end{verbatim}
-, which will create debug mode executables (useful for debugging purposes but much slower than the release mode executable) in the folders
+which will create debug mode executables (useful for debugging purposes but much slower than the release mode executable) in the folders
 \begin{verbatim}
 /build/debug/real/main
 /build/debug/complex/main
 \end{verbatim}
- 
+\end{enumerate}
