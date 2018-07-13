@@ -49,7 +49,7 @@ namespace dftfe {
   //
   using namespace dealii;
 
- 
+
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
@@ -398,9 +398,20 @@ namespace dftfe {
        */
       void compute_fermienergy();
 
-      void output();
-      void writeBands();
+      /**
+       *@brief write wavefunction solution fields
+       */
+      void outputWfc();
 
+      /**
+       *@brief write electron density solution fields
+       */
+      void outputDensity();
+
+      /**
+       *@brief write the KS eigen values for given BZ sampling/path
+       */
+      void writeBands();
 
       /**
        *@brief Computes the volume of the domain
