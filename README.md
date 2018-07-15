@@ -15,18 +15,18 @@ Installation instructions
 -------------------------
 
 The steps to install the necessary dependencies and DFT-FE itself are described
-in the *Installation* section of the DFT-FE [manual](https://dftfewebsite/manual.pdf).
+in the *Installation* section of the DFT-FE [manual](https://github.com/dftfeDevelopers/dftfe/blob/manual/manual.pdf)
 
 
 Running DFT-FE
 --------------
 
-Instructions on how to run DFT-FE can also be found in the *Running DFT-FE* section of the [manual](https://dftfewebsite/manual.pdf). 
+Instructions on how to run DFT-FE can also be found in the *Running DFT-FE* section of the [manual](https://github.com/dftfeDevelopers/dftfe/blob/manual/manual.pdf). 
 
 
 Contributing to DFT-FE
 ----------------------
-Learn more about contributing in the *Contributing to DFT-FE's development* section of the [manual](https://dftfewebsite/manual.pdf).
+Learn more about contributing in the *Contributing to DFT-FE's development* section of the [manual](https://github.com/dftfeDevelopers/dftfe/blob/manual/manual.pdf).
 
 
 More information
@@ -36,11 +36,11 @@ For more information see:
 
  - The official [website](https://sites.google.com/umich.edu/dft-fe).
   
- - The current [manual](https://dftfewebsite/manual.pdf).
+ - The current [manual](https://github.com/dftfeDevelopers/dftfe/blob/manual/manual.pdf).
 
  - Doxygen generated [documentation](https://dftfedevelopers.github.io/dftfe/).
 
- - For questions about the source code of DFT-FE, portability, installation, etc., use the DFT-FE mailing list (dft-fe.users@umich.edu).
+ - For questions about DFT-FE, installation, bugs, etc., use the DFT-FE mailing list (dft-fe.users@umich.edu).
  
  - DFT-FE is primarily based on the [deal.II library](http://www.dealii.org/). If you have particular questions about deal.II, contact the [deal.II mailing lists](https://www.dealii.org/mail.html).
  
