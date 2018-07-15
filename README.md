@@ -11,13 +11,11 @@ same framework while accomodating arbitrary boundary conditions. DFT-FE code bui
 that has to do with finite elements, geometries, meshes, etc., and, through deal.II on p4est for parallel adaptive mesh handling. 
 
 
-
 Installation instructions
 -------------------------
 
 The steps to install the necessary dependencies and DFT-FE itself are described
 in the *Installation* section of the DFT-FE [manual](https://dftfewebsite/manual.pdf).
-
 
 
 Running DFT-FE
@@ -26,11 +24,9 @@ Running DFT-FE
 Instructions on how to run DFT-FE can also be found in the *Running DFT-FE* section of the [manual](https://dftfewebsite/manual.pdf). 
 
 
-
 Contributing to DFT-FE
 ----------------------
 Learn more about contributing in the *Contributing to DFT-FE's development* section of the [manual](https://dftfewebsite/manual.pdf).
-
 
 
 More information
@@ -38,7 +34,7 @@ More information
 
 For more information see:
 
- - The official [website](https://dftfewebsite).
+ - The official [website](https://sites.google.com/umich.edu/dft-fe).
 
  - DFT-FE [authors](https://github.com/dftfeDevelopers/dftfe/blob/publicGithubDevelop/authors).
  
@@ -56,7 +52,17 @@ For more information see:
     - Sambit Das: dsambit@umich.edu
     - Vikram Gavini: vikramg@umich.edu (Mentor)
 
+ - The following people have significantly contributed either in the past or current and furthered DFT-FE's goals and are therefore Principal Developers:
+ 
+Principal developers
+    ====================
+    Sambit Das       - University of Michigan, USA
+    Phani Motamarri  - University of Michigan, USA
 
+    Principal developers emeriti
+    =============================
+    Krishnendu Ghosh - University of Michigan, USA
+    Shiva Rudraraju  - University of Wisconsin Madison, USA
 
 License
 -------
