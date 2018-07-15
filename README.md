@@ -34,7 +34,7 @@ More information
 
 For more information see:
 
- - The official [website](https://sites.google.com/umich.edu/dft-fe).
+ - The official [website](https://sites.google.com/umich.edu/dftfe).
   
  - The current [manual](https://github.com/dftfeDevelopers/dftfe/blob/manual/manual.pdf).
 
