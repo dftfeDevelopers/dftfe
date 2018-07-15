@@ -363,9 +363,9 @@ namespace dftParameters
 			      Patterns::Bool(),
 			      "[Developer] Boolean parameter specifying whether to use gemm batch blas routines to perform matrix-matrix multiplication operations with groups of matrices, processing a number of groups at once using threads instead of the standard serial route. CAUTION: gemm batch blas routines will only be activated if the CHEBYSHEV FILTER BLOCK SIZE is less than 1000, and intel mkl blas library linked with the dealii installation. Default option is true.");
 
-	    prm.declare_entry("ORTHOGONALIZATION TYPE","LW",
+	    prm.declare_entry("ORTHOGONALIZATION TYPE","PGS",
 			      Patterns::Selection("GS|LW|PGS"),
-			      "[Standard] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization using SLEPc library), LW(Lowden Orthogonalization using LAPACK, extension to ScaLAPACK not implemented yet), PGS(Pseudo-Gram-Schmidt Orthogonalization, if dealii library is compiled with ScaLAPACK, ScaLAPACK functions are used otherwise LAPACK functions are used). LW is the default option.");
+			      "[Standard] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization using SLEPc library), LW(Lowden Orthogonalization implemented using LAPACK library, extension to use ScaLAPACK library not implemented yet), PGS(Pseudo-Gram-Schmidt Orthogonalization: if dealii library is compiled with ScaLAPACK and if you are using the real executable, parallel ScaLAPACK functions are used, otherwise serial LAPACK functions are used.) PGS is the default option.");
 
 	    prm.declare_entry("ENABLE SWITCH TO GS", "true",
 			      Patterns::Bool(),
