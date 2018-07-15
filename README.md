@@ -52,8 +52,7 @@ For more information see:
     - Sambit Das: dsambit@umich.edu
     - Vikram Gavini: vikramg@umich.edu (Mentor)
 
- - The following people have significantly contributed either in the past or current and furthered DFT-FE's goals and are therefore Principal Developers:
- 
+ - The following people have significantly contributed either in the past or current and advanced DFT-FE's goals: 
    - Principal developers
       - Sambit Das (University of Michigan, USA)
       - Phani Motamarri (University of Michigan, USA)
