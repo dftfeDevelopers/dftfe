@@ -15,18 +15,18 @@ Installation instructions
 -------------------------
 
 The steps to install the necessary dependencies and DFT-FE itself are described
-in the *Installation* section of the DFT-FE [manual](https://github.com/dftfeDevelopers/dftfe/blob/manual/manual.pdf)
+in the *Installation* section of the DFT-FE [manual](https://github.com/dftfeDevelopers/dftfe/blob/manual/manualv0.5.0-pre.pdf)
 
 
 Running DFT-FE
 --------------
 
-Instructions on how to run DFT-FE can also be found in the *Running DFT-FE* section of the [manual](https://github.com/dftfeDevelopers/dftfe/blob/manual/manual.pdf). 
+Instructions on how to run DFT-FE can also be found in the *Running DFT-FE* section of the [manual](https://github.com/dftfeDevelopers/dftfe/blob/manual/manualv0.5.0-pre.pdf). 
 
 
 Contributing to DFT-FE
 ----------------------
-Learn more about contributing in the *Contributing to DFT-FE's development* section of the [manual](https://github.com/dftfeDevelopers/dftfe/blob/manual/manual.pdf).
+Learn more about contributing in the *Contributing to DFT-FE's development* section of the [manual](https://github.com/dftfeDevelopers/dftfe/blob/manual/manualv0.5.0-pre.pdf).
 
 
 More information
@@ -36,7 +36,7 @@ For more information see:
 
  - The official [website](https://sites.google.com/umich.edu/dftfe).
   
- - The current [manual](https://github.com/dftfeDevelopers/dftfe/blob/manual/manual.pdf).
+ - The current [manual](https://github.com/dftfeDevelopers/dftfe/blob/manual/manualv0.5.0-pre.pdf).
 
  - Doxygen generated [documentation](https://dftfedevelopers.github.io/dftfe/).
 
