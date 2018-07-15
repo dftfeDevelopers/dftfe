@@ -217,8 +217,8 @@ namespace dftfe {
 	      AssertThrow((*it)[0]<=50,ExcMessage("DFT-FE Error: One of the atomic numbers exceeds 50."
 	      "Currently, for all-electron calculations we have single atom wavefunction and electron-density"
 	      "initial guess data till atomic number 50 only. Data for the remaining atomic numbers will be"
-	      "added in the next release. You could also contact the developers of DFT-FE, who can provide"
-	      "you with the code to generate the single atom wavefunction and electron-density data for"
+	      "added in the next release. In the mean time, you could also contact the developers of DFT-FE, who can provide"
+	      "you the data for the single atom wavefunction and electron-density data for"
 	      "atomic numbers beyond 50."));
 	  }
 

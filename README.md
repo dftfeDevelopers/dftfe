@@ -11,26 +11,22 @@ same framework while accomodating arbitrary boundary conditions. DFT-FE code bui
 that has to do with finite elements, geometries, meshes, etc., and, through deal.II on p4est for parallel adaptive mesh handling. 
 
 
-
 Installation instructions
 -------------------------
 
 The steps to install the necessary dependencies and DFT-FE itself are described
-in the *Installation* section of the DFT-FE [manual](https://dftfewebsite/manual.pdf).
-
+in the *Installation* section of the DFT-FE [manual](https://github.com/dftfeDevelopers/dftfe/blob/manual/manual.pdf)
 
 
 Running DFT-FE
 --------------
 
-Instructions on how to run DFT-FE can also be found in the *Running DFT-FE* section of the [manual](https://dftfewebsite/manual.pdf). 
-
+Instructions on how to run DFT-FE can also be found in the *Running DFT-FE* section of the [manual](https://github.com/dftfeDevelopers/dftfe/blob/manual/manual.pdf). 
 
 
 Contributing to DFT-FE
 ----------------------
-Learn more about contributing in the *Contributing to DFT-FE's development* section of the [manual](https://dftfewebsite/manual.pdf).
-
+Learn more about contributing in the *Contributing to DFT-FE's development* section of the [manual](https://github.com/dftfeDevelopers/dftfe/blob/manual/manual.pdf).
 
 
 More information
@@ -38,15 +34,13 @@ More information
 
 For more information see:
 
- - The official [website](https://dftfewebsite).
-
- - DFT-FE [authors](https://github.com/dftfeDevelopers/dftfe/blob/publicGithubDevelop/authors).
- 
- - The current [manual](https://dftfewebsite/manual.pdf).
+ - The official [website](https://sites.google.com/umich.edu/dftfe).
+  
+ - The current [manual](https://github.com/dftfeDevelopers/dftfe/blob/manual/manual.pdf).
 
  - Doxygen generated [documentation](https://dftfedevelopers.github.io/dftfe/).
 
- - For questions about the source code of DFT-FE, portability, installation, etc., use the DFT-FE mailing list (dft-fe.users@umich.edu).
+ - For questions about DFT-FE, installation, bugs, etc., use the DFT-FE mailing list. To subscribe to the mailing list, please send an email to dft-fe.users@umich.edu and we will add you to the list.
  
  - DFT-FE is primarily based on the [deal.II library](http://www.dealii.org/). If you have particular questions about deal.II, contact the [deal.II mailing lists](https://www.dealii.org/mail.html).
  
@@ -56,7 +50,16 @@ For more information see:
     - Sambit Das: dsambit@umich.edu
     - Vikram Gavini: vikramg@umich.edu (Mentor)
 
-
+ - The following people have significantly contributed either in the past or current and advanced DFT-FE's goals: 
+   - Principal developers
+      - Sambit Das (University of Michigan, USA)
+      - Phani Motamarri (University of Michigan, USA)
+    
+   - Principal developers emeriti
+      - Krishnendu Ghosh (University of Michigan, USA)
+      - Shiva Rudraraju  (University of Wisconsin Madison, USA)
+      
+ - A complete list of the many authors that have contributed to DFT-FE over the past can be found at [authors](https://github.com/dftfeDevelopers/dftfe/blob/publicGithubDevelop/authors).    
 
 License
 -------
