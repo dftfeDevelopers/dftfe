@@ -1104,10 +1104,10 @@
 \index[prmindexfull]{SCF parameters!Eigen-solver parameters!ORTHOGONALIZATION TYPE}
 
 
-{\it Default:} LW
+{\it Default:} PGS
 
 
-{\it Description:} [Standard] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization using SLEPc library), LW(Lowden Orthogonalization using LAPACK, extension to ScaLAPACK not implemented yet), PGS(Pseudo-Gram-Schmidt Orthogonalization, if dealii library is compiled with ScaLAPACK, ScaLAPACK functions are used otherwise LAPACK functions are used). LW is the default option.
+{\it Description:} [Standard] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization using SLEPc library), LW(Lowden Orthogonalization implemented using LAPACK library, extension to use ScaLAPACK library not implemented yet), PGS(Pseudo-Gram-Schmidt Orthogonalization: if dealii library is compiled with ScaLAPACK and if you are using the real executable, parallel ScaLAPACK functions are used, otherwise serial LAPACK functions are used.) PGS is the default option.
 
 
 {\it Possible values:} Any one of GS, LW, PGS
