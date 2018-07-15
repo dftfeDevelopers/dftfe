@@ -51,8 +51,13 @@ void dftClass<FEOrder>::initBoundaryConditions(){
     pcout<< "Minimum mesh size: "<<minElemLength<<std::endl;
   pcout<<"-------------------------------------------------"<<std::endl;
 
-  if (dofHandler.n_dofs()/n_mpi_processes<4000 && dftParameters::verbosity>=1)
-     pcout<<"DFT-FE Warning: The number of degrees of freedom per domain decomposition processor are less than 4000, where the parallel scaling efficiency is not good. We recommend to use 4000 or more degrees of freedom per domain decomposition processor. For further parallelization use input parameters NPBAND and/or NPKPT(in case of multiple k points)."<<std::endl;
+  if(dofHandler.n_dofs()>15000)
+    {
+      if(dofHandler.n_dofs()/n_mpi_processes<4000 && dftParameters::verbosity>=1)
+	{
+	  pcout<<"DFT-FE Warning: The number of degrees of freedom per domain decomposition processor are less than 4000, where the parallel scaling efficiency is not good. We recommend to use 4000 or more degrees of freedom per domain decomposition processor. For further parallelization use input parameters NPBAND and/or NPKPT(in case of multiple k points)."<<std::endl;
+	}
+    }
 
   if (dftParameters::verbosity>=4)
       dftUtils::printCurrentMemoryUsage(mpi_communicator,
