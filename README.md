@@ -40,7 +40,7 @@ For more information see:
 
  - Doxygen generated [documentation](https://dftfedevelopers.github.io/dftfe/).
 
- - For questions about DFT-FE, installation, bugs, etc., use the DFT-FE mailing list. To subscribe, please send an email to dft-fe.users@umich.edu and we will add you to the list.
+ - For questions about DFT-FE, installation, bugs, etc., use the DFT-FE mailing list. To subscribe to the mailing list, please send an email to dft-fe.users@umich.edu and we will add you to the list.
  
  - DFT-FE is primarily based on the [deal.II library](http://www.dealii.org/). If you have particular questions about deal.II, contact the [deal.II mailing lists](https://www.dealii.org/mail.html).
  
