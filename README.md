@@ -54,13 +54,13 @@ For more information see:
 
  - The following people have significantly contributed either in the past or current and furthered DFT-FE's goals and are therefore Principal Developers:
  
-Principal developers
-- Sambit Das (University of Michigan, USA)
-- Phani Motamarri (University of Michigan, USA)
+   - Principal developers
+      - Sambit Das (University of Michigan, USA)
+      - Phani Motamarri (University of Michigan, USA)
     
-Principal developers emeriti
-- Krishnendu Ghosh (University of Michigan, USA)
-- Shiva Rudraraju  (University of Wisconsin Madison, USA)
+   - Principal developers emeriti
+      - Krishnendu Ghosh (University of Michigan, USA)
+      - Shiva Rudraraju  (University of Wisconsin Madison, USA)
 
 License
 -------
