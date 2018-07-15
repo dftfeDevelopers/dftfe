@@ -35,9 +35,7 @@ More information
 For more information see:
 
  - The official [website](https://sites.google.com/umich.edu/dft-fe).
-
- - DFT-FE [authors](https://github.com/dftfeDevelopers/dftfe/blob/publicGithubDevelop/authors).
- 
+  
  - The current [manual](https://dftfewebsite/manual.pdf).
 
  - Doxygen generated [documentation](https://dftfedevelopers.github.io/dftfe/).
@@ -60,6 +58,8 @@ For more information see:
    - Principal developers emeriti
       - Krishnendu Ghosh (University of Michigan, USA)
       - Shiva Rudraraju  (University of Wisconsin Madison, USA)
+      
+ - A complete list of the many authors that have contributed to DFT-FE over the past can be found at [authors](https://github.com/dftfeDevelopers/dftfe/blob/publicGithubDevelop/authors).    
 
 License
 -------
