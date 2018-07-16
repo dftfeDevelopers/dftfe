@@ -9,6 +9,7 @@
 # Modified 2010 by Wolfgang Bangerth
 # Modified 2010 by Timo Heister
 # Modified 2013 by Matthias Maier
+# Modified 2018 by Sambit Das (to fix OpenMP linking with intel compilers)
 #
 # p4est is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
