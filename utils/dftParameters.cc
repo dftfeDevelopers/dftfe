@@ -554,10 +554,9 @@ namespace dftParameters
         std::cout << "It is based on adaptive finite-element based methodologies.		        " << std::endl ;
         std::cout << "For details and citing please refer: P.Motamarri et. al., Comp. Phys. Comm., Vol xx, Issue xx, pp xx, 2018" << std::endl ;
 	std::cout << "==========================================================================================================" << std::endl ;
-	std::cout << " DFT-FE authors (alphabetically) :									" << std::endl ;
+	std::cout << " DFT-FE Principal developers and Mentors (alphabetically) :									" << std::endl ;
 	std::cout << "														" << std::endl ;
 	std::cout << " Sambit Das               - University of Michigan, Ann Arbor" << std::endl ;
-	std::cout << " Denis Davydov            - University of Erlangen-Nuremberg " << std::endl ;
 	std::cout << " Vikram Gavini (Mentor)   - University of Michigan, Ann Arbor" << std::endl ;
 	std::cout << " Krishnendu Ghosh         - University of Michigan, Ann Arbor" << std::endl ;
 	std::cout << " Phani Motamarri          - University of Michigan, Ann Arbor" << std::endl ;
@@ -637,7 +636,7 @@ namespace dftParameters
        if (dftParameters::periodicX ||dftParameters::periodicY ||dftParameters::periodicZ)
 	   dftParameters::meshSizeOuterDomain=4.0;
        else
-	   dftParameters::meshSizeOuterDomain=10.0;
+	   dftParameters::meshSizeOuterDomain=13.0;
 
     if (dftParameters::meshSizeInnerBall<1.0e-6)
        if (dftParameters::isPseudopotential)

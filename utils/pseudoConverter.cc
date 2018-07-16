@@ -29,7 +29,7 @@ namespace dftfe
 {
   namespace pseudoUtils
   {
-    
+
     bool ends_with(std::string const & value, std::string const & ending)
     {
       if (ending.size() > value.size()) return false;
@@ -69,7 +69,7 @@ namespace dftfe
 	  AssertThrow(isupf(toParse),dealii::ExcMessage("Not a valid pseudopotential format and upf format only is currently supported"));
 
 	  atomTypes.push_back(z);
-	  
+
 	  if(isupf(toParse))
 	    {
 	      //std::string xmlFileName = newFolder + "/" + toParse.substr(0, toParse.find(".upf"));
@@ -84,7 +84,7 @@ namespace dftfe
 		  std::string newPath =  dftPath + "/tests/dft/pseudopotential/real/" + toParse;
 #endif
 
-		 
+
 		  errorFlag = upfToxml(newPath,
 				       xmlFileName);
 		}
@@ -94,9 +94,9 @@ namespace dftfe
 				       xmlFileName);
 
 		  if(dftParameters::verbosity >= 1)
-		    pcout<< " Reading Pseudopotential File: "<<toParse<<std::endl;
+		    pcout<< " Reading Pseudopotential File: "<<toParse<<", with atomic number: "<< z<<std::endl;
 
-		  
+
 		}
 
 	      AssertThrow(errorFlag==0,dealii::ExcMessage("Error in reading upf format"));
