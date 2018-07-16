@@ -305,7 +305,7 @@ namespace dftParameters
     prm.enter_subsection ("SCF parameters");
     {
 	prm.declare_entry("TEMPERATURE", "500.0",
-			  Patterns::Double(0.0),
+			  Patterns::Double(1e-5),
 			  "[Standard] Fermi-Dirac smearing temperature (in Kelvin).");
 
 	prm.declare_entry("MAXIMUM ITERATIONS", "50",
