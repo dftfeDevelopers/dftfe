@@ -36,14 +36,18 @@ and following the installation instructions in the README.
 
 \subsubsection{Instructions for deal.II's dependencies-- p4est, PETSc, SLEPc, and ScaLAPACK}
 \begin{enumerate}
-	\item   {\bf p4est}: This library is used by deal.II to create and distribute finite-element meshes across multiple processors. Download the latest release tarball of p4est from \url{http://www.p4est.org/}, and follow the installation instructions in \url{https://www.dealii.org/9.0.0/external-libs/p4est.html}. 
+	\item   {\bf p4est}: This library is used by deal.II to create and distribute finite-element meshes across multiple processors. Download the latest release tarball of p4est from \url{http://www.p4est.org/}. Also download the \href{https://github.com/dftfeDevelopers/dftfe/raw/manual/p4est-setup.sh}{script}, to automatically compile and install a debug and optimized version of p4est. Next do
+\begin{verbatim}
+$ chmod u+x p4est-setup.sh
+$ ./p4est-setup.sh p4est-x-y-z.tar.gz p4est_install_dir_path
+\end{verbatim}
 
 	\item {\bf PETSc}: PETSc is a parallel linear algebra library. \dftfe{} needs two variants of the PETSc installation- one with real scalar type and the another with complex scalar type. Also both the installation variants must have 64-bit indices and optimized mode enabled during the installation. To install PETSc, first download the latest release tarball from \url{https://www.mcs.anl.gov/petsc/download/index.html}, unpack it, and follow the installation instructions in \url{https://www.mcs.anl.gov/petsc/documentation/installation.html}. 
 	
 Below, we show an example installation for the real scalar type variant. 
 This example should be used only as a reference.
 \begin{verbatim}
-$ ./configure --prefix=petsc_installation_dir_path --with-debugging=no 
+$ ./configure --prefix=petsc_install_dir_path --with-debugging=no 
               --with-64-bit-indices=true --with-cc=c_compiler
               --with-cxx=c++_compiler --with-fc=fortran_compiler
               --with-blas-lapack-lib=(optimized BLAS-LAPACK library path) 
@@ -139,9 +143,9 @@ The values for \verb|-DLAPACK_DIR|,\verb|-DLAPACK_LIBRARIES|, \verb|-DLAPACK_LIN
 
 \subsubsection{Important generic instructions for deal.II and its dependencies}
 \begin{itemize}
-\item If using Intel compilers and Intel MKL for BLAS-LAPACK library, it is {\bf very important} to use \href{https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor}{Intel MKL Link Line Advisor} to set correctly link with BLAS-LAPACK library as needed in installations of PETSc, ScaLAPACK, and deal.II. To exploit performance benefit from threads, we recommend (strongly recommended for the new Intel Xeon Phi processors (KNL)) linking to threaded versions of Intel MKL libraries by using the options ``threading layer'' and  ``OpenMP library'' in \href{https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor}{Intel MKL Link Line Advisor}. 
+\item If using Intel MKL for BLAS-LAPACK library, it is {\bf very important} to use \href{https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor}{Intel MKL Link Line Advisor} to set correctly link with BLAS-LAPACK library as needed in installations of PETSc, ScaLAPACK, and deal.II. To exploit performance benefit from threads, we recommend (strongly recommended for the new Intel Xeon Phi processors (KNL)) linking to threaded versions of Intel MKL libraries by using the options ``threading layer'' and  ``OpenMP library'' in \href{https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor}{Intel MKL Link Line Advisor}. 
 
-\item \textcolor{red}{\bf CAUTION! It is  very important to ensure that deal.II and its dependencies (p4est, PETSc, SLEPc, and ScaLAPACK), are compiled with the same compilers, BLAS-LAPACK libraries, and MPI libraries to prevent deal.II compilation issues, occurence of runtime crashes, and \dftfe{} performance degradation.}  
+\item \textcolor{red}{\bf CAUTION! It is  very important to ensure that deal.II and its dependencies (p4est, PETSc, SLEPc, and ScaLAPACK), are compiled with the same compilers, BLAS-LAPACK libraries, and MPI libraries to prevent deal.II compilation issues, occurence of run time crashes, and \dftfe{} performance degradation.}  
 \end{itemize}
 
 \subsection{Obtaining and Compiling \dftfe{}}
