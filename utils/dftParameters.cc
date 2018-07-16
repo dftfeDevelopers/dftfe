@@ -293,7 +293,7 @@ namespace dftParameters
 
 	prm.declare_entry("SPIN POLARIZATION", "0",
 			  Patterns::Integer(0,1),
-			  "[Standard] Spin polarization: 0 for no spin polarization and 1 for spin polarization. Default option is 0.");
+			  "[Standard] Spin polarization: 0 for no spin polarization and 1 for collinear spin polarization calculation. Default option is 0.");
 
 	prm.declare_entry("START MAGNETIZATION", "0.0",
 			  Patterns::Double(-0.5,0.5),
