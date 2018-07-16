@@ -552,7 +552,7 @@ namespace dftParameters
         std::cout << "			Welcome to the Open Source program DFT-FE v0.5.0-pre			        " << std::endl ;
         std::cout << "This is a C++ code for materials modeling from first principles using Kohn-Sham density functional theory " << std::endl ;
         std::cout << "It is based on adaptive finite-element based methodologies.		        " << std::endl ;
-        std::cout << "For details and citing please refer: P.Motamarri et. al., Comp. Phys. Comm., Vol xx, Issue xx, pp xx, 2018" << std::endl ;
+        std::cout << "For details and citing please refer to our website: https://sites.google.com/umich.edu/dftfe" << std::endl ;
 	std::cout << "==========================================================================================================" << std::endl ;
 	std::cout << " DFT-FE Principal developers and Mentors (alphabetically) :									" << std::endl ;
 	std::cout << "														" << std::endl ;
@@ -561,7 +561,8 @@ namespace dftParameters
 	std::cout << " Krishnendu Ghosh         - University of Michigan, Ann Arbor" << std::endl ;
 	std::cout << " Phani Motamarri          - University of Michigan, Ann Arbor" << std::endl ;
 	std::cout << " Shiva Rudraraju          - University of Wisconsin-Madison  " << std::endl ;
-        std::cout << "==========================================================================================================" << std::endl ;
+	std::cout << " (A complete list of the many authors that have contributed to DFT-FE can be found in the authors file)"<< std::endl;
+        std::cout <<  "==========================================================================================================" << std::endl ;
         std::cout << " 	     Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors         " << std::endl ;
         std::cout << " 			DFT-FE is published under [LGPL v2.1 or newer] 				" << std::endl ;
         std::cout << "==========================================================================================================" << std::endl ;
