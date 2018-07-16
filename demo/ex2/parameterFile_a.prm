@@ -32,9 +32,9 @@ subsection Brillouin zone k point sampling options
     set SAMPLING POINTS 1 = 2
     set SAMPLING POINTS 2 = 2
     set SAMPLING POINTS 3 = 2
-    set SAMPLING SHIFT 1  = 0.0
-    set SAMPLING SHIFT 2  = 0.0
-    set SAMPLING SHIFT 3  = 0.0
+    set SAMPLING SHIFT 1  = 0
+    set SAMPLING SHIFT 2  = 0
+    set SAMPLING SHIFT 3  = 0
   end
 end
 
@@ -53,5 +53,6 @@ subsection SCF parameters
   set TOLERANCE                        = 5e-6 
   subsection Eigen-solver parameters
       set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 20
+      set ORTHOGONALIZATION TYPE=LW
   end
 end

@@ -5,10 +5,9 @@ This is a C++ code for materials modeling from first principles using Kohn-Sham 
 It is based on adaptive finite-element based methodologies.		        
 For details and citing please refer: P.Motamarri et. al., Comp. Phys. Comm., Vol xx, Issue xx, pp xx, 2018
 ==========================================================================================================
- DFT-FE authors (alphabetically) :									
+ DFT-FE Principal developers and Mentors (alphabetically) :									
 														
  Sambit Das               - University of Michigan, Ann Arbor
- Denis Davydov            - University of Erlangen-Nuremberg 
  Vikram Gavini (Mentor)   - University of Michigan, Ann Arbor
  Krishnendu Ghosh         - University of Michigan, Ann Arbor
  Phani Motamarri          - University of Michigan, Ann Arbor
@@ -18,9 +17,10 @@ For details and citing please refer: P.Motamarri et. al., Comp. Phys. Comm., Vol
  			DFT-FE is published under [LGPL v2.1 or newer] 				
 ==========================================================================================================
 ==========================================================================================================
-set REPRODUCIBLE OUTPUT   = false
-set VERBOSITY             = 1
-set WRITE SOLUTION FIELDS = false
+set REPRODUCIBLE OUTPUT = false
+set VERBOSITY           = 1
+set WRITE DENSITY       = false
+set WRITE WFC           = false
 subsection Boundary conditions
   set PERIODIC1             = false
   set PERIODIC2             = false
@@ -54,11 +54,11 @@ subsection DFT functional parameters
 end
 subsection Finite element mesh parameters
   set MESH FILE        = 
-  set POLYNOMIAL ORDER = 3
+  set POLYNOMIAL ORDER = 4
   subsection Auto mesh generation parameters
     set ATOM BALL RADIUS      = 2.0
     set BASE MESH SIZE        = 0.0
-    set MESH SIZE AROUND ATOM = 0.7
+    set MESH SIZE AROUND ATOM = 0.5
     set MESH SIZE AT ATOM     = 0.0
   end
 end
@@ -104,7 +104,7 @@ subsection SCF parameters
     set LOWER BOUND UNWANTED FRAC UPPER   = 0
     set LOWER BOUND WANTED SPECTRUM       = -10.0
     set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 12
-    set ORTHOGONALIZATION TYPE            = LW
+    set ORTHOGONALIZATION TYPE            = PGS
     set ORTHO RR WFC BLOCK SIZE           = 200
     set SCALAPACKPROCS                    = 0
     set SUBSPACE ROT DOFS BLOCK SIZE      = 2000
@@ -120,8 +120,8 @@ number of atoms: 2
 number of atoms types: 1
 
 Reading Pseudo-potential data for each atom from the list given in : pseudo.inp
- Reading Pseudopotential File: N_ONCV_PBE-1.0.upf
-Atomic system initialization, wall time: 0.0564134s.
+ Reading Pseudopotential File: N_ONCV_PBE-1.0.upf, with atomic number: 7
+Atomic system initialization, wall time: 0.0687281s.
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
 v1 : 8.000000000000000000e+01 0.000000000000000000e+00 0.000000000000000000e+00
 v2 : 0.000000000000000000e+00 8.000000000000000000e+01 0.000000000000000000e+00
@@ -134,14 +134,13 @@ AtomId 1:  1.199999999999999956e+00 0.000000000000000000e+00 0.00000000000000000
 
 Finite element mesh information
 -------------------------------------------------
-number of elements: 960
-number of degrees of freedom: 31257
-Minimum mesh size: 5.924922030747543644e-01
+number of elements: 2792
+number of degrees of freedom: 201969
+Minimum mesh size: 3.938018632126455421e-01
 -------------------------------------------------
-DFT-FE Warning: The number of degrees of freedom per domain decomposition processor are less than 4000, where the parallel scaling efficiency is not good. We recommend to use 4000 or more degrees of freedom per domain decomposition processor. For further parallelization use input parameters NPBAND and/or NPKPT(in case of multiple k points).
 Determining the ball radius around the atom for nuclear self-potential solve... 
 ...Adaptively set ball radius: 4.000000000000000000e+00
-Volume of the domain (Bohr^3): 5.119999999999941792e+05
+Volume of the domain (Bohr^3): 5.120000000000216532e+05
 
 Setting initial guess for wavefunctions....
 Number of wavefunctions generated randomly to be used as initial guess for starting the SCF : 12
@@ -151,123 +150,123 @@ number of eigen values: 12
 =============================================================================================================================
 
 Reading initial guess for electron-density.....
-Initial total charge: 1.000000000000000355e+01
+Initial total charge: 9.999999999999950262e+00
 
 Pseudopotential initalization....
-KSDFT problem initialization, wall time: 1.24782s.
-Nuclear self-potential solve, wall time: 0.207435s.
+KSDFT problem initialization, wall time: 4.21031s.
+Nuclear self-potential solve, wall time: 2.59618s.
 
 ************************Begin Self-Consistent-Field Iteration:  1 ***********************
-Total energy  : -1.983235753903785081e+01
+Total energy  : -1.985276762924850047e+01
 ***********************Self-Consistent-Field Iteration:  1 complete**********************
-Wall time for the above scf iteration: 1.695679136000000087e+00 seconds
-Number of Chebyshev filtered subspace iterations: 6
+Wall time for the above scf iteration: 4.824977630299999731e+01 seconds
+Number of Chebyshev filtered subspace iterations: 14
 
 ************************Begin Self-Consistent-Field Iteration:  2 ***********************
-Simple mixing, L2 norm of electron-density difference: 2.786469589889556744e-02
-Total energy  : -1.983398617354401949e+01
+Simple mixing, L2 norm of electron-density difference: 2.800172389350336424e-02
+Total energy  : -1.985337521179089038e+01
 ***********************Self-Consistent-Field Iteration:  2 complete**********************
-Wall time for the above scf iteration: 4.283806159999999918e-01 seconds
+Wall time for the above scf iteration: 5.313025371000000163e+00 seconds
 Number of Chebyshev filtered subspace iterations: 1
 
 ************************Begin Self-Consistent-Field Iteration:  3 ***********************
-Anderson mixing, L2 norm of electron-density difference: 7.489225294601761784e-02
-Total energy  : -1.983455700057740856e+01
+Anderson mixing, L2 norm of electron-density difference: 7.464820683824331671e-02
+Total energy  : -1.985404550594886430e+01
 ***********************Self-Consistent-Field Iteration:  3 complete**********************
-Wall time for the above scf iteration: 3.644957400000000125e-01 seconds
+Wall time for the above scf iteration: 5.364410588000000146e+00 seconds
 Number of Chebyshev filtered subspace iterations: 1
 
 ************************Begin Self-Consistent-Field Iteration:  4 ***********************
-Anderson mixing, L2 norm of electron-density difference: 1.822076002119436822e-02
-Total energy  : -1.983474836660121809e+01
+Anderson mixing, L2 norm of electron-density difference: 1.905221032472663445e-02
+Total energy  : -1.985423836066095760e+01
 ***********************Self-Consistent-Field Iteration:  4 complete**********************
-Wall time for the above scf iteration: 3.890040840000000277e-01 seconds
+Wall time for the above scf iteration: 5.526536651999999883e+00 seconds
 Number of Chebyshev filtered subspace iterations: 1
 
 ************************Begin Self-Consistent-Field Iteration:  5 ***********************
-Anderson mixing, L2 norm of electron-density difference: 8.516900514676128964e-03
-Total energy  : -1.983478905392346547e+01
+Anderson mixing, L2 norm of electron-density difference: 6.077183541015715625e-03
+Total energy  : -1.985426803663060369e+01
 ***********************Self-Consistent-Field Iteration:  5 complete**********************
-Wall time for the above scf iteration: 5.327858920000000387e-01 seconds
+Wall time for the above scf iteration: 5.398753838000000194e+00 seconds
 Number of Chebyshev filtered subspace iterations: 1
 
 ************************Begin Self-Consistent-Field Iteration:  6 ***********************
-Anderson mixing, L2 norm of electron-density difference: 6.574071088713643110e-03
-Total energy  : -1.983481526388875693e+01
+Anderson mixing, L2 norm of electron-density difference: 2.368487577623857449e-03
+Total energy  : -1.985427195011210699e+01
 ***********************Self-Consistent-Field Iteration:  6 complete**********************
-Wall time for the above scf iteration: 4.041720569999999735e-01 seconds
+Wall time for the above scf iteration: 5.424388725000000022e+00 seconds
 Number of Chebyshev filtered subspace iterations: 1
 
 ************************Begin Self-Consistent-Field Iteration:  7 ***********************
-Anderson mixing, L2 norm of electron-density difference: 8.380316274197545379e-04
-Total energy  : -1.983481663512374382e+01
+Anderson mixing, L2 norm of electron-density difference: 8.338212135346739903e-04
+Total energy  : -1.985427335142470540e+01
 ***********************Self-Consistent-Field Iteration:  7 complete**********************
-Wall time for the above scf iteration: 3.925081870000000084e-01 seconds
+Wall time for the above scf iteration: 5.571495163999999889e+00 seconds
 Number of Chebyshev filtered subspace iterations: 1
 
 ************************Begin Self-Consistent-Field Iteration:  8 ***********************
-Anderson mixing, L2 norm of electron-density difference: 1.903366150935091822e-04
-Total energy  : -1.983481667889293121e+01
+Anderson mixing, L2 norm of electron-density difference: 5.146695701784117973e-04
+Total energy  : -1.985427358017284405e+01
 ***********************Self-Consistent-Field Iteration:  8 complete**********************
-Wall time for the above scf iteration: 4.054412949999999793e-01 seconds
+Wall time for the above scf iteration: 5.560297449000000114e+00 seconds
 Number of Chebyshev filtered subspace iterations: 1
 
 ************************Begin Self-Consistent-Field Iteration:  9 ***********************
-Anderson mixing, L2 norm of electron-density difference: 7.235311173737007874e-05
-Total energy  : -1.983481667621812861e+01
+Anderson mixing, L2 norm of electron-density difference: 3.956134261913998341e-04
+Total energy  : -1.985427367978457269e+01
 ***********************Self-Consistent-Field Iteration:  9 complete**********************
-Wall time for the above scf iteration: 4.013844890000000110e-01 seconds
+Wall time for the above scf iteration: 5.611490850000000030e+00 seconds
 Number of Chebyshev filtered subspace iterations: 1
 
 ************************Begin Self-Consistent-Field Iteration: 10 ***********************
-Anderson mixing, L2 norm of electron-density difference: 6.319215035614475821e-05
-Total energy  : -1.983481667931501136e+01
+Anderson mixing, L2 norm of electron-density difference: 3.613286108290040296e-05
+Total energy  : -1.985427368389531466e+01
 ***********************Self-Consistent-Field Iteration: 10 complete**********************
-Wall time for the above scf iteration: 4.108439979999999880e-01 seconds
+Wall time for the above scf iteration: 5.882496581999999918e+00 seconds
 Number of Chebyshev filtered subspace iterations: 1
 
 ************************Begin Self-Consistent-Field Iteration: 11 ***********************
-Anderson mixing, L2 norm of electron-density difference: 1.641478332238948206e-05
-Total energy  : -1.983481667948543858e+01
+Anderson mixing, L2 norm of electron-density difference: 4.229158776587986360e-05
+Total energy  : -1.985427368566904960e+01
 ***********************Self-Consistent-Field Iteration: 11 complete**********************
-Wall time for the above scf iteration: 4.732978760000000062e-01 seconds
+Wall time for the above scf iteration: 5.794933867000000127e+00 seconds
 Number of Chebyshev filtered subspace iterations: 1
 
 ************************Begin Self-Consistent-Field Iteration: 12 ***********************
-Anderson mixing, L2 norm of electron-density difference: 5.569698726586388252e-06
-Total energy  : -1.983481667949289928e+01
+Anderson mixing, L2 norm of electron-density difference: 3.478185552429059567e-05
+Total energy  : -1.985427368663760461e+01
 ***********************Self-Consistent-Field Iteration: 12 complete**********************
-Wall time for the above scf iteration: 4.346379289999999784e-01 seconds
+Wall time for the above scf iteration: 5.925735539999999801e+00 seconds
 Number of Chebyshev filtered subspace iterations: 1
 
 ************************Begin Self-Consistent-Field Iteration: 13 ***********************
-Anderson mixing, L2 norm of electron-density difference: 3.332882215182470443e-07
-Total energy  : -1.983481667949235572e+01
+Anderson mixing, L2 norm of electron-density difference: 3.509896774037435892e-06
+Total energy  : -1.985427368663370373e+01
 ***********************Self-Consistent-Field Iteration: 13 complete**********************
-Wall time for the above scf iteration: 4.541725300000000187e-01 seconds
+Wall time for the above scf iteration: 6.094066255999999626e+00 seconds
 Number of Chebyshev filtered subspace iterations: 1
 
 SCF iterations converged to the specified tolerance after: 13 iterations.
 
 Energy computations (Hartree)
 -------------------------------------------------------------------------------
-Band energy                                         :  -5.2703159573219782e+00
-Exchange energy                                     :  -4.3782488058909363e+00
-Correlation energy                                  :  -3.5537432383401724e-01
-Total energy                                        :  -1.9834816679492356e+01
-Total energy per atom                               :  -9.9174083397461779e+00
+Band energy                                         :  -5.2614866751788565e+00
+Exchange energy                                     :  -4.3812113449164221e+00
+Correlation energy                                  :  -3.5561648449361605e-01
+Total energy                                        :  -1.9854273686633704e+01
+Total energy per atom                               :  -9.9271368433168519e+00
 -------------------------------------------------------------------------------
-Total scf solve, wall time: 6.85757s.
+Total scf solve, wall time: 116.931s.
 
 Ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  2.431329977297677358e-01,-4.412924913627726568e-09,3.420124293799717274e-09
-AtomId    1:  -2.431332565026557424e-01,-5.290271991777054181e-09,3.773056715151990037e-09
+AtomId    0:  2.565521923675431748e-01,3.553545914067555379e-09,-3.651368953617735013e-08
+AtomId    1:  -2.565518143787873795e-01,4.024132839999526351e-08,-1.568512049671783818e-08
 --------------------------------------------------------------------------------------------
- Maximum absolute force atom id: 1, Force vec: -2.431332565026557424e-01,-5.290271991777054181e-09,3.773056715151990037e-09
-Ion force computation, wall time: 0.0535525s.
+ Maximum absolute force atom id: 0, Force vec: 2.565521923675431748e-01,3.553545914067555379e-09,-3.651368953617735013e-08
+Ion force computation, wall time: 0.406443s.
 
-Elapsed wall time since start of the program: 8.423419789000000435e+00 seconds
+Elapsed wall time since start of the program: 1.242135775269999982e+02 seconds
 
  --------------Ion force relaxation flags----------------
 1  0  0
@@ -281,20 +280,19 @@ v2 : 0.000000000000000000e+00 8.000000000000000000e+01 0.000000000000000000e+00
 v3 : 0.000000000000000000e+00 0.000000000000000000e+00 8.000000000000000000e+01
 -----------------------------------------------------------------------------------------
 ------------Cartesian coordinates of atoms (origin at center of domain)------------------
-AtomId 0:  -1.029806901589162660e+00 0.000000000000000000e+00 0.000000000000000000e+00
-AtomId 1:  1.029806720448140922e+00 0.000000000000000000e+00 0.000000000000000000e+00
+AtomId 0:  -1.020413465342719705e+00 0.000000000000000000e+00 0.000000000000000000e+00
+AtomId 1:  1.020413729934848801e+00 0.000000000000000000e+00 0.000000000000000000e+00
 -----------------------------------------------------------------------------------------
 
 Finite element mesh information
 -------------------------------------------------
-number of elements: 960
-number of degrees of freedom: 31257
-Minimum mesh size: 4.818400833802604644e-01
+number of elements: 2736
+number of degrees of freedom: 198385
+Minimum mesh size: 3.756786958118185638e-01
 -------------------------------------------------
-DFT-FE Warning: The number of degrees of freedom per domain decomposition processor are less than 4000, where the parallel scaling efficiency is not good. We recommend to use 4000 or more degrees of freedom per domain decomposition processor. For further parallelization use input parameters NPBAND and/or NPKPT(in case of multiple k points).
 Determining the ball radius around the atom for nuclear self-potential solve... 
 ...Adaptively set ball radius: 4.000000000000000000e+00
-Volume of the domain (Bohr^3): 5.119999999999944121e+05
+Volume of the domain (Bohr^3): 5.120000000000238069e+05
 
 Reading initial guess for PSI....
 Number of wavefunctions generated randomly to be used as initial guess for starting the SCF : 12
@@ -302,117 +300,159 @@ Number of wavefunctions generated randomly to be used as initial guess for start
 number of electrons: 10
 number of eigen values: 12
 =============================================================================================================================
-Initial total charge: 1.000000000000000000e+01
+Initial total charge: 9.999999999999994671e+00
 
 Pseudopotential initalization....
-KSDFT problem initialization, wall time: 1.47376s.
+KSDFT problem initialization, wall time: 5.32339s.
 ...Reinitialization end
-Nuclear self-potential solve, wall time: 0.168832s.
+Nuclear self-potential solve, wall time: 2.62723s.
 
 ************************Begin Self-Consistent-Field Iteration:  1 ***********************
-Total energy  : -1.978552553683189075e+01
+Total energy  : -1.965522385196519295e+01
 ***********************Self-Consistent-Field Iteration:  1 complete**********************
-Wall time for the above scf iteration: 1.631416849999999918e+00 seconds
-Number of Chebyshev filtered subspace iterations: 7
+Wall time for the above scf iteration: 3.912209645899999799e+01 seconds
+Number of Chebyshev filtered subspace iterations: 12
 
 ************************Begin Self-Consistent-Field Iteration:  2 ***********************
-Simple mixing, L2 norm of electron-density difference: 1.466738042115178775e-01
-Total energy  : -1.988472619168432942e+01
+Simple mixing, L2 norm of electron-density difference: 3.903195345382830528e-01
+Total energy  : -1.987435692622200989e+01
 ***********************Self-Consistent-Field Iteration:  2 complete**********************
-Wall time for the above scf iteration: 5.780596420000000402e-01 seconds
-Number of Chebyshev filtered subspace iterations: 2
+Wall time for the above scf iteration: 1.120078897600000012e+01 seconds
+Number of Chebyshev filtered subspace iterations: 3
 
 ************************Begin Self-Consistent-Field Iteration:  3 ***********************
-Anderson mixing, L2 norm of electron-density difference: 9.346718214453525464e-02
-Total energy  : -1.988848986439735356e+01
+Anderson mixing, L2 norm of electron-density difference: 1.793228819832116683e-01
+Total energy  : -1.988189922184918146e+01
 ***********************Self-Consistent-Field Iteration:  3 complete**********************
-Wall time for the above scf iteration: 3.699468710000000105e-01 seconds
-Number of Chebyshev filtered subspace iterations: 1
+Wall time for the above scf iteration: 8.222496833999999311e+00 seconds
+Number of Chebyshev filtered subspace iterations: 2
 
 ************************Begin Self-Consistent-Field Iteration:  4 ***********************
-Anderson mixing, L2 norm of electron-density difference: 2.279790808210177197e-02
-Total energy  : -1.988858196380689591e+01
+Anderson mixing, L2 norm of electron-density difference: 5.570024914384905795e-02
+Total energy  : -1.988198975671414104e+01
 ***********************Self-Consistent-Field Iteration:  4 complete**********************
-Wall time for the above scf iteration: 3.733458170000000242e-01 seconds
+Wall time for the above scf iteration: 5.052464269999999757e+00 seconds
 Number of Chebyshev filtered subspace iterations: 1
 
 ************************Begin Self-Consistent-Field Iteration:  5 ***********************
-Anderson mixing, L2 norm of electron-density difference: 6.897761261035833223e-03
-Total energy  : -1.988859414950892912e+01
+Anderson mixing, L2 norm of electron-density difference: 1.225244741364734172e-02
+Total energy  : -1.988198415633233651e+01
 ***********************Self-Consistent-Field Iteration:  5 complete**********************
-Wall time for the above scf iteration: 4.880277749999999970e-01 seconds
+Wall time for the above scf iteration: 5.125834081999999903e+00 seconds
 Number of Chebyshev filtered subspace iterations: 1
 
 ************************Begin Self-Consistent-Field Iteration:  6 ***********************
-Anderson mixing, L2 norm of electron-density difference: 3.777616071034086299e-03
-Total energy  : -1.988860857141447980e+01
+Anderson mixing, L2 norm of electron-density difference: 1.052024418520310610e-02
+Total energy  : -1.988205963108399033e+01
 ***********************Self-Consistent-Field Iteration:  6 complete**********************
-Wall time for the above scf iteration: 3.813333170000000050e-01 seconds
+Wall time for the above scf iteration: 5.157844133000000220e+00 seconds
 Number of Chebyshev filtered subspace iterations: 1
 
 ************************Begin Self-Consistent-Field Iteration:  7 ***********************
-Anderson mixing, L2 norm of electron-density difference: 1.181294393913983731e-03
-Total energy  : -1.988860992239862568e+01
+Anderson mixing, L2 norm of electron-density difference: 7.357608344263229759e-04
+Total energy  : -1.988206332223049699e+01
 ***********************Self-Consistent-Field Iteration:  7 complete**********************
-Wall time for the above scf iteration: 3.907791500000000195e-01 seconds
+Wall time for the above scf iteration: 5.315051367999999776e+00 seconds
 Number of Chebyshev filtered subspace iterations: 1
 
 ************************Begin Self-Consistent-Field Iteration:  8 ***********************
-Anderson mixing, L2 norm of electron-density difference: 2.689939098680387453e-04
-Total energy  : -1.988860999709805100e+01
+Anderson mixing, L2 norm of electron-density difference: 6.858646686543511855e-04
+Total energy  : -1.988206415869634469e+01
 ***********************Self-Consistent-Field Iteration:  8 complete**********************
-Wall time for the above scf iteration: 3.992484749999999916e-01 seconds
+Wall time for the above scf iteration: 5.239426595000000297e+00 seconds
 Number of Chebyshev filtered subspace iterations: 1
 
 ************************Begin Self-Consistent-Field Iteration:  9 ***********************
-Anderson mixing, L2 norm of electron-density difference: 5.150645234295808477e-05
-Total energy  : -1.988860999875554825e+01
+Anderson mixing, L2 norm of electron-density difference: 1.873983322749439118e-04
+Total energy  : -1.988206417648723701e+01
 ***********************Self-Consistent-Field Iteration:  9 complete**********************
-Wall time for the above scf iteration: 4.083010479999999998e-01 seconds
+Wall time for the above scf iteration: 5.448780160000000095e+00 seconds
 Number of Chebyshev filtered subspace iterations: 1
 
 ************************Begin Self-Consistent-Field Iteration: 10 ***********************
-Anderson mixing, L2 norm of electron-density difference: 1.564764420299863146e-05
-Total energy  : -1.988860999870143687e+01
+Anderson mixing, L2 norm of electron-density difference: 3.231223106654632039e-04
+Total energy  : -1.988206424805666472e+01
 ***********************Self-Consistent-Field Iteration: 10 complete**********************
-Wall time for the above scf iteration: 4.159289580000000153e-01 seconds
+Wall time for the above scf iteration: 5.485603022000000273e+00 seconds
 Number of Chebyshev filtered subspace iterations: 1
 
 ************************Begin Self-Consistent-Field Iteration: 11 ***********************
-Anderson mixing, L2 norm of electron-density difference: 1.184274872049128233e-05
-Total energy  : -1.988860999879378966e+01
+Anderson mixing, L2 norm of electron-density difference: 7.563585467428164102e-05
+Total energy  : -1.988206424814566020e+01
 ***********************Self-Consistent-Field Iteration: 11 complete**********************
-Wall time for the above scf iteration: 4.334634170000000175e-01 seconds
+Wall time for the above scf iteration: 5.539316413999999966e+00 seconds
 Number of Chebyshev filtered subspace iterations: 1
 
 ************************Begin Self-Consistent-Field Iteration: 12 ***********************
-Anderson mixing, L2 norm of electron-density difference: 1.767912891638302547e-06
-Total energy  : -1.988860999882322034e+01
+Anderson mixing, L2 norm of electron-density difference: 8.729348052233387050e-05
+Total energy  : -1.988206425204511518e+01
 ***********************Self-Consistent-Field Iteration: 12 complete**********************
-Wall time for the above scf iteration: 4.433935130000000169e-01 seconds
+Wall time for the above scf iteration: 5.713058718000000091e+00 seconds
 Number of Chebyshev filtered subspace iterations: 1
 
-SCF iterations converged to the specified tolerance after: 12 iterations.
+************************Begin Self-Consistent-Field Iteration: 13 ***********************
+Anderson mixing, L2 norm of electron-density difference: 3.518625752946128241e-05
+Total energy  : -1.988206425196291960e+01
+***********************Self-Consistent-Field Iteration: 13 complete**********************
+Wall time for the above scf iteration: 5.859414954000000009e+00 seconds
+Number of Chebyshev filtered subspace iterations: 1
+
+************************Begin Self-Consistent-Field Iteration: 14 ***********************
+Anderson mixing, L2 norm of electron-density difference: 3.816067806909644353e-05
+Total energy  : -1.988206425244701236e+01
+***********************Self-Consistent-Field Iteration: 14 complete**********************
+Wall time for the above scf iteration: 5.988569095999999981e+00 seconds
+Number of Chebyshev filtered subspace iterations: 1
+
+************************Begin Self-Consistent-Field Iteration: 15 ***********************
+Anderson mixing, L2 norm of electron-density difference: 2.491088513029834095e-05
+Total energy  : -1.988206425266473332e+01
+***********************Self-Consistent-Field Iteration: 15 complete**********************
+Wall time for the above scf iteration: 6.250505972000000021e+00 seconds
+Number of Chebyshev filtered subspace iterations: 1
+
+************************Begin Self-Consistent-Field Iteration: 16 ***********************
+Anderson mixing, L2 norm of electron-density difference: 1.465591051070022176e-05
+Total energy  : -1.988206425261440913e+01
+***********************Self-Consistent-Field Iteration: 16 complete**********************
+Wall time for the above scf iteration: 6.425060475999999632e+00 seconds
+Number of Chebyshev filtered subspace iterations: 1
+
+************************Begin Self-Consistent-Field Iteration: 17 ***********************
+Anderson mixing, L2 norm of electron-density difference: 9.765794168638427974e-06
+Total energy  : -1.988206425266040256e+01
+***********************Self-Consistent-Field Iteration: 17 complete**********************
+Wall time for the above scf iteration: 6.756911633999999722e+00 seconds
+Number of Chebyshev filtered subspace iterations: 1
+
+************************Begin Self-Consistent-Field Iteration: 18 ***********************
+Anderson mixing, L2 norm of electron-density difference: 3.430157440078908725e-06
+Total energy  : -1.988206425264373678e+01
+***********************Self-Consistent-Field Iteration: 18 complete**********************
+Wall time for the above scf iteration: 6.876157081999999754e+00 seconds
+Number of Chebyshev filtered subspace iterations: 1
+
+SCF iterations converged to the specified tolerance after: 18 iterations.
 
 Energy computations (Hartree)
 -------------------------------------------------------------------------------
-Band energy                                         :  -5.5710400715297785e+00
-Exchange energy                                     :  -4.5496818420552128e+00
-Correlation energy                                  :  -3.6263735498102934e-01
-Total energy                                        :  -1.9888609998823220e+01
-Total energy per atom                               :  -9.9443049994116102e+00
+Band energy                                         :  -5.5801344501542793e+00
+Exchange energy                                     :  -4.5641819641656465e+00
+Correlation energy                                  :  -3.6322265344711058e-01
+Total energy                                        :  -1.9882064252643737e+01
+Total energy per atom                               :  -9.9410321263218684e+00
 -------------------------------------------------------------------------------
-Total scf solve, wall time: 6.37967s.
+Total scf solve, wall time: 145.836s.
 
 Ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  -7.865535360723859004e-02,7.239882982918366058e-09,1.175683072033792409e-08
-AtomId    1:  7.865374023022098093e-02,-8.228013801565972401e-09,-1.250150957299127341e-08
+AtomId    0:  -4.818780288159052461e-02,-6.244974364663498481e-09,-4.770794559752489228e-09
+AtomId    1:  4.818866070977289445e-02,1.179042048496110710e-09,-2.510202642969083797e-09
 --------------------------------------------------------------------------------------------
- Maximum absolute force atom id: 0, Force vec: -7.865535360723859004e-02,7.239882982918366058e-09,1.175683072033792409e-08
-Ion force computation, wall time: 0.047425s.
+ Maximum absolute force atom id: 1, Force vec: 4.818866070977289445e-02,1.179042048496110710e-09,-2.510202642969083797e-09
+Ion force computation, wall time: 0.413279s.
 
-Elapsed wall time since start of the program: 1.649762932799999859e+01 seconds
+Elapsed wall time since start of the program: 2.784372045470000216e+02 seconds
 
 Auto remeshing and reinitialization of dft problem for new atom coordinates
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
@@ -421,20 +461,19 @@ v2 : 0.000000000000000000e+00 8.000000000000000000e+01 0.000000000000000000e+00
 v3 : 0.000000000000000000e+00 0.000000000000000000e+00 8.000000000000000000e+01
 -----------------------------------------------------------------------------------------
 ------------Cartesian coordinates of atoms (origin at center of domain)------------------
-AtomId 0:  -1.071407193099046751e+00 0.000000000000000000e+00 0.000000000000000000e+00
-AtomId 1:  1.071407056234316979e+00 0.000000000000000000e+00 0.000000000000000000e+00
+AtomId 0:  -1.048811282764503972e+00 0.000000000000000000e+00 0.000000000000000000e+00
+AtomId 1:  1.048811505516976217e+00 0.000000000000000000e+00 0.000000000000000000e+00
 -----------------------------------------------------------------------------------------
 
 Finite element mesh information
 -------------------------------------------------
-number of elements: 960
-number of degrees of freedom: 31257
-Minimum mesh size: 5.088867760984677746e-01
+number of elements: 2736
+number of degrees of freedom: 198385
+Minimum mesh size: 3.246639035712343690e-01
 -------------------------------------------------
-DFT-FE Warning: The number of degrees of freedom per domain decomposition processor are less than 4000, where the parallel scaling efficiency is not good. We recommend to use 4000 or more degrees of freedom per domain decomposition processor. For further parallelization use input parameters NPBAND and/or NPKPT(in case of multiple k points).
 Determining the ball radius around the atom for nuclear self-potential solve... 
 ...Adaptively set ball radius: 4.000000000000000000e+00
-Volume of the domain (Bohr^3): 5.119999999999941792e+05
+Volume of the domain (Bohr^3): 5.120000000000238651e+05
 
 Reading initial guess for PSI....
 Number of wavefunctions generated randomly to be used as initial guess for starting the SCF : 12
@@ -442,110 +481,145 @@ Number of wavefunctions generated randomly to be used as initial guess for start
 number of electrons: 10
 number of eigen values: 12
 =============================================================================================================================
-Initial total charge: 1.000000000000000711e+01
+Initial total charge: 9.999999999999994671e+00
 
 Pseudopotential initalization....
-KSDFT problem initialization, wall time: 1.46197s.
+KSDFT problem initialization, wall time: 5.64227s.
 ...Reinitialization end
-Nuclear self-potential solve, wall time: 0.167096s.
+Nuclear self-potential solve, wall time: 2.41262s.
 
 ************************Begin Self-Consistent-Field Iteration:  1 ***********************
-Total energy  : -1.987707336978389350e+01
+Total energy  : -1.986572308115606234e+01
 ***********************Self-Consistent-Field Iteration:  1 complete**********************
-Wall time for the above scf iteration: 1.624030410999999896e+00 seconds
-Number of Chebyshev filtered subspace iterations: 7
+Wall time for the above scf iteration: 4.657511045399999716e+01 seconds
+Number of Chebyshev filtered subspace iterations: 14
 
 ************************Begin Self-Consistent-Field Iteration:  2 ***********************
-Simple mixing, L2 norm of electron-density difference: 1.082432112556371354e-02
-Total energy  : -1.988549797411685915e+01
+Simple mixing, L2 norm of electron-density difference: 1.399386785005190537e-01
+Total energy  : -1.990087495169314025e+01
 ***********************Self-Consistent-Field Iteration:  2 complete**********************
-Wall time for the above scf iteration: 3.617538160000000058e-01 seconds
-Number of Chebyshev filtered subspace iterations: 1
+Wall time for the above scf iteration: 8.501238688000000820e+00 seconds
+Number of Chebyshev filtered subspace iterations: 2
 
 ************************Begin Self-Consistent-Field Iteration:  3 ***********************
-Anderson mixing, L2 norm of electron-density difference: 2.504727392496903376e-02
-Total energy  : -1.988568615313138110e+01
+Anderson mixing, L2 norm of electron-density difference: 1.569484865492854764e-01
+Total energy  : -1.990346077300696948e+01
 ***********************Self-Consistent-Field Iteration:  3 complete**********************
-Wall time for the above scf iteration: 3.646015029999999935e-01 seconds
+Wall time for the above scf iteration: 5.219599269999999791e+00 seconds
 Number of Chebyshev filtered subspace iterations: 1
 
 ************************Begin Self-Consistent-Field Iteration:  4 ***********************
-Anderson mixing, L2 norm of electron-density difference: 6.925066683230674848e-03
-Total energy  : -1.988569680934487138e+01
+Anderson mixing, L2 norm of electron-density difference: 3.662621419697138780e-02
+Total energy  : -1.990385005120998585e+01
 ***********************Self-Consistent-Field Iteration:  4 complete**********************
-Wall time for the above scf iteration: 3.722848029999999975e-01 seconds
+Wall time for the above scf iteration: 5.218609578999999776e+00 seconds
 Number of Chebyshev filtered subspace iterations: 1
 
 ************************Begin Self-Consistent-Field Iteration:  5 ***********************
-Anderson mixing, L2 norm of electron-density difference: 2.116381715039573203e-03
-Total energy  : -1.988569639553226764e+01
+Anderson mixing, L2 norm of electron-density difference: 1.007549411651651600e-02
+Total energy  : -1.990390643788450475e+01
 ***********************Self-Consistent-Field Iteration:  5 complete**********************
-Wall time for the above scf iteration: 3.731676440000000206e-01 seconds
+Wall time for the above scf iteration: 5.131996371999999695e+00 seconds
 Number of Chebyshev filtered subspace iterations: 1
 
 ************************Begin Self-Consistent-Field Iteration:  6 ***********************
-Anderson mixing, L2 norm of electron-density difference: 1.260265727965622891e-03
-Total energy  : -1.988569869343158913e+01
+Anderson mixing, L2 norm of electron-density difference: 3.973189724789440505e-03
+Total energy  : -1.990392427710842327e+01
 ***********************Self-Consistent-Field Iteration:  6 complete**********************
-Wall time for the above scf iteration: 3.782488090000000192e-01 seconds
+Wall time for the above scf iteration: 5.400615782000000031e+00 seconds
 Number of Chebyshev filtered subspace iterations: 1
 
 ************************Begin Self-Consistent-Field Iteration:  7 ***********************
-Anderson mixing, L2 norm of electron-density difference: 2.791131966470686873e-04
-Total energy  : -1.988569877877140613e+01
+Anderson mixing, L2 norm of electron-density difference: 9.122755830555305491e-04
+Total energy  : -1.990392632778743831e+01
 ***********************Self-Consistent-Field Iteration:  7 complete**********************
-Wall time for the above scf iteration: 3.899673909999999966e-01 seconds
+Wall time for the above scf iteration: 5.233462431000000414e+00 seconds
 Number of Chebyshev filtered subspace iterations: 1
 
 ************************Begin Self-Consistent-Field Iteration:  8 ***********************
-Anderson mixing, L2 norm of electron-density difference: 4.958771558912196609e-05
-Total energy  : -1.988569878032689076e+01
+Anderson mixing, L2 norm of electron-density difference: 1.717560966766570635e-04
+Total energy  : -1.990392648071662762e+01
 ***********************Self-Consistent-Field Iteration:  8 complete**********************
-Wall time for the above scf iteration: 3.950038300000000002e-01 seconds
+Wall time for the above scf iteration: 5.629981253999999602e+00 seconds
 Number of Chebyshev filtered subspace iterations: 1
 
 ************************Begin Self-Consistent-Field Iteration:  9 ***********************
-Anderson mixing, L2 norm of electron-density difference: 2.431768397385780753e-05
-Total energy  : -1.988569877882074621e+01
+Anderson mixing, L2 norm of electron-density difference: 1.495600210342786461e-04
+Total energy  : -1.990392652115319549e+01
 ***********************Self-Consistent-Field Iteration:  9 complete**********************
-Wall time for the above scf iteration: 5.535858089999999843e-01 seconds
+Wall time for the above scf iteration: 5.452422841999999825e+00 seconds
 Number of Chebyshev filtered subspace iterations: 1
 
 ************************Begin Self-Consistent-Field Iteration: 10 ***********************
-Anderson mixing, L2 norm of electron-density difference: 3.300228364368074091e-05
-Total energy  : -1.988569878065099061e+01
+Anderson mixing, L2 norm of electron-density difference: 1.822175885104053189e-05
+Total energy  : -1.990392652358580250e+01
 ***********************Self-Consistent-Field Iteration: 10 complete**********************
-Wall time for the above scf iteration: 4.146155690000000171e-01 seconds
+Wall time for the above scf iteration: 5.600529895000000202e+00 seconds
 Number of Chebyshev filtered subspace iterations: 1
 
 ************************Begin Self-Consistent-Field Iteration: 11 ***********************
-Anderson mixing, L2 norm of electron-density difference: 4.116961435252569666e-06
-Total energy  : -1.988569878062298812e+01
+Anderson mixing, L2 norm of electron-density difference: 3.503018046277428310e-05
+Total energy  : -1.990392652545695995e+01
 ***********************Self-Consistent-Field Iteration: 11 complete**********************
-Wall time for the above scf iteration: 4.253023169999999853e-01 seconds
+Wall time for the above scf iteration: 5.732039072000000068e+00 seconds
 Number of Chebyshev filtered subspace iterations: 1
 
-SCF iterations converged to the specified tolerance after: 11 iterations.
+************************Begin Self-Consistent-Field Iteration: 12 ***********************
+Anderson mixing, L2 norm of electron-density difference: 1.594915937055081654e-05
+Total energy  : -1.990392652543880558e+01
+***********************Self-Consistent-Field Iteration: 12 complete**********************
+Wall time for the above scf iteration: 5.729679288999999898e+00 seconds
+Number of Chebyshev filtered subspace iterations: 1
+
+************************Begin Self-Consistent-Field Iteration: 13 ***********************
+Anderson mixing, L2 norm of electron-density difference: 1.853595431762346818e-05
+Total energy  : -1.990392652564403519e+01
+***********************Self-Consistent-Field Iteration: 13 complete**********************
+Wall time for the above scf iteration: 6.195258137999999803e+00 seconds
+Number of Chebyshev filtered subspace iterations: 1
+
+************************Begin Self-Consistent-Field Iteration: 14 ***********************
+Anderson mixing, L2 norm of electron-density difference: 8.540178358609961599e-06
+Total energy  : -1.990392652563012632e+01
+***********************Self-Consistent-Field Iteration: 14 complete**********************
+Wall time for the above scf iteration: 6.022515463999999596e+00 seconds
+Number of Chebyshev filtered subspace iterations: 1
+
+************************Begin Self-Consistent-Field Iteration: 15 ***********************
+Anderson mixing, L2 norm of electron-density difference: 6.352795092679357653e-06
+Total energy  : -1.990392652562839615e+01
+***********************Self-Consistent-Field Iteration: 15 complete**********************
+Wall time for the above scf iteration: 6.297970744999999759e+00 seconds
+Number of Chebyshev filtered subspace iterations: 1
+
+************************Begin Self-Consistent-Field Iteration: 16 ***********************
+Anderson mixing, L2 norm of electron-density difference: 3.964297985369952749e-06
+Total energy  : -1.990392652569207854e+01
+***********************Self-Consistent-Field Iteration: 16 complete**********************
+Wall time for the above scf iteration: 8.326203841999999966e+00 seconds
+Number of Chebyshev filtered subspace iterations: 1
+
+SCF iterations converged to the specified tolerance after: 16 iterations.
 
 Energy computations (Hartree)
 -------------------------------------------------------------------------------
-Band energy                                         :  -5.4913031790423661e+00
-Exchange energy                                     :  -4.5012684795319480e+00
-Correlation energy                                  :  -3.6097649413794558e-01
-Total energy                                        :  -1.9885698780622988e+01
-Total energy per atom                               :  -9.9428493903114941e+00
+Band energy                                         :  -5.5247649961160894e+00
+Exchange energy                                     :  -4.5298928578455460e+00
+Correlation energy                                  :  -3.6211519386482593e-01
+Total energy                                        :  -1.9903926525692079e+01
+Total energy per atom                               :  -9.9519632628460393e+00
 -------------------------------------------------------------------------------
-Total scf solve, wall time: 5.71787s.
+Total scf solve, wall time: 137.966s.
 
 Ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  4.123931488482161789e-02,5.758295526499954066e-08,-5.883521952076108119e-08
-AtomId    1:  -4.125849948722397353e-02,-1.256811841039790693e-08,4.290501015016476294e-08
+AtomId    0:  2.375033720886439437e-02,-2.443023801356028692e-09,-1.073476141826143135e-10
+AtomId    1:  -2.375022539045747519e-02,1.968289474160359433e-09,2.973967864371629063e-10
 --------------------------------------------------------------------------------------------
- Maximum absolute force atom id: 1, Force vec: -4.125849948722397353e-02,-1.256811841039790693e-08,4.290501015016476294e-08
-Ion force computation, wall time: 0.0484406s.
+ Maximum absolute force atom id: 0, Force vec: 2.375033720886439437e-02,-2.443023801356028692e-09,-1.073476141826143135e-10
+Ion force computation, wall time: 0.415261s.
 
-Elapsed wall time since start of the program: 2.389368424799999957e+01 seconds
+Elapsed wall time since start of the program: 4.248749212110000144e+02 seconds
 
 Auto remeshing and reinitialization of dft problem for new atom coordinates
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
@@ -554,251 +628,19 @@ v2 : 0.000000000000000000e+00 8.000000000000000000e+01 0.000000000000000000e+00
 v3 : 0.000000000000000000e+00 0.000000000000000000e+00 8.000000000000000000e+01
 -----------------------------------------------------------------------------------------
 ------------Cartesian coordinates of atoms (origin at center of domain)------------------
-AtomId 0:  -1.057095957644153206e+00 0.000000000000000000e+00 0.000000000000000000e+00
-AtomId 1:  1.057095805547596523e+00 0.000000000000000000e+00 0.000000000000000000e+00
+AtomId 0:  -1.039435829713734716e+00 0.000000000000000000e+00 0.000000000000000000e+00
+AtomId 1:  1.039436066279442406e+00 0.000000000000000000e+00 0.000000000000000000e+00
 -----------------------------------------------------------------------------------------
 
 Finite element mesh information
 -------------------------------------------------
-number of elements: 960
-number of degrees of freedom: 31257
-Minimum mesh size: 4.995822358244061956e-01
+number of elements: 2736
+number of degrees of freedom: 198385
+Minimum mesh size: 3.715110402134143008e-01
 -------------------------------------------------
-DFT-FE Warning: The number of degrees of freedom per domain decomposition processor are less than 4000, where the parallel scaling efficiency is not good. We recommend to use 4000 or more degrees of freedom per domain decomposition processor. For further parallelization use input parameters NPBAND and/or NPKPT(in case of multiple k points).
 Determining the ball radius around the atom for nuclear self-potential solve... 
 ...Adaptively set ball radius: 4.000000000000000000e+00
-Volume of the domain (Bohr^3): 5.119999999999940046e+05
-
-Reading initial guess for PSI....
-Number of wavefunctions generated randomly to be used as initial guess for starting the SCF : 12
-=============================================================================================================================
-number of electrons: 10
-number of eigen values: 12
-=============================================================================================================================
-Initial total charge: 1.000000000000000711e+01
-
-Pseudopotential initalization....
-KSDFT problem initialization, wall time: 1.46283s.
-...Reinitialization end
-Nuclear self-potential solve, wall time: 0.162343s.
-
-************************Begin Self-Consistent-Field Iteration:  1 ***********************
-Total energy  : -1.988668631858438829e+01
-***********************Self-Consistent-Field Iteration:  1 complete**********************
-Wall time for the above scf iteration: 1.710853916999999891e+00 seconds
-Number of Chebyshev filtered subspace iterations: 7
-
-************************Begin Self-Consistent-Field Iteration:  2 ***********************
-Simple mixing, L2 norm of electron-density difference: 1.198600025307029228e-03
-Total energy  : -1.988769876295740247e+01
-***********************Self-Consistent-Field Iteration:  2 complete**********************
-Wall time for the above scf iteration: 3.680472100000000135e-01 seconds
-Number of Chebyshev filtered subspace iterations: 1
-
-************************Begin Self-Consistent-Field Iteration:  3 ***********************
-Anderson mixing, L2 norm of electron-density difference: 8.447335168048684603e-03
-Total energy  : -1.988772862429678412e+01
-***********************Self-Consistent-Field Iteration:  3 complete**********************
-Wall time for the above scf iteration: 3.672862350000000164e-01 seconds
-Number of Chebyshev filtered subspace iterations: 1
-
-************************Begin Self-Consistent-Field Iteration:  4 ***********************
-Anderson mixing, L2 norm of electron-density difference: 2.257309980090778379e-03
-Total energy  : -1.988773009400063074e+01
-***********************Self-Consistent-Field Iteration:  4 complete**********************
-Wall time for the above scf iteration: 3.666160330000000078e-01 seconds
-Number of Chebyshev filtered subspace iterations: 1
-
-************************Begin Self-Consistent-Field Iteration:  5 ***********************
-Anderson mixing, L2 norm of electron-density difference: 6.629205481078789645e-04
-Total energy  : -1.988773017524757591e+01
-***********************Self-Consistent-Field Iteration:  5 complete**********************
-Wall time for the above scf iteration: 3.722363550000000187e-01 seconds
-Number of Chebyshev filtered subspace iterations: 1
-
-************************Begin Self-Consistent-Field Iteration:  6 ***********************
-Anderson mixing, L2 norm of electron-density difference: 2.468880517115274332e-04
-Total energy  : -1.988773025925073412e+01
-***********************Self-Consistent-Field Iteration:  6 complete**********************
-Wall time for the above scf iteration: 3.848564950000000207e-01 seconds
-Number of Chebyshev filtered subspace iterations: 1
-
-************************Begin Self-Consistent-Field Iteration:  7 ***********************
-Anderson mixing, L2 norm of electron-density difference: 8.118649998637282486e-05
-Total energy  : -1.988773026556342671e+01
-***********************Self-Consistent-Field Iteration:  7 complete**********************
-Wall time for the above scf iteration: 3.859277950000000179e-01 seconds
-Number of Chebyshev filtered subspace iterations: 1
-
-************************Begin Self-Consistent-Field Iteration:  8 ***********************
-Anderson mixing, L2 norm of electron-density difference: 1.161822735777013424e-05
-Total energy  : -1.988773026565786495e+01
-***********************Self-Consistent-Field Iteration:  8 complete**********************
-Wall time for the above scf iteration: 3.897904440000000137e-01 seconds
-Number of Chebyshev filtered subspace iterations: 1
-
-************************Begin Self-Consistent-Field Iteration:  9 ***********************
-Anderson mixing, L2 norm of electron-density difference: 4.079318965523010797e-06
-Total energy  : -1.988773026564197366e+01
-***********************Self-Consistent-Field Iteration:  9 complete**********************
-Wall time for the above scf iteration: 3.979059409999999852e-01 seconds
-Number of Chebyshev filtered subspace iterations: 1
-
-SCF iterations converged to the specified tolerance after: 9 iterations.
-
-Energy computations (Hartree)
--------------------------------------------------------------------------------
-Band energy                                         :  -5.5182653151950101e+00
-Exchange energy                                     :  -4.5174007342798266e+00
-Correlation energy                                  :  -3.6155762716809114e-01
-Total energy                                        :  -1.9887730265641974e+01
-Total energy per atom                               :  -9.9438651328209868e+00
--------------------------------------------------------------------------------
-Total scf solve, wall time: 4.80913s.
-
-Ion forces (Hartree/Bohr)
---------------------------------------------------------------------------------------------
-AtomId    0:  3.964308239594592151e-03,1.211318678967165875e-07,-2.757309067614316378e-08
-AtomId    1:  -3.966851314499175371e-03,-1.305305008496603959e-07,3.186356537497082864e-08
---------------------------------------------------------------------------------------------
- Maximum absolute force atom id: 1, Force vec: -3.966851314499175371e-03,-1.305305008496603959e-07,3.186356537497082864e-08
-Ion force computation, wall time: 0.0473497s.
-
-Elapsed wall time since start of the program: 3.037602808300000135e+01 seconds
-
-Auto remeshing and reinitialization of dft problem for new atom coordinates
------------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
-v1 : 8.000000000000000000e+01 0.000000000000000000e+00 0.000000000000000000e+00
-v2 : 0.000000000000000000e+00 8.000000000000000000e+01 0.000000000000000000e+00
-v3 : 0.000000000000000000e+00 0.000000000000000000e+00 8.000000000000000000e+01
------------------------------------------------------------------------------------------
-------------Cartesian coordinates of atoms (origin at center of domain)------------------
-AtomId 0:  -1.055573766631401345e+00 0.000000000000000000e+00 0.000000000000000000e+00
-AtomId 1:  1.055573612914736614e+00 0.000000000000000000e+00 0.000000000000000000e+00
------------------------------------------------------------------------------------------
-
-Finite element mesh information
--------------------------------------------------
-number of elements: 960
-number of degrees of freedom: 31257
-Minimum mesh size: 4.985925737070017738e-01
--------------------------------------------------
-DFT-FE Warning: The number of degrees of freedom per domain decomposition processor are less than 4000, where the parallel scaling efficiency is not good. We recommend to use 4000 or more degrees of freedom per domain decomposition processor. For further parallelization use input parameters NPBAND and/or NPKPT(in case of multiple k points).
-Determining the ball radius around the atom for nuclear self-potential solve... 
-...Adaptively set ball radius: 4.000000000000000000e+00
-Volume of the domain (Bohr^3): 5.119999999999944121e+05
-
-Reading initial guess for PSI....
-Number of wavefunctions generated randomly to be used as initial guess for starting the SCF : 12
-=============================================================================================================================
-number of electrons: 10
-number of eigen values: 12
-=============================================================================================================================
-Initial total charge: 9.999999999999991118e+00
-
-Pseudopotential initalization....
-KSDFT problem initialization, wall time: 1.45645s.
-...Reinitialization end
-Nuclear self-potential solve, wall time: 0.162794s.
-
-************************Begin Self-Consistent-Field Iteration:  1 ***********************
-Total energy  : -1.988763940856884105e+01
-***********************Self-Consistent-Field Iteration:  1 complete**********************
-Wall time for the above scf iteration: 1.682818187000000076e+00 seconds
-Number of Chebyshev filtered subspace iterations: 7
-
-************************Begin Self-Consistent-Field Iteration:  2 ***********************
-Simple mixing, L2 norm of electron-density difference: 2.349329766291617308e-05
-Total energy  : -1.988787567692229175e+01
-***********************Self-Consistent-Field Iteration:  2 complete**********************
-Wall time for the above scf iteration: 3.616831249999999942e-01 seconds
-Number of Chebyshev filtered subspace iterations: 1
-
-************************Begin Self-Consistent-Field Iteration:  3 ***********************
-Anderson mixing, L2 norm of electron-density difference: 1.917670697950273973e-03
-Total energy  : -1.988788780194365557e+01
-***********************Self-Consistent-Field Iteration:  3 complete**********************
-Wall time for the above scf iteration: 3.629785529999999816e-01 seconds
-Number of Chebyshev filtered subspace iterations: 1
-
-************************Begin Self-Consistent-Field Iteration:  4 ***********************
-Anderson mixing, L2 norm of electron-density difference: 4.769298651571877664e-04
-Total energy  : -1.988788838028593631e+01
-***********************Self-Consistent-Field Iteration:  4 complete**********************
-Wall time for the above scf iteration: 3.618926920000000158e-01 seconds
-Number of Chebyshev filtered subspace iterations: 1
-
-************************Begin Self-Consistent-Field Iteration:  5 ***********************
-Anderson mixing, L2 norm of electron-density difference: 1.738209571181844443e-04
-Total energy  : -1.988788844578892423e+01
-***********************Self-Consistent-Field Iteration:  5 complete**********************
-Wall time for the above scf iteration: 3.718617599999999856e-01 seconds
-Number of Chebyshev filtered subspace iterations: 1
-
-************************Begin Self-Consistent-Field Iteration:  6 ***********************
-Anderson mixing, L2 norm of electron-density difference: 4.329279896653227529e-05
-Total energy  : -1.988788844770582998e+01
-***********************Self-Consistent-Field Iteration:  6 complete**********************
-Wall time for the above scf iteration: 3.740734379999999804e-01 seconds
-Number of Chebyshev filtered subspace iterations: 1
-
-************************Begin Self-Consistent-Field Iteration:  7 ***********************
-Anderson mixing, L2 norm of electron-density difference: 1.495244968425274405e-05
-Total energy  : -1.988788844803257660e+01
-***********************Self-Consistent-Field Iteration:  7 complete**********************
-Wall time for the above scf iteration: 3.809535969999999772e-01 seconds
-Number of Chebyshev filtered subspace iterations: 1
-
-************************Begin Self-Consistent-Field Iteration:  8 ***********************
-Anderson mixing, L2 norm of electron-density difference: 4.341709243943012836e-06
-Total energy  : -1.988788844801598898e+01
-***********************Self-Consistent-Field Iteration:  8 complete**********************
-Wall time for the above scf iteration: 3.893984360000000144e-01 seconds
-Number of Chebyshev filtered subspace iterations: 1
-
-SCF iterations converged to the specified tolerance after: 8 iterations.
-
-Energy computations (Hartree)
--------------------------------------------------------------------------------
-Band energy                                         :  -5.5211698157353384e+00
-Exchange energy                                     :  -4.5191489423139890e+00
-Correlation energy                                  :  -3.6161887901618467e-01
-Total energy                                        :  -1.9887888448015989e+01
-Total energy per atom                               :  -9.9439442240079945e+00
--------------------------------------------------------------------------------
-Total scf solve, wall time: 4.35068s.
-
-Ion forces (Hartree/Bohr)
---------------------------------------------------------------------------------------------
-AtomId    0:  -2.257082818222849382e-04,2.229486107265966758e-07,-1.478114696755634949e-07
-AtomId    1:  2.272442083440383460e-04,-4.745031918654361164e-10,1.142631607040089925e-07
---------------------------------------------------------------------------------------------
- Maximum absolute force atom id: 1, Force vec: 2.272442083440383460e-04,-4.745031918654361164e-10,1.142631607040089925e-07
-Ion force computation, wall time: 0.0484302s.
-
-Elapsed wall time since start of the program: 3.639502144000000072e+01 seconds
-
-Auto remeshing and reinitialization of dft problem for new atom coordinates
------------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
-v1 : 8.000000000000000000e+01 0.000000000000000000e+00 0.000000000000000000e+00
-v2 : 0.000000000000000000e+00 8.000000000000000000e+01 0.000000000000000000e+00
-v3 : 0.000000000000000000e+00 0.000000000000000000e+00 8.000000000000000000e+01
------------------------------------------------------------------------------------------
-------------Cartesian coordinates of atoms (origin at center of domain)------------------
-AtomId 0:  -1.055656003152950717e+00 0.000000000000000000e+00 0.000000000000000000e+00
-AtomId 1:  1.055655849523812417e+00 0.000000000000000000e+00 0.000000000000000000e+00
------------------------------------------------------------------------------------------
-
-Finite element mesh information
--------------------------------------------------
-number of elements: 960
-number of degrees of freedom: 31257
-Minimum mesh size: 4.986460403017737852e-01
--------------------------------------------------
-DFT-FE Warning: The number of degrees of freedom per domain decomposition processor are less than 4000, where the parallel scaling efficiency is not good. We recommend to use 4000 or more degrees of freedom per domain decomposition processor. For further parallelization use input parameters NPBAND and/or NPKPT(in case of multiple k points).
-Determining the ball radius around the atom for nuclear self-potential solve... 
-...Adaptively set ball radius: 4.000000000000000000e+00
-Volume of the domain (Bohr^3): 5.119999999999942956e+05
+Volume of the domain (Bohr^3): 5.120000000000240398e+05
 
 Reading initial guess for PSI....
 Number of wavefunctions generated randomly to be used as initial guess for starting the SCF : 12
@@ -809,100 +651,447 @@ number of eigen values: 12
 Initial total charge: 9.999999999999996447e+00
 
 Pseudopotential initalization....
-KSDFT problem initialization, wall time: 1.50333s.
+KSDFT problem initialization, wall time: 5.33263s.
 ...Reinitialization end
-Nuclear self-potential solve, wall time: 0.167215s.
+Nuclear self-potential solve, wall time: 2.40515s.
 
 ************************Begin Self-Consistent-Field Iteration:  1 ***********************
-Total energy  : -1.988743872151660952e+01
+Total energy  : -1.986087976713085013e+01
 ***********************Self-Consistent-Field Iteration:  1 complete**********************
-Wall time for the above scf iteration: 1.689033094000000013e+00 seconds
-Number of Chebyshev filtered subspace iterations: 7
+Wall time for the above scf iteration: 4.718196767300000261e+01 seconds
+Number of Chebyshev filtered subspace iterations: 14
 
 ************************Begin Self-Consistent-Field Iteration:  2 ***********************
-Simple mixing, L2 norm of electron-density difference: 1.301355038794989232e-05
-Total energy  : -1.988785885710554169e+01
+Simple mixing, L2 norm of electron-density difference: 9.751862796696636471e-02
+Total energy  : -1.988061670878732201e+01
 ***********************Self-Consistent-Field Iteration:  2 complete**********************
-Wall time for the above scf iteration: 3.621989999999999932e-01 seconds
-Number of Chebyshev filtered subspace iterations: 1
+Wall time for the above scf iteration: 8.329058484999999123e+00 seconds
+Number of Chebyshev filtered subspace iterations: 2
 
 ************************Begin Self-Consistent-Field Iteration:  3 ***********************
-Anderson mixing, L2 norm of electron-density difference: 1.884133112544896438e-03
-Total energy  : -1.988787808838894478e+01
+Anderson mixing, L2 norm of electron-density difference: 1.423771689253130190e-01
+Total energy  : -1.988213473414378996e+01
 ***********************Self-Consistent-Field Iteration:  3 complete**********************
-Wall time for the above scf iteration: 3.633491480000000107e-01 seconds
-Number of Chebyshev filtered subspace iterations: 1
+Wall time for the above scf iteration: 8.470368162999999839e+00 seconds
+Number of Chebyshev filtered subspace iterations: 2
 
 ************************Begin Self-Consistent-Field Iteration:  4 ***********************
-Anderson mixing, L2 norm of electron-density difference: 1.097348846982806317e-03
-Total energy  : -1.988788014074077282e+01
+Anderson mixing, L2 norm of electron-density difference: 3.193553064727437663e-02
+Total energy  : -1.988221653485570428e+01
 ***********************Self-Consistent-Field Iteration:  4 complete**********************
-Wall time for the above scf iteration: 3.676152149999999952e-01 seconds
+Wall time for the above scf iteration: 5.144633956999999924e+00 seconds
 Number of Chebyshev filtered subspace iterations: 1
 
 ************************Begin Self-Consistent-Field Iteration:  5 ***********************
-Anderson mixing, L2 norm of electron-density difference: 2.254456268572732906e-04
-Total energy  : -1.988788020665670331e+01
+Anderson mixing, L2 norm of electron-density difference: 3.185861910224142488e-03
+Total energy  : -1.988222118399724181e+01
 ***********************Self-Consistent-Field Iteration:  5 complete**********************
-Wall time for the above scf iteration: 3.719864849999999779e-01 seconds
+Wall time for the above scf iteration: 5.169709327999999715e+00 seconds
 Number of Chebyshev filtered subspace iterations: 1
 
 ************************Begin Self-Consistent-Field Iteration:  6 ***********************
-Anderson mixing, L2 norm of electron-density difference: 6.389522599519126744e-05
-Total energy  : -1.988788021011946228e+01
+Anderson mixing, L2 norm of electron-density difference: 1.631714244840711328e-03
+Total energy  : -1.988222247224258155e+01
 ***********************Self-Consistent-Field Iteration:  6 complete**********************
-Wall time for the above scf iteration: 3.755056809999999801e-01 seconds
+Wall time for the above scf iteration: 5.220474568000000204e+00 seconds
 Number of Chebyshev filtered subspace iterations: 1
 
 ************************Begin Self-Consistent-Field Iteration:  7 ***********************
-Anderson mixing, L2 norm of electron-density difference: 1.810675155395522439e-05
-Total energy  : -1.988788021038129727e+01
+Anderson mixing, L2 norm of electron-density difference: 2.680524587208612782e-04
+Total energy  : -1.988222257665115933e+01
 ***********************Self-Consistent-Field Iteration:  7 complete**********************
-Wall time for the above scf iteration: 3.788751539999999918e-01 seconds
+Wall time for the above scf iteration: 5.223632739000000136e+00 seconds
 Number of Chebyshev filtered subspace iterations: 1
 
 ************************Begin Self-Consistent-Field Iteration:  8 ***********************
-Anderson mixing, L2 norm of electron-density difference: 4.898794793816320026e-06
-Total energy  : -1.988788021040705445e+01
+Anderson mixing, L2 norm of electron-density difference: 2.799176759483559601e-04
+Total energy  : -1.988222262563100173e+01
 ***********************Self-Consistent-Field Iteration:  8 complete**********************
-Wall time for the above scf iteration: 3.917200590000000093e-01 seconds
+Wall time for the above scf iteration: 5.474438767999999733e+00 seconds
 Number of Chebyshev filtered subspace iterations: 1
 
-SCF iterations converged to the specified tolerance after: 8 iterations.
+************************Begin Self-Consistent-Field Iteration:  9 ***********************
+Anderson mixing, L2 norm of electron-density difference: 8.373466136901541572e-05
+Total energy  : -1.988222263486083818e+01
+***********************Self-Consistent-Field Iteration:  9 complete**********************
+Wall time for the above scf iteration: 5.404050130999999979e+00 seconds
+Number of Chebyshev filtered subspace iterations: 1
+
+************************Begin Self-Consistent-Field Iteration: 10 ***********************
+Anderson mixing, L2 norm of electron-density difference: 1.262386060134687532e-05
+Total energy  : -1.988222263564745873e+01
+***********************Self-Consistent-Field Iteration: 10 complete**********************
+Wall time for the above scf iteration: 5.533958840999999573e+00 seconds
+Number of Chebyshev filtered subspace iterations: 1
+
+************************Begin Self-Consistent-Field Iteration: 11 ***********************
+Anderson mixing, L2 norm of electron-density difference: 1.312387907939336788e-05
+Total energy  : -1.988222263586998295e+01
+***********************Self-Consistent-Field Iteration: 11 complete**********************
+Wall time for the above scf iteration: 5.637252712999999638e+00 seconds
+Number of Chebyshev filtered subspace iterations: 1
+
+************************Begin Self-Consistent-Field Iteration: 12 ***********************
+Anderson mixing, L2 norm of electron-density difference: 3.586466042974535701e-06
+Total energy  : -1.988222263588286509e+01
+***********************Self-Consistent-Field Iteration: 12 complete**********************
+Wall time for the above scf iteration: 5.873338420999999698e+00 seconds
+Number of Chebyshev filtered subspace iterations: 1
+
+SCF iterations converged to the specified tolerance after: 12 iterations.
 
 Energy computations (Hartree)
 -------------------------------------------------------------------------------
-Band energy                                         :  -5.5210099783601621e+00
-Exchange energy                                     :  -4.5190538645192397e+00
-Correlation energy                                  :  -3.6161554762072379e-01
-Total energy                                        :  -1.9887880210407054e+01
-Total energy per atom                               :  -9.9439401052035272e+00
+Band energy                                         :  -5.5428603720078273e+00
+Exchange energy                                     :  -4.5409715296319568e+00
+Correlation energy                                  :  -3.6248674234229228e-01
+Total energy                                        :  -1.9882222635882865e+01
+Total energy per atom                               :  -9.9411113179414325e+00
 -------------------------------------------------------------------------------
-Total scf solve, wall time: 4.36533s.
+Total scf solve, wall time: 113.719s.
 
 Ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  -8.185823741373252777e-06,-1.503725983894591749e-07,-3.045620861363319831e-07
-AtomId    1:  -1.566798428956567638e-06,-1.303734104401288582e-07,-2.560647731225402374e-07
+AtomId    0:  1.047796146136155751e-02,-4.916074811966146779e-09,-2.658445725188529618e-08
+AtomId    1:  -1.047921152130363957e-02,1.556024839837919730e-08,2.320285968915314356e-08
 --------------------------------------------------------------------------------------------
- Maximum absolute force atom id: 0, Force vec: -8.185823741373252777e-06,-1.503725983894591749e-07,-3.045620861363319831e-07
-Ion force computation, wall time: 0.0474307s.
+ Maximum absolute force atom id: 1, Force vec: -1.047921152130363957e-02,1.556024839837919730e-08,2.320285968915314356e-08
+Ion force computation, wall time: 0.411897s.
 
-Elapsed wall time since start of the program: 4.247912028100000015e+01 seconds
+Elapsed wall time since start of the program: 5.467457858789999818e+02 seconds
 
-Non-linerar Conjugate Gradient solver converged after 1 iterations.
- ...Ion force relaxation completed as maximum force magnitude is less than FORCE TOL: 1.000000000000000048e-04, total number of ion position updates: 5
+Auto remeshing and reinitialization of dft problem for new atom coordinates
+-----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
+v1 : 8.000000000000000000e+01 0.000000000000000000e+00 0.000000000000000000e+00
+v2 : 0.000000000000000000e+00 8.000000000000000000e+01 0.000000000000000000e+00
+v3 : 0.000000000000000000e+00 0.000000000000000000e+00 8.000000000000000000e+01
+-----------------------------------------------------------------------------------------
+------------Cartesian coordinates of atoms (origin at center of domain)------------------
+AtomId 0:  -1.032033497374218012e+00 0.000000000000000000e+00 0.000000000000000000e+00
+AtomId 1:  1.032033744846082346e+00 0.000000000000000000e+00 0.000000000000000000e+00
+-----------------------------------------------------------------------------------------
+
+Finite element mesh information
+-------------------------------------------------
+number of elements: 2736
+number of degrees of freedom: 198385
+Minimum mesh size: 3.731328350236871039e-01
+-------------------------------------------------
+Determining the ball radius around the atom for nuclear self-potential solve... 
+...Adaptively set ball radius: 4.000000000000000000e+00
+Volume of the domain (Bohr^3): 5.120000000000239816e+05
+
+Reading initial guess for PSI....
+Number of wavefunctions generated randomly to be used as initial guess for starting the SCF : 12
+=============================================================================================================================
+number of electrons: 10
+number of eigen values: 12
+=============================================================================================================================
+Initial total charge: 9.999999999999991118e+00
+
+Pseudopotential initalization....
+KSDFT problem initialization, wall time: 5.33912s.
+...Reinitialization end
+Nuclear self-potential solve, wall time: 2.44711s.
+
+************************Begin Self-Consistent-Field Iteration:  1 ***********************
+Total energy  : -1.988193161689917332e+01
+***********************Self-Consistent-Field Iteration:  1 complete**********************
+Wall time for the above scf iteration: 4.661426459900000197e+01 seconds
+Number of Chebyshev filtered subspace iterations: 14
+
+************************Begin Self-Consistent-Field Iteration:  2 ***********************
+Simple mixing, L2 norm of electron-density difference: 3.733583115916752713e-04
+Total energy  : -1.988237533944651858e+01
+***********************Self-Consistent-Field Iteration:  2 complete**********************
+Wall time for the above scf iteration: 5.051129115000000169e+00 seconds
+Number of Chebyshev filtered subspace iterations: 1
+
+************************Begin Self-Consistent-Field Iteration:  3 ***********************
+Anderson mixing, L2 norm of electron-density difference: 4.231114558725899977e-03
+Total energy  : -1.988241967151676448e+01
+***********************Self-Consistent-Field Iteration:  3 complete**********************
+Wall time for the above scf iteration: 5.258716013999999994e+00 seconds
+Number of Chebyshev filtered subspace iterations: 1
+
+************************Begin Self-Consistent-Field Iteration:  4 ***********************
+Anderson mixing, L2 norm of electron-density difference: 1.512803398943619307e-03
+Total energy  : -1.988242736525885590e+01
+***********************Self-Consistent-Field Iteration:  4 complete**********************
+Wall time for the above scf iteration: 5.086169993999999583e+00 seconds
+Number of Chebyshev filtered subspace iterations: 1
+
+************************Begin Self-Consistent-Field Iteration:  5 ***********************
+Anderson mixing, L2 norm of electron-density difference: 6.481388415624280688e-04
+Total energy  : -1.988242903571137177e+01
+***********************Self-Consistent-Field Iteration:  5 complete**********************
+Wall time for the above scf iteration: 5.124100190000000055e+00 seconds
+Number of Chebyshev filtered subspace iterations: 1
+
+************************Begin Self-Consistent-Field Iteration:  6 ***********************
+Anderson mixing, L2 norm of electron-density difference: 3.154312938469515685e-04
+Total energy  : -1.988242942215331155e+01
+***********************Self-Consistent-Field Iteration:  6 complete**********************
+Wall time for the above scf iteration: 5.210526091000000193e+00 seconds
+Number of Chebyshev filtered subspace iterations: 1
+
+************************Begin Self-Consistent-Field Iteration:  7 ***********************
+Anderson mixing, L2 norm of electron-density difference: 4.011585692783698295e-05
+Total energy  : -1.988242947957780871e+01
+***********************Self-Consistent-Field Iteration:  7 complete**********************
+Wall time for the above scf iteration: 5.290430167000000239e+00 seconds
+Number of Chebyshev filtered subspace iterations: 1
+
+************************Begin Self-Consistent-Field Iteration:  8 ***********************
+Anderson mixing, L2 norm of electron-density difference: 4.149114296122383204e-05
+Total energy  : -1.988242949164714446e+01
+***********************Self-Consistent-Field Iteration:  8 complete**********************
+Wall time for the above scf iteration: 5.240814205000000392e+00 seconds
+Number of Chebyshev filtered subspace iterations: 1
+
+************************Begin Self-Consistent-Field Iteration:  9 ***********************
+Anderson mixing, L2 norm of electron-density difference: 4.976600932016967255e-06
+Total energy  : -1.988242949353350042e+01
+***********************Self-Consistent-Field Iteration:  9 complete**********************
+Wall time for the above scf iteration: 5.281280576000000337e+00 seconds
+Number of Chebyshev filtered subspace iterations: 1
+
+SCF iterations converged to the specified tolerance after: 9 iterations.
+
+Energy computations (Hartree)
+-------------------------------------------------------------------------------
+Band energy                                         :  -5.5572873664127531e+00
+Exchange energy                                     :  -4.5498856157526806e+00
+Correlation energy                                  :  -3.6277559077664806e-01
+Total energy                                        :  -1.9882429493533500e+01
+Total energy per atom                               :  -9.9412147467667502e+00
+-------------------------------------------------------------------------------
+Total scf solve, wall time: 89.2609s.
+
+Ion forces (Hartree/Bohr)
+--------------------------------------------------------------------------------------------
+AtomId    0:  -1.129747045527204098e-02,-5.408419922732547518e-08,8.396404577344640519e-08
+AtomId    1:  1.129667746561159244e-02,4.119386173515873165e-08,-1.000846460248380754e-07
+--------------------------------------------------------------------------------------------
+ Maximum absolute force atom id: 0, Force vec: -1.129747045527204098e-02,-5.408419922732547518e-08,8.396404577344640519e-08
+Ion force computation, wall time: 0.415706s.
+
+Elapsed wall time since start of the program: 6.442101074050000307e+02 seconds
+
+Auto remeshing and reinitialization of dft problem for new atom coordinates
+-----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
+v1 : 8.000000000000000000e+01 0.000000000000000000e+00 0.000000000000000000e+00
+v2 : 0.000000000000000000e+00 8.000000000000000000e+01 0.000000000000000000e+00
+v3 : 0.000000000000000000e+00 0.000000000000000000e+00 8.000000000000000000e+01
+-----------------------------------------------------------------------------------------
+------------Cartesian coordinates of atoms (origin at center of domain)------------------
+AtomId 0:  -1.035873780249095599e+00 0.000000000000000000e+00 0.000000000000000000e+00
+AtomId 1:  1.035874022062915234e+00 0.000000000000000000e+00 0.000000000000000000e+00
+-----------------------------------------------------------------------------------------
+
+Finite element mesh information
+-------------------------------------------------
+number of elements: 2736
+number of degrees of freedom: 198385
+Minimum mesh size: 3.722914582047609500e-01
+-------------------------------------------------
+Determining the ball radius around the atom for nuclear self-potential solve... 
+...Adaptively set ball radius: 4.000000000000000000e+00
+Volume of the domain (Bohr^3): 5.120000000000238069e+05
+
+Reading initial guess for PSI....
+Number of wavefunctions generated randomly to be used as initial guess for starting the SCF : 12
+=============================================================================================================================
+number of electrons: 10
+number of eigen values: 12
+=============================================================================================================================
+Initial total charge: 1.000000000000000711e+01
+
+Pseudopotential initalization....
+KSDFT problem initialization, wall time: 5.27664s.
+...Reinitialization end
+Nuclear self-potential solve, wall time: 2.40693s.
+
+************************Begin Self-Consistent-Field Iteration:  1 ***********************
+Total energy  : -1.988200659926434000e+01
+***********************Self-Consistent-Field Iteration:  1 complete**********************
+Wall time for the above scf iteration: 4.582877350799999761e+01 seconds
+Number of Chebyshev filtered subspace iterations: 14
+
+************************Begin Self-Consistent-Field Iteration:  2 ***********************
+Simple mixing, L2 norm of electron-density difference: 1.021782943481227765e-04
+Total energy  : -1.988230866605931624e+01
+***********************Self-Consistent-Field Iteration:  2 complete**********************
+Wall time for the above scf iteration: 5.061513748000000312e+00 seconds
+Number of Chebyshev filtered subspace iterations: 1
+
+************************Begin Self-Consistent-Field Iteration:  3 ***********************
+Anderson mixing, L2 norm of electron-density difference: 2.228702178421799410e-03
+Total energy  : -1.988235304263243108e+01
+***********************Self-Consistent-Field Iteration:  3 complete**********************
+Wall time for the above scf iteration: 5.036849291000000228e+00 seconds
+Number of Chebyshev filtered subspace iterations: 1
+
+************************Begin Self-Consistent-Field Iteration:  4 ***********************
+Anderson mixing, L2 norm of electron-density difference: 8.191506437865428902e-04
+Total energy  : -1.988236122464229538e+01
+***********************Self-Consistent-Field Iteration:  4 complete**********************
+Wall time for the above scf iteration: 5.020045773999999739e+00 seconds
+Number of Chebyshev filtered subspace iterations: 1
+
+************************Begin Self-Consistent-Field Iteration:  5 ***********************
+Anderson mixing, L2 norm of electron-density difference: 3.147423726997094356e-04
+Total energy  : -1.988236278359459774e+01
+***********************Self-Consistent-Field Iteration:  5 complete**********************
+Wall time for the above scf iteration: 5.048940477999999565e+00 seconds
+Number of Chebyshev filtered subspace iterations: 1
+
+************************Begin Self-Consistent-Field Iteration:  6 ***********************
+Anderson mixing, L2 norm of electron-density difference: 1.522756422246509026e-04
+Total energy  : -1.988236309400691226e+01
+***********************Self-Consistent-Field Iteration:  6 complete**********************
+Wall time for the above scf iteration: 5.198777441999999915e+00 seconds
+Number of Chebyshev filtered subspace iterations: 1
+
+************************Begin Self-Consistent-Field Iteration:  7 ***********************
+Anderson mixing, L2 norm of electron-density difference: 2.529263178682535462e-05
+Total energy  : -1.988236314680157690e+01
+***********************Self-Consistent-Field Iteration:  7 complete**********************
+Wall time for the above scf iteration: 5.126010581000000066e+00 seconds
+Number of Chebyshev filtered subspace iterations: 1
+
+************************Begin Self-Consistent-Field Iteration:  8 ***********************
+Anderson mixing, L2 norm of electron-density difference: 2.466237450304701448e-05
+Total energy  : -1.988236315740723015e+01
+***********************Self-Consistent-Field Iteration:  8 complete**********************
+Wall time for the above scf iteration: 5.277203143000000374e+00 seconds
+Number of Chebyshev filtered subspace iterations: 1
+
+************************Begin Self-Consistent-Field Iteration:  9 ***********************
+Anderson mixing, L2 norm of electron-density difference: 6.320025301989243673e-06
+Total energy  : -1.988236315928926956e+01
+***********************Self-Consistent-Field Iteration:  9 complete**********************
+Wall time for the above scf iteration: 5.325063158999999935e+00 seconds
+Number of Chebyshev filtered subspace iterations: 1
+
+************************Begin Self-Consistent-Field Iteration: 10 ***********************
+Anderson mixing, L2 norm of electron-density difference: 7.024461289705976458e-06
+Total energy  : -1.988236315974473101e+01
+***********************Self-Consistent-Field Iteration: 10 complete**********************
+Wall time for the above scf iteration: 5.451744932999999627e+00 seconds
+Number of Chebyshev filtered subspace iterations: 1
+
+************************Begin Self-Consistent-Field Iteration: 11 ***********************
+Anderson mixing, L2 norm of electron-density difference: 1.638430466659290461e-06
+Total energy  : -1.988236315978545221e+01
+***********************Self-Consistent-Field Iteration: 11 complete**********************
+Wall time for the above scf iteration: 5.538770593999999825e+00 seconds
+Number of Chebyshev filtered subspace iterations: 1
+
+SCF iterations converged to the specified tolerance after: 11 iterations.
+
+Energy computations (Hartree)
+-------------------------------------------------------------------------------
+Band energy                                         :  -5.5497705177999803e+00
+Exchange energy                                     :  -4.5452380479562287e+00
+Correlation energy                                  :  -3.6262601140211237e-01
+Total energy                                        :  -1.9882363159785452e+01
+Total energy per atom                               :  -9.9411815798927261e+00
+-------------------------------------------------------------------------------
+Total scf solve, wall time: 98.9651s.
+
+Ion forces (Hartree/Bohr)
+--------------------------------------------------------------------------------------------
+AtomId    0:  1.262439393474928603e-04,8.536149214349023390e-09,-2.337429373232974283e-07
+AtomId    1:  -1.268528598814856745e-04,3.631461580486865064e-09,2.334395566754368656e-07
+--------------------------------------------------------------------------------------------
+ Maximum absolute force atom id: 1, Force vec: -1.268528598814856745e-04,3.631461580486865064e-09,2.334395566754368656e-07
+Ion force computation, wall time: 0.413104s.
+
+Elapsed wall time since start of the program: 7.512734120559999837e+02 seconds
+
+Auto remeshing and reinitialization of dft problem for new atom coordinates
+-----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
+v1 : 8.000000000000000000e+01 0.000000000000000000e+00 0.000000000000000000e+00
+v2 : 0.000000000000000000e+00 8.000000000000000000e+01 0.000000000000000000e+00
+v3 : 0.000000000000000000e+00 0.000000000000000000e+00 8.000000000000000000e+01
+-----------------------------------------------------------------------------------------
+------------Cartesian coordinates of atoms (origin at center of domain)------------------
+AtomId 0:  -1.035785409491552400e+00 0.000000000000000000e+00 0.000000000000000000e+00
+AtomId 1:  1.035785225060998238e+00 0.000000000000000000e+00 0.000000000000000000e+00
+-----------------------------------------------------------------------------------------
+
+Finite element mesh information
+-------------------------------------------------
+number of elements: 2736
+number of degrees of freedom: 198385
+Minimum mesh size: 3.723108742843561636e-01
+-------------------------------------------------
+Determining the ball radius around the atom for nuclear self-potential solve... 
+...Adaptively set ball radius: 4.000000000000000000e+00
+Volume of the domain (Bohr^3): 5.120000000000235159e+05
+
+Reading initial guess for PSI....
+Number of wavefunctions generated randomly to be used as initial guess for starting the SCF : 12
+=============================================================================================================================
+number of electrons: 10
+number of eigen values: 12
+=============================================================================================================================
+Initial total charge: 1.000000000000000000e+01
+
+Pseudopotential initalization....
+KSDFT problem initialization, wall time: 5.31069s.
+...Reinitialization end
+Nuclear self-potential solve, wall time: 2.41295s.
+
+************************Begin Self-Consistent-Field Iteration:  1 ***********************
+Total energy  : -1.988222398397896740e+01
+***********************Self-Consistent-Field Iteration:  1 complete**********************
+Wall time for the above scf iteration: 4.589568289000000334e+01 seconds
+Number of Chebyshev filtered subspace iterations: 14
+
+************************Begin Self-Consistent-Field Iteration:  2 ***********************
+Simple mixing, L2 norm of electron-density difference: 7.996510577432099085e-08
+Total energy  : -1.988234026657917042e+01
+***********************Self-Consistent-Field Iteration:  2 complete**********************
+Wall time for the above scf iteration: 5.146364904000000351e+00 seconds
+Number of Chebyshev filtered subspace iterations: 1
+
+SCF iterations converged to the specified tolerance after: 2 iterations.
+
+Energy computations (Hartree)
+-------------------------------------------------------------------------------
+Band energy                                         :  -5.5507575308224419e+00
+Exchange energy                                     :  -4.5453827103382238e+00
+Correlation energy                                  :  -3.6263037106348378e-01
+Total energy                                        :  -1.9882340266579170e+01
+Total energy per atom                               :  -9.9411701332895852e+00
+-------------------------------------------------------------------------------
+Total scf solve, wall time: 52.0967s.
+
+Ion forces (Hartree/Bohr)
+--------------------------------------------------------------------------------------------
+AtomId    0:  2.774504374519239092e-05,1.524249812840392476e-05,6.198914952030166320e-05
+AtomId    1:  -3.259055555587982156e-05,-9.248862384426446786e-06,-4.381784260682440590e-05
+--------------------------------------------------------------------------------------------
+ Maximum absolute force atom id: 0, Force vec: 2.774504374519239092e-05,1.524249812840392476e-05,6.198914952030166320e-05
+Ion force computation, wall time: 0.421754s.
+
+Elapsed wall time since start of the program: 8.115163136219999842e+02 seconds
+
+Non-linerar Conjugate Gradient solver converged after 2 iterations.
+ ...Ion force relaxation completed as maximum force magnitude is less than FORCE TOL: 1.000000000000000048e-04, total number of ion position updates: 6
 
 
 +---------------------------------------------+------------+------------+
-| Total wallclock time elapsed since start    | 4.248e+01s |            |
+| Total wallclock time elapsed since start    | 8.115e+02s |            |
 |                                             |            |            |
 | Section                         | no. calls |  wall time | % of total |
 +---------------------------------+-----------+------------+------------+
-| Atomic system initialization    |         1 | 5.641e-02s |  1.33e-01% |
-| Ion force computation           |         6 | 2.926e-01s |  6.89e-01% |
-| KSDFT problem initialization    |         6 | 8.606e+00s |  2.03e+01% |
-| Nuclear self-potential solve    |         6 | 1.036e+00s |  2.44e+00% |
-| Total scf solve                 |         6 | 3.248e+01s |  7.65e+01% |
+| Atomic system initialization    |         1 | 6.873e-02s | 0.000e+00% |
+| Ion force computation           |         7 | 2.897e+00s |  3.57e-01% |
+| KSDFT problem initialization    |         7 | 3.644e+01s |  4.49e+00% |
+| Nuclear self-potential solve    |         7 | 1.731e+01s |  2.13e+00% |
+| Total scf solve                 |         7 | 7.548e+02s |  9.30e+01% |
 +---------------------------------+-----------+------------+------------+
 
