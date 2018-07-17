@@ -293,7 +293,7 @@ namespace dftParameters
 
 	prm.declare_entry("SPIN POLARIZATION", "0",
 			  Patterns::Integer(0,1),
-			  "[Standard] Spin polarization: 0 for no spin polarization and 1 for spin polarization. Default option is 0.");
+			  "[Standard] Spin polarization: 0 for no spin polarization and 1 for collinear spin polarization calculation. Default option is 0.");
 
 	prm.declare_entry("START MAGNETIZATION", "0.0",
 			  Patterns::Double(-0.5,0.5),
@@ -305,7 +305,7 @@ namespace dftParameters
     prm.enter_subsection ("SCF parameters");
     {
 	prm.declare_entry("TEMPERATURE", "500.0",
-			  Patterns::Double(0.0),
+			  Patterns::Double(1e-5),
 			  "[Standard] Fermi-Dirac smearing temperature (in Kelvin).");
 
 	prm.declare_entry("MAXIMUM ITERATIONS", "50",
@@ -552,17 +552,17 @@ namespace dftParameters
         std::cout << "			Welcome to the Open Source program DFT-FE v0.5.0-pre			        " << std::endl ;
         std::cout << "This is a C++ code for materials modeling from first principles using Kohn-Sham density functional theory " << std::endl ;
         std::cout << "It is based on adaptive finite-element based methodologies.		        " << std::endl ;
-        std::cout << "For details and citing please refer: P.Motamarri et. al., Comp. Phys. Comm., Vol xx, Issue xx, pp xx, 2018" << std::endl ;
+        std::cout << "For details and citing please refer to our website: https://sites.google.com/umich.edu/dftfe" << std::endl ;
 	std::cout << "==========================================================================================================" << std::endl ;
-	std::cout << " DFT-FE authors (alphabetically) :									" << std::endl ;
+	std::cout << " DFT-FE Principal developers and Mentors (alphabetically) :									" << std::endl ;
 	std::cout << "														" << std::endl ;
 	std::cout << " Sambit Das               - University of Michigan, Ann Arbor" << std::endl ;
-	std::cout << " Denis Davydov            - University of Erlangen-Nuremberg " << std::endl ;
 	std::cout << " Vikram Gavini (Mentor)   - University of Michigan, Ann Arbor" << std::endl ;
 	std::cout << " Krishnendu Ghosh         - University of Michigan, Ann Arbor" << std::endl ;
 	std::cout << " Phani Motamarri          - University of Michigan, Ann Arbor" << std::endl ;
 	std::cout << " Shiva Rudraraju          - University of Wisconsin-Madison  " << std::endl ;
-        std::cout << "==========================================================================================================" << std::endl ;
+	std::cout << " (A complete list of the many authors that have contributed to DFT-FE can be found in the authors file)"<< std::endl;
+        std::cout <<  "==========================================================================================================" << std::endl ;
         std::cout << " 	     Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors         " << std::endl ;
         std::cout << " 			DFT-FE is published under [LGPL v2.1 or newer] 				" << std::endl ;
         std::cout << "==========================================================================================================" << std::endl ;
@@ -585,11 +585,11 @@ namespace dftParameters
        AssertThrow(!dftParameters::useSymm,ExcMessage("DFT-FE Error: USE GROUP SYMMETRY must be set to false if either ION FORCE or CELL STRESS is set to true. This functionality will be added in a future release"));
 
 #else
-    AssertThrow(!dftParameters::isCellStress,ExcMessage("DFT-FE Error: Currently CELL STRESS cannot be set true in real mode for periodic Gamma point problems. This functionality will be added soon."));
-
     AssertThrow( dftParameters::nkx==1 &&  dftParameters::nky==1 &&  dftParameters::nkz==1
              && dftParameters::offsetFlagX==0 &&  dftParameters::offsetFlagY==0 &&  dftParameters::offsetFlagZ==0
 	    ,ExcMessage("DFT-FE Error: Real executable cannot be used for non-zero k point."));
+
+    AssertThrow(!dftParameters::isCellStress,ExcMessage("DFT-FE Error: Currently CELL STRESS cannot be set true if using real executable for a periodic Gamma point problem. This functionality will be added soon."));
 #endif
     AssertThrow(!(dftParameters::chkType==2 && (dftParameters::isIonOpt || dftParameters::isCellOpt)),ExcMessage("DFT-FE Error: CHK TYPE=2 cannot be used if geometry optimization is being performed."));
 
@@ -637,7 +637,7 @@ namespace dftParameters
        if (dftParameters::periodicX ||dftParameters::periodicY ||dftParameters::periodicZ)
 	   dftParameters::meshSizeOuterDomain=4.0;
        else
-	   dftParameters::meshSizeOuterDomain=10.0;
+	   dftParameters::meshSizeOuterDomain=13.0;
 
     if (dftParameters::meshSizeInnerBall<1.0e-6)
        if (dftParameters::isPseudopotential)
