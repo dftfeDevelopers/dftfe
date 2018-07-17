@@ -9,9 +9,9 @@ architecture of the code and the core functionalities. Developers with
 significant contributions to core functionalities and code architecture
 in the past who are no longer active principal developers, are listed under
 principal developers emeriti. A subset of the principal developers and 
-mentors are administrators. Finally, all contributors who have contributed
-major parts of the DFT-FE code or sent fixes and small enhancements are listed
-under contributors. All the underlying lists are in alphabetical order. 
+mentors are administrators. Finally, all contributors who have contributed to 
+major parts of the DFT-FE code or sent important fixes and enhancements are 
+listed under contributors. All the underlying lists are in alphabetical order. 
  
 Copyright (c) 2017-2018 The Regents of the University of Michigan
 
@@ -30,7 +30,7 @@ Copyright (c) 2017-2018 The Regents of the University of Michigan
     Sambit Das       - University of Michigan, USA
     Krishnendu Ghosh - University of Michigan, USA
     Phani Motamarri  - University of Michigan, USA
-    Sukhan Parekh    - University of Michigan, USA
+    Shukan Parekh    - University of Michigan, USA
 
     Administrators
     ==============

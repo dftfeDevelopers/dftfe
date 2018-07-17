@@ -1,4 +1,9 @@
 NERSC Cori is a Cray sytem.
 Before compiling dftfe or the required libraries do:
+
 export XTPE_LINK_TYPE=dynamic
 export CRAYPE_LINK_TYPE=dynamic
+module swap craype-haswell craype-mic-knl
+module load craype-hugepages2M
+
+Recommeneded to put the above in your bash script (except module swap craype-haswell craype-mic-knl)
