@@ -307,7 +307,12 @@ namespace dftfe {
 		    "to half the number of electrons with a 10 percent buffer to avoid convergence issues in"
 		    "SCF iterations"<<std::endl;
 	  }
-	dftParameters::numberEigenValues = (numElectrons/2.0) + 0.1*(numElectrons/2.0);
+	numEigenValues = (numElectrons/2.0) + std::max(0.1*(numElectrons/2.0),7.0);
+
+	if(dftParameters::verbosity >= 1)
+	  {
+	    pcout <<" Setting the number of Kohn-Sham wave functions to be set to "<<numEigenValues<<std::endl;
+	  }
       }
 
     //estimate total number of wave functions from atomic orbital filling
