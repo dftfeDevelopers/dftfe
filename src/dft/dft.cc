@@ -1125,8 +1125,8 @@ namespace dftfe {
 
 	    if (dftParameters::numRRWfc!=numEigenValues && dftParameters::verbosity>=1)
 	    {
-		pcout<< std::endl<<"(If using spectrum sliced Rayleigh-Ritz (using NUMBER OF RAYLEIGH-RITZ EIGENSTATES input parameter) please ignore Band energy, Total energy, and Total energy per atom printed below."<<std::endl;
-		pcout<<"Also ignore the eigenvalues (if printed below) which have value= -10.0. Those are for states not considered in spectrum sliced Rayleigh-Ritz.)"<<std::endl<<std::endl;
+		pcout<< std::endl<<"(If using spectrum split Rayleigh-Ritz (using NUMBER OF RAYLEIGH-RITZ EIGENSTATES input parameter) please ignore Band energy, Total energy, and Total energy per atom printed below."<<std::endl;
+		pcout<<"Also ignore the eigenvalues (if printed below) which have value= -10.0. Those are for states not considered in spectrum split Rayleigh-Ritz.)"<<std::endl<<std::endl;
 	    }
 
 	    QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
@@ -1203,8 +1203,8 @@ namespace dftfe {
     else
       pcout<<"SCF iterations converged to the specified tolerance after: "<<scfIter<<" iterations."<<std::endl;
 
-    //If spectrum slicing was used in the scf iteration, do one subspace iteration
-    //with no spectrum slicing to get all eigenvalues
+    //If spectrum splitting was used in the scf iteration, do one subspace iteration
+    //with no spectrum splitting to get all eigenvalues
     if (dftParameters::numRRWfc!=numEigenValues)
     {
 	if (dftParameters::spinPolarized==1)
