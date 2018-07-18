@@ -559,6 +559,7 @@ namespace dftfe {
        * data storage for Kohn-Sham wavefunctions
        */
       std::vector<std::vector<double> > eigenValues;
+      std::vector<std::vector<double> > eigenValuesRRSliced;
       std::vector<dealii::parallel::distributed::Vector<dataTypes::number>> d_eigenVectorsFlattened;
 
       /// parallel message stream
@@ -718,7 +719,8 @@ namespace dftfe {
 				     const unsigned int kPointIndex,
 				     kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
 				     chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver,
-				     std::vector<double> & residualNormWaveFunctions);
+				     std::vector<double> & residualNormWaveFunctions,
+				     const bool isSpectrumSliced);
 
       void computeResidualNorm(const std::vector<double> & eigenValuesTemp,
 			       kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,

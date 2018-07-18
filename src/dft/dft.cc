@@ -314,6 +314,11 @@ namespace dftfe {
     if (dftParameters::startingWFCType=="ATOMIC")
       determineOrbitalFilling();
 
+    if (dftParameters::numRRWfc==0)
+      dftParameters::numRRWfc=numEigenValues;
+
+     AssertThrow(dftParameters::numRRWfc<=numEigenValues
+		    ,ExcMessage("DFT-FE Error: Incorrect input value used- NUMBER OF RAYLEIGH-RITZ EIGENSTATES is more than the number of total number of wavefunctions."));
 #ifdef USE_COMPLEX
     if(dftParameters::kPointDataFile == "")
       generateMPGrid();
@@ -330,6 +335,7 @@ namespace dftfe {
 
     //set size of eigenvalues and eigenvectors data structures
     eigenValues.resize(d_kPointWeights.size());
+    eigenValuesRRSliced.resize(d_kPointWeights.size());
 
     a0.resize((dftParameters::spinPolarized+1)*d_kPointWeights.size(),dftParameters::lowerEndWantedSpectrum);
     bLow.resize((dftParameters::spinPolarized+1)*d_kPointWeights.size(),0.0);
@@ -338,6 +344,7 @@ namespace dftfe {
     for(unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
       {
 	eigenValues[kPoint].resize((dftParameters::spinPolarized+1)*numEigenValues);
+	eigenValuesRRSliced[kPoint].resize((dftParameters::spinPolarized+1)*dftParameters::numRRWfc);
       }
 
     //convert pseudopotential files in upf format to dftfe format
@@ -803,13 +810,15 @@ namespace dftfe {
 	if (dftParameters::spinPolarized==1)
 	  {
 
-	    std::vector<std::vector<std::vector<double> > > eigenValuesSpins(2,
-									     std::vector<std::vector<double> >(d_kPointWeights.size(),
-													       std::vector<double>(numEigenValues)));
+	    std::vector<std::vector<std::vector<double> > >
+		 eigenValuesSpins(2,
+		 	          std::vector<std::vector<double> >(d_kPointWeights.size(),
+				  std::vector<double>(dftParameters::numRRWfc)));
 
-	    std::vector<std::vector<std::vector<double>>> residualNormWaveFunctionsAllkPointsSpins(2,
-												   std::vector<std::vector<double> >(d_kPointWeights.size(),
-																     std::vector<double>(numEigenValues)));
+	    std::vector<std::vector<std::vector<double>>>
+		residualNormWaveFunctionsAllkPointsSpins(2,
+			      	                         std::vector<std::vector<double> >(d_kPointWeights.size(),
+					  	         std::vector<double>(dftParameters::numRRWfc)));
 
 	    for(unsigned int s=0; s<2; ++s)
 	      {
@@ -847,15 +856,16 @@ namespace dftfe {
 						  kPoint,
 						  kohnShamDFTEigenOperator,
 						  subspaceIterationSolver,
-						  residualNormWaveFunctionsAllkPointsSpins[s][kPoint]);
+						  residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
+						  true);
 		      }
 		  }
 	      }
 
 	    for(unsigned int s=0; s<2; ++s)
 	      for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-		for (unsigned int i = 0; i<numEigenValues; ++i)
-		  eigenValuesSpins[s][kPoint][i]=eigenValues[kPoint][numEigenValues*s+i];
+		for (unsigned int i = 0; i<dftParameters::numRRWfc; ++i)
+		  eigenValuesSpins[s][kPoint][i]=eigenValuesRRSliced[kPoint][dftParameters::numRRWfc*s+i];
 	    //
 	    //fermi energy
 	    //
@@ -920,15 +930,16 @@ namespace dftfe {
 						  kPoint,
 						  kohnShamDFTEigenOperator,
 						  subspaceIterationSolver,
-						  residualNormWaveFunctionsAllkPointsSpins[s][kPoint]);
+						  residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
+						  true);
 
 		      }
 		  }
 		count++;
 		for(unsigned int s=0; s<2; ++s)
 		  for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-		    for (unsigned int i = 0; i<numEigenValues; ++i)
-		      eigenValuesSpins[s][kPoint][i]=eigenValues[kPoint][numEigenValues*s+i];
+		    for (unsigned int i = 0; i<dftParameters::numRRWfc; ++i)
+		      eigenValuesSpins[s][kPoint][i]=eigenValuesRRSliced[kPoint][dftParameters::numRRWfc*s+i];
 
 		compute_fermienergy();
 		maxRes =std::max(computeMaximumHighestOccupiedStateResidualNorm
@@ -957,7 +968,7 @@ namespace dftfe {
 	    std::vector<std::vector<double>> residualNormWaveFunctionsAllkPoints;
 	    residualNormWaveFunctionsAllkPoints.resize(d_kPointWeights.size());
 	    for(unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-	      residualNormWaveFunctionsAllkPoints[kPoint].resize(numEigenValues);
+	      residualNormWaveFunctionsAllkPoints[kPoint].resize(dftParameters::numRRWfc);
 
 	    if(dftParameters::xc_id < 4)
 	      {
@@ -993,7 +1004,8 @@ namespace dftfe {
 					      kPoint,
 					      kohnShamDFTEigenOperator,
 					      subspaceIterationSolver,
-					      residualNormWaveFunctionsAllkPoints[kPoint]);
+					      residualNormWaveFunctionsAllkPoints[kPoint],
+					      true);
 
 		  }
 	      }
@@ -1008,7 +1020,7 @@ namespace dftfe {
 	    //
 	    double maxRes = computeMaximumHighestOccupiedStateResidualNorm
 	      (residualNormWaveFunctionsAllkPoints,
-	       eigenValues,
+	       eigenValuesRRSliced,
 	       fermiEnergy);
 	    if (dftParameters::verbosity>=2)
 	      pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
@@ -1041,13 +1053,14 @@ namespace dftfe {
 					      kPoint,
 					      kohnShamDFTEigenOperator,
 					      subspaceIterationSolver,
-					      residualNormWaveFunctionsAllkPoints[kPoint]);
+					      residualNormWaveFunctionsAllkPoints[kPoint],
+					      true);
 		  }
 		count++;
 		compute_fermienergy();
 		maxRes = computeMaximumHighestOccupiedStateResidualNorm
 		  (residualNormWaveFunctionsAllkPoints,
-		   eigenValues,
+		   eigenValuesRRSliced,
 		   fermiEnergy);
 		if (dftParameters::verbosity>=2)
 		  pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
@@ -1109,6 +1122,12 @@ namespace dftfe {
 				 dftParameters::verbosity);
 
 	    computing_timer.exit_section("phiTot solve");
+
+	    if (dftParameters::numRRWfc!=numEigenValues && dftParameters::verbosity>=1)
+	    {
+		pcout<< std::endl<<"(If using spectrum sliced Rayleigh-Ritz (using NUMBER OF RAYLEIGH-RITZ EIGENSTATES input parameter) please ignore Band energy, Total energy, and Total energy per atom printed below."<<std::endl;
+		pcout<<"Also ignore the eigenvalues (if printed below) which have value= -10.0. Those are for states not considered in spectrum sliced Rayleigh-Ritz.)"<<std::endl<<std::endl;
+	    }
 
 	    QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
 	    const double totalEnergy = dftParameters::spinPolarized==0 ?
@@ -1183,6 +1202,77 @@ namespace dftfe {
       pcout<<"DFT-FE Warning: SCF iterations did not converge to the specified tolerance after: "<<scfIter<<" iterations."<<std::endl;
     else
       pcout<<"SCF iterations converged to the specified tolerance after: "<<scfIter<<" iterations."<<std::endl;
+
+    //If spectrum slicing was used in the scf iteration, do one subspace iteration
+    //with no spectrum slicing to get all eigenvalues
+    if (dftParameters::numRRWfc!=numEigenValues)
+    {
+	if (dftParameters::spinPolarized==1)
+	  {
+
+	    std::vector<std::vector<std::vector<double>>>
+		residualNormWaveFunctionsAllkPointsSpins(2,
+			      	                         std::vector<std::vector<double> >(d_kPointWeights.size(),
+					  	         std::vector<double>(numEigenValues)));
+
+	    for(unsigned int s=0; s<2; ++s)
+	      {
+
+		for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
+		  {
+		    kohnShamDFTEigenOperator.reinitkPointIndex(kPoint);
+
+
+		    computing_timer.enter_section("Hamiltonian Matrix Computation");
+		    kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint);
+		    computing_timer.exit_section("Hamiltonian Matrix Computation");
+
+
+
+		    if (dftParameters::verbosity>=2)
+		      pcout<<"Doing one full spectrum Chebyshev filter pass for spin "<< s+1<<std::endl;
+
+		    kohnShamEigenSpaceCompute(s,
+					      kPoint,
+					      kohnShamDFTEigenOperator,
+					      subspaceIterationSolver,
+					      residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
+					      false);
+		  }
+	      }
+	  }
+        else
+	  {
+	    std::vector<std::vector<double>> residualNormWaveFunctionsAllkPoints;
+	    residualNormWaveFunctionsAllkPoints.resize(d_kPointWeights.size());
+	    for(unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
+	      residualNormWaveFunctionsAllkPoints[kPoint].resize(numEigenValues);
+
+	    for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
+	      {
+		kohnShamDFTEigenOperator.reinitkPointIndex(kPoint);
+
+		computing_timer.enter_section("Hamiltonian Matrix Computation");
+		kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint);
+		computing_timer.exit_section("Hamiltonian Matrix Computation");
+
+
+
+		if (dftParameters::verbosity>=2)
+		  pcout<<"Doing one full spectrum Chebyshev filter pass "<<std::endl;
+
+
+		kohnShamEigenSpaceCompute(0,
+					  kPoint,
+					  kohnShamDFTEigenOperator,
+					  subspaceIterationSolver,
+					  residualNormWaveFunctionsAllkPoints[kPoint],
+					  false);
+
+	      }
+	  }
+
+    }
 
     if (!dftParameters::computeEnergyEverySCF)
     {

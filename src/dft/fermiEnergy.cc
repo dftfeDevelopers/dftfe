@@ -92,6 +92,16 @@ namespace internal {
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::compute_fermienergy()
 {
+  for(unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
+    for(unsigned int istate = 0; istate < numEigenValues*(dftParameters::spinPolarized+1); ++istate)
+    {
+	if (istate>= (numEigenValues-dftParameters::numRRWfc)*(dftParameters::spinPolarized+1))
+	  eigenValues[kPoint][istate]
+	         =eigenValuesRRSliced[kPoint][istate
+		                 -(numEigenValues-dftParameters::numRRWfc)*(dftParameters::spinPolarized+1)];
+	else
+	  eigenValues[kPoint][istate]=-10.0;
+    }
 
   int count =  std::ceil(static_cast<double>(numElectrons)/(2.0-dftParameters::spinPolarized));
   double TVal = dftParameters::TVal;
@@ -214,7 +224,7 @@ void dftClass<FEOrder>::compute_fermienergy()
 
   if(std::abs(R) > newtonIterTol)
     {
-      AssertThrow(false,ExcMessage("DFT-FE Error: Newton-Raphson iterations failed to converge in Fermi energy computation. Hint: Number of wavefunctions are probably insufficient- try increasing the NUMBER OF KOHN-SHAM WAVEFUNCTIONS input parameter."));     
+      AssertThrow(false,ExcMessage("DFT-FE Error: Newton-Raphson iterations failed to converge in Fermi energy computation. Hint: Number of wavefunctions are probably insufficient- try increasing the NUMBER OF KOHN-SHAM WAVEFUNCTIONS input parameter."));
     }
 
   //set Fermi energy

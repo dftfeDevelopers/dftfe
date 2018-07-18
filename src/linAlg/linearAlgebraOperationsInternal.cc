@@ -46,7 +46,7 @@ namespace dftfe
 				std::ceil((double)size/(double)(1000))):
 				std::min((unsigned int)std::floor(std::sqrt(numberProcs)),
 				         dftParameters::scalapackParalProcs);
-	      if(dftParameters::verbosity>=3)
+	      if(dftParameters::verbosity>=4)
 	      {
 		 dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
 		 pcout<<"Scalapack Matrix created, row procs: "<< rowProcs<<std::endl;

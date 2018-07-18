@@ -80,7 +80,8 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 						  const unsigned int kPointIndex,
 						  kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
 						  chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver,
-						  std::vector<double>                            & residualNormWaveFunctions)
+						  std::vector<double>                            & residualNormWaveFunctions,
+						  const bool isSpectrumSliced)
 {
   computing_timer.enter_section("Chebyshev solve");
 
@@ -101,7 +102,8 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 				       d_eigenVectorsFlattened[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
 				       constraintsNoneDataInfo);
 
-  std::vector<double> eigenValuesTemp(numEigenValues,0.0);
+  std::vector<double> eigenValuesTemp(isSpectrumSliced?dftParameters::numRRWfc
+	                              :numEigenValues,0.0);
 
   subspaceIterationSolver.reinitSpectrumBounds(a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
 					       bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
@@ -127,12 +129,25 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
   //
   //copy the eigenValues and corresponding residual norms back to data members
   //
-  for(unsigned int i = 0; i < (unsigned int)numEigenValues; i++)
+  if (isSpectrumSliced)
     {
-      if(dftParameters::verbosity>=4)
-          pcout<<"eigen value "<< std::setw(3) <<i <<": "<<eigenValuesTemp[i] <<std::endl;
+      for(unsigned int i = 0; i < dftParameters::numRRWfc; i++)
+	{
+	  if(dftParameters::verbosity>=4)
+	      pcout<<"Spectrum sliced eigen value "<< std::setw(3) <<i <<": "<<eigenValuesTemp[i] <<std::endl;
 
-      eigenValues[kPointIndex][spinType*numEigenValues + i] =  eigenValuesTemp[i];
+	  eigenValuesRRSliced[kPointIndex][spinType*dftParameters::numRRWfc + i] =  eigenValuesTemp[i];
+	}
+    }
+  else
+    {
+      for(unsigned int i = 0; i < numEigenValues; i++)
+	{
+	  if(dftParameters::verbosity>=4)
+	      pcout<<"eigen value "<< std::setw(3) <<i <<": "<<eigenValuesTemp[i] <<std::endl;
+
+	  eigenValues[kPointIndex][spinType*numEigenValues + i] =  eigenValuesTemp[i];
+	}
     }
 
   if (dftParameters::verbosity>=4)
@@ -140,7 +155,7 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 
 
   //set a0 and bLow
-  a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=eigenValuesTemp[0];
+  a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=-10.0;//eigenValuesTemp[0];
   bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=eigenValuesTemp.back();
   //
 

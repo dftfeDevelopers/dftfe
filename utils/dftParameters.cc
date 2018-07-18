@@ -64,6 +64,7 @@ namespace dftParameters
   unsigned int natoms=0;
   unsigned int natomTypes=0;
   double lowerBoundUnwantedFracUpper=0;
+  unsigned int numRRWfc=0;
 
   void declare_parameters(ParameterHandler &prm)
   {
@@ -339,6 +340,10 @@ namespace dftParameters
 			      Patterns::Integer(0),
 			      "[Standard] Number of Kohn-Sham wavefunctions to be computed. For insulators use N/2+(10-20) and for metals use 20 percent more than N/2 (atleast 10 more). N is the total number of electrons. For spin-polarized calculations this parameter denotes the number of Kohn-Sham wavefunctions to be computed for each spin.");
 
+	    prm.declare_entry("NUMBER OF RAYLEIGH-RITZ EIGENSTATES", "0",
+			      Patterns::Integer(0),
+			      "[Standard] Number of Kohn-Sham eigenstates starting from the highest to be computed in the Rayleigh-Ritz projection step. For the default value of 0, all the eigenstates are computed in the Rayleigh-Ritz projection step.");
+
 	    prm.declare_entry("LOWER BOUND WANTED SPECTRUM", "-10.0",
 			      Patterns::Double(),
 			      "[Developer] The lower bound of the wanted eigen spectrum. It is only used for the first iteration of the Chebyshev filtered subspace iteration procedure. A rough estimate based on single atom eigen values can be used here. Default value is good enough for most problems.");
@@ -513,6 +518,7 @@ namespace dftParameters
 	prm.enter_subsection ("Eigen-solver parameters");
 	{
 	   dftParameters::numberEigenValues             = prm.get_integer("NUMBER OF KOHN-SHAM WAVEFUNCTIONS");
+	   dftParameters::numRRWfc             = prm.get_integer("NUMBER OF RAYLEIGH-RITZ EIGENSTATES");
 	   dftParameters::lowerEndWantedSpectrum        = prm.get_double("LOWER BOUND WANTED SPECTRUM");
 	   dftParameters::lowerBoundUnwantedFracUpper   = prm.get_double("LOWER BOUND UNWANTED FRAC UPPER");
 	   dftParameters::chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
