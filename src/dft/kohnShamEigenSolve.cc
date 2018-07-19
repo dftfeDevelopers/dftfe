@@ -145,7 +145,7 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 	     eigenValues[kPointIndex][spinType*numEigenValues + i]
 		 = eigenValuesTemp[i-(numEigenValues-numEigenValuesRR)];
 	  else
-             eigenValues[kPointIndex][spinType*numEigenValues + i]=-10.0;
+             eigenValues[kPointIndex][spinType*numEigenValues + i]=-100.0;
 	}
     }
   else
