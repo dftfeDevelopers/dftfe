@@ -164,7 +164,9 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 
 
   //set a0 and bLow
-  a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=-10.0;//eigenValuesTemp[0];
+  a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=isSpectrumSplit?
+                                                            dftParameters::lowerEndWantedSpectrum
+                                                            :eigenValuesTemp[0];
   bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=eigenValuesTemp.back();
   //
 
