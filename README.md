@@ -15,13 +15,13 @@ Installation instructions
 -------------------------
 
 The steps to install the necessary dependencies and DFT-FE itself are described
-in the *Installation* section of the DFT-FE [manual](https://github.com/dftfeDevelopers/dftfe/blob/manual/manualv0.5.0-pre.pdf).
+in the *Installation* section of the DFT-FE manual (compile doc/manual/manual.tex or download the current release version manual [here](https://github.com/dftfeDevelopers/dftfe/blob/manual/manual-current-release.pdf)). 
 
 
 Running DFT-FE
 --------------
 
-Instructions on how to run DFT-FE can also be found in the *Running DFT-FE* section of the [manual](https://github.com/dftfeDevelopers/dftfe/blob/manual/manualv0.5.0-pre.pdf). 
+Instructions on how to run DFT-FE can also be found in the *Running DFT-FE* section of the manual (compile doc/manual/manual.tex or download the current release version manual [here](https://github.com/dftfeDevelopers/dftfe/blob/manual/manual-current-release.pdf)). 
 
 
 Contributing to DFT-FE
@@ -36,13 +36,13 @@ For more information see:
 
  - The official [website](https://sites.google.com/umich.edu/dftfe).
   
- - The current [manual](https://github.com/dftfeDevelopers/dftfe/blob/manual/manualv0.5.0-pre.pdf).
-
  - Doxygen generated [documentation](https://dftfedevelopers.github.io/dftfe/).
 
- - For questions about DFT-FE, installation, bugs, etc., use the DFT-FE mailing list. To subscribe to the mailing list, please send an email to dft-fe.admin@umich.edu and we will add you to the list.
+ - For questions about DFT-FE, installation, bugs, etc., use the [DFT-FE discussion forum](https://groups.google.com/forum/#!forum/dftfe-user-group). 
+
+ - For latest news, updates, and release announcements about DFT-FE please send an email to dft-fe.admin@umich.edu, and we will add you to our announcement mailing list.
  
- - DFT-FE is primarily based on the [deal.II library](http://www.dealii.org/). If you have particular questions about deal.II, contact the [deal.II mailing lists](https://www.dealii.org/mail.html).
+ - DFT-FE is primarily based on the [deal.II library](http://www.dealii.org/). If you have particular questions about deal.II, contact the [deal.II discussion group](https://www.dealii.org/mail.html).
  
  - If you have specific questions about DFT-FE that are not suitable for the public and archived mailing lists, you can contact the principal developers and mentors:
 
