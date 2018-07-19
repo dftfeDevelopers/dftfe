@@ -319,10 +319,11 @@ namespace dftfe {
     if (dftParameters::startingWFCType=="ATOMIC")
       determineOrbitalFilling();
 
+     AssertThrow(dftParameters::numCoreWfcRR<=numEigenValues
+		    ,ExcMessage("DFT-FE Error: Incorrect input value used- SPECTRUM SPLIT CORE EIGENSTATES should be less than the total number of wavefunctions."));
      numEigenValuesRR=numEigenValues-dftParameters::numCoreWfcRR;
 
-     AssertThrow(numEigenValuesRR>=0
-		    ,ExcMessage("DFT-FE Error: Incorrect input value used- SPECTRUM SPLIT CORE EIGENSTATES is more than the total number of wavefunctions."));
+
 #ifdef USE_COMPLEX
     if(dftParameters::kPointDataFile == "")
       generateMPGrid();
@@ -873,7 +874,8 @@ namespace dftfe {
 	    //
 	    //fermi energy
 	    //
-	    compute_fermienergy();
+	    compute_fermienergy(eigenValues,
+		                numElectrons);
 
 	    //maximum of the residual norm of the state closest to and below the Fermi level among all k points,
 	    //and also the maximum between the two spins
@@ -945,7 +947,8 @@ namespace dftfe {
 		    for (unsigned int i = 0; i<numEigenValuesRR; ++i)
 		      eigenValuesSpins[s][kPoint][i]=eigenValuesRRSplit[kPoint][numEigenValuesRR*s+i];
 
-		compute_fermienergy();
+	        compute_fermienergy(eigenValues,
+		                    numElectrons);
 		maxRes =std::max(computeMaximumHighestOccupiedStateResidualNorm
 				 (residualNormWaveFunctionsAllkPointsSpins[0],
 				  eigenValuesSpins[0],
@@ -1017,7 +1020,8 @@ namespace dftfe {
 	    //
 	    //fermi energy
 	    //
-	    compute_fermienergy();
+	    compute_fermienergy(eigenValues,
+		                numElectrons);
 
 	    //
 	    //maximum of the residual norm of the state closest to and below the Fermi level among all k points
@@ -1061,7 +1065,8 @@ namespace dftfe {
 					      true);
 		  }
 		count++;
-		compute_fermienergy();
+	        compute_fermienergy(eigenValues,
+		                    numElectrons);
 		maxRes = computeMaximumHighestOccupiedStateResidualNorm
 		  (residualNormWaveFunctionsAllkPoints,
 		   eigenValuesRRSplit,
@@ -1103,7 +1108,7 @@ namespace dftfe {
 	//
 	//phiTot with rhoOut
 	//
-	if (dftParameters::computeEnergyEverySCF)
+	if (dftParameters::computeEnergyEverySCF && numEigenValuesRR==numEigenValues)
 	{
 	    if(dftParameters::verbosity>=2)
 	      pcout<< std::endl<<"Poisson solve for total electrostatic potential (rhoOut+b): ";
@@ -1126,12 +1131,6 @@ namespace dftfe {
 				 dftParameters::verbosity);
 
 	    computing_timer.exit_section("phiTot solve");
-
-	    if (numEigenValuesRR!=numEigenValues && dftParameters::verbosity>=1)
-	    {
-		pcout<< std::endl<<"(If using spectrum split Rayleigh-Ritz (using NUMBER OF RAYLEIGH-RITZ EIGENSTATES input parameter) please ignore Band energy, Total energy, and Total energy per atom printed below."<<std::endl;
-		pcout<<"Also ignore the eigenvalues (if printed below) which have value= -10.0. Those are for states not considered in spectrum split Rayleigh-Ritz.)"<<std::endl<<std::endl;
-	    }
 
 	    QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
 	    const double totalEnergy = dftParameters::spinPolarized==0 ?
@@ -1184,10 +1183,14 @@ namespace dftfe {
 						    0,
 						    dftParameters::verbosity>=2);
 	    if (dftParameters::verbosity==1)
-	      {
 		pcout<<"Total energy  : " << totalEnergy << std::endl;
-	      }
 	}
+	else
+	{
+	    if (numEigenValuesRR!=numEigenValues && dftParameters::computeEnergyEverySCF && dftParameters::verbosity>=1)
+		pcout<<"DFT-FE Warning: energy computation is not performed at the end of each scf iteration step\n"<<"if SPECTRUM SPLIT CORE EIGENSTATES is set to a non-zero value."<< std::endl;
+	}
+
 	if (dftParameters::verbosity>=1)
 	  pcout<<"***********************Self-Consistent-Field Iteration: "<<std::setw(2)<<scfIter+1<<" complete**********************"<<std::endl;
 
@@ -1290,7 +1293,7 @@ namespace dftfe {
 
     }
 
-    if (!dftParameters::computeEnergyEverySCF)
+    if (!dftParameters::computeEnergyEverySCF || numEigenValuesRR!=numEigenValues)
     {
 	if(dftParameters::verbosity>=2)
 	  pcout<< std::endl<<"Poisson solve for total electrostatic potential (rhoOut+b): ";

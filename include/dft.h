@@ -402,7 +402,8 @@ namespace dftfe {
       /**
        *@brief Computes Fermi-energy obtained by imposing constraint on the number of electrons
        */
-      void compute_fermienergy();
+      void compute_fermienergy(const std::vector<std::vector<double>> & eigenValuesInput,
+	                       const double numElectronsInput);
 
       /**
        *@brief write wavefunction solution fields

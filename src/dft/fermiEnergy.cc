@@ -90,40 +90,21 @@ namespace internal {
 
 //compute fermi energy
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::compute_fermienergy()
+void dftClass<FEOrder>::compute_fermienergy(const std::vector<std::vector<double>> & eigenValuesInput,
+	                                    const double numElectronsInput)
 {
-  for(unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-    for(unsigned int istate = 0; istate < numEigenValues; ++istate)
-    {
-	if (istate>= (numEigenValues-numEigenValuesRR))
-	{
-	  eigenValues[kPoint][istate]
-	         =eigenValuesRRSplit[kPoint][istate
-		                 -(numEigenValues-numEigenValuesRR)];
-	  if (dftParameters::spinPolarized==1)
-	    eigenValues[kPoint][numEigenValues+istate]
-	         =eigenValuesRRSplit[kPoint][numEigenValuesRR+istate
-		                              -(numEigenValues-numEigenValuesRR)];
-	}
-	else
-	{
-	  eigenValues[kPoint][istate]=-10.0;
 
-	  if (dftParameters::spinPolarized==1)
-	    eigenValues[kPoint][numEigenValues+istate]=-10.0;
-	}
-    }
-
-  int count =  std::ceil(static_cast<double>(numElectrons)/(2.0-dftParameters::spinPolarized));
+  int count =  std::ceil(static_cast<double>(numElectronsInput)
+	                                     /(2.0-dftParameters::spinPolarized));
   double TVal = dftParameters::TVal;
 
 
   std::vector<double> eigenValuesAllkPoints;
   for(int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
     {
-      for(int statesIter = 0; statesIter < eigenValues[0].size(); ++statesIter)
+      for(int statesIter = 0; statesIter < eigenValuesInput[0].size(); ++statesIter)
 	{
-	  eigenValuesAllkPoints.push_back(eigenValues[kPoint][statesIter]);
+	  eigenValuesAllkPoints.push_back(eigenValuesInput[kPoint][statesIter]);
 	}
     }
 
@@ -153,7 +134,7 @@ void dftClass<FEOrder>::compute_fermienergy()
   for(int iter = 0; iter < maxNumberFermiEnergySolveIterations; ++iter)
     {
       double yRightLocal = internal::FermiDiracFunctionValue(xRight,
-					      eigenValues,
+					      eigenValuesInput,
 					      d_kPointWeights,
 					      TVal);
 
@@ -162,7 +143,7 @@ void dftClass<FEOrder>::compute_fermienergy()
       yRight -=  (double)numElectrons;
 
       double yLeftLocal =  internal::FermiDiracFunctionValue(xLeft,
-					      eigenValues,
+					      eigenValuesInput,
 					      d_kPointWeights,
 					      TVal);
 
@@ -179,7 +160,7 @@ void dftClass<FEOrder>::compute_fermienergy()
       double xBisected = (xLeft + xRight)/2.0;
 
       double yBisectedLocal = internal::FermiDiracFunctionValue(xBisected,
-						 eigenValues,
+						 eigenValuesInput,
 						 d_kPointWeights,
 						 TVal) ;
       double yBisected = Utilities::MPI::sum(yBisectedLocal, interpoolcomm);
@@ -215,13 +196,13 @@ void dftClass<FEOrder>::compute_fermienergy()
     {
 
       double functionValueLocal = internal::FermiDiracFunctionValue(fe,
-					      eigenValues,
+					      eigenValuesInput,
 					      d_kPointWeights,
 					      TVal);
       functionValue = Utilities::MPI::sum(functionValueLocal, interpoolcomm);
 
       double functionDerivativeValueLocal  = internal::FermiDiracFunctionDerivativeValue(fe,
-								  eigenValues,
+								  eigenValuesInput,
 								  d_kPointWeights,
 								  TVal);
 
