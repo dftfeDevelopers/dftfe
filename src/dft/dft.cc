@@ -314,11 +314,10 @@ namespace dftfe {
     if (dftParameters::startingWFCType=="ATOMIC")
       determineOrbitalFilling();
 
-    if (dftParameters::numRRWfc==0)
-      dftParameters::numRRWfc=numEigenValues;
+     numEigenValuesRR=numEigenValues-dftParameters::numCoreWfcRR;
 
-     AssertThrow(dftParameters::numRRWfc<=numEigenValues
-		    ,ExcMessage("DFT-FE Error: Incorrect input value used- NUMBER OF RAYLEIGH-RITZ EIGENSTATES is more than the number of total number of wavefunctions."));
+     AssertThrow(numEigenValuesRR>=0
+		    ,ExcMessage("DFT-FE Error: Incorrect input value used- SPECTRUM SPLIT CORE EIGENSTATES is more than the total number of wavefunctions."));
 #ifdef USE_COMPLEX
     if(dftParameters::kPointDataFile == "")
       generateMPGrid();
@@ -335,7 +334,7 @@ namespace dftfe {
 
     //set size of eigenvalues and eigenvectors data structures
     eigenValues.resize(d_kPointWeights.size());
-    eigenValuesRRSliced.resize(d_kPointWeights.size());
+    eigenValuesRRSplit.resize(d_kPointWeights.size());
 
     a0.resize((dftParameters::spinPolarized+1)*d_kPointWeights.size(),dftParameters::lowerEndWantedSpectrum);
     bLow.resize((dftParameters::spinPolarized+1)*d_kPointWeights.size(),0.0);
@@ -344,7 +343,7 @@ namespace dftfe {
     for(unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
       {
 	eigenValues[kPoint].resize((dftParameters::spinPolarized+1)*numEigenValues);
-	eigenValuesRRSliced[kPoint].resize((dftParameters::spinPolarized+1)*dftParameters::numRRWfc);
+	eigenValuesRRSplit[kPoint].resize((dftParameters::spinPolarized+1)*numEigenValuesRR);
       }
 
     //convert pseudopotential files in upf format to dftfe format
@@ -813,12 +812,12 @@ namespace dftfe {
 	    std::vector<std::vector<std::vector<double> > >
 		 eigenValuesSpins(2,
 		 	          std::vector<std::vector<double> >(d_kPointWeights.size(),
-				  std::vector<double>(dftParameters::numRRWfc)));
+				  std::vector<double>(numEigenValuesRR)));
 
 	    std::vector<std::vector<std::vector<double>>>
 		residualNormWaveFunctionsAllkPointsSpins(2,
 			      	                         std::vector<std::vector<double> >(d_kPointWeights.size(),
-					  	         std::vector<double>(dftParameters::numRRWfc)));
+					  	         std::vector<double>(numEigenValuesRR)));
 
 	    for(unsigned int s=0; s<2; ++s)
 	      {
@@ -864,8 +863,8 @@ namespace dftfe {
 
 	    for(unsigned int s=0; s<2; ++s)
 	      for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-		for (unsigned int i = 0; i<dftParameters::numRRWfc; ++i)
-		  eigenValuesSpins[s][kPoint][i]=eigenValuesRRSliced[kPoint][dftParameters::numRRWfc*s+i];
+		for (unsigned int i = 0; i<numEigenValuesRR; ++i)
+		  eigenValuesSpins[s][kPoint][i]=eigenValuesRRSplit[kPoint][numEigenValuesRR*s+i];
 	    //
 	    //fermi energy
 	    //
@@ -938,8 +937,8 @@ namespace dftfe {
 		count++;
 		for(unsigned int s=0; s<2; ++s)
 		  for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-		    for (unsigned int i = 0; i<dftParameters::numRRWfc; ++i)
-		      eigenValuesSpins[s][kPoint][i]=eigenValuesRRSliced[kPoint][dftParameters::numRRWfc*s+i];
+		    for (unsigned int i = 0; i<numEigenValuesRR; ++i)
+		      eigenValuesSpins[s][kPoint][i]=eigenValuesRRSplit[kPoint][numEigenValuesRR*s+i];
 
 		compute_fermienergy();
 		maxRes =std::max(computeMaximumHighestOccupiedStateResidualNorm
@@ -968,7 +967,7 @@ namespace dftfe {
 	    std::vector<std::vector<double>> residualNormWaveFunctionsAllkPoints;
 	    residualNormWaveFunctionsAllkPoints.resize(d_kPointWeights.size());
 	    for(unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-	      residualNormWaveFunctionsAllkPoints[kPoint].resize(dftParameters::numRRWfc);
+	      residualNormWaveFunctionsAllkPoints[kPoint].resize(numEigenValuesRR);
 
 	    if(dftParameters::xc_id < 4)
 	      {
@@ -1020,7 +1019,7 @@ namespace dftfe {
 	    //
 	    double maxRes = computeMaximumHighestOccupiedStateResidualNorm
 	      (residualNormWaveFunctionsAllkPoints,
-	       eigenValuesRRSliced,
+	       eigenValuesRRSplit,
 	       fermiEnergy);
 	    if (dftParameters::verbosity>=2)
 	      pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
@@ -1060,7 +1059,7 @@ namespace dftfe {
 		compute_fermienergy();
 		maxRes = computeMaximumHighestOccupiedStateResidualNorm
 		  (residualNormWaveFunctionsAllkPoints,
-		   eigenValuesRRSliced,
+		   eigenValuesRRSplit,
 		   fermiEnergy);
 		if (dftParameters::verbosity>=2)
 		  pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
@@ -1123,7 +1122,7 @@ namespace dftfe {
 
 	    computing_timer.exit_section("phiTot solve");
 
-	    if (dftParameters::numRRWfc!=numEigenValues && dftParameters::verbosity>=1)
+	    if (numEigenValuesRR!=numEigenValues && dftParameters::verbosity>=1)
 	    {
 		pcout<< std::endl<<"(If using spectrum split Rayleigh-Ritz (using NUMBER OF RAYLEIGH-RITZ EIGENSTATES input parameter) please ignore Band energy, Total energy, and Total energy per atom printed below."<<std::endl;
 		pcout<<"Also ignore the eigenvalues (if printed below) which have value= -10.0. Those are for states not considered in spectrum split Rayleigh-Ritz.)"<<std::endl<<std::endl;
@@ -1205,7 +1204,7 @@ namespace dftfe {
 
     //If spectrum splitting was used in the scf iteration, do one subspace iteration
     //with no spectrum splitting to get all eigenvalues
-    if (dftParameters::numRRWfc!=numEigenValues)
+    if (numEigenValuesRR!=numEigenValues)
     {
 	if (dftParameters::spinPolarized==1)
 	  {
@@ -1218,6 +1217,18 @@ namespace dftfe {
 	    for(unsigned int s=0; s<2; ++s)
 	      {
 
+		if(dftParameters::xc_id < 4)
+		  {
+		    computing_timer.enter_section("VEff Computation");
+		    kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, pseudoValues);
+		    computing_timer.exit_section("VEff Computation");
+		  }
+		else if (dftParameters::xc_id == 4)
+		  {
+		    computing_timer.enter_section("VEff Computation");
+		    kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, pseudoValues);
+		    computing_timer.exit_section("VEff Computation");
+		  }
 		for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
 		  {
 		    kohnShamDFTEigenOperator.reinitkPointIndex(kPoint);

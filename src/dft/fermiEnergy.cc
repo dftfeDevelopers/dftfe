@@ -93,14 +93,25 @@ template<unsigned int FEOrder>
 void dftClass<FEOrder>::compute_fermienergy()
 {
   for(unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-    for(unsigned int istate = 0; istate < numEigenValues*(dftParameters::spinPolarized+1); ++istate)
+    for(unsigned int istate = 0; istate < numEigenValues; ++istate)
     {
-	if (istate>= (numEigenValues-dftParameters::numRRWfc)*(dftParameters::spinPolarized+1))
+	if (istate>= (numEigenValues-numEigenValuesRR))
+	{
 	  eigenValues[kPoint][istate]
-	         =eigenValuesRRSliced[kPoint][istate
-		                 -(numEigenValues-dftParameters::numRRWfc)*(dftParameters::spinPolarized+1)];
+	         =eigenValuesRRSplit[kPoint][istate
+		                 -(numEigenValues-numEigenValuesRR)];
+	  if (dftParameters::spinPolarized==1)
+	    eigenValues[kPoint][numEigenValues+istate]
+	         =eigenValuesRRSplit[kPoint][numEigenValuesRR+istate
+		                              -(numEigenValues-numEigenValuesRR)];
+	}
 	else
+	{
 	  eigenValues[kPoint][istate]=-10.0;
+
+	  if (dftParameters::spinPolarized==1)
+	    eigenValues[kPoint][numEigenValues+istate]=-10.0;
+	}
     }
 
   int count =  std::ceil(static_cast<double>(numElectrons)/(2.0-dftParameters::spinPolarized));
