@@ -408,11 +408,44 @@ namespace dftfe{
       pcout<<"Orthogonalization Done: "<<std::endl;
 
     computing_timer.enter_section("Rayleigh-Ritz proj Opt");
-    linearAlgebraOperations::rayleighRitz(operatorMatrix,
+
+    dealii::parallel::distributed::Vector<dataTypes::number> eigenVectorsFlattenedRR;
+    if (eigenValues.size()!=totalNumberWaveFunctions)
+    {
+
+	operatorMatrix.reinit(eigenValues.size(),
+			      eigenVectorsFlattenedRR,
+			      true);
+	for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
+	    for(unsigned int iWave = 0; iWave < eigenValues.size(); ++iWave)
+		eigenVectorsFlattenedRR.local_element(iNode*eigenValues.size()
+			 +iWave)
+		     =eigenVectorsFlattened.local_element(iNode*totalNumberWaveFunctions
+			                                  +(totalNumberWaveFunctions-eigenValues.size())
+							  +iWave);
+
+        linearAlgebraOperations::rayleighRitz(operatorMatrix,
+					     eigenVectorsFlattenedRR,
+					     eigenValues.size(),
+					     interBandGroupComm,
+					     eigenValues);
+
+	for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
+	    for(unsigned int iWave = 0; iWave < eigenValues.size(); ++iWave)
+		  eigenVectorsFlattened.local_element(iNode*totalNumberWaveFunctions
+			                              +(totalNumberWaveFunctions-eigenValues.size())
+						      +iWave)
+		  = eigenVectorsFlattenedRR.local_element(iNode*eigenValues.size()
+			                                       +iWave);
+    }
+    else
+       linearAlgebraOperations::rayleighRitz(operatorMatrix,
 					  eigenVectorsFlattened,
 					  totalNumberWaveFunctions,
 					  interBandGroupComm,
 					  eigenValues);
+
+
     computing_timer.exit_section("Rayleigh-Ritz proj Opt");
 
     if(dftParameters::verbosity >= 4)
@@ -422,10 +455,16 @@ namespace dftfe{
       }
 
     computing_timer.enter_section("eigen vectors residuals opt");
-    linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
-						      eigenVectorsFlattened,
-						      eigenValues,
-						      residualNorms);
+    if (eigenValues.size()!=totalNumberWaveFunctions)
+       linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
+						         eigenVectorsFlattenedRR,
+						         eigenValues,
+						         residualNorms);
+    else
+       linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
+						         eigenVectorsFlattened,
+						         eigenValues,
+						         residualNorms);
     computing_timer.exit_section("eigen vectors residuals opt");
 
     if(dftParameters::verbosity >= 4)

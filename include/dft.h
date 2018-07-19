@@ -149,6 +149,12 @@ namespace dftfe {
       unsigned int numEigenValues;
 
       /**
+       * @brief Number of Kohn-Sham eigen values to be computed in the Rayleigh-Ritz step
+       * after spectrum splitting.
+       */
+      unsigned int numEigenValuesRR;
+
+      /**
        * @brief Number of random wavefunctions
        */
       unsigned int d_nonAtomicWaveFunctions;
@@ -396,7 +402,8 @@ namespace dftfe {
       /**
        *@brief Computes Fermi-energy obtained by imposing constraint on the number of electrons
        */
-      void compute_fermienergy();
+      void compute_fermienergy(const std::vector<std::vector<double>> & eigenValuesInput,
+	                       const double numElectronsInput);
 
       /**
        *@brief write wavefunction solution fields
@@ -559,6 +566,9 @@ namespace dftfe {
        * data storage for Kohn-Sham wavefunctions
        */
       std::vector<std::vector<double> > eigenValues;
+
+      /// Spectrum split higher eigenvalues computed in Rayleigh-Ritz step
+      std::vector<std::vector<double> > eigenValuesRRSplit;
       std::vector<dealii::parallel::distributed::Vector<dataTypes::number>> d_eigenVectorsFlattened;
 
       /// parallel message stream
@@ -718,7 +728,8 @@ namespace dftfe {
 				     const unsigned int kPointIndex,
 				     kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
 				     chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver,
-				     std::vector<double> & residualNormWaveFunctions);
+				     std::vector<double> & residualNormWaveFunctions,
+				     const bool isSpectrumSplit);
 
       void computeResidualNorm(const std::vector<double> & eigenValuesTemp,
 			       kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
