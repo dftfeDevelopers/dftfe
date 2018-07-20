@@ -191,7 +191,7 @@ namespace dftfe
 	      std::vector<double> temp(2,0.0);
 	      temp[0] = it->second;//charge;
 	      temp[1] = vselfBinScratch(it->first);//vself
-	      if (dftParameters::verbosity>=2)
+	      if (dftParameters::verbosity>=4)
 		  std::cout<< "(only for debugging: peak value of Vself: "<< temp[1] << ")" <<std::endl;
 
 	      localVselfs.push_back(temp);
@@ -209,7 +209,7 @@ namespace dftfe
       phiExt.update_ghost_values();
 
       //print the norms of phiExt (in periodic case L2 norm of phiExt field does not match. check later)
-      if (dftParameters::verbosity>=2)
+      if (dftParameters::verbosity>=4)
 	 pcout<<"L2 Norm Value of phiext: "<<phiExt.l2_norm()<<std::endl;
     }
 }
