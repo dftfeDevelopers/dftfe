@@ -92,11 +92,6 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
       //
       int numberPseudoWaveFunctions = d_numberPseudoAtomicWaveFunctions[iAtom];
 
-      if (dftParameters::verbosity>=4)
-      {
-       pcout<<"Number of Pseudo wavefunctions: "<<std::endl;
-       pcout<<numberPseudoWaveFunctions<<std::endl;
-      }
 
       //
       //allocate element Matrices
