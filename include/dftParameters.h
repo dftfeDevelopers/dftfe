@@ -63,6 +63,7 @@ namespace dftfe {
       extern bool writeDensitySolutionFields;
 
       extern std::string startingWFCType;
+      extern unsigned int numCoreWfcRR;
       extern unsigned int chebyshevBlockSize;
       extern bool useBatchGEMM;
       extern unsigned int orthoRRWaveFuncBlockSize;

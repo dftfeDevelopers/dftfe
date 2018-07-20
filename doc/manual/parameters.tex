@@ -46,7 +46,7 @@
 {\it Default:} false
 
 
-{\it Description:} [Standard] Writes KSDFT ground state (last ground state solve in case of geometry optimization) electron-density solution fields (FEM mesh nodal values) to densityOutput.vtu file for visualization purposes. The electron-density solution field in densityOutput.vtu is named density. In case of spin-polarized calculation, two additional solution fields- density\_0 and density\_1 are also written where 0 and 1 denote the spin indices. Default: false.
+{\it Description:} [Standard] Writes KSDFT ground state (last ground state solve in case of geometry optimization) electron-density solution fields (FEM mesh nodal values) to densityOutput.vtu file for visualization purposes. The electron-density solution field in densityOutput.vtu is named density. In case of spin-polarized calculation, two additional solution fields- densityI\_0 and density\_1 are also written where 0 and 1 denote the spin indices. Default: false.
 
 
 {\it Possible values:} A boolean value (true or false)
@@ -942,7 +942,7 @@
 {\it Description:} [Standard] Fermi-Dirac smearing temperature (in Kelvin).
 
 
-{\it Possible values:} A floating point number $v$ such that $0 \leq v \leq \text{MAX\_DOUBLE}$
+{\it Possible values:} A floating point number $v$ such that $1e-05 \leq v \leq \text{MAX\_DOUBLE}$
 \item {\it Parameter name:} {\tt TOLERANCE}
 \phantomsection\label{parameters:SCF parameters/TOLERANCE}
 \label{parameters:SCF_20parameters/TOLERANCE}
@@ -1143,6 +1143,22 @@
 
 
 {\it Possible values:} An integer $n$ such that $0\leq n \leq 300$
+\item {\it Parameter name:} {\tt SPECTRUM SPLIT CORE EIGENSTATES}
+\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/SPECTRUM SPLIT CORE EIGENSTATES}
+\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/SPECTRUM_20SPLIT_20CORE_20EIGENSTATES}
+
+
+\index[prmindex]{SPECTRUM SPLIT CORE EIGENSTATES}
+\index[prmindexfull]{SCF parameters!Eigen-solver parameters!SPECTRUM SPLIT CORE EIGENSTATES}
+
+
+{\it Default:} 0
+
+
+{\it Description:} [Standard] Number of lowest Kohn-Sham eigenstates which should not be included in the Rayleigh-Ritz projection step.  In other words, only the higher eigenstates excluding the specified core eigenstates are used to compute projected Hamiltonian and subsequently diagonalization is done on this reduced Hamiltonian. This value is usually chosen to be the sum of the number of core eigenstates for each atom type multiplied by number of atoms of that type. Recommended for large systems with greater than 5000 electrons. Default value is 0- no core eigenstates are excluded from the Rayleigh-Ritz projection step.
+
+
+{\it Possible values:} An integer $n$ such that $0\leq n \leq 2147483647$
 \item {\it Parameter name:} {\tt SUBSPACE ROT DOFS BLOCK SIZE}
 \phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/SUBSPACE ROT DOFS BLOCK SIZE}
 \label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/SUBSPACE_20ROT_20DOFS_20BLOCK_20SIZE}
