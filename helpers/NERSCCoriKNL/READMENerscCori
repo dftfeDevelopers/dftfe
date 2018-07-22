@@ -5,5 +5,7 @@ export XTPE_LINK_TYPE=dynamic
 export CRAYPE_LINK_TYPE=dynamic
 module swap craype-haswell craype-mic-knl
 module load craype-hugepages2M
+module load intel/18.0.2.199
+module load memkind
 
-Recommeneded to put the above in your bash script (except module swap craype-haswell craype-mic-knl)
+Recommeneded to put the above in your bash script
