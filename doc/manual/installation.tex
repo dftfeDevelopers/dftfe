@@ -16,7 +16,7 @@ Below, we give brief installation and/or linking instructions for each of the ab
 \begin{enumerate}
 	\item   {\bf ALGLIB}: Used by \dftfe{} for spline fitting for various radial data. Download the current release of the Alglib free C++ edition from \url{http://www.alglib.net/download.php}. After downloading and unpacking, go to \verb|cpp/src|, and create a shared library using a C++ compiler. For example, using Intel compiler do
 \begin{verbatim}
-$ icpc -c -fPIC *.cpp
+$ icpc -c -fPIC -O3 *.cpp
 $ icpc *.o -shared -o libAlglib.so
 \end{verbatim}
 \item {\bf Libxc}: Used by \dftfe{} for exchange-correlation functionals. Download the current release from \url{http://www.tddft.org/programs/libxc/download/}, and follow the recommended installation procedure (using \verb|./configure|) described in \url{http://www.tddft.org/programs/libxc/installation/}.
