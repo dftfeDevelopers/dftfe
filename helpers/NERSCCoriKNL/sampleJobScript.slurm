@@ -24,6 +24,6 @@ export OMP_PLACES=threads
 export OMP_PROC_BIND=spread
 
 
-sbcast /global/homes/d/user/dftfeProduction/build/release/real/main /tmp/main
+sbcast --compress=lz4 /global/homes/d/user/dftfeProduction/build/release/real/main /tmp/main
 
 srun -n 16384 -c 8 --cpu_bind=cores /tmp/main parameterFile.prm > output
