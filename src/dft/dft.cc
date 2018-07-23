@@ -665,6 +665,9 @@ namespace dftfe {
 					2,
 					d_phiExt,
 					d_noConstraints,
+				        d_imagePositions,
+				        d_imageIds,
+				        d_imageCharges,
 					d_localVselfs);
     computingTimerStandard.exit_section("Nuclear self-potential solve");
     computing_timer.exit_section("Nuclear self-potential solve");

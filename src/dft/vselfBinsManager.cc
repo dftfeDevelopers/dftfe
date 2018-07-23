@@ -311,15 +311,14 @@ namespace dftfe
 
     {
       d_bins.clear();
-      d_imageIdsInBins.clear();
       d_boundaryFlag.clear();
+      d_boundaryFlagOnlyChargeId.clear();
+      d_dofClosestChargeLocationMap.clear();
       d_vselfBinField.clear();
       d_closestAtomBin.clear();
       d_vselfBinConstraintMatrices.clear();
 
       d_atomLocations=atomLocations;
-      d_imagePositions=imagePositions;
-      d_imageCharges=imageCharges;
 
       const unsigned int numberImageCharges = imageIds.size();
       const unsigned int numberGlobalAtoms = atomLocations.size();
@@ -383,7 +382,7 @@ namespace dftfe
 	      pcout<<"...Adaptively set ball radius: "<< radiusAtomBallAdaptive<<std::endl;
 
 	  if (radiusAtomBallAdaptive<3.0)
-             if (dftParameters::verbosity>=1 && !dftParameters::reproducible_output)		 
+             if (dftParameters::verbosity>=1 && !dftParameters::reproducible_output)
 	        pcout<<"DFT-FE warning: Tried to adaptively determine the ball radius for nuclear self-potential solve and was found to be less than 3.0, which can detoriate the accuracy of the KSDFT groundstate energy and forces. One approach to overcome this issue is to use a larger super cell with smallest periodic dimension greater than 6.0 (twice of 3.0), assuming an orthorhombic domain. If that is not feasible, you may need more h refinement of the finite element mesh around the atoms to achieve the desired accuracy."<<std::endl;
 	  MPI_Barrier(mpi_communicator);
 
@@ -472,8 +471,10 @@ namespace dftfe
       if (dftParameters::verbosity>=2)
 	pcout<<"number bins: "<<numberBins<<std::endl;
 
-      d_imageIdsInBins.resize(numberBins);
+      std::vector<std::vector<int> > imageIdsInBins(numberBins);
       d_boundaryFlag.resize(numberBins);
+      d_boundaryFlagOnlyChargeId.resize(numberBins);
+      d_dofClosestChargeLocationMap.resize(numberBins);
       d_vselfBinField.resize(numberBins);
       d_closestAtomBin.resize(numberBins);
       d_vselfBinConstraintMatrices.resize(numberBins);
@@ -488,7 +489,7 @@ namespace dftfe
 
 	  int numberGlobalAtomsInBin = atomsInCurrentBin.size();
 
-	  std::vector<int> &imageIdsOfAtomsInCurrentBin = d_imageIdsInBins[iBin];
+	  std::vector<int> &imageIdsOfAtomsInCurrentBin = imageIdsInBins[iBin];
 	  std::vector<std::vector<double> > imagePositionsOfAtomsInCurrentBin;
 
 	  if (dftParameters::verbosity>=2)
@@ -570,21 +571,50 @@ namespace dftfe
 		      double minDistance = *minDistanceIter;
 
 		      int chargeId;
+		      int domainChargeId;
 
 		      if(minDistanceAtomId < numberGlobalAtomsInBin)
+		      {
 			chargeId = atomsInCurrentBin[minDistanceAtomId];
+			domainChargeId=chargeId;
+		      }
 		      else
+		      {
 			chargeId = imageIdsOfAtomsInCurrentBin[minDistanceAtomId-numberGlobalAtomsInBin]+numberGlobalAtoms;
+			domainChargeId=imageIds[imageIdsOfAtomsInCurrentBin[minDistanceAtomId-numberGlobalAtomsInBin]];
+		      }
 
 		      d_closestAtomBin[iBin][iterMap->first] = chargeId;
 
 		      //FIXME: These two can be moved to the outermost bin loop
 		      std::map<dealii::types::global_dof_index, int> & boundaryNodeMap = d_boundaryFlag[iBin];
+		      std::map<dealii::types::global_dof_index, int> & boundaryNodeMapOnlyChargeId
+			                                    = d_boundaryFlagOnlyChargeId[iBin];
+                      std::map<dealii::types::global_dof_index, dealii::Point<3>> & dofClosestChargeLocationMap
+		                                            = d_dofClosestChargeLocationMap[iBin];
 		      std::map<dealii::types::global_dof_index, double> & vSelfBinNodeMap = d_vselfBinField[iBin];
+
+		      if(minDistanceAtomId < numberGlobalAtomsInBin)
+		      {
+			dofClosestChargeLocationMap[iterMap->first][0] = atomLocations[chargeId][2];
+			dofClosestChargeLocationMap[iterMap->first][1] = atomLocations[chargeId][3];
+			dofClosestChargeLocationMap[iterMap->first][2] = atomLocations[chargeId][4];
+		      }
+		      else
+		      {
+			dofClosestChargeLocationMap[iterMap->first][0] =
+			    imagePositions[chargeId-numberGlobalAtoms][0];
+			dofClosestChargeLocationMap[iterMap->first][1] =
+			    imagePositions[chargeId-numberGlobalAtoms][1];
+			dofClosestChargeLocationMap[iterMap->first][2] =
+			    imagePositions[chargeId-numberGlobalAtoms][2];
+		      }
 
 		      if(minDistance < radiusAtomBallAdaptive)
 			{
 			  boundaryNodeMap[iterMap->first] = chargeId;
+			  boundaryNodeMapOnlyChargeId[iterMap->first] = domainChargeId;
+
 			  inNodes++;
 
 			  double atomCharge;
@@ -622,6 +652,7 @@ namespace dftfe
 			  const double potentialValue = -atomCharge/minDistance;
 
 			  boundaryNodeMap[iterMap->first] = -1;
+			  boundaryNodeMapOnlyChargeId[iterMap->first] = -1;
 			  vSelfBinNodeMap[iterMap->first] = potentialValue;
 			  outNodes++;
 
@@ -857,9 +888,6 @@ namespace dftfe
     const std::map<int,std::set<int> > & vselfBinsManager<FEOrder>::getAtomIdsBins() const {return d_bins;}
 
     template<unsigned int FEOrder>
-    const std::vector<std::vector<int> > & vselfBinsManager<FEOrder>::getImageIdsBins() const {return d_imageIdsInBins;}
-
-    template<unsigned int FEOrder>
     const std::vector<std::map<dealii::types::global_dof_index, int> > & vselfBinsManager<FEOrder>::getBoundaryFlagsBins() const {return d_boundaryFlag;}
 
     template<unsigned int FEOrder>
@@ -867,6 +895,9 @@ namespace dftfe
 
     template<unsigned int FEOrder>
     const std::vector<vectorType> & vselfBinsManager<FEOrder>::getVselfFieldBins() const {return d_vselfFieldBins;}
+
+    template<unsigned int FEOrder>
+    const std::map<unsigned int, unsigned int>  & vselfBinsManager<FEOrder>::getAtomIdBinIdMapLocalAllImages() const {return d_atomIdBinIdMapLocalAllImages;}
 
     template class vselfBinsManager<1>;
     template class vselfBinsManager<2>;

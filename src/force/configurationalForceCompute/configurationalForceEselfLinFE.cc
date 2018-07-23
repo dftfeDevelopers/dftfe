@@ -21,8 +21,8 @@ template<unsigned int FEOrder>
 void forceClass<FEOrder>::computeConfigurationalForceEselfLinFE()
 {
   const std::vector<std::vector<double> > & atomLocations=dftPtr->atomLocations;
-  const std::vector<std::vector<double> > & imagePositions=dftPtr->d_imagePositions;
-  const std::vector<double> & imageCharges=dftPtr->d_imageCharges;
+  const std::vector<std::vector<double> > & imagePositions=dftPtr->d_imagePositionsTrunc;
+  const std::vector<double> & imageCharges=dftPtr->d_imageChargesTrunc;
   //
   //First add configurational force contribution from the volume integral
   //

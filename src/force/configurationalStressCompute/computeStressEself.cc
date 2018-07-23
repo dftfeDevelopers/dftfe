@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Sambit Das 
+// @author Sambit Das
 //
 
 #ifdef USE_COMPLEX
@@ -27,8 +27,8 @@ void forceClass<FEOrder>::computeStressEself()
   Tensor<2,3,double> dummyTensor;
 #endif
   const std::vector<std::vector<double> > & atomLocations=dftPtr->atomLocations;
-  const std::vector<std::vector<double> > & imagePositions=dftPtr->d_imagePositions;
-  const std::vector<double> & imageCharges=dftPtr->d_imageCharges;
+  const std::vector<std::vector<double> > & imagePositions=dftPtr->d_imagePositionsTrunc;
+  const std::vector<double> & imageCharges=dftPtr->d_imageChargesTrunc;
   const unsigned int numberGlobalAtoms = atomLocations.size();
   //
   //First add configurational stress contribution from the volume integral
