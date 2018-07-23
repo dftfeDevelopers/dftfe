@@ -22,7 +22,7 @@ module load craype-hugepages2M
 export OMP_NUM_THREADS=2
 export OMP_PLACES=threads
 export OMP_PROC_BIND=spread
-
+export PMI_MMAP_SYNC_WAIT_TIME=600
 
 sbcast --compress=lz4 /global/homes/d/user/dftfeProduction/build/release/real/main /tmp/main
 
