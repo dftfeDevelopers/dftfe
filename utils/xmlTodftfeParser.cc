@@ -477,7 +477,7 @@ bool xmlTodftfeParser::outputData(const std::string & baseOutputPath)
     for (int i = 0; i < l3_count; ++i) {
         int m = -3;
         for (int j = 0; j < 7; ++j) {
-            pseudo << serial_no << " " << "1" << " " << m << std::endl;
+            pseudo << serial_no << " " << "3" << " " << m << std::endl;
             m += 1;
         }
         serial_no += 1;
