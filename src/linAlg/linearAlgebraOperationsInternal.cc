@@ -364,16 +364,22 @@ namespace dftfe
 
 	      if (BDof!=0)
 	      {
-	          dealii::Utilities::MPI::sum(rotatedVectorsMatBlock,
-					      interBandGroupComm,
-					      rotatedVectorsMatBlock);
-
 		  for (unsigned int i = 0; i <BDof; ++i)
 		      for (unsigned int j = 0; j <numberSubspaceVectors; ++j)
 			  subspaceVectorsArray.local_element(numberSubspaceVectors*(i+idof)+j)
 			      =rotatedVectorsMatBlock[i*numberSubspaceVectors+j];
 	      }
 	  }//block loop over dofs
+
+	  if (numberBandGroups>1)
+  	  {
+	    MPI_Allreduce(MPI_IN_PLACE,
+			  subspaceVectorsArray.begin(),
+			  numberSubspaceVectors*numLocalDofs,
+			  MPI_DOUBLE,
+			  MPI_SUM,
+			  interBandGroupComm);
+	  }
 #endif
 	}
 #endif
