@@ -22,17 +22,22 @@
 namespace dftfe
 {
     template<unsigned int FEOrder>
-    void vselfBinsManager<FEOrder>::solveVselfInBins(const dealii::MatrixFree<3,double> & matrix_free_data,
-	                                    const unsigned int offset,
-	                                    vectorType & phiExt,
-					    const dealii::ConstraintMatrix & phiExtConstraintMatrix,
-	                                    std::vector<std::vector<double> > & localVselfs)
+    void vselfBinsManager<FEOrder>::solveVselfInBins
+                                    (const dealii::MatrixFree<3,double> & matrix_free_data,
+	                             const unsigned int offset,
+	                             vectorType & phiExt,
+			             const dealii::ConstraintMatrix & phiExtConstraintMatrix,
+				     const std::vector<std::vector<double> > & imagePositions,
+				     const std::vector<int> & imageIds,
+				     const std::vector<double> &imageCharges,
+	                             std::vector<std::vector<double> > & localVselfs)
     {
       localVselfs.clear();
       d_vselfFieldBins.clear();
+      d_atomIdBinIdMapLocalAllImages.clear();
       //phiExt with nuclear charge
       //
-      const unsigned int numberBins = d_boundaryFlag.size();
+      const unsigned int numberBins = d_boundaryFlagOnlyChargeId.size();
       const unsigned int numberGlobalCharges = d_atomLocations.size();
 
       phiExt = 0;
@@ -93,10 +98,24 @@ namespace dftfe
 	  std::vector<int> atomsInCurrentBin(atomsInBinSet.begin(),atomsInBinSet.end());
 	  const unsigned int numberGlobalAtomsInBin = atomsInCurrentBin.size();
 
-	  std::vector<int> & imageIdsOfAtomsInCurrentBin = d_imageIdsInBins[iBin];
+	  std::vector<int> imageIdsOfAtomsInCurrentBin;
+	  std::vector<int> imageChargeIdsOfAtomsInCurrentBin;
+	  for(int index = 0; index < numberGlobalAtomsInBin; ++index)
+	    {
+	      int globalChargeIdInCurrentBin = atomsInCurrentBin[index];
+	      for(int iImageAtom = 0; iImageAtom < imageIds.size(); ++iImageAtom)
+		  if(imageIds[iImageAtom] == globalChargeIdInCurrentBin)
+		  {
+		      imageIdsOfAtomsInCurrentBin.push_back(iImageAtom);
+		      imageChargeIdsOfAtomsInCurrentBin.push_back(imageIds[iImageAtom]);
+		  }
+	    }
+
 	  const unsigned int numberImageAtomsInBin = imageIdsOfAtomsInCurrentBin.size();
 
-	  std::map<dealii::types::global_dof_index, int> & boundaryNodeMap = d_boundaryFlag[iBin];
+	  std::map<dealii::types::global_dof_index, int> & boundaryNodeMap = d_boundaryFlagOnlyChargeId[iBin];
+          std::map<dealii::types::global_dof_index, dealii::Point<3>> & dofClosestChargeLocationMap
+		                                            = d_dofClosestChargeLocationMap[iBin];
 
 	  int inNodes =0, outNodes = 0;
 	  for(iterNodalCoorMap = supportPoints.begin(); iterNodalCoorMap != supportPoints.end(); ++iterNodalCoorMap)
@@ -132,30 +151,42 @@ namespace dftfe
 			  //get the globalChargeId corresponding to iCharge in the current bin
 			  //and add numberGlobalCharges to image atomId
 			  int chargeId;
+			  unsigned int atomId;
+			  dealii::Point<3> atomCoor(0.0,0.0,0.0);
 			  if(iCharge < numberGlobalAtomsInBin)
+			  {
 			    chargeId = atomsInCurrentBin[iCharge];
+			    atomId=chargeId;
+			    atomCoor[0] = d_atomLocations[chargeId][2];
+		            atomCoor[1] = d_atomLocations[chargeId][3];
+			    atomCoor[2] = d_atomLocations[chargeId][4];
+			  }
 			  else
-			    chargeId = imageIdsOfAtomsInCurrentBin[iCharge-numberGlobalAtomsInBin]+numberGlobalCharges;
-
-			  //std::cout<<"Charge Id in BinId: "<<chargeId<<" "<<iBin<<std::endl;
-
+			  {
+			    chargeId = imageChargeIdsOfAtomsInCurrentBin[iCharge-numberGlobalAtomsInBin];
+			    atomId=imageIdsOfAtomsInCurrentBin[iCharge-numberGlobalAtomsInBin]
+				   +numberGlobalCharges;
+			    atomCoor[0]
+				= imagePositions[imageIdsOfAtomsInCurrentBin[iCharge-numberGlobalAtomsInBin]][0];
+			    atomCoor[1]
+				= imagePositions[imageIdsOfAtomsInCurrentBin[iCharge-numberGlobalAtomsInBin]][1];
+			    atomCoor[2]
+				= imagePositions[imageIdsOfAtomsInCurrentBin[iCharge-numberGlobalAtomsInBin]][2];
+			  }
 
 			  double vSelf;
-			  if(boundaryFlag == chargeId)
+			  if(boundaryFlag == chargeId
+			    && dofClosestChargeLocationMap[iterNodalCoorMap->first].distance(atomCoor)<1e-5)
 			    {
 			      vSelf = vselfBinScratch(iterNodalCoorMap->first);
 			      inNodes++;
+			      d_atomIdBinIdMapLocalAllImages[atomId]=iBin;
 			    }
 			  else
 			    {
-		              dealii::Point<3> atomCoor(0.0,0.0,0.0);
 			      double nuclearCharge;
 			      if(iCharge < numberGlobalAtomsInBin)
 				{
-				  atomCoor[0] = d_atomLocations[chargeId][2];
-				  atomCoor[1] = d_atomLocations[chargeId][3];
-				  atomCoor[2] = d_atomLocations[chargeId][4];
-
 				  if(dftParameters::isPseudopotential)
 				    nuclearCharge = d_atomLocations[chargeId][1];
 				  else
@@ -164,11 +195,8 @@ namespace dftfe
 				}
 			      else
 				{
-				  atomCoor[0] = d_imagePositions[imageIdsOfAtomsInCurrentBin[iCharge-numberGlobalAtomsInBin]][0];
-				  atomCoor[1] = d_imagePositions[imageIdsOfAtomsInCurrentBin[iCharge-numberGlobalAtomsInBin]][1];
-				  atomCoor[2] = d_imagePositions[imageIdsOfAtomsInCurrentBin[iCharge-numberGlobalAtomsInBin]][2];
-				  nuclearCharge = d_imageCharges[imageIdsOfAtomsInCurrentBin[iCharge-numberGlobalAtomsInBin]];
-
+				  nuclearCharge =
+				      imageCharges[imageIdsOfAtomsInCurrentBin[iCharge-numberGlobalAtomsInBin]];
 				}
 
 			      const double r = nodalCoor.distance(atomCoor);
