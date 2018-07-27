@@ -90,7 +90,8 @@ Download the current release version from \url{http://www.netlib.org/scalapack/#
 \end{enumerate}
 
 \subsubsection{Instructions for deal.II}
-Assuming the above dependencies (p4est, PETSc, SLEPc, and ScaLAPACK) are installed, we now briefly discuss the steps to compile and install the deal.II library linked with the above dependencies:
+Assuming the above dependencies (p4est, PETSc, SLEPc, and ScaLAPACK) are installed, we now briefly discuss the steps to compile and install deal.II library linked with the above dependencies. You need to install two variants of the deal.II library-- one variant linked with PETSc and SLEPc real scalar type installations, and the other variant linked with PETSc and SLEPc complex scalar type installations. 
+
 \begin{enumerate}
 
 \item Obtain the development version of deal.II library via
@@ -98,22 +99,28 @@ Assuming the above dependencies (p4est, PETSc, SLEPc, and ScaLAPACK) are install
 $ git clone -b workingBranch https://github.com/dftfeDevelopers/dealii.git
 \end{verbatim}
 
+\item In addition to C, C++ and Fortran compilers, MPI library, and CMake which were required to install the above dependencies, deal.II additionaly requires BOOST library. If not found externally, cmake will resort to the bundled BOOST that comes along with deal.II. Based on our experience, we recommend to use the bundled boost (enforced by unsetting/unloading external BOOST library environment paths) to avoid compilation issues.
+
 \item
 \begin{verbatim}
-$ mkdir build
-$ cd build
-$ cmake -DCMAKE_INSTALL_PREFIX=dealii_install_dir_path otherCmakeOptions ../deal.II
+$ mkdir buildReal
+$ cd buildReal
+$ cmake -DCMAKE_INSTALL_PREFIX=dealii_petscReal_install_dir_path
+        otherCmakeOptions ../deal.II
 $ make install
 \end{verbatim}
 {\bf ``otherCmakeOptions'' must include} the following options
 \begin{verbatim}
 -DDEAL_II_WITH_MPI=ON -DDEAL_II_WITH_64BIT_INDICES=ON
 -DP4EST_DIR=p4est_install_dir_path
--DDEAL_II_WITH_PETSC=ON -DDEAL_II_WITH_SLEPC=ON
+-DDEAL_II_WITH_PETSC=ON -DPETSC_DIR=petscReal_install_dir_path 
+-DDEAL_II_WITH_SLEPC=ON -DSLEPC_DIR=slepcReal_install_dir_path
 \end{verbatim}
-and LAPACK and ScaLAPACK link options (see below for example). For more information about installing deal.II library refer to \url{https://dealii.org/developer/readme.html}.  
-\end{enumerate}		
-For your reference, we here provide an example of deal.II installation, which we did on a high-performance computer (\href{https://www.tacc.utexas.edu/systems/stampede2}{STAMPEDE2}) using Intel compilers and Intel MPI library
+and LAPACK and ScaLAPACK link options (see below for example). 
+
+\item Repeat above step for installing deal.II linked with PETSc and SLEPc complex scalar type. 
+\end{enumerate}	
+ For more information about installing deal.II library refer to \url{https://dealii.org/developer/readme.html}. We also provide here an example of deal.II installation, which we did on a high-performance computer (\href{https://www.tacc.utexas.edu/systems/stampede2}{STAMPEDE2}) using Intel compilers and Intel MPI library (CXX flags used below are specific to the architecture)
 \begin{verbatim}
 $ mkdir build
 $ cd build

@@ -40,9 +40,25 @@ subsection A
 end
 \end{verbatim}
 , and indentation used in the above examples is only for readability.
-\subsection{Demo examples walkthrough}
+\subsection{Demo examples}
+Now we will walk you through a few demo examples in the \verb|/dftfe/demo/| folder. 
 \subsubsection{Example 1}
-Please follow the examples in the \verb|/dftfe/demo/| folder.
+Lets consider the first example given in the folder
+\verb|/dftfe/demo/ex1|, where we compute the pseudopotential KSDFT groundstate of Nitrogen molecule.
+There are two input parameter files-- parameterFile\_a.prm and parameterFile\_b.prm. parameterFile\_a.prm is
+for computing the KSDFT ground-state of the Nitrogen molecule without atomic relaxation while parameterFile\_b.prm involves atomic relaxation.
+Below we provide a walkthrough on setting up parameterFile\_a.prm and parameterFile\_b.prm
+\begin{verbatim}
+7    5   -1.20000000E+00   0.00000000E+00   0.00000000E+00
+7    5    1.20000000E+00   0.00000000E+00   0.00000000E+00
+\end{verbatim}
 
-\subsubsection{Example 2}
-To be written
+\begin{verbatim}
+80.0 0.0 0.0
+0.0 80.0 0.0
+0.0 0.0 80.0
+\end{verbatim}
+
+\begin{verbatim}
+7 N_ONCV_PBE-1.0.upf
+\end{verbatim}
