@@ -357,8 +357,8 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
 {
   unsigned int vertices_per_cell=GeometryInfo<C_DIM>::vertices_per_cell;
   const std::vector<std::vector<double> > & atomLocations=dftPtr->atomLocations;
-  const std::vector<std::vector<double> > & imagePositions=dftPtr->d_imagePositions;
-  const std::vector<int > & imageIds=dftPtr->d_imageIds;
+  const std::vector<std::vector<double> > & imagePositions=dftPtr->d_imagePositionsTrunc;
+  const std::vector<int > & imageIds=dftPtr->d_imageIdsTrunc;
   const int numberGlobalAtoms = atomLocations.size();
   const int numberImageCharges = imageIds.size();
   const int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;

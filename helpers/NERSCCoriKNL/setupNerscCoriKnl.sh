@@ -8,7 +8,7 @@ set -o pipefail
 # and optimization flag
 
 #Paths for external libraries
-dealiiPetscRealDir="/project/projectdirs/m2360/softwaresDFTFE/dealiiKNL/intel18.0.2_petscReal_64Bit_scalapackMpichHugepages"
+dealiiPetscRealDir="/project/projectdirs/m2360/softwaresDFTFE/dealiiKNL/intel18_petscReal_64Bit_scalapackMpichHugepages"
 dealiiPetscComplexDir="/project/projectdirs/m2360/softwaresDFTFE/dealiiKNL/intel18_petscComplex_64Bit_scalapack"
 alglibDir="/project/projectdirs/m2360/softwaresDFTFE/alglib/cpp/src"
 libxcDir="/project/projectdirs/m2360/softwaresDFTFE/libxc/install_libxc2.2.0_intel18"

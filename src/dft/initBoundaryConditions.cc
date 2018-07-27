@@ -120,9 +120,9 @@ void dftClass<FEOrder>::initBoundaryConditions(){
 	                            dofHandler,
 				    constraintsNone,
 				    atomLocations,
-				    d_imagePositions,
-				    d_imageIds,
-				    d_imageCharges,
+				    d_imagePositionsTrunc,
+				    d_imageIdsTrunc,
+				    d_imageChargesTrunc,
 				    dftParameters::radiusAtomBall);
   computing_timer.exit_section("Create atom bins");
 
