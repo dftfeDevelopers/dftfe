@@ -44,8 +44,6 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
   }
 
   const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
-  const unsigned int numberImageCharges = dftPtr->d_imageIds.size();
-  const unsigned int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
   std::map<unsigned int, std::vector<double> > forceContributionFPSPLocalGammaAtoms;
   std::map<unsigned int, std::vector<double> > forceContributionFnlGammaAtoms;
 
