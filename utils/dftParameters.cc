@@ -211,7 +211,7 @@ namespace dftParameters
 			  "[Developer] Mesh size of the base mesh on which refinement is performed. For the default value of 0.0, a heuristically determined base mesh size is used, which is good enough for most cases. Standard users do not need to tune this parameter. Units: a.u.");
 
 	prm.declare_entry("ATOM BALL RADIUS","2.0",
-			  Patterns::Double(0,3),
+			  Patterns::Double(0,9),
 			  "[Developer] Radius of ball enclosing every atom inside which the mesh size is set close to MESH SIZE AROUND ATOM. The default value of 2.0 is good enough for most cases. On rare cases, where the nonlocal pseudopotential projectors have a compact supportbeyond 2.0, a slightly larger ATOM BALL RADIUS between 2.0 to 2.5 may be required. Standard users do not need to tune this parameter. Units: a.u.");
 
 	prm.declare_entry("MESH SIZE AROUND ATOM", "1.0",

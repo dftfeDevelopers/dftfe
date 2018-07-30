@@ -95,8 +95,9 @@ void forceClass<FEOrder>::initLocalPseudoPotentialForce()
 	{
 	  //compute values for the current elements
 	  fe_values.reinit(cell);
-	  d_gradPseudoVLoc[cell->id()]=std::vector<double>(n_q_points*3);
-	  std::vector<Tensor<1,3,double> > gradPseudoValContribution(n_q_points);
+          std::vector<double> & gradPseudoVLoc=d_gradPseudoVLoc[cell->id()];
+	  gradPseudoVLoc.resize(n_q_points*3);
+	  std::vector<Tensor<1,3,double>> gradPseudoVLocAtom(n_q_points);
 	  //loop over atoms
 	  for (unsigned int n=0; n<dftPtr->atomLocations.size(); n++)
 	  {
@@ -118,21 +119,23 @@ void forceClass<FEOrder>::initLocalPseudoPotentialForce()
 		    {
 		      firstDer= (dftPtr->atomLocations[n][1])/distanceToAtom/distanceToAtom;
 		    }
-		    gradPseudoValContribution[q]=firstDer*(quadPoint-atom)/distanceToAtom;
-		    d_gradPseudoVLoc[cell->id()][q*3+0]+=gradPseudoValContribution[q][0];
-		    d_gradPseudoVLoc[cell->id()][q*3+1]+=gradPseudoValContribution[q][1];
-		    d_gradPseudoVLoc[cell->id()][q*3+2]+=gradPseudoValContribution[q][2];
+		    gradPseudoVLocAtom[q]=firstDer*(quadPoint-atom)/distanceToAtom;
+		    gradPseudoVLoc[q*3+0]+=gradPseudoVLocAtom[q][0];
+		    gradPseudoVLoc[q*3+1]+=gradPseudoVLocAtom[q][1];
+		    gradPseudoVLoc[q*3+2]+=gradPseudoVLocAtom[q][2];
 	      }//loop over quad points
-	      if (isPseudoDataInCell){
-	          d_gradPseudoVLocAtoms[n][cell->id()]=std::vector<double>(n_q_points*3);
+	      if (isPseudoDataInCell)
+	      {
+		  std::vector<double> & gradPseudoVLocAtomCell=d_gradPseudoVLocAtoms[n][cell->id()];
+	          gradPseudoVLocAtomCell.resize(n_q_points*3);
 	          for (unsigned int q = 0; q < n_q_points; ++q)
 	          {
-		    d_gradPseudoVLocAtoms[n][cell->id()][q*3+0]=gradPseudoValContribution[q][0];
-		    d_gradPseudoVLocAtoms[n][cell->id()][q*3+1]=gradPseudoValContribution[q][1];
-		    d_gradPseudoVLocAtoms[n][cell->id()][q*3+2]=gradPseudoValContribution[q][2];
+		    gradPseudoVLocAtomCell[q*3+0]=gradPseudoVLocAtom[q][0];
+		    gradPseudoVLocAtomCell[q*3+1]=gradPseudoVLocAtom[q][1];
+		    gradPseudoVLocAtomCell[q*3+2]=gradPseudoVLocAtom[q][2];
 	          }
 	      }
-	  }//loop pver atoms
+	  }//loop over atoms
 
 	  //loop over image charges
 	  for(unsigned int iImageCharge = 0; iImageCharge < numberImageCharges; ++iImageCharge)
@@ -156,18 +159,21 @@ void forceClass<FEOrder>::initLocalPseudoPotentialForce()
 		    {
 		      firstDer= (dftPtr->atomLocations[masterAtomId][1])/distanceToAtom/distanceToAtom;
 		    }
-		    gradPseudoValContribution[q]=firstDer*(quadPoint-imageAtom)/distanceToAtom;
-		    d_gradPseudoVLoc[cell->id()][q*3+0]+=gradPseudoValContribution[q][0];
-		    d_gradPseudoVLoc[cell->id()][q*3+1]+=gradPseudoValContribution[q][1];
-		    d_gradPseudoVLoc[cell->id()][q*3+2]+=gradPseudoValContribution[q][2];
+		    gradPseudoVLocAtom[q]=firstDer*(quadPoint-imageAtom)/distanceToAtom;
+		    gradPseudoVLoc[q*3+0]+=gradPseudoVLocAtom[q][0];
+		    gradPseudoVLoc[q*3+1]+=gradPseudoVLocAtom[q][1];
+		    gradPseudoVLoc[q*3+2]+=gradPseudoVLocAtom[q][2];
 	      }//loop over quad points
-	      if (isPseudoDataInCell){
-	          d_gradPseudoVLocAtoms[numberGlobalCharges+iImageCharge][cell->id()]=std::vector<double>(n_q_points*3);
+	      if (isPseudoDataInCell)
+	      {
+		  std::vector<double> & gradPseudoVLocAtomCell
+		                   =d_gradPseudoVLocAtoms[numberGlobalCharges+iImageCharge][cell->id()];
+	          gradPseudoVLocAtomCell.resize(n_q_points*3);
 	          for (unsigned int q = 0; q < n_q_points; ++q)
 	          {
-		    d_gradPseudoVLocAtoms[numberGlobalCharges+iImageCharge][cell->id()][q*3+0]=gradPseudoValContribution[q][0];
-		    d_gradPseudoVLocAtoms[numberGlobalCharges+iImageCharge][cell->id()][q*3+1]=gradPseudoValContribution[q][1];
-		    d_gradPseudoVLocAtoms[numberGlobalCharges+iImageCharge][cell->id()][q*3+2]=gradPseudoValContribution[q][2];
+		    gradPseudoVLocAtomCell[q*3+0]=gradPseudoVLocAtom[q][0];
+		    gradPseudoVLocAtomCell[q*3+1]=gradPseudoVLocAtom[q][1];
+		    gradPseudoVLocAtomCell[q*3+2]=gradPseudoVLocAtom[q][2];
 	          }
 	      }
 	   }//loop over image charges

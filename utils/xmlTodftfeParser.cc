@@ -324,7 +324,7 @@ bool xmlTodftfeParser::outputData(const std::string & baseOutputPath)
     // Output mesh_spacing
     int jl = 0;
     int jd = 0;
-    int j0 = 0;
+    int j0 = 1;
     int j1 = 0;
     int j2 = 0;
     int j3 = 0;
@@ -359,7 +359,7 @@ bool xmlTodftfeParser::outputData(const std::string & baseOutputPath)
     if(l0_vec.size() > 0) 
       {
         size_t size = l0_vec[0].size();
-        for (int i = 0; i < size; ++i) 
+        for (int i = 1; i < size; ++i) 
 	  {
             l0 << mesh[j0] << " ";
             for (int j = 0; j < l0_vec.size(); ++j) {
@@ -477,7 +477,7 @@ bool xmlTodftfeParser::outputData(const std::string & baseOutputPath)
     for (int i = 0; i < l3_count; ++i) {
         int m = -3;
         for (int j = 0; j < 7; ++j) {
-            pseudo << serial_no << " " << "1" << " " << m << std::endl;
+            pseudo << serial_no << " " << "3" << " " << m << std::endl;
             m += 1;
         }
         serial_no += 1;
