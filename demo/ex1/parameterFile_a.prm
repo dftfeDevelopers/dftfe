@@ -14,8 +14,8 @@ end
 subsection Finite element mesh parameters
   set POLYNOMIAL ORDER=4
   subsection Auto mesh generation parameters
-    set BASE MESH SIZE=10.0
-    set MESH SIZE AROUND ATOM  = 0.7
+    set BASE MESH SIZE=11.5
+    set MESH SIZE AROUND ATOM  = 0.4
   end
 end
 

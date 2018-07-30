@@ -31,7 +31,7 @@ Reading initial guess for electron-density.....
 Pseudopotential initalization....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 9 iterations.
+SCF iterations converged to the specified tolerance after: 10 iterations.
 
 Energy computations (Hartree) 
 -------------------
@@ -44,9 +44,9 @@ Absolute value of cell stress (Hartree/Bohr^3)
 0.000000  0.000000  0.000011
 ------------------------------------------------------------------------
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
-v1 : 7.596198 0.000000 0.000000
-v2 : 0.000000 7.596198 0.000000
-v3 : 0.000000 0.000000 7.596198
+v1 : 7.596193 0.000000 0.000000
+v2 : 0.000000 7.596193 0.000000
+v3 : 0.000000 0.000000 7.596193
 -----------------------------------------------------------------------------------------
 -----Fractional coordinates of atoms------ 
 AtomId 0:  0.000000 0.000000 0.000000
@@ -65,11 +65,11 @@ number of degrees of freedom: 15849
 Pseudopotential initalization....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 11 iterations.
+SCF iterations converged to the specified tolerance after: 10 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:          -8.36532520
+             Total energy:          -8.36532522
 
 Absolute value of cell stress (Hartree/Bohr^3)
 ------------------------------------------------------------------------
