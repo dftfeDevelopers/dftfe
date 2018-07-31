@@ -75,7 +75,7 @@ namespace dftfe {
 	   * @param[in] imageCharges image atoms charge values data	   *
 	   * @param[out] localVselfs peak self-potential values of atoms in the local processor
 	   */
-	  void vselfBinsManager::solveVselfInBins(const dealii::MatrixFree<3,double> & matrix_free_data,
+	  void solveVselfInBins(const dealii::MatrixFree<3,double> & matrix_free_data,
 		                                  const unsigned int offset,
 	                                          vectorType & phiExt,
 						  const dealii::ConstraintMatrix & phiExtConstraintMatrix,
@@ -85,19 +85,19 @@ namespace dftfe {
 	                                          std::vector<std::vector<double> > & localVselfs);
 
           /// get const reference map of binIds and atomIds
-	  const std::map<int,std::set<int> > & vselfBinsManager::getAtomIdsBins() const;
+	  const std::map<int,std::set<int> > & getAtomIdsBins() const;
 
 	  /// get const reference to map of global dof index and vself solve boundary flag in each bin
-	  const std::vector<std::map<dealii::types::global_dof_index, int> > & vselfBinsManager::getBoundaryFlagsBins() const;
+	  const std::vector<std::map<dealii::types::global_dof_index, int> > & getBoundaryFlagsBins() const;
 
 	  /// get const reference to map of global dof index and vself field initial value in each bin
-	  const std::vector<std::map<dealii::types::global_dof_index, int> > & vselfBinsManager::getClosestAtomIdsBins() const;
+	  const std::vector<std::map<dealii::types::global_dof_index, int> > & getClosestAtomIdsBins() const;
 
 	  /// get const reference to map of global dof index and vself field initial value in each bin
-	  const std::vector<vectorType> & vselfBinsManager::getVselfFieldBins() const;
+	  const std::vector<vectorType> & getVselfFieldBins() const;
 
 	  /// get const reference to d_atomIdBinIdMapLocalAllImages
-	  const std::map<unsigned int, unsigned int>  & vselfBinsManager::getAtomIdBinIdMapLocalAllImages() const;
+	  const std::map<unsigned int, unsigned int>  & getAtomIdBinIdMapLocalAllImages() const;
 
 
     private:
