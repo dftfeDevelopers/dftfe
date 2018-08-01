@@ -225,9 +225,9 @@ namespace dftfe {
 	 }
 
 	 const unsigned int dataSizeInBytes=sizeof(double)*totalQuadVectorSize;
-         const std::function<void(const typename dealii::parallel::distributed::Triangulation<3>::cell_iterator &cell,
+         std::function<void(const typename dealii::parallel::distributed::Triangulation<3>::cell_iterator &cell,
 		            const typename dealii::parallel::distributed::Triangulation<3>::CellStatus status,
-		            void * data)> funcSave = 
+		            void * data)> funcSave =
 				   [&](const typename dealii::parallel::distributed::Triangulation<3>::cell_iterator &cell,
 		                       const typename dealii::parallel::distributed::Triangulation<3>::CellStatus status,
 		                       void * data)
@@ -312,21 +312,21 @@ namespace dftfe {
       //will need to re-evaluated after the dealii github issue #6223 is fixed
       std::function<void(const typename dealii::parallel::distributed::Triangulation<3>::cell_iterator &cell,
 		         const typename dealii::parallel::distributed::Triangulation<3>::CellStatus status,
-		         void * data)> dummyFunc = 
+		         void * data)> dummyFunc1 =
 				   [&](const typename dealii::parallel::distributed::Triangulation<3>::cell_iterator &cell,
 		                       const typename dealii::parallel::distributed::Triangulation<3>::CellStatus status,
 		                       void * data)
-				       {};          
+				       {};
       const  unsigned int offset1 = d_parallelTriangulationMoved.register_data_attach(totalQuadVectorSize*sizeof(double),
-		                                                                      dummyFunc);
+		                                                                      dummyFunc1);
 
 
-      std::function<void(const typename dealii::parallel::distributed::Triangulation<3>::cell_iterator &cell,
-		         const typename dealii::parallel::distributed::Triangulation<3>::CellStatus status,
-		         void * data)> funcLoad = 
+      const std::function<void(const typename dealii::parallel::distributed::Triangulation<3>::cell_iterator &cell,
+		               const typename dealii::parallel::distributed::Triangulation<3>::CellStatus status,
+		               const void * data)> funcLoad =
 				   [&](const typename dealii::parallel::distributed::Triangulation<3>::cell_iterator &cell,
 		                       const typename dealii::parallel::distributed::Triangulation<3>::CellStatus status,
-		                       void * data)
+		                       const void * data)
 				       {
 					      if (cell->active() && cell->is_locally_owned())
 					      {
@@ -358,9 +358,16 @@ namespace dftfe {
      //dummy de-serialization for d_parallelTriangulationUnmoved to avoid assert fail in call to save
      //FIXME: This also needs to be re-evaluated after the dealii github issue #6223 is fixed
      const  unsigned int offset2 = d_parallelTriangulationUnmoved.register_data_attach(totalQuadVectorSize*sizeof(double),
-		                                                                       dummyFunc);
+		                                                                       dummyFunc1);
+     const std::function<void(const typename dealii::parallel::distributed::Triangulation<3>::cell_iterator &cell,
+		              const typename dealii::parallel::distributed::Triangulation<3>::CellStatus status,
+		              const void * data)> dummyFunc2 =
+				   [&](const typename dealii::parallel::distributed::Triangulation<3>::cell_iterator &cell,
+		                       const typename dealii::parallel::distributed::Triangulation<3>::CellStatus status,
+		                       const void * data)
+				       {};
      d_parallelTriangulationUnmoved.notify_ready_to_unpack(offset2,
-				                            dummyFunc);
+				                           dummyFunc2);
 
     }
 }

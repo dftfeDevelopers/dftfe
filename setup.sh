@@ -8,23 +8,23 @@ set -o pipefail
 # and optimization flag
 
 #Paths for external libraries
-dealiiPetscRealDir="/home/iancclin/dftfe/dealii_real"
-dealiiPetscComplexDir="/home/iancclin/dftfe/dealii_complex"
-alglibDir="/home/iancclin/dftfe/alglib/cpp/src"
-libxcDir="/home/iancclin/dftfe/libxc"
-spglibDir="/home/iancclin/dftfe/spglib"
-xmlIncludeDir="/home/iancclin/dftfe/libxml2/include/libxml2"
-xmlLibDir="/home/iancclin/dftfe/libxml2/lib"
+dealiiPetscRealDir="/home/vikramg/DFT-FE-softwares/softwareCentos/dealiiDev/intel_18.0.1_petscReal_avx_64bit_mklthread_scalapack"
+dealiiPetscComplexDir="/home/vikramg/DFT-FE-softwares/softwareCentos/dealiiDev/intel_18.0.1_petscComplex_avx_64bit_mklthread_scalapack"
+alglibDir="/nfs/mcfs_comp/home/rudraa/software/alglib/cpp/src"
+libxcDir="/home/vikramg/DFT-FE-softwares/softwareCentos/libxcNew/install_intel18"
+spglibDir="/home/vikramg/DFT-FE-softwares/softwareCentos/spglib"
+xmlIncludeDir="/usr/include/libxml2"
+xmlLibDir="/usr/lib64"
 
 #If you have installed dealii by linking with intel mkl library set underlying flag to "ON",
 #otherwise set it to "OFF"
-withIntelMkl=OFF
+withIntelMkl=ON
 
 #Compiler options and flags
 c_compiler=mpicc
 cxx_compiler=mpicxx
-c_flagsRelease="-O2 -fpermissive"
-cxx_flagsRelease="-O2 -fpermissive"
+c_flagsRelease=-O2
+cxx_flagsRelease=-O2
 
 #Optmization flag: 1 for optimized mode and 0 for debug mode compilation
 optimizedMode=1
