@@ -225,46 +225,50 @@ namespace dftfe {
 	 }
 
 	 const unsigned int dataSizeInBytes=sizeof(double)*totalQuadVectorSize;
-         const unsigned int offset = d_parallelTriangulationUnmoved.register_data_attach
-	          (dataSizeInBytes,
-		   [&](const typename dealii::parallel::distributed::Triangulation<3>::cell_iterator &cell,
-		       const typename dealii::parallel::distributed::Triangulation<3>::CellStatus status,
-		       void * data) -> void
-		       {
-			  if (cell->active() && cell->is_locally_owned())
-			  {
-			     Assert((*cellQuadDataContainerIn[0]).find(cell->id())!=(*cellQuadDataContainerIn[0]).end(),ExcInternalError());
+         const std::function<void(const typename dealii::parallel::distributed::Triangulation<3>::cell_iterator &cell,
+		            const typename dealii::parallel::distributed::Triangulation<3>::CellStatus status,
+		            void * data)> funcSave = 
+				   [&](const typename dealii::parallel::distributed::Triangulation<3>::cell_iterator &cell,
+		                       const typename dealii::parallel::distributed::Triangulation<3>::CellStatus status,
+		                       void * data)
+				       {
+					  if (cell->active() && cell->is_locally_owned())
+					  {
+					     Assert((*cellQuadDataContainerIn[0]).find(cell->id())!=(*cellQuadDataContainerIn[0]).end(),ExcInternalError());
 
-			     double* dataStore = reinterpret_cast<double*>(data);
+					     double* dataStore = reinterpret_cast<double*>(data);
 
-			     double tempArray[totalQuadVectorSize];
-			     unsigned int count=0;
-			     for (unsigned int i=0; i<containerSize;++i)
-	                     {
-			       const unsigned int quadVectorSize=
-			           (*cellQuadDataContainerIn[i]).begin()->second.size();
+					     double tempArray[totalQuadVectorSize];
+					     unsigned int count=0;
+					     for (unsigned int i=0; i<containerSize;++i)
+					     {
+					       const unsigned int quadVectorSize=
+						   (*cellQuadDataContainerIn[i]).begin()->second.size();
 
-                               for (unsigned int j=0; j<quadVectorSize;++j)
-			       {
-			           tempArray[count]=(*cellQuadDataContainerIn[i]).find(cell->id())->second[j];
-				   count++;
-                               }
-			     }
+					       for (unsigned int j=0; j<quadVectorSize;++j)
+					       {
+						   tempArray[count]=(*cellQuadDataContainerIn[i]).find(cell->id())->second[j];
+						   count++;
+					       }
+					     }
 
-		             std::memcpy(dataStore,
-				         &tempArray[0],
-					 dataSizeInBytes);
-			  }
-		          else
-			  {
-			     double* dataStore = reinterpret_cast<double*>(data);
-			     double tempArray[totalQuadVectorSize];
-			     std::memcpy(dataStore,
-				         &tempArray[0],
-					 dataSizeInBytes);
-			  }
-		       }
-		   );
+					     std::memcpy(dataStore,
+							 &tempArray[0],
+							 dataSizeInBytes);
+					  }
+					  else
+					  {
+					     double* dataStore = reinterpret_cast<double*>(data);
+					     double tempArray[totalQuadVectorSize];
+					     std::memcpy(dataStore,
+							 &tempArray[0],
+							 dataSizeInBytes);
+					  }
+				       };
+
+
+         const unsigned int offset = d_parallelTriangulationUnmoved.register_data_attach(dataSizeInBytes,
+		                                                                         funcSave);
 
          const std::string filename="parallelUnmovedTriaSolData.chk";
 	 if (std::ifstream(filename) && this_mpi_process==0)
@@ -306,63 +310,57 @@ namespace dftfe {
 
       //FIXME: The underlying function calls to register_data_attach to notify_ready_to_unpack
       //will need to re-evaluated after the dealii github issue #6223 is fixed
-      const  unsigned int offset1 = d_parallelTriangulationMoved.register_data_attach
-	          (totalQuadVectorSize*sizeof(double),
-		   [&](const typename dealii::parallel::distributed::Triangulation<3>::cell_iterator &cell,
-		       const typename dealii::parallel::distributed::Triangulation<3>::CellStatus status,
-		       void * data) -> void
-		       {
-		       }
-		  );
+      std::function<void(const typename dealii::parallel::distributed::Triangulation<3>::cell_iterator &cell,
+		         const typename dealii::parallel::distributed::Triangulation<3>::CellStatus status,
+		         void * data)> dummyFunc = 
+				   [&](const typename dealii::parallel::distributed::Triangulation<3>::cell_iterator &cell,
+		                       const typename dealii::parallel::distributed::Triangulation<3>::CellStatus status,
+		                       void * data)
+				       {};          
+      const  unsigned int offset1 = d_parallelTriangulationMoved.register_data_attach(totalQuadVectorSize*sizeof(double),
+		                                                                      dummyFunc);
 
-      d_parallelTriangulationMoved.notify_ready_to_unpack
-	      (offset1,[&](const typename dealii::parallel::distributed::Triangulation<3>::cell_iterator &cell,
-		     const typename dealii::parallel::distributed::Triangulation<3>::CellStatus status,
-		     const void * data) -> void
-		   {
-		      if (cell->active() && cell->is_locally_owned())
-		      {
-			 const double* dataStore = reinterpret_cast<const double*>(data);
 
-			 double tempArray[totalQuadVectorSize];
+      std::function<void(const typename dealii::parallel::distributed::Triangulation<3>::cell_iterator &cell,
+		         const typename dealii::parallel::distributed::Triangulation<3>::CellStatus status,
+		         void * data)> funcLoad = 
+				   [&](const typename dealii::parallel::distributed::Triangulation<3>::cell_iterator &cell,
+		                       const typename dealii::parallel::distributed::Triangulation<3>::CellStatus status,
+		                       void * data)
+				       {
+					      if (cell->active() && cell->is_locally_owned())
+					      {
+						 const double* dataStore = reinterpret_cast<const double*>(data);
 
-			 std::memcpy(&tempArray[0],
-				     dataStore,
-				     totalQuadVectorSize*sizeof(double));
+						 double tempArray[totalQuadVectorSize];
 
-			 unsigned int count=0;
-			 for (unsigned int i=0; i<cellQuadDataContainerOut.size();++i)
-	                 {
-			   Assert(cellDataSizeContainer[i]!=0,ExcInternalError());
-                           cellQuadDataContainerOut[i][cell->id()]=std::vector<double>(cellDataSizeContainer[i]);
-			   for (unsigned int j=0; j<cellDataSizeContainer[i];++j)
-			   {
-			       cellQuadDataContainerOut[i][cell->id()][j]=tempArray[count];
-			       count++;
-			   }
-			 }//container loop
-		      }
-		   }
-	       );
+						 std::memcpy(&tempArray[0],
+							     dataStore,
+							     totalQuadVectorSize*sizeof(double));
+
+						 unsigned int count=0;
+						 for (unsigned int i=0; i<cellQuadDataContainerOut.size();++i)
+						 {
+						   Assert(cellDataSizeContainer[i]!=0,ExcInternalError());
+						   cellQuadDataContainerOut[i][cell->id()]=std::vector<double>(cellDataSizeContainer[i]);
+						   for (unsigned int j=0; j<cellDataSizeContainer[i];++j)
+						   {
+						       cellQuadDataContainerOut[i][cell->id()][j]=tempArray[count];
+						       count++;
+						   }
+						 }//container loop
+					      }
+				     };
+
+      d_parallelTriangulationMoved.notify_ready_to_unpack(offset1,
+                                                          funcLoad);
 
      //dummy de-serialization for d_parallelTriangulationUnmoved to avoid assert fail in call to save
      //FIXME: This also needs to be re-evaluated after the dealii github issue #6223 is fixed
-     const  unsigned int offset2 = d_parallelTriangulationUnmoved.register_data_attach
-	          (totalQuadVectorSize*sizeof(double),
-		   [&](const typename dealii::parallel::distributed::Triangulation<3>::cell_iterator &cell,
-		       const typename dealii::parallel::distributed::Triangulation<3>::CellStatus status,
-		       void * data) -> void
-		       {
-		       }
-		  );
-
-      d_parallelTriangulationUnmoved.notify_ready_to_unpack
-	      (offset2,[&](const typename dealii::parallel::distributed::Triangulation<3>::cell_iterator &cell,
-		     const typename dealii::parallel::distributed::Triangulation<3>::CellStatus status,
-		     const void * data) -> void
-		   {
-		   }
-	       );
+     const  unsigned int offset2 = d_parallelTriangulationUnmoved.register_data_attach(totalQuadVectorSize*sizeof(double),
+		                                                                       dummyFunc);
+     d_parallelTriangulationUnmoved.notify_ready_to_unpack(offset2,
+				                            dummyFunc);
 
     }
 }
