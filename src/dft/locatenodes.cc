@@ -266,7 +266,7 @@ void dftClass<FEOrder>::locatePeriodicPinnedNodes(const dealii::DoFHandler<3> & 
 		  if(feNodeGlobalCoord.distance(pinnedNodeCoord) < 1.0e-5)
 		    {
 	              if (dftParameters::verbosity>=4)
-		         std::cout << "Pinned core with nodal coordinates (" << pinnedLocations[*it][0] << " " << pinnedLocations[*it][1] << " "<<pinnedLocations[*it][2]<< ") located with node id " << nodeID << " in processor " << this_mpi_process;
+		         std::cout << "Pinned core with nodal coordinates (" << pinnedLocations[*it][0] << " " << pinnedLocations[*it][1] << " "<<pinnedLocations[*it][2]<< ") located with node id " << nodeID << " in processor " << this_mpi_process<<std::endl;
 		      if (locallyRelevantDofs.is_element(nodeID))
 			{
 			  constraints.add_line(nodeID);
