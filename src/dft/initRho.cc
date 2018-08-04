@@ -564,13 +564,21 @@ void dftClass<FEOrder>::computeNodalRhoFromQuadData()
   //
   matrix_free_data.initialize_dof_vector(d_rhoNodalField,densityDofHandlerIndex);
   d_rhoNodalField=0;
+
+  std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell , 
+                       const unsigned int q)> funcRho = 
+                       [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
+                       const unsigned int q)
+                       {return (*rhoOutValues).find(cell->id())->second[q];};
+
   dealii::VectorTools::project<3,dealii::parallel::distributed::Vector<double>>
       (dealii::MappingQ1<3,3>(),
        dofHandler,
        constraintsNone,
        QGauss<3>(C_num1DQuad<FEOrder>()),
-       [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell , const unsigned int q) -> double {return (*rhoOutValues).find(cell->id())->second[q];},
+       funcRho,
        d_rhoNodalField);
+
   d_rhoNodalField.update_ghost_values();
 
 
@@ -578,24 +586,40 @@ void dftClass<FEOrder>::computeNodalRhoFromQuadData()
   {
       matrix_free_data.initialize_dof_vector(d_rhoNodalFieldSpin0,densityDofHandlerIndex);
       d_rhoNodalFieldSpin0=0;
+
+      std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell , 
+                           const unsigned int q)> funcRhoSpin0 = 
+				   [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
+				   const unsigned int q)
+				   {return (*rhoOutValuesSpinPolarized).find(cell->id())->second[2*q];};
+
       dealii::VectorTools::project<3,dealii::parallel::distributed::Vector<double>>
 	  (dealii::MappingQ1<3,3>(),
 	   dofHandler,
 	   constraintsNone,
 	   QGauss<3>(C_num1DQuad<FEOrder>()),
-	   [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell , const unsigned int q) -> double {return (*rhoOutValuesSpinPolarized).find(cell->id())->second[2*q];},
+	   funcRhoSpin0,
 	   d_rhoNodalFieldSpin0);
+
       d_rhoNodalFieldSpin0.update_ghost_values();
 
       matrix_free_data.initialize_dof_vector(d_rhoNodalFieldSpin1,densityDofHandlerIndex);
       d_rhoNodalFieldSpin1=0;
+
+      std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell , 
+                           const unsigned int q)> funcRhoSpin1 = 
+				   [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
+				   const unsigned int q)
+				   {return (*rhoOutValuesSpinPolarized).find(cell->id())->second[2*q+1];};
+
       dealii::VectorTools::project<3,dealii::parallel::distributed::Vector<double>>
 	  (dealii::MappingQ1<3,3>(),
 	   dofHandler,
 	   constraintsNone,
 	   QGauss<3>(C_num1DQuad<FEOrder>()),
-	   [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell , const unsigned int q) -> double {return (*rhoOutValuesSpinPolarized).find(cell->id())->second[2*q+1];},
+	   funcRhoSpin1,
 	   d_rhoNodalFieldSpin1);
+
       d_rhoNodalFieldSpin1.update_ghost_values();
   }
 }

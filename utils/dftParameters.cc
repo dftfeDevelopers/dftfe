@@ -211,12 +211,12 @@ namespace dftParameters
 			  "[Developer] Mesh size of the base mesh on which refinement is performed. For the default value of 0.0, a heuristically determined base mesh size is used, which is good enough for most cases. Standard users do not need to tune this parameter. Units: a.u.");
 
 	prm.declare_entry("ATOM BALL RADIUS","2.0",
-			  Patterns::Double(0,9),
-			  "[Developer] Radius of ball enclosing every atom inside which the mesh size is set close to MESH SIZE AROUND ATOM. The default value of 2.0 is good enough for most cases. On rare cases, where the nonlocal pseudopotential projectors have a compact supportbeyond 2.0, a slightly larger ATOM BALL RADIUS between 2.0 to 2.5 may be required. Standard users do not need to tune this parameter. Units: a.u.");
+			  Patterns::Double(0,20),
+			  "[Developer] Radius of ball enclosing every atom inside which the mesh size is set close to MESH SIZE AROUND ATOM. The default value of 2.0 is good enough for most cases. On rare cases, where the nonlocal pseudopotential projectors have a compact support beyond 2.0, a slightly larger ATOM BALL RADIUS between 2.0 to 2.5 may be required. Standard users do not need to tune this parameter. Units: a.u.");
 
-	prm.declare_entry("MESH SIZE AROUND ATOM", "1.0",
+	prm.declare_entry("MESH SIZE AROUND ATOM", "0.8",
 			  Patterns::Double(0.0001,10),
-			  "[Standard] Mesh size in a ball of radius ATOM BALL RADIUS around every atom. For pseudopotential calculations, a value between 0.5 to 1.0 is usually a good choice. For all-electron calculations, a value between 0.1 to 0.3 would be a good starting choice. MESH SIZE AROUND ATOM is the only parameter standard users need to tune to achieve the desired accuracy in their results with respect to the mesh refinement. Units: a.u.");
+			  "[Standard] Mesh size in a ball of radius ATOM BALL RADIUS around every atom. For pseudopotential calculations, a value between 0.5 to 1.0 is usually a good choice. For all-electron calculations, a value between 0.1 to 0.3 would be a good starting choice. In most cases, MESH SIZE AROUND ATOM is the only parameter to be tuned to achieve the desired accuracy in energy and forces with respect to the mesh refinement. Units: a.u.");
 
 	prm.declare_entry("MESH SIZE AT ATOM", "0.0",
 			  Patterns::Double(0.0,10),
@@ -309,7 +309,7 @@ namespace dftParameters
 			  Patterns::Double(1e-5),
 			  "[Standard] Fermi-Dirac smearing temperature (in Kelvin).");
 
-	prm.declare_entry("MAXIMUM ITERATIONS", "50",
+	prm.declare_entry("MAXIMUM ITERATIONS", "100",
 			  Patterns::Integer(1,1000),
 			  "[Standard] Maximum number of iterations to be allowed for SCF convergence");
 
@@ -368,9 +368,9 @@ namespace dftParameters
 			      Patterns::Bool(),
 			      "[Developer] Boolean parameter specifying whether to use gemm batch blas routines to perform matrix-matrix multiplication operations with groups of matrices, processing a number of groups at once using threads instead of the standard serial route. CAUTION: gemm batch blas routines will only be activated if the CHEBYSHEV FILTER BLOCK SIZE is less than 1000, and intel mkl blas library linked with the dealii installation. Default option is true.");
 
-	    prm.declare_entry("ORTHOGONALIZATION TYPE","PGS",
-			      Patterns::Selection("GS|LW|PGS"),
-			      "[Standard] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization using SLEPc library), LW(Lowden Orthogonalization implemented using LAPACK library, extension to use ScaLAPACK library not implemented yet), PGS(Pseudo-Gram-Schmidt Orthogonalization: if dealii library is compiled with ScaLAPACK and if you are using the real executable, parallel ScaLAPACK functions are used, otherwise serial LAPACK functions are used.) PGS is the default option.");
+	    prm.declare_entry("ORTHOGONALIZATION TYPE","Auto",
+			      Patterns::Selection("GS|LW|PGS|Auto"),
+			      "[Standard] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization using SLEPc library), LW(Lowden Orthogonalization implemented using LAPACK library, extension to use ScaLAPACK library not implemented yet), PGS(Pseudo-Gram-Schmidt Orthogonalization: if dealii library is compiled with ScaLAPACK and if you are using the real executable, parallel ScaLAPACK functions are used, otherwise serial LAPACK functions are used.) Auto is the default option, which chooses GS for all-electron case and PGS for pseudopotential case.");
 
 	    prm.declare_entry("ENABLE SWITCH TO GS", "true",
 			      Patterns::Bool(),
@@ -650,6 +650,21 @@ namespace dftParameters
 	   dftParameters::meshSizeInnerBall=dftParameters::meshSizeOuterBall;
        else
 	   dftParameters::meshSizeInnerBall=0.1*dftParameters::meshSizeOuterBall;
+
+    if (dftParameters::isPseudopotential && dftParameters::orthogType=="Auto")
+    {
+         if (dftParameters::verbosity >=1 && Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)
+	     std::cout <<"Setting ORTHOGONALIZATION TYPE=PGS for pseudopotential calculations "<<std::endl;
+	 dftParameters::orthogType="PGS";
+    }
+    else if (!dftParameters::isPseudopotential && dftParameters::orthogType=="Auto")
+    {
+         if (dftParameters::verbosity >=1 && Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)
+	     std::cout <<"Setting ORTHOGONALIZATION TYPE=GS for all-electron calculations "<<std::endl;
+	        
+	 dftParameters::orthogType="GS";
+    }
+	    
   }
 
 }
