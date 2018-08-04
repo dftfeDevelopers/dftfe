@@ -120,11 +120,11 @@ namespace dftParameters
 
 	prm.declare_entry("ATOMIC COORDINATES FILE", "",
 			  Patterns::Anything(),
-			  "[Standard] Atomic-coordinates input file name. For fully non-periodic domain give cartesian coordinates of the atoms (in a.u) with respect to origin at the center of the domain. For periodic and semi-periodic give fractional coordinates of atoms. File format (example for two atoms): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 (row2). The number of rows must be equal to NATOMS, and number of unique atoms must be equal to NATOM TYPES.");
+			  "[Standard] Atomic-coordinates input file name. For fully non-periodic domain give cartesian coordinates of the atoms (in a.u) with respect to origin at the center of the domain. For periodic and semi-periodic domain give fractional coordinates of atoms. File format (example for two atoms): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 (row2). The number of rows must be equal to NATOMS, and number of unique atoms must be equal to NATOM TYPES.");
 
 	prm.declare_entry("DOMAIN VECTORS FILE", "",
 			  Patterns::Anything(),
-			  "[Standard] Domain vectors input file name. Domain vectors describe the edges of the 3D parallelepiped computational domain. File format: v1x v1y v1z (row1), v2x v2y v2z (row2), v3x v3y v3z (row3). Units: a.u. CAUTION: please ensure that the domain vectors form a right-handed coordinate system i.e. dotProduct(crossProduct(v1,v2),v3)>0. Domain vectors are the typical lattice vectors in a fully periodic calculation.");
+			  "[Standard] Domain vectors input file name. Domain vectors describe the three edges of the 3D parallelepiped computational domain. File format: v1x v1y v1z (row1), v2x v2y v2z (row2), v3x v3y v3z (row3). Units: a.u. CAUTION: please ensure that the domain vectors form a right-handed coordinate system i.e. dotProduct(crossProduct(v1,v2),v3)>0. Domain vectors are the typical lattice vectors in a fully periodic calculation.");
 
 	prm.enter_subsection ("Optimization");
 	{
@@ -211,12 +211,12 @@ namespace dftParameters
 			  "[Developer] Mesh size of the base mesh on which refinement is performed. For the default value of 0.0, a heuristically determined base mesh size is used, which is good enough for most cases. Standard users do not need to tune this parameter. Units: a.u.");
 
 	prm.declare_entry("ATOM BALL RADIUS","2.0",
-			  Patterns::Double(0,9),
-			  "[Developer] Radius of ball enclosing every atom inside which the mesh size is set close to MESH SIZE AROUND ATOM. The default value of 2.0 is good enough for most cases. On rare cases, where the nonlocal pseudopotential projectors have a compact supportbeyond 2.0, a slightly larger ATOM BALL RADIUS between 2.0 to 2.5 may be required. Standard users do not need to tune this parameter. Units: a.u.");
+			  Patterns::Double(0,20),
+			  "[Developer] Radius of ball enclosing every atom inside which the mesh size is set close to MESH SIZE AROUND ATOM. The default value of 2.0 is good enough for most cases. On rare cases, where the nonlocal pseudopotential projectors have a compact support beyond 2.0, a slightly larger ATOM BALL RADIUS between 2.0 to 2.5 may be required. Standard users do not need to tune this parameter. Units: a.u.");
 
-	prm.declare_entry("MESH SIZE AROUND ATOM", "1.0",
+	prm.declare_entry("MESH SIZE AROUND ATOM", "0.8",
 			  Patterns::Double(0.0001,10),
-			  "[Standard] Mesh size in a ball of radius ATOM BALL RADIUS around every atom. For pseudopotential calculations, a value between 0.5 to 1.0 is usually a good choice. For all-electron calculations, a value between 0.1 to 0.3 would be a good starting choice. MESH SIZE AROUND ATOM is the only parameter standard users need to tune to achieve the desired accuracy in their results with respect to the mesh refinement. Units: a.u.");
+			  "[Standard] Mesh size in a ball of radius ATOM BALL RADIUS around every atom. For pseudopotential calculations, a value between 0.5 to 1.0 is usually a good choice. For all-electron calculations, a value between 0.1 to 0.3 would be a good starting choice. In most cases, MESH SIZE AROUND ATOM is the only parameter to be tuned to achieve the desired accuracy in energy and forces with respect to the mesh refinement. Units: a.u.");
 
 	prm.declare_entry("MESH SIZE AT ATOM", "0.0",
 			  Patterns::Double(0.0,10),
@@ -286,7 +286,7 @@ namespace dftParameters
 
 	prm.declare_entry("PSEUDOPOTENTIAL FILE NAMES LIST", "",
 			  Patterns::Anything(),
-			  "[Standard] Pseudopotential file. This file contains the list of pseudopotential file names in UPF format corresponding to the atoms involved in the calculations. UPF version greater than 2.0 and norm-conserving pseudopotentials in UPF format are only accepted. File format (example for two atoms Mg(z=12), Al(z=13)): 12 filename1.upf(row1), 13 filename2.upf (row2)");
+			  "[Standard] Pseudopotential file. This file contains the list of pseudopotential file names in UPF format corresponding to the atoms involved in the calculations. UPF version 2.0 or greater and norm-conserving pseudopotentials in UPF format are only accepted. File format (example for two atoms Mg(z=12), Al(z=13)): 12 filename1.upf(row1), 13 filename2.upf (row2)");
 
 	prm.declare_entry("EXCHANGE CORRELATION TYPE", "1",
 			  Patterns::Integer(1,4),
@@ -309,7 +309,7 @@ namespace dftParameters
 			  Patterns::Double(1e-5),
 			  "[Standard] Fermi-Dirac smearing temperature (in Kelvin).");
 
-	prm.declare_entry("MAXIMUM ITERATIONS", "50",
+	prm.declare_entry("MAXIMUM ITERATIONS", "100",
 			  Patterns::Integer(1,1000),
 			  "[Standard] Maximum number of iterations to be allowed for SCF convergence");
 
@@ -319,7 +319,7 @@ namespace dftParameters
 
 	prm.declare_entry("ANDERSON SCHEME MIXING HISTORY", "10",
 			  Patterns::Integer(1,1000),
-			  "[Standard] Number of SCF iteration history to be considered for mixing the electron-density. For metallic systems, typically a mixing history larger than the default value provides better scf convergence.");
+			  "[Standard] Number of SCF iteration history to be considered for mixing the electron-density using Anderson mixing scheme. For metallic systems, typically a mixing history larger than the default value provides better scf convergence.");
 
 	prm.declare_entry("ANDERSON SCHEME MIXING PARAMETER", "0.5",
 			  Patterns::Double(0.0,1.0),
@@ -368,9 +368,9 @@ namespace dftParameters
 			      Patterns::Bool(),
 			      "[Developer] Boolean parameter specifying whether to use gemm batch blas routines to perform matrix-matrix multiplication operations with groups of matrices, processing a number of groups at once using threads instead of the standard serial route. CAUTION: gemm batch blas routines will only be activated if the CHEBYSHEV FILTER BLOCK SIZE is less than 1000, and intel mkl blas library linked with the dealii installation. Default option is true.");
 
-	    prm.declare_entry("ORTHOGONALIZATION TYPE","PGS",
-			      Patterns::Selection("GS|LW|PGS"),
-			      "[Standard] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization using SLEPc library), LW(Lowden Orthogonalization implemented using LAPACK library, extension to use ScaLAPACK library not implemented yet), PGS(Pseudo-Gram-Schmidt Orthogonalization: if dealii library is compiled with ScaLAPACK and if you are using the real executable, parallel ScaLAPACK functions are used, otherwise serial LAPACK functions are used.) PGS is the default option.");
+	    prm.declare_entry("ORTHOGONALIZATION TYPE","Auto",
+			      Patterns::Selection("GS|LW|PGS|Auto"),
+			      "[Standard] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization using SLEPc library), LW(Lowden Orthogonalization implemented using LAPACK library, extension to use ScaLAPACK library not implemented yet), PGS(Pseudo-Gram-Schmidt Orthogonalization: if dealii library is compiled with ScaLAPACK and if you are using the real executable, parallel ScaLAPACK functions are used, otherwise serial LAPACK functions are used.) Auto is the default option, which chooses GS for all-electron case and PGS for pseudopotential case.");
 
 	    prm.declare_entry("ENABLE SWITCH TO GS", "true",
 			      Patterns::Bool(),
@@ -555,7 +555,7 @@ namespace dftParameters
      {
         std::cout << "==========================================================================================================" << std::endl ;
         std::cout << "==========================================================================================================" << std::endl ;
-        std::cout << "			Welcome to the Open Source program DFT-FE v0.5.0-pre			        " << std::endl ;
+        std::cout << "			Welcome to the Open Source program DFT-FE v0.5.0			        " << std::endl ;
         std::cout << "This is a C++ code for materials modeling from first principles using Kohn-Sham density functional theory " << std::endl ;
         std::cout << "It is based on adaptive finite-element based methodologies.		        " << std::endl ;
         std::cout << "For details and citing please refer to our website: https://sites.google.com/umich.edu/dftfe" << std::endl ;
@@ -650,6 +650,21 @@ namespace dftParameters
 	   dftParameters::meshSizeInnerBall=dftParameters::meshSizeOuterBall;
        else
 	   dftParameters::meshSizeInnerBall=0.1*dftParameters::meshSizeOuterBall;
+
+    if (dftParameters::isPseudopotential && dftParameters::orthogType=="Auto")
+    {
+         if (dftParameters::verbosity >=1 && Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)
+	     std::cout <<"Setting ORTHOGONALIZATION TYPE=PGS for pseudopotential calculations "<<std::endl;
+	 dftParameters::orthogType="PGS";
+    }
+    else if (!dftParameters::isPseudopotential && dftParameters::orthogType=="Auto")
+    {
+         if (dftParameters::verbosity >=1 && Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)
+	     std::cout <<"Setting ORTHOGONALIZATION TYPE=GS for all-electron calculations "<<std::endl;
+	        
+	 dftParameters::orthogType="GS";
+    }
+	    
   }
 
 }

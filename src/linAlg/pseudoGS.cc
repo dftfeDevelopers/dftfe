@@ -224,7 +224,7 @@ namespace dftfe
        else
        {
 	  for (unsigned int i = 0; i < numberVectors; ++i)
-	    if (std::abs(overlapMatrix[i*numberVectors])<1e-14)
+	    if (std::abs(overlapMatrix[i*numberVectors+i])<1e-14)
 	    {
 		flag=1;
 		break;

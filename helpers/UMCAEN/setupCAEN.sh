@@ -8,23 +8,23 @@ set -o pipefail
 # and optimization flag
 
 #Paths for external libraries
-dealiiPetscRealDir="/project/projectdirs/m2360/softwaresDFTFE/dealiiKNL/intel18_petscReal_64Bit_scalapackMpichHugepages"
-dealiiPetscComplexDir="/project/projectdirs/m2360/softwaresDFTFE/dealiiKNL/intel18_petscComplex_64Bit_scalapack"
-alglibDir="/project/projectdirs/m2360/softwaresDFTFE/alglib/cpp/src"
-libxcDir="/project/projectdirs/m2360/softwaresDFTFE/libxc/install_libxc2.2.0_intel18"
-spglibDir="/project/projectdirs/m2360/softwaresDFTFE/spglib"
-xmlIncludeDir="/usr/include/libxml2/libxml"
+dealiiPetscRealDir="/afs/umich.edu/user/p/h/phanim/Public/PRISMSTraining/softwares/dealii/install_dealiiReal"
+dealiiPetscComplexDir="/afs/umich.edu/user/p/h/phanim/Public/PRISMSTraining/softwares/dealii/install_dealiiComplex"
+alglibDir="/afs/umich.edu/user/p/h/phanim/Public/PRISMSTraining/softwares/alglib/cpp/src"
+libxcDir="/afs/umich.edu/user/p/h/phanim/Public/PRISMSTraining/softwares/libxc/install_libxc"
+spglibDir="/afs/umich.edu/user/p/h/phanim/Public/PRISMSTraining/softwares/spglib/install_spglib"
+xmlIncludeDir="/usr/include/libxml2"
 xmlLibDir="/usr/lib64"
 
 #If you have installed dealii by linking with intel mkl library set underlying flag to "ON",
 #otherwise set it to "OFF"
-withIntelMkl=ON
+withIntelMkl=OFF
 
 #Compiler options and flags
-c_compiler=cc
-cxx_compiler=CC
-c_flagsRelease=-O2
-cxx_flagsRelease=-O2
+c_compiler=mpicc
+cxx_compiler=mpicxx
+c_flagsRelease="-O2 -fpermissive"
+cxx_flagsRelease="-O2 -fpermissive"
 
 #Optmization flag: 1 for optimized mode and 0 for debug mode compilation
 optimizedMode=1
