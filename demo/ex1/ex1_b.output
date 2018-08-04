@@ -1,6 +1,6 @@
 ==========================================================================================================
 ==========================================================================================================
-			Welcome to the Open Source program DFT-FE v0.5.0-pre			        
+			Welcome to the Open Source program DFT-FE v0.5.0			        
 This is a C++ code for materials modeling from first principles using Kohn-Sham density functional theory 
 It is based on adaptive finite-element based methodologies.		        
 For details and citing please refer to our website: https://sites.google.com/umich.edu/dftfe

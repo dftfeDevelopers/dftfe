@@ -1191,7 +1191,7 @@ namespace dftfe {
 	else
 	{
 	    if (numEigenValuesRR!=numEigenValues && dftParameters::computeEnergyEverySCF && dftParameters::verbosity>=1)
-		pcout<<"DFT-FE Warning: energy computation is not performed at the end of each scf iteration step\n"<<"if SPECTRUM SPLIT CORE EIGENSTATES is set to a non-zero value."<< std::endl;
+		pcout<<"DFT-FE Message: energy computation is not performed at the end of each scf iteration step\n"<<"if SPECTRUM SPLIT CORE EIGENSTATES is set to a non-zero value."<< std::endl;
 	}
 
 	if (dftParameters::verbosity>=1)

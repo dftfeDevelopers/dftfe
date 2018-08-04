@@ -133,8 +133,10 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
     {
       for(unsigned int i = 0; i < numEigenValuesRR; i++)
 	{
-	  if(dftParameters::verbosity>=4)
-	      pcout<<"Spectrum split eigen value "<< std::setw(3) <<i <<": "<<eigenValuesTemp[i] <<std::endl;
+	  if(dftParameters::verbosity>=4 && numEigenValues==numEigenValuesRR)
+	      pcout<<"eigen value "<< std::setw(3) <<i <<": "<<eigenValuesTemp[i] <<std::endl;
+	  else if(dftParameters::verbosity>=4 && numEigenValues!=numEigenValuesRR)
+              pcout<<"valence eigen value "<< std::setw(3) <<i <<": "<<eigenValuesTemp[i] <<std::endl;
 
 	  eigenValuesRRSplit[kPointIndex][spinType*numEigenValuesRR + i] =  eigenValuesTemp[i];
 	}

@@ -286,7 +286,7 @@ namespace dftParameters
 
 	prm.declare_entry("PSEUDOPOTENTIAL FILE NAMES LIST", "",
 			  Patterns::Anything(),
-			  "[Standard] Pseudopotential file. This file contains the list of pseudopotential file names in UPF format corresponding to the atoms involved in the calculations. UPF version greater than 2.0 and norm-conserving pseudopotentials in UPF format are only accepted. File format (example for two atoms Mg(z=12), Al(z=13)): 12 filename1.upf(row1), 13 filename2.upf (row2)");
+			  "[Standard] Pseudopotential file. This file contains the list of pseudopotential file names in UPF format corresponding to the atoms involved in the calculations. UPF version 2.0 or greater and norm-conserving pseudopotentials in UPF format are only accepted. File format (example for two atoms Mg(z=12), Al(z=13)): 12 filename1.upf(row1), 13 filename2.upf (row2)");
 
 	prm.declare_entry("EXCHANGE CORRELATION TYPE", "1",
 			  Patterns::Integer(1,4),
@@ -319,7 +319,7 @@ namespace dftParameters
 
 	prm.declare_entry("ANDERSON SCHEME MIXING HISTORY", "10",
 			  Patterns::Integer(1,1000),
-			  "[Standard] Number of SCF iteration history to be considered for mixing the electron-density. For metallic systems, typically a mixing history larger than the default value provides better scf convergence.");
+			  "[Standard] Number of SCF iteration history to be considered for mixing the electron-density using Anderson mixing scheme. For metallic systems, typically a mixing history larger than the default value provides better scf convergence.");
 
 	prm.declare_entry("ANDERSON SCHEME MIXING PARAMETER", "0.5",
 			  Patterns::Double(0.0,1.0),
@@ -555,7 +555,7 @@ namespace dftParameters
      {
         std::cout << "==========================================================================================================" << std::endl ;
         std::cout << "==========================================================================================================" << std::endl ;
-        std::cout << "			Welcome to the Open Source program DFT-FE v0.5.0-pre			        " << std::endl ;
+        std::cout << "			Welcome to the Open Source program DFT-FE v0.5.0			        " << std::endl ;
         std::cout << "This is a C++ code for materials modeling from first principles using Kohn-Sham density functional theory " << std::endl ;
         std::cout << "It is based on adaptive finite-element based methodologies.		        " << std::endl ;
         std::cout << "For details and citing please refer to our website: https://sites.google.com/umich.edu/dftfe" << std::endl ;
