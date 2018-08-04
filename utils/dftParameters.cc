@@ -100,17 +100,21 @@ namespace dftParameters
     {
 	prm.declare_entry("CHK TYPE", "0",
 			   Patterns::Integer(0,2),
-			   "[Standard] Checkpoint type, 0(dont create any checkpoint), 1(create checkpoint for geometry optimization restart if ION OPT or CELL OPT is set to true. Currently, checkpointing and restart framework doesn't work if both ION OPT and CELL OPT are set to true- the code will throw an error if attempted.), 2(create checkpoint for scf restart. Currently, this option cannot be used if geometry optimization is being performed. The code will throw an error if this option is used in conjunction with geometry optimization.)");
+			   "[Standard] Checkpoint type, 0 (do not create any checkpoint), 1 (create checkpoint for geometry optimization restart if either ION OPT or CELL OPT is set to true. Currently, checkpointing and restart framework does not work if both ION OPT and CELL OPT are set to true simultaneously- the code will throw an error if attempted.), 2 (create checkpoint for scf restart. Currently, this option cannot be used if geometry optimization is being performed. The code will throw an error if this option is used in conjunction with geometry optimization.)");
 
 	prm.declare_entry("RESTART FROM CHK", "false",
 			   Patterns::Bool(),
-			   "[Standard] Boolean parameter specifying if the current job reads from a checkpoint. The nature of the restart corresponds to the CHK TYPE parameter. Hence, the checkpoint being read must have been created using the same value of the CHK TYPE parameter. RESTART FROM CHK is always false for CHK TYPE 0.");
+			   "[Standard] Boolean parameter specifying if the current job reads from a checkpoint. The nature of the restart corresponds to the CHK TYPE parameter. Hence, the checkpoint being read must have been created using the CHK TYPE parameter before using this option. RESTART FROM CHK is always false for CHK TYPE 0.");
     }
     prm.leave_subsection ();
 
     prm.enter_subsection ("Geometry");
     {
-        prm.declare_entry("NATOMS", "0",
+	prm.declare_entry("ATOMIC COORDINATES FILE", "",
+			  Patterns::Anything(),
+			  "[Standard] Atomic-coordinates input file name. For fully non-periodic domain give cartesian coordinates of the atoms (in a.u) with respect to origin at the center of the domain. For periodic and semi-periodic domain give fractional coordinates of atoms. File format (example for two atoms): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 (row2). The number of rows must be equal to NATOMS, and number of unique atoms must be equal to NATOM TYPES.");
+
+	prm.declare_entry("NATOMS", "0",
                         Patterns::Integer(0),
                        "[Standard] Total number of atoms. This parameter requires a mandatory non-zero input which is equal to the number of rows in the file passed to ATOMIC COORDINATES FILE.");
 
@@ -118,13 +122,9 @@ namespace dftParameters
                         Patterns::Integer(0),
                        "[Standard] Total number of atom types. This parameter requires a mandatory non-zero input which is equal to the number of unique atom types in the file passed to ATOMIC COORDINATES FILE.");
 
-	prm.declare_entry("ATOMIC COORDINATES FILE", "",
-			  Patterns::Anything(),
-			  "[Standard] Atomic-coordinates input file name. For fully non-periodic domain give cartesian coordinates of the atoms (in a.u) with respect to origin at the center of the domain. For periodic and semi-periodic domain give fractional coordinates of atoms. File format (example for two atoms): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 (row2). The number of rows must be equal to NATOMS, and number of unique atoms must be equal to NATOM TYPES.");
-
 	prm.declare_entry("DOMAIN VECTORS FILE", "",
 			  Patterns::Anything(),
-			  "[Standard] Domain vectors input file name. Domain vectors describe the three edges of the 3D parallelepiped computational domain. File format: v1x v1y v1z (row1), v2x v2y v2z (row2), v3x v3y v3z (row3). Units: a.u. CAUTION: please ensure that the domain vectors form a right-handed coordinate system i.e. dotProduct(crossProduct(v1,v2),v3)>0. Domain vectors are the typical lattice vectors in a fully periodic calculation.");
+			  "[Standard] Domain vectors input file name. Domain vectors are the vectors bounding the three edges of the 3D parallelepiped computational domain. File format: v1x v1y v1z (row1), v2x v2y v2z (row2), v3x v3y v3z (row3). Units: a.u. CAUTION: please ensure that the domain vectors form a right-handed coordinate system i.e. dotProduct(crossProduct(v1,v2),v3)>0. Domain vectors are the typical lattice vectors in a fully periodic calculation.");
 
 	prm.enter_subsection ("Optimization");
 	{
@@ -135,7 +135,7 @@ namespace dftParameters
 
 	    prm.declare_entry("NON SELF CONSISTENT FORCE", "false",
 			      Patterns::Bool(),
-			      "[Developer] Boolean parameter specfiying whether to add the force terms arising due to the non self-consistency error. Currently non self-consistent force computation is still in developmental phase. The default option is false.");
+			      "[Developer] Boolean parameter specfiying whether to include the force contributions arising out of non self-consistency in the Kohn-Sham ground-state calculation. Currently non self-consistent force computation is still in experimental phase. The default option is false.");
 
 	    prm.declare_entry("ION OPT", "false",
 			      Patterns::Bool(),
@@ -147,7 +147,7 @@ namespace dftParameters
 
 	    prm.declare_entry("ION RELAX FLAGS FILE", "",
 			      Patterns::Anything(),
-			      "[Standard] File specifying the atomic position update permission flags. 1- update 0- no update. File format (example for two atoms with atom 1 fixed and atom 2 free): 0 0 0 (row1), 1 1 1 (row2).");
+			      "[Standard] File specifying the atomic position update permission flags (1-free to move, 0-fixed) for each coordinate axes and for all atoms. File format (example for two atoms with atom 1 fixed and atom 2 free): 0 0 0 (row1), 1 1 1 (row2).");
 
 	    prm.declare_entry("CELL STRESS", "false",
 			      Patterns::Bool(),
