@@ -78,10 +78,10 @@ namespace dftfe {
 	/// function needed by dealii to mimic SparseMatrix
         virtual bool operator!= (double val) const =0;
 
-     protected:
+     //protected:
 
 	 /// typedef declaration needed by dealii
-	 typedef dealii::types::global_dof_index size_type;
+	typedef dealii::types::global_dof_index size_type;
     };
 
 }
