@@ -88,11 +88,11 @@ namespace dftParameters
     {
 	prm.declare_entry("NPKPT", "1",
 			  Patterns::Integer(1),
-			  "[Standard] Number of groups of MPI processors across which the work load of the irreducible k-points is parallelised. NPKPT times NPBAND must be a divisor of total number of MPI tasks. Further, NPKPT must be less than or equal to the number of irreducible k-points.");
+			  "[Standard] Number of groups of MPI tasks across which the work load of the irreducible k-points is parallelised. NPKPT times NPBAND must be a divisor of total number of MPI tasks. Further, NPKPT must be less than or equal to the number of irreducible k-points.");
 
 	prm.declare_entry("NPBAND", "1",
 			   Patterns::Integer(1),
-			   "[Standard] Number of groups of MPI processors across which the work load of the bands is parallelised. NPKPT times NPBAND must be a divisor of total number of MPI tasks. Further, NPBAND must be less than or equal to NUMBER OF KOHN-SHAM WAVEFUNCTIONS.");
+			   "[Standard] Number of groups of MPI tasks across which the work load of the bands is parallelised. NPKPT times NPBAND must be a divisor of total number of MPI tasks. Further, NPBAND must be less than or equal to NUMBER OF KOHN-SHAM WAVEFUNCTIONS.");
     }
     prm.leave_subsection ();
 
