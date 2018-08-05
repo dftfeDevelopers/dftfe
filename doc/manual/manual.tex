@@ -4,7 +4,7 @@
 \usepackage{lmodern}
 \usepackage{amsmath}
 \usepackage{amsfonts}
-\usepackage{subfigure}
+\usepackage{subcaption}
 \usepackage{textpos}
 
 % use a larger page size; otherwise, it is difficult to have complete
@@ -136,7 +136,7 @@
 \hfill{\Huge \fontfamily{\sfdefault}\selectfont User Manual \\
 \raggedleft \huge \fontfamily{\sfdefault}\selectfont Version
 % keep the following line as is so that we can replace this using a script:
-0.5.0-pre %VERSION-INFO%
+0.5.0 %VERSION-INFO%
 \\\large(generated \today)\\
 \vspace{1.5em}
 {\Large Sambit Das\,\\Vikram Gavini\,\\Phani Motamarri\\}
@@ -196,7 +196,7 @@ Copyright (c) 2017-2018 The Regents of the University of Michigan and \hyperref[
 \input{rundftfe}
 
 
-\section{Future plans for \dftfe}
+\section{Future extensions to \dftfe}
 \label{sec:future}
 \input{futurePlans}
 
@@ -211,9 +211,8 @@ Copyright (c) 2017-2018 The Regents of the University of Michigan and \hyperref[
 
 \section{Run-time input parameters}
 \label{sec:parameters}
-The underlying description of the input parameters also includes a ``Standard/Developer'' label, which signifies whether an input parameter is
-a standard one, or is an expert level one for development purposes. The default values of the development level parameters are good enough
-for almost all cases. For user convenience,
+The underlying description of the input parameters also includes a ``Standard/Advanced/Developer'' label, which signifies whether an input parameter is
+a standard one, or an advanced level parameter, or a developer level one only meant for development purposes. The default values of the ``Advanced'' and ``Developer'' labelled parameters are good enough for almost all cases. However, in some cases user may need to use ``Advanced'' labelled parameters. For user convenience,
 all input parameters are also indexed at the end of this manual in Section~\ref{sec:runtime-parameter-index-full}.
 % now include a file that describes all currently available run-time parameters
 \input{parameters}

@@ -19,7 +19,16 @@ Below, we give brief installation and/or linking instructions for each of the ab
 $ icpc -c -fPIC -O3 *.cpp
 $ icpc *.o -shared -o libAlglib.so
 \end{verbatim}
-\item {\bf Libxc}: Used by \dftfe{} for exchange-correlation functionals. Download the current release from \url{http://www.tddft.org/programs/libxc/download/}, and follow the recommended installation procedure (using \verb|./configure|) described in \url{http://www.tddft.org/programs/libxc/installation/}.
+\item {\bf Libxc}: Used by \dftfe{} for exchange-correlation functionals. Download the current release from \url{http://www.tddft.org/programs/libxc/download/}, and do 
+\begin{verbatim}
+$ ./configure --prefix=libxc_install_dir_path
+              CC=c_compiler CXX=c++_compiler FC=fortran_compiler
+	      CFLAGS=-fPIC FCFLAGS=-fPIC
+     
+$ make
+$ make install
+\end{verbatim}
+Do not forget to replace \verb|libxc_install_dir_path| by some appropriate path on your file system and make sure that you have write permissions. Also replace \verb|c_compiler, c++_compiler| and \verb|fortran_compiler| with compilers on your system.
 
 \item {\bf spglib}: Used by \dftfe{} to find crystal symmetries. To install spglib, first obtain the development version of spglib from their github repository by
 \begin{verbatim}
@@ -27,16 +36,21 @@ $ git clone https://github.com/atztogo/spglib.git
 \end{verbatim}	
 and next follow the ``Compiling using cmake'' installation procedure described in \url{https://atztogo.github.io/spglib/install.html}.   	
 
-\item {\bf Libxml2}: Libxml2 is used by \dftfe{} to read \verb|.xml| files. Most likely, Libxml2 might be already installed in the high-performance computer you are working with. It is usually installed in the default locations like \verb|/usr/lib64| (library path) and \verb|/usr/include/libxml2| (include path). Libxml2 can also be installed by doing
+\item {\bf Libxml2}: Libxml2 is used by \dftfe{} to read \verb|.xml| files. Most likely, Libxml2 might be already installed in the high-performance computer you are working with. It is usually installed in the default locations like \verb|/usr/lib64| (library path which contains \verb|.so| file for Libxml2, something like \verb|libxml2.so.2|) and \verb|/usr/include/libxml2| (include path). 
+
+Libxml2 can also be installed by doing (Do not use these instructions if you have already have Libxml2 on your system)
 \begin{verbatim}
-$ git clone git://git.gnome.org/libxml2	
+$ git clone git://git.gnome.org/libxml2
+$ ./autogen.sh --prefix=Libxml_install_dir_path
+$ make
+$ make install 
 \end{verbatim}
-and following the installation instructions in the README.
+There might be errors complaining that it can not create regular file libxml2.py in /usr/lib/python2.7/site-packages, but that should not matter.
 \end{enumerate}
 
 \subsubsection{Instructions for deal.II's dependencies-- p4est, PETSc, SLEPc, and ScaLAPACK}
 \begin{enumerate}
-	\item   {\bf p4est}: This library is used by deal.II to create and distribute finite-element meshes across multiple processors. Download the current release tarball of p4est from \url{http://www.p4est.org/}. Also download the script-- \href{https://github.com/dftfeDevelopers/dftfe/raw/manual/p4est-setup.sh}{p4est-setup.sh}, to automatically compile and install a debug and optimized version of p4est. To install using the script, do
+	\item   {\bf p4est}: This library is used by deal.II to create and distribute finite-element meshes across multiple processors. Download the current release tarball of p4est from \url{http://www.p4est.org/}. Also download the script from \url{https://github.com/dftfeDevelopers/dftfe/raw/manual/p4est-setup.sh} if using Intel compilers, or from \url{https://dealii.org/developer/external-libs/p4est.html} if using GCC compilers. Use the script to automatically compile and install a debug and optimized version of p4est by doing
 \begin{verbatim}
 $ chmod u+x p4est-setup.sh
 $ ./p4est-setup.sh p4est-x-y-z.tar.gz p4est_install_dir_path
@@ -47,7 +61,7 @@ $ ./p4est-setup.sh p4est-x-y-z.tar.gz p4est_install_dir_path
 Below, we show an example installation for the real scalar type variant. 
 This example should be used only as a reference.
 \begin{verbatim}
-$ ./configure --prefix=petsc_install_dir_path --with-debugging=no 
+$ ./configure --prefix=petscReal_install_dir_path --with-debugging=no 
               --with-64-bit-indices=true --with-cc=c_compiler
               --with-cxx=c++_compiler --with-fc=fortran_compiler
               --with-blas-lapack-lib=(optimized BLAS-LAPACK library path) 
@@ -61,7 +75,7 @@ $ make PETSC_DIR=prompted by PETSc
        PETSC_ARCH=prompted by PETSc
        install
 \end{verbatim}
-For the complex installation variant, the only change is adding  \verb|--with-scalar-type=complex| to the configuration step above (\verb|./configure|).
+For the complex installation variant, unpack a fresh PETSc directory from the tarball and repeat the above steps with the only changes being adding  \verb|--with-scalar-type=complex| and \verb|--with-clanguage=cxx| to the configuration step (\verb|./configure|) as well as providing a new installation path to \verb|--prefix|.
 
 Please notice that we have used place holders for values of some of the above configuration flags. You have to use the correct values specific to the compilers and MPI libraries you are working with. Also make sure to follow compiling recommendations for the high-performance computer you are compiling on. For example, if using Intel compilers and Intel MKL for BLAS-LAPACK, it is {\bf very important} to use \href{https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor}{Intel MKL Link Line Advisor} to set the appropriate path for ``\verb|--with-blas-lapack-lib=|''. It can be something like
 \begin{verbatim}
@@ -72,7 +86,17 @@ Please notice that we have used place holders for values of some of the above co
   -liomp5 -lpthread -lm -ldl" 
 \end{verbatim}
 
-\item {\bf SLEPc}: The SLEPc library is built on top of PETSc, and it is used in DFT-FE for Gram-Schmidt Orthogonalization. To install SLEPc, first download the current release tarball from \url{http://slepc.upv.es/download/}, and then follow the installation procedure described in \url{http://slepc.upv.es/documentation/instal.htm}. {\bf Important: } SLEPc installation requires PETSc to be installed first. You also need to create two separate SLEPc installations- one for PETSc installed with \\\verb|--with-scalar-type=real|, and the second for PETSc installed with \verb|--with-scalar-type=complex|.
+\item {\bf SLEPc}: The SLEPc library is built on top of PETSc, and it is used in DFT-FE for Gram-Schmidt Orthogonalization. To install SLEPc, first download the current release tarball from \url{http://slepc.upv.es/download/}, and then follow the installation procedure described in \url{http://slepc.upv.es/documentation/instal.htm}. {\bf Important: } SLEPc installation requires PETSc to be installed first. You also need to create two separate SLEPc installations- one for PETSc installed with \\\verb|--with-scalar-type=real|, and the second for PETSc installed with \verb|--with-scalar-type=complex|. 
+	
+For your reference you provide here an example installation of SLEPc for real scalar type
+\begin{verbatim}
+$ export PETSC_DIR=petscReal_install_dir_path
+$ unset PETSC_ARCH
+$ cd downloaded_slepc_dir
+$ ./configure --prefix=slepcReal_install_dir_path
+$ make
+$ make install
+\end{verbatim}
 
 \item {\bf ScaLAPACK}: ScaLAPACK library is used by DFT-FE via deal.II for its parallel linear algebra routines involving dense matrices. ScaLAPACK is already installed in most high-performance computers. For example, in case of Intel MKL, linking to pre-installed ScaLAPACK libraries would be something like (obtained via \href{https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor}{Intel MKL Link Line Advisor})
 \begin{verbatim}
@@ -85,35 +109,42 @@ ${MKLROOT}/lib/intel64/libmkl_blacs_openmpi_lp64.so
 \end{verbatim}
 
 {\bf Installing ScaLAPACK from scratch}\\
-Do not use these instructions if you already have pre-installed ScaLAPACK libraries on you high-performance computer.
+Do not use these instructions if you already have pre-installed ScaLAPACK libraries on your high-performance computer.
 Download the current release version from \url{http://www.netlib.org/scalapack/#\_software}, and build a shared library (use \verb|BUILD_SHARED_LIBS=ON| and \verb|BUILD_STATIC_LIBS=OFF|  during the cmake configuration) installation of ScaLAPACK using cmake. BLACS library, which is required for linking to Intel MKL ScaLAPACK, is not required to be installed separately as it is compiled along with the ScaLAPACK library. Hence you just have to link to\\ \verb|/your_scalapack_installation_dir/lib/libscalapack.so| for using the ScaLAPACK library. For best performance, ScaLAPACK must be linked to optimized BLAS-LAPACK libraries by using\\ \verb|USE_OPTIMIZED_LAPACK_BLAS=ON|, and providing external paths to BLAS-LAPACK during the cmake configuration.   	
 \end{enumerate}
 
 \subsubsection{Instructions for deal.II}
-Assuming the above dependencies (p4est, PETSc, SLEPc, and ScaLAPACK) are installed, we now briefly discuss the steps to compile and install the deal.II library linked with the above dependencies:
+Assuming the above dependencies (p4est, PETSc, SLEPc, and ScaLAPACK) are installed, we now briefly discuss the steps to compile and install deal.II library linked with the above dependencies. You need to install two variants of the deal.II library-- one variant linked with real scalar type PETSc and SLEPc installations, and the other variant linked with complex scalar type PETSc and SLEPc installations. 
+
 \begin{enumerate}
 
 \item Obtain the development version of deal.II library via
 \begin{verbatim}
-$ git clone -b workingBranch https://github.com/dftfeDevelopers/dealii.git
+$ git clone -b dealiiStable https://github.com/dftfeDevelopers/dealii.git
 \end{verbatim}
+
+\item In addition to requiring C, C++ and Fortran compilers, MPI library, and CMake, deal.II additionaly requires BOOST library. If not found externally, cmake will resort to the bundled BOOST that comes along with deal.II. Based on our experience, we recommend to use the bundled boost (enforced by unsetting/unloading external BOOST library environment paths) to avoid compilation issues.
 
 \item
 \begin{verbatim}
-$ mkdir build
-$ cd build
-$ cmake -DCMAKE_INSTALL_PREFIX=dealii_install_dir_path otherCmakeOptions ../deal.II
+$ mkdir buildReal
+$ cd buildReal
+$ cmake -DCMAKE_INSTALL_PREFIX=dealii_petscReal_install_dir_path
+        otherCmakeOptions ../deal.II
 $ make install
 \end{verbatim}
 {\bf ``otherCmakeOptions'' must include} the following options
 \begin{verbatim}
 -DDEAL_II_WITH_MPI=ON -DDEAL_II_WITH_64BIT_INDICES=ON
--DP4EST_DIR=p4est_install_dir_path
--DDEAL_II_WITH_PETSC=ON -DDEAL_II_WITH_SLEPC=ON
+-DDEAL_II_WITH_P4EST=ON -DP4EST_DIR=p4est_install_dir_path
+-DDEAL_II_WITH_PETSC=ON -DPETSC_DIR=petscReal_install_dir_path 
+-DDEAL_II_WITH_SLEPC=ON -DSLEPC_DIR=slepcReal_install_dir_path
 \end{verbatim}
-and LAPACK and ScaLAPACK link options (see below for example). For more information about installing deal.II library refer to \url{https://dealii.org/developer/readme.html}.  
-\end{enumerate}		
-For your reference, we here provide an example of deal.II installation, which we did on a high-performance computer (\href{https://www.tacc.utexas.edu/systems/stampede2}{STAMPEDE2}) using Intel compilers and Intel MPI library
+and LAPACK and ScaLAPACK link options (see below for example). 
+
+\item Repeat above step for installing deal.II linked with complex scalar type PETSc and SLEPc installations. 
+\end{enumerate}	
+ For more information about installing deal.II library refer to \url{https://dealii.org/developer/readme.html}. We also provide here an example of deal.II installation, which we did on a high-performance computer (\href{https://www.tacc.utexas.edu/systems/stampede2}{STAMPEDE2}) using Intel compilers and Intel MPI library (CXX flags used below are specific to the architecture)
 \begin{verbatim}
 $ mkdir build
 $ cd build
@@ -121,6 +152,7 @@ $ cmake -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx
   -DCMAKE_Fortran_COMPILER=mpif90 -DDEAL_II_CXX_FLAGS_RELEASE=-xMIC-AVX512 
   -DDEAL_II_CXX_FLAGS_DEBUG=-xMIC-AVX512  -DDEAL_II_COMPONENT_EXAMPLES=OFF
   -DDEAL_II_WITH_MPI=ON -DDEAL_II_WITH_64BIT_INDICES=ON
+  -DDEAL_II_WITH_P4EST=ON
   -DP4EST_DIR=p4est_install_dir_path
   -DDEAL_II_WITH_PETSC=ON 
   -DPETSC_DIR=petsc_install_dir_path
@@ -139,7 +171,9 @@ $ cmake -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx
 $ make -j 8
 $ make install
 \end{verbatim}
-The values for \verb|-DLAPACK_DIR|,\verb|-DLAPACK_LIBRARIES|, \verb|-DLAPACK_LINKER_FLAGS|,\verb|-DSCALAPACK_DIR|, and\\ \verb|-DSCALAPACK_LIBRARIES| were obtained with the help of \href{https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor}{Intel MKL Link Line Advisor}. Note that in the above procedure one is installing the development version of deal.II library and this version is continuously updated by deal.II developers, which can sometimes lead to installation issues on certain compilers. If you face any issues during the installation procedure of deal.II development version as explained above, you may alternatively obtain the current release version of deal.II by downloading and unpacking the .tar.gz file from \url{https://www.dealii.org/download.html} and following the same procedure as above. If you still face installation issues, and/or if you have any questions about the deal.II installation, please contact the deal.II developers at \href{https://groups.google.com/d/forum/dealii}{deal.II mailing lists}.\\
+The values for \verb|-DLAPACK_DIR|,\verb|-DLAPACK_LIBRARIES|, \verb|-DLAPACK_LINKER_FLAGS|,\verb|-DSCALAPACK_DIR|, and\\ \verb|-DSCALAPACK_LIBRARIES| were obtained with the help of \href{https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor}{Intel MKL Link Line Advisor}.\\ 
+
+%Note that in the above procedure one is installing the development version of deal.II library and this version is continuously updated by deal.II developers, which can sometimes lead to installation issues on certain compilers. If you face any issues during the installation procedure of deal.II development version as explained above, you may alternatively obtain the current release version of deal.II by downloading and unpacking the .tar.gz file from \url{https://www.dealii.org/download.html} and following the same procedure as above. If you still face installation issues, and/or if you have any questions about the deal.II installation, please contact the deal.II developers at \href{https://groups.google.com/d/forum/dealii}{deal.II mailing lists}.\\
 
 {\bf Using AVX, AVX-512 instructions in deal.II:}\\
 deal.II compilation will automatically try to pick the available vector instructions on the sytem like SSE2, AVX and AVX-512, and generate the following output message during compilation   
@@ -159,9 +193,11 @@ Ensuring that deal.II picks up AVX-512 is strongly recommended for obtaining max
 
 \subsubsection{Important generic instructions for deal.II and its dependencies}
 \begin{itemize}
-\item If using Intel MKL for BLAS-LAPACK library, it is {\bf very important} to use \href{https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor}{Intel MKL Link Line Advisor} to set correctly link with BLAS-LAPACK library as needed in installations of PETSc, ScaLAPACK, and deal.II. To exploit performance benefit from threads, we recommend (strongly recommended for the new Intel Xeon Phi (KNL) and Skylane processors) linking to threaded versions of Intel MKL libraries by using the options ``threading layer'' and  ``OpenMP library'' in \href{https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor}{Intel MKL Link Line Advisor}. 
+\item If using Intel MKL for BLAS-LAPACK library, it is {\bf very important} to use \href{https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor}{Intel MKL Link Line Advisor} to set correctly link with BLAS-LAPACK library as needed in installations of PETSc, ScaLAPACK, and deal.II. To exploit performance benefit from threads, we recommend (strongly recommended for the new Intel Xeon Phi (KNL) and Skylane processors) linking to threaded versions of Intel MKL libraries by using the options ``threading layer'' and  ``OpenMP library'' in \href{https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor}{Intel MKL Link Line Advisor}.
 
-\item \textcolor{red}{\bf CAUTION! It is  very important to ensure that deal.II and its dependencies (p4est, PETSc, SLEPc, and ScaLAPACK), are compiled with the same compilers, BLAS-LAPACK libraries (except for p4est), and MPI libraries to prevent deal.II compilation issues, occurence of run time crashes, and \dftfe{} performance degradation.}  
+\item Use \verb|-fPIC| compiler flag for compilation of deal.II and its dependencies, to prevent linking errors during \dftfe{} compilation.	
+
+\item \textcolor{red}{\bf CAUTION! It is  very important to ensure that deal.II and its dependencies (p4est, PETSc, SLEPc, and ScaLAPACK), are compiled with the same compilers, BLAS-LAPACK libraries, and MPI libraries to prevent deal.II compilation issues, occurence of run time crashes, and \dftfe{} performance degradation.}  
 \end{itemize}
 
 \subsection{Obtaining and Compiling \dftfe{}}
@@ -173,32 +209,31 @@ $ git clone -b release https://github.com/dftfeDevelopers/dftfe.git
 $ cd dftfe
 \end{verbatim}
 Do \verb|git pull| in the \verb|dftfe| directory any time to obtain new patches that have been added since your \verb|git clone| or last \verb|git pull|.
-If you are not familiar with Git, you may download from the current release \href{https://www.google.com/url?q=https%3A%2F%2Fgithub.com%2FdftfeDevelopers%2Fdftfe%2Farchive%2Fv0.5.0-pre.tar.gz&sa=D&sntz=1&usg=AFQjCNGict_QL7ffoe1ccR3wpMV96SvVCw}{tarball}, but downloading via Git is recommended to avail new patches seamlessly. 
+If you are not familiar with Git, you may download the current release tarball from the \href{https://sites.google.com/umich.edu/dftfe/download}{Downloads} page in our website, but downloading via Git is recommended to avail new patches seamlessly. 
 
-{\bf Obtaining previous releases:} (Skip this part if you are using the current release version)
-\begin{enumerate}
-\item
-\begin{verbatim}
-$ git clone https://github.com/dftfeDevelopers/dftfe.git 
-$ cd dftfe
-\end{verbatim}
 
-\item To get the list of all release tags (current and previous releases) do
-\begin{verbatim}
-$ git tag -l
-\end{verbatim}
+%{\bf Obtaining previous releases:} (Skip this part if you are using the current release version)
+%\begin{enumerate}
+%\item
+%\begin{verbatim}
+%$ git clone https://github.com/dftfeDevelopers/dftfe.git 
+%$ cd dftfe
+%\end{verbatim}
 
-\item
-Choose the desired release tag name and do
-\begin{verbatim}
-$ git checkout tags/<tag_name> 
-\end{verbatim}
-\end{enumerate}
-Alternatively, you could download the appropriate tarball from \href{https://github.com/dftfeDevelopers/dftfe/releases}{github-releases}.
+%\item To get the list of all release tags (current and previous releases) do
+%\begin{verbatim}
+%$ git tag -l
+%\end{verbatim}
 
-\item Set paths to external libraries (deal.II, ALGLIB, Libxc, spglib, and Libxml2), compiler options, and compiler flags in \verb|setup.sh|, which is a script to compile \dftfe{} using cmake. For your reference, a few example \verb|setup.sh| scripts are provided in the \verb|/helpers| folder. 
-	
-Please make sure to set \verb|withIntelMkl=ON| in setup.sh if you have installed deal.II by linking with Intel MKL library, otherwise set it to \verb|OFF|. 
+%\item
+%Choose the desired release tag name and do
+%\begin{verbatim}
+%$ git checkout tags/<tag_name> 
+%\end{verbatim}
+%\end{enumerate}
+%Alternatively, you could download the appropriate tarball from \href{https://github.com/dftfeDevelopers/dftfe/releases}{github-releases}.
+
+\item Set paths to external libraries (deal.II, ALGLIB, Libxc, spglib, and Libxml2), compiler options, and compiler flags in \verb|setup.sh|, which is a script to compile \dftfe{} using cmake. For your reference, a few example \verb|setup.sh| scripts are provided in the \verb|/helpers| folder. If you are using GCC compilers, please add \verb|-fpermissive| to the compiler flags. Also if you have installed deal.II by linking with Intel MKL library, set \verb|withIntelMkl=ON| in setup.sh , otherwise set it to \verb|OFF|. 
 
 \item To compile \dftfe{} in release mode (the fast version), set \verb|optimizedFlag=1| in \verb|setup.sh| and do
 \begin{verbatim}
