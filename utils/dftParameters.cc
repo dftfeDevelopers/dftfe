@@ -112,7 +112,7 @@ namespace dftParameters
     {
 	prm.declare_entry("ATOMIC COORDINATES FILE", "",
 			  Patterns::Anything(),
-			  "[Standard] Atomic-coordinates input file name. For fully non-periodic domain give cartesian coordinates of the atoms (in a.u) with respect to origin at the center of the domain. For periodic and semi-periodic domain give fractional coordinates of atoms. File format (example for two atoms): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 (row2). The number of rows must be equal to NATOMS, and number of unique atoms must be equal to NATOM TYPES.");
+			  "[Standard] Atomic-coordinates input file name. For fully non-periodic domain give Cartesian coordinates of the atoms (in a.u) with respect to origin at the center of the domain. For periodic and semi-periodic domain give fractional coordinates of atoms. File format (example for two atoms): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 (row2). The number of rows must be equal to NATOMS, and number of unique atoms must be equal to NATOM TYPES.");
 
 	prm.declare_entry("NATOMS", "0",
                         Patterns::Integer(0),
@@ -135,7 +135,7 @@ namespace dftParameters
 
 	    prm.declare_entry("NON SELF CONSISTENT FORCE", "false",
 			      Patterns::Bool(),
-			      "[Developer] Boolean parameter specfiying whether to include the force contributions arising out of non self-consistency in the Kohn-Sham ground-state calculation. Currently non self-consistent force computation is still in experimental phase. The default option is false.");
+			      "[Developer] Boolean parameter specifying whether to include the force contributions arising out of non self-consistency in the Kohn-Sham ground-state calculation. Currently non self-consistent force computation is still in experimental phase. The default option is false.");
 
 	    prm.declare_entry("ION OPT", "false",
 			      Patterns::Bool(),
@@ -143,7 +143,7 @@ namespace dftParameters
 
 	    prm.declare_entry("FORCE TOL", "1e-4",
 			      Patterns::Double(0,1.0),
-			      "[Standard] Sets the tolerance on the maximum force (in a.u.) on an atom during atomic relaxation.");
+			      "[Standard] Sets the tolerance on the maximum force (in a.u.) on an atom during atomic relaxation, when the atoms are considered to be relaxed.");
 
 	    prm.declare_entry("ION RELAX FLAGS FILE", "",
 			      Patterns::Anything(),
@@ -175,7 +175,7 @@ namespace dftParameters
     {
         prm.declare_entry("SELF POTENTIAL RADIUS", "0.0",
                       Patterns::Double(0.0,10),
-                      "[Advanced] The radius (in a.u) of the ball around an atom in which self-potential of the associated nuclear charge is solved. For the default value of 0.0, the radius value is automatically determined to accomodate the largest radius possible for the given finite element mesh. The default approach works for most problems.");
+                      "[Advanced] The radius (in a.u) of the ball around an atom in which self-potential of the associated nuclear charge is solved. For the default value of 0.0, the radius value is automatically determined to accommodate the largest radius possible for the given finite element mesh. The default approach works for most problems.");
 
 	prm.declare_entry("PERIODIC1", "false",
 			  Patterns::Bool(),
@@ -233,27 +233,27 @@ namespace dftParameters
         {
 	    prm.declare_entry("SAMPLING POINTS 1", "1",
 			      Patterns::Integer(1,1000),
-			      "[Standard] Number of Monkhorst-Pack grid points to be used along reciprocal latttice vector 1.");
+			      "[Standard] Number of Monkhorst-Pack grid points to be used along reciprocal lattice vector 1.");
 
 	    prm.declare_entry("SAMPLING POINTS 2", "1",
 			      Patterns::Integer(1,1000),
-			      "[Standard] Number of Monkhorst-Pack grid points to be used along reciprocal latttice vector 2.");
+			      "[Standard] Number of Monkhorst-Pack grid points to be used along reciprocal lattice vector 2.");
 
 	    prm.declare_entry("SAMPLING POINTS 3", "1",
 			      Patterns::Integer(1,1000),
-			      "[Standard] Number of Monkhorst-Pack grid points to be used along reciprocal latttice vector 3.");
+			      "[Standard] Number of Monkhorst-Pack grid points to be used along reciprocal lattice vector 3.");
 
 	    prm.declare_entry("SAMPLING SHIFT 1", "0",
 			      Patterns::Integer(0,1),
-			      "[Standard] If fractional shifting to be used (0 for no shift, 1 for shift) along reciprocal latttice vector 1.");
+			      "[Standard] If fractional shifting to be used (0 for no shift, 1 for shift) along reciprocal lattice vector 1.");
 
 	    prm.declare_entry("SAMPLING SHIFT 2", "0",
 			      Patterns::Integer(0,1),
-			      "[Standard] If fractional shifting to be used (0 for no shift, 1 for shift) along reciprocal latttice vector 2.");
+			      "[Standard] If fractional shifting to be used (0 for no shift, 1 for shift) along reciprocal lattice vector 2.");
 
 	    prm.declare_entry("SAMPLING SHIFT 3", "0",
 			      Patterns::Integer(0,1),
-			      "[Standard] If fractional shifting to be used (0 for no shift, 1 for shift) along reciprocal latttice vector 3.");
+			      "[Standard] If fractional shifting to be used (0 for no shift, 1 for shift) along reciprocal lattice vector 3.");
 
 	}
 	prm.leave_subsection ();
@@ -331,7 +331,7 @@ namespace dftParameters
 
 	prm.declare_entry("COMPUTE ENERGY EACH ITER", "true",
 			  Patterns::Bool(),
-			  "[Advanced] Boolean parameter specifying whether to compute the total energy at the end of every SCf. Setting it to false can lead to some computational time savings.");
+			  "[Advanced] Boolean parameter specifying whether to compute the total energy at the end of every SCF. Setting it to false can lead to some computational time savings.");
 
 	prm.enter_subsection ("Eigen-solver parameters");
 	{
@@ -362,7 +362,7 @@ namespace dftParameters
 
 	    prm.declare_entry("CHEBYSHEV FILTER BLOCK SIZE", "400",
 			       Patterns::Integer(1),
-			       "[Advanced] Chebyshev filtering procedure involves the matrix-matrix multiplication where one matrix corresponds to the discretized Hamiltonian and the other matrix corresponds to the wavefunction matrix. The matrix-matrix multiplication is accomplised in a loop over the number of blocks of the wavefunction matrix to reduce the memory footprint of the code. This parameter specifies the block size of the wavefunction matrix to be used in the matrix-matrix multiplication. The optimum value is dependent on the computing architecture.");
+			       "[Advanced] Chebyshev filtering procedure involves the matrix-matrix multiplication where one matrix corresponds to the discretized Hamiltonian and the other matrix corresponds to the wavefunction matrix. The matrix-matrix multiplication is accomplished in a loop over the number of blocks of the wavefunction matrix to reduce the memory footprint of the code. This parameter specifies the block size of the wavefunction matrix to be used in the matrix-matrix multiplication. The optimum value is dependent on the computing architecture.");
 
 	    prm.declare_entry("BATCH GEMM", "true",
 			      Patterns::Bool(),
