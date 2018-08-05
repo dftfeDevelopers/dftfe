@@ -23,7 +23,7 @@ subsection Finite element mesh parameters
 end
 
 subsection Parallelization
-  set NPKPT=4
+  set NPKPT=2
 end
 
 subsection Brillouin zone k point sampling options
@@ -32,9 +32,9 @@ subsection Brillouin zone k point sampling options
     set SAMPLING POINTS 1 = 2
     set SAMPLING POINTS 2 = 2
     set SAMPLING POINTS 3 = 2
-    set SAMPLING SHIFT 1  = 0
-    set SAMPLING SHIFT 2  = 0
-    set SAMPLING SHIFT 3  = 0
+    set SAMPLING SHIFT 1  = 1
+    set SAMPLING SHIFT 2  = 1
+    set SAMPLING SHIFT 3  = 1
   end
 end
 
