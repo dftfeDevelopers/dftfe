@@ -47,7 +47,7 @@ subsection SCF parameters
   set ANDERSON SCHEME MIXING PARAMETER = 0.5
   set MAXIMUM ITERATIONS               = 50
   set TEMPERATURE                      = 500
-  set TOLERANCE                        = 1e-5 
+  set TOLERANCE                        = 1e-5
   subsection Eigen-solver parameters
       set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 12
   end

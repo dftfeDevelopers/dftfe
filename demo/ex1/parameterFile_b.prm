@@ -23,6 +23,10 @@ subsection Finite element mesh parameters
   end
 end
 
+subsection Parallelization
+  set NPBAND=1
+end
+
 subsection DFT functional parameters
   set EXCHANGE CORRELATION TYPE   = 4
   set PSEUDOPOTENTIAL CALCULATION = true
@@ -35,6 +39,7 @@ subsection SCF parameters
   set MAXIMUM ITERATIONS               = 40
   set TEMPERATURE                      = 500
   set TOLERANCE                        = 1e-5
+  set STARTING WFC                     = RANDOM
   subsection Eigen-solver parameters
       set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 12
   end

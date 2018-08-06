@@ -17,8 +17,12 @@ end
 subsection Finite element mesh parameters
   set POLYNOMIAL ORDER=4
   subsection Auto mesh generation parameters
-    set MESH SIZE AROUND ATOM  = 0.25
+    set MESH SIZE AROUND ATOM  = 0.5
   end
+end
+
+subsection Parallelization
+  set NPBAND=1
 end
 
 subsection DFT functional parameters
@@ -33,7 +37,10 @@ subsection SCF parameters
   set MAXIMUM ITERATIONS               = 40
   set TEMPERATURE                      = 500
   set TOLERANCE                        = 1e-5
+  set STARTING WFC                     = RANDOM
   subsection Eigen-solver parameters
       set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 12
   end
 end
+
+set WRITE DENSITY=false
