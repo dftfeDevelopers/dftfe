@@ -197,7 +197,7 @@ Ensuring that deal.II picks up AVX-512 is strongly recommended for obtaining max
 
 \item Use \verb|-fPIC| compiler flag for compilation of deal.II and its dependencies, to prevent linking errors during \dftfe{} compilation.	
 
-\item \textcolor{red}{\bf CAUTION! It is  very important to ensure that deal.II and its dependencies (p4est, PETSc, SLEPc, and ScaLAPACK), are compiled with the same compilers, BLAS-LAPACK libraries, and MPI libraries to prevent deal.II compilation issues, occurence of run time crashes, and \dftfe{} performance degradation.}  
+\item \textcolor{red}{\bf CAUTION! It is  highly recommended to compile deal.II and its dependencies (p4est, PETSc, SLEPc, and ScaLAPACK),  with the same compilers, same BLAS-LAPACK libraries, and same MPI libraries. This prevents deal.II compilation issues, occurence of run time crashes, and \dftfe{} performance degradation.}  
 \end{itemize}
 
 \subsection{Obtaining and Compiling \dftfe{}}
