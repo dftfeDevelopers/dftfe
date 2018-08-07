@@ -64,7 +64,7 @@ where
 
 \item \verb|NATOMS| is the total number of atoms, and \verb|NATOM TYPES| is the total number of atom types.
 	
-\item``domainVectors.inp'' (any other file name can be used), given as input to \verb|DOMAIN VECTORS FILE|,  is the external input file which lists the three domain vectors describing the
+\item``domainVectors.inp'' (any other file name can be used), given as input to \verb|DOMAIN VECTORS FILE|,  is the external input file which lists the three domain vectors (in a.u) describing the
 3D parallelepiped computational domain. For the current example we take a cubodial domain with 80 a.u as the edge length. 
 Accordingly, the ``domainVectors.inp'' file is formatted as  
 \begin{verbatim}
@@ -75,8 +75,7 @@ Accordingly, the ``domainVectors.inp'' file is formatted as
 wheres each row corresponds to a domain vector.
 It is a requirement that the above vectors must form a right-handed coordinate system i.e. $(v1 \times v2)\cdot v3 >0$.
 
-\item ``coordinates.inp'' (any other file name can be used), given as input to \verb|ATOMIC COORDINATES FILE|, is the name of an external input file present in the same workspace which lists the Cartesian coordinates 
-of the atoms with respect to origin at the center of the domain. For this example, ``coordinates.inp'' is described as 
+\item ``coordinates.inp'' (any other file name can be used), given as input to \verb|ATOMIC COORDINATES FILE|, is the name of an external input file present in the same workspace which lists the Cartesian coordinates of the atoms (in a.u.) with respect to origin at the center of the domain. For this example, ``coordinates.inp'' is described as 
 \begin{verbatim}
 7    5   -1.30000000E+00   0.00000000E+00   0.00000000E+00
 7    5    1.30000000E+00   0.00000000E+00   0.00000000E+00
@@ -208,8 +207,8 @@ subsection Geometry
   set ATOMIC COORDINATES FILE      = coordinates.inp 
   set DOMAIN VECTORS FILE = domainVectors.inp
   subsection Optimization
-    set FORCE TOL            = 1e-4
     set ION OPT              = true
+    set FORCE TOL            = 1e-4    
     set ION RELAX FLAGS FILE = relaxationFlags.inp
   end
 end
