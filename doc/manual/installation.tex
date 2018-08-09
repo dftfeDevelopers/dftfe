@@ -133,14 +133,20 @@ $ cmake -DCMAKE_INSTALL_PREFIX=dealii_petscReal_install_dir_path
         otherCmakeOptions ../deal.II
 $ make install
 \end{verbatim}
-{\bf ``otherCmakeOptions'' must include} the following options
+{\bf ``otherCmakeOptions'' include} the following options
 \begin{verbatim}
 -DDEAL_II_WITH_MPI=ON -DDEAL_II_WITH_64BIT_INDICES=ON
 -DDEAL_II_WITH_P4EST=ON -DP4EST_DIR=p4est_install_dir_path
 -DDEAL_II_WITH_PETSC=ON -DPETSC_DIR=petscReal_install_dir_path 
 -DDEAL_II_WITH_SLEPC=ON -DSLEPC_DIR=slepcReal_install_dir_path
+-DDEAL_II_WITH_LAPACK=ON
+-DLAPACK_DIR=lapack_dir_path 
+-DLAPACK_LIBRARIES=lapack_lib_path
+-DLAPACK_FOUND=true
+-DSCALAPACK_DIR=scalapack_dir_path
+-DSCALAPACK_LIBRARIES=scalapack_lib_path
 \end{verbatim}
-and LAPACK and ScaLAPACK link options (see below for example). 
+{\bf Linking with ScaLAPACK is optional, but strongly recommended for systems with 5000 electrons or more.}
 
 \item Repeat above step for installing deal.II linked with complex scalar type PETSc and SLEPc installations. 
 \end{enumerate}	
@@ -193,7 +199,7 @@ Ensure that deal.II picks up AVX-512, which is strongly recommended for obtainin
 
 \subsubsection{Important generic instructions for deal.II and its dependencies}
 \begin{itemize}
-\item If using Intel MKL for BLAS-LAPACK library, it is {\bf very important} to use \href{https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor}{Intel MKL Link Line Advisor} to set correctly link with BLAS-LAPACK library as needed in installations of PETSc, ScaLAPACK, and deal.II. To exploit performance benefit from threads, we recommend (strongly recommended for the new Intel Xeon Phi (KNL) and Skylane processors) linking to threaded versions of Intel MKL libraries by using the options ``threading layer'' and  ``OpenMP library'' in \href{https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor}{Intel MKL Link Line Advisor}.
+\item We strongly recommend to link to optimized BLAS-LAPACK library. If using Intel MKL for BLAS-LAPACK library, it is {\bf very important} to use \href{https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor}{Intel MKL Link Line Advisor} to correctly link with Intel MKL for installations of PETSc, ScaLAPACK, and deal.II. To exploit performance benefit from threads, we recommend (strongly recommended for the new Intel Xeon Phi (KNL) and Skylake processors) linking to threaded versions of Intel MKL libraries by using the options ``threading layer'' and  ``OpenMP library'' in \href{https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor}{Intel MKL Link Line Advisor}.
 
 \item Use \verb|-fPIC| compiler flag for compilation of deal.II and its dependencies, to prevent linking errors during \dftfe{} compilation.	
 
@@ -233,7 +239,7 @@ If you are not familiar with Git, you may download the current release tarball f
 %\end{enumerate}
 %Alternatively, you could download the appropriate tarball from \href{https://github.com/dftfeDevelopers/dftfe/releases}{github-releases}.
 
-\item Set paths to external libraries (deal.II, ALGLIB, Libxc, spglib, and Libxml2), compiler options, and compiler flags in \verb|setup.sh|, which is a script to compile \dftfe{} using cmake. For your reference, a few example \verb|setup.sh| scripts are provided in the \verb|/helpers| folder. If you are using GCC compilers, please add \verb|-fpermissive| to the compiler flags. Also if you have installed deal.II by linking with Intel MKL library, set \verb|withIntelMkl=ON| in setup.sh , otherwise set it to \verb|OFF|. 
+\item Set paths to external libraries (deal.II, ALGLIB, Libxc, spglib, and Libxml2), compiler options, and compiler flags in \verb|setup.sh|, which is a script to compile \dftfe{} using cmake. For your reference, a few example \verb|setup.sh| scripts are provided in the \verb|/helpers| folder. If you are using GCC compilers, please add \verb|-fpermissive| to the compiler flags (see for example \verb|UMCAEN/setupCAEN.sh|). Also if you have installed deal.II by linking with Intel MKL library, set \verb|withIntelMkl=ON| in setup.sh , otherwise set it to \verb|OFF|. 
 
 \item To compile \dftfe{} in release mode (the fast version), set \verb|optimizedFlag=1| in \verb|setup.sh| and do
 \begin{verbatim}
