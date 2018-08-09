@@ -718,8 +718,8 @@ namespace dftfe{
       //
       //compute operator times X
       //
-      bool scaleFlag = false;
-      T scalar = 1.0;
+      const bool scaleFlag = false;
+      const double scalar = 1.0;
       operatorMatrix.HX(X,
 			totalNumberVectors,
 			scaleFlag,
