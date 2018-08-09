@@ -199,7 +199,7 @@ Ensure that deal.II picks up AVX-512, which is strongly recommended for obtainin
 
 \subsubsection{Important generic instructions for deal.II and its dependencies}
 \begin{itemize}
-\item We strongly recommend to link to optimized BLAS-LAPACK library. If using Intel MKL for BLAS-LAPACK library, it is {\bf very important} to use \href{https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor}{Intel MKL Link Line Advisor} to correctly link with Intel MKL for installations of PETSc, ScaLAPACK, and deal.II. To exploit performance benefit from threads, we recommend (strongly recommended for the new Intel Xeon Phi (KNL) and Skylane processors) linking to threaded versions of Intel MKL libraries by using the options ``threading layer'' and  ``OpenMP library'' in \href{https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor}{Intel MKL Link Line Advisor}.
+\item We strongly recommend to link to optimized BLAS-LAPACK library. If using Intel MKL for BLAS-LAPACK library, it is {\bf very important} to use \href{https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor}{Intel MKL Link Line Advisor} to correctly link with Intel MKL for installations of PETSc, ScaLAPACK, and deal.II. To exploit performance benefit from threads, we recommend (strongly recommended for the new Intel Xeon Phi (KNL) and Skylake processors) linking to threaded versions of Intel MKL libraries by using the options ``threading layer'' and  ``OpenMP library'' in \href{https://software.intel.com/en-us/articles/intel-mkl-link-line-advisor}{Intel MKL Link Line Advisor}.
 
 \item Use \verb|-fPIC| compiler flag for compilation of deal.II and its dependencies, to prevent linking errors during \dftfe{} compilation.	
 
