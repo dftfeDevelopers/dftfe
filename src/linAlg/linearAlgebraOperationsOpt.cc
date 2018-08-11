@@ -513,8 +513,11 @@ namespace dftfe{
       //stored in the column major format
       //
       computing_timer.enter_section("Blocked subspace rotation, RR step");
+      dealii::parallel::distributed::Vector<dataTypes::number> temp;
       internal::subspaceRotation(X,
 		                 numberWaveFunctions,
+				 0,
+				 temp,
 		                 processGrid,
 				 interBandGroupComm,
 			         projHamPar,
@@ -1131,8 +1134,10 @@ namespace dftfe{
 					       const unsigned int);
 
     template unsigned int pseudoGramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<dataTypes::number> &,
-					             const unsigned int,
-						     const MPI_Comm &);
+					                     const unsigned int,
+						             const MPI_Comm &,
+							     const unsigned int numberCoreVectors,
+			                                     dealii::parallel::distributed::Vector<dataTypes::number> & tempNonCoreVectorsArray);
 
     template void rayleighRitz(operatorDFTClass  & operatorMatrix,
 			       dealii::parallel::distributed::Vector<dataTypes::number> &,

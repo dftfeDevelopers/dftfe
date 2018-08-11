@@ -30,7 +30,9 @@ namespace dftfe
     template<typename T>
     unsigned int pseudoGramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<T> & X,
 				            const unsigned int numberVectors,
-					    const MPI_Comm &interBandGroupComm)
+					    const MPI_Comm &interBandGroupComm,
+			                    const unsigned int numberCoreVectors,
+			                    dealii::parallel::distributed::Vector<T> & tempNonCoreVectorsArray)
     {
       const unsigned int numLocalDofs = X.local_size()/numberVectors;
 
@@ -132,6 +134,8 @@ namespace dftfe
       computing_timer.enter_section("Subspace rotation PGS");
       internal::subspaceRotation(X,
 		                 numberVectors,
+				 numberCoreVectors,
+				 tempNonCoreVectorsArray,
 		                 processGrid,
 				 interBandGroupComm,
 			         LMatPar,
@@ -145,7 +149,9 @@ namespace dftfe
     template<typename T>
     unsigned int pseudoGramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<T> & X,
 				            const unsigned int numberVectors,
-					    const MPI_Comm &interBandGroupComm)
+					    const MPI_Comm &interBandGroupComm,
+			                    const unsigned int numberCoreVectors,
+			                    dealii::parallel::distributed::Vector<T> & tempNonCoreVectorsArray)
     {
        const unsigned int localVectorSize = X.local_size()/numberVectors;
 

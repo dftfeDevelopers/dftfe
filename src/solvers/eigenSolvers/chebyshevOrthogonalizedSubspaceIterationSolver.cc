@@ -358,6 +358,15 @@ namespace dftfe{
     if(dftParameters::verbosity >= 4)
       pcout<<"ChebyShev Filtering Done: "<<std::endl;
 
+    dealii::parallel::distributed::Vector<dataTypes::number> eigenVectorsFlattenedRR;
+    if (eigenValues.size()!=totalNumberWaveFunctions)
+    {
+
+        operatorMatrix.reinit(eigenValues.size(),
+                              eigenVectorsFlattenedRR,
+                              true);
+    }
+
     if(dftParameters::orthogType.compare("LW") == 0)
       {
 	computing_timer.enter_section("Lowden Orthogn Opt");
@@ -383,7 +392,9 @@ namespace dftfe{
 	const unsigned int flag=linearAlgebraOperations::pseudoGramSchmidtOrthogonalization
 	                                                           (eigenVectorsFlattened,
 								    totalNumberWaveFunctions,
-								    interBandGroupComm);
+								    interBandGroupComm,
+                                                                    totalNumberWaveFunctions-eigenValues.size(),
+								    eigenVectorsFlattenedRR);
 	if (flag==1)
 	{
 	    if(dftParameters::verbosity >= 1)
@@ -409,13 +420,9 @@ namespace dftfe{
 
     computing_timer.enter_section("Rayleigh-Ritz proj Opt");
 
-    dealii::parallel::distributed::Vector<dataTypes::number> eigenVectorsFlattenedRR;
     if (eigenValues.size()!=totalNumberWaveFunctions)
     {
 
-	operatorMatrix.reinit(eigenValues.size(),
-			      eigenVectorsFlattenedRR,
-			      true);
 	for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
 	    for(unsigned int iWave = 0; iWave < eigenValues.size(); ++iWave)
 		eigenVectorsFlattenedRR.local_element(iNode*eigenValues.size()

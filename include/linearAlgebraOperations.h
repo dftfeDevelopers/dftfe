@@ -75,7 +75,7 @@ namespace dftfe
                    int * info);
     }
 #endif
-/** 
+/**
  *  @brief Contains linear algebra functions used in the implementation of an eigen solver
  *
  *  @author Phani Motamarri, Sambit Das
@@ -183,8 +183,10 @@ namespace dftfe
       */
     template<typename T>
       unsigned int pseudoGramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<T> & X,
-					      const unsigned int numberComponents,
-					      const MPI_Comm &interBandGroupComm);
+					              const unsigned int numberComponents,
+					              const MPI_Comm &interBandGroupComm,
+			                              const unsigned int numberCoreVectors,
+			                              dealii::parallel::distributed::Vector<T> & tempNonCoreVectorsArray);
 
     /** @brief Compute Rayleigh-Ritz projection
      *

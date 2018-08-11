@@ -230,6 +230,8 @@ namespace dftfe
 	template<typename T>
 	void subspaceRotation(dealii::parallel::distributed::Vector<T> & subspaceVectorsArray,
 		              const unsigned int numberSubspaceVectors,
+			      const unsigned int numberCoreVectors,
+			      dealii::parallel::distributed::Vector<T> & tempNonCoreVectorsArray,
 		              const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 			      const MPI_Comm &interBandGroupComm,
 			      const dealii::ScaLAPACKMatrix<T> & rotationMatPar,
@@ -373,12 +375,43 @@ namespace dftfe
 
 	  if (numberBandGroups>1)
   	  {
-	    MPI_Allreduce(MPI_IN_PLACE,
-			  subspaceVectorsArray.begin(),
-			  numberSubspaceVectors*numLocalDofs,
-			  MPI_DOUBLE,
-			  MPI_SUM,
-			  interBandGroupComm);
+	    if (numberCoreVectors!=0)
+	    {
+
+		const unsigned int numberNonCoreVectors=numberSubspaceVectors-numberCoreVectors;
+		for(unsigned int iNode = 0; iNode < numLocalDofs; ++iNode)
+		    for(unsigned int iWave = 0; iWave < numberNonCoreVectors; ++iWave)
+			tempNonCoreVectorsArray.local_element(iNode*numberNonCoreVectors
+				 +iWave)
+			     =subspaceVectorsArray.local_element(iNode*numberSubspaceVectors
+								  +numberCoreVectors
+								  +iWave);
+
+		MPI_Allreduce(MPI_IN_PLACE,
+			      tempNonCoreVectorsArray.begin(),
+			      numberNonCoreVectors*numLocalDofs,
+			      MPI_DOUBLE,
+			      MPI_SUM,
+			      interBandGroupComm);
+
+		for(unsigned int iNode = 0; iNode < numLocalDofs; ++iNode)
+		    for(unsigned int iWave = 0; iWave < numberNonCoreVectors; ++iWave)
+		        subspaceVectorsArray.local_element
+			                      (iNode*numberSubspaceVectors
+					       +numberCoreVectors
+					       +iWave)
+		                                =tempNonCoreVectorsArray.local_element(iNode*numberNonCoreVectors+iWave);
+
+	    }
+	    else
+	    {
+		MPI_Allreduce(MPI_IN_PLACE,
+			      subspaceVectorsArray.begin(),
+			      numberSubspaceVectors*numLocalDofs,
+			      MPI_DOUBLE,
+			      MPI_SUM,
+			      interBandGroupComm);
+	    }
 	  }
 #endif
 	}
@@ -401,6 +434,8 @@ namespace dftfe
 	template
 	void subspaceRotation(dealii::parallel::distributed::Vector<dataTypes::number> & subspaceVectorsArray,
 		              const unsigned int numberSubspaceVectors,
+			      const unsigned int numberCoreVectors,
+			      dealii::parallel::distributed::Vector<dataTypes::number> & tempNonCoreVectorsArray,
 		              const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 			      const MPI_Comm &interBandGroupComm,
 			      const dealii::ScaLAPACKMatrix<dataTypes::number> & rotationMatPar,
