@@ -75,7 +75,7 @@ void dftClass<FEOrder>::compute_rhoOut()
 					      numEigenValues,
 					      bandGroupLowHighPlusOneIndices);
 
-   const unsigned int eigenVectorsBlockSize=std::min(dftParameters::orthoRRWaveFuncBlockSize,
+   const unsigned int eigenVectorsBlockSize=std::min(dftParameters::wfcBlockSize,
 	                                             bandGroupLowHighPlusOneIndices[1]);
 
    std::vector<std::vector<vectorType>> eigenVectors((1+dftParameters::spinPolarized)*d_kPointWeights.size());

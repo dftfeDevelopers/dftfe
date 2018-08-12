@@ -1001,7 +1001,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
    //memory for 50k wavefunctions. The parallel
    //ScaLapack matrix is directly filled from the X^{T}*H*XBlock result
 
-    const unsigned int vectorsBlockSize=std::min(dftParameters::orthoRRWaveFuncBlockSize,
+    const unsigned int vectorsBlockSize=std::min(dftParameters::wfcBlockSize,
 	                                         bandGroupLowHighPlusOneIndices[1]);
 
     std::vector<dataTypes::number> projHamBlock(numberWaveFunctions*vectorsBlockSize,0.0);
