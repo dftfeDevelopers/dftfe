@@ -64,9 +64,8 @@ namespace dftfe {
 
       extern std::string startingWFCType;
       extern unsigned int numCoreWfcRR;
-      extern unsigned int chebyshevBlockSize;
       extern bool useBatchGEMM;
-      extern unsigned int orthoRRWaveFuncBlockSize;
+      extern unsigned int wfcBlockSize;
       extern unsigned int subspaceRotDofsBlockSize;
       extern bool enableSwitchToGS;
       extern unsigned int nbandGrps;

@@ -159,7 +159,7 @@ namespace dftfe
 				                          globalToLocalRowIdMap,
 					                  globalToLocalColumnIdMap);
 
-	  const unsigned int vectorsBlockSize=std::min(dftParameters::orthoRRWaveFuncBlockSize,
+	  const unsigned int vectorsBlockSize=std::min(dftParameters::wfcBlockSize,
 	                                               bandGroupLowHighPlusOneIndices[1]);
 
 	  std::vector<T> overlapMatrixBlock(numberVectors*vectorsBlockSize,0.0);
@@ -263,7 +263,7 @@ namespace dftfe
 					                  globalToLocalColumnIdMap);
 
 
-	  const unsigned int vectorsBlockSize=std::min(dftParameters::orthoRRWaveFuncBlockSize,
+	  const unsigned int vectorsBlockSize=std::min(dftParameters::wfcBlockSize,
 	                                               bandGroupLowHighPlusOneIndices[1]);
 	  const unsigned int dofsBlockSize=dftParameters::subspaceRotDofsBlockSize;
 
