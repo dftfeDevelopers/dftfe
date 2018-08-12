@@ -65,6 +65,7 @@ namespace dftParameters
   unsigned int natomTypes=0;
   double lowerBoundUnwantedFracUpper=0;
   unsigned int numCoreWfcRR=0;
+  bool triMatPGSOpt=true;
 
   void declare_parameters(ParameterHandler &prm)
   {
@@ -376,6 +377,11 @@ namespace dftParameters
 			      Patterns::Bool(),
 			      "[Developer] Controls automatic switching to Gram-Schimdt orthogonalization if Lowden Orthogonalization or Pseudo-Gram-Schimdt orthogonalization are unstable. Default option is true.");
 
+
+	    prm.declare_entry("ENABLE SUBSPACE ROT PGS OPT", "true",
+			      Patterns::Bool(),
+			      "[Developer] Turns on subspace rotation optimization for Pseudo-Gram-Schimdt orthogonalization. Default option is true.");
+
 	    prm.declare_entry("ORTHO RR WFC BLOCK SIZE", "200",
 			       Patterns::Integer(1),
 			       "[Developer] This block size is used for memory optimization purposes in the orthogonalization and Rayleigh-Ritz steps. This optimization is only activated if dealii library is compiled with ScaLAPACK. Default value is 200.");
@@ -529,6 +535,7 @@ namespace dftParameters
 	   dftParameters::orthoRRWaveFuncBlockSize= prm.get_integer("ORTHO RR WFC BLOCK SIZE");
 	   dftParameters::subspaceRotDofsBlockSize= prm.get_integer("SUBSPACE ROT DOFS BLOCK SIZE");
 	   dftParameters::enableSwitchToGS= prm.get_bool("ENABLE SWITCH TO GS");
+	   dftParameters::triMatPGSOpt= prm.get_bool("ENABLE SUBSPACE ROT PGS OPT");
 	   dftParameters::scalapackParalProcs= prm.get_integer("SCALAPACKPROCS");
 	}
 	prm.leave_subsection ();
@@ -661,10 +668,10 @@ namespace dftParameters
     {
          if (dftParameters::verbosity >=1 && Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)
 	     std::cout <<"Setting ORTHOGONALIZATION TYPE=GS for all-electron calculations "<<std::endl;
-	        
+
 	 dftParameters::orthogType="GS";
     }
-	    
+
   }
 
 }

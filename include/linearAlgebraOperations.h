@@ -179,9 +179,9 @@ namespace dftfe
       *  @param[in] numberComponents Number of multiple-fields
       *  @param[in] interBandGroupComm interpool communicator for parallelization over band groups
       *  @param[in] numberCoreVectors number of core states for which Mpi all reduce
-      *  is not used after subspace rotation step. This parameter is used only in case of 
+      *  is not used after subspace rotation step. This parameter is used only in case of
       *  band parallelization
-      *  @param[in] tempNonCoreVectorsArray this parameter is required if numberCoreVectors
+      *  @param[in,out] nonCoreVectorsArray this parameter is required if numberCoreVectors
       *  is not equal to 0. In that case, the block size of tempNonCoreVectorsArray is equal
       *  to numberComponents minus numberCoreVectors.
       *
@@ -192,7 +192,7 @@ namespace dftfe
 					              const unsigned int numberComponents,
 					              const MPI_Comm &interBandGroupComm,
 			                              const unsigned int numberCoreVectors,
-			                              dealii::parallel::distributed::Vector<T> & tempNonCoreVectorsArray);
+			                              dealii::parallel::distributed::Vector<T> & nonCoreVectorsArray);
 
     /** @brief Compute Rayleigh-Ritz projection
      *

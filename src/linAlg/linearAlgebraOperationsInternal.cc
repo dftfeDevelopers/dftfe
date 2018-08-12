@@ -231,11 +231,12 @@ namespace dftfe
 	void subspaceRotation(dealii::parallel::distributed::Vector<T> & subspaceVectorsArray,
 		              const unsigned int numberSubspaceVectors,
 			      const unsigned int numberCoreVectors,
-			      dealii::parallel::distributed::Vector<T> & tempNonCoreVectorsArray,
+			      dealii::parallel::distributed::Vector<T> & nonCoreVectorsArray,
 		              const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 			      const MPI_Comm &interBandGroupComm,
 			      const dealii::ScaLAPACKMatrix<T> & rotationMatPar,
-			      const bool rotationMatTranspose)
+			      const bool rotationMatTranspose,
+			      const bool isRotationMatLowerTria)
 	{
 #ifdef USE_COMPLEX
 	  AssertThrow(false,dftUtils::ExcNotImplementedYet());
@@ -287,6 +288,9 @@ namespace dftfe
 		  // Correct block dimensions if block "goes off edge of" the matrix
 		  const unsigned int BVec = std::min(vectorsBlockSize, numberSubspaceVectors-jvec);
 
+		  const unsigned int nonZeroVectorsSize=isRotationMatLowerTria?
+		                                         (jvec+BVec)
+		                                         :numberSubspaceVectors;
 
 		  if ((jvec+BVec)<=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1] &&
 		  (jvec+BVec)>bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
@@ -299,7 +303,7 @@ namespace dftfe
 		      if (rotationMatTranspose)
 		      {
 			  if (processGrid->is_process_active())
-			      for (unsigned int i = 0; i <numberSubspaceVectors; ++i)
+			      for (unsigned int i = 0; i <nonZeroVectorsSize; ++i)
 				  if (globalToLocalRowIdMap.find(i)
 					  !=globalToLocalRowIdMap.end())
 				  {
@@ -318,7 +322,7 @@ namespace dftfe
 		      else
 		      {
 			  if (processGrid->is_process_active())
-			      for (unsigned int i = 0; i <numberSubspaceVectors; ++i)
+			      for (unsigned int i = 0; i <nonZeroVectorsSize; ++i)
 				  if(globalToLocalColumnIdMap.find(i)
 					  !=globalToLocalColumnIdMap.end())
 				  {
@@ -345,7 +349,7 @@ namespace dftfe
 				 &transB,
 				 &BVec,
 				 &BDof,
-				 &numberSubspaceVectors,
+				 &nonZeroVectorsSize,
 				 &scalarCoeffAlpha,
 				 &rotationMatBlock[0],
 				 &BVec,
@@ -381,14 +385,13 @@ namespace dftfe
 		const unsigned int numberNonCoreVectors=numberSubspaceVectors-numberCoreVectors;
 		for(unsigned int iNode = 0; iNode < numLocalDofs; ++iNode)
 		    for(unsigned int iWave = 0; iWave < numberNonCoreVectors; ++iWave)
-			tempNonCoreVectorsArray.local_element(iNode*numberNonCoreVectors
-				 +iWave)
+			nonCoreVectorsArray.local_element(iNode*numberNonCoreVectors +iWave)
 			     =subspaceVectorsArray.local_element(iNode*numberSubspaceVectors
 								  +numberCoreVectors
 								  +iWave);
 
 		MPI_Allreduce(MPI_IN_PLACE,
-			      tempNonCoreVectorsArray.begin(),
+			      nonCoreVectorsArray.begin(),
 			      numberNonCoreVectors*numLocalDofs,
 			      MPI_DOUBLE,
 			      MPI_SUM,
@@ -400,7 +403,7 @@ namespace dftfe
 			                      (iNode*numberSubspaceVectors
 					       +numberCoreVectors
 					       +iWave)
-		                                =tempNonCoreVectorsArray.local_element(iNode*numberNonCoreVectors+iWave);
+		                                =nonCoreVectorsArray.local_element(iNode*numberNonCoreVectors+iWave);
 
 	    }
 	    else
@@ -435,11 +438,12 @@ namespace dftfe
 	void subspaceRotation(dealii::parallel::distributed::Vector<dataTypes::number> & subspaceVectorsArray,
 		              const unsigned int numberSubspaceVectors,
 			      const unsigned int numberCoreVectors,
-			      dealii::parallel::distributed::Vector<dataTypes::number> & tempNonCoreVectorsArray,
+			      dealii::parallel::distributed::Vector<dataTypes::number> & nonCoreVectorsArray,
 		              const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 			      const MPI_Comm &interBandGroupComm,
 			      const dealii::ScaLAPACKMatrix<dataTypes::number> & rotationMatPar,
-			      const bool rotationMatTranpose);
+			      const bool rotationMatTranpose,
+			      const bool isRotationMatLowerTria);
 
         template
 	void sumAcrossInterCommScaLAPACKMat(const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,

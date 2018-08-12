@@ -139,7 +139,8 @@ namespace dftfe
 		                 processGrid,
 				 interBandGroupComm,
 			         LMatPar,
-				 overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::upper_triangular?true:false);
+				 overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::upper_triangular?true:false,
+				 dftParameters::triMatPGSOpt?true:false);
 
       computing_timer.exit_section("Subspace rotation PGS");
 

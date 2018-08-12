@@ -98,11 +98,12 @@ namespace dftfe
 	void subspaceRotation(dealii::parallel::distributed::Vector<T> & subspaceVectorsArray,
 		              const unsigned int numberSubspaceVectors,
 			      const unsigned int numberCoreVectors,
-			      dealii::parallel::distributed::Vector<T> & tempNonCoreVectorsArray,
+			      dealii::parallel::distributed::Vector<T> & nonCoreVectorsArray,
 		              const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 			      const MPI_Comm &interBandGroupComm,
 			      const dealii::ScaLAPACKMatrix<T> & rotationMatPar,
-			      const bool rotationMatTranspose=false);
+			      const bool rotationMatTranspose=false,
+			      const bool isRotationMatLowerTria=false);
 
 #endif
     }
