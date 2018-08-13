@@ -50,12 +50,11 @@ namespace dftParameters
   bool restartFromChk=false;
   bool reproducible_output=false;
 
-  unsigned int chebyshevBlockSize=512;
   std::string startingWFCType="";
   bool useBatchGEMM=false;
   bool writeWfcSolutionFields=false;
   bool writeDensitySolutionFields=false;
-  unsigned int orthoRRWaveFuncBlockSize=200;
+  unsigned int wfcBlockSize=400;
   unsigned int subspaceRotDofsBlockSize=2000;
   bool enableSwitchToGS=true;
   unsigned int nbandGrps=1;
@@ -65,6 +64,7 @@ namespace dftParameters
   unsigned int natomTypes=0;
   double lowerBoundUnwantedFracUpper=0;
   unsigned int numCoreWfcRR=0;
+  bool triMatPGSOpt=true;
 
   void declare_parameters(ParameterHandler &prm)
   {
@@ -360,13 +360,9 @@ namespace dftParameters
 			      Patterns::Double(1e-10),
 			      "[Advanced] Parameter specifying the accuracy of the occupied eigenvectors close to the Fermi-energy computed using Chebyshev filtering subspace iteration procedure. Default value is sufficient for most purposes");
 
-	    prm.declare_entry("CHEBYSHEV FILTER BLOCK SIZE", "400",
-			       Patterns::Integer(1),
-			       "[Advanced] Chebyshev filtering procedure involves the matrix-matrix multiplication where one matrix corresponds to the discretized Hamiltonian and the other matrix corresponds to the wavefunction matrix. The matrix-matrix multiplication is accomplished in a loop over the number of blocks of the wavefunction matrix to reduce the memory footprint of the code. This parameter specifies the block size of the wavefunction matrix to be used in the matrix-matrix multiplication. The optimum value is dependent on the computing architecture.");
-
 	    prm.declare_entry("BATCH GEMM", "true",
 			      Patterns::Bool(),
-			      "[Advanced] Boolean parameter specifying whether to use gemm batch blas routines to perform matrix-matrix multiplication operations with groups of matrices, processing a number of groups at once using threads instead of the standard serial route. CAUTION: gemm batch blas routines will only be activated if the CHEBYSHEV FILTER BLOCK SIZE is less than 1000, and only if intel mkl blas library is linked with the dealii installation. Default option is true.");
+			      "[Advanced] Boolean parameter specifying whether to use gemm batch blas routines to perform matrix-matrix multiplication operations with groups of matrices, processing a number of groups at once using threads instead of the standard serial route. CAUTION: gemm batch blas routines will only be activated if the WFC BLOCK SIZE is less than 1000, and only if intel mkl blas library is linked with the dealii installation. Default option is true.");
 
 	    prm.declare_entry("ORTHOGONALIZATION TYPE","Auto",
 			      Patterns::Selection("GS|LW|PGS|Auto"),
@@ -376,9 +372,14 @@ namespace dftParameters
 			      Patterns::Bool(),
 			      "[Developer] Controls automatic switching to Gram-Schimdt orthogonalization if Lowden Orthogonalization or Pseudo-Gram-Schimdt orthogonalization are unstable. Default option is true.");
 
-	    prm.declare_entry("ORTHO RR WFC BLOCK SIZE", "200",
+
+	    prm.declare_entry("ENABLE SUBSPACE ROT PGS OPT", "true",
+			      Patterns::Bool(),
+			      "[Developer] Turns on subspace rotation optimization for Pseudo-Gram-Schimdt orthogonalization. Default option is true.");
+
+	    prm.declare_entry("WFC BLOCK SIZE", "400",
 			       Patterns::Integer(1),
-			       "[Developer] This block size is used for memory optimization purposes in the orthogonalization and Rayleigh-Ritz steps. This optimization is only activated if dealii library is compiled with ScaLAPACK. Default value is 200.");
+			       "[Advanced] Chebyshev filtering procedure involves the matrix-matrix multiplication where one matrix corresponds to the discretized Hamiltonian and the other matrix corresponds to the wavefunction matrix. The matrix-matrix multiplication is accomplished in a loop over the number of blocks of the wavefunction matrix to reduce the memory footprint of the code. This parameter specifies the block size of the wavefunction matrix to be used in the matrix-matrix multiplication. The optimum value is dependent on the computing architecture. The same block size also used for memory optimization purposes in the orthogonalization and Rayleigh-Ritz steps. The memory optimization part is activated only if dealii library is compiled with ScaLAPACK. For optimum work sharing during band parallelization (NPBAND > 1), we recommend adjusting WFC BLOCK SIZE and NUMBER OF KOHN-SHAM WAVEFUNCTIONS such that NUMBER OF KOHN-SHAM WAVEFUNCTIONS/NPBAND/WFC BLOCK SIZE equals an integer value. Default value is 400.");
 
 	    prm.declare_entry("SUBSPACE ROT DOFS BLOCK SIZE", "2000",
 			       Patterns::Integer(1),
@@ -522,13 +523,13 @@ namespace dftParameters
 	   dftParameters::lowerEndWantedSpectrum        = prm.get_double("LOWER BOUND WANTED SPECTRUM");
 	   dftParameters::lowerBoundUnwantedFracUpper   = prm.get_double("LOWER BOUND UNWANTED FRAC UPPER");
 	   dftParameters::chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
-	   dftParameters::chebyshevBlockSize= prm.get_integer("CHEBYSHEV FILTER BLOCK SIZE");
 	   dftParameters::useBatchGEMM= prm.get_bool("BATCH GEMM");
 	   dftParameters::orthogType        = prm.get("ORTHOGONALIZATION TYPE");
 	   dftParameters::chebyshevTolerance = prm.get_double("CHEBYSHEV FILTER TOLERANCE");
-	   dftParameters::orthoRRWaveFuncBlockSize= prm.get_integer("ORTHO RR WFC BLOCK SIZE");
+	   dftParameters::wfcBlockSize= prm.get_integer("WFC BLOCK SIZE");
 	   dftParameters::subspaceRotDofsBlockSize= prm.get_integer("SUBSPACE ROT DOFS BLOCK SIZE");
 	   dftParameters::enableSwitchToGS= prm.get_bool("ENABLE SWITCH TO GS");
+	   dftParameters::triMatPGSOpt= prm.get_bool("ENABLE SUBSPACE ROT PGS OPT");
 	   dftParameters::scalapackParalProcs= prm.get_integer("SCALAPACKPROCS");
 	}
 	prm.leave_subsection ();
@@ -661,10 +662,10 @@ namespace dftParameters
     {
          if (dftParameters::verbosity >=1 && Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)
 	     std::cout <<"Setting ORTHOGONALIZATION TYPE=GS for all-electron calculations "<<std::endl;
-	        
+
 	 dftParameters::orthogType="GS";
     }
-	    
+
   }
 
 }

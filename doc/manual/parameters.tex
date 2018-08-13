@@ -683,8 +683,7 @@
 {\it Default:} 1e-4
 
 
-{\it Description:} [Standard] Sets the tolerance on the maximum force (in a.u.) on an atom when atoms are
-considered to be relaxed.
+{\it Description:} [Standard] Sets the tolerance on the maximum force (in a.u.) on an atom during atomic relaxation, when the atoms are considered to be relaxed.
 
 
 {\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 1$
@@ -980,26 +979,10 @@ considered to be relaxed.
 {\it Default:} true
 
 
-{\it Description:} [Advanced] Boolean parameter specifying whether to use gemm batch blas routines to perform matrix-matrix multiplication operations with groups of matrices, processing a number of groups at once using threads instead of the standard serial route. CAUTION: gemm batch blas routines will only be activated if the CHEBYSHEV FILTER BLOCK SIZE is less than 1000, and only if intel mkl blas library is linked with the dealii installation. Default option is true.
+{\it Description:} [Advanced] Boolean parameter specifying whether to use gemm batch blas routines to perform matrix-matrix multiplication operations with groups of matrices, processing a number of groups at once using threads instead of the standard serial route. CAUTION: gemm batch blas routines will only be activated if the WFC BLOCK SIZE is less than 1000, and only if intel mkl blas library is linked with the dealii installation. Default option is true.
 
 
 {\it Possible values:} A boolean value (true or false)
-\item {\it Parameter name:} {\tt CHEBYSHEV FILTER BLOCK SIZE}
-\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/CHEBYSHEV FILTER BLOCK SIZE}
-\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/CHEBYSHEV_20FILTER_20BLOCK_20SIZE}
-
-
-\index[prmindex]{CHEBYSHEV FILTER BLOCK SIZE}
-\index[prmindexfull]{SCF parameters!Eigen-solver parameters!CHEBYSHEV FILTER BLOCK SIZE}
-
-
-{\it Default:} 400
-
-
-{\it Description:} [Advanced] Chebyshev filtering procedure involves the matrix-matrix multiplication where one matrix corresponds to the discretized Hamiltonian and the other matrix corresponds to the wavefunction matrix. The matrix-matrix multiplication is accomplished in a loop over the number of blocks of the wavefunction matrix to reduce the memory footprint of the code. This parameter specifies the block size of the wavefunction matrix to be used in the matrix-matrix multiplication. The optimum value is dependent on the computing architecture.
-
-
-{\it Possible values:} An integer $n$ such that $1\leq n \leq 2147483647$
 \item {\it Parameter name:} {\tt CHEBYSHEV FILTER TOLERANCE}
 \phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/CHEBYSHEV FILTER TOLERANCE}
 \label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/CHEBYSHEV_20FILTER_20TOLERANCE}
@@ -1032,6 +1015,22 @@ considered to be relaxed.
 
 
 {\it Possible values:} An integer $n$ such that $0\leq n \leq 2000$
+\item {\it Parameter name:} {\tt ENABLE SUBSPACE ROT PGS OPT}
+\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/ENABLE SUBSPACE ROT PGS OPT}
+\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/ENABLE_20SUBSPACE_20ROT_20PGS_20OPT}
+
+
+\index[prmindex]{ENABLE SUBSPACE ROT PGS OPT}
+\index[prmindexfull]{SCF parameters!Eigen-solver parameters!ENABLE SUBSPACE ROT PGS OPT}
+
+
+{\it Default:} true
+
+
+{\it Description:} [Developer] Turns on subspace rotation optimization for Pseudo-Gram-Schimdt orthogonalization. Default option is true.
+
+
+{\it Possible values:} A boolean value (true or false)
 \item {\it Parameter name:} {\tt ENABLE SWITCH TO GS}
 \phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/ENABLE SWITCH TO GS}
 \label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/ENABLE_20SWITCH_20TO_20GS}
@@ -1112,22 +1111,6 @@ considered to be relaxed.
 
 
 {\it Possible values:} Any one of GS, LW, PGS, Auto
-\item {\it Parameter name:} {\tt ORTHO RR WFC BLOCK SIZE}
-\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/ORTHO RR WFC BLOCK SIZE}
-\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/ORTHO_20RR_20WFC_20BLOCK_20SIZE}
-
-
-\index[prmindex]{ORTHO RR WFC BLOCK SIZE}
-\index[prmindexfull]{SCF parameters!Eigen-solver parameters!ORTHO RR WFC BLOCK SIZE}
-
-
-{\it Default:} 200
-
-
-{\it Description:} [Developer] This block size is used for memory optimization purposes in the orthogonalization and Rayleigh-Ritz steps. This optimization is only activated if dealii library is compiled with ScaLAPACK. Default value is 200.
-
-
-{\it Possible values:} An integer $n$ such that $1\leq n \leq 2147483647$
 \item {\it Parameter name:} {\tt SCALAPACKPROCS}
 \phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/SCALAPACKPROCS}
 \label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/SCALAPACKPROCS}
@@ -1173,6 +1156,22 @@ considered to be relaxed.
 
 
 {\it Description:} [Developer] This block size is used for memory optimization purposes in subspace rotation step in Pseudo-Gram-Schmidt orthogonalization and Rayleigh-Ritz steps. This optimization is only activated if dealii library is compiled with ScaLAPACK. Default value is 2000.
+
+
+{\it Possible values:} An integer $n$ such that $1\leq n \leq 2147483647$
+\item {\it Parameter name:} {\tt WFC BLOCK SIZE}
+\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/WFC BLOCK SIZE}
+\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/WFC_20BLOCK_20SIZE}
+
+
+\index[prmindex]{WFC BLOCK SIZE}
+\index[prmindexfull]{SCF parameters!Eigen-solver parameters!WFC BLOCK SIZE}
+
+
+{\it Default:} 400
+
+
+{\it Description:} [Advanced] Chebyshev filtering procedure involves the matrix-matrix multiplication where one matrix corresponds to the discretized Hamiltonian and the other matrix corresponds to the wavefunction matrix. The matrix-matrix multiplication is accomplished in a loop over the number of blocks of the wavefunction matrix to reduce the memory footprint of the code. This parameter specifies the block size of the wavefunction matrix to be used in the matrix-matrix multiplication. The optimum value is dependent on the computing architecture. The same block size also used for memory optimization purposes in the orthogonalization and Rayleigh-Ritz steps. The memory optimization part is activated only if dealii library is compiled with ScaLAPACK. For optimum work sharing during band parallelization (NPBAND > 1), we recommend adjusting WFC BLOCK SIZE and NUMBER OF KOHN-SHAM WAVEFUNCTIONS such that NUMBER OF KOHN-SHAM WAVEFUNCTIONS/NPBAND/WFC BLOCK SIZE equals an integer value. Default value is 400.
 
 
 {\it Possible values:} An integer $n$ such that $1\leq n \leq 2147483647$
