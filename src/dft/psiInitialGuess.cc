@@ -246,8 +246,8 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 
       const dealii::types::global_dof_index dofID = locallyOwnedDOFs[dof];
       Point<3> node = d_supportPoints[dofID];
-      if(d_eigenVectorsFlattened[0].in_local_range(dofID*numEigenValues))
-	{
+      //if(d_eigenVectorsFlattened[0].in_local_range(dofID*numEigenValues))
+      //{
 	  if(!constraintsNone.is_constrained(dofID))
 	    {
 	      //
@@ -312,7 +312,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 			  //spherical part
 			  if (it->m > 0)
 			    {
-			      d_eigenVectorsFlattened[kPoint][dofID*numEigenValues+waveFunction] +=
+			      d_eigenVectorsFlattenedSTL[kPoint][dofID*numEigenValues+waveFunction] +=
 				  dataTypes::number(R*std::sqrt(2)*boost::math::spherical_harmonic_r(it->l,it->m,theta,phi));
 			    }
 			  else if (it->m == 0)
@@ -355,7 +355,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 
 		}
 	    }
-	}
+	  //}
     }
 
   for(int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
