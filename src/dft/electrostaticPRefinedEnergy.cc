@@ -61,8 +61,17 @@ void dftClass<FEOrder>::computeElectrostaticEnergyPRefined()
    std::vector<dealii::GridTools::PeriodicFacePair<typename dealii::DoFHandler<3>::cell_iterator> > periodicity_vector2;
    const std::array<unsigned int,3> periodic = {dftParameters::periodicX, dftParameters::periodicY, dftParameters::periodicZ};
 
+   std::vector<int> periodicDirectionVector;
+   for (unsigned int  d= 0; d < 3; ++d) 
+     {
+       if (periodic[d]==1) 
+	 {
+	   periodicDirectionVector.push_back(d);
+	 }
+     }
+
    for (unsigned int i = 0; i < std::accumulate(periodic.begin(),periodic.end(),0); ++i)
-         GridTools::collect_periodic_faces(dofHandlerPRefined, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector2,offsetVectors[i]);
+         GridTools::collect_periodic_faces(dofHandlerPRefined, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ periodicDirectionVector[i], periodicity_vector2,offsetVectors[periodicDirectionVector[i]]);
 
    dealii::DoFTools::make_periodicity_constraints<dealii::DoFHandler<3> >(periodicity_vector2, constraintsPRefined);
    constraintsPRefined.close();
