@@ -312,17 +312,17 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 			  //spherical part
 			  if (it->m > 0)
 			    {
-			      d_eigenVectorsFlattenedSTL[kPoint][dofID*numEigenValues+waveFunction] +=
+			      d_eigenVectorsFlattenedSTL[kPoint][dof*numEigenValues+waveFunction] +=
 				  dataTypes::number(R*std::sqrt(2)*boost::math::spherical_harmonic_r(it->l,it->m,theta,phi));
 			    }
 			  else if (it->m == 0)
 			    {
-			      d_eigenVectorsFlattened[kPoint][dofID*numEigenValues+waveFunction] +=
+			      d_eigenVectorsFlattenedSTL[kPoint][dof*numEigenValues+waveFunction] +=
 				  dataTypes::number(R*boost::math::spherical_harmonic_r(it->l,it->m,theta,phi));
 			    }
 			  else
 			    {
-			      d_eigenVectorsFlattened[kPoint][dofID*numEigenValues+waveFunction] +=
+			      d_eigenVectorsFlattenedSTL[kPoint][dof*numEigenValues+waveFunction] +=
 				  dataTypes::number(R*std::sqrt(2)*boost::math::spherical_harmonic_i(it->l,-(it->m),theta,phi));
 			    }
 			}
@@ -348,7 +348,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 			  if(rand()%2 == 0)
 			    value = -1.0*value;
 
-			  d_eigenVectorsFlattened[kPoint][dofID*numEigenValues+iWave] = dataTypes::number(value);
+			  d_eigenVectorsFlattened[kPoint][dof*numEigenValues+iWave] = dataTypes::number(value);
 
 			}
 		    }
@@ -358,11 +358,11 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 	  //}
     }
 
-  for(int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
-    {
-      d_eigenVectorsFlattened[kPoint].compress(VectorOperation::insert);
-      d_eigenVectorsFlattened[kPoint].update_ghost_values();
-    }
+  //for(int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+  //{
+  //   d_eigenVectorsFlattened[kPoint].compress(VectorOperation::insert);
+  //      d_eigenVectorsFlattened[kPoint].update_ghost_values();
+  //  }
 
   if (dftParameters::startingWFCType=="RANDOM")
     {

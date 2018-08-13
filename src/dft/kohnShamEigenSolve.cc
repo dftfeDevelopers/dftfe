@@ -39,13 +39,13 @@ namespace internal
 				    const std::shared_ptr<const dealii::Utilities::MPI::Partitioner> & singleComponentPartitioner,
 				    const unsigned int numberFields,
 				    const std::vector<dealii::types::global_dof_index> & localProc_dof_indicesReal,
-				    dealii::parallel::distributed::Vector<dataTypes::number> & fieldsArrayFlattened,
+				    std::vector<dataTypes::number> & fieldsArrayFlattened,
 				    dftUtils::constraintMatrixInfo & constraintsNoneDataInfo)
     {
 
-        constraintsNoneDataInfo.precomputeMaps(singleComponentPartitioner,
-					       fieldsArrayFlattened.get_partitioner(),
-					       numberFields);
+      //constraintsNoneDataInfo.precomputeMaps(singleComponentPartitioner,
+      //				       fieldsArrayFlattened.get_partitioner(),
+      //				       numberFields);
         const unsigned int numberDofs = fieldsArrayFlattened.local_size()/numberFields;
         const unsigned int inc = 1;
 
@@ -67,9 +67,9 @@ namespace internal
 #endif
 	}
 
-	constraintsNoneDataInfo.distribute(fieldsArrayFlattened,
-					   numberFields);
-	fieldsArrayFlattened.update_ghost_values();
+	//constraintsNoneDataInfo.distribute(fieldsArrayFlattened,
+	//				   numberFields);
+	//fieldsArrayFlattened.update_ghost_values();
     }
 }
 
@@ -109,7 +109,7 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 					       bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
 
   subspaceIterationSolver.solve(kohnShamDFTEigenOperator,
-  				d_eigenVectorsFlattened[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
+  				d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
 				d_tempEigenVec,
 				numEigenValues,
   				eigenValuesTemp,

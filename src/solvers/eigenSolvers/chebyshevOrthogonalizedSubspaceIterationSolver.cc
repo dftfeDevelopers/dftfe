@@ -108,8 +108,8 @@ namespace dftfe{
   // solve
   //
   eigenSolverClass::ReturnValueType
-  chebyshevOrthogonalizedSubspaceIterationSolver::solve(operatorDFTClass           & operatorMatrix,
-							dealii::parallel::distributed::Vector<dataTypes::number>    & eigenVectorsFlattened,
+  chebyshevOrthogonalizedSubspaceIterationSolver::solve(operatorDFTClass  & operatorMatrix,
+							std::vector<dataTypes::number> & eigenVectorsFlattened,
 							vectorType  & tempEigenVec,
 							const unsigned int totalNumberWaveFunctions,
 							std::vector<double>        & eigenValues,
@@ -119,7 +119,7 @@ namespace dftfe{
 
 
     if (dftParameters::verbosity>=4)
-      dftUtils::printCurrentMemoryUsage(eigenVectorsFlattened.get_mpi_communicator(),
+      dftUtils::printCurrentMemoryUsage(operatorMatrix.getMPICommunicator(),
 	                      "Before Lanczos k-step upper Bound");
 
     computing_timer.enter_section("Lanczos k-step Upper Bound");
@@ -155,15 +155,15 @@ namespace dftfe{
     //
     //Set the constraints to zero
     //
-    operatorMatrix.getOverloadedConstraintMatrix()->set_zero(eigenVectorsFlattened,
-	                                                    totalNumberWaveFunctions);
+    //operatorMatrix.getOverloadedConstraintMatrix()->set_zero(eigenVectorsFlattened,
+    //	                                                    totalNumberWaveFunctions);
 
 
     if (dftParameters::verbosity>=4)
-      dftUtils::printCurrentMemoryUsage(eigenVectorsFlattened.get_mpi_communicator(),
+      dftUtils::printCurrentMemoryUsage(operatorMatrix.getMPICommunicator(),
 	                      "Before starting chebyshev filtering");
 
-    const unsigned int localVectorSize = eigenVectorsFlattened.local_size()/totalNumberWaveFunctions;
+    const unsigned int localVectorSize = eigenVectorsFlattened.size()/totalNumberWaveFunctions;
 
 
     //band group parallelization data structures
@@ -178,8 +178,8 @@ namespace dftfe{
     const unsigned int vectorsBlockSize=std::min(dftParameters::wfcBlockSize,
 	                                         bandGroupLowHighPlusOneIndices[1]);
 
-    if(totalNumberBlocks > 1 || numberBandGroups>1)
-    {
+    // if(totalNumberBlocks >= 1 || numberBandGroups>1)
+    //{
 	//
 	//allocate storage for eigenVectorsFlattenedArray for multiple blocks
 	//
@@ -208,7 +208,7 @@ namespace dftfe{
 		for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
 		    for(unsigned int iWave = 0; iWave < BVec; ++iWave)
 			eigenVectorsFlattenedArrayBlock.local_element(iNode*BVec+iWave)
-			     =eigenVectorsFlattened.local_element(iNode*totalNumberWaveFunctions+jvec+iWave);
+			     =eigenVectorsFlattened[iNode*totalNumberWaveFunctions+jvec+iWave];
 
 		computing_timer.exit_section("Copy from full to block flattened array");
 
@@ -226,14 +226,14 @@ namespace dftfe{
 		computing_timer.exit_section("Chebyshev filtering opt");
 
 		if (dftParameters::verbosity>=4)
-		  dftUtils::printCurrentMemoryUsage(eigenVectorsFlattened.get_mpi_communicator(),
+		  dftUtils::printCurrentMemoryUsage(operatorMatrix.getMPICommunicator(),
 					  "During blocked chebyshev filtering");
 
 		//copy the eigenVectorsFlattenedArrayBlock into eigenVectorsFlattenedArray after filtering
 		computing_timer.enter_section("Copy from block to full flattened array");
 		for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
 		    for(unsigned int iWave = 0; iWave < BVec; ++iWave)
-			  eigenVectorsFlattened.local_element(iNode*totalNumberWaveFunctions+jvec+iWave)
+			  eigenVectorsFlattened[iNode*totalNumberWaveFunctions+jvec+iWave]
 			  = eigenVectorsFlattenedArrayBlock.local_element(iNode*BVec+iWave);
 
 		computing_timer.exit_section("Copy from block to full flattened array");
@@ -243,7 +243,7 @@ namespace dftfe{
 	        //set to zero wavefunctions which wont go through chebyshev filtering inside a given band group
 		for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
 		    for(unsigned int iWave = 0; iWave < BVec; ++iWave)
-			  eigenVectorsFlattened.local_element(iNode*totalNumberWaveFunctions+jvec+iWave)
+			  eigenVectorsFlattened[iNode*totalNumberWaveFunctions+jvec+iWave]
 			  = dataTypes::number(0.0);
 
 	    }
@@ -273,8 +273,8 @@ namespace dftfe{
 
 	    computing_timer.exit_section("MPI All Reduce wavefunctions across all band groups");
 	}
-    }
-    else
+	//}
+    /*else
     {
 	operatorMatrix.reinit(totalNumberWaveFunctions,
 			      eigenVectorsFlattened,
@@ -292,7 +292,7 @@ namespace dftfe{
 						 d_lowerBoundWantedSpectrum);
 	computing_timer.exit_section("Chebyshev filtering opt");
 
-    }
+	}*/
 
     if(dftParameters::verbosity >= 4)
       pcout<<"ChebyShev Filtering Done: "<<std::endl;
