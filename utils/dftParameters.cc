@@ -65,6 +65,7 @@ namespace dftParameters
   double lowerBoundUnwantedFracUpper=0;
   unsigned int numCoreWfcRR=0;
   bool triMatPGSOpt=true;
+  bool reuseWfcGeoOpt=true;
 
   void declare_parameters(ParameterHandler &prm)
   {
@@ -164,6 +165,10 @@ namespace dftParameters
 	    prm.declare_entry("CELL CONSTRAINT TYPE", "12",
 			      Patterns::Integer(1,13),
 			      "[Standard] Cell relaxation constraint type, 1 (isotropic shape-fixed volume optimization), 2 (volume-fixed shape optimization), 3 (relax along domain vector component v1x), 4 (relax along domain vector component v2x), 5 (relax along domain vector component v3x), 6 (relax along domain vector components v2x and v3x), 7 (relax along domain vector components v1x and v3x), 8 (relax along domain vector components v1x and v2x), 9 (volume optimization- relax along domain vector components v1x, v2x and v3x), 10 (2D - relax along x and y components), 11(2D- relax only x and y components with inplane area fixed), 12(relax all domain vector components), 13 automatically decides the constraints based on boundary conditions. CAUTION: A majority of these options only make sense in an orthorhombic cell geometry.");
+
+	    prm.declare_entry("REUSE WFC", "true",
+			      Patterns::Bool(),
+			      "[Standard] Reuse previous ground-state wavefunctions during geometry optimization.");
 
 	}
 	prm.leave_subsection ();
@@ -445,6 +450,7 @@ namespace dftParameters
 	    dftParameters::isCellStress                  = dftParameters::isCellOpt || prm.get_bool("CELL STRESS");
 	    dftParameters::stressRelaxTol                = prm.get_double("STRESS TOL");
 	    dftParameters::cellConstraintType            = prm.get_integer("CELL CONSTRAINT TYPE");
+	    dftParameters::reuseWfcGeoOpt                = prm.get_bool("REUSE WFC");
 	}
 	prm.leave_subsection ();
     }

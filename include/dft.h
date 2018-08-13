@@ -715,6 +715,7 @@ namespace dftfe {
       std::vector<double> a0;
       std::vector<double> bLow;
       vectorType d_tempEigenVec;
+      vectorType d_tempEigenVecPrev;
 
       /**
        * @brief compute the maximum of the residual norm of the highest occupied state among all k points

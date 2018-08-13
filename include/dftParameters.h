@@ -75,6 +75,7 @@ namespace dftfe {
       extern unsigned int natomTypes;
       extern double lowerBoundUnwantedFracUpper;
       extern bool triMatPGSOpt;
+      extern bool reuseWfcGeoOpt;
 
       /**
        * Declare parameters.
