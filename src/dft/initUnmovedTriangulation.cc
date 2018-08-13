@@ -139,11 +139,22 @@ void dftClass<FEOrder>::initUnmovedTriangulation(const parallel::distributed::Tr
     }
 
   std::vector<GridTools::PeriodicFacePair<typename DoFHandler<3>::cell_iterator> > periodicity_vector2, periodicity_vector2Eigen;
+
+  std::vector<int> periodicDirectionVector;
   const std::array<int,3> periodic = {dftParameters::periodicX, dftParameters::periodicY, dftParameters::periodicZ};
+  for(unsigned int  d= 0; d < 3; ++d) 
+    {
+      if(periodic[d]==1) 
+	{
+	  periodicDirectionVector.push_back(d);
+	}
+    }
+
+
   for (int i = 0; i < std::accumulate(periodic.begin(),periodic.end(),0); ++i)
    {
-      GridTools::collect_periodic_faces(dofHandler, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector2,offsetVectors[i]);
-      GridTools::collect_periodic_faces(dofHandlerEigen, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector2Eigen,offsetVectors[i]);
+      GridTools::collect_periodic_faces(dofHandler, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ periodicDirectionVector[i], periodicity_vector2,offsetVectors[periodicDirectionVector[i]]);
+      GridTools::collect_periodic_faces(dofHandlerEigen, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ periodicDirectionVector[i], periodicity_vector2Eigen,offsetVectors[periodicDirectionVector[i]]);
    }
 
   DoFTools::make_periodicity_constraints<DoFHandler<3> >(periodicity_vector2, constraintsNone);

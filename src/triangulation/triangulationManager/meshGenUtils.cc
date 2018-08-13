@@ -179,19 +179,31 @@ void markPeriodicFacesNonOrthogonal(Triangulation<3,3> &triangulation,
 		//pcout<<"Domain is not periodic: "<<std::endl;
 	      } */
 	     unsigned int i = 1 ;
-
-             for (unsigned int  d= 0; d < 3; ++d) {
-	        if (periodic[d]==1) {
-                 if (std::abs(getCosineAngle(faceNormalVector,periodicFaceNormals[d]) - 1.0) < 1.0e-05)
-		    cell->face(f)->set_boundary_id(i);
-	         else if (std::abs(getCosineAngle(faceNormalVector,periodicFaceNormals[d]) + 1.0) < 1.0e-05)
-		    cell->face(f)->set_boundary_id(i+1);
-                  i = i+2 ;
-                }
-             }
+	     
+             for (unsigned int  d= 0; d < 3; ++d) 
+	       {
+		 if (periodic[d]==1) 
+		   {
+		     if (std::abs(getCosineAngle(faceNormalVector,periodicFaceNormals[d]) - 1.0) < 1.0e-05)
+		       cell->face(f)->set_boundary_id(i);
+		     else if (std::abs(getCosineAngle(faceNormalVector,periodicFaceNormals[d]) + 1.0) < 1.0e-05)
+		       cell->face(f)->set_boundary_id(i+1);
+		     i = i+2 ;
+		   }
+	       }
 
 
 	    }
+	}
+    }
+
+  std::vector<int> periodicDirectionVector;
+
+  for (unsigned int  d= 0; d < 3; ++d) 
+    {
+      if (periodic[d]==1) 
+	{
+	  periodicDirectionVector.push_back(d);
 	}
     }
 
@@ -199,7 +211,7 @@ void markPeriodicFacesNonOrthogonal(Triangulation<3,3> &triangulation,
   std::vector<GridTools::PeriodicFacePair<typename Triangulation<3,3>::cell_iterator> > periodicity_vector;
   for (int i = 0; i < std::accumulate(periodic.begin(),periodic.end(),0); ++i)
     {
-      GridTools::collect_periodic_faces(triangulation, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector, offsetVectors[i]);
+      GridTools::collect_periodic_faces(triangulation, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ periodicDirectionVector[i], periodicity_vector, offsetVectors[periodicDirectionVector[i]]);
       //GridTools::collect_periodic_faces(triangulation, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ i, periodicity_vector);
     }
   triangulation.add_periodicity(periodicity_vector);
