@@ -1,0 +1,40 @@
+number of atoms: 1
+number of atoms types: 1
+Z:13
+=============================================================================================================================
+number of electrons: 3
+number of eigen values: 20
+=============================================================================================================================
+-----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
+v1 : 4.000000000000000000e+01 0.000000000000000000e+00 0.000000000000000000e+00
+v2 : 0.000000000000000000e+00 4.000000000000000000e+01 0.000000000000000000e+00
+v3 : 0.000000000000000000e+00 2.000000000000000000e+01 4.000000000000000000e+01
+-----------------------------------------------------------------------------------------
+-----Fractional coordinates of atoms------ 
+AtomId 0:  5.000000000000000000e-01 5.000000000000000000e-01 5.000000000000000000e-01
+-----------------------------------------------------------------------------------------
+Number Image Charges  2
+
+Finite element mesh information
+-------------------------------------------------
+number of elements: 484
+number of degrees of freedom: 16939
+-------------------------------------------------
+
+Setting initial guess for wavefunctions....
+
+Reading initial guess for electron-density.....
+
+Pseudopotential initalization....
+
+Starting SCF iterations....
+SCF iterations converged to the specified tolerance after: 8 iterations.
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:          -1.94589409
+
+Absolute values of ion forces (Hartree/Bohr)
+--------------------------------------------------------------------------------------------
+AtomId    0:  0.000000,0.000000,0.000000
+--------------------------------------------------------------------------------------------
