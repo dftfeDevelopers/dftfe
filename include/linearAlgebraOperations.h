@@ -75,7 +75,7 @@ namespace dftfe
                    int * info);
     }
 #endif
-/** 
+/**
  *  @brief Contains linear algebra functions used in the implementation of an eigen solver
  *
  *  @author Phani Motamarri, Sambit Das
@@ -178,13 +178,21 @@ namespace dftfe
       *  In-place update of the given subspace
       *  @param[in] numberComponents Number of multiple-fields
       *  @param[in] interBandGroupComm interpool communicator for parallelization over band groups
+      *  @param[in] numberCoreVectors number of core states for which Mpi all reduce
+      *  is not used after subspace rotation step. This parameter is used only in case of
+      *  band parallelization
+      *  @param[in,out] nonCoreVectorsArray this parameter is required if numberCoreVectors
+      *  is not equal to 0. In that case, the block size of tempNonCoreVectorsArray is equal
+      *  to numberComponents minus numberCoreVectors.
       *
       *  @return flag indicating success/failure. 1 for failure, 0 for success
       */
     template<typename T>
       unsigned int pseudoGramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<T> & X,
-					      const unsigned int numberComponents,
-					      const MPI_Comm &interBandGroupComm);
+					              const unsigned int numberComponents,
+					              const MPI_Comm &interBandGroupComm,
+			                              const unsigned int numberCoreVectors,
+			                              dealii::parallel::distributed::Vector<T> & nonCoreVectorsArray);
 
     /** @brief Compute Rayleigh-Ritz projection
      *

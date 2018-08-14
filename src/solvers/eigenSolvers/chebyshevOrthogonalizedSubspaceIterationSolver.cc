@@ -165,54 +165,18 @@ namespace dftfe{
 
     const unsigned int localVectorSize = eigenVectorsFlattened.local_size()/totalNumberWaveFunctions;
 
-    //
-    //Split the complete wavefunctions into multiple blocks.
-    //Create the size of vectors in each block
-    //
+
+    //band group parallelization data structures
     const unsigned int numberBandGroups=
-	dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
+    dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
     const unsigned int bandGroupTaskId = dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
-    const unsigned int wavefunctionsBlockSizeBandGroup=totalNumberWaveFunctions/numberBandGroups;
-    const unsigned int numChebyshevFilterBlocksInsideBandGroup=std::ceil((double)wavefunctionsBlockSizeBandGroup/(double)dftParameters::chebyshevBlockSize);
-    const unsigned int chebyshevFilterBlockSizeInsideBandGroup
-	                          =wavefunctionsBlockSizeBandGroup/
-				  numChebyshevFilterBlocksInsideBandGroup;
-
-    const unsigned int totalNumberBlocks =numChebyshevFilterBlocksInsideBandGroup*numberBandGroups;
-    std::vector<unsigned int> actualBlockSizes(totalNumberBlocks,chebyshevFilterBlockSizeInsideBandGroup);
-
-    const unsigned lastBlockSizeInsideBandGroupExceptLastBandGroup
-	              = wavefunctionsBlockSizeBandGroup
-			 -(numChebyshevFilterBlocksInsideBandGroup-1)*chebyshevFilterBlockSizeInsideBandGroup;
-
-    for(unsigned int ibgrp = 0; ibgrp < numberBandGroups; ++ibgrp)
-       actualBlockSizes[numChebyshevFilterBlocksInsideBandGroup*(ibgrp+1)-1]=lastBlockSizeInsideBandGroupExceptLastBandGroup;
-
-    actualBlockSizes[totalNumberBlocks-1]=
-	                 totalNumberWaveFunctions
-			 -numberBandGroups*(numChebyshevFilterBlocksInsideBandGroup-1)*chebyshevFilterBlockSizeInsideBandGroup
-			 -lastBlockSizeInsideBandGroupExceptLastBandGroup*(numberBandGroups-1);
-
-    std::vector<int> blockLowIndices(totalNumberBlocks,0);
-
-#ifdef DEBUG
-    if (dftParameters::verbosity>=4)
-      pcout<<"numChebyshevFilterBlocksInsideBandGroup: "<<numChebyshevFilterBlocksInsideBandGroup<<std::endl;
-#endif
-    unsigned int sizeCount=0;
-    for (unsigned int i=0;i<totalNumberBlocks;++i)
-    {
-	blockLowIndices[i]=sizeCount;
-        sizeCount+=actualBlockSizes[i];
-#ifdef DEBUG
-        if (dftParameters::verbosity>=4)
-	   pcout<< "blockId: "<< i << ", blockSize: "<< actualBlockSizes[i]<<", lowindex: "<<blockLowIndices[i]<<std::endl;
-#endif
-    }
-
-    AssertThrow(blockLowIndices[totalNumberBlocks-1]+actualBlockSizes[totalNumberBlocks-1]
-	        == totalNumberWaveFunctions,
-                dealii::ExcMessage("DFT-FE Error: block sizes for chebsyshev filtering not correctly set."));
+    std::vector<unsigned int> bandGroupLowHighPlusOneIndices;
+    dftUtils::createBandParallelizationIndices(interBandGroupComm,
+					       totalNumberWaveFunctions,
+					       bandGroupLowHighPlusOneIndices);
+    const unsigned int totalNumberBlocks=std::ceil((double)totalNumberWaveFunctions/(double)dftParameters::wfcBlockSize);
+    const unsigned int vectorsBlockSize=std::min(dftParameters::wfcBlockSize,
+	                                         bandGroupLowHighPlusOneIndices[1]);
 
     if(totalNumberBlocks > 1 || numberBandGroups>1)
     {
@@ -220,38 +184,31 @@ namespace dftfe{
 	//allocate storage for eigenVectorsFlattenedArray for multiple blocks
 	//
 	dealii::parallel::distributed::Vector<dataTypes::number> eigenVectorsFlattenedArrayBlock;
+	operatorMatrix.reinit(vectorsBlockSize,
+		              eigenVectorsFlattenedArrayBlock,
+			      true);
 
-	for(unsigned int ibgrp = 0; ibgrp < numberBandGroups; ++ibgrp)
+	for (unsigned int jvec = 0; jvec < totalNumberWaveFunctions; jvec += vectorsBlockSize)
 	{
-	    if (bandGroupTaskId!=ibgrp)
-		continue;
 
-	    for(unsigned int nBlock = 0; nBlock < numChebyshevFilterBlocksInsideBandGroup; ++nBlock)
-	    {
-		//
-		//Get the current block data
-		//
-		const unsigned int numberWaveFunctionsPerCurrentBlock =
-		     actualBlockSizes[nBlock+ibgrp*numChebyshevFilterBlocksInsideBandGroup];
-		const unsigned int lowIndex=
-		     blockLowIndices[nBlock+ibgrp*numChebyshevFilterBlocksInsideBandGroup];
+	      // Correct block dimensions if block "goes off edge of" the matrix
+	      const unsigned int BVec = std::min(vectorsBlockSize, totalNumberWaveFunctions-jvec);
 
+	      if ((jvec+BVec)<=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1] &&
+	           (jvec+BVec)>bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
+	      {
 		//create custom partitioned dealii array
-		if (nBlock==0 || nBlock==numChebyshevFilterBlocksInsideBandGroup-1)
-		  {
-		    operatorMatrix.reinit(numberWaveFunctionsPerCurrentBlock,
+		if (BVec!=vectorsBlockSize)
+		    operatorMatrix.reinit(BVec,
 					  eigenVectorsFlattenedArrayBlock,
 					  true);
-		  }
-
 
 		//fill the eigenVectorsFlattenedArrayBlock from eigenVectorsFlattenedArray
 		computing_timer.enter_section("Copy from full to block flattened array");
 		for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
-		    for(unsigned int iWave = 0; iWave < numberWaveFunctionsPerCurrentBlock; ++iWave)
-			eigenVectorsFlattenedArrayBlock.local_element(iNode*numberWaveFunctionsPerCurrentBlock
-				 +iWave)
-			     =eigenVectorsFlattened.local_element(iNode*totalNumberWaveFunctions+lowIndex+iWave);
+		    for(unsigned int iWave = 0; iWave < BVec; ++iWave)
+			eigenVectorsFlattenedArrayBlock.local_element(iNode*BVec+iWave)
+			     =eigenVectorsFlattened.local_element(iNode*totalNumberWaveFunctions+jvec+iWave);
 
 		computing_timer.exit_section("Copy from full to block flattened array");
 
@@ -261,7 +218,7 @@ namespace dftfe{
 		computing_timer.enter_section("Chebyshev filtering opt");
 		linearAlgebraOperations::chebyshevFilter(operatorMatrix,
 							 eigenVectorsFlattenedArrayBlock,
-							 numberWaveFunctionsPerCurrentBlock,
+							 BVec,
 							 chebyshevOrder,
 							 d_lowerBoundUnWantedSpectrum,
 							 upperBoundUnwantedSpectrum,
@@ -275,40 +232,22 @@ namespace dftfe{
 		//copy the eigenVectorsFlattenedArrayBlock into eigenVectorsFlattenedArray after filtering
 		computing_timer.enter_section("Copy from block to full flattened array");
 		for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
-		    for(unsigned int iWave = 0; iWave < numberWaveFunctionsPerCurrentBlock; ++iWave)
-			  eigenVectorsFlattened.local_element(iNode*totalNumberWaveFunctions+lowIndex+iWave)
-			  = eigenVectorsFlattenedArrayBlock.local_element(iNode*numberWaveFunctionsPerCurrentBlock
-				 +iWave);
+		    for(unsigned int iWave = 0; iWave < BVec; ++iWave)
+			  eigenVectorsFlattened.local_element(iNode*totalNumberWaveFunctions+jvec+iWave)
+			  = eigenVectorsFlattenedArrayBlock.local_element(iNode*BVec+iWave);
 
 		computing_timer.exit_section("Copy from block to full flattened array");
-	    }//block loop
-
-	    if (numberBandGroups>1)
+	    }
+	    else
 	    {
 	        //set to zero wavefunctions which wont go through chebyshev filtering inside a given band group
-		const unsigned int leftLowIndex=blockLowIndices[ibgrp*numChebyshevFilterBlocksInsideBandGroup];
-		const unsigned int rightHighIndexPlusOne
-			  =ibgrp==(numberBandGroups-1)?
-			   totalNumberWaveFunctions
-			   :blockLowIndices[(ibgrp+1)*numChebyshevFilterBlocksInsideBandGroup];
-	        for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
-		{
-		    //wavefunctions to the left of the band group
-		    for(int iWave = 0; iWave < leftLowIndex; ++iWave)
-			  eigenVectorsFlattened.local_element(iNode*totalNumberWaveFunctions+iWave)
-			  =dataTypes::number(0.0);
-
-		    //wavefunctions to the right of the band group
-		    for(int iWave = rightHighIndexPlusOne; iWave < totalNumberWaveFunctions; ++iWave)
-			  eigenVectorsFlattened.local_element(iNode*totalNumberWaveFunctions+iWave)
+		for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
+		    for(unsigned int iWave = 0; iWave < BVec; ++iWave)
+			  eigenVectorsFlattened.local_element(iNode*totalNumberWaveFunctions+jvec+iWave)
 			  = dataTypes::number(0.0);
-		}
-#ifdef DEBUG
-                if (dftParameters::verbosity>=4)
-		   std::cout<<"ibgrp: "<<ibgrp<< ", leftLowIndex: "<<leftLowIndex<<", rightHighIndexPlusOne: "<<rightHighIndexPlusOne<<std::endl;
-#endif
+
 	    }
-	}//band group
+	}//block loop
 
 	eigenVectorsFlattenedArrayBlock.reinit(0);
 
@@ -358,6 +297,15 @@ namespace dftfe{
     if(dftParameters::verbosity >= 4)
       pcout<<"ChebyShev Filtering Done: "<<std::endl;
 
+    dealii::parallel::distributed::Vector<dataTypes::number> eigenVectorsFlattenedRR;
+    if (eigenValues.size()!=totalNumberWaveFunctions)
+    {
+
+        operatorMatrix.reinit(eigenValues.size(),
+                              eigenVectorsFlattenedRR,
+                              true);
+    }
+
     if(dftParameters::orthogType.compare("LW") == 0)
       {
 	computing_timer.enter_section("Lowden Orthogn Opt");
@@ -383,7 +331,9 @@ namespace dftfe{
 	const unsigned int flag=linearAlgebraOperations::pseudoGramSchmidtOrthogonalization
 	                                                           (eigenVectorsFlattened,
 								    totalNumberWaveFunctions,
-								    interBandGroupComm);
+								    interBandGroupComm,
+                                                                    totalNumberWaveFunctions-eigenValues.size(),
+								    eigenVectorsFlattenedRR);
 	if (flag==1)
 	{
 	    if(dftParameters::verbosity >= 1)
@@ -409,13 +359,9 @@ namespace dftfe{
 
     computing_timer.enter_section("Rayleigh-Ritz proj Opt");
 
-    dealii::parallel::distributed::Vector<dataTypes::number> eigenVectorsFlattenedRR;
     if (eigenValues.size()!=totalNumberWaveFunctions)
     {
 
-	operatorMatrix.reinit(eigenValues.size(),
-			      eigenVectorsFlattenedRR,
-			      true);
 	for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
 	    for(unsigned int iWave = 0; iWave < eigenValues.size(); ++iWave)
 		eigenVectorsFlattenedRR.local_element(iNode*eigenValues.size()
