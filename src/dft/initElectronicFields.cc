@@ -91,6 +91,14 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
   matrix_free_data.initialize_dof_vector(d_tempEigenVec,eigenDofHandlerIndex);
 
   //
+  //store constraintEigen Matrix entries into STL vector
+  //
+  constraintsNoneEigenDataInfo.initialize(d_tempEigenVec.get_partitioner(),
+					  constraintsNoneEigen);
+
+  constraintsNoneDataInfo.initialize(matrix_free_data.get_vector_partitioner(),
+				     constraintsNone);
+  //
   //initialize density and PSI/ interpolate from previous ground state solution
   //
   if (usePreviousGroundStateFields==0)
@@ -211,14 +219,6 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
  if (dftParameters::verbosity>=4)
    dftUtils::printCurrentMemoryUsage(mpi_communicator,
 			  "Serial and parallel prev mesh generated");
-  //
-  //store constraintEigen Matrix entries into STL vector
-  //
-  constraintsNoneEigenDataInfo.initialize(d_tempEigenVec.get_partitioner(),
-					  constraintsNoneEigen);
-
-  constraintsNoneDataInfo.initialize(matrix_free_data.get_vector_partitioner(),
-				     constraintsNone);
 
  if (dftParameters::verbosity>=4)
    dftUtils::printCurrentMemoryUsage(mpi_communicator,
