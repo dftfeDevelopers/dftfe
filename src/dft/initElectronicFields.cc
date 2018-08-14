@@ -60,8 +60,9 @@ void dftClass<FEOrder>::initPsiAndRhoFromPreviousGroundStatePsi(std::vector<std:
      if (dftParameters::verbosity>=2)
       pcout<<"L2 Norm Value of interpolated eigenvector 0: "<<eigenVectorsCurrentPtrs[0]->l2_norm()<<std::endl;
 
-     pcout <<std::endl<< "Computing rho initial guess from previous ground state PSI...."<<std::endl;
-     computeRhoInitialGuessFromPSI(eigenVectors);
+     initRhoFromPreviousGroundStateRho();
+     //pcout <<std::endl<< "Computing rho initial guess from previous ground state PSI...."<<std::endl;
+     //computeRhoInitialGuessFromPSI(eigenVectors);
 }
 
 //init
@@ -88,6 +89,19 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
   //initialize eigen vectors
   //
   matrix_free_data.initialize_dof_vector(d_tempEigenVec,eigenDofHandlerIndex);
+
+  //
+  //store constraintEigen Matrix entries into STL vector
+  //
+  constraintsNoneEigenDataInfo.initialize(d_tempEigenVec.get_partitioner(),
+					  constraintsNoneEigen);
+
+  constraintsNoneDataInfo.initialize(matrix_free_data.get_vector_partitioner(),
+				     constraintsNone);
+
+ if (dftParameters::verbosity>=4)
+   dftUtils::printCurrentMemoryUsage(mpi_communicator,
+			  "Overloaded constraint matrices initialized");
 
   //
   //initialize density and PSI/ interpolate from previous ground state solution
@@ -139,13 +153,73 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
   }
   else if (usePreviousGroundStateFields==2)
   {
-      //initPsiAndRhoFromPreviousGroundStatePsi(eigenVectors);
+      std::vector<std::vector<vectorType>> eigenVectors((1+dftParameters::spinPolarized)*d_kPointWeights.size(),
+	                                                 std::vector<vectorType>(numEigenValues));
+
+      for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+	  for(unsigned int i= 0; i < numEigenValues; ++i)
+	       eigenVectors[kPoint][i].reinit(d_tempEigenVecPrev);
+      for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+      {
+#ifdef USE_COMPLEX
+	 vectorTools::copyFlattenedDealiiVecToSingleCompVec
+		 (d_eigenVectorsFlattened[kPoint],
+		  numEigenValues,
+		  std::make_pair(0,numEigenValues),
+		  localProc_dof_indicesReal,
+		  localProc_dof_indicesImag,
+		  eigenVectors[kPoint]);
+#else
+	 vectorTools::copyFlattenedDealiiVecToSingleCompVec
+		 (d_eigenVectorsFlattened[kPoint],
+		  numEigenValues,
+		  std::make_pair(0,numEigenValues),
+		  eigenVectors[kPoint]);
+
+#endif
+	 d_eigenVectorsFlattened[kPoint].reinit(0);
+      }
+
+      initPsiAndRhoFromPreviousGroundStatePsi(eigenVectors);
+
+      for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+      {
+	  vectorTools::createDealiiVector<dataTypes::number>(matrix_free_data.get_vector_partitioner(),
+							     numEigenValues,
+							     d_eigenVectorsFlattened[kPoint]);
+#ifdef USE_COMPLEX
+	 vectorTools::copySingleCompVecToFlattenedDealiiVec
+		 (d_eigenVectorsFlattened[kPoint],
+		  numEigenValues,
+		  std::make_pair(0,numEigenValues),
+		  localProc_dof_indicesReal,
+		  localProc_dof_indicesImag,
+		  eigenVectors[kPoint]);
+#else
+	 vectorTools::copySingleCompVecToFlattenedDealiiVec
+		 (d_eigenVectorsFlattened[kPoint],
+		  numEigenValues,
+		  std::make_pair(0,numEigenValues),
+		  eigenVectors[kPoint]);
+
+#endif
+      }
   }
+
+  updatePrevMeshDataStructures();
 
    if (dftParameters::verbosity>=2)
        if (dftParameters::spinPolarized==1)
 	pcout<< std::endl<<"net magnetization: "<< totalMagnetization(rhoInValuesSpinPolarized) <<std::endl;
+}
 
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::updatePrevMeshDataStructures()
+{
+  matrix_free_data.initialize_dof_vector(d_tempEigenVecPrev,eigenDofHandlerIndex);
+
+  constraintsNoneEigenDataInfoPrev.initialize(d_tempEigenVecPrev.get_partitioner(),
+					  constraintsNoneEigen);
   //
   //update serial and parallel unmoved previous mesh
   //
@@ -153,21 +227,7 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
     d_mesh.generateSerialAndParallelUnmovedPreviousMesh(atomLocations,
 				                        d_imagePositions,
 				                        d_domainBoundingVectors);
-
-
  if (dftParameters::verbosity>=4)
    dftUtils::printCurrentMemoryUsage(mpi_communicator,
 			  "Serial and parallel prev mesh generated");
-  //
-  //store constraintEigen Matrix entries into STL vector
-  //
-  constraintsNoneEigenDataInfo.initialize(d_tempEigenVec.get_partitioner(),
-					  constraintsNoneEigen);
-
-  constraintsNoneDataInfo.initialize(matrix_free_data.get_vector_partitioner(),
-				     constraintsNone);
-
- if (dftParameters::verbosity>=4)
-   dftUtils::printCurrentMemoryUsage(mpi_communicator,
-			  "Overloaded constraint matrices initialized");
 }
