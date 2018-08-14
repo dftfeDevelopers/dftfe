@@ -238,6 +238,11 @@ namespace dftfe {
        */
       void initRhoFromPreviousGroundStateRho();
 
+      /**
+       * @brief update previous mesh data structures which are required for interpolating wfc and
+       * density during geometry optimization.
+       */
+      void updatePrevMeshDataStructures();
 
       /**
        *@brief project ground state electron density from previous mesh into
@@ -550,6 +555,14 @@ namespace dftfe {
        *used in eigen solve
        */
       dftUtils::constraintMatrixInfo constraintsNoneEigenDataInfo;
+
+      /**
+       *object which is used to store dealii constraint matrix information
+       *using STL vectors. The relevant dealii constraint matrix
+       *has hanging node constraints and periodic constraints(for periodic problems)
+       *used in eigen solve
+       */
+      dftUtils::constraintMatrixInfo constraintsNoneEigenDataInfoPrev;
 
       /**
        *object which is used to store dealii constraint matrix information

@@ -98,6 +98,11 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
 
   constraintsNoneDataInfo.initialize(matrix_free_data.get_vector_partitioner(),
 				     constraintsNone);
+
+ if (dftParameters::verbosity>=4)
+   dftUtils::printCurrentMemoryUsage(mpi_communicator,
+			  "Overloaded constraint matrices initialized");
+
   //
   //initialize density and PSI/ interpolate from previous ground state solution
   //
@@ -201,12 +206,20 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
       }
   }
 
-  matrix_free_data.initialize_dof_vector(d_tempEigenVecPrev,eigenDofHandlerIndex);
+  updatePrevMeshDataStructures();
 
    if (dftParameters::verbosity>=2)
        if (dftParameters::spinPolarized==1)
 	pcout<< std::endl<<"net magnetization: "<< totalMagnetization(rhoInValuesSpinPolarized) <<std::endl;
+}
 
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::updatePrevMeshDataStructures()
+{
+  matrix_free_data.initialize_dof_vector(d_tempEigenVecPrev,eigenDofHandlerIndex);
+
+  constraintsNoneEigenDataInfoPrev.initialize(d_tempEigenVecPrev.get_partitioner(),
+					  constraintsNoneEigen);
   //
   //update serial and parallel unmoved previous mesh
   //
@@ -214,13 +227,7 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
     d_mesh.generateSerialAndParallelUnmovedPreviousMesh(atomLocations,
 				                        d_imagePositions,
 				                        d_domainBoundingVectors);
-
-
  if (dftParameters::verbosity>=4)
    dftUtils::printCurrentMemoryUsage(mpi_communicator,
 			  "Serial and parallel prev mesh generated");
-
- if (dftParameters::verbosity>=4)
-   dftUtils::printCurrentMemoryUsage(mpi_communicator,
-			  "Overloaded constraint matrices initialized");
 }
