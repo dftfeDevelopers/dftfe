@@ -1,10 +1,11 @@
-All the underlying installation instructions assume a Linux operating system. We assume standard tools and libraries like CMake, compilers- (C, C++ and Fortran), and MPI libraries are pre-installed. Most high-performance computers would have the latest version of these libraries in the default environment. However, in many cases you would have to use \href{http://modules.sourceforge.net/}{Environment Modules} to set the correct environment variables for compilers-(C, C++ and Fortran), MPI libraries, and compilation tools like \href{http://www.cmake.org/}{CMake}. For example, on one of the high-performance computers we develop and test the \dftfe{} code, we use the following commands to set the desired environment variables
+All the underlying installation instructions assume a Linux operating system. We assume standard tools and libraries like CMake, compilers- (C, C++ and Fortran), and MPI libraries are pre-installed. Most high-performance computers would have the latest version of these libraries in the default environment. However, in many cases you would have to use \href{http://modules.sourceforge.net/}{Environment Modules} to set the correct environment variables for compilers-(C, C++ and Fortran), MPI libraries, and compilation tools like \href{http://www.cmake.org/}{CMake}. \emph{For example, on one of the high-performance computers we develop and test the \dftfe{} code, we can use the following commands to set the desired environment variables}
 \begin{verbatim}
 $ module load cmake
-$ module load intel/18.0.1
-$ module load openmpi/3.0.0/intel/18.0.1
+$ module load intel
+$ module load mpilibrary
 \end{verbatim}
-We strongly recommend using the latest stable version of compilers-(C, C++ and Fortran), and MPI libraries available on your high-performance computer. {\bf Our experience shows that Intel compilers provide the best performance}. Furthermore, for the installations which use \href{http://www.cmake.org/}{CMake}, version 2.8.12 or later is required.   
+In the above mpilibrary denotes the MPI library you are using in your system(for eg: openmpi, mpich or intel-mpi). 
+We strongly recommend using the latest stable version of compilers-(C, C++ and Fortran), and MPI libraries available on your high-performance computer. {\bf Our experience shows that Intel compilers provide the best performance in comparison to GNU compilers}. Furthermore, for the installations which use \href{http://www.cmake.org/}{CMake}, version 2.8.12 or later is required.   
 
 \subsection{Compiling and installing external libraries}
 \dftfe{} is primarily based on the open source finite element library \href{http://www.dealii.org/}{deal.II}, through which external dependencies
