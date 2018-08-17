@@ -47,7 +47,7 @@ For more information see:
  - If you have specific questions about DFT-FE that are not suitable for the public and archived mailing lists, you can contact the following:
     - Phani Motamarri: phanim@umich.edu
     - Sambit Das: dsambit@umich.edu
-    - Vikram Gavini: vikramg@umich.edu (Mentor)
+    - Vikram Gavini: vikramg@umich.edu 
 
  - The following people have significantly contributed either in the past or current and advanced DFT-FE's goals: (All the underlying lists are in alphabetical order)
    - Principal developers  
