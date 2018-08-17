@@ -50,16 +50,16 @@ For more information see:
     - Vikram Gavini: vikramg@umich.edu (Mentor)
 
  - The following people have significantly contributed either in the past or current and advanced DFT-FE's goals: (All the underlying lists are in alphabetical order)
-    - Principal developers in 
-      - Sambit Das (University of Michigan Ann Arbor, USA)
-      - Dr. Phani Motamarri (University of Michigan Ann Arbor, USA)
+   - Principal developers  
+       - Sambit Das (University of Michigan Ann Arbor, USA)
+       - Dr. Phani Motamarri (University of Michigan Ann Arbor, USA)
     
-    - Principal developers emeriti
-      - Dr. Krishnendu Ghosh (University of Michigan Ann Arbor, USA)
-      - Prof. Shiva Rudraraju  (University of Wisconsin Madison, USA)
+   - Principal developers emeriti
+       - Dr. Krishnendu Ghosh (University of Michigan Ann Arbor, USA)
+       - Prof. Shiva Rudraraju  (University of Wisconsin Madison, USA)
 
-    - Mentor
-      - Prof. Vikram Gavini (University of Michigan Ann Arbor, USA)
+   - Mentor
+       - Prof. Vikram Gavini (University of Michigan Ann Arbor, USA)
          
  - A complete list of the many authors that have contributed to DFT-FE can be found at [authors](https://github.com/dftfeDevelopers/dftfe/blob/publicGithubDevelop/authors).    
 
