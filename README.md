@@ -58,7 +58,10 @@ For more information see:
    - Principal developers emeriti
       - Krishnendu Ghosh (University of Michigan, USA)
       - Shiva Rudraraju  (University of Wisconsin Madison, USA)
-      
+
+   - Mentor
+      - Vikram Gavini (University of Michigan Ann Arbor, USA)
+         
  - A complete list of the many authors that have contributed to DFT-FE can be found at [authors](https://github.com/dftfeDevelopers/dftfe/blob/publicGithubDevelop/authors).    
 
 License
