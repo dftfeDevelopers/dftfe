@@ -162,7 +162,7 @@ namespace dftfe
 	  const unsigned int vectorsBlockSize=std::min(dftParameters::wfcBlockSize,
 	                                               bandGroupLowHighPlusOneIndices[1]);
 
-	  //std::vector<T> overlapMatrixBlock(numberVectors*vectorsBlockSize,0.0);
+	  std::vector<T> overlapMatrixBlock(numberVectors*vectorsBlockSize,0.0);
 	  std::vector<T> blockVectorsMatrix(numLocalDofs*vectorsBlockSize,0.0);
 
 	  for (unsigned int ivec = 0; ivec < numberVectors; ivec += vectorsBlockSize)
@@ -176,7 +176,7 @@ namespace dftfe
 		  const char transA = 'N',transB = 'N';
 		  const T scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
 
-		  //std::fill(overlapMatrixBlock.begin(),overlapMatrixBlock.end(),0.);
+		  std::fill(overlapMatrixBlock.begin(),overlapMatrixBlock.end(),0.);
 
 		  for (unsigned int i = 0; i <numLocalDofs; ++i)
 		      for (unsigned int j = 0; j <B; ++j)
@@ -184,7 +184,7 @@ namespace dftfe
 
 		  const unsigned int symmetricOptSize=numberVectors-ivec;
 
-		  std::vector<T> overlapMatrixBlock(symmetricOptSize*B,0.0);
+		  //std::vector<T> overlapMatrixBlock(symmetricOptSize*B,0.0);
 
 		  dgemm_(&transA,
 			 &transB,
@@ -200,10 +200,24 @@ namespace dftfe
 			 &overlapMatrixBlock[0],
 			 &symmetricOptSize);
 
-		  dealii::Utilities::MPI::sum(overlapMatrixBlock,
-					      X.get_mpi_communicator(),
-					      overlapMatrixBlock);
-
+		  //dealii::Utilities::MPI::sum(overlapMatrixBlock,
+		  //			      X.get_mpi_communicator(),
+		  //			      overlapMatrixBlock);
+#ifdef USE_COMPLEX
+		  MPI_Allreduce(MPI_IN_PLACE,
+				&overlapMatrixBlock[0],
+				symmetricOptSize*B,
+				MPI_C_DOUBLE_COMPLEX,
+				MPI_SUM,
+				X.get_mpi_communicator());
+#else
+		  MPI_Allreduce(MPI_IN_PLACE,
+			        &overlapMatrixBlock[0],
+				symmetricOptSize*B,
+				MPI_DOUBLE,
+				MPI_SUM,
+			        X.get_mpi_communicator());
+#endif
 
 		  if (processGrid->is_process_active())
 		      for(unsigned int i = 0; i <B; ++i)
@@ -271,7 +285,7 @@ namespace dftfe
 	                                               bandGroupLowHighPlusOneIndices[1]);
 	  const unsigned int dofsBlockSize=dftParameters::subspaceRotDofsBlockSize;
 
-	  //std::vector<T> rotationMatBlock(vectorsBlockSize*numberSubspaceVectors,0.0);
+	  std::vector<T> rotationMatBlock(vectorsBlockSize*numberSubspaceVectors,0.0);
 	  std::vector<T> rotatedVectorsMatBlock(numberSubspaceVectors*dofsBlockSize,0.0);
           std::vector<T> rotatedVectorsMatBlockTemp(vectorsBlockSize*dofsBlockSize,0.0);
 
@@ -302,8 +316,8 @@ namespace dftfe
 		      const char transA = 'N',transB = 'N';
 		      const T scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
 
-		      std::vector<T> rotationMatBlock(vectorsBlockSize*nonZeroVectorsSize,0.0);
-		      //std::fill(rotationMatBlock.begin(),rotationMatBlock.end(),0.);
+		      //std::vector<T> rotationMatBlock(vectorsBlockSize*nonZeroVectorsSize,0.0);
+		      std::fill(rotationMatBlock.begin(),rotationMatBlock.end(),0.);
 
 		      if (rotationMatTranspose)
 		      {
@@ -344,9 +358,25 @@ namespace dftfe
 				  }
 		      }
 
-		      dealii::Utilities::MPI::sum(rotationMatBlock,
-						  subspaceVectorsArray.get_mpi_communicator(),
-						  rotationMatBlock);
+		      //dealii::Utilities::MPI::sum(rotationMatBlock,
+		      //		            subspaceVectorsArray.get_mpi_communicator(),
+		      //			    rotationMatBlock);
+#ifdef USE_COMPLEX
+		      MPI_Allreduce(MPI_IN_PLACE,
+				    &rotationMatBlock[0],
+				    vectorsBlockSize*nonZeroVectorsSize,
+				    MPI_C_DOUBLE_COMPLEX,
+				    MPI_SUM,
+				    subspaceVectorsArray.get_mpi_communicator());
+#else
+		      MPI_Allreduce(MPI_IN_PLACE,
+				    &rotationMatBlock[0],
+				    vectorsBlockSize*nonZeroVectorsSize,
+				    MPI_DOUBLE,
+				    MPI_SUM,
+				    subspaceVectorsArray.get_mpi_communicator());
+#endif
+
 		      if (BDof!=0)
 		      {
 
