@@ -162,7 +162,7 @@ namespace dftfe
 	  const unsigned int vectorsBlockSize=std::min(dftParameters::wfcBlockSize,
 	                                               bandGroupLowHighPlusOneIndices[1]);
 
-	  std::vector<T> overlapMatrixBlock(numberVectors*vectorsBlockSize,0.0);
+	  //std::vector<T> overlapMatrixBlock(numberVectors*vectorsBlockSize,0.0);
 	  std::vector<T> blockVectorsMatrix(numLocalDofs*vectorsBlockSize,0.0);
 
 	  for (unsigned int ivec = 0; ivec < numberVectors; ivec += vectorsBlockSize)
@@ -176,25 +176,29 @@ namespace dftfe
 		  const char transA = 'N',transB = 'N';
 		  const T scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
 
-		  std::fill(overlapMatrixBlock.begin(),overlapMatrixBlock.end(),0.);
+		  //std::fill(overlapMatrixBlock.begin(),overlapMatrixBlock.end(),0.);
 
 		  for (unsigned int i = 0; i <numLocalDofs; ++i)
 		      for (unsigned int j = 0; j <B; ++j)
 			  blockVectorsMatrix[j*numLocalDofs+i]=X.local_element(numberVectors*i+j+ivec);
 
+		  const unsigned int symmetricOptSize=numberVectors-ivec;
+
+		  std::vector<T> overlapMatrixBlock(symmetricOptSize*B,0.0);
+
 		  dgemm_(&transA,
 			 &transB,
-			 &numberVectors,
+			 &symmetricOptSize,
 			 &B,
 			 &numLocalDofs,
 			 &scalarCoeffAlpha,
-			 X.begin(),
+			 X.begin()+ivec,
 			 &numberVectors,
 			 &blockVectorsMatrix[0],
 			 &numLocalDofs,
 			 &scalarCoeffBeta,
 			 &overlapMatrixBlock[0],
-			 &numberVectors);
+			 &symmetricOptSize);
 
 		  dealii::Utilities::MPI::sum(overlapMatrixBlock,
 					      X.get_mpi_communicator(),
@@ -206,14 +210,14 @@ namespace dftfe
 			  if (globalToLocalColumnIdMap.find(i+ivec)!=globalToLocalColumnIdMap.end())
 			  {
 			      const unsigned int localColumnId=globalToLocalColumnIdMap[i+ivec];
-			      for (unsigned int j = 0; j <numberVectors; ++j)
+			      for (unsigned int j = ivec; j <numberVectors; ++j)
 			      {
 				 std::map<unsigned int, unsigned int>::iterator it=
 					      globalToLocalRowIdMap.find(j);
 				 if(it!=globalToLocalRowIdMap.end())
 				     overlapMatPar.local_el(it->second,
 							    localColumnId)
-							    =overlapMatrixBlock[i*numberVectors+j];
+							    =overlapMatrixBlock[i*symmetricOptSize+j-ivec];
 			      }
 			  }
 		}//band parallelization
@@ -267,7 +271,7 @@ namespace dftfe
 	                                               bandGroupLowHighPlusOneIndices[1]);
 	  const unsigned int dofsBlockSize=dftParameters::subspaceRotDofsBlockSize;
 
-	  std::vector<T> rotationMatBlock(vectorsBlockSize*numberSubspaceVectors,0.0);
+	  //std::vector<T> rotationMatBlock(vectorsBlockSize*numberSubspaceVectors,0.0);
 	  std::vector<T> rotatedVectorsMatBlock(numberSubspaceVectors*dofsBlockSize,0.0);
           std::vector<T> rotatedVectorsMatBlockTemp(vectorsBlockSize*dofsBlockSize,0.0);
 
@@ -298,7 +302,8 @@ namespace dftfe
 		      const char transA = 'N',transB = 'N';
 		      const T scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
 
-		      std::fill(rotationMatBlock.begin(),rotationMatBlock.end(),0.);
+		      std::vector<T> rotationMatBlock(vectorsBlockSize*nonZeroVectorsSize,0.0);
+		      //std::fill(rotationMatBlock.begin(),rotationMatBlock.end(),0.);
 
 		      if (rotationMatTranspose)
 		      {
