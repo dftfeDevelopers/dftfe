@@ -1004,6 +1004,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
     * N is denoted by numberWaveFunctions in the code.
     * MLoc, which is number of local dofs is denoted by numberDofs in the code.
     * Xc denotes complex conjugate of X.
+    * XcBlock is a matrix of size (MLoc x B). B is the block size.
     * A further optimization is done to reduce floating point operations:
     * As X^{T}*H*Xc is a Hermitian matrix, it suffices to compute only the lower
     * triangular part. To exploit this, we do

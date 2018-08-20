@@ -168,6 +168,7 @@ namespace dftfe
 	   * number of local degrees of freedom (N x MLoc).
 	   * MLoc is denoted by numLocalDofs.
 	   * Xc denotes complex conjugate of X.
+	   * XcBlock is a matrix with size (MLoc x B). B is the block size.
 	   * A further optimization is done to reduce floating point operations:
 	   * As X^{T}*Xc is a Hermitian matrix, it suffices to compute only the lower
 	   * triangular part. To exploit this, we do
@@ -321,8 +322,8 @@ namespace dftfe
 	   * is a matrix with size (N x MLoc).
 	   * N is denoted by numberWaveFunctions in the code.
 	   * MLoc, which is number of local dofs is denoted by numLocalDofs in the code.
-	   * QBvec is a matrix of size (BVec x N)
-	   * XBdof is a matrix of size (N x BDof)
+	   * QBvec is a matrix of size (BVec x N). BVec is the vectors block size.
+	   * XBdof is a matrix of size (N x BDof). BDof is the block size of dofs.
 	   * A further optimization is done to reduce floating point operations when
 	   * Q is a lower triangular matrix in the subspace rotation step of PGS:
 	   * Then it suffices to compute only the multiplication of lower
