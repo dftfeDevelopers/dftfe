@@ -995,11 +995,25 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 					      numberWaveFunctions,
 					      bandGroupLowHighPlusOneIndices);
 
-   //X^{T}*H*X is done in a blocked approach for memory optimization:
-   //Sum_{blocks} X^{T}*H*XBlock. The result of each X^{T}*H*XBlock
-   //has a much smaller memory compared to X^{T}*H*X. Think about the
-   //memory for 50k wavefunctions. The parallel
-   //ScaLapack matrix is directly filled from the X^{T}*H*XBlock result
+   /*
+    * X^{T}*H*Xc is done in a blocked approach for memory optimization:
+    * Sum_{blocks} X^{T}*H*XcBlock. The result of each X^{T}*H*XcBlock
+    * has a much smaller memory compared to X^{T}*H*Xc.
+    * X^{T} (denoted by X in the code with column major format storage)
+    * is a matrix with size (N x MLoc).
+    * N is denoted by numberWaveFunctions in the code.
+    * MLoc, which is number of local dofs is denoted by numberDofs in the code.
+    * Xc denotes complex conjugate of X.
+    * A further optimization is done to reduce floating point operations:
+    * As X^{T}*H*Xc is a Hermitian matrix, it suffices to compute only the lower
+    * triangular part. To exploit this, we do
+    * X^{T}*H*Xc=Sum_{blocks} XTrunc^{T}*H*XcBlock
+    * where XTrunc^{T} is a (D x MLoc) sub matrix of X^{T} with the row indices
+    * ranging from the lowest global index of XcBlock (denoted by jvec in the code)
+    * to N. D=N-jvec.
+    * The parallel ScaLapack matrix projHamPar is directly filled from
+    * the XTrunc^{T}*H*XcBlock result
+    */
 
     const unsigned int vectorsBlockSize=std::min(dftParameters::wfcBlockSize,
 	                                         bandGroupLowHighPlusOneIndices[1]);
@@ -1026,7 +1040,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 	      (jvec+B)>bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
 	  {
 	      XBlock=0;
-	      //fill XBlock from X:
+	      //fill XBlock^{T} from X:
 	      for(unsigned int iNode = 0; iNode<numberDofs; ++iNode)
 		  for(unsigned int iWave = 0; iWave < B; ++iWave)
 			XBlock.local_element(iNode*B
@@ -1034,7 +1048,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 			     =X.local_element(iNode*numberWaveFunctions+jvec+iWave);
 
 
-	      //evaluate H times XBlock and store in HXBlock
+	      //evaluate H times XBlock^{T} and store in HXBlock^{T}
 	      HXBlock=0;
 	      const bool scaleFlag = false;
 	      const dataTypes::number scalar = 1.0;
@@ -1045,41 +1059,64 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 		 HXBlock);
 
 
-	      const char transA = 'N',transB = 'T';
+	      const char transA = 'N';
+#ifdef USE_COMPLEX
+	      const char transB = 'C';
+#else
+	      const char transB = 'T';
+#endif
 	      const dataTypes::number alpha = 1.0,beta = 0.0;
 	      std::fill(projHamBlock.begin(),projHamBlock.end(),0.);
+
+	      const unsigned int D=numberWaveFunctions-jvec;
+
+	      // Comptute local XTrunc^{T}*HXcBlock.
 	      dgemm_(&transA,
 		     &transB,
-		     &numberWaveFunctions,
+		     &D,
 		     &B,
 		     &numberDofs,
 		     &alpha,
-		     X.begin(),
+		     X.begin()+jvec,
 		     &numberWaveFunctions,
 		     HXBlock.begin(),
 		     &B,
 		     &beta,
 		     &projHamBlock[0],
-		     &numberWaveFunctions);
+		     &D);
 
 
-	      dealii::Utilities::MPI::sum(projHamBlock,
-					  X.get_mpi_communicator(),
-					  projHamBlock);
+	      // Sum local XTrunc^{T}*HXcBlock across domain decomposition processors
+#ifdef USE_COMPLEX
+	      MPI_Allreduce(MPI_IN_PLACE,
+			    &projHamBlock[0],
+			    D*B,
+			    MPI_C_DOUBLE_COMPLEX,
+			    MPI_SUM,
+			    X.get_mpi_communicator());
+#else
+	      MPI_Allreduce(MPI_IN_PLACE,
+			    &projHamBlock[0],
+			    D*B,
+			    MPI_DOUBLE,
+			    MPI_SUM,
+			    X.get_mpi_communicator());
+#endif
 
+	      //Copying only the lower triangular part to the ScaLAPACK projected Hamiltonian matrix
 	      if (processGrid->is_process_active())
 		  for (unsigned int j = 0; j <B; ++j)
 		     if(globalToLocalColumnIdMap.find(j+jvec)!=globalToLocalColumnIdMap.end())
 		     {
 		       const unsigned int localColumnId=globalToLocalColumnIdMap[j+jvec];
-		       for (unsigned int i = 0; i <numberWaveFunctions; ++i)
+		       for (unsigned int i = jvec; i <numberWaveFunctions; ++i)
 		       {
 			 std::map<unsigned int, unsigned int>::iterator it=
 					      globalToLocalRowIdMap.find(i);
 			 if (it!=globalToLocalRowIdMap.end())
 				 projHamPar.local_el(it->second,
 						     localColumnId)
-						     =projHamBlock[j*numberWaveFunctions+i];
+						     =projHamBlock[j*D+i-jvec];
 		       }
 		     }
 
