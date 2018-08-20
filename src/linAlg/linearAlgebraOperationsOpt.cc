@@ -350,17 +350,18 @@ namespace dftfe{
     }
 
     template<typename T>
-    void gramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<T> & X,
-				      const unsigned int numberVectors)
+    void gramSchmidtOrthogonalization(std::vector<T> & X,
+				      const unsigned int numberVectors,
+				      const MPI_Comm & mpiComm)
     {
 
-      const unsigned int localVectorSize = X.local_size()/numberVectors;
+      const unsigned int localVectorSize = X.size()/numberVectors;
 
       //
       //Create template PETSc vector to create BV object later
       //
       Vec templateVec;
-      VecCreateMPI(X.get_mpi_communicator(),
+      VecCreateMPI(mpiComm,
 		   localVectorSize,
 		   PETSC_DETERMINE,
 		   &templateVec);
@@ -371,7 +372,7 @@ namespace dftfe{
       //Set BV options after creating BV object
       //
       BV columnSpaceOfVectors;
-      BVCreate(X.get_mpi_communicator(),&columnSpaceOfVectors);
+      BVCreate(mpiComm,&columnSpaceOfVectors);
       BVSetSizesFromVec(columnSpaceOfVectors,
 			templateVec,
 			numberVectors);
@@ -407,7 +408,7 @@ namespace dftfe{
 		      &v);
 	  VecSet(v,0.0);
 	  for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
-	    data[iNode] = X.local_element(numberVectors*iNode + iColumn);
+	    data[iNode] = X[numberVectors*iNode + iColumn];
 
 	  VecSetValues(v,
 		       localVectorSize,
@@ -443,7 +444,7 @@ namespace dftfe{
 		      &pointerv1);
 
 	  for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
-	    X.local_element(numberVectors*iNode + iColumn) = pointerv1[iNode];
+	    X[numberVectors*iNode + iColumn] = pointerv1[iNode];
 
 	  VecRestoreArray(v1,
 			  &pointerv1);
@@ -773,10 +774,11 @@ namespace dftfe{
 #endif
 
 #ifdef USE_COMPLEX
-    unsigned int lowdenOrthogonalization(dealii::parallel::distributed::Vector<std::complex<double> > & X,
-				 const unsigned int numberVectors)
+    unsigned int lowdenOrthogonalization(std::vector<std::complex<double> > & X,
+					 const unsigned int numberVectors,
+					 const MPI_Comm & mpiComm)
     {
-      const unsigned int localVectorSize = X.local_size()/numberVectors;
+      const unsigned int localVectorSize = X.size()/numberVectors;
       std::vector<std::complex<double> > overlapMatrix(numberVectors*numberVectors,0.0);
 
       //
@@ -801,14 +803,16 @@ namespace dftfe{
 	     &numberVectors,
 	     &localVectorSize,
 	     &alpha,
-	     X.begin(),
+	     &X[0],
 	     &numberVectors,
 	     &beta,
 	     &overlapMatrix[0],
 	     &numberVectors);
 
 
-      dealii::Utilities::MPI::sum(overlapMatrix, X.get_mpi_communicator(), overlapMatrix);
+      dealii::Utilities::MPI::sum(overlapMatrix, 
+				  mpiComm, 
+				  overlapMatrix);
 
       //
       //evaluate the conjugate of {S^T} to get actual overlap matrix
@@ -868,7 +872,7 @@ namespace dftfe{
 	      break;
 	    }
 	}
-       nanFlag=dealii::Utilities::MPI::max(nanFlag,X.get_mpi_communicator());
+       nanFlag=dealii::Utilities::MPI::max(nanFlag,mpi_comm);
        if (dftParameters::enableSwitchToGS && nanFlag==1)
           return nanFlag;
 
@@ -919,21 +923,22 @@ namespace dftfe{
        //using the column major format of blas
        //
        const char transA2  = 'T', transB2  = 'N';
-       dealii::parallel::distributed::Vector<std::complex<double> > orthoNormalizedBasis;
-       orthoNormalizedBasis.reinit(X);
+       //dealii::parallel::distributed::Vector<std::complex<double> > orthoNormalizedBasis;
+       std::vector<std::complex<double> > orthoNormalizedBasis(X.size(),0.0);
+
        zgemm_(&transA2,
-	     &transB2,
-	     &numberEigenValues,
-             &localVectorSize,
-	     &numberEigenValues,
-	     &alpha1,
-	     &invSqrtOverlapMatrix[0],
-	     &numberEigenValues,
-	     X.begin(),
-	     &numberEigenValues,
-	     &beta1,
-	     orthoNormalizedBasis.begin(),
-	     &numberEigenValues);
+	      &transB2,
+	      &numberEigenValues,
+	      &localVectorSize,
+	      &numberEigenValues,
+	      &alpha1,
+	      &invSqrtOverlapMatrix[0],
+	      &numberEigenValues,
+	      &X[0],
+	      &numberEigenValues,
+	      &beta1,
+	      &orthoNormalizedBasis[0],
+	      &numberEigenValues);
 
 
        X = orthoNormalizedBasis;
@@ -941,10 +946,11 @@ namespace dftfe{
        return 0;
     }
 #else
-    unsigned int lowdenOrthogonalization(dealii::parallel::distributed::Vector<double> & X,
-				 const unsigned int numberVectors)
+    unsigned int lowdenOrthogonalization(std::vector<double> & X,
+					 const unsigned int numberVectors,
+					 const MPI_Comm & mpiComm)
     {
-      const unsigned int localVectorSize = X.local_size()/numberVectors;
+      const unsigned int localVectorSize = X.size()/numberVectors;
 
       std::vector<double> overlapMatrix(numberVectors*numberVectors,0.0);
 
@@ -982,14 +988,16 @@ namespace dftfe{
 	     &numberVectors,
 	     &localVectorSize,
 	     &alpha,
-	     X.begin(),
+	     &X[0],
 	     &numberVectors,
 	     &beta,
 	     &overlapMatrix[0],
 	     &numberVectors);
       computing_timer.exit_section("local overlap matrix for lowden");
 
-      dealii::Utilities::MPI::sum(overlapMatrix, X.get_mpi_communicator(), overlapMatrix);
+      dealii::Utilities::MPI::sum(overlapMatrix, 
+				  mpiComm, 
+				  overlapMatrix);
 
       std::vector<double> eigenValuesOverlap(numberVectors);
       computing_timer.enter_section("eigen decomp. of overlap matrix");
@@ -1013,7 +1021,7 @@ namespace dftfe{
 	    }
 	}
 
-      nanFlag=dealii::Utilities::MPI::max(nanFlag,X.get_mpi_communicator());
+      nanFlag=dealii::Utilities::MPI::max(nanFlag,mpiComm);
       if (dftParameters::enableSwitchToGS && nanFlag==1)
           return nanFlag;
 
@@ -1094,8 +1102,10 @@ namespace dftfe{
        //using the column major format of blas
        //
        const char transA2  = 'N', transB2  = 'N';
-       dealii::parallel::distributed::Vector<double> orthoNormalizedBasis;
-       orthoNormalizedBasis.reinit(X);
+       //dealii::parallel::distributed::Vector<double> orthoNormalizedBasis;
+       //orthoNormalizedBasis.reinit(X);
+       std::vector<double> orthoNormalizedBasis(X.size(),0.0);
+
        computing_timer.enter_section("subspace rotation in lowden");
        dgemm_(&transA2,
 	      &transB2,
@@ -1105,10 +1115,10 @@ namespace dftfe{
 	      &alpha,
 	      &invSqrtOverlapMatrix[0],
 	      &numberEigenValues,
-	      X.begin(),
+	      &X[0],
 	      &numberEigenValues,
 	      &beta,
-	      orthoNormalizedBasis.begin(),
+	      &orthoNormalizedBasis[0],
 	      &numberEigenValues);
        computing_timer.exit_section("subspace rotation in lowden");
 
@@ -1130,13 +1140,15 @@ namespace dftfe{
 				  const double );
 
 
-    template void gramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<dataTypes::number> &,
-					       const unsigned int);
+    template void gramSchmidtOrthogonalization(std::vector<dataTypes::number> &,
+					       const unsigned int,
+					       const MPI_Comm &);
 
-    template unsigned int pseudoGramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<dataTypes::number> &,
+    template unsigned int pseudoGramSchmidtOrthogonalization(std::vector<dataTypes::number> &,
 					                     const unsigned int,
 						             const MPI_Comm &,
 							     const unsigned int numberCoreVectors,
+							     const MPI_Comm &mpiComm,
 			                                     dealii::parallel::distributed::Vector<dataTypes::number> & tempNonCoreVectorsArray);
 
     template void rayleighRitz(operatorDFTClass  & operatorMatrix,

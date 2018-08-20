@@ -152,10 +152,12 @@ namespace dftfe
      *  @param[in,out]  X Given subspace as flattened array of multi-vectors.
      *  In-place update of the given subspace
      *  @param[in] numberComponents Number of multiple-fields
+     *  @param[in] mpiComm global communicator 
      */
     template<typename T>
-      void gramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<T> & X,
-					const unsigned int numberComponents);
+      void gramSchmidtOrthogonalization(std::vector<T> & X,
+					const unsigned int numberComponents,
+					const MPI_Comm & mpiComm);
 
 
     /** @brief Orthogonalize given subspace using Lowden orthogonalization for double data-type
@@ -164,11 +166,12 @@ namespace dftfe
      *  @param[in,out]  X Given subspace as flattened array of multi-vectors.
      *  In-place update of the given subspace
      *  @param[in] numberComponents Number of multiple-fields
-     *
+     *  @param[in] mpiComm global communicator 
      *  @return flag indicating success/failure. 1 for failure, 0 for success
      */
-    unsigned int lowdenOrthogonalization(dealii::parallel::distributed::Vector<dataTypes::number> & X,
-				 const unsigned int numberComponents);
+    unsigned int lowdenOrthogonalization(std::vector<dataTypes::number> & X,
+					 const unsigned int numberComponents,
+					 const MPI_Comm & mpiComm);
 
 
      /** @brief Orthogonalize given subspace using Pseudo-Gram-Schmidt orthogonalization
@@ -188,10 +191,11 @@ namespace dftfe
       *  @return flag indicating success/failure. 1 for failure, 0 for success
       */
     template<typename T>
-      unsigned int pseudoGramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<T> & X,
+      unsigned int pseudoGramSchmidtOrthogonalization(std::vector<T> & X,
 					              const unsigned int numberComponents,
 					              const MPI_Comm &interBandGroupComm,
 			                              const unsigned int numberCoreVectors,
+						      const MPI_Comm &mpiComm,
 			                              dealii::parallel::distributed::Vector<T> & nonCoreVectorsArray);
 
     /** @brief Compute Rayleigh-Ritz projection

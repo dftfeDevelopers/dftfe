@@ -28,13 +28,15 @@ namespace dftfe
   {
 #if(defined DEAL_II_WITH_SCALAPACK && !USE_COMPLEX)
     template<typename T>
-    unsigned int pseudoGramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<T> & X,
-				            const unsigned int numberVectors,
-					    const MPI_Comm &interBandGroupComm,
-			                    const unsigned int numberCoreVectors,
-			                    dealii::parallel::distributed::Vector<T> & tempNonCoreVectorsArray)
+    unsigned int pseudoGramSchmidtOrthogonalization(std::vector<T> & X,
+						    const unsigned int numberVectors,
+						    const MPI_Comm &interBandGroupComm,
+						    const unsigned int numberCoreVectors,
+						    const MPI_Comm & mpiComm,
+						    dealii::parallel::distributed::Vector<T> & tempNonCoreVectorsArray)
+
     {
-      const unsigned int numLocalDofs = X.local_size()/numberVectors;
+      const unsigned int numLocalDofs = X.size()/numberVectors;
 
       dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
       dealii::TimerOutput computing_timer(pcout,
@@ -45,9 +47,9 @@ namespace dftfe
 
       const unsigned rowsBlockSize=std::min((unsigned int)50,numberVectors);
       std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  processGrid;
-      internal::createProcessGridSquareMatrix(X.get_mpi_communicator(),
-		                           numberVectors,
-					   processGrid);
+      internal::createProcessGridSquareMatrix(mpiComm,
+					      numberVectors,
+					      processGrid);
 
       dealii::ScaLAPACKMatrix<T> overlapMatPar(numberVectors,
                                                processGrid,
@@ -59,6 +61,7 @@ namespace dftfe
 	                                  numberVectors,
 		                          processGrid,
 					  interBandGroupComm,
+					  mpiComm,
 				          overlapMatPar);
       computing_timer.exit_section("Fill overlap matrix for PGS");
 
@@ -122,7 +125,7 @@ namespace dftfe
 		 break;
            }
 
-      flag=dealii::Utilities::MPI::max(flag,X.get_mpi_communicator());
+      flag=dealii::Utilities::MPI::max(flag,mpiComm);
       if (dftParameters::enableSwitchToGS && flag==1)
           return flag;
 
@@ -138,6 +141,7 @@ namespace dftfe
 				 tempNonCoreVectorsArray,
 		                 processGrid,
 				 interBandGroupComm,
+				 mpiComm,
 			         LMatPar,
 				 overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::upper_triangular?true:false,
 				 dftParameters::triMatPGSOpt?true:false);
@@ -148,13 +152,14 @@ namespace dftfe
     }
 #else
     template<typename T>
-    unsigned int pseudoGramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<T> & X,
-				            const unsigned int numberVectors,
-					    const MPI_Comm &interBandGroupComm,
-			                    const unsigned int numberCoreVectors,
-			                    dealii::parallel::distributed::Vector<T> & tempNonCoreVectorsArray)
+    unsigned int pseudoGramSchmidtOrthogonalization(std::vector<T> & X,
+						    const unsigned int numberVectors,
+						    const MPI_Comm &interBandGroupComm,
+						    const unsigned int numberCoreVectors,
+						    const MPI_Comm & mpiComm,	    
+						    dealii::parallel::distributed::Vector<T> & tempNonCoreVectorsArray)
     {
-       const unsigned int localVectorSize = X.local_size()/numberVectors;
+       const unsigned int localVectorSize = X.size()/numberVectors;
 
        std::vector<T> overlapMatrix(numberVectors*numberVectors,0.0);
 
@@ -186,7 +191,7 @@ namespace dftfe
 	     &numberVectors,
 	     &localVectorSize,
 	     &alpha1,
-	     X.begin(),
+	     &X[0],
 	     &numberVectors,
 	     &beta1,
 	     &overlapMatrix[0],
@@ -197,13 +202,13 @@ namespace dftfe
 	     &numberVectors,
 	     &localVectorSize,
 	     &alpha1,
-	     X.begin(),
+	     &X[0],
 	     &numberVectors,
 	     &beta1,
 	     &overlapMatrix[0],
 	     &numberVectors);
 #endif
-       dealii::Utilities::MPI::sum(overlapMatrix, X.get_mpi_communicator(), overlapMatrix);
+       dealii::Utilities::MPI::sum(overlapMatrix, mpiComm, overlapMatrix);
        computing_timer.exit_section("local overlap matrix for pgs");
 
        computing_timer.enter_section("PGS cholesky and triangular matrix invert");
@@ -269,8 +274,9 @@ namespace dftfe
        //X=X*Lc^{-1}^{T} implemented as X^{T}=Lc^{-1}*X^{T} with X^{T} stored in the column major format
 
        computing_timer.enter_section("subspace rotation in pgs");
-       dealii::parallel::distributed::Vector<T> orthoNormalizedBasis;
-       orthoNormalizedBasis.reinit(X);
+       //dealii::parallel::distributed::Vector<T> orthoNormalizedBasis;
+       //orthoNormalizedBasis.reinit(X);
+       std::vector<T> orthoNormalizedBasis(X.size(),0.0);
        const char transA4  = 'N', transB4  = 'N';
        const T alpha4 = 1.0, beta4 = 0.0;
 #ifdef USE_COMPLEX
@@ -282,7 +288,7 @@ namespace dftfe
 	     &alpha4,
 	     &overlapMatrix[0],
 	     &numberVectors,
-	     X.begin(),
+	     &X[0],
 	     &numberVectors,
 	     &beta4,
 	     orthoNormalizedBasis.begin(),
@@ -296,7 +302,7 @@ namespace dftfe
 	      &alpha4,
 	      &overlapMatrix[0],
 	      &numberVectors,
-	      X.begin(),
+	      &X[0],
 	      &numberVectors,
 	      &beta4,
 	      orthoNormalizedBasis.begin(),

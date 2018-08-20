@@ -80,11 +80,33 @@ namespace dftfe
 	 *
 	 */
 	template<typename T>
-	void fillParallelOverlapMatrix(const dealii::parallel::distributed::Vector<T> & X,
+	void fillParallelOverlapMatrix(const std::vector<T> & X,
 		                       const unsigned int numberVectors,
 		                       const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 				       const MPI_Comm &interBandGroupComm,
+				       const MPI_Comm &mpiComm,
 				       dealii::ScaLAPACKMatrix<T> & overlapMatPar);
+
+	/** @brief Computes X^{T}=Q*X^{T} inplace. X^{T} is the subspaceVectorsArray in the column major
+	 * format. Q is rotationMatPar.
+	 *
+	 * The subspace rotation inside this function is done in a blocked approach
+	 * which avoids creation of full serial rotation matrix memory, and also avoids creation
+	 * of another full subspaceVectorsArray memory.
+	 *
+	 */
+	template<typename T>
+	void subspaceRotation(std::vector<T> & subspaceVectorsArray,
+		              const unsigned int numberSubspaceVectors,
+			      const unsigned int numberCoreVectors,
+			      dealii::parallel::distributed::Vector<T> & nonCoreVectorsArray,
+		              const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+			      const MPI_Comm &interBandGroupComm,
+			      const MPI_Comm &mpiComm,
+			      const dealii::ScaLAPACKMatrix<T> & rotationMatPar,
+			      const bool rotationMatTranspose=false,
+			      const bool isRotationMatLowerTria=false);
+
 
 	/** @brief Computes X^{T}=Q*X^{T} inplace. X^{T} is the subspaceVectorsArray in the column major
 	 * format. Q is rotationMatPar.
@@ -104,6 +126,7 @@ namespace dftfe
 			      const dealii::ScaLAPACKMatrix<T> & rotationMatPar,
 			      const bool rotationMatTranspose=false,
 			      const bool isRotationMatLowerTria=false);
+
 
 #endif
     }

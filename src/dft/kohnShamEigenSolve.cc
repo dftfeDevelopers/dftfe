@@ -46,7 +46,7 @@ namespace internal
       //constraintsNoneDataInfo.precomputeMaps(singleComponentPartitioner,
       //				       fieldsArrayFlattened.get_partitioner(),
       //				       numberFields);
-        const unsigned int numberDofs = fieldsArrayFlattened.local_size()/numberFields;
+        const unsigned int numberDofs = fieldsArrayFlattened.size()/numberFields;
         const unsigned int inc = 1;
 
         for(unsigned int i = 0; i < numberDofs; ++i)
@@ -56,13 +56,13 @@ namespace internal
 		diagonal.local_element(localProc_dof_indicesReal[i]);
 	    zdscal_(&numberFields,
 	           &scalingCoeff,
-	           fieldsArrayFlattened.begin()+i*numberFields,
+	           fieldsArrayFlattened[i*numberFields],
 	           &inc);
 #else
 	    double scalingCoeff = diagonal.local_element(i);
 	    dscal_(&numberFields,
 		   &scalingCoeff,
-		   fieldsArrayFlattened.begin()+i*numberFields,
+		   &fieldsArrayFlattened[i*numberFields],
 		   &inc);
 #endif
 	}
@@ -99,7 +99,7 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 				       matrix_free_data.get_vector_partitioner(),
 				       numEigenValues,
 				       localProc_dof_indicesReal,
-				       d_eigenVectorsFlattened[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
+				       d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
 				       constraintsNoneDataInfo);
 
   std::vector<double> eigenValuesTemp(isSpectrumSplit?numEigenValuesRR
@@ -123,7 +123,7 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 				       matrix_free_data.get_vector_partitioner(),
 				       numEigenValues,
 				       localProc_dof_indicesReal,
-				       d_eigenVectorsFlattened[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
+				       d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
 				       constraintsNoneDataInfo);
 
   //

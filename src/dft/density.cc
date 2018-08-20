@@ -107,7 +107,7 @@ void dftClass<FEOrder>::compute_rhoOut()
 							       currentBlockSize,
 							       eigenVectorsFlattenedArrayBlock);
 
-	constraintsNoneDataInfo.precomputeMaps(matrix_free_data.get_partitioner(),
+	constraintsNoneDataInfo.precomputeMaps(matrix_free_data.get_vector_partitioner(),
 					       eigenVectorsFlattenedArrayBlock.get_partitioner(),
 					       currentBlockSize);
 	
