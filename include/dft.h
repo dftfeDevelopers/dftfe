@@ -392,6 +392,9 @@ namespace dftfe {
       double mixing_anderson();
       double mixing_simple_spinPolarized();
       double mixing_anderson_spinPolarized();
+      double mixing_broyden();
+      double mixing_broyden_spinPolarized();
+
 
       /**
        * Re solves the all electrostatics on a p refined mesh, and computes
@@ -602,6 +605,15 @@ namespace dftfe {
       std::map<dealii::CellId, std::vector<double> > * gradRhoInValues, *gradRhoInValuesSpinPolarized;
       std::map<dealii::CellId, std::vector<double> > * gradRhoOutValues, *gradRhoOutValuesSpinPolarized;
       std::deque<std::map<dealii::CellId,std::vector<double> >> gradRhoInVals,gradRhoInValsSpinPolarized,gradRhoOutVals, gradRhoOutValsSpinPolarized;
+
+      // Broyden mixing related objects
+      std::map<dealii::CellId, std::vector<double> > F, gradF ;
+      std::deque<std::map<dealii::CellId,std::vector<double> >> dF, graddF ;
+      std::deque<std::map<dealii::CellId,std::vector<double> >> u, gradU ;
+      std::deque<double>  wt;
+      double w0 = 0.0 ;
+      //
+
 
       // storage for total electrostatic potential solution vector corresponding to input scf electron density
       vectorType d_phiTotRhoIn;

@@ -18,7 +18,6 @@
 
 //Include header files
 #include <dft.h>
-#include <kohnShamDFTOperator.h>
 #include <force.h>
 #include <poissonSolverProblem.h>
 #include <dealiiLinearSolver.h>
@@ -67,6 +66,7 @@ namespace dftfe {
 #include "mixingschemes.cc"
 #include "kohnShamEigenSolve.cc"
 #include "restart.cc"
+//#include "electrostaticPRefinedEnergy.cc"
 #include "moveAtoms.cc"
 
   //
@@ -96,7 +96,7 @@ namespace dftfe {
     pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
     computing_timer (pcout,
 		     dftParameters::reproducible_output
-		     || dftParameters::verbosity<4? TimerOutput::never : TimerOutput::summary,
+		     || dftParameters::verbosity<2? TimerOutput::never : TimerOutput::summary,
 		     TimerOutput::wall_times),
     computingTimerStandard(pcout,
 		     dftParameters::reproducible_output
@@ -185,7 +185,6 @@ namespace dftfe {
   template<unsigned int FEOrder>
   void dftClass<FEOrder>::set()
   {
-    computingTimerStandard.enter_section("Atomic system initialization");
     if (dftParameters::verbosity>=4)
       dftUtils::printCurrentMemoryUsage(mpi_communicator,
 			      "Entered call to set");
@@ -200,10 +199,7 @@ namespace dftfe {
 	//read fractionalCoordinates of atoms in periodic case
 	//
 	dftUtils::readFile(numberColumnsCoordinatesFile, atomLocations, dftParameters::coordinatesFile);
-	AssertThrow(dftParameters::natoms==atomLocations.size(),ExcMessage("DFT-FE Error: The number atoms"
-		    "read from the atomic coordinates file (input through ATOMIC COORDINATES FILE) doesn't"
-		    "match the NATOMS input. Please check your atomic coordinates file. Sometimes an extra"
-		    "blank row at the end can cause this issue too."));
+	AssertThrow(dftParameters::natoms==atomLocations.size(),ExcMessage("DFT-FE Error: The number atoms read from the atomic coordinates file (input through ATOMIC COORDINATES FILE) doesn't match the NATOMS input. Please check your atomic coordinates file. Sometimes an extra blank row at the end can cause this issue too."));
 	pcout << "number of atoms: " << atomLocations.size() << "\n";
 	atomLocationsFractional.resize(atomLocations.size()) ;
 	//
@@ -212,14 +208,6 @@ namespace dftfe {
 	for (std::vector<std::vector<double> >::iterator it=atomLocations.begin(); it<atomLocations.end(); it++)
 	  {
 	    atomTypes.insert((unsigned int)((*it)[0]));
-
-	    if (!dftParameters::isPseudopotential)
-	      AssertThrow((*it)[0]<=50,ExcMessage("DFT-FE Error: One of the atomic numbers exceeds 50."
-	      "Currently, for all-electron calculations we have single atom wavefunction and electron-density"
-	      "initial guess data till atomic number 50 only. Data for the remaining atomic numbers will be"
-	      "added in the next release. In the mean time, you could also contact the developers of DFT-FE, who can provide"
-	      "you the data for the single atom wavefunction and electron-density data for"
-	      "atomic numbers beyond 50."));
 	  }
 
 	//
@@ -234,10 +222,7 @@ namespace dftfe {
       {
 	dftUtils::readFile(numberColumnsCoordinatesFile, atomLocations, dftParameters::coordinatesFile);
 
-	AssertThrow(dftParameters::natoms==atomLocations.size(),ExcMessage("DFT-FE Error: The number atoms"
-		    "read from the atomic coordinates file (input through ATOMIC COORDINATES FILE) doesn't"
-		    "match the NATOMS input. Please check your atomic coordinates file. Sometimes an extra"
-		    "blank row at the end can cause this issue too."));
+	AssertThrow(dftParameters::natoms==atomLocations.size(),ExcMessage("DFT-FE Error: The number atoms read from the atomic coordinates file (input through ATOMIC COORDINATES FILE) doesn't match the NATOMS input. Please check your atomic coordinates file. Sometimes an extra blank row at the end can cause this issue too."));
 	pcout << "number of atoms: " << atomLocations.size() << "\n";
 
 	//
@@ -246,14 +231,6 @@ namespace dftfe {
 	for (std::vector<std::vector<double> >::iterator it=atomLocations.begin(); it<atomLocations.end(); it++)
 	  {
 	    atomTypes.insert((unsigned int)((*it)[0]));
-
-	    if (!dftParameters::isPseudopotential)
-	      AssertThrow((*it)[0]<=50,ExcMessage("DFT-FE Error: One of the atomic numbers exceeds 50."
-	      "Currently, for all-electron calculations we have single atom wavefunction and electron-density"
-	      "initial guess data till atomic number 50 only. Data for the remaining atomic numbers will be"
-	      "added in the next release. You could also contact the developers of DFT-FE, who can provide"
-	      "you with the code to generate the single atom wavefunction and electron-density data for"
-	      "atomic numbers beyond 50."));
 	  }
       }
 
@@ -263,30 +240,10 @@ namespace dftfe {
     unsigned int numberColumnsLatticeVectorsFile = 3;
     dftUtils::readFile(numberColumnsLatticeVectorsFile,d_domainBoundingVectors,dftParameters::domainBoundingVectorsFile);
 
-    AssertThrow(d_domainBoundingVectors.size()==3,ExcMessage("DFT-FE Error: The number of domain bounding"
-		"vectors read from input file (input through DOMAIN VECTORS FILE) should be 3. Please check"
-		"your domain vectors file. Sometimes an extra blank row at the end can cause this issue too."));
-
-    //
-    //evaluate cross product of
-    //
-    std::vector<double> cross;
-    dftUtils::cross_product(d_domainBoundingVectors[0],
-			    d_domainBoundingVectors[1],
-			    cross);
-
-    double scalarConst = d_domainBoundingVectors[2][0]*cross[0] + d_domainBoundingVectors[2][1]*cross[1] + d_domainBoundingVectors[2][2]*cross[2];
-   AssertThrow(scalarConst>0,ExcMessage("DFT-FE Error: Domain bounding vectors or lattice vectors read from"
-	       "input file (input through DOMAIN VECTORS FILE) should form a right-handed coordinate system."
-	       "Please check your domain vectors file. This is usually fixed by changing the order of the"
-	       "vectors in the domain vectors file."));
-
+    AssertThrow(dftParameters::natomTypes==atomTypes.size(),ExcMessage("DFT-FE Error: The number atom types read from the atomic coordinates file (input through ATOMIC COORDINATES FILE) doesn't match the NATOM TYPES input. Please check your atomic coordinates file."));
     pcout << "number of atoms types: " << atomTypes.size() << "\n";
 
-
-    //
     //determine number of electrons
-    //
     for(unsigned int iAtom = 0; iAtom < atomLocations.size(); iAtom++)
     {
       const unsigned int Z = atomLocations[iAtom][0];
@@ -296,43 +253,30 @@ namespace dftfe {
 	  numElectrons += valenceZ;
       else
 	  numElectrons += Z;
+      //
     }
-
-    if(dftParameters::numberEigenValues <= numElectrons/2.0)
-      {
-	if(dftParameters::verbosity >= 1)
-	  {
-	    pcout <<" Warning: User has requested the number of Kohn-Sham wavefunctions to be less than or"
-		    "equal to half the number of electrons in the system. Setting the Kohn-Sham wavefunctions"
-		    "to half the number of electrons with a 10 percent buffer to avoid convergence issues in"
-		    "SCF iterations"<<std::endl;
-	  }
-	numEigenValues = (numElectrons/2.0) + std::max(0.1*(numElectrons/2.0),7.0);
-
-	if(dftParameters::verbosity >= 1)
-	  {
-	    pcout <<" Setting the number of Kohn-Sham wave functions to be set to "<<numEigenValues<<std::endl;
-	  }
-      }
-
+    //
+    //
+    if (dftParameters::constraintMagnetization)
+    {
+       numElectronsUp = std::ceil(static_cast<double>(numElectrons)/2.0);
+       numElectronsDown = numElectrons - numElectronsUp;
+      //
+      int netMagnetization = std::round(2.0 * static_cast<double>(numElectrons) * dftParameters::start_magnetization ) ;
+      //
+      while ( (numElectronsUp-numElectronsDown) < std::abs(netMagnetization))
+	 {
+	  numElectronsDown -=1 ;
+	  numElectronsUp +=1 ;
+	}
+    }
+    numElectrons += (int) std::round(dftParameters::tot_charge) ;
     //estimate total number of wave functions from atomic orbital filling
     if (dftParameters::startingWFCType=="ATOMIC")
       determineOrbitalFilling();
 
-     AssertThrow(dftParameters::numCoreWfcRR<=numEigenValues
-		    ,ExcMessage("DFT-FE Error: Incorrect input value used- SPECTRUM SPLIT CORE EIGENSTATES should be less than the total number of wavefunctions."));
-     numEigenValuesRR=numEigenValues-dftParameters::numCoreWfcRR;
-
-
 #ifdef USE_COMPLEX
-    if(dftParameters::kPointDataFile == "")
-      generateMPGrid();
-    else
-      {
-	AssertThrow(dftParameters::npool=1
-		    ,ExcMessage("DFT-FE Error: k-Point parallelization is not implemented for external k-point file"));
-	readkPointData();
-      }
+    generateMPGrid();
 #else
     d_kPointCoordinates.resize(3,0.0);
     d_kPointWeights.resize(1,1.0);
@@ -340,7 +284,6 @@ namespace dftfe {
 
     //set size of eigenvalues and eigenvectors data structures
     eigenValues.resize(d_kPointWeights.size());
-    eigenValuesRRSplit.resize(d_kPointWeights.size());
 
     a0.resize((dftParameters::spinPolarized+1)*d_kPointWeights.size(),dftParameters::lowerEndWantedSpectrum);
     bLow.resize((dftParameters::spinPolarized+1)*d_kPointWeights.size(),0.0);
@@ -349,7 +292,6 @@ namespace dftfe {
     for(unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
       {
 	eigenValues[kPoint].resize((dftParameters::spinPolarized+1)*numEigenValues);
-	eigenValuesRRSplit[kPoint].resize((dftParameters::spinPolarized+1)*numEigenValuesRR);
       }
 
     //convert pseudopotential files in upf format to dftfe format
@@ -362,7 +304,7 @@ namespace dftfe {
       pseudoUtils::convert(dftParameters::pseudoPotentialFile);
 
     MPI_Barrier(MPI_COMM_WORLD);
-    computingTimerStandard.exit_section("Atomic system initialization");
+
   }
 
   //dft pseudopotential init
@@ -378,9 +320,18 @@ namespace dftfe {
 	pcout<<std::endl<<"Pseudopotential initalization...."<<std::endl;
 	initLocalPseudoPotential();
 
-
-	computeSparseStructureNonLocalProjectors_OV();
-	computeElementalOVProjectorKets();
+	//
+	//
+	//if(dftParameters::pseudoProjector == 2)
+	//{
+	    computeSparseStructureNonLocalProjectors_OV();
+	    computeElementalOVProjectorKets();
+	    //}
+	    //else
+	    //{
+	    //computeSparseStructureNonLocalProjectors();
+	    //computeElementalProjectorKets();
+	    //}
 
 	forcePtr->initPseudoData();
       }
@@ -417,16 +368,8 @@ namespace dftfe {
   	for(unsigned int i = 0; i < atomLocationsFractional.size(); ++i)
 	  {
 	    for(unsigned int idim = 0; idim < 3; ++idim)
-	    {
 	      if (periodicBc[idim])
-	        AssertThrow(atomLocationsFractional[i][2+idim]>-tol && atomLocationsFractional[i][2+idim]<1.0+tol,ExcMessage("DFT-FE Error: periodic direction fractional coordinates doesn't lie in [0,1]. Please check input"
-	        "fractional coordinates, or if this is an ionic relaxation step, please check the corresponding"
-		"algorithm."));
-              if (!periodicBc[idim])
-		AssertThrow(atomLocationsFractional[i][2+idim]>tol && atomLocationsFractional[i][2+idim]<1.0-tol,ExcMessage("DFT-FE Error: non-periodic direction fractional coordinates doesn't lie in (0,1). Please check"
-	       "input fractional coordinates, or if this is an ionic relaxation step, please check the"
-	       "corresponding algorithm."));
-	    }
+	        AssertThrow(atomLocationsFractional[i][2+idim]>-tol && atomLocationsFractional[i][2+idim]<1.0+tol,ExcMessage("DFT-FE Error: periodic direction fractional coordinates doesn't lie in [0,1]. Please check input fractional coordinates, or if this is an ionic relaxation step, please check the corresponding algorithm."));
 	  }
 
 	generateImageCharges(d_pspCutOff,
@@ -446,10 +389,22 @@ namespace dftfe {
 
 	internaldft::convertToCellCenteredCartesianCoordinates(atomLocations,
 							       d_domainBoundingVectors);
+        //
+	//print cartesian coordinates
+	//
+	if (dftParameters::verbosity>=2) {
+	pcout<<"------------Cartesian coordinates of atoms (origin at center of domain)------------------"<<std::endl;
+	for(unsigned int i = 0; i < atomLocations.size(); ++i)
+	  {
+	    pcout<<"AtomId "<<i <<":  "<<atomLocations[i][2]<<" "<<atomLocations[i][3]<<" "<<atomLocations[i][4]<<"\n";
+	  }
+	pcout<<"-----------------------------------------------------------------------------------------"<<std::endl;
+	}
+        //
 #ifdef USE_COMPLEX
 	recomputeKPointCoordinates();
 #endif
-	if (dftParameters::verbosity>=4)
+	if (dftParameters::verbosity>=2)
 	  {
 	    //FIXME: Print all k points across all pools
 	    pcout<<"-------------------k points cartesian coordinates and weights-----------------------------"<<std::endl;
@@ -489,7 +444,7 @@ namespace dftfe {
   template<unsigned int FEOrder>
   void dftClass<FEOrder>::init (const unsigned int usePreviousGroundStateFields)
   {
-    computingTimerStandard.enter_section("KSDFT problem initialization");
+    computingTimerStandard.enter_section("Pre-processing steps");
 
     if (dftParameters::verbosity>=4)
       dftUtils::printCurrentMemoryUsage(mpi_communicator,
@@ -568,16 +523,15 @@ namespace dftfe {
     if (dftParameters::verbosity>=4)
       dftUtils::printCurrentMemoryUsage(mpi_communicator,
 	                      "initPseudopotential completed");
-    computingTimerStandard.exit_section("KSDFT problem initialization");
+    computingTimerStandard.exit_section("Pre-processing steps");
   }
 
   template<unsigned int FEOrder>
   void dftClass<FEOrder>::initNoRemesh()
   {
-    computingTimerStandard.enter_section("KSDFT problem initialization");
+    computingTimerStandard.enter_section("Pre-processing steps");
     initImageChargesUpdateKPoints();
 
-    updatePrevMeshDataStructures();
     //
     //reinitialize dirichlet BCs for total potential and vSelf poisson solutions
     //
@@ -591,7 +545,7 @@ namespace dftfe {
     //reinitialize pseudopotential related data structures
     //
     initPseudoPotentialAll();
-    computingTimerStandard.exit_section("KSDFT problem initialization");
+    computingTimerStandard.exit_section("Pre-processing steps");
   }
 
   //
@@ -662,9 +616,6 @@ namespace dftfe {
 					2,
 					d_phiExt,
 					d_noConstraints,
-				        d_imagePositions,
-				        d_imageIds,
-				        d_imageCharges,
 					d_localVselfs);
     computingTimerStandard.exit_section("Nuclear self-potential solve");
     computing_timer.exit_section("Nuclear self-potential solve");
@@ -680,9 +631,9 @@ namespace dftfe {
 
 
     //
-    //create kohnShamDFTOperatorClass object
+    //create eigenClass object
     //
-    kohnShamDFTOperatorClass<FEOrder> kohnShamDFTEigenOperator(this,mpi_communicator);
+    eigenClass<FEOrder> kohnShamDFTEigenOperator(this,mpi_communicator);
     kohnShamDFTEigenOperator.init();
 
     if (dftParameters::verbosity>=4)
@@ -751,10 +702,18 @@ namespace dftfe {
 	      {
 		if (dftParameters::spinPolarized==1)
 		  {
-		    norm = sqrt(mixing_anderson_spinPolarized());
+		     if (dftParameters::mixingMethod=="ANDERSON")
+		        norm = sqrt(mixing_anderson_spinPolarized());
+		     if (dftParameters::mixingMethod=="BROYDEN")
+		        norm = sqrt(mixing_broyden_spinPolarized());
 		  }
-		else
-		  norm = sqrt(mixing_anderson());
+		else 
+		  {
+		    if (dftParameters::mixingMethod=="ANDERSON")
+		        norm = sqrt(mixing_anderson());
+		    if (dftParameters::mixingMethod=="BROYDEN")
+		        norm = sqrt(mixing_broyden());
+		  }
 
 		if (dftParameters::verbosity>=1)
 		  pcout<<"Anderson mixing, L2 norm of electron-density difference: "<< norm<< std::endl;
@@ -791,6 +750,7 @@ namespace dftfe {
 				       phiTotDofHandlerIndex,
 				       d_atomNodeIdToChargeMap,
 				       *rhoInValues,
+					backgroundCharge,
 				       false);
 	else
 	  phiTotalSolverProblem.reinit(matrix_free_data,
@@ -798,7 +758,8 @@ namespace dftfe {
 				       *d_constraintsVector[phiTotDofHandlerIndex],
 				       phiTotDofHandlerIndex,
 				       d_atomNodeIdToChargeMap,
-				       *rhoInValues);
+				       *rhoInValues,
+					backgroundCharge);
 
 	dealiiCGSolver.solve(phiTotalSolverProblem,
 
@@ -815,15 +776,13 @@ namespace dftfe {
 	if (dftParameters::spinPolarized==1)
 	  {
 
-	    std::vector<std::vector<std::vector<double> > >
-		 eigenValuesSpins(2,
-		 	          std::vector<std::vector<double> >(d_kPointWeights.size(),
-				  std::vector<double>(numEigenValuesRR)));
+	    std::vector<std::vector<std::vector<double> > > eigenValuesSpins(2,
+									     std::vector<std::vector<double> >(d_kPointWeights.size(),
+													       std::vector<double>(numEigenValues)));
 
-	    std::vector<std::vector<std::vector<double>>>
-		residualNormWaveFunctionsAllkPointsSpins(2,
-			      	                         std::vector<std::vector<double> >(d_kPointWeights.size(),
-					  	         std::vector<double>(numEigenValuesRR)));
+	    std::vector<std::vector<std::vector<double>>> residualNormWaveFunctionsAllkPointsSpins(2,
+												   std::vector<std::vector<double> >(d_kPointWeights.size(),
+																     std::vector<double>(numEigenValues)));
 
 	    for(unsigned int s=0; s<2; ++s)
 	      {
@@ -852,7 +811,7 @@ namespace dftfe {
 		      dftUtils::printCurrentMemoryUsage(mpi_communicator,
 					      "Hamiltonian Matrix computed");
 
-		    for(unsigned int j = 0; j < 1; ++j)
+		    for(unsigned int j = 0; j < dftParameters::numPass; ++j)
 		      {
 			if (dftParameters::verbosity>=2)
 			  pcout<<"Beginning Chebyshev filter pass "<< j+1<< " for spin "<< s+1<<std::endl;
@@ -861,21 +820,22 @@ namespace dftfe {
 						  kPoint,
 						  kohnShamDFTEigenOperator,
 						  subspaceIterationSolver,
-						  residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
-						  true);
+						  residualNormWaveFunctionsAllkPointsSpins[s][kPoint]);
 		      }
 		  }
 	      }
 
 	    for(unsigned int s=0; s<2; ++s)
 	      for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-		for (unsigned int i = 0; i<numEigenValuesRR; ++i)
-		  eigenValuesSpins[s][kPoint][i]=eigenValuesRRSplit[kPoint][numEigenValuesRR*s+i];
+		for (unsigned int i = 0; i<numEigenValues; ++i)
+		  eigenValuesSpins[s][kPoint][i]=eigenValues[kPoint][numEigenValues*s+i];
 	    //
 	    //fermi energy
 	    //
-	    compute_fermienergy(eigenValues,
-		                numElectrons);
+	    if (dftParameters::constraintMagnetization)
+	         compute_fermienergy_constraintMagnetization();
+	    else
+		 compute_fermienergy();
 
 	    //maximum of the residual norm of the state closest to and below the Fermi level among all k points,
 	    //and also the maximum between the two spins
@@ -889,9 +849,7 @@ namespace dftfe {
 				     fermiEnergy));
 
 	    if (dftParameters::verbosity>=2)
-	      {
-		pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
-	      }
+	      pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
 
 	    //if the residual norm is greater than adaptiveChebysevFilterPassesTol (a heuristic value)
 	    // do more passes of chebysev filter till the check passes.
@@ -922,7 +880,7 @@ namespace dftfe {
 		      {
 			kohnShamDFTEigenOperator.reinitkPointIndex(kPoint);
 			if (dftParameters::verbosity>=2)
-			  pcout<< "Beginning Chebyshev filter pass "<< 1+count<< " for spin "<< s+1<<std::endl;;
+			  pcout<< "Beginning Chebyshev filter pass "<< dftParameters::numPass+count<< " for spin "<< s+1<<std::endl;;
 
 			computing_timer.enter_section("Hamiltonian Matrix Computation");
 			kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint);
@@ -936,19 +894,20 @@ namespace dftfe {
 						  kPoint,
 						  kohnShamDFTEigenOperator,
 						  subspaceIterationSolver,
-						  residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
-						  true);
+						  residualNormWaveFunctionsAllkPointsSpins[s][kPoint]);
 
 		      }
 		  }
 		count++;
 		for(unsigned int s=0; s<2; ++s)
 		  for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-		    for (unsigned int i = 0; i<numEigenValuesRR; ++i)
-		      eigenValuesSpins[s][kPoint][i]=eigenValuesRRSplit[kPoint][numEigenValuesRR*s+i];
+		    for (unsigned int i = 0; i<numEigenValues; ++i)
+		      eigenValuesSpins[s][kPoint][i]=eigenValues[kPoint][numEigenValues*s+i];
 
-	        compute_fermienergy(eigenValues,
-		                    numElectrons);
+		if (dftParameters::constraintMagnetization)
+	         compute_fermienergy_constraintMagnetization();
+	       else
+		 compute_fermienergy();
 		maxRes =std::max(computeMaximumHighestOccupiedStateResidualNorm
 				 (residualNormWaveFunctionsAllkPointsSpins[0],
 				  eigenValuesSpins[0],
@@ -961,13 +920,7 @@ namespace dftfe {
 		  pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
 
 	      }
-
-	    if(dftParameters::verbosity>=2)
-	      {
-		pcout  << "Fermi Energy computed: "<<fermiEnergy<<std::endl;
-	      }
-
-	      numberChebyshevSolvePasses=count;
+	      numberChebyshevSolvePasses=dftParameters::numPass+count-1;
 	  }
 	else
 	  {
@@ -975,7 +928,7 @@ namespace dftfe {
 	    std::vector<std::vector<double>> residualNormWaveFunctionsAllkPoints;
 	    residualNormWaveFunctionsAllkPoints.resize(d_kPointWeights.size());
 	    for(unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-	      residualNormWaveFunctionsAllkPoints[kPoint].resize(numEigenValuesRR);
+	      residualNormWaveFunctionsAllkPoints[kPoint].resize(numEigenValues);
 
 	    if(dftParameters::xc_id < 4)
 	      {
@@ -1001,7 +954,7 @@ namespace dftfe {
 		if (dftParameters::verbosity>=4)
 		      dftUtils::printCurrentMemoryUsage(mpi_communicator,
 					      "Hamiltonian Matrix computed");
-		for(unsigned int j = 0; j < 1; ++j)
+		for(unsigned int j = 0; j < dftParameters::numPass; ++j)
 		  {
 		    if (dftParameters::verbosity>=2)
 		      pcout<< "Beginning Chebyshev filter pass "<< j+1<<std::endl;
@@ -1011,8 +964,7 @@ namespace dftfe {
 					      kPoint,
 					      kohnShamDFTEigenOperator,
 					      subspaceIterationSolver,
-					      residualNormWaveFunctionsAllkPoints[kPoint],
-					      true);
+					      residualNormWaveFunctionsAllkPoints[kPoint]);
 
 		  }
 	      }
@@ -1020,15 +972,16 @@ namespace dftfe {
 	    //
 	    //fermi energy
 	    //
-	    compute_fermienergy(eigenValues,
-		                numElectrons);
-
+            if (dftParameters::constraintMagnetization)
+	         compute_fermienergy_constraintMagnetization();
+	    else
+		 compute_fermienergy();
 	    //
 	    //maximum of the residual norm of the state closest to and below the Fermi level among all k points
 	    //
 	    double maxRes = computeMaximumHighestOccupiedStateResidualNorm
 	      (residualNormWaveFunctionsAllkPoints,
-	       eigenValuesRRSplit,
+	       eigenValues,
 	       fermiEnergy);
 	    if (dftParameters::verbosity>=2)
 	      pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
@@ -1048,39 +1001,34 @@ namespace dftfe {
 		  {
 		    kohnShamDFTEigenOperator.reinitkPointIndex(kPoint);
 		    if (dftParameters::verbosity>=2)
-		      pcout<< "Beginning Chebyshev filter pass "<< 1+count<<std::endl;
+		      pcout<< "Beginning Chebyshev filter pass "<< dftParameters::numPass+count<<std::endl;
 
 		    computing_timer.enter_section("Hamiltonian Matrix Computation");
 		    kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint);
 		    computing_timer.exit_section("Hamiltonian Matrix Computation");
 
-		    if(dftParameters::verbosity>=4)
+		    if (dftParameters::verbosity>=4)
 		      dftUtils::printCurrentMemoryUsage(mpi_communicator,
-							"Hamiltonian Matrix computed");
+					      "Hamiltonian Matrix computed");
 		    kohnShamEigenSpaceCompute(0,
 					      kPoint,
 					      kohnShamDFTEigenOperator,
 					      subspaceIterationSolver,
-					      residualNormWaveFunctionsAllkPoints[kPoint],
-					      true);
+					      residualNormWaveFunctionsAllkPoints[kPoint]);
 		  }
 		count++;
-	        compute_fermienergy(eigenValues,
-		                    numElectrons);
+		if (dftParameters::constraintMagnetization)
+	         compute_fermienergy_constraintMagnetization();
+	        else
+		 compute_fermienergy();
 		maxRes = computeMaximumHighestOccupiedStateResidualNorm
 		  (residualNormWaveFunctionsAllkPoints,
-		   eigenValuesRRSplit,
+		   eigenValues,
 		   fermiEnergy);
 		if (dftParameters::verbosity>=2)
 		  pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
 	      }
-
-              numberChebyshevSolvePasses=count;
-
-	      if(dftParameters::verbosity>=2)
-		{
-		  pcout  << "Fermi Energy computed: "<<fermiEnergy<<std::endl;
-		}
+              numberChebyshevSolvePasses=dftParameters::numPass+count-1;
 	  }
 	computing_timer.enter_section("compute rho");
 #ifdef USE_COMPLEX
@@ -1108,7 +1056,7 @@ namespace dftfe {
 	//
 	//phiTot with rhoOut
 	//
-	if (dftParameters::computeEnergyEverySCF && numEigenValuesRR==numEigenValues)
+	if (dftParameters::computeEnergyEverySCF)
 	{
 	    if(dftParameters::verbosity>=2)
 	      pcout<< std::endl<<"Poisson solve for total electrostatic potential (rhoOut+b): ";
@@ -1154,6 +1102,7 @@ namespace dftfe {
 				       d_atomNodeIdToChargeMap,
 				       atomLocations.size(),
 				       lowerBoundKindex,
+				       backgroundCharge,
 				       0,
 				       dftParameters::verbosity>=2) :
 	      energyCalc.computeEnergySpinPolarized(dofHandler,
@@ -1163,6 +1112,8 @@ namespace dftfe {
 						    eigenValues,
 						    d_kPointWeights,
 						    fermiEnergy,
+						    fermiEnergyUp,
+						    fermiEnergyDown,
 						    funcX,
 						    funcC,
 						    d_phiTotRhoIn,
@@ -1180,17 +1131,14 @@ namespace dftfe {
 						    d_atomNodeIdToChargeMap,
 						    atomLocations.size(),
 						    lowerBoundKindex,
+						    backgroundCharge,
 						    0,
 						    dftParameters::verbosity>=2);
 	    if (dftParameters::verbosity==1)
+	      {
 		pcout<<"Total energy  : " << totalEnergy << std::endl;
+	      }
 	}
-	else
-	{
-	    if (numEigenValuesRR!=numEigenValues && dftParameters::computeEnergyEverySCF && dftParameters::verbosity>=1)
-		pcout<<"DFT-FE Message: energy computation is not performed at the end of each scf iteration step\n"<<"if SPECTRUM SPLIT CORE EIGENSTATES is set to a non-zero value."<< std::endl;
-	}
-
 	if (dftParameters::verbosity>=1)
 	  pcout<<"***********************Self-Consistent-Field Iteration: "<<std::setw(2)<<scfIter+1<<" complete**********************"<<std::endl;
 
@@ -1210,90 +1158,7 @@ namespace dftfe {
     else
       pcout<<"SCF iterations converged to the specified tolerance after: "<<scfIter<<" iterations."<<std::endl;
 
-    //If spectrum splitting was used in the scf iteration, do one subspace iteration
-    //with no spectrum splitting to get all eigenvalues
-    if (numEigenValuesRR!=numEigenValues)
-    {
-	if (dftParameters::spinPolarized==1)
-	  {
-
-	    std::vector<std::vector<std::vector<double>>>
-		residualNormWaveFunctionsAllkPointsSpins(2,
-			      	                         std::vector<std::vector<double> >(d_kPointWeights.size(),
-					  	         std::vector<double>(numEigenValues)));
-
-	    for(unsigned int s=0; s<2; ++s)
-	      {
-
-		if(dftParameters::xc_id < 4)
-		  {
-		    computing_timer.enter_section("VEff Computation");
-		    kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, pseudoValues);
-		    computing_timer.exit_section("VEff Computation");
-		  }
-		else if (dftParameters::xc_id == 4)
-		  {
-		    computing_timer.enter_section("VEff Computation");
-		    kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, pseudoValues);
-		    computing_timer.exit_section("VEff Computation");
-		  }
-		for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-		  {
-		    kohnShamDFTEigenOperator.reinitkPointIndex(kPoint);
-
-
-		    computing_timer.enter_section("Hamiltonian Matrix Computation");
-		    kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint);
-		    computing_timer.exit_section("Hamiltonian Matrix Computation");
-
-
-
-		    if (dftParameters::verbosity>=2)
-		      pcout<<"Doing one full spectrum Chebyshev filter pass for spin "<< s+1<<std::endl;
-
-		    kohnShamEigenSpaceCompute(s,
-					      kPoint,
-					      kohnShamDFTEigenOperator,
-					      subspaceIterationSolver,
-					      residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
-					      false);
-		  }
-	      }
-	  }
-        else
-	  {
-	    std::vector<std::vector<double>> residualNormWaveFunctionsAllkPoints;
-	    residualNormWaveFunctionsAllkPoints.resize(d_kPointWeights.size());
-	    for(unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-	      residualNormWaveFunctionsAllkPoints[kPoint].resize(numEigenValues);
-
-	    for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-	      {
-		kohnShamDFTEigenOperator.reinitkPointIndex(kPoint);
-
-		computing_timer.enter_section("Hamiltonian Matrix Computation");
-		kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint);
-		computing_timer.exit_section("Hamiltonian Matrix Computation");
-
-
-
-		if (dftParameters::verbosity>=2)
-		  pcout<<"Doing one full spectrum Chebyshev filter pass "<<std::endl;
-
-
-		kohnShamEigenSpaceCompute(0,
-					  kPoint,
-					  kohnShamDFTEigenOperator,
-					  subspaceIterationSolver,
-					  residualNormWaveFunctionsAllkPoints[kPoint],
-					  false);
-
-	      }
-	  }
-
-    }
-
-    if (!dftParameters::computeEnergyEverySCF || numEigenValuesRR!=numEigenValues)
+    if (!dftParameters::computeEnergyEverySCF)
     {
 	if(dftParameters::verbosity>=2)
 	  pcout<< std::endl<<"Poisson solve for total electrostatic potential (rhoOut+b): ";
@@ -1307,6 +1172,7 @@ namespace dftfe {
 				     phiTotDofHandlerIndex,
 				     d_atomNodeIdToChargeMap,
 				     *rhoOutValues,
+				     backgroundCharge,
 				     false);
 
 
@@ -1316,6 +1182,7 @@ namespace dftfe {
 			     dftParameters::verbosity);
 
 	computing_timer.exit_section("phiTot solve");
+
     }
     //
     // compute and print ground state energy or energy after max scf iterations
@@ -1342,6 +1209,7 @@ namespace dftfe {
 			       d_atomNodeIdToChargeMap,
 			       atomLocations.size(),
 			       lowerBoundKindex,
+			       backgroundCharge,
 			       1,
 			       true) :
       energyCalc.computeEnergySpinPolarized(dofHandler,
@@ -1351,6 +1219,8 @@ namespace dftfe {
 					    eigenValues,
 					    d_kPointWeights,
 					    fermiEnergy,
+					    fermiEnergyUp,
+					    fermiEnergyDown,
 					    funcX,
 					    funcC,
 					    d_phiTotRhoIn,
@@ -1368,6 +1238,7 @@ namespace dftfe {
 					    d_atomNodeIdToChargeMap,
 					    atomLocations.size(),
 					    lowerBoundKindex,
+					    backgroundCharge,
 					    1,
 					    true);
 
@@ -1409,135 +1280,86 @@ namespace dftfe {
     //if (dftParameters::electrostaticsPRefinement)
     //  computeElectrostaticEnergyPRefined();
 
-    if (dftParameters::writeWfcSolutionFields)
-      outputWfc();
+    //
+     pcout << " check 0.0 " << std::endl;
+    //hyperFineTensor(rhoOutValuesSpinPolarized) ;
+    //computeDTensorWrapper() ;
+    efgTensor(rhoOutValues) ;
+    //
+    computeNodalRhoFromQuadData();
 
-    if (dftParameters::writeDensitySolutionFields)
-      outputDensity();
+
+    if (dftParameters::writeSolutionFields)
+      output();
 
     if (dftParameters::verbosity>=1)
        pcout << std::endl<< "Elapsed wall time since start of the program: " << d_globalTimer.wall_time() << " seconds\n"<<std::endl;
   }
 
-  //Output wfc
+  //Output
   template <unsigned int FEOrder>
-  void dftClass<FEOrder>::outputWfc()
+  void dftClass<FEOrder>::output()
   {
     DataOut<3> data_outEigen;
     data_outEigen.attach_dof_handler (dofHandlerEigen);
     std::vector<vectorType> tempVec(1);
     tempVec[0].reinit(d_tempEigenVec);
-    for (unsigned int s=0; s<1+dftParameters::spinPolarized; ++s)
-      for (unsigned int k=0; k<d_kPointWeights.size(); ++k)
-	for(unsigned int i=0; i<numEigenValues; ++i)
-	  {
+    for(unsigned int i=0; i<numEigenValues; ++i)
+      {
+	char buffer[100]; sprintf(buffer,"eigen%u", i);
 #ifdef USE_COMPLEX
-	    vectorTools::copyFlattenedDealiiVecToSingleCompVec
-		     (d_eigenVectorsFlattened[k*(1+dftParameters::spinPolarized)+s],
-		      numEigenValues,
-		      std::make_pair(i,i+1),
-		      localProc_dof_indicesReal,
-		      localProc_dof_indicesImag,
-		      tempVec);
+        vectorTools::copyFlattenedDealiiVecToSingleCompVec
+		 (d_eigenVectorsFlattened[0],
+		  numEigenValues,
+		  std::make_pair(i,i+1),
+		  localProc_dof_indicesReal,
+		  localProc_dof_indicesImag,
+		  tempVec);
 #else
-	    vectorTools::copyFlattenedDealiiVecToSingleCompVec
-		     (d_eigenVectorsFlattened[k*(1+dftParameters::spinPolarized)+s],
-		      numEigenValues,
-		      std::make_pair(i,i+1),
-		      tempVec);
+        vectorTools::copyFlattenedDealiiVecToSingleCompVec
+		 (d_eigenVectorsFlattened[0],
+		  numEigenValues,
+		  std::make_pair(i,i+1),
+		  tempVec);
 #endif
-	    if (dftParameters::spinPolarized==1)
-	      data_outEigen.add_data_vector (d_tempEigenVec,"wfc_"+std::to_string(s)+"_"+std::to_string(k)+"_"+std::to_string(i));
-	    else
-	      data_outEigen.add_data_vector (d_tempEigenVec,"wfc_"+std::to_string(k)+"_"+std::to_string(i));
-	  }
-
+	data_outEigen.add_data_vector (d_tempEigenVec, buffer);
+      }
     data_outEigen.build_patches (C_num1DQuad<FEOrder>());
 
+    std::ofstream output ("eigen.vtu");
     dftUtils::writeDataVTUParallelLowestPoolId(data_outEigen,
 					       mpi_communicator,
 					       interpoolcomm,
 					       interBandGroupComm,
-					       "wfcOutput");
-  }
+					       std::string("eigen"));
 
-
-  //Output density
-  template <unsigned int FEOrder>
-  void dftClass<FEOrder>::outputDensity()
-  {
     //
     //compute nodal electron-density from quad data
     //
     dealii::parallel::distributed::Vector<double>  rhoNodalField;
     matrix_free_data.initialize_dof_vector(rhoNodalField,densityDofHandlerIndex);
     rhoNodalField=0;
-    std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell , 
-                         const unsigned int q)> funcRho = 
-                          [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
-                              const unsigned int q)
-                              {return (*rhoOutValues).find(cell->id())->second[q];};
     dealii::VectorTools::project<3,dealii::parallel::distributed::Vector<double>> (dealii::MappingQ1<3,3>(),
 										   dofHandler,
 										   constraintsNone,
 										   QGauss<3>(C_num1DQuad<FEOrder>()),
-										   funcRho,
+										   [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell , const unsigned int q) -> double {return (*rhoOutValues).find(cell->id())->second[q];},
 										   rhoNodalField);
     rhoNodalField.update_ghost_values();
-
-    dealii::parallel::distributed::Vector<double>  rhoNodalFieldSpin0;
-    dealii::parallel::distributed::Vector<double>  rhoNodalFieldSpin1;
-    if (dftParameters::spinPolarized==1)
-    {
-	matrix_free_data.initialize_dof_vector(rhoNodalFieldSpin0,densityDofHandlerIndex);
-	rhoNodalFieldSpin0=0;
-        std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell , 
-                             const unsigned int q)> funcRhoSpin0 = 
-                             [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
-                              const unsigned int q)
-                              {return (*rhoOutValuesSpinPolarized).find(cell->id())->second[2*q];};
-	dealii::VectorTools::project<3,dealii::parallel::distributed::Vector<double>> (dealii::MappingQ1<3,3>(),
-										       dofHandler,
-										       constraintsNone,
-										       QGauss<3>(C_num1DQuad<FEOrder>()),
-										       funcRhoSpin0,
-										       rhoNodalFieldSpin0);
-	rhoNodalFieldSpin0.update_ghost_values();
-
-
-	matrix_free_data.initialize_dof_vector(rhoNodalFieldSpin1,densityDofHandlerIndex);
-	rhoNodalFieldSpin1=0;
-        std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell , 
-                             const unsigned int q)> funcRhoSpin1 = 
-                             [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
-                              const unsigned int q)
-                              {return (*rhoOutValuesSpinPolarized).find(cell->id())->second[2*q+1];};
-	dealii::VectorTools::project<3,dealii::parallel::distributed::Vector<double>> (dealii::MappingQ1<3,3>(),
-										       dofHandler,
-										       constraintsNone,
-										       QGauss<3>(C_num1DQuad<FEOrder>()),
-										       funcRhoSpin1,
-										       rhoNodalFieldSpin1);
-	rhoNodalFieldSpin1.update_ghost_values();
-    }
 
     //
     //only generate output for electron-density
     //
     DataOut<3> dataOutRho;
     dataOutRho.attach_dof_handler(dofHandler);
-    dataOutRho.add_data_vector(rhoNodalField, std::string("density"));
-    if (dftParameters::spinPolarized==1)
-    {
-      dataOutRho.add_data_vector(rhoNodalFieldSpin0, std::string("density_0"));
-      dataOutRho.add_data_vector(rhoNodalFieldSpin1, std::string("density_1"));
-    }
+    char buffer[100]; sprintf(buffer,"rhoField");
+    dataOutRho.add_data_vector(rhoNodalField, buffer);
     dataOutRho.build_patches(C_num1DQuad<FEOrder>());
     dftUtils::writeDataVTUParallelLowestPoolId(dataOutRho,
 					       mpi_communicator,
 					       interpoolcomm,
 					       interBandGroupComm,
-					       "densityOutput");
+					       std::string("rhoField"));
 
   }
 
