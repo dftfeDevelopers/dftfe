@@ -78,7 +78,7 @@ void dftClass<FEOrder>::compute_rhoOut()
    const unsigned int eigenVectorsBlockSize=std::min(dftParameters::wfcBlockSize,
 	                                             bandGroupLowHighPlusOneIndices[1]);
 
-   const unsigned int localVectorSize = d_eigenVectorsFlattenedSTL.size()/numEigenValues;
+   const unsigned int localVectorSize = d_eigenVectorsFlattenedSTL[0].size()/numEigenValues;
 
    std::vector<std::vector<vectorType>> eigenVectors((1+dftParameters::spinPolarized)*d_kPointWeights.size());
 
@@ -98,7 +98,7 @@ void dftClass<FEOrder>::compute_rhoOut()
 	   }
       }
 
-      if ((ivec+currentBlockSize)<=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1] &&
+      if((ivec+currentBlockSize)<=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1] &&
 	  (ivec+currentBlockSize)>bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
       {
 
@@ -111,14 +111,18 @@ void dftClass<FEOrder>::compute_rhoOut()
 					       eigenVectorsFlattenedArrayBlock.get_partitioner(),
 					       currentBlockSize);
 	
+	
 
 	  for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
 	  {
-	    
 	    for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
-	      for(unsigned int iWave = 0; iWave < currentBlockSize; ++iWave)
-		eigenVectorsFlattenedArrayBlock.local_element(iNode*currentBlockSize+iWave)
-		  = d_eigenVectorsFlattenedSTL[kPoint][iNode*numEigenValues+ivec+iWave];
+	      {
+		for(unsigned int iWave = 0; iWave < currentBlockSize; ++iWave)
+		  {
+		    eigenVectorsFlattenedArrayBlock.local_element(iNode*currentBlockSize+iWave)
+		      = d_eigenVectorsFlattenedSTL[kPoint][iNode*numEigenValues+ivec+iWave];
+		  }
+	      }
 
 	    constraintsNoneDataInfo.distribute(eigenVectorsFlattenedArrayBlock,
 					       currentBlockSize);

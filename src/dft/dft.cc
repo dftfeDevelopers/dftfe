@@ -1382,10 +1382,60 @@ namespace dftfe {
 
     computingTimerStandard.exit_section("Total scf solve");
 
+    if(dftParameters::isIonForce || dftParameters::isCellStress)
+      {
+	//
+	//Recreate the full dealii partitioned array
+	//
+	d_eigenVectorsFlattened.resize((1+dftParameters::spinPolarized)*d_kPointWeights.size());
+	
+	for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+	  {
+	    vectorTools::createDealiiVector<dataTypes::number>(matrix_free_data.get_vector_partitioner(),
+							       numEigenValues,
+							       d_eigenVectorsFlattened[kPoint]);
+
+	    
+	    d_eigenVectorsFlattened[kPoint] = dataTypes::number(0.0);
+
+	  }
+
+	const unsigned int localVectorSize = d_eigenVectorsFlattenedSTL[0].size()/numEigenValues;
+
+	constraintsNoneDataInfo.precomputeMaps(matrix_free_data.get_vector_partitioner(),
+					       d_eigenVectorsFlattened[0].get_partitioner(),
+					       numEigenValues);
+
+	for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+	  {
+	    for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
+	      {
+		for(unsigned int iWave = 0; iWave < numEigenValues; ++iWave)
+		  {
+		    d_eigenVectorsFlattened[kPoint].local_element(iNode*numEigenValues+iWave)
+		      = d_eigenVectorsFlattenedSTL[kPoint][iNode*numEigenValues+iWave];
+		  }
+	      }
+
+	    constraintsNoneDataInfo.distribute(d_eigenVectorsFlattened[kPoint],
+					       numEigenValues);
+
+	  }
+
+
+	for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+	  {
+	    d_eigenVectorsFlattenedSTL[kPoint].clear();
+	    std::vector<dataTypes::number>().swap(d_eigenVectorsFlattenedSTL[kPoint]);
+	  }
+
+      }
+
     if (dftParameters::isIonForce)
       {
         if(dftParameters::selfConsistentSolverTolerance>1e-5 && dftParameters::verbosity>=1)
             pcout<<"DFT-FE Warning: Ion force accuracy may be affected for the given scf iteration solve tolerance: "<<dftParameters::selfConsistentSolverTolerance<<", recommended to use TOLERANCE below 1e-5."<<std::endl;
+
 
  	computing_timer.enter_section("Ion force computation");
 	computingTimerStandard.enter_section("Ion force computation");

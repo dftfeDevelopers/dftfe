@@ -56,7 +56,7 @@ namespace internal
 		diagonal.local_element(localProc_dof_indicesReal[i]);
 	    zdscal_(&numberFields,
 	           &scalingCoeff,
-	           fieldsArrayFlattened[i*numberFields],
+	           &fieldsArrayFlattened[i*numberFields],
 	           &inc);
 #else
 	    double scalingCoeff = diagonal.local_element(i);

@@ -291,7 +291,7 @@ namespace dftfe
 	     &X[0],
 	     &numberVectors,
 	     &beta4,
-	     orthoNormalizedBasis.begin(),
+	     &orthoNormalizedBasis[0],
 	     &numberVectors);
 #else
        dgemm_(&transA4,
@@ -305,7 +305,7 @@ namespace dftfe
 	      &X[0],
 	      &numberVectors,
 	      &beta4,
-	      orthoNormalizedBasis.begin(),
+	      &orthoNormalizedBasis[0],
 	      &numberVectors);
 #endif
        computing_timer.exit_section("subspace rotation in pgs");

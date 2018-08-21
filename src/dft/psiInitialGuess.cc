@@ -348,7 +348,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 			  if(rand()%2 == 0)
 			    value = -1.0*value;
 
-			  d_eigenVectorsFlattened[kPoint][dof*numEigenValues+iWave] = dataTypes::number(value);
+			  d_eigenVectorsFlattenedSTL[kPoint][dof*numEigenValues+iWave] = dataTypes::number(value);
 
 			}
 		    }

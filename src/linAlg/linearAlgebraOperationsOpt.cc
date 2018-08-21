@@ -872,7 +872,7 @@ namespace dftfe{
 	      break;
 	    }
 	}
-       nanFlag=dealii::Utilities::MPI::max(nanFlag,mpi_comm);
+       nanFlag=dealii::Utilities::MPI::max(nanFlag,mpiComm);
        if (dftParameters::enableSwitchToGS && nanFlag==1)
           return nanFlag;
 
