@@ -5,7 +5,7 @@ DFT-FE : Density Functional Theory With Finite-Elements
 About
 -----
 
-DFT-FE is a C++ code for materials modeling from first principles using Kohn-Sham density functional theory.
+DFT-FE is a C++ code for materials modeling from first principles using Kohn-Sham density functional theory, developed by the Computational Materials Physics Group at University of Michigan(http://www-personal.umich.edu/~vikramg/).
 It is based on adaptive finite-element discretization that handles all-electron and pseudopotential calculations in the 
 same framework, and incorporates scalable and efficient solvers for the solution of the Kohn-Sham equations. Importantly, DFT-FE can handle general geometries and boundary conditions, including periodic, semi-periodic and non-periodic systems. DFT-FE code builds on top of the deal.II library for everything 
 that has to do with finite elements, geometries, meshes, etc., and, through deal.II on p4est for parallel adaptive mesh handling.
@@ -34,7 +34,7 @@ More information
 
 For more information see:
 
- - The official [website](https://sites.google.com/umich.edu/dftfe).
+ - The official [website](https://sites.google.com/umich.edu/dftfe) for information on code capabilities, appropriate referencing of the code, acknowledgements, and news related to DFT-FE.
   
  - Doxygen generated [documentation](https://dftfedevelopers.github.io/dftfe/).
 
