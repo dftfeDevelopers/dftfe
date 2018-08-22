@@ -353,7 +353,7 @@ namespace dftfe
 
 
 	if (dftParameters::verbosity>=4)
-	  dftUtils::printCurrentMemoryUsage(subspaceVectorsArray.get_mpi_communicator(),
+	  dftUtils::printCurrentMemoryUsage(mpiComm,
 					    "Inside Blocked susbpace rotation");
 
 	for (unsigned int idof = 0; idof < maxNumLocalDofs; idof += dofsBlockSize)
@@ -488,7 +488,7 @@ namespace dftfe
 		for(unsigned int iNode = 0; iNode < numLocalDofs; ++iNode)
 		  for(unsigned int iWave = 0; iWave < numberNonCoreVectors; ++iWave)
 		    nonCoreVectorsArray.local_element(iNode*numberNonCoreVectors +iWave)
-		      =subspaceVectorsArray[iNode*N+numberCoreVectors+iWave);
+		      =subspaceVectorsArray[iNode*N+numberCoreVectors+iWave];
 
 
 		MPI_Allreduce(MPI_IN_PLACE,
@@ -507,7 +507,7 @@ namespace dftfe
 	    else
 	      {
 		MPI_Allreduce(MPI_IN_PLACE,
-			      subspaceVectorsArray.begin(),
+			      &subspaceVectorsArray[0],
 			      N*numLocalDofs,
 			      MPI_DOUBLE,
 			      MPI_SUM,
