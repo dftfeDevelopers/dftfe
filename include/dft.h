@@ -238,6 +238,11 @@ namespace dftfe {
        */
       void initRhoFromPreviousGroundStateRho();
 
+      /**
+       * @brief update previous mesh data structures which are required for interpolating wfc and
+       * density during geometry optimization.
+       */
+      void updatePrevMeshDataStructures();
 
       /**
        *@brief project ground state electron density from previous mesh into
@@ -554,6 +559,14 @@ namespace dftfe {
       /**
        *object which is used to store dealii constraint matrix information
        *using STL vectors. The relevant dealii constraint matrix
+       *has hanging node constraints and periodic constraints(for periodic problems)
+       *used in eigen solve
+       */
+      dftUtils::constraintMatrixInfo constraintsNoneEigenDataInfoPrev;
+
+      /**
+       *object which is used to store dealii constraint matrix information
+       *using STL vectors. The relevant dealii constraint matrix
        *has hanging node constraints used in Poisson problem solution
        *
        */
@@ -716,6 +729,7 @@ namespace dftfe {
       std::vector<double> a0;
       std::vector<double> bLow;
       vectorType d_tempEigenVec;
+      vectorType d_tempEigenVecPrev;
 
       /**
        * @brief compute the maximum of the residual norm of the highest occupied state among all k points

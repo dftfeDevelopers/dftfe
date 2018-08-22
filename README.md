@@ -44,21 +44,23 @@ For more information see:
  
  - DFT-FE is primarily based on the [deal.II library](http://www.dealii.org/). If you have particular questions about deal.II, use the [deal.II discussion forum](https://www.dealii.org/mail.html).
  
- - If you have specific questions about DFT-FE that are not suitable for the public and archived mailing lists, you can contact the principal developers and mentors:
-
+ - If you have specific questions about DFT-FE that are not suitable for the public and archived mailing lists, you can contact the following:
     - Phani Motamarri: phanim@umich.edu
     - Sambit Das: dsambit@umich.edu
-    - Vikram Gavini: vikramg@umich.edu (Mentor)
+    - Vikram Gavini: vikramg@umich.edu 
 
- - The following people have significantly contributed either in the past or current and advanced DFT-FE's goals: 
-   - Principal developers
-      - Sambit Das (University of Michigan, USA)
-      - Phani Motamarri (University of Michigan, USA)
+ - The following people have significantly contributed either in the past or current and advanced DFT-FE's goals: (All the underlying lists are in alphabetical order)
+   - Principal developers  
+       - Sambit Das (University of Michigan Ann Arbor, USA)
+       - Dr. Phani Motamarri (University of Michigan Ann Arbor, USA)
     
    - Principal developers emeriti
-      - Krishnendu Ghosh (University of Michigan, USA)
-      - Shiva Rudraraju  (University of Wisconsin Madison, USA)
-      
+       - Dr. Krishnendu Ghosh (University of Michigan Ann Arbor, USA)
+       - Prof. Shiva Rudraraju  (University of Wisconsin Madison, USA)
+
+   - Mentor
+       - Prof. Vikram Gavini (University of Michigan Ann Arbor, USA)
+         
  - A complete list of the many authors that have contributed to DFT-FE can be found at [authors](https://github.com/dftfeDevelopers/dftfe/blob/publicGithubDevelop/authors).    
 
 License

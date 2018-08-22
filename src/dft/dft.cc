@@ -577,10 +577,7 @@ namespace dftfe {
     computingTimerStandard.enter_section("KSDFT problem initialization");
     initImageChargesUpdateKPoints();
 
-    //update serial and parallel unmoved previous mesh
-    d_mesh.generateSerialAndParallelUnmovedPreviousMesh(atomLocations,
-				                        d_imagePositions,
-				                        d_domainBoundingVectors);
+    updatePrevMeshDataStructures();
     //
     //reinitialize dirichlet BCs for total potential and vSelf poisson solutions
     //

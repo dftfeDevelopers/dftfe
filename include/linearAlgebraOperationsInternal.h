@@ -24,7 +24,7 @@ namespace dftfe
   namespace linearAlgebraOperations
   {
     /**
-     *  @brief Contains small internal functions used in linearAlgebraOperations
+     *  @brief Contains internal functions used in linearAlgebraOperations
      *
      *  @author Sambit Das
      */
@@ -70,9 +70,9 @@ namespace dftfe
 				            const MPI_Comm &interComm,
 					    const unsigned int broadcastRoot);
 
-	/** @brief Computes S=X^{T}*X and stores in a parallel ScaLAPACK matrix.
-	 * X^{T} is the subspaceVectorsArray in the column major format. S is the
-	 * overlapMatPar.
+	/** @brief Computes Sc=X^{T}*Xc and stores in a parallel ScaLAPACK matrix.
+	 * X^{T} is the subspaceVectorsArray stored in the column major format (N x M).
+	 * Sc is the overlapMatPar.
 	 *
 	 * The overlap matrix computation and filling is done in a blocked approach
 	 * which avoids creation of full serial overlap matrix memory, and also avoids creation
@@ -87,8 +87,8 @@ namespace dftfe
 				       const MPI_Comm &mpiComm,
 				       dealii::ScaLAPACKMatrix<T> & overlapMatPar);
 
-	/** @brief Computes X^{T}=Q*X^{T} inplace. X^{T} is the subspaceVectorsArray in the column major
-	 * format. Q is rotationMatPar.
+	/** @brief Computes X^{T}=Q*X^{T} inplace. X^{T} is the subspaceVectorsArray
+	 * stored in the column major format (N x M). Q is rotationMatPar.
 	 *
 	 * The subspace rotation inside this function is done in a blocked approach
 	 * which avoids creation of full serial rotation matrix memory, and also avoids creation
@@ -118,7 +118,7 @@ namespace dftfe
 	 */
 	template<typename T>
 	void subspaceRotation(dealii::parallel::distributed::Vector<T> & subspaceVectorsArray,
-		              const unsigned int numberSubspaceVectors,
+		              const unsigned int N,
 			      const unsigned int numberCoreVectors,
 			      dealii::parallel::distributed::Vector<T> & nonCoreVectorsArray,
 		              const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
