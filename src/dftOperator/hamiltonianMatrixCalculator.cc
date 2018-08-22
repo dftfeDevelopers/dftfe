@@ -153,7 +153,14 @@ void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(unsigned int kP
 
       for(unsigned int iSubCell = 0; iSubCell < n_sub_cells; ++iSubCell)
 	{
-	  d_cellHamiltonianMatrix[iElem].resize(numberDofsPerElement*numberDofsPerElement,0.0);
+	  //FIXME: Aligning to 16 byte memory boundaries. However, this is not a guaranteed to align for 64 byte boundaries
+	  //as required for efficient AVX512 vectorization.
+	  //Use functions like mkl_malloc for 64 byte memory alignment.
+#ifdef USE_COMPLEX
+	  d_cellHamiltonianMatrix[iElem].resize(numberDofsPerElement*numberDofsPerElement+(numberDofsPerElement*numberDofsPerElement)%4);
+#else
+	  d_cellHamiltonianMatrix[iElem].resize(numberDofsPerElement*numberDofsPerElement+(numberDofsPerElement*numberDofsPerElement)%8);
+#endif
 	  for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
 	    {
 	      for(unsigned int jNode = 0; jNode < numberDofsPerElement; ++jNode)
