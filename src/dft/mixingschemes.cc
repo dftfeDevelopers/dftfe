@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------
 //
-// Copyright (c) 2017 The Regents of the University of Michigan and DFT-FE authors.
+// Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors.
 //
 // This file is part of the DFT-FE code.
 //
@@ -13,15 +13,12 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Shiva Rudraraju (2016), Phani Motamarri (2016), Krishnendu Ghosh(2017)
+// @author Shiva Rudraraju, Phani Motamarri, Krishnendu Ghosh
 //
 
 //source file for all the mixing schemes
 
-#include<iostream>
- 
-using namespace std;
- 
+
 void calldgesv(const unsigned int dimensionMatrix,
 		 double *matrix,
 		 double *matrixInverse)
@@ -40,7 +37,6 @@ void calldgesv(const unsigned int dimensionMatrix,
 	
 
     }
-
 
 //implement simple mixing scheme
 template<unsigned int FEOrder>
@@ -206,6 +202,7 @@ double dftClass<FEOrder>::mixing_anderson(){
 	  if (cell->is_locally_owned())
 	    {
 	      (*gradRhoInValues)[cell->id()]=std::vector<double>(3*num_quad_points);
+	      fe_values.reinit (cell);
 	      for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
 		{
 		  //
@@ -253,19 +250,15 @@ double dftClass<FEOrder>::mixing_broyden(){
   FEValues<3> fe_values (FE, quadrature, update_JxW_values);
   const unsigned int num_quad_points = quadrature.size();
   //
-  int N = rhoOutVals.size()- 1;
-  //if (rhoOutVals.size() > 2)
-  //	N = u.size() ;
+  int N = dFBroyden.size() + 1;
   //
-  //
-  pcout << " mixing check 1.0 " << std::endl ;
   std::map<dealii::CellId,std::vector<double> >  delRho, delGradRho ;
-  dF.push_back(std::map<dealii::CellId,std::vector<double> >());
-  u.push_back(std::map<dealii::CellId,std::vector<double> >());
+  dFBroyden.push_back(std::map<dealii::CellId,std::vector<double> >());
+  uBroyden.push_back(std::map<dealii::CellId,std::vector<double> >());
   if (dftParameters::xc_id == 4)
     {
-     graddF.push_back(std::map<dealii::CellId,std::vector<double> >());
-     gradU.push_back(std::map<dealii::CellId,std::vector<double> >());
+     graddFBroyden.push_back(std::map<dealii::CellId,std::vector<double> >());
+     gradUBroyden.push_back(std::map<dealii::CellId,std::vector<double> >());
     }	
   //
   double FOld ;
@@ -280,54 +273,51 @@ double dftClass<FEOrder>::mixing_broyden(){
   for (; cell!=endc; ++cell) {
     if (cell->is_locally_owned()){
       //
-      (dF[N-1])[cell->id()]=std::vector<double>(num_quad_points);
+      (dFBroyden[N-1])[cell->id()]=std::vector<double>(num_quad_points);
       delRho[cell->id()]=std::vector<double>(num_quad_points);
       if (N==1)
-	F[cell->id()]=std::vector<double>(num_quad_points);
+	FBroyden[cell->id()]=std::vector<double>(num_quad_points);
       //
       if (dftParameters::xc_id == 4)
         {
-	 (graddF[N-1])[cell->id()]=std::vector<double>(3*num_quad_points);
+	 (graddFBroyden[N-1])[cell->id()]=std::vector<double>(3*num_quad_points);
          delGradRho[cell->id()]=std::vector<double>(3*num_quad_points);
 	 if (N==1)
-	    gradF[cell->id()]=std::vector<double>(3*num_quad_points);
+	    gradFBroyden[cell->id()]=std::vector<double>(3*num_quad_points);
 	}
       fe_values.reinit (cell);
       for (unsigned int q_point=0; q_point<num_quad_points; ++q_point){
 	if (N==1){
 	    FOld = ((rhoOutVals[0])[cell->id()][q_point])- ((rhoInVals[0])[cell->id()][q_point]);
 	    w0Loc += FOld * FOld * fe_values.JxW(q_point) ;
-            //F[cell->id()]=std::vector<double>(num_quad_points);
 	    if (dftParameters::xc_id == 4)
 		{
-		//gradF[cell->id()]=std::vector<double>(3*num_quad_points);
 		for (unsigned int dir=0; dir < 3; ++dir)
 		    gradFOld[dir]  = ((gradRhoOutVals[0])[cell->id()][3*q_point+dir])- ((gradRhoInVals[0])[cell->id()][3*q_point+dir]);
 		} 
 	    }
 	else
 	    {
-	     FOld  = F[cell->id()][q_point] ;
+	     FOld  = FBroyden[cell->id()][q_point] ;
 	    if (dftParameters::xc_id == 4)
 		for (unsigned int dir=0; dir < 3; ++dir)
-		    gradFOld[dir]  = gradF[cell->id()][3*q_point+dir] ;
+		    gradFOld[dir]  = gradFBroyden[cell->id()][3*q_point+dir] ;
 	    }
 	//
-        //pcout << " mixing check 1.01 " << std::endl ;
-         F[cell->id()][q_point] = (rhoOutVals[N])[cell->id()][q_point]- (rhoInVals[N])[cell->id()][q_point];
+         FBroyden[cell->id()][q_point] = (rhoOutVals[N])[cell->id()][q_point]- (rhoInVals[N])[cell->id()][q_point];
          delRho[cell->id()][q_point] = (rhoInVals[N])[cell->id()][q_point]- (rhoInVals[N-1])[cell->id()][q_point];
 	//	
-	(dF[N-1])[cell->id()][q_point] = F[cell->id()][q_point]- FOld;
+	(dFBroyden[N-1])[cell->id()][q_point] = FBroyden[cell->id()][q_point]- FOld;
         if (dftParameters::xc_id == 4)
 	 {
 	  for (unsigned int dir=0; dir < 3; ++dir) {
 	  delGradRho[cell->id()][3*q_point+dir] = (gradRhoInVals[N])[cell->id()][3*q_point + dir]- (gradRhoInVals[N-1])[cell->id()][3*q_point+dir];
-          gradF[cell->id()][3*q_point+dir] = (gradRhoOutVals[N])[cell->id()][3*q_point + dir]- (gradRhoInVals[N])[cell->id()][3*q_point+dir];
-  	  (graddF[N-1])[cell->id()][3*q_point+dir] = gradF[cell->id()][3*q_point+dir]- gradFOld[dir];
+          gradFBroyden[cell->id()][3*q_point+dir] = (gradRhoOutVals[N])[cell->id()][3*q_point + dir]- (gradRhoInVals[N])[cell->id()][3*q_point+dir];
+  	  (graddFBroyden[N-1])[cell->id()][3*q_point+dir] = gradFBroyden[cell->id()][3*q_point+dir]- gradFOld[dir];
 	  }
 	 }
-	dfMagLoc += (dF[N-1])[cell->id()][q_point] * (dF[N-1])[cell->id()][q_point] *fe_values.JxW(q_point);
-	wtTempLoc += F[cell->id()][q_point] * F[cell->id()][q_point] *fe_values.JxW(q_point) ;
+	dfMagLoc += (dFBroyden[N-1])[cell->id()][q_point] * (dFBroyden[N-1])[cell->id()][q_point] *fe_values.JxW(q_point);
+	wtTempLoc += FBroyden[cell->id()][q_point] * FBroyden[cell->id()][q_point] *fe_values.JxW(q_point) ;
       }
     }
   }
@@ -335,50 +325,47 @@ double dftClass<FEOrder>::mixing_broyden(){
   wtTemp=Utilities::MPI::sum(wtTempLoc, mpi_communicator);
   dfMag=Utilities::MPI::sum(dfMagLoc, mpi_communicator);
   if (N==1)
-    w0 = Utilities::MPI::sum(w0Loc, mpi_communicator);
+    w0Broyden = Utilities::MPI::sum(w0Loc, mpi_communicator);
   
   //
-  pcout << " mixing check 1.1 " << std::endl ;
   cell = dofHandler.begin_active(), endc = dofHandler.end();
   //
   wtTemp = std::pow(wtTemp, -0.5 ) ; 
-  wt.push_back(wtTemp) ;
+  wtBroyden.push_back(wtTemp) ;
   double G = dftParameters::mixingParameter ;
   //
   std::vector<double> c(N, 0.0) , invBeta(N*N, 0.0), beta(N*N, 0.0), gamma(N, 0.0), cLoc(N, 0.0) , invBetaLoc(N*N, 0.0) ; 
   for (; cell!=endc; ++cell)
     if (cell->is_locally_owned())
       {
-      (u[N-1])[cell->id()]=std::vector<double>(num_quad_points);
+      (uBroyden[N-1])[cell->id()]=std::vector<double>(num_quad_points);
       if (dftParameters::xc_id == 4)
-	(gradU[N-1])[cell->id()]=std::vector<double>(3*num_quad_points);
+	(gradUBroyden[N-1])[cell->id()]=std::vector<double>(3*num_quad_points);
       fe_values.reinit (cell);
       //
       for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
 	  {
-	  (dF[N-1])[cell->id()][q_point] /= dfMag ;
+	  (dFBroyden[N-1])[cell->id()][q_point] /= dfMag ;
           delRho[cell->id()][q_point] /= dfMag ;
-          (u[N-1])[cell->id()][q_point] = G * (dF[N-1])[cell->id()][q_point] + delRho[cell->id()][q_point] ;
+          (uBroyden[N-1])[cell->id()][q_point] = G * (dFBroyden[N-1])[cell->id()][q_point] + delRho[cell->id()][q_point] ;
           //
           if (dftParameters::xc_id == 4)
 	    {
 		for (unsigned int dir=0; dir < 3; ++dir) {
-		    (graddF[N-1])[cell->id()][3*q_point+dir] /= dfMag ;
+		    (graddFBroyden[N-1])[cell->id()][3*q_point+dir] /= dfMag ;
 		    delGradRho[cell->id()][3*q_point+dir] /= dfMag ;
-		    (gradU[N-1])[cell->id()][3*q_point+dir] = G * (graddF[N-1])[cell->id()][3*q_point+dir] + delGradRho[cell->id()][3*q_point+dir] ;
+		    (gradUBroyden[N-1])[cell->id()][3*q_point+dir] = G * (graddFBroyden[N-1])[cell->id()][3*q_point+dir] + delGradRho[cell->id()][3*q_point+dir] ;
 		}
 	    }
-	  // 
-	  //pcout << " mixing check 1.11 " << std::endl ;
           //
           for (unsigned int k = 0; k < N ; ++k) {
-              cLoc[k] += wt[k] * (dF[k])[cell->id()][q_point] * F[cell->id()][q_point] *fe_values.JxW(q_point);
+              cLoc[k] += wtBroyden[k] * (dFBroyden[k])[cell->id()][q_point] * FBroyden[cell->id()][q_point] *fe_values.JxW(q_point);
                for (unsigned int l = k; l < N ; ++l)
                  {
-	          invBetaLoc[N*k + l] +=  wt[k] * wt[l] * (dF[k])[cell->id()][q_point] * (dF[l])[cell->id()][q_point] *fe_values.JxW(q_point);
+	          invBetaLoc[N*k + l] +=  wtBroyden[k] * wtBroyden[l] * (dFBroyden[k])[cell->id()][q_point] * (dFBroyden[l])[cell->id()][q_point] *fe_values.JxW(q_point);
 	          invBetaLoc[N*l + k] = invBetaLoc[N*k + l] ;
 	          if (l==k) {
-	              invBetaLoc[N*l + l] = w0*w0 + invBetaLoc[N*l + l] ;
+	              invBetaLoc[N*l + l] = w0Broyden*w0Broyden + invBetaLoc[N*l + l] ;
 		      beta[N*l + l] = 1.0 ;
 		    }
                  }
@@ -392,8 +379,6 @@ double dftClass<FEOrder>::mixing_broyden(){
    }
    c[k]=Utilities::MPI::sum(cLoc[k], mpi_communicator);
    }
-   //
-   pcout << " mixing check 1.2 " << std::endl ;
 
    //
    // Invert beta
@@ -401,15 +386,11 @@ double dftClass<FEOrder>::mixing_broyden(){
     calldgesv(N,
 	   &invBeta[0],
 	   &beta[0]);
-   //
-   pcout << " mixing check 1.3 " << std::endl ;
+
    
    for (unsigned int m = 0; m < N ; ++m)
 	for (unsigned int l = 0; l < N ; ++l)
 	    gamma[m] += c[l] * beta[N*m + l] ;
-
-  //
-  pcout << " mixing check 1.4 " << std::endl ;
   //
   std::map<dealii::CellId,std::vector<double> > rhoInValuesOld= *rhoInValues;
   rhoInVals.push_back(std::map<dealii::CellId,std::vector<double> >());
@@ -432,27 +413,22 @@ double dftClass<FEOrder>::mixing_broyden(){
       fe_values.reinit (cell);
       for (unsigned int q_point=0; q_point<num_quad_points; ++q_point){
 	//Compute (rhoIn-rhoOut)^2
-        normValue+=std::pow((rhoInValuesOld)[cell->id()][q_point]-(*rhoOutValues)[cell->id()][q_point],2.0)*fe_values.JxW(q_point);
-        //normValue+=0.1;
-        (*rhoInValues)[cell->id()][q_point] = rhoInValuesOld[cell->id()][q_point] + G * F[cell->id()][q_point] ;
-        //pcout << " mixing check 1.41 " << std::endl ;
+        normValue+=std::pow((rhoInValuesOld)[cell->id()][q_point]-(*rhoOutValues)[cell->id()][q_point],2.0)*fe_values.JxW(q_point);;
+        (*rhoInValues)[cell->id()][q_point] = rhoInValuesOld[cell->id()][q_point] + G * FBroyden[cell->id()][q_point] ;
 	if (dftParameters::xc_id == 4)
 	   for (unsigned int dir=0; dir < 3; ++dir) 
-		(*gradRhoInValues)[cell->id()][3*q_point + dir] = gradRhoInValuesOld[cell->id()][3*q_point + dir] + G * gradF[cell->id()][3*q_point+dir] ;
+		(*gradRhoInValues)[cell->id()][3*q_point + dir] = gradRhoInValuesOld[cell->id()][3*q_point + dir] + G * gradFBroyden[cell->id()][3*q_point+dir] ;
 	//
 	for (int i = 0; i < N; ++i){
-	  (*rhoInValues)[cell->id()][q_point] -=  wt[i] * gamma[i] * (u[i])[cell->id()][q_point] ;
+	  (*rhoInValues)[cell->id()][q_point] -=  wtBroyden[i] * gamma[i] * (uBroyden[i])[cell->id()][q_point] ;
 	  if (dftParameters::xc_id == 4)
 	   for (unsigned int dir=0; dir < 3; ++dir) 
-		(*gradRhoInValues)[cell->id()][3*q_point + dir] -= wt[i] * gamma[i] * (gradU[i])[cell->id()][3*q_point+dir] ;
+		(*gradRhoInValues)[cell->id()][3*q_point + dir] -= wtBroyden[i] * gamma[i] * (gradUBroyden[i])[cell->id()][3*q_point+dir] ;
        }
       }
-    //pcout << " mixing check 1.42 " << std::endl ;
     }
   }
   //
-  //pcout << normValue << std::endl;
-  pcout << " mixing check 1.5 " << std::endl ;
   //
   
 
@@ -471,19 +447,15 @@ double dftClass<FEOrder>::mixing_broyden_spinPolarized(){
   FEValues<3> fe_values (FE, quadrature, update_JxW_values);
   const unsigned int num_quad_points = quadrature.size();
   //
-  int N = rhoOutVals.size()- 1;
-  //if (rhoOutVals.size() > 2)
-  //	N = u.size() ;
+  int N = dFBroyden.size() + 1;
   //
-  //
-  pcout << " mixing check 1.0 " << std::endl ;
   std::map<dealii::CellId,std::vector<double> >  delRho, delGradRho ;
-  dF.push_back(std::map<dealii::CellId,std::vector<double> >());
-  u.push_back(std::map<dealii::CellId,std::vector<double> >());
+  dFBroyden.push_back(std::map<dealii::CellId,std::vector<double> >());
+  uBroyden.push_back(std::map<dealii::CellId,std::vector<double> >());
   if (dftParameters::xc_id == 4)
     {
-     graddF.push_back(std::map<dealii::CellId,std::vector<double> >());
-     gradU.push_back(std::map<dealii::CellId,std::vector<double> >());
+     graddFBroyden.push_back(std::map<dealii::CellId,std::vector<double> >());
+     gradUBroyden.push_back(std::map<dealii::CellId,std::vector<double> >());
     }	
   //
   double FOld ;
@@ -498,17 +470,17 @@ double dftClass<FEOrder>::mixing_broyden_spinPolarized(){
   for (; cell!=endc; ++cell) {
     if (cell->is_locally_owned()){
       //
-      (dF[N-1])[cell->id()]=std::vector<double>(2*num_quad_points);
+      (dFBroyden[N-1])[cell->id()]=std::vector<double>(2*num_quad_points);
       delRho[cell->id()]=std::vector<double>(2*num_quad_points);
       if (N==1)
-	F[cell->id()]=std::vector<double>(2*num_quad_points);
+	FBroyden[cell->id()]=std::vector<double>(2*num_quad_points);
       //
       if (dftParameters::xc_id == 4)
         {
-	 (graddF[N-1])[cell->id()]=std::vector<double>(6*num_quad_points);
+	 (graddFBroyden[N-1])[cell->id()]=std::vector<double>(6*num_quad_points);
          delGradRho[cell->id()]=std::vector<double>(6*num_quad_points);
 	 if (N==1)
-	    gradF[cell->id()]=std::vector<double>(6*num_quad_points);
+	    gradFBroyden[cell->id()]=std::vector<double>(6*num_quad_points);
 	}
       fe_values.reinit (cell);
       for (unsigned int q_point=0; q_point<2*num_quad_points; ++q_point){ // factor 2 due to spin splitting
@@ -525,31 +497,32 @@ double dftClass<FEOrder>::mixing_broyden_spinPolarized(){
 	    }
 	else
 	    {
-	     FOld  = F[cell->id()][q_point] ;
+	     FOld  = FBroyden[cell->id()][q_point] ;
 	    if (dftParameters::xc_id == 4)
 		for (unsigned int dir=0; dir < 3; ++dir)
-		    gradFOld[dir]  = gradF[cell->id()][3*q_point+dir] ;
+		    gradFOld[dir]  = gradFBroyden[cell->id()][3*q_point+dir] ;
 	    }
-	//
-        //pcout << " mixing check 1.01 " << std::endl ;
-         F[cell->id()][q_point] = (rhoOutValsSpinPolarized[N])[cell->id()][q_point]- (rhoInValsSpinPolarized[N])[cell->id()][q_point];
+
+         FBroyden[cell->id()][q_point] = (rhoOutValsSpinPolarized[N])[cell->id()][q_point]- (rhoInValsSpinPolarized[N])[cell->id()][q_point];
          delRho[cell->id()][q_point] = (rhoInValsSpinPolarized[N])[cell->id()][q_point]- (rhoInValsSpinPolarized[N-1])[cell->id()][q_point];
 	//	
-	(dF[N-1])[cell->id()][q_point] = F[cell->id()][q_point]- FOld;
+	(dFBroyden[N-1])[cell->id()][q_point] = FBroyden[cell->id()][q_point]- FOld;
         if (dftParameters::xc_id == 4)
 	 {
 	  for (unsigned int dir=0; dir < 3; ++dir) {
 	  delGradRho[cell->id()][3*q_point+dir] = (gradRhoInValsSpinPolarized[N])[cell->id()][3*q_point + dir]- (gradRhoInValsSpinPolarized[N-1])[cell->id()][3*q_point+dir];
-          gradF[cell->id()][3*q_point+dir] = (gradRhoOutValsSpinPolarized[N])[cell->id()][3*q_point + dir]- (gradRhoInValsSpinPolarized[N])[cell->id()][3*q_point+dir];
-  	  (graddF[N-1])[cell->id()][3*q_point+dir] = gradF[cell->id()][3*q_point+dir]- gradFOld[dir];
+          gradFBroyden[cell->id()][3*q_point+dir] = (gradRhoOutValsSpinPolarized[N])[cell->id()][3*q_point + dir]- (gradRhoInValsSpinPolarized[N])[cell->id()][3*q_point+dir];
+  	  (graddFBroyden[N-1])[cell->id()][3*q_point+dir] = gradFBroyden[cell->id()][3*q_point+dir]- gradFOld[dir];
 	  }
 	 }
       }
       //
       for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
 	  {
-	  dfMagLoc += ( ( (dF[N-1])[cell->id()][2*q_point]  + (dF[N-1])[cell->id()][2*q_point+1] ) * ( (dF[N-1])[cell->id()][2*q_point]  + (dF[N-1])[cell->id()][2*q_point+1] ) )  *fe_values.JxW(q_point);
-	  wtTempLoc += ( (F[cell->id()][2*q_point] + F[cell->id()][2*q_point+1]) * ((F[cell->id()][2*q_point] + F[cell->id()][2*q_point+1]))) *fe_values.JxW(q_point) ;
+	  dfMagLoc += ( ( (dFBroyden[N-1])[cell->id()][2*q_point]  + 
+			(dFBroyden[N-1])[cell->id()][2*q_point+1] ) * ( (dFBroyden[N-1])[cell->id()][2*q_point]  + (dFBroyden[N-1])[cell->id()][2*q_point+1] ) )  *fe_values.JxW(q_point);
+	  //
+	  wtTempLoc += ( (FBroyden[cell->id()][2*q_point] + FBroyden[cell->id()][2*q_point+1]) * ((FBroyden[cell->id()][2*q_point] + FBroyden[cell->id()][2*q_point+1]))) *fe_values.JxW(q_point) ;
 	  if (N==1){
 	    FOld = ((rhoOutVals[0])[cell->id()][q_point])- ((rhoInVals[0])[cell->id()][q_point]);
 	    w0Loc += FOld * FOld * fe_values.JxW(q_point) ;
@@ -561,55 +534,53 @@ double dftClass<FEOrder>::mixing_broyden_spinPolarized(){
   wtTemp=Utilities::MPI::sum(wtTempLoc, mpi_communicator);
   dfMag=Utilities::MPI::sum(dfMagLoc, mpi_communicator);
   if (N==1)
-    w0 = Utilities::MPI::sum(w0Loc, mpi_communicator);
+    w0Broyden = Utilities::MPI::sum(w0Loc, mpi_communicator);
   
   //
-  pcout << " mixing check 1.1 " << std::endl ;
   cell = dofHandler.begin_active(), endc = dofHandler.end();
   //
   wtTemp = std::pow(wtTemp, -0.5 ) ; 
-  wt.push_back(wtTemp) ;
+  wtBroyden.push_back(wtTemp) ;
   double G = dftParameters::mixingParameter ;
   //
   std::vector<double> c(N, 0.0) , invBeta(N*N, 0.0), beta(N*N, 0.0), gamma(N, 0.0), cLoc(N, 0.0) , invBetaLoc(N*N, 0.0) ; 
   for (; cell!=endc; ++cell)
     if (cell->is_locally_owned())
       {
-      (u[N-1])[cell->id()]=std::vector<double>(2*num_quad_points);
+      (uBroyden[N-1])[cell->id()]=std::vector<double>(2*num_quad_points);
       if (dftParameters::xc_id == 4)
-	(gradU[N-1])[cell->id()]=std::vector<double>(6*num_quad_points);
+	(gradUBroyden[N-1])[cell->id()]=std::vector<double>(6*num_quad_points);
       fe_values.reinit (cell);
       //
       for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
 	  {
-	  (dF[N-1])[cell->id()][2*q_point] /= dfMag ; (dF[N-1])[cell->id()][2*q_point+1] /= dfMag ;
+	  (dFBroyden[N-1])[cell->id()][2*q_point] /= dfMag ; (dFBroyden[N-1])[cell->id()][2*q_point+1] /= dfMag ;
           delRho[cell->id()][2*q_point] /= dfMag ; delRho[cell->id()][2*q_point+1] /= dfMag ;
 	  //
-          (u[N-1])[cell->id()][2*q_point] = G * (dF[N-1])[cell->id()][2*q_point] + delRho[cell->id()][2*q_point] ;
-	  (u[N-1])[cell->id()][2*q_point+1] = G * (dF[N-1])[cell->id()][2*q_point+1] + delRho[cell->id()][2*q_point+1] ;
+          (uBroyden[N-1])[cell->id()][2*q_point] = G * (dFBroyden[N-1])[cell->id()][2*q_point] + delRho[cell->id()][2*q_point] ;
+	  (uBroyden[N-1])[cell->id()][2*q_point+1] = G * (dFBroyden[N-1])[cell->id()][2*q_point+1] + delRho[cell->id()][2*q_point+1] ;
           //
           if (dftParameters::xc_id == 4)
 	    {
 		for (unsigned int dir=0; dir < 3; ++dir) {
-		    (graddF[N-1])[cell->id()][6*q_point+dir] /= dfMag ; (graddF[N-1])[cell->id()][6*q_point+3+dir] /= dfMag ;
+		    (graddFBroyden[N-1])[cell->id()][6*q_point+dir] /= dfMag ; (graddFBroyden[N-1])[cell->id()][6*q_point+3+dir] /= dfMag ;
 		    delGradRho[cell->id()][6*q_point+dir] /= dfMag ; delGradRho[cell->id()][6*q_point+3+dir] /= dfMag ;
 		    //
-		    (gradU[N-1])[cell->id()][6*q_point+dir] = G * (graddF[N-1])[cell->id()][6*q_point+dir] + delGradRho[cell->id()][6*q_point+dir] ;
-		    (gradU[N-1])[cell->id()][6*q_point+3+dir] = G * (graddF[N-1])[cell->id()][6*q_point+3+dir] + delGradRho[cell->id()][6*q_point+3+dir] ;
+		    (gradUBroyden[N-1])[cell->id()][6*q_point+dir] = G * (graddFBroyden[N-1])[cell->id()][6*q_point+dir] + delGradRho[cell->id()][6*q_point+dir] ;
+		    (gradUBroyden[N-1])[cell->id()][6*q_point+3+dir] = G * (graddFBroyden[N-1])[cell->id()][6*q_point+3+dir] + delGradRho[cell->id()][6*q_point+3+dir] ;
 		}
 	    }
-	  // 
-	  //pcout << " mixing check 1.11 " << std::endl ;
           //
           for (unsigned int k = 0; k < N ; ++k) {
-              cLoc[k] += wt[k] * ( (dF[k])[cell->id()][2*q_point] + (dF[k])[cell->id()][2*q_point+1]) * ( F[cell->id()][2*q_point] + F[cell->id()][2*q_point+1] ) *fe_values.JxW(q_point);
+              cLoc[k] += wtBroyden[k] * ( (dFBroyden[k])[cell->id()][2*q_point] + 
+			(dFBroyden[k])[cell->id()][2*q_point+1]) * ( FBroyden[cell->id()][2*q_point] + FBroyden[cell->id()][2*q_point+1] ) *fe_values.JxW(q_point);
                for (unsigned int l = k; l < N ; ++l)
                  {
-	          invBetaLoc[N*k + l] +=  wt[k] * wt[l] * ( (dF[k])[cell->id()][2*q_point] + (dF[k])[cell->id()][2*q_point+1]) * 
-							  ( (dF[l])[cell->id()][2*q_point] + (dF[l])[cell->id()][2*q_point+1]) *fe_values.JxW(q_point);
+	          invBetaLoc[N*k + l] +=  wtBroyden[k] * wtBroyden[l] * ( (dFBroyden[k])[cell->id()][2*q_point] + (dFBroyden[k])[cell->id()][2*q_point+1]) * 
+							  ( (dFBroyden[l])[cell->id()][2*q_point] + (dFBroyden[l])[cell->id()][2*q_point+1]) *fe_values.JxW(q_point);
 	          invBetaLoc[N*l + k] = invBetaLoc[N*k + l] ;
 	          if (l==k) {
-	              invBetaLoc[N*l + l] = w0*w0 + invBetaLoc[N*l + l] ;
+	              invBetaLoc[N*l + l] = w0Broyden*w0Broyden + invBetaLoc[N*l + l] ;
 		      beta[N*l + l] = 1.0 ;
 		    }
                  }
@@ -623,8 +594,6 @@ double dftClass<FEOrder>::mixing_broyden_spinPolarized(){
    }
    c[k]=Utilities::MPI::sum(cLoc[k], mpi_communicator);
    }
-   //
-   pcout << " mixing check 1.2 " << std::endl ;
 
    //
    // Invert beta
@@ -633,14 +602,11 @@ double dftClass<FEOrder>::mixing_broyden_spinPolarized(){
 	   &invBeta[0],
 	   &beta[0]);
    //
-   pcout << " mixing check 1.3 " << std::endl ;
    
    for (unsigned int m = 0; m < N ; ++m)
 	for (unsigned int l = 0; l < N ; ++l)
 	    gamma[m] += c[l] * beta[N*m + l] ;
 
-  //
-  pcout << " mixing check 1.4 " << std::endl ;
   //
   std::map<dealii::CellId,std::vector<double> > rhoInValuesOld= *rhoInValues;
   rhoInVals.push_back(std::map<dealii::CellId,std::vector<double> >());
@@ -677,22 +643,22 @@ double dftClass<FEOrder>::mixing_broyden_spinPolarized(){
       for (unsigned int q_point=0; q_point<num_quad_points; ++q_point){
 	//Compute (rhoIn-rhoOut)^2
         normValue+=std::pow((rhoInValuesOld)[cell->id()][q_point]-(*rhoOutValues)[cell->id()][q_point],2.0)*fe_values.JxW(q_point);
-        (*rhoInValuesSpinPolarized)[cell->id()][2*q_point] = rhoInValuesOldSpinPolarized[cell->id()][2*q_point] + G * F[cell->id()][2*q_point] ;
-	(*rhoInValuesSpinPolarized)[cell->id()][2*q_point+1] = rhoInValuesOldSpinPolarized[cell->id()][2*q_point+1] + G * F[cell->id()][2*q_point+1] ;
+        (*rhoInValuesSpinPolarized)[cell->id()][2*q_point] = rhoInValuesOldSpinPolarized[cell->id()][2*q_point] + G * FBroyden[cell->id()][2*q_point] ;
+	(*rhoInValuesSpinPolarized)[cell->id()][2*q_point+1] = rhoInValuesOldSpinPolarized[cell->id()][2*q_point+1] + G * FBroyden[cell->id()][2*q_point+1] ;
         //
 	if (dftParameters::xc_id == 4)
 	   for (unsigned int dir=0; dir < 3; ++dir) {
-		(*gradRhoInValuesSpinPolarized)[cell->id()][6*q_point + dir] = gradRhoInValuesOldSpinPolarized[cell->id()][6*q_point + dir] + G * gradF[cell->id()][6*q_point+dir] ;
-		(*gradRhoInValuesSpinPolarized)[cell->id()][6*q_point + 3 + dir] = gradRhoInValuesOldSpinPolarized[cell->id()][6*q_point + 3 + dir] + G * gradF[cell->id()][6*q_point+3+dir] ;
+		(*gradRhoInValuesSpinPolarized)[cell->id()][6*q_point + dir] = gradRhoInValuesOldSpinPolarized[cell->id()][6*q_point + dir] + G * gradFBroyden[cell->id()][6*q_point+dir] ;
+		(*gradRhoInValuesSpinPolarized)[cell->id()][6*q_point + 3 + dir] = gradRhoInValuesOldSpinPolarized[cell->id()][6*q_point + 3 + dir] + G * gradFBroyden[cell->id()][6*q_point+3+dir] ;
 		}
 	//
 	for (int i = 0; i < N; ++i){
-	  (*rhoInValuesSpinPolarized)[cell->id()][2*q_point] -=  wt[i] * gamma[i] * (u[i])[cell->id()][2*q_point] ;
-	  (*rhoInValuesSpinPolarized)[cell->id()][2*q_point+1] -=  wt[i] * gamma[i] * (u[i])[cell->id()][2*q_point+1] ;
+	  (*rhoInValuesSpinPolarized)[cell->id()][2*q_point] -=  wtBroyden[i] * gamma[i] * (uBroyden[i])[cell->id()][2*q_point] ;
+	  (*rhoInValuesSpinPolarized)[cell->id()][2*q_point+1] -=  wtBroyden[i] * gamma[i] * (uBroyden[i])[cell->id()][2*q_point+1] ;
 	  if (dftParameters::xc_id == 4)
 	   for (unsigned int dir=0; dir < 3; ++dir) {
-		(*gradRhoInValuesSpinPolarized)[cell->id()][6*q_point + dir] -= wt[i] * gamma[i] * (gradU[i])[cell->id()][6*q_point+dir] ;
-		(*gradRhoInValuesSpinPolarized)[cell->id()][6*q_point + 3 + dir] -= wt[i] * gamma[i] * (gradU[i])[cell->id()][6*q_point+3+dir] ;
+		(*gradRhoInValuesSpinPolarized)[cell->id()][6*q_point + dir] -= wtBroyden[i] * gamma[i] * (gradUBroyden[i])[cell->id()][6*q_point+dir] ;
+		(*gradRhoInValuesSpinPolarized)[cell->id()][6*q_point + 3 + dir] -= wtBroyden[i] * gamma[i] * (gradUBroyden[i])[cell->id()][6*q_point+3+dir] ;
 	   }
        }
 	(*rhoInValues)[cell->id()][q_point] = (*rhoInValuesSpinPolarized)[cell->id()][2*q_point] + (*rhoInValuesSpinPolarized)[cell->id()][2*q_point+1] ;
@@ -702,12 +668,9 @@ double dftClass<FEOrder>::mixing_broyden_spinPolarized(){
 
 
       }
-    //pcout << " mixing check 1.42 " << std::endl ;
     }
   }
   //
-  //pcout << normValue << std::endl;
-  pcout << " mixing check 1.5 " << std::endl ;
   //
   
 
@@ -945,6 +908,7 @@ double dftClass<FEOrder>::mixing_anderson_spinPolarized(){
 	      (*gradRhoInValues)[cell->id()]=std::vector<double>(3*num_quad_points);
 	      (*gradRhoInValuesSpinPolarized)[cell->id()]=std::vector<double>(6*num_quad_points);
 	      //
+	      fe_values.reinit (cell);
 	      for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
 		{
 		  //
@@ -1007,3 +971,4 @@ double dftClass<FEOrder>::mixing_anderson_spinPolarized(){
     }
   return Utilities::MPI::sum(normValue, mpi_communicator);
 }
+

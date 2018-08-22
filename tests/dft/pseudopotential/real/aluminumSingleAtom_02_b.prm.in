@@ -37,9 +37,11 @@ end
 
 subsection DFT functional parameters
   set PSEUDOPOTENTIAL CALCULATION =true
-  set PSEUDOPOTENTIAL FILE NAMES LIST = @SOURCE_DIR@/pseudoAlKB.inp 
+  set PSEUDOPOTENTIAL FILE NAMES LIST = @SOURCE_DIR@/pseudoAlONCV.inp 
   set PSEUDO TESTS FLAG = true
-  set EXCHANGE CORRELATION TYPE = 1
+  set EXCHANGE CORRELATION TYPE = 4
+  set SPIN POLARIZATION = 1
+  set START MAGNETIZATION = 0.25
 end
 
 
@@ -48,6 +50,7 @@ subsection SCF parameters
   set TOLERANCE          = 1e-6 # low tolerance ot run in Debug mode
   set MIXING PARAMETER   = 0.5
   set MIXING HISTORY     = 70
+  set MIXING METHOD   = BROYDEN
   set TEMPERATURE                        = 500
   set STARTING WFC=ATOMIC
 

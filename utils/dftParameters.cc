@@ -331,7 +331,7 @@ namespace dftParameters
 			  Patterns::Double(0.0,1.0),
 			  "[Standard] Mixing parameter to be used in density mixing schemes.");
 
-	prm.declare_entry("MIXING METHOD","BROYDEN",
+	prm.declare_entry("MIXING METHOD","ANDERSON",
 			      Patterns::Selection("BROYDEN|ANDERSON"),
 			      "[Standard] Method for density mixing. ANDERSON is the default option.");
 
@@ -521,8 +521,8 @@ namespace dftParameters
 	dftParameters::TVal                          = prm.get_double("TEMPERATURE");
 	dftParameters::numSCFIterations              = prm.get_integer("MAXIMUM ITERATIONS");
 	dftParameters::selfConsistentSolverTolerance = prm.get_double("TOLERANCE");
-	dftParameters::mixingHistory                 = prm.get_integer("ANDERSON SCHEME MIXING HISTORY");
-	dftParameters::mixingParameter               = prm.get_double("ANDERSON SCHEME MIXING PARAMETER");
+	dftParameters::mixingHistory                 = prm.get_integer("MIXING HISTORY");
+	dftParameters::mixingParameter               = prm.get_double("MIXING PARAMETER");
 	dftParameters::mixingMethod                  = prm.get("MIXING METHOD");
         dftParameters::startingWFCType               = prm.get("STARTING WFC");
 	dftParameters::computeEnergyEverySCF         = prm.get_bool("COMPUTE ENERGY EACH ITER");

@@ -46,7 +46,7 @@ namespace dftfe {
       extern double outerAtomBallRadius, meshSizeOuterDomain;
       extern double meshSizeInnerBall, meshSizeOuterBall;
       extern double chebyshevTolerance;
-      std::string mixingMethod ;
+      extern std::string mixingMethod ;
 
 
       extern bool isIonOpt, isCellOpt, isIonForce, isCellStress;

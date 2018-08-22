@@ -607,11 +607,11 @@ namespace dftfe {
       std::deque<std::map<dealii::CellId,std::vector<double> >> gradRhoInVals,gradRhoInValsSpinPolarized,gradRhoOutVals, gradRhoOutValsSpinPolarized;
 
       // Broyden mixing related objects
-      std::map<dealii::CellId, std::vector<double> > F, gradF ;
-      std::deque<std::map<dealii::CellId,std::vector<double> >> dF, graddF ;
-      std::deque<std::map<dealii::CellId,std::vector<double> >> u, gradU ;
-      std::deque<double>  wt;
-      double w0 = 0.0 ;
+      std::map<dealii::CellId, std::vector<double> > FBroyden, gradFBroyden ;
+      std::deque<std::map<dealii::CellId,std::vector<double> >> dFBroyden, graddFBroyden ;
+      std::deque<std::map<dealii::CellId,std::vector<double> >> uBroyden, gradUBroyden ;
+      std::deque<double>  wtBroyden;
+      double w0Broyden = 0.0 ;
       //
 
 
