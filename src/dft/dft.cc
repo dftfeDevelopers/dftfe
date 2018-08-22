@@ -1385,7 +1385,7 @@ namespace dftfe {
     if(dftParameters::isIonForce || dftParameters::isCellStress)
       {
 	//
-	//Recreate the full dealii partitioned array
+	//Create the full dealii partitioned array
 	//
 	d_eigenVectorsFlattened.resize((1+dftParameters::spinPolarized)*d_kPointWeights.size());
 	
@@ -1400,11 +1400,15 @@ namespace dftfe {
 
 	  }
 
-	const unsigned int localVectorSize = d_eigenVectorsFlattenedSTL[0].size()/numEigenValues;
+
+	Assert(d_eigenVectorsFlattened[0].local_size()==d_eigenVectorsFlattenedSTL[0].size(),
+		  dealii::ExcMessage("Incorrect local sizes of STL and dealii arrays"));
 
 	constraintsNoneDataInfo.precomputeMaps(matrix_free_data.get_vector_partitioner(),
 					       d_eigenVectorsFlattened[0].get_partitioner(),
 					       numEigenValues);
+
+	const unsigned int localVectorSize = d_eigenVectorsFlattenedSTL[0].size()/numEigenValues;
 
 	for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
 	  {
@@ -1458,6 +1462,41 @@ namespace dftfe {
 	computing_timer.exit_section("Cell stress computation");
       }
 #endif
+
+    if(dftParameters::isIonForce || dftParameters::isCellStress)
+      {
+	//
+	//Create the full STL array from dealii flattened array
+	//
+	for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+	  d_eigenVectorsFlattenedSTL[kPoint].resize(numEigenValues*matrix_free_data.get_vector_partitioner()->local_size(),dataTypes::number(0.0));
+
+	Assert(d_eigenVectorsFlattened[0].local_size()==d_eigenVectorsFlattenedSTL[0].size(),
+	       dealii::ExcMessage("Incorrect local sizes of STL and dealii arrays"));
+
+	const unsigned int localVectorSize = d_eigenVectorsFlattenedSTL[0].size()/numEigenValues;
+
+	//
+	//copy the data into STL array
+	//
+	for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+	  {
+	    for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
+	      {
+		for(unsigned int iWave = 0; iWave < numEigenValues; ++iWave)
+		  {
+		    d_eigenVectorsFlattenedSTL[kPoint][iNode*numEigenValues+iWave] = d_eigenVectorsFlattened[kPoint].local_element(iNode*numEigenValues+iWave);
+		  }
+	      }
+	  }
+
+	for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+	  {
+	    d_eigenVectorsFlattened[kPoint].reinit(0);
+	  }
+	
+      }
+
 
     //if (dftParameters::electrostaticsPRefinement)
     //  computeElectrostaticEnergyPRefined();
