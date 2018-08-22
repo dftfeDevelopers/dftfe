@@ -32,11 +32,9 @@ Learn more about contributing to DFT-FE's development [here](https://github.com/
 More information
 ----------------
 
-For more information see:
-
- - The official [website](https://sites.google.com/umich.edu/dftfe) for information on code capabilities, appropriate referencing of the code, acknowledgements, and news related to DFT-FE.
+ - See the official [website](https://sites.google.com/umich.edu/dftfe) for information on code capabilities, appropriate referencing of the code, acknowledgements, and news related to DFT-FE.
   
- - Doxygen generated [documentation](https://dftfedevelopers.github.io/dftfe/).
+ - See Doxygen generated [documentation](https://dftfedevelopers.github.io/dftfe/).
 
  - For questions about DFT-FE, installation, bugs, etc., use the [DFT-FE discussion forum](https://groups.google.com/forum/#!forum/dftfe-user-group). 
 
