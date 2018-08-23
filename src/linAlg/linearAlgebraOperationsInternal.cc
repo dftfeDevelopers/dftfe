@@ -345,7 +345,7 @@ namespace dftfe
 	   */
 	  const unsigned int vectorsBlockSize=std::min(dftParameters::wfcBlockSize,
 	                                               bandGroupLowHighPlusOneIndices[1]);
-	  const unsigned int dofsBlockSize=std::min(numLocalDofs,
+	  const unsigned int dofsBlockSize=std::min(maxNumLocalDofs,
 		                                    dftParameters::subspaceRotDofsBlockSize);
 
 	  std::vector<T> rotationMatBlock(vectorsBlockSize*N,0.0);
@@ -579,7 +579,7 @@ namespace dftfe
 	   */
 	  const unsigned int vectorsBlockSize=std::min(dftParameters::wfcBlockSize,
 	                                               bandGroupLowHighPlusOneIndices[1]);
-	  const unsigned int dofsBlockSize=std::min(numLocalDofs,
+	  const unsigned int dofsBlockSize=std::min(maxNumLocalDofs,
 		                                    dftParameters::subspaceRotDofsBlockSize);
 
 	  std::vector<T> rotationMatBlock(vectorsBlockSize*N,0.0);
