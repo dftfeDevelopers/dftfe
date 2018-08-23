@@ -184,14 +184,36 @@ template<unsigned int FEOrder>
 void symmetryClass<FEOrder>::computeLocalrhoOut()
 {
   std::vector<std::vector<vectorType>> eigenVectors((1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size());
+
+  const unsigned int localVectorSize = dftPtr->d_eigenVectorsFlattenedSTL[0].size()/dftPtr->numEigenValues;
+
+  dealii::parallel::distributed::Vector<dataTypes::number> eigenVectorsFlattenedArrayFullBlock;
+  vectorTools::createDealiiVector<dataTypes::number>(dftPtr->matrix_free_data.get_vector_partitioner(),
+						     dftPtr->numEigenValues,
+						     eigenVectorsFlattenedArrayFullBlock);
+
+  dftPtr->constraintsNoneDataInfo.precomputeMaps(dftPtr->matrix_free_data.get_vector_partitioner(),
+						 eigenVectorsFlattenedArrayFullBlock.get_partitioner(),
+						 dftPtr->numEigenValues);	    
+
   for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size(); ++kPoint)
      {
      eigenVectors[kPoint].resize(dftPtr->numEigenValues);
      for(unsigned int i = 0; i < dftPtr->numEigenValues; ++i)
         eigenVectors[kPoint][i].reinit(dftPtr->d_tempEigenVec);
+
+     for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
+       for(unsigned int iWave = 0; iWave < dftPtr->numEigenValues; ++iWave)
+	 eigenVectorsFlattenedArrayFullBlock.local_element(iNode*dftPtr->numEigenValues+iWave)
+	   = dftPtr->d_eigenVectorsFlattenedSTL[kPoint][iNode*dftPtr->numEigenValues+iWave];
+
+     dftPtr->constraintsNoneDataInfo.distribute(eigenVectorsFlattenedArrayFullBlock,
+						dftPtr->numEigenValues);
+
+
 #ifdef USE_COMPLEX
      vectorTools::copyFlattenedDealiiVecToSingleCompVec
-		 (dftPtr->d_eigenVectorsFlattened[kPoint],
+		 (eigenVectorsFlattenedArrayFullBlock,
 		  dftPtr->numEigenValues,
 		  std::make_pair(0,dftPtr->numEigenValues),
 		  dftPtr->localProc_dof_indicesReal,

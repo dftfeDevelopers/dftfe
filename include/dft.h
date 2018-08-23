@@ -572,6 +572,7 @@ namespace dftfe {
        */
       dftUtils::constraintMatrixInfo constraintsNoneDataInfo;
 
+
       ConstraintMatrix constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_noConstraints;
 
 
@@ -582,7 +583,8 @@ namespace dftfe {
 
       /// Spectrum split higher eigenvalues computed in Rayleigh-Ritz step
       std::vector<std::vector<double> > eigenValuesRRSplit;
-      std::vector<dealii::parallel::distributed::Vector<dataTypes::number>> d_eigenVectorsFlattened;
+      std::vector<dealii::parallel::distributed::Vector<dataTypes::number> > d_eigenVectorsFlattened;
+      std::vector<std::vector<dataTypes::number> > d_eigenVectorsFlattenedSTL;
 
       /// parallel message stream
       ConditionalOStream  pcout;

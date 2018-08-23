@@ -78,7 +78,12 @@ void dftClass<FEOrder>::compute_rhoOut()
    const unsigned int eigenVectorsBlockSize=std::min(dftParameters::wfcBlockSize,
 	                                             bandGroupLowHighPlusOneIndices[1]);
 
+   const unsigned int localVectorSize = d_eigenVectorsFlattenedSTL[0].size()/numEigenValues;
+
    std::vector<std::vector<vectorType>> eigenVectors((1+dftParameters::spinPolarized)*d_kPointWeights.size());
+
+
+
    for(unsigned int ivec = 0; ivec < numEigenValues; ivec+=eigenVectorsBlockSize)
    {
       const unsigned int currentBlockSize=std::min(eigenVectorsBlockSize,numEigenValues-ivec);
@@ -93,25 +98,49 @@ void dftClass<FEOrder>::compute_rhoOut()
 	   }
       }
 
-      if ((ivec+currentBlockSize)<=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1] &&
+      if((ivec+currentBlockSize)<=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1] &&
 	  (ivec+currentBlockSize)>bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
       {
 
+	dealii::parallel::distributed::Vector<dataTypes::number> eigenVectorsFlattenedArrayBlock;
+	    vectorTools::createDealiiVector<dataTypes::number>(matrix_free_data.get_vector_partitioner(),
+							       currentBlockSize,
+							       eigenVectorsFlattenedArrayBlock);
+
+	constraintsNoneDataInfo.precomputeMaps(matrix_free_data.get_vector_partitioner(),
+					       eigenVectorsFlattenedArrayBlock.get_partitioner(),
+					       currentBlockSize);
+	
+	
+
 	  for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
 	  {
+	    for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
+	      {
+		for(unsigned int iWave = 0; iWave < currentBlockSize; ++iWave)
+		  {
+		    eigenVectorsFlattenedArrayBlock.local_element(iNode*currentBlockSize+iWave)
+		      = d_eigenVectorsFlattenedSTL[kPoint][iNode*numEigenValues+ivec+iWave];
+		  }
+	      }
+
+	    constraintsNoneDataInfo.distribute(eigenVectorsFlattenedArrayBlock,
+					       currentBlockSize);
+	  
+
 #ifdef USE_COMPLEX
 		 vectorTools::copyFlattenedDealiiVecToSingleCompVec
-			 (d_eigenVectorsFlattened[kPoint],
-			  numEigenValues,
-			  std::make_pair(ivec,ivec+currentBlockSize),
+			 (eigenVectorsFlattenedArrayBlock,
+			  currentBlockSize,
+			  std::make_pair(0,currentBlockSize),
 			  localProc_dof_indicesReal,
 			  localProc_dof_indicesImag,
 			  eigenVectors[kPoint]);
 #else
 		 vectorTools::copyFlattenedDealiiVecToSingleCompVec
-			 (d_eigenVectorsFlattened[kPoint],
-			  numEigenValues,
-			  std::make_pair(ivec,ivec+currentBlockSize),
+			 (eigenVectorsFlattenedArrayBlock,
+			  currentBlockSize,
+			  std::make_pair(0,currentBlockSize),
 			  eigenVectors[kPoint]);
 
 #endif
