@@ -8,7 +8,7 @@ subsection Geometry
   set DOMAIN VECTORS FILE = @SOURCE_DIR@/nitrogenMolecule_domainVectors.inp
   subsection Optimization
     set ION OPT=true
-    set FORCE TOL=0.075
+    set FORCE TOL=4e-2
     set ION RELAX FLAGS FILE =@SOURCE_DIR@/nitrogenMolecule_relaxationFlags.inp
     set REUSE WFC=true
   end
@@ -24,10 +24,10 @@ end
 subsection Finite element mesh parameters
   set POLYNOMIAL ORDER=3
   subsection Auto mesh generation parameters
-    set MESH SIZE AROUND ATOM  = 0.7
-    set BASE MESH SIZE = 10.0
+    set MESH SIZE AROUND ATOM  = 0.5
+    set BASE MESH SIZE = 13.0
     set ATOM BALL RADIUS = 2.0
-    set MESH SIZE AT ATOM = 0.7
+    set MESH SIZE AT ATOM = 0.5
   end
 end
 
@@ -43,12 +43,12 @@ subsection SCF parameters
   set ANDERSON SCHEME MIXING PARAMETER = 0.5
   set MAXIMUM ITERATIONS               = 40
   set TEMPERATURE                      = 500
-  set TOLERANCE                        = 5e-6
+  set TOLERANCE                        = 1e-5
 
   subsection Eigen-solver parameters
       set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 12
-      set ORTHOGONALIZATION TYPE=LW
-      set CHEBYSHEV POLYNOMIAL DEGREE = 30
-      set CHEBYSHEV FILTER TOLERANCE=1e-3
+      set ORTHOGONALIZATION TYPE=PGS
+      set CHEBYSHEV POLYNOMIAL DEGREE = 40
+      set CHEBYSHEV FILTER TOLERANCE=1e-2
   end
 end

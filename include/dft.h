@@ -572,6 +572,7 @@ namespace dftfe {
        */
       dftUtils::constraintMatrixInfo constraintsNoneDataInfo;
 
+
       ConstraintMatrix constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_noConstraints;
 
 

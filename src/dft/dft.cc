@@ -577,7 +577,8 @@ namespace dftfe {
     computingTimerStandard.enter_section("KSDFT problem initialization");
     initImageChargesUpdateKPoints();
 
-    updatePrevMeshDataStructures();
+    if  (dftParameters::isIonOpt || dftParameters::isCellOpt)
+       updatePrevMeshDataStructures();
     //
     //reinitialize dirichlet BCs for total potential and vSelf poisson solutions
     //
@@ -1385,14 +1386,14 @@ namespace dftfe {
 	//Create the full dealii partitioned array
 	//
 	d_eigenVectorsFlattened.resize((1+dftParameters::spinPolarized)*d_kPointWeights.size());
-	
+
 	for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
 	  {
 	    vectorTools::createDealiiVector<dataTypes::number>(matrix_free_data.get_vector_partitioner(),
 							       numEigenValues,
 							       d_eigenVectorsFlattened[kPoint]);
 
-	    
+
 	    d_eigenVectorsFlattened[kPoint] = dataTypes::number(0.0);
 
 	  }
@@ -1491,7 +1492,7 @@ namespace dftfe {
 	  {
 	    d_eigenVectorsFlattened[kPoint].reinit(0);
 	  }
-	
+
       }
 
 
@@ -1561,8 +1562,8 @@ namespace dftfe {
     dealii::parallel::distributed::Vector<double>  rhoNodalField;
     matrix_free_data.initialize_dof_vector(rhoNodalField,densityDofHandlerIndex);
     rhoNodalField=0;
-    std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell , 
-                         const unsigned int q)> funcRho = 
+    std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
+                         const unsigned int q)> funcRho =
                           [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
                               const unsigned int q)
                               {return (*rhoOutValues).find(cell->id())->second[q];};
@@ -1580,8 +1581,8 @@ namespace dftfe {
     {
 	matrix_free_data.initialize_dof_vector(rhoNodalFieldSpin0,densityDofHandlerIndex);
 	rhoNodalFieldSpin0=0;
-        std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell , 
-                             const unsigned int q)> funcRhoSpin0 = 
+        std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
+                             const unsigned int q)> funcRhoSpin0 =
                              [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
                               const unsigned int q)
                               {return (*rhoOutValuesSpinPolarized).find(cell->id())->second[2*q];};
@@ -1596,8 +1597,8 @@ namespace dftfe {
 
 	matrix_free_data.initialize_dof_vector(rhoNodalFieldSpin1,densityDofHandlerIndex);
 	rhoNodalFieldSpin1=0;
-        std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell , 
-                             const unsigned int q)> funcRhoSpin1 = 
+        std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
+                             const unsigned int q)> funcRhoSpin1 =
                              [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
                               const unsigned int q)
                               {return (*rhoOutValuesSpinPolarized).find(cell->id())->second[2*q+1];};
