@@ -31,7 +31,7 @@ end
 subsection SCF parameters
   set ANDERSON SCHEME MIXING HISTORY   = 70
   set ANDERSON SCHEME MIXING PARAMETER = 0.5
-  set MAXIMUM ITERATIONS               = 1
+  set MAXIMUM ITERATIONS               = 40
   set TEMPERATURE                      = 500
   set TOLERANCE                        = 1e-5
   subsection Eigen-solver parameters
