@@ -344,7 +344,7 @@ namespace dftfe {
 
     a0.resize((dftParameters::spinPolarized+1)*d_kPointWeights.size(),dftParameters::lowerEndWantedSpectrum);
     bLow.resize((dftParameters::spinPolarized+1)*d_kPointWeights.size(),0.0);
-    d_eigenVectorsFlattened.resize((1+dftParameters::spinPolarized)*d_kPointWeights.size());
+    d_eigenVectorsFlattenedSTL.resize((1+dftParameters::spinPolarized)*d_kPointWeights.size());
 
     for(unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
       {
@@ -577,7 +577,8 @@ namespace dftfe {
     computingTimerStandard.enter_section("KSDFT problem initialization");
     initImageChargesUpdateKPoints();
 
-    updatePrevMeshDataStructures();
+    if  (dftParameters::isIonOpt || dftParameters::isCellOpt)
+       updatePrevMeshDataStructures();
     //
     //reinitialize dirichlet BCs for total potential and vSelf poisson solutions
     //
@@ -1388,10 +1389,64 @@ namespace dftfe {
 
     computingTimerStandard.exit_section("Total scf solve");
 
+    if(dftParameters::isIonForce || dftParameters::isCellStress)
+      {
+	//
+	//Create the full dealii partitioned array
+	//
+	d_eigenVectorsFlattened.resize((1+dftParameters::spinPolarized)*d_kPointWeights.size());
+
+	for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+	  {
+	    vectorTools::createDealiiVector<dataTypes::number>(matrix_free_data.get_vector_partitioner(),
+							       numEigenValues,
+							       d_eigenVectorsFlattened[kPoint]);
+
+
+	    d_eigenVectorsFlattened[kPoint] = dataTypes::number(0.0);
+
+	  }
+
+
+	Assert(d_eigenVectorsFlattened[0].local_size()==d_eigenVectorsFlattenedSTL[0].size(),
+		  dealii::ExcMessage("Incorrect local sizes of STL and dealii arrays"));
+
+	constraintsNoneDataInfo.precomputeMaps(matrix_free_data.get_vector_partitioner(),
+					       d_eigenVectorsFlattened[0].get_partitioner(),
+					       numEigenValues);
+
+	const unsigned int localVectorSize = d_eigenVectorsFlattenedSTL[0].size()/numEigenValues;
+
+	for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+	  {
+	    for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
+	      {
+		for(unsigned int iWave = 0; iWave < numEigenValues; ++iWave)
+		  {
+		    d_eigenVectorsFlattened[kPoint].local_element(iNode*numEigenValues+iWave)
+		      = d_eigenVectorsFlattenedSTL[kPoint][iNode*numEigenValues+iWave];
+		  }
+	      }
+
+	    constraintsNoneDataInfo.distribute(d_eigenVectorsFlattened[kPoint],
+					       numEigenValues);
+
+	  }
+
+
+	for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+	  {
+	    d_eigenVectorsFlattenedSTL[kPoint].clear();
+	    std::vector<dataTypes::number>().swap(d_eigenVectorsFlattenedSTL[kPoint]);
+	  }
+
+      }
+
     if (dftParameters::isIonForce)
       {
         if(dftParameters::selfConsistentSolverTolerance>1e-5 && dftParameters::verbosity>=1)
             pcout<<"DFT-FE Warning: Ion force accuracy may be affected for the given scf iteration solve tolerance: "<<dftParameters::selfConsistentSolverTolerance<<", recommended to use TOLERANCE below 1e-5."<<std::endl;
+
 
  	computing_timer.enter_section("Ion force computation");
 	computingTimerStandard.enter_section("Ion force computation");
@@ -1414,6 +1469,41 @@ namespace dftfe {
 	computing_timer.exit_section("Cell stress computation");
       }
 #endif
+
+    if(dftParameters::isIonForce || dftParameters::isCellStress)
+      {
+	//
+	//Create the full STL array from dealii flattened array
+	//
+	for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+	  d_eigenVectorsFlattenedSTL[kPoint].resize(numEigenValues*matrix_free_data.get_vector_partitioner()->local_size(),dataTypes::number(0.0));
+
+	Assert(d_eigenVectorsFlattened[0].local_size()==d_eigenVectorsFlattenedSTL[0].size(),
+	       dealii::ExcMessage("Incorrect local sizes of STL and dealii arrays"));
+
+	const unsigned int localVectorSize = d_eigenVectorsFlattenedSTL[0].size()/numEigenValues;
+
+	//
+	//copy the data into STL array
+	//
+	for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+	  {
+	    for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
+	      {
+		for(unsigned int iWave = 0; iWave < numEigenValues; ++iWave)
+		  {
+		    d_eigenVectorsFlattenedSTL[kPoint][iNode*numEigenValues+iWave] = d_eigenVectorsFlattened[kPoint].local_element(iNode*numEigenValues+iWave);
+		  }
+	      }
+	  }
+
+	for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+	  {
+	    d_eigenVectorsFlattened[kPoint].reinit(0);
+	  }
+
+      }
+
 
     //if (dftParameters::electrostaticsPRefinement)
     //  computeElectrostaticEnergyPRefined();
@@ -1481,8 +1571,8 @@ namespace dftfe {
     dealii::parallel::distributed::Vector<double>  rhoNodalField;
     matrix_free_data.initialize_dof_vector(rhoNodalField,densityDofHandlerIndex);
     rhoNodalField=0;
-    std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell , 
-                         const unsigned int q)> funcRho = 
+    std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
+                         const unsigned int q)> funcRho =
                           [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
                               const unsigned int q)
                               {return (*rhoOutValues).find(cell->id())->second[q];};
@@ -1500,8 +1590,8 @@ namespace dftfe {
     {
 	matrix_free_data.initialize_dof_vector(rhoNodalFieldSpin0,densityDofHandlerIndex);
 	rhoNodalFieldSpin0=0;
-        std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell , 
-                             const unsigned int q)> funcRhoSpin0 = 
+        std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
+                             const unsigned int q)> funcRhoSpin0 =
                              [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
                               const unsigned int q)
                               {return (*rhoOutValuesSpinPolarized).find(cell->id())->second[2*q];};
@@ -1516,8 +1606,8 @@ namespace dftfe {
 
 	matrix_free_data.initialize_dof_vector(rhoNodalFieldSpin1,densityDofHandlerIndex);
 	rhoNodalFieldSpin1=0;
-        std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell , 
-                             const unsigned int q)> funcRhoSpin1 = 
+        std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
+                             const unsigned int q)> funcRhoSpin1 =
                              [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
                               const unsigned int q)
                               {return (*rhoOutValuesSpinPolarized).find(cell->id())->second[2*q+1];};
