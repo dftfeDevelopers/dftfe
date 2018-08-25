@@ -172,6 +172,18 @@ void symmetryClass<FEOrder>::computeAndSymmetrize_rhoOut()
 	    dftPtr->gradRhoOutValsSpinPolarized.pop_front();
 	   }
 	}
+     //
+     if (dftParameters::mixingMethod=="BROYDEN")
+	{
+	 dftPtr->dFBroyden.pop_front();
+         dftPtr->uBroyden.pop_front();
+	 if(dftParameters::xc_id == 4)//GGA
+         {
+	  dftPtr->graddFBroyden.pop_front();
+	  dftPtr->gradUBroyden.pop_front();
+         }
+       }	
+
      }
 }
 //=============================================================================================================================================

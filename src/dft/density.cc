@@ -375,6 +375,18 @@ void dftClass<FEOrder>::compute_rhoOut()
 	  gradRhoInValsSpinPolarized.pop_front();
 	  gradRhoOutValsSpinPolarized.pop_front();
       }
+
+      if (dftParameters::mixingMethod=="BROYDEN")
+	{
+	 dFBroyden.pop_front();
+         uBroyden.pop_front();
+	 if(dftParameters::xc_id == 4)//GGA
+         {
+	  graddFBroyden.pop_front();
+	  gradUBroyden.pop_front();
+         }
+       }
+
     }
 
 }

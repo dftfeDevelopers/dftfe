@@ -251,6 +251,7 @@ double dftClass<FEOrder>::mixing_broyden(){
   const unsigned int num_quad_points = quadrature.size();
   //
   int N = dFBroyden.size() + 1;
+  
   //
   std::map<dealii::CellId,std::vector<double> >  delRho, delGradRho ;
   dFBroyden.push_back(std::map<dealii::CellId,std::vector<double> >());
@@ -324,17 +325,25 @@ double dftClass<FEOrder>::mixing_broyden(){
   //
   wtTemp=Utilities::MPI::sum(wtTempLoc, mpi_communicator);
   dfMag=Utilities::MPI::sum(dfMagLoc, mpi_communicator);
-  if (N==1)
+  if (N==1) {
     w0Broyden = Utilities::MPI::sum(w0Loc, mpi_communicator);
-  
+    w0Broyden = std::pow(w0Broyden, -0.5 ) ;
+   }
+  // Comment out following line, for using w0 computed from simply mixed rho (not recommended)
+  w0Broyden = 0.0 ;
   //
-  cell = dofHandler.begin_active(), endc = dofHandler.end();
+  wtTemp = std::pow(wtTemp, -0.5 ) ;
   //
-  wtTemp = std::pow(wtTemp, -0.5 ) ; 
-  wtBroyden.push_back(wtTemp) ;
+  // Comment out push_back(1.0) and uncomment push_back(wtTemp) to include history dependence in wtBroyden (not recommended) 
+  //wtBroyden.push_back(wtTemp) ;
+  wtBroyden.push_back(1.0) ;
+  //
+  //
   double G = dftParameters::mixingParameter ;
   //
   std::vector<double> c(N, 0.0) , invBeta(N*N, 0.0), beta(N*N, 0.0), gamma(N, 0.0), cLoc(N, 0.0) , invBetaLoc(N*N, 0.0) ; 
+  //
+  cell = dofHandler.begin_active(), endc = dofHandler.end();
   for (; cell!=endc; ++cell)
     if (cell->is_locally_owned())
       {
@@ -364,10 +373,6 @@ double dftClass<FEOrder>::mixing_broyden(){
                  {
 	          invBetaLoc[N*k + l] +=  wtBroyden[k] * wtBroyden[l] * (dFBroyden[k])[cell->id()][q_point] * (dFBroyden[l])[cell->id()][q_point] *fe_values.JxW(q_point);
 	          invBetaLoc[N*l + k] = invBetaLoc[N*k + l] ;
-	          if (l==k) {
-	              invBetaLoc[N*l + l] = w0Broyden*w0Broyden + invBetaLoc[N*l + l] ;
-		      beta[N*l + l] = 1.0 ;
-		    }
                  }
 	     }
 	 }
@@ -376,6 +381,11 @@ double dftClass<FEOrder>::mixing_broyden(){
    for (unsigned int k = 0; k < N ; ++k) {
    for (unsigned int l = 0; l < N ; ++l) {
    invBeta[N*k + l]=Utilities::MPI::sum(invBetaLoc[N*k + l], mpi_communicator);
+   if (l==k) 
+	{
+	 invBeta[N*l + l] = w0Broyden*w0Broyden + invBeta[N*l + l] ;
+	 beta[N*l + l] = 1.0 ;
+	}
    }
    c[k]=Utilities::MPI::sum(cLoc[k], mpi_communicator);
    }
@@ -533,17 +543,24 @@ double dftClass<FEOrder>::mixing_broyden_spinPolarized(){
   //
   wtTemp=Utilities::MPI::sum(wtTempLoc, mpi_communicator);
   dfMag=Utilities::MPI::sum(dfMagLoc, mpi_communicator);
-  if (N==1)
+  if (N==1) {
     w0Broyden = Utilities::MPI::sum(w0Loc, mpi_communicator);
-  
+    w0Broyden = std::pow(w0Broyden, -0.5 ) ;
+   }
+  // Comment out following line, for using w0 computed from simply mixed rho (not recommended)
+  w0Broyden = 0.0 ;
   //
-  cell = dofHandler.begin_active(), endc = dofHandler.end();
+  wtTemp = std::pow(wtTemp, -0.5 ) ;
   //
-  wtTemp = std::pow(wtTemp, -0.5 ) ; 
-  wtBroyden.push_back(wtTemp) ;
+  // Comment out push_back(1.0) and uncomment push_back(wtTemp) to include history dependence in wtBroyden (not recommended) 
+  //wtBroyden.push_back(wtTemp) ;
+  wtBroyden.push_back(1.0) ;
+  //
   double G = dftParameters::mixingParameter ;
   //
   std::vector<double> c(N, 0.0) , invBeta(N*N, 0.0), beta(N*N, 0.0), gamma(N, 0.0), cLoc(N, 0.0) , invBetaLoc(N*N, 0.0) ; 
+  //
+  cell = dofHandler.begin_active(), endc = dofHandler.end();
   for (; cell!=endc; ++cell)
     if (cell->is_locally_owned())
       {
@@ -579,10 +596,6 @@ double dftClass<FEOrder>::mixing_broyden_spinPolarized(){
 	          invBetaLoc[N*k + l] +=  wtBroyden[k] * wtBroyden[l] * ( (dFBroyden[k])[cell->id()][2*q_point] + (dFBroyden[k])[cell->id()][2*q_point+1]) * 
 							  ( (dFBroyden[l])[cell->id()][2*q_point] + (dFBroyden[l])[cell->id()][2*q_point+1]) *fe_values.JxW(q_point);
 	          invBetaLoc[N*l + k] = invBetaLoc[N*k + l] ;
-	          if (l==k) {
-	              invBetaLoc[N*l + l] = w0Broyden*w0Broyden + invBetaLoc[N*l + l] ;
-		      beta[N*l + l] = 1.0 ;
-		    }
                  }
 	     }
 	 }
@@ -591,6 +604,12 @@ double dftClass<FEOrder>::mixing_broyden_spinPolarized(){
    for (unsigned int k = 0; k < N ; ++k) {
    for (unsigned int l = 0; l < N ; ++l) {
    invBeta[N*k + l]=Utilities::MPI::sum(invBetaLoc[N*k + l], mpi_communicator);
+   //
+     if (l==k) 
+     {
+	invBeta[N*l + l] = w0Broyden*w0Broyden + invBeta[N*l + l] ;
+	beta[N*l + l] = 1.0 ;
+     }
    }
    c[k]=Utilities::MPI::sum(cLoc[k], mpi_communicator);
    }
