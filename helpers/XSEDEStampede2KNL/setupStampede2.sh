@@ -8,11 +8,11 @@ set -o pipefail
 # and optimization flag
 
 #Paths for external libraries
-dealiiPetscRealDir="/work/05316/dsambit/groupSoftwaresStampede2/dealiiKnl/intel_18.0.0_petscReal_scalapack_64Bit_avx512"
-dealiiPetscComplexDir="/work/05316/dsambit/groupSoftwaresStampede2/dealiiExpt/intel_18.0.1_petscComplex_64Bit_scalapack"
-alglibDir="/work/05316/dsambit/groupSoftwaresStampede2/alglib/cpp/src"
-libxcDir="/work/05316/dsambit/groupSoftwaresStampede2/libxc/libxc-4.0.4_install_intel"
-spglibDir="/work/05316/dsambit/groupSoftwaresStampede2/spglibInstall"
+dealiiPetscRealDir="/work/05316/dsambit/publicSharedSoftware/dealiiDev/intel_18.0.0_petscReal_scalapack_64Bit"
+dealiiPetscComplexDir="/work/05316/dsambit/publicSharedSoftware/dealiiDev/intel_18.0.0_petscComplex_scalapack_64Bit"
+alglibDir="/work/05316/dsambit/publicSharedSoftware/alglib/cppIntel18.0.0/src"
+libxcDir="/work/05316/dsambit/publicSharedSoftware/libxc/install_intel18.0.0"
+spglibDir="/work/05316/dsambit/publicSharedSoftware/spglib/install_intel18.0.0"
 xmlIncludeDir="/usr/include/libxml2"
 xmlLibDir="/usr/lib64"
 
