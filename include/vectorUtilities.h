@@ -134,6 +134,8 @@ namespace dftfe{
      *  each entry of componentVectors is assumed to be already initialized with the 2-component
      *  version of the same single component partitioner used in the creation of the flattenedArray
      *  partitioner.
+     *  @param[in] isFlattenedDealiiGhostValuesUpdated default is false. Use true for
+     *  optimization if update ghost values has already been called in the flattened dealii vec.
      */
      void copyFlattenedDealiiVecToSingleCompVec
                              (const dealii::parallel::distributed::Vector<std::complex<double>>  & flattenedArray,
@@ -141,7 +143,8 @@ namespace dftfe{
 			      const std::pair<unsigned int,unsigned int> componentIndexRange,
 			      const std::vector<dealii::types::global_dof_index> & localProcDofIndicesReal,
                               const std::vector<dealii::types::global_dof_index> & localProcDofIndicesImag,
-			      std::vector<dealii::parallel::distributed::Vector<double>>  & componentVectors);
+			      std::vector<dealii::parallel::distributed::Vector<double>>  & componentVectors,
+			      const bool isFlattenedDealiiGhostValuesUpdated=false);
 
 #else
     /** @brief Copies a single field component from a flattenedArray parallel distributed
@@ -156,12 +159,15 @@ namespace dftfe{
      *  componentIndexRange.second-componentIndexRange.first. Further, each entry of
      *  componentVectors is assumed to be already initialized with the same single component
      *  partitioner used in the creation of the flattenedArray partitioner.
+     *  @param[in] isFlattenedDealiiGhostValuesUpdated default is false. Use true for
+     *  optimization if update ghost values has already been called in the flattened dealii vec.
      */
      void copyFlattenedDealiiVecToSingleCompVec
                              (const dealii::parallel::distributed::Vector<double>  & flattenedArray,
 			      const unsigned int                        totalNumberComponents,
 			      const std::pair<unsigned int,unsigned int>  componentIndexRange,
-			      std::vector<dealii::parallel::distributed::Vector<double>>  & componentVectors);
+			      std::vector<dealii::parallel::distributed::Vector<double>>  & componentVectors,
+			      const bool isFlattenedDealiiGhostValuesUpdated=false);
 
 #endif
 
