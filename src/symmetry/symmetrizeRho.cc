@@ -322,10 +322,19 @@ void symmetryClass<FEOrder>::computeLocalrhoOut()
 	      for(unsigned int i=0; i<(dftPtr->numEigenValues); ++i)
 		 {
 		 double factor=((dftPtr->eigenValues)[kPoint][i]-(dftPtr->fermiEnergy))/(C_kb*dftParameters::TVal);
-		 const double partialOccupancyAlpha = getOccupancy(factor) ;
+		 double partialOccupancyAlpha = getOccupancy(factor) ;
 		 //
 		 factor=((dftPtr->eigenValues)[kPoint][i+dftParameters::spinPolarized*(dftPtr->numEigenValues)]-(dftPtr->fermiEnergy))/(C_kb*dftParameters::TVal);
-		 const double partialOccupancyBeta = getOccupancy(factor) ;
+		 double partialOccupancyBeta = getOccupancy(factor) ;
+		 //
+		 if(dftParameters::constraintMagnetization)
+			{
+			partialOccupancyAlpha = 1.0 , partialOccupancyBeta = 1.0 ;
+			if ((dftPtr->eigenValues)[kPoint][i+dftParameters::spinPolarized*(dftPtr->numEigenValues)] > (dftPtr->fermiEnergyDown))
+				partialOccupancyBeta = 0.0 ;
+			if ((dftPtr->eigenValues)[kPoint][i] > (dftPtr->fermiEnergyUp))
+				partialOccupancyAlpha = 0.0 ;					
+			}
 		 //
 		 fe_values.get_function_values((eigenVectors[(1+dftParameters::spinPolarized)*kPoint][i]), tempPsiAlpha);
 		 if (dftParameters::spinPolarized==1)

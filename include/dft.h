@@ -412,6 +412,10 @@ namespace dftfe {
        */
       void compute_fermienergy(const std::vector<std::vector<double>> & eigenValuesInput,
 	                       const double numElectronsInput);
+      /**
+       *@brief Computes Fermi-energy obtained by imposing separate constraints on the number of spin-up and spin-down electrons
+       */
+      void compute_fermienergy_constraintMagnetization(const std::vector<std::vector<double>> & eigenValuesInput);
 
       /**
        *@brief write wavefunction solution fields
@@ -461,7 +465,7 @@ namespace dftfe {
       /**
        * stores required data for Kohn-Sham problem
        */
-      unsigned int numElectrons, numLevels;
+      unsigned int numElectrons, numElectronsUp, numElectronsDown, numLevels;
       std::set<unsigned int> atomTypes;
       std::vector<std::vector<double> > atomLocations,atomLocationsFractional,d_reciprocalLatticeVectors, d_domainBoundingVectors;
 
@@ -734,7 +738,7 @@ namespace dftfe {
       void recomputeKPointCoordinates();
 
       /// fermi energy
-      double fermiEnergy;
+      double fermiEnergy, fermiEnergyUp, fermiEnergyDown;
 
       //chebyshev filter variables and functions
       //int numPass ; // number of filter passes

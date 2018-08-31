@@ -35,7 +35,7 @@ namespace dftParameters
   double chebyshevTolerance = 1e-02;
   std::string mixingMethod = ""; 
 
-  bool isPseudopotential=false,periodicX=false,periodicY=false,periodicZ=false, useSymm=false, timeReversal=false,pseudoTestsFlag=false;
+  bool isPseudopotential=false,periodicX=false,periodicY=false,periodicZ=false, useSymm=false, timeReversal=false,pseudoTestsFlag=false, constraintMagnetization=false;
   std::string meshFileName="",coordinatesFile="",domainBoundingVectorsFile="",kPointDataFile="", ionRelaxFlagsFile="",orthogType="",pseudoPotentialFile="";
 
   double outerAtomBallRadius=2.0, meshSizeOuterDomain=10.0;
@@ -335,6 +335,10 @@ namespace dftParameters
 			      Patterns::Selection("BROYDEN|ANDERSON"),
 			      "[Standard] Method for density mixing. ANDERSON is the default option.");
 
+	prm.declare_entry("CONSTRAINT MAGNETIZATION", "false",
+			  Patterns::Bool(),
+			  "[Standard] Boolean parameter specifying whether to keep the starting magnetization fixed through the SCF iterations. Default is FALSE");
+
 	prm.declare_entry("STARTING WFC","RANDOM",
 			  Patterns::Selection("ATOMIC|RANDOM"),
 			  "[Standard] Sets the type of the starting Kohn-Sham wavefunctions guess: Atomic(Superposition of single atom atomic orbitals. Atom types for which atomic orbitals are not available, random wavefunctions are taken. Currently, atomic orbitals data is not available for all atoms.), Random(The starting guess for all wavefunctions are taken to be random). Default: RANDOM.");
@@ -524,6 +528,7 @@ namespace dftParameters
 	dftParameters::mixingHistory                 = prm.get_integer("MIXING HISTORY");
 	dftParameters::mixingParameter               = prm.get_double("MIXING PARAMETER");
 	dftParameters::mixingMethod                  = prm.get("MIXING METHOD");
+	dftParameters::constraintMagnetization       = prm.get_bool("CONSTRAINT MAGNETIZATION");
         dftParameters::startingWFCType               = prm.get("STARTING WFC");
 	dftParameters::computeEnergyEverySCF         = prm.get_bool("COMPUTE ENERGY EACH ITER");
 
