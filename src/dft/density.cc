@@ -82,7 +82,7 @@ void dftClass<FEOrder>::compute_rhoOut()
 
    std::vector<std::vector<vectorType>> eigenVectors((1+dftParameters::spinPolarized)*d_kPointWeights.size());
 
-
+   std::vector<dealii::parallel::distributed::Vector<dataTypes::number> > eigenVectorsFlattenedBlock((1+dftParameters::spinPolarized)*d_kPointWeights.size());
 
    for(unsigned int ivec = 0; ivec < numEigenValues; ivec+=eigenVectorsBlockSize)
    {
@@ -95,7 +95,17 @@ void dftClass<FEOrder>::compute_rhoOut()
 	      eigenVectors[kPoint].resize(currentBlockSize);
 	      for(unsigned int i= 0; i < currentBlockSize; ++i)
 		  eigenVectors[kPoint][i].reinit(d_tempEigenVec);
+
+
+	      vectorTools::createDealiiVector<dataTypes::number>(matrix_free_data.get_vector_partitioner(),
+							         currentBlockSize,
+							         eigenVectorsFlattenedBlock[kPoint]);
+	      eigenVectorsFlattenedBlock[kPoint] = dataTypes::number(0.0);
 	   }
+
+	   constraintsNoneDataInfo.precomputeMaps(matrix_free_data.get_vector_partitioner(),
+					          eigenVectorsFlattenedBlock[0].get_partitioner(),
+					          currentBlockSize);
       }
 
       if((ivec+currentBlockSize)<=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1] &&
@@ -103,27 +113,45 @@ void dftClass<FEOrder>::compute_rhoOut()
       {
 	   for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
 	   {
+
+
+		 for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
+		    for(unsigned int iWave = 0; iWave < currentBlockSize; ++iWave)
+			eigenVectorsFlattenedBlock[kPoint].local_element(iNode*currentBlockSize+iWave)
+			  = d_eigenVectorsFlattenedSTL[kPoint][iNode*numEigenValues+ivec+iWave];
+
+		 constraintsNoneDataInfo.distribute(eigenVectorsFlattenedBlock[kPoint],
+						    currentBlockSize);
+		 eigenVectorsFlattenedBlock[kPoint].update_ghost_values();
+
 #ifdef USE_COMPLEX
-		 vectorTools::copyFlattenedSTLVecToSingleCompVec
-			 (d_eigenVectorsFlattenedSTL[kPoint],
-			  numEigenValues,
-			  std::make_pair(ivec,ivec+currentBlockSize),
+		 vectorTools::copyFlattenedDealiiVecToSingleCompVec
+			 (eigenVectorsFlattenedBlock[kPoint],
+			  currentBlockSize,
+			  std::make_pair(0,currentBlockSize),
 			  localProc_dof_indicesReal,
 			  localProc_dof_indicesImag,
-			  eigenVectors[kPoint]);
+			  eigenVectors[kPoint],
+			  false);
+
+		 //FIXME: The underlying call to update_ghost_values
+		 //is required because currently localProc_dof_indicesReal
+		 //and localProc_dof_indicesImag are only available for
+		 //locally owned nodes. Once they are also made available
+		 //for ghost nodes- use true for the last argument in
+		 //copyFlattenedDealiiVecToSingleCompVec(..) above and supress
+		 //underlying call.
+		 for(unsigned int i= 0; i < currentBlockSize; ++i)
+		     eigenVectors[kPoint][i].update_ghost_values();
 #else
-		 vectorTools::copyFlattenedSTLVecToSingleCompVec
-			 (d_eigenVectorsFlattenedSTL[kPoint],
-			  numEigenValues,
-			  std::make_pair(ivec,ivec+currentBlockSize),
-			  eigenVectors[kPoint]);
+		 vectorTools::copyFlattenedDealiiVecToSingleCompVec
+			 (eigenVectorsFlattenedBlock[kPoint],
+			  currentBlockSize,
+			  std::make_pair(0,currentBlockSize),
+			  eigenVectors[kPoint],
+			  true);
 
 #endif
-		 for(unsigned int i= 0; i < currentBlockSize; ++i)
-		 {
-		     constraintsNoneEigenDataInfo.distribute(eigenVectors[kPoint][i]);
-		     eigenVectors[kPoint][i].update_ghost_values();
-		 }
 	  }
 
 #ifdef USE_COMPLEX
