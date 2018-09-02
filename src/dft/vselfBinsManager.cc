@@ -97,6 +97,79 @@ namespace dftfe
 	  }
 	}
 
+
+	void exchangeInteractionMaps(const unsigned int totalNumberAtoms,
+			             std::map<int,std::set<int> > & interactionMap,
+			             const unsigned int numMeshPartitions,
+			             const MPI_Comm & mpi_communicator)
+
+	{
+	  std::map<int,std::set<int> >::iterator iter;
+
+	  for(unsigned int iGlobal = 0; iGlobal < totalNumberAtoms; ++iGlobal)
+	  {
+
+	    //
+	    // for each charge, exchange its global list across all procs
+	    //
+	    iter = interactionMap.find(iGlobal);
+
+	    std::vector<int> localAtomToInteractingAtomsList;
+
+	    if(iter != interactionMap.end())
+	    {
+	      std::set<int>  & localInteractingAtomsSet = iter->second;
+	      std::copy(localInteractingAtomsSet.begin(),
+			localInteractingAtomsSet.end(),
+			std::back_inserter(localAtomToInteractingAtomsList));
+
+	    }
+
+	    const int sizeOnLocalProc = localAtomToInteractingAtomsList.size();
+
+            std::vector<int> interactionMapListSizes(numMeshPartitions);
+
+	    MPI_Allgather(&sizeOnLocalProc,
+			  1,
+			  MPI_INT,
+			  &(interactionMapListSizes[0]),
+			  1,
+			  MPI_INT,
+			  mpi_communicator);
+
+	    const int newListSize =
+	    std::accumulate(&(interactionMapListSizes[0]),
+			      &(interactionMapListSizes[numMeshPartitions]),
+			      0);
+
+	    std::vector<int> globalInteractionMapList(newListSize);
+
+	    std::vector<int> mpiOffsets(numMeshPartitions);
+
+	    mpiOffsets[0] = 0;
+
+	    for(unsigned int i = 1; i < numMeshPartitions; ++i)
+	      mpiOffsets[i] = interactionMapListSizes[i-1]+ mpiOffsets[i-1];
+
+	    MPI_Allgatherv(&(localAtomToInteractingAtomsList[0]),
+			   sizeOnLocalProc,
+			   MPI_INT,
+			   &(globalInteractionMapList[0]),
+			   &(interactionMapListSizes[0]),
+			   &(mpiOffsets[0]),
+			   MPI_INT,
+			   mpi_communicator);
+
+	    //
+	    // over-write local interaction with items of globalInteractionList
+	    //
+	    for(unsigned int i = 0 ; i < globalInteractionMapList.size(); ++i)
+	      (interactionMap[iGlobal]).insert(globalInteractionMapList[i]);
+
+	  }
+	}
+
+
 	//
 	unsigned int createAndCheckInteractionMap(std::map<int,std::set<int> > & interactionMap,
 		                         const dealii::DoFHandler<3> &  dofHandler,
@@ -144,7 +217,7 @@ namespace dftfe
 	      std::vector<dealii::types::global_dof_index> cell_dof_indices(dofs_per_cell);
 
 	      for(; cell!= endc; ++cell)
-		  if(cell->is_locally_owned())
+		  if(cell->is_locally_owned() || cell->is_ghost())
 		    {
 		      int cutOffFlag = 0;
 		      cell->get_dof_indices(cell_dof_indices);
@@ -175,27 +248,26 @@ namespace dftfe
 
 		    }//cell locally owned if loop
 
-	      atomToGlobalNodeIdMap[iAtom] = tempNodalSet;
+	      if (!tempNodalSet.empty())
+	         atomToGlobalNodeIdMap[iAtom] = tempNodalSet;
 
 	    }//atom loop
 
 	  //
 	  //exchange atomToGlobalNodeIdMap across all processors
 	  //
-	  internal::exchangeAtomToGlobalNodeIdMaps(totalNumberAtoms,
-						   atomToGlobalNodeIdMap,
-						   n_mpi_processes,
-						   mpi_communicator);
+	  //internal::exchangeAtomToGlobalNodeIdMaps(totalNumberAtoms,
+	  //					   atomToGlobalNodeIdMap,
+	  //					   n_mpi_processes,
+	  //					   mpi_communicator);
 
-	  //
-	  //erase keys which have empty values
-	  //
-	  for(unsigned int iAtom = numberGlobalAtoms; iAtom < totalNumberAtoms; ++iAtom)
-	      if(atomToGlobalNodeIdMap[iAtom].empty() == true)
-		  atomToGlobalNodeIdMap.erase(iAtom);
+	  unsigned int ilegalInteraction=0;
 
 	  for(unsigned int iAtom = 0; iAtom < totalNumberAtoms; ++iAtom)
 	    {
+	      if (atomToGlobalNodeIdMap.find(iAtom)==atomToGlobalNodeIdMap.end())
+		  continue;
+
 	      //
 	      //Add iAtom to the interactionMap corresponding to the key iAtom
 	      //
@@ -207,7 +279,8 @@ namespace dftfe
 	      for(int jAtom = iAtom - 1; jAtom > -1; jAtom--)
 		{
 		  //std::cout<<"JAtom: "<<jAtom<<std::endl;
-
+		  if (atomToGlobalNodeIdMap.find(jAtom)==atomToGlobalNodeIdMap.end())
+		      continue;
 		  //
 		  //compute intersection between the atomGlobalNodeIdMap of iAtom and jAtom
 		  //
@@ -241,7 +314,8 @@ namespace dftfe
 			  if(masterAtomId == iAtom)
 			    {
 			      //std::cout<<"Atom and its own image is interacting decrease radius"<<std::endl;
-			      return 1;
+			      ilegalInteraction= 1;
+			      break;
 			    }
 			  interactionMap[iAtom].insert(masterAtomId);
 			  interactionMap[masterAtomId].insert(iAtom);
@@ -256,7 +330,8 @@ namespace dftfe
 			  if(masterAtomId == jAtom)
 			    {
 			      //std::cout<<"Atom and its own image is interacting decrease radius"<<std::endl;
-			      return 1;
+			      ilegalInteraction= 1;
+			      break;
 			    }
 			  interactionMap[masterAtomId].insert(jAtom);
 			  interactionMap[jAtom].insert(masterAtomId);
@@ -272,7 +347,8 @@ namespace dftfe
 			  if(masteriAtomId == masterjAtomId)
 			    {
 			      //std::cout<<"Two Image Atoms corresponding to same parent Atoms are interacting decrease radius"<<std::endl;
-			      return 2;
+			      ilegalInteraction= 2;
+			      break;
 			    }
 			  interactionMap[masteriAtomId].insert(masterjAtomId);
 			  interactionMap[masterjAtomId].insert(masteriAtomId);
@@ -282,7 +358,18 @@ namespace dftfe
 
 		}//end of jAtom loop
 
+	        if (ilegalInteraction!=0)
+		    break;
+
 	    }//end of iAtom loop
+
+	    if (dealii::Utilities::MPI::sum(ilegalInteraction, mpi_communicator)>0)
+	       return 1;
+
+	    internal::exchangeInteractionMaps(totalNumberAtoms,
+	  			              interactionMap,
+	  				      n_mpi_processes,
+	  				      mpi_communicator);
 	    return 0;
 	}
     }
