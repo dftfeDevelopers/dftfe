@@ -214,7 +214,7 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
       }
   }
 
-  if  (dftParameters::isIonOpt || dftParameters::isCellOpt)
+  if  (dftParameters::isIonOpt)
     updatePrevMeshDataStructures();
 
   if (dftParameters::verbosity>=2)
