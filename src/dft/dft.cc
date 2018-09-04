@@ -577,7 +577,7 @@ namespace dftfe {
     computingTimerStandard.enter_section("KSDFT problem initialization");
     initImageChargesUpdateKPoints();
 
-    if  (dftParameters::isIonOpt || dftParameters::isCellOpt)
+    if  (dftParameters::isIonOpt)
        updatePrevMeshDataStructures();
     //
     //reinitialize dirichlet BCs for total potential and vSelf poisson solutions
