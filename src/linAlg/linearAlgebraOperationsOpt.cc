@@ -204,8 +204,8 @@ namespace dftfe{
     void callgemm(const unsigned int numberEigenValues,
 		  const unsigned int localVectorSize,
 		  const std::vector<double> & eigenVectorSubspaceMatrix,
-		  const dealii::parallel::distributed::Vector<double> & X,
-		  dealii::parallel::distributed::Vector<double> & Y)
+		  const std::vector<double> & X,
+		  std::vector<double> & Y)
 
     {
 
@@ -219,10 +219,10 @@ namespace dftfe{
 	     &alpha,
 	     &eigenVectorSubspaceMatrix[0],
 	     &numberEigenValues,
-	     X.begin(),
+	     &X[0],
 	     &numberEigenValues,
 	     &beta,
-	     Y.begin(),
+	     &Y[0],
 	     &numberEigenValues);
 
     }
@@ -231,8 +231,8 @@ namespace dftfe{
     void callgemm(const unsigned int numberEigenValues,
 		  const unsigned int localVectorSize,
 		  const std::vector<std::complex<double> > & eigenVectorSubspaceMatrix,
-		  const dealii::parallel::distributed::Vector<std::complex<double> > & X,
-		  dealii::parallel::distributed::Vector<std::complex<double> > & Y)
+		  const std::vector<std::complex<double> > & X,
+		  std::vector<std::complex<double> > & Y)
 
     {
 
@@ -246,10 +246,10 @@ namespace dftfe{
 	     &alpha,
 	     &eigenVectorSubspaceMatrix[0],
 	     &numberEigenValues,
-	     X.begin(),
+	     &X[0],
 	     &numberEigenValues,
 	     &beta,
-	     Y.begin(),
+	     &Y[0],
 	     &numberEigenValues);
 
     }
@@ -461,9 +461,10 @@ namespace dftfe{
 #if(defined DEAL_II_WITH_SCALAPACK && !USE_COMPLEX)
     template<typename T>
     void rayleighRitz(operatorDFTClass & operatorMatrix,
-		      dealii::parallel::distributed::Vector<T> & X,
+		      std::vector<T> & X,
 		      const unsigned int numberWaveFunctions,
 		      const MPI_Comm &interBandGroupComm,
+		      const MPI_Comm &mpi_communicator,
 		      std::vector<double> & eigenValues)
 
     {
@@ -478,7 +479,7 @@ namespace dftfe{
       //
       const unsigned rowsBlockSize=std::min((unsigned int)50,numberWaveFunctions);
       std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  processGrid;
-      internal::createProcessGridSquareMatrix(X.get_mpi_communicator(),
+      internal::createProcessGridSquareMatrix(mpi_communicator,
 		                              numberWaveFunctions,
 					      processGrid);
 
@@ -514,15 +515,20 @@ namespace dftfe{
       //stored in the column major format
       //
       computing_timer.enter_section("Blocked subspace rotation, RR step");
-      dealii::parallel::distributed::Vector<dataTypes::number> temp;
-      internal::subspaceRotation(X,
+      std::vector<T> temp;
+      const unsigned int numberCoreWaveFunctions=0;
+
+      internal::subspaceRotation(&X[0],
+	                         X.size(),
 		                 numberWaveFunctions,
-				 0,
-				 temp,
+				 numberCoreWaveFunctions,
+				 &temp[0],
 		                 processGrid,
 				 interBandGroupComm,
+				 mpi_communicator,
 			         projHamPar,
 				 true);
+
       computing_timer.exit_section("Blocked subspace rotation, RR step");
 
     }
@@ -530,9 +536,10 @@ namespace dftfe{
 
     template<typename T>
     void rayleighRitz(operatorDFTClass & operatorMatrix,
-		      dealii::parallel::distributed::Vector<T> & X,
+		      std::vector<T> & X,
 		      const unsigned int numberWaveFunctions,
 		      const MPI_Comm &interBandGroupComm,
+		      const MPI_Comm &mpi_communicator,
 		      std::vector<double> & eigenValues)
     {
       dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
@@ -567,13 +574,13 @@ namespace dftfe{
 	        numberEigenValues*numberEigenValues,
                 MPI_C_DOUBLE_COMPLEX,
 	        0,
-	        X.get_mpi_communicator());
+	        mpi_communicator);
 #else
       MPI_Bcast(&ProjHam[0],
 	        numberEigenValues*numberEigenValues,
 	        MPI_DOUBLE,
 	        0,
-	        X.get_mpi_communicator());
+	        mpi_communicator);
 #endif
 
       computing_timer.exit_section("eigen decomp in RR");
@@ -582,9 +589,8 @@ namespace dftfe{
       //
       //rotate the basis in the subspace X = X*Q
       //
-      const unsigned int localVectorSize = X.local_size()/numberEigenValues;
-      dealii::parallel::distributed::Vector<T> rotatedBasis;
-      rotatedBasis.reinit(X);
+      const unsigned int localVectorSize = X.size()/numberEigenValues;
+      std::vector<T> rotatedBasis(X.size());
 
       computing_timer.enter_section("subspace rotation in RR");
       callgemm(numberEigenValues,
@@ -598,11 +604,12 @@ namespace dftfe{
     }
 #endif
 
-#ifdef DEAL_II_WITH_SCALAPACK
+
     template<typename T>
     void computeEigenResidualNorm(operatorDFTClass & operatorMatrix,
-				  dealii::parallel::distributed::Vector<T> & X,
+				  std::vector<T> & X,
 				  const std::vector<double> & eigenValues,
+				  const MPI_Comm &mpiComm,
 				  std::vector<double> & residualNorm)
 
     {
@@ -611,11 +618,11 @@ namespace dftfe{
       //get the number of eigenVectors
       //
       const unsigned int totalNumberVectors = eigenValues.size();
-      const unsigned int localVectorSize = X.local_size()/totalNumberVectors;
+      const unsigned int localVectorSize = X.size()/totalNumberVectors;
       std::vector<double> residualNormSquare(totalNumberVectors,0.0);
 
       //create temporary arrays XBlock,HXBlock
-      dealii::parallel::distributed::Vector<dataTypes::number> XBlock,HXBlock;
+      dealii::parallel::distributed::Vector<T> XBlock,HXBlock;
 
       // Do H*X using a blocked approach and compute
       // the residual norms: H*XBlock-XBlock*D, where
@@ -641,7 +648,7 @@ namespace dftfe{
 	      for(unsigned int iWave = 0; iWave < B; ++iWave)
 		    XBlock.local_element(iNode*B
 			     +iWave)
-			 =X.local_element(iNode*totalNumberVectors+jvec+iWave);
+			 =X[iNode*totalNumberVectors+jvec+iWave];
 
 
 	  //evaluate H times XBlock and store in HXBlock
@@ -665,7 +672,9 @@ namespace dftfe{
       }
 
 
-      dealii::Utilities::MPI::sum(residualNormSquare,X.get_mpi_communicator(),residualNormSquare);
+      dealii::Utilities::MPI::sum(residualNormSquare,
+	                          mpiComm,
+				  residualNormSquare);
       if(dftParameters::verbosity>=4)
 	{
 	  if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
@@ -685,93 +694,7 @@ namespace dftfe{
 	  std::cout <<std::endl;
 
     }
-#else
-    template<typename T>
-    void computeEigenResidualNorm(operatorDFTClass & operatorMatrix,
-				  dealii::parallel::distributed::Vector<T> & X,
-				  const std::vector<double> & eigenValues,
-				  std::vector<double> & residualNorm)
 
-    {
-
-      //
-      //get the number of eigenVectors
-      //
-      const unsigned int totalNumberVectors = eigenValues.size();
-      std::vector<double> residualNormSquare(totalNumberVectors,0.0);
-
-      //
-      //reinit blockSize require for HX later
-      //
-      operatorMatrix.reinit(totalNumberVectors,
-	      		    X,
-		            false);
-
-      //
-      //create temp Array
-      //
-      dealii::parallel::distributed::Vector<T> Y;
-      Y.reinit(X);
-
-      //
-      //initialize to zero
-      //
-      const T zeroValue = 0.0;
-      Y = zeroValue;
-
-      //
-      //compute operator times X
-      //
-      const bool scaleFlag = false;
-      const double scalar = 1.0;
-      operatorMatrix.HX(X,
-			totalNumberVectors,
-			scaleFlag,
-			scalar,
-			Y);
-
-      if(dftParameters::verbosity>=4)
-	{
-	  if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
-	    std::cout<<"L-2 Norm of residue   :"<<std::endl;
-	}
-
-
-      const unsigned int localVectorSize = X.local_size()/totalNumberVectors;
-
-      //
-      //compute residual norms
-      //
-      for(unsigned int iDof = 0; iDof < localVectorSize; ++iDof)
-	{
-	  for(unsigned int iWave = 0; iWave < totalNumberVectors; iWave++)
-	    {
-	      T value = Y.local_element(totalNumberVectors*iDof + iWave) - eigenValues[iWave]*X.local_element(totalNumberVectors*iDof + iWave);
-	      residualNormSquare[iWave] += std::abs(value)*std::abs(value);
-	    }
-	}
-
-
-      dealii::Utilities::MPI::sum(residualNormSquare,X.get_mpi_communicator(),residualNormSquare);
-      for(unsigned int iWave = 0; iWave < totalNumberVectors; ++iWave)
-	{
-	  residualNorm[iWave] = sqrt(residualNormSquare[iWave]);
-
-	  if(dftParameters::verbosity>=4)
-	    {
-	      if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
-		std::cout<<"eigen vector "<< iWave<<": "<<residualNorm[iWave]<<std::endl;
-	    }
-	}
-
-      if(dftParameters::verbosity>=4)
-      {
-	if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
-	  std::cout <<std::endl;
-      }
-
-    }
-#endif
 
 #ifdef USE_COMPLEX
     unsigned int lowdenOrthogonalization(std::vector<std::complex<double> > & X,
@@ -810,8 +733,8 @@ namespace dftfe{
 	     &numberVectors);
 
 
-      dealii::Utilities::MPI::sum(overlapMatrix, 
-				  mpiComm, 
+      dealii::Utilities::MPI::sum(overlapMatrix,
+				  mpiComm,
 				  overlapMatrix);
 
       //
@@ -995,8 +918,8 @@ namespace dftfe{
 	     &numberVectors);
       computing_timer.exit_section("local overlap matrix for lowden");
 
-      dealii::Utilities::MPI::sum(overlapMatrix, 
-				  mpiComm, 
+      dealii::Utilities::MPI::sum(overlapMatrix,
+				  mpiComm,
 				  overlapMatrix);
 
       std::vector<double> eigenValuesOverlap(numberVectors);
@@ -1149,17 +1072,19 @@ namespace dftfe{
 						             const MPI_Comm &,
 							     const unsigned int numberCoreVectors,
 							     const MPI_Comm &mpiComm,
-			                                     dealii::parallel::distributed::Vector<dataTypes::number> & tempNonCoreVectorsArray);
+			                                     std::vector<dataTypes::number> & tempNonCoreVectorsArray);
 
     template void rayleighRitz(operatorDFTClass  & operatorMatrix,
-			       dealii::parallel::distributed::Vector<dataTypes::number> &,
+			       std::vector<dataTypes::number> &,
 			       const unsigned int numberWaveFunctions,
+			       const MPI_Comm &,
 			       const MPI_Comm &,
 			       std::vector<double>     & eigenValues);
 
     template void computeEigenResidualNorm(operatorDFTClass        & operatorMatrix,
-					   dealii::parallel::distributed::Vector<dataTypes::number> & X,
+					   std::vector<dataTypes::number> & X,
 					   const std::vector<double> & eigenValues,
+					   const MPI_Comm &mpiComm,
 					   std::vector<double>     & residualNorm);
 
   }//end of namespace
