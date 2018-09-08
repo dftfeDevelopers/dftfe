@@ -96,9 +96,9 @@ namespace dftParameters
 			   Patterns::Integer(1),
 			   "[Standard] Number of groups of MPI tasks across which the work load of the bands is parallelised. NPKPT times NPBAND must be a divisor of total number of MPI tasks. Further, NPBAND must be less than or equal to NUMBER OF KOHN-SHAM WAVEFUNCTIONS.");
 
-	prm.declare_entry("MPI ALLREDUCE BLOCK SIZE", "2.0",
+	prm.declare_entry("MPI ALLREDUCE BLOCK SIZE", "100.0",
 			   Patterns::Double(0),
-			   "[Advanced] Block size in MB used to break a single MPI_Allreduce call on wavefunction vectors data into multiple MPI_Allreduce calls to avoid hitting network latency. This variable is relevant only if NPBAND>1. The optimum value is architecture specific. Default value is 2.0 MB.");
+			   "[Advanced] Block message size in MB used to break a single MPI_Allreduce call on wavefunction vectors data into multiple MPI_Allreduce calls. This is useful on certain architectures which take advantage of High Bandwidth Memory to improve efficiency of MPI operations. This variable is relevant only if NPBAND>1. Default value is 100.0 MB.");
     }
     prm.leave_subsection ();
 
