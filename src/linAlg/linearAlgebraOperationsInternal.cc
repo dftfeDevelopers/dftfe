@@ -485,7 +485,7 @@ namespace dftfe
 	  if (numberBandGroups>1)
   	  {
 	    if (numberCoreVectors!=0)
-	      {
+	    {
 
 		const unsigned int numberNonCoreVectors=N-numberCoreVectors;
 		for(unsigned int iNode = 0; iNode < numLocalDofs; ++iNode)
@@ -493,13 +493,23 @@ namespace dftfe
 		    *(nonCoreVectorsArray+iNode*numberNonCoreVectors +iWave)
 		      =*(subspaceVectorsArray+iNode*N+numberCoreVectors+iWave);
 
+		//8 bytes for double
+		const unsigned int blockSize=dftParameters::mpiAllReduceMessageBlockSizeMB*1e+6/8;
 
-		MPI_Allreduce(MPI_IN_PLACE,
-			      nonCoreVectorsArray,
-			      numberNonCoreVectors*numLocalDofs,
-			      MPI_DOUBLE,
-			      MPI_SUM,
-			      interBandGroupComm);
+		for (unsigned int i=0; i<numberNonCoreVectors*numLocalDofs;i+=blockSize)
+		{
+		   const unsigned int currentBlockSize=std::min(blockSize,
+			                                    numberNonCoreVectors*numLocalDofs-i);
+
+		   MPI_Allreduce(MPI_IN_PLACE,
+				 nonCoreVectorsArray+i,
+				 currentBlockSize,
+				 MPI_DOUBLE,
+				 MPI_SUM,
+				 interBandGroupComm);
+		}
+
+
 
 		for(unsigned int iNode = 0; iNode < numLocalDofs; ++iNode)
 		    for(unsigned int iWave = 0; iWave < numberNonCoreVectors; ++iWave)
@@ -508,14 +518,23 @@ namespace dftfe
 
 	    }
 	    else
-	      {
-		MPI_Allreduce(MPI_IN_PLACE,
-			      subspaceVectorsArray,
-			      N*numLocalDofs,
-			      MPI_DOUBLE,
-			      MPI_SUM,
-			      interBandGroupComm);
-	      }
+	    {
+
+		//8 bytes for double
+		const unsigned int blockSize=dftParameters::mpiAllReduceMessageBlockSizeMB*1e+6/8;
+
+		for (unsigned int i=0; i<N*numLocalDofs;i+=blockSize)
+		{
+		   const unsigned int currentBlockSize=std::min(blockSize,N*numLocalDofs-i);
+
+		   MPI_Allreduce(MPI_IN_PLACE,
+				 subspaceVectorsArray+i,
+				 currentBlockSize,
+				 MPI_DOUBLE,
+				 MPI_SUM,
+				 interBandGroupComm);
+		}
+	    }
 	  }
 #endif
       }
