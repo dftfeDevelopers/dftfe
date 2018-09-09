@@ -76,6 +76,7 @@ namespace dftfe {
       extern double lowerBoundUnwantedFracUpper;
       extern bool triMatPGSOpt;
       extern bool reuseWfcGeoOpt;
+      extern double mpiAllReduceMessageBlockSizeMB;
 
       /**
        * Declare parameters.

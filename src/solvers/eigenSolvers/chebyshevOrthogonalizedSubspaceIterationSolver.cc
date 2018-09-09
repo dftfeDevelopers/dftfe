@@ -253,22 +253,32 @@ namespace dftfe{
     if (numberBandGroups>1)
     {
 	computing_timer.enter_section("MPI All Reduce wavefunctions across all band groups");
-
 #ifdef USE_COMPLEX
-	MPI_Allreduce(MPI_IN_PLACE,
-		      &eigenVectorsFlattened[0],
-		      totalNumberWaveFunctions*localVectorSize,
-		      MPI_C_DOUBLE_COMPLEX,
-		      MPI_SUM,
-		      interBandGroupComm);
+	//16 bytes for std::complex<double>
+        const unsigned int blockSize=dftParameters::mpiAllReduceMessageBlockSizeMB*1e+6/16;
 #else
-	MPI_Allreduce(MPI_IN_PLACE,
-		      &eigenVectorsFlattened[0],
-		      totalNumberWaveFunctions*localVectorSize,
-		      MPI_DOUBLE,
-		      MPI_SUM,
-		      interBandGroupComm);
+	//8 bytes for double
+	const unsigned int blockSize=dftParameters::mpiAllReduceMessageBlockSizeMB*1e+6/8;
 #endif
+        for (unsigned int i=0; i<totalNumberWaveFunctions*localVectorSize;i+=blockSize)
+        {
+            const unsigned int currentBlockSize=std::min(blockSize,totalNumberWaveFunctions*localVectorSize-i);
+#ifdef USE_COMPLEX
+	    MPI_Allreduce(MPI_IN_PLACE,
+			  &eigenVectorsFlattened[0]+i,
+			  currentBlockSize,
+			  MPI_C_DOUBLE_COMPLEX,
+			  MPI_SUM,
+			  interBandGroupComm);
+#else
+	    MPI_Allreduce(MPI_IN_PLACE,
+			  &eigenVectorsFlattened[0]+i,
+			  currentBlockSize,
+			  MPI_DOUBLE,
+			  MPI_SUM,
+			  interBandGroupComm);
+#endif
+	}
 
 	computing_timer.exit_section("MPI All Reduce wavefunctions across all band groups");
     }
