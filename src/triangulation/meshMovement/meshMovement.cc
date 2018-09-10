@@ -77,7 +77,7 @@ meshMovementClass::meshMovementClass(const MPI_Comm &mpi_comm_replica):
 
 }
 
-void meshMovementClass::init(const Triangulation<3,3> & triangulation, const std::vector<std::vector<double> > & domainBoundingVectors)
+void meshMovementClass::init(Triangulation<3,3> & triangulation, const std::vector<std::vector<double> > & domainBoundingVectors)
 {
   d_domainBoundingVectors=domainBoundingVectors;
   if (triangulation.locally_owned_subdomain()==numbers::invalid_subdomain_id)
@@ -89,7 +89,11 @@ void meshMovementClass::init(const Triangulation<3,3> & triangulation, const std
 
   d_dofHandlerMoveMesh.clear();
   if (d_isParallelMesh)
-    d_dofHandlerMoveMesh.initialize(dynamic_cast<const parallel::distributed::Triangulation<3> & >(triangulation),FEMoveMesh);
+  {
+    triaPtr=&(dynamic_cast<parallel::distributed::Triangulation<3> & >(triangulation));
+    d_dofHandlerMoveMesh.initialize(*triaPtr,FEMoveMesh);
+
+  }
   else
     d_dofHandlerMoveMesh.initialize(triangulation,FEMoveMesh);
   d_dofHandlerMoveMesh.distribute_dofs(FEMoveMesh);
@@ -126,9 +130,9 @@ void meshMovementClass::init(const Triangulation<3,3> & triangulation, const std
   const std::array<int,3> periodic = {dftParameters::periodicX, dftParameters::periodicY, dftParameters::periodicZ};
 
   std::vector<int> periodicDirectionVector;
-  for (unsigned int  d= 0; d < 3; ++d) 
+  for (unsigned int  d= 0; d < 3; ++d)
     {
-      if (periodic[d]==1) 
+      if (periodic[d]==1)
 	{
 	  periodicDirectionVector.push_back(d);
 	}
@@ -151,39 +155,16 @@ void meshMovementClass::initMoved(const std::vector<std::vector<double> > & doma
 
 void meshMovementClass::initIncrementField()
 {
-  //dftPtr->matrix_free_data.initialize_dof_vector(d_incrementalDisplacement,d_forceDofHandlerIndex);
-  IndexSet  ghost_indices=d_locally_relevant_dofs;
-  ghost_indices.subtract_set(d_locally_owned_dofs);
 
-  if(!d_isParallelMesh)
-  {
-     d_incrementalDisplacementSerial.reinit(d_locally_owned_dofs.size());
-     d_incrementalDisplacementSerial=0;
-  }
-  else
-  {
-     d_incrementalDisplacementParallel=dealii::parallel::distributed::Vector<double>(d_locally_owned_dofs,
-									             ghost_indices,
-                                                                                     mpi_communicator);
-     d_incrementalDisplacementParallel=0;
-  }
+ d_incrementalDisplacement.reinit(d_locally_relevant_dofs.size());
+ d_incrementalDisplacement=0;
+
 }
 
 
 void meshMovementClass::finalizeIncrementField()
 {
-  if (d_isParallelMesh)
-  {
-    //d_incrementalDisplacement.compress(VectorOperation::insert);//inserts current value at owned node and sets ghosts to zero
-    //d_incrementalDisplacementParallel.update_ghost_values();
-    d_constraintsMoveMesh.distribute(d_incrementalDisplacementParallel);//distribute to constrained degrees of freedom (periodic and hanging nodes)
-    d_incrementalDisplacementParallel.update_ghost_values();
-   }
-   else
-   {
-     d_incrementalDisplacementSerial.update_ghost_values();
-     d_constraintsMoveMesh.distribute(d_incrementalDisplacementSerial);
-   }
+  d_constraintsMoveMesh.distribute(d_incrementalDisplacement);
 }
 
 void meshMovementClass::updateTriangulationVertices()
@@ -193,25 +174,28 @@ void meshMovementClass::updateTriangulationVertices()
     pcout << "Start moving triangulation..." << std::endl;
   std::vector<bool> vertex_moved(d_dofHandlerMoveMesh.get_triangulation().n_vertices(),
                                  false);
+  const std::vector<bool> locally_owned_vertices =
+      dealii::GridTools::get_locally_owned_vertices(d_dofHandlerMoveMesh.get_triangulation());
 
   // Next move vertices on locally owned cells
   DoFHandler<3>::active_cell_iterator   cell = d_dofHandlerMoveMesh.begin_active();
   DoFHandler<3>::active_cell_iterator   endc = d_dofHandlerMoveMesh.end();
   for (; cell!=endc; ++cell) {
-     if (!cell->is_artificial())
+     if (cell->is_locally_owned())
      {
 	for (unsigned int vertex_no=0; vertex_no<GeometryInfo<C_DIM>::vertices_per_cell;++vertex_no)
 	 {
 	     const unsigned global_vertex_no = cell->vertex_index(vertex_no);
 
-	     if (vertex_moved[global_vertex_no])
+	     if (vertex_moved[global_vertex_no]
+		 || !locally_owned_vertices[global_vertex_no])
 	       continue;
 
 	     Point<C_DIM> vertexDisplacement;
-	     for (unsigned int d=0; d<C_DIM; ++d){
+	     for (unsigned int d=0; d<C_DIM; ++d)
+	     {
 		const unsigned int globalDofIndex= cell->vertex_dof_index(vertex_no,d);
-	     	vertexDisplacement[d]=d_isParallelMesh?d_incrementalDisplacementParallel[globalDofIndex]:
-                                                   d_incrementalDisplacementSerial[globalDofIndex];
+	     	vertexDisplacement[d]=d_incrementalDisplacement[globalDofIndex];
 	     }
 
 	     cell->vertex(vertex_no) += vertexDisplacement;
@@ -219,6 +203,9 @@ void meshMovementClass::updateTriangulationVertices()
 	  }
       }
   }
+  if (d_isParallelMesh)
+    triaPtr->communicate_locally_moved_vertices(locally_owned_vertices);
+
   d_dofHandlerMoveMesh.distribute_dofs(FEMoveMesh);
   if (dftParameters::verbosity>=4)
     pcout << "...End moving triangulation" << std::endl;
@@ -251,6 +238,7 @@ std::pair<bool,double> meshMovementClass::movedMeshCheck()
 	  offsetVectors[i][j] = unitVectorsXYZ[i][j] - d_domainBoundingVectors[i][j];
 	}
     }
+  /*
   if (dftParameters::verbosity>=4)
     pcout << "Sanity check for periodic matched faces on moved triangulation..." << std::endl;
   for(unsigned int i=0; i< d_periodicity_vector.size(); ++i)
@@ -271,6 +259,7 @@ std::pair<bool,double> meshMovementClass::movedMeshCheck()
   if (dftParameters::verbosity>=4)
     pcout << "...Sanity check passed" << std::endl;
 
+  */  
   //print out mesh metrics
   typename Triangulation<3,3>::active_cell_iterator cell, endc;
   double minElemLength=1e+6;

@@ -156,8 +156,8 @@ void triangulationManager::generateCoarseMeshesForRestart
 //
 //get unmoved serial mesh
 //
-const parallel::distributed::Triangulation<3> &
-triangulationManager::getSerialMeshUnmoved() const
+parallel::distributed::Triangulation<3> &
+triangulationManager::getSerialMeshUnmoved()
 {
   return d_serialTriangulationUnmoved;
 }
@@ -174,8 +174,8 @@ triangulationManager::getParallelMeshMoved()
 //
 //get unmoved parallel mesh
 //
-const parallel::distributed::Triangulation<3> &
-triangulationManager::getParallelMeshUnmoved() const
+parallel::distributed::Triangulation<3> &
+triangulationManager::getParallelMeshUnmoved()
 {
   return d_parallelTriangulationUnmoved;
 }
@@ -183,8 +183,8 @@ triangulationManager::getParallelMeshUnmoved() const
 //
 //get unmoved parallel mesh
 //
-const parallel::distributed::Triangulation<3> &
-triangulationManager::getParallelMeshUnmovedPrevious() const
+parallel::distributed::Triangulation<3> &
+triangulationManager::getParallelMeshUnmovedPrevious()
 {
   return d_parallelTriangulationUnmovedPrevious;
 }
@@ -192,8 +192,8 @@ triangulationManager::getParallelMeshUnmovedPrevious() const
 //
 //get unmoved serial mesh
 //
-const parallel::distributed::Triangulation<3> &
-triangulationManager::getSerialMeshUnmovedPrevious() const
+parallel::distributed::Triangulation<3> &
+triangulationManager::getSerialMeshUnmovedPrevious()
 {
   return d_serialTriangulationUnmovedPrevious;
 }
