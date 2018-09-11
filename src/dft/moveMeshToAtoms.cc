@@ -17,7 +17,7 @@
 //
 
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::moveMeshToAtoms(const Triangulation<3,3> & triangulationMove)
+void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove)
 {
 
   meshMovementGaussianClass gaussianMove(mpi_communicator);

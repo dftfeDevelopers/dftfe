@@ -522,7 +522,7 @@ namespace dftfe {
     //
     //get access to triangulation objects from meshGenerator class
     //
-    const parallel::distributed::Triangulation<3> & triangulationPar = d_mesh.getParallelMeshMoved();
+    parallel::distributed::Triangulation<3> & triangulationPar = d_mesh.getParallelMeshMoved();
 
     //
     //initialize dofHandlers and hanging-node constraints and periodic constraints on the unmoved Mesh

@@ -110,7 +110,7 @@ namespace dftfe  {
      * @brief returns constant reference to serial unmoved triangulation
      *
      */
-      const parallel::distributed::Triangulation<3> & getSerialMeshUnmoved() const;
+      parallel::distributed::Triangulation<3> & getSerialMeshUnmoved();
 
     /**
      * @brief returns reference to parallel moved triangulation
@@ -122,14 +122,14 @@ namespace dftfe  {
      * @brief returns constant reference to parallel unmoved triangulation
      *
      */
-      const parallel::distributed::Triangulation<3> & getParallelMeshUnmoved() const;
+      parallel::distributed::Triangulation<3> & getParallelMeshUnmoved();
 
     /**
      * @brief returns constant reference to parallel unmoved previous triangulation
      * (triangulation used in the last ground state solve during structure optimization).
      *
      */
-      const parallel::distributed::Triangulation<3> & getParallelMeshUnmovedPrevious() const;
+      parallel::distributed::Triangulation<3> & getParallelMeshUnmovedPrevious();
 
     /**
      * @brief returns constant reference to serial unmoved previous triangulation
@@ -137,7 +137,7 @@ namespace dftfe  {
      * structure optimization).
      *
      */
-      const parallel::distributed::Triangulation<3> & getSerialMeshUnmovedPrevious() const;
+      parallel::distributed::Triangulation<3> & getSerialMeshUnmovedPrevious();
 
     /**
      * @brief resets the vertices of parallel mesh moved to umoved. This is required before
