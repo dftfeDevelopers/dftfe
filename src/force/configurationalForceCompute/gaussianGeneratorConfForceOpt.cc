@@ -365,10 +365,10 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
   std::vector<double> globalAtomsGaussianForcesLocalPart(numberGlobalAtoms*C_DIM,0);
   d_globalAtomsGaussianForces.clear();
   d_globalAtomsGaussianForces.resize(numberGlobalAtoms*C_DIM,0.0);
+
 #ifdef USE_COMPLEX
   std::vector<double> globalAtomsGaussianForcesKPointsLocalPart(numberGlobalAtoms*C_DIM,0);
-  d_globalAtomsGaussianForcesKPoints.clear();
-  d_globalAtomsGaussianForcesKPoints.resize(numberGlobalAtoms*C_DIM,0.0);
+  std::vector<double> globalAtomsGaussianForcesKPoints(numberGlobalAtoms*C_DIM,0.0);
 #endif
   std::vector<bool> vertex_touched(d_dofHandlerForce.get_triangulation().n_vertices(),
 				   false);
@@ -437,9 +437,11 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
 	          const unsigned int globalDofIndex=cell->vertex_dof_index(i,idim);
 	          if (!d_constraintsNoneForce.is_constrained(globalDofIndex) && d_locally_owned_dofsForce.is_element(globalDofIndex))
 		  {
-	              globalAtomsGaussianForcesLocalPart[C_DIM*atomId+idim]+=gaussianWeight*d_configForceVectorLinFE[globalDofIndex];
+	              globalAtomsGaussianForcesLocalPart[C_DIM*atomId+idim]+=
+			  gaussianWeight*(d_configForceVectorLinFE[globalDofIndex]);
 #ifdef USE_COMPLEX
-                      globalAtomsGaussianForcesKPointsLocalPart[C_DIM*atomId+idim]+=gaussianWeight*d_configForceVectorLinFEKPoints[globalDofIndex];
+                      globalAtomsGaussianForcesKPointsLocalPart[C_DIM*atomId+idim]+=
+			  gaussianWeight*(d_configForceVectorLinFEKPoints[globalDofIndex]);
 #endif
 		  }
 	      }//idim loop
@@ -459,7 +461,7 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
 #ifdef USE_COMPLEX
   //Sum all processor contributions and distribute to all processors
   MPI_Allreduce(&(globalAtomsGaussianForcesKPointsLocalPart[0]),
-		&(d_globalAtomsGaussianForcesKPoints[0]),
+		&(globalAtomsGaussianForcesKPoints[0]),
 		numberGlobalAtoms*C_DIM,
 		MPI_DOUBLE,
 		MPI_SUM,
@@ -469,8 +471,8 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
   {
       for (unsigned int idim=0; idim < C_DIM ; idim++)
       {
-          d_globalAtomsGaussianForcesKPoints[iAtom*C_DIM+idim]= Utilities::MPI::sum(d_globalAtomsGaussianForcesKPoints[iAtom*C_DIM+idim], dftPtr->interpoolcomm);
-          d_globalAtomsGaussianForces[iAtom*C_DIM+idim]+=d_globalAtomsGaussianForcesKPoints[iAtom*C_DIM+idim];
+          globalAtomsGaussianForcesKPoints[iAtom*C_DIM+idim]= Utilities::MPI::sum(globalAtomsGaussianForcesKPoints[iAtom*C_DIM+idim], dftPtr->interpoolcomm);
+          d_globalAtomsGaussianForces[iAtom*C_DIM+idim]+=globalAtomsGaussianForcesKPoints[iAtom*C_DIM+idim];
       }
   }
 #endif

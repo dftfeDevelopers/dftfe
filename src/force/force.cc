@@ -115,9 +115,9 @@ void forceClass<FEOrder>::initUnmoved(const Triangulation<3,3> & triangulation)
 
   std::vector<int> periodicDirectionVector;
 
-  for(unsigned int  d= 0; d < 3; ++d) 
+  for(unsigned int  d= 0; d < 3; ++d)
     {
-      if(periodic[d]==1) 
+      if(periodic[d]==1)
 	{
 	  periodicDirectionVector.push_back(d);
 	}
@@ -176,7 +176,7 @@ void forceClass<FEOrder>::configForceLinFEInit()
 {
 
   dftPtr->matrix_free_data.initialize_dof_vector(d_configForceVectorLinFE,d_forceDofHandlerIndex);
-  d_configForceVectorLinFE=0;//also zeros out the ghost vectors
+  d_configForceVectorLinFE=0;
 #ifdef USE_COMPLEX
   dftPtr->matrix_free_data.initialize_dof_vector(d_configForceVectorLinFEKPoints,d_forceDofHandlerIndex);
   d_configForceVectorLinFEKPoints=0;
@@ -190,6 +190,7 @@ void forceClass<FEOrder>::configForceLinFEFinalize()
   //d_configForceVectorLinFE.update_ghost_values();
   d_constraintsNoneForce.distribute(d_configForceVectorLinFE);//distribute to constrained degrees of freedom (for example periodic)
   d_configForceVectorLinFE.update_ghost_values();
+
 #ifdef USE_COMPLEX
   d_configForceVectorLinFEKPoints.compress(VectorOperation::add);//copies the ghost element cache to the owning element
   //d_configForceVectorLinFEKPoints.update_ghost_values();
