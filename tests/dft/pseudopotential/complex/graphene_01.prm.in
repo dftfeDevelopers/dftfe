@@ -70,6 +70,7 @@ subsection SCF parameters
   set ANDERSON SCHEME MIXING HISTORY     = 70
   set TEMPERATURE                        = 500
   set STARTING WFC=ATOMIC
+  set HIGHER QUAD NLP  = false
   subsection Eigen-solver parameters
       set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 20
       set LOWER BOUND WANTED SPECTRUM = -10.0

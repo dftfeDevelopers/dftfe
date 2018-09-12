@@ -51,16 +51,41 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk()
   const unsigned int numVectorizedArrayElements=VectorizedArray<double>::n_array_elements;
   const MatrixFree<3,double> & matrix_free_data=dftPtr->matrix_free_data;
 
-  FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  forceEval(matrix_free_data,d_forceDofHandlerIndex, 0);
-  FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),2> psiEvalSpin0(matrix_free_data,dftPtr->eigenDofHandlerIndex , 0);
-  FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),2> psiEvalSpin1(matrix_free_data,dftPtr->eigenDofHandlerIndex , 0);
-  FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> phiTotEval(matrix_free_data,dftPtr->phiTotDofHandlerIndex, 0);
-  FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> phiTotInEval(matrix_free_data,dftPtr->phiTotDofHandlerIndex, 0);
-  FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> phiExtEval(matrix_free_data, dftPtr->phiExtDofHandlerIndex, 0);
+  FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  forceEval(matrix_free_data,
+	                                                        d_forceDofHandlerIndex,
+								0);
+  FEEvaluation<C_DIM,1,C_num1DQuadPSP<FEOrder>(),C_DIM>  forceEvalNLP(matrix_free_data,
+	                                                           d_forceDofHandlerIndex,
+								   2);
+
+  FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),2> psiEvalSpin0(matrix_free_data,
+	                                                            dftPtr->eigenDofHandlerIndex,
+								    0);
+  FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),2> psiEvalSpin1(matrix_free_data,
+	                                                            dftPtr->eigenDofHandlerIndex,
+								    0);
+  FEEvaluation<C_DIM,FEOrder,C_num1DQuadPSP<FEOrder>(),2> psiEvalSpin0NLP(matrix_free_data,
+	                                                            dftPtr->eigenDofHandlerIndex,
+								    2);
+  FEEvaluation<C_DIM,FEOrder,C_num1DQuadPSP<FEOrder>(),2> psiEvalSpin1NLP(matrix_free_data,
+	                                                            dftPtr->eigenDofHandlerIndex,
+								    2);
+
+  FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> phiTotEval(matrix_free_data,
+	                                                          dftPtr->phiTotDofHandlerIndex,
+								  0);
+  FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> phiTotInEval(matrix_free_data,
+	                                                            dftPtr->phiTotDofHandlerIndex,
+								    0);
+  FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> phiExtEval(matrix_free_data,
+	                                                          dftPtr->phiExtDofHandlerIndex,
+								  0);
   QGauss<C_DIM>  quadrature(C_num1DQuad<FEOrder>());
   FEValues<C_DIM> feVselfValues (dftPtr->FE, quadrature, update_gradients | update_quadrature_points);
 
   const unsigned int numQuadPoints=forceEval.n_q_points;
+  const unsigned int numQuadPointsNLP=dftParameters::useHigherQuadNLP?
+                                      forceEvalNLP.n_q_points:numQuadPoints;
   const unsigned int numEigenVectors=dftPtr->numEigenValues;
   const unsigned int numKPoints=dftPtr->d_kPointWeights.size();
 
@@ -128,6 +153,13 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk()
     psiEvalSpin0.reinit(cell);
     psiEvalSpin1.reinit(cell);
 
+    if (isPseudopotential && dftParameters::useHigherQuadNLP)
+    {
+      forceEvalNLP.reinit(cell);
+      psiEvalSpin0NLP.reinit(cell);
+      psiEvalSpin1NLP.reinit(cell);
+    }
+
     phiTotEval.reinit(cell);
     phiTotEval.read_dof_values_plain(dftPtr->d_phiTotRhoOut);//read without taking constraints into account
     phiTotEval.evaluate(true,true);
@@ -167,9 +199,9 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk()
     std::vector<std::vector<std::vector<std::vector<Tensor<1,2, Tensor<2,C_DIM,VectorizedArray<double> > > > > > >gradZetalmDeltaVlDyadicDistImageAtomsQuads;
     if(isPseudopotential)
     {
-	ZetaDeltaVQuads.resize(numQuadPoints);
-	gradZetalmDeltaVlDyadicDistImageAtomsQuads.resize(numQuadPoints);
-	for (unsigned int q=0; q<numQuadPoints; ++q)
+	ZetaDeltaVQuads.resize(numQuadPointsNLP);
+	gradZetalmDeltaVlDyadicDistImageAtomsQuads.resize(numQuadPointsNLP);
+	for (unsigned int q=0; q<numQuadPointsNLP; ++q)
 	{
 	  ZetaDeltaVQuads[q].resize(d_nonLocalPSP_ZetalmDeltaVl.size());
 	  gradZetalmDeltaVlDyadicDistImageAtomsQuads[q].resize(d_nonLocalPSP_gradZetalmDeltaVlDyadicDistImageAtoms_KPoint.size());
@@ -336,6 +368,30 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk()
 	  gradRhoSpin1Quads[q][idim][iSubCell]=Utilities::MPI::sum(gradRhoSpin1Quads[q][idim][iSubCell],dftPtr->interpoolcomm);
 	}
 
+    std::vector<Tensor<1,2,VectorizedArray<double> > > psiSpin0QuadsNLP;
+    std::vector<Tensor<1,2,VectorizedArray<double> > > psiSpin1QuadsNLP;
+    if (isPseudopotential && dftParameters::useHigherQuadNLP)
+    {
+	psiSpin0QuadsNLP.resize(numQuadPointsNLP*numEigenVectors*numKPoints,zeroTensor1);
+	psiSpin1QuadsNLP.resize(numQuadPointsNLP*numEigenVectors*numKPoints,zeroTensor1);
+	for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
+	    for (unsigned int iEigenVec=0; iEigenVec<numEigenVectors; ++iEigenVec)
+	    {
+	      psiEvalSpin0NLP.read_dof_values_plain(eigenVectors[2*ikPoint][iEigenVec]);
+	      psiEvalSpin0NLP.evaluate(true,false);
+
+	      psiEvalSpin1NLP.read_dof_values_plain(eigenVectors[2*ikPoint+1][iEigenVec]);
+	      psiEvalSpin1NLP.evaluate(true,false);
+
+	      for (unsigned int q=0; q<numQuadPointsNLP; ++q)
+	      {
+		 const int id=q*numEigenVectors*numKPoints+numEigenVectors*ikPoint+iEigenVec;
+		 psiSpin0QuadsNLP[id]=psiEvalSpin0NLP.get_value(q);
+		 psiSpin1QuadsNLP[id]=psiEvalSpin1NLP.get_value(q);
+	      }//quad point loop
+	    } //eigenvector loop
+    }
+
     if(isPseudopotential)
     {
        for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
@@ -350,7 +406,7 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk()
 	     gradPseudoVLocQuads[q][2][iSubCell]=d_gradPseudoVLoc[subCellId][C_DIM*q+2];
 	  }
 
-	  for (unsigned int q=0; q<numQuadPoints; ++q)
+	  for (unsigned int q=0; q<numQuadPointsNLP; ++q)
 	  {
             for (unsigned int i=0; i < d_nonLocalPSP_gradZetalmDeltaVlDyadicDistImageAtoms_KPoint.size(); ++i)
 	    {
@@ -361,14 +417,14 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk()
 		{
                    for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
 		   {
-                      ZetaDeltaVQuads[q][i][iPseudoWave][ikPoint][0][iSubCell]=d_nonLocalPSP_ZetalmDeltaVl[i][iPseudoWave][subCellId][ikPoint*numQuadPoints*2+q*2+0];
-                      ZetaDeltaVQuads[q][i][iPseudoWave][ikPoint][1][iSubCell]=d_nonLocalPSP_ZetalmDeltaVl[i][iPseudoWave][subCellId][ikPoint*numQuadPoints*2+q*2+1];
+                      ZetaDeltaVQuads[q][i][iPseudoWave][ikPoint][0][iSubCell]=d_nonLocalPSP_ZetalmDeltaVl[i][iPseudoWave][subCellId][ikPoint*numQuadPointsNLP*2+q*2+0];
+                      ZetaDeltaVQuads[q][i][iPseudoWave][ikPoint][1][iSubCell]=d_nonLocalPSP_ZetalmDeltaVl[i][iPseudoWave][subCellId][ikPoint*numQuadPointsNLP*2+q*2+1];
 		      for (unsigned int idim=0; idim<C_DIM; idim++)
 		      {
 		        for (unsigned int jdim=0; jdim<C_DIM; jdim++)
 		        {
-                           gradZetalmDeltaVlDyadicDistImageAtomsQuads[q][i][iPseudoWave][ikPoint][0][idim][jdim][iSubCell]=d_nonLocalPSP_gradZetalmDeltaVlDyadicDistImageAtoms_KPoint[i][iPseudoWave][subCellId][ikPoint*numQuadPoints*C_DIM*C_DIM*2+q*C_DIM*C_DIM*2+idim*C_DIM*2+jdim*2+0];
-                           gradZetalmDeltaVlDyadicDistImageAtomsQuads[q][i][iPseudoWave][ikPoint][1][idim][jdim][iSubCell]=d_nonLocalPSP_gradZetalmDeltaVlDyadicDistImageAtoms_KPoint[i][iPseudoWave][subCellId][ikPoint*numQuadPoints*C_DIM*C_DIM*2+q*C_DIM*C_DIM*2+idim*C_DIM*2+jdim*2+1];
+                           gradZetalmDeltaVlDyadicDistImageAtomsQuads[q][i][iPseudoWave][ikPoint][0][idim][jdim][iSubCell]=d_nonLocalPSP_gradZetalmDeltaVlDyadicDistImageAtoms_KPoint[i][iPseudoWave][subCellId][ikPoint*numQuadPointsNLP*C_DIM*C_DIM*2+q*C_DIM*C_DIM*2+idim*C_DIM*2+jdim*2+0];
+                           gradZetalmDeltaVlDyadicDistImageAtomsQuads[q][i][iPseudoWave][ikPoint][1][idim][jdim][iSubCell]=d_nonLocalPSP_gradZetalmDeltaVlDyadicDistImageAtoms_KPoint[i][iPseudoWave][subCellId][ikPoint*numQuadPointsNLP*C_DIM*C_DIM*2+q*C_DIM*C_DIM*2+idim*C_DIM*2+jdim*2+1];
 			}
 		      }
 		   }
@@ -384,6 +440,8 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk()
 			         rhoQuads);
     }//is pseudopotential check
 
+    Tensor<2,C_DIM,VectorizedArray<double> > EQuadSum=zeroTensor4;
+    Tensor<2,C_DIM,VectorizedArray<double> > EKPointsQuadSum=zeroTensor4;
     for (unsigned int q=0; q<numQuadPoints; ++q)
     {
        VectorizedArray<double> phiTot_q =phiTotEval.get_value(q);
@@ -423,7 +481,7 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk()
 					  dftPtr->fermiEnergy,
 					  dftParameters::TVal);
 
-       if(isPseudopotential)
+       if(isPseudopotential && !dftParameters::useHigherQuadNLP)
        {
            EKPoints+=eshelbyTensorSP::getEnlEshelbyTensorPeriodic
 	                                                (ZetaDeltaVQuads[q],
@@ -448,20 +506,47 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk()
 
        }//is pseudopotential check
 
-       E=E*forceEval.JxW(q);
-       EKPoints=EKPoints*forceEval.JxW(q);
-       for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
-       {
-	    for (unsigned int idim=0; idim<C_DIM; ++idim)
-	    {
-		for (unsigned int jdim=0; jdim<C_DIM; ++jdim)
-		{
-		    d_stress[idim][jdim]+=E[idim][jdim][iSubCell];
-		    d_stressKPoints[idim][jdim]+=EKPoints[idim][jdim][iSubCell];
-		}
-	    }
-       }
+       EQuadSum+=E*forceEval.JxW(q);
+       EKPointsQuadSum+=EKPoints*forceEval.JxW(q);
+
     }//quad point loop
+
+    if (isPseudopotential && dftParameters::useHigherQuadNLP)
+	for (unsigned int q=0; q<numQuadPointsNLP; ++q)
+	{
+	   Tensor<2,C_DIM,VectorizedArray<double> > EKPoints
+                 =eshelbyTensorSP::getEnlEshelbyTensorPeriodic
+	                                                (ZetaDeltaVQuads[q],
+		                                         projectorKetTimesPsiSpin0TimesV,
+		                                         projectorKetTimesPsiSpin1TimesV,
+						         psiSpin0QuadsNLP.begin()+q*numEigenVectors*numKPoints,
+						         psiSpin1QuadsNLP.begin()+q*numEigenVectors*numKPoints,
+							 dftPtr->d_kPointWeights,
+						         dftPtr->eigenValues,
+						         dftPtr->fermiEnergy,
+						         dftParameters::TVal);
+
+           EKPoints+=eshelbyTensorSP::getEnlStress(gradZetalmDeltaVlDyadicDistImageAtomsQuads[q],
+		                                 projectorKetTimesPsiSpin0TimesV,
+						 projectorKetTimesPsiSpin1TimesV,
+					         psiSpin0QuadsNLP.begin()+q*numEigenVectors*numKPoints,
+					         psiSpin1QuadsNLP.begin()+q*numEigenVectors*numKPoints,
+					         dftPtr->d_kPointWeights,
+						 dftPtr->eigenValues,
+						 dftPtr->fermiEnergy,
+						 dftParameters::TVal);
+
+
+	   EKPointsQuadSum+=EKPoints*forceEvalNLP.JxW(q);
+	}
+
+   for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
+	for (unsigned int idim=0; idim<C_DIM; ++idim)
+	    for (unsigned int jdim=0; jdim<C_DIM; ++jdim)
+	    {
+		d_stress[idim][jdim]+=EQuadSum[idim][jdim][iSubCell];
+		d_stressKPoints[idim][jdim]+=EKPointsQuadSum[idim][jdim][iSubCell];
+	    }
   }
 }
 #endif

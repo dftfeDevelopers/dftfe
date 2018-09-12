@@ -155,6 +155,7 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   std::vector<Quadrature<1> > quadratureVector;
   quadratureVector.push_back(QGauss<1>(C_num1DQuad<FEOrder>()));
   quadratureVector.push_back(QGaussLobatto<1>(FEOrder+1));
+  quadratureVector.push_back(QGauss<1>(C_num1DQuadPSP<FEOrder>()));
 
   //
   //

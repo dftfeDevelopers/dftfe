@@ -24,7 +24,7 @@ end
 
 
 subsection Finite element mesh parameters
-  set POLYNOMIAL ORDER = 2
+  set POLYNOMIAL ORDER = 3
   
   subsection Auto mesh generation parameters
     set BASE MESH SIZE = 1.0 
@@ -55,6 +55,8 @@ subsection DFT functional parameters
   set PSEUDOPOTENTIAL FILE NAMES LIST = @SOURCE_DIR@/pseudoMgONCV.inp
   set PSEUDO TESTS FLAG = true
   set EXCHANGE CORRELATION TYPE = 4
+  set SPIN POLARIZATION=1
+  set START MAGNETIZATION=0.2
 end
 
 
@@ -64,19 +66,17 @@ subsection SCF parameters
   set ANDERSON SCHEME MIXING PARAMETER   = 0.5
   set ANDERSON SCHEME MIXING HISTORY     = 70
   set TEMPERATURE                        = 500
-  set STARTING WFC=ATOMIC
-  set HIGHER QUAD NLP  = false
+  set STARTING WFC=RANDOM
+  set HIGHER QUAD NLP  = true
   subsection Eigen-solver parameters
-      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 20
+      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 40
       set LOWER BOUND WANTED SPECTRUM = -10.0
       set CHEBYSHEV POLYNOMIAL DEGREE = 40
       set CHEBYSHEV FILTER TOLERANCE=1e-3
-      set WFC BLOCK SIZE=7
-      set BATCH GEMM=true
-      set ORTHOGONALIZATION TYPE=GS
+      set ORTHOGONALIZATION TYPE=LW
+      set ENABLE SWITCH TO GS=true
   end
 end
-
 
 subsection Poisson problem parameters
   set MAXIMUM ITERATIONS = 10000
