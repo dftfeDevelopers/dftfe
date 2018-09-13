@@ -515,18 +515,22 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(
        VectorizedArray<double> phiTot_q =phiTotEval.get_value(q);
        Tensor<1,C_DIM,VectorizedArray<double> > gradPhiTot_q =phiTotEval.get_gradient(q);
        VectorizedArray<double> phiExt_q =phiExtEval.get_value(q)*phiExtFactor;
-#ifdef USE_COMPLEX
-       Tensor<2,C_DIM,VectorizedArray<double> > E=eshelbyTensor::getELocEshelbyTensorPeriodicNoKPoints
+
+       Tensor<2,C_DIM,VectorizedArray<double> > E=eshelbyTensor::getEElectroEshelbyTensor
 	                                                     (phiTot_q,
 			                                      gradPhiTot_q,
 						              rhoQuads[q],
-						              gradRhoQuads[q],
-						              excQuads[q],
-						              derExchCorrEnergyWithGradRhoOutQuads[q],
 							      pseudoVLocQuads[q],
 							      phiExt_q);
 
-       Tensor<2,C_DIM,VectorizedArray<double> > EKPoints=eshelbyTensor::getELocEshelbyTensorPeriodicKPoints
+       E+=eshelbyTensor::getELocXcPspEshelbyTensor
+				      (rhoQuads[q],
+				      gradRhoQuads[q],
+				      excQuads[q],
+				      derExchCorrEnergyWithGradRhoOutQuads[q],
+				      pseudoVLocQuads[q]);
+#ifdef USE_COMPLEX
+       Tensor<2,C_DIM,VectorizedArray<double> > EKPoints=eshelbyTensor::getELocWfcEshelbyTensorPeriodicKPoints
 						             (psiQuads.begin()+q*numEigenVectors*numKPoints,
 						              gradPsiQuads.begin()+q*numEigenVectors*numKPoints,
 							      dftPtr->d_kPointCoordinates,
@@ -535,19 +539,12 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE(
 							      dftPtr->fermiEnergy,
 							      dftParameters::TVal);
 #else
-       Tensor<2,C_DIM,VectorizedArray<double> > E=eshelbyTensor::getELocEshelbyTensorNonPeriodic(phiTot_q,
-			                                         gradPhiTot_q,
-						                 rhoQuads[q],
-						                 gradRhoQuads[q],
-						                 excQuads[q],
-						                 derExchCorrEnergyWithGradRhoOutQuads[q],
-								 pseudoVLocQuads[q],
-								 phiExt_q,
-						                 psiQuads.begin()+q*numEigenVectors,
-						                 gradPsiQuads.begin()+q*numEigenVectors,
-								 (dftPtr->eigenValues)[0],
-								 dftPtr->fermiEnergy,
-								 dftParameters::TVal);
+       E+=eshelbyTensor::getELocWfcEshelbyTensorNonPeriodic
+					 (psiQuads.begin()+q*numEigenVectors,
+					 gradPsiQuads.begin()+q*numEigenVectors,
+					 (dftPtr->eigenValues)[0],
+					 dftPtr->fermiEnergy,
+					 dftParameters::TVal);
 #endif
        Tensor<1,C_DIM,VectorizedArray<double> > F=zeroTensor3;
        if(isPseudopotential)
