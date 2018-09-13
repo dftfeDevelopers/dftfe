@@ -51,7 +51,10 @@ namespace dftfe
 
 	      pcout <<std::endl<< "Energy computations (Hartree) "<<std::endl;
 	      pcout << "-------------------"<<std::endl;
-	      pcout<<std::setw(25)<<"Total energy"<<": "<<std::fixed<<std::setprecision(8)<<std::setw(20)<<totalEnergyTrunc<< std::endl;
+	      if (dftParameters::useMixedPrecisionPGS)
+		pcout<<std::setw(25)<<"Total energy"<<": "<<std::fixed<<std::setprecision(6)<<std::setw(20)<<totalEnergyTrunc<< std::endl;
+	      else
+	        pcout<<std::setw(25)<<"Total energy"<<": "<<std::fixed<<std::setprecision(8)<<std::setw(20)<<totalEnergyTrunc<< std::endl;
 	  }
 	  else
 	  {
