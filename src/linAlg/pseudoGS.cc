@@ -136,17 +136,30 @@ namespace dftfe
 
       //X=X*L^{-1}^{T} implemented as X^{T}=L^{-1}*X^{T} with X^{T} stored in the column major format
       computing_timer.enter_section("Subspace rotation PGS");
-      internal::subspaceRotation(&X[0],
-	                         X.size(),
-		                 numberVectors,
-				 numberCoreVectors,
-				 &tempNonCoreVectorsArray[0],
-		                 processGrid,
-				 interBandGroupComm,
-				 mpiComm,
-			         LMatPar,
-				 overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::upper_triangular?true:false,
-				 dftParameters::triMatPGSOpt?true:false);
+
+      if (!dftParameters::useMixedPrecisionPGS)
+	  internal::subspaceRotation(&X[0],
+				     X.size(),
+				     numberVectors,
+				     numberCoreVectors,
+				     &tempNonCoreVectorsArray[0],
+				     processGrid,
+				     interBandGroupComm,
+				     mpiComm,
+				     LMatPar,
+				     overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::upper_triangular?true:false,
+				     dftParameters::triMatPGSOpt?true:false);
+      else
+	  internal::subspaceRotationPGSMixedPrec(&X[0],
+				     X.size(),
+				     numberVectors,
+				     numberCoreVectors,
+				     &tempNonCoreVectorsArray[0],
+				     processGrid,
+				     interBandGroupComm,
+				     mpiComm,
+				     LMatPar,
+				     overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::upper_triangular?true:false);
 
       computing_timer.exit_section("Subspace rotation PGS");
 

@@ -68,6 +68,7 @@ namespace dftParameters
   bool reuseWfcGeoOpt=true;
   extern double mpiAllReduceMessageBlockSizeMB=2.0;
   bool useHigherQuadNLP=true;
+  bool useMixedPrecisionPGS=false;
 
   void declare_parameters(ParameterHandler &prm)
   {
@@ -403,6 +404,10 @@ namespace dftParameters
 	    prm.declare_entry("SCALAPACKPROCS", "0",
 			      Patterns::Integer(0,300),
 			      "[Advanced] Uses a processor grid of SCALAPACKPROCS times SCALAPACKPROCS for parallel distribution of the subspace projected matrix in the Rayleigh-Ritz step and the overlap matrix in the Pseudo-Gram-Schmidt step. Default value is 0 for which a thumb rule is used (see http://netlib.org/scalapack/slug/node106.html). This parameter is only used if dealii library is compiled with ScaLAPACK.");
+
+	    prm.declare_entry("USE MIXED PREC PGS", "false",
+			      Patterns::Bool(),
+			      "[Advanced] Use mixed precision arithmetic in susbpace rotation step of PGS orthogonalization, if ORTHOGONALIZATION TYPE is set to PGS. Currently this optimization is only enabled for the real executable. Default setting is false.");
 	}
 	prm.leave_subsection ();
     }
@@ -549,6 +554,7 @@ namespace dftParameters
 	   dftParameters::enableSwitchToGS= prm.get_bool("ENABLE SWITCH TO GS");
 	   dftParameters::triMatPGSOpt= prm.get_bool("ENABLE SUBSPACE ROT PGS OPT");
 	   dftParameters::scalapackParalProcs= prm.get_integer("SCALAPACKPROCS");
+	   dftParameters::useMixedPrecisionPGS= prm.get_bool("USE MIXED PREC PGS");
 	}
 	prm.leave_subsection ();
     }

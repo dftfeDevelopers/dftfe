@@ -78,6 +78,7 @@ namespace dftfe {
       extern bool reuseWfcGeoOpt;
       extern double mpiAllReduceMessageBlockSizeMB;
       extern bool useHigherQuadNLP;
+      extern bool useMixedPrecisionPGS;
 
       /**
        * Declare parameters.
