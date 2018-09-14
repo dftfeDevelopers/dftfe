@@ -631,18 +631,21 @@ namespace dftfe
 			      {
 				const unsigned int localRowId=globalToLocalRowIdMap[i];
 				for (unsigned int j = 0; j <BVec; ++j)
-
-				  {
+				{
 				    std::map<unsigned int, unsigned int>::iterator it=
 				      globalToLocalColumnIdMap.find(j+jvec);
 				    if(it!=globalToLocalColumnIdMap.end())
+				    {
 				      rotationMatBlock[i*BVec+j]=
 					rotationMatPar.local_el(localRowId,
 								it->second);
 
-				    if (i==(j+jvec))
-                                        rotationMatBlock[i*BVec+j]-=(dataTypes::numberLowPrec)1.0;
-				  }
+				    }
+				}
+
+				if (i>=jvec && i<(jvec+BVec))
+				  if (globalToLocalColumnIdMap.find(i)!=globalToLocalColumnIdMap.end())
+                                    rotationMatBlock[i*BVec+i-jvec]-=(dataTypes::numberLowPrec)1.0;
 			      }
 		      }
 		    else
@@ -658,12 +661,16 @@ namespace dftfe
 				    std::map<unsigned int, unsigned int>::iterator it=
 				      globalToLocalRowIdMap.find(j+jvec);
 				    if (it!=globalToLocalRowIdMap.end())
+				    {
 				      rotationMatBlock[i*BVec+j]=
 					rotationMatPar.local_el(it->second,
 								localColumnId);
-				    if (i==(j+jvec))
-                                        rotationMatBlock[i*BVec+j]-=(dataTypes::numberLowPrec)1.0;
+				    }
 				  }
+
+				  if (i>=jvec && i<(jvec+BVec))
+				    if (globalToLocalRowIdMap.find(i)!=globalToLocalRowIdMap.end())
+                                      rotationMatBlock[i*BVec+i-jvec]-=(dataTypes::numberLowPrec)1.0;
 			      }
 		      }
 
