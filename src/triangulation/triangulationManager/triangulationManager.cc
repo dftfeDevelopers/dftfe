@@ -30,202 +30,236 @@
 #include "restartUtils.cc"
 
 namespace dftfe {
-//
-//constructor
-//
-triangulationManager::triangulationManager(const MPI_Comm &mpi_comm_replica,
-	                                   const MPI_Comm &interpoolcomm,
-					   const MPI_Comm &interbandgroup_comm):
-  d_parallelTriangulationUnmoved(mpi_comm_replica),
-  d_parallelTriangulationUnmovedPrevious(mpi_comm_replica),
-  d_parallelTriangulationMoved(mpi_comm_replica),
-  mpi_communicator (mpi_comm_replica),
-  interpoolcomm(interpoolcomm),
-  interBandGroupComm(interbandgroup_comm),
-  d_serialTriangulationUnmoved(MPI_COMM_SELF),
-  d_serialTriangulationUnmovedPrevious(MPI_COMM_SELF),
-  this_mpi_process (Utilities::MPI::this_mpi_process(mpi_comm_replica)),
-  n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_comm_replica)),
-  pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
-  computing_timer (pcout, TimerOutput::never, TimerOutput::wall_times)
-{
-
-}
-
-//
-//destructor
-//
-triangulationManager::~triangulationManager()
-{
-
-}
-
-
-//
-//generate Mesh
-//
-void triangulationManager::generateSerialUnmovedAndParallelMovedUnmovedMesh
-                    (const std::vector<std::vector<double> > & atomLocations,
-		     const std::vector<std::vector<double> > & imageAtomLocations,
-		     const std::vector<std::vector<double> > & domainBoundingVectors,
-		     const bool generateSerialTria)
-{
-
   //
-  //set the data members before generating mesh
+  //constructor
   //
-  d_atomPositions = atomLocations;
-  d_imageAtomPositions = imageAtomLocations;
-  d_domainBoundingVectors = domainBoundingVectors;
-
-  //clear existing triangulation data
-  d_serialTriangulationUnmoved.clear();
-  d_parallelTriangulationUnmoved.clear();
-  d_parallelTriangulationMoved.clear();
-
-  //
-  //generate mesh data members
-  //
-  if (generateSerialTria)
-     generateMesh(d_parallelTriangulationUnmoved, d_serialTriangulationUnmoved);
-  else
-     generateMesh(d_parallelTriangulationUnmoved);
-  generateMesh(d_parallelTriangulationMoved);
-}
-
-//
-//generate Mesh
-//
-void triangulationManager::generateSerialAndParallelUnmovedPreviousMesh
-                    (const std::vector<std::vector<double> > & atomLocations,
-		     const std::vector<std::vector<double> > & imageAtomLocations,
-		     const std::vector<std::vector<double> > & domainBoundingVectors)
-{
-
-  //
-  //set the data members before generating mesh
-  //
-  d_atomPositions = atomLocations;
-  d_imageAtomPositions = imageAtomLocations;
-  d_domainBoundingVectors = domainBoundingVectors;
-
-  d_parallelTriangulationUnmovedPrevious.clear();
-  d_serialTriangulationUnmovedPrevious.clear();
-
-  generateMesh(d_parallelTriangulationUnmovedPrevious, d_serialTriangulationUnmovedPrevious);
-}
-
-//
-//
-void triangulationManager::generateCoarseMeshesForRestart
-		  (const std::vector<std::vector<double> > & atomLocations,
-		   const std::vector<std::vector<double> > & imageAtomLocations,
-		   const std::vector<std::vector<double> > & domainBoundingVectors,
-		   const bool generateSerialTria)
-{
-
-  //
-  //set the data members before generating mesh
-  //
-  d_atomPositions = atomLocations;
-  d_imageAtomPositions = imageAtomLocations;
-  d_domainBoundingVectors = domainBoundingVectors;
-
-  //clear existing triangulation data
-  d_serialTriangulationUnmoved.clear();
-  d_parallelTriangulationUnmoved.clear();
-  d_parallelTriangulationMoved.clear();
-  d_parallelTriangulationUnmovedPrevious.clear();
-  d_serialTriangulationUnmovedPrevious.clear();
-
-  //
-  //generate coarse meshes
-  //
-  if (generateSerialTria)
-     generateCoarseMesh(d_serialTriangulationUnmoved);
-
-  generateCoarseMesh(d_parallelTriangulationUnmoved);
-  generateCoarseMesh(d_parallelTriangulationMoved);
-  if (dftParameters::isIonOpt || dftParameters::isCellOpt)
+  triangulationManager::triangulationManager(const MPI_Comm &mpi_comm_replica,
+					     const MPI_Comm &interpoolcomm,
+					     const MPI_Comm &interbandgroup_comm):
+    d_parallelTriangulationUnmoved(mpi_comm_replica),
+    d_parallelTriangulationUnmovedPrevious(mpi_comm_replica),
+    d_parallelTriangulationMoved(mpi_comm_replica),
+    d_triangulationElectrostatics(mpi_comm_replica),
+    mpi_communicator (mpi_comm_replica),
+    interpoolcomm(interpoolcomm),
+    interBandGroupComm(interbandgroup_comm),
+    d_serialTriangulationUnmoved(MPI_COMM_SELF),
+    d_serialTriangulationUnmovedPrevious(MPI_COMM_SELF),
+    this_mpi_process (Utilities::MPI::this_mpi_process(mpi_comm_replica)),
+    n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_comm_replica)),
+    pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
+    computing_timer (pcout, TimerOutput::never, TimerOutput::wall_times)
   {
-    generateCoarseMesh(d_parallelTriangulationUnmovedPrevious);
-    generateCoarseMesh(d_serialTriangulationUnmovedPrevious);
+
   }
-}
 
-//
-//get unmoved serial mesh
-//
-parallel::distributed::Triangulation<3> &
-triangulationManager::getSerialMeshUnmoved()
-{
-  return d_serialTriangulationUnmoved;
-}
+  //
+  //destructor
+  //
+  triangulationManager::~triangulationManager()
+  {
 
-//
-//get moved parallel mesh
-//
-parallel::distributed::Triangulation<3> &
-triangulationManager::getParallelMeshMoved()
-{
-  return d_parallelTriangulationMoved;
-}
+  }
 
-//
-//get unmoved parallel mesh
-//
-parallel::distributed::Triangulation<3> &
-triangulationManager::getParallelMeshUnmoved()
-{
-  return d_parallelTriangulationUnmoved;
-}
 
-//
-//get unmoved parallel mesh
-//
-parallel::distributed::Triangulation<3> &
-triangulationManager::getParallelMeshUnmovedPrevious()
-{
-  return d_parallelTriangulationUnmovedPrevious;
-}
+  //
+  //generate Mesh
+  //
+  void triangulationManager::generateSerialUnmovedAndParallelMovedUnmovedMesh
+  (const std::vector<std::vector<double> > & atomLocations,
+   const std::vector<std::vector<double> > & imageAtomLocations,
+   const std::vector<std::vector<double> > & domainBoundingVectors,
+   const bool generateSerialTria)
+  {
 
-//
-//get unmoved serial mesh
-//
-parallel::distributed::Triangulation<3> &
-triangulationManager::getSerialMeshUnmovedPrevious()
-{
-  return d_serialTriangulationUnmovedPrevious;
-}
+    //
+    //set the data members before generating mesh
+    //
+    d_atomPositions = atomLocations;
+    d_imageAtomPositions = imageAtomLocations;
+    d_domainBoundingVectors = domainBoundingVectors;
 
-//
-void
-triangulationManager::resetParallelMeshMovedToUnmoved()
-{
-  AssertThrow(d_parallelTriangulationUnmoved.n_global_active_cells()!=0, dftUtils::ExcInternalError());
-  AssertThrow(d_parallelTriangulationUnmoved.n_global_active_cells()
-	    ==d_parallelTriangulationMoved.n_global_active_cells(), dftUtils::ExcInternalError());
+    //clear existing triangulation data
+    d_serialTriangulationUnmoved.clear();
+    d_parallelTriangulationUnmoved.clear();
+    d_parallelTriangulationMoved.clear();
 
-  std::vector<bool> vertexTouched(d_parallelTriangulationMoved.n_vertices(),
-                                 false);
-  typename parallel::distributed::Triangulation<3>::cell_iterator cellUnmoved, endcUnmoved, cellMoved;
-  cellUnmoved = d_parallelTriangulationUnmoved.begin();
-  endcUnmoved = d_parallelTriangulationUnmoved.end();
-  cellMoved=d_parallelTriangulationMoved.begin();
+    //
+    //generate mesh data members
+    //
+    if (generateSerialTria)
+      generateMesh(d_parallelTriangulationUnmoved, d_serialTriangulationUnmoved);
+    else
+      generateMesh(d_parallelTriangulationUnmoved);
+    generateMesh(d_parallelTriangulationMoved);
+  }
 
-  for (; cellUnmoved!=endcUnmoved; ++cellUnmoved, ++cellMoved)
-    for (unsigned int vertexNo=0; vertexNo<dealii::GeometryInfo<3>::vertices_per_cell;++vertexNo)
-     {
-	 const unsigned int globalVertexNo= cellUnmoved->vertex_index(vertexNo);
+  //
+  //generate Mesh
+  //
+  void triangulationManager::generateSerialAndParallelUnmovedPreviousMesh
+  (const std::vector<std::vector<double> > & atomLocations,
+   const std::vector<std::vector<double> > & imageAtomLocations,
+   const std::vector<std::vector<double> > & domainBoundingVectors)
+  {
 
-	 if (vertexTouched[globalVertexNo])
-	   continue;
+    //
+    //set the data members before generating mesh
+    //
+    d_atomPositions = atomLocations;
+    d_imageAtomPositions = imageAtomLocations;
+    d_domainBoundingVectors = domainBoundingVectors;
 
-	 cellMoved->vertex(vertexNo) = cellUnmoved->vertex(vertexNo);
+    d_parallelTriangulationUnmovedPrevious.clear();
+    d_serialTriangulationUnmovedPrevious.clear();
 
-	 vertexTouched[globalVertexNo] = true;
+    generateMesh(d_parallelTriangulationUnmovedPrevious, d_serialTriangulationUnmovedPrevious);
+  }
+
+
+
+  //
+  //generate electrostatics mesh
+  //
+  void triangulationManager::generateMeshForElectrostatics(const std::vector<std::vector<double> > & atomLocations,
+							   const std::vector<std::vector<double> > & imageAtomLocations,
+							   const std::vector<std::vector<double> > & domainBoundingVectors)
+  {
+    //
+    //set the data members before generating mesh
+    //
+    d_atomPositions = atomLocations;
+    d_imageAtomPositions = imageAtomLocations;
+    d_domainBoundingVectors = domainBoundingVectors;
+
+    d_triangulationElectrostatics.clear();
+
+    generateMesh(d_triangulationElectrostatics);
+
+  }
+
+
+  //
+  //
+  void triangulationManager::generateCoarseMeshesForRestart
+  (const std::vector<std::vector<double> > & atomLocations,
+   const std::vector<std::vector<double> > & imageAtomLocations,
+   const std::vector<std::vector<double> > & domainBoundingVectors,
+   const bool generateSerialTria)
+  {
+
+    //
+    //set the data members before generating mesh
+    //
+    d_atomPositions = atomLocations;
+    d_imageAtomPositions = imageAtomLocations;
+    d_domainBoundingVectors = domainBoundingVectors;
+
+    //clear existing triangulation data
+    d_serialTriangulationUnmoved.clear();
+    d_parallelTriangulationUnmoved.clear();
+    d_parallelTriangulationMoved.clear();
+    d_parallelTriangulationUnmovedPrevious.clear();
+    d_serialTriangulationUnmovedPrevious.clear();
+
+    //
+    //generate coarse meshes
+    //
+    if (generateSerialTria)
+      generateCoarseMesh(d_serialTriangulationUnmoved);
+
+    generateCoarseMesh(d_parallelTriangulationUnmoved);
+    generateCoarseMesh(d_parallelTriangulationMoved);
+    if (dftParameters::isIonOpt || dftParameters::isCellOpt)
+      {
+	generateCoarseMesh(d_parallelTriangulationUnmovedPrevious);
+	generateCoarseMesh(d_serialTriangulationUnmovedPrevious);
       }
+  }
 
-}
+  //
+  //get unmoved serial mesh
+  //
+  parallel::distributed::Triangulation<3> &
+  triangulationManager::getSerialMeshUnmoved()
+  {
+    return d_serialTriangulationUnmoved;
+  }
+
+  //
+  //get moved parallel mesh
+  //
+  parallel::distributed::Triangulation<3> &
+  triangulationManager::getParallelMeshMoved()
+  {
+    return d_parallelTriangulationMoved;
+  }
+
+  //
+  //get unmoved parallel mesh
+  //
+  parallel::distributed::Triangulation<3> &
+  triangulationManager::getParallelMeshUnmoved()
+  {
+    return d_parallelTriangulationUnmoved;
+  }
+
+  //
+  //get unmoved parallel mesh
+  //
+  parallel::distributed::Triangulation<3> &
+  triangulationManager::getParallelMeshUnmovedPrevious()
+  {
+    return d_parallelTriangulationUnmovedPrevious;
+  }
+
+  //
+  //get unmoved serial mesh
+  //
+  parallel::distributed::Triangulation<3> &
+  triangulationManager::getSerialMeshUnmovedPrevious()
+  {
+    return d_serialTriangulationUnmovedPrevious;
+  }
+
+
+  //
+  //get electrostatics mesh
+  //
+  parallel::distributed::Triangulation<3> &
+  triangulationManager::getElectrostaticsMesh()
+  {
+    return d_triangulationElectrostatics;
+  }
+
+  //
+  void
+  triangulationManager::resetParallelMeshMovedToUnmoved()
+  {
+    AssertThrow(d_parallelTriangulationUnmoved.n_global_active_cells()!=0, dftUtils::ExcInternalError());
+    AssertThrow(d_parallelTriangulationUnmoved.n_global_active_cells()
+		==d_parallelTriangulationMoved.n_global_active_cells(), dftUtils::ExcInternalError());
+
+    std::vector<bool> vertexTouched(d_parallelTriangulationMoved.n_vertices(),
+				    false);
+    typename parallel::distributed::Triangulation<3>::cell_iterator cellUnmoved, endcUnmoved, cellMoved;
+    cellUnmoved = d_parallelTriangulationUnmoved.begin();
+    endcUnmoved = d_parallelTriangulationUnmoved.end();
+    cellMoved=d_parallelTriangulationMoved.begin();
+
+    for (; cellUnmoved!=endcUnmoved; ++cellUnmoved, ++cellMoved)
+      for (unsigned int vertexNo=0; vertexNo<dealii::GeometryInfo<3>::vertices_per_cell;++vertexNo)
+	{
+	  const unsigned int globalVertexNo= cellUnmoved->vertex_index(vertexNo);
+
+	  if (vertexTouched[globalVertexNo])
+	    continue;
+
+	  cellMoved->vertex(vertexNo) = cellUnmoved->vertex(vertexNo);
+
+	  vertexTouched[globalVertexNo] = true;
+	}
+
+  }
 
 }
