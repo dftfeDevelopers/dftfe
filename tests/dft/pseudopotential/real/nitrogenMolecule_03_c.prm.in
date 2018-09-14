@@ -32,6 +32,11 @@ subsection DFT functional parameters
   set PSEUDOPOTENTIAL FILE NAMES LIST = @SOURCE_DIR@/pseudoNGGA.inp
 end
 
+subsection Parallelization
+  set NPBAND=2
+end
+
+
 subsection SCF parameters
   set ANDERSON SCHEME MIXING HISTORY   = 70
   set ANDERSON SCHEME MIXING PARAMETER = 0.5
@@ -45,5 +50,9 @@ subsection SCF parameters
       set CHEBYSHEV POLYNOMIAL DEGREE = 30
       set CHEBYSHEV FILTER TOLERANCE=2e-3
       set USE MIXED PREC PGS=true
+      set WFC BLOCK SIZE=3
+      set SUBSPACE ROT DOFS BLOCK SIZE=500
+      set SCALAPACKPROCS=2
+      set SPECTRUM SPLIT CORE EIGENSTATES=3
   end
 end
