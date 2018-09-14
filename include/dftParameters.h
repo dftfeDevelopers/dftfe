@@ -79,6 +79,7 @@ namespace dftfe {
       extern double mpiAllReduceMessageBlockSizeMB;
       extern bool useHigherQuadNLP;
       extern bool useMixedPrecisionPGS;
+      extern unsigned int numAdaptiveFilterStates;
 
       /**
        * Declare parameters.

@@ -69,6 +69,7 @@ namespace dftParameters
   extern double mpiAllReduceMessageBlockSizeMB=2.0;
   bool useHigherQuadNLP=true;
   bool useMixedPrecisionPGS=false;
+  unsigned int numAdaptiveFilterStates=0;
 
   void declare_parameters(ParameterHandler &prm)
   {
@@ -408,6 +409,10 @@ namespace dftParameters
 	    prm.declare_entry("USE MIXED PREC PGS", "false",
 			      Patterns::Bool(),
 			      "[Advanced] Use mixed precision arithmetic in susbpace rotation step of PGS orthogonalization, if ORTHOGONALIZATION TYPE is set to PGS. Currently this optimization is only enabled for the real executable. Default setting is false.");
+
+	    prm.declare_entry("ADAPTIVE FILTER STATES", "0",
+			      Patterns::Integer(0),
+			      "[Advanced] Number of lowest Kohn-Sham eigenstates which are filtered with half the Chebyshev polynomial degree specified by CHEBYSHEV POLYNOMIAL DEGREE. This value is usually chosen to be the sum of the number of core eigenstates for each atom type multiplied by number of atoms of that type. This setting is recommended for medium-large systems (greater than 2000 electrons). Default value is 0 i.e., all states are filtered with the same Chebyshev polynomial degree.");
 	}
 	prm.leave_subsection ();
     }
@@ -555,6 +560,7 @@ namespace dftParameters
 	   dftParameters::triMatPGSOpt= prm.get_bool("ENABLE SUBSPACE ROT PGS OPT");
 	   dftParameters::scalapackParalProcs= prm.get_integer("SCALAPACKPROCS");
 	   dftParameters::useMixedPrecisionPGS= prm.get_bool("USE MIXED PREC PGS");
+	   dftParameters::numAdaptiveFilterStates= prm.get_integer("ADAPTIVE FILTER STATES");
 	}
 	prm.leave_subsection ();
     }

@@ -215,7 +215,16 @@ namespace dftfe{
 	    //call Chebyshev filtering function only for the current block to be filtered
 	    //and does in-place filtering
 	    computing_timer.enter_section("Chebyshev filtering opt");
-	    linearAlgebraOperations::chebyshevFilter(operatorMatrix,
+	    if (jvec+BVec<dftParameters::numAdaptiveFilterStates)
+	       linearAlgebraOperations::chebyshevFilter(operatorMatrix,
+						        eigenVectorsFlattenedArrayBlock,
+						        BVec,
+						        chebyshevOrder/2,
+						        d_lowerBoundUnWantedSpectrum,
+						        upperBoundUnwantedSpectrum,
+						        d_lowerBoundWantedSpectrum);
+	    else
+	       linearAlgebraOperations::chebyshevFilter(operatorMatrix,
 						     eigenVectorsFlattenedArrayBlock,
 						     BVec,
 						     chebyshevOrder,
