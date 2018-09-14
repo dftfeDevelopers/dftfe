@@ -372,17 +372,21 @@ void forceClass<FEOrder>::computeStressEEshelbyEPSPEnlEk()
        VectorizedArray<double> phiTot_q =phiTotEval.get_value(q);
        Tensor<1,C_DIM,VectorizedArray<double> > gradPhiTot_q =phiTotEval.get_gradient(q);
        VectorizedArray<double> phiExt_q =phiExtEval.get_value(q)*phiExtFactor;
-       Tensor<2,C_DIM,VectorizedArray<double> > E=eshelbyTensor::getELocEshelbyTensorPeriodicNoKPoints
+       Tensor<2,C_DIM,VectorizedArray<double> > E=eshelbyTensor::getEElectroEshelbyTensor
 	                                                     (phiTot_q,
 			                                      gradPhiTot_q,
 						              rhoQuads[q],
-						              gradRhoQuads[q],
-						              excQuads[q],
-						              derExchCorrEnergyWithGradRhoOutQuads[q],
 							      pseudoVLocQuads[q],
 							      phiExt_q);
 
-       Tensor<2,C_DIM,VectorizedArray<double> > EKPoints=eshelbyTensor::getELocEshelbyTensorPeriodicKPoints
+       E+=eshelbyTensor::getELocXcPspEshelbyTensor
+				      (rhoQuads[q],
+				      gradRhoQuads[q],
+				      excQuads[q],
+				      derExchCorrEnergyWithGradRhoOutQuads[q],
+				      pseudoVLocQuads[q]);
+
+       Tensor<2,C_DIM,VectorizedArray<double> > EKPoints=eshelbyTensor::getELocWfcEshelbyTensorPeriodicKPoints
 						             (psiQuads.begin()+q*numEigenVectors*numKPoints,
 						              gradPsiQuads.begin()+q*numEigenVectors*numKPoints,
 							      dftPtr->d_kPointCoordinates,

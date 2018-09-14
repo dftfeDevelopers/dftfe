@@ -447,19 +447,24 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk()
        VectorizedArray<double> phiTot_q =phiTotEval.get_value(q);
        Tensor<1,C_DIM,VectorizedArray<double> > gradPhiTot_q =phiTotEval.get_gradient(q);
        VectorizedArray<double> phiExt_q =phiExtEval.get_value(q)*phiExtFactor;
-       Tensor<2,C_DIM,VectorizedArray<double> > E=eshelbyTensorSP::getELocEshelbyTensorPeriodicNoKPoints
+
+       Tensor<2,C_DIM,VectorizedArray<double> > E=eshelbyTensor::getEElectroEshelbyTensor
 	                                                     (phiTot_q,
 			                                      gradPhiTot_q,
 						              rhoQuads[q],
-						              gradRhoSpin0Quads[q],
-							      gradRhoSpin1Quads[q],
-						              excQuads[q],
-						              derExchCorrEnergyWithGradRhoOutSpin0Quads[q],
-							      derExchCorrEnergyWithGradRhoOutSpin1Quads[q],
 							      pseudoVLocQuads[q],
 							      phiExt_q);
 
-       Tensor<2,C_DIM,VectorizedArray<double> > EKPoints=eshelbyTensorSP::getELocEshelbyTensorPeriodicKPoints
+       E+=eshelbyTensorSP::getELocXcPspEshelbyTensor
+				      (rhoQuads[q],
+				       gradRhoSpin0Quads[q],
+				       gradRhoSpin1Quads[q],
+				       excQuads[q],
+				       derExchCorrEnergyWithGradRhoOutSpin0Quads[q],
+				       derExchCorrEnergyWithGradRhoOutSpin1Quads[q],
+				       pseudoVLocQuads[q]);
+
+       Tensor<2,C_DIM,VectorizedArray<double> > EKPoints=eshelbyTensorSP::getELocWfcEshelbyTensorPeriodicKPoints
 							 (psiSpin0Quads.begin()+q*numEigenVectors*numKPoints,
                                                           psiSpin1Quads.begin()+q*numEigenVectors*numKPoints,
 							  gradPsiSpin0Quads.begin()+q*numEigenVectors*numKPoints,
