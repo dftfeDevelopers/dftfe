@@ -25,6 +25,8 @@
 #include <dftParameters.h>
 #include <dftUtils.h>
 #include <fileReaders.h>
+#include <constants.h>
+
 #include "meshGenUtils.cc"
 #include "generateMesh.cc"
 #include "restartUtils.cc"

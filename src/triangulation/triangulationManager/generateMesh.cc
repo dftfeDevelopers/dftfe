@@ -16,6 +16,11 @@
 
 namespace dftfe {
 
+   struct quadData
+   {
+     double density;
+   };
+
     namespace internal
     {
 	void checkTriangulationEqualityAcrossProcessorPools
@@ -290,9 +295,126 @@ namespace dftfe {
 	}
     }
 
+  template<unsigned int FEOrder> 
+  void triangulationManager::generateSubdividedMeshWithQuadData(const dealii::MatrixFree<3,double> & matrixFreeData,
+								const ConstraintMatrix & constraints,
+								const std::map<dealii::CellId,std::vector<double> > & rhoQuadValuesCoarse,
+								std::map<dealii::CellId,std::vector<double> > & rhoQuadValuesRefined)
+								
+  {
+    
+    //
+    //create a new nodal field to store electron-density
+    //
+    vectorType rhoNodalFieldCoarse;
+    matrixFreeData.initialize_dof_vector(rhoNodalFieldCoarse);
+
+    //
+    //access quadrature rules
+    //
+    dealii::QGauss<3> quadrature(C_num1DQuad<FEOrder>());
+    const unsigned int n_q_points = quadrature.size();
+
+
+    //
+    //create electron-density quadrature data using "CellDataStorage" class of dealii
+    //
+    /*CellDataStorage<typename DoFHandler<3>::active_cell_iterator,quadData> rhoQuadDataStorage;
+
+    rhoQuadDataStorage.initialize(matrixFreeData.get_dof_handler().begin_active(),
+				  matrixFreeData.get_dof_handler().end(),
+				  n_q_points);
+
+
+    //
+    //Copy rho values into CellDataStorage Container
+    //
+    typename dealii::DoFHandler<3>::active_cell_iterator cell = matrixFreeData.get_dof_handler().begin_active(), endc = matrixFreeData.get_dof_handler().end();
+
+    for(; cell!=endc; ++cell)
+      {
+	if(cell->is_locally_owned())
+	  {
+	    const std::vector<std::shared_ptr<quadData> > rhoQuadPointVector = rhoQuadDataStorage.get_data(cell);
+	    for(unsigned int q = 0; q < n_q_points; ++q)
+	      {
+		rhoQuadPointVector[q]->density = rhoQuadValuesCoarse.find(cell->id())->second[q];
+	      }
+	  }
+	  }*/
+
+
+     std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell,const unsigned int q)> funcRho = [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell , const unsigned int q)
+                              {return rhoQuadValuesCoarse.find(cell->id())->second[q];};
+
+    //
+    //project and create a nodal field of the same mesh from the quadrature data (L2 projection from quad points to nodes)
+    //
+     dealii::VectorTools::project<3,dealii::parallel::distributed::Vector<double> >(matrixFreeData.get_dof_handler(),
+								   constraints,
+								   quadrature,
+								   funcRho,
+								   rhoNodalFieldCoarse);
+
+
+    rhoNodalFieldCoarse.update_ghost_values();
+
+    //
+    //uniformly subdivide the mesh to prepare for solution transfer
+    //
+    parallel::distributed::SolutionTransfer<3,vectorType> solTrans(matrixFreeData.get_dof_handler());
+    d_triangulationElectrostatics.set_all_refine_flags();
+    d_triangulationElectrostatics.prepare_coarsening_and_refinement();
+    solTrans.prepare_for_coarsening_and_refinement(rhoNodalFieldCoarse);
+    d_triangulationElectrostatics.execute_coarsening_and_refinement();
+
+
+    //
+    //create a dofHandler for the refined Mesh
+    //
+    dealii::DoFHandler<3> dofHandlerHRefined;
+    dofHandlerHRefined.initialize(electrostaticsTria,dealii::FE_Q<3>(dealii::QGaussLobatto<1>(FEOrder+1)));
+    dofHandlerHRefined.distribute_dofs(dofHandlerHRefined.get_fe());
+
+
+    //
+    //create nodal field on the refined mesh
+    //
+    vectorType rhoNodalFieldRefined;
+    rhoNodalFieldRefined.reinit(dofHandlerHRefined.n_dofs());
+    solTrans.interpolate(rhoNodalFieldRefined);
+    rhoNodalFieldRefined.update_ghost_values();
+
+    
+    //
+    //Remove other updates
+    //
+    FEValues<3> fe_values(dofHandlerHRefined.get_fe(),quadrature,update_values | update_JxW_values | update_quadrature_points);
+
+    typename dealii::DoFHandler<3>::active_cell_iterator cellRefined = dofHandlerHRefined.begin_active(), endcRefined = dofHandlerHRefined.end();
+
+    //
+    //clean up tempRho after debugging tests
+    //
+    std::vector<double> tempRho(n_q_points);
+
+    for(; cellRefined!=endcRefined; ++cellRefined)
+      {
+	if(cellRefined->is_locally_owned())
+	  {
+	    fe_values.reinit(cellRefined);
+	    fe_values.get_function_values(rhoNodalFieldRefined,tempRho);
+ 	    std::vector<double> & tempRho1 = rhoQuadValuesRefined[cellRefined->id()];
+	    tempRho1 = tempRho;                   								  
+	  }
+      }
+
+    
+  }
+
 
     void triangulationManager::generateMesh(parallel::distributed::Triangulation<3>& parallelTriangulation,
-					  parallel::distributed::Triangulation<3>& serialTriangulation)
+					    parallel::distributed::Triangulation<3>& serialTriangulation)
     {
       if(!dftParameters::meshFileName.empty())
 	{

@@ -16,6 +16,7 @@
 #ifndef triangulationManager_H_
 #define triangulationManager_H_
 #include "headers.h"
+#include "stdafx.h"
 
 namespace dftfe  {
 
@@ -122,6 +123,18 @@ namespace dftfe  {
        const std::vector<std::vector<double> > & domainBoundingVectors,
        const bool generateSerialTria);
 
+
+    /**
+     * @brief returns constant reference to triangulation to compute electrostatics
+     *
+     */
+     template<unsigned int FEOrder>
+    void  generateSubdividedMeshWithQuadData(const dealii::MatrixFree<3,double> & matrixFreeData,
+										 const ConstraintMatrix & constraints,
+										 const std::map<dealii::CellId,std::vector<double> > & rhoQuadValuesCoarse,
+										 std::map<dealii::CellId,std::vector<double> > & rhoQuadValuesRefined);
+
+
     /**
      * @brief returns constant reference to serial unmoved triangulation
      *
@@ -162,6 +175,7 @@ namespace dftfe  {
      */
     parallel::distributed::Triangulation<3> & getElectrostaticsMesh();
 
+    
 
     /**
      * @brief resets the vertices of parallel mesh moved to umoved. This is required before

@@ -17,7 +17,8 @@
 //
 
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove)
+void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
+					bool reuseClosestTriaVertices)
 {
 
   meshMovementGaussianClass gaussianMove(mpi_communicator);
@@ -38,9 +39,24 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove)
 
   std::vector<Point<3>> closestTriaVertexToAtomsLocation;
   std::vector<Tensor<1,3,double> > dispClosestTriaVerticesToAtoms;
-  gaussianMove.findClosestVerticesToDestinationPoints(atomPoints,
-						      closestTriaVertexToAtomsLocation,
-						      dispClosestTriaVerticesToAtoms);
+
+
+  if(reuseClosestTriaVertices)
+    {
+      closestTriaVertexToAtomsLocation = d_closestTriaVertexToAtomsLocation;
+      dispClosestTriaVerticesToAtoms = d_dispClosestTriaVerticesToAtoms;
+    }
+  else
+    {
+      gaussianMove.findClosestVerticesToDestinationPoints(atomPoints,
+							  closestTriaVertexToAtomsLocation,
+							  dispClosestTriaVerticesToAtoms);
+    }
+
+  d_closestTriaVertexToAtomsLocation = closestTriaVertexToAtomsLocation;
+  d_dispClosestTriaVerticesToAtoms = dispClosestTriaVerticesToAtoms;
+
+
 
   //add control point locations and displacements corresponding to images
   for(unsigned int iImage=0;iImage <numberImageAtoms; iImage++)

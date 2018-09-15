@@ -276,7 +276,8 @@ namespace dftfe {
       /**
        *@brief  moves the triangulation vertices using Gaussians such that the all atoms are on triangulation vertices
        */
-      void moveMeshToAtoms(Triangulation<3,3> & triangulationMove);
+      void moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
+			   bool reuseFlag = false);
 
       /**
        * Initializes the guess of electron-density and single-atom wavefunctions on the mesh,
@@ -711,6 +712,10 @@ namespace dftfe {
 
       /// k point weights
       std::vector<double> d_kPointWeights;
+
+      /// closest tria vertex
+      std::vector<Point<3>> d_closestTriaVertexToAtomsLocation;
+      std::vector<Tensor<1,3,double> > d_dispClosestTriaVerticesToAtoms;
 
       /// global k index of lower bound of the local k point set
       unsigned int lowerBoundKindex ;
