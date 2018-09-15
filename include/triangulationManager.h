@@ -128,11 +128,12 @@ namespace dftfe  {
      * @brief returns constant reference to triangulation to compute electrostatics
      *
      */
-     template<unsigned int FEOrder>
     void  generateSubdividedMeshWithQuadData(const dealii::MatrixFree<3,double> & matrixFreeData,
-										 const ConstraintMatrix & constraints,
-										 const std::map<dealii::CellId,std::vector<double> > & rhoQuadValuesCoarse,
-										 std::map<dealii::CellId,std::vector<double> > & rhoQuadValuesRefined);
+					     const ConstraintMatrix & constraints,
+					     const dealii::Quadrature<3> & quadrature,				     
+					     const unsigned int FEOrder,
+					     const std::map<dealii::CellId,std::vector<double> > & rhoQuadValuesCoarse,				     
+					     std::map<dealii::CellId,std::vector<double> > & rhoQuadValuesRefined);
 
 
     /**

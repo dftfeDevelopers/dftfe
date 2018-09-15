@@ -295,12 +295,13 @@ namespace dftfe {
 	}
     }
 
-  template<unsigned int FEOrder> 
+
   void triangulationManager::generateSubdividedMeshWithQuadData(const dealii::MatrixFree<3,double> & matrixFreeData,
-								const ConstraintMatrix & constraints,
+								const dealii::ConstraintMatrix & constraints,
+								const dealii::Quadrature<3> & quadrature,
+								const unsigned int FEOrder,
 								const std::map<dealii::CellId,std::vector<double> > & rhoQuadValuesCoarse,
-								std::map<dealii::CellId,std::vector<double> > & rhoQuadValuesRefined)
-								
+							        std::map<dealii::CellId,std::vector<double> > & rhoQuadValuesRefined)
   {
     
     //
@@ -310,9 +311,8 @@ namespace dftfe {
     matrixFreeData.initialize_dof_vector(rhoNodalFieldCoarse);
 
     //
-    //access quadrature rules
+    //Get number of quadrature points
     //
-    dealii::QGauss<3> quadrature(C_num1DQuad<FEOrder>());
     const unsigned int n_q_points = quadrature.size();
 
 
@@ -347,14 +347,16 @@ namespace dftfe {
      std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell,const unsigned int q)> funcRho = [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell , const unsigned int q)
                               {return rhoQuadValuesCoarse.find(cell->id())->second[q];};
 
+   
     //
     //project and create a nodal field of the same mesh from the quadrature data (L2 projection from quad points to nodes)
     //
-     dealii::VectorTools::project<3,dealii::parallel::distributed::Vector<double> >(matrixFreeData.get_dof_handler(),
-								   constraints,
-								   quadrature,
-								   funcRho,
-								   rhoNodalFieldCoarse);
+     dealii::VectorTools::project<3,dealii::parallel::distributed::Vector<double> >(dealii::MappingQ1<3,3>(),
+										    matrixFreeData.get_dof_handler(),
+										    constraints,
+										    quadrature,
+										    funcRho,
+										    rhoNodalFieldCoarse);
 
 
     rhoNodalFieldCoarse.update_ghost_values();
@@ -373,7 +375,7 @@ namespace dftfe {
     //create a dofHandler for the refined Mesh
     //
     dealii::DoFHandler<3> dofHandlerHRefined;
-    dofHandlerHRefined.initialize(electrostaticsTria,dealii::FE_Q<3>(dealii::QGaussLobatto<1>(FEOrder+1)));
+    dofHandlerHRefined.initialize(d_triangulationElectrostatics,dealii::FE_Q<3>(dealii::QGaussLobatto<1>(FEOrder+1)));
     dofHandlerHRefined.distribute_dofs(dofHandlerHRefined.get_fe());
 
 
@@ -393,9 +395,7 @@ namespace dftfe {
 
     typename dealii::DoFHandler<3>::active_cell_iterator cellRefined = dofHandlerHRefined.begin_active(), endcRefined = dofHandlerHRefined.end();
 
-    //
-    //clean up tempRho after debugging tests
-    //
+
     std::vector<double> tempRho(n_q_points);
 
     for(; cellRefined!=endcRefined; ++cellRefined)
@@ -404,8 +404,9 @@ namespace dftfe {
 	  {
 	    fe_values.reinit(cellRefined);
 	    fe_values.get_function_values(rhoNodalFieldRefined,tempRho);
- 	    std::vector<double> & tempRho1 = rhoQuadValuesRefined[cellRefined->id()];
-	    tempRho1 = tempRho;                   								  
+	    //rhoQuadValuesRefined.find(cellRefined->id()]->second.clear();
+	    for(unsigned int q_point = 0; q_point < n_q_points; ++q_point)
+	      rhoQuadValuesRefined[cellRefined->id()].push_back(tempRho[q_point]);
 	  }
       }
 
@@ -557,5 +558,6 @@ namespace dftfe {
 
       serialTriangulation.execute_coarsening_and_refinement();
     }
+
 
 }

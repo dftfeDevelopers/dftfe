@@ -477,14 +477,11 @@ namespace dftfe
       //parallel loop over all elements
       typename dealii::DoFHandler<3>::active_cell_iterator cellElectrostatic = dofHandlerElectrostatic.begin_active(), endcElectrostatic = dofHandlerElectrostatic.end();
 
-      typename dealii::DoFHandler<3>::active_cell_iterator cellElectronic = dofHandlerElectronic.begin_active();
+      typename dealii::DoFHandler<3>::active_cell_iterator cellElectronic = dofHandlerElectronic.begin_active(), endcElectronic = dofHandlerElectronic.end();
 
-      for (; cellElectrostatic!=endcElectrostatic; ++cellElectrostatic, ++cellElectronic)
-	  if (cellElectrostatic->is_locally_owned())
+      for (; cellElectronic!=endcElectronic; ++cellElectronic)
+	  if (cellElectronic->is_locally_owned())
 	    {
-	      // Compute values for current cell.
-	      feValuesElectrostatic.reinit (cellElectrostatic);
-	      feValuesElectrostatic.get_function_values(phiTotRhoOut,cellPhiTotRhoOut);
 
 	      feValuesElectronic.reinit (cellElectronic);
 	      feValuesElectronic.get_function_values(phiTotRhoIn,cellPhiTotRhoIn);
@@ -594,10 +591,22 @@ namespace dftfe
 		      electrostaticPotentialTimesRho+=cellPhiTotRhoIn[q_point]*(rhoOutValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW (q_point);
 		    }
 		}
-
-	        for (unsigned int q_point = 0; q_point < num_quad_points_electrostatic; ++q_point)
-		  electrostaticEnergyTotPot+=0.5*(cellPhiTotRhoOut[q_point])*(rhoOutValuesElectrostatic.find(cellElectrostatic->id())->second[q_point])*feValuesElectrostatic.JxW(q_point);
+	       
 	}
+
+
+      for(; cellElectrostatic!=endcElectrostatic; ++cellElectrostatic)
+	if(cellElectrostatic->is_locally_owned())
+	  {
+	    // Compute values for current cell.
+	    feValuesElectrostatic.reinit(cellElectrostatic);
+	    feValuesElectrostatic.get_function_values(phiTotRhoOut,cellPhiTotRhoOut);
+
+	    for(unsigned int q_point = 0; q_point < num_quad_points_electrostatic; ++q_point)
+	      electrostaticEnergyTotPot+=0.5*(cellPhiTotRhoOut[q_point])*(rhoOutValuesElectrostatic.find(cellElectrostatic->id())->second[q_point])*feValuesElectrostatic.JxW(q_point);
+	  }
+
+
 
       const double potentialTimesRho=excCorrPotentialTimesRho+electrostaticPotentialTimesRho;
 

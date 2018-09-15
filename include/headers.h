@@ -63,6 +63,7 @@
 #include <deal.II/lac/solver_gmres.h>
 #include <deal.II/lac/precondition.h>
 #include <deal.II/distributed/tria.h>
+#include <deal.II/distributed/solution_transfer.h>
 #include <deal.II/lac/parallel_vector.h>
 #include <deal.II/matrix_free/matrix_free.h>
 #include <deal.II/matrix_free/fe_evaluation.h>

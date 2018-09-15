@@ -395,15 +395,15 @@ namespace dftfe {
       double mixing_anderson_spinPolarized();
 
       /**
-       * Re solves the all electrostatics on a p refined mesh, and computes
+       * Re solves the all electrostatics on a h refined mesh, and computes
        * the corresponding energy. This function
-       * is called after reaching the ground state electron density. Currently the p refinement
-       * is hardcoded to FEOrder+2.
+       * is called after reaching the ground state electron density. Currently the h refinement
+       * is hardcoded to a one subdivison of carser mesh
        * FIXME: The function is not yet extened to the case when point group symmetry is used.
        * However, it works for time reversal symmetry.
        *
        */
-      //void computeElectrostaticEnergyPRefined();
+      void computeElectrostaticEnergyHRefined();
 
       /**
        *@brief Computes Fermi-energy obtained by imposing constraint on the number of electrons
