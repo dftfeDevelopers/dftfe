@@ -1577,7 +1577,7 @@ namespace dftfe {
       }
 
 
-    //if (dftParameters::electrostaticsPRefinement)
+  if(dftParameters::electrostaticsHRefinement)
     computeElectrostaticEnergyHRefined();
 
     if (dftParameters::writeWfcSolutionFields)

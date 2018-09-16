@@ -138,9 +138,9 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
 					   dofHandlerHRefined,
 					   constraintsHRefined,
 					   atomLocations,
-					   d_imagePositions,
-					   d_imageIds,
-					   d_imageCharges,
+					   d_imagePositionsTrunc,
+					   d_imageIdsTrunc,
+					   d_imageChargesTrunc,
 					   dftParameters::radiusAtomBall);
 
    std::vector<const dealii::DoFHandler<3> *> matrixFreeDofHandlerVectorInput;
