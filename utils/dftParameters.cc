@@ -33,8 +33,9 @@ namespace dftParameters
   double radiusAtomBall=0.0, mixingParameter=0.5;
   double lowerEndWantedSpectrum=0.0,relLinearSolverTolerance=1e-10,selfConsistentSolverTolerance=1e-10,TVal=500, start_magnetization=0.0;
   double chebyshevTolerance = 1e-02;
+  std::string mixingMethod = ""; 
 
-  bool isPseudopotential=false,periodicX=false,periodicY=false,periodicZ=false, useSymm=false, timeReversal=false,pseudoTestsFlag=false;
+  bool isPseudopotential=false,periodicX=false,periodicY=false,periodicZ=false, useSymm=false, timeReversal=false,pseudoTestsFlag=false, constraintMagnetization=false;
   std::string meshFileName="",coordinatesFile="",domainBoundingVectorsFile="",kPointDataFile="", ionRelaxFlagsFile="",orthogType="",pseudoPotentialFile="";
 
   double outerAtomBallRadius=2.0, meshSizeOuterDomain=10.0;
@@ -330,13 +331,21 @@ namespace dftParameters
 			  Patterns::Double(1e-12,1.0),
 			  "[Standard] SCF iterations stopping tolerance in terms of $L_2$ norm of the electron-density difference between two successive iterations. CAUTION: A tolerance close to 1e-7 or lower can deteriorate the SCF convergence due to the round-off error accumulation.");
 
-	prm.declare_entry("ANDERSON SCHEME MIXING HISTORY", "10",
+	prm.declare_entry("MIXING HISTORY", "10",
 			  Patterns::Integer(1,1000),
-			  "[Standard] Number of SCF iteration history to be considered for mixing the electron-density using Anderson mixing scheme. For metallic systems, a mixing history larger than the default value provides better scf convergence.");
+			  "[Standard] Number of SCF iteration history to be considered for density mixing schemes. For metallic systems, a mixing history larger than the default value provides better scf convergence.");
 
-	prm.declare_entry("ANDERSON SCHEME MIXING PARAMETER", "0.5",
+	prm.declare_entry("MIXING PARAMETER", "0.5",
 			  Patterns::Double(0.0,1.0),
-			  "[Standard] Mixing parameter to be used in Anderson scheme.");
+			  "[Standard] Mixing parameter to be used in density mixing schemes.");
+
+	prm.declare_entry("MIXING METHOD","ANDERSON",
+			      Patterns::Selection("BROYDEN|ANDERSON"),
+			      "[Standard] Method for density mixing. ANDERSON is the default option.");
+
+	prm.declare_entry("CONSTRAINT MAGNETIZATION", "false",
+			  Patterns::Bool(),
+			  "[Standard] Boolean parameter specifying whether to keep the starting magnetization fixed through the SCF iterations. Default is FALSE");
 
 	prm.declare_entry("STARTING WFC","RANDOM",
 			  Patterns::Selection("ATOMIC|RANDOM"),
@@ -537,8 +546,10 @@ namespace dftParameters
 	dftParameters::TVal                          = prm.get_double("TEMPERATURE");
 	dftParameters::numSCFIterations              = prm.get_integer("MAXIMUM ITERATIONS");
 	dftParameters::selfConsistentSolverTolerance = prm.get_double("TOLERANCE");
-	dftParameters::mixingHistory                 = prm.get_integer("ANDERSON SCHEME MIXING HISTORY");
-	dftParameters::mixingParameter               = prm.get_double("ANDERSON SCHEME MIXING PARAMETER");
+	dftParameters::mixingHistory                 = prm.get_integer("MIXING HISTORY");
+	dftParameters::mixingParameter               = prm.get_double("MIXING PARAMETER");
+	dftParameters::mixingMethod                  = prm.get("MIXING METHOD");
+	dftParameters::constraintMagnetization       = prm.get_bool("CONSTRAINT MAGNETIZATION");
         dftParameters::startingWFCType               = prm.get("STARTING WFC");
 	dftParameters::computeEnergyEverySCF         = prm.get_bool("COMPUTE ENERGY EACH ITER");
 	dftParameters::useHigherQuadNLP              = prm.get_bool("HIGHER QUAD NLP");

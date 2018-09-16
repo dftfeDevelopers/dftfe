@@ -85,6 +85,8 @@ namespace dftfe
 	double localBandEnergy(const std::vector<std::vector<double> > & eigenValues,
 			       const std::vector<double> & kPointWeights,
 		               const double fermiEnergy,
+			       const double fermiEnergyUp,
+			       const double fermiEnergyDown,
 			       const double TVal,
 			       const unsigned int spinPolarized,
 			       const dealii::ConditionalOStream & scout,
@@ -105,26 +107,45 @@ namespace dftfe
 		  scout<<" Printing KS eigen values (spin split if this is a spin polarized calculation ) and fractional occupancies for kPoint " << (lowerBoundKindex + kPoint) << std::endl;
 	          scout << "  " << std::endl ;
 		}
-	      for (unsigned int i=0; i<numEigenValues; i++)
+              for (unsigned int i=0; i<numEigenValues; i++)
 		{
+		  if (spinPolarized==0)
+		  {
                   const double partialOccupancy=dftUtils::getPartialOccupancy
                                                     (eigenValues[kPoint][i],
                                                      fermiEnergy,
                                                      C_kb,
                                                      TVal);
-		  bandEnergyLocal+= (2-spinPolarized)*partialOccupancy*kPointWeights[kPoint]*eigenValues[kPoint][i];
+		  bandEnergyLocal+= 2.0*partialOccupancy*kPointWeights[kPoint]*eigenValues[kPoint][i];
 		  //
-		  if (spinPolarized==0)
+		  
 	 	     if (verbosity>2)
 		        scout << i<<" : "<< eigenValues[kPoint][i] << "       " << partialOccupancy<<std::endl;
 		  //
+		  }
 		  if (spinPolarized==1){
-		  const double partialOccupancy2=dftUtils::getPartialOccupancy
+	 	  double partialOccupancy=dftUtils::getPartialOccupancy
+                                                    (eigenValues[kPoint][i],
+                                                     fermiEnergy,
+                                                     C_kb,
+                                                     TVal);
+		  double partialOccupancy2=dftUtils::getPartialOccupancy
                                                     (eigenValues[kPoint][i+numEigenValues],
                                                      fermiEnergy,
                                                      C_kb,
                                                      TVal);
-		  bandEnergyLocal+= (2-spinPolarized)*partialOccupancy2*kPointWeights[kPoint]*eigenValues[kPoint][i+numEigenValues];
+
+		 if(dftParameters::constraintMagnetization)
+			{
+				 partialOccupancy = 1.0 , partialOccupancy2 = 1.0 ;
+				 if (eigenValues[kPoint][i+numEigenValues] > fermiEnergyDown)
+					partialOccupancy2 = 0.0 ;
+				 if (eigenValues[kPoint][i] > fermiEnergyUp)
+					partialOccupancy = 0.0 ;					
+
+			}
+		  bandEnergyLocal+= partialOccupancy*kPointWeights[kPoint]*eigenValues[kPoint][i];
+		  bandEnergyLocal+= partialOccupancy2*kPointWeights[kPoint]*eigenValues[kPoint][i+numEigenValues];
 		  //
 		  if (verbosity>2)
 			scout<< i<<" : "<< eigenValues[kPoint][i] << "       " << eigenValues[kPoint][i+numEigenValues] << "       " <<
@@ -249,6 +270,8 @@ namespace dftfe
 	  dealii::Utilities::MPI::sum(internal::localBandEnergy(eigenValues,
 			                              kPointWeights,
 		                                      fermiEnergy,
+						      fermiEnergy,
+						      fermiEnergy,
 						      dftParameters::TVal,
 						      dftParameters::spinPolarized,
 						      scout,
@@ -423,6 +446,8 @@ namespace dftfe
 			     const std::vector<std::vector<double> > & eigenValues,
 			     const std::vector<double> & kPointWeights,
 			     const double fermiEnergy,
+			     const double fermiEnergyUp,
+			     const double fermiEnergyDown,
 			     const xc_func_type & funcX,
 			     const xc_func_type & funcC,
 			     const vectorType & phiTotRhoIn,
@@ -457,6 +482,8 @@ namespace dftfe
 	  dealii::Utilities::MPI::sum(internal::localBandEnergy(eigenValues,
 			                              kPointWeights,
 		                                      fermiEnergy,
+						      fermiEnergyUp,
+						      fermiEnergyDown,
 						      dftParameters::TVal,
 						      dftParameters::spinPolarized,
 						      scout,

@@ -228,3 +228,38 @@ void dftClass<FEOrder>::compute_fermienergy(const std::vector<std::vector<double
   if (dftParameters::verbosity>=2)
      pcout<< "Fermi energy                                     : "<< fermiEnergy<<std::endl;
 }
+//compute fermi energy constrained magnetization
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::compute_fermienergy_constraintMagnetization(const std::vector<std::vector<double>> & eigenValuesInput)
+{
+
+
+  int countUp =  numElectronsUp;
+  int countDown =   numElectronsDown;
+
+
+  std::vector<double> eigenValuesAllkPointsUp, eigenValuesAllkPointsDown;
+  for(int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
+    {
+      for(int statesIter = 0; statesIter < numEigenValues; ++statesIter)
+	{
+	  eigenValuesAllkPointsUp.push_back(eigenValuesInput[kPoint][statesIter]);
+	  eigenValuesAllkPointsDown.push_back(eigenValuesInput[kPoint][numEigenValues+statesIter]);
+	}
+    }
+
+  std::sort(eigenValuesAllkPointsUp.begin(),eigenValuesAllkPointsUp.end());
+  std::sort(eigenValuesAllkPointsDown.begin(),eigenValuesAllkPointsDown.end());
+
+  fermiEnergyUp = eigenValuesAllkPointsUp[countUp - 1] ;
+  fermiEnergyDown = eigenValuesAllkPointsDown[countDown - 1] ;
+  //
+  fermiEnergy = std::max(fermiEnergyUp, fermiEnergyDown) ;
+  //
+  if (dftParameters::verbosity==2)
+    {
+     pcout << "This is a constrained magnetization calculation " << std::endl ;
+     pcout<< "Fermi energy for spin up                                    : "<< fermiEnergyUp<<std::endl;
+     pcout<< "Fermi energy for spin down                                    : "<< fermiEnergyDown<<std::endl;	
+    }
+}

@@ -119,6 +119,8 @@ namespace dftfe {
 	 * @param eigenValues eigenValues for each k point.
 	 * @param kPointWeights
 	 * @param fermiEnergy
+	 * @param fermiEnergyUp
+	 * @param fermiEnergyDown
 	 * @param funcX exchange functional object.
 	 * @param funcC correlation functional object.
 	 * @param phiTotRhoIn nodal vector field of total electrostatic potential using input
@@ -161,6 +163,8 @@ namespace dftfe {
 			     const std::vector<std::vector<double> > & eigenValues,
 			     const std::vector<double> & kPointWeights,
 			     const double fermiEnergy,
+			     const double fermiEnergyUp,
+			     const double fermiEnergyDown,
 			     const xc_func_type & funcX,
 			     const xc_func_type & funcC,
 			     const vectorType & phiTotRhoIn,

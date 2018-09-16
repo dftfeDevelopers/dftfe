@@ -32,6 +32,10 @@ void dftClass<FEOrder>::clearRhoData()
   rhoOutValsSpinPolarized.clear();
   gradRhoInValsSpinPolarized.clear();
   gradRhoOutValsSpinPolarized.clear();
+  dFBroyden.clear();
+  graddFBroyden.clear() ;
+  uBroyden.clear();
+  gradUBroyden.clear() ;
 }
 
 template<unsigned int FEOrder>
