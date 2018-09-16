@@ -238,6 +238,8 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
 						  eigenValues,
 						  d_kPointWeights,
 						  fermiEnergy,
+						  fermiEnergyUp,
+						  fermiEnergyDown,
 						  funcX,
 						  funcC,
 						  d_phiTotRhoIn,
