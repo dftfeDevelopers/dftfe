@@ -542,7 +542,7 @@ namespace dftfe {
     //
     //get access to triangulation objects from meshGenerator class
     //
-    const parallel::distributed::Triangulation<3> & triangulationPar = d_mesh.getParallelMeshMoved();
+    parallel::distributed::Triangulation<3> & triangulationPar = d_mesh.getParallelMeshMoved();
 
     //
     //initialize dofHandlers and hanging-node constraints and periodic constraints on the unmoved Mesh
@@ -597,7 +597,7 @@ namespace dftfe {
     computingTimerStandard.enter_section("KSDFT problem initialization");
     initImageChargesUpdateKPoints();
 
-    if  (dftParameters::isIonOpt || dftParameters::isCellOpt)
+    if  (dftParameters::isIonOpt)
        updatePrevMeshDataStructures();
     //
     //reinitialize dirichlet BCs for total potential and vSelf poisson solutions

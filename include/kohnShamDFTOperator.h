@@ -31,7 +31,7 @@ namespace dftfe{
    /**
    * @brief Implementation class for building the Kohn-Sham DFT discrete operator and the action of the discrete operator on a single vector or multiple vectors
    *
-   * @author Phani Motamarri, 
+   * @author Phani Motamarri, Sambit Das
    */
 
   //
@@ -87,7 +87,7 @@ namespace dftfe{
        * @param src given orthogonal basis vectors
        * @return ProjMatrix projected small matrix
        */
-      void XtHX(dealii::parallel::distributed::Vector<dataTypes::number> & src,
+      void XtHX(const std::vector<dataTypes::number> & src,
 		const unsigned int numberComponents,
 		std::vector<dataTypes::number> & ProjHam);
 
@@ -105,7 +105,7 @@ namespace dftfe{
      * which avoids creation of full projected Hamiltonian matrix memory, and also avoids creation
      * of another full X memory.
      */
-      void XtHX(const dealii::parallel::distributed::Vector<dataTypes::number> & X,
+      void XtHX(const std::vector<dataTypes::number> & X,
 		const unsigned int numberComponents,
 		const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 		dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar);

@@ -40,10 +40,14 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
   //get FE data structures
   //
   QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
+  QGauss<3>  quadratureHigh(C_num1DQuadPSP<FEOrder>());
+
   //FEValues<3> fe_values(FE, quadrature, update_values | update_gradients | update_JxW_values);
-  FEValues<3> fe_values(FE, quadrature, update_values | update_JxW_values| update_quadrature_points);
+  FEValues<3> fe_values(FE, dftParameters::useHigherQuadNLP?quadratureHigh:quadrature,
+	                    update_values | update_JxW_values| update_quadrature_points);
   const unsigned int numberNodesPerElement  = FE.dofs_per_cell;
-  const unsigned int numberQuadraturePoints = quadrature.size();
+  const unsigned int numberQuadraturePoints = dftParameters::useHigherQuadNLP?quadratureHigh.size()
+                                                             :quadrature.size();
 
 
   //

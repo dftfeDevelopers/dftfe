@@ -1,0 +1,56 @@
+set VERBOSITY = 0
+set REPRODUCIBLE OUTPUT = true
+
+subsection Geometry
+  set NATOMS=2
+  set NATOM TYPES=1
+  set ATOMIC COORDINATES FILE = @SOURCE_DIR@/nitrogenMolecule_coordinates.inp
+  set DOMAIN VECTORS FILE = @SOURCE_DIR@/nitrogenMolecule_domainVectors.inp
+end
+
+subsection Boundary conditions
+  set PERIODIC1                       = false
+  set PERIODIC2                       = false
+  set PERIODIC3                       = false
+  set SELF POTENTIAL RADIUS = 4.0
+end
+
+subsection Finite element mesh parameters
+  set POLYNOMIAL ORDER=3
+  subsection Auto mesh generation parameters
+    set MESH SIZE AROUND ATOM  = 0.7
+    set BASE MESH SIZE = 10.0
+    set ATOM BALL RADIUS = 2.0
+    set MESH SIZE AT ATOM = 0.7
+  end
+end
+
+subsection DFT functional parameters
+  set EXCHANGE CORRELATION TYPE   = 4
+  set PSEUDOPOTENTIAL CALCULATION = true
+  set PSEUDO TESTS FLAG = true
+  set PSEUDOPOTENTIAL FILE NAMES LIST = @SOURCE_DIR@/pseudoNGGA.inp
+end
+
+subsection Parallelization
+  set NPBAND=2
+end
+
+
+subsection SCF parameters
+  set ANDERSON SCHEME MIXING HISTORY   = 70
+  set ANDERSON SCHEME MIXING PARAMETER = 0.5
+  set MAXIMUM ITERATIONS               = 40
+  set TEMPERATURE                      = 500
+  set TOLERANCE                        = 5e-6
+  set HIGHER QUAD NLP  = true
+  subsection Eigen-solver parameters
+      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 12
+      set ORTHOGONALIZATION TYPE=PGS
+      set CHEBYSHEV POLYNOMIAL DEGREE = 30
+      set CHEBYSHEV FILTER TOLERANCE=2e-3
+      set USE MIXED PREC PGS=true
+      set WFC BLOCK SIZE=3
+      set SUBSPACE ROT DOFS BLOCK SIZE=500
+  end
+end

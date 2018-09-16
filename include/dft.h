@@ -276,7 +276,7 @@ namespace dftfe {
       /**
        *@brief  moves the triangulation vertices using Gaussians such that the all atoms are on triangulation vertices
        */
-      void moveMeshToAtoms(const Triangulation<3,3> & triangulationMove);
+      void moveMeshToAtoms(Triangulation<3,3> & triangulationMove);
 
       /**
        * Initializes the guess of electron-density and single-atom wavefunctions on the mesh,
@@ -286,7 +286,7 @@ namespace dftfe {
        * In periodic problems, periodic faces are mapped here. Further finite-element nodes
        * to be pinned for solving the Poisson problem electro-static potential is set here
        */
-      void initUnmovedTriangulation(const parallel::distributed::Triangulation<3> & triangulation);
+      void initUnmovedTriangulation(parallel::distributed::Triangulation<3> & triangulation);
       void initBoundaryConditions();
       void initElectronicFields(const unsigned int usePreviousGroundStateFields=0);
       void initPseudoPotentialAll();

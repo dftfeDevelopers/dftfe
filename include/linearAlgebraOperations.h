@@ -34,6 +34,7 @@ namespace dftfe
       void zdscal_(const unsigned int *n, const double *alpha, std::complex<double> *x, const unsigned int *inc);
       void daxpy_(const unsigned int *n, const double *alpha, double *x, const unsigned int *incx, double *y, const unsigned int *incy);
       void dgemm_(const char* transA, const char* transB, const unsigned int *m, const unsigned int *n, const unsigned int *k, const double *alpha, const double *A, const unsigned int *lda, const double *B, const unsigned int *ldb, const double *beta, double *C, const unsigned int *ldc);
+      void sgemm_(const char* transA, const char* transB, const unsigned int *m, const unsigned int *n, const unsigned int *k, const float *alpha, const float *A, const unsigned int *lda, const float *B, const unsigned int *ldb, const float *beta, float *C, const unsigned int *ldc);
 #ifdef WITH_MKL
       void dgemm_batch_(const char* transa_array,const char* transb_array,const unsigned int* m_array,const unsigned int* n_array,const unsigned int* k_array,const double* alpha_array,double** a_array,const unsigned int * lda_array,const double ** b_array,const unsigned int * ldb_array,const double * beta_array,double** c_array,const unsigned int * ldc_array,const unsigned int* group_count,const unsigned int* group_size);
 #endif
@@ -152,7 +153,7 @@ namespace dftfe
      *  @param[in,out]  X Given subspace as flattened array of multi-vectors.
      *  In-place update of the given subspace
      *  @param[in] numberComponents Number of multiple-fields
-     *  @param[in] mpiComm global communicator 
+     *  @param[in] mpiComm global communicator
      */
     template<typename T>
       void gramSchmidtOrthogonalization(std::vector<T> & X,
@@ -166,7 +167,7 @@ namespace dftfe
      *  @param[in,out]  X Given subspace as flattened array of multi-vectors.
      *  In-place update of the given subspace
      *  @param[in] numberComponents Number of multiple-fields
-     *  @param[in] mpiComm global communicator 
+     *  @param[in] mpiComm global communicator
      *  @return flag indicating success/failure. 1 for failure, 0 for success
      */
     unsigned int lowdenOrthogonalization(std::vector<dataTypes::number> & X,
@@ -196,7 +197,7 @@ namespace dftfe
 					              const MPI_Comm &interBandGroupComm,
 			                              const unsigned int numberCoreVectors,
 						      const MPI_Comm &mpiComm,
-			                              dealii::parallel::distributed::Vector<T> & nonCoreVectorsArray);
+			                              std::vector<T> & nonCoreVectorsArray);
 
     /** @brief Compute Rayleigh-Ritz projection
      *
@@ -219,13 +220,15 @@ namespace dftfe
      *  In-place rotated subspace
      *  @param[in] numberComponents Number of multiple-fields
      *  @param[in] interBandGroupComm interpool communicator for parallelization over band groups
+     *  @param[in] mpiComm domain decomposition communicator
      *  @param[out] eigenValues of the Projected Hamiltonian
      */
     template<typename T>
     void rayleighRitz(operatorDFTClass        & operatorMatrix,
-		      dealii::parallel::distributed::Vector<T> & X,
+		      std::vector<T> & X,
 		      const unsigned int numberComponents,
 		      const MPI_Comm &interBandGroupComm,
+		      const MPI_Comm &mpiComm,
 		      std::vector<double>     & eigenValues);
 
     /** @brief Compute Compute residual norm associated with eigenValue problem of the given operator
@@ -233,26 +236,15 @@ namespace dftfe
      *  @param[in] operatorMatrix An object which has access to the given matrix
      *  @param[in]  X Given subspace as STL vector of dealii vectors
      *  @param[in]  eigenValues eigenValues of the operator
-     *  @param[out] residualNorms of the eigen Value problem
-     */
-    void computeEigenResidualNorm(operatorDFTClass        & operatorMatrix,
-				  std::vector<vectorType> & X,
-				  const std::vector<double>     & eigenValues,
-				  std::vector<double> & residualNorm);
-
-
-    /** @brief Compute residual norm associated with eigenValue problem of the given operator
-     *
-     *  @param[in] operatorMatrix An object which has access to the given matrix
-     *  @param[in]  X Given eigenvector subspace as flattened array of multi-vectors
-     *  @param[in]  eigenValues eigenValues of the operator
+     *  @param[in]  mpiComm domain decomposition communicator
      *  @param[out] residualNorms of the eigen Value problem
      */
     template<typename T>
     void computeEigenResidualNorm(operatorDFTClass        & operatorMatrix,
-				  dealii::parallel::distributed::Vector<T> & X,
-				  const std::vector<double> & eigenValues,
-				  std::vector<double>     & residualNorm);
+				  std::vector<T> & X,
+				  const std::vector<double>     & eigenValues,
+				  const MPI_Comm &mpiComm,
+				  std::vector<double> & residualNorm);
 
   }
 

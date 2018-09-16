@@ -773,21 +773,32 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
   }
 
   template<unsigned int FEOrder>
-  void kohnShamDFTOperatorClass<FEOrder>::XtHX(dealii::parallel::distributed::Vector<std::complex<double> > & X,
+  void kohnShamDFTOperatorClass<FEOrder>::XtHX(const std::vector<std::complex<double> > & X,
 				 const unsigned int numberWaveFunctions,
 				 std::vector<std::complex<double> > & ProjHam)
   {
     //
     //Get access to number of locally owned nodes on the current processor
     //
-    const unsigned int numberDofs = X.local_size()/numberWaveFunctions;
+    const unsigned int numberDofs = X.size()/numberWaveFunctions;
 
     //
     //Resize ProjHam
     //
     ProjHam.clear();
     ProjHam.resize(numberWaveFunctions*numberWaveFunctions,0.0);
-
+    //
+    //create temporary array XTemp
+    //
+    dealii::parallel::distributed::Vector<std::complex<double>> XTemp;
+    reinit(numberWaveFunctions,
+	   XTemp,
+	   true);
+    for(unsigned int iNode = 0; iNode<numberDofs; ++iNode)
+       for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
+	    XTemp.local_element(iNode*numberWaveFunctions
+		     +iWave)
+		 =X[iNode*numberWaveFunctions+iWave];
     //
     //create temporary array Y
     //
@@ -800,11 +811,11 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 
 
     //
-    //evaluate H times X and store in Y
+    //evaluate H times XTemp and store in Y
     //
     const bool scaleFlag = false;
     const double scalar = 1.0;
-    HX(X,
+    HX(XTemp,
        numberWaveFunctions,
        scaleFlag,
        scalar,
@@ -831,7 +842,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 	   &alpha,
 	   Y.begin(),
 	   &numberWaveFunctions,
-           X.begin(),
+           &X[0],
 	   &numberWaveFunctions,
 	   &beta,
 	   &XtHXValuelocal[0],
@@ -902,7 +913,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
   }
 
   template<unsigned int FEOrder>
-  void kohnShamDFTOperatorClass<FEOrder>::XtHX(dealii::parallel::distributed::Vector<double> & X,
+  void kohnShamDFTOperatorClass<FEOrder>::XtHX(const std::vector<double> & X,
 				 const unsigned int numberWaveFunctions,
 				 std::vector<double> & ProjHam)
   {
@@ -910,13 +921,26 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
     //
     //Get access to number of locally owned nodes on the current processor
     //
-    const unsigned int numberDofs = X.local_size()/numberWaveFunctions;
+    const unsigned int numberDofs = X.size()/numberWaveFunctions;
 
     //
     //Resize ProjHam
     //
     ProjHam.clear();
     ProjHam.resize(numberWaveFunctions*numberWaveFunctions,0.0);
+
+    //
+    //create temporary array XTemp
+    //
+    dealii::parallel::distributed::Vector<double> XTemp;
+    reinit(numberWaveFunctions,
+	   XTemp,
+	   true);
+    for(unsigned int iNode = 0; iNode<numberDofs; ++iNode)
+       for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
+	    XTemp.local_element(iNode*numberWaveFunctions
+		     +iWave)
+		 =X[iNode*numberWaveFunctions+iWave];
 
     //
     //create temporary array Y
@@ -927,11 +951,11 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 	   true);
 
     //
-    //evaluate H times X and store in Y
+    //evaluate H times XTemp and store in Y
     //
     bool scaleFlag = false;
     double scalar = 1.0;
-    HX(X,
+    HX(XTemp,
        numberWaveFunctions,
        scaleFlag,
        scalar,
@@ -947,7 +971,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 	   &numberWaveFunctions,
 	   &numberDofs,
 	   &alpha,
-	   X.begin(),
+	   &X[0],
 	   &numberWaveFunctions,
            Y.begin(),
 	   &numberWaveFunctions,
@@ -964,7 +988,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 
 #ifdef DEAL_II_WITH_SCALAPACK
   template<unsigned int FEOrder>
-  void kohnShamDFTOperatorClass<FEOrder>::XtHX(const dealii::parallel::distributed::Vector<dataTypes::number> & X,
+  void kohnShamDFTOperatorClass<FEOrder>::XtHX(const std::vector<dataTypes::number> & X,
 				 const unsigned int numberWaveFunctions,
 				 const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 				 dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar)
@@ -975,7 +999,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
     //
     //Get access to number of locally owned nodes on the current processor
     //
-    const unsigned int numberDofs = X.local_size()/numberWaveFunctions;
+    const unsigned int numberDofs = X.size()/numberWaveFunctions;
 
     //create temporary arrays XBlock,Hx
     dealii::parallel::distributed::Vector<dataTypes::number> XBlock,HXBlock;
@@ -1046,7 +1070,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 		  for(unsigned int iWave = 0; iWave < B; ++iWave)
 			XBlock.local_element(iNode*B
 				 +iWave)
-			     =X.local_element(iNode*numberWaveFunctions+jvec+iWave);
+			     =X[iNode*numberWaveFunctions+jvec+iWave];
 
 
 	      //evaluate H times XBlock^{T} and store in HXBlock^{T}
@@ -1078,7 +1102,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 		     &B,
 		     &numberDofs,
 		     &alpha,
-		     X.begin()+jvec,
+		     &X[0]+jvec,
 		     &numberWaveFunctions,
 		     HXBlock.begin(),
 		     &B,
@@ -1094,14 +1118,14 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 			    D*B,
 			    MPI_C_DOUBLE_COMPLEX,
 			    MPI_SUM,
-			    X.get_mpi_communicator());
+			    getMPICommunicator());
 #else
 	      MPI_Allreduce(MPI_IN_PLACE,
 			    &projHamBlock[0],
 			    D*B,
 			    MPI_DOUBLE,
 			    MPI_SUM,
-			    X.get_mpi_communicator());
+			    getMPICommunicator());
 #endif
 
 	      //Copying only the lower triangular part to the ScaLAPACK projected Hamiltonian matrix

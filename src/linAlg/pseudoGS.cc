@@ -33,7 +33,7 @@ namespace dftfe
 						    const MPI_Comm &interBandGroupComm,
 						    const unsigned int numberCoreVectors,
 						    const MPI_Comm & mpiComm,
-						    dealii::parallel::distributed::Vector<T> & tempNonCoreVectorsArray)
+						    std::vector<T> & tempNonCoreVectorsArray)
 
     {
       const unsigned int numLocalDofs = X.size()/numberVectors;
@@ -57,7 +57,8 @@ namespace dftfe
 
       //S=X*X^{T}. Implemented as S=X^{T}*X with X^{T} stored in the column major format
       computing_timer.enter_section("Fill overlap matrix for PGS");
-      internal::fillParallelOverlapMatrix(X,
+      internal::fillParallelOverlapMatrix(&X[0],
+	                                  X.size(),
 	                                  numberVectors,
 		                          processGrid,
 					  interBandGroupComm,
@@ -135,16 +136,30 @@ namespace dftfe
 
       //X=X*L^{-1}^{T} implemented as X^{T}=L^{-1}*X^{T} with X^{T} stored in the column major format
       computing_timer.enter_section("Subspace rotation PGS");
-      internal::subspaceRotation(X,
-		                 numberVectors,
-				 numberCoreVectors,
-				 tempNonCoreVectorsArray,
-		                 processGrid,
-				 interBandGroupComm,
-				 mpiComm,
-			         LMatPar,
-				 overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::upper_triangular?true:false,
-				 dftParameters::triMatPGSOpt?true:false);
+
+      if (!dftParameters::useMixedPrecisionPGS)
+	  internal::subspaceRotation(&X[0],
+				     X.size(),
+				     numberVectors,
+				     numberCoreVectors,
+				     &tempNonCoreVectorsArray[0],
+				     processGrid,
+				     interBandGroupComm,
+				     mpiComm,
+				     LMatPar,
+				     overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::upper_triangular?true:false,
+				     dftParameters::triMatPGSOpt?true:false);
+      else
+	  internal::subspaceRotationPGSMixedPrec(&X[0],
+				     X.size(),
+				     numberVectors,
+				     numberCoreVectors,
+				     &tempNonCoreVectorsArray[0],
+				     processGrid,
+				     interBandGroupComm,
+				     mpiComm,
+				     LMatPar,
+				     overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::upper_triangular?true:false);
 
       computing_timer.exit_section("Subspace rotation PGS");
 
@@ -156,8 +171,8 @@ namespace dftfe
 						    const unsigned int numberVectors,
 						    const MPI_Comm &interBandGroupComm,
 						    const unsigned int numberCoreVectors,
-						    const MPI_Comm & mpiComm,	    
-						    dealii::parallel::distributed::Vector<T> & tempNonCoreVectorsArray)
+						    const MPI_Comm & mpiComm,
+						    std::vector<T> & tempNonCoreVectorsArray)
     {
        const unsigned int localVectorSize = X.size()/numberVectors;
 

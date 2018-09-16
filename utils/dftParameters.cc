@@ -67,6 +67,10 @@ namespace dftParameters
   unsigned int numCoreWfcRR=0;
   bool triMatPGSOpt=true;
   bool reuseWfcGeoOpt=true;
+  extern double mpiAllReduceMessageBlockSizeMB=2.0;
+  bool useHigherQuadNLP=true;
+  bool useMixedPrecisionPGS=false;
+  unsigned int numAdaptiveFilterStates=0;
 
   void declare_parameters(ParameterHandler &prm)
   {
@@ -95,6 +99,10 @@ namespace dftParameters
 	prm.declare_entry("NPBAND", "1",
 			   Patterns::Integer(1),
 			   "[Standard] Number of groups of MPI tasks across which the work load of the bands is parallelised. NPKPT times NPBAND must be a divisor of total number of MPI tasks. Further, NPBAND must be less than or equal to NUMBER OF KOHN-SHAM WAVEFUNCTIONS.");
+
+	prm.declare_entry("MPI ALLREDUCE BLOCK SIZE", "100.0",
+			   Patterns::Double(0),
+			   "[Advanced] Block message size in MB used to break a single MPI_Allreduce call on wavefunction vectors data into multiple MPI_Allreduce calls. This is useful on certain architectures which take advantage of High Bandwidth Memory to improve efficiency of MPI operations. This variable is relevant only if NPBAND>1. Default value is 100.0 MB.");
     }
     prm.leave_subsection ();
 
@@ -347,6 +355,10 @@ namespace dftParameters
 			  Patterns::Bool(),
 			  "[Advanced] Boolean parameter specifying whether to compute the total energy at the end of every SCF. Setting it to false can lead to some computational time savings.");
 
+	prm.declare_entry("HIGHER QUAD NLP", "true",
+			  Patterns::Bool(),
+			  "[Advanced] Boolean parameter specifying whether to use a higher order quadrature rule for the calculations involving the non-local part of the pseudopotential. Default setting is true. Could be safely set to false if you are using a very refined mesh.");
+
 	prm.enter_subsection ("Eigen-solver parameters");
 	{
 
@@ -402,6 +414,14 @@ namespace dftParameters
 	    prm.declare_entry("SCALAPACKPROCS", "0",
 			      Patterns::Integer(0,300),
 			      "[Advanced] Uses a processor grid of SCALAPACKPROCS times SCALAPACKPROCS for parallel distribution of the subspace projected matrix in the Rayleigh-Ritz step and the overlap matrix in the Pseudo-Gram-Schmidt step. Default value is 0 for which a thumb rule is used (see http://netlib.org/scalapack/slug/node106.html). This parameter is only used if dealii library is compiled with ScaLAPACK.");
+
+	    prm.declare_entry("USE MIXED PREC PGS", "false",
+			      Patterns::Bool(),
+			      "[Advanced] Use mixed precision arithmetic in susbpace rotation step of PGS orthogonalization, if ORTHOGONALIZATION TYPE is set to PGS. Currently this optimization is only enabled for the real executable. Default setting is false.");
+
+	    prm.declare_entry("ADAPTIVE FILTER STATES", "0",
+			      Patterns::Integer(0),
+			      "[Advanced] Number of lowest Kohn-Sham eigenstates which are filtered with half the Chebyshev polynomial degree specified by CHEBYSHEV POLYNOMIAL DEGREE. This value is usually chosen to be the sum of the number of core eigenstates for each atom type multiplied by number of atoms of that type. This setting is recommended for medium-large systems (greater than 2000 electrons). Default value is 0 i.e., all states are filtered with the same Chebyshev polynomial degree.");
 	}
 	prm.leave_subsection ();
     }
@@ -432,6 +452,7 @@ namespace dftParameters
     {
 	dftParameters::npool             = prm.get_integer("NPKPT");
 	dftParameters::nbandGrps         = prm.get_integer("NPBAND");
+	dftParameters::mpiAllReduceMessageBlockSizeMB = prm.get_double("MPI ALLREDUCE BLOCK SIZE");
     }
     prm.leave_subsection ();
 
@@ -531,6 +552,7 @@ namespace dftParameters
 	dftParameters::constraintMagnetization       = prm.get_bool("CONSTRAINT MAGNETIZATION");
         dftParameters::startingWFCType               = prm.get("STARTING WFC");
 	dftParameters::computeEnergyEverySCF         = prm.get_bool("COMPUTE ENERGY EACH ITER");
+	dftParameters::useHigherQuadNLP              = prm.get_bool("HIGHER QUAD NLP");
 
 
 	prm.enter_subsection ("Eigen-solver parameters");
@@ -548,6 +570,8 @@ namespace dftParameters
 	   dftParameters::enableSwitchToGS= prm.get_bool("ENABLE SWITCH TO GS");
 	   dftParameters::triMatPGSOpt= prm.get_bool("ENABLE SUBSPACE ROT PGS OPT");
 	   dftParameters::scalapackParalProcs= prm.get_integer("SCALAPACKPROCS");
+	   dftParameters::useMixedPrecisionPGS= prm.get_bool("USE MIXED PREC PGS");
+	   dftParameters::numAdaptiveFilterStates= prm.get_integer("ADAPTIVE FILTER STATES");
 	}
 	prm.leave_subsection ();
     }
