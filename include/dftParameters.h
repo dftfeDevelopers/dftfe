@@ -56,6 +56,7 @@ namespace dftfe {
 
       extern unsigned int verbosity, chkType;
       extern bool restartFromChk;
+      extern bool electrostaticsHRefinement;
 
       extern bool reproducible_output;
 
