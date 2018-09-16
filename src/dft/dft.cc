@@ -1496,7 +1496,20 @@ namespace dftfe {
 
  	computing_timer.enter_section("Ion force computation");
 	computingTimerStandard.enter_section("Ion force computation");
-	forcePtr->computeAtomsForces();
+	forcePtr->computeAtomsForces(matrix_free_data,
+		                     eigenDofHandlerIndex,
+				     phiExtDofHandlerIndex,
+				     phiTotDofHandlerIndex,
+                                     d_phiTotRhoIn,
+				     d_phiTotRhoOut,
+				     d_phiExt,
+				     d_vselfBinsManager,
+				     matrix_free_data,
+				     phiTotDofHandlerIndex,
+				     d_phiTotRhoOut,
+				     *rhoOutValues,
+				     d_noConstraints,
+				     d_vselfBinsManager);
 	forcePtr->printAtomsForces();
 	computingTimerStandard.exit_section("Ion force computation");
 	computing_timer.exit_section("Ion force computation");
@@ -1509,7 +1522,20 @@ namespace dftfe {
 
 	computing_timer.enter_section("Cell stress computation");
 	computingTimerStandard.enter_section("Cell stress computation");
-	forcePtr->computeStress();
+	forcePtr->computeStress(matrix_free_data,
+		                eigenDofHandlerIndex,
+				phiExtDofHandlerIndex,
+				phiTotDofHandlerIndex,
+                                d_phiTotRhoIn,
+				d_phiTotRhoOut,
+				d_phiExt,
+				d_vselfBinsManager,
+				matrix_free_data,
+				phiTotDofHandlerIndex,
+				d_phiTotRhoOut,
+				*rhoOutValues,
+				d_noConstraints,
+				d_vselfBinsManager);
 	forcePtr->printStress();
 	computingTimerStandard.exit_section("Cell stress computation");
 	computing_timer.exit_section("Cell stress computation");

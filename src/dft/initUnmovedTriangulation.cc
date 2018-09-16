@@ -190,7 +190,8 @@ void dftClass<FEOrder>::initUnmovedTriangulation(parallel::distributed::Triangul
      dftUtils::printCurrentMemoryUsage(mpi_communicator,
 			  "Created the basic constraint matrices");
 
-  forcePtr->initUnmoved(triangulation);
+  forcePtr->initUnmoved(triangulation,d_domainBoundingVectors,false);
+  forcePtr->initUnmoved(triangulation,d_domainBoundingVectors,true);
 
   if (dftParameters::verbosity>=4)
      dftUtils::printCurrentMemoryUsage(mpi_communicator,

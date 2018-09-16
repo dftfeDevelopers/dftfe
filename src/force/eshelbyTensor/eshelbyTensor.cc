@@ -156,14 +156,12 @@ namespace eshelbyTensor
     Tensor<2,C_DIM,VectorizedArray<double> >  getEElectroEshelbyTensor
 	                     (const VectorizedArray<double> & phiTot,
 			      const Tensor<1,C_DIM,VectorizedArray<double> > & gradPhiTot,
-			      const VectorizedArray<double> & rho,
-			      const VectorizedArray<double> & pseudoVLoc,
-			      const VectorizedArray<double> & phiExt)
+			      const VectorizedArray<double> & rho)
     {
 
        Tensor<2,C_DIM,VectorizedArray<double> > eshelbyTensor=
 	   make_vectorized_array(1.0/(4.0*M_PI))*outer_product(gradPhiTot,gradPhiTot);
-       VectorizedArray<double> identityTensorFactor=make_vectorized_array(-1.0/(8.0*M_PI))*scalar_product(gradPhiTot,gradPhiTot)+rho*phiTot -phiExt*rho;
+       VectorizedArray<double> identityTensorFactor=make_vectorized_array(-1.0/(8.0*M_PI))*scalar_product(gradPhiTot,gradPhiTot)+rho*phiTot;
 
        eshelbyTensor[0][0]+=identityTensorFactor;
        eshelbyTensor[1][1]+=identityTensorFactor;
@@ -176,11 +174,12 @@ namespace eshelbyTensor
 			     const Tensor<1,C_DIM,VectorizedArray<double> > & gradRho,
 			     const VectorizedArray<double> & exc,
 			     const Tensor<1,C_DIM,VectorizedArray<double> > & derExcGradRho,
-			     const VectorizedArray<double> & pseudoVLoc)
+			     const VectorizedArray<double> & pseudoVLoc,
+			     const VectorizedArray<double> & phiExt)
     {
 
        Tensor<2,C_DIM,VectorizedArray<double> > eshelbyTensor=-outer_product(derExcGradRho,gradRho);
-       VectorizedArray<double> identityTensorFactor=exc*rho + pseudoVLoc*rho;
+       VectorizedArray<double> identityTensorFactor=exc*rho + (pseudoVLoc-phiExt)*rho;
 
 
        eshelbyTensor[0][0]+=identityTensorFactor;

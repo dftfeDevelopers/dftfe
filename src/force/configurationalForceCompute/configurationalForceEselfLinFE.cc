@@ -18,7 +18,9 @@
 
 //compute configurational force contribution from nuclear self energy on the mesh nodes using linear shape function generators
 template<unsigned int FEOrder>
-void forceClass<FEOrder>::computeConfigurationalForceEselfLinFE()
+void forceClass<FEOrder>::computeConfigurationalForceEselfLinFE
+                                              (const DoFHandler<3> & dofHandlerElectro,
+				               const vselfBinsManager<FEOrder> & vselfBinsManagerElectro)
 {
   const std::vector<std::vector<double> > & atomLocations=dftPtr->atomLocations;
   const std::vector<std::vector<double> > & imagePositions=dftPtr->d_imagePositionsTrunc;
@@ -28,13 +30,13 @@ void forceClass<FEOrder>::computeConfigurationalForceEselfLinFE()
   //
   QGauss<C_DIM>  quadrature(C_num1DQuad<FEOrder>());
   FEValues<C_DIM> feForceValues (FEForce, quadrature, update_gradients | update_JxW_values);
-  FEValues<C_DIM> feVselfValues (dftPtr->FE, quadrature, update_gradients);
+  FEValues<C_DIM> feVselfValues (dofHandlerElectro.get_fe(), quadrature, update_gradients);
   const unsigned int   forceDofsPerCell = FEForce.dofs_per_cell;
   const unsigned int   forceBaseIndicesPerCell = forceDofsPerCell/FEForce.components;
   Vector<double>       elementalForce (forceDofsPerCell);
   const unsigned int   numQuadPoints = quadrature.size();
   std::vector<types::global_dof_index> forceLocalDofIndices(forceDofsPerCell);
-  const unsigned int numberBins=dftPtr->d_vselfBinsManager.getAtomIdsBins().size();
+  const unsigned int numberBins=vselfBinsManagerElectro.getAtomIdsBins().size();
   std::vector<Tensor<1,C_DIM,double> > gradVselfQuad(numQuadPoints);
   std::vector<unsigned int> baseIndexDofsVec(forceBaseIndicesPerCell*C_DIM);
   Tensor<1,C_DIM,double> baseIndexForceVec;
@@ -49,7 +51,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEselfLinFE()
   {
     const std::vector<DoFHandler<C_DIM>::active_cell_iterator> & cellsVselfBallDofHandler=d_cellsVselfBallsDofHandler[iBin];
     const std::vector<DoFHandler<C_DIM>::active_cell_iterator> & cellsVselfBallDofHandlerForce=d_cellsVselfBallsDofHandlerForce[iBin];
-    const vectorType & iBinVselfField= dftPtr->d_vselfBinsManager.getVselfFieldBins()[iBin];
+    const vectorType & iBinVselfField= vselfBinsManagerElectro.getVselfFieldBins()[iBin];
     std::vector<DoFHandler<C_DIM>::active_cell_iterator>::const_iterator iter1;
     std::vector<DoFHandler<C_DIM>::active_cell_iterator>::const_iterator iter2;
     iter2 = cellsVselfBallDofHandlerForce.begin();
@@ -74,7 +76,9 @@ void forceClass<FEOrder>::computeConfigurationalForceEselfLinFE()
 	      elementalForce[baseIndexDofsVec[C_DIM*ibase+idim]]=baseIndexForceVec[idim];
 	}//base index loop
 
-	d_constraintsNoneForce.distribute_local_to_global(elementalForce,forceLocalDofIndices,d_configForceVectorLinFE);
+	d_constraintsNoneForceElectro.distribute_local_to_global(elementalForce,
+		                                                 forceLocalDofIndices,
+								 d_configForceVectorLinFEElectro);
      }//cell loop
   }//bin loop
 
@@ -107,7 +111,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEselfLinFE()
   {
     const std::map<DoFHandler<C_DIM>::active_cell_iterator,std::vector<unsigned int > >  & cellsVselfBallSurfacesDofHandler=d_cellFacesVselfBallSurfacesDofHandler[iBin];
     const std::map<DoFHandler<C_DIM>::active_cell_iterator,std::vector<unsigned int > >  & cellsVselfBallSurfacesDofHandlerForce=d_cellFacesVselfBallSurfacesDofHandlerForce[iBin];
-    const vectorType & iBinVselfField= dftPtr->d_vselfBinsManager.getVselfFieldBins()[iBin];
+    const vectorType & iBinVselfField= vselfBinsManagerElectro.getVselfFieldBins()[iBin];
     std::map<DoFHandler<C_DIM>::active_cell_iterator,std::vector<unsigned int > >::const_iterator iter1;
     std::map<DoFHandler<C_DIM>::active_cell_iterator,std::vector<unsigned int > >::const_iterator iter2;
     iter2 = cellsVselfBallSurfacesDofHandlerForce.begin();
@@ -161,7 +165,9 @@ void forceClass<FEOrder>::computeConfigurationalForceEselfLinFE()
 	       elementalFaceForce[baseIndexFaceDofsForceVec[C_DIM*ibase+idim]]=baseIndexFaceForceVec[idim];
 	     }
 	   }//base index loop
-	   d_constraintsNoneForce.distribute_local_to_global(elementalFaceForce,forceFaceLocalDofIndices,d_configForceVectorLinFE);
+	   d_constraintsNoneForceElectro.distribute_local_to_global(elementalFaceForce,
+		                                                    forceFaceLocalDofIndices,
+								    d_configForceVectorLinFEElectro);
 	}//face loop
      }//cell loop
   }//bin loop

@@ -18,7 +18,19 @@
 #ifdef USE_COMPLEX
 //compute configurational stress contribution from all terms except the nuclear self energy
 template<unsigned int FEOrder>
-void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk()
+void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk
+                             (const MatrixFree<3,double> & matrixFreeData,
+			      const unsigned int eigenDofHandlerIndex,
+			      const unsigned int phiExtDofHandlerIndex,
+			      const unsigned int phiTotDofHandlerIndex,
+			      const vectorType & phiTotRhoIn,
+			      const vectorType & phiTotRhoOut,
+			      const vectorType & phiExt,
+			      const vselfBinsManager<FEOrder> & vselfBinsManagerEigen,
+			      const MatrixFree<3,double> & matrixFreeDataElectro,
+			      const unsigned int phiTotDofHandlerIndexElectro,
+			      const vectorType & phiTotRhoOutElectro,
+			      const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro)
 {
   std::vector<std::vector<vectorType>> eigenVectors((1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size());
   for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size(); ++kPoint)
@@ -49,39 +61,40 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk()
   const unsigned int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
   const bool isPseudopotential = dftParameters::isPseudopotential;
   const unsigned int numVectorizedArrayElements=VectorizedArray<double>::n_array_elements;
-  const MatrixFree<3,double> & matrix_free_data=dftPtr->matrix_free_data;
 
-  FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  forceEval(matrix_free_data,
+  FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  forceEval(matrixFreeData,
 	                                                        d_forceDofHandlerIndex,
 								0);
-  FEEvaluation<C_DIM,1,C_num1DQuadPSP<FEOrder>(),C_DIM>  forceEvalNLP(matrix_free_data,
+  FEEvaluation<C_DIM,1,C_num1DQuadPSP<FEOrder>(),C_DIM>  forceEvalNLP(matrixFreeData,
 	                                                           d_forceDofHandlerIndex,
 								   2);
 
-  FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),2> psiEvalSpin0(matrix_free_data,
-	                                                            dftPtr->eigenDofHandlerIndex,
+  FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),2> psiEvalSpin0(matrixFreeData,
+	                                                            eigenDofHandlerIndex,
 								    0);
-  FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),2> psiEvalSpin1(matrix_free_data,
-	                                                            dftPtr->eigenDofHandlerIndex,
+  FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),2> psiEvalSpin1(matrixFreeData,
+	                                                            eigenDofHandlerIndex,
 								    0);
-  FEEvaluation<C_DIM,FEOrder,C_num1DQuadPSP<FEOrder>(),2> psiEvalSpin0NLP(matrix_free_data,
-	                                                            dftPtr->eigenDofHandlerIndex,
+  FEEvaluation<C_DIM,FEOrder,C_num1DQuadPSP<FEOrder>(),2> psiEvalSpin0NLP(matrixFreeData,
+	                                                            eigenDofHandlerIndex,
 								    2);
-  FEEvaluation<C_DIM,FEOrder,C_num1DQuadPSP<FEOrder>(),2> psiEvalSpin1NLP(matrix_free_data,
-	                                                            dftPtr->eigenDofHandlerIndex,
+  FEEvaluation<C_DIM,FEOrder,C_num1DQuadPSP<FEOrder>(),2> psiEvalSpin1NLP(matrixFreeData,
+	                                                            eigenDofHandlerIndex,
 								    2);
 
-  FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> phiTotEval(matrix_free_data,
-	                                                          dftPtr->phiTotDofHandlerIndex,
+  FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> phiTotOutEval(matrixFreeData,
+	                                                          phiTotDofHandlerIndex,
 								  0);
-  FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> phiTotInEval(matrix_free_data,
-	                                                            dftPtr->phiTotDofHandlerIndex,
+  FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> phiTotInEval(matrixFreeData,
+	                                                            phiTotDofHandlerIndex,
 								    0);
-  FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> phiExtEval(matrix_free_data,
-	                                                          dftPtr->phiExtDofHandlerIndex,
+  FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> phiExtEval(matrixFreeData,
+	                                                          phiExtDofHandlerIndex,
 								  0);
   QGauss<C_DIM>  quadrature(C_num1DQuad<FEOrder>());
-  FEValues<C_DIM> feVselfValues (dftPtr->FE, quadrature, update_gradients | update_quadrature_points);
+  FEValues<C_DIM> feVselfValues (matrixFreeData.get_dof_handler(phiExtDofHandlerIndex).get_fe(),
+	                         quadrature,
+				 update_gradients | update_quadrature_points);
 
   const unsigned int numQuadPoints=forceEval.n_q_points;
   const unsigned int numQuadPointsNLP=dftParameters::useHigherQuadNLP?
@@ -147,7 +160,7 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk()
   std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > derExchCorrEnergyWithGradRhoOutSpin0Quads(numQuadPoints,zeroTensor3);
   std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > derExchCorrEnergyWithGradRhoOutSpin1Quads(numQuadPoints,zeroTensor3);
 
-  for (unsigned int cell=0; cell<matrix_free_data.n_macro_cells(); ++cell)
+  for (unsigned int cell=0; cell<matrixFreeData.n_macro_cells(); ++cell)
   {
     forceEval.reinit(cell);
     psiEvalSpin0.reinit(cell);
@@ -160,16 +173,19 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk()
       psiEvalSpin1NLP.reinit(cell);
     }
 
-    phiTotEval.reinit(cell);
-    phiTotEval.read_dof_values_plain(dftPtr->d_phiTotRhoOut);//read without taking constraints into account
-    phiTotEval.evaluate(true,true);
+    if (dftParameters::nonSelfConsistentForce)
+    {
+	phiTotOutEval.reinit(cell);
+	phiTotOutEval.read_dof_values_plain(phiTotRhoOut);//read without taking constraints into account
+	phiTotOutEval.evaluate(true,false);
 
-    phiTotInEval.reinit(cell);
-    phiTotInEval.read_dof_values_plain(dftPtr->d_phiTotRhoIn);//read without taking constraints into account
-    phiTotInEval.evaluate(true,true);
+	phiTotInEval.reinit(cell);
+	phiTotInEval.read_dof_values_plain(phiTotRhoIn);//read without taking constraints into account
+	phiTotInEval.evaluate(true,false);
+    }
 
     phiExtEval.reinit(cell);
-    phiExtEval.read_dof_values_plain(dftPtr->d_phiExt);
+    phiExtEval.read_dof_values_plain(phiExt);
     phiExtEval.evaluate(true,true);
 
     std::fill(rhoQuads.begin(),rhoQuads.end(),make_vectorized_array(0.0));
@@ -186,13 +202,16 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk()
     std::fill(derExchCorrEnergyWithGradRhoInSpin1Quads.begin(),derExchCorrEnergyWithGradRhoInSpin1Quads.end(),zeroTensor3);
     std::fill(derExchCorrEnergyWithGradRhoOutSpin0Quads.begin(),derExchCorrEnergyWithGradRhoOutSpin0Quads.end(),zeroTensor3);
     std::fill(derExchCorrEnergyWithGradRhoOutSpin1Quads.begin(),derExchCorrEnergyWithGradRhoOutSpin1Quads.end(),zeroTensor3);
-    for (unsigned int q=0; q<numQuadPoints; ++q)
-    {
-	 vEffRhoInSpin0Quads[q]=phiTotInEval.get_value(q);
-	 vEffRhoInSpin1Quads[q]=phiTotInEval.get_value(q);
-	 vEffRhoOutSpin0Quads[q]=phiTotEval.get_value(q);
-	 vEffRhoOutSpin1Quads[q]=phiTotEval.get_value(q);
-    }
+
+    if (dftParameters::nonSelfConsistentForce)
+	for (unsigned int q=0; q<numQuadPoints; ++q)
+	{
+	     vEffRhoInSpin0Quads[q]=phiTotInEval.get_value(q);
+	     vEffRhoInSpin1Quads[q]=phiTotInEval.get_value(q);
+	     vEffRhoOutSpin0Quads[q]=phiTotOutEval.get_value(q);
+	     vEffRhoOutSpin1Quads[q]=phiTotOutEval.get_value(q);
+	}
+
     //allocate storage for vector of quadPoints, nonlocal atom id, pseudo wave, k point
     //FIXME: flatten nonlocal atomid id and pseudo wave and k point
     std::vector<std::vector<std::vector<std::vector<Tensor<1,2,VectorizedArray<double> > > > > >ZetaDeltaVQuads;
@@ -219,7 +238,7 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk()
 	}
     }
 
-    const unsigned int numSubCells=matrix_free_data.n_components_filled(cell);
+    const unsigned int numSubCells=matrixFreeData.n_components_filled(cell);
     //For LDA
     std::vector<double> exchValRhoOut(numQuadPoints);
     std::vector<double> corrValRhoOut(numQuadPoints);
@@ -242,7 +261,7 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk()
     //
     for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
     {
-       subCellPtr= matrix_free_data.get_cell_iterator(cell,iSubCell);
+       subCellPtr= matrixFreeData.get_cell_iterator(cell,iSubCell);
        dealii::CellId subCellId=subCellPtr->id();
        if(dftParameters::xc_id == 4)
        {
@@ -396,7 +415,7 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk()
     {
        for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
        {
-          subCellPtr= matrix_free_data.get_cell_iterator(cell,iSubCell);
+          subCellPtr= matrixFreeData.get_cell_iterator(cell,iSubCell);
           dealii::CellId subCellId=subCellPtr->id();
 	  for (unsigned int q=0; q<numQuadPoints; ++q)
 	  {
@@ -435,34 +454,28 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk()
        }//subcell loop
 
        addEPSPStressContribution(feVselfValues,
-	                         forceEval,
-			         cell,
-			         rhoQuads);
+				 forceEval,
+				 matrixFreeData,
+				 cell,
+				 rhoQuads,
+				 vselfBinsManagerEigen);
     }//is pseudopotential check
 
     Tensor<2,C_DIM,VectorizedArray<double> > EQuadSum=zeroTensor4;
     Tensor<2,C_DIM,VectorizedArray<double> > EKPointsQuadSum=zeroTensor4;
     for (unsigned int q=0; q<numQuadPoints; ++q)
     {
-       VectorizedArray<double> phiTot_q =phiTotEval.get_value(q);
-       Tensor<1,C_DIM,VectorizedArray<double> > gradPhiTot_q =phiTotEval.get_gradient(q);
        VectorizedArray<double> phiExt_q =phiExtEval.get_value(q)*phiExtFactor;
 
-       Tensor<2,C_DIM,VectorizedArray<double> > E=eshelbyTensor::getEElectroEshelbyTensor
-	                                                     (phiTot_q,
-			                                      gradPhiTot_q,
-						              rhoQuads[q],
-							      pseudoVLocQuads[q],
-							      phiExt_q);
-
-       E+=eshelbyTensorSP::getELocXcPspEshelbyTensor
+       Tensor<2,C_DIM,VectorizedArray<double> > E=eshelbyTensorSP::getELocXcPspEshelbyTensor
 				      (rhoQuads[q],
 				       gradRhoSpin0Quads[q],
 				       gradRhoSpin1Quads[q],
 				       excQuads[q],
 				       derExchCorrEnergyWithGradRhoOutSpin0Quads[q],
 				       derExchCorrEnergyWithGradRhoOutSpin1Quads[q],
-				       pseudoVLocQuads[q]);
+				       pseudoVLocQuads[q],
+				        phiExt_q);
 
        Tensor<2,C_DIM,VectorizedArray<double> > EKPoints=eshelbyTensorSP::getELocWfcEshelbyTensorPeriodicKPoints
 							 (psiSpin0Quads.begin()+q*numEigenVectors*numKPoints,
@@ -553,5 +566,12 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk()
 		d_stressKPoints[idim][jdim]+=EKPointsQuadSum[idim][jdim][iSubCell];
 	    }
   }
+
+  ////Add electrostatic configurational force contribution////////////////
+  computeStressEEshelbyEElectroPhiTot
+		    (matrixFreeDataElectro,
+		     phiTotDofHandlerIndexElectro,
+		     phiTotRhoOutElectro,
+		     rhoOutValuesElectro);
 }
 #endif

@@ -29,7 +29,6 @@
 #include <boost/math/special_functions/spherical_harmonic.hpp>
 
 
-
 //This class computes and stores the configurational forces corresponding to geometry optimization.
 //It uses the formulation in the paper by Motamarri et.al. (https://arxiv.org/abs/1712.05535)
 //which provides an unified approach to atomic forces corresponding to internal atomic relaxation and cell stress
@@ -54,6 +53,74 @@ namespace  dftfe {
 #include "createBinObjectsForce.cc"
 #include "locateAtomCoreNodesForce.cc"
 
+namespace internalForce
+{
+    void initUnmoved(const Triangulation<3,3> & triangulation,
+	             const std::vector<std::vector<double> >  & domainBoundingVectors,
+		     DoFHandler<C_DIM> & dofHandlerForce,
+		     FESystem<C_DIM> & FEForce,
+		     ConstraintMatrix  & constraintsForce,
+		     IndexSet  & locally_owned_dofsForce,
+		     IndexSet  & locally_relevant_dofsForce)
+    {
+      dofHandlerForce.clear();
+      dofHandlerForce.initialize(triangulation,FEForce);
+      dofHandlerForce.distribute_dofs(FEForce);
+      locally_owned_dofsForce.clear();locally_relevant_dofsForce.clear();
+      locally_owned_dofsForce = dofHandlerForce.locally_owned_dofs();
+      DoFTools::extract_locally_relevant_dofs(dofHandlerForce, locally_relevant_dofsForce);
+
+      ///
+      constraintsForce.clear(); constraintsForce.reinit(locally_relevant_dofsForce);
+      DoFTools::make_hanging_node_constraints(dofHandlerForce, constraintsForce);
+
+      //create unitVectorsXYZ
+      std::vector<std::vector<double> > unitVectorsXYZ;
+      unitVectorsXYZ.resize(3);
+
+      for(int i = 0; i < 3; ++i)
+	{
+	  unitVectorsXYZ[i].resize(3,0.0);
+	  unitVectorsXYZ[i][i] = 0.0;
+	}
+
+      std::vector<Tensor<1,3> > offsetVectors;
+      //resize offset vectors
+      offsetVectors.resize(3);
+
+      for(int i = 0; i < 3; ++i)
+	{
+	  for(int j = 0; j < 3; ++j)
+	    {
+	      offsetVectors[i][j] = unitVectorsXYZ[i][j] - domainBoundingVectors[i][j];
+	    }
+	}
+
+      std::vector<GridTools::PeriodicFacePair<typename DoFHandler<C_DIM>::cell_iterator> > periodicity_vectorForce;
+
+      const std::array<int,3> periodic = {dftParameters::periodicX, dftParameters::periodicY, dftParameters::periodicZ};
+
+
+      std::vector<int> periodicDirectionVector;
+
+      for(unsigned int  d= 0; d < 3; ++d)
+	{
+	  if(periodic[d]==1)
+	    {
+	      periodicDirectionVector.push_back(d);
+	    }
+	}
+
+      for (int i = 0; i < std::accumulate(periodic.begin(),periodic.end(),0); ++i)
+       {
+	  GridTools::collect_periodic_faces(dofHandlerForce, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ periodicDirectionVector[i], periodicity_vectorForce,offsetVectors[periodicDirectionVector[i]]);
+	}
+
+      DoFTools::make_periodicity_constraints<DoFHandler<C_DIM> >(periodicity_vectorForce, constraintsForce);
+      constraintsForce.close();
+    }
+}
+
 //
 //constructor
 //
@@ -73,72 +140,62 @@ forceClass<FEOrder>::forceClass(dftClass<FEOrder>* _dftPtr,const MPI_Comm &mpi_c
 //initialize forceClass object
 //
 template<unsigned int FEOrder>
-void forceClass<FEOrder>::initUnmoved(const Triangulation<3,3> & triangulation)
+void forceClass<FEOrder>::initUnmoved(const Triangulation<3,3> & triangulation,
+	                              const std::vector<std::vector<double> >  & domainBoundingVectors,
+	                              const bool isElectrostaticsMesh)
 {
-  d_dofHandlerForce.clear();
-  d_dofHandlerForce.initialize(triangulation,FEForce);
-  d_dofHandlerForce.distribute_dofs(FEForce);
-  d_locally_owned_dofsForce.clear();d_locally_relevant_dofsForce.clear();
-  d_locally_owned_dofsForce = d_dofHandlerForce.locally_owned_dofs();
-  DoFTools::extract_locally_relevant_dofs(d_dofHandlerForce, d_locally_relevant_dofsForce);
 
-  ///
-  d_constraintsNoneForce.clear(); d_constraintsNoneForce.reinit(d_locally_relevant_dofsForce);
-  DoFTools::make_hanging_node_constraints(d_dofHandlerForce, d_constraintsNoneForce);
-
-  //create unitVectorsXYZ
-  std::vector<std::vector<double> > unitVectorsXYZ;
-  unitVectorsXYZ.resize(3);
-
-  for(int i = 0; i < 3; ++i)
-    {
-      unitVectorsXYZ[i].resize(3,0.0);
-      unitVectorsXYZ[i][i] = 0.0;
-    }
-
-  std::vector<Tensor<1,3> > offsetVectors;
-  //resize offset vectors
-  offsetVectors.resize(3);
-
-  for(int i = 0; i < 3; ++i)
-    {
-      for(int j = 0; j < 3; ++j)
-	{
-	  offsetVectors[i][j] = unitVectorsXYZ[i][j] - dftPtr->d_domainBoundingVectors[i][j];
-	}
-    }
-
-  std::vector<GridTools::PeriodicFacePair<typename DoFHandler<C_DIM>::cell_iterator> > periodicity_vectorForce;
-
-  const std::array<int,3> periodic = {dftParameters::periodicX, dftParameters::periodicY, dftParameters::periodicZ};
-
-
-  std::vector<int> periodicDirectionVector;
-
-  for(unsigned int  d= 0; d < 3; ++d)
-    {
-      if(periodic[d]==1)
-	{
-	  periodicDirectionVector.push_back(d);
-	}
-    }
-
-  for (int i = 0; i < std::accumulate(periodic.begin(),periodic.end(),0); ++i)
-   {
-      GridTools::collect_periodic_faces(d_dofHandlerForce, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ periodicDirectionVector[i], periodicity_vectorForce,offsetVectors[periodicDirectionVector[i]]);
-    }
-
-  DoFTools::make_periodicity_constraints<DoFHandler<C_DIM> >(periodicity_vectorForce, d_constraintsNoneForce);
-  d_constraintsNoneForce.close();
+    if (isElectrostaticsMesh)
+	internalForce::initUnmoved(triangulation,
+		                   domainBoundingVectors,
+				   d_dofHandlerForceElectro,
+				   FEForce,
+				   d_constraintsNoneForceElectro,
+				   d_locally_owned_dofsForceElectro,
+				   d_locally_relevant_dofsForceElectro);
+    else
+	internalForce::initUnmoved(triangulation,
+		                   domainBoundingVectors,
+				   d_dofHandlerForce,
+				   FEForce,
+				   d_constraintsNoneForce,
+				   d_locally_owned_dofsForce,
+				   d_locally_relevant_dofsForce);
 }
+
+
 
 //reinitialize force class object after mesh update
 template<unsigned int FEOrder>
-void forceClass<FEOrder>::initMoved()
+void forceClass<FEOrder>::initMoved
+                    (std::vector<const DoFHandler<3> *> & dofHandlerVectorMatrixFree,
+	             std::vector<const ConstraintMatrix * > & constraintsVectorMatrixFree,
+	             const bool isElectrostaticsMesh,
+		     const bool isElectrostaticsEigenMeshDifferent)
 {
-  d_dofHandlerForce.distribute_dofs(FEForce);
-  createBinObjectsForce();
-  locateAtomCoreNodesForce();
+  if (isElectrostaticsMesh)
+  {
+     d_dofHandlerForceElectro.distribute_dofs(FEForce);
+
+     if (isElectrostaticsEigenMeshDifferent)
+     {
+       dofHandlerVectorMatrixFree.push_back(&d_dofHandlerForceElectro);
+       constraintsVectorMatrixFree.push_back(&d_constraintsNoneForceElectro);
+     }
+     d_forceDofHandlerIndexElectro = dofHandlerVectorMatrixFree.size()-1;
+  }
+  else
+  {
+     d_dofHandlerForce.distribute_dofs(FEForce);
+
+     dofHandlerVectorMatrixFree.push_back(&d_dofHandlerForce);
+     d_forceDofHandlerIndex = dofHandlerVectorMatrixFree.size()-1;
+     constraintsVectorMatrixFree.push_back(&d_constraintsNoneForce);
+
+     locateAtomCoreNodesForce(d_dofHandlerForce,
+	                      d_locally_owned_dofsForce,
+			      d_atomsForceDofs);
+  }
 }
 
 //
@@ -165,20 +222,58 @@ void forceClass<FEOrder>::initPseudoData(){
 
 //compute forces on atoms corresponding to a Gaussian generator
 template<unsigned int FEOrder>
-void forceClass<FEOrder>::computeAtomsForces(){
-  computeConfigurationalForceTotalLinFE();
+void forceClass<FEOrder>::computeAtomsForces
+		 (const MatrixFree<3,double> & matrixFreeData,
+		 const unsigned int eigenDofHandlerIndex,
+		 const unsigned int phiExtDofHandlerIndex,
+		 const unsigned int phiTotDofHandlerIndex,
+		 const vectorType & phiTotRhoIn,
+		 const vectorType & phiTotRhoOut,
+		 const vectorType & phiExt,
+		 const vselfBinsManager<FEOrder> & vselfBinsManagerEigen,
+	         const MatrixFree<3,double> & matrixFreeDataElectro,
+		 const unsigned int phiTotDofHandlerIndexElectro,
+		 const vectorType & phiTotRhoOutElectro,
+		 const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
+	         const ConstraintMatrix  & noConstraintsElectro,
+		 const vselfBinsManager<FEOrder> & vselfBinsManagerElectro)
+{
+  createBinObjectsForce(matrixFreeDataElectro.get_dof_handler(phiTotDofHandlerIndexElectro),
+	                noConstraintsElectro,
+	                vselfBinsManagerElectro);
+
+  computeConfigurationalForceTotalLinFE(matrixFreeData,
+		                        eigenDofHandlerIndex,
+		                        phiExtDofHandlerIndex,
+		                        phiTotDofHandlerIndex,
+		                        phiTotRhoIn,
+		                        phiTotRhoOut,
+		                        phiExt,
+		                        vselfBinsManagerEigen,
+	                                matrixFreeDataElectro,
+		                        phiTotDofHandlerIndexElectro,
+		                        phiTotRhoOutElectro,
+		                        rhoOutValuesElectro,
+		                        vselfBinsManagerElectro);
+
   computeAtomsForcesGaussianGenerator(d_allowGaussianOverlapOnAtoms);
 }
 
 
 template<unsigned int FEOrder>
-void forceClass<FEOrder>::configForceLinFEInit()
+void forceClass<FEOrder>::configForceLinFEInit(const MatrixFree<3,double> & matrixFreeData,
+	                                       const MatrixFree<3,double> & matrixFreeDataElectro)
 {
 
-  dftPtr->matrix_free_data.initialize_dof_vector(d_configForceVectorLinFE,d_forceDofHandlerIndex);
+  matrixFreeData.initialize_dof_vector(d_configForceVectorLinFE,d_forceDofHandlerIndex);
   d_configForceVectorLinFE=0;
+
+  matrixFreeDataElectro.initialize_dof_vector(d_configForceVectorLinFEElectro,
+	                                         d_forceDofHandlerIndexElectro);
+  d_configForceVectorLinFEElectro=0;
+
 #ifdef USE_COMPLEX
-  dftPtr->matrix_free_data.initialize_dof_vector(d_configForceVectorLinFEKPoints,d_forceDofHandlerIndex);
+  matrixFreeData.initialize_dof_vector(d_configForceVectorLinFEKPoints,d_forceDofHandlerIndex);
   d_configForceVectorLinFEKPoints=0;
 #endif
 }
@@ -190,6 +285,12 @@ void forceClass<FEOrder>::configForceLinFEFinalize()
   //d_configForceVectorLinFE.update_ghost_values();
   d_constraintsNoneForce.distribute(d_configForceVectorLinFE);//distribute to constrained degrees of freedom (for example periodic)
   d_configForceVectorLinFE.update_ghost_values();
+
+
+  d_configForceVectorLinFEElectro.compress(VectorOperation::add);//copies the ghost element cache to the owning element
+  //d_configForceVectorLinFE.update_ghost_values();
+  d_constraintsNoneForceElectro.distribute(d_configForceVectorLinFEElectro);//distribute to constrained degrees of freedom (for example periodic)
+  d_configForceVectorLinFEElectro.update_ghost_values();
 
 #ifdef USE_COMPLEX
   d_configForceVectorLinFEKPoints.compress(VectorOperation::add);//copies the ghost element cache to the owning element
@@ -206,19 +307,60 @@ void forceClass<FEOrder>::configForceLinFEFinalize()
 //force expressions refer to the Configurational force paper by Motamarri et.al.
 //(https://arxiv.org/abs/1712.05535)
 template<unsigned int FEOrder>
-void forceClass<FEOrder>::computeConfigurationalForceTotalLinFE()
+void forceClass<FEOrder>::computeConfigurationalForceTotalLinFE
+                                     (const MatrixFree<3,double> & matrixFreeData,
+				     const unsigned int eigenDofHandlerIndex,
+				     const unsigned int phiExtDofHandlerIndex,
+				     const unsigned int phiTotDofHandlerIndex,
+				     const vectorType & phiTotRhoIn,
+				     const vectorType & phiTotRhoOut,
+				     const vectorType & phiExt,
+				     const vselfBinsManager<FEOrder> & vselfBinsManagerEigen,
+				     const MatrixFree<3,double> & matrixFreeDataElectro,
+				     const unsigned int phiTotDofHandlerIndexElectro,
+				     const vectorType & phiTotRhoOutElectro,
+				     const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
+				     const vselfBinsManager<FEOrder> & vselfBinsManagerElectro)
 {
 
 
-  configForceLinFEInit();
+  configForceLinFEInit(matrixFreeData,
+	               matrixFreeDataElectro);
+
   //configurational force contribution from all terms except those from nuclear self energy
   if (dftParameters::spinPolarized)
-     computeConfigurationalForceSpinPolarizedEEshelbyTensorFPSPFnlLinFE();
+     computeConfigurationalForceSpinPolarizedEEshelbyTensorFPSPFnlLinFE
+		                        (matrixFreeData,
+		                        eigenDofHandlerIndex,
+		                        phiExtDofHandlerIndex,
+		                        phiTotDofHandlerIndex,
+		                        phiTotRhoIn,
+		                        phiTotRhoOut,
+		                        phiExt,
+		                        vselfBinsManagerEigen,
+	                                matrixFreeDataElectro,
+		                        phiTotDofHandlerIndexElectro,
+		                        phiTotRhoOutElectro,
+		                        rhoOutValuesElectro);
   else
-     computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE();
+     computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
+		                        (matrixFreeData,
+		                        eigenDofHandlerIndex,
+		                        phiExtDofHandlerIndex,
+		                        phiTotDofHandlerIndex,
+		                        phiTotRhoIn,
+		                        phiTotRhoOut,
+		                        phiExt,
+		                        vselfBinsManagerEigen,
+	                                matrixFreeDataElectro,
+		                        phiTotDofHandlerIndexElectro,
+		                        phiTotRhoOutElectro,
+		                        rhoOutValuesElectro);
+
   //configurational force contribution from nuclear self energy. This is handled separately as it involves
   // a surface integral over the vself ball surface
-  computeConfigurationalForceEselfLinFE();
+  computeConfigurationalForceEselfLinFE(matrixFreeDataElectro.get_dof_handler(phiTotDofHandlerIndexElectro),
+				        vselfBinsManagerElectro);
   configForceLinFEFinalize();
 #ifdef DEBUG
   std::map<std::pair<unsigned int,unsigned int>, unsigned int> ::const_iterator it;

@@ -451,6 +451,80 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
   }//cell loop
 
 
+  vertex_touched.clear();
+  vertex_touched.resize(d_dofHandlerForceElectro.get_triangulation().n_vertices(),false);
+  cell = d_dofHandlerForceElectro.begin_active();
+  endc = d_dofHandlerForceElectro.end();
+  for (; cell!=endc; ++cell)
+   if (cell->is_locally_owned())
+   {
+    for (unsigned int i=0; i<vertices_per_cell; ++i)
+    {
+	const unsigned global_vertex_no = cell->vertex_index(i);
+
+	if (vertex_touched[global_vertex_no])
+	   continue;
+	vertex_touched[global_vertex_no]=true;
+	Point<C_DIM> nodalCoor = cell->vertex(i);
+
+	int overlappedAtomId=-1;
+	for (unsigned int jAtom=0;jAtom <totalNumberAtoms; jAtom++)
+	{
+           Point<C_DIM> jAtomCoor;
+           if(jAtom < numberGlobalAtoms)
+           {
+              jAtomCoor[0] = atomLocations[jAtom][2];
+              jAtomCoor[1] = atomLocations[jAtom][3];
+              jAtomCoor[2] = atomLocations[jAtom][4];
+           }
+           else
+           {
+	      jAtomCoor[0] = imagePositions[jAtom-numberGlobalAtoms][0];
+	      jAtomCoor[1] = imagePositions[jAtom-numberGlobalAtoms][1];
+	      jAtomCoor[2] = imagePositions[jAtom-numberGlobalAtoms][2];
+            }
+            const double distance=(nodalCoor-jAtomCoor).norm();
+	    if (distance < 1e-5){
+		overlappedAtomId=jAtom;
+		break;
+	    }
+	}//j atom loop
+
+        for (unsigned int iAtom=0;iAtom <totalNumberAtoms; iAtom++)
+	{
+             if (overlappedAtomId!=iAtom && overlappedAtomId!=-1 && !allowGaussianOverlapOnAtoms)
+		 continue;
+             Point<C_DIM> atomCoor;
+	     int atomId=iAtom;
+	     if(iAtom < numberGlobalAtoms)
+	     {
+		atomCoor[0] = atomLocations[iAtom][2];
+		atomCoor[1] = atomLocations[iAtom][3];
+		atomCoor[2] = atomLocations[iAtom][4];
+	      }
+	      else
+	      {
+		atomCoor[0] = imagePositions[iAtom-numberGlobalAtoms][0];
+		atomCoor[1] = imagePositions[iAtom-numberGlobalAtoms][1];
+		atomCoor[2] = imagePositions[iAtom-numberGlobalAtoms][2];
+		atomId=imageIds[iAtom-numberGlobalAtoms];
+	      }
+	      const double rsq=(nodalCoor-atomCoor).norm_square();
+	      const double gaussianWeight=std::exp(-d_gaussianConstant*rsq);
+	      for (unsigned int idim=0; idim < C_DIM ; idim++)
+	      {
+	          const unsigned int globalDofIndex=cell->vertex_dof_index(i,idim);
+	          if (!d_constraintsNoneForceElectro.is_constrained(globalDofIndex)
+			  && d_locally_owned_dofsForceElectro.is_element(globalDofIndex))
+		  {
+	              globalAtomsGaussianForcesLocalPart[C_DIM*atomId+idim]+=
+			  gaussianWeight*(d_configForceVectorLinFEElectro[globalDofIndex]);
+		  }
+	      }//idim loop
+ 	}//iAtom loop
+     }//vertices per cell
+   }//locally owned check
+
   //Sum all processor contributions and distribute to all processors
   MPI_Allreduce(&(globalAtomsGaussianForcesLocalPart[0]),
 		&(d_globalAtomsGaussianForces[0]),
