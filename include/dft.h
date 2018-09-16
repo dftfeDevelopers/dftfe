@@ -393,6 +393,9 @@ namespace dftfe {
       double mixing_anderson();
       double mixing_simple_spinPolarized();
       double mixing_anderson_spinPolarized();
+      double mixing_broyden();
+      double mixing_broyden_spinPolarized();
+
 
       /**
        * Re solves the all electrostatics on a h refined mesh, and computes
@@ -410,6 +413,10 @@ namespace dftfe {
        */
       void compute_fermienergy(const std::vector<std::vector<double>> & eigenValuesInput,
 	                       const double numElectronsInput);
+      /**
+       *@brief Computes Fermi-energy obtained by imposing separate constraints on the number of spin-up and spin-down electrons
+       */
+      void compute_fermienergy_constraintMagnetization(const std::vector<std::vector<double>> & eigenValuesInput);
 
       /**
        *@brief write wavefunction solution fields
@@ -459,7 +466,7 @@ namespace dftfe {
       /**
        * stores required data for Kohn-Sham problem
        */
-      unsigned int numElectrons, numLevels;
+      unsigned int numElectrons, numElectronsUp, numElectronsDown, numLevels;
       std::set<unsigned int> atomTypes;
       std::vector<std::vector<double> > atomLocations,atomLocationsFractional,d_reciprocalLatticeVectors, d_domainBoundingVectors;
 
@@ -606,6 +613,15 @@ namespace dftfe {
       std::map<dealii::CellId, std::vector<double> > * gradRhoOutValues, *gradRhoOutValuesSpinPolarized;
       std::deque<std::map<dealii::CellId,std::vector<double> >> gradRhoInVals,gradRhoInValsSpinPolarized,gradRhoOutVals, gradRhoOutValsSpinPolarized;
 
+      // Broyden mixing related objects
+      std::map<dealii::CellId, std::vector<double> > FBroyden, gradFBroyden ;
+      std::deque<std::map<dealii::CellId,std::vector<double> >> dFBroyden, graddFBroyden ;
+      std::deque<std::map<dealii::CellId,std::vector<double> >> uBroyden, gradUBroyden ;
+      std::deque<double>  wtBroyden;
+      double w0Broyden = 0.0 ;
+      //
+
+
       // storage for total electrostatic potential solution vector corresponding to input scf electron density
       vectorType d_phiTotRhoIn;
 
@@ -727,7 +743,7 @@ namespace dftfe {
       void recomputeKPointCoordinates();
 
       /// fermi energy
-      double fermiEnergy;
+      double fermiEnergy, fermiEnergyUp, fermiEnergyDown;
 
       //chebyshev filter variables and functions
       //int numPass ; // number of filter passes

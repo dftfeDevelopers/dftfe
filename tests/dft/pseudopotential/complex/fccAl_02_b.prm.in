@@ -5,23 +5,25 @@ subsection Boundary conditions
   set PERIODIC1                       = true
   set PERIODIC2                       = true
   set PERIODIC3                       = true
-  set SELF POTENTIAL RADIUS = 2.8
+  set SELF POTENTIAL RADIUS = 0
 end
 
 
 subsection Brillouin zone k point sampling options
-  set USE GROUP SYMMETRY         = true
   set USE TIME REVERSAL SYMMETRY = true
   subsection Monkhorst-Pack (MP) grid generation
-    set SAMPLING POINTS 1 = 4
-    set SAMPLING POINTS 2 = 4
-    set SAMPLING POINTS 3 = 4
+    set SAMPLING POINTS 1 = 2
+    set SAMPLING POINTS 2 = 2
+    set SAMPLING POINTS 3 = 2
     set SAMPLING SHIFT 1  = 1
     set SAMPLING SHIFT 2  = 1
     set SAMPLING SHIFT 3  = 1
   end
 end
 
+subsection Parallelization
+  set NPKPT=4
+end
 
 subsection DFT functional parameters
   set EXCHANGE CORRELATION TYPE   = 1
@@ -35,9 +37,10 @@ end
 subsection Finite element mesh parameters
   set POLYNOMIAL ORDER = 2
   subsection Auto mesh generation parameters
-    set ATOM BALL RADIUS     = 0.0
-    set BASE MESH SIZE       = 0.7
-    set MESH SIZE AT ATOM  = 0.7
+    set ATOM BALL RADIUS      = 2.0
+    set BASE MESH SIZE        = 4.0
+    set MESH SIZE AT ATOM     = 0.6
+    set MESH SIZE AROUND ATOM = 0.6
   end
 
 end
@@ -46,7 +49,12 @@ subsection Geometry
   set NATOMS=4
   set NATOM TYPES=1
   set ATOMIC COORDINATES FILE      = @SOURCE_DIR@/fccAl_coordinates.inp
-  set DOMAIN VECTORS FILE = @SOURCE_DIR@/fccAl_domainBoundingVectors.inp 
+  set DOMAIN VECTORS FILE = @SOURCE_DIR@/fccAl_domainBoundingVectors.inp
+  subsection Optimization
+    set STRESS TOL            = 1e-5
+    set CELL OPT              = true
+    set CELL CONSTRAINT TYPE  = 1
+  end 
 end
 
 
@@ -58,16 +66,16 @@ end
 
 subsection SCF parameters
   set MIXING HISTORY   = 70
-  set MIXING PARAMETER = 0.5
+  set MIXING PARAMETER = 0.2
+  set MIXING SCHEME = BROYDEN
   set MAXIMUM ITERATIONS               = 50
   set TEMPERATURE                      = 500 
-  set TOLERANCE                        = 1e-7
-  set STARTING WFC=ATOMIC
+  set TOLERANCE                        = 1e-6
+  set STARTING WFC=RANDOM
   set HIGHER QUAD NLP  = false
   subsection Eigen-solver parameters
      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 20
      set CHEBYSHEV FILTER TOLERANCE=1e-3
-     set ORTHOGONALIZATION TYPE=PGS
-     set ENABLE SWITCH TO GS=false
+     set ORTHOGONALIZATION TYPE=LW
   end
 end

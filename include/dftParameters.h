@@ -40,12 +40,13 @@ namespace dftfe {
       extern double radiusAtomBall, mixingParameter;
       extern double lowerEndWantedSpectrum,relLinearSolverTolerance,selfConsistentSolverTolerance,TVal, start_magnetization;
 
-      extern bool isPseudopotential, periodicX, periodicY, periodicZ, useSymm, timeReversal,pseudoTestsFlag;
+      extern bool isPseudopotential, periodicX, periodicY, periodicZ, useSymm, timeReversal,pseudoTestsFlag, constraintMagnetization;
       extern std::string meshFileName,coordinatesFile,domainBoundingVectorsFile,kPointDataFile, ionRelaxFlagsFile, orthogType,pseudoPotentialFile;
 
       extern double outerAtomBallRadius, meshSizeOuterDomain;
       extern double meshSizeInnerBall, meshSizeOuterBall;
       extern double chebyshevTolerance;
+      extern std::string mixingMethod ;
 
 
       extern bool isIonOpt, isCellOpt, isIonForce, isCellStress;
@@ -79,6 +80,7 @@ namespace dftfe {
       extern double mpiAllReduceMessageBlockSizeMB;
       extern bool useHigherQuadNLP;
       extern bool useMixedPrecisionPGS;
+      extern unsigned int numAdaptiveFilterStates;
 
       /**
        * Declare parameters.
