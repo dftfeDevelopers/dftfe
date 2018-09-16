@@ -18,12 +18,14 @@
 
 
 template<unsigned int FEOrder>
-void forceClass<FEOrder>::createBinObjectsForce()
+void forceClass<FEOrder>::createBinObjectsForce(const DoFHandler<3> & dofHandlerElectro,
+	                                        const ConstraintMatrix  & noConstraintsElectro,
+				                const vselfBinsManager<FEOrder> & vselfBinsManagerElectro)
 {
   const unsigned int faces_per_cell=GeometryInfo<C_DIM>::faces_per_cell;
-  const unsigned int dofs_per_cell=dftPtr->FE.dofs_per_cell;
-  const unsigned int dofs_per_face=dftPtr->FE.dofs_per_face;
-  const unsigned int numberBins=dftPtr->d_vselfBinsManager.getAtomIdsBins().size();
+  const unsigned int dofs_per_cell=dofHandlerElectro.get_fe().dofs_per_cell;
+  const unsigned int dofs_per_face=dofHandlerElectro.get_fe().dofs_per_face;
+  const unsigned int numberBins=vselfBinsManagerElectro.getAtomIdsBins().size();
   //clear exisitng data
   d_cellsVselfBallsDofHandler.clear();
   d_cellsVselfBallsDofHandlerForce.clear();
@@ -41,9 +43,12 @@ void forceClass<FEOrder>::createBinObjectsForce()
   for(unsigned int iBin = 0; iBin < numberBins; ++iBin)
   {
 
-     const std::map<dealii::types::global_dof_index, int> & boundaryNodeMap = dftPtr->d_vselfBinsManager.getBoundaryFlagsBins()[iBin];
-     const std::map<dealii::types::global_dof_index, int> & closestAtomBinMap =dftPtr->d_vselfBinsManager.getClosestAtomIdsBins()[iBin];
-     DoFHandler<C_DIM>::active_cell_iterator cell = dftPtr->dofHandler.begin_active(),endc = dftPtr->dofHandler.end();
+     const std::map<dealii::types::global_dof_index, int> & boundaryNodeMap
+	                                        = vselfBinsManagerElectro.getBoundaryFlagsBins()[iBin];
+     const std::map<dealii::types::global_dof_index, int> & closestAtomBinMap =
+	                                       vselfBinsManagerElectro.getClosestAtomIdsBins()[iBin];
+     DoFHandler<C_DIM>::active_cell_iterator cell = dofHandlerElectro.begin_active();
+     DoFHandler<C_DIM>::active_cell_iterator endc = dofHandlerElectro.end();
      DoFHandler<C_DIM>::active_cell_iterator cellForce = d_dofHandlerForce.begin_active();
      for(; cell!= endc; ++cell, ++cellForce)
      {
@@ -65,7 +70,7 @@ void forceClass<FEOrder>::createBinObjectsForce()
 	      for(unsigned int iFaceDof = 0; iFaceDof < dofs_per_face; ++iFaceDof)
 	      {
                  const types::global_dof_index nodeId=iFaceGlobalDofIndices[iFaceDof];
-		 if (!dftPtr->d_noConstraints.is_constrained(nodeId))
+		 if (!noConstraintsElectro.is_constrained(nodeId))
 		 {
 	            Assert(boundaryNodeMap.find(nodeId)!=boundaryNodeMap.end(),ExcMessage("BUG"));
                     Assert(closestAtomBinMap.find(nodeId)!=closestAtomBinMap.end(),ExcMessage("BUG"));

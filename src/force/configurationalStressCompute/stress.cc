@@ -18,8 +18,26 @@
 
 #ifdef USE_COMPLEX
 template<unsigned int FEOrder>
-void forceClass<FEOrder>::computeStress()
+void forceClass<FEOrder>::computeStress
+		 (const MatrixFree<3,double> & matrixFreeData,
+		 const unsigned int eigenDofHandlerIndex,
+		 const unsigned int phiExtDofHandlerIndex,
+		 const unsigned int phiTotDofHandlerIndex,
+		 const vectorType & phiTotRhoIn,
+		 const vectorType & phiTotRhoOut,
+		 const vectorType & phiExt,
+		 const vselfBinsManager<FEOrder> & vselfBinsManagerEigen,
+	         const MatrixFree<3,double> & matrixFreeDataElectro,
+		 const unsigned int phiTotDofHandlerIndexElectro,
+		 const vectorType & phiTotRhoOutElectro,
+		 const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
+	         const ConstraintMatrix  & noConstraintsElectro,
+		 const vselfBinsManager<FEOrder> & vselfBinsManagerElectro)
 {
+  createBinObjectsForce(matrixFreeDataElectro.get_dof_handler(phiTotDofHandlerIndexElectro),
+	                noConstraintsElectro,
+	                vselfBinsManagerElectro);
+
   //reset to zero
   for (unsigned int idim=0; idim<C_DIM; idim++)
   {
@@ -32,13 +50,36 @@ void forceClass<FEOrder>::computeStress()
 
   //configurational stress contribution from all terms except those from nuclear self energy
   if (dftParameters::spinPolarized)
-     computeStressSpinPolarizedEEshelbyEPSPEnlEk();
+     computeStressSpinPolarizedEEshelbyEPSPEnlEk(matrixFreeData,
+		                        eigenDofHandlerIndex,
+		                        phiExtDofHandlerIndex,
+		                        phiTotDofHandlerIndex,
+		                        phiTotRhoIn,
+		                        phiTotRhoOut,
+		                        phiExt,
+		                        vselfBinsManagerEigen,
+	                                matrixFreeDataElectro,
+		                        phiTotDofHandlerIndexElectro,
+		                        phiTotRhoOutElectro,
+		                        rhoOutValuesElectro);
   else
-     computeStressEEshelbyEPSPEnlEk();
+     computeStressEEshelbyEPSPEnlEk(matrixFreeData,
+		                        eigenDofHandlerIndex,
+		                        phiExtDofHandlerIndex,
+		                        phiTotDofHandlerIndex,
+		                        phiTotRhoIn,
+		                        phiTotRhoOut,
+		                        phiExt,
+		                        vselfBinsManagerEigen,
+	                                matrixFreeDataElectro,
+		                        phiTotDofHandlerIndexElectro,
+		                        phiTotRhoOutElectro,
+		                        rhoOutValuesElectro);
 
   //configurational stress contribution from nuclear self energy. This is handled separately as it involves
   // a surface integral over the vself ball surface
-  computeStressEself();
+  computeStressEself(matrixFreeDataElectro.get_dof_handler(phiTotDofHandlerIndexElectro),
+	             vselfBinsManagerElectro);
 
   //Sum all processor contributions and distribute to all processors
   d_stress=Utilities::MPI::sum(d_stress,mpi_communicator);

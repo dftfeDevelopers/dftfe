@@ -30,11 +30,12 @@ namespace eshelbyTensorSP
 						       const VectorizedArray<double> & exc,
 						       const Tensor<1,C_DIM,VectorizedArray<double> > & derExcGradRhoSpin0,
 						       const Tensor<1,C_DIM,VectorizedArray<double> > & derExcGradRhoSpin1,
-						       const VectorizedArray<double> & pseudoVLoc)
+						       const VectorizedArray<double> & pseudoVLoc,
+						       const VectorizedArray<double> & phiExt)
     {
        Tensor<2,C_DIM,VectorizedArray<double> > eshelbyTensor= -outer_product(derExcGradRhoSpin0,gradRhoSpin0)
 	                                                       -outer_product(derExcGradRhoSpin1,gradRhoSpin1);
-       VectorizedArray<double> identityTensorFactor=exc*rho + pseudoVLoc*rho;
+       VectorizedArray<double> identityTensorFactor=exc*rho + (pseudoVLoc-phiExt)*rho;
        eshelbyTensor[0][0]+=identityTensorFactor;
        eshelbyTensor[1][1]+=identityTensorFactor;
        eshelbyTensor[2][2]+=identityTensorFactor;
