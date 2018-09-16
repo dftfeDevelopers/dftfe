@@ -186,7 +186,7 @@ namespace dftParameters
     prm.enter_subsection ("Boundary conditions");
     {
         prm.declare_entry("SELF POTENTIAL RADIUS", "0.0",
-                      Patterns::Double(0.0,10),
+                      Patterns::Double(0.0,50),
                       "[Advanced] The radius (in a.u) of the ball around an atom in which self-potential of the associated nuclear charge is solved. For the default value of 0.0, the radius value is automatically determined to accommodate the largest radius possible for the given finite element mesh. The default approach works for most problems.");
 
 	prm.declare_entry("PERIODIC1", "false",
