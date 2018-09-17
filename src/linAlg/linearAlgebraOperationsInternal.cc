@@ -229,7 +229,7 @@ namespace dftfe
 #endif
 		      }
 
-		  const unsigned int diagBlockSize=1;
+		  const unsigned int diagBlockSize=B;
 		  const unsigned int D=N-ivec;
 
 		  dgemm_(&transA,
