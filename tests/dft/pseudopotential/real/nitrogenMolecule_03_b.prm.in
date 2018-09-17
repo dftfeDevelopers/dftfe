@@ -49,7 +49,8 @@ subsection SCF parameters
       set ORTHOGONALIZATION TYPE=PGS
       set CHEBYSHEV POLYNOMIAL DEGREE = 30
       set CHEBYSHEV FILTER TOLERANCE=2e-3
-      set USE MIXED PREC PGS=true
+      set USE MIXED PREC PGS SR=true
+      set USE MIXED PREC PGS O=true
       set WFC BLOCK SIZE=3
       set SUBSPACE ROT DOFS BLOCK SIZE=500
   end

@@ -229,11 +229,12 @@ namespace dftfe
 #endif
 		      }
 
+		  const unsigned int diagBlockSize=1;
 		  const unsigned int D=N-ivec;
 
 		  dgemm_(&transA,
 			 &transB,
-			 &B,
+			 &diagBlockSize,
 			 &B,
 			 &numLocalDofs,
 			 &scalarCoeffAlpha,
@@ -245,23 +246,23 @@ namespace dftfe
 			 &overlapMatrixBlock[0],
 			 &D);
 
-		  const unsigned int DRem=D-B;
+		  const unsigned int DRem=D-diagBlockSize;
 		  sgemm_(&transA,
 			 &transB,
 			 &DRem,
 			 &B,
 			 &numLocalDofs,
 			 &scalarCoeffAlphaLowPrec,
-			 &subspaceVectorsArrayLowPrec[0]+ivec+B,
+			 &subspaceVectorsArrayLowPrec[0]+ivec+diagBlockSize,
 			 &N,
 			 &blockVectorsMatrixLowPrec[0],
 			 &numLocalDofs,
 			 &scalarCoeffBetaLowPrec,
-			 &overlapMatrixBlockLowPrec[B],
+			 &overlapMatrixBlockLowPrec[diagBlockSize],
 			 &D);
 
 		  for(unsigned int i = 0; i <B; ++i)
-		      for (unsigned int j = ivec+B; j <N; ++j)
+		      for (unsigned int j = ivec+diagBlockSize; j <N; ++j)
 			  overlapMatrixBlock[i*D+j-ivec]
 			      =(dataTypes::number)overlapMatrixBlockLowPrec[i*D+j-ivec];
 
