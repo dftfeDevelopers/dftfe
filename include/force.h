@@ -112,6 +112,7 @@ namespace dftfe {
 		 const vectorType & phiTotRhoIn,
 		 const vectorType & phiTotRhoOut,
 		 const vectorType & phiExt,
+		 const ConstraintMatrix  & noConstraints,
 		 const vselfBinsManager<FEOrder>   & vselfBinsManagerEigen,
 	         const MatrixFree<3,double> & matrixFreeDataElectro,
 		 const unsigned int phiTotDofHandlerIndexElectro,
@@ -151,6 +152,7 @@ namespace dftfe {
 		 const vectorType & phiTotRhoIn,
 		 const vectorType & phiTotRhoOut,
 		 const vectorType & phiExt,
+		 const ConstraintMatrix  & noConstraints,
 		 const vselfBinsManager<FEOrder>   & vselfBinsManagerEigen,
 	         const MatrixFree<3,double> & matrixFreeDataElectro,
 		 const unsigned int phiTotDofHandlerIndexElectro,
@@ -191,9 +193,17 @@ namespace dftfe {
 			  const IndexSet & locally_owned_dofsForce,
 			  std::map<std::pair<unsigned int,unsigned int>, unsigned int> & atomsForceDofs);
 
-      void createBinObjectsForce(const DoFHandler<3> & dofHandlerElectro,
-	                         const ConstraintMatrix  & noConstraintsElectro,
-				 const vselfBinsManager<FEOrder>   & vselfBinsManagerElectro);
+      void createBinObjectsForce
+	        (const DoFHandler<3> & dofHandler,
+		 const DoFHandler<3> & dofHandlerForce,
+		 const ConstraintMatrix  & noConstraints,
+		 const vselfBinsManager<FEOrder> & vselfBinsManager,
+		 std::vector<std::vector<DoFHandler<C_DIM>::active_cell_iterator> > & cellsVselfBallsDofHandler,
+		 std::vector<std::vector<DoFHandler<C_DIM>::active_cell_iterator> > & cellsVselfBallsDofHandlerForce,
+		 std::vector<std::map<dealii::CellId , unsigned int> > & cellsVselfBallsClosestAtomIdDofHandler,
+		 std::map<unsigned int, unsigned int> & AtomIdBinIdLocalDofHandler,
+		 std::vector<std::map<DoFHandler<C_DIM>::active_cell_iterator,std::vector<unsigned int > > > & cellFacesVselfBallSurfacesDofHandler,
+		 std::vector<std::map<DoFHandler<C_DIM>::active_cell_iterator,std::vector<unsigned int > > > & cellFacesVselfBallSurfacesDofHandlerForce);
 
       void configForceLinFEInit(const MatrixFree<3,double> & matrixFreeData,
 	                        const MatrixFree<3,double> & matrixFreeDataElectro);
@@ -562,6 +572,32 @@ namespace dftfe {
        * cell iterator.
        */
       std::vector<std::map<DoFHandler<C_DIM>::active_cell_iterator,std::vector<unsigned int > > > d_cellFacesVselfBallSurfacesDofHandlerForce;
+
+      /// Internal data: stores cell iterators of all cells in dftPtr->d_dofHandler which are part of the vself ball. Outer vector is over vself bins.
+      std::vector<std::vector<DoFHandler<C_DIM>::active_cell_iterator> > d_cellsVselfBallsDofHandlerElectro;
+
+      /// Internal data: stores cell iterators of all cells in d_dofHandlerForce which are part of the vself ball. Outer vector is over vself bins.
+      std::vector<std::vector<DoFHandler<C_DIM>::active_cell_iterator> > d_cellsVselfBallsDofHandlerForceElectro;
+
+      /// Internal data: stores map of vself ball cell Id  to the closest atom Id of that cell. Outer vector over vself bins.
+      std::vector<std::map<dealii::CellId , unsigned int> > d_cellsVselfBallsClosestAtomIdDofHandlerElectro;
+
+      /// Internal data: stores the map of atom Id (only in the local processor) to the vself bin Id.
+      std::map<unsigned int, unsigned int> d_AtomIdBinIdLocalDofHandlerElectro;
+
+      /* Internal data: stores the face ids of dftPtr->d_dofHandler (single component field) on which to
+       * evaluate the vself ball surface integral in the configurational force expression. Outer vector is over
+       * the vself bins. Inner map is between the cell iterator and the vector of face ids to integrate on for that
+       * cell iterator.
+       */
+      std::vector<std::map<DoFHandler<C_DIM>::active_cell_iterator,std::vector<unsigned int > > > d_cellFacesVselfBallSurfacesDofHandlerElectro;
+
+      /* Internal data: stores the face ids of d_dofHandlerForce (three component field) on which to
+       * evaluate the vself ball surface integral in the configurational force expression. Outer vector is over
+       * the vself bins. Inner map is between the cell iterator and the vector of face ids to integrate on for that
+       * cell iterator.
+       */
+      std::vector<std::map<DoFHandler<C_DIM>::active_cell_iterator,std::vector<unsigned int > > > d_cellFacesVselfBallSurfacesDofHandlerForceElectro;
 
       /// mpi_communicator in the current pool
       const MPI_Comm mpi_communicator;

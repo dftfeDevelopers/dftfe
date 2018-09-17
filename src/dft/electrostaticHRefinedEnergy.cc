@@ -24,9 +24,9 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
    if (dftParameters::verbosity>=2)
         pcout<< std::endl<<"-----------------Re computing electrostatics on h globally refined mesh--------------"<<std::endl;
 
-   
+
    std::map<dealii::CellId, std::vector<double> > rhoOutHRefinedQuadValues;
-   
+
    //
    //access quadrature object
    //
@@ -42,10 +42,10 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
 					     *rhoOutValues,
 					     rhoOutHRefinedQuadValues);
 
-					     
-   
+
+
    dealii::parallel::distributed::Triangulation<3> & electrostaticsTria = d_mesh.getElectrostaticsMesh();
-   
+   forcePtr->initUnmoved(electrostaticsTria,d_domainBoundingVectors,true);
 
    dealii::DoFHandler<3> dofHandlerHRefined;
    dofHandlerHRefined.initialize(electrostaticsTria,dealii::FE_Q<3>(dealii::QGaussLobatto<1>(FEOrder+1)));
@@ -83,9 +83,9 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
    const std::array<unsigned int,3> periodic = {dftParameters::periodicX, dftParameters::periodicY, dftParameters::periodicZ};
 
    std::vector<int> periodicDirectionVector;
-   for (unsigned int  d= 0; d < 3; ++d) 
+   for (unsigned int  d= 0; d < 3; ++d)
      {
-       if (periodic[d]==1) 
+       if (periodic[d]==1)
 	 {
 	   periodicDirectionVector.push_back(d);
 	 }
@@ -154,6 +154,11 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
    const unsigned phiExtDofHandlerIndexHRefined = matrixFreeDofHandlerVectorInput.size()-1;
    matrixFreeConstraintsInputVector.push_back(&onlyHangingNodeConstraints);
 
+   forcePtr->initMoved(matrixFreeDofHandlerVectorInput,
+	               matrixFreeConstraintsInputVector,
+	               true,
+		       true);
+
    std::vector<Quadrature<1> > quadratureVector;
    quadratureVector.push_back(QGauss<1>(C_num1DQuad<FEOrder>()));
 
@@ -168,7 +173,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
    std::map<dealii::types::global_dof_index, double> atomHRefinedNodeIdToChargeMap;
    locateAtomCoreNodes(dofHandlerHRefined,atomHRefinedNodeIdToChargeMap);
 
- 
+
    //solve vself in bins on h refined mesh
    std::vector<std::vector<double> > localVselfsHRefined;
    vectorType phiExtHRefined;
@@ -207,7 +212,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
 
    energyCalculator energyCalcHRefined(mpi_communicator, interpoolcomm, interBandGroupComm);
 
-  
+
   const double totalEnergy = dftParameters::spinPolarized==0 ?
     energyCalcHRefined.computeEnergy(dofHandlerHRefined,
 				     dofHandler,
@@ -259,6 +264,146 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
 						  lowerBoundKindex,
 						  1,
 						  true);
+
+
+
+    if(dftParameters::isIonForce || dftParameters::isCellStress)
+      {
+	//
+	//Create the full dealii partitioned array
+	//
+	d_eigenVectorsFlattened.resize((1+dftParameters::spinPolarized)*d_kPointWeights.size());
+
+	for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+	  {
+	    vectorTools::createDealiiVector<dataTypes::number>(matrix_free_data.get_vector_partitioner(),
+							       numEigenValues,
+							       d_eigenVectorsFlattened[kPoint]);
+
+
+	    d_eigenVectorsFlattened[kPoint] = dataTypes::number(0.0);
+
+	  }
+
+
+	Assert(d_eigenVectorsFlattened[0].local_size()==d_eigenVectorsFlattenedSTL[0].size(),
+		  dealii::ExcMessage("Incorrect local sizes of STL and dealii arrays"));
+
+	constraintsNoneDataInfo.precomputeMaps(matrix_free_data.get_vector_partitioner(),
+					       d_eigenVectorsFlattened[0].get_partitioner(),
+					       numEigenValues);
+
+	const unsigned int localVectorSize = d_eigenVectorsFlattenedSTL[0].size()/numEigenValues;
+
+	for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+	  {
+	    for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
+	      {
+		for(unsigned int iWave = 0; iWave < numEigenValues; ++iWave)
+		  {
+		    d_eigenVectorsFlattened[kPoint].local_element(iNode*numEigenValues+iWave)
+		      = d_eigenVectorsFlattenedSTL[kPoint][iNode*numEigenValues+iWave];
+		  }
+	      }
+
+	    constraintsNoneDataInfo.distribute(d_eigenVectorsFlattened[kPoint],
+					       numEigenValues);
+
+	  }
+
+
+	for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+	  {
+	    d_eigenVectorsFlattenedSTL[kPoint].clear();
+	    std::vector<dataTypes::number>().swap(d_eigenVectorsFlattenedSTL[kPoint]);
+	  }
+
+      }
+
+    if (dftParameters::isIonForce)
+      {
+
+ 	computing_timer.enter_section("Ion force computation");
+	computingTimerStandard.enter_section("Ion force computation");
+	forcePtr->computeAtomsForces(matrix_free_data,
+		                     eigenDofHandlerIndex,
+				     phiExtDofHandlerIndex,
+				     phiTotDofHandlerIndex,
+                                     d_phiTotRhoIn,
+				     d_phiTotRhoOut,
+				     d_phiExt,
+				     d_noConstraints,
+				     d_vselfBinsManager,
+				     matrixFreeDataHRefined,
+				     phiTotDofHandlerIndexHRefined,
+				     phiTotRhoOutHRefined,
+				     rhoOutHRefinedQuadValues,
+				     onlyHangingNodeConstraints,
+				     vselfBinsManagerHRefined);
+	forcePtr->printAtomsForces();
+	computingTimerStandard.exit_section("Ion force computation");
+	computing_timer.exit_section("Ion force computation");
+      }
+#ifdef USE_COMPLEX
+    if (dftParameters::isCellStress)
+      {
+
+	computing_timer.enter_section("Cell stress computation");
+	computingTimerStandard.enter_section("Cell stress computation");
+	forcePtr->computeStress(matrix_free_data,
+		                eigenDofHandlerIndex,
+				phiExtDofHandlerIndex,
+				phiTotDofHandlerIndex,
+                                d_phiTotRhoIn,
+				d_phiTotRhoOut,
+				d_phiExt,
+				d_noConstraints,
+				d_vselfBinsManager,
+				matrixFreeDataHRefined,
+				phiTotDofHandlerIndexHRefined,
+				phiTotRhoOutHRefined,
+				rhoOutHRefinedQuadValues,
+				onlyHangingNodeConstraints,
+			        vselfBinsManagerHRefined);
+	forcePtr->printStress();
+	computingTimerStandard.exit_section("Cell stress computation");
+	computing_timer.exit_section("Cell stress computation");
+      }
+#endif
+
+    if(dftParameters::isIonForce || dftParameters::isCellStress)
+      {
+	//
+	//Create the full STL array from dealii flattened array
+	//
+	for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+	  d_eigenVectorsFlattenedSTL[kPoint].resize(numEigenValues*matrix_free_data.get_vector_partitioner()->local_size(),dataTypes::number(0.0));
+
+	Assert(d_eigenVectorsFlattened[0].local_size()==d_eigenVectorsFlattenedSTL[0].size(),
+	       dealii::ExcMessage("Incorrect local sizes of STL and dealii arrays"));
+
+	const unsigned int localVectorSize = d_eigenVectorsFlattenedSTL[0].size()/numEigenValues;
+
+	//
+	//copy the data into STL array
+	//
+	for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+	  {
+	    for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
+	      {
+		for(unsigned int iWave = 0; iWave < numEigenValues; ++iWave)
+		  {
+		    d_eigenVectorsFlattenedSTL[kPoint][iNode*numEigenValues+iWave] = d_eigenVectorsFlattened[kPoint].local_element(iNode*numEigenValues+iWave);
+		  }
+	      }
+	  }
+
+	for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+	  {
+	    d_eigenVectorsFlattened[kPoint].reinit(0);
+	  }
+
+      }
 
 
 }

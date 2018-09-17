@@ -43,7 +43,7 @@ void forceClass<FEOrder>::computeStressEself(const DoFHandler<3> & dofHandlerEle
 
   for(unsigned int iBin = 0; iBin < numberBins; ++iBin)
   {
-    const std::vector<DoFHandler<C_DIM>::active_cell_iterator> & cellsVselfBallDofHandler=d_cellsVselfBallsDofHandler[iBin];
+    const std::vector<DoFHandler<C_DIM>::active_cell_iterator> & cellsVselfBallDofHandler=d_cellsVselfBallsDofHandlerElectro[iBin];
     const vectorType & iBinVselfField= vselfBinsManagerElectro.getVselfFieldBins()[iBin];
     std::vector<DoFHandler<C_DIM>::active_cell_iterator>::const_iterator iter1;
     for (iter1 = cellsVselfBallDofHandler.begin(); iter1 != cellsVselfBallDofHandler.end(); ++iter1)
@@ -71,13 +71,13 @@ void forceClass<FEOrder>::computeStressEself(const DoFHandler<3> & dofHandlerEle
 
   for(unsigned int iBin = 0; iBin < numberBins; ++iBin)
   {
-    const std::map<DoFHandler<C_DIM>::active_cell_iterator,std::vector<unsigned int > >  & cellsVselfBallSurfacesDofHandler=d_cellFacesVselfBallSurfacesDofHandler[iBin];
+    const std::map<DoFHandler<C_DIM>::active_cell_iterator,std::vector<unsigned int > >  & cellsVselfBallSurfacesDofHandler=d_cellFacesVselfBallSurfacesDofHandlerElectro[iBin];
     const vectorType & iBinVselfField= vselfBinsManagerElectro.getVselfFieldBins()[iBin];
     std::map<DoFHandler<C_DIM>::active_cell_iterator,std::vector<unsigned int > >::const_iterator iter1;
     for (iter1 = cellsVselfBallSurfacesDofHandler.begin(); iter1 != cellsVselfBallSurfacesDofHandler.end(); ++iter1)
     {
 	DoFHandler<C_DIM>::active_cell_iterator cell=iter1->first;
-        const int closestAtomId= d_cellsVselfBallsClosestAtomIdDofHandler[iBin][cell->id()];
+        const int closestAtomId= d_cellsVselfBallsClosestAtomIdDofHandlerElectro[iBin][cell->id()];
         double closestAtomCharge;
 	Point<C_DIM> closestAtomLocation;
 	if(closestAtomId < numberGlobalAtoms)

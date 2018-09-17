@@ -315,7 +315,7 @@ namespace dftfe {
 	    pcout <<" Setting the number of Kohn-Sham wave functions to be set to "<<numEigenValues<<std::endl;
 	  }
       }
-    
+
     if (dftParameters::constraintMagnetization)
      {
        numElectronsUp = std::ceil(static_cast<double>(numElectrons)/2.0);
@@ -784,7 +784,7 @@ namespace dftfe {
 		     if (dftParameters::mixingMethod=="BROYDEN" )
 		        norm = sqrt(mixing_broyden_spinPolarized());
 		  }
-		else 
+		else
 		  {
 		    if (dftParameters::mixingMethod=="ANDERSON")
 		        norm = sqrt(mixing_anderson());
@@ -1503,6 +1503,7 @@ namespace dftfe {
                                      d_phiTotRhoIn,
 				     d_phiTotRhoOut,
 				     d_phiExt,
+				     d_noConstraints,
 				     d_vselfBinsManager,
 				     matrix_free_data,
 				     phiTotDofHandlerIndex,
@@ -1529,6 +1530,7 @@ namespace dftfe {
                                 d_phiTotRhoIn,
 				d_phiTotRhoOut,
 				d_phiExt,
+				d_noConstraints,
 				d_vselfBinsManager,
 				matrix_free_data,
 				phiTotDofHandlerIndex,

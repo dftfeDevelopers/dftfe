@@ -26,6 +26,7 @@ void forceClass<FEOrder>::computeStress
 		 const vectorType & phiTotRhoIn,
 		 const vectorType & phiTotRhoOut,
 		 const vectorType & phiExt,
+		 const ConstraintMatrix  & noConstraints,
 		 const vselfBinsManager<FEOrder> & vselfBinsManagerEigen,
 	         const MatrixFree<3,double> & matrixFreeDataElectro,
 		 const unsigned int phiTotDofHandlerIndexElectro,
@@ -34,9 +35,27 @@ void forceClass<FEOrder>::computeStress
 	         const ConstraintMatrix  & noConstraintsElectro,
 		 const vselfBinsManager<FEOrder> & vselfBinsManagerElectro)
 {
+  createBinObjectsForce(matrixFreeData.get_dof_handler(phiTotDofHandlerIndex),
+	                d_dofHandlerForce,
+	                noConstraints,
+	                vselfBinsManagerEigen,
+                        d_cellsVselfBallsDofHandler,
+                        d_cellsVselfBallsDofHandlerForce,
+                        d_cellsVselfBallsClosestAtomIdDofHandler,
+                        d_AtomIdBinIdLocalDofHandler,
+                        d_cellFacesVselfBallSurfacesDofHandler,
+                        d_cellFacesVselfBallSurfacesDofHandlerForce);
+
   createBinObjectsForce(matrixFreeDataElectro.get_dof_handler(phiTotDofHandlerIndexElectro),
+	                d_dofHandlerForceElectro,
 	                noConstraintsElectro,
-	                vselfBinsManagerElectro);
+	                vselfBinsManagerElectro,
+                        d_cellsVselfBallsDofHandlerElectro,
+                        d_cellsVselfBallsDofHandlerForceElectro,
+                        d_cellsVselfBallsClosestAtomIdDofHandlerElectro,
+                        d_AtomIdBinIdLocalDofHandlerElectro,
+                        d_cellFacesVselfBallSurfacesDofHandlerElectro,
+                        d_cellFacesVselfBallSurfacesDofHandlerForceElectro);
 
   //reset to zero
   for (unsigned int idim=0; idim<C_DIM; idim++)
