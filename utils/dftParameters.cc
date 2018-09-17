@@ -417,7 +417,7 @@ namespace dftParameters
 
 	    prm.declare_entry("USE MIXED PREC PGS", "false",
 			      Patterns::Bool(),
-			      "[Advanced] Use mixed precision arithmetic in susbpace rotation step of PGS orthogonalization, if ORTHOGONALIZATION TYPE is set to PGS. Currently this optimization is only enabled for the real executable. Default setting is false.");
+			      "[Advanced] Use mixed precision arithmetic in overlap matrix computation and susbpace rotation step of PGS orthogonalization, if ORTHOGONALIZATION TYPE is set to PGS. Currently this optimization is only enabled for the real executable. Default setting is false.");
 
 	    prm.declare_entry("ADAPTIVE FILTER STATES", "0",
 			      Patterns::Integer(0),
