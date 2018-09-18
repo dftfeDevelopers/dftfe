@@ -33,7 +33,7 @@ namespace dftParameters
   double radiusAtomBall=0.0, mixingParameter=0.5;
   double lowerEndWantedSpectrum=0.0,relLinearSolverTolerance=1e-10,selfConsistentSolverTolerance=1e-10,TVal=500, start_magnetization=0.0;
   double chebyshevTolerance = 1e-02;
-  std::string mixingMethod = ""; 
+  std::string mixingMethod = "";
 
   bool isPseudopotential=false,periodicX=false,periodicY=false,periodicZ=false, useSymm=false, timeReversal=false,pseudoTestsFlag=false, constraintMagnetization=false;
   std::string meshFileName="",coordinatesFile="",domainBoundingVectorsFile="",kPointDataFile="", ionRelaxFlagsFile="",orthogType="",pseudoPotentialFile="";
@@ -69,7 +69,8 @@ namespace dftParameters
   bool reuseWfcGeoOpt=true;
   extern double mpiAllReduceMessageBlockSizeMB=2.0;
   bool useHigherQuadNLP=true;
-  bool useMixedPrecisionPGS=false;
+  bool useMixedPrecPGS_SR=false;
+  bool useMixedPrecPGS_O=false;
   unsigned int numAdaptiveFilterStates=0;
 
   void declare_parameters(ParameterHandler &prm)
@@ -415,9 +416,13 @@ namespace dftParameters
 			      Patterns::Integer(0,300),
 			      "[Advanced] Uses a processor grid of SCALAPACKPROCS times SCALAPACKPROCS for parallel distribution of the subspace projected matrix in the Rayleigh-Ritz step and the overlap matrix in the Pseudo-Gram-Schmidt step. Default value is 0 for which a thumb rule is used (see http://netlib.org/scalapack/slug/node106.html). This parameter is only used if dealii library is compiled with ScaLAPACK.");
 
-	    prm.declare_entry("USE MIXED PREC PGS", "false",
+	    prm.declare_entry("USE MIXED PREC PGS SR", "false",
 			      Patterns::Bool(),
 			      "[Advanced] Use mixed precision arithmetic in susbpace rotation step of PGS orthogonalization, if ORTHOGONALIZATION TYPE is set to PGS. Currently this optimization is only enabled for the real executable. Default setting is false.");
+
+	    prm.declare_entry("USE MIXED PREC PGS O", "false",
+			      Patterns::Bool(),
+			      "[Advanced] Use mixed precision arithmetic in overlap matrix computation step of PGS orthogonalization, if ORTHOGONALIZATION TYPE is set to PGS. Currently this optimization is only enabled for the real executable. Default setting is false.");
 
 	    prm.declare_entry("ADAPTIVE FILTER STATES", "0",
 			      Patterns::Integer(0),
@@ -570,7 +575,8 @@ namespace dftParameters
 	   dftParameters::enableSwitchToGS= prm.get_bool("ENABLE SWITCH TO GS");
 	   dftParameters::triMatPGSOpt= prm.get_bool("ENABLE SUBSPACE ROT PGS OPT");
 	   dftParameters::scalapackParalProcs= prm.get_integer("SCALAPACKPROCS");
-	   dftParameters::useMixedPrecisionPGS= prm.get_bool("USE MIXED PREC PGS");
+	   dftParameters::useMixedPrecPGS_SR= prm.get_bool("USE MIXED PREC PGS SR");
+	   dftParameters::useMixedPrecPGS_O= prm.get_bool("USE MIXED PREC PGS O");
 	   dftParameters::numAdaptiveFilterStates= prm.get_integer("ADAPTIVE FILTER STATES");
 	}
 	prm.leave_subsection ();

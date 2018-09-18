@@ -88,6 +88,25 @@ namespace dftfe
 				       const MPI_Comm &mpiComm,
 				       dealii::ScaLAPACKMatrix<T> & overlapMatPar);
 
+
+	/** @brief Computes Sc=X^{T}*Xc and stores in a parallel ScaLAPACK matrix.
+	 * X^{T} is the subspaceVectorsArray stored in the column major format (N x M).
+	 * Sc is the overlapMatPar.
+	 *
+	 * The overlap matrix computation and filling is done in a blocked approach
+	 * which avoids creation of full serial overlap matrix memory, and also avoids creation
+	 * of another full X memory.
+	 *
+	 */
+	void fillParallelOverlapMatrixMixedPrec
+	                              (const dataTypes::number* X,
+		                       const unsigned int XLocalSize,
+		                       const unsigned int numberVectors,
+		                       const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+				       const MPI_Comm &interBandGroupComm,
+				       const MPI_Comm &mpiComm,
+				       dealii::ScaLAPACKMatrix<dataTypes::number> & overlapMatPar);
+
 	/** @brief Computes X^{T}=Q*X^{T} inplace. X^{T} is the subspaceVectorsArray
 	 * stored in the column major format (N x M). Q is rotationMatPar.
 	 *
