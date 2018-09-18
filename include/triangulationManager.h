@@ -66,28 +66,17 @@ namespace dftfe  {
      *  @param domainBoundingVectors vector of domain bounding vectors (refer to
      *  description of input parameters.
      *  @param generateSerialMesh bool to toggle to generation of serial tria
+     *  @param generateElectrostaticsTria bool to toggle to generate separate tria for electrostatics
      */
     void generateSerialUnmovedAndParallelMovedUnmovedMesh
       (const std::vector<std::vector<double> > & atomLocations,
        const std::vector<std::vector<double> > & imageAtomLocations,
        const std::vector<std::vector<double> > & domainBoundingVectors,
-       const bool generateSerialTria);
+       const bool generateSerialTria,
+       const bool generateElectrostaticsTria);
 
 
-    /** @brief generates mesh for electrostatics problem
-     *
-     *  @param atomLocations vector containing cartesian coordinates at atoms with
-     *  respect to origin (center of domain).
-     *  @param imageAtomLocations vector containing cartesian coordinates of image
-     *  atoms with respect to origin.
-     *  @param domainBoundingVectors vector of domain bounding vectors (refer to
-     *  description of input parameters.
-     */
-    void generateMeshForElectrostatics(const std::vector<std::vector<double> > & atomLocations,
-				       const std::vector<std::vector<double> > & imageAtomLocations,
-				       const std::vector<std::vector<double> > & domainBoundingVectors);
-
-
+   
 
     /** @brief generates serial and parallel unmoved previous mesh.
      *
@@ -104,7 +93,8 @@ namespace dftfe  {
     void generateSerialAndParallelUnmovedPreviousMesh
       (const std::vector<std::vector<double> > & atomLocations,
        const std::vector<std::vector<double> > & imageAtomLocations,
-       const std::vector<std::vector<double> > & domainBoundingVectors);
+       const std::vector<std::vector<double> > & domainBoundingVectors,
+       const bool generateElectrostaticsTria);
 
 
     /** @brief generates the coarse meshes for restart.
@@ -251,13 +241,18 @@ namespace dftfe  {
      * @brief internal function which generates a parallel and serial mesh using a adaptive refinement strategy.
      *
      */
-    void generateMesh(parallel::distributed::Triangulation<3>& parallelTriangulation, parallel::distributed::Triangulation<3>& serialTriangulation);
+    void generateMesh(parallel::distributed::Triangulation<3>& parallelTriangulation, 
+		      parallel::distributed::Triangulation<3>& serialTriangulation,
+		      parallel::distributed::Triangulation<3>& electrostaticsTriangulation,
+		      const bool generateElectrostaticsTria);
 
     /**
      * @brief internal function which generates a parallel mesh using a adaptive refinement strategy.
      *
      */
-    void generateMesh(parallel::distributed::Triangulation<3>& parallelTriangulation);
+    void generateMesh(parallel::distributed::Triangulation<3>& parallelTriangulation,
+		      parallel::distributed::Triangulation<3>& electrostaticsTriangulation,
+		      const bool generateElectrostaticsTria);
 
     /**
      * @brief internal function which generates a coarse mesh which is required for the load function call in
@@ -271,6 +266,8 @@ namespace dftfe  {
      *
      */
     void refinementAlgorithmA(parallel::distributed::Triangulation<3>& parallelTriangulation,
+			      parallel::distributed::Triangulation<3>& electrostaticsTriangulation,
+			      const bool generateElectrostaticsTria,
 			      std::vector<unsigned int> & locallyOwnedCellsRefineFlags,
 			      std::map<dealii::CellId,unsigned int> & cellIdToCellRefineFlagMapLocal);
 

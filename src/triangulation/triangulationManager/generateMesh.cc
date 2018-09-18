@@ -101,9 +101,11 @@ namespace dftfe {
       pcout<<std::endl<< "Coarse triangulation number of elements: "<< parallelTriangulation.n_global_active_cells()<<std::endl;
   }
 
-  void triangulationManager::refinementAlgorithmA(parallel::distributed::Triangulation<3>& parallelTriangulation,
-						  std::vector<unsigned int> & locallyOwnedCellsRefineFlags,
-						  std::map<dealii::CellId,unsigned int> & cellIdToCellRefineFlagMapLocal)
+  void triangulationManager::refinementAlgorithmA(parallel::distributed::Triangulation<3>   & parallelTriangulation,
+						  parallel::distributed::Triangulation<3>   & electrostaticsTriangulation,
+						  const bool                                  generateElectrostaticsTria,
+						  std::vector<unsigned int>                 & locallyOwnedCellsRefineFlags,
+						  std::map<dealii::CellId,unsigned int>     & cellIdToCellRefineFlagMapLocal)
   {
     //
     //compute magnitudes of domainBounding Vectors
@@ -114,11 +116,18 @@ namespace dftfe {
 
     locallyOwnedCellsRefineFlags.clear();
     cellIdToCellRefineFlagMapLocal.clear();
-    typename parallel::distributed::Triangulation<3>::active_cell_iterator cell, endc;
+    typename parallel::distributed::Triangulation<3>::active_cell_iterator cell, endc, cellElectro;
     cell = parallelTriangulation.begin_active();
     endc = parallelTriangulation.end();
+
+    if(generateElectrostaticsTria)
+      cellElectro = electrostaticsTriangulation.begin_active();
+
+    //
+    //
     //
     for(;cell != endc; ++cell)
+      {
       if(cell->is_locally_owned())
 	{
 	  const dealii::Point<3> center(cell->center());
@@ -187,6 +196,8 @@ namespace dftfe {
 	      locallyOwnedCellsRefineFlags.push_back(1);
 	      cellIdToCellRefineFlagMapLocal[cell->id()]=1;
 	      cell->set_refine_flag();
+	      if(generateElectrostaticsTria)
+		cellElectro->set_refine_flag();
 	    }
 	  else
 	    {
@@ -194,6 +205,9 @@ namespace dftfe {
 	      locallyOwnedCellsRefineFlags.push_back(0);
 	    }
 	}
+      if(generateElectrostaticsTria)
+	++cellElectro;
+      }
 
 
   }
@@ -202,7 +216,9 @@ namespace dftfe {
   //generate adaptive mesh
   //
 
-  void triangulationManager::generateMesh(parallel::distributed::Triangulation<3>& parallelTriangulation)
+  void triangulationManager::generateMesh(parallel::distributed::Triangulation<3>& parallelTriangulation,
+					  parallel::distributed::Triangulation<3>& electrostaticsTriangulation,
+					  const bool generateElectrostaticsTria)
   {
     if(!dftParameters::meshFileName.empty())
       {
@@ -221,6 +237,11 @@ namespace dftfe {
       {
 
 	generateCoarseMesh(parallelTriangulation);
+	if(generateElectrostaticsTria)
+	  {
+	    generateCoarseMesh(electrostaticsTriangulation);
+	    AssertThrow(parallelTriangulation.n_global_active_cells()==electrostaticsTriangulation.n_global_active_cells(),ExcMessage("Number of coarse mesh cells are different in electrostatics triangulations."));
+	  }
 
 	//
 	//Multilayer refinement
@@ -235,6 +256,8 @@ namespace dftfe {
 	    std::vector<unsigned int> locallyOwnedCellsRefineFlags;
 	    std::map<dealii::CellId,unsigned int> cellIdToCellRefineFlagMapLocal;
 	    refinementAlgorithmA(parallelTriangulation,
+				 electrostaticsTriangulation,
+				 generateElectrostaticsTria,
 				 locallyOwnedCellsRefineFlags,
 				 cellIdToCellRefineFlagMapLocal);
 
@@ -251,6 +274,8 @@ namespace dftfe {
 		      pcout<< "refinement in progress, level: "<< numLevels<<std::endl;
 
 		    parallelTriangulation.execute_coarsening_and_refinement();
+		    if(generateElectrostaticsTria)
+		      electrostaticsTriangulation.execute_coarsening_and_refinement();
 		    numLevels++;
 		  }
 		else
@@ -292,6 +317,45 @@ namespace dftfe {
 	internal::checkTriangulationEqualityAcrossProcessorPools(parallelTriangulation,
 								 numLocallyOwnedCells,
 								 interBandGroupComm);
+
+
+	if(generateElectrostaticsTria)
+	  {
+	    numLocallyOwnedCells = 0;
+	    minElemLength = dftParameters::meshSizeOuterDomain;
+
+	    cell = electrostaticsTriangulation.begin_active();
+	    endc = electrostaticsTriangulation.end();
+	    for( ; cell != endc; ++cell)
+	      {
+		if(cell->is_locally_owned())
+		  {
+		    numLocallyOwnedCells++;
+		    if(cell->minimum_vertex_distance() < minElemLength) minElemLength = cell->minimum_vertex_distance();
+		  }
+	      }
+
+	    minElemLength = Utilities::MPI::min(minElemLength, mpi_communicator);
+
+	    //
+	    //print out adaptive electrostatics mesh metrics 
+	    //
+	    if (dftParameters::verbosity>=4)
+	      {
+		pcout<< "Electrostatics Triangulation generation summary: "<<std::endl<<" num elements: "<<electrostaticsTriangulation.n_global_active_cells()<<", num refinement levels: "<<numLevels<<", min element length: "<<minElemLength<<std::endl;		  
+	      }
+
+
+	    internal::checkTriangulationEqualityAcrossProcessorPools(electrostaticsTriangulation,
+								     numLocallyOwnedCells,
+								     interpoolcomm);
+
+	    internal::checkTriangulationEqualityAcrossProcessorPools(electrostaticsTriangulation,
+								     numLocallyOwnedCells,
+								     interBandGroupComm);
+
+	  }
+
       }
   }
 
@@ -310,6 +374,7 @@ namespace dftfe {
     vectorType rhoNodalFieldCoarse;
     matrixFreeData.initialize_dof_vector(rhoNodalFieldCoarse);
     rhoNodalFieldCoarse = 0.0;
+    rhoQuadValuesRefined.clear();
 
     //
     //Get number of quadrature points
@@ -317,10 +382,10 @@ namespace dftfe {
     const unsigned int n_q_points = quadrature.size();
 
     //
-    //create a lamda function for L2 projection of quadrature electron-density to nodal electron density
+    //create a lambda function for L2 projection of quadrature electron-density to nodal electron density
     //
      std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell,const unsigned int q)> funcRho = [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell , const unsigned int q)
-      {return rhoQuadValuesCoarse.find(cell->id())->second[q];};
+       {return rhoQuadValuesCoarse.find(cell->id())->second[q];};
 
    
     //
@@ -341,26 +406,30 @@ namespace dftfe {
     //
     //compute total charge using rho nodal field for debugging purposes
     //
-    double normValue=0.0;
-    QGauss<3>  quadrature_formula(FEOrder+1);
-    FEValues<3> fe_valuesC(matrixFreeData.get_dof_handler().get_fe(), quadrature_formula, update_values | update_JxW_values);
-    const unsigned int   dofs_per_cell = matrixFreeData.get_dof_handler().get_fe().dofs_per_cell;
+
+    if(dftParameters::verbosity >= 4)
+      {
+	double normValue=0.0;
+	QGauss<3>  quadrature_formula(FEOrder+1);
+	FEValues<3> fe_valuesC(matrixFreeData.get_dof_handler().get_fe(), quadrature_formula, update_values | update_JxW_values);
+	const unsigned int   dofs_per_cell = matrixFreeData.get_dof_handler().get_fe().dofs_per_cell;
     
 
-    DoFHandler<3>::active_cell_iterator
-      cell = matrixFreeData.get_dof_handler().begin_active(),
-      endc = matrixFreeData.get_dof_handler().end();
-    for (; cell!=endc; ++cell) {
-      if (cell->is_locally_owned()){
-	fe_valuesC.reinit (cell);
-	std::vector<double> tempRho(n_q_points);
-	fe_valuesC.get_function_values(rhoNodalFieldCoarse,tempRho);
-	for (unsigned int q_point=0; q_point<n_q_points; ++q_point){
-	  normValue+=tempRho[q_point]*fe_valuesC.JxW(q_point);
+	DoFHandler<3>::active_cell_iterator
+	  cell = matrixFreeData.get_dof_handler().begin_active(),
+	  endc = matrixFreeData.get_dof_handler().end();
+	for (; cell!=endc; ++cell) {
+	  if (cell->is_locally_owned()){
+	    fe_valuesC.reinit (cell);
+	    std::vector<double> tempRho(n_q_points);
+	    fe_valuesC.get_function_values(rhoNodalFieldCoarse,tempRho);
+	    for (unsigned int q_point=0; q_point<n_q_points; ++q_point){
+	      normValue+=tempRho[q_point]*fe_valuesC.JxW(q_point);
+	    }
+	  }
 	}
+	pcout<<"Value of total charge on coarse mesh from nodal field: "<< Utilities::MPI::sum(normValue, mpi_communicator)<<std::endl;
       }
-    }
-    pcout<<"Value of total charge on coarse mesh from nodal field: "<< Utilities::MPI::sum(normValue, mpi_communicator)<<std::endl;
 
 
     //
@@ -368,15 +437,16 @@ namespace dftfe {
     //
     dealii::DoFHandler<3> dofHandlerHRefined;
     dofHandlerHRefined.initialize(d_triangulationElectrostatics,dealii::FE_Q<3>(dealii::QGaussLobatto<1>(FEOrder+1)));
+    
     dofHandlerHRefined.distribute_dofs(dofHandlerHRefined.get_fe());
     parallel::distributed::SolutionTransfer<3,vectorType> solTrans(dofHandlerHRefined);
     //d_triangulationElectrostatics.set_all_refine_flags();
     Vector<float> estimated_error_per_cell(d_triangulationElectrostatics.n_active_cells());
     estimated_error_per_cell = 1.0;
     parallel::distributed::GridRefinement::refine_and_coarsen_fixed_fraction(d_triangulationElectrostatics,
-									     estimated_error_per_cell,
-									     1.0,
-									     0.0);
+    									     estimated_error_per_cell,
+    									     1.0,
+    									     0.0);
     d_triangulationElectrostatics.prepare_coarsening_and_refinement();
     solTrans.prepare_for_coarsening_and_refinement(rhoNodalFieldCoarse);
     d_triangulationElectrostatics.execute_coarsening_and_refinement();
@@ -387,67 +457,119 @@ namespace dftfe {
     //
     //print refined mesh details
     //
-    pcout << std::endl<<"Finite element mesh information"<<std::endl;
-    pcout<<"-------------------------------------------------"<<std::endl;
-    pcout << "number of elements: "
-	  << dofHandlerHRefined.get_triangulation().n_global_active_cells()
-	  << std::endl
-	  << "number of degrees of freedom: "
-	  << dofHandlerHRefined.n_dofs()
-	  << std::endl;
+    if (dftParameters::verbosity>=2)
+      {
+	pcout << std::endl<<"Finite element mesh information after subdividing the mesh"<<std::endl;
+	pcout<<"-------------------------------------------------"<<std::endl;
+	pcout << "number of elements: "
+	      << dofHandlerHRefined.get_triangulation().n_global_active_cells()
+	      << std::endl
+	      << "number of degrees of freedom: "
+	      << dofHandlerHRefined.n_dofs()
+	      << std::endl;
+      }
 
+
+    //
+    //create a local matrix free object
+    //
+    dealii::IndexSet locallyRelevantDofs;
+    dealii::DoFTools::extract_locally_relevant_dofs(dofHandlerHRefined, locallyRelevantDofs);
+
+    dealii::ConstraintMatrix onlyHangingNodeConstraints;
+    onlyHangingNodeConstraints.reinit(locallyRelevantDofs);
+    dealii::DoFTools::make_hanging_node_constraints(dofHandlerHRefined, onlyHangingNodeConstraints);
+    onlyHangingNodeConstraints.close();
+
+
+    std::vector<const dealii::ConstraintMatrix*> matrixFreeConstraintsInputVector;
+    matrixFreeConstraintsInputVector.push_back(&onlyHangingNodeConstraints);
+
+    std::vector<const dealii::DoFHandler<3> *> matrixFreeDofHandlerVectorInput;
+    matrixFreeDofHandlerVectorInput.push_back(&dofHandlerHRefined);
+
+    std::vector<Quadrature<1> > quadratureVector;
+    quadratureVector.push_back(QGauss<1>(FEOrder+1));
+
+    //
+    //matrix free data structure
+    //
+    typename dealii::MatrixFree<3>::AdditionalData additional_data;
+    additional_data.tasks_parallel_scheme = dealii::MatrixFree<3>::AdditionalData::partition_partition;
+    dealii::MatrixFree<3,double> matrixFreeDataHRefined;
+    matrixFreeDataHRefined.reinit(matrixFreeDofHandlerVectorInput,
+    				  matrixFreeConstraintsInputVector,
+    				  quadratureVector,
+				  additional_data);
+				  
 
     //
     //create nodal field on the refined mesh
     //
     vectorType rhoNodalFieldRefined;
-    rhoNodalFieldRefined.reinit(dofHandlerHRefined.n_dofs());
-    //rhoNodalFieldRefined.reinit(dofHandlerHRefined.locally_owned_dofs(),
-    //			mpi_communicator);
+    //rhoNodalFieldRefined.reinit(dofHandlerHRefined.n_dofs());
+    matrixFreeDataHRefined.initialize_dof_vector(rhoNodalFieldRefined);
     rhoNodalFieldRefined.zero_out_ghosts();
     solTrans.interpolate(rhoNodalFieldRefined);
     rhoNodalFieldRefined.update_ghost_values();
-    
+    onlyHangingNodeConstraints.distribute(rhoNodalFieldRefined);
+    rhoNodalFieldRefined.update_ghost_values();
+
+
     
     //
     //fill in quadrature values of the field on the refined mesh
     //
     FEValues<3> fe_values(dofHandlerHRefined.get_fe(),quadrature,update_values | update_JxW_values | update_quadrature_points);
+    
     typename dealii::DoFHandler<3>::active_cell_iterator cellRefined = dofHandlerHRefined.begin_active(), endcRefined = dofHandlerHRefined.end();
-    std::vector<double> tempRho(n_q_points);
+    std::vector<double> tempRho1(n_q_points);
 
+    double totalCharge1=0.0;
     for(; cellRefined!=endcRefined; ++cellRefined)
       {
 	if(cellRefined->is_locally_owned())
 	  {
 	    fe_values.reinit(cellRefined);
-	    fe_values.get_function_values(rhoNodalFieldRefined,tempRho);
+	    fe_values.get_function_values(rhoNodalFieldRefined,tempRho1);
+	    //fe_values.get_function_values(rhoNodalFieldCoarse,tempRho1);
+	    rhoQuadValuesRefined[cellRefined->id()].resize(n_q_points);
 	    for(unsigned int q_point = 0; q_point < n_q_points; ++q_point)
-	      rhoQuadValuesRefined[cellRefined->id()].push_back(tempRho[q_point]);
+	      {
+		rhoQuadValuesRefined[cellRefined->id()][q_point] = tempRho1[q_point];
+		totalCharge1+=tempRho1[q_point]*fe_values.JxW(q_point);
+	      }
 	  }
       }
+
+    pcout<<"Value of total charge on refined mesh after solution transfer: "<< Utilities::MPI::sum(totalCharge1, mpi_communicator)<<std::endl;
 
     //
     //compute total charge using quadrature values on the refined mesh
     //
-    typename dealii::DoFHandler<3>::active_cell_iterator cellRefinedNew = dofHandlerHRefined.begin_active(), endcRefinedNew = dofHandlerHRefined.end();
-    double totalCharge=0.0;
-    for(; cellRefinedNew!=endcRefinedNew; ++cellRefinedNew)
+    if (dftParameters::verbosity>=4)
       {
-	if(cellRefinedNew->is_locally_owned())
+	typename dealii::DoFHandler<3>::active_cell_iterator cellRefinedNew = dofHandlerHRefined.begin_active(), endcRefinedNew = dofHandlerHRefined.end();
+	double totalCharge=0.0;
+	for(; cellRefinedNew!=endcRefinedNew; ++cellRefinedNew)
 	  {
-	    fe_values.reinit(cellRefinedNew);
-	    for(unsigned int q_point = 0; q_point < n_q_points; ++q_point)
-	      totalCharge += rhoQuadValuesRefined.find(cellRefinedNew->id())->second[q_point]*fe_values.JxW(q_point);
+	    if(cellRefinedNew->is_locally_owned())
+	      {
+		fe_values.reinit(cellRefinedNew);
+		for(unsigned int q_point = 0; q_point < n_q_points; ++q_point)
+		  totalCharge += rhoQuadValuesRefined.find(cellRefinedNew->id())->second[q_point]*fe_values.JxW(q_point);
+	      }
 	  }
+	pcout<<"Value of total charge on refined mesh after solution transfer: "<< Utilities::MPI::sum(totalCharge, mpi_communicator)<<std::endl;
       }
-    pcout<<"Value of total charge on refined mesh after solution transfer: "<< Utilities::MPI::sum(totalCharge, mpi_communicator)<<std::endl;
    
   }
 
 
-  void triangulationManager::generateMesh(parallel::distributed::Triangulation<3>& parallelTriangulation,
-					  parallel::distributed::Triangulation<3>& serialTriangulation)
+  void triangulationManager::generateMesh(parallel::distributed::Triangulation<3> & parallelTriangulation,
+					  parallel::distributed::Triangulation<3> & serialTriangulation,
+					  parallel::distributed::Triangulation<3> & electrostaticsTriangulation,
+					  const bool generateElectrostaticsTria)
   {
     if(!dftParameters::meshFileName.empty())
       {
@@ -473,6 +595,14 @@ namespace dftfe {
 	generateCoarseMesh(serialTriangulation);
 	AssertThrow(parallelTriangulation.n_global_active_cells()==serialTriangulation.n_global_active_cells(),ExcMessage("Number of coarse mesh cells are different in serial and parallel triangulations."));
 
+	if(generateElectrostaticsTria)
+	  {
+	    generateCoarseMesh(electrostaticsTriangulation);
+	    AssertThrow(parallelTriangulation.n_global_active_cells()==electrostaticsTriangulation.n_global_active_cells(),ExcMessage("Number of coarse mesh cells are different in electrostatics triangulations."));
+	  }
+
+
+
 	//
 	//Multilayer refinement
 	//
@@ -484,6 +614,8 @@ namespace dftfe {
 	    std::vector<unsigned int> locallyOwnedCellsRefineFlags;
 	    std::map<dealii::CellId,unsigned int> cellIdToCellRefineFlagMapLocal;
 	    refinementAlgorithmA(parallelTriangulation,
+				 electrostaticsTriangulation,
+				 generateElectrostaticsTria,
 				 locallyOwnedCellsRefineFlags,
 				 cellIdToCellRefineFlagMapLocal);
 
@@ -508,6 +640,9 @@ namespace dftfe {
 		      pcout<< "refinement in progress, level: "<< numLevels<<std::endl;
 
 		    parallelTriangulation.execute_coarsening_and_refinement();
+		    if(generateElectrostaticsTria)
+		      electrostaticsTriangulation.execute_coarsening_and_refinement();
+
 		    numLevels++;
 		  }
 		else
@@ -558,6 +693,44 @@ namespace dftfe {
 	  pcout<<" numParallelCells: "<< numberGlobalCellsParallel<<", numSerialCells: "<< numberGlobalCellsSerial<<std::endl;
 
 	AssertThrow(numberGlobalCellsParallel==numberGlobalCellsSerial,ExcMessage("Number of cells are different for parallel and serial triangulations"));
+
+
+	if(generateElectrostaticsTria)
+	  {
+	    numLocallyOwnedCells = 0;
+	    double minElemLengthElectroTria = dftParameters::meshSizeOuterDomain;
+
+	    cell = electrostaticsTriangulation.begin_active();
+	    endc = electrostaticsTriangulation.end();
+	    for( ; cell != endc; ++cell)
+	      {
+		if(cell->is_locally_owned())
+		  {
+		    numLocallyOwnedCells++;
+		    if(cell->minimum_vertex_distance() < minElemLengthElectroTria) minElemLengthElectroTria = cell->minimum_vertex_distance();
+		  }
+	      }
+
+	    minElemLengthElectroTria = Utilities::MPI::min(minElemLengthElectroTria, mpi_communicator);
+
+	    //
+	    //print out adaptive electrostatics mesh metrics 
+	    //
+	    if (dftParameters::verbosity>=4)
+	      {
+		pcout<< "Electrostatics Triangulation generation summary: "<<std::endl<<" num elements: "<<electrostaticsTriangulation.n_global_active_cells()<<", num refinement levels: "<<numLevels<<", min element length: "<<minElemLengthElectroTria<<std::endl;		  
+	      }
+
+
+	    internal::checkTriangulationEqualityAcrossProcessorPools(electrostaticsTriangulation,
+								     numLocallyOwnedCells,
+								     interpoolcomm);
+
+	    internal::checkTriangulationEqualityAcrossProcessorPools(electrostaticsTriangulation,
+								     numLocallyOwnedCells,
+								     interBandGroupComm);
+
+	  }
 
       }
   }

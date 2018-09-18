@@ -535,11 +535,9 @@ namespace dftfe {
 	d_mesh.generateSerialUnmovedAndParallelMovedUnmovedMesh(atomLocations,
 								d_imagePositions,
 								d_domainBoundingVectors,
-								dftParameters::useSymm);
+								dftParameters::useSymm,
+								dftParameters::electrostaticsHRefinement);
 
-	d_mesh.generateMeshForElectrostatics(atomLocations,
-					     d_imagePositions,
-					     d_domainBoundingVectors);
       }
     computing_timer.exit_section("mesh generation");
 

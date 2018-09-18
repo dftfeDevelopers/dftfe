@@ -71,7 +71,8 @@ namespace dftfe {
   (const std::vector<std::vector<double> > & atomLocations,
    const std::vector<std::vector<double> > & imageAtomLocations,
    const std::vector<std::vector<double> > & domainBoundingVectors,
-   const bool generateSerialTria)
+   const bool generateSerialTria,
+   const bool generateElectrostaticsTria)
   {
 
     //
@@ -90,10 +91,12 @@ namespace dftfe {
     //generate mesh data members
     //
     if (generateSerialTria)
-      generateMesh(d_parallelTriangulationUnmoved, d_serialTriangulationUnmoved);
+      generateMesh(d_parallelTriangulationUnmoved, d_serialTriangulationUnmoved, d_triangulationElectrostatics, generateElectrostaticsTria);
     else
-      generateMesh(d_parallelTriangulationUnmoved);
-    generateMesh(d_parallelTriangulationMoved);
+      generateMesh(d_parallelTriangulationUnmoved, d_triangulationElectrostatics, generateElectrostaticsTria);
+    generateMesh(d_parallelTriangulationMoved,
+		 d_triangulationElectrostatics,
+		 false);
   }
 
   //
@@ -102,7 +105,8 @@ namespace dftfe {
   void triangulationManager::generateSerialAndParallelUnmovedPreviousMesh
   (const std::vector<std::vector<double> > & atomLocations,
    const std::vector<std::vector<double> > & imageAtomLocations,
-   const std::vector<std::vector<double> > & domainBoundingVectors)
+   const std::vector<std::vector<double> > & domainBoundingVectors,
+   const bool generateElectrostaticsTria)
   {
 
     //
@@ -115,30 +119,9 @@ namespace dftfe {
     d_parallelTriangulationUnmovedPrevious.clear();
     d_serialTriangulationUnmovedPrevious.clear();
 
-    generateMesh(d_parallelTriangulationUnmovedPrevious, d_serialTriangulationUnmovedPrevious);
+    generateMesh(d_parallelTriangulationUnmovedPrevious, d_serialTriangulationUnmovedPrevious, d_triangulationElectrostatics, generateElectrostaticsTria);
   }
 
-
-
-  //
-  //generate electrostatics mesh
-  //
-  void triangulationManager::generateMeshForElectrostatics(const std::vector<std::vector<double> > & atomLocations,
-							   const std::vector<std::vector<double> > & imageAtomLocations,
-							   const std::vector<std::vector<double> > & domainBoundingVectors)
-  {
-    //
-    //set the data members before generating mesh
-    //
-    d_atomPositions = atomLocations;
-    d_imageAtomPositions = imageAtomLocations;
-    d_domainBoundingVectors = domainBoundingVectors;
-
-    d_triangulationElectrostatics.clear();
-
-    generateMesh(d_triangulationElectrostatics);
-
-  }
 
 
   //

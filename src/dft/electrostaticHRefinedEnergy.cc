@@ -35,6 +35,8 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
    //
    //subdivide the existing mesh and project electron-density onto the new mesh
    //
+
+   computing_timer.enter_section("h refinement electrostatics");
    d_mesh.generateSubdividedMeshWithQuadData(matrix_free_data,
 					     constraintsNone,
 					     quadrature,
@@ -259,6 +261,6 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
 						  lowerBoundKindex,
 						  1,
 						  true);
-
+  computing_timer.exit_section("h refinement electrostatics");
 
 }
