@@ -18,18 +18,22 @@
 
 //(locally used function) compute FPSPLocal contibution due to Gamma(Rj) for given set of cells
 template<unsigned int FEOrder>
-void forceClass<FEOrder>::FPSPLocalGammaAtomsElementalContribution(std::map<unsigned int, std::vector<double> > & forceContributionFPSPLocalGammaAtoms,
-		                                               FEValues<C_DIM> & feVselfValues,
-							       FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
-							       const unsigned int cell,
-							       const std::vector<VectorizedArray<double> > & rhoQuads){
+void forceClass<FEOrder>::FPSPLocalGammaAtomsElementalContribution
+             (std::map<unsigned int, std::vector<double> > & forceContributionFPSPLocalGammaAtoms,
+	      FEValues<C_DIM> & feValues,
+	      FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
+	      const MatrixFree<3,double> & matrixFreeData,
+	      const unsigned int cell,
+	      const std::vector<VectorizedArray<double> > & rhoQuads,
+	      const vselfBinsManager<FEOrder> & vselfBinsManagerEigen)
+{
   Tensor<1,C_DIM,VectorizedArray<double> > zeroTensor1;
   for (unsigned int idim=0; idim<C_DIM; idim++)
     zeroTensor1[idim]=make_vectorized_array(0.0);
   const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
   const unsigned int numberImageCharges = dftPtr->d_imageIds.size();
   const unsigned int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
-  const unsigned int numSubCells= dftPtr->matrix_free_data.n_components_filled(cell);
+  const unsigned int numSubCells= matrixFreeData.n_components_filled(cell);
   const unsigned int numQuadPoints=forceEval.n_q_points;
   DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
 
@@ -67,8 +71,8 @@ void forceClass<FEOrder>::FPSPLocalGammaAtomsElementalContribution(std::map<unsi
        isLocalDomainOutsidePspTail=true;
     unsigned int binIdiAtom;
     std::map<unsigned int,unsigned int>::const_iterator it1=
-	dftPtr->d_vselfBinsManager.getAtomIdBinIdMapLocalAllImages().find(iAtom);
-    if (it1==dftPtr->d_vselfBinsManager.getAtomIdBinIdMapLocalAllImages().end())
+	vselfBinsManagerEigen.getAtomIdBinIdMapLocalAllImages().find(iAtom);
+    if (it1==vselfBinsManagerEigen.getAtomIdBinIdMapLocalAllImages().end())
        isLocalDomainOutsideVselfBall=true;
     else
        binIdiAtom=it1->second;
@@ -78,9 +82,9 @@ void forceClass<FEOrder>::FPSPLocalGammaAtomsElementalContribution(std::map<unsi
 
     for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
     {
-       subCellPtr= dftPtr->matrix_free_data.get_cell_iterator(cell,iSubCell);
+       subCellPtr= matrixFreeData.get_cell_iterator(cell,iSubCell);
        dealii::CellId subCellId=subCellPtr->id();
-       feVselfValues.reinit(subCellPtr);
+       feValues.reinit(subCellPtr);
        //get grad vself for iAtom
        bool isCellOutsideVselfBall=true;
        if (!isLocalDomainOutsideVselfBall)
@@ -93,23 +97,23 @@ void forceClass<FEOrder>::FPSPLocalGammaAtomsElementalContribution(std::map<unsi
 	    const unsigned int closestAtomId=it2->second;
 	    if(it2->second >= numberGlobalAtoms)
 	    {
-               const unsigned int imageIdTrunc=closestAtomId-numberGlobalAtoms;
-               closestAtomLocation[0]=dftPtr->d_imagePositionsTrunc[imageIdTrunc][0];
-               closestAtomLocation[1]=dftPtr->d_imagePositionsTrunc[imageIdTrunc][1];
-               closestAtomLocation[2]=dftPtr->d_imagePositionsTrunc[imageIdTrunc][2];
+	       const unsigned int imageIdTrunc=closestAtomId-numberGlobalAtoms;
+	       closestAtomLocation[0]=dftPtr->d_imagePositionsTrunc[imageIdTrunc][0];
+	       closestAtomLocation[1]=dftPtr->d_imagePositionsTrunc[imageIdTrunc][1];
+	       closestAtomLocation[2]=dftPtr->d_imagePositionsTrunc[imageIdTrunc][2];
 	    }
 	    else
 	    {
-               closestAtomLocation[0]=dftPtr->atomLocations[closestAtomId][2];
-               closestAtomLocation[1]=dftPtr->atomLocations[closestAtomId][3];
-               closestAtomLocation[2]=dftPtr->atomLocations[closestAtomId][4];
+	       closestAtomLocation[0]=dftPtr->atomLocations[closestAtomId][2];
+	       closestAtomLocation[1]=dftPtr->atomLocations[closestAtomId][3];
+	       closestAtomLocation[2]=dftPtr->atomLocations[closestAtomId][4];
 	    }
 
-            if(atomLocation.distance(closestAtomLocation)<1e-5)
+	    if(atomLocation.distance(closestAtomLocation)<1e-5)
 	    {
 		 isCellOutsideVselfBall=false;
 		 std::vector<Tensor<1,C_DIM,double> > gradVselfQuadsSubCell(numQuadPoints);
-		 feVselfValues.get_function_gradients(dftPtr->d_vselfBinsManager.getVselfFieldBins()[binIdiAtom],
+		 feValues.get_function_gradients(vselfBinsManagerEigen.getVselfFieldBins()[binIdiAtom],
 						       gradVselfQuadsSubCell);
 		 for (unsigned int q=0; q<numQuadPoints; ++q)
 		 {
@@ -124,7 +128,7 @@ void forceClass<FEOrder>::FPSPLocalGammaAtomsElementalContribution(std::map<unsi
        if (isCellOutsideVselfBall)
 	  for (unsigned int q=0; q<numQuadPoints; ++q)
 	  {
-	      Point<C_DIM> quadPoint=feVselfValues.quadrature_point(q);
+	      Point<C_DIM> quadPoint=feValues.quadrature_point(q);
 	      Tensor<1,C_DIM,double> dispAtom=quadPoint-atomLocation;
 	      const double dist=dispAtom.norm();
 	      Tensor<1,C_DIM,double> temp=atomCharge*dispAtom/dist/dist/dist;
@@ -133,13 +137,17 @@ void forceClass<FEOrder>::FPSPLocalGammaAtomsElementalContribution(std::map<unsi
 	      gradVselfQuads[q][2][iSubCell]=temp[2];
 	  }
 
+
        //get grad pseudo VLoc for iAtom
        bool isCellOutsidePspTail=true;
-       if (!isLocalDomainOutsidePspTail){
+       if (!isLocalDomainOutsidePspTail)
+       {
 	  std::map<dealii::CellId, std::vector<double> >::const_iterator it=d_gradPseudoVLocAtoms[iAtom].find(subCellId);
-	  if (it!=d_gradPseudoVLocAtoms[iAtom].end()){
+	  if (it!=d_gradPseudoVLocAtoms[iAtom].end())
+	  {
 	    isCellOutsidePspTail=false;
-	    for (unsigned int q=0; q<numQuadPoints; ++q){
+	    for (unsigned int q=0; q<numQuadPoints; ++q)
+	    {
 	       gradPseudoVLocAtomsQuads[q][0][iSubCell]=(it->second)[q*C_DIM];
 	       gradPseudoVLocAtomsQuads[q][1][iSubCell]=(it->second)[q*C_DIM+1];
 	       gradPseudoVLocAtomsQuads[q][2][iSubCell]=(it->second)[q*C_DIM+2];
@@ -147,10 +155,10 @@ void forceClass<FEOrder>::FPSPLocalGammaAtomsElementalContribution(std::map<unsi
 	  }
        }
 
-       if (isCellOutsidePspTail){
+       if (isCellOutsidePspTail)
 	  for (unsigned int q=0; q<numQuadPoints; ++q)
 	  {
-	      Point<C_DIM> quadPoint=feVselfValues.quadrature_point(q);
+	      Point<C_DIM> quadPoint=feValues.quadrature_point(q);
 	      Tensor<1,C_DIM,double> dispAtom=quadPoint-atomLocation;
 	      const double dist=dispAtom.norm();
 	      Tensor<1,C_DIM,double> temp=atomCharge*dispAtom/dist/dist/dist;
@@ -158,37 +166,45 @@ void forceClass<FEOrder>::FPSPLocalGammaAtomsElementalContribution(std::map<unsi
 	      gradPseudoVLocAtomsQuads[q][1][iSubCell]=temp[1];
 	      gradPseudoVLocAtomsQuads[q][2][iSubCell]=temp[2];
 	  }
-       }
     }//subCell loop
+
+
     for (unsigned int q=0; q<numQuadPoints; ++q)
     {
         forceEval.submit_value(-eshelbyTensor::getFPSPLocal(rhoQuads[q],
 							    gradPseudoVLocAtomsQuads[q],
 							    gradVselfQuads[q]),
 							    q);
+
     }
     Tensor<1,C_DIM,VectorizedArray<double> > forceContributionFPSPLocalGammaiAtomCells
 						 =forceEval.integrate_value();
 
     if (forceContributionFPSPLocalGammaAtoms.find(atomId)==forceContributionFPSPLocalGammaAtoms.end())
        forceContributionFPSPLocalGammaAtoms[atomId]=std::vector<double>(C_DIM,0.0);
-    for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell){
-       for (unsigned int idim=0; idim<C_DIM; idim++){
+    for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
+       for (unsigned int idim=0; idim<C_DIM; idim++)
+       {
          forceContributionFPSPLocalGammaAtoms[atomId][idim]+=
 	       forceContributionFPSPLocalGammaiAtomCells[idim][iSubCell];
        }
-    }
   }//iAtom loop
 }
 
 //(locally used function) accumulate and distribute FPSPLocal contibution due to Gamma(Rj)
 template<unsigned int FEOrder>
-void forceClass<FEOrder>::distributeForceContributionFPSPLocalGammaAtoms(const std::map<unsigned int,std::vector<double> > & forceContributionFPSPLocalGammaAtoms)
+void forceClass<FEOrder>::distributeForceContributionFPSPLocalGammaAtoms
+              (const std::map<unsigned int,std::vector<double> > & forceContributionFPSPLocalGammaAtoms,
+	       const std::map<std::pair<unsigned int,unsigned int>, unsigned int> & atomsForceDofs,
+	       const ConstraintMatrix &  constraintsNoneForce,
+	       vectorType & configForceVectorLinFE)
 {
-    for (unsigned int iAtom=0;iAtom <dftPtr->atomLocations.size(); iAtom++){
+    for (unsigned int iAtom=0;iAtom <dftPtr->atomLocations.size(); iAtom++)
+    {
 
       bool doesAtomIdExistOnLocallyOwnedNode=false;
-      if (d_atomsForceDofs.find(std::pair<unsigned int,unsigned int>(iAtom,0))!=d_atomsForceDofs.end()){
+      if (atomsForceDofs.find(std::pair<unsigned int,unsigned int>(iAtom,0))!=atomsForceDofs.end())
+      {
         doesAtomIdExistOnLocallyOwnedNode=true;
       }
 
@@ -205,12 +221,16 @@ void forceClass<FEOrder>::distributeForceContributionFPSPLocalGammaAtoms(const s
 		  MPI_SUM,
 		  mpi_communicator);
 
-      if (doesAtomIdExistOnLocallyOwnedNode){
+      if (doesAtomIdExistOnLocallyOwnedNode)
+      {
         std::vector<types::global_dof_index> forceLocalDofIndices(C_DIM);
         for (unsigned int idim=0; idim<C_DIM; idim++)
-	    forceLocalDofIndices[idim]=d_atomsForceDofs[std::pair<unsigned int,unsigned int>(iAtom,idim)];
+	    forceLocalDofIndices[idim]=atomsForceDofs.find(std::pair<unsigned int,unsigned int>(iAtom,idim))->second;
 
-        d_constraintsNoneForce.distribute_local_to_global(forceContributionFPSPLocalGammaiAtomGlobal,forceLocalDofIndices,d_configForceVectorLinFE);
+        constraintsNoneForce.distribute_local_to_global
+	                     (forceContributionFPSPLocalGammaiAtomGlobal,
+			      forceLocalDofIndices,
+			      configForceVectorLinFE);
       }
     }
 }

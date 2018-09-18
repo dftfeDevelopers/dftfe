@@ -315,7 +315,7 @@ namespace dftfe {
 	    pcout <<" Setting the number of Kohn-Sham wave functions to be set to "<<numEigenValues<<std::endl;
 	  }
       }
-    
+
     if (dftParameters::constraintMagnetization)
      {
        numElectronsUp = std::ceil(static_cast<double>(numElectrons)/2.0);
@@ -782,7 +782,7 @@ namespace dftfe {
 		     if (dftParameters::mixingMethod=="BROYDEN" )
 		        norm = sqrt(mixing_broyden_spinPolarized());
 		  }
-		else 
+		else
 		  {
 		    if (dftParameters::mixingMethod=="ANDERSON")
 		        norm = sqrt(mixing_anderson());
@@ -1494,7 +1494,21 @@ namespace dftfe {
 
  	computing_timer.enter_section("Ion force computation");
 	computingTimerStandard.enter_section("Ion force computation");
-	forcePtr->computeAtomsForces();
+	forcePtr->computeAtomsForces(matrix_free_data,
+		                     eigenDofHandlerIndex,
+				     phiExtDofHandlerIndex,
+				     phiTotDofHandlerIndex,
+                                     d_phiTotRhoIn,
+				     d_phiTotRhoOut,
+				     d_phiExt,
+				     d_noConstraints,
+				     d_vselfBinsManager,
+				     matrix_free_data,
+				     phiTotDofHandlerIndex,
+				     d_phiTotRhoOut,
+				     *rhoOutValues,
+				     d_noConstraints,
+				     d_vselfBinsManager);
 	forcePtr->printAtomsForces();
 	computingTimerStandard.exit_section("Ion force computation");
 	computing_timer.exit_section("Ion force computation");
@@ -1507,7 +1521,21 @@ namespace dftfe {
 
 	computing_timer.enter_section("Cell stress computation");
 	computingTimerStandard.enter_section("Cell stress computation");
-	forcePtr->computeStress();
+	forcePtr->computeStress(matrix_free_data,
+		                eigenDofHandlerIndex,
+				phiExtDofHandlerIndex,
+				phiTotDofHandlerIndex,
+                                d_phiTotRhoIn,
+				d_phiTotRhoOut,
+				d_phiExt,
+				d_noConstraints,
+				d_vselfBinsManager,
+				matrix_free_data,
+				phiTotDofHandlerIndex,
+				d_phiTotRhoOut,
+				*rhoOutValues,
+				d_noConstraints,
+				d_vselfBinsManager);
 	forcePtr->printStress();
 	computingTimerStandard.exit_section("Cell stress computation");
 	computing_timer.exit_section("Cell stress computation");
