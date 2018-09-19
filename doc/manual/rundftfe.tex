@@ -1,10 +1,10 @@
-After compiling \dftfe{} as described in Section~\ref{sec:installation}, we have now two executables --- \verb|/build/release/real/main| and \verb|/build/release/complex/main|. The \verb|/build/release/real/main| executable, which uses real data-structures is sufficient for fully non-periodic problems. The executable can also be used for periodic and semi-periodic problems involving a Gamma point calculation. On the other hand the \verb|/build/release/complex/main| executable, which uses complex data-structures is required for periodic and semi-periodic problems with multiple k point sampling for Brillouin zone integration. These executables are to be used as follows-- for a serial run use
+After compiling \dftfe{} as described in Section~\ref{sec:installation}, we have now two executables --- \verb|/build/release/real/dftfe| and \verb|/build/release/complex/dftfe|. The \verb|/build/release/real/dftfe| executable, which uses real data-structures is sufficient for fully non-periodic problems. The executable can also be used for periodic and semi-periodic problems involving a Gamma point calculation. On the other hand the \verb|/build/release/complex/dftfe| executable, which uses complex data-structures is required for periodic and semi-periodic problems with multiple k point sampling for Brillouin zone integration. These executables are to be used as follows-- for a serial run use
 \begin{verbatim}
-  ./main parameterFile.prm
+  ./dftfe parameterFile.prm
 \end{verbatim}
 or, for a parallel run use
 \begin{verbatim}
-  mpirun -n N ./main parameterFile.prm
+  mpirun -n N ./dftfe parameterFile.prm
 \end{verbatim}
 to run with N processors. 
 \subsection{Structuring the input file}
@@ -166,9 +166,9 @@ subsection Finite element mesh parameters
   end
 end
 \end{verbatim} 
-and now run the problem using the \verb|/build/release/real/main| executable 
+and now run the problem using the \verb|/build/release/real/dftfe| executable 
 \begin{verbatim}
- mpirun -n 16 ../../build/release/real/main parameterFile_a.prm > outputMesh1 &
+ mpirun -n 16 ../../build/release/real/dftfe parameterFile_a.prm > outputMesh1 &
 \end{verbatim}
 From the ``outputMesh1'' file, you can obtain information on the number of degrees of freedom in the auto-generated finite-element mesh and the ground-state energy and forces. 
 
