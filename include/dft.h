@@ -41,6 +41,7 @@
 #include <petsc.h>
 #include <slepceps.h>
 #include <spglib.h>
+#include <stdafx.h>
 
 namespace dftfe {
 
@@ -369,7 +370,19 @@ namespace dftfe {
       /**
        *@brief Computes total charge by integrating the electron-density
        */
-      double totalCharge(const std::map<dealii::CellId, std::vector<double> > *rhoQuadValues);
+      double totalCharge(const dealii::DoFHandler<3> & dofHandlerOfField,
+			 const vectorType & rhoNodalField,
+			 std::map<dealii::CellId, std::vector<double> > & rhoQuadValues);
+
+      
+      double totalCharge(const dealii::DoFHandler<3> & dofHandlerOfField,
+			 const vectorType & rhoNodalField);
+
+
+      double totalCharge(const dealii::DoFHandler<3> & dofHandlerOfField,
+			 const std::map<dealii::CellId, std::vector<double> > *rhoQuadValues);
+
+      
 
       /**
        *@brief Computes net magnetization from the difference of local spin densities

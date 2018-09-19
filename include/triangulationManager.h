@@ -16,7 +16,7 @@
 #ifndef triangulationManager_H_
 #define triangulationManager_H_
 #include "headers.h"
-#include "stdafx.h"
+
 
 namespace dftfe  {
 
@@ -118,12 +118,12 @@ namespace dftfe  {
      * @brief returns constant reference to triangulation to compute electrostatics
      *
      */
-    void  generateSubdividedMeshWithQuadData(const dealii::MatrixFree<3,double> & matrixFreeData,
+    /*void  generateSubdividedMeshWithQuadData(const dealii::MatrixFree<3,double> & matrixFreeData,
 					     const ConstraintMatrix & constraints,
 					     const dealii::Quadrature<3> & quadrature,				     
 					     const unsigned int FEOrder,
 					     const std::map<dealii::CellId,std::vector<double> > & rhoQuadValuesCoarse,				     
-					     std::map<dealii::CellId,std::vector<double> > & rhoQuadValuesRefined);
+					     std::map<dealii::CellId,std::vector<double> > & rhoQuadValuesRefined);*/
 
 
     /**
@@ -173,7 +173,7 @@ namespace dftfe  {
      * any mesh refinemen/coarsening operations are performed.
      *
      */
-    void resetParallelMeshMovedToUnmoved();
+    void resetParallelMeshMovedToUnmoved(parallel::distributed::Triangulation<3> & parallelTriangulationMoved);
 
     /**
      * @brief serialize the triangulations and the associated solution vectors

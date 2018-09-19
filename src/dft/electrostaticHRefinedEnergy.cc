@@ -25,33 +25,98 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
         pcout<< std::endl<<"-----------------Re computing electrostatics on h globally refined mesh--------------"<<std::endl;
 
 
-   std::map<dealii::CellId, std::vector<double> > rhoOutHRefinedQuadValues;
+   
 
    //
    //access quadrature object
    //
    dealii::QGauss<3> quadrature(C_num1DQuad<FEOrder>());
+   const unsigned int n_q_points = quadrature.size();
+
+
+  
+
+   //
+   //project and create a nodal field of the same mesh from the quadrature data (L2 projection from quad points to nodes)
+   //
+   vectorType rhoNodalFieldCoarse;
+   matrix_free_data.initialize_dof_vector(rhoNodalFieldCoarse);
+   rhoNodalFieldCoarse = 0.0;
+
+   //
+   //create a lambda function for L2 projection of quadrature electron-density to nodal electron density
+   //
+   std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell,const unsigned int q)> funcRho = [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell , const unsigned int q)
+     {return (*rhoOutValues).find(cell->id())->second[q];};
+
+   dealii::VectorTools::project<3,dealii::parallel::distributed::Vector<double> >(dealii::MappingQ1<3,3>(),
+										  matrix_free_data.get_dof_handler(),
+										  constraintsNone,
+										  quadrature,
+										  funcRho,
+										  rhoNodalFieldCoarse);
+
+   rhoNodalFieldCoarse.update_ghost_values();
+   constraintsNone.distribute(rhoNodalFieldCoarse);
+   rhoNodalFieldCoarse.update_ghost_values();
+
+   //
+   //compute the total charge using rho nodal field for debugging purposes
+   //
+   if(dftParameters::verbosity >= 4)
+     {
+       const double integralRhoValue = totalCharge(matrix_free_data.get_dof_handler(),
+						   rhoNodalFieldCoarse);
+
+       pcout<<"Value of total charge on coarse mesh using L2 projected nodal field: "<< integralRhoValue<<std::endl;
+     }
+
 
    //
    //subdivide the existing mesh and project electron-density onto the new mesh
    //
-
    computing_timer.enter_section("h refinement electrostatics");
-   d_mesh.generateSubdividedMeshWithQuadData(matrix_free_data,
+     /*d_mesh.generateSubdividedMeshWithQuadData(matrix_free_data,
 					     constraintsNone,
 					     quadrature,
 					     FEOrder,
 					     *rhoOutValues,
-					     rhoOutHRefinedQuadValues);
+					     rhoOutHRefinedQuadValues);*/
 
-
-
+   //
+   //initialize the new dofHandler to refine and do a solution transfer
+   //
    dealii::parallel::distributed::Triangulation<3> & electrostaticsTria = d_mesh.getElectrostaticsMesh();
-   forcePtr->initUnmoved(electrostaticsTria,d_domainBoundingVectors,true);
-
+   
    dealii::DoFHandler<3> dofHandlerHRefined;
    dofHandlerHRefined.initialize(electrostaticsTria,dealii::FE_Q<3>(dealii::QGaussLobatto<1>(FEOrder+1)));
    dofHandlerHRefined.distribute_dofs(dofHandlerHRefined.get_fe());
+
+   //
+   //create a solution transfer object and prepare for refinement and solution transfer
+   //
+   parallel::distributed::SolutionTransfer<3,vectorType> solTrans(dofHandlerHRefined);
+   electrostaticsTria.set_all_refine_flags();
+   electrostaticsTria.prepare_coarsening_and_refinement();
+   solTrans.prepare_for_coarsening_and_refinement(rhoNodalFieldCoarse);
+   electrostaticsTria.execute_coarsening_and_refinement();
+
+   dofHandlerHRefined.distribute_dofs(dofHandlerHRefined.get_fe());
+
+   //
+   //print refined mesh details
+   //
+   if (dftParameters::verbosity>=2)
+     {
+       pcout << std::endl<<"Finite element mesh information after subdividing the mesh"<<std::endl;
+       pcout<<"-------------------------------------------------"<<std::endl;
+       pcout << "number of elements: "
+	     << dofHandlerHRefined.get_triangulation().n_global_active_cells()
+	     << std::endl
+	     << "number of degrees of freedom: "
+	     << dofHandlerHRefined.n_dofs()
+	     << std::endl;
+     }
 
    dealii::IndexSet locallyRelevantDofs;
    dealii::DoFTools::extract_locally_relevant_dofs(dofHandlerHRefined, locallyRelevantDofs);
@@ -99,10 +164,31 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
    dealii::DoFTools::make_periodicity_constraints<dealii::DoFHandler<3> >(periodicity_vector2, constraintsHRefined);
    constraintsHRefined.close();
 
-   moveMeshToAtoms(electrostaticsTria,
-		   true);
+   /*moveMeshToAtoms(electrostaticsTria,
+   		   true);
 
-   dofHandlerHRefined.distribute_dofs(dofHandlerHRefined.get_fe());
+		   dofHandlerHRefined.distribute_dofs(dofHandlerHRefined.get_fe());
+
+   //
+   //compute the electron density on the moved mesh
+   //
+   if (dftParameters::verbosity>=4)
+     {
+       FEValues<3> fe_values(dofHandlerHRefined.get_fe(),quadrature,update_values | update_JxW_values | update_quadrature_points);
+
+       typename dealii::DoFHandler<3>::active_cell_iterator cellRefinedNew = dofHandlerHRefined.begin_active(), endcRefinedNew = dofHandlerHRefined.end();
+       double totalCharge=0.0;
+       for(; cellRefinedNew!=endcRefinedNew; ++cellRefinedNew)
+	 {
+	   if(cellRefinedNew->is_locally_owned())
+	     {
+	       fe_values.reinit(cellRefinedNew);
+	       for(unsigned int q_point = 0; q_point < quadrature.size(); ++q_point)
+		 totalCharge += rhoOutHRefinedQuadValues.find(cellRefinedNew->id())->second[q_point]*fe_values.JxW(q_point);
+	     }
+	 }
+       pcout<<"Value of total charge on refined mesh after solution transfer: "<< Utilities::MPI::sum(totalCharge, mpi_communicator)<<std::endl;
+       }*/
 
 
    //matrix free data structure
@@ -156,6 +242,8 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
    const unsigned phiExtDofHandlerIndexHRefined = matrixFreeDofHandlerVectorInput.size()-1;
    matrixFreeConstraintsInputVector.push_back(&onlyHangingNodeConstraints);
 
+   forcePtr->initUnmoved(electrostaticsTria,d_domainBoundingVectors,true);
+
    forcePtr->initMoved(matrixFreeDofHandlerVectorInput,
 	               matrixFreeConstraintsInputVector,
 	               true,
@@ -171,6 +259,31 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
 			         quadratureVector,
 			         additional_data);
 
+   //
+   //create rho nodal field on the refined mesh and conduct solution transfer
+   //
+   vectorType rhoNodalFieldRefined;
+   matrixFreeDataHRefined.initialize_dof_vector(rhoNodalFieldRefined);
+   rhoNodalFieldRefined.zero_out_ghosts();
+   solTrans.interpolate(rhoNodalFieldRefined);
+   rhoNodalFieldRefined.update_ghost_values();
+   constraintsHRefined.distribute(rhoNodalFieldRefined);
+   rhoNodalFieldRefined.update_ghost_values();
+
+   //
+   //fill in quadrature values of the field on the refined mesh and compute total charge
+   //
+   std::map<dealii::CellId, std::vector<double> > rhoOutHRefinedQuadValues;
+   const double integralRhoValue = totalCharge(dofHandlerHRefined,
+					       rhoNodalFieldRefined,
+					       rhoOutHRefinedQuadValues);
+   //
+   //compute total charge using rhoNodalRefined field
+   //
+   if(dftParameters::verbosity >= 4)
+     {
+       pcout<<"Value of total charge on refined mesh after rho solution transfer: "<< integralRhoValue<<std::endl;
+     }
 
    std::map<dealii::types::global_dof_index, double> atomHRefinedNodeIdToChargeMap;
    locateAtomCoreNodes(dofHandlerHRefined,atomHRefinedNodeIdToChargeMap);
@@ -191,7 +304,9 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
 					     d_imageCharges,
 	                                     localVselfsHRefined);
 
+   //
    //solve the Poisson problem for total rho
+   //
    vectorType phiTotRhoOutHRefined;
    matrixFreeDataHRefined.initialize_dof_vector(phiTotRhoOutHRefined,phiTotDofHandlerIndexHRefined);
 

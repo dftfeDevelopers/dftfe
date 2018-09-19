@@ -219,18 +219,18 @@ namespace dftfe {
 
   //
   void
-  triangulationManager::resetParallelMeshMovedToUnmoved()
+  triangulationManager::resetParallelMeshMovedToUnmoved(parallel::distributed::Triangulation<3>& parallelTriangulationMoved)
   {
     AssertThrow(d_parallelTriangulationUnmoved.n_global_active_cells()!=0, dftUtils::ExcInternalError());
     AssertThrow(d_parallelTriangulationUnmoved.n_global_active_cells()
-		==d_parallelTriangulationMoved.n_global_active_cells(), dftUtils::ExcInternalError());
+		==parallelTriangulationMoved.n_global_active_cells(), dftUtils::ExcInternalError());
 
-    std::vector<bool> vertexTouched(d_parallelTriangulationMoved.n_vertices(),
+    std::vector<bool> vertexTouched(parallelTriangulationMoved.n_vertices(),
 				    false);
     typename parallel::distributed::Triangulation<3>::cell_iterator cellUnmoved, endcUnmoved, cellMoved;
     cellUnmoved = d_parallelTriangulationUnmoved.begin();
     endcUnmoved = d_parallelTriangulationUnmoved.end();
-    cellMoved=d_parallelTriangulationMoved.begin();
+    cellMoved=parallelTriangulationMoved.begin();
 
     for (; cellUnmoved!=endcUnmoved; ++cellUnmoved, ++cellMoved)
       for (unsigned int vertexNo=0; vertexNo<dealii::GeometryInfo<3>::vertices_per_cell;++vertexNo)

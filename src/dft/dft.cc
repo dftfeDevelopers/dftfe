@@ -566,6 +566,15 @@ namespace dftfe {
     //
     moveMeshToAtoms(triangulationPar);
 
+    if(dftParameters::electrostaticsHRefinement)
+      {
+	//
+	//get access to triangulation objects from meshGenerator class
+	//
+	parallel::distributed::Triangulation<3> & triangulationElectro = d_mesh.getElectrostaticsMesh();
+	moveMeshToAtoms(triangulationElectro);
+      }
+
     if (dftParameters::verbosity>=4)
       dftUtils::printCurrentMemoryUsage(mpi_communicator,
 	                      "moveMeshToAtoms completed");
@@ -1148,7 +1157,8 @@ namespace dftfe {
 	//
 	//compute integral rhoOut
 	//
-	const double integralRhoValue=totalCharge(rhoOutValues);
+	const double integralRhoValue=totalCharge(dofHandler,
+						  rhoOutValues);
 
 	if (dftParameters::verbosity>=2){
 	  pcout<< std::endl<<"number of electrons: "<< integralRhoValue<<std::endl;

@@ -216,8 +216,8 @@ namespace dftfe {
   //generate adaptive mesh
   //
 
-  void triangulationManager::generateMesh(parallel::distributed::Triangulation<3>& parallelTriangulation,
-					  parallel::distributed::Triangulation<3>& electrostaticsTriangulation,
+  void triangulationManager::generateMesh(parallel::distributed::Triangulation<3> & parallelTriangulation,
+					  parallel::distributed::Triangulation<3> & electrostaticsTriangulation,
 					  const bool generateElectrostaticsTria)
   {
     if(!dftParameters::meshFileName.empty())
@@ -360,7 +360,7 @@ namespace dftfe {
   }
 
 
-  void triangulationManager::generateSubdividedMeshWithQuadData(const dealii::MatrixFree<3,double> & matrixFreeData,
+  /*void triangulationManager::generateSubdividedMeshWithQuadData(const dealii::MatrixFree<3,double> & matrixFreeData,
 								const dealii::ConstraintMatrix & constraints,
 								const dealii::Quadrature<3> & quadrature,
 								const unsigned int FEOrder,
@@ -428,7 +428,7 @@ namespace dftfe {
 	    }
 	  }
 	}
-	pcout<<"Value of total charge on coarse mesh from nodal field: "<< Utilities::MPI::sum(normValue, mpi_communicator)<<std::endl;
+	pcout<<"Value of total charge on coarse mesh using L2 projected nodal field: "<< Utilities::MPI::sum(normValue, mpi_communicator)<<std::endl;
       }
 
 
@@ -440,13 +440,8 @@ namespace dftfe {
     
     dofHandlerHRefined.distribute_dofs(dofHandlerHRefined.get_fe());
     parallel::distributed::SolutionTransfer<3,vectorType> solTrans(dofHandlerHRefined);
-    //d_triangulationElectrostatics.set_all_refine_flags();
-    Vector<float> estimated_error_per_cell(d_triangulationElectrostatics.n_active_cells());
-    estimated_error_per_cell = 1.0;
-    parallel::distributed::GridRefinement::refine_and_coarsen_fixed_fraction(d_triangulationElectrostatics,
-    									     estimated_error_per_cell,
-    									     1.0,
-    									     0.0);
+    d_triangulationElectrostatics.set_all_refine_flags();
+
     d_triangulationElectrostatics.prepare_coarsening_and_refinement();
     solTrans.prepare_for_coarsening_and_refinement(rhoNodalFieldCoarse);
     d_triangulationElectrostatics.execute_coarsening_and_refinement();
@@ -501,20 +496,17 @@ namespace dftfe {
     				  matrixFreeConstraintsInputVector,
     				  quadratureVector,
 				  additional_data);
-				  
 
     //
     //create nodal field on the refined mesh
     //
     vectorType rhoNodalFieldRefined;
-    //rhoNodalFieldRefined.reinit(dofHandlerHRefined.n_dofs());
     matrixFreeDataHRefined.initialize_dof_vector(rhoNodalFieldRefined);
     rhoNodalFieldRefined.zero_out_ghosts();
     solTrans.interpolate(rhoNodalFieldRefined);
     rhoNodalFieldRefined.update_ghost_values();
     onlyHangingNodeConstraints.distribute(rhoNodalFieldRefined);
     rhoNodalFieldRefined.update_ghost_values();
-
 
     
     //
@@ -531,8 +523,8 @@ namespace dftfe {
 	if(cellRefined->is_locally_owned())
 	  {
 	    fe_values.reinit(cellRefined);
-	    fe_values.get_function_values(rhoNodalFieldRefined,tempRho1);
-	    //fe_values.get_function_values(rhoNodalFieldCoarse,tempRho1);
+	    //fe_values.get_function_values(rhoNodalFieldRefined,tempRho1);
+	    fe_values.get_function_values(rhoNodalFieldCoarse,tempRho1);
 	    rhoQuadValuesRefined[cellRefined->id()].resize(n_q_points);
 	    for(unsigned int q_point = 0; q_point < n_q_points; ++q_point)
 	      {
@@ -542,7 +534,7 @@ namespace dftfe {
 	  }
       }
 
-    pcout<<"Value of total charge on refined mesh after solution transfer: "<< Utilities::MPI::sum(totalCharge1, mpi_communicator)<<std::endl;
+    pcout<<"Value of total charge on refined unmoved mesh after solution transfer: "<< Utilities::MPI::sum(totalCharge1, mpi_communicator)<<std::endl;
 
     //
     //compute total charge using quadrature values on the refined mesh
@@ -560,10 +552,10 @@ namespace dftfe {
 		  totalCharge += rhoQuadValuesRefined.find(cellRefinedNew->id())->second[q_point]*fe_values.JxW(q_point);
 	      }
 	  }
-	pcout<<"Value of total charge on refined mesh after solution transfer: "<< Utilities::MPI::sum(totalCharge, mpi_communicator)<<std::endl;
+	pcout<<"Value of total charge on refined unmoved mesh after solution transfer: "<< Utilities::MPI::sum(totalCharge, mpi_communicator)<<std::endl;
       }
    
-  }
+  }*/
 
 
   void triangulationManager::generateMesh(parallel::distributed::Triangulation<3> & parallelTriangulation,
