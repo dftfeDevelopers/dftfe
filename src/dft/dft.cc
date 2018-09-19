@@ -314,7 +314,7 @@ namespace dftfe {
 	    pcout <<" Setting the number of Kohn-Sham wave functions to be set to "<<numEigenValues<<std::endl;
 	  }
       }
-    
+
     if (dftParameters::constraintMagnetization)
      {
        numElectronsUp = std::ceil(static_cast<double>(numElectrons)/2.0);
@@ -739,7 +739,7 @@ namespace dftfe {
     double norm = 1.0;
     //CAUTION: Choosing a looser tolerance might lead to failed tests
     const double adaptiveChebysevFilterPassesTol = dftParameters::chebyshevTolerance;
-
+    const double mixedPrecStoppingNorm=dftParameters::mixedPrecStoppingTol;
 
     pcout<<std::endl;
     if (dftParameters::verbosity==0)
@@ -777,7 +777,7 @@ namespace dftfe {
 		     if (dftParameters::mixingMethod=="BROYDEN" )
 		        norm = sqrt(mixing_broyden_spinPolarized());
 		  }
-		else 
+		else
 		  {
 		    if (dftParameters::mixingMethod=="ANDERSON")
 		        norm = sqrt(mixing_anderson());
@@ -892,7 +892,8 @@ namespace dftfe {
 						  kohnShamDFTEigenOperator,
 						  subspaceIterationSolver,
 						  residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
-						  true);
+						  true,
+						  norm<mixedPrecStoppingNorm?false:true);
 		      }
 		  }
 	      }
@@ -970,7 +971,8 @@ namespace dftfe {
 						  kohnShamDFTEigenOperator,
 						  subspaceIterationSolver,
 						  residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
-						  true);
+						  true,
+						  norm<mixedPrecStoppingNorm?false:true);
 
 		      }
 		  }
@@ -1049,7 +1051,8 @@ namespace dftfe {
 					      kohnShamDFTEigenOperator,
 					      subspaceIterationSolver,
 					      residualNormWaveFunctionsAllkPoints[kPoint],
-					      true);
+					      true,
+					      norm<mixedPrecStoppingNorm?false:true);
 
 		  }
 	      }
@@ -1102,7 +1105,8 @@ namespace dftfe {
 					      kohnShamDFTEigenOperator,
 					      subspaceIterationSolver,
 					      residualNormWaveFunctionsAllkPoints[kPoint],
-					      true);
+					      true,
+					      norm<mixedPrecStoppingNorm?false:true);
 		  }
 		count++;
 		//
@@ -1303,6 +1307,7 @@ namespace dftfe {
 					      kohnShamDFTEigenOperator,
 					      subspaceIterationSolver,
 					      residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
+					      false,
 					      false);
 		  }
 	      }
@@ -1333,6 +1338,7 @@ namespace dftfe {
 					  kohnShamDFTEigenOperator,
 					  subspaceIterationSolver,
 					  residualNormWaveFunctionsAllkPoints[kPoint],
+					  false,
 					  false);
 
 	      }
