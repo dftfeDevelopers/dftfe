@@ -57,13 +57,22 @@ namespace dftfe
 
       //S=X*X^{T}. Implemented as S=X^{T}*X with X^{T} stored in the column major format
       computing_timer.enter_section("Fill overlap matrix for PGS");
-      internal::fillParallelOverlapMatrix(&X[0],
-	                                  X.size(),
-	                                  numberVectors,
-		                          processGrid,
-					  interBandGroupComm,
-					  mpiComm,
-				          overlapMatPar);
+      if (!dftParameters::useMixedPrecPGS_O)
+	  internal::fillParallelOverlapMatrix(&X[0],
+					      X.size(),
+					      numberVectors,
+					      processGrid,
+					      interBandGroupComm,
+					      mpiComm,
+					      overlapMatPar);
+      else
+	  internal::fillParallelOverlapMatrixMixedPrec(&X[0],
+					               X.size(),
+						       numberVectors,
+						       processGrid,
+						       interBandGroupComm,
+						       mpiComm,
+						       overlapMatPar);
       computing_timer.exit_section("Fill overlap matrix for PGS");
 
       //S=L*L^{T}
@@ -137,7 +146,7 @@ namespace dftfe
       //X=X*L^{-1}^{T} implemented as X^{T}=L^{-1}*X^{T} with X^{T} stored in the column major format
       computing_timer.enter_section("Subspace rotation PGS");
 
-      if (!dftParameters::useMixedPrecisionPGS)
+      if (!dftParameters::useMixedPrecPGS_SR)
 	  internal::subspaceRotation(&X[0],
 				     X.size(),
 				     numberVectors,
