@@ -3,8 +3,8 @@
 ##
 
 # Set the name of the project and target:
-SET(TARGET "main")
-SET(TARGETLIB "dftfe")
+SET(TARGET "dftfe")
+SET(TARGETLIB "dftFE")
 
 INCLUDE_DIRECTORIES(
  ${CMAKE_SOURCE_DIR}/include
