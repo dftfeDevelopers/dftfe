@@ -33,6 +33,7 @@ namespace dftfe
 						    const MPI_Comm &interBandGroupComm,
 						    const unsigned int numberCoreVectors,
 						    const MPI_Comm & mpiComm,
+						    const bool useMixedPrec,
 						    std::vector<T> & tempNonCoreVectorsArray)
 
     {
@@ -57,7 +58,7 @@ namespace dftfe
 
       //S=X*X^{T}. Implemented as S=X^{T}*X with X^{T} stored in the column major format
       computing_timer.enter_section("Fill overlap matrix for PGS");
-      if (!dftParameters::useMixedPrecPGS_O)
+      if (!(dftParameters::useMixedPrecPGS_O && useMixedPrec))
 	  internal::fillParallelOverlapMatrix(&X[0],
 					      X.size(),
 					      numberVectors,
@@ -146,7 +147,7 @@ namespace dftfe
       //X=X*L^{-1}^{T} implemented as X^{T}=L^{-1}*X^{T} with X^{T} stored in the column major format
       computing_timer.enter_section("Subspace rotation PGS");
 
-      if (!dftParameters::useMixedPrecPGS_SR)
+      if (!(dftParameters::useMixedPrecPGS_SR && useMixedPrec))
 	  internal::subspaceRotation(&X[0],
 				     X.size(),
 				     numberVectors,
@@ -181,6 +182,7 @@ namespace dftfe
 						    const MPI_Comm &interBandGroupComm,
 						    const unsigned int numberCoreVectors,
 						    const MPI_Comm & mpiComm,
+						    const bool useMixedPrec,
 						    std::vector<T> & tempNonCoreVectorsArray)
     {
        const unsigned int localVectorSize = X.size()/numberVectors;

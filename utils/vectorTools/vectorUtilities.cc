@@ -474,6 +474,9 @@ namespace dftfe
 				     const unsigned int                                                ,
 				     dealii::parallel::distributed::Vector<dataTypes::number>     &);
 
+    template void createDealiiVector(const std::shared_ptr<const dealii::Utilities::MPI::Partitioner> &,
+				     const unsigned int                                                ,
+				     dealii::parallel::distributed::Vector<dataTypes::numberLowPrec>     &);
 
   }//end of namespace
 

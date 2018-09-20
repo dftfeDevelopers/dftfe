@@ -107,9 +107,15 @@ namespace dftfe {
 							   flattenedArray);
 
     if(dftParameters::isPseudopotential)
+    {
       vectorTools::createDealiiVector<dataTypes::number>(dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
 							 numberWaveFunctions,
 							 dftPtr->d_projectorKetTimesVectorParFlattened);
+
+      vectorTools::createDealiiVector<dataTypes::numberLowPrec>(dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
+							 numberWaveFunctions,
+							 dftPtr->d_projectorKetTimesVectorParFlattenedLowPrec);
+    }
 
 
 
@@ -129,9 +135,15 @@ void kohnShamDFTOperatorClass<FEOrder>::reinit(const unsigned int numberWaveFunc
 {
 
   if(dftParameters::isPseudopotential)
+  {
     vectorTools::createDealiiVector<dataTypes::number>(dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
 						       numberWaveFunctions,
 						       dftPtr->d_projectorKetTimesVectorParFlattened);
+    vectorTools::createDealiiVector<dataTypes::numberLowPrec>
+	  (dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
+	   numberWaveFunctions,
+	   dftPtr->d_projectorKetTimesVectorParFlattenedLowPrec);
+  }
 
 }
 
@@ -388,6 +400,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 			       const unsigned int numberWaveFunctions,
 			       const bool scaleFlag,
 			       const double scalar,
+			       const bool useSinglePrec,
 			       dealii::parallel::distributed::Vector<std::complex<double> > & dst)
 
 
@@ -516,6 +529,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 			       const unsigned int numberWaveFunctions,
 			       const bool scaleFlag,
 			       const double scalar,
+			       const bool useSinglePrec,
 			       dealii::parallel::distributed::Vector<double> & dst)
 
 
@@ -563,9 +577,16 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
     //
 #ifdef WITH_MKL
     if (dftParameters::useBatchGEMM && numberWaveFunctions<1000)
-       computeLocalHamiltonianTimesXBatchGEMM(src,
+    {
+       if (useSinglePrec)
+         computeLocalHamiltonianTimesXBatchGEMMSinglePrec(src,
 				              numberWaveFunctions,
 				              dst);
+       else
+	  computeLocalHamiltonianTimesXBatchGEMM(src,
+				  numberWaveFunctions,
+				  dst);
+    }
     else
        computeLocalHamiltonianTimesX(src,
 				     numberWaveFunctions,
@@ -583,9 +604,16 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
     {
 #ifdef WITH_MKL
       if (dftParameters::useBatchGEMM && numberWaveFunctions<1000)
-        computeNonLocalHamiltonianTimesXBatchGEMM(src,
+      {
+	if (useSinglePrec)
+            computeNonLocalHamiltonianTimesXBatchGEMMSinglePrec(src,
 				                  numberWaveFunctions,
 				                  dst);
+	else
+            computeNonLocalHamiltonianTimesXBatchGEMM(src,
+				                  numberWaveFunctions,
+				                  dst);
+      }
       else
         computeNonLocalHamiltonianTimesX(src,
 				         numberWaveFunctions,
@@ -819,6 +847,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
        numberWaveFunctions,
        scaleFlag,
        scalar,
+       false,
        Y);
 
     for(unsigned int i = 0; i < Y.local_size(); ++i)
@@ -959,6 +988,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
        numberWaveFunctions,
        scaleFlag,
        scalar,
+       false,
        Y);
 
     char transA = 'N';
@@ -1081,6 +1111,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 		 B,
 		 scaleFlag,
 		 scalar,
+		 false,
 		 HXBlock);
 
 

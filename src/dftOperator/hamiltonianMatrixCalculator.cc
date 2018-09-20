@@ -34,6 +34,8 @@ void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(unsigned int kP
   d_cellHamiltonianMatrix.clear();
   d_cellHamiltonianMatrix.resize(totalLocallyOwnedCells);
 
+  d_cellHamiltonianMatrixLowPrec.clear();
+  d_cellHamiltonianMatrixLowPrec.resize(totalLocallyOwnedCells);
   //
   //Get some FE related Data
   //
@@ -161,6 +163,8 @@ void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(unsigned int kP
 #else
 	  d_cellHamiltonianMatrix[iElem].resize(numberDofsPerElement*numberDofsPerElement+(numberDofsPerElement*numberDofsPerElement)%8,0.0);
 #endif
+	  d_cellHamiltonianMatrixLowPrec[iElem].resize(numberDofsPerElement*numberDofsPerElement,0.0);
+
 	  for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
 	    {
 	      for(unsigned int jNode = 0; jNode < numberDofsPerElement; ++jNode)
@@ -168,8 +172,16 @@ void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(unsigned int kP
 #ifdef USE_COMPLEX
 		  d_cellHamiltonianMatrix[iElem][numberDofsPerElement*iNode + jNode].real(elementHamiltonianMatrix[numberDofsPerElement*iNode + jNode][iSubCell]);
 		  d_cellHamiltonianMatrix[iElem][numberDofsPerElement*iNode + jNode].imag(elementHamiltonianMatrixImag[numberDofsPerElement*iNode + jNode][iSubCell]);
+
+		  d_cellHamiltonianMatrixLowPrec[iElem][numberDofsPerElement*iNode + jNode].real((float)elementHamiltonianMatrix[numberDofsPerElement*iNode + jNode][iSubCell]);
+		  d_cellHamiltonianMatrixLowPrec[iElem][numberDofsPerElement*iNode + jNode].imag((float)elementHamiltonianMatrixImag[numberDofsPerElement*iNode + jNode][iSubCell]);
+
 #else
-		  d_cellHamiltonianMatrix[iElem][numberDofsPerElement*iNode + jNode] = elementHamiltonianMatrix[numberDofsPerElement*iNode + jNode][iSubCell];
+		  d_cellHamiltonianMatrix[iElem][numberDofsPerElement*iNode + jNode]
+		      = elementHamiltonianMatrix[numberDofsPerElement*iNode + jNode][iSubCell];
+
+		  d_cellHamiltonianMatrixLowPrec[iElem][numberDofsPerElement*iNode + jNode]
+		      = (dataTypes::numberLowPrec)elementHamiltonianMatrix[numberDofsPerElement*iNode + jNode][iSubCell];
 #endif
 
 		}

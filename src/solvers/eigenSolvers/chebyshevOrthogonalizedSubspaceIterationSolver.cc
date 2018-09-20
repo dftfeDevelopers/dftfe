@@ -114,7 +114,8 @@ namespace dftfe{
 							const unsigned int totalNumberWaveFunctions,
 							std::vector<double>        & eigenValues,
 							std::vector<double>        & residualNorms,
-							const MPI_Comm &interBandGroupComm)
+							const MPI_Comm &interBandGroupComm,
+							const bool useMixedPrec)
   {
 
 
@@ -222,7 +223,9 @@ namespace dftfe{
 						        chebyshevOrder/2,
 						        d_lowerBoundUnWantedSpectrum,
 						        upperBoundUnwantedSpectrum,
-						        d_lowerBoundWantedSpectrum);
+						        d_lowerBoundWantedSpectrum,
+							dftParameters::useMixedPrecCheby && useMixedPrec?
+							true:false);
 	    else
 	       linearAlgebraOperations::chebyshevFilter(operatorMatrix,
 						     eigenVectorsFlattenedArrayBlock,
@@ -230,7 +233,9 @@ namespace dftfe{
 						     chebyshevOrder,
 						     d_lowerBoundUnWantedSpectrum,
 						     upperBoundUnwantedSpectrum,
-						     d_lowerBoundWantedSpectrum);
+						     d_lowerBoundWantedSpectrum,
+						     dftParameters::useMixedPrecCheby && useMixedPrec?
+						     true:false);
 	    computing_timer.exit_section("Chebyshev filtering opt");
 
 	    if (dftParameters::verbosity>=4)
@@ -321,6 +326,7 @@ namespace dftfe{
 				  interBandGroupComm,
 				  totalNumberWaveFunctions-eigenValues.size(),
 				  operatorMatrix.getMPICommunicator(),
+				  useMixedPrec,
 				  eigenVectorsFlattenedRR);
 
 	if (flag==1)
