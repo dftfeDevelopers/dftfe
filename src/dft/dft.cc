@@ -566,14 +566,14 @@ namespace dftfe {
     //
     moveMeshToAtoms(triangulationPar);
 
-    if(dftParameters::electrostaticsHRefinement)
+    /*if(dftParameters::electrostaticsHRefinement)
       {
 	//
 	//get access to triangulation objects from meshGenerator class
 	//
 	parallel::distributed::Triangulation<3> & triangulationElectro = d_mesh.getElectrostaticsMesh();
 	moveMeshToAtoms(triangulationElectro);
-      }
+	}*/
 
     if (dftParameters::verbosity>=4)
       dftUtils::printCurrentMemoryUsage(mpi_communicator,
@@ -1205,6 +1205,8 @@ namespace dftfe {
 				       funcC,
 				       d_phiTotRhoIn,
 				       d_phiTotRhoOut,
+				       d_phiExt,
+				       d_phiExt,
 				       *rhoInValues,
 				       *rhoOutValues,
 				       *rhoOutValues,
@@ -1229,6 +1231,8 @@ namespace dftfe {
 						    funcC,
 						    d_phiTotRhoIn,
 						    d_phiTotRhoOut,
+						    d_phiExt,
+						    d_phiExt,
 						    *rhoInValues,
 						    *rhoOutValues,
 						    *rhoOutValues,
@@ -1395,6 +1399,8 @@ namespace dftfe {
 			       funcC,
 			       d_phiTotRhoIn,
 			       d_phiTotRhoOut,
+			       d_phiExt,
+			       d_phiExt,
 			       *rhoInValues,
 			       *rhoOutValues,
 			       *rhoOutValues,
@@ -1419,6 +1425,8 @@ namespace dftfe {
 					    funcC,
 					    d_phiTotRhoIn,
 					    d_phiTotRhoOut,
+					    d_phiExt,
+					    d_phiExt,
 					    *rhoInValues,
 					    *rhoOutValues,
 					    *rhoOutValues,

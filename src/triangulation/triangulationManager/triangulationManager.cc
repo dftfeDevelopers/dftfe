@@ -35,13 +35,14 @@ namespace dftfe {
   //
   //constructor
   //
-  triangulationManager::triangulationManager(const MPI_Comm &mpi_comm_replica,
-					     const MPI_Comm &interpoolcomm,
-					     const MPI_Comm &interbandgroup_comm):
+  triangulationManager::triangulationManager(const MPI_Comm & mpi_comm_replica,
+					     const MPI_Comm & interpoolcomm,
+					     const MPI_Comm & interbandgroup_comm):
     d_parallelTriangulationUnmoved(mpi_comm_replica),
     d_parallelTriangulationUnmovedPrevious(mpi_comm_replica),
     d_parallelTriangulationMoved(mpi_comm_replica),
-    d_triangulationElectrostatics(mpi_comm_replica),
+    d_triangulationElectrostaticsRho(mpi_comm_replica),
+    d_triangulationElectrostaticsDisp(mpi_comm_replica),
     mpi_communicator (mpi_comm_replica),
     interpoolcomm(interpoolcomm),
     interBandGroupComm(interbandgroup_comm),
@@ -91,11 +92,20 @@ namespace dftfe {
     //generate mesh data members
     //
     if (generateSerialTria)
-      generateMesh(d_parallelTriangulationUnmoved, d_serialTriangulationUnmoved, d_triangulationElectrostatics, generateElectrostaticsTria);
+      generateMesh(d_parallelTriangulationUnmoved, 
+		   d_serialTriangulationUnmoved, 
+		   d_triangulationElectrostaticsRho, 
+		   d_triangulationElectrostaticsDisp,
+		   generateElectrostaticsTria);
     else
-      generateMesh(d_parallelTriangulationUnmoved, d_triangulationElectrostatics, generateElectrostaticsTria);
+      generateMesh(d_parallelTriangulationUnmoved, 
+		   d_triangulationElectrostaticsRho, 
+		   d_triangulationElectrostaticsDisp,
+		   generateElectrostaticsTria);
+
     generateMesh(d_parallelTriangulationMoved,
-		 d_triangulationElectrostatics,
+		 d_triangulationElectrostaticsRho,
+		 d_triangulationElectrostaticsDisp,
 		 false);
   }
 
@@ -119,7 +129,7 @@ namespace dftfe {
     d_parallelTriangulationUnmovedPrevious.clear();
     d_serialTriangulationUnmovedPrevious.clear();
 
-    generateMesh(d_parallelTriangulationUnmovedPrevious, d_serialTriangulationUnmovedPrevious, d_triangulationElectrostatics, generateElectrostaticsTria);
+    generateMesh(d_parallelTriangulationUnmovedPrevious, d_serialTriangulationUnmovedPrevious, d_triangulationElectrostaticsRho, d_triangulationElectrostaticsDisp, generateElectrostaticsTria);
   }
 
 
@@ -212,35 +222,43 @@ namespace dftfe {
   //get electrostatics mesh
   //
   parallel::distributed::Triangulation<3> &
-  triangulationManager::getElectrostaticsMesh()
+  triangulationManager::getElectrostaticsMeshRho()
   {
-    return d_triangulationElectrostatics;
+    return d_triangulationElectrostaticsRho;
   }
 
-  //
-  void
-  triangulationManager::resetParallelMeshMovedToUnmoved(parallel::distributed::Triangulation<3>& parallelTriangulationMoved)
+  parallel::distributed::Triangulation<3> &
+  triangulationManager::getElectrostaticsMeshDisp()
   {
-    AssertThrow(d_parallelTriangulationUnmoved.n_global_active_cells()!=0, dftUtils::ExcInternalError());
-    AssertThrow(d_parallelTriangulationUnmoved.n_global_active_cells()
-		==parallelTriangulationMoved.n_global_active_cells(), dftUtils::ExcInternalError());
+    return d_triangulationElectrostaticsDisp;
+  }
+  
 
-    std::vector<bool> vertexTouched(parallelTriangulationMoved.n_vertices(),
+  //reset MeshB to MeshA
+  void
+  triangulationManager::resetMesh(parallel::distributed::Triangulation<3>& parallelTriangulationA,
+				  parallel::distributed::Triangulation<3>& parallelTriangulationB)
+  {
+    AssertThrow(parallelTriangulationA.n_global_active_cells()!=0, dftUtils::ExcInternalError());
+    AssertThrow(parallelTriangulationA.n_global_active_cells()
+		==parallelTriangulationB.n_global_active_cells(), dftUtils::ExcInternalError());
+
+    std::vector<bool> vertexTouched(parallelTriangulationB.n_vertices(),
 				    false);
-    typename parallel::distributed::Triangulation<3>::cell_iterator cellUnmoved, endcUnmoved, cellMoved;
-    cellUnmoved = d_parallelTriangulationUnmoved.begin();
-    endcUnmoved = d_parallelTriangulationUnmoved.end();
-    cellMoved=parallelTriangulationMoved.begin();
+    typename parallel::distributed::Triangulation<3>::cell_iterator cellA, endcA, cellB;
+    cellA = parallelTriangulationA.begin();
+    endcA = parallelTriangulationA.end();
+    cellB = parallelTriangulationB.begin();
 
-    for (; cellUnmoved!=endcUnmoved; ++cellUnmoved, ++cellMoved)
+    for (; cellA!=endcA; ++cellA, ++cellB)
       for (unsigned int vertexNo=0; vertexNo<dealii::GeometryInfo<3>::vertices_per_cell;++vertexNo)
 	{
-	  const unsigned int globalVertexNo= cellUnmoved->vertex_index(vertexNo);
+	  const unsigned int globalVertexNo= cellA->vertex_index(vertexNo);
 
 	  if (vertexTouched[globalVertexNo])
 	    continue;
 
-	  cellMoved->vertex(vertexNo) = cellUnmoved->vertex(vertexNo);
+	  cellB->vertex(vertexNo) = cellA->vertex(vertexNo);
 
 	  vertexTouched[globalVertexNo] = true;
 	}

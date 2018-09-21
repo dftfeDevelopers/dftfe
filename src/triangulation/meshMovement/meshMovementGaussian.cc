@@ -28,7 +28,8 @@ meshMovementGaussianClass::meshMovementGaussianClass(const MPI_Comm &mpi_comm_re
 
 std::pair<bool,double> meshMovementGaussianClass::moveMesh(const std::vector<Point<C_DIM> > & controlPointLocations,
                                                            const std::vector<Tensor<1,C_DIM,double> > & controlPointDisplacements,
-                                                           const double controllingParameter)
+                                                           const double controllingParameter,
+							   const bool moveSubdivided)
 {
   d_controlPointLocations=controlPointLocations;
   d_controlPointDisplacements=controlPointDisplacements;
@@ -43,6 +44,8 @@ std::pair<bool,double> meshMovementGaussianClass::moveMesh(const std::vector<Poi
   finalizeIncrementField();
   if (dftParameters::verbosity==2)
       pcout << "...Computed triangulation displacement increment" << std::endl;
+  if(moveSubdivided)
+    moveSubdividedMesh();
 
   updateTriangulationVertices();
   std::pair<bool,double> returnData=movedMeshCheck();

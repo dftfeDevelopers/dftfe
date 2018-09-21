@@ -102,7 +102,8 @@ namespace dftfe {
   }
 
   void triangulationManager::refinementAlgorithmA(parallel::distributed::Triangulation<3>   & parallelTriangulation,
-						  parallel::distributed::Triangulation<3>   & electrostaticsTriangulation,
+						  parallel::distributed::Triangulation<3>   & electrostaticsTriangulationRho,
+						  parallel::distributed::Triangulation<3>   & electrostaticsTriangulationDisp,
 						  const bool                                  generateElectrostaticsTria,
 						  std::vector<unsigned int>                 & locallyOwnedCellsRefineFlags,
 						  std::map<dealii::CellId,unsigned int>     & cellIdToCellRefineFlagMapLocal)
@@ -116,12 +117,15 @@ namespace dftfe {
 
     locallyOwnedCellsRefineFlags.clear();
     cellIdToCellRefineFlagMapLocal.clear();
-    typename parallel::distributed::Triangulation<3>::active_cell_iterator cell, endc, cellElectro;
+    typename parallel::distributed::Triangulation<3>::active_cell_iterator cell, endc, cellElectroRho, cellElectroDisp;
     cell = parallelTriangulation.begin_active();
     endc = parallelTriangulation.end();
 
     if(generateElectrostaticsTria)
-      cellElectro = electrostaticsTriangulation.begin_active();
+      {
+	cellElectroRho = electrostaticsTriangulationRho.begin_active();
+	cellElectroDisp = electrostaticsTriangulationDisp.begin_active();
+      }
 
     //
     //
@@ -197,7 +201,10 @@ namespace dftfe {
 	      cellIdToCellRefineFlagMapLocal[cell->id()]=1;
 	      cell->set_refine_flag();
 	      if(generateElectrostaticsTria)
-		cellElectro->set_refine_flag();
+		{
+		  cellElectroRho->set_refine_flag();
+		  cellElectroDisp->set_refine_flag();
+		}
 	    }
 	  else
 	    {
@@ -206,7 +213,10 @@ namespace dftfe {
 	    }
 	}
       if(generateElectrostaticsTria)
-	++cellElectro;
+	{
+	  ++cellElectroRho;
+	  ++cellElectroDisp;
+	}
       }
 
 
@@ -217,7 +227,8 @@ namespace dftfe {
   //
 
   void triangulationManager::generateMesh(parallel::distributed::Triangulation<3> & parallelTriangulation,
-					  parallel::distributed::Triangulation<3> & electrostaticsTriangulation,
+					  parallel::distributed::Triangulation<3> & electrostaticsTriangulationRho,
+					  parallel::distributed::Triangulation<3> & electrostaticsTriangulationDisp,
 					  const bool generateElectrostaticsTria)
   {
     if(!dftParameters::meshFileName.empty())
@@ -239,8 +250,10 @@ namespace dftfe {
 	generateCoarseMesh(parallelTriangulation);
 	if(generateElectrostaticsTria)
 	  {
-	    generateCoarseMesh(electrostaticsTriangulation);
-	    AssertThrow(parallelTriangulation.n_global_active_cells()==electrostaticsTriangulation.n_global_active_cells(),ExcMessage("Number of coarse mesh cells are different in electrostatics triangulations."));
+	    generateCoarseMesh(electrostaticsTriangulationRho);
+	    generateCoarseMesh(electrostaticsTriangulationDisp);
+	    AssertThrow(parallelTriangulation.n_global_active_cells()==electrostaticsTriangulationRho.n_global_active_cells(),ExcMessage("Number of coarse mesh cells are different in electrostatics triangulations having rho field."));
+	    AssertThrow(parallelTriangulation.n_global_active_cells()==electrostaticsTriangulationDisp.n_global_active_cells(),ExcMessage("Number of coarse mesh cells are different in electrostatics triangulations having disp field."));
 	  }
 
 	//
@@ -256,7 +269,8 @@ namespace dftfe {
 	    std::vector<unsigned int> locallyOwnedCellsRefineFlags;
 	    std::map<dealii::CellId,unsigned int> cellIdToCellRefineFlagMapLocal;
 	    refinementAlgorithmA(parallelTriangulation,
-				 electrostaticsTriangulation,
+				 electrostaticsTriangulationRho,
+				 electrostaticsTriangulationDisp,
 				 generateElectrostaticsTria,
 				 locallyOwnedCellsRefineFlags,
 				 cellIdToCellRefineFlagMapLocal);
@@ -275,7 +289,10 @@ namespace dftfe {
 
 		    parallelTriangulation.execute_coarsening_and_refinement();
 		    if(generateElectrostaticsTria)
-		      electrostaticsTriangulation.execute_coarsening_and_refinement();
+		      {
+			electrostaticsTriangulationRho.execute_coarsening_and_refinement();
+			electrostaticsTriangulationDisp.execute_coarsening_and_refinement();
+		      }
 		    numLevels++;
 		  }
 		else
@@ -289,7 +306,7 @@ namespace dftfe {
 	//
 	double minElemLength = dftParameters::meshSizeOuterDomain;
 	unsigned int numLocallyOwnedCells=0;
-	typename parallel::distributed::Triangulation<3>::active_cell_iterator cell, endc;
+	typename parallel::distributed::Triangulation<3>::active_cell_iterator cell, endc, cellDisp;
 	cell = parallelTriangulation.begin_active();
 	endc = parallelTriangulation.end();
 	for( ; cell != endc; ++cell)
@@ -322,35 +339,52 @@ namespace dftfe {
 	if(generateElectrostaticsTria)
 	  {
 	    numLocallyOwnedCells = 0;
-	    minElemLength = dftParameters::meshSizeOuterDomain;
+	    double minElemLengthRho = dftParameters::meshSizeOuterDomain;
+	    double minElemLengthDisp = dftParameters::meshSizeOuterDomain;
 
-	    cell = electrostaticsTriangulation.begin_active();
-	    endc = electrostaticsTriangulation.end();
+	    cell = electrostaticsTriangulationRho.begin_active();
+	    endc = electrostaticsTriangulationRho.end();
+	    cellDisp = electrostaticsTriangulationDisp.begin_active();
 	    for( ; cell != endc; ++cell)
 	      {
 		if(cell->is_locally_owned())
 		  {
 		    numLocallyOwnedCells++;
-		    if(cell->minimum_vertex_distance() < minElemLength) minElemLength = cell->minimum_vertex_distance();
+		    if(cell->minimum_vertex_distance() < minElemLengthRho) minElemLengthRho = cell->minimum_vertex_distance();
+		    if(cellDisp->minimum_vertex_distance() < minElemLengthDisp) minElemLengthDisp = cellDisp->minimum_vertex_distance();
 		  }
+		++cellDisp;
 	      }
 
-	    minElemLength = Utilities::MPI::min(minElemLength, mpi_communicator);
+	    minElemLengthRho = Utilities::MPI::min(minElemLengthRho, mpi_communicator);
+	    minElemLengthDisp = Utilities::MPI::min(minElemLengthDisp, mpi_communicator);
 
 	    //
 	    //print out adaptive electrostatics mesh metrics 
 	    //
 	    if (dftParameters::verbosity>=4)
 	      {
-		pcout<< "Electrostatics Triangulation generation summary: "<<std::endl<<" num elements: "<<electrostaticsTriangulation.n_global_active_cells()<<", num refinement levels: "<<numLevels<<", min element length: "<<minElemLength<<std::endl;		  
+		pcout<< "Electrostatics Triangulation generation summary: "<<std::endl<<" num elements: "<<electrostaticsTriangulationRho.n_global_active_cells()<<", num refinement levels: "<<numLevels<<", min element length: "<<minElemLengthRho<<std::endl;		  
+
+		pcout<< "Electrostatics Triangulation generation summary: "<<std::endl<<" num elements: "<<electrostaticsTriangulationDisp.n_global_active_cells()<<", num refinement levels: "<<numLevels<<", min element length: "<<minElemLengthDisp<<std::endl;
+
 	      }
 
 
-	    internal::checkTriangulationEqualityAcrossProcessorPools(electrostaticsTriangulation,
+	    internal::checkTriangulationEqualityAcrossProcessorPools(electrostaticsTriangulationRho,
 								     numLocallyOwnedCells,
 								     interpoolcomm);
 
-	    internal::checkTriangulationEqualityAcrossProcessorPools(electrostaticsTriangulation,
+	    internal::checkTriangulationEqualityAcrossProcessorPools(electrostaticsTriangulationRho,
+								     numLocallyOwnedCells,
+								     interBandGroupComm);
+
+
+	    internal::checkTriangulationEqualityAcrossProcessorPools(electrostaticsTriangulationDisp,
+								     numLocallyOwnedCells,
+								     interpoolcomm);
+
+	    internal::checkTriangulationEqualityAcrossProcessorPools(electrostaticsTriangulationDisp,
 								     numLocallyOwnedCells,
 								     interBandGroupComm);
 
@@ -560,7 +594,8 @@ namespace dftfe {
 
   void triangulationManager::generateMesh(parallel::distributed::Triangulation<3> & parallelTriangulation,
 					  parallel::distributed::Triangulation<3> & serialTriangulation,
-					  parallel::distributed::Triangulation<3> & electrostaticsTriangulation,
+					  parallel::distributed::Triangulation<3> & electrostaticsTriangulationRho,
+					  parallel::distributed::Triangulation<3> & electrostaticsTriangulationDisp,
 					  const bool generateElectrostaticsTria)
   {
     if(!dftParameters::meshFileName.empty())
@@ -589,8 +624,10 @@ namespace dftfe {
 
 	if(generateElectrostaticsTria)
 	  {
-	    generateCoarseMesh(electrostaticsTriangulation);
-	    AssertThrow(parallelTriangulation.n_global_active_cells()==electrostaticsTriangulation.n_global_active_cells(),ExcMessage("Number of coarse mesh cells are different in electrostatics triangulations."));
+	    generateCoarseMesh(electrostaticsTriangulationRho);
+	    generateCoarseMesh(electrostaticsTriangulationDisp);
+	    AssertThrow(parallelTriangulation.n_global_active_cells()==electrostaticsTriangulationRho.n_global_active_cells(),ExcMessage("Number of coarse mesh cells are different in electrostatics triangulations having rho field."));
+	    AssertThrow(parallelTriangulation.n_global_active_cells()==electrostaticsTriangulationDisp.n_global_active_cells(),ExcMessage("Number of coarse mesh cells are different in electrostatics triangulations disp field."));
 	  }
 
 
@@ -606,7 +643,8 @@ namespace dftfe {
 	    std::vector<unsigned int> locallyOwnedCellsRefineFlags;
 	    std::map<dealii::CellId,unsigned int> cellIdToCellRefineFlagMapLocal;
 	    refinementAlgorithmA(parallelTriangulation,
-				 electrostaticsTriangulation,
+				 electrostaticsTriangulationRho,
+				 electrostaticsTriangulationDisp,
 				 generateElectrostaticsTria,
 				 locallyOwnedCellsRefineFlags,
 				 cellIdToCellRefineFlagMapLocal);
@@ -633,7 +671,10 @@ namespace dftfe {
 
 		    parallelTriangulation.execute_coarsening_and_refinement();
 		    if(generateElectrostaticsTria)
-		      electrostaticsTriangulation.execute_coarsening_and_refinement();
+		      {
+			electrostaticsTriangulationRho.execute_coarsening_and_refinement();
+			electrostaticsTriangulationDisp.execute_coarsening_and_refinement();
+		      }
 
 		    numLevels++;
 		  }
@@ -648,7 +689,7 @@ namespace dftfe {
 	//compute some adaptive mesh metrics
 	//
 	double minElemLength = dftParameters::meshSizeOuterDomain;
-	typename parallel::distributed::Triangulation<3>::active_cell_iterator cell, endc;
+	typename parallel::distributed::Triangulation<3>::active_cell_iterator cell, endc, cellDisp;
 	cell = parallelTriangulation.begin_active();
 	endc = parallelTriangulation.end();
 	unsigned int numLocallyOwnedCells=0;
@@ -691,36 +732,52 @@ namespace dftfe {
 	  {
 	    numLocallyOwnedCells = 0;
 	    double minElemLengthElectroTria = dftParameters::meshSizeOuterDomain;
+	    double minElemLengthDisp = dftParameters::meshSizeOuterDomain;
 
-	    cell = electrostaticsTriangulation.begin_active();
-	    endc = electrostaticsTriangulation.end();
+	    cell = electrostaticsTriangulationRho.begin_active();
+	    endc = electrostaticsTriangulationRho.end();
+	    cellDisp = electrostaticsTriangulationDisp.begin_active();
 	    for( ; cell != endc; ++cell)
 	      {
 		if(cell->is_locally_owned())
 		  {
 		    numLocallyOwnedCells++;
 		    if(cell->minimum_vertex_distance() < minElemLengthElectroTria) minElemLengthElectroTria = cell->minimum_vertex_distance();
+		    if(cellDisp->minimum_vertex_distance() < minElemLengthDisp) minElemLengthDisp = cellDisp->minimum_vertex_distance();
 		  }
 	      }
 
 	    minElemLengthElectroTria = Utilities::MPI::min(minElemLengthElectroTria, mpi_communicator);
+	    minElemLengthDisp = Utilities::MPI::min(minElemLengthDisp, mpi_communicator);
 
 	    //
 	    //print out adaptive electrostatics mesh metrics 
 	    //
 	    if (dftParameters::verbosity>=4)
 	      {
-		pcout<< "Electrostatics Triangulation generation summary: "<<std::endl<<" num elements: "<<electrostaticsTriangulation.n_global_active_cells()<<", num refinement levels: "<<numLevels<<", min element length: "<<minElemLengthElectroTria<<std::endl;		  
+		pcout<< "Electrostatics Triangulation generation summary: "<<std::endl<<" num elements: "<<electrostaticsTriangulationRho.n_global_active_cells()<<", num refinement levels: "<<numLevels<<", min element length: "<<minElemLengthElectroTria<<std::endl;	
+
+		pcout<< "Electrostatics Triangulation generation summary: "<<std::endl<<" num elements: "<<electrostaticsTriangulationDisp.n_global_active_cells()<<", num refinement levels: "<<numLevels<<", min element length: "<<minElemLengthDisp<<std::endl;
+	  
 	      }
 
 
-	    internal::checkTriangulationEqualityAcrossProcessorPools(electrostaticsTriangulation,
+	    internal::checkTriangulationEqualityAcrossProcessorPools(electrostaticsTriangulationRho,
 								     numLocallyOwnedCells,
 								     interpoolcomm);
 
-	    internal::checkTriangulationEqualityAcrossProcessorPools(electrostaticsTriangulation,
+	    internal::checkTriangulationEqualityAcrossProcessorPools(electrostaticsTriangulationRho,
 								     numLocallyOwnedCells,
 								     interBandGroupComm);
+
+	    internal::checkTriangulationEqualityAcrossProcessorPools(electrostaticsTriangulationDisp,
+								     numLocallyOwnedCells,
+								     interpoolcomm);
+
+	    internal::checkTriangulationEqualityAcrossProcessorPools(electrostaticsTriangulationDisp,
+								     numLocallyOwnedCells,
+								     interBandGroupComm);
+
 
 	  }
 

@@ -164,16 +164,23 @@ namespace dftfe  {
      * @brief returns constant reference to triangulation to compute electrostatics
      *
      */
-    parallel::distributed::Triangulation<3> & getElectrostaticsMesh();
+    parallel::distributed::Triangulation<3> & getElectrostaticsMeshRho();
 
-    
 
     /**
-     * @brief resets the vertices of parallel mesh moved to umoved. This is required before
-     * any mesh refinemen/coarsening operations are performed.
+     * @brief returns constant reference to triangulation to compute electrostatics
      *
      */
-    void resetParallelMeshMovedToUnmoved(parallel::distributed::Triangulation<3> & parallelTriangulationMoved);
+    parallel::distributed::Triangulation<3> & getElectrostaticsMeshDisp();
+
+      
+
+    /**
+     * @brief resets the vertices of meshB moved to vertices of meshA. 
+     *
+     */
+    void resetMesh(parallel::distributed::Triangulation<3> & parallelTriangulationA,
+		   parallel::distributed::Triangulation<3> & parallelTriangulationB);
 
     /**
      * @brief serialize the triangulations and the associated solution vectors
@@ -243,7 +250,8 @@ namespace dftfe  {
      */
     void generateMesh(parallel::distributed::Triangulation<3>& parallelTriangulation, 
 		      parallel::distributed::Triangulation<3>& serialTriangulation,
-		      parallel::distributed::Triangulation<3>& electrostaticsTriangulation,
+		      parallel::distributed::Triangulation<3>& electrostaticsTriangulationRho,
+		      parallel::distributed::Triangulation<3>& electrostaticsTriangulationDisp,
 		      const bool generateElectrostaticsTria);
 
     /**
@@ -251,7 +259,8 @@ namespace dftfe  {
      *
      */
     void generateMesh(parallel::distributed::Triangulation<3>& parallelTriangulation,
-		      parallel::distributed::Triangulation<3>& electrostaticsTriangulation,
+		      parallel::distributed::Triangulation<3>& electrostaticsTriangulationRho,
+		      parallel::distributed::Triangulation<3>& electrostaticsTriangulationDisp,
 		      const bool generateElectrostaticsTria);
 
     /**
@@ -266,7 +275,8 @@ namespace dftfe  {
      *
      */
     void refinementAlgorithmA(parallel::distributed::Triangulation<3>& parallelTriangulation,
-			      parallel::distributed::Triangulation<3>& electrostaticsTriangulation,
+			      parallel::distributed::Triangulation<3>& electrostaticsTriangulationRho,
+			       parallel::distributed::Triangulation<3>& electrostaticsTriangulationDisp,
 			      const bool generateElectrostaticsTria,
 			      std::vector<unsigned int> & locallyOwnedCellsRefineFlags,
 			      std::map<dealii::CellId,unsigned int> & cellIdToCellRefineFlagMapLocal);
@@ -296,7 +306,8 @@ namespace dftfe  {
     parallel::distributed::Triangulation<3> d_parallelTriangulationUnmoved;
     parallel::distributed::Triangulation<3> d_parallelTriangulationUnmovedPrevious;
     parallel::distributed::Triangulation<3> d_parallelTriangulationMoved;
-    parallel::distributed::Triangulation<3> d_triangulationElectrostatics;
+    parallel::distributed::Triangulation<3> d_triangulationElectrostaticsRho;
+    parallel::distributed::Triangulation<3> d_triangulationElectrostaticsDisp;
     parallel::distributed::Triangulation<3> d_serialTriangulationUnmoved;
     parallel::distributed::Triangulation<3> d_serialTriangulationUnmovedPrevious;
     
