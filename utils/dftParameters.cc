@@ -412,7 +412,7 @@ namespace dftParameters
 
 	    prm.declare_entry("ADAPTIVE FILTER STATES", "0",
 			      Patterns::Integer(0),
-			      "[Advanced] Number of lowest Kohn-Sham eigenstates which are filtered with half the Chebyshev polynomial degree specified by CHEBYSHEV POLYNOMIAL DEGREE. This value is usually chosen to be the sum of the number of core eigenstates for each atom type multiplied by number of atoms of that type. This setting is recommended for medium-large systems (greater than 2000 electrons). Default value is 0 i.e., all states are filtered with the same Chebyshev polynomial degree.");
+			      "[Advanced] Number of lowest Kohn-Sham eigenstates which are filtered with Chebyshev polynomial degree linearly varying from 50 percent (starting from the lowest) to 80 percent of the value specified by CHEBYSHEV POLYNOMIAL DEGREE. This imposes a step function filtering polynomial order on the ADAPTIVE FILTER STATES as filtering is done with blocks of size WFC BLOCK SIZE. This setting is recommended for large systems (greater than 5000 electrons). Default value is 0 i.e., all states are filtered with the same Chebyshev polynomial degree.");
 	}
 	prm.leave_subsection ();
     }
