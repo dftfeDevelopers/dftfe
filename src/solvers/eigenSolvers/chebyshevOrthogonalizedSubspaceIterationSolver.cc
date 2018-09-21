@@ -229,7 +229,8 @@ namespace dftfe{
 						        upperBoundUnwantedSpectrum,
 						        d_lowerBoundWantedSpectrum,
 							dftParameters::useMixedPrecCheby && useMixedPrec?
-							true:false);
+	    						true:false);
+	    }
 	    else
 	       linearAlgebraOperations::chebyshevFilter(operatorMatrix,
 						     eigenVectorsFlattenedArrayBlock,
