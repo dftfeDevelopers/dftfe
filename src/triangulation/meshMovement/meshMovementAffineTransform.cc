@@ -47,7 +47,8 @@ std::pair<bool,double> meshMovementAffineTransform::transform(const Tensor<2,3,d
 
 std::pair<bool,double> meshMovementAffineTransform::moveMesh(const std::vector<Point<C_DIM> > & controlPointLocations,
                                                              const std::vector<Tensor<1,C_DIM,double> > & controlPointDisplacements,
-                                                             const double controllingParameter)
+                                                             const double controllingParameter,
+							     const bool moveSubdivided)
 {
    AssertThrow(false,dftUtils::ExcNotImplementedYet());
 }

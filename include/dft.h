@@ -278,7 +278,8 @@ namespace dftfe {
        *@brief  moves the triangulation vertices using Gaussians such that the all atoms are on triangulation vertices
        */
       void moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
-			   bool reuseFlag = false);
+			   bool reuseFlag = false,
+			   bool moveSubdivided = false);
 
       /**
        * Initializes the guess of electron-density and single-atom wavefunctions on the mesh,

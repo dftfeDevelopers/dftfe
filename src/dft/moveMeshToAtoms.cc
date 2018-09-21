@@ -18,7 +18,8 @@
 
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
-					bool reuseClosestTriaVertices)
+					bool reuseClosestTriaVertices,
+					bool moveSubdivided)
 {
 
   meshMovementGaussianClass gaussianMove(mpi_communicator);
@@ -80,8 +81,9 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
 
   const double gaussianConstant=0.5;
   const std::pair<bool,double> meshQualityMetrics=gaussianMove.moveMesh(closestTriaVertexToAtomsLocation,
-		                                                  dispClosestTriaVerticesToAtoms,
-			                                          gaussianConstant);
+									dispClosestTriaVerticesToAtoms,
+									gaussianConstant,
+									moveSubdivided);
 
   AssertThrow(!meshQualityMetrics.first,ExcMessage("Negative jacobian created after moving closest nodes to atoms. Suggestion: increase refinement near atoms"));
 
