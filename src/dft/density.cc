@@ -231,17 +231,26 @@ void dftClass<FEOrder>::compute_rhoOut()
 			  for(unsigned int iEigenVec=0; iEigenVec<currentBlockSize; ++iEigenVec)
 			    {
 
-			      const double partialOccupancy=dftUtils::getPartialOccupancy
+			      double partialOccupancy=dftUtils::getPartialOccupancy
 							    (eigenValues[kPoint][ivec+iEigenVec],
 							     fermiEnergy,
 							     C_kb,
 							     dftParameters::TVal);
 
-			      const double partialOccupancy2=dftUtils::getPartialOccupancy
+			      double partialOccupancy2=dftUtils::getPartialOccupancy
 							    (eigenValues[kPoint][ivec+iEigenVec+dftParameters::spinPolarized*numEigenVectors],
 							     fermiEnergy,
 							     C_kb,
 							     dftParameters::TVal);
+			      if(dftParameters::constraintMagnetization)
+				{
+				 partialOccupancy = 1.0 , partialOccupancy2 = 1.0 ;
+				 if (eigenValues[kPoint][ivec+iEigenVec+dftParameters::spinPolarized*numEigenVectors] > fermiEnergyDown)
+					partialOccupancy2 = 0.0 ;
+				 if (eigenValues[kPoint][ivec+iEigenVec] > fermiEnergyUp)
+					partialOccupancy = 0.0 ;					
+
+				}
 
 			      for(unsigned int q=0; q<numQuadPoints; ++q)
 				{
@@ -412,6 +421,18 @@ void dftClass<FEOrder>::compute_rhoOut()
 	  gradRhoInValsSpinPolarized.pop_front();
 	  gradRhoOutValsSpinPolarized.pop_front();
       }
+
+      if (dftParameters::mixingMethod=="BROYDEN")
+	{
+	 dFBroyden.pop_front();
+         uBroyden.pop_front();
+	 if(dftParameters::xc_id == 4)//GGA
+         {
+	  graddFBroyden.pop_front();
+	  gradUBroyden.pop_front();
+         }
+       }
+
     }
 
 }

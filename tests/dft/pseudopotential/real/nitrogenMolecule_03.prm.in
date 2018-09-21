@@ -33,8 +33,8 @@ subsection DFT functional parameters
 end
 
 subsection SCF parameters
-  set ANDERSON SCHEME MIXING HISTORY   = 70
-  set ANDERSON SCHEME MIXING PARAMETER = 0.5
+  set MIXING HISTORY   = 70
+  set MIXING PARAMETER = 0.5
   set MAXIMUM ITERATIONS               = 40
   set TEMPERATURE                      = 500
   set TOLERANCE                        = 5e-6
@@ -44,6 +44,7 @@ subsection SCF parameters
       set ORTHOGONALIZATION TYPE=PGS
       set CHEBYSHEV POLYNOMIAL DEGREE = 30
       set CHEBYSHEV FILTER TOLERANCE=2e-3
-      set USE MIXED PREC PGS=true
+      set USE MIXED PREC PGS SR=true
+      set USE MIXED PREC PGS O=true
   end
 end

@@ -28,7 +28,7 @@ namespace dftfe{
   /**
    * @brief Concrete class implementing Chebyshev filtered orthogonalized subspace
    * iteration solver.
-   * @author Phani Motamarri 
+   * @author Phani Motamarri
    */
 
   class chebyshevOrthogonalizedSubspaceIterationSolver : public eigenSolverClass {
@@ -59,7 +59,8 @@ namespace dftfe{
 					    const unsigned int totalNumberWaveFunctions,
 					    std::vector<double> & eigenValues,
 					    std::vector<double> & residuals,
-					    const MPI_Comm &interBandGroupComm);
+					    const MPI_Comm &interBandGroupComm,
+					    const bool useMixedPrec);
 
     /**
      * @brief Solve a generalized eigen problem.

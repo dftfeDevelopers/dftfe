@@ -315,6 +315,26 @@ namespace dftfe {
 	  }
       }
 
+    if (dftParameters::constraintMagnetization)
+     {
+       numElectronsUp = std::ceil(static_cast<double>(numElectrons)/2.0);
+       numElectronsDown = numElectrons - numElectronsUp;
+      //
+      int netMagnetization = std::round(2.0 * static_cast<double>(numElectrons) * dftParameters::start_magnetization ) ;
+      //
+      while ( (numElectronsUp-numElectronsDown) < std::abs(netMagnetization))
+	 {
+	  numElectronsDown -=1 ;
+	  numElectronsUp +=1 ;
+	}
+      //
+      if(dftParameters::verbosity >= 1)
+	  {
+	    pcout <<" Number of spin up electrons "<<numElectronsUp<<std::endl;
+	    pcout <<" Number of spin down electrons "<<numElectronsDown<<std::endl;
+	  }
+     }
+
     //estimate total number of wave functions from atomic orbital filling
     if (dftParameters::startingWFCType=="ATOMIC")
       determineOrbitalFilling();
@@ -719,7 +739,7 @@ namespace dftfe {
     double norm = 1.0;
     //CAUTION: Choosing a looser tolerance might lead to failed tests
     const double adaptiveChebysevFilterPassesTol = dftParameters::chebyshevTolerance;
-
+    const double mixedPrecStoppingNorm=dftParameters::mixedPrecStoppingTol;
 
     pcout<<std::endl;
     if (dftParameters::verbosity==0)
@@ -752,14 +772,23 @@ namespace dftfe {
 	      {
 		if (dftParameters::spinPolarized==1)
 		  {
-		    norm = sqrt(mixing_anderson_spinPolarized());
+		     if (dftParameters::mixingMethod=="ANDERSON" )
+		        norm = sqrt(mixing_anderson_spinPolarized());
+		     if (dftParameters::mixingMethod=="BROYDEN" )
+		        norm = sqrt(mixing_broyden_spinPolarized());
 		  }
 		else
-		  norm = sqrt(mixing_anderson());
+		  {
+		    if (dftParameters::mixingMethod=="ANDERSON")
+		        norm = sqrt(mixing_anderson());
+		    if (dftParameters::mixingMethod=="BROYDEN")
+		        norm = sqrt(mixing_broyden());
+		  }
 
 		if (dftParameters::verbosity>=1)
-		  pcout<<"Anderson mixing, L2 norm of electron-density difference: "<< norm<< std::endl;
+		  pcout<<"L2 norm of electron-density difference: "<< norm<< std::endl;
 	      }
+
 
 	    d_phiTotRhoIn = d_phiTotRhoOut;
 	  }
@@ -863,7 +892,8 @@ namespace dftfe {
 						  kohnShamDFTEigenOperator,
 						  subspaceIterationSolver,
 						  residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
-						  true);
+						  true,
+						  norm<mixedPrecStoppingNorm?false:true);
 		      }
 		  }
 	      }
@@ -875,8 +905,11 @@ namespace dftfe {
 	    //
 	    //fermi energy
 	    //
-	    compute_fermienergy(eigenValues,
-		                numElectrons);
+	    if (dftParameters::constraintMagnetization)
+	           compute_fermienergy_constraintMagnetization(eigenValues) ;
+	    else
+	           compute_fermienergy(eigenValues,
+		                    numElectrons);
 
 	    //maximum of the residual norm of the state closest to and below the Fermi level among all k points,
 	    //and also the maximum between the two spins
@@ -938,7 +971,8 @@ namespace dftfe {
 						  kohnShamDFTEigenOperator,
 						  subspaceIterationSolver,
 						  residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
-						  true);
+						  true,
+						  norm<mixedPrecStoppingNorm?false:true);
 
 		      }
 		  }
@@ -947,9 +981,13 @@ namespace dftfe {
 		  for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
 		    for (unsigned int i = 0; i<numEigenValuesRR; ++i)
 		      eigenValuesSpins[s][kPoint][i]=eigenValuesRRSplit[kPoint][numEigenValuesRR*s+i];
-
-	        compute_fermienergy(eigenValues,
+		//
+		if (dftParameters::constraintMagnetization)
+	           compute_fermienergy_constraintMagnetization(eigenValues) ;
+		else
+	            compute_fermienergy(eigenValues,
 		                    numElectrons);
+		//
 		maxRes =std::max(computeMaximumHighestOccupiedStateResidualNorm
 				 (residualNormWaveFunctionsAllkPointsSpins[0],
 				  eigenValuesSpins[0],
@@ -1013,7 +1051,8 @@ namespace dftfe {
 					      kohnShamDFTEigenOperator,
 					      subspaceIterationSolver,
 					      residualNormWaveFunctionsAllkPoints[kPoint],
-					      true);
+					      true,
+					      norm<mixedPrecStoppingNorm?false:true);
 
 		  }
 	      }
@@ -1021,8 +1060,11 @@ namespace dftfe {
 	    //
 	    //fermi energy
 	    //
-	    compute_fermienergy(eigenValues,
-		                numElectrons);
+	   if (dftParameters::constraintMagnetization)
+	           compute_fermienergy_constraintMagnetization(eigenValues) ;
+	   else
+	            compute_fermienergy(eigenValues,
+		                    numElectrons);
 
 	    //
 	    //maximum of the residual norm of the state closest to and below the Fermi level among all k points
@@ -1063,11 +1105,17 @@ namespace dftfe {
 					      kohnShamDFTEigenOperator,
 					      subspaceIterationSolver,
 					      residualNormWaveFunctionsAllkPoints[kPoint],
-					      true);
+					      true,
+					      norm<mixedPrecStoppingNorm?false:true);
 		  }
 		count++;
-	        compute_fermienergy(eigenValues,
+		//
+	        if (dftParameters::constraintMagnetization)
+	           compute_fermienergy_constraintMagnetization(eigenValues) ;
+		else
+	            compute_fermienergy(eigenValues,
 		                    numElectrons);
+		//
 		maxRes = computeMaximumHighestOccupiedStateResidualNorm
 		  (residualNormWaveFunctionsAllkPoints,
 		   eigenValuesRRSplit,
@@ -1163,8 +1211,10 @@ namespace dftfe {
 						    quadrature,
 						    eigenValues,
 						    d_kPointWeights,
-						    fermiEnergy,
-						    funcX,
+					            fermiEnergy,
+					            fermiEnergyUp,
+					            fermiEnergyDown,
+					            funcX,
 						    funcC,
 						    d_phiTotRhoIn,
 						    d_phiTotRhoOut,
@@ -1257,6 +1307,7 @@ namespace dftfe {
 					      kohnShamDFTEigenOperator,
 					      subspaceIterationSolver,
 					      residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
+					      false,
 					      false);
 		  }
 	      }
@@ -1287,6 +1338,7 @@ namespace dftfe {
 					  kohnShamDFTEigenOperator,
 					  subspaceIterationSolver,
 					  residualNormWaveFunctionsAllkPoints[kPoint],
+					  false,
 					  false);
 
 	      }
@@ -1352,6 +1404,8 @@ namespace dftfe {
 					    eigenValues,
 					    d_kPointWeights,
 					    fermiEnergy,
+					    fermiEnergyUp,
+					    fermiEnergyDown,
 					    funcX,
 					    funcC,
 					    d_phiTotRhoIn,
@@ -1644,4 +1698,5 @@ namespace dftfe {
   template class dftClass<11>;
   template class dftClass<12>;
 }
+
 

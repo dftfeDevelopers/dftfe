@@ -81,7 +81,8 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 						  kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
 						  chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver,
 						  std::vector<double>                            & residualNormWaveFunctions,
-						  const bool isSpectrumSplit)
+						  const bool isSpectrumSplit,
+						  const bool useMixedPrec)
 {
   computing_timer.enter_section("Chebyshev solve");
 
@@ -114,7 +115,8 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 				numEigenValues,
   				eigenValuesTemp,
 				residualNormWaveFunctions,
-				interBandGroupComm);
+				interBandGroupComm,
+				useMixedPrec);
 
   //
   //scale the eigenVectors with M^{-1/2} to represent the wavefunctions in the usual FE basis
