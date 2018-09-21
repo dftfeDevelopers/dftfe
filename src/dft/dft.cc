@@ -1515,7 +1515,9 @@ namespace dftfe {
 				     d_vselfBinsManager,
 				     matrix_free_data,
 				     phiTotDofHandlerIndex,
+				     phiExtDofHandlerIndex,
 				     d_phiTotRhoOut,
+				     d_phiExt,
 				     *rhoOutValues,
 				     d_noConstraints,
 				     d_vselfBinsManager);
@@ -1542,7 +1544,9 @@ namespace dftfe {
 				d_vselfBinsManager,
 				matrix_free_data,
 				phiTotDofHandlerIndex,
+				phiExtDofHandlerIndex,
 				d_phiTotRhoOut,
+				d_phiExt,
 				*rhoOutValues,
 				d_noConstraints,
 				d_vselfBinsManager);

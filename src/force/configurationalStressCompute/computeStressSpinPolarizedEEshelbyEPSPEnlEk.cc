@@ -28,9 +28,12 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk
 			      const vectorType & phiExt,
 			      const vselfBinsManager<FEOrder> & vselfBinsManagerEigen,
 			      const MatrixFree<3,double> & matrixFreeDataElectro,
-			      const unsigned int phiTotDofHandlerIndexElectro,
-			      const vectorType & phiTotRhoOutElectro,
-			      const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro)
+		              const unsigned int phiTotDofHandlerIndexElectro,
+		              const unsigned int phiExtDofHandlerIndexElectro,
+		              const vectorType & phiTotRhoOutElectro,
+		              const vectorType & phiExtElectro,
+			      const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
+			      const vselfBinsManager<FEOrder> & vselfBinsManagerElectro)
 {
   std::vector<std::vector<vectorType>> eigenVectors((1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size());
   for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size(); ++kPoint)
@@ -88,9 +91,7 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk
   FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> phiTotInEval(matrixFreeData,
 	                                                            phiTotDofHandlerIndex,
 								    0);
-  FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> phiExtEval(matrixFreeData,
-	                                                          phiExtDofHandlerIndex,
-								  0);
+
   QGauss<C_DIM>  quadrature(C_num1DQuad<FEOrder>());
   FEValues<C_DIM> feVselfValues (matrixFreeData.get_dof_handler(phiExtDofHandlerIndex).get_fe(),
 	                         quadrature,
@@ -183,10 +184,6 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk
 	phiTotInEval.read_dof_values_plain(phiTotRhoIn);//read without taking constraints into account
 	phiTotInEval.evaluate(true,false);
     }
-
-    phiExtEval.reinit(cell);
-    phiExtEval.read_dof_values_plain(phiExt);
-    phiExtEval.evaluate(true,true);
 
     std::fill(rhoQuads.begin(),rhoQuads.end(),make_vectorized_array(0.0));
     std::fill(gradRhoSpin0Quads.begin(),gradRhoSpin0Quads.end(),zeroTensor3);
@@ -458,14 +455,14 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk
 				 matrixFreeData,
 				 cell,
 				 rhoQuads,
-				 vselfBinsManagerEigen);
+				 vselfBinsManagerEigen,
+				 false);
     }//is pseudopotential check
 
     Tensor<2,C_DIM,VectorizedArray<double> > EQuadSum=zeroTensor4;
     Tensor<2,C_DIM,VectorizedArray<double> > EKPointsQuadSum=zeroTensor4;
     for (unsigned int q=0; q<numQuadPoints; ++q)
     {
-       VectorizedArray<double> phiExt_q =phiExtEval.get_value(q)*phiExtFactor;
 
        Tensor<2,C_DIM,VectorizedArray<double> > E=eshelbyTensorSP::getELocXcPspEshelbyTensor
 				      (rhoQuads[q],
@@ -474,8 +471,7 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk
 				       excQuads[q],
 				       derExchCorrEnergyWithGradRhoOutSpin0Quads[q],
 				       derExchCorrEnergyWithGradRhoOutSpin1Quads[q],
-				       pseudoVLocQuads[q],
-				        phiExt_q);
+				       pseudoVLocQuads[q]);
 
        Tensor<2,C_DIM,VectorizedArray<double> > EKPoints=eshelbyTensorSP::getELocWfcEshelbyTensorPeriodicKPoints
 							 (psiSpin0Quads.begin()+q*numEigenVectors*numKPoints,
@@ -570,8 +566,11 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk
   ////Add electrostatic configurational force contribution////////////////
   computeStressEEshelbyEElectroPhiTot
 		    (matrixFreeDataElectro,
-		     phiTotDofHandlerIndexElectro,
+	             phiTotDofHandlerIndexElectro,
+	             phiExtDofHandlerIndexElectro,
 		     phiTotRhoOutElectro,
-		     rhoOutValuesElectro);
+		     phiExtElectro,
+		     rhoOutValuesElectro,
+		     vselfBinsManagerElectro);
 }
 #endif

@@ -25,7 +25,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
         pcout<< std::endl<<"-----------------Re computing electrostatics on h globally refined mesh--------------"<<std::endl;
 
 
-   
+
 
    //
    //access quadrature object
@@ -34,7 +34,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
    const unsigned int n_q_points = quadrature.size();
 
 
-  
+
 
    //
    //project and create a nodal field of the same mesh from the quadrature data (L2 projection from quad points to nodes)
@@ -87,7 +87,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
    //initialize the new dofHandler to refine and do a solution transfer
    //
    dealii::parallel::distributed::Triangulation<3> & electrostaticsTria = d_mesh.getElectrostaticsMesh();
-   
+
    dealii::DoFHandler<3> dofHandlerHRefined;
    dofHandlerHRefined.initialize(electrostaticsTria,dealii::FE_Q<3>(dealii::QGaussLobatto<1>(FEOrder+1)));
    dofHandlerHRefined.distribute_dofs(dofHandlerHRefined.get_fe());
@@ -453,7 +453,9 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
 				     d_vselfBinsManager,
 				     matrixFreeDataHRefined,
 				     phiTotDofHandlerIndexHRefined,
+				     phiExtDofHandlerIndexHRefined,
 				     phiTotRhoOutHRefined,
+				     phiExtHRefined,
 				     rhoOutHRefinedQuadValues,
 				     onlyHangingNodeConstraints,
 				     vselfBinsManagerHRefined);
@@ -478,7 +480,9 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
 				d_vselfBinsManager,
 				matrixFreeDataHRefined,
 				phiTotDofHandlerIndexHRefined,
+				phiExtDofHandlerIndexHRefined,
 				phiTotRhoOutHRefined,
+				phiExtHRefined,
 				rhoOutHRefinedQuadValues,
 				onlyHangingNodeConstraints,
 			        vselfBinsManagerHRefined);

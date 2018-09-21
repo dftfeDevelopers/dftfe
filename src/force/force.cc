@@ -183,6 +183,10 @@ void forceClass<FEOrder>::initMoved
        constraintsVectorMatrixFree.push_back(&d_constraintsNoneForceElectro);
      }
      d_forceDofHandlerIndexElectro = dofHandlerVectorMatrixFree.size()-1;
+
+     locateAtomCoreNodesForce(d_dofHandlerForceElectro,
+	                      d_locally_owned_dofsForceElectro,
+			      d_atomsForceDofsElectro);
   }
   else
   {
@@ -202,23 +206,15 @@ void forceClass<FEOrder>::initMoved
 //initialize pseudopotential data for force computation
 //
 template<unsigned int FEOrder>
-void forceClass<FEOrder>::initPseudoData(){
+void forceClass<FEOrder>::initPseudoData()
+{
 
   if(dftParameters::isPseudopotential)
     {
-      initLocalPseudoPotentialForce();
-      //if (dftParameters::pseudoProjector==2)
-      //{
         computeElementalNonLocalPseudoOVDataForce();
-	//}
-	//else
-	//{
-        //computeElementalNonLocalPseudoDataForce();
-	//}
+	initLocalPseudoPotentialForce();
     }
 }
-
-
 
 //compute forces on atoms corresponding to a Gaussian generator
 template<unsigned int FEOrder>
@@ -234,7 +230,9 @@ void forceClass<FEOrder>::computeAtomsForces
 		 const vselfBinsManager<FEOrder> & vselfBinsManagerEigen,
 	         const MatrixFree<3,double> & matrixFreeDataElectro,
 		 const unsigned int phiTotDofHandlerIndexElectro,
+		 const unsigned int phiExtDofHandlerIndexElectro,
 		 const vectorType & phiTotRhoOutElectro,
+		 const vectorType & phiExtElectro,
 		 const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
 	         const ConstraintMatrix  & noConstraintsElectro,
 		 const vselfBinsManager<FEOrder> & vselfBinsManagerElectro)
@@ -271,7 +269,9 @@ void forceClass<FEOrder>::computeAtomsForces
 		                        vselfBinsManagerEigen,
 	                                matrixFreeDataElectro,
 		                        phiTotDofHandlerIndexElectro,
+		                        phiExtDofHandlerIndexElectro,
 		                        phiTotRhoOutElectro,
+		                        phiExtElectro,
 		                        rhoOutValuesElectro,
 		                        vselfBinsManagerElectro);
 
@@ -337,7 +337,9 @@ void forceClass<FEOrder>::computeConfigurationalForceTotalLinFE
 				     const vselfBinsManager<FEOrder> & vselfBinsManagerEigen,
 				     const MatrixFree<3,double> & matrixFreeDataElectro,
 				     const unsigned int phiTotDofHandlerIndexElectro,
+				     const unsigned int phiExtDofHandlerIndexElectro,
 				     const vectorType & phiTotRhoOutElectro,
+				     const vectorType & phiExtElectro,
 				     const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
 				     const vselfBinsManager<FEOrder> & vselfBinsManagerElectro)
 {
@@ -359,8 +361,11 @@ void forceClass<FEOrder>::computeConfigurationalForceTotalLinFE
 		                        vselfBinsManagerEigen,
 	                                matrixFreeDataElectro,
 		                        phiTotDofHandlerIndexElectro,
+		                        phiExtDofHandlerIndexElectro,
 		                        phiTotRhoOutElectro,
-		                        rhoOutValuesElectro);
+		                        phiExtElectro,
+		                        rhoOutValuesElectro,
+					vselfBinsManagerElectro);
   else
      computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 		                        (matrixFreeData,
@@ -373,8 +378,11 @@ void forceClass<FEOrder>::computeConfigurationalForceTotalLinFE
 		                        vselfBinsManagerEigen,
 	                                matrixFreeDataElectro,
 		                        phiTotDofHandlerIndexElectro,
+		                        phiExtDofHandlerIndexElectro,
 		                        phiTotRhoOutElectro,
-		                        rhoOutValuesElectro);
+		                        phiExtElectro,
+		                        rhoOutValuesElectro,
+					vselfBinsManagerElectro);
 
   //configurational force contribution from nuclear self energy. This is handled separately as it involves
   // a surface integral over the vself ball surface

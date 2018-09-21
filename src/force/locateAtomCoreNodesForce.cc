@@ -59,7 +59,7 @@ void forceClass<FEOrder>::locateAtomCoreNodesForce
 		{
  	           //std::cout << "Atom nodal coordinates (" << feNodeGlobalCoord << " ,"<< atomCoord <<") associated with force node id " << forceNodeId << " , force component: "<< idim << " in processor " << this_mpi_process << " and added \n";
 
-                 d_atomsForceDofs[std::pair<unsigned int,unsigned int>(*it,idim)]=forceNodeId;
+                  atomsForceDofs[std::pair<unsigned int,unsigned int>(*it,idim)]=forceNodeId;
 	       }
 	      }
 	      isFound=true;
@@ -73,6 +73,6 @@ void forceClass<FEOrder>::locateAtomCoreNodesForce
   }//atomsToLocate loop
   MPI_Barrier(mpi_communicator);
 
-  const unsigned int totalForceNodesFound = Utilities::MPI::sum(d_atomsForceDofs.size(), mpi_communicator);
+  const unsigned int totalForceNodesFound = Utilities::MPI::sum(atomsForceDofs.size(), mpi_communicator);
   AssertThrow(totalForceNodesFound==numAtoms*3,ExcMessage("Atleast one atom doesn't lie on force dof handler dof"));
 }

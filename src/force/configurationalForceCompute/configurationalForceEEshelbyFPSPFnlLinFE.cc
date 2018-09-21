@@ -65,9 +65,12 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 			      const vectorType & phiExt,
 			      const vselfBinsManager<FEOrder> & vselfBinsManagerEigen,
 			      const MatrixFree<3,double> & matrixFreeDataElectro,
-			      const unsigned int phiTotDofHandlerIndexElectro,
-			      const vectorType & phiTotRhoOutElectro,
-			      const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro)
+		              const unsigned int phiTotDofHandlerIndexElectro,
+		              const unsigned int phiExtDofHandlerIndexElectro,
+		              const vectorType & phiTotRhoOutElectro,
+		              const vectorType & phiExtElectro,
+			      const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
+			      const vselfBinsManager<FEOrder> & vselfBinsManagerElectro)
 {
   std::vector<std::vector<vectorType>> eigenVectors((1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size());
   for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size(); ++kPoint)
@@ -94,7 +97,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
   }
 
   const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
-  std::map<unsigned int, std::vector<double> > forceContributionFPSPLocalGammaAtoms;
+  std::map<unsigned int, std::vector<double> > forceContributionFPSPLocalGammaAtomsPSP;
   std::map<unsigned int, std::vector<double> > forceContributionFnlGammaAtoms;
 
   const bool isPseudopotential = dftParameters::isPseudopotential;
@@ -140,11 +143,6 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
   FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> phiTotOutEval(matrixFreeData,
 	                                                            phiTotDofHandlerIndex,
 								    0);
-
-  FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> phiExtEval(matrixFreeData,
-	                                                          phiExtDofHandlerIndex,
-								  0);
-
 
   QGauss<C_DIM>  quadrature(C_num1DQuad<FEOrder>());
   FEValues<C_DIM> feVselfValues (matrixFreeData.get_dof_handler(phiExtDofHandlerIndex).get_fe(),
@@ -220,6 +218,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 
     if (dftParameters::nonSelfConsistentForce)
     {
+
 	phiTotOutEval.reinit(cell);
 	phiTotOutEval.read_dof_values_plain(phiTotRhoOut);//read without taking constraints into account
 	phiTotOutEval.evaluate(true,false);
@@ -228,10 +227,6 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 	phiTotInEval.read_dof_values_plain(phiTotRhoIn);//read without taking constraints into account
 	phiTotInEval.evaluate(true,false);
     }
-
-    phiExtEval.reinit(cell);
-    phiExtEval.read_dof_values_plain(phiExt);
-    phiExtEval.evaluate(true,true);
 
     std::fill(rhoQuads.begin(),rhoQuads.end(),make_vectorized_array(0.0));
     std::fill(gradRhoQuads.begin(),gradRhoQuads.end(),zeroTensor3);
@@ -459,6 +454,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
        {
           subCellPtr= matrixFreeData.get_cell_iterator(cell,iSubCell);
           dealii::CellId subCellId=subCellPtr->id();
+
 	  for (unsigned int q=0; q<numQuadPoints; ++q)
 	  {
 	     pseudoVLocQuads[q][iSubCell]=dftPtr->pseudoValues[subCellId][q];
@@ -502,13 +498,14 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 	  }//q loop
        }//subcell loop
        //compute FPSPLocalGammaAtoms  (contibution due to Gamma(Rj))
-       FPSPLocalGammaAtomsElementalContribution(forceContributionFPSPLocalGammaAtoms,
+       FPSPLocalGammaAtomsElementalContribution(forceContributionFPSPLocalGammaAtomsPSP,
 		                                feVselfValues,
 			                        forceEval,
 						matrixFreeData,
 					        cell,
 					        rhoQuads,
-						vselfBinsManagerEigen);
+						vselfBinsManagerEigen,
+						false);
 #ifdef USE_COMPLEX
 
        FnlGammaAtomsElementalContributionPeriodic
@@ -536,15 +533,12 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 
     for (unsigned int q=0; q<numQuadPoints; ++q)
     {
-       VectorizedArray<double> phiExt_q =phiExtEval.get_value(q)*phiExtFactor;
-
        Tensor<2,C_DIM,VectorizedArray<double> > E=eshelbyTensor::getELocXcPspEshelbyTensor
 						  (rhoQuads[q],
 						  gradRhoQuads[q],
 						  excQuads[q],
 						  derExchCorrEnergyWithGradRhoOutQuads[q],
-						  pseudoVLocQuads[q],
-						  phiExt_q);
+						  pseudoVLocQuads[q]);
 
 #ifdef USE_COMPLEX
        Tensor<2,C_DIM,VectorizedArray<double> > EKPoints=eshelbyTensor::getELocWfcEshelbyTensorPeriodicKPoints
@@ -566,11 +560,9 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
        Tensor<1,C_DIM,VectorizedArray<double> > F=zeroTensor3;
        if(isPseudopotential)
        {
-           Tensor<1,C_DIM,VectorizedArray<double> > gradPhiExt_q =phiExtEval.get_gradient(q);
-	   F+=eshelbyTensor::getFPSPLocal(rhoQuads[q],
-		                          gradPseudoVLocQuads[q],
-			                  gradPhiExt_q);
-           if (!dftParameters::useHigherQuadNLP)
+	   F+=rhoQuads[q]*gradPseudoVLocQuads[q];
+
+	   if (!dftParameters::useHigherQuadNLP)
 	   {
 #ifdef USE_COMPLEX
 	       Tensor<1,C_DIM,VectorizedArray<double> > FKPoints
@@ -717,7 +709,8 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
   // add global FPSPLocal contribution due to Gamma(Rj) to the configurational force vector
   if(isPseudopotential)
   {
-     distributeForceContributionFPSPLocalGammaAtoms(forceContributionFPSPLocalGammaAtoms,
+
+     distributeForceContributionFPSPLocalGammaAtoms(forceContributionFPSPLocalGammaAtomsPSP,
 	                                            d_atomsForceDofs,
 						    d_constraintsNoneForce,
 						    d_configForceVectorLinFE);
@@ -729,16 +722,22 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
   computeConfigurationalForceEEshelbyEElectroPhiTot
 			(matrixFreeDataElectro,
 			 phiTotDofHandlerIndexElectro,
+			 phiExtDofHandlerIndexElectro,
 			 phiTotRhoOutElectro,
-			 rhoOutValuesElectro);
+			 phiExtElectro,
+			 rhoOutValuesElectro,
+			 vselfBinsManagerElectro);
 }
 
 template<unsigned int FEOrder>
 void forceClass<FEOrder>::computeConfigurationalForceEEshelbyEElectroPhiTot
 			(const MatrixFree<3,double> & matrixFreeDataElectro,
-			 const unsigned int phiTotDofHandlerIndexElectro,
-			 const vectorType & phiTotRhoOutElectro,
-			 const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro)
+		         const unsigned int phiTotDofHandlerIndexElectro,
+		         const unsigned int phiExtDofHandlerIndexElectro,
+		         const vectorType & phiTotRhoOutElectro,
+		         const vectorType & phiExtElectro,
+			 const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
+			 const vselfBinsManager<FEOrder> & vselfBinsManagerElectro)
 {
   FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  forceEvalElectro(matrixFreeDataElectro,
 	                                                        d_forceDofHandlerIndexElectro,
@@ -748,10 +747,23 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyEElectroPhiTot
 	                                                          phiTotDofHandlerIndexElectro,
 								  0);
 
+  FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> phiExtEvalElectro(matrixFreeDataElectro,
+	                                                          phiExtDofHandlerIndexElectro,
+								  0);
+
+  std::map<unsigned int, std::vector<double> > forceContributionFPSPLocalGammaAtomsVself;
+
   const unsigned int numQuadPoints=forceEvalElectro.n_q_points;
   DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
 
+  QGauss<C_DIM>  quadrature(C_num1DQuad<FEOrder>());
+  FEValues<C_DIM> feVselfValuesElectro (matrixFreeDataElectro.
+	                                get_dof_handler(phiExtDofHandlerIndexElectro).get_fe(),
+	                                quadrature,
+				        update_gradients | update_quadrature_points);
+
   std::vector<VectorizedArray<double> > rhoQuadsElectro(numQuadPoints,make_vectorized_array(0.0));
+
   for (unsigned int cell=0; cell<matrixFreeDataElectro.n_macro_cells(); ++cell)
   {
     forceEvalElectro.reinit(cell);
@@ -759,6 +771,13 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyEElectroPhiTot
     phiTotEvalElectro.reinit(cell);
     phiTotEvalElectro.read_dof_values_plain(phiTotRhoOutElectro);
     phiTotEvalElectro.evaluate(true,true);
+
+    phiExtEvalElectro.reinit(cell);
+    phiExtEvalElectro.read_dof_values_plain(phiExtElectro);
+    if (dftParameters::isPseudopotential)
+      phiExtEvalElectro.evaluate(true,true);
+    else
+      phiExtEvalElectro.evaluate(true,false);
 
     std::fill(rhoQuadsElectro.begin(),rhoQuadsElectro.end(),make_vectorized_array(0.0));
 
@@ -772,19 +791,61 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyEElectroPhiTot
          rhoQuadsElectro[q][iSubCell]=rhoOutValuesElectro.find(subCellId)->second[q];
     }
 
+    if(dftParameters::isPseudopotential)
+    {
+
+       FPSPLocalGammaAtomsElementalContribution(forceContributionFPSPLocalGammaAtomsVself,
+						feVselfValuesElectro,
+						forceEvalElectro,
+						matrixFreeDataElectro,
+						cell,
+						rhoQuadsElectro,
+						vselfBinsManagerElectro,
+						true);
+    }
+
     for (unsigned int q=0; q<numQuadPoints; ++q)
     {
        VectorizedArray<double> phiTotElectro_q =phiTotEvalElectro.get_value(q);
+       VectorizedArray<double> phiExtElectro_q =dftParameters::isPseudopotential?
+	                                        phiExtEvalElectro.get_value(q)
+						:make_vectorized_array(0.0);
        Tensor<1,C_DIM,VectorizedArray<double> > gradPhiTotElectro_q =phiTotEvalElectro.get_gradient(q);
 
        Tensor<2,C_DIM,VectorizedArray<double> > E=eshelbyTensor::getEElectroEshelbyTensor
 	                                                     (phiTotElectro_q,
 			                                      gradPhiTotElectro_q,
+							      phiExtElectro_q,
 						              rhoQuadsElectro[q]);
+
+       if(dftParameters::isPseudopotential)
+       {
+	   Tensor<1,C_DIM,VectorizedArray<double> > gradPhiExt_q =phiExtEvalElectro.get_gradient(q);
+	   Tensor<1,C_DIM,VectorizedArray<double> > F=-rhoQuadsElectro[q]*gradPhiExt_q;
+	   forceEvalElectro.submit_value(F,q);
+       }
+
        forceEvalElectro.submit_gradient(E,q);
     }
 
-    forceEvalElectro.integrate (false,true);
+    if(dftParameters::isPseudopotential)
+      forceEvalElectro.integrate (true,true);
+    else
+      forceEvalElectro.integrate (false,true);
+
     forceEvalElectro.distribute_local_to_global(d_configForceVectorLinFEElectro);
+
+  }
+
+  // add global FPSPLocal contribution due to Gamma(Rj) to the configurational force vector
+  if(dftParameters::isPseudopotential)
+  {
+
+
+     distributeForceContributionFPSPLocalGammaAtoms(forceContributionFPSPLocalGammaAtomsVself,
+	                                            d_atomsForceDofsElectro,
+						    d_constraintsNoneForceElectro,
+						    d_configForceVectorLinFEElectro);
+
   }
 }

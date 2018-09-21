@@ -82,8 +82,7 @@ namespace dftfe {
 			      const VectorizedArray<double> & exc,
 			      const Tensor<1,C_DIM,VectorizedArray<double> > & derExcGradRhoSpin0,
 			      const Tensor<1,C_DIM,VectorizedArray<double> > & derExcGradRhoSpin1,
-			      const VectorizedArray<double> & pseudoVLoc,
-			      const VectorizedArray<double> & phiExt);
+			      const VectorizedArray<double> & pseudoVLoc);
 
       ///Local pseudotential force contribution
       Tensor<1,C_DIM,VectorizedArray<double> >  getFPSPLocal(const VectorizedArray<double> rho,
