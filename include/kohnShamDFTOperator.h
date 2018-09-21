@@ -78,6 +78,7 @@ namespace dftfe{
 	      const unsigned int numberComponents,
 	      const bool scaleFlag,
 	      const double scalar,
+	      const bool useSinglePrec,
 	      dealii::parallel::distributed::Vector<dataTypes::number> & dst);
 
 
@@ -273,6 +274,7 @@ namespace dftfe{
        * of complex data type
        */
       std::vector<std::vector<dataTypes::number> > d_cellHamiltonianMatrix;
+      std::vector<std::vector<dataTypes::numberLowPrec> > d_cellHamiltonianMatrixLowPrec;
 
       /**
        * @brief implementation of matrix-vector product using cell-level stiffness matrices.
@@ -299,6 +301,12 @@ namespace dftfe{
        * @param dst Vector containing matrix times given multi-vectors product
        */
       void computeLocalHamiltonianTimesXBatchGEMM
+	           (const dealii::parallel::distributed::Vector<dataTypes::number> & src,
+		    const unsigned int numberWaveFunctions,
+		    dealii::parallel::distributed::Vector<dataTypes::number> & dst) const;
+
+
+       void  computeLocalHamiltonianTimesXBatchGEMMSinglePrec
 	           (const dealii::parallel::distributed::Vector<dataTypes::number> & src,
 		    const unsigned int numberWaveFunctions,
 		    dealii::parallel::distributed::Vector<dataTypes::number> & dst) const;
@@ -332,6 +340,12 @@ namespace dftfe{
       void computeNonLocalHamiltonianTimesXBatchGEMM(const dealii::parallel::distributed::Vector<dataTypes::number> & src,
 						     const unsigned int numberWaveFunctions,
 						     dealii::parallel::distributed::Vector<dataTypes::number> & dst) const;
+
+
+      void computeNonLocalHamiltonianTimesXBatchGEMMSinglePrec
+            (const dealii::parallel::distributed::Vector<dataTypes::number> & src,
+	     const unsigned int numberWaveFunctions,
+	     dealii::parallel::distributed::Vector<dataTypes::number>  & dst) const;
 #endif
 
       ///pointer to dft class

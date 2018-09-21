@@ -72,7 +72,9 @@ namespace dftParameters
   bool useHigherQuadNLP=true;
   bool useMixedPrecPGS_SR=false;
   bool useMixedPrecPGS_O=false;
+  bool useMixedPrecCheby=false;
   unsigned int numAdaptiveFilterStates=0;
+  double mixedPrecStoppingTol=1e-4;
 
   void declare_parameters(ParameterHandler &prm)
   {
@@ -430,6 +432,14 @@ namespace dftParameters
 			      Patterns::Bool(),
 			      "[Advanced] Use mixed precision arithmetic in overlap matrix computation step of PGS orthogonalization, if ORTHOGONALIZATION TYPE is set to PGS. Currently this optimization is only enabled for the real executable. Default setting is false.");
 
+	    prm.declare_entry("USE MIXED PREC CHEBY", "false",
+			      Patterns::Bool(),
+			      "[Advanced] Use mixed precision arithmetic in Chebyshev filtering. Currently this optimization is only enabled for the real executable and batch gemm. Default setting is false.");
+
+	    prm.declare_entry("MIXED PREC STOPPING TOL", "1e-4",
+			      Patterns::Double(0),
+			      "[Advanced] Scf tolerance below which mixed precision cannot be used. Default value is 1e-4.");
+
 	    prm.declare_entry("ADAPTIVE FILTER STATES", "0",
 			      Patterns::Integer(0),
 			      "[Advanced] Number of lowest Kohn-Sham eigenstates which are filtered with half the Chebyshev polynomial degree specified by CHEBYSHEV POLYNOMIAL DEGREE. This value is usually chosen to be the sum of the number of core eigenstates for each atom type multiplied by number of atoms of that type. This setting is recommended for medium-large systems (greater than 2000 electrons). Default value is 0 i.e., all states are filtered with the same Chebyshev polynomial degree.");
@@ -584,6 +594,8 @@ namespace dftParameters
 	   dftParameters::scalapackParalProcs= prm.get_integer("SCALAPACKPROCS");
 	   dftParameters::useMixedPrecPGS_SR= prm.get_bool("USE MIXED PREC PGS SR");
 	   dftParameters::useMixedPrecPGS_O= prm.get_bool("USE MIXED PREC PGS O");
+	   dftParameters::useMixedPrecCheby= prm.get_bool("USE MIXED PREC CHEBY");
+	   dftParameters::mixedPrecStoppingTol= prm.get_double("MIXED PREC STOPPING TOL");
 	   dftParameters::numAdaptiveFilterStates= prm.get_integer("ADAPTIVE FILTER STATES");
 	}
 	prm.leave_subsection ();

@@ -753,7 +753,7 @@ namespace dftfe {
     double norm = 1.0;
     //CAUTION: Choosing a looser tolerance might lead to failed tests
     const double adaptiveChebysevFilterPassesTol = dftParameters::chebyshevTolerance;
-
+    const double mixedPrecStoppingNorm=dftParameters::mixedPrecStoppingTol;
 
     pcout<<std::endl;
     if (dftParameters::verbosity==0)
@@ -906,7 +906,8 @@ namespace dftfe {
 						  kohnShamDFTEigenOperator,
 						  subspaceIterationSolver,
 						  residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
-						  true);
+						  true,
+						  norm<mixedPrecStoppingNorm?false:true);
 		      }
 		  }
 	      }
@@ -984,7 +985,8 @@ namespace dftfe {
 						  kohnShamDFTEigenOperator,
 						  subspaceIterationSolver,
 						  residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
-						  true);
+						  true,
+						  norm<mixedPrecStoppingNorm?false:true);
 
 		      }
 		  }
@@ -1063,7 +1065,8 @@ namespace dftfe {
 					      kohnShamDFTEigenOperator,
 					      subspaceIterationSolver,
 					      residualNormWaveFunctionsAllkPoints[kPoint],
-					      true);
+					      true,
+					      norm<mixedPrecStoppingNorm?false:true);
 
 		  }
 	      }
@@ -1116,7 +1119,8 @@ namespace dftfe {
 					      kohnShamDFTEigenOperator,
 					      subspaceIterationSolver,
 					      residualNormWaveFunctionsAllkPoints[kPoint],
-					      true);
+					      true,
+					      norm<mixedPrecStoppingNorm?false:true);
 		  }
 		count++;
 		//
@@ -1322,6 +1326,7 @@ namespace dftfe {
 					      kohnShamDFTEigenOperator,
 					      subspaceIterationSolver,
 					      residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
+					      false,
 					      false);
 		  }
 	      }
@@ -1352,6 +1357,7 @@ namespace dftfe {
 					  kohnShamDFTEigenOperator,
 					  subspaceIterationSolver,
 					  residualNormWaveFunctionsAllkPoints[kPoint],
+					  false,
 					  false);
 
 	      }
