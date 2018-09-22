@@ -63,14 +63,14 @@ namespace dftfe
 	  pcout << "Energy computations (Hartree)\n";
 	  pcout << "-------------------------------------------------------------------------------\n";
 	  sprintf(bufferEnergy, "%-52s:%25.16e\n", "Band energy", bandEnergy); pcout << bufferEnergy;
-	  if (verbosity==2)
+	  if (verbosity>=2)
 	    {
 	      sprintf(bufferEnergy, "%-52s:%25.16e\n", "Kinetic energy", totalkineticEnergy); pcout << bufferEnergy;
 	    }
 
 	  sprintf(bufferEnergy, "%-52s:%25.16e\n", "Exchange energy", totalexchangeEnergy); pcout << bufferEnergy;
 	  sprintf(bufferEnergy, "%-52s:%25.16e\n", "Correlation energy", totalcorrelationEnergy); pcout << bufferEnergy;
-	  if (verbosity==2)
+	  if (verbosity>=2)
 	    {
 	      sprintf(bufferEnergy, "%-52s:%25.16e\n", "Electrostatic energy", totalElectrostaticEnergy); pcout << bufferEnergy;
 	    }
