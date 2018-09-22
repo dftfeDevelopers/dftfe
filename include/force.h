@@ -116,7 +116,9 @@ namespace dftfe {
 		 const vselfBinsManager<FEOrder>   & vselfBinsManagerEigen,
 	         const MatrixFree<3,double> & matrixFreeDataElectro,
 		 const unsigned int phiTotDofHandlerIndexElectro,
+		 const unsigned int phiExtDofHandlerIndexElectro,
 		 const vectorType & phiTotRhoOutElectro,
+		 const vectorType & phiExtElectro,
 		 const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
 	         const ConstraintMatrix  & noConstraintsElectro,
 		 const vselfBinsManager<FEOrder>   & vselfBinsManagerElectro);
@@ -156,7 +158,9 @@ namespace dftfe {
 		 const vselfBinsManager<FEOrder>   & vselfBinsManagerEigen,
 	         const MatrixFree<3,double> & matrixFreeDataElectro,
 		 const unsigned int phiTotDofHandlerIndexElectro,
+		 const unsigned int phiExtDofHandlerIndexElectro,
 		 const vectorType & phiTotRhoOutElectro,
+		 const vectorType & phiExtElectro,
 		 const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
 	         const ConstraintMatrix  & noConstraintsElectro,
 		 const vselfBinsManager<FEOrder>   & vselfBinsManagerElectro);
@@ -220,9 +224,12 @@ namespace dftfe {
 			      const vectorType & phiExt,
 			      const vselfBinsManager<FEOrder>   & vselfBinsManagerEigen,
 			      const MatrixFree<3,double> & matrixFreeDataElectro,
-			      const unsigned int phiTotDofHandlerIndexElectro,
-			      const vectorType & phiTotRhoOutElectro,
-			      const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro);
+		              const unsigned int phiTotDofHandlerIndexElectro,
+		              const unsigned int phiExtDofHandlerIndexElectro,
+		              const vectorType & phiTotRhoOutElectro,
+		              const vectorType & phiExtElectro,
+			      const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
+			      const vselfBinsManager<FEOrder> & vselfBinsManagerElectro);
 
       void computeConfigurationalForceSpinPolarizedEEshelbyTensorFPSPFnlLinFE
 			      (const MatrixFree<3,double> & matrixFreeData,
@@ -234,15 +241,21 @@ namespace dftfe {
 			      const vectorType & phiExt,
 			      const vselfBinsManager<FEOrder>   & vselfBinsManagerEigen,
 			      const MatrixFree<3,double> & matrixFreeDataElectro,
-			      const unsigned int phiTotDofHandlerIndexElectro,
-			      const vectorType & phiTotRhoOutElectro,
-			      const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro);
+		              const unsigned int phiTotDofHandlerIndexElectro,
+		              const unsigned int phiExtDofHandlerIndexElectro,
+		              const vectorType & phiTotRhoOutElectro,
+		              const vectorType & phiExtElectro,
+			      const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
+			      const vselfBinsManager<FEOrder> & vselfBinsManagerElectro);
 
       void computeConfigurationalForceEEshelbyEElectroPhiTot
 	                    (const MatrixFree<3,double> & matrixFreeDataElectro,
-			      const unsigned int phiTotDofHandlerIndexElectro,
-			      const vectorType & phiTotRhoOutElectro,
-			      const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro);
+		             const unsigned int phiTotDofHandlerIndexElectro,
+		             const unsigned int phiExtDofHandlerIndexElectro,
+		             const vectorType & phiTotRhoOutElectro,
+		             const vectorType & phiExtElectro,
+			     const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
+			     const vselfBinsManager<FEOrder> & vselfBinsManagerElectro);
 
       void computeConfigurationalForcePhiExtLinFE();
 
@@ -261,19 +274,22 @@ namespace dftfe {
 				     const vectorType & phiExt,
 				     const vselfBinsManager<FEOrder>   & vselfBinsManagerEigen,
 				     const MatrixFree<3,double> & matrixFreeDataElectro,
-				     const unsigned int phiTotDofHandlerIndexElectro,
-				     const vectorType & phiTotRhoOutElectro,
+		                     const unsigned int phiTotDofHandlerIndexElectro,
+		                     const unsigned int phiExtDofHandlerIndexElectro,
+		                     const vectorType & phiTotRhoOutElectro,
+		                     const vectorType & phiExtElectro,
 				     const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
 				     const vselfBinsManager<FEOrder>   & vselfBinsManagerElectro);
 
       void FPSPLocalGammaAtomsElementalContribution
-	     (std::map<unsigned int, std::vector<double> > & forceContributionFPSPLocalGammaAtoms,
+             (std::map<unsigned int, std::vector<double> > & forceContributionFPSPLocalGammaAtoms,
 	      FEValues<C_DIM> & feValues,
 	      FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
 	      const MatrixFree<3,double> & matrixFreeData,
 	      const unsigned int cell,
 	      const std::vector<VectorizedArray<double> > & rhoQuads,
-	      const vselfBinsManager<FEOrder>   & vselfBinsManagerEigen);
+	      const vselfBinsManager<FEOrder> & vselfBinsManager,
+	      const bool isVselfContributionOnly);
 
       void distributeForceContributionFPSPLocalGammaAtoms
 	      (const std::map<unsigned int,std::vector<double> > & forceContributionFPSPLocalGammaAtoms,
@@ -342,15 +358,21 @@ namespace dftfe {
 			      const vectorType & phiExt,
 			      const vselfBinsManager<FEOrder>   & vselfBinsManagerEigen,
 			      const MatrixFree<3,double> & matrixFreeDataElectro,
-			      const unsigned int phiTotDofHandlerIndexElectro,
-			      const vectorType & phiTotRhoOutElectro,
-			      const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro);
+		              const unsigned int phiTotDofHandlerIndexElectro,
+		              const unsigned int phiExtDofHandlerIndexElectro,
+		              const vectorType & phiTotRhoOutElectro,
+		              const vectorType & phiExtElectro,
+			      const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
+			      const vselfBinsManager<FEOrder> & vselfBinsManagerElectro);
 
       void computeStressEEshelbyEElectroPhiTot
 	                    (const MatrixFree<3,double> & matrixFreeDataElectro,
-			      const unsigned int phiTotDofHandlerIndexElectro,
-			      const vectorType & phiTotRhoOutElectro,
-			      const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro);
+		             const unsigned int phiTotDofHandlerIndexElectro,
+	                     const unsigned int phiExtDofHandlerIndexElectro,
+		             const vectorType & phiTotRhoOutElectro,
+		             const vectorType & phiExtElectro,
+			     const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
+			     const vselfBinsManager<FEOrder> & vselfBinsManagerElectro);
 
       void computeStressSpinPolarizedEEshelbyEPSPEnlEk(const MatrixFree<3,double> & matrixFreeData,
 			      const unsigned int eigenDofHandlerIndex,
@@ -362,8 +384,11 @@ namespace dftfe {
 			      const vselfBinsManager<FEOrder>   & vselfBinsManagerEigen,
 			      const MatrixFree<3,double> & matrixFreeDataElectro,
 			      const unsigned int phiTotDofHandlerIndexElectro,
+			      const unsigned int phiExtDofHandlerIndexElectro,
 			      const vectorType & phiTotRhoOutElectro,
-			      const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro);
+			      const vectorType & phiExtElectro,
+			      const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
+			      const vselfBinsManager<FEOrder> & vselfBinsManagerElectro);
 
       void addEPSPStressContribution
 	      (FEValues<C_DIM> & feValues,
@@ -371,7 +396,8 @@ namespace dftfe {
 	      const MatrixFree<3,double> & matrixFreeData,
 	      const unsigned int cell,
 	      const std::vector<VectorizedArray<double> > & rhoQuads,
-	      const vselfBinsManager<FEOrder>   & vselfBinsManagerEigen);
+	      const vselfBinsManager<FEOrder>   & vselfBinsManagerEigen,
+	      const bool isVselfContributionOnly);
 #endif
 
       void initLocalPseudoPotentialForce();

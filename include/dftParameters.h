@@ -84,6 +84,8 @@ namespace dftfe {
       extern bool useMixedPrecPGS_SR;
       extern bool useMixedPrecPGS_O;
       extern unsigned int numAdaptiveFilterStates;
+      extern bool useMixedPrecCheby;
+      extern double mixedPrecStoppingTol;
 
       /**
        * Declare parameters.

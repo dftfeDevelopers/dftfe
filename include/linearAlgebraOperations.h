@@ -30,6 +30,7 @@ namespace dftfe
       void dgemv_(char* TRANS, const int* M, const int* N, double* alpha, double* A, const int* LDA, double* X, const int* INCX, double* beta, double* C, const int* INCY);
       void dgesv_( int* n, int* nrhs, double* a, int* lda, int* ipiv, double* b, int* ldb, int* info );
       void dscal_(const unsigned int *n, const double *alpha, double *x, const unsigned int *inc);
+      void sscal_(const unsigned int *n, const float *alpha, float *x, const unsigned int *inc);
       void zscal_(const unsigned int *n, std::complex<double> *alpha, std::complex<double> *x, const unsigned int *inc);
       void zdscal_(const unsigned int *n, const double *alpha, std::complex<double> *x, const unsigned int *inc);
       void daxpy_(const unsigned int *n, const double *alpha, double *x, const unsigned int *incx, double *y, const unsigned int *incy);
@@ -37,14 +38,18 @@ namespace dftfe
       void sgemm_(const char* transA, const char* transB, const unsigned int *m, const unsigned int *n, const unsigned int *k, const float *alpha, const float *A, const unsigned int *lda, const float *B, const unsigned int *ldb, const float *beta, float *C, const unsigned int *ldc);
 #ifdef WITH_MKL
       void dgemm_batch_(const char* transa_array,const char* transb_array,const unsigned int* m_array,const unsigned int* n_array,const unsigned int* k_array,const double* alpha_array,double** a_array,const unsigned int * lda_array,const double ** b_array,const unsigned int * ldb_array,const double * beta_array,double** c_array,const unsigned int * ldc_array,const unsigned int* group_count,const unsigned int* group_size);
+      void sgemm_batch_(const char* transa_array,const char* transb_array,const unsigned int* m_array,const unsigned int* n_array,const unsigned int* k_array,const float* alpha_array,float** a_array,const unsigned int * lda_array,const float ** b_array,const unsigned int * ldb_array,const float * beta_array,float** c_array,const unsigned int * ldc_array,const unsigned int* group_count,const unsigned int* group_size);
 #endif
       void dsyevd_(const char* jobz, const char* uplo, const unsigned int* n, double* A, const unsigned int *lda, double* w, double* work, const unsigned int* lwork, int* iwork, const unsigned int* liwork, int* info);
       void dsyevr_(const char *jobz, const char *range, const char *uplo,const unsigned int *n, double *A,const unsigned int *lda,const double *vl, const double *vu, const unsigned int *il, const unsigned int *iu, const double *abstol, const unsigned int *m, double *w, double *Z, const unsigned int * ldz, unsigned int * isuppz, double *work, const int *lwork, int * iwork, const int *liwork, int *info);
       void dsyrk_(const char *uplo, const char *trans, const unsigned int *n, const unsigned int *k, const double *alpha, const double *A, const unsigned int *lda, const double *beta, double *C, const unsigned int * ldc);
       void dcopy_(const unsigned int *n,const double *x,const unsigned int *incx,double *y,const unsigned int *incy);
+      void scopy_(const unsigned int *n,const float *x,const unsigned int *incx,float *y,const unsigned int *incy);
       void zgemm_(const char* transA, const char* transB, const unsigned int *m, const unsigned int *n, const unsigned int *k, const std::complex<double> *alpha, const std::complex<double> *A, const unsigned int *lda, const std::complex<double> *B, const unsigned int *ldb, const std::complex<double> *beta, std::complex<double> *C, const unsigned int *ldc);
+      void cgemm_(const char* transA, const char* transB, const unsigned int *m, const unsigned int *n, const unsigned int *k, const std::complex<float> *alpha, const std::complex<float> *A, const unsigned int *lda, const std::complex<float> *B, const unsigned int *ldb, const std::complex<float> *beta, std::complex<float> *C, const unsigned int *ldc);
 #ifdef WITH_MKL
       void zgemm_batch_(const char* transa_array,const char* transb_array,const unsigned int* m_array,const unsigned int* n_array,const unsigned int* k_array,const std::complex<double>* alpha_array,std::complex<double>** a_array,const unsigned int * lda_array,const std::complex<double> ** b_array,const unsigned int * ldb_array,const std::complex<double> * beta_array,std::complex<double>** c_array,const unsigned int * ldc_array,const unsigned int* group_count,const unsigned int* group_size);
+      void cgemm_batch_(const char* transa_array,const char* transb_array,const unsigned int* m_array,const unsigned int* n_array,const unsigned int* k_array,const std::complex<float>* alpha_array,std::complex<float>** a_array,const unsigned int * lda_array,const std::complex<float> ** b_array,const unsigned int * ldb_array,const std::complex<float> * beta_array,std::complex<float>** c_array,const unsigned int * ldc_array,const unsigned int* group_count,const unsigned int* group_size);
 #endif
       void zheevd_(const char *jobz, const char *uplo, const unsigned int *n,std::complex<double> *A,const unsigned int *lda,double *w,std::complex<double> *work, const unsigned int *lwork,double *rwork, const unsigned int *lrwork, int *iwork,const unsigned int *liwork, int *info);
       void zheevr_(const char *jobz, const char *range, const char *uplo,const unsigned int *n,std::complex<double> *A,const unsigned int *lda,const double *vl, const double *vu, const unsigned int *il, const unsigned int *iu, const double *abstol, const unsigned int *m, double *w, std::complex<double> *Z, const unsigned int * ldz, unsigned int * isuppz, std::complex<double> *work, const int *lwork, double *rwork, const int *lrwork, int * iwork, const int *liwork, int *info);
@@ -131,7 +136,8 @@ namespace dftfe
 			 const unsigned int m,
 			 const double a,
 			 const double b,
-			 const double a0);
+			 const double a0,
+			 const bool useMixedPrec);
 
 
 
@@ -197,6 +203,7 @@ namespace dftfe
 					              const MPI_Comm &interBandGroupComm,
 			                              const unsigned int numberCoreVectors,
 						      const MPI_Comm &mpiComm,
+						      const bool useMixedPrec,
 			                              std::vector<T> & nonCoreVectorsArray);
 
     /** @brief Compute Rayleigh-Ritz projection

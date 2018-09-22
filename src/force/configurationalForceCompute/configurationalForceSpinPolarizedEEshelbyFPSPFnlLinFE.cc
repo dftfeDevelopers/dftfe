@@ -27,9 +27,12 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 			      const vectorType & phiExt,
 			      const vselfBinsManager<FEOrder> & vselfBinsManagerEigen,
 			      const MatrixFree<3,double> & matrixFreeDataElectro,
-			      const unsigned int phiTotDofHandlerIndexElectro,
-			      const vectorType & phiTotRhoOutElectro,
-			      const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro)
+		              const unsigned int phiTotDofHandlerIndexElectro,
+		              const unsigned int phiExtDofHandlerIndexElectro,
+		              const vectorType & phiTotRhoOutElectro,
+		              const vectorType & phiExtElectro,
+			      const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
+			      const vselfBinsManager<FEOrder> & vselfBinsManagerElectro)
 {
   std::vector<std::vector<vectorType>> eigenVectors((1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size());
   for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size(); ++kPoint)
@@ -56,7 +59,7 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
   }
 
   const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
-  std::map<unsigned int, std::vector<double> > forceContributionFPSPLocalGammaAtoms;
+  std::map<unsigned int, std::vector<double> > forceContributionFPSPLocalGammaAtomsPSP;
   std::map<unsigned int, std::vector<double> > forceContributionFnlGammaAtoms;
 
   const bool isPseudopotential = dftParameters::isPseudopotential;
@@ -111,9 +114,6 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
   FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> phiTotInEval(matrixFreeData,
 	                                                            phiTotDofHandlerIndex,
 								    0);
-  FEEvaluation<C_DIM,FEOrder,C_num1DQuad<FEOrder>(),1> phiExtEval(matrixFreeData,
-	                                                          phiExtDofHandlerIndex,
-								  0);
   QGauss<C_DIM>  quadrature(C_num1DQuad<FEOrder>());
   FEValues<C_DIM> feVselfValues (matrixFreeData.get_dof_handler(phiExtDofHandlerIndex).get_fe(),
 	                         quadrature,
@@ -210,10 +210,6 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 	phiTotInEval.read_dof_values_plain(phiTotRhoIn);//read without taking constraints into account
 	phiTotInEval.evaluate(true,false);
     }
-
-    phiExtEval.reinit(cell);
-    phiExtEval.read_dof_values_plain(phiExt);
-    phiExtEval.evaluate(true,true);
 
     std::fill(rhoQuads.begin(),rhoQuads.end(),make_vectorized_array(0.0));
     std::fill(gradRhoSpin0Quads.begin(),gradRhoSpin0Quads.end(),zeroTensor3);
@@ -560,13 +556,14 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 	  }//q loop
        }//subcell loop
        //compute FPSPLocalGammaAtoms  (contibution due to Gamma(Rj))
-       FPSPLocalGammaAtomsElementalContribution(forceContributionFPSPLocalGammaAtoms,
+       FPSPLocalGammaAtomsElementalContribution(forceContributionFPSPLocalGammaAtomsPSP,
 		                                feVselfValues,
 			                        forceEval,
 						matrixFreeData,
 					        cell,
 					        rhoQuads,
-						vselfBinsManagerEigen);
+						vselfBinsManagerEigen,
+						false);
 #ifdef USE_COMPLEX
 
        FnlGammaAtomsElementalContributionPeriodicSpinPolarized(forceContributionFnlGammaAtoms,
@@ -603,8 +600,6 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 
     for (unsigned int q=0; q<numQuadPoints; ++q)
     {
-       VectorizedArray<double> phiExt_q =phiExtEval.get_value(q)*phiExtFactor;
-
        Tensor<2,C_DIM,VectorizedArray<double> > E=eshelbyTensorSP::getELocXcPspEshelbyTensor
 				      (rhoQuads[q],
 				       gradRhoSpin0Quads[q],
@@ -612,8 +607,7 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 				       excQuads[q],
 				       derExchCorrEnergyWithGradRhoOutSpin0Quads[q],
 				       derExchCorrEnergyWithGradRhoOutSpin1Quads[q],
-				       pseudoVLocQuads[q],
-				       phiExt_q);
+				       pseudoVLocQuads[q]);
 #ifdef USE_COMPLEX
        Tensor<2,C_DIM,VectorizedArray<double> > EKPoints=eshelbyTensorSP::getELocWfcEshelbyTensorPeriodicKPoints
 							 (psiSpin0Quads.begin()+q*numEigenVectors*numKPoints,
@@ -638,10 +632,7 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
        Tensor<1,C_DIM,VectorizedArray<double> > F=zeroTensor3;
        if(isPseudopotential)
        {
-           Tensor<1,C_DIM,VectorizedArray<double> > gradPhiExt_q =phiExtEval.get_gradient(q);
-	   F+=eshelbyTensorSP::getFPSPLocal(rhoQuads[q],
-		                            gradPseudoVLocQuads[q],
-			                    gradPhiExt_q);
+	   F+=rhoQuads[q]*gradPseudoVLocQuads[q];
 
            if (!dftParameters::useHigherQuadNLP)
 	   {
@@ -815,7 +806,7 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
   // add global FPSPLocal contribution due to Gamma(Rj) to the configurational force vector
   if(isPseudopotential)
   {
-     distributeForceContributionFPSPLocalGammaAtoms(forceContributionFPSPLocalGammaAtoms,
+     distributeForceContributionFPSPLocalGammaAtoms(forceContributionFPSPLocalGammaAtomsPSP,
 	                                            d_atomsForceDofs,
 						    d_constraintsNoneForce,
 						    d_configForceVectorLinFE);
@@ -826,6 +817,9 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
   computeConfigurationalForceEEshelbyEElectroPhiTot
 			(matrixFreeDataElectro,
 			 phiTotDofHandlerIndexElectro,
+			 phiExtDofHandlerIndexElectro,
 			 phiTotRhoOutElectro,
-			 rhoOutValuesElectro);
+			 phiExtElectro,
+			 rhoOutValuesElectro,
+			 vselfBinsManagerElectro);
 }

@@ -106,6 +106,7 @@ namespace dftfe{
 		    const unsigned int numberComponents,
 		    const bool scaleFlag,
 		    const double scalar,
+		    const bool useSinglePrec,
 		    dealii::parallel::distributed::Vector<dataTypes::number> & Y) = 0;
 
 

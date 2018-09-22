@@ -691,20 +691,28 @@ namespace dftfe {
       std::map<std::pair<unsigned int,unsigned int>, unsigned int> d_projectorIdsNumberingMapCurrentProcess;
 #ifdef USE_COMPLEX
       std::vector<std::vector<std::vector<std::vector<std::complex<double> > > > > d_nonLocalProjectorElementMatrices,d_nonLocalProjectorElementMatricesConjugate,d_nonLocalProjectorElementMatricesTranspose;
+
+      std::vector<std::vector<std::vector<std::vector<std::complex<float> > > > > d_nonLocalProjectorElementMatricesLowPrec,d_nonLocalProjectorElementMatricesConjugateLowPrec,d_nonLocalProjectorElementMatricesTransposeLowPrec;
+
       std::vector<dealii::parallel::distributed::Vector<std::complex<double> > > d_projectorKetTimesVectorPar;
 
       /// parallel vector used in nonLocalHamiltionian times wavefunction vector computation
       /// pre-initialization of the parallel layout is more efficient than creating the parallel
       /// layout for every nonLocalHamiltionan times wavefunction computation
       dealii::parallel::distributed::Vector<std::complex<double> >  d_projectorKetTimesVectorParFlattened;
+      dealii::parallel::distributed::Vector<std::complex<float> >  d_projectorKetTimesVectorParFlattenedLowPrec;
 #else
       std::vector<std::vector<std::vector<std::vector<double> > > > d_nonLocalProjectorElementMatrices,d_nonLocalProjectorElementMatricesConjugate,d_nonLocalProjectorElementMatricesTranspose;
+
+      std::vector<std::vector<std::vector<std::vector<float> > > > d_nonLocalProjectorElementMatricesLowPrec,d_nonLocalProjectorElementMatricesConjugateLowPrec,d_nonLocalProjectorElementMatricesTransposeLowPrec;
+
       std::vector<dealii::parallel::distributed::Vector<double> > d_projectorKetTimesVectorPar;
 
       /// parallel vector used in nonLocalHamiltionian times wavefunction vector computation
       /// pre-initialization of the parallel layout is more efficient than creating the parallel
       /// layout for every nonLocalHamiltionan times wavefunction computation
       dealii::parallel::distributed::Vector<double> d_projectorKetTimesVectorParFlattened;
+      dealii::parallel::distributed::Vector<float> d_projectorKetTimesVectorParFlattenedLowPrec;
 #endif
 
       //
@@ -780,7 +788,8 @@ namespace dftfe {
 				     kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
 				     chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver,
 				     std::vector<double> & residualNormWaveFunctions,
-				     const bool isSpectrumSplit);
+				     const bool isSpectrumSplit,
+				     const bool useMixedPrec);
 
       void computeResidualNorm(const std::vector<double> & eigenValuesTemp,
 			       kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,

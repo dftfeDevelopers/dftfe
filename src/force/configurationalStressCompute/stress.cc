@@ -30,7 +30,9 @@ void forceClass<FEOrder>::computeStress
 		 const vselfBinsManager<FEOrder> & vselfBinsManagerEigen,
 	         const MatrixFree<3,double> & matrixFreeDataElectro,
 		 const unsigned int phiTotDofHandlerIndexElectro,
+		 const unsigned int phiExtDofHandlerIndexElectro,
 		 const vectorType & phiTotRhoOutElectro,
+		 const vectorType & phiExtElectro,
 		 const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
 	         const ConstraintMatrix  & noConstraintsElectro,
 		 const vselfBinsManager<FEOrder> & vselfBinsManagerElectro)
@@ -79,8 +81,11 @@ void forceClass<FEOrder>::computeStress
 		                        vselfBinsManagerEigen,
 	                                matrixFreeDataElectro,
 		                        phiTotDofHandlerIndexElectro,
+		                        phiExtDofHandlerIndexElectro,
 		                        phiTotRhoOutElectro,
-		                        rhoOutValuesElectro);
+		                        phiExtElectro,
+		                        rhoOutValuesElectro,
+					vselfBinsManagerElectro);
   else
      computeStressEEshelbyEPSPEnlEk(matrixFreeData,
 		                        eigenDofHandlerIndex,
@@ -92,8 +97,11 @@ void forceClass<FEOrder>::computeStress
 		                        vselfBinsManagerEigen,
 	                                matrixFreeDataElectro,
 		                        phiTotDofHandlerIndexElectro,
+		                        phiExtDofHandlerIndexElectro,
 		                        phiTotRhoOutElectro,
-		                        rhoOutValuesElectro);
+		                        phiExtElectro,
+		                        rhoOutValuesElectro,
+					vselfBinsManagerElectro);
 
   //configurational stress contribution from nuclear self energy. This is handled separately as it involves
   // a surface integral over the vself ball surface

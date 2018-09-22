@@ -266,7 +266,8 @@ namespace dftfe{
 			 const unsigned int m,
 			 const double a,
 			 const double b,
-			 const double a0)
+			 const double a0,
+			 const bool useMixedPrec)
     {
       double e, c, sigma, sigma1, sigma2, gamma;
       e = (b-a)/2.0; c = (b+a)/2.0;
@@ -292,10 +293,12 @@ namespace dftfe{
       //
       bool scaleFlag = false;
       double scalar = 1.0;
+
       operatorMatrix.HX(XArray,
 			numberWaveFunctions,
 			scaleFlag,
 			scalar,
+			false,
 			YArray);
 
 
@@ -326,11 +329,21 @@ namespace dftfe{
 	  //call HX
 	  //
 	  bool scaleFlag = true;
-	  operatorMatrix.HX(YArray,
-			    numberWaveFunctions,
-			    scaleFlag,
-			    alpha1,
-			    XArray);
+
+	  if (degree<0.9*m && useMixedPrec)
+	      operatorMatrix.HX(YArray,
+				numberWaveFunctions,
+				scaleFlag,
+				alpha1,
+				true,
+				XArray);
+	  else
+	      operatorMatrix.HX(YArray,
+				numberWaveFunctions,
+				scaleFlag,
+				alpha1,
+				false,
+				XArray);
 
 	  //
 	  //XArray = YArray
@@ -659,6 +672,7 @@ namespace dftfe{
 	                    B,
 	                    scaleFlag,
 	                    scalar,
+			    false,
 	                    HXBlock);
 
 	  //compute residual norms:
@@ -1060,7 +1074,8 @@ namespace dftfe{
 				  const unsigned int,
 				  const double ,
 				  const double ,
-				  const double );
+				  const double,
+				  const bool useMixedPrec);
 
 
     template void gramSchmidtOrthogonalization(std::vector<dataTypes::number> &,
@@ -1072,6 +1087,7 @@ namespace dftfe{
 						             const MPI_Comm &,
 							     const unsigned int numberCoreVectors,
 							     const MPI_Comm &mpiComm,
+							     const bool useMixedPrec,
 			                                     std::vector<dataTypes::number> & tempNonCoreVectorsArray);
 
     template void rayleighRitz(operatorDFTClass  & operatorMatrix,

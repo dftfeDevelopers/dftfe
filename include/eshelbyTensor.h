@@ -88,6 +88,7 @@ namespace dftfe {
       Tensor<2,C_DIM,VectorizedArray<double> >  getEElectroEshelbyTensor
 	                     (const VectorizedArray<double> & phiTot,
 			      const Tensor<1,C_DIM,VectorizedArray<double> > & gradPhiTot,
+			      const VectorizedArray<double> & phiExt,
 			      const VectorizedArray<double> & rho);
 
       /// exchange-correlation and psp part of the ELoc Eshelby tensor
@@ -96,8 +97,7 @@ namespace dftfe {
 			     const Tensor<1,C_DIM,VectorizedArray<double> > & gradRho,
 			     const VectorizedArray<double> & exc,
 			     const Tensor<1,C_DIM,VectorizedArray<double> > & derExcGradRho,
-			     const VectorizedArray<double> & pseudoVLoc,
-			     const VectorizedArray<double> & phiExt);
+			     const VectorizedArray<double> & pseudoVLoc);
 
       /// Local pseudotential force contribution
       Tensor<1,C_DIM,VectorizedArray<double> >  getFPSPLocal(const VectorizedArray<double> rho,

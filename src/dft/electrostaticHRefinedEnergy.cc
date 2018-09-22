@@ -25,7 +25,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
         pcout<< std::endl<<"-----------------Re computing electrostatics on h globally refined mesh--------------"<<std::endl;
 
 
-   
+
 
    //
    //access quadrature object
@@ -34,7 +34,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
    const unsigned int n_q_points = quadrature.size();
 
 
-  
+
 
    //
    //project and create a nodal field of the same mesh from the quadrature data (L2 projection from quad points to nodes)
@@ -81,7 +81,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
    //initialize the new dofHandler to refine and do a solution transfer
    //
    dealii::parallel::distributed::Triangulation<3> & electrostaticsTriaRho = d_mesh.getElectrostaticsMeshRho();
-   
+
    dealii::DoFHandler<3> dofHandlerHRefined;
    dofHandlerHRefined.initialize(electrostaticsTriaRho,dealii::FE_Q<3>(dealii::QGaussLobatto<1>(FEOrder+1)));
    dofHandlerHRefined.distribute_dofs(dofHandlerHRefined.get_fe());
@@ -118,7 +118,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
    IndexSet ghost_indices = locallyRelevantDofs;
    ghost_indices.subtract_set(dofHandlerHRefined.locally_owned_dofs());
 
-   
+
    dealii::ConstraintMatrix onlyHangingNodeConstraints;
    onlyHangingNodeConstraints.reinit(locallyRelevantDofs);
    dealii::DoFTools::make_hanging_node_constraints(dofHandlerHRefined, onlyHangingNodeConstraints);
@@ -203,7 +203,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
    const double integralRhoValue = totalCharge(dofHandlerHRefined,
 					       rhoNodalFieldRefined,
 					       rhoOutHRefinedQuadValues);
-   
+
    //
    //compute total charge using rhoNodalRefined field
    //
@@ -271,7 +271,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
 	               true,
 		       true);
 
-  
+
    std::vector<Quadrature<1> > quadratureVector;
    quadratureVector.push_back(QGauss<1>(C_num1DQuad<FEOrder>()));
 
@@ -282,8 +282,8 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
 			         quadratureVector,
 			         additional_data);
 
-  
-  
+
+
    std::map<dealii::types::global_dof_index, double> atomHRefinedNodeIdToChargeMap;
    locateAtomCoreNodes(dofHandlerHRefined,atomHRefinedNodeIdToChargeMap);
 
@@ -456,7 +456,9 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
 				     d_vselfBinsManager,
 				     matrixFreeDataHRefined,
 				     phiTotDofHandlerIndexHRefined,
+				     phiExtDofHandlerIndexHRefined,
 				     phiTotRhoOutHRefined,
+				     phiExtHRefined,
 				     rhoOutHRefinedQuadValues,
 				     onlyHangingNodeConstraints,
 				     vselfBinsManagerHRefined);
@@ -481,7 +483,9 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
 				d_vselfBinsManager,
 				matrixFreeDataHRefined,
 				phiTotDofHandlerIndexHRefined,
+				phiExtDofHandlerIndexHRefined,
 				phiTotRhoOutHRefined,
+				phiExtHRefined,
 				rhoOutHRefinedQuadValues,
 				onlyHangingNodeConstraints,
 			        vselfBinsManagerHRefined);
