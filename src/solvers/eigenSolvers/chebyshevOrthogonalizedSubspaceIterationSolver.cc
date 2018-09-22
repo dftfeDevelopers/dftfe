@@ -217,15 +217,20 @@ namespace dftfe{
 	    //and does in-place filtering
 	    computing_timer.enter_section("Chebyshev filtering opt");
 	    if (jvec+BVec<dftParameters::numAdaptiveFilterStates)
+	    {
+	       const double chebyshevOrd=(double)chebyshevOrder;
+	       const double adaptiveOrder=0.5*chebyshevOrd
+		                          +jvec*0.3*chebyshevOrd/dftParameters::numAdaptiveFilterStates;
 	       linearAlgebraOperations::chebyshevFilter(operatorMatrix,
 						        eigenVectorsFlattenedArrayBlock,
 						        BVec,
-						        chebyshevOrder/2,
+						        std::ceil(adaptiveOrder),
 						        d_lowerBoundUnWantedSpectrum,
 						        upperBoundUnwantedSpectrum,
 						        d_lowerBoundWantedSpectrum,
 							dftParameters::useMixedPrecCheby && useMixedPrec?
-							true:false);
+	    						true:false);
+	    }
 	    else
 	       linearAlgebraOperations::chebyshevFilter(operatorMatrix,
 						     eigenVectorsFlattenedArrayBlock,
