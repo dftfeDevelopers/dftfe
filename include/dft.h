@@ -421,7 +421,7 @@ namespace dftfe {
        *
        */
       void computeElectrostaticEnergyHRefined();
-
+      void computeElectrostaticEnergyPRefined();
       /**
        *@brief Computes Fermi-energy obtained by imposing constraint on the number of electrons
        */

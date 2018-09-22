@@ -51,6 +51,7 @@ namespace dftParameters
   bool restartFromChk=false;
   bool reproducible_output=false;
   bool electrostaticsHRefinement = false;
+  bool electrostaticsPRefinement = false;
 
   std::string startingWFCType="";
   bool useBatchGEMM=false;
@@ -83,7 +84,11 @@ namespace dftParameters
 
     prm.declare_entry("H REFINED ELECTROSTATICS", "false",
 		      Patterns::Bool(),
-		      "[Advanced] Compute electrostatic energy and forces on a refined mesh after each ground-state solve.");
+		      "[Advanced] Compute electrostatic energy and forces on a h refined mesh after each ground-state solve.");
+
+    prm.declare_entry("P REFINED ELECTROSTATICS", "false",
+		      Patterns::Bool(),
+		      "[Advanced] Compute electrostatic energy and forces on a p refined mesh after each ground-state solve.");
 
     prm.declare_entry("VERBOSITY", "1",
                       Patterns::Integer(0,4),
@@ -459,6 +464,8 @@ namespace dftParameters
     dftParameters::writeWfcSolutionFields           = prm.get_bool("WRITE WFC");
     dftParameters::writeDensitySolutionFields           = prm.get_bool("WRITE DENSITY");
     dftParameters::electrostaticsHRefinement = prm.get_bool("H REFINED ELECTROSTATICS");
+    dftParameters::electrostaticsPRefinement = prm.get_bool("P REFINED ELECTROSTATICS");
+
 
     prm.enter_subsection ("Parallelization");
     {

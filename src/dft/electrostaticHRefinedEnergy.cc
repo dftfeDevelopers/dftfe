@@ -175,6 +175,14 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
    constraintsHRefined.distribute(rhoNodalFieldRefined);
    rhoNodalFieldRefined.update_ghost_values();
 
+
+   //
+   //call init for the force computation subsequently
+   //
+   forcePtr->initUnmoved(electrostaticsTriaRho,
+			 d_domainBoundingVectors,
+			 true);
+
    //
    //move the refined mesh so that it forms exact subdivison of coarse moved mesh
    //
@@ -256,9 +264,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
    const unsigned phiExtDofHandlerIndexHRefined = matrixFreeDofHandlerVectorInput.size()-1;
    matrixFreeConstraintsInputVector.push_back(&onlyHangingNodeConstraints);
 
-   forcePtr->initUnmoved(electrostaticsTriaRho,
-			 d_domainBoundingVectors,
-			 true);
+  
 
    forcePtr->initMoved(matrixFreeDofHandlerVectorInput,
 	               matrixFreeConstraintsInputVector,

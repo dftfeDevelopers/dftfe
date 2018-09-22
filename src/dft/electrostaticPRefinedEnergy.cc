@@ -21,13 +21,52 @@ template<unsigned int FEOrder>
 void dftClass<FEOrder>::computeElectrostaticEnergyPRefined()
 {
 #define FEOrder_PRefined FEOrder+2
+  
+  std::vector<std::vector<vectorType> > eigenVectors((1+dftParameters::spinPolarized)*d_kPointWeights.size());
+#ifdef USE_COMPLEX
+  for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+    {
+      eigenVectors[kPoint].resize(numEigenValues);
+
+      for(unsigned int i= 0; i < numEigenValues; ++i)
+	eigenVectors[kPoint][i].reinit(d_tempEigenVec);
+
+      vectorTools::copyFlattenedDealiiVecToSingleCompVec(d_eigenVectorsFlattened[kPoint],
+							 numEigenValues,
+							 std::make_pair(0,numEigenValues),
+							 localProc_dof_indicesReal,
+							 localProc_dof_indicesImag,
+							 eigenVectors[kPoint]);
+    }
+#else
+  for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+    {
+      eigenVectors[kPoint].resize(numEigenValues);
+
+      for(unsigned int i= 0; i < numEigenValues; ++i)
+	eigenVectors[kPoint][i].reinit(d_tempEigenVec);
+
+
+      vectorTools::copyFlattenedDealiiVecToSingleCompVec(d_eigenVectorsFlattened[kPoint],
+							 numEigenValues,
+							 std::make_pair(0,numEigenValues),
+							 eigenVectors[kPoint]);
+    }
+#endif
+
+  computing_timer.enter_section("p refinement electrostatics");
+
    if (dftParameters::verbosity>=2)
         pcout<< std::endl<<"-----------------Re computing electrostatics on p refined mesh with polynomial order: "<<FEOrder_PRefined <<"---------------"<<std::endl;
-   d_mesh.resetParallelMeshMovedToUnmoved();
-   const dealii::parallel::distributed::Triangulation<3> & tria = d_mesh.getParallelMeshMoved();
+
+   dealii::parallel::distributed::Triangulation<3> & triaMoved = d_mesh.getParallelMeshMoved();
+   dealii::parallel::distributed::Triangulation<3> & triaUnMoved = d_mesh.getParallelMeshUnmoved();
+
+   d_mesh.resetMesh(triaUnMoved,
+		    triaMoved);
 
    dealii::DoFHandler<3> dofHandlerPRefined;
-   dofHandlerPRefined.initialize(tria,dealii::FE_Q<3>(dealii::QGaussLobatto<1>(FEOrder_PRefined+1)));
+   dofHandlerPRefined.initialize(triaMoved,dealii::FE_Q<3>(dealii::QGaussLobatto<1>(FEOrder_PRefined+1)));
    dofHandlerPRefined.distribute_dofs(dofHandlerPRefined.get_fe());
 
    dealii::IndexSet locallyRelevantDofs;
@@ -76,7 +115,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyPRefined()
    dealii::DoFTools::make_periodicity_constraints<dealii::DoFHandler<3> >(periodicity_vector2, constraintsPRefined);
    constraintsPRefined.close();
 
-   moveMeshToAtoms(tria);
+   moveMeshToAtoms(triaMoved);
 
    dofHandlerPRefined.distribute_dofs (dofHandlerPRefined.get_fe());
 
@@ -240,6 +279,9 @@ void dftClass<FEOrder>::computeElectrostaticEnergyPRefined()
 		                             2,
 	                                     phiExtPRefined,
 				             onlyHangingNodeConstraints,
+					     d_imagePositions,
+					     d_imageIds,
+					     d_imageCharges,
 	                                     localVselfsPRefined);
 
    //solve the Poisson problem for total rho
@@ -263,55 +305,65 @@ void dftClass<FEOrder>::computeElectrostaticEnergyPRefined()
 			dftParameters::maxLinearSolverIterations,
 			dftParameters::verbosity);
 
-  energyCalculator energyCalcPRefined(mpi_communicator, interpoolcomm);
+   energyCalculator energyCalcPRefined(mpi_communicator, interpoolcomm, interBandGroupComm);
 
   QGauss<3>  quadratureElectronic(C_num1DQuad<FEOrder>());
 
   const double totalEnergy = dftParameters::spinPolarized==0 ?
-       energyCalcPRefined.computeEnergy(dofHandlerPRefined,
-	                         dofHandler,
-				 quadraturePRefined,
-				 quadratureElectronic,
-				 eigenValues,
-				 d_kPointWeights,
-				 fermiEnergy,
-				 funcX,
-				 funcC,
-				 d_phiTotRhoIn,
-				 phiTotRhoOutPRefined,
-				 *rhoInValues,
-				 *rhoOutValues,
-				 rhoOutPRefinedQuadValues,
-				 *gradRhoInValues,
-				 *gradRhoOutValues,
-				 localVselfsPRefined,
-				 atomPRefinedNodeIdToChargeMap,
-				 atomLocations.size(),
-				 true) :
-       energyCalcPRefined.computeEnergySpinPolarized(dofHandlerPRefined,
-	                                    dofHandler,
-					    quadraturePRefined,
-					    quadratureElectronic,
-					    eigenValues,
-					    d_kPointWeights,
-					    fermiEnergy,
-					    funcX,
-					    funcC,
-					    d_phiTotRhoIn,
-					    phiTotRhoOutPRefined,
-					    *rhoInValues,
-					    *rhoOutValues,
-					    rhoOutPRefinedQuadValues,
-					    *gradRhoInValues,
-					    *gradRhoOutValues,
-					    *rhoInValuesSpinPolarized,
-					    *rhoOutValuesSpinPolarized,
-					    *gradRhoInValuesSpinPolarized,
-					    *gradRhoOutValuesSpinPolarized,
-				            localVselfsPRefined,
-				            atomPRefinedNodeIdToChargeMap,
-					    atomLocations.size(),
-					    true);
-
+    energyCalcPRefined.computeEnergy(dofHandlerPRefined,
+				     dofHandler,
+				     quadraturePRefined,
+				     quadratureElectronic,
+				     eigenValues,
+				     d_kPointWeights,
+				     fermiEnergy,
+				     funcX,
+				     funcC,
+				     d_phiTotRhoIn,
+				     phiTotRhoOutPRefined,
+				     d_phiExt,
+				     phiExtPRefined,
+				     *rhoInValues,
+				     *rhoOutValues,
+				     rhoOutPRefinedQuadValues,
+				     *gradRhoInValues,
+				     *gradRhoOutValues,
+				     localVselfsPRefined,
+				     atomPRefinedNodeIdToChargeMap,
+				     atomLocations.size(),
+				     lowerBoundKindex,
+				     1,
+				     true) :
+    energyCalcPRefined.computeEnergySpinPolarized(dofHandlerPRefined,
+						  dofHandler,
+						  quadraturePRefined,
+						  quadratureElectronic,
+						  eigenValues,
+						  d_kPointWeights,
+						  fermiEnergy,
+						  fermiEnergyUp,
+						  fermiEnergyDown,
+						  funcX,
+						  funcC,
+						  d_phiTotRhoIn,
+						  phiTotRhoOutPRefined,
+						  d_phiExt,
+						  phiExtPRefined,
+						  *rhoInValues,
+						  *rhoOutValues,
+						  rhoOutPRefinedQuadValues,
+						  *gradRhoInValues,
+						  *gradRhoOutValues,
+						  *rhoInValuesSpinPolarized,
+						  *rhoOutValuesSpinPolarized,
+						  *gradRhoInValuesSpinPolarized,
+						  *gradRhoOutValuesSpinPolarized,
+						  localVselfsPRefined,
+						  atomPRefinedNodeIdToChargeMap,
+						  atomLocations.size(),
+						  lowerBoundKindex,
+						  1,
+						  true);
+computing_timer.exit_section("p refinement electrostatics");
 
 }

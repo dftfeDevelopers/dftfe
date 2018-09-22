@@ -69,7 +69,7 @@ namespace dftfe {
 #include "restart.cc"
 #include "moveAtoms.cc"
 #include "electrostaticHRefinedEnergy.cc"
-
+#include "electrostaticPRefinedEnergy.cc"
   //
   //dft constructor
   //
@@ -1597,6 +1597,9 @@ namespace dftfe {
 
   if(dftParameters::electrostaticsHRefinement)
     computeElectrostaticEnergyHRefined();
+
+  if(dftParameters::electrostaticsPRefinement)
+    computeElectrostaticEnergyPRefined();
 
     if (dftParameters::writeWfcSolutionFields)
       outputWfc();
