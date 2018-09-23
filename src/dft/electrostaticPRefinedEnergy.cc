@@ -20,8 +20,57 @@
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::computeElectrostaticEnergyPRefined()
 {
-#define FEOrder_PRefined FEOrder+2
-  
+#define FEOrder_PRefined FEOrder+4
+    //
+    //Create the full dealii partitioned array
+    //
+    d_eigenVectorsFlattened.resize((1+dftParameters::spinPolarized)*d_kPointWeights.size());
+
+    for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+      {
+	vectorTools::createDealiiVector<dataTypes::number>(matrix_free_data.get_vector_partitioner(),
+							   numEigenValues,
+							   d_eigenVectorsFlattened[kPoint]);
+
+
+	d_eigenVectorsFlattened[kPoint] = dataTypes::number(0.0);
+
+      }
+
+
+    Assert(d_eigenVectorsFlattened[0].local_size()==d_eigenVectorsFlattenedSTL[0].size(),
+	      dealii::ExcMessage("Incorrect local sizes of STL and dealii arrays"));
+
+    constraintsNoneDataInfo.precomputeMaps(matrix_free_data.get_vector_partitioner(),
+					   d_eigenVectorsFlattened[0].get_partitioner(),
+					   numEigenValues);
+
+    const unsigned int localVectorSize = d_eigenVectorsFlattenedSTL[0].size()/numEigenValues;
+
+    for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+      {
+	for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
+	  {
+	    for(unsigned int iWave = 0; iWave < numEigenValues; ++iWave)
+	      {
+		d_eigenVectorsFlattened[kPoint].local_element(iNode*numEigenValues+iWave)
+		  = d_eigenVectorsFlattenedSTL[kPoint][iNode*numEigenValues+iWave];
+	      }
+	  }
+
+	constraintsNoneDataInfo.distribute(d_eigenVectorsFlattened[kPoint],
+					   numEigenValues);
+
+      }
+
+
+    for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+      {
+	d_eigenVectorsFlattenedSTL[kPoint].clear();
+	std::vector<dataTypes::number>().swap(d_eigenVectorsFlattenedSTL[kPoint]);
+      }
+
+
   std::vector<std::vector<vectorType> > eigenVectors((1+dftParameters::spinPolarized)*d_kPointWeights.size());
 #ifdef USE_COMPLEX
   for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
@@ -101,9 +150,9 @@ void dftClass<FEOrder>::computeElectrostaticEnergyPRefined()
    const std::array<unsigned int,3> periodic = {dftParameters::periodicX, dftParameters::periodicY, dftParameters::periodicZ};
 
    std::vector<int> periodicDirectionVector;
-   for (unsigned int  d= 0; d < 3; ++d) 
+   for (unsigned int  d= 0; d < 3; ++d)
      {
-       if (periodic[d]==1) 
+       if (periodic[d]==1)
 	 {
 	   periodicDirectionVector.push_back(d);
 	 }
