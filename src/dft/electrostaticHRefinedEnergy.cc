@@ -326,6 +326,11 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
 			dftParameters::maxLinearSolverIterations,
 			dftParameters::verbosity);
 
+   std::map<dealii::CellId, std::vector<double> > pseudoValuesHRefined;
+   initLocalPseudoPotential(dofHandlerHRefined,
+			    quadrature,
+			    pseudoValuesHRefined);
+
    energyCalculator energyCalcHRefined(mpi_communicator, interpoolcomm, interBandGroupComm);
 
 
@@ -350,6 +355,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
 				     *gradRhoOutValues,
 				     localVselfsHRefined,
 				     pseudoValues,
+				     pseudoValuesHRefined,
 				     atomHRefinedNodeIdToChargeMap,
 				     atomLocations.size(),
 				     lowerBoundKindex,
@@ -381,6 +387,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
 						  *gradRhoOutValuesSpinPolarized,
 						  localVselfsHRefined,
 						  pseudoValues,
+						  pseudoValuesHRefined,
 						  atomHRefinedNodeIdToChargeMap,
 						  atomLocations.size(),
 						  lowerBoundKindex,

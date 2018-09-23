@@ -20,9 +20,11 @@
 //Initialize rho by reading in single-atom electron-density and fit a spline
 //
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::initLocalPseudoPotential()
+void dftClass<FEOrder>::initLocalPseudoPotential(const DoFHandler<3> & _dofHandler,
+	                                         const dealii::QGauss<3> & _quadrature,
+	                                         std::map<dealii::CellId, std::vector<double> > & _pseudoValues)
 {
-  pseudoValues.clear();
+  _pseudoValues.clear();
   //
   //Reading single atom rho initial guess
   //
@@ -74,10 +76,8 @@ void dftClass<FEOrder>::initLocalPseudoPotential()
   //
   //Initialize pseudopotential
   //
-  QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
-  //FEValues<3> fe_values (FE, quadrature_formula, update_values);
-  FEValues<3> fe_values (FE, quadrature_formula, update_quadrature_points);
-  const unsigned int n_q_points = quadrature_formula.size();
+  FEValues<3> fe_values (_dofHandler.get_fe(), _quadrature, update_quadrature_points);
+  const unsigned int n_q_points = _quadrature.size();
 
   //
   //get number of image charges used only for periodic
@@ -87,14 +87,14 @@ void dftClass<FEOrder>::initLocalPseudoPotential()
   //
   //loop over elements
   //
-  typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
+  typename DoFHandler<3>::active_cell_iterator cell = _dofHandler.begin_active(), endc = _dofHandler.end();
   for(; cell!=endc; ++cell)
     {
       if(cell->is_locally_owned())
 	{
 	  fe_values.reinit(cell);
-	  pseudoValues[cell->id()]=std::vector<double>(n_q_points);
-	  double * pseudoValuesPtr = &((pseudoValues)[cell->id()][0]);
+	  _pseudoValues[cell->id()]=std::vector<double>(n_q_points);
+	  double * pseudoValuesPtr = &((_pseudoValues)[cell->id()][0]);
 	  for (unsigned int q = 0; q < n_q_points; ++q)
 	    {
 	      const Point<3> & quadPoint=fe_values.quadrature_point(q);

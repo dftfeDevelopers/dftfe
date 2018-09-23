@@ -347,7 +347,9 @@ namespace dftfe {
       void readPSI();
       void readPSIRadialValues();
       void loadPSIFiles(unsigned int Z, unsigned int n, unsigned int l, unsigned int & flag);
-      void initLocalPseudoPotential();
+      void initLocalPseudoPotential(const DoFHandler<3> & _dofHandler,
+	                            const dealii::QGauss<3> & _quadrature,
+	                            std::map<dealii::CellId, std::vector<double> > & _pseudoValues);
       void initNonLocalPseudoPotential();
       void initNonLocalPseudoPotential_OV();
       void computeSparseStructureNonLocalProjectors();
@@ -375,7 +377,7 @@ namespace dftfe {
 			 const vectorType & rhoNodalField,
 			 std::map<dealii::CellId, std::vector<double> > & rhoQuadValues);
 
-      
+
       double totalCharge(const dealii::DoFHandler<3> & dofHandlerOfField,
 			 const vectorType & rhoNodalField);
 
@@ -383,7 +385,7 @@ namespace dftfe {
       double totalCharge(const dealii::DoFHandler<3> & dofHandlerOfField,
 			 const std::map<dealii::CellId, std::vector<double> > *rhoQuadValues);
 
-      
+
 
       /**
        *@brief Computes net magnetization from the difference of local spin densities

@@ -354,6 +354,11 @@ void dftClass<FEOrder>::computeElectrostaticEnergyPRefined()
 			dftParameters::maxLinearSolverIterations,
 			dftParameters::verbosity);
 
+   std::map<dealii::CellId, std::vector<double> > pseudoValuesPRefined;
+   initLocalPseudoPotential(dofHandlerPRefined,
+			    quadraturePRefined,
+			    pseudoValuesPRefined);
+
    energyCalculator energyCalcPRefined(mpi_communicator, interpoolcomm, interBandGroupComm);
 
   QGauss<3>  quadratureElectronic(C_num1DQuad<FEOrder>());
@@ -379,6 +384,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyPRefined()
 				     *gradRhoOutValues,
 				     localVselfsPRefined,
 				     pseudoValues,
+				     pseudoValuesPRefined,
 				     atomPRefinedNodeIdToChargeMap,
 				     atomLocations.size(),
 				     lowerBoundKindex,
@@ -410,6 +416,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyPRefined()
 						  *gradRhoOutValuesSpinPolarized,
 						  localVselfsPRefined,
 						  pseudoValues,
+						  pseudoValuesPRefined,
 						  atomPRefinedNodeIdToChargeMap,
 						  atomLocations.size(),
 						  lowerBoundKindex,

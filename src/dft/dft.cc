@@ -397,7 +397,10 @@ namespace dftfe {
 
 	TimerOutput::Scope scope (computing_timer, "psp init");
 	pcout<<std::endl<<"Pseudopotential initalization...."<<std::endl;
-	initLocalPseudoPotential();
+	QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
+	initLocalPseudoPotential(dofHandler,
+	                         quadrature,
+	                         pseudoValues);
 
 
 	computeSparseStructureNonLocalProjectors_OV();
@@ -1218,6 +1221,7 @@ namespace dftfe {
 				       *gradRhoOutValues,
 				       d_localVselfs,
 				       pseudoValues,
+				       pseudoValues,
 				       d_atomNodeIdToChargeMap,
 				       atomLocations.size(),
 				       lowerBoundKindex,
@@ -1248,6 +1252,7 @@ namespace dftfe {
 						    *gradRhoInValuesSpinPolarized,
 						    *gradRhoOutValuesSpinPolarized,
 						    d_localVselfs,
+						    pseudoValues,
 						    pseudoValues,
 						    d_atomNodeIdToChargeMap,
 						    atomLocations.size(),
@@ -1416,6 +1421,7 @@ namespace dftfe {
 			       *gradRhoOutValues,
 			       d_localVselfs,
 			       pseudoValues,
+			       pseudoValues,
 			       d_atomNodeIdToChargeMap,
 			       atomLocations.size(),
 			       lowerBoundKindex,
@@ -1446,6 +1452,7 @@ namespace dftfe {
 					    *gradRhoInValuesSpinPolarized,
 					    *gradRhoOutValuesSpinPolarized,
 					    d_localVselfs,
+					    pseudoValues,
 					    pseudoValues,
 					    d_atomNodeIdToChargeMap,
 					    atomLocations.size(),

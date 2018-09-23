@@ -249,7 +249,8 @@ namespace dftfe
    const std::map<dealii::CellId, std::vector<double> > & gradRhoInValues,
    const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValues,
    const std::vector<std::vector<double> > & localVselfs,
-   const std::map<dealii::CellId, std::vector<double> > & pseudoValues,
+   const std::map<dealii::CellId, std::vector<double> > & pseudoValuesElectronic,
+   const std::map<dealii::CellId, std::vector<double> > & pseudoValuesElectrostatic,
    const std::map<dealii::types::global_dof_index, double> & atomElectrostaticNodeIdToChargeMap,
    const unsigned int numberGlobalAtoms,
    const unsigned int lowerBoundKindex,
@@ -347,17 +348,12 @@ namespace dftfe
 		  correlationEnergy+=(corrEnergyDensity[q_point])*(rhoOutValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW(q_point);
 
 		  electrostaticPotentialTimesRho+=(cellPhiTotRhoIn[q_point]
-			                          +pseudoValues.find(cellElectronic->id())->second[q_point]
+			                          +pseudoValuesElectronic.find(cellElectronic->id())->second[q_point]
 			                          -cellPhiExt[q_point])
 				  *(rhoOutValues.find(cellElectronic->id())->second[q_point])
 				  *feValuesElectronic.JxW (q_point);
 
 		  vSelfPotentialTimesRho+=cellPhiExt[q_point]*(rhoOutValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW (q_point);
-
-		  vPseudoMinusVselfPotentialTimesRho+=(pseudoValues.find(cellElectronic->id())->second[q_point]
-			                             -cellPhiExt[q_point])
-						      *(rhoOutValues.find(cellElectronic->id())->second[q_point])
-						      *feValuesElectronic.JxW (q_point);
 
 		}
 
@@ -391,17 +387,12 @@ namespace dftfe
 		  correlationEnergy+=(corrEnergyVal[q_point])*(rhoOutValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW(q_point);
 
 		  electrostaticPotentialTimesRho+=(cellPhiTotRhoIn[q_point]
-			                          +pseudoValues.find(cellElectronic->id())->second[q_point]
+			                          +pseudoValuesElectronic.find(cellElectronic->id())->second[q_point]
 			                          -cellPhiExt[q_point])
 				  *(rhoOutValues.find(cellElectronic->id())->second[q_point])
 				  *feValuesElectronic.JxW (q_point);
 
 		  vSelfPotentialTimesRho+=cellPhiExt[q_point]*(rhoOutValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW (q_point);
-
-		  vPseudoMinusVselfPotentialTimesRho+=(pseudoValues.find(cellElectronic->id())->second[q_point]
-			                             -cellPhiExt[q_point])
-						      *(rhoOutValues.find(cellElectronic->id())->second[q_point])
-						      *feValuesElectronic.JxW (q_point);
 
 		}
 	    }
@@ -422,6 +413,12 @@ namespace dftfe
 	    {
 	      electrostaticEnergyTotPot  += 0.5*(cellPhiTotRhoOut[q_point])*(rhoOutValuesElectrostatic.find(cellElectrostatic->id())->second[q_point])*feValuesElectrostatic.JxW(q_point);
 	      vSelfPotentialElecTimesRho += cellPhiExtElec[q_point]*(rhoOutValuesElectrostatic.find(cellElectrostatic->id())->second[q_point])*feValuesElectrostatic.JxW (q_point);
+
+	      vPseudoMinusVselfPotentialTimesRho+=
+		     (pseudoValuesElectrostatic.find(cellElectrostatic->id())->second[q_point]
+		     -cellPhiExtElec[q_point])
+		     *(rhoOutValuesElectrostatic.find(cellElectrostatic->id())->second[q_point])
+		     *feValuesElectrostatic.JxW (q_point);
 	    }
 	}
 
@@ -429,15 +426,6 @@ namespace dftfe
 
     double energy=-potentialTimesRho+exchangeEnergy+correlationEnergy+electrostaticEnergyTotPot
 	          +vPseudoMinusVselfPotentialTimesRho;
-
-    double vSelfTimesRhoDiff = 0.0,totalvSelfTimesRhoDiffEnergy = 0.0;
-    if(dftParameters::electrostaticsHRefinement && dftParameters::isPseudopotential)
-      {
-	vSelfTimesRhoDiff = vSelfPotentialTimesRho - vSelfPotentialElecTimesRho;
-	totalvSelfTimesRhoDiffEnergy = dealii::Utilities::MPI::sum(vSelfTimesRhoDiff, mpi_communicator);
-      }
-
-
 
 
     const double nuclearElectrostaticEnergy=internal::nuclearElectrostaticEnergyLocal(phiTotRhoOut,
@@ -467,12 +455,6 @@ namespace dftfe
 
     double totalkineticEnergy=-totalpotentialTimesRho+bandEnergy;
 
-    if(dftParameters::electrostaticsHRefinement && dftParameters::isPseudopotential)
-      {
-	totalEnergy+=totalvSelfTimesRhoDiffEnergy;
-	if(dftParameters::verbosity >= 4)
-	  pcout<<" (vSelfCoarse - vSelfRefine)*rho "<<totalvSelfTimesRhoDiffEnergy<<std::endl;
-      }
 
     //output
     if (print)
@@ -520,7 +502,8 @@ namespace dftfe
    const std::map<dealii::CellId, std::vector<double> > & gradRhoInValuesSpinPolarized,
    const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesSpinPolarized,
    const std::vector<std::vector<double> > & localVselfs,
-   const std::map<dealii::CellId, std::vector<double> > & pseudoValues,
+   const std::map<dealii::CellId, std::vector<double> > & pseudoValuesElectronic,
+   const std::map<dealii::CellId, std::vector<double> > & pseudoValuesElectrostatic,
    const std::map<dealii::types::global_dof_index, double> & atomElectrostaticNodeIdToChargeMap,
    const unsigned int numberGlobalAtoms,
    const unsigned int lowerBoundKindex,
@@ -640,18 +623,13 @@ namespace dftfe
 		  correlationEnergy+=(corrEnergyDensity[q_point])*(rhoOutValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW(q_point);
 
 		  electrostaticPotentialTimesRho+=(cellPhiTotRhoIn[q_point]
-			                          +pseudoValues.find(cellElectronic->id())->second[q_point]
+			                          +pseudoValuesElectronic.find(cellElectronic->id())->second[q_point]
 			                          -cellPhiExt[q_point])
 				  *(rhoOutValues.find(cellElectronic->id())->second[q_point])
 				  *feValuesElectronic.JxW (q_point);
 
 		  vSelfPotentialTimesRho+=cellPhiExt[q_point]*(rhoOutValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW (q_point);
 
-
-		  vPseudoMinusVselfPotentialTimesRho+=(pseudoValues.find(cellElectronic->id())->second[q_point]
-			                             -cellPhiExt[q_point])
-						      *(rhoOutValues.find(cellElectronic->id())->second[q_point])
-						      *feValuesElectronic.JxW (q_point);
 		}
 	    }
 	  else
@@ -688,18 +666,12 @@ namespace dftfe
 		  correlationEnergy+=(corrEnergyVal[q_point])*(rhoOutValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW(q_point) ;
 
 		  electrostaticPotentialTimesRho+=(cellPhiTotRhoIn[q_point]
-			                          +pseudoValues.find(cellElectronic->id())->second[q_point]
+			                          +pseudoValuesElectronic.find(cellElectronic->id())->second[q_point]
 			                          -cellPhiExt[q_point])
 				  *(rhoOutValues.find(cellElectronic->id())->second[q_point])
 				  *feValuesElectronic.JxW (q_point);
 
 		  vSelfPotentialTimesRho+=cellPhiExt[q_point]*(rhoOutValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW (q_point);
-
-
-		  vPseudoMinusVselfPotentialTimesRho+=(pseudoValues.find(cellElectronic->id())->second[q_point]
-			                             -cellPhiExt[q_point])
-						      *(rhoOutValues.find(cellElectronic->id())->second[q_point])
-						      *feValuesElectronic.JxW (q_point);
 
 		}
 	    }
@@ -718,6 +690,12 @@ namespace dftfe
 	    {
 	      electrostaticEnergyTotPot+=0.5*(cellPhiTotRhoOut[q_point])*(rhoOutValuesElectrostatic.find(cellElectrostatic->id())->second[q_point])*feValuesElectrostatic.JxW(q_point);
 	      vSelfPotentialElecTimesRho += cellPhiExtElec[q_point]*(rhoOutValuesElectrostatic.find(cellElectrostatic->id())->second[q_point])*feValuesElectrostatic.JxW (q_point);
+
+	      vPseudoMinusVselfPotentialTimesRho+=
+		     (pseudoValuesElectrostatic.find(cellElectrostatic->id())->second[q_point]
+		     -cellPhiExtElec[q_point])
+		     *(rhoOutValuesElectrostatic.find(cellElectrostatic->id())->second[q_point])
+		     *feValuesElectrostatic.JxW (q_point);
 	    }
 	}
 
@@ -727,14 +705,6 @@ namespace dftfe
 
     double energy=-potentialTimesRho+exchangeEnergy+correlationEnergy+electrostaticEnergyTotPot
 	          +vPseudoMinusVselfPotentialTimesRho;
-
-    double vSelfTimesRhoDiff = 0.0,totalvSelfTimesRhoDiffEnergy = 0.0;
-    if(dftParameters::electrostaticsHRefinement && dftParameters::isPseudopotential)
-      {
-	vSelfTimesRhoDiff = vSelfPotentialTimesRho - vSelfPotentialElecTimesRho;
-	totalvSelfTimesRhoDiffEnergy = dealii::Utilities::MPI::sum(vSelfTimesRhoDiff, mpi_communicator);
-      }
-
 
     const double nuclearElectrostaticEnergy=internal::nuclearElectrostaticEnergyLocal(phiTotRhoOut,
 										      localVselfs,
@@ -761,13 +731,6 @@ namespace dftfe
 
 
     double totalkineticEnergy=-totalpotentialTimesRho+bandEnergy;
-
-    if(dftParameters::electrostaticsHRefinement)
-      {
-	totalEnergy+=totalvSelfTimesRhoDiffEnergy;
-	if(dftParameters::verbosity >= 4)
-	  pcout<<" (vSelfCoarse - vSelfRefine)*rho "<<totalvSelfTimesRhoDiffEnergy<<std::endl;
-      }
 
     //output
     if (print)
