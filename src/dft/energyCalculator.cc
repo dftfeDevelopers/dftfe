@@ -685,6 +685,7 @@ namespace dftfe
 	  // Compute values for current cell.
 	  feValuesElectrostatic.reinit(cellElectrostatic);
 	  feValuesElectrostatic.get_function_values(phiTotRhoOut,cellPhiTotRhoOut);
+          feValuesElectrostatic.get_function_values(phiExtElec,cellPhiExtElec);
 
 	  for(unsigned int q_point = 0; q_point < num_quad_points_electrostatic; ++q_point)
 	    {
