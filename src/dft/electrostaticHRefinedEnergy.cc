@@ -264,7 +264,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
    const unsigned phiExtDofHandlerIndexHRefined = matrixFreeDofHandlerVectorInput.size()-1;
    matrixFreeConstraintsInputVector.push_back(&onlyHangingNodeConstraints);
 
-  
+
 
    forcePtr->initMoved(matrixFreeDofHandlerVectorInput,
 	               matrixFreeConstraintsInputVector,
@@ -349,6 +349,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
 				     *gradRhoInValues,
 				     *gradRhoOutValues,
 				     localVselfsHRefined,
+				     pseudoValues,
 				     atomHRefinedNodeIdToChargeMap,
 				     atomLocations.size(),
 				     lowerBoundKindex,
@@ -379,6 +380,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
 						  *gradRhoInValuesSpinPolarized,
 						  *gradRhoOutValuesSpinPolarized,
 						  localVselfsHRefined,
+						  pseudoValues,
 						  atomHRefinedNodeIdToChargeMap,
 						  atomLocations.size(),
 						  lowerBoundKindex,
