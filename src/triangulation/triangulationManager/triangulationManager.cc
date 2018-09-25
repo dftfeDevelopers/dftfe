@@ -88,7 +88,12 @@ namespace dftfe {
     d_serialTriangulationUnmoved.clear();
     d_parallelTriangulationUnmoved.clear();
     d_parallelTriangulationMoved.clear();
-
+    if (generateElectrostaticsTria)
+    {
+	d_triangulationElectrostaticsRho.clear();
+	d_triangulationElectrostaticsDisp.clear();
+	d_triangulationElectrostaticsForce.clear();
+    }
     //
     //generate mesh data members
     //
@@ -133,7 +138,19 @@ namespace dftfe {
     d_parallelTriangulationUnmovedPrevious.clear();
     d_serialTriangulationUnmovedPrevious.clear();
 
-    generateMesh(d_parallelTriangulationUnmovedPrevious, d_serialTriangulationUnmovedPrevious, d_triangulationElectrostaticsRho, d_triangulationElectrostaticsDisp, generateElectrostaticsTria);
+    if (generateElectrostaticsTria)
+    {
+	d_triangulationElectrostaticsRho.clear();
+	d_triangulationElectrostaticsDisp.clear();
+	d_triangulationElectrostaticsForce.clear();
+    }
+
+    generateMesh(d_parallelTriangulationUnmovedPrevious,
+	         d_serialTriangulationUnmovedPrevious,
+		 d_triangulationElectrostaticsRho,
+		 d_triangulationElectrostaticsDisp,
+		 d_triangulationElectrostaticsForce,
+		 generateElectrostaticsTria);
   }
 
 
