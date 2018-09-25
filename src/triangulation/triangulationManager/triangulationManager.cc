@@ -43,6 +43,7 @@ namespace dftfe {
     d_parallelTriangulationMoved(mpi_comm_replica),
     d_triangulationElectrostaticsRho(mpi_comm_replica),
     d_triangulationElectrostaticsDisp(mpi_comm_replica),
+    d_triangulationElectrostaticsForce(mpi_comm_replica),
     mpi_communicator (mpi_comm_replica),
     interpoolcomm(interpoolcomm),
     interBandGroupComm(interbandgroup_comm),
@@ -92,20 +93,23 @@ namespace dftfe {
     //generate mesh data members
     //
     if (generateSerialTria)
-      generateMesh(d_parallelTriangulationUnmoved, 
-		   d_serialTriangulationUnmoved, 
-		   d_triangulationElectrostaticsRho, 
+      generateMesh(d_parallelTriangulationUnmoved,
+		   d_serialTriangulationUnmoved,
+		   d_triangulationElectrostaticsRho,
 		   d_triangulationElectrostaticsDisp,
+		   d_triangulationElectrostaticsForce,
 		   generateElectrostaticsTria);
     else
-      generateMesh(d_parallelTriangulationUnmoved, 
-		   d_triangulationElectrostaticsRho, 
+      generateMesh(d_parallelTriangulationUnmoved,
+		   d_triangulationElectrostaticsRho,
 		   d_triangulationElectrostaticsDisp,
+		   d_triangulationElectrostaticsForce,
 		   generateElectrostaticsTria);
 
     generateMesh(d_parallelTriangulationMoved,
 		 d_triangulationElectrostaticsRho,
 		 d_triangulationElectrostaticsDisp,
+		 d_triangulationElectrostaticsForce,
 		 false);
   }
 
@@ -232,7 +236,12 @@ namespace dftfe {
   {
     return d_triangulationElectrostaticsDisp;
   }
-  
+
+  parallel::distributed::Triangulation<3> &
+  triangulationManager::getElectrostaticsMeshForce()
+  {
+    return d_triangulationElectrostaticsForce;
+  }
 
   //reset MeshB to MeshA
   void

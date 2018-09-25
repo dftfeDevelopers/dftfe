@@ -181,12 +181,14 @@ void forceClass<FEOrder>::initMoved
      {
        dofHandlerVectorMatrixFree.push_back(&d_dofHandlerForceElectro);
        constraintsVectorMatrixFree.push_back(&d_constraintsNoneForceElectro);
+       d_isElectrostaticsMeshSubdivided=true;
      }
      d_forceDofHandlerIndexElectro = dofHandlerVectorMatrixFree.size()-1;
 
      locateAtomCoreNodesForce(d_dofHandlerForceElectro,
 	                      d_locally_owned_dofsForceElectro,
 			      d_atomsForceDofsElectro);
+
   }
   else
   {

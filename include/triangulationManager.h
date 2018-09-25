@@ -76,7 +76,7 @@ namespace dftfe  {
        const bool generateElectrostaticsTria);
 
 
-   
+
 
     /** @brief generates serial and parallel unmoved previous mesh.
      *
@@ -120,9 +120,9 @@ namespace dftfe  {
      */
     /*void  generateSubdividedMeshWithQuadData(const dealii::MatrixFree<3,double> & matrixFreeData,
 					     const ConstraintMatrix & constraints,
-					     const dealii::Quadrature<3> & quadrature,				     
+					     const dealii::Quadrature<3> & quadrature,
 					     const unsigned int FEOrder,
-					     const std::map<dealii::CellId,std::vector<double> > & rhoQuadValuesCoarse,				     
+					     const std::map<dealii::CellId,std::vector<double> > & rhoQuadValuesCoarse,
 					     std::map<dealii::CellId,std::vector<double> > & rhoQuadValuesRefined);*/
 
 
@@ -158,8 +158,8 @@ namespace dftfe  {
      *
      */
     parallel::distributed::Triangulation<3> & getSerialMeshUnmovedPrevious();
-   
-      
+
+
     /**
      * @brief returns constant reference to triangulation to compute electrostatics
      *
@@ -173,10 +173,15 @@ namespace dftfe  {
      */
     parallel::distributed::Triangulation<3> & getElectrostaticsMeshDisp();
 
-      
 
     /**
-     * @brief resets the vertices of meshB moved to vertices of meshA. 
+     * @brief returns constant reference to triangulation to compute electrostatics
+     *
+     */
+    parallel::distributed::Triangulation<3> & getElectrostaticsMeshForce();
+
+    /**
+     * @brief resets the vertices of meshB moved to vertices of meshA.
      *
      */
     void resetMesh(parallel::distributed::Triangulation<3> & parallelTriangulationA,
@@ -248,10 +253,11 @@ namespace dftfe  {
      * @brief internal function which generates a parallel and serial mesh using a adaptive refinement strategy.
      *
      */
-    void generateMesh(parallel::distributed::Triangulation<3>& parallelTriangulation, 
+    void generateMesh(parallel::distributed::Triangulation<3>& parallelTriangulation,
 		      parallel::distributed::Triangulation<3>& serialTriangulation,
 		      parallel::distributed::Triangulation<3>& electrostaticsTriangulationRho,
 		      parallel::distributed::Triangulation<3>& electrostaticsTriangulationDisp,
+		      parallel::distributed::Triangulation<3>& electrostaticsTriangulationForce,
 		      const bool generateElectrostaticsTria);
 
     /**
@@ -261,6 +267,7 @@ namespace dftfe  {
     void generateMesh(parallel::distributed::Triangulation<3>& parallelTriangulation,
 		      parallel::distributed::Triangulation<3>& electrostaticsTriangulationRho,
 		      parallel::distributed::Triangulation<3>& electrostaticsTriangulationDisp,
+		      parallel::distributed::Triangulation<3>& electrostaticsTriangulationForce,
 		      const bool generateElectrostaticsTria);
 
     /**
@@ -276,7 +283,8 @@ namespace dftfe  {
      */
     void refinementAlgorithmA(parallel::distributed::Triangulation<3>& parallelTriangulation,
 			      parallel::distributed::Triangulation<3>& electrostaticsTriangulationRho,
-			       parallel::distributed::Triangulation<3>& electrostaticsTriangulationDisp,
+			      parallel::distributed::Triangulation<3>& electrostaticsTriangulationDisp,
+			      parallel::distributed::Triangulation<3>& electrostaticsTriangulationForce,
 			      const bool generateElectrostaticsTria,
 			      std::vector<unsigned int> & locallyOwnedCellsRefineFlags,
 			      std::map<dealii::CellId,unsigned int> & cellIdToCellRefineFlagMapLocal);
@@ -308,9 +316,10 @@ namespace dftfe  {
     parallel::distributed::Triangulation<3> d_parallelTriangulationMoved;
     parallel::distributed::Triangulation<3> d_triangulationElectrostaticsRho;
     parallel::distributed::Triangulation<3> d_triangulationElectrostaticsDisp;
+    parallel::distributed::Triangulation<3> d_triangulationElectrostaticsForce;
     parallel::distributed::Triangulation<3> d_serialTriangulationUnmoved;
     parallel::distributed::Triangulation<3> d_serialTriangulationUnmovedPrevious;
-    
+
 
     std::vector<std::vector<double> > d_atomPositions;
     std::vector<std::vector<double> > d_imageAtomPositions;

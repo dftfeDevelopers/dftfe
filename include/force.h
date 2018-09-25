@@ -625,6 +625,10 @@ namespace dftfe {
        */
       std::vector<std::map<DoFHandler<C_DIM>::active_cell_iterator,std::vector<unsigned int > > > d_cellFacesVselfBallSurfacesDofHandlerForceElectro;
 
+      std::vector<vectorType> d_gaussianWeightsVecAtoms;
+
+      bool d_isElectrostaticsMeshSubdivided=false;
+
       /// mpi_communicator in the current pool
       const MPI_Comm mpi_communicator;
 
