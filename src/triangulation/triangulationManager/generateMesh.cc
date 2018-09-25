@@ -315,7 +315,7 @@ namespace dftfe {
 	//
 	double minElemLength = dftParameters::meshSizeOuterDomain;
 	unsigned int numLocallyOwnedCells=0;
-	typename parallel::distributed::Triangulation<3>::active_cell_iterator cell, endc, cellDisp;
+	typename parallel::distributed::Triangulation<3>::active_cell_iterator cell, endc, cellDisp, cellForce;
 	cell = parallelTriangulation.begin_active();
 	endc = parallelTriangulation.end();
 	for( ; cell != endc; ++cell)
@@ -355,6 +355,7 @@ namespace dftfe {
 	    cell = electrostaticsTriangulationRho.begin_active();
 	    endc = electrostaticsTriangulationRho.end();
 	    cellDisp = electrostaticsTriangulationDisp.begin_active();
+	    cellForce = electrostaticsTriangulationForce.begin_active();
 	    for( ; cell != endc; ++cell)
 	      {
 		if(cell->is_locally_owned())
@@ -364,15 +365,16 @@ namespace dftfe {
 			minElemLengthRho = cell->minimum_vertex_distance();
 		    if(cellDisp->minimum_vertex_distance() < minElemLengthDisp)
 			minElemLengthDisp = cellDisp->minimum_vertex_distance();
-		    if(cellDisp->minimum_vertex_distance() < minElemLengthForce)
-			minElemLengthForce = cellDisp->minimum_vertex_distance();
+		    if(cellForce->minimum_vertex_distance() < minElemLengthForce)
+			minElemLengthForce = cellForce->minimum_vertex_distance();
 		  }
 		++cellDisp;
+		++cellForce;
 	      }
 
 	    minElemLengthRho = Utilities::MPI::min(minElemLengthRho, mpi_communicator);
 	    minElemLengthDisp = Utilities::MPI::min(minElemLengthDisp, mpi_communicator);
-            minElemLengthForce = Utilities::MPI::min(minElemLengthDisp, mpi_communicator);
+            minElemLengthForce = Utilities::MPI::min(minElemLengthForce, mpi_communicator);
 	    //
 	    //print out adaptive electrostatics mesh metrics
 	    //
@@ -521,7 +523,7 @@ namespace dftfe {
 	//compute some adaptive mesh metrics
 	//
 	double minElemLength = dftParameters::meshSizeOuterDomain;
-	typename parallel::distributed::Triangulation<3>::active_cell_iterator cell, endc, cellDisp;
+	typename parallel::distributed::Triangulation<3>::active_cell_iterator cell, endc, cellDisp, cellForce;
 	cell = parallelTriangulation.begin_active();
 	endc = parallelTriangulation.end();
 	unsigned int numLocallyOwnedCells=0;
@@ -570,6 +572,7 @@ namespace dftfe {
 	    cell = electrostaticsTriangulationRho.begin_active();
 	    endc = electrostaticsTriangulationRho.end();
 	    cellDisp = electrostaticsTriangulationDisp.begin_active();
+	    cellForce = electrostaticsTriangulationForce.begin_active();
 	    for( ; cell != endc; ++cell)
 	      {
 		if(cell->is_locally_owned())
@@ -579,15 +582,16 @@ namespace dftfe {
 			minElemLengthRho = cell->minimum_vertex_distance();
 		    if(cellDisp->minimum_vertex_distance() < minElemLengthDisp)
 			minElemLengthDisp = cellDisp->minimum_vertex_distance();
-		    if(cellDisp->minimum_vertex_distance() < minElemLengthForce)
-			minElemLengthForce = cellDisp->minimum_vertex_distance();
+		    if(cellForce->minimum_vertex_distance() < minElemLengthForce)
+			minElemLengthForce = cellForce->minimum_vertex_distance();
 		  }
 		++cellDisp;
+		++cellForce;
 	      }
 
 	    minElemLengthRho = Utilities::MPI::min(minElemLengthRho, mpi_communicator);
 	    minElemLengthDisp = Utilities::MPI::min(minElemLengthDisp, mpi_communicator);
-            minElemLengthForce = Utilities::MPI::min(minElemLengthDisp, mpi_communicator);
+            minElemLengthForce = Utilities::MPI::min(minElemLengthForce, mpi_communicator);
 	    //
 	    //print out adaptive electrostatics mesh metrics
 	    //
