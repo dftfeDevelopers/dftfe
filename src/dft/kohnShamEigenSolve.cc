@@ -39,14 +39,14 @@ namespace internal
 				    const std::shared_ptr<const dealii::Utilities::MPI::Partitioner> & singleComponentPartitioner,
 				    const unsigned int numberFields,
 				    const std::vector<dealii::types::global_dof_index> & localProc_dof_indicesReal,
-				    dealii::parallel::distributed::Vector<dataTypes::number> & fieldsArrayFlattened,
+				    std::vector<dataTypes::number> & fieldsArrayFlattened,
 				    dftUtils::constraintMatrixInfo & constraintsNoneDataInfo)
     {
 
-        constraintsNoneDataInfo.precomputeMaps(singleComponentPartitioner,
-					       fieldsArrayFlattened.get_partitioner(),
-					       numberFields);
-        const unsigned int numberDofs = fieldsArrayFlattened.local_size()/numberFields;
+      //constraintsNoneDataInfo.precomputeMaps(singleComponentPartitioner,
+      //				       fieldsArrayFlattened.get_partitioner(),
+      //				       numberFields);
+        const unsigned int numberDofs = fieldsArrayFlattened.size()/numberFields;
         const unsigned int inc = 1;
 
         for(unsigned int i = 0; i < numberDofs; ++i)
@@ -56,20 +56,20 @@ namespace internal
 		diagonal.local_element(localProc_dof_indicesReal[i]);
 	    zdscal_(&numberFields,
 	           &scalingCoeff,
-	           fieldsArrayFlattened.begin()+i*numberFields,
+	           &fieldsArrayFlattened[i*numberFields],
 	           &inc);
 #else
 	    double scalingCoeff = diagonal.local_element(i);
 	    dscal_(&numberFields,
 		   &scalingCoeff,
-		   fieldsArrayFlattened.begin()+i*numberFields,
+		   &fieldsArrayFlattened[i*numberFields],
 		   &inc);
 #endif
 	}
 
-	constraintsNoneDataInfo.distribute(fieldsArrayFlattened,
-					   numberFields);
-	fieldsArrayFlattened.update_ghost_values();
+	//constraintsNoneDataInfo.distribute(fieldsArrayFlattened,
+	//				   numberFields);
+	//fieldsArrayFlattened.update_ghost_values();
     }
 }
 
@@ -81,7 +81,8 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 						  kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
 						  chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver,
 						  std::vector<double>                            & residualNormWaveFunctions,
-						  const bool isSpectrumSplit)
+						  const bool isSpectrumSplit,
+						  const bool useMixedPrec)
 {
   computing_timer.enter_section("Chebyshev solve");
 
@@ -99,7 +100,7 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 				       matrix_free_data.get_vector_partitioner(),
 				       numEigenValues,
 				       localProc_dof_indicesReal,
-				       d_eigenVectorsFlattened[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
+				       d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
 				       constraintsNoneDataInfo);
 
   std::vector<double> eigenValuesTemp(isSpectrumSplit?numEigenValuesRR
@@ -109,12 +110,13 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 					       bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
 
   subspaceIterationSolver.solve(kohnShamDFTEigenOperator,
-  				d_eigenVectorsFlattened[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
+  				d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
 				d_tempEigenVec,
 				numEigenValues,
   				eigenValuesTemp,
 				residualNormWaveFunctions,
-				interBandGroupComm);
+				interBandGroupComm,
+				useMixedPrec);
 
   //
   //scale the eigenVectors with M^{-1/2} to represent the wavefunctions in the usual FE basis
@@ -123,7 +125,7 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 				       matrix_free_data.get_vector_partitioner(),
 				       numEigenValues,
 				       localProc_dof_indicesReal,
-				       d_eigenVectorsFlattened[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
+				       d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
 				       constraintsNoneDataInfo);
 
   //

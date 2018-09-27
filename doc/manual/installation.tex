@@ -156,8 +156,9 @@ $ make install
 $ mkdir build
 $ cd build
 $ cmake -DCMAKE_C_COMPILER=mpicc -DCMAKE_CXX_COMPILER=mpicxx 
-  -DCMAKE_Fortran_COMPILER=mpif90 -DDEAL_II_CXX_FLAGS_RELEASE=-xMIC-AVX512 
-  -DDEAL_II_CXX_FLAGS_DEBUG=-xMIC-AVX512  -DDEAL_II_COMPONENT_EXAMPLES=OFF
+  -DCMAKE_Fortran_COMPILER=mpif90
+  -DCMAKE_CXX_FLAGS="-xMIC-AVX512" -DCMAKE_C_FLAGS="-xMIC-AVX512"
+  -DDEAL_II_CXX_FLAGS_RELEASE=-O3 -DDEAL_II_COMPONENT_EXAMPLES=OFF
   -DDEAL_II_WITH_MPI=ON -DDEAL_II_WITH_64BIT_INDICES=ON
   -DDEAL_II_WITH_P4EST=ON
   -DP4EST_DIR=p4est_install_dir_path
@@ -248,8 +249,8 @@ $ ./setup.sh
 \end{verbatim} 
 If compilation is successful, a \verb|/build| directory will be created with the following executables:
 \begin{verbatim}
-/build/release/real/main
-/build/release/complex/main
+/build/release/real/dftfe
+/build/release/complex/dftfe
 \end{verbatim}
 
 \item
@@ -259,7 +260,7 @@ $ ./setup.sh
 \end{verbatim}
 which will create the following debug mode executables:
 \begin{verbatim}
-/build/debug/real/main
-/build/debug/complex/main
+/build/debug/real/dftfe
+/build/debug/complex/dftfe
 \end{verbatim}
 \end{enumerate}

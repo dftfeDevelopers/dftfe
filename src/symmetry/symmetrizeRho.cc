@@ -172,6 +172,18 @@ void symmetryClass<FEOrder>::computeAndSymmetrize_rhoOut()
 	    dftPtr->gradRhoOutValsSpinPolarized.pop_front();
 	   }
 	}
+     //
+     if (dftParameters::mixingMethod=="BROYDEN")
+	{
+	 dftPtr->dFBroyden.pop_front();
+         dftPtr->uBroyden.pop_front();
+	 if(dftParameters::xc_id == 4)//GGA
+         {
+	  dftPtr->graddFBroyden.pop_front();
+	  dftPtr->gradUBroyden.pop_front();
+         }
+       }	
+
      }
 }
 //=============================================================================================================================================
@@ -184,14 +196,36 @@ template<unsigned int FEOrder>
 void symmetryClass<FEOrder>::computeLocalrhoOut()
 {
   std::vector<std::vector<vectorType>> eigenVectors((1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size());
+
+  const unsigned int localVectorSize = dftPtr->d_eigenVectorsFlattenedSTL[0].size()/dftPtr->numEigenValues;
+
+  dealii::parallel::distributed::Vector<dataTypes::number> eigenVectorsFlattenedArrayFullBlock;
+  vectorTools::createDealiiVector<dataTypes::number>(dftPtr->matrix_free_data.get_vector_partitioner(),
+						     dftPtr->numEigenValues,
+						     eigenVectorsFlattenedArrayFullBlock);
+
+  dftPtr->constraintsNoneDataInfo.precomputeMaps(dftPtr->matrix_free_data.get_vector_partitioner(),
+						 eigenVectorsFlattenedArrayFullBlock.get_partitioner(),
+						 dftPtr->numEigenValues);	    
+
   for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size(); ++kPoint)
      {
      eigenVectors[kPoint].resize(dftPtr->numEigenValues);
      for(unsigned int i = 0; i < dftPtr->numEigenValues; ++i)
         eigenVectors[kPoint][i].reinit(dftPtr->d_tempEigenVec);
+
+     for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
+       for(unsigned int iWave = 0; iWave < dftPtr->numEigenValues; ++iWave)
+	 eigenVectorsFlattenedArrayFullBlock.local_element(iNode*dftPtr->numEigenValues+iWave)
+	   = dftPtr->d_eigenVectorsFlattenedSTL[kPoint][iNode*dftPtr->numEigenValues+iWave];
+
+     dftPtr->constraintsNoneDataInfo.distribute(eigenVectorsFlattenedArrayFullBlock,
+						dftPtr->numEigenValues);
+
+
 #ifdef USE_COMPLEX
      vectorTools::copyFlattenedDealiiVecToSingleCompVec
-		 (dftPtr->d_eigenVectorsFlattened[kPoint],
+		 (eigenVectorsFlattenedArrayFullBlock,
 		  dftPtr->numEigenValues,
 		  std::make_pair(0,dftPtr->numEigenValues),
 		  dftPtr->localProc_dof_indicesReal,
@@ -288,10 +322,19 @@ void symmetryClass<FEOrder>::computeLocalrhoOut()
 	      for(unsigned int i=0; i<(dftPtr->numEigenValues); ++i)
 		 {
 		 double factor=((dftPtr->eigenValues)[kPoint][i]-(dftPtr->fermiEnergy))/(C_kb*dftParameters::TVal);
-		 const double partialOccupancyAlpha = getOccupancy(factor) ;
+		 double partialOccupancyAlpha = getOccupancy(factor) ;
 		 //
 		 factor=((dftPtr->eigenValues)[kPoint][i+dftParameters::spinPolarized*(dftPtr->numEigenValues)]-(dftPtr->fermiEnergy))/(C_kb*dftParameters::TVal);
-		 const double partialOccupancyBeta = getOccupancy(factor) ;
+		 double partialOccupancyBeta = getOccupancy(factor) ;
+		 //
+		 if(dftParameters::constraintMagnetization)
+			{
+			partialOccupancyAlpha = 1.0 , partialOccupancyBeta = 1.0 ;
+			if ((dftPtr->eigenValues)[kPoint][i+dftParameters::spinPolarized*(dftPtr->numEigenValues)] > (dftPtr->fermiEnergyDown))
+				partialOccupancyBeta = 0.0 ;
+			if ((dftPtr->eigenValues)[kPoint][i] > (dftPtr->fermiEnergyUp))
+				partialOccupancyAlpha = 0.0 ;					
+			}
 		 //
 		 fe_values.get_function_values((eigenVectors[(1+dftParameters::spinPolarized)*kPoint][i]), tempPsiAlpha);
 		 if (dftParameters::spinPolarized==1)

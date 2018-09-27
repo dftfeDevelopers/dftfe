@@ -3,8 +3,8 @@
 ##
 
 # Set the name of the project and target:
-SET(TARGET "main")
-SET(TARGETLIB "dftfe")
+SET(TARGET "dftfe")
+SET(TARGETLIB "dftfem")
 
 INCLUDE_DIRECTORIES(
  ${CMAKE_SOURCE_DIR}/include
@@ -256,6 +256,26 @@ ELSE()
   MESSAGE(FATAL_ERROR "-- Provide path to prefix of SPGLIB: -DSPGLIB_DIR=/path/to/prefix")
 ENDIF (DEFINED SPGLIB_DIR)
 
+
+#
+# Custom "debug" and "release" make targets:
+#
+ADD_CUSTOM_TARGET(debug
+COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Debug ${CMAKE_SOURCE_DIR}
+COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target all
+COMMENT "Switch CMAKE_BUILD_TYPE to Debug"
+)
+
+ADD_CUSTOM_TARGET(release
+COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Release ${CMAKE_SOURCE_DIR}
+COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target all
+COMMENT "Switch CMAKE_BUILD_TYPE to Release"
+)
+
+
+#
+# FIXME: that will not play well with installation
+#
 ADD_DEFINITIONS(-DDFT_PATH="${CMAKE_CURRENT_SOURCE_DIR}")
 
 # Enable testing and descent into tests/ subdirectory:
@@ -274,3 +294,19 @@ ELSE()
    ADD_SUBDIRECTORY(tests/dft/pseudopotential/real)
    ADD_SUBDIRECTORY(tests/dft/allElectron/real)
 ENDIF()
+
+
+#
+# installation target.
+# use with -DCMAKE_INSTALL_PREFIX=/path/to/
+#
+SET(TARGETLIBEXPORT "femdftTargets")
+# 1. Install defined library target
+install (TARGETS ${TARGETLIB} EXPORT ${TARGETLIBEXPORT}
+         LIBRARY DESTINATION lib)
+# 2. Install the binary
+install (TARGETS ${TARGET}
+         RUNTIME DESTINATION bin)
+# 3. Install content of include dir
+install (DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
+         DESTINATION include)

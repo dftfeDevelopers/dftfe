@@ -7,15 +7,15 @@ v2 : 0.000000000000000000e+00 8.000000000000000000e+01 0.000000000000000000e+00
 v3 : 0.000000000000000000e+00 0.000000000000000000e+00 8.000000000000000000e+01
 -----------------------------------------------------------------------------------------
 -----Fractional coordinates of atoms------ 
-AtomId 0:  4.871249999999999747e-01 0.000000000000000000e+00 0.000000000000000000e+00
-AtomId 1:  5.128749999999999698e-01 0.000000000000000000e+00 0.000000000000000000e+00
+AtomId 0:  4.837500000000000133e-01 0.000000000000000000e+00 0.000000000000000000e+00
+AtomId 1:  5.162499999999999867e-01 0.000000000000000000e+00 0.000000000000000000e+00
 -----------------------------------------------------------------------------------------
 Number Image Charges  14
 
 Finite element mesh information
 -------------------------------------------------
-number of elements: 960
-number of degrees of freedom: 33369
+number of elements: 2792
+number of degrees of freedom: 94211
 -------------------------------------------------
 
 Setting initial guess for wavefunctions....
@@ -33,12 +33,12 @@ SCF iterations converged to the specified tolerance after: 12 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.88860965
+             Total energy:         -19.79765523
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.078047,0.000000,0.000000
-AtomId    1:  0.078047,0.000000,0.000000
+AtomId    0:  0.292464,0.000001,0.000000
+AtomId    1:  0.292450,0.000015,0.000014
 --------------------------------------------------------------------------------------------
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
 v1 : 80.000000 0.000000 0.000000
@@ -46,15 +46,128 @@ v2 : 0.000000 80.000000 0.000000
 v3 : 0.000000 0.000000 80.000000
 -----------------------------------------------------------------------------------------
 -----Fractional coordinates of atoms------ 
-AtomId 0:  0.486442 0.000000 0.000000
-AtomId 1:  0.513558 0.000000 0.000000
+AtomId 0:  0.486309 0.000000 0.000000
+AtomId 1:  0.513691 0.000000 0.000000
 -----------------------------------------------------------------------------------------
 Number Image Charges  14
 
 Finite element mesh information
 -------------------------------------------------
-number of elements: 960
-number of degrees of freedom: 33369
+number of elements: 2736
+number of degrees of freedom: 92699
+-------------------------------------------------
+
+Setting initial guess for wavefunctions....
+=============================================================================================================================
+number of electrons: 10
+number of eigen values: 12
+=============================================================================================================================
+
+Reading initial guess for electron-density.....
+
+Pseudopotential initalization....
+
+Starting SCF iterations....
+SCF iterations converged to the specified tolerance after: 12 iterations.
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -19.89600555
+
+Absolute values of ion forces (Hartree/Bohr)
+--------------------------------------------------------------------------------------------
+AtomId    0:  0.126047,0.000000,0.000000
+AtomId    1:  0.126055,0.000000,0.000000
+--------------------------------------------------------------------------------------------
+-----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
+v1 : 80.000000 0.000000 0.000000
+v2 : 0.000000 80.000000 0.000000
+v3 : 0.000000 0.000000 80.000000
+-----------------------------------------------------------------------------------------
+-----Fractional coordinates of atoms------ 
+AtomId 0:  0.488248 0.000000 0.000000
+AtomId 1:  0.511753 0.000000 0.000000
+-----------------------------------------------------------------------------------------
+Number Image Charges  14
+
+Finite element mesh information
+-------------------------------------------------
+number of elements: 2624
+number of degrees of freedom: 88475
+-------------------------------------------------
+
+Reading initial guess for PSI....
+=============================================================================================================================
+number of electrons: 10
+number of eigen values: 12
+=============================================================================================================================
+
+Pseudopotential initalization....
+
+Starting SCF iterations....
+SCF iterations converged to the specified tolerance after: 13 iterations.
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -19.83955968
+
+Absolute values of ion forces (Hartree/Bohr)
+--------------------------------------------------------------------------------------------
+AtomId    0:  0.401591,0.000000,0.000000
+AtomId    1:  0.401590,0.000000,0.000000
+--------------------------------------------------------------------------------------------
+-----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
+v1 : 80.000000 0.000000 0.000000
+v2 : 0.000000 80.000000 0.000000
+v3 : 0.000000 0.000000 80.000000
+-----------------------------------------------------------------------------------------
+-----Fractional coordinates of atoms------ 
+AtomId 0:  0.486772 0.000000 0.000000
+AtomId 1:  0.513228 0.000000 0.000000
+-----------------------------------------------------------------------------------------
+Number Image Charges  14
+
+Finite element mesh information
+-------------------------------------------------
+number of elements: 2736
+number of degrees of freedom: 92699
+-------------------------------------------------
+
+Reading initial guess for PSI....
+=============================================================================================================================
+number of electrons: 10
+number of eigen values: 12
+=============================================================================================================================
+
+Pseudopotential initalization....
+
+Starting SCF iterations....
+SCF iterations converged to the specified tolerance after: 12 iterations.
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -19.90260829
+
+Absolute values of ion forces (Hartree/Bohr)
+--------------------------------------------------------------------------------------------
+AtomId    0:  0.044741,0.000000,0.000000
+AtomId    1:  0.044727,0.000000,0.000000
+--------------------------------------------------------------------------------------------
+-----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
+v1 : 80.000000 0.000000 0.000000
+v2 : 0.000000 80.000000 0.000000
+v3 : 0.000000 0.000000 80.000000
+-----------------------------------------------------------------------------------------
+-----Fractional coordinates of atoms------ 
+AtomId 0:  0.486920 0.000000 0.000000
+AtomId 1:  0.513080 0.000000 0.000000
+-----------------------------------------------------------------------------------------
+Number Image Charges  14
+
+Finite element mesh information
+-------------------------------------------------
+number of elements: 2736
+number of degrees of freedom: 92699
 -------------------------------------------------
 
 Interpolating previous groundstate PSI into the new finite element mesh....
@@ -62,14 +175,14 @@ Interpolating previous groundstate PSI into the new finite element mesh....
 Pseudopotential initalization....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 9 iterations.
+SCF iterations converged to the specified tolerance after: 11 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.88297263
+             Total energy:         -19.90333351
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.072328,0.000000,0.000000
-AtomId    1:  0.072326,0.000000,0.000000
+AtomId    0:  0.013421,0.000000,0.000000
+AtomId    1:  0.013422,0.000000,0.000000
 --------------------------------------------------------------------------------------------

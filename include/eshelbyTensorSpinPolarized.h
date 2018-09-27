@@ -52,20 +52,8 @@ namespace dftfe {
      */
     namespace eshelbyTensorSP
     {
-      ///Local part of the Eshelby tensor for periodic case (only considers terms which are not summed over k points)
-      Tensor<2,C_DIM,VectorizedArray<double> >  getELocEshelbyTensorPeriodicNoKPoints
-						  (const VectorizedArray<double> & phiTot,
-						   const Tensor<1,C_DIM,VectorizedArray<double> > & gradPhiTot,
-						   const VectorizedArray<double> & rho,
-						   const Tensor<1,C_DIM,VectorizedArray<double> > & gradRhoSpin0,
-						   const Tensor<1,C_DIM,VectorizedArray<double> > & gradRhoSpin1,
-						   const VectorizedArray<double> & exc,
-						   const Tensor<1,C_DIM,VectorizedArray<double> > & derExcGradRhoSpin0,
-						   const Tensor<1,C_DIM,VectorizedArray<double> > & derExcGradRhoSpin1,
-						   const VectorizedArray<double> & pseudoVLoc,
-						   const VectorizedArray<double> & phiExt);
       ///Local part of the Eshelby tensor for periodic case (only considers terms which are summed over k points)
-      Tensor<2,C_DIM,VectorizedArray<double> >  getELocEshelbyTensorPeriodicKPoints
+      Tensor<2,C_DIM,VectorizedArray<double> >  getELocWfcEshelbyTensorPeriodicKPoints
 		    (std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator psiSpin0Begin,
 		     std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator psiSpin1Begin,
 		     std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > >::const_iterator gradPsiSpin0Begin,
@@ -77,24 +65,24 @@ namespace dftfe {
 		     const double tVal);
 
       ///Local part of the Eshelby tensor for non-periodic case
-      Tensor<2,C_DIM,VectorizedArray<double> >  getELocEshelbyTensorNonPeriodic
-		       (const VectorizedArray<double> & phiTot,
-			const Tensor<1,C_DIM,VectorizedArray<double> > & gradPhiTot,
-			const VectorizedArray<double> & rho,
-			const Tensor<1,C_DIM,VectorizedArray<double> > & gradRhoSpin0,
-			const Tensor<1,C_DIM,VectorizedArray<double> > & gradRhoSpin1,
-			const VectorizedArray<double> & exc,
-			const Tensor<1,C_DIM,VectorizedArray<double> > & derExcGradRhoSpin0,
-			const Tensor<1,C_DIM,VectorizedArray<double> > & derExcGradRhoSpin1,
-			const VectorizedArray<double> & pseudoVLoc,
-			const VectorizedArray<double> & phiExt,
-			std::vector<VectorizedArray<double> >::const_iterator psiSpin0Begin,
+      Tensor<2,C_DIM,VectorizedArray<double> >  getELocWfcEshelbyTensorNonPeriodic
+			(std::vector<VectorizedArray<double> >::const_iterator psiSpin0Begin,
 			std::vector<VectorizedArray<double> >::const_iterator psiSpin1Begin,
 			std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >::const_iterator gradPsiSpin0Begin,
 			std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >::const_iterator gradPsiSpin1Begin,
 			const std::vector<double> & eigenValues_,
 			const double fermiEnergy_,
 			const double tVal);
+
+      /// exchange-correlation and psp part of the ELoc Eshelby tensor
+      Tensor<2,C_DIM,VectorizedArray<double> >  getELocXcPspEshelbyTensor
+			     (const VectorizedArray<double> & rho,
+			      const Tensor<1,C_DIM,VectorizedArray<double> > & gradRhoSpin0,
+			      const Tensor<1,C_DIM,VectorizedArray<double> > & gradRhoSpin1,
+			      const VectorizedArray<double> & exc,
+			      const Tensor<1,C_DIM,VectorizedArray<double> > & derExcGradRhoSpin0,
+			      const Tensor<1,C_DIM,VectorizedArray<double> > & derExcGradRhoSpin1,
+			     const VectorizedArray<double> & pseudoVLoc);
 
       ///Local pseudotential force contribution
       Tensor<1,C_DIM,VectorizedArray<double> >  getFPSPLocal(const VectorizedArray<double> rho,

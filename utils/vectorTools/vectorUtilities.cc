@@ -199,10 +199,9 @@ namespace dftfe
 
     }
 
-
 #ifdef USE_COMPLEX
-    void copyFlattenedDealiiVecToSingleCompVec
-                             (const dealii::parallel::distributed::Vector<std::complex<double>>  & flattenedArray,
+    void copyFlattenedSTLVecToSingleCompVec
+                             (const std::vector<std::complex<double>>  & flattenedArray,
 			      const unsigned int                        totalNumberComponents,
 			      const std::pair<unsigned int,unsigned int> componentIndexRange,
 			      const std::vector<dealii::types::global_dof_index> & localProcDofIndicesReal,
@@ -215,26 +214,22 @@ namespace dftfe
 		&& componentIndexRange.second <=totalNumberComponents,
 		  dealii::ExcMessage("componentIndexRange doesn't lie within totalNumberComponents"));
 
-	const unsigned int localVectorSize = flattenedArray.local_size()/totalNumberComponents;
+	const unsigned int localVectorSize = flattenedArray.size()/totalNumberComponents;
 	for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
-	  {
 	      for(unsigned int icomp = componentIndexRange.first; icomp<componentIndexRange.second; ++icomp)
 	      {
 		  const unsigned int flattenedArrayLocalIndex =
 		      totalNumberComponents*iNode + icomp;
 
 		  componentVectors[icomp-componentIndexRange.first].local_element(localProcDofIndicesReal[iNode])
-			= flattenedArray.local_element(flattenedArrayLocalIndex).real();
+			= flattenedArray[flattenedArrayLocalIndex].real();
 		  componentVectors[icomp-componentIndexRange.first].local_element(localProcDofIndicesImag[iNode])
-			= flattenedArray.local_element(flattenedArrayLocalIndex).imag();
+			= flattenedArray[flattenedArrayLocalIndex].imag();
 	      }
-	  }
-	for(unsigned int i=0; i<componentVectors.size(); ++i)
-	      componentVectors[i].update_ghost_values();
     }
 #else
-    void copyFlattenedDealiiVecToSingleCompVec
-                             (const dealii::parallel::distributed::Vector<double>  & flattenedArray,
+    void copyFlattenedSTLVecToSingleCompVec
+                             (const std::vector<double>  & flattenedArray,
 			      const unsigned int                        totalNumberComponents,
 			      const std::pair<unsigned int,unsigned int>  componentIndexRange,
 			      std::vector<dealii::parallel::distributed::Vector<double>>  & componentVectors)
@@ -244,20 +239,119 @@ namespace dftfe
         Assert(componentIndexRange.first <totalNumberComponents
 		&& componentIndexRange.second <=totalNumberComponents,
 		  dealii::ExcMessage("componentIndexRange doesn't lie within totalNumberComponents"));
-	const unsigned int localVectorSize = flattenedArray.local_size()/totalNumberComponents;
+	const unsigned int localVectorSize = flattenedArray.size()/totalNumberComponents;
 	for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
-	  {
 	      for(unsigned int icomp = componentIndexRange.first; icomp<componentIndexRange.second; ++icomp)
 	      {
 		  const unsigned int flattenedArrayLocalIndex =
 		      totalNumberComponents*iNode + icomp;
 		  componentVectors[icomp-componentIndexRange.first].local_element(iNode)
-			= flattenedArray.local_element(flattenedArrayLocalIndex);
+			= flattenedArray[flattenedArrayLocalIndex];
 	      }
-	  }
 
-	for(unsigned int i=0; i<componentVectors.size(); ++i)
-	      componentVectors[i].update_ghost_values();
+    }
+#endif
+
+#ifdef USE_COMPLEX
+    void copyFlattenedDealiiVecToSingleCompVec
+                             (const dealii::parallel::distributed::Vector<std::complex<double>>  & flattenedArray,
+			      const unsigned int                        totalNumberComponents,
+			      const std::pair<unsigned int,unsigned int> componentIndexRange,
+			      const std::vector<dealii::types::global_dof_index> & localProcDofIndicesReal,
+                              const std::vector<dealii::types::global_dof_index> & localProcDofIndicesImag,
+			      std::vector<dealii::parallel::distributed::Vector<double>>  & componentVectors,
+			      const bool isFlattenedDealiiGhostValuesUpdated)
+    {
+        Assert(componentVectors.size()==(componentIndexRange.second-componentIndexRange.first),
+		  dealii::ExcMessage("Incorrect dimensions of componentVectors"));
+        Assert(componentIndexRange.first <totalNumberComponents
+		&& componentIndexRange.second <=totalNumberComponents,
+		  dealii::ExcMessage("componentIndexRange doesn't lie within totalNumberComponents"));
+
+	const std::shared_ptr< const dealii::Utilities::MPI::Partitioner > & partitioner
+	                             =flattenedArray.get_partitioner();
+	const unsigned int localSize =  partitioner->local_size()/totalNumberComponents;
+        const unsigned int n_ghosts   = partitioner->n_ghost_indices()/totalNumberComponents;
+        const unsigned int totalSize  = localSize + n_ghosts;
+
+	if (!isFlattenedDealiiGhostValuesUpdated)
+	{
+	    for(unsigned int iNode = 0; iNode < localSize; ++iNode)
+		  for(unsigned int icomp = componentIndexRange.first; icomp<componentIndexRange.second; ++icomp)
+		  {
+		      const unsigned int flattenedArrayLocalIndex =
+			  totalNumberComponents*iNode + icomp;
+
+		      componentVectors[icomp-componentIndexRange.first].local_element(localProcDofIndicesReal[iNode])
+			    = flattenedArray.local_element(flattenedArrayLocalIndex).real();
+		      componentVectors[icomp-componentIndexRange.first].local_element(localProcDofIndicesImag[iNode])
+			    = flattenedArray.local_element(flattenedArrayLocalIndex).imag();
+		  }
+
+	    for(unsigned int i=0; i<componentVectors.size(); ++i)
+		  componentVectors[i].update_ghost_values();
+	}
+	else
+	{
+	    for(unsigned int iNode = 0; iNode < totalSize; ++iNode)
+		  for(unsigned int icomp = componentIndexRange.first; icomp<componentIndexRange.second; ++icomp)
+		  {
+		      const unsigned int flattenedArrayLocalIndex =
+			  totalNumberComponents*iNode + icomp;
+
+		      componentVectors[icomp-componentIndexRange.first].local_element(localProcDofIndicesReal[iNode])
+			    = flattenedArray.local_element(flattenedArrayLocalIndex).real();
+		      componentVectors[icomp-componentIndexRange.first].local_element(localProcDofIndicesImag[iNode])
+			    = flattenedArray.local_element(flattenedArrayLocalIndex).imag();
+		  }
+	}
+    }
+#else
+    void copyFlattenedDealiiVecToSingleCompVec
+                             (const dealii::parallel::distributed::Vector<double>  & flattenedArray,
+			      const unsigned int                        totalNumberComponents,
+			      const std::pair<unsigned int,unsigned int>  componentIndexRange,
+			      std::vector<dealii::parallel::distributed::Vector<double>>  & componentVectors,
+			      const bool isFlattenedDealiiGhostValuesUpdated)
+    {
+        Assert(componentVectors.size()==(componentIndexRange.second-componentIndexRange.first),
+		  dealii::ExcMessage("Incorrect dimensions of componentVectors"));
+        Assert(componentIndexRange.first <totalNumberComponents
+		&& componentIndexRange.second <=totalNumberComponents,
+		  dealii::ExcMessage("componentIndexRange doesn't lie within totalNumberComponents"));
+
+	const std::shared_ptr< const dealii::Utilities::MPI::Partitioner > & partitioner
+	                             =flattenedArray.get_partitioner();
+	const unsigned int localSize =  partitioner->local_size()/totalNumberComponents;
+        const unsigned int n_ghosts   = partitioner->n_ghost_indices()/totalNumberComponents;
+        const unsigned int totalSize  = localSize + n_ghosts;
+
+	if (!isFlattenedDealiiGhostValuesUpdated)
+	{
+	    for(unsigned int iNode = 0; iNode < localSize; ++iNode)
+		  for(unsigned int icomp = componentIndexRange.first; icomp<componentIndexRange.second; ++icomp)
+		  {
+		      const unsigned int flattenedArrayLocalIndex =
+			  totalNumberComponents*iNode + icomp;
+		      componentVectors[icomp-componentIndexRange.first].local_element(iNode)
+			    = flattenedArray.local_element(flattenedArrayLocalIndex);
+		  }
+
+	    for(unsigned int i=0; i<componentVectors.size(); ++i)
+		  componentVectors[i].update_ghost_values();
+	}
+	else
+	{
+	    for(unsigned int iNode = 0; iNode < totalSize; ++iNode)
+		  for(unsigned int icomp = componentIndexRange.first; icomp<componentIndexRange.second; ++icomp)
+		  {
+		      const unsigned int flattenedArrayLocalIndex =
+			  totalNumberComponents*iNode + icomp;
+		      componentVectors[icomp-componentIndexRange.first].local_element(iNode)
+			    = flattenedArray.local_element(flattenedArrayLocalIndex);
+		  }
+
+	}
     }
 #endif
 
@@ -321,11 +415,68 @@ namespace dftfe
     }
 #endif
 
+#ifdef USE_COMPLEX
+    void copySingleCompVecToFlattenedSTLVec
+                             (std::vector<std::complex<double>>  & flattenedArray,
+			      const unsigned int                        totalNumberComponents,
+			      const std::pair<unsigned int,unsigned int> componentIndexRange,
+			      const std::vector<dealii::types::global_dof_index> & localProcDofIndicesReal,
+                              const std::vector<dealii::types::global_dof_index> & localProcDofIndicesImag,
+			      const std::vector<dealii::parallel::distributed::Vector<double>>  & componentVectors)
+    {
+        Assert(componentVectors.size()==(componentIndexRange.second-componentIndexRange.first),
+		  dealii::ExcMessage("Incorrect dimensions of componentVectors"));
+        Assert(componentIndexRange.first <totalNumberComponents
+		&& componentIndexRange.second <=totalNumberComponents,
+		  dealii::ExcMessage("componentIndexRange doesn't lie within totalNumberComponents"));
+
+	const unsigned int localVectorSize = flattenedArray.size()/totalNumberComponents;
+	for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
+	      for(unsigned int icomp = componentIndexRange.first; icomp<componentIndexRange.second; ++icomp)
+	      {
+		  const unsigned int flattenedArrayLocalIndex =
+		      totalNumberComponents*iNode + icomp;
+
+		  const double real=componentVectors[icomp-componentIndexRange.first].local_element(localProcDofIndicesReal[iNode]);
+		  const double imag=componentVectors[icomp-componentIndexRange.first].local_element(localProcDofIndicesImag[iNode]);
+
+		  flattenedArray[flattenedArrayLocalIndex]=std::complex<double>(real,imag);
+	      }
+
+    }
+#else
+    void copySingleCompVecToFlattenedSTLVec
+                             (std::vector<double>  & flattenedArray,
+			      const unsigned int                        totalNumberComponents,
+			      const std::pair<unsigned int,unsigned int>  componentIndexRange,
+			      const std::vector<dealii::parallel::distributed::Vector<double>>  & componentVectors)
+    {
+        Assert(componentVectors.size()==(componentIndexRange.second-componentIndexRange.first),
+		  dealii::ExcMessage("Incorrect dimensions of componentVectors"));
+        Assert(componentIndexRange.first <totalNumberComponents
+		&& componentIndexRange.second <=totalNumberComponents,
+		  dealii::ExcMessage("componentIndexRange doesn't lie within totalNumberComponents"));
+	const unsigned int localVectorSize = flattenedArray.size()/totalNumberComponents;
+	for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
+	      for(unsigned int icomp = componentIndexRange.first; icomp<componentIndexRange.second; ++icomp)
+	      {
+		  const unsigned int flattenedArrayLocalIndex =
+		      totalNumberComponents*iNode + icomp;
+		  flattenedArray[flattenedArrayLocalIndex]=
+		      componentVectors[icomp-componentIndexRange.first].local_element(iNode);
+	      }
+
+    }
+#endif
+
 
     template void createDealiiVector(const std::shared_ptr<const dealii::Utilities::MPI::Partitioner> &,
 				     const unsigned int                                                ,
 				     dealii::parallel::distributed::Vector<dataTypes::number>     &);
 
+    template void createDealiiVector(const std::shared_ptr<const dealii::Utilities::MPI::Partitioner> &,
+				     const unsigned int                                                ,
+				     dealii::parallel::distributed::Vector<dataTypes::numberLowPrec>     &);
 
   }//end of namespace
 

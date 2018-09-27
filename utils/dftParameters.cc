@@ -33,8 +33,9 @@ namespace dftParameters
   double radiusAtomBall=0.0, mixingParameter=0.5;
   double lowerEndWantedSpectrum=0.0,relLinearSolverTolerance=1e-10,selfConsistentSolverTolerance=1e-10,TVal=500, start_magnetization=0.0;
   double chebyshevTolerance = 1e-02;
+  std::string mixingMethod = "";
 
-  bool isPseudopotential=false,periodicX=false,periodicY=false,periodicZ=false, useSymm=false, timeReversal=false,pseudoTestsFlag=false;
+  bool isPseudopotential=false,periodicX=false,periodicY=false,periodicZ=false, useSymm=false, timeReversal=false,pseudoTestsFlag=false, constraintMagnetization=false;
   std::string meshFileName="",coordinatesFile="",domainBoundingVectorsFile="",kPointDataFile="", ionRelaxFlagsFile="",orthogType="",pseudoPotentialFile="";
 
   double outerAtomBallRadius=2.0, meshSizeOuterDomain=10.0;
@@ -66,6 +67,13 @@ namespace dftParameters
   unsigned int numCoreWfcRR=0;
   bool triMatPGSOpt=true;
   bool reuseWfcGeoOpt=true;
+  extern double mpiAllReduceMessageBlockSizeMB=2.0;
+  bool useHigherQuadNLP=true;
+  bool useMixedPrecPGS_SR=false;
+  bool useMixedPrecPGS_O=false;
+  bool useMixedPrecCheby=false;
+  unsigned int numAdaptiveFilterStates=0;
+  double mixedPrecStoppingTol=1e-4;
 
   void declare_parameters(ParameterHandler &prm)
   {
@@ -94,6 +102,10 @@ namespace dftParameters
 	prm.declare_entry("NPBAND", "1",
 			   Patterns::Integer(1),
 			   "[Standard] Number of groups of MPI tasks across which the work load of the bands is parallelised. NPKPT times NPBAND must be a divisor of total number of MPI tasks. Further, NPBAND must be less than or equal to NUMBER OF KOHN-SHAM WAVEFUNCTIONS.");
+
+	prm.declare_entry("MPI ALLREDUCE BLOCK SIZE", "100.0",
+			   Patterns::Double(0),
+			   "[Advanced] Block message size in MB used to break a single MPI_Allreduce call on wavefunction vectors data into multiple MPI_Allreduce calls. This is useful on certain architectures which take advantage of High Bandwidth Memory to improve efficiency of MPI operations. This variable is relevant only if NPBAND>1. Default value is 100.0 MB.");
     }
     prm.leave_subsection ();
 
@@ -322,13 +334,21 @@ namespace dftParameters
 			  Patterns::Double(1e-12,1.0),
 			  "[Standard] SCF iterations stopping tolerance in terms of $L_2$ norm of the electron-density difference between two successive iterations. CAUTION: A tolerance close to 1e-7 or lower can deteriorate the SCF convergence due to the round-off error accumulation.");
 
-	prm.declare_entry("ANDERSON SCHEME MIXING HISTORY", "10",
+	prm.declare_entry("MIXING HISTORY", "10",
 			  Patterns::Integer(1,1000),
-			  "[Standard] Number of SCF iteration history to be considered for mixing the electron-density using Anderson mixing scheme. For metallic systems, a mixing history larger than the default value provides better scf convergence.");
+			  "[Standard] Number of SCF iteration history to be considered for density mixing schemes. For metallic systems, a mixing history larger than the default value provides better scf convergence.");
 
-	prm.declare_entry("ANDERSON SCHEME MIXING PARAMETER", "0.5",
+	prm.declare_entry("MIXING PARAMETER", "0.5",
 			  Patterns::Double(0.0,1.0),
-			  "[Standard] Mixing parameter to be used in Anderson scheme.");
+			  "[Standard] Mixing parameter to be used in density mixing schemes.");
+
+	prm.declare_entry("MIXING METHOD","ANDERSON",
+			      Patterns::Selection("BROYDEN|ANDERSON"),
+			      "[Standard] Method for density mixing. ANDERSON is the default option.");
+
+	prm.declare_entry("CONSTRAINT MAGNETIZATION", "false",
+			  Patterns::Bool(),
+			  "[Standard] Boolean parameter specifying whether to keep the starting magnetization fixed through the SCF iterations. Default is FALSE");
 
 	prm.declare_entry("STARTING WFC","RANDOM",
 			  Patterns::Selection("ATOMIC|RANDOM"),
@@ -337,6 +357,10 @@ namespace dftParameters
 	prm.declare_entry("COMPUTE ENERGY EACH ITER", "true",
 			  Patterns::Bool(),
 			  "[Advanced] Boolean parameter specifying whether to compute the total energy at the end of every SCF. Setting it to false can lead to some computational time savings.");
+
+	prm.declare_entry("HIGHER QUAD NLP", "true",
+			  Patterns::Bool(),
+			  "[Advanced] Boolean parameter specifying whether to use a higher order quadrature rule for the calculations involving the non-local part of the pseudopotential. Default setting is true. Could be safely set to false if you are using a very refined mesh.");
 
 	prm.enter_subsection ("Eigen-solver parameters");
 	{
@@ -393,6 +417,26 @@ namespace dftParameters
 	    prm.declare_entry("SCALAPACKPROCS", "0",
 			      Patterns::Integer(0,300),
 			      "[Advanced] Uses a processor grid of SCALAPACKPROCS times SCALAPACKPROCS for parallel distribution of the subspace projected matrix in the Rayleigh-Ritz step and the overlap matrix in the Pseudo-Gram-Schmidt step. Default value is 0 for which a thumb rule is used (see http://netlib.org/scalapack/slug/node106.html). This parameter is only used if dealii library is compiled with ScaLAPACK.");
+
+	    prm.declare_entry("USE MIXED PREC PGS SR", "false",
+			      Patterns::Bool(),
+			      "[Advanced] Use mixed precision arithmetic in subspace rotation step of PGS orthogonalization, if ORTHOGONALIZATION TYPE is set to PGS. Currently this optimization is only enabled for the real executable. Default setting is false.");
+
+	    prm.declare_entry("USE MIXED PREC PGS O", "false",
+			      Patterns::Bool(),
+			      "[Advanced] Use mixed precision arithmetic in overlap matrix computation step of PGS orthogonalization, if ORTHOGONALIZATION TYPE is set to PGS. Currently this optimization is only enabled for the real executable. Default setting is false.");
+
+	    prm.declare_entry("USE MIXED PREC CHEBY", "false",
+			      Patterns::Bool(),
+			      "[Advanced] Use mixed precision arithmetic in Chebyshev filtering. Currently this optimization is only enabled for the real executable and batch gemm. Default setting is false.");
+
+	    prm.declare_entry("MIXED PREC STOPPING TOL", "1e-4",
+			      Patterns::Double(0),
+			      "[Advanced] Scf tolerance below which mixed precision cannot be used. Default value is 1e-4.");
+
+	    prm.declare_entry("ADAPTIVE FILTER STATES", "0",
+			      Patterns::Integer(0),
+			      "[Advanced] Number of lowest Kohn-Sham eigenstates which are filtered with Chebyshev polynomial degree linearly varying from 50 percent (starting from the lowest) to 80 percent of the value specified by CHEBYSHEV POLYNOMIAL DEGREE. This imposes a step function filtering polynomial order on the ADAPTIVE FILTER STATES as filtering is done with blocks of size WFC BLOCK SIZE. This setting is recommended for large systems (greater than 5000 electrons). Default value is 0 i.e., all states are filtered with the same Chebyshev polynomial degree.");
 	}
 	prm.leave_subsection ();
     }
@@ -423,6 +467,7 @@ namespace dftParameters
     {
 	dftParameters::npool             = prm.get_integer("NPKPT");
 	dftParameters::nbandGrps         = prm.get_integer("NPBAND");
+	dftParameters::mpiAllReduceMessageBlockSizeMB = prm.get_double("MPI ALLREDUCE BLOCK SIZE");
     }
     prm.leave_subsection ();
 
@@ -516,10 +561,13 @@ namespace dftParameters
 	dftParameters::TVal                          = prm.get_double("TEMPERATURE");
 	dftParameters::numSCFIterations              = prm.get_integer("MAXIMUM ITERATIONS");
 	dftParameters::selfConsistentSolverTolerance = prm.get_double("TOLERANCE");
-	dftParameters::mixingHistory                 = prm.get_integer("ANDERSON SCHEME MIXING HISTORY");
-	dftParameters::mixingParameter               = prm.get_double("ANDERSON SCHEME MIXING PARAMETER");
+	dftParameters::mixingHistory                 = prm.get_integer("MIXING HISTORY");
+	dftParameters::mixingParameter               = prm.get_double("MIXING PARAMETER");
+	dftParameters::mixingMethod                  = prm.get("MIXING METHOD");
+	dftParameters::constraintMagnetization       = prm.get_bool("CONSTRAINT MAGNETIZATION");
         dftParameters::startingWFCType               = prm.get("STARTING WFC");
 	dftParameters::computeEnergyEverySCF         = prm.get_bool("COMPUTE ENERGY EACH ITER");
+	dftParameters::useHigherQuadNLP              = prm.get_bool("HIGHER QUAD NLP");
 
 
 	prm.enter_subsection ("Eigen-solver parameters");
@@ -537,6 +585,11 @@ namespace dftParameters
 	   dftParameters::enableSwitchToGS= prm.get_bool("ENABLE SWITCH TO GS");
 	   dftParameters::triMatPGSOpt= prm.get_bool("ENABLE SUBSPACE ROT PGS OPT");
 	   dftParameters::scalapackParalProcs= prm.get_integer("SCALAPACKPROCS");
+	   dftParameters::useMixedPrecPGS_SR= prm.get_bool("USE MIXED PREC PGS SR");
+	   dftParameters::useMixedPrecPGS_O= prm.get_bool("USE MIXED PREC PGS O");
+	   dftParameters::useMixedPrecCheby= prm.get_bool("USE MIXED PREC CHEBY");
+	   dftParameters::mixedPrecStoppingTol= prm.get_double("MIXED PREC STOPPING TOL");
+	   dftParameters::numAdaptiveFilterStates= prm.get_integer("ADAPTIVE FILTER STATES");
 	}
 	prm.leave_subsection ();
     }
@@ -562,10 +615,11 @@ namespace dftParameters
      {
         std::cout << "==========================================================================================================" << std::endl ;
         std::cout << "==========================================================================================================" << std::endl ;
-        std::cout << "			Welcome to the Open Source program DFT-FE v0.5			        " << std::endl ;
-        std::cout << "This is a C++ code for materials modeling from first principles using Kohn-Sham density functional theory " << std::endl ;
-        std::cout << "It is based on adaptive finite-element based methodologies.		        " << std::endl ;
-        std::cout << "For details and citing please refer to our website: https://sites.google.com/umich.edu/dftfe" << std::endl ;
+        std::cout << "			Welcome to the Open Source program DFT-FE v0.6.0			        " << std::endl ;
+        std::cout << "This is a C++ code for materials modeling from first principles using Kohn-Sham density functional theory." << std::endl ;
+        std::cout << "This is a real-space code for periodic, semi-periodic and non-periodic pseudopotential" << std::endl ;
+        std::cout << "and all-electron calculations, and is based on adaptive finite-element discretization." << std::endl ;
+        std::cout << "For further details, and citing, please refer to our website: https://sites.google.com/umich.edu/dftfe" << std::endl ;
 	std::cout << "==========================================================================================================" << std::endl ;
 	std::cout << " DFT-FE Principal developers and Mentors (alphabetically) :									" << std::endl ;
 	std::cout << "														" << std::endl ;

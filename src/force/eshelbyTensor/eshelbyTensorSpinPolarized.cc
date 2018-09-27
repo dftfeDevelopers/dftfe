@@ -23,27 +23,25 @@ namespace dftfe {
 namespace eshelbyTensorSP
 {
 
-    Tensor<2,C_DIM,VectorizedArray<double> >  getELocEshelbyTensorPeriodicNoKPoints
-						      (const VectorizedArray<double> & phiTot,
-						       const Tensor<1,C_DIM,VectorizedArray<double> > & gradPhiTot,
-						       const VectorizedArray<double> & rho,
+    Tensor<2,C_DIM,VectorizedArray<double> >  getELocXcPspEshelbyTensor
+						       (const VectorizedArray<double> & rho,
 						       const Tensor<1,C_DIM,VectorizedArray<double> > & gradRhoSpin0,
 						       const Tensor<1,C_DIM,VectorizedArray<double> > & gradRhoSpin1,
 						       const VectorizedArray<double> & exc,
 						       const Tensor<1,C_DIM,VectorizedArray<double> > & derExcGradRhoSpin0,
 						       const Tensor<1,C_DIM,VectorizedArray<double> > & derExcGradRhoSpin1,
-						       const VectorizedArray<double> & pseudoVLoc,
-						       const VectorizedArray<double> & phiExt)
+						       const VectorizedArray<double> & pseudoVLoc)
     {
-       Tensor<2,C_DIM,VectorizedArray<double> > eshelbyTensor= make_vectorized_array(1.0/(4.0*M_PI))*outer_product(gradPhiTot,gradPhiTot)-outer_product(derExcGradRhoSpin0,gradRhoSpin0)-outer_product(derExcGradRhoSpin1,gradRhoSpin1);
-       VectorizedArray<double> identityTensorFactor=make_vectorized_array(-1.0/(8.0*M_PI))*scalar_product(gradPhiTot,gradPhiTot)+rho*phiTot+exc*rho + (pseudoVLoc-phiExt)*rho;
+       Tensor<2,C_DIM,VectorizedArray<double> > eshelbyTensor= -outer_product(derExcGradRhoSpin0,gradRhoSpin0)
+	                                                       -outer_product(derExcGradRhoSpin1,gradRhoSpin1);
+       VectorizedArray<double> identityTensorFactor=exc*rho + pseudoVLoc*rho;
        eshelbyTensor[0][0]+=identityTensorFactor;
        eshelbyTensor[1][1]+=identityTensorFactor;
        eshelbyTensor[2][2]+=identityTensorFactor;
        return eshelbyTensor;
     }
 
-    Tensor<2,C_DIM,VectorizedArray<double> >  getELocEshelbyTensorPeriodicKPoints
+    Tensor<2,C_DIM,VectorizedArray<double> >  getELocWfcEshelbyTensorPeriodicKPoints
 		    (std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator psiSpin0Begin,
 		     std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator psiSpin1Begin,
 		     std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > >::const_iterator gradPsiSpin0Begin,
@@ -58,12 +56,9 @@ namespace eshelbyTensorSP
 
        Tensor<2,C_DIM,VectorizedArray<double> > eshelbyTensor;
        for (unsigned int idim=0; idim<C_DIM; idim++)
-       {
 	 for (unsigned int jdim=0; jdim<C_DIM; jdim++)
-	 {
 	   eshelbyTensor[idim][jdim]=make_vectorized_array(0.0);
-	 }
-       }
+
        VectorizedArray<double> identityTensorFactor=make_vectorized_array(0.0);
 
        std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator it1Spin0=psiSpin0Begin;
@@ -117,18 +112,8 @@ namespace eshelbyTensorSP
        return eshelbyTensor;
     }
 
-    Tensor<2,C_DIM,VectorizedArray<double> >  getELocEshelbyTensorNonPeriodic
-		       (const VectorizedArray<double> & phiTot,
-			const Tensor<1,C_DIM,VectorizedArray<double> > & gradPhiTot,
-			const VectorizedArray<double> & rho,
-			const Tensor<1,C_DIM,VectorizedArray<double> > & gradRhoSpin0,
-			const Tensor<1,C_DIM,VectorizedArray<double> > & gradRhoSpin1,
-			const VectorizedArray<double> & exc,
-			const Tensor<1,C_DIM,VectorizedArray<double> > & derExcGradRhoSpin0,
-			const Tensor<1,C_DIM,VectorizedArray<double> > & derExcGradRhoSpin1,
-			const VectorizedArray<double> & pseudoVLoc,
-			const VectorizedArray<double> & phiExt,
-			std::vector<VectorizedArray<double> >::const_iterator psiSpin0Begin,
+    Tensor<2,C_DIM,VectorizedArray<double> >  getELocWfcEshelbyTensorNonPeriodic
+			(std::vector<VectorizedArray<double> >::const_iterator psiSpin0Begin,
 			std::vector<VectorizedArray<double> >::const_iterator psiSpin1Begin,
 			std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >::const_iterator gradPsiSpin0Begin,
 			std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >::const_iterator gradPsiSpin1Begin,
@@ -137,8 +122,12 @@ namespace eshelbyTensorSP
 			const double tVal)
     {
 
-       Tensor<2,C_DIM,VectorizedArray<double> > eshelbyTensor= make_vectorized_array(1.0/(4.0*M_PI))*outer_product(gradPhiTot,gradPhiTot)-outer_product(derExcGradRhoSpin0,gradRhoSpin0)-outer_product(derExcGradRhoSpin1,gradRhoSpin1);
-       VectorizedArray<double> identityTensorFactor=make_vectorized_array(-1.0/(8.0*M_PI))*scalar_product(gradPhiTot,gradPhiTot)+rho*phiTot+exc*rho + (pseudoVLoc-phiExt)*rho;
+       Tensor<2,C_DIM,VectorizedArray<double> > eshelbyTensor;
+       for (unsigned int idim=0; idim<C_DIM; idim++)
+	 for (unsigned int jdim=0; jdim<C_DIM; jdim++)
+	   eshelbyTensor[idim][jdim]=make_vectorized_array(0.0);
+
+       VectorizedArray<double> identityTensorFactor=make_vectorized_array(0.0);
 
        std::vector<VectorizedArray<double> >::const_iterator it1Spin0=psiSpin0Begin;
        std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >::const_iterator it2Spin0=gradPsiSpin0Begin;

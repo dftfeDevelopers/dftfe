@@ -24,7 +24,7 @@ namespace dftfe
   namespace linearAlgebraOperations
   {
     /**
-     *  @brief Contains small internal functions used in linearAlgebraOperations
+     *  @brief Contains internal functions used in linearAlgebraOperations
      *
      *  @author Sambit Das
      */
@@ -70,9 +70,9 @@ namespace dftfe
 				            const MPI_Comm &interComm,
 					    const unsigned int broadcastRoot);
 
-	/** @brief Computes S=X^{T}*X and stores in a parallel ScaLAPACK matrix.
-	 * X^{T} is the subspaceVectorsArray in the column major format. S is the
-	 * overlapMatPar.
+	/** @brief Computes Sc=X^{T}*Xc and stores in a parallel ScaLAPACK matrix.
+	 * X^{T} is the subspaceVectorsArray stored in the column major format (N x M).
+	 * Sc is the overlapMatPar.
 	 *
 	 * The overlap matrix computation and filling is done in a blocked approach
 	 * which avoids creation of full serial overlap matrix memory, and also avoids creation
@@ -80,14 +80,35 @@ namespace dftfe
 	 *
 	 */
 	template<typename T>
-	void fillParallelOverlapMatrix(const dealii::parallel::distributed::Vector<T> & X,
+	void fillParallelOverlapMatrix(const T* X,
+		                       const unsigned int XLocalSize,
 		                       const unsigned int numberVectors,
 		                       const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 				       const MPI_Comm &interBandGroupComm,
+				       const MPI_Comm &mpiComm,
 				       dealii::ScaLAPACKMatrix<T> & overlapMatPar);
 
-	/** @brief Computes X^{T}=Q*X^{T} inplace. X^{T} is the subspaceVectorsArray in the column major
-	 * format. Q is rotationMatPar.
+
+	/** @brief Computes Sc=X^{T}*Xc and stores in a parallel ScaLAPACK matrix.
+	 * X^{T} is the subspaceVectorsArray stored in the column major format (N x M).
+	 * Sc is the overlapMatPar.
+	 *
+	 * The overlap matrix computation and filling is done in a blocked approach
+	 * which avoids creation of full serial overlap matrix memory, and also avoids creation
+	 * of another full X memory.
+	 *
+	 */
+	void fillParallelOverlapMatrixMixedPrec
+	                              (const dataTypes::number* X,
+		                       const unsigned int XLocalSize,
+		                       const unsigned int numberVectors,
+		                       const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+				       const MPI_Comm &interBandGroupComm,
+				       const MPI_Comm &mpiComm,
+				       dealii::ScaLAPACKMatrix<dataTypes::number> & overlapMatPar);
+
+	/** @brief Computes X^{T}=Q*X^{T} inplace. X^{T} is the subspaceVectorsArray
+	 * stored in the column major format (N x M). Q is rotationMatPar.
 	 *
 	 * The subspace rotation inside this function is done in a blocked approach
 	 * which avoids creation of full serial rotation matrix memory, and also avoids creation
@@ -95,15 +116,38 @@ namespace dftfe
 	 *
 	 */
 	template<typename T>
-	void subspaceRotation(dealii::parallel::distributed::Vector<T> & subspaceVectorsArray,
+	void subspaceRotation(T* subspaceVectorsArray,
+		              const unsigned int subspaceVectorsArrayLocalSize,
 		              const unsigned int numberSubspaceVectors,
 			      const unsigned int numberCoreVectors,
-			      dealii::parallel::distributed::Vector<T> & nonCoreVectorsArray,
+			      T* nonCoreVectorsArray,
 		              const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 			      const MPI_Comm &interBandGroupComm,
+			      const MPI_Comm &mpiComm,
 			      const dealii::ScaLAPACKMatrix<T> & rotationMatPar,
 			      const bool rotationMatTranspose=false,
 			      const bool isRotationMatLowerTria=false);
+
+
+	/** @brief Computes X^{T}=Q*X^{T} inplace. X^{T} is the subspaceVectorsArray
+	 * stored in the column major format (N x M). Q is rotationMatPar.
+	 *
+	 * The subspace rotation inside this function is done in a blocked approach
+	 * which avoids creation of full serial rotation matrix memory, and also avoids creation
+	 * of another full subspaceVectorsArray memory.
+	 *
+	 */
+	void subspaceRotationPGSMixedPrec
+	                       (dataTypes::number* subspaceVectorsArray,
+				const unsigned int subspaceVectorsArrayLocalSize,
+				const unsigned int N,
+				const unsigned int numberCoreVectors,
+				dataTypes::number* nonCoreVectorsArray,
+				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+				const MPI_Comm &interBandGroupComm,
+				const MPI_Comm &mpiComm,
+				const dealii::ScaLAPACKMatrix<dataTypes::number> & rotationMatPar,
+				const bool rotationMatTranspose=false);
 
 #endif
     }

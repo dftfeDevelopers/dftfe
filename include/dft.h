@@ -276,7 +276,7 @@ namespace dftfe {
       /**
        *@brief  moves the triangulation vertices using Gaussians such that the all atoms are on triangulation vertices
        */
-      void moveMeshToAtoms(const Triangulation<3,3> & triangulationMove);
+      void moveMeshToAtoms(Triangulation<3,3> & triangulationMove);
 
       /**
        * Initializes the guess of electron-density and single-atom wavefunctions on the mesh,
@@ -286,7 +286,7 @@ namespace dftfe {
        * In periodic problems, periodic faces are mapped here. Further finite-element nodes
        * to be pinned for solving the Poisson problem electro-static potential is set here
        */
-      void initUnmovedTriangulation(const parallel::distributed::Triangulation<3> & triangulation);
+      void initUnmovedTriangulation(parallel::distributed::Triangulation<3> & triangulation);
       void initBoundaryConditions();
       void initElectronicFields(const unsigned int usePreviousGroundStateFields=0);
       void initPseudoPotentialAll();
@@ -392,6 +392,9 @@ namespace dftfe {
       double mixing_anderson();
       double mixing_simple_spinPolarized();
       double mixing_anderson_spinPolarized();
+      double mixing_broyden();
+      double mixing_broyden_spinPolarized();
+
 
       /**
        * Re solves the all electrostatics on a p refined mesh, and computes
@@ -409,6 +412,10 @@ namespace dftfe {
        */
       void compute_fermienergy(const std::vector<std::vector<double>> & eigenValuesInput,
 	                       const double numElectronsInput);
+      /**
+       *@brief Computes Fermi-energy obtained by imposing separate constraints on the number of spin-up and spin-down electrons
+       */
+      void compute_fermienergy_constraintMagnetization(const std::vector<std::vector<double>> & eigenValuesInput);
 
       /**
        *@brief write wavefunction solution fields
@@ -458,7 +465,7 @@ namespace dftfe {
       /**
        * stores required data for Kohn-Sham problem
        */
-      unsigned int numElectrons, numLevels;
+      unsigned int numElectrons, numElectronsUp, numElectronsDown, numLevels;
       std::set<unsigned int> atomTypes;
       std::vector<std::vector<double> > atomLocations,atomLocationsFractional,d_reciprocalLatticeVectors, d_domainBoundingVectors;
 
@@ -572,6 +579,7 @@ namespace dftfe {
        */
       dftUtils::constraintMatrixInfo constraintsNoneDataInfo;
 
+
       ConstraintMatrix constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_noConstraints;
 
 
@@ -582,7 +590,8 @@ namespace dftfe {
 
       /// Spectrum split higher eigenvalues computed in Rayleigh-Ritz step
       std::vector<std::vector<double> > eigenValuesRRSplit;
-      std::vector<dealii::parallel::distributed::Vector<dataTypes::number>> d_eigenVectorsFlattened;
+      std::vector<dealii::parallel::distributed::Vector<dataTypes::number> > d_eigenVectorsFlattened;
+      std::vector<std::vector<dataTypes::number> > d_eigenVectorsFlattenedSTL;
 
       /// parallel message stream
       ConditionalOStream  pcout;
@@ -602,6 +611,15 @@ namespace dftfe {
       std::map<dealii::CellId, std::vector<double> > * gradRhoInValues, *gradRhoInValuesSpinPolarized;
       std::map<dealii::CellId, std::vector<double> > * gradRhoOutValues, *gradRhoOutValuesSpinPolarized;
       std::deque<std::map<dealii::CellId,std::vector<double> >> gradRhoInVals,gradRhoInValsSpinPolarized,gradRhoOutVals, gradRhoOutValsSpinPolarized;
+
+      // Broyden mixing related objects
+      std::map<dealii::CellId, std::vector<double> > FBroyden, gradFBroyden ;
+      std::deque<std::map<dealii::CellId,std::vector<double> >> dFBroyden, graddFBroyden ;
+      std::deque<std::map<dealii::CellId,std::vector<double> >> uBroyden, gradUBroyden ;
+      std::deque<double>  wtBroyden;
+      double w0Broyden = 0.0 ;
+      //
+
 
       // storage for total electrostatic potential solution vector corresponding to input scf electron density
       vectorType d_phiTotRhoIn;
@@ -658,20 +676,28 @@ namespace dftfe {
       std::map<std::pair<unsigned int,unsigned int>, unsigned int> d_projectorIdsNumberingMapCurrentProcess;
 #ifdef USE_COMPLEX
       std::vector<std::vector<std::vector<std::vector<std::complex<double> > > > > d_nonLocalProjectorElementMatrices,d_nonLocalProjectorElementMatricesConjugate,d_nonLocalProjectorElementMatricesTranspose;
+
+      std::vector<std::vector<std::vector<std::vector<std::complex<float> > > > > d_nonLocalProjectorElementMatricesLowPrec,d_nonLocalProjectorElementMatricesConjugateLowPrec,d_nonLocalProjectorElementMatricesTransposeLowPrec;
+
       std::vector<dealii::parallel::distributed::Vector<std::complex<double> > > d_projectorKetTimesVectorPar;
 
       /// parallel vector used in nonLocalHamiltionian times wavefunction vector computation
       /// pre-initialization of the parallel layout is more efficient than creating the parallel
       /// layout for every nonLocalHamiltionan times wavefunction computation
       dealii::parallel::distributed::Vector<std::complex<double> >  d_projectorKetTimesVectorParFlattened;
+      dealii::parallel::distributed::Vector<std::complex<float> >  d_projectorKetTimesVectorParFlattenedLowPrec;
 #else
       std::vector<std::vector<std::vector<std::vector<double> > > > d_nonLocalProjectorElementMatrices,d_nonLocalProjectorElementMatricesConjugate,d_nonLocalProjectorElementMatricesTranspose;
+
+      std::vector<std::vector<std::vector<std::vector<float> > > > d_nonLocalProjectorElementMatricesLowPrec,d_nonLocalProjectorElementMatricesConjugateLowPrec,d_nonLocalProjectorElementMatricesTransposeLowPrec;
+
       std::vector<dealii::parallel::distributed::Vector<double> > d_projectorKetTimesVectorPar;
 
       /// parallel vector used in nonLocalHamiltionian times wavefunction vector computation
       /// pre-initialization of the parallel layout is more efficient than creating the parallel
       /// layout for every nonLocalHamiltionan times wavefunction computation
       dealii::parallel::distributed::Vector<double> d_projectorKetTimesVectorParFlattened;
+      dealii::parallel::distributed::Vector<float> d_projectorKetTimesVectorParFlattenedLowPrec;
 #endif
 
       //
@@ -720,7 +746,7 @@ namespace dftfe {
       void recomputeKPointCoordinates();
 
       /// fermi energy
-      double fermiEnergy;
+      double fermiEnergy, fermiEnergyUp, fermiEnergyDown;
 
       //chebyshev filter variables and functions
       //int numPass ; // number of filter passes
@@ -743,7 +769,8 @@ namespace dftfe {
 				     kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
 				     chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver,
 				     std::vector<double> & residualNormWaveFunctions,
-				     const bool isSpectrumSplit);
+				     const bool isSpectrumSplit,
+				     const bool useMixedPrec);
 
       void computeResidualNorm(const std::vector<double> & eigenValuesTemp,
 			       kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,

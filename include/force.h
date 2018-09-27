@@ -181,6 +181,7 @@ namespace dftfe {
       void FnlGammaAtomsElementalContributionPeriodic
 	  (std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
 	   FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
+	   FEEvaluation<C_DIM,1,C_num1DQuadPSP<FEOrder>(),C_DIM>  & forceEvalNLP,
 	   const unsigned int cell,
 	   const std::vector<std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > > & pspnlGammaAtomsQuads,
 	   const std::vector<std::vector<std::vector<std::complex<double> > > > & projectorKetTimesPsiTimesV,
@@ -189,6 +190,7 @@ namespace dftfe {
       void FnlGammaAtomsElementalContributionPeriodicSpinPolarized
 	  (std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
 	   FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
+	   FEEvaluation<C_DIM,1,C_num1DQuadPSP<FEOrder>(),C_DIM>  & forceEvalNLP,
 	   const unsigned int cell,
 	   const std::vector<std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > > & pspnlGammaAtomsQuads,
 	   const std::vector<std::vector<std::vector<std::complex<double> > > > & projectorKetTimesPsiSpin0TimesV,
@@ -200,6 +202,7 @@ namespace dftfe {
       void FnlGammaAtomsElementalContributionNonPeriodicSpinPolarized
 	  (std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
 	   FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
+	   FEEvaluation<C_DIM,1,C_num1DQuadPSP<FEOrder>(),C_DIM>  & forceEvalNLP,
 	   const unsigned int cell,
 	   const std::vector<std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > > pspnlGammaAtomQuads,
 	   const std::vector<std::vector<double> >  & projectorKetTimesPsiSpin0TimesV,
@@ -210,6 +213,7 @@ namespace dftfe {
       void FnlGammaAtomsElementalContributionNonPeriodic
 	  (std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
 	   FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
+	   FEEvaluation<C_DIM,1,C_num1DQuadPSP<FEOrder>(),C_DIM>  & forceEvalNLP,
 	   const unsigned int cell,
 	   const std::vector<std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > > pspnlGammaAtomQuads,
 	   const std::vector<std::vector<double> >  & projectorKetTimesPsiTimesV,
@@ -336,14 +340,6 @@ namespace dftfe {
 
       /// Storage for configurational force on all global atoms.
       std::vector<double> d_globalAtomsGaussianForces;
-
-#ifdef USE_COMPLEX
-      /* Part of the configurational force which is summed over k points.
-       * It is a temporary data structure required for force evaluation (d_globalAtomsGaussianForces)
-       * when parallization over k points is on.
-       */
-      std::vector<double> d_globalAtomsGaussianForcesKPoints;
-#endif
 
       /// Storage for configurational stress tensor
       Tensor<2,C_DIM,double> d_stress;

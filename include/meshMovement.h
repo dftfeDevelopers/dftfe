@@ -46,7 +46,7 @@ namespace dftfe {
        *  @param[in] domainBoundingVectors domain vectors of the domain corresponding to
        *  the triangulation object.
        */
-      void init(const Triangulation<3,3> & triangulation,
+      void init(Triangulation<3,3> & triangulation,
 	        const std::vector<std::vector<double> > & domainBoundingVectors);
 
       /** @brief Re-initializes the required data-structures for a given triangulation
@@ -88,15 +88,15 @@ namespace dftfe {
 					      double controllingParameter)=0;
       virtual void computeIncrement()=0;
 
-      /// Parallel distributed vector of displacements of the triangulation vertices
-      dealii::parallel::distributed::Vector<double>  d_incrementalDisplacementParallel;
+      /// vector of displacements of the triangulation vertices
+      Vector<double> d_incrementalDisplacement;
 
-      Vector<double> d_incrementalDisplacementSerial;
       bool d_isParallelMesh;
 
       //dealii based FE data structres
       FESystem<C_DIM>  FEMoveMesh;
       DoFHandler<C_DIM> d_dofHandlerMoveMesh;
+      parallel::distributed::Triangulation<3> * triaPtr;
       IndexSet   d_locally_owned_dofs;
       IndexSet   d_locally_relevant_dofs;
       ConstraintMatrix d_constraintsMoveMesh;

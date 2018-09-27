@@ -28,7 +28,7 @@
 
 
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::initUnmovedTriangulation(const parallel::distributed::Triangulation<3> & triangulation)
+void dftClass<FEOrder>::initUnmovedTriangulation(parallel::distributed::Triangulation<3> & triangulation)
 {
   computing_timer.enter_section("unmoved setup");
 
@@ -142,9 +142,9 @@ void dftClass<FEOrder>::initUnmovedTriangulation(const parallel::distributed::Tr
 
   std::vector<int> periodicDirectionVector;
   const std::array<int,3> periodic = {dftParameters::periodicX, dftParameters::periodicY, dftParameters::periodicZ};
-  for(unsigned int  d= 0; d < 3; ++d) 
+  for(unsigned int  d= 0; d < 3; ++d)
     {
-      if(periodic[d]==1) 
+      if(periodic[d]==1)
 	{
 	  periodicDirectionVector.push_back(d);
 	}

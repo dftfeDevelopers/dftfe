@@ -106,6 +106,7 @@ namespace dftfe{
 		    const unsigned int numberComponents,
 		    const bool scaleFlag,
 		    const double scalar,
+		    const bool useSinglePrec,
 		    dealii::parallel::distributed::Vector<dataTypes::number> & Y) = 0;
 
 
@@ -113,13 +114,11 @@ namespace dftfe{
     /**
      * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
      *
-     * @param X Vector of Vectors containing multi-wavefunction fields (though X does not
-     * change inside the function it is scaled inside HX function and rescaled back to
-     * avoid duplication of memory and hence is not const)
+     * @param X Vector of Vectors containing multi-wavefunction fields
      * @param numberComponents number of wavefunctions associated with a given node
      * @param ProjMatrix projected small matrix
      */
-    virtual void XtHX(dealii::parallel::distributed::Vector<dataTypes::number> & X,
+    virtual void XtHX(const std::vector<dataTypes::number> & X,
 		      const unsigned int numberComponents,
 		      std::vector<dataTypes::number> & ProjHam) = 0;
 
@@ -133,7 +132,7 @@ namespace dftfe{
      * @param projHamPar parallel ScaLAPACKMatrix which stores the computed projection
      * of the operation into the given subspace
      */
-    virtual void XtHX(const dealii::parallel::distributed::Vector<dataTypes::number> & X,
+    virtual void XtHX(const std::vector<dataTypes::number> & X,
 		      const unsigned int numberComponents,
 		      const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 		      dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar) = 0;

@@ -65,11 +65,11 @@ end
 subsection SCF parameters
   set MAXIMUM ITERATIONS = 100 
   set TOLERANCE          = 1e-6
-  set ANDERSON SCHEME MIXING PARAMETER   = 0.5
-  set ANDERSON SCHEME MIXING HISTORY     = 70
+  set MIXING PARAMETER   = 0.5
+  set MIXING HISTORY     = 70
   set TEMPERATURE                        = 500
   set STARTING WFC= ATOMIC
-
+  set HIGHER QUAD NLP  = false
   subsection Eigen-solver parameters
      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 27
      set LOWER BOUND WANTED SPECTRUM = -10.0

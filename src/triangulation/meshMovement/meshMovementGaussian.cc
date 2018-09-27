@@ -63,9 +63,10 @@ void meshMovementGaussianClass::computeIncrement()
   DoFHandler<3>::active_cell_iterator
   cell = d_dofHandlerMoveMesh.begin_active(),
   endc = d_dofHandlerMoveMesh.end();
-  for (; cell!=endc; ++cell) {
-   if (!cell->is_artificial()){
-    for (unsigned int i=0; i<vertices_per_cell; ++i){
+  for (; cell!=endc; ++cell)
+   if (!cell->is_artificial())
+    for (unsigned int i=0; i<vertices_per_cell; ++i)
+    {
 	const unsigned global_vertex_no = cell->vertex_index(i);
 
 	if (vertex_touched[global_vertex_no])
@@ -74,9 +75,11 @@ void meshMovementGaussianClass::computeIncrement()
 	Point<C_DIM> nodalCoor = cell->vertex(i);
 
 	int overlappedControlPointId=-1;
-	for (unsigned int jControl=0;jControl <d_controlPointLocations.size(); jControl++){
+	for (unsigned int jControl=0;jControl <d_controlPointLocations.size(); jControl++)
+	{
 	     const double distance=(nodalCoor-d_controlPointLocations[jControl]).norm();
-	     if (distance < 1e-5){
+	     if (distance < 1e-5)
+	     {
 		overlappedControlPointId=jControl;
 		break;
 	     }
@@ -95,18 +98,12 @@ void meshMovementGaussianClass::computeIncrement()
 	      const unsigned int globalDofIndex=cell->vertex_dof_index(i,idim);
 
 	      if(!d_constraintsMoveMesh.is_constrained(globalDofIndex))
-	      {
-		   if (d_isParallelMesh)
-		       d_incrementalDisplacementParallel[globalDofIndex]+=gaussianWeight*d_controlPointDisplacements[iControl][idim];
-		   else
-		       d_incrementalDisplacementSerial[globalDofIndex]+=gaussianWeight*d_controlPointDisplacements[iControl][idim];
-	      }
+		   d_incrementalDisplacement[globalDofIndex]
+		       +=gaussianWeight*d_controlPointDisplacements[iControl][idim];
 
 	   }
 	}
      }
-   }
-  }
 }
 
 }

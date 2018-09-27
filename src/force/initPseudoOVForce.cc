@@ -34,9 +34,11 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoOVDataForce()
   //get FE data structures
   //
   QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
-  FEValues<3> fe_values(dftPtr->FE, quadrature, update_quadrature_points);
+  QGauss<3>  quadratureHigh(C_num1DQuadPSP<FEOrder>());
+  FEValues<3> fe_values(dftPtr->FE, dftParameters::useHigherQuadNLP?quadratureHigh:quadrature, update_quadrature_points);
   const unsigned int numberNodesPerElement  = dftPtr->FE.dofs_per_cell;
-  const unsigned int numberQuadraturePoints = quadrature.size();
+  const unsigned int numberQuadraturePoints = dftParameters::useHigherQuadNLP?quadratureHigh.size()
+                                                             :quadrature.size();
   const unsigned int numKPoints=dftPtr->d_kPointWeights.size();
 
   //

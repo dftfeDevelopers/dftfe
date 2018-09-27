@@ -78,7 +78,12 @@ void dftClass<FEOrder>::compute_rhoOut()
    const unsigned int eigenVectorsBlockSize=std::min(dftParameters::wfcBlockSize,
 	                                             bandGroupLowHighPlusOneIndices[1]);
 
+   const unsigned int localVectorSize = d_eigenVectorsFlattenedSTL[0].size()/numEigenValues;
+
    std::vector<std::vector<vectorType>> eigenVectors((1+dftParameters::spinPolarized)*d_kPointWeights.size());
+
+   std::vector<dealii::parallel::distributed::Vector<dataTypes::number> > eigenVectorsFlattenedBlock((1+dftParameters::spinPolarized)*d_kPointWeights.size());
+
    for(unsigned int ivec = 0; ivec < numEigenValues; ivec+=eigenVectorsBlockSize)
    {
       const unsigned int currentBlockSize=std::min(eigenVectorsBlockSize,numEigenValues-ivec);
@@ -90,29 +95,61 @@ void dftClass<FEOrder>::compute_rhoOut()
 	      eigenVectors[kPoint].resize(currentBlockSize);
 	      for(unsigned int i= 0; i < currentBlockSize; ++i)
 		  eigenVectors[kPoint][i].reinit(d_tempEigenVec);
+
+
+	      vectorTools::createDealiiVector<dataTypes::number>(matrix_free_data.get_vector_partitioner(),
+							         currentBlockSize,
+							         eigenVectorsFlattenedBlock[kPoint]);
+	      eigenVectorsFlattenedBlock[kPoint] = dataTypes::number(0.0);
 	   }
+
+	   constraintsNoneDataInfo.precomputeMaps(matrix_free_data.get_vector_partitioner(),
+					          eigenVectorsFlattenedBlock[0].get_partitioner(),
+					          currentBlockSize);
       }
 
-      if ((ivec+currentBlockSize)<=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1] &&
+      if((ivec+currentBlockSize)<=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1] &&
 	  (ivec+currentBlockSize)>bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
       {
+	   for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+	   {
 
-	  for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
-	  {
+
+		 for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
+		    for(unsigned int iWave = 0; iWave < currentBlockSize; ++iWave)
+			eigenVectorsFlattenedBlock[kPoint].local_element(iNode*currentBlockSize+iWave)
+			  = d_eigenVectorsFlattenedSTL[kPoint][iNode*numEigenValues+ivec+iWave];
+
+		 constraintsNoneDataInfo.distribute(eigenVectorsFlattenedBlock[kPoint],
+						    currentBlockSize);
+		 eigenVectorsFlattenedBlock[kPoint].update_ghost_values();
+
 #ifdef USE_COMPLEX
 		 vectorTools::copyFlattenedDealiiVecToSingleCompVec
-			 (d_eigenVectorsFlattened[kPoint],
-			  numEigenValues,
-			  std::make_pair(ivec,ivec+currentBlockSize),
+			 (eigenVectorsFlattenedBlock[kPoint],
+			  currentBlockSize,
+			  std::make_pair(0,currentBlockSize),
 			  localProc_dof_indicesReal,
 			  localProc_dof_indicesImag,
-			  eigenVectors[kPoint]);
+			  eigenVectors[kPoint],
+			  false);
+
+		 //FIXME: The underlying call to update_ghost_values
+		 //is required because currently localProc_dof_indicesReal
+		 //and localProc_dof_indicesImag are only available for
+		 //locally owned nodes. Once they are also made available
+		 //for ghost nodes- use true for the last argument in
+		 //copyFlattenedDealiiVecToSingleCompVec(..) above and supress
+		 //underlying call.
+		 for(unsigned int i= 0; i < currentBlockSize; ++i)
+		     eigenVectors[kPoint][i].update_ghost_values();
 #else
 		 vectorTools::copyFlattenedDealiiVecToSingleCompVec
-			 (d_eigenVectorsFlattened[kPoint],
-			  numEigenValues,
-			  std::make_pair(ivec,ivec+currentBlockSize),
-			  eigenVectors[kPoint]);
+			 (eigenVectorsFlattenedBlock[kPoint],
+			  currentBlockSize,
+			  std::make_pair(0,currentBlockSize),
+			  eigenVectors[kPoint],
+			  true);
 
 #endif
 	  }
@@ -194,17 +231,26 @@ void dftClass<FEOrder>::compute_rhoOut()
 			  for(unsigned int iEigenVec=0; iEigenVec<currentBlockSize; ++iEigenVec)
 			    {
 
-			      const double partialOccupancy=dftUtils::getPartialOccupancy
+			      double partialOccupancy=dftUtils::getPartialOccupancy
 							    (eigenValues[kPoint][ivec+iEigenVec],
 							     fermiEnergy,
 							     C_kb,
 							     dftParameters::TVal);
 
-			      const double partialOccupancy2=dftUtils::getPartialOccupancy
+			      double partialOccupancy2=dftUtils::getPartialOccupancy
 							    (eigenValues[kPoint][ivec+iEigenVec+dftParameters::spinPolarized*numEigenVectors],
 							     fermiEnergy,
 							     C_kb,
 							     dftParameters::TVal);
+			      if(dftParameters::constraintMagnetization)
+				{
+				 partialOccupancy = 1.0 , partialOccupancy2 = 1.0 ;
+				 if (eigenValues[kPoint][ivec+iEigenVec+dftParameters::spinPolarized*numEigenVectors] > fermiEnergyDown)
+					partialOccupancy2 = 0.0 ;
+				 if (eigenValues[kPoint][ivec+iEigenVec] > fermiEnergyUp)
+					partialOccupancy = 0.0 ;					
+
+				}
 
 			      for(unsigned int q=0; q<numQuadPoints; ++q)
 				{
@@ -375,6 +421,18 @@ void dftClass<FEOrder>::compute_rhoOut()
 	  gradRhoInValsSpinPolarized.pop_front();
 	  gradRhoOutValsSpinPolarized.pop_front();
       }
+
+      if (dftParameters::mixingMethod=="BROYDEN")
+	{
+	 dFBroyden.pop_front();
+         uBroyden.pop_front();
+	 if(dftParameters::xc_id == 4)//GGA
+         {
+	  graddFBroyden.pop_front();
+	  gradUBroyden.pop_front();
+         }
+       }
+
     }
 
 }
