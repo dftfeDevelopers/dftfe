@@ -20,8 +20,9 @@
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
 {
-
-   if (dftParameters::verbosity>=2)
+   computing_timer.enter_section("h refinement electrostatics");
+   computingTimerStandard.enter_section("h refinement electrostatics");
+   if (dftParameters::verbosity>=1)
         pcout<< std::endl<<"-----------------Re computing electrostatics on h globally refined mesh--------------"<<std::endl;
 
 
@@ -33,8 +34,40 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
    dealii::QGauss<3> quadrature(C_num1DQuad<FEOrder>());
    const unsigned int n_q_points = quadrature.size();
 
+   std::map<dealii::CellId, std::vector<double> > _gradRhoOutValues;
+   std::map<dealii::CellId, std::vector<double> > _gradRhoOutValuesSpinPolarized;
+   if (dftParameters::isCellStress || dftParameters::isIonForce)
+	if (!(dftParameters::xc_id == 4))
+	{
+
+	       gradRhoOutValues=&_gradRhoOutValues;
+	       if (dftParameters::spinPolarized==1)
+		   gradRhoOutValuesSpinPolarized=&_gradRhoOutValuesSpinPolarized;
 
 
+	       typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
+	       for (; cell!=endc; ++cell)
+		  if (cell->is_locally_owned())
+		    {
+			const dealii::CellId cellId=cell->id();
+			(*rhoOutValues)[cellId] = std::vector<double>(n_q_points,0.0);
+			(*gradRhoOutValues)[cellId] = std::vector<double>(3*n_q_points,0.0);
+
+			if (dftParameters::spinPolarized==1)
+			{
+			   (*rhoOutValuesSpinPolarized)[cellId]
+				 = std::vector<double>(2*n_q_points,0.0);
+			   (*gradRhoOutValuesSpinPolarized)[cellId]
+				 = std::vector<double>(6*n_q_points,0.0);
+			}
+		    }
+
+	       computeRhoFromPSI(rhoOutValues,
+			    gradRhoOutValues,
+			    rhoOutValuesSpinPolarized,
+			    gradRhoOutValuesSpinPolarized,
+			    true);
+	}
 
    //
    //project and create a nodal field of the same mesh from the quadrature data (L2 projection from quad points to nodes)
@@ -42,6 +75,22 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
    vectorType rhoNodalFieldCoarse;
    matrix_free_data.initialize_dof_vector(rhoNodalFieldCoarse);
    rhoNodalFieldCoarse = 0.0;
+
+   vectorType delxRhoNodalFieldCoarse;
+   vectorType delyRhoNodalFieldCoarse;
+   vectorType delzRhoNodalFieldCoarse;
+   if (dftParameters::isCellStress || dftParameters::isIonForce)
+   {
+
+       matrix_free_data.initialize_dof_vector(delxRhoNodalFieldCoarse);
+       delxRhoNodalFieldCoarse = 0.0;
+
+       matrix_free_data.initialize_dof_vector(delyRhoNodalFieldCoarse);
+       delyRhoNodalFieldCoarse = 0.0;
+
+       matrix_free_data.initialize_dof_vector(delzRhoNodalFieldCoarse);
+       delzRhoNodalFieldCoarse = 0.0;
+   }
 
    //
    //create a lambda function for L2 projection of quadrature electron-density to nodal electron density
@@ -55,10 +104,58 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
 										  quadrature,
 										  funcRho,
 										  rhoNodalFieldCoarse);
+   if (dftParameters::isCellStress || dftParameters::isIonForce)
+   {
+       std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell,const unsigned int q)> funcDelxRho = [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell , const unsigned int q)
+	 {return (*gradRhoOutValues).find(cell->id())->second[3*q];};
+
+       dealii::VectorTools::project<3,dealii::parallel::distributed::Vector<double> >(dealii::MappingQ1<3,3>(),
+										      matrix_free_data.get_dof_handler(),
+										      constraintsNone,
+										      quadrature,
+										      funcDelxRho,
+										      delxRhoNodalFieldCoarse);
+
+       std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell,const unsigned int q)> funcDelyRho = [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell , const unsigned int q)
+	 {return (*gradRhoOutValues).find(cell->id())->second[3*q+1];};
+
+       dealii::VectorTools::project<3,dealii::parallel::distributed::Vector<double> >(dealii::MappingQ1<3,3>(),
+										      matrix_free_data.get_dof_handler(),
+										      constraintsNone,
+										      quadrature,
+										      funcDelyRho,
+										      delyRhoNodalFieldCoarse);
+
+       std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell,const unsigned int q)> funcDelzRho = [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell , const unsigned int q)
+	 {return (*gradRhoOutValues).find(cell->id())->second[3*q+2];};
+
+       dealii::VectorTools::project<3,dealii::parallel::distributed::Vector<double> >(dealii::MappingQ1<3,3>(),
+										      matrix_free_data.get_dof_handler(),
+										      constraintsNone,
+										      quadrature,
+										      funcDelzRho,
+										      delzRhoNodalFieldCoarse);
+   }
 
    rhoNodalFieldCoarse.update_ghost_values();
    constraintsNone.distribute(rhoNodalFieldCoarse);
    rhoNodalFieldCoarse.update_ghost_values();
+
+
+   if (dftParameters::isCellStress || dftParameters::isIonForce)
+   {
+       delxRhoNodalFieldCoarse.update_ghost_values();
+       constraintsNone.distribute(delxRhoNodalFieldCoarse);
+       delxRhoNodalFieldCoarse.update_ghost_values();
+
+       delyRhoNodalFieldCoarse.update_ghost_values();
+       constraintsNone.distribute(delyRhoNodalFieldCoarse);
+       delyRhoNodalFieldCoarse.update_ghost_values();
+
+       delzRhoNodalFieldCoarse.update_ghost_values();
+       constraintsNone.distribute(delzRhoNodalFieldCoarse);
+       delzRhoNodalFieldCoarse.update_ghost_values();
+   }
 
    //
    //compute the total charge using rho nodal field for debugging purposes
@@ -75,7 +172,6 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
    //
    //subdivide the existing mesh and project electron-density onto the new mesh
    //
-   computing_timer.enter_section("h refinement electrostatics");
 
    //
    //initialize the new dofHandler to refine and do a solution transfer
@@ -92,7 +188,23 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
    parallel::distributed::SolutionTransfer<3,vectorType> solTrans(dofHandlerHRefined);
    electrostaticsTriaRho.set_all_refine_flags();
    electrostaticsTriaRho.prepare_coarsening_and_refinement();
-   solTrans.prepare_for_coarsening_and_refinement(rhoNodalFieldCoarse);
+
+   if (dftParameters::isCellStress || dftParameters::isIonForce)
+   {
+       std::vector<const vectorType *> vecAllIn(4);
+       vecAllIn[0]=&rhoNodalFieldCoarse;
+       vecAllIn[1]=&delxRhoNodalFieldCoarse;
+       vecAllIn[2]=&delyRhoNodalFieldCoarse;
+       vecAllIn[3]=&delzRhoNodalFieldCoarse;
+
+
+       solTrans.prepare_for_coarsening_and_refinement(vecAllIn);
+   }
+   else
+   {
+       solTrans.prepare_for_coarsening_and_refinement(rhoNodalFieldCoarse);
+   }
+
    electrostaticsTriaRho.execute_coarsening_and_refinement();
 
    dofHandlerHRefined.distribute_dofs(dofHandlerHRefined.get_fe());
@@ -170,11 +282,55 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
 										   ghost_indices,
 										   mpi_communicator);
    rhoNodalFieldRefined.zero_out_ghosts();
-   solTrans.interpolate(rhoNodalFieldRefined);
+
+   vectorType delxRhoNodalFieldRefined;
+   vectorType delyRhoNodalFieldRefined;
+   vectorType delzRhoNodalFieldRefined;
+
+   if (dftParameters::isCellStress || dftParameters::isIonForce)
+   {
+
+       delxRhoNodalFieldRefined.reinit(rhoNodalFieldRefined);
+       delxRhoNodalFieldRefined.zero_out_ghosts();
+
+       delyRhoNodalFieldRefined.reinit(rhoNodalFieldRefined);
+       delyRhoNodalFieldRefined.zero_out_ghosts();
+
+       delzRhoNodalFieldRefined.reinit(rhoNodalFieldRefined);
+       delzRhoNodalFieldRefined.zero_out_ghosts();
+   }
+
+   if (dftParameters::isCellStress || dftParameters::isIonForce)
+   {
+       std::vector<vectorType *> vecAllOut(4);
+       vecAllOut[0]=&rhoNodalFieldRefined;
+       vecAllOut[1]=&delxRhoNodalFieldRefined;
+       vecAllOut[2]=&delyRhoNodalFieldRefined;
+       vecAllOut[3]=&delzRhoNodalFieldRefined;
+
+       solTrans.interpolate(vecAllOut);
+   }
+   else
+       solTrans.interpolate(rhoNodalFieldRefined);
+
    rhoNodalFieldRefined.update_ghost_values();
    constraintsHRefined.distribute(rhoNodalFieldRefined);
    rhoNodalFieldRefined.update_ghost_values();
 
+   if (dftParameters::isCellStress || dftParameters::isIonForce)
+   {
+       delxRhoNodalFieldRefined.update_ghost_values();
+       constraintsHRefined.distribute(delxRhoNodalFieldRefined);
+       delxRhoNodalFieldRefined.update_ghost_values();
+
+       delyRhoNodalFieldRefined.update_ghost_values();
+       constraintsHRefined.distribute(delyRhoNodalFieldRefined);
+       delyRhoNodalFieldRefined.update_ghost_values();
+
+       delzRhoNodalFieldRefined.update_ghost_values();
+       constraintsHRefined.distribute(delzRhoNodalFieldRefined);
+       delzRhoNodalFieldRefined.update_ghost_values();
+   }
 
    //
    //call init for the force computation subsequently
@@ -203,6 +359,38 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
    const double integralRhoValue = totalCharge(dofHandlerHRefined,
 					       rhoNodalFieldRefined,
 					       rhoOutHRefinedQuadValues);
+   //
+   //fill in grad rho at quadrature values of the field on the refined mesh
+   //
+   std::map<dealii::CellId, std::vector<double> > gradRhoOutHRefinedQuadValues;
+
+   if (dftParameters::isCellStress || dftParameters::isIonForce)
+   {
+       FEValues<3> fe_values (dofHandlerHRefined.get_fe(), quadrature, update_values);
+       std::vector<double> tempDelxRho(n_q_points);
+       std::vector<double> tempDelyRho(n_q_points);
+       std::vector<double> tempDelzRho(n_q_points);
+
+       DoFHandler<3>::active_cell_iterator
+       cell = dofHandlerHRefined.begin_active(),
+       endc = dofHandlerHRefined.end();
+       for(; cell!=endc; ++cell)
+	  if(cell->is_locally_owned())
+	  {
+	      fe_values.reinit (cell);
+	      fe_values.get_function_values(delxRhoNodalFieldRefined,tempDelxRho);
+	      fe_values.get_function_values(delyRhoNodalFieldRefined,tempDelyRho);
+	      fe_values.get_function_values(delzRhoNodalFieldRefined,tempDelzRho);
+
+	      gradRhoOutHRefinedQuadValues[cell->id()].resize(3*n_q_points);
+	      for (unsigned int q_point=0; q_point<n_q_points; ++q_point)
+		{
+		  gradRhoOutHRefinedQuadValues[cell->id()][3*q_point] = tempDelxRho[q_point];
+		  gradRhoOutHRefinedQuadValues[cell->id()][3*q_point+1] = tempDelyRho[q_point];
+		  gradRhoOutHRefinedQuadValues[cell->id()][3*q_point+2] = tempDelzRho[q_point];
+		}
+	  }
+   }
 
    //
    //compute total charge using rhoNodalRefined field
@@ -251,7 +439,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
 					   d_imagePositionsTrunc,
 					   d_imageIdsTrunc,
 					   d_imageChargesTrunc,
-					   dftParameters::radiusAtomBall);
+					   d_vselfBinsManager.getStoredAdaptiveBallRadius());
 
    std::vector<const dealii::DoFHandler<3> *> matrixFreeDofHandlerVectorInput;
 
@@ -326,10 +514,16 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
 			dftParameters::maxLinearSolverIterations,
 			dftParameters::verbosity);
 
-   std::map<dealii::CellId, std::vector<double> > pseudoValuesHRefined;
-   initLocalPseudoPotential(dofHandlerHRefined,
-			    quadrature,
-			    pseudoValuesHRefined);
+   std::map<dealii::CellId, std::vector<double> > pseudoVLocHRefined;
+   std::map<dealii::CellId, std::vector<double> > gradPseudoVLocHRefined;
+   std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > gradPseudoVLocAtomsHRefined;
+
+   if(dftParameters::isPseudopotential)
+       initLocalPseudoPotential(dofHandlerHRefined,
+				quadrature,
+				pseudoVLocHRefined,
+				gradPseudoVLocHRefined,
+				gradPseudoVLocAtomsHRefined);
 
    energyCalculator energyCalcHRefined(mpi_communicator, interpoolcomm, interBandGroupComm);
 
@@ -354,8 +548,8 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
 				     *gradRhoInValues,
 				     *gradRhoOutValues,
 				     localVselfsHRefined,
-				     pseudoValues,
-				     pseudoValuesHRefined,
+				     d_pseudoVLoc,
+				     pseudoVLocHRefined,
 				     atomHRefinedNodeIdToChargeMap,
 				     atomLocations.size(),
 				     lowerBoundKindex,
@@ -386,14 +580,14 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
 						  *gradRhoInValuesSpinPolarized,
 						  *gradRhoOutValuesSpinPolarized,
 						  localVselfsHRefined,
-						  pseudoValues,
-						  pseudoValuesHRefined,
+						  d_pseudoVLoc,
+						  pseudoVLocHRefined,
 						  atomHRefinedNodeIdToChargeMap,
 						  atomLocations.size(),
 						  lowerBoundKindex,
 						  1,
 						  true);
-  computing_timer.exit_section("h refinement electrostatics");
+
 
 
     if(dftParameters::isIonForce || dftParameters::isCellStress)
@@ -461,6 +655,9 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
                                      d_phiTotRhoIn,
 				     d_phiTotRhoOut,
 				     d_phiExt,
+				     d_pseudoVLoc,
+				     d_gradPseudoVLoc,
+				     d_gradPseudoVLocAtoms,
 				     d_noConstraints,
 				     d_vselfBinsManager,
 				     matrixFreeDataHRefined,
@@ -469,6 +666,10 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
 				     phiTotRhoOutHRefined,
 				     phiExtHRefined,
 				     rhoOutHRefinedQuadValues,
+				     gradRhoOutHRefinedQuadValues,
+				     pseudoVLocHRefined,
+				     gradPseudoVLocHRefined,
+				     gradPseudoVLocAtomsHRefined,
 				     onlyHangingNodeConstraints,
 				     vselfBinsManagerHRefined);
 	forcePtr->printAtomsForces();
@@ -488,6 +689,9 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
                                 d_phiTotRhoIn,
 				d_phiTotRhoOut,
 				d_phiExt,
+				d_pseudoVLoc,
+				d_gradPseudoVLoc,
+				d_gradPseudoVLocAtoms,
 				d_noConstraints,
 				d_vselfBinsManager,
 				matrixFreeDataHRefined,
@@ -496,6 +700,10 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
 				phiTotRhoOutHRefined,
 				phiExtHRefined,
 				rhoOutHRefinedQuadValues,
+				gradRhoOutHRefinedQuadValues,
+				pseudoVLocHRefined,
+				gradPseudoVLocHRefined,
+				gradPseudoVLocAtomsHRefined,
 				onlyHangingNodeConstraints,
 			        vselfBinsManagerHRefined);
 	forcePtr->printStress();
@@ -538,5 +746,6 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
 
       }
 
-
+  computing_timer.exit_section("h refinement electrostatics");
+  computingTimerStandard.exit_section("h refinement electrostatics");
 }

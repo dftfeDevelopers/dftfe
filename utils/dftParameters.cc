@@ -86,11 +86,11 @@ namespace dftParameters
 
     prm.declare_entry("H REFINED ELECTROSTATICS", "false",
 		      Patterns::Bool(),
-		      "[Advanced] Compute electrostatic energy and forces on a h refined mesh after each ground-state solve.");
+		      "[Advanced] Compute electrostatic energy and forces on a h refined mesh after each ground-state solve. Default: false.");
 
     prm.declare_entry("P REFINED ELECTROSTATICS", "false",
 		      Patterns::Bool(),
-		      "[Advanced] Compute electrostatic energy and forces on a p refined mesh after each ground-state solve.");
+		      "[Advanced] Compute electrostatic energy on a p refined mesh after each ground-state solve. Default: false.");
 
     prm.declare_entry("VERBOSITY", "1",
                       Patterns::Integer(0,4),

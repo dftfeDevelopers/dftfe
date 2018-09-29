@@ -212,10 +212,7 @@ void forceClass<FEOrder>::initPseudoData()
 {
 
   if(dftParameters::isPseudopotential)
-    {
         computeElementalNonLocalPseudoOVDataForce();
-	initLocalPseudoPotentialForce();
-    }
 }
 
 //compute forces on atoms corresponding to a Gaussian generator
@@ -228,6 +225,9 @@ void forceClass<FEOrder>::computeAtomsForces
 		 const vectorType & phiTotRhoIn,
 		 const vectorType & phiTotRhoOut,
 		 const vectorType & phiExt,
+		 const std::map<dealii::CellId, std::vector<double> > & pseudoVLoc,
+		 const std::map<dealii::CellId, std::vector<double> > & gradPseudoVLoc,
+		 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtoms,
 		 const ConstraintMatrix  & noConstraints,
 		 const vselfBinsManager<FEOrder> & vselfBinsManagerEigen,
 	         const MatrixFree<3,double> & matrixFreeDataElectro,
@@ -236,9 +236,14 @@ void forceClass<FEOrder>::computeAtomsForces
 		 const vectorType & phiTotRhoOutElectro,
 		 const vectorType & phiExtElectro,
 		 const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
+		 const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectro,
+		 const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
+		 const std::map<dealii::CellId, std::vector<double> > & gradPseudoVLocElectro,
+		 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtomsElectro,
 	         const ConstraintMatrix  & noConstraintsElectro,
 		 const vselfBinsManager<FEOrder> & vselfBinsManagerElectro)
 {
+  /*
   createBinObjectsForce(matrixFreeData.get_dof_handler(phiTotDofHandlerIndex),
 	                d_dofHandlerForce,
 	                noConstraints,
@@ -249,6 +254,7 @@ void forceClass<FEOrder>::computeAtomsForces
                         d_AtomIdBinIdLocalDofHandler,
                         d_cellFacesVselfBallSurfacesDofHandler,
                         d_cellFacesVselfBallSurfacesDofHandlerForce);
+  */
 
   createBinObjectsForce(matrixFreeDataElectro.get_dof_handler(phiTotDofHandlerIndexElectro),
 	                d_dofHandlerForceElectro,
@@ -268,6 +274,9 @@ void forceClass<FEOrder>::computeAtomsForces
 		                        phiTotRhoIn,
 		                        phiTotRhoOut,
 		                        phiExt,
+					pseudoVLoc,
+					gradPseudoVLoc,
+					gradPseudoVLocAtoms,
 		                        vselfBinsManagerEigen,
 	                                matrixFreeDataElectro,
 		                        phiTotDofHandlerIndexElectro,
@@ -275,6 +284,10 @@ void forceClass<FEOrder>::computeAtomsForces
 		                        phiTotRhoOutElectro,
 		                        phiExtElectro,
 		                        rhoOutValuesElectro,
+					gradRhoOutValuesElectro,
+					pseudoVLocElectro,
+					gradPseudoVLocElectro,
+					gradPseudoVLocAtomsElectro,
 		                        vselfBinsManagerElectro);
 
   computeAtomsForcesGaussianGenerator(d_allowGaussianOverlapOnAtoms);
@@ -336,6 +349,9 @@ void forceClass<FEOrder>::computeConfigurationalForceTotalLinFE
 				     const vectorType & phiTotRhoIn,
 				     const vectorType & phiTotRhoOut,
 				     const vectorType & phiExt,
+		                     const std::map<dealii::CellId, std::vector<double> > & pseudoVLoc,
+		                     const std::map<dealii::CellId, std::vector<double> > & gradPseudoVLoc,
+		                     const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtoms,
 				     const vselfBinsManager<FEOrder> & vselfBinsManagerEigen,
 				     const MatrixFree<3,double> & matrixFreeDataElectro,
 				     const unsigned int phiTotDofHandlerIndexElectro,
@@ -343,6 +359,10 @@ void forceClass<FEOrder>::computeConfigurationalForceTotalLinFE
 				     const vectorType & phiTotRhoOutElectro,
 				     const vectorType & phiExtElectro,
 				     const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
+				     const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectro,
+		                     const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
+		                     const std::map<dealii::CellId, std::vector<double> > & gradPseudoVLocElectro,
+		                     const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtomsElectro,
 				     const vselfBinsManager<FEOrder> & vselfBinsManagerElectro)
 {
 
@@ -360,6 +380,9 @@ void forceClass<FEOrder>::computeConfigurationalForceTotalLinFE
 		                        phiTotRhoIn,
 		                        phiTotRhoOut,
 		                        phiExt,
+					pseudoVLoc,
+					gradPseudoVLoc,
+					gradPseudoVLocAtoms,
 		                        vselfBinsManagerEigen,
 	                                matrixFreeDataElectro,
 		                        phiTotDofHandlerIndexElectro,
@@ -367,6 +390,10 @@ void forceClass<FEOrder>::computeConfigurationalForceTotalLinFE
 		                        phiTotRhoOutElectro,
 		                        phiExtElectro,
 		                        rhoOutValuesElectro,
+					gradRhoOutValuesElectro,
+					pseudoVLocElectro,
+					gradPseudoVLocElectro,
+					gradPseudoVLocAtomsElectro,
 					vselfBinsManagerElectro);
   else
      computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
@@ -377,6 +404,9 @@ void forceClass<FEOrder>::computeConfigurationalForceTotalLinFE
 		                        phiTotRhoIn,
 		                        phiTotRhoOut,
 		                        phiExt,
+					pseudoVLoc,
+					gradPseudoVLoc,
+					gradPseudoVLocAtoms,
 		                        vselfBinsManagerEigen,
 	                                matrixFreeDataElectro,
 		                        phiTotDofHandlerIndexElectro,
@@ -384,6 +414,10 @@ void forceClass<FEOrder>::computeConfigurationalForceTotalLinFE
 		                        phiTotRhoOutElectro,
 		                        phiExtElectro,
 		                        rhoOutValuesElectro,
+					gradRhoOutValuesElectro,
+					pseudoVLocElectro,
+					gradPseudoVLocElectro,
+					gradPseudoVLocAtomsElectro,
 					vselfBinsManagerElectro);
 
   //configurational force contribution from nuclear self energy. This is handled separately as it involves

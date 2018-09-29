@@ -325,13 +325,26 @@ namespace dftfe {
        */
       void computeNodalRhoFromQuadData();
 
+
+      /**
+       *@brief computes density quadratrue dat from wavefunctions
+       */
+      void computeRhoFromPSI
+		    (std::map<dealii::CellId, std::vector<double> > * _rhoValues,
+		     std::map<dealii::CellId, std::vector<double> > * _gradRhoValues,
+		     std::map<dealii::CellId, std::vector<double> > * _rhoValuesSpinPolarized,
+		     std::map<dealii::CellId, std::vector<double> > * _gradRhoValuesSpinPolarized,
+		     const bool isEvaluateGradRho);
+
+
       /**
        *@brief sums rho cell quadratrure data from  inter communicator
        */
-      void sumRhoData(std::map<dealii::CellId, std::vector<double> > * rhoValues,
-	              std::map<dealii::CellId, std::vector<double> > * gradRhoValues,
-	              std::map<dealii::CellId, std::vector<double> > * rhoValuesSpinPolarized,
-		      std::map<dealii::CellId, std::vector<double> > * gradRhoValuesSpinPolarized,
+      void sumRhoData(std::map<dealii::CellId, std::vector<double> > * _rhoValues,
+	              std::map<dealii::CellId, std::vector<double> > * _gradRhoValues,
+	              std::map<dealii::CellId, std::vector<double> > * _rhoValuesSpinPolarized,
+		      std::map<dealii::CellId, std::vector<double> > * _gradRhoValuesSpinPolarized,
+		      const bool isGradRhoDataPresent,
 		      const MPI_Comm &interComm);
 
       /**
@@ -348,8 +361,10 @@ namespace dftfe {
       void readPSIRadialValues();
       void loadPSIFiles(unsigned int Z, unsigned int n, unsigned int l, unsigned int & flag);
       void initLocalPseudoPotential(const DoFHandler<3> & _dofHandler,
-	                            const dealii::QGauss<3> & _quadrature,
-	                            std::map<dealii::CellId, std::vector<double> > & _pseudoValues);
+	   const dealii::QGauss<3> & _quadrature,
+	   std::map<dealii::CellId, std::vector<double> > & _pseudoValues,
+	   std::map<dealii::CellId, std::vector<double> > & _gradPseudoValues,
+	   std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & _gradPseudoValuesAtoms);
       void initNonLocalPseudoPotential();
       void initNonLocalPseudoPotential_OV();
       void computeSparseStructureNonLocalProjectors();
@@ -657,7 +672,16 @@ namespace dftfe {
       vectorType d_rhoNodalFieldSpin1;
 
       double d_pspTail = 8.0;
-      std::map<dealii::CellId, std::vector<double> > pseudoValues;
+      std::map<dealii::CellId, std::vector<double> > d_pseudoVLoc;
+
+      /// Internal data:: map for cell id to gradient of Vpseudo local of individual atoms. Only for atoms
+      /// whose psp tail intersects the local domain.
+      std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > d_gradPseudoVLocAtoms;
+
+
+      /// Internal data: map for cell id to sum Vpseudo local of all atoms whose psp tail intersects the local domain.
+      std::map<dealii::CellId, std::vector<double> > d_gradPseudoVLoc;
+
       std::vector<std::vector<double> > d_localVselfs;
 
       //nonlocal pseudopotential related objects used only for pseudopotential calculation

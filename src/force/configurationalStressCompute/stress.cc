@@ -26,6 +26,9 @@ void forceClass<FEOrder>::computeStress
 		 const vectorType & phiTotRhoIn,
 		 const vectorType & phiTotRhoOut,
 		 const vectorType & phiExt,
+		 const std::map<dealii::CellId, std::vector<double> > & pseudoVLoc,
+		 const std::map<dealii::CellId, std::vector<double> > & gradPseudoVLoc,
+		 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtoms,
 		 const ConstraintMatrix  & noConstraints,
 		 const vselfBinsManager<FEOrder> & vselfBinsManagerEigen,
 	         const MatrixFree<3,double> & matrixFreeDataElectro,
@@ -34,9 +37,14 @@ void forceClass<FEOrder>::computeStress
 		 const vectorType & phiTotRhoOutElectro,
 		 const vectorType & phiExtElectro,
 		 const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
+		 const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectro,
+		 const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
+		 const std::map<dealii::CellId, std::vector<double> > & gradPseudoVLocElectro,
+		 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtomsElectro,
 	         const ConstraintMatrix  & noConstraintsElectro,
 		 const vselfBinsManager<FEOrder> & vselfBinsManagerElectro)
 {
+  /*
   createBinObjectsForce(matrixFreeData.get_dof_handler(phiTotDofHandlerIndex),
 	                d_dofHandlerForce,
 	                noConstraints,
@@ -47,6 +55,7 @@ void forceClass<FEOrder>::computeStress
                         d_AtomIdBinIdLocalDofHandler,
                         d_cellFacesVselfBallSurfacesDofHandler,
                         d_cellFacesVselfBallSurfacesDofHandlerForce);
+ */
 
   createBinObjectsForce(matrixFreeDataElectro.get_dof_handler(phiTotDofHandlerIndexElectro),
 	                d_dofHandlerForceElectro,
@@ -78,6 +87,9 @@ void forceClass<FEOrder>::computeStress
 		                        phiTotRhoIn,
 		                        phiTotRhoOut,
 		                        phiExt,
+	                                pseudoVLoc,
+					gradPseudoVLoc,
+					gradPseudoVLocAtoms,
 		                        vselfBinsManagerEigen,
 	                                matrixFreeDataElectro,
 		                        phiTotDofHandlerIndexElectro,
@@ -85,6 +97,10 @@ void forceClass<FEOrder>::computeStress
 		                        phiTotRhoOutElectro,
 		                        phiExtElectro,
 		                        rhoOutValuesElectro,
+					gradRhoOutValuesElectro,
+	                                pseudoVLocElectro,
+					gradPseudoVLocElectro,
+					gradPseudoVLocAtomsElectro,
 					vselfBinsManagerElectro);
   else
      computeStressEEshelbyEPSPEnlEk(matrixFreeData,
@@ -94,6 +110,9 @@ void forceClass<FEOrder>::computeStress
 		                        phiTotRhoIn,
 		                        phiTotRhoOut,
 		                        phiExt,
+	                                pseudoVLoc,
+					gradPseudoVLoc,
+					gradPseudoVLocAtoms,
 		                        vselfBinsManagerEigen,
 	                                matrixFreeDataElectro,
 		                        phiTotDofHandlerIndexElectro,
@@ -101,6 +120,10 @@ void forceClass<FEOrder>::computeStress
 		                        phiTotRhoOutElectro,
 		                        phiExtElectro,
 		                        rhoOutValuesElectro,
+					gradRhoOutValuesElectro,
+	                                pseudoVLocElectro,
+					gradPseudoVLocElectro,
+					gradPseudoVLocAtomsElectro,
 					vselfBinsManagerElectro);
 
   //configurational stress contribution from nuclear self energy. This is handled separately as it involves

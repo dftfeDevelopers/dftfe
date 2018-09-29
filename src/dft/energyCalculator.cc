@@ -347,11 +347,15 @@ namespace dftfe
 
 		  correlationEnergy+=(corrEnergyDensity[q_point])*(rhoOutValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW(q_point);
 
-		  electrostaticPotentialTimesRho+=(cellPhiTotRhoIn[q_point]
-			                          +pseudoValuesElectronic.find(cellElectronic->id())->second[q_point]
-			                          -cellPhiExt[q_point])
+		  electrostaticPotentialTimesRho+=(cellPhiTotRhoIn[q_point])
 				  *(rhoOutValues.find(cellElectronic->id())->second[q_point])
 				  *feValuesElectronic.JxW (q_point);
+
+		  if(dftParameters::isPseudopotential)
+		      electrostaticPotentialTimesRho+=(pseudoValuesElectronic.find(cellElectronic->id())->second[q_point]
+						      -cellPhiExt[q_point])
+				      *(rhoOutValues.find(cellElectronic->id())->second[q_point])
+				      *feValuesElectronic.JxW (q_point);
 
 		  vSelfPotentialTimesRho+=cellPhiExt[q_point]*(rhoOutValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW (q_point);
 
@@ -386,11 +390,15 @@ namespace dftfe
 
 		  correlationEnergy+=(corrEnergyVal[q_point])*(rhoOutValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW(q_point);
 
-		  electrostaticPotentialTimesRho+=(cellPhiTotRhoIn[q_point]
-			                          +pseudoValuesElectronic.find(cellElectronic->id())->second[q_point]
-			                          -cellPhiExt[q_point])
+		  electrostaticPotentialTimesRho+=(cellPhiTotRhoIn[q_point])
 				  *(rhoOutValues.find(cellElectronic->id())->second[q_point])
 				  *feValuesElectronic.JxW (q_point);
+
+		  if(dftParameters::isPseudopotential)
+		      electrostaticPotentialTimesRho+=(pseudoValuesElectronic.find(cellElectronic->id())->second[q_point]
+						      -cellPhiExt[q_point])
+				      *(rhoOutValues.find(cellElectronic->id())->second[q_point])
+				      *feValuesElectronic.JxW (q_point);
 
 		  vSelfPotentialTimesRho+=cellPhiExt[q_point]*(rhoOutValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW (q_point);
 
@@ -414,11 +422,12 @@ namespace dftfe
 	      electrostaticEnergyTotPot  += 0.5*(cellPhiTotRhoOut[q_point])*(rhoOutValuesElectrostatic.find(cellElectrostatic->id())->second[q_point])*feValuesElectrostatic.JxW(q_point);
 	      vSelfPotentialElecTimesRho += cellPhiExtElec[q_point]*(rhoOutValuesElectrostatic.find(cellElectrostatic->id())->second[q_point])*feValuesElectrostatic.JxW (q_point);
 
-	      electrostaticEnergyTotPot+=
-		     (pseudoValuesElectrostatic.find(cellElectrostatic->id())->second[q_point]
-		     -cellPhiExtElec[q_point])
-		     *(rhoOutValuesElectrostatic.find(cellElectrostatic->id())->second[q_point])
-		     *feValuesElectrostatic.JxW (q_point);
+	      if(dftParameters::isPseudopotential)
+		  electrostaticEnergyTotPot+=
+			 (pseudoValuesElectrostatic.find(cellElectrostatic->id())->second[q_point]
+			 -cellPhiExtElec[q_point])
+			 *(rhoOutValuesElectrostatic.find(cellElectrostatic->id())->second[q_point])
+			 *feValuesElectrostatic.JxW (q_point);
 	    }
 	}
 
@@ -621,11 +630,15 @@ namespace dftfe
 
 		  correlationEnergy+=(corrEnergyDensity[q_point])*(rhoOutValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW(q_point);
 
-		  electrostaticPotentialTimesRho+=(cellPhiTotRhoIn[q_point]
-			                          +pseudoValuesElectronic.find(cellElectronic->id())->second[q_point]
-			                          -cellPhiExt[q_point])
+		  electrostaticPotentialTimesRho+=(cellPhiTotRhoIn[q_point])
 				  *(rhoOutValues.find(cellElectronic->id())->second[q_point])
 				  *feValuesElectronic.JxW (q_point);
+
+		  if(dftParameters::isPseudopotential)
+		      electrostaticPotentialTimesRho+=(pseudoValuesElectronic.find(cellElectronic->id())->second[q_point]
+						      -cellPhiExt[q_point])
+				      *(rhoOutValues.find(cellElectronic->id())->second[q_point])
+				      *feValuesElectronic.JxW (q_point);
 
 		  vSelfPotentialTimesRho+=cellPhiExt[q_point]*(rhoOutValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW (q_point);
 
@@ -664,11 +677,15 @@ namespace dftfe
 		  exchangeEnergy+=(exchangeEnergyVal[q_point])*(rhoOutValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW(q_point);
 		  correlationEnergy+=(corrEnergyVal[q_point])*(rhoOutValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW(q_point) ;
 
-		  electrostaticPotentialTimesRho+=(cellPhiTotRhoIn[q_point]
-			                          +pseudoValuesElectronic.find(cellElectronic->id())->second[q_point]
-			                          -cellPhiExt[q_point])
+		  electrostaticPotentialTimesRho+=(cellPhiTotRhoIn[q_point])
 				  *(rhoOutValues.find(cellElectronic->id())->second[q_point])
 				  *feValuesElectronic.JxW (q_point);
+
+		  if(dftParameters::isPseudopotential)
+		      electrostaticPotentialTimesRho+=(pseudoValuesElectronic.find(cellElectronic->id())->second[q_point]
+						      -cellPhiExt[q_point])
+				      *(rhoOutValues.find(cellElectronic->id())->second[q_point])
+				      *feValuesElectronic.JxW (q_point);
 
 		  vSelfPotentialTimesRho+=cellPhiExt[q_point]*(rhoOutValues.find(cellElectronic->id())->second[q_point])*feValuesElectronic.JxW (q_point);
 
@@ -691,11 +708,12 @@ namespace dftfe
 	      electrostaticEnergyTotPot+=0.5*(cellPhiTotRhoOut[q_point])*(rhoOutValuesElectrostatic.find(cellElectrostatic->id())->second[q_point])*feValuesElectrostatic.JxW(q_point);
 	      vSelfPotentialElecTimesRho += cellPhiExtElec[q_point]*(rhoOutValuesElectrostatic.find(cellElectrostatic->id())->second[q_point])*feValuesElectrostatic.JxW (q_point);
 
-	      electrostaticEnergyTotPot+=
-		     (pseudoValuesElectrostatic.find(cellElectrostatic->id())->second[q_point]
-		     -cellPhiExtElec[q_point])
-		     *(rhoOutValuesElectrostatic.find(cellElectrostatic->id())->second[q_point])
-		     *feValuesElectrostatic.JxW (q_point);
+	      if(dftParameters::isPseudopotential)
+		  electrostaticEnergyTotPot+=
+			 (pseudoValuesElectrostatic.find(cellElectrostatic->id())->second[q_point]
+			 -cellPhiExtElec[q_point])
+			 *(rhoOutValuesElectrostatic.find(cellElectrostatic->id())->second[q_point])
+			 *feValuesElectrostatic.JxW (q_point);
 	    }
 	}
 

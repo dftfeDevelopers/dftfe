@@ -799,6 +799,7 @@ void dftClass<FEOrder>::initRhoFromPreviousGroundStateRho()
 	     gradRhoInValues,
 	     rhoInValuesSpinPolarized,
 	     gradRhoInValuesSpinPolarized,
+	     dftParameters::xc_id == 4,
 	     interpoolcomm);
 
   //normalize density

@@ -75,19 +75,14 @@ namespace dftfe {
 			const double tVal);
 
       /// exchange-correlation and psp part of the ELoc Eshelby tensor
-      Tensor<2,C_DIM,VectorizedArray<double> >  getELocXcPspEshelbyTensor
+      Tensor<2,C_DIM,VectorizedArray<double> >  getELocXcEshelbyTensor
 			     (const VectorizedArray<double> & rho,
 			      const Tensor<1,C_DIM,VectorizedArray<double> > & gradRhoSpin0,
 			      const Tensor<1,C_DIM,VectorizedArray<double> > & gradRhoSpin1,
 			      const VectorizedArray<double> & exc,
 			      const Tensor<1,C_DIM,VectorizedArray<double> > & derExcGradRhoSpin0,
-			      const Tensor<1,C_DIM,VectorizedArray<double> > & derExcGradRhoSpin1,
-			      const VectorizedArray<double> & pseudoVLoc);
+			      const Tensor<1,C_DIM,VectorizedArray<double> > & derExcGradRhoSpin1);
 
-      ///Local pseudotential force contribution
-      Tensor<1,C_DIM,VectorizedArray<double> >  getFPSPLocal(const VectorizedArray<double> rho,
-							   const Tensor<1,C_DIM,VectorizedArray<double> > & gradPseudoVLoc,
-							   const Tensor<1,C_DIM,VectorizedArray<double> > & gradPhiExt);
 
       ///Nonlocal pseudotential Eshelby tensor (for non-periodic case)
       Tensor<2,C_DIM,VectorizedArray<double> >  getEnlEshelbyTensorNonPeriodic(const std::vector<std::vector<VectorizedArray<double> > > & ZetaDeltaV,

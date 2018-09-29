@@ -354,10 +354,16 @@ void dftClass<FEOrder>::computeElectrostaticEnergyPRefined()
 			dftParameters::maxLinearSolverIterations,
 			dftParameters::verbosity);
 
-   std::map<dealii::CellId, std::vector<double> > pseudoValuesPRefined;
-   initLocalPseudoPotential(dofHandlerPRefined,
-			    quadraturePRefined,
-			    pseudoValuesPRefined);
+   std::map<dealii::CellId, std::vector<double> > pseudoVLocPRefined;
+   std::map<dealii::CellId, std::vector<double> > gradPseudoVLocPRefined;
+   std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > gradPseudoVLocAtomsPRefined;
+
+   if(dftParameters::isPseudopotential)
+       initLocalPseudoPotential(dofHandlerPRefined,
+				quadraturePRefined,
+				pseudoVLocPRefined,
+				gradPseudoVLocPRefined,
+				gradPseudoVLocAtomsPRefined);
 
    energyCalculator energyCalcPRefined(mpi_communicator, interpoolcomm, interBandGroupComm);
 
@@ -383,8 +389,8 @@ void dftClass<FEOrder>::computeElectrostaticEnergyPRefined()
 				     *gradRhoInValues,
 				     *gradRhoOutValues,
 				     localVselfsPRefined,
-				     pseudoValues,
-				     pseudoValuesPRefined,
+				     d_pseudoVLoc,
+				     pseudoVLocPRefined,
 				     atomPRefinedNodeIdToChargeMap,
 				     atomLocations.size(),
 				     lowerBoundKindex,
@@ -415,8 +421,8 @@ void dftClass<FEOrder>::computeElectrostaticEnergyPRefined()
 						  *gradRhoInValuesSpinPolarized,
 						  *gradRhoOutValuesSpinPolarized,
 						  localVselfsPRefined,
-						  pseudoValues,
-						  pseudoValuesPRefined,
+						  d_pseudoVLoc,
+						  pseudoVLocPRefined,
 						  atomPRefinedNodeIdToChargeMap,
 						  atomLocations.size(),
 						  lowerBoundKindex,

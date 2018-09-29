@@ -400,7 +400,9 @@ namespace dftfe {
 	QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
 	initLocalPseudoPotential(dofHandler,
 	                         quadrature,
-	                         pseudoValues);
+	                         d_pseudoVLoc,
+				 d_gradPseudoVLoc,
+				 d_gradPseudoVLocAtoms);
 
 
 	computeSparseStructureNonLocalProjectors_OV();
@@ -877,13 +879,13 @@ namespace dftfe {
 		if(dftParameters::xc_id < 4)
 		  {
 		    computing_timer.enter_section("VEff Computation");
-		    kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, pseudoValues);
+		    kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, d_pseudoVLoc);
 		    computing_timer.exit_section("VEff Computation");
 		  }
 		else if (dftParameters::xc_id == 4)
 		  {
 		    computing_timer.enter_section("VEff Computation");
-		    kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, pseudoValues);
+		    kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, d_pseudoVLoc);
 		    computing_timer.exit_section("VEff Computation");
 		  }
 		for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
@@ -959,13 +961,13 @@ namespace dftfe {
 		    if(dftParameters::xc_id < 4)
 		      {
 			computing_timer.enter_section("VEff Computation");
-			kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, pseudoValues);
+			kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, d_pseudoVLoc);
 			computing_timer.exit_section("VEff Computation");
 		      }
 		    else if (dftParameters::xc_id == 4)
 		      {
 			computing_timer.enter_section("VEff Computation");
-			kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, pseudoValues);
+			kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, d_pseudoVLoc);
 			computing_timer.exit_section("VEff Computation");
 		      }
 
@@ -1036,13 +1038,13 @@ namespace dftfe {
 	    if(dftParameters::xc_id < 4)
 	      {
 		computing_timer.enter_section("VEff Computation");
-		kohnShamDFTEigenOperator.computeVEff(rhoInValues, d_phiTotRhoIn, d_phiExt, pseudoValues);
+		kohnShamDFTEigenOperator.computeVEff(rhoInValues, d_phiTotRhoIn, d_phiExt, d_pseudoVLoc);
 		computing_timer.exit_section("VEff Computation");
 	      }
 	    else if (dftParameters::xc_id == 4)
 	      {
 		computing_timer.enter_section("VEff Computation");
-		kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, d_phiTotRhoIn, d_phiExt, pseudoValues);
+		kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, d_phiTotRhoIn, d_phiExt, d_pseudoVLoc);
 		computing_timer.exit_section("VEff Computation");
 	      }
 
@@ -1220,8 +1222,8 @@ namespace dftfe {
 				       *gradRhoInValues,
 				       *gradRhoOutValues,
 				       d_localVselfs,
-				       pseudoValues,
-				       pseudoValues,
+				       d_pseudoVLoc,
+				       d_pseudoVLoc,
 				       d_atomNodeIdToChargeMap,
 				       atomLocations.size(),
 				       lowerBoundKindex,
@@ -1252,8 +1254,8 @@ namespace dftfe {
 						    *gradRhoInValuesSpinPolarized,
 						    *gradRhoOutValuesSpinPolarized,
 						    d_localVselfs,
-						    pseudoValues,
-						    pseudoValues,
+						    d_pseudoVLoc,
+						    d_pseudoVLoc,
 						    d_atomNodeIdToChargeMap,
 						    atomLocations.size(),
 						    lowerBoundKindex,
@@ -1305,13 +1307,13 @@ namespace dftfe {
 		if(dftParameters::xc_id < 4)
 		  {
 		    computing_timer.enter_section("VEff Computation");
-		    kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, pseudoValues);
+		    kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, d_pseudoVLoc);
 		    computing_timer.exit_section("VEff Computation");
 		  }
 		else if (dftParameters::xc_id == 4)
 		  {
 		    computing_timer.enter_section("VEff Computation");
-		    kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, pseudoValues);
+		    kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, d_pseudoVLoc);
 		    computing_timer.exit_section("VEff Computation");
 		  }
 		for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
@@ -1420,8 +1422,8 @@ namespace dftfe {
 			       *gradRhoInValues,
 			       *gradRhoOutValues,
 			       d_localVselfs,
-			       pseudoValues,
-			       pseudoValues,
+			       d_pseudoVLoc,
+			       d_pseudoVLoc,
 			       d_atomNodeIdToChargeMap,
 			       atomLocations.size(),
 			       lowerBoundKindex,
@@ -1452,8 +1454,8 @@ namespace dftfe {
 					    *gradRhoInValuesSpinPolarized,
 					    *gradRhoOutValuesSpinPolarized,
 					    d_localVselfs,
-					    pseudoValues,
-					    pseudoValues,
+					    d_pseudoVLoc,
+					    d_pseudoVLoc,
 					    d_atomNodeIdToChargeMap,
 					    atomLocations.size(),
 					    lowerBoundKindex,
@@ -1536,6 +1538,9 @@ namespace dftfe {
                                      d_phiTotRhoIn,
 				     d_phiTotRhoOut,
 				     d_phiExt,
+				     d_pseudoVLoc,
+				     d_gradPseudoVLoc,
+				     d_gradPseudoVLocAtoms,
 				     d_noConstraints,
 				     d_vselfBinsManager,
 				     matrix_free_data,
@@ -1544,6 +1549,10 @@ namespace dftfe {
 				     d_phiTotRhoOut,
 				     d_phiExt,
 				     *rhoOutValues,
+				     *gradRhoOutValues,
+				     d_pseudoVLoc,
+				     d_gradPseudoVLoc,
+				     d_gradPseudoVLocAtoms,
 				     d_noConstraints,
 				     d_vselfBinsManager);
 	forcePtr->printAtomsForces();
@@ -1565,6 +1574,9 @@ namespace dftfe {
                                 d_phiTotRhoIn,
 				d_phiTotRhoOut,
 				d_phiExt,
+				d_pseudoVLoc,
+				d_gradPseudoVLoc,
+				d_gradPseudoVLocAtoms,
 				d_noConstraints,
 				d_vselfBinsManager,
 				matrix_free_data,
@@ -1573,6 +1585,10 @@ namespace dftfe {
 				d_phiTotRhoOut,
 				d_phiExt,
 				*rhoOutValues,
+				*gradRhoOutValues,
+				d_pseudoVLoc,
+				d_gradPseudoVLoc,
+				d_gradPseudoVLocAtoms,
 				d_noConstraints,
 				d_vselfBinsManager);
 	forcePtr->printStress();
