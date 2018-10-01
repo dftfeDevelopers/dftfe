@@ -516,26 +516,28 @@ namespace dftfe{
       eigenValues=projHamPar.eigenpairs_symmetric_by_index_MRRR(std::make_pair(0,numberWaveFunctions-1),true);
       computing_timer.exit_section("ScaLAPACK eigen decomp, RR step");
 
-      computing_timer.enter_section("Broadcast eigvec across band groups, RR step");
+      computing_timer.enter_section("Broadcast eigvec and eigenvalues across band groups, RR step");
       internal::broadcastAcrossInterCommScaLAPACKMat
 	                                   (processGrid,
 		                            projHamPar,
 				            interBandGroupComm,
 					    0);
-      computing_timer.exit_section("Broadcast eigvec across band groups, RR step");
+
+      MPI_Bcast(&eigenValues[0],
+		eigenValues.size(),
+		MPI_DOUBLE,
+		0,
+		interBandGroupComm);
+      computing_timer.exit_section("Broadcast eigvec and eigenvalues across band groups, RR step");
       //
       //rotate the basis in the subspace X = X*Q, implemented as X^{T}=Q^{T}*X^{T} with X^{T}
       //stored in the column major format
       //
       computing_timer.enter_section("Blocked subspace rotation, RR step");
-      std::vector<T> temp;
-      const unsigned int numberCoreWaveFunctions=0;
 
       internal::subspaceRotation(&X[0],
 	                         X.size(),
 		                 numberWaveFunctions,
-				 numberCoreWaveFunctions,
-				 &temp[0],
 		                 processGrid,
 				 interBandGroupComm,
 				 mpi_communicator,
@@ -595,6 +597,11 @@ namespace dftfe{
 	        0,
 	        mpi_communicator);
 #endif
+      MPI_Bcast(&eigenValues[0],
+		eigenValues.size(),
+		MPI_DOUBLE,
+		0,
+		mpi_communicator);
 
       computing_timer.exit_section("eigen decomp in RR");
 
@@ -617,6 +624,101 @@ namespace dftfe{
     }
 #endif
 
+#if(defined DEAL_II_WITH_SCALAPACK && !USE_COMPLEX)
+    template<typename T>
+    void rayleighRitzSpectrumSplitDirect
+                    (operatorDFTClass & operatorMatrix,
+		     std::vector<T> & X,
+		     const unsigned int numberWaveFunctions,
+		     const unsigned int numberCoreStates,
+		     const MPI_Comm &interBandGroupComm,
+		     const MPI_Comm &mpi_communicator,
+		     std::vector<double> & eigenValues)
+
+    {
+      dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
+
+      dealii::TimerOutput computing_timer(pcout,
+					  dftParameters::reproducible_output ||
+					  dftParameters::verbosity<4 ? dealii::TimerOutput::never : dealii::TimerOutput::summary,
+					  dealii::TimerOutput::wall_times);
+      //
+      //compute projected Hamiltonian
+      //
+      const unsigned rowsBlockSize=std::min((unsigned int)50,numberWaveFunctions);
+      std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  processGrid;
+      internal::createProcessGridSquareMatrix(mpi_communicator,
+		                              numberWaveFunctions,
+					      processGrid);
+
+      dealii::ScaLAPACKMatrix<T> projHamPar(numberWaveFunctions,
+                                            processGrid,
+                                            rowsBlockSize);
+
+      computing_timer.enter_section("Blocked XtHX, RR step");
+      operatorMatrix.XtHX(X,
+			  numberWaveFunctions,
+			  processGrid,
+			  projHamPar);
+      computing_timer.exit_section("Blocked XtHX, RR step");
+
+      //
+      //compute eigendecomposition of ProjHam
+      //
+      computing_timer.enter_section("ScaLAPACK eigen decomp, RR step");
+      eigenValues.resize(numberWaveFunctions-numberCoreStates);
+      eigenValues=projHamPar.eigenpairs_symmetric_by_index_MRRR(std::make_pair(numberCoreStates,numberWaveFunctions-1),true);
+      computing_timer.exit_section("ScaLAPACK eigen decomp, RR step");
+
+      computing_timer.enter_section("Broadcast eigvec and eigenvalues across band groups, RR step");
+
+      internal::broadcastAcrossInterCommScaLAPACKMat
+	                                   (processGrid,
+		                            projHamPar,
+				            interBandGroupComm,
+					    0);
+
+      MPI_Bcast(&eigenValues[0],
+		eigenValues.size(),
+		MPI_DOUBLE,
+		0,
+		interBandGroupComm);
+
+      computing_timer.exit_section("Broadcast eigvec and eigenvalues across band groups, RR step");
+      //
+      //rotate the basis in the subspace X = X*Q, implemented as X^{T}=Q^{T}*X^{T} with X^{T}
+      //stored in the column major format
+      //
+      computing_timer.enter_section("Blocked subspace rotation, RR step");
+
+      internal::subspaceRotationSpectrumSplit(&X[0],
+	                         X.size(),
+		                 numberWaveFunctions,
+		                 processGrid,
+                                 numberWaveFunctions-numberCoreStates,
+				 interBandGroupComm,
+				 mpi_communicator,
+			         projHamPar,
+				 true);
+
+      computing_timer.exit_section("Blocked subspace rotation, RR step");
+
+    }
+#else
+
+    template<typename T>
+    void rayleighRitzSpectrumSplitDirect
+                  (operatorDFTClass & operatorMatrix,
+		   std::vector<T> & X,
+		   const unsigned int numberWaveFunctions,
+		   const unsigned int numberCoreStates,
+		   const MPI_Comm &interBandGroupComm,
+		   const MPI_Comm &mpi_communicator,
+		   std::vector<double> & eigenValues)
+    {
+       AssertThrow(false,dftUtils::ExcNotImplementedYet());
+    }
+#endif
 
     template<typename T>
     void computeEigenResidualNorm(operatorDFTClass & operatorMatrix,
@@ -1085,10 +1187,8 @@ namespace dftfe{
     template unsigned int pseudoGramSchmidtOrthogonalization(std::vector<dataTypes::number> &,
 					                     const unsigned int,
 						             const MPI_Comm &,
-							     const unsigned int numberCoreVectors,
 							     const MPI_Comm &mpiComm,
-							     const bool useMixedPrec,
-			                                     std::vector<dataTypes::number> & tempNonCoreVectorsArray);
+							     const bool useMixedPrec);
 
     template void rayleighRitz(operatorDFTClass  & operatorMatrix,
 			       std::vector<dataTypes::number> &,
@@ -1096,6 +1196,16 @@ namespace dftfe{
 			       const MPI_Comm &,
 			       const MPI_Comm &,
 			       std::vector<double>     & eigenValues);
+
+
+    template void rayleighRitzSpectrumSplitDirect
+	                  (operatorDFTClass  & operatorMatrix,
+			   std::vector<dataTypes::number> &,
+			   const unsigned int numberWaveFunctions,
+			   const unsigned int numberCoreStates,
+			   const MPI_Comm &,
+			   const MPI_Comm &,
+			   std::vector<double>     & eigenValues);
 
     template void computeEigenResidualNorm(operatorDFTClass        & operatorMatrix,
 					   std::vector<dataTypes::number> & X,

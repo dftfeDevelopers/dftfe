@@ -31,10 +31,8 @@ namespace dftfe
     unsigned int pseudoGramSchmidtOrthogonalization(std::vector<T> & X,
 						    const unsigned int numberVectors,
 						    const MPI_Comm &interBandGroupComm,
-						    const unsigned int numberCoreVectors,
 						    const MPI_Comm & mpiComm,
-						    const bool useMixedPrec,
-						    std::vector<T> & tempNonCoreVectorsArray)
+						    const bool useMixedPrec)
 
     {
       const unsigned int numLocalDofs = X.size()/numberVectors;
@@ -151,8 +149,6 @@ namespace dftfe
 	  internal::subspaceRotation(&X[0],
 				     X.size(),
 				     numberVectors,
-				     numberCoreVectors,
-				     &tempNonCoreVectorsArray[0],
 				     processGrid,
 				     interBandGroupComm,
 				     mpiComm,
@@ -163,8 +159,6 @@ namespace dftfe
 	  internal::subspaceRotationPGSMixedPrec(&X[0],
 				     X.size(),
 				     numberVectors,
-				     numberCoreVectors,
-				     &tempNonCoreVectorsArray[0],
 				     processGrid,
 				     interBandGroupComm,
 				     mpiComm,
@@ -180,10 +174,8 @@ namespace dftfe
     unsigned int pseudoGramSchmidtOrthogonalization(std::vector<T> & X,
 						    const unsigned int numberVectors,
 						    const MPI_Comm &interBandGroupComm,
-						    const unsigned int numberCoreVectors,
 						    const MPI_Comm & mpiComm,
-						    const bool useMixedPrec,
-						    std::vector<T> & tempNonCoreVectorsArray)
+						    const bool useMixedPrec)
     {
        const unsigned int localVectorSize = X.size()/numberVectors;
 

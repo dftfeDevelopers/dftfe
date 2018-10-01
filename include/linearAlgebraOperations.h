@@ -201,10 +201,8 @@ namespace dftfe
       unsigned int pseudoGramSchmidtOrthogonalization(std::vector<T> & X,
 					              const unsigned int numberComponents,
 					              const MPI_Comm &interBandGroupComm,
-			                              const unsigned int numberCoreVectors,
 						      const MPI_Comm &mpiComm,
-						      const bool useMixedPrec,
-			                              std::vector<T> & nonCoreVectorsArray);
+						      const bool useMixedPrec);
 
     /** @brief Compute Rayleigh-Ritz projection
      *
@@ -225,7 +223,7 @@ namespace dftfe
      *  @param[in] operatorMatrix An object which has access to the given matrix
      *  @param[in,out]  X Given subspace as flattened array of multi-vectors.
      *  In-place rotated subspace
-     *  @param[in] numberComponents Number of multiple-fields
+     *  @param[in] numberComponents Number of vectors
      *  @param[in] interBandGroupComm interpool communicator for parallelization over band groups
      *  @param[in] mpiComm domain decomposition communicator
      *  @param[out] eigenValues of the Projected Hamiltonian
@@ -237,6 +235,30 @@ namespace dftfe
 		      const MPI_Comm &interBandGroupComm,
 		      const MPI_Comm &mpiComm,
 		      std::vector<double>     & eigenValues);
+
+
+    /** @brief Compute Rayleigh-Ritz projection in case of spectrum split using direct diagonalization
+     *  (serial version using LAPACK, parallel version using ScaLAPACK)
+     *
+     *  @param[in] operatorMatrix An object which has access to the given matrix
+     *  @param[in,out]  X Given subspace as flattened array of multi-vectors.
+     *  In-place rotated subspace
+     *  @param[in] numberComponents Number of vectors
+     *  @param[in] numberCoreStates Number of core states to be used for spectrum splitting
+     *  @param[in] interBandGroupComm interpool communicator for parallelization over band groups
+     *  @param[in] mpiComm domain decomposition communicator
+     *  @param[out] eigenValues of the Projected Hamiltonian
+     */
+    template<typename T>
+    void rayleighRitzSpectrumSplitDirect
+                     (operatorDFTClass        & operatorMatrix,
+		      std::vector<T> & X,
+		      const unsigned int numberComponents,
+		      const unsigned int numberCoreStates,
+		      const MPI_Comm &interBandGroupComm,
+		      const MPI_Comm &mpiComm,
+		      std::vector<double>     & eigenValues);
+
 
     /** @brief Compute Compute residual norm associated with eigenValue problem of the given operator
      *
