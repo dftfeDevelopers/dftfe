@@ -50,6 +50,8 @@ namespace dftParameters
   unsigned int verbosity=0; unsigned int chkType=0;
   bool restartFromChk=false;
   bool reproducible_output=false;
+  bool electrostaticsHRefinement = false;
+  bool electrostaticsPRefinement = false;
 
   std::string startingWFCType="";
   bool useBatchGEMM=false;
@@ -80,6 +82,15 @@ namespace dftParameters
     prm.declare_entry("REPRODUCIBLE OUTPUT", "false",
                       Patterns::Bool(),
                       "[Developer] Limit output to what is reproducible, i.e. don't print timing or absolute paths. This parameter is only used for testing purposes.");
+
+
+    prm.declare_entry("H REFINED ELECTROSTATICS", "false",
+		      Patterns::Bool(),
+		      "[Advanced] Compute electrostatic energy and forces on a h refined mesh after each ground-state solve. Default: false.");
+
+    prm.declare_entry("P REFINED ELECTROSTATICS", "false",
+		      Patterns::Bool(),
+		      "[Advanced] Compute electrostatic energy on a p refined mesh after each ground-state solve. Default: false.");
 
     prm.declare_entry("VERBOSITY", "1",
                       Patterns::Integer(0,4),
@@ -191,7 +202,7 @@ namespace dftParameters
     prm.enter_subsection ("Boundary conditions");
     {
         prm.declare_entry("SELF POTENTIAL RADIUS", "0.0",
-                      Patterns::Double(0.0,10),
+                      Patterns::Double(0.0,50),
                       "[Advanced] The radius (in a.u) of the ball around an atom in which self-potential of the associated nuclear charge is solved. For the default value of 0.0, the radius value is automatically determined to accommodate the largest radius possible for the given finite element mesh. The default approach works for most problems.");
 
 	prm.declare_entry("PERIODIC1", "false",
@@ -462,6 +473,9 @@ namespace dftParameters
     dftParameters::reproducible_output           = prm.get_bool("REPRODUCIBLE OUTPUT");
     dftParameters::writeWfcSolutionFields           = prm.get_bool("WRITE WFC");
     dftParameters::writeDensitySolutionFields           = prm.get_bool("WRITE DENSITY");
+    dftParameters::electrostaticsHRefinement = prm.get_bool("H REFINED ELECTROSTATICS");
+    dftParameters::electrostaticsPRefinement = prm.get_bool("P REFINED ELECTROSTATICS");
+
 
     prm.enter_subsection ("Parallelization");
     {

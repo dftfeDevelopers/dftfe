@@ -41,6 +41,7 @@
 #include <petsc.h>
 #include <slepceps.h>
 #include <spglib.h>
+#include <stdafx.h>
 
 namespace dftfe {
 
@@ -276,7 +277,9 @@ namespace dftfe {
       /**
        *@brief  moves the triangulation vertices using Gaussians such that the all atoms are on triangulation vertices
        */
-      void moveMeshToAtoms(Triangulation<3,3> & triangulationMove);
+      void moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
+			   bool reuseFlag = false,
+			   bool moveSubdivided = false);
 
       /**
        * Initializes the guess of electron-density and single-atom wavefunctions on the mesh,
@@ -322,13 +325,26 @@ namespace dftfe {
        */
       void computeNodalRhoFromQuadData();
 
+
+      /**
+       *@brief computes density quadratrue dat from wavefunctions
+       */
+      void computeRhoFromPSI
+		    (std::map<dealii::CellId, std::vector<double> > * _rhoValues,
+		     std::map<dealii::CellId, std::vector<double> > * _gradRhoValues,
+		     std::map<dealii::CellId, std::vector<double> > * _rhoValuesSpinPolarized,
+		     std::map<dealii::CellId, std::vector<double> > * _gradRhoValuesSpinPolarized,
+		     const bool isEvaluateGradRho);
+
+
       /**
        *@brief sums rho cell quadratrure data from  inter communicator
        */
-      void sumRhoData(std::map<dealii::CellId, std::vector<double> > * rhoValues,
-	              std::map<dealii::CellId, std::vector<double> > * gradRhoValues,
-	              std::map<dealii::CellId, std::vector<double> > * rhoValuesSpinPolarized,
-		      std::map<dealii::CellId, std::vector<double> > * gradRhoValuesSpinPolarized,
+      void sumRhoData(std::map<dealii::CellId, std::vector<double> > * _rhoValues,
+	              std::map<dealii::CellId, std::vector<double> > * _gradRhoValues,
+	              std::map<dealii::CellId, std::vector<double> > * _rhoValuesSpinPolarized,
+		      std::map<dealii::CellId, std::vector<double> > * _gradRhoValuesSpinPolarized,
+		      const bool isGradRhoDataPresent,
 		      const MPI_Comm &interComm);
 
       /**
@@ -344,7 +360,11 @@ namespace dftfe {
       void readPSI();
       void readPSIRadialValues();
       void loadPSIFiles(unsigned int Z, unsigned int n, unsigned int l, unsigned int & flag);
-      void initLocalPseudoPotential();
+      void initLocalPseudoPotential(const DoFHandler<3> & _dofHandler,
+	   const dealii::QGauss<3> & _quadrature,
+	   std::map<dealii::CellId, std::vector<double> > & _pseudoValues,
+	   std::map<dealii::CellId, std::vector<double> > & _gradPseudoValues,
+	   std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & _gradPseudoValuesAtoms);
       void initNonLocalPseudoPotential();
       void initNonLocalPseudoPotential_OV();
       void computeSparseStructureNonLocalProjectors();
@@ -368,7 +388,19 @@ namespace dftfe {
       /**
        *@brief Computes total charge by integrating the electron-density
        */
-      double totalCharge(const std::map<dealii::CellId, std::vector<double> > *rhoQuadValues);
+      double totalCharge(const dealii::DoFHandler<3> & dofHandlerOfField,
+			 const vectorType & rhoNodalField,
+			 std::map<dealii::CellId, std::vector<double> > & rhoQuadValues);
+
+
+      double totalCharge(const dealii::DoFHandler<3> & dofHandlerOfField,
+			 const vectorType & rhoNodalField);
+
+
+      double totalCharge(const dealii::DoFHandler<3> & dofHandlerOfField,
+			 const std::map<dealii::CellId, std::vector<double> > *rhoQuadValues);
+
+
 
       /**
        *@brief Computes net magnetization from the difference of local spin densities
@@ -397,16 +429,16 @@ namespace dftfe {
 
 
       /**
-       * Re solves the all electrostatics on a p refined mesh, and computes
+       * Re solves the all electrostatics on a h refined mesh, and computes
        * the corresponding energy. This function
-       * is called after reaching the ground state electron density. Currently the p refinement
-       * is hardcoded to FEOrder+2.
+       * is called after reaching the ground state electron density. Currently the h refinement
+       * is hardcoded to a one subdivison of carser mesh
        * FIXME: The function is not yet extened to the case when point group symmetry is used.
        * However, it works for time reversal symmetry.
        *
        */
-      //void computeElectrostaticEnergyPRefined();
-
+      void computeElectrostaticEnergyHRefined();
+      void computeElectrostaticEnergyPRefined();
       /**
        *@brief Computes Fermi-energy obtained by imposing constraint on the number of electrons
        */
@@ -640,7 +672,16 @@ namespace dftfe {
       vectorType d_rhoNodalFieldSpin1;
 
       double d_pspTail = 8.0;
-      std::map<dealii::CellId, std::vector<double> > pseudoValues;
+      std::map<dealii::CellId, std::vector<double> > d_pseudoVLoc;
+
+      /// Internal data:: map for cell id to gradient of Vpseudo local of individual atoms. Only for atoms
+      /// whose psp tail intersects the local domain.
+      std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > d_gradPseudoVLocAtoms;
+
+
+      /// Internal data: map for cell id to sum Vpseudo local of all atoms whose psp tail intersects the local domain.
+      std::map<dealii::CellId, std::vector<double> > d_gradPseudoVLoc;
+
       std::vector<std::vector<double> > d_localVselfs;
 
       //nonlocal pseudopotential related objects used only for pseudopotential calculation
@@ -735,6 +776,10 @@ namespace dftfe {
 
       /// k point weights
       std::vector<double> d_kPointWeights;
+
+      /// closest tria vertex
+      std::vector<Point<3>> d_closestTriaVertexToAtomsLocation;
+      std::vector<Tensor<1,3,double> > d_dispClosestTriaVerticesToAtoms;
 
       /// global k index of lower bound of the local k point set
       unsigned int lowerBoundKindex ;

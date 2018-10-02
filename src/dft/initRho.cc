@@ -17,7 +17,7 @@
 //
 
 //
-//Initlialize rho by reading in single-atom electron-density and fit a spline
+//Initialize rho by reading in single-atom electron-density and fit a spline
 //
 #include <dftParameters.h>
 
@@ -799,6 +799,7 @@ void dftClass<FEOrder>::initRhoFromPreviousGroundStateRho()
 	     gradRhoInValues,
 	     rhoInValuesSpinPolarized,
 	     gradRhoInValuesSpinPolarized,
+	     dftParameters::xc_id == 4,
 	     interpoolcomm);
 
   //normalize density
@@ -815,7 +816,8 @@ void dftClass<FEOrder>::normalizeRho()
   QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
   const unsigned int n_q_points    = quadrature_formula.size();
 
-  const double charge = totalCharge(rhoInValues);
+  const double charge = totalCharge(dofHandler,
+				    rhoInValues);
   const double scaling=((double)numElectrons)/charge;
 
   if (dftParameters::verbosity>=2)
@@ -845,7 +847,8 @@ void dftClass<FEOrder>::normalizeRho()
       }
     }
   }
-  double chargeAfterScaling = totalCharge(rhoInValues);
+  double chargeAfterScaling = totalCharge(dofHandler,
+					  rhoInValues);
 
   if (dftParameters::verbosity>=1)
      pcout<<"Initial total charge: "<< chargeAfterScaling<<std::endl;
