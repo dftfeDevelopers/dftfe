@@ -893,6 +893,7 @@ namespace dftfe {
 						  subspaceIterationSolver,
 						  residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
 						  true,
+						  scfIter<dftParameters::innerChebyStartingScfIter?false:true,
 						  norm<mixedPrecStoppingNorm?false:true);
 		      }
 		  }
@@ -972,6 +973,7 @@ namespace dftfe {
 						  subspaceIterationSolver,
 						  residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
 						  true,
+						  scfIter<dftParameters::innerChebyStartingScfIter?false:true,
 						  norm<mixedPrecStoppingNorm?false:true);
 
 		      }
@@ -1052,6 +1054,7 @@ namespace dftfe {
 					      subspaceIterationSolver,
 					      residualNormWaveFunctionsAllkPoints[kPoint],
 					      true,
+					      scfIter<dftParameters::innerChebyStartingScfIter?false:true,
 					      norm<mixedPrecStoppingNorm?false:true);
 
 		  }
@@ -1106,6 +1109,7 @@ namespace dftfe {
 					      subspaceIterationSolver,
 					      residualNormWaveFunctionsAllkPoints[kPoint],
 					      true,
+					      scfIter<dftParameters::innerChebyStartingScfIter?false:true,
 					      norm<mixedPrecStoppingNorm?false:true);
 		  }
 		count++;
@@ -1308,6 +1312,7 @@ namespace dftfe {
 					      subspaceIterationSolver,
 					      residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
 					      false,
+					      false,
 					      false);
 		  }
 	      }
@@ -1338,6 +1343,7 @@ namespace dftfe {
 					  kohnShamDFTEigenOperator,
 					  subspaceIterationSolver,
 					  residualNormWaveFunctionsAllkPoints[kPoint],
+					  false,
 					  false,
 					  false);
 

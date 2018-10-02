@@ -115,7 +115,8 @@ namespace dftfe{
 							std::vector<double>        & eigenValues,
 							std::vector<double>        & residualNorms,
 							const MPI_Comm &interBandGroupComm,
-							const bool useMixedPrec)
+							const bool useMixedPrec,
+							const bool useInnerChebySpectrumSplit)
   {
 
 
@@ -353,7 +354,13 @@ namespace dftfe{
     if (eigenValues.size()!=totalNumberWaveFunctions)
     {
 
-        linearAlgebraOperations::rayleighRitzSpectrumSplitDirect
+	if (useInnerChebySpectrumSplit)
+	{
+           AssertThrow(false,dftUtils::ExcNotImplementedYet());
+	}
+	else
+	{
+           linearAlgebraOperations::rayleighRitzSpectrumSplitDirect
 	                                    (operatorMatrix,
 					     eigenVectorsFlattened,
 					     totalNumberWaveFunctions,
@@ -361,6 +368,7 @@ namespace dftfe{
 					     interBandGroupComm,
 					     operatorMatrix.getMPICommunicator(),
 					     eigenValues);
+	}
 
     }
     else

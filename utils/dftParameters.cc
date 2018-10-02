@@ -74,6 +74,7 @@ namespace dftParameters
   bool useMixedPrecCheby=false;
   unsigned int numAdaptiveFilterStates=0;
   double mixedPrecStoppingTol=1e-4;
+  unsigned int innerChebyStartingScfIter=1;
 
   void declare_parameters(ParameterHandler &prm)
   {
@@ -373,6 +374,10 @@ namespace dftParameters
 			      Patterns::Integer(0),
 			      "[Advanced] Number of lowest Kohn-Sham eigenstates which should not be included in the Rayleigh-Ritz projection step.  In other words, only the higher eigenstates (Number of Kohn-Sham wavefunctions minus the specified core eigenstates) are used to compute projected Hamiltonian and subsequently diagonalization is done on the projected Hamiltonian corresponding to the higher eigenstates. This value is usually chosen to be the sum of the number of core eigenstates for each atom type multiplied by number of atoms of that type. This setting is recommended for large systems (greater than 5000 electrons). Default value is 0 i.e., no core eigenstates are excluded from the Rayleigh-Ritz projection step.");
 
+	    prm.declare_entry("INNER CHEBY STARTING SCF ITER", "100",
+			      Patterns::Integer(0),
+			      "[Advanced] SCF iteration no beyond which spectrum splitting based on an inner chebyshev filter solve can be used.");
+
 	    prm.declare_entry("LOWER BOUND WANTED SPECTRUM", "-10.0",
 			      Patterns::Double(),
 			      "[Developer] The lower bound of the wanted eigen spectrum. It is only used for the first iteration of the Chebyshev filtered subspace iteration procedure. A rough estimate based on single atom eigen values can be used here. Default value is good enough for most problems.");
@@ -573,7 +578,8 @@ namespace dftParameters
 	prm.enter_subsection ("Eigen-solver parameters");
 	{
 	   dftParameters::numberEigenValues             = prm.get_integer("NUMBER OF KOHN-SHAM WAVEFUNCTIONS");
-	   dftParameters::numCoreWfcRR             = prm.get_integer("SPECTRUM SPLIT CORE EIGENSTATES");
+	   dftParameters::numCoreWfcRR                  = prm.get_integer("SPECTRUM SPLIT CORE EIGENSTATES");
+	   dftParameters::innerChebyStartingScfIter        = prm.get_integer("INNER CHEBY STARTING SCF ITER");
 	   dftParameters::lowerEndWantedSpectrum        = prm.get_double("LOWER BOUND WANTED SPECTRUM");
 	   dftParameters::lowerBoundUnwantedFracUpper   = prm.get_double("LOWER BOUND UNWANTED FRAC UPPER");
 	   dftParameters::chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
