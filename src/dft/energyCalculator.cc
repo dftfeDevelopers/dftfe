@@ -36,6 +36,7 @@ namespace dftfe
 		      const unsigned int numberAtoms,
 		      const dealii::ConditionalOStream & pcout,
 		      const bool reproducibleOutput,
+		      const bool isPseudo,
 		      const unsigned int verbosity)
     {
 
@@ -65,14 +66,22 @@ namespace dftfe
 	  sprintf(bufferEnergy, "%-52s:%25.16e\n", "Band energy", bandEnergy); pcout << bufferEnergy;
 	  if (verbosity>=2)
 	    {
-	      sprintf(bufferEnergy, "%-52s:%25.16e\n", "Kinetic energy plus nonlocal PSP", totalkineticEnergy); pcout << bufferEnergy;
+	      if (isPseudo)
+	          sprintf(bufferEnergy, "%-52s:%25.16e\n", "Kinetic energy plus nonlocal PSP energy", totalkineticEnergy);
+	      else
+	          sprintf(bufferEnergy, "%-52s:%25.16e\n", "Kinetic energy", totalkineticEnergy);
+	      pcout << bufferEnergy;
 	    }
 
 	  sprintf(bufferEnergy, "%-52s:%25.16e\n", "Exchange energy", totalexchangeEnergy); pcout << bufferEnergy;
 	  sprintf(bufferEnergy, "%-52s:%25.16e\n", "Correlation energy", totalcorrelationEnergy); pcout << bufferEnergy;
 	  if (verbosity>=2)
 	    {
-	      sprintf(bufferEnergy, "%-52s:%25.16e\n", "Local PSP Electrostatic energy", totalElectrostaticEnergy); pcout << bufferEnergy;
+	      if (isPseudo)
+	         sprintf(bufferEnergy, "%-52s:%25.16e\n", "Local PSP Electrostatic energy", totalElectrostaticEnergy);
+	      else
+	         sprintf(bufferEnergy, "%-52s:%25.16e\n", "Electrostatic energy", totalElectrostaticEnergy);
+	      pcout << bufferEnergy;
 	    }
 
 	  sprintf(bufferEnergy, "%-52s:%25.16e\n", "Total energy", totalEnergy); pcout << bufferEnergy;
@@ -476,6 +485,7 @@ namespace dftfe
 			      numberGlobalAtoms,
 			      pcout,
 			      dftParameters::reproducible_output,
+			      dftParameters::isPseudopotential,
 			      dftParameters::verbosity);
       }
 
@@ -761,6 +771,7 @@ namespace dftfe
 			      numberGlobalAtoms,
 			      pcout,
 			      dftParameters::reproducible_output,
+			      dftParameters::isPseudopotential,
 			      dftParameters::verbosity);
       }
 
