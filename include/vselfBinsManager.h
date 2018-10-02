@@ -99,6 +99,9 @@ namespace dftfe {
 	  /// get const reference to d_atomIdBinIdMapLocalAllImages
 	  const std::map<unsigned int, unsigned int>  & getAtomIdBinIdMapLocalAllImages() const;
 
+	  /// get stored adaptive ball radius
+	  double getStoredAdaptiveBallRadius() const;
+
 
     private:
 

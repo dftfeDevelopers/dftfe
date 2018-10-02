@@ -68,7 +68,8 @@ namespace dftfe {
 #include "kohnShamEigenSolve.cc"
 #include "restart.cc"
 #include "moveAtoms.cc"
-
+#include "electrostaticHRefinedEnergy.cc"
+#include "electrostaticPRefinedEnergy.cc"
   //
   //dft constructor
   //
@@ -396,7 +397,12 @@ namespace dftfe {
 
 	TimerOutput::Scope scope (computing_timer, "psp init");
 	pcout<<std::endl<<"Pseudopotential initalization...."<<std::endl;
-	initLocalPseudoPotential();
+	QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
+	initLocalPseudoPotential(dofHandler,
+	                         quadrature,
+	                         d_pseudoVLoc,
+				 d_gradPseudoVLoc,
+				 d_gradPseudoVLocAtoms);
 
 
 	computeSparseStructureNonLocalProjectors_OV();
@@ -530,10 +536,14 @@ namespace dftfe {
 	loadTriaInfoAndRhoData();
       }
     else
-      d_mesh.generateSerialUnmovedAndParallelMovedUnmovedMesh(atomLocations,
-							      d_imagePositions,
-							      d_domainBoundingVectors,
-							      dftParameters::useSymm);
+      {
+	d_mesh.generateSerialUnmovedAndParallelMovedUnmovedMesh(atomLocations,
+								d_imagePositions,
+								d_domainBoundingVectors,
+								dftParameters::useSymm,
+								dftParameters::electrostaticsHRefinement);
+
+      }
     computing_timer.exit_section("mesh generation");
 
     if (dftParameters::verbosity>=4)
@@ -560,6 +570,15 @@ namespace dftfe {
     //move triangulation to have atoms on triangulation vertices
     //
     moveMeshToAtoms(triangulationPar);
+
+    /*if(dftParameters::electrostaticsHRefinement)
+      {
+	//
+	//get access to triangulation objects from meshGenerator class
+	//
+	parallel::distributed::Triangulation<3> & triangulationElectro = d_mesh.getElectrostaticsMesh();
+	moveMeshToAtoms(triangulationElectro);
+	}*/
 
     if (dftParameters::verbosity>=4)
       dftUtils::printCurrentMemoryUsage(mpi_communicator,
@@ -860,13 +879,13 @@ namespace dftfe {
 		if(dftParameters::xc_id < 4)
 		  {
 		    computing_timer.enter_section("VEff Computation");
-		    kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, pseudoValues);
+		    kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, d_pseudoVLoc);
 		    computing_timer.exit_section("VEff Computation");
 		  }
 		else if (dftParameters::xc_id == 4)
 		  {
 		    computing_timer.enter_section("VEff Computation");
-		    kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, pseudoValues);
+		    kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, d_pseudoVLoc);
 		    computing_timer.exit_section("VEff Computation");
 		  }
 		for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
@@ -943,13 +962,13 @@ namespace dftfe {
 		    if(dftParameters::xc_id < 4)
 		      {
 			computing_timer.enter_section("VEff Computation");
-			kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, pseudoValues);
+			kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, d_pseudoVLoc);
 			computing_timer.exit_section("VEff Computation");
 		      }
 		    else if (dftParameters::xc_id == 4)
 		      {
 			computing_timer.enter_section("VEff Computation");
-			kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, pseudoValues);
+			kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, d_pseudoVLoc);
 			computing_timer.exit_section("VEff Computation");
 		      }
 
@@ -1021,13 +1040,13 @@ namespace dftfe {
 	    if(dftParameters::xc_id < 4)
 	      {
 		computing_timer.enter_section("VEff Computation");
-		kohnShamDFTEigenOperator.computeVEff(rhoInValues, d_phiTotRhoIn, d_phiExt, pseudoValues);
+		kohnShamDFTEigenOperator.computeVEff(rhoInValues, d_phiTotRhoIn, d_phiExt, d_pseudoVLoc);
 		computing_timer.exit_section("VEff Computation");
 	      }
 	    else if (dftParameters::xc_id == 4)
 	      {
 		computing_timer.enter_section("VEff Computation");
-		kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, d_phiTotRhoIn, d_phiExt, pseudoValues);
+		kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, d_phiTotRhoIn, d_phiExt, d_pseudoVLoc);
 		computing_timer.exit_section("VEff Computation");
 	      }
 
@@ -1151,7 +1170,8 @@ namespace dftfe {
 	//
 	//compute integral rhoOut
 	//
-	const double integralRhoValue=totalCharge(rhoOutValues);
+	const double integralRhoValue=totalCharge(dofHandler,
+						  rhoOutValues);
 
 	if (dftParameters::verbosity>=2){
 	  pcout<< std::endl<<"number of electrons: "<< integralRhoValue<<std::endl;
@@ -1198,12 +1218,16 @@ namespace dftfe {
 				       funcC,
 				       d_phiTotRhoIn,
 				       d_phiTotRhoOut,
+				       d_phiExt,
+				       d_phiExt,
 				       *rhoInValues,
 				       *rhoOutValues,
 				       *rhoOutValues,
 				       *gradRhoInValues,
 				       *gradRhoOutValues,
 				       d_localVselfs,
+				       d_pseudoVLoc,
+				       d_pseudoVLoc,
 				       d_atomNodeIdToChargeMap,
 				       atomLocations.size(),
 				       lowerBoundKindex,
@@ -1222,6 +1246,8 @@ namespace dftfe {
 						    funcC,
 						    d_phiTotRhoIn,
 						    d_phiTotRhoOut,
+						    d_phiExt,
+						    d_phiExt,
 						    *rhoInValues,
 						    *rhoOutValues,
 						    *rhoOutValues,
@@ -1232,6 +1258,8 @@ namespace dftfe {
 						    *gradRhoInValuesSpinPolarized,
 						    *gradRhoOutValuesSpinPolarized,
 						    d_localVselfs,
+						    d_pseudoVLoc,
+						    d_pseudoVLoc,
 						    d_atomNodeIdToChargeMap,
 						    atomLocations.size(),
 						    lowerBoundKindex,
@@ -1283,13 +1311,13 @@ namespace dftfe {
 		if(dftParameters::xc_id < 4)
 		  {
 		    computing_timer.enter_section("VEff Computation");
-		    kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, pseudoValues);
+		    kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, d_pseudoVLoc);
 		    computing_timer.exit_section("VEff Computation");
 		  }
 		else if (dftParameters::xc_id == 4)
 		  {
 		    computing_timer.enter_section("VEff Computation");
-		    kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, pseudoValues);
+		    kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, d_pseudoVLoc);
 		    computing_timer.exit_section("VEff Computation");
 		  }
 		for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
@@ -1392,12 +1420,16 @@ namespace dftfe {
 			       funcC,
 			       d_phiTotRhoIn,
 			       d_phiTotRhoOut,
+			       d_phiExt,
+			       d_phiExt,
 			       *rhoInValues,
 			       *rhoOutValues,
 			       *rhoOutValues,
 			       *gradRhoInValues,
 			       *gradRhoOutValues,
 			       d_localVselfs,
+			       d_pseudoVLoc,
+			       d_pseudoVLoc,
 			       d_atomNodeIdToChargeMap,
 			       atomLocations.size(),
 			       lowerBoundKindex,
@@ -1416,6 +1448,8 @@ namespace dftfe {
 					    funcC,
 					    d_phiTotRhoIn,
 					    d_phiTotRhoOut,
+					    d_phiExt,
+					    d_phiExt,
 					    *rhoInValues,
 					    *rhoOutValues,
 					    *rhoOutValues,
@@ -1426,6 +1460,8 @@ namespace dftfe {
 					    *gradRhoInValuesSpinPolarized,
 					    *gradRhoOutValuesSpinPolarized,
 					    d_localVselfs,
+					    d_pseudoVLoc,
+					    d_pseudoVLoc,
 					    d_atomNodeIdToChargeMap,
 					    atomLocations.size(),
 					    lowerBoundKindex,
@@ -1501,7 +1537,30 @@ namespace dftfe {
 
  	computing_timer.enter_section("Ion force computation");
 	computingTimerStandard.enter_section("Ion force computation");
-	forcePtr->computeAtomsForces();
+	forcePtr->computeAtomsForces(matrix_free_data,
+		                     eigenDofHandlerIndex,
+				     phiExtDofHandlerIndex,
+				     phiTotDofHandlerIndex,
+                                     d_phiTotRhoIn,
+				     d_phiTotRhoOut,
+				     d_phiExt,
+				     d_pseudoVLoc,
+				     d_gradPseudoVLoc,
+				     d_gradPseudoVLocAtoms,
+				     d_noConstraints,
+				     d_vselfBinsManager,
+				     matrix_free_data,
+				     phiTotDofHandlerIndex,
+				     phiExtDofHandlerIndex,
+				     d_phiTotRhoOut,
+				     d_phiExt,
+				     *rhoOutValues,
+				     *gradRhoOutValues,
+				     d_pseudoVLoc,
+				     d_gradPseudoVLoc,
+				     d_gradPseudoVLocAtoms,
+				     d_noConstraints,
+				     d_vselfBinsManager);
 	forcePtr->printAtomsForces();
 	computingTimerStandard.exit_section("Ion force computation");
 	computing_timer.exit_section("Ion force computation");
@@ -1514,7 +1573,30 @@ namespace dftfe {
 
 	computing_timer.enter_section("Cell stress computation");
 	computingTimerStandard.enter_section("Cell stress computation");
-	forcePtr->computeStress();
+	forcePtr->computeStress(matrix_free_data,
+		                eigenDofHandlerIndex,
+				phiExtDofHandlerIndex,
+				phiTotDofHandlerIndex,
+                                d_phiTotRhoIn,
+				d_phiTotRhoOut,
+				d_phiExt,
+				d_pseudoVLoc,
+				d_gradPseudoVLoc,
+				d_gradPseudoVLocAtoms,
+				d_noConstraints,
+				d_vselfBinsManager,
+				matrix_free_data,
+				phiTotDofHandlerIndex,
+				phiExtDofHandlerIndex,
+				d_phiTotRhoOut,
+				d_phiExt,
+				*rhoOutValues,
+				*gradRhoOutValues,
+				d_pseudoVLoc,
+				d_gradPseudoVLoc,
+				d_gradPseudoVLocAtoms,
+				d_noConstraints,
+				d_vselfBinsManager);
 	forcePtr->printStress();
 	computingTimerStandard.exit_section("Cell stress computation");
 	computing_timer.exit_section("Cell stress computation");
@@ -1556,8 +1638,11 @@ namespace dftfe {
       }
 
 
-    //if (dftParameters::electrostaticsPRefinement)
-    //  computeElectrostaticEnergyPRefined();
+  if(dftParameters::electrostaticsHRefinement)
+    computeElectrostaticEnergyHRefined();
+
+  if(dftParameters::electrostaticsPRefinement)
+    computeElectrostaticEnergyPRefined();
 
     if (dftParameters::writeWfcSolutionFields)
       outputWfc();

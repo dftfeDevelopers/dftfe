@@ -23,18 +23,17 @@ namespace dftfe {
 namespace eshelbyTensorSP
 {
 
-    Tensor<2,C_DIM,VectorizedArray<double> >  getELocXcPspEshelbyTensor
+    Tensor<2,C_DIM,VectorizedArray<double> >  getELocXcEshelbyTensor
 						       (const VectorizedArray<double> & rho,
 						       const Tensor<1,C_DIM,VectorizedArray<double> > & gradRhoSpin0,
 						       const Tensor<1,C_DIM,VectorizedArray<double> > & gradRhoSpin1,
 						       const VectorizedArray<double> & exc,
 						       const Tensor<1,C_DIM,VectorizedArray<double> > & derExcGradRhoSpin0,
-						       const Tensor<1,C_DIM,VectorizedArray<double> > & derExcGradRhoSpin1,
-						       const VectorizedArray<double> & pseudoVLoc)
+						       const Tensor<1,C_DIM,VectorizedArray<double> > & derExcGradRhoSpin1)
     {
        Tensor<2,C_DIM,VectorizedArray<double> > eshelbyTensor= -outer_product(derExcGradRhoSpin0,gradRhoSpin0)
 	                                                       -outer_product(derExcGradRhoSpin1,gradRhoSpin1);
-       VectorizedArray<double> identityTensorFactor=exc*rho + pseudoVLoc*rho;
+       VectorizedArray<double> identityTensorFactor=exc*rho;
        eshelbyTensor[0][0]+=identityTensorFactor;
        eshelbyTensor[1][1]+=identityTensorFactor;
        eshelbyTensor[2][2]+=identityTensorFactor;
@@ -303,14 +302,6 @@ namespace eshelbyTensorSP
        return F;
     }
 
-    Tensor<1,C_DIM,VectorizedArray<double> >  getFPSPLocal(const VectorizedArray<double> rho,
-							   const Tensor<1,C_DIM,VectorizedArray<double> > & gradPseudoVLoc,
-							   const Tensor<1,C_DIM,VectorizedArray<double> > & gradPhiExt)
-
-    {
-
-       return rho*(gradPseudoVLoc-gradPhiExt);
-    }
 
     Tensor<1,C_DIM,VectorizedArray<double> >  getFnlPeriodic(const std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > & gradZetaDeltaV,
 							     const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiSpin0TimesV,
