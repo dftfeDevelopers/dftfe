@@ -1,4 +1,3 @@
-set VERBOSITY=4
 subsection Geometry
   set NATOMS=2
   set NATOM TYPES=1
@@ -28,10 +27,6 @@ subsection DFT functional parameters
   set PSEUDOPOTENTIAL FILE NAMES LIST = pseudo.inp
 end
 
-subsection Parallelization
-  set NPBAND=2
-end
-
 subsection SCF parameters
   set MIXING HISTORY   = 70
   set MIXING PARAMETER = 0.5
@@ -39,10 +34,6 @@ subsection SCF parameters
   set TEMPERATURE                      = 500
   set TOLERANCE                        = 1e-5
   subsection Eigen-solver parameters
-      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 13
-      set SPECTRUM SPLIT CORE EIGENSTATES=1
-      set ORTHOGONALIZATION TYPE=PGS
-      set WFC BLOCK SIZE=6
-      set CHEBYSHEV FILTER TOLERANCE=1e-3
+      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 12
   end
 end
