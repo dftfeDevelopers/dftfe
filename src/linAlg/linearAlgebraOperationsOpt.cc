@@ -523,11 +523,13 @@ namespace dftfe{
 				            interBandGroupComm,
 					    0);
 
+      /*
       MPI_Bcast(&eigenValues[0],
 		eigenValues.size(),
 		MPI_DOUBLE,
 		0,
 		interBandGroupComm);
+      */
       computing_timer.exit_section("Broadcast eigvec and eigenvalues across band groups, RR step");
       //
       //rotate the basis in the subspace X = X*Q, implemented as X^{T}=Q^{T}*X^{T} with X^{T}
@@ -597,11 +599,13 @@ namespace dftfe{
 	        0,
 	        mpi_communicator);
 #endif
+      /*
       MPI_Bcast(&eigenValues[0],
 		eigenValues.size(),
 		MPI_DOUBLE,
 		0,
 		mpi_communicator);
+		*/
 
       computing_timer.exit_section("eigen decomp in RR");
 
@@ -677,13 +681,13 @@ namespace dftfe{
 		                            projHamPar,
 				            interBandGroupComm,
 					    0);
-
+      /*
       MPI_Bcast(&eigenValues[0],
 		eigenValues.size(),
 		MPI_DOUBLE,
 		0,
 		interBandGroupComm);
-
+      */
       computing_timer.exit_section("Broadcast eigvec and eigenvalues across band groups, RR step");
       //
       //rotate the basis in the subspace X = X*Q, implemented as X^{T}=Q^{T}*X^{T} with X^{T}

@@ -120,7 +120,7 @@ namespace dftUtils
 	    dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
        const unsigned int wfcBlockSizeBandGroup=numBands/numberBandGroups;
        AssertThrow(wfcBlockSizeBandGroup != 0,
-                dealii::ExcMessage("DFT-FE Error: NPBAND more than either total number of bands or total number of top states in case spectrum splitting."));
+                dealii::ExcMessage("DFT-FE Error: NPBAND is more than either total number of bands or total number of top states in case of spectrum splitting."));
        bandGroupLowHighPlusOneIndices.resize(numberBandGroups*2);
        for (unsigned int i=0;i<numberBandGroups;i++)
        {
