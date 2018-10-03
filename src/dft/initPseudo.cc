@@ -1130,8 +1130,8 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors()
                                                      mpi_communicator);
 #endif
 
-  d_projectorKetTimesVectorPar.resize(numEigenValues);
-  for (unsigned int i = 0; i < numEigenValues; ++i)
+  d_projectorKetTimesVectorPar.resize(d_numEigenValues);
+  for (unsigned int i = 0; i < d_numEigenValues; ++i)
     d_projectorKetTimesVectorPar[i].reinit(vec);
 
 }

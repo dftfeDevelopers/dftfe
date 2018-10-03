@@ -43,7 +43,8 @@ void dftClass<FEOrder>::compute_rhoOut()
 		    gradRhoOutValues,
 		    rhoOutValuesSpinPolarized,
 		    gradRhoOutValuesSpinPolarized,
-		    dftParameters::xc_id == 4);
+		    dftParameters::xc_id == 4,
+		    true);
 
 
   //pop out rhoInVals and rhoOutVals if their size exceeds mixing history size
@@ -225,9 +226,12 @@ void dftClass<FEOrder>::computeRhoFromPSI
 	                         std::map<dealii::CellId, std::vector<double> > * _gradRhoValues,
 	                         std::map<dealii::CellId, std::vector<double> > * _rhoValuesSpinPolarized,
 		                 std::map<dealii::CellId, std::vector<double> > * _gradRhoValuesSpinPolarized,
-		                 const bool isEvaluateGradRho)
+		                 const bool isEvaluateGradRho,
+				 const bool isConsiderUnrotatedFractionalEigenVec)
 {
-   const unsigned int numEigenVectors=numEigenValues;
+   const unsigned int numEigenVectorsTotal=d_numEigenValues;
+   const unsigned int numEigenVectorsFrac=d_numEigenValuesRR;
+   const unsigned int numEigenVectorsCore=d_numEigenValues-d_numEigenValuesRR;
    const unsigned int numKPoints=d_kPointWeights.size();
 
 #ifdef USE_COMPLEX
@@ -260,21 +264,24 @@ void dftClass<FEOrder>::computeRhoFromPSI
    const unsigned int bandGroupTaskId = dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
    std::vector<unsigned int> bandGroupLowHighPlusOneIndices;
    dftUtils::createBandParallelizationIndices(interBandGroupComm,
-					      numEigenValues,
+					      numEigenVectorsTotal,
 					      bandGroupLowHighPlusOneIndices);
 
    const unsigned int eigenVectorsBlockSize=std::min(dftParameters::wfcBlockSize,
 	                                             bandGroupLowHighPlusOneIndices[1]);
 
-   const unsigned int localVectorSize = d_eigenVectorsFlattenedSTL[0].size()/numEigenValues;
+   const unsigned int localVectorSize = d_eigenVectorsFlattenedSTL[0].size()/numEigenVectorsTotal;
 
    std::vector<std::vector<vectorType>> eigenVectors((1+dftParameters::spinPolarized)*d_kPointWeights.size());
-
    std::vector<dealii::parallel::distributed::Vector<dataTypes::number> > eigenVectorsFlattenedBlock((1+dftParameters::spinPolarized)*d_kPointWeights.size());
 
-   for(unsigned int ivec = 0; ivec < numEigenValues; ivec+=eigenVectorsBlockSize)
+
+   std::vector<std::vector<vectorType>> eigenVectorsUnrotFrac((1+dftParameters::spinPolarized)*d_kPointWeights.size());
+   std::vector<dealii::parallel::distributed::Vector<dataTypes::number> > eigenVectorsUnrotFracFlattenedBlock((1+dftParameters::spinPolarized)*d_kPointWeights.size());
+
+   for(unsigned int ivec = 0; ivec < numEigenVectorsTotal; ivec+=eigenVectorsBlockSize)
    {
-      const unsigned int currentBlockSize=std::min(eigenVectorsBlockSize,numEigenValues-ivec);
+      const unsigned int currentBlockSize=std::min(eigenVectorsBlockSize,numEigenVectorsTotal-ivec);
 
       if (currentBlockSize!=eigenVectorsBlockSize || ivec==0)
       {
@@ -296,6 +303,51 @@ void dftClass<FEOrder>::computeRhoFromPSI
 					          currentBlockSize);
       }
 
+      const bool isUnrotFracEigenVectorsInBlock=
+	              ((numEigenVectorsFrac!=numEigenVectorsTotal)
+	               && (ivec+currentBlockSize)> numEigenVectorsCore
+		       && isConsiderUnrotatedFractionalEigenVec)?true:false;
+
+      unsigned int currentBlockSizeFrac=eigenVectorsBlockSize;
+      unsigned int startingIndexFracGlobal=ivec;
+      unsigned int startingIndexFrac=0;
+      if (isUnrotFracEigenVectorsInBlock)
+      {
+	  if (ivec<numEigenVectorsCore)
+	  {
+	    currentBlockSizeFrac=ivec+currentBlockSize-numEigenVectorsCore;
+	    startingIndexFracGlobal=numEigenVectorsCore;
+	    startingIndexFrac=numEigenVectorsCore-ivec;
+	  }
+	  else
+	  {
+	    currentBlockSizeFrac=currentBlockSize;
+	    startingIndexFracGlobal=ivec;
+	    startingIndexFrac=0;
+	  }
+
+	  if (currentBlockSizeFrac!=eigenVectorsUnrotFrac.size() || eigenVectorsUnrotFrac.size()==0)
+	  {
+	       for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+	       {
+		  eigenVectorsUnrotFrac[kPoint].resize(currentBlockSizeFrac);
+		  for(unsigned int i= 0; i < currentBlockSizeFrac; ++i)
+		      eigenVectorsUnrotFrac[kPoint][i].reinit(d_tempEigenVec);
+
+
+		  vectorTools::createDealiiVector<dataTypes::number>
+		                               (matrix_free_data.get_vector_partitioner(),
+					        currentBlockSizeFrac,
+					        eigenVectorsUnrotFracFlattenedBlock[kPoint]);
+		  eigenVectorsUnrotFracFlattenedBlock[kPoint] = dataTypes::number(0.0);
+	       }
+
+	       constraintsNoneDataInfo2.precomputeMaps(matrix_free_data.get_vector_partitioner(),
+						       eigenVectorsUnrotFracFlattenedBlock[0].get_partitioner(),
+						       currentBlockSizeFrac);
+	  }
+      }
+
       if((ivec+currentBlockSize)<=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1] &&
 	  (ivec+currentBlockSize)>bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
       {
@@ -306,7 +358,7 @@ void dftClass<FEOrder>::computeRhoFromPSI
 		 for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
 		    for(unsigned int iWave = 0; iWave < currentBlockSize; ++iWave)
 			eigenVectorsFlattenedBlock[kPoint].local_element(iNode*currentBlockSize+iWave)
-			  = d_eigenVectorsFlattenedSTL[kPoint][iNode*numEigenValues+ivec+iWave];
+			  = d_eigenVectorsFlattenedSTL[kPoint][iNode*numEigenVectorsTotal+ivec+iWave];
 
 		 constraintsNoneDataInfo.distribute(eigenVectorsFlattenedBlock[kPoint],
 						    currentBlockSize);
@@ -340,6 +392,50 @@ void dftClass<FEOrder>::computeRhoFromPSI
 			  true);
 
 #endif
+
+                 if (isUnrotFracEigenVectorsInBlock)
+		 {
+
+		     for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
+			for(unsigned int iWave = 0; iWave < currentBlockSizeFrac; ++iWave)
+			    eigenVectorsUnrotFracFlattenedBlock[kPoint].local_element(iNode*currentBlockSizeFrac
+				                                                     +iWave)
+			      = d_eigenVectorsUnrotFracFlattenedSTL[kPoint][iNode*numEigenVectorsFrac
+			                                                    +startingIndexFracGlobal+iWave];
+
+		     constraintsNoneDataInfo2.distribute(eigenVectorsUnrotFracFlattenedBlock[kPoint],
+							currentBlockSizeFrac);
+		     eigenVectorsUnrotFracFlattenedBlock[kPoint].update_ghost_values();
+
+#ifdef USE_COMPLEX
+		     vectorTools::copyFlattenedDealiiVecToSingleCompVec
+			     (eigenVectorsUnrotFracFlattenedBlock[kPoint],
+			      currentBlockSizeFrac,
+			      std::make_pair(0,currentBlockSizeFrac),
+			      localProc_dof_indicesReal,
+			      localProc_dof_indicesImag,
+			      eigenVectorsUnrotFrac[kPoint],
+			      false);
+
+		     //FIXME: The underlying call to update_ghost_values
+		     //is required because currently localProc_dof_indicesReal
+		     //and localProc_dof_indicesImag are only available for
+		     //locally owned nodes. Once they are also made available
+		     //for ghost nodes- use true for the last argument in
+		     //copyFlattenedDealiiVecToSingleCompVec(..) above and supress
+		     //underlying call.
+		     for(unsigned int i= 0; i < currentBlockSizeFrac; ++i)
+			 eigenVectors[kPoint][i].update_ghost_values();
+#else
+		     vectorTools::copyFlattenedDealiiVecToSingleCompVec
+			     (eigenVectorsUnrotFracFlattenedBlock[kPoint],
+			      currentBlockSizeFrac,
+			      std::make_pair(0,currentBlockSizeFrac),
+			      eigenVectorsUnrotFrac[kPoint],
+			      true);
+
+#endif
+		 }
 	  }
 
 #ifdef USE_COMPLEX
@@ -347,11 +443,21 @@ void dftClass<FEOrder>::computeRhoFromPSI
 	  std::vector<Tensor<1,2,VectorizedArray<double> > > psiQuads2(numQuadPoints*currentBlockSize*numKPoints,zeroTensor1);
 	  std::vector<Tensor<1,2,Tensor<1,3,VectorizedArray<double> > > > gradPsiQuads(numQuadPoints*currentBlockSize*numKPoints,zeroTensor2);
 	  std::vector<Tensor<1,2,Tensor<1,3,VectorizedArray<double> > > > gradPsiQuads2(numQuadPoints*currentBlockSize*numKPoints,zeroTensor2);
+
+	  std::vector<Tensor<1,2,VectorizedArray<double> > > psiUnrotFracQuads(numQuadPoints*currentBlockSizeFrac*numKPoints,zeroTensor1);
+	  std::vector<Tensor<1,2,VectorizedArray<double> > > psiUnrotFracQuads2(numQuadPoints*currentBlockSizeFrac*numKPoints,zeroTensor1);
+	  std::vector<Tensor<1,2,Tensor<1,3,VectorizedArray<double> > > > gradPsiUnrotFracQuads(numQuadPoints*currentBlockSizeFrac*numKPoints,zeroTensor2);
+	  std::vector<Tensor<1,2,Tensor<1,3,VectorizedArray<double> > > > gradPsiUnrotFracQuads2(numQuadPoints*currentBlockSizeFrac*numKPoints,zeroTensor2);
 #else
 	  std::vector< VectorizedArray<double> > psiQuads(numQuadPoints*currentBlockSize,make_vectorized_array(0.0));
 	  std::vector< VectorizedArray<double> > psiQuads2(numQuadPoints*currentBlockSize,make_vectorized_array(0.0));
 	  std::vector<Tensor<1,3,VectorizedArray<double> > > gradPsiQuads(numQuadPoints*currentBlockSize,zeroTensor3);
 	  std::vector<Tensor<1,3,VectorizedArray<double> > > gradPsiQuads2(numQuadPoints*currentBlockSize,zeroTensor3);
+
+	  std::vector< VectorizedArray<double> > psiUnrotFracQuads(numQuadPoints*currentBlockSizeFrac,make_vectorized_array(0.0));
+	  std::vector< VectorizedArray<double> > psiUnrotFracQuads2(numQuadPoints*currentBlockSizeFrac,make_vectorized_array(0.0));
+	  std::vector<Tensor<1,3,VectorizedArray<double> > > gradPsiUnrotFracQuads(numQuadPoints*currentBlockSizeFrac,zeroTensor3);
+	  std::vector<Tensor<1,3,VectorizedArray<double> > > gradPsiUnrotFracQuads2(numQuadPoints*currentBlockSizeFrac,zeroTensor3);
 #endif
 
 	  for (unsigned int cell=0; cell<matrix_free_data.n_macro_cells(); ++cell)
@@ -397,6 +503,52 @@ void dftClass<FEOrder>::computeRhoFromPSI
 				    gradPsiQuads2[q*currentBlockSize*numKPoints+currentBlockSize*kPoint+iEigenVec]=psiEval.get_gradient(q);
 			       }
 			   }
+
+			   if (isUnrotFracEigenVectorsInBlock && startingIndexFrac>=iEigenVec)
+			   {
+
+			       const unsigned int vectorIndex=iEigenVec-startingIndexFrac;
+			       psiEval.read_dof_values_plain
+				   (eigenVectorsUnrotFrac
+				    [(1+dftParameters::spinPolarized)*kPoint][vectorIndex]);
+
+			       if(isEvaluateGradRho)
+				  psiEval.evaluate(true,true);
+			       else
+				  psiEval.evaluate(true,false);
+
+			       for (unsigned int q=0; q<numQuadPoints; ++q)
+			       {
+				 psiUnrotFracQuads[q*currentBlockSizeFrac*numKPoints
+				     +currentBlockSizeFrac*kPoint+vectorIndex]=psiEval.get_value(q);
+				 if(isEvaluateGradRho)
+				    gradPsiUnrotFracQuads[q*currentBlockSizeFrac*numKPoints
+					+currentBlockSizeFrac*kPoint+vectorIndex]=psiEval.get_gradient(q);
+			       }
+
+			       if(dftParameters::spinPolarized==1)
+			       {
+
+				   psiEval.read_dof_values_plain
+				       (eigenVectorsUnrotFrac[(1+dftParameters::spinPolarized)*kPoint
+					                       +1][vectorIndex]);
+
+				   if(isEvaluateGradRho)
+				      psiEval.evaluate(true,true);
+				   else
+				      psiEval.evaluate(true,false);
+
+				   for (unsigned int q=0; q<numQuadPoints; ++q)
+				   {
+				     psiUnrotFracQuads2[q*currentBlockSizeFrac*numKPoints
+					 +currentBlockSizeFrac*kPoint+vectorIndex]=psiEval.get_value(q);
+				     if(isEvaluateGradRho)
+					gradPsiUnrotFracQuads2[q*currentBlockSizeFrac*numKPoints
+					    +currentBlockSizeFrac*kPoint+vectorIndex]=psiEval.get_gradient(q);
+				   }
+			       }
+			   }
+
 			}//eigenvector per k point
 
 		  for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
@@ -416,6 +568,7 @@ void dftClass<FEOrder>::computeRhoFromPSI
 			}
 
 			for(unsigned int kPoint = 0; kPoint < numKPoints; ++kPoint)
+			{
 			  for(unsigned int iEigenVec=0; iEigenVec<currentBlockSize; ++iEigenVec)
 			    {
 
@@ -426,14 +579,16 @@ void dftClass<FEOrder>::computeRhoFromPSI
 							     dftParameters::TVal);
 
 			      double partialOccupancy2=dftUtils::getPartialOccupancy
-							    (eigenValues[kPoint][ivec+iEigenVec+dftParameters::spinPolarized*numEigenVectors],
+							    (eigenValues[kPoint][ivec+iEigenVec
+							     +dftParameters::spinPolarized*numEigenVectorsTotal],
 							     fermiEnergy,
 							     C_kb,
 							     dftParameters::TVal);
 			      if(dftParameters::constraintMagnetization)
 				{
 				 partialOccupancy = 1.0 , partialOccupancy2 = 1.0 ;
-				 if (eigenValues[kPoint][ivec+iEigenVec+dftParameters::spinPolarized*numEigenVectors] > fermiEnergyDown)
+				 if (eigenValues[kPoint][ivec+iEigenVec
+					 +dftParameters::spinPolarized*numEigenVectorsTotal] > fermiEnergyDown)
 					partialOccupancy2 = 0.0 ;
 				 if (eigenValues[kPoint][ivec+iEigenVec] > fermiEnergyUp)
 					partialOccupancy = 0.0 ;
@@ -532,8 +687,108 @@ void dftClass<FEOrder>::computeRhoFromPSI
 				    }
 
 #endif
+
+
+				  if (isUnrotFracEigenVectorsInBlock && startingIndexFrac>=iEigenVec)
+				  {
+				      const unsigned int idFrac=q*currentBlockSizeFrac*numKPoints
+					             +currentBlockSizeFrac*kPoint
+						     +iEigenVec-startingIndexFrac;
+#ifdef USE_COMPLEX
+				      Vector<double> psiUnrotFrac, psiUnrotFrac2;
+				      psiUnrotFrac.reinit(2); psiUnrotFrac2.reinit(2);
+
+				      psi(0)= psiUnrotFracQuads[idFrac][0][iSubCell];
+				      psi(1)=psiUnrotFracQuads[idFrac][1][iSubCell];
+
+				      if(dftParameters::spinPolarized==1)
+				      {
+					psi2(0)=psiUnrotFracQuads2[idFrac][0][iSubCell];
+					psi2(1)=psiUnrotFracQuads2[idFrac][1][iSubCell];
+				      }
+
+				      std::vector<Tensor<1,3,double> > gradPsi(2),gradPsi2(2);
+
+				      if(isEvaluateGradRho)
+					  for(unsigned int idim=0; idim<3; ++idim)
+					  {
+					     gradPsi[0][idim]=gradPsiQuads[id][0][idim][iSubCell];
+					     gradPsi[1][idim]=gradPsiQuads[id][1][idim][iSubCell];
+
+					     if(dftParameters::spinPolarized==1)
+					     {
+						 gradPsi2[0][idim]=gradPsiQuads2[id][0][idim][iSubCell];
+						 gradPsi2[1][idim]=gradPsiQuads2[id][1][idim][iSubCell];
+					     }
+					  }
+#else
+				      double psi, psi2;
+				      psi=psiQuads[id][iSubCell];
+				      if (dftParameters::spinPolarized==1)
+					  psi2=psiQuads2[id][iSubCell];
+
+				      Tensor<1,3,double> gradPsi,gradPsi2;
+				      if(isEvaluateGradRho)
+					  for(unsigned int idim=0; idim<3; ++idim)
+					  {
+					     gradPsi[idim]=gradPsiQuads[id][idim][iSubCell];
+					     if(dftParameters::spinPolarized==1)
+						 gradPsi2[idim]=gradPsiQuads2[id][idim][iSubCell];
+					  }
+
+#endif
+
+#ifdef USE_COMPLEX
+				      if(dftParameters::spinPolarized==1)
+					{
+					  rhoTempSpinPolarized[2*q] += partialOccupancy*d_kPointWeights[kPoint]*(psi(0)*psi(0) + psi(1)*psi(1));
+					  rhoTempSpinPolarized[2*q+1] += partialOccupancy2*d_kPointWeights[kPoint]*(psi2(0)*psi2(0) + psi2(1)*psi2(1));
+					  //
+					  if(isEvaluateGradRho)
+					      for(unsigned int idim=0; idim<3; ++idim)
+					      {
+						  gradRhoTempSpinPolarized[6*q + idim] +=
+						  2.0*partialOccupancy*d_kPointWeights[kPoint]*(psi(0)*gradPsi[0][idim] + psi(1)*gradPsi[1][idim]);
+						  gradRhoTempSpinPolarized[6*q + 3+idim] +=
+						  2.0*partialOccupancy2*d_kPointWeights[kPoint]*(psi2(0)*gradPsi2[0][idim] + psi2(1)*gradPsi2[1][idim]);
+					      }
+					}
+				      else
+					{
+					  rhoTemp[q] += 2.0*partialOccupancy*d_kPointWeights[kPoint]*(psi(0)*psi(0) + psi(1)*psi(1));
+					  if(isEvaluateGradRho)
+					    for(unsigned int idim=0; idim<3; ++idim)
+					       gradRhoTemp[3*q + idim] += 2.0*2.0*partialOccupancy*d_kPointWeights[kPoint]*(psi(0)*gradPsi[0][idim] + psi(1)*gradPsi[1][idim]);
+					}
+#else
+				      if(dftParameters::spinPolarized==1)
+					{
+					  rhoTempSpinPolarized[2*q] += partialOccupancy*psi*psi;
+					  rhoTempSpinPolarized[2*q+1] += partialOccupancy2*psi2*psi2;
+
+					  if(isEvaluateGradRho)
+					      for(unsigned int idim=0; idim<3; ++idim)
+					      {
+						  gradRhoTempSpinPolarized[6*q + idim] += 2.0*partialOccupancy*(psi*gradPsi[idim]);
+						  gradRhoTempSpinPolarized[6*q + 3+idim] +=  2.0*partialOccupancy2*(psi2*gradPsi2[idim]);
+					      }
+					}
+				      else
+					{
+					  rhoTemp[q] += 2.0*partialOccupancy*psi*psi;
+
+					  if(isEvaluateGradRho)
+					    for(unsigned int idim=0; idim<3; ++idim)
+					       gradRhoTemp[3*q + idim] += 2.0*2.0*partialOccupancy*psi*gradPsi[idim];
+					}
+
+#endif
+
+				  }
+
 				}//quad point loop
 			    }//block eigenvectors per k point
+			}
 
 			for (unsigned int q=0; q<numQuadPoints; ++q)
 			{

@@ -99,13 +99,13 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
   //multiply by M^{1/2}
   internal::pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_sqrtMassVector,
 				       matrix_free_data.get_vector_partitioner(),
-				       numEigenValues,
+				       d_numEigenValues,
 				       localProc_dof_indicesReal,
 				       d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
 				       constraintsNoneDataInfo);
 
-  std::vector<double> eigenValuesTemp(isSpectrumSplit?numEigenValuesRR
-	                              :numEigenValues,0.0);
+  std::vector<double> eigenValuesTemp(isSpectrumSplit?d_numEigenValuesRR
+	                              :d_numEigenValues,0.0);
 
   subspaceIterationSolver.reinitSpectrumBounds(a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
 					       bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
@@ -113,7 +113,7 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
   subspaceIterationSolver.solve(kohnShamDFTEigenOperator,
   				d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
 				d_tempEigenVec,
-				numEigenValues,
+				d_numEigenValues,
   				eigenValuesTemp,
 				residualNormWaveFunctions,
 				interBandGroupComm,
@@ -125,7 +125,7 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
   //
   internal::pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_invSqrtMassVector,
 				       matrix_free_data.get_vector_partitioner(),
-				       numEigenValues,
+				       d_numEigenValues,
 				       localProc_dof_indicesReal,
 				       d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
 				       constraintsNoneDataInfo);
@@ -135,33 +135,33 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
   //
   if (isSpectrumSplit)
     {
-      for(unsigned int i = 0; i < numEigenValuesRR; i++)
+      for(unsigned int i = 0; i < d_numEigenValuesRR; i++)
 	{
-	  if(dftParameters::verbosity>=4 && numEigenValues==numEigenValuesRR)
+	  if(dftParameters::verbosity>=4 && d_numEigenValues==d_numEigenValuesRR)
 	      pcout<<"eigen value "<< std::setw(3) <<i <<": "<<eigenValuesTemp[i] <<std::endl;
-	  else if(dftParameters::verbosity>=4 && numEigenValues!=numEigenValuesRR)
+	  else if(dftParameters::verbosity>=4 && d_numEigenValues!=d_numEigenValuesRR)
               pcout<<"valence eigen value "<< std::setw(3) <<i <<": "<<eigenValuesTemp[i] <<std::endl;
 
-	  eigenValuesRRSplit[kPointIndex][spinType*numEigenValuesRR + i] =  eigenValuesTemp[i];
+	  eigenValuesRRSplit[kPointIndex][spinType*d_numEigenValuesRR + i] =  eigenValuesTemp[i];
 	}
 
-      for(unsigned int i = 0; i < numEigenValues; i++)
+      for(unsigned int i = 0; i < d_numEigenValues; i++)
 	{
-	  if (i>=(numEigenValues-numEigenValuesRR))
-	     eigenValues[kPointIndex][spinType*numEigenValues + i]
-		 = eigenValuesTemp[i-(numEigenValues-numEigenValuesRR)];
+	  if (i>=(d_numEigenValues-d_numEigenValuesRR))
+	     eigenValues[kPointIndex][spinType*d_numEigenValues + i]
+		 = eigenValuesTemp[i-(d_numEigenValues-d_numEigenValuesRR)];
 	  else
-             eigenValues[kPointIndex][spinType*numEigenValues + i]=-100.0;
+             eigenValues[kPointIndex][spinType*d_numEigenValues + i]=-100.0;
 	}
     }
   else
     {
-      for(unsigned int i = 0; i < numEigenValues; i++)
+      for(unsigned int i = 0; i < d_numEigenValues; i++)
 	{
 	  if(dftParameters::verbosity>=4)
 	      pcout<<"eigen value "<< std::setw(3) <<i <<": "<<eigenValuesTemp[i] <<std::endl;
 
-	  eigenValues[kPointIndex][spinType*numEigenValues + i] =  eigenValuesTemp[i];
+	  eigenValues[kPointIndex][spinType*d_numEigenValues + i] =  eigenValuesTemp[i];
 	}
     }
 

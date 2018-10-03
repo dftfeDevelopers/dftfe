@@ -152,7 +152,7 @@ void dftClass<FEOrder>::determineOrbitalFilling()
   unsigned int errorReadFile = 0;
   unsigned int fileReadFlag = 0;
   unsigned int waveFunctionCount = 0;
-  unsigned int totalNumberWaveFunctions = numEigenValues;
+  unsigned int totalNumberWaveFunctions = d_numEigenValues;
 
   for (std::vector<std::vector<unsigned int> >::iterator it = stencil.begin(); it < stencil.end(); it++)
     {
@@ -183,29 +183,29 @@ void dftClass<FEOrder>::determineOrbitalFilling()
 		  temp.atomID = iAtom;
 		  temp.Z = Z; temp.n = n; temp.l = l; temp.m = m; temp.psi = radValues[Z][n][l];
 		  waveFunctionsVector.push_back(temp); waveFunctionCount++;
-		  if(waveFunctionCount >= numEigenValues && waveFunctionCount >= numberGlobalAtoms) break;
+		  if(waveFunctionCount >= d_numEigenValues && waveFunctionCount >= numberGlobalAtoms) break;
 		}
 
 	    }
 
-	  if(waveFunctionCount >= numEigenValues && waveFunctionCount >= numberGlobalAtoms) break;
+	  if(waveFunctionCount >= d_numEigenValues && waveFunctionCount >= numberGlobalAtoms) break;
 	}
 
-      if(waveFunctionCount >= numEigenValues && waveFunctionCount >= numberGlobalAtoms) break;
+      if(waveFunctionCount >= d_numEigenValues && waveFunctionCount >= numberGlobalAtoms) break;
 
       if(fileReadFlag == 0)
 	errorReadFile += 1;
     }
 
 
-  if(waveFunctionsVector.size() > numEigenValues)
+  if(waveFunctionsVector.size() > d_numEigenValues)
     {
-      numEigenValues = waveFunctionsVector.size();
+      d_numEigenValues = waveFunctionsVector.size();
     }
 
   pcout<<"============================================================================================================================="<<std::endl;
   pcout<<"number of electrons: "<<numElectrons<<std::endl;
-  pcout << "number of eigen values: " << numEigenValues << std::endl;
+  pcout << "number of eigen values: " << d_numEigenValues << std::endl;
 
   if (dftParameters::verbosity>=1)
     pcout<<"number of wavefunctions computed using single atom data to be used as initial guess for starting the SCF: " <<waveFunctionCount<<std::endl;
@@ -236,7 +236,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
   const unsigned int numberGlobalAtoms = atomLocations.size();
 
   if (dftParameters::verbosity>=1)
-      pcout << "Number of wavefunctions generated randomly to be used as initial guess for starting the SCF : " << numEigenValues - waveFunctionsVector.size()<< std::endl;
+      pcout << "Number of wavefunctions generated randomly to be used as initial guess for starting the SCF : " << d_numEigenValues - waveFunctionsVector.size()<< std::endl;
   //
   //loop over nodes
   //
@@ -246,7 +246,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 
       const dealii::types::global_dof_index dofID = locallyOwnedDOFs[dof];
       Point<3> node = d_supportPoints[dofID];
-      //if(d_eigenVectorsFlattened[0].in_local_range(dofID*numEigenValues))
+      //if(d_eigenVectorsFlattened[0].in_local_range(dofID*d_numEigenValues))
       //{
 	  if(!constraintsNone.is_constrained(dofID))
 	    {
@@ -312,17 +312,17 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 			  //spherical part
 			  if (it->m > 0)
 			    {
-			      d_eigenVectorsFlattenedSTL[kPoint][dof*numEigenValues+waveFunction] +=
+			      d_eigenVectorsFlattenedSTL[kPoint][dof*d_numEigenValues+waveFunction] +=
 				  dataTypes::number(R*std::sqrt(2)*boost::math::spherical_harmonic_r(it->l,it->m,theta,phi));
 			    }
 			  else if (it->m == 0)
 			    {
-			      d_eigenVectorsFlattenedSTL[kPoint][dof*numEigenValues+waveFunction] +=
+			      d_eigenVectorsFlattenedSTL[kPoint][dof*d_numEigenValues+waveFunction] +=
 				  dataTypes::number(R*boost::math::spherical_harmonic_r(it->l,it->m,theta,phi));
 			    }
 			  else
 			    {
-			      d_eigenVectorsFlattenedSTL[kPoint][dof*numEigenValues+waveFunction] +=
+			      d_eigenVectorsFlattenedSTL[kPoint][dof*d_numEigenValues+waveFunction] +=
 				  dataTypes::number(R*std::sqrt(2)*boost::math::spherical_harmonic_i(it->l,-(it->m),theta,phi));
 			    }
 			}
@@ -330,17 +330,17 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 		    }
 
 		  d_nonAtomicWaveFunctions = 0;
-		  if(waveFunctionsVector.size() < numEigenValues)
+		  if(waveFunctionsVector.size() < d_numEigenValues)
 		    {
 
-		      d_nonAtomicWaveFunctions = numEigenValues - waveFunctionsVector.size();
+		      d_nonAtomicWaveFunctions = d_numEigenValues - waveFunctionsVector.size();
 
 		      //
 		      // assign the rest of the wavefunctions using a standard normal distribution
 		      //
 		      boost::math::normal normDist;
 
-		      for(unsigned int iWave = waveFunctionsVector.size(); iWave < numEigenValues; ++iWave)
+		      for(unsigned int iWave = waveFunctionsVector.size(); iWave < d_numEigenValues; ++iWave)
 			{
 
 			  double z = (-0.5 + (rand()+ 0.0)/(RAND_MAX))*3.0;
@@ -348,7 +348,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 			  if(rand()%2 == 0)
 			    value = -1.0*value;
 
-			  d_eigenVectorsFlattenedSTL[kPoint][dof*numEigenValues+iWave] = dataTypes::number(value);
+			  d_eigenVectorsFlattenedSTL[kPoint][dof*d_numEigenValues+iWave] = dataTypes::number(value);
 
 			}
 		    }
@@ -368,7 +368,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
     {
       pcout<<"============================================================================================================================="<<std::endl;
       pcout<<"number of electrons: "<<numElectrons<<std::endl;
-      pcout << "number of eigen values: " << numEigenValues << std::endl;
+      pcout << "number of eigen values: " << d_numEigenValues << std::endl;
       pcout<<"============================================================================================================================="<<std::endl;
     }
 

@@ -29,7 +29,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyPRefined()
     for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
       {
 	vectorTools::createDealiiVector<dataTypes::number>(matrix_free_data.get_vector_partitioner(),
-							   numEigenValues,
+							   d_numEigenValues,
 							   d_eigenVectorsFlattened[kPoint]);
 
 
@@ -43,23 +43,23 @@ void dftClass<FEOrder>::computeElectrostaticEnergyPRefined()
 
     constraintsNoneDataInfo.precomputeMaps(matrix_free_data.get_vector_partitioner(),
 					   d_eigenVectorsFlattened[0].get_partitioner(),
-					   numEigenValues);
+					   d_numEigenValues);
 
-    const unsigned int localVectorSize = d_eigenVectorsFlattenedSTL[0].size()/numEigenValues;
+    const unsigned int localVectorSize = d_eigenVectorsFlattenedSTL[0].size()/d_numEigenValues;
 
     for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
       {
 	for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
 	  {
-	    for(unsigned int iWave = 0; iWave < numEigenValues; ++iWave)
+	    for(unsigned int iWave = 0; iWave < d_numEigenValues; ++iWave)
 	      {
-		d_eigenVectorsFlattened[kPoint].local_element(iNode*numEigenValues+iWave)
-		  = d_eigenVectorsFlattenedSTL[kPoint][iNode*numEigenValues+iWave];
+		d_eigenVectorsFlattened[kPoint].local_element(iNode*d_numEigenValues+iWave)
+		  = d_eigenVectorsFlattenedSTL[kPoint][iNode*d_numEigenValues+iWave];
 	      }
 	  }
 
 	constraintsNoneDataInfo.distribute(d_eigenVectorsFlattened[kPoint],
-					   numEigenValues);
+					   d_numEigenValues);
 
       }
 
@@ -75,14 +75,14 @@ void dftClass<FEOrder>::computeElectrostaticEnergyPRefined()
 #ifdef USE_COMPLEX
   for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
     {
-      eigenVectors[kPoint].resize(numEigenValues);
+      eigenVectors[kPoint].resize(d_numEigenValues);
 
-      for(unsigned int i= 0; i < numEigenValues; ++i)
+      for(unsigned int i= 0; i < d_numEigenValues; ++i)
 	eigenVectors[kPoint][i].reinit(d_tempEigenVec);
 
       vectorTools::copyFlattenedDealiiVecToSingleCompVec(d_eigenVectorsFlattened[kPoint],
-							 numEigenValues,
-							 std::make_pair(0,numEigenValues),
+							 d_numEigenValues,
+							 std::make_pair(0,d_numEigenValues),
 							 localProc_dof_indicesReal,
 							 localProc_dof_indicesImag,
 							 eigenVectors[kPoint]);
@@ -90,15 +90,15 @@ void dftClass<FEOrder>::computeElectrostaticEnergyPRefined()
 #else
   for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
     {
-      eigenVectors[kPoint].resize(numEigenValues);
+      eigenVectors[kPoint].resize(d_numEigenValues);
 
-      for(unsigned int i= 0; i < numEigenValues; ++i)
+      for(unsigned int i= 0; i < d_numEigenValues; ++i)
 	eigenVectors[kPoint][i].reinit(d_tempEigenVec);
 
 
       vectorTools::copyFlattenedDealiiVecToSingleCompVec(d_eigenVectorsFlattened[kPoint],
-							 numEigenValues,
-							 std::make_pair(0,numEigenValues),
+							 d_numEigenValues,
+							 std::make_pair(0,d_numEigenValues),
 							 eigenVectors[kPoint]);
     }
 #endif
@@ -260,7 +260,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyPRefined()
 	  std::vector<double> rhoTemp(num_quad_points);
 
 	  for(unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-	      for(unsigned int i=0; i<numEigenValues; ++i)
+	      for(unsigned int i=0; i<d_numEigenValues; ++i)
 	      {
 
 		      fe_values.get_function_values(eigenVectors[(1+dftParameters::spinPolarized)*kPoint][i],
@@ -278,7 +278,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyPRefined()
 		      double partialOccupancy2;
 		      if(dftParameters::spinPolarized==1)
 		         partialOccupancy2=dftUtils::getPartialOccupancy
-						    (eigenValues[kPoint][i+numEigenValues],
+						    (eigenValues[kPoint][i+d_numEigenValues],
 						     fermiEnergy,
 						     C_kb,
 						     dftParameters::TVal);
