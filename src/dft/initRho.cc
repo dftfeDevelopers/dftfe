@@ -387,7 +387,7 @@ void dftClass<FEOrder>::computeRhoInitialGuessFromPSI(std::vector<std::vector<ve
 
 	      for(int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
 		{
-		  for(unsigned int i=0; i<numEigenValues; ++i)
+		  for(unsigned int i=0; i<d_numEigenValues; ++i)
 		    {
 		      fe_values.get_function_values(eigenVectors[(1+dftParameters::spinPolarized)*kPoint][i], tempPsi);
 		      if(dftParameters::spinPolarized==1)
@@ -402,7 +402,7 @@ void dftClass<FEOrder>::computeRhoInitialGuessFromPSI(std::vector<std::vector<ve
 			  double factor = (eigenValues[kPoint][i]-fermiEnergy)/(C_kb*dftParameters::TVal);
 			  double partialOccupancy = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)):1.0/(1.0 + std::exp(factor));
 			  //
-			  factor=(eigenValues[kPoint][i+dftParameters::spinPolarized*numEigenValues]-fermiEnergy)/(C_kb*dftParameters::TVal);
+			  factor=(eigenValues[kPoint][i+dftParameters::spinPolarized*d_numEigenValues]-fermiEnergy)/(C_kb*dftParameters::TVal);
 			  double partialOccupancy2 = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)):1.0/(1.0 + std::exp(factor));
 #ifdef USE_COMPLEX
 			  if(dftParameters::spinPolarized==1)
@@ -499,7 +499,7 @@ void dftClass<FEOrder>::computeRhoInitialGuessFromPSI(std::vector<std::vector<ve
 	    {
 	      for(int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
 		{
-		  for(unsigned int i=0; i<numEigenValues; ++i)
+		  for(unsigned int i=0; i<d_numEigenValues; ++i)
 		    {
 		      fe_values.get_function_values(eigenVectors[(1+dftParameters::spinPolarized)*kPoint][i], tempPsi);
 		      if(dftParameters::spinPolarized==1)
@@ -510,7 +510,7 @@ void dftClass<FEOrder>::computeRhoInitialGuessFromPSI(std::vector<std::vector<ve
 			  double factor=(eigenValues[kPoint][i]-fermiEnergy)/(C_kb*dftParameters::TVal);
 			  double partialOccupancy = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)):1.0/(1.0 + std::exp(factor));
 			  //
-			  factor=(eigenValues[kPoint][i+dftParameters::spinPolarized*numEigenValues]-fermiEnergy)/(C_kb*dftParameters::TVal);
+			  factor=(eigenValues[kPoint][i+dftParameters::spinPolarized*d_numEigenValues]-fermiEnergy)/(C_kb*dftParameters::TVal);
 			  double partialOccupancy2 = (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)):1.0/(1.0 + std::exp(factor));
 #ifdef USE_COMPLEX
 			   if(dftParameters::spinPolarized==1)
@@ -569,8 +569,8 @@ void dftClass<FEOrder>::computeNodalRhoFromQuadData()
   matrix_free_data.initialize_dof_vector(d_rhoNodalField,densityDofHandlerIndex);
   d_rhoNodalField=0;
 
-  std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell , 
-                       const unsigned int q)> funcRho = 
+  std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
+                       const unsigned int q)> funcRho =
                        [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
                        const unsigned int q)
                        {return (*rhoOutValues).find(cell->id())->second[q];};
@@ -591,8 +591,8 @@ void dftClass<FEOrder>::computeNodalRhoFromQuadData()
       matrix_free_data.initialize_dof_vector(d_rhoNodalFieldSpin0,densityDofHandlerIndex);
       d_rhoNodalFieldSpin0=0;
 
-      std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell , 
-                           const unsigned int q)> funcRhoSpin0 = 
+      std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
+                           const unsigned int q)> funcRhoSpin0 =
 				   [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
 				   const unsigned int q)
 				   {return (*rhoOutValuesSpinPolarized).find(cell->id())->second[2*q];};
@@ -610,8 +610,8 @@ void dftClass<FEOrder>::computeNodalRhoFromQuadData()
       matrix_free_data.initialize_dof_vector(d_rhoNodalFieldSpin1,densityDofHandlerIndex);
       d_rhoNodalFieldSpin1=0;
 
-      std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell , 
-                           const unsigned int q)> funcRhoSpin1 = 
+      std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
+                           const unsigned int q)> funcRhoSpin1 =
 				   [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
 				   const unsigned int q)
 				   {return (*rhoOutValuesSpinPolarized).find(cell->id())->second[2*q+1];};

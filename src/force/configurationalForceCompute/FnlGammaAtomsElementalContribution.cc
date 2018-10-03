@@ -28,7 +28,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionPeriodic(std::map<un
 {
 
   const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
-  const unsigned int numEigenVectors=dftPtr->numEigenValues;
+  const unsigned int numEigenVectors=dftPtr->d_numEigenValues;
   const unsigned int numKPoints=dftPtr->d_kPointWeights.size();
   const unsigned int numSubCells= dftPtr->matrix_free_data.n_components_filled(cell);
   const unsigned int numQuadPoints=dftParameters::useHigherQuadNLP?
@@ -122,7 +122,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodic(std::map
 {
 
   const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
-  const unsigned int numEigenVectors=dftPtr->numEigenValues;
+  const unsigned int numEigenVectors=dftPtr->d_numEigenValues;
   const unsigned int numSubCells= dftPtr->matrix_free_data.n_components_filled(cell);
   const unsigned int numQuadPoints=dftParameters::useHigherQuadNLP?
                                    forceEvalNLP.n_q_points

@@ -147,13 +147,13 @@ namespace dftfe {
       /**
        * @brief Number of Kohn-Sham eigen values to be computed
        */
-      unsigned int numEigenValues;
+      unsigned int d_numEigenValues;
 
       /**
        * @brief Number of Kohn-Sham eigen values to be computed in the Rayleigh-Ritz step
        * after spectrum splitting.
        */
-      unsigned int numEigenValuesRR;
+      unsigned int d_numEigenValuesRR;
 
       /**
        * @brief Number of random wavefunctions
@@ -334,7 +334,8 @@ namespace dftfe {
 		     std::map<dealii::CellId, std::vector<double> > * _gradRhoValues,
 		     std::map<dealii::CellId, std::vector<double> > * _rhoValuesSpinPolarized,
 		     std::map<dealii::CellId, std::vector<double> > * _gradRhoValuesSpinPolarized,
-		     const bool isEvaluateGradRho);
+		     const bool isEvaluateGradRho,
+		     const bool isConsiderUnrotatedFractionalEigenVec);
 
 
       /**
@@ -610,6 +611,14 @@ namespace dftfe {
        *
        */
       dftUtils::constraintMatrixInfo constraintsNoneDataInfo;
+
+      /**
+       *object which is used to store dealii constraint matrix information
+       *using STL vectors. The relevant dealii constraint matrix
+       *has hanging node constraints used in Poisson problem solution
+       *
+       */
+      dftUtils::constraintMatrixInfo constraintsNoneDataInfo2;
 
 
       ConstraintMatrix constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_noConstraints;

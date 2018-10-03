@@ -82,23 +82,23 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
   std::vector<std::vector<vectorType>> eigenVectors((1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size());
   for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size(); ++kPoint)
   {
-        eigenVectors[kPoint].resize(dftPtr->numEigenValues);
-        for(unsigned int i = 0; i < dftPtr->numEigenValues; ++i)
+        eigenVectors[kPoint].resize(dftPtr->d_numEigenValues);
+        for(unsigned int i = 0; i < dftPtr->d_numEigenValues; ++i)
           eigenVectors[kPoint][i].reinit(dftPtr->d_tempEigenVec);
 
 #ifdef USE_COMPLEX
 	vectorTools::copyFlattenedDealiiVecToSingleCompVec
 		 (dftPtr->d_eigenVectorsFlattened[kPoint],
-		  dftPtr->numEigenValues,
-		  std::make_pair(0,dftPtr->numEigenValues),
+		  dftPtr->d_numEigenValues,
+		  std::make_pair(0,dftPtr->d_numEigenValues),
 		  dftPtr->localProc_dof_indicesReal,
 		  dftPtr->localProc_dof_indicesImag,
 		  eigenVectors[kPoint]);
 #else
 	vectorTools::copyFlattenedDealiiVecToSingleCompVec
 		 (dftPtr->d_eigenVectorsFlattened[kPoint],
-		  dftPtr->numEigenValues,
-		  std::make_pair(0,dftPtr->numEigenValues),
+		  dftPtr->d_numEigenValues,
+		  std::make_pair(0,dftPtr->d_numEigenValues),
 		  eigenVectors[kPoint]);
 #endif
   }
@@ -159,7 +159,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
   const unsigned int numQuadPoints=forceEval.n_q_points;
   const unsigned int numQuadPointsNLP=dftParameters::useHigherQuadNLP?
                                       forceEvalNLP.n_q_points:numQuadPoints;
-  const unsigned int numEigenVectors=dftPtr->numEigenValues;
+  const unsigned int numEigenVectors=dftPtr->d_numEigenValues;
   const unsigned int numKPoints=dftPtr->d_kPointWeights.size();
   DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
   Tensor<1,2,VectorizedArray<double> > zeroTensor1;zeroTensor1[0]=make_vectorized_array(0.0);zeroTensor1[1]=make_vectorized_array(0.0);

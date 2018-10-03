@@ -93,7 +93,7 @@ int main (int argc, char *argv[])
       dftfe::dftClass<1> problemFEOrder1(bandGroupsPool.get_intrapool_comm(),
 	                                 kPointPool.get_interpool_comm(),
 					 bandGroupsPool.get_interpool_comm());
-      problemFEOrder1.numEigenValues = dftfe::dftParameters::numberEigenValues;
+      problemFEOrder1.d_numEigenValues = dftfe::dftParameters::numberEigenValues;
       problemFEOrder1.set();
       problemFEOrder1.init();
       problemFEOrder1.run();
@@ -105,7 +105,7 @@ int main (int argc, char *argv[])
       dftfe::dftClass<2> problemFEOrder2(bandGroupsPool.get_intrapool_comm(),
 	                                 kPointPool.get_interpool_comm(),
 					 bandGroupsPool.get_interpool_comm());
-      problemFEOrder2.numEigenValues = dftfe::dftParameters::numberEigenValues;
+      problemFEOrder2.d_numEigenValues = dftfe::dftParameters::numberEigenValues;
       problemFEOrder2.set();
       problemFEOrder2.init();
       problemFEOrder2.run();
@@ -117,7 +117,7 @@ int main (int argc, char *argv[])
       dftfe::dftClass<3> problemFEOrder3(bandGroupsPool.get_intrapool_comm(),
 	                                 kPointPool.get_interpool_comm(),
 					 bandGroupsPool.get_interpool_comm());
-      problemFEOrder3.numEigenValues = dftfe::dftParameters::numberEigenValues;
+      problemFEOrder3.d_numEigenValues = dftfe::dftParameters::numberEigenValues;
       problemFEOrder3.set();
       problemFEOrder3.init();
       problemFEOrder3.run();
@@ -129,7 +129,7 @@ int main (int argc, char *argv[])
       dftfe::dftClass<4> problemFEOrder4(bandGroupsPool.get_intrapool_comm(),
 	                                 kPointPool.get_interpool_comm(),
 					 bandGroupsPool.get_interpool_comm());
-      problemFEOrder4.numEigenValues = dftfe::dftParameters::numberEigenValues;
+      problemFEOrder4.d_numEigenValues = dftfe::dftParameters::numberEigenValues;
       problemFEOrder4.set();
       problemFEOrder4.init();
       problemFEOrder4.run();
@@ -141,7 +141,7 @@ int main (int argc, char *argv[])
       dftfe::dftClass<5> problemFEOrder5(bandGroupsPool.get_intrapool_comm(),
 	                                kPointPool.get_interpool_comm(),
 					bandGroupsPool.get_interpool_comm());
-      problemFEOrder5.numEigenValues = dftfe::dftParameters::numberEigenValues;
+      problemFEOrder5.d_numEigenValues = dftfe::dftParameters::numberEigenValues;
       problemFEOrder5.set();
       problemFEOrder5.init();
       problemFEOrder5.run();
@@ -153,7 +153,7 @@ int main (int argc, char *argv[])
       dftfe::dftClass<6> problemFEOrder6(bandGroupsPool.get_intrapool_comm(),
 	                                kPointPool.get_interpool_comm(),
 					bandGroupsPool.get_interpool_comm());
-      problemFEOrder6.numEigenValues = dftfe::dftParameters::numberEigenValues;
+      problemFEOrder6.d_numEigenValues = dftfe::dftParameters::numberEigenValues;
       problemFEOrder6.set();
       problemFEOrder6.init();
       problemFEOrder6.run();
@@ -165,7 +165,7 @@ int main (int argc, char *argv[])
       dftfe::dftClass<7> problemFEOrder7(bandGroupsPool.get_intrapool_comm(),
 	                                 kPointPool.get_interpool_comm(),
 					 bandGroupsPool.get_interpool_comm());
-      problemFEOrder7.numEigenValues = dftfe::dftParameters::numberEigenValues;
+      problemFEOrder7.d_numEigenValues = dftfe::dftParameters::numberEigenValues;
       problemFEOrder7.set();
       problemFEOrder7.init();
       problemFEOrder7.run();
@@ -177,7 +177,7 @@ int main (int argc, char *argv[])
       dftfe::dftClass<8> problemFEOrder8(bandGroupsPool.get_intrapool_comm(),
 	                                 kPointPool.get_interpool_comm(),
 					 bandGroupsPool.get_interpool_comm());
-      problemFEOrder8.numEigenValues = dftfe::dftParameters::numberEigenValues;
+      problemFEOrder8.d_numEigenValues = dftfe::dftParameters::numberEigenValues;
       problemFEOrder8.set();
       problemFEOrder8.init();
       problemFEOrder8.run();
@@ -189,7 +189,7 @@ int main (int argc, char *argv[])
       dftfe::dftClass<9> problemFEOrder9(bandGroupsPool.get_intrapool_comm(),
 	                                 kPointPool.get_interpool_comm(),
 					 bandGroupsPool.get_interpool_comm());
-      problemFEOrder9.numEigenValues = dftfe::dftParameters::numberEigenValues;
+      problemFEOrder9.d_numEigenValues = dftfe::dftParameters::numberEigenValues;
       problemFEOrder9.set();
       problemFEOrder9.init();
       problemFEOrder9.run();
@@ -201,7 +201,7 @@ int main (int argc, char *argv[])
       dftfe::dftClass<10> problemFEOrder10(bandGroupsPool.get_intrapool_comm(),
 	                                   kPointPool.get_interpool_comm(),
 					   bandGroupsPool.get_interpool_comm());
-      problemFEOrder10.numEigenValues = dftfe::dftParameters::numberEigenValues;
+      problemFEOrder10.d_numEigenValues = dftfe::dftParameters::numberEigenValues;
       problemFEOrder10.set();
       problemFEOrder10.init();
       problemFEOrder10.run();
@@ -213,7 +213,7 @@ int main (int argc, char *argv[])
       dftfe::dftClass<11> problemFEOrder11(bandGroupsPool.get_intrapool_comm(),
 	                                   kPointPool.get_interpool_comm(),
 					   bandGroupsPool.get_interpool_comm());
-      problemFEOrder11.numEigenValues = dftfe::dftParameters::numberEigenValues;
+      problemFEOrder11.d_numEigenValues = dftfe::dftParameters::numberEigenValues;
       problemFEOrder11.set();
       problemFEOrder11.init();
       problemFEOrder11.run();
@@ -225,7 +225,7 @@ int main (int argc, char *argv[])
       dftfe::dftClass<12> problemFEOrder12(bandGroupsPool.get_intrapool_comm(),
 	                                   kPointPool.get_interpool_comm(),
 					   bandGroupsPool.get_interpool_comm());
-      problemFEOrder12.numEigenValues = dftfe::dftParameters::numberEigenValues;
+      problemFEOrder12.d_numEigenValues = dftfe::dftParameters::numberEigenValues;
       problemFEOrder12.set();
       problemFEOrder12.init();
       problemFEOrder12.run();
