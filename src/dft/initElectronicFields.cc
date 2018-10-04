@@ -117,7 +117,9 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
 	 d_eigenVectorsFlattenedSTL[kPoint].resize(d_numEigenValues*matrix_free_data.get_vector_partitioner()->local_size(),dataTypes::number(0.0));
 
 	 if (d_numEigenValuesRR!=d_numEigenValues)
-	    d_eigenVectorsUnrotFracFlattenedSTL[kPoint].resize(d_numEigenValuesRR*matrix_free_data.get_vector_partitioner()->local_size(),dataTypes::number(0.0));
+	 {
+	    d_eigenVectorsRotFracDensityFlattenedSTL[kPoint].resize(d_numEigenValuesRR*matrix_free_data.get_vector_partitioner()->local_size(),dataTypes::number(0.0));
+	 }
        }
 
      pcout <<std::endl<< "Setting initial guess for wavefunctions...."<<std::endl;
@@ -147,7 +149,9 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
 	 d_eigenVectorsFlattenedSTL[kPoint].resize(d_numEigenValues*matrix_free_data.get_vector_partitioner()->local_size(),dataTypes::number(0.0));
 
 	 if (d_numEigenValuesRR!=d_numEigenValues)
-	    d_eigenVectorsUnrotFracFlattenedSTL[kPoint].resize(d_numEigenValuesRR*matrix_free_data.get_vector_partitioner()->local_size(),dataTypes::number(0.0));
+	 {
+	    d_eigenVectorsRotFracDensityFlattenedSTL[kPoint].resize(d_numEigenValuesRR*matrix_free_data.get_vector_partitioner()->local_size(),dataTypes::number(0.0));
+	 }
      }
 
      pcout <<std::endl<< "Reading initial guess for PSI...."<<std::endl;
@@ -202,7 +206,9 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
 		                                    dataTypes::number(0.0));
 
 	 if (d_numEigenValuesRR!=d_numEigenValues)
-	    d_eigenVectorsUnrotFracFlattenedSTL[kPoint].resize(d_numEigenValuesRR*matrix_free_data.get_vector_partitioner()->local_size(),dataTypes::number(0.0));
+	 {
+	    d_eigenVectorsRotFracDensityFlattenedSTL[kPoint].resize(d_numEigenValuesRR*matrix_free_data.get_vector_partitioner()->local_size(),dataTypes::number(0.0));
+	 }
 	}
 
 #ifdef USE_COMPLEX

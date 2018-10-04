@@ -110,7 +110,7 @@ namespace dftfe{
   eigenSolverClass::ReturnValueType
   chebyshevOrthogonalizedSubspaceIterationSolver::solve(operatorDFTClass  & operatorMatrix,
 							std::vector<dataTypes::number> & eigenVectorsFlattened,
-							std::vector<dataTypes::number> & eigenVectorsUnrotFracFlattened,
+							std::vector<dataTypes::number> & eigenVectorsRotFracDensityFlattened,
 							vectorType  & tempEigenVec,
 							const unsigned int totalNumberWaveFunctions,
 							std::vector<double>        & eigenValues,
@@ -354,15 +354,10 @@ namespace dftfe{
 
     computing_timer.enter_section("Rayleigh-Ritz proj Opt");
 
+    std::vector<dataTypes::number> eigenVectorsFlattenedRR;
+
     if (eigenValues.size()!=totalNumberWaveFunctions)
     {
-	for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
-	    for(unsigned int iWave = 0; iWave < eigenValues.size(); ++iWave)
-		eigenVectorsUnrotFracFlattened[iNode*eigenValues.size()
-			 +iWave]
-		     =eigenVectorsFlattened[iNode*totalNumberWaveFunctions+
-		     (totalNumberWaveFunctions-eigenValues.size())+iWave];
-
 	if (useInnerChebySpectrumSplit)
 	{
            AssertThrow(false,dftUtils::ExcNotImplementedYet());
@@ -372,11 +367,38 @@ namespace dftfe{
            linearAlgebraOperations::rayleighRitzSpectrumSplitDirect
 	                                    (operatorMatrix,
 					     eigenVectorsFlattened,
+					     eigenVectorsRotFracDensityFlattened,
 					     totalNumberWaveFunctions,
 					     totalNumberWaveFunctions-eigenValues.size(),
 					     interBandGroupComm,
 					     operatorMatrix.getMPICommunicator(),
 					     eigenValues);
+
+
+	    eigenVectorsFlattenedRR.resize(eigenValues.size()*localVectorSize,dataTypes::number(0.0));
+	    for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
+		for(unsigned int iWave = 0; iWave < eigenValues.size(); ++iWave)
+		    eigenVectorsFlattenedRR[iNode*eigenValues.size()
+			     +iWave]
+			 =eigenVectorsFlattened[iNode*totalNumberWaveFunctions+
+			 (totalNumberWaveFunctions-eigenValues.size())+iWave];
+
+
+	    std::vector<double> eigenValuesTemp(eigenValues.size());
+	    linearAlgebraOperations::rayleighRitz(operatorMatrix,
+						  eigenVectorsFlattenedRR,
+						  eigenValues.size(),
+						  interBandGroupComm,
+						  operatorMatrix.getMPICommunicator(),
+						  eigenValuesTemp);
+
+	    for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
+		for(unsigned int iWave = 0; iWave < eigenValues.size(); ++iWave)
+		    eigenVectorsFlattened[iNode*totalNumberWaveFunctions+
+			 (totalNumberWaveFunctions-eigenValues.size())+iWave]
+			 =eigenVectorsFlattenedRR[iNode*eigenValues.size()
+			     +iWave];
+
 	}
 
     }
@@ -406,16 +428,6 @@ namespace dftfe{
 
     if (eigenValues.size()!=totalNumberWaveFunctions)
     {
-        std::vector<dataTypes::number> eigenVectorsFlattenedRR;
-        eigenVectorsFlattenedRR.resize(eigenValues.size()*localVectorSize,dataTypes::number(0.0));
-
-	for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
-	    for(unsigned int iWave = 0; iWave < eigenValues.size(); ++iWave)
-		eigenVectorsFlattenedRR[iNode*eigenValues.size()
-			 +iWave]
-		     =eigenVectorsFlattened[iNode*totalNumberWaveFunctions+
-		     (totalNumberWaveFunctions-eigenValues.size())+iWave];
-
         linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
 							eigenVectorsFlattenedRR,
 							eigenValues,

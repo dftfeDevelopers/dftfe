@@ -241,8 +241,8 @@ namespace dftfe
      *  (serial version using LAPACK, parallel version using ScaLAPACK)
      *
      *  @param[in] operatorMatrix An object which has access to the given matrix
-     *  @param[in,out]  X Given subspace as flattened array of multi-vectors.
-     *  In-place rotated subspace
+     *  @param[in]  X Given subspace as flattened array of multi-vectors.
+     *  @param[out] Y rotated subspace of top states
      *  @param[in] numberComponents Number of vectors
      *  @param[in] numberCoreStates Number of core states to be used for spectrum splitting
      *  @param[in] interBandGroupComm interpool communicator for parallelization over band groups
@@ -252,7 +252,8 @@ namespace dftfe
     template<typename T>
     void rayleighRitzSpectrumSplitDirect
                      (operatorDFTClass        & operatorMatrix,
-		      std::vector<T> & X,
+		      const std::vector<T> & X,
+		      std::vector<T> & Y,
 		      const unsigned int numberComponents,
 		      const unsigned int numberCoreStates,
 		      const MPI_Comm &interBandGroupComm,

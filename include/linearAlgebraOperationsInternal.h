@@ -128,7 +128,7 @@ namespace dftfe
 			      const bool isRotationMatLowerTria=false);
 
 
-	/** @brief Computes X^{T}=Q*X^{T} inplace.
+	/** @brief Computes Y^{T}=Q*X^{T}.
 	 *
 	 * X^{T} is stored in the column major format (N x M). Q is extracted from the supplied
 	 * QMat as Q=QMat{1:numberTopVectors}. If QMat is in column major format
@@ -143,7 +143,8 @@ namespace dftfe
 	 *
 	 */
 	template<typename T>
-	void subspaceRotationSpectrumSplit(T* X,
+	void subspaceRotationSpectrumSplit(const T* X,
+		              T * Y,
 		              const unsigned int subspaceVectorsArrayLocalSize,
 		              const unsigned int N,
 		              const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,

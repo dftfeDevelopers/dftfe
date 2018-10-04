@@ -335,7 +335,7 @@ namespace dftfe {
 		     std::map<dealii::CellId, std::vector<double> > * _rhoValuesSpinPolarized,
 		     std::map<dealii::CellId, std::vector<double> > * _gradRhoValuesSpinPolarized,
 		     const bool isEvaluateGradRho,
-		     const bool isConsiderUnrotatedFractionalEigenVec);
+		     const bool isConsiderSpectrumSplitting);
 
 
       /**
@@ -633,7 +633,7 @@ namespace dftfe {
       std::vector<std::vector<double> > eigenValuesRRSplit;
       std::vector<dealii::parallel::distributed::Vector<dataTypes::number> > d_eigenVectorsFlattened;
       std::vector<std::vector<dataTypes::number> > d_eigenVectorsFlattenedSTL;
-      std::vector<std::vector<dataTypes::number> > d_eigenVectorsUnrotFracFlattenedSTL;
+      std::vector<std::vector<dataTypes::number> > d_eigenVectorsRotFracDensityFlattenedSTL;
 
       /// parallel message stream
       ConditionalOStream  pcout;

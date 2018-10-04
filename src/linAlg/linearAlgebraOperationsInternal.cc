@@ -657,7 +657,8 @@ namespace dftfe
 
 
 	template<typename T>
-	void subspaceRotationSpectrumSplit(T* X,
+	void subspaceRotationSpectrumSplit(const T* X,
+		              T* Y,
 		              const unsigned int subspaceVectorsArrayLocalSize,
 		              const unsigned int N,
 		              const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
@@ -805,33 +806,32 @@ namespace dftfe
 		  }// band parallelization
 	    }//block loop over vectors
 
-	    if (numberBandGroups>1)
-	    {
-
-
-		    const unsigned int blockSize=dftParameters::mpiAllReduceMessageBlockSizeMB*1e+6/sizeof(T);
-
-		    for (unsigned int i=0; i<numberTopVectors*dofsBlockSize;i+=blockSize)
-		    {
-		       const unsigned int currentBlockSize=std::min(blockSize,numberTopVectors*dofsBlockSize-i);
-
-		       MPI_Allreduce(MPI_IN_PLACE,
-				     &rotatedVectorsMatBlock[0]+i,
-				     currentBlockSize,
-				     dataTypes::mpi_type_id(&rotatedVectorsMatBlock[0]),
-				     MPI_SUM,
-				     interBandGroupComm);
-		    }
-	    }
 
 	    if (BDof!=0)
 	      {
 		for (unsigned int i = 0; i <BDof; ++i)
 		  for (unsigned int j = 0; j <numberTopVectors; ++j)
-		    *(X+N*(i+idof)+j+N-numberTopVectors)
+		    *(Y+numberTopVectors*(i+idof)+j)
 		      =rotatedVectorsMatBlock[i*numberTopVectors+j];
 	      }
 	  }//block loop over dofs
+
+	  if (numberBandGroups>1)
+	  {
+		const unsigned int blockSize=dftParameters::mpiAllReduceMessageBlockSizeMB*1e+6/sizeof(T);
+
+		for (unsigned int i=0; i<numberTopVectors*numLocalDofs;i+=blockSize)
+		{
+		   const unsigned int currentBlockSize=std::min(blockSize,numberTopVectors*numLocalDofs-i);
+
+		   MPI_Allreduce(MPI_IN_PLACE,
+				 Y+i,
+				 currentBlockSize,
+				 dataTypes::mpi_type_id(Y),
+				 MPI_SUM,
+				 interBandGroupComm);
+		}
+	  }
 #endif
       }
 
@@ -1084,7 +1084,8 @@ namespace dftfe
 					  const MPI_Comm &interComm);
 
       template
-      void subspaceRotationSpectrumSplit(dataTypes::number* X,
+      void subspaceRotationSpectrumSplit(const dataTypes::number* X,
+	                      dataTypes::number* Y,
 		              const unsigned int subspaceVectorsArrayLocalSize,
 		              const unsigned int N,
 		              const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,

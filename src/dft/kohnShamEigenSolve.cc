@@ -103,9 +103,10 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
   subspaceIterationSolver.reinitSpectrumBounds(a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
 					       bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
 
+
   subspaceIterationSolver.solve(kohnShamDFTEigenOperator,
   				d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
-				d_eigenVectorsUnrotFracFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
+				d_eigenVectorsRotFracDensityFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
 				d_tempEigenVec,
 				d_numEigenValues,
   				eigenValuesTemp,
@@ -129,7 +130,7 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 				            matrix_free_data.get_vector_partitioner(),
 				            d_numEigenValuesRR,
 				            localProc_dof_indicesReal,
-				            d_eigenVectorsUnrotFracFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
+				            d_eigenVectorsRotFracDensityFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
   }
 
   //
@@ -177,7 +178,6 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
                                                             :eigenValuesTemp[0];
   bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=eigenValuesTemp.back();
   //
-
 
   computing_timer.exit_section("Chebyshev solve");
 }

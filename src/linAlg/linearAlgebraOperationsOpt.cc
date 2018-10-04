@@ -632,7 +632,8 @@ namespace dftfe{
     template<typename T>
     void rayleighRitzSpectrumSplitDirect
                     (operatorDFTClass & operatorMatrix,
-		     std::vector<T> & X,
+		     const std::vector<T> & X,
+		     std::vector<T> & Y,
 		     const unsigned int numberWaveFunctions,
 		     const unsigned int numberCoreStates,
 		     const MPI_Comm &interBandGroupComm,
@@ -696,6 +697,7 @@ namespace dftfe{
       computing_timer.enter_section("Blocked subspace rotation, RR step");
 
       internal::subspaceRotationSpectrumSplit(&X[0],
+	                         &Y[0],
 	                         X.size(),
 		                 numberWaveFunctions,
 		                 processGrid,
@@ -713,7 +715,8 @@ namespace dftfe{
     template<typename T>
     void rayleighRitzSpectrumSplitDirect
                   (operatorDFTClass & operatorMatrix,
-		   std::vector<T> & X,
+		   const std::vector<T> & X,
+		   std::vector<T> & Y,
 		   const unsigned int numberWaveFunctions,
 		   const unsigned int numberCoreStates,
 		   const MPI_Comm &interBandGroupComm,
@@ -1204,6 +1207,7 @@ namespace dftfe{
 
     template void rayleighRitzSpectrumSplitDirect
 	                  (operatorDFTClass  & operatorMatrix,
+			   const std::vector<dataTypes::number> &,
 			   std::vector<dataTypes::number> &,
 			   const unsigned int numberWaveFunctions,
 			   const unsigned int numberCoreStates,
