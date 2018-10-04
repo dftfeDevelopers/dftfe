@@ -69,7 +69,9 @@ namespace dftfe {
 	problem.distributeX();
 	x.update_ghost_values();
       }
-      catch (...) {
+      catch (...)
+      {
+	AssertThrow(false,dealii::ExcMessage("DFT-FE Error: Poisson solver did not converge as per set tolerances. consider increasing MAXIMUM ITERATIONS in Poisson problem parameters."));
 	pcout << "\nWarning: solver did not converge as per set tolerances. consider increasing maxLinearSolverIterations or decreasing relLinearSolverTolerance.\n";
 	pcout << "Current abs. residual: "<<solverControl.last_value()<<std::endl;
       }
