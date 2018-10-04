@@ -692,14 +692,13 @@ namespace dftParameters
       AssertThrow(!dftParameters::pseudoPotentialFile.empty(),
 	        ExcMessage("DFT-FE Error: PSEUDOPOTENTIAL FILE NAMES LIST not given."));
 
-    if (dftParameters::verbosity >=1 && Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)
-       if (dftParameters::spinPolarized==0)
+    if (dftParameters::spinPolarized==0)
             AssertThrow(!dftParameters::constraintMagnetization,
 	        ExcMessage("DFT-FE Error: This is a SPIN UNPOLARIZED calculation. Can't have CONSTRAINT MAGNETIZATION ON."));
 
     if (dftParameters::verbosity >=1 && Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)
         if (dftParameters::constraintMagnetization)
-            pcout << " WARNING: CONSTRAINT MAGNETIZATION is ON. A fixed occupation will be used no matter what temperature is provided at input" << std::endl;
+            std::cout << " WARNING: CONSTRAINT MAGNETIZATION is ON. A fixed occupation will be used no matter what temperature is provided at input" << std::endl;
 
     AssertThrow(dftParameters::numberEigenValues!=0
 	        ,ExcMessage("DFT-FE Error: Number of wavefunctions not specified or given value of zero, which is not allowed."));
