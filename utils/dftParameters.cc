@@ -76,7 +76,8 @@ namespace dftParameters
   bool useMixedPrecCheby=false;
   unsigned int numAdaptiveFilterStates=0;
   double mixedPrecStoppingTol=1e-4;
-  unsigned int innerChebyStartingScfIter=1;
+  unsigned int spectrumSplitStartingScfIter=1;
+  bool useInnerChebySpectrumSplit=true;
 
   void declare_parameters(ParameterHandler &prm)
   {
@@ -383,11 +384,15 @@ namespace dftParameters
 
 	    prm.declare_entry("SPECTRUM SPLIT CORE EIGENSTATES", "0",
 			      Patterns::Integer(0),
-			      "[Advanced] Number of lowest Kohn-Sham eigenstates which should not be included in the Rayleigh-Ritz diagonalization.  In other words, only the eigenvalues and eigenvectors corresponding to the higher eigenstates (Number of Kohn-Sham wavefunctions minus the specified core eigenstates) are computed in the diagonalization of the projected Hamiltonian. This value is usually chosen to be the sum of the number of core eigenstates for each atom type multiplied by number of atoms of that type. This setting is recommended for large systems (greater than 5000 electrons). Default value is 0 i.e., no core eigenstates are excluded from the Rayleigh-Ritz projection step. Currently this optimization is not implemented for the complex executable.");
+			      "[Advanced] Number of lowest Kohn-Sham eigenstates which should not be included in the Rayleigh-Ritz diagonalization.  In other words, only the eigenvalues and eigenvectors corresponding to the higher eigenstates (Number of Kohn-Sham wavefunctions minus the specified core eigenstates) are computed in the diagonalization of the projected Hamiltonian. This value is usually chosen to be the sum of the number of core eigenstates for each atom type multiplied by number of atoms of that type. This setting is recommended for large systems (greater than 5000 electrons). Default value is 0 i.e., no core eigenstates are excluded from the Rayleigh-Ritz projection step. Currently this optimization is not implemented for the complex executable and ScaLAPACK linking is also needed.");
 
-	    prm.declare_entry("INNER CHEBY STARTING SCF ITER", "100",
+	    prm.declare_entry("SPECTRUM SPLIT STARTING SCF ITER", "1",
 			      Patterns::Integer(0),
-			      "[Advanced] SCF iteration no beyond which spectrum splitting based on an inner chebyshev filter solve can be used.");
+			      "[Advanced] SCF iteration no beyond which spectrum splitting based can be used.");
+
+	    prm.declare_entry("USE INNER CHEBY SPECTRUM SPLIT", "true",
+			      Patterns::Bool(),
+			      "[Advanced] Controls use of inner chebyshev filter in spectrum splitting versus full diagonalization using ScaLAPACK.");
 
 	    prm.declare_entry("LOWER BOUND WANTED SPECTRUM", "-10.0",
 			      Patterns::Double(),
@@ -593,7 +598,8 @@ namespace dftParameters
 	{
 	   dftParameters::numberEigenValues             = prm.get_integer("NUMBER OF KOHN-SHAM WAVEFUNCTIONS");
 	   dftParameters::numCoreWfcRR                  = prm.get_integer("SPECTRUM SPLIT CORE EIGENSTATES");
-	   dftParameters::innerChebyStartingScfIter        = prm.get_integer("INNER CHEBY STARTING SCF ITER");
+	   dftParameters::spectrumSplitStartingScfIter  = prm.get_integer("SPECTRUM SPLIT STARTING SCF ITER");
+	   dftParameters::useInnerChebySpectrumSplit    = prm.get_bool("USE INNER CHEBY SPECTRUM SPLIT");
 	   dftParameters::lowerEndWantedSpectrum        = prm.get_double("LOWER BOUND WANTED SPECTRUM");
 	   dftParameters::lowerBoundUnwantedFracUpper   = prm.get_double("LOWER BOUND UNWANTED FRAC UPPER");
 	   dftParameters::chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");

@@ -392,12 +392,14 @@ namespace dftfe{
 						  operatorMatrix.getMPICommunicator(),
 						  eigenValuesTemp);
 
+
 	    for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
 		for(unsigned int iWave = 0; iWave < eigenValues.size(); ++iWave)
 		    eigenVectorsFlattened[iNode*totalNumberWaveFunctions+
 			 (totalNumberWaveFunctions-eigenValues.size())+iWave]
 			 =eigenVectorsFlattenedRR[iNode*eigenValues.size()
 			     +iWave];
+
 
 	}
 

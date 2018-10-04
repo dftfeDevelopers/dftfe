@@ -86,7 +86,8 @@ namespace dftfe {
       extern unsigned int numAdaptiveFilterStates;
       extern bool useMixedPrecCheby;
       extern double mixedPrecStoppingTol;
-      extern unsigned int innerChebyStartingScfIter;
+      extern unsigned int spectrumSplitStartingScfIter;
+      extern bool useInnerChebySpectrumSplit;
 
       /**
        * Declare parameters.

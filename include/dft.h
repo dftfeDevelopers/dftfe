@@ -416,7 +416,7 @@ namespace dftfe {
       /**
        *@brief Computes output electron-density from wavefunctions
        */
-      void compute_rhoOut();
+      void compute_rhoOut(const bool isConsiderSpectrumSplitting);
 
       /**
        *@brief Mixing schemes for mixing electron-density

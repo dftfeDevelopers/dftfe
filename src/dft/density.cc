@@ -20,7 +20,7 @@
 
 //calculate electron density
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::compute_rhoOut()
+void dftClass<FEOrder>::compute_rhoOut(const bool isConsiderSpectrumSplitting)
 {
   resizeAndAllocateRhoTableStorage
 		    (rhoOutVals,
@@ -44,7 +44,7 @@ void dftClass<FEOrder>::compute_rhoOut()
 		    rhoOutValuesSpinPolarized,
 		    gradRhoOutValuesSpinPolarized,
 		    dftParameters::xc_id == 4,
-		    true);
+		    isConsiderSpectrumSplitting);
 
 
   //pop out rhoInVals and rhoOutVals if their size exceeds mixing history size

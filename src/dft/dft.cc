@@ -872,12 +872,15 @@ namespace dftfe {
 	    std::vector<std::vector<std::vector<double> > >
 		 eigenValuesSpins(2,
 		 	          std::vector<std::vector<double> >(d_kPointWeights.size(),
-				  std::vector<double>(d_numEigenValuesRR)));
+				  std::vector<double>(scfIter<dftParameters::spectrumSplitStartingScfIter?
+				                      d_numEigenValues:d_numEigenValuesRR)));
 
 	    std::vector<std::vector<std::vector<double>>>
-		residualNormWaveFunctionsAllkPointsSpins(2,
-			      	                         std::vector<std::vector<double> >(d_kPointWeights.size(),
-					  	         std::vector<double>(d_numEigenValuesRR)));
+		residualNormWaveFunctionsAllkPointsSpins
+		                 (2,
+			      	  std::vector<std::vector<double> >(d_kPointWeights.size(),
+				  std::vector<double>(scfIter<dftParameters::spectrumSplitStartingScfIter?
+							     d_numEigenValues:d_numEigenValuesRR)));
 
 	    for(unsigned int s=0; s<2; ++s)
 	      {
@@ -916,8 +919,8 @@ namespace dftfe {
 						  kohnShamDFTEigenOperator,
 						  subspaceIterationSolver,
 						  residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
-						  true,
-						  scfIter<dftParameters::innerChebyStartingScfIter?false:true,
+						  scfIter<dftParameters::spectrumSplitStartingScfIter?false:true,
+						  dftParameters::useInnerChebySpectrumSplit?true:false,
 						  norm<mixedPrecStoppingNorm?false:true);
 		      }
 		  }
@@ -925,8 +928,14 @@ namespace dftfe {
 
 	    for(unsigned int s=0; s<2; ++s)
 	      for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-		for (unsigned int i = 0; i<d_numEigenValuesRR; ++i)
-		  eigenValuesSpins[s][kPoint][i]=eigenValuesRRSplit[kPoint][d_numEigenValuesRR*s+i];
+	      {
+	        if (scfIter<dftParameters::spectrumSplitStartingScfIter)
+		  for (unsigned int i = 0; i<d_numEigenValues; ++i)
+		    eigenValuesSpins[s][kPoint][i]=eigenValues[kPoint][d_numEigenValues*s+i];
+		else
+		  for (unsigned int i = 0; i<d_numEigenValuesRR; ++i)
+		    eigenValuesSpins[s][kPoint][i]=eigenValuesRRSplit[kPoint][d_numEigenValuesRR*s+i];
+	      }
 	    //
 	    //fermi energy
 	    //
@@ -996,8 +1005,8 @@ namespace dftfe {
 						  kohnShamDFTEigenOperator,
 						  subspaceIterationSolver,
 						  residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
-						  true,
-						  scfIter<dftParameters::innerChebyStartingScfIter?false:true,
+						  scfIter<dftParameters::spectrumSplitStartingScfIter?false:true,
+						  dftParameters::useInnerChebySpectrumSplit?true:false,
 						  norm<mixedPrecStoppingNorm?false:true);
 
 		      }
@@ -1005,8 +1014,14 @@ namespace dftfe {
 		count++;
 		for(unsigned int s=0; s<2; ++s)
 		  for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-		    for (unsigned int i = 0; i<d_numEigenValuesRR; ++i)
-		      eigenValuesSpins[s][kPoint][i]=eigenValuesRRSplit[kPoint][d_numEigenValuesRR*s+i];
+		  {
+		    if (scfIter<dftParameters::spectrumSplitStartingScfIter)
+			for (unsigned int i = 0; i<d_numEigenValues; ++i)
+			  eigenValuesSpins[s][kPoint][i]=eigenValues[kPoint][d_numEigenValues*s+i];
+		    else
+			for (unsigned int i = 0; i<d_numEigenValuesRR; ++i)
+			  eigenValuesSpins[s][kPoint][i]=eigenValuesRRSplit[kPoint][d_numEigenValuesRR*s+i];
+		  }
 		//
 		if (dftParameters::constraintMagnetization)
 	           compute_fermienergy_constraintMagnetization(eigenValues) ;
@@ -1040,7 +1055,7 @@ namespace dftfe {
 	    std::vector<std::vector<double>> residualNormWaveFunctionsAllkPoints;
 	    residualNormWaveFunctionsAllkPoints.resize(d_kPointWeights.size());
 	    for(unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-	      residualNormWaveFunctionsAllkPoints[kPoint].resize(d_numEigenValuesRR);
+	      residualNormWaveFunctionsAllkPoints[kPoint].resize(scfIter<dftParameters::spectrumSplitStartingScfIter?d_numEigenValues:d_numEigenValuesRR);
 
 	    if(dftParameters::xc_id < 4)
 	      {
@@ -1077,8 +1092,8 @@ namespace dftfe {
 					      kohnShamDFTEigenOperator,
 					      subspaceIterationSolver,
 					      residualNormWaveFunctionsAllkPoints[kPoint],
-					      true,
-					      scfIter<dftParameters::innerChebyStartingScfIter?false:true,
+					      scfIter<dftParameters::spectrumSplitStartingScfIter?false:true,
+					      dftParameters::useInnerChebySpectrumSplit?true:false,
 					      norm<mixedPrecStoppingNorm?false:true);
 
 		  }
@@ -1098,7 +1113,7 @@ namespace dftfe {
 	    //
 	    double maxRes = computeMaximumHighestOccupiedStateResidualNorm
 	      (residualNormWaveFunctionsAllkPoints,
-	       eigenValuesRRSplit,
+	       scfIter<dftParameters::spectrumSplitStartingScfIter?eigenValues:eigenValuesRRSplit,
 	       fermiEnergy);
 	    if (dftParameters::verbosity>=2)
 	      pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
@@ -1132,8 +1147,8 @@ namespace dftfe {
 					      kohnShamDFTEigenOperator,
 					      subspaceIterationSolver,
 					      residualNormWaveFunctionsAllkPoints[kPoint],
-					      true,
-					      scfIter<dftParameters::innerChebyStartingScfIter?false:true,
+					      scfIter<dftParameters::spectrumSplitStartingScfIter?false:true,
+					      dftParameters::useInnerChebySpectrumSplit?true:false,
 					      norm<mixedPrecStoppingNorm?false:true);
 		  }
 		count++;
@@ -1146,7 +1161,7 @@ namespace dftfe {
 		//
 		maxRes = computeMaximumHighestOccupiedStateResidualNorm
 		  (residualNormWaveFunctionsAllkPoints,
-		   eigenValuesRRSplit,
+		   scfIter<dftParameters::spectrumSplitStartingScfIter?eigenValues:eigenValuesRRSplit,
 		   fermiEnergy);
 		if (dftParameters::verbosity>=2)
 		  pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
@@ -1166,9 +1181,9 @@ namespace dftfe {
 	  symmetryPtr->computeAndSymmetrize_rhoOut();
 	}
 	else
-	  compute_rhoOut();
+	  compute_rhoOut(scfIter<dftParameters::spectrumSplitStartingScfIter?false:true);
 #else
-	compute_rhoOut();
+	compute_rhoOut(scfIter<dftParameters::spectrumSplitStartingScfIter?false:true);
 #endif
 	computing_timer.exit_section("compute rho");
 
