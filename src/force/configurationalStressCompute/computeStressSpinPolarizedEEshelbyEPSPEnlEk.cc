@@ -373,16 +373,26 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk
              gradPsiSpin0Quads[id]=psiEvalSpin0.get_gradient(q);
 	     gradPsiSpin1Quads[id]=psiEvalSpin1.get_gradient(q);
 
-             const double partOccSpin0 =dftUtils::getPartialOccupancy
+             double partOccSpin0 =dftUtils::getPartialOccupancy
 		                                                     (dftPtr->eigenValues[ikPoint][iEigenVec],
 		                                                      dftPtr->fermiEnergy,
 								      C_kb,
 								      dftParameters::TVal);
-             const double partOccSpin1 =dftUtils::getPartialOccupancy
+             double partOccSpin1 =dftUtils::getPartialOccupancy
 		                                                     (dftPtr->eigenValues[ikPoint][iEigenVec+numEigenVectors],
 		                                                      dftPtr->fermiEnergy,
 								      C_kb,
 								      dftParameters::TVal);
+
+	     if(dftParameters::constraintMagnetization)
+	     {
+		 partOccSpin0 = 1.0 , partOccSpin1 = 1.0 ;
+		 if ( dftPtr->eigenValues[ikPoint][iEigenVec+numEigenVectors]> dftPtr->fermiEnergyDown)
+			partOccSpin1 = 0.0 ;
+		 if (dftPtr->eigenValues[ikPoint][iEigenVec+numEigenVectors] > dftPtr->fermiEnergyUp)
+			partOccSpin0 = 0.0 ;
+	     }
+
 	     const VectorizedArray<double> factor0=make_vectorized_array(dftPtr->d_kPointWeights[ikPoint]*partOccSpin0);
 	     const VectorizedArray<double> factor1=make_vectorized_array(dftPtr->d_kPointWeights[ikPoint]*partOccSpin1);
 

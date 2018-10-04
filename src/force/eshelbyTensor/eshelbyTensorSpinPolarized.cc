@@ -225,14 +225,23 @@ namespace eshelbyTensorSP
 	    const Tensor<1,2,VectorizedArray<double> > & psiSpin0= *it1Spin0;
 	    const Tensor<1,2,VectorizedArray<double> > & psiSpin1= *it1Spin1;
 
-	    const double partOccSpin0 =dftUtils::getPartialOccupancy(eigenValues_[ik][eigenIndex],
+	    double partOccSpin0 =dftUtils::getPartialOccupancy(eigenValues_[ik][eigenIndex],
 								     fermiEnergy_,
 								     C_kb,
 								     tVal);
-	    const double partOccSpin1 =dftUtils::getPartialOccupancy(eigenValues_[ik][eigenIndex+numEigenValues],
+	    double partOccSpin1 =dftUtils::getPartialOccupancy(eigenValues_[ik][eigenIndex+numEigenValues],
 								     fermiEnergy_,
 								     C_kb,
 								     tVal);
+
+	    if(dftParameters::constraintMagnetization)
+	    {
+		 partOccSpin0 = 1.0 , partOccSpin1 = 1.0 ;
+		 if (eigenValues_[ik][eigenIndex+numEigenValues]> dftPtr->fermiEnergyDown)
+			partOccSpin1 = 0.0 ;
+		 if (eigenValues_[ik][eigenIndex] > dftPtr->fermiEnergyUp)
+			partOccSpin0 = 0.0 ;
+	    }
 
 	    const VectorizedArray<double> fnkSpin0=make_vectorized_array(partOccSpin0*kPointWeights[ik]);
 	    const VectorizedArray<double> fnkSpin1=make_vectorized_array(partOccSpin1*kPointWeights[ik]);
