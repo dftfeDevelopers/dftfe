@@ -769,11 +769,13 @@ void dftClass<FEOrder>::computeRhoFromPSI
 					      for(unsigned int idim=0; idim<3; ++idim)
 					      {
 						  gradRhoTempSpinPolarized[6*q + idim]
-						      += 2.0*(psiRotFrac*gradPsiRotFrac[idim]
-							     -psi*gradPsi[idim]);
+						      += 2.0*(partialOccupancy*psiRotFrac*gradPsiRotFrac[idim]
+							      -psiRotFrac*gradPsiRotFrac[idim]
+							     +psi*gradPsi[idim]);
 						  gradRhoTempSpinPolarized[6*q + 3+idim]
-						      +=  2.0*(psiRotFrac2*gradPsiRotFrac2[idim]
-							      -psi2*gradPsi2[idim]);
+						      +=  2.0*(partialOccupancy2*psiRotFrac2*gradPsiRotFrac2[idim]
+							      -psiRotFrac2*gradPsiRotFrac2[idim]
+							      +psi2*gradPsi2[idim]);
 					      }
 					}
 				      else
