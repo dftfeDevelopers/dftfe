@@ -39,13 +39,9 @@ namespace internal
 				    const std::shared_ptr<const dealii::Utilities::MPI::Partitioner> & singleComponentPartitioner,
 				    const unsigned int numberFields,
 				    const std::vector<dealii::types::global_dof_index> & localProc_dof_indicesReal,
-				    std::vector<dataTypes::number> & fieldsArrayFlattened,
-				    dftUtils::constraintMatrixInfo & constraintsNoneDataInfo)
+				    std::vector<dataTypes::number> & fieldsArrayFlattened)
     {
 
-      //constraintsNoneDataInfo.precomputeMaps(singleComponentPartitioner,
-      //				       fieldsArrayFlattened.get_partitioner(),
-      //				       numberFields);
         const unsigned int numberDofs = fieldsArrayFlattened.size()/numberFields;
         const unsigned int inc = 1;
 
@@ -67,9 +63,6 @@ namespace internal
 #endif
 	}
 
-	//constraintsNoneDataInfo.distribute(fieldsArrayFlattened,
-	//				   numberFields);
-	//fieldsArrayFlattened.update_ghost_values();
     }
 }
 
@@ -90,7 +83,8 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
   if (dftParameters::verbosity>=2)
     {
       pcout << "kPoint: "<< kPointIndex<<std::endl;
-      pcout << "spin: "<< spinType+1 <<std::endl;
+      if (dftParameters::spinPolarized==1)
+        pcout << "spin: "<< spinType+1 <<std::endl;
     }
 
 
@@ -101,8 +95,7 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 				       matrix_free_data.get_vector_partitioner(),
 				       d_numEigenValues,
 				       localProc_dof_indicesReal,
-				       d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
-				       constraintsNoneDataInfo);
+				       d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
 
   std::vector<double> eigenValuesTemp(isSpectrumSplit?d_numEigenValuesRR
 	                              :d_numEigenValues,0.0);
@@ -112,6 +105,7 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 
   subspaceIterationSolver.solve(kohnShamDFTEigenOperator,
   				d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
+				d_eigenVectorsUnrotFracFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
 				d_tempEigenVec,
 				d_numEigenValues,
   				eigenValuesTemp,
@@ -127,8 +121,16 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 				       matrix_free_data.get_vector_partitioner(),
 				       d_numEigenValues,
 				       localProc_dof_indicesReal,
-				       d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
-				       constraintsNoneDataInfo);
+				       d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
+
+  if (isSpectrumSplit && d_numEigenValuesRR!=d_numEigenValues)
+  {
+       internal::pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_invSqrtMassVector,
+				            matrix_free_data.get_vector_partitioner(),
+				            d_numEigenValuesRR,
+				            localProc_dof_indicesReal,
+				            d_eigenVectorsUnrotFracFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
+  }
 
   //
   //copy the eigenValues and corresponding residual norms back to data members

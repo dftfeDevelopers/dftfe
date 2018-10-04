@@ -383,7 +383,7 @@ namespace dftParameters
 
 	    prm.declare_entry("SPECTRUM SPLIT CORE EIGENSTATES", "0",
 			      Patterns::Integer(0),
-			      "[Advanced] Number of lowest Kohn-Sham eigenstates which should not be included in the Rayleigh-Ritz projection step.  In other words, only the higher eigenstates (Number of Kohn-Sham wavefunctions minus the specified core eigenstates) are used to compute projected Hamiltonian and subsequently diagonalization is done on the projected Hamiltonian corresponding to the higher eigenstates. This value is usually chosen to be the sum of the number of core eigenstates for each atom type multiplied by number of atoms of that type. This setting is recommended for large systems (greater than 5000 electrons). Default value is 0 i.e., no core eigenstates are excluded from the Rayleigh-Ritz projection step.");
+			      "[Advanced] Number of lowest Kohn-Sham eigenstates which should not be included in the Rayleigh-Ritz diagonalization.  In other words, only the eigenvalues and eigenvectors corresponding to the higher eigenstates (Number of Kohn-Sham wavefunctions minus the specified core eigenstates) are computed in the diagonalization of the projected Hamiltonian. This value is usually chosen to be the sum of the number of core eigenstates for each atom type multiplied by number of atoms of that type. This setting is recommended for large systems (greater than 5000 electrons). Default value is 0 i.e., no core eigenstates are excluded from the Rayleigh-Ritz projection step. Currently this optimization is not implemented for the complex executable.");
 
 	    prm.declare_entry("INNER CHEBY STARTING SCF ITER", "100",
 			      Patterns::Integer(0),
@@ -671,6 +671,9 @@ namespace dftParameters
     if (dftParameters::isIonForce || dftParameters::isCellStress)
        AssertThrow(!dftParameters::useSymm,ExcMessage("DFT-FE Error: USE GROUP SYMMETRY must be set to false if either ION FORCE or CELL STRESS is set to true. This functionality will be added in a future release"));
 
+
+    if (dftParameters::numCoreWfcRR>0)
+       AssertThrow(false,ExcMessage("DFT-FE Error: SPECTRUM SPLIT CORE EIGENSTATES cannot be set to a non-zero value when using complex executable. This optimization will be added in a future release"));
 #else
     AssertThrow( dftParameters::nkx==1 &&  dftParameters::nky==1 &&  dftParameters::nkz==1
              && dftParameters::offsetFlagX==0 &&  dftParameters::offsetFlagY==0 &&  dftParameters::offsetFlagZ==0

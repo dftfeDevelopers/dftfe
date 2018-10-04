@@ -309,24 +309,24 @@ void dftClass<FEOrder>::computeRhoFromPSI
 		       && isConsiderUnrotatedFractionalEigenVec)?true:false;
 
       unsigned int currentBlockSizeFrac=eigenVectorsBlockSize;
-      unsigned int startingIndexFracGlobal=ivec;
+      unsigned int startingIndexFracGlobal=0;
       unsigned int startingIndexFrac=0;
       if (isUnrotFracEigenVectorsInBlock)
       {
 	  if (ivec<numEigenVectorsCore)
 	  {
 	    currentBlockSizeFrac=ivec+currentBlockSize-numEigenVectorsCore;
-	    startingIndexFracGlobal=numEigenVectorsCore;
+	    startingIndexFracGlobal=0;
 	    startingIndexFrac=numEigenVectorsCore-ivec;
 	  }
 	  else
 	  {
 	    currentBlockSizeFrac=currentBlockSize;
-	    startingIndexFracGlobal=ivec;
+	    startingIndexFracGlobal=ivec-numEigenVectorsCore;
 	    startingIndexFrac=0;
 	  }
 
-	  if (currentBlockSizeFrac!=eigenVectorsUnrotFrac.size() || eigenVectorsUnrotFrac.size()==0)
+	  if (currentBlockSizeFrac!=eigenVectorsUnrotFrac[0].size() || eigenVectorsUnrotFrac[0].size()==0)
 	  {
 	       for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
 	       {
@@ -425,7 +425,7 @@ void dftClass<FEOrder>::computeRhoFromPSI
 		     //copyFlattenedDealiiVecToSingleCompVec(..) above and supress
 		     //underlying call.
 		     for(unsigned int i= 0; i < currentBlockSizeFrac; ++i)
-			 eigenVectors[kPoint][i].update_ghost_values();
+			 eigenVectorsUnrotFrac[kPoint][i].update_ghost_values();
 #else
 		     vectorTools::copyFlattenedDealiiVecToSingleCompVec
 			     (eigenVectorsUnrotFracFlattenedBlock[kPoint],
@@ -504,7 +504,7 @@ void dftClass<FEOrder>::computeRhoFromPSI
 			       }
 			   }
 
-			   if (isUnrotFracEigenVectorsInBlock && startingIndexFrac>=iEigenVec)
+			   if (isUnrotFracEigenVectorsInBlock && iEigenVec>=startingIndexFrac)
 			   {
 
 			       const unsigned int vectorIndex=iEigenVec-startingIndexFrac;
@@ -689,7 +689,7 @@ void dftClass<FEOrder>::computeRhoFromPSI
 #endif
 
 
-				  if (isUnrotFracEigenVectorsInBlock && startingIndexFrac>=iEigenVec)
+				  if (isUnrotFracEigenVectorsInBlock && iEigenVec>=startingIndexFrac)
 				  {
 				      const unsigned int idFrac=q*currentBlockSizeFrac*numKPoints
 					             +currentBlockSizeFrac*kPoint
@@ -698,42 +698,48 @@ void dftClass<FEOrder>::computeRhoFromPSI
 				      Vector<double> psiUnrotFrac, psiUnrotFrac2;
 				      psiUnrotFrac.reinit(2); psiUnrotFrac2.reinit(2);
 
-				      psi(0)= psiUnrotFracQuads[idFrac][0][iSubCell];
-				      psi(1)=psiUnrotFracQuads[idFrac][1][iSubCell];
+				      psiUnrotFrac(0)= psiUnrotFracQuads[idFrac][0][iSubCell];
+				      psiUnrotFrac(1)=psiUnrotFracQuads[idFrac][1][iSubCell];
 
 				      if(dftParameters::spinPolarized==1)
 				      {
-					psi2(0)=psiUnrotFracQuads2[idFrac][0][iSubCell];
-					psi2(1)=psiUnrotFracQuads2[idFrac][1][iSubCell];
+					psiUnrotFrac2(0)=psiUnrotFracQuads2[idFrac][0][iSubCell];
+					psiUnrotFrac2(1)=psiUnrotFracQuads2[idFrac][1][iSubCell];
 				      }
 
-				      std::vector<Tensor<1,3,double> > gradPsi(2),gradPsi2(2);
+				      std::vector<Tensor<1,3,double> > gradPsiUnrotFrac(2),gradPsiUnrotFrac2(2);
 
 				      if(isEvaluateGradRho)
 					  for(unsigned int idim=0; idim<3; ++idim)
 					  {
-					     gradPsi[0][idim]=gradPsiQuads[id][0][idim][iSubCell];
-					     gradPsi[1][idim]=gradPsiQuads[id][1][idim][iSubCell];
+					     gradPsiUnrotFrac[0][idim]
+						 =gradPsiUnrotFracQuads[idFrac][0][idim][iSubCell];
+					     gradPsiUnrotFrac[1][idim]
+						 =gradPsiUnrotFracQuads[idFrac][1][idim][iSubCell];
 
 					     if(dftParameters::spinPolarized==1)
 					     {
-						 gradPsi2[0][idim]=gradPsiQuads2[id][0][idim][iSubCell];
-						 gradPsi2[1][idim]=gradPsiQuads2[id][1][idim][iSubCell];
+						 gradPsiUnrotFrac2[0][idim]
+						     =gradPsiUnrotFracQuads2[idFrac][0][idim][iSubCell];
+						 gradPsiUnrotFrac2[1][idim]
+						     =gradPsiUnrotFracQuads2[idFrac][1][idim][iSubCell];
 					     }
 					  }
 #else
-				      double psi, psi2;
-				      psi=psiQuads[id][iSubCell];
+				      double psiUnrotFrac, psiUnrotFrac2;
+				      psiUnrotFrac=psiUnrotFracQuads[idFrac][iSubCell];
 				      if (dftParameters::spinPolarized==1)
-					  psi2=psiQuads2[id][iSubCell];
+					  psiUnrotFrac2=psiUnrotFracQuads2[idFrac][iSubCell];
 
-				      Tensor<1,3,double> gradPsi,gradPsi2;
+				      Tensor<1,3,double> gradPsiUnrotFrac,gradPsiUnrotFrac2;
 				      if(isEvaluateGradRho)
 					  for(unsigned int idim=0; idim<3; ++idim)
 					  {
-					     gradPsi[idim]=gradPsiQuads[id][idim][iSubCell];
+					     gradPsiUnrotFrac[idim]
+						 =gradPsiUnrotFracQuads[idFrac][idim][iSubCell];
 					     if(dftParameters::spinPolarized==1)
-						 gradPsi2[idim]=gradPsiQuads2[id][idim][iSubCell];
+						 gradPsiUnrotFrac2[idim]
+						     =gradPsiUnrotFracQuads2[idFrac][idim][iSubCell];
 					  }
 
 #endif
@@ -741,45 +747,76 @@ void dftClass<FEOrder>::computeRhoFromPSI
 #ifdef USE_COMPLEX
 				      if(dftParameters::spinPolarized==1)
 					{
-					  rhoTempSpinPolarized[2*q] += partialOccupancy*d_kPointWeights[kPoint]*(psi(0)*psi(0) + psi(1)*psi(1));
-					  rhoTempSpinPolarized[2*q+1] += partialOccupancy2*d_kPointWeights[kPoint]*(psi2(0)*psi2(0) + psi2(1)*psi2(1));
+					  rhoTempSpinPolarized[2*q]
+					      +=
+					      d_kPointWeights[kPoint]
+					      *((psiUnrotFrac(0)*psiUnrotFrac(0)
+					         + psiUnrotFrac(1)*psiUnrotFrac(1))
+					      -(psi(0)*psi(0) + psi(1)*psi(1)));
+
+					  rhoTempSpinPolarized[2*q+1]
+					      +=
+					      d_kPointWeights[kPoint]
+					      *((psiUnrotFrac2(0)*psiUnrotFrac2(0)
+							  + psiUnrotFrac2(1)*psiUnrotFrac2(1))
+					       -(psi2(0)*psi2(0)+ psi2(1)*psi2(1)));
 					  //
 					  if(isEvaluateGradRho)
 					      for(unsigned int idim=0; idim<3; ++idim)
 					      {
-						  gradRhoTempSpinPolarized[6*q + idim] +=
-						  2.0*partialOccupancy*d_kPointWeights[kPoint]*(psi(0)*gradPsi[0][idim] + psi(1)*gradPsi[1][idim]);
-						  gradRhoTempSpinPolarized[6*q + 3+idim] +=
-						  2.0*partialOccupancy2*d_kPointWeights[kPoint]*(psi2(0)*gradPsi2[0][idim] + psi2(1)*gradPsi2[1][idim]);
+						  gradRhoTempSpinPolarized[6*q + idim]
+						  += 2.0*d_kPointWeights[kPoint]
+						  *((psiUnrotFrac(0)*gradPsiUnrotFrac[0][idim]
+						      + psiUnrotFrac(1)*gradPsiUnrotFrac[1][idim])
+						     -(psi(0)*gradPsi[0][idim] + psi(1)*gradPsi[1][idim]));
+						  gradRhoTempSpinPolarized[6*q + 3+idim]
+						  += 2.0*d_kPointWeights[kPoint]
+						  *((psiUnrotFrac2(0)*gradPsiUnrotFrac2[0][idim]
+						     + psiUnrotFrac2(1)*gradPsiUnrotFrac2[1][idim])
+						    -(psi2(0)*gradPsi2[0][idim] + psi2(1)*gradPsi2[1][idim]));
 					      }
 					}
 				      else
 					{
-					  rhoTemp[q] += 2.0*partialOccupancy*d_kPointWeights[kPoint]*(psi(0)*psi(0) + psi(1)*psi(1));
+					  rhoTemp[q] += 2.0*d_kPointWeights[kPoint]
+					      *((psiUnrotFrac(0)*psiUnrotFrac(0)
+					          + psiUnrotFrac(1)*psiUnrotFrac(1))
+						-(psi(0)*psi(0) + psi(1)*psi(1)));
 					  if(isEvaluateGradRho)
 					    for(unsigned int idim=0; idim<3; ++idim)
-					       gradRhoTemp[3*q + idim] += 2.0*2.0*partialOccupancy*d_kPointWeights[kPoint]*(psi(0)*gradPsi[0][idim] + psi(1)*gradPsi[1][idim]);
+					       gradRhoTemp[3*q + idim]
+						   += 2.0*2.0*d_kPointWeights[kPoint]
+						   *((psiUnrotFrac(0)*gradPsiUnrotFrac[0][idim]
+						       + psiUnrotFrac(1)*gradPsiUnrotFrac[1][idim])
+					            -(psi(0)*gradPsi[0][idim] + psi(1)*gradPsi[1][idim]));
 					}
 #else
 				      if(dftParameters::spinPolarized==1)
 					{
-					  rhoTempSpinPolarized[2*q] += partialOccupancy*psi*psi;
-					  rhoTempSpinPolarized[2*q+1] += partialOccupancy2*psi2*psi2;
+					  rhoTempSpinPolarized[2*q] += (psiUnrotFrac*psiUnrotFrac-psi*psi);
+					  rhoTempSpinPolarized[2*q+1] +=(psiUnrotFrac2*psiUnrotFrac2
+						                            -psi2*psi2);
 
 					  if(isEvaluateGradRho)
 					      for(unsigned int idim=0; idim<3; ++idim)
 					      {
-						  gradRhoTempSpinPolarized[6*q + idim] += 2.0*partialOccupancy*(psi*gradPsi[idim]);
-						  gradRhoTempSpinPolarized[6*q + 3+idim] +=  2.0*partialOccupancy2*(psi2*gradPsi2[idim]);
+						  gradRhoTempSpinPolarized[6*q + idim]
+						      += 2.0*(psiUnrotFrac*gradPsiUnrotFrac[idim]
+							     -psi*gradPsi[idim]);
+						  gradRhoTempSpinPolarized[6*q + 3+idim]
+						      +=  2.0*(psiUnrotFrac2*gradPsiUnrotFrac2[idim]
+							      -psi2*gradPsi2[idim]);
 					      }
 					}
 				      else
 					{
-					  rhoTemp[q] += 2.0*partialOccupancy*psi*psi;
+					  rhoTemp[q] += 2.0*(psiUnrotFrac*psiUnrotFrac-psi*psi);
 
 					  if(isEvaluateGradRho)
 					    for(unsigned int idim=0; idim<3; ++idim)
-					       gradRhoTemp[3*q + idim] += 2.0*2.0*partialOccupancy*psi*gradPsi[idim];
+					       gradRhoTemp[3*q + idim]
+						   += 2.0*2.0*(psiUnrotFrac*gradPsiUnrotFrac[idim]
+							       -psi*gradPsi[idim]);
 					}
 
 #endif

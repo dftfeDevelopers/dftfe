@@ -633,6 +633,7 @@ namespace dftfe {
       std::vector<std::vector<double> > eigenValuesRRSplit;
       std::vector<dealii::parallel::distributed::Vector<dataTypes::number> > d_eigenVectorsFlattened;
       std::vector<std::vector<dataTypes::number> > d_eigenVectorsFlattenedSTL;
+      std::vector<std::vector<dataTypes::number> > d_eigenVectorsUnrotFracFlattenedSTL;
 
       /// parallel message stream
       ConditionalOStream  pcout;

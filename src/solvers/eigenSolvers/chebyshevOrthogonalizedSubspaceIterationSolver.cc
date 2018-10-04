@@ -110,6 +110,7 @@ namespace dftfe{
   eigenSolverClass::ReturnValueType
   chebyshevOrthogonalizedSubspaceIterationSolver::solve(operatorDFTClass  & operatorMatrix,
 							std::vector<dataTypes::number> & eigenVectorsFlattened,
+							std::vector<dataTypes::number> & eigenVectorsUnrotFracFlattened,
 							vectorType  & tempEigenVec,
 							const unsigned int totalNumberWaveFunctions,
 							std::vector<double>        & eigenValues,
@@ -355,6 +356,12 @@ namespace dftfe{
 
     if (eigenValues.size()!=totalNumberWaveFunctions)
     {
+	for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
+	    for(unsigned int iWave = 0; iWave < eigenValues.size(); ++iWave)
+		eigenVectorsUnrotFracFlattened[iNode*eigenValues.size()
+			 +iWave]
+		     =eigenVectorsFlattened[iNode*totalNumberWaveFunctions+
+		     (totalNumberWaveFunctions-eigenValues.size())+iWave];
 
 	if (useInnerChebySpectrumSplit)
 	{

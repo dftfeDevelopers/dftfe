@@ -113,14 +113,11 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
   {
      for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
        {
-	 /*vectorTools::createDealiiVector<dataTypes::number>(matrix_free_data.get_vector_partitioner(),
-							     d_numEigenValues,
-							     d_eigenVectorsFlattened[kPoint]);*/
 
 	 d_eigenVectorsFlattenedSTL[kPoint].resize(d_numEigenValues*matrix_free_data.get_vector_partitioner()->local_size(),dataTypes::number(0.0));
 
-	   //d_eigenVectorsFlattened[kPoint] = dataTypes::number(0.0);
-
+	 if (d_numEigenValuesRR!=d_numEigenValues)
+	    d_eigenVectorsUnrotFracFlattenedSTL[kPoint].resize(d_numEigenValuesRR*matrix_free_data.get_vector_partitioner()->local_size(),dataTypes::number(0.0));
        }
 
      pcout <<std::endl<< "Setting initial guess for wavefunctions...."<<std::endl;
@@ -146,7 +143,12 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
   else if (usePreviousGroundStateFields==1)
   {
      for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+     {
 	 d_eigenVectorsFlattenedSTL[kPoint].resize(d_numEigenValues*matrix_free_data.get_vector_partitioner()->local_size(),dataTypes::number(0.0));
+
+	 if (d_numEigenValuesRR!=d_numEigenValues)
+	    d_eigenVectorsUnrotFracFlattenedSTL[kPoint].resize(d_numEigenValuesRR*matrix_free_data.get_vector_partitioner()->local_size(),dataTypes::number(0.0));
+     }
 
      pcout <<std::endl<< "Reading initial guess for PSI...."<<std::endl;
      readPSI();
@@ -195,8 +197,13 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
       {
 	//Create the full STL array
 	for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+	{
 	  d_eigenVectorsFlattenedSTL[kPoint].resize(d_numEigenValues*matrix_free_data.get_vector_partitioner()->local_size(),
 		                                    dataTypes::number(0.0));
+
+	 if (d_numEigenValuesRR!=d_numEigenValues)
+	    d_eigenVectorsUnrotFracFlattenedSTL[kPoint].resize(d_numEigenValuesRR*matrix_free_data.get_vector_partitioner()->local_size(),dataTypes::number(0.0));
+	}
 
 #ifdef USE_COMPLEX
 	 vectorTools::copySingleCompVecToFlattenedSTLVec
