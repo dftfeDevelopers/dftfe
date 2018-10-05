@@ -437,10 +437,6 @@ namespace dftParameters
 			      Patterns::Bool(),
 			      "[Advanced] Use mixed precision arithmetic in overlap matrix computation step of PGS orthogonalization, if ORTHOGONALIZATION TYPE is set to PGS. Currently this optimization is only enabled for the real executable. Default setting is false.");
 
-	    prm.declare_entry("USE MIXED PREC CHEBY", "false",
-			      Patterns::Bool(),
-			      "[Advanced] Use mixed precision arithmetic in Chebyshev filtering. Currently this optimization is only enabled for the real executable and batch gemm. Default setting is false.");
-
 	    prm.declare_entry("MIXED PREC STOPPING TOL", "1e-4",
 			      Patterns::Double(0),
 			      "[Advanced] Scf tolerance below which mixed precision cannot be used. Default value is 1e-4.");
@@ -601,7 +597,6 @@ namespace dftParameters
 	   dftParameters::scalapackParalProcs= prm.get_integer("SCALAPACKPROCS");
 	   dftParameters::useMixedPrecPGS_SR= prm.get_bool("USE MIXED PREC PGS SR");
 	   dftParameters::useMixedPrecPGS_O= prm.get_bool("USE MIXED PREC PGS O");
-	   dftParameters::useMixedPrecCheby= prm.get_bool("USE MIXED PREC CHEBY");
 	   dftParameters::mixedPrecStoppingTol= prm.get_double("MIXED PREC STOPPING TOL");
 	   dftParameters::numAdaptiveFilterStates= prm.get_integer("ADAPTIVE FILTER STATES");
 	}
