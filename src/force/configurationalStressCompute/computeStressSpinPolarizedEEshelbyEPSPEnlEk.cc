@@ -525,7 +525,9 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk
 							  dftPtr->d_kPointCoordinates,
 							  dftPtr->d_kPointWeights,
 							  dftPtr->eigenValues,
-							  dftPtr->fermiEnergy,
+					                  dftPtr->fermiEnergy,
+				                          dftPtr->fermiEnergyUp,
+					                  dftPtr->fermiEnergyDown,
 							  dftParameters::TVal);
 
        EKPoints+=eshelbyTensorSP::getEKStress
@@ -537,6 +539,8 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk
 					  dftPtr->d_kPointWeights,
 					  dftPtr->eigenValues,
 					  dftPtr->fermiEnergy,
+				          dftPtr->fermiEnergyUp,
+					  dftPtr->fermiEnergyDown,
 					  dftParameters::TVal);
 
        if(isPseudopotential && !dftParameters::useHigherQuadNLP)
@@ -549,7 +553,9 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk
 						         psiSpin1Quads.begin()+q*numEigenVectors*numKPoints,
 							 dftPtr->d_kPointWeights,
 						         dftPtr->eigenValues,
-						         dftPtr->fermiEnergy,
+					                 dftPtr->fermiEnergy,
+				                         dftPtr->fermiEnergyUp,
+					                 dftPtr->fermiEnergyDown,
 						         dftParameters::TVal);
 
            EKPoints+=eshelbyTensorSP::getEnlStress(gradZetalmDeltaVlDyadicDistImageAtomsQuads[q],
@@ -559,7 +565,9 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk
 					         psiSpin1Quads.begin()+q*numEigenVectors*numKPoints,
 					         dftPtr->d_kPointWeights,
 						 dftPtr->eigenValues,
-						 dftPtr->fermiEnergy,
+					         dftPtr->fermiEnergy,
+				                 dftPtr->fermiEnergyUp,
+					         dftPtr->fermiEnergyDown,
 						 dftParameters::TVal);
 
        }//is pseudopotential check
@@ -581,7 +589,9 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk
 						         psiSpin1QuadsNLP.begin()+q*numEigenVectors*numKPoints,
 							 dftPtr->d_kPointWeights,
 						         dftPtr->eigenValues,
-						         dftPtr->fermiEnergy,
+					                 dftPtr->fermiEnergy,
+				                         dftPtr->fermiEnergyUp,
+					                 dftPtr->fermiEnergyDown,
 						         dftParameters::TVal);
 
            EKPoints+=eshelbyTensorSP::getEnlStress(gradZetalmDeltaVlDyadicDistImageAtomsQuads[q],
@@ -591,7 +601,9 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk
 					         psiSpin1QuadsNLP.begin()+q*numEigenVectors*numKPoints,
 					         dftPtr->d_kPointWeights,
 						 dftPtr->eigenValues,
-						 dftPtr->fermiEnergy,
+					         dftPtr->fermiEnergy,
+				                 dftPtr->fermiEnergyUp,
+					         dftPtr->fermiEnergyDown,
 						 dftParameters::TVal);
 
 
