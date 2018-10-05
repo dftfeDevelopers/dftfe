@@ -258,6 +258,7 @@ namespace dftfe
 		      const unsigned int numberCoreStates,
 		      const MPI_Comm &interBandGroupComm,
 		      const MPI_Comm &mpiComm,
+		      const bool useMixedPrec,
 		      std::vector<double>     & eigenValues);
 
 

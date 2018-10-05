@@ -372,6 +372,7 @@ namespace dftfe{
 					     totalNumberWaveFunctions-eigenValues.size(),
 					     interBandGroupComm,
 					     operatorMatrix.getMPICommunicator(),
+					     useMixedPrec,
 					     eigenValues);
 
 

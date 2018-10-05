@@ -73,6 +73,7 @@ namespace dftParameters
   bool useHigherQuadNLP=true;
   bool useMixedPrecPGS_SR=false;
   bool useMixedPrecPGS_O=false;
+  bool useMixedPrecXTHX=false;
   bool useMixedPrecCheby=false;
   unsigned int numAdaptiveFilterStates=0;
   double mixedPrecStoppingTol=1e-4;
@@ -441,11 +442,16 @@ namespace dftParameters
 
 	    prm.declare_entry("USE MIXED PREC PGS SR", "false",
 			      Patterns::Bool(),
-			      "[Advanced] Use mixed precision arithmetic in subspace rotation step of PGS orthogonalization, if ORTHOGONALIZATION TYPE is set to PGS. Currently this optimization is only enabled for the real executable. Default setting is false.");
+			      "[Advanced] Use mixed precision arithmetic in subspace rotation step of PGS orthogonalization, if ORTHOGONALIZATION TYPE is set to PGS. Currently this optimization is only enabled for the real executable and with ScaLAPACK linking. Default setting is false.");
 
 	    prm.declare_entry("USE MIXED PREC PGS O", "false",
 			      Patterns::Bool(),
-			      "[Advanced] Use mixed precision arithmetic in overlap matrix computation step of PGS orthogonalization, if ORTHOGONALIZATION TYPE is set to PGS. Currently this optimization is only enabled for the real executable. Default setting is false.");
+			      "[Advanced] Use mixed precision arithmetic in overlap matrix computation step of PGS orthogonalization, if ORTHOGONALIZATION TYPE is set to PGS. Currently this optimization is only enabled for the real executable and with ScaLAPACK linking. Default setting is false.");
+
+
+	    prm.declare_entry("USE MIXED PREC XTHX", "false",
+			      Patterns::Bool(),
+			      "[Advanced] Use mixed precision arithmetic in computing subspace projected Kohn-Sham Hamiltonian. Currently this optimization is only enabled for the real executable and with ScaLAPACK linking. Default setting is false.");
 
 	    prm.declare_entry("USE MIXED PREC CHEBY", "false",
 			      Patterns::Bool(),
@@ -613,6 +619,7 @@ namespace dftParameters
 	   dftParameters::scalapackParalProcs= prm.get_integer("SCALAPACKPROCS");
 	   dftParameters::useMixedPrecPGS_SR= prm.get_bool("USE MIXED PREC PGS SR");
 	   dftParameters::useMixedPrecPGS_O= prm.get_bool("USE MIXED PREC PGS O");
+	   dftParameters::useMixedPrecXTHX= prm.get_bool("USE MIXED PREC XTHX");
 	   dftParameters::useMixedPrecCheby= prm.get_bool("USE MIXED PREC CHEBY");
 	   dftParameters::mixedPrecStoppingTol= prm.get_double("MIXED PREC STOPPING TOL");
 	   dftParameters::numAdaptiveFilterStates= prm.get_integer("ADAPTIVE FILTER STATES");

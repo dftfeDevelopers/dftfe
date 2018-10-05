@@ -638,6 +638,7 @@ namespace dftfe{
 		     const unsigned int numberCoreStates,
 		     const MPI_Comm &interBandGroupComm,
 		     const MPI_Comm &mpi_communicator,
+		     const bool useMixedPrec,
 		     std::vector<double> & eigenValues)
 
     {
@@ -661,8 +662,15 @@ namespace dftfe{
                                             rowsBlockSize);
 
       computing_timer.enter_section("Blocked XtHX, RR step");
-      operatorMatrix.XtHX(X,
+      if (useMixedPrec && dftParameters::useMixedPrecXTHX)
+         operatorMatrix.XtHX(X,
 			  numberWaveFunctions,
+			  processGrid,
+			  projHamPar);
+      else
+         operatorMatrix.XtHXMixedPrec(X,
+			  numberWaveFunctions,
+			  numberCoreStates,
 			  processGrid,
 			  projHamPar);
       computing_timer.exit_section("Blocked XtHX, RR step");
@@ -721,6 +729,7 @@ namespace dftfe{
 		   const unsigned int numberCoreStates,
 		   const MPI_Comm &interBandGroupComm,
 		   const MPI_Comm &mpi_communicator,
+		   const bool useMixedPrec,
 		   std::vector<double> & eigenValues)
     {
        AssertThrow(false,dftUtils::ExcNotImplementedYet());
@@ -1213,6 +1222,7 @@ namespace dftfe{
 			   const unsigned int numberCoreStates,
 			   const MPI_Comm &,
 			   const MPI_Comm &,
+			   const bool useMixedPrec,
 			   std::vector<double>     & eigenValues);
 
     template void computeEigenResidualNorm(operatorDFTClass        & operatorMatrix,

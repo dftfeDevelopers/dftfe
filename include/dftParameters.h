@@ -83,6 +83,7 @@ namespace dftfe {
       extern bool useHigherQuadNLP;
       extern bool useMixedPrecPGS_SR;
       extern bool useMixedPrecPGS_O;
+      extern bool useMixedPrecXTHX;
       extern unsigned int numAdaptiveFilterStates;
       extern bool useMixedPrecCheby;
       extern double mixedPrecStoppingTol;

@@ -1185,6 +1185,270 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 						                      dftPtr->interBandGroupComm);
 #endif
   }
+
+  template<unsigned int FEOrder>
+  void kohnShamDFTOperatorClass<FEOrder>::XtHXMixedPrec
+	             (const std::vector<dataTypes::number> & X,
+		      const unsigned int N,
+		      const unsigned int Ncore,
+		      const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+		      dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar)
+  {
+#ifdef USE_COMPLEX
+    AssertThrow(false,dftUtils::ExcNotImplementedYet());
+#else
+    //
+    //Get access to number of locally owned nodes on the current processor
+    //
+    const unsigned int numberDofs = X.size()/N;
+
+    //create temporary arrays XBlock,Hx
+    dealii::parallel::distributed::Vector<dataTypes::number> XBlock,HXBlock;
+
+    std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
+    std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
+    linearAlgebraOperations::internal::createGlobalToLocalIdMapsScaLAPACKMat(processGrid,
+						    projHamPar,
+						    globalToLocalRowIdMap,
+						    globalToLocalColumnIdMap);
+   //band group parallelization data structures
+   const unsigned int numberBandGroups=
+	dealii::Utilities::MPI::n_mpi_processes(dftPtr->interBandGroupComm);
+   const unsigned int bandGroupTaskId = dealii::Utilities::MPI::this_mpi_process(dftPtr->interBandGroupComm);
+   std::vector<unsigned int> bandGroupLowHighPlusOneIndices;
+   dftUtils::createBandParallelizationIndices(dftPtr->interBandGroupComm,
+					      N,
+					      bandGroupLowHighPlusOneIndices);
+
+   /*
+    * X^{T}*H*Xc is done in a blocked approach for memory optimization:
+    * Sum_{blocks} X^{T}*H*XcBlock. The result of each X^{T}*H*XcBlock
+    * has a much smaller memory compared to X^{T}*H*Xc.
+    * X^{T} (denoted by X in the code with column major format storage)
+    * is a matrix with size (N x MLoc).
+    * MLoc, which is number of local dofs is denoted by numberDofs in the code.
+    * Xc denotes complex conjugate of X.
+    * XcBlock is a matrix of size (MLoc x B). B is the block size.
+    * A further optimization is done to reduce floating point operations:
+    * As X^{T}*H*Xc is a Hermitian matrix, it suffices to compute only the lower
+    * triangular part. To exploit this, we do
+    * X^{T}*H*Xc=Sum_{blocks} XTrunc^{T}*H*XcBlock
+    * where XTrunc^{T} is a (D x MLoc) sub matrix of X^{T} with the row indices
+    * ranging from the lowest global index of XcBlock (denoted by jvec in the code)
+    * to N. D=N-jvec.
+    * The parallel ScaLapack matrix projHamPar is directly filled from
+    * the XTrunc^{T}*H*XcBlock result
+    */
+
+    const unsigned int vectorsBlockSize=std::min(dftParameters::wfcBlockSize,
+	                                         bandGroupLowHighPlusOneIndices[1]);
+
+    std::vector<dataTypes::numberLowPrec> projHamBlockSinglePrec(N*vectorsBlockSize,0.0);
+    std::vector<dataTypes::number> projHamBlock(N*vectorsBlockSize,0.0);
+
+    std::vector<dataTypes::numberLowPrec> HXBlockSinglePrec;
+
+    std::vector<dataTypes::numberLowPrec> XSinglePrec(&X[0],&X[0]+X.size());
+
+    if (dftParameters::verbosity>=4)
+      dftUtils::printCurrentMemoryUsage(mpi_communicator,
+	                      "Inside Blocked XtHX with parallel projected Ham matrix");
+
+    for (unsigned int jvec = 0; jvec < N; jvec += vectorsBlockSize)
+    {
+	  // Correct block dimensions if block "goes off edge of" the matrix
+	  const unsigned int B = std::min(vectorsBlockSize, N-jvec);
+	  if (jvec==0 || B!=vectorsBlockSize)
+	  {
+	     reinit(B,
+		    XBlock,
+		    true);
+	     HXBlock.reinit(XBlock);
+	     HXBlockSinglePrec.resize(B*numberDofs);
+	  }
+
+	  if ((jvec+B)<=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1] &&
+	      (jvec+B)>bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
+	  {
+	      XBlock=0;
+	      //fill XBlock^{T} from X:
+	      for(unsigned int iNode = 0; iNode<numberDofs; ++iNode)
+		  for(unsigned int iWave = 0; iWave < B; ++iWave)
+			XBlock.local_element(iNode*B
+				 +iWave)
+			     =X[iNode*N+jvec+iWave];
+
+
+	      //evaluate H times XBlock^{T} and store in HXBlock^{T}
+	      HXBlock=0;
+	      const bool scaleFlag = false;
+	      const dataTypes::number scalar = 1.0;
+	      HX(XBlock,
+		 B,
+		 scaleFlag,
+		 scalar,
+		 false,
+		 HXBlock);
+
+
+	      const char transA = 'N';
+#ifdef USE_COMPLEX
+	      const char transB = 'C';
+#else
+	      const char transB = 'T';
+#endif
+	      const dataTypes::number alpha = 1.0,beta = 0.0;
+	      std::fill(projHamBlock.begin(),projHamBlock.end(),0.);
+
+	      if (jvec+B>Ncore)
+	      {
+
+		  const unsigned int D=N-jvec;
+
+		  // Comptute local XTrunc^{T}*HXcBlock.
+		  dgemm_(&transA,
+			 &transB,
+			 &D,
+			 &B,
+			 &numberDofs,
+			 &alpha,
+			 &X[0]+jvec,
+			 &N,
+			 HXBlock.begin(),
+			 &B,
+			 &beta,
+			 &projHamBlock[0],
+			 &D);
+
+
+		  // Sum local XTrunc^{T}*HXcBlock across domain decomposition processors
+		  MPI_Allreduce(MPI_IN_PLACE,
+				&projHamBlock[0],
+				D*B,
+				dataTypes::mpi_type_id(&projHamBlock[0]),
+				MPI_SUM,
+				getMPICommunicator());
+
+
+		  //Copying only the lower triangular part to the ScaLAPACK projected Hamiltonian matrix
+		  if (processGrid->is_process_active())
+		      for (unsigned int j = 0; j <B; ++j)
+			 if(globalToLocalColumnIdMap.find(j+jvec)!=globalToLocalColumnIdMap.end())
+			 {
+			   const unsigned int localColumnId=globalToLocalColumnIdMap[j+jvec];
+			   for (unsigned int i = jvec; i <N; ++i)
+			   {
+			     std::map<unsigned int, unsigned int>::iterator it=
+						  globalToLocalRowIdMap.find(i);
+			     if (it!=globalToLocalRowIdMap.end())
+				     projHamPar.local_el(it->second,
+							 localColumnId)
+							 =projHamBlock[j*D+i-jvec];
+			   }
+			 }
+	      }
+	      else
+	      {
+
+		  const dataTypes::numberLowPrec alphaSinglePrec = 1.0,betaSinglePrec = 0.0;
+	          std::fill(projHamBlockSinglePrec.begin(),projHamBlockSinglePrec.end(),0.);
+
+		  for(unsigned int iNode = 0; iNode<numberDofs; ++iNode)
+		      for(unsigned int iWave = 0; iWave < B; ++iWave)
+			    HXBlockSinglePrec[iNode*B+iWave]=HXBlock.local_element(iNode*B+iWave);
+
+		  const unsigned int Dcore=Ncore-jvec;
+
+		  sgemm_(&transA,
+			 &transB,
+			 &Dcore,
+			 &B,
+			 &numberDofs,
+			 &alphaSinglePrec,
+			 &XSinglePrec[0]+jvec,
+			 &N,
+			 &HXBlockSinglePrec[0],
+			 &B,
+			 &betaSinglePrec,
+			 &projHamBlockSinglePrec[0],
+			 &Dcore);
+
+		  MPI_Allreduce(MPI_IN_PLACE,
+				&projHamBlockSinglePrec[0],
+				Dcore*B,
+				dataTypes::mpi_type_id(&projHamBlockSinglePrec[0]),
+				MPI_SUM,
+				getMPICommunicator());
+
+
+		  if (processGrid->is_process_active())
+		      for (unsigned int j = 0; j <B; ++j)
+			 if(globalToLocalColumnIdMap.find(j+jvec)!=globalToLocalColumnIdMap.end())
+			 {
+			   const unsigned int localColumnId=globalToLocalColumnIdMap[j+jvec];
+			   for (unsigned int i = jvec; i <Ncore; ++i)
+			   {
+			     std::map<unsigned int, unsigned int>::iterator it=
+						  globalToLocalRowIdMap.find(i);
+			     if (it!=globalToLocalRowIdMap.end())
+				     projHamPar.local_el(it->second,
+							 localColumnId)
+							 =(dataTypes::number)
+							   projHamBlockSinglePrec[j*Dcore+i-jvec];
+			   }
+			 }
+
+		  const unsigned int Dvalence=N-Ncore;
+
+		  dgemm_(&transA,
+			 &transB,
+			 &Dvalence,
+			 &B,
+			 &numberDofs,
+			 &alpha,
+			 &X[0]+Ncore,
+			 &N,
+			 HXBlock.begin(),
+			 &B,
+			 &beta,
+			 &projHamBlock[0],
+			 &Dvalence);
+
+
+		  MPI_Allreduce(MPI_IN_PLACE,
+				&projHamBlock[0],
+				Dvalence*B,
+				dataTypes::mpi_type_id(&projHamBlock[0]),
+				MPI_SUM,
+				getMPICommunicator());
+
+		  if (processGrid->is_process_active())
+		      for (unsigned int j = 0; j <B; ++j)
+			 if(globalToLocalColumnIdMap.find(j+jvec)!=globalToLocalColumnIdMap.end())
+			 {
+			   const unsigned int localColumnId=globalToLocalColumnIdMap[j+jvec];
+			   for (unsigned int i = Ncore; i <N; ++i)
+			   {
+			     std::map<unsigned int, unsigned int>::iterator it=
+						  globalToLocalRowIdMap.find(i);
+			     if (it!=globalToLocalRowIdMap.end())
+				     projHamPar.local_el(it->second,
+							 localColumnId)
+							 =projHamBlock[j*Dvalence+i-Ncore];
+			   }
+			 }
+	      }
+
+
+	  }//band parallelization
+
+    }//block loop
+
+    linearAlgebraOperations::internal::sumAcrossInterCommScaLAPACKMat(processGrid,
+						                      projHamPar,
+						                      dftPtr->interBandGroupComm);
+#endif
+  }
 #endif
 
 template<unsigned int FEOrder>

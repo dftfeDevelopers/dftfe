@@ -137,6 +137,26 @@ namespace dftfe{
 		      const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 		      dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar) = 0;
 
+
+    /**
+     * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
+     *
+     * @param X Vector of Vectors containing multi-wavefunction fields
+     * @param totalNumberComponents number of wavefunctions associated with a given node
+     * @param singlePrecComponents number of wavecfuntions starting from the first for
+     * which the project Hamiltionian block will be computed in single procession. However
+     * the cross blocks will still be computed in double precision.
+     * @param processGrid two-dimensional processor grid corresponding to the parallel projHamPar
+     * @param projHamPar parallel ScaLAPACKMatrix which stores the computed projection
+     * of the operation into the given subspace
+     */
+    virtual void XtHXMixedPrec
+	             (const std::vector<dataTypes::number> & X,
+		      const unsigned int totalNumberComponents,
+		      const unsigned int singlePrecComponents,
+		      const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+		      dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar) = 0;
+
 #endif
     /**
      * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
