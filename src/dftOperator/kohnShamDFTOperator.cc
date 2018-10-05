@@ -1248,7 +1248,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
     const unsigned int vectorsBlockSize=std::min(dftParameters::wfcBlockSize,
 	                                         bandGroupLowHighPlusOneIndices[1]);
 
-    std::vector<dataTypes::numberLowPrec> projHamBlockSinglePrec(N*vectorsBlockSize,0.0);
+    std::vector<dataTypes::numberLowPrec> projHamBlockSinglePrec(Ncore*vectorsBlockSize,0.0);
     std::vector<dataTypes::number> projHamBlock(N*vectorsBlockSize,0.0);
 
     std::vector<dataTypes::numberLowPrec> HXBlockSinglePrec;

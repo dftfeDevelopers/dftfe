@@ -661,19 +661,27 @@ namespace dftfe{
                                             processGrid,
                                             rowsBlockSize);
 
-      computing_timer.enter_section("Blocked XtHX, RR step");
+
       if (useMixedPrec && dftParameters::useMixedPrecXTHX)
+      {
+	 computing_timer.enter_section("Blocked XtHX Mixed Prec, RR step");
          operatorMatrix.XtHX(X,
 			  numberWaveFunctions,
 			  processGrid,
 			  projHamPar);
+	 computing_timer.exit_section("Blocked XtHX Mixed Prec, RR step");
+      }
       else
+      {
+	 computing_timer.enter_section("Blocked XtHX, RR step");
          operatorMatrix.XtHXMixedPrec(X,
 			  numberWaveFunctions,
 			  numberCoreStates,
 			  processGrid,
 			  projHamPar);
-      computing_timer.exit_section("Blocked XtHX, RR step");
+	 computing_timer.exit_section("Blocked XtHX, RR step");
+      }
+
 
       //
       //compute eigendecomposition of ProjHam
