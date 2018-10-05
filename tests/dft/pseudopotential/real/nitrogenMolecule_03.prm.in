@@ -46,5 +46,6 @@ subsection SCF parameters
       set CHEBYSHEV FILTER TOLERANCE=2e-3
       set USE MIXED PREC PGS SR=true
       set USE MIXED PREC PGS O=true
+      set MIXED PREC STOPPING TOL=1e-4
   end
 end

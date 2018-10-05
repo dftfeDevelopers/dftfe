@@ -1360,8 +1360,9 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 
 		  for(unsigned int iNode = 0; iNode<numberDofs; ++iNode)
 		      for(unsigned int iWave = 0; iWave < B; ++iWave)
-			    HXBlockSinglePrec[iNode*B+iWave]=HXBlock.local_element(iNode*B+iWave);
+			    HXBlockSinglePrec[iNode*B+iWave]=(dataTypes::numberLowPrec)HXBlock.local_element(iNode*B+iWave);
 
+		  const unsigned int D=N-jvec;
 		  const unsigned int Dcore=Ncore-jvec;
 
 		  sgemm_(&transA,
@@ -1378,31 +1379,6 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 			 &projHamBlockSinglePrec[0],
 			 &Dcore);
 
-		  MPI_Allreduce(MPI_IN_PLACE,
-				&projHamBlockSinglePrec[0],
-				Dcore*B,
-				dataTypes::mpi_type_id(&projHamBlockSinglePrec[0]),
-				MPI_SUM,
-				getMPICommunicator());
-
-
-		  if (processGrid->is_process_active())
-		      for (unsigned int j = 0; j <B; ++j)
-			 if(globalToLocalColumnIdMap.find(j+jvec)!=globalToLocalColumnIdMap.end())
-			 {
-			   const unsigned int localColumnId=globalToLocalColumnIdMap[j+jvec];
-			   for (unsigned int i = jvec; i <Ncore; ++i)
-			   {
-			     std::map<unsigned int, unsigned int>::iterator it=
-						  globalToLocalRowIdMap.find(i);
-			     if (it!=globalToLocalRowIdMap.end())
-				     projHamPar.local_el(it->second,
-							 localColumnId)
-							 =(dataTypes::number)
-							   projHamBlockSinglePrec[j*Dcore+i-jvec];
-			   }
-			 }
-
 		  const unsigned int Dvalence=N-Ncore;
 
 		  dgemm_(&transA,
@@ -1416,13 +1392,17 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 			 HXBlock.begin(),
 			 &B,
 			 &beta,
-			 &projHamBlock[0],
-			 &Dvalence);
+			 &projHamBlock[0]+Dcore,
+			 &D);
 
+		  for(unsigned int i = 0; i<B; ++i)
+		      for(unsigned int j = 0; j < Dcore; ++j)
+			   projHamBlock[i*D+j]
+			       =(dataTypes::number)projHamBlockSinglePrec[i*Dcore+j];
 
 		  MPI_Allreduce(MPI_IN_PLACE,
 				&projHamBlock[0],
-				Dvalence*B,
+				D*B,
 				dataTypes::mpi_type_id(&projHamBlock[0]),
 				MPI_SUM,
 				getMPICommunicator());
@@ -1432,14 +1412,14 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 			 if(globalToLocalColumnIdMap.find(j+jvec)!=globalToLocalColumnIdMap.end())
 			 {
 			   const unsigned int localColumnId=globalToLocalColumnIdMap[j+jvec];
-			   for (unsigned int i = Ncore; i <N; ++i)
+			   for (unsigned int i = jvec; i <N; ++i)
 			   {
 			     std::map<unsigned int, unsigned int>::iterator it=
 						  globalToLocalRowIdMap.find(i);
 			     if (it!=globalToLocalRowIdMap.end())
 				     projHamPar.local_el(it->second,
 							 localColumnId)
-							 =projHamBlock[j*Dvalence+i-Ncore];
+							 =projHamBlock[j*D+i-jvec];
 			   }
 			 }
 	      }
