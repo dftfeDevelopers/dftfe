@@ -112,9 +112,11 @@ namespace dftfe {
 							 numberWaveFunctions,
 							 dftPtr->d_projectorKetTimesVectorParFlattened);
 
-      vectorTools::createDealiiVector<dataTypes::numberLowPrec>(dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
-							 numberWaveFunctions,
-							 dftPtr->d_projectorKetTimesVectorParFlattenedLowPrec);
+      ///FIXME In some cases this caused Assert failure. So it is commented to out for now
+      /// requires to be uncommented for developing/experimenting mixed precision in chebyshev filtering
+      //vectorTools::createDealiiVector<dataTypes::numberLowPrec>(dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
+      //							 numberWaveFunctions,
+      //							 dftPtr->d_projectorKetTimesVectorParFlattenedLowPrec);
     }
 
 
@@ -139,10 +141,13 @@ void kohnShamDFTOperatorClass<FEOrder>::reinit(const unsigned int numberWaveFunc
     vectorTools::createDealiiVector<dataTypes::number>(dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
 						       numberWaveFunctions,
 						       dftPtr->d_projectorKetTimesVectorParFlattened);
-    vectorTools::createDealiiVector<dataTypes::numberLowPrec>
-	  (dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
-	   numberWaveFunctions,
-	   dftPtr->d_projectorKetTimesVectorParFlattenedLowPrec);
+
+    ///FIXME In some cases this caused Assert failure. So it is commented to out for now
+    /// requires to be uncommented for developing/experimenting mixed precision in chebyshev filtering
+    //vectorTools::createDealiiVector<dataTypes::numberLowPrec>
+    //	  (dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
+    //	   numberWaveFunctions,
+    //	   dftPtr->d_projectorKetTimesVectorParFlattenedLowPrec);
   }
 
 }

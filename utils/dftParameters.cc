@@ -453,10 +453,6 @@ namespace dftParameters
 			      Patterns::Bool(),
 			      "[Advanced] Use mixed precision arithmetic in computing subspace projected Kohn-Sham Hamiltonian. Currently this optimization is only enabled for the real executable and with ScaLAPACK linking. Default setting is false.");
 
-	    prm.declare_entry("USE MIXED PREC CHEBY", "false",
-			      Patterns::Bool(),
-			      "[Advanced] Use mixed precision arithmetic in Chebyshev filtering. Currently this optimization is only enabled for the real executable and batch gemm. Default setting is false.");
-
 	    prm.declare_entry("MIXED PREC STOPPING TOL", "1e-4",
 			      Patterns::Double(0),
 			      "[Advanced] Scf tolerance below which mixed precision cannot be used. Default value is 1e-4.");
@@ -620,7 +616,6 @@ namespace dftParameters
 	   dftParameters::useMixedPrecPGS_SR= prm.get_bool("USE MIXED PREC PGS SR");
 	   dftParameters::useMixedPrecPGS_O= prm.get_bool("USE MIXED PREC PGS O");
 	   dftParameters::useMixedPrecXTHX= prm.get_bool("USE MIXED PREC XTHX");
-	   dftParameters::useMixedPrecCheby= prm.get_bool("USE MIXED PREC CHEBY");
 	   dftParameters::mixedPrecStoppingTol= prm.get_double("MIXED PREC STOPPING TOL");
 	   dftParameters::numAdaptiveFilterStates= prm.get_integer("ADAPTIVE FILTER STATES");
 	}
@@ -713,6 +708,14 @@ namespace dftParameters
     if (dftParameters::isPseudopotential)
       AssertThrow(!dftParameters::pseudoPotentialFile.empty(),
 	        ExcMessage("DFT-FE Error: PSEUDOPOTENTIAL FILE NAMES LIST not given."));
+
+    if (dftParameters::spinPolarized==0)
+            AssertThrow(!dftParameters::constraintMagnetization,
+	        ExcMessage("DFT-FE Error: This is a SPIN UNPOLARIZED calculation. Can't have CONSTRAINT MAGNETIZATION ON."));
+
+    if (dftParameters::verbosity >=1 && Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)
+        if (dftParameters::constraintMagnetization)
+            std::cout << " WARNING: CONSTRAINT MAGNETIZATION is ON. A fixed occupation will be used no matter what temperature is provided at input" << std::endl;
 
     AssertThrow(dftParameters::numberEigenValues!=0
 	        ,ExcMessage("DFT-FE Error: Number of wavefunctions not specified or given value of zero, which is not allowed."));
