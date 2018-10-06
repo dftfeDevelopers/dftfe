@@ -665,8 +665,9 @@ namespace dftfe{
       if (useMixedPrec && dftParameters::useMixedPrecXTHX)
       {
 	 computing_timer.enter_section("Blocked XtHX Mixed Prec, RR step");
-         operatorMatrix.XtHX(X,
+         operatorMatrix.XtHXMixedPrec(X,
 			  numberWaveFunctions,
+			  numberCoreStates,
 			  processGrid,
 			  projHamPar);
 	 computing_timer.exit_section("Blocked XtHX Mixed Prec, RR step");
@@ -674,9 +675,8 @@ namespace dftfe{
       else
       {
 	 computing_timer.enter_section("Blocked XtHX, RR step");
-         operatorMatrix.XtHXMixedPrec(X,
+         operatorMatrix.XtHX(X,
 			  numberWaveFunctions,
-			  numberCoreStates,
 			  processGrid,
 			  projHamPar);
 	 computing_timer.exit_section("Blocked XtHX, RR step");
