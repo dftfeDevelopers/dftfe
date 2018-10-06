@@ -1356,11 +1356,9 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 	      {
 
 		  const dataTypes::numberLowPrec alphaSinglePrec = 1.0,betaSinglePrec = 0.0;
-	          std::fill(projHamBlockSinglePrec.begin(),projHamBlockSinglePrec.end(),0.);
 
-		  for(unsigned int iNode = 0; iNode<numberDofs; ++iNode)
-		      for(unsigned int iWave = 0; iWave < B; ++iWave)
-			    HXBlockSinglePrec[iNode*B+iWave]=(dataTypes::numberLowPrec)HXBlock.local_element(iNode*B+iWave);
+		  for(unsigned int i = 0; i<numberDofs*B; ++i)
+	          	    HXBlockSinglePrec[i]=HXBlock.local_element(i);
 
 		  const unsigned int D=N-jvec;
 		  const unsigned int Dcore=Ncore-jvec;
@@ -1398,7 +1396,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 		  for(unsigned int i = 0; i<B; ++i)
 		      for(unsigned int j = 0; j < Dcore; ++j)
 			   projHamBlock[i*D+j]
-			       =(dataTypes::number)projHamBlockSinglePrec[i*Dcore+j];
+			       =projHamBlockSinglePrec[i*Dcore+j];
 
 		  MPI_Allreduce(MPI_IN_PLACE,
 				&projHamBlock[0],
