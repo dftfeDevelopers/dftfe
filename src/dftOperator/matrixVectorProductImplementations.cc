@@ -305,8 +305,8 @@ void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesX(const deal
 #ifdef WITH_MKL
 template<unsigned int FEOrder>
 void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesXBatchGEMM (const dealii::parallel::distributed::Vector<std::complex<double> > & src,
-								  const unsigned int numberWaveFunctions,
-								  dealii::parallel::distributed::Vector<std::complex<double> > & dst) const
+										const unsigned int numberWaveFunctions,
+										dealii::parallel::distributed::Vector<std::complex<double> > & dst) const
 
 {
 
@@ -402,8 +402,8 @@ void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesXBatchGEMMSi
 #else
 template<unsigned int FEOrder>
 void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesX(const dealii::parallel::distributed::Vector<double> & src,
-							const unsigned int numberWaveFunctions,
-							dealii::parallel::distributed::Vector<double> & dst) const
+								      const unsigned int numberWaveFunctions,
+								      dealii::parallel::distributed::Vector<double> & dst) const
 {
 
 

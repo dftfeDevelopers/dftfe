@@ -35,7 +35,7 @@ namespace dftfe {
     {
 
       extern unsigned int finiteElementPolynomialOrder,n_refinement_steps,numberEigenValues,xc_id, spinPolarized, nkx,nky,nkz , offsetFlagX,offsetFlagY,offsetFlagZ;
-      extern unsigned int chebyshevOrder,numPass,numSCFIterations,maxLinearSolverIterations, mixingHistory, npool;
+      extern unsigned int chebyshevOrder,numPass,numSCFIterations,maxLinearSolverIterations, mixingHistory, npool, numberWaveFunctionsForEstimate, numLevels;
 
       extern double radiusAtomBall, mixingParameter;
       extern double lowerEndWantedSpectrum,relLinearSolverTolerance,selfConsistentSolverTolerance,TVal, start_magnetization;
@@ -45,12 +45,12 @@ namespace dftfe {
 
       extern double outerAtomBallRadius, meshSizeOuterDomain;
       extern double meshSizeInnerBall, meshSizeOuterBall;
-      extern double chebyshevTolerance;
+      extern double chebyshevTolerance, topfrac;
       extern std::string mixingMethod ;
 
 
       extern bool isIonOpt, isCellOpt, isIonForce, isCellStress;
-      extern bool nonSelfConsistentForce;
+      extern bool nonSelfConsistentForce, meshAdaption;
       extern double forceRelaxTol, stressRelaxTol;
       extern unsigned int cellConstraintType;
 

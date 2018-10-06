@@ -273,6 +273,12 @@ namespace dftfe {
 
       void determineOrbitalFilling();
 
+      //
+      //generate mesh using a-posteriori error estimates
+      //
+      void aposterioriMeshGenerate();
+      dataTypes::number computeTraceXtHX(unsigned int numberWaveFunctionsEstimate);
+
 
       /**
        *@brief  moves the triangulation vertices using Gaussians such that the all atoms are on triangulation vertices

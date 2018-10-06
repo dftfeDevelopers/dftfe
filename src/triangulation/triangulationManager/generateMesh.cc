@@ -41,6 +41,119 @@ namespace dftfe {
 	Utilities::MPI::max(numLocallyOwnedCells, interpool_comm);
       AssertThrow(numberLocalCellsMinPools==numberLocalCellsMaxPools,ExcMessage("Number of local cells are different across pools or in other words the physical partitions don't have the same ordering across pools."));
     }
+
+
+    void computeMeshMetrics(const parallel::distributed::Triangulation<3> & parallelTriangulation,
+			    const std::string & printCommand,
+			    const dealii::ConditionalOStream &  pcout,
+			    const MPI_Comm & mpi_comm,
+			    const MPI_Comm & interpool_comm1,
+			    const MPI_Comm & interpool_comm2)
+
+    {
+      //
+	//compute some adaptive mesh metrics
+	//
+	double minElemLength = dftParameters::meshSizeOuterDomain;
+	unsigned int numLocallyOwnedCells=0;
+	typename parallel::distributed::Triangulation<3>::active_cell_iterator cell, endc;
+	cell = parallelTriangulation.begin_active();
+	endc = parallelTriangulation.end();
+	for( ; cell != endc; ++cell)
+	  {
+	    if(cell->is_locally_owned())
+	      {
+		numLocallyOwnedCells++;
+		if(cell->minimum_vertex_distance() < minElemLength) minElemLength = cell->minimum_vertex_distance();
+	      }
+	  }
+
+	minElemLength = Utilities::MPI::min(minElemLength, mpi_comm);
+
+	//
+	//print out adaptive mesh metrics
+	//
+	if (dftParameters::verbosity>=4)
+	  {
+            pcout<< printCommand <<std::endl<<" num elements: "<<parallelTriangulation.n_global_active_cells()<<", min element length: "<<minElemLength<<std::endl;
+	  }
+
+	checkTriangulationEqualityAcrossProcessorPools(parallelTriangulation,
+						       numLocallyOwnedCells,
+						       interpool_comm1);
+	checkTriangulationEqualityAcrossProcessorPools(parallelTriangulation,
+						       numLocallyOwnedCells,
+						       interpool_comm2);
+
+    }
+
+    void computeLocalFiniteElementError(const dealii::DoFHandler<3> & dofHandler,
+					const std::vector<const vectorType*> & eigenVectorsArray,
+					std::vector<double>  & errorInEachCell,
+					const unsigned int FEOrder)
+    {
+
+      typename dealii::DoFHandler<3>::active_cell_iterator cell, endc;
+      cell = dofHandler.begin_active(); 
+      endc = dofHandler.end();
+
+      errorInEachCell.clear();
+
+      //
+      //create some FE data structures
+      //
+      dealii::QGauss<3>  quadrature(FEOrder+1);
+      dealii::FEValues<3> fe_values (dofHandler.get_fe(), quadrature, dealii::update_values | dealii::update_JxW_values | dealii::update_3rd_derivatives);
+      const unsigned int num_quad_points = quadrature.size();
+
+      std::vector<Tensor<3,3,double> > thirdDerivatives(num_quad_points);
+
+      for(;cell != endc; ++cell)
+	{
+	  if(cell->is_locally_owned())
+	    {
+	      fe_values.reinit(cell);
+
+	      const dealii::Point<3> center(cell->center());
+	      double currentMeshSize = cell->minimum_vertex_distance();//cell->diameter();
+	      //
+	      //Estimate the error for the current mesh
+	      //
+	      double derPsiSquare = 0.0;
+	      for(unsigned int iwave = 0; iwave < eigenVectorsArray.size(); ++iwave)
+		{
+		  fe_values.get_function_third_derivatives(*eigenVectorsArray[iwave],
+							   thirdDerivatives);
+		  for(unsigned int q_point = 0; q_point < num_quad_points; ++q_point)
+		    {
+		      double sum = 0.0;
+		      for(unsigned int i = 0; i < 3; ++i)
+			{
+			  for(unsigned int j = 0; j < 3; ++j)
+			    {
+			      for(unsigned int k = 0; k < 3; ++k)
+				{
+				  sum += std::abs(thirdDerivatives[q_point][i][j][k])*std::abs(thirdDerivatives[q_point][i][j][k]);
+				}
+			    }
+			}
+		    
+		      derPsiSquare += sum*fe_values.JxW(q_point);
+		    }//q_point
+		}//iwave
+	      double exponent = 4.0;
+	      double error = pow(currentMeshSize,exponent)*derPsiSquare;
+	      errorInEachCell.push_back(error);
+	    }
+	  else
+	    {
+	      errorInEachCell.push_back(0.0);
+	    }
+	}
+
+    }
+
+
   }
 
   void triangulationManager::generateCoarseMesh(parallel::distributed::Triangulation<3>& parallelTriangulation)
@@ -226,6 +339,149 @@ namespace dftfe {
 
   }
 
+
+  //
+  //generate mesh based on a-posteriori estimates
+  //
+  void triangulationManager::generateMeshAposteriori(const DoFHandler<3> & dofHandler,
+						     parallel::distributed::Triangulation<3> & parallelTriangulation,
+						     const std::vector<vectorType> & eigenVectorsArrayIn,
+						     const unsigned int FEOrder,
+						     const bool generateElectrostaticsTria)
+  {
+    
+    double topfrac = dftParameters::topfrac;
+    double bottomfrac = 0.0;
+
+    //
+    //create an array of pointers holding the eigenVectors on starting mesh
+    //
+    unsigned int numberWaveFunctionsEstimate = eigenVectorsArrayIn.size();
+    std::vector<const vectorType*> eigenVectorsArrayOfPtrsIn(numberWaveFunctionsEstimate);
+    for(int iWave = 0; iWave < numberWaveFunctionsEstimate; ++iWave)
+      {
+	eigenVectorsArrayOfPtrsIn[iWave] = &eigenVectorsArrayIn[iWave];
+      }
+
+    //
+    //create storage for storing errors in each cell
+    //
+    dealii::Vector<double> estimated_error_per_cell(parallelTriangulation.n_active_cells());
+    std::vector<double> errorInEachCell;
+
+    //
+    //fill in the errors corresponding to each cell
+    //
+    
+    internal::computeLocalFiniteElementError(dofHandler,
+					     eigenVectorsArrayOfPtrsIn,
+					     errorInEachCell,
+					     FEOrder);
+
+    for(unsigned int i = 0; i < errorInEachCell.size(); ++i)
+      estimated_error_per_cell(i) = errorInEachCell[i];
+
+    //
+    //print certain error metrics of each cell
+    //
+    if (dftParameters::verbosity>=4)
+      {
+	double maxErrorIndicator = *std::max_element(errorInEachCell.begin(),errorInEachCell.end());
+	double globalMaxError = Utilities::MPI::max(maxErrorIndicator,mpi_communicator);
+	double errorSum = std::accumulate(errorInEachCell.begin(),errorInEachCell.end(),0.0);
+	double globalSum = Utilities::MPI::sum(errorSum,mpi_communicator);
+	pcout<<" Sum Error of all Cells: "<<globalSum<<" Max Error of all Cells:" <<globalMaxError<<std::endl;
+      }
+
+    //
+    //reset moved parallel triangulation to unmoved triangulation
+    //
+    resetMesh(d_parallelTriangulationUnmoved,
+	      parallelTriangulation);
+
+    //
+    //prepare all meshes for refinement using estimated errors in each cell
+    //
+    parallel::distributed::GridRefinement::refine_and_coarsen_fixed_number(parallelTriangulation,
+									   estimated_error_per_cell,
+									   topfrac,
+									   bottomfrac);
+
+    parallelTriangulation.prepare_coarsening_and_refinement();
+    parallelTriangulation.execute_coarsening_and_refinement();
+
+    parallel::distributed::GridRefinement::refine_and_coarsen_fixed_number(d_parallelTriangulationUnmoved,
+									   estimated_error_per_cell,
+									   topfrac,
+									   bottomfrac);
+
+    d_parallelTriangulationUnmoved.prepare_coarsening_and_refinement();
+    d_parallelTriangulationUnmoved.execute_coarsening_and_refinement();
+
+    std::string printCommand = "A-posteriori Triangulation Summary";
+    internal::computeMeshMetrics(parallelTriangulation,
+				 printCommand,
+				 pcout,
+				 mpi_communicator,
+				 interpoolcomm,
+				 interBandGroupComm);
+
+    if(generateElectrostaticsTria)
+      {
+	parallel::distributed::GridRefinement::refine_and_coarsen_fixed_number(d_triangulationElectrostaticsRho,
+									       estimated_error_per_cell,
+									       topfrac,
+									       bottomfrac);
+
+	d_triangulationElectrostaticsRho.prepare_coarsening_and_refinement();
+	d_triangulationElectrostaticsRho.execute_coarsening_and_refinement();
+
+
+	parallel::distributed::GridRefinement::refine_and_coarsen_fixed_number(d_triangulationElectrostaticsDisp,
+									       estimated_error_per_cell,
+									       topfrac,
+									       bottomfrac);
+
+	d_triangulationElectrostaticsDisp.prepare_coarsening_and_refinement();
+	d_triangulationElectrostaticsDisp.execute_coarsening_and_refinement();
+
+
+	parallel::distributed::GridRefinement::refine_and_coarsen_fixed_number(d_triangulationElectrostaticsForce,
+									       estimated_error_per_cell,
+									       topfrac,
+									       bottomfrac);
+
+	d_triangulationElectrostaticsForce.prepare_coarsening_and_refinement();
+	d_triangulationElectrostaticsForce.execute_coarsening_and_refinement();
+
+	std::string printCommand1 = "A-posteriori Electrostatics Rho Triangulation Summary";
+	internal::computeMeshMetrics(d_triangulationElectrostaticsRho,
+				     printCommand1,
+				     pcout,
+				     mpi_communicator,
+				     interpoolcomm,
+				     interBandGroupComm);
+
+	std::string printCommand2 = "A-posteriori Electrostatics Disp Triangulation Summary";
+	internal::computeMeshMetrics(d_triangulationElectrostaticsDisp,
+				     printCommand2,
+				     pcout,
+				     mpi_communicator,
+				     interpoolcomm,
+				     interBandGroupComm);
+
+
+	std::string printCommand3 = "A-posteriori Electrostatics Force Triangulation Summary";
+	internal::computeMeshMetrics(d_triangulationElectrostaticsForce,
+				     printCommand3,
+				     pcout,
+				     mpi_communicator,
+				     interpoolcomm,
+				     interBandGroupComm);
+      }
+
+  }
+						  
   //
   //generate adaptive mesh
   //

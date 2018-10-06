@@ -40,6 +40,8 @@ namespace dftParameters
 
   double outerAtomBallRadius=2.0, meshSizeOuterDomain=10.0;
   double meshSizeInnerBall=1.0, meshSizeOuterBall=1.0;
+  unsigned int numLevels = 1,numberWaveFunctionsForEstimate = 5;
+  double topfrac = 0.1;
 
   bool isIonOpt=false, isCellOpt=false, isIonForce=false, isCellStress=false;
   bool nonSelfConsistentForce=false;
@@ -52,6 +54,7 @@ namespace dftParameters
   bool reproducible_output=false;
   bool electrostaticsHRefinement = false;
   bool electrostaticsPRefinement = false;
+  bool meshAdaption = false;
 
   std::string startingWFCType="";
   bool useBatchGEMM=false;
@@ -249,6 +252,22 @@ namespace dftParameters
 	prm.declare_entry("MESH SIZE AT ATOM", "0.0",
 			  Patterns::Double(0.0,10),
 			  "[Advanced] Mesh size of the finite elements in the immediate vicinity of the atom. For the default value of 0.0, a heuristically determined MESH SIZE AT ATOM is used, which is good enough for most cases. Standard users do not need to tune this parameter. Units: a.u.");
+
+	prm.declare_entry("MESH ADAPTION","false",
+			  Patterns::Bool(),
+			  "[Standard] Generates adaptive mesh based on a-posteriori mesh adaption strategy using single atom wavefunctions before computing the ground-state. Default: false.");
+
+	prm.declare_entry("TOP FRAC", "0.1",
+			  Patterns::Double(0.0,1),
+			  "[Developer] Top fraction of elements to be refined.");
+
+	prm.declare_entry("NUM LEVELS", "1",
+			  Patterns::Integer(0,10),
+			  "[Developer] Number of times to be refined.");
+
+	prm.declare_entry("ERROR ESTIMATE WAVEFUNCTIONS", "5",
+			  Patterns::Integer(0),
+			  "[Developer] Number of wavefunctions to be used for error estimation.");
 
       }
       prm.leave_subsection ();
@@ -534,6 +553,10 @@ namespace dftParameters
 	    dftParameters::meshSizeOuterDomain           = prm.get_double("BASE MESH SIZE");
 	    dftParameters::meshSizeInnerBall             = prm.get_double("MESH SIZE AT ATOM");
 	    dftParameters::meshSizeOuterBall             = prm.get_double("MESH SIZE AROUND ATOM");
+	    dftParameters::meshAdaption                  = prm.get_bool("MESH ADAPTION");
+	    dftParameters::topfrac                       = prm.get_double("TOP FRAC");
+            dftParameters::numLevels                     = prm.get_double("NUM LEVELS");
+	    dftParameters::numberWaveFunctionsForEstimate = prm.get_integer("ERROR ESTIMATE WAVEFUNCTIONS");
 	}
         prm.leave_subsection ();
     }

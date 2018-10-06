@@ -67,11 +67,114 @@ namespace internal
 #endif
 	}
 
-	//constraintsNoneDataInfo.distribute(fieldsArrayFlattened,
-	//				   numberFields);
-	//fieldsArrayFlattened.update_ghost_values();
     }
 }
+
+//
+template<unsigned int FEOrder>
+dataTypes::number dftClass<FEOrder>::computeTraceXtHX(unsigned int numberWaveFunctionsEstimate)
+{
+  //
+  //set up poisson solver
+  //
+  dealiiLinearSolver dealiiCGSolver(mpi_communicator, dealiiLinearSolver::CG);
+  poissonSolverProblem<FEOrder> phiTotalSolverProblem(mpi_communicator);
+
+  //
+  //solve for vself and compute Tr(XtHX)
+  //
+  d_vselfBinsManager.solveVselfInBins(matrix_free_data,
+				      2,
+				      d_phiExt,
+				      d_noConstraints,
+				      d_imagePositions,
+				      d_imageIds,
+				      d_imageCharges,
+				      d_localVselfs);
+
+  //
+  //solve for potential corresponding to initial electron-density
+  //
+  phiTotalSolverProblem.reinit(matrix_free_data,
+			       d_phiTotRhoIn,
+			       *d_constraintsVector[phiTotDofHandlerIndex],
+			       phiTotDofHandlerIndex,
+			       d_atomNodeIdToChargeMap,
+			       *rhoInValues);
+
+
+  dealiiCGSolver.solve(phiTotalSolverProblem,
+		       dftParameters::relLinearSolverTolerance,
+		       dftParameters::maxLinearSolverIterations,
+		       dftParameters::verbosity);
+
+  //
+  //create kohnShamDFTOperatorClass object
+  //
+  kohnShamDFTOperatorClass<FEOrder> kohnShamDFTEigenOperator(this,mpi_communicator);
+  kohnShamDFTEigenOperator.init();
+
+  //
+  //precompute shapeFunctions and shapeFunctionGradients and shapeFunctionGradientIntegrals
+  //
+  kohnShamDFTEigenOperator.preComputeShapeFunctionGradientIntegrals();
+
+  //
+  //compute Veff
+  //
+  if(dftParameters::xc_id < 4)
+    {
+      kohnShamDFTEigenOperator.computeVEff(rhoInValues, d_phiTotRhoIn, d_phiExt, d_pseudoVLoc);
+    }
+  else if (dftParameters::xc_id == 4)
+    {
+      kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, d_phiTotRhoIn, d_phiExt, d_pseudoVLoc);
+    }
+
+  //
+  //compute Hamiltonian matrix
+  //
+  kohnShamDFTEigenOperator.computeHamiltonianMatrix(0);
+
+  //
+  //scale the eigenVectors (initial guess of single atom wavefunctions or previous guess) to convert into Lowden Orthonormalized FE basis
+  //multiply by M^{1/2}
+  internal::pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_sqrtMassVector,
+				       matrix_free_data.get_vector_partitioner(),
+				       numEigenValues,
+				       localProc_dof_indicesReal,
+				       d_eigenVectorsFlattenedSTL[0],
+				       constraintsNoneDataInfo);
+
+  //
+  //compute projected Hamiltonian
+  //
+  std::vector<dataTypes::number> ProjHam;
+  
+  kohnShamDFTEigenOperator.XtHX(d_eigenVectorsFlattenedSTL[0],
+				numEigenValues,
+				ProjHam);
+
+  //
+  //scale the eigenVectors with M^{-1/2} to represent the wavefunctions in the usual FE basis
+  //
+  internal::pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_invSqrtMassVector,
+				       matrix_free_data.get_vector_partitioner(),
+				       numEigenValues,
+				       localProc_dof_indicesReal,
+				       d_eigenVectorsFlattenedSTL[0],
+				       constraintsNoneDataInfo);
+
+  dataTypes::number trXtHX = 0.0;
+  for(unsigned int i = 0; i < numberWaveFunctionsEstimate; ++i)
+    {
+      trXtHX += ProjHam[numEigenValues*i+i];
+    }
+
+  return trXtHX;
+
+}
+
 
 
 //chebyshev solver

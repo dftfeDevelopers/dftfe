@@ -115,15 +115,19 @@ namespace dftfe  {
 
 
     /**
-     * @brief returns constant reference to triangulation to compute electrostatics
+     * @brief returns generates A-posteriori refined mesh
      *
+     * @param dofHandler corresponds to starting mesh which has to refined
+     * @param parallelTriangulation corresponds to starting triangulation
+     * @param eigenVectorsArrayIn solution vectors used to compute errors in each cell required for refinement
+     * @param FEOrder finite-element interpolating polynomial
+     * @param generateElectrostaticsTria required for generating electrostatics triangulation
      */
-    /*void  generateSubdividedMeshWithQuadData(const dealii::MatrixFree<3,double> & matrixFreeData,
-					     const ConstraintMatrix & constraints,
-					     const dealii::Quadrature<3> & quadrature,
-					     const unsigned int FEOrder,
-					     const std::map<dealii::CellId,std::vector<double> > & rhoQuadValuesCoarse,
-					     std::map<dealii::CellId,std::vector<double> > & rhoQuadValuesRefined);*/
+    void generateMeshAposteriori(const dealii::DoFHandler<3> & dofHandler,
+				 parallel::distributed::Triangulation<3> & parallelTriangulation,
+				 const std::vector<vectorType> & eigenVectorsArrayIn,
+				 const unsigned int FEOrder,
+				 const bool generateElectrostaticsTria);
 
 
     /**
@@ -288,6 +292,8 @@ namespace dftfe  {
 			      const bool generateElectrostaticsTria,
 			      std::vector<unsigned int> & locallyOwnedCellsRefineFlags,
 			      std::map<dealii::CellId,unsigned int> & cellIdToCellRefineFlagMapLocal);
+
+    
 
     /**
      * @brief internal function which refines the serial mesh based on refinement flags from parallel mesh.
