@@ -37,10 +37,12 @@ namespace dftfe{
     /**
      * @brief Constructor.
      *
+     * @param mpi_comm domain decomposition mpi communicator
      * @param lowerBoundWantedSpectrum Lower Bound of the Wanted Spectrum.
      * @param lowerBoundUnWantedSpectrum Lower Bound of the UnWanted Spectrum.
      */
-    chebyshevOrthogonalizedSubspaceIterationSolver(double lowerBoundWantedSpectrum,
+    chebyshevOrthogonalizedSubspaceIterationSolver(const MPI_Comm &mpi_comm,
+	                                           double lowerBoundWantedSpectrum,
 						   double lowerBoundUnWantedSpectrum);
 
 

@@ -47,7 +47,7 @@ namespace dftfe {
     n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_comm_replica)),
     this_mpi_process (Utilities::MPI::this_mpi_process(mpi_comm_replica)),
     pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
-    computing_timer (pcout, TimerOutput::never, TimerOutput::wall_times),
+    computing_timer (mpi_comm_replica,pcout, TimerOutput::never, TimerOutput::wall_times),
     operatorDFTClass(mpi_comm_replica,
 		     _dftPtr->getMatrixFreeData(),
 		     _dftPtr->getLocalDofIndicesReal(),

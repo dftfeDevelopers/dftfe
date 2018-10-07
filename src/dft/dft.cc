@@ -95,11 +95,13 @@ namespace dftfe {
     d_gaussianMovePar(mpi_comm_replica),
     d_vselfBinsManager(mpi_comm_replica),
     pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
-    computing_timer (pcout,
+    computing_timer (mpi_comm_replica,
+	             pcout,
 		     dftParameters::reproducible_output
 		     || dftParameters::verbosity<4? TimerOutput::never : TimerOutput::summary,
 		     TimerOutput::wall_times),
-    computingTimerStandard(pcout,
+    computingTimerStandard(mpi_comm_replica,
+	             pcout,
 		     dftParameters::reproducible_output
 		     || dftParameters::verbosity<1? TimerOutput::never : TimerOutput::every_call_and_summary,
 		     TimerOutput::wall_times)
@@ -737,7 +739,8 @@ namespace dftfe {
     //
     //create eigen solver object
     //
-    chebyshevOrthogonalizedSubspaceIterationSolver subspaceIterationSolver(dftParameters::lowerEndWantedSpectrum,
+    chebyshevOrthogonalizedSubspaceIterationSolver subspaceIterationSolver(mpi_communicator,
+	                                                                   dftParameters::lowerEndWantedSpectrum,
 									   0.0);
 
 
@@ -772,7 +775,7 @@ namespace dftfe {
     while ((norm > dftParameters::selfConsistentSolverTolerance) && (scfIter < dftParameters::numSCFIterations))
       {
 
-	dealii::Timer local_timer;
+	dealii::Timer local_timer(MPI_COMM_WORLD,true);
 	if (dftParameters::verbosity>=1)
 	  pcout<<"************************Begin Self-Consistent-Field Iteration: "<<std::setw(2)<<scfIter+1<<" ***********************"<<std::endl;
 	//

@@ -265,7 +265,7 @@ namespace dftfe{
 			 const double b,
 			 const double a0)
     {
-      
+
       //To be implemented
 
     }
@@ -498,7 +498,8 @@ namespace dftfe{
     {
       dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
 
-      dealii::TimerOutput computing_timer(pcout,
+      dealii::TimerOutput computing_timer(mpi_communicator,
+	                                  pcout,
 					  dftParameters::reproducible_output ||
 					  dftParameters::verbosity<4 ? dealii::TimerOutput::never : dealii::TimerOutput::summary,
 					  dealii::TimerOutput::wall_times);
@@ -576,7 +577,8 @@ namespace dftfe{
     {
       dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
 
-      dealii::TimerOutput computing_timer(pcout,
+      dealii::TimerOutput computing_timer(mpi_communicator,
+	                                  pcout,
 					  dftParameters::reproducible_output ||
 					  dftParameters::verbosity<4 ? dealii::TimerOutput::never : dealii::TimerOutput::summary,
 					  dealii::TimerOutput::wall_times);
@@ -659,7 +661,8 @@ namespace dftfe{
     {
       dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
 
-      dealii::TimerOutput computing_timer(pcout,
+      dealii::TimerOutput computing_timer(mpi_communicator,
+	                                  pcout,
 					  dftParameters::reproducible_output ||
 					  dftParameters::verbosity<4 ? dealii::TimerOutput::never : dealii::TimerOutput::summary,
 					  dealii::TimerOutput::wall_times);
@@ -779,7 +782,8 @@ namespace dftfe{
     {
       dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
 
-      dealii::TimerOutput computing_timer(pcout,
+      dealii::TimerOutput computing_timer(mpi_communicator,
+	                                  pcout,
 					  dftParameters::reproducible_output ||
 					  dftParameters::verbosity<4 ? dealii::TimerOutput::never : dealii::TimerOutput::summary,
 					  dealii::TimerOutput::wall_times);
@@ -827,7 +831,7 @@ namespace dftfe{
 						   numberWaveFunctions,
 						   numberValenceStates,
 						   processGridWaveFunctions);
-      
+
 
       dealii::ScaLAPACKMatrix<T> valenceWaveFunctionsMatrixPar(numberWaveFunctions,
 							       numberValenceStates,
@@ -837,7 +841,7 @@ namespace dftfe{
       //
       //Fill in valenceWaveFunctionsMatrixPar
       //
-      
+
       //
       //Chebyshev filtering of valenceWaveFunctions
       //
@@ -1178,7 +1182,8 @@ namespace dftfe{
 
       dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
 
-      dealii::TimerOutput computing_timer(pcout,
+      dealii::TimerOutput computing_timer(mpiComm,
+	                                  pcout,
 					  dftParameters::reproducible_output ||
 					  dftParameters::verbosity<4? dealii::TimerOutput::never : dealii::TimerOutput::summary,
 					  dealii::TimerOutput::wall_times);

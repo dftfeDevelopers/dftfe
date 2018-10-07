@@ -38,7 +38,8 @@ namespace dftfe
       const unsigned int numLocalDofs = X.size()/numberVectors;
 
       dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
-      dealii::TimerOutput computing_timer(pcout,
+      dealii::TimerOutput computing_timer(mpiComm,
+	                                  pcout,
 					  dftParameters::reproducible_output ||
 					  dftParameters::verbosity<4 ? dealii::TimerOutput::never : dealii::TimerOutput::summary,
 					  dealii::TimerOutput::wall_times);
@@ -204,7 +205,8 @@ namespace dftfe
        dealii::ConditionalOStream   pcout(std::cout,
 	                                 (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
 
-       dealii::TimerOutput computing_timer(pcout,
+       dealii::TimerOutput computing_timer(mpiComm,
+	                                   pcout,
 					  dftParameters::reproducible_output ||
 					  dftParameters::verbosity<4? dealii::TimerOutput::never : dealii::TimerOutput::summary,
 					  dealii::TimerOutput::wall_times);
