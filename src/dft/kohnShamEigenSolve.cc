@@ -193,7 +193,7 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
   else
     {
       a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType] = eigenValuesTemp[0];
-      valenceCoreSplit[(1+dftParameters::spinPolarized)*kPointIndex+spinType] = eigenValuesTemp[dftParameters::numCoreWfcRR-1];
+      valenceCoreSplit[(1+dftParameters::spinPolarized)*kPointIndex+spinType] = eigenValuesTemp[dftParameters::numCoreWfcRR];
     }
 
   computing_timer.exit_section("Chebyshev solve");

@@ -150,13 +150,14 @@ namespace dftfe
      *  @param[in]  b upper bound of unwanted spectrum
      *  @param[in]  a0 lower bound of wanted spectrum
      */
+#if(defined DEAL_II_WITH_SCALAPACK && !USE_COMPLEX)
     void chebyshevFilter(dealii::ScaLAPACKMatrix<dataTypes::number> & matrixA,
 			 dealii::ScaLAPACKMatrix<dataTypes::number> & columnSpaceX,
 			 const unsigned int m,
 			 const double a,
 			 const double b,
 			 const double a0);
-    
+#endif    
 
 
     /** @brief Orthogonalize given subspace using GramSchmidt orthogonalization

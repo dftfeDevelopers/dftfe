@@ -258,18 +258,41 @@ namespace dftfe{
     //
     //chebyshev filtering
     //
+#if(defined DEAL_II_WITH_SCALAPACK && !USE_COMPLEX)
     void chebyshevFilter(dealii::ScaLAPACKMatrix<dataTypes::number> & matrixA,
 			 dealii::ScaLAPACKMatrix<dataTypes::number> & columnSpaceX,
+			 std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  processGridWaveFunctions,
 			 const unsigned int m,
 			 const double a,
 			 const double b,
 			 const double a0)
     {
       
-      //To be implemented
+      double e, c, sigma, sigma1, sigma2, gamma;
+      e = (b-a)/2.0; c = (b+a)/2.0;
+      sigma = e/(a0-c); sigma1 = sigma; gamma = 2.0/sigma1;
+
+      //
+      //create temp scalapack matrix corresponding to columnSpaceX
+      //
+      const unsigned int rowsBlockSize=std::min((unsigned int)50,columnSpaceX.m());
+      const unsigned int columnsBlockSize=std::min((unsigned int)50,columnSpaceX.n());
+      dealii::ScaLAPACKMatrix<dataTypes::number> columnSpaceY(columnSpaceX.m(),
+							      columnSpaceX.n(),
+							      processGridWaveFunctions,
+							      rowsBlockSize,
+							      columnsBlockSize);
+
+      //
+      //compute Y = H*X
+      //
+  
+      //
+      //
+      //
 
     }
-
+#endif
 
     //
     //chebyshev filtering of given subspace XArray
@@ -822,16 +845,9 @@ namespace dftfe{
       //
       const unsigned int numberValenceStates = numberWaveFunctions - numberCoreStates;
       const unsigned columnsBlockSize=std::min((unsigned int)50,numberValenceStates);
-      std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  processGridWaveFunctions;
-      internal::createProcessGridRectangularMatrix(mpi_communicator,
-						   numberWaveFunctions,
-						   numberValenceStates,
-						   processGridWaveFunctions);
-      
-
       dealii::ScaLAPACKMatrix<T> valenceWaveFunctionsMatrixPar(numberWaveFunctions,
 							       numberValenceStates,
-							       processGridWaveFunctions,
+							       processGridProjHam,
 							       rowsBlockSize,
 							       columnsBlockSize);
       //
@@ -844,6 +860,7 @@ namespace dftfe{
       const unsigned int polynomialDegree = 4;
       chebyshevFilter(projHamPar,
 		      valenceWaveFunctionsMatrixPar,
+		      processGridProjHam,
 		      polynomialDegree,
 		      -lowerBoundValenceSpectrum,
 		      -upperBoundValenceSpectrum,
