@@ -78,6 +78,13 @@ namespace dftfe{
     void reinitSpectrumBounds(double lowerBoundWantedSpectrum,
 			      double lowerBoundUnWantedSpectrum);
 
+    /**
+     * @brief reinit spectrum bounds of Projected Hamiltonian for inner Chebyshev filtering
+     */
+    void reinitProjHamSpectrumBounds(double lowerBoundCoreSpectrum,
+				     double lowerBoundValenceSpectrum,
+				     double upperBoundValenceSpectrum);
+
 
   private:
     //
@@ -89,6 +96,21 @@ namespace dftfe{
     //stores lower bound of unwanted spectrum
     //
     double d_lowerBoundUnWantedSpectrum;
+
+    //
+    //stores lower bound of core part of the spectrum
+    //
+    double d_lowerBoundCoreSpectrum;
+
+    //
+    //stores lower bound of valence part of the spectrum
+    //
+    double d_lowerBoundValenceSpectrum;
+
+    //
+    //stores upper bound of valence part of spectrum
+    //
+    double d_upperBoundValenceSpectrum;
 
     //
     //variables for printing out and timing

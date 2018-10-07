@@ -140,6 +140,24 @@ namespace dftfe
 			 const bool useMixedPrec);
 
 
+     /** @brief Apply Chebyshev filter to a given subspace
+     *
+     *  @param[in] matrixA An object which has access to the given matrix
+     *  @param[in,out]  columnSpaceX Given subspace as a scalapack matrix
+     *  In-place update of the given subspace.
+     *  @param[in]  m Chebyshev polynomial degree
+     *  @param[in]  a lower bound of unwanted spectrum
+     *  @param[in]  b upper bound of unwanted spectrum
+     *  @param[in]  a0 lower bound of wanted spectrum
+     */
+    void chebyshevFilter(dealii::ScaLAPACKMatrix<dataTypes::number> & matrixA,
+			 dealii::ScaLAPACKMatrix<dataTypes::number> & columnSpaceX,
+			 const unsigned int m,
+			 const double a,
+			 const double b,
+			 const double a0);
+    
+
 
     /** @brief Orthogonalize given subspace using GramSchmidt orthogonalization
      *
@@ -188,12 +206,7 @@ namespace dftfe
       *  In-place update of the given subspace
       *  @param[in] numberComponents Number of multiple-fields
       *  @param[in] interBandGroupComm interpool communicator for parallelization over band groups
-      *  @param[in] numberCoreVectors number of core states for which Mpi all reduce
-      *  is not used after subspace rotation step. This parameter is used only in case of
-      *  band parallelization
-      *  @param[in,out] nonCoreVectorsArray this parameter is required if numberCoreVectors
-      *  is not equal to 0. In that case, the block size of tempNonCoreVectorsArray is equal
-      *  to numberComponents minus numberCoreVectors.
+      *  @param[in] mpiComm global communicator
       *
       *  @return flag indicating success/failure. 1 for failure, 0 for success
       */
@@ -203,6 +216,15 @@ namespace dftfe
 					              const MPI_Comm &interBandGroupComm,
 						      const MPI_Comm &mpiComm,
 						      const bool useMixedPrec);
+
+
+    /** @brief Orthogonalize given subspace using Pseudo-Gram-Schmidt orthogonalization
+     *  
+     *	@param[in] X Given subspace as scalapack matrix
+     *
+     *  @return flag indicating success/failure. 1 for failure, 0 for success
+     */
+    unsigned int pseudoGramSchmidtOrthogonalization(dealii::ScaLAPACKMatrix<dataTypes::number> & X);
 
     /** @brief Compute Rayleigh-Ritz projection
      *
@@ -254,6 +276,36 @@ namespace dftfe
                      (operatorDFTClass        & operatorMatrix,
 		      const std::vector<T> & X,
 		      std::vector<T> & Y,
+		      const unsigned int numberComponents,
+		      const unsigned int numberCoreStates,
+		      const MPI_Comm &interBandGroupComm,
+		      const MPI_Comm &mpiComm,
+		      const bool useMixedPrec,
+		      std::vector<double>     & eigenValues);
+
+
+    /** @brief Compute Rayleigh-Ritz projection in case of spectrum split using inner Chebyshev filtering
+     *
+     *  @param[in] operatorMatrix An object which has access to the given matrix
+     *  @param[in]  X Given subspace as flattened array of multi-vectors.
+     *  @param[out] Y rotated subspace of top states
+     *  @param[in] lowerBoundCoreSpectrum Lower bound of core part of eigen-spectrum
+     *  @param[in] lowerBoundValenceSpectrum Lower bound of valence part of eigen-spectrum
+     *  @param[in] upperBoundValenceSpectrum Upper bound of valence part of eigen-spectrum
+     *  @param[in] numberComponents Number of vectors
+     *  @param[in] numberCoreStates Number of core states to be used for spectrum splitting
+     *  @param[in] interBandGroupComm interpool communicator for parallelization over band groups
+     *  @param[in] mpiComm domain decomposition communicator
+     *  @param[out] eigenValues of the Projected Hamiltonian
+     */
+    template<typename T>
+    void rayleighRitzSpectrumSplitInnerCheb
+                     (operatorDFTClass        & operatorMatrix,
+		      const std::vector<T> & X,
+		      std::vector<T> & Y,
+		      const double lowerBoundCoreSpectrum,
+		      const double lowerBoundValenceSpectrum,
+		      const double upperBoundValenceSpectrum,
 		      const unsigned int numberComponents,
 		      const unsigned int numberCoreStates,
 		      const MPI_Comm &interBandGroupComm,

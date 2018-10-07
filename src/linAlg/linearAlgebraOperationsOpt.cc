@@ -255,6 +255,21 @@ namespace dftfe{
     }
 
 
+    //
+    //chebyshev filtering
+    //
+    void chebyshevFilter(dealii::ScaLAPACKMatrix<dataTypes::number> & matrixA,
+			 dealii::ScaLAPACKMatrix<dataTypes::number> & columnSpaceX,
+			 const unsigned int m,
+			 const double a,
+			 const double b,
+			 const double a0)
+    {
+      
+      //To be implemented
+
+    }
+
 
     //
     //chebyshev filtering of given subspace XArray
@@ -744,6 +759,149 @@ namespace dftfe{
     }
 #endif
 
+
+#if(defined DEAL_II_WITH_SCALAPACK && !USE_COMPLEX)
+    template<typename T>
+    void rayleighRitzSpectrumSplitInnerCheb
+                    (operatorDFTClass & operatorMatrix,
+		     const std::vector<T> & X,
+		     std::vector<T> & Y,
+		     const double lowerBoundCoreSpectrum,
+		     const double lowerBoundValenceSpectrum,
+		     const double upperBoundValenceSpectrum,
+		     const unsigned int numberWaveFunctions,
+		     const unsigned int numberCoreStates,
+		     const MPI_Comm &interBandGroupComm,
+		     const MPI_Comm &mpi_communicator,
+		     const bool useMixedPrec,
+		     std::vector<double> & eigenValues)
+
+    {
+      dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
+
+      dealii::TimerOutput computing_timer(pcout,
+					  dftParameters::reproducible_output ||
+					  dftParameters::verbosity<4 ? dealii::TimerOutput::never : dealii::TimerOutput::summary,
+					  dealii::TimerOutput::wall_times);
+      //
+      //compute projected Hamiltonian
+      //
+      const unsigned rowsBlockSize=std::min((unsigned int)50,numberWaveFunctions);
+      std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  processGridProjHam;
+      internal::createProcessGridSquareMatrix(mpi_communicator,
+		                              numberWaveFunctions,
+					      processGridProjHam);
+
+      dealii::ScaLAPACKMatrix<T> projHamPar(numberWaveFunctions,
+                                            processGridProjHam,
+                                            rowsBlockSize);
+
+
+      if(useMixedPrec && dftParameters::useMixedPrecXTHX)
+	{
+	  computing_timer.enter_section("Blocked XtHX Mixed Prec, RR step");
+	  operatorMatrix.XtHXMixedPrec(X,
+				       numberWaveFunctions,
+				       numberCoreStates,
+				       processGridProjHam,
+				       projHamPar);
+	  computing_timer.exit_section("Blocked XtHX Mixed Prec, RR step");
+	}
+      else
+	{
+	  computing_timer.enter_section("Blocked XtHX, RR step");
+	  operatorMatrix.XtHX(X,
+			      numberWaveFunctions,
+			      processGridProjHam,
+			      projHamPar);
+	  computing_timer.exit_section("Blocked XtHX, RR step");
+	}
+
+      //
+      //initialize scalapack matrix of valence wavefunctions of size "numberWaveFunctions x numberValenceStates"
+      //
+      const unsigned int numberValenceStates = numberWaveFunctions - numberCoreStates;
+      const unsigned columnsBlockSize=std::min((unsigned int)50,numberValenceStates);
+      std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  processGridWaveFunctions;
+      internal::createProcessGridRectangularMatrix(mpi_communicator,
+						   numberWaveFunctions,
+						   numberValenceStates,
+						   processGridWaveFunctions);
+      
+
+      dealii::ScaLAPACKMatrix<T> valenceWaveFunctionsMatrixPar(numberWaveFunctions,
+							       numberValenceStates,
+							       processGridWaveFunctions,
+							       rowsBlockSize,
+							       columnsBlockSize);
+      //
+      //Fill in valenceWaveFunctionsMatrixPar
+      //
+      
+      //
+      //Chebyshev filtering of valenceWaveFunctions
+      //
+      const unsigned int polynomialDegree = 4;
+      chebyshevFilter(projHamPar,
+		      valenceWaveFunctionsMatrixPar,
+		      polynomialDegree,
+		      -lowerBoundValenceSpectrum,
+		      -upperBoundValenceSpectrum,
+		      -lowerBoundCoreSpectrum);
+
+
+
+      //
+      //orthogonalize valenceWaveFunctions
+      //
+      pseudoGramSchmidtOrthogonalization(valenceWaveFunctionsMatrixPar);
+
+      //
+      //compute subspace projection of smaller Hamiltonian into orthogonalized space
+      //
+      const unsigned rowsBlockSizeVal=std::min((unsigned int)50,numberValenceStates);
+      std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  processGridValProjHam;
+      internal::createProcessGridSquareMatrix(mpi_communicator,
+		                              numberValenceStates,
+					      processGridValProjHam);
+
+      dealii::ScaLAPACKMatrix<T> valProjHamPar(numberValenceStates,
+					       processGridValProjHam,
+					       rowsBlockSizeVal);
+      /*subspaceProjection(projHamPar,
+			 valenceWaveFunctionsMatrixPar,
+			 valProjHamPar);*/
+
+      //
+      //subspace diagonalization (extract eigenpairs of valProjHamPar)
+      //
+
+
+      //
+      //subspace rotation
+      //
+
+    }
+#else
+    template<typename T>
+    void rayleighRitzSpectrumSplitInnerCheb
+                    (operatorDFTClass & operatorMatrix,
+		     const std::vector<T> & X,
+		     std::vector<T> & Y,
+		     const double lowerBoundCoreSpectrum,
+		     const double lowerBoundValenceSpectrum,
+		     const double upperBoundValenceSpectrum,
+		     const unsigned int numberWaveFunctions,
+		     const unsigned int numberCoreStates,
+		     const MPI_Comm &interBandGroupComm,
+		     const MPI_Comm &mpi_communicator,
+		     const bool useMixedPrec,
+		     std::vector<double> & eigenValues)
+    {
+      AssertThrow(false,dftUtils::ExcNotImplementedYet());
+    }
+#endif
+
     template<typename T>
     void computeEigenResidualNorm(operatorDFTClass & operatorMatrix,
 				  std::vector<T> & X,
@@ -1226,6 +1384,20 @@ namespace dftfe{
 	                  (operatorDFTClass  & operatorMatrix,
 			   const std::vector<dataTypes::number> &,
 			   std::vector<dataTypes::number> &,
+			   const unsigned int numberWaveFunctions,
+			   const unsigned int numberCoreStates,
+			   const MPI_Comm &,
+			   const MPI_Comm &,
+			   const bool useMixedPrec,
+			   std::vector<double>     & eigenValues);
+
+    template void rayleighRitzSpectrumSplitInnerCheb
+	                  (operatorDFTClass  & operatorMatrix,
+			   const std::vector<dataTypes::number> &,
+			   std::vector<dataTypes::number> &,
+			   const double lowerBoundCoreSpectrum,
+			   const double lowerBoundValenceSpectrum,
+			   const double upperBoundValenceSpectrum,
 			   const unsigned int numberWaveFunctions,
 			   const unsigned int numberCoreStates,
 			   const MPI_Comm &,

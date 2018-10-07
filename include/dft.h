@@ -808,6 +808,9 @@ namespace dftfe {
 
       std::vector<double> a0;
       std::vector<double> bLow;
+      std::vector<double> valenceCoreSplit;
+
+
       vectorType d_tempEigenVec;
       vectorType d_tempEigenVecPrev;
 

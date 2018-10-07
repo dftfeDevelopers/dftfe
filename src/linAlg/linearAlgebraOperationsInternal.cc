@@ -58,6 +58,29 @@ namespace dftfe
       }
 
 
+      void createProcessGridRectangularMatrix(const MPI_Comm & mpi_communicator,
+					      const unsigned sizeRows,
+					      const unsigned sizeColumns,
+					      std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid)
+      {
+	const unsigned int numberProcs = dealii::Utilities::MPI::n_mpi_processes(mpi_communicator);
+
+	//Rule of thumb from http://netlib.org/scalapack/slug/node106.html#SECTION04511000000000000000
+	const unsigned int rowProcs=  std::min(std::floor(std::sqrt(numberProcs)),std::ceil((double)sizeRows/(double)(1000)));
+	const unsigned int columnProcs = std::min(std::floor(std::sqrt(numberProcs)),std::ceil((double)sizeColumns/(double)(1000)));
+
+	if(dftParameters::verbosity>=4)
+	  {
+	    dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
+	    pcout<<"Scalapack Matrix created, row procs x column procs: "<< rowProcs<<" x "<<columnProcs<<std::endl;
+	  }
+
+	processGrid=std::make_shared<const dealii::Utilities::MPI::ProcessGrid>(mpi_communicator,
+										rowProcs,
+										columnProcs);
+      }
+
+
       template<typename T>
       void createGlobalToLocalIdMapsScaLAPACKMat(const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 						 const dealii::ScaLAPACKMatrix<T> & mat,

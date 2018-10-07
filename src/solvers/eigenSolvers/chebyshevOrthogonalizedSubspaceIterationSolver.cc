@@ -104,6 +104,20 @@ namespace dftfe{
     d_lowerBoundUnWantedSpectrum = lowerBoundUnWantedSpectrum;
   }
 
+
+  //
+  //reinitialize spectrum bounds
+  //
+  void
+  chebyshevOrthogonalizedSubspaceIterationSolver::reinitProjHamSpectrumBounds(double lowerBoundCoreSpectrum,
+									      double lowerBoundValenceSpectrum,
+									      double upperBoundValenceSpectrum)
+  {
+    d_lowerBoundCoreSpectrum    = lowerBoundCoreSpectrum;
+    d_lowerBoundValenceSpectrum = lowerBoundValenceSpectrum;
+    d_upperBoundValenceSpectrum = upperBoundValenceSpectrum;
+  }
+
   //
   // solve
   //
@@ -123,7 +137,7 @@ namespace dftfe{
 
     if (dftParameters::verbosity>=4)
       dftUtils::printCurrentMemoryUsage(operatorMatrix.getMPICommunicator(),
-	                      "Before Lanczos k-step upper Bound");
+					"Before Lanczos k-step upper Bound");
 
     computing_timer.enter_section("Lanczos k-step Upper Bound");
     operatorMatrix.reinit(1);
@@ -358,9 +372,20 @@ namespace dftfe{
 
     if (eigenValues.size()!=totalNumberWaveFunctions)
     {
-	if (useInnerChebySpectrumSplit)
+	if(useInnerChebySpectrumSplit)
 	{
-           AssertThrow(false,dftUtils::ExcNotImplementedYet());
+	  linearAlgebraOperations::rayleighRitzSpectrumSplitInnerCheb(operatorMatrix,
+								      eigenVectorsFlattened,
+								      eigenVectorsRotFracDensityFlattened,
+								      d_lowerBoundCoreSpectrum,
+								      d_lowerBoundValenceSpectrum,
+								      d_upperBoundValenceSpectrum,
+								      totalNumberWaveFunctions,
+								      totalNumberWaveFunctions-eigenValues.size(),
+								      interBandGroupComm,
+								      operatorMatrix.getMPICommunicator(),
+								      useMixedPrec,
+								      eigenValues);
 	}
 	else
 	{

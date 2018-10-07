@@ -103,6 +103,11 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
   subspaceIterationSolver.reinitSpectrumBounds(a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
 					       bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
 
+  if(isSpectrumSplit)
+    subspaceIterationSolver.reinitProjHamSpectrumBounds(a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
+							valenceCoreSplit[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
+							bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
+  
 
   subspaceIterationSolver.solve(kohnShamDFTEigenOperator,
   				d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
@@ -173,11 +178,23 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 
 
   //set a0 and bLow
-  a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=isSpectrumSplit?
+  /* a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=isSpectrumSplit?
                                                             dftParameters::lowerEndWantedSpectrum
-                                                            :eigenValuesTemp[0];
+                                                            :eigenValuesTemp[0];*/
+
+ 
   bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=eigenValuesTemp.back();
-  //
+
+
+  if(isSpectrumSplit)
+    {
+      valenceCoreSplit[(1+dftParameters::spinPolarized)*kPointIndex+spinType] = eigenValuesTemp[0];
+    }
+  else
+    {
+      a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType] = eigenValuesTemp[0];
+      valenceCoreSplit[(1+dftParameters::spinPolarized)*kPointIndex+spinType] = eigenValuesTemp[dftParameters::numCoreWfcRR-1];
+    }
 
   computing_timer.exit_section("Chebyshev solve");
 }

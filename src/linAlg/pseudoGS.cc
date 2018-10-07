@@ -182,6 +182,12 @@ namespace dftfe
 
       return 0;
     }
+
+    unsigned int pseudoGramSchmidtOrthogonalization(dealii::ScaLAPACKMatrix<dataTypes::number> & X)
+    {
+      return 0;
+    }
+
 #else
     template<typename T>
     unsigned int pseudoGramSchmidtOrthogonalization(std::vector<T> & X,
