@@ -67,12 +67,15 @@ namespace dftfe{
   //
   // Constructor.
   //
-  chebyshevOrthogonalizedSubspaceIterationSolver::chebyshevOrthogonalizedSubspaceIterationSolver(double lowerBoundWantedSpectrum,
-												 double lowerBoundUnWantedSpectrum):
+  chebyshevOrthogonalizedSubspaceIterationSolver::chebyshevOrthogonalizedSubspaceIterationSolver
+                                                           (const MPI_Comm &mpi_comm,
+							    double lowerBoundWantedSpectrum,
+							    double lowerBoundUnWantedSpectrum):
     d_lowerBoundWantedSpectrum(lowerBoundWantedSpectrum),
     d_lowerBoundUnWantedSpectrum(lowerBoundUnWantedSpectrum),
     pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
-    computing_timer(pcout,
+    computing_timer(mpi_comm,
+	            pcout,
 		    dftParameters::reproducible_output ||
 		    dftParameters::verbosity<4? dealii::TimerOutput::never : dealii::TimerOutput::summary,
 		    dealii::TimerOutput::wall_times)
