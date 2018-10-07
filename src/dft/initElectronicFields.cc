@@ -110,14 +110,8 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
   {
      for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
        {
-	 /*vectorTools::createDealiiVector<dataTypes::number>(matrix_free_data.get_vector_partitioner(),
-							     numEigenValues,
-							     d_eigenVectorsFlattened[kPoint]);*/
 
 	 d_eigenVectorsFlattenedSTL[kPoint].resize(numEigenValues*matrix_free_data.get_vector_partitioner()->local_size(),dataTypes::number(0.0));
-
-	   //d_eigenVectorsFlattened[kPoint] = dataTypes::number(0.0);
-
        }
 
      pcout <<std::endl<< "Setting initial guess for wavefunctions...."<<std::endl;
