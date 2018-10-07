@@ -593,7 +593,7 @@ namespace dftfe
 
 		      MPI_Allreduce(MPI_IN_PLACE,
 				    &rotationMatBlock[0],
-				    vectorsBlockSize*D,
+				    BVec*D,
 				    dataTypes::mpi_type_id(&rotationMatBlock[0]),
 				    MPI_SUM,
 				    mpiComm);
@@ -775,7 +775,7 @@ namespace dftfe
 
 		      MPI_Allreduce(MPI_IN_PLACE,
 				    &rotationMatBlock[0],
-				    vectorsBlockSize*N,
+				    BVec*N,
 				    dataTypes::mpi_type_id(&rotationMatBlock[0]),
 				    MPI_SUM,
 				    mpiComm);
@@ -906,7 +906,7 @@ namespace dftfe
 	std::vector<dataTypes::numberLowPrec> subspaceVectorsArraySinglePrec(subspaceVectorsArray,
 		                                                             subspaceVectorsArray+
 									     subspaceVectorsArrayLocalSize);
-
+        std::vector<dataTypes::number> diagValuesBlock(vectorsBlockSize,0.0);
 	if (dftParameters::verbosity>=4)
 	  dftUtils::printCurrentMemoryUsage(mpiComm,
 					    "Inside Blocked susbpace rotation");
@@ -935,7 +935,7 @@ namespace dftfe
 		    const dataTypes::numberLowPrec scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
 
 		    std::fill(rotationMatBlock.begin(),rotationMatBlock.end(),0.);
-
+                    std::fill(diagValuesBlock.begin(),diagValuesBlock.end(),0.);
 		    //Extract QBVec from parallel ScaLAPACK matrix Q
 		    if (rotationMatTranspose)
 		      {
@@ -959,8 +959,16 @@ namespace dftfe
 				}
 
 				if (i>=jvec && i<(jvec+BVec))
-				  if (globalToLocalColumnIdMap.find(i)!=globalToLocalColumnIdMap.end())
-                                    rotationMatBlock[i*BVec+i-jvec]-=(dataTypes::numberLowPrec)1.0;
+				{
+				  std::map<unsigned int, unsigned int>::iterator it=
+				      globalToLocalColumnIdMap.find(i);
+				  if (it!=globalToLocalColumnIdMap.end())
+				  {
+                                    rotationMatBlock[i*BVec+i-jvec]=0.0;
+				    diagValuesBlock[i-jvec]=rotationMatPar.local_el(localRowId,
+								                    it->second);
+				  }
+				}
 			      }
 		      }
 		    else
@@ -984,16 +992,31 @@ namespace dftfe
 				  }
 
 				  if (i>=jvec && i<(jvec+BVec))
+				  {
+				    std::map<unsigned int, unsigned int>::iterator it=
+				      globalToLocalRowIdMap.find(i);
 				    if (globalToLocalRowIdMap.find(i)!=globalToLocalRowIdMap.end())
-                                      rotationMatBlock[i*BVec+i-jvec]-=(dataTypes::numberLowPrec)1.0;
+				    {
+                                      rotationMatBlock[i*BVec+i-jvec]=0.0;
+				      diagValuesBlock[i-jvec]
+					=rotationMatPar.local_el(it->second,
+								 localColumnId);
+				    }
+				  }
 			      }
 		      }
 
-
 		      MPI_Allreduce(MPI_IN_PLACE,
 				    &rotationMatBlock[0],
-				    vectorsBlockSize*D,
+				    BVec*D,
 				    dataTypes::mpi_type_id(&rotationMatBlock[0]),
+				    MPI_SUM,
+				    mpiComm);
+
+		      MPI_Allreduce(MPI_IN_PLACE,
+				    &diagValuesBlock[0],
+				    BVec,
+				    dataTypes::mpi_type_id(&diagValuesBlock[0]),
 				    MPI_SUM,
 				    mpiComm);
 
@@ -1017,7 +1040,8 @@ namespace dftfe
 			  for (unsigned int i = 0; i <BDof; ++i)
 			      for (unsigned int j = 0; j <BVec; ++j)
 				  *(subspaceVectorsArray+N*(idof+i)+j+jvec)
-				     +=(dataTypes::number)rotatedVectorsMatBlockTemp[i*BVec+j];
+				     = *(subspaceVectorsArray+N*(idof+i)+j+jvec)*diagValuesBlock[j]
+				       +(dataTypes::number)rotatedVectorsMatBlockTemp[i*BVec+j];
 		      }
 
 		  }// band parallelization
