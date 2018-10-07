@@ -1311,7 +1311,7 @@ namespace dftfe {
 	if (dftParameters::chkType==2)
 	  saveTriaInfoAndRhoData();
       }
-    computing_timer.exit_section("scf solve");
+
     if(scfIter==dftParameters::numSCFIterations)
       pcout<<"DFT-FE Warning: SCF iterations did not converge to the specified tolerance after: "<<scfIter<<" iterations."<<std::endl;
     else
@@ -1498,6 +1498,7 @@ namespace dftfe {
     //mesh in case of atomic relaxation
     computeNodalRhoFromQuadData();
 
+    computing_timer.exit_section("scf solve");
     computingTimerStandard.exit_section("Total scf solve");
 
     if(dftParameters::isIonForce || dftParameters::isCellStress)
