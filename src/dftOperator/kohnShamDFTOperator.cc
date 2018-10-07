@@ -1248,7 +1248,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
     const unsigned int vectorsBlockSize=std::min(dftParameters::wfcBlockSize,
 	                                         bandGroupLowHighPlusOneIndices[1]);
 
-    std::vector<dataTypes::numberLowPrec> projHamBlockSinglePrec(Ncore*vectorsBlockSize,0.0);
+    std::vector<dataTypes::numberLowPrec> projHamBlockSinglePrec(N*vectorsBlockSize,0.0);
     std::vector<dataTypes::number> projHamBlock(N*vectorsBlockSize,0.0);
 
     std::vector<dataTypes::numberLowPrec> HXBlockSinglePrec;
@@ -1358,14 +1358,13 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 		  const dataTypes::numberLowPrec alphaSinglePrec = 1.0,betaSinglePrec = 0.0;
 
 		  for(unsigned int i = 0; i<numberDofs*B; ++i)
-	          	    HXBlockSinglePrec[i]=HXBlock.local_element(i);
+	          	HXBlockSinglePrec[i]=HXBlock.local_element(i);
 
 		  const unsigned int D=N-jvec;
-		  const unsigned int Dcore=Ncore-jvec;
 
 		  sgemm_(&transA,
 			 &transB,
-			 &Dcore,
+			 &D,
 			 &B,
 			 &numberDofs,
 			 &alphaSinglePrec,
@@ -1375,35 +1374,18 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 			 &B,
 			 &betaSinglePrec,
 			 &projHamBlockSinglePrec[0],
-			 &Dcore);
-
-		  const unsigned int Dvalence=N-Ncore;
-
-		  dgemm_(&transA,
-			 &transB,
-			 &Dvalence,
-			 &B,
-			 &numberDofs,
-			 &alpha,
-			 &X[0]+Ncore,
-			 &N,
-			 HXBlock.begin(),
-			 &B,
-			 &beta,
-			 &projHamBlock[0]+Dcore,
 			 &D);
 
-		  for(unsigned int i = 0; i<B; ++i)
-		      for(unsigned int j = 0; j < Dcore; ++j)
-			   projHamBlock[i*D+j]
-			       =projHamBlockSinglePrec[i*Dcore+j];
-
 		  MPI_Allreduce(MPI_IN_PLACE,
-				&projHamBlock[0],
+				&projHamBlockSinglePrec[0],
 				D*B,
-				dataTypes::mpi_type_id(&projHamBlock[0]),
+				dataTypes::mpi_type_id(&projHamBlockSinglePrec[0]),
 				MPI_SUM,
 				getMPICommunicator());
+
+
+		  for(unsigned int i = 0; i<B*D; ++i)
+			   projHamBlock[i]=projHamBlockSinglePrec[i];
 
 		  if (processGrid->is_process_active())
 		      for (unsigned int j = 0; j <B; ++j)
