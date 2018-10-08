@@ -261,7 +261,7 @@ namespace dftfe{
 #if(defined DEAL_II_WITH_SCALAPACK && !USE_COMPLEX)
     void chebyshevFilter(dealii::ScaLAPACKMatrix<dataTypes::number> & matrixA,
 			 dealii::ScaLAPACKMatrix<dataTypes::number> & columnSpaceX,
-			 std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  processGridWaveFunctions,
+			 std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  processGrid,
 			 const unsigned int m,
 			 const double a,
 			 const double b,
@@ -279,18 +279,66 @@ namespace dftfe{
       const unsigned int columnsBlockSize=std::min((unsigned int)50,columnSpaceX.n());
       dealii::ScaLAPACKMatrix<dataTypes::number> columnSpaceY(columnSpaceX.m(),
 							      columnSpaceX.n(),
-							      processGridWaveFunctions,
+							      processGrid,
 							      rowsBlockSize,
 							      columnsBlockSize);
 
-      //
-      //compute Y = H*X
-      //
+      dealii::ScaLAPACKMatrix<dataTypes::number> columnSpaceYNew(columnSpaceX.m(),
+								 columnSpaceX.n(),
+								 processGrid,
+								 rowsBlockSize,
+								 columnsBlockSize);
 
       //
+      //compute Y = (-sigma1*c/e)*X
       //
+      columnSpaceY.add(columnSpaceX,0.0,-sigma1*c/e);
+      
       //
+      //compute Y = (sigma1/e)*(H*X) + Y
+      //
+      matrixA.mult(sigma1/e,columnSpaceX,1,columnSpaceY);
 
+      //
+      //polynomial loop
+      //
+      for(unsigned int degree = 2; degree < m+1; ++degree)
+	{
+	  sigma2 = 1.0/(gamma - sigma);
+	  
+	  //
+	  //Ynew = -sigma*sigma2*X
+	  //
+	  columnSpaceYNew.add(columnSpaceX,0,-sigma*sigma2);
+
+	  //
+	  //Ynew = Ynew + (-2*sigma2*c/e)*Y
+	  //
+	  columnSpaceYNew.add(columnSpaceY,1,(-2.0*sigma2*c/e));
+
+	  //
+	  //Ynew = (2*sigma2/e)*H*Y + Ynew)
+	  //
+	  matrixA.mult(2.0*sigma2/e,columnSpaceY,1,columnSpaceYNew);
+
+	  //
+	  //X = Y
+	  //
+	  columnSpaceX.add(columnSpaceY,0.0,1.0);
+
+	  //
+	  //Y = Ynew
+	  //
+	  columnSpaceY.add(columnSpaceYNew,0.0,1.0);
+
+	  //
+	  //sigma = sigma2
+	  //
+	  sigma = sigma2;
+	}
+
+      columnSpaceX.add(columnSpaceY,0.0,1.0);
+      
     }
 #endif
 
