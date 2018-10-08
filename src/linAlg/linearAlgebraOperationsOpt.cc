@@ -293,7 +293,7 @@ namespace dftfe{
       //compute Y = (-sigma1*c/e)*X
       //
       columnSpaceY.add(columnSpaceX,0.0,-sigma1*c/e);
-      
+
       //
       //compute Y = (sigma1/e)*(H*X) + Y
       //
@@ -305,7 +305,7 @@ namespace dftfe{
       for(unsigned int degree = 2; degree < m+1; ++degree)
 	{
 	  sigma2 = 1.0/(gamma - sigma);
-	  
+
 	  //
 	  //Ynew = -sigma*sigma2*X
 	  //
@@ -338,7 +338,7 @@ namespace dftfe{
 	}
 
       columnSpaceX.add(columnSpaceY,0.0,1.0);
-      
+
     }
 #endif
 
@@ -929,19 +929,77 @@ namespace dftfe{
       //
       //compute subspace projection of smaller Hamiltonian into orthogonalized space
       //
-      /*subspaceProjection(projHamPar,
-			 valenceWaveFunctionsMatrixPar,
-			 valProjHamPar);*/
+      computing_timer.enter_section("subspace projection valence, RR step");
+      dealii::ScaLAPACKMatrix<T> projHamTimesValenceWaveFunctionsMatrixPar(numberWaveFunctions,
+							          numberValenceStates,
+							          processGridProjHam,
+							          rowsBlockSize,
+							          columnsBlockSize);
 
+      projHamPar.mmult(projHamTimesValenceWaveFunctionsMatrixPar,
+	              valenceWaveFunctionsMatrixPar,
+                      false);
+
+      dealii::ScaLAPACKMatrix<T> projHamValenceMatrixPar(numberValenceStates,
+							 processGridProjHam,
+							 columnsBlockSize);
+
+      valenceWaveFunctionsMatrixPar.Tmmult(projHamValenceMatrixPar,
+	              projHamTimesValenceWaveFunctionsMatrixPar,
+                      false);
+      computing_timer.exit_section("subspace projection valence, RR step");
       //
       //subspace diagonalization (extract eigenpairs of valProjHamPar)
       //
 
+      computing_timer.enter_section("valence proj ham diagonalization and subspace rot, RR step");
+      eigenValues.resize(numberValenceStates);
+      eigenValues=projHamValenceMatrixPar.eigenpairs_symmetric_by_index_MRRR
+	          (std::make_pair(0,numberValenceStates),true);
+
+      dealii::ScaLAPACKMatrix<T> valenceWaveFunctionsRotatedMatrixPar(numberWaveFunctions,
+							       numberValenceStates,
+							       processGridProjHam,
+							       rowsBlockSize,
+							       columnsBlockSize);
+      valenceWaveFunctionsMatrixPar.mmult(valenceWaveFunctionsRotatedMatrixPar,
+	              projHamValenceMatrixPar,
+                      false);
+      computing_timer.exit_section("valence proj ham diaganalization and subspace rot, RR step");
+
+      computing_timer.enter_section("Broadcast eigvec and eigenvalues across band groups, RR step");
+
+      internal::broadcastAcrossInterCommScaLAPACKMat
+	                                   (processGridProjHam,
+		                            valenceWaveFunctionsRotatedMatrixPar,
+				            interBandGroupComm,
+					    0);
+      /*
+      MPI_Bcast(&eigenValues[0],
+		eigenValues.size(),
+		MPI_DOUBLE,
+		0,
+		interBandGroupComm);
+      */
+      computing_timer.exit_section("Broadcast eigvec and eigenvalues across band groups, RR step");
 
       //
       //subspace rotation
       //
+      computing_timer.enter_section("Blocked subspace rotation, RR step");
 
+      internal::subspaceRotationSpectrumSplit(&X[0],
+	                         &Y[0],
+	                         X.size(),
+		                 numberWaveFunctions,
+		                 processGridProjHam,
+                                 numberValenceStates,
+				 interBandGroupComm,
+				 mpi_communicator,
+			         valenceWaveFunctionsRotatedMatrixPar,
+				 true);
+
+      computing_timer.exit_section("Blocked subspace rotation, RR step");
     }
 #else
     template<typename T>
