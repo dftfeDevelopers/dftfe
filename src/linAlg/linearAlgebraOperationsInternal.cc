@@ -538,8 +538,6 @@ namespace dftfe
 
 	std::vector<T> rotationMatBlock(vectorsBlockSize*N,0.0);
 	std::vector<T> rotatedVectorsMatBlock(N*dofsBlockSize,0.0);
-        std::vector<T> rotatedVectorsMatBlockTemp(vectorsBlockSize*dofsBlockSize,0.0);
-
 
 	if (dftParameters::verbosity>=4)
 	  dftUtils::printCurrentMemoryUsage(mpiComm,
@@ -637,13 +635,8 @@ namespace dftfe
 				 subspaceVectorsArray+idof*N,
 				 &N,
 				 &scalarCoeffBeta,
-				 &rotatedVectorsMatBlockTemp[0],
-				 &BVec);
-
-			  for (unsigned int i = 0; i <BDof; ++i)
-			      for (unsigned int j = 0; j <BVec; ++j)
-				  rotatedVectorsMatBlock[N*i+j+jvec]
-				      =rotatedVectorsMatBlockTemp[i*BVec+j];
+				 &rotatedVectorsMatBlock[0]+jvec,
+				 &N);
 		      }
 
 		  }// band parallelization
@@ -724,8 +717,6 @@ namespace dftfe
 
 	std::vector<T> rotationMatBlock(vectorsBlockSize*N,0.0);
 	std::vector<T> rotatedVectorsMatBlock(numberTopVectors*dofsBlockSize,0.0);
-        std::vector<T> rotatedVectorsMatBlockTemp(vectorsBlockSize*dofsBlockSize,0.0);
-
 
 	if (dftParameters::verbosity>=4)
 	  dftUtils::printCurrentMemoryUsage(mpiComm,
@@ -818,13 +809,8 @@ namespace dftfe
 				 X+idof*N,
 				 &N,
 				 &scalarCoeffBeta,
-				 &rotatedVectorsMatBlockTemp[0],
-				 &BVec);
-
-			  for (unsigned int i = 0; i <BDof; ++i)
-			      for (unsigned int j = 0; j <BVec; ++j)
-				  rotatedVectorsMatBlock[numberTopVectors*i+j+jvec]
-				      =rotatedVectorsMatBlockTemp[i*BVec+j];
+				 &rotatedVectorsMatBlock[0]+jvec,
+				 &numberTopVectors);
 		      }
 
 		  }// band parallelization
