@@ -150,9 +150,10 @@ namespace dftfe
      *  @param[in]  b upper bound of unwanted spectrum
      *  @param[in]  a0 lower bound of wanted spectrum
      */
-#if(defined DEAL_II_WITH_SCALAPACK)
+#if(defined DEAL_II_WITH_SCALAPACK && !USE_COMPLEX)
     void chebyshevFilter(dealii::ScaLAPACKMatrix<dataTypes::number> & matrixA,
 			 dealii::ScaLAPACKMatrix<dataTypes::number> & columnSpaceX,
+			 std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 			 const unsigned int m,
 			 const double a,
 			 const double b,
