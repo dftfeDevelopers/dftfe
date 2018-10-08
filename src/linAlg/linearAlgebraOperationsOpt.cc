@@ -295,7 +295,7 @@ namespace dftfe{
       columnSpaceY.add(columnSpaceX,0.0,-sigma1*c/e);
 
       //
-      //compute Y = (sigma1/e)*(H*X) + Y
+      //compute Y = (sigma1/e)*(-H*X) + Y
       //
       matrixA.mult(sigma1/e,columnSpaceX,1,columnSpaceY);
 
@@ -905,26 +905,50 @@ namespace dftfe{
       //
       //Fill in valenceWaveFunctionsMatrixPar
       //
+      if (processGridProjHam->is_process_active())
+         for (unsigned int i = 0; i < valenceWaveFunctionsMatrixPar.local_m(); ++i)
+           {
+             const unsigned int glob_i = valenceWaveFunctionsMatrixPar.global_row(i);
+             for (unsigned int j = 0; j < valenceWaveFunctionsMatrixPar.local_n(); ++j)
+               {
+		 const unsigned int glob_j = valenceWaveFunctionsMatrixPar.global_column(j);
+		 const unsigned int rowIndexToSetOne = dftParameters::numCoreWfcRR+glob_j;
+		 if(glob_i == rowIndexToSetOne)
+		   valenceWaveFunctionsMatrixPar.local_el(i, j) = 1.0;
+		 else
+		   valenceWaveFunctionsMatrixPar.local_el(i, j) = 0.0;
+               }
+           }
+
+      //
+      //change the sign of projected Hamiltonian
+      //
+      projHamPar.add(projHamPar,-1.0,0.0);
 
       //
       //Chebyshev filtering of valenceWaveFunctions
       //
       const unsigned int polynomialDegree = 4;
-      chebyshevFilter(projHamPar,
-		      valenceWaveFunctionsMatrixPar,
-		      processGridProjHam,
-		      polynomialDegree,
-		      -lowerBoundValenceSpectrum,
-		      -upperBoundValenceSpectrum,
-		      -lowerBoundCoreSpectrum);
+      const unsigned int numberPasses = 4;
+
+      for(unsigned int i = 0; i < numberPasses; ++i)
+	{
+	  chebyshevFilter(projHamPar,
+			  valenceWaveFunctionsMatrixPar,
+			  processGridProjHam,
+			  polynomialDegree,
+			  -lowerBoundValenceSpectrum,
+			  -lowerBoundCoreSpectrum,
+			  -upperBoundValenceSpectrum);
 
 
 
-      //
-      //orthogonalize valenceWaveFunctions
-      //
-      pseudoGramSchmidtOrthogonalization(valenceWaveFunctionsMatrixPar,
-					 processGridProjHam);
+	  //
+	  //orthogonalize valenceWaveFunctions
+	  //
+	  pseudoGramSchmidtOrthogonalization(valenceWaveFunctionsMatrixPar,
+					     processGridProjHam);
+	}
 
       //
       //compute subspace projection of smaller Hamiltonian into orthogonalized space
@@ -955,7 +979,7 @@ namespace dftfe{
       computing_timer.enter_section("valence proj ham diagonalization and subspace rot, RR step");
       eigenValues.resize(numberValenceStates);
       eigenValues=projHamValenceMatrixPar.eigenpairs_symmetric_by_index_MRRR
-	          (std::make_pair(0,numberValenceStates),true);
+	          (std::make_pair(0,numberValenceStates-1),true);
 
       dealii::ScaLAPACKMatrix<T> valenceWaveFunctionsRotatedMatrixPar(numberWaveFunctions,
 							       numberValenceStates,
@@ -965,7 +989,7 @@ namespace dftfe{
       valenceWaveFunctionsMatrixPar.mmult(valenceWaveFunctionsRotatedMatrixPar,
 	              projHamValenceMatrixPar,
                       false);
-      computing_timer.exit_section("valence proj ham diaganalization and subspace rot, RR step");
+      computing_timer.exit_section("valence proj ham diagonalization and subspace rot, RR step");
 
       computing_timer.enter_section("Broadcast eigvec and eigenvalues across band groups, RR step");
 
