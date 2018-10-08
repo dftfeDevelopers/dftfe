@@ -69,6 +69,7 @@ namespace dftfe {
       extern unsigned int numCoreWfcRR;
       extern bool useBatchGEMM;
       extern unsigned int wfcBlockSize;
+      extern unsigned int chebyWfcBlockSize;
       extern unsigned int subspaceRotDofsBlockSize;
       extern bool enableSwitchToGS;
       extern unsigned int nbandGrps;
