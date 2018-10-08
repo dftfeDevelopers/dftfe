@@ -968,7 +968,7 @@ namespace dftfe{
 			     +iWave)
 			 =X[iNode*totalNumberVectors+jvec+iWave];
 
-
+	  MPI_Barrier(mpiComm);
 	  //evaluate H times XBlock and store in HXBlock
 	  HXBlock=T(0.);
 	  const bool scaleFlag = false;

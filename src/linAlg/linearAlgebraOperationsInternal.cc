@@ -287,8 +287,9 @@ namespace dftfe
 		  for(unsigned int i = 0; i <B; ++i)
 		      for (unsigned int j = ivec+diagBlockSize; j <N; ++j)
 			  overlapMatrixBlock[i*D+j-ivec]
-			      =(dataTypes::number)overlapMatrixBlockLowPrec[i*D+j-ivec];
+			      =overlapMatrixBlockLowPrec[i*D+j-ivec];
 
+		  MPI_Barrier(mpiComm);
 		  // Sum local XTrunc^{T}*XcBlock across domain decomposition processors
 		  MPI_Allreduce(MPI_IN_PLACE,
 				&overlapMatrixBlock[0],
@@ -431,7 +432,7 @@ namespace dftfe
 			 &overlapMatrixBlock[0],
 			 &D);
 
-
+                  MPI_Barrier(mpiComm);
 		  // Sum local XTrunc^{T}*XcBlock across domain decomposition processors
 		  MPI_Allreduce(MPI_IN_PLACE,
 				&overlapMatrixBlock[0],
@@ -614,6 +615,7 @@ namespace dftfe
 		      }
 
 
+		      MPI_Barrier(mpiComm);
 		      MPI_Allreduce(MPI_IN_PLACE,
 				    &rotationMatBlock[0],
 				    BVec*D,
@@ -658,8 +660,7 @@ namespace dftfe
 
 	  if (numberBandGroups>1)
   	  {
-
-
+	        MPI_Barrier(interBandGroupComm);
 		const unsigned int blockSize=dftParameters::mpiAllReduceMessageBlockSizeMB*1e+6/sizeof(T);
 
 		for (unsigned int i=0; i<N*numLocalDofs;i+=blockSize)
@@ -795,7 +796,7 @@ namespace dftfe
 			      }
 		      }
 
-
+                      MPI_Barrier(mpiComm);
 		      MPI_Allreduce(MPI_IN_PLACE,
 				    &rotationMatBlock[0],
 				    BVec*N,
@@ -842,7 +843,7 @@ namespace dftfe
 	  if (numberBandGroups>1)
 	  {
 		const unsigned int blockSize=dftParameters::mpiAllReduceMessageBlockSizeMB*1e+6/sizeof(T);
-
+                MPI_Barrier(interBandGroupComm);
 		for (unsigned int i=0; i<numberTopVectors*numLocalDofs;i+=blockSize)
 		{
 		   const unsigned int currentBlockSize=std::min(blockSize,numberTopVectors*numLocalDofs-i);
@@ -1029,6 +1030,7 @@ namespace dftfe
 			      }
 		      }
 
+		      MPI_Barrier(mpiComm);
 		      MPI_Allreduce(MPI_IN_PLACE,
 				    &rotationMatBlock[0],
 				    BVec*D,
@@ -1064,7 +1066,7 @@ namespace dftfe
 			      for (unsigned int j = 0; j <BVec; ++j)
 				  *(subspaceVectorsArray+N*(idof+i)+j+jvec)
 				     = *(subspaceVectorsArray+N*(idof+i)+j+jvec)*diagValuesBlock[j]
-				       +(dataTypes::number)rotatedVectorsMatBlockTemp[i*BVec+j];
+				       +rotatedVectorsMatBlockTemp[i*BVec+j];
 		      }
 
 		  }// band parallelization
@@ -1080,7 +1082,7 @@ namespace dftfe
 
 	  if (numberBandGroups>1)
   	  {
-
+                MPI_Barrier(interBandGroupComm);
 		const unsigned int blockSize=dftParameters::mpiAllReduceMessageBlockSizeMB*1e+6
 		                                /sizeof(dataTypes::number);
 
