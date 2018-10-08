@@ -796,6 +796,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
     std::vector<std::complex<double> > XtHXValuelocal(sizeXtHX,0.0);
     zgemm_(&transA, &transB, &n, &n, &k, &alpha, &x[0], &lda, &hx[0], &ldb, &beta, &XtHXValuelocal[0], &ldc);
 
+    MPI_Barrier(mpi_communicator);
     MPI_Allreduce(&XtHXValuelocal[0],
 		  &ProjHam[0],
 		  sizeXtHX,
@@ -884,6 +885,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 
     const unsigned int size = numberWaveFunctions*numberWaveFunctions;
 
+    MPI_Barrier(mpi_communicator);
     MPI_Allreduce(&XtHXValuelocal[0],
 		  &ProjHam[0],
 		  size,
@@ -1108,6 +1110,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 			     =X[iNode*numberWaveFunctions+jvec+iWave];
 
 
+	      MPI_Barrier(getMPICommunicator());
 	      //evaluate H times XBlock^{T} and store in HXBlock^{T}
 	      HXBlock=0;
 	      const bool scaleFlag = false;
@@ -1118,7 +1121,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 		 scalar,
 		 false,
 		 HXBlock);
-
+              MPI_Barrier(getMPICommunicator());
 
 	      const char transA = 'N';
 #ifdef USE_COMPLEX
@@ -1146,23 +1149,14 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 		     &projHamBlock[0],
 		     &D);
 
-
+              MPI_Barrier(getMPICommunicator());
 	      // Sum local XTrunc^{T}*HXcBlock across domain decomposition processors
-#ifdef USE_COMPLEX
 	      MPI_Allreduce(MPI_IN_PLACE,
 			    &projHamBlock[0],
 			    D*B,
-			    MPI_C_DOUBLE_COMPLEX,
+			    dataTypes::mpi_type_id(&projHamBlock[0]),
 			    MPI_SUM,
 			    getMPICommunicator());
-#else
-	      MPI_Allreduce(MPI_IN_PLACE,
-			    &projHamBlock[0],
-			    D*B,
-			    MPI_DOUBLE,
-			    MPI_SUM,
-			    getMPICommunicator());
-#endif
 
 	      //Copying only the lower triangular part to the ScaLAPACK projected Hamiltonian matrix
 	      if (processGrid->is_process_active())
@@ -1185,9 +1179,13 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 
     }//block loop
 
-    linearAlgebraOperations::internal::sumAcrossInterCommScaLAPACKMat(processGrid,
-						                      projHamPar,
-						                      dftPtr->interBandGroupComm);
+    if (numberBandGroups>1)
+    {
+       MPI_Barrier(dftPtr->interBandGroupComm);
+       linearAlgebraOperations::internal::sumAcrossInterCommScaLAPACKMat(processGrid,
+						                         projHamPar,
+						                         dftPtr->interBandGroupComm);
+    }
 #endif
   }
 
@@ -1284,6 +1282,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 			     =X[iNode*N+jvec+iWave];
 
 
+	      MPI_Barrier(getMPICommunicator());
 	      //evaluate H times XBlock^{T} and store in HXBlock^{T}
 	      HXBlock=0;
 	      const bool scaleFlag = false;
@@ -1294,7 +1293,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 		 scalar,
 		 false,
 		 HXBlock);
-
+	      MPI_Barrier(getMPICommunicator());
 
 	      const char transA = 'N';
 #ifdef USE_COMPLEX
@@ -1325,7 +1324,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 			 &projHamBlock[0],
 			 &D);
 
-
+                  MPI_Barrier(getMPICommunicator());
 		  // Sum local XTrunc^{T}*HXcBlock across domain decomposition processors
 		  MPI_Allreduce(MPI_IN_PLACE,
 				&projHamBlock[0],
@@ -1376,6 +1375,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 			 &projHamBlockSinglePrec[0],
 			 &D);
 
+		  MPI_Barrier(getMPICommunicator());
 		  MPI_Allreduce(MPI_IN_PLACE,
 				&projHamBlockSinglePrec[0],
 				D*B,
@@ -1383,9 +1383,6 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 				MPI_SUM,
 				getMPICommunicator());
 
-
-		  for(unsigned int i = 0; i<B*D; ++i)
-			   projHamBlock[i]=projHamBlockSinglePrec[i];
 
 		  if (processGrid->is_process_active())
 		      for (unsigned int j = 0; j <B; ++j)
@@ -1399,7 +1396,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 			     if (it!=globalToLocalRowIdMap.end())
 				     projHamPar.local_el(it->second,
 							 localColumnId)
-							 =projHamBlock[j*D+i-jvec];
+							 =projHamBlockSinglePrec[j*D+i-jvec];
 			   }
 			 }
 	      }
@@ -1409,9 +1406,13 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 
     }//block loop
 
-    linearAlgebraOperations::internal::sumAcrossInterCommScaLAPACKMat(processGrid,
+    if (numberBandGroups>1)
+    {
+      MPI_Barrier(dftPtr->interBandGroupComm);
+      linearAlgebraOperations::internal::sumAcrossInterCommScaLAPACKMat(processGrid,
 						                      projHamPar,
 						                      dftPtr->interBandGroupComm);
+    }
 #endif
   }
 #endif

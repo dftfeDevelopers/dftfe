@@ -293,7 +293,7 @@ namespace dftfe{
     if (numberBandGroups>1)
     {
 	computing_timer.enter_section("MPI All Reduce wavefunctions across all band groups");
-
+        MPI_Barrier(interBandGroupComm);
 	const unsigned int blockSize=dftParameters::mpiAllReduceMessageBlockSizeMB*1e+6/sizeof(dataTypes::number);
         for (unsigned int i=0; i<totalNumberWaveFunctions*localVectorSize;i+=blockSize)
         {
