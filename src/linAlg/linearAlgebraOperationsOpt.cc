@@ -258,7 +258,7 @@ namespace dftfe{
     //
     //chebyshev filtering
     //
-#if(defined DEAL_II_WITH_SCALAPACK)
+#if(defined DEAL_II_WITH_SCALAPACK && !USE_COMPLEX)
     void chebyshevFilter(dealii::ScaLAPACKMatrix<dataTypes::number> & matrixA,
 			 dealii::ScaLAPACKMatrix<dataTypes::number> & columnSpaceX,
 			 std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
