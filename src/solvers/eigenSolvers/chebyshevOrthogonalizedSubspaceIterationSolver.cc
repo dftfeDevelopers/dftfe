@@ -196,8 +196,8 @@ namespace dftfe{
     dftUtils::createBandParallelizationIndices(interBandGroupComm,
 					       totalNumberWaveFunctions,
 					       bandGroupLowHighPlusOneIndices);
-    const unsigned int totalNumberBlocks=std::ceil((double)totalNumberWaveFunctions/(double)dftParameters::wfcBlockSize);
-    const unsigned int vectorsBlockSize=std::min(dftParameters::wfcBlockSize,
+    const unsigned int totalNumberBlocks=std::ceil((double)totalNumberWaveFunctions/(double)dftParameters::chebyWfcBlockSize);
+    const unsigned int vectorsBlockSize=std::min(dftParameters::chebyWfcBlockSize,
 	                                         bandGroupLowHighPlusOneIndices[1]);
 
 

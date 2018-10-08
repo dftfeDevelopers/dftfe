@@ -74,6 +74,7 @@ subsection SCF parameters
       set ORTHOGONALIZATION TYPE=PGS
       set ENABLE SWITCH TO GS=false
       set WFC BLOCK SIZE=7
+      set CHEBY WFC BLOCK SIZE=7
   end
 end
 

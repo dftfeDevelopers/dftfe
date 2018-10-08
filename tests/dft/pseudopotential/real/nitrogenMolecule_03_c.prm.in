@@ -53,6 +53,7 @@ subsection SCF parameters
       set USE MIXED PREC PGS O=true
       set MIXED PREC STOPPING TOL=1e-4
       set WFC BLOCK SIZE=3
+      set CHEBY WFC BLOCK SIZE=3
       set SUBSPACE ROT DOFS BLOCK SIZE=500
       set SCALAPACKPROCS=2
       set SPECTRUM SPLIT CORE EIGENSTATES=3

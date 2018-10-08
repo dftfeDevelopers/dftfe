@@ -84,6 +84,7 @@ subsection SCF parameters
       set CHEBYSHEV FILTER TOLERANCE=1e-3
       set ORTHOGONALIZATION TYPE=GS
       set WFC BLOCK SIZE=3
+      set CHEBY WFC BLOCK SIZE=3
   end
 end
 
