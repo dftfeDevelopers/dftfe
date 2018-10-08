@@ -150,7 +150,7 @@ namespace dftfe
      *  @param[in]  b upper bound of unwanted spectrum
      *  @param[in]  a0 lower bound of wanted spectrum
      */
-#if(defined DEAL_II_WITH_SCALAPACK && !USE_COMPLEX)
+#if(defined DEAL_II_WITH_SCALAPACK)
     void chebyshevFilter(dealii::ScaLAPACKMatrix<dataTypes::number> & matrixA,
 			 dealii::ScaLAPACKMatrix<dataTypes::number> & columnSpaceX,
 			 const unsigned int m,
@@ -225,7 +225,8 @@ namespace dftfe
      *
      *  @return flag indicating success/failure. 1 for failure, 0 for success
      */
-    unsigned int pseudoGramSchmidtOrthogonalization(dealii::ScaLAPACKMatrix<dataTypes::number> & X);
+    void pseudoGramSchmidtOrthogonalization(dealii::ScaLAPACKMatrix<dataTypes::number> & X,
+					    std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid> & processGrid);
 
     /** @brief Compute Rayleigh-Ritz projection
      *

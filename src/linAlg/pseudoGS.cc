@@ -184,9 +184,10 @@ namespace dftfe
       return 0;
     }
 
-    unsigned int pseudoGramSchmidtOrthogonalization(dealii::ScaLAPACKMatrix<dataTypes::number> & X)
+    void pseudoGramSchmidtOrthogonalization(dealii::ScaLAPACKMatrix<dataTypes::number> & X,
+					    std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid> & processGrid)
     {
-      return 0;
+      
     }
 
 #else

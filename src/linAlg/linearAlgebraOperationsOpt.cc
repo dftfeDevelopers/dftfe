@@ -258,10 +258,10 @@ namespace dftfe{
     //
     //chebyshev filtering
     //
-#if(defined DEAL_II_WITH_SCALAPACK && !USE_COMPLEX)
+#if(defined DEAL_II_WITH_SCALAPACK)
     void chebyshevFilter(dealii::ScaLAPACKMatrix<dataTypes::number> & matrixA,
 			 dealii::ScaLAPACKMatrix<dataTypes::number> & columnSpaceX,
-			 std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  processGrid,
+			 std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 			 const unsigned int m,
 			 const double a,
 			 const double b,
@@ -923,20 +923,12 @@ namespace dftfe{
       //
       //orthogonalize valenceWaveFunctions
       //
-      pseudoGramSchmidtOrthogonalization(valenceWaveFunctionsMatrixPar);
+      pseudoGramSchmidtOrthogonalization(valenceWaveFunctionsMatrixPar,
+					 processGridProjHam);
 
       //
       //compute subspace projection of smaller Hamiltonian into orthogonalized space
       //
-      const unsigned rowsBlockSizeVal=std::min((unsigned int)50,numberValenceStates);
-      std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  processGridValProjHam;
-      internal::createProcessGridSquareMatrix(mpi_communicator,
-		                              numberValenceStates,
-					      processGridValProjHam);
-
-      dealii::ScaLAPACKMatrix<T> valProjHamPar(numberValenceStates,
-					       processGridValProjHam,
-					       rowsBlockSizeVal);
       /*subspaceProjection(projHamPar,
 			 valenceWaveFunctionsMatrixPar,
 			 valProjHamPar);*/
