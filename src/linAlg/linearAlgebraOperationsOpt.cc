@@ -931,6 +931,13 @@ namespace dftfe{
       const unsigned int polynomialDegree = 4;
       const unsigned int numberPasses = 4;
 
+      if(dftParameters::verbosity >= 4)
+	{
+	  pcout<<"Lower Bound of Valence Spectrum: "<<lowerBoundValenceSpectrum<<std::endl;
+	  pcout<<"Lower Bound of Core Spectrum: "<<lowerBoundCoreSpectrum<<std::endl;
+	  pcout<<"Upper Bound of Valence Spectrum: "<<upperBoundValenceSpectrum<<std::endl;
+	}
+
       for(unsigned int i = 0; i < numberPasses; ++i)
 	{
 	  chebyshevFilter(projHamPar,
@@ -949,6 +956,12 @@ namespace dftfe{
 	  pseudoGramSchmidtOrthogonalization(valenceWaveFunctionsMatrixPar,
 					     processGridProjHam);
 	}
+
+      //
+      //switch back the sign of projected Hamiltonian
+      //
+      projHamPar.add(projHamPar,-1.0,0.0);
+
 
       //
       //compute subspace projection of smaller Hamiltonian into orthogonalized space
