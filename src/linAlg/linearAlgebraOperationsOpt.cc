@@ -292,7 +292,15 @@ namespace dftfe{
       //
       //compute Y = (-sigma1*c/e)*X
       //
-      columnSpaceY.add(columnSpaceX,0.0,-sigma1*c/e);
+      //columnSpaceY.add(columnSpaceX,0.0,-sigma1*c/e);
+      
+      //
+      //copy Y = X and then scale Y, i.e Y  = (-sigma1*c/e)*Y
+      //
+      columnSpaceX.copy_to(columnSpaceY);
+      internal::scaleScaLAPACKMat(processGrid,
+				  columnSpaceY,
+				  -sigma1*c/e);
 
       //
       //compute Y = (sigma1/e)*(-H*X) + Y
@@ -309,7 +317,15 @@ namespace dftfe{
 	  //
 	  //Ynew = -sigma*sigma2*X
 	  //
-	  columnSpaceYNew.add(columnSpaceX,0,-sigma*sigma2);
+	  //columnSpaceYNew.add(columnSpaceX,0,-sigma*sigma2);
+
+	  //
+	  //copy Ynew = X and then scale Ynew, i.e Ynew = -sigma*sigma2*X
+	  //
+	  columnSpaceX.copy_to(columnSpaceYNew);
+	  internal::scaleScaLAPACKMat(processGrid,
+				      columnSpaceYNew,
+				      -sigma*sigma2);
 
 	  //
 	  //Ynew = Ynew + (-2*sigma2*c/e)*Y
@@ -324,12 +340,14 @@ namespace dftfe{
 	  //
 	  //X = Y
 	  //
-	  columnSpaceX.add(columnSpaceY,0.0,1.0);
+	  //columnSpaceX.add(columnSpaceY,0.0,1.0);
+	  columnSpaceY.copy_to(columnSpaceX);
 
 	  //
 	  //Y = Ynew
 	  //
-	  columnSpaceY.add(columnSpaceYNew,0.0,1.0);
+	  //columnSpaceY.add(columnSpaceYNew,0.0,1.0);
+	  columnSpaceYNew.copy_to(columnSpaceY);
 
 	  //
 	  //sigma = sigma2
@@ -337,7 +355,9 @@ namespace dftfe{
 	  sigma = sigma2;
 	}
 
-      columnSpaceX.add(columnSpaceY,0.0,1.0);
+      //copy  final Y to X
+      //columnSpaceX.add(columnSpaceY,0.0,1.0);
+      columnSpaceY.copy_to(columnSpaceX);
 
     }
 #endif
@@ -905,8 +925,8 @@ namespace dftfe{
       //
       //Fill in valenceWaveFunctionsMatrixPar
       //
-      if (processGridProjHam->is_process_active())
-         for (unsigned int i = 0; i < valenceWaveFunctionsMatrixPar.local_m(); ++i)
+      if(processGridProjHam->is_process_active())
+         for(unsigned int i = 0; i < valenceWaveFunctionsMatrixPar.local_m(); ++i)
            {
              const unsigned int glob_i = valenceWaveFunctionsMatrixPar.global_row(i);
              for (unsigned int j = 0; j < valenceWaveFunctionsMatrixPar.local_n(); ++j)
@@ -920,10 +940,7 @@ namespace dftfe{
                }
            }
 
-      //
-      //change the sign of projected Hamiltonian
-      //
-      projHamPar.add(projHamPar,-1.0,0.0);
+      
 
       //
       //Chebyshev filtering of valenceWaveFunctions
@@ -937,6 +954,18 @@ namespace dftfe{
 	  pcout<<"Lower Bound of Core Spectrum: "<<lowerBoundCoreSpectrum<<std::endl;
 	  pcout<<"Upper Bound of Valence Spectrum: "<<upperBoundValenceSpectrum<<std::endl;
 	}
+
+
+      computing_timer.enter_section("Inner Chebyshev filtering, valence states");
+
+      //
+      //change the sign of projected Hamiltonian
+      //
+      //projHamPar.add(projHamPar,-1.0,0.0);
+
+      internal::scaleScaLAPACKMat(processGridProjHam,
+				  projHamPar,
+				  -1.0);
 
       for(unsigned int i = 0; i < numberPasses; ++i)
 	{
@@ -960,8 +989,11 @@ namespace dftfe{
       //
       //switch back the sign of projected Hamiltonian
       //
-      projHamPar.add(projHamPar,-1.0,0.0);
-
+      //projHamPar.add(projHamPar,-1.0,0.0);
+      internal::scaleScaLAPACKMat(processGridProjHam,
+				  projHamPar,
+				  -1.0);
+      computing_timer.exit_section("Inner Chebyshev filtering, valence states");
 
       //
       //compute subspace projection of smaller Hamiltonian into orthogonalized space

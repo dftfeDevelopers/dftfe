@@ -68,6 +68,18 @@ namespace dftfe
 		                            dealii::ScaLAPACKMatrix<T> & mat,
 				            const MPI_Comm &interComm);
 
+	
+
+	/** @brief scale a ScaLAPACKMat with a scalar
+	 * 
+	 *
+	 */
+        template<typename T>
+	void scaleScaLAPACKMat(const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+			       dealii::ScaLAPACKMatrix<T> & mat,
+			       const T scalar);
+
+
 	/** @brief MPI_Bcast of ScaLAPACKMat across a given inter communicator from a given broadcast root.
 	 * Used for band parallelization.
 	 *

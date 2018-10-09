@@ -130,6 +130,30 @@ namespace dftfe
       }
 
       template<typename T>
+      void scaleScaLAPACKMat(const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+			     dealii::ScaLAPACKMatrix<T> & mat,
+			     const T scalar)
+      {
+#ifdef USE_COMPLEX
+	AssertThrow(false,dftUtils::ExcNotImplementedYet());
+#else
+	if(processGrid->is_process_active())
+	  {
+	    const unsigned int numberComponents =  mat.local_m()*mat.local_n();
+	    const unsigned int inc = 1;
+	    dscal_(&numberComponents,
+		   &scalar,
+		   &mat.local_el(0,0),
+		   &inc);
+	  }
+
+#endif
+      }
+
+
+      
+
+      template<typename T>
       void broadcastAcrossInterCommScaLAPACKMat
       (const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
        dealii::ScaLAPACKMatrix<T> & mat,
@@ -1112,6 +1136,12 @@ namespace dftfe
 			    const dealii::ScaLAPACKMatrix<dataTypes::number> & rotationMatPar,
 			    const bool rotationMatTranpose,
 			    const bool isRotationMatLowerTria);
+
+
+      template 
+      void scaleScaLAPACKMat(const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+			     dealii::ScaLAPACKMatrix<dataTypes::number> & mat,
+			     const dataTypes::number scalar);
 
       template
       void sumAcrossInterCommScaLAPACKMat(const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
