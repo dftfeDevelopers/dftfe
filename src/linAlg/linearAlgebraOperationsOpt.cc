@@ -293,7 +293,7 @@ namespace dftfe{
       //compute Y = (-sigma1*c/e)*X
       //
       //columnSpaceY.add(columnSpaceX,0.0,-sigma1*c/e);
-      
+
       //
       //copy Y = X and then scale Y, i.e Y  = (-sigma1*c/e)*Y
       //
@@ -771,7 +771,7 @@ namespace dftfe{
                                             rowsBlockSize);
 
 
-      if (useMixedPrec && dftParameters::useMixedPrecXTHX)
+      if (useMixedPrec && dftParameters::useMixedPrecXTHXSpectrumSplit)
       {
 	 computing_timer.enter_section("Blocked XtHX Mixed Prec, RR step");
          operatorMatrix.XtHXMixedPrec(X,
@@ -819,20 +819,42 @@ namespace dftfe{
       //rotate the basis in the subspace X = X*Q, implemented as X^{T}=Q^{T}*X^{T} with X^{T}
       //stored in the column major format
       //
-      computing_timer.enter_section("Blocked subspace rotation, RR step");
 
-      internal::subspaceRotationSpectrumSplit(&X[0],
-	                         &Y[0],
-	                         X.size(),
-		                 numberWaveFunctions,
-		                 processGrid,
-                                 numberWaveFunctions-numberCoreStates,
-				 interBandGroupComm,
-				 mpi_communicator,
-			         projHamPar,
-				 true);
+      if (useMixedPrec && dftParameters::useMixedPrecSubspaceRotSpectrumSplit
+)
+      {
+	  computing_timer.enter_section("Blocked subspace rotation mixed prec, RR step");
 
-      computing_timer.exit_section("Blocked subspace rotation, RR step");
+	  internal::subspaceRotationSpectrumSplitMixedPrec(&X[0],
+				     &Y[0],
+				     X.size(),
+				     numberWaveFunctions,
+				     processGrid,
+				     numberWaveFunctions-numberCoreStates,
+				     interBandGroupComm,
+				     mpi_communicator,
+				     projHamPar,
+				     true);
+
+	  computing_timer.exit_section("Blocked subspace rotation mixed prec, RR step");
+      }
+      else
+      {
+	  computing_timer.enter_section("Blocked subspace rotation, RR step");
+
+	  internal::subspaceRotationSpectrumSplit(&X[0],
+				     &Y[0],
+				     X.size(),
+				     numberWaveFunctions,
+				     processGrid,
+				     numberWaveFunctions-numberCoreStates,
+				     interBandGroupComm,
+				     mpi_communicator,
+				     projHamPar,
+				     true);
+
+	  computing_timer.exit_section("Blocked subspace rotation, RR step");
+      }
 
     }
 #else
@@ -892,7 +914,7 @@ namespace dftfe{
                                             rowsBlockSize);
 
 
-      if(useMixedPrec && dftParameters::useMixedPrecXTHX)
+      if(useMixedPrec && dftParameters::useMixedPrecXTHXSpectrumSplit)
 	{
 	  computing_timer.enter_section("Blocked XtHX Mixed Prec, RR step");
 	  operatorMatrix.XtHXMixedPrec(X,
@@ -940,7 +962,7 @@ namespace dftfe{
                }
            }
 
-      
+
 
       //
       //Chebyshev filtering of valenceWaveFunctions
@@ -1055,20 +1077,42 @@ namespace dftfe{
       //
       //subspace rotation
       //
-      computing_timer.enter_section("Blocked subspace rotation, RR step");
 
-      internal::subspaceRotationSpectrumSplit(&X[0],
-	                         &Y[0],
-	                         X.size(),
-		                 numberWaveFunctions,
-		                 processGridProjHam,
-                                 numberValenceStates,
-				 interBandGroupComm,
-				 mpi_communicator,
-			         valenceWaveFunctionsRotatedMatrixPar,
-				 true);
+      if (useMixedPrec && dftParameters::useMixedPrecSubspaceRotSpectrumSplit
+)
+      {
+	  computing_timer.enter_section("Blocked subspace rotation mixed prec, RR step");
 
-      computing_timer.exit_section("Blocked subspace rotation, RR step");
+	  internal::subspaceRotationSpectrumSplitMixedPrec(&X[0],
+				     &Y[0],
+				     X.size(),
+				     numberWaveFunctions,
+				     processGridProjHam,
+				     numberValenceStates,
+				     interBandGroupComm,
+				     mpi_communicator,
+				     valenceWaveFunctionsRotatedMatrixPar,
+				     true);
+
+	  computing_timer.exit_section("Blocked subspace rotation mixed prec, RR step");
+      }
+      else
+      {
+	  computing_timer.enter_section("Blocked subspace rotation, RR step");
+
+	  internal::subspaceRotationSpectrumSplit(&X[0],
+				     &Y[0],
+				     X.size(),
+				     numberWaveFunctions,
+				     processGridProjHam,
+				     numberValenceStates,
+				     interBandGroupComm,
+				     mpi_communicator,
+				     valenceWaveFunctionsRotatedMatrixPar,
+				     true);
+
+	  computing_timer.exit_section("Blocked subspace rotation, RR step");
+      }
     }
 #else
     template<typename T>

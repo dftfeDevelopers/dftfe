@@ -151,7 +151,7 @@ namespace dftfe
       }
 
 
-      
+
 
       template<typename T>
       void broadcastAcrossInterCommScaLAPACKMat
@@ -870,6 +870,224 @@ namespace dftfe
       }
 
 
+	void subspaceRotationSpectrumSplitMixedPrec(const dataTypes::number* X,
+		              dataTypes::number* Y,
+		              const unsigned int subspaceVectorsArrayLocalSize,
+		              const unsigned int N,
+		              const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+			      const unsigned int numberTopVectors,
+			      const MPI_Comm &interBandGroupComm,
+			      const MPI_Comm &mpiComm,
+			      const dealii::ScaLAPACKMatrix<dataTypes::number> & QMat,
+			      const bool QMatTranspose)
+	{
+#ifdef USE_COMPLEX
+	AssertThrow(false,dftUtils::ExcNotImplementedYet());
+#else
+	const unsigned int numLocalDofs = subspaceVectorsArrayLocalSize/N;
+
+	const unsigned int maxNumLocalDofs=dealii::Utilities::MPI::max(numLocalDofs,
+								       mpiComm);
+
+	//band group parallelization data structures
+	const unsigned int numberBandGroups=
+	  dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
+	const unsigned int bandGroupTaskId = dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
+	std::vector<unsigned int> bandGroupLowHighPlusOneIndices;
+	dftUtils::createBandParallelizationIndices(interBandGroupComm,
+						   numberTopVectors,
+						   bandGroupLowHighPlusOneIndices);
+
+	std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
+	std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
+	internal::createGlobalToLocalIdMapsScaLAPACKMat(processGrid,
+							QMat,
+							globalToLocalRowIdMap,
+							globalToLocalColumnIdMap);
+
+
+	const unsigned int vectorsBlockSize=std::min(dftParameters::wfcBlockSize,
+	                                               bandGroupLowHighPlusOneIndices[1]);
+	const unsigned int dofsBlockSize=std::min(maxNumLocalDofs,
+		                                    dftParameters::subspaceRotDofsBlockSize);
+
+	const unsigned int Ncore=N-numberTopVectors;
+	std::vector<dataTypes::number> rotationMatTopCompBlock(vectorsBlockSize*numberTopVectors,0.0);
+	std::vector<dataTypes::number> rotatedVectorsMatBlock(numberTopVectors*dofsBlockSize,0.0);
+
+	std::vector<dataTypes::numberLowPrec> rotationMatCoreCompBlock(vectorsBlockSize*Ncore,0.0);
+        std::vector<dataTypes::numberLowPrec> rotatedVectorsMatCoreContrBlockTemp(vectorsBlockSize*dofsBlockSize,0.0);
+
+	std::vector<dataTypes::numberLowPrec> XSinglePrec(X,
+		                                          X+
+					                  subspaceVectorsArrayLocalSize);
+	if (dftParameters::verbosity>=4)
+	  dftUtils::printCurrentMemoryUsage(mpiComm,
+					    "Inside Blocked susbpace rotation");
+
+	for (unsigned int idof = 0; idof < maxNumLocalDofs; idof += dofsBlockSize)
+	  {
+	    // Correct block dimensions if block "goes off edge of" the matrix
+	    unsigned int BDof=0;
+	    if (numLocalDofs>=idof)
+	      BDof = std::min(dofsBlockSize, numLocalDofs-idof);
+
+	    std::fill(rotatedVectorsMatBlock.begin(),rotatedVectorsMatBlock.end(),0.);
+	    for (unsigned int jvec = 0; jvec < numberTopVectors; jvec += vectorsBlockSize)
+	    {
+		  // Correct block dimensions if block "goes off edge of" the matrix
+		  const unsigned int BVec = std::min(vectorsBlockSize, numberTopVectors-jvec);
+
+		  // If one plus the ending index of a block lies within a band parallelization group
+		  // do computations for that block within the band group, otherwise skip that
+		  // block. This is only activated if NPBAND>1
+		  if ((jvec+BVec)<=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1] &&
+		  (jvec+BVec)>bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
+		  {
+		    const char transA = 'N',transB = 'N';
+		    const dataTypes::number scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
+		    const dataTypes::numberLowPrec scalarCoeffAlphaSinglePrec = 1.0,scalarCoeffBetaSinglePrec = 0.0;
+
+		    std::fill(rotationMatCoreCompBlock.begin(),rotationMatCoreCompBlock.end(),0.);
+		    std::fill(rotationMatTopCompBlock.begin(),rotationMatTopCompBlock.end(),0.);
+
+		    //Extract QBVec from parallel ScaLAPACK matrix Q
+		    if (QMatTranspose)
+		      {
+			if (processGrid->is_process_active())
+			  for (unsigned int i = 0; i <N; ++i)
+			    if (globalToLocalRowIdMap.find(i)
+				!=globalToLocalRowIdMap.end())
+			      {
+				const unsigned int localRowId=globalToLocalRowIdMap[i];
+				for (unsigned int j = 0; j <BVec; ++j)
+
+				  {
+				    std::map<unsigned int, unsigned int>::iterator it=
+				      globalToLocalColumnIdMap.find(j+jvec);
+				    if(it!=globalToLocalColumnIdMap.end())
+				    {
+				        const dataTypes::number val=
+					          QMat.local_el(localRowId,
+								it->second);
+					if (i<Ncore)
+					  rotationMatCoreCompBlock[i*BVec+j]=val;
+					else
+					  rotationMatTopCompBlock[(i-Ncore)*BVec+j]=val;
+				    }
+				  }
+			      }
+		      }
+		    else
+		      {
+			if (processGrid->is_process_active())
+			  for (unsigned int i = 0; i <N; ++i)
+			    if(globalToLocalColumnIdMap.find(i)
+			       !=globalToLocalColumnIdMap.end())
+			      {
+				const unsigned int localColumnId=globalToLocalColumnIdMap[i];
+				for (unsigned int j = 0; j <BVec; ++j)
+				  {
+				    std::map<unsigned int, unsigned int>::iterator it=
+				      globalToLocalRowIdMap.find(j+jvec);
+				    if (it!=globalToLocalRowIdMap.end())
+				    {
+				        const dataTypes::number val=
+				 	          QMat.local_el(it->second,
+								localColumnId);
+					if (i<Ncore)
+					  rotationMatCoreCompBlock[i*BVec+j]=val;
+					else
+					  rotationMatTopCompBlock[(i-Ncore)*BVec+j]=val;
+
+				    }
+				  }
+			      }
+		      }
+
+                      MPI_Barrier(mpiComm);
+		      MPI_Allreduce(MPI_IN_PLACE,
+				    &rotationMatCoreCompBlock[0],
+				    BVec*Ncore,
+				    dataTypes::mpi_type_id(&rotationMatCoreCompBlock[0]),
+				    MPI_SUM,
+				    mpiComm);
+
+		      MPI_Allreduce(MPI_IN_PLACE,
+				    &rotationMatTopCompBlock[0],
+				    BVec*numberTopVectors,
+				    dataTypes::mpi_type_id(&rotationMatTopCompBlock[0]),
+				    MPI_SUM,
+				    mpiComm);
+
+		      if (BDof!=0)
+		      {
+			  sgemm_(&transA,
+				 &transB,
+				 &BVec,
+				 &BDof,
+				 &Ncore,
+				 &scalarCoeffAlphaSinglePrec,
+				 &rotationMatCoreCompBlock[0],
+				 &BVec,
+				 &XSinglePrec[0]+idof*N,
+				 &N,
+				 &scalarCoeffBetaSinglePrec,
+				 &rotatedVectorsMatCoreContrBlockTemp[0],
+				 &BVec);
+
+			  dgemm_(&transA,
+				 &transB,
+				 &BVec,
+				 &BDof,
+				 &numberTopVectors,
+				 &scalarCoeffAlpha,
+				 &rotationMatTopCompBlock[0],
+				 &BVec,
+				 X+idof*N+Ncore,
+				 &N,
+				 &scalarCoeffBeta,
+				 &rotatedVectorsMatBlock[0]+jvec,
+				 &numberTopVectors);
+
+		           for (unsigned int i = 0; i <BDof; ++i)
+			      for (unsigned int j = 0; j <BVec; ++j)
+			          rotatedVectorsMatBlock[i*numberTopVectors+j+jvec]
+				      +=rotatedVectorsMatCoreContrBlockTemp[i*BVec+j];
+		      }
+
+		  }// band parallelization
+	    }//block loop over vectors
+
+
+	    if (BDof!=0)
+	      {
+		for (unsigned int i = 0; i <BDof; ++i)
+		  for (unsigned int j = 0; j <numberTopVectors; ++j)
+		    *(Y+numberTopVectors*(i+idof)+j)
+		      =rotatedVectorsMatBlock[i*numberTopVectors+j];
+	      }
+	  }//block loop over dofs
+
+	  if (numberBandGroups>1)
+	  {
+		const unsigned int blockSize=dftParameters::mpiAllReduceMessageBlockSizeMB*1e+6/sizeof(dataTypes::number);
+                MPI_Barrier(interBandGroupComm);
+		for (unsigned int i=0; i<numberTopVectors*numLocalDofs;i+=blockSize)
+		{
+		   const unsigned int currentBlockSize=std::min(blockSize,numberTopVectors*numLocalDofs-i);
+
+		   MPI_Allreduce(MPI_IN_PLACE,
+				 Y+i,
+				 currentBlockSize,
+				 dataTypes::mpi_type_id(Y),
+				 MPI_SUM,
+				 interBandGroupComm);
+		}
+	  }
+#endif
+      }
+
       void subspaceRotationPGSMixedPrec
 			   (dataTypes::number* subspaceVectorsArray,
 			    const unsigned int subspaceVectorsArrayLocalSize,
@@ -1138,7 +1356,7 @@ namespace dftfe
 			    const bool isRotationMatLowerTria);
 
 
-      template 
+      template
       void scaleScaLAPACKMat(const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 			     dealii::ScaLAPACKMatrix<dataTypes::number> & mat,
 			     const dataTypes::number scalar);
@@ -1159,6 +1377,7 @@ namespace dftfe
 			      const MPI_Comm &mpiComm,
 			      const dealii::ScaLAPACKMatrix<dataTypes::number> & QMat,
 			      const bool QMatTranspose);
+
 
       template
       void broadcastAcrossInterCommScaLAPACKMat
