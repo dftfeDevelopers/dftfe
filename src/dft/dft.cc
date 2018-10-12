@@ -1348,12 +1348,9 @@ namespace dftfe {
 		  {
 		    kohnShamDFTEigenOperator.reinitkPointIndex(kPoint);
 
-
 		    computing_timer.enter_section("Hamiltonian Matrix Computation");
 		    kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint);
 		    computing_timer.exit_section("Hamiltonian Matrix Computation");
-
-
 
 		    if (dftParameters::verbosity>=2)
 		      pcout<<"Doing one full spectrum Chebyshev filter pass for spin "<< s+1<<std::endl;

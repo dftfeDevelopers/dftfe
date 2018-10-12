@@ -945,8 +945,8 @@ namespace dftfe{
       //
       //Chebyshev filtering of valenceWaveFunctions
       //
-      const unsigned int polynomialDegree = 4;
-      const unsigned int numberPasses = 4;
+      const unsigned int polynomialDegree = dftParameters::innerChebPolynomialDegree;
+      const unsigned int numberPasses = dftParameters::innerChebNumberPasses;
 
       if(dftParameters::verbosity >= 4)
 	{
