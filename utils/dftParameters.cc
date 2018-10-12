@@ -27,7 +27,7 @@ namespace dftfe {
 namespace dftParameters
 {
 
-  unsigned int finiteElementPolynomialOrder=1,n_refinement_steps=1,numberEigenValues=1,xc_id=1, spinPolarized=0, nkx=1,nky=1,nkz=1, offsetFlagX=0,offsetFlagY=0,offsetFlagZ=0;
+  unsigned int finiteElementPolynomialOrder=1,n_refinement_steps=1,numberEigenValues=1,xc_id=1, spinPolarized=0, nkx=1,nky=1,nkz=1, offsetFlagX=0,offsetFlagY=0,offsetFlagZ=0,innerChebPolynomialDegree=1, innerChebNumberPasses=1;
   unsigned int chebyshevOrder=1,numPass=1, numSCFIterations=1,maxLinearSolverIterations=1, mixingHistory=1, npool=1;
 
   double radiusAtomBall=0.0, mixingParameter=0.5;
@@ -396,6 +396,14 @@ namespace dftParameters
 			      Patterns::Bool(),
 			      "[Advanced] Controls use of inner chebyshev filter in spectrum splitting versus full diagonalization using ScaLAPACK.");
 
+	    prm.declare_entry("INNER CHEBYSHEV POLYNOMIAL DEGREE", "1",
+			      Patterns::Integer(0,2000),
+			      "[Advanced] Polynomial degree of inner chebyshev filter used in spectrum splitting for computing valence eigenvalues of the projected Hamiltonian.");
+
+	    prm.declare_entry("INNER CHEBYSHEV FILTER PASSES", "1",
+			      Patterns::Integer(0,2000),
+			      "[Advanced] Number of passes of inner chebyshev filter used in spectrum splitting versus for computing valence eigenvalues of the projected Hamiltonian.");
+
 	    prm.declare_entry("LOWER BOUND WANTED SPECTRUM", "-10.0",
 			      Patterns::Double(),
 			      "[Developer] The lower bound of the wanted eigen spectrum. It is only used for the first iteration of the Chebyshev filtered subspace iteration procedure. A rough estimate based on single atom eigen values can be used here. Default value is good enough for most problems.");
@@ -607,6 +615,8 @@ namespace dftParameters
 	   dftParameters::numCoreWfcRR                  = prm.get_integer("SPECTRUM SPLIT CORE EIGENSTATES");
 	   dftParameters::spectrumSplitStartingScfIter  = prm.get_integer("SPECTRUM SPLIT STARTING SCF ITER");
 	   dftParameters::useInnerChebySpectrumSplit    = prm.get_bool("USE INNER CHEBY SPECTRUM SPLIT");
+	   dftParameters::innerChebPolynomialDegree     = prm.get_integer("INNER CHEBYSHEV POLYNOMIAL DEGREE");
+	   dftParameters::innerChebNumberPasses         = prm.get_integer("INNER CHEBYSHEV FILTER PASSES");
 	   dftParameters::lowerEndWantedSpectrum        = prm.get_double("LOWER BOUND WANTED SPECTRUM");
 	   dftParameters::lowerBoundUnwantedFracUpper   = prm.get_double("LOWER BOUND UNWANTED FRAC UPPER");
 	   dftParameters::chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
