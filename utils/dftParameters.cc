@@ -74,10 +74,10 @@ namespace dftParameters
   bool useHigherQuadNLP=true;
   bool useMixedPrecPGS_SR=false;
   bool useMixedPrecPGS_O=false;
-  bool useMixedPrecXTHX=false;
+  bool useMixedPrecXTHXSpectrumSplit=false;
+  bool useMixedPrecSubspaceRotSpectrumSplit=false;
   bool useMixedPrecCheby=false;
   unsigned int numAdaptiveFilterStates=0;
-  double mixedPrecStoppingTol=1e-4;
   unsigned int spectrumSplitStartingScfIter=1;
   bool useInnerChebySpectrumSplit=true;
 
@@ -454,13 +454,13 @@ namespace dftParameters
 			      "[Advanced] Use mixed precision arithmetic in overlap matrix computation step of PGS orthogonalization, if ORTHOGONALIZATION TYPE is set to PGS. Currently this optimization is only enabled for the real executable and with ScaLAPACK linking. Default setting is false.");
 
 
-	    prm.declare_entry("USE MIXED PREC XTHX", "false",
+	    prm.declare_entry("USE MIXED PREC XTHX SPECTRUM SPLIT", "false",
 			      Patterns::Bool(),
-			      "[Advanced] Use mixed precision arithmetic in computing subspace projected Kohn-Sham Hamiltonian. Currently this optimization is only enabled for the real executable and with ScaLAPACK linking. Default setting is false.");
+			      "[Advanced] Use mixed precision arithmetic in computing subspace projected Kohn-Sham Hamiltonian when SPECTRUM SPLIT CORE EIGENSTATES>0. Currently this optimization is only enabled for the real executable and with ScaLAPACK linking. Default setting is false.");
 
-	    prm.declare_entry("MIXED PREC STOPPING TOL", "1e-4",
-			      Patterns::Double(0),
-			      "[Advanced] Scf tolerance below which mixed precision cannot be used. Default value is 1e-4.");
+	    prm.declare_entry("USE MIXED PREC RR_SR SPECTRUM SPLIT", "false",
+			      Patterns::Bool(),
+			      "[Advanced] Use mixed precision arithmetic in Rayleigh-Ritz subspace rotation step when SPECTRUM SPLIT CORE EIGENSTATES>0. Currently this optimization is only enabled for the real executable and with ScaLAPACK linking. Default setting is false.");
 
 	    prm.declare_entry("ADAPTIVE FILTER STATES", "0",
 			      Patterns::Integer(0),
@@ -621,8 +621,8 @@ namespace dftParameters
 	   dftParameters::scalapackParalProcs= prm.get_integer("SCALAPACKPROCS");
 	   dftParameters::useMixedPrecPGS_SR= prm.get_bool("USE MIXED PREC PGS SR");
 	   dftParameters::useMixedPrecPGS_O= prm.get_bool("USE MIXED PREC PGS O");
-	   dftParameters::useMixedPrecXTHX= prm.get_bool("USE MIXED PREC XTHX");
-	   dftParameters::mixedPrecStoppingTol= prm.get_double("MIXED PREC STOPPING TOL");
+	   dftParameters::useMixedPrecXTHXSpectrumSplit= prm.get_bool("USE MIXED PREC XTHX SPECTRUM SPLIT");
+	   dftParameters::useMixedPrecSubspaceRotSpectrumSplit= prm.get_bool("USE MIXED PREC RR_SR SPECTRUM SPLIT");
 	   dftParameters::numAdaptiveFilterStates= prm.get_integer("ADAPTIVE FILTER STATES");
 	}
 	prm.leave_subsection ();

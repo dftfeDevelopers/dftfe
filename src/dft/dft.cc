@@ -767,7 +767,6 @@ namespace dftfe {
     double norm = 1.0;
     //CAUTION: Choosing a looser tolerance might lead to failed tests
     const double adaptiveChebysevFilterPassesTol = dftParameters::chebyshevTolerance;
-    const double mixedPrecStoppingNorm=dftParameters::mixedPrecStoppingTol;
 
     pcout<<std::endl;
     if (dftParameters::verbosity==0)
@@ -925,7 +924,7 @@ namespace dftfe {
 						  residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
 						  scfIter<dftParameters::spectrumSplitStartingScfIter?false:true,
 						  dftParameters::useInnerChebySpectrumSplit?true:false,
-						  norm<mixedPrecStoppingNorm?false:true);
+						  true);
 		      }
 		  }
 	      }
@@ -1011,7 +1010,7 @@ namespace dftfe {
 						  residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
 						  scfIter<dftParameters::spectrumSplitStartingScfIter?false:true,
 						  dftParameters::useInnerChebySpectrumSplit?true:false,
-						  norm<mixedPrecStoppingNorm?false:true);
+						  true);
 
 		      }
 		  }
@@ -1098,7 +1097,7 @@ namespace dftfe {
 					      residualNormWaveFunctionsAllkPoints[kPoint],
 					      scfIter<dftParameters::spectrumSplitStartingScfIter?false:true,
 					      dftParameters::useInnerChebySpectrumSplit?true:false,
-					      norm<mixedPrecStoppingNorm?false:true);
+					      true);
 
 		  }
 	      }
@@ -1153,7 +1152,7 @@ namespace dftfe {
 					      residualNormWaveFunctionsAllkPoints[kPoint],
 					      scfIter<dftParameters::spectrumSplitStartingScfIter?false:true,
 					      dftParameters::useInnerChebySpectrumSplit?true:false,
-					      norm<mixedPrecStoppingNorm?false:true);
+					      true);
 		  }
 		count++;
 		//
