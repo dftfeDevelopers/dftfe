@@ -233,9 +233,6 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 
   for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
     {
-
-      d_eigenVectorsFlattenedSTL[kPoint].resize(numEigenValues*matrix_free_data.get_vector_partitioner()->local_size(),dataTypes::number(0.0));
-
       std::fill(d_eigenVectorsFlattenedSTL[kPoint].begin(),d_eigenVectorsFlattenedSTL[kPoint].end(),0.0);
     }
 

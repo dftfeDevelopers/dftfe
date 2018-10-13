@@ -705,7 +705,7 @@ namespace dftfe {
 	moveMeshToAtoms(triangulationPar);
 	initBoundaryConditions();
 	initElectronicFields();
-	/*initPseudoPotentialAll();*/
+	initPseudoPotentialAll();
 
 	//
 	//compute Tr(XtHX) for each level of mesh
