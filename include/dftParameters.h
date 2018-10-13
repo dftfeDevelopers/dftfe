@@ -34,7 +34,7 @@ namespace dftfe {
     namespace dftParameters
     {
 
-      extern unsigned int finiteElementPolynomialOrder,n_refinement_steps,numberEigenValues,xc_id, spinPolarized, nkx,nky,nkz , offsetFlagX,offsetFlagY,offsetFlagZ;
+      extern unsigned int finiteElementPolynomialOrder,n_refinement_steps,numberEigenValues,xc_id, spinPolarized, nkx,nky,nkz , offsetFlagX,offsetFlagY,offsetFlagZ, innerChebPolynomialDegree, innerChebNumberPasses;
       extern unsigned int chebyshevOrder,numPass,numSCFIterations,maxLinearSolverIterations, mixingHistory, npool;
 
       extern double radiusAtomBall, mixingParameter;
@@ -90,6 +90,7 @@ namespace dftfe {
       extern bool useMixedPrecCheby;
       extern unsigned int spectrumSplitStartingScfIter;
       extern bool useInnerChebySpectrumSplit;
+
 
       /**
        * Declare parameters.

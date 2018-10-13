@@ -1,3 +1,4 @@
+set VERBOSITY = 4
 subsection Geometry
   set NATOMS=2
   set NATOM TYPES=1
@@ -32,8 +33,10 @@ subsection SCF parameters
   set MIXING PARAMETER = 0.5
   set MAXIMUM ITERATIONS               = 40
   set TEMPERATURE                      = 500
-  set TOLERANCE                        = 1e-5
+  set TOLERANCE                        = 1e-7
+  set STARTING WFC                     = ATOMIC
   subsection Eigen-solver parameters
       set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 12
+      set CHEBYSHEV FILTER TOLERANCE        = 5e-02  
   end
 end

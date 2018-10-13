@@ -25,43 +25,42 @@ namespace dftfe{
 
   namespace internal
   {
+      unsigned int setChebyshevOrder(const unsigned int upperBoundUnwantedSpectrum)
+      {
+	unsigned int chebyshevOrder;
+	if(upperBoundUnwantedSpectrum <= 500)
+	  chebyshevOrder = 30;
+	else if(upperBoundUnwantedSpectrum > 500  && upperBoundUnwantedSpectrum <= 1000)
+	  chebyshevOrder = 40;
+	else if(upperBoundUnwantedSpectrum > 1000 && upperBoundUnwantedSpectrum <= 2000)
+	  chebyshevOrder = 60;
+	else if(upperBoundUnwantedSpectrum > 2000 && upperBoundUnwantedSpectrum <= 3000)
+	  chebyshevOrder = 70;
+	else if(upperBoundUnwantedSpectrum > 3000 && upperBoundUnwantedSpectrum <= 5000)
+	  chebyshevOrder = 80;
+	else if(upperBoundUnwantedSpectrum > 5000 && upperBoundUnwantedSpectrum <= 9000)
+	  chebyshevOrder = 90;
+	else if(upperBoundUnwantedSpectrum > 9000 && upperBoundUnwantedSpectrum <= 14000)
+	  chebyshevOrder = 140;
+	else if(upperBoundUnwantedSpectrum > 14000 && upperBoundUnwantedSpectrum <= 20000)
+	  chebyshevOrder = 160;
+	else if(upperBoundUnwantedSpectrum > 20000 && upperBoundUnwantedSpectrum <= 30000)
+	  chebyshevOrder = 210;
+	else if(upperBoundUnwantedSpectrum > 30000 && upperBoundUnwantedSpectrum <= 50000)
+	  chebyshevOrder = 300;
+	else if(upperBoundUnwantedSpectrum > 50000 && upperBoundUnwantedSpectrum <= 80000)
+	  chebyshevOrder = 450;
+	else if(upperBoundUnwantedSpectrum > 80000 && upperBoundUnwantedSpectrum <= 1e5)
+	  chebyshevOrder = 550;
+	else if(upperBoundUnwantedSpectrum > 1e5 && upperBoundUnwantedSpectrum <= 2e5)
+	  chebyshevOrder = 700;
+	else if(upperBoundUnwantedSpectrum > 2e5 && upperBoundUnwantedSpectrum <= 5e5)
+	  chebyshevOrder = 1000;
+	else if(upperBoundUnwantedSpectrum > 5e5)
+	  chebyshevOrder = 1250;
 
-    unsigned int setChebyshevOrder(const unsigned int upperBoundUnwantedSpectrum)
-    {
-      unsigned int chebyshevOrder;
-      if(upperBoundUnwantedSpectrum <= 500)
-	chebyshevOrder = 30;
-      else if(upperBoundUnwantedSpectrum > 500  && upperBoundUnwantedSpectrum <= 1000)
-	chebyshevOrder = 40;
-      else if(upperBoundUnwantedSpectrum > 1000 && upperBoundUnwantedSpectrum <= 2000)
-	chebyshevOrder = 50;
-      else if(upperBoundUnwantedSpectrum > 2000 && upperBoundUnwantedSpectrum <= 3000)
-	chebyshevOrder = 60;
-      else if(upperBoundUnwantedSpectrum > 3000 && upperBoundUnwantedSpectrum <= 5000)
-	chebyshevOrder = 75;
-      else if(upperBoundUnwantedSpectrum > 5000 && upperBoundUnwantedSpectrum <= 9000)
-	chebyshevOrder = 90;
-      else if(upperBoundUnwantedSpectrum > 9000 && upperBoundUnwantedSpectrum <= 14000)
-	chebyshevOrder = 140;
-      else if(upperBoundUnwantedSpectrum > 14000 && upperBoundUnwantedSpectrum <= 20000)
-	chebyshevOrder = 160;
-      else if(upperBoundUnwantedSpectrum > 20000 && upperBoundUnwantedSpectrum <= 30000)
-	chebyshevOrder = 210;
-      else if(upperBoundUnwantedSpectrum > 30000 && upperBoundUnwantedSpectrum <= 50000)
-	chebyshevOrder = 300;
-      else if(upperBoundUnwantedSpectrum > 50000 && upperBoundUnwantedSpectrum <= 80000)
-	chebyshevOrder = 450;
-      else if(upperBoundUnwantedSpectrum > 80000 && upperBoundUnwantedSpectrum <= 1e5)
-	chebyshevOrder = 550;
-      else if(upperBoundUnwantedSpectrum > 1e5 && upperBoundUnwantedSpectrum <= 2e5)
-	chebyshevOrder = 700;
-      else if(upperBoundUnwantedSpectrum > 2e5 && upperBoundUnwantedSpectrum <= 5e5)
-	chebyshevOrder = 1000;
-      else if(upperBoundUnwantedSpectrum > 5e5)
-	chebyshevOrder = 1250;
-
-      return chebyshevOrder;
-    }
+	return chebyshevOrder;
+      }
   }
 
   //
