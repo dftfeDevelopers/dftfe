@@ -1134,6 +1134,8 @@ namespace dftfe{
 	  //
 	  norm = residualVector.frobenius_norm();
 
+	  pcout<<"Norm for Inner Chebyshev Filtered Subspace Iterations for pass "<<numberPasses<<" is "<<norm<<std::endl;
+
 	  numberPasses += 1;
 
 		      
