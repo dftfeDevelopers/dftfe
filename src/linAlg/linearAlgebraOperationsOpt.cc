@@ -962,13 +962,21 @@ namespace dftfe{
                }
            }
 
+      //
+      //create storage for rotated valence wavefuncitons
+      //
+      dealii::ScaLAPACKMatrix<T> valenceWaveFunctionsRotatedMatrixPar(numberWaveFunctions,
+								      numberValenceStates,
+								      processGridProjHam,
+								      rowsBlockSize,
+								      columnsBlockSize);
 
 
       //
       //Chebyshev filtering of valenceWaveFunctions
       //
       const unsigned int polynomialDegree = dftParameters::innerChebPolynomialDegree;
-      const unsigned int numberPasses = dftParameters::innerChebNumberPasses;
+
 
       if(dftParameters::verbosity >= 4)
 	{
@@ -985,12 +993,19 @@ namespace dftfe{
       //
       //projHamPar.add(projHamPar,-1.0,0.0);
 
-      internal::scaleScaLAPACKMat(processGridProjHam,
-				  projHamPar,
-				  -1.0);
+      double norm = 1e2;
+      const double tolerance = dftParameters::innerChebTolerance;
+      unsigned int numberPasses = 0;
 
-      for(unsigned int i = 0; i < numberPasses; ++i)
+      
+      while(norm > tolerance)
 	{
+
+	  internal::scaleScaLAPACKMat(processGridProjHam,
+				      projHamPar,
+				      -1.0);
+
+
 	  chebyshevFilter(projHamPar,
 			  valenceWaveFunctionsMatrixPar,
 			  processGridProjHam,
@@ -1006,80 +1021,132 @@ namespace dftfe{
 	  //
 	  pseudoGramSchmidtOrthogonalization(valenceWaveFunctionsMatrixPar,
 					     processGridProjHam);
+
+
+	  //
+	  //switch back the sign of projected Hamiltonian
+	  //
+	  //projHamPar.add(projHamPar,-1.0,0.0);
+	  internal::scaleScaLAPACKMat(processGridProjHam,
+				      projHamPar,
+				      -1.0);
+	  computing_timer.exit_section("Inner Chebyshev filtering, valence states");
+
+	  //
+	  //compute subspace projection of smaller Hamiltonian into orthogonalized space
+	  //
+	  computing_timer.enter_section("subspace projection valence, RR step");
+	  dealii::ScaLAPACKMatrix<T> projHamTimesValenceWaveFunctionsMatrixPar(numberWaveFunctions,
+									       numberValenceStates,
+									       processGridProjHam,
+									       rowsBlockSize,
+									       columnsBlockSize);
+
+	  projHamPar.mmult(projHamTimesValenceWaveFunctionsMatrixPar,
+			   valenceWaveFunctionsMatrixPar,
+			   false);
+
+	  dealii::ScaLAPACKMatrix<T> projHamValenceMatrixPar(numberValenceStates,
+							     processGridProjHam,
+							     columnsBlockSize);
+
+	  valenceWaveFunctionsMatrixPar.Tmmult(projHamValenceMatrixPar,
+					       projHamTimesValenceWaveFunctionsMatrixPar,
+					       false);
+	  computing_timer.exit_section("subspace projection valence, RR step");
+
+	  //
+	  //subspace diagonalization (extract eigenpairs of valProjHamPar)
+	  //
+	  computing_timer.enter_section("valence proj ham diagonalization and subspace rot, RR step");
+	  eigenValues.resize(numberValenceStates);
+	  eigenValues = projHamValenceMatrixPar.eigenpairs_symmetric_by_index_MRRR(std::make_pair(0,numberValenceStates-1),true);
+
+	 
+	  valenceWaveFunctionsMatrixPar.mmult(valenceWaveFunctionsRotatedMatrixPar,
+					      projHamValenceMatrixPar,
+					      false);
+	  computing_timer.exit_section("valence proj ham diagonalization and subspace rot, RR step");
+
+	  computing_timer.enter_section("Broadcast eigvec and eigenvalues across band groups, RR step");
+
+	  internal::broadcastAcrossInterCommScaLAPACKMat(processGridProjHam,
+							 valenceWaveFunctionsRotatedMatrixPar,
+							 interBandGroupComm,
+							 0);
+
+	  computing_timer.exit_section("Broadcast eigvec and eigenvalues across band groups, RR step");
+
+	  //
+	  //compute residual norm
+	  //
+
+
+	  //
+	  //create a scalapack matrix containing first column
+	  //
+	  dealii::ScaLAPACKMatrix<T> smallestValenceEigenVector(numberWaveFunctions,
+								1,
+								processGridProjHam,
+								rowsBlockSize,
+								1);
+      
+
+	  if(processGridProjHam->is_process_active())
+	    for(unsigned int i = 0; i < valenceWaveFunctionsRotatedMatrixPar.local_n(); ++i)
+	      {
+		const unsigned int glob_i = valenceWaveFunctionsRotatedMatrixPar.global_column(i);
+		if(glob_i == 0)
+		  {
+		    for(unsigned int j = 0; j < valenceWaveFunctionsRotatedMatrixPar.local_m(); ++j)
+		      {
+			const unsigned int glob_j = valenceWaveFunctionsRotatedMatrixPar.global_row(j);
+			smallestValenceEigenVector.local_el(j, i) = valenceWaveFunctionsRotatedMatrixPar.local_el(j, i);
+		      }
+		  }
+	      }
+
+
+	  //
+	  //create a temp matrix to store eigenvector residual
+	  //
+	  dealii::ScaLAPACKMatrix<T> residualVector(numberWaveFunctions,
+						    1,
+						    processGridProjHam,
+						    rowsBlockSize,
+						    1);
+
+	  //
+	  //compute eigenVector norm
+	  //
+	  projHamPar.mmult(residualVector,
+			   smallestValenceEigenVector,
+			   false);
+
+	  //
+	  //scale eigenVector with eigenValue
+	  //
+	  residualVector.add(-eigenValues[0],
+			     smallestValenceEigenVector);
+
+	  //
+	  //evaluate the norm of the residual vector
+	  //
+	  norm = residualVector.frobenius_norm();
+
+	  numberPasses += 1;
+
+		      
 	}
 
-      //
-      //switch back the sign of projected Hamiltonian
-      //
-      //projHamPar.add(projHamPar,-1.0,0.0);
-      internal::scaleScaLAPACKMat(processGridProjHam,
-				  projHamPar,
-				  -1.0);
-      computing_timer.exit_section("Inner Chebyshev filtering, valence states");
-
-      //
-      //compute subspace projection of smaller Hamiltonian into orthogonalized space
-      //
-      computing_timer.enter_section("subspace projection valence, RR step");
-      dealii::ScaLAPACKMatrix<T> projHamTimesValenceWaveFunctionsMatrixPar(numberWaveFunctions,
-							          numberValenceStates,
-							          processGridProjHam,
-							          rowsBlockSize,
-							          columnsBlockSize);
-
-      projHamPar.mmult(projHamTimesValenceWaveFunctionsMatrixPar,
-	              valenceWaveFunctionsMatrixPar,
-                      false);
-
-      dealii::ScaLAPACKMatrix<T> projHamValenceMatrixPar(numberValenceStates,
-							 processGridProjHam,
-							 columnsBlockSize);
-
-      valenceWaveFunctionsMatrixPar.Tmmult(projHamValenceMatrixPar,
-	              projHamTimesValenceWaveFunctionsMatrixPar,
-                      false);
-      computing_timer.exit_section("subspace projection valence, RR step");
-      //
-      //subspace diagonalization (extract eigenpairs of valProjHamPar)
-      //
-
-      computing_timer.enter_section("valence proj ham diagonalization and subspace rot, RR step");
-      eigenValues.resize(numberValenceStates);
-      eigenValues=projHamValenceMatrixPar.eigenpairs_symmetric_by_index_MRRR
-	          (std::make_pair(0,numberValenceStates-1),true);
-
-      dealii::ScaLAPACKMatrix<T> valenceWaveFunctionsRotatedMatrixPar(numberWaveFunctions,
-							       numberValenceStates,
-							       processGridProjHam,
-							       rowsBlockSize,
-							       columnsBlockSize);
-      valenceWaveFunctionsMatrixPar.mmult(valenceWaveFunctionsRotatedMatrixPar,
-	              projHamValenceMatrixPar,
-                      false);
-      computing_timer.exit_section("valence proj ham diagonalization and subspace rot, RR step");
-
-      computing_timer.enter_section("Broadcast eigvec and eigenvalues across band groups, RR step");
-
-      internal::broadcastAcrossInterCommScaLAPACKMat
-	                                   (processGridProjHam,
-		                            valenceWaveFunctionsRotatedMatrixPar,
-				            interBandGroupComm,
-					    0);
-      /*
-      MPI_Bcast(&eigenValues[0],
-		eigenValues.size(),
-		MPI_DOUBLE,
-		0,
-		interBandGroupComm);
-      */
-      computing_timer.exit_section("Broadcast eigvec and eigenvalues across band groups, RR step");
+      pcout<<"Number of Inner Chebyshev Filtered Subspace Iterations: "<<numberPasses<<std::endl;
+       
 
       //
       //subspace rotation
       //
 
-      if (useMixedPrec && dftParameters::useMixedPrecSubspaceRotSpectrumSplit
-)
+      if (useMixedPrec && dftParameters::useMixedPrecSubspaceRotSpectrumSplit)
       {
 	  computing_timer.enter_section("Blocked subspace rotation mixed prec, RR step");
 
