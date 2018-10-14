@@ -944,9 +944,20 @@ namespace dftfe{
 							       processGridProjHam,
 							       rowsBlockSize,
 							       columnsBlockSize);
+
       //
-      //Fill in valenceWaveFunctionsMatrixPar
+      //create a tempMatrix of the same size as valenceWaveFunctionsMatrixPar
       //
+      dealii::ScaLAPACKMatrix<T> tempValenceWaveFunctionsMatrixPar(numberWaveFunctions,
+								   numberValenceStates,
+								   processGridProjHam,
+								   rowsBlockSize,
+								   columnsBlockSize);
+      
+
+      //
+      //Fill in valenceWaveFunctionsMatrixPar with unit vectors
+      //column "j" of valenceWaveFunctionsMatrixPar will have "1" at the row index corresponding to (numberWaveFunctions-1)-j
       if(processGridProjHam->is_process_active())
          for(unsigned int i = 0; i < valenceWaveFunctionsMatrixPar.local_m(); ++i)
            {
@@ -954,11 +965,34 @@ namespace dftfe{
              for (unsigned int j = 0; j < valenceWaveFunctionsMatrixPar.local_n(); ++j)
                {
 		 const unsigned int glob_j = valenceWaveFunctionsMatrixPar.global_column(j);
-		 const unsigned int rowIndexToSetOne = dftParameters::numCoreWfcRR+glob_j;
+		 const unsigned int rowIndexToSetOne = (numberWaveFunctions-1)-glob_j;
 		 if(glob_i == rowIndexToSetOne)
 		   valenceWaveFunctionsMatrixPar.local_el(i, j) = 1.0;
 		 else
 		   valenceWaveFunctionsMatrixPar.local_el(i, j) = 0.0;
+               }
+           }
+
+      //
+      //create a temp matrix containing reverse permutation of the Identity matrix of the size numberValenceStates x numberValenceStates to be used later
+      //
+      dealii::ScaLAPACKMatrix<T> permutedIdentityMatrix(numberValenceStates,
+							processGridProjHam,
+							columnsBlockSize);
+
+      
+      if(processGridProjHam->is_process_active())
+         for(unsigned int i = 0; i < permutedIdentityMatrix.local_m(); ++i)
+           {
+             const unsigned int glob_i = permutedIdentityMatrix.global_row(i);
+             for (unsigned int j = 0; j < permutedIdentityMatrix.local_n(); ++j)
+               {
+		 const unsigned int glob_j = permutedIdentityMatrix.global_column(j);
+		 const unsigned int rowIndexToSetOne = (numberValenceStates-1)-glob_j;
+		 if(glob_i == rowIndexToSetOne)
+		   permutedIdentityMatrix.local_el(i, j) = 1.0;
+		 else
+		   permutedIdentityMatrix.local_el(i, j) = 0.0;
                }
            }
 
@@ -986,7 +1020,7 @@ namespace dftfe{
 	}
 
 
-      computing_timer.enter_section("Inner Chebyshev filtering, valence states");
+      
 
       //
       //change the sign of projected Hamiltonian
@@ -997,14 +1031,19 @@ namespace dftfe{
       const double tolerance = dftParameters::innerChebTolerance;
       unsigned int numberPasses = 0;
 
+      internal::scaleScaLAPACKMat(processGridProjHam,
+				  projHamPar,
+				  -1.0);
+
       
       while(norm > tolerance)
 	{
 
-	  internal::scaleScaLAPACKMat(processGridProjHam,
+	  /*internal::scaleScaLAPACKMat(processGridProjHam,
 				      projHamPar,
-				      -1.0);
+				      -1.0);*/
 
+	  computing_timer.enter_section("Inner Chebyshev filtering, valence states");
 
 	  chebyshevFilter(projHamPar,
 			  valenceWaveFunctionsMatrixPar,
@@ -1015,22 +1054,24 @@ namespace dftfe{
 			  -upperBoundValenceSpectrum);
 
 
-
+	  computing_timer.exit_section("Inner Chebyshev filtering, valence states");
 	  //
 	  //orthogonalize valenceWaveFunctions
 	  //
+	  computing_timer.enter_section("Inner Pseudo-GramSchmidt, valence states");
 	  pseudoGramSchmidtOrthogonalization(valenceWaveFunctionsMatrixPar,
 					     processGridProjHam);
+	  computing_timer.exit_section("Inner Pseudo-GramSchmidt, valence states");
 
 
 	  //
 	  //switch back the sign of projected Hamiltonian
 	  //
 	  //projHamPar.add(projHamPar,-1.0,0.0);
-	  internal::scaleScaLAPACKMat(processGridProjHam,
+	  /*internal::scaleScaLAPACKMat(processGridProjHam,
 				      projHamPar,
-				      -1.0);
-	  computing_timer.exit_section("Inner Chebyshev filtering, valence states");
+				      -1.0);*/
+	 
 
 	  //
 	  //compute subspace projection of smaller Hamiltonian into orthogonalized space
@@ -1092,19 +1133,26 @@ namespace dftfe{
 								1);
       
 
-	  if(processGridProjHam->is_process_active())
+	  /*if(processGridProjHam->is_process_active())
 	    for(unsigned int i = 0; i < valenceWaveFunctionsRotatedMatrixPar.local_n(); ++i)
 	      {
 		const unsigned int glob_i = valenceWaveFunctionsRotatedMatrixPar.global_column(i);
-		if(glob_i == 0)
+		if(glob_i == numberValenceStates-1)
 		  {
 		    for(unsigned int j = 0; j < valenceWaveFunctionsRotatedMatrixPar.local_m(); ++j)
 		      {
 			const unsigned int glob_j = valenceWaveFunctionsRotatedMatrixPar.global_row(j);
-			smallestValenceEigenVector.local_el(j, i) = valenceWaveFunctionsRotatedMatrixPar.local_el(j, i);
+			smallestValenceEigenVector.local_el(j, 0) = valenceWaveFunctionsRotatedMatrixPar.local_el(j, i);
 		      }
 		  }
-	      }
+		  }*/
+
+
+
+	  valenceWaveFunctionsRotatedMatrixPar.copy_to(smallestValenceEigenVector,
+						       std::make_pair(0,numberValenceStates-1),
+						       std::make_pair(0,0),
+						       std::make_pair(numberWaveFunctions,1));
 
 
 	  //
@@ -1126,7 +1174,7 @@ namespace dftfe{
 	  //
 	  //scale eigenVector with eigenValue
 	  //
-	  residualVector.add(-eigenValues[0],
+	  residualVector.add(-eigenValues[numberValenceStates-1],
 			     smallestValenceEigenVector);
 
 	  //
@@ -1142,7 +1190,15 @@ namespace dftfe{
 	}
 
       pcout<<"Number of Inner Chebyshev Filtered Subspace Iterations: "<<numberPasses<<std::endl;
-       
+
+      //
+      //rotate valenceWaveFunctionsRotatedMatrixPar with a reverse permutation of the Identity matrix
+      //
+      valenceWaveFunctionsRotatedMatrixPar.mmult(tempValenceWaveFunctionsMatrixPar,
+						 permutedIdentityMatrix,
+						 false);
+
+      tempValenceWaveFunctionsMatrixPar.copy_to(valenceWaveFunctionsRotatedMatrixPar);
 
       //
       //subspace rotation

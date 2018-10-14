@@ -27,7 +27,7 @@ c_flagsRelease=-O2
 cxx_flagsRelease=-O2
 
 #Optmization flag: 1 for optimized mode and 0 for debug mode compilation
-optimizedMode=1
+optimizedMode=0
 
 ###########################################################################
 #Usually, no changes are needed below this line
