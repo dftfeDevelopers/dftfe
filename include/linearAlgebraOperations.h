@@ -219,7 +219,7 @@ namespace dftfe
 						      const MPI_Comm &mpiComm,
 						      const bool useMixedPrec);
 
-
+#if(defined DEAL_II_WITH_SCALAPACK && !USE_COMPLEX)
     /** @brief Orthogonalize given subspace using Pseudo-Gram-Schmidt orthogonalization
      *  
      *	@param[in] X Given subspace as scalapack matrix
@@ -236,6 +236,8 @@ namespace dftfe
      *  In-place rotated subspace
      *  @param[out] eigenValues of the Projected Hamiltonian
      */
+#endif
+
     void rayleighRitz(operatorDFTClass        & operatorMatrix,
 		      std::vector<vectorType> & X,
 		      std::vector<double>     & eigenValues);
