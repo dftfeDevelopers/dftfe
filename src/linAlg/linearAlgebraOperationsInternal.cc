@@ -232,8 +232,6 @@ namespace dftfe
 	                                               bandGroupLowHighPlusOneIndices[1]);
 
 	  std::vector<dataTypes::number> overlapMatrixBlock(N*vectorsBlockSize,0.0);
-	  std::vector<dataTypes::number> blockVectorsMatrix(numLocalDofs*vectorsBlockSize,0.0);
-	  std::vector<dataTypes::numberLowPrec> blockVectorsMatrixLowPrec(numLocalDofs*vectorsBlockSize,0.0);
 	  std::vector<dataTypes::numberLowPrec> overlapMatrixBlockLowPrec(N*vectorsBlockSize,0.0);
 
 	  std::vector<dataTypes::numberLowPrec> subspaceVectorsArrayLowPrec(subspaceVectorsArray,
@@ -250,33 +248,14 @@ namespace dftfe
 	      if ((ivec+B)<=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1] &&
 	      (ivec+B)>bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
 	      {
-		  const char transA = 'N',transB = 'N';
+		  const char transA = 'N',transB = 'T';
 		  const dataTypes::number scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
 		  const dataTypes::numberLowPrec scalarCoeffAlphaLowPrec = 1.0,scalarCoeffBetaLowPrec = 0.0;
 
 		  std::fill(overlapMatrixBlock.begin(),overlapMatrixBlock.end(),0.);
                   std::fill(overlapMatrixBlockLowPrec.begin(),overlapMatrixBlockLowPrec.end(),0.);
 
-	          // Extract XcBlock from X^{T}.
-		  for (unsigned int i = 0; i <numLocalDofs; ++i)
-		      for (unsigned int j = 0; j <B; ++j)
-		      {
-#ifdef USE_COMPLEX
-			  blockVectorsMatrix[j*numLocalDofs+i]=
-			      std::conj(subspaceVectorsArray[N*i+j+ivec]);
-
-		          blockVectorsMatrixLowPrec[j*numLocalDofs+i]=
-			      std::conj((dataTypes::numberLowPrec)subspaceVectorsArray[N*i+j+ivec]);
-#else
-			  blockVectorsMatrix[j*numLocalDofs+i]=
-			      subspaceVectorsArray[N*i+j+ivec];
-
-			  blockVectorsMatrixLowPrec[j*numLocalDofs+i]=
-			      (dataTypes::numberLowPrec)subspaceVectorsArray[N*i+j+ivec];
-#endif
-		      }
-
-		  const unsigned int diagBlockSize=B;
+		  const unsigned int diagBlockSize=1;
 		  const unsigned int D=N-ivec;
 
 		  dgemm_(&transA,
@@ -287,26 +266,29 @@ namespace dftfe
 			 &scalarCoeffAlpha,
 			 subspaceVectorsArray+ivec,
 			 &N,
-			 &blockVectorsMatrix[0],
-			 &numLocalDofs,
+			 subspaceVectorsArray+ivec,
+			 &N,
 			 &scalarCoeffBeta,
 			 &overlapMatrixBlock[0],
 			 &D);
 
 		  const unsigned int DRem=D-diagBlockSize;
-		  sgemm_(&transA,
-			 &transB,
-			 &DRem,
-			 &B,
-			 &numLocalDofs,
-			 &scalarCoeffAlphaLowPrec,
-			 &subspaceVectorsArrayLowPrec[0]+ivec+diagBlockSize,
-			 &N,
-			 &blockVectorsMatrixLowPrec[0],
-			 &numLocalDofs,
-			 &scalarCoeffBetaLowPrec,
-			 &overlapMatrixBlockLowPrec[diagBlockSize],
-			 &D);
+		  if (DRem!=0)
+		  {
+		    sgemm_(&transA,
+			   &transB,
+			   &DRem,
+			   &B,
+			   &numLocalDofs,
+			   &scalarCoeffAlphaLowPrec,
+			   &subspaceVectorsArrayLowPrec[0]+ivec+diagBlockSize,
+			   &N,
+			   &subspaceVectorsArrayLowPrec[0]+ivec,
+			   &N,
+			   &scalarCoeffBetaLowPrec,
+			   &overlapMatrixBlockLowPrec[diagBlockSize],
+			   &D);
+		  }
 
 		  for(unsigned int i = 0; i <B; ++i)
 		      for (unsigned int j = ivec+diagBlockSize; j <N; ++j)
@@ -407,7 +389,6 @@ namespace dftfe
 	                                               bandGroupLowHighPlusOneIndices[1]);
 
 	  std::vector<T> overlapMatrixBlock(N*vectorsBlockSize,0.0);
-	  std::vector<T> blockVectorsMatrix(numLocalDofs*vectorsBlockSize,0.0);
 
 	  for (unsigned int ivec = 0; ivec < N; ivec += vectorsBlockSize)
 	  {
@@ -420,26 +401,12 @@ namespace dftfe
 	      if ((ivec+B)<=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1] &&
 	      (ivec+B)>bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
 	      {
-		  const char transA = 'N',transB = 'N';
+		  const char transA = 'N',transB = 'T';
 		  const T scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
 
 		  std::fill(overlapMatrixBlock.begin(),overlapMatrixBlock.end(),0.);
 
-	          // Extract XcBlock from X^{T}.
-		  for (unsigned int i = 0; i <numLocalDofs; ++i)
-		      for (unsigned int j = 0; j <B; ++j)
-		      {
-#ifdef USE_COMPLEX
-			  blockVectorsMatrix[j*numLocalDofs+i]=
-			      std::conj(subspaceVectorsArray[N*i+j+ivec]);
-#else
-			  blockVectorsMatrix[j*numLocalDofs+i]=
-			      subspaceVectorsArray[N*i+j+ivec];
-#endif
-		      }
-
 		  const unsigned int D=N-ivec;
-
 
 		  // Comptute local XTrunc^{T}*XcBlock.
 		  dgemm_(&transA,
@@ -450,8 +417,8 @@ namespace dftfe
 			 &scalarCoeffAlpha,
 			 subspaceVectorsArray+ivec,
 			 &N,
-			 &blockVectorsMatrix[0],
-			 &numLocalDofs,
+			 subspaceVectorsArray+ivec,
+			 &N,
 			 &scalarCoeffBeta,
 			 &overlapMatrixBlock[0],
 			 &D);
