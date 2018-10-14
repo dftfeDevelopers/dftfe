@@ -34,7 +34,7 @@ namespace dftfe {
     namespace dftParameters
     {
 
-      extern unsigned int finiteElementPolynomialOrder,n_refinement_steps,numberEigenValues,xc_id, spinPolarized, nkx,nky,nkz , offsetFlagX,offsetFlagY,offsetFlagZ, innerChebPolynomialDegree, innerChebNumberPasses;
+      extern unsigned int finiteElementPolynomialOrder,n_refinement_steps,numberEigenValues,xc_id, spinPolarized, nkx,nky,nkz , offsetFlagX,offsetFlagY,offsetFlagZ, innerChebPolynomialDegree; 
       extern unsigned int chebyshevOrder,numPass,numSCFIterations,maxLinearSolverIterations, mixingHistory, npool;
 
       extern double radiusAtomBall, mixingParameter;
@@ -45,7 +45,7 @@ namespace dftfe {
 
       extern double outerAtomBallRadius, meshSizeOuterDomain;
       extern double meshSizeInnerBall, meshSizeOuterBall;
-      extern double chebyshevTolerance;
+      extern double chebyshevTolerance,innerChebTolerance;
       extern std::string mixingMethod ;
 
 
