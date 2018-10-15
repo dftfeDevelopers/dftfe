@@ -104,9 +104,12 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 					       bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
 
   if(isSpectrumSplit)
-    subspaceIterationSolver.reinitProjHamSpectrumBounds(a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
-							valenceCoreSplit[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
-							bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
+    {
+      double bufferFora0 = -0.7;
+      subspaceIterationSolver.reinitProjHamSpectrumBounds(a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType]+bufferFora0,
+							  valenceCoreSplit[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
+							  bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
+    }
   
 
   subspaceIterationSolver.solve(kohnShamDFTEigenOperator,
@@ -184,7 +187,7 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 
  
   bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=eigenValuesTemp.back();
-  double bufferForValenceCoreSplit = 0.1;
+  double bufferForValenceCoreSplit = 0.7;
 
   if(isSpectrumSplit)
     {

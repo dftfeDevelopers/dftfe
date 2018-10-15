@@ -271,7 +271,7 @@ namespace dftfe
       //
       //copy X = Y
       //
-      X.add(Y,0.0,1.0);
+      Y.copy_to(X);
 
       
       

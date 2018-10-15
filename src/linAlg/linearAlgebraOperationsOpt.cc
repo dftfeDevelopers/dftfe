@@ -882,9 +882,9 @@ namespace dftfe{
                     (operatorDFTClass & operatorMatrix,
 		     const std::vector<T> & X,
 		     std::vector<T> & Y,
-		     const double lowerBoundCoreSpectrum,
-		     const double lowerBoundValenceSpectrum,
-		     const double upperBoundValenceSpectrum,
+		     double lowerBoundCoreSpectrum,
+		     double lowerBoundValenceSpectrum,
+		     double upperBoundValenceSpectrum,
 		     const unsigned int numberWaveFunctions,
 		     const unsigned int numberCoreStates,
 		     const MPI_Comm &interBandGroupComm,
@@ -1011,15 +1011,6 @@ namespace dftfe{
       //
       const unsigned int polynomialDegree = dftParameters::innerChebPolynomialDegree;
 
-
-      if(dftParameters::verbosity >= 4)
-	{
-	  pcout<<"Lower Bound of Valence Spectrum: "<<lowerBoundValenceSpectrum<<std::endl;
-	  pcout<<"Lower Bound of Core Spectrum: "<<lowerBoundCoreSpectrum<<std::endl;
-	  pcout<<"Upper Bound of Valence Spectrum: "<<upperBoundValenceSpectrum<<std::endl;
-	}
-
-
       
 
       //
@@ -1029,7 +1020,7 @@ namespace dftfe{
 
       double norm = 1e2;
       const double tolerance = dftParameters::innerChebTolerance;
-      unsigned int numberPasses = 0;
+      unsigned int numberPassCount = 0;
 
       internal::scaleScaLAPACKMat(processGridProjHam,
 				  projHamPar,
@@ -1037,13 +1028,21 @@ namespace dftfe{
 
       
       while(norm > tolerance)
-	{
+      {
 
 	  /*internal::scaleScaLAPACKMat(processGridProjHam,
 				      projHamPar,
 				      -1.0);*/
 
 	  computing_timer.enter_section("Inner Chebyshev filtering, valence states");
+
+	  if(dftParameters::verbosity >= 4)
+	    {
+	      pcout<<"Lower Bound of Valence Spectrum: "<<lowerBoundValenceSpectrum<<std::endl;
+	      pcout<<"Lower Bound of Core Spectrum: "<<lowerBoundCoreSpectrum<<std::endl;
+	      pcout<<"Upper Bound of Valence Spectrum: "<<upperBoundValenceSpectrum<<std::endl;
+	    }
+
 
 	  chebyshevFilter(projHamPar,
 			  valenceWaveFunctionsMatrixPar,
@@ -1182,14 +1181,22 @@ namespace dftfe{
 	  //
 	  norm = residualVector.frobenius_norm();
 
-	  pcout<<"Norm for Inner Chebyshev Filtered Subspace Iterations for pass "<<numberPasses<<" is "<<norm<<std::endl;
+	  pcout<<"Norm for Inner Chebyshev Filtered Subspace Iterations for pass "<<numberPassCount<<" is "<<norm<<" desired eigenValue "<<-eigenValues[numberValenceStates-1]<<std::endl;
 
-	  numberPasses += 1;
+	  numberPassCount += 1;
 
+	  //
+	  //copy valenceWaveFunctionsRotatedMatrixPar to valenceWaveFunctionsMatrixPar
+	  //
+	  valenceWaveFunctionsRotatedMatrixPar.copy_to(valenceWaveFunctionsMatrixPar);
+
+	  double buffer = 0.5;
+	  lowerBoundValenceSpectrum = -eigenValues[numberValenceStates-1]-buffer;
+	  upperBoundValenceSpectrum = -eigenValues[0];
 		      
 	}
 
-      pcout<<"Number of Inner Chebyshev Filtered Subspace Iterations: "<<numberPasses<<std::endl;
+      pcout<<"Number of Inner Chebyshev Filtered Subspace Iterations: "<<numberPassCount<<std::endl;
 
       //
       //rotate valenceWaveFunctionsRotatedMatrixPar with a reverse permutation of the Identity matrix
@@ -1199,6 +1206,17 @@ namespace dftfe{
 						 false);
 
       tempValenceWaveFunctionsMatrixPar.copy_to(valenceWaveFunctionsRotatedMatrixPar);
+
+      
+      std::vector<double> eigenValuesTemp = eigenValues;
+
+      //
+      //set the correct sign for eigenvalues and do a reverse permutation of eigenvalues as well
+      //
+      for(unsigned int i = 0; i < eigenValues.size(); ++i)
+	{
+	  eigenValues[i] = -eigenValuesTemp[(eigenValues.size()-1)-i];
+	}
 
       //
       //subspace rotation
@@ -1245,9 +1263,9 @@ namespace dftfe{
                     (operatorDFTClass & operatorMatrix,
 		     const std::vector<T> & X,
 		     std::vector<T> & Y,
-		     const double lowerBoundCoreSpectrum,
-		     const double lowerBoundValenceSpectrum,
-		     const double upperBoundValenceSpectrum,
+		     double lowerBoundCoreSpectrum,
+		     double lowerBoundValenceSpectrum,
+		     double upperBoundValenceSpectrum,
 		     const unsigned int numberWaveFunctions,
 		     const unsigned int numberCoreStates,
 		     const MPI_Comm &interBandGroupComm,
@@ -1753,9 +1771,9 @@ namespace dftfe{
 	                  (operatorDFTClass  & operatorMatrix,
 			   const std::vector<dataTypes::number> &,
 			   std::vector<dataTypes::number> &,
-			   const double lowerBoundCoreSpectrum,
-			   const double lowerBoundValenceSpectrum,
-			   const double upperBoundValenceSpectrum,
+			   double lowerBoundCoreSpectrum,
+			   double lowerBoundValenceSpectrum,
+			   double upperBoundValenceSpectrum,
 			   const unsigned int numberWaveFunctions,
 			   const unsigned int numberCoreStates,
 			   const MPI_Comm &,
