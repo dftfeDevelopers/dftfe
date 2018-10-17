@@ -367,7 +367,6 @@ namespace dftfe {
 
     a0.resize((dftParameters::spinPolarized+1)*d_kPointWeights.size(),dftParameters::lowerEndWantedSpectrum);
     bLow.resize((dftParameters::spinPolarized+1)*d_kPointWeights.size(),0.0);
-    valenceCoreSplit.resize((dftParameters::spinPolarized+1)*d_kPointWeights.size(),0.0);
 
     d_eigenVectorsFlattenedSTL.resize((1+dftParameters::spinPolarized)*d_kPointWeights.size());
     if (d_numEigenValuesRR!=d_numEigenValues)
@@ -923,7 +922,6 @@ namespace dftfe {
 						  subspaceIterationSolver,
 						  residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
 						  scfIter<dftParameters::spectrumSplitStartingScfIter?false:true,
-						  dftParameters::useInnerChebySpectrumSplit?true:false,
 						  true);
 		      }
 		  }
@@ -1009,7 +1007,6 @@ namespace dftfe {
 						  subspaceIterationSolver,
 						  residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
 						  scfIter<dftParameters::spectrumSplitStartingScfIter?false:true,
-						  dftParameters::useInnerChebySpectrumSplit?true:false,
 						  true);
 
 		      }
@@ -1096,7 +1093,6 @@ namespace dftfe {
 					      subspaceIterationSolver,
 					      residualNormWaveFunctionsAllkPoints[kPoint],
 					      scfIter<dftParameters::spectrumSplitStartingScfIter?false:true,
-					      dftParameters::useInnerChebySpectrumSplit?true:false,
 					      true);
 
 		  }
@@ -1151,7 +1147,6 @@ namespace dftfe {
 					      subspaceIterationSolver,
 					      residualNormWaveFunctionsAllkPoints[kPoint],
 					      scfIter<dftParameters::spectrumSplitStartingScfIter?false:true,
-					      dftParameters::useInnerChebySpectrumSplit?true:false,
 					      true);
 		  }
 		count++;
@@ -1360,7 +1355,6 @@ namespace dftfe {
 					      subspaceIterationSolver,
 					      residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
 					      false,
-					      false,
 					      false);
 		  }
 	      }
@@ -1391,7 +1385,6 @@ namespace dftfe {
 					  kohnShamDFTEigenOperator,
 					  subspaceIterationSolver,
 					  residualNormWaveFunctionsAllkPoints[kPoint],
-					  false,
 					  false,
 					  false);
 

@@ -140,27 +140,6 @@ namespace dftfe
 			 const bool useMixedPrec);
 
 
-     /** @brief Apply Chebyshev filter to a given subspace
-     *
-     *  @param[in] matrixA An object which has access to the given matrix
-     *  @param[in,out]  columnSpaceX Given subspace as a scalapack matrix
-     *  In-place update of the given subspace.
-     *  @param[in]  m Chebyshev polynomial degree
-     *  @param[in]  a lower bound of unwanted spectrum
-     *  @param[in]  b upper bound of unwanted spectrum
-     *  @param[in]  a0 lower bound of wanted spectrum
-     */
-#if(defined DEAL_II_WITH_SCALAPACK && !USE_COMPLEX)
-    void chebyshevFilter(dealii::ScaLAPACKMatrix<dataTypes::number> & matrixA,
-			 dealii::ScaLAPACKMatrix<dataTypes::number> & columnSpaceX,
-			 std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-			 const unsigned int m,
-			 const double a,
-			 const double b,
-			 const double a0);
-#endif    
-
-
     /** @brief Orthogonalize given subspace using GramSchmidt orthogonalization
      *
      *  @param[in] operatorMatrix An object which has access to the given matrix
@@ -219,16 +198,6 @@ namespace dftfe
 						      const MPI_Comm &mpiComm,
 						      const bool useMixedPrec);
 
-#if(defined DEAL_II_WITH_SCALAPACK && !USE_COMPLEX)
-    /** @brief Orthogonalize given subspace using Pseudo-Gram-Schmidt orthogonalization
-     *  
-     *	@param[in] X Given subspace as scalapack matrix
-     *
-     *  @return flag indicating success/failure. 1 for failure, 0 for success
-     */
-    void pseudoGramSchmidtOrthogonalization(dealii::ScaLAPACKMatrix<dataTypes::number> & X,
-					    std::shared_ptr<const dealii::Utilities::MPI::ProcessGrid> & processGrid);
-
     /** @brief Compute Rayleigh-Ritz projection
      *
      *  @param[in] operatorMatrix An object which has access to the given matrix
@@ -236,8 +205,6 @@ namespace dftfe
      *  In-place rotated subspace
      *  @param[out] eigenValues of the Projected Hamiltonian
      */
-#endif
-
     void rayleighRitz(operatorDFTClass        & operatorMatrix,
 		      std::vector<vectorType> & X,
 		      std::vector<double>     & eigenValues);
@@ -281,36 +248,6 @@ namespace dftfe
                      (operatorDFTClass        & operatorMatrix,
 		      const std::vector<T> & X,
 		      std::vector<T> & Y,
-		      const unsigned int numberComponents,
-		      const unsigned int numberCoreStates,
-		      const MPI_Comm &interBandGroupComm,
-		      const MPI_Comm &mpiComm,
-		      const bool useMixedPrec,
-		      std::vector<double>     & eigenValues);
-
-
-    /** @brief Compute Rayleigh-Ritz projection in case of spectrum split using inner Chebyshev filtering
-     *
-     *  @param[in] operatorMatrix An object which has access to the given matrix
-     *  @param[in]  X Given subspace as flattened array of multi-vectors.
-     *  @param[out] Y rotated subspace of top states
-     *  @param[in] lowerBoundCoreSpectrum Lower bound of core part of eigen-spectrum
-     *  @param[in] lowerBoundValenceSpectrum Lower bound of valence part of eigen-spectrum
-     *  @param[in] upperBoundValenceSpectrum Upper bound of valence part of eigen-spectrum
-     *  @param[in] numberComponents Number of vectors
-     *  @param[in] numberCoreStates Number of core states to be used for spectrum splitting
-     *  @param[in] interBandGroupComm interpool communicator for parallelization over band groups
-     *  @param[in] mpiComm domain decomposition communicator
-     *  @param[out] eigenValues of the Projected Hamiltonian
-     */
-    template<typename T>
-    void rayleighRitzSpectrumSplitInnerCheb
-                     (operatorDFTClass        & operatorMatrix,
-		      const std::vector<T> & X,
-		      std::vector<T> & Y,
-		      double lowerBoundCoreSpectrum,
-		      double lowerBoundValenceSpectrum,
-		      double upperBoundValenceSpectrum,
 		      const unsigned int numberComponents,
 		      const unsigned int numberCoreStates,
 		      const MPI_Comm &interBandGroupComm,

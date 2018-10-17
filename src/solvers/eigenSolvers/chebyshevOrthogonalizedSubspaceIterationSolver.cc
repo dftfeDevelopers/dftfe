@@ -108,19 +108,6 @@ namespace dftfe{
 
 
   //
-  //reinitialize spectrum bounds
-  //
-  void
-  chebyshevOrthogonalizedSubspaceIterationSolver::reinitProjHamSpectrumBounds(double lowerBoundCoreSpectrum,
-									      double lowerBoundValenceSpectrum,
-									      double upperBoundValenceSpectrum)
-  {
-    d_lowerBoundCoreSpectrum    = lowerBoundCoreSpectrum;
-    d_lowerBoundValenceSpectrum = lowerBoundValenceSpectrum;
-    d_upperBoundValenceSpectrum = upperBoundValenceSpectrum;
-  }
-
-  //
   // solve
   //
   eigenSolverClass::ReturnValueType
@@ -132,8 +119,7 @@ namespace dftfe{
 							std::vector<double>        & eigenValues,
 							std::vector<double>        & residualNorms,
 							const MPI_Comm &interBandGroupComm,
-							const bool useMixedPrec,
-							const bool useInnerChebySpectrumSplit)
+							const bool useMixedPrec)
   {
 
 
@@ -374,33 +360,15 @@ namespace dftfe{
 
     if (eigenValues.size()!=totalNumberWaveFunctions)
       {
-	if(useInnerChebySpectrumSplit)
-	  {
-	    linearAlgebraOperations::rayleighRitzSpectrumSplitInnerCheb(operatorMatrix,
-									eigenVectorsFlattened,
-									eigenVectorsRotFracDensityFlattened,
-									d_lowerBoundCoreSpectrum,
-									d_lowerBoundValenceSpectrum,
-									d_upperBoundValenceSpectrum,
-									totalNumberWaveFunctions,
-									totalNumberWaveFunctions-eigenValues.size(),
-									interBandGroupComm,
-									operatorMatrix.getMPICommunicator(),
-									useMixedPrec,
-									eigenValues);
-	  }
-	else
-	  {
-	    linearAlgebraOperations::rayleighRitzSpectrumSplitDirect(operatorMatrix,
-								     eigenVectorsFlattened,
-								     eigenVectorsRotFracDensityFlattened,
-								     totalNumberWaveFunctions,
-								     totalNumberWaveFunctions-eigenValues.size(),
-								     interBandGroupComm,
-								     operatorMatrix.getMPICommunicator(),
-								     useMixedPrec,
-								     eigenValues);
-	  }
+	linearAlgebraOperations::rayleighRitzSpectrumSplitDirect(operatorMatrix,
+								 eigenVectorsFlattened,
+								 eigenVectorsRotFracDensityFlattened,
+								 totalNumberWaveFunctions,
+								 totalNumberWaveFunctions-eigenValues.size(),
+								 interBandGroupComm,
+								 operatorMatrix.getMPICommunicator(),
+								 useMixedPrec,
+								 eigenValues);
 
 
 	eigenVectorsFlattenedRR.resize(eigenValues.size()*localVectorSize,dataTypes::number(0.0));

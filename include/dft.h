@@ -808,7 +808,6 @@ namespace dftfe {
 
       std::vector<double> a0;
       std::vector<double> bLow;
-      std::vector<double> valenceCoreSplit;
 
 
       vectorType d_tempEigenVec;
@@ -828,7 +827,6 @@ namespace dftfe {
 				     chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver,
 				     std::vector<double> & residualNormWaveFunctions,
 				     const bool isSpectrumSplit,
-				     const bool isInnerChebySpectrumSplit,
 				     const bool useMixedPrec);
 
       void computeResidualNorm(const std::vector<double> & eigenValuesTemp,

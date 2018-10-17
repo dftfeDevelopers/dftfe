@@ -27,12 +27,12 @@ namespace dftfe {
 namespace dftParameters
 {
 
-  unsigned int finiteElementPolynomialOrder=1,n_refinement_steps=1,numberEigenValues=1,xc_id=1, spinPolarized=0, nkx=1,nky=1,nkz=1, offsetFlagX=0,offsetFlagY=0,offsetFlagZ=0,innerChebPolynomialDegree=1; 
+  unsigned int finiteElementPolynomialOrder=1,n_refinement_steps=1,numberEigenValues=1,xc_id=1, spinPolarized=0, nkx=1,nky=1,nkz=1, offsetFlagX=0,offsetFlagY=0,offsetFlagZ=0;
   unsigned int chebyshevOrder=1,numPass=1, numSCFIterations=1,maxLinearSolverIterations=1, mixingHistory=1, npool=1;
 
   double radiusAtomBall=0.0, mixingParameter=0.5;
   double lowerEndWantedSpectrum=0.0,relLinearSolverTolerance=1e-10,selfConsistentSolverTolerance=1e-10,TVal=500, start_magnetization=0.0;
-  double chebyshevTolerance = 1e-02,innerChebTolerance=1e-02;;
+  double chebyshevTolerance = 1e-02;
   std::string mixingMethod = "";
 
   bool isPseudopotential=false,periodicX=false,periodicY=false,periodicZ=false, useSymm=false, timeReversal=false,pseudoTestsFlag=false, constraintMagnetization=false;
@@ -79,7 +79,6 @@ namespace dftParameters
   bool useMixedPrecCheby=false;
   unsigned int numAdaptiveFilterStates=0;
   unsigned int spectrumSplitStartingScfIter=1;
-  bool useInnerChebySpectrumSplit=true;
 
   void declare_parameters(ParameterHandler &prm)
   {
@@ -392,18 +391,6 @@ namespace dftParameters
 			      Patterns::Integer(0),
 			      "[Advanced] SCF iteration no beyond which spectrum splitting based can be used.");
 
-	    prm.declare_entry("USE INNER CHEBY SPECTRUM SPLIT", "true",
-			      Patterns::Bool(),
-			      "[Advanced] Controls use of inner chebyshev filter in spectrum splitting versus full diagonalization using ScaLAPACK.");
-
-	    prm.declare_entry("INNER CHEBYSHEV POLYNOMIAL DEGREE", "1",
-			      Patterns::Integer(0,2000),
-			      "[Advanced] Polynomial degree of inner chebyshev filter used in spectrum splitting for computing valence eigenvalues of the projected Hamiltonian.");
-
-	    prm.declare_entry("INNER CHEBYSHEV FILTER TOLERANCE", "1e-02",
-			      Patterns::Double(),
-			      "[Advanced] Number of passes of inner chebyshev filter used in spectrum splitting versus for computing valence eigenvalues of the projected Hamiltonian.");
-
 	    prm.declare_entry("LOWER BOUND WANTED SPECTRUM", "-10.0",
 			      Patterns::Double(),
 			      "[Developer] The lower bound of the wanted eigen spectrum. It is only used for the first iteration of the Chebyshev filtered subspace iteration procedure. A rough estimate based on single atom eigen values can be used here. Default value is good enough for most problems.");
@@ -614,9 +601,6 @@ namespace dftParameters
 	   dftParameters::numberEigenValues             = prm.get_integer("NUMBER OF KOHN-SHAM WAVEFUNCTIONS");
 	   dftParameters::numCoreWfcRR                  = prm.get_integer("SPECTRUM SPLIT CORE EIGENSTATES");
 	   dftParameters::spectrumSplitStartingScfIter  = prm.get_integer("SPECTRUM SPLIT STARTING SCF ITER");
-	   dftParameters::useInnerChebySpectrumSplit    = prm.get_bool("USE INNER CHEBY SPECTRUM SPLIT");
-	   dftParameters::innerChebPolynomialDegree     = prm.get_integer("INNER CHEBYSHEV POLYNOMIAL DEGREE");
-	   dftParameters::innerChebTolerance         = prm.get_double("INNER CHEBYSHEV FILTER TOLERANCE");
 	   dftParameters::lowerEndWantedSpectrum        = prm.get_double("LOWER BOUND WANTED SPECTRUM");
 	   dftParameters::lowerBoundUnwantedFracUpper   = prm.get_double("LOWER BOUND UNWANTED FRAC UPPER");
 	   dftParameters::chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
