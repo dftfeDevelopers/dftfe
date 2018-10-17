@@ -52,6 +52,7 @@ subsection SCF parameters
       set USE MIXED PREC PGS SR=true
       set USE MIXED PREC PGS O=true
       set WFC BLOCK SIZE=3
+      set CHEBY WFC BLOCK SIZE=3
       set SUBSPACE ROT DOFS BLOCK SIZE=500
   end
 end

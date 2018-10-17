@@ -37,10 +37,12 @@ namespace dftfe{
     /**
      * @brief Constructor.
      *
+     * @param mpi_comm domain decomposition mpi communicator
      * @param lowerBoundWantedSpectrum Lower Bound of the Wanted Spectrum.
      * @param lowerBoundUnWantedSpectrum Lower Bound of the UnWanted Spectrum.
      */
-    chebyshevOrthogonalizedSubspaceIterationSolver(double lowerBoundWantedSpectrum,
+    chebyshevOrthogonalizedSubspaceIterationSolver(const MPI_Comm &mpi_comm,
+	                                           double lowerBoundWantedSpectrum,
 						   double lowerBoundUnWantedSpectrum);
 
 
@@ -55,6 +57,7 @@ namespace dftfe{
      */
     eigenSolverClass::ReturnValueType solve(operatorDFTClass & operatorMatrix,
 	                                    std::vector<dataTypes::number> & eigenVectorsFlattened,
+					    std::vector<dataTypes::number> & eigenVectorsRotFracDensityFlattened,
 					    vectorType & tempEigenVec,
 					    const unsigned int totalNumberWaveFunctions,
 					    std::vector<double> & eigenValues,
@@ -75,7 +78,6 @@ namespace dftfe{
      */
     void reinitSpectrumBounds(double lowerBoundWantedSpectrum,
 			      double lowerBoundUnWantedSpectrum);
-
 
   private:
     //

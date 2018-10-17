@@ -51,7 +51,7 @@ end
 
 
 subsection Poisson problem parameters
-  set MAXIMUM ITERATIONS = 10000
+  set MAXIMUM ITERATIONS = 4000
   set TOLERANCE          = 1e-12
 end
 

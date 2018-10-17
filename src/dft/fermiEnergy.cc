@@ -241,10 +241,10 @@ void dftClass<FEOrder>::compute_fermienergy_constraintMagnetization(const std::v
   std::vector<double> eigenValuesAllkPointsUp, eigenValuesAllkPointsDown;
   for(int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
     {
-      for(int statesIter = 0; statesIter < numEigenValues; ++statesIter)
+      for(int statesIter = 0; statesIter < d_numEigenValues; ++statesIter)
 	{
 	  eigenValuesAllkPointsUp.push_back(eigenValuesInput[kPoint][statesIter]);
-	  eigenValuesAllkPointsDown.push_back(eigenValuesInput[kPoint][numEigenValues+statesIter]);
+	  eigenValuesAllkPointsDown.push_back(eigenValuesInput[kPoint][d_numEigenValues+statesIter]);
 	}
     }
 
@@ -260,6 +260,6 @@ void dftClass<FEOrder>::compute_fermienergy_constraintMagnetization(const std::v
     {
      pcout << "This is a constrained magnetization calculation " << std::endl ;
      pcout<< "Fermi energy for spin up                                    : "<< fermiEnergyUp<<std::endl;
-     pcout<< "Fermi energy for spin down                                    : "<< fermiEnergyDown<<std::endl;	
+     pcout<< "Fermi energy for spin down                                    : "<< fermiEnergyDown<<std::endl;
     }
 }

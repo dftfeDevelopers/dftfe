@@ -66,7 +66,8 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
 			    gradRhoOutValues,
 			    rhoOutValuesSpinPolarized,
 			    gradRhoOutValuesSpinPolarized,
-			    true);
+			    true,
+			    false);
 	}
 
    //
@@ -600,7 +601,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
 	for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
 	  {
 	    vectorTools::createDealiiVector<dataTypes::number>(matrix_free_data.get_vector_partitioner(),
-							       numEigenValues,
+							       d_numEigenValues,
 							       d_eigenVectorsFlattened[kPoint]);
 
 
@@ -614,23 +615,23 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
 
 	constraintsNoneDataInfo.precomputeMaps(matrix_free_data.get_vector_partitioner(),
 					       d_eigenVectorsFlattened[0].get_partitioner(),
-					       numEigenValues);
+					       d_numEigenValues);
 
-	const unsigned int localVectorSize = d_eigenVectorsFlattenedSTL[0].size()/numEigenValues;
+	const unsigned int localVectorSize = d_eigenVectorsFlattenedSTL[0].size()/d_numEigenValues;
 
 	for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
 	  {
 	    for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
 	      {
-		for(unsigned int iWave = 0; iWave < numEigenValues; ++iWave)
+		for(unsigned int iWave = 0; iWave < d_numEigenValues; ++iWave)
 		  {
-		    d_eigenVectorsFlattened[kPoint].local_element(iNode*numEigenValues+iWave)
-		      = d_eigenVectorsFlattenedSTL[kPoint][iNode*numEigenValues+iWave];
+		    d_eigenVectorsFlattened[kPoint].local_element(iNode*d_numEigenValues+iWave)
+		      = d_eigenVectorsFlattenedSTL[kPoint][iNode*d_numEigenValues+iWave];
 		  }
 	      }
 
 	    constraintsNoneDataInfo.distribute(d_eigenVectorsFlattened[kPoint],
-					       numEigenValues);
+					       d_numEigenValues);
 
 	  }
 
@@ -718,12 +719,12 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
 	//Create the full STL array from dealii flattened array
 	//
 	for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
-	  d_eigenVectorsFlattenedSTL[kPoint].resize(numEigenValues*matrix_free_data.get_vector_partitioner()->local_size(),dataTypes::number(0.0));
+	  d_eigenVectorsFlattenedSTL[kPoint].resize(d_numEigenValues*matrix_free_data.get_vector_partitioner()->local_size(),dataTypes::number(0.0));
 
 	Assert(d_eigenVectorsFlattened[0].local_size()==d_eigenVectorsFlattenedSTL[0].size(),
 	       dealii::ExcMessage("Incorrect local sizes of STL and dealii arrays"));
 
-	const unsigned int localVectorSize = d_eigenVectorsFlattenedSTL[0].size()/numEigenValues;
+	const unsigned int localVectorSize = d_eigenVectorsFlattenedSTL[0].size()/d_numEigenValues;
 
 	//
 	//copy the data into STL array
@@ -732,9 +733,9 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
 	  {
 	    for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
 	      {
-		for(unsigned int iWave = 0; iWave < numEigenValues; ++iWave)
+		for(unsigned int iWave = 0; iWave < d_numEigenValues; ++iWave)
 		  {
-		    d_eigenVectorsFlattenedSTL[kPoint][iNode*numEigenValues+iWave] = d_eigenVectorsFlattened[kPoint].local_element(iNode*numEigenValues+iWave);
+		    d_eigenVectorsFlattenedSTL[kPoint][iNode*d_numEigenValues+iWave] = d_eigenVectorsFlattened[kPoint].local_element(iNode*d_numEigenValues+iWave);
 		  }
 	      }
 	  }

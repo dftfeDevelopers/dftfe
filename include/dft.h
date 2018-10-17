@@ -147,13 +147,13 @@ namespace dftfe {
       /**
        * @brief Number of Kohn-Sham eigen values to be computed
        */
-      unsigned int numEigenValues;
+      unsigned int d_numEigenValues;
 
       /**
        * @brief Number of Kohn-Sham eigen values to be computed in the Rayleigh-Ritz step
        * after spectrum splitting.
        */
-      unsigned int numEigenValuesRR;
+      unsigned int d_numEigenValuesRR;
 
       /**
        * @brief Number of random wavefunctions
@@ -334,7 +334,8 @@ namespace dftfe {
 		     std::map<dealii::CellId, std::vector<double> > * _gradRhoValues,
 		     std::map<dealii::CellId, std::vector<double> > * _rhoValuesSpinPolarized,
 		     std::map<dealii::CellId, std::vector<double> > * _gradRhoValuesSpinPolarized,
-		     const bool isEvaluateGradRho);
+		     const bool isEvaluateGradRho,
+		     const bool isConsiderSpectrumSplitting);
 
 
       /**
@@ -415,7 +416,7 @@ namespace dftfe {
       /**
        *@brief Computes output electron-density from wavefunctions
        */
-      void compute_rhoOut();
+      void compute_rhoOut(const bool isConsiderSpectrumSplitting);
 
       /**
        *@brief Mixing schemes for mixing electron-density
@@ -611,6 +612,14 @@ namespace dftfe {
        */
       dftUtils::constraintMatrixInfo constraintsNoneDataInfo;
 
+      /**
+       *object which is used to store dealii constraint matrix information
+       *using STL vectors. The relevant dealii constraint matrix
+       *has hanging node constraints used in Poisson problem solution
+       *
+       */
+      dftUtils::constraintMatrixInfo constraintsNoneDataInfo2;
+
 
       ConstraintMatrix constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_noConstraints;
 
@@ -624,6 +633,7 @@ namespace dftfe {
       std::vector<std::vector<double> > eigenValuesRRSplit;
       std::vector<dealii::parallel::distributed::Vector<dataTypes::number> > d_eigenVectorsFlattened;
       std::vector<std::vector<dataTypes::number> > d_eigenVectorsFlattenedSTL;
+      std::vector<std::vector<dataTypes::number> > d_eigenVectorsRotFracDensityFlattenedSTL;
 
       /// parallel message stream
       ConditionalOStream  pcout;
@@ -798,6 +808,8 @@ namespace dftfe {
 
       std::vector<double> a0;
       std::vector<double> bLow;
+
+
       vectorType d_tempEigenVec;
       vectorType d_tempEigenVecPrev;
 

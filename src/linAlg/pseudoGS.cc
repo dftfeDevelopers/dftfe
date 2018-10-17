@@ -31,16 +31,15 @@ namespace dftfe
     unsigned int pseudoGramSchmidtOrthogonalization(std::vector<T> & X,
 						    const unsigned int numberVectors,
 						    const MPI_Comm &interBandGroupComm,
-						    const unsigned int numberCoreVectors,
 						    const MPI_Comm & mpiComm,
-						    const bool useMixedPrec,
-						    std::vector<T> & tempNonCoreVectorsArray)
+						    const bool useMixedPrec)
 
     {
       const unsigned int numLocalDofs = X.size()/numberVectors;
 
       dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
-      dealii::TimerOutput computing_timer(pcout,
+      dealii::TimerOutput computing_timer(mpiComm,
+	                                  pcout,
 					  dftParameters::reproducible_output ||
 					  dftParameters::verbosity<4 ? dealii::TimerOutput::never : dealii::TimerOutput::summary,
 					  dealii::TimerOutput::wall_times);
@@ -57,8 +56,9 @@ namespace dftfe
                                                rowsBlockSize);
 
       //S=X*X^{T}. Implemented as S=X^{T}*X with X^{T} stored in the column major format
-      computing_timer.enter_section("Fill overlap matrix for PGS");
       if (!(dftParameters::useMixedPrecPGS_O && useMixedPrec))
+      {
+	  computing_timer.enter_section("Fill overlap matrix PGS");
 	  internal::fillParallelOverlapMatrix(&X[0],
 					      X.size(),
 					      numberVectors,
@@ -66,7 +66,11 @@ namespace dftfe
 					      interBandGroupComm,
 					      mpiComm,
 					      overlapMatPar);
+	  computing_timer.exit_section("Fill overlap matrix PGS");
+      }
       else
+      {
+	  computing_timer.enter_section("Fill overlap matrix mixed prec PGS");
 	  internal::fillParallelOverlapMatrixMixedPrec(&X[0],
 					               X.size(),
 						       numberVectors,
@@ -74,7 +78,9 @@ namespace dftfe
 						       interBandGroupComm,
 						       mpiComm,
 						       overlapMatPar);
-      computing_timer.exit_section("Fill overlap matrix for PGS");
+	  computing_timer.exit_section("Fill overlap matrix mixed prec PGS");
+      }
+
 
       //S=L*L^{T}
       computing_timer.enter_section("PGS cholesky, copy, and triangular matrix invert");
@@ -145,45 +151,46 @@ namespace dftfe
       computing_timer.exit_section("PGS cholesky, copy, and triangular matrix invert");
 
       //X=X*L^{-1}^{T} implemented as X^{T}=L^{-1}*X^{T} with X^{T} stored in the column major format
-      computing_timer.enter_section("Subspace rotation PGS");
-
       if (!(dftParameters::useMixedPrecPGS_SR && useMixedPrec))
+      {
+
+	  computing_timer.enter_section("Subspace rotation PGS");
 	  internal::subspaceRotation(&X[0],
 				     X.size(),
 				     numberVectors,
-				     numberCoreVectors,
-				     &tempNonCoreVectorsArray[0],
 				     processGrid,
 				     interBandGroupComm,
 				     mpiComm,
 				     LMatPar,
 				     overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::upper_triangular?true:false,
 				     dftParameters::triMatPGSOpt?true:false);
+	  computing_timer.exit_section("Subspace rotation PGS");
+      }
       else
+      {
+	  computing_timer.enter_section("Subspace rotation mixed prec PGS");
 	  internal::subspaceRotationPGSMixedPrec(&X[0],
 				     X.size(),
 				     numberVectors,
-				     numberCoreVectors,
-				     &tempNonCoreVectorsArray[0],
 				     processGrid,
 				     interBandGroupComm,
 				     mpiComm,
 				     LMatPar,
 				     overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::upper_triangular?true:false);
+	  computing_timer.exit_section("Subspace rotation mixed prec PGS");
+      }
 
-      computing_timer.exit_section("Subspace rotation PGS");
 
       return 0;
     }
+
 #else
     template<typename T>
     unsigned int pseudoGramSchmidtOrthogonalization(std::vector<T> & X,
 						    const unsigned int numberVectors,
 						    const MPI_Comm &interBandGroupComm,
-						    const unsigned int numberCoreVectors,
 						    const MPI_Comm & mpiComm,
-						    const bool useMixedPrec,
-						    std::vector<T> & tempNonCoreVectorsArray)
+						    const bool useMixedPrec)
     {
        const unsigned int localVectorSize = X.size()/numberVectors;
 
@@ -193,7 +200,8 @@ namespace dftfe
        dealii::ConditionalOStream   pcout(std::cout,
 	                                 (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
 
-       dealii::TimerOutput computing_timer(pcout,
+       dealii::TimerOutput computing_timer(mpiComm,
+	                                   pcout,
 					  dftParameters::reproducible_output ||
 					  dftParameters::verbosity<4? dealii::TimerOutput::never : dealii::TimerOutput::summary,
 					  dealii::TimerOutput::wall_times);

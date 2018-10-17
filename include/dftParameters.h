@@ -69,6 +69,7 @@ namespace dftfe {
       extern unsigned int numCoreWfcRR;
       extern bool useBatchGEMM;
       extern unsigned int wfcBlockSize;
+      extern unsigned int chebyWfcBlockSize;
       extern unsigned int subspaceRotDofsBlockSize;
       extern bool enableSwitchToGS;
       extern unsigned int nbandGrps;
@@ -83,9 +84,11 @@ namespace dftfe {
       extern bool useHigherQuadNLP;
       extern bool useMixedPrecPGS_SR;
       extern bool useMixedPrecPGS_O;
+      extern bool useMixedPrecXTHXSpectrumSplit;
+      extern bool useMixedPrecSubspaceRotSpectrumSplit;
       extern unsigned int numAdaptiveFilterStates;
       extern bool useMixedPrecCheby;
-      extern double mixedPrecStoppingTol;
+      extern unsigned int spectrumSplitStartingScfIter;
 
       /**
        * Declare parameters.

@@ -63,7 +63,7 @@ end
 
 
 subsection SCF parameters
-  set MAXIMUM ITERATIONS = 100 
+  set MAXIMUM ITERATIONS = 40 
   set TOLERANCE          = 1e-6
   set MIXING PARAMETER   = 0.5
   set MIXING HISTORY     = 70
@@ -73,11 +73,13 @@ subsection SCF parameters
   subsection Eigen-solver parameters
      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 27
      set SPECTRUM SPLIT CORE EIGENSTATES=7
+     set SPECTRUM SPLIT STARTING SCF ITER=0
      set LOWER BOUND WANTED SPECTRUM = -10.0
      set CHEBYSHEV POLYNOMIAL DEGREE = 40
      set CHEBYSHEV FILTER TOLERANCE=1e-3
      set ORTHOGONALIZATION TYPE=PGS
      set WFC BLOCK SIZE=5
+     set CHEBY WFC BLOCK SIZE=5
      set ENABLE SUBSPACE ROT PGS OPT=true
      set SUBSPACE ROT DOFS BLOCK SIZE=10000
   end
@@ -85,6 +87,6 @@ end
 
 
 subsection Poisson problem parameters
-  set MAXIMUM ITERATIONS = 10000
+  set MAXIMUM ITERATIONS = 4000
   set TOLERANCE          = 1e-12
 end
