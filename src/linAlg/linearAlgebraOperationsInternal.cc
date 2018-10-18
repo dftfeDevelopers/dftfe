@@ -255,12 +255,11 @@ namespace dftfe
 		  std::fill(overlapMatrixBlock.begin(),overlapMatrixBlock.end(),0.);
                   std::fill(overlapMatrixBlockLowPrec.begin(),overlapMatrixBlockLowPrec.end(),0.);
 
-		  const unsigned int diagBlockSize=1;
 		  const unsigned int D=N-ivec;
 
 		  dgemm_(&transA,
 			 &transB,
-			 &diagBlockSize,
+			 &B,
 			 &B,
 			 &numLocalDofs,
 			 &scalarCoeffAlpha,
@@ -272,7 +271,7 @@ namespace dftfe
 			 &overlapMatrixBlock[0],
 			 &D);
 
-		  const unsigned int DRem=D-diagBlockSize;
+		  const unsigned int DRem=D-B;
 		  if (DRem!=0)
 		  {
 		    sgemm_(&transA,
@@ -281,19 +280,19 @@ namespace dftfe
 			   &B,
 			   &numLocalDofs,
 			   &scalarCoeffAlphaLowPrec,
-			   &subspaceVectorsArrayLowPrec[0]+ivec+diagBlockSize,
+			   &subspaceVectorsArrayLowPrec[0]+ivec+B,
 			   &N,
 			   &subspaceVectorsArrayLowPrec[0]+ivec,
 			   &N,
 			   &scalarCoeffBetaLowPrec,
-			   &overlapMatrixBlockLowPrec[diagBlockSize],
-			   &D);
+			   &overlapMatrixBlockLowPrec[0],
+			   &DRem);
 		  }
 
 		  for(unsigned int i = 0; i <B; ++i)
-		      for (unsigned int j = ivec+diagBlockSize; j <N; ++j)
-			  overlapMatrixBlock[i*D+j-ivec]
-			      =overlapMatrixBlockLowPrec[i*D+j-ivec];
+		      for (unsigned int j = 0; j <DRem; ++j)
+			  overlapMatrixBlock[i*D+j+B]
+			      =overlapMatrixBlockLowPrec[i*DRem+j];
 
 		  MPI_Barrier(mpiComm);
 		  // Sum local XTrunc^{T}*XcBlock across domain decomposition processors
