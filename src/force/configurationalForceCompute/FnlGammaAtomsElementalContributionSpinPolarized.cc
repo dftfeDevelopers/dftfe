@@ -73,7 +73,9 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionPeriodicSpinPolarize
 						    psiSpin1Quads.begin()+q*numEigenVectors*numKPoints,
 						    dftPtr->d_kPointWeights,
 						    dftPtr->eigenValues,
-						    dftPtr->fermiEnergy,
+					            dftPtr->fermiEnergy,
+				                    dftPtr->fermiEnergyUp,
+					            dftPtr->fermiEnergyDown,
 						    dftParameters::TVal);
 	       forceEvalNLP.submit_value(F,q);
 	  }
@@ -91,7 +93,9 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionPeriodicSpinPolarize
 						    psiSpin1Quads.begin()+q*numEigenVectors*numKPoints,
 						    dftPtr->d_kPointWeights,
 						    dftPtr->eigenValues,
-						    dftPtr->fermiEnergy,
+					            dftPtr->fermiEnergy,
+				                    dftPtr->fermiEnergyUp,
+					            dftPtr->fermiEnergyDown,
 						    dftParameters::TVal);
 	       forceEval.submit_value(F,q);
 	  }
@@ -161,7 +165,9 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodicSpinPolar
 								psiSpin0Quads.begin()+q*numEigenVectors,
 								psiSpin1Quads.begin()+q*numEigenVectors,
 								(dftPtr->eigenValues)[0],
-								dftPtr->fermiEnergy,
+					                        dftPtr->fermiEnergy,
+				                                dftPtr->fermiEnergyUp,
+					                        dftPtr->fermiEnergyDown,
 								dftParameters::TVal);
 	       forceEvalNLP.submit_value(F,q);
 	  }
@@ -178,7 +184,9 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodicSpinPolar
 								psiSpin0Quads.begin()+q*numEigenVectors,
 								psiSpin1Quads.begin()+q*numEigenVectors,
 								(dftPtr->eigenValues)[0],
-								dftPtr->fermiEnergy,
+					                        dftPtr->fermiEnergy,
+				                                dftPtr->fermiEnergyUp,
+					                        dftPtr->fermiEnergyDown,
 								dftParameters::TVal);
 	       forceEval.submit_value(F,q);
 	  }
