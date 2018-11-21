@@ -28,7 +28,8 @@ namespace dftfe
   {
 #if(defined DEAL_II_WITH_SCALAPACK && !USE_COMPLEX)
     template<typename T>
-    unsigned int pseudoGramSchmidtOrthogonalization(std::vector<T> & X,
+    unsigned int pseudoGramSchmidtOrthogonalization(operatorDFTClass & operatorMatrix,
+		                                    std::vector<T> & X,
 						    const unsigned int numberVectors,
 						    const MPI_Comm &interBandGroupComm,
 						    const MPI_Comm & mpiComm,
@@ -45,15 +46,20 @@ namespace dftfe
 					  dealii::TimerOutput::wall_times);
 
 
-      const unsigned rowsBlockSize=std::min((unsigned int)50,numberVectors);
+      const unsigned int rowsBlockSize=operatorMatrix.getScalapackBlockSize();
       std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  processGrid;
       internal::createProcessGridSquareMatrix(mpiComm,
-					      numberVectors,
-					      processGrid);
+                                              numberVectors,
+                                              processGrid);
 
       dealii::ScaLAPACKMatrix<T> overlapMatPar(numberVectors,
                                                processGrid,
                                                rowsBlockSize);
+
+      if (processGrid->is_process_active())
+         std::fill(&overlapMatPar.local_el(0,0),
+	           &overlapMatPar.local_el(0,0)+overlapMatPar.local_m()*overlapMatPar.local_n(),
+		   T(0.0));
 
       //S=X*X^{T}. Implemented as S=X^{T}*X with X^{T} stored in the column major format
       if (!(dftParameters::useMixedPrecPGS_O && useMixedPrec))
@@ -186,7 +192,8 @@ namespace dftfe
 
 #else
     template<typename T>
-    unsigned int pseudoGramSchmidtOrthogonalization(std::vector<T> & X,
+    unsigned int pseudoGramSchmidtOrthogonalization(operatorDFTClass & operatorMatrix,
+		                                    std::vector<T> & X,
 						    const unsigned int numberVectors,
 						    const MPI_Comm &interBandGroupComm,
 						    const MPI_Comm & mpiComm,

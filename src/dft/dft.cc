@@ -732,6 +732,12 @@ namespace dftfe {
     kohnShamDFTOperatorClass<FEOrder> kohnShamDFTEigenOperator(this,mpi_communicator);
     kohnShamDFTEigenOperator.init();
 
+#ifdef DEAL_II_WITH_SCALAPACK
+    kohnShamDFTEigenOperator.processGridOptionalELPASetup(d_numEigenValues,
+			                                  d_numEigenValues);
+
+#endif
+
     if (dftParameters::verbosity>=4)
       dftUtils::printCurrentMemoryUsage(mpi_communicator,
 	                      "Kohn-sham dft operator init called");
@@ -1663,6 +1669,12 @@ namespace dftfe {
 
     if (dftParameters::writeDensitySolutionFields)
       outputDensity();
+
+#ifdef DFTFE_WITH_ELPA
+    if (dftParameters::useELPA)
+	 kohnShamDFTEigenOperator.elpaUninit();
+#endif
+
 
     if (dftParameters::verbosity>=1)
        pcout << std::endl<< "Elapsed wall time since start of the program: " << d_globalTimer.wall_time() << " seconds\n"<<std::endl;

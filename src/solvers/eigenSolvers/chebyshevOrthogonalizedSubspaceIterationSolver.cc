@@ -323,7 +323,8 @@ namespace dftfe{
       {
 	computing_timer.enter_section("Pseudo-Gram-Schmidt");
 	const unsigned int flag=linearAlgebraOperations::pseudoGramSchmidtOrthogonalization
-	  (eigenVectorsFlattened,
+	  (operatorMatrix,
+	   eigenVectorsFlattened,
 	   totalNumberWaveFunctions,
 	   interBandGroupComm,
 	   operatorMatrix.getMPICommunicator(),

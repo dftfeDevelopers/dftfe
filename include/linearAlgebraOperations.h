@@ -192,7 +192,8 @@ namespace dftfe
       *  @return flag indicating success/failure. 1 for failure, 0 for success
       */
     template<typename T>
-      unsigned int pseudoGramSchmidtOrthogonalization(std::vector<T> & X,
+      unsigned int pseudoGramSchmidtOrthogonalization(operatorDFTClass & operatorMatrix,
+		                                      std::vector<T> & X,
 					              const unsigned int numberComponents,
 					              const MPI_Comm &interBandGroupComm,
 						      const MPI_Comm &mpiComm,

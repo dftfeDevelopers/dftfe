@@ -23,7 +23,12 @@
 
 #include <headers.h>
 #include <constraintMatrixInfo.h>
-
+#ifdef DFTFE_WITH_ELPA
+extern "C"
+{
+#include <elpa/elpa.h>
+}
+#endif
 
 namespace dftfe{
 
@@ -44,6 +49,21 @@ namespace dftfe{
      */
     virtual ~operatorDFTClass() = 0;
 
+#ifdef DEAL_II_WITH_SCALAPACK
+    unsigned int getScalapackBlockSize() const;
+
+    void processGridOptionalELPASetup(const unsigned int na,
+    		                      const unsigned int nev);
+
+#ifdef DFTFE_WITH_ELPA
+    void elpaUninit();
+
+    elpa_t & getElpaHandle();
+
+    elpa_autotune_t & getElpaAutoTuneHandle();
+#endif
+
+#endif
 
     /**
      * @brief initialize operatorClass
@@ -291,7 +311,49 @@ namespace dftfe{
     //mpi communicator
     //
     MPI_Comm                          d_mpi_communicator;
+
+#ifdef DEAL_II_WITH_SCALAPACK
+#ifdef DFTFE_WITH_ELPA
+    /// ELPA handle
+    elpa_t d_elpaHandle;
+
+    /// ELPA autotune handle
+    elpa_autotune_t d_elpaAutoTuneHandle;
+
+    /// processGrid mpi communicator
+    MPI_Comm d_processGridCommunicatorActive;
+#endif
+
+    //ScaLAPACK distributed format block size
+    unsigned int d_scalapackBlockSize;
+#endif
   };
+
+/*--------------------- Inline functions --------------------------------*/
+
+#  ifndef DOXYGEN
+#ifdef DEAL_II_WITH_SCALAPACK
+   inline unsigned int
+   operatorDFTClass::getScalapackBlockSize() const
+   {
+     return d_scalapackBlockSize;
+   }
+
+#ifdef DFTFE_WITH_ELPA
+  inline
+  elpa_t & operatorDFTClass::getElpaHandle()
+  {
+       return d_elpaHandle;
+  }
+
+  inline
+  elpa_autotune_t & operatorDFTClass::getElpaAutoTuneHandle()
+  {
+       return d_elpaAutoTuneHandle;
+  }
+#endif
+#endif
+#  endif // ifndef DOXYGEN
 
 }
 #endif
