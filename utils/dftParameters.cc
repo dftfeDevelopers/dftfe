@@ -448,7 +448,7 @@ namespace dftParameters
 
             prm.declare_entry("USE ELPA", "false",
 			       Patterns::Bool(),
-			      "[Standard] Use ELPA instead of ScaLAPACK for diagonalization of subspace projected Hamiltonian. Default setting is false.");
+			      "[Standard] Use ELPA instead of ScaLAPACK for diagonalization of subspace projected Hamiltonian and Pseudo-Gram-Schmidt orthogonalization. Currently this setting is only available for real executable. Default setting is false.");
 
 	    prm.declare_entry("USE MIXED PREC PGS SR", "false",
 			      Patterns::Bool(),

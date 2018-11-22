@@ -431,7 +431,7 @@ namespace dftfe
 			  if (globalToLocalColumnIdMap.find(i+ivec)!=globalToLocalColumnIdMap.end())
 			  {
 			      const unsigned int localColumnId=globalToLocalColumnIdMap[i+ivec];
-			      for (unsigned int j = ivec; j <N; ++j)
+			      for (unsigned int j = ivec+i; j <N; ++j)
 			      {
 				 std::map<unsigned int, unsigned int>::iterator it=
 					      globalToLocalRowIdMap.find(j);
@@ -559,7 +559,7 @@ namespace dftfe
 			  if (globalToLocalColumnIdMap.find(i+ivec)!=globalToLocalColumnIdMap.end())
 			  {
 			      const unsigned int localColumnId=globalToLocalColumnIdMap[i+ivec];
-			      for (unsigned int j = ivec; j <N; ++j)
+			      for (unsigned int j = ivec+i; j <N; ++j)
 			      {
 				 std::map<unsigned int, unsigned int>::iterator it=
 					      globalToLocalRowIdMap.find(j);
