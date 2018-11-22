@@ -17,6 +17,12 @@
 #define linearAlgebraOperationsInternal_h
 
 #include <headers.h>
+#ifdef DFTFE_WITH_ELPA
+extern "C"
+{
+#include <elpa/elpa.h>
+}
+#endif
 
 namespace dftfe
 {
@@ -31,6 +37,19 @@ namespace dftfe
     namespace internal
     {
 #ifdef DEAL_II_WITH_SCALAPACK
+
+#ifdef DFTFE_WITH_ELPA
+	/** @brief setup ELPA handle.
+	 *
+	 */
+	void setupELPAHandle(const MPI_Comm & mpi_communicator,
+			     const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+			     const unsigned int na,
+			     const unsigned int nev,
+			     const unsigned int blockSize,
+			     elpa_t & elpaHandle);
+#endif
+
 	/** @brief Wrapper function to create a two dimensional processor grid for a square matrix in
 	 * dealii::ScaLAPACKMatrix storage format.
 	 *

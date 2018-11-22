@@ -52,6 +52,8 @@ namespace dftfe{
 #ifdef DEAL_II_WITH_SCALAPACK
     unsigned int getScalapackBlockSize() const;
 
+    unsigned int getScalapackBlockSizeValence() const;
+
     void processGridOptionalELPASetup(const unsigned int na,
     		                      const unsigned int nev);
 
@@ -59,6 +61,8 @@ namespace dftfe{
     void elpaUninit();
 
     elpa_t & getElpaHandle();
+
+    elpa_t & getElpaHandleValence();
 
     elpa_autotune_t & getElpaAutoTuneHandle();
 #endif
@@ -317,15 +321,21 @@ namespace dftfe{
     /// ELPA handle
     elpa_t d_elpaHandle;
 
+    /// ELPA handle for valence proj Ham
+    elpa_t d_elpaHandleValence;
+
     /// ELPA autotune handle
     elpa_autotune_t d_elpaAutoTuneHandle;
 
     /// processGrid mpi communicator
-    MPI_Comm d_processGridCommunicatorActive;
+    //MPI_Comm d_processGridCommunicatorActive;
 #endif
 
-    //ScaLAPACK distributed format block size
+    /// ScaLAPACK distributed format block size
     unsigned int d_scalapackBlockSize;
+
+    /// ScaLAPACK distributed format block size for valence proj Ham
+    unsigned int d_scalapackBlockSizeValence;
 #endif
   };
 
@@ -339,11 +349,22 @@ namespace dftfe{
      return d_scalapackBlockSize;
    }
 
+   inline unsigned int
+   operatorDFTClass::getScalapackBlockSizeValence() const
+   {
+     return d_scalapackBlockSizeValence;
+   }
 #ifdef DFTFE_WITH_ELPA
   inline
   elpa_t & operatorDFTClass::getElpaHandle()
   {
        return d_elpaHandle;
+  }
+
+  inline
+  elpa_t & operatorDFTClass::getElpaHandleValence()
+  {
+       return d_elpaHandleValence;
   }
 
   inline

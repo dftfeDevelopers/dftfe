@@ -141,124 +141,42 @@ namespace dftfe {
        d_scalapackBlockSize=std::min(dftParameters::scalapackBlockSize,
 	                     (na+processGrid->get_process_grid_rows()-1)
                              /processGrid->get_process_grid_rows());
+#ifdef DFTFE_WITH_ELPA
+       if (dftParameters::useELPA)
+           linearAlgebraOperations::internal::setupELPAHandle(getMPICommunicator(),
+                                                              processGrid,
+							      na,
+							      nev,
+							      d_scalapackBlockSize,
+							      d_elpaHandle);
+#endif
+
+       if (nev!=na)
+       {
+	   std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  processGridValence;
+	   linearAlgebraOperations::internal::createProcessGridSquareMatrix(getMPICommunicator(),
+						   nev,
+						   processGridValence);
+
+
+	   d_scalapackBlockSizeValence=std::min(dftParameters::scalapackBlockSize,
+				 (nev+processGridValence->get_process_grid_rows()-1)
+				 /processGridValence->get_process_grid_rows());
+
+#ifdef DFTFE_WITH_ELPA
+	   if (dftParameters::useELPA)
+	       linearAlgebraOperations::internal::setupELPAHandle(getMPICommunicator(),
+								  processGridValence,
+								  nev,
+								  nev,
+								  d_scalapackBlockSizeValence,
+								  d_elpaHandleValence);
+#endif
+	   //std::cout<<"nblkvalence: "<<d_scalapackBlockSizeValence<<std::endl;
+       }
 
        //std::cout<<"nblk: "<<d_scalapackBlockSize<<std::endl;
 
-#ifdef DFTFE_WITH_ELPA
-       if (dftParameters::useELPA)
-       {
-	   int error;
-
-	   if (elpa_init(20180525) != ELPA_OK) {
-	     fprintf(stderr, "Error: ELPA API version not supported");
-	     exit(1);
-	   }
-
-	   d_elpaHandle = elpa_allocate(&error);
-	   AssertThrow(error== ELPA_OK,
-		    dealii::ExcMessage("DFT-FE Error: ELPA Error."));
-
-	   // Get the group of processes in mpi_communicator
-	   int       ierr = 0;
-	   MPI_Group all_group;
-	   ierr = MPI_Comm_group(getMPICommunicator(), &all_group);
-	   AssertThrowMPI(ierr);
-
-	   // Construct the group containing all ranks we need:
-	   const unsigned int n_active_mpi_processes =
-	   processGrid->get_process_grid_rows() * processGrid->get_process_grid_columns();
-	   std::vector<int> active_ranks;
-	   for (unsigned int i = 0; i < n_active_mpi_processes; ++i)
-	      active_ranks.push_back(i);
-
-	   MPI_Group active_group;
-	   const int n = active_ranks.size();
-	   ierr        = MPI_Group_incl(all_group,
-				n,
-				active_ranks.data(),
-				&active_group);
-	   AssertThrowMPI(ierr);
-
-	   // Create the communicator based on active_group.
-	   // Note that on all the inactive processs the resulting MPI_Comm d_processGridCommunicatorActive
-	   // will be MPI_COMM_NULL.
-	   ierr = dealii::Utilities::MPI::create_group(getMPICommunicator(),
-					      active_group,
-					      50,
-					      &d_processGridCommunicatorActive);
-	   AssertThrowMPI(ierr);
-
-	   ierr = MPI_Group_free(&all_group);
-	   AssertThrowMPI(ierr);
-	   ierr = MPI_Group_free(&active_group);
-	   AssertThrowMPI(ierr);
-
-
-	   dealii::ScaLAPACKMatrix<double> tempMat(na,
-						   processGrid,
-						   d_scalapackBlockSize);
-	   if (processGrid->is_process_active())
-	   {
-
-	       /* Set parameters the matrix and it's MPI distribution */
-	       elpa_set_integer(d_elpaHandle, "na", na, &error);
-	       AssertThrow(error== ELPA_OK,
-			dealii::ExcMessage("DFT-FE Error: ELPA Error."));
-
-
-	       elpa_set_integer(d_elpaHandle, "nev", nev, &error);
-	       AssertThrow(error== ELPA_OK,
-			dealii::ExcMessage("DFT-FE Error: ELPA Error."));
-
-	       elpa_set_integer(d_elpaHandle, "nblk", d_scalapackBlockSize, &error);
-	       AssertThrow(error== ELPA_OK,
-			dealii::ExcMessage("DFT-FE Error: ELPA Error."));
-
-	       elpa_set_integer(d_elpaHandle, "mpi_comm_parent", MPI_Comm_c2f(d_processGridCommunicatorActive), &error);
-	       AssertThrow(error== ELPA_OK,
-			dealii::ExcMessage("DFT-FE Error: ELPA Error."));
-
-
-	       //std::cout<<"local_nrows: "<<tempMat.local_m() <<std::endl;
-	       //std::cout<<"local_ncols: "<<tempMat.local_n() <<std::endl;
-	       //std::cout<<"process_row: "<<processGrid->get_this_process_row()<<std::endl;
-	       //std::cout<<"process_col: "<<processGrid->get_this_process_column()<<std::endl;
-
-	       elpa_set_integer(d_elpaHandle, "local_nrows", tempMat.local_m(), &error);
-	       AssertThrow(error== ELPA_OK,
-			dealii::ExcMessage("DFT-FE Error: ELPA Error."));
-
-	       elpa_set_integer(d_elpaHandle, "local_ncols", tempMat.local_n(), &error);
-	       AssertThrow(error== ELPA_OK,
-			dealii::ExcMessage("DFT-FE Error: ELPA Error."));
-
-	       elpa_set_integer(d_elpaHandle, "process_row", processGrid->get_this_process_row(), &error);
-	       AssertThrow(error== ELPA_OK,
-			dealii::ExcMessage("DFT-FE Error: ELPA Error."));
-
-	       elpa_set_integer(d_elpaHandle, "process_col", processGrid->get_this_process_column(), &error);
-	       AssertThrow(error== ELPA_OK,
-			dealii::ExcMessage("DFT-FE Error: ELPA Error."));
-
-
-	       /* Setup */
-	       AssertThrow(elpa_setup(d_elpaHandle)==ELPA_OK,
-			dealii::ExcMessage("DFT-FE Error: ELPA Error."));
-
-	       elpa_set_integer(d_elpaHandle, "solver", ELPA_SOLVER_2STAGE, &error);
-	       AssertThrow(error==ELPA_OK,
-			dealii::ExcMessage("DFT-FE Error: ELPA Error."));
-
-#ifdef DEBUG
-	       elpa_set_integer(d_elpaHandle, "debug", 1, &error);
-	       AssertThrow(error==ELPA_OK,
-			dealii::ExcMessage("DFT-FE Error: ELPA Error."));
-#endif
-	  }
-
-	   //d_elpaAutoTuneHandle = elpa_autotune_setup(d_elpaHandle, ELPA_AUTOTUNE_FAST, ELPA_AUTOTUNE_DOMAIN_REAL, &error);   // create autotune object
-      }
-#endif
   }
 
 #ifdef DFTFE_WITH_ELPA

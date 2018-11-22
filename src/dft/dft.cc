@@ -734,7 +734,7 @@ namespace dftfe {
 
 #ifdef DEAL_II_WITH_SCALAPACK
     kohnShamDFTEigenOperator.processGridOptionalELPASetup(d_numEigenValues,
-			                                  d_numEigenValues);
+			                                  d_numEigenValuesRR);
 
 #endif
 

@@ -385,6 +385,7 @@ namespace dftfe{
 	linearAlgebraOperations::rayleighRitz(operatorMatrix,
 					      eigenVectorsFlattenedRR,
 					      eigenValues.size(),
+					      true,
 					      interBandGroupComm,
 					      operatorMatrix.getMPICommunicator(),
 					      eigenValuesTemp);
@@ -405,6 +406,7 @@ namespace dftfe{
 	linearAlgebraOperations::rayleighRitz(operatorMatrix,
 					      eigenVectorsFlattened,
 					      totalNumberWaveFunctions,
+					      false,
 					      interBandGroupComm,
 					      operatorMatrix.getMPICommunicator(),
 					      eigenValues);
