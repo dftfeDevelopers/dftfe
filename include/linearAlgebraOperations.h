@@ -136,8 +136,7 @@ namespace dftfe
 			 const unsigned int m,
 			 const double a,
 			 const double b,
-			 const double a0,
-			 const bool useMixedPrec);
+			 const double a0);
 
 
     /** @brief Orthogonalize given subspace using GramSchmidt orthogonalization

@@ -76,7 +76,6 @@ namespace dftParameters
   bool useMixedPrecPGS_O=false;
   bool useMixedPrecXTHXSpectrumSplit=false;
   bool useMixedPrecSubspaceRotSpectrumSplit=false;
-  bool useMixedPrecCheby=false;
   unsigned int numAdaptiveFilterStates=0;
   unsigned int spectrumSplitStartingScfIter=1;
 

@@ -149,9 +149,10 @@ namespace dftfe {
 		   fe_values.reinit (cell);
 		   elementalRhs=0.0;
 
+		   const std::vector<double>& tempVec=d_rhoValuesPtr->find(cell->id())->second;
 		   for (unsigned int i=0; i<dofs_per_cell; ++i)
 		       for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
-			      elementalRhs(i) += fe_values.shape_value(i, q_point)*d_rhoValuesPtr->find(cell->id())->second[q_point]*fe_values.JxW (q_point);
+			      elementalRhs(i) += fe_values.shape_value(i, q_point)*tempVec[q_point]*fe_values.JxW (q_point);
 
 		   //assemble to global data structures
 		   cell->get_dof_indices (local_dof_indices);
