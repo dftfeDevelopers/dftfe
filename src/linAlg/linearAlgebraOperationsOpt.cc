@@ -570,8 +570,8 @@ namespace dftfe{
 				&eigenValues[0],
 				&eigenVectors.local_el(0,0),
 				&error);
-	      Assert(error==ELPA_OK,
-		    dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+	      AssertThrow(error==ELPA_OK,
+		    dealii::ExcMessage("DFT-FE Error: elpa_eigenvectors error."));
 	  }
 
 
@@ -818,8 +818,8 @@ namespace dftfe{
 				&allEigenValues[0],
 				&eigenVectors.local_el(0,0),
 				&error);
-	      Assert(error==ELPA_OK,
-		    dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+	      AssertThrow(error==ELPA_OK,
+		    dealii::ExcMessage("DFT-FE Error: elpa_eigenvectors error in case spectrum splitting."));
 	  }
 
 	  for (unsigned int i=0;i<numValenceStates;++i)

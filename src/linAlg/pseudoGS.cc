@@ -115,8 +115,8 @@ namespace dftfe
 	  {
 	      int error;
 	      elpa_cholesky_d(operatorMatrix.getElpaHandle(), &overlapMatParTrans.local_el(0,0), &error);
-	      Assert(error==ELPA_OK,
-			dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+	      AssertThrow(error==ELPA_OK,
+			dealii::ExcMessage("DFT-FE Error: elpa_cholesky_d error."));
 	  }
 	  overlapMatParTrans.copy_to(overlapMatPar);
 	  overlapMatPropertyPostCholesky=dealii::LAPACKSupport::Property::upper_triangular;
@@ -196,8 +196,8 @@ namespace dftfe
 	  {
 	      int error;
 	      elpa_invert_trm_d(operatorMatrix.getElpaHandle(), &LMatPar.local_el(0,0), &error);
-	      Assert(error==ELPA_OK,
-			dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+	      AssertThrow(error==ELPA_OK,
+			dealii::ExcMessage("DFT-FE Error: elpa_invert_trm_d error."));
 	  }
       }
       else
