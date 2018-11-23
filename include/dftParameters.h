@@ -87,7 +87,6 @@ namespace dftfe {
       extern bool useMixedPrecXTHXSpectrumSplit;
       extern bool useMixedPrecSubspaceRotSpectrumSplit;
       extern unsigned int numAdaptiveFilterStates;
-      extern bool useMixedPrecCheby;
       extern unsigned int spectrumSplitStartingScfIter;
 
       /**

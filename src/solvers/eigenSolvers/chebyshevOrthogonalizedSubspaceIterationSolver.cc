@@ -233,9 +233,7 @@ namespace dftfe{
 							 std::ceil(adaptiveOrder),
 							 d_lowerBoundUnWantedSpectrum,
 							 upperBoundUnwantedSpectrum,
-							 d_lowerBoundWantedSpectrum,
-							 dftParameters::useMixedPrecCheby && useMixedPrec?
-							 true:false);
+							 d_lowerBoundWantedSpectrum);
 	      }
 	    else
 	      linearAlgebraOperations::chebyshevFilter(operatorMatrix,
@@ -244,9 +242,7 @@ namespace dftfe{
 						       chebyshevOrder,
 						       d_lowerBoundUnWantedSpectrum,
 						       upperBoundUnwantedSpectrum,
-						       d_lowerBoundWantedSpectrum,
-						       dftParameters::useMixedPrecCheby && useMixedPrec?
-						       true:false);
+						       d_lowerBoundWantedSpectrum);
 	    computing_timer.exit_section("Chebyshev filtering opt");
 
 	    if (dftParameters::verbosity>=4)

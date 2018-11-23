@@ -728,7 +728,6 @@ namespace dftfe {
 #ifdef USE_COMPLEX
       std::vector<std::vector<std::vector<std::vector<std::complex<double> > > > > d_nonLocalProjectorElementMatrices,d_nonLocalProjectorElementMatricesConjugate,d_nonLocalProjectorElementMatricesTranspose;
 
-      std::vector<std::vector<std::vector<std::vector<std::complex<float> > > > > d_nonLocalProjectorElementMatricesLowPrec,d_nonLocalProjectorElementMatricesConjugateLowPrec,d_nonLocalProjectorElementMatricesTransposeLowPrec;
 
       std::vector<dealii::parallel::distributed::Vector<std::complex<double> > > d_projectorKetTimesVectorPar;
 
@@ -736,11 +735,9 @@ namespace dftfe {
       /// pre-initialization of the parallel layout is more efficient than creating the parallel
       /// layout for every nonLocalHamiltionan times wavefunction computation
       dealii::parallel::distributed::Vector<std::complex<double> >  d_projectorKetTimesVectorParFlattened;
-      dealii::parallel::distributed::Vector<std::complex<float> >  d_projectorKetTimesVectorParFlattenedLowPrec;
 #else
       std::vector<std::vector<std::vector<std::vector<double> > > > d_nonLocalProjectorElementMatrices,d_nonLocalProjectorElementMatricesConjugate,d_nonLocalProjectorElementMatricesTranspose;
 
-      std::vector<std::vector<std::vector<std::vector<float> > > > d_nonLocalProjectorElementMatricesLowPrec,d_nonLocalProjectorElementMatricesConjugateLowPrec,d_nonLocalProjectorElementMatricesTransposeLowPrec;
 
       std::vector<dealii::parallel::distributed::Vector<double> > d_projectorKetTimesVectorPar;
 
@@ -748,7 +745,6 @@ namespace dftfe {
       /// pre-initialization of the parallel layout is more efficient than creating the parallel
       /// layout for every nonLocalHamiltionan times wavefunction computation
       dealii::parallel::distributed::Vector<double> d_projectorKetTimesVectorParFlattened;
-      dealii::parallel::distributed::Vector<float> d_projectorKetTimesVectorParFlattenedLowPrec;
 #endif
 
       //

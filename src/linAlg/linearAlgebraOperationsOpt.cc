@@ -265,8 +265,7 @@ namespace dftfe{
 			 const unsigned int m,
 			 const double a,
 			 const double b,
-			 const double a0,
-			 const bool useMixedPrec)
+			 const double a0)
     {
       double e, c, sigma, sigma1, sigma2, gamma;
       e = (b-a)/2.0; c = (b+a)/2.0;
@@ -297,7 +296,6 @@ namespace dftfe{
 			numberWaveFunctions,
 			scaleFlag,
 			scalar,
-			false,
 			YArray);
 
 
@@ -329,19 +327,10 @@ namespace dftfe{
 	  //
 	  bool scaleFlag = true;
 
-	  if (degree<0.9*m && useMixedPrec)
-	      operatorMatrix.HX(YArray,
+	  operatorMatrix.HX(YArray,
 				numberWaveFunctions,
 				scaleFlag,
 				alpha1,
-				true,
-				XArray);
-	  else
-	      operatorMatrix.HX(YArray,
-				numberWaveFunctions,
-				scaleFlag,
-				alpha1,
-				false,
 				XArray);
 
 	  //
@@ -823,7 +812,6 @@ namespace dftfe{
 	                    B,
 	                    scaleFlag,
 	                    scalar,
-			    false,
 	                    HXBlock);
 
 	  //compute residual norms:
@@ -1226,8 +1214,7 @@ namespace dftfe{
 				  const unsigned int,
 				  const double ,
 				  const double ,
-				  const double,
-				  const bool useMixedPrec);
+				  const double);
 
 
     template void gramSchmidtOrthogonalization(std::vector<dataTypes::number> &,
