@@ -248,7 +248,8 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
       {
 	cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
         tempRho[v]=(*rhoValues).find(cellPtr->id())->second;
-	tempPseudo[v]=pseudoValues.find(cellPtr->id())->second;
+	if(dftParameters::isPseudopotential)
+	  tempPseudo[v]=pseudoValues.find(cellPtr->id())->second;
       }
       for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
 	{
@@ -339,7 +340,8 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 	cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
         tempRho[v]=(*rhoValues).find(cellPtr->id())->second;
         tempGradRho[v]=(*gradRhoValues).find(cellPtr->id())->second;
-	tempPseudo[v]=pseudoValues.find(cellPtr->id())->second;
+	if(dftParameters::isPseudopotential)
+	   tempPseudo[v]=pseudoValues.find(cellPtr->id())->second;
       }
       for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
 	{
@@ -1450,7 +1452,8 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEffSpinPolarized(const std::map<
       {
 	cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
         tempRho[v]=(*rhoValues).find(cellPtr->id())->second;
-	tempPseudo[v]=pseudoValues.find(cellPtr->id())->second;
+	if(dftParameters::isPseudopotential)
+	   tempPseudo[v]=pseudoValues.find(cellPtr->id())->second;
       }
 
       for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
@@ -1543,7 +1546,8 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEffSpinPolarized(const std::map<
 	cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
         tempRho[v]=(*rhoValues).find(cellPtr->id())->second;
         tempGradRho[v]=(*gradRhoValues).find(cellPtr->id())->second;
-	tempPseudo[v]=pseudoValues.find(cellPtr->id())->second;
+	if(dftParameters::isPseudopotential)
+	  tempPseudo[v]=pseudoValues.find(cellPtr->id())->second;
       }
 
       for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
