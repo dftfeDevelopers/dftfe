@@ -180,11 +180,14 @@ namespace dftfe {
   }
 
 #ifdef DFTFE_WITH_ELPA
-  void operatorDFTClass::elpaUninit()
+  void operatorDFTClass::elpaDeallocateHandles(const unsigned int na,
+		                    const unsigned int nev)
   {
        //elpa_autotune_deallocate(d_elpaAutoTuneHandle);
        elpa_deallocate(d_elpaHandle);
-       elpa_uninit();
+       if (na!=nev)
+	  elpa_deallocate(d_elpaHandleValence);
+
   }
 #endif
 #endif

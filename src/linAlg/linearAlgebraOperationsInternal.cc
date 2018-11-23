@@ -45,11 +45,6 @@ namespace dftfe
       {
 	   int error;
 
-	   if (elpa_init(20180525) != ELPA_OK) {
-	     fprintf(stderr, "Error: ELPA API version not supported");
-	     exit(1);
-	   }
-
 	   elpaHandle = elpa_allocate(&error);
 	   AssertThrow(error== ELPA_OK,
 		    dealii::ExcMessage("DFT-FE Error: ELPA Error."));

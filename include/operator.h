@@ -58,7 +58,8 @@ namespace dftfe{
     		                      const unsigned int nev);
 
 #ifdef DFTFE_WITH_ELPA
-    void elpaUninit();
+    void elpaDeallocateHandles(const unsigned int na,
+		    const unsigned int nev);
 
     elpa_t & getElpaHandle();
 
