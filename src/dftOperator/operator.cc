@@ -146,13 +146,23 @@ namespace dftfe {
            linearAlgebraOperations::internal::setupELPAHandle(getMPICommunicator(),
                                                               processGrid,
 							      na,
-							      nev,
+							      na,
 							      d_scalapackBlockSize,
 							      d_elpaHandle);
 #endif
 
        if (nev!=na)
        {
+#ifdef DFTFE_WITH_ELPA
+	   if (dftParameters::useELPA)
+	       linearAlgebraOperations::internal::setupELPAHandle(getMPICommunicator(),
+								  processGrid,
+								  na,
+								  nev,
+								  d_scalapackBlockSize,
+								  d_elpaHandlePartialEigenVec);
+#endif
+
 	   std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  processGridValence;
 	   linearAlgebraOperations::internal::createProcessGridSquareMatrix(getMPICommunicator(),
 						   nev,
@@ -186,7 +196,10 @@ namespace dftfe {
        //elpa_autotune_deallocate(d_elpaAutoTuneHandle);
        elpa_deallocate(d_elpaHandle);
        if (na!=nev)
+       {
+	  elpa_deallocate(d_elpaHandlePartialEigenVec);
 	  elpa_deallocate(d_elpaHandleValence);
+       }
 
   }
 #endif

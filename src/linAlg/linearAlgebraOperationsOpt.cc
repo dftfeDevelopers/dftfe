@@ -813,7 +813,7 @@ namespace dftfe{
 	  if (processGrid->is_process_active())
           {
 	      int error;
-	      elpa_eigenvectors_d(operatorMatrix.getElpaHandle(),
+	      elpa_eigenvectors_d(operatorMatrix.getElpaHandlePartialEigenVec(),
 				&projHamPar.local_el(0,0),
 				&allEigenValues[0],
 				&eigenVectors.local_el(0,0),

@@ -63,6 +63,8 @@ namespace dftfe{
 
     elpa_t & getElpaHandle();
 
+    elpa_t & getElpaHandlePartialEigenVec();
+
     elpa_t & getElpaHandleValence();
 
     elpa_autotune_t & getElpaAutoTuneHandle();
@@ -325,6 +327,9 @@ namespace dftfe{
     /// ELPA handle for valence proj Ham
     elpa_t d_elpaHandleValence;
 
+    /// ELPA handle for partial eigenvectors of full proj ham
+    elpa_t d_elpaHandlePartialEigenVec;
+
     /// ELPA autotune handle
     elpa_autotune_t d_elpaAutoTuneHandle;
 
@@ -367,6 +372,13 @@ namespace dftfe{
   {
        return d_elpaHandleValence;
   }
+
+  inline
+  elpa_t & operatorDFTClass::getElpaHandlePartialEigenVec()
+  {
+       return d_elpaHandlePartialEigenVec;
+  }
+
 
   inline
   elpa_autotune_t & operatorDFTClass::getElpaAutoTuneHandle()
