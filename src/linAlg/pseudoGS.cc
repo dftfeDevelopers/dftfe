@@ -98,6 +98,7 @@ namespace dftfe
       dealii::LAPACKSupport::Property overlapMatPropertyPostCholesky;
       if (dftParameters::useELPA)
       {
+	  //For ELPA cholesky only the upper triangular part is enough
 	  dealii::ScaLAPACKMatrix<T> overlapMatParTrans(numberVectors,
 						processGrid,
 						rowsBlockSize);
@@ -109,7 +110,6 @@ namespace dftfe
 		        T(0.0));
 
 	  overlapMatParTrans.copy_transposed(overlapMatPar);
-
 
 	  if (processGrid->is_process_active())
 	  {

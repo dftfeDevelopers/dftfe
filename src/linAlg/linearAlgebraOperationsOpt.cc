@@ -536,6 +536,8 @@ namespace dftfe{
 		    &eigenVectors.local_el(0,0)+eigenVectors.local_m()*eigenVectors.local_n(),
 		    T(0.0));
 
+	  //For ELPA eigendecomposition the full matrix is required unlike
+	  //ScaLAPACK which can work with only the lower triangular part
 	  dealii::ScaLAPACKMatrix<T> projHamParTrans(numberWaveFunctions,
 						processGrid,
 						rowsBlockSize);
@@ -787,6 +789,8 @@ namespace dftfe{
 		    &eigenVectors.local_el(0,0)+eigenVectors.local_m()*eigenVectors.local_n(),
 		    T(0.0));
 
+	  //For ELPA eigendecomposition the full matrix is required unlike
+	  //ScaLAPACK which can work with only the lower triangular part
 	  dealii::ScaLAPACKMatrix<T> projHamParTrans(numberWaveFunctions,
 						processGrid,
 						rowsBlockSize);
