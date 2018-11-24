@@ -319,7 +319,8 @@ namespace dftfe{
       {
 	computing_timer.enter_section("Pseudo-Gram-Schmidt");
 	const unsigned int flag=linearAlgebraOperations::pseudoGramSchmidtOrthogonalization
-	  (eigenVectorsFlattened,
+	  (operatorMatrix,
+	   eigenVectorsFlattened,
 	   totalNumberWaveFunctions,
 	   interBandGroupComm,
 	   operatorMatrix.getMPICommunicator(),
@@ -380,6 +381,7 @@ namespace dftfe{
 	linearAlgebraOperations::rayleighRitz(operatorMatrix,
 					      eigenVectorsFlattenedRR,
 					      eigenValues.size(),
+					      true,
 					      interBandGroupComm,
 					      operatorMatrix.getMPICommunicator(),
 					      eigenValuesTemp);
@@ -400,6 +402,7 @@ namespace dftfe{
 	linearAlgebraOperations::rayleighRitz(operatorMatrix,
 					      eigenVectorsFlattened,
 					      totalNumberWaveFunctions,
+					      false,
 					      interBandGroupComm,
 					      operatorMatrix.getMPICommunicator(),
 					      eigenValues);

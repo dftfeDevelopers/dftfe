@@ -1156,7 +1156,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 		     if(globalToLocalColumnIdMap.find(j+jvec)!=globalToLocalColumnIdMap.end())
 		     {
 		       const unsigned int localColumnId=globalToLocalColumnIdMap[j+jvec];
-		       for (unsigned int i = jvec; i <numberWaveFunctions; ++i)
+		       for (unsigned int i = j+jvec; i <numberWaveFunctions; ++i)
 		       {
 			 std::map<unsigned int, unsigned int>::iterator it=
 					      globalToLocalRowIdMap.find(i);
@@ -1331,7 +1331,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 			 if(globalToLocalColumnIdMap.find(j+jvec)!=globalToLocalColumnIdMap.end())
 			 {
 			   const unsigned int localColumnId=globalToLocalColumnIdMap[j+jvec];
-			   for (unsigned int i = jvec; i <N; ++i)
+			   for (unsigned int i = jvec+j; i <N; ++i)
 			   {
 			     std::map<unsigned int, unsigned int>::iterator it=
 						  globalToLocalRowIdMap.find(i);
@@ -1380,7 +1380,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 			 if(globalToLocalColumnIdMap.find(j+jvec)!=globalToLocalColumnIdMap.end())
 			 {
 			   const unsigned int localColumnId=globalToLocalColumnIdMap[j+jvec];
-			   for (unsigned int i = jvec; i <N; ++i)
+			   for (unsigned int i = jvec+j; i <N; ++i)
 			   {
 			     std::map<unsigned int, unsigned int>::iterator it=
 						  globalToLocalRowIdMap.find(i);

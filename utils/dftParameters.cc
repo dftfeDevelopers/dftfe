@@ -64,6 +64,7 @@ namespace dftParameters
   unsigned int nbandGrps=1;
   bool computeEnergyEverySCF=true;
   unsigned int scalapackParalProcs=0;
+  unsigned int scalapackBlockSize=50;
   unsigned int natoms=0;
   unsigned int natomTypes=0;
   double lowerBoundUnwantedFracUpper=0;
@@ -78,6 +79,7 @@ namespace dftParameters
   bool useMixedPrecSubspaceRotSpectrumSplit=false;
   unsigned int numAdaptiveFilterStates=0;
   unsigned int spectrumSplitStartingScfIter=1;
+  bool useELPA=false;
 
   void declare_parameters(ParameterHandler &prm)
   {
@@ -439,6 +441,14 @@ namespace dftParameters
 			      Patterns::Integer(0,300),
 			      "[Advanced] Uses a processor grid of SCALAPACKPROCS times SCALAPACKPROCS for parallel distribution of the subspace projected matrix in the Rayleigh-Ritz step and the overlap matrix in the Pseudo-Gram-Schmidt step. Default value is 0 for which a thumb rule is used (see http://netlib.org/scalapack/slug/node106.html). This parameter is only used if dealii library is compiled with ScaLAPACK.");
 
+            prm.declare_entry("SCALAPACK BLOCK SIZE", "50",
+			       Patterns::Integer(1,300),
+			       "[Advanced] ScaLAPACK process grid block size.");
+
+            prm.declare_entry("USE ELPA", "false",
+			       Patterns::Bool(),
+			      "[Standard] Use ELPA instead of ScaLAPACK for diagonalization of subspace projected Hamiltonian and Pseudo-Gram-Schmidt orthogonalization. Currently this setting is only available for real executable. Default setting is false.");
+
 	    prm.declare_entry("USE MIXED PREC PGS SR", "false",
 			      Patterns::Bool(),
 			      "[Advanced] Use mixed precision arithmetic in subspace rotation step of PGS orthogonalization, if ORTHOGONALIZATION TYPE is set to PGS. Currently this optimization is only enabled for the real executable and with ScaLAPACK linking. Default setting is false.");
@@ -603,6 +613,7 @@ namespace dftParameters
 	   dftParameters::lowerEndWantedSpectrum        = prm.get_double("LOWER BOUND WANTED SPECTRUM");
 	   dftParameters::lowerBoundUnwantedFracUpper   = prm.get_double("LOWER BOUND UNWANTED FRAC UPPER");
 	   dftParameters::chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
+	   dftParameters::useELPA= prm.get_bool("USE ELPA");
 	   dftParameters::useBatchGEMM= prm.get_bool("BATCH GEMM");
 	   dftParameters::orthogType        = prm.get("ORTHOGONALIZATION TYPE");
 	   dftParameters::chebyshevTolerance = prm.get_double("CHEBYSHEV FILTER TOLERANCE");
@@ -612,6 +623,7 @@ namespace dftParameters
 	   dftParameters::enableSwitchToGS= prm.get_bool("ENABLE SWITCH TO GS");
 	   dftParameters::triMatPGSOpt= prm.get_bool("ENABLE SUBSPACE ROT PGS OPT");
 	   dftParameters::scalapackParalProcs= prm.get_integer("SCALAPACKPROCS");
+	   dftParameters::scalapackBlockSize= prm.get_integer("SCALAPACK BLOCK SIZE");
 	   dftParameters::useMixedPrecPGS_SR= prm.get_bool("USE MIXED PREC PGS SR");
 	   dftParameters::useMixedPrecPGS_O= prm.get_bool("USE MIXED PREC PGS O");
 	   dftParameters::useMixedPrecXTHXSpectrumSplit= prm.get_bool("USE MIXED PREC XTHX SPECTRUM SPLIT");

@@ -45,6 +45,12 @@
 #include <linearAlgebraOperations.h>
 #include <vectorUtilities.h>
 #include <pseudoConverter.h>
+#ifdef DFTFE_WITH_ELPA
+extern "C"
+{
+#include <elpa/elpa.h>
+}
+#endif
 
 
 namespace dftfe {
@@ -113,6 +119,15 @@ namespace dftfe {
 #ifdef USE_COMPLEX
     geoOptCellPtr= new geoOptCell<FEOrder>(this, mpi_comm_replica);
 #endif
+
+#ifdef DFTFE_WITH_ELPA
+    int error;
+
+    if (elpa_init(20180525) != ELPA_OK) {
+	 fprintf(stderr, "Error: ELPA API version not supported");
+	 exit(1);
+    }
+#endif
   }
 
   template<unsigned int FEOrder>
@@ -124,6 +139,10 @@ namespace dftfe {
     delete geoOptIonPtr;
 #ifdef USE_COMPLEX
     delete geoOptCellPtr;
+#endif
+
+#ifdef DFTFE_WITH_ELPA
+    elpa_uninit();
 #endif
   }
 
@@ -731,6 +750,12 @@ namespace dftfe {
     //
     kohnShamDFTOperatorClass<FEOrder> kohnShamDFTEigenOperator(this,mpi_communicator);
     kohnShamDFTEigenOperator.init();
+
+#ifdef DEAL_II_WITH_SCALAPACK
+    kohnShamDFTEigenOperator.processGridOptionalELPASetup(d_numEigenValues,
+			                                  d_numEigenValuesRR);
+
+#endif
 
     if (dftParameters::verbosity>=4)
       dftUtils::printCurrentMemoryUsage(mpi_communicator,
@@ -1663,6 +1688,13 @@ namespace dftfe {
 
     if (dftParameters::writeDensitySolutionFields)
       outputDensity();
+
+#ifdef DFTFE_WITH_ELPA
+    if (dftParameters::useELPA)
+	 kohnShamDFTEigenOperator.elpaDeallocateHandles(d_numEigenValues,
+				             d_numEigenValuesRR);
+#endif
+
 
     if (dftParameters::verbosity>=1)
        pcout << std::endl<< "Elapsed wall time since start of the program: " << d_globalTimer.wall_time() << " seconds\n"<<std::endl;

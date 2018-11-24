@@ -28,7 +28,8 @@ namespace dftfe
   {
 #if(defined DEAL_II_WITH_SCALAPACK && !USE_COMPLEX)
     template<typename T>
-    unsigned int pseudoGramSchmidtOrthogonalization(std::vector<T> & X,
+    unsigned int pseudoGramSchmidtOrthogonalization(operatorDFTClass & operatorMatrix,
+		                                    std::vector<T> & X,
 						    const unsigned int numberVectors,
 						    const MPI_Comm &interBandGroupComm,
 						    const MPI_Comm & mpiComm,
@@ -45,15 +46,20 @@ namespace dftfe
 					  dealii::TimerOutput::wall_times);
 
 
-      const unsigned rowsBlockSize=std::min((unsigned int)50,numberVectors);
+      const unsigned int rowsBlockSize=operatorMatrix.getScalapackBlockSize();
       std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  processGrid;
       internal::createProcessGridSquareMatrix(mpiComm,
-					      numberVectors,
-					      processGrid);
+                                              numberVectors,
+                                              processGrid);
 
       dealii::ScaLAPACKMatrix<T> overlapMatPar(numberVectors,
                                                processGrid,
                                                rowsBlockSize);
+
+      if (processGrid->is_process_active())
+         std::fill(&overlapMatPar.local_el(0,0),
+	           &overlapMatPar.local_el(0,0)+overlapMatPar.local_m()*overlapMatPar.local_n(),
+		   T(0.0));
 
       //S=X*X^{T}. Implemented as S=X^{T}*X with X^{T} stored in the column major format
       if (!(dftParameters::useMixedPrecPGS_O && useMixedPrec))
@@ -83,11 +89,49 @@ namespace dftfe
 
 
       //S=L*L^{T}
+#if(defined DFTFE_WITH_ELPA)
+      computing_timer.enter_section("ELPA PGS cholesky, copy, and triangular matrix invert");
+#else
       computing_timer.enter_section("PGS cholesky, copy, and triangular matrix invert");
+#endif
+#if(defined DFTFE_WITH_ELPA)
+      dealii::LAPACKSupport::Property overlapMatPropertyPostCholesky;
+      if (dftParameters::useELPA)
+      {
+	  //For ELPA cholesky only the upper triangular part is enough
+	  dealii::ScaLAPACKMatrix<T> overlapMatParTrans(numberVectors,
+						processGrid,
+						rowsBlockSize);
+
+          if (processGrid->is_process_active())
+	      std::fill(&overlapMatParTrans.local_el(0,0),
+		        &overlapMatParTrans.local_el(0,0)
+			+overlapMatParTrans.local_m()*overlapMatParTrans.local_n(),
+		        T(0.0));
+
+	  overlapMatParTrans.copy_transposed(overlapMatPar);
+
+	  if (processGrid->is_process_active())
+	  {
+	      int error;
+	      elpa_cholesky_d(operatorMatrix.getElpaHandle(), &overlapMatParTrans.local_el(0,0), &error);
+	      AssertThrow(error==ELPA_OK,
+			dealii::ExcMessage("DFT-FE Error: elpa_cholesky_d error."));
+	  }
+	  overlapMatParTrans.copy_to(overlapMatPar);
+	  overlapMatPropertyPostCholesky=dealii::LAPACKSupport::Property::upper_triangular;
+      }
+      else
+      {
+	  overlapMatPar.compute_cholesky_factorization();
+
+	  overlapMatPropertyPostCholesky=overlapMatPar.get_property();
+      }
+#else
       overlapMatPar.compute_cholesky_factorization();
 
       dealii::LAPACKSupport::Property overlapMatPropertyPostCholesky=overlapMatPar.get_property();
-
+#endif
       AssertThrow(overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::lower_triangular
 		  ||overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::upper_triangular
 	           ,dealii::ExcMessage("DFT-FE Error: overlap matrix property after cholesky factorization incorrect"));
@@ -96,7 +140,6 @@ namespace dftfe
                                          processGrid,
                                          rowsBlockSize,
 					 overlapMatPropertyPostCholesky);
-
       //copy triangular part of projHamPar into LMatPar
       if (processGrid->is_process_active())
          for (unsigned int i = 0; i < overlapMatPar.local_n(); ++i)
@@ -123,15 +166,14 @@ namespace dftfe
            }
 
       //Check if any of the diagonal entries of LMat are close to zero. If yes break off PGS and return flag=1
-
       unsigned int flag=0;
       if (processGrid->is_process_active())
-         for (unsigned int i = 0; i < overlapMatPar.local_n(); ++i)
+         for (unsigned int i = 0; i < LMatPar.local_n(); ++i)
            {
-             const unsigned int glob_i = overlapMatPar.global_column(i);
-             for (unsigned int j = 0; j < overlapMatPar.local_m(); ++j)
+             const unsigned int glob_i = LMatPar.global_column(i);
+             for (unsigned int j = 0; j < LMatPar.local_m(); ++j)
                {
-		 const unsigned int glob_j = overlapMatPar.global_row(j);
+		 const unsigned int glob_j = LMatPar.global_row(j);
 		 if (glob_i==glob_j)
 		    if (std::abs(LMatPar.local_el(j, i))<1e-14)
 			flag=1;
@@ -147,8 +189,29 @@ namespace dftfe
           return flag;
 
       //invert triangular matrix
+#if(defined DFTFE_WITH_ELPA)
+      if (dftParameters::useELPA)
+      {
+	  if (processGrid->is_process_active())
+	  {
+	      int error;
+	      elpa_invert_trm_d(operatorMatrix.getElpaHandle(), &LMatPar.local_el(0,0), &error);
+	      AssertThrow(error==ELPA_OK,
+			dealii::ExcMessage("DFT-FE Error: elpa_invert_trm_d error."));
+	  }
+      }
+      else
+      {
+	  LMatPar.invert();
+      }
+#else
       LMatPar.invert();
+#endif
+#if(defined DFTFE_WITH_ELPA)
+      computing_timer.exit_section("ELPA PGS cholesky, copy, and triangular matrix invert");
+#else
       computing_timer.exit_section("PGS cholesky, copy, and triangular matrix invert");
+#endif
 
       //X=X*L^{-1}^{T} implemented as X^{T}=L^{-1}*X^{T} with X^{T} stored in the column major format
       if (!(dftParameters::useMixedPrecPGS_SR && useMixedPrec))
@@ -186,7 +249,8 @@ namespace dftfe
 
 #else
     template<typename T>
-    unsigned int pseudoGramSchmidtOrthogonalization(std::vector<T> & X,
+    unsigned int pseudoGramSchmidtOrthogonalization(operatorDFTClass & operatorMatrix,
+		                                    std::vector<T> & X,
 						    const unsigned int numberVectors,
 						    const MPI_Comm &interBandGroupComm,
 						    const MPI_Comm & mpiComm,

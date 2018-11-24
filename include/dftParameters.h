@@ -75,6 +75,7 @@ namespace dftfe {
       extern unsigned int nbandGrps;
       extern bool computeEnergyEverySCF;
       extern unsigned int scalapackParalProcs;
+      extern unsigned int scalapackBlockSize;
       extern unsigned int natoms;
       extern unsigned int natomTypes;
       extern double lowerBoundUnwantedFracUpper;
@@ -88,6 +89,7 @@ namespace dftfe {
       extern bool useMixedPrecSubspaceRotSpectrumSplit;
       extern unsigned int numAdaptiveFilterStates;
       extern unsigned int spectrumSplitStartingScfIter;
+      extern bool useELPA;
 
       /**
        * Declare parameters.

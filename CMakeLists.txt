@@ -213,7 +213,7 @@ ELSE()
 ENDIF (DEFINED LIBXC_DIR)
 
 #
-# XML. Set with -DXML_DIR=/path/to/xml
+# XML. Set with -DXML_LIB_DIR and -DXML_INCLUDE_DIR
 #
 IF (DEFINED XML_INCLUDE_DIR)
   FIND_LIBRARY(XML_LIBRARY
@@ -230,7 +230,7 @@ IF (DEFINED XML_INCLUDE_DIR)
   )
   INCLUDE_DIRECTORIES ("${XML_INCLUDE_DIR}")
 ELSE()
-  MESSAGE(FATAL_ERROR "-- Provide path of XML: -DXML_DIR=/path/to/xml")
+  MESSAGE(FATAL_ERROR "-- Provide path of XML: -DXML_LIB_DIR and -DXML_INCLUDE_DIR")
 ENDIF (DEFINED XML_INCLUDE_DIR)
 
 
@@ -256,6 +256,37 @@ ELSE()
   MESSAGE(FATAL_ERROR "-- Provide path to prefix of SPGLIB: -DSPGLIB_DIR=/path/to/prefix")
 ENDIF (DEFINED SPGLIB_DIR)
 
+#
+# ELPA. Set with -DELPA_LIB_DIR and -DELPA_INCLUDE_DIR
+#
+IF (WITH_ELPA)
+   ADD_DEFINITIONS(-DDFTFE_WITH_ELPA)
+   IF(NOT DEAL_II_WITH_SCALAPACK)
+     MESSAGE(FATAL_ERROR "
+     Error! The deal.II library found at ${DEAL_II_PATH} was not configured with
+     DEAL_II_WITH_SCALAPACK = ON
+     which is required for using ELPA."
+     )
+   ENDIF()
+
+   IF (DEFINED ELPA_INCLUDE_DIR)
+      FIND_LIBRARY(ELPA_LIBRARY
+	NAMES elpa elpa_openmp
+	HINTS ${ELPA_LIB_DIR}
+	NO_DEFAULT_PATH
+      )
+      IF(ELPA_LIBRARY STREQUAL "ELPA_LIBRARY-NOTFOUND")
+	  MESSAGE(FATAL_ERROR "-- ELPA was not found in ${ELPA_LIB_DIR}")
+      ENDIF()
+      MESSAGE("-- Use ELPA from ${ELPA_LIB_DIR}")
+      TARGET_LINK_LIBRARIES(${TARGETLIB}
+		"${ELPA_LIBRARY}"
+      )
+      INCLUDE_DIRECTORIES ("${ELPA_INCLUDE_DIR}")
+   ELSE()
+      MESSAGE(FATAL_ERROR "-- Provide path of ELPA: -DELPA_LIB_DIR and -DELPA_INCLUDE_DIR")
+   ENDIF (DEFINED ELPA_INCLUDE_DIR)
+ENDIF()
 
 #
 # Custom "debug" and "release" make targets:
