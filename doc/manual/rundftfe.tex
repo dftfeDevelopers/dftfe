@@ -121,8 +121,8 @@ functional [PRL. 77, 3865 (1996)]'' functional.
 \item Set the input parameters for Self-Consistent field iterative procedure.
 \begin{verbatim}
 subsection SCF parameters
-  set ANDERSON SCHEME MIXING HISTORY   = 70
-  set ANDERSON SCHEME MIXING PARAMETER = 0.5
+  set MIXING HISTORY   = 70
+  set MIXING PARAMETER = 0.5
   set MAXIMUM ITERATIONS               = 40
   set TEMPERATURE                      = 500
   set TOLERANCE                        = 1e-5
@@ -133,9 +133,9 @@ end
 \end{verbatim}
 where
 \begin{itemize}		
-\item ``70'' set for \verb|ANDERSON SCHEME MIXING HISTORY| is the number of SCF iteration history to be considered for mixing the electron-
-density using Anderson mixing sheme.
-\item ``0.5'' set for \verb|ANDERSON SCHEME MIXING PARAMETER| is the mixing parameter to be used in Anderson scheme.
+\item ``70'' set for \verb|MIXING HISTORY| is the number of SCF iteration history to be considered for mixing the electron-
+density.
+\item ``0.5'' set for \verb|MIXING PARAMETER| is the mixing parameter to be used in the mixing scheme.
 \item ``40'' set for \verb|MAXIMUM ITERATIONS| is the maximum number of iterations allowed in SCF iterative procedure.
 \item ``500'' set for \verb|TEMPERATURE| is the Fermi-Dirac smearing temperature in Kelvin.
 \item ``1e-5'' set for \verb|TOLERANCE| is the SCF stopping tolerance in terms of L2 norm of the electron-density
