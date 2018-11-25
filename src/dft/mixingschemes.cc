@@ -121,25 +121,55 @@ double dftClass<FEOrder>::mixing_anderson(){
   for (int i=0; i<lda*N; i++) A[i]=0.0;
   for (int i=0; i<ldb*NRHS; i++) c[i]=0.0;
 
+  std::vector<std::vector<double> > rhoOutTemp(N+1,
+					       std::vector<double>(num_quad_points,0.0));
+
+  std::vector<std::vector<double> > rhoInTemp(N+1,
+					      std::vector<double>(num_quad_points,0.0));
+
+  std::vector<std::vector<double> > gradRhoOutTemp(N+1,
+						   std::vector<double>(3*num_quad_points,0.0));
+
+  std::vector<std::vector<double> > gradRhoInTemp(N+1,
+						  std::vector<double>(3*num_quad_points,0.0));
+
+ 
+  
+
   //parallel loop over all elements
   typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
-  for (; cell!=endc; ++cell) {
-    if (cell->is_locally_owned()){
-      fe_values.reinit (cell);
-      for (unsigned int q_point=0; q_point<num_quad_points; ++q_point){
-	//fill coefficient matrix, rhs
-	double Fn=((rhoOutVals[N])[cell->id()][q_point])- ((rhoInVals[N])[cell->id()][q_point]);
-	for (int m=0; m<N; m++){
-	  double Fnm=((rhoOutVals[N-1-m])[cell->id()][q_point])- ((rhoInVals[N-1-m])[cell->id()][q_point]);
-	  for (int k=0; k<N; k++){
-	    double Fnk=((rhoOutVals[N-1-k])[cell->id()][q_point])- ((rhoInVals[N-1-k])[cell->id()][q_point]);
-	    A[k*N+m] += (Fn-Fnm)*(Fn-Fnk)*fe_values.JxW(q_point); // (m,k)^th entry
-	  }
-	  c[m] += (Fn-Fnm)*(Fn)*fe_values.JxW(q_point); // (m)^th entry
+  for(; cell!=endc; ++cell) 
+    {
+      if (cell->is_locally_owned())
+	{
+	  fe_values.reinit (cell);
+
+	  for(int hist = 0; hist < N+1; hist++)
+	    {
+	      rhoOutTemp[hist] = (rhoOutVals[hist])[cell->id()];
+	      rhoInTemp[hist] = (rhoInVals[hist])[cell->id()];
+	    }
+	  
+	  for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
+	    {
+	      //fill coefficient matrix, rhs
+	      //double Fn=((rhoOutVals[N])[cell->id()][q_point])- ((rhoInVals[N])[cell->id()][q_point]);
+	      double Fn = rhoOutTemp[N][q_point] - rhoInTemp[N][q_point];
+	      for (int m=0; m<N; m++)
+		{
+		  //double Fnm=((rhoOutVals[N-1-m])[cell->id()][q_point])- ((rhoInVals[N-1-m])[cell->id()][q_point]);
+		  double Fnm = rhoOutTemp[N-1-m][q_point] - rhoInTemp[N-1-m][q_point];
+		  for (int k=0; k<N; k++)
+		    {
+		      //double Fnk=((rhoOutVals[N-1-k])[cell->id()][q_point])- ((rhoInVals[N-1-k])[cell->id()][q_point]);
+		      double Fnk = rhoOutTemp[N-1-k][q_point] - rhoInTemp[N-1-k][q_point];
+		      A[k*N+m] += (Fn-Fnm)*(Fn-Fnk)*fe_values.JxW(q_point); // (m,k)^th entry
+		    }
+		  c[m] += (Fn-Fnm)*(Fn)*fe_values.JxW(q_point); // (m)^th entry
+		}
+	    }
 	}
-      }
     }
-  }
   //accumulate over all processors
   std::vector<double> ATotal(lda*N), cTotal(ldb*NRHS);
   MPI_Allreduce(&A[0], &ATotal[0], lda*N, MPI_DOUBLE, MPI_SUM, mpi_communicator);
@@ -169,24 +199,40 @@ double dftClass<FEOrder>::mixing_anderson(){
 
   //implement anderson mixing
   cell = dofHandler.begin_active();
-  for (; cell!=endc; ++cell) {
-    if (cell->is_locally_owned()){
-      (*rhoInValues)[cell->id()]=std::vector<double>(num_quad_points);
-      fe_values.reinit (cell);
-      for (unsigned int q_point=0; q_point<num_quad_points; ++q_point){
-	//Compute (rhoIn-rhoOut)^2
-        normValue+=std::pow((rhoInValuesOld)[cell->id()][q_point]-(*rhoOutValues)[cell->id()][q_point],2.0)*fe_values.JxW(q_point);
-	//Anderson mixing scheme
-	double rhoOutBar=cn*(rhoOutVals[N])[cell->id()][q_point];
-	double rhoInBar=cn*(rhoInVals[N])[cell->id()][q_point];
-	for (int i = 0; i < N; i++){
-	  rhoOutBar+=cTotal[i]*(rhoOutVals[N-1-i])[cell->id()][q_point];
-	  rhoInBar+=cTotal[i]*(rhoInVals[N-1-i])[cell->id()][q_point];
+  for (; cell!=endc; ++cell) 
+    {
+      if (cell->is_locally_owned())
+	{
+	  (*rhoInValues)[cell->id()]=std::vector<double>(num_quad_points);
+	  fe_values.reinit (cell);
+
+	  for(int hist = 0; hist < N+1; hist++)
+	    {
+	      rhoOutTemp[hist] = (rhoOutVals[hist])[cell->id()];
+	      rhoInTemp[hist] = (rhoInVals[hist])[cell->id()];
+	    }
+
+	  for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
+	    {
+	      //Compute (rhoIn-rhoOut)^2
+	      normValue+=std::pow((rhoInValuesOld)[cell->id()][q_point]-(*rhoOutValues)[cell->id()][q_point],2.0)*fe_values.JxW(q_point);
+	      //Anderson mixing scheme
+	      //double rhoOutBar=cn*(rhoOutVals[N])[cell->id()][q_point];
+	      //double rhoInBar=cn*(rhoInVals[N])[cell->id()][q_point];
+	      double rhoOutBar=cn*rhoOutTemp[N][q_point];
+	      double rhoInBar=cn*rhoInTemp[N][q_point];
+
+	      for (int i = 0; i < N; i++)
+		{
+		  //rhoOutBar+=cTotal[i]*(rhoOutVals[N-1-i])[cell->id()][q_point];
+		  //rhoInBar+=cTotal[i]*(rhoInVals[N-1-i])[cell->id()][q_point];
+		  rhoOutBar+=cTotal[i]*rhoOutTemp[N-1-i][q_point];
+		  rhoInBar+=cTotal[i]*rhoInTemp[N-1-i][q_point];
+		}
+	      (*rhoInValues)[cell->id()][q_point]=std::abs((1-dftParameters::mixingParameter)*rhoInBar+dftParameters::mixingParameter*rhoOutBar);
+	    }
 	}
-	(*rhoInValues)[cell->id()][q_point]=std::abs((1-dftParameters::mixingParameter)*rhoInBar+dftParameters::mixingParameter*rhoOutBar);
-      }
     }
-  }
 
   //compute gradRho for GGA using mixing constants from rho mixing
 
@@ -203,28 +249,37 @@ double dftClass<FEOrder>::mixing_anderson(){
 	    {
 	      (*gradRhoInValues)[cell->id()]=std::vector<double>(3*num_quad_points);
 	      fe_values.reinit (cell);
+
+	      
+	      for(int hist = 0; hist < N+1; hist++)
+		{
+		  gradRhoOutTemp[hist] = (gradRhoOutVals[hist])[cell->id()];
+		  gradRhoInTemp[hist] = (gradRhoInVals[hist])[cell->id()];
+		}
+
+
 	      for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
 		{
 		  //
 		  //Anderson mixing scheme
 		  //
-		  double gradRhoXOutBar = cn*(gradRhoOutVals[N])[cell->id()][3*q_point + 0];
-		  double gradRhoYOutBar = cn*(gradRhoOutVals[N])[cell->id()][3*q_point + 1];
-		  double gradRhoZOutBar = cn*(gradRhoOutVals[N])[cell->id()][3*q_point + 2];
+		  double gradRhoXOutBar = cn*gradRhoOutTemp[N][3*q_point+0];//cn*(gradRhoOutVals[N])[cell->id()][3*q_point + 0];
+		  double gradRhoYOutBar = cn*gradRhoOutTemp[N][3*q_point+1];//cn*(gradRhoOutVals[N])[cell->id()][3*q_point + 1];
+		  double gradRhoZOutBar = cn*gradRhoOutTemp[N][3*q_point+2];//cn*(gradRhoOutVals[N])[cell->id()][3*q_point + 2];
 
-		  double gradRhoXInBar = cn*(gradRhoInVals[N])[cell->id()][3*q_point + 0];
-		  double gradRhoYInBar = cn*(gradRhoInVals[N])[cell->id()][3*q_point + 1];
-		  double gradRhoZInBar = cn*(gradRhoInVals[N])[cell->id()][3*q_point + 2];
+		  double gradRhoXInBar = cn*gradRhoInTemp[N][3*q_point+0];//cn*(gradRhoInVals[N])[cell->id()][3*q_point + 0];
+		  double gradRhoYInBar = cn*gradRhoInTemp[N][3*q_point+1];//cn*(gradRhoInVals[N])[cell->id()][3*q_point + 1];
+		  double gradRhoZInBar = cn*gradRhoInTemp[N][3*q_point+2];//cn*(gradRhoInVals[N])[cell->id()][3*q_point + 2];
 
 		  for (int i = 0; i < N; i++)
 		    {
-		      gradRhoXOutBar += cTotal[i]*(gradRhoOutVals[N-1-i])[cell->id()][3*q_point + 0];
-		      gradRhoYOutBar += cTotal[i]*(gradRhoOutVals[N-1-i])[cell->id()][3*q_point + 1];
-		      gradRhoZOutBar += cTotal[i]*(gradRhoOutVals[N-1-i])[cell->id()][3*q_point + 2];
+		     gradRhoXOutBar  += cTotal[i]*gradRhoOutTemp[N-1-i][3*q_point + 0]; //cTotal[i]*(gradRhoOutVals[N-1-i])[cell->id()][3*q_point + 0];
+		      gradRhoYOutBar += cTotal[i]*gradRhoOutTemp[N-1-i][3*q_point + 1];//cTotal[i]*(gradRhoOutVals[N-1-i])[cell->id()][3*q_point + 1];
+		      gradRhoZOutBar += cTotal[i]*gradRhoOutTemp[N-1-i][3*q_point + 2];//cTotal[i]*(gradRhoOutVals[N-1-i])[cell->id()][3*q_point + 2];
 
-		      gradRhoXInBar += cTotal[i]*(gradRhoInVals[N-1-i])[cell->id()][3*q_point + 0];
-		      gradRhoYInBar += cTotal[i]*(gradRhoInVals[N-1-i])[cell->id()][3*q_point + 1];
-		      gradRhoZInBar += cTotal[i]*(gradRhoInVals[N-1-i])[cell->id()][3*q_point + 2];
+		      gradRhoXInBar += cTotal[i]*gradRhoInTemp[N-1-i][3*q_point + 0]; //cTotal[i]*(gradRhoInVals[N-1-i])[cell->id()][3*q_point + 0];
+		      gradRhoYInBar += cTotal[i]*gradRhoInTemp[N-1-i][3*q_point + 1];//cTotal[i]*(gradRhoInVals[N-1-i])[cell->id()][3*q_point + 1];
+		      gradRhoZInBar += cTotal[i]*gradRhoInTemp[N-1-i][3*q_point + 2];//cTotal[i]*(gradRhoInVals[N-1-i])[cell->id()][3*q_point + 2];
 		    }
 
 		  (*gradRhoInValues)[cell->id()][3*q_point + 0] = ((1-dftParameters::mixingParameter)*gradRhoXInBar+dftParameters::mixingParameter*gradRhoXOutBar);
@@ -810,25 +865,63 @@ double dftClass<FEOrder>::mixing_anderson_spinPolarized(){
   for (int i=0; i<lda*N; i++) A[i]=0.0;
   for (int i=0; i<ldb*NRHS; i++) c[i]=0.0;
 
+  std::vector<std::vector<double> > rhoOutTemp(N+1,
+					       std::vector<double>(num_quad_points,0.0));
+
+  std::vector<std::vector<double> > rhoInTemp(N+1,
+					      std::vector<double>(num_quad_points,0.0));
+
+  std::vector<std::vector<double> > gradRhoOutTemp(N+1,
+						   std::vector<double>(3*num_quad_points,0.0));
+
+  std::vector<std::vector<double> > gradRhoInTemp(N+1,
+						  std::vector<double>(3*num_quad_points,0.0));
+
+  std::vector<std::vector<double> > rhoOutSpinPolarizedTemp(N+1,
+							    std::vector<double>(2*num_quad_points,0.0));
+
+  std::vector<std::vector<double> > rhoInSpinPolarizedTemp(N+1,
+							   std::vector<double>(2*num_quad_points,0.0));
+
+  std::vector<std::vector<double> > gradRhoOutSpinPolarizedTemp(N+1,
+							    std::vector<double>(6*num_quad_points,0.0));
+
+  std::vector<std::vector<double> > gradRhoInSpinPolarizedTemp(N+1,
+							   std::vector<double>(6*num_quad_points,0.0));
+
   //parallel loop over all elements
   typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
-  for (; cell!=endc; ++cell) {
-    if (cell->is_locally_owned()){
-      fe_values.reinit (cell);
-      for (unsigned int q_point=0; q_point<num_quad_points; ++q_point){
-	//fill coefficient matrix, rhs
-	double Fn=((rhoOutVals[N])[cell->id()][q_point])- ((rhoInVals[N])[cell->id()][q_point]);
-	for (int m=0; m<N; m++){
-	  double Fnm=((rhoOutVals[N-1-m])[cell->id()][q_point])- ((rhoInVals[N-1-m])[cell->id()][q_point]);
-	  for (int k=0; k<N; k++){
-	    double Fnk=((rhoOutVals[N-1-k])[cell->id()][q_point])- ((rhoInVals[N-1-k])[cell->id()][q_point]);
-	    A[k*N+m] += (Fn-Fnm)*(Fn-Fnk)*fe_values.JxW(q_point); // (m,k)^th entry
-	  }
-	  c[m] += (Fn-Fnm)*(Fn)*fe_values.JxW(q_point); // (m)^th entry
+  for (; cell!=endc; ++cell) 
+    {
+      if (cell->is_locally_owned())
+	{
+	  fe_values.reinit (cell);
+
+	  for(int hist = 0; hist < N+1; hist++)
+	    {
+	      rhoOutTemp[hist] = (rhoOutVals[hist])[cell->id()];
+	      rhoInTemp[hist] = (rhoInVals[hist])[cell->id()];
+	    }
+
+	  for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
+	    {
+	      //fill coefficient matrix, rhs
+	      double Fn = rhoOutTemp[N][q_point] - rhoInTemp[N][q_point];
+	      for (int m=0; m<N; m++)
+		{
+		  //double Fnm=((rhoOutVals[N-1-m])[cell->id()][q_point])- ((rhoInVals[N-1-m])[cell->id()][q_point]);
+		  double Fnm = rhoOutTemp[N-1-m][q_point] - rhoInTemp[N-1-m][q_point];
+		  for (int k=0; k<N; k++)
+		    {
+		      //double Fnk=((rhoOutVals[N-1-k])[cell->id()][q_point])- ((rhoInVals[N-1-k])[cell->id()][q_point]);
+		      double Fnk = rhoOutTemp[N-1-k][q_point] - rhoInTemp[N-1-k][q_point];
+		      A[k*N+m] += (Fn-Fnm)*(Fn-Fnk)*fe_values.JxW(q_point); // (m,k)^th entry
+		    }
+		  c[m] += (Fn-Fnm)*(Fn)*fe_values.JxW(q_point); // (m)^th entry
+		}
+	    }
 	}
-      }
     }
-  }
   //accumulate over all processors
   std::vector<double> ATotal(lda*N), cTotal(ldb*NRHS);
   MPI_Allreduce(&A[0], &ATotal[0], lda*N, MPI_DOUBLE, MPI_SUM, mpi_communicator);
@@ -870,6 +963,13 @@ double dftClass<FEOrder>::mixing_anderson_spinPolarized(){
       (*rhoInValues)[cell->id()]=std::vector<double>(num_quad_points);
       //}
       fe_values.reinit (cell);
+
+      for(int hist = 0; hist < N+1; hist++)
+	{
+	  rhoOutSpinPolarizedTemp[hist] = (rhoOutValsSpinPolarized[hist])[cell->id()];
+	  rhoInSpinPolarizedTemp[hist] = (rhoInValsSpinPolarized[hist])[cell->id()];
+	}
+
       for (unsigned int q_point=0; q_point<num_quad_points; ++q_point){
 	//Compute (rhoIn-rhoOut)^2
         //normValue+=std::pow((*rhoInValuesOld)[cell->id()][2*q_point+s]-(*rhoOutValues)[cell->id()][2*q_point+s],2.0)*fe_values.JxW(q_point);
@@ -877,19 +977,24 @@ double dftClass<FEOrder>::mixing_anderson_spinPolarized(){
 	//normValue+=std::pow((*rhoInValuesOldSpinPolarized)[cell->id()][2*q_point]-(*rhoOutValuesSpinPolarized)[cell->id()][2*q_point],2.0)*fe_values.JxW(q_point);
 	//normValue+=std::pow((*rhoInValuesOldSpinPolarized)[cell->id()][2*q_point+1]-(*rhoOutValuesSpinPolarized)[cell->id()][2*q_point+1],2.0)*fe_values.JxW(q_point);
 	normValue+=std::pow((rhoInValuesOld)[cell->id()][q_point]-(*rhoOutValues)[cell->id()][q_point],2.0)*fe_values.JxW(q_point);
-	double rhoOutBar1=cn*(rhoOutValsSpinPolarized[N])[cell->id()][2*q_point];
-	double rhoInBar1=cn*(rhoInValsSpinPolarized[N])[cell->id()][2*q_point];
-	for (int i = 0; i < N; i++){
-	  rhoOutBar1+=cTotal[i]*(rhoOutValsSpinPolarized[N-1-i])[cell->id()][2*q_point];
-	  rhoInBar1+=cTotal[i]*(rhoInValsSpinPolarized[N-1-i])[cell->id()][2*q_point];
-	}
+	double rhoOutBar1=cn*rhoOutSpinPolarizedTemp[N][2*q_point];
+	double rhoInBar1=cn*rhoInSpinPolarizedTemp[N][2*q_point];
+	for (int i = 0; i < N; i++)
+	  {
+	  //rhoOutBar1+=cTotal[i]*(rhoOutValsSpinPolarized[N-1-i])[cell->id()][2*q_point];
+	  //rhoInBar1+=cTotal[i]*(rhoInValsSpinPolarized[N-1-i])[cell->id()][2*q_point];
+	    rhoOutBar1+=cTotal[i]*rhoOutSpinPolarizedTemp[N-1-i][2*q_point];
+	    rhoInBar1+=cTotal[i]*rhoInSpinPolarizedTemp[N-1-i][2*q_point];
+	  }
 	(*rhoInValuesSpinPolarized)[cell->id()][2*q_point]=std::abs((1-dftParameters::mixingParameter)*rhoInBar1+dftParameters::mixingParameter*rhoOutBar1);
 	//
-        double rhoOutBar2=cn*(rhoOutValsSpinPolarized[N])[cell->id()][2*q_point+1];
-	double rhoInBar2=cn*(rhoInValsSpinPolarized[N])[cell->id()][2*q_point+1];
+        double rhoOutBar2=cn*rhoOutSpinPolarizedTemp[N][2*q_point+1];
+	double rhoInBar2=cn*rhoInSpinPolarizedTemp[N][2*q_point+1];
 	for (int i = 0; i < N; i++){
-	  rhoOutBar2+=cTotal[i]*(rhoOutValsSpinPolarized[N-1-i])[cell->id()][2*q_point+1];
-	  rhoInBar2+=cTotal[i]*(rhoInValsSpinPolarized[N-1-i])[cell->id()][2*q_point+1];
+	  //rhoOutBar2+=cTotal[i]*(rhoOutValsSpinPolarized[N-1-i])[cell->id()][2*q_point+1];
+	  //rhoInBar2+=cTotal[i]*(rhoInValsSpinPolarized[N-1-i])[cell->id()][2*q_point+1];
+	  rhoOutBar2+=cTotal[i]*rhoOutSpinPolarizedTemp[N-1-i][2*q_point+1];
+	  rhoInBar2+=cTotal[i]*rhoInSpinPolarizedTemp[N-1-i][2*q_point+1];
 	}
 	(*rhoInValuesSpinPolarized)[cell->id()][2*q_point+1]=std::abs((1-dftParameters::mixingParameter)*rhoInBar2+dftParameters::mixingParameter*rhoOutBar2);
 	//
@@ -928,49 +1033,56 @@ double dftClass<FEOrder>::mixing_anderson_spinPolarized(){
 	      (*gradRhoInValuesSpinPolarized)[cell->id()]=std::vector<double>(6*num_quad_points);
 	      //
 	      fe_values.reinit (cell);
+
+	      for(int hist = 0; hist < N+1; hist++)
+		{
+		  gradRhoOutSpinPolarizedTemp[hist] = (gradRhoOutValsSpinPolarized[hist])[cell->id()];
+		  gradRhoInSpinPolarizedTemp[hist] = (gradRhoInValsSpinPolarized[hist])[cell->id()];
+		}
+
 	      for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
 		{
 		  //
 		  //Anderson mixing scheme spin up
 		  //
-		  double gradRhoXOutBar1 = cn*(gradRhoOutValsSpinPolarized[N])[cell->id()][6*q_point + 0];
-		  double gradRhoYOutBar1 = cn*(gradRhoOutValsSpinPolarized[N])[cell->id()][6*q_point + 1];
-		  double gradRhoZOutBar1 = cn*(gradRhoOutValsSpinPolarized[N])[cell->id()][6*q_point + 2];
+		  double gradRhoXOutBar1 = cn*gradRhoOutSpinPolarizedTemp[N][6*q_point + 0];//cn*(gradRhoOutValsSpinPolarized[N])[cell->id()][6*q_point + 0];
+		  double gradRhoYOutBar1 = cn*gradRhoOutSpinPolarizedTemp[N][6*q_point + 1];//cn*(gradRhoOutValsSpinPolarized[N])[cell->id()][6*q_point + 1];
+		  double gradRhoZOutBar1 = cn*gradRhoOutSpinPolarizedTemp[N][6*q_point + 2];//cn*(gradRhoOutValsSpinPolarized[N])[cell->id()][6*q_point + 2];
 
-		  double gradRhoXInBar1 = cn*(gradRhoInValsSpinPolarized[N])[cell->id()][6*q_point + 0];
-		  double gradRhoYInBar1 = cn*(gradRhoInValsSpinPolarized[N])[cell->id()][6*q_point + 1];
-		  double gradRhoZInBar1 = cn*(gradRhoInValsSpinPolarized[N])[cell->id()][6*q_point + 2];
+		  double gradRhoXInBar1 = cn*gradRhoInSpinPolarizedTemp[N][6*q_point + 0];
+		  double gradRhoYInBar1 = cn*gradRhoInSpinPolarizedTemp[N][6*q_point + 1];
+		  double gradRhoZInBar1 = cn*gradRhoInSpinPolarizedTemp[N][6*q_point + 2];
 
 		  for (int i = 0; i < N; i++)
 		    {
-		      gradRhoXOutBar1 += cTotal[i]*(gradRhoOutValsSpinPolarized[N-1-i])[cell->id()][6*q_point + 0];
-		      gradRhoYOutBar1 += cTotal[i]*(gradRhoOutValsSpinPolarized[N-1-i])[cell->id()][6*q_point + 1];
-		      gradRhoZOutBar1 += cTotal[i]*(gradRhoOutValsSpinPolarized[N-1-i])[cell->id()][6*q_point + 2];
+		      gradRhoXOutBar1 += cTotal[i]*gradRhoOutSpinPolarizedTemp[N-1-i][6*q_point + 0];
+		      gradRhoYOutBar1 += cTotal[i]*gradRhoOutSpinPolarizedTemp[N-1-i][6*q_point + 1];
+		      gradRhoZOutBar1 += cTotal[i]*gradRhoOutSpinPolarizedTemp[N-1-i][6*q_point + 2];
 
-		      gradRhoXInBar1 += cTotal[i]*(gradRhoInValsSpinPolarized[N-1-i])[cell->id()][6*q_point + 0];
-		      gradRhoYInBar1 += cTotal[i]*(gradRhoInValsSpinPolarized[N-1-i])[cell->id()][6*q_point + 1];
-		      gradRhoZInBar1 += cTotal[i]*(gradRhoInValsSpinPolarized[N-1-i])[cell->id()][6*q_point + 2];
+		      gradRhoXInBar1 += cTotal[i]*gradRhoInSpinPolarizedTemp[N-1-i][6*q_point + 0];
+		      gradRhoYInBar1 += cTotal[i]*gradRhoInSpinPolarizedTemp[N-1-i][6*q_point + 1];
+		      gradRhoZInBar1 += cTotal[i]*gradRhoInSpinPolarizedTemp[N-1-i][6*q_point + 2];
 		    }
 		  //
 		  //Anderson mixing scheme spin down
 		  //
-		  double gradRhoXOutBar2 = cn*(gradRhoOutValsSpinPolarized[N])[cell->id()][6*q_point + 3];
-		  double gradRhoYOutBar2 = cn*(gradRhoOutValsSpinPolarized[N])[cell->id()][6*q_point + 4];
-		  double gradRhoZOutBar2 = cn*(gradRhoOutValsSpinPolarized[N])[cell->id()][6*q_point + 5];
+		  double gradRhoXOutBar2 = cn*gradRhoOutSpinPolarizedTemp[N][6*q_point + 3];
+		  double gradRhoYOutBar2 = cn*gradRhoOutSpinPolarizedTemp[N][6*q_point + 4];
+		  double gradRhoZOutBar2 = cn*gradRhoOutSpinPolarizedTemp[N][6*q_point + 5];
 
-		  double gradRhoXInBar2 = cn*(gradRhoInValsSpinPolarized[N])[cell->id()][6*q_point + 3];
-		  double gradRhoYInBar2 = cn*(gradRhoInValsSpinPolarized[N])[cell->id()][6*q_point + 4];
-		  double gradRhoZInBar2 = cn*(gradRhoInValsSpinPolarized[N])[cell->id()][6*q_point + 5];
+		  double gradRhoXInBar2 = cn*gradRhoInSpinPolarizedTemp[N][6*q_point + 3];
+		  double gradRhoYInBar2 = cn*gradRhoInSpinPolarizedTemp[N][6*q_point + 4];
+		  double gradRhoZInBar2 = cn*gradRhoInSpinPolarizedTemp[N][6*q_point + 5];
 
 		  for (int i = 0; i < N; i++)
 		    {
-		      gradRhoXOutBar2 += cTotal[i]*(gradRhoOutValsSpinPolarized[N-1-i])[cell->id()][6*q_point + 3];
-		      gradRhoYOutBar2 += cTotal[i]*(gradRhoOutValsSpinPolarized[N-1-i])[cell->id()][6*q_point + 4];
-		      gradRhoZOutBar2 += cTotal[i]*(gradRhoOutValsSpinPolarized[N-1-i])[cell->id()][6*q_point + 5];
+		      gradRhoXOutBar2 += cTotal[i]*gradRhoOutSpinPolarizedTemp[N-1-i][6*q_point + 3];
+		      gradRhoYOutBar2 += cTotal[i]*gradRhoOutSpinPolarizedTemp[N-1-i][6*q_point + 4];
+		      gradRhoZOutBar2 += cTotal[i]*gradRhoOutSpinPolarizedTemp[N-1-i][6*q_point + 5];
 
-		      gradRhoXInBar2 += cTotal[i]*(gradRhoInValsSpinPolarized[N-1-i])[cell->id()][6*q_point + 3];
-		      gradRhoYInBar2 += cTotal[i]*(gradRhoInValsSpinPolarized[N-1-i])[cell->id()][6*q_point + 4];
-		      gradRhoZInBar2 += cTotal[i]*(gradRhoInValsSpinPolarized[N-1-i])[cell->id()][6*q_point + 5];
+		      gradRhoXInBar2 += cTotal[i]*gradRhoInSpinPolarizedTemp[N-1-i][6*q_point + 3];
+		      gradRhoYInBar2 += cTotal[i]*gradRhoInSpinPolarizedTemp[N-1-i][6*q_point + 4];
+		      gradRhoZInBar2 += cTotal[i]*gradRhoInSpinPolarizedTemp[N-1-i][6*q_point + 5];
 		    }
 		  //
 		  (*gradRhoInValuesSpinPolarized)[cell->id()][6*q_point + 0] = ((1-dftParameters::mixingParameter)*gradRhoXInBar1+dftParameters::mixingParameter*gradRhoXOutBar1);
