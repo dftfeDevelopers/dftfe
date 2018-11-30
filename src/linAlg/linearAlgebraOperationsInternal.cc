@@ -141,6 +141,10 @@ namespace dftfe
 	       AssertThrow(error==ELPA_OK,
 	       	  dealii::ExcMessage("DFT-FE Error: ELPA Error."));
 
+               //elpa_set_integer(elpaHandle, "real_kernel",ELPA_2STAGE_REAL_AVX512_BLOCK6, &error);
+               //AssertThrow(error==ELPA_OK,
+               //   dealii::ExcMessage("DFT-FE Error: ELPA Error."));
+
 #ifdef DEBUG
 	       elpa_set_integer(elpaHandle, "debug", 1, &error);
 	       AssertThrow(error==ELPA_OK,
