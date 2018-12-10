@@ -47,7 +47,7 @@ namespace dftfe {
     n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_comm_replica)),
     this_mpi_process (Utilities::MPI::this_mpi_process(mpi_comm_replica)),
     pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
-    computing_timer (pcout, TimerOutput::never, TimerOutput::wall_times),
+    computing_timer (mpi_comm_replica,pcout, TimerOutput::never, TimerOutput::wall_times),
     operatorDFTClass(mpi_comm_replica,
 		     _dftPtr->getMatrixFreeData(),
 		     _dftPtr->getLocalDofIndicesReal(),
@@ -112,11 +112,6 @@ namespace dftfe {
 							 numberWaveFunctions,
 							 dftPtr->d_projectorKetTimesVectorParFlattened);
 
-      ///FIXME In some cases this caused Assert failure. So it is commented to out for now
-      /// requires to be uncommented for developing/experimenting mixed precision in chebyshev filtering
-      //vectorTools::createDealiiVector<dataTypes::numberLowPrec>(dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
-      //							 numberWaveFunctions,
-      //							 dftPtr->d_projectorKetTimesVectorParFlattenedLowPrec);
     }
 
 
@@ -141,13 +136,6 @@ void kohnShamDFTOperatorClass<FEOrder>::reinit(const unsigned int numberWaveFunc
     vectorTools::createDealiiVector<dataTypes::number>(dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
 						       numberWaveFunctions,
 						       dftPtr->d_projectorKetTimesVectorParFlattened);
-
-    ///FIXME In some cases this caused Assert failure. So it is commented to out for now
-    /// requires to be uncommented for developing/experimenting mixed precision in chebyshev filtering
-    //vectorTools::createDealiiVector<dataTypes::numberLowPrec>
-    //	  (dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
-    //	   numberWaveFunctions,
-    //	   dftPtr->d_projectorKetTimesVectorParFlattenedLowPrec);
   }
 
 }
@@ -253,17 +241,26 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
       fe_eval_phiExt.read_dof_values(phiExt);
       fe_eval_phiExt.evaluate(true, false, false);
 
+      const unsigned int n_sub_cells=dftPtr->matrix_free_data.n_components_filled(cell);
+      std::vector< std::vector<double>> tempRho(n_sub_cells);
+      std::vector< std::vector<double>> tempPseudo(n_sub_cells);
+      for (unsigned int v = 0; v < n_sub_cells; ++v)
+      {
+	cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
+        tempRho[v]=(*rhoValues).find(cellPtr->id())->second;
+	if(dftParameters::isPseudopotential)
+	  tempPseudo[v]=pseudoValues.find(cellPtr->id())->second;
+      }
       for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
 	{
 	  //
 	  //loop over each cell
 	  //
-	  unsigned int n_sub_cells=dftPtr->matrix_free_data.n_components_filled(cell);
 	  std::vector<double> densityValue(n_sub_cells), exchangePotentialVal(n_sub_cells), corrPotentialVal(n_sub_cells);
 	  for (unsigned int v = 0; v < n_sub_cells; ++v)
 	    {
 	      cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
-	      densityValue[v] = (*rhoValues).find(cellPtr->id())->second[q];
+	      densityValue[v] = tempRho[v][q];
 	    }
 
 	  xc_lda_vxc(&(dftPtr->funcX),n_sub_cells,&densityValue[0],&exchangePotentialVal[0]);
@@ -285,7 +282,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 	      for (unsigned int v = 0; v < n_sub_cells; ++v)
 		{
 		  cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
-		  pseudoPotential[v]=pseudoValues.find(cellPtr->id())->second[q];
+		  pseudoPotential[v]=tempPseudo[v][q];
 		}
 	      vEff(cell,q) = fe_eval_phi.get_value(q)+exchangePotential+corrPotential+(pseudoPotential-fe_eval_phiExt.get_value(q));
 	    }
@@ -334,21 +331,31 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
       fe_eval_phiExt.evaluate(true, false, false);
 
 
-
+      const unsigned int n_sub_cells=dftPtr->matrix_free_data.n_components_filled(cell);
+      std::vector< std::vector<double>> tempRho(n_sub_cells);
+      std::vector< std::vector<double>> tempGradRho(n_sub_cells);
+      std::vector< std::vector<double>> tempPseudo(n_sub_cells);
+      for (unsigned int v = 0; v < n_sub_cells; ++v)
+      {
+	cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
+        tempRho[v]=(*rhoValues).find(cellPtr->id())->second;
+        tempGradRho[v]=(*gradRhoValues).find(cellPtr->id())->second;
+	if(dftParameters::isPseudopotential)
+	   tempPseudo[v]=pseudoValues.find(cellPtr->id())->second;
+      }
       for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
 	{
 	  //
 	  //loop over each cell
 	  //
-	  unsigned int n_sub_cells=dftPtr->matrix_free_data.n_components_filled(cell);
 	  std::vector<double> densityValue(n_sub_cells), derExchEnergyWithDensityVal(n_sub_cells), derCorrEnergyWithDensityVal(n_sub_cells), derExchEnergyWithSigma(n_sub_cells), derCorrEnergyWithSigma(n_sub_cells), sigmaValue(n_sub_cells);
 	  for (unsigned int v = 0; v < n_sub_cells; ++v)
 	    {
 	      cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
-	      densityValue[v] = (*rhoValues).find(cellPtr->id())->second[q];
-	      double gradRhoX = (*gradRhoValues).find(cellPtr->id())->second[3*q + 0];
-	      double gradRhoY = (*gradRhoValues).find(cellPtr->id())->second[3*q + 1];
-	      double gradRhoZ = (*gradRhoValues).find(cellPtr->id())->second[3*q + 2];
+	      densityValue[v] = tempRho[v][q];
+	      double gradRhoX = tempGradRho[v][3*q + 0];
+	      double gradRhoY = tempGradRho[v][3*q + 1];
+	      double gradRhoZ = tempGradRho[v][3*q + 2];
 	      sigmaValue[v] = gradRhoX*gradRhoX + gradRhoY*gradRhoY + gradRhoZ*gradRhoZ;
 	    }
 
@@ -362,9 +369,9 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 	      cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
 	      derExchEnergyWithDensity[v]=derExchEnergyWithDensityVal[v];
 	      derCorrEnergyWithDensity[v]=derCorrEnergyWithDensityVal[v];
-	      double gradRhoX = (*gradRhoValues).find(cellPtr->id())->second[3*q + 0];
-	      double gradRhoY = (*gradRhoValues).find(cellPtr->id())->second[3*q + 1];
-	      double gradRhoZ = (*gradRhoValues).find(cellPtr->id())->second[3*q + 2];
+	      double gradRhoX = tempGradRho[v][3*q + 0];
+	      double gradRhoY = tempGradRho[v][3*q + 1];
+	      double gradRhoZ = tempGradRho[v][3*q + 2];
 	      double term = derExchEnergyWithSigma[v]+derCorrEnergyWithSigma[v];
 	      derExcWithSigmaTimesGradRhoX[v] = term*gradRhoX;
 	      derExcWithSigmaTimesGradRhoY[v] = term*gradRhoY;
@@ -380,7 +387,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 	      for (unsigned int v = 0; v < n_sub_cells; ++v)
 		{
 		  cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
-		  pseudoPotential[v]=pseudoValues.find(cellPtr->id())->second[q];
+		  pseudoPotential[v]=tempPseudo[v][q];
 		}
 	      vEff(cell,q)=fe_eval_phi.get_value(q)+derExchEnergyWithDensity+derCorrEnergyWithDensity+(pseudoPotential-fe_eval_phiExt.get_value(q));
 	      derExcWithSigmaTimesGradRho(cell,q)[0] = derExcWithSigmaTimesGradRhoX;
@@ -405,7 +412,6 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 			       const unsigned int numberWaveFunctions,
 			       const bool scaleFlag,
 			       const double scalar,
-			       const bool useSinglePrec,
 			       dealii::parallel::distributed::Vector<std::complex<double> > & dst)
 
 
@@ -448,7 +454,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
     					       numberWaveFunctions);
 
 
-    src.update_ghost_values();
+    //src.update_ghost_values();
 
 
     //
@@ -534,7 +540,6 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 			       const unsigned int numberWaveFunctions,
 			       const bool scaleFlag,
 			       const double scalar,
-			       const bool useSinglePrec,
 			       dealii::parallel::distributed::Vector<double> & dst)
 
 
@@ -575,7 +580,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
     dftPtr->constraintsNoneDataInfo.distribute(src,
 					      numberWaveFunctions);
 
-    src.update_ghost_values();
+    //src.update_ghost_values();
 
     //
     //Hloc*M^{-1/2}*X
@@ -583,11 +588,6 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 #ifdef WITH_MKL
     if (dftParameters::useBatchGEMM && numberWaveFunctions<1000)
     {
-       if (useSinglePrec)
-         computeLocalHamiltonianTimesXBatchGEMMSinglePrec(src,
-				              numberWaveFunctions,
-				              dst);
-       else
 	  computeLocalHamiltonianTimesXBatchGEMM(src,
 				  numberWaveFunctions,
 				  dst);
@@ -610,11 +610,6 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 #ifdef WITH_MKL
       if (dftParameters::useBatchGEMM && numberWaveFunctions<1000)
       {
-	if (useSinglePrec)
-            computeNonLocalHamiltonianTimesXBatchGEMMSinglePrec(src,
-				                  numberWaveFunctions,
-				                  dst);
-	else
             computeNonLocalHamiltonianTimesXBatchGEMM(src,
 				                  numberWaveFunctions,
 				                  dst);
@@ -796,6 +791,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
     std::vector<std::complex<double> > XtHXValuelocal(sizeXtHX,0.0);
     zgemm_(&transA, &transB, &n, &n, &k, &alpha, &x[0], &lda, &hx[0], &ldb, &beta, &XtHXValuelocal[0], &ldc);
 
+    MPI_Barrier(mpi_communicator);
     MPI_Allreduce(&XtHXValuelocal[0],
 		  &ProjHam[0],
 		  sizeXtHX,
@@ -852,7 +848,6 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
        numberWaveFunctions,
        scaleFlag,
        scalar,
-       false,
        Y);
 
     for(unsigned int i = 0; i < Y.local_size(); ++i)
@@ -884,6 +879,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 
     const unsigned int size = numberWaveFunctions*numberWaveFunctions;
 
+    MPI_Barrier(mpi_communicator);
     MPI_Allreduce(&XtHXValuelocal[0],
 		  &ProjHam[0],
 		  size,
@@ -993,7 +989,6 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
        numberWaveFunctions,
        scaleFlag,
        scalar,
-       false,
        Y);
 
     char transA = 'N';
@@ -1108,6 +1103,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 			     =X[iNode*numberWaveFunctions+jvec+iWave];
 
 
+	      MPI_Barrier(getMPICommunicator());
 	      //evaluate H times XBlock^{T} and store in HXBlock^{T}
 	      HXBlock=0;
 	      const bool scaleFlag = false;
@@ -1116,9 +1112,8 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 		 B,
 		 scaleFlag,
 		 scalar,
-		 false,
 		 HXBlock);
-
+              MPI_Barrier(getMPICommunicator());
 
 	      const char transA = 'N';
 #ifdef USE_COMPLEX
@@ -1146,23 +1141,14 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 		     &projHamBlock[0],
 		     &D);
 
-
+              MPI_Barrier(getMPICommunicator());
 	      // Sum local XTrunc^{T}*HXcBlock across domain decomposition processors
-#ifdef USE_COMPLEX
 	      MPI_Allreduce(MPI_IN_PLACE,
 			    &projHamBlock[0],
 			    D*B,
-			    MPI_C_DOUBLE_COMPLEX,
+			    dataTypes::mpi_type_id(&projHamBlock[0]),
 			    MPI_SUM,
 			    getMPICommunicator());
-#else
-	      MPI_Allreduce(MPI_IN_PLACE,
-			    &projHamBlock[0],
-			    D*B,
-			    MPI_DOUBLE,
-			    MPI_SUM,
-			    getMPICommunicator());
-#endif
 
 	      //Copying only the lower triangular part to the ScaLAPACK projected Hamiltonian matrix
 	      if (processGrid->is_process_active())
@@ -1170,7 +1156,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 		     if(globalToLocalColumnIdMap.find(j+jvec)!=globalToLocalColumnIdMap.end())
 		     {
 		       const unsigned int localColumnId=globalToLocalColumnIdMap[j+jvec];
-		       for (unsigned int i = jvec; i <numberWaveFunctions; ++i)
+		       for (unsigned int i = j+jvec; i <numberWaveFunctions; ++i)
 		       {
 			 std::map<unsigned int, unsigned int>::iterator it=
 					      globalToLocalRowIdMap.find(i);
@@ -1185,9 +1171,239 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 
     }//block loop
 
-    linearAlgebraOperations::internal::sumAcrossInterCommScaLAPACKMat(processGrid,
+    if (numberBandGroups>1)
+    {
+       MPI_Barrier(dftPtr->interBandGroupComm);
+       linearAlgebraOperations::internal::sumAcrossInterCommScaLAPACKMat(processGrid,
+						                         projHamPar,
+						                         dftPtr->interBandGroupComm);
+    }
+#endif
+  }
+
+  template<unsigned int FEOrder>
+  void kohnShamDFTOperatorClass<FEOrder>::XtHXMixedPrec
+	             (const std::vector<dataTypes::number> & X,
+		      const unsigned int N,
+		      const unsigned int Ncore,
+		      const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+		      dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar)
+  {
+#ifdef USE_COMPLEX
+    AssertThrow(false,dftUtils::ExcNotImplementedYet());
+#else
+    //
+    //Get access to number of locally owned nodes on the current processor
+    //
+    const unsigned int numberDofs = X.size()/N;
+
+    //create temporary arrays XBlock,Hx
+    dealii::parallel::distributed::Vector<dataTypes::number> XBlock,HXBlock;
+
+    std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
+    std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
+    linearAlgebraOperations::internal::createGlobalToLocalIdMapsScaLAPACKMat(processGrid,
+						    projHamPar,
+						    globalToLocalRowIdMap,
+						    globalToLocalColumnIdMap);
+   //band group parallelization data structures
+   const unsigned int numberBandGroups=
+	dealii::Utilities::MPI::n_mpi_processes(dftPtr->interBandGroupComm);
+   const unsigned int bandGroupTaskId = dealii::Utilities::MPI::this_mpi_process(dftPtr->interBandGroupComm);
+   std::vector<unsigned int> bandGroupLowHighPlusOneIndices;
+   dftUtils::createBandParallelizationIndices(dftPtr->interBandGroupComm,
+					      N,
+					      bandGroupLowHighPlusOneIndices);
+
+   /*
+    * X^{T}*H*Xc is done in a blocked approach for memory optimization:
+    * Sum_{blocks} X^{T}*H*XcBlock. The result of each X^{T}*H*XcBlock
+    * has a much smaller memory compared to X^{T}*H*Xc.
+    * X^{T} (denoted by X in the code with column major format storage)
+    * is a matrix with size (N x MLoc).
+    * MLoc, which is number of local dofs is denoted by numberDofs in the code.
+    * Xc denotes complex conjugate of X.
+    * XcBlock is a matrix of size (MLoc x B). B is the block size.
+    * A further optimization is done to reduce floating point operations:
+    * As X^{T}*H*Xc is a Hermitian matrix, it suffices to compute only the lower
+    * triangular part. To exploit this, we do
+    * X^{T}*H*Xc=Sum_{blocks} XTrunc^{T}*H*XcBlock
+    * where XTrunc^{T} is a (D x MLoc) sub matrix of X^{T} with the row indices
+    * ranging from the lowest global index of XcBlock (denoted by jvec in the code)
+    * to N. D=N-jvec.
+    * The parallel ScaLapack matrix projHamPar is directly filled from
+    * the XTrunc^{T}*H*XcBlock result
+    */
+
+    const unsigned int vectorsBlockSize=std::min(dftParameters::wfcBlockSize,
+	                                         bandGroupLowHighPlusOneIndices[1]);
+
+    std::vector<dataTypes::numberLowPrec> projHamBlockSinglePrec(N*vectorsBlockSize,0.0);
+    std::vector<dataTypes::number> projHamBlock(N*vectorsBlockSize,0.0);
+
+    std::vector<dataTypes::numberLowPrec> HXBlockSinglePrec;
+
+    std::vector<dataTypes::numberLowPrec> XSinglePrec(&X[0],&X[0]+X.size());
+
+    if (dftParameters::verbosity>=4)
+      dftUtils::printCurrentMemoryUsage(mpi_communicator,
+	                      "Inside Blocked XtHX with parallel projected Ham matrix");
+
+    for (unsigned int jvec = 0; jvec < N; jvec += vectorsBlockSize)
+    {
+	  // Correct block dimensions if block "goes off edge of" the matrix
+	  const unsigned int B = std::min(vectorsBlockSize, N-jvec);
+	  if (jvec==0 || B!=vectorsBlockSize)
+	  {
+	     reinit(B,
+		    XBlock,
+		    true);
+	     HXBlock.reinit(XBlock);
+	     HXBlockSinglePrec.resize(B*numberDofs);
+	  }
+
+	  if ((jvec+B)<=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1] &&
+	      (jvec+B)>bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
+	  {
+	      XBlock=0;
+	      //fill XBlock^{T} from X:
+	      for(unsigned int iNode = 0; iNode<numberDofs; ++iNode)
+		  for(unsigned int iWave = 0; iWave < B; ++iWave)
+			XBlock.local_element(iNode*B
+				 +iWave)
+			     =X[iNode*N+jvec+iWave];
+
+
+	      MPI_Barrier(getMPICommunicator());
+	      //evaluate H times XBlock^{T} and store in HXBlock^{T}
+	      HXBlock=0;
+	      const bool scaleFlag = false;
+	      const dataTypes::number scalar = 1.0;
+	      HX(XBlock,
+		 B,
+		 scaleFlag,
+		 scalar,
+		 HXBlock);
+	      MPI_Barrier(getMPICommunicator());
+
+	      const char transA = 'N';
+#ifdef USE_COMPLEX
+	      const char transB = 'C';
+#else
+	      const char transB = 'T';
+#endif
+	      const dataTypes::number alpha = 1.0,beta = 0.0;
+	      std::fill(projHamBlock.begin(),projHamBlock.end(),0.);
+
+	      if (jvec+B>Ncore)
+	      {
+
+		  const unsigned int D=N-jvec;
+
+		  // Comptute local XTrunc^{T}*HXcBlock.
+		  dgemm_(&transA,
+			 &transB,
+			 &D,
+			 &B,
+			 &numberDofs,
+			 &alpha,
+			 &X[0]+jvec,
+			 &N,
+			 HXBlock.begin(),
+			 &B,
+			 &beta,
+			 &projHamBlock[0],
+			 &D);
+
+                  MPI_Barrier(getMPICommunicator());
+		  // Sum local XTrunc^{T}*HXcBlock across domain decomposition processors
+		  MPI_Allreduce(MPI_IN_PLACE,
+				&projHamBlock[0],
+				D*B,
+				dataTypes::mpi_type_id(&projHamBlock[0]),
+				MPI_SUM,
+				getMPICommunicator());
+
+
+		  //Copying only the lower triangular part to the ScaLAPACK projected Hamiltonian matrix
+		  if (processGrid->is_process_active())
+		      for (unsigned int j = 0; j <B; ++j)
+			 if(globalToLocalColumnIdMap.find(j+jvec)!=globalToLocalColumnIdMap.end())
+			 {
+			   const unsigned int localColumnId=globalToLocalColumnIdMap[j+jvec];
+			   for (unsigned int i = jvec+j; i <N; ++i)
+			   {
+			     std::map<unsigned int, unsigned int>::iterator it=
+						  globalToLocalRowIdMap.find(i);
+			     if (it!=globalToLocalRowIdMap.end())
+				     projHamPar.local_el(it->second,
+							 localColumnId)
+							 =projHamBlock[j*D+i-jvec];
+			   }
+			 }
+	      }
+	      else
+	      {
+
+		  const dataTypes::numberLowPrec alphaSinglePrec = 1.0,betaSinglePrec = 0.0;
+
+		  for(unsigned int i = 0; i<numberDofs*B; ++i)
+	          	HXBlockSinglePrec[i]=HXBlock.local_element(i);
+
+		  const unsigned int D=N-jvec;
+
+		  sgemm_(&transA,
+			 &transB,
+			 &D,
+			 &B,
+			 &numberDofs,
+			 &alphaSinglePrec,
+			 &XSinglePrec[0]+jvec,
+			 &N,
+			 &HXBlockSinglePrec[0],
+			 &B,
+			 &betaSinglePrec,
+			 &projHamBlockSinglePrec[0],
+			 &D);
+
+		  MPI_Barrier(getMPICommunicator());
+		  MPI_Allreduce(MPI_IN_PLACE,
+				&projHamBlockSinglePrec[0],
+				D*B,
+				dataTypes::mpi_type_id(&projHamBlockSinglePrec[0]),
+				MPI_SUM,
+				getMPICommunicator());
+
+
+		  if (processGrid->is_process_active())
+		      for (unsigned int j = 0; j <B; ++j)
+			 if(globalToLocalColumnIdMap.find(j+jvec)!=globalToLocalColumnIdMap.end())
+			 {
+			   const unsigned int localColumnId=globalToLocalColumnIdMap[j+jvec];
+			   for (unsigned int i = jvec+j; i <N; ++i)
+			   {
+			     std::map<unsigned int, unsigned int>::iterator it=
+						  globalToLocalRowIdMap.find(i);
+			     if (it!=globalToLocalRowIdMap.end())
+				     projHamPar.local_el(it->second,
+							 localColumnId)
+							 =projHamBlockSinglePrec[j*D+i-jvec];
+			   }
+			 }
+	      }
+
+
+	  }//band parallelization
+
+    }//block loop
+
+    if (numberBandGroups>1)
+    {
+      MPI_Barrier(dftPtr->interBandGroupComm);
+      linearAlgebraOperations::internal::sumAcrossInterCommScaLAPACKMat(processGrid,
 						                      projHamPar,
 						                      dftPtr->interBandGroupComm);
+    }
 #endif
   }
 #endif
@@ -1229,19 +1445,28 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEffSpinPolarized(const std::map<
       fe_eval_phiExt.evaluate(true, false, false);
 
 
+      const unsigned int n_sub_cells=dftPtr->matrix_free_data.n_components_filled(cell);
+      std::vector< std::vector<double>> tempRho(n_sub_cells);
+      std::vector< std::vector<double>> tempPseudo(n_sub_cells);
+      for (unsigned int v = 0; v < n_sub_cells; ++v)
+      {
+	cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
+        tempRho[v]=(*rhoValues).find(cellPtr->id())->second;
+	if(dftParameters::isPseudopotential)
+	   tempPseudo[v]=pseudoValues.find(cellPtr->id())->second;
+      }
 
       for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
 	{
 	  //
 	  //loop over each cell
 	  //
-	  unsigned int n_sub_cells=dftPtr->matrix_free_data.n_components_filled(cell);
 	  std::vector<double> densityValue(2*n_sub_cells), exchangePotentialVal(2*n_sub_cells), corrPotentialVal(2*n_sub_cells);
 	  for (unsigned int v = 0; v < n_sub_cells; ++v)
 	    {
 	      cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
-	      densityValue[2*v+1] = (*rhoValues).find(cellPtr->id())->second[2*q+1];
-	      densityValue[2*v] = (*rhoValues).find(cellPtr->id())->second[2*q];
+	      densityValue[2*v+1] =tempRho[v][2*q+1];
+	      densityValue[2*v] = tempRho[v][2*q];
 	    }
 
 	  xc_lda_vxc(&(dftPtr->funcX),n_sub_cells,&densityValue[0],&exchangePotentialVal[0]);
@@ -1263,7 +1488,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEffSpinPolarized(const std::map<
 	      for (unsigned int v = 0; v < n_sub_cells; ++v)
 		{
 		  cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
-		  pseudoPotential[v]=pseudoValues.find(cellPtr->id())->second[q];
+		  pseudoPotential[v]=tempPseudo[v][q];
 		}
 	      vEff(cell,q)=fe_eval_phi.get_value(q)+exchangePotential+corrPotential+(pseudoPotential-fe_eval_phiExt.get_value(q));
 	    }
@@ -1312,27 +1537,37 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEffSpinPolarized(const std::map<
       fe_eval_phiExt.read_dof_values(phiExt);
       fe_eval_phiExt.evaluate(true, false, false);
 
-
+      const unsigned int n_sub_cells=dftPtr->matrix_free_data.n_components_filled(cell);
+      std::vector< std::vector<double>> tempRho(n_sub_cells);
+      std::vector< std::vector<double>> tempGradRho(n_sub_cells);
+      std::vector< std::vector<double>> tempPseudo(n_sub_cells);
+      for (unsigned int v = 0; v < n_sub_cells; ++v)
+      {
+	cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
+        tempRho[v]=(*rhoValues).find(cellPtr->id())->second;
+        tempGradRho[v]=(*gradRhoValues).find(cellPtr->id())->second;
+	if(dftParameters::isPseudopotential)
+	  tempPseudo[v]=pseudoValues.find(cellPtr->id())->second;
+      }
 
       for (unsigned int q = 0; q < numberQuadraturePoints; ++q)
 	{
 	  //
 	  //loop over each cell
 	  //
-	  unsigned int n_sub_cells=dftPtr->matrix_free_data.n_components_filled(cell);
 	  std::vector<double> densityValue(2*n_sub_cells), derExchEnergyWithDensityVal(2*n_sub_cells), derCorrEnergyWithDensityVal(2*n_sub_cells),
 				derExchEnergyWithSigma(3*n_sub_cells), derCorrEnergyWithSigma(3*n_sub_cells), sigmaValue(3*n_sub_cells);
 	  for (unsigned int v = 0; v < n_sub_cells; ++v)
 	    {
 	      cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
-	      densityValue[2*v+1] = (*rhoValues).find(cellPtr->id())->second[2*q+1];
-	      densityValue[2*v] = (*rhoValues).find(cellPtr->id())->second[2*q];
-	      double gradRhoX1 = (*gradRhoValues).find(cellPtr->id())->second[6*q + 0];
-	      double gradRhoY1 = (*gradRhoValues).find(cellPtr->id())->second[6*q + 1];
-	      double gradRhoZ1 = (*gradRhoValues).find(cellPtr->id())->second[6*q + 2];
-	      double gradRhoX2 = (*gradRhoValues).find(cellPtr->id())->second[6*q + 3];
-	      double gradRhoY2 = (*gradRhoValues).find(cellPtr->id())->second[6*q + 4];
-	      double gradRhoZ2 = (*gradRhoValues).find(cellPtr->id())->second[6*q + 5];
+	      densityValue[2*v+1] = tempRho[v][2*q+1];
+	      densityValue[2*v] = tempRho[v][2*q];
+	      double gradRhoX1 = tempGradRho[v][6*q + 0];
+	      double gradRhoY1 = tempGradRho[v][6*q + 1];
+	      double gradRhoZ1 = tempGradRho[v][6*q + 2];
+	      double gradRhoX2 = tempGradRho[v][6*q + 3];
+	      double gradRhoY2 = tempGradRho[v][6*q + 4];
+	      double gradRhoZ2 = tempGradRho[v][6*q + 5];
 	      //
 	      sigmaValue[3*v+0] = gradRhoX1*gradRhoX1 + gradRhoY1*gradRhoY1 + gradRhoZ1*gradRhoZ1;
 	      sigmaValue[3*v+1] = gradRhoX1*gradRhoX2 + gradRhoY1*gradRhoY2 + gradRhoZ1*gradRhoZ2;
@@ -1350,12 +1585,12 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEffSpinPolarized(const std::map<
 	      cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
 	      derExchEnergyWithDensity[v]=derExchEnergyWithDensityVal[2*v+spinIndex];
 	      derCorrEnergyWithDensity[v]=derCorrEnergyWithDensityVal[2*v+spinIndex];
-	      double gradRhoX = (*gradRhoValues).find(cellPtr->id())->second[6*q + 0 + 3*spinIndex];
-	      double gradRhoY = (*gradRhoValues).find(cellPtr->id())->second[6*q + 1 + 3*spinIndex];
-	      double gradRhoZ = (*gradRhoValues).find(cellPtr->id())->second[6*q + 2 + 3*spinIndex];
-	      double gradRhoOtherX = (*gradRhoValues).find(cellPtr->id())->second[6*q + 0 + 3*(1-spinIndex)];
-	      double gradRhoOtherY = (*gradRhoValues).find(cellPtr->id())->second[6*q + 1 + 3*(1-spinIndex)];
-	      double gradRhoOtherZ = (*gradRhoValues).find(cellPtr->id())->second[6*q + 2 + 3*(1-spinIndex)];
+	      double gradRhoX = tempGradRho[v][6*q + 0 + 3*spinIndex];
+	      double gradRhoY = tempGradRho[v][6*q + 1 + 3*spinIndex];
+	      double gradRhoZ = tempGradRho[v][6*q + 2 + 3*spinIndex];
+	      double gradRhoOtherX = tempGradRho[v][6*q + 0 + 3*(1-spinIndex)];
+	      double gradRhoOtherY = tempGradRho[v][6*q + 1 + 3*(1-spinIndex)];
+	      double gradRhoOtherZ = tempGradRho[v][6*q + 2 + 3*(1-spinIndex)];
 	      double term = derExchEnergyWithSigma[3*v+2*spinIndex]+derCorrEnergyWithSigma[3*v+2*spinIndex];
 	      double termOff = derExchEnergyWithSigma[3*v+1]+derCorrEnergyWithSigma[3*v+1];
 	      derExcWithSigmaTimesGradRhoX[v] = term*gradRhoX + 0.5*termOff*gradRhoOtherX;
@@ -1372,7 +1607,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEffSpinPolarized(const std::map<
 	      for (unsigned int v = 0; v < n_sub_cells; ++v)
 		{
 		  cellPtr=dftPtr->matrix_free_data.get_cell_iterator(cell, v);
-		  pseudoPotential[v]=pseudoValues.find(cellPtr->id())->second[q];
+		  pseudoPotential[v]=tempPseudo[v][q];
 		}
 	      vEff(cell,q)=fe_eval_phi.get_value(q)+derExchEnergyWithDensity+derCorrEnergyWithDensity+(pseudoPotential-fe_eval_phiExt.get_value(q));
 	      derExcWithSigmaTimesGradRho(cell,q)[0] = derExcWithSigmaTimesGradRhoX;

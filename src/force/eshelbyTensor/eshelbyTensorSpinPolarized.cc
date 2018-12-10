@@ -15,8 +15,9 @@
 //
 // @author Sambit Das (2017)
 //
-#include "../../../include/eshelbyTensorSpinPolarized.h"
-#include "../../../include/dftUtils.h"
+#include <eshelbyTensorSpinPolarized.h>
+#include <dftUtils.h>
+#include <dftParameters.h>
 
 namespace dftfe {
 
@@ -49,6 +50,8 @@ namespace eshelbyTensorSP
 		     const std::vector<double> & kPointWeights,
 		     const std::vector<std::vector<double> > & eigenValues_,
 		     const double fermiEnergy_,
+		     const double fermiEnergyUp_,
+		     const double fermiEnergyDown_,
 		     const double tVal)
     {
 
@@ -76,14 +79,23 @@ namespace eshelbyTensorSP
 	    const Tensor<1,2,VectorizedArray<double> > & psiSpin1= *it1Spin1;
 	    const Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > >  & gradPsiSpin1=*it2Spin1;
 
-	    const double partOccSpin0 =dftUtils::getPartialOccupancy(eigenValues_[ik][eigenIndex],
+	    double partOccSpin0 =dftUtils::getPartialOccupancy(eigenValues_[ik][eigenIndex],
 								     fermiEnergy_,
 								     C_kb,
 								     tVal);
-	    const double partOccSpin1 =dftUtils::getPartialOccupancy(eigenValues_[ik][eigenIndex+numEigenValues],
+	    double partOccSpin1 =dftUtils::getPartialOccupancy(eigenValues_[ik][eigenIndex+numEigenValues],
 								     fermiEnergy_,
 								     C_kb,
 								     tVal);
+
+	    if(dftParameters::constraintMagnetization)
+	    {
+		 partOccSpin0 = 1.0 , partOccSpin1 = 1.0 ;
+		 if (eigenValues_[ik][eigenIndex+numEigenValues]> fermiEnergyDown_)
+			partOccSpin1 = 0.0 ;
+		 if (eigenValues_[ik][eigenIndex] > fermiEnergyUp_)
+			partOccSpin0 = 0.0 ;
+	    }
 
 	    VectorizedArray<double> identityTensorFactorContributionSpin0=make_vectorized_array(0.0);
 	    VectorizedArray<double> identityTensorFactorContributionSpin1=make_vectorized_array(0.0);
@@ -117,7 +129,9 @@ namespace eshelbyTensorSP
 			std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >::const_iterator gradPsiSpin0Begin,
 			std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >::const_iterator gradPsiSpin1Begin,
 			const std::vector<double> & eigenValues_,
-			const double fermiEnergy_,
+		        const double fermiEnergy_,
+		        const double fermiEnergyUp_,
+		        const double fermiEnergyDown_,
 			const double tVal)
     {
 
@@ -138,14 +152,26 @@ namespace eshelbyTensorSP
 	  const Tensor<1,C_DIM,VectorizedArray<double> > & gradPsiSpin0=*it2Spin0;
 	  const VectorizedArray<double> & psiSpin1= *it1Spin1;
 	  const Tensor<1,C_DIM,VectorizedArray<double> > & gradPsiSpin1=*it2Spin1;
-	  const double partOccSpin0 =dftUtils::getPartialOccupancy(eigenValues_[eigenIndex],
-								   fermiEnergy_,
-								   C_kb,
-								   tVal);
-	  const double partOccSpin1 =dftUtils::getPartialOccupancy(eigenValues_[eigenIndex+numEigenValues],
-								   fermiEnergy_,
-								   C_kb,
-								   tVal);
+
+	  double partOccSpin0 =dftUtils::getPartialOccupancy(eigenValues_[eigenIndex],
+								     fermiEnergy_,
+								     C_kb,
+								     tVal);
+
+	  double partOccSpin1 =dftUtils::getPartialOccupancy(eigenValues_[eigenIndex+numEigenValues],
+								     fermiEnergy_,
+								     C_kb,
+								     tVal);
+
+	  if(dftParameters::constraintMagnetization)
+	  {
+		 partOccSpin0 = 1.0 , partOccSpin1 = 1.0 ;
+		 if (eigenValues_[eigenIndex+numEigenValues]> fermiEnergyDown_)
+			partOccSpin1 = 0.0 ;
+		 if (eigenValues_[eigenIndex] > fermiEnergyUp_)
+			partOccSpin0 = 0.0 ;
+	  }
+
 	  identityTensorFactor+=make_vectorized_array(0.5*partOccSpin0)*scalar_product(gradPsiSpin0,gradPsiSpin0)-make_vectorized_array(partOccSpin0*eigenValues_[eigenIndex])*psiSpin0*psiSpin0;
 	  identityTensorFactor+=make_vectorized_array(0.5*partOccSpin1)*scalar_product(gradPsiSpin1,gradPsiSpin1)-make_vectorized_array(partOccSpin1*eigenValues_[eigenIndex+numEigenValues])*psiSpin1*psiSpin1;
 	  eshelbyTensor-=make_vectorized_array(partOccSpin0)*outer_product(gradPsiSpin0,gradPsiSpin0);
@@ -165,7 +191,9 @@ namespace eshelbyTensorSP
 									     std::vector<VectorizedArray<double> >::const_iterator psiSpin0Begin,
 									     std::vector<VectorizedArray<double> >::const_iterator psiSpin1Begin,
 									     const std::vector<double> & eigenValues_,
-									     const double fermiEnergy_,
+			                                                     const double fermiEnergy_,
+			                                                     const double fermiEnergyUp_,
+			                                                     const double fermiEnergyDown_,
 									     const double tVal)
     {
 
@@ -178,14 +206,25 @@ namespace eshelbyTensorSP
        {
 	  const VectorizedArray<double> & psiSpin0= *it1Spin0;
 	  const VectorizedArray<double> & psiSpin1= *it1Spin1;
-	  const double partOccSpin0 =dftUtils::getPartialOccupancy(eigenValues_[eigenIndex],
-								   fermiEnergy_,
-								   C_kb,
-								   tVal);
-	  const double partOccSpin1 =dftUtils::getPartialOccupancy(eigenValues_[eigenIndex+numEigenValues],
-								   fermiEnergy_,
-								   C_kb,
-								   tVal);
+
+	  double partOccSpin0 =dftUtils::getPartialOccupancy(eigenValues_[eigenIndex],
+								     fermiEnergy_,
+								     C_kb,
+								     tVal);
+	  double partOccSpin1 =dftUtils::getPartialOccupancy(eigenValues_[eigenIndex+numEigenValues],
+								     fermiEnergy_,
+								     C_kb,
+								     tVal);
+
+	  if(dftParameters::constraintMagnetization)
+	  {
+		 partOccSpin0 = 1.0 , partOccSpin1 = 1.0 ;
+		 if (eigenValues_[eigenIndex+numEigenValues]> fermiEnergyDown_)
+			partOccSpin1 = 0.0 ;
+		 if (eigenValues_[eigenIndex] > fermiEnergyUp_)
+			partOccSpin0 = 0.0 ;
+	  }
+
 	  for (unsigned int iAtomNonLocal=0; iAtomNonLocal < ZetaDeltaV.size(); ++iAtomNonLocal)
 	  {
 	     const int numberPseudoWaveFunctions = ZetaDeltaV[iAtomNonLocal].size();
@@ -210,7 +249,9 @@ namespace eshelbyTensorSP
 									  std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator psiSpin1Begin,
 									  const std::vector<double> & kPointWeights,
 									  const std::vector<std::vector<double> > & eigenValues_,
-									  const double fermiEnergy_,
+		                                                          const double fermiEnergy_,
+		                                                          const double fermiEnergyUp_,
+		                                                          const double fermiEnergyDown_,
 									  const double tVal)
     {
        Tensor<2,C_DIM,VectorizedArray<double> > eshelbyTensor;
@@ -225,14 +266,23 @@ namespace eshelbyTensorSP
 	    const Tensor<1,2,VectorizedArray<double> > & psiSpin0= *it1Spin0;
 	    const Tensor<1,2,VectorizedArray<double> > & psiSpin1= *it1Spin1;
 
-	    const double partOccSpin0 =dftUtils::getPartialOccupancy(eigenValues_[ik][eigenIndex],
+	    double partOccSpin0 =dftUtils::getPartialOccupancy(eigenValues_[ik][eigenIndex],
 								     fermiEnergy_,
 								     C_kb,
 								     tVal);
-	    const double partOccSpin1 =dftUtils::getPartialOccupancy(eigenValues_[ik][eigenIndex+numEigenValues],
+	    double partOccSpin1 =dftUtils::getPartialOccupancy(eigenValues_[ik][eigenIndex+numEigenValues],
 								     fermiEnergy_,
 								     C_kb,
 								     tVal);
+
+	    if(dftParameters::constraintMagnetization)
+	    {
+		 partOccSpin0 = 1.0 , partOccSpin1 = 1.0 ;
+		 if (eigenValues_[ik][eigenIndex+numEigenValues]> fermiEnergyDown_)
+			partOccSpin1 = 0.0 ;
+		 if (eigenValues_[ik][eigenIndex] > fermiEnergyUp_)
+			partOccSpin0 = 0.0 ;
+	    }
 
 	    const VectorizedArray<double> fnkSpin0=make_vectorized_array(partOccSpin0*kPointWeights[ik]);
 	    const VectorizedArray<double> fnkSpin1=make_vectorized_array(partOccSpin1*kPointWeights[ik]);
@@ -268,7 +318,9 @@ namespace eshelbyTensorSP
 								std::vector<VectorizedArray<double> >::const_iterator psiSpin0Begin,
 								std::vector<VectorizedArray<double> >::const_iterator psiSpin1Begin,
 								const std::vector<double> & eigenValues_,
-								const double fermiEnergy_,
+		                                                const double fermiEnergy_,
+		                                                const double fermiEnergyUp_,
+		                                                const double fermiEnergyDown_,
 								const double tVal)
     {
 
@@ -280,14 +332,25 @@ namespace eshelbyTensorSP
        {
 	  const VectorizedArray<double> & psiSpin0= *it1Spin0;
 	  const VectorizedArray<double> & psiSpin1= *it1Spin1;
-	  const double partOccSpin0 =dftUtils::getPartialOccupancy(eigenValues_[eigenIndex],
-								   fermiEnergy_,
-								   C_kb,
-								   tVal);
-	  const double partOccSpin1 =dftUtils::getPartialOccupancy(eigenValues_[eigenIndex+numEigenValues],
-								   fermiEnergy_,
-								   C_kb,
-								   tVal);
+
+	  double partOccSpin0 =dftUtils::getPartialOccupancy(eigenValues_[eigenIndex],
+								     fermiEnergy_,
+								     C_kb,
+								     tVal);
+	  double partOccSpin1 =dftUtils::getPartialOccupancy(eigenValues_[eigenIndex+numEigenValues],
+								     fermiEnergy_,
+								     C_kb,
+								     tVal);
+
+	  if(dftParameters::constraintMagnetization)
+	  {
+		 partOccSpin0 = 1.0 , partOccSpin1 = 1.0 ;
+		 if (eigenValues_[eigenIndex+numEigenValues]> fermiEnergyDown_)
+			partOccSpin1 = 0.0 ;
+		 if (eigenValues_[eigenIndex] > fermiEnergyUp_)
+			partOccSpin0 = 0.0 ;
+	  }
+
 	  for (unsigned int iAtomNonLocal=0; iAtomNonLocal < gradZetaDeltaV.size(); ++iAtomNonLocal)
 	  {
 	     const unsigned int numberPseudoWaveFunctions = gradZetaDeltaV[iAtomNonLocal].size();
@@ -310,7 +373,9 @@ namespace eshelbyTensorSP
 							     std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiSpin1Begin,
 							     const std::vector<double> & kPointWeights,
 							     const std::vector<std::vector<double> > & eigenValues_,
-							     const double fermiEnergy_,
+		                                             const double fermiEnergy_,
+		                                             const double fermiEnergyUp_,
+		                                             const double fermiEnergyDown_,
 							     const double tVal)
     {
        Tensor<1,C_DIM,VectorizedArray<double> > F;
@@ -324,14 +389,24 @@ namespace eshelbyTensorSP
 	    const Tensor<1,2,VectorizedArray<double> > & psiSpin0= *it1Spin0;
 	    const Tensor<1,2,VectorizedArray<double> > & psiSpin1= *it1Spin1;
 
-	    const double partOccSpin0 =dftUtils::getPartialOccupancy(eigenValues_[ik][eigenIndex],
-								   fermiEnergy_,
-								   C_kb,
-								   tVal);
-	    const double partOccSpin1 =dftUtils::getPartialOccupancy(eigenValues_[ik][eigenIndex+numEigenValues],
-								   fermiEnergy_,
-								   C_kb,
-								   tVal);
+	    double partOccSpin0 =dftUtils::getPartialOccupancy(eigenValues_[ik][eigenIndex],
+								     fermiEnergy_,
+								     C_kb,
+								     tVal);
+	    double partOccSpin1 =dftUtils::getPartialOccupancy(eigenValues_[ik][eigenIndex+numEigenValues],
+								     fermiEnergy_,
+								     C_kb,
+								     tVal);
+
+	    if(dftParameters::constraintMagnetization)
+	    {
+		 partOccSpin0 = 1.0 , partOccSpin1 = 1.0 ;
+		 if (eigenValues_[ik][eigenIndex+numEigenValues]> fermiEnergyDown_)
+			partOccSpin1 = 0.0 ;
+		 if (eigenValues_[ik][eigenIndex] > fermiEnergyUp_)
+			partOccSpin0 = 0.0 ;
+	    }
+
 	    const VectorizedArray<double> fnkSpin0=make_vectorized_array(partOccSpin0*kPointWeights[ik]);
 	    const VectorizedArray<double> fnkSpin1=make_vectorized_array(partOccSpin1*kPointWeights[ik]);
 	    for (unsigned int iAtomNonLocal=0; iAtomNonLocal < gradZetaDeltaV.size(); ++iAtomNonLocal)
@@ -380,7 +455,9 @@ namespace eshelbyTensorSP
 						 const std::vector<double> & kPointCoordinates,
 						 const std::vector<double> & kPointWeights,
 						 const std::vector<std::vector<double> > & eigenValues_,
-						 const double fermiEnergy_,
+		                                 const double fermiEnergy_,
+		                                 const double fermiEnergyUp_,
+		                                 const double fermiEnergyDown_,
 						 const double tVal)
     {
        Tensor<2,C_DIM,VectorizedArray<double> > eshelbyTensor;
@@ -409,14 +486,24 @@ namespace eshelbyTensorSP
 	    const Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > >  & gradPsiSpin0=*it2Spin0;
 	    const Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > >  & gradPsiSpin1=*it2Spin1;
 
-	    const double partOccSpin0 =dftUtils::getPartialOccupancy(eigenValues_[ik][eigenIndex],
+	    double partOccSpin0 =dftUtils::getPartialOccupancy(eigenValues_[ik][eigenIndex],
 								     fermiEnergy_,
 								     C_kb,
 								     tVal);
-	    const double partOccSpin1 =dftUtils::getPartialOccupancy(eigenValues_[ik][eigenIndex+numEigenValues],
+	    double partOccSpin1 =dftUtils::getPartialOccupancy(eigenValues_[ik][eigenIndex+numEigenValues],
 								     fermiEnergy_,
 								     C_kb,
 								     tVal);
+
+	    if(dftParameters::constraintMagnetization)
+	    {
+		 partOccSpin0 = 1.0 , partOccSpin1 = 1.0 ;
+		 if (eigenValues_[ik][eigenIndex+numEigenValues]> fermiEnergyDown_)
+			partOccSpin1 = 0.0 ;
+		 if (eigenValues_[ik][eigenIndex] > fermiEnergyUp_)
+			partOccSpin0 = 0.0 ;
+	    }
+
 	    VectorizedArray<double> fnkSpin0=make_vectorized_array(partOccSpin0*kPointWeights[ik]);
 	    VectorizedArray<double> fnkSpin1=make_vectorized_array(partOccSpin1*kPointWeights[ik]);
 
@@ -438,7 +525,9 @@ namespace eshelbyTensorSP
 							 std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiSpin1Begin,
 							 const std::vector<double> & kPointWeights,
 							 const std::vector<std::vector<double> > & eigenValues_,
-							 const double fermiEnergy_,
+		                                         const double fermiEnergy_,
+		                                         const double fermiEnergyUp_,
+		                                         const double fermiEnergyDown_,
 							 const double tVal)
  {
        Tensor<2,C_DIM,VectorizedArray<double> > E;
@@ -452,14 +541,24 @@ namespace eshelbyTensorSP
 	    const Tensor<1,2,VectorizedArray<double> > & psiSpin0= *it1Spin0;
 	    const Tensor<1,2,VectorizedArray<double> > & psiSpin1= *it1Spin1;
 
-	    const double partOccSpin0 =dftUtils::getPartialOccupancy(eigenValues_[ik][eigenIndex],
+	    double partOccSpin0 =dftUtils::getPartialOccupancy(eigenValues_[ik][eigenIndex],
 								   fermiEnergy_,
 								   C_kb,
 								   tVal);
-	    const double partOccSpin1 =dftUtils::getPartialOccupancy(eigenValues_[ik][eigenIndex+numEigenValues],
+	    double partOccSpin1 =dftUtils::getPartialOccupancy(eigenValues_[ik][eigenIndex+numEigenValues],
 								   fermiEnergy_,
 								   C_kb,
 								   tVal);
+
+	    if(dftParameters::constraintMagnetization)
+	    {
+		 partOccSpin0 = 1.0 , partOccSpin1 = 1.0 ;
+		 if (eigenValues_[ik][eigenIndex+numEigenValues]> fermiEnergyDown_)
+			partOccSpin1 = 0.0 ;
+		 if (eigenValues_[ik][eigenIndex] > fermiEnergyUp_)
+			partOccSpin0 = 0.0 ;
+	    }
+
 	    const VectorizedArray<double> fnkSpin0=make_vectorized_array(partOccSpin0*kPointWeights[ik]);
 	    const VectorizedArray<double> fnkSpin1=make_vectorized_array(partOccSpin1*kPointWeights[ik]);
 	    for (unsigned int iAtomNonLocal=0; iAtomNonLocal < gradZetalmDeltaVlDyadicDistImageAtoms.size(); ++iAtomNonLocal)

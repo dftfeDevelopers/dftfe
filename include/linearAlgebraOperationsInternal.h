@@ -17,6 +17,12 @@
 #define linearAlgebraOperationsInternal_h
 
 #include <headers.h>
+#ifdef DFTFE_WITH_ELPA
+extern "C"
+{
+#include <elpa/elpa.h>
+}
+#endif
 
 namespace dftfe
 {
@@ -31,6 +37,19 @@ namespace dftfe
     namespace internal
     {
 #ifdef DEAL_II_WITH_SCALAPACK
+
+#ifdef DFTFE_WITH_ELPA
+	/** @brief setup ELPA handle.
+	 *
+	 */
+	void setupELPAHandle(const MPI_Comm & mpi_communicator,
+			     const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+			     const unsigned int na,
+			     const unsigned int nev,
+			     const unsigned int blockSize,
+			     elpa_t & elpaHandle);
+#endif
+
 	/** @brief Wrapper function to create a two dimensional processor grid for a square matrix in
 	 * dealii::ScaLAPACKMatrix storage format.
 	 *
@@ -38,6 +57,15 @@ namespace dftfe
 	void createProcessGridSquareMatrix(const MPI_Comm & mpi_communicator,
 		                           const unsigned size,
 					   std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid);
+
+	/** @brief Wrapper function to create a two dimensional processor grid for a rectangular matrix in
+	 * dealii::ScaLAPACKMatrix storage format.
+	 *
+	 */
+	void  createProcessGridRectangularMatrix(const MPI_Comm & mpi_communicator,
+						 const unsigned sizeRows,
+						 const unsigned sizeColumns,
+						 std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid);
 
 
 	/** @brief Creates global row/column id to local row/column ids for dealii::ScaLAPACKMatrix
@@ -58,6 +86,18 @@ namespace dftfe
 	void sumAcrossInterCommScaLAPACKMat(const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 		                            dealii::ScaLAPACKMatrix<T> & mat,
 				            const MPI_Comm &interComm);
+
+
+
+	/** @brief scale a ScaLAPACKMat with a scalar
+	 *
+	 *
+	 */
+        template<typename T>
+	void scaleScaLAPACKMat(const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+			       dealii::ScaLAPACKMatrix<T> & mat,
+			       const T scalar);
+
 
 	/** @brief MPI_Bcast of ScaLAPACKMat across a given inter communicator from a given broadcast root.
 	 * Used for band parallelization.
@@ -108,19 +148,18 @@ namespace dftfe
 				       dealii::ScaLAPACKMatrix<dataTypes::number> & overlapMatPar);
 
 	/** @brief Computes X^{T}=Q*X^{T} inplace. X^{T} is the subspaceVectorsArray
-	 * stored in the column major format (N x M). Q is rotationMatPar.
+	 * stored in the column major format (N x M). Q is rotationMatPar (N x N).
 	 *
 	 * The subspace rotation inside this function is done in a blocked approach
 	 * which avoids creation of full serial rotation matrix memory, and also avoids creation
 	 * of another full subspaceVectorsArray memory.
+	 * subspaceVectorsArrayLocalSize=N*M
 	 *
 	 */
 	template<typename T>
 	void subspaceRotation(T* subspaceVectorsArray,
 		              const unsigned int subspaceVectorsArrayLocalSize,
-		              const unsigned int numberSubspaceVectors,
-			      const unsigned int numberCoreVectors,
-			      T* nonCoreVectorsArray,
+		              const unsigned int N,
 		              const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 			      const MPI_Comm &interBandGroupComm,
 			      const MPI_Comm &mpiComm,
@@ -129,20 +168,71 @@ namespace dftfe
 			      const bool isRotationMatLowerTria=false);
 
 
+	/** @brief Computes Y^{T}=Q*X^{T}.
+	 *
+	 * X^{T} is stored in the column major format (N x M). Q is extracted from the supplied
+	 * QMat as Q=QMat{1:numberTopVectors}. If QMat is in column major format
+	 * set QMatTranspose=false, otherwise set to true if in row major format.
+	 * The dimensions (in row major format) of QMat could be either a) (N x numberTopVectors)
+	 * or b) (N x N) where numberTopVectors!=N. In this case
+	 * it is assumed that Q is stored in the first numberTopVectors columns of QMat.
+	 * The subspace rotation inside this function is done in a blocked approach
+	 * which avoids creation of full serial rotation matrix memory, and also avoids creation
+	 * of another full X memory.
+	 * subspaceVectorsArrayLocalSize=N*M
+	 *
+	 */
+	template<typename T>
+	void subspaceRotationSpectrumSplit(const T* X,
+		              T * Y,
+		              const unsigned int subspaceVectorsArrayLocalSize,
+		              const unsigned int N,
+		              const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+			      const unsigned int numberTopVectors,
+			      const MPI_Comm &interBandGroupComm,
+			      const MPI_Comm &mpiComm,
+			      const dealii::ScaLAPACKMatrix<T> & QMat,
+			      const bool QMatTranspose=false);
+
+	/** @brief Computes Y^{T}=Q*X^{T}.
+	 *
+	 * X^{T} is stored in the column major format (N x M). Q is extracted from the supplied
+	 * QMat as Q=QMat{1:numberTopVectors}. If QMat is in column major format
+	 * set QMatTranspose=false, otherwise set to true if in row major format.
+	 * The dimensions (in row major format) of QMat could be either a) (N x numberTopVectors)
+	 * or b) (N x N) where numberTopVectors!=N. In this case
+	 * it is assumed that Q is stored in the first numberTopVectors columns of QMat.
+	 * The subspace rotation inside this function is done in a blocked approach
+	 * which avoids creation of full serial rotation matrix memory, and also avoids creation
+	 * of another full X memory.
+	 * subspaceVectorsArrayLocalSize=N*M
+	 *
+	 */
+	void subspaceRotationSpectrumSplitMixedPrec(const dataTypes::number* X,
+		              dataTypes::number * Y,
+		              const unsigned int subspaceVectorsArrayLocalSize,
+		              const unsigned int N,
+		              const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+			      const unsigned int numberTopVectors,
+			      const MPI_Comm &interBandGroupComm,
+			      const MPI_Comm &mpiComm,
+			      const dealii::ScaLAPACKMatrix<dataTypes::number> & QMat,
+			      const bool QMatTranspose=false);
+
+
 	/** @brief Computes X^{T}=Q*X^{T} inplace. X^{T} is the subspaceVectorsArray
-	 * stored in the column major format (N x M). Q is rotationMatPar.
+	 * stored in the column major format (N x M). Q is rotationMatPar (N x N).
 	 *
 	 * The subspace rotation inside this function is done in a blocked approach
 	 * which avoids creation of full serial rotation matrix memory, and also avoids creation
 	 * of another full subspaceVectorsArray memory.
+	 * subspaceVectorsArrayLocalSize=N*M
 	 *
 	 */
 	void subspaceRotationPGSMixedPrec
 	                       (dataTypes::number* subspaceVectorsArray,
 				const unsigned int subspaceVectorsArrayLocalSize,
 				const unsigned int N,
-				const unsigned int numberCoreVectors,
-				dataTypes::number* nonCoreVectorsArray,
 				const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 				const MPI_Comm &interBandGroupComm,
 				const MPI_Comm &mpiComm,

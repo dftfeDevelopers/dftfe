@@ -45,23 +45,23 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk
   std::vector<std::vector<vectorType>> eigenVectors((1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size());
   for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size(); ++kPoint)
   {
-        eigenVectors[kPoint].resize(dftPtr->numEigenValues);
-        for(unsigned int i = 0; i < dftPtr->numEigenValues; ++i)
+        eigenVectors[kPoint].resize(dftPtr->d_numEigenValues);
+        for(unsigned int i = 0; i < dftPtr->d_numEigenValues; ++i)
           eigenVectors[kPoint][i].reinit(dftPtr->d_tempEigenVec);
 
 #ifdef USE_COMPLEX
 	vectorTools::copyFlattenedDealiiVecToSingleCompVec
 		 (dftPtr->d_eigenVectorsFlattened[kPoint],
-		  dftPtr->numEigenValues,
-		  std::make_pair(0,dftPtr->numEigenValues),
+		  dftPtr->d_numEigenValues,
+		  std::make_pair(0,dftPtr->d_numEigenValues),
 		  dftPtr->localProc_dof_indicesReal,
 		  dftPtr->localProc_dof_indicesImag,
 		  eigenVectors[kPoint]);
 #else
 	vectorTools::copyFlattenedDealiiVecToSingleCompVec
 		 (dftPtr->d_eigenVectorsFlattened[kPoint],
-		  dftPtr->numEigenValues,
-		  std::make_pair(0,dftPtr->numEigenValues),
+		  dftPtr->d_numEigenValues,
+		  std::make_pair(0,dftPtr->d_numEigenValues),
 		  eigenVectors[kPoint]);
 #endif
   }
@@ -107,7 +107,7 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk
   const unsigned int numQuadPoints=forceEval.n_q_points;
   const unsigned int numQuadPointsNLP=dftParameters::useHigherQuadNLP?
                                       forceEvalNLP.n_q_points:numQuadPoints;
-  const unsigned int numEigenVectors=dftPtr->numEigenValues;
+  const unsigned int numEigenVectors=dftPtr->d_numEigenValues;
   const unsigned int numKPoints=dftPtr->d_kPointWeights.size();
 
   DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
@@ -373,16 +373,26 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk
              gradPsiSpin0Quads[id]=psiEvalSpin0.get_gradient(q);
 	     gradPsiSpin1Quads[id]=psiEvalSpin1.get_gradient(q);
 
-             const double partOccSpin0 =dftUtils::getPartialOccupancy
+             double partOccSpin0 =dftUtils::getPartialOccupancy
 		                                                     (dftPtr->eigenValues[ikPoint][iEigenVec],
 		                                                      dftPtr->fermiEnergy,
 								      C_kb,
 								      dftParameters::TVal);
-             const double partOccSpin1 =dftUtils::getPartialOccupancy
+             double partOccSpin1 =dftUtils::getPartialOccupancy
 		                                                     (dftPtr->eigenValues[ikPoint][iEigenVec+numEigenVectors],
 		                                                      dftPtr->fermiEnergy,
 								      C_kb,
 								      dftParameters::TVal);
+
+	     if(dftParameters::constraintMagnetization)
+	     {
+		 partOccSpin0 = 1.0 , partOccSpin1 = 1.0 ;
+		 if ( dftPtr->eigenValues[ikPoint][iEigenVec+numEigenVectors]> dftPtr->fermiEnergyDown)
+			partOccSpin1 = 0.0 ;
+		 if (dftPtr->eigenValues[ikPoint][iEigenVec+numEigenVectors] > dftPtr->fermiEnergyUp)
+			partOccSpin0 = 0.0 ;
+	     }
+
 	     const VectorizedArray<double> factor0=make_vectorized_array(dftPtr->d_kPointWeights[ikPoint]*partOccSpin0);
 	     const VectorizedArray<double> factor1=make_vectorized_array(dftPtr->d_kPointWeights[ikPoint]*partOccSpin1);
 
@@ -515,7 +525,9 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk
 							  dftPtr->d_kPointCoordinates,
 							  dftPtr->d_kPointWeights,
 							  dftPtr->eigenValues,
-							  dftPtr->fermiEnergy,
+					                  dftPtr->fermiEnergy,
+				                          dftPtr->fermiEnergyUp,
+					                  dftPtr->fermiEnergyDown,
 							  dftParameters::TVal);
 
        EKPoints+=eshelbyTensorSP::getEKStress
@@ -527,6 +539,8 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk
 					  dftPtr->d_kPointWeights,
 					  dftPtr->eigenValues,
 					  dftPtr->fermiEnergy,
+				          dftPtr->fermiEnergyUp,
+					  dftPtr->fermiEnergyDown,
 					  dftParameters::TVal);
 
        if(isPseudopotential && !dftParameters::useHigherQuadNLP)
@@ -539,7 +553,9 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk
 						         psiSpin1Quads.begin()+q*numEigenVectors*numKPoints,
 							 dftPtr->d_kPointWeights,
 						         dftPtr->eigenValues,
-						         dftPtr->fermiEnergy,
+					                 dftPtr->fermiEnergy,
+				                         dftPtr->fermiEnergyUp,
+					                 dftPtr->fermiEnergyDown,
 						         dftParameters::TVal);
 
            EKPoints+=eshelbyTensorSP::getEnlStress(gradZetalmDeltaVlDyadicDistImageAtomsQuads[q],
@@ -549,7 +565,9 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk
 					         psiSpin1Quads.begin()+q*numEigenVectors*numKPoints,
 					         dftPtr->d_kPointWeights,
 						 dftPtr->eigenValues,
-						 dftPtr->fermiEnergy,
+					         dftPtr->fermiEnergy,
+				                 dftPtr->fermiEnergyUp,
+					         dftPtr->fermiEnergyDown,
 						 dftParameters::TVal);
 
        }//is pseudopotential check
@@ -571,7 +589,9 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk
 						         psiSpin1QuadsNLP.begin()+q*numEigenVectors*numKPoints,
 							 dftPtr->d_kPointWeights,
 						         dftPtr->eigenValues,
-						         dftPtr->fermiEnergy,
+					                 dftPtr->fermiEnergy,
+				                         dftPtr->fermiEnergyUp,
+					                 dftPtr->fermiEnergyDown,
 						         dftParameters::TVal);
 
            EKPoints+=eshelbyTensorSP::getEnlStress(gradZetalmDeltaVlDyadicDistImageAtomsQuads[q],
@@ -581,7 +601,9 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk
 					         psiSpin1QuadsNLP.begin()+q*numEigenVectors*numKPoints,
 					         dftPtr->d_kPointWeights,
 						 dftPtr->eigenValues,
-						 dftPtr->fermiEnergy,
+					         dftPtr->fermiEnergy,
+				                 dftPtr->fermiEnergyUp,
+					         dftPtr->fermiEnergyDown,
 						 dftParameters::TVal);
 
 

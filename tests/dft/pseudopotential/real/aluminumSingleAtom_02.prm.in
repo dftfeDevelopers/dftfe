@@ -44,7 +44,7 @@ end
 
 
 subsection SCF parameters
-  set MAXIMUM ITERATIONS = 100
+  set MAXIMUM ITERATIONS = 40
   set TOLERANCE          = 1e-6 # low tolerance ot run in Debug mode
   set MIXING PARAMETER   = 0.5
   set MIXING HISTORY     = 70
@@ -63,6 +63,6 @@ end
 
 
 subsection Poisson problem parameters
-  set MAXIMUM ITERATIONS = 10000
+  set MAXIMUM ITERATIONS = 4000
   set TOLERANCE          = 1e-12
 end

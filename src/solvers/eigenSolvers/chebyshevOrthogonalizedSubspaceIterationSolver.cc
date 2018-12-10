@@ -25,7 +25,6 @@ namespace dftfe{
 
   namespace internal
   {
-
       unsigned int setChebyshevOrder(const unsigned int upperBoundUnwantedSpectrum)
       {
 	unsigned int chebyshevOrder;
@@ -67,12 +66,15 @@ namespace dftfe{
   //
   // Constructor.
   //
-  chebyshevOrthogonalizedSubspaceIterationSolver::chebyshevOrthogonalizedSubspaceIterationSolver(double lowerBoundWantedSpectrum,
-												 double lowerBoundUnWantedSpectrum):
+  chebyshevOrthogonalizedSubspaceIterationSolver::chebyshevOrthogonalizedSubspaceIterationSolver
+  (const MPI_Comm &mpi_comm,
+   double lowerBoundWantedSpectrum,
+   double lowerBoundUnWantedSpectrum):
     d_lowerBoundWantedSpectrum(lowerBoundWantedSpectrum),
     d_lowerBoundUnWantedSpectrum(lowerBoundUnWantedSpectrum),
     pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
-    computing_timer(pcout,
+    computing_timer(mpi_comm,
+	            pcout,
 		    dftParameters::reproducible_output ||
 		    dftParameters::verbosity<4? dealii::TimerOutput::never : dealii::TimerOutput::summary,
 		    dealii::TimerOutput::wall_times)
@@ -104,12 +106,14 @@ namespace dftfe{
     d_lowerBoundUnWantedSpectrum = lowerBoundUnWantedSpectrum;
   }
 
+
   //
   // solve
   //
   eigenSolverClass::ReturnValueType
   chebyshevOrthogonalizedSubspaceIterationSolver::solve(operatorDFTClass  & operatorMatrix,
 							std::vector<dataTypes::number> & eigenVectorsFlattened,
+							std::vector<dataTypes::number> & eigenVectorsRotFracDensityFlattened,
 							vectorType  & tempEigenVec,
 							const unsigned int totalNumberWaveFunctions,
 							std::vector<double>        & eigenValues,
@@ -121,12 +125,12 @@ namespace dftfe{
 
     if (dftParameters::verbosity>=4)
       dftUtils::printCurrentMemoryUsage(operatorMatrix.getMPICommunicator(),
-	                      "Before Lanczos k-step upper Bound");
+					"Before Lanczos k-step upper Bound");
 
     computing_timer.enter_section("Lanczos k-step Upper Bound");
     operatorMatrix.reinit(1);
     const double upperBoundUnwantedSpectrum = linearAlgebraOperations::lanczosUpperBoundEigenSpectrum(operatorMatrix,
-     											      tempEigenVec);
+												      tempEigenVec);
     computing_timer.exit_section("Lanczos k-step Upper Bound");
 
     unsigned int chebyshevOrder = dftParameters::chebyshevOrder;
@@ -138,7 +142,7 @@ namespace dftfe{
       chebyshevOrder=internal::setChebyshevOrder(upperBoundUnwantedSpectrum);
 
     if (dftParameters::lowerBoundUnwantedFracUpper>1e-6)
-       d_lowerBoundUnWantedSpectrum=dftParameters::lowerBoundUnwantedFracUpper*upperBoundUnwantedSpectrum;
+      d_lowerBoundUnWantedSpectrum=dftParameters::lowerBoundUnwantedFracUpper*upperBoundUnwantedSpectrum;
     //
     //output statements
     //
@@ -164,21 +168,21 @@ namespace dftfe{
 
     if (dftParameters::verbosity>=4)
       dftUtils::printCurrentMemoryUsage(operatorMatrix.getMPICommunicator(),
-	                      "Before starting chebyshev filtering");
+					"Before starting chebyshev filtering");
 
     const unsigned int localVectorSize = eigenVectorsFlattened.size()/totalNumberWaveFunctions;
 
 
     //band group parallelization data structures
     const unsigned int numberBandGroups=
-    dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
+      dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
     const unsigned int bandGroupTaskId = dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
     std::vector<unsigned int> bandGroupLowHighPlusOneIndices;
     dftUtils::createBandParallelizationIndices(interBandGroupComm,
 					       totalNumberWaveFunctions,
 					       bandGroupLowHighPlusOneIndices);
-    const unsigned int totalNumberBlocks=std::ceil((double)totalNumberWaveFunctions/(double)dftParameters::wfcBlockSize);
-    const unsigned int vectorsBlockSize=std::min(dftParameters::wfcBlockSize,
+    const unsigned int totalNumberBlocks=std::ceil((double)totalNumberWaveFunctions/(double)dftParameters::chebyWfcBlockSize);
+    const unsigned int vectorsBlockSize=std::min(dftParameters::chebyWfcBlockSize,
 	                                         bandGroupLowHighPlusOneIndices[1]);
 
 
@@ -191,26 +195,26 @@ namespace dftfe{
 			  true);
 
     for (unsigned int jvec = 0; jvec < totalNumberWaveFunctions; jvec += vectorsBlockSize)
-    {
+      {
 
-	  // Correct block dimensions if block "goes off edge of" the matrix
-	  const unsigned int BVec = std::min(vectorsBlockSize, totalNumberWaveFunctions-jvec);
+	// Correct block dimensions if block "goes off edge of" the matrix
+	const unsigned int BVec = std::min(vectorsBlockSize, totalNumberWaveFunctions-jvec);
 
-	  if ((jvec+BVec)<=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1] &&
-	       (jvec+BVec)>bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
+	if ((jvec+BVec)<=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1] &&
+	    (jvec+BVec)>bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
 	  {
 	    //create custom partitioned dealii array
 	    if (BVec!=vectorsBlockSize)
-		operatorMatrix.reinit(BVec,
-				      eigenVectorsFlattenedArrayBlock,
-				      true);
+	      operatorMatrix.reinit(BVec,
+				    eigenVectorsFlattenedArrayBlock,
+				    true);
 
 	    //fill the eigenVectorsFlattenedArrayBlock from eigenVectorsFlattenedArray
 	    computing_timer.enter_section("Copy from full to block flattened array");
 	    for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
-		for(unsigned int iWave = 0; iWave < BVec; ++iWave)
-		    eigenVectorsFlattenedArrayBlock.local_element(iNode*BVec+iWave)
-			 =eigenVectorsFlattened[iNode*totalNumberWaveFunctions+jvec+iWave];
+	      for(unsigned int iWave = 0; iWave < BVec; ++iWave)
+		eigenVectorsFlattenedArrayBlock.local_element(iNode*BVec+iWave)
+		  =eigenVectorsFlattened[iNode*totalNumberWaveFunctions+jvec+iWave];
 
 	    computing_timer.exit_section("Copy from full to block flattened array");
 
@@ -219,30 +223,26 @@ namespace dftfe{
 	    //and does in-place filtering
 	    computing_timer.enter_section("Chebyshev filtering opt");
 	    if (jvec+BVec<dftParameters::numAdaptiveFilterStates)
-	    {
-	       const double chebyshevOrd=(double)chebyshevOrder;
-	       const double adaptiveOrder=0.5*chebyshevOrd
-		                          +jvec*0.3*chebyshevOrd/dftParameters::numAdaptiveFilterStates;
-	       linearAlgebraOperations::chebyshevFilter(operatorMatrix,
-						        eigenVectorsFlattenedArrayBlock,
-						        BVec,
-						        std::ceil(adaptiveOrder),
-						        d_lowerBoundUnWantedSpectrum,
-						        upperBoundUnwantedSpectrum,
-						        d_lowerBoundWantedSpectrum,
-							dftParameters::useMixedPrecCheby && useMixedPrec?
-	    						true:false);
-	    }
+	      {
+		const double chebyshevOrd=(double)chebyshevOrder;
+		const double adaptiveOrder=0.5*chebyshevOrd
+		  +jvec*0.3*chebyshevOrd/dftParameters::numAdaptiveFilterStates;
+		linearAlgebraOperations::chebyshevFilter(operatorMatrix,
+							 eigenVectorsFlattenedArrayBlock,
+							 BVec,
+							 std::ceil(adaptiveOrder),
+							 d_lowerBoundUnWantedSpectrum,
+							 upperBoundUnwantedSpectrum,
+							 d_lowerBoundWantedSpectrum);
+	      }
 	    else
-	       linearAlgebraOperations::chebyshevFilter(operatorMatrix,
-						     eigenVectorsFlattenedArrayBlock,
-						     BVec,
-						     chebyshevOrder,
-						     d_lowerBoundUnWantedSpectrum,
-						     upperBoundUnwantedSpectrum,
-						     d_lowerBoundWantedSpectrum,
-						     dftParameters::useMixedPrecCheby && useMixedPrec?
-						     true:false);
+	      linearAlgebraOperations::chebyshevFilter(operatorMatrix,
+						       eigenVectorsFlattenedArrayBlock,
+						       BVec,
+						       chebyshevOrder,
+						       d_lowerBoundUnWantedSpectrum,
+						       upperBoundUnwantedSpectrum,
+						       d_lowerBoundWantedSpectrum);
 	    computing_timer.exit_section("Chebyshev filtering opt");
 
 	    if (dftParameters::verbosity>=4)
@@ -252,32 +252,32 @@ namespace dftfe{
 	    //copy the eigenVectorsFlattenedArrayBlock into eigenVectorsFlattenedArray after filtering
 	    computing_timer.enter_section("Copy from block to full flattened array");
 	    for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
-		for(unsigned int iWave = 0; iWave < BVec; ++iWave)
-		      eigenVectorsFlattened[iNode*totalNumberWaveFunctions+jvec+iWave]
-		      = eigenVectorsFlattenedArrayBlock.local_element(iNode*BVec+iWave);
+	      for(unsigned int iWave = 0; iWave < BVec; ++iWave)
+		eigenVectorsFlattened[iNode*totalNumberWaveFunctions+jvec+iWave]
+		  = eigenVectorsFlattenedArrayBlock.local_element(iNode*BVec+iWave);
 
 	    computing_timer.exit_section("Copy from block to full flattened array");
-	}
+	  }
 	else
-	{
+	  {
 	    //set to zero wavefunctions which wont go through chebyshev filtering inside a given band group
 	    for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
-		for(unsigned int iWave = 0; iWave < BVec; ++iWave)
-		      eigenVectorsFlattened[iNode*totalNumberWaveFunctions+jvec+iWave]
-		      = dataTypes::number(0.0);
+	      for(unsigned int iWave = 0; iWave < BVec; ++iWave)
+		eigenVectorsFlattened[iNode*totalNumberWaveFunctions+jvec+iWave]
+		  = dataTypes::number(0.0);
 
-	}
-    }//block loop
+	  }
+      }//block loop
 
     eigenVectorsFlattenedArrayBlock.reinit(0);
 
     if (numberBandGroups>1)
-    {
+      {
 	computing_timer.enter_section("MPI All Reduce wavefunctions across all band groups");
-
+        MPI_Barrier(interBandGroupComm);
 	const unsigned int blockSize=dftParameters::mpiAllReduceMessageBlockSizeMB*1e+6/sizeof(dataTypes::number);
         for (unsigned int i=0; i<totalNumberWaveFunctions*localVectorSize;i+=blockSize)
-        {
+	  {
             const unsigned int currentBlockSize=std::min(blockSize,totalNumberWaveFunctions*localVectorSize-i);
 	    MPI_Allreduce(MPI_IN_PLACE,
 			  &eigenVectorsFlattened[0]+i,
@@ -285,24 +285,15 @@ namespace dftfe{
 			  dataTypes::mpi_type_id(&eigenVectorsFlattened[0]),
 			  MPI_SUM,
 			  interBandGroupComm);
-	}
+	  }
 
 	computing_timer.exit_section("MPI All Reduce wavefunctions across all band groups");
-    }
+      }
 
 
     if(dftParameters::verbosity >= 4)
       pcout<<"ChebyShev Filtering Done: "<<std::endl;
 
-    std::vector<dataTypes::number> eigenVectorsFlattenedRR;
-    if (eigenValues.size()!=totalNumberWaveFunctions)
-    {
-
-	eigenVectorsFlattenedRR.resize(eigenValues.size()*localVectorSize,dataTypes::number(0.0));
-        //operatorMatrix.reinit(eigenValues.size(),
-        //                      eigenVectorsFlattenedRR,
-        //                      true);
-    }
 
     if(dftParameters::orthogType.compare("LW") == 0)
       {
@@ -312,43 +303,42 @@ namespace dftfe{
 										   operatorMatrix.getMPICommunicator());
 
 	if (flag==1)
-	{
+	  {
 	    if(dftParameters::verbosity >= 1)
-		pcout<<"Switching to Gram-Schimdt orthogonalization as Lowden orthogonalization was not successful"<<std::endl;
+	      pcout<<"Switching to Gram-Schimdt orthogonalization as Lowden orthogonalization was not successful"<<std::endl;
 
 	    computing_timer.enter_section("Gram-Schmidt Orthogn Opt");
 	    linearAlgebraOperations::gramSchmidtOrthogonalization(eigenVectorsFlattened,
 								  totalNumberWaveFunctions,
 								  operatorMatrix.getMPICommunicator());
 	    computing_timer.exit_section("Gram-Schmidt Orthogn Opt");
-	}
+	  }
 	computing_timer.exit_section("Lowden Orthogn Opt");
       }
     else if (dftParameters::orthogType.compare("PGS") == 0)
-    {
+      {
 	computing_timer.enter_section("Pseudo-Gram-Schmidt");
 	const unsigned int flag=linearAlgebraOperations::pseudoGramSchmidtOrthogonalization
-	                         (eigenVectorsFlattened,
-				  totalNumberWaveFunctions,
-				  interBandGroupComm,
-				  totalNumberWaveFunctions-eigenValues.size(),
-				  operatorMatrix.getMPICommunicator(),
-				  useMixedPrec,
-				  eigenVectorsFlattenedRR);
+	  (operatorMatrix,
+	   eigenVectorsFlattened,
+	   totalNumberWaveFunctions,
+	   interBandGroupComm,
+	   operatorMatrix.getMPICommunicator(),
+	   useMixedPrec);
 
 	if (flag==1)
-	{
+	  {
 	    if(dftParameters::verbosity >= 1)
-		pcout<<"Switching to Gram-Schimdt orthogonalization as Pseudo-Gram-Schimdt orthogonalization was not successful"<<std::endl;
+	      pcout<<"Switching to Gram-Schimdt orthogonalization as Pseudo-Gram-Schimdt orthogonalization was not successful"<<std::endl;
 
 	    computing_timer.enter_section("Gram-Schmidt Orthogn Opt");
 	    linearAlgebraOperations::gramSchmidtOrthogonalization(eigenVectorsFlattened,
 								  totalNumberWaveFunctions,
 								  operatorMatrix.getMPICommunicator());
 	    computing_timer.exit_section("Gram-Schmidt Orthogn Opt");
-	}
+	  }
 	computing_timer.exit_section("Pseudo-Gram-Schmidt");
-    }
+      }
     else if (dftParameters::orthogType.compare("GS") == 0)
       {
 	computing_timer.enter_section("Gram-Schmidt Orthogn Opt");
@@ -363,27 +353,48 @@ namespace dftfe{
 
     computing_timer.enter_section("Rayleigh-Ritz proj Opt");
 
+    std::vector<dataTypes::number> eigenVectorsFlattenedRR;
+
     if (eigenValues.size()!=totalNumberWaveFunctions)
-    {
+      {
+	linearAlgebraOperations::rayleighRitzSpectrumSplitDirect(operatorMatrix,
+								 eigenVectorsFlattened,
+								 eigenVectorsRotFracDensityFlattened,
+								 totalNumberWaveFunctions,
+								 totalNumberWaveFunctions-eigenValues.size(),
+								 interBandGroupComm,
+								 operatorMatrix.getMPICommunicator(),
+								 useMixedPrec,
+								 eigenValues);
+
+
+	eigenVectorsFlattenedRR.resize(eigenValues.size()*localVectorSize,dataTypes::number(0.0));
+	for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
+	  for(unsigned int iWave = 0; iWave < eigenValues.size(); ++iWave)
+	    eigenVectorsFlattenedRR[iNode*eigenValues.size()
+				    +iWave]
+	      =eigenVectorsFlattened[iNode*totalNumberWaveFunctions+
+				     (totalNumberWaveFunctions-eigenValues.size())+iWave];
+
+
+	std::vector<double> eigenValuesTemp(eigenValues.size());
+	linearAlgebraOperations::rayleighRitz(operatorMatrix,
+					      eigenVectorsFlattenedRR,
+					      eigenValues.size(),
+					      true,
+					      interBandGroupComm,
+					      operatorMatrix.getMPICommunicator(),
+					      eigenValuesTemp);
+
 
 	for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
-	    for(unsigned int iWave = 0; iWave < eigenValues.size(); ++iWave)
-		eigenVectorsFlattenedRR[iNode*eigenValues.size()
-			 +iWave]
-		     =eigenVectorsFlattened[iNode*totalNumberWaveFunctions+(totalNumberWaveFunctions-eigenValues.size())+iWave];
+	  for(unsigned int iWave = 0; iWave < eigenValues.size(); ++iWave)
+	    eigenVectorsFlattened[iNode*totalNumberWaveFunctions+
+				  (totalNumberWaveFunctions-eigenValues.size())+iWave]
+	      =eigenVectorsFlattenedRR[iNode*eigenValues.size()
+				       +iWave];
 
-        linearAlgebraOperations::rayleighRitz(operatorMatrix,
-					     eigenVectorsFlattenedRR,
-					     eigenValues.size(),
-					     interBandGroupComm,
-					     operatorMatrix.getMPICommunicator(),
-					     eigenValues);
-
-	for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
-	    for(unsigned int iWave = 0; iWave < eigenValues.size(); ++iWave)
-		  eigenVectorsFlattened[iNode*totalNumberWaveFunctions+(totalNumberWaveFunctions-eigenValues.size())+iWave]
-		  = eigenVectorsFlattenedRR[iNode*eigenValues.size()+iWave];
-    }
+      }
     else
       {
 
@@ -391,6 +402,7 @@ namespace dftfe{
 	linearAlgebraOperations::rayleighRitz(operatorMatrix,
 					      eigenVectorsFlattened,
 					      totalNumberWaveFunctions,
+					      false,
 					      interBandGroupComm,
 					      operatorMatrix.getMPICommunicator(),
 					      eigenValues);
@@ -406,12 +418,16 @@ namespace dftfe{
       }
 
     computing_timer.enter_section("eigen vectors residuals opt");
+
+
     if (eigenValues.size()!=totalNumberWaveFunctions)
-      linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
-							eigenVectorsFlattenedRR,
-							eigenValues,
-							operatorMatrix.getMPICommunicator(),
-							residualNorms);
+      {
+        linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
+							  eigenVectorsFlattenedRR,
+							  eigenValues,
+							  operatorMatrix.getMPICommunicator(),
+							  residualNorms);
+      }
     else
       linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
       						        eigenVectorsFlattened,
@@ -484,59 +500,59 @@ namespace dftfe{
       operatorMatrix.getConstraintMatrixEigen()->set_zero(eigenVectors[i]);
 
 
-     if(dftParameters::verbosity >= 4)
-       {
-	 PetscLogDouble bytes;
-	 PetscMemoryGetCurrentUsage(&bytes);
-	 FILE *dummy;
-	 unsigned int this_mpi_process = dealii::Utilities::MPI::this_mpi_process(operatorMatrix.getMPICommunicator());
-	 PetscSynchronizedPrintf(operatorMatrix.getMPICommunicator(),"[%d] Memory Usage before starting eigen solution  %e\n",this_mpi_process,bytes);
-	 PetscSynchronizedFlush(operatorMatrix.getMPICommunicator(),dummy);
-       }
+    if(dftParameters::verbosity >= 4)
+      {
+	PetscLogDouble bytes;
+	PetscMemoryGetCurrentUsage(&bytes);
+	FILE *dummy;
+	unsigned int this_mpi_process = dealii::Utilities::MPI::this_mpi_process(operatorMatrix.getMPICommunicator());
+	PetscSynchronizedPrintf(operatorMatrix.getMPICommunicator(),"[%d] Memory Usage before starting eigen solution  %e\n",this_mpi_process,bytes);
+	PetscSynchronizedFlush(operatorMatrix.getMPICommunicator(),dummy);
+      }
 
-     operatorMatrix.reinit(totalNumberWaveFunctions);
+    operatorMatrix.reinit(totalNumberWaveFunctions);
 
-     //
-     //call chebyshev filtering routine
-     //
-     computing_timer.enter_section("Chebyshev filtering");
+    //
+    //call chebyshev filtering routine
+    //
+    computing_timer.enter_section("Chebyshev filtering");
 
-     linearAlgebraOperations::chebyshevFilter(operatorMatrix,
+    linearAlgebraOperations::chebyshevFilter(operatorMatrix,
 					     eigenVectors,
 					     chebyshevOrder,
 					     d_lowerBoundUnWantedSpectrum,
 					     upperBoundUnwantedSpectrum,
 					     d_lowerBoundWantedSpectrum);
 
-     computing_timer.exit_section("Chebyshev filtering");
+    computing_timer.exit_section("Chebyshev filtering");
 
 
-     computing_timer.enter_section("Gram-Schmidt Orthogonalization");
+    computing_timer.enter_section("Gram-Schmidt Orthogonalization");
 
-     linearAlgebraOperations::gramSchmidtOrthogonalization(operatorMatrix,
+    linearAlgebraOperations::gramSchmidtOrthogonalization(operatorMatrix,
 							  eigenVectors);
 
 
-     computing_timer.exit_section("Gram-Schmidt Orthogonalization");
+    computing_timer.exit_section("Gram-Schmidt Orthogonalization");
 
 
-     computing_timer.enter_section("Rayleigh Ritz Projection");
+    computing_timer.enter_section("Rayleigh Ritz Projection");
 
-     linearAlgebraOperations::rayleighRitz(operatorMatrix,
+    linearAlgebraOperations::rayleighRitz(operatorMatrix,
 					  eigenVectors,
 					  eigenValues);
 
-     computing_timer.exit_section("Rayleigh Ritz Projection");
+    computing_timer.exit_section("Rayleigh Ritz Projection");
 
 
-     computing_timer.enter_section("compute eigen vectors residuals");
-     //linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
-     //						      eigenVectors,
-     //						      eigenValues,
-     //						      residualNorms);
-     computing_timer.exit_section("compute eigen vectors residuals");
+    computing_timer.enter_section("compute eigen vectors residuals");
+    //linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
+    //						      eigenVectors,
+    //						      eigenValues,
+    //						      residualNorms);
+    computing_timer.exit_section("compute eigen vectors residuals");
 
-     return;
+    return;
 
   }
 

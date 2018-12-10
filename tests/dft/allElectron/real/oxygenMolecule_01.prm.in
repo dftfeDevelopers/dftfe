@@ -1,0 +1,54 @@
+set VERBOSITY = 0
+set REPRODUCIBLE OUTPUT = true
+
+subsection Geometry
+  set NATOMS=2
+  set NATOM TYPES=1
+  set ATOMIC COORDINATES FILE = @SOURCE_DIR@/oxygenMolecule_coordinates.inp
+  set DOMAIN VECTORS FILE = @SOURCE_DIR@/oxygenMolecule_domainVectors.inp
+
+  subsection Optimization
+    set ION FORCE=true
+    set CELL STRESS=false
+  end 
+end
+
+subsection Boundary conditions
+  set PERIODIC1                       = false
+  set PERIODIC2                       = false
+  set PERIODIC3                       = false
+  set SELF POTENTIAL RADIUS = 4.0
+end
+
+subsection Finite element mesh parameters
+  set POLYNOMIAL ORDER=2
+  subsection Auto mesh generation parameters
+    set MESH SIZE AROUND ATOM  = 0.5
+    set BASE MESH SIZE = 10.0
+    set ATOM BALL RADIUS = 2.0
+    set MESH SIZE AT ATOM = 0.1
+  end
+end
+
+subsection DFT functional parameters
+  set EXCHANGE CORRELATION TYPE   = 4
+  set PSEUDOPOTENTIAL CALCULATION = false
+  set SPIN POLARIZATION = 1
+  set START MAGNETIZATION = 0.0625
+end
+
+subsection SCF parameters
+  set MIXING HISTORY   = 5
+  set MIXING PARAMETER = 0.2
+  set CONSTRAINT MAGNETIZATION = true
+  set MAXIMUM ITERATIONS               = 50
+  set TEMPERATURE                      = 10
+  set TOLERANCE                        = 1e-6
+
+  subsection Eigen-solver parameters
+      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 20
+      set ORTHOGONALIZATION TYPE=GS
+      set CHEBYSHEV POLYNOMIAL DEGREE = 0
+      set CHEBYSHEV FILTER TOLERANCE=1e-3
+  end
+end

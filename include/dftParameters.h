@@ -69,11 +69,13 @@ namespace dftfe {
       extern unsigned int numCoreWfcRR;
       extern bool useBatchGEMM;
       extern unsigned int wfcBlockSize;
+      extern unsigned int chebyWfcBlockSize;
       extern unsigned int subspaceRotDofsBlockSize;
       extern bool enableSwitchToGS;
       extern unsigned int nbandGrps;
       extern bool computeEnergyEverySCF;
       extern unsigned int scalapackParalProcs;
+      extern unsigned int scalapackBlockSize;
       extern unsigned int natoms;
       extern unsigned int natomTypes;
       extern double lowerBoundUnwantedFracUpper;
@@ -83,9 +85,11 @@ namespace dftfe {
       extern bool useHigherQuadNLP;
       extern bool useMixedPrecPGS_SR;
       extern bool useMixedPrecPGS_O;
+      extern bool useMixedPrecXTHXSpectrumSplit;
+      extern bool useMixedPrecSubspaceRotSpectrumSplit;
       extern unsigned int numAdaptiveFilterStates;
-      extern bool useMixedPrecCheby;
-      extern double mixedPrecStoppingTol;
+      extern unsigned int spectrumSplitStartingScfIter;
+      extern bool useELPA;
 
       /**
        * Declare parameters.

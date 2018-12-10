@@ -36,6 +36,10 @@ subsection Parallelization
   set NPBAND=2
 end
 
+subsection Poisson problem parameters
+  set MAXIMUM ITERATIONS=5000
+  set TOLERANCE=1e-12
+end
 
 subsection SCF parameters
   set MIXING HISTORY   = 70
@@ -52,8 +56,10 @@ subsection SCF parameters
       set USE MIXED PREC PGS SR=true
       set USE MIXED PREC PGS O=true
       set WFC BLOCK SIZE=3
+      set CHEBY WFC BLOCK SIZE=3
       set SUBSPACE ROT DOFS BLOCK SIZE=500
       set SCALAPACKPROCS=2
       set SPECTRUM SPLIT CORE EIGENSTATES=3
+      set SPECTRUM SPLIT STARTING SCF ITER=0
   end
 end

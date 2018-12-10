@@ -44,23 +44,23 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
   std::vector<std::vector<vectorType>> eigenVectors((1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size());
   for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*dftPtr->d_kPointWeights.size(); ++kPoint)
   {
-        eigenVectors[kPoint].resize(dftPtr->numEigenValues);
-        for(unsigned int i = 0; i < dftPtr->numEigenValues; ++i)
+        eigenVectors[kPoint].resize(dftPtr->d_numEigenValues);
+        for(unsigned int i = 0; i < dftPtr->d_numEigenValues; ++i)
           eigenVectors[kPoint][i].reinit(dftPtr->d_tempEigenVec);
 
 #ifdef USE_COMPLEX
 	vectorTools::copyFlattenedDealiiVecToSingleCompVec
 		 (dftPtr->d_eigenVectorsFlattened[kPoint],
-		  dftPtr->numEigenValues,
-		  std::make_pair(0,dftPtr->numEigenValues),
+		  dftPtr->d_numEigenValues,
+		  std::make_pair(0,dftPtr->d_numEigenValues),
 		  dftPtr->localProc_dof_indicesReal,
 		  dftPtr->localProc_dof_indicesImag,
 		  eigenVectors[kPoint]);
 #else
 	vectorTools::copyFlattenedDealiiVecToSingleCompVec
 		 (dftPtr->d_eigenVectorsFlattened[kPoint],
-		  dftPtr->numEigenValues,
-		  std::make_pair(0,dftPtr->numEigenValues),
+		  dftPtr->d_numEigenValues,
+		  std::make_pair(0,dftPtr->d_numEigenValues),
 		  eigenVectors[kPoint]);
 #endif
   }
@@ -130,7 +130,7 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
   const unsigned int numQuadPoints=forceEval.n_q_points;
   const unsigned int numQuadPointsNLP=dftParameters::useHigherQuadNLP?
                                       forceEvalNLP.n_q_points:numQuadPoints;
-  const unsigned int numEigenVectors=dftPtr->numEigenValues;
+  const unsigned int numEigenVectors=dftPtr->d_numEigenValues;
   const unsigned int numKPoints=dftPtr->d_kPointWeights.size();
   DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
   Tensor<1,2,VectorizedArray<double> > zeroTensor1;zeroTensor1[0]=make_vectorized_array(0.0);zeroTensor1[1]=make_vectorized_array(0.0);
@@ -446,16 +446,26 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 	        tempHessianPsiSpin1=psiEvalSpin1.get_hessian(q);
 	     }
 
-             const double partOccSpin0 =dftUtils::getPartialOccupancy
+             double partOccSpin0 =dftUtils::getPartialOccupancy
 		                                                     (dftPtr->eigenValues[ikPoint][iEigenVec],
 		                                                      dftPtr->fermiEnergy,
 								      C_kb,
 								      dftParameters::TVal);
-             const double partOccSpin1 =dftUtils::getPartialOccupancy
+             double partOccSpin1 =dftUtils::getPartialOccupancy
 		                                                     (dftPtr->eigenValues[ikPoint][iEigenVec+numEigenVectors],
 		                                                      dftPtr->fermiEnergy,
 								      C_kb,
 								      dftParameters::TVal);
+
+	     if(dftParameters::constraintMagnetization)
+	     {
+		 partOccSpin0 = 1.0 , partOccSpin1 = 1.0 ;
+		 if ( dftPtr->eigenValues[ikPoint][iEigenVec+numEigenVectors]> dftPtr->fermiEnergyDown)
+			partOccSpin1 = 0.0 ;
+		 if (dftPtr->eigenValues[ikPoint][iEigenVec+numEigenVectors] > dftPtr->fermiEnergyUp)
+			partOccSpin0 = 0.0 ;
+	     }
+
 	     const VectorizedArray<double> factor0=make_vectorized_array(dftPtr->d_kPointWeights[ikPoint]*partOccSpin0);
 	     const VectorizedArray<double> factor1=make_vectorized_array(dftPtr->d_kPointWeights[ikPoint]*partOccSpin1);
 
@@ -635,6 +645,8 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 							  dftPtr->d_kPointWeights,
 							  dftPtr->eigenValues,
 							  dftPtr->fermiEnergy,
+							  dftPtr->fermiEnergyUp,
+							  dftPtr->fermiEnergyDown,
 							  dftParameters::TVal);
 #else
        E+=eshelbyTensorSP::getELocWfcEshelbyTensorNonPeriodic
@@ -644,6 +656,8 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 					     gradPsiSpin1Quads.begin()+q*numEigenVectors,
 					     (dftPtr->eigenValues)[0],
 					     dftPtr->fermiEnergy,
+				             dftPtr->fermiEnergyUp,
+					     dftPtr->fermiEnergyDown,
 					     dftParameters::TVal);
 #endif
        Tensor<1,C_DIM,VectorizedArray<double> > F=zeroTensor3;
@@ -669,7 +683,9 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 						psiSpin1Quads.begin()+q*numEigenVectors*numKPoints,
 						dftPtr->d_kPointWeights,
 						dftPtr->eigenValues,
-						dftPtr->fermiEnergy,
+					        dftPtr->fermiEnergy,
+				                dftPtr->fermiEnergyUp,
+					        dftPtr->fermiEnergyDown,
 						dftParameters::TVal);
 
 
@@ -681,7 +697,9 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 							     psiSpin1Quads.begin()+q*numEigenVectors*numKPoints,
 							     dftPtr->d_kPointWeights,
 							     dftPtr->eigenValues,
-							     dftPtr->fermiEnergy,
+					                     dftPtr->fermiEnergy,
+				                             dftPtr->fermiEnergyUp,
+					                     dftPtr->fermiEnergyDown,
 							     dftParameters::TVal);
 	       forceEvalKPoints.submit_value(FKPoints,q);
 #else
@@ -692,7 +710,9 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 						   psiSpin0Quads.begin()+q*numEigenVectors,
 						   psiSpin1Quads.begin()+q*numEigenVectors,
 						   (dftPtr->eigenValues)[0],
-						   dftPtr->fermiEnergy,
+					           dftPtr->fermiEnergy,
+				                   dftPtr->fermiEnergyUp,
+					           dftPtr->fermiEnergyDown,
 						   dftParameters::TVal);
 
 	       E+=eshelbyTensorSP::getEnlEshelbyTensorNonPeriodic(ZetaDeltaVQuads[q],
@@ -701,7 +721,9 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 								psiSpin0Quads.begin()+q*numEigenVectors,
 								psiSpin1Quads.begin()+q*numEigenVectors,
 								(dftPtr->eigenValues)[0],
-								dftPtr->fermiEnergy,
+					                        dftPtr->fermiEnergy,
+				                                dftPtr->fermiEnergyUp,
+					                        dftPtr->fermiEnergyDown,
 								dftParameters::TVal);
 #endif
 	   }
@@ -745,7 +767,9 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 						psiSpin1QuadsNLP.begin()+q*numEigenVectors*numKPoints,
 						dftPtr->d_kPointWeights,
 						dftPtr->eigenValues,
-						dftPtr->fermiEnergy,
+					        dftPtr->fermiEnergy,
+				                dftPtr->fermiEnergyUp,
+					        dftPtr->fermiEnergyDown,
 						dftParameters::TVal);
 
                Tensor<2,C_DIM,VectorizedArray<double> > EKPoints
@@ -757,7 +781,9 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 							     psiSpin1QuadsNLP.begin()+q*numEigenVectors*numKPoints,
 							     dftPtr->d_kPointWeights,
 							     dftPtr->eigenValues,
-							     dftPtr->fermiEnergy,
+					                     dftPtr->fermiEnergy,
+				                             dftPtr->fermiEnergyUp,
+					                     dftPtr->fermiEnergyDown,
 							     dftParameters::TVal);
 	       forceEvalKPointsNLP.submit_value(FKPoints,q);
 	       forceEvalKPointsNLP.submit_gradient(EKPoints,q);
@@ -770,7 +796,9 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 						   psiSpin0QuadsNLP.begin()+q*numEigenVectors,
 						   psiSpin1QuadsNLP.begin()+q*numEigenVectors,
 						   (dftPtr->eigenValues)[0],
-						   dftPtr->fermiEnergy,
+					           dftPtr->fermiEnergy,
+				                   dftPtr->fermiEnergyUp,
+					           dftPtr->fermiEnergyDown,
 						   dftParameters::TVal);
                Tensor<2,C_DIM,VectorizedArray<double> >	E
 	         =eshelbyTensorSP::getEnlEshelbyTensorNonPeriodic(ZetaDeltaVQuads[q],
@@ -779,7 +807,9 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 								psiSpin0QuadsNLP.begin()+q*numEigenVectors,
 								psiSpin1QuadsNLP.begin()+q*numEigenVectors,
 								(dftPtr->eigenValues)[0],
-								dftPtr->fermiEnergy,
+					                        dftPtr->fermiEnergy,
+				                                dftPtr->fermiEnergyUp,
+					                        dftPtr->fermiEnergyDown,
 								dftParameters::TVal);
                forceEvalNLP.submit_value(F,q);
 	       forceEvalNLP.submit_gradient(E,q);

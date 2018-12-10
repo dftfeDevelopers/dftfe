@@ -78,7 +78,6 @@ namespace dftfe{
 	      const unsigned int numberComponents,
 	      const bool scaleFlag,
 	      const double scalar,
-	      const bool useSinglePrec,
 	      dealii::parallel::distributed::Vector<dataTypes::number> & dst);
 
 
@@ -110,6 +109,25 @@ namespace dftfe{
 		const unsigned int numberComponents,
 		const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 		dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar);
+
+    /**
+     * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
+     *
+     * @param X Vector of Vectors containing multi-wavefunction fields
+     * @param N total number of wavefunctions components
+     * @param Ncore number of wavecfuntions starting from the first for
+     * which the project Hamiltionian block will be computed in single procession. However
+     * the cross blocks will still be computed in double precision.
+     * @param processGrid two-dimensional processor grid corresponding to the parallel projHamPar
+     * @param projHamPar parallel ScaLAPACKMatrix which stores the computed projection
+     * of the operation into the given subspace
+     */
+    virtual void XtHXMixedPrec
+	             (const std::vector<dataTypes::number> & X,
+		      const unsigned int N,
+		      const unsigned int Ncore,
+		      const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+		      dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar);
 #endif
 
       /**
@@ -274,7 +292,6 @@ namespace dftfe{
        * of complex data type
        */
       std::vector<std::vector<dataTypes::number> > d_cellHamiltonianMatrix;
-      std::vector<std::vector<dataTypes::numberLowPrec> > d_cellHamiltonianMatrixLowPrec;
 
       /**
        * @brief implementation of matrix-vector product using cell-level stiffness matrices.
@@ -305,11 +322,6 @@ namespace dftfe{
 		    const unsigned int numberWaveFunctions,
 		    dealii::parallel::distributed::Vector<dataTypes::number> & dst) const;
 
-
-       void  computeLocalHamiltonianTimesXBatchGEMMSinglePrec
-	           (const dealii::parallel::distributed::Vector<dataTypes::number> & src,
-		    const unsigned int numberWaveFunctions,
-		    dealii::parallel::distributed::Vector<dataTypes::number> & dst) const;
 
 #endif
       /**
@@ -342,10 +354,6 @@ namespace dftfe{
 						     dealii::parallel::distributed::Vector<dataTypes::number> & dst) const;
 
 
-      void computeNonLocalHamiltonianTimesXBatchGEMMSinglePrec
-            (const dealii::parallel::distributed::Vector<dataTypes::number> & src,
-	     const unsigned int numberWaveFunctions,
-	     dealii::parallel::distributed::Vector<dataTypes::number>  & dst) const;
 #endif
 
       ///pointer to dft class
