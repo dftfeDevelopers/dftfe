@@ -56,7 +56,8 @@ namespace dftfe
 	 */
 	void createProcessGridSquareMatrix(const MPI_Comm & mpi_communicator,
 		                           const unsigned size,
-					   std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid);
+					   std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+					   const bool useOnlyThumbRule=false);
 
 	/** @brief Wrapper function to create a two dimensional processor grid for a rectangular matrix in
 	 * dealii::ScaLAPACKMatrix storage format.
