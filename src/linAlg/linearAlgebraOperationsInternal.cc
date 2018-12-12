@@ -157,16 +157,23 @@ namespace dftfe
 #endif
       void createProcessGridSquareMatrix(const MPI_Comm & mpi_communicator,
 					 const unsigned size,
-					 std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid)
+					 std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+					 const bool useOnlyThumbRule)
       {
 	const unsigned int numberProcs = dealii::Utilities::MPI::n_mpi_processes(mpi_communicator);
 
 	//Rule of thumb from http://netlib.org/scalapack/slug/node106.html#SECTION04511000000000000000
-	const unsigned int rowProcs=dftParameters::scalapackParalProcs==0?
+	unsigned int rowProcs=(dftParameters::scalapackParalProcs==0 || useOnlyThumbRule)?
 	  std::min(std::floor(std::sqrt(numberProcs)),
 		   std::ceil((double)size/(double)(1000))):
 	  std::min((unsigned int)std::floor(std::sqrt(numberProcs)),
 		   dftParameters::scalapackParalProcs);
+
+#ifdef DFTFE_WITH_ELPA
+	rowProcs=((dftParameters::scalapackParalProcs==0 || useOnlyThumbRule) && dftParameters::useELPA)?
+		   std::min((unsigned int)std::floor(std::sqrt(numberProcs)),rowProcs*2):rowProcs;
+#endif
+
 	if(dftParameters::verbosity>=4)
 	  {
 	    dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
