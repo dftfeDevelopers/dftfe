@@ -361,6 +361,7 @@ namespace dftfe
 
 	  std::vector<dataTypes::number> overlapMatrixBlock(N*vectorsBlockSize,0.0);
 	  std::vector<dataTypes::numberLowPrec> overlapMatrixBlockLowPrec(N*vectorsBlockSize,0.0);
+	  std::vector<dataTypes::number> overlapMatrixBlockDoublePrec(vectorsBlockSize*vectorsBlockSize,0.0);
 
 	  std::vector<dataTypes::numberLowPrec> subspaceVectorsArrayLowPrec(subspaceVectorsArray,
 		                                                             subspaceVectorsArray+
@@ -396,8 +397,8 @@ namespace dftfe
 			 subspaceVectorsArray+ivec,
 			 &N,
 			 &scalarCoeffBeta,
-			 &overlapMatrixBlock[0],
-			 &D);
+			 &overlapMatrixBlockDoublePrec[0],
+			 &B);
 
 		  const unsigned int DRem=D-B;
 		  if (DRem!=0)
@@ -417,19 +418,34 @@ namespace dftfe
 			   &DRem);
 		  }
 
+		  MPI_Barrier(mpiComm);
+		  // Sum local XTrunc^{T}*XcBlock for double precision across domain decomposition processors
+		  MPI_Allreduce(MPI_IN_PLACE,
+				&overlapMatrixBlockDoublePrec[0],
+				B*B,
+				dataTypes::mpi_type_id(&overlapMatrixBlockDoublePrec[0]),
+				MPI_SUM,
+				mpiComm);
+
+		  MPI_Barrier(mpiComm);
+		  // Sum local XTrunc^{T}*XcBlock for single precision across domain decomposition processors
+		  MPI_Allreduce(MPI_IN_PLACE,
+				&overlapMatrixBlockLowPrec[0],
+				DRem*B,
+				dataTypes::mpi_type_id(&overlapMatrixBlockLowPrec[0]),
+				MPI_SUM,
+				mpiComm);
+
 		  for(unsigned int i = 0; i <B; ++i)
+		  {
+		      for (unsigned int j = 0; j <B; ++j)
+			  overlapMatrixBlock[i*D+j]
+			      =overlapMatrixBlockDoublePrec[i*B+j];
+
 		      for (unsigned int j = 0; j <DRem; ++j)
 			  overlapMatrixBlock[i*D+j+B]
 			      =overlapMatrixBlockLowPrec[i*DRem+j];
-
-		  MPI_Barrier(mpiComm);
-		  // Sum local XTrunc^{T}*XcBlock across domain decomposition processors
-		  MPI_Allreduce(MPI_IN_PLACE,
-				&overlapMatrixBlock[0],
-				D*B,
-				dataTypes::mpi_type_id(&overlapMatrixBlock[0]),
-				MPI_SUM,
-				mpiComm);
+		  }
 
 		  //Copying only the lower triangular part to the ScaLAPACK overlap matrix
 		  if (processGrid->is_process_active())
