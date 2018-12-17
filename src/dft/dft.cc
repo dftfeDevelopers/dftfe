@@ -697,14 +697,14 @@ namespace dftfe {
 
 #ifdef USE_COMPLEX
 	     vectorTools::copyFlattenedSTLVecToSingleCompVec(d_eigenVectorsFlattenedSTL[0],
-							     numEigenValues,
+							     d_numEigenValues,
 							     std::make_pair(0,numberWaveFunctionsErrorEstimate),
 							     localProc_dof_indicesReal,
 							     localProc_dof_indicesImag,
 							     eigenVectorsArray);
 #else
 	     vectorTools::copyFlattenedSTLVecToSingleCompVec(d_eigenVectorsFlattenedSTL[0],
-							     numEigenValues,
+							     d_numEigenValues,
 							     std::make_pair(0,numberWaveFunctionsErrorEstimate),
 							     eigenVectorsArray);
 #endif

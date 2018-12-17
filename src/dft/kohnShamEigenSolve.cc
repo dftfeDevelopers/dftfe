@@ -137,10 +137,10 @@ dataTypes::number dftClass<FEOrder>::computeTraceXtHX(unsigned int numberWaveFun
   //multiply by M^{1/2}
   internal::pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_sqrtMassVector,
 				       matrix_free_data.get_vector_partitioner(),
-				       numEigenValues,
+				       d_numEigenValues,
 				       localProc_dof_indicesReal,
-				       d_eigenVectorsFlattenedSTL[0],
-				       constraintsNoneDataInfo);
+				       d_eigenVectorsFlattenedSTL[0]);
+
 
   //
   //compute projected Hamiltonian
@@ -148,7 +148,7 @@ dataTypes::number dftClass<FEOrder>::computeTraceXtHX(unsigned int numberWaveFun
   std::vector<dataTypes::number> ProjHam;
   
   kohnShamDFTEigenOperator.XtHX(d_eigenVectorsFlattenedSTL[0],
-				numEigenValues,
+				d_numEigenValues,
 				ProjHam);
 
   //
@@ -156,15 +156,15 @@ dataTypes::number dftClass<FEOrder>::computeTraceXtHX(unsigned int numberWaveFun
   //
   internal::pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_invSqrtMassVector,
 				       matrix_free_data.get_vector_partitioner(),
-				       numEigenValues,
+				       d_numEigenValues,
 				       localProc_dof_indicesReal,
-				       d_eigenVectorsFlattenedSTL[0],
-				       constraintsNoneDataInfo);
+				       d_eigenVectorsFlattenedSTL[0]);
+
 
   dataTypes::number trXtHX = 0.0;
   for(unsigned int i = 0; i < numberWaveFunctionsEstimate; ++i)
     {
-      trXtHX += ProjHam[numEigenValues*i+i];
+      trXtHX += ProjHam[d_numEigenValues*i+i];
     }
 
   return trXtHX;

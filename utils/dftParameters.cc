@@ -266,7 +266,7 @@ namespace dftParameters
 			  "[Developer] Top fraction of elements to be refined.");
 
 	prm.declare_entry("NUM LEVELS", "1",
-			  Patterns::Integer(0,10),
+			  Patterns::Integer(0,30),
 			  "[Developer] Number of times to be refined.");
 
 	prm.declare_entry("ERROR ESTIMATE WAVEFUNCTIONS", "5",
