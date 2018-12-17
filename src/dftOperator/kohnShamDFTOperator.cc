@@ -454,7 +454,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
     					       numberWaveFunctions);
 
 
-    src.update_ghost_values();
+    //src.update_ghost_values();
 
 
     //
@@ -580,7 +580,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
     dftPtr->constraintsNoneDataInfo.distribute(src,
 					      numberWaveFunctions);
 
-    src.update_ghost_values();
+    //src.update_ghost_values();
 
     //
     //Hloc*M^{-1/2}*X
