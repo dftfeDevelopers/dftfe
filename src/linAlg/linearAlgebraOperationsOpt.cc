@@ -490,7 +490,8 @@ namespace dftfe{
       std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  processGrid;
       internal::createProcessGridSquareMatrix(mpi_communicator,
                                               numberWaveFunctions,
-                                              processGrid);
+                                              processGrid,
+					      isValenceProjHam);
 
       dealii::ScaLAPACKMatrix<T> projHamPar(numberWaveFunctions,
                                             processGrid,

@@ -166,7 +166,8 @@ namespace dftfe {
 	   std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  processGridValence;
 	   linearAlgebraOperations::internal::createProcessGridSquareMatrix(getMPICommunicator(),
 						   nev,
-						   processGridValence);
+						   processGridValence,
+						   true);
 
 
 	   d_scalapackBlockSizeValence=std::min(dftParameters::scalapackBlockSize,
