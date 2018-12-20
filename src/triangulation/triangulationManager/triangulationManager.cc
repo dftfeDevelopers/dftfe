@@ -124,8 +124,7 @@ namespace dftfe {
   void triangulationManager::generateSerialAndParallelUnmovedPreviousMesh
   (const std::vector<std::vector<double> > & atomLocations,
    const std::vector<std::vector<double> > & imageAtomLocations,
-   const std::vector<std::vector<double> > & domainBoundingVectors,
-   const bool generateElectrostaticsTria)
+   const std::vector<std::vector<double> > & domainBoundingVectors)
   {
 
     //
@@ -138,19 +137,27 @@ namespace dftfe {
     d_parallelTriangulationUnmovedPrevious.clear();
     d_serialTriangulationUnmovedPrevious.clear();
 
-    if (generateElectrostaticsTria)
+
+    generateCoarseMesh(d_parallelTriangulationUnmovedPrevious);
+    generateCoarseMesh(d_serialTriangulationUnmovedPrevious);
+
+    for (unsigned int i=0; i<d_parallelTriaCurrentRefinement.size(); ++i)
     {
-	d_triangulationElectrostaticsRho.clear();
-	d_triangulationElectrostaticsDisp.clear();
-	d_triangulationElectrostaticsForce.clear();
+        d_parallelTriangulationUnmovedPrevious.load_refine_flags(d_parallelTriaCurrentRefinement[i]);
+        d_parallelTriangulationUnmovedPrevious.execute_coarsening_and_refinement();
+
+        d_serialTriangulationUnmovedPrevious.load_refine_flags(d_serialTriaCurrentRefinement[i]);
+        d_serialTriangulationUnmovedPrevious.execute_coarsening_and_refinement();
     }
 
+    /*
     generateMesh(d_parallelTriangulationUnmovedPrevious,
 	         d_serialTriangulationUnmovedPrevious,
 		 d_triangulationElectrostaticsRho,
 		 d_triangulationElectrostaticsDisp,
 		 d_triangulationElectrostaticsForce,
-		 generateElectrostaticsTria);
+		 false);
+		 */
   }
 
 

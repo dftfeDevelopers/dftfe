@@ -252,8 +252,7 @@ void dftClass<FEOrder>::updatePrevMeshDataStructures()
   //
   d_mesh.generateSerialAndParallelUnmovedPreviousMesh(atomLocations,
 						      d_imagePositions,
-						      d_domainBoundingVectors,
-						      false);
+						      d_domainBoundingVectors);
  if (dftParameters::verbosity>=4)
    dftUtils::printCurrentMemoryUsage(mpi_communicator,
 			  "Serial and parallel prev mesh generated");
