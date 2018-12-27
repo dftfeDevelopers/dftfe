@@ -558,7 +558,7 @@ namespace dftfe {
 	d_mesh.generateCoarseMeshesForRestart(atomLocations,
 					      d_imagePositions,
 					      d_domainBoundingVectors,
-					      dftParameters::useSymm);
+					      dftParameters::useSymm || dftParameters::isIonOpt);
 	loadTriaInfoAndRhoData();
       }
     else
@@ -566,7 +566,7 @@ namespace dftfe {
 	d_mesh.generateSerialUnmovedAndParallelMovedUnmovedMesh(atomLocations,
 								d_imagePositions,
 								d_domainBoundingVectors,
-								dftParameters::useSymm,
+								dftParameters::useSymm || dftParameters::isIonOpt,
 								dftParameters::electrostaticsHRefinement);
 
       }
