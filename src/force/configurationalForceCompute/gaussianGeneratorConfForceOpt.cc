@@ -366,6 +366,25 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
   d_globalAtomsGaussianForces.clear();
   d_globalAtomsGaussianForces.resize(numberGlobalAtoms*C_DIM,0.0);
 
+
+  if (d_isElectrostaticsMeshSubdivided)
+  {
+      IndexSet  ghostIndicesForce=d_locally_relevant_dofsForce;
+      ghostIndicesForce.subtract_set(d_locally_owned_dofsForce);
+
+      d_gaussianWeightsVecAtoms.resize(totalNumberAtoms);
+
+      for (unsigned int iatom=0;iatom<totalNumberAtoms;++iatom)
+      {
+	  (d_gaussianWeightsVecAtoms[iatom])
+	               = dealii::parallel::distributed::Vector<double>(d_locally_owned_dofsForce,
+									       ghostIndicesForce,
+									       mpi_communicator);
+	  (d_gaussianWeightsVecAtoms[iatom]) = 0.0;
+	  d_gaussianWeightsVecAtoms[iatom].zero_out_ghosts();
+      }
+  }
+
 #ifdef USE_COMPLEX
   std::vector<double> globalAtomsGaussianForcesKPointsLocalPart(numberGlobalAtoms*C_DIM,0);
   std::vector<double> globalAtomsGaussianForcesKPoints(numberGlobalAtoms*C_DIM,0.0);
@@ -437,6 +456,9 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
 	          const unsigned int globalDofIndex=cell->vertex_dof_index(i,idim);
 	          if (!d_constraintsNoneForce.is_constrained(globalDofIndex) && d_locally_owned_dofsForce.is_element(globalDofIndex))
 		  {
+		      if (d_isElectrostaticsMeshSubdivided)
+		        d_gaussianWeightsVecAtoms[iAtom][globalDofIndex]=gaussianWeight;
+
 	              globalAtomsGaussianForcesLocalPart[C_DIM*atomId+idim]+=
 			  gaussianWeight*(d_configForceVectorLinFE[globalDofIndex]);
 #ifdef USE_COMPLEX
@@ -450,6 +472,132 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
    }//locally owned check
   }//cell loop
 
+  if (d_isElectrostaticsMeshSubdivided)
+  {
+      for (unsigned int iatom=0;iatom<totalNumberAtoms;++iatom)
+      {
+	d_constraintsNoneForce.distribute(d_gaussianWeightsVecAtoms[iatom]);
+	d_gaussianWeightsVecAtoms[iatom].update_ghost_values();
+      }
+
+      dealii::parallel::distributed::Triangulation<3> & electrostaticsTriaForce
+	  = dftPtr->d_mesh.getElectrostaticsMeshForce();
+
+      dealii::DoFHandler<3> dofHandlerSolTrans;
+      dofHandlerSolTrans.initialize(electrostaticsTriaForce,
+	                            FESystem<3>(FE_Q<3>(dealii::QGaussLobatto<1>(2)),3));
+      dofHandlerSolTrans.distribute_dofs(dofHandlerSolTrans.get_fe());
+
+      parallel::distributed::SolutionTransfer<3,vectorType> solTrans(dofHandlerSolTrans);
+      electrostaticsTriaForce.set_all_refine_flags();
+      electrostaticsTriaForce.prepare_coarsening_and_refinement();
+
+      std::vector<const vectorType *> vecAllIn(d_gaussianWeightsVecAtoms.size());
+      for (unsigned int i=0; i<d_gaussianWeightsVecAtoms.size(); ++i)
+	  vecAllIn[i]=&d_gaussianWeightsVecAtoms[i];
+
+      solTrans.prepare_for_coarsening_and_refinement(vecAllIn);
+      electrostaticsTriaForce.execute_coarsening_and_refinement();
+
+      IndexSet  ghostIndicesForceElectro=d_locally_relevant_dofsForceElectro;
+      ghostIndicesForceElectro.subtract_set(d_locally_owned_dofsForceElectro);
+
+      dofHandlerSolTrans.distribute_dofs(dofHandlerSolTrans.get_fe());
+
+      for (unsigned int iatom=0;iatom<totalNumberAtoms;++iatom)
+      {
+	  (d_gaussianWeightsVecAtoms[iatom])
+	               = dealii::parallel::distributed::Vector<double>(d_locally_owned_dofsForceElectro,
+								       ghostIndicesForceElectro,
+								       mpi_communicator);
+	  (d_gaussianWeightsVecAtoms[iatom]) = 0.0;
+	  d_gaussianWeightsVecAtoms[iatom].zero_out_ghosts();
+      }
+
+      std::vector<vectorType *> vecAllOut(d_gaussianWeightsVecAtoms.size());
+      for (unsigned int i=0; i<d_gaussianWeightsVecAtoms.size(); ++i)
+	  vecAllOut[i]=&d_gaussianWeightsVecAtoms[i];
+
+      solTrans.interpolate(vecAllOut);
+  }
+
+  vertex_touched.clear();
+  vertex_touched.resize(d_dofHandlerForceElectro.get_triangulation().n_vertices(),false);
+  cell = d_dofHandlerForceElectro.begin_active();
+  endc = d_dofHandlerForceElectro.end();
+  for (; cell!=endc; ++cell)
+   if (cell->is_locally_owned())
+   {
+    for (unsigned int i=0; i<vertices_per_cell; ++i)
+    {
+	const unsigned global_vertex_no = cell->vertex_index(i);
+
+	if (vertex_touched[global_vertex_no])
+	   continue;
+	vertex_touched[global_vertex_no]=true;
+	Point<C_DIM> nodalCoor = cell->vertex(i);
+
+	int overlappedAtomId=-1;
+	for (unsigned int jAtom=0;jAtom <totalNumberAtoms; jAtom++)
+	{
+           Point<C_DIM> jAtomCoor;
+           if(jAtom < numberGlobalAtoms)
+           {
+              jAtomCoor[0] = atomLocations[jAtom][2];
+              jAtomCoor[1] = atomLocations[jAtom][3];
+              jAtomCoor[2] = atomLocations[jAtom][4];
+           }
+           else
+           {
+	      jAtomCoor[0] = imagePositions[jAtom-numberGlobalAtoms][0];
+	      jAtomCoor[1] = imagePositions[jAtom-numberGlobalAtoms][1];
+	      jAtomCoor[2] = imagePositions[jAtom-numberGlobalAtoms][2];
+            }
+            const double distance=(nodalCoor-jAtomCoor).norm();
+	    if (distance < 1e-5){
+		overlappedAtomId=jAtom;
+		break;
+	    }
+	}//j atom loop
+
+        for (unsigned int iAtom=0;iAtom <totalNumberAtoms; iAtom++)
+	{
+             if (overlappedAtomId!=iAtom && overlappedAtomId!=-1 && !allowGaussianOverlapOnAtoms)
+		 continue;
+             Point<C_DIM> atomCoor;
+	     int atomId=iAtom;
+	     if(iAtom < numberGlobalAtoms)
+	     {
+		atomCoor[0] = atomLocations[iAtom][2];
+		atomCoor[1] = atomLocations[iAtom][3];
+		atomCoor[2] = atomLocations[iAtom][4];
+	      }
+	      else
+	      {
+		atomCoor[0] = imagePositions[iAtom-numberGlobalAtoms][0];
+		atomCoor[1] = imagePositions[iAtom-numberGlobalAtoms][1];
+		atomCoor[2] = imagePositions[iAtom-numberGlobalAtoms][2];
+		atomId=imageIds[iAtom-numberGlobalAtoms];
+	      }
+	      const double rsq=(nodalCoor-atomCoor).norm_square();
+	      double gaussianWeight=std::exp(-d_gaussianConstant*rsq);
+	      for (unsigned int idim=0; idim < C_DIM ; idim++)
+	      {
+	          const unsigned int globalDofIndex=cell->vertex_dof_index(i,idim);
+
+	          if (!d_constraintsNoneForceElectro.is_constrained(globalDofIndex)
+			  && d_locally_owned_dofsForceElectro.is_element(globalDofIndex))
+		  {
+		      if (d_isElectrostaticsMeshSubdivided)
+		         gaussianWeight=d_gaussianWeightsVecAtoms[iAtom][globalDofIndex];
+
+	              globalAtomsGaussianForcesLocalPart[C_DIM*atomId+idim]+=
+			  gaussianWeight*(d_configForceVectorLinFEElectro[globalDofIndex]);
+		  }
+	      }//idim loop
+ 	}//iAtom loop
+     }//vertices per cell
+   }//locally owned check
 
   //Sum all processor contributions and distribute to all processors
   MPI_Allreduce(&(globalAtomsGaussianForcesLocalPart[0]),

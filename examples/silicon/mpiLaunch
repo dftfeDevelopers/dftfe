@@ -1,0 +1,11 @@
+#!/bin/bash
+module swap craype-haswell craype-mic-knl
+export PROJECTDIR=/project/projectdirs/m2360/krisghos
+export EXEC=$PROJECTDIR/dftfe/build/release/complex/main
+export INFILE=parameterFileAutoMesh.prm
+export OUTFILE=si-test.out
+export ERRORFILE=si.log
+export OMP_NUM_THREADS=1
+export OMP_PLACES=threads
+export OMP_PROC_BIND=spread
+srun -n 1024 -c 4 --cpu_bind=cores $EXEC $INFILE>$OUTFILE 2>$ERRORFILE

@@ -23,7 +23,12 @@
 
 #include <headers.h>
 #include <constraintMatrixInfo.h>
-
+#ifdef DFTFE_WITH_ELPA
+extern "C"
+{
+#include <elpa/elpa.h>
+}
+#endif
 
 namespace dftfe{
 
@@ -44,6 +49,28 @@ namespace dftfe{
      */
     virtual ~operatorDFTClass() = 0;
 
+#ifdef DEAL_II_WITH_SCALAPACK
+    unsigned int getScalapackBlockSize() const;
+
+    unsigned int getScalapackBlockSizeValence() const;
+
+    void processGridOptionalELPASetup(const unsigned int na,
+    		                      const unsigned int nev);
+
+#ifdef DFTFE_WITH_ELPA
+    void elpaDeallocateHandles(const unsigned int na,
+		    const unsigned int nev);
+
+    elpa_t & getElpaHandle();
+
+    elpa_t & getElpaHandlePartialEigenVec();
+
+    elpa_t & getElpaHandleValence();
+
+    elpa_autotune_t & getElpaAutoTuneHandle();
+#endif
+
+#endif
 
     /**
      * @brief initialize operatorClass
@@ -133,6 +160,26 @@ namespace dftfe{
      */
     virtual void XtHX(const std::vector<dataTypes::number> & X,
 		      const unsigned int numberComponents,
+		      const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+		      dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar) = 0;
+
+
+    /**
+     * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
+     *
+     * @param X Vector of Vectors containing multi-wavefunction fields
+     * @param totalNumberComponents number of wavefunctions associated with a given node
+     * @param singlePrecComponents number of wavecfuntions starting from the first for
+     * which the project Hamiltionian block will be computed in single procession. However
+     * the cross blocks will still be computed in double precision.
+     * @param processGrid two-dimensional processor grid corresponding to the parallel projHamPar
+     * @param projHamPar parallel ScaLAPACKMatrix which stores the computed projection
+     * of the operation into the given subspace
+     */
+    virtual void XtHXMixedPrec
+	             (const std::vector<dataTypes::number> & X,
+		      const unsigned int totalNumberComponents,
+		      const unsigned int singlePrecComponents,
 		      const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 		      dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar) = 0;
 
@@ -270,7 +317,76 @@ namespace dftfe{
     //mpi communicator
     //
     MPI_Comm                          d_mpi_communicator;
+
+#ifdef DEAL_II_WITH_SCALAPACK
+#ifdef DFTFE_WITH_ELPA
+    /// ELPA handle
+    elpa_t d_elpaHandle;
+
+    /// ELPA handle for valence proj Ham
+    elpa_t d_elpaHandleValence;
+
+    /// ELPA handle for partial eigenvectors of full proj ham
+    elpa_t d_elpaHandlePartialEigenVec;
+
+    /// ELPA autotune handle
+    elpa_autotune_t d_elpaAutoTuneHandle;
+
+    /// processGrid mpi communicator
+    //MPI_Comm d_processGridCommunicatorActive;
+#endif
+
+    /// ScaLAPACK distributed format block size
+    unsigned int d_scalapackBlockSize;
+
+    /// ScaLAPACK distributed format block size for valence proj Ham
+    unsigned int d_scalapackBlockSizeValence;
+#endif
   };
+
+/*--------------------- Inline functions --------------------------------*/
+
+#  ifndef DOXYGEN
+#ifdef DEAL_II_WITH_SCALAPACK
+   inline unsigned int
+   operatorDFTClass::getScalapackBlockSize() const
+   {
+     return d_scalapackBlockSize;
+   }
+
+   inline unsigned int
+   operatorDFTClass::getScalapackBlockSizeValence() const
+   {
+     return d_scalapackBlockSizeValence;
+   }
+#ifdef DFTFE_WITH_ELPA
+  inline
+  elpa_t & operatorDFTClass::getElpaHandle()
+  {
+       return d_elpaHandle;
+  }
+
+  inline
+  elpa_t & operatorDFTClass::getElpaHandleValence()
+  {
+       return d_elpaHandleValence;
+  }
+
+  inline
+  elpa_t & operatorDFTClass::getElpaHandlePartialEigenVec()
+  {
+       return d_elpaHandlePartialEigenVec;
+  }
+
+
+  inline
+  elpa_autotune_t & operatorDFTClass::getElpaAutoTuneHandle()
+  {
+       return d_elpaAutoTuneHandle;
+  }
+#endif
+#endif
+#  endif // ifndef DOXYGEN
 
 }
 #endif

@@ -80,23 +80,28 @@ namespace dftfe {
       /// Function which updates the locally relevant triangulation vertices
       void updateTriangulationVertices();
 
+      /// Function which moves subdivided mesh
+      void moveSubdividedMesh();
+
       /// Performs periodic matching sanity check and returns the pair<if negative jacobian, maximum inverse jacobian magnitude>
       std::pair<bool,double> movedMeshCheck();
 
       virtual std::pair<bool,double> moveMesh(const std::vector<Point<C_DIM> > & controlPointLocations,
 					      const std::vector<Tensor<1,C_DIM,double> > & controlPointDisplacements,
-					      double controllingParameter)=0;
+					      const double controllingParameter,
+					      const bool moveSubdivided = false)=0;
       virtual void computeIncrement()=0;
 
       /// vector of displacements of the triangulation vertices
-      Vector<double> d_incrementalDisplacement;
+      //Vector<double> d_incrementalDisplacement;
+      vectorType d_incrementalDisplacement;
 
       bool d_isParallelMesh;
 
       //dealii based FE data structres
       FESystem<C_DIM>  FEMoveMesh;
       DoFHandler<C_DIM> d_dofHandlerMoveMesh;
-      parallel::distributed::Triangulation<3> * triaPtr;
+      parallel::distributed::Triangulation<3> * d_triaPtr;
       IndexSet   d_locally_owned_dofs;
       IndexSet   d_locally_relevant_dofs;
       ConstraintMatrix d_constraintsMoveMesh;

@@ -33,7 +33,7 @@ namespace dftParameters
   double radiusAtomBall=0.0, mixingParameter=0.5;
   double lowerEndWantedSpectrum=0.0,relLinearSolverTolerance=1e-10,selfConsistentSolverTolerance=1e-10,TVal=500, start_magnetization=0.0;
   double chebyshevTolerance = 1e-02;
-  std::string mixingMethod = ""; 
+  std::string mixingMethod = "";
 
   bool isPseudopotential=false,periodicX=false,periodicY=false,periodicZ=false, useSymm=false, timeReversal=false,pseudoTestsFlag=false, constraintMagnetization=false;
   std::string meshFileName="",coordinatesFile="",domainBoundingVectorsFile="",kPointDataFile="", ionRelaxFlagsFile="",orthogType="",pseudoPotentialFile="";
@@ -50,17 +50,21 @@ namespace dftParameters
   unsigned int verbosity=0; unsigned int chkType=0;
   bool restartFromChk=false;
   bool reproducible_output=false;
+  bool electrostaticsHRefinement = false;
+  bool electrostaticsPRefinement = false;
 
   std::string startingWFCType="";
   bool useBatchGEMM=false;
   bool writeWfcSolutionFields=false;
   bool writeDensitySolutionFields=false;
   unsigned int wfcBlockSize=400;
+  unsigned int chebyWfcBlockSize=400;
   unsigned int subspaceRotDofsBlockSize=2000;
   bool enableSwitchToGS=true;
   unsigned int nbandGrps=1;
   bool computeEnergyEverySCF=true;
   unsigned int scalapackParalProcs=0;
+  unsigned int scalapackBlockSize=50;
   unsigned int natoms=0;
   unsigned int natomTypes=0;
   double lowerBoundUnwantedFracUpper=0;
@@ -69,14 +73,28 @@ namespace dftParameters
   bool reuseWfcGeoOpt=true;
   extern double mpiAllReduceMessageBlockSizeMB=2.0;
   bool useHigherQuadNLP=true;
-  bool useMixedPrecisionPGS=false;
+  bool useMixedPrecPGS_SR=false;
+  bool useMixedPrecPGS_O=false;
+  bool useMixedPrecXTHXSpectrumSplit=false;
+  bool useMixedPrecSubspaceRotSpectrumSplit=false;
   unsigned int numAdaptiveFilterStates=0;
+  unsigned int spectrumSplitStartingScfIter=1;
+  bool useELPA=false;
 
   void declare_parameters(ParameterHandler &prm)
   {
     prm.declare_entry("REPRODUCIBLE OUTPUT", "false",
                       Patterns::Bool(),
                       "[Developer] Limit output to what is reproducible, i.e. don't print timing or absolute paths. This parameter is only used for testing purposes.");
+
+
+    prm.declare_entry("H REFINED ELECTROSTATICS", "false",
+		      Patterns::Bool(),
+		      "[Advanced] Compute electrostatic energy and forces on a h refined mesh after each ground-state solve. Default: false.");
+
+    prm.declare_entry("P REFINED ELECTROSTATICS", "false",
+		      Patterns::Bool(),
+		      "[Advanced] Compute electrostatic energy on a p refined mesh after each ground-state solve. Default: false.");
 
     prm.declare_entry("VERBOSITY", "1",
                       Patterns::Integer(0,4),
@@ -188,7 +206,7 @@ namespace dftParameters
     prm.enter_subsection ("Boundary conditions");
     {
         prm.declare_entry("SELF POTENTIAL RADIUS", "0.0",
-                      Patterns::Double(0.0,10),
+                      Patterns::Double(0.0,50),
                       "[Advanced] The radius (in a.u) of the ball around an atom in which self-potential of the associated nuclear charge is solved. For the default value of 0.0, the radius value is automatically determined to accommodate the largest radius possible for the given finite element mesh. The default approach works for most problems.");
 
 	prm.declare_entry("PERIODIC1", "false",
@@ -368,7 +386,11 @@ namespace dftParameters
 
 	    prm.declare_entry("SPECTRUM SPLIT CORE EIGENSTATES", "0",
 			      Patterns::Integer(0),
-			      "[Advanced] Number of lowest Kohn-Sham eigenstates which should not be included in the Rayleigh-Ritz projection step.  In other words, only the higher eigenstates (Number of Kohn-Sham wavefunctions minus the specified core eigenstates) are used to compute projected Hamiltonian and subsequently diagonalization is done on the projected Hamiltonian corresponding to the higher eigenstates. This value is usually chosen to be the sum of the number of core eigenstates for each atom type multiplied by number of atoms of that type. This setting is recommended for large systems (greater than 5000 electrons). Default value is 0 i.e., no core eigenstates are excluded from the Rayleigh-Ritz projection step.");
+			      "[Advanced] Number of lowest Kohn-Sham eigenstates which should not be included in the Rayleigh-Ritz diagonalization.  In other words, only the eigenvalues and eigenvectors corresponding to the higher eigenstates (Number of Kohn-Sham wavefunctions minus the specified core eigenstates) are computed in the diagonalization of the projected Hamiltonian. This value is usually chosen to be the sum of the number of core eigenstates for each atom type multiplied by number of atoms of that type. This setting is recommended for large systems (greater than 5000 electrons). Default value is 0 i.e., no core eigenstates are excluded from the Rayleigh-Ritz projection step. Currently this optimization is not implemented for the complex executable and ScaLAPACK linking is also needed.");
+
+	    prm.declare_entry("SPECTRUM SPLIT STARTING SCF ITER", "1",
+			      Patterns::Integer(0),
+			      "[Advanced] SCF iteration no beyond which spectrum splitting based can be used.");
 
 	    prm.declare_entry("LOWER BOUND WANTED SPECTRUM", "-10.0",
 			      Patterns::Double(),
@@ -388,7 +410,7 @@ namespace dftParameters
 
 	    prm.declare_entry("BATCH GEMM", "true",
 			      Patterns::Bool(),
-			      "[Advanced] Boolean parameter specifying whether to use gemm batch blas routines to perform matrix-matrix multiplication operations with groups of matrices, processing a number of groups at once using threads instead of the standard serial route. CAUTION: gemm batch blas routines will only be activated if the WFC BLOCK SIZE is less than 1000, and only if intel mkl blas library is linked with the dealii installation. Default option is true.");
+			      "[Advanced] Boolean parameter specifying whether to use gemm batch blas routines to perform matrix-matrix multiplication operations with groups of matrices, processing a number of groups at once using threads instead of the standard serial route. CAUTION: gemm batch blas routines will only be activated if the CHEBY WFC BLOCK SIZE is less than 1000, and only if intel mkl blas library is linked with the dealii installation. Default option is true.");
 
 	    prm.declare_entry("ORTHOGONALIZATION TYPE","Auto",
 			      Patterns::Selection("GS|LW|PGS|Auto"),
@@ -403,9 +425,13 @@ namespace dftParameters
 			      Patterns::Bool(),
 			      "[Developer] Turns on subspace rotation optimization for Pseudo-Gram-Schimdt orthogonalization. Default option is true.");
 
+	    prm.declare_entry("CHEBY WFC BLOCK SIZE", "400",
+			       Patterns::Integer(1),
+			       "[Advanced] Chebyshev filtering procedure involves the matrix-matrix multiplication where one matrix corresponds to the discretized Hamiltonian and the other matrix corresponds to the wavefunction matrix. The matrix-matrix multiplication is accomplished in a loop over the number of blocks of the wavefunction matrix to reduce the memory footprint of the code. This parameter specifies the block size of the wavefunction matrix to be used in the matrix-matrix multiplication. The optimum value is dependent on the computing architecture. For optimum work sharing during band parallelization (NPBAND > 1), we recommend adjusting CHEBY WFC BLOCK SIZE and NUMBER OF KOHN-SHAM WAVEFUNCTIONS such that NUMBER OF KOHN-SHAM WAVEFUNCTIONS/NPBAND/CHEBY WFC BLOCK SIZE equals an integer value. Default value is 400.");
+
 	    prm.declare_entry("WFC BLOCK SIZE", "400",
 			       Patterns::Integer(1),
-			       "[Advanced] Chebyshev filtering procedure involves the matrix-matrix multiplication where one matrix corresponds to the discretized Hamiltonian and the other matrix corresponds to the wavefunction matrix. The matrix-matrix multiplication is accomplished in a loop over the number of blocks of the wavefunction matrix to reduce the memory footprint of the code. This parameter specifies the block size of the wavefunction matrix to be used in the matrix-matrix multiplication. The optimum value is dependent on the computing architecture. The same block size also used for memory optimization purposes in the orthogonalization and Rayleigh-Ritz steps. The memory optimization part is activated only if dealii library is compiled with ScaLAPACK. For optimum work sharing during band parallelization (NPBAND > 1), we recommend adjusting WFC BLOCK SIZE and NUMBER OF KOHN-SHAM WAVEFUNCTIONS such that NUMBER OF KOHN-SHAM WAVEFUNCTIONS/NPBAND/WFC BLOCK SIZE equals an integer value. Default value is 400.");
+			       "[Advanced]  This parameter specifies the block size of the wavefunction matrix to be used for memory optimization purposes in the orthogonalization, Rayleigh-Ritz, and density computation steps. The feature is activated only if dealii library is compiled with ScaLAPACK. The optimum block size is dependent on the computing architecture. For optimum work sharing during band parallelization (NPBAND > 1), we recommend adjusting WFC BLOCK SIZE and NUMBER OF KOHN-SHAM WAVEFUNCTIONS such that NUMBER OF KOHN-SHAM WAVEFUNCTIONS/NPBAND/WFC BLOCK SIZE equals an integer value. Default value is 400.");
 
 	    prm.declare_entry("SUBSPACE ROT DOFS BLOCK SIZE", "2000",
 			       Patterns::Integer(1),
@@ -413,15 +439,36 @@ namespace dftParameters
 
 	    prm.declare_entry("SCALAPACKPROCS", "0",
 			      Patterns::Integer(0,300),
-			      "[Advanced] Uses a processor grid of SCALAPACKPROCS times SCALAPACKPROCS for parallel distribution of the subspace projected matrix in the Rayleigh-Ritz step and the overlap matrix in the Pseudo-Gram-Schmidt step. Default value is 0 for which a thumb rule is used (see http://netlib.org/scalapack/slug/node106.html). This parameter is only used if dealii library is compiled with ScaLAPACK.");
+			      "[Advanced] Uses a processor grid of SCALAPACKPROCS times SCALAPACKPROCS for parallel distribution of the subspace projected matrix in the Rayleigh-Ritz step and the overlap matrix in the Pseudo-Gram-Schmidt step. Default value is 0 for which a thumb rule is used (see http://netlib.org/scalapack/slug/node106.html). If ELPA is used, twice the value obtained from the thumb rule is used as ELPA scales much better than ScaLAPACK. This parameter is only used if dealii library is compiled with ScaLAPACK.");
 
-	    prm.declare_entry("USE MIXED PREC PGS", "false",
+            prm.declare_entry("SCALAPACK BLOCK SIZE", "50",
+			       Patterns::Integer(1,300),
+			       "[Advanced] ScaLAPACK process grid block size.");
+
+            prm.declare_entry("USE ELPA", "false",
+			       Patterns::Bool(),
+			      "[Standard] Use ELPA instead of ScaLAPACK for diagonalization of subspace projected Hamiltonian and Pseudo-Gram-Schmidt orthogonalization. Currently this setting is only available for real executable. Default setting is false.");
+
+	    prm.declare_entry("USE MIXED PREC PGS SR", "false",
 			      Patterns::Bool(),
-			      "[Advanced] Use mixed precision arithmetic in susbpace rotation step of PGS orthogonalization, if ORTHOGONALIZATION TYPE is set to PGS. Currently this optimization is only enabled for the real executable. Default setting is false.");
+			      "[Advanced] Use mixed precision arithmetic in subspace rotation step of PGS orthogonalization, if ORTHOGONALIZATION TYPE is set to PGS. Currently this optimization is only enabled for the real executable and with ScaLAPACK linking. Default setting is false.");
+
+	    prm.declare_entry("USE MIXED PREC PGS O", "false",
+			      Patterns::Bool(),
+			      "[Advanced] Use mixed precision arithmetic in overlap matrix computation step of PGS orthogonalization, if ORTHOGONALIZATION TYPE is set to PGS. Currently this optimization is only enabled for the real executable and with ScaLAPACK linking. Default setting is false.");
+
+
+	    prm.declare_entry("USE MIXED PREC XTHX SPECTRUM SPLIT", "false",
+			      Patterns::Bool(),
+			      "[Advanced] Use mixed precision arithmetic in computing subspace projected Kohn-Sham Hamiltonian when SPECTRUM SPLIT CORE EIGENSTATES>0. Currently this optimization is only enabled for the real executable and with ScaLAPACK linking. Default setting is false.");
+
+	    prm.declare_entry("USE MIXED PREC RR_SR SPECTRUM SPLIT", "false",
+			      Patterns::Bool(),
+			      "[Advanced] Use mixed precision arithmetic in Rayleigh-Ritz subspace rotation step when SPECTRUM SPLIT CORE EIGENSTATES>0. Currently this optimization is only enabled for the real executable and with ScaLAPACK linking. Default setting is false.");
 
 	    prm.declare_entry("ADAPTIVE FILTER STATES", "0",
 			      Patterns::Integer(0),
-			      "[Advanced] Number of lowest Kohn-Sham eigenstates which are filtered with half the Chebyshev polynomial degree specified by CHEBYSHEV POLYNOMIAL DEGREE. This value is usually chosen to be the sum of the number of core eigenstates for each atom type multiplied by number of atoms of that type. This setting is recommended for medium-large systems (greater than 2000 electrons). Default value is 0 i.e., all states are filtered with the same Chebyshev polynomial degree.");
+			      "[Advanced] Number of lowest Kohn-Sham eigenstates which are filtered with Chebyshev polynomial degree linearly varying from 50 percent (starting from the lowest) to 80 percent of the value specified by CHEBYSHEV POLYNOMIAL DEGREE. This imposes a step function filtering polynomial order on the ADAPTIVE FILTER STATES as filtering is done with blocks of size WFC BLOCK SIZE. This setting is recommended for large systems (greater than 5000 electrons). Default value is 0 i.e., all states are filtered with the same Chebyshev polynomial degree.");
 	}
 	prm.leave_subsection ();
     }
@@ -433,7 +480,7 @@ namespace dftParameters
 			  Patterns::Integer(0,20000),
 			  "[Advanced] Maximum number of iterations to be allowed for Poisson problem convergence.");
 
-	prm.declare_entry("TOLERANCE", "1e-12",
+        prm.declare_entry("TOLERANCE", "1e-14",
 			  Patterns::Double(0,1.0),
 			  "[Advanced] Relative tolerance as stopping criterion for Poisson problem convergence.");
     }
@@ -447,6 +494,9 @@ namespace dftParameters
     dftParameters::reproducible_output           = prm.get_bool("REPRODUCIBLE OUTPUT");
     dftParameters::writeWfcSolutionFields           = prm.get_bool("WRITE WFC");
     dftParameters::writeDensitySolutionFields           = prm.get_bool("WRITE DENSITY");
+    dftParameters::electrostaticsHRefinement = prm.get_bool("H REFINED ELECTROSTATICS");
+    dftParameters::electrostaticsPRefinement = prm.get_bool("P REFINED ELECTROSTATICS");
+
 
     prm.enter_subsection ("Parallelization");
     {
@@ -558,19 +608,26 @@ namespace dftParameters
 	prm.enter_subsection ("Eigen-solver parameters");
 	{
 	   dftParameters::numberEigenValues             = prm.get_integer("NUMBER OF KOHN-SHAM WAVEFUNCTIONS");
-	   dftParameters::numCoreWfcRR             = prm.get_integer("SPECTRUM SPLIT CORE EIGENSTATES");
+	   dftParameters::numCoreWfcRR                  = prm.get_integer("SPECTRUM SPLIT CORE EIGENSTATES");
+	   dftParameters::spectrumSplitStartingScfIter  = prm.get_integer("SPECTRUM SPLIT STARTING SCF ITER");
 	   dftParameters::lowerEndWantedSpectrum        = prm.get_double("LOWER BOUND WANTED SPECTRUM");
 	   dftParameters::lowerBoundUnwantedFracUpper   = prm.get_double("LOWER BOUND UNWANTED FRAC UPPER");
 	   dftParameters::chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
+	   dftParameters::useELPA= prm.get_bool("USE ELPA");
 	   dftParameters::useBatchGEMM= prm.get_bool("BATCH GEMM");
 	   dftParameters::orthogType        = prm.get("ORTHOGONALIZATION TYPE");
 	   dftParameters::chebyshevTolerance = prm.get_double("CHEBYSHEV FILTER TOLERANCE");
 	   dftParameters::wfcBlockSize= prm.get_integer("WFC BLOCK SIZE");
+	   dftParameters::chebyWfcBlockSize= prm.get_integer("CHEBY WFC BLOCK SIZE");
 	   dftParameters::subspaceRotDofsBlockSize= prm.get_integer("SUBSPACE ROT DOFS BLOCK SIZE");
 	   dftParameters::enableSwitchToGS= prm.get_bool("ENABLE SWITCH TO GS");
 	   dftParameters::triMatPGSOpt= prm.get_bool("ENABLE SUBSPACE ROT PGS OPT");
 	   dftParameters::scalapackParalProcs= prm.get_integer("SCALAPACKPROCS");
-	   dftParameters::useMixedPrecisionPGS= prm.get_bool("USE MIXED PREC PGS");
+	   dftParameters::scalapackBlockSize= prm.get_integer("SCALAPACK BLOCK SIZE");
+	   dftParameters::useMixedPrecPGS_SR= prm.get_bool("USE MIXED PREC PGS SR");
+	   dftParameters::useMixedPrecPGS_O= prm.get_bool("USE MIXED PREC PGS O");
+	   dftParameters::useMixedPrecXTHXSpectrumSplit= prm.get_bool("USE MIXED PREC XTHX SPECTRUM SPLIT");
+	   dftParameters::useMixedPrecSubspaceRotSpectrumSplit= prm.get_bool("USE MIXED PREC RR_SR SPECTRUM SPLIT");
 	   dftParameters::numAdaptiveFilterStates= prm.get_integer("ADAPTIVE FILTER STATES");
 	}
 	prm.leave_subsection ();
@@ -597,10 +654,11 @@ namespace dftParameters
      {
         std::cout << "==========================================================================================================" << std::endl ;
         std::cout << "==========================================================================================================" << std::endl ;
-        std::cout << "			Welcome to the Open Source program DFT-FE v0.5			        " << std::endl ;
-        std::cout << "This is a C++ code for materials modeling from first principles using Kohn-Sham density functional theory " << std::endl ;
-        std::cout << "It is based on adaptive finite-element based methodologies.		        " << std::endl ;
-        std::cout << "For details and citing please refer to our website: https://sites.google.com/umich.edu/dftfe" << std::endl ;
+        std::cout << "			Welcome to the Open Source program DFT-FE v0.6.0			        " << std::endl ;
+        std::cout << "This is a C++ code for materials modeling from first principles using Kohn-Sham density functional theory." << std::endl ;
+        std::cout << "This is a real-space code for periodic, semi-periodic and non-periodic pseudopotential" << std::endl ;
+        std::cout << "and all-electron calculations, and is based on adaptive finite-element discretization." << std::endl ;
+        std::cout << "For further details, and citing, please refer to our website: https://sites.google.com/umich.edu/dftfe" << std::endl ;
 	std::cout << "==========================================================================================================" << std::endl ;
 	std::cout << " DFT-FE Principal developers and Mentors (alphabetically) :									" << std::endl ;
 	std::cout << "														" << std::endl ;
@@ -632,6 +690,9 @@ namespace dftParameters
     if (dftParameters::isIonForce || dftParameters::isCellStress)
        AssertThrow(!dftParameters::useSymm,ExcMessage("DFT-FE Error: USE GROUP SYMMETRY must be set to false if either ION FORCE or CELL STRESS is set to true. This functionality will be added in a future release"));
 
+
+    if (dftParameters::numCoreWfcRR>0)
+       AssertThrow(false,ExcMessage("DFT-FE Error: SPECTRUM SPLIT CORE EIGENSTATES cannot be set to a non-zero value when using complex executable. This optimization will be added in a future release"));
 #else
     AssertThrow( dftParameters::nkx==1 &&  dftParameters::nky==1 &&  dftParameters::nkz==1
              && dftParameters::offsetFlagX==0 &&  dftParameters::offsetFlagY==0 &&  dftParameters::offsetFlagZ==0
@@ -658,6 +719,14 @@ namespace dftParameters
     if (dftParameters::isPseudopotential)
       AssertThrow(!dftParameters::pseudoPotentialFile.empty(),
 	        ExcMessage("DFT-FE Error: PSEUDOPOTENTIAL FILE NAMES LIST not given."));
+
+    if (dftParameters::spinPolarized==0)
+            AssertThrow(!dftParameters::constraintMagnetization,
+	        ExcMessage("DFT-FE Error: This is a SPIN UNPOLARIZED calculation. Can't have CONSTRAINT MAGNETIZATION ON."));
+
+    if (dftParameters::verbosity >=1 && Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)
+        if (dftParameters::constraintMagnetization)
+            std::cout << " WARNING: CONSTRAINT MAGNETIZATION is ON. A fixed occupation will be used no matter what temperature is provided at input" << std::endl;
 
     AssertThrow(dftParameters::numberEigenValues!=0
 	        ,ExcMessage("DFT-FE Error: Number of wavefunctions not specified or given value of zero, which is not allowed."));

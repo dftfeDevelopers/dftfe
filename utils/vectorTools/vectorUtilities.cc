@@ -49,8 +49,8 @@ namespace dftfe
       //
       //Set the maximal size of the indices upon which this object operates.
       //
-      locallyOwnedFlattenedNodesSet.set_size(globalNumberDegreesOfFreedom*blockSize);
-      ghostFlattenedNodesSet.set_size(globalNumberDegreesOfFreedom*blockSize);
+      locallyOwnedFlattenedNodesSet.set_size(globalNumberDegreesOfFreedom*(dealii::types::global_dof_index)blockSize);
+      ghostFlattenedNodesSet.set_size(globalNumberDegreesOfFreedom*(dealii::types::global_dof_index)blockSize);
 
 
       for(unsigned int ilocaldof = 0; ilocaldof < totalSize; ++ilocaldof)
@@ -63,14 +63,14 @@ namespace dftfe
 	    {
 	      for(unsigned int iwave = 0; iwave < blockSize; ++iwave)
 		{
-		  newGhostGlobalNodeIds.push_back(blockSize*globalIndex+iwave);
+		  newGhostGlobalNodeIds.push_back((dealii::types::global_dof_index)blockSize*globalIndex+(dealii::types::global_dof_index)iwave);
 		}
 	    }
 	  else
 	    {
 	      for(unsigned int iwave = 0; iwave < blockSize; ++iwave)
 		{
-		  newLocallyOwnedGlobalNodeIds.push_back(blockSize*globalIndex+iwave);
+		  newLocallyOwnedGlobalNodeIds.push_back((dealii::types::global_dof_index)blockSize*globalIndex+(dealii::types::global_dof_index)iwave);
 		}
 	    }
 
@@ -160,7 +160,7 @@ namespace dftfe
 		  dealii::types::global_dof_index globalIndex = cell_dof_indicesGlobal[iNode];
 
 		  //Think about variable blockSize
-		  dealii::types::global_dof_index globalIndexFlattenedArray = blockSize*globalIndex;
+		  dealii::types::global_dof_index globalIndexFlattenedArray = (dealii::types::global_dof_index)blockSize*globalIndex;
 		  dealii::types::global_dof_index localIndexFlattenedArray = partitioner->global_to_local(globalIndexFlattenedArray);
 		  flattenedArrayMacroCellLocalProcIndexIdMap[iElem].push_back(localIndexFlattenedArray);
 		}//idof loop
@@ -189,7 +189,7 @@ namespace dftfe
 		  dealii::types::global_dof_index globalIndex = cell_dof_indices[iNode];
 
 		  //Think about variable blockSize
-		  dealii::types::global_dof_index globalIndexFlattenedArray = blockSize*globalIndex;
+		  dealii::types::global_dof_index globalIndexFlattenedArray = (dealii::types::global_dof_index)blockSize*globalIndex;
 		  dealii::types::global_dof_index localIndexFlattenedArray = partitioner->global_to_local(globalIndexFlattenedArray);
 		  flattenedArrayCellLocalProcIndexIdMap[iElemCount].push_back(localIndexFlattenedArray);
 		}
@@ -474,7 +474,11 @@ namespace dftfe
 				     const unsigned int                                                ,
 				     dealii::parallel::distributed::Vector<dataTypes::number>     &);
 
+    template void createDealiiVector(const std::shared_ptr<const dealii::Utilities::MPI::Partitioner> &,
+				     const unsigned int                                                ,
+				     dealii::parallel::distributed::Vector<dataTypes::numberLowPrec>     &);
 
   }//end of namespace
 
 }
+

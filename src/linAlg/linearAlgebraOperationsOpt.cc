@@ -26,7 +26,12 @@
 #include <linearAlgebraOperationsInternal.h>
 #include <dftParameters.h>
 #include <dftUtils.h>
-
+#ifdef DFTFE_WITH_ELPA
+extern "C"
+{
+#include <elpa/elpa.h>
+}
+#endif
 #include "pseudoGS.cc"
 
 namespace dftfe{
@@ -255,7 +260,6 @@ namespace dftfe{
     }
 
 
-
     //
     //chebyshev filtering of given subspace XArray
     //
@@ -292,6 +296,7 @@ namespace dftfe{
       //
       bool scaleFlag = false;
       double scalar = 1.0;
+
       operatorMatrix.HX(XArray,
 			numberWaveFunctions,
 			scaleFlag,
@@ -326,11 +331,12 @@ namespace dftfe{
 	  //call HX
 	  //
 	  bool scaleFlag = true;
+
 	  operatorMatrix.HX(YArray,
-			    numberWaveFunctions,
-			    scaleFlag,
-			    alpha1,
-			    XArray);
+				numberWaveFunctions,
+				scaleFlag,
+				alpha1,
+				XArray);
 
 	  //
 	  //XArray = YArray
@@ -463,6 +469,7 @@ namespace dftfe{
     void rayleighRitz(operatorDFTClass & operatorMatrix,
 		      std::vector<T> & X,
 		      const unsigned int numberWaveFunctions,
+		      const bool isValenceProjHam,
 		      const MPI_Comm &interBandGroupComm,
 		      const MPI_Comm &mpi_communicator,
 		      std::vector<double> & eigenValues)
@@ -470,22 +477,29 @@ namespace dftfe{
     {
       dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
 
-      dealii::TimerOutput computing_timer(pcout,
+      dealii::TimerOutput computing_timer(mpi_communicator,
+	                                  pcout,
 					  dftParameters::reproducible_output ||
 					  dftParameters::verbosity<4 ? dealii::TimerOutput::never : dealii::TimerOutput::summary,
 					  dealii::TimerOutput::wall_times);
       //
       //compute projected Hamiltonian
       //
-      const unsigned rowsBlockSize=std::min((unsigned int)50,numberWaveFunctions);
+      const unsigned int rowsBlockSize=isValenceProjHam?operatorMatrix.getScalapackBlockSizeValence()
+	                                                :operatorMatrix.getScalapackBlockSize();
       std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  processGrid;
       internal::createProcessGridSquareMatrix(mpi_communicator,
-		                              numberWaveFunctions,
-					      processGrid);
+                                              numberWaveFunctions,
+                                              processGrid,
+					      isValenceProjHam);
 
       dealii::ScaLAPACKMatrix<T> projHamPar(numberWaveFunctions,
                                             processGrid,
                                             rowsBlockSize);
+      if (processGrid->is_process_active())
+	  std::fill(&projHamPar.local_el(0,0),
+		    &projHamPar.local_el(0,0)+projHamPar.local_m()*projHamPar.local_n(),
+		    T(0.0));
 
       computing_timer.enter_section("Blocked XtHX, RR step");
       operatorMatrix.XtHX(X,
@@ -497,32 +511,109 @@ namespace dftfe{
       //
       //compute eigendecomposition of ProjHam
       //
-      computing_timer.enter_section("ScaLAPACK eigen decomp, RR step");
       const unsigned int numberEigenValues = numberWaveFunctions;
       eigenValues.resize(numberEigenValues);
+#if(defined DFTFE_WITH_ELPA)
+      if (dftParameters::useELPA)
+      {
+	  computing_timer.enter_section("ELPA eigen decomp, RR step");
+          dealii::ScaLAPACKMatrix<T> eigenVectors(numberWaveFunctions,
+                                            processGrid,
+                                            rowsBlockSize);
+
+	  if (processGrid->is_process_active())
+	      std::fill(&eigenVectors.local_el(0,0),
+		    &eigenVectors.local_el(0,0)+eigenVectors.local_m()*eigenVectors.local_n(),
+		    T(0.0));
+
+	  //For ELPA eigendecomposition the full matrix is required unlike
+	  //ScaLAPACK which can work with only the lower triangular part
+	  dealii::ScaLAPACKMatrix<T> projHamParTrans(numberWaveFunctions,
+						processGrid,
+						rowsBlockSize);
+
+          if (processGrid->is_process_active())
+	      std::fill(&projHamParTrans.local_el(0,0),
+		        &projHamParTrans.local_el(0,0)+projHamParTrans.local_m()*projHamParTrans.local_n(),
+		        T(0.0));
+
+
+	  projHamParTrans.copy_transposed(projHamPar);
+	  projHamPar.add(projHamParTrans,T(1.0),T(1.0));
+
+	  if (processGrid->is_process_active())
+	     for (unsigned int i = 0; i < projHamPar.local_n(); ++i)
+	       {
+		 const unsigned int glob_i = projHamPar.global_column(i);
+		 for (unsigned int j = 0; j < projHamPar.local_m(); ++j)
+		   {
+		     const unsigned int glob_j = projHamPar.global_row(j);
+		     if (glob_i==glob_j)
+			projHamPar.local_el(j, i)*=T(0.5);
+		   }
+	       }
+
+	  if (processGrid->is_process_active())
+          {
+	      int error;
+	      elpa_eigenvectors_d(isValenceProjHam?operatorMatrix.getElpaHandleValence():
+		                                   operatorMatrix.getElpaHandle(),
+				&projHamPar.local_el(0,0),
+				&eigenValues[0],
+				&eigenVectors.local_el(0,0),
+				&error);
+	      AssertThrow(error==ELPA_OK,
+		    dealii::ExcMessage("DFT-FE Error: elpa_eigenvectors error."));
+	  }
+
+
+	  MPI_Bcast(&eigenValues[0],
+		    eigenValues.size(),
+		    MPI_DOUBLE,
+		    0,
+		    mpi_communicator);
+
+
+	  eigenVectors.copy_to(projHamPar);
+
+	  computing_timer.exit_section("ELPA eigen decomp, RR step");
+      }
+      else
+      {
+	  computing_timer.enter_section("ScaLAPACK eigen decomp, RR step");
+	  eigenValues=projHamPar.eigenpairs_symmetric_by_index_MRRR(std::make_pair(0,numberWaveFunctions-1),true);
+	  computing_timer.exit_section("ScaLAPACK eigen decomp, RR step");
+       }
+#else
+      computing_timer.enter_section("ScaLAPACK eigen decomp, RR step");
       eigenValues=projHamPar.eigenpairs_symmetric_by_index_MRRR(std::make_pair(0,numberWaveFunctions-1),true);
       computing_timer.exit_section("ScaLAPACK eigen decomp, RR step");
+#endif
 
-      computing_timer.enter_section("Broadcast eigvec across band groups, RR step");
+      computing_timer.enter_section("Broadcast eigvec and eigenvalues across band groups, RR step");
       internal::broadcastAcrossInterCommScaLAPACKMat
 	                                   (processGrid,
 		                            projHamPar,
 				            interBandGroupComm,
 					    0);
-      computing_timer.exit_section("Broadcast eigvec across band groups, RR step");
+
+      /*
+      MPI_Bcast(&eigenValues[0],
+		eigenValues.size(),
+		MPI_DOUBLE,
+		0,
+		interBandGroupComm);
+      */
+      computing_timer.exit_section("Broadcast eigvec and eigenvalues across band groups, RR step");
       //
       //rotate the basis in the subspace X = X*Q, implemented as X^{T}=Q^{T}*X^{T} with X^{T}
       //stored in the column major format
       //
       computing_timer.enter_section("Blocked subspace rotation, RR step");
-      std::vector<T> temp;
-      const unsigned int numberCoreWaveFunctions=0;
 
       internal::subspaceRotation(&X[0],
 	                         X.size(),
 		                 numberWaveFunctions,
-				 numberCoreWaveFunctions,
-				 &temp[0],
 		                 processGrid,
 				 interBandGroupComm,
 				 mpi_communicator,
@@ -530,7 +621,6 @@ namespace dftfe{
 				 true);
 
       computing_timer.exit_section("Blocked subspace rotation, RR step");
-
     }
 #else
 
@@ -538,13 +628,15 @@ namespace dftfe{
     void rayleighRitz(operatorDFTClass & operatorMatrix,
 		      std::vector<T> & X,
 		      const unsigned int numberWaveFunctions,
+		      const bool isValenceProjHam,
 		      const MPI_Comm &interBandGroupComm,
 		      const MPI_Comm &mpi_communicator,
 		      std::vector<double> & eigenValues)
     {
       dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
 
-      dealii::TimerOutput computing_timer(pcout,
+      dealii::TimerOutput computing_timer(mpi_communicator,
+	                                  pcout,
 					  dftParameters::reproducible_output ||
 					  dftParameters::verbosity<4 ? dealii::TimerOutput::never : dealii::TimerOutput::summary,
 					  dealii::TimerOutput::wall_times);
@@ -582,6 +674,13 @@ namespace dftfe{
 	        0,
 	        mpi_communicator);
 #endif
+      /*
+      MPI_Bcast(&eigenValues[0],
+		eigenValues.size(),
+		MPI_DOUBLE,
+		0,
+		mpi_communicator);
+		*/
 
       computing_timer.exit_section("eigen decomp in RR");
 
@@ -601,6 +700,250 @@ namespace dftfe{
       computing_timer.exit_section("subspace rotation in RR");
 
       X = rotatedBasis;
+    }
+#endif
+
+#if(defined DEAL_II_WITH_SCALAPACK && !USE_COMPLEX)
+    template<typename T>
+    void rayleighRitzSpectrumSplitDirect
+                    (operatorDFTClass & operatorMatrix,
+		     const std::vector<T> & X,
+		     std::vector<T> & Y,
+		     const unsigned int numberWaveFunctions,
+		     const unsigned int numberCoreStates,
+		     const MPI_Comm &interBandGroupComm,
+		     const MPI_Comm &mpi_communicator,
+		     const bool useMixedPrec,
+		     std::vector<double> & eigenValues)
+
+    {
+      dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
+
+      dealii::TimerOutput computing_timer(mpi_communicator,
+	                                  pcout,
+					  dftParameters::reproducible_output ||
+					  dftParameters::verbosity<4 ? dealii::TimerOutput::never : dealii::TimerOutput::summary,
+					  dealii::TimerOutput::wall_times);
+      //
+      //compute projected Hamiltonian
+      //
+      const unsigned int rowsBlockSize=operatorMatrix.getScalapackBlockSize();
+      std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  processGrid;
+      internal::createProcessGridSquareMatrix(mpi_communicator,
+                                              numberWaveFunctions,
+                                              processGrid);
+
+
+      dealii::ScaLAPACKMatrix<T> projHamPar(numberWaveFunctions,
+                                            processGrid,
+                                            rowsBlockSize);
+      if (processGrid->is_process_active())
+	  std::fill(&projHamPar.local_el(0,0),
+		    &projHamPar.local_el(0,0)+projHamPar.local_m()*projHamPar.local_n(),
+		    T(0.0));
+
+      if (useMixedPrec && dftParameters::useMixedPrecXTHXSpectrumSplit)
+      {
+	 computing_timer.enter_section("Blocked XtHX Mixed Prec, RR step");
+         operatorMatrix.XtHXMixedPrec(X,
+			  numberWaveFunctions,
+			  numberCoreStates,
+			  processGrid,
+			  projHamPar);
+	 computing_timer.exit_section("Blocked XtHX Mixed Prec, RR step");
+      }
+      else
+      {
+	 computing_timer.enter_section("Blocked XtHX, RR step");
+         operatorMatrix.XtHX(X,
+			  numberWaveFunctions,
+			  processGrid,
+			  projHamPar);
+	 computing_timer.exit_section("Blocked XtHX, RR step");
+      }
+
+      const unsigned int numValenceStates=numberWaveFunctions-numberCoreStates;
+      eigenValues.resize(numValenceStates);
+      //compute eigendecomposition of ProjHam
+#if(defined DFTFE_WITH_ELPA)
+      if (dftParameters::useELPA)
+      {
+	  computing_timer.enter_section("ELPA eigen decomp, RR step");
+	  std::vector<double> allEigenValues(numberWaveFunctions,0.0);
+          dealii::ScaLAPACKMatrix<T> eigenVectors(numberWaveFunctions,
+                                            processGrid,
+                                            rowsBlockSize);
+
+	  if (processGrid->is_process_active())
+	      std::fill(&eigenVectors.local_el(0,0),
+		    &eigenVectors.local_el(0,0)+eigenVectors.local_m()*eigenVectors.local_n(),
+		    T(0.0));
+
+	  //For ELPA eigendecomposition the full matrix is required unlike
+	  //ScaLAPACK which can work with only the lower triangular part
+	  dealii::ScaLAPACKMatrix<T> projHamParTrans(numberWaveFunctions,
+						processGrid,
+						rowsBlockSize);
+          if (processGrid->is_process_active())
+	      std::fill(&projHamParTrans.local_el(0,0),
+		        &projHamParTrans.local_el(0,0)+projHamParTrans.local_m()*projHamParTrans.local_n(),
+		        T(0.0));
+
+	  projHamParTrans.copy_transposed(projHamPar);
+	  projHamPar.add(projHamParTrans,T(-1.0),T(-1.0));
+
+	  if (processGrid->is_process_active())
+	     for (unsigned int i = 0; i < projHamPar.local_n(); ++i)
+	       {
+		 const unsigned int glob_i = projHamPar.global_column(i);
+		 for (unsigned int j = 0; j < projHamPar.local_m(); ++j)
+		   {
+		     const unsigned int glob_j = projHamPar.global_row(j);
+		     if (glob_i==glob_j)
+			projHamPar.local_el(j, i)*=T(0.5);
+		   }
+	       }
+
+	  if (processGrid->is_process_active())
+          {
+	      int error;
+	      elpa_eigenvectors_d(operatorMatrix.getElpaHandlePartialEigenVec(),
+				&projHamPar.local_el(0,0),
+				&allEigenValues[0],
+				&eigenVectors.local_el(0,0),
+				&error);
+	      AssertThrow(error==ELPA_OK,
+		    dealii::ExcMessage("DFT-FE Error: elpa_eigenvectors error in case spectrum splitting."));
+	  }
+
+	  for (unsigned int i=0;i<numValenceStates;++i)
+	         eigenValues[numValenceStates-i-1]=-allEigenValues[i];
+
+	  MPI_Bcast(&eigenValues[0],
+		    eigenValues.size(),
+		    MPI_DOUBLE,
+		    0,
+		    mpi_communicator);
+
+
+	  dealii::ScaLAPACKMatrix<T> permutedIdentityMat(numberWaveFunctions,
+						    processGrid,
+						    rowsBlockSize);
+          if (processGrid->is_process_active())
+	      std::fill(&permutedIdentityMat.local_el(0,0),
+		        &permutedIdentityMat.local_el(0,0)
+			+permutedIdentityMat.local_m()*permutedIdentityMat.local_n(),
+		        T(0.0));
+
+	  if (processGrid->is_process_active())
+	     for (unsigned int i = 0; i < permutedIdentityMat.local_m(); ++i)
+	       {
+		 const unsigned int glob_i = permutedIdentityMat.global_row(i);
+		 if (glob_i<numValenceStates)
+		 {
+		     for (unsigned int j = 0; j < permutedIdentityMat.local_n(); ++j)
+		       {
+			 const unsigned int glob_j = permutedIdentityMat.global_column(j);
+			 if (glob_j<numValenceStates)
+			 {
+			     const unsigned int rowIndexToSetOne = (numValenceStates-1)-glob_j;
+			     if(glob_i == rowIndexToSetOne)
+				permutedIdentityMat.local_el(i, j) = T(1.0);
+			 }
+		       }
+		 }
+	       }
+
+          eigenVectors.mmult(projHamPar,permutedIdentityMat);
+
+
+
+	  computing_timer.exit_section("ELPA eigen decomp, RR step");
+      }
+      else
+      {
+	  computing_timer.enter_section("ScaLAPACK eigen decomp, RR step");
+	  eigenValues=projHamPar.eigenpairs_symmetric_by_index_MRRR(std::make_pair(numberCoreStates,numberWaveFunctions-1),true);
+	  computing_timer.exit_section("ScaLAPACK eigen decomp, RR step");
+       }
+#else
+      computing_timer.enter_section("ScaLAPACK eigen decomp, RR step");
+      eigenValues=projHamPar.eigenpairs_symmetric_by_index_MRRR(std::make_pair(numberCoreStates,numberWaveFunctions-1),true);
+      computing_timer.exit_section("ScaLAPACK eigen decomp, RR step");
+#endif
+
+      computing_timer.enter_section("Broadcast eigvec and eigenvalues across band groups, RR step");
+
+      internal::broadcastAcrossInterCommScaLAPACKMat
+	                                   (processGrid,
+		                            projHamPar,
+				            interBandGroupComm,
+					    0);
+      /*
+      MPI_Bcast(&eigenValues[0],
+		eigenValues.size(),
+		MPI_DOUBLE,
+		0,
+		interBandGroupComm);
+      */
+      computing_timer.exit_section("Broadcast eigvec and eigenvalues across band groups, RR step");
+      //
+      //rotate the basis in the subspace X = X*Q, implemented as X^{T}=Q^{T}*X^{T} with X^{T}
+      //stored in the column major format
+      //
+
+      if (useMixedPrec && dftParameters::useMixedPrecSubspaceRotSpectrumSplit
+)
+      {
+	  computing_timer.enter_section("Blocked subspace rotation mixed prec, RR step");
+
+	  internal::subspaceRotationSpectrumSplitMixedPrec(&X[0],
+				     &Y[0],
+				     X.size(),
+				     numberWaveFunctions,
+				     processGrid,
+				     numberWaveFunctions-numberCoreStates,
+				     interBandGroupComm,
+				     mpi_communicator,
+				     projHamPar,
+				     true);
+
+	  computing_timer.exit_section("Blocked subspace rotation mixed prec, RR step");
+      }
+      else
+      {
+	  computing_timer.enter_section("Blocked subspace rotation, RR step");
+
+	  internal::subspaceRotationSpectrumSplit(&X[0],
+				     &Y[0],
+				     X.size(),
+				     numberWaveFunctions,
+				     processGrid,
+				     numberWaveFunctions-numberCoreStates,
+				     interBandGroupComm,
+				     mpi_communicator,
+				     projHamPar,
+				     true);
+
+	  computing_timer.exit_section("Blocked subspace rotation, RR step");
+      }
+
+    }
+#else
+
+    template<typename T>
+    void rayleighRitzSpectrumSplitDirect
+                  (operatorDFTClass & operatorMatrix,
+		   const std::vector<T> & X,
+		   std::vector<T> & Y,
+		   const unsigned int numberWaveFunctions,
+		   const unsigned int numberCoreStates,
+		   const MPI_Comm &interBandGroupComm,
+		   const MPI_Comm &mpi_communicator,
+		   const bool useMixedPrec,
+		   std::vector<double> & eigenValues)
+    {
+       AssertThrow(false,dftUtils::ExcNotImplementedYet());
     }
 #endif
 
@@ -650,7 +993,7 @@ namespace dftfe{
 			     +iWave)
 			 =X[iNode*totalNumberVectors+jvec+iWave];
 
-
+	  MPI_Barrier(mpiComm);
 	  //evaluate H times XBlock and store in HXBlock
 	  HXBlock=T(0.);
 	  const bool scaleFlag = false;
@@ -880,7 +1223,8 @@ namespace dftfe{
 
       dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
 
-      dealii::TimerOutput computing_timer(pcout,
+      dealii::TimerOutput computing_timer(mpiComm,
+	                                  pcout,
 					  dftParameters::reproducible_output ||
 					  dftParameters::verbosity<4? dealii::TimerOutput::never : dealii::TimerOutput::summary,
 					  dealii::TimerOutput::wall_times);
@@ -1060,26 +1404,39 @@ namespace dftfe{
 				  const unsigned int,
 				  const double ,
 				  const double ,
-				  const double );
+				  const double);
 
 
     template void gramSchmidtOrthogonalization(std::vector<dataTypes::number> &,
 					       const unsigned int,
 					       const MPI_Comm &);
 
-    template unsigned int pseudoGramSchmidtOrthogonalization(std::vector<dataTypes::number> &,
+    template unsigned int pseudoGramSchmidtOrthogonalization(operatorDFTClass & operatorMatrix,
+	                                                     std::vector<dataTypes::number> &,
 					                     const unsigned int,
 						             const MPI_Comm &,
-							     const unsigned int numberCoreVectors,
 							     const MPI_Comm &mpiComm,
-			                                     std::vector<dataTypes::number> & tempNonCoreVectorsArray);
+							     const bool useMixedPrec);
 
     template void rayleighRitz(operatorDFTClass  & operatorMatrix,
 			       std::vector<dataTypes::number> &,
 			       const unsigned int numberWaveFunctions,
+			       const bool isValenceProjHam,
 			       const MPI_Comm &,
 			       const MPI_Comm &,
 			       std::vector<double>     & eigenValues);
+
+
+    template void rayleighRitzSpectrumSplitDirect
+	                  (operatorDFTClass  & operatorMatrix,
+			   const std::vector<dataTypes::number> &,
+			   std::vector<dataTypes::number> &,
+			   const unsigned int numberWaveFunctions,
+			   const unsigned int numberCoreStates,
+			   const MPI_Comm &,
+			   const MPI_Comm &,
+			   const bool useMixedPrec,
+			   std::vector<double>     & eigenValues);
 
     template void computeEigenResidualNorm(operatorDFTClass        & operatorMatrix,
 					   std::vector<dataTypes::number> & X,

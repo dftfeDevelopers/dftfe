@@ -160,17 +160,17 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   //
   //
   //
-  forcePtr->initMoved();
+  forcePtr->initMoved(dofHandlerVector,
+	              d_constraintsVector,
+	              false);
+
+  forcePtr->initMoved(dofHandlerVector,
+	              d_constraintsVector,
+	              true);
 
   if (dftParameters::verbosity>=4)
       dftUtils::printCurrentMemoryUsage(mpi_communicator,
 	                      "Called force init moved");
-  //
-  //push dofHandler and constraints for force
-  //
-  dofHandlerVector.push_back(&(forcePtr->d_dofHandlerForce));
-  forcePtr->d_forceDofHandlerIndex = dofHandlerVector.size()-1;
-  d_constraintsVector.push_back(&(forcePtr->d_constraintsNoneForce));
 
   matrix_free_data.reinit(dofHandlerVector, d_constraintsVector, quadratureVector, additional_data);
 

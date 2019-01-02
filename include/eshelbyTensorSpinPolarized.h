@@ -62,6 +62,8 @@ namespace dftfe {
 		     const std::vector<double> & kPointWeights,
 		     const std::vector<std::vector<double> > & eigenValues_,
 		     const double fermiEnergy_,
+		     const double fermiEnergyUp_,
+		     const double fermiEnergyDown_,
 		     const double tVal);
 
       ///Local part of the Eshelby tensor for non-periodic case
@@ -71,23 +73,20 @@ namespace dftfe {
 			std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >::const_iterator gradPsiSpin0Begin,
 			std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >::const_iterator gradPsiSpin1Begin,
 			const std::vector<double> & eigenValues_,
-			const double fermiEnergy_,
+		        const double fermiEnergy_,
+		        const double fermiEnergyUp_,
+		        const double fermiEnergyDown_,
 			const double tVal);
 
       /// exchange-correlation and psp part of the ELoc Eshelby tensor
-      Tensor<2,C_DIM,VectorizedArray<double> >  getELocXcPspEshelbyTensor
+      Tensor<2,C_DIM,VectorizedArray<double> >  getELocXcEshelbyTensor
 			     (const VectorizedArray<double> & rho,
 			      const Tensor<1,C_DIM,VectorizedArray<double> > & gradRhoSpin0,
 			      const Tensor<1,C_DIM,VectorizedArray<double> > & gradRhoSpin1,
 			      const VectorizedArray<double> & exc,
 			      const Tensor<1,C_DIM,VectorizedArray<double> > & derExcGradRhoSpin0,
-			      const Tensor<1,C_DIM,VectorizedArray<double> > & derExcGradRhoSpin1,
-			     const VectorizedArray<double> & pseudoVLoc);
+			      const Tensor<1,C_DIM,VectorizedArray<double> > & derExcGradRhoSpin1);
 
-      ///Local pseudotential force contribution
-      Tensor<1,C_DIM,VectorizedArray<double> >  getFPSPLocal(const VectorizedArray<double> rho,
-							   const Tensor<1,C_DIM,VectorizedArray<double> > & gradPseudoVLoc,
-							   const Tensor<1,C_DIM,VectorizedArray<double> > & gradPhiExt);
 
       ///Nonlocal pseudotential Eshelby tensor (for non-periodic case)
       Tensor<2,C_DIM,VectorizedArray<double> >  getEnlEshelbyTensorNonPeriodic(const std::vector<std::vector<VectorizedArray<double> > > & ZetaDeltaV,
@@ -96,19 +95,24 @@ namespace dftfe {
 									     std::vector<VectorizedArray<double> >::const_iterator psiSpin0Begin,
 									     std::vector<VectorizedArray<double> >::const_iterator psiSpin1Begin,
 									     const std::vector<double> & eigenValues_,
-									     const double fermiEnergy_,
+		                                                             const double fermiEnergy_,
+		                                                             const double fermiEnergyUp_,
+		                                                             const double fermiEnergyDown_,
 									     const double tVal);
 
       ///Nonlocal pseudotential Eshelby tensor (for periodic case)
-      Tensor<2,C_DIM,VectorizedArray<double> >  getEnlEshelbyTensorPeriodic(const std::vector<std::vector<std::vector<Tensor<1,2,VectorizedArray<double> > > > > & ZetaDeltaV,
-									  const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiSpin0TimesV,
-									  const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiSpin1TimesV,
-									  std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator psiSpin0Begin,
-									  std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator psiSpin1Begin,
-									  const std::vector<double> & kPointWeights,
-									  const std::vector<std::vector<double> > & eigenValues_,
-									  const double fermiEnergy_,
-									  const double tVal);
+      Tensor<2,C_DIM,VectorizedArray<double> >  getEnlEshelbyTensorPeriodic
+								     (const std::vector<std::vector<std::vector<Tensor<1,2,VectorizedArray<double> > > > > & ZetaDeltaV,
+								      const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiSpin0TimesV,
+								      const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiSpin1TimesV,
+								      std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator psiSpin0Begin,
+								      std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator psiSpin1Begin,
+								      const std::vector<double> & kPointWeights,
+								      const std::vector<std::vector<double> > & eigenValues_,
+								      const double fermiEnergy_,
+								      const double fermiEnergyUp_,
+								      const double fermiEnergyDown_,
+								      const double tVal);
 
       ///Nonlocal pseudotential force contribution (for non periodic case)
       Tensor<1,C_DIM,VectorizedArray<double> >  getFnlNonPeriodic(const std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > & gradZetaDeltaV,
@@ -118,6 +122,8 @@ namespace dftfe {
 								std::vector<VectorizedArray<double> >::const_iterator psiSpin1Begin,
 								const std::vector<double> & eigenValues_,
 								const double fermiEnergy_,
+								const double fermiEnergyUp_,
+								const double fermiEnergyDown_,
 								const double tVal);
       ///Nonlocal pseudotential force contribution (for periodic case)
       Tensor<1,C_DIM,VectorizedArray<double> >  getFnlPeriodic(const std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > & gradZetaDeltaV,
@@ -127,7 +133,9 @@ namespace dftfe {
 							     std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiSpin1Begin,
 							     const std::vector<double> & kPointWeights,
 							     const std::vector<std::vector<double> > & eigenValues_,
-							     const double fermiEnergy_,
+						             const double fermiEnergy_,
+						             const double fermiEnergyUp_,
+						             const double fermiEnergyDown_,
 							     const double tVal);
 
       ///Force contribution due to the numerical difference between the input and output electron density (rhoIn and rhoOut)
@@ -154,6 +162,8 @@ namespace dftfe {
 						   const std::vector<double> & kPointWeights,
 						   const std::vector<std::vector<double> > & eigenValues_,
 						   const double fermiEnergy_,
+						   const double fermiEnergyUp_,
+						   const double fermiEnergyDown_,
 						   const double tVal);
 
       /// Nonlocal pseudotential Eshelby tensor (used only for stress computation)
@@ -164,7 +174,9 @@ namespace dftfe {
 							     std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiSpin1Begin,
 							     const std::vector<double> & kPointWeights,
 							     const std::vector<std::vector<double> > & eigenValues_,
-							     const double fermiEnergy_,
+						             const double fermiEnergy_,
+						             const double fermiEnergyUp_,
+						             const double fermiEnergyDown_,
 							     const double tVal);
     };
 

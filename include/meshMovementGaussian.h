@@ -48,7 +48,8 @@ namespace dftfe {
        */
       std::pair<bool,double> moveMesh(const std::vector<Point<C_DIM> > & controlPointLocations,
 				      const std::vector<Tensor<1,3,double> > & controlPointDisplacements,
-				      const double controllingParameter);
+				      const double controllingParameter,
+				      const bool moveSubdivided = false);
     private:
       /** @brief internal function which computes the nodal increment field in the local processor
        *

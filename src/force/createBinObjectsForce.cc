@@ -18,33 +18,46 @@
 
 
 template<unsigned int FEOrder>
-void forceClass<FEOrder>::createBinObjectsForce()
+void forceClass<FEOrder>::createBinObjectsForce
+    (const DoFHandler<3> & dofHandler,
+     const DoFHandler<3> & dofHandlerForce,
+     const ConstraintMatrix  & noConstraints,
+     const vselfBinsManager<FEOrder> & vselfBinsManager,
+     std::vector<std::vector<DoFHandler<C_DIM>::active_cell_iterator> > & cellsVselfBallsDofHandler,
+     std::vector<std::vector<DoFHandler<C_DIM>::active_cell_iterator> > & cellsVselfBallsDofHandlerForce,
+     std::vector<std::map<dealii::CellId , unsigned int> > & cellsVselfBallsClosestAtomIdDofHandler,
+     std::map<unsigned int, unsigned int> & AtomIdBinIdLocalDofHandler,
+     std::vector<std::map<DoFHandler<C_DIM>::active_cell_iterator,std::vector<unsigned int > > > & cellFacesVselfBallSurfacesDofHandler,
+     std::vector<std::map<DoFHandler<C_DIM>::active_cell_iterator,std::vector<unsigned int > > > & cellFacesVselfBallSurfacesDofHandlerForce)
 {
   const unsigned int faces_per_cell=GeometryInfo<C_DIM>::faces_per_cell;
-  const unsigned int dofs_per_cell=dftPtr->FE.dofs_per_cell;
-  const unsigned int dofs_per_face=dftPtr->FE.dofs_per_face;
-  const unsigned int numberBins=dftPtr->d_vselfBinsManager.getAtomIdsBins().size();
+  const unsigned int dofs_per_cell=dofHandler.get_fe().dofs_per_cell;
+  const unsigned int dofs_per_face=dofHandler.get_fe().dofs_per_face;
+  const unsigned int numberBins=vselfBinsManager.getAtomIdsBins().size();
   //clear exisitng data
-  d_cellsVselfBallsDofHandler.clear();
-  d_cellsVselfBallsDofHandlerForce.clear();
-  d_cellFacesVselfBallSurfacesDofHandler.clear();
-  d_cellFacesVselfBallSurfacesDofHandlerForce.clear();
-  d_cellsVselfBallsClosestAtomIdDofHandler.clear();
-  d_AtomIdBinIdLocalDofHandler.clear();
+  cellsVselfBallsDofHandler.clear();
+  cellsVselfBallsDofHandlerForce.clear();
+  cellFacesVselfBallSurfacesDofHandler.clear();
+  cellFacesVselfBallSurfacesDofHandlerForce.clear();
+  cellsVselfBallsClosestAtomIdDofHandler.clear();
+  AtomIdBinIdLocalDofHandler.clear();
   //resize
-  d_cellsVselfBallsDofHandler.resize(numberBins);
-  d_cellsVselfBallsDofHandlerForce.resize(numberBins);
-  d_cellFacesVselfBallSurfacesDofHandler.resize(numberBins);
-  d_cellFacesVselfBallSurfacesDofHandlerForce.resize(numberBins);
-  d_cellsVselfBallsClosestAtomIdDofHandler.resize(numberBins);
+  cellsVselfBallsDofHandler.resize(numberBins);
+  cellsVselfBallsDofHandlerForce.resize(numberBins);
+  cellFacesVselfBallSurfacesDofHandler.resize(numberBins);
+  cellFacesVselfBallSurfacesDofHandlerForce.resize(numberBins);
+  cellsVselfBallsClosestAtomIdDofHandler.resize(numberBins);
 
   for(unsigned int iBin = 0; iBin < numberBins; ++iBin)
   {
 
-     const std::map<dealii::types::global_dof_index, int> & boundaryNodeMap = dftPtr->d_vselfBinsManager.getBoundaryFlagsBins()[iBin];
-     const std::map<dealii::types::global_dof_index, int> & closestAtomBinMap =dftPtr->d_vselfBinsManager.getClosestAtomIdsBins()[iBin];
-     DoFHandler<C_DIM>::active_cell_iterator cell = dftPtr->dofHandler.begin_active(),endc = dftPtr->dofHandler.end();
-     DoFHandler<C_DIM>::active_cell_iterator cellForce = d_dofHandlerForce.begin_active();
+     const std::map<dealii::types::global_dof_index, int> & boundaryNodeMap
+	                                        = vselfBinsManager.getBoundaryFlagsBins()[iBin];
+     const std::map<dealii::types::global_dof_index, int> & closestAtomBinMap =
+	                                       vselfBinsManager.getClosestAtomIdsBins()[iBin];
+     DoFHandler<C_DIM>::active_cell_iterator cell = dofHandler.begin_active();
+     DoFHandler<C_DIM>::active_cell_iterator endc = dofHandler.end();
+     DoFHandler<C_DIM>::active_cell_iterator cellForce = dofHandlerForce.begin_active();
      for(; cell!= endc; ++cell, ++cellForce)
      {
 	if(cell->is_locally_owned())
@@ -65,7 +78,7 @@ void forceClass<FEOrder>::createBinObjectsForce()
 	      for(unsigned int iFaceDof = 0; iFaceDof < dofs_per_face; ++iFaceDof)
 	      {
                  const types::global_dof_index nodeId=iFaceGlobalDofIndices[iFaceDof];
-		 if (!dftPtr->d_noConstraints.is_constrained(nodeId))
+		 if (!noConstraints.is_constrained(nodeId))
 		 {
 	            Assert(boundaryNodeMap.find(nodeId)!=boundaryNodeMap.end(),ExcMessage("BUG"));
                     Assert(closestAtomBinMap.find(nodeId)!=closestAtomBinMap.end(),ExcMessage("BUG"));
@@ -102,12 +115,12 @@ void forceClass<FEOrder>::createBinObjectsForce()
 		  std::cout << "closestAtomIdSum: "<<closestAtomIdSum<< ", closestAtomId: "<<closestAtomId<< ", nonHangingNodeIdCountCell: "<<nonHangingNodeIdCountCell<<std::endl;
 	      }
 	      AssertThrow(closestAtomIdSum==closestAtomId*nonHangingNodeIdCountCell,ExcMessage("cell dofs on vself ball surface have different closest atom ids, remedy- increase separation between vself balls"));
-	      d_cellsVselfBallsDofHandler[iBin].push_back(cell);
-	      d_cellsVselfBallsDofHandlerForce[iBin].push_back(cellForce);
-	      d_cellsVselfBallsClosestAtomIdDofHandler[iBin][cell->id()]=closestAtomId;
-	      d_AtomIdBinIdLocalDofHandler[closestAtomId]=iBin;
-	      d_cellFacesVselfBallSurfacesDofHandler[iBin][cell]= allFaceIdsOfCell;
-	      d_cellFacesVselfBallSurfacesDofHandlerForce[iBin][cellForce]= dirichletFaceIds;//allFaceIdsOfCell;
+	      cellsVselfBallsDofHandler[iBin].push_back(cell);
+	      cellsVselfBallsDofHandlerForce[iBin].push_back(cellForce);
+	      cellsVselfBallsClosestAtomIdDofHandler[iBin][cell->id()]=closestAtomId;
+	      AtomIdBinIdLocalDofHandler[closestAtomId]=iBin;
+	      cellFacesVselfBallSurfacesDofHandler[iBin][cell]= allFaceIdsOfCell;
+	      cellFacesVselfBallSurfacesDofHandlerForce[iBin][cellForce]= dirichletFaceIds;//allFaceIdsOfCell;
 	   }
 	}//cell locally owned
      }// cell loop

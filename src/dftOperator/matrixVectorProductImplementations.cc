@@ -389,6 +389,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesXBatchGEMM (
   delete []  cellHamMatrixTimesWaveMatrixBatch;
   delete []  cellHamMatrixBatch;
 }
+
 #endif
 #else
 template<unsigned int FEOrder>

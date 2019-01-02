@@ -986,6 +986,9 @@ namespace dftfe
     template<unsigned int FEOrder>
     const std::map<unsigned int, unsigned int>  & vselfBinsManager<FEOrder>::getAtomIdBinIdMapLocalAllImages() const {return d_atomIdBinIdMapLocalAllImages;}
 
+    template<unsigned int FEOrder>
+    double vselfBinsManager<FEOrder>::getStoredAdaptiveBallRadius() const {return d_storedAdaptiveBallRadius;}
+
     template class vselfBinsManager<1>;
     template class vselfBinsManager<2>;
     template class vselfBinsManager<3>;

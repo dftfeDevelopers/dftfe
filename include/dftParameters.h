@@ -56,6 +56,8 @@ namespace dftfe {
 
       extern unsigned int verbosity, chkType;
       extern bool restartFromChk;
+      extern bool electrostaticsHRefinement;
+      extern bool electrostaticsPRefinement;
 
       extern bool reproducible_output;
 
@@ -67,11 +69,13 @@ namespace dftfe {
       extern unsigned int numCoreWfcRR;
       extern bool useBatchGEMM;
       extern unsigned int wfcBlockSize;
+      extern unsigned int chebyWfcBlockSize;
       extern unsigned int subspaceRotDofsBlockSize;
       extern bool enableSwitchToGS;
       extern unsigned int nbandGrps;
       extern bool computeEnergyEverySCF;
       extern unsigned int scalapackParalProcs;
+      extern unsigned int scalapackBlockSize;
       extern unsigned int natoms;
       extern unsigned int natomTypes;
       extern double lowerBoundUnwantedFracUpper;
@@ -79,8 +83,13 @@ namespace dftfe {
       extern bool reuseWfcGeoOpt;
       extern double mpiAllReduceMessageBlockSizeMB;
       extern bool useHigherQuadNLP;
-      extern bool useMixedPrecisionPGS;
+      extern bool useMixedPrecPGS_SR;
+      extern bool useMixedPrecPGS_O;
+      extern bool useMixedPrecXTHXSpectrumSplit;
+      extern bool useMixedPrecSubspaceRotSpectrumSplit;
       extern unsigned int numAdaptiveFilterStates;
+      extern unsigned int spectrumSplitStartingScfIter;
+      extern bool useELPA;
 
       /**
        * Declare parameters.

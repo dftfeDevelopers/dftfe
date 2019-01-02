@@ -99,6 +99,9 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
   constraintsNoneDataInfo.initialize(matrix_free_data.get_vector_partitioner(),
 				     constraintsNone);
 
+  constraintsNoneDataInfo2.initialize(matrix_free_data.get_vector_partitioner(),
+				     constraintsNone);
+
  if (dftParameters::verbosity>=4)
    dftUtils::printCurrentMemoryUsage(mpi_communicator,
 			  "Overloaded constraint matrices initialized");
@@ -110,14 +113,13 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
   {
      for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
        {
-	 /*vectorTools::createDealiiVector<dataTypes::number>(matrix_free_data.get_vector_partitioner(),
-							     numEigenValues,
-							     d_eigenVectorsFlattened[kPoint]);*/
 
-	 d_eigenVectorsFlattenedSTL[kPoint].resize(numEigenValues*matrix_free_data.get_vector_partitioner()->local_size(),dataTypes::number(0.0));
+	 d_eigenVectorsFlattenedSTL[kPoint].resize(d_numEigenValues*matrix_free_data.get_vector_partitioner()->local_size(),dataTypes::number(0.0));
 
-	   //d_eigenVectorsFlattened[kPoint] = dataTypes::number(0.0);
-
+	 if (d_numEigenValuesRR!=d_numEigenValues)
+	 {
+	    d_eigenVectorsRotFracDensityFlattenedSTL[kPoint].resize(d_numEigenValuesRR*matrix_free_data.get_vector_partitioner()->local_size(),dataTypes::number(0.0));
+	 }
        }
 
      pcout <<std::endl<< "Setting initial guess for wavefunctions...."<<std::endl;
@@ -143,7 +145,14 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
   else if (usePreviousGroundStateFields==1)
   {
      for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
-	 d_eigenVectorsFlattenedSTL[kPoint].resize(numEigenValues*matrix_free_data.get_vector_partitioner()->local_size(),dataTypes::number(0.0));
+     {
+	 d_eigenVectorsFlattenedSTL[kPoint].resize(d_numEigenValues*matrix_free_data.get_vector_partitioner()->local_size(),dataTypes::number(0.0));
+
+	 if (d_numEigenValuesRR!=d_numEigenValues)
+	 {
+	    d_eigenVectorsRotFracDensityFlattenedSTL[kPoint].resize(d_numEigenValuesRR*matrix_free_data.get_vector_partitioner()->local_size(),dataTypes::number(0.0));
+	 }
+     }
 
      pcout <<std::endl<< "Reading initial guess for PSI...."<<std::endl;
      readPSI();
@@ -153,30 +162,30 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
   else if (usePreviousGroundStateFields==2)
   {
       std::vector<std::vector<vectorType>> eigenVectors((1+dftParameters::spinPolarized)*d_kPointWeights.size(),
-	                                                 std::vector<vectorType>(numEigenValues));
+	                                                 std::vector<vectorType>(d_numEigenValues));
 
       for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
-	  for(unsigned int i= 0; i < numEigenValues; ++i)
+	  for(unsigned int i= 0; i < d_numEigenValues; ++i)
 	       eigenVectors[kPoint][i].reinit(d_tempEigenVecPrev);
       for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
       {
 #ifdef USE_COMPLEX
 	 vectorTools::copyFlattenedSTLVecToSingleCompVec
 		 (d_eigenVectorsFlattenedSTL[kPoint],
-		  numEigenValues,
-		  std::make_pair(0,numEigenValues),
+		  d_numEigenValues,
+		  std::make_pair(0,d_numEigenValues),
 		  localProc_dof_indicesReal,
 		  localProc_dof_indicesImag,
 		  eigenVectors[kPoint]);
 #else
 	 vectorTools::copyFlattenedSTLVecToSingleCompVec
 		 (d_eigenVectorsFlattenedSTL[kPoint],
-		  numEigenValues,
-		  std::make_pair(0,numEigenValues),
+		  d_numEigenValues,
+		  std::make_pair(0,d_numEigenValues),
 		  eigenVectors[kPoint]);
 
 #endif
-	for(unsigned int i= 0; i < numEigenValues; ++i)
+	for(unsigned int i= 0; i < d_numEigenValues; ++i)
 	{
 	  constraintsNoneEigenDataInfoPrev.distribute(eigenVectors[kPoint][i]);
 	  eigenVectors[kPoint][i].update_ghost_values();
@@ -192,22 +201,29 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
       {
 	//Create the full STL array
 	for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
-	  d_eigenVectorsFlattenedSTL[kPoint].resize(numEigenValues*matrix_free_data.get_vector_partitioner()->local_size(),
+	{
+	  d_eigenVectorsFlattenedSTL[kPoint].resize(d_numEigenValues*matrix_free_data.get_vector_partitioner()->local_size(),
 		                                    dataTypes::number(0.0));
+
+	 if (d_numEigenValuesRR!=d_numEigenValues)
+	 {
+	    d_eigenVectorsRotFracDensityFlattenedSTL[kPoint].resize(d_numEigenValuesRR*matrix_free_data.get_vector_partitioner()->local_size(),dataTypes::number(0.0));
+	 }
+	}
 
 #ifdef USE_COMPLEX
 	 vectorTools::copySingleCompVecToFlattenedSTLVec
 		 (d_eigenVectorsFlattenedSTL[kPoint],
-		  numEigenValues,
-		  std::make_pair(0,numEigenValues),
+		  d_numEigenValues,
+		  std::make_pair(0,d_numEigenValues),
 		  localProc_dof_indicesReal,
 		  localProc_dof_indicesImag,
 		  eigenVectors[kPoint]);
 #else
 	 vectorTools::copySingleCompVecToFlattenedSTLVec
 		 (d_eigenVectorsFlattenedSTL[kPoint],
-		  numEigenValues,
-		  std::make_pair(0,numEigenValues),
+		  d_numEigenValues,
+		  std::make_pair(0,d_numEigenValues),
 		  eigenVectors[kPoint]);
 
 #endif
@@ -235,8 +251,9 @@ void dftClass<FEOrder>::updatePrevMeshDataStructures()
   //update serial and parallel unmoved previous mesh
   //
   d_mesh.generateSerialAndParallelUnmovedPreviousMesh(atomLocations,
-				                        d_imagePositions,
-				                        d_domainBoundingVectors);
+						      d_imagePositions,
+						      d_domainBoundingVectors,
+						      false);
  if (dftParameters::verbosity>=4)
    dftUtils::printCurrentMemoryUsage(mpi_communicator,
 			  "Serial and parallel prev mesh generated");
