@@ -132,7 +132,7 @@ void dftClass<FEOrder>::readkPointData()
   dftUtils::readFile(numberColumnskPointDataFile, kPointData, kPointRuleFile);
   d_kPointCoordinates.clear() ;
   d_kPointWeights.clear();
-  const unsigned int maxkPoints = kPointData.size();
+  unsigned int maxkPoints = kPointData.size();
   d_kPointCoordinates.resize(maxkPoints*3,0.0);
   d_kPointWeights.resize(maxkPoints,0.0);
   kPointReducedCoordinates = d_kPointCoordinates;
@@ -164,6 +164,61 @@ void dftClass<FEOrder>::readkPointData()
                                         kPointReducedCoordinates[3*i+1]*d_reciprocalLatticeVectors[1][d1] +
                                         kPointReducedCoordinates[3*i+2]*d_reciprocalLatticeVectors[2][d1];
      }
+   //
+  AssertThrow(maxkPoints>=dftParameters::npool,ExcMessage("Number of k-points should be higher than or equal to number of pools"));
+   const unsigned int this_mpi_pool (Utilities::MPI::this_mpi_process(interpoolcomm)) ;
+   std::vector<double> d_kPointCoordinatesGlobal(3*maxkPoints, 0.0) ;
+   std::vector<double> d_kPointWeightsGlobal(maxkPoints, 0.0) ;
+   std::vector<double> kPointReducedCoordinatesGlobal(3*maxkPoints, 0.0) ;
+   for(unsigned int i = 0; i < maxkPoints; ++i)
+    {
+       for (unsigned int d=0; d < 3; ++d)
+       {
+         d_kPointCoordinatesGlobal[3*i + d] = d_kPointCoordinates[3*i + d];
+	 kPointReducedCoordinatesGlobal[3*i + d] = kPointReducedCoordinates[3*i + d];
+       }
+     d_kPointWeightsGlobal[i] = d_kPointWeights[i] ;
+    }
+   //
+   const unsigned int maxkPointsGlobal = maxkPoints ;
+   d_kPointCoordinates.clear() ;
+   kPointReducedCoordinates.clear();
+   d_kPointWeights.clear() ;
+   maxkPoints = maxkPointsGlobal / dftParameters::npool ;
+   const unsigned int rest = maxkPointsGlobal%dftParameters::npool ;
+   if (this_mpi_pool < rest)
+       maxkPoints = maxkPoints + 1 ;
+   //
+   pcout << " check 0.1	" << std::endl ;
+   //
+   d_kPointCoordinates.resize(3*maxkPoints, 0.0) ;
+   kPointReducedCoordinates.resize(3*maxkPoints, 0.0);
+   d_kPointWeights.resize(maxkPoints, 0.0) ;
+   //
+   std::vector<int> sendSizekPoints1(dftParameters::npool, 0), mpiOffsetskPoints1(dftParameters::npool, 0) ;
+   std::vector<int> sendSizekPoints2(dftParameters::npool, 0), mpiOffsetskPoints2(dftParameters::npool, 0) ;
+   if (this_mpi_pool==0) {
+   //
+     for (unsigned int i=0; i < dftParameters::npool; ++i) {
+       sendSizekPoints1[i] = 3*(maxkPointsGlobal / dftParameters::npool) ;
+       sendSizekPoints2[i] = ( maxkPointsGlobal / dftParameters::npool ) ;
+	if (i < rest){
+	   sendSizekPoints1[i] = sendSizekPoints1[i] + 3 ;
+	   sendSizekPoints2[i] = sendSizekPoints2[i] + 1 ;
+        }
+    if (i > 0){
+  	  mpiOffsetskPoints1[i] = mpiOffsetskPoints1[i-1] + sendSizekPoints1[i-1] ;
+	  mpiOffsetskPoints2[i] = mpiOffsetskPoints2[i-1] + sendSizekPoints2[i-1] ;
+    }
+   }
+   }
+   //
+   pcout << " check 0.2	" << std::endl ;
+   //pcout << sendSizekPoints[0] << "  " << sendSizekPoints[1] << " " << maxkPoints << std::endl;
+   //
+   MPI_Scatterv(&(d_kPointCoordinatesGlobal[0]),&(sendSizekPoints1[0]), &(mpiOffsetskPoints1[0]), MPI_DOUBLE, &(d_kPointCoordinates[0]), 3*maxkPoints, MPI_DOUBLE, 0, interpoolcomm);
+   MPI_Scatterv(&(d_kPointWeightsGlobal[0]),&(sendSizekPoints2[0]), &(mpiOffsetskPoints2[0]), MPI_DOUBLE, &(d_kPointWeights[0]), maxkPoints, MPI_DOUBLE, 0, interpoolcomm);
+   MPI_Scatterv(&(kPointReducedCoordinatesGlobal[0]),&(sendSizekPoints1[0]), &(mpiOffsetskPoints1[0]), MPI_DOUBLE, &(kPointReducedCoordinates[0]), 3*maxkPoints, MPI_DOUBLE, 0, interpoolcomm);
 }
 //============================================================================================================================================
 //============================================================================================================================================

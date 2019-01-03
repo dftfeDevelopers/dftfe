@@ -1,0 +1,21 @@
+#!/bin/bash
+#SBATCH -N 50
+#SBATCH -C knl
+#SBATCH -q regular
+#SBATCH -t 10:30:00
+
+#OpenMP settings:
+export OMP_NUM_THREADS=1
+export OMP_PLACES=threads
+export OMP_PROC_BIND=spread
+
+module swap craype-haswell craype-mic-knl
+export PROJECTDIR=/project/projectdirs/m2360/krisghos
+export EXEC=$PROJECTDIR/dftfe/build/release/real/main
+export INFILE=parameterFileAutoMesh.prm
+export OUTFILE=si-test.out
+export ERRORFILE=test.log
+export OMP_NUM_THREADS=1
+export OMP_PLACES=threads
+export OMP_PROC_BIND=spread
+srun -n 3200 -c 4 --cpu_bind=cores $EXEC $INFILE>$OUTFILE 2>$ERRORFILE
