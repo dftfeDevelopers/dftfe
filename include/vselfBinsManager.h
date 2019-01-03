@@ -70,28 +70,37 @@ namespace dftfe {
            * @param[in] offset MatrixFree object starting offset for vself bins solve
 	   * @param[out] phiExt sum of the self-potential fields of all atoms and image atoms
 	   * @param[in] phiExtConstraintMatrix constraintMatrix corresponding to phiExt
+	   * @param[in] imagePositions image atoms positions data
+	   * @param[in] imageIds image atoms Ids data
+	   * @param[in] imageCharges image atoms charge values data	   *
 	   * @param[out] localVselfs peak self-potential values of atoms in the local processor
 	   */
-	  void vselfBinsManager::solveVselfInBins(const dealii::MatrixFree<3,double> & matrix_free_data,
+	  void solveVselfInBins(const dealii::MatrixFree<3,double> & matrix_free_data,
 		                                  const unsigned int offset,
 	                                          vectorType & phiExt,
 						  const dealii::ConstraintMatrix & phiExtConstraintMatrix,
+						  const std::vector<std::vector<double> > & imagePositions,
+						  const std::vector<int> & imageIds,
+						  const std::vector<double> & imageCharges,
 	                                          std::vector<std::vector<double> > & localVselfs);
 
           /// get const reference map of binIds and atomIds
-	  const std::map<int,std::set<int> > & vselfBinsManager::getAtomIdsBins() const;
-
-	  /// get const reference to vector of image ids in each bin
-	  const std::vector<std::vector<int> > & vselfBinsManager::getImageIdsBins() const;
+	  const std::map<int,std::set<int> > & getAtomIdsBins() const;
 
 	  /// get const reference to map of global dof index and vself solve boundary flag in each bin
-	  const std::vector<std::map<dealii::types::global_dof_index, int> > & vselfBinsManager::getBoundaryFlagsBins() const;
+	  const std::vector<std::map<dealii::types::global_dof_index, int> > & getBoundaryFlagsBins() const;
 
 	  /// get const reference to map of global dof index and vself field initial value in each bin
-	  const std::vector<std::map<dealii::types::global_dof_index, int> > & vselfBinsManager::getClosestAtomIdsBins() const;
+	  const std::vector<std::map<dealii::types::global_dof_index, int> > & getClosestAtomIdsBins() const;
 
 	  /// get const reference to map of global dof index and vself field initial value in each bin
-	  const std::vector<vectorType> & vselfBinsManager::getVselfFieldBins() const;
+	  const std::vector<vectorType> & getVselfFieldBins() const;
+
+	  /// get const reference to d_atomIdBinIdMapLocalAllImages
+	  const std::map<unsigned int, unsigned int>  & getAtomIdBinIdMapLocalAllImages() const;
+
+	  /// get stored adaptive ball radius
+	  double getStoredAdaptiveBallRadius() const;
 
 
     private:
@@ -112,11 +121,6 @@ namespace dftfe {
 	/// storage for input atomLocations argument in createAtomBins function
 	std::vector<std::vector<double> >  d_atomLocations;
 
-	/// storage for input imagePositions argument in createAtomBins function
-	std::vector<std::vector<double> >  d_imagePositions;
-
-	/// storage for input imageCharges argument in createAtomBins function
-	std::vector<double>  d_imageCharges;
 
         /// vector of constraint matrices for vself bins
         std::vector<dealii::ConstraintMatrix> d_vselfBinConstraintMatrices;
@@ -124,17 +128,25 @@ namespace dftfe {
         /// map of binIds and atomIds
         std::map<int,std::set<int> > d_bins;
 
-	/// vector of image ids in each bin
-	std::vector<std::vector<int> > d_imageIdsInBins;
-
-	/// map of global dof index and vself solve boundary flag in each bin
+	/// map of global dof index and vself solve boundary flag (chargeId or
+	//  imageId+numberGlobalCharges) in each bin
 	std::vector<std::map<dealii::types::global_dof_index, int> > d_boundaryFlag;
+
+	/// map of global dof index and vself solve boundary flag (only chargeId)in each bin
+	std::vector<std::map<dealii::types::global_dof_index, int> > d_boundaryFlagOnlyChargeId;
+
+	/// map of global dof index to location of closest charge
+	std::vector<std::map<dealii::types::global_dof_index, dealii::Point<3>> > d_dofClosestChargeLocationMap;
 
         /// map of global dof index and vself field initial value in each bin
 	std::vector<std::map<dealii::types::global_dof_index, double> > d_vselfBinField;
 
 	/// map of global dof index and vself field initial value in each bin
 	std::vector<std::map<dealii::types::global_dof_index, int> > d_closestAtomBin;
+
+        /// Internal data: stores the map of atom Id (only in the local processor) to the vself bin Id.
+	/// Populated in solve vself in Bins
+        std::map<unsigned int, unsigned int> d_atomIdBinIdMapLocalAllImages;
 
 	/// solved vself solution field for each bin
 	std::vector<vectorType> d_vselfFieldBins;

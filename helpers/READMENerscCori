@@ -1,3 +1,0 @@
-Before compiling dftfe or the required libraries do:
-export XTPE_LINK_TYPE=dynamic
-export CRAYPE_LINK_TYPE=dynamic

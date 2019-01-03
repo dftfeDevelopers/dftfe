@@ -39,14 +39,10 @@ namespace internal
 				    const std::shared_ptr<const dealii::Utilities::MPI::Partitioner> & singleComponentPartitioner,
 				    const unsigned int numberFields,
 				    const std::vector<dealii::types::global_dof_index> & localProc_dof_indicesReal,
-				    dealii::parallel::distributed::Vector<dataTypes::number> & fieldsArrayFlattened,
-				    dftUtils::constraintMatrixInfo & constraintsNoneDataInfo)
+				    std::vector<dataTypes::number> & fieldsArrayFlattened)
     {
 
-        constraintsNoneDataInfo.precomputeMaps(singleComponentPartitioner,
-					       fieldsArrayFlattened.get_partitioner(),
-					       numberFields);
-        const unsigned int numberDofs = fieldsArrayFlattened.local_size()/numberFields;
+        const unsigned int numberDofs = fieldsArrayFlattened.size()/numberFields;
         const unsigned int inc = 1;
 
         for(unsigned int i = 0; i < numberDofs; ++i)
@@ -56,20 +52,17 @@ namespace internal
 		diagonal.local_element(localProc_dof_indicesReal[i]);
 	    zdscal_(&numberFields,
 	           &scalingCoeff,
-	           fieldsArrayFlattened.begin()+i*numberFields,
+	           &fieldsArrayFlattened[i*numberFields],
 	           &inc);
 #else
 	    double scalingCoeff = diagonal.local_element(i);
 	    dscal_(&numberFields,
 		   &scalingCoeff,
-		   fieldsArrayFlattened.begin()+i*numberFields,
+		   &fieldsArrayFlattened[i*numberFields],
 		   &inc);
 #endif
 	}
 
-	constraintsNoneDataInfo.distribute(fieldsArrayFlattened,
-					   numberFields);
-	fieldsArrayFlattened.update_ghost_values();
     }
 }
 
@@ -80,14 +73,17 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 						  const unsigned int kPointIndex,
 						  kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
 						  chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver,
-						  std::vector<double>                            & residualNormWaveFunctions)
+						  std::vector<double>                            & residualNormWaveFunctions,
+						  const bool isSpectrumSplit,
+						  const bool useMixedPrec)
 {
   computing_timer.enter_section("Chebyshev solve");
 
   if (dftParameters::verbosity>=2)
     {
       pcout << "kPoint: "<< kPointIndex<<std::endl;
-      pcout << "spin: "<< spinType+1 <<std::endl;
+      if (dftParameters::spinPolarized==1)
+        pcout << "spin: "<< spinType+1 <<std::endl;
     }
 
 
@@ -96,43 +92,77 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
   //multiply by M^{1/2}
   internal::pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_sqrtMassVector,
 				       matrix_free_data.get_vector_partitioner(),
-				       numEigenValues,
+				       d_numEigenValues,
 				       localProc_dof_indicesReal,
-				       d_eigenVectorsFlattened[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
-				       constraintsNoneDataInfo);
+				       d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
 
-  std::vector<double> eigenValuesTemp(numEigenValues,0.0);
+  std::vector<double> eigenValuesTemp(isSpectrumSplit?d_numEigenValuesRR
+	                              :d_numEigenValues,0.0);
 
   subspaceIterationSolver.reinitSpectrumBounds(a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
 					       bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
 
   subspaceIterationSolver.solve(kohnShamDFTEigenOperator,
-  				d_eigenVectorsFlattened[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
+  				d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
+				d_eigenVectorsRotFracDensityFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
 				d_tempEigenVec,
-				numEigenValues,
+				d_numEigenValues,
   				eigenValuesTemp,
 				residualNormWaveFunctions,
-				interBandGroupComm);
+				interBandGroupComm,
+				useMixedPrec);
 
   //
   //scale the eigenVectors with M^{-1/2} to represent the wavefunctions in the usual FE basis
   //
   internal::pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_invSqrtMassVector,
 				       matrix_free_data.get_vector_partitioner(),
-				       numEigenValues,
+				       d_numEigenValues,
 				       localProc_dof_indicesReal,
-				       d_eigenVectorsFlattened[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
-				       constraintsNoneDataInfo);
+				       d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
+
+  if (isSpectrumSplit && d_numEigenValuesRR!=d_numEigenValues)
+  {
+       internal::pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_invSqrtMassVector,
+				            matrix_free_data.get_vector_partitioner(),
+				            d_numEigenValuesRR,
+				            localProc_dof_indicesReal,
+				            d_eigenVectorsRotFracDensityFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
+  }
 
   //
   //copy the eigenValues and corresponding residual norms back to data members
   //
-  for(unsigned int i = 0; i < (unsigned int)numEigenValues; i++)
+  if (isSpectrumSplit)
     {
-      if(dftParameters::verbosity>=4)
-          pcout<<"eigen value "<< std::setw(3) <<i <<": "<<eigenValuesTemp[i] <<std::endl;
+      for(unsigned int i = 0; i < d_numEigenValuesRR; i++)
+	{
+	  if(dftParameters::verbosity>=4 && d_numEigenValues==d_numEigenValuesRR)
+	      pcout<<"eigen value "<< std::setw(3) <<i <<": "<<eigenValuesTemp[i] <<std::endl;
+	  else if(dftParameters::verbosity>=4 && d_numEigenValues!=d_numEigenValuesRR)
+              pcout<<"valence eigen value "<< std::setw(3) <<i <<": "<<eigenValuesTemp[i] <<std::endl;
 
-      eigenValues[kPointIndex][spinType*numEigenValues + i] =  eigenValuesTemp[i];
+	  eigenValuesRRSplit[kPointIndex][spinType*d_numEigenValuesRR + i] =  eigenValuesTemp[i];
+	}
+
+      for(unsigned int i = 0; i < d_numEigenValues; i++)
+	{
+	  if (i>=(d_numEigenValues-d_numEigenValuesRR))
+	     eigenValues[kPointIndex][spinType*d_numEigenValues + i]
+		 = eigenValuesTemp[i-(d_numEigenValues-d_numEigenValuesRR)];
+	  else
+             eigenValues[kPointIndex][spinType*d_numEigenValues + i]=-100.0;
+	}
+    }
+  else
+    {
+      for(unsigned int i = 0; i < d_numEigenValues; i++)
+	{
+	  if(dftParameters::verbosity>=4)
+	      pcout<<"eigen value "<< std::setw(3) <<i <<": "<<eigenValuesTemp[i] <<std::endl;
+
+	  eigenValues[kPointIndex][spinType*d_numEigenValues + i] =  eigenValuesTemp[i];
+	}
     }
 
   if (dftParameters::verbosity>=4)
@@ -140,14 +170,100 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 
 
   //set a0 and bLow
-  a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=eigenValuesTemp[0];
-  bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=eigenValuesTemp.back();
-  //
+  /* a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=isSpectrumSplit?
+                                                            dftParameters::lowerEndWantedSpectrum
+                                                            :eigenValuesTemp[0];*/
 
+ 
+  bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=eigenValuesTemp.back();
+
+  if(!isSpectrumSplit)
+    {
+      a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType] = eigenValuesTemp[0];
+    }
 
   computing_timer.exit_section("Chebyshev solve");
 }
 
+//chebyshev solver
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::kohnShamEigenSpaceComputeNSCF(const unsigned int spinType,
+						  const unsigned int kPointIndex,
+						  kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
+						  chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver,
+						  std::vector<double>                            & residualNormWaveFunctions,
+						  unsigned int ipass) 
+{
+  computing_timer.enter_section("Chebyshev solve"); 
+  
+   if (dftParameters::verbosity==2)
+    {
+      pcout << "kPoint: "<< kPointIndex<<std::endl;
+      pcout << "spin: "<< spinType+1 <<std::endl;
+    }
+
+  //
+  //scale the eigenVectors (initial guess of single atom wavefunctions or previous guess) to convert into Lowden Orthonormalized FE basis
+  //multiply by M^{1/2}
+  if (ipass==1)
+   internal::pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_invSqrtMassVector,
+				       matrix_free_data.get_vector_partitioner(),
+				       d_numEigenValues,
+				       localProc_dof_indicesReal,
+				       d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
+
+ 
+  std::vector<double> eigenValuesTemp(d_numEigenValues,0.0);
+
+  subspaceIterationSolver.reinitSpectrumBounds(a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
+					       bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
+
+
+ subspaceIterationSolver.solve(kohnShamDFTEigenOperator,
+  				d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
+				d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
+				d_tempEigenVec,
+				d_numEigenValues,
+  				eigenValuesTemp,
+				residualNormWaveFunctions,
+				interBandGroupComm,
+				false);
+ 
+  if(dftParameters::verbosity >= 4)
+    {
+      PetscLogDouble bytes;
+      PetscMemoryGetCurrentUsage(&bytes);
+      FILE *dummy;
+      unsigned int this_mpi_process = dealii::Utilities::MPI::this_mpi_process(mpi_communicator);
+      PetscSynchronizedPrintf(mpi_communicator,"[%d] Memory after recreating STL vector and exiting from subspaceIteration solver  %e\n",this_mpi_process,bytes);
+      PetscSynchronizedFlush(mpi_communicator,dummy);
+    }
+  
+
+  
+  //
+  //copy the eigenValues and corresponding residual norms back to data members
+  //
+  for(unsigned int i = 0; i < d_numEigenValues; i++)
+    {
+      //if(dftParameters::verbosity==2)
+      //    pcout<<"eigen value "<< std::setw(3) <<i <<": "<<eigenValuesTemp[i] <<std::endl;
+
+      eigenValues[kPointIndex][spinType*d_numEigenValues + i] =  eigenValuesTemp[i];
+    }
+
+  //if (dftParameters::verbosity==2)  
+  //   pcout <<std::endl;
+
+
+  //set a0 and bLow
+  a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=eigenValuesTemp[0]; 
+  bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=eigenValuesTemp.back(); 
+  //
+
+ 
+  computing_timer.exit_section("Chebyshev solve"); 
+}
 
 
 template<unsigned int FEOrder>

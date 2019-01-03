@@ -30,20 +30,26 @@ namespace dftfe
       void dgemv_(char* TRANS, const int* M, const int* N, double* alpha, double* A, const int* LDA, double* X, const int* INCX, double* beta, double* C, const int* INCY);
       void dgesv_( int* n, int* nrhs, double* a, int* lda, int* ipiv, double* b, int* ldb, int* info );
       void dscal_(const unsigned int *n, const double *alpha, double *x, const unsigned int *inc);
+      void sscal_(const unsigned int *n, const float *alpha, float *x, const unsigned int *inc);
       void zscal_(const unsigned int *n, std::complex<double> *alpha, std::complex<double> *x, const unsigned int *inc);
       void zdscal_(const unsigned int *n, const double *alpha, std::complex<double> *x, const unsigned int *inc);
       void daxpy_(const unsigned int *n, const double *alpha, double *x, const unsigned int *incx, double *y, const unsigned int *incy);
       void dgemm_(const char* transA, const char* transB, const unsigned int *m, const unsigned int *n, const unsigned int *k, const double *alpha, const double *A, const unsigned int *lda, const double *B, const unsigned int *ldb, const double *beta, double *C, const unsigned int *ldc);
+      void sgemm_(const char* transA, const char* transB, const unsigned int *m, const unsigned int *n, const unsigned int *k, const float *alpha, const float *A, const unsigned int *lda, const float *B, const unsigned int *ldb, const float *beta, float *C, const unsigned int *ldc);
 #ifdef WITH_MKL
       void dgemm_batch_(const char* transa_array,const char* transb_array,const unsigned int* m_array,const unsigned int* n_array,const unsigned int* k_array,const double* alpha_array,double** a_array,const unsigned int * lda_array,const double ** b_array,const unsigned int * ldb_array,const double * beta_array,double** c_array,const unsigned int * ldc_array,const unsigned int* group_count,const unsigned int* group_size);
+      void sgemm_batch_(const char* transa_array,const char* transb_array,const unsigned int* m_array,const unsigned int* n_array,const unsigned int* k_array,const float* alpha_array,float** a_array,const unsigned int * lda_array,const float ** b_array,const unsigned int * ldb_array,const float * beta_array,float** c_array,const unsigned int * ldc_array,const unsigned int* group_count,const unsigned int* group_size);
 #endif
       void dsyevd_(const char* jobz, const char* uplo, const unsigned int* n, double* A, const unsigned int *lda, double* w, double* work, const unsigned int* lwork, int* iwork, const unsigned int* liwork, int* info);
       void dsyevr_(const char *jobz, const char *range, const char *uplo,const unsigned int *n, double *A,const unsigned int *lda,const double *vl, const double *vu, const unsigned int *il, const unsigned int *iu, const double *abstol, const unsigned int *m, double *w, double *Z, const unsigned int * ldz, unsigned int * isuppz, double *work, const int *lwork, int * iwork, const int *liwork, int *info);
       void dsyrk_(const char *uplo, const char *trans, const unsigned int *n, const unsigned int *k, const double *alpha, const double *A, const unsigned int *lda, const double *beta, double *C, const unsigned int * ldc);
       void dcopy_(const unsigned int *n,const double *x,const unsigned int *incx,double *y,const unsigned int *incy);
+      void scopy_(const unsigned int *n,const float *x,const unsigned int *incx,float *y,const unsigned int *incy);
       void zgemm_(const char* transA, const char* transB, const unsigned int *m, const unsigned int *n, const unsigned int *k, const std::complex<double> *alpha, const std::complex<double> *A, const unsigned int *lda, const std::complex<double> *B, const unsigned int *ldb, const std::complex<double> *beta, std::complex<double> *C, const unsigned int *ldc);
+      void cgemm_(const char* transA, const char* transB, const unsigned int *m, const unsigned int *n, const unsigned int *k, const std::complex<float> *alpha, const std::complex<float> *A, const unsigned int *lda, const std::complex<float> *B, const unsigned int *ldb, const std::complex<float> *beta, std::complex<float> *C, const unsigned int *ldc);
 #ifdef WITH_MKL
       void zgemm_batch_(const char* transa_array,const char* transb_array,const unsigned int* m_array,const unsigned int* n_array,const unsigned int* k_array,const std::complex<double>* alpha_array,std::complex<double>** a_array,const unsigned int * lda_array,const std::complex<double> ** b_array,const unsigned int * ldb_array,const std::complex<double> * beta_array,std::complex<double>** c_array,const unsigned int * ldc_array,const unsigned int* group_count,const unsigned int* group_size);
+      void cgemm_batch_(const char* transa_array,const char* transb_array,const unsigned int* m_array,const unsigned int* n_array,const unsigned int* k_array,const std::complex<float>* alpha_array,std::complex<float>** a_array,const unsigned int * lda_array,const std::complex<float> ** b_array,const unsigned int * ldb_array,const std::complex<float> * beta_array,std::complex<float>** c_array,const unsigned int * ldc_array,const unsigned int* group_count,const unsigned int* group_size);
 #endif
       void zheevd_(const char *jobz, const char *uplo, const unsigned int *n,std::complex<double> *A,const unsigned int *lda,double *w,std::complex<double> *work, const unsigned int *lwork,double *rwork, const unsigned int *lrwork, int *iwork,const unsigned int *liwork, int *info);
       void zheevr_(const char *jobz, const char *range, const char *uplo,const unsigned int *n,std::complex<double> *A,const unsigned int *lda,const double *vl, const double *vu, const unsigned int *il, const unsigned int *iu, const double *abstol, const unsigned int *m, double *w, std::complex<double> *Z, const unsigned int * ldz, unsigned int * isuppz, std::complex<double> *work, const int *lwork, double *rwork, const int *lrwork, int * iwork, const int *liwork, int *info);
@@ -75,7 +81,7 @@ namespace dftfe
                    int * info);
     }
 #endif
-/** 
+/**
  *  @brief Contains linear algebra functions used in the implementation of an eigen solver
  *
  *  @author Phani Motamarri, Sambit Das
@@ -133,7 +139,6 @@ namespace dftfe
 			 const double a0);
 
 
-
     /** @brief Orthogonalize given subspace using GramSchmidt orthogonalization
      *
      *  @param[in] operatorMatrix An object which has access to the given matrix
@@ -152,10 +157,12 @@ namespace dftfe
      *  @param[in,out]  X Given subspace as flattened array of multi-vectors.
      *  In-place update of the given subspace
      *  @param[in] numberComponents Number of multiple-fields
+     *  @param[in] mpiComm global communicator
      */
     template<typename T>
-      void gramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<T> & X,
-					const unsigned int numberComponents);
+      void gramSchmidtOrthogonalization(std::vector<T> & X,
+					const unsigned int numberComponents,
+					const MPI_Comm & mpiComm);
 
 
     /** @brief Orthogonalize given subspace using Lowden orthogonalization for double data-type
@@ -164,11 +171,12 @@ namespace dftfe
      *  @param[in,out]  X Given subspace as flattened array of multi-vectors.
      *  In-place update of the given subspace
      *  @param[in] numberComponents Number of multiple-fields
-     *
+     *  @param[in] mpiComm global communicator
      *  @return flag indicating success/failure. 1 for failure, 0 for success
      */
-    unsigned int lowdenOrthogonalization(dealii::parallel::distributed::Vector<dataTypes::number> & X,
-				 const unsigned int numberComponents);
+    unsigned int lowdenOrthogonalization(std::vector<dataTypes::number> & X,
+					 const unsigned int numberComponents,
+					 const MPI_Comm & mpiComm);
 
 
      /** @brief Orthogonalize given subspace using Pseudo-Gram-Schmidt orthogonalization
@@ -178,13 +186,17 @@ namespace dftfe
       *  In-place update of the given subspace
       *  @param[in] numberComponents Number of multiple-fields
       *  @param[in] interBandGroupComm interpool communicator for parallelization over band groups
+      *  @param[in] mpiComm global communicator
       *
       *  @return flag indicating success/failure. 1 for failure, 0 for success
       */
     template<typename T>
-      unsigned int pseudoGramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<T> & X,
-					      const unsigned int numberComponents,
-					      const MPI_Comm &interBandGroupComm);
+      unsigned int pseudoGramSchmidtOrthogonalization(operatorDFTClass & operatorMatrix,
+		                                      std::vector<T> & X,
+					              const unsigned int numberComponents,
+					              const MPI_Comm &interBandGroupComm,
+						      const MPI_Comm &mpiComm,
+						      const bool useMixedPrec);
 
     /** @brief Compute Rayleigh-Ritz projection
      *
@@ -205,42 +217,60 @@ namespace dftfe
      *  @param[in] operatorMatrix An object which has access to the given matrix
      *  @param[in,out]  X Given subspace as flattened array of multi-vectors.
      *  In-place rotated subspace
-     *  @param[in] numberComponents Number of multiple-fields
+     *  @param[in] numberComponents Number of vectors
      *  @param[in] interBandGroupComm interpool communicator for parallelization over band groups
+     *  @param[in] mpiComm domain decomposition communicator
      *  @param[out] eigenValues of the Projected Hamiltonian
      */
     template<typename T>
     void rayleighRitz(operatorDFTClass        & operatorMatrix,
-		      dealii::parallel::distributed::Vector<T> & X,
+		      std::vector<T> & X,
 		      const unsigned int numberComponents,
+		      const bool isValenceProjHam,
 		      const MPI_Comm &interBandGroupComm,
+		      const MPI_Comm &mpiComm,
 		      std::vector<double>     & eigenValues);
+
+
+    /** @brief Compute Rayleigh-Ritz projection in case of spectrum split using direct diagonalization
+     *  (serial version using LAPACK, parallel version using ScaLAPACK)
+     *
+     *  @param[in] operatorMatrix An object which has access to the given matrix
+     *  @param[in]  X Given subspace as flattened array of multi-vectors.
+     *  @param[out] Y rotated subspace of top states
+     *  @param[in] numberComponents Number of vectors
+     *  @param[in] numberCoreStates Number of core states to be used for spectrum splitting
+     *  @param[in] interBandGroupComm interpool communicator for parallelization over band groups
+     *  @param[in] mpiComm domain decomposition communicator
+     *  @param[out] eigenValues of the Projected Hamiltonian
+     */
+    template<typename T>
+    void rayleighRitzSpectrumSplitDirect
+                     (operatorDFTClass        & operatorMatrix,
+		      const std::vector<T> & X,
+		      std::vector<T> & Y,
+		      const unsigned int numberComponents,
+		      const unsigned int numberCoreStates,
+		      const MPI_Comm &interBandGroupComm,
+		      const MPI_Comm &mpiComm,
+		      const bool useMixedPrec,
+		      std::vector<double>     & eigenValues);
+
 
     /** @brief Compute Compute residual norm associated with eigenValue problem of the given operator
      *
      *  @param[in] operatorMatrix An object which has access to the given matrix
      *  @param[in]  X Given subspace as STL vector of dealii vectors
      *  @param[in]  eigenValues eigenValues of the operator
-     *  @param[out] residualNorms of the eigen Value problem
-     */
-    void computeEigenResidualNorm(operatorDFTClass        & operatorMatrix,
-				  std::vector<vectorType> & X,
-				  const std::vector<double>     & eigenValues,
-				  std::vector<double> & residualNorm);
-
-
-    /** @brief Compute residual norm associated with eigenValue problem of the given operator
-     *
-     *  @param[in] operatorMatrix An object which has access to the given matrix
-     *  @param[in]  X Given eigenvector subspace as flattened array of multi-vectors
-     *  @param[in]  eigenValues eigenValues of the operator
+     *  @param[in]  mpiComm domain decomposition communicator
      *  @param[out] residualNorms of the eigen Value problem
      */
     template<typename T>
     void computeEigenResidualNorm(operatorDFTClass        & operatorMatrix,
-				  dealii::parallel::distributed::Vector<T> & X,
-				  const std::vector<double> & eigenValues,
-				  std::vector<double>     & residualNorm);
+				  std::vector<T> & X,
+				  const std::vector<double>     & eigenValues,
+				  const MPI_Comm &mpiComm,
+				  std::vector<double> & residualNorm);
 
   }
 

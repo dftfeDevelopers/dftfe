@@ -31,7 +31,7 @@ namespace dftfe{
    /**
    * @brief Implementation class for building the Kohn-Sham DFT discrete operator and the action of the discrete operator on a single vector or multiple vectors
    *
-   * @author Phani Motamarri, 
+   * @author Phani Motamarri, Sambit Das
    */
 
   //
@@ -87,7 +87,7 @@ namespace dftfe{
        * @param src given orthogonal basis vectors
        * @return ProjMatrix projected small matrix
        */
-      void XtHX(dealii::parallel::distributed::Vector<dataTypes::number> & src,
+      void XtHX(const std::vector<dataTypes::number> & src,
 		const unsigned int numberComponents,
 		std::vector<dataTypes::number> & ProjHam);
 
@@ -105,10 +105,29 @@ namespace dftfe{
      * which avoids creation of full projected Hamiltonian matrix memory, and also avoids creation
      * of another full X memory.
      */
-      void XtHX(const dealii::parallel::distributed::Vector<dataTypes::number> & X,
+      void XtHX(const std::vector<dataTypes::number> & X,
 		const unsigned int numberComponents,
 		const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 		dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar);
+
+    /**
+     * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
+     *
+     * @param X Vector of Vectors containing multi-wavefunction fields
+     * @param N total number of wavefunctions components
+     * @param Ncore number of wavecfuntions starting from the first for
+     * which the project Hamiltionian block will be computed in single procession. However
+     * the cross blocks will still be computed in double precision.
+     * @param processGrid two-dimensional processor grid corresponding to the parallel projHamPar
+     * @param projHamPar parallel ScaLAPACKMatrix which stores the computed projection
+     * of the operation into the given subspace
+     */
+    virtual void XtHXMixedPrec
+	             (const std::vector<dataTypes::number> & X,
+		      const unsigned int N,
+		      const unsigned int Ncore,
+		      const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+		      dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar);
 #endif
 
       /**
@@ -303,6 +322,7 @@ namespace dftfe{
 		    const unsigned int numberWaveFunctions,
 		    dealii::parallel::distributed::Vector<dataTypes::number> & dst) const;
 
+
 #endif
       /**
        * @brief implementation of non-local Hamiltonian matrix-vector product
@@ -332,6 +352,8 @@ namespace dftfe{
       void computeNonLocalHamiltonianTimesXBatchGEMM(const dealii::parallel::distributed::Vector<dataTypes::number> & src,
 						     const unsigned int numberWaveFunctions,
 						     dealii::parallel::distributed::Vector<dataTypes::number> & dst) const;
+
+
 #endif
 
       ///pointer to dft class

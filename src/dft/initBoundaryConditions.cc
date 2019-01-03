@@ -51,8 +51,13 @@ void dftClass<FEOrder>::initBoundaryConditions(){
     pcout<< "Minimum mesh size: "<<minElemLength<<std::endl;
   pcout<<"-------------------------------------------------"<<std::endl;
 
-  if (dofHandler.n_dofs()/n_mpi_processes<4000 && dftParameters::verbosity>=1)
-     pcout<<"DFT-FE Warning: The number of degrees of freedom per domain decomposition processor are less than 4000, where the parallel scaling efficiency is not good. We recommend to use 4000 or more degrees of freedom per domain decomposition processor. For further parallelization use input parameters NPBAND and/or NPKPT(in case of multiple k points)."<<std::endl;
+  if(dofHandler.n_dofs()>15000)
+    {
+      if(dofHandler.n_dofs()/n_mpi_processes<4000 && dftParameters::verbosity>=1)
+	{
+	  pcout<<"DFT-FE Warning: The number of degrees of freedom per domain decomposition processor are less than 4000, where the parallel scaling efficiency is not good. We recommend to use 4000 or more degrees of freedom per domain decomposition processor. For further parallelization use input parameters NPBAND and/or NPKPT(in case of multiple k points)."<<std::endl;
+	}
+    }
 
   if (dftParameters::verbosity>=4)
       dftUtils::printCurrentMemoryUsage(mpi_communicator,
@@ -115,9 +120,9 @@ void dftClass<FEOrder>::initBoundaryConditions(){
 	                            dofHandler,
 				    constraintsNone,
 				    atomLocations,
-				    d_imagePositions,
-				    d_imageIds,
-				    d_imageCharges,
+				    d_imagePositionsTrunc,
+				    d_imageIdsTrunc,
+				    d_imageChargesTrunc,
 				    dftParameters::radiusAtomBall);
   computing_timer.exit_section("Create atom bins");
 
@@ -150,21 +155,22 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   std::vector<Quadrature<1> > quadratureVector;
   quadratureVector.push_back(QGauss<1>(C_num1DQuad<FEOrder>()));
   quadratureVector.push_back(QGaussLobatto<1>(FEOrder+1));
+  quadratureVector.push_back(QGauss<1>(C_num1DQuadPSP<FEOrder>()));
 
   //
   //
   //
-  forcePtr->initMoved();
+  forcePtr->initMoved(dofHandlerVector,
+	              d_constraintsVector,
+	              false);
+
+  forcePtr->initMoved(dofHandlerVector,
+	              d_constraintsVector,
+	              true);
 
   if (dftParameters::verbosity>=4)
       dftUtils::printCurrentMemoryUsage(mpi_communicator,
 	                      "Called force init moved");
-  //
-  //push dofHandler and constraints for force
-  //
-  dofHandlerVector.push_back(&(forcePtr->d_dofHandlerForce));
-  forcePtr->d_forceDofHandlerIndex = dofHandlerVector.size()-1;
-  d_constraintsVector.push_back(&(forcePtr->d_constraintsNoneForce));
 
   matrix_free_data.reinit(dofHandlerVector, d_constraintsVector, quadratureVector, additional_data);
 

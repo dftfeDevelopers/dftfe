@@ -35,12 +35,15 @@
 #include <vselfBinsManager.h>
 #include <dftParameters.h>
 #include <triangulationManager.h>
+#include <poissonSolverProblem.h>
+#include <dealiiLinearSolver.h>
 
 #include <interpolation.h>
 #include <xc.h>
 #include <petsc.h>
 #include <slepceps.h>
 #include <spglib.h>
+#include <stdafx.h>
 
 namespace dftfe {
 
@@ -146,7 +149,13 @@ namespace dftfe {
       /**
        * @brief Number of Kohn-Sham eigen values to be computed
        */
-      unsigned int numEigenValues;
+      unsigned int d_numEigenValues;
+
+      /**
+       * @brief Number of Kohn-Sham eigen values to be computed in the Rayleigh-Ritz step
+       * after spectrum splitting.
+       */
+      unsigned int d_numEigenValuesRR;
 
       /**
        * @brief Number of random wavefunctions
@@ -232,6 +241,11 @@ namespace dftfe {
        */
       void initRhoFromPreviousGroundStateRho();
 
+      /**
+       * @brief update previous mesh data structures which are required for interpolating wfc and
+       * density during geometry optimization.
+       */
+      void updatePrevMeshDataStructures();
 
       /**
        *@brief project ground state electron density from previous mesh into
@@ -265,7 +279,9 @@ namespace dftfe {
       /**
        *@brief  moves the triangulation vertices using Gaussians such that the all atoms are on triangulation vertices
        */
-      void moveMeshToAtoms(const Triangulation<3,3> & triangulationMove);
+      void moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
+			   bool reuseFlag = false,
+			   bool moveSubdivided = false);
 
       /**
        * Initializes the guess of electron-density and single-atom wavefunctions on the mesh,
@@ -275,7 +291,7 @@ namespace dftfe {
        * In periodic problems, periodic faces are mapped here. Further finite-element nodes
        * to be pinned for solving the Poisson problem electro-static potential is set here
        */
-      void initUnmovedTriangulation(const parallel::distributed::Triangulation<3> & triangulation);
+      void initUnmovedTriangulation(parallel::distributed::Triangulation<3> & triangulation);
       void initBoundaryConditions();
       void initElectronicFields(const unsigned int usePreviousGroundStateFields=0);
       void initPseudoPotentialAll();
@@ -311,13 +327,27 @@ namespace dftfe {
        */
       void computeNodalRhoFromQuadData();
 
+
+      /**
+       *@brief computes density quadratrue dat from wavefunctions
+       */
+      void computeRhoFromPSI
+		    (std::map<dealii::CellId, std::vector<double> > * _rhoValues,
+		     std::map<dealii::CellId, std::vector<double> > * _gradRhoValues,
+		     std::map<dealii::CellId, std::vector<double> > * _rhoValuesSpinPolarized,
+		     std::map<dealii::CellId, std::vector<double> > * _gradRhoValuesSpinPolarized,
+		     const bool isEvaluateGradRho,
+		     const bool isConsiderSpectrumSplitting);
+
+
       /**
        *@brief sums rho cell quadratrure data from  inter communicator
        */
-      void sumRhoData(std::map<dealii::CellId, std::vector<double> > * rhoValues,
-	              std::map<dealii::CellId, std::vector<double> > * gradRhoValues,
-	              std::map<dealii::CellId, std::vector<double> > * rhoValuesSpinPolarized,
-		      std::map<dealii::CellId, std::vector<double> > * gradRhoValuesSpinPolarized,
+      void sumRhoData(std::map<dealii::CellId, std::vector<double> > * _rhoValues,
+	              std::map<dealii::CellId, std::vector<double> > * _gradRhoValues,
+	              std::map<dealii::CellId, std::vector<double> > * _rhoValuesSpinPolarized,
+		      std::map<dealii::CellId, std::vector<double> > * _gradRhoValuesSpinPolarized,
+		      const bool isGradRhoDataPresent,
 		      const MPI_Comm &interComm);
 
       /**
@@ -333,7 +363,11 @@ namespace dftfe {
       void readPSI();
       void readPSIRadialValues();
       void loadPSIFiles(unsigned int Z, unsigned int n, unsigned int l, unsigned int & flag);
-      void initLocalPseudoPotential();
+      void initLocalPseudoPotential(const DoFHandler<3> & _dofHandler,
+	   const dealii::QGauss<3> & _quadrature,
+	   std::map<dealii::CellId, std::vector<double> > & _pseudoValues,
+	   std::map<dealii::CellId, std::vector<double> > & _gradPseudoValues,
+	   std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & _gradPseudoValuesAtoms);
       void initNonLocalPseudoPotential();
       void initNonLocalPseudoPotential_OV();
       void computeSparseStructureNonLocalProjectors();
@@ -357,7 +391,19 @@ namespace dftfe {
       /**
        *@brief Computes total charge by integrating the electron-density
        */
-      double totalCharge(const std::map<dealii::CellId, std::vector<double> > *rhoQuadValues);
+      double totalCharge(const dealii::DoFHandler<3> & dofHandlerOfField,
+			 const vectorType & rhoNodalField,
+			 std::map<dealii::CellId, std::vector<double> > & rhoQuadValues);
+
+
+      double totalCharge(const dealii::DoFHandler<3> & dofHandlerOfField,
+			 const vectorType & rhoNodalField);
+
+
+      double totalCharge(const dealii::DoFHandler<3> & dofHandlerOfField,
+			 const std::map<dealii::CellId, std::vector<double> > *rhoQuadValues);
+
+
 
       /**
        *@brief Computes net magnetization from the difference of local spin densities
@@ -372,7 +418,7 @@ namespace dftfe {
       /**
        *@brief Computes output electron-density from wavefunctions
        */
-      void compute_rhoOut();
+      void compute_rhoOut(const bool isConsiderSpectrumSplitting);
 
       /**
        *@brief Mixing schemes for mixing electron-density
@@ -381,22 +427,30 @@ namespace dftfe {
       double mixing_anderson();
       double mixing_simple_spinPolarized();
       double mixing_anderson_spinPolarized();
+      double mixing_broyden();
+      double mixing_broyden_spinPolarized();
+
 
       /**
-       * Re solves the all electrostatics on a p refined mesh, and computes
+       * Re solves the all electrostatics on a h refined mesh, and computes
        * the corresponding energy. This function
-       * is called after reaching the ground state electron density. Currently the p refinement
-       * is hardcoded to FEOrder+2.
+       * is called after reaching the ground state electron density. Currently the h refinement
+       * is hardcoded to a one subdivison of carser mesh
        * FIXME: The function is not yet extened to the case when point group symmetry is used.
        * However, it works for time reversal symmetry.
        *
        */
-      //void computeElectrostaticEnergyPRefined();
-
+      void computeElectrostaticEnergyHRefined();
+      void computeElectrostaticEnergyPRefined();
       /**
        *@brief Computes Fermi-energy obtained by imposing constraint on the number of electrons
        */
-      void compute_fermienergy();
+      void compute_fermienergy(const std::vector<std::vector<double>> & eigenValuesInput,
+	                       const double numElectronsInput);
+      /**
+       *@brief Computes Fermi-energy obtained by imposing separate constraints on the number of spin-up and spin-down electrons
+       */
+      void compute_fermienergy_constraintMagnetization(const std::vector<std::vector<double>> & eigenValuesInput);
 
       /**
        *@brief write wavefunction solution fields
@@ -451,7 +505,7 @@ namespace dftfe {
       /**
        * stores required data for Kohn-Sham problem
        */
-      unsigned int numElectrons, numLevels;
+      unsigned int numElectrons, numElectronsUp, numElectronsDown, numLevels;
       std::set<unsigned int> atomTypes;
       std::vector<std::vector<double> > atomLocations,atomLocationsFractional,d_reciprocalLatticeVectors, d_domainBoundingVectors;
 
@@ -552,10 +606,27 @@ namespace dftfe {
       /**
        *object which is used to store dealii constraint matrix information
        *using STL vectors. The relevant dealii constraint matrix
+       *has hanging node constraints and periodic constraints(for periodic problems)
+       *used in eigen solve
+       */
+      dftUtils::constraintMatrixInfo constraintsNoneEigenDataInfoPrev;
+
+      /**
+       *object which is used to store dealii constraint matrix information
+       *using STL vectors. The relevant dealii constraint matrix
        *has hanging node constraints used in Poisson problem solution
        *
        */
       dftUtils::constraintMatrixInfo constraintsNoneDataInfo;
+
+      /**
+       *object which is used to store dealii constraint matrix information
+       *using STL vectors. The relevant dealii constraint matrix
+       *has hanging node constraints used in Poisson problem solution
+       *
+       */
+      dftUtils::constraintMatrixInfo constraintsNoneDataInfo2;
+
 
       ConstraintMatrix constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_noConstraints;
 
@@ -564,7 +635,12 @@ namespace dftfe {
        * data storage for Kohn-Sham wavefunctions
        */
       std::vector<std::vector<double> > eigenValues;
-      std::vector<dealii::parallel::distributed::Vector<dataTypes::number>> d_eigenVectorsFlattened;
+
+      /// Spectrum split higher eigenvalues computed in Rayleigh-Ritz step
+      std::vector<std::vector<double> > eigenValuesRRSplit;
+      std::vector<dealii::parallel::distributed::Vector<dataTypes::number> > d_eigenVectorsFlattened;
+      std::vector<std::vector<dataTypes::number> > d_eigenVectorsFlattenedSTL;
+      std::vector<std::vector<dataTypes::number> > d_eigenVectorsRotFracDensityFlattenedSTL;
 
       /// parallel message stream
       ConditionalOStream  pcout;
@@ -585,6 +661,15 @@ namespace dftfe {
       std::map<dealii::CellId, std::vector<double> > * gradRhoOutValues, *gradRhoOutValuesSpinPolarized;
       std::deque<std::map<dealii::CellId,std::vector<double> >> gradRhoInVals,gradRhoInValsSpinPolarized,gradRhoOutVals, gradRhoOutValsSpinPolarized;
 
+      // Broyden mixing related objects
+      std::map<dealii::CellId, std::vector<double> > FBroyden, gradFBroyden ;
+      std::deque<std::map<dealii::CellId,std::vector<double> >> dFBroyden, graddFBroyden ;
+      std::deque<std::map<dealii::CellId,std::vector<double> >> uBroyden, gradUBroyden ;
+      std::deque<double>  wtBroyden;
+      double w0Broyden = 0.0 ;
+      //
+
+
       // storage for total electrostatic potential solution vector corresponding to input scf electron density
       vectorType d_phiTotRhoIn;
 
@@ -604,7 +689,16 @@ namespace dftfe {
       vectorType d_rhoNodalFieldSpin1;
 
       double d_pspTail = 8.0;
-      std::map<dealii::CellId, std::vector<double> > pseudoValues;
+      std::map<dealii::CellId, std::vector<double> > d_pseudoVLoc;
+
+      /// Internal data:: map for cell id to gradient of Vpseudo local of individual atoms. Only for atoms
+      /// whose psp tail intersects the local domain.
+      std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > d_gradPseudoVLocAtoms;
+
+
+      /// Internal data: map for cell id to sum Vpseudo local of all atoms whose psp tail intersects the local domain.
+      std::map<dealii::CellId, std::vector<double> > d_gradPseudoVLoc;
+
       std::vector<std::vector<double> > d_localVselfs;
 
       //nonlocal pseudopotential related objects used only for pseudopotential calculation
@@ -640,6 +734,8 @@ namespace dftfe {
       std::map<std::pair<unsigned int,unsigned int>, unsigned int> d_projectorIdsNumberingMapCurrentProcess;
 #ifdef USE_COMPLEX
       std::vector<std::vector<std::vector<std::vector<std::complex<double> > > > > d_nonLocalProjectorElementMatrices,d_nonLocalProjectorElementMatricesConjugate,d_nonLocalProjectorElementMatricesTranspose;
+
+
       std::vector<dealii::parallel::distributed::Vector<std::complex<double> > > d_projectorKetTimesVectorPar;
 
       /// parallel vector used in nonLocalHamiltionian times wavefunction vector computation
@@ -648,6 +744,8 @@ namespace dftfe {
       dealii::parallel::distributed::Vector<std::complex<double> >  d_projectorKetTimesVectorParFlattened;
 #else
       std::vector<std::vector<std::vector<std::vector<double> > > > d_nonLocalProjectorElementMatrices,d_nonLocalProjectorElementMatricesConjugate,d_nonLocalProjectorElementMatricesTranspose;
+
+
       std::vector<dealii::parallel::distributed::Vector<double> > d_projectorKetTimesVectorPar;
 
       /// parallel vector used in nonLocalHamiltionian times wavefunction vector computation
@@ -692,6 +790,10 @@ namespace dftfe {
       /// k point weights
       std::vector<double> d_kPointWeights;
 
+      /// closest tria vertex
+      std::vector<Point<3>> d_closestTriaVertexToAtomsLocation;
+      std::vector<Tensor<1,3,double> > d_dispClosestTriaVerticesToAtoms;
+
       /// global k index of lower bound of the local k point set
       unsigned int lowerBoundKindex ;
       /**
@@ -702,14 +804,26 @@ namespace dftfe {
       void recomputeKPointCoordinates();
 
       /// fermi energy
-      double fermiEnergy;
+      double fermiEnergy, fermiEnergyUp, fermiEnergyDown;
 
       //chebyshev filter variables and functions
       //int numPass ; // number of filter passes
 
       std::vector<double> a0;
       std::vector<double> bLow;
+
+
       vectorType d_tempEigenVec;
+      vectorType d_tempEigenVecPrev;
+
+      /**
+      * @ nscf variables
+      */
+     bool scfConverged;
+     void nscf(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
+	      chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver);
+     void initnscf(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,poissonSolverProblem<FEOrder> & phiTotalSolverProblem,
+	      dealiiLinearSolver & dealiiCGSolver) ;
 
       /**
        * @brief compute the maximum of the residual norm of the highest occupied state among all k points
@@ -723,7 +837,16 @@ namespace dftfe {
 				     const unsigned int kPointIndex,
 				     kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
 				     chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver,
-				     std::vector<double> & residualNormWaveFunctions);
+				     std::vector<double> & residualNormWaveFunctions,
+				     const bool isSpectrumSplit,
+				     const bool useMixedPrec);
+
+     void kohnShamEigenSpaceComputeNSCF(const unsigned int spinType,
+				    const unsigned int kPointIndex,
+				    kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
+				    chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver,
+				    std::vector<double>                            & residualNormWaveFunctions,
+				    unsigned int ipass) ;
 
       void computeResidualNorm(const std::vector<double> & eigenValuesTemp,
 			       kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,

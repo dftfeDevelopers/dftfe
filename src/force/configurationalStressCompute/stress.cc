@@ -18,8 +18,56 @@
 
 #ifdef USE_COMPLEX
 template<unsigned int FEOrder>
-void forceClass<FEOrder>::computeStress()
+void forceClass<FEOrder>::computeStress
+		 (const MatrixFree<3,double> & matrixFreeData,
+		 const unsigned int eigenDofHandlerIndex,
+		 const unsigned int phiExtDofHandlerIndex,
+		 const unsigned int phiTotDofHandlerIndex,
+		 const vectorType & phiTotRhoIn,
+		 const vectorType & phiTotRhoOut,
+		 const vectorType & phiExt,
+		 const std::map<dealii::CellId, std::vector<double> > & pseudoVLoc,
+		 const std::map<dealii::CellId, std::vector<double> > & gradPseudoVLoc,
+		 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtoms,
+		 const ConstraintMatrix  & noConstraints,
+		 const vselfBinsManager<FEOrder> & vselfBinsManagerEigen,
+	         const MatrixFree<3,double> & matrixFreeDataElectro,
+		 const unsigned int phiTotDofHandlerIndexElectro,
+		 const unsigned int phiExtDofHandlerIndexElectro,
+		 const vectorType & phiTotRhoOutElectro,
+		 const vectorType & phiExtElectro,
+		 const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectro,
+		 const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesElectro,
+		 const std::map<dealii::CellId, std::vector<double> > & pseudoVLocElectro,
+		 const std::map<dealii::CellId, std::vector<double> > & gradPseudoVLocElectro,
+		 const std::map<unsigned int,std::map<dealii::CellId, std::vector<double> > > & gradPseudoVLocAtomsElectro,
+	         const ConstraintMatrix  & noConstraintsElectro,
+		 const vselfBinsManager<FEOrder> & vselfBinsManagerElectro)
 {
+  /*
+  createBinObjectsForce(matrixFreeData.get_dof_handler(phiTotDofHandlerIndex),
+	                d_dofHandlerForce,
+	                noConstraints,
+	                vselfBinsManagerEigen,
+                        d_cellsVselfBallsDofHandler,
+                        d_cellsVselfBallsDofHandlerForce,
+                        d_cellsVselfBallsClosestAtomIdDofHandler,
+                        d_AtomIdBinIdLocalDofHandler,
+                        d_cellFacesVselfBallSurfacesDofHandler,
+                        d_cellFacesVselfBallSurfacesDofHandlerForce);
+ */
+
+  createBinObjectsForce(matrixFreeDataElectro.get_dof_handler(phiTotDofHandlerIndexElectro),
+	                d_dofHandlerForceElectro,
+	                noConstraintsElectro,
+	                vselfBinsManagerElectro,
+                        d_cellsVselfBallsDofHandlerElectro,
+                        d_cellsVselfBallsDofHandlerForceElectro,
+                        d_cellsVselfBallsClosestAtomIdDofHandlerElectro,
+                        d_AtomIdBinIdLocalDofHandlerElectro,
+                        d_cellFacesVselfBallSurfacesDofHandlerElectro,
+                        d_cellFacesVselfBallSurfacesDofHandlerForceElectro);
+
   //reset to zero
   for (unsigned int idim=0; idim<C_DIM; idim++)
   {
@@ -32,13 +80,56 @@ void forceClass<FEOrder>::computeStress()
 
   //configurational stress contribution from all terms except those from nuclear self energy
   if (dftParameters::spinPolarized)
-     computeStressSpinPolarizedEEshelbyEPSPEnlEk();
+     computeStressSpinPolarizedEEshelbyEPSPEnlEk(matrixFreeData,
+		                        eigenDofHandlerIndex,
+		                        phiExtDofHandlerIndex,
+		                        phiTotDofHandlerIndex,
+		                        phiTotRhoIn,
+		                        phiTotRhoOut,
+		                        phiExt,
+	                                pseudoVLoc,
+					gradPseudoVLoc,
+					gradPseudoVLocAtoms,
+		                        vselfBinsManagerEigen,
+	                                matrixFreeDataElectro,
+		                        phiTotDofHandlerIndexElectro,
+		                        phiExtDofHandlerIndexElectro,
+		                        phiTotRhoOutElectro,
+		                        phiExtElectro,
+		                        rhoOutValuesElectro,
+					gradRhoOutValuesElectro,
+	                                pseudoVLocElectro,
+					gradPseudoVLocElectro,
+					gradPseudoVLocAtomsElectro,
+					vselfBinsManagerElectro);
   else
-     computeStressEEshelbyEPSPEnlEk();
+     computeStressEEshelbyEPSPEnlEk(matrixFreeData,
+		                        eigenDofHandlerIndex,
+		                        phiExtDofHandlerIndex,
+		                        phiTotDofHandlerIndex,
+		                        phiTotRhoIn,
+		                        phiTotRhoOut,
+		                        phiExt,
+	                                pseudoVLoc,
+					gradPseudoVLoc,
+					gradPseudoVLocAtoms,
+		                        vselfBinsManagerEigen,
+	                                matrixFreeDataElectro,
+		                        phiTotDofHandlerIndexElectro,
+		                        phiExtDofHandlerIndexElectro,
+		                        phiTotRhoOutElectro,
+		                        phiExtElectro,
+		                        rhoOutValuesElectro,
+					gradRhoOutValuesElectro,
+	                                pseudoVLocElectro,
+					gradPseudoVLocElectro,
+					gradPseudoVLocAtomsElectro,
+					vselfBinsManagerElectro);
 
   //configurational stress contribution from nuclear self energy. This is handled separately as it involves
   // a surface integral over the vself ball surface
-  computeStressEself();
+  computeStressEself(matrixFreeDataElectro.get_dof_handler(phiTotDofHandlerIndexElectro),
+	             vselfBinsManagerElectro);
 
   //Sum all processor contributions and distribute to all processors
   d_stress=Utilities::MPI::sum(d_stress,mpi_communicator);

@@ -97,6 +97,79 @@ namespace dftfe
 	  }
 	}
 
+
+	void exchangeInteractionMaps(const unsigned int totalNumberAtoms,
+			             std::map<int,std::set<int> > & interactionMap,
+			             const unsigned int numMeshPartitions,
+			             const MPI_Comm & mpi_communicator)
+
+	{
+	  std::map<int,std::set<int> >::iterator iter;
+
+	  for(unsigned int iGlobal = 0; iGlobal < totalNumberAtoms; ++iGlobal)
+	  {
+
+	    //
+	    // for each charge, exchange its global list across all procs
+	    //
+	    iter = interactionMap.find(iGlobal);
+
+	    std::vector<int> localAtomToInteractingAtomsList;
+
+	    if(iter != interactionMap.end())
+	    {
+	      std::set<int>  & localInteractingAtomsSet = iter->second;
+	      std::copy(localInteractingAtomsSet.begin(),
+			localInteractingAtomsSet.end(),
+			std::back_inserter(localAtomToInteractingAtomsList));
+
+	    }
+
+	    const int sizeOnLocalProc = localAtomToInteractingAtomsList.size();
+
+            std::vector<int> interactionMapListSizes(numMeshPartitions);
+
+	    MPI_Allgather(&sizeOnLocalProc,
+			  1,
+			  MPI_INT,
+			  &(interactionMapListSizes[0]),
+			  1,
+			  MPI_INT,
+			  mpi_communicator);
+
+	    const int newListSize =
+	    std::accumulate(&(interactionMapListSizes[0]),
+			      &(interactionMapListSizes[numMeshPartitions]),
+			      0);
+
+	    std::vector<int> globalInteractionMapList(newListSize);
+
+	    std::vector<int> mpiOffsets(numMeshPartitions);
+
+	    mpiOffsets[0] = 0;
+
+	    for(unsigned int i = 1; i < numMeshPartitions; ++i)
+	      mpiOffsets[i] = interactionMapListSizes[i-1]+ mpiOffsets[i-1];
+
+	    MPI_Allgatherv(&(localAtomToInteractingAtomsList[0]),
+			   sizeOnLocalProc,
+			   MPI_INT,
+			   &(globalInteractionMapList[0]),
+			   &(interactionMapListSizes[0]),
+			   &(mpiOffsets[0]),
+			   MPI_INT,
+			   mpi_communicator);
+
+	    //
+	    // over-write local interaction with items of globalInteractionList
+	    //
+	    for(unsigned int i = 0 ; i < globalInteractionMapList.size(); ++i)
+	      (interactionMap[iGlobal]).insert(globalInteractionMapList[i]);
+
+	  }
+	}
+
+
 	//
 	unsigned int createAndCheckInteractionMap(std::map<int,std::set<int> > & interactionMap,
 		                         const dealii::DoFHandler<3> &  dofHandler,
@@ -144,7 +217,7 @@ namespace dftfe
 	      std::vector<dealii::types::global_dof_index> cell_dof_indices(dofs_per_cell);
 
 	      for(; cell!= endc; ++cell)
-		  if(cell->is_locally_owned())
+		  if(cell->is_locally_owned() || cell->is_ghost())
 		    {
 		      int cutOffFlag = 0;
 		      cell->get_dof_indices(cell_dof_indices);
@@ -175,27 +248,26 @@ namespace dftfe
 
 		    }//cell locally owned if loop
 
-	      atomToGlobalNodeIdMap[iAtom] = tempNodalSet;
+	      if (!tempNodalSet.empty())
+	         atomToGlobalNodeIdMap[iAtom] = tempNodalSet;
 
 	    }//atom loop
 
 	  //
 	  //exchange atomToGlobalNodeIdMap across all processors
 	  //
-	  internal::exchangeAtomToGlobalNodeIdMaps(totalNumberAtoms,
-						   atomToGlobalNodeIdMap,
-						   n_mpi_processes,
-						   mpi_communicator);
+	  //internal::exchangeAtomToGlobalNodeIdMaps(totalNumberAtoms,
+	  //					   atomToGlobalNodeIdMap,
+	  //					   n_mpi_processes,
+	  //					   mpi_communicator);
 
-	  //
-	  //erase keys which have empty values
-	  //
-	  for(unsigned int iAtom = numberGlobalAtoms; iAtom < totalNumberAtoms; ++iAtom)
-	      if(atomToGlobalNodeIdMap[iAtom].empty() == true)
-		  atomToGlobalNodeIdMap.erase(iAtom);
+	  unsigned int ilegalInteraction=0;
 
 	  for(unsigned int iAtom = 0; iAtom < totalNumberAtoms; ++iAtom)
 	    {
+	      if (atomToGlobalNodeIdMap.find(iAtom)==atomToGlobalNodeIdMap.end())
+		  continue;
+
 	      //
 	      //Add iAtom to the interactionMap corresponding to the key iAtom
 	      //
@@ -207,7 +279,8 @@ namespace dftfe
 	      for(int jAtom = iAtom - 1; jAtom > -1; jAtom--)
 		{
 		  //std::cout<<"JAtom: "<<jAtom<<std::endl;
-
+		  if (atomToGlobalNodeIdMap.find(jAtom)==atomToGlobalNodeIdMap.end())
+		      continue;
 		  //
 		  //compute intersection between the atomGlobalNodeIdMap of iAtom and jAtom
 		  //
@@ -241,7 +314,8 @@ namespace dftfe
 			  if(masterAtomId == iAtom)
 			    {
 			      //std::cout<<"Atom and its own image is interacting decrease radius"<<std::endl;
-			      return 1;
+			      ilegalInteraction= 1;
+			      break;
 			    }
 			  interactionMap[iAtom].insert(masterAtomId);
 			  interactionMap[masterAtomId].insert(iAtom);
@@ -256,7 +330,8 @@ namespace dftfe
 			  if(masterAtomId == jAtom)
 			    {
 			      //std::cout<<"Atom and its own image is interacting decrease radius"<<std::endl;
-			      return 1;
+			      ilegalInteraction= 1;
+			      break;
 			    }
 			  interactionMap[masterAtomId].insert(jAtom);
 			  interactionMap[jAtom].insert(masterAtomId);
@@ -272,7 +347,8 @@ namespace dftfe
 			  if(masteriAtomId == masterjAtomId)
 			    {
 			      //std::cout<<"Two Image Atoms corresponding to same parent Atoms are interacting decrease radius"<<std::endl;
-			      return 2;
+			      ilegalInteraction= 2;
+			      break;
 			    }
 			  interactionMap[masteriAtomId].insert(masterjAtomId);
 			  interactionMap[masterjAtomId].insert(masteriAtomId);
@@ -282,7 +358,18 @@ namespace dftfe
 
 		}//end of jAtom loop
 
+	        if (ilegalInteraction!=0)
+		    break;
+
 	    }//end of iAtom loop
+
+	    if (dealii::Utilities::MPI::sum(ilegalInteraction, mpi_communicator)>0)
+	       return 1;
+
+	    internal::exchangeInteractionMaps(totalNumberAtoms,
+	  			              interactionMap,
+	  				      n_mpi_processes,
+	  				      mpi_communicator);
 	    return 0;
 	}
     }
@@ -311,15 +398,14 @@ namespace dftfe
 
     {
       d_bins.clear();
-      d_imageIdsInBins.clear();
       d_boundaryFlag.clear();
+      d_boundaryFlagOnlyChargeId.clear();
+      d_dofClosestChargeLocationMap.clear();
       d_vselfBinField.clear();
       d_closestAtomBin.clear();
       d_vselfBinConstraintMatrices.clear();
 
       d_atomLocations=atomLocations;
-      d_imagePositions=imagePositions;
-      d_imageCharges=imageCharges;
 
       const unsigned int numberImageCharges = imageIds.size();
       const unsigned int numberGlobalAtoms = atomLocations.size();
@@ -382,9 +468,9 @@ namespace dftfe
 	  if (dftParameters::verbosity>=1 && !dftParameters::reproducible_output)
 	      pcout<<"...Adaptively set ball radius: "<< radiusAtomBallAdaptive<<std::endl;
 
-	  if (radiusAtomBallAdaptive<3.0)
-             if (dftParameters::verbosity>=1 && !dftParameters::reproducible_output)		 
-	        pcout<<"DFT-FE warning: Tried to adaptively determine the ball radius for nuclear self-potential solve and was found to be less than 3.0, which can detoriate the accuracy of the KSDFT groundstate energy and forces. One approach to overcome this issue is to use a larger super cell with smallest periodic dimension greater than 6.0 (twice of 3.0), assuming an orthorhombic domain. If that is not feasible, you may need more h refinement of the finite element mesh around the atoms to achieve the desired accuracy."<<std::endl;
+	  if (radiusAtomBallAdaptive<2.5)
+             if (dftParameters::verbosity>=1 && !dftParameters::reproducible_output)
+	        pcout<<"DFT-FE warning: Tried to adaptively determine the ball radius for nuclear self-potential solve and was found to be less than 2.5, which can detoriate the accuracy of the KSDFT groundstate energy and forces. One approach to overcome this issue is to use a larger super cell with smallest periodic dimension greater than 5.0 (twice of 2.5), assuming an orthorhombic domain. If that is not feasible, you may need more h refinement of the finite element mesh around the atoms to achieve the desired accuracy."<<std::endl;
 	  MPI_Barrier(mpi_communicator);
 
 	  d_storedAdaptiveBallRadius=radiusAtomBallAdaptive;
@@ -472,8 +558,10 @@ namespace dftfe
       if (dftParameters::verbosity>=2)
 	pcout<<"number bins: "<<numberBins<<std::endl;
 
-      d_imageIdsInBins.resize(numberBins);
+      std::vector<std::vector<int> > imageIdsInBins(numberBins);
       d_boundaryFlag.resize(numberBins);
+      d_boundaryFlagOnlyChargeId.resize(numberBins);
+      d_dofClosestChargeLocationMap.resize(numberBins);
       d_vselfBinField.resize(numberBins);
       d_closestAtomBin.resize(numberBins);
       d_vselfBinConstraintMatrices.resize(numberBins);
@@ -488,7 +576,7 @@ namespace dftfe
 
 	  int numberGlobalAtomsInBin = atomsInCurrentBin.size();
 
-	  std::vector<int> &imageIdsOfAtomsInCurrentBin = d_imageIdsInBins[iBin];
+	  std::vector<int> &imageIdsOfAtomsInCurrentBin = imageIdsInBins[iBin];
 	  std::vector<std::vector<double> > imagePositionsOfAtomsInCurrentBin;
 
 	  if (dftParameters::verbosity>=2)
@@ -570,21 +658,50 @@ namespace dftfe
 		      double minDistance = *minDistanceIter;
 
 		      int chargeId;
+		      int domainChargeId;
 
 		      if(minDistanceAtomId < numberGlobalAtomsInBin)
+		      {
 			chargeId = atomsInCurrentBin[minDistanceAtomId];
+			domainChargeId=chargeId;
+		      }
 		      else
+		      {
 			chargeId = imageIdsOfAtomsInCurrentBin[minDistanceAtomId-numberGlobalAtomsInBin]+numberGlobalAtoms;
+			domainChargeId=imageIds[imageIdsOfAtomsInCurrentBin[minDistanceAtomId-numberGlobalAtomsInBin]];
+		      }
 
 		      d_closestAtomBin[iBin][iterMap->first] = chargeId;
 
 		      //FIXME: These two can be moved to the outermost bin loop
 		      std::map<dealii::types::global_dof_index, int> & boundaryNodeMap = d_boundaryFlag[iBin];
+		      std::map<dealii::types::global_dof_index, int> & boundaryNodeMapOnlyChargeId
+			                                    = d_boundaryFlagOnlyChargeId[iBin];
+                      std::map<dealii::types::global_dof_index, dealii::Point<3>> & dofClosestChargeLocationMap
+		                                            = d_dofClosestChargeLocationMap[iBin];
 		      std::map<dealii::types::global_dof_index, double> & vSelfBinNodeMap = d_vselfBinField[iBin];
+
+		      if(minDistanceAtomId < numberGlobalAtomsInBin)
+		      {
+			dofClosestChargeLocationMap[iterMap->first][0] = atomLocations[chargeId][2];
+			dofClosestChargeLocationMap[iterMap->first][1] = atomLocations[chargeId][3];
+			dofClosestChargeLocationMap[iterMap->first][2] = atomLocations[chargeId][4];
+		      }
+		      else
+		      {
+			dofClosestChargeLocationMap[iterMap->first][0] =
+			    imagePositions[chargeId-numberGlobalAtoms][0];
+			dofClosestChargeLocationMap[iterMap->first][1] =
+			    imagePositions[chargeId-numberGlobalAtoms][1];
+			dofClosestChargeLocationMap[iterMap->first][2] =
+			    imagePositions[chargeId-numberGlobalAtoms][2];
+		      }
 
 		      if(minDistance < radiusAtomBallAdaptive)
 			{
 			  boundaryNodeMap[iterMap->first] = chargeId;
+			  boundaryNodeMapOnlyChargeId[iterMap->first] = domainChargeId;
+
 			  inNodes++;
 
 			  double atomCharge;
@@ -622,6 +739,7 @@ namespace dftfe
 			  const double potentialValue = -atomCharge/minDistance;
 
 			  boundaryNodeMap[iterMap->first] = -1;
+			  boundaryNodeMapOnlyChargeId[iterMap->first] = -1;
 			  vSelfBinNodeMap[iterMap->first] = potentialValue;
 			  outNodes++;
 
@@ -857,9 +975,6 @@ namespace dftfe
     const std::map<int,std::set<int> > & vselfBinsManager<FEOrder>::getAtomIdsBins() const {return d_bins;}
 
     template<unsigned int FEOrder>
-    const std::vector<std::vector<int> > & vselfBinsManager<FEOrder>::getImageIdsBins() const {return d_imageIdsInBins;}
-
-    template<unsigned int FEOrder>
     const std::vector<std::map<dealii::types::global_dof_index, int> > & vselfBinsManager<FEOrder>::getBoundaryFlagsBins() const {return d_boundaryFlag;}
 
     template<unsigned int FEOrder>
@@ -867,6 +982,12 @@ namespace dftfe
 
     template<unsigned int FEOrder>
     const std::vector<vectorType> & vselfBinsManager<FEOrder>::getVselfFieldBins() const {return d_vselfFieldBins;}
+
+    template<unsigned int FEOrder>
+    const std::map<unsigned int, unsigned int>  & vselfBinsManager<FEOrder>::getAtomIdBinIdMapLocalAllImages() const {return d_atomIdBinIdMapLocalAllImages;}
+
+    template<unsigned int FEOrder>
+    double vselfBinsManager<FEOrder>::getStoredAdaptiveBallRadius() const {return d_storedAdaptiveBallRadius;}
 
     template class vselfBinsManager<1>;
     template class vselfBinsManager<2>;

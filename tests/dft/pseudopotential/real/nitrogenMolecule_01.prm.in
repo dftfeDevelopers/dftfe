@@ -38,12 +38,12 @@ subsection DFT functional parameters
 end
 
 subsection SCF parameters
-  set ANDERSON SCHEME MIXING HISTORY   = 70
-  set ANDERSON SCHEME MIXING PARAMETER = 0.5
+  set MIXING HISTORY   = 70
+  set MIXING PARAMETER = 0.5
   set MAXIMUM ITERATIONS               = 40
   set TEMPERATURE                      = 500
   set TOLERANCE                        = 5e-6
-
+  set HIGHER QUAD NLP  = false
   subsection Eigen-solver parameters
       set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 12
       set ORTHOGONALIZATION TYPE=LW

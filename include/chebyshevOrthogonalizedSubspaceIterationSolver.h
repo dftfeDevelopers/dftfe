@@ -28,7 +28,7 @@ namespace dftfe{
   /**
    * @brief Concrete class implementing Chebyshev filtered orthogonalized subspace
    * iteration solver.
-   * @author Phani Motamarri 
+   * @author Phani Motamarri
    */
 
   class chebyshevOrthogonalizedSubspaceIterationSolver : public eigenSolverClass {
@@ -37,10 +37,12 @@ namespace dftfe{
     /**
      * @brief Constructor.
      *
+     * @param mpi_comm domain decomposition mpi communicator
      * @param lowerBoundWantedSpectrum Lower Bound of the Wanted Spectrum.
      * @param lowerBoundUnWantedSpectrum Lower Bound of the UnWanted Spectrum.
      */
-    chebyshevOrthogonalizedSubspaceIterationSolver(double lowerBoundWantedSpectrum,
+    chebyshevOrthogonalizedSubspaceIterationSolver(const MPI_Comm &mpi_comm,
+	                                           double lowerBoundWantedSpectrum,
 						   double lowerBoundUnWantedSpectrum);
 
 
@@ -54,12 +56,14 @@ namespace dftfe{
      * @brief Solve a generalized eigen problem.
      */
     eigenSolverClass::ReturnValueType solve(operatorDFTClass & operatorMatrix,
-	                                    dealii::parallel::distributed::Vector<dataTypes::number> & eigenVectorsFlattened,
+	                                    std::vector<dataTypes::number> & eigenVectorsFlattened,
+					    std::vector<dataTypes::number> & eigenVectorsRotFracDensityFlattened,
 					    vectorType & tempEigenVec,
 					    const unsigned int totalNumberWaveFunctions,
 					    std::vector<double> & eigenValues,
 					    std::vector<double> & residuals,
-					    const MPI_Comm &interBandGroupComm);
+					    const MPI_Comm &interBandGroupComm,
+					    const bool useMixedPrec);
 
     /**
      * @brief Solve a generalized eigen problem.
@@ -74,7 +78,6 @@ namespace dftfe{
      */
     void reinitSpectrumBounds(double lowerBoundWantedSpectrum,
 			      double lowerBoundUnWantedSpectrum);
-
 
   private:
     //

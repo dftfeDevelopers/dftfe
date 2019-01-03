@@ -28,44 +28,110 @@ namespace dftfe
   {
 #if(defined DEAL_II_WITH_SCALAPACK && !USE_COMPLEX)
     template<typename T>
-    unsigned int pseudoGramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<T> & X,
-				            const unsigned int numberVectors,
-					    const MPI_Comm &interBandGroupComm)
+    unsigned int pseudoGramSchmidtOrthogonalization(operatorDFTClass & operatorMatrix,
+		                                    std::vector<T> & X,
+						    const unsigned int numberVectors,
+						    const MPI_Comm &interBandGroupComm,
+						    const MPI_Comm & mpiComm,
+						    const bool useMixedPrec)
+
     {
-      const unsigned int numLocalDofs = X.local_size()/numberVectors;
+      const unsigned int numLocalDofs = X.size()/numberVectors;
 
       dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
-      dealii::TimerOutput computing_timer(pcout,
+      dealii::TimerOutput computing_timer(mpiComm,
+	                                  pcout,
 					  dftParameters::reproducible_output ||
 					  dftParameters::verbosity<4 ? dealii::TimerOutput::never : dealii::TimerOutput::summary,
 					  dealii::TimerOutput::wall_times);
 
 
-      const unsigned rowsBlockSize=std::min((unsigned int)50,numberVectors);
+      const unsigned int rowsBlockSize=operatorMatrix.getScalapackBlockSize();
       std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  processGrid;
-      internal::createProcessGridSquareMatrix(X.get_mpi_communicator(),
-		                           numberVectors,
-					   processGrid);
+      internal::createProcessGridSquareMatrix(mpiComm,
+                                              numberVectors,
+                                              processGrid);
 
       dealii::ScaLAPACKMatrix<T> overlapMatPar(numberVectors,
                                                processGrid,
                                                rowsBlockSize);
 
+      if (processGrid->is_process_active())
+         std::fill(&overlapMatPar.local_el(0,0),
+	           &overlapMatPar.local_el(0,0)+overlapMatPar.local_m()*overlapMatPar.local_n(),
+		   T(0.0));
+
       //S=X*X^{T}. Implemented as S=X^{T}*X with X^{T} stored in the column major format
-      computing_timer.enter_section("Fill overlap matrix for PGS");
-      internal::fillParallelOverlapMatrix(X,
-	                                  numberVectors,
-		                          processGrid,
-					  interBandGroupComm,
-				          overlapMatPar);
-      computing_timer.exit_section("Fill overlap matrix for PGS");
+      if (!(dftParameters::useMixedPrecPGS_O && useMixedPrec))
+      {
+	  computing_timer.enter_section("Fill overlap matrix PGS");
+	  internal::fillParallelOverlapMatrix(&X[0],
+					      X.size(),
+					      numberVectors,
+					      processGrid,
+					      interBandGroupComm,
+					      mpiComm,
+					      overlapMatPar);
+	  computing_timer.exit_section("Fill overlap matrix PGS");
+      }
+      else
+      {
+	  computing_timer.enter_section("Fill overlap matrix mixed prec PGS");
+	  internal::fillParallelOverlapMatrixMixedPrec(&X[0],
+					               X.size(),
+						       numberVectors,
+						       processGrid,
+						       interBandGroupComm,
+						       mpiComm,
+						       overlapMatPar);
+	  computing_timer.exit_section("Fill overlap matrix mixed prec PGS");
+      }
+
 
       //S=L*L^{T}
+#if(defined DFTFE_WITH_ELPA)
+      computing_timer.enter_section("ELPA PGS cholesky, copy, and triangular matrix invert");
+#else
       computing_timer.enter_section("PGS cholesky, copy, and triangular matrix invert");
+#endif
+#if(defined DFTFE_WITH_ELPA)
+      dealii::LAPACKSupport::Property overlapMatPropertyPostCholesky;
+      if (dftParameters::useELPA)
+      {
+	  //For ELPA cholesky only the upper triangular part is enough
+	  dealii::ScaLAPACKMatrix<T> overlapMatParTrans(numberVectors,
+						processGrid,
+						rowsBlockSize);
+
+          if (processGrid->is_process_active())
+	      std::fill(&overlapMatParTrans.local_el(0,0),
+		        &overlapMatParTrans.local_el(0,0)
+			+overlapMatParTrans.local_m()*overlapMatParTrans.local_n(),
+		        T(0.0));
+
+	  overlapMatParTrans.copy_transposed(overlapMatPar);
+
+	  if (processGrid->is_process_active())
+	  {
+	      int error;
+	      elpa_cholesky_d(operatorMatrix.getElpaHandle(), &overlapMatParTrans.local_el(0,0), &error);
+	      AssertThrow(error==ELPA_OK,
+			dealii::ExcMessage("DFT-FE Error: elpa_cholesky_d error."));
+	  }
+	  overlapMatParTrans.copy_to(overlapMatPar);
+	  overlapMatPropertyPostCholesky=dealii::LAPACKSupport::Property::upper_triangular;
+      }
+      else
+      {
+	  overlapMatPar.compute_cholesky_factorization();
+
+	  overlapMatPropertyPostCholesky=overlapMatPar.get_property();
+      }
+#else
       overlapMatPar.compute_cholesky_factorization();
 
       dealii::LAPACKSupport::Property overlapMatPropertyPostCholesky=overlapMatPar.get_property();
-
+#endif
       AssertThrow(overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::lower_triangular
 		  ||overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::upper_triangular
 	           ,dealii::ExcMessage("DFT-FE Error: overlap matrix property after cholesky factorization incorrect"));
@@ -74,7 +140,6 @@ namespace dftfe
                                          processGrid,
                                          rowsBlockSize,
 					 overlapMatPropertyPostCholesky);
-
       //copy triangular part of projHamPar into LMatPar
       if (processGrid->is_process_active())
          for (unsigned int i = 0; i < overlapMatPar.local_n(); ++i)
@@ -101,15 +166,14 @@ namespace dftfe
            }
 
       //Check if any of the diagonal entries of LMat are close to zero. If yes break off PGS and return flag=1
-
       unsigned int flag=0;
       if (processGrid->is_process_active())
-         for (unsigned int i = 0; i < overlapMatPar.local_n(); ++i)
+         for (unsigned int i = 0; i < LMatPar.local_n(); ++i)
            {
-             const unsigned int glob_i = overlapMatPar.global_column(i);
-             for (unsigned int j = 0; j < overlapMatPar.local_m(); ++j)
+             const unsigned int glob_i = LMatPar.global_column(i);
+             for (unsigned int j = 0; j < LMatPar.local_m(); ++j)
                {
-		 const unsigned int glob_j = overlapMatPar.global_row(j);
+		 const unsigned int glob_j = LMatPar.global_row(j);
 		 if (glob_i==glob_j)
 		    if (std::abs(LMatPar.local_el(j, i))<1e-14)
 			flag=1;
@@ -120,34 +184,79 @@ namespace dftfe
 		 break;
            }
 
-      flag=dealii::Utilities::MPI::max(flag,X.get_mpi_communicator());
+      flag=dealii::Utilities::MPI::max(flag,mpiComm);
       if (dftParameters::enableSwitchToGS && flag==1)
           return flag;
 
       //invert triangular matrix
+#if(defined DFTFE_WITH_ELPA)
+      if (dftParameters::useELPA)
+      {
+	  if (processGrid->is_process_active())
+	  {
+	      int error;
+	      elpa_invert_trm_d(operatorMatrix.getElpaHandle(), &LMatPar.local_el(0,0), &error);
+	      AssertThrow(error==ELPA_OK,
+			dealii::ExcMessage("DFT-FE Error: elpa_invert_trm_d error."));
+	  }
+      }
+      else
+      {
+	  LMatPar.invert();
+      }
+#else
       LMatPar.invert();
+#endif
+#if(defined DFTFE_WITH_ELPA)
+      computing_timer.exit_section("ELPA PGS cholesky, copy, and triangular matrix invert");
+#else
       computing_timer.exit_section("PGS cholesky, copy, and triangular matrix invert");
+#endif
 
       //X=X*L^{-1}^{T} implemented as X^{T}=L^{-1}*X^{T} with X^{T} stored in the column major format
-      computing_timer.enter_section("Subspace rotation PGS");
-      internal::subspaceRotation(X,
-		                 numberVectors,
-		                 processGrid,
-				 interBandGroupComm,
-			         LMatPar,
-				 overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::upper_triangular?true:false);
+      if (!(dftParameters::useMixedPrecPGS_SR && useMixedPrec))
+      {
 
-      computing_timer.exit_section("Subspace rotation PGS");
+	  computing_timer.enter_section("Subspace rotation PGS");
+	  internal::subspaceRotation(&X[0],
+				     X.size(),
+				     numberVectors,
+				     processGrid,
+				     interBandGroupComm,
+				     mpiComm,
+				     LMatPar,
+				     overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::upper_triangular?true:false,
+				     dftParameters::triMatPGSOpt?true:false);
+	  computing_timer.exit_section("Subspace rotation PGS");
+      }
+      else
+      {
+	  computing_timer.enter_section("Subspace rotation mixed prec PGS");
+	  internal::subspaceRotationPGSMixedPrec(&X[0],
+				     X.size(),
+				     numberVectors,
+				     processGrid,
+				     interBandGroupComm,
+				     mpiComm,
+				     LMatPar,
+				     overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::upper_triangular?true:false);
+	  computing_timer.exit_section("Subspace rotation mixed prec PGS");
+      }
+
 
       return 0;
     }
+
 #else
     template<typename T>
-    unsigned int pseudoGramSchmidtOrthogonalization(dealii::parallel::distributed::Vector<T> & X,
-				            const unsigned int numberVectors,
-					    const MPI_Comm &interBandGroupComm)
+    unsigned int pseudoGramSchmidtOrthogonalization(operatorDFTClass & operatorMatrix,
+		                                    std::vector<T> & X,
+						    const unsigned int numberVectors,
+						    const MPI_Comm &interBandGroupComm,
+						    const MPI_Comm & mpiComm,
+						    const bool useMixedPrec)
     {
-       const unsigned int localVectorSize = X.local_size()/numberVectors;
+       const unsigned int localVectorSize = X.size()/numberVectors;
 
        std::vector<T> overlapMatrix(numberVectors*numberVectors,0.0);
 
@@ -155,7 +264,8 @@ namespace dftfe
        dealii::ConditionalOStream   pcout(std::cout,
 	                                 (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
 
-       dealii::TimerOutput computing_timer(pcout,
+       dealii::TimerOutput computing_timer(mpiComm,
+	                                   pcout,
 					  dftParameters::reproducible_output ||
 					  dftParameters::verbosity<4? dealii::TimerOutput::never : dealii::TimerOutput::summary,
 					  dealii::TimerOutput::wall_times);
@@ -179,7 +289,7 @@ namespace dftfe
 	     &numberVectors,
 	     &localVectorSize,
 	     &alpha1,
-	     X.begin(),
+	     &X[0],
 	     &numberVectors,
 	     &beta1,
 	     &overlapMatrix[0],
@@ -190,13 +300,13 @@ namespace dftfe
 	     &numberVectors,
 	     &localVectorSize,
 	     &alpha1,
-	     X.begin(),
+	     &X[0],
 	     &numberVectors,
 	     &beta1,
 	     &overlapMatrix[0],
 	     &numberVectors);
 #endif
-       dealii::Utilities::MPI::sum(overlapMatrix, X.get_mpi_communicator(), overlapMatrix);
+       dealii::Utilities::MPI::sum(overlapMatrix, mpiComm, overlapMatrix);
        computing_timer.exit_section("local overlap matrix for pgs");
 
        computing_timer.enter_section("PGS cholesky and triangular matrix invert");
@@ -224,7 +334,7 @@ namespace dftfe
        else
        {
 	  for (unsigned int i = 0; i < numberVectors; ++i)
-	    if (std::abs(overlapMatrix[i*numberVectors])<1e-14)
+	    if (std::abs(overlapMatrix[i*numberVectors+i])<1e-14)
 	    {
 		flag=1;
 		break;
@@ -262,8 +372,9 @@ namespace dftfe
        //X=X*Lc^{-1}^{T} implemented as X^{T}=Lc^{-1}*X^{T} with X^{T} stored in the column major format
 
        computing_timer.enter_section("subspace rotation in pgs");
-       dealii::parallel::distributed::Vector<T> orthoNormalizedBasis;
-       orthoNormalizedBasis.reinit(X);
+       //dealii::parallel::distributed::Vector<T> orthoNormalizedBasis;
+       //orthoNormalizedBasis.reinit(X);
+       std::vector<T> orthoNormalizedBasis(X.size(),0.0);
        const char transA4  = 'N', transB4  = 'N';
        const T alpha4 = 1.0, beta4 = 0.0;
 #ifdef USE_COMPLEX
@@ -275,10 +386,10 @@ namespace dftfe
 	     &alpha4,
 	     &overlapMatrix[0],
 	     &numberVectors,
-	     X.begin(),
+	     &X[0],
 	     &numberVectors,
 	     &beta4,
-	     orthoNormalizedBasis.begin(),
+	     &orthoNormalizedBasis[0],
 	     &numberVectors);
 #else
        dgemm_(&transA4,
@@ -289,10 +400,10 @@ namespace dftfe
 	      &alpha4,
 	      &overlapMatrix[0],
 	      &numberVectors,
-	      X.begin(),
+	      &X[0],
 	      &numberVectors,
 	      &beta4,
-	      orthoNormalizedBasis.begin(),
+	      &orthoNormalizedBasis[0],
 	      &numberVectors);
 #endif
        computing_timer.exit_section("subspace rotation in pgs");

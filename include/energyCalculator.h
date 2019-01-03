@@ -93,12 +93,16 @@ namespace dftfe {
 			     const xc_func_type & funcC,
 			     const vectorType & phiTotRhoIn,
 			     const vectorType & phiTotRhoOut,
+			     const vectorType & phiExt,
+			     const vectorType & phiExtElec,
 			     const std::map<dealii::CellId, std::vector<double> > & rhoInValues,
 			     const std::map<dealii::CellId, std::vector<double> > & rhoOutValues,
 			     const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectrostatic,
 			     const std::map<dealii::CellId, std::vector<double> > & gradRhoInValues,
 			     const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValues,
 		             const std::vector<std::vector<double> > & localVselfs,
+			     const std::map<dealii::CellId, std::vector<double> > & pseudoValuesElectronic,
+                             const std::map<dealii::CellId, std::vector<double> > & pseudoValuesElectrostatic,
 		             const std::map<dealii::types::global_dof_index, double> & atomElectrostaticNodeIdToChargeMap,
 			     const unsigned int numberGlobalAtoms,
 			     const unsigned int lowerBoundKindex,
@@ -119,6 +123,8 @@ namespace dftfe {
 	 * @param eigenValues eigenValues for each k point.
 	 * @param kPointWeights
 	 * @param fermiEnergy
+	 * @param fermiEnergyUp
+	 * @param fermiEnergyDown
 	 * @param funcX exchange functional object.
 	 * @param funcC correlation functional object.
 	 * @param phiTotRhoIn nodal vector field of total electrostatic potential using input
@@ -161,10 +167,14 @@ namespace dftfe {
 			     const std::vector<std::vector<double> > & eigenValues,
 			     const std::vector<double> & kPointWeights,
 			     const double fermiEnergy,
+			     const double fermiEnergyUp,
+			     const double fermiEnergyDown,
 			     const xc_func_type & funcX,
 			     const xc_func_type & funcC,
 			     const vectorType & phiTotRhoIn,
 			     const vectorType & phiTotRhoOut,
+			     const vectorType & phiExt,
+			     const vectorType & phiExtElec,
 			     const std::map<dealii::CellId, std::vector<double> > & rhoInValues,
 			     const std::map<dealii::CellId, std::vector<double> > & rhoOutValues,
 			     const std::map<dealii::CellId, std::vector<double> > & rhoOutValuesElectrostatic,
@@ -175,6 +185,8 @@ namespace dftfe {
 			     const std::map<dealii::CellId, std::vector<double> > & gradRhoInValuesSpinPolarized,
 			     const std::map<dealii::CellId, std::vector<double> > & gradRhoOutValuesSpinPolarized,
 			     const std::vector<std::vector<double> > & localVselfs,
+			     const std::map<dealii::CellId, std::vector<double> > & pseudoValuesElectronic,
+                             const std::map<dealii::CellId, std::vector<double> > & pseudoValuesElectrostatic,
 			     const std::map<dealii::types::global_dof_index, double> & atomElectrostaticNodeIdToChargeMap,
 			     const unsigned int numberGlobalAtoms,
 			     const unsigned int lowerBoundKindex,

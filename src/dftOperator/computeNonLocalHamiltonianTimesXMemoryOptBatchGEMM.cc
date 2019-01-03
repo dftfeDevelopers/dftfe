@@ -217,6 +217,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesXBatchGEM
     }//non local atomid loop
 
 }
+
 #else
 template<unsigned int FEOrder>
 void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesXBatchGEMM(const dealii::parallel::distributed::Vector<double> & src,

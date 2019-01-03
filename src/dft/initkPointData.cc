@@ -136,6 +136,16 @@ void dftClass<FEOrder>::readkPointData()
   d_kPointCoordinates.resize(maxkPoints*3,0.0);
   d_kPointWeights.resize(maxkPoints,0.0);
   kPointReducedCoordinates = d_kPointCoordinates;
+  //
+  const std::array<unsigned int,3> periodic = {dftParameters::periodicX, dftParameters::periodicY, dftParameters::periodicZ};
+  d_reciprocalLatticeVectors=internaldft::getReciprocalLatticeVectors(d_domainBoundingVectors, periodic);
+  if (dftParameters::verbosity >= 1)
+     {
+     pcout<<"-----------Reciprocal vectors along which the MP grid is to be generated-------------"<<std::endl;
+     for(int i = 0; i < 3; ++i)
+	pcout<<"G"<< i+1<<" : "<< d_reciprocalLatticeVectors[i][0]<<" "<<d_reciprocalLatticeVectors[i][1]<<" "<<d_reciprocalLatticeVectors[i][2]<<std::endl;
+     }
+  //
   for(unsigned int i = 0; i < maxkPoints; ++i)
     {
     for (unsigned int d = 0; d < 3; ++d)

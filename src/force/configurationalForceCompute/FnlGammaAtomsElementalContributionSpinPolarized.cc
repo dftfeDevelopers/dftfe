@@ -22,6 +22,7 @@ template<unsigned int FEOrder>
 void forceClass<FEOrder>::FnlGammaAtomsElementalContributionPeriodicSpinPolarized
                                   (std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
 				   FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
+				   FEEvaluation<C_DIM,1,C_num1DQuadPSP<FEOrder>(),C_DIM>  & forceEvalNLP,
 				   const unsigned int cell,
 				   const std::vector<std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > > & pspnlGammaAtomsQuads,
                                    const std::vector<std::vector<std::vector<std::complex<double> > > > & projectorKetTimesPsiSpin0TimesV,
@@ -31,10 +32,12 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionPeriodicSpinPolarize
 {
 
   const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
-  const unsigned int numEigenVectors=dftPtr->numEigenValues;
+  const unsigned int numEigenVectors=dftPtr->d_numEigenValues;
   const unsigned int numKPoints=dftPtr->d_kPointWeights.size();
   const unsigned int numSubCells= dftPtr->matrix_free_data.n_components_filled(cell);
-  const unsigned int numQuadPoints=forceEval.n_q_points;
+  const unsigned int numQuadPoints=dftParameters::useHigherQuadNLP?
+                                   forceEvalNLP.n_q_points
+				   :forceEval.n_q_points;
   DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
 
   const unsigned int numNonLocalAtomsCurrentProcess= dftPtr->d_nonLocalAtomIdsInCurrentProcess.size();
@@ -55,36 +58,60 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionPeriodicSpinPolarize
 	  temp2Spin1[ikPoint].resize(1);
 	  temp2Spin1[ikPoint][0]=projectorKetTimesPsiSpin1TimesV[ikPoint][iAtom];
       }
-      for (unsigned int q=0; q<numQuadPoints; ++q)
-      {
-	   std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > temp1(1);
-	   temp1[0]=pspnlGammaAtomsQuads[q][iAtom];
 
-           const Tensor<1,C_DIM,VectorizedArray<double> >
-	       F=-eshelbyTensorSP::getFnlPeriodic(temp1,
-						temp2Spin0,
-						temp2Spin1,
-						psiSpin0Quads.begin()+q*numEigenVectors*numKPoints,
-                                                psiSpin1Quads.begin()+q*numEigenVectors*numKPoints,
-						dftPtr->d_kPointWeights,
-						dftPtr->eigenValues,
-						dftPtr->fermiEnergy,
-						dftParameters::TVal);
-           forceEval.submit_value(F,q);
-      }
+      if (dftParameters::useHigherQuadNLP)
+	  for (unsigned int q=0; q<numQuadPoints; ++q)
+	  {
+	       std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > temp1(1);
+	       temp1[0]=pspnlGammaAtomsQuads[q][iAtom];
+
+	       const Tensor<1,C_DIM,VectorizedArray<double> >
+		   F=-eshelbyTensorSP::getFnlPeriodic(temp1,
+						    temp2Spin0,
+						    temp2Spin1,
+						    psiSpin0Quads.begin()+q*numEigenVectors*numKPoints,
+						    psiSpin1Quads.begin()+q*numEigenVectors*numKPoints,
+						    dftPtr->d_kPointWeights,
+						    dftPtr->eigenValues,
+					            dftPtr->fermiEnergy,
+				                    dftPtr->fermiEnergyUp,
+					            dftPtr->fermiEnergyDown,
+						    dftParameters::TVal);
+	       forceEvalNLP.submit_value(F,q);
+	  }
+      else
+	  for (unsigned int q=0; q<numQuadPoints; ++q)
+	  {
+	       std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > temp1(1);
+	       temp1[0]=pspnlGammaAtomsQuads[q][iAtom];
+
+	       const Tensor<1,C_DIM,VectorizedArray<double> >
+		   F=-eshelbyTensorSP::getFnlPeriodic(temp1,
+						    temp2Spin0,
+						    temp2Spin1,
+						    psiSpin0Quads.begin()+q*numEigenVectors*numKPoints,
+						    psiSpin1Quads.begin()+q*numEigenVectors*numKPoints,
+						    dftPtr->d_kPointWeights,
+						    dftPtr->eigenValues,
+					            dftPtr->fermiEnergy,
+				                    dftPtr->fermiEnergyUp,
+					            dftPtr->fermiEnergyDown,
+						    dftParameters::TVal);
+	       forceEval.submit_value(F,q);
+	  }
+
       const Tensor<1,C_DIM,VectorizedArray<double> > forceContributionFnlGammaiAtomCells
-						     =forceEval.integrate_value();
+						     =dftParameters::useHigherQuadNLP?
+						      forceEvalNLP.integrate_value()
+						      :forceEval.integrate_value();
 
       if (forceContributionFnlGammaAtoms.find(globalChargeIdNonLocalAtom)==forceContributionFnlGammaAtoms.end())
 	   forceContributionFnlGammaAtoms[globalChargeIdNonLocalAtom]=std::vector<double>(C_DIM,0.0);
+
       for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
-      {
 	   for (unsigned int idim=0; idim<C_DIM; idim++)
-	   {
 	     forceContributionFnlGammaAtoms[globalChargeIdNonLocalAtom][idim]+=
 		   forceContributionFnlGammaiAtomCells[idim][iSubCell];
-	   }
-      }
   }//iAtom loop
 }
 
@@ -94,6 +121,7 @@ template<unsigned int FEOrder>
 void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodicSpinPolarized
                                   (std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
 				   FEEvaluation<C_DIM,1,C_num1DQuad<FEOrder>(),C_DIM>  & forceEval,
+				   FEEvaluation<C_DIM,1,C_num1DQuadPSP<FEOrder>(),C_DIM>  & forceEvalNLP,
 				   const unsigned int cell,
 				   const std::vector<std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > > pspnlGammaAtomQuads,
                                    const std::vector<std::vector<double> >  & projectorKetTimesPsiSpin0TimesV,
@@ -103,9 +131,11 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodicSpinPolar
 {
 
   const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
-  const unsigned int numEigenVectors=dftPtr->numEigenValues;
+  const unsigned int numEigenVectors=dftPtr->d_numEigenValues;
   const unsigned int numSubCells= dftPtr->matrix_free_data.n_components_filled(cell);
-  const unsigned int numQuadPoints=forceEval.n_q_points;
+  const unsigned int numQuadPoints=dftParameters::useHigherQuadNLP?
+                                   forceEvalNLP.n_q_points
+				   :forceEval.n_q_points;
   DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
 
   const unsigned int numNonLocalAtomsCurrentProcess= dftPtr->d_nonLocalAtomIdsInCurrentProcess.size();
@@ -121,35 +151,58 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodicSpinPolar
       temp2Spin0[0]=projectorKetTimesPsiSpin0TimesV[iAtom];
       std::vector<std::vector<double> >  temp2Spin1(1);
       temp2Spin1[0]=projectorKetTimesPsiSpin1TimesV[iAtom];
-      for (unsigned int q=0; q<numQuadPoints; ++q)
-      {
-	   std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > temp1(1);
-	   temp1[0]=pspnlGammaAtomQuads[q][iAtom];
 
-           const Tensor<1,C_DIM,VectorizedArray<double> > F=
-	                  -eshelbyTensorSP::getFnlNonPeriodic(temp1,
-					                    temp2Spin0,
-							    temp2Spin1,
-					                    psiSpin0Quads.begin()+q*numEigenVectors,
-							    psiSpin1Quads.begin()+q*numEigenVectors,
-					                    (dftPtr->eigenValues)[0],
-					                    dftPtr->fermiEnergy,
-					                    dftParameters::TVal);
-           forceEval.submit_value(F,q);
-      }
+      if (dftParameters::useHigherQuadNLP)
+	  for (unsigned int q=0; q<numQuadPoints; ++q)
+	  {
+	       std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > temp1(1);
+	       temp1[0]=pspnlGammaAtomQuads[q][iAtom];
+
+	       const Tensor<1,C_DIM,VectorizedArray<double> > F=
+			      -eshelbyTensorSP::getFnlNonPeriodic(temp1,
+								temp2Spin0,
+								temp2Spin1,
+								psiSpin0Quads.begin()+q*numEigenVectors,
+								psiSpin1Quads.begin()+q*numEigenVectors,
+								(dftPtr->eigenValues)[0],
+					                        dftPtr->fermiEnergy,
+				                                dftPtr->fermiEnergyUp,
+					                        dftPtr->fermiEnergyDown,
+								dftParameters::TVal);
+	       forceEvalNLP.submit_value(F,q);
+	  }
+      else
+	  for (unsigned int q=0; q<numQuadPoints; ++q)
+	  {
+	       std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > temp1(1);
+	       temp1[0]=pspnlGammaAtomQuads[q][iAtom];
+
+	       const Tensor<1,C_DIM,VectorizedArray<double> > F=
+			      -eshelbyTensorSP::getFnlNonPeriodic(temp1,
+								temp2Spin0,
+								temp2Spin1,
+								psiSpin0Quads.begin()+q*numEigenVectors,
+								psiSpin1Quads.begin()+q*numEigenVectors,
+								(dftPtr->eigenValues)[0],
+					                        dftPtr->fermiEnergy,
+				                                dftPtr->fermiEnergyUp,
+					                        dftPtr->fermiEnergyDown,
+								dftParameters::TVal);
+	       forceEval.submit_value(F,q);
+	  }
+
       const Tensor<1,C_DIM,VectorizedArray<double> > forceContributionFnlGammaiAtomCells
-						     =forceEval.integrate_value();
+						     =dftParameters::useHigherQuadNLP?
+						      forceEvalNLP.integrate_value()
+						      :forceEval.integrate_value();
 
       if (forceContributionFnlGammaAtoms.find(globalChargeIdNonLocalAtom)==forceContributionFnlGammaAtoms.end())
 	   forceContributionFnlGammaAtoms[globalChargeIdNonLocalAtom]=std::vector<double>(C_DIM,0.0);
+
       for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
-      {
 	   for (unsigned int idim=0; idim<C_DIM; idim++)
-	   {
 	     forceContributionFnlGammaAtoms[globalChargeIdNonLocalAtom][idim]+=
 		   forceContributionFnlGammaiAtomCells[idim][iSubCell];
-	   }
-      }
   }//iAtom loop
 }
 

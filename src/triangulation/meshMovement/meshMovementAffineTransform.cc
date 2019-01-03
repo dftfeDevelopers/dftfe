@@ -47,7 +47,8 @@ std::pair<bool,double> meshMovementAffineTransform::transform(const Tensor<2,3,d
 
 std::pair<bool,double> meshMovementAffineTransform::moveMesh(const std::vector<Point<C_DIM> > & controlPointLocations,
                                                              const std::vector<Tensor<1,C_DIM,double> > & controlPointDisplacements,
-                                                             const double controllingParameter)
+                                                             const double controllingParameter,
+							     const bool moveSubdivided)
 {
    AssertThrow(false,dftUtils::ExcNotImplementedYet());
 }
@@ -61,9 +62,10 @@ void meshMovementAffineTransform::computeIncrement()
   DoFHandler<3>::active_cell_iterator
   cell = d_dofHandlerMoveMesh.begin_active(),
   endc = d_dofHandlerMoveMesh.end();
-  for (; cell!=endc; ++cell) {
-   if (!cell->is_artificial()){
-    for (unsigned int i=0; i<vertices_per_cell; ++i){
+  for (; cell!=endc; ++cell)
+   if (!cell->is_artificial())
+    for (unsigned int i=0; i<vertices_per_cell; ++i)
+    {
 	const unsigned global_vertex_no = cell->vertex_index(i);
 
 	if (vertex_touched[global_vertex_no])
@@ -76,15 +78,10 @@ void meshMovementAffineTransform::computeIncrement()
 	{
 	    const unsigned int globalDofIndex=cell->vertex_dof_index(i,idim);
 
-	    if (d_isParallelMesh)
-	       d_incrementalDisplacementParallel[globalDofIndex]=increment[idim];
-	    else
-	       d_incrementalDisplacementSerial[globalDofIndex]=increment[idim];
-	 }
+	    d_incrementalDisplacement[globalDofIndex]=increment[idim];
+	}
 
      }
-   }
-  }
 }
 
 }

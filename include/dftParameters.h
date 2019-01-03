@@ -40,12 +40,13 @@ namespace dftfe {
       extern double radiusAtomBall, mixingParameter;
       extern double lowerEndWantedSpectrum,relLinearSolverTolerance,selfConsistentSolverTolerance,TVal, start_magnetization;
 
-      extern bool isPseudopotential, periodicX, periodicY, periodicZ, useSymm, timeReversal,pseudoTestsFlag;
+      extern bool isPseudopotential, periodicX, periodicY, periodicZ, useSymm, timeReversal,pseudoTestsFlag, constraintMagnetization;
       extern std::string meshFileName,coordinatesFile,domainBoundingVectorsFile,kPointDataFile, ionRelaxFlagsFile, orthogType,pseudoPotentialFile;
 
       extern double outerAtomBallRadius, meshSizeOuterDomain;
       extern double meshSizeInnerBall, meshSizeOuterBall;
       extern double chebyshevTolerance;
+      extern std::string mixingMethod ;
 
 
       extern bool isIonOpt, isCellOpt, isIonForce, isCellStress;
@@ -55,6 +56,8 @@ namespace dftfe {
 
       extern unsigned int verbosity, chkType;
       extern bool restartFromChk;
+      extern bool electrostaticsHRefinement;
+      extern bool electrostaticsPRefinement;
 
       extern bool reproducible_output;
 
@@ -63,17 +66,30 @@ namespace dftfe {
       extern bool writeDensitySolutionFields;
 
       extern std::string startingWFCType;
-      extern unsigned int chebyshevBlockSize;
+      extern unsigned int numCoreWfcRR;
       extern bool useBatchGEMM;
-      extern unsigned int orthoRRWaveFuncBlockSize;
+      extern unsigned int wfcBlockSize;
+      extern unsigned int chebyWfcBlockSize;
       extern unsigned int subspaceRotDofsBlockSize;
       extern bool enableSwitchToGS;
       extern unsigned int nbandGrps;
       extern bool computeEnergyEverySCF;
       extern unsigned int scalapackParalProcs;
+      extern unsigned int scalapackBlockSize;
       extern unsigned int natoms;
       extern unsigned int natomTypes;
       extern double lowerBoundUnwantedFracUpper;
+      extern bool triMatPGSOpt;
+      extern bool reuseWfcGeoOpt;
+      extern double mpiAllReduceMessageBlockSizeMB;
+      extern bool useHigherQuadNLP;
+      extern bool useMixedPrecPGS_SR;
+      extern bool useMixedPrecPGS_O;
+      extern bool useMixedPrecXTHXSpectrumSplit;
+      extern bool useMixedPrecSubspaceRotSpectrumSplit;
+      extern unsigned int numAdaptiveFilterStates;
+      extern unsigned int spectrumSplitStartingScfIter;
+      extern bool useELPA;
 
       /**
        * Declare parameters.

@@ -168,7 +168,12 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point<C
           if (!dftParameters::reproducible_output)
 	    pcout << "Auto remeshing and reinitialization of dft problem for new atom coordinates" << std::endl;
 
-	  init(1);
+	  if (maxDispAtom<0.2 && dftParameters::isPseudopotential)
+	  {
+	    init(dftParameters::reuseWfcGeoOpt && maxDispAtom<0.1?2:1);
+	  }  	  
+	  else
+	    init(0);
 
 	  if (!dftParameters::reproducible_output)
 	    pcout << "...Reinitialization end" << std::endl;

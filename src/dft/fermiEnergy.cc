@@ -90,19 +90,21 @@ namespace internal {
 
 //compute fermi energy
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::compute_fermienergy()
+void dftClass<FEOrder>::compute_fermienergy(const std::vector<std::vector<double>> & eigenValuesInput,
+	                                    const double numElectronsInput)
 {
 
-  int count =  std::ceil(static_cast<double>(numElectrons)/(2.0-dftParameters::spinPolarized));
+  int count =  std::ceil(static_cast<double>(numElectronsInput)
+	                                     /(2.0-dftParameters::spinPolarized));
   double TVal = dftParameters::TVal;
 
 
   std::vector<double> eigenValuesAllkPoints;
   for(int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
     {
-      for(int statesIter = 0; statesIter < eigenValues[0].size(); ++statesIter)
+      for(int statesIter = 0; statesIter < eigenValuesInput[0].size(); ++statesIter)
 	{
-	  eigenValuesAllkPoints.push_back(eigenValues[kPoint][statesIter]);
+	  eigenValuesAllkPoints.push_back(eigenValuesInput[kPoint][statesIter]);
 	}
     }
 
@@ -132,7 +134,7 @@ void dftClass<FEOrder>::compute_fermienergy()
   for(int iter = 0; iter < maxNumberFermiEnergySolveIterations; ++iter)
     {
       double yRightLocal = internal::FermiDiracFunctionValue(xRight,
-					      eigenValues,
+					      eigenValuesInput,
 					      d_kPointWeights,
 					      TVal);
 
@@ -141,7 +143,7 @@ void dftClass<FEOrder>::compute_fermienergy()
       yRight -=  (double)numElectrons;
 
       double yLeftLocal =  internal::FermiDiracFunctionValue(xLeft,
-					      eigenValues,
+					      eigenValuesInput,
 					      d_kPointWeights,
 					      TVal);
 
@@ -158,7 +160,7 @@ void dftClass<FEOrder>::compute_fermienergy()
       double xBisected = (xLeft + xRight)/2.0;
 
       double yBisectedLocal = internal::FermiDiracFunctionValue(xBisected,
-						 eigenValues,
+						 eigenValuesInput,
 						 d_kPointWeights,
 						 TVal) ;
       double yBisected = Utilities::MPI::sum(yBisectedLocal, interpoolcomm);
@@ -194,13 +196,13 @@ void dftClass<FEOrder>::compute_fermienergy()
     {
 
       double functionValueLocal = internal::FermiDiracFunctionValue(fe,
-					      eigenValues,
+					      eigenValuesInput,
 					      d_kPointWeights,
 					      TVal);
       functionValue = Utilities::MPI::sum(functionValueLocal, interpoolcomm);
 
       double functionDerivativeValueLocal  = internal::FermiDiracFunctionDerivativeValue(fe,
-								  eigenValues,
+								  eigenValuesInput,
 								  d_kPointWeights,
 								  TVal);
 
@@ -214,7 +216,7 @@ void dftClass<FEOrder>::compute_fermienergy()
 
   if(std::abs(R) > newtonIterTol)
     {
-      AssertThrow(false,ExcMessage("DFT-FE Error: Newton-Raphson iterations failed to converge in Fermi energy computation. Hint: Number of wavefunctions are probably insufficient- try increasing the NUMBER OF KOHN-SHAM WAVEFUNCTIONS input parameter."));     
+      AssertThrow(false,ExcMessage("DFT-FE Error: Newton-Raphson iterations failed to converge in Fermi energy computation. Hint: Number of wavefunctions are probably insufficient- try increasing the NUMBER OF KOHN-SHAM WAVEFUNCTIONS input parameter."));
     }
 
   //set Fermi energy
@@ -225,4 +227,39 @@ void dftClass<FEOrder>::compute_fermienergy()
 
   if (dftParameters::verbosity>=2)
      pcout<< "Fermi energy                                     : "<< fermiEnergy<<std::endl;
+}
+//compute fermi energy constrained magnetization
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::compute_fermienergy_constraintMagnetization(const std::vector<std::vector<double>> & eigenValuesInput)
+{
+
+
+  int countUp =  numElectronsUp;
+  int countDown =   numElectronsDown;
+
+
+  std::vector<double> eigenValuesAllkPointsUp, eigenValuesAllkPointsDown;
+  for(int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
+    {
+      for(int statesIter = 0; statesIter < d_numEigenValues; ++statesIter)
+	{
+	  eigenValuesAllkPointsUp.push_back(eigenValuesInput[kPoint][statesIter]);
+	  eigenValuesAllkPointsDown.push_back(eigenValuesInput[kPoint][d_numEigenValues+statesIter]);
+	}
+    }
+
+  std::sort(eigenValuesAllkPointsUp.begin(),eigenValuesAllkPointsUp.end());
+  std::sort(eigenValuesAllkPointsDown.begin(),eigenValuesAllkPointsDown.end());
+
+  fermiEnergyUp = eigenValuesAllkPointsUp[countUp - 1] ;
+  fermiEnergyDown = eigenValuesAllkPointsDown[countDown - 1] ;
+  //
+  fermiEnergy = std::max(fermiEnergyUp, fermiEnergyDown) ;
+  //
+  if (dftParameters::verbosity==2)
+    {
+     pcout << "This is a constrained magnetization calculation " << std::endl ;
+     pcout<< "Fermi energy for spin up                                    : "<< fermiEnergyUp<<std::endl;
+     pcout<< "Fermi energy for spin down                                    : "<< fermiEnergyDown<<std::endl;
+    }
 }

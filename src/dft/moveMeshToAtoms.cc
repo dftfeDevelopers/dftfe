@@ -17,7 +17,9 @@
 //
 
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::moveMeshToAtoms(const Triangulation<3,3> & triangulationMove)
+void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
+					bool reuseClosestTriaVertices,
+					bool moveSubdivided)
 {
 
   meshMovementGaussianClass gaussianMove(mpi_communicator);
@@ -38,9 +40,24 @@ void dftClass<FEOrder>::moveMeshToAtoms(const Triangulation<3,3> & triangulation
 
   std::vector<Point<3>> closestTriaVertexToAtomsLocation;
   std::vector<Tensor<1,3,double> > dispClosestTriaVerticesToAtoms;
-  gaussianMove.findClosestVerticesToDestinationPoints(atomPoints,
-						      closestTriaVertexToAtomsLocation,
-						      dispClosestTriaVerticesToAtoms);
+
+
+  if(reuseClosestTriaVertices)
+    {
+      closestTriaVertexToAtomsLocation = d_closestTriaVertexToAtomsLocation;
+      dispClosestTriaVerticesToAtoms = d_dispClosestTriaVerticesToAtoms;
+    }
+  else
+    {
+      gaussianMove.findClosestVerticesToDestinationPoints(atomPoints,
+							  closestTriaVertexToAtomsLocation,
+							  dispClosestTriaVerticesToAtoms);
+    }
+
+  d_closestTriaVertexToAtomsLocation = closestTriaVertexToAtomsLocation;
+  d_dispClosestTriaVerticesToAtoms = dispClosestTriaVerticesToAtoms;
+
+
 
   //add control point locations and displacements corresponding to images
   for(unsigned int iImage=0;iImage <numberImageAtoms; iImage++)
@@ -64,8 +81,9 @@ void dftClass<FEOrder>::moveMeshToAtoms(const Triangulation<3,3> & triangulation
 
   const double gaussianConstant=0.5;
   const std::pair<bool,double> meshQualityMetrics=gaussianMove.moveMesh(closestTriaVertexToAtomsLocation,
-		                                                  dispClosestTriaVerticesToAtoms,
-			                                          gaussianConstant);
+									dispClosestTriaVerticesToAtoms,
+									gaussianConstant,
+									moveSubdivided);
 
   AssertThrow(!meshQualityMetrics.first,ExcMessage("Negative jacobian created after moving closest nodes to atoms. Suggestion: increase refinement near atoms"));
 

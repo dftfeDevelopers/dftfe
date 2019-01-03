@@ -13,13 +13,14 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Sambit Das 
+// @author Sambit Das
 //
 
 #ifdef USE_COMPLEX
 //compute stress contribution from nuclear self energy
 template<unsigned int FEOrder>
-void forceClass<FEOrder>::computeStressEself()
+void forceClass<FEOrder>::computeStressEself(const DoFHandler<3> & dofHandlerElectro,
+				             const vselfBinsManager<FEOrder> & vselfBinsManagerElectro)
 {
 #ifdef DEBUG
   double dummyTest=0;
@@ -27,23 +28,23 @@ void forceClass<FEOrder>::computeStressEself()
   Tensor<2,3,double> dummyTensor;
 #endif
   const std::vector<std::vector<double> > & atomLocations=dftPtr->atomLocations;
-  const std::vector<std::vector<double> > & imagePositions=dftPtr->d_imagePositions;
-  const std::vector<double> & imageCharges=dftPtr->d_imageCharges;
+  const std::vector<std::vector<double> > & imagePositions=dftPtr->d_imagePositionsTrunc;
+  const std::vector<double> & imageCharges=dftPtr->d_imageChargesTrunc;
   const unsigned int numberGlobalAtoms = atomLocations.size();
   //
   //First add configurational stress contribution from the volume integral
   //
   QGauss<C_DIM>  quadrature(C_num1DQuad<FEOrder>());
-  FEValues<C_DIM> feVselfValues (dftPtr->FE, quadrature, update_gradients | update_JxW_values);
+  FEValues<C_DIM> feVselfValues (dofHandlerElectro.get_fe(), quadrature, update_gradients | update_JxW_values);
   const unsigned int   numQuadPoints = quadrature.size();
-  const unsigned int numberBins=dftPtr->d_vselfBinsManager.getAtomIdsBins().size();
+  const unsigned int numberBins=vselfBinsManagerElectro.getAtomIdsBins().size();
 
   std::vector<Tensor<1,C_DIM,double> > gradVselfQuad(numQuadPoints);
 
   for(unsigned int iBin = 0; iBin < numberBins; ++iBin)
   {
-    const std::vector<DoFHandler<C_DIM>::active_cell_iterator> & cellsVselfBallDofHandler=d_cellsVselfBallsDofHandler[iBin];
-    const vectorType & iBinVselfField= dftPtr->d_vselfBinsManager.getVselfFieldBins()[iBin];
+    const std::vector<DoFHandler<C_DIM>::active_cell_iterator> & cellsVselfBallDofHandler=d_cellsVselfBallsDofHandlerElectro[iBin];
+    const vectorType & iBinVselfField= vselfBinsManagerElectro.getVselfFieldBins()[iBin];
     std::vector<DoFHandler<C_DIM>::active_cell_iterator>::const_iterator iter1;
     for (iter1 = cellsVselfBallDofHandler.begin(); iter1 != cellsVselfBallDofHandler.end(); ++iter1)
     {
@@ -63,20 +64,20 @@ void forceClass<FEOrder>::computeStressEself()
   //second add configurational stress contribution from the surface integral
   //
   QGauss<C_DIM-1>  faceQuadrature(C_num1DQuad<FEOrder>());
-  FEFaceValues<C_DIM> feVselfFaceValues (dftPtr->FE, faceQuadrature, update_gradients| update_JxW_values | update_normal_vectors | update_quadrature_points);
+  FEFaceValues<C_DIM> feVselfFaceValues (dofHandlerElectro.get_fe(), faceQuadrature, update_gradients| update_JxW_values | update_normal_vectors | update_quadrature_points);
   const unsigned int faces_per_cell=GeometryInfo<C_DIM>::faces_per_cell;
   const unsigned int   numFaceQuadPoints = faceQuadrature.size();
 
 
   for(unsigned int iBin = 0; iBin < numberBins; ++iBin)
   {
-    const std::map<DoFHandler<C_DIM>::active_cell_iterator,std::vector<unsigned int > >  & cellsVselfBallSurfacesDofHandler=d_cellFacesVselfBallSurfacesDofHandler[iBin];
-    const vectorType & iBinVselfField= dftPtr->d_vselfBinsManager.getVselfFieldBins()[iBin];
+    const std::map<DoFHandler<C_DIM>::active_cell_iterator,std::vector<unsigned int > >  & cellsVselfBallSurfacesDofHandler=d_cellFacesVselfBallSurfacesDofHandlerElectro[iBin];
+    const vectorType & iBinVselfField= vselfBinsManagerElectro.getVselfFieldBins()[iBin];
     std::map<DoFHandler<C_DIM>::active_cell_iterator,std::vector<unsigned int > >::const_iterator iter1;
     for (iter1 = cellsVselfBallSurfacesDofHandler.begin(); iter1 != cellsVselfBallSurfacesDofHandler.end(); ++iter1)
     {
 	DoFHandler<C_DIM>::active_cell_iterator cell=iter1->first;
-        const int closestAtomId= d_cellsVselfBallsClosestAtomIdDofHandler[iBin][cell->id()];
+        const int closestAtomId= d_cellsVselfBallsClosestAtomIdDofHandlerElectro[iBin][cell->id()];
         double closestAtomCharge;
 	Point<C_DIM> closestAtomLocation;
 	if(closestAtomId < numberGlobalAtoms)

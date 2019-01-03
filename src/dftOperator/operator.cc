@@ -18,6 +18,8 @@
 // @author Phani Motamarri
 //
 #include <operator.h>
+#include <linearAlgebraOperationsInternal.h>
+#include <dftParameters.h>
 
 //
 // Constructor.
@@ -100,7 +102,7 @@ namespace dftfe {
   }
 
   //
-  //Get overloaded constraint matrix object constructed using 1-component FE object 
+  //Get overloaded constraint matrix object constructed using 1-component FE object
   //
   dftUtils::constraintMatrixInfo * operatorDFTClass::getOverloadedConstraintMatrix() const
   {
@@ -122,5 +124,86 @@ namespace dftfe {
   {
     return d_mpi_communicator;
   }
+
+#ifdef DEAL_II_WITH_SCALAPACK
+
+  void operatorDFTClass::processGridOptionalELPASetup(const unsigned int na,
+    		                                      const unsigned int nev)
+  {
+
+
+       std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  processGrid;
+       linearAlgebraOperations::internal::createProcessGridSquareMatrix(getMPICommunicator(),
+                                               na,
+                                               processGrid);
+
+
+       d_scalapackBlockSize=std::min(dftParameters::scalapackBlockSize,
+	                     (na+processGrid->get_process_grid_rows()-1)
+                             /processGrid->get_process_grid_rows());
+#ifdef DFTFE_WITH_ELPA
+       if (dftParameters::useELPA)
+           linearAlgebraOperations::internal::setupELPAHandle(getMPICommunicator(),
+                                                              processGrid,
+							      na,
+							      na,
+							      d_scalapackBlockSize,
+							      d_elpaHandle);
+#endif
+
+       if (nev!=na)
+       {
+#ifdef DFTFE_WITH_ELPA
+	   if (dftParameters::useELPA)
+	       linearAlgebraOperations::internal::setupELPAHandle(getMPICommunicator(),
+								  processGrid,
+								  na,
+								  nev,
+								  d_scalapackBlockSize,
+								  d_elpaHandlePartialEigenVec);
+#endif
+
+	   std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  processGridValence;
+	   linearAlgebraOperations::internal::createProcessGridSquareMatrix(getMPICommunicator(),
+						   nev,
+						   processGridValence,
+						   true);
+
+
+	   d_scalapackBlockSizeValence=std::min(dftParameters::scalapackBlockSize,
+				 (nev+processGridValence->get_process_grid_rows()-1)
+				 /processGridValence->get_process_grid_rows());
+
+#ifdef DFTFE_WITH_ELPA
+	   if (dftParameters::useELPA)
+	       linearAlgebraOperations::internal::setupELPAHandle(getMPICommunicator(),
+								  processGridValence,
+								  nev,
+								  nev,
+								  d_scalapackBlockSizeValence,
+								  d_elpaHandleValence);
+#endif
+	   //std::cout<<"nblkvalence: "<<d_scalapackBlockSizeValence<<std::endl;
+       }
+
+       //std::cout<<"nblk: "<<d_scalapackBlockSize<<std::endl;
+
+  }
+
+#ifdef DFTFE_WITH_ELPA
+  void operatorDFTClass::elpaDeallocateHandles(const unsigned int na,
+		                    const unsigned int nev)
+  {
+       //elpa_autotune_deallocate(d_elpaAutoTuneHandle);
+       elpa_deallocate(d_elpaHandle);
+       if (na!=nev)
+       {
+	  elpa_deallocate(d_elpaHandlePartialEigenVec);
+	  elpa_deallocate(d_elpaHandleValence);
+       }
+
+  }
+#endif
+#endif
 
 }
