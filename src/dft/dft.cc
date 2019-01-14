@@ -74,6 +74,7 @@ namespace dftfe {
 #include "kohnShamEigenSolve.cc"
 #include "restart.cc"
 #include "moveAtoms.cc"
+#include "nscf.cc"
 #include "electrostaticHRefinedEnergy.cc"
 #include "electrostaticPRefinedEnergy.cc"
   //
@@ -367,14 +368,7 @@ namespace dftfe {
 
 
 #ifdef USE_COMPLEX
-    if(dftParameters::kPointDataFile == "")
       generateMPGrid();
-    else
-      {
-	AssertThrow(dftParameters::npool=1
-		    ,ExcMessage("DFT-FE Error: k-Point parallelization is not implemented for external k-point file"));
-	readkPointData();
-      }
 #else
     d_kPointCoordinates.resize(3,0.0);
     d_kPointWeights.resize(1,1.0);
@@ -1689,6 +1683,17 @@ namespace dftfe {
     if (dftParameters::writeDensitySolutionFields)
       outputDensity();
 
+
+#ifdef USE_COMPLEX
+    if( !(dftParameters::kPointDataFile == "") )
+      {
+       readkPointData();
+       initnscf(kohnShamDFTEigenOperator, phiTotalSolverProblem,dealiiCGSolver) ;
+       nscf(kohnShamDFTEigenOperator,subspaceIterationSolver) ;
+       writeBands() ;
+     }
+#endif
+
 #ifdef DFTFE_WITH_ELPA
     if (dftParameters::useELPA)
 	 kohnShamDFTEigenOperator.elpaDeallocateHandles(d_numEigenValues,
@@ -1820,6 +1825,53 @@ namespace dftfe {
 					       interBandGroupComm,
 					       "densityOutput");
 
+  }
+
+  template <unsigned int FEOrder>
+  void dftClass<FEOrder>::writeBands()
+  {
+  int numkPoints = (1+dftParameters::spinPolarized)*d_kPointWeights.size();
+  std::vector<double> eigenValuesFlattened ;
+  //
+  for (unsigned int kPoint = 0; kPoint < numkPoints; ++kPoint)
+      for(unsigned int iWave = 0; iWave < d_numEigenValues; ++iWave)
+	  eigenValuesFlattened.push_back(eigenValues[kPoint][iWave]) ;
+  //
+  //
+  //
+  int totkPoints = Utilities::MPI::sum(numkPoints, interpoolcomm);
+  std::vector<int> numkPointsArray(dftParameters::npool), mpi_offsets(dftParameters::npool, 0);
+  std::vector<double> eigenValuesFlattenedGlobal(totkPoints*d_numEigenValues,0.0);
+  //
+  MPI_Gather(&numkPoints,1,MPI_INT, &(numkPointsArray[0]),1, MPI_INT,0,interpoolcomm);
+  //
+  numkPointsArray[0] = d_numEigenValues * numkPointsArray[0] ;
+  for (unsigned int ipool=1; ipool < dftParameters::npool ; ++ipool)
+      {
+	numkPointsArray[ipool] =  d_numEigenValues * numkPointsArray[ipool] ;
+	mpi_offsets[ipool] = mpi_offsets[ipool-1] + numkPointsArray[ipool -1] ;
+      }
+  //
+  MPI_Gatherv(&(eigenValuesFlattened[0]), numkPoints*d_numEigenValues, MPI_DOUBLE, &(eigenValuesFlattenedGlobal[0]),&(numkPointsArray[0]), &(mpi_offsets[0]), MPI_DOUBLE, 0 ,interpoolcomm);
+  //
+  if (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) ==0)
+     {
+     FILE * pFile;
+     pFile = fopen ("bands.out","w");
+     fprintf (pFile, "%d %d\n", totkPoints, d_numEigenValues );
+     for (unsigned int kPoint = 0; kPoint < totkPoints/(1+dftParameters::spinPolarized); ++kPoint) 
+	 {
+	 for(unsigned int iWave = 0; iWave < d_numEigenValues; ++iWave)
+	    { 
+	    if (dftParameters::spinPolarized)	    
+		fprintf (pFile, "%d  %d   %g   %g\n",  kPoint, iWave, eigenValuesFlattenedGlobal[2*kPoint*d_numEigenValues+iWave], eigenValuesFlattenedGlobal[(2*kPoint+1)*d_numEigenValues+iWave]);
+            else
+		fprintf (pFile, "%d  %d %g\n",  kPoint, iWave, eigenValuesFlattenedGlobal[kPoint*d_numEigenValues+iWave]);
+	    }
+	}
+     }
+  MPI_Barrier(MPI_COMM_WORLD);
+  //
   }
 
   template class dftClass<1>;

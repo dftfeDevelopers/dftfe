@@ -35,6 +35,8 @@
 #include <vselfBinsManager.h>
 #include <dftParameters.h>
 #include <triangulationManager.h>
+#include <poissonSolverProblem.h>
+#include <dealiiLinearSolver.h>
 
 #include <interpolation.h>
 #include <xc.h>
@@ -461,6 +463,11 @@ namespace dftfe {
       void outputDensity();
 
       /**
+       *@brief write the KS eigen values for given BZ sampling/path
+       */
+      void writeBands();
+
+      /**
        *@brief Computes the volume of the domain
        */
       double computeVolume(const dealii::DoFHandler<3> & _dofHandler);
@@ -810,6 +817,15 @@ namespace dftfe {
       vectorType d_tempEigenVecPrev;
 
       /**
+      * @ nscf variables
+      */
+     bool scfConverged;
+     void nscf(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
+	      chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver);
+     void initnscf(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,poissonSolverProblem<FEOrder> & phiTotalSolverProblem,
+	      dealiiLinearSolver & dealiiCGSolver) ;
+
+      /**
        * @brief compute the maximum of the residual norm of the highest occupied state among all k points
        */
       double computeMaximumHighestOccupiedStateResidualNorm(const std::vector<std::vector<double> > & residualNormWaveFunctionsAllkPoints,
@@ -824,6 +840,13 @@ namespace dftfe {
 				     std::vector<double> & residualNormWaveFunctions,
 				     const bool isSpectrumSplit,
 				     const bool useMixedPrec);
+
+     void kohnShamEigenSpaceComputeNSCF(const unsigned int spinType,
+				    const unsigned int kPointIndex,
+				    kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
+				    chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver,
+				    std::vector<double>                            & residualNormWaveFunctions,
+				    unsigned int ipass) ;
 
       void computeResidualNorm(const std::vector<double> & eigenValuesTemp,
 			       kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,

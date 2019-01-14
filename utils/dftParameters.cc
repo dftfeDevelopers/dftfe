@@ -292,7 +292,7 @@ namespace dftParameters
 
 	prm.declare_entry("kPOINT RULE FILE", "",
 			  Patterns::Anything(),
-			  "[Developer] File specifying the k-Point rule to sample Brillouin zone. CAUTION: This option is recommended only for postprocessing, for example band structure calculation. To set k point rule for DFT solve use the Monkhorst-Pack (MP) grid generation.");
+			  "[Developer] File providing list of k points on which eigen values are to be computed from converged KS Hamiltonian. The first three columns specify the crystal coordinates of the k points. The fourth column provides weights of the corresponding points, which is currently not used. The eigen values are written on an output file bands.out");
 
 	prm.declare_entry("USE GROUP SYMMETRY", "false",
 			  Patterns::Bool(),
