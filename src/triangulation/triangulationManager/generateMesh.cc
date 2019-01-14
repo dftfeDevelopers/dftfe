@@ -195,6 +195,10 @@ namespace dftfe {
 	  catch(MappingQ1<3>::ExcTransformationFailed)
 	    {
 	    }
+
+          cellRefineFlag= Utilities::MPI::max((unsigned int) cellRefineFlag, interpoolcomm);
+	  cellRefineFlag= Utilities::MPI::max((unsigned int) cellRefineFlag, interBandGroupComm);
+
 	  //
 	  //set refine flags
 	  if(cellRefineFlag)
@@ -263,6 +267,7 @@ namespace dftfe {
 	    AssertThrow(parallelTriangulation.n_global_active_cells()==electrostaticsTriangulationForce.n_global_active_cells(),ExcMessage("Number of coarse mesh cells are different in electrostatics triangulation for force computation."));
 	  }
 
+	d_parallelTriaCurrentRefinement.clear();
 	//
 	//Multilayer refinement
 	//
@@ -294,6 +299,9 @@ namespace dftfe {
 		  {
 		    if (dftParameters::verbosity>=4)
 		      pcout<< "refinement in progress, level: "<< numLevels<<std::endl;
+
+                    d_parallelTriaCurrentRefinement.push_back(std::vector<bool>());
+		    parallelTriangulation.save_refine_flags(d_parallelTriaCurrentRefinement[numLevels]);
 
 		    parallelTriangulation.execute_coarsening_and_refinement();
 		    if(generateElectrostaticsTria)
@@ -462,7 +470,8 @@ namespace dftfe {
 	    AssertThrow(parallelTriangulation.n_global_active_cells()==electrostaticsTriangulationForce.n_global_active_cells(),ExcMessage("Number of coarse mesh cells are different in electrostatics triangulations for force computation."));
 	  }
 
-
+        d_parallelTriaCurrentRefinement.clear();
+        d_serialTriaCurrentRefinement.clear();
 
 	//
 	//Multilayer refinement
@@ -492,15 +501,22 @@ namespace dftfe {
 	    if (refineFlag)
 	      {
 
-		//First refine serial mesh
-		refineSerialMesh(cellIdToCellRefineFlagMapLocal,
-				 mpi_communicator,
-				 serialTriangulation) ;
-
 		if(numLevels<d_max_refinement_steps)
 		  {
 		    if (dftParameters::verbosity>=4)
 		      pcout<< "refinement in progress, level: "<< numLevels<<std::endl;
+
+                    d_serialTriaCurrentRefinement.push_back(std::vector<bool>());
+
+		    //First refine serial mesh
+		    refineSerialMesh(cellIdToCellRefineFlagMapLocal,
+				     mpi_communicator,
+				     serialTriangulation,
+				     d_serialTriaCurrentRefinement[numLevels]) ;
+
+
+                    d_parallelTriaCurrentRefinement.push_back(std::vector<bool>());
+		    parallelTriangulation.save_refine_flags(d_parallelTriaCurrentRefinement[numLevels]);
 
 		    parallelTriangulation.execute_coarsening_and_refinement();
 		    if(generateElectrostaticsTria)
@@ -641,7 +657,8 @@ namespace dftfe {
   void triangulationManager::refineSerialMesh
   (const std::map<dealii::CellId,unsigned int> & cellIdToCellRefineFlagMapLocal,
    const MPI_Comm &mpi_comm,
-   parallel::distributed::Triangulation<3>& serialTriangulation)
+   parallel::distributed::Triangulation<3>& serialTriangulation,
+   std::vector<bool> & serialTriaCurrentRefinement)
 
   {
     typename parallel::distributed::Triangulation<3>::active_cell_iterator cell, endc;
@@ -662,6 +679,7 @@ namespace dftfe {
 	    cell->set_refine_flag();
 	}
 
+    serialTriangulation.save_refine_flags(serialTriaCurrentRefinement);
     serialTriangulation.execute_coarsening_and_refinement();
   }
 

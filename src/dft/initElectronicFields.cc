@@ -197,20 +197,21 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
 
       initPsiAndRhoFromPreviousGroundStatePsi(eigenVectors);
 
+      //Create the full STL array
       for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
       {
-	//Create the full STL array
-	for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
-	{
-	  d_eigenVectorsFlattenedSTL[kPoint].resize(d_numEigenValues*matrix_free_data.get_vector_partitioner()->local_size(),
-		                                    dataTypes::number(0.0));
+	  d_eigenVectorsFlattenedSTL[kPoint].resize
+	      (d_numEigenValues*matrix_free_data.get_vector_partitioner()->local_size(),
+	       dataTypes::number(0.0));
 
 	 if (d_numEigenValuesRR!=d_numEigenValues)
-	 {
-	    d_eigenVectorsRotFracDensityFlattenedSTL[kPoint].resize(d_numEigenValuesRR*matrix_free_data.get_vector_partitioner()->local_size(),dataTypes::number(0.0));
-	 }
-	}
+	    d_eigenVectorsRotFracDensityFlattenedSTL[kPoint].resize
+		(d_numEigenValuesRR*matrix_free_data.get_vector_partitioner()->local_size()
+		 ,dataTypes::number(0.0));
+      }
 
+      for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+      {
 #ifdef USE_COMPLEX
 	 vectorTools::copySingleCompVecToFlattenedSTLVec
 		 (d_eigenVectorsFlattenedSTL[kPoint],
@@ -252,8 +253,7 @@ void dftClass<FEOrder>::updatePrevMeshDataStructures()
   //
   d_mesh.generateSerialAndParallelUnmovedPreviousMesh(atomLocations,
 						      d_imagePositions,
-						      d_domainBoundingVectors,
-						      false);
+						      d_domainBoundingVectors);
  if (dftParameters::verbosity>=4)
    dftUtils::printCurrentMemoryUsage(mpi_communicator,
 			  "Serial and parallel prev mesh generated");

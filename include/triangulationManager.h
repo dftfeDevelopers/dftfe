@@ -93,8 +93,7 @@ namespace dftfe  {
     void generateSerialAndParallelUnmovedPreviousMesh
       (const std::vector<std::vector<double> > & atomLocations,
        const std::vector<std::vector<double> > & imageAtomLocations,
-       const std::vector<std::vector<double> > & domainBoundingVectors,
-       const bool generateElectrostaticsTria);
+       const std::vector<std::vector<double> > & domainBoundingVectors);
 
 
     /** @brief generates the coarse meshes for restart.
@@ -296,7 +295,8 @@ namespace dftfe  {
      */
     void refineSerialMesh(const std::map<dealii::CellId,unsigned int> & cellIdToCellRefineFlagMapLocal,
 			  const MPI_Comm &mpi_comm,
-			  parallel::distributed::Triangulation<3>& serialTriangulation);
+			  parallel::distributed::Triangulation<3>& serialTriangulation,
+			  std::vector<bool> & serialTriaCurrentRefinement);
 
     /**
      * @brief internal function to serialize support triangulations. No solution data is attached to them
@@ -319,6 +319,9 @@ namespace dftfe  {
     parallel::distributed::Triangulation<3> d_triangulationElectrostaticsForce;
     parallel::distributed::Triangulation<3> d_serialTriangulationUnmoved;
     parallel::distributed::Triangulation<3> d_serialTriangulationUnmovedPrevious;
+
+    std::vector<std::vector<bool> > d_parallelTriaCurrentRefinement;
+    std::vector<std::vector<bool> > d_serialTriaCurrentRefinement;
 
 
     std::vector<std::vector<double> > d_atomPositions;
