@@ -77,7 +77,7 @@ namespace dftfe {
 
   }
 
-  void meshMovementClass::init(Triangulation<3,3> & triangulation, 
+  void meshMovementClass::init(Triangulation<3,3> & triangulation,
 			       const std::vector<std::vector<double> > & domainBoundingVectors)
   {
     d_domainBoundingVectors=domainBoundingVectors;
@@ -165,7 +165,7 @@ namespace dftfe {
     d_incrementalDisplacement = dealii::parallel::distributed::Vector<double>(d_locally_owned_dofs,
 									      ghost_indices,
 									      mpi_communicator);
-    
+
     d_incrementalDisplacement = 0.0;
 
     d_incrementalDisplacement.zero_out_ghosts();
@@ -292,21 +292,29 @@ namespace dftfe {
       if (dftParameters::verbosity>=4)
       pcout << "...Sanity check passed" << std::endl;
 
-    */  
+    */
     //print out mesh metrics
     typename Triangulation<3,3>::active_cell_iterator cell, endc;
     double minElemLength=1e+6;
+    double maxElemLength=0.0;
     cell = d_dofHandlerMoveMesh.get_triangulation().begin_active();
     endc = d_dofHandlerMoveMesh.get_triangulation().end();
-    for ( ; cell != endc; ++cell){
-      if (cell->is_locally_owned()){
-	if (cell->minimum_vertex_distance()<minElemLength) minElemLength = cell->minimum_vertex_distance();
+    for ( ; cell != endc; ++cell)
+    {
+      if (cell->is_locally_owned())
+      {
+	if (cell->minimum_vertex_distance()<minElemLength)
+	    minElemLength = cell->minimum_vertex_distance();
+
+        if (cell->minimum_vertex_distance()>maxElemLength)
+	    maxElemLength = cell->minimum_vertex_distance();
       }
     }
     minElemLength=Utilities::MPI::min(minElemLength, mpi_communicator);
+    maxElemLength=Utilities::MPI::max(maxElemLength, mpi_communicator);
 
     if (dftParameters::verbosity>=4)
-      pcout<< "Mesh movement quality metric, h_min: "<<minElemLength<<std::endl;
+      pcout<< "Mesh movement quality metric, h_min: "<<minElemLength<<", h_max: "<<maxElemLength<<std::endl;
 
     std::pair<bool,double> meshQualityMetrics;
     QGauss<3>  quadrature(2);
