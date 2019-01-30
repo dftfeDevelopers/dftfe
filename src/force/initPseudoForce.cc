@@ -432,7 +432,7 @@ void forceClass<FEOrder>::computeNonLocalProjectorKetTimesPsiTimesV(const std::v
 		     &numberWaveFunctions,
 		     &numberNodesPerElement,
 		     &alpha,
-		     &dftPtr->d_nonLocalProjectorElementMatrices[atomId][nonZeroElementMatrixId][kPointIndex][0],
+		     &dftPtr->d_nonLocalProjectorElementMatrices[atomId][nonZeroElementMatrixId][0],
 		     &numberNodesPerElement,
 		     &inputVectors[0],
 		     &numberNodesPerElement,

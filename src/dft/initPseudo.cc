@@ -1241,10 +1241,8 @@ void dftClass<FEOrder>::computeElementalProjectorKets()
 	  d_nonLocalProjectorElementMatricesTranspose[iAtom][iElemComp].resize(maxkPoints,
 									       std::vector<std::complex<double> > (numberNodesPerElement*numberPseudoWaveFunctions,0.0));
 #else
-	  d_nonLocalProjectorElementMatrices[iAtom][iElemComp].resize(maxkPoints,
-								      std::vector<double> (numberNodesPerElement*numberPseudoWaveFunctions,0.0));
-	  d_nonLocalProjectorElementMatricesTranspose[iAtom][iElemComp].resize(maxkPoints,
-								      std::vector<double> (numberNodesPerElement*numberPseudoWaveFunctions,0.0));
+	  d_nonLocalProjectorElementMatrices[iAtom][iElemComp].resize(numberNodesPerElement*numberPseudoWaveFunctions,0.0);
+	  d_nonLocalProjectorElementMatricesTranspose[iAtom][iElemComp].resize(numberNodesPerElement*numberPseudoWaveFunctions,0.0);
 #endif
 
 	  int iPsp = -1;
@@ -1403,9 +1401,9 @@ void dftClass<FEOrder>::computeElementalProjectorKets()
 			  tempReal += nonLocalProjectorBasisReal[maxkPoints*iQuadPoint+kPoint]*fe_values.shape_value(iNode,iQuadPoint)*fe_values.JxW(iQuadPoint);
 			  tempImag += nonLocalProjectorBasisImag[maxkPoints*iQuadPoint+kPoint]*fe_values.shape_value(iNode,iQuadPoint)*fe_values.JxW(iQuadPoint);
 #else
-			  d_nonLocalProjectorElementMatrices[iAtom][iElemComp][kPoint][numberNodesPerElement*iPseudoWave + iNode] += nonLocalProjectorBasisReal[maxkPoints*iQuadPoint+kPoint]*fe_values.shape_value(iNode,iQuadPoint)*fe_values.JxW(iQuadPoint);
+			  d_nonLocalProjectorElementMatrices[iAtom][iElemComp][numberNodesPerElement*iPseudoWave + iNode] += nonLocalProjectorBasisReal[maxkPoints*iQuadPoint+kPoint]*fe_values.shape_value(iNode,iQuadPoint)*fe_values.JxW(iQuadPoint);
 
-			d_nonLocalProjectorElementMatricesTranspose[iAtom][iElemComp][kPoint][numberPseudoWaveFunctions*iNode+iPseudoWave ] += nonLocalProjectorBasisReal[maxkPoints*iQuadPoint+kPoint]*fe_values.shape_value(iNode,iQuadPoint)*fe_values.JxW(iQuadPoint);
+			d_nonLocalProjectorElementMatricesTranspose[iAtom][iElemComp][numberPseudoWaveFunctions*iNode+iPseudoWave ] += nonLocalProjectorBasisReal[maxkPoints*iQuadPoint+kPoint]*fe_values.shape_value(iNode,iQuadPoint)*fe_values.JxW(iQuadPoint);
 #endif
 			}
 #ifdef USE_COMPLEX

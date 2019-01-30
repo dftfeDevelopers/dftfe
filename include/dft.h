@@ -743,7 +743,7 @@ namespace dftfe {
       /// layout for every nonLocalHamiltionan times wavefunction computation
       dealii::parallel::distributed::Vector<std::complex<double> >  d_projectorKetTimesVectorParFlattened;
 #else
-      std::vector<std::vector<std::vector<std::vector<double> > > > d_nonLocalProjectorElementMatrices,d_nonLocalProjectorElementMatricesConjugate,d_nonLocalProjectorElementMatricesTranspose;
+      std::vector<std::vector<std::vector<double> > > d_nonLocalProjectorElementMatrices,d_nonLocalProjectorElementMatricesConjugate,d_nonLocalProjectorElementMatricesTranspose;
 
 
       std::vector<dealii::parallel::distributed::Vector<double> > d_projectorKetTimesVectorPar;
