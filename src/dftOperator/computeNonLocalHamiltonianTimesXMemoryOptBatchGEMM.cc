@@ -280,7 +280,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesXBatchGEM
 		     &alpha,
 		     &cellWaveFunctionMatrix[0],
 		     &numberWaveFunctions,
-		     &dftPtr->d_nonLocalProjectorElementMatrices[atomId][nonZeroElementMatrixId][d_kPointIndex][0],
+		     &dftPtr->d_nonLocalProjectorElementMatrices[atomId][nonZeroElementMatrixId][0],
 		     &d_numberNodesPerElement,
 		     &beta,
 		     &projectorKetTimesVector[atomId][0],
@@ -370,7 +370,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesXBatchGEM
 	    cellProjectorKetTimesVectorMatrixBatch[iElemComp]
 		=&projectorKetTimesVector[atomId][0];
 	    cellNonLocalProjectorKetBatch[iElemComp]
-		=&dftPtr->d_nonLocalProjectorElementMatricesTranspose[atomId][iElemComp][d_kPointIndex][0];
+		=&dftPtr->d_nonLocalProjectorElementMatricesTranspose[atomId][iElemComp][0];
 	}
 
         dgemm_batch_(&transA1,

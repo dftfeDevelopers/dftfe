@@ -67,6 +67,9 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
   d_nonLocalProjectorElementMatricesConjugate.resize(numberNonLocalAtoms);
   d_nonLocalProjectorElementMatricesTranspose.resize(numberNonLocalAtoms);
 
+  std::vector<double> nonLocalProjectorBasisReal(maxkPoints*numberQuadraturePoints,0.0);
+  std::vector<double> nonLocalProjectorBasisImag(maxkPoints*numberQuadraturePoints,0.0);
+
   int cumulativeWaveSplineId = 0;
   int waveFunctionId;
   //
@@ -123,12 +126,23 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
 	  d_nonLocalProjectorElementMatricesTranspose[iAtom][iElemComp].resize(maxkPoints,
 									       std::vector<std::complex<double> > (numberNodesPerElement*numberPseudoWaveFunctions,0.0));
 
+          std::vector<std::vector<std::complex<double> > > & nonLocalProjectorElementMatricesAtomElem=d_nonLocalProjectorElementMatrices[iAtom][iElemComp];
+
+	  std::vector<std::vector<std::complex<double> > > & nonLocalProjectorElementMatricesConjugateAtomElem=d_nonLocalProjectorElementMatricesConjugate[iAtom][iElemComp];
+
+	  std::vector<std::vector<std::complex<double> > > & nonLocalProjectorElementMatricesTransposeAtomElem=d_nonLocalProjectorElementMatricesTranspose[iAtom][iElemComp];
 
 #else
-	  d_nonLocalProjectorElementMatrices[iAtom][iElemComp].resize(maxkPoints,
-								      std::vector<double> (numberNodesPerElement*numberPseudoWaveFunctions,0.0));
-	  d_nonLocalProjectorElementMatricesTranspose[iAtom][iElemComp].resize(maxkPoints,
-								      std::vector<double> (numberNodesPerElement*numberPseudoWaveFunctions,0.0));
+	  d_nonLocalProjectorElementMatrices[iAtom][iElemComp].resize(numberNodesPerElement*numberPseudoWaveFunctions,0.0);
+	  d_nonLocalProjectorElementMatricesTranspose[iAtom][iElemComp].resize(numberNodesPerElement*numberPseudoWaveFunctions,0.0);
+
+          std::vector<double> & nonLocalProjectorElementMatricesAtomElem
+	      =d_nonLocalProjectorElementMatrices[iAtom][iElemComp];
+
+
+          std::vector<double> & nonLocalProjectorElementMatricesTransposeAtomElem
+	      =d_nonLocalProjectorElementMatricesTranspose[iAtom][iElemComp];
+
 
 #endif
 
@@ -150,8 +164,8 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
 	      lTemp = lQuantumNumber;
 
 
-	      std::vector<double> nonLocalProjectorBasisReal(maxkPoints*numberQuadraturePoints,0.0);
-	      std::vector<double> nonLocalProjectorBasisImag(maxkPoints*numberQuadraturePoints,0.0);
+	      std::fill(nonLocalProjectorBasisReal.begin(),nonLocalProjectorBasisReal.end(),0.0);
+	      std::fill(nonLocalProjectorBasisImag.begin(),nonLocalProjectorBasisImag.end(),0.0);
 
 	      double nlpValue = 0.0;
 	      for(int iQuadPoint = 0; iQuadPoint < numberQuadraturePoints; ++iQuadPoint)
@@ -259,28 +273,33 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
 		      double tempImag = 0;
 		      for(int iQuadPoint = 0; iQuadPoint < numberQuadraturePoints; ++iQuadPoint)
 			{
+			  const double shapeval=fe_values.shape_value(iNode,iQuadPoint);
+			  const double jxw=fe_values.JxW(iQuadPoint);
 #ifdef USE_COMPLEX
-			  tempReal += nonLocalProjectorBasisReal[maxkPoints*iQuadPoint+kPoint]*fe_values.shape_value(iNode,iQuadPoint)*fe_values.JxW(iQuadPoint);
-			  tempImag += nonLocalProjectorBasisImag[maxkPoints*iQuadPoint+kPoint]*fe_values.shape_value(iNode,iQuadPoint)*fe_values.JxW(iQuadPoint);
+			  tempReal += nonLocalProjectorBasisReal[maxkPoints*iQuadPoint+kPoint]*shapeval*jxw;
+			  tempImag += nonLocalProjectorBasisImag[maxkPoints*iQuadPoint+kPoint]*shapeval*jxw;
 #else
-			  d_nonLocalProjectorElementMatrices[iAtom][iElemComp][kPoint][numberNodesPerElement*iPseudoWave + iNode] += nonLocalProjectorBasisReal[maxkPoints*iQuadPoint+kPoint]*fe_values.shape_value(iNode,iQuadPoint)*fe_values.JxW(iQuadPoint);
 
-			  d_nonLocalProjectorElementMatricesTranspose[iAtom][iElemComp][kPoint]
+			  nonLocalProjectorElementMatricesAtomElem
+			      [numberNodesPerElement*iPseudoWave + iNode]
+			      += nonLocalProjectorBasisReal[maxkPoints*iQuadPoint]*shapeval*jxw;
+
+			  nonLocalProjectorElementMatricesTransposeAtomElem
 			      [numberPseudoWaveFunctions*iNode+iPseudoWave]
-			      += nonLocalProjectorBasisReal[maxkPoints*iQuadPoint+kPoint]*fe_values.shape_value(iNode,iQuadPoint)*fe_values.JxW(iQuadPoint);
+			      += nonLocalProjectorBasisReal[maxkPoints*iQuadPoint]*shapeval*jxw;
 
 #endif
 			}
 #ifdef USE_COMPLEX
-		      d_nonLocalProjectorElementMatrices[iAtom][iElemComp][kPoint][numberNodesPerElement*iPseudoWave + iNode].real(tempReal);
-		      d_nonLocalProjectorElementMatrices[iAtom][iElemComp][kPoint][numberNodesPerElement*iPseudoWave + iNode].imag(tempImag);
+		        nonLocalProjectorElementMatricesAtomElem[kPoint][numberNodesPerElement*iPseudoWave + iNode].real(tempReal);
+		        nonLocalProjectorElementMatricesAtomElem[kPoint][numberNodesPerElement*iPseudoWave + iNode].imag(tempImag);
 
-		      d_nonLocalProjectorElementMatricesConjugate[iAtom][iElemComp][kPoint][numberNodesPerElement*iPseudoWave + iNode].real(tempReal);
-		      d_nonLocalProjectorElementMatricesConjugate[iAtom][iElemComp][kPoint][numberNodesPerElement*iPseudoWave + iNode].imag(-tempImag);
+		        nonLocalProjectorElementMatricesConjugateAtomElem[kPoint][numberNodesPerElement*iPseudoWave + iNode].real(tempReal);
+		        nonLocalProjectorElementMatricesConjugateAtomElem[kPoint][numberNodesPerElement*iPseudoWave + iNode].imag(-tempImag);
 
-		      d_nonLocalProjectorElementMatricesTranspose[iAtom][iElemComp][kPoint]
+		        nonLocalProjectorElementMatricesTransposeAtomElem[kPoint]
 			  [numberPseudoWaveFunctions*iNode+iPseudoWave].real(tempReal);
-		      d_nonLocalProjectorElementMatricesTranspose[iAtom][iElemComp][kPoint]
+		        nonLocalProjectorElementMatricesTransposeAtomElem[kPoint]
 			  [numberPseudoWaveFunctions*iNode+iPseudoWave].imag(tempImag);
 
 #endif
