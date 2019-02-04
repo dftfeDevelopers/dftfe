@@ -125,7 +125,7 @@ namespace dftfe {
     int error;
 
     if (elpa_init(20180525) != ELPA_OK) {
-	 fprintf(stderr, "Error: ELPA API version not supported");
+	 fprintf(stderr, "Error: ELPA API version not supported. Use API version 20180525.");
 	 exit(1);
     }
 #endif
