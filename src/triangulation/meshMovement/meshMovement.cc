@@ -386,7 +386,14 @@ namespace dftfe {
     std::vector<bool> isPeriodic(3,false);
     isPeriodic[0]=dftParameters::periodicX;isPeriodic[1]=dftParameters::periodicY;isPeriodic[2]=dftParameters::periodicZ;
 
-    for (unsigned int idest=0;idest <destinationPoints.size(); idest++){
+    dealii::BoundingBox<3> boundingBox=dealii::GridTools::compute_bounding_box(d_dofHandlerMoveMesh.get_triangulation());
+    const std::pair< dealii::Point< 3,double >, dealii::Point<3, double > > & boundary_points
+	      =boundingBox.get_boundary_points();
+    const dealii::Point<3,double> boxCenter=(boundary_points.first + boundary_points.second)/2.0;
+    const double boxSphereRadius= boundary_points.first.distance(boxCenter);
+
+    for (unsigned int idest=0;idest <destinationPoints.size(); idest++)
+    {
 
       std::vector<bool> isDestPointOnPeriodicSurface(3,false);
 
@@ -406,67 +413,76 @@ namespace dftfe {
       double minDistance=1e+6;
       Point<3> closestTriaVertexLocation;
 
+      bool isDestPointConsidered=true;
+      if (destinationPoints[idest].distance(boxCenter)>1.2*boxSphereRadius)
+	isDestPointConsidered=false;
+
       std::vector<bool> vertex_touched(d_dofHandlerMoveMesh.get_triangulation().n_vertices(),
                                        false);
       DoFHandler<3>::active_cell_iterator
 	cell = d_dofHandlerMoveMesh.begin_active(),
 	endc = d_dofHandlerMoveMesh.end();
-      for (; cell!=endc; ++cell) {
-	if (cell->is_locally_owned()){
-	  for (unsigned int i=0; i<vertices_per_cell; ++i){
-            const unsigned global_vertex_no = cell->vertex_index(i);
 
-	    if (vertex_touched[global_vertex_no])
-	      continue;
-	    vertex_touched[global_vertex_no]=true;
-
-	    if((d_constraintsMoveMesh.is_constrained(cell->vertex_dof_index(i,0))
-		&& !d_constraintsMoveMesh.is_identity_constrained(cell->vertex_dof_index(i,0)))
-	       || !d_locally_owned_dofs.is_element(cell->vertex_dof_index(i,0))){
-	      continue;
-	    }
-
-	    Point<C_DIM> nodalCoor = cell->vertex(i);
-            std::vector<bool> isNodeOnPeriodicSurface(3,false);
-
-	    bool isNodeConsidered=true;
-
-	    if (isDestPointOnPeriodicSurface[0]
-		|| isDestPointOnPeriodicSurface[1]
-		|| isDestPointOnPeriodicSurface[2])
+      if (isDestPointConsidered)
+	  for (; cell!=endc; ++cell)
+	  {
+	    if (cell->is_locally_owned())
+	    {
+	      for (unsigned int i=0; i<vertices_per_cell; ++i)
 	      {
+		const unsigned global_vertex_no = cell->vertex_index(i);
 
-		std::vector<double> nodeFracCoords= meshMovementUtils::getFractionalCoordinates(latticeVectorsFlattened,
-												nodalCoor,                                                                                                        corner);
-		for (int idim=0; idim<3; idim++)
+		if (vertex_touched[global_vertex_no])
+		  continue;
+		vertex_touched[global_vertex_no]=true;
+
+		if((d_constraintsMoveMesh.is_constrained(cell->vertex_dof_index(i,0))
+		    && !d_constraintsMoveMesh.is_identity_constrained(cell->vertex_dof_index(i,0)))
+		   || !d_locally_owned_dofs.is_element(cell->vertex_dof_index(i,0))){
+		  continue;
+		}
+
+		Point<C_DIM> nodalCoor = cell->vertex(i);
+		std::vector<bool> isNodeOnPeriodicSurface(3,false);
+
+		bool isNodeConsidered=true;
+
+		if (isDestPointOnPeriodicSurface[0]
+		    || isDestPointOnPeriodicSurface[1]
+		    || isDestPointOnPeriodicSurface[2])
 		  {
-		    if ((std::fabs(nodeFracCoords[idim]-0.0) <1e-5/latticeVectorsMagnitudes[idim]
-			 || std::fabs(nodeFracCoords[idim]-1.0) <1e-5/latticeVectorsMagnitudes[idim])
-			&& isPeriodic[idim]==true)
-		      isNodeOnPeriodicSurface[idim]=true;
+
+		    std::vector<double> nodeFracCoords= meshMovementUtils::getFractionalCoordinates(latticeVectorsFlattened,
+												    nodalCoor,                                                                                                        corner);
+		    for (int idim=0; idim<3; idim++)
+		      {
+			if ((std::fabs(nodeFracCoords[idim]-0.0) <1e-5/latticeVectorsMagnitudes[idim]
+			     || std::fabs(nodeFracCoords[idim]-1.0) <1e-5/latticeVectorsMagnitudes[idim])
+			    && isPeriodic[idim]==true)
+			  isNodeOnPeriodicSurface[idim]=true;
+		      }
+		    isNodeConsidered=false;
+		    //std::cout<< "nodeFracCoords: "<< nodeFracCoords[0] << "," <<nodeFracCoords[1] <<"," <<nodeFracCoords[2]<<std::endl;
+		    if ( (isDestPointOnPeriodicSurface[0]==isNodeOnPeriodicSurface[0])
+			 && (isDestPointOnPeriodicSurface[1]==isNodeOnPeriodicSurface[1])
+			 && (isDestPointOnPeriodicSurface[2]==isNodeOnPeriodicSurface[2])){
+		      isNodeConsidered=true;
+		      //std::cout<< "nodeFracCoords: "<< nodeFracCoords[0] << "," <<nodeFracCoords[1] <<"," <<nodeFracCoords[2]<<std::endl;
+		    }
 		  }
-		isNodeConsidered=false;
-		//std::cout<< "nodeFracCoords: "<< nodeFracCoords[0] << "," <<nodeFracCoords[1] <<"," <<nodeFracCoords[2]<<std::endl;
-		if ( (isDestPointOnPeriodicSurface[0]==isNodeOnPeriodicSurface[0])
-	             && (isDestPointOnPeriodicSurface[1]==isNodeOnPeriodicSurface[1])
-                     && (isDestPointOnPeriodicSurface[2]==isNodeOnPeriodicSurface[2])){
-		  isNodeConsidered=true;
-		  //std::cout<< "nodeFracCoords: "<< nodeFracCoords[0] << "," <<nodeFracCoords[1] <<"," <<nodeFracCoords[2]<<std::endl;
+
+		if (!isNodeConsidered)
+		  continue;
+
+		const double distance=(nodalCoor-destinationPoints[idest]).norm();
+
+		if (distance < minDistance){
+		  minDistance=distance;
+		  closestTriaVertexLocation=nodalCoor;
 		}
 	      }
-
-	    if (!isNodeConsidered)
-	      continue;
-
-            const double distance=(nodalCoor-destinationPoints[idest]).norm();
-
-	    if (distance < minDistance){
-	      minDistance=distance;
-	      closestTriaVertexLocation=nodalCoor;
 	    }
 	  }
-	}
-      }
       const double globalMinDistance=Utilities::MPI::min(minDistance, mpi_communicator);
 
       //std::cout << "minDistance: "<< minDistance << "globalMinDistance: "<<globalMinDistance << " closest vertex location: "<< closestTriaVertexLocation <<std::endl;

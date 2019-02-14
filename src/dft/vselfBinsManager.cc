@@ -178,6 +178,8 @@ namespace dftfe
 			                 const std::vector<std::vector<double> > & imagePositions,
 				         const std::vector<int> & imageIds,
 		                         const double radiusAtomBall,
+					 const dealii::Point<3,double> & boundingBoxCenter,
+					 const double boundingBoxSphereRadius,
 			                 const unsigned int n_mpi_processes,
 			                 const MPI_Comm & mpi_communicator)
 	{
@@ -211,6 +213,8 @@ namespace dftfe
 		  atomCoor[2] = imagePositions[iAtom-numberGlobalAtoms][2];
 		}
 
+	      if (atomCoor.distance(boundingBoxCenter)>1.2*(radiusAtomBall+boundingBoxSphereRadius))
+		  continue;
 	      // std::cout<<"Atom Coor: "<<atomCoor[0]<<" "<<atomCoor[1]<<" "<<atomCoor[2]<<std::endl;
 
 	      dealii::DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),endc = dofHandler.end();
@@ -414,6 +418,13 @@ namespace dftfe
       const unsigned int vertices_per_cell=dealii::GeometryInfo<3>::vertices_per_cell;
       const unsigned int dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
 
+
+      dealii::BoundingBox<3> boundingBox=dealii::GridTools::compute_bounding_box(dofHandler.get_triangulation());
+      const std::pair< dealii::Point< 3,double >, dealii::Point<3, double > > & boundary_points
+	      =boundingBox.get_boundary_points();
+      const dealii::Point<3,double> boxCenter=(boundary_points.first + boundary_points.second)/2.0;
+      const double boxSphereRadius= boundary_points.first.distance(boxCenter);
+
       std::map<dealii::types::global_dof_index, dealii::Point<3> > supportPoints;
       dealii::DoFTools::map_dofs_to_support_points(dealii::MappingQ1<3,3>(), dofHandler, supportPoints);
 
@@ -443,6 +454,8 @@ namespace dftfe
 								    imagePositions,
 								    imageIds,
 								    radiusAtomBallAdaptive,
+								    boxCenter,
+								    boxSphereRadius,
 								    n_mpi_processes,
 								    mpi_communicator);
 	  while (check!=0 && radiusAtomBallAdaptive>=1.0)
@@ -455,6 +468,8 @@ namespace dftfe
 							   imagePositions,
 							   imageIds,
 							   radiusAtomBallAdaptive,
+							   boxCenter,
+							   boxSphereRadius,
 							   n_mpi_processes,
 							   mpi_communicator);
 	  }
@@ -488,6 +503,8 @@ namespace dftfe
 									  imagePositions,
 									  imageIds,
 									  radiusAtomBallAdaptive,
+									  boxCenter,
+									  boxSphereRadius,
 									  n_mpi_processes,
 									  mpi_communicator);
 	  std::string message;
