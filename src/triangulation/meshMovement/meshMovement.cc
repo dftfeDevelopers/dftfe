@@ -386,11 +386,7 @@ namespace dftfe {
     std::vector<bool> isPeriodic(3,false);
     isPeriodic[0]=dftParameters::periodicX;isPeriodic[1]=dftParameters::periodicY;isPeriodic[2]=dftParameters::periodicZ;
 
-    dealii::BoundingBox<3> boundingBox=dealii::GridTools::compute_bounding_box(d_dofHandlerMoveMesh.get_triangulation());
-    const std::pair< dealii::Point< 3,double >, dealii::Point<3, double > > & boundary_points
-	      =boundingBox.get_boundary_points();
-    const dealii::Point<3,double> boxCenter=(boundary_points.first + boundary_points.second)/2.0;
-    const double boxSphereRadius= boundary_points.first.distance(boxCenter);
+    dealii::BoundingBox<3> boundingBoxTria=dealii::GridTools::compute_bounding_box(d_dofHandlerMoveMesh.get_triangulation());
 
     for (unsigned int idest=0;idest <destinationPoints.size(); idest++)
     {
@@ -413,9 +409,17 @@ namespace dftfe {
       double minDistance=1e+6;
       Point<3> closestTriaVertexLocation;
 
-      bool isDestPointConsidered=true;
-      if (destinationPoints[idest].distance(boxCenter)>1.2*boxSphereRadius)
-	isDestPointConsidered=false;
+      const double sphereRad=2.0;
+      dealii::Tensor<1,3,double> tempDisp;
+      tempDisp[0]=sphereRad;
+      tempDisp[1]=sphereRad;
+      tempDisp[2]=sphereRad;
+      std::pair< dealii::Point<3,double >,dealii::Point<3, double>> boundaryPoints;
+      boundaryPoints.first=destinationPoints[idest]-tempDisp;
+      boundaryPoints.second=destinationPoints[idest]+tempDisp;
+      dealii::BoundingBox<3> boundingBoxAroundPoint(boundaryPoints);
+
+      const bool isDestPointConsidered= (boundingBoxTria.get_neighbor_type(boundingBoxAroundPoint)==NeighborType::not_neighbors)?false:true;
 
       std::vector<bool> vertex_touched(d_dofHandlerMoveMesh.get_triangulation().n_vertices(),
                                        false);
