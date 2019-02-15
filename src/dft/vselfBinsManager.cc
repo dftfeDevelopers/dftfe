@@ -180,8 +180,10 @@ namespace dftfe
 		                         const double radiusAtomBall,
 					 const dealii::BoundingBox<3> & boundingBoxTria,
 			                 const unsigned int n_mpi_processes,
-			                 const MPI_Comm & mpi_communicator)
+			                 const MPI_Comm & mpi_communicator,
+					 dealii::TimerOutput & computing_timer)
 	{
+	  computing_timer.enter_section("create bins: find nodes inside atom balls");
 	  interactionMap.clear();
           const unsigned int numberImageCharges = imageIds.size();
           const unsigned int numberGlobalAtoms = atomLocations.size();
@@ -265,6 +267,7 @@ namespace dftfe
 
 	    }//atom loop
 
+	  computing_timer.exit_section("create bins: find nodes inside atom balls");
 	  //
 	  //exchange atomToGlobalNodeIdMap across all processors
 	  //
@@ -273,6 +276,7 @@ namespace dftfe
 	  //					   n_mpi_processes,
 	  //					   mpi_communicator);
 
+	  computing_timer.enter_section("create bins: local interaction maps");
 	  unsigned int ilegalInteraction=0;
 
 	  for(unsigned int iAtom = 0; iAtom < totalNumberAtoms; ++iAtom)
@@ -374,14 +378,16 @@ namespace dftfe
 		    break;
 
 	    }//end of iAtom loop
-
+            computing_timer.exit_section("create bins: local interaction maps");
 	    if (dealii::Utilities::MPI::sum(ilegalInteraction, mpi_communicator)>0)
 	       return 1;
 
+	    computing_timer.enter_section("create bins: exchange interaction maps");
 	    internal::exchangeInteractionMaps(totalNumberAtoms,
 	  			              interactionMap,
 	  				      n_mpi_processes,
 	  				      mpi_communicator);
+	    computing_timer.exit_section("create bins: exchange interaction maps");
 	    return 0;
 	}
     }
@@ -409,6 +415,15 @@ namespace dftfe
 			                   const double radiusAtomBall)
 
     {
+      dealii::ConditionalOStream pcout (std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
+      dealii::TimerOutput computing_timer(mpi_communicator,
+	                             pcout,
+                                     dftParameters::reproducible_output ||
+                                     dftParameters::verbosity<4 ? dealii::TimerOutput::never:
+                                     dealii::TimerOutput::summary,dealii::TimerOutput::wall_times);
+
+      computing_timer.enter_section("create bins: initial overheads");
+
       d_bins.clear();
       d_boundaryFlag.clear();
       d_boundaryFlagOnlyChargeId.clear();
@@ -441,6 +456,8 @@ namespace dftfe
       dealii::DoFTools::make_hanging_node_constraints(dofHandler, onlyHangingNodeConstraints);
       onlyHangingNodeConstraints.close();
 
+      computing_timer.exit_section("create bins: initial overheads");
+
       //create interaction maps by finding the intersection of global NodeIds of each atom
       std::map<int,std::set<int> > interactionMap;
 
@@ -460,7 +477,8 @@ namespace dftfe
 								    radiusAtomBallAdaptive,
 								    boundingBoxTria,
 								    n_mpi_processes,
-								    mpi_communicator);
+								    mpi_communicator,
+								    computing_timer);
 	  while (check!=0 && radiusAtomBallAdaptive>=1.0)
 	  {
 	      radiusAtomBallAdaptive-=0.25;
@@ -473,7 +491,8 @@ namespace dftfe
 							   radiusAtomBallAdaptive,
 							   boundingBoxTria,
 							   n_mpi_processes,
-							   mpi_communicator);
+							   mpi_communicator,
+							   computing_timer);
 	  }
 
 	  std::string message;
@@ -507,7 +526,8 @@ namespace dftfe
 									  radiusAtomBallAdaptive,
 									  boundingBoxTria,
 									  n_mpi_processes,
-									  mpi_communicator);
+									  mpi_communicator,
+									  computing_timer);
 	  std::string message;
 	  if (check==1)
 	      message="DFT-FE Error: Atom and its own image is interacting decrease radius";
@@ -517,6 +537,7 @@ namespace dftfe
 	  AssertThrow(check==0,dealii::ExcMessage(message));
       }
 
+      computing_timer.enter_section("create bins: put in bins");
       std::map<int,std::set<int> >::iterator iter;
 
       //
@@ -575,6 +596,10 @@ namespace dftfe
       const int numberBins = binCount + 1;
       if (dftParameters::verbosity>=2)
 	pcout<<"number bins: "<<numberBins<<std::endl;
+
+      computing_timer.exit_section("create bins: put in bins");
+
+      computing_timer.enter_section("create bins: set boundary conditions");
 
       std::vector<std::vector<int> > imageIdsInBins(numberBins);
       d_boundaryFlag.resize(numberBins);
@@ -906,7 +931,12 @@ namespace dftfe
 
 	}//bin loop
 
+        computing_timer.exit_section("create bins: set boundary conditions");
+
+	computing_timer.enter_section("create bins: sanity check");
         createAtomBinsSanityCheck(dofHandler,onlyHangingNodeConstraints);
+	computing_timer.exit_section("create bins: sanity check");
+
         locateAtomsInBins(dofHandler);
 
       return;

@@ -21,6 +21,12 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
 					bool reuseClosestTriaVertices,
 					bool moveSubdivided)
 {
+  dealii::ConditionalOStream pcout_movemesh (std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
+  dealii::TimerOutput timer_movemesh(mpi_communicator,
+	                             pcout_movemesh,
+                                     dftParameters::reproducible_output ||
+                                     dftParameters::verbosity<4 ? dealii::TimerOutput::never:
+                                     dealii::TimerOutput::summary,dealii::TimerOutput::wall_times);
 
   meshMovementGaussianClass gaussianMove(mpi_communicator);
   gaussianMove.init(triangulationMove,d_domainBoundingVectors);
@@ -41,7 +47,7 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
   std::vector<Point<3>> closestTriaVertexToAtomsLocation;
   std::vector<Tensor<1,3,double> > dispClosestTriaVerticesToAtoms;
 
-
+  timer_movemesh.enter_section("move mesh to atoms: find closest vertices");
   if(reuseClosestTriaVertices)
     {
       closestTriaVertexToAtomsLocation = d_closestTriaVertexToAtomsLocation;
@@ -53,12 +59,13 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
 							  closestTriaVertexToAtomsLocation,
 							  dispClosestTriaVerticesToAtoms);
     }
+  timer_movemesh.exit_section("move mesh to atoms: find closest vertices");
 
   d_closestTriaVertexToAtomsLocation = closestTriaVertexToAtomsLocation;
   d_dispClosestTriaVerticesToAtoms = dispClosestTriaVerticesToAtoms;
 
 
-
+  timer_movemesh.enter_section("move mesh to atoms: move mesh");
   //add control point locations and displacements corresponding to images
   for(unsigned int iImage=0;iImage <numberImageAtoms; iImage++)
   {
@@ -84,6 +91,7 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
 									dispClosestTriaVerticesToAtoms,
 									gaussianConstant,
 									moveSubdivided);
+  timer_movemesh.exit_section("move mesh to atoms: move mesh");
 
   AssertThrow(!meshQualityMetrics.first,ExcMessage("Negative jacobian created after moving closest nodes to atoms. Suggestion: increase refinement near atoms"));
 
