@@ -178,6 +178,7 @@ namespace dftfe
 			                 const std::vector<std::vector<double> > & imagePositions,
 				         const std::vector<int> & imageIds,
 		                         const double radiusAtomBall,
+					 const dealii::BoundingBox<3> & boundingBoxTria,
 			                 const unsigned int n_mpi_processes,
 			                 const MPI_Comm & mpi_communicator)
 	{
@@ -211,6 +212,17 @@ namespace dftfe
 		  atomCoor[2] = imagePositions[iAtom-numberGlobalAtoms][2];
 		}
 
+	      dealii::Tensor<1,3,double> tempDisp;
+	      tempDisp[0]=radiusAtomBall;
+	      tempDisp[1]=radiusAtomBall;
+	      tempDisp[2]=radiusAtomBall;
+	      std::pair< dealii::Point<3,double >,dealii::Point<3, double>> boundaryPoints;
+	      boundaryPoints.first=atomCoor-tempDisp;
+	      boundaryPoints.second=atomCoor+tempDisp;
+	      dealii::BoundingBox<3> boundingBoxAroundPoint(boundaryPoints);
+
+	      if(boundingBoxTria.get_neighbor_type(boundingBoxAroundPoint)==dealii::NeighborType::not_neighbors)
+                 continue;
 	      // std::cout<<"Atom Coor: "<<atomCoor[0]<<" "<<atomCoor[1]<<" "<<atomCoor[2]<<std::endl;
 
 	      dealii::DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(),endc = dofHandler.end();
@@ -414,6 +426,9 @@ namespace dftfe
       const unsigned int vertices_per_cell=dealii::GeometryInfo<3>::vertices_per_cell;
       const unsigned int dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
 
+
+      dealii::BoundingBox<3> boundingBoxTria=dealii::GridTools::compute_bounding_box(dofHandler.get_triangulation());
+
       std::map<dealii::types::global_dof_index, dealii::Point<3> > supportPoints;
       dealii::DoFTools::map_dofs_to_support_points(dealii::MappingQ1<3,3>(), dofHandler, supportPoints);
 
@@ -443,6 +458,7 @@ namespace dftfe
 								    imagePositions,
 								    imageIds,
 								    radiusAtomBallAdaptive,
+								    boundingBoxTria,
 								    n_mpi_processes,
 								    mpi_communicator);
 	  while (check!=0 && radiusAtomBallAdaptive>=1.0)
@@ -455,6 +471,7 @@ namespace dftfe
 							   imagePositions,
 							   imageIds,
 							   radiusAtomBallAdaptive,
+							   boundingBoxTria,
 							   n_mpi_processes,
 							   mpi_communicator);
 	  }
@@ -488,6 +505,7 @@ namespace dftfe
 									  imagePositions,
 									  imageIds,
 									  radiusAtomBallAdaptive,
+									  boundingBoxTria,
 									  n_mpi_processes,
 									  mpi_communicator);
 	  std::string message;
