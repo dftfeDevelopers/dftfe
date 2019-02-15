@@ -439,7 +439,7 @@ namespace dftfe {
   template<unsigned int FEOrder>
   void dftClass<FEOrder>::initImageChargesUpdateKPoints()
   {
-
+    TimerOutput::Scope scope (computing_timer, "image charges and k point generation");
     pcout<<"-----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------"<<std::endl;
     for(int i = 0; i < d_domainBoundingVectors.size(); ++i)
       {
