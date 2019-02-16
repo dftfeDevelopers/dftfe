@@ -51,7 +51,7 @@ void dftClass<FEOrder>::initRho()
   std::map<unsigned int, alglib::spline1dinterpolant> denSpline;
   std::map<unsigned int, std::vector<std::vector<double> > > singleAtomElectronDensity;
   std::map<unsigned int, double> outerMostPointDen;
-  const double maxRadiusDensityData=10.0;
+  const double maxRadiusDensityData=15.0;
 
   //loop over atom types
   for (std::set<unsigned int>::iterator it=atomTypes.begin(); it!=atomTypes.end(); it++)
