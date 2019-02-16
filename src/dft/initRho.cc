@@ -51,6 +51,7 @@ void dftClass<FEOrder>::initRho()
   std::map<unsigned int, alglib::spline1dinterpolant> denSpline;
   std::map<unsigned int, std::vector<std::vector<double> > > singleAtomElectronDensity;
   std::map<unsigned int, double> outerMostPointDen;
+  const double maxRadiusDensityData=10.0;
 
   //loop over atom types
   for (std::set<unsigned int>::iterator it=atomTypes.begin(); it!=atomTypes.end(); it++)
@@ -136,7 +137,7 @@ void dftClass<FEOrder>::initRho()
 		{
 		  Point<3> atom(atomLocations[n][2],atomLocations[n][3],atomLocations[n][4]);
 		  double distanceToAtom = quadPoint.distance(atom);
-		  if(distanceToAtom <= outerMostPointDen[atomLocations[n][0]])
+		  if(distanceToAtom <= std::min(outerMostPointDen[atomLocations[n][0]],maxRadiusDensityData))
 		    {
 		      rhoValueAtQuadPt += alglib::spline1dcalc(denSpline[atomLocations[n][0]], distanceToAtom);
 		    }
@@ -154,7 +155,7 @@ void dftClass<FEOrder>::initRho()
 				     d_imagePositionsTrunc[iImageCharge][2]);
 		  double distanceToAtom = quadPoint.distance(imageAtom);
 		  int masterAtomId = d_imageIdsTrunc[iImageCharge];
-		  if(distanceToAtom <= outerMostPointDen[atomLocations[masterAtomId][0]])//outerMostPointPseudo[atomLocations[masterAtomId][0]])
+		  if(distanceToAtom <= std::min(outerMostPointDen[atomLocations[masterAtomId][0]],maxRadiusDensityData))//outerMostPointPseudo[atomLocations[masterAtomId][0]])
 		    {
 		      rhoValueAtQuadPt += alglib::spline1dcalc(denSpline[atomLocations[masterAtomId][0]], distanceToAtom);
 		    }
@@ -215,7 +216,7 @@ void dftClass<FEOrder>::initRho()
 		    {
 		      Point<3> atom(atomLocations[n][2],atomLocations[n][3],atomLocations[n][4]);
 		      double distanceToAtom = quadPoint.distance(atom);
-		      if(distanceToAtom <= outerMostPointDen[atomLocations[n][0]])
+		      if(distanceToAtom <= std::min(outerMostPointDen[atomLocations[n][0]],maxRadiusDensityData))
 			{
 			  //rhoValueAtQuadPt+=alglib::spline1dcalc(denSpline[atomLocations[n][0]], distanceToAtom);
 			  double value,radialDensityFirstDerivative,radialDensitySecondDerivative;
@@ -244,7 +245,7 @@ void dftClass<FEOrder>::initRho()
 					 d_imagePositionsTrunc[iImageCharge][2]);
 		      double distanceToAtom = quadPoint.distance(imageAtom);
 		      int masterAtomId = d_imageIdsTrunc[iImageCharge];
-		      if(distanceToAtom <= outerMostPointDen[atomLocations[masterAtomId][0]])//outerMostPointPseudo[atomLocations[masterAtomId][0]])
+		      if(distanceToAtom <= std::min(outerMostPointDen[atomLocations[masterAtomId][0]],maxRadiusDensityData))//outerMostPointPseudo[atomLocations[masterAtomId][0]])
 			{
 			  double value,radialDensityFirstDerivative,radialDensitySecondDerivative;
 			  alglib::spline1ddiff(denSpline[atomLocations[masterAtomId][0]],
