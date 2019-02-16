@@ -32,28 +32,26 @@ void forceClass<FEOrder>::locateAtomCoreNodesForce
   std::set<unsigned int> atomsTolocate;
   for (unsigned int i = 0; i < numAtoms; i++) atomsTolocate.insert(i);
 
-  //loop over all atoms to locate the corresponding nodes
-  for (std::set<unsigned int>::iterator it=atomsTolocate.begin(); it!=atomsTolocate.end(); ++it)
-  {
-    Point<3> atomCoord(atomLocations[*it][2],atomLocations[*it][3],atomLocations[*it][4]);
-    //element loop
-    bool isFound=false;
-    DoFHandler<3>::active_cell_iterator
-    cell = dofHandlerForce.begin_active(),
-    endc = dofHandlerForce.end();
-    for (; cell!=endc; ++cell)
-    {
-      if (cell->is_locally_owned())
-      {
-        for (unsigned int i=0; i<vertices_per_cell; ++i)
-	{
-	  Point<3> feNodeGlobalCoord = cell->vertex(i);
+  DoFHandler<3>::active_cell_iterator
+  cell = dofHandlerForce.begin_active(),
+  endc = dofHandlerForce.end();
 
-	  if(feNodeGlobalCoord.distance(atomCoord) < 1.0e-5)
-	  {
+  //element loop
+  for (; cell!=endc; ++cell)
+    if (cell->is_locally_owned())
+      for (unsigned int i=0; i<vertices_per_cell; ++i){
+	const dealii::types::global_dof_index nodeID=cell->vertex_dof_index(i,0);
+	Point<3> feNodeGlobalCoord = cell->vertex(i);
+	//
+	//loop over all atoms to locate the corresponding nodes
+	//
+	for (std::set<unsigned int>::iterator it=atomsTolocate.begin(); it!=atomsTolocate.end(); ++it){
+	  Point<3> atomCoord(atomLocations[*it][2],atomLocations[*it][3],atomLocations[*it][4]);
+	   if(feNodeGlobalCoord.distance(atomCoord) < 1.0e-5)
+	   {
 
-	      for (unsigned int idim=0; idim < C_DIM ; idim++)
-	      {
+	     for (unsigned int idim=0; idim < C_DIM ; idim++)
+	     {
                 const unsigned int forceNodeId=cell->vertex_dof_index(i,idim);
 	        if (locally_owned_dofsForce.is_element(forceNodeId))
 		{
@@ -61,16 +59,12 @@ void forceClass<FEOrder>::locateAtomCoreNodesForce
 
                   atomsForceDofs[std::pair<unsigned int,unsigned int>(*it,idim)]=forceNodeId;
 	       }
-	      }
-	      isFound=true;
-	      break;
-	  }//tolerance check if loop
-        }//vertices_per_cell loop
-      }//locally owned cell if loop
-      if (isFound)
-      break;
-    }//cell loop
-  }//atomsToLocate loop
+	     }
+	     atomsTolocate.erase(*it);
+	     break;
+	   }//tolerance check if loop
+	}//atomsTolocate loop
+      }//vertices_per_cell loop
   MPI_Barrier(mpi_communicator);
 
   const unsigned int totalForceNodesFound = Utilities::MPI::sum(atomsForceDofs.size(), mpi_communicator);
