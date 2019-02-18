@@ -353,7 +353,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 		      if (r==0){theta=0; phi=0;}
 
 		      double R=0.0;
-		      if (r<=outerValues[it->Z][it->n][it->l])
+		      if (r<=d_wfcInitTruncation)//outerValues[it->Z][it->n][it->l])
 		      {
 			  //radial part
 			  R = alglib::spline1dcalc(*(it->psi),r);
