@@ -90,6 +90,7 @@ namespace dftfe {
       extern unsigned int numAdaptiveFilterStates;
       extern unsigned int spectrumSplitStartingScfIter;
       extern bool useELPA;
+      extern bool constraintsParallelCheck;
 
       /**
        * Declare parameters.

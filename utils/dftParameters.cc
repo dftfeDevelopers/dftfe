@@ -80,6 +80,7 @@ namespace dftParameters
   unsigned int numAdaptiveFilterStates=0;
   unsigned int spectrumSplitStartingScfIter=1;
   bool useELPA=false;
+  bool constraintsParallelCheck=false;
 
   void declare_parameters(ParameterHandler &prm)
   {
@@ -220,6 +221,11 @@ namespace dftParameters
 	prm.declare_entry("PERIODIC3", "false",
 			  Patterns::Bool(),
 			  "[Standard] Periodicity along the third domain bounding vector.");
+
+        prm.declare_entry("CONSTRAINTS PARALLEL CHECK", "false",
+			   Patterns::Bool(),
+			  "[Developer] Check for consistency of constraints in parallel.");
+
     }
     prm.leave_subsection ();
 
@@ -542,6 +548,7 @@ namespace dftParameters
 	dftParameters::periodicX                     = prm.get_bool("PERIODIC1");
 	dftParameters::periodicY                     = prm.get_bool("PERIODIC2");
 	dftParameters::periodicZ                     = prm.get_bool("PERIODIC3");
+	dftParameters::constraintsParallelCheck      = prm.get_bool("CONSTRAINTS PARALLEL CHECK");
     }
     prm.leave_subsection ();
 
