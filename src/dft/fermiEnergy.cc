@@ -233,33 +233,38 @@ template<unsigned int FEOrder>
 void dftClass<FEOrder>::compute_fermienergy_constraintMagnetization(const std::vector<std::vector<double>> & eigenValuesInput)
 {
 
-
   int countUp =  numElectronsUp;
   int countDown =   numElectronsDown;
-
-
+  //
+  const unsigned int nk = dftParameters::nkx * dftParameters::nky * dftParameters::nkz ;
+  //
   std::vector<double> eigenValuesAllkPointsUp, eigenValuesAllkPointsDown;
   for(int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
     {
-      for(int statesIter = 0; statesIter < d_numEigenValues; ++statesIter)
-	{
+      unsigned int numberOfkPointsUnderGroup = (unsigned int) round (nk * d_kPointWeights[kPoint]) ;
+      for(int ik = 0; ik < numberOfkPointsUnderGroup; ++ik)
+        for(int statesIter = 0; statesIter < d_numEigenValues; ++statesIter)
+	  {
 	  eigenValuesAllkPointsUp.push_back(eigenValuesInput[kPoint][statesIter]);
 	  eigenValuesAllkPointsDown.push_back(eigenValuesInput[kPoint][d_numEigenValues+statesIter]);
-	}
+	  }
     }
 
   std::sort(eigenValuesAllkPointsUp.begin(),eigenValuesAllkPointsUp.end());
   std::sort(eigenValuesAllkPointsDown.begin(),eigenValuesAllkPointsDown.end());
 
-  fermiEnergyUp = eigenValuesAllkPointsUp[countUp - 1] ;
-  fermiEnergyDown = eigenValuesAllkPointsDown[countDown - 1] ;
+  double fermiEnergyUpLocal = eigenValuesAllkPointsUp[countUp - 1] ;
+  double fermiEnergyDownLocal = eigenValuesAllkPointsDown[countDown - 1] ;
+  //
+  fermiEnergyUp = Utilities::MPI::max(fermiEnergyUpLocal, interpoolcomm);
+  fermiEnergyDown = Utilities::MPI::max(fermiEnergyDownLocal, interpoolcomm);
   //
   fermiEnergy = std::max(fermiEnergyUp, fermiEnergyDown) ;
   //
-  if (dftParameters::verbosity==2)
+  if (dftParameters::verbosity>=2)
     {
-     pcout << "This is a constrained magnetization calculation " << std::endl ;
+     pcout << " This is a constrained magnetization calculation " << std::endl ;
      pcout<< "Fermi energy for spin up                                    : "<< fermiEnergyUp<<std::endl;
-     pcout<< "Fermi energy for spin down                                    : "<< fermiEnergyDown<<std::endl;
+     pcout<< "Fermi energy for spin down                                    : "<< fermiEnergyDown<<std::endl;	
     }
 }
