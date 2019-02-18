@@ -333,7 +333,11 @@ namespace dftfe{
     elpa_autotune_t d_elpaAutoTuneHandle;
 
     /// processGrid mpi communicator
-    //MPI_Comm d_processGridCommunicatorActive;
+    MPI_Comm d_processGridCommunicatorActive;
+
+    MPI_Comm d_processGridCommunicatorActivePartial;
+     
+    MPI_Comm d_processGridCommunicatorActiveValence;
 #endif
 
     /// ScaLAPACK distributed format block size
