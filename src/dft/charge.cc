@@ -37,8 +37,9 @@ double dftClass<FEOrder>::totalCharge(const dealii::DoFHandler<3> & dofHandlerOf
   for (; cell!=endc; ++cell) {
     if (cell->is_locally_owned()){
       fe_values.reinit (cell);
+      const std::vector<double> & rhoValues=(*rhoQuadValues).find(cell->id())->second;
       for (unsigned int q_point=0; q_point<n_q_points; ++q_point){
-        normValue+=(*rhoQuadValues).find(cell->id())->second[q_point]*fe_values.JxW(q_point);
+        normValue+=rhoValues[q_point]*fe_values.JxW(q_point);
       }
     }
   }

@@ -578,6 +578,7 @@ namespace dftfe {
 	//compute some adaptive mesh metrics
 	//
 	double minElemLength = dftParameters::meshSizeOuterDomain;
+	double maxElemLength = 0.0;
 	unsigned int numLocallyOwnedCells=0;
 	typename parallel::distributed::Triangulation<3>::active_cell_iterator cell, endc, cellDisp, cellForce;
 	cell = parallelTriangulation.begin_active();
@@ -587,18 +588,23 @@ namespace dftfe {
 	    if(cell->is_locally_owned())
 	      {
 		numLocallyOwnedCells++;
-		if(cell->minimum_vertex_distance() < minElemLength) minElemLength = cell->minimum_vertex_distance();
+		if(cell->minimum_vertex_distance() < minElemLength)
+		    minElemLength = cell->minimum_vertex_distance();
+
+		if(cell->minimum_vertex_distance() > maxElemLength)
+		    maxElemLength = cell->minimum_vertex_distance();
 	      }
 	  }
 
 	minElemLength = Utilities::MPI::min(minElemLength, mpi_communicator);
+	maxElemLength = Utilities::MPI::max(maxElemLength, mpi_communicator);
 
 	//
 	//print out adaptive mesh metrics
 	//
 	if (dftParameters::verbosity>=4)
 	  {
-            pcout<< "Triangulation generation summary: "<<std::endl<<" num elements: "<<parallelTriangulation.n_global_active_cells()<<", num refinement levels: "<<numLevels<<", min element length: "<<minElemLength<<std::endl;
+            pcout<< "Triangulation generation summary: "<<std::endl<<" num elements: "<<parallelTriangulation.n_global_active_cells()<<", num refinement levels: "<<numLevels<<", min element length: "<<minElemLength<<", max element length: "<<maxElemLength<<std::endl;
 	  }
 
 	internal::checkTriangulationEqualityAcrossProcessorPools(parallelTriangulation,
@@ -795,6 +801,7 @@ namespace dftfe {
 	//compute some adaptive mesh metrics
 	//
 	double minElemLength = dftParameters::meshSizeOuterDomain;
+	double maxElemLength = 0.0;
 	typename parallel::distributed::Triangulation<3>::active_cell_iterator cell, endc, cellDisp, cellForce;
 	cell = parallelTriangulation.begin_active();
 	endc = parallelTriangulation.end();
@@ -804,18 +811,23 @@ namespace dftfe {
 	    if(cell->is_locally_owned())
 	      {
 		numLocallyOwnedCells++;
-		if(cell->minimum_vertex_distance() < minElemLength) minElemLength = cell->minimum_vertex_distance();
+		if(cell->minimum_vertex_distance() < minElemLength)
+		    minElemLength = cell->minimum_vertex_distance();
+
+		if(cell->minimum_vertex_distance() > maxElemLength)
+		    maxElemLength = cell->minimum_vertex_distance();
 	      }
 	  }
 
 	minElemLength = Utilities::MPI::min(minElemLength, mpi_communicator);
+	maxElemLength = Utilities::MPI::max(maxElemLength, mpi_communicator);
 
 	//
 	//print out adaptive mesh metrics and check mesh generation synchronization across pools
 	//
 	if (dftParameters::verbosity>=4)
 	  {
-	    pcout<< "Triangulation generation summary: "<<std::endl<<" num elements: "<<parallelTriangulation.n_global_active_cells()<<", num refinement levels: "<<numLevels<<", min element length: "<<minElemLength<<std::endl;
+	    pcout<< "Triangulation generation summary: "<<std::endl<<" num elements: "<<parallelTriangulation.n_global_active_cells()<<", num refinement levels: "<<numLevels<<", min element length: "<<minElemLength<<", max element length: "<<maxElemLength<<std::endl;
 	  }
 
 	internal::checkTriangulationEqualityAcrossProcessorPools(parallelTriangulation,

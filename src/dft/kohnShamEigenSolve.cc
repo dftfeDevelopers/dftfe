@@ -291,6 +291,85 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
   computing_timer.exit_section("Chebyshev solve");
 }
 
+//chebyshev solver
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::kohnShamEigenSpaceComputeNSCF(const unsigned int spinType,
+						  const unsigned int kPointIndex,
+						  kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
+						  chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver,
+						  std::vector<double>                            & residualNormWaveFunctions,
+						  unsigned int ipass) 
+{
+  computing_timer.enter_section("Chebyshev solve"); 
+  
+   if (dftParameters::verbosity==2)
+    {
+      pcout << "kPoint: "<< kPointIndex<<std::endl;
+      pcout << "spin: "<< spinType+1 <<std::endl;
+    }
+
+  //
+  //scale the eigenVectors (initial guess of single atom wavefunctions or previous guess) to convert into Lowden Orthonormalized FE basis
+  //multiply by M^{1/2}
+  if (ipass==1)
+   internal::pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_invSqrtMassVector,
+				       matrix_free_data.get_vector_partitioner(),
+				       d_numEigenValues,
+				       localProc_dof_indicesReal,
+				       d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
+
+ 
+  std::vector<double> eigenValuesTemp(d_numEigenValues,0.0);
+
+  subspaceIterationSolver.reinitSpectrumBounds(a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
+					       bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
+
+
+ subspaceIterationSolver.solve(kohnShamDFTEigenOperator,
+  				d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
+				d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
+				d_tempEigenVec,
+				d_numEigenValues,
+  				eigenValuesTemp,
+				residualNormWaveFunctions,
+				interBandGroupComm,
+				false);
+ 
+  if(dftParameters::verbosity >= 4)
+    {
+      PetscLogDouble bytes;
+      PetscMemoryGetCurrentUsage(&bytes);
+      FILE *dummy;
+      unsigned int this_mpi_process = dealii::Utilities::MPI::this_mpi_process(mpi_communicator);
+      PetscSynchronizedPrintf(mpi_communicator,"[%d] Memory after recreating STL vector and exiting from subspaceIteration solver  %e\n",this_mpi_process,bytes);
+      PetscSynchronizedFlush(mpi_communicator,dummy);
+    }
+  
+
+  
+  //
+  //copy the eigenValues and corresponding residual norms back to data members
+  //
+  for(unsigned int i = 0; i < d_numEigenValues; i++)
+    {
+      //if(dftParameters::verbosity==2)
+      //    pcout<<"eigen value "<< std::setw(3) <<i <<": "<<eigenValuesTemp[i] <<std::endl;
+
+      eigenValues[kPointIndex][spinType*d_numEigenValues + i] =  eigenValuesTemp[i];
+    }
+
+  //if (dftParameters::verbosity==2)  
+  //   pcout <<std::endl;
+
+
+  //set a0 and bLow
+  a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=eigenValuesTemp[0]; 
+  bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=eigenValuesTemp.back(); 
+  //
+
+ 
+  computing_timer.exit_section("Chebyshev solve"); 
+}
 
 
 template<unsigned int FEOrder>

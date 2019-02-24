@@ -83,6 +83,7 @@ namespace dftParameters
   unsigned int numAdaptiveFilterStates=0;
   unsigned int spectrumSplitStartingScfIter=1;
   bool useELPA=false;
+  bool constraintsParallelCheck=false;
 
   void declare_parameters(ParameterHandler &prm)
   {
@@ -223,6 +224,11 @@ namespace dftParameters
 	prm.declare_entry("PERIODIC3", "false",
 			  Patterns::Bool(),
 			  "[Standard] Periodicity along the third domain bounding vector.");
+
+        prm.declare_entry("CONSTRAINTS PARALLEL CHECK", "false",
+			   Patterns::Bool(),
+			  "[Developer] Check for consistency of constraints in parallel.");
+
     }
     prm.leave_subsection ();
 
@@ -311,7 +317,7 @@ namespace dftParameters
 
 	prm.declare_entry("kPOINT RULE FILE", "",
 			  Patterns::Anything(),
-			  "[Developer] File specifying the k-Point rule to sample Brillouin zone. CAUTION: This option is recommended only for postprocessing, for example band structure calculation. To set k point rule for DFT solve use the Monkhorst-Pack (MP) grid generation.");
+			  "[Developer] File providing list of k points on which eigen values are to be computed from converged KS Hamiltonian. The first three columns specify the crystal coordinates of the k points. The fourth column provides weights of the corresponding points, which is currently not used. The eigen values are written on an output file bands.out");
 
 	prm.declare_entry("USE GROUP SYMMETRY", "false",
 			  Patterns::Bool(),
@@ -561,6 +567,7 @@ namespace dftParameters
 	dftParameters::periodicX                     = prm.get_bool("PERIODIC1");
 	dftParameters::periodicY                     = prm.get_bool("PERIODIC2");
 	dftParameters::periodicZ                     = prm.get_bool("PERIODIC3");
+	dftParameters::constraintsParallelCheck      = prm.get_bool("CONSTRAINTS PARALLEL CHECK");
     }
     prm.leave_subsection ();
 

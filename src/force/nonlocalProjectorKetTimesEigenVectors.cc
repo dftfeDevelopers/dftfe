@@ -125,7 +125,7 @@ void forceClass<FEOrder>::computeNonLocalProjectorKetTimesPsiTimesVFlattened
 		     &numberWaveFunctions,
 		     &numberNodesPerElement,
 		     &alpha,
-		     &dftPtr->d_nonLocalProjectorElementMatrices[atomId][nonZeroElementMatrixId][kPointIndex][0],
+		     &dftPtr->d_nonLocalProjectorElementMatrices[atomId][nonZeroElementMatrixId][0],
 		     &numberNodesPerElement,
 		     &cellWaveFunctionMatrix[0],
 		     &numberWaveFunctions,
