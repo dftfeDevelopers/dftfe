@@ -208,13 +208,17 @@ void dftClass<FEOrder>::computeElementalOVProjectorKets()
 		      //
 		      // get the spherical coordinates from cartesian
 		      //
-		      double r,theta,phi;
-		      pseudoUtils::convertCartesianToSpherical(x,r,theta,phi);
+		      //double r,theta,phi;
+		      //pseudoUtils::convertCartesianToSpherical(x,r,theta,phi);
 
 
 		      double sphericalHarmonicVal, radialProjVal, projectorFunctionValue;
-		      if(r <= d_outerMostPointPseudoProjectorData[globalWaveSplineId])
+		      if(std::sqrt(x[0]*x[0]+x[1]*x[1]+x[2]*x[2]) <= d_outerMostPointPseudoProjectorData[globalWaveSplineId])
 			{
+                          double r,theta,phi;
+		          pseudoUtils::convertCartesianToSpherical(x,r,theta,phi);
+
+
 			  pseudoUtils::getRadialFunctionVal(r,
 							    radialProjVal,
 							    &d_pseudoWaveFunctionSplines[globalWaveSplineId]);
