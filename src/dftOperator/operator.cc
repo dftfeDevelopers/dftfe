@@ -35,6 +35,11 @@ namespace dftfe {
 				     const dealii::ConstraintMatrix                        & constraintMatrixEigen,
 				     dftUtils::constraintMatrixInfo                        & constraintMatrixNone):
     d_mpi_communicator(mpi_comm_replica),
+#ifdef DFTFE_WITH_ELPA	
+    d_processGridCommunicatorActive(MPI_COMM_NULL),
+    d_processGridCommunicatorActivePartial(MPI_COMM_NULL),
+    d_processGridCommunicatorActiveValence(MPI_COMM_NULL),
+#endif	
     d_matrix_free_data(&matrix_free_data),
     d_localDofIndicesReal(&localDofIndicesReal),
     d_localDofIndicesImag(&localDofIndicesImag),
@@ -52,7 +57,16 @@ namespace dftfe {
   //
   operatorDFTClass::~operatorDFTClass()
   {
+#ifdef DFTFE_WITH_ELPA	  
+      if (d_processGridCommunicatorActive != MPI_COMM_NULL)
+	  MPI_Comm_free(&d_processGridCommunicatorActive);
 
+      if (d_processGridCommunicatorActivePartial != MPI_COMM_NULL)
+	  MPI_Comm_free(&d_processGridCommunicatorActivePartial);
+
+      if (d_processGridCommunicatorActiveValence != MPI_COMM_NULL)
+	 MPI_Comm_free(&d_processGridCommunicatorActiveValence);
+#endif      
     //
     //
     //
@@ -144,6 +158,7 @@ namespace dftfe {
 #ifdef DFTFE_WITH_ELPA
        if (dftParameters::useELPA)
            linearAlgebraOperations::internal::setupELPAHandle(getMPICommunicator(),
+			                                      d_processGridCommunicatorActive,
                                                               processGrid,
 							      na,
 							      na,
@@ -156,6 +171,7 @@ namespace dftfe {
 #ifdef DFTFE_WITH_ELPA
 	   if (dftParameters::useELPA)
 	       linearAlgebraOperations::internal::setupELPAHandle(getMPICommunicator(),
+			                                          d_processGridCommunicatorActivePartial,
 								  processGrid,
 								  na,
 								  nev,
@@ -177,6 +193,7 @@ namespace dftfe {
 #ifdef DFTFE_WITH_ELPA
 	   if (dftParameters::useELPA)
 	       linearAlgebraOperations::internal::setupELPAHandle(getMPICommunicator(),
+			                                          d_processGridCommunicatorActiveValence,
 								  processGridValence,
 								  nev,
 								  nev,
