@@ -774,6 +774,7 @@ namespace dftfe {
       //
       std::vector<double> d_outerMostPointPseudoWaveFunctionsData;
       std::vector<double> d_outerMostPointPseudoPotData;
+      std::vector<double> d_outerMostPointPseudoProjectorData;
 
       /// map of atom node number and atomic weight
       std::map<dealii::types::global_dof_index, double> d_atomNodeIdToChargeMap;
