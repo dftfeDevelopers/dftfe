@@ -59,6 +59,7 @@ namespace dftfe {
   struct orbital
   {
     unsigned int atomID;
+    unsigned int waveID;
     unsigned int Z, n, l;
     int m;
     alglib::spline1dinterpolant* psi;
@@ -560,6 +561,9 @@ namespace dftfe {
 
       /// volume of the domain
       double d_domainVolume;
+
+      /// init wfc trunctation radius
+      double d_wfcInitTruncation;
 
       /**
        * dealii based FE data structres

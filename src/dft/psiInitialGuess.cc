@@ -49,12 +49,14 @@ void dftClass<FEOrder>::loadPSIFiles(unsigned int Z,
 
   fileReadFlag = dftUtils::readPsiFile(2, values, psiFile);
 
-
+  const double truncationTol=1e-8;
   //
   //spline fitting for single-atom wavefunctions
   //
   if(fileReadFlag > 0)
     {
+      double maxTruncationRadius=0.0;
+      unsigned int truncRowId=0;
       if (!dftParameters::reproducible_output)
         pcout<<"reading data from file: "<<psiFile<<std::endl;
 
@@ -74,6 +76,9 @@ void dftClass<FEOrder>::loadPSIFiles(unsigned int Z,
       for(int irow = 0; irow < numRows; ++irow)
 	{
 	  yData[irow] = values[irow][1];
+
+	  if (std::fabs(yData[irow])>truncationTol)
+	      truncRowId=irow;
 	}
       alglib::real_1d_array y;
       y.setcontent(numRows,&yData[0]);
@@ -87,6 +92,10 @@ void dftClass<FEOrder>::loadPSIFiles(unsigned int Z,
 				 *spline);
 
       radValues[Z][n][l]=spline;
+
+      maxTruncationRadius=xData[truncRowId];
+      if (maxTruncationRadius>d_wfcInitTruncation)
+	  d_wfcInitTruncation=maxTruncationRadius;
     }
 }
 
@@ -182,6 +191,7 @@ void dftClass<FEOrder>::determineOrbitalFilling()
 		  orbital temp;
 		  temp.atomID = iAtom;
 		  temp.Z = Z; temp.n = n; temp.l = l; temp.m = m; temp.psi = radValues[Z][n][l];
+		  temp.waveID=waveFunctionCount;
 		  waveFunctionsVector.push_back(temp); waveFunctionCount++;
 		  if(waveFunctionCount >= d_numEigenValues && waveFunctionCount >= numberGlobalAtoms) break;
 		}
@@ -244,6 +254,40 @@ void dftClass<FEOrder>::readPSIRadialValues(){
   //
   //loop over nodes
   //
+
+  std::vector<orbital>  waveFunctionsVectorTruncated;
+  dealii::BoundingBox<3> boundingBoxTria=dealii::GridTools::compute_bounding_box(dofHandler.get_triangulation());
+  for (std::vector<orbital>::iterator it = waveFunctionsVector.begin(); it < waveFunctionsVector.end(); it++)
+    {
+	  const unsigned int chargeId = it->atomID;
+	  Point<3> atomCoord;
+
+	  if(chargeId < atomLocations.size())
+	    {
+	      atomCoord[0] = atomLocations[chargeId][2];
+	      atomCoord[1] = atomLocations[chargeId][3];
+	      atomCoord[2] = atomLocations[chargeId][4];
+	    }
+	  else
+	    {
+	      atomCoord[0] = d_imagePositions[chargeId-numberGlobalAtoms][0];
+	      atomCoord[1] = d_imagePositions[chargeId-numberGlobalAtoms][1];
+	      atomCoord[2] = d_imagePositions[chargeId-numberGlobalAtoms][2];
+	    }
+
+	  dealii::Tensor<1,3,double> tempDisp;
+	  tempDisp[0]=d_wfcInitTruncation;
+	  tempDisp[1]=d_wfcInitTruncation;
+	  tempDisp[2]=d_wfcInitTruncation;
+	  std::pair< dealii::Point<3,double >,dealii::Point<3, double>> boundaryPoints;
+	  boundaryPoints.first=atomCoord-tempDisp;
+	  boundaryPoints.second=atomCoord+tempDisp;
+	  dealii::BoundingBox<3> boundingBoxAroundAtom(boundaryPoints);
+
+	  if (boundingBoxTria.get_neighbor_type(boundingBoxAroundAtom)!=NeighborType::not_neighbors);
+	     waveFunctionsVectorTruncated.push_back(*it);
+    }
+
   bool pp=false;
   for(unsigned int dof=0; dof<numberDofs; dof++)
     {
@@ -257,8 +301,8 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 	  //
 	  for(int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
 	    {
-	      unsigned int waveFunction=0;
-	      for (std::vector<orbital>::iterator it = waveFunctionsVector.begin(); it < waveFunctionsVector.end(); it++)
+	      //unsigned int waveFunction=0;
+	      for (std::vector<orbital>::iterator it = waveFunctionsVectorTruncated.begin(); it < waveFunctionsVectorTruncated.end(); it++)
 		{
 		  //
 		  //get the imageIdmap information corresponding to globalChargeId
@@ -274,7 +318,7 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 		  imageIdsList.push_back(it->atomID);
 		  // }
 
-
+                  const unsigned int waveId=it->waveID;
 		  for(int iImageAtomCount = 0; iImageAtomCount < imageIdsList.size();++iImageAtomCount)
 		    {
 
@@ -307,27 +351,31 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 		      double phi = atan2(y,x);
 
 		      if (r==0){theta=0; phi=0;}
-		      //radial part
+
 		      double R=0.0;
-		      if (r<=outerValues[it->Z][it->n][it->l]) R = alglib::spline1dcalc(*(it->psi),r);
-		      //spherical part
-		      if (it->m > 0)
-			{
-			  d_eigenVectorsFlattenedSTL[kPoint][dof*d_numEigenValues+waveFunction] +=
-			    dataTypes::number(R*std::sqrt(2)*boost::math::spherical_harmonic_r(it->l,it->m,theta,phi));
-			}
-		      else if (it->m == 0)
-			{
-			  d_eigenVectorsFlattenedSTL[kPoint][dof*d_numEigenValues+waveFunction] +=
-			    dataTypes::number(R*boost::math::spherical_harmonic_r(it->l,it->m,theta,phi));
-			}
-		      else
-			{
-			  d_eigenVectorsFlattenedSTL[kPoint][dof*d_numEigenValues+waveFunction] +=
-			    dataTypes::number(R*std::sqrt(2)*boost::math::spherical_harmonic_i(it->l,-(it->m),theta,phi));
-			}
+		      if (r<=d_wfcInitTruncation)//outerValues[it->Z][it->n][it->l])
+		      {
+			  //radial part
+			  R = alglib::spline1dcalc(*(it->psi),r);
+			  //spherical part
+			  if (it->m > 0)
+			    {
+			      d_eigenVectorsFlattenedSTL[kPoint][dof*d_numEigenValues+waveId] +=
+				dataTypes::number(R*std::sqrt(2)*boost::math::spherical_harmonic_r(it->l,it->m,theta,phi));
+			    }
+			  else if (it->m == 0)
+			    {
+			      d_eigenVectorsFlattenedSTL[kPoint][dof*d_numEigenValues+waveId] +=
+				dataTypes::number(R*boost::math::spherical_harmonic_r(it->l,it->m,theta,phi));
+			    }
+			  else
+			    {
+			      d_eigenVectorsFlattenedSTL[kPoint][dof*d_numEigenValues+waveId] +=
+				dataTypes::number(R*std::sqrt(2)*boost::math::spherical_harmonic_i(it->l,-(it->m),theta,phi));
+			    }
+		      }
 		    }
-		  waveFunction++;
+		  //waveFunction++;
 		}
 
 		  d_nonAtomicWaveFunctions = 0;
