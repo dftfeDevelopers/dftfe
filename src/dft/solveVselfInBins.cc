@@ -145,6 +145,8 @@ namespace dftfe
 		      //
 		      //go through all atoms in a given bin
 		      //
+		      double vSelf=0.0;
+		      const dealii::Point<3> & dofClosestChargeLocation=dofClosestChargeLocationMap[iterNodalCoorMap->first];
 		      for(int iCharge = 0; iCharge < numberGlobalAtomsInBin+numberImageAtomsInBin; ++iCharge)
 			{
 			  //
@@ -174,11 +176,10 @@ namespace dftfe
 				= imagePositions[imageIdsOfAtomsInCurrentBin[iCharge-numberGlobalAtomsInBin]][2];
 			  }
 
-			  double vSelf;
 			  if(boundaryFlag == chargeId
-			    && dofClosestChargeLocationMap[iterNodalCoorMap->first].distance(atomCoor)<1e-5)
+			    && dofClosestChargeLocation.distance(atomCoor)<1e-5)
 			    {
-			      vSelf = vselfBinScratch(iterNodalCoorMap->first);
+			      vSelf += vselfBinScratch(iterNodalCoorMap->first);
 			      inNodes++;
 			      d_atomIdBinIdMapLocalAllImages[atomId]=iBin;
 			    }
@@ -200,15 +201,12 @@ namespace dftfe
 				}
 
 			      const double r = nodalCoor.distance(atomCoor);
-			      vSelf = -nuclearCharge/r;
+			      vSelf += -nuclearCharge/r;
 			      outNodes++;
 			    }
-
-			  //store updated value in phiExt which is sumVself
-
-			  phiExt(iterNodalCoorMap->first)+= vSelf;
-
 			}//charge loop
+		        //store updated value in phiExt which is sumVself
+		        phiExt(iterNodalCoorMap->first)+= vSelf;
 		    }
 
 	  //
