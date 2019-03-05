@@ -32,6 +32,23 @@ namespace dftfe{
   namespace vectorTools
   {
 
+    /** @brief Create constraint matrix using serial mesh.
+     *  Temporary fix for a bug (Issue #7053) in deal.ii until it is resolved.
+     *
+     *  @param[in] serial Triangulation which must be exactly same as the parallel triangulation associated
+     *  with dofHandlerPar
+     *  @param[in] parallel DofHandler
+     *  @param[out] periodic hanging constraints.
+     *  @param[out] only hanging constraints
+     */
+     void createParallelConstraintMatrixFromSerial(const dealii::Triangulation<3,3> & serTria,
+	                                           const dealii::DoFHandler<3> & dofHandlerPar,
+						   const MPI_Comm & mpi_comm,
+						   const std::vector<std::vector<double> > & domainBoundingVectors,
+						   dealii::ConstraintMatrix & periodicHangingConstraints,
+						   dealii::ConstraintMatrix & onlyHangingConstraints);
+
+
     /** @brief Creates a custom partitioned flattened dealii vector.
      *  stores multiple components asociated with a node sequentially.
      *

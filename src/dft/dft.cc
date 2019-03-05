@@ -560,7 +560,9 @@ namespace dftfe {
 	d_mesh.generateSerialUnmovedAndParallelMovedUnmovedMesh(atomLocations,
 								d_imagePositions,
 								d_domainBoundingVectors,
-								dftParameters::useSymm || dftParameters::isIonOpt,
+								dftParameters::useSymm
+								|| dftParameters::isIonOpt
+								|| dftParameters::createConstraintsFromSerialDofhandler,
 								dftParameters::electrostaticsHRefinement);
 
       }
@@ -589,7 +591,8 @@ namespace dftfe {
     //
     //move triangulation to have atoms on triangulation vertices
     //
-    moveMeshToAtoms(triangulationPar);
+    moveMeshToAtoms(triangulationPar,
+	            d_mesh.getSerialMeshUnmoved());
 
     /*if(dftParameters::electrostaticsHRefinement)
       {
@@ -1859,11 +1862,11 @@ namespace dftfe {
      FILE * pFile;
      pFile = fopen ("bands.out","w");
      fprintf (pFile, "%d %d\n", totkPoints, d_numEigenValues );
-     for (unsigned int kPoint = 0; kPoint < totkPoints/(1+dftParameters::spinPolarized); ++kPoint) 
+     for (unsigned int kPoint = 0; kPoint < totkPoints/(1+dftParameters::spinPolarized); ++kPoint)
 	 {
 	 for(unsigned int iWave = 0; iWave < d_numEigenValues; ++iWave)
-	    { 
-	    if (dftParameters::spinPolarized)	    
+	    {
+	    if (dftParameters::spinPolarized)
 		fprintf (pFile, "%d  %d   %g   %g\n",  kPoint, iWave, eigenValuesFlattenedGlobal[2*kPoint*d_numEigenValues+iWave], eigenValuesFlattenedGlobal[(2*kPoint+1)*d_numEigenValues+iWave]);
             else
 		fprintf (pFile, "%d  %d %g\n",  kPoint, iWave, eigenValuesFlattenedGlobal[kPoint*d_numEigenValues+iWave]);

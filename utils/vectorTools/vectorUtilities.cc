@@ -18,12 +18,188 @@
 
 #include <vectorUtilities.h>
 #include <exception>
+#include <dftParameters.h>
 
 namespace dftfe
 {
 
   namespace vectorTools
   {
+
+    void createParallelConstraintMatrixFromSerial(const dealii::Triangulation<3,3> & serTria,
+	                                          const dealii::DoFHandler<3> & dofHandlerPar,
+						  const MPI_Comm & mpi_comm,
+						  const std::vector<std::vector<double> > & domainBoundingVectors,
+						  dealii::ConstraintMatrix & periodicHangingConstraints,
+						  dealii::ConstraintMatrix & onlyHangingConstraints)
+    {
+      dealii::IndexSet locally_owned_dofs_par = dofHandlerPar.locally_owned_dofs();
+
+      dealii::IndexSet locally_relevant_dofs_par;
+      dealii::DoFTools::extract_locally_relevant_dofs(dofHandlerPar, locally_relevant_dofs_par);
+
+      dealii::DoFHandler<3> dofHandlerSer(serTria);
+      dofHandlerSer.distribute_dofs(dofHandlerPar.get_fe());
+
+      const dealii::types::global_dof_index numGlobalDofs=dofHandlerSer.n_locally_owned_dofs();
+      std::vector<dealii::types::global_dof_index> newDofNumbers(numGlobalDofs,0);
+
+      std::map<dealii::CellId, dealii::DoFHandler<3>::active_cell_iterator> cellIdToCellIterMapSer;
+      std::map<dealii::CellId, dealii::DoFHandler<3>::active_cell_iterator> cellIdToCellIterMapPar;
+      typename dealii::DoFHandler<3>::active_cell_iterator cell = dofHandlerPar.begin_active();
+      typename dealii::DoFHandler<3>::active_cell_iterator endc = dofHandlerPar.end();
+      for(; cell!=endc; ++cell)
+      {
+	 if (cell->is_locally_owned())
+	 {
+	     cellIdToCellIterMapPar[cell->id()] = cell;
+	 }
+      }
+
+      cell = dofHandlerSer.begin_active();
+      endc = dofHandlerSer.end();
+      for(; cell!=endc; ++cell)
+      {
+	 if (cellIdToCellIterMapPar.find(cell->id())!=cellIdToCellIterMapPar.end())
+	 {
+	     cellIdToCellIterMapSer[cell->id()] = cell;
+	 }
+      }
+
+      const unsigned int dofs_per_cell = dofHandlerPar.get_fe().dofs_per_cell;
+      std::vector<dealii::types::global_dof_index> cell_dof_indices_par(dofs_per_cell);
+      std::vector<dealii::types::global_dof_index> cell_dof_indices_ser(dofs_per_cell);
+      cell = dofHandlerPar.begin_active();
+      endc = dofHandlerPar.end();
+      for(; cell!=endc; ++cell)
+      {
+	 if (cell->is_locally_owned())
+	 {
+	    cell->get_dof_indices(cell_dof_indices_par);
+	    cellIdToCellIterMapSer[cell->id()]->get_dof_indices(cell_dof_indices_ser);
+	    for(unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
+	    {
+		if (locally_owned_dofs_par.is_element(cell_dof_indices_par[iNode]))
+		   newDofNumbers[cell_dof_indices_ser[iNode]]=cell_dof_indices_par[iNode];
+	    }
+	 }
+      }
+
+      MPI_Allreduce(MPI_IN_PLACE,
+		    &newDofNumbers[0],
+		    numGlobalDofs,
+		    DEAL_II_DOF_INDEX_MPI_TYPE,
+		    MPI_SUM,
+		    mpi_comm);
+
+      if (false)
+      {
+	if (dealii::Utilities::MPI::this_mpi_process(mpi_comm) == 0)
+	   for (unsigned int i=0; i<newDofNumbers.size();++i)
+	      std::cout<<"Old dof id: "<< i <<",  new dof id: "<< newDofNumbers[i]<<std::endl;
+      }
+
+      dofHandlerSer.renumber_dofs(newDofNumbers);
+
+#ifdef DEBUG
+      std::map<dealii::types::global_dof_index, dealii::Point<3>> supportPointsSer;
+      DoFTools::map_dofs_to_support_points(dealii::MappingQ1<3>(), dofHandlerSer, supportPointsSer);
+
+      std::map<dealii::types::global_dof_index,dealii::Point<3> >::iterator iterMap;
+      for(iterMap = supportPoints.begin(); iterMap != supportPoints.end(); ++iterMap)
+	  if(locally_owned_dofs.is_element(iterMap->first))
+	       Assert(iterMap->second.distance(supportPointsSer[iterMap->first])<1e-5, dealii::ExcMessage("DFT-FE Error"));
+#endif
+
+      dealii::IndexSet locally_relevant_dofs_ser;
+      dealii::DoFTools::extract_locally_relevant_dofs(dofHandlerSer, locally_relevant_dofs_ser);
+
+      dealii::ConstraintMatrix constraintsHangingSer;
+      constraintsHangingSer.clear();
+      constraintsHangingSer.reinit(locally_relevant_dofs_ser);
+      dealii::DoFTools::make_hanging_node_constraints(dofHandlerSer, constraintsHangingSer);
+
+      dealii::ConstraintMatrix constraintsPeriodicHangingSer(constraintsHangingSer);
+      constraintsHangingSer.close();
+
+      //create unitVectorsXYZ
+      std::vector<std::vector<double> > unitVectorsXYZ;
+      unitVectorsXYZ.resize(3);
+
+      for(int i = 0; i < 3; ++i)
+	{
+	  unitVectorsXYZ[i].resize(3,0.0);
+	  unitVectorsXYZ[i][i] = 0.0;
+	}
+
+      std::vector<dealii::Tensor<1,3> > offsetVectors;
+      //resize offset vectors
+      offsetVectors.resize(3);
+
+      for(int i = 0; i < 3; ++i)
+	{
+	  for(int j = 0; j < 3; ++j)
+	    {
+	      offsetVectors[i][j] = unitVectorsXYZ[i][j] - domainBoundingVectors[i][j];
+	    }
+	}
+
+      std::vector<dealii::GridTools::PeriodicFacePair<typename dealii::DoFHandler<3>::cell_iterator> > periodicity_vector2;
+
+      std::vector<int> periodicDirectionVector;
+      const std::array<int,3> periodic = {dftParameters::periodicX, dftParameters::periodicY, dftParameters::periodicZ};
+      for(unsigned int  d= 0; d < 3; ++d)
+	{
+	  if(periodic[d]==1)
+	    {
+	      periodicDirectionVector.push_back(d);
+	    }
+	}
+
+
+      for (int i = 0; i < std::accumulate(periodic.begin(),periodic.end(),0); ++i)
+       {
+	   dealii::GridTools::collect_periodic_faces(dofHandlerSer,
+		                            /*b_id1*/ 2*i+1,
+					    /*b_id2*/ 2*i+2,
+					    /*direction*/ periodicDirectionVector[i],
+					    periodicity_vector2,
+					    offsetVectors[periodicDirectionVector[i]]);
+       }
+
+      dealii::DoFTools::make_periodicity_constraints<dealii::DoFHandler<3>>(periodicity_vector2,
+	                                                                    constraintsPeriodicHangingSer);
+      constraintsPeriodicHangingSer.close();
+
+      periodicHangingConstraints.clear();
+      periodicHangingConstraints.reinit(locally_relevant_dofs_par);
+
+      onlyHangingConstraints.clear();
+      onlyHangingConstraints.reinit(locally_relevant_dofs_par);
+
+      for (dealii::IndexSet::ElementIterator indexIter = locally_relevant_dofs_par.begin();
+	   indexIter != locally_relevant_dofs_par.end();
+	   ++indexIter)
+      {
+
+	if (constraintsPeriodicHangingSer.is_constrained(*indexIter))
+	{
+	   periodicHangingConstraints.add_line(*indexIter);
+	   periodicHangingConstraints.add_entries(*indexIter,
+				   *constraintsPeriodicHangingSer.get_constraint_entries(*indexIter));
+	}
+
+	if (constraintsHangingSer.is_constrained(*indexIter))
+	{
+	   onlyHangingConstraints.add_line(*indexIter);
+	   onlyHangingConstraints.add_entries(*indexIter,
+				   *constraintsHangingSer.get_constraint_entries(*indexIter));
+	}
+      }
+
+      periodicHangingConstraints.close();
+      onlyHangingConstraints.close();
+    }
 
     template<typename T>
     void createDealiiVector(const std::shared_ptr< const dealii::Utilities::MPI::Partitioner > & partitioner,

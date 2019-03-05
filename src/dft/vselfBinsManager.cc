@@ -406,6 +406,7 @@ namespace dftfe
 
     template<unsigned int FEOrder>
     void vselfBinsManager<FEOrder>::createAtomBins(std::vector<const dealii::ConstraintMatrix * > & constraintsVector,
+		                           const dealii::ConstraintMatrix & onlyHangingNodeConstraints,
 		                           const dealii::DoFHandler<3> &  dofHandler,
 			                   const dealii::ConstraintMatrix & constraintMatrix,
 			                   const std::vector<std::vector<double> > & atomLocations,
@@ -451,10 +452,10 @@ namespace dftfe
       dealii::DoFTools::extract_locally_relevant_dofs(dofHandler, locally_relevant_dofs);
 
       //create a constraint matrix with only hanging node constraints
-      dealii::ConstraintMatrix onlyHangingNodeConstraints;
-      onlyHangingNodeConstraints.reinit(locally_relevant_dofs);
-      dealii::DoFTools::make_hanging_node_constraints(dofHandler, onlyHangingNodeConstraints);
-      onlyHangingNodeConstraints.close();
+      //dealii::ConstraintMatrix onlyHangingNodeConstraints;
+      //onlyHangingNodeConstraints.reinit(locally_relevant_dofs);
+      //dealii::DoFTools::make_hanging_node_constraints(dofHandler, onlyHangingNodeConstraints);
+      //onlyHangingNodeConstraints.close();
 
       computing_timer.exit_section("create bins: initial overheads");
 

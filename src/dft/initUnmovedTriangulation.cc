@@ -33,10 +33,14 @@ void dftClass<FEOrder>::initUnmovedTriangulation(parallel::distributed::Triangul
   computing_timer.enter_section("unmoved setup");
 
   //initialize affine transformation object (must be done on unmoved triangulation)
-  d_affineTransformMesh.init(triangulation,d_domainBoundingVectors);
+  d_affineTransformMesh.init(triangulation,
+	                     d_mesh.getSerialMeshUnmoved(),
+	                     d_domainBoundingVectors);
 
   //initialize meshMovementGaussianClass object (must be done on unmoved triangulation)
-  d_gaussianMovePar.init(triangulation,d_domainBoundingVectors);
+  d_gaussianMovePar.init(triangulation,
+	                 d_mesh.getSerialMeshUnmoved(),
+	                 d_domainBoundingVectors);
 
   if (dftParameters::verbosity>=4)
      dftUtils::printCurrentMemoryUsage(mpi_communicator,
@@ -186,12 +190,51 @@ void dftClass<FEOrder>::initUnmovedTriangulation(parallel::distributed::Triangul
       constraintsNoneEigen.close();
     }
 
+  if (dftParameters::createConstraintsFromSerialDofhandler)
+  {
+#ifdef USE_COMPLEX
+	vectorTools::createParallelConstraintMatrixFromSerial(d_mesh.getSerialMeshUnmoved(),
+							      dofHandler,
+							      mpi_communicator,
+							      d_domainBoundingVectors,
+							      constraintsNone,
+							      d_noConstraints);
+
+	vectorTools::createParallelConstraintMatrixFromSerial(d_mesh.getSerialMeshUnmoved(),
+							      dofHandlerEigen,
+							      mpi_communicator,
+							      d_domainBoundingVectors,
+							      constraintsNoneEigen,
+							      noConstraintsEigen);
+#else
+	vectorTools::createParallelConstraintMatrixFromSerial(d_mesh.getSerialMeshUnmoved(),
+							      dofHandler,
+							      mpi_communicator,
+							      d_domainBoundingVectors,
+							      constraintsNone,
+							      d_noConstraints);
+	constraintsNoneEigen.clear();
+	constraintsNoneEigen.reinit(locally_relevant_dofs);
+	constraintsNoneEigen.merge(constraintsNone,ConstraintMatrix::MergeConflictBehavior::right_object_wins);
+
+	noConstraintsEigen.clear();
+	noConstraintsEigen.reinit(locally_relevant_dofs);
+	noConstraintsEigen.merge(d_noConstraints,ConstraintMatrix::MergeConflictBehavior::right_object_wins);
+#endif
+  }
+
   if (dftParameters::verbosity>=4)
      dftUtils::printCurrentMemoryUsage(mpi_communicator,
 			  "Created the basic constraint matrices");
 
-  forcePtr->initUnmoved(triangulation,d_domainBoundingVectors,false);
-  forcePtr->initUnmoved(triangulation,d_domainBoundingVectors,true);
+  forcePtr->initUnmoved(triangulation,
+	                d_mesh.getSerialMeshUnmoved(),
+			d_domainBoundingVectors,
+			false);
+  forcePtr->initUnmoved(triangulation,
+	                d_mesh.getSerialMeshUnmoved(),
+	                d_domainBoundingVectors,
+			true);
 
   if (dftParameters::verbosity>=4)
      dftUtils::printCurrentMemoryUsage(mpi_communicator,

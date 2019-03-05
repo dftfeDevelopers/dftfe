@@ -18,6 +18,7 @@
 //
 #include <meshMovement.h>
 #include <dftParameters.h>
+#include <vectorUtilities.h>
 
 namespace dftfe {
   namespace meshMovementUtils{
@@ -78,6 +79,7 @@ namespace dftfe {
   }
 
   void meshMovementClass::init(Triangulation<3,3> & triangulation,
+		               Triangulation<3,3> & serialTriangulation,
 			       const std::vector<std::vector<double> > & domainBoundingVectors)
   {
     d_domainBoundingVectors=domainBoundingVectors;
@@ -146,6 +148,18 @@ namespace dftfe {
 
     DoFTools::make_periodicity_constraints<DoFHandler<C_DIM> >(d_periodicity_vector, d_constraintsMoveMesh);
     d_constraintsMoveMesh.close();
+
+    if (dftParameters::createConstraintsFromSerialDofhandler)
+    {
+	    d_triaPtrSerial=&serialTriangulation;
+            ConstraintMatrix  dummy;
+	    vectorTools::createParallelConstraintMatrixFromSerial(serialTriangulation,
+								  d_dofHandlerMoveMesh,
+								  mpi_communicator,
+								  domainBoundingVectors,
+								  d_constraintsMoveMesh,
+								  dummy);
+    }
   }
 
   void meshMovementClass::initMoved(const std::vector<std::vector<double> > & domainBoundingVectors)
@@ -234,7 +248,11 @@ namespace dftfe {
     solTrans.prepare_for_coarsening_and_refinement(d_incrementalDisplacement);
     d_triaPtr->execute_coarsening_and_refinement();
 
+    if (dftParameters::createConstraintsFromSerialDofhandler)
+      d_triaPtrSerial->refine_global(1);
+
     init(*d_triaPtr,
+	 *d_triaPtrSerial,
 	 d_domainBoundingVectors);
 
     initIncrementField();

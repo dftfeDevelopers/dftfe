@@ -54,6 +54,7 @@ namespace dftfe {
 	 * @param[in] radiusAtomBall self-potential ball radius
 	 */
 	 void createAtomBins(std::vector<const dealii::ConstraintMatrix * > & constraintsVector,
+			     const dealii::ConstraintMatrix & onlyHangingNodeConstraints,
 		             const dealii::DoFHandler<3> & dofHandler,
 			     const dealii::ConstraintMatrix & constraintMatrix,
 			     const std::vector<std::vector<double> > & atomLocations,

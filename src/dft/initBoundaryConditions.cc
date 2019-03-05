@@ -109,6 +109,10 @@ void dftClass<FEOrder>::initBoundaryConditions(){
      AssertThrow(d_constraintsForTotalPotential.is_consistent_in_parallel(locally_owned_dofs_debug,
                                                locally_active_dofs_debug,
                                                mpi_communicator),ExcMessage("DFT-FE Error: Constraints are not consistent in parallel."));
+
+     AssertThrow(d_noConstraints.is_consistent_in_parallel(locally_owned_dofs_debug,
+                                               locally_active_dofs_debug,
+                                               mpi_communicator),ExcMessage("DFT-FE Error: Constraints are not consistent in parallel."));
   }
 
   //clear existing constraints matrix vector
@@ -129,6 +133,7 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   //
   computing_timer.enter_section("Create atom bins");
   d_vselfBinsManager.createAtomBins(d_constraintsVector,
+	                            d_noConstraints,
 	                            dofHandler,
 				    constraintsNone,
 				    atomLocations,

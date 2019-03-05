@@ -43,10 +43,12 @@ namespace dftfe {
       /** @brief Initializes the required data-structures for a given triangulation
        *
        *  @param[in] triangulation triangulation object whose nodes are to be moved
+       *  @param[in] serial triangulation to create constraints from serial dofHandler (temporary fix)
        *  @param[in] domainBoundingVectors domain vectors of the domain corresponding to
        *  the triangulation object.
        */
       void init(Triangulation<3,3> & triangulation,
+		Triangulation<3,3> & serialTriangulation,      
 	        const std::vector<std::vector<double> > & domainBoundingVectors);
 
       /** @brief Re-initializes the required data-structures for a given triangulation
@@ -102,6 +104,7 @@ namespace dftfe {
       FESystem<C_DIM>  FEMoveMesh;
       DoFHandler<C_DIM> d_dofHandlerMoveMesh;
       parallel::distributed::Triangulation<3> * d_triaPtr;
+      Triangulation<3,3>  * d_triaPtrSerial;
       IndexSet   d_locally_owned_dofs;
       IndexSet   d_locally_relevant_dofs;
       ConstraintMatrix d_constraintsMoveMesh;

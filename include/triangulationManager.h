@@ -132,6 +132,12 @@ namespace dftfe  {
     parallel::distributed::Triangulation<3> & getSerialMeshUnmoved();
 
     /**
+     * @brief returns constant reference to serial unmoved triangulation
+     *
+     */
+    parallel::distributed::Triangulation<3> & getSerialMeshElectrostatics();
+
+    /**
      * @brief returns reference to parallel moved triangulation
      *
      */
@@ -254,6 +260,7 @@ namespace dftfe  {
      */
     void generateMesh(parallel::distributed::Triangulation<3>& parallelTriangulation,
 		      parallel::distributed::Triangulation<3>& serialTriangulation,
+		      parallel::distributed::Triangulation<3>& serialTriangulationElectrostatics,
 		      parallel::distributed::Triangulation<3>& electrostaticsTriangulationRho,
 		      parallel::distributed::Triangulation<3>& electrostaticsTriangulationDisp,
 		      parallel::distributed::Triangulation<3>& electrostaticsTriangulationForce,
@@ -319,6 +326,7 @@ namespace dftfe  {
     parallel::distributed::Triangulation<3> d_triangulationElectrostaticsForce;
     parallel::distributed::Triangulation<3> d_serialTriangulationUnmoved;
     parallel::distributed::Triangulation<3> d_serialTriangulationUnmovedPrevious;
+    parallel::distributed::Triangulation<3> d_serialTriangulationElectrostatics;
 
     std::vector<std::vector<bool> > d_parallelTriaCurrentRefinement;
     std::vector<std::vector<bool> > d_serialTriaCurrentRefinement;

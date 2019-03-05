@@ -81,6 +81,7 @@ namespace dftParameters
   unsigned int spectrumSplitStartingScfIter=1;
   bool useELPA=false;
   bool constraintsParallelCheck=false;
+  bool createConstraintsFromSerialDofhandler=true;
 
   void declare_parameters(ParameterHandler &prm)
   {
@@ -225,6 +226,10 @@ namespace dftParameters
         prm.declare_entry("CONSTRAINTS PARALLEL CHECK", "false",
 			   Patterns::Bool(),
 			  "[Developer] Check for consistency of constraints in parallel.");
+
+        prm.declare_entry("CONSTRAINTS FROM SERIAL DOFHANDLER", "true",
+			   Patterns::Bool(),
+			  "[Developer] Check constraints from serial dofHandler.");
 
     }
     prm.leave_subsection ();
@@ -549,6 +554,7 @@ namespace dftParameters
 	dftParameters::periodicY                     = prm.get_bool("PERIODIC2");
 	dftParameters::periodicZ                     = prm.get_bool("PERIODIC3");
 	dftParameters::constraintsParallelCheck      = prm.get_bool("CONSTRAINTS PARALLEL CHECK");
+	dftParameters::createConstraintsFromSerialDofhandler= prm.get_bool("CONSTRAINTS FROM SERIAL DOFHANDLER");
     }
     prm.leave_subsection ();
 

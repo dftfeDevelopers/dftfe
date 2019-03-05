@@ -19,6 +19,7 @@ subsection Boundary conditions
   set PERIODIC1 = false
   set PERIODIC2 = false
   set PERIODIC3 = true
+  set CONSTRAINTS PARALLEL CHECK=true
 end
 
 
