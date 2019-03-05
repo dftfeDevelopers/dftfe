@@ -32,12 +32,8 @@ void forceClass<FEOrder>::locateAtomCoreNodesForce
   std::set<unsigned int> atomsTolocate;
   for (unsigned int i = 0; i < numAtoms; i++) atomsTolocate.insert(i);
 
-  DoFHandler<3>::active_cell_iterator
-  cell = dofHandlerForce.begin_active(),
-  endc = dofHandlerForce.end();
-
   //element loop
-  for (; cell!=endc; ++cell)
+  for (auto cell : dofHandlerForce.active_cell_iterators())	  
     if (cell->is_locally_owned())
       for (unsigned int i=0; i<vertices_per_cell; ++i){
 	const dealii::types::global_dof_index nodeID=cell->vertex_dof_index(i,0);
