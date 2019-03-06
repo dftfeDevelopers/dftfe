@@ -74,10 +74,8 @@ namespace dftfe
 	    cell->get_dof_indices(cell_dof_indices_par);
 	    cellIdToCellIterMapSer[cell->id()]->get_dof_indices(cell_dof_indices_ser);
 	    for(unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
-	    {
 		if (locally_owned_dofs_par.is_element(cell_dof_indices_par[iNode]))
 		   newDofNumbers[cell_dof_indices_ser[iNode]]=cell_dof_indices_par[iNode];
-	    }
 	 }
 
       MPI_Allreduce(MPI_IN_PLACE,
