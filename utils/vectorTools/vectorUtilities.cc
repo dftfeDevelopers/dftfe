@@ -33,7 +33,16 @@ namespace dftfe
 						  dealii::ConstraintMatrix & periodicHangingConstraints,
 						  dealii::ConstraintMatrix & onlyHangingConstraints)
     {
-      dealii::IndexSet locally_owned_dofs_par = dofHandlerPar.locally_owned_dofs();
+      dealii::ConditionalOStream pcout (std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
+      dealii::TimerOutput computing_timer(mpi_comm,
+	                             pcout,
+                                     dftParameters::reproducible_output ||
+                                     dftParameters::verbosity<4 ? dealii::TimerOutput::never:
+                                     dealii::TimerOutput::summary,dealii::TimerOutput::wall_times);
+
+      computing_timer.enter_section("Create constraints from serial dofHandler");
+
+      const dealii::IndexSet & locally_owned_dofs_par = dofHandlerPar.locally_owned_dofs();
 
       dealii::IndexSet locally_relevant_dofs_par;
       dealii::DoFTools::extract_locally_relevant_dofs(dofHandlerPar, locally_relevant_dofs_par);
@@ -46,33 +55,20 @@ namespace dftfe
 
       std::map<dealii::CellId, dealii::DoFHandler<3>::active_cell_iterator> cellIdToCellIterMapSer;
       std::map<dealii::CellId, dealii::DoFHandler<3>::active_cell_iterator> cellIdToCellIterMapPar;
-      typename dealii::DoFHandler<3>::active_cell_iterator cell = dofHandlerPar.begin_active();
-      typename dealii::DoFHandler<3>::active_cell_iterator endc = dofHandlerPar.end();
-      for(; cell!=endc; ++cell)
-      {
-	 if (cell->is_locally_owned())
-	 {
-	     cellIdToCellIterMapPar[cell->id()] = cell;
-	 }
-      }
 
-      cell = dofHandlerSer.begin_active();
-      endc = dofHandlerSer.end();
-      for(; cell!=endc; ++cell)
-      {
+      for(const auto & cell : dofHandlerPar.active_cell_iterators())
+	 if (cell->is_locally_owned())
+	     cellIdToCellIterMapPar[cell->id()] = cell;
+
+      for(const auto & cell : dofHandlerSer.active_cell_iterators())
 	 if (cellIdToCellIterMapPar.find(cell->id())!=cellIdToCellIterMapPar.end())
-	 {
 	     cellIdToCellIterMapSer[cell->id()] = cell;
-	 }
-      }
 
       const unsigned int dofs_per_cell = dofHandlerPar.get_fe().dofs_per_cell;
       std::vector<dealii::types::global_dof_index> cell_dof_indices_par(dofs_per_cell);
       std::vector<dealii::types::global_dof_index> cell_dof_indices_ser(dofs_per_cell);
-      cell = dofHandlerPar.begin_active();
-      endc = dofHandlerPar.end();
-      for(; cell!=endc; ++cell)
-      {
+
+      for(const auto & cell : dofHandlerPar.active_cell_iterators())
 	 if (cell->is_locally_owned())
 	 {
 	    cell->get_dof_indices(cell_dof_indices_par);
@@ -83,7 +79,6 @@ namespace dftfe
 		   newDofNumbers[cell_dof_indices_ser[iNode]]=cell_dof_indices_par[iNode];
 	    }
 	 }
-      }
 
       MPI_Allreduce(MPI_IN_PLACE,
 		    &newDofNumbers[0],
@@ -92,24 +87,18 @@ namespace dftfe
 		    MPI_SUM,
 		    mpi_comm);
 
-      if (false)
-      {
-	if (dealii::Utilities::MPI::this_mpi_process(mpi_comm) == 0)
-	   for (unsigned int i=0; i<newDofNumbers.size();++i)
-	      std::cout<<"Old dof id: "<< i <<",  new dof id: "<< newDofNumbers[i]<<std::endl;
-      }
-
       dofHandlerSer.renumber_dofs(newDofNumbers);
 
+      {
 #ifdef DEBUG
-      std::map<dealii::types::global_dof_index, dealii::Point<3>> supportPointsSer;
-      DoFTools::map_dofs_to_support_points(dealii::MappingQ1<3>(), dofHandlerSer, supportPointsSer);
+	  std::map<dealii::types::global_dof_index, dealii::Point<3>> supportPointsSer;
+	  DoFTools::map_dofs_to_support_points(dealii::MappingQ1<3>(), dofHandlerSer, supportPointsSer);
 
-      std::map<dealii::types::global_dof_index,dealii::Point<3> >::iterator iterMap;
-      for(iterMap = supportPoints.begin(); iterMap != supportPoints.end(); ++iterMap)
-	  if(locally_owned_dofs.is_element(iterMap->first))
-	       Assert(iterMap->second.distance(supportPointsSer[iterMap->first])<1e-5, dealii::ExcMessage("DFT-FE Error"));
+	  for(auto  iterMap : supportPoints)
+	      if(locally_owned_dofs.is_element(iterMap->first))
+		   Assert(iterMap->second.distance(supportPointsSer[iterMap->first])<1e-5, dealii::ExcMessage("DFT-FE Error"));
 #endif
+      }
 
       dealii::IndexSet locally_relevant_dofs_ser;
       dealii::DoFTools::extract_locally_relevant_dofs(dofHandlerSer, locally_relevant_dofs_ser);
@@ -123,49 +112,32 @@ namespace dftfe
       constraintsHangingSer.close();
 
       //create unitVectorsXYZ
-      std::vector<std::vector<double> > unitVectorsXYZ;
-      unitVectorsXYZ.resize(3);
-
-      for(int i = 0; i < 3; ++i)
-	{
-	  unitVectorsXYZ[i].resize(3,0.0);
-	  unitVectorsXYZ[i][i] = 0.0;
-	}
+      std::vector<std::vector<double> > unitVectorsXYZ(3,std::vector<double>(3,0.0));
 
       std::vector<dealii::Tensor<1,3> > offsetVectors;
       //resize offset vectors
       offsetVectors.resize(3);
 
       for(int i = 0; i < 3; ++i)
-	{
 	  for(int j = 0; j < 3; ++j)
-	    {
 	      offsetVectors[i][j] = unitVectorsXYZ[i][j] - domainBoundingVectors[i][j];
-	    }
-	}
 
       std::vector<dealii::GridTools::PeriodicFacePair<typename dealii::DoFHandler<3>::cell_iterator> > periodicity_vector2;
 
       std::vector<int> periodicDirectionVector;
       const std::array<int,3> periodic = {dftParameters::periodicX, dftParameters::periodicY, dftParameters::periodicZ};
       for(unsigned int  d= 0; d < 3; ++d)
-	{
 	  if(periodic[d]==1)
-	    {
 	      periodicDirectionVector.push_back(d);
-	    }
-	}
 
 
-      for (int i = 0; i < std::accumulate(periodic.begin(),periodic.end(),0); ++i)
-       {
+      for (unsigned int i = 0; i < std::accumulate(periodic.begin(),periodic.end(),0); ++i)
 	   dealii::GridTools::collect_periodic_faces(dofHandlerSer,
 		                            /*b_id1*/ 2*i+1,
 					    /*b_id2*/ 2*i+2,
 					    /*direction*/ periodicDirectionVector[i],
 					    periodicity_vector2,
 					    offsetVectors[periodicDirectionVector[i]]);
-       }
 
       dealii::DoFTools::make_periodicity_constraints<dealii::DoFHandler<3>>(periodicity_vector2,
 	                                                                    constraintsPeriodicHangingSer);
@@ -177,28 +149,28 @@ namespace dftfe
       onlyHangingConstraints.clear();
       onlyHangingConstraints.reinit(locally_relevant_dofs_par);
 
-      for (dealii::IndexSet::ElementIterator indexIter = locally_relevant_dofs_par.begin();
-	   indexIter != locally_relevant_dofs_par.end();
-	   ++indexIter)
+      for (auto index : locally_relevant_dofs_par)
       {
 
-	if (constraintsPeriodicHangingSer.is_constrained(*indexIter))
+	if (constraintsPeriodicHangingSer.is_constrained(index))
 	{
-	   periodicHangingConstraints.add_line(*indexIter);
-	   periodicHangingConstraints.add_entries(*indexIter,
-				   *constraintsPeriodicHangingSer.get_constraint_entries(*indexIter));
+	   periodicHangingConstraints.add_line(index);
+	   periodicHangingConstraints.add_entries(index,
+				   *constraintsPeriodicHangingSer.get_constraint_entries(index));
 	}
 
-	if (constraintsHangingSer.is_constrained(*indexIter))
+	if (constraintsHangingSer.is_constrained(index))
 	{
-	   onlyHangingConstraints.add_line(*indexIter);
-	   onlyHangingConstraints.add_entries(*indexIter,
-				   *constraintsHangingSer.get_constraint_entries(*indexIter));
+	   onlyHangingConstraints.add_line(index);
+	   onlyHangingConstraints.add_entries(index,
+				   *constraintsHangingSer.get_constraint_entries(index));
 	}
       }
 
       periodicHangingConstraints.close();
       onlyHangingConstraints.close();
+
+      computing_timer.exit_section("Create constraints from serial dofHandler");
     }
 
     template<typename T>
