@@ -98,12 +98,8 @@ namespace dftfe
 #endif
       }
 
-      dealii::IndexSet locally_relevant_dofs_ser;
-      dealii::DoFTools::extract_locally_relevant_dofs(dofHandlerSer, locally_relevant_dofs_ser);
-
       dealii::ConstraintMatrix constraintsHangingSer;
       constraintsHangingSer.clear();
-      constraintsHangingSer.reinit(locally_relevant_dofs_ser);
       dealii::DoFTools::make_hanging_node_constraints(dofHandlerSer, constraintsHangingSer);
 
       dealii::ConstraintMatrix constraintsPeriodicHangingSer(constraintsHangingSer);
