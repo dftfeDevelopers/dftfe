@@ -19,6 +19,7 @@
 #include <vectorUtilities.h>
 #include <exception>
 #include <dftParameters.h>
+#include <dftUtils.h>
 
 namespace dftfe
 {
@@ -57,7 +58,7 @@ namespace dftfe
       std::map<dealii::CellId, dealii::DoFHandler<3>::active_cell_iterator> cellIdToCellIterMapPar;
 
       for(const auto & cell : dofHandlerPar.active_cell_iterators())
-	 if (cell->is_locally_owned())
+	 if (!cell->is_artificial())
 	     cellIdToCellIterMapPar[cell->id()] = cell;
 
       for(const auto & cell : dofHandlerSer.active_cell_iterators())
@@ -87,22 +88,24 @@ namespace dftfe
 
       dofHandlerSer.renumber_dofs(newDofNumbers);
 
-      {
-#ifdef DEBUG
-	  std::map<dealii::types::global_dof_index, dealii::Point<3>> supportPointsSer;
-	  DoFTools::map_dofs_to_support_points(dealii::MappingQ1<3>(), dofHandlerSer, supportPointsSer);
-
-	  for(auto  iterMap : supportPoints)
-	      if(locally_owned_dofs.is_element(iterMap->first))
-		   Assert(iterMap->second.distance(supportPointsSer[iterMap->first])<1e-5, dealii::ExcMessage("DFT-FE Error"));
-#endif
-      }
+      if (dftParameters::verbosity>=4)
+        dftUtils::printCurrentMemoryUsage(mpi_comm,
+			  "Renumbered serial dofHandler");
 
       dealii::ConstraintMatrix constraintsHangingSer;
-      constraintsHangingSer.clear();
-      dealii::DoFTools::make_hanging_node_constraints(dofHandlerSer, constraintsHangingSer);
 
-      dealii::ConstraintMatrix constraintsPeriodicHangingSer(constraintsHangingSer);
+
+      dealii::DoFTools::make_hanging_node_constraints_from_serial(dofHandlerSer,
+	                                                          dofHandlerPar,
+								  cellIdToCellIterMapSer,
+	                                                          constraintsHangingSer);
+      if (dftParameters::verbosity>=4)
+        dftUtils::printCurrentMemoryUsage(mpi_comm,
+			  "Created hanging node constraints serial");
+
+      dealii::ConstraintMatrix constraintsPeriodicHangingSer;
+      constraintsPeriodicHangingSer.merge(constraintsHangingSer,
+	                                  dealii::ConstraintMatrix::MergeConflictBehavior::right_object_wins);
       constraintsHangingSer.close();
 
       //create unitVectorsXYZ
@@ -135,7 +138,12 @@ namespace dftfe
 
       dealii::DoFTools::make_periodicity_constraints<dealii::DoFHandler<3>>(periodicity_vector2,
 	                                                                    constraintsPeriodicHangingSer);
+
       constraintsPeriodicHangingSer.close();
+
+      if (dftParameters::verbosity>=4)
+        dftUtils::printCurrentMemoryUsage(mpi_comm,
+			  "Created periodic constraints serial");
 
       periodicHangingConstraints.clear();
       periodicHangingConstraints.reinit(locally_relevant_dofs_par);

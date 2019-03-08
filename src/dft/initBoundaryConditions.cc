@@ -204,5 +204,5 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   d_domainVolume=computeVolume(dofHandler);
 
   //update gaussianMeshMovementClass object
-  d_gaussianMovePar.initMoved(d_domainBoundingVectors);
+  //d_gaussianMovePar.initMoved(d_domainBoundingVectors);
 }

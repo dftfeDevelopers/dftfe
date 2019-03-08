@@ -33,14 +33,15 @@ void dftClass<FEOrder>::initUnmovedTriangulation(parallel::distributed::Triangul
   computing_timer.enter_section("unmoved setup");
 
   //initialize affine transformation object (must be done on unmoved triangulation)
-  d_affineTransformMesh.init(triangulation,
-	                     d_mesh.getSerialMeshUnmoved(),
-	                     d_domainBoundingVectors);
+  if (dftParameters::isCellOpt)
+    d_affineTransformMesh.init(triangulation,
+  	                       d_mesh.getSerialMeshUnmoved(),
+                               d_domainBoundingVectors);
 
   //initialize meshMovementGaussianClass object (must be done on unmoved triangulation)
-  d_gaussianMovePar.init(triangulation,
-	                 d_mesh.getSerialMeshUnmoved(),
-	                 d_domainBoundingVectors);
+  //d_gaussianMovePar.init(triangulation,
+  //	                 d_mesh.getSerialMeshUnmoved(),
+  //	                 d_domainBoundingVectors);
 
   if (dftParameters::verbosity>=4)
      dftUtils::printCurrentMemoryUsage(mpi_communicator,
@@ -216,10 +217,12 @@ void dftClass<FEOrder>::initUnmovedTriangulation(parallel::distributed::Triangul
 	constraintsNoneEigen.clear();
 	constraintsNoneEigen.reinit(locally_relevant_dofs);
 	constraintsNoneEigen.merge(constraintsNone,ConstraintMatrix::MergeConflictBehavior::right_object_wins);
+        constraintsNoneEigen.close();
 
 	noConstraintsEigen.clear();
 	noConstraintsEigen.reinit(locally_relevant_dofs);
 	noConstraintsEigen.merge(d_noConstraints,ConstraintMatrix::MergeConflictBehavior::right_object_wins);
+	noConstraintsEigen.close();
 #endif
   }
 
