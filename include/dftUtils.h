@@ -23,7 +23,7 @@
 
 namespace dftfe {
 
-  /** 
+  /**
    *  @brief Contains repeatedly used functions in the KSDFT calculations
    *
    *  @author Sambit Das, Krishnendu Ghosh, Phani Motamarri
@@ -31,6 +31,16 @@ namespace dftfe {
 
   namespace dftUtils
     {
+
+      /** @brief Create bounding box around a sphere.
+       *
+       *  @param  sphere center
+       *  @param  sphere radius
+       *  @return bounding box
+       */
+       dealii::BoundingBox<3>  createBoundingBoxForSphere(const dealii::Point<3> & center,
+	                                                  const double sphereRadius);
+
       /** @brief Calculates partial occupancy of the atomic orbital using
        *  Fermi-Dirac smearing.
        *
@@ -42,7 +52,7 @@ namespace dftfe {
        */
       double getPartialOccupancy(const double eigenValue,const double fermiEnergy,const double kb,const double T);
 
-      
+
       /** @brief Calculates cross product of two vectors
        *
        *  @param  a first vector
@@ -53,7 +63,7 @@ namespace dftfe {
       void cross_product(const std::vector<double> & a,
 			 const std::vector<double> & b,
 			 std::vector<double> & crossProductVector);
-     
+
 
       /** @brief Applies an affine transformation to the domain bounding vectors
        *
@@ -118,7 +128,7 @@ namespace dftfe {
 	MPI_Comm &get_intrapool_comm();
 
       private:
-	
+
 	MPI_Comm interpoolcomm;
 	MPI_Comm intrapoolcomm;
 
