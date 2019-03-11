@@ -45,7 +45,19 @@ namespace dftUtils
     return (factor >= 0)?std::exp(-factor)/(1.0 + std::exp(-factor)) : 1.0/(1.0 + std::exp(factor));
   }
 
-
+  dealii::BoundingBox<3>  createBoundingBoxForSphere(const dealii::Point<3> & center,
+	                                             const double sphereRadius)
+  {
+      dealii::Tensor<1,3,double> tempDisp;
+      tempDisp[0]=sphereRadius;
+      tempDisp[1]=sphereRadius;
+      tempDisp[2]=sphereRadius;
+      std::pair< dealii::Point<3,double >,dealii::Point<3, double>> boundaryPoints;
+      boundaryPoints.first=center-tempDisp;
+      boundaryPoints.second=center+tempDisp;
+      dealii::BoundingBox<3> boundingBox(boundaryPoints);
+      return boundingBox;
+  }
 
   void cross_product(const std::vector<double> &a,
 		     const std::vector<double> &b,

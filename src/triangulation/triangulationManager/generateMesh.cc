@@ -518,6 +518,7 @@ namespace dftfe {
 		    refineSerialMesh(cellIdToCellRefineFlagMapLocal,
 				     mpi_communicator,
 				     serialTriangulation,
+				     parallelTriangulation,
 				     d_serialTriaCurrentRefinement[numLevels]) ;
 
 
@@ -670,26 +671,44 @@ namespace dftfe {
   (const std::map<dealii::CellId,unsigned int> & cellIdToCellRefineFlagMapLocal,
    const MPI_Comm &mpi_comm,
    parallel::distributed::Triangulation<3>& serialTriangulation,
+   const parallel::distributed::Triangulation<3>& parallelTriangulation,
    std::vector<bool> & serialTriaCurrentRefinement)
 
   {
-    typename parallel::distributed::Triangulation<3>::active_cell_iterator cell, endc;
-    cell = serialTriangulation.begin_active();
-    endc = serialTriangulation.end();
-    for(;cell != endc; ++cell)
+    const unsigned int numberGlobalCellsSerial = serialTriangulation.n_global_active_cells();
+    std::vector<unsigned int> refineFlagsSerialCells(numberGlobalCellsSerial,0);
+
+    dealii::BoundingBox<3> boundingBoxParallelTria=dealii::GridTools::compute_bounding_box(parallelTriangulation);
+
+    unsigned int count=0;
+    for(auto cell : serialTriangulation.active_cell_iterators())
       if(cell->is_locally_owned())
 	{
-	  unsigned int refineFlag =0;
-
-	  std::map<dealii::CellId,unsigned int>::const_iterator
-	    iter=cellIdToCellRefineFlagMapLocal.find(cell->id());
-	  if (iter!=cellIdToCellRefineFlagMapLocal.end())
-	    refineFlag=iter->second;
-
-	  refineFlag = Utilities::MPI::sum(refineFlag,mpi_comm);
-	  if (refineFlag==1)
-	    cell->set_refine_flag();
+          if(boundingBoxParallelTria.point_inside(cell->center()))
+          {
+	      std::map<dealii::CellId,unsigned int>::const_iterator
+		iter=cellIdToCellRefineFlagMapLocal.find(cell->id());
+	      if (iter!=cellIdToCellRefineFlagMapLocal.end())
+		refineFlagsSerialCells[count]=iter->second;
+	  }
+	  count++;
 	}
+
+    MPI_Allreduce(MPI_IN_PLACE,
+	          &refineFlagsSerialCells[0],
+		  numberGlobalCellsSerial,
+                  MPI_UNSIGNED,
+		  MPI_SUM,
+		  mpi_comm);
+
+    count=0;
+    for(auto cell : serialTriangulation.active_cell_iterators())
+      if(cell->is_locally_owned())
+      {
+	  if (refineFlagsSerialCells[count]==1)
+	    cell->set_refine_flag();
+	  count++;
+      }
 
     serialTriangulation.save_refine_flags(serialTriaCurrentRefinement);
     serialTriangulation.execute_coarsening_and_refinement();
