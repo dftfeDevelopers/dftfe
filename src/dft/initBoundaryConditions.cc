@@ -99,22 +99,6 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   d_constraintsForTotalPotential.merge(constraintsNone,ConstraintMatrix::MergeConflictBehavior::right_object_wins);
   d_constraintsForTotalPotential.close();
 
-  if (dftParameters::constraintsParallelCheck)
-  {
-     IndexSet locally_active_dofs_debug;
-     DoFTools::extract_locally_active_dofs(dofHandler, locally_active_dofs_debug);
-
-     const std::vector<IndexSet>& locally_owned_dofs_debug= dofHandler.locally_owned_dofs_per_processor();
-
-     AssertThrow(d_constraintsForTotalPotential.is_consistent_in_parallel(locally_owned_dofs_debug,
-                                               locally_active_dofs_debug,
-                                               mpi_communicator),ExcMessage("DFT-FE Error: Constraints are not consistent in parallel."));
-
-     AssertThrow(d_noConstraints.is_consistent_in_parallel(locally_owned_dofs_debug,
-                                               locally_active_dofs_debug,
-                                               mpi_communicator),ExcMessage("DFT-FE Error: Constraints are not consistent in parallel."));
-  }
-
   //clear existing constraints matrix vector
   d_constraintsVector.clear();
 
@@ -142,6 +126,27 @@ void dftClass<FEOrder>::initBoundaryConditions(){
 				    d_imageChargesTrunc,
 				    dftParameters::radiusAtomBall);
   computing_timer.exit_section("Create atom bins");
+
+  if (dftParameters::constraintsParallelCheck)
+  {
+     IndexSet locally_active_dofs_debug;
+     DoFTools::extract_locally_active_dofs(dofHandler, locally_active_dofs_debug);
+
+     const std::vector<IndexSet>& locally_owned_dofs_debug= dofHandler.locally_owned_dofs_per_processor();
+
+     AssertThrow(d_constraintsForTotalPotential.is_consistent_in_parallel(locally_owned_dofs_debug,
+                                               locally_active_dofs_debug,
+                                               mpi_communicator),ExcMessage("DFT-FE Error: Constraints are not consistent in parallel."));
+
+     AssertThrow(d_noConstraints.is_consistent_in_parallel(locally_owned_dofs_debug,
+                                               locally_active_dofs_debug,
+                                               mpi_communicator),ExcMessage("DFT-FE Error: Constraints are not consistent in parallel."));
+
+     for (unsigned int i=0; i<d_constraintsVector.size();i++)
+	 AssertThrow(d_constraintsVector[i]->is_consistent_in_parallel(locally_owned_dofs_debug,
+						   locally_active_dofs_debug,
+						   mpi_communicator),ExcMessage("DFT-FE Error: Constraints are not consistent in parallel."));
+  }
 
   if (dftParameters::verbosity>=4)
       dftUtils::printCurrentMemoryUsage(mpi_communicator,
