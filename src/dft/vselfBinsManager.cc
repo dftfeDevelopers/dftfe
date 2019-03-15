@@ -948,8 +948,10 @@ namespace dftfe
 		}
 	    }
 
+	    d_vselfBinConstraintMatrices[iBin].merge(onlyHangingNodeConstraints,dealii::ConstraintMatrix::MergeConflictBehavior::left_object_wins);
+	    d_vselfBinConstraintMatrices[iBin].close();
 	    d_vselfBinConstraintMatrices[iBin].merge(constraintMatrix,dealii::ConstraintMatrix::MergeConflictBehavior::left_object_wins);
-	    d_vselfBinConstraintMatrices[iBin].close(); //pcout<<" ibin: "<<iBin <<" size of constraints: "<< constraintsForVselfInBin->n_constraints()<<std::endl;
+	    d_vselfBinConstraintMatrices[iBin].close();
 	    constraintsVector.push_back(&(d_vselfBinConstraintMatrices[iBin]));
 
 	}//bin loop
