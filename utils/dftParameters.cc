@@ -176,7 +176,7 @@ namespace dftParameters
 
 	    prm.declare_entry("ION RELAX FLAGS FILE", "",
 			      Patterns::Anything(),
-			      "[Standard] File specifying the permission flags (1-free to move, 0-fixed) for the 3-coordinate directions and for all atoms. File format (example for two atoms with atom 1 fixed and atom 2 free): 0 0 0 (row1), 1 1 1 (row2).");
+			      "[Standard] File specifying the permission flags (1-free to move, 0-fixed) and external forces for the 3-coordinate directions and for all atoms. File format (example for two atoms with atom 1 fixed and atom 2 free and 0.01 Ha/Bohr force acting on atom 2): 0 0 0 0.0 0.0 0.0(row1), 1 1 1 0.0 0.0 0.01(row2).");
 
 	    prm.declare_entry("CELL STRESS", "false",
 			      Patterns::Bool(),

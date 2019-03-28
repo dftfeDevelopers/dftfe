@@ -110,9 +110,11 @@ namespace dftfe {
 
 	void readRelaxationFlagsFile(const unsigned int numColumns,
 				     std::vector<std::vector<int> > &data,
+				     std::vector<std::vector<double> > &forceData,
 				     const std::string & fileName)
 	{
-	  std::vector<int> rowData(numColumns, 0.0);
+	  std::vector<int> rowData(3, 0);
+	  std::vector<double> rowForceData(3, 0.0);
 	  std::ifstream readFile(fileName.c_str());
 	  if(readFile.fail())
 	    {
@@ -124,8 +126,7 @@ namespace dftfe {
 	  // String to store line and word
 	  //
 	  std::string readLine;
-	  std::string word;
-
+	  std::string word, item;
 	  //
 	  // column index
 	  //
@@ -139,10 +140,18 @@ namespace dftfe {
 
 		  columnCount = 0;
 
-		  while(iss >> word && columnCount < numColumns)
-		    rowData[columnCount++] = atoi(word.c_str());
+		  rowForceData.resize(3,0.0) ;
 
-		  data.push_back(rowData);
+		  while(iss >> word && columnCount < numColumns)
+		   {
+		    if (columnCount < 3)
+		        rowData[columnCount] = atoi(word.c_str());
+		    else
+			rowForceData[columnCount-3] = atof(word.c_str());
+                    //
+                    columnCount++ ;
+                   }
+		  data.push_back(rowData); forceData.push_back(rowForceData);
 		}
 	    }
 	  readFile.close();
