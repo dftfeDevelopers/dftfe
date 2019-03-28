@@ -8,25 +8,25 @@ set -o pipefail
 # and optimization flag
 
 #Paths for external libraries
-dealiiPetscRealDir="/project/projectdirs/m2360/softwaresDFTFE/dealiiKNL/intel18_petscReal_64Bit_scalapackMpichHugepages"
-dealiiPetscComplexDir="/project/projectdirs/m2360/softwaresDFTFE/dealiKNLNew/intel18.0.1Complex"
-alglibDir="/global/project/projectdirs/m2360/softwaresDFTFE/alglib/cpp/src"
-libxcDir="/project/projectdirs/m2360/softwaresDFTFE/libxc/install_libxc2.2.0_intel18"
-spglibDir="/project/projectdirs/m2360/softwaresDFTFE/spglib"
-xmlIncludeDir="/usr/include/libxml2/libxml"
+dealiiPetscRealDir="/home/vikramg/DFT-FE-softwares/softwareCentos/dealiiDev/intel18.0.1_real_processGridOld"
+dealiiPetscComplexDir="/home/vikramg/DFT-FE-softwares/softwareCentos/dealiiDev/intel_18.0.1_petscComplex_avx_64bit_mklthread_scalapack"
+alglibDir="/nfs/mcfs_comp/home/rudraa/software/alglib/cpp/src"
+libxcDir="/home/vikramg/DFT-FE-softwares/softwareCentos/libxcNew/install_intel18"
+spglibDir="/home/vikramg/DFT-FE-softwares/softwareCentos/spglib"
+xmlIncludeDir="/usr/include/libxml2"
 xmlLibDir="/usr/lib64"
-elpaIncludeDir="/global/project/projectdirs/m2360/softwaresDFTFE/elpa/install/include/elpa_openmp-2018.05.001"
-elpaLibDir="/global/project/projectdirs/m2360/softwaresDFTFE/elpa/install/lib"
+elpaIncludeDir="/home/vikramg/DFT-FE-softwares/softwareCentos/elpa/install2/include/elpa_openmp-2018.05.001"
+elpaLibDir="/home/vikramg/DFT-FE-softwares/softwareCentos/elpa/install2/lib"
 
 #If you have installed dealii by linking with intel mkl library set underlying flag to "ON",
 #otherwise set it to "OFF"
 withIntelMkl=ON
 
 #Compiler options and flags
-c_compiler=cc
-cxx_compiler=CC
-c_flagsRelease=-O2
-cxx_flagsRelease=-O2
+c_compiler=mpicc
+cxx_compiler=mpicxx
+c_flagsRelease="-O3"
+cxx_flagsRelease="-O3"
 
 #Option to link to ELPA
 withELPA=ON
