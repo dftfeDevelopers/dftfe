@@ -122,11 +122,11 @@ namespace dftfe  {
      * @param FEOrder finite-element interpolating polynomial
      * @param generateElectrostaticsTria required for generating electrostatics triangulation
      */
-    void generateMeshAposteriori(const dealii::DoFHandler<3> & dofHandler,
-				 parallel::distributed::Triangulation<3> & parallelTriangulation,
-				 const std::vector<vectorType> & eigenVectorsArrayIn,
-				 const unsigned int FEOrder,
-				 const bool generateElectrostaticsTria);
+    void generateAutomaticMeshApriori(const dealii::DoFHandler<3> & dofHandler,
+				      parallel::distributed::Triangulation<3> & parallelTriangulation,
+				      const std::vector<vectorType> & eigenVectorsArrayIn,
+				      const unsigned int FEOrder,
+				      const bool generateElectrostaticsTria);
 
 
     /**

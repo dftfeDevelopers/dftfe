@@ -51,7 +51,7 @@ namespace dftfe {
 
       extern bool isIonOpt, isCellOpt, isIonForce, isCellStress;
       extern bool nonSelfConsistentForce, meshAdaption;
-      extern double forceRelaxTol, stressRelaxTol;
+      extern double forceRelaxTol, stressRelaxTol, toleranceKinetic;
       extern unsigned int cellConstraintType;
 
       extern unsigned int verbosity, chkType;

@@ -347,11 +347,11 @@ namespace dftfe {
   //
   //generate mesh based on a-posteriori estimates
   //
-  void triangulationManager::generateMeshAposteriori(const DoFHandler<3> & dofHandler,
-						     parallel::distributed::Triangulation<3> & parallelTriangulation,
-						     const std::vector<vectorType> & eigenVectorsArrayIn,
-						     const unsigned int FEOrder,
-						     const bool generateElectrostaticsTria)
+  void triangulationManager::generateAutomaticMeshApriori(const DoFHandler<3> & dofHandler,
+							  parallel::distributed::Triangulation<3> & parallelTriangulation,
+							  const std::vector<vectorType> & eigenVectorsArrayIn,
+							  const unsigned int FEOrder,
+							  const bool generateElectrostaticsTria)
   {
     
     double topfrac = dftParameters::topfrac;

@@ -47,6 +47,7 @@ namespace dftParameters
   bool nonSelfConsistentForce=false;
   double forceRelaxTol  = 1e-4;//Hartree/Bohr
   double stressRelaxTol = 1e-6;//Hartree/Bohr^3
+  double toleranceKinetic = 1e-03;
   unsigned int cellConstraintType=12;// all cell components to be relaxed
 
   unsigned int verbosity=0; unsigned int chkType=0;
@@ -274,6 +275,10 @@ namespace dftParameters
 	prm.declare_entry("NUM LEVELS", "1",
 			  Patterns::Integer(0,30),
 			  "[Developer] Number of times to be refined.");
+
+	prm.declare_entry("TOLERANCE FOR MESH ADAPTION", "1",
+			  Patterns::Double(0.0,1),
+			  "[Developer] Tolerance criteria used for stopping the multi-level mesh adaption done apriori using single atom wavefunctions. This is used as Kinetic energy change between two successive iterations");
 
 	prm.declare_entry("ERROR ESTIMATE WAVEFUNCTIONS", "5",
 			  Patterns::Integer(0),
@@ -585,6 +590,7 @@ namespace dftParameters
 	    dftParameters::topfrac                       = prm.get_double("TOP FRAC");
             dftParameters::numLevels                     = prm.get_double("NUM LEVELS");
 	    dftParameters::numberWaveFunctionsForEstimate = prm.get_integer("ERROR ESTIMATE WAVEFUNCTIONS");
+	    dftParameters::toleranceKinetic = prm.get_double("TOLERANCE FOR MESH ADAPTION");
 	}
         prm.leave_subsection ();
     }

@@ -675,7 +675,8 @@ namespace dftfe {
     unsigned int numberWaveFunctionsErrorEstimate = dftParameters::numberWaveFunctionsForEstimate;
     bool refineFlag = true;
     unsigned int countLevel = 0;
-
+    double traceXtKX = computeTraceXtKX(numberWaveFunctionsErrorEstimate);
+    double traceXtKXPrev = traceXtKX;
     
     while(refineFlag)
       {
@@ -703,11 +704,11 @@ namespace dftfe {
 	       }
 
 
-	     d_mesh.generateMeshAposteriori(dofHandler,
-					    triangulationPar,
-					    eigenVectorsArray,
-					    FEOrder,
-					    dftParameters::electrostaticsHRefinement);
+	     d_mesh.generateAutomaticMeshApriori(dofHandler,
+						 triangulationPar,
+						 eigenVectorsArray,
+						 FEOrder,
+						 dftParameters::electrostaticsHRefinement);
 
 	  }
 
@@ -730,14 +731,20 @@ namespace dftfe {
 	//
 	//compute Tr(XtKX) for each level of mesh
 	//
-	double traceXtKX = computeTraceXtKX(numberWaveFunctionsErrorEstimate);
+	traceXtKX = computeTraceXtKX(numberWaveFunctionsErrorEstimate);
 	pcout<<" Tr(XtKX) value for Level: "<<countLevel<<" "<<traceXtKX<<std::endl;
+
+	//compute change in traceXtKX
+	double deltaKinetic = std::abs(traceXtKX - traceXtKXPrev);
+
+	//reset traceXtkXPrev to traceXtKX
+	traceXtKXPrev = traceXtKX;
 
 	//
 	//set refineFlag
 	//
 	countLevel += 1;
-	if(countLevel >= numberLevelRefinements)
+	if(countLevel >= numberLevelRefinements || deltaKinetic <= dftParameters::toleranceKinetic)
 	  refineFlag = false;
 
       }
