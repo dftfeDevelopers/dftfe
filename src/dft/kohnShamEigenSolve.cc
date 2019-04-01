@@ -171,7 +171,76 @@ dataTypes::number dftClass<FEOrder>::computeTraceXtHX(unsigned int numberWaveFun
 
 }
 
+template<unsigned int FEOrder>
+double dftClass<FEOrder>::computeTraceXtKX(unsigned int numberWaveFunctionsEstimate)
+{
+  
+  //
+  //create kohnShamDFTOperatorClass object
+  //
+  kohnShamDFTOperatorClass<FEOrder> kohnShamDFTEigenOperator(this,mpi_communicator);
+  kohnShamDFTEigenOperator.init();
 
+  //
+  //precompute shapeFunctions and shapeFunctionGradients and shapeFunctionGradientIntegrals
+  //
+  kohnShamDFTEigenOperator.preComputeShapeFunctionGradientIntegrals();
+
+  
+  //
+  //compute Hamiltonian matrix
+  //
+  kohnShamDFTEigenOperator.computeKineticMatrix();
+
+  //
+  //scale the eigenVectors (initial guess of single atom wavefunctions or previous guess) to convert into Lowden Orthonormalized FE basis
+  //multiply by M^{1/2}
+  internal::pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_sqrtMassVector,
+				       matrix_free_data.get_vector_partitioner(),
+				       d_numEigenValues,
+				       localProc_dof_indicesReal,
+				       d_eigenVectorsFlattenedSTL[0]);
+
+
+  //
+  //orthogonalize the vectors
+  //
+  linearAlgebraOperations::gramSchmidtOrthogonalization(d_eigenVectorsFlattenedSTL[0],
+							d_numEigenValues,
+							mpi_communicator);
+
+  //
+  //compute projected Hamiltonian
+  //
+  std::vector<dataTypes::number> ProjHam;
+  
+  kohnShamDFTEigenOperator.XtHX(d_eigenVectorsFlattenedSTL[0],
+				d_numEigenValues,
+				ProjHam);
+
+  //
+  //scale the eigenVectors with M^{-1/2} to represent the wavefunctions in the usual FE basis
+  //
+  internal::pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_invSqrtMassVector,
+				       matrix_free_data.get_vector_partitioner(),
+				       d_numEigenValues,
+				       localProc_dof_indicesReal,
+				       d_eigenVectorsFlattenedSTL[0]);
+
+  double trXtKX = 0.0;
+#ifdef USE_COMPLEX
+  trXtKX = 0.0;
+#else
+  for(unsigned int i = 0; i < numberWaveFunctionsEstimate; ++i)
+    {
+      trXtKX += ProjHam[d_numEigenValues*i+i];
+    }
+#endif
+
+  return trXtKX;
+
+
+}
 
 //chebyshev solver
 template<unsigned int FEOrder>

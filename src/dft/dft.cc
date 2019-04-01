@@ -689,23 +689,16 @@ namespace dftfe {
 	     for(unsigned int i = 0; i < numberWaveFunctionsErrorEstimate; ++i)
 	       eigenVectorsArray[i].reinit(tempVec);
 
-#ifdef USE_COMPLEX
-	     vectorTools::copyFlattenedSTLVecToSingleCompVec(d_eigenVectorsFlattenedSTL[0],
-							     d_numEigenValues,
-							     std::make_pair(0,numberWaveFunctionsErrorEstimate),
-							     localProc_dof_indicesReal,
-							     localProc_dof_indicesImag,
-							     eigenVectorsArray);
-#else
+
 	     vectorTools::copyFlattenedSTLVecToSingleCompVec(d_eigenVectorsFlattenedSTL[0],
 							     d_numEigenValues,
 							     std::make_pair(0,numberWaveFunctionsErrorEstimate),
 							     eigenVectorsArray);
-#endif
+
 
 	     for(unsigned int i= 0; i < numberWaveFunctionsErrorEstimate; ++i)
 	       {
-		 constraintsNoneEigenDataInfo.distribute(eigenVectorsArray[i]);
+		 constraintsNone.distribute(eigenVectorsArray[i]);
 		 eigenVectorsArray[i].update_ghost_values();
 	       }
 
@@ -715,6 +708,7 @@ namespace dftfe {
 					    eigenVectorsArray,
 					    FEOrder,
 					    dftParameters::electrostaticsHRefinement);
+
 	  }
 
 
@@ -730,9 +724,14 @@ namespace dftfe {
 	//
 	//compute Tr(XtHX) for each level of mesh
 	//
-	dataTypes::number traceXtHX = computeTraceXtHX(numberWaveFunctionsErrorEstimate);
+	//dataTypes::number traceXtHX = computeTraceXtHX(numberWaveFunctionsErrorEstimate);
+	//pcout<<" Tr(XtHX) value for Level: "<<countLevel<<" "<<traceXtHX<<std::endl;
 
-	pcout<<" Tr(XtHX) value for Level: "<<countLevel<<" "<<traceXtHX<<std::endl;
+	//
+	//compute Tr(XtKX) for each level of mesh
+	//
+	double traceXtKX = computeTraceXtKX(numberWaveFunctionsErrorEstimate);
+	pcout<<" Tr(XtKX) value for Level: "<<countLevel<<" "<<traceXtKX<<std::endl;
 
 	//
 	//set refineFlag
