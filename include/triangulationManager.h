@@ -302,6 +302,7 @@ namespace dftfe  {
     void refineSerialMesh(const std::map<dealii::CellId,unsigned int> & cellIdToCellRefineFlagMapLocal,
 			  const MPI_Comm &mpi_comm,
 			  parallel::distributed::Triangulation<3>& serialTriangulation,
+			  const parallel::distributed::Triangulation<3>& parallelTriangulation,
 			  std::vector<bool> & serialTriaCurrentRefinement);
 
     /**

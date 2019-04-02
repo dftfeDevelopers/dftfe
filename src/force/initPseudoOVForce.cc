@@ -196,13 +196,17 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoOVDataForce()
 		      //
 		      // get the spherical coordinates from cartesian
 		      //
-		      double r,theta,phi;
-		      pseudoForceUtils::convertCartesianToSpherical(x,r,theta,phi);
+		      //double r,theta,phi;
+		      //pseudoForceUtils::convertCartesianToSpherical(x,r,theta,phi);
 
 		      double radialProjVal, sphericalHarmonicVal, projectorFunctionValue;
 	              std::vector<double> projectorFunctionDerivatives(3,0.0);
-		      if(r <= dftPtr->d_pspTail)//d_outerMostPointPseudoWaveFunctionsData[globalWaveSplineId])
+		      if(std::sqrt(x[0]*x[0]+x[1]*x[1]+x[2]*x[2]) <=dftPtr->d_outerMostPointPseudoProjectorData[globalWaveSplineId]) //dftPtr->d_pspTail)//d_outerMostPointPseudoWaveFunctionsData[globalWaveSplineId])
 			{
+                          double r,theta,phi;
+		          pseudoForceUtils::convertCartesianToSpherical(x,r,theta,phi);
+
+
 			  pseudoForceUtils::getRadialFunctionVal(r,
 					                         radialProjVal,
 					                         &dftPtr->d_pseudoWaveFunctionSplines[globalWaveSplineId]);

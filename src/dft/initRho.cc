@@ -51,6 +51,7 @@ void dftClass<FEOrder>::initRho()
   std::map<unsigned int, alglib::spline1dinterpolant> denSpline;
   std::map<unsigned int, std::vector<std::vector<double> > > singleAtomElectronDensity;
   std::map<unsigned int, double> outerMostPointDen;
+  const double truncationTol=1e-8;
 
   //loop over atom types
   for (std::set<unsigned int>::iterator it=atomTypes.begin(); it!=atomTypes.end(); it++)
@@ -73,10 +74,15 @@ void dftClass<FEOrder>::initRho()
       dftUtils::readFile(2, singleAtomElectronDensity[*it], densityFile);
       unsigned int numRows = singleAtomElectronDensity[*it].size()-1;
       std::vector<double> xData(numRows), yData(numRows);
+
+      unsigned int maxRowId=0;
       for(unsigned int irow = 0; irow < numRows; ++irow)
 	{
 	  xData[irow] = singleAtomElectronDensity[*it][irow][0];
 	  yData[irow] = singleAtomElectronDensity[*it][irow][1];
+
+	  if (yData[irow]>truncationTol)
+             maxRowId=irow;
 	}
 
       //interpolate rho
@@ -87,7 +93,7 @@ void dftClass<FEOrder>::initRho()
       alglib::ae_int_t natural_bound_type_L = 1;
       alglib::ae_int_t natural_bound_type_R = 1;
       spline1dbuildcubic(x, y, numRows, natural_bound_type_L, 0.0, natural_bound_type_R, 0.0, denSpline[*it]);
-      outerMostPointDen[*it]= xData[numRows-1];
+      outerMostPointDen[*it]= xData[maxRowId];
     }
 
 

@@ -186,6 +186,9 @@ namespace dftfe {
     /// d_beta = (d_deltaNew - d_deltaMid)/d_deltaOld
     double              d_beta;
 
+    ///
+    double d_gradMax;
+
     /// storage for number of unknowns to be solved for in the nonlinear problem
     unsigned int   d_numberUnknowns;
 

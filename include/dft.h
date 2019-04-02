@@ -59,6 +59,7 @@ namespace dftfe {
   struct orbital
   {
     unsigned int atomID;
+    unsigned int waveID;
     unsigned int Z, n, l;
     int m;
     alglib::spline1dinterpolant* psi;
@@ -568,6 +569,9 @@ namespace dftfe {
       /// volume of the domain
       double d_domainVolume;
 
+      /// init wfc trunctation radius
+      double d_wfcInitTruncation;
+
       /**
        * dealii based FE data structres
        */
@@ -781,6 +785,7 @@ namespace dftfe {
       //
       std::vector<double> d_outerMostPointPseudoWaveFunctionsData;
       std::vector<double> d_outerMostPointPseudoPotData;
+      std::vector<double> d_outerMostPointPseudoProjectorData;
 
       /// map of atom node number and atomic weight
       std::map<dealii::types::global_dof_index, double> d_atomNodeIdToChargeMap;

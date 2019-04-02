@@ -66,6 +66,7 @@ namespace dftfe {
     // initialize delta new
     //
     d_deltaNew = 0.0;
+    d_gradMax=0.0;
 
     //
     // iterate over unknowns
@@ -78,7 +79,9 @@ namespace dftfe {
       d_steepestDirectionOld[i]  =r;
       d_conjugateDirection[i]   = r;
       d_deltaNew      += factor*r*d_conjugateDirection[i];
-
+ 
+      if (std::abs(d_gradient[i])>d_gradMax)
+	d_gradMax=std::abs(d_gradient[i]);
     }
     //
     //
@@ -496,18 +499,22 @@ namespace dftfe {
 
       // compute deltaNew, and initialize steepestDirectionOld to current steepest direction
       d_deltaNew = 0.0;
+      d_gradMax=0.0;
       for (unsigned int i = 0; i < d_numberUnknowns; ++i)
       {
          const double r = -d_gradient[i];
          d_steepestDirectionOld[i]  =r;
          d_deltaNew += d_unknownCountFlag[i]*r*r;
+
+	 if (std::abs(d_gradient[i])>d_gradMax)
+                d_gradMax=std::abs(d_gradient[i]);
       }
     }
     //
     // check for convergence
     //
     unsigned int isSuccess=0;
-    if ( d_deltaNew < toleranceSqr*d_numberUnknowns)
+    if ( d_gradMax < d_tolerance)
         isSuccess=1;
 
     MPI_Bcast(&(isSuccess),
@@ -605,7 +612,15 @@ namespace dftfe {
       // check for convergence
       //
       unsigned int isBreak=0;
-      if (d_deltaNew < toleranceSqr*d_numberUnknowns)
+
+      d_gradMax=0.0;
+      for (unsigned int i = 0; i < d_numberUnknowns; ++i)
+      {
+         if (std::abs(d_gradient[i])>d_gradMax)
+            d_gradMax=std::abs(d_gradient[i]);
+      }
+
+      if (d_gradMax < d_tolerance)
 	isBreak=1;
       MPI_Bcast(&(isSuccess),
 		   1,

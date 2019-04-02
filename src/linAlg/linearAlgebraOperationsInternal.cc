@@ -37,6 +37,7 @@ namespace dftfe
 
 #ifdef DFTFE_WITH_ELPA
       void setupELPAHandle(const MPI_Comm & mpi_communicator,
+                           MPI_Comm & processGridCommunicatorActive,
 			   const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 			   const unsigned int na,
 			   const unsigned int nev,
@@ -73,7 +74,7 @@ namespace dftfe
 	   // Create the communicator based on active_group.
 	   // Note that on all the inactive processs the resulting MPI_Comm processGridCommunicatorActive
 	   // will be MPI_COMM_NULL.
-	   MPI_Comm processGridCommunicatorActive;
+	   //MPI_Comm processGridCommunicatorActive;
 	   ierr = dealii::Utilities::MPI::create_group(mpi_communicator,
 					      active_group,
 					      50,
