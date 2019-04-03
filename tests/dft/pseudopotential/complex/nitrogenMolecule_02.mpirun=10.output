@@ -33,12 +33,12 @@ SCF iterations converged to the specified tolerance after: 12 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.79765856
+             Total energy:         -19.79765398
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.292465,0.000000,0.000000
-AtomId    1:  0.292453,0.000011,0.000012
+AtomId    0:  0.292464,0.000000,0.000000
+AtomId    1:  0.292461,0.000004,0.000008
 --------------------------------------------------------------------------------------------
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
 v1 : 80.000000 0.000000 0.000000
@@ -72,12 +72,12 @@ SCF iterations converged to the specified tolerance after: 12 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.89600598
+             Total energy:         -19.89600662
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.126044,0.000000,0.000000
-AtomId    1:  0.126052,0.000000,0.000000
+AtomId    0:  0.126039,0.000000,0.000000
+AtomId    1:  0.126047,0.000000,0.000000
 --------------------------------------------------------------------------------------------
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
 v1 : 80.000000 0.000000 0.000000
@@ -109,12 +109,12 @@ SCF iterations converged to the specified tolerance after: 13 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.83956439
+             Total energy:         -19.83957145
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.401557,0.000000,0.000000
-AtomId    1:  0.401557,0.000000,0.000000
+AtomId    0:  0.401497,0.000000,0.000000
+AtomId    1:  0.401497,0.000000,0.000000
 --------------------------------------------------------------------------------------------
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
 v1 : 80.000000 0.000000 0.000000
@@ -146,12 +146,12 @@ SCF iterations converged to the specified tolerance after: 12 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.90260843
+             Total energy:         -19.90260869
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.044737,0.000000,0.000000
-AtomId    1:  0.044724,0.000000,0.000000
+AtomId    0:  0.044730,0.000000,0.000000
+AtomId    1:  0.044717,0.000000,0.000000
 --------------------------------------------------------------------------------------------
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
 v1 : 80.000000 0.000000 0.000000
@@ -179,10 +179,10 @@ SCF iterations converged to the specified tolerance after: 11 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.90333353
+             Total energy:         -19.90333358
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.013419,0.000000,0.000000
-AtomId    1:  0.013420,0.000000,0.000000
+AtomId    0:  0.013414,0.000000,0.000000
+AtomId    1:  0.013416,0.000000,0.000000
 --------------------------------------------------------------------------------------------
