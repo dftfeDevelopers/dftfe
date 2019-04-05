@@ -422,7 +422,7 @@ namespace dftfe {
     d_parallelTriangulationUnmoved.prepare_coarsening_and_refinement();
     d_parallelTriangulationUnmoved.execute_coarsening_and_refinement();
 
-    std::string printCommand = "A-posteriori Triangulation Summary";
+    std::string printCommand = "Automatic Adaptive Mesh Refinement Based Triangulation Summary";
     internal::computeMeshMetrics(parallelTriangulation,
 				 printCommand,
 				 pcout,

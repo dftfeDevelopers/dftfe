@@ -272,7 +272,7 @@ namespace dftParameters
 			  Patterns::Double(0.0,1),
 			  "[Developer] Top fraction of elements to be refined.");
 
-	prm.declare_entry("NUM LEVELS", "1",
+	prm.declare_entry("NUM LEVELS", "10",
 			  Patterns::Integer(0,30),
 			  "[Developer] Number of times to be refined.");
 
@@ -772,6 +772,9 @@ namespace dftParameters
 
     AssertThrow(dftParameters::natomTypes!=0
 	        ,ExcMessage("DFT-FE Error: Number of atom types not specified or given a value of zero, which is not allowed."));
+
+    if(dftParameters::meshAdaption)
+      AssertThrow(!(dftParameters::isIonOpt && dftParameters::isCellOpt),ExcMessage("DFT-FE Error: Currently Atomic relaxation does not work with automatic mesh adaption scheme."));
 
 #ifndef WITH_MKL;
     dftParameters::useBatchGEMM=false;

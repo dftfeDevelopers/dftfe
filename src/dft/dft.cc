@@ -732,10 +732,11 @@ namespace dftfe {
 	//compute Tr(XtKX) for each level of mesh
 	//
 	traceXtKX = computeTraceXtKX(numberWaveFunctionsErrorEstimate);
-	pcout<<" Tr(XtKX) value for Level: "<<countLevel<<" "<<traceXtKX<<std::endl;
+        if(dftParameters::verbosity>0)
+	  pcout<<" Tr(XtKX) value for Level: "<<countLevel<<" "<<traceXtKX<<std::endl;
 
 	//compute change in traceXtKX
-	double deltaKinetic = std::abs(traceXtKX - traceXtKXPrev);
+	double deltaKinetic = std::abs(traceXtKX - traceXtKXPrev)/atomLocations.size();
 
 	//reset traceXtkXPrev to traceXtKX
 	traceXtKXPrev = traceXtKX;
