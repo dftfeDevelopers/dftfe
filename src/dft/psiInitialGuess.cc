@@ -309,14 +309,14 @@ void dftClass<FEOrder>::readPSIRadialValues(){
 		  //(Fix me: Examine whether periodic image contributions have to be included or not)
 		  //currently not including
 		  std::vector<int> imageIdsList;
-		  //if(dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ)
-		  //{
-		  //  imageIdsList = d_globalChargeIdToImageIdMap[it->atomID];
-		  // }
-		  //else
-		  //{
-		  imageIdsList.push_back(it->atomID);
-		  // }
+		  if(dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ)
+		  {
+		    imageIdsList = d_globalChargeIdToImageIdMap[it->atomID];
+		  }
+		  else
+		  {
+		    imageIdsList.push_back(it->atomID);
+		  }
 
                   const unsigned int waveId=it->waveID;
 		  for(int iImageAtomCount = 0; iImageAtomCount < imageIdsList.size();++iImageAtomCount)
