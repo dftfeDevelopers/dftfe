@@ -376,10 +376,14 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
 
       for (unsigned int iatom=0;iatom<totalNumberAtoms;++iatom)
       {
-	  (d_gaussianWeightsVecAtoms[iatom])
+	  if (iatom==0)    
+	    d_gaussianWeightsVecAtoms[iatom]
 	               = dealii::parallel::distributed::Vector<double>(d_locally_owned_dofsForce,
 									       ghostIndicesForce,
 									       mpi_communicator);
+	  else
+            d_gaussianWeightsVecAtoms[iatom].reinit(d_gaussianWeightsVecAtoms[0]);
+
 	  (d_gaussianWeightsVecAtoms[iatom]) = 0.0;
 	  d_gaussianWeightsVecAtoms[iatom].zero_out_ghosts();
       }
@@ -506,10 +510,14 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
 
       for (unsigned int iatom=0;iatom<totalNumberAtoms;++iatom)
       {
-	  (d_gaussianWeightsVecAtoms[iatom])
+	  if (iatom==0)
+	    d_gaussianWeightsVecAtoms[iatom]
 	               = dealii::parallel::distributed::Vector<double>(d_locally_owned_dofsForceElectro,
 								       ghostIndicesForceElectro,
 								       mpi_communicator);
+	  else
+            d_gaussianWeightsVecAtoms[iatom].reinit(d_gaussianWeightsVecAtoms[0]);		
+
 	  (d_gaussianWeightsVecAtoms[iatom]) = 0.0;
 	  d_gaussianWeightsVecAtoms[iatom].zero_out_ghosts();
       }
