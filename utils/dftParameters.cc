@@ -40,11 +40,14 @@ namespace dftParameters
 
   double outerAtomBallRadius=2.0, meshSizeOuterDomain=10.0;
   double meshSizeInnerBall=1.0, meshSizeOuterBall=1.0;
+  unsigned int numLevels = 1,numberWaveFunctionsForEstimate = 5;
+  double topfrac = 0.1;
 
   bool isIonOpt=false, isCellOpt=false, isIonForce=false, isCellStress=false;
   bool nonSelfConsistentForce=false;
   double forceRelaxTol  = 1e-4;//Hartree/Bohr
   double stressRelaxTol = 1e-6;//Hartree/Bohr^3
+  double toleranceKinetic = 1e-03;
   unsigned int cellConstraintType=12;// all cell components to be relaxed
 
   unsigned int verbosity=0; unsigned int chkType=0;
@@ -52,6 +55,7 @@ namespace dftParameters
   bool reproducible_output=false;
   bool electrostaticsHRefinement = false;
   bool electrostaticsPRefinement = false;
+  bool meshAdaption = false;
 
   std::string startingWFCType="";
   bool useBatchGEMM=false;
@@ -259,6 +263,26 @@ namespace dftParameters
 	prm.declare_entry("MESH SIZE AT ATOM", "0.0",
 			  Patterns::Double(0.0,10),
 			  "[Advanced] Mesh size of the finite elements in the immediate vicinity of the atom. For the default value of 0.0, a heuristically determined MESH SIZE AT ATOM is used, which is good enough for most cases. Standard users do not need to tune this parameter. Units: a.u.");
+
+	prm.declare_entry("MESH ADAPTION","false",
+			  Patterns::Bool(),
+			  "[Standard] Generates adaptive mesh based on a-posteriori mesh adaption strategy using single atom wavefunctions before computing the ground-state. Default: false.");
+
+	prm.declare_entry("TOP FRAC", "0.1",
+			  Patterns::Double(0.0,1),
+			  "[Developer] Top fraction of elements to be refined.");
+
+	prm.declare_entry("NUM LEVELS", "10",
+			  Patterns::Integer(0,30),
+			  "[Developer] Number of times to be refined.");
+
+	prm.declare_entry("TOLERANCE FOR MESH ADAPTION", "1",
+			  Patterns::Double(0.0,1),
+			  "[Developer] Tolerance criteria used for stopping the multi-level mesh adaption done apriori using single atom wavefunctions. This is used as Kinetic energy change between two successive iterations");
+
+	prm.declare_entry("ERROR ESTIMATE WAVEFUNCTIONS", "5",
+			  Patterns::Integer(0),
+			  "[Developer] Number of wavefunctions to be used for error estimation.");
 
       }
       prm.leave_subsection ();
@@ -562,6 +586,11 @@ namespace dftParameters
 	    dftParameters::meshSizeOuterDomain           = prm.get_double("BASE MESH SIZE");
 	    dftParameters::meshSizeInnerBall             = prm.get_double("MESH SIZE AT ATOM");
 	    dftParameters::meshSizeOuterBall             = prm.get_double("MESH SIZE AROUND ATOM");
+	    dftParameters::meshAdaption                  = prm.get_bool("MESH ADAPTION");
+	    dftParameters::topfrac                       = prm.get_double("TOP FRAC");
+            dftParameters::numLevels                     = prm.get_double("NUM LEVELS");
+	    dftParameters::numberWaveFunctionsForEstimate = prm.get_integer("ERROR ESTIMATE WAVEFUNCTIONS");
+	    dftParameters::toleranceKinetic = prm.get_double("TOLERANCE FOR MESH ADAPTION");
 	}
         prm.leave_subsection ();
     }
@@ -743,6 +772,9 @@ namespace dftParameters
 
     AssertThrow(dftParameters::natomTypes!=0
 	        ,ExcMessage("DFT-FE Error: Number of atom types not specified or given a value of zero, which is not allowed."));
+
+    if(dftParameters::meshAdaption)
+      AssertThrow(!(dftParameters::isIonOpt && dftParameters::isCellOpt),ExcMessage("DFT-FE Error: Currently Atomic relaxation does not work with automatic mesh adaption scheme."));
 
 #ifndef WITH_MKL;
     dftParameters::useBatchGEMM=false;

@@ -181,3 +181,72 @@ void kohnShamDFTOperatorClass<FEOrder>::computeHamiltonianMatrix(unsigned int kP
 }
 
 
+template<unsigned int FEOrder>
+void kohnShamDFTOperatorClass<FEOrder>::computeKineticMatrix()
+{
+
+  //
+  //Get the number of locally owned cells
+  //
+  const unsigned int numberMacroCells = dftPtr->matrix_free_data.n_macro_cells();
+  const unsigned int totalLocallyOwnedCells = dftPtr->matrix_free_data.n_physical_cells();
+
+  //
+  //Resize the cell-level hamiltonian  matrix
+  //
+  d_cellHamiltonianMatrix.clear();
+  d_cellHamiltonianMatrix.resize(totalLocallyOwnedCells);
+
+  //
+  //Get some FE related Data
+  //
+  QGauss<3> quadrature(C_num1DQuad<FEOrder>());
+  FEEvaluation<3, FEOrder, C_num1DQuad<FEOrder>(), 1, double>  fe_eval(dftPtr->matrix_free_data, 0, 0);
+  FEValues<3> fe_values(dftPtr->matrix_free_data.get_dof_handler().get_fe(), quadrature,update_gradients);
+  const unsigned int numberDofsPerElement = dftPtr->matrix_free_data.get_dof_handler().get_fe().dofs_per_cell;
+
+
+  //
+  //compute cell-level stiffness matrix by going over dealii macrocells
+  //which allows efficient integration of cell-level stiffness matrix integrals
+  //using dealii vectorized arrays
+  unsigned int iElem = 0;
+  for(unsigned int iMacroCell = 0; iMacroCell < numberMacroCells; ++iMacroCell)
+    {
+      std::vector<VectorizedArray<double> > elementHamiltonianMatrix;
+      elementHamiltonianMatrix.resize(numberDofsPerElement*numberDofsPerElement);
+      fe_eval.reinit(iMacroCell);
+      const  unsigned int n_sub_cells = dftPtr->matrix_free_data.n_components_filled(iMacroCell);
+
+      for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+	{
+	  for(unsigned int jNode = 0; jNode < numberDofsPerElement; ++jNode)
+	    {
+
+	      elementHamiltonianMatrix[numberDofsPerElement*iNode + jNode] = d_cellShapeFunctionGradientIntegral[iMacroCell][numberDofsPerElement*iNode + jNode];
+
+	    }//jNode loop
+
+	}//iNode loop
+
+
+      for(unsigned int iSubCell = 0; iSubCell < n_sub_cells; ++iSubCell)
+	{
+	  //FIXME: Use functions like mkl_malloc for 64 byte memory alignment.
+	  d_cellHamiltonianMatrix[iElem].resize(numberDofsPerElement*numberDofsPerElement,0.0);
+
+	  for(unsigned int iNode = 0; iNode < numberDofsPerElement; ++iNode)
+	    {
+	      for(unsigned int jNode = 0; jNode < numberDofsPerElement; ++jNode)
+		{
+		  d_cellHamiltonianMatrix[iElem][numberDofsPerElement*iNode + jNode]
+		      = elementHamiltonianMatrix[numberDofsPerElement*iNode + jNode][iSubCell];
+		}
+	    }
+
+	  iElem += 1;
+	}
+
+    }//macrocell loop
+
+}

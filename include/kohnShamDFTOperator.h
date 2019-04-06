@@ -257,7 +257,7 @@ namespace dftfe{
 
       ///compute element Hamiltonian matrix
       void computeHamiltonianMatrix(unsigned int kPointIndex);
-
+      void computeKineticMatrix();
 
 
 

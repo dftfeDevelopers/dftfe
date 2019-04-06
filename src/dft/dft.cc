@@ -591,14 +591,6 @@ namespace dftfe {
     //
     moveMeshToAtoms(triangulationPar);
 
-    /*if(dftParameters::electrostaticsHRefinement)
-      {
-	//
-	//get access to triangulation objects from meshGenerator class
-	//
-	parallel::distributed::Triangulation<3> & triangulationElectro = d_mesh.getElectrostaticsMesh();
-	moveMeshToAtoms(triangulationElectro);
-	}*/
 
     if (dftParameters::verbosity>=4)
       dftUtils::printCurrentMemoryUsage(mpi_communicator,
@@ -668,12 +660,109 @@ namespace dftfe {
     initNoRemesh();
   }
 
+
+  //
+  //generate a-posteriori mesh
+  //
+  template<unsigned int FEOrder>
+  void dftClass<FEOrder>::aposterioriMeshGenerate()
+  {
+    //
+    //get access to triangulation objects from meshGenerator class
+    //
+    parallel::distributed::Triangulation<3> & triangulationPar = d_mesh.getParallelMeshMoved();
+    unsigned int numberLevelRefinements = dftParameters::numLevels;
+    unsigned int numberWaveFunctionsErrorEstimate = dftParameters::numberWaveFunctionsForEstimate;
+    bool refineFlag = true;
+    unsigned int countLevel = 0;
+    double traceXtKX = computeTraceXtKX(numberWaveFunctionsErrorEstimate);
+    double traceXtKXPrev = traceXtKX;
+    
+    while(refineFlag)
+      {
+	if(numberLevelRefinements > 0)
+	  {
+	     vectorType tempVec;
+	     matrix_free_data.initialize_dof_vector(tempVec);
+
+	     std::vector<dealii::parallel::distributed::Vector<double> > eigenVectorsArray(numberWaveFunctionsErrorEstimate);
+	     
+	     for(unsigned int i = 0; i < numberWaveFunctionsErrorEstimate; ++i)
+	       eigenVectorsArray[i].reinit(tempVec);
+
+
+	     vectorTools::copyFlattenedSTLVecToSingleCompVec(d_eigenVectorsFlattenedSTL[0],
+							     d_numEigenValues,
+							     std::make_pair(0,numberWaveFunctionsErrorEstimate),
+							     eigenVectorsArray);
+
+
+	     for(unsigned int i= 0; i < numberWaveFunctionsErrorEstimate; ++i)
+	       {
+		 constraintsNone.distribute(eigenVectorsArray[i]);
+		 eigenVectorsArray[i].update_ghost_values();
+	       }
+
+
+	     d_mesh.generateAutomaticMeshApriori(dofHandler,
+						 triangulationPar,
+						 eigenVectorsArray,
+						 FEOrder,
+						 dftParameters::electrostaticsHRefinement);
+
+	  }
+
+
+	//
+	//initialize dofHandlers of refined mesh and move triangulation
+	//
+	initUnmovedTriangulation(triangulationPar);
+	moveMeshToAtoms(triangulationPar);
+	initBoundaryConditions();
+	initElectronicFields();
+	initPseudoPotentialAll();
+
+	//
+	//compute Tr(XtHX) for each level of mesh
+	//
+	//dataTypes::number traceXtHX = computeTraceXtHX(numberWaveFunctionsErrorEstimate);
+	//pcout<<" Tr(XtHX) value for Level: "<<countLevel<<" "<<traceXtHX<<std::endl;
+
+	//
+	//compute Tr(XtKX) for each level of mesh
+	//
+	traceXtKX = computeTraceXtKX(numberWaveFunctionsErrorEstimate);
+        if(dftParameters::verbosity>0)
+	  pcout<<" Tr(XtKX) value for Level: "<<countLevel<<" "<<traceXtKX<<std::endl;
+
+	//compute change in traceXtKX
+	double deltaKinetic = std::abs(traceXtKX - traceXtKXPrev)/atomLocations.size();
+
+	//reset traceXtkXPrev to traceXtKX
+	traceXtKXPrev = traceXtKX;
+
+	//
+	//set refineFlag
+	//
+	countLevel += 1;
+	if(countLevel >= numberLevelRefinements || deltaKinetic <= dftParameters::toleranceKinetic)
+	  refineFlag = false;
+
+      }
+
+  }
+
+
   //
   //dft run
   //
   template<unsigned int FEOrder>
   void dftClass<FEOrder>::run()
   {
+
+    if(dftParameters::meshAdaption)
+      aposterioriMeshGenerate();
+
     solve();
 
     if (dftParameters::isIonOpt && !dftParameters::isCellOpt)

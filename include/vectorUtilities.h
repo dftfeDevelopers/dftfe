@@ -92,6 +92,13 @@ namespace dftfe{
                               const std::vector<dealii::types::global_dof_index> & localProcDofIndicesImag,
 			      std::vector<dealii::parallel::distributed::Vector<double>>  & componentVectors);
 
+     void copyFlattenedSTLVecToSingleCompVec
+                             (const std::vector<std::complex<double> >  & flattenedArray,
+			      const unsigned int                        totalNumberComponents,
+			      const std::pair<unsigned int,unsigned int> componentIndexRange,
+
+			      std::vector<dealii::parallel::distributed::Vector<double>>  & componentVectors);
+
 #else
     /** @brief Copies a single field component from a flattenedArray STL
      * vector containing multiple component fields to a single field parallel distributed vector.
