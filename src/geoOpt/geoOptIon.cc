@@ -47,13 +47,17 @@ void geoOptIon<FEOrder>::init()
 {
    const int numberGlobalAtoms=dftPtr->atomLocations.size();
    std::vector<std::vector<int> > tempRelaxFlagsData;
-   dftUtils::readRelaxationFlagsFile(3,tempRelaxFlagsData,dftParameters::ionRelaxFlagsFile);
+   std::vector<std::vector<double> > tempForceData;
+   dftUtils::readRelaxationFlagsFile(6,tempRelaxFlagsData, tempForceData, dftParameters::ionRelaxFlagsFile);
    AssertThrow(tempRelaxFlagsData.size()==numberGlobalAtoms,ExcMessage("Incorrect number of entries in relaxationFlags file"));
    d_relaxationFlags.clear();
+   d_externalForceOnAtom.clear();
    for (unsigned int i=0; i< numberGlobalAtoms; ++i)
    {
-       for (unsigned int j=0; j< 3; ++j)
+       for (unsigned int j=0; j< 3; ++j){
           d_relaxationFlags.push_back(tempRelaxFlagsData[i][j]);
+          d_externalForceOnAtom.push_back(tempForceData[i][j]);
+       }
    }
    //print relaxation flags
    pcout<<" --------------Ion force relaxation flags----------------"<<std::endl;
@@ -158,7 +162,7 @@ void geoOptIon<FEOrder>::gradient(std::vector<double> & gradient)
       {
           if (d_relaxationFlags[3*i+j]==1)
 	  {
-              gradient.push_back(tempGradient[3*i+j]);
+              gradient.push_back(tempGradient[3*i+j] - d_externalForceOnAtom[3*i+j] );
 	  }
       }
    }

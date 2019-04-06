@@ -97,9 +97,11 @@ namespace dftfe {
 
     private:
 
-      /// storage for relaxation flags for each global atom.
+      /// storage for relaxation flags and external force components for each global atom.
       /// each atom has three flags corresponding to three components (0- no relax, 1- relax)
+      /// and three external force components 
       std::vector<unsigned int> d_relaxationFlags;
+      std::vector<double> d_externalForceOnAtom;
 
       /// maximum force component to be relaxed
       double d_maximumAtomForceToBeRelaxed;

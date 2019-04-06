@@ -59,6 +59,7 @@ namespace dftfe {
        */
 	void readRelaxationFlagsFile(const unsigned int numColumns,
 				     std::vector<std::vector<int> > &data,
+				     std::vector<std::vector<double> > &forceData,
 				     const std::string & fileName);
 
       /**
