@@ -18,6 +18,7 @@
 
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
+		                        Triangulation<3,3> & triangulationSerial,
 					bool reuseClosestTriaVertices,
 					bool moveSubdivided)
 {
@@ -29,7 +30,9 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
                                      dealii::TimerOutput::summary,dealii::TimerOutput::wall_times);
 
   meshMovementGaussianClass gaussianMove(mpi_communicator);
-  gaussianMove.init(triangulationMove,d_domainBoundingVectors);
+  gaussianMove.init(triangulationMove,
+		    triangulationSerial,
+		    d_domainBoundingVectors);
 
   const unsigned int numberGlobalAtoms = atomLocations.size();
   const unsigned int numberImageAtoms = d_imageIds.size();

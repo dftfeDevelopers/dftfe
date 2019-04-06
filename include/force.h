@@ -67,6 +67,7 @@ namespace dftfe {
      *  @return void.
      */
       void initUnmoved(const Triangulation<3,3> & triangulation,
+		       const Triangulation<3,3> & serialTriangulation,
 	               const std::vector<std::vector<double> >  & domainBoundingVectors,
 	               const bool isElectrostaticsMesh);
 

@@ -19,6 +19,7 @@ subsection Boundary conditions
   set PERIODIC2                       = false
   set PERIODIC3                       = false
   set SELF POTENTIAL RADIUS = 4.0
+  set CONSTRAINTS PARALLEL CHECK=true
 end
 
 subsection Finite element mesh parameters

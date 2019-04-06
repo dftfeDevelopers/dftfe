@@ -334,19 +334,21 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
    }
 
    //
-   //call init for the force computation subsequently
-   //
-   forcePtr->initUnmoved(electrostaticsTriaRho,
-			 d_domainBoundingVectors,
-			 true);
-
-   //
    //move the refined mesh so that it forms exact subdivison of coarse moved mesh
    //
    dealii::parallel::distributed::Triangulation<3> & electrostaticsTriaDisp = d_mesh.getElectrostaticsMeshDisp();
    moveMeshToAtoms(electrostaticsTriaDisp,
+		   d_mesh.getSerialMeshElectrostatics(),
 		   true,
 		   true);
+
+   //
+   //call init for the force computation subsequently
+   //
+   forcePtr->initUnmoved(electrostaticsTriaRho,
+		         d_mesh.getSerialMeshElectrostatics(),
+			 d_domainBoundingVectors,
+			 true);
 
    d_mesh.resetMesh(electrostaticsTriaDisp,
 		    electrostaticsTriaRho);
@@ -434,6 +436,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
 
    vselfBinsManager<FEOrder> vselfBinsManagerHRefined(mpi_communicator);
    vselfBinsManagerHRefined.createAtomBins(matrixFreeConstraintsInputVector,
+		                           onlyHangingNodeConstraints,
 					   dofHandlerHRefined,
 					   constraintsHRefined,
 					   atomLocations,

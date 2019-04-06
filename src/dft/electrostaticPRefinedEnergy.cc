@@ -164,7 +164,8 @@ void dftClass<FEOrder>::computeElectrostaticEnergyPRefined()
    dealii::DoFTools::make_periodicity_constraints<dealii::DoFHandler<3> >(periodicity_vector2, constraintsPRefined);
    constraintsPRefined.close();
 
-   moveMeshToAtoms(triaMoved);
+   moveMeshToAtoms(triaMoved,
+	           d_mesh.getSerialMeshUnmoved());
 
    dofHandlerPRefined.distribute_dofs (dofHandlerPRefined.get_fe());
 
@@ -201,6 +202,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyPRefined()
 
    vselfBinsManager<FEOrder_PRefined> vselfBinsManagerPRefined(mpi_communicator);
    vselfBinsManagerPRefined.createAtomBins(matrixFreeConstraintsInputVector,
+		                           onlyHangingNodeConstraints,
 					   dofHandlerPRefined,
 					   constraintsPRefined,
 					   atomLocations,

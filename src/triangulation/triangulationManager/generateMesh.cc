@@ -693,6 +693,7 @@ namespace dftfe {
   void triangulationManager::generateMesh
           (parallel::distributed::Triangulation<3> & parallelTriangulation,
 	   parallel::distributed::Triangulation<3> & serialTriangulation,
+           parallel::distributed::Triangulation<3> & serialTriangulationElectrostatics,
 	   parallel::distributed::Triangulation<3> & electrostaticsTriangulationRho,
 	   parallel::distributed::Triangulation<3> & electrostaticsTriangulationDisp,
 	   parallel::distributed::Triangulation<3> & electrostaticsTriangulationForce,
@@ -730,6 +731,9 @@ namespace dftfe {
 	    AssertThrow(parallelTriangulation.n_global_active_cells()==electrostaticsTriangulationRho.n_global_active_cells(),ExcMessage("Number of coarse mesh cells are different in electrostatics triangulations having rho field."));
 	    AssertThrow(parallelTriangulation.n_global_active_cells()==electrostaticsTriangulationDisp.n_global_active_cells(),ExcMessage("Number of coarse mesh cells are different in electrostatics triangulations disp field."));
 	    AssertThrow(parallelTriangulation.n_global_active_cells()==electrostaticsTriangulationForce.n_global_active_cells(),ExcMessage("Number of coarse mesh cells are different in electrostatics triangulations for force computation."));
+
+	    generateCoarseMesh(serialTriangulationElectrostatics);
+	    AssertThrow(parallelTriangulation.n_global_active_cells()==serialTriangulationElectrostatics.n_global_active_cells(),ExcMessage("Number of coarse mesh cells are different in electrostatics serial triangulation computation."));
 	  }
 
         d_parallelTriaCurrentRefinement.clear();
@@ -777,6 +781,12 @@ namespace dftfe {
 				     parallelTriangulation,
 				     d_serialTriaCurrentRefinement[numLevels]) ;
 
+		    if(generateElectrostaticsTria)
+			refineSerialMesh(cellIdToCellRefineFlagMapLocal,
+					 mpi_communicator,
+					 serialTriangulationElectrostatics,
+					 parallelTriangulation,
+					 d_serialTriaCurrentRefinement[numLevels]);
 
                     d_parallelTriaCurrentRefinement.push_back(std::vector<bool>());
 		    parallelTriangulation.save_refine_flags(d_parallelTriaCurrentRefinement[numLevels]);

@@ -288,6 +288,7 @@ namespace dftfe {
        *@brief  moves the triangulation vertices using Gaussians such that the all atoms are on triangulation vertices
        */
       void moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
+		           Triangulation<3,3> & triangulationSerial,
 			   bool reuseFlag = false,
 			   bool moveSubdivided = false);
 

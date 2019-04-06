@@ -18,12 +18,162 @@
 
 #include <vectorUtilities.h>
 #include <exception>
+#include <dftParameters.h>
+#include <dftUtils.h>
 
 namespace dftfe
 {
 
   namespace vectorTools
   {
+
+    void createParallelConstraintMatrixFromSerial(const dealii::Triangulation<3,3> & serTria,
+	                                          const dealii::DoFHandler<3> & dofHandlerPar,
+						  const MPI_Comm & mpi_comm,
+						  const std::vector<std::vector<double> > & domainBoundingVectors,
+						  dealii::ConstraintMatrix & periodicHangingConstraints,
+						  dealii::ConstraintMatrix & onlyHangingConstraints)
+    {
+      dealii::ConditionalOStream pcout (std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
+      dealii::TimerOutput computing_timer(mpi_comm,
+	                             pcout,
+                                     dftParameters::reproducible_output ||
+                                     dftParameters::verbosity<4 ? dealii::TimerOutput::never:
+                                     dealii::TimerOutput::summary,dealii::TimerOutput::wall_times);
+
+      computing_timer.enter_section("Create constraints from serial dofHandler");
+
+      const dealii::IndexSet & locally_owned_dofs_par = dofHandlerPar.locally_owned_dofs();
+
+      dealii::IndexSet locally_relevant_dofs_par;
+      dealii::DoFTools::extract_locally_relevant_dofs(dofHandlerPar, locally_relevant_dofs_par);
+
+      dealii::DoFHandler<3> dofHandlerSer(serTria);
+      dofHandlerSer.distribute_dofs(dofHandlerPar.get_fe());
+
+      const dealii::types::global_dof_index numGlobalDofs=dofHandlerSer.n_locally_owned_dofs();
+      std::vector<dealii::types::global_dof_index> newDofNumbers(numGlobalDofs,0);
+
+      std::map<dealii::CellId, dealii::DoFHandler<3>::active_cell_iterator> cellIdToCellIterMapSer;
+      std::map<dealii::CellId, dealii::DoFHandler<3>::active_cell_iterator> cellIdToCellIterMapPar;
+
+      for(const auto & cell : dofHandlerPar.active_cell_iterators())
+	 if (!cell->is_artificial())
+	     cellIdToCellIterMapPar[cell->id()] = cell;
+
+      for(const auto & cell : dofHandlerSer.active_cell_iterators())
+	 if (cellIdToCellIterMapPar.find(cell->id())!=cellIdToCellIterMapPar.end())
+	     cellIdToCellIterMapSer[cell->id()] = cell;
+
+      const unsigned int dofs_per_cell = dofHandlerPar.get_fe().dofs_per_cell;
+      std::vector<dealii::types::global_dof_index> cell_dof_indices_par(dofs_per_cell);
+      std::vector<dealii::types::global_dof_index> cell_dof_indices_ser(dofs_per_cell);
+
+      for(const auto & cell : dofHandlerPar.active_cell_iterators())
+	 if (cell->is_locally_owned())
+	 {
+	    cell->get_dof_indices(cell_dof_indices_par);
+	    cellIdToCellIterMapSer[cell->id()]->get_dof_indices(cell_dof_indices_ser);
+	    for(unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
+		if (locally_owned_dofs_par.is_element(cell_dof_indices_par[iNode]))
+		   newDofNumbers[cell_dof_indices_ser[iNode]]=cell_dof_indices_par[iNode];
+	 }
+
+      MPI_Allreduce(MPI_IN_PLACE,
+		    &newDofNumbers[0],
+		    numGlobalDofs,
+		    DEAL_II_DOF_INDEX_MPI_TYPE,
+		    MPI_SUM,
+		    mpi_comm);
+
+      dofHandlerSer.renumber_dofs(newDofNumbers);
+
+      if (dftParameters::verbosity>=4)
+        dftUtils::printCurrentMemoryUsage(mpi_comm,
+			  "Renumbered serial dofHandler");
+
+      dealii::ConstraintMatrix constraintsHangingSer;
+
+
+      dealii::DoFTools::make_hanging_node_constraints_from_serial(dofHandlerSer,
+	                                                          dofHandlerPar,
+								  cellIdToCellIterMapSer,
+	                                                          constraintsHangingSer);
+      if (dftParameters::verbosity>=4)
+        dftUtils::printCurrentMemoryUsage(mpi_comm,
+			  "Created hanging node constraints serial");
+
+      dealii::ConstraintMatrix constraintsPeriodicHangingSer;
+      constraintsPeriodicHangingSer.merge(constraintsHangingSer,
+	                                  dealii::ConstraintMatrix::MergeConflictBehavior::right_object_wins);
+      constraintsHangingSer.close();
+
+      //create unitVectorsXYZ
+      std::vector<std::vector<double> > unitVectorsXYZ(3,std::vector<double>(3,0.0));
+
+      std::vector<dealii::Tensor<1,3> > offsetVectors;
+      //resize offset vectors
+      offsetVectors.resize(3);
+
+      for(int i = 0; i < 3; ++i)
+	  for(int j = 0; j < 3; ++j)
+	      offsetVectors[i][j] = unitVectorsXYZ[i][j] - domainBoundingVectors[i][j];
+
+      std::vector<dealii::GridTools::PeriodicFacePair<typename dealii::DoFHandler<3>::cell_iterator> > periodicity_vector2;
+
+      std::vector<int> periodicDirectionVector;
+      const std::array<int,3> periodic = {dftParameters::periodicX, dftParameters::periodicY, dftParameters::periodicZ};
+      for(unsigned int  d= 0; d < 3; ++d)
+	  if(periodic[d]==1)
+	      periodicDirectionVector.push_back(d);
+
+
+      for (unsigned int i = 0; i < std::accumulate(periodic.begin(),periodic.end(),0); ++i)
+	   dealii::GridTools::collect_periodic_faces(dofHandlerSer,
+		                            /*b_id1*/ 2*i+1,
+					    /*b_id2*/ 2*i+2,
+					    /*direction*/ periodicDirectionVector[i],
+					    periodicity_vector2,
+					    offsetVectors[periodicDirectionVector[i]]);
+
+      dealii::DoFTools::make_periodicity_constraints<dealii::DoFHandler<3>>(periodicity_vector2,
+	                                                                    constraintsPeriodicHangingSer);
+
+      constraintsPeriodicHangingSer.close();
+
+      if (dftParameters::verbosity>=4)
+        dftUtils::printCurrentMemoryUsage(mpi_comm,
+			  "Created periodic constraints serial");
+
+      periodicHangingConstraints.clear();
+      periodicHangingConstraints.reinit(locally_relevant_dofs_par);
+
+      onlyHangingConstraints.clear();
+      onlyHangingConstraints.reinit(locally_relevant_dofs_par);
+
+      for (auto index : locally_relevant_dofs_par)
+      {
+
+	if (constraintsPeriodicHangingSer.is_constrained(index))
+	{
+	   periodicHangingConstraints.add_line(index);
+	   periodicHangingConstraints.add_entries(index,
+				   *constraintsPeriodicHangingSer.get_constraint_entries(index));
+	}
+
+	if (constraintsHangingSer.is_constrained(index))
+	{
+	   onlyHangingConstraints.add_line(index);
+	   onlyHangingConstraints.add_entries(index,
+				   *constraintsHangingSer.get_constraint_entries(index));
+	}
+      }
+
+      periodicHangingConstraints.close();
+      onlyHangingConstraints.close();
+
+      computing_timer.exit_section("Create constraints from serial dofHandler");
+    }
 
     template<typename T>
     void createDealiiVector(const std::shared_ptr< const dealii::Utilities::MPI::Partitioner > & partitioner,

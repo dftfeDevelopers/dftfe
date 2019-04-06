@@ -56,7 +56,9 @@ namespace  dftfe {
 namespace internalForce
 {
     void initUnmoved(const Triangulation<3,3> & triangulation,
+	             const Triangulation<3,3> & serialTriangulation,
 	             const std::vector<std::vector<double> >  & domainBoundingVectors,
+		     const MPI_Comm & mpi_comm,
 		     DoFHandler<C_DIM> & dofHandlerForce,
 		     FESystem<C_DIM> & FEForce,
 		     ConstraintMatrix  & constraintsForce,
@@ -118,6 +120,17 @@ namespace internalForce
 
       DoFTools::make_periodicity_constraints<DoFHandler<C_DIM> >(periodicity_vectorForce, constraintsForce);
       constraintsForce.close();
+
+      if (dftParameters::createConstraintsFromSerialDofhandler)
+      {
+            ConstraintMatrix  dummy;
+	    vectorTools::createParallelConstraintMatrixFromSerial(serialTriangulation,
+								  dofHandlerForce,
+								  mpi_comm,
+								  domainBoundingVectors,
+								  constraintsForce,
+								  dummy);
+      }
     }
 }
 
@@ -141,13 +154,16 @@ forceClass<FEOrder>::forceClass(dftClass<FEOrder>* _dftPtr,const MPI_Comm &mpi_c
 //
 template<unsigned int FEOrder>
 void forceClass<FEOrder>::initUnmoved(const Triangulation<3,3> & triangulation,
+	                              const Triangulation<3,3> & serialTriangulation,
 	                              const std::vector<std::vector<double> >  & domainBoundingVectors,
 	                              const bool isElectrostaticsMesh)
 {
 
     if (isElectrostaticsMesh)
 	internalForce::initUnmoved(triangulation,
+		                   serialTriangulation,
 		                   domainBoundingVectors,
+				   mpi_communicator,
 				   d_dofHandlerForceElectro,
 				   FEForce,
 				   d_constraintsNoneForceElectro,
@@ -155,7 +171,9 @@ void forceClass<FEOrder>::initUnmoved(const Triangulation<3,3> & triangulation,
 				   d_locally_relevant_dofsForceElectro);
     else
 	internalForce::initUnmoved(triangulation,
+		                   serialTriangulation,
 		                   domainBoundingVectors,
+				   mpi_communicator,
 				   d_dofHandlerForce,
 				   FEForce,
 				   d_constraintsNoneForce,

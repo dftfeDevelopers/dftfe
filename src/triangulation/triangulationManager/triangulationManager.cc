@@ -49,6 +49,7 @@ namespace dftfe {
     interBandGroupComm(interbandgroup_comm),
     d_serialTriangulationUnmoved(MPI_COMM_SELF),
     d_serialTriangulationUnmovedPrevious(MPI_COMM_SELF),
+    d_serialTriangulationElectrostatics(MPI_COMM_SELF),
     this_mpi_process (Utilities::MPI::this_mpi_process(mpi_comm_replica)),
     n_mpi_processes (Utilities::MPI::n_mpi_processes(mpi_comm_replica)),
     pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
@@ -93,6 +94,7 @@ namespace dftfe {
 	d_triangulationElectrostaticsRho.clear();
 	d_triangulationElectrostaticsDisp.clear();
 	d_triangulationElectrostaticsForce.clear();
+	d_serialTriangulationElectrostatics.clear();
     }
     //
     //generate mesh data members
@@ -100,6 +102,7 @@ namespace dftfe {
     if (generateSerialTria)
       generateMesh(d_parallelTriangulationUnmoved,
 		   d_serialTriangulationUnmoved,
+		   d_serialTriangulationElectrostatics,
 		   d_triangulationElectrostaticsRho,
 		   d_triangulationElectrostaticsDisp,
 		   d_triangulationElectrostaticsForce,
@@ -207,6 +210,15 @@ namespace dftfe {
   triangulationManager::getSerialMeshUnmoved()
   {
     return d_serialTriangulationUnmoved;
+  }
+
+  //
+  //get serial mesh for electrostatics
+  //
+  parallel::distributed::Triangulation<3> &
+  triangulationManager::getSerialMeshElectrostatics()
+  {
+    return d_serialTriangulationElectrostatics;
   }
 
   //
