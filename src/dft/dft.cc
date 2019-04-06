@@ -720,7 +720,8 @@ namespace dftfe {
 	//initialize dofHandlers of refined mesh and move triangulation
 	//
 	initUnmovedTriangulation(triangulationPar);
-	moveMeshToAtoms(triangulationPar);
+	moveMeshToAtoms(triangulationPar,
+			d_mesh.getSerialMeshUnmoved());
 	initBoundaryConditions();
 	initElectronicFields();
 	initPseudoPotentialAll();
