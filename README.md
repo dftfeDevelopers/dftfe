@@ -21,7 +21,7 @@ in the *Installation* section of the DFT-FE manual (compile doc/manual/manual.te
 Running DFT-FE
 --------------
 
-Instructions on how to run DFT-FE can also be found in the *Running DFT-FE* section of the manual (compile doc/manual/manual.tex or download the current release version manual [here](https://github.com/dftfeDevelopers/dftfe/blob/manual/manual-current-release.pdf)). 
+Instructions on how to run DFT-FE including demo examples can also be found in the *Running DFT-FE* section of the manual (compile doc/manual/manual.tex or download the current release version manual [here](https://github.com/dftfeDevelopers/dftfe/blob/manual/manual-current-release.pdf)). 
 
 
 Contributing to DFT-FE
