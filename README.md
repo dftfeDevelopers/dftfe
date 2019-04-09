@@ -21,7 +21,7 @@ in the *Installation* section of the DFT-FE manual (doc/manual/manual.pdf).
 Running DFT-FE
 --------------
 
-Instructions on how to run DFT-FE can also be found in the *Running DFT-FE* section of the manual (doc/manual/manual.pdf). 
+Instructions on how to run DFT-FE including demo examples can be found in the *Running DFT-FE* section of the manual (doc/manual/manual.pdf). 
 
 
 Contributing to DFT-FE
