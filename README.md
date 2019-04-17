@@ -54,7 +54,7 @@ Directory structure of DFT-FE
       - symmetrizeRho.cc (class for density symmetrization based on irreducible Brillouin zone calculation)
       - initGroupSymmetry.cc (part of symmetrizeRho.cc)
 
- - utils (Folder containing commonly used utily functions in DFT-FE)
+ - utils/ (Folder containing commonly used utily functions in DFT-FE)
    - xmlTodftfeParser.cc (converts pseudopotential file from xml format to dftfe format)
    - pseudoConverter.cc (wrapper to convert pseudopotential file from upf to dftfe format)
    - constraintMatrixInfo.cc (Overloads functions associated with dealii's constraintMatrix class)
