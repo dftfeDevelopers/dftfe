@@ -66,6 +66,14 @@ Directory structure of DFT-FE
      - interpolateFieldsFromPreviousMesh.cc (class to interpolate solutions fields from one finite element mesh to another) 
 
  - pseudoConvertors/upfToxml.cc (converts pseudopotential file from upf to xml format)
+ - include/ (contains all the include files containing class and namespace declarations)
+ - data/ (contains single atom wavefunctions and density data required for initial guess for all-electron calculations)
+ - tests/ (contains unit tests and regression tests used during code development, and to ensure accuracy and reproducibility of the code)
+ - demo/ (contains demo examples- see doc/manual/manual.pdf for details)
+ - helpers/ (for developers)
+ - doc/ (folder for documentation. it contains the manual)
+ - setup.sh (required for compilation of DFT-FE- see doc/manual/manual.pdf for details)
+ - Doxyfile (used for generating doxygen documentation)
 
 
 
