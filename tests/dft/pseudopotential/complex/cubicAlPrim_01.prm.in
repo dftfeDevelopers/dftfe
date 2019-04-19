@@ -4,7 +4,7 @@ set REPRODUCIBLE OUTPUT=true
 subsection Geometry
   set NATOMS=1
   set NATOM TYPES=1
-  set ATOMIC COORDINATES FILE = @SOURCE_DIR@/cubicAl_coordinates.inp
+  set ATOMIC COORDINATES FILE = @SOURCE_DIR@/cubicAlONCV_coordinates.inp
   set DOMAIN VECTORS FILE = @SOURCE_DIR@/cubicAl_domainBoundingVectors.inp
   
   subsection Optimization
