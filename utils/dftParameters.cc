@@ -84,7 +84,7 @@ namespace dftParameters
   unsigned int numAdaptiveFilterStates=0;
   unsigned int spectrumSplitStartingScfIter=1;
   bool useELPA=false;
-  bool constraintsParallelCheck=false;
+  bool constraintsParallelCheck=true;
   bool createConstraintsFromSerialDofhandler=true;
 
   void declare_parameters(ParameterHandler &prm)
@@ -227,7 +227,7 @@ namespace dftParameters
 			  Patterns::Bool(),
 			  "[Standard] Periodicity along the third domain bounding vector.");
 
-        prm.declare_entry("CONSTRAINTS PARALLEL CHECK", "false",
+        prm.declare_entry("CONSTRAINTS PARALLEL CHECK", "true",
 			   Patterns::Bool(),
 			  "[Developer] Check for consistency of constraints in parallel.");
 
