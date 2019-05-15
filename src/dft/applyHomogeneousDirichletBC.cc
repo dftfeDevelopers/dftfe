@@ -41,7 +41,7 @@ void dftClass<FEOrder>::applyHomogeneousDirichletBC(const dealii::DoFHandler<3> 
   std::vector<bool> dofs_touched(_dofHandler.n_dofs(),false);
   dealii::DoFHandler<3>::active_cell_iterator cell = _dofHandler.begin_active(),endc = _dofHandler.end();
   for(; cell!= endc; ++cell)
-   if(cell->is_locally_owned())
+    if(cell->is_locally_owned() || cell->is_ghost())
    {
      cell->get_dof_indices(cellGlobalDofIndices);
      for(unsigned int iFace = 0; iFace < faces_per_cell; ++iFace)
