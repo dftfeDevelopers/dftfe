@@ -134,15 +134,15 @@ void dftClass<FEOrder>::initBoundaryConditions(){
 
      const std::vector<IndexSet>& locally_owned_dofs_debug= dofHandler.locally_owned_dofs_per_processor();
 
+     AssertThrow(constraintsNone.is_consistent_in_parallel(locally_owned_dofs_debug,
+                                               locally_active_dofs_debug,
+                                               mpi_communicator),ExcMessage("DFT-FE Error: Constraints are not consistent in parallel."));
+
      AssertThrow(d_constraintsForTotalPotential.is_consistent_in_parallel(locally_owned_dofs_debug,
                                                locally_active_dofs_debug,
                                                mpi_communicator),ExcMessage("DFT-FE Error: Constraints are not consistent in parallel."));
 
-     AssertThrow(d_noConstraints.is_consistent_in_parallel(locally_owned_dofs_debug,
-                                               locally_active_dofs_debug,
-                                               mpi_communicator),ExcMessage("DFT-FE Error: Constraints are not consistent in parallel."));
-
-     for (unsigned int i=0; i<d_constraintsVector.size();i++)
+     for (unsigned int i=2; i<d_constraintsVector.size();i++)
 	 AssertThrow(d_constraintsVector[i]->is_consistent_in_parallel(locally_owned_dofs_debug,
 						   locally_active_dofs_debug,
 						   mpi_communicator),ExcMessage("DFT-FE Error: Constraints are not consistent in parallel."));
