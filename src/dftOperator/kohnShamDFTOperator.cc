@@ -228,7 +228,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
     {
 
       //
-      //extract total potential
+      //extract total potential to interpolate from nodes to quad points
       //
       fe_eval_phi.reinit(cell);
       fe_eval_phi.read_dof_values_plain(phi);
