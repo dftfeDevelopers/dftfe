@@ -552,7 +552,7 @@ namespace dftfe {
 	d_mesh.generateCoarseMeshesForRestart(atomLocations,
 					      d_imagePositions,
 					      d_domainBoundingVectors,
-					      dftParameters::useSymm || dftParameters::isIonOpt);
+					      dftParameters::useSymm || dftParameters::isIonOpt || dftParameters::createConstraintsFromSerialDofhandler);
 	loadTriaInfoAndRhoData();
       }
     else
