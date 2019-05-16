@@ -552,10 +552,8 @@ namespace dftParameters
     {
         dftParameters::natoms                        = prm.get_integer("NATOMS");
         dftParameters::natomTypes                    = prm.get_integer("NATOM TYPES");
-        dftParameters::coordinatesFile               = (restartFromChk==true && chkType==1)?"atomsCartCoord.chk"
-		                                       :prm.get("ATOMIC COORDINATES FILE");
-        dftParameters::domainBoundingVectorsFile     = (restartFromChk==true && chkType==1)?"domainBoundingVectors.chk"
-		                                       :prm.get("DOMAIN VECTORS FILE");
+        dftParameters::coordinatesFile               = prm.get("ATOMIC COORDINATES FILE");
+        dftParameters::domainBoundingVectorsFile     = prm.get("DOMAIN VECTORS FILE");
 	prm.enter_subsection ("Optimization");
 	{
 	    dftParameters::isIonOpt                      = prm.get_bool("ION OPT");
@@ -684,6 +682,16 @@ namespace dftParameters
        dftParameters::relLinearSolverTolerance      = prm.get_double("TOLERANCE");
     }
     prm.leave_subsection ();
+
+    if (restartFromChk==true && chkType==1)
+    {
+	if (dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ)
+	    dftParameters::coordinatesFile="atomsFracCoord.chk";
+	else
+            dftParameters::coordinatesFile="atomsCartCoord.chk";
+
+        dftParameters::domainBoundingVectorsFile="domainBoundingVectors.chk";
+    }
 
   //
     check_print_parameters(prm);
