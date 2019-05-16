@@ -552,8 +552,10 @@ namespace dftParameters
     {
         dftParameters::natoms                        = prm.get_integer("NATOMS");
         dftParameters::natomTypes                    = prm.get_integer("NATOM TYPES");
-        dftParameters::coordinatesFile               = prm.get("ATOMIC COORDINATES FILE");
-        dftParameters::domainBoundingVectorsFile     = prm.get("DOMAIN VECTORS FILE");
+        dftParameters::coordinatesFile               = (restartFromChk==true && chkType==1)?"atomsCartCoord.chk"
+		                                       :prm.get("ATOMIC COORDINATES FILE");
+        dftParameters::domainBoundingVectorsFile     = (restartFromChk==true && chkType==1)?"domainBoundingVectors.chk"
+		                                       :prm.get("DOMAIN VECTORS FILE");
 	prm.enter_subsection ("Optimization");
 	{
 	    dftParameters::isIonOpt                      = prm.get_bool("ION OPT");
