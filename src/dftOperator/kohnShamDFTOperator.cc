@@ -215,7 +215,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 {
   const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
   const unsigned int n_array_elements = VectorizedArray<double>::n_array_elements;
-  FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>()> fe_eval_phi(dftPtr->matrix_free_data, 0 ,0);
+  FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>()> fe_eval_phi(dftPtr->matrix_free_data, dftPtr->phiTotDofHandlerIndex ,0);
   FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>()> fe_eval_phiExt(dftPtr->matrix_free_data, dftPtr->phiExtDofHandlerIndex, 0);
   const int numberQuadraturePoints = fe_eval_phi.n_q_points;
   vEff.reinit (n_cells, numberQuadraturePoints);
@@ -228,17 +228,17 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
     {
 
       //
-      //extract total potential
+      //extract total potential to interpolate from nodes to quad points
       //
       fe_eval_phi.reinit(cell);
-      fe_eval_phi.read_dof_values(phi);
+      fe_eval_phi.read_dof_values_plain(phi);
       fe_eval_phi.evaluate(true, false, false);
 
       //
       //extract phiExt
       //
       fe_eval_phiExt.reinit(cell);
-      fe_eval_phiExt.read_dof_values(phiExt);
+      fe_eval_phiExt.read_dof_values_plain(phiExt);
       fe_eval_phiExt.evaluate(true, false, false);
 
       const unsigned int n_sub_cells=dftPtr->matrix_free_data.n_components_filled(cell);
@@ -303,7 +303,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 {
   const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
   const unsigned int n_array_elements = VectorizedArray<double>::n_array_elements;
-  FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>()> fe_eval_phi(dftPtr->matrix_free_data, 0 ,0);
+  FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>()> fe_eval_phi(dftPtr->matrix_free_data, dftPtr->phiTotDofHandlerIndex ,0);
   FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>()> fe_eval_phiExt(dftPtr->matrix_free_data, dftPtr->phiExtDofHandlerIndex ,0);
   int numberQuadraturePoints = fe_eval_phi.n_q_points;
   vEff.reinit (n_cells, numberQuadraturePoints);
@@ -320,14 +320,14 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
       //extract total potential
       //
       fe_eval_phi.reinit(cell);
-      fe_eval_phi.read_dof_values(phi);
+      fe_eval_phi.read_dof_values_plain(phi);
       fe_eval_phi.evaluate(true, false, false);
 
       //
       //extract phiExt
       //
       fe_eval_phiExt.reinit(cell);
-      fe_eval_phiExt.read_dof_values(phiExt);
+      fe_eval_phiExt.read_dof_values_plain(phiExt);
       fe_eval_phiExt.evaluate(true, false, false);
 
 
@@ -1418,7 +1418,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEffSpinPolarized(const std::map<
 {
   const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
   const unsigned int n_array_elements = VectorizedArray<double>::n_array_elements;
-  FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>()> fe_eval_phi(dftPtr->matrix_free_data, 0 ,0);
+  FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>()> fe_eval_phi(dftPtr->matrix_free_data, dftPtr->phiTotDofHandlerIndex ,0);
   FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>()> fe_eval_phiExt(dftPtr->matrix_free_data, dftPtr->phiExtDofHandlerIndex, 0);
   int numberQuadraturePoints = fe_eval_phi.n_q_points;
   vEff.reinit (n_cells, numberQuadraturePoints);
@@ -1434,14 +1434,14 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEffSpinPolarized(const std::map<
       //extract total potential
       //
       fe_eval_phi.reinit(cell);
-      fe_eval_phi.read_dof_values(phi);
+      fe_eval_phi.read_dof_values_plain(phi);
       fe_eval_phi.evaluate(true, false, false);
 
       //
       //extract phiExt
       //
       fe_eval_phiExt.reinit(cell);
-      fe_eval_phiExt.read_dof_values(phiExt);
+      fe_eval_phiExt.read_dof_values_plain(phiExt);
       fe_eval_phiExt.evaluate(true, false, false);
 
 
@@ -1510,7 +1510,7 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEffSpinPolarized(const std::map<
 {
   const unsigned int n_cells = dftPtr->matrix_free_data.n_macro_cells();
   const unsigned int n_array_elements = VectorizedArray<double>::n_array_elements;
-  FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>()> fe_eval_phi(dftPtr->matrix_free_data, 0 ,0);
+  FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>()> fe_eval_phi(dftPtr->matrix_free_data, dftPtr->phiTotDofHandlerIndex ,0);
   FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>()> fe_eval_phiExt(dftPtr->matrix_free_data, dftPtr->phiExtDofHandlerIndex ,0);
   int numberQuadraturePoints = fe_eval_phi.n_q_points;
   vEff.reinit (n_cells, numberQuadraturePoints);
@@ -1527,14 +1527,14 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEffSpinPolarized(const std::map<
       //extract total potential
       //
       fe_eval_phi.reinit(cell);
-      fe_eval_phi.read_dof_values(phi);
+      fe_eval_phi.read_dof_values_plain(phi);
       fe_eval_phi.evaluate(true, false, false);
 
       //
       //extract phiExt
       //
       fe_eval_phiExt.reinit(cell);
-      fe_eval_phiExt.read_dof_values(phiExt);
+      fe_eval_phiExt.read_dof_values_plain(phiExt);
       fe_eval_phiExt.evaluate(true, false, false);
 
       const unsigned int n_sub_cells=dftPtr->matrix_free_data.n_components_filled(cell);

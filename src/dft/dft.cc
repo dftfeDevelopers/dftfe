@@ -552,7 +552,7 @@ namespace dftfe {
 	d_mesh.generateCoarseMeshesForRestart(atomLocations,
 					      d_imagePositions,
 					      d_domainBoundingVectors,
-					      dftParameters::useSymm || dftParameters::isIonOpt);
+					      dftParameters::useSymm || dftParameters::isIonOpt || dftParameters::createConstraintsFromSerialDofhandler);
 	loadTriaInfoAndRhoData();
       }
     else
@@ -898,10 +898,10 @@ namespace dftfe {
 	      {
 		if (dftParameters::spinPolarized==1)
 		  {
-		    norm = mixing_simple_spinPolarized();
+		    norm = sqrt(mixing_simple_spinPolarized());
 		  }
 		else
-		  norm = mixing_simple();
+		  norm = sqrt(mixing_simple());
 
 		if (dftParameters::verbosity>=1)
 		  pcout<<"Simple mixing, L2 norm of electron-density difference: "<< norm<< std::endl;

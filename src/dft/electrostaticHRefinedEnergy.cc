@@ -445,6 +445,27 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
 					   d_imageChargesTrunc,
 					   d_vselfBinsManager.getStoredAdaptiveBallRadius());
 
+   if (dftParameters::constraintsParallelCheck)
+   {
+     IndexSet locally_active_dofs_debug;
+     DoFTools::extract_locally_active_dofs(dofHandlerHRefined, locally_active_dofs_debug);
+
+     const std::vector<IndexSet>& locally_owned_dofs_debug= dofHandlerHRefined.locally_owned_dofs_per_processor();
+
+     AssertThrow(constraintsHRefined.is_consistent_in_parallel(locally_owned_dofs_debug,
+                                               locally_active_dofs_debug,
+                                               mpi_communicator),ExcMessage("DFT-FE Error: Constraints are not consistent in parallel. This is because of a known issue in the deal.ii library, which will be fixed soon. Currently, please set H REFINED ELECTROSTATICS to false."));
+
+     AssertThrow(constraintsForTotalPotential.is_consistent_in_parallel(locally_owned_dofs_debug,
+                                               locally_active_dofs_debug,
+                                               mpi_communicator),ExcMessage("DFT-FE Error: Constraints are not consistent in parallel. This is because of a known issue in the deal.ii library, which will be fixed soon. Currently, please set H REFINED ELECTROSTATICS to false."));
+
+     for (unsigned int i=2; i<matrixFreeConstraintsInputVector.size();i++)
+	 AssertThrow(matrixFreeConstraintsInputVector[i]->is_consistent_in_parallel(locally_owned_dofs_debug,
+						   locally_active_dofs_debug,
+						   mpi_communicator),ExcMessage("DFT-FE Error: Constraints are not consistent in parallel. This is because of a known issue in the deal.ii library, which will be fixed soon. Currently, please set H REFINED ELECTROSTATICS to false."));
+   }
+
    std::vector<const dealii::DoFHandler<3> *> matrixFreeDofHandlerVectorInput;
 
    for(unsigned int i = 0; i < matrixFreeConstraintsInputVector.size(); ++i)

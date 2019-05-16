@@ -73,8 +73,8 @@ void geoOptIon<FEOrder>::run()
 {
    const double tol=dftParameters::forceRelaxTol;//(units: Hatree/Bohr)
    const unsigned int  maxIter=100;
-   const double lineSearchTol=tol*2.0;
-   const double lineSearchDampingParameter=0.7;
+   const double lineSearchTol=tol;
+   const double lineSearchDampingParameter=0.5;
    const unsigned int maxLineSearchIter=4;
    const unsigned int debugLevel=Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) ==0?dftParameters::verbosity:0;
 
