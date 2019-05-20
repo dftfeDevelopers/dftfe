@@ -388,9 +388,9 @@ namespace dftParameters
 			  Patterns::Integer(1,1000),
 			  "[Standard] Number of SCF iteration history to be considered for density mixing schemes. For metallic systems, a mixing history larger than the default value provides better scf convergence.");
 
-	prm.declare_entry("MIXING PARAMETER", "0.5",
+	prm.declare_entry("MIXING PARAMETER", "0.1",
 			  Patterns::Double(0.0,1.0),
-			  "[Standard] Mixing parameter to be used in density mixing schemes.");
+			  "[Standard] Mixing parameter to be used in density mixing schemes. Default: 0.1.");
 
 	prm.declare_entry("MIXING METHOD","ANDERSON",
 			      Patterns::Selection("BROYDEN|ANDERSON"),
