@@ -468,9 +468,9 @@ namespace dftParameters
 			       Patterns::Integer(1),
 			       "[Advanced]  This parameter specifies the block size of the wavefunction matrix to be used for memory optimization purposes in the orthogonalization, Rayleigh-Ritz, and density computation steps. The feature is activated only if dealii library is compiled with ScaLAPACK. The optimum block size is dependent on the computing architecture. For optimum work sharing during band parallelization (NPBAND > 1), we recommend adjusting WFC BLOCK SIZE and NUMBER OF KOHN-SHAM WAVEFUNCTIONS such that NUMBER OF KOHN-SHAM WAVEFUNCTIONS/NPBAND/WFC BLOCK SIZE equals an integer value. Default value is 400.");
 
-	    prm.declare_entry("SUBSPACE ROT DOFS BLOCK SIZE", "2000",
+	    prm.declare_entry("SUBSPACE ROT DOFS BLOCK SIZE", "5000",
 			       Patterns::Integer(1),
-			       "[Developer] This block size is used for memory optimization purposes in subspace rotation step in Pseudo-Gram-Schmidt orthogonalization and Rayleigh-Ritz steps. This optimization is only activated if dealii library is compiled with ScaLAPACK. Default value is 2000.");
+			       "[Developer] This block size is used for memory optimization purposes in subspace rotation step in Pseudo-Gram-Schmidt orthogonalization and Rayleigh-Ritz steps. This optimization is only activated if dealii library is compiled with ScaLAPACK. Default value is 5000.");
 
 	    prm.declare_entry("SCALAPACKPROCS", "0",
 			      Patterns::Integer(0,300),
@@ -511,7 +511,7 @@ namespace dftParameters
 
     prm.enter_subsection ("Poisson problem parameters");
     {
-	prm.declare_entry("MAXIMUM ITERATIONS", "5000",
+	prm.declare_entry("MAXIMUM ITERATIONS", "10000",
 			  Patterns::Integer(0,20000),
 			  "[Advanced] Maximum number of iterations to be allowed for Poisson problem convergence.");
 
