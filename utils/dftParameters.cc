@@ -706,7 +706,7 @@ namespace dftParameters
      {
         std::cout << "==========================================================================================================" << std::endl ;
         std::cout << "==========================================================================================================" << std::endl ;
-        std::cout << "			Welcome to the Open Source program DFT-FE v0.6.0			        " << std::endl ;
+        std::cout << "			Welcome to the Open Source program DFT-FE development version			        " << std::endl ;
         std::cout << "This is a C++ code for materials modeling from first principles using Kohn-Sham density functional theory." << std::endl ;
         std::cout << "This is a real-space code for periodic, semi-periodic and non-periodic pseudopotential" << std::endl ;
         std::cout << "and all-electron calculations, and is based on adaptive finite-element discretization." << std::endl ;
@@ -721,7 +721,7 @@ namespace dftParameters
 	std::cout << " Shiva Rudraraju          - University of Wisconsin-Madison  " << std::endl ;
 	std::cout << " (A complete list of the many authors that have contributed to DFT-FE can be found in the authors file)"<< std::endl;
         std::cout <<  "==========================================================================================================" << std::endl ;
-        std::cout << " 	     Copyright (c) 2017-2018 The Regents of the University of Michigan and DFT-FE authors         " << std::endl ;
+        std::cout << " 	     Copyright (c) 2017-2019 The Regents of the University of Michigan and DFT-FE authors         " << std::endl ;
         std::cout << " 			DFT-FE is published under [LGPL v2.1 or newer] 				" << std::endl ;
         std::cout << "==========================================================================================================" << std::endl ;
         std::cout << "==========================================================================================================" << std::endl ;
