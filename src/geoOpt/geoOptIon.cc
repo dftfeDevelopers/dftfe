@@ -214,8 +214,8 @@ void geoOptIon<FEOrder>::update(const std::vector<double> & solution)
 	        MPI_COMM_WORLD);
    }
 
-   if (dftParameters::verbosity>=2)
-     pcout<< "  Maximum force to be relaxed: "<<  d_maximumAtomForceToBeRelaxed <<std::endl;
+   if (dftParameters::verbosity>=1)
+     pcout<< "  Maximum force component to be relaxed: "<<  d_maximumAtomForceToBeRelaxed <<std::endl;
    dftPtr->updateAtomPositionsAndMoveMesh(globalAtomsDisplacements);
    d_totalUpdateCalls+=1;
 

@@ -383,7 +383,7 @@ namespace dftfe {
     double etaP   = deltaDReturnValue.second;
     double alphaP=0;
     if (debugLevel >= 2)
-       std::cout << "Initial guess for secant line search iteration, alpha: " << alpha << std::endl;
+       pcout << "Initial guess for secant line search iteration, alpha: " << alpha << std::endl;
     //
     // update unknowns removing earlier update
     //
@@ -427,7 +427,9 @@ namespace dftfe {
       // output
       //
       if (debugLevel >= 2)
-	std::cout << "Line search iteration: " << iter << " alphaNew: " << alphaNew << " alpha: "<<alpha<< " alphaP: "<<alphaP <<"  eta: "<< eta << " etaP: "<<etaP << std::endl;
+	pcout << "Line search iteration: " << iter << " alphaNew: " << alphaNew << " alpha: "<<alpha<< " alphaP: "<<alphaP <<"  eta: "<< eta << " etaP: "<<etaP << std::endl;
+      else if(debugLevel>= 1)
+	pcout << "Line search iteration: " << iter <<std::endl;      
       //
       // update unknowns
       //
@@ -541,9 +543,10 @@ namespace dftfe {
 
 
       if (d_debugLevel >= 2)
-      std::cout << "Iteration no. | delta new | residual norm "
+        pcout << "CG Iter. no. | delta new | residual norm "
 	"| residual norm avg" << std::endl;
-
+      else if (d_debugLevel >= 1)
+	pcout << "CG Iter. no. "<<d_iter+1<<std::endl;      
       //
       // output at the begining of the iteration
       //
