@@ -405,7 +405,8 @@ namespace dftfe{
 					      false,
 					      interBandGroupComm,
 					      operatorMatrix.getMPICommunicator(),
-					      eigenValues);
+					      eigenValues,
+					      false);
       }
 
 
@@ -426,6 +427,7 @@ namespace dftfe{
 							  eigenVectorsFlattenedRR,
 							  eigenValues,
 							  operatorMatrix.getMPICommunicator(),
+							  interBandGroupComm,
 							  residualNorms);
       }
     else
@@ -433,6 +435,7 @@ namespace dftfe{
       						        eigenVectorsFlattened,
       						        eigenValues,
 							operatorMatrix.getMPICommunicator(),
+							interBandGroupComm,
       						        residualNorms);
     computing_timer.exit_section("eigen vectors residuals opt");
 

@@ -229,7 +229,8 @@ namespace dftfe
 		      const bool isValenceProjHam,
 		      const MPI_Comm &interBandGroupComm,
 		      const MPI_Comm &mpiComm,
-		      std::vector<double>     & eigenValues);
+		      std::vector<double>     & eigenValues,
+		      const bool doCommAfterBandParal=true);
 
 
     /** @brief Compute Rayleigh-Ritz projection in case of spectrum split using direct diagonalization
@@ -270,6 +271,7 @@ namespace dftfe
 				  std::vector<T> & X,
 				  const std::vector<double>     & eigenValues,
 				  const MPI_Comm &mpiComm,
+				  const MPI_Comm &interBandGroupComm,
 				  std::vector<double> & residualNorm);
 
   }

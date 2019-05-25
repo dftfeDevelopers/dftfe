@@ -792,6 +792,9 @@ namespace dftParameters
     if(dftParameters::meshAdaption)
       AssertThrow(!(dftParameters::isIonOpt && dftParameters::isCellOpt),ExcMessage("DFT-FE Error: Currently Atomic relaxation does not work with automatic mesh adaption scheme."));
 
+    if(dftParameters::nbandGrps>1)
+      AssertThrow(dftParameters::wfcBlockSize==dftParameters::chebyWfcBlockSize,ExcMessage("DFT-FE Error: WFC BLOCK SIZE and CHEBY WFC BLOCK SIZE must be same for band parallelization."));
+
 #ifndef WITH_MKL;
     dftParameters::useBatchGEMM=false;
     if (dftParameters::verbosity >=1 && Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)

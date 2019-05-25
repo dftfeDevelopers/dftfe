@@ -615,7 +615,8 @@ namespace dftfe
 			    const MPI_Comm &mpiComm,
 			    const dealii::ScaLAPACKMatrix<T> & rotationMatPar,
 			    const bool rotationMatTranspose,
-			    const bool isRotationMatLowerTria)
+			    const bool isRotationMatLowerTria,
+			    const bool doCommAfterBandParal)
       {
 #ifdef USE_COMPLEX
 	AssertThrow(false,dftUtils::ExcNotImplementedYet());
@@ -786,7 +787,7 @@ namespace dftfe
 	      }
 	  }//block loop over dofs
 
-	  if (numberBandGroups>1)
+	  if (numberBandGroups>1 && doCommAfterBandParal)
   	  {
 	        MPI_Barrier(interBandGroupComm);
 		const unsigned int blockSize=dftParameters::mpiAllReduceMessageBlockSizeMB*1e+6/sizeof(T);
@@ -1464,7 +1465,8 @@ namespace dftfe
 			    const MPI_Comm &mpiComm,
 			    const dealii::ScaLAPACKMatrix<dataTypes::number> & rotationMatPar,
 			    const bool rotationMatTranpose,
-			    const bool isRotationMatLowerTria);
+			    const bool isRotationMatLowerTria,
+			    const bool doCommAfterBandParal);
 
 
       template

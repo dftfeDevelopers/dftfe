@@ -472,7 +472,8 @@ namespace dftfe{
 		      const bool isValenceProjHam,
 		      const MPI_Comm &interBandGroupComm,
 		      const MPI_Comm &mpi_communicator,
-		      std::vector<double> & eigenValues)
+		      std::vector<double> & eigenValues,
+		      const bool doCommAfterBandParal)
 
     {
       dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
@@ -618,7 +619,9 @@ namespace dftfe{
 				 interBandGroupComm,
 				 mpi_communicator,
 			         projHamPar,
-				 true);
+				 true,
+				 false,
+				 doCommAfterBandParal);
 
       computing_timer.exit_section("Blocked subspace rotation, RR step");
     }
@@ -631,7 +634,8 @@ namespace dftfe{
 		      const bool isValenceProjHam,
 		      const MPI_Comm &interBandGroupComm,
 		      const MPI_Comm &mpi_communicator,
-		      std::vector<double> & eigenValues)
+		      std::vector<double> & eigenValues,
+		      const bool doCommAfterBandParal)
     {
       dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
 
@@ -953,6 +957,7 @@ namespace dftfe{
 				  std::vector<T> & X,
 				  const std::vector<double> & eigenValues,
 				  const MPI_Comm &mpiComm,
+				  const MPI_Comm &interBandGroupComm,
 				  std::vector<double> & residualNorm)
 
     {
@@ -963,6 +968,15 @@ namespace dftfe{
       const unsigned int totalNumberVectors = eigenValues.size();
       const unsigned int localVectorSize = X.size()/totalNumberVectors;
       std::vector<double> residualNormSquare(totalNumberVectors,0.0);
+
+      //band group parallelization data structures
+      const unsigned int numberBandGroups=
+	 dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
+      const unsigned int bandGroupTaskId = dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
+      std::vector<unsigned int> bandGroupLowHighPlusOneIndices;
+      dftUtils::createBandParallelizationIndices(interBandGroupComm,
+						 totalNumberVectors,
+						 bandGroupLowHighPlusOneIndices);
 
       //create temporary arrays XBlock,HXBlock
       dealii::parallel::distributed::Vector<T> XBlock,HXBlock;
@@ -977,47 +991,57 @@ namespace dftfe{
       {
 	  // Correct block dimensions if block "goes off edge"
 	  const unsigned int B = std::min(vectorsBlockSize, totalNumberVectors-jvec);
+
 	  if (jvec==0 || B!=vectorsBlockSize)
 	  {
-	     operatorMatrix.reinit(B,
-		                   XBlock,
-		                   true);
-	     HXBlock.reinit(XBlock);
+		 operatorMatrix.reinit(B,
+				       XBlock,
+				       true);
+		 HXBlock.reinit(XBlock);
 	  }
 
-          XBlock=T(0.);
-	  //fill XBlock from X:
-	  for(unsigned int iNode = 0; iNode<localVectorSize; ++iNode)
-	      for(unsigned int iWave = 0; iWave < B; ++iWave)
-		    XBlock.local_element(iNode*B
-			     +iWave)
-			 =X[iNode*totalNumberVectors+jvec+iWave];
+	  if ((jvec+B)<=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1] &&
+	  (jvec+B)>bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
+	  {
+	      XBlock=T(0.);
+	      //fill XBlock from X:
+	      for(unsigned int iNode = 0; iNode<localVectorSize; ++iNode)
+		  for(unsigned int iWave = 0; iWave < B; ++iWave)
+			XBlock.local_element(iNode*B
+				 +iWave)
+			     =X[iNode*totalNumberVectors+jvec+iWave];
 
-	  MPI_Barrier(mpiComm);
-	  //evaluate H times XBlock and store in HXBlock
-	  HXBlock=T(0.);
-	  const bool scaleFlag = false;
-	  const double scalar = 1.0;
-	  operatorMatrix.HX(XBlock,
-	                    B,
-	                    scaleFlag,
-	                    scalar,
-	                    HXBlock);
+	      MPI_Barrier(mpiComm);
+	      //evaluate H times XBlock and store in HXBlock
+	      HXBlock=T(0.);
+	      const bool scaleFlag = false;
+	      const double scalar = 1.0;
+	      operatorMatrix.HX(XBlock,
+				B,
+				scaleFlag,
+				scalar,
+				HXBlock);
 
-	  //compute residual norms:
-	  for(unsigned int iDof = 0; iDof < localVectorSize; ++iDof)
-	      for(unsigned int iWave = 0; iWave < B; iWave++)
-		{
-		  const double temp =std::abs(HXBlock.local_element(B*iDof + iWave) -
-		      eigenValues[jvec+iWave]*XBlock.local_element(B*iDof + iWave));
-		  residualNormSquare[jvec+iWave] += temp*temp;
-		}
+	      //compute residual norms:
+	      for(unsigned int iDof = 0; iDof < localVectorSize; ++iDof)
+		  for(unsigned int iWave = 0; iWave < B; iWave++)
+		    {
+		      const double temp =std::abs(HXBlock.local_element(B*iDof + iWave) -
+			  eigenValues[jvec+iWave]*XBlock.local_element(B*iDof + iWave));
+		      residualNormSquare[jvec+iWave] += temp*temp;
+		    }
+	  }
       }
 
 
       dealii::Utilities::MPI::sum(residualNormSquare,
 	                          mpiComm,
 				  residualNormSquare);
+
+      dealii::Utilities::MPI::sum(residualNormSquare,
+	                          interBandGroupComm,
+				  residualNormSquare);
+
       if(dftParameters::verbosity>=4)
 	{
 	  if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
@@ -1424,7 +1448,8 @@ namespace dftfe{
 			       const bool isValenceProjHam,
 			       const MPI_Comm &,
 			       const MPI_Comm &,
-			       std::vector<double>     & eigenValues);
+			       std::vector<double>     & eigenValues,
+			       const bool doCommAfterBandParal);
 
 
     template void rayleighRitzSpectrumSplitDirect
@@ -1442,6 +1467,7 @@ namespace dftfe{
 					   std::vector<dataTypes::number> & X,
 					   const std::vector<double> & eigenValues,
 					   const MPI_Comm &mpiComm,
+					   const MPI_Comm &interBandGroupComm,
 					   std::vector<double>     & residualNorm);
 
   }//end of namespace
