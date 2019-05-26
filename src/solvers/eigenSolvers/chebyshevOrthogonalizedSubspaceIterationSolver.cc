@@ -340,7 +340,6 @@ namespace dftfe{
 		     = eigenVectorsBandGroup[iNode*numVectorsBandParal+iWave];
 
 	    MPI_Barrier(interBandGroupComm);
-	    computing_timer.enter_section("MPI_Allgatherv across band groups");
 	    //MPI_Barrier(interBandGroupComm);
 	    std::vector<int> recvcounts(numberBandGroups,0);
 	    std::vector<int> displs(numberBandGroups,0);
