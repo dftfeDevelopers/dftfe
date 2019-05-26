@@ -986,7 +986,9 @@ namespace dftfe{
       // D is the eigenvalues matrix.
       // The blocked approach avoids additional full
       // wavefunction matrix memory
-      const unsigned int vectorsBlockSize=dftParameters::wfcBlockSize;
+      const unsigned int vectorsBlockSize=std::min(dftParameters::wfcBlockSize,
+		                                   bandGroupLowHighPlusOneIndices[1]);
+
       for (unsigned int jvec = 0; jvec < totalNumberVectors; jvec += vectorsBlockSize)
       {
 	  // Correct block dimensions if block "goes off edge"
