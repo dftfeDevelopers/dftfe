@@ -86,6 +86,7 @@ namespace dftParameters
   bool useELPA=false;
   bool constraintsParallelCheck=true;
   bool createConstraintsFromSerialDofhandler=true;
+  bool bandParalOpt=true;
 
   void declare_parameters(ParameterHandler &prm)
   {
@@ -127,6 +128,10 @@ namespace dftParameters
 	prm.declare_entry("MPI ALLREDUCE BLOCK SIZE", "100.0",
 			   Patterns::Double(0),
 			   "[Advanced] Block message size in MB used to break a single MPI_Allreduce call on wavefunction vectors data into multiple MPI_Allreduce calls. This is useful on certain architectures which take advantage of High Bandwidth Memory to improve efficiency of MPI operations. This variable is relevant only if NPBAND>1. Default value is 100.0 MB.");
+
+        prm.declare_entry("BAND PARAL OPT", "true",
+			   Patterns::Bool(),
+			  "[Standard] Uses a more optimal route for band parallelization but at the cost of extra wavefunctions memory.");
     }
     prm.leave_subsection ();
 
@@ -537,6 +542,7 @@ namespace dftParameters
     {
 	dftParameters::npool             = prm.get_integer("NPKPT");
 	dftParameters::nbandGrps         = prm.get_integer("NPBAND");
+	dftParameters::bandParalOpt = prm.get_bool("BAND PARAL OPT");
 	dftParameters::mpiAllReduceMessageBlockSizeMB = prm.get_double("MPI ALLREDUCE BLOCK SIZE");
     }
     prm.leave_subsection ();
