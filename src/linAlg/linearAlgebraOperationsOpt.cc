@@ -1048,13 +1048,11 @@ namespace dftfe{
 	    std::cout<<"L-2 Norm of residue   :"<<std::endl;
 	}
       for(unsigned int iWave = 0; iWave < totalNumberVectors; ++iWave)
-	{
 	  residualNorm[iWave] = sqrt(residualNormSquare[iWave]);
 
-	  if(dftParameters::verbosity>=4)
-	      if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
-		std::cout<<"eigen vector "<< iWave<<": "<<residualNorm[iWave]<<std::endl;
-	}
+      if(dftParameters::verbosity>=4 && dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+        for(unsigned int iWave = 0; iWave < totalNumberVectors; ++iWave)
+         std::cout<<"eigen vector "<< iWave<<": "<<residualNorm[iWave]<<std::endl;
 
       if(dftParameters::verbosity>=4)
 	if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
