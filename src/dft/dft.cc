@@ -1607,6 +1607,7 @@ namespace dftfe {
 
     const unsigned int localVectorSize = d_eigenVectorsFlattenedSTL[0].size()/d_numEigenValues;
 
+#ifndef USE_COMPLEX 
     if (numberBandGroups>1)
        for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
                  MPI_Allreduce(MPI_IN_PLACE,
@@ -1615,6 +1616,7 @@ namespace dftfe {
 		               dataTypes::mpi_type_id(&d_eigenVectorsFlattenedSTL[kPoint][0]),
 		               MPI_SUM,
 		               interBandGroupComm);
+#endif
 
     if(dftParameters::isIonForce || dftParameters::isCellStress)
       {
