@@ -927,8 +927,8 @@ namespace dftfe {
 		  pcout<<"L2 norm of electron-density difference: "<< norm<< std::endl;
 	      }
 
-
-	    d_phiTotRhoIn = d_phiTotRhoOut;
+	    if (dftParameters::computeEnergyEverySCF && d_numEigenValuesRR==d_numEigenValues)
+	      d_phiTotRhoIn = d_phiTotRhoOut;
 	  }
 	else if (dftParameters::restartFromChk && dftParameters::chkType==2)
 	  {
@@ -941,8 +941,8 @@ namespace dftfe {
 
 	    if (dftParameters::verbosity>=1)
 	      pcout<<"Anderson Mixing, L2 norm of electron-density difference: "<< norm<< std::endl;
-
-	    d_phiTotRhoIn = d_phiTotRhoOut;
+	    if (dftParameters::computeEnergyEverySCF && d_numEigenValuesRR==d_numEigenValues)
+	      d_phiTotRhoIn = d_phiTotRhoOut;
 	  }
         computing_timer.exit_section("density mixing");
 	//
@@ -969,7 +969,6 @@ namespace dftfe {
 				       *rhoInValues);
 
 	dealiiCGSolver.solve(phiTotalSolverProblem,
-
 			     dftParameters::relLinearSolverTolerance,
 			     dftParameters::maxLinearSolverIterations,
 			     dftParameters::verbosity);
