@@ -87,6 +87,7 @@ namespace dftParameters
   bool constraintsParallelCheck=true;
   bool createConstraintsFromSerialDofhandler=true;
   bool bandParalOpt=true;
+  bool rrGEP=false;
 
   void declare_parameters(ParameterHandler &prm)
   {
@@ -432,6 +433,10 @@ namespace dftParameters
 			      Patterns::Integer(0),
 			      "[Advanced] SCF iteration no beyond which spectrum splitting based can be used.");
 
+            prm.declare_entry("RR GEP", "false",
+			       Patterns::Bool(),"[Standard] Solve generalized eigenvalue problem instead of standard eignevalue problem in Rayleigh-Ritz step.");
+
+
 	    prm.declare_entry("LOWER BOUND WANTED SPECTRUM", "-10.0",
 			      Patterns::Double(),
 			      "[Developer] The lower bound of the wanted eigen spectrum. It is only used for the first iteration of the Chebyshev filtered subspace iteration procedure. A rough estimate based on single atom eigen values can be used here. Default value is good enough for most problems.");
@@ -658,6 +663,7 @@ namespace dftParameters
 	   dftParameters::numberEigenValues             = prm.get_integer("NUMBER OF KOHN-SHAM WAVEFUNCTIONS");
 	   dftParameters::numCoreWfcRR                  = prm.get_integer("SPECTRUM SPLIT CORE EIGENSTATES");
 	   dftParameters::spectrumSplitStartingScfIter  = prm.get_integer("SPECTRUM SPLIT STARTING SCF ITER");
+	   dftParameters::rrGEP= prm.get_bool("RR GEP");
 	   dftParameters::lowerEndWantedSpectrum        = prm.get_double("LOWER BOUND WANTED SPECTRUM");
 	   dftParameters::lowerBoundUnwantedFracUpper   = prm.get_double("LOWER BOUND UNWANTED FRAC UPPER");
 	   dftParameters::chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");

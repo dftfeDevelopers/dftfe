@@ -214,6 +214,26 @@ namespace dftfe
 		      std::vector<double>     & eigenValues);
 
 
+    /** @brief Compute Rayleigh-Ritz projection
+     *  (serial version using LAPACK, parallel version using ScaLAPACK)
+     *
+     *  @param[in] operatorMatrix An object which has access to the given matrix
+     *  @param[in,out]  X Given subspace as flattened array of multi-vectors.
+     *  In-place rotated subspace
+     *  @param[in] numberComponents Number of vectors
+     *  @param[in] interBandGroupComm interpool communicator for parallelization over band groups
+     *  @param[in] mpiComm domain decomposition communicator
+     *  @param[out] eigenValues of the Projected Hamiltonian
+     */
+    template<typename T>
+    void rayleighRitzGEP(operatorDFTClass        & operatorMatrix,
+		      std::vector<T> & X,
+		      const unsigned int numberComponents,
+		      const MPI_Comm &interBandGroupComm,
+		      const MPI_Comm &mpiComm,
+		      std::vector<double>     & eigenValues,
+		      const bool useMixedPrec);
+
 
     /** @brief Compute Rayleigh-Ritz projection
      *  (serial version using LAPACK, parallel version using ScaLAPACK)
