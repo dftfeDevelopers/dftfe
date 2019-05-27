@@ -529,9 +529,9 @@ namespace dftfe{
 
       //S=L*L^{T}
 #if(defined DFTFE_WITH_ELPA)
-      computing_timer.enter_section("ELPA PGS cholesky, copy, and triangular matrix invert");
+      computing_timer.enter_section("Cholesky and triangular matrix invert");
 #else
-      computing_timer.enter_section("PGS cholesky, copy, and triangular matrix invert");
+      computing_timer.enter_section("Cholesky and triangular matrix invert");
 #endif
 #if(defined DFTFE_WITH_ELPA)
       dealii::LAPACKSupport::Property overlapMatPropertyPostCholesky;
@@ -625,9 +625,9 @@ namespace dftfe{
       LMatPar.invert();
 #endif
 #if(defined DFTFE_WITH_ELPA)
-      computing_timer.exit_section("ELPA PGS cholesky, copy, and triangular matrix invert");
+      computing_timer.exit_section("Cholesky and triangular matrix invert");
 #else
-      computing_timer.exit_section("PGS cholesky, copy, and triangular matrix invert");
+      computing_timer.exit_section("Cholesky and triangular matrix invert");
 #endif
 
 
@@ -680,8 +680,16 @@ namespace dftfe{
 					    processGrid,
 					    rowsBlockSize);
 
-      LMatPar.mmult(projHamParCopy,projHamPar);
-      projHamParCopy.mTmult(projHamPar,LMatPar);
+      if (overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::lower_triangular)
+      {
+	  LMatPar.mmult(projHamParCopy,projHamPar);
+	  projHamParCopy.mTmult(projHamPar,LMatPar);
+      }
+      else
+      {
+	  LMatPar.Tmmult(projHamParCopy,projHamPar);
+	  projHamParCopy.mmult(projHamPar,LMatPar);
+      }
 
       //
       //compute eigendecomposition of ProjHam
@@ -759,7 +767,11 @@ namespace dftfe{
       computing_timer.enter_section("Blocked subspace rotation, RR step");
 
       projHamPar.copy_to(projHamParCopy);
-      LMatPar.Tmmult(projHamPar,projHamParCopy);
+      if (overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::lower_triangular)
+        LMatPar.Tmmult(projHamPar,projHamParCopy);
+      else
+	LMatPar.mmult(projHamPar,projHamParCopy);
+
       internal::subspaceRotation(&X[0],
 	                         X.size(),
 		                 numberWaveFunctions,
