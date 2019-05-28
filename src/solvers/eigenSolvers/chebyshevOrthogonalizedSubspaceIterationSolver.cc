@@ -409,7 +409,58 @@ namespace dftfe{
     if (dftParameters::rrGEP)
     {
 	 computing_timer.enter_section("Rayleigh-Ritz GEP");
-	 linearAlgebraOperations::rayleighRitzGEP(operatorMatrix,
+  	 std::vector<dataTypes::number> eigenVectorsFlattenedRR;
+
+	 if (eigenValues.size()!=totalNumberWaveFunctions)
+	 {
+	    linearAlgebraOperations::rayleighRitzGEPSpectrumSplitDirect(operatorMatrix,
+								     eigenVectorsFlattened,
+								     eigenVectorsRotFracDensityFlattened,
+								     totalNumberWaveFunctions,
+								     totalNumberWaveFunctions-eigenValues.size(),
+								     interBandGroupComm,
+								     operatorMatrix.getMPICommunicator(),
+								     useMixedPrec,
+								     eigenValues);
+
+
+	    eigenVectorsFlattenedRR.resize(eigenValues.size()*localVectorSize,dataTypes::number(0.0));
+	    for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
+	      for(unsigned int iWave = 0; iWave < eigenValues.size(); ++iWave)
+		eigenVectorsFlattenedRR[iNode*eigenValues.size()
+					+iWave]
+		  =eigenVectorsFlattened[iNode*totalNumberWaveFunctions+
+					 (totalNumberWaveFunctions-eigenValues.size())+iWave];
+
+	    if (numberBandGroups>1)
+		MPI_Allreduce(MPI_IN_PLACE,
+		              &eigenVectorsFlattenedRR[0],
+			      eigenValues.size()*localVectorSize,
+			      dataTypes::mpi_type_id(&eigenVectorsFlattenedRR[0]),
+			      MPI_SUM,
+			      interBandGroupComm);
+
+	    std::vector<double> eigenValuesTemp(eigenValues.size());
+	    linearAlgebraOperations::rayleighRitz(operatorMatrix,
+						  eigenVectorsFlattenedRR,
+						  eigenValues.size(),
+						  true,
+						  interBandGroupComm,
+						  operatorMatrix.getMPICommunicator(),
+						  eigenValuesTemp);
+
+
+	    for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
+	      for(unsigned int iWave = 0; iWave < eigenValues.size(); ++iWave)
+		eigenVectorsFlattened[iNode*totalNumberWaveFunctions+
+				      (totalNumberWaveFunctions-eigenValues.size())+iWave]
+		  =eigenVectorsFlattenedRR[iNode*eigenValues.size()
+					   +iWave];
+
+
+	 }
+	 else
+	    linearAlgebraOperations::rayleighRitzGEP(operatorMatrix,
 						  eigenVectorsFlattened,
 						  totalNumberWaveFunctions,
 						  interBandGroupComm,
@@ -419,8 +470,15 @@ namespace dftfe{
  	 computing_timer.exit_section("Rayleigh-Ritz GEP");
 
         computing_timer.enter_section("eigen vectors residuals opt");
-
-	linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
+	if (eigenValues.size()!=totalNumberWaveFunctions)
+	    linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
+							      eigenVectorsFlattenedRR,
+							      eigenValues,
+							      operatorMatrix.getMPICommunicator(),
+							      interBandGroupComm,
+							      residualNorms);
+	else
+	  linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
 							    eigenVectorsFlattened,
 							    eigenValues,
 							    operatorMatrix.getMPICommunicator(),

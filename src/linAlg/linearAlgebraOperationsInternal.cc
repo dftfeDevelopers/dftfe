@@ -1318,7 +1318,8 @@ namespace dftfe
 			    const MPI_Comm &interBandGroupComm,
 			    const MPI_Comm &mpiComm,
 			    const dealii::ScaLAPACKMatrix<dataTypes::number> & rotationMatPar,
-			    const bool rotationMatTranspose)
+			    const bool rotationMatTranspose,
+			    const bool doCommAfterBandParal)
       {
 #ifdef USE_COMPLEX
         AssertThrow(false,dftUtils::ExcNotImplementedYet());
@@ -1530,7 +1531,7 @@ namespace dftfe
 	      }//block loop over vectors
 	  }//block loop over dofs
 
-	  if (numberBandGroups>1)
+	  if (numberBandGroups>1 && doCommAfterBandParal)
   	  {
                 MPI_Barrier(interBandGroupComm);
 		const unsigned int blockSize=dftParameters::mpiAllReduceMessageBlockSizeMB*1e+6

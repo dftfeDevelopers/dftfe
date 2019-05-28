@@ -504,7 +504,7 @@ namespace dftfe{
       //S=X*X^{T}. Implemented as S=X^{T}*X with X^{T} stored in the column major format
       if (!(dftParameters::useMixedPrecPGS_O && useMixedPrec))
       {
-	  computing_timer.enter_section("Fill overlap matrix PGS");
+	  computing_timer.enter_section("Fill overlap matrix");
 	  internal::fillParallelOverlapMatrix(&X[0],
 					      X.size(),
 					      numberWaveFunctions,
@@ -512,11 +512,11 @@ namespace dftfe{
 					      interBandGroupComm,
 					      mpi_communicator,
 					      overlapMatPar);
-	  computing_timer.exit_section("Fill overlap matrix PGS");
+	  computing_timer.exit_section("Fill overlap matrix");
       }
       else
       {
-	  computing_timer.enter_section("Fill overlap matrix mixed prec PGS");
+	  computing_timer.enter_section("Fill overlap matrix mixed prec");
 	  internal::fillParallelOverlapMatrixMixedPrec(&X[0],
 					               X.size(),
 						       numberWaveFunctions,
@@ -524,7 +524,7 @@ namespace dftfe{
 						       interBandGroupComm,
 						       mpi_communicator,
 						       overlapMatPar);
-	  computing_timer.exit_section("Fill overlap matrix mixed prec PGS");
+	  computing_timer.exit_section("Fill overlap matrix mixed prec");
       }
 
       //S=L*L^{T}
@@ -761,10 +761,10 @@ namespace dftfe{
       */
       computing_timer.exit_section("Broadcast eigvec and eigenvalues across band groups, RR step");
       //
-      //rotate the basis in the subspace X = X*Q, implemented as X^{T}=Q^{T}*X^{T} with X^{T}
+      //rotate the basis in the subspace X = X*L_{inv}^{T}*Q,
       //stored in the column major format
       //
-      computing_timer.enter_section("Blocked subspace rotation, RR step");
+      computing_timer.enter_section("X = X*L_{inv}^{T}*Q, RR step");
 
       projHamPar.copy_to(projHamParCopy);
       if (overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::lower_triangular)
@@ -783,7 +783,7 @@ namespace dftfe{
 				 false,
 				 false);
 
-      computing_timer.exit_section("Blocked subspace rotation, RR step");
+      computing_timer.exit_section("X = X*L_{inv}^{T}*Q, RR step");
     }
 #else
 
@@ -1042,6 +1042,445 @@ namespace dftfe{
       X = rotatedBasis;
     }
 #endif
+
+#if(defined DEAL_II_WITH_SCALAPACK && !USE_COMPLEX)
+    template<typename T>
+    void rayleighRitzGEPSpectrumSplitDirect(operatorDFTClass        & operatorMatrix,
+		      std::vector<T> & X,
+		      std::vector<T> & Y,
+		      const unsigned int numberWaveFunctions,
+		      const unsigned int numberCoreStates,
+		      const MPI_Comm &interBandGroupComm,
+		      const MPI_Comm &mpiComm,
+		      const bool useMixedPrec,
+		      std::vector<double>     & eigenValues)
+    {
+      dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
+
+      dealii::TimerOutput computing_timer(mpiComm,
+	                                  pcout,
+					  dftParameters::reproducible_output ||
+					  dftParameters::verbosity<4 ? dealii::TimerOutput::never : dealii::TimerOutput::summary,
+					  dealii::TimerOutput::wall_times);
+
+      const unsigned int rowsBlockSize=operatorMatrix.getScalapackBlockSize();
+      std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  processGrid;
+      internal::createProcessGridSquareMatrix(mpiComm,
+                                              numberWaveFunctions,
+                                              processGrid);
+
+      //
+      //compute overlap matrix
+      //
+      dealii::ScaLAPACKMatrix<T> overlapMatPar(numberWaveFunctions,
+                                               processGrid,
+                                               rowsBlockSize);
+
+      if (processGrid->is_process_active())
+         std::fill(&overlapMatPar.local_el(0,0),
+	           &overlapMatPar.local_el(0,0)+overlapMatPar.local_m()*overlapMatPar.local_n(),
+		   T(0.0));
+
+      //S=X*X^{T}. Implemented as S=X^{T}*X with X^{T} stored in the column major format
+      if (!(dftParameters::useMixedPrecPGS_O && useMixedPrec))
+      {
+	  computing_timer.enter_section("Fill overlap matrix");
+	  internal::fillParallelOverlapMatrix(&X[0],
+					      X.size(),
+					      numberWaveFunctions,
+					      processGrid,
+					      interBandGroupComm,
+					      mpiComm,
+					      overlapMatPar);
+	  computing_timer.exit_section("Fill overlap matrix");
+      }
+      else
+      {
+	  computing_timer.enter_section("Fill overlap matrix mixed prec");
+	  internal::fillParallelOverlapMatrixMixedPrec(&X[0],
+					               X.size(),
+						       numberWaveFunctions,
+						       processGrid,
+						       interBandGroupComm,
+						       mpiComm,
+						       overlapMatPar);
+	  computing_timer.exit_section("Fill overlap matrix mixed prec");
+      }
+
+      //S=L*L^{T}
+#if(defined DFTFE_WITH_ELPA)
+      computing_timer.enter_section("Cholesky and triangular matrix invert");
+#else
+      computing_timer.enter_section("Cholesky and triangular matrix invert");
+#endif
+#if(defined DFTFE_WITH_ELPA)
+      dealii::LAPACKSupport::Property overlapMatPropertyPostCholesky;
+      if (dftParameters::useELPA)
+      {
+	  //For ELPA cholesky only the upper triangular part is enough
+	  dealii::ScaLAPACKMatrix<T> overlapMatParTrans(numberWaveFunctions,
+						processGrid,
+						rowsBlockSize);
+
+          if (processGrid->is_process_active())
+	      std::fill(&overlapMatParTrans.local_el(0,0),
+		        &overlapMatParTrans.local_el(0,0)
+			+overlapMatParTrans.local_m()*overlapMatParTrans.local_n(),
+		        T(0.0));
+
+	  overlapMatParTrans.copy_transposed(overlapMatPar);
+
+	  if (processGrid->is_process_active())
+	  {
+	      int error;
+	      elpa_cholesky_d(operatorMatrix.getElpaHandle(), &overlapMatParTrans.local_el(0,0), &error);
+	      AssertThrow(error==ELPA_OK,
+			dealii::ExcMessage("DFT-FE Error: elpa_cholesky_d error."));
+	  }
+	  overlapMatParTrans.copy_to(overlapMatPar);
+	  overlapMatPropertyPostCholesky=dealii::LAPACKSupport::Property::upper_triangular;
+      }
+      else
+      {
+	  overlapMatPar.compute_cholesky_factorization();
+
+	  overlapMatPropertyPostCholesky=overlapMatPar.get_property();
+      }
+#else
+      overlapMatPar.compute_cholesky_factorization();
+
+      dealii::LAPACKSupport::Property overlapMatPropertyPostCholesky=overlapMatPar.get_property();
+#endif
+      AssertThrow(overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::lower_triangular
+		  ||overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::upper_triangular
+	           ,dealii::ExcMessage("DFT-FE Error: overlap matrix property after cholesky factorization incorrect"));
+
+      dealii::ScaLAPACKMatrix<T> LMatPar(numberWaveFunctions,
+                                         processGrid,
+                                         rowsBlockSize,
+					 overlapMatPropertyPostCholesky);
+
+      //copy triangular part of projHamPar into LMatPar
+      if (processGrid->is_process_active())
+         for (unsigned int i = 0; i < overlapMatPar.local_n(); ++i)
+           {
+             const unsigned int glob_i = overlapMatPar.global_column(i);
+             for (unsigned int j = 0; j < overlapMatPar.local_m(); ++j)
+               {
+		 const unsigned int glob_j = overlapMatPar.global_row(j);
+		 if (overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::lower_triangular)
+		 {
+		     if (glob_i <= glob_j)
+			LMatPar.local_el(j, i)=overlapMatPar.local_el(j, i);
+		     else
+			LMatPar.local_el(j, i)=0;
+		 }
+		 else
+		 {
+		     if (glob_j <= glob_i)
+			LMatPar.local_el(j, i)=overlapMatPar.local_el(j, i);
+		     else
+			LMatPar.local_el(j, i)=0;
+		 }
+               }
+           }
+
+      //invert triangular matrix
+#if(defined DFTFE_WITH_ELPA)
+      if (dftParameters::useELPA)
+      {
+	  if (processGrid->is_process_active())
+	  {
+	      int error;
+	      elpa_invert_trm_d(operatorMatrix.getElpaHandle(), &LMatPar.local_el(0,0), &error);
+	      AssertThrow(error==ELPA_OK,
+			dealii::ExcMessage("DFT-FE Error: elpa_invert_trm_d error."));
+	  }
+      }
+      else
+      {
+	  LMatPar.invert();
+      }
+#else
+      LMatPar.invert();
+#endif
+#if(defined DFTFE_WITH_ELPA)
+      computing_timer.exit_section("Cholesky and triangular matrix invert");
+#else
+      computing_timer.exit_section("Cholesky and triangular matrix invert");
+#endif
+
+
+      //
+      //compute projected Hamiltonian
+      //
+      dealii::ScaLAPACKMatrix<T> projHamPar(numberWaveFunctions,
+                                            processGrid,
+                                            rowsBlockSize);
+      if (processGrid->is_process_active())
+	  std::fill(&projHamPar.local_el(0,0),
+		    &projHamPar.local_el(0,0)+projHamPar.local_m()*projHamPar.local_n(),
+		    T(0.0));
+
+      if (useMixedPrec && dftParameters::useMixedPrecXTHXSpectrumSplit)
+      {
+	 computing_timer.enter_section("Blocked XtHX Mixed Prec, RR step");
+         operatorMatrix.XtHXMixedPrec(X,
+			  numberWaveFunctions,
+			  numberCoreStates,
+			  processGrid,
+			  projHamPar);
+	 computing_timer.exit_section("Blocked XtHX Mixed Prec, RR step");
+      }
+      else
+      {
+	 computing_timer.enter_section("Blocked XtHX, RR step");
+         operatorMatrix.XtHX(X,
+			  numberWaveFunctions,
+			  processGrid,
+			  projHamPar);
+	 computing_timer.exit_section("Blocked XtHX, RR step");
+      }
+
+      //For ELPA eigendecomposition the full matrix is required unlike
+      //ScaLAPACK which can work with only the lower triangular part
+      dealii::ScaLAPACKMatrix<T> projHamParTrans(numberWaveFunctions,
+					    processGrid,
+					    rowsBlockSize);
+
+      if (processGrid->is_process_active())
+	  std::fill(&projHamParTrans.local_el(0,0),
+		    &projHamParTrans.local_el(0,0)+projHamParTrans.local_m()*projHamParTrans.local_n(),
+		    T(0.0));
+
+
+      projHamParTrans.copy_transposed(projHamPar);
+      projHamPar.add(projHamParTrans,T(1.0),T(1.0));
+
+      if (processGrid->is_process_active())
+	 for (unsigned int i = 0; i < projHamPar.local_n(); ++i)
+	   {
+	     const unsigned int glob_i = projHamPar.global_column(i);
+	     for (unsigned int j = 0; j < projHamPar.local_m(); ++j)
+	       {
+		 const unsigned int glob_j = projHamPar.global_row(j);
+		 if (glob_i==glob_j)
+		    projHamPar.local_el(j, i)*=T(0.5);
+	       }
+	   }
+
+      dealii::ScaLAPACKMatrix<T> projHamParCopy(numberWaveFunctions,
+					    processGrid,
+					    rowsBlockSize);
+
+      if (overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::lower_triangular)
+      {
+	  LMatPar.mmult(projHamParCopy,projHamPar);
+	  projHamParCopy.mTmult(projHamPar,LMatPar);
+      }
+      else
+      {
+	  LMatPar.Tmmult(projHamParCopy,projHamPar);
+	  projHamParCopy.mmult(projHamPar,LMatPar);
+      }
+
+      //
+      //compute eigendecomposition of ProjHam
+      //
+      const unsigned int numValenceStates=numberWaveFunctions-numberCoreStates;
+      eigenValues.resize(numValenceStates);
+#if(defined DFTFE_WITH_ELPA)
+      if (dftParameters::useELPA)
+      {
+	  computing_timer.enter_section("ELPA eigen decomp, RR step");
+	  std::vector<double> allEigenValues(numberWaveFunctions,0.0);
+          dealii::ScaLAPACKMatrix<T> eigenVectors(numberWaveFunctions,
+                                            processGrid,
+                                            rowsBlockSize);
+
+	  if (processGrid->is_process_active())
+	      std::fill(&eigenVectors.local_el(0,0),
+		    &eigenVectors.local_el(0,0)+eigenVectors.local_m()*eigenVectors.local_n(),
+		    T(0.0));
+
+	  if (processGrid->is_process_active())
+          {
+	      int error;
+	      elpa_eigenvectors_d(operatorMatrix.getElpaHandlePartialEigenVec(),
+				&projHamPar.local_el(0,0),
+				&allEigenValues[0],
+				&eigenVectors.local_el(0,0),
+				&error);
+	      AssertThrow(error==ELPA_OK,
+		    dealii::ExcMessage("DFT-FE Error: elpa_eigenvectors error in case spectrum splitting."));
+	  }
+
+	  for (unsigned int i=0;i<numValenceStates;++i)
+	         eigenValues[numValenceStates-i-1]=-allEigenValues[i];
+
+	  MPI_Bcast(&eigenValues[0],
+		    eigenValues.size(),
+		    MPI_DOUBLE,
+		    0,
+		    mpiComm);
+
+
+	  dealii::ScaLAPACKMatrix<T> permutedIdentityMat(numberWaveFunctions,
+						    processGrid,
+						    rowsBlockSize);
+          if (processGrid->is_process_active())
+	      std::fill(&permutedIdentityMat.local_el(0,0),
+		        &permutedIdentityMat.local_el(0,0)
+			+permutedIdentityMat.local_m()*permutedIdentityMat.local_n(),
+		        T(0.0));
+
+	  if (processGrid->is_process_active())
+	     for (unsigned int i = 0; i < permutedIdentityMat.local_m(); ++i)
+	       {
+		 const unsigned int glob_i = permutedIdentityMat.global_row(i);
+		 if (glob_i<numValenceStates)
+		 {
+		     for (unsigned int j = 0; j < permutedIdentityMat.local_n(); ++j)
+		       {
+			 const unsigned int glob_j = permutedIdentityMat.global_column(j);
+			 if (glob_j<numValenceStates)
+			 {
+			     const unsigned int rowIndexToSetOne = (numValenceStates-1)-glob_j;
+			     if(glob_i == rowIndexToSetOne)
+				permutedIdentityMat.local_el(i, j) = T(1.0);
+			 }
+		       }
+		 }
+	       }
+
+          eigenVectors.mmult(projHamPar,permutedIdentityMat);
+
+
+
+	  computing_timer.exit_section("ELPA eigen decomp, RR step");
+
+      }
+      else
+      {
+	  computing_timer.enter_section("ScaLAPACK eigen decomp, RR step");
+	  eigenValues=projHamPar.eigenpairs_symmetric_by_index_MRRR(std::make_pair(numberCoreStates,numberWaveFunctions-1),true);
+	  computing_timer.exit_section("ScaLAPACK eigen decomp, RR step");
+       }
+#else
+      computing_timer.enter_section("ScaLAPACK eigen decomp, RR step");
+      eigenValues=projHamPar.eigenpairs_symmetric_by_index_MRRR(std::make_pair(numberCoreStates,numberWaveFunctions-1),true);
+      computing_timer.exit_section("ScaLAPACK eigen decomp, RR step");
+#endif
+
+      computing_timer.enter_section("Broadcast eigvec and eigenvalues across band groups, RR step");
+      internal::broadcastAcrossInterCommScaLAPACKMat
+	                                   (processGrid,
+		                            projHamPar,
+				            interBandGroupComm,
+					    0);
+
+      /*
+      MPI_Bcast(&eigenValues[0],
+		eigenValues.size(),
+		MPI_DOUBLE,
+		0,
+		interBandGroupComm);
+      */
+      computing_timer.exit_section("Broadcast eigvec and eigenvalues across band groups, RR step");
+
+      //
+      //rotate the basis in the subspace X_{fr}=X*(L^{-1}^{T}*Q_{fr}
+      //
+      projHamPar.copy_to(projHamParCopy);
+      if (overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::lower_triangular)
+        LMatPar.Tmmult(projHamPar,projHamParCopy);
+      else
+	LMatPar.mmult(projHamPar,projHamParCopy);
+
+      if (useMixedPrec && dftParameters::useMixedPrecSubspaceRotSpectrumSplit)
+      {
+	  computing_timer.enter_section("X_{fr}=X*(L^{-1}^{T}*Q_{fr}) mixed prec, RR step");
+
+	  internal::subspaceRotationSpectrumSplitMixedPrec(&X[0],
+				     &Y[0],
+				     X.size(),
+				     numberWaveFunctions,
+				     processGrid,
+				     numberWaveFunctions-numberCoreStates,
+				     interBandGroupComm,
+				     mpiComm,
+				     projHamPar,
+				     true);
+
+	  computing_timer.exit_section("X_{fr}=X*(L^{-1}^{T}*Q_{fr}) mixed prec, RR step");
+      }
+      else
+      {
+	  computing_timer.enter_section("X_{fr}=X*(L^{-1}^{T}*Q_{fr}), RR step");
+
+	  internal::subspaceRotationSpectrumSplit(&X[0],
+				     &Y[0],
+				     X.size(),
+				     numberWaveFunctions,
+				     processGrid,
+				     numberWaveFunctions-numberCoreStates,
+				     interBandGroupComm,
+				     mpiComm,
+				     projHamPar,
+				     true);
+
+	  computing_timer.exit_section("X_{fr}=X*(L^{-1}^{T}*Q_{fr}), RR step");
+      }
+
+      //X=X*L^{-1}^{T} implemented as X^{T}=L^{-1}*X^{T} with X^{T} stored in the column major format
+      if (!(dftParameters::useMixedPrecPGS_SR && useMixedPrec))
+      {
+
+	  computing_timer.enter_section("X=X*L^{-1}^{T}, RR step");
+	  internal::subspaceRotation(&X[0],
+				     X.size(),
+				     numberWaveFunctions,
+				     processGrid,
+				     interBandGroupComm,
+				     mpiComm,
+				     LMatPar,
+				     overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::upper_triangular?true:false,
+				     dftParameters::triMatPGSOpt?true:false,
+				     false);
+	  computing_timer.exit_section("X=X*L^{-1}^{T}, RR step");
+      }
+      else
+      {
+	  computing_timer.enter_section("X=X*L^{-1}^{T} mixed prec, RR step");
+	  internal::subspaceRotationPGSMixedPrec(&X[0],
+				     X.size(),
+				     numberWaveFunctions,
+				     processGrid,
+				     interBandGroupComm,
+				     mpiComm,
+				     LMatPar,
+				     overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::upper_triangular?true:false,
+				     false);
+	  computing_timer.exit_section("X=X*L^{-1}^{T} mixed prec, RR step");
+      }
+    }
+#else
+
+    template<typename T>
+    void rayleighRitzGEPSpectrumSplitDirect(operatorDFTClass        & operatorMatrix,
+		      std::vector<T> & X,
+		      std::vector<T> & Y,
+		      const unsigned int numberWaveFunctions,
+		      const unsigned int numberCoreStates,
+		      const MPI_Comm &interBandGroupComm,
+		      const MPI_Comm &mpiComm,
+		      const bool useMixedPrec,
+		      std::vector<double>     & eigenValues)
+    {
+       AssertThrow(false,dftUtils::ExcNotImplementedYet());
+    }
+#endif
+
 
 #if(defined DEAL_II_WITH_SCALAPACK && !USE_COMPLEX)
     template<typename T>
@@ -1806,6 +2245,17 @@ namespace dftfe{
 			   const MPI_Comm &,
 			   const bool useMixedPrec,
 			   std::vector<double>     & eigenValues);
+
+    template void rayleighRitzGEPSpectrumSplitDirect
+                     (operatorDFTClass        & operatorMatrix,
+		      std::vector<dataTypes::number> & X,
+		      std::vector<dataTypes::number> & Y,
+		      const unsigned int numberWaveFunctions,
+		      const unsigned int numberCoreStates,
+		      const MPI_Comm &interBandGroupComm,
+		      const MPI_Comm &mpiComm,
+		      const bool useMixedPrec,
+		      std::vector<double>     & eigenValues);
 
     template void computeEigenResidualNorm(operatorDFTClass        & operatorMatrix,
 					   std::vector<dataTypes::number> & X,

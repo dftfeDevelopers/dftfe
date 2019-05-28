@@ -240,7 +240,8 @@ namespace dftfe
 				const MPI_Comm &interBandGroupComm,
 				const MPI_Comm &mpiComm,
 				const dealii::ScaLAPACKMatrix<dataTypes::number> & rotationMatPar,
-				const bool rotationMatTranspose=false);
+				const bool rotationMatTranspose=false,
+				const bool doCommAfterBandParal=true);
 
 #endif
     }
