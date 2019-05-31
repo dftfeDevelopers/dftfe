@@ -409,8 +409,6 @@ namespace dftfe{
     if (dftParameters::rrGEP)
     {
 	 computing_timer.enter_section("Rayleigh-Ritz GEP");
-  	 std::vector<dataTypes::number> eigenVectorsFlattenedRR;
-
 	 if (eigenValues.size()!=totalNumberWaveFunctions)
 	 {
 	    linearAlgebraOperations::rayleighRitzGEPSpectrumSplitDirect(operatorMatrix,
@@ -422,42 +420,6 @@ namespace dftfe{
 								     operatorMatrix.getMPICommunicator(),
 								     useMixedPrec,
 								     eigenValues);
-
-
-	    eigenVectorsFlattenedRR.resize(eigenValues.size()*localVectorSize,dataTypes::number(0.0));
-	    for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
-	      for(unsigned int iWave = 0; iWave < eigenValues.size(); ++iWave)
-		eigenVectorsFlattenedRR[iNode*eigenValues.size()
-					+iWave]
-		  =eigenVectorsFlattened[iNode*totalNumberWaveFunctions+
-					 (totalNumberWaveFunctions-eigenValues.size())+iWave];
-
-	    if (numberBandGroups>1)
-		MPI_Allreduce(MPI_IN_PLACE,
-		              &eigenVectorsFlattenedRR[0],
-			      eigenValues.size()*localVectorSize,
-			      dataTypes::mpi_type_id(&eigenVectorsFlattenedRR[0]),
-			      MPI_SUM,
-			      interBandGroupComm);
-
-	    std::vector<double> eigenValuesTemp(eigenValues.size());
-	    linearAlgebraOperations::rayleighRitz(operatorMatrix,
-						  eigenVectorsFlattenedRR,
-						  eigenValues.size(),
-						  true,
-						  interBandGroupComm,
-						  operatorMatrix.getMPICommunicator(),
-						  eigenValuesTemp);
-
-
-	    for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
-	      for(unsigned int iWave = 0; iWave < eigenValues.size(); ++iWave)
-		eigenVectorsFlattened[iNode*totalNumberWaveFunctions+
-				      (totalNumberWaveFunctions-eigenValues.size())+iWave]
-		  =eigenVectorsFlattenedRR[iNode*eigenValues.size()
-					   +iWave];
-
-
 	 }
 	 else
 	    linearAlgebraOperations::rayleighRitzGEP(operatorMatrix,
@@ -472,7 +434,7 @@ namespace dftfe{
         computing_timer.enter_section("eigen vectors residuals opt");
 	if (eigenValues.size()!=totalNumberWaveFunctions)
 	    linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
-							      eigenVectorsFlattenedRR,
+							      eigenVectorsRotFracDensityFlattened,
 							      eigenValues,
 							      operatorMatrix.getMPICommunicator(),
 							      interBandGroupComm,
@@ -546,8 +508,6 @@ namespace dftfe{
 
 	computing_timer.enter_section("Rayleigh-Ritz proj Opt");
 
-	std::vector<dataTypes::number> eigenVectorsFlattenedRR;
-
 	if (eigenValues.size()!=totalNumberWaveFunctions)
 	  {
 	    linearAlgebraOperations::rayleighRitzSpectrumSplitDirect(operatorMatrix,
@@ -559,34 +519,6 @@ namespace dftfe{
 								     operatorMatrix.getMPICommunicator(),
 								     useMixedPrec,
 								     eigenValues);
-
-
-	    eigenVectorsFlattenedRR.resize(eigenValues.size()*localVectorSize,dataTypes::number(0.0));
-	    for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
-	      for(unsigned int iWave = 0; iWave < eigenValues.size(); ++iWave)
-		eigenVectorsFlattenedRR[iNode*eigenValues.size()
-					+iWave]
-		  =eigenVectorsFlattened[iNode*totalNumberWaveFunctions+
-					 (totalNumberWaveFunctions-eigenValues.size())+iWave];
-
-
-	    std::vector<double> eigenValuesTemp(eigenValues.size());
-	    linearAlgebraOperations::rayleighRitz(operatorMatrix,
-						  eigenVectorsFlattenedRR,
-						  eigenValues.size(),
-						  true,
-						  interBandGroupComm,
-						  operatorMatrix.getMPICommunicator(),
-						  eigenValuesTemp);
-
-
-	    for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
-	      for(unsigned int iWave = 0; iWave < eigenValues.size(); ++iWave)
-		eigenVectorsFlattened[iNode*totalNumberWaveFunctions+
-				      (totalNumberWaveFunctions-eigenValues.size())+iWave]
-		  =eigenVectorsFlattenedRR[iNode*eigenValues.size()
-					   +iWave];
-
 	  }
 	else
 	  {
@@ -616,7 +548,7 @@ namespace dftfe{
 	if (eigenValues.size()!=totalNumberWaveFunctions)
 	  {
 	    linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
-							      eigenVectorsFlattenedRR,
+							      eigenVectorsRotFracDensityFlattened,
 							      eigenValues,
 							      operatorMatrix.getMPICommunicator(),
 							      interBandGroupComm,
