@@ -1255,7 +1255,10 @@ namespace dftfe{
 
 
       projHamParTrans.copy_transposed(projHamPar);
-      projHamPar.add(projHamParTrans,T(1.0),T(1.0));
+      if (dftParameters::useELPA)
+        projHamPar.add(projHamParTrans,T(-1.0),T(-1.0));
+      else
+        projHamPar.add(projHamParTrans,T(1.0),T(1.0));
 
       if (processGrid->is_process_active())
 	 for (unsigned int i = 0; i < projHamPar.local_n(); ++i)
