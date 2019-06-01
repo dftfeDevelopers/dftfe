@@ -1386,6 +1386,8 @@ namespace dftfe
 	  dftUtils::printCurrentMemoryUsage(mpiComm,
 					    "Inside Blocked susbpace rotation");
 
+	int startIndexBandParal=N;
+        int numVectorsBandParal=0;
 	for (unsigned int idof = 0; idof < maxNumLocalDofs; idof += dofsBlockSize)
 	  {
 	    // Correct block dimensions if block "goes off edge of" the matrix
@@ -1406,6 +1408,10 @@ namespace dftfe
 		  if ((jvec+BVec)<=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1] &&
 		  (jvec+BVec)>bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
 		  {
+		    if (jvec<startIndexBandParal)
+			startIndexBandParal=jvec;
+		    numVectorsBandParal= jvec+BVec-startIndexBandParal;
+
 		    const char transA = 'N',transB = 'N';
 		    const dataTypes::numberLowPrec scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
 
@@ -1533,21 +1539,124 @@ namespace dftfe
 
 	  if (numberBandGroups>1 && doCommAfterBandParal)
   	  {
-                MPI_Barrier(interBandGroupComm);
-		const unsigned int blockSize=dftParameters::mpiAllReduceMessageBlockSizeMB*1e+6
-		                                /sizeof(dataTypes::number);
-
-		for (unsigned int i=0; i<N*numLocalDofs;i+=blockSize)
+	        if (!dftParameters::bandParalOpt)
 		{
-		   const unsigned int currentBlockSize=std::min(blockSize,N*numLocalDofs-i);
+		    MPI_Barrier(interBandGroupComm);
+		    const unsigned int blockSize=dftParameters::mpiAllReduceMessageBlockSizeMB*1e+6/sizeof(double);
 
-		   MPI_Allreduce(MPI_IN_PLACE,
-				 subspaceVectorsArray+i,
-				 currentBlockSize,
-				 dataTypes::mpi_type_id(subspaceVectorsArray),
-				 MPI_SUM,
-				 interBandGroupComm);
+		    for (unsigned int i=0; i<N*numLocalDofs;i+=blockSize)
+		    {
+		       const unsigned int currentBlockSize=std::min(blockSize,N*numLocalDofs-i);
+
+		       MPI_Allreduce(MPI_IN_PLACE,
+				     subspaceVectorsArray+i,
+				     currentBlockSize,
+				     dataTypes::mpi_type_id(subspaceVectorsArray),
+				     MPI_SUM,
+				     interBandGroupComm);
+		    }
 		}
+		else
+		{
+		    MPI_Barrier(interBandGroupComm);
+
+		    std::vector<dataTypes::number> eigenVectorsBandGroup(numVectorsBandParal*numLocalDofs,0);
+		    std::vector<dataTypes::number> eigenVectorsBandGroupTransposed(numVectorsBandParal*numLocalDofs,0);
+		    for(unsigned int iNode = 0; iNode < numLocalDofs; ++iNode)
+		       for(unsigned int iWave = 0; iWave < numVectorsBandParal; ++iWave)
+			   eigenVectorsBandGroup[iNode*numVectorsBandParal+iWave]
+			     = subspaceVectorsArray[iNode*N+startIndexBandParal+iWave];
+
+		    /*
+		    const char ordering = 'C';
+		    const char trans = 'T';
+#ifdef USE_COMPLEX
+		    mkl_zomatcopy_(ordering,
+				   trans,
+				   localVectorSize,
+				   numVectorsBandParal,
+				   std::complex<double>(1.0),
+				   &eigenVectorsBandGroup[0],
+				   numVectorsBandParal,
+				   &eigenVectorsBandGroupTransposed[0],
+				   localVectorSize);
+#else
+
+		    mkl_domatcopy_(ordering,
+				   trans,
+				   numVectorsBandParal,
+				   localVectorSize,
+				   1.0,
+				   &eigenVectorsBandGroup[0],
+				   numVectorsBandParal,
+				   &eigenVectorsBandGroupTransposed[0],
+				   localVectorSize);
+#endif
+		    */
+		    for(unsigned int iNode = 0; iNode < numLocalDofs; ++iNode)
+		       for(unsigned int iWave = 0; iWave < numVectorsBandParal; ++iWave)
+			   eigenVectorsBandGroupTransposed[iWave*numLocalDofs+iNode]
+			     = eigenVectorsBandGroup[iNode*numVectorsBandParal+iWave];
+
+		    std::vector<int> recvcounts(numberBandGroups,0);
+		    std::vector<int> displs(numberBandGroups,0);
+
+		    int recvcount=numVectorsBandParal*numLocalDofs;
+		    MPI_Allgather(&recvcount,
+				  1,
+				  MPI_INT,
+				  &recvcounts[0],
+				  1,
+				  MPI_INT,
+				  interBandGroupComm);
+
+		    int displ=startIndexBandParal*numLocalDofs;
+		    MPI_Allgather(&displ,
+				  1,
+				  MPI_INT,
+				  &displs[0],
+				  1,
+				  MPI_INT,
+				  interBandGroupComm);
+
+		    std::vector<dataTypes::number> eigenVectorsTransposed(N*numLocalDofs,0);
+		    MPI_Allgatherv(&eigenVectorsBandGroupTransposed[0],
+				   numVectorsBandParal*numLocalDofs,
+				   dataTypes::mpi_type_id(&eigenVectorsBandGroupTransposed[0]),
+				   &eigenVectorsTransposed[0],
+				   &recvcounts[0],
+				   &displs[0],
+				   dataTypes::mpi_type_id(&eigenVectorsTransposed[0]),
+				   interBandGroupComm);
+		    /*
+#ifdef USE_COMPLEX
+		    mkl_zomatcopy_(ordering,
+				   trans,
+				   totalNumberWaveFunctions,
+				   localVectorSize,
+				   std::complex<double>(1.0),
+				   &eigenVectorsTransposed[0],
+				   localVectorSize,
+				   &eigenVectorsFlattened[0],
+				   totalNumberWaveFunctions);
+#else
+
+		    mkl_domatcopy_(ordering,
+				   trans,
+				   totalNumberWaveFunctions,
+				   localVectorSize,
+				   1.0,
+				   &eigenVectorsTransposed[0],
+				   localVectorSize,
+				   &eigenVectorsFlattened[0],
+				   totalNumberWaveFunctions);
+#endif
+		    */
+		    for(unsigned int iNode = 0; iNode < numLocalDofs; ++iNode)
+		       for(unsigned int iWave = 0; iWave < N; ++iWave)
+			   subspaceVectorsArray[iNode*N+iWave]
+			     = eigenVectorsTransposed[iWave*numLocalDofs+iNode];
+		 }
 	  }
 #endif
       }
