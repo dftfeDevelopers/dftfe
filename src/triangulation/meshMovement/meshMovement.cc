@@ -365,7 +365,8 @@ namespace dftfe {
 		  }
 
 	      }
-	    maxJacobianRatio=maxJacobian/minJacobian;
+	    if (maxJacobian/minJacobian> maxJacobianRatio)
+	       maxJacobianRatio=maxJacobian/minJacobian;
 	  }
       }
     maxJacobianRatio= Utilities::MPI::max(maxJacobianRatio,mpi_communicator);
