@@ -86,6 +86,8 @@ namespace dftParameters
   bool useELPA=false;
   bool constraintsParallelCheck=true;
   bool createConstraintsFromSerialDofhandler=true;
+  bool bandParalOpt=true;
+  bool rrGEP=false;
 
   void declare_parameters(ParameterHandler &prm)
   {
@@ -127,6 +129,10 @@ namespace dftParameters
 	prm.declare_entry("MPI ALLREDUCE BLOCK SIZE", "100.0",
 			   Patterns::Double(0),
 			   "[Advanced] Block message size in MB used to break a single MPI_Allreduce call on wavefunction vectors data into multiple MPI_Allreduce calls. This is useful on certain architectures which take advantage of High Bandwidth Memory to improve efficiency of MPI operations. This variable is relevant only if NPBAND>1. Default value is 100.0 MB.");
+
+        prm.declare_entry("BAND PARAL OPT", "true",
+			   Patterns::Bool(),
+			  "[Standard] Uses a more optimal route for band parallelization but at the cost of extra wavefunctions memory.");
     }
     prm.leave_subsection ();
 
@@ -427,6 +433,10 @@ namespace dftParameters
 			      Patterns::Integer(0),
 			      "[Advanced] SCF iteration no beyond which spectrum splitting based can be used.");
 
+            prm.declare_entry("RR GEP", "false",
+			       Patterns::Bool(),"[Standard] Solve generalized eigenvalue problem instead of standard eignevalue problem in Rayleigh-Ritz step.");
+
+
 	    prm.declare_entry("LOWER BOUND WANTED SPECTRUM", "-10.0",
 			      Patterns::Double(),
 			      "[Developer] The lower bound of the wanted eigen spectrum. It is only used for the first iteration of the Chebyshev filtered subspace iteration procedure. A rough estimate based on single atom eigen values can be used here. Default value is good enough for most problems.");
@@ -537,6 +547,7 @@ namespace dftParameters
     {
 	dftParameters::npool             = prm.get_integer("NPKPT");
 	dftParameters::nbandGrps         = prm.get_integer("NPBAND");
+	dftParameters::bandParalOpt = prm.get_bool("BAND PARAL OPT");
 	dftParameters::mpiAllReduceMessageBlockSizeMB = prm.get_double("MPI ALLREDUCE BLOCK SIZE");
     }
     prm.leave_subsection ();
@@ -652,6 +663,7 @@ namespace dftParameters
 	   dftParameters::numberEigenValues             = prm.get_integer("NUMBER OF KOHN-SHAM WAVEFUNCTIONS");
 	   dftParameters::numCoreWfcRR                  = prm.get_integer("SPECTRUM SPLIT CORE EIGENSTATES");
 	   dftParameters::spectrumSplitStartingScfIter  = prm.get_integer("SPECTRUM SPLIT STARTING SCF ITER");
+	   dftParameters::rrGEP= prm.get_bool("RR GEP");
 	   dftParameters::lowerEndWantedSpectrum        = prm.get_double("LOWER BOUND WANTED SPECTRUM");
 	   dftParameters::lowerBoundUnwantedFracUpper   = prm.get_double("LOWER BOUND UNWANTED FRAC UPPER");
 	   dftParameters::chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
@@ -791,6 +803,9 @@ namespace dftParameters
 
     if(dftParameters::meshAdaption)
       AssertThrow(!(dftParameters::isIonOpt && dftParameters::isCellOpt),ExcMessage("DFT-FE Error: Currently Atomic relaxation does not work with automatic mesh adaption scheme."));
+
+    if(dftParameters::nbandGrps>1)
+      AssertThrow(dftParameters::wfcBlockSize==dftParameters::chebyWfcBlockSize,ExcMessage("DFT-FE Error: WFC BLOCK SIZE and CHEBY WFC BLOCK SIZE must be same for band parallelization."));
 
 #ifndef WITH_MKL;
     dftParameters::useBatchGEMM=false;

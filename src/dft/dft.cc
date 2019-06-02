@@ -680,7 +680,7 @@ namespace dftfe {
     unsigned int countLevel = 0;
     double traceXtKX = computeTraceXtKX(numberWaveFunctionsErrorEstimate);
     double traceXtKXPrev = traceXtKX;
-    
+
     while(refineFlag)
       {
 	if(numberLevelRefinements > 0)
@@ -689,7 +689,7 @@ namespace dftfe {
 	     matrix_free_data.initialize_dof_vector(tempVec);
 
 	     std::vector<dealii::parallel::distributed::Vector<double> > eigenVectorsArray(numberWaveFunctionsErrorEstimate);
-	     
+
 	     for(unsigned int i = 0; i < numberWaveFunctionsErrorEstimate; ++i)
 	       eigenVectorsArray[i].reinit(tempVec);
 
@@ -1601,6 +1601,22 @@ namespace dftfe {
     computing_timer.exit_section("scf solve");
     computingTimerStandard.exit_section("Total scf solve");
 
+    const unsigned int numberBandGroups=
+	  dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
+
+    const unsigned int localVectorSize = d_eigenVectorsFlattenedSTL[0].size()/d_numEigenValues;
+
+#ifndef USE_COMPLEX 
+    if (numberBandGroups>1)
+       for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+                 MPI_Allreduce(MPI_IN_PLACE,
+		               &d_eigenVectorsFlattenedSTL[kPoint][0],
+		               localVectorSize*d_numEigenValues,
+		               dataTypes::mpi_type_id(&d_eigenVectorsFlattenedSTL[kPoint][0]),
+		               MPI_SUM,
+		               interBandGroupComm);
+#endif
+
     if(dftParameters::isIonForce || dftParameters::isCellStress)
       {
 	//
@@ -1626,8 +1642,6 @@ namespace dftfe {
 	constraintsNoneDataInfo.precomputeMaps(matrix_free_data.get_vector_partitioner(),
 					       d_eigenVectorsFlattened[0].get_partitioner(),
 					       d_numEigenValues);
-
-	const unsigned int localVectorSize = d_eigenVectorsFlattenedSTL[0].size()/d_numEigenValues;
 
 	for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
 	  {

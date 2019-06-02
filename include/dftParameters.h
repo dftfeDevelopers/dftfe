@@ -92,6 +92,8 @@ namespace dftfe {
       extern bool useELPA;
       extern bool constraintsParallelCheck;
       extern bool createConstraintsFromSerialDofhandler;
+      extern bool bandParalOpt;
+      extern bool rrGEP;
 
       /**
        * Declare parameters.
