@@ -193,7 +193,8 @@ namespace dftfe{
     operatorMatrix.reinit(vectorsBlockSize,
 			  eigenVectorsFlattenedArrayBlock,
 			  true);
-
+    int startIndexBandParal=totalNumberWaveFunctions;
+    int numVectorsBandParal=0;
     for (unsigned int jvec = 0; jvec < totalNumberWaveFunctions; jvec += vectorsBlockSize)
       {
 
@@ -203,6 +204,10 @@ namespace dftfe{
 	if ((jvec+BVec)<=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1] &&
 	    (jvec+BVec)>bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
 	  {
+	    if (jvec<startIndexBandParal)
+		startIndexBandParal=jvec;
+	    numVectorsBandParal= jvec+BVec-startIndexBandParal;
+
 	    //create custom partitioned dealii array
 	    if (BVec!=vectorsBlockSize)
 	      operatorMatrix.reinit(BVec,
@@ -252,9 +257,9 @@ namespace dftfe{
 	    //copy the eigenVectorsFlattenedArrayBlock into eigenVectorsFlattenedArray after filtering
 	    computing_timer.enter_section("Copy from block to full flattened array");
 	    for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
-	      for(unsigned int iWave = 0; iWave < BVec; ++iWave)
-		eigenVectorsFlattened[iNode*totalNumberWaveFunctions+jvec+iWave]
-		  = eigenVectorsFlattenedArrayBlock.local_element(iNode*BVec+iWave);
+	       for(unsigned int iWave = 0; iWave < BVec; ++iWave)
+	   	   eigenVectorsFlattened[iNode*totalNumberWaveFunctions+jvec+iWave]
+		     = eigenVectorsFlattenedArrayBlock.local_element(iNode*BVec+iWave);
 
 	    computing_timer.exit_section("Copy from block to full flattened array");
 	  }
@@ -263,8 +268,8 @@ namespace dftfe{
 	    //set to zero wavefunctions which wont go through chebyshev filtering inside a given band group
 	    for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
 	      for(unsigned int iWave = 0; iWave < BVec; ++iWave)
-		eigenVectorsFlattened[iNode*totalNumberWaveFunctions+jvec+iWave]
-		  = dataTypes::number(0.0);
+	        eigenVectorsFlattened[iNode*totalNumberWaveFunctions+jvec+iWave]
+                = dataTypes::number(0.0);
 
 	  }
       }//block loop
@@ -273,168 +278,293 @@ namespace dftfe{
 
     if (numberBandGroups>1)
       {
-	computing_timer.enter_section("MPI All Reduce wavefunctions across all band groups");
-        MPI_Barrier(interBandGroupComm);
-	const unsigned int blockSize=dftParameters::mpiAllReduceMessageBlockSizeMB*1e+6/sizeof(dataTypes::number);
-        for (unsigned int i=0; i<totalNumberWaveFunctions*localVectorSize;i+=blockSize)
-	  {
-            const unsigned int currentBlockSize=std::min(blockSize,totalNumberWaveFunctions*localVectorSize-i);
-	    MPI_Allreduce(MPI_IN_PLACE,
-			  &eigenVectorsFlattened[0]+i,
-			  currentBlockSize,
-			  dataTypes::mpi_type_id(&eigenVectorsFlattened[0]),
-			  MPI_SUM,
-			  interBandGroupComm);
-	  }
+	if (!dftParameters::bandParalOpt)
+	{
+	    computing_timer.enter_section("MPI All Reduce wavefunctions across all band groups");
+	    MPI_Barrier(interBandGroupComm);
+	    const unsigned int blockSize=dftParameters::mpiAllReduceMessageBlockSizeMB*1e+6/sizeof(dataTypes::number);
+	    for (unsigned int i=0; i<totalNumberWaveFunctions*localVectorSize;i+=blockSize)
+	      {
+		const unsigned int currentBlockSize=std::min(blockSize,totalNumberWaveFunctions*localVectorSize-i);
+		MPI_Allreduce(MPI_IN_PLACE,
+			      &eigenVectorsFlattened[0]+i,
+			      currentBlockSize,
+			      dataTypes::mpi_type_id(&eigenVectorsFlattened[0]),
+			      MPI_SUM,
+			      interBandGroupComm);
+	      }
+	    computing_timer.exit_section("MPI All Reduce wavefunctions across all band groups");
+        }
+	else
+	{
+	    computing_timer.enter_section("MPI_Allgatherv across band groups");
+	    MPI_Barrier(interBandGroupComm);
+	    std::vector<dataTypes::number> eigenVectorsBandGroup(numVectorsBandParal*localVectorSize,0);
+	    std::vector<dataTypes::number> eigenVectorsBandGroupTransposed(numVectorsBandParal*localVectorSize,0);
+	    std::vector<dataTypes::number> eigenVectorsTransposed(totalNumberWaveFunctions*localVectorSize,0);
 
-	computing_timer.exit_section("MPI All Reduce wavefunctions across all band groups");
+	    for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
+	       for(unsigned int iWave = 0; iWave < numVectorsBandParal; ++iWave)
+		   eigenVectorsBandGroup[iNode*numVectorsBandParal+iWave]
+		     = eigenVectorsFlattened[iNode*totalNumberWaveFunctions+startIndexBandParal+iWave];
+
+	    /*
+	    const char ordering = 'C';
+	    const char trans = 'T';
+#ifdef USE_COMPLEX
+	    mkl_zomatcopy_(ordering,
+			   trans,
+			   localVectorSize,
+			   numVectorsBandParal,
+			   std::complex<double>(1.0),
+			   &eigenVectorsBandGroup[0],
+			   numVectorsBandParal,
+			   &eigenVectorsBandGroupTransposed[0],
+			   localVectorSize);
+#else
+
+	    mkl_domatcopy_(ordering,
+			   trans,
+			   numVectorsBandParal,
+			   localVectorSize,
+			   1.0,
+			   &eigenVectorsBandGroup[0],
+			   numVectorsBandParal,
+			   &eigenVectorsBandGroupTransposed[0],
+			   localVectorSize);
+#endif
+	    */
+	    for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
+	       for(unsigned int iWave = 0; iWave < numVectorsBandParal; ++iWave)
+		   eigenVectorsBandGroupTransposed[iWave*localVectorSize+iNode]
+		     = eigenVectorsBandGroup[iNode*numVectorsBandParal+iWave];
+
+	    std::vector<int> recvcounts(numberBandGroups,0);
+	    std::vector<int> displs(numberBandGroups,0);
+
+	    int recvcount=numVectorsBandParal*localVectorSize;
+	    MPI_Allgather(&recvcount,
+			  1,
+			  MPI_INT,
+			  &recvcounts[0],
+			  1,
+			  MPI_INT,
+			  interBandGroupComm);
+
+	    int displ=startIndexBandParal*localVectorSize;
+	    MPI_Allgather(&displ,
+			  1,
+			  MPI_INT,
+			  &displs[0],
+			  1,
+			  MPI_INT,
+			  interBandGroupComm);
+
+	    MPI_Allgatherv(&eigenVectorsBandGroupTransposed[0],
+			   numVectorsBandParal*localVectorSize,
+			   dataTypes::mpi_type_id(&eigenVectorsBandGroupTransposed[0]),
+			   &eigenVectorsTransposed[0],
+			   &recvcounts[0],
+			   &displs[0],
+			   dataTypes::mpi_type_id(&eigenVectorsTransposed[0]),
+			   interBandGroupComm);
+
+	    /*
+#ifdef USE_COMPLEX
+	    mkl_zomatcopy_(ordering,
+			   trans,
+			   totalNumberWaveFunctions,
+			   localVectorSize,
+			   std::complex<double>(1.0),
+			   &eigenVectorsTransposed[0],
+			   localVectorSize,
+			   &eigenVectorsFlattened[0],
+			   totalNumberWaveFunctions);
+#else
+
+	    mkl_domatcopy_(ordering,
+			   trans,
+			   totalNumberWaveFunctions,
+			   localVectorSize,
+			   1.0,
+			   &eigenVectorsTransposed[0],
+			   localVectorSize,
+			   &eigenVectorsFlattened[0],
+			   totalNumberWaveFunctions);
+#endif
+	    */
+	    for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
+	       for(unsigned int iWave = 0; iWave < totalNumberWaveFunctions; ++iWave)
+		   eigenVectorsFlattened[iNode*totalNumberWaveFunctions+iWave]
+		     = eigenVectorsTransposed[iWave*localVectorSize+iNode];
+	    MPI_Barrier(interBandGroupComm);
+	    computing_timer.exit_section("MPI_Allgatherv across band groups");
+	 }
       }
 
 
     if(dftParameters::verbosity >= 4)
       pcout<<"ChebyShev Filtering Done: "<<std::endl;
 
+    if (dftParameters::rrGEP)
+    {
+	 computing_timer.enter_section("Rayleigh-Ritz GEP");
+	 if (eigenValues.size()!=totalNumberWaveFunctions)
+	 {
+	    linearAlgebraOperations::rayleighRitzGEPSpectrumSplitDirect(operatorMatrix,
+								     eigenVectorsFlattened,
+								     eigenVectorsRotFracDensityFlattened,
+								     totalNumberWaveFunctions,
+								     totalNumberWaveFunctions-eigenValues.size(),
+								     interBandGroupComm,
+								     operatorMatrix.getMPICommunicator(),
+								     useMixedPrec,
+								     eigenValues);
+	 }
+	 else
+	    linearAlgebraOperations::rayleighRitzGEP(operatorMatrix,
+						  eigenVectorsFlattened,
+						  totalNumberWaveFunctions,
+						  interBandGroupComm,
+						  operatorMatrix.getMPICommunicator(),
+						  eigenValues,
+						  useMixedPrec);
+ 	 computing_timer.exit_section("Rayleigh-Ritz GEP");
 
-    if(dftParameters::orthogType.compare("LW") == 0)
-      {
-	computing_timer.enter_section("Lowden Orthogn Opt");
-	const unsigned int flag = linearAlgebraOperations::lowdenOrthogonalization(eigenVectorsFlattened,
-										   totalNumberWaveFunctions,
-										   operatorMatrix.getMPICommunicator());
-
-	if (flag==1)
+        computing_timer.enter_section("eigen vectors residuals opt");
+	if (eigenValues.size()!=totalNumberWaveFunctions)
+	    linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
+							      eigenVectorsRotFracDensityFlattened,
+							      eigenValues,
+							      operatorMatrix.getMPICommunicator(),
+							      interBandGroupComm,
+							      residualNorms);
+	else
+	  linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
+							    eigenVectorsFlattened,
+							    eigenValues,
+							    operatorMatrix.getMPICommunicator(),
+							    interBandGroupComm,
+							    residualNorms);
+	computing_timer.exit_section("eigen vectors residuals opt");
+    }
+    else
+    {
+	if(dftParameters::orthogType.compare("LW") == 0)
 	  {
-	    if(dftParameters::verbosity >= 1)
-	      pcout<<"Switching to Gram-Schimdt orthogonalization as Lowden orthogonalization was not successful"<<std::endl;
+	    computing_timer.enter_section("Lowden Orthogn Opt");
+	    const unsigned int flag = linearAlgebraOperations::lowdenOrthogonalization(eigenVectorsFlattened,
+										       totalNumberWaveFunctions,
+										       operatorMatrix.getMPICommunicator());
 
+	    if (flag==1)
+	      {
+		if(dftParameters::verbosity >= 1)
+		  pcout<<"Switching to Gram-Schimdt orthogonalization as Lowden orthogonalization was not successful"<<std::endl;
+
+		computing_timer.enter_section("Gram-Schmidt Orthogn Opt");
+		linearAlgebraOperations::gramSchmidtOrthogonalization(eigenVectorsFlattened,
+								      totalNumberWaveFunctions,
+								      operatorMatrix.getMPICommunicator());
+		computing_timer.exit_section("Gram-Schmidt Orthogn Opt");
+	      }
+	    computing_timer.exit_section("Lowden Orthogn Opt");
+	  }
+	else if (dftParameters::orthogType.compare("PGS") == 0)
+	  {
+	    computing_timer.enter_section("Pseudo-Gram-Schmidt");
+	    const unsigned int flag=linearAlgebraOperations::pseudoGramSchmidtOrthogonalization
+	      (operatorMatrix,
+	       eigenVectorsFlattened,
+	       totalNumberWaveFunctions,
+	       interBandGroupComm,
+	       operatorMatrix.getMPICommunicator(),
+	       useMixedPrec);
+
+	    if (flag==1)
+	      {
+		if(dftParameters::verbosity >= 1)
+		  pcout<<"Switching to Gram-Schimdt orthogonalization as Pseudo-Gram-Schimdt orthogonalization was not successful"<<std::endl;
+
+		computing_timer.enter_section("Gram-Schmidt Orthogn Opt");
+		linearAlgebraOperations::gramSchmidtOrthogonalization(eigenVectorsFlattened,
+								      totalNumberWaveFunctions,
+								      operatorMatrix.getMPICommunicator());
+		computing_timer.exit_section("Gram-Schmidt Orthogn Opt");
+	      }
+	    computing_timer.exit_section("Pseudo-Gram-Schmidt");
+	  }
+	else if (dftParameters::orthogType.compare("GS") == 0)
+	  {
 	    computing_timer.enter_section("Gram-Schmidt Orthogn Opt");
 	    linearAlgebraOperations::gramSchmidtOrthogonalization(eigenVectorsFlattened,
 								  totalNumberWaveFunctions,
 								  operatorMatrix.getMPICommunicator());
 	    computing_timer.exit_section("Gram-Schmidt Orthogn Opt");
 	  }
-	computing_timer.exit_section("Lowden Orthogn Opt");
-      }
-    else if (dftParameters::orthogType.compare("PGS") == 0)
-      {
-	computing_timer.enter_section("Pseudo-Gram-Schmidt");
-	const unsigned int flag=linearAlgebraOperations::pseudoGramSchmidtOrthogonalization
-	  (operatorMatrix,
-	   eigenVectorsFlattened,
-	   totalNumberWaveFunctions,
-	   interBandGroupComm,
-	   operatorMatrix.getMPICommunicator(),
-	   useMixedPrec);
 
-	if (flag==1)
+	if(dftParameters::verbosity >= 4)
+	  pcout<<"Orthogonalization Done: "<<std::endl;
+
+	computing_timer.enter_section("Rayleigh-Ritz proj Opt");
+
+	if (eigenValues.size()!=totalNumberWaveFunctions)
 	  {
-	    if(dftParameters::verbosity >= 1)
-	      pcout<<"Switching to Gram-Schimdt orthogonalization as Pseudo-Gram-Schimdt orthogonalization was not successful"<<std::endl;
-
-	    computing_timer.enter_section("Gram-Schmidt Orthogn Opt");
-	    linearAlgebraOperations::gramSchmidtOrthogonalization(eigenVectorsFlattened,
-								  totalNumberWaveFunctions,
-								  operatorMatrix.getMPICommunicator());
-	    computing_timer.exit_section("Gram-Schmidt Orthogn Opt");
+	    linearAlgebraOperations::rayleighRitzSpectrumSplitDirect(operatorMatrix,
+								     eigenVectorsFlattened,
+								     eigenVectorsRotFracDensityFlattened,
+								     totalNumberWaveFunctions,
+								     totalNumberWaveFunctions-eigenValues.size(),
+								     interBandGroupComm,
+								     operatorMatrix.getMPICommunicator(),
+								     useMixedPrec,
+								     eigenValues);
 	  }
-	computing_timer.exit_section("Pseudo-Gram-Schmidt");
-      }
-    else if (dftParameters::orthogType.compare("GS") == 0)
-      {
-	computing_timer.enter_section("Gram-Schmidt Orthogn Opt");
-	linearAlgebraOperations::gramSchmidtOrthogonalization(eigenVectorsFlattened,
-							      totalNumberWaveFunctions,
-							      operatorMatrix.getMPICommunicator());
-	computing_timer.exit_section("Gram-Schmidt Orthogn Opt");
-      }
-
-    if(dftParameters::verbosity >= 4)
-      pcout<<"Orthogonalization Done: "<<std::endl;
-
-    computing_timer.enter_section("Rayleigh-Ritz proj Opt");
-
-    std::vector<dataTypes::number> eigenVectorsFlattenedRR;
-
-    if (eigenValues.size()!=totalNumberWaveFunctions)
-      {
-	linearAlgebraOperations::rayleighRitzSpectrumSplitDirect(operatorMatrix,
-								 eigenVectorsFlattened,
-								 eigenVectorsRotFracDensityFlattened,
-								 totalNumberWaveFunctions,
-								 totalNumberWaveFunctions-eigenValues.size(),
-								 interBandGroupComm,
-								 operatorMatrix.getMPICommunicator(),
-								 useMixedPrec,
-								 eigenValues);
+	else
+	  {
 
 
-	eigenVectorsFlattenedRR.resize(eigenValues.size()*localVectorSize,dataTypes::number(0.0));
-	for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
-	  for(unsigned int iWave = 0; iWave < eigenValues.size(); ++iWave)
-	    eigenVectorsFlattenedRR[iNode*eigenValues.size()
-				    +iWave]
-	      =eigenVectorsFlattened[iNode*totalNumberWaveFunctions+
-				     (totalNumberWaveFunctions-eigenValues.size())+iWave];
+	    linearAlgebraOperations::rayleighRitz(operatorMatrix,
+						  eigenVectorsFlattened,
+						  totalNumberWaveFunctions,
+						  false,
+						  interBandGroupComm,
+						  operatorMatrix.getMPICommunicator(),
+						  eigenValues,
+						  false);
+	  }
 
 
-	std::vector<double> eigenValuesTemp(eigenValues.size());
-	linearAlgebraOperations::rayleighRitz(operatorMatrix,
-					      eigenVectorsFlattenedRR,
-					      eigenValues.size(),
-					      true,
-					      interBandGroupComm,
-					      operatorMatrix.getMPICommunicator(),
-					      eigenValuesTemp);
+	computing_timer.exit_section("Rayleigh-Ritz proj Opt");
+
+	if(dftParameters::verbosity >= 4)
+	  {
+	    pcout<<"Rayleigh-Ritz Done: "<<std::endl;
+	    pcout<<std::endl;
+	  }
+
+        computing_timer.enter_section("eigen vectors residuals opt");
+
+	if (eigenValues.size()!=totalNumberWaveFunctions)
+	  {
+	    linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
+							      eigenVectorsRotFracDensityFlattened,
+							      eigenValues,
+							      operatorMatrix.getMPICommunicator(),
+							      interBandGroupComm,
+							      residualNorms);
+	  }
+	else
+	  linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
+							    eigenVectorsFlattened,
+							    eigenValues,
+							    operatorMatrix.getMPICommunicator(),
+							    interBandGroupComm,
+							    residualNorms);
+	computing_timer.exit_section("eigen vectors residuals opt");
+    }
 
 
-	for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
-	  for(unsigned int iWave = 0; iWave < eigenValues.size(); ++iWave)
-	    eigenVectorsFlattened[iNode*totalNumberWaveFunctions+
-				  (totalNumberWaveFunctions-eigenValues.size())+iWave]
-	      =eigenVectorsFlattenedRR[iNode*eigenValues.size()
-				       +iWave];
-
-      }
-    else
-      {
-
-
-	linearAlgebraOperations::rayleighRitz(operatorMatrix,
-					      eigenVectorsFlattened,
-					      totalNumberWaveFunctions,
-					      false,
-					      interBandGroupComm,
-					      operatorMatrix.getMPICommunicator(),
-					      eigenValues);
-      }
-
-
-    computing_timer.exit_section("Rayleigh-Ritz proj Opt");
-
-    if(dftParameters::verbosity >= 4)
-      {
-	pcout<<"Rayleigh-Ritz Done: "<<std::endl;
-	pcout<<std::endl;
-      }
-
-    computing_timer.enter_section("eigen vectors residuals opt");
-
-
-    if (eigenValues.size()!=totalNumberWaveFunctions)
-      {
-        linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
-							  eigenVectorsFlattenedRR,
-							  eigenValues,
-							  operatorMatrix.getMPICommunicator(),
-							  residualNorms);
-      }
-    else
-      linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
-      						        eigenVectorsFlattened,
-      						        eigenValues,
-							operatorMatrix.getMPICommunicator(),
-      						        residualNorms);
-    computing_timer.exit_section("eigen vectors residuals opt");
 
     if(dftParameters::verbosity >= 4)
       {

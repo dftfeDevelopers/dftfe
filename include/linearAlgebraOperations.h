@@ -39,6 +39,8 @@ namespace dftfe
 #ifdef WITH_MKL
       void dgemm_batch_(const char* transa_array,const char* transb_array,const unsigned int* m_array,const unsigned int* n_array,const unsigned int* k_array,const double* alpha_array,double** a_array,const unsigned int * lda_array,const double ** b_array,const unsigned int * ldb_array,const double * beta_array,double** c_array,const unsigned int * ldc_array,const unsigned int* group_count,const unsigned int* group_size);
       void sgemm_batch_(const char* transa_array,const char* transb_array,const unsigned int* m_array,const unsigned int* n_array,const unsigned int* k_array,const float* alpha_array,float** a_array,const unsigned int * lda_array,const float ** b_array,const unsigned int * ldb_array,const float * beta_array,float** c_array,const unsigned int * ldc_array,const unsigned int* group_count,const unsigned int* group_size);
+      void mkl_dimatcopy_(const char ordering, const char trans, unsigned int rows, unsigned int cols, const double alpha, double * AB, unsigned int lda, unsigned int ldb);
+      void mkl_domatcopy_(char ordering, char trans, unsigned int rows, unsigned int cols, const double alpha, const double * A, unsigned int lda, double * B, unsigned int ldb);
 #endif
       void dsyevd_(const char* jobz, const char* uplo, const unsigned int* n, double* A, const unsigned int *lda, double* w, double* work, const unsigned int* lwork, int* iwork, const unsigned int* liwork, int* info);
       void dsyevr_(const char *jobz, const char *range, const char *uplo,const unsigned int *n, double *A,const unsigned int *lda,const double *vl, const double *vu, const unsigned int *il, const unsigned int *iu, const double *abstol, const unsigned int *m, double *w, double *Z, const unsigned int * ldz, unsigned int * isuppz, double *work, const int *lwork, int * iwork, const int *liwork, int *info);
@@ -50,6 +52,8 @@ namespace dftfe
 #ifdef WITH_MKL
       void zgemm_batch_(const char* transa_array,const char* transb_array,const unsigned int* m_array,const unsigned int* n_array,const unsigned int* k_array,const std::complex<double>* alpha_array,std::complex<double>** a_array,const unsigned int * lda_array,const std::complex<double> ** b_array,const unsigned int * ldb_array,const std::complex<double> * beta_array,std::complex<double>** c_array,const unsigned int * ldc_array,const unsigned int* group_count,const unsigned int* group_size);
       void cgemm_batch_(const char* transa_array,const char* transb_array,const unsigned int* m_array,const unsigned int* n_array,const unsigned int* k_array,const std::complex<float>* alpha_array,std::complex<float>** a_array,const unsigned int * lda_array,const std::complex<float> ** b_array,const unsigned int * ldb_array,const std::complex<float> * beta_array,std::complex<float>** c_array,const unsigned int * ldc_array,const unsigned int* group_count,const unsigned int* group_size);
+      void mkl_zimatcopy_(const char ordering, const char trans, unsigned int rows, unsigned int cols, const std::complex<double> alpha, std::complex<double> * AB, unsigned int lda, unsigned int ldb);
+      void mkl_zomatcopy_(char ordering, char trans, unsigned int rows, unsigned int cols, const std::complex<double> alpha, const std::complex<double> * A, unsigned int lda, std::complex<double> * B, unsigned int ldb);
 #endif
       void zheevd_(const char *jobz, const char *uplo, const unsigned int *n,std::complex<double> *A,const unsigned int *lda,double *w,std::complex<double> *work, const unsigned int *lwork,double *rwork, const unsigned int *lrwork, int *iwork,const unsigned int *liwork, int *info);
       void zheevr_(const char *jobz, const char *range, const char *uplo,const unsigned int *n,std::complex<double> *A,const unsigned int *lda,const double *vl, const double *vu, const unsigned int *il, const unsigned int *iu, const double *abstol, const unsigned int *m, double *w, std::complex<double> *Z, const unsigned int * ldz, unsigned int * isuppz, std::complex<double> *work, const int *lwork, double *rwork, const int *lrwork, int * iwork, const int *liwork, int *info);
@@ -210,6 +214,26 @@ namespace dftfe
 		      std::vector<double>     & eigenValues);
 
 
+    /** @brief Compute Rayleigh-Ritz projection
+     *  (serial version using LAPACK, parallel version using ScaLAPACK)
+     *
+     *  @param[in] operatorMatrix An object which has access to the given matrix
+     *  @param[in,out]  X Given subspace as flattened array of multi-vectors.
+     *  In-place rotated subspace
+     *  @param[in] numberComponents Number of vectors
+     *  @param[in] interBandGroupComm interpool communicator for parallelization over band groups
+     *  @param[in] mpiComm domain decomposition communicator
+     *  @param[out] eigenValues of the Projected Hamiltonian
+     */
+    template<typename T>
+    void rayleighRitzGEP(operatorDFTClass        & operatorMatrix,
+		      std::vector<T> & X,
+		      const unsigned int numberComponents,
+		      const MPI_Comm &interBandGroupComm,
+		      const MPI_Comm &mpiComm,
+		      std::vector<double>     & eigenValues,
+		      const bool useMixedPrec);
+
 
     /** @brief Compute Rayleigh-Ritz projection
      *  (serial version using LAPACK, parallel version using ScaLAPACK)
@@ -229,8 +253,32 @@ namespace dftfe
 		      const bool isValenceProjHam,
 		      const MPI_Comm &interBandGroupComm,
 		      const MPI_Comm &mpiComm,
-		      std::vector<double>     & eigenValues);
+		      std::vector<double>     & eigenValues,
+		      const bool doCommAfterBandParal=true);
 
+    /** @brief Compute Rayleigh-Ritz projection in case of spectrum split using direct diagonalization
+     *  (serial version using LAPACK, parallel version using ScaLAPACK)
+     *
+     *  @param[in] operatorMatrix An object which has access to the given matrix
+     *  @param[in]  X Given subspace as flattened array of multi-vectors.
+     *  @param[out] Y rotated subspace of top states
+     *  @param[in] numberComponents Number of vectors
+     *  @param[in] numberCoreStates Number of core states to be used for spectrum splitting
+     *  @param[in] interBandGroupComm interpool communicator for parallelization over band groups
+     *  @param[in] mpiComm domain decomposition communicator
+     *  @param[out] eigenValues of the Projected Hamiltonian
+     */
+    template<typename T>
+    void rayleighRitzGEPSpectrumSplitDirect
+                     (operatorDFTClass        & operatorMatrix,
+		      std::vector<T> & X,
+		      std::vector<T> & Y,
+		      const unsigned int numberComponents,
+		      const unsigned int numberCoreStates,
+		      const MPI_Comm &interBandGroupComm,
+		      const MPI_Comm &mpiComm,
+		      const bool useMixedPrec,
+		      std::vector<double>     & eigenValues);
 
     /** @brief Compute Rayleigh-Ritz projection in case of spectrum split using direct diagonalization
      *  (serial version using LAPACK, parallel version using ScaLAPACK)
@@ -270,6 +318,7 @@ namespace dftfe
 				  std::vector<T> & X,
 				  const std::vector<double>     & eigenValues,
 				  const MPI_Comm &mpiComm,
+				  const MPI_Comm &interBandGroupComm,
 				  std::vector<double> & residualNorm);
 
   }
