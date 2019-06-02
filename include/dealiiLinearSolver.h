@@ -54,7 +54,7 @@ namespace dftfe {
 	   *                   2 - all debug output.
 	   */
 	   void solve(dealiiLinearSolverProblem & problem,
-		      const double relTolerance,
+		      const double absTolerance,
 		      const unsigned int maxNumberIterations,
 		      const unsigned int  debugLevel = 0);
 
