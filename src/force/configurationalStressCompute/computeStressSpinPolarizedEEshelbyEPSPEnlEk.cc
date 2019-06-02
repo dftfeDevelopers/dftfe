@@ -389,7 +389,7 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk
 		 partOccSpin0 = 1.0 , partOccSpin1 = 1.0 ;
 		 if ( dftPtr->eigenValues[ikPoint][iEigenVec+numEigenVectors]> dftPtr->fermiEnergyDown)
 			partOccSpin1 = 0.0 ;
-		 if (dftPtr->eigenValues[ikPoint][iEigenVec+numEigenVectors] > dftPtr->fermiEnergyUp)
+		 if (dftPtr->eigenValues[ikPoint][iEigenVec] > dftPtr->fermiEnergyUp)
 			partOccSpin0 = 0.0 ;
 	     }
 
