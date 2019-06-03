@@ -35,7 +35,7 @@ namespace dftfe {
 
     //solve
     void dealiiLinearSolver::solve(dealiiLinearSolverProblem & problem,
-		                     const double relTolerance,
+		                     const double absTolerance,
 		                     const unsigned int maxNumberIterations,
 		                     const unsigned int  debugLevel)
     {
@@ -44,7 +44,7 @@ namespace dftfe {
       problem.computeRhs(rhs);
 
       //create dealii solver control object
-      dealii::SolverControl solverControl(maxNumberIterations,relTolerance*rhs.l2_norm());
+      dealii::SolverControl solverControl(maxNumberIterations,absTolerance);
 
 
       //initialize preconditioner
