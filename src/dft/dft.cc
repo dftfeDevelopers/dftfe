@@ -1413,7 +1413,7 @@ namespace dftfe {
 	//
 	scfIter++;
 
-	if (dftParameters::chkType==2)
+	if (dftParameters::chkType==2 && scfIter%10 == 0)
 	  saveTriaInfoAndRhoData();
       }
 
@@ -1617,6 +1617,9 @@ namespace dftfe {
 		               interBandGroupComm);
 #endif
 
+    //
+    //move this to a common routine
+    //
     if(dftParameters::isIonForce || dftParameters::isCellStress)
       {
 	//
@@ -1815,6 +1818,7 @@ namespace dftfe {
   template <unsigned int FEOrder>
   void dftClass<FEOrder>::outputWfc()
   {
+
     DataOut<3> data_outEigen;
     data_outEigen.attach_dof_handler (dofHandlerEigen);
     std::vector<vectorType> tempVec(1);
@@ -1824,19 +1828,32 @@ namespace dftfe {
 	for(unsigned int i=0; i<d_numEigenValues; ++i)
 	  {
 #ifdef USE_COMPLEX
-	    vectorTools::copyFlattenedDealiiVecToSingleCompVec
+	    /*vectorTools::copyFlattenedDealiiVecToSingleCompVec
 		     (d_eigenVectorsFlattened[k*(1+dftParameters::spinPolarized)+s],
 		      d_numEigenValues,
 		      std::make_pair(i,i+1),
 		      localProc_dof_indicesReal,
 		      localProc_dof_indicesImag,
-		      tempVec);
+		      tempVec);*/
+
+	    vectorTools::copyFlattenedSTLVecToSingleCompVec(d_eigenVectorsFlattenedSTL[k*(1+dftParameters::spinPolarized)+s],
+							    d_numEigenValues,
+							    std::make_pair(i,i+1),
+							    localProc_dof_indicesReal,
+							    localProc_dof_indicesImag,
+							    tempVec);
+
 #else
-	    vectorTools::copyFlattenedDealiiVecToSingleCompVec
+	    /*vectorTools::copyFlattenedDealiiVecToSingleCompVec
 		     (d_eigenVectorsFlattened[k*(1+dftParameters::spinPolarized)+s],
 		      d_numEigenValues,
 		      std::make_pair(i,i+1),
-		      tempVec);
+		      tempVec);*/
+
+	    vectorTools::copyFlattenedSTLVecToSingleCompVec(d_eigenVectorsFlattenedSTL[k*(1+dftParameters::spinPolarized)+s],
+							    d_numEigenValues,
+							    std::make_pair(i,i+1),
+							    tempVec);
 #endif
 	    if (dftParameters::spinPolarized==1)
 	      data_outEigen.add_data_vector (d_tempEigenVec,"wfc_"+std::to_string(s)+"_"+std::to_string(k)+"_"+std::to_string(i));
@@ -1844,7 +1861,7 @@ namespace dftfe {
 	      data_outEigen.add_data_vector (d_tempEigenVec,"wfc_"+std::to_string(k)+"_"+std::to_string(i));
 	  }
 
-    data_outEigen.build_patches (C_num1DQuad<FEOrder>());
+    data_outEigen.build_patches (FEOrder);
 
     dftUtils::writeDataVTUParallelLowestPoolId(data_outEigen,
 					       mpi_communicator,
@@ -1924,7 +1941,7 @@ namespace dftfe {
       dataOutRho.add_data_vector(rhoNodalFieldSpin0, std::string("density_0"));
       dataOutRho.add_data_vector(rhoNodalFieldSpin1, std::string("density_1"));
     }
-    dataOutRho.build_patches(C_num1DQuad<FEOrder>());
+    dataOutRho.build_patches(FEOrder);
     dftUtils::writeDataVTUParallelLowestPoolId(dataOutRho,
 					       mpi_communicator,
 					       interpoolcomm,
