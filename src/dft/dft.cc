@@ -1854,13 +1854,20 @@ namespace dftfe {
 							    d_numEigenValues,
 							    std::make_pair(i,i+1),
 							    tempVec);
+	   
+
 #endif
+
+	     tempVec[0].update_ghost_values();
+
 	    if (dftParameters::spinPolarized==1)
-	      data_outEigen.add_data_vector (d_tempEigenVec,"wfc_"+std::to_string(s)+"_"+std::to_string(k)+"_"+std::to_string(i));
+	      data_outEigen.add_data_vector (tempVec[0],"wfc_"+std::to_string(s)+"_"+std::to_string(k)+"_"+std::to_string(i));
 	    else
-	      data_outEigen.add_data_vector (d_tempEigenVec,"wfc_"+std::to_string(k)+"_"+std::to_string(i));
+	      data_outEigen.add_data_vector (tempVec[0],"wfc_"+std::to_string(k)+"_"+std::to_string(i));
 	  }
 
+    
+    
     data_outEigen.build_patches (FEOrder);
 
     dftUtils::writeDataVTUParallelLowestPoolId(data_outEigen,
