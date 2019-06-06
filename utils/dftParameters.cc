@@ -106,7 +106,7 @@ namespace dftParameters
 
     prm.declare_entry("VERBOSITY", "1",
                       Patterns::Integer(0,4),
-                      "[Standard] Parameter to control verbosity of terminal output. Ranges from 1 for low, 2 for medium (prints eigenvalues and fractional occupancies at the end of each ground-state solve), 3 for high (prints eigenvalues and fractional occupancies at the end of each self-consistent field iteration), and 4 for very high, which is only meant for code development purposes. VERBOSITY=0 is only used for unit testing and shouldn't be used by standard users.");
+                      "[Standard] Parameter to control verbosity of terminal output. Ranges from 1 for low, 2 for medium (prints some more additional information), 3 for high (prints eigenvalues and fractional occupancies at the end of each self-consistent field iteration), and 4 for very high, which is only meant for code development purposes. VERBOSITY=0 is only used for unit testing and shouldn't be used by standard users.");
 
     prm.declare_entry("WRITE WFC", "false",
                       Patterns::Bool(),
@@ -433,8 +433,8 @@ namespace dftParameters
 			      Patterns::Integer(0),
 			      "[Advanced] SCF iteration no beyond which spectrum splitting based can be used.");
 
-            prm.declare_entry("RR GEP", "false",
-			       Patterns::Bool(),"[Standard] Solve generalized eigenvalue problem instead of standard eignevalue problem in Rayleigh-Ritz step.");
+            prm.declare_entry("RR GEP", "true",
+			      Patterns::Bool(),"[Advanced] Solve generalized eigenvalue problem instead of standard eignevalue problem in Rayleigh-Ritz step. This approach is not extended yet to complex executable. Default value is true for real executable and false for complex executable.");
 
 
 	    prm.declare_entry("LOWER BOUND WANTED SPECTRUM", "-10.0",
@@ -459,7 +459,7 @@ namespace dftParameters
 
 	    prm.declare_entry("ORTHOGONALIZATION TYPE","Auto",
 			      Patterns::Selection("GS|LW|PGS|Auto"),
-			      "[Advanced] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization using SLEPc library), LW(Lowden Orthogonalization implemented using LAPACK/BLAS routines, extension to use ScaLAPACK library not implemented yet), PGS(Pseudo-Gram-Schmidt Orthogonalization: if dealii library is compiled with ScaLAPACK and if you are using the real executable, parallel ScaLAPACK functions are used, otherwise serial LAPACK functions are used.) Auto is the default option, which chooses GS for all-electron case and PGS for pseudopotential case.");
+			      "[Advanced] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization using SLEPc library), LW(Lowden Orthogonalization implemented using LAPACK/BLAS routines, extension to use ScaLAPACK library not implemented yet), PGS(Pseudo-Gram-Schmidt Orthogonalization: if dealii library is compiled with ScaLAPACK and if you are using the real executable, parallel ScaLAPACK functions are used, otherwise serial LAPACK functions are used.) Auto is the default option, which chooses GS for all-electron case and PGS for pseudopotential case. GS and LW options are only available if RR GEP is set to false.");
 
 	    prm.declare_entry("ENABLE SWITCH TO GS", "true",
 			      Patterns::Bool(),
@@ -704,6 +704,10 @@ namespace dftParameters
 
         dftParameters::domainBoundingVectorsFile="domainBoundingVectors.chk";
     }
+
+#ifdef USE_COMPLEX
+    dftParameters::rrGEP=false;
+#endif
 
   //
     check_print_parameters(prm);

@@ -55,5 +55,6 @@ subsection SCF parameters
       set WFC BLOCK SIZE=3
       set CHEBY WFC BLOCK SIZE=3
       set SUBSPACE ROT DOFS BLOCK SIZE=500
+      set RR GEP=false
   end
 end

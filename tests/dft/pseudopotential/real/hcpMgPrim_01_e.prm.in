@@ -82,6 +82,7 @@ subsection SCF parameters
      set WFC BLOCK SIZE=5
      set CHEBY WFC BLOCK SIZE=5
      set ENABLE SUBSPACE ROT PGS OPT=true
+     set RR GEP=false
   end
 end
 

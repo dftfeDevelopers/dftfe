@@ -649,11 +649,12 @@ void forceClass<FEOrder>::printAtomsForces()
     pcout<< "--------------------------------------------------------------------------------------------"<<std::endl;
     //also find the atom with the maximum absolute force and print that
     double maxForce=-1.0;
+    double sumAbsValForceComp=0;
     unsigned int maxForceAtomId=0;
     for (unsigned int i=0; i< numberGlobalAtoms; i++)
     {
 	if (!dftParameters::reproducible_output)
-	   pcout<< "AtomId "<< std::setw(4) << i << ":  "<< std::scientific<< -d_globalAtomsGaussianForces[3*i]<<","<< -d_globalAtomsGaussianForces[3*i+1]<<","<<-d_globalAtomsGaussianForces[3*i+2]<<std::endl;
+	   pcout<<std::setw(4) <<i<<"     "<< std::scientific<< -d_globalAtomsGaussianForces[3*i]<< "   "<< -d_globalAtomsGaussianForces[3*i+1]<<"   "<<-d_globalAtomsGaussianForces[3*i+2]<<std::endl;
 	else
 	{
 	   std::vector<double> truncatedForce(C_DIM);
@@ -667,6 +668,7 @@ void forceClass<FEOrder>::printAtomsForces()
 	for (unsigned int idim=0; idim< C_DIM; idim++)
         {
 	    absForce+=d_globalAtomsGaussianForces[3*i+idim]*d_globalAtomsGaussianForces[3*i+idim];
+	    sumAbsValForceComp+=std::abs(d_globalAtomsGaussianForces[3*i+idim]);
 	}
 	Assert (absForce>=0., ExcInternalError());
 	absForce=std::sqrt(absForce);
@@ -680,5 +682,8 @@ void forceClass<FEOrder>::printAtomsForces()
     pcout<< "--------------------------------------------------------------------------------------------"<<std::endl;
 
     if (dftParameters::verbosity>=1)
+    {
         pcout<<" Maximum absolute force atom id: "<< maxForceAtomId << ", Force vec: "<< -d_globalAtomsGaussianForces[3*maxForceAtomId]<<","<< -d_globalAtomsGaussianForces[3*maxForceAtomId+1]<<","<<-d_globalAtomsGaussianForces[3*maxForceAtomId+2]<<std::endl;
+	pcout<<" Sum of absolute value of all force components over all atoms: "<<sumAbsValForceComp<<std::endl;
+    }
 }

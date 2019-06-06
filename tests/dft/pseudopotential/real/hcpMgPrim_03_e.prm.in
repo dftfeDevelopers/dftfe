@@ -76,6 +76,7 @@ subsection SCF parameters
       set CHEBYSHEV FILTER TOLERANCE=1e-3
       set ORTHOGONALIZATION TYPE=LW
       set ENABLE SWITCH TO GS=true
+      set RR GEP=false
   end
 end
 

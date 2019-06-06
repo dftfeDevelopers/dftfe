@@ -76,6 +76,7 @@ subsection SCF parameters
       set CHEBY WFC BLOCK SIZE=7
       set BATCH GEMM=true
       set ORTHOGONALIZATION TYPE=GS
+      set RR GEP=false
   end
 end
 

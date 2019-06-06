@@ -79,6 +79,7 @@ subsection SCF parameters
       set ENABLE SWITCH TO GS=false
       set WFC BLOCK SIZE=3
       set CHEBY WFC BLOCK SIZE=3
+      set RR GEP=false
   end
 end
 
