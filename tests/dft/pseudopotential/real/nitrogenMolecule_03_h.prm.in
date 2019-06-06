@@ -61,5 +61,6 @@ subsection SCF parameters
       set USE ELPA=true
       set SPECTRUM SPLIT CORE EIGENSTATES=3
       set SPECTRUM SPLIT STARTING SCF ITER=0
+      set RR GEP=false
   end
 end

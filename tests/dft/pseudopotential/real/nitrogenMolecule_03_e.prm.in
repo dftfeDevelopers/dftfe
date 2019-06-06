@@ -51,5 +51,6 @@ subsection SCF parameters
       set ORTHOGONALIZATION TYPE=PGS
       set CHEBYSHEV POLYNOMIAL DEGREE = 30
       set CHEBYSHEV FILTER TOLERANCE=2e-3
+      set RR GEP=false
   end
 end

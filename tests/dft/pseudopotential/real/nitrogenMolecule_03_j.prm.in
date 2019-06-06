@@ -62,5 +62,6 @@ subsection SCF parameters
       set SPECTRUM SPLIT CORE EIGENSTATES=3
       set SPECTRUM SPLIT STARTING SCF ITER=2
       set USE MIXED PREC XTHX SPECTRUM SPLIT=true
+      set RR GEP=false
   end
 end
