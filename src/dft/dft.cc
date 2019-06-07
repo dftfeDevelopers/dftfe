@@ -878,7 +878,7 @@ namespace dftfe {
     double norm = 1.0;
     //CAUTION: Choosing a looser tolerance might lead to failed tests
     const double adaptiveChebysevFilterPassesTol = dftParameters::chebyshevTolerance;
-
+    bool spectrumSplitScfConverged=false;
     pcout<<std::endl;
     if (dftParameters::verbosity==0)
       pcout<<"Starting SCF iterations...."<<std::endl;
@@ -945,6 +945,9 @@ namespace dftfe {
 	      d_phiTotRhoIn = d_phiTotRhoOut;
 	  }
         computing_timer.exit_section("density mixing");
+
+	if (!(norm > dftParameters::selfConsistentSolverTolerance) && d_numEigenValues!=d_numEigenValuesRR)
+              spectrumSplitScfConverged=true;
 	//
 	//phiTot with rhoIn
 	//
@@ -985,14 +988,14 @@ namespace dftfe {
 	    std::vector<std::vector<std::vector<double> > >
 		 eigenValuesSpins(2,
 		 	          std::vector<std::vector<double> >(d_kPointWeights.size(),
-				  std::vector<double>(scfIter<dftParameters::spectrumSplitStartingScfIter?
+				  std::vector<double>((scfIter<dftParameters::spectrumSplitStartingScfIter || spectrumSplitScfConverged)?
 				                      d_numEigenValues:d_numEigenValuesRR)));
 
 	    std::vector<std::vector<std::vector<double>>>
 		residualNormWaveFunctionsAllkPointsSpins
 		                 (2,
 			      	  std::vector<std::vector<double> >(d_kPointWeights.size(),
-				  std::vector<double>(scfIter<dftParameters::spectrumSplitStartingScfIter?
+				  std::vector<double>((scfIter<dftParameters::spectrumSplitStartingScfIter|| spectrumSplitScfConverged)?
 							     d_numEigenValues:d_numEigenValuesRR)));
 
 	    for(unsigned int s=0; s<2; ++s)
@@ -1032,7 +1035,7 @@ namespace dftfe {
 						  kohnShamDFTEigenOperator,
 						  subspaceIterationSolver,
 						  residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
-						  scfIter<dftParameters::spectrumSplitStartingScfIter?false:true,
+						  (scfIter<dftParameters::spectrumSplitStartingScfIter || spectrumSplitScfConverged)?false:true,
 						  true);
 		      }
 		  }
@@ -1041,7 +1044,7 @@ namespace dftfe {
 	    for(unsigned int s=0; s<2; ++s)
 	      for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
 	      {
-	        if (scfIter<dftParameters::spectrumSplitStartingScfIter)
+	        if (scfIter<dftParameters::spectrumSplitStartingScfIter || spectrumSplitScfConverged)
 		  for (unsigned int i = 0; i<d_numEigenValues; ++i)
 		    eigenValuesSpins[s][kPoint][i]=eigenValues[kPoint][d_numEigenValues*s+i];
 		else
@@ -1117,7 +1120,7 @@ namespace dftfe {
 						  kohnShamDFTEigenOperator,
 						  subspaceIterationSolver,
 						  residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
-						  scfIter<dftParameters::spectrumSplitStartingScfIter?false:true,
+						  (scfIter<dftParameters::spectrumSplitStartingScfIter||spectrumSplitScfConverged)?false:true,
 						  true);
 
 		      }
@@ -1126,7 +1129,7 @@ namespace dftfe {
 		for(unsigned int s=0; s<2; ++s)
 		  for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
 		  {
-		    if (scfIter<dftParameters::spectrumSplitStartingScfIter)
+		    if (scfIter<dftParameters::spectrumSplitStartingScfIter || spectrumSplitScfConverged)
 			for (unsigned int i = 0; i<d_numEigenValues; ++i)
 			  eigenValuesSpins[s][kPoint][i]=eigenValues[kPoint][d_numEigenValues*s+i];
 		    else
@@ -1166,7 +1169,7 @@ namespace dftfe {
 	    std::vector<std::vector<double>> residualNormWaveFunctionsAllkPoints;
 	    residualNormWaveFunctionsAllkPoints.resize(d_kPointWeights.size());
 	    for(unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-	      residualNormWaveFunctionsAllkPoints[kPoint].resize(scfIter<dftParameters::spectrumSplitStartingScfIter?d_numEigenValues:d_numEigenValuesRR);
+	      residualNormWaveFunctionsAllkPoints[kPoint].resize((scfIter<dftParameters::spectrumSplitStartingScfIter||spectrumSplitScfConverged)?d_numEigenValues:d_numEigenValuesRR);
 
 	    if(dftParameters::xc_id < 4)
 	      {
@@ -1203,7 +1206,7 @@ namespace dftfe {
 					      kohnShamDFTEigenOperator,
 					      subspaceIterationSolver,
 					      residualNormWaveFunctionsAllkPoints[kPoint],
-					      scfIter<dftParameters::spectrumSplitStartingScfIter?false:true,
+					      (scfIter<dftParameters::spectrumSplitStartingScfIter||spectrumSplitScfConverged)?false:true,
 					      true);
 
 		  }
@@ -1223,7 +1226,7 @@ namespace dftfe {
 	    //
 	    double maxRes = computeMaximumHighestOccupiedStateResidualNorm
 	      (residualNormWaveFunctionsAllkPoints,
-	       scfIter<dftParameters::spectrumSplitStartingScfIter?eigenValues:eigenValuesRRSplit,
+	       (scfIter<dftParameters::spectrumSplitStartingScfIter||spectrumSplitScfConverged)?eigenValues:eigenValuesRRSplit,
 	       fermiEnergy);
 	    if (dftParameters::verbosity>=2)
 	      pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
@@ -1257,7 +1260,7 @@ namespace dftfe {
 					      kohnShamDFTEigenOperator,
 					      subspaceIterationSolver,
 					      residualNormWaveFunctionsAllkPoints[kPoint],
-					      scfIter<dftParameters::spectrumSplitStartingScfIter?false:true,
+					      (scfIter<dftParameters::spectrumSplitStartingScfIter||spectrumSplitScfConverged)?false:true,
 					      true);
 		  }
 		count++;
@@ -1270,7 +1273,7 @@ namespace dftfe {
 		//
 		maxRes = computeMaximumHighestOccupiedStateResidualNorm
 		  (residualNormWaveFunctionsAllkPoints,
-		   scfIter<dftParameters::spectrumSplitStartingScfIter?eigenValues:eigenValuesRRSplit,
+		   (scfIter<dftParameters::spectrumSplitStartingScfIter||spectrumSplitScfConverged)?eigenValues:eigenValuesRRSplit,
 		   fermiEnergy);
 		if (dftParameters::verbosity>=2)
 		  pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
@@ -1290,9 +1293,9 @@ namespace dftfe {
 	  symmetryPtr->computeAndSymmetrize_rhoOut();
 	}
 	else
-	  compute_rhoOut(scfIter<dftParameters::spectrumSplitStartingScfIter?false:true);
+	  compute_rhoOut((scfIter<dftParameters::spectrumSplitStartingScfIter||spectrumSplitScfConverged)?false:true);
 #else
-	compute_rhoOut(scfIter<dftParameters::spectrumSplitStartingScfIter?false:true);
+	compute_rhoOut((scfIter<dftParameters::spectrumSplitStartingScfIter||spectrumSplitScfConverged)?false:true);
 #endif
 	computing_timer.exit_section("compute rho");
 
@@ -1421,88 +1424,6 @@ namespace dftfe {
       pcout<<"DFT-FE Warning: SCF iterations did not converge to the specified tolerance after: "<<scfIter<<" iterations."<<std::endl;
     else
       pcout<<"SCF iterations converged to the specified tolerance after: "<<scfIter<<" iterations."<<std::endl;
-
-    //If spectrum splitting was used in the scf iteration, do one subspace iteration
-    //with no spectrum splitting to get all eigenvalues
-    if (d_numEigenValuesRR!=d_numEigenValues)
-    {
-	if (dftParameters::spinPolarized==1)
-	  {
-
-	    std::vector<std::vector<std::vector<double>>>
-		residualNormWaveFunctionsAllkPointsSpins(2,
-			      	                         std::vector<std::vector<double> >(d_kPointWeights.size(),
-					  	         std::vector<double>(d_numEigenValues)));
-
-	    for(unsigned int s=0; s<2; ++s)
-	      {
-
-		if(dftParameters::xc_id < 4)
-		  {
-		    computing_timer.enter_section("VEff Computation");
-		    kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, d_pseudoVLoc);
-		    computing_timer.exit_section("VEff Computation");
-		  }
-		else if (dftParameters::xc_id == 4)
-		  {
-		    computing_timer.enter_section("VEff Computation");
-		    kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, d_pseudoVLoc);
-		    computing_timer.exit_section("VEff Computation");
-		  }
-		for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-		  {
-		    kohnShamDFTEigenOperator.reinitkPointIndex(kPoint);
-
-		    computing_timer.enter_section("Hamiltonian Matrix Computation");
-		    kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint);
-		    computing_timer.exit_section("Hamiltonian Matrix Computation");
-
-		    if (dftParameters::verbosity>=2)
-		      pcout<<"Doing one full spectrum Chebyshev filter pass for spin "<< s+1<<std::endl;
-
-		    kohnShamEigenSpaceCompute(s,
-					      kPoint,
-					      kohnShamDFTEigenOperator,
-					      subspaceIterationSolver,
-					      residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
-					      false,
-					      false);
-		  }
-	      }
-	  }
-        else
-	  {
-	    std::vector<std::vector<double>> residualNormWaveFunctionsAllkPoints;
-	    residualNormWaveFunctionsAllkPoints.resize(d_kPointWeights.size());
-	    for(unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-	      residualNormWaveFunctionsAllkPoints[kPoint].resize(d_numEigenValues);
-
-	    for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-	      {
-		kohnShamDFTEigenOperator.reinitkPointIndex(kPoint);
-
-		computing_timer.enter_section("Hamiltonian Matrix Computation");
-		kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint);
-		computing_timer.exit_section("Hamiltonian Matrix Computation");
-
-
-
-		if (dftParameters::verbosity>=2)
-		  pcout<<"Doing one full spectrum Chebyshev filter pass "<<std::endl;
-
-
-		kohnShamEigenSpaceCompute(0,
-					  kPoint,
-					  kohnShamDFTEigenOperator,
-					  subspaceIterationSolver,
-					  residualNormWaveFunctionsAllkPoints[kPoint],
-					  false,
-					  false);
-
-	      }
-	  }
-
-    }
 
     if (!dftParameters::computeEnergyEverySCF || d_numEigenValuesRR!=d_numEigenValues)
     {
