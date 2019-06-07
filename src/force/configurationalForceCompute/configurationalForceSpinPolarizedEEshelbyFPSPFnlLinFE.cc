@@ -208,7 +208,7 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
       psiEvalSpin1NLP.reinit(cell);
     }
 
-    if (d_isElectrostaticsMeshSubdivided || dftParameters::nonSelfConsistentForce)
+    if (d_isElectrostaticsMeshSubdivided)
     {
       phiTotOutEval.reinit(cell);
       phiTotOutEval.read_dof_values_plain(phiTotRhoOut);
@@ -220,13 +220,6 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
       phiExtEval.reinit(cell);
       phiExtEval.read_dof_values_plain(phiExt);
       phiExtEval.evaluate(true,false);
-    }
-
-    if (dftParameters::nonSelfConsistentForce)
-    {
-	phiTotInEval.reinit(cell);
-	phiTotInEval.read_dof_values_plain(phiTotRhoIn);//read without taking constraints into account
-	phiTotInEval.evaluate(true,false);
     }
 
     std::fill(rhoQuads.begin(),rhoQuads.end(),make_vectorized_array(0.0));
@@ -245,15 +238,6 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
     std::fill(derExchCorrEnergyWithGradRhoInSpin1Quads.begin(),derExchCorrEnergyWithGradRhoInSpin1Quads.end(),zeroTensor3);
     std::fill(derExchCorrEnergyWithGradRhoOutSpin0Quads.begin(),derExchCorrEnergyWithGradRhoOutSpin0Quads.end(),zeroTensor3);
     std::fill(derExchCorrEnergyWithGradRhoOutSpin1Quads.begin(),derExchCorrEnergyWithGradRhoOutSpin1Quads.end(),zeroTensor3);
-
-    if (dftParameters::nonSelfConsistentForce)
-	for (unsigned int q=0; q<numQuadPoints; ++q)
-	{
-	     vEffRhoInSpin0Quads[q]=phiTotInEval.get_value(q);
-	     vEffRhoInSpin1Quads[q]=phiTotInEval.get_value(q);
-	     vEffRhoOutSpin0Quads[q]=phiTotOutEval.get_value(q);
-	     vEffRhoOutSpin1Quads[q]=phiTotOutEval.get_value(q);
-	}
 
 #ifdef USE_COMPLEX
     //vector of quadPoints, nonlocal atom id, pseudo wave, k point
@@ -399,6 +383,12 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
        for (unsigned int q=0; q<numQuadPoints; ++q)
        {
          rhoQuads[q][iSubCell]=(*dftPtr->rhoOutValues)[subCellId][q];
+
+	 for (unsigned int idim=0; idim<C_DIM; idim++)
+	 {
+	    gradRhoSpin0Quads[q][idim][iSubCell]=(*dftPtr->gradRhoOutValuesSpinPolarized)[subCellId][6*q+idim];
+	    gradRhoSpin1Quads[q][idim][iSubCell]=(*dftPtr->gradRhoOutValuesSpinPolarized)[subCellId][6*q+3+idim];
+	 }
        }
     }
 
@@ -407,31 +397,21 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
     std::vector<Tensor<1,2,VectorizedArray<double> > > psiSpin1Quads(numQuadPoints*numEigenVectors*numKPoints,zeroTensor1);
     std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > > gradPsiSpin0Quads(numQuadPoints*numEigenVectors*numKPoints,zeroTensor2);
     std::vector<Tensor<1,2,Tensor<1,C_DIM,VectorizedArray<double> > > > gradPsiSpin1Quads(numQuadPoints*numEigenVectors*numKPoints,zeroTensor2);
-    Tensor<1,2,Tensor<2,C_DIM,VectorizedArray<double> > >  tempHessianPsiSpin0;
-    Tensor<1,2,Tensor<2,C_DIM,VectorizedArray<double> > >  tempHessianPsiSpin1;
 #else
     std::vector< VectorizedArray<double> > psiSpin0Quads(numQuadPoints*numEigenVectors,make_vectorized_array(0.0));
     std::vector< VectorizedArray<double> > psiSpin1Quads(numQuadPoints*numEigenVectors,make_vectorized_array(0.0));
     std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradPsiSpin0Quads(numQuadPoints*numEigenVectors,zeroTensor3);
     std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > gradPsiSpin1Quads(numQuadPoints*numEigenVectors,zeroTensor3);
-    Tensor<2,C_DIM,VectorizedArray<double> >  tempHessianPsiSpin0;
-    Tensor<2,C_DIM,VectorizedArray<double> >  tempHessianPsiSpin1;
 #endif
 
     for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
         for (unsigned int iEigenVec=0; iEigenVec<numEigenVectors; ++iEigenVec)
         {
           psiEvalSpin0.read_dof_values_plain(eigenVectors[2*ikPoint][iEigenVec]);
-	  if (dftParameters::nonSelfConsistentForce)
-             psiEvalSpin0.evaluate(true,true,true);
-	  else
-             psiEvalSpin0.evaluate(true,true);
+          psiEvalSpin0.evaluate(true,true);
 
           psiEvalSpin1.read_dof_values_plain(eigenVectors[2*ikPoint+1][iEigenVec]);
-	  if (dftParameters::nonSelfConsistentForce)
-             psiEvalSpin1.evaluate(true,true,true);
-	  else
-             psiEvalSpin1.evaluate(true,true);
+          psiEvalSpin1.evaluate(true,true);
 
           for (unsigned int q=0; q<numQuadPoints; ++q)
           {
@@ -440,63 +420,8 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 	     psiSpin1Quads[id]=psiEvalSpin1.get_value(q);
              gradPsiSpin0Quads[id]=psiEvalSpin0.get_gradient(q);
 	     gradPsiSpin1Quads[id]=psiEvalSpin1.get_gradient(q);
-	     if (dftParameters::nonSelfConsistentForce)
-	     {
-	        tempHessianPsiSpin0=psiEvalSpin0.get_hessian(q);
-	        tempHessianPsiSpin1=psiEvalSpin1.get_hessian(q);
-	     }
-
-             double partOccSpin0 =dftUtils::getPartialOccupancy
-		                                                     (dftPtr->eigenValues[ikPoint][iEigenVec],
-		                                                      dftPtr->fermiEnergy,
-								      C_kb,
-								      dftParameters::TVal);
-             double partOccSpin1 =dftUtils::getPartialOccupancy
-		                                                     (dftPtr->eigenValues[ikPoint][iEigenVec+numEigenVectors],
-		                                                      dftPtr->fermiEnergy,
-								      C_kb,
-								      dftParameters::TVal);
-
-	     if(dftParameters::constraintMagnetization)
-	     {
-		 partOccSpin0 = 1.0 , partOccSpin1 = 1.0 ;
-		 if ( dftPtr->eigenValues[ikPoint][iEigenVec+numEigenVectors]> dftPtr->fermiEnergyDown)
-			partOccSpin1 = 0.0 ;
-		 if (dftPtr->eigenValues[ikPoint][iEigenVec] > dftPtr->fermiEnergyUp)
-			partOccSpin0 = 0.0 ;
-	     }
-
-	     const VectorizedArray<double> factor0=make_vectorized_array(dftPtr->d_kPointWeights[ikPoint]*partOccSpin0);
-	     const VectorizedArray<double> factor1=make_vectorized_array(dftPtr->d_kPointWeights[ikPoint]*partOccSpin1);
-
-	     gradRhoSpin0Quads[q]+=factor0*internalforce::computeGradRhoContribution(psiSpin0Quads[id],gradPsiSpin0Quads[id]);
-	     gradRhoSpin1Quads[q]+=factor1*internalforce::computeGradRhoContribution(psiSpin1Quads[id],gradPsiSpin1Quads[id]);
-
-	     if (dftParameters::nonSelfConsistentForce)
-	     {
-		 hessianRhoSpin0Quads[q]+=factor0*internalforce::computeHessianRhoContribution(psiSpin0Quads[id],gradPsiSpin0Quads[id], tempHessianPsiSpin0);
-		 hessianRhoSpin1Quads[q]+=factor1*internalforce::computeHessianRhoContribution(psiSpin1Quads[id],gradPsiSpin1Quads[id], tempHessianPsiSpin1);
-	     }
-
           }//quad point loop
         } //eigenvector loop
-
-    //accumulate grad rho and hessian rho quad point contribution from all pools
-    for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
-      for (unsigned int q=0; q<numQuadPoints; ++q)
-	for (unsigned int idim=0; idim<C_DIM; idim++)
-	{
-	  gradRhoSpin0Quads[q][idim][iSubCell]=Utilities::MPI::sum(gradRhoSpin0Quads[q][idim][iSubCell],dftPtr->interpoolcomm);
-	  gradRhoSpin1Quads[q][idim][iSubCell]=Utilities::MPI::sum(gradRhoSpin1Quads[q][idim][iSubCell],dftPtr->interpoolcomm);
-
-	  if (dftParameters::nonSelfConsistentForce)
-	      for (unsigned int jdim=0; jdim<C_DIM; jdim++)
-	      {
-		hessianRhoSpin0Quads[q][idim][jdim][iSubCell]=Utilities::MPI::sum(hessianRhoSpin0Quads[q][idim][jdim][iSubCell],dftPtr->interpoolcomm);
-    ;
-		hessianRhoSpin1Quads[q][idim][jdim][iSubCell]=Utilities::MPI::sum(hessianRhoSpin1Quads[q][idim][jdim][iSubCell],dftPtr->interpoolcomm);
-	      }
-	}
 
 #ifdef USE_COMPLEX
     std::vector<Tensor<1,2,VectorizedArray<double> > > psiSpin0QuadsNLP;
@@ -730,22 +655,6 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 
 
        }
-
-       if (dftParameters::nonSelfConsistentForce)
-	   F+=eshelbyTensorSP::getNonSelfConsistentForce
-						   (vEffRhoInSpin0Quads[q],
-						    vEffRhoInSpin1Quads[q],
-						    vEffRhoOutSpin0Quads[q],
-						    vEffRhoOutSpin1Quads[q],
-						    gradRhoSpin0Quads[q],
-						    gradRhoSpin1Quads[q],
-						    derExchCorrEnergyWithGradRhoInSpin0Quads[q],
-						    derExchCorrEnergyWithGradRhoInSpin1Quads[q],
-						    derExchCorrEnergyWithGradRhoOutSpin0Quads[q],
-						    derExchCorrEnergyWithGradRhoOutSpin1Quads[q],
-						    hessianRhoSpin0Quads[q],
-						    hessianRhoSpin1Quads[q]);
-
 
        forceEval.submit_value(F,q);
        forceEval.submit_gradient(E,q);
