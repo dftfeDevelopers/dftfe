@@ -1578,7 +1578,7 @@ namespace dftfe {
 	}
     }
 
-    if(dftParameters::isIonForce || dftParameters::isCellStress)
+    if(dftParameters::isCellStress)
     {
 	//
 	//Create the full dealii partitioned array
@@ -1620,13 +1620,13 @@ namespace dftfe {
 
 	  }
 
-
+        /*
 	for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
 	  {
 	    d_eigenVectorsFlattenedSTL[kPoint].clear();
 	    std::vector<dataTypes::number>().swap(d_eigenVectorsFlattenedSTL[kPoint]);
 	  }
-
+        */
       }
 
     if (dftParameters::isIonForce)
@@ -1701,41 +1701,6 @@ namespace dftfe {
 	computing_timer.exit_section("Cell stress computation");
       }
 #endif
-
-    if(dftParameters::isIonForce || dftParameters::isCellStress)
-      {
-	//
-	//Create the full STL array from dealii flattened array
-	//
-	for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
-	  d_eigenVectorsFlattenedSTL[kPoint].resize(d_numEigenValues*matrix_free_data.get_vector_partitioner()->local_size(),dataTypes::number(0.0));
-
-	Assert(d_eigenVectorsFlattened[0].local_size()==d_eigenVectorsFlattenedSTL[0].size(),
-	       dealii::ExcMessage("Incorrect local sizes of STL and dealii arrays"));
-
-	const unsigned int localVectorSize = d_eigenVectorsFlattenedSTL[0].size()/d_numEigenValues;
-
-	//
-	//copy the data into STL array
-	//
-	for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
-	  {
-	    for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
-	      {
-		for(unsigned int iWave = 0; iWave < d_numEigenValues; ++iWave)
-		  {
-		    d_eigenVectorsFlattenedSTL[kPoint][iNode*d_numEigenValues+iWave] = d_eigenVectorsFlattened[kPoint].local_element(iNode*d_numEigenValues+iWave);
-		  }
-	      }
-	  }
-
-	for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
-	  {
-	    d_eigenVectorsFlattened[kPoint].reinit(0);
-	  }
-
-      }
-
 
   if(dftParameters::electrostaticsHRefinement)
     computeElectrostaticEnergyHRefined();

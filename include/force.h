@@ -346,7 +346,8 @@ namespace dftfe {
 	   const unsigned int cell,
 	   const std::vector<std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > > & pspnlGammaAtomsQuads,
 	   const std::vector<std::vector<std::vector<std::complex<double> > > > & projectorKetTimesPsiTimesV,
-	   const std::vector<Tensor<1,2,VectorizedArray<double> > > & psiQuads);
+	   const std::vector<Tensor<1,2,VectorizedArray<double> > > & psiQuads,
+	   const std::vector< std::vector<double> > & eigenValues);
 
       void FnlGammaAtomsElementalContributionPeriodicSpinPolarized
 	  (std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
@@ -357,7 +358,8 @@ namespace dftfe {
 	   const std::vector<std::vector<std::vector<std::complex<double> > > > & projectorKetTimesPsiSpin0TimesV,
 	   const std::vector<std::vector<std::vector<std::complex<double> > > > & projectorKetTimesPsiSpin1TimesV,
 	   const std::vector<Tensor<1,2,VectorizedArray<double> > > & psiSpin0Quads,
-	   const std::vector<Tensor<1,2,VectorizedArray<double> > > & psiSpin1Quads);
+	   const std::vector<Tensor<1,2,VectorizedArray<double> > > & psiSpin1Quads,
+	   const std::vector< std::vector<double> > & eigenValues);
 #else
 
       void FnlGammaAtomsElementalContributionNonPeriodicSpinPolarized
@@ -369,7 +371,8 @@ namespace dftfe {
 	   const std::vector<std::vector<double> >  & projectorKetTimesPsiSpin0TimesV,
 	   const std::vector<std::vector<double> >  & projectorKetTimesPsiSpin1TimesV,
 	   const std::vector< VectorizedArray<double> > & psiSpin0Quads,
-	   const std::vector< VectorizedArray<double> > & psiSpin1Quads);
+	   const std::vector< VectorizedArray<double> > & psiSpin1Quads,
+	   const std::vector< std::vector<double> > & eigenValues);
 
       void FnlGammaAtomsElementalContributionNonPeriodic
 	  (std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
@@ -378,7 +381,8 @@ namespace dftfe {
 	   const unsigned int cell,
 	   const std::vector<std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > > pspnlGammaAtomQuads,
 	   const std::vector<std::vector<double> >  & projectorKetTimesPsiTimesV,
-	   const std::vector< VectorizedArray<double> > & psiQuads);
+	   const std::vector< VectorizedArray<double> > & psiQuads,
+	   const std::vector< std::vector<double> > & eigenValues);
 
 #endif
 

@@ -28,16 +28,17 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionPeriodicSpinPolarize
                                    const std::vector<std::vector<std::vector<std::complex<double> > > > & projectorKetTimesPsiSpin0TimesV,
                                    const std::vector<std::vector<std::vector<std::complex<double> > > > & projectorKetTimesPsiSpin1TimesV,
 				   const std::vector<Tensor<1,2,VectorizedArray<double> > > & psiSpin0Quads,
-				   const std::vector<Tensor<1,2,VectorizedArray<double> > > & psiSpin1Quads)
+				   const std::vector<Tensor<1,2,VectorizedArray<double> > > & psiSpin1Quads,
+				   const std::vector< std::vector<double> > & eigenValues)
 {
 
   const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
-  const unsigned int numEigenVectors=dftPtr->d_numEigenValues;
   const unsigned int numKPoints=dftPtr->d_kPointWeights.size();
   const unsigned int numSubCells= dftPtr->matrix_free_data.n_components_filled(cell);
   const unsigned int numQuadPoints=dftParameters::useHigherQuadNLP?
                                    forceEvalNLP.n_q_points
 				   :forceEval.n_q_points;
+  const unsigned int numEigenVectors=psiSpin0Quads.size()/numQuadPoints/numKPoints;
   DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
 
   const unsigned int numNonLocalAtomsCurrentProcess= dftPtr->d_nonLocalAtomIdsInCurrentProcess.size();
@@ -72,7 +73,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionPeriodicSpinPolarize
 						    psiSpin0Quads.begin()+q*numEigenVectors*numKPoints,
 						    psiSpin1Quads.begin()+q*numEigenVectors*numKPoints,
 						    dftPtr->d_kPointWeights,
-						    dftPtr->eigenValues,
+						    eigenValues,
 					            dftPtr->fermiEnergy,
 				                    dftPtr->fermiEnergyUp,
 					            dftPtr->fermiEnergyDown,
@@ -92,7 +93,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionPeriodicSpinPolarize
 						    psiSpin0Quads.begin()+q*numEigenVectors*numKPoints,
 						    psiSpin1Quads.begin()+q*numEigenVectors*numKPoints,
 						    dftPtr->d_kPointWeights,
-						    dftPtr->eigenValues,
+						    eigenValues,
 					            dftPtr->fermiEnergy,
 				                    dftPtr->fermiEnergyUp,
 					            dftPtr->fermiEnergyDown,
@@ -127,15 +128,16 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodicSpinPolar
                                    const std::vector<std::vector<double> >  & projectorKetTimesPsiSpin0TimesV,
                                    const std::vector<std::vector<double> >  & projectorKetTimesPsiSpin1TimesV,
 				   const std::vector< VectorizedArray<double> > & psiSpin0Quads,
-				   const std::vector< VectorizedArray<double> > & psiSpin1Quads)
+				   const std::vector< VectorizedArray<double> > & psiSpin1Quads,
+				   const std::vector< std::vector<double> > & eigenValues)
 {
 
   const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
-  const unsigned int numEigenVectors=dftPtr->d_numEigenValues;
   const unsigned int numSubCells= dftPtr->matrix_free_data.n_components_filled(cell);
   const unsigned int numQuadPoints=dftParameters::useHigherQuadNLP?
                                    forceEvalNLP.n_q_points
 				   :forceEval.n_q_points;
+  const unsigned int numEigenVectors=psiSpin0Quads.size()/numQuadPoints;
   DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
 
   const unsigned int numNonLocalAtomsCurrentProcess= dftPtr->d_nonLocalAtomIdsInCurrentProcess.size();
@@ -164,7 +166,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodicSpinPolar
 								temp2Spin1,
 								psiSpin0Quads.begin()+q*numEigenVectors,
 								psiSpin1Quads.begin()+q*numEigenVectors,
-								(dftPtr->eigenValues)[0],
+								eigenValues[0],
 					                        dftPtr->fermiEnergy,
 				                                dftPtr->fermiEnergyUp,
 					                        dftPtr->fermiEnergyDown,
@@ -183,7 +185,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodicSpinPolar
 								temp2Spin1,
 								psiSpin0Quads.begin()+q*numEigenVectors,
 								psiSpin1Quads.begin()+q*numEigenVectors,
-								(dftPtr->eigenValues)[0],
+								eigenValues[0],
 					                        dftPtr->fermiEnergy,
 				                                dftPtr->fermiEnergyUp,
 					                        dftPtr->fermiEnergyDown,
