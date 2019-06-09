@@ -45,6 +45,11 @@
 #include <linearAlgebraOperations.h>
 #include <vectorUtilities.h>
 #include <pseudoConverter.h>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <iomanip>
+#include <limits>
 #ifdef DFTFE_WITH_ELPA
 extern "C"
 {
@@ -64,6 +69,7 @@ namespace dftfe {
 #include "initPseudo.cc"
 #include "initPseudo-OV.cc"
 #include "initRho.cc"
+#include "dos.cc"
 #include "publicMethods.cc"
 #include "generateImageCharges.cc"
 #include "psiInitialGuess.cc"
@@ -768,6 +774,14 @@ namespace dftfe {
       aposterioriMeshGenerate();
 
     solve();
+
+    if(dftParameters::writeDosFile)
+      compute_tdos(eigenValues,
+		   "dosFile");
+
+    if(dftParameters::writeLdosFile)
+      compute_ldos(eigenValues,
+		   "ldosFile");
 
     if (dftParameters::isIonOpt && !dftParameters::isCellOpt)
       {
@@ -1821,20 +1835,19 @@ namespace dftfe {
 
     DataOut<3> data_outEigen;
     data_outEigen.attach_dof_handler (dofHandlerEigen);
+
     std::vector<vectorType> tempVec(1);
     tempVec[0].reinit(d_tempEigenVec);
-    for (unsigned int s=0; s<1+dftParameters::spinPolarized; ++s)
-      for (unsigned int k=0; k<d_kPointWeights.size(); ++k)
-	for(unsigned int i=0; i<d_numEigenValues; ++i)
+
+    std::vector<vectorType> visualizeWaveFunctions(d_kPointWeights.size()*(1+dftParameters::spinPolarized)*d_numEigenValues);
+    
+    unsigned int count = 0;
+    for (unsigned int s = 0; s < 1+dftParameters::spinPolarized; ++s)
+      for (unsigned int k = 0; k < d_kPointWeights.size(); ++k)
+	for(unsigned int i = 0; i < d_numEigenValues; ++i)
 	  {
+
 #ifdef USE_COMPLEX
-	    /*vectorTools::copyFlattenedDealiiVecToSingleCompVec
-		     (d_eigenVectorsFlattened[k*(1+dftParameters::spinPolarized)+s],
-		      d_numEigenValues,
-		      std::make_pair(i,i+1),
-		      localProc_dof_indicesReal,
-		      localProc_dof_indicesImag,
-		      tempVec);*/
 
 	    vectorTools::copyFlattenedSTLVecToSingleCompVec(d_eigenVectorsFlattenedSTL[k*(1+dftParameters::spinPolarized)+s],
 							    d_numEigenValues,
@@ -1844,12 +1857,6 @@ namespace dftfe {
 							    tempVec);
 
 #else
-	    /*vectorTools::copyFlattenedDealiiVecToSingleCompVec
-		     (d_eigenVectorsFlattened[k*(1+dftParameters::spinPolarized)+s],
-		      d_numEigenValues,
-		      std::make_pair(i,i+1),
-		      tempVec);*/
-
 	    vectorTools::copyFlattenedSTLVecToSingleCompVec(d_eigenVectorsFlattenedSTL[k*(1+dftParameters::spinPolarized)+s],
 							    d_numEigenValues,
 							    std::make_pair(i,i+1),
@@ -1858,23 +1865,30 @@ namespace dftfe {
 
 #endif
 
-	     tempVec[0].update_ghost_values();
+	    constraintsNoneEigenDataInfo.distribute(tempVec[0]);
+	    visualizeWaveFunctions[count] = tempVec[0];
 
 	    if (dftParameters::spinPolarized==1)
-	      data_outEigen.add_data_vector (tempVec[0],"wfc_"+std::to_string(s)+"_"+std::to_string(k)+"_"+std::to_string(i));
+	      data_outEigen.add_data_vector(visualizeWaveFunctions[count],"wfc_spin"+std::to_string(s)+"_kpoint"+std::to_string(k)+"_"+std::to_string(i));
 	    else
-	      data_outEigen.add_data_vector (tempVec[0],"wfc_"+std::to_string(k)+"_"+std::to_string(i));
+	      data_outEigen.add_data_vector(visualizeWaveFunctions[count],"wfc_"+std::to_string(k)+"_"+std::to_string(i));
+
+	    count += 1;
+
+	   
 	  }
 
-    
-    
-    data_outEigen.build_patches (FEOrder);
+    data_outEigen.build_patches(FEOrder);
 
-    dftUtils::writeDataVTUParallelLowestPoolId(data_outEigen,
+    dftUtils::writeDataVTUParallelLowestPoolId(dofHandlerEigen,
+					       data_outEigen,
 					       mpi_communicator,
 					       interpoolcomm,
 					       interBandGroupComm,
 					       "wfcOutput");
+    //"wfcOutput_"+std::to_string(k)+"_"+std::to_string(i));
+    
+    
   }
 
 
@@ -1949,7 +1963,9 @@ namespace dftfe {
       dataOutRho.add_data_vector(rhoNodalFieldSpin1, std::string("density_1"));
     }
     dataOutRho.build_patches(FEOrder);
-    dftUtils::writeDataVTUParallelLowestPoolId(dataOutRho,
+    
+    dftUtils::writeDataVTUParallelLowestPoolId(dofHandler,
+					       dataOutRho,
 					       mpi_communicator,
 					       interpoolcomm,
 					       interBandGroupComm,
