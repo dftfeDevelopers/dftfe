@@ -39,6 +39,12 @@ subsection DFT functional parameters
   set PSEUDOPOTENTIAL FILE NAMES LIST = @SOURCE_DIR@/pseudoNGGA.inp
 end
 
+subsection Poisson problem parameters
+  set MAXIMUM ITERATIONS = 10000
+  set TOLERANCE          = 1e-9
+end
+
+
 subsection SCF parameters
   set MIXING HISTORY   = 70
   set MIXING PARAMETER = 0.5

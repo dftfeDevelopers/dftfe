@@ -38,6 +38,11 @@ subsection Parallelization
   set NPBAND=1
 end
 
+subsection Poisson problem parameters
+  set MAXIMUM ITERATIONS = 10000
+  set TOLERANCE          = 1e-9
+end
+
 
 subsection SCF parameters
   set MIXING HISTORY   = 70
