@@ -775,14 +775,6 @@ namespace dftfe {
 
     solve();
 
-    if(dftParameters::writeDosFile)
-      compute_tdos(eigenValues,
-		   "dosFile");
-
-    if(dftParameters::writeLdosFile)
-      compute_ldos(eigenValues,
-		   "ldosFile");
-
     if (dftParameters::isIonOpt && !dftParameters::isCellOpt)
       {
 	geoOptIonPtr->init();
@@ -811,6 +803,16 @@ namespace dftfe {
 	AssertThrow(false,ExcMessage("CELL OPT cannot be set to true for fully non-periodic domain."));
 #endif
       }
+
+    if(dftParameters::writeDosFile)
+      compute_tdos(eigenValues,
+		   "dosFile");
+
+    if(dftParameters::writeLdosFile)
+      compute_ldos(eigenValues,
+		   "ldosFile");
+
+
   }
 
   //
