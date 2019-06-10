@@ -376,7 +376,7 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
 
       for (unsigned int iatom=0;iatom<totalNumberAtoms;++iatom)
       {
-	  if (iatom==0)    
+	  if (iatom==0)
 	    d_gaussianWeightsVecAtoms[iatom]
 	               = dealii::parallel::distributed::Vector<double>(d_locally_owned_dofsForce,
 									       ghostIndicesForce,
@@ -516,7 +516,7 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
 								       ghostIndicesForceElectro,
 								       mpi_communicator);
 	  else
-            d_gaussianWeightsVecAtoms[iatom].reinit(d_gaussianWeightsVecAtoms[0]);		
+            d_gaussianWeightsVecAtoms[iatom].reinit(d_gaussianWeightsVecAtoms[0]);
 
 	  (d_gaussianWeightsVecAtoms[iatom]) = 0.0;
 	  d_gaussianWeightsVecAtoms[iatom].zero_out_ghosts();
@@ -614,6 +614,15 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
 		MPI_DOUBLE,
 		MPI_SUM,
                 mpi_communicator);
+
+  //Sum over band parallelization
+  MPI_Allreduce(MPI_IN_PLACE,
+		&(d_globalAtomsGaussianForces[0]),
+		numberGlobalAtoms*C_DIM,
+		MPI_DOUBLE,
+		MPI_SUM,
+                dftPtr->interBandGroupComm);
+
 #ifdef USE_COMPLEX
   //Sum all processor contributions and distribute to all processors
   MPI_Allreduce(&(globalAtomsGaussianForcesKPointsLocalPart[0]),
@@ -622,12 +631,26 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
 		MPI_DOUBLE,
 		MPI_SUM,
                 mpi_communicator);
-  //Sum over k point pools and add to total Gaussian force
+  //Sum over band parallelization and k point pools
+  MPI_Allreduce(MPI_IN_PLACE,
+		&(globalAtomsGaussianForcesKPoints[0]),
+		numberGlobalAtoms*C_DIM,
+		MPI_DOUBLE,
+		MPI_SUM,
+                dftPtr->interBandGroupComm);
+
+  MPI_Allreduce(MPI_IN_PLACE,
+		&(globalAtomsGaussianForcesKPoints[0]),
+		numberGlobalAtoms*C_DIM,
+		MPI_DOUBLE,
+		MPI_SUM,
+                dftPtr->interpoolcomm);
+
+  //add to total Gaussian force
   for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
   {
       for (unsigned int idim=0; idim < C_DIM ; idim++)
       {
-          globalAtomsGaussianForcesKPoints[iAtom*C_DIM+idim]= Utilities::MPI::sum(globalAtomsGaussianForcesKPoints[iAtom*C_DIM+idim], dftPtr->interpoolcomm);
           d_globalAtomsGaussianForces[iAtom*C_DIM+idim]+=globalAtomsGaussianForcesKPoints[iAtom*C_DIM+idim];
       }
   }

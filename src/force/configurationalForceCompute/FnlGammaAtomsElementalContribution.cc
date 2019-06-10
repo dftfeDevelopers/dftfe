@@ -24,16 +24,17 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionPeriodic(std::map<un
 							              const unsigned int cell,
 							              const std::vector<std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > > & pspnlGammaAtomsQuads,
                                                                       const std::vector<std::vector<std::vector<std::complex<double> > > > & projectorKetTimesPsiTimesV,
-							              const std::vector<Tensor<1,2,VectorizedArray<double> > > & psiQuads)
+							              const std::vector<Tensor<1,2,VectorizedArray<double> > > & psiQuads,
+								      const std::vector< std::vector<double> > & eigenValues)
 {
 
   const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
-  const unsigned int numEigenVectors=dftPtr->d_numEigenValues;
   const unsigned int numKPoints=dftPtr->d_kPointWeights.size();
   const unsigned int numSubCells= dftPtr->matrix_free_data.n_components_filled(cell);
   const unsigned int numQuadPoints=dftParameters::useHigherQuadNLP?
                                    forceEvalNLP.n_q_points
 				   :forceEval.n_q_points;
+  const unsigned int numEigenVectors=psiQuads.size()/numQuadPoints/numKPoints;
   DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
 
   const unsigned int numNonLocalAtomsCurrentProcess= dftPtr->d_nonLocalAtomIdsInCurrentProcess.size();
@@ -65,7 +66,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionPeriodic(std::map<un
 						    temp2,
 						    psiQuads.begin()+q*numEigenVectors*numKPoints,
 						    dftPtr->d_kPointWeights,
-						    dftPtr->eigenValues,
+						    eigenValues,
 						    dftPtr->fermiEnergy,
 						    dftParameters::TVal);
 
@@ -85,7 +86,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionPeriodic(std::map<un
 						    temp2,
 						    psiQuads.begin()+q*numEigenVectors*numKPoints,
 						    dftPtr->d_kPointWeights,
-						    dftPtr->eigenValues,
+						    eigenValues,
 						    dftPtr->fermiEnergy,
 						    dftParameters::TVal);
 
@@ -118,15 +119,16 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodic(std::map
 							                const unsigned int cell,
 							                const std::vector<std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > > pspnlGammaAtomQuads,
                                                                         const std::vector<std::vector<double> >  & projectorKetTimesPsiTimesV,
-							                const std::vector< VectorizedArray<double> > & psiQuads)
+							                const std::vector< VectorizedArray<double> > & psiQuads,
+									const std::vector< std::vector<double> > & eigenValues)
 {
 
   const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
-  const unsigned int numEigenVectors=dftPtr->d_numEigenValues;
   const unsigned int numSubCells= dftPtr->matrix_free_data.n_components_filled(cell);
   const unsigned int numQuadPoints=dftParameters::useHigherQuadNLP?
                                    forceEvalNLP.n_q_points
 				   :forceEval.n_q_points;
+  const unsigned int numEigenVectors=psiQuads.size()/numQuadPoints;
   DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
 
   const unsigned int numNonLocalAtomsCurrentProcess= dftPtr->d_nonLocalAtomIdsInCurrentProcess.size();
@@ -153,7 +155,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodic(std::map
 			      -eshelbyTensor::getFnlNonPeriodic(temp1,
 								temp2,
 								psiQuads.begin()+q*numEigenVectors,
-								(dftPtr->eigenValues)[0],
+								eigenValues[0],
 								dftPtr->fermiEnergy,
 								dftParameters::TVal);
 
@@ -172,7 +174,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodic(std::map
 			      -eshelbyTensor::getFnlNonPeriodic(temp1,
 								temp2,
 								psiQuads.begin()+q*numEigenVectors,
-								(dftPtr->eigenValues)[0],
+								eigenValues[0],
 								dftPtr->fermiEnergy,
 								dftParameters::TVal);
 

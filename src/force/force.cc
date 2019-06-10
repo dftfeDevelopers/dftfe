@@ -443,7 +443,8 @@ void forceClass<FEOrder>::computeConfigurationalForceTotalLinFE
 
   //configurational force contribution from nuclear self energy. This is handled separately as it involves
   // a surface integral over the vself ball surface
-  computeConfigurationalForceEselfLinFE(matrixFreeDataElectro.get_dof_handler(phiTotDofHandlerIndexElectro),
+  if (dealii::Utilities::MPI::this_mpi_process(dftPtr->interBandGroupComm)==0)
+    computeConfigurationalForceEselfLinFE(matrixFreeDataElectro.get_dof_handler(phiTotDofHandlerIndexElectro),
 				        vselfBinsManagerElectro);
   configForceLinFEFinalize();
 #ifdef DEBUG

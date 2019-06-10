@@ -1539,7 +1539,47 @@ namespace dftfe {
 #endif
 
     if(dftParameters::isIonForce || dftParameters::isCellStress)
-      {
+    {
+	dealii::QGauss<3> quadrature(C_num1DQuad<FEOrder>());
+        const unsigned int n_q_points = quadrature.size();
+	if (!(dftParameters::xc_id == 4))
+	{
+	       gradRhoOutVals.push_back(std::map<dealii::CellId, std::vector<double> >());
+	       if (dftParameters::spinPolarized==1)
+	  	  gradRhoOutValsSpinPolarized.push_back(std::map<dealii::CellId, std::vector<double> >());
+
+	       gradRhoOutValues=&gradRhoOutVals.back();
+	       if (dftParameters::spinPolarized==1)
+	           gradRhoOutValuesSpinPolarized=&gradRhoOutValsSpinPolarized.back();
+
+	       typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
+	       for (; cell!=endc; ++cell)
+		  if (cell->is_locally_owned())
+		    {
+			const dealii::CellId cellId=cell->id();
+			(*rhoOutValues)[cellId] = std::vector<double>(n_q_points,0.0);
+			(*gradRhoOutValues)[cellId] = std::vector<double>(3*n_q_points,0.0);
+
+			if (dftParameters::spinPolarized==1)
+			{
+			   (*rhoOutValuesSpinPolarized)[cellId]
+				 = std::vector<double>(2*n_q_points,0.0);
+			   (*gradRhoOutValuesSpinPolarized)[cellId]
+				 = std::vector<double>(6*n_q_points,0.0);
+			}
+		    }
+
+	       computeRhoFromPSI(rhoOutValues,
+			    gradRhoOutValues,
+			    rhoOutValuesSpinPolarized,
+			    gradRhoOutValuesSpinPolarized,
+			    true,
+			    false);
+	}
+    }
+
+    if(dftParameters::isCellStress)
+    {
 	//
 	//Create the full dealii partitioned array
 	//
@@ -1580,20 +1620,19 @@ namespace dftfe {
 
 	  }
 
-
+        /*
 	for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
 	  {
 	    d_eigenVectorsFlattenedSTL[kPoint].clear();
 	    std::vector<dataTypes::number>().swap(d_eigenVectorsFlattenedSTL[kPoint]);
 	  }
-
+        */
       }
 
     if (dftParameters::isIonForce)
       {
         if(dftParameters::selfConsistentSolverTolerance>1e-5 && dftParameters::verbosity>=1)
             pcout<<"DFT-FE Warning: Ion force accuracy may be affected for the given scf iteration solve tolerance: "<<dftParameters::selfConsistentSolverTolerance<<", recommended to use TOLERANCE below 1e-5."<<std::endl;
-
 
  	computing_timer.enter_section("Ion force computation");
 	computingTimerStandard.enter_section("Ion force computation");
@@ -1662,41 +1701,6 @@ namespace dftfe {
 	computing_timer.exit_section("Cell stress computation");
       }
 #endif
-
-    if(dftParameters::isIonForce || dftParameters::isCellStress)
-      {
-	//
-	//Create the full STL array from dealii flattened array
-	//
-	for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
-	  d_eigenVectorsFlattenedSTL[kPoint].resize(d_numEigenValues*matrix_free_data.get_vector_partitioner()->local_size(),dataTypes::number(0.0));
-
-	Assert(d_eigenVectorsFlattened[0].local_size()==d_eigenVectorsFlattenedSTL[0].size(),
-	       dealii::ExcMessage("Incorrect local sizes of STL and dealii arrays"));
-
-	const unsigned int localVectorSize = d_eigenVectorsFlattenedSTL[0].size()/d_numEigenValues;
-
-	//
-	//copy the data into STL array
-	//
-	for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
-	  {
-	    for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
-	      {
-		for(unsigned int iWave = 0; iWave < d_numEigenValues; ++iWave)
-		  {
-		    d_eigenVectorsFlattenedSTL[kPoint][iNode*d_numEigenValues+iWave] = d_eigenVectorsFlattened[kPoint].local_element(iNode*d_numEigenValues+iWave);
-		  }
-	      }
-	  }
-
-	for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
-	  {
-	    d_eigenVectorsFlattened[kPoint].reinit(0);
-	  }
-
-      }
-
 
   if(dftParameters::electrostaticsHRefinement)
     computeElectrostaticEnergyHRefined();
