@@ -1226,11 +1226,11 @@ namespace dftfe {
 	    //
 	    //fermi energy
 	    //
-	   if (dftParameters::constraintMagnetization)
-	           compute_fermienergy_constraintMagnetization(eigenValues) ;
-	   else
-	            compute_fermienergy(eigenValues,
-		                    numElectrons);
+	    if (dftParameters::constraintMagnetization)
+	      compute_fermienergy_constraintMagnetization(eigenValues) ;
+	    else
+	      compute_fermienergy(eigenValues,
+				  numElectrons);
 
 	    //
 	    //maximum of the residual norm of the state closest to and below the Fermi level among all k points
@@ -1833,36 +1833,80 @@ namespace dftfe {
   void dftClass<FEOrder>::outputWfc()
   {
 
+    //
+    //identify the index which is close to Fermi Energy
+    //
+    int indexFermiEnergy = -1.0;
+    for(int spinType = 0; spinType < 1+dftParameters::spinPolarized; ++spinType)
+      {
+	for(int i = 0; i < d_numEigenValues; ++i)
+	  {
+	    if(eigenValues[0][spinType*d_numEigenValues + i] >= fermiEnergy)
+	      {
+		if(i > indexFermiEnergy)
+		  {
+		    indexFermiEnergy = i;
+		    break;
+		  }
+	      }
+	  }
+      }
+
+    //
+    //create a range of wavefunctions to output the wavefunction files
+    //
+    int startingRange = indexFermiEnergy - 4;
+    int endingRange = indexFermiEnergy + 4;
+
+    int startingRangeSpin = startingRange;
+
+    for(int spinType = 0; spinType < 1+dftParameters::spinPolarized; ++spinType)
+      {
+	for(int i = indexFermiEnergy-4; i > 0; --i)
+	  {
+	    if(std::abs(eigenValues[0][spinType*d_numEigenValues + i] - eigenValues[0][spinType*d_numEigenValues + (i-1)]) <= 1e-03)
+	      {
+		if(spinType == 0)
+		  startingRange -= 1;
+		else
+		  startingRangeSpin -= 1;
+	      }
+
+	  }
+      }
+    
+    if(startingRangeSpin < startingRange)
+      startingRange = startingRangeSpin;
+
+    int numStatesOutput = (endingRange - startingRange) + 1;
+
+
     DataOut<3> data_outEigen;
-    data_outEigen.attach_dof_handler (dofHandlerEigen);
+    data_outEigen.attach_dof_handler(dofHandlerEigen);
 
     std::vector<vectorType> tempVec(1);
     tempVec[0].reinit(d_tempEigenVec);
 
-    std::vector<vectorType> visualizeWaveFunctions(d_kPointWeights.size()*(1+dftParameters::spinPolarized)*d_numEigenValues);
+    std::vector<vectorType> visualizeWaveFunctions(d_kPointWeights.size()*(1+dftParameters::spinPolarized)*numStatesOutput);
     
     unsigned int count = 0;
-    for (unsigned int s = 0; s < 1+dftParameters::spinPolarized; ++s)
-      for (unsigned int k = 0; k < d_kPointWeights.size(); ++k)
-	for(unsigned int i = 0; i < d_numEigenValues; ++i)
+    for(unsigned int s = 0; s < 1+dftParameters::spinPolarized; ++s)
+      for(unsigned int k = 0; k < d_kPointWeights.size(); ++k)
+	for(unsigned int i = startingRange; i < endingRange; ++i)
 	  {
 
 #ifdef USE_COMPLEX
-
 	    vectorTools::copyFlattenedSTLVecToSingleCompVec(d_eigenVectorsFlattenedSTL[k*(1+dftParameters::spinPolarized)+s],
 							    d_numEigenValues,
 							    std::make_pair(i,i+1),
 							    localProc_dof_indicesReal,
 							    localProc_dof_indicesImag,
 							    tempVec);
-
 #else
 	    vectorTools::copyFlattenedSTLVecToSingleCompVec(d_eigenVectorsFlattenedSTL[k*(1+dftParameters::spinPolarized)+s],
 							    d_numEigenValues,
 							    std::make_pair(i,i+1),
 							    tempVec);
-	   
-
 #endif
 
 	    constraintsNoneEigenDataInfo.distribute(tempVec[0]);
