@@ -525,7 +525,7 @@ namespace dftParameters
 			  Patterns::Integer(0,20000),
 			  "[Advanced] Maximum number of iterations to be allowed for Poisson problem convergence.");
 
-        prm.declare_entry("TOLERANCE", "1e-9",
+        prm.declare_entry("TOLERANCE", "1e-10",
 			  Patterns::Double(0,1.0),
 			  "[Advanced] Absolute tolerance on the residual as stopping criterion for Poisson problem convergence.");
     }
