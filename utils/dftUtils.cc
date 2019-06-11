@@ -110,6 +110,7 @@ namespace dftUtils
 	                                const MPI_Comm & domainComm,
 				        const MPI_Comm & kPointComm,
 					const MPI_Comm & bandGroupComm,
+					const std::string & folderName,
 	                                const std::string & fileName)
   {
     const unsigned int poolId=dealii::Utilities::MPI::this_mpi_process(kPointComm);
@@ -117,14 +118,7 @@ namespace dftUtils
     const unsigned int minPoolId=dealii::Utilities::MPI::min(poolId,kPointComm);
     const unsigned int minBandGroupId=dealii::Utilities::MPI::min(bandGroupId,bandGroupComm);
 
-    
-
-    /*if (poolId==minPoolId && bandGroupId==minBandGroupId)
-    {
-      std::string fileNameVTU=fileName+".vtu";
-      dataOut.write_vtu_in_parallel(fileNameVTU.c_str(),intrapoolcomm);
-      }*/
-
+  
     unsigned int n_mpi_processes;
     if(poolId==minPoolId && bandGroupId==minBandGroupId)
       {
@@ -138,8 +132,11 @@ namespace dftUtils
 
 	const unsigned int this_mpi_process = dealii::Utilities::MPI::this_mpi_process(domainComm);
 	n_mpi_processes = dealii::Utilities::MPI::n_mpi_processes(domainComm);
-	std::string outFileName = fileName + "_" + dealii::Utilities::to_string(this_mpi_process)+".vtu";
+	std::string outFileName = folderName + "/" + fileName + "_" + dealii::Utilities::to_string(this_mpi_process)+".vtu";
 	std::ofstream output(outFileName);
+	//output.open(folderName + "/" + fileName + "_" + dealii::Utilities::to_string(this_mpi_process)+".vtu");
+	// = fileName + "_" + dealii::Utilities::to_string(this_mpi_process)+".vtu";
+	//std::ofstream output(outFileName);
 	dataOut.write_vtu(output);
       }
 
@@ -151,11 +148,11 @@ namespace dftUtils
           filenames.push_back(fileName + "_" +
 			      dealii::Utilities::to_string(i) + ".vtu");
         const std::string visit_master_filename =
-          (fileName + "_master.visit");
+          (folderName + "/" + fileName + "_master.visit");
         std::ofstream visit_master(visit_master_filename.c_str());
 	dealii::DataOutBase::write_visit_record(visit_master, filenames);
         const std::string pvtu_master_filename =
-          (fileName + "_master.pvtu");
+          (folderName + "/" + fileName + "_master.pvtu");
         std::ofstream pvtu_master(pvtu_master_filename.c_str());
         dataOut.write_pvtu_record(pvtu_master, filenames);
 	/* static std::vector<std::pair<double, std::string>> times_and_names;

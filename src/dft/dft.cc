@@ -50,6 +50,7 @@
 #include <sstream>
 #include <iomanip>
 #include <limits>
+#include <sys/stat.h>
 #ifdef DFTFE_WITH_ELPA
 extern "C"
 {
@@ -1917,7 +1918,7 @@ namespace dftfe {
 	    if (dftParameters::spinPolarized==1)
 	      data_outEigen.add_data_vector(visualizeWaveFunctions[count],"wfc_spin"+std::to_string(s)+"_kpoint"+std::to_string(k)+"_"+std::to_string(i));
 	    else
-	      data_outEigen.add_data_vector(visualizeWaveFunctions[count],"wfc_"+std::to_string(k)+"_"+std::to_string(i));
+	      data_outEigen.add_data_vector(visualizeWaveFunctions[count],"wfc_kpoint"+std::to_string(k)+"_"+std::to_string(i));
 
 	    count += 1;
 
@@ -1926,11 +1927,15 @@ namespace dftfe {
 
     data_outEigen.build_patches(FEOrder);
 
+    std::string tempFolder = "waveFunctionOutputFolder";
+    mkdir(tempFolder.c_str(),ACCESSPERMS);
+
     dftUtils::writeDataVTUParallelLowestPoolId(dofHandlerEigen,
 					       data_outEigen,
 					       mpi_communicator,
 					       interpoolcomm,
 					       interBandGroupComm,
+					       tempFolder,
 					       "wfcOutput");
     //"wfcOutput_"+std::to_string(k)+"_"+std::to_string(i));
     
@@ -2009,12 +2014,16 @@ namespace dftfe {
       dataOutRho.add_data_vector(rhoNodalFieldSpin1, std::string("density_1"));
     }
     dataOutRho.build_patches(FEOrder);
+
+    std::string tempFolder = "densityOutputFolder";
+    mkdir(tempFolder.c_str(),ACCESSPERMS);
     
     dftUtils::writeDataVTUParallelLowestPoolId(dofHandler,
 					       dataOutRho,
 					       mpi_communicator,
 					       interpoolcomm,
 					       interBandGroupComm,
+					       tempFolder,
 					       "densityOutput");
 
   }

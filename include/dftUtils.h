@@ -87,6 +87,7 @@ namespace dftfe {
 					     const MPI_Comm & intrapoolcomm,
 					     const MPI_Comm & interpoolcomm,
 					     const MPI_Comm &interBandGroupComm,
+					     const std::string & folderName,
 					     const std::string & fileName);
 
       /** @brief Create index vector which is used for band parallelization

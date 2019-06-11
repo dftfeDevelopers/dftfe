@@ -179,6 +179,7 @@ void dftClass<FEOrder>::compute_ldos(const std::vector<std::vector<double>> & ei
   FEValues<3> fe_values (dofHandler.get_fe(), quadrature_formula, update_values|update_JxW_values);
   const unsigned int dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
   const unsigned int n_q_points    = quadrature_formula.size();
+  std::vector<double> tempQuadPointValuesSquare(n_q_points);
   std::vector<double> tempQuadPointValues(n_q_points);
 
   std::vector<vectorType> tempVec(1);
@@ -214,16 +215,28 @@ void dftClass<FEOrder>::compute_ldos(const std::vector<std::vector<double>> & ei
 
 		       for(unsigned int q_point = 0; q_point < n_q_points; ++q_point)
 			 {
-			   double weightWaveFunction = tempQuadPointValues[q_point]*tempQuadPointValues[q_point];
-			   for(unsigned int epsInt = 0; epsInt < numberIntervals; ++epsInt)
+			   tempQuadPointValuesSquare[q_point] = tempQuadPointValues[q_point]*tempQuadPointValues[q_point];
+			 }
+
+
+		       //for(unsigned int q_point = 0; q_point < n_q_points; ++q_point)
+		       for(unsigned int epsInt = 0; epsInt < numberIntervals; ++epsInt)
+			 {
+			   //double weightWaveFunction = tempQuadPointValues[q_point]*tempQuadPointValues[q_point];
+			   //for(unsigned int epsInt = 0; epsInt < numberIntervals; ++epsInt)
+			   double epsValue = lowerBoundEpsilon+epsInt*intervalSize;
+			   double term1 = (epsValue - eigenValuesInput[0][spinType*d_numEigenValues + iWave]);
+			   double smearedEnergyLevel = (sigma/M_PI)*(1.0/(term1*term1+sigma*sigma));
+
+			   for(unsigned int q_point = 0; q_point < n_q_points; ++q_point)
 			     {
-			       double epsValue = lowerBoundEpsilon+epsInt*intervalSize;
-			       double term1 = (epsValue - eigenValuesInput[0][spinType*d_numEigenValues + iWave]);
-			       double smearedEnergyLevel = (sigma/M_PI)*(1.0/(term1*term1+sigma*sigma));
+			       //double epsValue = lowerBoundEpsilon+epsInt*intervalSize;
+			       //double term1 = (epsValue - eigenValuesInput[0][spinType*d_numEigenValues + iWave]);
+			       //double smearedEnergyLevel = (sigma/M_PI)*(1.0/(term1*term1+sigma*sigma));
 			       if(spinType == 0)
-				 localDensityOfStatesUp[numberIntervals*globalAtomId + epsInt] += weightWaveFunction*smearedEnergyLevel*fe_values.JxW(q_point);
+				 localDensityOfStatesUp[numberIntervals*globalAtomId + epsInt] += tempQuadPointValuesSquare[q_point]*smearedEnergyLevel*fe_values.JxW(q_point);
 			       else
-				 localDensityOfStatesDown[numberIntervals*globalAtomId + epsInt] += weightWaveFunction*smearedEnergyLevel*fe_values.JxW(q_point);
+				 localDensityOfStatesDown[numberIntervals*globalAtomId + epsInt] += tempQuadPointValuesSquare[q_point]*smearedEnergyLevel*fe_values.JxW(q_point);
 			     }
 			 }
 		     }
@@ -266,13 +279,22 @@ void dftClass<FEOrder>::compute_ldos(const std::vector<std::vector<double>> & ei
 
 		  for(unsigned int q_point = 0; q_point < n_q_points; ++q_point)
 		    {
-		      double weightWaveFunction = tempQuadPointValues[q_point]*tempQuadPointValues[q_point];
-		      for(unsigned int epsInt = 0; epsInt < numberIntervals; ++epsInt)
+		      tempQuadPointValuesSquare[q_point] = tempQuadPointValues[q_point]*tempQuadPointValues[q_point];
+		    }
+
+
+		  //for(unsigned int q_point = 0; q_point < n_q_points; ++q_point)
+
+		  for(unsigned int epsInt = 0; epsInt < numberIntervals; ++epsInt)
+		    {
+		      // double weightWaveFunction = tempQuadPointValues[q_point]*tempQuadPointValues[q_point];
+		      //for(unsigned int epsInt = 0; epsInt < numberIntervals; ++epsInt)
+		      double epsValue = lowerBoundEpsilon+epsInt*intervalSize;
+		      double term1 = (epsValue - eigenValuesInput[0][iWave]);
+		      double smearedEnergyLevel = (sigma/M_PI)*(1.0/(term1*term1+sigma*sigma));
+		      for(unsigned int q_point = 0; q_point < n_q_points; ++q_point)
 			{
-			  double epsValue = lowerBoundEpsilon+epsInt*intervalSize;
-			  double term1 = (epsValue - eigenValuesInput[0][iWave]);
-			  double smearedEnergyLevel = (sigma/M_PI)*(1.0/(term1*term1+sigma*sigma));
-			  localDensityOfStates[numberIntervals*globalAtomId + epsInt] += 2.0*weightWaveFunction*smearedEnergyLevel*fe_values.JxW(q_point);
+			  localDensityOfStates[numberIntervals*globalAtomId + epsInt] += 2.0*tempQuadPointValuesSquare[q_point]*smearedEnergyLevel*fe_values.JxW(q_point);
 			}
 		    }
 		}
