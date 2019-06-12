@@ -49,7 +49,7 @@ subsection SCF parameters
   subsection Eigen-solver parameters
       set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 20
       set ORTHOGONALIZATION TYPE=GS
-      set CHEBYSHEV POLYNOMIAL DEGREE = 0
+      set CHEBYSHEV POLYNOMIAL DEGREE = 80
       set CHEBYSHEV FILTER TOLERANCE=1e-3
   end
 end

@@ -76,7 +76,7 @@ subsection SCF parameters
   subsection Eigen-solver parameters
       set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 72
       set LOWER BOUND WANTED SPECTRUM = -70.0
-      set CHEBYSHEV POLYNOMIAL DEGREE = 0
+      set CHEBYSHEV POLYNOMIAL DEGREE = 30
       set CHEBYSHEV FILTER TOLERANCE=1e-3
       set ORTHOGONALIZATION TYPE=LW
   end
