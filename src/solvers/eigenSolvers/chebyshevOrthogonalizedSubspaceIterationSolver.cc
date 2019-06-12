@@ -29,15 +29,17 @@ namespace dftfe{
       {
 	unsigned int chebyshevOrder;
 	if(upperBoundUnwantedSpectrum <= 500)
-	  chebyshevOrder = 30;
+	  chebyshevOrder = 25;
 	else if(upperBoundUnwantedSpectrum > 500  && upperBoundUnwantedSpectrum <= 1000)
-	  chebyshevOrder = 40;
+	  chebyshevOrder = 35;
 	else if(upperBoundUnwantedSpectrum > 1000 && upperBoundUnwantedSpectrum <= 2000)
-	  chebyshevOrder = 60;
+	  chebyshevOrder = 45;
 	else if(upperBoundUnwantedSpectrum > 2000 && upperBoundUnwantedSpectrum <= 3000)
+	  chebyshevOrder = 60;
+	else if(upperBoundUnwantedSpectrum > 3000 && upperBoundUnwantedSpectrum <= 4000)
 	  chebyshevOrder = 70;
-	else if(upperBoundUnwantedSpectrum > 3000 && upperBoundUnwantedSpectrum <= 5000)
-	  chebyshevOrder = 80;
+        else if(upperBoundUnwantedSpectrum > 4000 && upperBoundUnwantedSpectrum <= 5000)
+          chebyshevOrder = 80;
 	else if(upperBoundUnwantedSpectrum > 5000 && upperBoundUnwantedSpectrum <= 9000)
 	  chebyshevOrder = 90;
 	else if(upperBoundUnwantedSpectrum > 9000 && upperBoundUnwantedSpectrum <= 14000)

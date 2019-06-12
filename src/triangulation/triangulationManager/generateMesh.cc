@@ -295,6 +295,15 @@ namespace dftfe {
 	  if(inOuterAtomBall && currentMeshSize > dftParameters::meshSizeOuterBall)
 	    cellRefineFlag = true;
 
+          bool inInnerAtomBall = false;
+
+	  if(distanceToClosestAtom <= dftParameters::innerAtomBallRadius)
+	      inInnerAtomBall = true;
+
+          if(inInnerAtomBall && currentMeshSize > dftParameters::meshSizeInnerBall)
+	     cellRefineFlag = true;
+
+
 	  MappingQ1<3,3> mapping;
 	  try
 	    {

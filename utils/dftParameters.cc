@@ -38,7 +38,7 @@ namespace dftParameters
   bool isPseudopotential=false,periodicX=false,periodicY=false,periodicZ=false, useSymm=false, timeReversal=false,pseudoTestsFlag=false, constraintMagnetization=false;
   std::string meshFileName="",coordinatesFile="",domainBoundingVectorsFile="",kPointDataFile="", ionRelaxFlagsFile="",orthogType="",pseudoPotentialFile="";
 
-  double outerAtomBallRadius=2.0, meshSizeOuterDomain=10.0;
+  double outerAtomBallRadius=2.0, innerAtomBallRadius=0.0, meshSizeOuterDomain=10.0;
   double meshSizeInnerBall=1.0, meshSizeOuterBall=1.0;
   unsigned int numLevels = 1,numberWaveFunctionsForEstimate = 5;
   double topfrac = 0.1;
@@ -88,6 +88,7 @@ namespace dftParameters
   bool createConstraintsFromSerialDofhandler=true;
   bool bandParalOpt=true;
   bool rrGEP=false;
+  bool autoUserMeshParams=false;
 
   void declare_parameters(ParameterHandler &prm)
   {
@@ -267,6 +268,11 @@ namespace dftParameters
 			  Patterns::Double(0,20),
 			  "[Advanced] Radius of ball enclosing every atom, inside which the mesh size is set close to MESH SIZE AROUND ATOM. The default value of 2.0 is good enough for most cases. On rare cases, where the nonlocal pseudopotential projectors have a compact support beyond 2.0, a slightly larger ATOM BALL RADIUS between 2.0 to 2.5 may be required. Standard users do not need to tune this parameter. Units: a.u.");
 
+        prm.declare_entry("INNER ATOM BALL RADIUS","0.0",
+			   Patterns::Double(0,20),
+			  "[Advanced] Radius of ball enclosing every atom, inside which the mesh size is set close to MESH SIZE AT ATOM. Standard users do not need to tune this parameter. Units: a.u.");
+
+
 	prm.declare_entry("MESH SIZE AROUND ATOM", "0.8",
 			  Patterns::Double(0.0001,10),
 			  "[Standard] Mesh size in a ball of radius ATOM BALL RADIUS around every atom. For pseudopotential calculations, a value between 0.5 to 1.0 is usually a good choice. For all-electron calculations, a value between 0.1 to 0.3 would be a good starting choice. In most cases, MESH SIZE AROUND ATOM is the only parameter to be tuned to achieve the desired accuracy in energy and forces with respect to the mesh refinement. Units: a.u.");
@@ -278,6 +284,11 @@ namespace dftParameters
 	prm.declare_entry("MESH ADAPTION","false",
 			  Patterns::Bool(),
 			  "[Standard] Generates adaptive mesh based on a-posteriori mesh adaption strategy using single atom wavefunctions before computing the ground-state. Default: false.");
+
+        prm.declare_entry("AUTO USER MESH PARAMS","false",
+			   Patterns::Bool(),
+			   "[Standard] Except MESH SIZE AROUND ATOM, all other user defined mesh parameters are heuristically set. Default: false.");
+
 
 	prm.declare_entry("TOP FRAC", "0.1",
 			  Patterns::Double(0.0,1),
@@ -600,10 +611,12 @@ namespace dftParameters
 	prm.enter_subsection ("Auto mesh generation parameters");
 	{
 	    dftParameters::outerAtomBallRadius           = prm.get_double("ATOM BALL RADIUS");
+	    dftParameters::innerAtomBallRadius           = prm.get_double("INNER ATOM BALL RADIUS");
 	    dftParameters::meshSizeOuterDomain           = prm.get_double("BASE MESH SIZE");
 	    dftParameters::meshSizeInnerBall             = prm.get_double("MESH SIZE AT ATOM");
 	    dftParameters::meshSizeOuterBall             = prm.get_double("MESH SIZE AROUND ATOM");
 	    dftParameters::meshAdaption                  = prm.get_bool("MESH ADAPTION");
+	    dftParameters::autoUserMeshParams            = prm.get_bool("AUTO USER MESH PARAMS");
 	    dftParameters::topfrac                       = prm.get_double("TOP FRAC");
             dftParameters::numLevels                     = prm.get_double("NUM LEVELS");
 	    dftParameters::numberWaveFunctionsForEstimate = prm.get_integer("ERROR ESTIMATE WAVEFUNCTIONS");
@@ -835,6 +848,27 @@ namespace dftParameters
 	   dftParameters::meshSizeInnerBall=dftParameters::meshSizeOuterBall;
        else
 	   dftParameters::meshSizeInnerBall=0.1*dftParameters::meshSizeOuterBall;
+
+    if (dftParameters::autoUserMeshParams)
+    {
+       dftParameters::meshSizeOuterDomain=std::pow(2,std::ceil(log2(4.0/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;
+
+       if (dftParameters::isPseudopotential)
+       {
+	  if (dftParameters::meshSizeOuterBall>0.4)
+	  {
+            dftParameters::meshSizeInnerBall=dftParameters::meshSizeOuterBall*0.5;
+	    dftParameters::innerAtomBallRadius=0.5;
+	  }
+
+	  if (dftParameters::meshSizeOuterBall<0.4)
+            dftParameters::innerAtomBallRadius=1.8;		  
+       }
+       else
+       {
+          dftParameters::innerAtomBallRadius=0.1;
+       }
+    }
 
     if (dftParameters::isPseudopotential && dftParameters::orthogType=="Auto")
     {
