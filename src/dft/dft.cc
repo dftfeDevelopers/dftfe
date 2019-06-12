@@ -35,16 +35,21 @@
 #include <complex>
 #include <cmath>
 #include <algorithm>
-#include "linalg.h"
-#include "stdafx.h"
-#include <fstream>
-#include <boost/math/special_functions/spherical_harmonic.hpp>
-#include <boost/math/distributions/normal.hpp>
-#include <boost/random/normal_distribution.hpp>
+#include <linalg.h>
 #include <interpolateFieldsFromPreviousMesh.h>
 #include <linearAlgebraOperations.h>
 #include <vectorUtilities.h>
 #include <pseudoConverter.h>
+#include <stdafx.h>
+#include <boost/math/special_functions/spherical_harmonic.hpp>
+#include <boost/math/distributions/normal.hpp>
+#include <boost/random/normal_distribution.hpp>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <iomanip>
+#include <limits>
+#include <sys/stat.h>
 #ifdef DFTFE_WITH_ELPA
 extern "C"
 {
@@ -64,6 +69,7 @@ namespace dftfe {
 #include "initPseudo.cc"
 #include "initPseudo-OV.cc"
 #include "initRho.cc"
+#include "dos.cc"
 #include "publicMethods.cc"
 #include "generateImageCharges.cc"
 #include "psiInitialGuess.cc"
@@ -797,6 +803,16 @@ namespace dftfe {
 	AssertThrow(false,ExcMessage("CELL OPT cannot be set to true for fully non-periodic domain."));
 #endif
       }
+
+    if(dftParameters::writeDosFile)
+      compute_tdos(eigenValues,
+		   "dosData.out");
+
+    if(dftParameters::writeLdosFile)
+      compute_ldos(eigenValues,
+		   "ldosData.out");
+
+
   }
 
   //
@@ -1215,11 +1231,11 @@ namespace dftfe {
 	    //
 	    //fermi energy
 	    //
-	   if (dftParameters::constraintMagnetization)
-	           compute_fermienergy_constraintMagnetization(eigenValues) ;
-	   else
-	            compute_fermienergy(eigenValues,
-		                    numElectrons);
+	    if (dftParameters::constraintMagnetization)
+	      compute_fermienergy_constraintMagnetization(eigenValues) ;
+	    else
+	      compute_fermienergy(eigenValues,
+				  numElectrons);
 
 	    //
 	    //maximum of the residual norm of the state closest to and below the Fermi level among all k points
@@ -1416,7 +1432,7 @@ namespace dftfe {
 	//
 	scfIter++;
 
-	if (dftParameters::chkType==2)
+	if (dftParameters::chkType==2 && scfIter%10 == 0)
 	  saveTriaInfoAndRhoData();
       }
 
@@ -1538,6 +1554,9 @@ namespace dftfe {
 		               interBandGroupComm);
 #endif
 
+    //
+    //move this to a common routine
+    //
     if(dftParameters::isIonForce || dftParameters::isCellStress)
     {
 	dealii::QGauss<3> quadrature(C_num1DQuad<FEOrder>());
@@ -1740,42 +1759,112 @@ namespace dftfe {
   template <unsigned int FEOrder>
   void dftClass<FEOrder>::outputWfc()
   {
+
+    //
+    //identify the index which is close to Fermi Energy
+    //
+    int indexFermiEnergy = -1.0;
+    for(int spinType = 0; spinType < 1+dftParameters::spinPolarized; ++spinType)
+      {
+	for(int i = 0; i < d_numEigenValues; ++i)
+	  {
+	    if(eigenValues[0][spinType*d_numEigenValues + i] >= fermiEnergy)
+	      {
+		if(i > indexFermiEnergy)
+		  {
+		    indexFermiEnergy = i;
+		    break;
+		  }
+	      }
+	  }
+      }
+
+    //
+    //create a range of wavefunctions to output the wavefunction files
+    //
+    int startingRange = indexFermiEnergy - 4;
+    int endingRange = indexFermiEnergy + 4;
+
+    int startingRangeSpin = startingRange;
+
+    for(int spinType = 0; spinType < 1+dftParameters::spinPolarized; ++spinType)
+      {
+        for(int i = indexFermiEnergy-5; i > 0; --i)
+          {
+            if(std::abs(eigenValues[0][spinType*d_numEigenValues + (indexFermiEnergy-4)] - eigenValues[0][spinType*d_numEigenValues + i]) <= 5e-04)
+              {
+                if(spinType == 0)
+                  startingRange -= 1;
+                else
+                  startingRangeSpin -= 1;
+              }
+
+          }
+      }
+
+    
+    if(startingRangeSpin < startingRange)
+      startingRange = startingRangeSpin;
+
+    int numStatesOutput = (endingRange - startingRange) + 1;
+
+
     DataOut<3> data_outEigen;
-    data_outEigen.attach_dof_handler (dofHandlerEigen);
+    data_outEigen.attach_dof_handler(dofHandlerEigen);
+
     std::vector<vectorType> tempVec(1);
     tempVec[0].reinit(d_tempEigenVec);
-    for (unsigned int s=0; s<1+dftParameters::spinPolarized; ++s)
-      for (unsigned int k=0; k<d_kPointWeights.size(); ++k)
-	for(unsigned int i=0; i<d_numEigenValues; ++i)
+
+    std::vector<vectorType> visualizeWaveFunctions(d_kPointWeights.size()*(1+dftParameters::spinPolarized)*numStatesOutput);
+    
+    unsigned int count = 0;
+    for(unsigned int s = 0; s < 1+dftParameters::spinPolarized; ++s)
+      for(unsigned int k = 0; k < d_kPointWeights.size(); ++k)
+	for(unsigned int i = startingRange; i < endingRange; ++i)
 	  {
+
 #ifdef USE_COMPLEX
-	    vectorTools::copyFlattenedDealiiVecToSingleCompVec
-		     (d_eigenVectorsFlattened[k*(1+dftParameters::spinPolarized)+s],
-		      d_numEigenValues,
-		      std::make_pair(i,i+1),
-		      localProc_dof_indicesReal,
-		      localProc_dof_indicesImag,
-		      tempVec);
+	    vectorTools::copyFlattenedSTLVecToSingleCompVec(d_eigenVectorsFlattenedSTL[k*(1+dftParameters::spinPolarized)+s],
+							    d_numEigenValues,
+							    std::make_pair(i,i+1),
+							    localProc_dof_indicesReal,
+							    localProc_dof_indicesImag,
+							    tempVec);
 #else
-	    vectorTools::copyFlattenedDealiiVecToSingleCompVec
-		     (d_eigenVectorsFlattened[k*(1+dftParameters::spinPolarized)+s],
-		      d_numEigenValues,
-		      std::make_pair(i,i+1),
-		      tempVec);
+	    vectorTools::copyFlattenedSTLVecToSingleCompVec(d_eigenVectorsFlattenedSTL[k*(1+dftParameters::spinPolarized)+s],
+							    d_numEigenValues,
+							    std::make_pair(i,i+1),
+							    tempVec);
 #endif
+
+	    constraintsNoneEigenDataInfo.distribute(tempVec[0]);
+	    visualizeWaveFunctions[count] = tempVec[0];
+
 	    if (dftParameters::spinPolarized==1)
-	      data_outEigen.add_data_vector (d_tempEigenVec,"wfc_"+std::to_string(s)+"_"+std::to_string(k)+"_"+std::to_string(i));
+	      data_outEigen.add_data_vector(visualizeWaveFunctions[count],"wfc_spin"+std::to_string(s)+"_kpoint"+std::to_string(k)+"_"+std::to_string(i));
 	    else
-	      data_outEigen.add_data_vector (d_tempEigenVec,"wfc_"+std::to_string(k)+"_"+std::to_string(i));
+	      data_outEigen.add_data_vector(visualizeWaveFunctions[count],"wfc_kpoint"+std::to_string(k)+"_"+std::to_string(i));
+
+	    count += 1;
+
+	   
 	  }
 
-    data_outEigen.build_patches (C_num1DQuad<FEOrder>());
+    data_outEigen.build_patches(FEOrder);
 
-    dftUtils::writeDataVTUParallelLowestPoolId(data_outEigen,
+    std::string tempFolder = "waveFunctionOutputFolder";
+    mkdir(tempFolder.c_str(),ACCESSPERMS);
+
+    dftUtils::writeDataVTUParallelLowestPoolId(dofHandlerEigen,
+					       data_outEigen,
 					       mpi_communicator,
 					       interpoolcomm,
 					       interBandGroupComm,
+					       tempFolder,
 					       "wfcOutput");
+    //"wfcOutput_"+std::to_string(k)+"_"+std::to_string(i));
+    
+    
   }
 
 
@@ -1849,11 +1938,17 @@ namespace dftfe {
       dataOutRho.add_data_vector(rhoNodalFieldSpin0, std::string("density_0"));
       dataOutRho.add_data_vector(rhoNodalFieldSpin1, std::string("density_1"));
     }
-    dataOutRho.build_patches(C_num1DQuad<FEOrder>());
-    dftUtils::writeDataVTUParallelLowestPoolId(dataOutRho,
+    dataOutRho.build_patches(FEOrder);
+
+    std::string tempFolder = "densityOutputFolder";
+    mkdir(tempFolder.c_str(),ACCESSPERMS);
+    
+    dftUtils::writeDataVTUParallelLowestPoolId(dofHandler,
+					       dataOutRho,
 					       mpi_communicator,
 					       interpoolcomm,
 					       interBandGroupComm,
+					       tempFolder,
 					       "densityOutput");
 
   }

@@ -82,10 +82,12 @@ namespace dftfe {
        *  @param  interBandGroupComm  mpi communicator across band groups
        *  @param  fileName
        */
-       void writeDataVTUParallelLowestPoolId(const dealii::DataOut<3> & dataOut,
+       void writeDataVTUParallelLowestPoolId(const dealii::DoFHandler<3> & dofHandler,
+					     const dealii::DataOut<3> & dataOut,
 					     const MPI_Comm & intrapoolcomm,
 					     const MPI_Comm & interpoolcomm,
 					     const MPI_Comm &interBandGroupComm,
+					     const std::string & folderName,
 					     const std::string & fileName);
 
       /** @brief Create index vector which is used for band parallelization
