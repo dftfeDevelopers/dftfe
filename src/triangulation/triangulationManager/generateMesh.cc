@@ -94,7 +94,7 @@ namespace dftfe {
     {
 
       typename dealii::DoFHandler<3>::active_cell_iterator cell, endc;
-      cell = dofHandler.begin_active(); 
+      cell = dofHandler.begin_active();
       endc = dofHandler.end();
 
       errorInEachCell.clear();
@@ -137,7 +137,7 @@ namespace dftfe {
 				}
 			    }
 			}
-		    
+
 		      derPsiSquare += sum*fe_values.JxW(q_point);
 		    }//q_point
 		}//iwave
@@ -295,6 +295,25 @@ namespace dftfe {
 	  if(inOuterAtomBall && currentMeshSize > dftParameters::meshSizeOuterBall)
 	    cellRefineFlag = true;
 
+          bool inInnerAtomBall = false;
+
+	  if(distanceToClosestAtom <= dftParameters::innerAtomBallRadius)
+	      inInnerAtomBall = true;
+
+          if(inInnerAtomBall && currentMeshSize > dftParameters::meshSizeInnerBall)
+	     cellRefineFlag = true;
+
+	  if (!dftParameters::reproducible_output)
+	  {
+             bool inBiggerAtomBall = false;
+
+	     if(distanceToClosestAtom <= 16.0)
+	        inBiggerAtomBall = true;
+
+             if(inBiggerAtomBall && currentMeshSize > 4.0)
+	        cellRefineFlag = true;
+	  }
+
 	  MappingQ1<3,3> mapping;
 	  try
 	    {
@@ -353,7 +372,7 @@ namespace dftfe {
 							  const unsigned int FEOrder,
 							  const bool generateElectrostaticsTria)
   {
-    
+
     double topfrac = dftParameters::topfrac;
     double bottomfrac = 0.0;
 
@@ -376,7 +395,7 @@ namespace dftfe {
     //
     //fill in the errors corresponding to each cell
     //
-    
+
     internal::computeLocalFiniteElementError(dofHandler,
 					     eigenVectorsArrayOfPtrsIn,
 					     errorInEachCell,
@@ -485,7 +504,7 @@ namespace dftfe {
       }
 
   }
-						  
+
   //
   //generate adaptive mesh
   //
