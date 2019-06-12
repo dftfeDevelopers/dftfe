@@ -1787,11 +1787,6 @@ namespace dftfe {
 
     int startingRangeSpin = startingRange;
 
-    int startingRange = indexFermiEnergy - 4;
-    int endingRange = indexFermiEnergy + 4;
-
-    int startingRangeSpin = startingRange;
-
     for(int spinType = 0; spinType < 1+dftParameters::spinPolarized; ++spinType)
       {
         for(int i = indexFermiEnergy-5; i > 0; --i)
