@@ -727,7 +727,7 @@ namespace dftParameters
 
     if (dftParameters::useMixedPrecAll)
     {
-       dftParameters::useMixedPrecPGS_O=true;	  
+       dftParameters::useMixedPrecPGS_O=true;
        dftParameters::useMixedPrecPGS_SR=true;
        dftParameters::useMixedPrecXTHXSpectrumSplit=true;
     }
@@ -869,7 +869,10 @@ namespace dftParameters
 
     if (dftParameters::autoUserMeshParams)
     {
-       dftParameters::meshSizeOuterDomain=std::pow(2,std::ceil(log2(4.0/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;
+       if (dftParameters::periodicX ||dftParameters::periodicY ||dftParameters::periodicZ)
+          dftParameters::meshSizeOuterDomain=std::pow(2,std::ceil(log2(4.0/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;
+       else
+          dftParameters::meshSizeOuterDomain=std::pow(2,std::ceil(log2(12.0/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;
 
        if (dftParameters::isPseudopotential)
        {
@@ -880,7 +883,7 @@ namespace dftParameters
 	  }
 
 	  if (dftParameters::meshSizeOuterBall<0.4)
-            dftParameters::innerAtomBallRadius=1.8;		  
+            dftParameters::innerAtomBallRadius=1.8;
        }
        else
        {
@@ -906,7 +909,7 @@ namespace dftParameters
     if (!(dftParameters::periodicX ||dftParameters::periodicY ||dftParameters::periodicZ)
         &&!dftParameters::reproducible_output)
     {
-        dftParameters::constraintsParallelCheck=false;	   
+        dftParameters::constraintsParallelCheck=false;
 	dftParameters::createConstraintsFromSerialDofhandler=false;
     }
 
