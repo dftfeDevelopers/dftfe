@@ -89,6 +89,7 @@ namespace dftParameters
   bool bandParalOpt=true;
   bool rrGEP=false;
   bool autoUserMeshParams=false;
+  bool useMixedPrecAll=false;
 
   void declare_parameters(ParameterHandler &prm)
   {
@@ -460,7 +461,7 @@ namespace dftParameters
 			      Patterns::Double(0,1),
 			      "[Developer] The value of the fraction of the upper bound of the unwanted spectrum, the lower bound of the unwanted spectrum will be set. Default value is 0.");
 
-	    prm.declare_entry("CHEBYSHEV FILTER TOLERANCE","1e-02",
+	    prm.declare_entry("CHEBYSHEV FILTER TOLERANCE","2e-02",
 			      Patterns::Double(1e-10),
 			      "[Advanced] Parameter specifying the accuracy of the occupied eigenvectors close to the Fermi-energy computed using Chebyshev filtering subspace iteration procedure. Default value is sufficient for most purposes");
 
@@ -521,6 +522,11 @@ namespace dftParameters
 	    prm.declare_entry("USE MIXED PREC RR_SR SPECTRUM SPLIT", "false",
 			      Patterns::Bool(),
 			      "[Advanced] Use mixed precision arithmetic in Rayleigh-Ritz subspace rotation step when SPECTRUM SPLIT CORE EIGENSTATES>0. Currently this optimization is only enabled for the real executable and with ScaLAPACK linking. Default setting is false.");
+
+            prm.declare_entry("USE MIXED PREC ALL", "false",
+			       Patterns::Bool(),
+			       "[Advanced] Use mixed precision arithmetic algorithms in Rayleigh-Ritz and Cholesky orthogonalization. Currently this optimization is only enabled for the real executable and with ScaLAPACK linking. Default setting is false.");
+
 
 	    prm.declare_entry("ADAPTIVE FILTER STATES", "0",
 			      Patterns::Integer(0),
@@ -695,6 +701,7 @@ namespace dftParameters
 	   dftParameters::useMixedPrecPGS_O= prm.get_bool("USE MIXED PREC PGS O");
 	   dftParameters::useMixedPrecXTHXSpectrumSplit= prm.get_bool("USE MIXED PREC XTHX SPECTRUM SPLIT");
 	   dftParameters::useMixedPrecSubspaceRotSpectrumSplit= prm.get_bool("USE MIXED PREC RR_SR SPECTRUM SPLIT");
+	   dftParameters::useMixedPrecAll= prm.get_bool("USE MIXED PREC ALL");
 	   dftParameters::numAdaptiveFilterStates= prm.get_integer("ADAPTIVE FILTER STATES");
 	}
 	prm.leave_subsection ();
@@ -718,8 +725,19 @@ namespace dftParameters
         dftParameters::domainBoundingVectorsFile="domainBoundingVectors.chk";
     }
 
+    if (dftParameters::useMixedPrecAll)
+    {
+       dftParameters::useMixedPrecPGS_O=true;	  
+       dftParameters::useMixedPrecPGS_SR=true;
+       dftParameters::useMixedPrecXTHXSpectrumSplit=true;
+    }
 #ifdef USE_COMPLEX
     dftParameters::rrGEP=false;
+#endif
+
+#ifdef DFTFE_WITH_ELPA
+    if (!dftParameters::reproducible_output)
+      dftParameters::useELPA=true;
 #endif
 
   //
@@ -855,7 +873,7 @@ namespace dftParameters
 
        if (dftParameters::isPseudopotential)
        {
-	  if (dftParameters::meshSizeOuterBall>0.4)
+	  if (dftParameters::meshSizeOuterBall>0.4 && (dftParameters::isIonForce || dftParameters::isCellStress))
 	  {
             dftParameters::meshSizeInnerBall=dftParameters::meshSizeOuterBall*0.5;
 	    dftParameters::innerAtomBallRadius=0.5;
@@ -866,7 +884,8 @@ namespace dftParameters
        }
        else
        {
-          dftParameters::innerAtomBallRadius=0.1;
+	  if (dftParameters::isIonForce || dftParameters::isCellStress)
+             dftParameters::innerAtomBallRadius=0.1;
        }
     }
 
@@ -882,6 +901,13 @@ namespace dftParameters
 	     std::cout <<"Setting ORTHOGONALIZATION TYPE=GS for all-electron calculations "<<std::endl;
 
 	 dftParameters::orthogType="GS";
+    }
+
+    if (!(dftParameters::periodicX ||dftParameters::periodicY ||dftParameters::periodicZ)
+        &&!dftParameters::reproducible_output)
+    {
+        dftParameters::constraintsParallelCheck=false;	   
+	dftParameters::createConstraintsFromSerialDofhandler=false;
     }
 
   }
