@@ -376,7 +376,7 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
 
       for (unsigned int iatom=0;iatom<totalNumberAtoms;++iatom)
       {
-	  if (iatom==0)    
+	  if (iatom==0)
 	    d_gaussianWeightsVecAtoms[iatom]
 	               = dealii::parallel::distributed::Vector<double>(d_locally_owned_dofsForce,
 									       ghostIndicesForce,
@@ -516,7 +516,7 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
 								       ghostIndicesForceElectro,
 								       mpi_communicator);
 	  else
-            d_gaussianWeightsVecAtoms[iatom].reinit(d_gaussianWeightsVecAtoms[0]);		
+            d_gaussianWeightsVecAtoms[iatom].reinit(d_gaussianWeightsVecAtoms[0]);
 
 	  (d_gaussianWeightsVecAtoms[iatom]) = 0.0;
 	  d_gaussianWeightsVecAtoms[iatom].zero_out_ghosts();
@@ -614,6 +614,15 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
 		MPI_DOUBLE,
 		MPI_SUM,
                 mpi_communicator);
+
+  //Sum over band parallelization
+  MPI_Allreduce(MPI_IN_PLACE,
+		&(d_globalAtomsGaussianForces[0]),
+		numberGlobalAtoms*C_DIM,
+		MPI_DOUBLE,
+		MPI_SUM,
+                dftPtr->interBandGroupComm);
+
 #ifdef USE_COMPLEX
   //Sum all processor contributions and distribute to all processors
   MPI_Allreduce(&(globalAtomsGaussianForcesKPointsLocalPart[0]),
@@ -622,12 +631,26 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
 		MPI_DOUBLE,
 		MPI_SUM,
                 mpi_communicator);
-  //Sum over k point pools and add to total Gaussian force
+  //Sum over band parallelization and k point pools
+  MPI_Allreduce(MPI_IN_PLACE,
+		&(globalAtomsGaussianForcesKPoints[0]),
+		numberGlobalAtoms*C_DIM,
+		MPI_DOUBLE,
+		MPI_SUM,
+                dftPtr->interBandGroupComm);
+
+  MPI_Allreduce(MPI_IN_PLACE,
+		&(globalAtomsGaussianForcesKPoints[0]),
+		numberGlobalAtoms*C_DIM,
+		MPI_DOUBLE,
+		MPI_SUM,
+                dftPtr->interpoolcomm);
+
+  //add to total Gaussian force
   for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
   {
       for (unsigned int idim=0; idim < C_DIM ; idim++)
       {
-          globalAtomsGaussianForcesKPoints[iAtom*C_DIM+idim]= Utilities::MPI::sum(globalAtomsGaussianForcesKPoints[iAtom*C_DIM+idim], dftPtr->interpoolcomm);
           d_globalAtomsGaussianForces[iAtom*C_DIM+idim]+=globalAtomsGaussianForcesKPoints[iAtom*C_DIM+idim];
       }
   }
@@ -649,11 +672,12 @@ void forceClass<FEOrder>::printAtomsForces()
     pcout<< "--------------------------------------------------------------------------------------------"<<std::endl;
     //also find the atom with the maximum absolute force and print that
     double maxForce=-1.0;
+    double sumAbsValForceComp=0;
     unsigned int maxForceAtomId=0;
     for (unsigned int i=0; i< numberGlobalAtoms; i++)
     {
 	if (!dftParameters::reproducible_output)
-	   pcout<< "AtomId "<< std::setw(4) << i << ":  "<< std::scientific<< -d_globalAtomsGaussianForces[3*i]<<","<< -d_globalAtomsGaussianForces[3*i+1]<<","<<-d_globalAtomsGaussianForces[3*i+2]<<std::endl;
+	   pcout<<std::setw(4) <<i<<"     "<< std::scientific<< -d_globalAtomsGaussianForces[3*i]<< "   "<< -d_globalAtomsGaussianForces[3*i+1]<<"   "<<-d_globalAtomsGaussianForces[3*i+2]<<std::endl;
 	else
 	{
 	   std::vector<double> truncatedForce(C_DIM);
@@ -667,6 +691,7 @@ void forceClass<FEOrder>::printAtomsForces()
 	for (unsigned int idim=0; idim< C_DIM; idim++)
         {
 	    absForce+=d_globalAtomsGaussianForces[3*i+idim]*d_globalAtomsGaussianForces[3*i+idim];
+	    sumAbsValForceComp+=std::abs(d_globalAtomsGaussianForces[3*i+idim]);
 	}
 	Assert (absForce>=0., ExcInternalError());
 	absForce=std::sqrt(absForce);
@@ -680,5 +705,8 @@ void forceClass<FEOrder>::printAtomsForces()
     pcout<< "--------------------------------------------------------------------------------------------"<<std::endl;
 
     if (dftParameters::verbosity>=1)
+    {
         pcout<<" Maximum absolute force atom id: "<< maxForceAtomId << ", Force vec: "<< -d_globalAtomsGaussianForces[3*maxForceAtomId]<<","<< -d_globalAtomsGaussianForces[3*maxForceAtomId+1]<<","<<-d_globalAtomsGaussianForces[3*maxForceAtomId+2]<<std::endl;
+	pcout<<" Sum of absolute value of all force components over all atoms: "<<sumAbsValForceComp<<std::endl;
+    }
 }

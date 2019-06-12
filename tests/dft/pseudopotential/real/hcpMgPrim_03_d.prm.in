@@ -80,6 +80,7 @@ subsection SCF parameters
       set WFC BLOCK SIZE=3
       set CHEBY WFC BLOCK SIZE=3
       set SCALAPACKPROCS=2
+      set RR GEP=false
   end
 end
 

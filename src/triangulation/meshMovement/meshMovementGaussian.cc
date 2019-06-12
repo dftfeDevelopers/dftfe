@@ -95,7 +95,9 @@ void meshMovementGaussianClass::computeIncrement()
 	       continue;
 	    }
   	    const double rsq=(nodalCoor-d_controlPointLocations[iControl]).norm_square();
-	    const double gaussianWeight=std::exp(-d_controllingParameter*rsq);
+	    const double gaussianWeight=dftParameters::reproducible_output?
+		                     std::exp(-(rsq)/std::pow(d_controllingParameter,2))
+		                    :std::exp(-(rsq*rsq)/std::pow(d_controllingParameter,4));
 	    for (unsigned int idim=0; idim < C_DIM ; idim++)
 	    {
 	      const unsigned int globalDofIndex=cell->vertex_dof_index(i,idim);

@@ -7,6 +7,9 @@ subsection Geometry
   set NATOM TYPES=1
   set ATOMIC COORDINATES FILE = @SOURCE_DIR@/nitrogenMolecule_coordinates.inp
   set DOMAIN VECTORS FILE = @SOURCE_DIR@/nitrogenMolecule_domainVectors.inp
+  subsection Optimization
+    set ION FORCE=true
+  end
 end
 
 subsection Boundary conditions
@@ -51,5 +54,6 @@ subsection SCF parameters
       set ORTHOGONALIZATION TYPE=PGS
       set CHEBYSHEV POLYNOMIAL DEGREE = 30
       set CHEBYSHEV FILTER TOLERANCE=2e-3
+      set RR GEP=false
   end
 end
