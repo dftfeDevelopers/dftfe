@@ -297,9 +297,9 @@ namespace dftParameters
 			  Patterns::Bool(),
 			  "[Standard] Generates adaptive mesh based on a-posteriori mesh adaption strategy using single atom wavefunctions before computing the ground-state. Default: false.");
 
-        prm.declare_entry("AUTO USER MESH PARAMS","true",
+        prm.declare_entry("AUTO USER MESH PARAMS","false",
 			   Patterns::Bool(),
-			   "[Standard] Except MESH SIZE AROUND ATOM, all other user defined mesh parameters are heuristically set. Default: true.");
+			   "[Standard] Except MESH SIZE AROUND ATOM, all other user defined mesh parameters are heuristically set. Default: false.");
 
 
 	prm.declare_entry("TOP FRAC", "0.1",
@@ -887,20 +887,15 @@ namespace dftParameters
 
     if (dftParameters::autoUserMeshParams && !dftParameters::reproducible_output)
     {
-       if (dftParameters::periodicX ||dftParameters::periodicY ||dftParameters::periodicZ)
-          dftParameters::meshSizeOuterDomain=std::pow(2,std::ceil(log2(4.0/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;
-       else
-          dftParameters::meshSizeOuterDomain=std::pow(2,std::ceil(log2(12.0/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;
-
        if (dftParameters::isPseudopotential)
        {
-	  if (dftParameters::meshSizeOuterBall>0.4 && (dftParameters::isIonForce || dftParameters::isCellStress))
-	  {
-            dftParameters::meshSizeInnerBall=dftParameters::meshSizeOuterBall*0.7;
-	    dftParameters::innerAtomBallRadius=0.5;
-	  }
+	  //if (dftParameters::meshSizeOuterBall>0.45 && (dftParameters::isIonForce || dftParameters::isCellStress))
+	  //{
+          //  dftParameters::meshSizeInnerBall=dftParameters::meshSizeOuterBall*0.5;
+	  //  dftParameters::innerAtomBallRadius=dftParameters::meshSizeOuterBall;
+	  //}
 
-	  if (dftParameters::meshSizeOuterBall<0.4)
+	  if (dftParameters::meshSizeOuterBall<0.5)
             dftParameters::outerAtomBallRadius=1.8;
        }
        else
