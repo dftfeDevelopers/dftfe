@@ -896,7 +896,7 @@ namespace dftParameters
        {
 	  if (dftParameters::meshSizeOuterBall>0.4 && (dftParameters::isIonForce || dftParameters::isCellStress))
 	  {
-            dftParameters::meshSizeInnerBall=dftParameters::meshSizeOuterBall*0.3;
+            dftParameters::meshSizeInnerBall=dftParameters::meshSizeOuterBall*0.7;
 	    dftParameters::innerAtomBallRadius=0.5;
 	  }
 
