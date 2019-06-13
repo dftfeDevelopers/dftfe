@@ -180,9 +180,9 @@ namespace dftfe {
        }
        else
        {
-          baseMeshSize1=std::pow(2,round(log2(std::max(domainBoundingVectorMag1/6.0,12.0)/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;
-          baseMeshSize2=std::pow(2,round(log2(std::max(domainBoundingVectorMag2/6.0,12.0)/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;
-	  baseMeshSize3=std::pow(2,round(log2(std::max(domainBoundingVectorMag3/6.0,12.0)/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;
+          baseMeshSize1=std::pow(2,round(log2(std::min(domainBoundingVectorMag1/8.0,12.0)/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;
+          baseMeshSize2=std::pow(2,round(log2(std::min(domainBoundingVectorMag2/8.0,12.0)/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;
+	  baseMeshSize3=std::pow(2,round(log2(std::min(domainBoundingVectorMag3/8.0,12.0)/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;
        }
 
 	numberIntervalsEachDirection.push_back(domainBoundingVectorMag1/baseMeshSize1);
@@ -315,7 +315,7 @@ namespace dftfe {
 	      if(distanceToClosestAtom <= dftParameters::outerAtomBallRadius)
 		inOuterAtomBall = true;
 
-	      if(inOuterAtomBall && currentMeshSize > 1.2*dftParameters::meshSizeOuterBall)
+	      if(inOuterAtomBall && currentMeshSize > 1.5*dftParameters::meshSizeOuterBall)
 		cellRefineFlag = true;
 
 	      bool inInnerAtomBall = false;
@@ -323,7 +323,7 @@ namespace dftfe {
 	      if(distanceToClosestAtom <= dftParameters::innerAtomBallRadius)
 		  inInnerAtomBall = true;
 
-	      if(inInnerAtomBall && currentMeshSize > 1.2*dftParameters::meshSizeInnerBall)
+	      if(inInnerAtomBall && currentMeshSize > 1.5*dftParameters::meshSizeInnerBall)
 		 cellRefineFlag = true;
 	  }
 	  else
