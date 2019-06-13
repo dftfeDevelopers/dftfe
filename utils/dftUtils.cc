@@ -134,9 +134,6 @@ namespace dftUtils
 	n_mpi_processes = dealii::Utilities::MPI::n_mpi_processes(domainComm);
 	std::string outFileName = folderName + "/" + fileName + "_" + dealii::Utilities::to_string(this_mpi_process)+".vtu";
 	std::ofstream output(outFileName);
-	//output.open(folderName + "/" + fileName + "_" + dealii::Utilities::to_string(this_mpi_process)+".vtu");
-	// = fileName + "_" + dealii::Utilities::to_string(this_mpi_process)+".vtu";
-	//std::ofstream output(outFileName);
 	dataOut.write_vtu(output);
       }
 

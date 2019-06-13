@@ -41,7 +41,7 @@ namespace dftfe {
       extern double lowerEndWantedSpectrum,relLinearSolverTolerance,selfConsistentSolverTolerance,TVal, start_magnetization;
 
       extern bool isPseudopotential, periodicX, periodicY, periodicZ, useSymm, timeReversal,pseudoTestsFlag, constraintMagnetization, writeDosFile, writeLdosFile;
-      extern std::string meshFileName,coordinatesFile,domainBoundingVectorsFile,kPointDataFile, ionRelaxFlagsFile, orthogType,pseudoPotentialFile;
+      extern std::string meshFileName,coordinatesFile,domainBoundingVectorsFile,kPointDataFile, ionRelaxFlagsFile, orthogType, algoType, pseudoPotentialFile;
 
       extern double outerAtomBallRadius, innerAtomBallRadius, meshSizeOuterDomain;
       extern bool autoUserMeshParams;
@@ -95,7 +95,6 @@ namespace dftfe {
       extern bool createConstraintsFromSerialDofhandler;
       extern bool bandParalOpt;
       extern bool rrGEP;
-      extern bool useMixedPrecAll;
 
       /**
        * Declare parameters.

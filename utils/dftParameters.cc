@@ -36,7 +36,7 @@ namespace dftParameters
   std::string mixingMethod = "";
 
   bool isPseudopotential=false,periodicX=false,periodicY=false,periodicZ=false, useSymm=false, timeReversal=false,pseudoTestsFlag=false, constraintMagnetization=false, writeDosFile=false, writeLdosFile=false;
-  std::string meshFileName="",coordinatesFile="",domainBoundingVectorsFile="",kPointDataFile="", ionRelaxFlagsFile="",orthogType="",pseudoPotentialFile="";
+  std::string meshFileName="",coordinatesFile="",domainBoundingVectorsFile="",kPointDataFile="", ionRelaxFlagsFile="",orthogType="", algoType="", pseudoPotentialFile="";
 
   double outerAtomBallRadius=2.0, innerAtomBallRadius=0.0, meshSizeOuterDomain=10.0;
   double meshSizeInnerBall=1.0, meshSizeOuterBall=1.0;
@@ -89,7 +89,6 @@ namespace dftParameters
   bool bandParalOpt=true;
   bool rrGEP=false;
   bool autoUserMeshParams=false;
-  bool useMixedPrecAll=false;
 
   void declare_parameters(ParameterHandler &prm)
   {
@@ -298,9 +297,9 @@ namespace dftParameters
 			  Patterns::Bool(),
 			  "[Standard] Generates adaptive mesh based on a-posteriori mesh adaption strategy using single atom wavefunctions before computing the ground-state. Default: false.");
 
-        prm.declare_entry("AUTO USER MESH PARAMS","false",
+        prm.declare_entry("AUTO USER MESH PARAMS","true",
 			   Patterns::Bool(),
-			   "[Standard] Except MESH SIZE AROUND ATOM, all other user defined mesh parameters are heuristically set. Default: false.");
+			   "[Standard] Except MESH SIZE AROUND ATOM, all other user defined mesh parameters are heuristically set. Default: true.");
 
 
 	prm.declare_entry("TOP FRAC", "0.1",
@@ -447,7 +446,7 @@ namespace dftParameters
 
 	    prm.declare_entry("NUMBER OF KOHN-SHAM WAVEFUNCTIONS", "10",
 			      Patterns::Integer(0),
-			      "[Standard] Number of Kohn-Sham wavefunctions to be computed. For spin-polarized calculations, this parameter denotes the number of Kohn-Sham wavefunctions to be computed for each spin. A recommended value for this parameter is to set it to N/2+Nb where N is the number of electrons. Use Nb to be 10-20 percent of N/2 for insulators and for metals use Nb to be 20 percent of N/2. If 10-20 percent of N/2 is less than 10 wavefunctions, set Nb to be atleast 10.");
+			      "[Standard] Number of Kohn-Sham wavefunctions to be computed. For spin-polarized calculations, this parameter denotes the number of Kohn-Sham wavefunctions to be computed for each spin. A recommended value for this parameter is to set it to N/2+Nb where N is the number of electrons. Use Nb to be 5-10 percent of N/2 for insulators and for metals use Nb to be 10-15 percent of N/2. If 5-15 percent of N/2 is less than 10 wavefunctions, set Nb to be atleast 10.");
 
 	    prm.declare_entry("SPECTRUM SPLIT CORE EIGENSTATES", "0",
 			      Patterns::Integer(0),
@@ -535,9 +534,9 @@ namespace dftParameters
 			      Patterns::Bool(),
 			      "[Advanced] Use mixed precision arithmetic in Rayleigh-Ritz subspace rotation step when SPECTRUM SPLIT CORE EIGENSTATES>0. Currently this optimization is only enabled for the real executable and with ScaLAPACK linking. Default setting is false.");
 
-            prm.declare_entry("USE MIXED PREC ALL", "false",
-			       Patterns::Bool(),
-			       "[Advanced] Use mixed precision arithmetic algorithms in Rayleigh-Ritz and Cholesky orthogonalization. Currently this optimization is only enabled for the real executable and with ScaLAPACK linking. Default setting is false.");
+            prm.declare_entry("ALGO", "NORMAL",
+			       Patterns::Selection("NORMAL|FAST"),
+			       "[Standard] In the FAST mode, spectrum splitting technique is used in Rayleigh-Ritz step, and mixed precision arithmetic algorithms are used in Rayleigh-Ritz and Cholesky factorization based orthogonalization step. For spectrum splitting, 85 percent of the total number of wavefunctions are taken to be core states, which holds good for most systems including metallic systems assuming NUMBER OF KOHN-SHAM WAVEFUNCTIONS to be around 10 percent more than N/2. FAST setting is strongly recommended for large-scale (> 10k electrons) system sizes. Both NORMAL and FAST setting use Chebyshev filtered subspace iteration technique. Currently, FAST setting is only enabled for the real executable and with ScaLAPACK linking. If manual options for mixed precision and spectum splitting are being used, please use NORMAL setting for ALGO. Default setting is NORMAL.");
 
 
 	    prm.declare_entry("ADAPTIVE FILTER STATES", "0",
@@ -719,7 +718,7 @@ namespace dftParameters
 	   dftParameters::useMixedPrecPGS_O= prm.get_bool("USE MIXED PREC PGS O");
 	   dftParameters::useMixedPrecXTHXSpectrumSplit= prm.get_bool("USE MIXED PREC XTHX SPECTRUM SPLIT");
 	   dftParameters::useMixedPrecSubspaceRotSpectrumSplit= prm.get_bool("USE MIXED PREC RR_SR SPECTRUM SPLIT");
-	   dftParameters::useMixedPrecAll= prm.get_bool("USE MIXED PREC ALL");
+	   dftParameters::algoType= prm.get("ALGO");
 	   dftParameters::numAdaptiveFilterStates= prm.get_integer("ADAPTIVE FILTER STATES");
 	}
 	prm.leave_subsection ();
@@ -743,11 +742,12 @@ namespace dftParameters
         dftParameters::domainBoundingVectorsFile="domainBoundingVectors.chk";
     }
 
-    if (dftParameters::useMixedPrecAll)
+    if (dftParameters::algoType=="FAST")
     {
        dftParameters::useMixedPrecPGS_O=true;
        dftParameters::useMixedPrecPGS_SR=true;
        dftParameters::useMixedPrecXTHXSpectrumSplit=true;
+       dftParameters::numCoreWfcRR=0.85*dftParameters::numberEigenValues;
     }
 #ifdef USE_COMPLEX
     dftParameters::rrGEP=false;
@@ -885,7 +885,7 @@ namespace dftParameters
        else
 	   dftParameters::meshSizeInnerBall=0.1*dftParameters::meshSizeOuterBall;
 
-    if (dftParameters::autoUserMeshParams)
+    if (dftParameters::autoUserMeshParams && !dftParameters::reproducible_output)
     {
        if (dftParameters::periodicX ||dftParameters::periodicY ||dftParameters::periodicZ)
           dftParameters::meshSizeOuterDomain=std::pow(2,std::ceil(log2(4.0/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;

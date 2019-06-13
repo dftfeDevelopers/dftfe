@@ -35,16 +35,15 @@
 #include <complex>
 #include <cmath>
 #include <algorithm>
-#include "linalg.h"
-#include "stdafx.h"
-#include <fstream>
-#include <boost/math/special_functions/spherical_harmonic.hpp>
-#include <boost/math/distributions/normal.hpp>
-#include <boost/random/normal_distribution.hpp>
+#include <linalg.h>
 #include <interpolateFieldsFromPreviousMesh.h>
 #include <linearAlgebraOperations.h>
 #include <vectorUtilities.h>
 #include <pseudoConverter.h>
+#include <stdafx.h>
+#include <boost/math/special_functions/spherical_harmonic.hpp>
+#include <boost/math/distributions/normal.hpp>
+#include <boost/random/normal_distribution.hpp>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -807,11 +806,11 @@ namespace dftfe {
 
     if(dftParameters::writeDosFile)
       compute_tdos(eigenValues,
-		   "dosFile");
+		   "dosData.out");
 
     if(dftParameters::writeLdosFile)
       compute_ldos(eigenValues,
-		   "ldosFile");
+		   "ldosData.out");
 
 
   }
@@ -1790,18 +1789,19 @@ namespace dftfe {
 
     for(int spinType = 0; spinType < 1+dftParameters::spinPolarized; ++spinType)
       {
-	for(int i = indexFermiEnergy-4; i > 0; --i)
-	  {
-	    if(std::abs(eigenValues[0][spinType*d_numEigenValues + i] - eigenValues[0][spinType*d_numEigenValues + (i-1)]) <= 1e-03)
-	      {
-		if(spinType == 0)
-		  startingRange -= 1;
-		else
-		  startingRangeSpin -= 1;
-	      }
+        for(int i = indexFermiEnergy-5; i > 0; --i)
+          {
+            if(std::abs(eigenValues[0][spinType*d_numEigenValues + (indexFermiEnergy-4)] - eigenValues[0][spinType*d_numEigenValues + i]) <= 5e-04)
+              {
+                if(spinType == 0)
+                  startingRange -= 1;
+                else
+                  startingRangeSpin -= 1;
+              }
 
-	  }
+          }
       }
+
     
     if(startingRangeSpin < startingRange)
       startingRange = startingRangeSpin;
