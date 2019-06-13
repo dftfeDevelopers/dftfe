@@ -105,22 +105,61 @@ namespace dftUtils
      MPI_Barrier(mpiComm);
   }
 
-  void writeDataVTUParallelLowestPoolId(const dealii::DataOut<3> & dataOut,
-	                                const MPI_Comm & intrapoolcomm,
-				        const MPI_Comm & interpoolcomm,
-					const MPI_Comm &interBandGroupComm,
+  void writeDataVTUParallelLowestPoolId(const dealii::DoFHandler<3> & dofHandler,
+					const dealii::DataOut<3> & dataOut,
+	                                const MPI_Comm & domainComm,
+				        const MPI_Comm & kPointComm,
+					const MPI_Comm & bandGroupComm,
+					const std::string & folderName,
 	                                const std::string & fileName)
   {
-    const unsigned int poolId=dealii::Utilities::MPI::this_mpi_process(interpoolcomm);
-    const unsigned int bandGroupId=dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
-    const unsigned int minPoolId=dealii::Utilities::MPI::min(poolId,interpoolcomm);
-    const unsigned int minBandGroupId=dealii::Utilities::MPI::min(bandGroupId,interBandGroupComm);
+    const unsigned int poolId=dealii::Utilities::MPI::this_mpi_process(kPointComm);
+    const unsigned int bandGroupId=dealii::Utilities::MPI::this_mpi_process(bandGroupComm);
+    const unsigned int minPoolId=dealii::Utilities::MPI::min(poolId,kPointComm);
+    const unsigned int minBandGroupId=dealii::Utilities::MPI::min(bandGroupId,bandGroupComm);
 
-    if (poolId==minPoolId && bandGroupId==minBandGroupId)
-    {
-      std::string fileNameVTU=fileName+".vtu";
-      dataOut.write_vtu_in_parallel(fileNameVTU.c_str(),intrapoolcomm);
-    }
+  
+    unsigned int n_mpi_processes;
+    if(poolId==minPoolId && bandGroupId==minBandGroupId)
+      {
+	/*std::vector<dealii::types::subdomain_id> partition_int(dofHandler.get_triangulation().n_active_cells());
+	dealii::GridTools::get_subdomain_association(dofHandler.get_triangulation(),
+						     partition_int);
+	const Vector<double> partitioning(partition_int.begin(),
+					  partition_int.end());
+	dataOut.add_data_vector(partitioning,"partitioning");
+	dataOut.build_patches();*/
+
+	const unsigned int this_mpi_process = dealii::Utilities::MPI::this_mpi_process(domainComm);
+	n_mpi_processes = dealii::Utilities::MPI::n_mpi_processes(domainComm);
+	std::string outFileName = folderName + "/" + fileName + "_" + dealii::Utilities::to_string(this_mpi_process)+".vtu";
+	std::ofstream output(outFileName);
+	dataOut.write_vtu(output);
+      }
+
+
+    if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+      {
+        std::vector<std::string> filenames;
+        for (unsigned int i = 0; i < n_mpi_processes; ++i)
+          filenames.push_back(fileName + "_" +
+			      dealii::Utilities::to_string(i) + ".vtu");
+        const std::string visit_master_filename =
+          (folderName + "/" + fileName + "_master.visit");
+        std::ofstream visit_master(visit_master_filename.c_str());
+	dealii::DataOutBase::write_visit_record(visit_master, filenames);
+        const std::string pvtu_master_filename =
+          (folderName + "/" + fileName + "_master.pvtu");
+        std::ofstream pvtu_master(pvtu_master_filename.c_str());
+        dataOut.write_pvtu_record(pvtu_master, filenames);
+	/* static std::vector<std::pair<double, std::string>> times_and_names;
+        times_and_names.push_back(
+				  std::pair<double, std::string>(present_time, pvtu_master_filename));
+        std::ofstream pvd_output("solution.pvd");
+	dealii::DataOutBase::write_pvd_record(pvd_output, times_and_names);*/
+      }
+
+
   }
 
   void createBandParallelizationIndices(const MPI_Comm &interBandGroupComm,

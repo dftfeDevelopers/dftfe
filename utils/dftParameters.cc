@@ -35,7 +35,7 @@ namespace dftParameters
   double chebyshevTolerance = 1e-02;
   std::string mixingMethod = "";
 
-  bool isPseudopotential=false,periodicX=false,periodicY=false,periodicZ=false, useSymm=false, timeReversal=false,pseudoTestsFlag=false, constraintMagnetization=false;
+  bool isPseudopotential=false,periodicX=false,periodicY=false,periodicZ=false, useSymm=false, timeReversal=false,pseudoTestsFlag=false, constraintMagnetization=false, writeDosFile=false, writeLdosFile=false;
   std::string meshFileName="",coordinatesFile="",domainBoundingVectorsFile="",kPointDataFile="", ionRelaxFlagsFile="",orthogType="", algoType="", pseudoPotentialFile="";
 
   double outerAtomBallRadius=2.0, innerAtomBallRadius=0.0, meshSizeOuterDomain=10.0;
@@ -109,13 +109,25 @@ namespace dftParameters
                       Patterns::Integer(0,4),
                       "[Standard] Parameter to control verbosity of terminal output. Ranges from 1 for low, 2 for medium (prints some more additional information), 3 for high (prints eigenvalues and fractional occupancies at the end of each self-consistent field iteration), and 4 for very high, which is only meant for code development purposes. VERBOSITY=0 is only used for unit testing and shouldn't be used by standard users.");
 
-    prm.declare_entry("WRITE WFC", "false",
-                      Patterns::Bool(),
-                      "[Standard] Writes DFT ground state wavefunction solution fields (FEM mesh nodal values) to wfcOutput.vtu file for visualization purposes. The wavefunction solution fields in wfcOutput.vtu are named wfc_s_k_i in case of spin-polarized calculations and wfc_k_i otherwise, where s denotes the spin index (0 or 1), k denotes the k point index starting from 0, and i denotes the Kohn-Sham wavefunction index starting from 0. In the case of geometry optimization, the wavefunctions corresponding to the last ground-state solve are written.  Default: false.");
+    prm.enter_subsection ("Postprocessing");
+    {
+      prm.declare_entry("WRITE WFC", "false",
+			Patterns::Bool(),
+			"[Standard] Writes DFT ground state wavefunction solution fields (FEM mesh nodal values) to wfcOutput.vtu file for visualization purposes. The wavefunction solution fields in wfcOutput.vtu are named wfc_s_k_i in case of spin-polarized calculations and wfc_k_i otherwise, where s denotes the spin index (0 or 1), k denotes the k point index starting from 0, and i denotes the Kohn-Sham wavefunction index starting from 0. In the case of geometry optimization, the wavefunctions corresponding to the last ground-state solve are written.  Default: false.");
 
-    prm.declare_entry("WRITE DENSITY", "false",
-                      Patterns::Bool(),
-                      "[Standard] Writes DFT ground state electron-density solution fields (FEM mesh nodal values) to densityOutput.vtu file for visualization purposes. The electron-density solution field in densityOutput.vtu is named density. In case of spin-polarized calculation, two additional solution fields- density_0 and density_1 are also written where 0 and 1 denote the spin indices. In the case of geometry optimization, the electron-density corresponding to the last ground-state solve is written. Default: false.");
+      prm.declare_entry("WRITE DENSITY", "false",
+			Patterns::Bool(),
+			"[Standard] Writes DFT ground state electron-density solution fields (FEM mesh nodal values) to densityOutput.vtu file for visualization purposes. The electron-density solution field in densityOutput.vtu is named density. In case of spin-polarized calculation, two additional solution fields- density_0 and density_1 are also written where 0 and 1 denote the spin indices. In the case of geometry optimization, the electron-density corresponding to the last ground-state solve is written. Default: false.");
+
+      prm.declare_entry("WRITE DENSITY OF STATES", "false",
+			Patterns::Bool(),
+			"[Standard] Computes density of states using Lorentzians. Uses specified Temperature for SCF as the broadening parameter. Outputs a file name 'dosData.out' containing two columns with first column indicating the energy in eV and second column indicating the density of states");
+
+      prm.declare_entry("WRITE LOCAL DENSITY OF STATES", "false",
+			Patterns::Bool(),
+			"[Standard] Computes local density of states on each atom using Lorentzians. Uses specified Temperature for SCF as the broadening parameter. Outputs a file name 'ldosData.out' containing NUMATOM+1 columns with first column indicating the energy in eV and all other NUMATOM columns indicating local density of states for each of the NUMATOM atoms.");
+    }
+    prm.leave_subsection ();
 
     prm.enter_subsection ("Parallelization");
     {
@@ -553,11 +565,17 @@ namespace dftParameters
   {
     dftParameters::verbosity                     = prm.get_integer("VERBOSITY");
     dftParameters::reproducible_output           = prm.get_bool("REPRODUCIBLE OUTPUT");
-    dftParameters::writeWfcSolutionFields           = prm.get_bool("WRITE WFC");
-    dftParameters::writeDensitySolutionFields           = prm.get_bool("WRITE DENSITY");
     dftParameters::electrostaticsHRefinement = prm.get_bool("H REFINED ELECTROSTATICS");
     dftParameters::electrostaticsPRefinement = prm.get_bool("P REFINED ELECTROSTATICS");
 
+    prm.enter_subsection ("Postprocessing");
+    {
+      dftParameters::writeWfcSolutionFields           = prm.get_bool("WRITE WFC");
+      dftParameters::writeDensitySolutionFields       = prm.get_bool("WRITE DENSITY");
+      dftParameters::writeDosFile                     = prm.get_bool("WRITE DENSITY OF STATES");
+      dftParameters::writeLdosFile                     = prm.get_bool("WRITE LOCAL DENSITY OF STATES");
+    }
+    prm.leave_subsection ();
 
     prm.enter_subsection ("Parallelization");
     {

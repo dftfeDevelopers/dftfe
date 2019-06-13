@@ -462,6 +462,16 @@ namespace dftfe {
       void compute_fermienergy_constraintMagnetization(const std::vector<std::vector<double>> & eigenValuesInput);
 
       /**
+       *@brief compute density of states and local density of states
+       */
+      void compute_tdos(const std::vector<std::vector<double> > & eigenValuesInput,
+			const std::string & fileName);
+
+      void compute_ldos(const std::vector<std::vector<double> > & eigenValuesInput,
+			const std::string & fileName);
+      
+
+      /**
        *@brief write wavefunction solution fields
        */
       void outputWfc();
