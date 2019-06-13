@@ -887,11 +887,6 @@ namespace dftParameters
 
     if (dftParameters::autoUserMeshParams && !dftParameters::reproducible_output)
     {
-       if (dftParameters::periodicX ||dftParameters::periodicY ||dftParameters::periodicZ)
-          dftParameters::meshSizeOuterDomain=std::pow(2,std::ceil(log2(4.0/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;
-       else
-          dftParameters::meshSizeOuterDomain=std::pow(2,std::ceil(log2(12.0/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;
-
        if (dftParameters::isPseudopotential)
        {
 	  if (dftParameters::meshSizeOuterBall>0.4 && (dftParameters::isIonForce || dftParameters::isCellStress))

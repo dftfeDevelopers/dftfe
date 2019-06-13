@@ -167,13 +167,34 @@ namespace dftfe {
 
     unsigned int subdivisions[3];subdivisions[0]=1.0;subdivisions[1]=1.0;subdivisions[2]=1.0;
 
-
-
     std::vector<double> numberIntervalsEachDirection;
-    numberIntervalsEachDirection.push_back(domainBoundingVectorMag1/dftParameters::meshSizeOuterDomain);
-    numberIntervalsEachDirection.push_back(domainBoundingVectorMag2/dftParameters::meshSizeOuterDomain);
-    numberIntervalsEachDirection.push_back(domainBoundingVectorMag3/dftParameters::meshSizeOuterDomain);
 
+    if (dftParameters::autoUserMeshParams && !dftParameters::reproducible_output)
+    {
+       double baseMeshSize1, baseMeshSize2, baseMeshSize3;
+       if (dftParameters::periodicX ||dftParameters::periodicY ||dftParameters::periodicZ)
+       {
+          baseMeshSize1=std::pow(2,round(log2(4.0/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;
+	  baseMeshSize2=std::pow(2,round(log2(4.0/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;
+          baseMeshSize3=std::pow(2,round(log2(4.0/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;
+       }
+       else
+       {
+          baseMeshSize1=std::pow(2,round(log2(std::max(domainBoundingVectorMag1/6.0,12.0)/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;
+          baseMeshSize2=std::pow(2,round(log2(std::max(domainBoundingVectorMag2/6.0,12.0)/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;
+	  baseMeshSize3=std::pow(2,round(log2(std::max(domainBoundingVectorMag3/6.0,12.0)/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;
+       }
+
+	numberIntervalsEachDirection.push_back(domainBoundingVectorMag1/baseMeshSize1);
+	numberIntervalsEachDirection.push_back(domainBoundingVectorMag2/baseMeshSize2);
+	numberIntervalsEachDirection.push_back(domainBoundingVectorMag3/baseMeshSize3);
+    }
+    else
+    {
+	numberIntervalsEachDirection.push_back(domainBoundingVectorMag1/dftParameters::meshSizeOuterDomain);
+	numberIntervalsEachDirection.push_back(domainBoundingVectorMag2/dftParameters::meshSizeOuterDomain);
+	numberIntervalsEachDirection.push_back(domainBoundingVectorMag3/dftParameters::meshSizeOuterDomain);
+    }
 
     Point<3> vector1(d_domainBoundingVectors[0][0],d_domainBoundingVectors[0][1],d_domainBoundingVectors[0][2]);
     Point<3> vector2(d_domainBoundingVectors[1][0],d_domainBoundingVectors[1][1],d_domainBoundingVectors[1][2]);
