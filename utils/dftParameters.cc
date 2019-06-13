@@ -889,10 +889,10 @@ namespace dftParameters
     {
        if (dftParameters::isPseudopotential)
        {
-	  if (dftParameters::meshSizeOuterBall>0.4 && (dftParameters::isIonForce || dftParameters::isCellStress))
+	  if (dftParameters::meshSizeOuterBall>0.45 && (dftParameters::isIonForce || dftParameters::isCellStress))
 	  {
             dftParameters::meshSizeInnerBall=dftParameters::meshSizeOuterBall*0.7;
-	    dftParameters::innerAtomBallRadius=0.5;
+	    dftParameters::innerAtomBallRadius=0.9*dftParameters::meshSizeOuterBall;
 	  }
 
 	  if (dftParameters::meshSizeOuterBall<0.4)
