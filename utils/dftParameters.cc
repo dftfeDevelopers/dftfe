@@ -297,9 +297,9 @@ namespace dftParameters
 			  Patterns::Bool(),
 			  "[Standard] Generates adaptive mesh based on a-posteriori mesh adaption strategy using single atom wavefunctions before computing the ground-state. Default: false.");
 
-        prm.declare_entry("AUTO USER MESH PARAMS","true",
+        prm.declare_entry("AUTO USER MESH PARAMS","false",
 			   Patterns::Bool(),
-			   "[Standard] Except MESH SIZE AROUND ATOM, all other user defined mesh parameters are heuristically set. Default: true.");
+			   "[Standard] Except MESH SIZE AROUND ATOM, all other user defined mesh parameters are heuristically set. Default: false.");
 
 
 	prm.declare_entry("TOP FRAC", "0.1",
