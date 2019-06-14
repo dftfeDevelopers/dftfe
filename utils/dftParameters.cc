@@ -881,7 +881,7 @@ namespace dftParameters
 
     if (dftParameters::meshSizeInnerBall<1.0e-6)
        if (dftParameters::isPseudopotential)
-	   dftParameters::meshSizeInnerBall=dftParameters::meshSizeOuterBall;
+	   dftParameters::meshSizeInnerBall=2.0*dftParameters::meshSizeOuterBall;
        else
 	   dftParameters::meshSizeInnerBall=0.1*dftParameters::meshSizeOuterBall;
 

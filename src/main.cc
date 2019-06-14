@@ -49,6 +49,8 @@ int main (int argc, char *argv[])
                          "\n"));
   //
   Utilities::MPI::MPI_InitFinalize mpi_initialization (argc, argv);
+  const double start = MPI_Wtime();
+
   //
   ParameterHandler prm;
   dftfe::dftParameters::declare_parameters (prm);
@@ -234,5 +236,12 @@ int main (int argc, char *argv[])
 
     }
 
+  const double end = MPI_Wtime();
+  if (dftfe::dftParameters::verbosity>=1 && dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)==0)
+  {
+      std::cout<<"============================================================================================="<<std::endl;
+      std::cout << "DFT-FE Program ends. Elapsed wall time since start of the program: " << end-start << " seconds."<<std::endl;
+      std::cout<<"============================================================================================="<<std::endl;
+  }
   return 0;
 }
