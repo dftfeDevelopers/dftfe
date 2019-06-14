@@ -4,7 +4,7 @@ subsection Geometry
   set ATOMIC COORDINATES FILE      = coordinates.inp           
   set DOMAIN VECTORS FILE = domainBoundingVectors.inp
   subsection Optimization
-    set STRESS TOL            = 1e-1
+    set STRESS TOL            = 4e-6
     set CELL OPT              = true
     set CELL CONSTRAINT TYPE  = 1
   end  
@@ -18,7 +18,7 @@ subsection Boundary conditions
 end
 
 subsection Finite element mesh parameters
-  set POLYNOMIAL ORDER=2
+  set POLYNOMIAL ORDER=4
   subsection Auto mesh generation parameters
     set MESH SIZE AROUND ATOM  = 0.5
   end
