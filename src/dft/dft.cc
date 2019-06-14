@@ -812,7 +812,8 @@ namespace dftfe {
       compute_ldos(eigenValues,
 		   "ldosData.out");
 
-
+    if (dftParameters::verbosity>=1)
+	pcout << std::endl<< "------------------DFT-FE ground-state solve completed---------------------------"<<std::endl;
   }
 
   //
@@ -1749,10 +1750,6 @@ namespace dftfe {
 	 kohnShamDFTEigenOperator.elpaDeallocateHandles(d_numEigenValues,
 				             d_numEigenValuesRR);
 #endif
-
-
-    if (dftParameters::verbosity>=1)
-       pcout << std::endl<< "Elapsed wall time since start of the program: " << d_globalTimer.wall_time() << " seconds\n"<<std::endl;
   }
 
   //Output wfc
@@ -1802,7 +1799,7 @@ namespace dftfe {
           }
       }
 
-    
+
     if(startingRangeSpin < startingRange)
       startingRange = startingRangeSpin;
 
@@ -1816,7 +1813,7 @@ namespace dftfe {
     tempVec[0].reinit(d_tempEigenVec);
 
     std::vector<vectorType> visualizeWaveFunctions(d_kPointWeights.size()*(1+dftParameters::spinPolarized)*numStatesOutput);
-    
+
     unsigned int count = 0;
     for(unsigned int s = 0; s < 1+dftParameters::spinPolarized; ++s)
       for(unsigned int k = 0; k < d_kPointWeights.size(); ++k)
@@ -1847,7 +1844,7 @@ namespace dftfe {
 
 	    count += 1;
 
-	   
+
 	  }
 
     data_outEigen.build_patches(FEOrder);
@@ -1863,8 +1860,8 @@ namespace dftfe {
 					       tempFolder,
 					       "wfcOutput");
     //"wfcOutput_"+std::to_string(k)+"_"+std::to_string(i));
-    
-    
+
+
   }
 
 
@@ -1942,7 +1939,7 @@ namespace dftfe {
 
     std::string tempFolder = "densityOutputFolder";
     mkdir(tempFolder.c_str(),ACCESSPERMS);
-    
+
     dftUtils::writeDataVTUParallelLowestPoolId(dofHandler,
 					       dataOutRho,
 					       mpi_communicator,
