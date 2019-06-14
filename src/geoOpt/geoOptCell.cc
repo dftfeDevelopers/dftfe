@@ -213,6 +213,37 @@ void geoOptCell<FEOrder>::run()
        if (cgReturn == nonLinearSolver::SUCCESS )
        {
 	    pcout<< " ...Cell stress relaxation completed as maximum stress magnitude is less than STRESS TOL: "<< dftParameters::stressRelaxTol<<", total number of cell geometry updates: "<<d_totalUpdateCalls<<std::endl;
+
+	    pcout<<"-------------------------------Final Relaxed structure-----------------------------"<<std::endl;
+	    pcout<<"-----------------------------------------------------------------------------------"<<std::endl;
+	    pcout<<"-----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------"<<std::endl;
+	    for(int i = 0; i < dftPtr->d_domainBoundingVectors.size(); ++i)
+	      {
+		pcout<<"v"<< i+1<<" : "<< dftPtr->d_domainBoundingVectors[i][0]<<" "<<dftPtr->d_domainBoundingVectors[i][1]<<" "<<dftPtr->d_domainBoundingVectors[i][2]<<std::endl;
+	      }
+	    pcout<<"-----------------------------------------------------------------------------------------"<<std::endl;
+
+	    if (dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ)
+	      {
+		pcout<<"-----Fractional coordinates of atoms------ "<<std::endl;
+		for(unsigned int i = 0; i < dftPtr->atomLocations.size(); ++i)
+		    pcout<<"AtomId "<<i <<":  "<<dftPtr->atomLocationsFractional[i][2]<<" "<<dftPtr->atomLocationsFractional[i][3]<<" "<<dftPtr->atomLocationsFractional[i][4]<<"\n";
+		pcout<<"-----------------------------------------------------------------------------------------"<<std::endl;
+	      }
+	    else
+	      {
+		//
+		//print cartesian coordinates
+		//
+		pcout<<"------------Cartesian coordinates of atoms (origin at center of domain)------------------"<<std::endl;
+		for(unsigned int i = 0; i < dftPtr->atomLocations.size(); ++i)
+		  {
+		    pcout<<"AtomId "<<i <<":  "<<dftPtr->atomLocations[i][2]<<" "<<dftPtr->atomLocations[i][3]<<" "<<dftPtr->atomLocations[i][4]<<"\n";
+		  }
+		pcout<<"-----------------------------------------------------------------------------------------"<<std::endl;
+	    pcout<<"-----------------------------------------------------------------------------------"<<std::endl;
+	    pcout<<"-----------------------------------------------------------------------------------"<<std::endl;
+	      }
        }
        else if (cgReturn == nonLinearSolver::MAX_ITER_REACHED)
        {
