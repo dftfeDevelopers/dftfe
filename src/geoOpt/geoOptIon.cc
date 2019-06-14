@@ -128,7 +128,7 @@ void geoOptIon<FEOrder>::run()
 
 	    if (dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ)
 	      {
-		pcout<<"-----Fractional coordinates of atoms------ "<<std::endl;
+		pcout<<"-------------------Fractional coordinates of atoms----------------------"<<std::endl;
 		for(unsigned int i = 0; i < dftPtr->atomLocations.size(); ++i)
 		    pcout<<"AtomId "<<i <<":  "<<dftPtr->atomLocationsFractional[i][2]<<" "<<dftPtr->atomLocationsFractional[i][3]<<" "<<dftPtr->atomLocationsFractional[i][4]<<"\n";
 		pcout<<"-----------------------------------------------------------------------------------------"<<std::endl;
@@ -144,9 +144,9 @@ void geoOptIon<FEOrder>::run()
 		    pcout<<"AtomId "<<i <<":  "<<dftPtr->atomLocations[i][2]<<" "<<dftPtr->atomLocations[i][3]<<" "<<dftPtr->atomLocations[i][4]<<"\n";
 		  }
 		pcout<<"-----------------------------------------------------------------------------------------"<<std::endl;
-	    pcout<<"-----------------------------------------------------------------------------------"<<std::endl;
-	    pcout<<"-----------------------------------------------------------------------------------"<<std::endl;
 	      }
+	    pcout<<"-----------------------------------------------------------------------------------"<<std::endl;
+	    pcout<<"-----------------------------------------------------------------------------------"<<std::endl;
        }
        else if (cgReturn == nonLinearSolver::FAILURE)
        {
