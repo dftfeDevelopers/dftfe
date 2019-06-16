@@ -59,3 +59,4 @@ subsection SCF parameters
       set RR GEP=false
   end
 end
+set H REFINED ELECTROSTATICS=false
