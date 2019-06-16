@@ -125,7 +125,7 @@ subsection SCF parameters
   set MIXING PARAMETER = 0.5
   set MAXIMUM ITERATIONS               = 40
   set TEMPERATURE                      = 500
-  set TOLERANCE                        = 1e-5
+  set TOLERANCE                        = 5e-5
   subsection Eigen-solver parameters
       set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 12
   end
@@ -162,19 +162,22 @@ where the \verb|ION FORCE| is set to true inside the nested subsection \verb|Opt
 subsection Finite element mesh parameters
   set POLYNOMIAL ORDER=4
   subsection Auto mesh generation parameters
-    set MESH SIZE AROUND ATOM  = 1.0
+    set AUTO USER MESH PARAMS =true
+    set MESH SIZE AROUND ATOM  = 0.8
   end
 end
 \end{verbatim} 
 and now run the problem using the \verb|/build/release/real/dftfe| executable 
 \begin{verbatim}
- mpirun -n 16 ../../build/release/real/dftfe parameterFile_a.prm > outputMesh1 &
+ mpirun -n 32 ../../build/release/real/dftfe parameterFile_a.prm > outputMesh1 &
 \end{verbatim}
 From the ``outputMesh1'' file, you can obtain information on the number of degrees of freedom in the auto-generated finite-element mesh and the ground-state energy and forces. 
 
-Repeat the above step twice, once with \verb|MESH SIZE AROUND ATOM  = 0.5| and again with\\ \verb|MESH SIZE AROUND ATOM  = 0.25|, each time reducing the previous choice of \verb|MESH SIZE AROUND ATOM| by half. Now run one more time with \verb|POLYNOMIAL ORDER  = 5| while keeping \\ \verb|MESH SIZE AROUND ATOM  = 0.25|. We recommend to run this final simulation with around 64 MPI tasks for faster computational times. The ground-state energy per atom and force on the atomId 0 is tabulated in Table~\ref{tab:table1} for all the above cases. Upon comparing the errors in the energy and force with respect the most refined mesh (\emph{Mesh No. 4}), we observe that for \emph{Mesh No. 3} we obtain convergence in energy per atom to $\mathcal{O}(10^{-7})$ accuracy, and convergence in force to $\mathcal{O}(10^{-5})$ accuracy. For your reference, we have provided the output file for \emph{Mesh No. 3} at \verb|/demo/ex1/ex1_a.output|. \dftfe{} also has the capability to write finite-element meshes with electron-density or wavefunction information to .vtu format which can be visualized using software like ParaView or Visit. As an example, Figure~\ref{fig:N2} shows the finite-element mesh and electron-density contours for \emph{Mesh No. 2}, which are obtained via setting
+Repeat the above step thrice, once with \verb|MESH SIZE AROUND ATOM  = 0.6|, then with\\ \verb|MESH SIZE AROUND ATOM  = 0.5|, and finally with \verb|MESH SIZE AROUND ATOM  = 0.4|. Now run one more time with \verb|POLYNOMIAL ORDER  = 5| while keeping \\ \verb|MESH SIZE AROUND ATOM  = 0.4|. We recommend to run this final simulation with around 64 MPI tasks for faster computational times. The ground-state energy per atom and force on the atomId 0 is tabulated in Table~\ref{tab:table1} for all the above cases. Upon comparing the errors in the energy and force with respect the most refined mesh (\emph{Mesh No. 5}), we observe that for \emph{Mesh No. 3} we obtain convergence in energy per atom to $\mathcal{O}(10^{-5})$ accuracy, and convergence in force to $\mathcal{O}(10^{-5})$ accuracy. For your reference, we have provided the output file for \emph{Mesh No. 3} at \verb|/demo/ex1/ex1_a.output|. \dftfe{} also has the capability to write finite-element meshes with electron-density or wavefunction information to .vtu format which can be visualized using software like ParaView or Visit. As an example, Figure~\ref{fig:N2} shows the finite-element mesh and electron-density contours for \emph{Mesh No. 3}, which are obtained via setting
 \begin{verbatim}
-set WRITE DENSITY=true
+subsection Postprocessing
+   set WRITE DENSITY=true
+end
 \end{verbatim}
 in the input parameter file, and visualizing the ``densityOutput.vtu'' file in ParaView.
 \begin{table}[h!]
@@ -185,13 +188,14 @@ in the input parameter file, and visualizing the ``densityOutput.vtu'' file in P
     \begin{tabular}{c|c|c|c|c|c}
 	    \hline\hline
 	    % <-- Alignments: 1st column left, 2nd middle and 3rd right, with vertical lines in between
-	    Mesh No. &\verb|POLYNOMIAL| &\verb|MESH SIZE| & Degrees of freedom& Energy per atom & Force on atomId 0\\
+	    Mesh No. &\verb|POLYNOMIAL| &\verb|MESH SIZE| & Total degrees of freedom& Energy per atom & Force on atomId 0\\
 	    &\verb|ORDER| &\verb|AROUND ATOM| & per atom  & (Hartree) & (Hartree/Bohr) \\
       \hline\hline
-	    1& 4 & 1.0 & 25,332 & -9.89824022 &  0.29076741\\
-	    2&4 & 0.5 &  100,984& -9.89917206 &  0.29401045\\
-	    3&4 & 0.25 & 354,624 & -9.89921210 &  0.29418854\\
-	    4&5 & 0.25 & 681,717 & -9.89921228 &  0.29417133\\
+	    1& 4 & 0.8 & 50,665 & -9.89788996 &  0.2936143\\
+	    2&4 & 0.6 &  70,997&  -9.89905556 &  0.2944262\\
+	    3&4 & 0.5 & 180,865 & -9.89919209 &  0.2941677\\
+	    4&4 & 0.4 & 201,969 & -9.89920596 &  0.2941331\\
+	    5&5 & 0.4 & 385,577 & -9.89921195 &  0.2941327\\
 	    \hline\hline
     \end{tabular}
   \end{center}
@@ -225,7 +229,7 @@ considered to be relaxed.
 \end{verbatim}
 which marks both the Nitrogen atoms to move freely along the x axis only.
 Now, run the atomic relaxation problem. From the output file, you should observe that the Nitrogen molecule geometry relaxed to
-an equilibrium bond length of 2.0819 Bohr after 11 geometry update steps.  For your reference, we have provided an output file at \verb|/demo/ex1/ex1_b.output|, which was run using 64 MPI tasks.
+an equilibrium bond length of 2.0819 Bohr after 10 geometry update steps.  For your reference, we have provided an output file at \verb|/demo/ex1/ex1_b.output|, which was run using 32 MPI tasks.
 \end{itemize}
 \end{enumerate}
 
@@ -319,12 +323,12 @@ The ground-state energy per atom and hydrostatic cell stress for finite-element 
     \begin{tabular}{c|c|c|c|c|c} 
 	    % <-- Alignments: 1st column left, 2nd middle and 3rd right, with vertical lines in between
 	    \hline\hline
-	    Mesh No. &\verb|POLYNOMIAL| &\verb|MESH SIZE| & Degrees of freedom& Energy per atom & Hydrostatic Cell stress\\
+	    Mesh No. &\verb|POLYNOMIAL| &\verb|MESH SIZE| & Total degrees of freedom& Energy per atom & Hydrostatic Cell stress\\
 	    &\verb|ORDER| &\verb|AROUND ATOM| & per atom  & (Hartree) & (Hartree/${\rm Bohr}^3$) \\
       \hline
-	    1& 4 & 1.0 & 12084 & -2.09083548 &  0.000028960\\	    
-	    2& 4 & 0.5 & 27172 & -2.09322424 &  0.000037918\\
-	    3&5 & 0.5 & 51239 &  -2.09322860 &  0.000038126\\
+	    1& 4 & 0.8 & 24,169  & -2.09083548 &  0.000028917\\	    
+	    2& 4 & 0.5 & 108,689 & -2.09322424 &  0.000037932\\
+	    3& 5 & 0.4 & 204,957 & -2.09322860 &  0.000038135\\
        \hline\hline
     \end{tabular}
   \end{center}
@@ -343,6 +347,6 @@ where
 \item ``4e-6'' for \verb|STRESS TOL| sets the tolerance of the cell stress (in a.u.) for cell stress relaxation.
 \item Choice of ``1'' for \verb|CELL CONSTRAINT TYPE| enforces isotropic shape-fixed volume optimization constraint during cell stress relaxation.
 \end{itemize}
-For your reference, the output file for the cell stress relaxation is provided at \verb|/demo/ex2/ex2_b.output|. From the output file, you should observe that you obtain a relaxed lattice constant of 7.569 Bohr after three geometry updates. 
+For your reference, the output file for the cell stress relaxation is provided at \verb|/demo/ex2/ex2_b.output|. From the output file, you should observe that you obtain a relaxed lattice constant of 7.563 Bohr after two geometry updates. 
 \end{enumerate}
 

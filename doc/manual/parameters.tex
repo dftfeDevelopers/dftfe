@@ -12,10 +12,10 @@
 \index[prmindexfull]{H REFINED ELECTROSTATICS}
 
 
-{\it Default:} false
+{\it Default:} true
 
 
-{\it Description:} [Advanced] Compute electrostatic energy and forces on a h refined mesh after each ground-state solve. Default: false.
+{\it Description:} [Advanced] Compute electrostatic energy and forces on a h refined mesh after each ground-state solve. Default: true if cell stress computation is set to false otherwise it is set to false.
 
 
 {\it Possible values:} A boolean value (true or false)
@@ -62,42 +62,10 @@
 {\it Default:} 1
 
 
-{\it Description:} [Standard] Parameter to control verbosity of terminal output. Ranges from 1 for low, 2 for medium (prints eigenvalues and fractional occupancies at the end of each ground-state solve), 3 for high (prints eigenvalues and fractional occupancies at the end of each self-consistent field iteration), and 4 for very high, which is only meant for code development purposes. VERBOSITY=0 is only used for unit testing and shouldn't be used by standard users.
+{\it Description:} [Standard] Parameter to control verbosity of terminal output. Ranges from 1 for low, 2 for medium (prints some more additional information), 3 for high (prints eigenvalues and fractional occupancies at the end of each self-consistent field iteration), and 4 for very high, which is only meant for code development purposes. VERBOSITY=0 is only used for unit testing and shouldn't be used by standard users.
 
 
 {\it Possible values:} An integer $n$ such that $0\leq n \leq 4$
-\item {\it Parameter name:} {\tt WRITE DENSITY}
-\phantomsection\label{parameters:WRITE DENSITY}
-\label{parameters:WRITE_20DENSITY}
-
-
-\index[prmindex]{WRITE DENSITY}
-\index[prmindexfull]{WRITE DENSITY}
-
-
-{\it Default:} false
-
-
-{\it Description:} [Standard] Writes DFT ground state electron-density solution fields (FEM mesh nodal values) to densityOutput.vtu file for visualization purposes. The electron-density solution field in densityOutput.vtu is named density. In case of spin-polarized calculation, two additional solution fields- densityi\_0 and density\_1 are also written where 0 and 1 denote the spin indices. In the case of geometry optimization, the electron-density corresponding to the last ground-state solve is written. Default: false.
-
-
-{\it Possible values:} A boolean value (true or false)
-\item {\it Parameter name:} {\tt WRITE WFC}
-\phantomsection\label{parameters:WRITE WFC}
-\label{parameters:WRITE_20WFC}
-
-
-\index[prmindex]{WRITE WFC}
-\index[prmindexfull]{WRITE WFC}
-
-
-{\it Default:} false
-
-
-{\it Description:} [Standard] Writes DFT ground state wavefunction solution fields (FEM mesh nodal values) to wfcOutput.vtu file for visualization purposes. The wavefunction solution fields in wfcOutput.vtu are named wfc\_s\_k\_i in case of spin-polarized calculations and wfc\_k\_i otherwise, where s denotes the spin index (0 or 1), k denotes the k point index starting from 0, and i denotes the Kohn-Sham wavefunction index starting from 0. In the case of geometry optimization, the wavefunctions corresponding to the last ground-state solve are written.  Default: false.
-
-
-{\it Possible values:} A boolean value (true or false)
 \end{itemize}
 
 
@@ -131,7 +99,7 @@
 \index[prmindexfull]{Boundary conditions!CONSTRAINTS PARALLEL CHECK}
 
 
-{\it Default:} false
+{\it Default:} true
 
 
 {\it Description:} [Developer] Check for consistency of constraints in parallel.
@@ -562,6 +530,22 @@
 
 
 {\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 20$
+\item {\it Parameter name:} {\tt AUTO USER MESH PARAMS}
+\phantomsection\label{parameters:Finite element mesh parameters/Auto mesh generation parameters/AUTO USER MESH PARAMS}
+\label{parameters:Finite_20element_20mesh_20parameters/Auto_20mesh_20generation_20parameters/AUTO_20USER_20MESH_20PARAMS}
+
+
+\index[prmindex]{AUTO USER MESH PARAMS}
+\index[prmindexfull]{Finite element mesh parameters!Auto mesh generation parameters!AUTO USER MESH PARAMS}
+
+
+{\it Default:} false
+
+
+{\it Description:} [Standard] Except MESH SIZE AROUND ATOM, all other user defined mesh parameters are heuristically set. Default: false.
+
+
+{\it Possible values:} A boolean value (true or false)
 \item {\it Parameter name:} {\tt BASE MESH SIZE}
 \phantomsection\label{parameters:Finite element mesh parameters/Auto mesh generation parameters/BASE MESH SIZE}
 \label{parameters:Finite_20element_20mesh_20parameters/Auto_20mesh_20generation_20parameters/BASE_20MESH_20SIZE}
@@ -594,6 +578,22 @@
 
 
 {\it Possible values:} An integer $n$ such that $0\leq n \leq 2147483647$
+\item {\it Parameter name:} {\tt INNER ATOM BALL RADIUS}
+\phantomsection\label{parameters:Finite element mesh parameters/Auto mesh generation parameters/INNER ATOM BALL RADIUS}
+\label{parameters:Finite_20element_20mesh_20parameters/Auto_20mesh_20generation_20parameters/INNER_20ATOM_20BALL_20RADIUS}
+
+
+\index[prmindex]{INNER ATOM BALL RADIUS}
+\index[prmindexfull]{Finite element mesh parameters!Auto mesh generation parameters!INNER ATOM BALL RADIUS}
+
+
+{\it Default:} 0.0
+
+
+{\it Description:} [Advanced] Radius of ball enclosing every atom, inside which the mesh size is set close to MESH SIZE AT ATOM. Standard users do not need to tune this parameter. Units: a.u.
+
+
+{\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 20$
 \item {\it Parameter name:} {\tt MESH ADAPTION}
 \phantomsection\label{parameters:Finite element mesh parameters/Auto mesh generation parameters/MESH ADAPTION}
 \label{parameters:Finite_20element_20mesh_20parameters/Auto_20mesh_20generation_20parameters/MESH_20ADAPTION}
@@ -933,6 +933,22 @@
 \label{parameters:Parallelization}
 
 \begin{itemize}
+\item {\it Parameter name:} {\tt BAND PARAL OPT}
+\phantomsection\label{parameters:Parallelization/BAND PARAL OPT}
+\label{parameters:Parallelization/BAND_20PARAL_20OPT}
+
+
+\index[prmindex]{BAND PARAL OPT}
+\index[prmindexfull]{Parallelization!BAND PARAL OPT}
+
+
+{\it Default:} true
+
+
+{\it Description:} [Standard] Uses a more optimal route for band parallelization but at the cost of extra wavefunctions memory.
+
+
+{\it Possible values:} A boolean value (true or false)
 \item {\it Parameter name:} {\tt MPI ALLREDUCE BLOCK SIZE}
 \phantomsection\label{parameters:Parallelization/MPI ALLREDUCE BLOCK SIZE}
 \label{parameters:Parallelization/MPI_20ALLREDUCE_20BLOCK_20SIZE}
@@ -994,7 +1010,7 @@
 \index[prmindexfull]{Poisson problem parameters!MAXIMUM ITERATIONS}
 
 
-{\it Default:} 5000
+{\it Default:} 10000
 
 
 {\it Description:} [Advanced] Maximum number of iterations to be allowed for Poisson problem convergence.
@@ -1010,13 +1026,83 @@
 \index[prmindexfull]{Poisson problem parameters!TOLERANCE}
 
 
-{\it Default:} 1e-14
+{\it Default:} 1e-10
 
 
-{\it Description:} [Advanced] Relative tolerance as stopping criterion for Poisson problem convergence.
+{\it Description:} [Advanced] Absolute tolerance on the residual as stopping criterion for Poisson problem convergence.
 
 
 {\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 1$
+\end{itemize}
+
+\subsection{Parameters in section \tt Postprocessing}
+\label{parameters:Postprocessing}
+
+\begin{itemize}
+\item {\it Parameter name:} {\tt WRITE DENSITY}
+\phantomsection\label{parameters:Postprocessing/WRITE DENSITY}
+\label{parameters:Postprocessing/WRITE_20DENSITY}
+
+
+\index[prmindex]{WRITE DENSITY}
+\index[prmindexfull]{Postprocessing!WRITE DENSITY}
+
+
+{\it Default:} false
+
+
+{\it Description:} [Standard] Writes DFT ground state electron-density solution fields (FEM mesh nodal values) to densityOutput.vtu file for visualization purposes. The electron-density solution field in densityOutput.vtu is named density. In case of spin-polarized calculation, two additional solution fields- density\_0 and density\_1 are also written where 0 and 1 denote the spin indices. In the case of geometry optimization, the electron-density corresponding to the last ground-state solve is written. Default: false.
+
+
+{\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt WRITE DENSITY OF STATES}
+\phantomsection\label{parameters:Postprocessing/WRITE DENSITY OF STATES}
+\label{parameters:Postprocessing/WRITE_20DENSITY_20OF_20STATES}
+
+
+\index[prmindex]{WRITE DENSITY OF STATES}
+\index[prmindexfull]{Postprocessing!WRITE DENSITY OF STATES}
+
+
+{\it Default:} false
+
+
+{\it Description:} [Standard] Computes density of states using Lorentzians. Uses specified Temperature for SCF as the broadening parameter. Outputs a file name 'dosData.out' containing two columns with first column indicating the energy in eV and second column indicating the density of states
+
+
+{\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt WRITE LOCAL DENSITY OF STATES}
+\phantomsection\label{parameters:Postprocessing/WRITE LOCAL DENSITY OF STATES}
+\label{parameters:Postprocessing/WRITE_20LOCAL_20DENSITY_20OF_20STATES}
+
+
+\index[prmindex]{WRITE LOCAL DENSITY OF STATES}
+\index[prmindexfull]{Postprocessing!WRITE LOCAL DENSITY OF STATES}
+
+
+{\it Default:} false
+
+
+{\it Description:} [Standard] Computes local density of states on each atom using Lorentzians. Uses specified Temperature for SCF as the broadening parameter. Outputs a file name 'ldosData.out' containing NUMATOM+1 columns with first column indicating the energy in eV and all other NUMATOM columns indicating local density of states for each of the NUMATOM atoms.
+
+
+{\it Possible values:} A boolean value (true or false)
+\item {\it Parameter name:} {\tt WRITE WFC}
+\phantomsection\label{parameters:Postprocessing/WRITE WFC}
+\label{parameters:Postprocessing/WRITE_20WFC}
+
+
+\index[prmindex]{WRITE WFC}
+\index[prmindexfull]{Postprocessing!WRITE WFC}
+
+
+{\it Default:} false
+
+
+{\it Description:} [Standard] Writes DFT ground state wavefunction solution fields (FEM mesh nodal values) to wfcOutput.vtu file for visualization purposes. The wavefunction solution fields in wfcOutput.vtu are named wfc\_s\_k\_i in case of spin-polarized calculations and wfc\_k\_i otherwise, where s denotes the spin index (0 or 1), k denotes the k point index starting from 0, and i denotes the Kohn-Sham wavefunction index starting from 0. In the case of geometry optimization, the wavefunctions corresponding to the last ground-state solve are written.  Default: false.
+
+
+{\it Possible values:} A boolean value (true or false)
 \end{itemize}
 
 \subsection{Parameters in section \tt SCF parameters}
@@ -1128,10 +1214,10 @@
 \index[prmindexfull]{SCF parameters!MIXING PARAMETER}
 
 
-{\it Default:} 0.5
+{\it Default:} 0.1
 
 
-{\it Description:} [Standard] Mixing parameter to be used in density mixing schemes.
+{\it Description:} [Standard] Mixing parameter to be used in density mixing schemes. Default: 0.1.
 
 
 {\it Possible values:} A floating point number $v$ such that $0 \leq v \leq 1$
@@ -1207,6 +1293,22 @@
 
 
 {\it Possible values:} An integer $n$ such that $0\leq n \leq 2147483647$
+\item {\it Parameter name:} {\tt ALGO}
+\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/ALGO}
+\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/ALGO}
+
+
+\index[prmindex]{ALGO}
+\index[prmindexfull]{SCF parameters!Eigen-solver parameters!ALGO}
+
+
+{\it Default:} NORMAL
+
+
+{\it Description:} [Standard] In the FAST mode, spectrum splitting technique is used in Rayleigh-Ritz step, and mixed precision arithmetic algorithms are used in Rayleigh-Ritz and Cholesky factorization based orthogonalization step. For spectrum splitting, 85 percent of the total number of wavefunctions are taken to be core states, which holds good for most systems including metallic systems assuming NUMBER OF KOHN-SHAM WAVEFUNCTIONS to be around 10 percent more than N/2. FAST setting is strongly recommended for large-scale (> 10k electrons) system sizes. Both NORMAL and FAST setting use Chebyshev filtered subspace iteration technique. Currently, FAST setting is only enabled for the real executable and with ScaLAPACK linking. If manual options for mixed precision and spectum splitting are being used, please use NORMAL setting for ALGO. Default setting is NORMAL.
+
+
+{\it Possible values:} Any one of NORMAL, FAST
 \item {\it Parameter name:} {\tt BATCH GEMM}
 \phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/BATCH GEMM}
 \label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/BATCH_20GEMM}
@@ -1232,7 +1334,7 @@
 \index[prmindexfull]{SCF parameters!Eigen-solver parameters!CHEBYSHEV FILTER TOLERANCE}
 
 
-{\it Default:} 1e-02
+{\it Default:} 2e-02
 
 
 {\it Description:} [Advanced] Parameter specifying the accuracy of the occupied eigenvectors close to the Fermi-energy computed using Chebyshev filtering subspace iteration procedure. Default value is sufficient for most purposes
@@ -1347,7 +1449,7 @@
 {\it Default:} 10
 
 
-{\it Description:} [Standard] Number of Kohn-Sham wavefunctions to be computed. For spin-polarized calculations, this parameter denotes the number of Kohn-Sham wavefunctions to be computed for each spin. A recommended value for this parameter is to set it to N/2+Nb where N is the number of electrons. Use Nb to be 10-20 percent of N/2 for insulators and for metals use Nb to be 20 percent of N/2. If 10-20 percent of N/2 is less than 10 wavefunctions, set Nb to be atleast 10.
+{\it Description:} [Standard] Number of Kohn-Sham wavefunctions to be computed. For spin-polarized calculations, this parameter denotes the number of Kohn-Sham wavefunctions to be computed for each spin. A recommended value for this parameter is to set it to N/2+Nb where N is the number of electrons. Use Nb to be 5-10 percent of N/2 for insulators and for metals use Nb to be 10-15 percent of N/2. If 5-15 percent of N/2 is less than 10 wavefunctions, set Nb to be atleast 10.
 
 
 {\it Possible values:} An integer $n$ such that $0\leq n \leq 2147483647$
@@ -1363,10 +1465,26 @@
 {\it Default:} Auto
 
 
-{\it Description:} [Advanced] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization using SLEPc library), LW(Lowden Orthogonalization implemented using LAPACK/BLAS routines, extension to use ScaLAPACK library not implemented yet), PGS(Pseudo-Gram-Schmidt Orthogonalization: if dealii library is compiled with ScaLAPACK and if you are using the real executable, parallel ScaLAPACK functions are used, otherwise serial LAPACK functions are used.) Auto is the default option, which chooses GS for all-electron case and PGS for pseudopotential case.
+{\it Description:} [Advanced] Parameter specifying the type of orthogonalization to be used: GS(Gram-Schmidt Orthogonalization using SLEPc library), LW(Lowden Orthogonalization implemented using LAPACK/BLAS routines, extension to use ScaLAPACK library not implemented yet), PGS(Pseudo-Gram-Schmidt Orthogonalization: if dealii library is compiled with ScaLAPACK and if you are using the real executable, parallel ScaLAPACK functions are used, otherwise serial LAPACK functions are used.) Auto is the default option, which chooses GS for all-electron case and PGS for pseudopotential case. GS and LW options are only available if RR GEP is set to false.
 
 
 {\it Possible values:} Any one of GS, LW, PGS, Auto
+\item {\it Parameter name:} {\tt RR GEP}
+\phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/RR GEP}
+\label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/RR_20GEP}
+
+
+\index[prmindex]{RR GEP}
+\index[prmindexfull]{SCF parameters!Eigen-solver parameters!RR GEP}
+
+
+{\it Default:} true
+
+
+{\it Description:} [Advanced] Solve generalized eigenvalue problem instead of standard eignevalue problem in Rayleigh-Ritz step. This approach is not extended yet to complex executable. Default value is true for real executable and false for complex executable.
+
+
+{\it Possible values:} A boolean value (true or false)
 \item {\it Parameter name:} {\tt SCALAPACKPROCS}
 \phantomsection\label{parameters:SCF parameters/Eigen_2dsolver parameters/SCALAPACKPROCS}
 \label{parameters:SCF_20parameters/Eigen_2dsolver_20parameters/SCALAPACKPROCS}
@@ -1424,7 +1542,7 @@
 \index[prmindexfull]{SCF parameters!Eigen-solver parameters!SPECTRUM SPLIT STARTING SCF ITER}
 
 
-{\it Default:} 1
+{\it Default:} 0
 
 
 {\it Description:} [Advanced] SCF iteration no beyond which spectrum splitting based can be used.
@@ -1440,10 +1558,10 @@
 \index[prmindexfull]{SCF parameters!Eigen-solver parameters!SUBSPACE ROT DOFS BLOCK SIZE}
 
 
-{\it Default:} 2000
+{\it Default:} 5000
 
 
-{\it Description:} [Developer] This block size is used for memory optimization purposes in subspace rotation step in Pseudo-Gram-Schmidt orthogonalization and Rayleigh-Ritz steps. This optimization is only activated if dealii library is compiled with ScaLAPACK. Default value is 2000.
+{\it Description:} [Developer] This block size is used for memory optimization purposes in subspace rotation step in Pseudo-Gram-Schmidt orthogonalization and Rayleigh-Ritz steps. This optimization is only activated if dealii library is compiled with ScaLAPACK. Default value is 5000.
 
 
 {\it Possible values:} An integer $n$ such that $1\leq n \leq 2147483647$
