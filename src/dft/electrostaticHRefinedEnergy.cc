@@ -660,6 +660,9 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
 	  }
       }
 
+    computing_timer.exit_section("h refinement electrostatics");
+    computingTimerStandard.exit_section("h refinement electrostatics");
+
     if (dftParameters::isIonForce)
       {
 
@@ -728,7 +731,4 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
 	computing_timer.exit_section("Cell stress computation");
       }
 #endif
-
-  computing_timer.exit_section("h refinement electrostatics");
-  computingTimerStandard.exit_section("h refinement electrostatics");
 }
