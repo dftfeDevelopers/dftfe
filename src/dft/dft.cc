@@ -1649,7 +1649,7 @@ namespace dftfe {
         */
       }
 
-    if (dftParameters::isIonForce && (!dftParameters::electrostaticsHRefinement || dftParameters::verbosity>=4))
+    if (dftParameters::isIonForce && (!dftParameters::electrostaticsHRefinement || dftParameters::verbosity>=4 || dftParameters::reproducible_output))
       {
         if(dftParameters::selfConsistentSolverTolerance>1e-4 && dftParameters::verbosity>=1)
             pcout<<"DFT-FE Warning: Ion force accuracy may be affected for the given scf iteration solve tolerance: "<<dftParameters::selfConsistentSolverTolerance<<", recommended to use TOLERANCE below 1e-4."<<std::endl;
@@ -1685,7 +1685,7 @@ namespace dftfe {
 	computing_timer.exit_section("Ion force computation");
       }
 #ifdef USE_COMPLEX
-    if (dftParameters::isCellStress && (!dftParameters::electrostaticsHRefinement || dftParameters::verbosity>=4))
+    if (dftParameters::isCellStress && (!dftParameters::electrostaticsHRefinement || dftParameters::verbosity>=4 || dftParameters::reproducible_output))
       {
         if(dftParameters::selfConsistentSolverTolerance>1e-4 && dftParameters::verbosity>=1)
             pcout<<"DFT-FE Warning: Cell stress accuracy may be affected for the given scf iteration solve tolerance: "<<dftParameters::selfConsistentSolverTolerance<<", recommended to use TOLERANCE below 1e-4."<<std::endl;
