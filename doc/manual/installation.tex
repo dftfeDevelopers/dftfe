@@ -10,10 +10,10 @@ We strongly recommend using the latest stable version of compilers-(C, C++ and F
 \subsection{Compiling and installing external libraries}
 \dftfe{} is primarily based on the open source finite element library \href{http://www.dealii.org/}{deal.II}, through which external dependencies
 on \href{http://p4est.org/}{p4est}, \href{https://www.mcs.anl.gov/petsc/}{PETSc}, \href{http://slepc.upv.es/}{SLEPc}, and \href{http://www.netlib.org/scalapack/}{ScaLAPACK} are set. ScaLAPACK is an optional requirement, but strongly recommended for large problem sizes with 5000 electrons or more. The other required external libraries, which are
-not interfaced via deal.II are \href{http://www.alglib.net/}{ALGLIB}, \href{http://www.tddft.org/programs/libxc/}{Libxc}, \href{https://atztogo.github.io/spglib/}{spglib}, and \href{http://www.xmlsoft.org/}{Libxml2}. Some of the above libraries (PETSc, SLEPc, ScaLAPACK, and Libxml2) might already be installed on most high-performance computers.
+not interfaced via deal.II are \href{http://www.alglib.net/}{ALGLIB}, \href{http://www.tddft.org/programs/libxc/}{Libxc}, \href{https://atztogo.github.io/spglib/}{spglib}, \href{http://www.xmlsoft.org/}{Libxml2} and optionally \href{https://elpa.mpcdf.mpg.de/}{ELPA}.  ELPA is strongly recommended for large problem sizes with 10000 electrons or more. Some of the above libraries (PETSc, SLEPc, ScaLAPACK, and Libxml2) might already be installed on most high-performance computers.
 
 Below, we give brief installation and/or linking instructions for each of the above libraries.
-\subsubsection{Instructions for ALGLIB, Libxc, spglib, and Libxml2}
+\subsubsection{Instructions for ALGLIB, Libxc, spglib, Libxml2, and ELPA}
 \begin{enumerate}
 	\item   {\bf ALGLIB}: Used by \dftfe{} for spline fitting for various radial data. Download the current release of the Alglib free C++ edition from \url{http://www.alglib.net/download.php}. After downloading and unpacking, go to \verb|cpp/src|, and create a shared library using a C++ compiler. For example, using Intel compiler do
 \begin{verbatim}
@@ -47,6 +47,8 @@ $ make
 $ make install 
 \end{verbatim}
 There might be errors complaining that it can not create regular file libxml2.py in /usr/lib/python2.7/site-packages, but that should not matter.
+
+\item {\bf ELPA}: Download elpa-2018.05.001 from \url{https://elpa.mpcdf.mpg.de/elpa-tar-archive} and follow the installation instructions in there. After installation of ELPA, go to \verb|elpa_generated.h| in \verb|install_dir/include/elpa_openmp-2018.05.001/elpa/| and comment out all function declarations having \verb|complex| variables. This step is required to successfully link ELPA with \dftfe.
 \end{enumerate}
 
 \subsubsection{Instructions for deal.II's dependencies-- p4est, PETSc, SLEPc, and ScaLAPACK}
@@ -57,7 +59,7 @@ $ chmod u+x p4est-setup.sh
 $ ./p4est-setup.sh p4est-x-y-z.tar.gz p4est_install_dir_path
 \end{verbatim}
 
-	\item {\bf PETSc}: PETSc is a parallel linear algebra library. \dftfe{} needs two variants of the PETSc installation- one with real scalar type and the another with complex scalar type. Also both the installation variants must have 64-bit indices and optimized mode enabled during the installation. To install PETSc, first download the current release tarball from \url{https://www.mcs.anl.gov/petsc/download/index.html}, unpack it, and follow the installation instructions in \url{https://www.mcs.anl.gov/petsc/documentation/installation.html}. 
+	\item {\bf PETSc}: PETSc is a parallel linear algebra library. \dftfe{} needs two variants of the PETSc installation- one with real scalar type and the another with complex scalar type. Also both the installation variants must have 64-bit indices and optimized mode enabled during the installation. To install PETSc, first download the current release (tested up to 3.9.2) tarball from \url{https://www.mcs.anl.gov/petsc/download/index.html}, unpack it, and follow the installation instructions in \url{https://www.mcs.anl.gov/petsc/documentation/installation.html}. 
 	
 Below, we show an example installation for the real scalar type variant. 
 This example should be used only as a reference.
@@ -87,7 +89,7 @@ Please notice that we have used place holders for values of some of the above co
   -liomp5 -lpthread -lm -ldl" 
 \end{verbatim}
 
-\item {\bf SLEPc}: The SLEPc library is built on top of PETSc, and it is used in DFT-FE for Gram-Schmidt Orthogonalization. To install SLEPc, first download the current release tarball from \url{http://slepc.upv.es/download/}, and then follow the installation procedure described in \url{http://slepc.upv.es/documentation/instal.htm}. {\bf Important: } SLEPc installation requires PETSc to be installed first. You also need to create two separate SLEPc installations- one for PETSc installed with \\\verb|--with-scalar-type=real|, and the second for PETSc installed with \verb|--with-scalar-type=complex|. 
+\item {\bf SLEPc}: The SLEPc library is built on top of PETSc, and it is used in DFT-FE for Gram-Schmidt Orthogonalization. To install SLEPc, first download the current release (tested up to 3.9.1) tarball from \url{http://slepc.upv.es/download/}, and then follow the installation procedure described in \url{http://slepc.upv.es/documentation/instal.htm}. {\bf Important: } SLEPc installation requires PETSc to be installed first. You also need to create two separate SLEPc installations- one for PETSc installed with \\\verb|--with-scalar-type=real|, and the second for PETSc installed with \verb|--with-scalar-type=complex|. 
 	
 For your reference you provide here an example installation of SLEPc for real scalar type
 \begin{verbatim}

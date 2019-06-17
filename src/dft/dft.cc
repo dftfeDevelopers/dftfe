@@ -1470,8 +1470,10 @@ namespace dftfe {
     // compute and print ground state energy or energy after max scf iterations
     //
     QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
-    const double totalEnergy = dftParameters::spinPolarized==0 ?
-      energyCalc.computeEnergy(dofHandler,
+    if (!dftParameters::electrostaticsHRefinement || dftParameters::verbosity>=4 || dftParameters::reproducible_output)
+    {
+      const double totalEnergy = dftParameters::spinPolarized==0 ?
+        energyCalc.computeEnergy(dofHandler,
 			       dofHandler,
 			       quadrature,
 			       quadrature,
@@ -1497,7 +1499,7 @@ namespace dftfe {
 			       lowerBoundKindex,
 			       1,
 			       true) :
-      energyCalc.computeEnergySpinPolarized(dofHandler,
+        energyCalc.computeEnergySpinPolarized(dofHandler,
 					    dofHandler,
 					    quadrature,
 					    quadrature,
@@ -1529,6 +1531,7 @@ namespace dftfe {
 					    lowerBoundKindex,
 					    1,
 					    true);
+    }
 
     MPI_Barrier(interpoolcomm);
 
