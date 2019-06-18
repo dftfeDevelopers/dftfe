@@ -62,7 +62,7 @@ void dftClass<FEOrder>::initBoundaryConditions(){
       const double perProcMem=totalMem/Utilities::MPI::n_mpi_processes(mpi_communicator);
       pcout <<"Rough estimate of peak memory requirement (RAM) total: "<<totalMem <<" GB."<<std::endl;
       pcout <<"Rough estimate of peak memory requirement (RAM) per MPI task: "<< perProcMem<<" GB."<<std::endl;
-      pcout <<"DFT-FE Message: many of the memory optimizations implemented in DFT-FE are useful only for larger system sizes."<<std::endl;
+      pcout <<"DFT-FE Message: many of the memory optimizations implemented\n"<< "in DFT-FE are useful only for larger system sizes."<<std::endl;
       pcout<<"-----------------------------------------------------------------------------"<<std::endl;
   }
 
