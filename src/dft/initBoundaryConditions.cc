@@ -51,6 +51,18 @@ void dftClass<FEOrder>::initBoundaryConditions(){
     pcout<< "Minimum mesh size: "<<minElemLength<<std::endl;
   pcout<<"-------------------------------------------------"<<std::endl;
 
+  pcout<<std::endl<<"-----------------------------------------------------------------------------"<<std::endl;
+#ifdef USE_COMPLEX
+  const double totalMem=2.0*dofHandler.n_dofs()*(dftParameters::spinPolarized+1)*d_kPointWeights.size()*d_numEigenValues*(2.0+3.0*std::min(dftParameters::wfcBlockSize,d_numEigenValues)/d_numEigenValues)*8/1e+9+0.3;
+#else
+  const double totalMem=(dftParameters::useMixedPrecPGS_O==true || dftParameters::useMixedPrecPGS_SR==true || dftParameters::useMixedPrecXTHXSpectrumSplit==true)?dofHandler.n_dofs()*(dftParameters::spinPolarized+1)*d_numEigenValues*(1.5+3.0*std::min(dftParameters::wfcBlockSize,d_numEigenValues)/d_numEigenValues)*8/1e+9+0.3:dofHandler.n_dofs()*(dftParameters::spinPolarized+1)*d_numEigenValues*(1.0+3.0*std::min(dftParameters::wfcBlockSize,d_numEigenValues)/d_numEigenValues)*8/1e+9+0.3;
+#endif
+  const double perProcMem=totalMem/Utilities::MPI::n_mpi_processes(mpi_communicator);
+  pcout <<"Rough estimate of peak memory requirement (RAM) total: "<<totalMem <<" GB."<<std::endl;
+  pcout <<"Rough estimate of peak memory requirement (RAM) per MPI task: "<< perProcMem<<" GB."<<std::endl;
+  pcout <<"DFT-FE Message: many of the memory optimizations implemented in DFT-FE are useful only for larger system sizes."<<std::endl;
+  pcout<<"-----------------------------------------------------------------------------"<<std::endl;
+
   if(dofHandler.n_dofs()>15000)
     {
       if(dofHandler.n_dofs()/n_mpi_processes<4000 && dftParameters::verbosity>=1)
