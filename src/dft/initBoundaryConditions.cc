@@ -55,9 +55,9 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   {
       pcout<<std::endl<<"-----------------------------------------------------------------------------"<<std::endl;
 #ifdef USE_COMPLEX
-      const double totalMem=2.0*dofHandler.n_dofs()*(dftParameters::spinPolarized+1)*d_kPointWeights.size()*d_numEigenValues*(2.0+3.0*std::min(dftParameters::wfcBlockSize,d_numEigenValues)/d_numEigenValues)*8/1e+9+0.3;
+      const double totalMem=2.0*dofHandler.n_dofs()*(dftParameters::spinPolarized+1)*d_kPointWeights.size()*d_numEigenValues*(2.0+3.0*std::min(dftParameters::wfcBlockSize,d_numEigenValues)/d_numEigenValues)*8/1e+9+0.5*Utilities::MPI::n_mpi_processes(mpi_communicator);
 #else
-      const double totalMem=(dftParameters::useMixedPrecPGS_O==true || dftParameters::useMixedPrecPGS_SR==true || dftParameters::useMixedPrecXTHXSpectrumSplit==true)?dofHandler.n_dofs()*(dftParameters::spinPolarized+1)*d_numEigenValues*(1.5+3.0*std::min(dftParameters::wfcBlockSize,d_numEigenValues)/d_numEigenValues)*8/1e+9+0.3:dofHandler.n_dofs()*(dftParameters::spinPolarized+1)*d_numEigenValues*(1.0+3.0*std::min(dftParameters::wfcBlockSize,d_numEigenValues)/d_numEigenValues)*8/1e+9+0.3;
+      const double totalMem=(dftParameters::useMixedPrecPGS_O==true || dftParameters::useMixedPrecPGS_SR==true || dftParameters::useMixedPrecXTHXSpectrumSplit==true)?dofHandler.n_dofs()*(dftParameters::spinPolarized+1)*d_numEigenValues*(1.5+3.0*std::min(dftParameters::wfcBlockSize,d_numEigenValues)/d_numEigenValues)*8/1e+9+0.5*Utilities::MPI::n_mpi_processes(mpi_communicator):dofHandler.n_dofs()*(dftParameters::spinPolarized+1)*d_numEigenValues*(1.0+3.0*std::min(dftParameters::wfcBlockSize,d_numEigenValues)/d_numEigenValues)*8/1e+9+0.5*Utilities::MPI::n_mpi_processes(mpi_communicator);
 #endif
       const double perProcMem=totalMem/Utilities::MPI::n_mpi_processes(mpi_communicator);
       pcout <<"Rough estimate of peak memory requirement (RAM) total: "<<totalMem <<" GB."<<std::endl;
