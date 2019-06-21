@@ -29,27 +29,27 @@ namespace dftfe{
       {
 	unsigned int chebyshevOrder;
 	if(upperBoundUnwantedSpectrum <= 500)
-	  chebyshevOrder = 25;
+	  chebyshevOrder = 20;
 	else if(upperBoundUnwantedSpectrum > 500  && upperBoundUnwantedSpectrum <= 1000)
-	  chebyshevOrder = 35;
+	  chebyshevOrder = 26;
 	else if(upperBoundUnwantedSpectrum > 1000 && upperBoundUnwantedSpectrum <= 1500)
-          chebyshevOrder = 40;		
+          chebyshevOrder = 30;		
         else if(upperBoundUnwantedSpectrum > 1500 && upperBoundUnwantedSpectrum <= 2000)
-	  chebyshevOrder = 45;
+	  chebyshevOrder = 34;
 	else if(upperBoundUnwantedSpectrum > 2000 && upperBoundUnwantedSpectrum <= 3000)
-	  chebyshevOrder = 55;
+	  chebyshevOrder = 41;
 	else if(upperBoundUnwantedSpectrum > 3000 && upperBoundUnwantedSpectrum <= 4000)
-	  chebyshevOrder = 65;
+	  chebyshevOrder = 49;
         else if(upperBoundUnwantedSpectrum > 4000 && upperBoundUnwantedSpectrum <= 5000)
-          chebyshevOrder = 75;
+          chebyshevOrder = 56;
 	else if(upperBoundUnwantedSpectrum > 5000 && upperBoundUnwantedSpectrum <= 9000)
-	  chebyshevOrder = 85;
+	  chebyshevOrder = 64;
 	else if(upperBoundUnwantedSpectrum > 9000 && upperBoundUnwantedSpectrum <= 14000)
-	  chebyshevOrder = 120;
+	  chebyshevOrder = 90;
 	else if(upperBoundUnwantedSpectrum > 14000 && upperBoundUnwantedSpectrum <= 20000)
-	  chebyshevOrder = 140;
+	  chebyshevOrder = 105;
 	else if(upperBoundUnwantedSpectrum > 20000 && upperBoundUnwantedSpectrum <= 30000)
-	  chebyshevOrder = 210;
+	  chebyshevOrder = 158;
 	else if(upperBoundUnwantedSpectrum > 30000 && upperBoundUnwantedSpectrum <= 50000)
 	  chebyshevOrder = 300;
 	else if(upperBoundUnwantedSpectrum > 50000 && upperBoundUnwantedSpectrum <= 80000)
@@ -123,7 +123,8 @@ namespace dftfe{
 							std::vector<double>        & eigenValues,
 							std::vector<double>        & residualNorms,
 							const MPI_Comm &interBandGroupComm,
-							const bool useMixedPrec)
+							const bool useMixedPrec,
+                                                        const bool isFirstScf)
   {
 
 
@@ -144,6 +145,8 @@ namespace dftfe{
     //
     if(chebyshevOrder == 0)
       chebyshevOrder=internal::setChebyshevOrder(upperBoundUnwantedSpectrum);
+
+    chebyshevOrder=(isFirstScf && dftParameters::isPseudopotential)?chebyshevOrder*1.34:chebyshevOrder;
 
     if (dftParameters::lowerBoundUnwantedFracUpper>1e-6)
       d_lowerBoundUnWantedSpectrum=dftParameters::lowerBoundUnwantedFracUpper*upperBoundUnwantedSpectrum;

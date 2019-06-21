@@ -63,7 +63,8 @@ namespace dftfe{
 					    std::vector<double> & eigenValues,
 					    std::vector<double> & residuals,
 					    const MPI_Comm &interBandGroupComm,
-					    const bool useMixedPrec);
+					    const bool useMixedPrec,
+                                            const bool isFirstScf=false);
 
     /**
      * @brief Solve a generalized eigen problem.
