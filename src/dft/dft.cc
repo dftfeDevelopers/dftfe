@@ -1053,7 +1053,8 @@ namespace dftfe {
 						  subspaceIterationSolver,
 						  residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
 						  (scfIter<dftParameters::spectrumSplitStartingScfIter || spectrumSplitScfConverged)?false:true,
-						  true);
+						  true,
+                                                  scfIter==0);
 		      }
 		  }
 	      }
@@ -1138,7 +1139,8 @@ namespace dftfe {
 						  subspaceIterationSolver,
 						  residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
 						  (scfIter<dftParameters::spectrumSplitStartingScfIter||spectrumSplitScfConverged)?false:true,
-						  true);
+						  true,
+                                                  scfIter==0);
 
 		      }
 		  }
@@ -1224,7 +1226,8 @@ namespace dftfe {
 					      subspaceIterationSolver,
 					      residualNormWaveFunctionsAllkPoints[kPoint],
 					      (scfIter<dftParameters::spectrumSplitStartingScfIter||spectrumSplitScfConverged)?false:true,
-					      true);
+					      true,
+                                              scfIter==0);
 
 		  }
 	      }
@@ -1278,7 +1281,8 @@ namespace dftfe {
 					      subspaceIterationSolver,
 					      residualNormWaveFunctionsAllkPoints[kPoint],
 					      (scfIter<dftParameters::spectrumSplitStartingScfIter||spectrumSplitScfConverged)?false:true,
-					      true);
+					      true,
+                                              scfIter==0);
 		  }
 		count++;
 		//

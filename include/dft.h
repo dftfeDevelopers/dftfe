@@ -862,7 +862,8 @@ namespace dftfe {
 				     chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver,
 				     std::vector<double> & residualNormWaveFunctions,
 				     const bool isSpectrumSplit,
-				     const bool useMixedPrec);
+				     const bool useMixedPrec,
+                                     const bool isFirstScf);
 
      void kohnShamEigenSpaceComputeNSCF(const unsigned int spinType,
 				    const unsigned int kPointIndex,
