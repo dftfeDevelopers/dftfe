@@ -344,6 +344,9 @@ namespace dftfe {
 	  }
       }
 
+    if (dftParameters::algoType=="FAST")
+      dftParameters::numCoreWfcRR=0.93*numElectrons/2.0;
+
     if (dftParameters::constraintMagnetization)
      {
        numElectronsUp = std::ceil(static_cast<double>(numElectrons)/2.0);
