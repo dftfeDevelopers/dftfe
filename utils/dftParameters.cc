@@ -747,7 +747,6 @@ namespace dftParameters
        dftParameters::useMixedPrecPGS_O=true;
        dftParameters::useMixedPrecPGS_SR=true;
        dftParameters::useMixedPrecXTHXSpectrumSplit=true;
-       dftParameters::numCoreWfcRR=0.85*dftParameters::numberEigenValues;
     }
 #ifdef USE_COMPLEX
     dftParameters::rrGEP=false;
