@@ -46,26 +46,49 @@ template<unsigned int FEOrder>
 void geoOptIon<FEOrder>::init()
 {
    const int numberGlobalAtoms=dftPtr->atomLocations.size();
-   std::vector<std::vector<int> > tempRelaxFlagsData;
-   std::vector<std::vector<double> > tempForceData;
-   dftUtils::readRelaxationFlagsFile(6,tempRelaxFlagsData, tempForceData, dftParameters::ionRelaxFlagsFile);
-   AssertThrow(tempRelaxFlagsData.size()==numberGlobalAtoms,ExcMessage("Incorrect number of entries in relaxationFlags file"));
-   d_relaxationFlags.clear();
-   d_externalForceOnAtom.clear();
-   for (unsigned int i=0; i< numberGlobalAtoms; ++i)
+   if (dftParameters::ionRelaxFlagsFile!="")
    {
+     std::vector<std::vector<int> > tempRelaxFlagsData;
+     std::vector<std::vector<double> > tempForceData;
+     dftUtils::readRelaxationFlagsFile(6,tempRelaxFlagsData, tempForceData, dftParameters::ionRelaxFlagsFile);
+     AssertThrow(tempRelaxFlagsData.size()==numberGlobalAtoms,ExcMessage("Incorrect number of entries in relaxationFlags file"));
+     d_relaxationFlags.clear();
+     d_externalForceOnAtom.clear();
+     for (unsigned int i=0; i< numberGlobalAtoms; ++i)
+     {
        for (unsigned int j=0; j< 3; ++j){
           d_relaxationFlags.push_back(tempRelaxFlagsData[i][j]);
           d_externalForceOnAtom.push_back(tempForceData[i][j]);
        }
+     }
+     //print relaxation flags
+     pcout<<" --------------Ion force relaxation flags----------------"<<std::endl;
+     for (unsigned int i=0; i< numberGlobalAtoms; ++i)
+     {
+	   pcout<<tempRelaxFlagsData[i][0] << "  "<< tempRelaxFlagsData[i][1] << "  "<<tempRelaxFlagsData[i][2]<<std::endl;
+     }
+     pcout<<" --------------------------------------------------"<<std::endl;
    }
-   //print relaxation flags
-   pcout<<" --------------Ion force relaxation flags----------------"<<std::endl;
-   for (unsigned int i=0; i< numberGlobalAtoms; ++i)
+   else
    {
-       pcout<<tempRelaxFlagsData[i][0] << "  "<< tempRelaxFlagsData[i][1] << "  "<<tempRelaxFlagsData[i][2]<<std::endl;
+     d_relaxationFlags.clear();
+     d_externalForceOnAtom.clear();
+     for (unsigned int i=0; i< numberGlobalAtoms; ++i)
+     {
+       for (unsigned int j=0; j< 3; ++j){
+          d_relaxationFlags.push_back(1.0);
+          d_externalForceOnAtom.push_back(0.0);
+       }
+     }
+     //print relaxation flags
+     pcout<<" --------------Ion force relaxation flags----------------"<<std::endl;
+     for (unsigned int i=0; i< numberGlobalAtoms; ++i)
+     {
+	   pcout<<1.0<< "  "<< 1.0 << "  "<<1.0<<std::endl;
+     }
+     pcout<<" --------------------------------------------------"<<std::endl;
    }
-   pcout<<" --------------------------------------------------"<<std::endl;
+
 }
 
 template<unsigned int FEOrder>
