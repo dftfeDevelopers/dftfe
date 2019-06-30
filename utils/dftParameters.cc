@@ -405,15 +405,15 @@ namespace dftParameters
 			  Patterns::Double(1e-5),
 			  "[Standard] Fermi-Dirac smearing temperature (in Kelvin).");
 
-	prm.declare_entry("MAXIMUM ITERATIONS", "100",
+	prm.declare_entry("MAXIMUM ITERATIONS", "200",
 			  Patterns::Integer(1,1000),
 			  "[Standard] Maximum number of iterations to be allowed for SCF convergence");
 
-	prm.declare_entry("TOLERANCE", "1e-06",
+	prm.declare_entry("TOLERANCE", "5e-05",
 			  Patterns::Double(1e-12,1.0),
 			  "[Standard] SCF iterations stopping tolerance in terms of $L_2$ norm of the electron-density difference between two successive iterations. CAUTION: A tolerance close to 1e-7 or lower can deteriorate the SCF convergence due to the round-off error accumulation.");
 
-	prm.declare_entry("MIXING HISTORY", "10",
+	prm.declare_entry("MIXING HISTORY", "50",
 			  Patterns::Integer(1,1000),
 			  "[Standard] Number of SCF iteration history to be considered for density mixing schemes. For metallic systems, a mixing history larger than the default value provides better scf convergence.");
 
