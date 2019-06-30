@@ -27,7 +27,7 @@ Reading initial guess for electron-density.....
 Pseudopotential initalization....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 13 iterations.
+SCF iterations converged to the specified tolerance after: 12 iterations.
 
 Energy computations (Hartree) 
 -------------------
@@ -35,8 +35,8 @@ Energy computations (Hartree)
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.243756,0.000000,0.000000
-AtomId    1:  0.243756,0.000000,0.000000
+AtomId    0:  0.243755,0.000000,0.000000
+AtomId    1:  0.243755,0.000000,0.000000
 --------------------------------------------------------------------------------------------
 
 Energy computations (Hartree) 
@@ -45,6 +45,6 @@ Energy computations (Hartree)
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.255635,0.000000,0.000000
-AtomId    1:  0.255635,0.000000,0.000000
+AtomId    0:  0.255634,0.000000,0.000000
+AtomId    1:  0.255634,0.000000,0.000000
 --------------------------------------------------------------------------------------------

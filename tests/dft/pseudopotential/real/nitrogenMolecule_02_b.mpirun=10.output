@@ -27,16 +27,16 @@ Reading initial guess for electron-density.....
 Pseudopotential initalization....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 16 iterations.
+SCF iterations converged to the specified tolerance after: 17 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.79765864
+             Total energy:         -19.79765863
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.292445,0.000000,0.000000
-AtomId    1:  0.292445,0.000000,0.000000
+AtomId    0:  0.292453,0.000000,0.000000
+AtomId    1:  0.292453,0.000000,0.000000
 --------------------------------------------------------------------------------------------
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
 v1 : 80.000000 0.000000 0.000000
@@ -44,8 +44,8 @@ v2 : 0.000000 80.000000 0.000000
 v3 : 0.000000 0.000000 80.000000
 -----------------------------------------------------------------------------------------
 ------------Cartesian coordinates of atoms (origin at center of domain)------------------
-AtomId 0:  -1.153777 0.000000 0.000000
-AtomId 1:  1.153777 0.000000 0.000000
+AtomId 0:  -1.153774 0.000000 0.000000
+AtomId 1:  1.153774 0.000000 0.000000
 -----------------------------------------------------------------------------------------
 
 Finite element mesh information
@@ -63,16 +63,16 @@ number of eigen values: 12
 Pseudopotential initalization....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 14 iterations.
+SCF iterations converged to the specified tolerance after: 15 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.87555546
+             Total energy:         -19.87555708
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.212569,0.000000,0.000000
-AtomId    1:  0.212569,0.000000,0.000000
+AtomId    0:  0.212563,0.000000,0.000000
+AtomId    1:  0.212563,0.000000,0.000000
 --------------------------------------------------------------------------------------------
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
 v1 : 80.000000 0.000000 0.000000
@@ -80,8 +80,8 @@ v2 : 0.000000 80.000000 0.000000
 v3 : 0.000000 0.000000 80.000000
 -----------------------------------------------------------------------------------------
 ------------Cartesian coordinates of atoms (origin at center of domain)------------------
-AtomId 0:  -0.764647 0.000000 0.000000
-AtomId 1:  0.764647 0.000000 0.000000
+AtomId 0:  -0.764706 0.000000 0.000000
+AtomId 1:  0.764706 0.000000 0.000000
 -----------------------------------------------------------------------------------------
 
 Finite element mesh information
@@ -105,12 +105,12 @@ SCF iterations converged to the specified tolerance after: 13 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.42357465
+             Total energy:         -19.42385133
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  2.364105,0.000000,0.000000
-AtomId    1:  2.364105,0.000000,0.000000
+AtomId    0:  2.363017,0.000000,0.000000
+AtomId    1:  2.363016,0.000000,0.000000
 --------------------------------------------------------------------------------------------
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
 v1 : 80.000000 0.000000 0.000000
@@ -118,8 +118,8 @@ v2 : 0.000000 80.000000 0.000000
 v3 : 0.000000 0.000000 80.000000
 -----------------------------------------------------------------------------------------
 ------------Cartesian coordinates of atoms (origin at center of domain)------------------
-AtomId 0:  -1.121675 0.000000 0.000000
-AtomId 1:  1.121675 0.000000 0.000000
+AtomId 0:  -1.121664 0.000000 0.000000
+AtomId 1:  1.121664 0.000000 0.000000
 -----------------------------------------------------------------------------------------
 
 Finite element mesh information
@@ -139,78 +139,78 @@ Reading initial guess for electron-density.....
 Pseudopotential initalization....
 
 Starting SCF iterations....
+SCF iterations converged to the specified tolerance after: 17 iterations.
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -19.88803731
+
+Absolute values of ion forces (Hartree/Bohr)
+--------------------------------------------------------------------------------------------
+AtomId    0:  0.170576,0.000000,0.000000
+AtomId    1:  0.170576,0.000000,0.000000
+--------------------------------------------------------------------------------------------
+-----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
+v1 : 80.000000 0.000000 0.000000
+v2 : 0.000000 80.000000 0.000000
+v3 : 0.000000 0.000000 80.000000
+-----------------------------------------------------------------------------------------
+------------Cartesian coordinates of atoms (origin at center of domain)------------------
+AtomId 0:  -1.097631 0.000000 0.000000
+AtomId 1:  1.097631 0.000000 0.000000
+-----------------------------------------------------------------------------------------
+
+Finite element mesh information
+-------------------------------------------------
+number of elements: 2736
+number of degrees of freedom: 86793
+-------------------------------------------------
+
+Interpolating previous groundstate PSI into the new finite element mesh....
+
+Pseudopotential initalization....
+
+Starting SCF iterations....
+SCF iterations converged to the specified tolerance after: 12 iterations.
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -19.89539391
+
+Absolute values of ion forces (Hartree/Bohr)
+--------------------------------------------------------------------------------------------
+AtomId    0:  0.130437,0.000000,0.000000
+AtomId    1:  0.130437,0.000000,0.000000
+--------------------------------------------------------------------------------------------
+-----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
+v1 : 80.000000 0.000000 0.000000
+v2 : 0.000000 80.000000 0.000000
+v3 : 0.000000 0.000000 80.000000
+-----------------------------------------------------------------------------------------
+------------Cartesian coordinates of atoms (origin at center of domain)------------------
+AtomId 0:  -1.019535 0.000000 0.000000
+AtomId 1:  1.019535 0.000000 0.000000
+-----------------------------------------------------------------------------------------
+
+Finite element mesh information
+-------------------------------------------------
+number of elements: 2736
+number of degrees of freedom: 86793
+-------------------------------------------------
+
+Interpolating previous groundstate PSI into the new finite element mesh....
+
+Pseudopotential initalization....
+
+Starting SCF iterations....
 SCF iterations converged to the specified tolerance after: 14 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.88803336
+             Total energy:         -19.86937618
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.170593,0.000000,0.000000
-AtomId    1:  0.170593,0.000000,0.000000
---------------------------------------------------------------------------------------------
------------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
-v1 : 80.000000 0.000000 0.000000
-v2 : 0.000000 80.000000 0.000000
-v3 : 0.000000 0.000000 80.000000
------------------------------------------------------------------------------------------
-------------Cartesian coordinates of atoms (origin at center of domain)------------------
-AtomId 0:  -1.097646 0.000000 0.000000
-AtomId 1:  1.097646 0.000000 0.000000
------------------------------------------------------------------------------------------
-
-Finite element mesh information
--------------------------------------------------
-number of elements: 2736
-number of degrees of freedom: 86793
--------------------------------------------------
-
-Interpolating previous groundstate PSI into the new finite element mesh....
-
-Pseudopotential initalization....
-
-Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 13 iterations.
-
-Energy computations (Hartree) 
--------------------
-             Total energy:         -19.89538997
-
-Absolute values of ion forces (Hartree/Bohr)
---------------------------------------------------------------------------------------------
-AtomId    0:  0.130449,0.000000,0.000000
-AtomId    1:  0.130449,0.000000,0.000000
---------------------------------------------------------------------------------------------
------------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
-v1 : 80.000000 0.000000 0.000000
-v2 : 0.000000 80.000000 0.000000
-v3 : 0.000000 0.000000 80.000000
------------------------------------------------------------------------------------------
-------------Cartesian coordinates of atoms (origin at center of domain)------------------
-AtomId 0:  -1.019564 0.000000 0.000000
-AtomId 1:  1.019564 0.000000 0.000000
------------------------------------------------------------------------------------------
-
-Finite element mesh information
--------------------------------------------------
-number of elements: 2736
-number of degrees of freedom: 86793
--------------------------------------------------
-
-Interpolating previous groundstate PSI into the new finite element mesh....
-
-Pseudopotential initalization....
-
-Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 15 iterations.
-
-Energy computations (Hartree) 
--------------------
-             Total energy:         -19.86937754
-
-Absolute values of ion forces (Hartree/Bohr)
---------------------------------------------------------------------------------------------
-AtomId    0:  0.039433,0.000000,0.000000
-AtomId    1:  0.039433,0.000000,0.000000
+AtomId    0:  0.039536,0.000000,0.000000
+AtomId    1:  0.039536,0.000000,0.000000
 --------------------------------------------------------------------------------------------
