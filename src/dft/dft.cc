@@ -879,6 +879,9 @@ namespace dftfe {
     kohnShamDFTEigenOperator.preComputeShapeFunctionGradientIntegrals();
     computing_timer.exit_section("shapefunction data");
 
+    if(dftParameters::rrGEPFullMassMatrix)
+      kohnShamDFTEigenOperator.computeMassMatrix();
+
     if (dftParameters::verbosity>=4)
       dftUtils::printCurrentMemoryUsage(mpi_communicator,
 	                      "Precompute shapefunction grad integrals, just before starting scf solve");

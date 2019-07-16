@@ -140,6 +140,7 @@ namespace dftfe{
 
     unsigned int chebyshevOrder = dftParameters::chebyshevOrder;
 
+
     //
     //set Chebyshev order
     //
@@ -406,7 +407,7 @@ namespace dftfe{
 		     = eigenVectorsTransposed[iWave*localVectorSize+iNode];
 	    MPI_Barrier(interBandGroupComm);
 	    computing_timer.exit_section("MPI_Allgatherv across band groups");
-	 }
+	}
       }
 
 
@@ -417,25 +418,41 @@ namespace dftfe{
     {
 	 computing_timer.enter_section("Rayleigh-Ritz GEP");
 	 if (eigenValues.size()!=totalNumberWaveFunctions)
-	 {
-	    linearAlgebraOperations::rayleighRitzGEPSpectrumSplitDirect(operatorMatrix,
-								     eigenVectorsFlattened,
-								     eigenVectorsRotFracDensityFlattened,
-								     totalNumberWaveFunctions,
-								     totalNumberWaveFunctions-eigenValues.size(),
-								     interBandGroupComm,
-								     operatorMatrix.getMPICommunicator(),
-								     useMixedPrec,
-								     eigenValues);
-	 }
+	   {
+	     linearAlgebraOperations::rayleighRitzGEPSpectrumSplitDirect(operatorMatrix,
+									 eigenVectorsFlattened,
+									 eigenVectorsRotFracDensityFlattened,
+									 totalNumberWaveFunctions,
+									 totalNumberWaveFunctions-eigenValues.size(),
+									 interBandGroupComm,
+									 operatorMatrix.getMPICommunicator(),
+									 useMixedPrec,
+									 eigenValues);
+	   }
 	 else
-	    linearAlgebraOperations::rayleighRitzGEP(operatorMatrix,
-						  eigenVectorsFlattened,
-						  totalNumberWaveFunctions,
-						  interBandGroupComm,
-						  operatorMatrix.getMPICommunicator(),
-						  eigenValues,
-						  useMixedPrec);
+	   {
+	    
+	     if(dftParameters::rrGEPFullMassMatrix)
+	       {
+		 linearAlgebraOperations::rayleighRitzGEPFullMassMatrix(operatorMatrix,
+									eigenVectorsFlattened,
+									totalNumberWaveFunctions,
+									interBandGroupComm,
+									operatorMatrix.getMPICommunicator(),
+									eigenValues,
+									useMixedPrec);
+	       }
+	     else
+	       {
+		 linearAlgebraOperations::rayleighRitzGEP(operatorMatrix,
+							  eigenVectorsFlattened,
+							  totalNumberWaveFunctions,
+							  interBandGroupComm,
+							  operatorMatrix.getMPICommunicator(),
+							  eigenValues,
+							  useMixedPrec);
+	       }
+	   }
  	 computing_timer.exit_section("Rayleigh-Ritz GEP");
 
         computing_timer.enter_section("eigen vectors residuals opt");
@@ -447,12 +464,26 @@ namespace dftfe{
 							      interBandGroupComm,
 							      residualNorms);
 	else
-	  linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
-							    eigenVectorsFlattened,
-							    eigenValues,
-							    operatorMatrix.getMPICommunicator(),
-							    interBandGroupComm,
-							    residualNorms);
+	  {
+	    if(dftParameters::rrGEPFullMassMatrix)
+	      {
+		linearAlgebraOperations::computeGEPResidualNorm(operatorMatrix,
+								eigenVectorsFlattened,
+								eigenValues,
+								operatorMatrix.getMPICommunicator(),
+								interBandGroupComm,
+								residualNorms);
+	      }
+	    else
+	      {
+		linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
+								  eigenVectorsFlattened,
+								  eigenValues,
+								  operatorMatrix.getMPICommunicator(),
+								  interBandGroupComm,
+								  residualNorms);
+	      }
+	  }
 	computing_timer.exit_section("eigen vectors residuals opt");
     }
     else

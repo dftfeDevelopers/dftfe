@@ -74,6 +74,18 @@ namespace dftfe {
 
   }
 
+  //set the data member of operator class
+  void operatorDFTClass::setInvSqrtMassVector(vectorType & invSqrtMassVector) 
+  {
+    d_invSqrtMassVector = invSqrtMassVector;
+  }
+
+  //get access to the data member of operator class
+  vectorType & operatorDFTClass::getInvSqrtMassVector() 
+  {
+    return d_invSqrtMassVector;
+  }
+
   //
   //Get local dof indices real
   //

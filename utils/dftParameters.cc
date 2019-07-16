@@ -88,6 +88,7 @@ namespace dftParameters
   bool createConstraintsFromSerialDofhandler=true;
   bool bandParalOpt=true;
   bool rrGEP=false;
+  bool rrGEPFullMassMatrix=false;
   bool autoUserMeshParams=false;
 
   void declare_parameters(ParameterHandler &prm)
@@ -459,6 +460,9 @@ namespace dftParameters
             prm.declare_entry("RR GEP", "true",
 			      Patterns::Bool(),"[Advanced] Solve generalized eigenvalue problem instead of standard eignevalue problem in Rayleigh-Ritz step. This approach is not extended yet to complex executable. Default value is true for real executable and false for complex executable.");
 
+	    prm.declare_entry("RR GEP FULL MASS MATRIX", "false",
+			      Patterns::Bool(),"[Advanced] Solve generalized eigenvalue problem instead of standard eignevalue problem in Rayleigh-Ritz step with finite-element overlap matrix evaluated using full quadrature rule (Gauss quadrature rule) only during the solution of the generalized eigenvalue problem in the RR step.  Default value is true and is only active when RR GEP is true.");
+
 
 	    prm.declare_entry("LOWER BOUND WANTED SPECTRUM", "-10.0",
 			      Patterns::Double(),
@@ -700,6 +704,7 @@ namespace dftParameters
 	   dftParameters::numCoreWfcRR                  = prm.get_integer("SPECTRUM SPLIT CORE EIGENSTATES");
 	   dftParameters::spectrumSplitStartingScfIter  = prm.get_integer("SPECTRUM SPLIT STARTING SCF ITER");
 	   dftParameters::rrGEP= prm.get_bool("RR GEP");
+	   dftParameters::rrGEPFullMassMatrix = prm.get_bool("RR GEP FULL MASS MATRIX");
 	   dftParameters::lowerEndWantedSpectrum        = prm.get_double("LOWER BOUND WANTED SPECTRUM");
 	   dftParameters::lowerBoundUnwantedFracUpper   = prm.get_double("LOWER BOUND UNWANTED FRAC UPPER");
 	   dftParameters::chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
@@ -828,6 +833,9 @@ namespace dftParameters
 
     if (dftParameters::nonSelfConsistentForce)
        AssertThrow(false,ExcMessage("DFT-FE Error: Implementation of this feature is not completed yet."));
+
+    if(dftParameters::numCoreWfcRR >= 0 && dftParameters::rrGEPFullMassMatrix)
+      AssertThrow(false,ExcMessage("DFT-FE Error: Spectrum splitting approach is not available with rayleigh Ritz projection with full mass matrix using Gauss-Legendre Quadrature rule."));
 
     AssertThrow(!dftParameters::coordinatesFile.empty()
 	        ,ExcMessage("DFT-FE Error: ATOMIC COORDINATES FILE not given."));

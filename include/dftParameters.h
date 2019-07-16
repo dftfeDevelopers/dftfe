@@ -95,6 +95,7 @@ namespace dftfe {
       extern bool createConstraintsFromSerialDofhandler;
       extern bool bandParalOpt;
       extern bool rrGEP;
+      extern bool rrGEPFullMassMatrix;
 
       /**
        * Declare parameters.

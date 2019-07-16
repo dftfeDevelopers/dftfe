@@ -785,6 +785,326 @@ namespace dftfe{
 
       computing_timer.exit_section("X = X*L_{inv}^{T}*Q, RR step");
     }
+
+    template<typename T>
+    void rayleighRitzGEPFullMassMatrix(operatorDFTClass & operatorMatrix,
+				       std::vector<T> & X,
+				       const unsigned int numberWaveFunctions,
+				       const MPI_Comm &interBandGroupComm,
+				       const MPI_Comm &mpi_communicator,
+				       std::vector<double> & eigenValues,
+				       const bool useMixedPrec)
+    {
+      dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
+
+      dealii::TimerOutput computing_timer(mpi_communicator,
+	                                  pcout,
+					  dftParameters::reproducible_output ||
+					  dftParameters::verbosity<4 ? dealii::TimerOutput::never : dealii::TimerOutput::summary,
+					  dealii::TimerOutput::wall_times);
+
+      const unsigned int rowsBlockSize=operatorMatrix.getScalapackBlockSize();
+      std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  processGrid;
+      internal::createProcessGridSquareMatrix(mpi_communicator,
+                                              numberWaveFunctions,
+                                              processGrid);
+      //
+      //scale the input vectors X with M^{-1/2}
+      //
+      const unsigned int numberDofs = X.size()/numberWaveFunctions;
+      const unsigned int inc = 1;
+
+      for(unsigned int i = 0; i < numberDofs; ++i)
+        {
+	  double scalingCoeff = operatorMatrix.getInvSqrtMassVector().local_element(i);
+	  dscal_(&numberWaveFunctions,
+		 &scalingCoeff,
+		 &X[i*numberWaveFunctions],
+		 &inc);
+	}
+
+      //
+      //compute projection of mass matrix S = (XtMX)
+      //
+      dealii::ScaLAPACKMatrix<T> overlapMatPar(numberWaveFunctions,
+                                               processGrid,
+                                               rowsBlockSize);
+
+      if (processGrid->is_process_active())
+         std::fill(&overlapMatPar.local_el(0,0),
+	           &overlapMatPar.local_el(0,0)+overlapMatPar.local_m()*overlapMatPar.local_n(),
+		   T(0.0));
+
+
+      
+      computing_timer.enter_section("Blocked XtMX, RR step");
+      operatorMatrix.XtMX(X,
+			  numberWaveFunctions,
+			  processGrid,
+			  overlapMatPar);
+      computing_timer.exit_section("Blocked XtMX, RR step");
+
+
+
+      //S=L*L^{T}
+#if(defined DFTFE_WITH_ELPA)
+      computing_timer.enter_section("Cholesky and triangular matrix invert");
+#else
+      computing_timer.enter_section("Cholesky and triangular matrix invert");
+#endif
+#if(defined DFTFE_WITH_ELPA)
+      dealii::LAPACKSupport::Property overlapMatPropertyPostCholesky;
+      if (dftParameters::useELPA)
+      {
+	  //For ELPA cholesky only the upper triangular part is enough
+	  dealii::ScaLAPACKMatrix<T> overlapMatParTrans(numberWaveFunctions,
+						processGrid,
+						rowsBlockSize);
+
+          if (processGrid->is_process_active())
+	      std::fill(&overlapMatParTrans.local_el(0,0),
+		        &overlapMatParTrans.local_el(0,0)
+			+overlapMatParTrans.local_m()*overlapMatParTrans.local_n(),
+		        T(0.0));
+
+	  overlapMatParTrans.copy_transposed(overlapMatPar);
+
+	  if (processGrid->is_process_active())
+	  {
+	      int error;
+	      elpa_cholesky_d(operatorMatrix.getElpaHandle(), &overlapMatParTrans.local_el(0,0), &error);
+	      AssertThrow(error==ELPA_OK,
+			dealii::ExcMessage("DFT-FE Error: elpa_cholesky_d error."));
+	  }
+	  overlapMatParTrans.copy_to(overlapMatPar);
+	  overlapMatPropertyPostCholesky=dealii::LAPACKSupport::Property::upper_triangular;
+      }
+      else
+      {
+	  overlapMatPar.compute_cholesky_factorization();
+
+	  overlapMatPropertyPostCholesky=overlapMatPar.get_property();
+      }
+#else
+      overlapMatPar.compute_cholesky_factorization();
+
+      dealii::LAPACKSupport::Property overlapMatPropertyPostCholesky=overlapMatPar.get_property();
+#endif
+      AssertThrow(overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::lower_triangular
+		  ||overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::upper_triangular
+	           ,dealii::ExcMessage("DFT-FE Error: overlap matrix property after cholesky factorization incorrect"));
+
+      dealii::ScaLAPACKMatrix<T> LMatPar(numberWaveFunctions,
+                                         processGrid,
+                                         rowsBlockSize,
+					 overlapMatPropertyPostCholesky);
+
+      //copy triangular part of projHamPar into LMatPar
+      if (processGrid->is_process_active())
+         for (unsigned int i = 0; i < overlapMatPar.local_n(); ++i)
+           {
+             const unsigned int glob_i = overlapMatPar.global_column(i);
+             for (unsigned int j = 0; j < overlapMatPar.local_m(); ++j)
+               {
+		 const unsigned int glob_j = overlapMatPar.global_row(j);
+		 if (overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::lower_triangular)
+		 {
+		     if (glob_i <= glob_j)
+			LMatPar.local_el(j, i)=overlapMatPar.local_el(j, i);
+		     else
+			LMatPar.local_el(j, i)=0;
+		 }
+		 else
+		 {
+		     if (glob_j <= glob_i)
+			LMatPar.local_el(j, i)=overlapMatPar.local_el(j, i);
+		     else
+			LMatPar.local_el(j, i)=0;
+		 }
+               }
+           }
+
+      //invert triangular matrix
+#if(defined DFTFE_WITH_ELPA)
+      if (dftParameters::useELPA)
+      {
+	  if (processGrid->is_process_active())
+	  {
+	      int error;
+	      elpa_invert_trm_d(operatorMatrix.getElpaHandle(), &LMatPar.local_el(0,0), &error);
+	      AssertThrow(error==ELPA_OK,
+			dealii::ExcMessage("DFT-FE Error: elpa_invert_trm_d error."));
+	  }
+      }
+      else
+      {
+	  LMatPar.invert();
+      }
+#else
+      LMatPar.invert();
+#endif
+#if(defined DFTFE_WITH_ELPA)
+      computing_timer.exit_section("Cholesky and triangular matrix invert");
+#else
+      computing_timer.exit_section("Cholesky and triangular matrix invert");
+#endif
+
+
+      //
+      //compute projected Hamiltonian
+      //
+      dealii::ScaLAPACKMatrix<T> projHamPar(numberWaveFunctions,
+                                            processGrid,
+                                            rowsBlockSize);
+      if (processGrid->is_process_active())
+	  std::fill(&projHamPar.local_el(0,0),
+		    &projHamPar.local_el(0,0)+projHamPar.local_m()*projHamPar.local_n(),
+		    T(0.0));
+
+      computing_timer.enter_section("Blocked XtHX, RR step");
+      operatorMatrix.XtHX(X,
+			  numberWaveFunctions,
+			  processGrid,
+			  projHamPar,
+			  true);
+      computing_timer.exit_section("Blocked XtHX, RR step");
+
+      //For ELPA eigendecomposition the full matrix is required unlike
+      //ScaLAPACK which can work with only the lower triangular part
+      dealii::ScaLAPACKMatrix<T> projHamParTrans(numberWaveFunctions,
+					    processGrid,
+					    rowsBlockSize);
+
+      if (processGrid->is_process_active())
+	  std::fill(&projHamParTrans.local_el(0,0),
+		    &projHamParTrans.local_el(0,0)+projHamParTrans.local_m()*projHamParTrans.local_n(),
+		    T(0.0));
+
+
+      projHamParTrans.copy_transposed(projHamPar);
+      projHamPar.add(projHamParTrans,T(1.0),T(1.0));
+
+      if (processGrid->is_process_active())
+	 for (unsigned int i = 0; i < projHamPar.local_n(); ++i)
+	   {
+	     const unsigned int glob_i = projHamPar.global_column(i);
+	     for (unsigned int j = 0; j < projHamPar.local_m(); ++j)
+	       {
+		 const unsigned int glob_j = projHamPar.global_row(j);
+		 if (glob_i==glob_j)
+		    projHamPar.local_el(j, i)*=T(0.5);
+	       }
+	   }
+
+      dealii::ScaLAPACKMatrix<T> projHamParCopy(numberWaveFunctions,
+					    processGrid,
+					    rowsBlockSize);
+
+      if (overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::lower_triangular)
+      {
+	  LMatPar.mmult(projHamParCopy,projHamPar);
+	  projHamParCopy.mTmult(projHamPar,LMatPar);
+      }
+      else
+      {
+	  LMatPar.Tmmult(projHamParCopy,projHamPar);
+	  projHamParCopy.mmult(projHamPar,LMatPar);
+      }
+
+      //
+      //compute eigendecomposition of ProjHam
+      //
+      const unsigned int numberEigenValues = numberWaveFunctions;
+      eigenValues.resize(numberEigenValues);
+#if(defined DFTFE_WITH_ELPA)
+      if (dftParameters::useELPA)
+      {
+	  computing_timer.enter_section("ELPA eigen decomp, RR step");
+          dealii::ScaLAPACKMatrix<T> eigenVectors(numberWaveFunctions,
+                                            processGrid,
+                                            rowsBlockSize);
+
+	  if (processGrid->is_process_active())
+	      std::fill(&eigenVectors.local_el(0,0),
+		    &eigenVectors.local_el(0,0)+eigenVectors.local_m()*eigenVectors.local_n(),
+		    T(0.0));
+
+	  if (processGrid->is_process_active())
+          {
+	      int error;
+	      elpa_eigenvectors_d(operatorMatrix.getElpaHandle(),
+				&projHamPar.local_el(0,0),
+				&eigenValues[0],
+				&eigenVectors.local_el(0,0),
+				&error);
+	      AssertThrow(error==ELPA_OK,
+		    dealii::ExcMessage("DFT-FE Error: elpa_eigenvectors error."));
+	  }
+
+
+	  MPI_Bcast(&eigenValues[0],
+		    eigenValues.size(),
+		    MPI_DOUBLE,
+		    0,
+		    mpi_communicator);
+
+
+	  eigenVectors.copy_to(projHamPar);
+
+	  computing_timer.exit_section("ELPA eigen decomp, RR step");
+      }
+      else
+      {
+	  computing_timer.enter_section("ScaLAPACK eigen decomp, RR step");
+	  eigenValues=projHamPar.eigenpairs_symmetric_by_index_MRRR(std::make_pair(0,numberWaveFunctions-1),true);
+	  computing_timer.exit_section("ScaLAPACK eigen decomp, RR step");
+       }
+#else
+      computing_timer.enter_section("ScaLAPACK eigen decomp, RR step");
+      eigenValues=projHamPar.eigenpairs_symmetric_by_index_MRRR(std::make_pair(0,numberWaveFunctions-1),true);
+      computing_timer.exit_section("ScaLAPACK eigen decomp, RR step");
+#endif
+
+      computing_timer.enter_section("Broadcast eigvec and eigenvalues across band groups, RR step");
+      internal::broadcastAcrossInterCommScaLAPACKMat
+	                                   (processGrid,
+		                            projHamPar,
+				            interBandGroupComm,
+					    0);
+
+      /*
+      MPI_Bcast(&eigenValues[0],
+		eigenValues.size(),
+		MPI_DOUBLE,
+		0,
+		interBandGroupComm);
+      */
+      computing_timer.exit_section("Broadcast eigvec and eigenvalues across band groups, RR step");
+      //
+      //rotate the basis in the subspace X = X*L_{inv}^{T}*Q,
+      //stored in the column major format
+      //
+      computing_timer.enter_section("X = X*L_{inv}^{T}*Q, RR step");
+
+      projHamPar.copy_to(projHamParCopy);
+      if (overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::lower_triangular)
+        LMatPar.Tmmult(projHamPar,projHamParCopy);
+      else
+	LMatPar.mmult(projHamPar,projHamParCopy);
+
+      internal::subspaceRotation(&X[0],
+	                         X.size(),
+		                 numberWaveFunctions,
+		                 processGrid,
+				 interBandGroupComm,
+				 mpi_communicator,
+			         projHamPar,
+				 true,
+				 false,
+				 false);
+
+      computing_timer.exit_section("X = X*L_{inv}^{T}*Q, RR step");
+    }
 #else
 
     template<typename T>
@@ -798,6 +1118,21 @@ namespace dftfe{
     {
        AssertThrow(false,dftUtils::ExcNotImplementedYet());
     }
+
+    template<typename T>
+    void rayleighRitzGEPFullMassMatrix(operatorDFTClass & operatorMatrix,
+                                       std::vector<T> & X,
+                                       const unsigned int numberWaveFunctions,
+                                       const MPI_Comm &interBandGroupComm,
+                                       const MPI_Comm &mpi_communicator,
+                                       std::vector<double> & eigenValues,
+                                       const bool useMixedPrec)
+   {
+      AssertThrow(false,dftUtils::ExcNotImplementedYet()); 
+   }
+
+
+
 #endif
 
 #if(defined DEAL_II_WITH_SCALAPACK && !USE_COMPLEX)
@@ -1839,6 +2174,120 @@ namespace dftfe{
 	  std::cout <<std::endl;
 
     }
+    
+    template<typename T>
+    void computeGEPResidualNorm(operatorDFTClass & operatorMatrix,
+				std::vector<T> & X,
+				const std::vector<double> & eigenValues,
+				const MPI_Comm &mpiComm,
+				const MPI_Comm &interBandGroupComm,
+				std::vector<double> & residualNorm)
+
+    {
+
+      //
+      //get the number of eigenVectors
+      //
+      const unsigned int totalNumberVectors = eigenValues.size();
+      const unsigned int localVectorSize = X.size()/totalNumberVectors;
+      std::vector<double> residualNormSquare(totalNumberVectors,0.0);
+
+      //band group parallelization data structures
+      const unsigned int numberBandGroups=
+	dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
+      const unsigned int bandGroupTaskId = dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
+      std::vector<unsigned int> bandGroupLowHighPlusOneIndices;
+      dftUtils::createBandParallelizationIndices(interBandGroupComm,
+						 totalNumberVectors,
+						 bandGroupLowHighPlusOneIndices);
+
+      //create temporary arrays XBlock,HXBlock
+      dealii::parallel::distributed::Vector<T> XBlock,HXBlock,MXBlock;
+
+      // Do H*X using a blocked approach and compute
+      // the residual norms: H*XBlock-XBlock*D, where
+      // D is the eigenvalues matrix.
+      // The blocked approach avoids additional full
+      // wavefunction matrix memory
+      const unsigned int vectorsBlockSize=std::min(dftParameters::wfcBlockSize,
+		                                   bandGroupLowHighPlusOneIndices[1]);
+
+      for (unsigned int jvec = 0; jvec < totalNumberVectors; jvec += vectorsBlockSize)
+	{
+	  // Correct block dimensions if block "goes off edge"
+	  const unsigned int B = std::min(vectorsBlockSize, totalNumberVectors-jvec);
+
+	  if (jvec==0 || B!=vectorsBlockSize)
+	    {
+	      operatorMatrix.reinit(B,
+				    XBlock,
+				    true);
+	      HXBlock.reinit(XBlock);
+	      MXBlock.reinit(XBlock);
+	    }
+
+	  if ((jvec+B)<=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1] &&
+	      (jvec+B)>bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
+	    {
+	      XBlock=T(0.);
+	      //fill XBlock from X:
+	      for(unsigned int iNode = 0; iNode<localVectorSize; ++iNode)
+		for(unsigned int iWave = 0; iWave < B; ++iWave)
+		  XBlock.local_element(iNode*B
+				       +iWave)
+		    =X[iNode*totalNumberVectors+jvec+iWave];
+
+	      MPI_Barrier(mpiComm);
+	      //evaluate H times XBlock and store in HXBlock
+	      HXBlock=T(0.);
+	      MXBlock=T(0.);
+
+	      operatorMatrix.HX(XBlock,
+				B,
+				HXBlock);
+
+	      operatorMatrix.MX(XBlock,
+				B,
+				MXBlock);
+
+
+	      //compute residual norms:
+	      for(unsigned int iDof = 0; iDof < localVectorSize; ++iDof)
+		for(unsigned int iWave = 0; iWave < B; iWave++)
+		  {
+		    const double temp =std::abs(HXBlock.local_element(B*iDof + iWave) -
+						eigenValues[jvec+iWave]*MXBlock.local_element(B*iDof + iWave));
+		    residualNormSquare[jvec+iWave] += temp*temp;
+		  }
+	    }
+	}
+
+
+      dealii::Utilities::MPI::sum(residualNormSquare,
+	                          mpiComm,
+				  residualNormSquare);
+
+      dealii::Utilities::MPI::sum(residualNormSquare,
+	                          interBandGroupComm,
+				  residualNormSquare);
+
+      if(dftParameters::verbosity>=4)
+	{
+	  if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+	    std::cout<<"L-2 Norm of residue   :"<<std::endl;
+	}
+      for(unsigned int iWave = 0; iWave < totalNumberVectors; ++iWave)
+	residualNorm[iWave] = sqrt(residualNormSquare[iWave]);
+
+      if(dftParameters::verbosity>=4 && dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+        for(unsigned int iWave = 0; iWave < totalNumberVectors; ++iWave)
+	  std::cout<<"eigen vector "<< iWave<<": "<<residualNorm[iWave]<<std::endl;
+
+      if(dftParameters::verbosity>=4)
+	if(dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+	  std::cout <<std::endl;
+
+    }
 
 
 #ifdef USE_COMPLEX
@@ -2238,6 +2687,15 @@ namespace dftfe{
 			       const bool useMixedPrec);
 
 
+    template void rayleighRitzGEPFullMassMatrix(operatorDFTClass  & operatorMatrix,
+						std::vector<dataTypes::number> &,
+						const unsigned int numberWaveFunctions,
+						const MPI_Comm &,
+						const MPI_Comm &,
+						std::vector<double>     & eigenValues,
+						const bool useMixedPrec);
+
+
     template void rayleighRitzSpectrumSplitDirect
 	                  (operatorDFTClass  & operatorMatrix,
 			   const std::vector<dataTypes::number> &,
@@ -2266,6 +2724,14 @@ namespace dftfe{
 					   const MPI_Comm &mpiComm,
 					   const MPI_Comm &interBandGroupComm,
 					   std::vector<double>     & residualNorm);
+
+   template void computeGEPResidualNorm(operatorDFTClass & operatorMatrix,
+                                        std::vector<dataTypes::number> & X,
+                                        const std::vector<double> & eigenValues,
+                                        const MPI_Comm &mpiComm,
+                                        const MPI_Comm &interBandGroupComm,
+                                        std::vector<double> & residualNorm);
+
 
   }//end of namespace
 
