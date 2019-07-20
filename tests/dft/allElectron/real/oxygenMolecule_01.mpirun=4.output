@@ -25,14 +25,14 @@ number of eigen values: 20
 Reading initial guess for electron-density.....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 25 iterations.
+SCF iterations converged to the specified tolerance after: 24 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:        -148.96286342
+             Total energy:        -148.96286341
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.000000,0.000000,0.044872
-AtomId    1:  0.000000,0.000000,0.450090
+AtomId    0:  0.000000,0.000000,0.044508
+AtomId    1:  0.000000,0.000000,0.450597
 --------------------------------------------------------------------------------------------

@@ -1104,7 +1104,7 @@ namespace dftfe {
 	    const double filterPassTol=(scfIter==0
 		                       && dftParameters::restartFromChk
 				       && dftParameters::chkType==2)? 1.0e-4
-		                       :adaptiveChebysevFilterPassesTol;
+		                       :((scfIter==0 && adaptiveChebysevFilterPassesTol>2e-2)?2e-2:adaptiveChebysevFilterPassesTol);
 	    while (maxRes>filterPassTol && count<100)
 	      {
 		for(unsigned int s=0; s<2; ++s)
@@ -1261,7 +1261,7 @@ namespace dftfe {
 	    const double filterPassTol=(scfIter==0
 		                       && dftParameters::restartFromChk
 				       && dftParameters::chkType==2)? 1.0e-4
-		                       :adaptiveChebysevFilterPassesTol;
+		                       :((scfIter==0 && adaptiveChebysevFilterPassesTol>2e-2)?2e-2:adaptiveChebysevFilterPassesTol);
 	    while (maxRes>filterPassTol && count<100)
 	      {
 

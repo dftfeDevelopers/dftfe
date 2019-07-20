@@ -67,7 +67,7 @@ SCF iterations converged to the specified tolerance after: 10 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.88436218
+             Total energy:         -19.88436215
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
@@ -80,7 +80,7 @@ v2 : 0.000000 80.000000 0.000000
 v3 : 0.000000 0.000000 80.000000
 -----------------------------------------------------------------------------------------
 ------------Cartesian coordinates of atoms (origin at center of domain)------------------
-AtomId 0:  -1.040235 0.000000 0.000000
+AtomId 0:  -1.040236 0.000000 0.000000
 AtomId 1:  1.040235 0.000000 0.000000
 -----------------------------------------------------------------------------------------
 
@@ -107,7 +107,7 @@ Energy computations (Hartree)
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.045229,0.000000,0.000000
+AtomId    0:  0.045228,0.000000,0.000000
 AtomId    1:  0.045225,0.000000,0.000000
 --------------------------------------------------------------------------------------------
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
@@ -139,12 +139,12 @@ SCF iterations converged to the specified tolerance after: 10 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.88774566
+             Total energy:         -19.88774565
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
 AtomId    0:  0.003536,0.000000,0.000000
-AtomId    1:  0.003531,0.000000,0.000000
+AtomId    1:  0.003532,0.000000,0.000000
 --------------------------------------------------------------------------------------------
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
 v1 : 80.000000 0.000000 0.000000

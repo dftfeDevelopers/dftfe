@@ -75,7 +75,8 @@ namespace dftParameters
   unsigned int numCoreWfcRR=0;
   bool triMatPGSOpt=true;
   bool reuseWfcGeoOpt=false;
-  extern double mpiAllReduceMessageBlockSizeMB=2.0;
+  bool reuseDensityGeoOpt=false;
+  double mpiAllReduceMessageBlockSizeMB=2.0;
   bool useHigherQuadNLP=true;
   bool useMixedPrecPGS_SR=false;
   bool useMixedPrecPGS_O=false;
@@ -221,6 +222,10 @@ namespace dftParameters
 	    prm.declare_entry("REUSE WFC", "false",
 			      Patterns::Bool(),
 			      "[Standard] Reuse previous ground-state wavefunctions during geometry optimization. Default setting is false.");
+
+            prm.declare_entry("REUSE DENSITY", "false",
+			       Patterns::Bool(),
+			      "[Standard] Reuse previous ground-state density during geometry optimization. Default setting is false.");
 
 	}
 	prm.leave_subsection ();
@@ -472,7 +477,7 @@ namespace dftParameters
 			      Patterns::Double(0,1),
 			      "[Developer] The value of the fraction of the upper bound of the unwanted spectrum, the lower bound of the unwanted spectrum will be set. Default value is 0.");
 
-	    prm.declare_entry("CHEBYSHEV FILTER TOLERANCE","2e-02",
+	    prm.declare_entry("CHEBYSHEV FILTER TOLERANCE","5e-02",
 			      Patterns::Double(1e-10),
 			      "[Advanced] Parameter specifying the accuracy of the occupied eigenvectors close to the Fermi-energy computed using Chebyshev filtering subspace iteration procedure. Default value is sufficient for most purposes");
 
@@ -611,6 +616,7 @@ namespace dftParameters
 	    dftParameters::stressRelaxTol                = prm.get_double("STRESS TOL");
 	    dftParameters::cellConstraintType            = prm.get_integer("CELL CONSTRAINT TYPE");
 	    dftParameters::reuseWfcGeoOpt                = prm.get_bool("REUSE WFC");
+	    dftParameters::reuseDensityGeoOpt                = prm.get_bool("REUSE DENSITY");
 	}
 	prm.leave_subsection ();
     }
