@@ -199,7 +199,9 @@ namespace dftfe{
 		      const unsigned int totalNumberComponents,
 		      const unsigned int singlePrecComponents,
 		      const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-		      dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar) = 0;
+		      dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar,
+		      bool origHFlag=false) = 0;
+
 
 #endif
     /**

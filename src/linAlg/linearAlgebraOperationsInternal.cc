@@ -477,6 +477,224 @@ namespace dftfe
 #endif
       }
 
+
+      void fillParallelXtMXMixedPrec(operatorDFTClass & operatorMatrix,
+				     const dataTypes::number* subspaceVectorsArray,
+	                             const unsigned int subspaceVectorsArrayLocalSize,
+				     const unsigned int N,
+				     const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+				     const MPI_Comm &interBandGroupComm,
+				     const MPI_Comm &mpiComm,
+				     dealii::ScaLAPACKMatrix<dataTypes::number> & overlapMatPar)
+      {
+
+#ifdef USE_COMPLEX
+	AssertThrow(false,dftUtils::ExcNotImplementedYet());
+#else
+          const unsigned int numLocalDofs = subspaceVectorsArrayLocalSize/N;
+
+	  //create temporary arrays XBlock,MXBlock
+	  dealii::parallel::distributed::Vector<dataTypes::number> XBlock,MXBlock;
+	  dealii::parallel::distributed::Vector<dataTypes::numberLowPrec> MXBlockLowPrec;
+
+          //band group parallelization data structures
+          const unsigned int numberBandGroups=
+	     dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
+          const unsigned int bandGroupTaskId = dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
+          std::vector<unsigned int> bandGroupLowHighPlusOneIndices;
+          dftUtils::createBandParallelizationIndices(interBandGroupComm,
+						     N,
+						     bandGroupLowHighPlusOneIndices);
+
+          //get global to local index maps for Scalapack matrix
+	  std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
+	  std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
+	  internal::createGlobalToLocalIdMapsScaLAPACKMat(processGrid,
+		                                          overlapMatPar,
+				                          globalToLocalRowIdMap,
+					                  globalToLocalColumnIdMap);
+
+
+          /* Below Xc and Sc denote conjugates of X and S. Evaluating S = Xc^{T}*M*X
+	   * is equivalent to Sc=X^{T}*M*Xc is done in a blocked approach for memory optimization:
+           * Sum_{blocks} X^{T}*M*XcBlock. The result of each X^{T}*M*XcBlock
+           * has a much smaller memory compared to X^{T}*M*Xc.
+	   * X^{T} is a matrix with size number of wavefunctions times
+	   * number of local degrees of freedom (N x MLoc).
+	   * MLoc is denoted by numLocalDofs.
+	   * Xc denotes complex conjugate of X.
+	   * XcBlock is a matrix with size (MLoc x B). B is the block size.
+	   * A further optimization is done to reduce floating point operations:
+	   * As X^{T}*M*Xc is a Hermitian matrix, it suffices to compute only the lower
+	   * triangular part. To exploit this, we do
+	   * X^{T}*M*Xc=Sum_{blocks} XTrunc^{T}*M*XcBlock
+	   * where XTrunc^{T} is a (D x MLoc) sub matrix of X^{T} with the row indices
+	   * ranging fromt the lowest global index of XcBlock (denoted by ivec in the code)
+	   * to N. D=N-ivec.
+	   * The parallel ScaLapack overlap matrix is directly filled from
+	   * the XTrunc^{T}*M*XcBlock result
+	   */
+	  const unsigned int vectorsBlockSize=std::min(dftParameters::wfcBlockSize,
+	                                               bandGroupLowHighPlusOneIndices[1]);
+
+	  std::vector<dataTypes::number> overlapMatrixBlock(N*vectorsBlockSize,0.0);
+	  std::vector<dataTypes::numberLowPrec> overlapMatrixBlockLowPrec(N*vectorsBlockSize,0.0);
+	  std::vector<dataTypes::number> overlapMatrixBlockDoublePrec(vectorsBlockSize*vectorsBlockSize,0.0);
+
+	  std::vector<dataTypes::numberLowPrec> subspaceVectorsArrayLowPrec(subspaceVectorsArray,
+									    subspaceVectorsArray+
+									    subspaceVectorsArrayLocalSize);
+
+	 
+
+	  for (unsigned int ivec = 0; ivec < N; ivec += vectorsBlockSize)
+	  {
+	      // Correct block dimensions if block "goes off edge of" the matrix
+	      const unsigned int B = std::min(vectorsBlockSize, N-ivec);
+
+	      if (ivec==0 || B!=vectorsBlockSize)
+		{
+		  operatorMatrix.reinit(B,
+					XBlock,
+					true);
+		  MXBlock.reinit(XBlock);
+
+		  MXBlockLowPrec.reinit(XBlock);
+
+		}
+
+	      // If one plus the ending index of a block lies within a band parallelization group
+	      // do computations for that block within the band group, otherwise skip that
+	      // block. This is only activated if NPBAND>1
+	      if ((ivec+B)<=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1] &&
+	      (ivec+B)>bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
+	      {
+		
+		XBlock=0.0;
+		//fill XBlock^{T} from X:
+		for(unsigned int iNode = 0; iNode<numLocalDofs; ++iNode)
+		  for(unsigned int iWave = 0; iWave < B; ++iWave)
+		    XBlock.local_element(iNode*B
+					 +iWave)
+		      = subspaceVectorsArray[iNode*N+ivec+iWave];
+
+		MPI_Barrier(mpiComm);
+
+		 //evaluate M times XBlock^{T} and store in MXBlock^{T}
+		MXBlock=0;
+		const bool scaleFlag = false;
+		const dataTypes::number scalar = 1.0;
+		operatorMatrix.MX(XBlock,
+				  B,
+				  MXBlock);
+		MPI_Barrier(mpiComm);
+
+		//fill MXBlock low precision
+		for(unsigned int iNode = 0; iNode<numLocalDofs; ++iNode)
+		  for(unsigned int iWave = 0; iWave < B; ++iWave)
+		    MXBlockLowPrec.local_element(iNode*B + iWave)
+		      = MXBlock.local_element(iNode*B + iWave);
+
+
+		const char transA = 'N',transB = 'T';
+		const dataTypes::number scalarCoeffAlpha = 1.0,scalarCoeffBeta = 0.0;
+		const dataTypes::numberLowPrec scalarCoeffAlphaLowPrec = 1.0,scalarCoeffBetaLowPrec = 0.0;
+
+		std::fill(overlapMatrixBlock.begin(),overlapMatrixBlock.end(),0.);
+		std::fill(overlapMatrixBlockLowPrec.begin(),overlapMatrixBlockLowPrec.end(),0.);
+
+		const unsigned int D=N-ivec;
+
+		dgemm_(&transA,
+		       &transB,
+		       &B,
+		       &B,
+		       &numLocalDofs,
+		       &scalarCoeffAlpha,
+		       subspaceVectorsArray+ivec,
+		       &N,
+		       MXBlock.begin(),
+		       &B,
+		       &scalarCoeffBeta,
+		       &overlapMatrixBlockDoublePrec[0],
+		       &B);
+
+		  const unsigned int DRem=D-B;
+		  if (DRem!=0)
+		  {
+		    sgemm_(&transA,
+			   &transB,
+			   &DRem,
+			   &B,
+			   &numLocalDofs,
+			   &scalarCoeffAlphaLowPrec,
+			   &subspaceVectorsArrayLowPrec[0]+ivec+B,
+			   &N,
+			   MXBlockLowPrec.begin(),
+			   &B,
+			   &scalarCoeffBetaLowPrec,
+			   &overlapMatrixBlockLowPrec[0],
+			   &DRem);
+		  }
+
+		  MPI_Barrier(mpiComm);
+		  // Sum local XTrunc^{T}*XcBlock for double precision across domain decomposition processors
+		  MPI_Allreduce(MPI_IN_PLACE,
+				&overlapMatrixBlockDoublePrec[0],
+				B*B,
+				dataTypes::mpi_type_id(&overlapMatrixBlockDoublePrec[0]),
+				MPI_SUM,
+				mpiComm);
+
+		  MPI_Barrier(mpiComm);
+		  // Sum local XTrunc^{T}*XcBlock for single precision across domain decomposition processors
+		  MPI_Allreduce(MPI_IN_PLACE,
+				&overlapMatrixBlockLowPrec[0],
+				DRem*B,
+				dataTypes::mpi_type_id(&overlapMatrixBlockLowPrec[0]),
+				MPI_SUM,
+				mpiComm);
+
+		  for(unsigned int i = 0; i <B; ++i)
+		  {
+		      for (unsigned int j = 0; j <B; ++j)
+			  overlapMatrixBlock[i*D+j]
+			      =overlapMatrixBlockDoublePrec[i*B+j];
+
+		      for (unsigned int j = 0; j <DRem; ++j)
+			  overlapMatrixBlock[i*D+j+B]
+			      =overlapMatrixBlockLowPrec[i*DRem+j];
+		  }
+
+		  //Copying only the lower triangular part to the ScaLAPACK overlap matrix
+		  if (processGrid->is_process_active())
+		      for(unsigned int i = 0; i <B; ++i)
+			  if (globalToLocalColumnIdMap.find(i+ivec)!=globalToLocalColumnIdMap.end())
+			  {
+			      const unsigned int localColumnId=globalToLocalColumnIdMap[i+ivec];
+			      for (unsigned int j = ivec+i; j <N; ++j)
+			      {
+				 std::map<unsigned int, unsigned int>::iterator it=
+					      globalToLocalRowIdMap.find(j);
+				 if(it!=globalToLocalRowIdMap.end())
+				     overlapMatPar.local_el(it->second,
+							    localColumnId)
+							    =overlapMatrixBlock[i*D+j-ivec];
+			      }
+			  }
+	      }//band parallelization
+	  }//block loop
+
+
+	  //accumulate contribution from all band parallelization groups
+          linearAlgebraOperations::internal::sumAcrossInterCommScaLAPACKMat
+	                                          (processGrid,
+						   overlapMatPar,
+						   interBandGroupComm);
+
+#endif
+      }
+
       template<typename T>
       void fillParallelOverlapMatrix(const T* subspaceVectorsArray,
 	                             const unsigned int subspaceVectorsArrayLocalSize,

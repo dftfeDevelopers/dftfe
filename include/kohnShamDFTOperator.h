@@ -142,7 +142,8 @@ namespace dftfe{
 		      const unsigned int N,
 		      const unsigned int Ncore,
 		      const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-		      dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar);
+		      dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar,
+		      bool origHFlag = false);
 #endif
 
       /**

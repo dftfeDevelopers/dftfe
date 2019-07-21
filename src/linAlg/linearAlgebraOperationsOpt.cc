@@ -836,14 +836,28 @@ namespace dftfe{
 		   T(0.0));
 
 
-      
-      computing_timer.enter_section("Blocked XtMX, RR step");
-      operatorMatrix.XtMX(X,
-			  numberWaveFunctions,
-			  processGrid,
-			  overlapMatPar);
-      computing_timer.exit_section("Blocked XtMX, RR step");
-
+      if(!(dftParameters::useMixedPrecPGS_O && useMixedPrec))
+	{
+	  computing_timer.enter_section("Blocked XtMX");
+	  operatorMatrix.XtMX(X,
+			      numberWaveFunctions,
+			      processGrid,
+			      overlapMatPar);
+	  computing_timer.exit_section("Blocked XtMX");
+	}
+      else
+	{
+	  computing_timer.enter_section("Fill overlap matrix XtMX using mixed prec");
+	  internal::fillParallelXtMXMixedPrec(operatorMatrix,
+					      &X[0],
+					      X.size(),
+					      numberWaveFunctions,
+					      processGrid,
+					      interBandGroupComm,
+					      mpi_communicator,
+					      overlapMatPar);
+	  computing_timer.exit_section("Fill overlap matrix XtMX using mixed prec");
+	}
 
 
       //S=L*L^{T}
@@ -961,13 +975,29 @@ namespace dftfe{
 		    &projHamPar.local_el(0,0)+projHamPar.local_m()*projHamPar.local_n(),
 		    T(0.0));
 
-      computing_timer.enter_section("Blocked XtHX, RR step");
-      operatorMatrix.XtHX(X,
-			  numberWaveFunctions,
-			  processGrid,
-			  projHamPar,
-			  true);
-      computing_timer.exit_section("Blocked XtHX, RR step");
+      
+      if(useMixedPrec)
+	{
+	  computing_timer.enter_section("Blocked XtHX Mixed Prec, RR step");
+	  operatorMatrix.XtHXMixedPrec(X,
+				       numberWaveFunctions,
+				       dftParameters::numCoreWfcMixedPrec,
+				       processGrid,
+				       projHamPar,
+				       true);
+	  computing_timer.enter_section("Blocked XtHX Mixed Prec, RR step");
+	}
+      else
+	{
+	  computing_timer.enter_section("Blocked XtHX, RR step");
+	  operatorMatrix.XtHX(X,
+			      numberWaveFunctions,
+			      processGrid,
+			      projHamPar,
+			      true);
+	  computing_timer.exit_section("Blocked XtHX, RR step");
+	}
+      
 
       //For ELPA eigendecomposition the full matrix is required unlike
       //ScaLAPACK which can work with only the lower triangular part
@@ -1380,17 +1410,17 @@ namespace dftfe{
 
 #if(defined DEAL_II_WITH_SCALAPACK && !USE_COMPLEX)
     template<typename T>
-    void rayleighRitzGEPSpectrumSplitDirect(operatorDFTClass        & operatorMatrix,
-		      std::vector<T> & X,
-		      std::vector<T> & Y,
-		      const unsigned int numberWaveFunctions,
-		      const unsigned int numberCoreStates,
-		      const MPI_Comm &interBandGroupComm,
-		      const MPI_Comm &mpiComm,
-		      const bool useMixedPrec,
-		      std::vector<double>     & eigenValues)
+    void rayleighRitzGEPSpectrumSplitDirect(operatorDFTClass & operatorMatrix,
+					    std::vector<T> & X,
+					    std::vector<T> & Y,
+					    const unsigned int numberWaveFunctions,
+					    const unsigned int numberCoreStates,
+					    const MPI_Comm & interBandGroupComm,
+					    const MPI_Comm & mpiComm,
+					    const bool useMixedPrec,
+					    std::vector<double> & eigenValues)
     {
-      dealii::ConditionalOStream   pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
+      dealii::ConditionalOStream pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
 
       dealii::TimerOutput computing_timer(mpiComm,
 	                                  pcout,
@@ -1806,14 +1836,14 @@ namespace dftfe{
 
     template<typename T>
     void rayleighRitzGEPSpectrumSplitDirect(operatorDFTClass        & operatorMatrix,
-		      std::vector<T> & X,
-		      std::vector<T> & Y,
-		      const unsigned int numberWaveFunctions,
-		      const unsigned int numberCoreStates,
-		      const MPI_Comm &interBandGroupComm,
-		      const MPI_Comm &mpiComm,
-		      const bool useMixedPrec,
-		      std::vector<double>     & eigenValues)
+					    std::vector<T> & X,
+					    std::vector<T> & Y,
+					    const unsigned int numberWaveFunctions,
+					    const unsigned int numberCoreStates,
+					    const MPI_Comm &interBandGroupComm,
+					    const MPI_Comm &mpiComm,
+					    const bool useMixedPrec,
+					    std::vector<double>     & eigenValues)
     {
        AssertThrow(false,dftUtils::ExcNotImplementedYet());
     }
@@ -1863,10 +1893,11 @@ namespace dftfe{
       {
 	 computing_timer.enter_section("Blocked XtHX Mixed Prec, RR step");
          operatorMatrix.XtHXMixedPrec(X,
-			  numberWaveFunctions,
-			  numberCoreStates,
-			  processGrid,
-			  projHamPar);
+				      numberWaveFunctions,
+				      numberCoreStates,
+				      processGrid,
+				      projHamPar);
+				      
 	 computing_timer.exit_section("Blocked XtHX Mixed Prec, RR step");
       }
       else

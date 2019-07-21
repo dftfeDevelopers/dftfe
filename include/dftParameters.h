@@ -68,6 +68,7 @@ namespace dftfe {
 
       extern std::string startingWFCType;
       extern unsigned int numCoreWfcRR;
+      extern unsigned int numCoreWfcMixedPrec;
       extern bool useBatchGEMM;
       extern unsigned int wfcBlockSize;
       extern unsigned int chebyWfcBlockSize;

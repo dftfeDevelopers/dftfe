@@ -1431,7 +1431,7 @@ template<unsigned int FEOrder>
 
 
 	      MPI_Barrier(getMPICommunicator());
-	      //evaluate H times XBlock^{T} and store in HXBlock^{T}
+	      //evaluate M times XBlock^{T} and store in XBlock^{T}
 	      MXBlock=0;
 	      const bool scaleFlag = false;
 	      const dataTypes::number scalar = 1.0;
@@ -1448,7 +1448,7 @@ template<unsigned int FEOrder>
 
 	      const unsigned int D = numberWaveFunctions-jvec;
 
-	      // Comptute local XTrunc^{T}*HXcBlock.
+	      // Comptute local XTrunc^{T}*MXcBlock.
 	      dgemm_(&transA,
 		     &transB,
 		     &D,
@@ -1509,7 +1509,8 @@ template<unsigned int FEOrder>
 		      const unsigned int N,
 		      const unsigned int Ncore,
 		      const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-		      dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar)
+		      dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar,
+		      bool origHFlag)
   {
 #ifdef USE_COMPLEX
     AssertThrow(false,dftUtils::ExcNotImplementedYet());
@@ -1601,11 +1602,20 @@ template<unsigned int FEOrder>
 	      HXBlock=0;
 	      const bool scaleFlag = false;
 	      const dataTypes::number scalar = 1.0;
-	      HX(XBlock,
-		 B,
-		 scaleFlag,
-		 scalar,
-		 HXBlock);
+	      if(origHFlag)
+		{
+		  HX(XBlock,
+		     B,
+		     HXBlock);
+		}
+	      else
+		{
+		  HX(XBlock,
+		     B,
+		     scaleFlag,
+		     scalar,
+		     HXBlock);
+		}
 	      MPI_Barrier(getMPICommunicator());
 
 	      const char transA = 'N';
