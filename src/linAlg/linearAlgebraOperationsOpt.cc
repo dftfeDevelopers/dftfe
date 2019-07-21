@@ -976,7 +976,7 @@ namespace dftfe{
 		    T(0.0));
 
       
-      if(useMixedPrec)
+      if(useMixedPrec && dftParameters::useMixedPrecXTHXSpectrumSplit)
 	{
 	  computing_timer.enter_section("Blocked XtHX Mixed Prec, RR step");
 	  operatorMatrix.XtHXMixedPrec(X,
