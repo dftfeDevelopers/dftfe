@@ -164,7 +164,7 @@ namespace linearAlgebraOperations
 
 
 
-      const unsigned int lanczosIterations=10;
+      const unsigned int lanczosIterations=20;
       double beta;
 
 

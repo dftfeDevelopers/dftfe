@@ -10,6 +10,7 @@ subsection Geometry
     set ION OPT=true
     set FORCE TOL=0.1
     set ION RELAX FLAGS FILE =@SOURCE_DIR@/nitrogenMolecule_relaxationFlags.inp
+    set REUSE DENSITY=true
   end
 end
 
