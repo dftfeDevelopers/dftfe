@@ -170,7 +170,7 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point<C
 
 	  if (maxDispAtom<0.2 && dftParameters::isPseudopotential)
 	  {
-	    init(dftParameters::reuseWfcGeoOpt && maxDispAtom<0.1?2:1);
+	    init(dftParameters::reuseWfcGeoOpt && maxDispAtom<0.1?2:(dftParameters::reuseDensityGeoOpt?1:0));
 	  }  	  
 	  else
 	    init(0);

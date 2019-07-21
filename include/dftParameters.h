@@ -83,6 +83,7 @@ namespace dftfe {
       extern double lowerBoundUnwantedFracUpper;
       extern bool triMatPGSOpt;
       extern bool reuseWfcGeoOpt;
+      extern bool reuseDensityGeoOpt;
       extern double mpiAllReduceMessageBlockSizeMB;
       extern bool useHigherQuadNLP;
       extern bool useMixedPrecPGS_SR;

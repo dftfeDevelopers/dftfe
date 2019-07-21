@@ -11,6 +11,7 @@ subsection Geometry
     set FORCE TOL=4e-2
     set ION RELAX FLAGS FILE =@SOURCE_DIR@/nitrogenMolecule_relaxationFlags.inp
     set REUSE WFC=true
+    set REUSE DENSITY=true
   end
 end
 

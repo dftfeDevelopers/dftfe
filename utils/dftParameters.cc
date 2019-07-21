@@ -76,7 +76,8 @@ namespace dftParameters
   unsigned int numCoreWfcMixedPrec=0;
   bool triMatPGSOpt=true;
   bool reuseWfcGeoOpt=false;
-  extern double mpiAllReduceMessageBlockSizeMB=2.0;
+  bool reuseDensityGeoOpt=false;
+  double mpiAllReduceMessageBlockSizeMB=2.0;
   bool useHigherQuadNLP=true;
   bool useMixedPrecPGS_SR=false;
   bool useMixedPrecPGS_O=false;
@@ -223,6 +224,10 @@ namespace dftParameters
 	    prm.declare_entry("REUSE WFC", "false",
 			      Patterns::Bool(),
 			      "[Standard] Reuse previous ground-state wavefunctions during geometry optimization. Default setting is false.");
+
+            prm.declare_entry("REUSE DENSITY", "false",
+			       Patterns::Bool(),
+			      "[Standard] Reuse previous ground-state density during geometry optimization. Default setting is false.");
 
 	}
 	prm.leave_subsection ();
@@ -407,15 +412,15 @@ namespace dftParameters
 			  Patterns::Double(1e-5),
 			  "[Standard] Fermi-Dirac smearing temperature (in Kelvin).");
 
-	prm.declare_entry("MAXIMUM ITERATIONS", "100",
+	prm.declare_entry("MAXIMUM ITERATIONS", "200",
 			  Patterns::Integer(1,1000),
 			  "[Standard] Maximum number of iterations to be allowed for SCF convergence");
 
-	prm.declare_entry("TOLERANCE", "1e-06",
+	prm.declare_entry("TOLERANCE", "5e-05",
 			  Patterns::Double(1e-12,1.0),
 			  "[Standard] SCF iterations stopping tolerance in terms of $L_2$ norm of the electron-density difference between two successive iterations. CAUTION: A tolerance close to 1e-7 or lower can deteriorate the SCF convergence due to the round-off error accumulation.");
 
-	prm.declare_entry("MIXING HISTORY", "10",
+	prm.declare_entry("MIXING HISTORY", "50",
 			  Patterns::Integer(1,1000),
 			  "[Standard] Number of SCF iteration history to be considered for density mixing schemes. For metallic systems, a mixing history larger than the default value provides better scf convergence.");
 
@@ -481,7 +486,7 @@ namespace dftParameters
 			      Patterns::Double(0,1),
 			      "[Developer] The value of the fraction of the upper bound of the unwanted spectrum, the lower bound of the unwanted spectrum will be set. Default value is 0.");
 
-	    prm.declare_entry("CHEBYSHEV FILTER TOLERANCE","2e-02",
+	    prm.declare_entry("CHEBYSHEV FILTER TOLERANCE","5e-02",
 			      Patterns::Double(1e-10),
 			      "[Advanced] Parameter specifying the accuracy of the occupied eigenvectors close to the Fermi-energy computed using Chebyshev filtering subspace iteration procedure. Default value is sufficient for most purposes");
 
@@ -620,6 +625,7 @@ namespace dftParameters
 	    dftParameters::stressRelaxTol                = prm.get_double("STRESS TOL");
 	    dftParameters::cellConstraintType            = prm.get_integer("CELL CONSTRAINT TYPE");
 	    dftParameters::reuseWfcGeoOpt                = prm.get_bool("REUSE WFC");
+	    dftParameters::reuseDensityGeoOpt                = prm.get_bool("REUSE DENSITY");
 	}
 	prm.leave_subsection ();
     }
@@ -757,7 +763,7 @@ namespace dftParameters
     {
        dftParameters::useMixedPrecPGS_O=true;
        dftParameters::useMixedPrecPGS_SR=true;
-       dftParameters::useMixedPrecXTHXSpectrumSplit=false;//true;
+       dftParameters::useMixedPrecXTHXSpectrumSplit=true;
        //dftParameters::numCoreWfcRR=0.85*dftParameters::numberEigenValues;
        dftParameters::numCoreWfcMixedPrec=0.85*dftParameters::numberEigenValues;
     }
