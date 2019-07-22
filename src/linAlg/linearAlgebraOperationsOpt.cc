@@ -764,7 +764,10 @@ namespace dftfe{
       //rotate the basis in the subspace X = X*L_{inv}^{T}*Q,
       //stored in the column major format
       //
-      computing_timer.enter_section("X = X*L_{inv}^{T}*Q, RR step");
+      if (!(dftParameters::useMixedPrecSubspaceRot && useMixedPrec))
+         computing_timer.enter_section("X = X*L_{inv}^{T}*Q, RR step");
+      else
+	 computing_timer.enter_section("X = X*L_{inv}^{T}*Q mixed prec, RR step");
 
       projHamPar.copy_to(projHamParCopy);
       if (overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::lower_triangular)
@@ -772,7 +775,8 @@ namespace dftfe{
       else
 	LMatPar.mmult(projHamPar,projHamParCopy);
 
-      internal::subspaceRotation(&X[0],
+      if (!(dftParameters::useMixedPrecSubspaceRot && useMixedPrec))
+          internal::subspaceRotation(&X[0],
 	                         X.size(),
 		                 numberWaveFunctions,
 		                 processGrid,
@@ -782,8 +786,21 @@ namespace dftfe{
 				 true,
 				 false,
 				 false);
+      else
+          internal::subspaceRotationMixedPrec(&X[0],
+	                         X.size(),
+		                 numberWaveFunctions,
+		                 processGrid,
+				 interBandGroupComm,
+				 mpi_communicator,
+			         projHamPar,
+				 true,
+				 false);
 
-      computing_timer.exit_section("X = X*L_{inv}^{T}*Q, RR step");
+      if (!(dftParameters::useMixedPrecSubspaceRot && useMixedPrec))
+         computing_timer.exit_section("X = X*L_{inv}^{T}*Q, RR step");
+      else
+	 computing_timer.exit_section("X = X*L_{inv}^{T}*Q mixed prec, RR step");
     }
 
     template<typename T>
