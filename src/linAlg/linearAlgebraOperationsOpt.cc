@@ -975,7 +975,7 @@ namespace dftfe{
 		    &projHamPar.local_el(0,0)+projHamPar.local_m()*projHamPar.local_n(),
 		    T(0.0));
 
-      
+
       if(useMixedPrec && dftParameters::useMixedPrecXTHXSpectrumSplit)
 	{
 	  computing_timer.enter_section("Blocked XtHX Mixed Prec, RR step");
@@ -997,7 +997,7 @@ namespace dftfe{
 			      true);
 	  computing_timer.exit_section("Blocked XtHX, RR step");
 	}
-      
+
 
       //For ELPA eigendecomposition the full matrix is required unlike
       //ScaLAPACK which can work with only the lower triangular part
@@ -1114,7 +1114,10 @@ namespace dftfe{
       //rotate the basis in the subspace X = X*L_{inv}^{T}*Q,
       //stored in the column major format
       //
-      computing_timer.enter_section("X = X*L_{inv}^{T}*Q, RR step");
+      if (!(dftParameters::useMixedPrecSubspaceRot && useMixedPrec))
+         computing_timer.enter_section("X = X*L_{inv}^{T}*Q, RR step");
+      else
+	 computing_timer.enter_section("X = X*L_{inv}^{T}*Q mixed prec, RR step");
 
       projHamPar.copy_to(projHamParCopy);
       if (overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::lower_triangular)
@@ -1122,7 +1125,8 @@ namespace dftfe{
       else
 	LMatPar.mmult(projHamPar,projHamParCopy);
 
-      internal::subspaceRotation(&X[0],
+      if (!(dftParameters::useMixedPrecSubspaceRot && useMixedPrec))
+          internal::subspaceRotation(&X[0],
 	                         X.size(),
 		                 numberWaveFunctions,
 		                 processGrid,
@@ -1132,8 +1136,21 @@ namespace dftfe{
 				 true,
 				 false,
 				 false);
+      else
+          internal::subspaceRotationMixedPrec(&X[0],
+	                         X.size(),
+		                 numberWaveFunctions,
+		                 processGrid,
+				 interBandGroupComm,
+				 mpi_communicator,
+			         projHamPar,
+				 true,
+				 false);
 
-      computing_timer.exit_section("X = X*L_{inv}^{T}*Q, RR step");
+      if (!(dftParameters::useMixedPrecSubspaceRot && useMixedPrec))
+         computing_timer.exit_section("X = X*L_{inv}^{T}*Q, RR step");
+      else
+	 computing_timer.exit_section("X = X*L_{inv}^{T}*Q mixed prec, RR step");
     }
 #else
 
@@ -1158,7 +1175,7 @@ namespace dftfe{
                                        std::vector<double> & eigenValues,
                                        const bool useMixedPrec)
    {
-      AssertThrow(false,dftUtils::ExcNotImplementedYet()); 
+      AssertThrow(false,dftUtils::ExcNotImplementedYet());
    }
 
 
@@ -1897,7 +1914,7 @@ namespace dftfe{
 				      numberCoreStates,
 				      processGrid,
 				      projHamPar);
-				      
+
 	 computing_timer.exit_section("Blocked XtHX Mixed Prec, RR step");
       }
       else
@@ -2205,7 +2222,7 @@ namespace dftfe{
 	  std::cout <<std::endl;
 
     }
-    
+
     template<typename T>
     void computeGEPResidualNorm(operatorDFTClass & operatorMatrix,
 				std::vector<T> & X,

@@ -193,6 +193,25 @@ namespace dftfe
 			      const bool isRotationMatLowerTria=false,
 			      const bool doCommAfterBandParal=true);
 
+	/** @brief Computes X^{T}=Q*X^{T} inplace. X^{T} is the subspaceVectorsArray
+	 * stored in the column major format (N x M). Q is rotationMatPar (N x N).
+	 *
+	 * The subspace rotation inside this function is done in a blocked approach
+	 * which avoids creation of full serial rotation matrix memory, and also avoids creation
+	 * of another full subspaceVectorsArray memory.
+	 * subspaceVectorsArrayLocalSize=N*M
+	 *
+	 */
+         void subspaceRotationMixedPrec(dataTypes::number* subspaceVectorsArray,
+		              const unsigned int subspaceVectorsArrayLocalSize,
+		              const unsigned int N,
+		              const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+			      const MPI_Comm &interBandGroupComm,
+			      const MPI_Comm &mpiComm,
+			      const dealii::ScaLAPACKMatrix<dataTypes::number> & rotationMatPar,
+			      const bool rotationMatTranspose=false,
+			      const bool doCommAfterBandParal=true);
+
 
 	/** @brief Computes Y^{T}=Q*X^{T}.
 	 *

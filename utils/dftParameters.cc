@@ -83,6 +83,7 @@ namespace dftParameters
   bool useMixedPrecPGS_O=false;
   bool useMixedPrecXTHXSpectrumSplit=false;
   bool useMixedPrecSubspaceRotSpectrumSplit=false;
+  bool useMixedPrecSubspaceRot=false;
   unsigned int numAdaptiveFilterStates=0;
   unsigned int spectrumSplitStartingScfIter=1;
   bool useELPA=false;
@@ -548,6 +549,11 @@ namespace dftParameters
 			      Patterns::Bool(),
 			      "[Advanced] Use mixed precision arithmetic in Rayleigh-Ritz subspace rotation step when SPECTRUM SPLIT CORE EIGENSTATES>0. Currently this optimization is only enabled for the real executable and with ScaLAPACK linking. Default setting is false.");
 
+            prm.declare_entry("USE MIXED PREC RR_SR", "false",
+			       Patterns::Bool(),
+			      "[Advanced] Use mixed precision arithmetic in Rayleigh-Ritz subspace rotation step. Currently this optimization is only enabled for the real executable and with ScaLAPACK linking. Default setting is false.");
+
+
             prm.declare_entry("ALGO", "NORMAL",
 			       Patterns::Selection("NORMAL|FAST"),
 			       "[Standard] In the FAST mode, spectrum splitting technique is used in Rayleigh-Ritz step, and mixed precision arithmetic algorithms are used in Rayleigh-Ritz and Cholesky factorization based orthogonalization step. For spectrum splitting, 85 percent of the total number of wavefunctions are taken to be core states, which holds good for most systems including metallic systems assuming NUMBER OF KOHN-SHAM WAVEFUNCTIONS to be around 10 percent more than N/2. FAST setting is strongly recommended for large-scale (> 10k electrons) system sizes. Both NORMAL and FAST setting use Chebyshev filtered subspace iteration technique. Currently, FAST setting is only enabled for the real executable and with ScaLAPACK linking. If manual options for mixed precision and spectum splitting are being used, please use NORMAL setting for ALGO. Default setting is NORMAL.");
@@ -735,6 +741,7 @@ namespace dftParameters
 	   dftParameters::useMixedPrecPGS_O= prm.get_bool("USE MIXED PREC PGS O");
 	   dftParameters::useMixedPrecXTHXSpectrumSplit= prm.get_bool("USE MIXED PREC XTHX SPECTRUM SPLIT");
 	   dftParameters::useMixedPrecSubspaceRotSpectrumSplit= prm.get_bool("USE MIXED PREC RR_SR SPECTRUM SPLIT");
+	   dftParameters::useMixedPrecSubspaceRot= prm.get_bool("USE MIXED PREC RR_SR");
 	   dftParameters::algoType= prm.get("ALGO");
 	   dftParameters::numAdaptiveFilterStates= prm.get_integer("ADAPTIVE FILTER STATES");
 	}
@@ -765,6 +772,7 @@ namespace dftParameters
        dftParameters::useMixedPrecPGS_SR=true;
        dftParameters::useMixedPrecXTHXSpectrumSplit=true;
        //dftParameters::numCoreWfcRR=0.85*dftParameters::numberEigenValues;
+       dftParameters::useMixedPrecSubspaceRot=true;
        dftParameters::numCoreWfcMixedPrec=0.85*dftParameters::numberEigenValues;
     }
 #ifdef USE_COMPLEX
