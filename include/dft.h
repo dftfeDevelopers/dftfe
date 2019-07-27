@@ -469,7 +469,12 @@ namespace dftfe {
 
       void compute_ldos(const std::vector<std::vector<double> > & eigenValuesInput,
 			const std::string & fileName);
+
       
+      /**
+       *@brief compute localization length
+       */
+      void compute_localizationLength(const std::string & locLengthFileName);
 
       /**
        *@brief write wavefunction solution fields
