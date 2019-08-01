@@ -17,7 +17,7 @@
 //
 
 
-//compute fermi energy
+//compute localization lengths currently implemented for spin unpolarized case
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::compute_localizationLength(const std::string & locLengthFileName)
 {
