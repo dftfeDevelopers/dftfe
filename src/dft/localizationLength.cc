@@ -23,7 +23,7 @@ void dftClass<FEOrder>::compute_localizationLength(const std::string & locLength
 {
 
   QGauss<3>  quadrature_formula(C_num1DQuad<FEOrder>());
-  FEValues<3> fe_values (dofHandler.get_fe(), quadrature_formula, update_values|update_JxW_values);
+  FEValues<3> fe_values (dofHandler.get_fe(), quadrature_formula, update_values|update_JxW_values|update_quadrature_points);
   const unsigned int dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
   const unsigned int n_q_points    = quadrature_formula.size();
   std::vector<double> tempQuadPointValues(n_q_points);
