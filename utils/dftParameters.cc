@@ -251,11 +251,11 @@ namespace dftParameters
 			  Patterns::Bool(),
 			  "[Standard] Periodicity along the third domain bounding vector.");
 
-        prm.declare_entry("CONSTRAINTS PARALLEL CHECK", "true",
+        prm.declare_entry("CONSTRAINTS PARALLEL CHECK", "false",
 			   Patterns::Bool(),
 			  "[Developer] Check for consistency of constraints in parallel.");
 
-        prm.declare_entry("CONSTRAINTS FROM SERIAL DOFHANDLER", "true",
+        prm.declare_entry("CONSTRAINTS FROM SERIAL DOFHANDLER", "false",
 			   Patterns::Bool(),
 			  "[Developer] Check constraints from serial dofHandler.");
 

@@ -94,11 +94,12 @@ namespace dftfe
 
       dealii::ConstraintMatrix constraintsHangingSer;
 
-
+      /*
       dealii::DoFTools::make_hanging_node_constraints_from_serial(dofHandlerSer,
 	                                                          dofHandlerPar,
 								  cellIdToCellIterMapSer,
 	                                                          constraintsHangingSer);
+      */
       if (dftParameters::verbosity>=4)
         dftUtils::printCurrentMemoryUsage(mpi_comm,
 			  "Created hanging node constraints serial");
