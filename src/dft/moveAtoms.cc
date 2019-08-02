@@ -183,73 +183,29 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point<C
 
       const double tol=1e-6;
       //Heuristic values
-      const  double maxJacobianRatio=10.0;
+      const  double maxJacobianRatio=2.0;
       const double break1=1e-2;
-      const double break2=1e-4;
 
-      unsigned int updateCase=0;
-      if (maxDispAtom >(break1-tol))
-      {
-	updateCase=0;
-      }
-      else if (maxDispAtom <(break1+tol) && maxDispAtom>break2)
-      {
-	updateCase=1;
-      }
-      else
-      {
-	updateCase=2;
-      }
+      unsigned int useGaussian=0;
+      if (maxDispAtom <(break1+tol))
+	useGaussian=1;
 
       //for synchrozination in case the updateCase are different in different processors due to floating point comparison
-      MPI_Bcast(&(updateCase),
+      MPI_Bcast(&(useGaussian),
 		1,
 		MPI_INT,
 		0,
 		MPI_COMM_WORLD);
 
-      if (updateCase==0)
+      if (useGaussian!=1)
       {
 	  pcout << "Auto remeshing and reinitialization of dft problem for new atom coordinates as max displacement magnitude: "<<maxDispAtom<< " is greater than: "<< break1 << " Bohr..." << std::endl;
 	  init(1);
 	  pcout << "...Reinitialization end" << std::endl;
       }
-      else if (updateCase==1)
-      {
-
-	  const double gaussianParameter=2.0;
-	  pcout << "Trying to Move using a wide Gaussian with Gaussian constant: "<<gaussianParameter<<" as max displacement magnitude: "<<maxDispAtom<< " is between "<< break2<<" and "<<break1<<" Bohr"<<std::endl;
-
-	  const std::pair<bool,double> meshQualityMetrics= d_gaussianMovePar.moveMesh(controlPointLocations,controlPointDisplacements,gaussianParameter);
-
-	  unsigned int autoMesh=0;
-	  if (meshQualityMetrics.first || meshQualityMetrics.second>maxJacobianRatio)
-	      autoMesh=1;
-	  MPI_Bcast(&(autoMesh),
-		    1,
-		    MPI_INT,
-		    0,
-		    MPI_COMM_WORLD);
-	  if (autoMesh==1)
-	  {
-	      if (meshQualityMetrics.first)
-		 pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to negative jacobian after Gaussian mesh movement using Gaussian constant: "<< gaussianParameter<<std::endl;
-	      else
-		 pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to maximum jacobian ratio: "<< meshQualityMetrics.second<< " exceeding set bound of: "<< maxJacobianRatio<<" after Gaussian mesh movement using Gaussian constant: "<< gaussianParameter<<std::endl;
-	      init(1);
-	      pcout << "...Reinitialization end" << std::endl;
-	  }
-	  else
-	  {
-	      pcout<< " Mesh quality check: maximum jacobian ratio after movement: "<< meshQualityMetrics.second<<std::endl;
-	      pcout<<"Now reinitializing all moved triangulation dependent objects..." << std::endl;
-	      initNoRemesh();
-	      pcout << "...Reinitialization end" << std::endl;
-	  }
-      }
       else
       {
-	   pcout << "Trying to Move using a narrow Gaussian with same Gaussian constant for computing the forces: "<<forcePtr->getGaussianGeneratorParameter()<<" as max displacement magnitude: "<< maxDispAtom<< " is below " << break2 <<" Bohr"<<std::endl;
+	   pcout << "Trying to Move using Gaussian with same Gaussian constant for computing the forces: "<<forcePtr->getGaussianGeneratorParameter()<<" as max displacement magnitude: "<< maxDispAtom<< " is below " << break1 <<" Bohr"<<std::endl;
 	  const std::pair<bool,double> meshQualityMetrics=d_gaussianMovePar.moveMesh(controlPointLocations,controlPointDisplacements,forcePtr->getGaussianGeneratorParameter());
 	  unsigned int autoMesh=0;
 	  if (meshQualityMetrics.first || meshQualityMetrics.second>maxJacobianRatio)

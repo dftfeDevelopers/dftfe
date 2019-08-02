@@ -556,7 +556,7 @@ namespace dftfe {
 
       /// Gaussian generator constant. Gaussian generator: Gamma(r)= exp(-d_gaussianConstant*r^2)
       /// FIXME: Until the hanging nodes surface integral issue is fixed use a value >=4.0
-      const double d_gaussianConstant=5.0;
+      double d_gaussianConstant;
 
       /// Storage for configurational force on all global atoms.
       std::vector<double> d_globalAtomsGaussianForces;

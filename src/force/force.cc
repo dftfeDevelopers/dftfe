@@ -222,6 +222,30 @@ void forceClass<FEOrder>::initMoved
      locateAtomCoreNodesForce(d_dofHandlerForce,
 	                      d_locally_owned_dofsForce,
 			      d_atomsForceDofs);
+
+    const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size(); 
+    std::vector<Point<3>> atomPoints;
+    for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
+    {
+         Point<3> atomCoor;
+         atomCoor[0] = dftPtr->atomLocations[iAtom][2];
+         atomCoor[1] = dftPtr->atomLocations[iAtom][3];
+         atomCoor[2] = dftPtr->atomLocations[iAtom][4];
+         atomPoints.push_back(atomCoor);
+    }
+
+
+     double minDist=1e+6;
+     for (unsigned int i=0;i <numberGlobalAtoms-1; i++)
+	 for (unsigned int j=i+1;j <numberGlobalAtoms; j++)
+	   {
+	      const double dist=atomPoints[i].distance(atomPoints[j]);
+	      if (dist<minDist)
+	             minDist=dist;
+	   }
+
+     d_gaussianConstant=dftParameters::reproducible_output?1/std::sqrt(5.0):std::min(0.9* minDist/2.0, 2.0);
+
   }
 }
 

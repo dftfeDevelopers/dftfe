@@ -454,7 +454,11 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
 		atomId=imageIds[iAtom-numberGlobalAtoms];
 	      }
 	      const double rsq=(nodalCoor-atomCoor).norm_square();
-	      const double gaussianWeight=std::exp(-d_gaussianConstant*rsq);
+	      //const double gaussianWeight=std::exp(-d_gaussianConstant*rsq);
+
+              const double gaussianWeight=dftParameters::reproducible_output?
+		           std::exp(-(rsq)/std::pow(d_gaussianConstant,2))				          :std::exp(-(rsq*rsq)/std::pow(d_gaussianConstant,4));
+
 	      for (unsigned int idim=0; idim < C_DIM ; idim++)
 	      {
 	          const unsigned int globalDofIndex=cell->vertex_dof_index(i,idim);
@@ -588,7 +592,9 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
 		atomId=imageIds[iAtom-numberGlobalAtoms];
 	      }
 	      const double rsq=(nodalCoor-atomCoor).norm_square();
-	      double gaussianWeight=std::exp(-d_gaussianConstant*rsq);
+	      //double gaussianWeight=std::exp(-d_gaussianConstant*rsq);
+	      double gaussianWeight=dftParameters::reproducible_output?
+	                           std::exp(-(rsq)/std::pow(d_gaussianConstant,2))                                        :std::exp(-(rsq*rsq)/std::pow(d_gaussianConstant,4));
 	      for (unsigned int idim=0; idim < C_DIM ; idim++)
 	      {
 	          const unsigned int globalDofIndex=cell->vertex_dof_index(i,idim);
