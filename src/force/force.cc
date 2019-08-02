@@ -244,7 +244,7 @@ void forceClass<FEOrder>::initMoved
 	             minDist=dist;
 	   }
 
-     d_gaussianConstant=dftParameters::reproducible_output?1/std::sqrt(5.0):std::min(0.9* minDist/2.0, 2.0);
+     d_gaussianConstant=dftParameters::reproducible_output?1/std::sqrt(5.0):std::min(0.7* minDist/2.0, 1.5);
 
   }
 }

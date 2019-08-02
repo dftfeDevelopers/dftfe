@@ -161,7 +161,7 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point<C
   }
   MPI_Barrier(mpi_communicator);
 
-  const bool useHybridMeshUpdateScheme=true;
+  const bool useHybridMeshUpdateScheme=dftParameters::electrostaticsHRefinement?false:true;
 
   if (!useHybridMeshUpdateScheme)//always remesh
   {
@@ -171,7 +171,7 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point<C
 	  if (maxDispAtom<0.2 && dftParameters::isPseudopotential)
 	  {
 	    init(dftParameters::reuseWfcGeoOpt && maxDispAtom<0.1?2:(dftParameters::reuseDensityGeoOpt?1:0));
-	  }  	  
+	  }
 	  else
 	    init(0);
 
@@ -180,11 +180,15 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point<C
   }
   else
   {
+      meshMovementGaussianClass gaussianMove(mpi_communicator);
+      gaussianMove.init(d_mesh.getParallelMeshMoved(),
+                        d_mesh.getSerialMeshUnmoved(),
+                        d_domainBoundingVectors);
 
       const double tol=1e-6;
       //Heuristic values
       const  double maxJacobianRatio=2.0;
-      const double break1=1e-2;
+      const double break1=5e-2;
 
       unsigned int useGaussian=0;
       if (maxDispAtom <(break1+tol))
@@ -206,7 +210,7 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point<C
       else
       {
 	   pcout << "Trying to Move using Gaussian with same Gaussian constant for computing the forces: "<<forcePtr->getGaussianGeneratorParameter()<<" as max displacement magnitude: "<< maxDispAtom<< " is below " << break1 <<" Bohr"<<std::endl;
-	  const std::pair<bool,double> meshQualityMetrics=d_gaussianMovePar.moveMesh(controlPointLocations,controlPointDisplacements,forcePtr->getGaussianGeneratorParameter());
+	  const std::pair<bool,double> meshQualityMetrics=gaussianMove.moveMesh(controlPointLocations,controlPointDisplacements,forcePtr->getGaussianGeneratorParameter());
 	  unsigned int autoMesh=0;
 	  if (meshQualityMetrics.first || meshQualityMetrics.second>maxJacobianRatio)
 	      autoMesh=1;
