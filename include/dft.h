@@ -214,7 +214,7 @@ namespace dftfe {
        *  @param[in] globalAtomsDisplacements vector containing the displacements (from current position) of all atoms (global).
        *  @return void.
        */
-      void updateAtomPositionsAndMoveMesh(const std::vector<Point<3> > & globalAtomsDisplacements);
+      void updateAtomPositionsAndMoveMesh(const std::vector<Tensor<1,3,double> > & globalAtomsDisplacements);
 
       /**
        * @brief writes the current domain bounding vectors and atom coordinates to files, which are required for
@@ -581,6 +581,8 @@ namespace dftfe {
 
       /// meshMovementGaussianClass object
       meshMovementGaussianClass d_gaussianMovePar;
+
+      std::vector<Tensor<1,3,double>> d_gaussianMovementAtomsNetDisplacements;
 
       /// volume of the domain
       double d_domainVolume;

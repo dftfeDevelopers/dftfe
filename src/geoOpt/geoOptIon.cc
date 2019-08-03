@@ -243,7 +243,7 @@ template<unsigned int FEOrder>
 void geoOptIon<FEOrder>::update(const std::vector<double> & solution)
 {
    const unsigned int numberGlobalAtoms=dftPtr->atomLocations.size();
-   std::vector<Point<3> > globalAtomsDisplacements(numberGlobalAtoms);
+   std::vector<Tensor<1,3,double> > globalAtomsDisplacements(numberGlobalAtoms);
    int count=0;
    for (unsigned int i=0; i< numberGlobalAtoms; ++i)
    {

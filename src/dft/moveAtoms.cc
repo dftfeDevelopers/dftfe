@@ -84,7 +84,7 @@ namespace internal{
 // Depending on the maximum displacement magnitude this function decides wether to do auto remeshing
 // or move mesh using Gaussian functions.
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point<C_DIM> > & globalAtomsDisplacements)
+void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<1,3,double> > & globalAtomsDisplacements)
 {
   const int numberGlobalAtoms = atomLocations.size();
   const int numberImageCharges = d_imageIds.size();
@@ -106,7 +106,7 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point<C
 
   std::vector<Point<C_DIM> > controlPointLocations;
   std::vector<Tensor<1,C_DIM,double> > controlPointDisplacements;
-
+  d_gaussianMovementAtomsNetDisplacements.resize(numberGlobalAtoms);
   double maxDispAtom=-1;
   for (unsigned int iAtom=0;iAtom <totalNumberAtoms; iAtom++)
   {
@@ -146,8 +146,11 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point<C
 	    atomLocations[iAtom][4]+=globalAtomsDisplacements[atomId][2];
         }
 
-	if (temp>maxDispAtom)
-	    maxDispAtom=temp;
+	d_gaussianMovementAtomsNetDisplacements[iAtom]+=globalAtomsDisplacements[iAtom];
+        const double netDisp=d_gaussianMovementAtomsNetDisplacements[iAtom].norm();
+
+	if (netDisp>maxDispAtom)
+	    maxDispAtom=netDisp;
      }
      else
      {
@@ -160,7 +163,7 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point<C
      controlPointDisplacements.push_back(globalAtomsDisplacements[atomId]);
   }
   MPI_Barrier(mpi_communicator);
-
+  
   const bool useHybridMeshUpdateScheme=dftParameters::electrostaticsHRefinement?false:true;
 
   if (!useHybridMeshUpdateScheme)//always remesh
@@ -174,6 +177,9 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point<C
 	  }
 	  else
 	    init(0);
+
+           for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
+                d_gaussianMovementAtomsNetDisplacements[iAtom]=0;
 
 	  if (!dftParameters::reproducible_output)
 	    pcout << "...Reinitialization end" << std::endl;
@@ -203,8 +209,11 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point<C
 
       if (useGaussian!=1)
       {
-	  pcout << "Auto remeshing and reinitialization of dft problem for new atom coordinates as max displacement magnitude: "<<maxDispAtom<< " is greater than: "<< break1 << " Bohr..." << std::endl;
+	  pcout << "Auto remeshing and reinitialization of dft problem for new atom coordinates as max net displacement magnitude: "<<maxDispAtom<< " is greater than: "<< break1 << " Bohr..." << std::endl;
 	  init(0);
+
+          for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
+	    d_gaussianMovementAtomsNetDisplacements[iAtom]=0;
 	  pcout << "...Reinitialization end" << std::endl;
       }
       else
@@ -226,6 +235,9 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Point<C
 	      else
 		 pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to maximum jacobian ratio: "<< meshQualityMetrics.second<< " exceeding set bound of: "<< maxJacobianRatio<<" after Gaussian mesh movement using Gaussian constant: "<< forcePtr->getGaussianGeneratorParameter()<<std::endl;
 	      init(0);
+
+              for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
+	        d_gaussianMovementAtomsNetDisplacements[iAtom]=0;
 	      pcout << "...Reinitialization end" << std::endl;
 	  }
 	  else
