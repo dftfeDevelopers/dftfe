@@ -16,10 +16,10 @@ subsection Boundary conditions
 end
 
 subsection Finite element mesh parameters
-  set POLYNOMIAL ORDER=5
+  set POLYNOMIAL ORDER=4
   subsection Auto mesh generation parameters
     set AUTO USER MESH PARAMS = true
-    set MESH SIZE AROUND ATOM  = 0.4
+    set MESH SIZE AROUND ATOM  = 0.5
   end
 end
 
