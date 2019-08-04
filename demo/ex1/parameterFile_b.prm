@@ -4,7 +4,7 @@ subsection Geometry
   set ATOMIC COORDINATES FILE      = coordinates.inp 
   set DOMAIN VECTORS FILE = domainVectors.inp
   subsection Optimization
-    set FORCE TOL            = 1e-4
+    set FORCE TOL            = 5e-4
     set ION OPT              = true
     set ION RELAX FLAGS FILE = relaxationFlags.inp
   end
@@ -17,7 +17,7 @@ subsection Boundary conditions
 end
 
 subsection Finite element mesh parameters
-  set POLYNOMIAL ORDER=4
+  set POLYNOMIAL ORDER=3
   subsection Auto mesh generation parameters
     set AUTO USER MESH PARAMS= true
     set MESH SIZE AROUND ATOM = 0.5
