@@ -29,9 +29,6 @@ subsection DFT functional parameters
 end
 
 subsection SCF parameters
-  set MIXING HISTORY   = 70
-  set MIXING PARAMETER = 0.5
-  set MAXIMUM ITERATIONS               = 40
   set TEMPERATURE                      = 500
   set TOLERANCE                        = 5e-5
   subsection Eigen-solver parameters

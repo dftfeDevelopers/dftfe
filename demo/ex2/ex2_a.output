@@ -87,6 +87,7 @@ subsection Geometry
     set ION OPT                   = false
     set ION RELAX FLAGS FILE      = 
     set NON SELF CONSISTENT FORCE = false
+    set REUSE DENSITY             = false
     set REUSE WFC                 = false
     set STRESS TOL                = 1e-6
   end
@@ -104,6 +105,7 @@ end
 subsection Postprocessing
   set WRITE DENSITY                 = false
   set WRITE DENSITY OF STATES       = false
+  set WRITE LOCALIZATION LENGTHS    = false
   set WRITE LOCAL DENSITY OF STATES = false
   set WRITE WFC                     = false
 end
@@ -111,10 +113,10 @@ subsection SCF parameters
   set COMPUTE ENERGY EACH ITER = true
   set CONSTRAINT MAGNETIZATION = false
   set HIGHER QUAD NLP          = true
-  set MAXIMUM ITERATIONS       = 50
-  set MIXING HISTORY           = 70
+  set MAXIMUM ITERATIONS       = 200
+  set MIXING HISTORY           = 50
   set MIXING METHOD            = ANDERSON
-  set MIXING PARAMETER         = 0.5
+  set MIXING PARAMETER         = 0.2
   set STARTING WFC             = RANDOM
   set TEMPERATURE              = 500
   set TOLERANCE                = 5e-5
@@ -122,7 +124,7 @@ subsection SCF parameters
     set ADAPTIVE FILTER STATES              = 0
     set ALGO                                = NORMAL
     set BATCH GEMM                          = true
-    set CHEBYSHEV FILTER TOLERANCE          = 2e-02
+    set CHEBYSHEV FILTER TOLERANCE          = 5e-02
     set CHEBYSHEV POLYNOMIAL DEGREE         = 0
     set CHEBY WFC BLOCK SIZE                = 400
     set ENABLE SUBSPACE ROT PGS OPT         = true
@@ -168,7 +170,7 @@ Reduced k-Point-coordinates and weights:
 
 Reading Pseudo-potential data for each atom from the list given in : pseudo.inp
  Reading Pseudopotential File: Al_KB_LDA.upf, with atomic number: 13
-Atomic system initialization, wall time: 0.0828335s.
+Atomic system initialization, wall time: 0.21703s.
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
 v1 : 7.599999999999999645e+00 0.000000000000000000e+00 0.000000000000000000e+00
 v2 : 0.000000000000000000e+00 7.599999999999999645e+00 0.000000000000000000e+00
@@ -187,6 +189,13 @@ number of elements: 1408
 number of degrees of freedom: 108689
 Minimum mesh size: 4.749999999999983125e-01
 -------------------------------------------------
+
+-----------------------------------------------------------------------------
+Rough estimate of peak memory requirement (RAM) total: 8.347804800000000469e+00 GB.
+Rough estimate of peak memory requirement (RAM) per MPI task: 5.217378000000000293e-01 GB.
+DFT-FE Message: many of the memory optimizations implemented
+in DFT-FE are useful only for larger system sizes.
+-----------------------------------------------------------------------------
 Determining the ball radius around the atom for nuclear self-potential solve... 
 ...Adaptively set ball radius: 2.750000000000000000e+00
 Volume of the domain (Bohr^3): 4.389760000000155742e+02
@@ -202,191 +211,207 @@ Reading initial guess for electron-density.....
 Initial total charge: 1.200000000000000355e+01
 
 Pseudopotential initalization....
-KSDFT problem initialization, wall time: 11.5905s.
-Nuclear self-potential solve, wall time: 2.08203s.
+KSDFT problem initialization, wall time: 9.33388s.
+Nuclear self-potential solve, wall time: 2.08664s.
 
 ************************Begin Self-Consistent-Field Iteration:  1 ***********************
-Total energy  : -8.372602998793253093e+00
+Fermi Energy computed: -1.138762673562022099e-01
+Total energy  : -8.371914534508205108e+00
 ***********************Self-Consistent-Field Iteration:  1 complete**********************
-Wall time for the above scf iteration: 3.969318013400000211e+01 seconds
-Number of Chebyshev filtered subspace iterations: 7
+Wall time for the above scf iteration: 3.996586328899999785e+01 seconds
+Number of Chebyshev filtered subspace iterations: 6
 
 ************************Begin Self-Consistent-Field Iteration:  2 ***********************
-Simple mixing, L2 norm of electron-density difference: 6.480841046743736344e-02
-Total energy  : -8.372855757609084293e+00
+Simple mixing, L2 norm of electron-density difference: 6.482324612226851579e-02
+Fermi Energy computed: -1.159106617057320682e-01
+Total energy  : -8.372656490586821931e+00
 ***********************Self-Consistent-Field Iteration:  2 complete**********************
-Wall time for the above scf iteration: 6.199198727999999825e+00 seconds
+Wall time for the above scf iteration: 6.025813190000000041e+00 seconds
 Number of Chebyshev filtered subspace iterations: 1
 
 ************************Begin Self-Consistent-Field Iteration:  3 ***********************
-L2 norm of electron-density difference: 3.118542222833835253e-02
-Total energy  : -8.372892088905530272e+00
+L2 norm of electron-density difference: 5.136611133783821476e-02
+Fermi Energy computed: -1.223976527620968535e-01
+Total energy  : -8.372857684568932868e+00
 ***********************Self-Consistent-Field Iteration:  3 complete**********************
-Wall time for the above scf iteration: 6.218216263000000410e+00 seconds
+Wall time for the above scf iteration: 5.833970648000000203e+00 seconds
 Number of Chebyshev filtered subspace iterations: 1
 
 ************************Begin Self-Consistent-Field Iteration:  4 ***********************
-L2 norm of electron-density difference: 1.478195631277642863e-03
-Total energy  : -8.372896437536047287e+00
+L2 norm of electron-density difference: 1.923624271789036669e-03
+Fermi Energy computed: -1.222941900105408708e-01
+Total energy  : -8.372889260694631020e+00
 ***********************Self-Consistent-Field Iteration:  4 complete**********************
-Wall time for the above scf iteration: 6.167850736000000111e+00 seconds
+Wall time for the above scf iteration: 5.948760000000000048e+00 seconds
 Number of Chebyshev filtered subspace iterations: 1
 
 ************************Begin Self-Consistent-Field Iteration:  5 ***********************
-L2 norm of electron-density difference: 6.680108734420734653e-04
-Total energy  : -8.372896899565789752e+00
+L2 norm of electron-density difference: 1.244575307070896423e-03
+Fermi Energy computed: -1.215069005262962715e-01
+Total energy  : -8.372895281470341899e+00
 ***********************Self-Consistent-Field Iteration:  5 complete**********************
-Wall time for the above scf iteration: 6.170420682999999684e+00 seconds
+Wall time for the above scf iteration: 9.537747785000000533e+00 seconds
 Number of Chebyshev filtered subspace iterations: 1
 
 ************************Begin Self-Consistent-Field Iteration:  6 ***********************
-L2 norm of electron-density difference: 1.681563074640180118e-04
-Total energy  : -8.372896954065829789e+00
+L2 norm of electron-density difference: 5.642851234239940972e-04
+Fermi Energy computed: -1.213394978009167263e-01
+Total energy  : -8.372896649799379531e+00
 ***********************Self-Consistent-Field Iteration:  6 complete**********************
-Wall time for the above scf iteration: 6.353603189000000206e+00 seconds
+Wall time for the above scf iteration: 5.931984522999999676e+00 seconds
 Number of Chebyshev filtered subspace iterations: 1
 
 ************************Begin Self-Consistent-Field Iteration:  7 ***********************
-L2 norm of electron-density difference: 5.268404539524944817e-05
-Total energy  : -8.372896961383720082e+00
+L2 norm of electron-density difference: 2.425478031772917856e-04
+Fermi Energy computed: -1.211804725143552086e-01
+Total energy  : -8.372896899808303317e+00
 ***********************Self-Consistent-Field Iteration:  7 complete**********************
-Wall time for the above scf iteration: 6.327317462999999975e+00 seconds
+Wall time for the above scf iteration: 6.051725322000000240e+00 seconds
 Number of Chebyshev filtered subspace iterations: 1
 
 ************************Begin Self-Consistent-Field Iteration:  8 ***********************
-L2 norm of electron-density difference: 1.819718092070493666e-05
-Total energy  : -8.372896961092376245e+00
+L2 norm of electron-density difference: 8.232969875703181385e-05
+Fermi Energy computed: -1.211833800978033004e-01
+Total energy  : -8.372896949778846576e+00
 ***********************Self-Consistent-Field Iteration:  8 complete**********************
-Wall time for the above scf iteration: 6.367928661999999740e+00 seconds
+Wall time for the above scf iteration: 6.034008495000000138e+00 seconds
 Number of Chebyshev filtered subspace iterations: 1
 
-SCF iterations converged to the specified tolerance after: 8 iterations.
+************************Begin Self-Consistent-Field Iteration:  9 ***********************
+L2 norm of electron-density difference: 4.340640153358856206e-05
+Fermi Energy computed: -1.211945307720263820e-01
+Total energy  : -8.372896959626594082e+00
+***********************Self-Consistent-Field Iteration:  9 complete**********************
+Wall time for the above scf iteration: 5.931521702000000396e+00 seconds
+Number of Chebyshev filtered subspace iterations: 1
+
+SCF iterations converged to the specified tolerance after: 9 iterations.
  Printing KS eigen values (spin split if this is a spin polarized calculation ) and fractional occupancies for kPoint 0
   
-0 : -4.441731780533514917e-01       1.000000000000000000e+00
-1 : -2.809404375139484267e-01       1.000000000000000000e+00
-2 : -2.809403327009913909e-01       1.000000000000000000e+00
-3 : -2.809403068539571557e-01       1.000000000000000000e+00
-4 : -1.222854846023083697e-01       6.666762423222994949e-01
-5 : -1.222853994003753886e-01       6.666642847674194572e-01
-6 : -1.222853646715992282e-01       6.666594107408028158e-01
-7 : 3.239595596460908417e-02       7.502780302997940686e-43
-8 : 4.016900530801043728e-02       5.536563149049667396e-45
-9 : 4.016911967055964566e-02       5.536163281470143317e-45
-10 : 4.016914632866337015e-02       5.536070075811445961e-45
-11 : 1.641383083558512479e-01       5.509336981869209832e-79
-12 : 1.641384194785049933e-01       5.508950352808630749e-79
-13 : 1.641407942269169640e-01       5.500694372932953562e-79
-14 : 2.261764668983969606e-01       5.313161787250471022e-96
-15 : 2.261780754263819915e-01       5.307767067607857332e-96
-16 : 2.261959491149576618e-01       5.248189200161943315e-96
-17 : 3.051492601702062712e-01       1.160905640395358888e-117
-18 : 3.053033625002170570e-01       1.053246276576207152e-117
-19 : 4.461187054686720499e-01       2.511185871414590244e-156
+0 : -4.441797814645926379e-01       1.000000000000000000e+00
+1 : -2.809472656574139027e-01       1.000000000000000000e+00
+2 : -2.809468831757126472e-01       1.000000000000000000e+00
+3 : -2.809467710357299586e-01       1.000000000000000000e+00
+4 : -1.222922736583031411e-01       6.666960933860917038e-01
+5 : -1.222921783810285851e-01       6.666827222044695578e-01
+6 : -1.222917396966181902e-01       6.666211539171551514e-01
+7 : 3.238934443133911767e-02       7.502609375928450724e-43
+8 : 4.016214576332641922e-02       5.537304265064132767e-45
+9 : 4.016255036296647457e-02       5.535889526517624998e-45
+10 : 4.016281194942527416e-02       5.534975045716459674e-45
+11 : 1.641319169745513729e-01       5.508445538135880907e-79
+12 : 1.641338131034857373e-01       5.501853120546361364e-79
+13 : 1.641408508015403667e-01       5.477453525069978106e-79
+14 : 2.261715458123787215e-01       5.307371557047663996e-96
+15 : 2.261770596327433991e-01       5.288922084465903668e-96
+16 : 2.262714850296164426e-01       4.982740763405317041e-96
+17 : 3.051898719169354735e-01       1.126768472337888727e-117
+18 : 3.061575838067317479e-01       6.115217592125078716e-118
+19 : 4.831580214952729269e-01       1.733642812369399608e-166
 ============================================================================================================
  Printing KS eigen values (spin split if this is a spin polarized calculation ) and fractional occupancies for kPoint 1
   
-0 : -4.441731780918970474e-01       1.000000000000000000e+00
-1 : -2.809404227709160762e-01       1.000000000000000000e+00
-2 : -2.809403688610260241e-01       1.000000000000000000e+00
-3 : -2.809402848182571133e-01       1.000000000000000000e+00
-4 : -1.222854676686744718e-01       6.666738658104702786e-01
-5 : -1.222854374964258278e-01       6.666696313347639791e-01
-6 : -1.222853442958472675e-01       6.666565510796116367e-01
-7 : 3.239593987262823216e-02       7.502856553329268240e-43
-8 : 4.016900470578921994e-02       5.536565254786907913e-45
-9 : 4.016907717629940311e-02       5.536311858880220815e-45
-10 : 4.016914779478740483e-02       5.536064949796386184e-45
-11 : 1.641383391209680354e-01       5.509229938079134925e-79
-12 : 1.641384365031360870e-01       5.508891121404813088e-79
-13 : 1.641389223149863075e-01       5.507201172932277482e-79
-14 : 2.261764688777676002e-01       5.313155145421559848e-96
-15 : 2.261769049451536617e-01       5.311692112511171370e-96
-16 : 2.261837771712160439e-01       5.288688501715700687e-96
-17 : 3.051307132075802286e-01       1.174583669118602280e-117
-18 : 3.051906038109118979e-01       1.130986030436856824e-117
-19 : 4.370379213289682929e-01       7.772212180067918529e-154
+0 : -4.441797811357889869e-01       1.000000000000000000e+00
+1 : -2.809472107540895713e-01       1.000000000000000000e+00
+2 : -2.809469277880894955e-01       1.000000000000000000e+00
+3 : -2.809467838352637248e-01       1.000000000000000000e+00
+4 : -1.222922291807944373e-01       6.666898514604142623e-01
+5 : -1.222921629387805770e-01       6.666805550191634566e-01
+6 : -1.222918064306723895e-01       6.666305202455796719e-01
+7 : 3.238931498772077561e-02       7.502748889142842820e-43
+8 : 4.016214341907285018e-02       5.537312463124097844e-45
+9 : 4.016252864451361898e-02       5.535965458907752252e-45
+10 : 4.016274231727181426e-02       5.535218458193077198e-45
+11 : 1.641318839467032220e-01       5.508560438567741303e-79
+12 : 1.641329644513933039e-01       5.504802718744390728e-79
+13 : 1.641421339696648996e-01       5.473016477395360794e-79
+14 : 2.261712720230405760e-01       5.308289342911966212e-96
+15 : 2.261746213054029453e-01       5.297072906353922478e-96
+16 : 2.262176656194790914e-01       5.155013551796681316e-96
+17 : 3.051803320371926365e-01       1.133577644714931679e-117
+18 : 3.055017624393011610e-01       9.253153261480012142e-118
+19 : 4.631131123291949980e-01       5.455713004396683068e-161
 ============================================================================================================
  Printing KS eigen values (spin split if this is a spin polarized calculation ) and fractional occupancies for kPoint 2
   
-0 : -4.441731780764277548e-01       1.000000000000000000e+00
-1 : -2.809404331349136807e-01       1.000000000000000000e+00
-2 : -2.809403331160967854e-01       1.000000000000000000e+00
-3 : -2.809403104563148457e-01       1.000000000000000000e+00
-4 : -1.222854735811322729e-01       6.666746955816990061e-01
-5 : -1.222854002454571293e-01       6.666644033703744698e-01
-6 : -1.222853748675957336e-01       6.666608417064793235e-01
-7 : 3.239593879729790044e-02       7.502861648708200796e-43
-8 : 4.016900212835210204e-02       5.536574267107863746e-45
-9 : 4.016911247646946098e-02       5.536188434687681109e-45
-10 : 4.016911848184689937e-02       5.536167437644586296e-45
-11 : 1.641383729332639707e-01       5.509112294368316961e-79
-12 : 1.641384299641105993e-01       5.508913871640888379e-79
-13 : 1.641393869334935030e-01       5.505585432762375314e-79
-14 : 2.261764630054870773e-01       5.313174850033614048e-96
-15 : 2.261770578019076383e-01       5.311179364061518207e-96
-16 : 2.261811859729786212e-01       5.297350374950597518e-96
-17 : 3.051326599460987832e-01       1.173140449495503918e-117
-18 : 3.052253793579461361e-01       1.106417530811763753e-117
-19 : 4.388129587650410057e-01       2.533317739926946930e-154
+0 : -4.441797813094783276e-01       1.000000000000000000e+00
+1 : -2.809472176452594283e-01       1.000000000000000000e+00
+2 : -2.809469222248288101e-01       1.000000000000000000e+00
+3 : -2.809467806896412956e-01       1.000000000000000000e+00
+4 : -1.222921986902947983e-01       6.666855724227569446e-01
+5 : -1.222921531170065579e-01       6.666791766148707499e-01
+6 : -1.222918406658331930e-01       6.666353252039548538e-01
+7 : 3.238926917507682635e-02       7.502965969157713100e-43
+8 : 4.016215792554116149e-02       5.537261732929652425e-45
+9 : 4.016254795701954677e-02       5.535897938175217082e-45
+10 : 4.016282334222419370e-02       5.534935221033452987e-45
+11 : 1.641314212634037151e-01       5.510170317394025324e-79
+12 : 1.641334221738888488e-01       5.503211649656339841e-79
+13 : 1.641440957740243345e-01       5.466239731051538896e-79
+14 : 2.261710951731593089e-01       5.308882256502346770e-96
+15 : 2.261791834625498376e-01       5.281832783002506882e-96
+16 : 2.262147448338790723e-01       5.164531380807539478e-96
+17 : 3.052618123066030420e-01       1.076720468666248545e-117
+18 : 3.076506721394940969e-01       2.381713772858026036e-118
+19 : 4.861367977990952993e-01       2.642072262725343329e-167
 ============================================================================================================
  Printing KS eigen values (spin split if this is a spin polarized calculation ) and fractional occupancies for kPoint 3
   
-0 : -4.441731780514122097e-01       1.000000000000000000e+00
-1 : -2.809404163810421684e-01       1.000000000000000000e+00
-2 : -2.809403664867522465e-01       1.000000000000000000e+00
-3 : -2.809402939821233347e-01       1.000000000000000000e+00
-4 : -1.222854626122237692e-01       6.666731561729054567e-01
-5 : -1.222854410231891814e-01       6.666701262940823991e-01
-6 : -1.222853460040436158e-01       6.666567908191024516e-01
-7 : 3.239594382849791954e-02       7.502837808742525812e-43
-8 : 4.016901418492482834e-02       5.536532109968038708e-45
-9 : 4.016907751068306276e-02       5.536310689721879762e-45
-10 : 4.016914244371690146e-02       5.536083658787760437e-45
-11 : 1.641383227792037325e-01       5.509286797165200210e-79
-12 : 1.641383600528101561e-01       5.509157109259622183e-79
-13 : 1.641387698326716993e-01       5.507731543139745664e-79
-14 : 2.261766230724713278e-01       5.312637766655684990e-96
-15 : 2.261767986871844605e-01       5.312048577408432738e-96
-16 : 2.261799219273489259e-01       5.301580981176654851e-96
-17 : 3.051326589775681941e-01       1.173141167077114834e-117
-18 : 3.052082274026441389e-01       1.118467746157093539e-117
-19 : 4.385778146408638167e-01       2.938899210107035771e-154
+0 : -4.441797815128051274e-01       1.000000000000000000e+00
+1 : -2.809473022091912853e-01       1.000000000000000000e+00
+2 : -2.809468549566494500e-01       1.000000000000000000e+00
+3 : -2.809467641605571941e-01       1.000000000000000000e+00
+4 : -1.222922799747592770e-01       6.666969798260040658e-01
+5 : -1.222921550466326002e-01       6.666794474220614219e-01
+6 : -1.222917500159640125e-01       6.666226022774721649e-01
+7 : 3.238926370138763694e-02       7.502991906271736945e-43
+8 : 4.016206244894874461e-02       5.537595630184251573e-45
+9 : 4.016253509316053405e-02       5.535942912940123670e-45
+10 : 4.016274695245285881e-02       5.535202254700882197e-45
+11 : 1.641314104776122329e-01       5.510207851520588707e-79
+12 : 1.641322167442629820e-01       5.507402780226935362e-79
+13 : 1.641362374403729230e-01       5.493435732980414671e-79
+14 : 2.261753918963811671e-01       5.294495624069831775e-96
+15 : 2.261852773941015193e-01       5.261544067055038676e-96
+16 : 2.262129096879831325e-01       5.170520473084229649e-96
+17 : 3.052381827348540355e-01       1.092909139260171327e-117
+18 : 3.055850798680045388e-01       8.778848582495554582e-118
+19 : 4.610136127682240570e-01       2.054468819436629965e-160
 ============================================================================================================
 
 Energy computations (Hartree)
 -------------------------------------------------------------------------------
-Band energy                                         :  -3.0631301751663624e+00
-Exchange energy                                     :  -2.6885381836343241e+00
-Correlation energy                                  :  -5.3544034081188430e-01
-Total energy                                        :  -8.3728969610923762e+00
-Total energy per atom                               :  -2.0932242402730941e+00
+Band energy                                         :  -3.0632096607445183e+00
+Exchange energy                                     :  -2.6885382994391174e+00
+Correlation energy                                  :  -5.3544034938011997e-01
+Total energy                                        :  -8.3728969596265941e+00
+Total energy per atom                               :  -2.0932242399066485e+00
 -------------------------------------------------------------------------------
-Total scf solve, wall time: 84.5514s.
+Total scf solve, wall time: 91.9132s.
 
 Cell stress (Hartree/Bohr^3)
 ------------------------------------------------------------------------
-3.793170675453094341e-05  1.223549339690913699e-11  4.933967289843861540e-11
-1.223570334549136399e-11  3.793154024332137160e-05  5.196112019229227793e-10
-4.933966930080271490e-11  5.196112969040117857e-10  3.793170850536087285e-05
+3.817885631431706158e-05  1.988396161246360732e-09  -1.021659400946068160e-09
+1.988395011318679525e-09  3.818366301089388433e-05  -6.433307909214173437e-09
+-1.021660788649223747e-09  -6.433309278830025904e-09  3.817942076741569619e-05
 ------------------------------------------------------------------------
-Cell stress computation, wall time: 6.45671s.
+Cell stress computation, wall time: 6.53065s.
 
 ------------------DFT-FE ground-state solve completed---------------------------
 
 
 +---------------------------------------------+------------+------------+
-| Total wallclock time elapsed since start    | 1.053e+02s |            |
+| Total wallclock time elapsed since start    | 1.106e+02s |            |
 |                                             |            |            |
 | Section                         | no. calls |  wall time | % of total |
 +---------------------------------+-----------+------------+------------+
-| Atomic system initialization    |         1 | 8.283e-02s | 0.000e+00% |
-| Cell stress computation         |         1 | 6.457e+00s |  6.13e+00% |
-| KSDFT problem initialization    |         1 | 1.159e+01s |  1.10e+01% |
-| Nuclear self-potential solve    |         1 | 2.082e+00s |  1.98e+00% |
-| Total scf solve                 |         1 | 8.455e+01s |  8.03e+01% |
+| Atomic system initialization    |         1 | 2.170e-01s |  1.96e-01% |
+| Cell stress computation         |         1 | 6.531e+00s |  5.90e+00% |
+| KSDFT problem initialization    |         1 | 9.334e+00s |  8.44e+00% |
+| Nuclear self-potential solve    |         1 | 2.087e+00s |  1.89e+00% |
+| Total scf solve                 |         1 | 9.191e+01s |  8.31e+01% |
 +---------------------------------+-----------+------------+------------+
 
 =============================================================================================
-DFT-FE Program ends. Elapsed wall time since start of the program: 1.053483844092115760e+02 seconds.
+DFT-FE Program ends. Elapsed wall time since start of the program: 1.107073994763195515e+02 seconds.
 =============================================================================================
