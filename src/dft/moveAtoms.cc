@@ -194,7 +194,7 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
       const double tol=1e-6;
       //Heuristic values
       const  double maxJacobianRatio=2.0;
-      const double break1=5e-2;
+      const double break1=0.1;
 
       unsigned int useGaussian=0;
       if (maxDispAtom <(break1+tol))
