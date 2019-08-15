@@ -302,7 +302,7 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 	  pcout << "Trying to Move using Gaussian with same Gaussian constant for computing the forces: "<<forcePtr->getGaussianGeneratorParameter()<<" as max displacement magnitude: "<< maxDispAtom<< " is below " << break1 <<" Bohr"<<std::endl;
 	  const std::pair<bool,double> meshQualityMetrics=gaussianMove.moveMesh(controlPointLocations,controlPointDisplacements,forcePtr->getGaussianGeneratorParameter());
 	  unsigned int autoMesh=0;
-	  if (meshQualityMetrics.first || meshQualityMetrics.second>1.2*d_autoMeshMaxJacobianRatio)
+	  if (meshQualityMetrics.first || meshQualityMetrics.second>1.3*d_autoMeshMaxJacobianRatio)
 	    autoMesh=1;
 	  MPI_Bcast(&(autoMesh),
 		    1,
@@ -314,7 +314,7 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 	      if (meshQualityMetrics.first)
 		pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to negative jacobian after Gaussian mesh movement using Gaussian constant: "<< forcePtr->getGaussianGeneratorParameter()<<std::endl;
 	      else
-		pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to maximum jacobian ratio: "<< meshQualityMetrics.second<< " exceeding set bound of: "<< maxJacobianRatio<<" after Gaussian mesh movement using Gaussian constant: "<< forcePtr->getGaussianGeneratorParameter()<<std::endl;
+		pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to maximum jacobian ratio: "<< meshQualityMetrics.second<< " exceeding set bound of: "<< 1.3*d_autoMeshMaxJacobianRatio<<" after Gaussian mesh movement using Gaussian constant: "<< forcePtr->getGaussianGeneratorParameter()<<std::endl;
 	      init(0);
 
               //for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
