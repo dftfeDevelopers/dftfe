@@ -64,9 +64,6 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
     }
   timer_movemesh.exit_section("move mesh to atoms: find closest vertices");
 
-  d_closestTriaVertexToAtomsLocation = closestTriaVertexToAtomsLocation;
-  d_dispClosestTriaVerticesToAtoms = dispClosestTriaVerticesToAtoms;
-
 
   timer_movemesh.enter_section("move mesh to atoms: move mesh");
   //add control point locations and displacements corresponding to images
@@ -88,6 +85,10 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
       closestTriaVertexToAtomsLocation.push_back(temp);
       dispClosestTriaVerticesToAtoms.push_back(dispClosestTriaVerticesToAtoms[atomId]);
    }
+
+  d_closestTriaVertexToAtomsLocation = closestTriaVertexToAtomsLocation;
+  d_dispClosestTriaVerticesToAtoms = dispClosestTriaVerticesToAtoms;
+
 
   double minDist=1e+6;
   for (unsigned int i=0;i <numberGlobalAtoms-1; i++)
