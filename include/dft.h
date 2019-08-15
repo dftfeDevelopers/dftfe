@@ -576,6 +576,8 @@ namespace dftfe {
        */
       triangulationManager d_mesh;
 
+      double d_autoMeshMaxJacobianRatio;
+
       /// affine transformation object
       meshMovementAffineTransform d_affineTransformMesh;
 

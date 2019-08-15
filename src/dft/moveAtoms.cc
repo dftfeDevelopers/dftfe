@@ -256,8 +256,8 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
       else
 	init(0);
 
-      for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
-	d_dispClosestTriaVerticesToAtoms[iAtom]= 0.0;
+      //for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
+	//d_dispClosestTriaVerticesToAtoms[iAtom]= 0.0;
 
       if (!dftParameters::reproducible_output)
 	pcout << "...Reinitialization end" << std::endl;
@@ -293,8 +293,8 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 	  pcout << "Auto remeshing and reinitialization of dft problem for new atom coordinates as max net displacement magnitude: "<<maxDispAtom<< " is greater than: "<< break1 << " Bohr..." << std::endl;
 	  init(0);
 
-          for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
-	    d_dispClosestTriaVerticesToAtoms[iAtom]=0;
+          //for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
+	    //d_dispClosestTriaVerticesToAtoms[iAtom]=0;
 	  pcout << "...Reinitialization end" << std::endl;
 	}
       else
@@ -302,7 +302,7 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 	  pcout << "Trying to Move using Gaussian with same Gaussian constant for computing the forces: "<<forcePtr->getGaussianGeneratorParameter()<<" as max displacement magnitude: "<< maxDispAtom<< " is below " << break1 <<" Bohr"<<std::endl;
 	  const std::pair<bool,double> meshQualityMetrics=gaussianMove.moveMesh(controlPointLocations,controlPointDisplacements,forcePtr->getGaussianGeneratorParameter());
 	  unsigned int autoMesh=0;
-	  if (meshQualityMetrics.first || meshQualityMetrics.second>maxJacobianRatio)
+	  if (meshQualityMetrics.first || meshQualityMetrics.second>1.2*d_autoMeshMaxJacobianRatio)
 	    autoMesh=1;
 	  MPI_Bcast(&(autoMesh),
 		    1,
@@ -317,8 +317,8 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 		pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to maximum jacobian ratio: "<< meshQualityMetrics.second<< " exceeding set bound of: "<< maxJacobianRatio<<" after Gaussian mesh movement using Gaussian constant: "<< forcePtr->getGaussianGeneratorParameter()<<std::endl;
 	      init(0);
 
-              for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
-	        d_dispClosestTriaVerticesToAtoms[iAtom]=0;
+              //for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
+	        //d_dispClosestTriaVerticesToAtoms[iAtom]=0;
 	      pcout << "...Reinitialization end" << std::endl;
 	    }
 	  else
