@@ -527,6 +527,10 @@ namespace dftfe {
 	    pcout<<"AtomId "<<i <<":  "<<atomLocations[i][2]<<" "<<atomLocations[i][3]<<" "<<atomLocations[i][4]<<"\n";
 	  }
 	pcout<<"-----------------------------------------------------------------------------------------"<<std::endl;
+
+	//
+	//redundant call (check later)
+	//
 	generateImageCharges(d_pspCutOff,
 	                     d_imageIds,
 		             d_imageCharges,
@@ -636,10 +640,11 @@ namespace dftfe {
   }
 
   template<unsigned int FEOrder>
-  void dftClass<FEOrder>::initNoRemesh()
+  void dftClass<FEOrder>::initNoRemesh(bool flag)
   {
     computingTimerStandard.enter_section("KSDFT problem initialization");
-    initImageChargesUpdateKPoints();
+    if(flag)
+      initImageChargesUpdateKPoints();
 
     if  (dftParameters::isIonOpt)
        updatePrevMeshDataStructures();

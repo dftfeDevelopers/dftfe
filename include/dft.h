@@ -135,7 +135,7 @@ namespace dftfe {
       /**
        * @brief Does KSDFT problem pre-processing steps but without remeshing.
        */
-      void initNoRemesh();
+      void initNoRemesh(bool flag = true);
 
       /**
        * @brief Selects between only electronic field relaxation or combined electronic and geometry relxation
