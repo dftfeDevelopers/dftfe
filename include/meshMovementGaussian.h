@@ -50,11 +50,29 @@ namespace dftfe {
 				      const std::vector<Tensor<1,3,double> > & controlPointDisplacements,
 				      const double controllingParameter,
 				      const bool moveSubdivided = false);
+
+
+      
+      std::pair<bool,double> moveMeshTwoStep(const std::vector<Point<C_DIM> > & controlPointLocations1,
+					     const std::vector<Point<C_DIM> > & controlPointLocations2,
+					     const std::vector<Tensor<1,3,double> > & controlPointDisplacements1,
+					     const std::vector<Tensor<1,3,double> > & controlPointDisplacements2,
+					     const double controllingParameter1,
+					      const double controllingParameter2,
+					     const bool moveSubdivided = false);
+
     private:
       /** @brief internal function which computes the nodal increment field in the local processor
        *
        */
       void computeIncrement();
+      
+      void computeIncrementTwoStep(const std::vector<Point<C_DIM> > & controlPointLocations1,
+				   const std::vector<Point<C_DIM> > & controlPointLocations2,
+				   const std::vector<Tensor<1,3,double> > & controlPointDisplacements1,
+				   const std::vector<Tensor<1,3,double> > & controlPointDisplacements2,
+				   const double controllingParameter1,
+				   const double controllingParameter2);
 
       /// internal: storage for coordinates of the control points to which the Gaussians are attached
       std::vector<Point<C_DIM> > d_controlPointLocations;

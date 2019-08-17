@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Sambit Das
+// @author Sambit Das and Phani Motamarri
 //
 
 namespace internal{
@@ -87,8 +87,8 @@ template<unsigned int FEOrder>
 void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<1,3,double> > & globalAtomsDisplacements)
 {
   const int numberGlobalAtoms = atomLocations.size();
-  const int numberImageCharges = d_imageIds.size();
-  const int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
+  int numberImageCharges = d_imageIds.size();
+  int totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
 
   std::vector<double> latticeVectorsFlattened(9,0.0);
   for (unsigned int idim=0; idim<3; idim++)
@@ -104,22 +104,26 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
   std::vector<bool> periodicBc(3,false);
   periodicBc[0]=dftParameters::periodicX;periodicBc[1]=dftParameters::periodicY;periodicBc[2]=dftParameters::periodicZ;
 
-  std::vector<Point<C_DIM> > controlPointLocations;
-  std::vector<Tensor<1,C_DIM,double> > controlPointDisplacements;
+  std::vector<Point<C_DIM> > controlPointLocationsInitialMove;
+  std::vector<Tensor<1,C_DIM,double> > controlPointDisplacementsInitialMove;
 
-  std::vector<Tensor<1,3,double> > tempDispClosestTriaVerticesToAtoms;
+  std::vector<Point<C_DIM> > controlPointLocationsCurrentMove;
+  std::vector<Tensor<1,C_DIM,double> > controlPointDisplacementsCurrentMove;
+
+  d_gaussianMovementAtomsNetDisplacements.resize(numberGlobalAtoms);
+  std::vector<Tensor<1,3,double> > tempGaussianMovementAtomsNetDisplacements;
 
   double maxDispAtom=-1;
   for(unsigned int iAtom=0;iAtom < numberGlobalAtoms; iAtom++)
     {
-      d_dispClosestTriaVerticesToAtoms[iAtom]+=globalAtomsDisplacements[iAtom];
-      const double netDisp = d_dispClosestTriaVerticesToAtoms[iAtom].norm();
+      d_gaussianMovementAtomsNetDisplacements[iAtom]+=globalAtomsDisplacements[iAtom];
+      const double netDisp = d_gaussianMovementAtomsNetDisplacements[iAtom].norm();
 
       if(netDisp>maxDispAtom)
 	maxDispAtom=netDisp;
     }
 
-  tempDispClosestTriaVerticesToAtoms = d_dispClosestTriaVerticesToAtoms;
+  tempGaussianMovementAtomsNetDisplacements = d_gaussianMovementAtomsNetDisplacements;
 
   unsigned int useGaussian = 0;
   const double tol=1e-6;
@@ -135,9 +139,13 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 	    0,
 	    MPI_COMM_WORLD);
 
+  
+
+
+
   if((dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ) && useGaussian == 0)
     {
-      for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
+      for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
 	{
 	  Point<C_DIM> atomCoor;
 	  int atomId=iAtom;
@@ -190,7 +198,7 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 	 
 	}
 
-      initImageChargesUpdateKPoints();
+      initImageChargesUpdateKPoints(false);
 
     }
   else
@@ -206,37 +214,29 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 	}
     }
 
-  d_dispClosestTriaVerticesToAtoms.clear();
 
+  d_gaussianMovementAtomsNetDisplacements.clear();
+  numberImageCharges = d_imageIds.size();
+  totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
 
   for(unsigned int iAtom = 0; iAtom < totalNumberAtoms; ++iAtom)
     {
       dealii::Point<C_DIM> temp;
       int atomId;
+      Point<3> atomCoor;
       if(iAtom < numberGlobalAtoms)
 	{
-	  atomId = iAtom;
-	  temp = d_closestTriaVertexToAtomsLocation[atomId];
-	  d_dispClosestTriaVerticesToAtoms.push_back(tempDispClosestTriaVerticesToAtoms[iAtom]);
+	  d_gaussianMovementAtomsNetDisplacements.push_back(tempGaussianMovementAtomsNetDisplacements[iAtom]);
 	}
       else
 	{
-	  Point<3> imageCoor;
-	  Point<3> correspondingAtomCoor;
-	  unsigned int iImage = iAtom - numberGlobalAtoms;
-	  imageCoor[0] = d_imagePositions[iImage][0];
-	  imageCoor[1] = d_imagePositions[iImage][1];
-	  imageCoor[2] = d_imagePositions[iImage][2];
-	  const int atomId=d_imageIds[iImage];
-	  correspondingAtomCoor[0] = atomLocations[atomId][2];
-	  correspondingAtomCoor[1] = atomLocations[atomId][3];
-	  correspondingAtomCoor[2] = atomLocations[atomId][4];
-	  temp = d_closestTriaVertexToAtomsLocation[atomId]+(imageCoor-correspondingAtomCoor);
-	  d_dispClosestTriaVerticesToAtoms.push_back(d_dispClosestTriaVerticesToAtoms[atomId]);
+	  const int atomId=d_imageIds[iAtom-numberGlobalAtoms];
+	  d_gaussianMovementAtomsNetDisplacements.push_back(d_gaussianMovementAtomsNetDisplacements[atomId]);
 	}
 
-      controlPointLocations.push_back(temp);
-      controlPointDisplacements.push_back(d_dispClosestTriaVerticesToAtoms[iAtom]);
+      controlPointLocationsInitialMove.push_back(d_closestTriaVertexToAtomsLocation[iAtom]);
+      controlPointDisplacementsInitialMove.push_back(d_dispClosestTriaVerticesToAtoms[iAtom]);
+      controlPointDisplacementsCurrentMove.push_back(d_gaussianMovementAtomsNetDisplacements[iAtom]);
       
     }
  
@@ -300,9 +300,9 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
       else
 	{
 	  pcout << "Trying to Move using Gaussian with same Gaussian constant for computing the forces: "<<forcePtr->getGaussianGeneratorParameter()<<" as max displacement magnitude: "<< maxDispAtom<< " is below " << break1 <<" Bohr"<<std::endl;
-	  const std::pair<bool,double> meshQualityMetrics=gaussianMove.moveMesh(controlPointLocations,controlPointDisplacements,forcePtr->getGaussianGeneratorParameter());
+	  const std::pair<bool,double> meshQualityMetrics=gaussianMove.moveMeshTwoStep(controlPointLocationsInitialMove,d_controlPointLocationsCurrentMove,controlPointDisplacementsInitialMove,controlPointDisplacementsCurrentMove,d_gaussianConstantAutoMove,forcePtr->getGaussianGeneratorParameter());
 	  unsigned int autoMesh=0;
-	  if (meshQualityMetrics.first || meshQualityMetrics.second>1.2*d_autoMeshMaxJacobianRatio)
+	  if (meshQualityMetrics.first || meshQualityMetrics.second>1.3*d_autoMeshMaxJacobianRatio)
 	    autoMesh=1;
 	  MPI_Bcast(&(autoMesh),
 		    1,
@@ -314,7 +314,40 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 	      if (meshQualityMetrics.first)
 		pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to negative jacobian after Gaussian mesh movement using Gaussian constant: "<< forcePtr->getGaussianGeneratorParameter()<<std::endl;
 	      else
-		pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to maximum jacobian ratio: "<< meshQualityMetrics.second<< " exceeding set bound of: "<< maxJacobianRatio<<" after Gaussian mesh movement using Gaussian constant: "<< forcePtr->getGaussianGeneratorParameter()<<std::endl;
+		pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to maximum jacobian ratio: "<< meshQualityMetrics.second<< " exceeding set bound of: "<< 1.3*d_autoMeshMaxJacobianRatio<<" after Gaussian mesh movement using Gaussian constant: "<< forcePtr->getGaussianGeneratorParameter()<<std::endl;
+
+	      if(dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ)
+		{
+		  for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
+		    {
+		      Point<C_DIM> atomCoor;
+		      int atomId=iAtom;
+		      atomCoor[0] = atomLocations[iAtom][2];
+		      atomCoor[1] = atomLocations[iAtom][3];
+		      atomCoor[2] = atomLocations[iAtom][4];
+
+		      Point<C_DIM> newCoord;
+		      for(unsigned int idim=0; idim<C_DIM; ++idim)
+			newCoord[idim]=atomCoor[idim]+globalAtomsDisplacements[atomId][idim];
+
+		      std::vector<double> newFracCoord=internal::wrapAtomsAcrossPeriodicBc(newCoord,
+											   corner,
+											   latticeVectorsFlattened,
+											   periodicBc);
+		      //for synchrozination
+		      MPI_Bcast(&(newFracCoord[0]),
+				3,
+				MPI_DOUBLE,
+				0,
+				MPI_COMM_WORLD);
+
+		      atomLocationsFractional[iAtom][2]=newFracCoord[0];
+		      atomLocationsFractional[iAtom][3]=newFracCoord[1];
+		      atomLocationsFractional[iAtom][4]=newFracCoord[2];
+		    }
+
+		}
+
 	      init(0);
 
               //for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)

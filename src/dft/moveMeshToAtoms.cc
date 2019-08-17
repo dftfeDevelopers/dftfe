@@ -89,6 +89,25 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
   d_closestTriaVertexToAtomsLocation = closestTriaVertexToAtomsLocation;
   d_dispClosestTriaVerticesToAtoms = dispClosestTriaVerticesToAtoms;
 
+  d_controlPointLocationsCurrentMove.clear();
+  for (unsigned int iAtom=0;iAtom <numberGlobalAtoms+numberImageAtoms; iAtom++)
+  {
+      Point<3> atomCoor;
+      if(iAtom < numberGlobalAtoms)
+	{
+	  atomCoor[0] = atomLocations[iAtom][2];
+	  atomCoor[1] = atomLocations[iAtom][3];
+	  atomCoor[2] = atomLocations[iAtom][4];
+	}
+      else
+	{
+	  atomCoor[0] = d_imagePositions[iAtom-numberGlobalAtoms][0];
+	  atomCoor[1] = d_imagePositions[iAtom-numberGlobalAtoms][1];
+	  atomCoor[2] = d_imagePositions[iAtom-numberGlobalAtoms][2];
+	}
+      d_controlPointLocationsCurrentMove.push_back(atomCoor);
+  }
+
 
   double minDist=1e+6;
   for (unsigned int i=0;i <numberGlobalAtoms-1; i++)
@@ -106,6 +125,9 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
 									dispClosestTriaVerticesToAtoms,
 									gaussianConstant,
 									moveSubdivided);
+
+  d_gaussianConstantAutoMove = gaussianConstant;
+
   timer_movemesh.exit_section("move mesh to atoms: move mesh");
 
   AssertThrow(!meshQualityMetrics.first,ExcMessage("Negative jacobian created after moving closest nodes to atoms. Suggestion: increase refinement near atoms"));

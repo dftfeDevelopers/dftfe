@@ -92,6 +92,17 @@ namespace dftfe {
 					      const std::vector<Tensor<1,C_DIM,double> > & controlPointDisplacements,
 					      const double controllingParameter,
 					      const bool moveSubdivided = false)=0;
+
+
+
+      /*virtual std::pair<bool,double> moveMeshTwoStep(const std::vector<Point<C_DIM> > & controlPointLocations1,
+						     const std::vector<Point<C_DIM> > & controlPointLocations2,
+						     const std::vector<Tensor<1,3,double> > & controlPointDisplacements1,
+						     const std::vector<Tensor<1,3,double> > & controlPointDisplacements2,
+						     const double controllingParameter1,
+						     const double controllingParameter2,
+						     const bool moveSubdivided = false) = 0;*/
+
       virtual void computeIncrement()=0;
 
       /// vector of displacements of the triangulation vertices

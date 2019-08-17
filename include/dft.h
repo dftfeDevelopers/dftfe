@@ -229,7 +229,7 @@ namespace dftfe {
        * @brief generate image charges and update k point cartesian coordinates based
        * on current lattice vectors
        */
-      void initImageChargesUpdateKPoints();
+      void initImageChargesUpdateKPoints(bool flag=true);
 
       /**
        */
@@ -585,6 +585,8 @@ namespace dftfe {
       meshMovementGaussianClass d_gaussianMovePar;
 
       std::vector<Tensor<1,3,double>> d_gaussianMovementAtomsNetDisplacements;
+      std::vector<Point<C_DIM> > d_controlPointLocationsCurrentMove;
+      double d_gaussianConstantAutoMove;
 
       /// volume of the domain
       double d_domainVolume;

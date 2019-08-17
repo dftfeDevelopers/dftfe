@@ -447,7 +447,7 @@ namespace dftfe {
 
   // generate image charges and update k point cartesian coordinates based on current lattice vectors
   template<unsigned int FEOrder>
-  void dftClass<FEOrder>::initImageChargesUpdateKPoints()
+  void dftClass<FEOrder>::initImageChargesUpdateKPoints(bool flag)
   {
     TimerOutput::Scope scope (computing_timer, "image charges and k point generation");
     pcout<<"-----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------"<<std::endl;
@@ -470,6 +470,9 @@ namespace dftfe {
 	std::vector<bool> periodicBc(3,false);
 	periodicBc[0]=dftParameters::periodicX;periodicBc[1]=dftParameters::periodicY;periodicBc[2]=dftParameters::periodicZ;
         const double tol=1e-6;
+
+        if(flag)
+        {
   	for(unsigned int i = 0; i < atomLocationsFractional.size(); ++i)
 	  {
 	    for(unsigned int idim = 0; idim < 3; ++idim)
@@ -484,6 +487,7 @@ namespace dftfe {
 	       "corresponding algorithm."));
 	    }
 	  }
+        }
 
 	generateImageCharges(d_pspCutOff,
 	                     d_imageIds,
