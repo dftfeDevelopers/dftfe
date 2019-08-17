@@ -347,7 +347,6 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 		    }
 
 		}
-
 	      init(0);
 
               //for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
