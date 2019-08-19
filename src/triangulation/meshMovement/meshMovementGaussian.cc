@@ -153,7 +153,7 @@ void meshMovementGaussianClass::computeIncrementTwoStep(const std::vector<Point<
 		       d_incrementalDisplacement[globalDofIndex]
 			 +=gaussianWeight*controlPointDisplacementsInitialMove[iControl][idim];
 		       
-		       nodalCoordinatesUpdated[global_vertex_no][idim] += d_incrementalDisplacement[globalDofIndex];
+		       nodalCoordinatesUpdated[global_vertex_no][idim] += gaussianWeight*controlPointDisplacementsInitialMove[iControl][idim];
 		     }
 
 		 }

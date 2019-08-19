@@ -535,6 +535,8 @@ namespace dftfe {
 
       /// vector of lendth number of periodic image charges with corresponding master chargeIds
       std::vector<int> d_imageIds;
+      std::vector<int> d_imageIdsAutoMesh;
+
 
       /// vector of length number of periodic image charges with corresponding charge values
       std::vector<double> d_imageCharges;

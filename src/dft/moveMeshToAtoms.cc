@@ -88,6 +88,10 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
 
   d_closestTriaVertexToAtomsLocation = closestTriaVertexToAtomsLocation;
   d_dispClosestTriaVerticesToAtoms = dispClosestTriaVerticesToAtoms;
+  d_imageIdsAutoMesh = d_imageIds;
+  d_gaussianMovementAtomsNetDisplacements.resize(numberGlobalAtoms);
+  for(unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
+     d_gaussianMovementAtomsNetDisplacements[iAtom]=0.0;
 
   d_controlPointLocationsCurrentMove.clear();
   for (unsigned int iAtom=0;iAtom <numberGlobalAtoms+numberImageAtoms; iAtom++)

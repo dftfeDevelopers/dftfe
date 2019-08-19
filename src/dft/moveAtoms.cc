@@ -63,6 +63,12 @@ namespace internal{
     const double tol=1e-8;
     std::vector<double> fracCoord= getFractionalCoordinates(latticeVectors,
 							    cellCenteredCoord,                                                                                                corner);
+
+
+    if(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+      std::cout<<"Fractional Coordinates before wrapping: "<<fracCoord[0]<<" "<<fracCoord[1]<<" "<<fracCoord[2]<<std::endl;
+
+
     //wrap fractional coordinate
     for(unsigned int i = 0; i < 3; ++i)
       {
@@ -72,9 +78,17 @@ namespace internal{
 	      fracCoord[i]+=1.0;
 	    else if (fracCoord[i]>1.0+tol)
 	      fracCoord[i]-=1.0;
+
+            if(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+	     std::cout<<fracCoord[i]<<" ";
+
 	    AssertThrow(fracCoord[i]>-2.0*tol && fracCoord[i]<1.0+2.0*tol,ExcMessage("Moved atom position doesnt't lie inside the cell after wrapping across periodic boundary"));
 	  }
       }
+
+     if(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+       std::cout<<std::endl;
+
     return fracCoord;
   }
 
@@ -216,7 +230,7 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 
 
   d_gaussianMovementAtomsNetDisplacements.clear();
-  numberImageCharges = d_imageIds.size();
+  numberImageCharges = d_imageIdsAutoMesh.size();
   totalNumberAtoms = numberGlobalAtoms + numberImageCharges;
 
   for(unsigned int iAtom = 0; iAtom < totalNumberAtoms; ++iAtom)
@@ -230,7 +244,7 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 	}
       else
 	{
-	  const int atomId=d_imageIds[iAtom-numberGlobalAtoms];
+	  const int atomId=d_imageIdsAutoMesh[iAtom-numberGlobalAtoms];
 	  d_gaussianMovementAtomsNetDisplacements.push_back(d_gaussianMovementAtomsNetDisplacements[atomId]);
 	}
 
@@ -302,7 +316,7 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 	  pcout << "Trying to Move using Gaussian with same Gaussian constant for computing the forces: "<<forcePtr->getGaussianGeneratorParameter()<<" as max displacement magnitude: "<< maxDispAtom<< " is below " << break1 <<" Bohr"<<std::endl;
 	  const std::pair<bool,double> meshQualityMetrics=gaussianMove.moveMeshTwoStep(controlPointLocationsInitialMove,d_controlPointLocationsCurrentMove,controlPointDisplacementsInitialMove,controlPointDisplacementsCurrentMove,d_gaussianConstantAutoMove,forcePtr->getGaussianGeneratorParameter());
 	  unsigned int autoMesh=0;
-	  if (meshQualityMetrics.first || meshQualityMetrics.second>1.3*d_autoMeshMaxJacobianRatio)
+	  if (meshQualityMetrics.first || meshQualityMetrics.second>1.15*d_autoMeshMaxJacobianRatio)
 	    autoMesh=1;
 	  MPI_Bcast(&(autoMesh),
 		    1,
