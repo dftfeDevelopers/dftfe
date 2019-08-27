@@ -61,6 +61,10 @@ namespace dftfe {
 					      const double controllingParameter2,
 					     const bool moveSubdivided = false);
 
+
+      void moveMeshTwoLevelElectro();
+
+
     private:
       /** @brief internal function which computes the nodal increment field in the local processor
        *

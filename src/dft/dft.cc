@@ -79,8 +79,8 @@ namespace dftfe {
 #include "density.cc"
 #include "mixingschemes.cc"
 #include "kohnShamEigenSolve.cc"
-#include "restart.cc"
 #include "moveAtoms.cc"
+#include "restart.cc"
 #include "nscf.cc"
 #include "electrostaticHRefinedEnergy.cc"
 #include "electrostaticPRefinedEnergy.cc"
@@ -104,6 +104,7 @@ namespace dftfe {
     this_mpi_process (Utilities::MPI::this_mpi_process(mpi_comm_replica)),
     numElectrons(0),
     numLevels(0),
+    d_autoMesh(1),
     d_mesh(mpi_comm_replica,_interpoolcomm,_interBandGroupComm),
     d_affineTransformMesh(mpi_comm_replica),
     d_gaussianMovePar(mpi_comm_replica),
@@ -657,8 +658,10 @@ namespace dftfe {
     //
     initBoundaryConditions();
 
+    //
     //rho init (use previous ground state electron density)
     //
+    solveNoSCF();
     noRemeshRhoDataInit();
 
     //
@@ -832,6 +835,8 @@ namespace dftfe {
     if (dftParameters::verbosity>=1)
 	pcout << std::endl<< "------------------DFT-FE ground-state solve completed---------------------------"<<std::endl;
   }
+
+
 
   //
   //dft solve

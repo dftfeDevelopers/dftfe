@@ -242,6 +242,66 @@ double dftClass<FEOrder>::computeTraceXtKX(unsigned int numberWaveFunctionsEstim
 
 }
 
+
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::solveNoSCF()
+{
+
+  //
+  //create kohnShamDFTOperatorClass object
+  //
+  kohnShamDFTOperatorClass<FEOrder> kohnShamDFTEigenOperator(this,mpi_communicator);
+  kohnShamDFTEigenOperator.init();
+
+  //
+  //scale the eigenVectors (initial guess of single atom wavefunctions or previous guess) to convert into Lowden Orthonormalized FE basis
+  //multiply by M^{1/2}
+  for (unsigned int kPointIndex = 0; kPointIndex < d_kPointWeights.size(); ++kPointIndex)
+    {
+      internal::pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_sqrtMassVector,
+					   matrix_free_data.get_vector_partitioner(),
+					   d_numEigenValues,
+					   localProc_dof_indicesReal,
+					   d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+0]);
+    }
+
+
+  if (dftParameters::verbosity>=2)
+    pcout<<"Re-orthonormalizing before solving for ground-state after Gaussian Movement of Mesh "<< std::endl;
+  //
+  //orthogonalize the vectors
+  //
+  for (unsigned int kPointIndex = 0; kPointIndex < d_kPointWeights.size(); ++kPointIndex)
+    {
+      linearAlgebraOperations::gramSchmidtOrthogonalization(d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+0],
+							    d_numEigenValues,
+							    mpi_communicator);
+    }
+
+  
+  //
+  //scale the eigenVectors with M^{-1/2} to represent the wavefunctions in the usual FE basis
+  //
+  for (unsigned int kPointIndex = 0; kPointIndex < d_kPointWeights.size(); ++kPointIndex)
+    {
+      internal::pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_invSqrtMassVector,
+					   matrix_free_data.get_vector_partitioner(),
+					   d_numEigenValues,
+					   localProc_dof_indicesReal,
+					   d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+0]);
+    }
+
+
+
+  computeRhoFromPSI(rhoOutValues,
+		    gradRhoOutValues,
+		    rhoOutValuesSpinPolarized,
+		    gradRhoOutValuesSpinPolarized,
+		    dftParameters::xc_id == 4,
+		    false);
+
+}
+
 //chebyshev solver
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,

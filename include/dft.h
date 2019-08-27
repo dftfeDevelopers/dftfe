@@ -143,7 +143,11 @@ namespace dftfe {
       void run();
 
       /**
-       * @brief Kohn-Sham ground solve using SCF iteration
+       * @brief compute approximation to ground-state without solving the SCF iteration
+       */
+      void solveNoSCF();
+      /**
+       * @brief Kohn-Sham ground-state solve using SCF iteration
        */
       void solve();
 
@@ -216,11 +220,12 @@ namespace dftfe {
        */
       void updateAtomPositionsAndMoveMesh(const std::vector<Tensor<1,3,double> > & globalAtomsDisplacements);
 
+
       /**
        * @brief writes the current domain bounding vectors and atom coordinates to files, which are required for
        * geometry relaxation restart
        */
-      void writeDomainAndAtomCoordinates() const;
+      void writeDomainAndAtomCoordinates();
 
 
     private:
@@ -532,6 +537,8 @@ namespace dftfe {
       unsigned int numElectrons, numElectronsUp, numElectronsDown, numLevels;
       std::set<unsigned int> atomTypes;
       std::vector<std::vector<double> > atomLocations,atomLocationsFractional,d_reciprocalLatticeVectors, d_domainBoundingVectors;
+      std::vector<std::vector<double> > d_atomLocationsAutoMesh;
+      std::vector<std::vector<double> > d_imagePositionsAutoMesh;
 
       /// vector of lendth number of periodic image charges with corresponding master chargeIds
       std::vector<int> d_imageIds;
@@ -579,6 +586,8 @@ namespace dftfe {
       triangulationManager d_mesh;
 
       double d_autoMeshMaxJacobianRatio;
+      double d_autoMesh;
+
 
       /// affine transformation object
       meshMovementAffineTransform d_affineTransformMesh;

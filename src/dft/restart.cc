@@ -232,11 +232,56 @@ void dftClass<FEOrder>::loadTriaInfoAndRhoData()
 }
 
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::writeDomainAndAtomCoordinates() const
+void dftClass<FEOrder>::writeDomainAndAtomCoordinates() 
 {
      dftUtils::writeDataIntoFile(d_domainBoundingVectors,
 			        "domainBoundingVectors.chk");
 
+      if (dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ)
+     {
+      const int numberGlobalAtoms = atomLocations.size();
+      std::vector<double> latticeVectorsFlattened(9,0.0);
+      std::vector<std::vector<double> > atomFractionalCoordinates;
+      for (unsigned int idim=0; idim<3; idim++)
+	for(unsigned int jdim=0; jdim<3; jdim++)
+	  latticeVectorsFlattened[3*idim+jdim]=d_domainBoundingVectors[idim][jdim];
+      Point<3> corner;
+      for (unsigned int idim=0; idim<3; idim++)
+	{
+	  corner[idim]=0;
+	  for(unsigned int jdim=0; jdim<3; jdim++)
+	    corner[idim]-=d_domainBoundingVectors[jdim][idim]/2.0;
+	}
+
+      std::vector<bool> periodicBc(3,false);
+      periodicBc[0]=dftParameters::periodicX;periodicBc[1]=dftParameters::periodicY;periodicBc[2]=dftParameters::periodicZ;
+
+      for (unsigned int iAtom = 0; iAtom < numberGlobalAtoms; iAtom++)
+	{
+	  Point<C_DIM> atomCoor;
+	  int atomId=iAtom;
+	  atomCoor[0] = atomLocations[iAtom][2];
+	  atomCoor[1] = atomLocations[iAtom][3];
+	  atomCoor[2] = atomLocations[iAtom][4];
+
+	  
+	  std::vector<double> newFracCoord=internal::wrapAtomsAcrossPeriodicBc(atomCoor,
+									       corner,
+									       latticeVectorsFlattened,
+									       periodicBc);
+	  //for synchrozination
+	  MPI_Bcast(&(newFracCoord[0]),
+		    3,
+		    MPI_DOUBLE,
+		    0,
+		    MPI_COMM_WORLD);
+
+	  atomLocationsFractional[iAtom][2]=newFracCoord[0];
+	  atomLocationsFractional[iAtom][3]=newFracCoord[1];
+	  atomLocationsFractional[iAtom][4]=newFracCoord[2];
+	}
+     }
+ 
 #ifdef USE_COMPLEX
      dftUtils::writeDataIntoFile(atomLocationsFractional,
 			        "atomsFracCoord.chk");

@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Sambit Das(2017)
+// @author Sambit Das(2017) and Phani Motamarri(2019)
 //
 //
 #include <meshMovementGaussian.h>
@@ -89,6 +89,12 @@ std::pair<bool,double> meshMovementGaussianClass::moveMeshTwoStep(const std::vec
   return returnData;
 }
 
+
+  void meshMovementGaussianClass::moveMeshTwoLevelElectro()
+  {
+    moveSubdividedMesh();
+    updateTriangulationVertices();
+  }
 
 void meshMovementGaussianClass::computeIncrementTwoStep(const std::vector<Point<C_DIM> > & controlPointLocationsInitialMove,
 								  const std::vector<Point<C_DIM> > & controlPointLocationsCurrentMove,
