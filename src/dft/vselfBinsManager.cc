@@ -523,6 +523,7 @@ namespace dftfe
 									  n_mpi_processes,
 									  mpi_communicator,
 									  computing_timer);
+	  d_storedAdaptiveBallRadius=radiusAtomBall;
 	  std::string message;
 	  if (check==1)
 	      message="DFT-FE Error: Atom and its own image is interacting decrease radius";
