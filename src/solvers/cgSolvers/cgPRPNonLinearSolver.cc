@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Sambit Das
+// @author Sambit Das and Phani Motamarri
 
 #include <cgPRPNonLinearSolver.h>
 #include <nonlinearSolverProblem.h>
@@ -367,7 +367,7 @@ namespace dftfe {
     //
     // set the initial value of alpha
     //
-    double alpha = d_lineSearchDampingParameter;
+    double alpha = -d_lineSearchDampingParameter;
 
     //
     // evaluate problem gradient
@@ -377,17 +377,13 @@ namespace dftfe {
     //
     // compute delta_d and eta_p
     //
-    std::pair<double, double> deltaDReturnValue =
-                 computeDeltaD();
-    double deltaD = deltaDReturnValue.first;
-    double etaP   = deltaDReturnValue.second;
-    double alphaP=0;
+    double etaP   = computeEta();
     if (debugLevel >= 2)
        pcout << "Initial guess for secant line search iteration, alpha: " << alpha << std::endl;
     //
     // update unknowns removing earlier update
     //
-    updateSolution(alpha-alphaP,
+    updateSolution(d_lineSearchDampingParameter,
 		   d_conjugateDirection,
 		   problem);
     //
@@ -404,7 +400,7 @@ namespace dftfe {
       //
       // compute eta
       //
-      const double eta = computeEta();
+      double eta = computeEta();
 
       unsigned int isSuccess=0;
       if (std::fabs(eta) < toleranceSqr*d_numberUnknowns)
@@ -416,10 +412,21 @@ namespace dftfe {
 		MPI_COMM_WORLD);
       if (isSuccess==1)
 	return SUCCESS;
+
+      //
+      //swap eta and etaP to make the notation consistent to PRP algorithm in "Painless Conjugate Algorithm"
+      //
+      if(iter == 0)
+	{
+	  double temp = eta;
+	  eta = etaP;
+	  etaP = temp;
+	}
+
       //
       // update alpha
       //
-      double alphaNew=(alphaP*eta-alpha*etaP)/(eta-etaP);
+      double alphaNew=alpha*eta/(etaP-eta);
 
 
 
@@ -427,21 +434,29 @@ namespace dftfe {
       // output
       //
       if (debugLevel >= 2)
-	pcout << "Line search iteration: " << iter << " alphaNew: " << alphaNew << " alpha: "<<alpha<< " alphaP: "<<alphaP <<"  eta: "<< eta << " etaP: "<<etaP << std::endl;
+	pcout << "Line search iteration: " << iter << " alphaNew: " << alphaNew << " alpha: "<<alpha <<"  eta: "<< eta << " etaP: "<<etaP << std::endl;
       else if(debugLevel>= 1)
 	pcout << "Line search iteration: " << iter <<std::endl;      
       //
       // update unknowns
       //
-      updateSolution(alphaNew-alpha,
-		     d_conjugateDirection,
-		     problem);
+      if(iter == 0)
+	{
+	  updateSolution(alphaNew-d_lineSearchDampingParameter,
+			 d_conjugateDirection,
+			 problem);
+	}
+      else
+	{
+	  updateSolution(alphaNew-alpha,
+			 d_conjugateDirection,
+			 problem);
+	}
 
       //
       // update etaP, alphaP and alpha
       //
       etaP = eta;
-      alphaP=alpha;
       alpha=alphaNew;
     }
 

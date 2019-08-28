@@ -849,7 +849,7 @@ namespace dftfe {
       void recomputeKPointCoordinates();
 
       /// fermi energy
-      double fermiEnergy, fermiEnergyUp, fermiEnergyDown;
+      double fermiEnergy, fermiEnergyUp, fermiEnergyDown, d_groundStateEnergy;
 
       //chebyshev filter variables and functions
       //int numPass ; // number of filter passes

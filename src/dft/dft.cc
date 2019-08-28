@@ -1557,6 +1557,9 @@ namespace dftfe {
 					    lowerBoundKindex,
 					    1,
 					    true);
+
+      d_groundStateEnergy = totalEnergy;
+      
     }
 
     MPI_Barrier(interpoolcomm);

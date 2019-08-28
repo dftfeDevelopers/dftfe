@@ -636,6 +636,8 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
 						  1,
 						  true);
 
+  d_groundStateEnergy = totalEnergy;
+
 
 
     if(dftParameters::isCellStress)
