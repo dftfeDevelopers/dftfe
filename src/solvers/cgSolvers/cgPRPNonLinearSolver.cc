@@ -448,7 +448,7 @@ namespace dftfe {
 	}
       else
 	{
-	  updateSolution(alphaNew-alpha,
+	  updateSolution(alphaNew,
 			 d_conjugateDirection,
 			 problem);
 	}
