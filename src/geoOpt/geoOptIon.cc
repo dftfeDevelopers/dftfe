@@ -98,7 +98,7 @@ namespace dftfe {
     const unsigned int  maxIter=100;
     const double lineSearchTol=1e-4;
     const double lineSearchDampingParameter=0.5;
-    const unsigned int maxLineSearchIter=3;
+    const unsigned int maxLineSearchIter=10;
     const unsigned int debugLevel=Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) ==0?dftParameters::verbosity:0;
 
     d_totalUpdateCalls=0;

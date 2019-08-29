@@ -362,7 +362,15 @@ namespace dftfe {
     // local data
     //
     const double toleranceSqr = tolerance*tolerance;
+    std::vector<double> tempFuncValueVector;
 
+    //
+    //constants used in Wolfe conditions
+    //c1, c2 are chosen based on Page122 of the book "Numerical Optimization" by Jorge Nocedal and Stephen J. Wright
+    //Also look at https://en.wikipedia.org/wiki/Wolfe_conditions
+    //
+    const double c1 = 1e-04;
+    const double c2 = 0.1;
 
     //
     // set the initial value of alpha
@@ -375,17 +383,26 @@ namespace dftfe {
     problem.gradient(d_gradient);
 
     //
+    // evaluate function value
+    //
+    problem.value(tempFuncValueVector);
+    double functionValue = tempFuncValueVector[0];
+
+    //
     // compute delta_d and eta_p
     //
     double etaP   = computeEta();
     if (debugLevel >= 2)
        pcout << "Initial guess for secant line search iteration, alpha: " << alpha << std::endl;
+
     //
     // update unknowns removing earlier update
     //
     updateSolution(d_lineSearchDampingParameter,
 		   d_conjugateDirection,
 		   problem);
+
+
     //
     // begin iteration (using secant method)
     //
@@ -415,6 +432,7 @@ namespace dftfe {
 
       //
       //swap eta and etaP to make the notation consistent to PRP algorithm in "Painless Conjugate Algorithm"
+      //https://www.cs.cmu.edu/~quake-papers/painless-conjugate-gradient.pdf
       //
       if(iter == 0)
 	{
@@ -423,12 +441,27 @@ namespace dftfe {
 	  etaP = temp;
 	}
 
+      if(iter > 1)
+	{
+	  problem.value(tempFuncValueVector);
+	  double functionalValueAfterAlphUpdate = tempFuncValueVector[0];
+
+	  double condition1 = (functionalValueAfterAlphUpdate - functionValue) - (c1*alpha*etaP);
+	  double condition2 = std::abs(eta) - c2*std::abs(etaP);
+	  if(condition1 <= 1e-05 && condition2 <= 1e-05)
+	    {
+	      if (debugLevel >= 2)
+		pcout << "Satisfied Wolfe condition: " << std::endl;
+	      
+	      return SUCCESS;
+
+	    }
+	}
+
       //
       // update alpha
       //
       double alphaNew=alpha*eta/(etaP-eta);
-
-
 
       //
       // output
@@ -437,6 +470,7 @@ namespace dftfe {
 	pcout << "Line search iteration: " << iter << " alphaNew: " << alphaNew << " alpha: "<<alpha <<"  eta: "<< eta << " etaP: "<<etaP << std::endl;
       else if(debugLevel>= 1)
 	pcout << "Line search iteration: " << iter <<std::endl;      
+
       //
       // update unknowns
       //
@@ -453,11 +487,15 @@ namespace dftfe {
 			 problem);
 	}
 
+
+      
+    
       //
       // update etaP, alphaP and alpha
       //
       etaP = eta;
       alpha=alphaNew;
+      
     }
 
     //
