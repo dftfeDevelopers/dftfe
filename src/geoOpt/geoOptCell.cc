@@ -268,7 +268,10 @@ unsigned int geoOptCell<FEOrder>::getNumberUnknowns() const
 template<unsigned int FEOrder>
 void geoOptCell<FEOrder>::value(std::vector<double> & functionValue)
 {
-   AssertThrow(false,dftUtils::ExcNotImplementedYet());
+//AssertThrow(false,dftUtils::ExcNotImplementedYet());
+functionValue.clear();
+functionValue.push_back(dftPtr->d_groundStateEnergy);
+
 }
 
 template<unsigned int FEOrder>
