@@ -323,7 +323,7 @@ INCLUDE(CTest)
 # default 600sec is not enough for some tests, increase:
 SET (TEST_TIME_LIMIT 3600)
 #
-IF (DEAL_II_PETSC_WITH_COMPLEX)
+IF (WITH_COMPLEX)
    ADD_SUBDIRECTORY(tests/dft/pseudopotential/complex)
    ADD_SUBDIRECTORY(tests/dft/allElectron/complex)
 ELSE()
