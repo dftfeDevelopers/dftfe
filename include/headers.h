@@ -68,7 +68,9 @@
 #include <deal.II/lac/parallel_vector.h>
 #include <deal.II/matrix_free/matrix_free.h>
 #include <deal.II/matrix_free/fe_evaluation.h>
+#ifdef USE_PETSC
 #include <deal.II/lac/slepc_solver.h>
+#endif
 #include <deal.II/base/config.h>
 #include <deal.II/base/smartpointer.h>
 #include <deal.II/base/types.h>

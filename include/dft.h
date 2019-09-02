@@ -40,8 +40,10 @@
 
 #include <interpolation.h>
 #include <xc.h>
+#ifdef USE_PETSC
 #include <petsc.h>
 #include <slepceps.h>
+#endif
 #include <spglib.h>
 #include <stdafx.h>
 
@@ -470,7 +472,7 @@ namespace dftfe {
       void compute_ldos(const std::vector<std::vector<double> > & eigenValuesInput,
 			const std::string & fileName);
 
-      
+
       /**
        *@brief compute localization length
        */
