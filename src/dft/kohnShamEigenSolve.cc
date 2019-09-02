@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author  Phani Motamarri
+// @author  Phani Motamarri, Sambit Das
 //
 #include <complex>
 #include <vector>
@@ -146,7 +146,7 @@ dataTypes::number dftClass<FEOrder>::computeTraceXtHX(unsigned int numberWaveFun
   //compute projected Hamiltonian
   //
   std::vector<dataTypes::number> ProjHam;
-  
+
   kohnShamDFTEigenOperator.XtHX(d_eigenVectorsFlattenedSTL[0],
 				d_numEigenValues,
 				ProjHam);
@@ -174,7 +174,7 @@ dataTypes::number dftClass<FEOrder>::computeTraceXtHX(unsigned int numberWaveFun
 template<unsigned int FEOrder>
 double dftClass<FEOrder>::computeTraceXtKX(unsigned int numberWaveFunctionsEstimate)
 {
-  
+
   //
   //create kohnShamDFTOperatorClass object
   //
@@ -186,7 +186,7 @@ double dftClass<FEOrder>::computeTraceXtKX(unsigned int numberWaveFunctionsEstim
   //
   kohnShamDFTEigenOperator.preComputeShapeFunctionGradientIntegrals();
 
-  
+
   //
   //compute Hamiltonian matrix
   //
@@ -213,7 +213,7 @@ double dftClass<FEOrder>::computeTraceXtKX(unsigned int numberWaveFunctionsEstim
   //compute projected Hamiltonian
   //
   std::vector<dataTypes::number> ProjHam;
-  
+
   kohnShamDFTEigenOperator.XtHX(d_eigenVectorsFlattenedSTL[0],
 				d_numEigenValues,
 				ProjHam);
@@ -253,45 +253,62 @@ void dftClass<FEOrder>::solveNoSCF()
   kohnShamDFTOperatorClass<FEOrder> kohnShamDFTEigenOperator(this,mpi_communicator);
   kohnShamDFTEigenOperator.init();
 
-  //
-  //scale the eigenVectors (initial guess of single atom wavefunctions or previous guess) to convert into Lowden Orthonormalized FE basis
-  //multiply by M^{1/2}
-  for (unsigned int kPointIndex = 0; kPointIndex < d_kPointWeights.size(); ++kPointIndex)
-    {
-      internal::pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_sqrtMassVector,
-					   matrix_free_data.get_vector_partitioner(),
-					   d_numEigenValues,
-					   localProc_dof_indicesReal,
-					   d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+0]);
-    }
+#ifdef DEAL_II_WITH_SCALAPACK
+  kohnShamDFTEigenOperator.processGridOptionalELPASetup(d_numEigenValues,
+			                                  d_numEigenValuesRR);
+
+#endif
+
+  for(unsigned int spinType=0; spinType<(1+dftParameters::spinPolarized); ++spinType)
+  {
+      //
+      //scale the eigenVectors (initial guess of single atom wavefunctions or previous guess) to convert into Lowden Orthonormalized FE basis
+      //multiply by M^{1/2}
+      for (unsigned int kPointIndex = 0; kPointIndex < d_kPointWeights.size(); ++kPointIndex)
+	{
+	  internal::pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_sqrtMassVector,
+					       matrix_free_data.get_vector_partitioner(),
+					       d_numEigenValues,
+					       localProc_dof_indicesReal,
+					       d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
+	}
 
 
-  if (dftParameters::verbosity>=2)
-    pcout<<"Re-orthonormalizing before solving for ground-state after Gaussian Movement of Mesh "<< std::endl;
-  //
-  //orthogonalize the vectors
-  //
-  for (unsigned int kPointIndex = 0; kPointIndex < d_kPointWeights.size(); ++kPointIndex)
-    {
-      linearAlgebraOperations::gramSchmidtOrthogonalization(d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+0],
-							    d_numEigenValues,
-							    mpi_communicator);
-    }
-
-  
-  //
-  //scale the eigenVectors with M^{-1/2} to represent the wavefunctions in the usual FE basis
-  //
-  for (unsigned int kPointIndex = 0; kPointIndex < d_kPointWeights.size(); ++kPointIndex)
-    {
-      internal::pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_invSqrtMassVector,
-					   matrix_free_data.get_vector_partitioner(),
-					   d_numEigenValues,
-					   localProc_dof_indicesReal,
-					   d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+0]);
-    }
+      if (dftParameters::verbosity>=2)
+	pcout<<"Re-orthonormalizing before solving for ground-state after Gaussian Movement of Mesh "<< std::endl;
+      //
+      //orthogonalize the vectors
+      //
+      for (unsigned int kPointIndex = 0; kPointIndex < d_kPointWeights.size(); ++kPointIndex)
+	{
+	  const unsigned int flag=linearAlgebraOperations::pseudoGramSchmidtOrthogonalization
+		  (kohnShamDFTEigenOperator,
+		   d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
+		   d_numEigenValues,
+		   interBandGroupComm,
+		   mpi_communicator,
+		   false);
+	}
 
 
+      //
+      //scale the eigenVectors with M^{-1/2} to represent the wavefunctions in the usual FE basis
+      //
+      for (unsigned int kPointIndex = 0; kPointIndex < d_kPointWeights.size(); ++kPointIndex)
+	{
+	  internal::pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_invSqrtMassVector,
+					       matrix_free_data.get_vector_partitioner(),
+					       d_numEigenValues,
+					       localProc_dof_indicesReal,
+					       d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
+	}
+  }
+
+#ifdef DFTFE_WITH_ELPA
+  if (dftParameters::useELPA)
+	 kohnShamDFTEigenOperator.elpaDeallocateHandles(d_numEigenValues,
+				             d_numEigenValuesRR);
+#endif
 
   computeRhoFromPSI(rhoOutValues,
 		    gradRhoOutValues,
@@ -411,7 +428,7 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
                                                             dftParameters::lowerEndWantedSpectrum
                                                             :eigenValuesTemp[0];*/
 
- 
+
   bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=eigenValuesTemp.back();
 
   if(!isSpectrumSplit)
@@ -429,10 +446,10 @@ void dftClass<FEOrder>::kohnShamEigenSpaceComputeNSCF(const unsigned int spinTyp
 						  kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
 						  chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver,
 						  std::vector<double>                            & residualNormWaveFunctions,
-						  unsigned int ipass) 
+						  unsigned int ipass)
 {
-  computing_timer.enter_section("Chebyshev solve"); 
-  
+  computing_timer.enter_section("Chebyshev solve");
+
    if (dftParameters::verbosity==2)
     {
       pcout << "kPoint: "<< kPointIndex<<std::endl;
@@ -449,7 +466,7 @@ void dftClass<FEOrder>::kohnShamEigenSpaceComputeNSCF(const unsigned int spinTyp
 				       localProc_dof_indicesReal,
 				       d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
 
- 
+
   std::vector<double> eigenValuesTemp(d_numEigenValues,0.0);
 
   subspaceIterationSolver.reinitSpectrumBounds(a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
@@ -465,7 +482,7 @@ void dftClass<FEOrder>::kohnShamEigenSpaceComputeNSCF(const unsigned int spinTyp
 				residualNormWaveFunctions,
 				interBandGroupComm,
 				false);
- 
+
   if(dftParameters::verbosity >= 4)
     {
       PetscLogDouble bytes;
@@ -475,9 +492,9 @@ void dftClass<FEOrder>::kohnShamEigenSpaceComputeNSCF(const unsigned int spinTyp
       PetscSynchronizedPrintf(mpi_communicator,"[%d] Memory after recreating STL vector and exiting from subspaceIteration solver  %e\n",this_mpi_process,bytes);
       PetscSynchronizedFlush(mpi_communicator,dummy);
     }
-  
 
-  
+
+
   //
   //copy the eigenValues and corresponding residual norms back to data members
   //
@@ -489,17 +506,17 @@ void dftClass<FEOrder>::kohnShamEigenSpaceComputeNSCF(const unsigned int spinTyp
       eigenValues[kPointIndex][spinType*d_numEigenValues + i] =  eigenValuesTemp[i];
     }
 
-  //if (dftParameters::verbosity==2)  
+  //if (dftParameters::verbosity==2)
   //   pcout <<std::endl;
 
 
   //set a0 and bLow
-  a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=eigenValuesTemp[0]; 
-  bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=eigenValuesTemp.back(); 
+  a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=eigenValuesTemp[0];
+  bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=eigenValuesTemp.back();
   //
 
- 
-  computing_timer.exit_section("Chebyshev solve"); 
+
+  computing_timer.exit_section("Chebyshev solve");
 }
 
 
