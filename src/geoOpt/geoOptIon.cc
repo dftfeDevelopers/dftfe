@@ -274,7 +274,7 @@ namespace dftfe {
 
     if (dftParameters::verbosity>=1)
       pcout<< "  Maximum force component to be relaxed: "<<  d_maximumAtomForceToBeRelaxed <<std::endl;
-    dftPtr->updateAtomPositionsAndMoveMesh(globalAtomsDisplacements);
+    dftPtr->updateAtomPositionsAndMoveMesh(globalAtomsDisplacements,d_maximumAtomForceToBeRelaxed);
     d_totalUpdateCalls+=1;
 
     dftPtr->solve();
