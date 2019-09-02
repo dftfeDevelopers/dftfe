@@ -96,6 +96,7 @@ namespace dftUtils
   void printCurrentMemoryUsage(const MPI_Comm & mpiComm,
 	                       const std::string message)
   {
+#ifdef USE_PETSC
      PetscLogDouble bytes;
      PetscMemoryGetCurrentUsage(&bytes);
      const double maxBytes = dealii::Utilities::MPI::max(bytes,mpiComm);
@@ -103,6 +104,7 @@ namespace dftUtils
      if (taskId==0)
          std::cout<<std::endl<<message+", Current maximum memory usage across all processors: "<<maxBytes/1.0e+6<<" MB."<<std::endl<<std::endl;
      MPI_Barrier(mpiComm);
+#endif
   }
 
   void writeDataVTUParallelLowestPoolId(const dealii::DoFHandler<3> & dofHandler,
@@ -118,7 +120,7 @@ namespace dftUtils
     const unsigned int minPoolId=dealii::Utilities::MPI::min(poolId,kPointComm);
     const unsigned int minBandGroupId=dealii::Utilities::MPI::min(bandGroupId,bandGroupComm);
 
-  
+
     unsigned int n_mpi_processes;
     if(poolId==minPoolId && bandGroupId==minBandGroupId)
       {

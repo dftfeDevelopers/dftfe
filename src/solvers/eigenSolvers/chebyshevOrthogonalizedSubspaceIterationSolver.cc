@@ -33,7 +33,7 @@ namespace dftfe{
 	else if(upperBoundUnwantedSpectrum > 500  && upperBoundUnwantedSpectrum <= 1000)
 	  chebyshevOrder = 30;
 	else if(upperBoundUnwantedSpectrum > 1000 && upperBoundUnwantedSpectrum <= 1500)
-          chebyshevOrder = 34;		
+          chebyshevOrder = 34;
         else if(upperBoundUnwantedSpectrum > 1500 && upperBoundUnwantedSpectrum <= 2000)
 	  chebyshevOrder = 38;
 	else if(upperBoundUnwantedSpectrum > 2000 && upperBoundUnwantedSpectrum <= 3000)
@@ -639,12 +639,14 @@ namespace dftfe{
 
     if(dftParameters::verbosity >= 4)
       {
+#ifdef USE_PETSC
 	PetscLogDouble bytes;
 	PetscMemoryGetCurrentUsage(&bytes);
 	FILE *dummy;
 	unsigned int this_mpi_process = dealii::Utilities::MPI::this_mpi_process(operatorMatrix.getMPICommunicator());
 	PetscSynchronizedPrintf(operatorMatrix.getMPICommunicator(),"[%d] Memory Usage before starting eigen solution  %e\n",this_mpi_process,bytes);
 	PetscSynchronizedFlush(operatorMatrix.getMPICommunicator(),dummy);
+#endif
       }
 
     operatorMatrix.reinit(totalNumberWaveFunctions);

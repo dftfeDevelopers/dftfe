@@ -75,16 +75,12 @@ ENDIF()
 # which can cross the 32 bit integer limits even for a moderate
 # problem size.
 IF(NOT DEAL_II_WITH_LAPACK OR
-   NOT DEAL_II_WITH_PETSC OR
-   NOT DEAL_II_WITH_SLEPC OR
    NOT DEAL_II_WITH_P4EST OR
    NOT DEAL_II_WITH_64BIT_INDICES OR
    NOT DEAL_II_WITH_MPI)
   MESSAGE(FATAL_ERROR "
 Error! The deal.II library found at ${DEAL_II_PATH} was not configured with
     DEAL_II_WITH_LAPACK = ON
-    DEAL_II_WITH_PETSC = ON
-    DEAL_II_WITH_SLEPC = ON
     DEAL_II_WITH_P4EST = ON
     DEAL_II_WITH_64BIT_INDICES = ON
     DEAL_II_WITH_MPI = ON
@@ -133,12 +129,21 @@ SET(DEAL_II_CXX_FLAGS  "${DEAL_II_CXX_FLAGS} ${WARNINGSLIST}" )
 #
 #Set use complex/use real flag
 #
-IF (DEAL_II_PETSC_WITH_COMPLEX)
+IF (WITH_COMPLEX)
    ADD_DEFINITIONS(-DUSE_COMPLEX)
    MESSAGE(STATUS "Using complex")
 ELSE()
    ADD_DEFINITIONS(-DUSE_REAL)
    MESSAGE(STATUS "Using real")
+ENDIF()
+
+
+#
+#Set use petsc and slepc flag
+#
+IF (DEAL_II_WITH_PETSC AND DEAL_II_WITH_SLEPC)
+   ADD_DEFINITIONS(-DUSE_PETSC)
+   MESSAGE(STATUS "Using petsc and slepc")
 ENDIF()
 
 #
@@ -318,7 +323,7 @@ INCLUDE(CTest)
 # default 600sec is not enough for some tests, increase:
 SET (TEST_TIME_LIMIT 3600)
 #
-IF (DEAL_II_PETSC_WITH_COMPLEX)
+IF (WITH_COMPLEX)
    ADD_SUBDIRECTORY(tests/dft/pseudopotential/complex)
    ADD_SUBDIRECTORY(tests/dft/allElectron/complex)
 ELSE()

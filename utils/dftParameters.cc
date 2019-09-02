@@ -877,7 +877,10 @@ namespace dftParameters
     dftParameters::useBatchGEMM=false;
     if (dftParameters::verbosity >=1 && Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)
         std::cout <<"Setting USE BATCH GEMM=false as intel mkl blas library is not being linked to."<<std::endl;
+#endif
 
+#ifndef USE_PETSC;
+   AssertThrow(dftParameters::isPseudopotential,ExcMessage("DFT-FE Error: Please link to dealii installed with petsc and slepc for all-electron calculations."));
 #endif
   }
 
