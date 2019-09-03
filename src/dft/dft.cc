@@ -70,6 +70,7 @@ namespace dftfe {
 #include "initPseudo-OV.cc"
 #include "initRho.cc"
 #include "dos.cc"
+#include "localizationLength.cc"
 #include "publicMethods.cc"
 #include "generateImageCharges.cc"
 #include "psiInitialGuess.cc"
@@ -814,6 +815,10 @@ namespace dftfe {
     if(dftParameters::writeLdosFile)
       compute_ldos(eigenValues,
 		   "ldosData.out");
+
+    if(dftParameters::writeLocalizationLengths)
+      compute_localizationLength("localizationLengths.out");
+    
 
     if (dftParameters::verbosity>=1)
 	pcout << std::endl<< "------------------DFT-FE ground-state solve completed---------------------------"<<std::endl;

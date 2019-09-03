@@ -360,7 +360,7 @@ namespace dftfe{
 				      const unsigned int numberVectors,
 				      const MPI_Comm & mpiComm)
     {
-
+#ifdef USE_PETSC
       const unsigned int localVectorSize = X.size()/numberVectors;
 
       //
@@ -461,7 +461,9 @@ namespace dftfe{
 	}
 
       BVDestroy(&columnSpaceOfVectors);
-
+#else
+      AssertThrow(false,dealii::ExcMessage("DFT-FE Error: Please link to dealii installed with petsc and slepc to Gram-Schidt orthogonalization."));
+#endif
     }
 
 

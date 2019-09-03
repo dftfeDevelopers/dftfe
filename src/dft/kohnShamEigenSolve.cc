@@ -146,7 +146,7 @@ dataTypes::number dftClass<FEOrder>::computeTraceXtHX(unsigned int numberWaveFun
   //compute projected Hamiltonian
   //
   std::vector<dataTypes::number> ProjHam;
-  
+
   kohnShamDFTEigenOperator.XtHX(d_eigenVectorsFlattenedSTL[0],
 				d_numEigenValues,
 				ProjHam);
@@ -174,7 +174,7 @@ dataTypes::number dftClass<FEOrder>::computeTraceXtHX(unsigned int numberWaveFun
 template<unsigned int FEOrder>
 double dftClass<FEOrder>::computeTraceXtKX(unsigned int numberWaveFunctionsEstimate)
 {
-  
+
   //
   //create kohnShamDFTOperatorClass object
   //
@@ -186,7 +186,7 @@ double dftClass<FEOrder>::computeTraceXtKX(unsigned int numberWaveFunctionsEstim
   //
   kohnShamDFTEigenOperator.preComputeShapeFunctionGradientIntegrals();
 
-  
+
   //
   //compute Hamiltonian matrix
   //
@@ -213,7 +213,7 @@ double dftClass<FEOrder>::computeTraceXtKX(unsigned int numberWaveFunctionsEstim
   //compute projected Hamiltonian
   //
   std::vector<dataTypes::number> ProjHam;
-  
+
   kohnShamDFTEigenOperator.XtHX(d_eigenVectorsFlattenedSTL[0],
 				d_numEigenValues,
 				ProjHam);
@@ -355,7 +355,7 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
                                                             dftParameters::lowerEndWantedSpectrum
                                                             :eigenValuesTemp[0];*/
 
- 
+
   bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=eigenValuesTemp.back();
 
   if(!isSpectrumSplit)
@@ -373,10 +373,10 @@ void dftClass<FEOrder>::kohnShamEigenSpaceComputeNSCF(const unsigned int spinTyp
 						  kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
 						  chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver,
 						  std::vector<double>                            & residualNormWaveFunctions,
-						  unsigned int ipass) 
+						  unsigned int ipass)
 {
-  computing_timer.enter_section("Chebyshev solve"); 
-  
+  computing_timer.enter_section("Chebyshev solve");
+
    if (dftParameters::verbosity==2)
     {
       pcout << "kPoint: "<< kPointIndex<<std::endl;
@@ -393,7 +393,7 @@ void dftClass<FEOrder>::kohnShamEigenSpaceComputeNSCF(const unsigned int spinTyp
 				       localProc_dof_indicesReal,
 				       d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
 
- 
+
   std::vector<double> eigenValuesTemp(d_numEigenValues,0.0);
 
   subspaceIterationSolver.reinitSpectrumBounds(a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
@@ -409,19 +409,21 @@ void dftClass<FEOrder>::kohnShamEigenSpaceComputeNSCF(const unsigned int spinTyp
 				residualNormWaveFunctions,
 				interBandGroupComm,
 				false);
- 
+
   if(dftParameters::verbosity >= 4)
     {
+#ifdef USE_PETSC
       PetscLogDouble bytes;
       PetscMemoryGetCurrentUsage(&bytes);
       FILE *dummy;
       unsigned int this_mpi_process = dealii::Utilities::MPI::this_mpi_process(mpi_communicator);
       PetscSynchronizedPrintf(mpi_communicator,"[%d] Memory after recreating STL vector and exiting from subspaceIteration solver  %e\n",this_mpi_process,bytes);
       PetscSynchronizedFlush(mpi_communicator,dummy);
+#endif
     }
-  
 
-  
+
+
   //
   //copy the eigenValues and corresponding residual norms back to data members
   //
@@ -433,17 +435,17 @@ void dftClass<FEOrder>::kohnShamEigenSpaceComputeNSCF(const unsigned int spinTyp
       eigenValues[kPointIndex][spinType*d_numEigenValues + i] =  eigenValuesTemp[i];
     }
 
-  //if (dftParameters::verbosity==2)  
+  //if (dftParameters::verbosity==2)
   //   pcout <<std::endl;
 
 
   //set a0 and bLow
-  a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=eigenValuesTemp[0]; 
-  bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=eigenValuesTemp.back(); 
+  a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=eigenValuesTemp[0];
+  bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType]=eigenValuesTemp.back();
   //
 
- 
-  computing_timer.exit_section("Chebyshev solve"); 
+
+  computing_timer.exit_section("Chebyshev solve");
 }
 
 

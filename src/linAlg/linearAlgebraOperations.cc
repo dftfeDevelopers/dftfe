@@ -347,7 +347,7 @@ namespace linearAlgebraOperations
 				    std::vector<vectorType> & X,
 				    unsigned int startingIndex)
   {
-
+#ifdef USE_PETSC
 
 #ifdef USE_COMPLEX
       unsigned int localSize = X[0].local_size()/2;
@@ -445,6 +445,9 @@ namespace linearAlgebraOperations
 #endif
       //
       VecDestroyVecs(numVectors, &petscColumnSpace);
+#else
+      AssertThrow(false,dealii::ExcMessage("DFT-FE Error: Please link to dealii installed with petsc and slepc to Gram-Schidt orthogonalization."));
+#endif
     }//end of Gram-Schmidt
 
 

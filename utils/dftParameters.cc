@@ -35,7 +35,7 @@ namespace dftParameters
   double chebyshevTolerance = 1e-02;
   std::string mixingMethod = "";
 
-  bool isPseudopotential=false,periodicX=false,periodicY=false,periodicZ=false, useSymm=false, timeReversal=false,pseudoTestsFlag=false, constraintMagnetization=false, writeDosFile=false, writeLdosFile=false;
+  bool isPseudopotential=false,periodicX=false,periodicY=false,periodicZ=false, useSymm=false, timeReversal=false,pseudoTestsFlag=false, constraintMagnetization=false, writeDosFile=false, writeLdosFile=false, writeLocalizationLengths=false;
   std::string meshFileName="",coordinatesFile="",domainBoundingVectorsFile="",kPointDataFile="", ionRelaxFlagsFile="",orthogType="", algoType="", pseudoPotentialFile="";
 
   double outerAtomBallRadius=2.0, innerAtomBallRadius=0.0, meshSizeOuterDomain=10.0;
@@ -130,6 +130,11 @@ namespace dftParameters
       prm.declare_entry("WRITE LOCAL DENSITY OF STATES", "false",
 			Patterns::Bool(),
 			"[Standard] Computes local density of states on each atom using Lorentzians. Uses specified Temperature for SCF as the broadening parameter. Outputs a file name 'ldosData.out' containing NUMATOM+1 columns with first column indicating the energy in eV and all other NUMATOM columns indicating local density of states for each of the NUMATOM atoms.");
+
+      prm.declare_entry("WRITE LOCALIZATION LENGTHS", "false",
+			Patterns::Bool(),
+			"[Standard] Computes localization lengths of all wavefunctions which is defined as the deviation around the mean position of a given wavefunction. Outputs a file name 'localizationLengths.out' containing 2 columns with first column indicating the wavefunction index and second column indicating localization length of the corresponding wavefunction.");
+
     }
     prm.leave_subsection ();
 
@@ -425,9 +430,9 @@ namespace dftParameters
 			  Patterns::Integer(1,1000),
 			  "[Standard] Number of SCF iteration history to be considered for density mixing schemes. For metallic systems, a mixing history larger than the default value provides better scf convergence.");
 
-	prm.declare_entry("MIXING PARAMETER", "0.1",
+	prm.declare_entry("MIXING PARAMETER", "0.2",
 			  Patterns::Double(0.0,1.0),
-			  "[Standard] Mixing parameter to be used in density mixing schemes. Default: 0.1.");
+			  "[Standard] Mixing parameter to be used in density mixing schemes. Default: 0.2.");
 
 	prm.declare_entry("MIXING METHOD","ANDERSON",
 			      Patterns::Selection("BROYDEN|ANDERSON"),
@@ -594,6 +599,7 @@ namespace dftParameters
       dftParameters::writeDensitySolutionFields       = prm.get_bool("WRITE DENSITY");
       dftParameters::writeDosFile                     = prm.get_bool("WRITE DENSITY OF STATES");
       dftParameters::writeLdosFile                     = prm.get_bool("WRITE LOCAL DENSITY OF STATES");
+      dftParameters::writeLocalizationLengths          = prm.get_bool("WRITE LOCALIZATION LENGTHS");
     }
     prm.leave_subsection ();
 
@@ -631,7 +637,7 @@ namespace dftParameters
 	    dftParameters::stressRelaxTol                = prm.get_double("STRESS TOL");
 	    dftParameters::cellConstraintType            = prm.get_integer("CELL CONSTRAINT TYPE");
 	    dftParameters::reuseWfcGeoOpt                = prm.get_bool("REUSE WFC");
-	    dftParameters::reuseDensityGeoOpt                = prm.get_bool("REUSE DENSITY");
+	    dftParameters::reuseDensityGeoOpt            = prm.get_bool("REUSE DENSITY");
 	}
 	prm.leave_subsection ();
     }
@@ -895,7 +901,10 @@ namespace dftParameters
     dftParameters::useBatchGEMM=false;
     if (dftParameters::verbosity >=1 && Utilities::MPI::this_mpi_process(MPI_COMM_WORLD)== 0)
         std::cout <<"Setting USE BATCH GEMM=false as intel mkl blas library is not being linked to."<<std::endl;
+#endif
 
+#ifndef USE_PETSC;
+   AssertThrow(dftParameters::isPseudopotential,ExcMessage("DFT-FE Error: Please link to dealii installed with petsc and slepc for all-electron calculations."));
 #endif
   }
 
