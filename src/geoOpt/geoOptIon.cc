@@ -278,14 +278,14 @@ namespace dftfe {
     d_totalUpdateCalls+=1;
 
 
-    if(d_maximumAtomForceToBeRelaxed >= 1e-02)
+    /*if(d_maximumAtomForceToBeRelaxed >= 1e-02)
       dftParameters::selfConsistentSolverTolerance = 1e-03;
     else if(d_maximumAtomForceToBeRelaxed >= 1e-03)
       dftParameters::selfConsistentSolverTolerance = 1e-04;
     else if(d_maximumAtomForceToBeRelaxed >= 1e-04)
       dftParameters::selfConsistentSolverTolerance = 1e-05;
     else if(d_maximumAtomForceToBeRelaxed >= 1e-05)
-      dftParameters::selfConsistentSolverTolerance = 5e-06;
+      dftParameters::selfConsistentSolverTolerance = 5e-06;*/
 
 
     dftPtr->solve();
