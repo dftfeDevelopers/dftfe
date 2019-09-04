@@ -79,8 +79,8 @@ namespace dftfe {
 #include "density.cc"
 #include "mixingschemes.cc"
 #include "kohnShamEigenSolve.cc"
-#include "restart.cc"
 #include "moveAtoms.cc"
+#include "restart.cc"
 #include "nscf.cc"
 #include "electrostaticHRefinedEnergy.cc"
 #include "electrostaticPRefinedEnergy.cc"
@@ -104,6 +104,7 @@ namespace dftfe {
     this_mpi_process (Utilities::MPI::this_mpi_process(mpi_comm_replica)),
     numElectrons(0),
     numLevels(0),
+    d_autoMesh(1),
     d_mesh(mpi_comm_replica,_interpoolcomm,_interBandGroupComm),
     d_affineTransformMesh(mpi_comm_replica),
     d_gaussianMovePar(mpi_comm_replica),
@@ -447,7 +448,7 @@ namespace dftfe {
 
   // generate image charges and update k point cartesian coordinates based on current lattice vectors
   template<unsigned int FEOrder>
-  void dftClass<FEOrder>::initImageChargesUpdateKPoints()
+  void dftClass<FEOrder>::initImageChargesUpdateKPoints(bool flag)
   {
     TimerOutput::Scope scope (computing_timer, "image charges and k point generation");
     pcout<<"-----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------"<<std::endl;
@@ -470,6 +471,9 @@ namespace dftfe {
 	std::vector<bool> periodicBc(3,false);
 	periodicBc[0]=dftParameters::periodicX;periodicBc[1]=dftParameters::periodicY;periodicBc[2]=dftParameters::periodicZ;
         const double tol=1e-6;
+
+        if(flag)
+        {
   	for(unsigned int i = 0; i < atomLocationsFractional.size(); ++i)
 	  {
 	    for(unsigned int idim = 0; idim < 3; ++idim)
@@ -484,6 +488,7 @@ namespace dftfe {
 	       "corresponding algorithm."));
 	    }
 	  }
+        }
 
 	generateImageCharges(d_pspCutOff,
 	                     d_imageIds,
@@ -527,6 +532,10 @@ namespace dftfe {
 	    pcout<<"AtomId "<<i <<":  "<<atomLocations[i][2]<<" "<<atomLocations[i][3]<<" "<<atomLocations[i][4]<<"\n";
 	  }
 	pcout<<"-----------------------------------------------------------------------------------------"<<std::endl;
+
+	//
+	//redundant call (check later)
+	//
 	generateImageCharges(d_pspCutOff,
 	                     d_imageIds,
 		             d_imageCharges,
@@ -636,10 +645,11 @@ namespace dftfe {
   }
 
   template<unsigned int FEOrder>
-  void dftClass<FEOrder>::initNoRemesh()
+  void dftClass<FEOrder>::initNoRemesh(bool flag)
   {
     computingTimerStandard.enter_section("KSDFT problem initialization");
-    initImageChargesUpdateKPoints();
+    if(flag)
+      initImageChargesUpdateKPoints();
 
     if  (dftParameters::isIonOpt)
        updatePrevMeshDataStructures();
@@ -648,8 +658,10 @@ namespace dftfe {
     //
     initBoundaryConditions();
 
+    //
     //rho init (use previous ground state electron density)
     //
+    solveNoSCF();
     noRemeshRhoDataInit();
 
     //
@@ -823,6 +835,8 @@ namespace dftfe {
     if (dftParameters::verbosity>=1)
 	pcout << std::endl<< "------------------DFT-FE ground-state solve completed---------------------------"<<std::endl;
   }
+
+
 
   //
   //dft solve
@@ -1543,6 +1557,9 @@ namespace dftfe {
 					    lowerBoundKindex,
 					    1,
 					    true);
+
+      d_groundStateEnergy = totalEnergy;
+      
     }
 
     MPI_Barrier(interpoolcomm);

@@ -333,14 +333,37 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
        delzRhoNodalFieldRefined.update_ghost_values();
    }
 
+  
    //
    //move the refined mesh so that it forms exact subdivison of coarse moved mesh
    //
    dealii::parallel::distributed::Triangulation<3> & electrostaticsTriaDisp = d_mesh.getElectrostaticsMeshDisp();
-   moveMeshToAtoms(electrostaticsTriaDisp,
-		   d_mesh.getSerialMeshElectrostatics(),
-		   true,
-		   true);
+
+   //
+   //create guassian Move object
+   //
+   if(d_autoMesh == 1)
+     moveMeshToAtoms(electrostaticsTriaDisp,
+		     d_mesh.getSerialMeshElectrostatics(),
+		     true,
+		     true);
+   else
+     {
+
+       //
+       //move electrostatics mesh
+       //
+
+       d_gaussianMovePar.init(electrostaticsTriaDisp,
+			      d_mesh.getSerialMeshElectrostatics(),
+			      d_domainBoundingVectors);
+
+       d_gaussianMovePar.moveMeshTwoLevelElectro();
+
+     }
+
+
+   
 
    //
    //call init for the force computation subsequently
@@ -612,6 +635,8 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
 						  lowerBoundKindex,
 						  1,
 						  true);
+
+  d_groundStateEnergy = totalEnergy;
 
 
 

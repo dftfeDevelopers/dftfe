@@ -108,23 +108,23 @@ void dftClass<FEOrder>::resizeAndAllocateRhoTableStorage
     }
 
 
-   typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
-   for (; cell!=endc; ++cell)
-      if (cell->is_locally_owned())
-	{
-	    const dealii::CellId cellId=cell->id();
-	    rhoVals.back()[cellId] = std::vector<double>(numQuadPoints,0.0);
-	    if(dftParameters::xc_id == 4)
-		gradRhoVals.back()[cellId] = std::vector<double>(3*numQuadPoints,0.0);
+  typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
+  for (; cell!=endc; ++cell)
+    if (cell->is_locally_owned())
+      {
+	const dealii::CellId cellId=cell->id();
+	rhoVals.back()[cellId] = std::vector<double>(numQuadPoints,0.0);
+	if(dftParameters::xc_id == 4)
+	  gradRhoVals.back()[cellId] = std::vector<double>(3*numQuadPoints,0.0);
 
-	    if (dftParameters::spinPolarized==1)
-	    {
-		 rhoValsSpinPolarized.back()[cellId] = std::vector<double>(2*numQuadPoints,0.0);
-		 if(dftParameters::xc_id == 4)
-		    gradRhoValsSpinPolarized.back()[cellId]
-		     = std::vector<double>(6*numQuadPoints,0.0);
-	    }
-	}
+	if (dftParameters::spinPolarized==1)
+	  {
+	    rhoValsSpinPolarized.back()[cellId] = std::vector<double>(2*numQuadPoints,0.0);
+	    if(dftParameters::xc_id == 4)
+	      gradRhoValsSpinPolarized.back()[cellId]
+		= std::vector<double>(6*numQuadPoints,0.0);
+	  }
+      }
 }
 
 template<unsigned int FEOrder>
@@ -169,6 +169,9 @@ void dftClass<FEOrder>::sumRhoData(std::map<dealii::CellId, std::vector<double> 
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::noRemeshRhoDataInit()
 {
+
+ 
+
   //create temporary copies of rho Out data
   std::map<dealii::CellId, std::vector<double> > rhoOutValuesCopy=*(rhoOutValues);
 
@@ -229,6 +232,9 @@ void dftClass<FEOrder>::computeRhoFromPSI
 		                 const bool isEvaluateGradRho,
 				 const bool isConsiderSpectrumSplitting)
 {
+
+ 
+
    const unsigned int numEigenVectorsTotal=d_numEigenValues;
    const unsigned int numEigenVectorsFrac=d_numEigenValuesRR;
    const unsigned int numEigenVectorsCore=d_numEigenValues-d_numEigenValuesRR;
@@ -240,6 +246,25 @@ void dftClass<FEOrder>::computeRhoFromPSI
    FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>(),1> psiEval(matrix_free_data,eigenDofHandlerIndex , 0);
 #endif
    const unsigned int numQuadPoints=psiEval.n_q_points;
+
+   //initialization to zero
+   typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
+  for (; cell!=endc; ++cell)
+    if (cell->is_locally_owned())
+      {
+	const dealii::CellId cellId=cell->id();
+	(*_rhoValues)[cellId] = std::vector<double>(numQuadPoints,0.0);
+	if(dftParameters::xc_id == 4)
+	  (*_gradRhoValues)[cellId] = std::vector<double>(3*numQuadPoints,0.0);
+
+	if (dftParameters::spinPolarized==1)
+	  {
+	    (*_rhoValuesSpinPolarized)[cellId] = std::vector<double>(2*numQuadPoints,0.0);
+	    if(dftParameters::xc_id == 4)
+	      (*_gradRhoValuesSpinPolarized)[cellId]
+		= std::vector<double>(6*numQuadPoints,0.0);
+	  }
+      }
 
    Tensor<1,2,VectorizedArray<double> > zeroTensor1;
    zeroTensor1[0]=make_vectorized_array(0.0);

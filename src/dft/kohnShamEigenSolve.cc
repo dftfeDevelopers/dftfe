@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author  Phani Motamarri
+// @author  Phani Motamarri, Sambit Das
 //
 #include <complex>
 #include <vector>
@@ -239,6 +239,83 @@ double dftClass<FEOrder>::computeTraceXtKX(unsigned int numberWaveFunctionsEstim
 
   return trXtKX;
 
+
+}
+
+
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::solveNoSCF()
+{
+
+  //
+  //create kohnShamDFTOperatorClass object
+  //
+  kohnShamDFTOperatorClass<FEOrder> kohnShamDFTEigenOperator(this,mpi_communicator);
+  kohnShamDFTEigenOperator.init();
+
+#ifdef DEAL_II_WITH_SCALAPACK
+  kohnShamDFTEigenOperator.processGridOptionalELPASetup(d_numEigenValues,
+			                                  d_numEigenValuesRR);
+
+#endif
+
+  for(unsigned int spinType=0; spinType<(1+dftParameters::spinPolarized); ++spinType)
+  {
+      //
+      //scale the eigenVectors (initial guess of single atom wavefunctions or previous guess) to convert into Lowden Orthonormalized FE basis
+      //multiply by M^{1/2}
+      for (unsigned int kPointIndex = 0; kPointIndex < d_kPointWeights.size(); ++kPointIndex)
+	{
+	  internal::pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_sqrtMassVector,
+					       matrix_free_data.get_vector_partitioner(),
+					       d_numEigenValues,
+					       localProc_dof_indicesReal,
+					       d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
+	}
+
+
+      if (dftParameters::verbosity>=2)
+	pcout<<"Re-orthonormalizing before solving for ground-state after Gaussian Movement of Mesh "<< std::endl;
+      //
+      //orthogonalize the vectors
+      //
+      for (unsigned int kPointIndex = 0; kPointIndex < d_kPointWeights.size(); ++kPointIndex)
+	{
+	  const unsigned int flag=linearAlgebraOperations::pseudoGramSchmidtOrthogonalization
+		  (kohnShamDFTEigenOperator,
+		   d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
+		   d_numEigenValues,
+		   interBandGroupComm,
+		   mpi_communicator,
+		   false);
+	}
+
+
+      //
+      //scale the eigenVectors with M^{-1/2} to represent the wavefunctions in the usual FE basis
+      //
+      for (unsigned int kPointIndex = 0; kPointIndex < d_kPointWeights.size(); ++kPointIndex)
+	{
+	  internal::pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_invSqrtMassVector,
+					       matrix_free_data.get_vector_partitioner(),
+					       d_numEigenValues,
+					       localProc_dof_indicesReal,
+					       d_eigenVectorsFlattenedSTL[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
+	}
+  }
+
+#ifdef DFTFE_WITH_ELPA
+  if (dftParameters::useELPA)
+	 kohnShamDFTEigenOperator.elpaDeallocateHandles(d_numEigenValues,
+				             d_numEigenValuesRR);
+#endif
+
+  computeRhoFromPSI(rhoOutValues,
+		    gradRhoOutValues,
+		    rhoOutValuesSpinPolarized,
+		    gradRhoOutValuesSpinPolarized,
+		    dftParameters::xc_id == 4,
+		    false);
 
 }
 

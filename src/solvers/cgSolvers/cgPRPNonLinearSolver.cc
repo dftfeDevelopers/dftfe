@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Sambit Das
+// @author Sambit Das and Phani Motamarri
 
 #include <cgPRPNonLinearSolver.h>
 #include <nonlinearSolverProblem.h>
@@ -362,12 +362,20 @@ namespace dftfe {
     // local data
     //
     const double toleranceSqr = tolerance*tolerance;
+    std::vector<double> tempFuncValueVector;
 
+    //
+    //constants used in Wolfe conditions
+    //c1, c2 are chosen based on Page122 of the book "Numerical Optimization" by Jorge Nocedal and Stephen J. Wright
+    //Also look at https://en.wikipedia.org/wiki/Wolfe_conditions
+    //
+    const double c1 = 1e-04;
+    const double c2 = 0.1;
 
     //
     // set the initial value of alpha
     //
-    double alpha = d_lineSearchDampingParameter;
+    double alpha = -d_lineSearchDampingParameter;
 
     //
     // evaluate problem gradient
@@ -375,21 +383,26 @@ namespace dftfe {
     problem.gradient(d_gradient);
 
     //
+    // evaluate function value
+    //
+    problem.value(tempFuncValueVector);
+    double functionValue = tempFuncValueVector[0];
+
+    //
     // compute delta_d and eta_p
     //
-    std::pair<double, double> deltaDReturnValue =
-                 computeDeltaD();
-    double deltaD = deltaDReturnValue.first;
-    double etaP   = deltaDReturnValue.second;
-    double alphaP=0;
+    double etaP   = computeEta();
     if (debugLevel >= 2)
        pcout << "Initial guess for secant line search iteration, alpha: " << alpha << std::endl;
+
     //
     // update unknowns removing earlier update
     //
-    updateSolution(alpha-alphaP,
+    updateSolution(d_lineSearchDampingParameter,
 		   d_conjugateDirection,
 		   problem);
+
+
     //
     // begin iteration (using secant method)
     //
@@ -404,7 +417,7 @@ namespace dftfe {
       //
       // compute eta
       //
-      const double eta = computeEta();
+      double eta = computeEta();
 
       unsigned int isSuccess=0;
       if (std::fabs(eta) < toleranceSqr*d_numberUnknowns)
@@ -416,33 +429,73 @@ namespace dftfe {
 		MPI_COMM_WORLD);
       if (isSuccess==1)
 	return SUCCESS;
+
+      //
+      //swap eta and etaP to make the notation consistent to PRP algorithm in "Painless Conjugate Algorithm"
+      //https://www.cs.cmu.edu/~quake-papers/painless-conjugate-gradient.pdf
+      //
+      if(iter == 0)
+	{
+	  double temp = eta;
+	  eta = etaP;
+	  etaP = temp;
+	}
+
+      if(iter > 1)
+	{
+	  problem.value(tempFuncValueVector);
+	  double functionalValueAfterAlphUpdate = tempFuncValueVector[0];
+
+	  double condition1 = (functionalValueAfterAlphUpdate - functionValue) - (c1*alpha*etaP);
+	  double condition2 = std::abs(eta) - c2*std::abs(etaP);
+	  if(condition1 <= 1e-05 && condition2 <= 1e-05)
+	    {
+	      if (debugLevel >= 2)
+		pcout << "Satisfied Wolfe condition: " << std::endl;
+	      
+	      return SUCCESS;
+
+	    }
+	}
+
       //
       // update alpha
       //
-      double alphaNew=(alphaP*eta-alpha*etaP)/(eta-etaP);
-
-
+      double alphaNew=alpha*eta/(etaP-eta);
 
       //
       // output
       //
       if (debugLevel >= 2)
-	pcout << "Line search iteration: " << iter << " alphaNew: " << alphaNew << " alpha: "<<alpha<< " alphaP: "<<alphaP <<"  eta: "<< eta << " etaP: "<<etaP << std::endl;
+	pcout << "Line search iteration: " << iter << " alphaNew: " << alphaNew << " alpha: "<<alpha <<"  eta: "<< eta << " etaP: "<<etaP << std::endl;
       else if(debugLevel>= 1)
 	pcout << "Line search iteration: " << iter <<std::endl;      
+
       //
       // update unknowns
       //
-      updateSolution(alphaNew-alpha,
-		     d_conjugateDirection,
-		     problem);
+      if(iter == 0)
+	{
+	  updateSolution(alphaNew-d_lineSearchDampingParameter,
+			 d_conjugateDirection,
+			 problem);
+	}
+      else
+	{
+	  updateSolution(alphaNew,
+			 d_conjugateDirection,
+			 problem);
+	}
 
+
+      
+    
       //
       // update etaP, alphaP and alpha
       //
       etaP = eta;
-      alphaP=alpha;
       alpha=alphaNew;
+      
     }
 
     //
