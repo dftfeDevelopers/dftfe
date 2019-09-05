@@ -419,19 +419,30 @@ namespace dftfe{
 	 computing_timer.enter_section("Rayleigh-Ritz GEP");
 	 if (eigenValues.size()!=totalNumberWaveFunctions)
 	   {
-	     linearAlgebraOperations::rayleighRitzGEPSpectrumSplitDirect(operatorMatrix,
-									 eigenVectorsFlattened,
-									 eigenVectorsRotFracDensityFlattened,
-									 totalNumberWaveFunctions,
-									 totalNumberWaveFunctions-eigenValues.size(),
-									 interBandGroupComm,
-									 operatorMatrix.getMPICommunicator(),
-									 useMixedPrec,
-									 eigenValues);
+	     if(dftParameters::rrGEPFullMassMatrix)
+	         linearAlgebraOperations::rayleighRitzGEPFullMassMatrixSpectrumSplitDirect(operatorMatrix,
+		   							                   eigenVectorsFlattened,
+									                   eigenVectorsRotFracDensityFlattened,
+									                   totalNumberWaveFunctions,
+									                   totalNumberWaveFunctions-eigenValues.size(),
+									                   interBandGroupComm,
+									                   operatorMatrix.getMPICommunicator(),
+									                   useMixedPrec,
+									                   eigenValues);
+	     else
+	         linearAlgebraOperations::rayleighRitzGEPSpectrumSplitDirect(operatorMatrix,
+		   							     eigenVectorsFlattened,
+									     eigenVectorsRotFracDensityFlattened,
+									     totalNumberWaveFunctions,
+									     totalNumberWaveFunctions-eigenValues.size(),
+									     interBandGroupComm,
+									     operatorMatrix.getMPICommunicator(),
+									     useMixedPrec,
+									     eigenValues);
 	   }
 	 else
 	   {
-	    
+
 	     if(dftParameters::rrGEPFullMassMatrix)
 	       {
 		 linearAlgebraOperations::rayleighRitzGEPFullMassMatrix(operatorMatrix,
@@ -457,32 +468,75 @@ namespace dftfe{
 
         computing_timer.enter_section("eigen vectors residuals opt");
 	if (eigenValues.size()!=totalNumberWaveFunctions)
+	{
+	    if(dftParameters::rrGEPFullMassMatrix)
+	    {
+	      //
+	      //scale with M^{1/2}
+	      //
+	      const unsigned int numberVectors=eigenValues.size();
+	      const unsigned int numberDofs = eigenVectorsRotFracDensityFlattened.size()/numberVectors;
+	      const unsigned int inc = 1;
+
+	      for(unsigned int i = 0; i < numberDofs; ++i)
+		{
+		  double scalingCoeff = 1.0/operatorMatrix.getInvSqrtMassVector().local_element(i);
+#ifdef USE_COMPLEX
+		  zdscal_(&numberVectors,
+			 &scalingCoeff,
+			 &eigenVectorsRotFracDensityFlattened[i*eigenValues.size()],
+			 &inc);
+#else
+		  dscal_(&numberVectors,
+			 &scalingCoeff,
+			 &eigenVectorsRotFracDensityFlattened[i*eigenValues.size()],
+			 &inc);
+#endif
+		}
+	    }
+
+
 	    linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
 							      eigenVectorsRotFracDensityFlattened,
 							      eigenValues,
 							      operatorMatrix.getMPICommunicator(),
 							      interBandGroupComm,
 							      residualNorms);
+	}
 	else
 	  {
 	    if(dftParameters::rrGEPFullMassMatrix)
-	      {
-		linearAlgebraOperations::computeGEPResidualNorm(operatorMatrix,
-								eigenVectorsFlattened,
-								eigenValues,
-								operatorMatrix.getMPICommunicator(),
-								interBandGroupComm,
-								residualNorms);
-	      }
-	    else
-	      {
-		linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
-								  eigenVectorsFlattened,
-								  eigenValues,
-								  operatorMatrix.getMPICommunicator(),
-								  interBandGroupComm,
-								  residualNorms);
-	      }
+	    {
+	      //
+	      //scale with M^{1/2}
+	      //
+	      const unsigned int numberVectors=eigenValues.size();
+	      const unsigned int numberDofs = eigenVectorsFlattened.size()/numberVectors;
+	      const unsigned int inc = 1;
+
+	      for(unsigned int i = 0; i < numberDofs; ++i)
+		{
+		  double scalingCoeff = 1.0/operatorMatrix.getInvSqrtMassVector().local_element(i);
+#ifdef USE_COMPLEX
+		  zdscal_(&numberVectors,
+			 &scalingCoeff,
+			 &eigenVectorsFlattened[i*eigenValues.size()],
+			 &inc);
+#else
+		  dscal_(&numberVectors,
+			 &scalingCoeff,
+			 &eigenVectorsFlattened[i*eigenValues.size()],
+			 &inc);
+#endif
+		}
+	    }
+
+	    linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
+	 						      eigenVectorsFlattened,
+							      eigenValues,
+							      operatorMatrix.getMPICommunicator(),
+							      interBandGroupComm,
+							      residualNorms);
 	  }
 	computing_timer.exit_section("eigen vectors residuals opt");
     }

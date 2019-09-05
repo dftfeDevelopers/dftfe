@@ -457,7 +457,7 @@ namespace dftParameters
 	prm.enter_subsection ("Eigen-solver parameters");
 	{
 
-	    prm.declare_entry("NUMBER OF KOHN-SHAM WAVEFUNCTIONS", "10",
+	    prm.declare_entry("NUMBER OF KOHN-SHAM WAVEFUNCTIONS", "0",
 			      Patterns::Integer(0),
 			      "[Standard] Number of Kohn-Sham wavefunctions to be computed. For spin-polarized calculations, this parameter denotes the number of Kohn-Sham wavefunctions to be computed for each spin. A recommended value for this parameter is to set it to N/2+Nb where N is the number of electrons. Use Nb to be 5-10 percent of N/2 for insulators and for metals use Nb to be 10-15 percent of N/2. If 5-15 percent of N/2 is less than 10 wavefunctions, set Nb to be atleast 10.");
 
@@ -476,7 +476,7 @@ namespace dftParameters
             prm.declare_entry("RR GEP", "true",
 			      Patterns::Bool(),"[Advanced] Solve generalized eigenvalue problem instead of standard eignevalue problem in Rayleigh-Ritz step. This approach is not extended yet to complex executable. Default value is true for real executable and false for complex executable.");
 
-	    prm.declare_entry("RR GEP FULL MASS MATRIX", "false",
+	    prm.declare_entry("RR GEP FULL MASS MATRIX", "true",
 			      Patterns::Bool(),"[Advanced] Solve generalized eigenvalue problem instead of standard eignevalue problem in Rayleigh-Ritz step with finite-element overlap matrix evaluated using full quadrature rule (Gauss quadrature rule) only during the solution of the generalized eigenvalue problem in the RR step.  Default value is true and is only active when RR GEP is true.");
 
 
@@ -777,12 +777,13 @@ namespace dftParameters
        dftParameters::useMixedPrecPGS_O=true;
        dftParameters::useMixedPrecPGS_SR=true;
        dftParameters::useMixedPrecXTHXSpectrumSplit=true;
-       //dftParameters::numCoreWfcRR=0.85*dftParameters::numberEigenValues;
-       dftParameters::useMixedPrecSubspaceRot=true;
-       dftParameters::numCoreWfcMixedPrec=0.85*dftParameters::numberEigenValues;
+       dftParameters::numCoreWfcRR=0.85*dftParameters::numberEigenValues;
+       //dftParameters::useMixedPrecSubspaceRot=true;
+       //dftParameters::numCoreWfcMixedPrec=0.85*dftParameters::numberEigenValues;
     }
 #ifdef USE_COMPLEX
     dftParameters::rrGEP=false;
+    dftParameters::rrGEPFullMassMatrix=false;
 #endif
 
 #ifdef DFTFE_WITH_ELPA
@@ -860,9 +861,6 @@ namespace dftParameters
 
     if (dftParameters::nonSelfConsistentForce)
        AssertThrow(false,ExcMessage("DFT-FE Error: Implementation of this feature is not completed yet."));
-
-    if(dftParameters::numCoreWfcRR >= 0 && dftParameters::rrGEPFullMassMatrix)
-      AssertThrow(false,ExcMessage("DFT-FE Error: Spectrum splitting approach is not available with rayleigh Ritz projection with full mass matrix using Gauss-Legendre Quadrature rule."));
 
     AssertThrow(!dftParameters::coordinatesFile.empty()
 	        ,ExcMessage("DFT-FE Error: ATOMIC COORDINATES FILE not given."));
