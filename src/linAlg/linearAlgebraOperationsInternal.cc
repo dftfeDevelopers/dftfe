@@ -1785,32 +1785,7 @@ namespace dftfe
 			   eigenVectorsBandGroup[iNode*numVectorsBandParal+iWave]
 			     = subspaceVectorsArray[iNode*N+startIndexBandParal+iWave];
 
-		    /*
-		    const char ordering = 'C';
-		    const char trans = 'T';
-#ifdef USE_COMPLEX
-		    mkl_zomatcopy_(ordering,
-				   trans,
-				   localVectorSize,
-				   numVectorsBandParal,
-				   std::complex<double>(1.0),
-				   &eigenVectorsBandGroup[0],
-				   numVectorsBandParal,
-				   &eigenVectorsBandGroupTransposed[0],
-				   localVectorSize);
-#else
 
-		    mkl_domatcopy_(ordering,
-				   trans,
-				   numVectorsBandParal,
-				   localVectorSize,
-				   1.0,
-				   &eigenVectorsBandGroup[0],
-				   numVectorsBandParal,
-				   &eigenVectorsBandGroupTransposed[0],
-				   localVectorSize);
-#endif
-		    */
 		    for(unsigned int iNode = 0; iNode < numLocalDofs; ++iNode)
 		       for(unsigned int iWave = 0; iWave < numVectorsBandParal; ++iWave)
 			   eigenVectorsBandGroupTransposed[iWave*numLocalDofs+iNode]
@@ -1846,30 +1821,7 @@ namespace dftfe
 				   &displs[0],
 				   dataTypes::mpi_type_id(&eigenVectorsTransposed[0]),
 				   interBandGroupComm);
-		    /*
-#ifdef USE_COMPLEX
-		    mkl_zomatcopy_(ordering,
-				   trans,
-				   totalNumberWaveFunctions,
-				   localVectorSize,
-				   std::complex<double>(1.0),
-				   &eigenVectorsTransposed[0],
-				   localVectorSize,
-				   &eigenVectorsFlattened[0],
-				   totalNumberWaveFunctions);
-#else
 
-		    mkl_domatcopy_(ordering,
-				   trans,
-				   totalNumberWaveFunctions,
-				   localVectorSize,
-				   1.0,
-				   &eigenVectorsTransposed[0],
-				   localVectorSize,
-				   &eigenVectorsFlattened[0],
-				   totalNumberWaveFunctions);
-#endif
-		    */
 		    for(unsigned int iNode = 0; iNode < numLocalDofs; ++iNode)
 		       for(unsigned int iWave = 0; iWave < N; ++iWave)
 			   subspaceVectorsArray[iNode*N+iWave]
@@ -2136,32 +2088,7 @@ namespace dftfe
 			   eigenVectorsBandGroup[iNode*numVectorsBandParal+iWave]
 			     = subspaceVectorsArray[iNode*N+startIndexBandParal+iWave];
 
-		    /*
-		    const char ordering = 'C';
-		    const char trans = 'T';
-#ifdef USE_COMPLEX
-		    mkl_zomatcopy_(ordering,
-				   trans,
-				   localVectorSize,
-				   numVectorsBandParal,
-				   std::complex<double>(1.0),
-				   &eigenVectorsBandGroup[0],
-				   numVectorsBandParal,
-				   &eigenVectorsBandGroupTransposed[0],
-				   localVectorSize);
-#else
 
-		    mkl_domatcopy_(ordering,
-				   trans,
-				   numVectorsBandParal,
-				   localVectorSize,
-				   1.0,
-				   &eigenVectorsBandGroup[0],
-				   numVectorsBandParal,
-				   &eigenVectorsBandGroupTransposed[0],
-				   localVectorSize);
-#endif
-		    */
 		    for(unsigned int iNode = 0; iNode < numLocalDofs; ++iNode)
 		       for(unsigned int iWave = 0; iWave < numVectorsBandParal; ++iWave)
 			   eigenVectorsBandGroupTransposed[iWave*numLocalDofs+iNode]
@@ -2197,30 +2124,7 @@ namespace dftfe
 				   &displs[0],
 				   dataTypes::mpi_type_id(&eigenVectorsTransposed[0]),
 				   interBandGroupComm);
-		    /*
-#ifdef USE_COMPLEX
-		    mkl_zomatcopy_(ordering,
-				   trans,
-				   totalNumberWaveFunctions,
-				   localVectorSize,
-				   std::complex<double>(1.0),
-				   &eigenVectorsTransposed[0],
-				   localVectorSize,
-				   &eigenVectorsFlattened[0],
-				   totalNumberWaveFunctions);
-#else
 
-		    mkl_domatcopy_(ordering,
-				   trans,
-				   totalNumberWaveFunctions,
-				   localVectorSize,
-				   1.0,
-				   &eigenVectorsTransposed[0],
-				   localVectorSize,
-				   &eigenVectorsFlattened[0],
-				   totalNumberWaveFunctions);
-#endif
-		    */
 		    for(unsigned int iNode = 0; iNode < numLocalDofs; ++iNode)
 		       for(unsigned int iWave = 0; iWave < N; ++iWave)
 			   subspaceVectorsArray[iNode*N+iWave]
