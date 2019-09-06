@@ -454,7 +454,11 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
 		atomId=imageIds[iAtom-numberGlobalAtoms];
 	      }
 	      const double rsq=(nodalCoor-atomCoor).norm_square();
-	      const double gaussianWeight=std::exp(-d_gaussianConstant*rsq);
+	      //const double gaussianWeight=std::exp(-d_gaussianConstant*rsq);
+
+              const double gaussianWeight=dftParameters::reproducible_output?
+		           std::exp(-(rsq)/std::pow(d_gaussianConstant,2))				          :std::exp(-(rsq*rsq)/std::pow(d_gaussianConstant,4));
+
 	      for (unsigned int idim=0; idim < C_DIM ; idim++)
 	      {
 	          const unsigned int globalDofIndex=cell->vertex_dof_index(i,idim);
@@ -588,7 +592,9 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
 		atomId=imageIds[iAtom-numberGlobalAtoms];
 	      }
 	      const double rsq=(nodalCoor-atomCoor).norm_square();
-	      double gaussianWeight=std::exp(-d_gaussianConstant*rsq);
+	      //double gaussianWeight=std::exp(-d_gaussianConstant*rsq);
+	      double gaussianWeight=dftParameters::reproducible_output?
+	                           std::exp(-(rsq)/std::pow(d_gaussianConstant,2))                                        :std::exp(-(rsq*rsq)/std::pow(d_gaussianConstant,4));
 	      for (unsigned int idim=0; idim < C_DIM ; idim++)
 	      {
 	          const unsigned int globalDofIndex=cell->vertex_dof_index(i,idim);
@@ -673,6 +679,7 @@ void forceClass<FEOrder>::printAtomsForces()
     //also find the atom with the maximum absolute force and print that
     double maxForce=-1.0;
     double sumAbsValForceComp=0;
+    std::vector<double> sumForce(3);
     unsigned int maxForceAtomId=0;
     for (unsigned int i=0; i< numberGlobalAtoms; i++)
     {
@@ -692,6 +699,7 @@ void forceClass<FEOrder>::printAtomsForces()
         {
 	    absForce+=d_globalAtomsGaussianForces[3*i+idim]*d_globalAtomsGaussianForces[3*i+idim];
 	    sumAbsValForceComp+=std::abs(d_globalAtomsGaussianForces[3*i+idim]);
+	    sumForce[idim]+=d_globalAtomsGaussianForces[3*i+idim];
 	}
 	Assert (absForce>=0., ExcInternalError());
 	absForce=std::sqrt(absForce);
@@ -708,5 +716,6 @@ void forceClass<FEOrder>::printAtomsForces()
     {
         pcout<<" Maximum absolute force atom id: "<< maxForceAtomId << ", Force vec: "<< -d_globalAtomsGaussianForces[3*maxForceAtomId]<<","<< -d_globalAtomsGaussianForces[3*maxForceAtomId+1]<<","<<-d_globalAtomsGaussianForces[3*maxForceAtomId+2]<<std::endl;
 	pcout<<" Sum of absolute value of all force components over all atoms: "<<sumAbsValForceComp<<std::endl;
+	pcout<<" Sum of all forces in each component: "<<sumForce[0]<<" "<< sumForce[1]<<" "<<sumForce[2]<<std::endl;
     }
 }

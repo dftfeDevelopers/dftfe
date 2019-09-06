@@ -137,7 +137,7 @@ namespace dftfe {
       /**
        * @brief Does KSDFT problem pre-processing steps but without remeshing.
        */
-      void initNoRemesh();
+      void initNoRemesh(bool flag = true);
 
       /**
        * @brief Selects between only electronic field relaxation or combined electronic and geometry relxation
@@ -145,7 +145,11 @@ namespace dftfe {
       void run();
 
       /**
-       * @brief Kohn-Sham ground solve using SCF iteration
+       * @brief compute approximation to ground-state without solving the SCF iteration
+       */
+      void solveNoSCF();
+      /**
+       * @brief Kohn-Sham ground-state solve using SCF iteration
        */
       void solve();
 
@@ -216,13 +220,15 @@ namespace dftfe {
        *  @param[in] globalAtomsDisplacements vector containing the displacements (from current position) of all atoms (global).
        *  @return void.
        */
-      void updateAtomPositionsAndMoveMesh(const std::vector<Point<3> > & globalAtomsDisplacements);
+      void updateAtomPositionsAndMoveMesh(const std::vector<Tensor<1,3,double> > & globalAtomsDisplacements,
+	                                  double maxDisplacement);
+
 
       /**
        * @brief writes the current domain bounding vectors and atom coordinates to files, which are required for
        * geometry relaxation restart
        */
-      void writeDomainAndAtomCoordinates() const;
+      void writeDomainAndAtomCoordinates();
 
 
     private:
@@ -231,7 +237,7 @@ namespace dftfe {
        * @brief generate image charges and update k point cartesian coordinates based
        * on current lattice vectors
        */
-      void initImageChargesUpdateKPoints();
+      void initImageChargesUpdateKPoints(bool flag=true);
 
       /**
        */
@@ -534,9 +540,13 @@ namespace dftfe {
       unsigned int numElectrons, numElectronsUp, numElectronsDown, numLevels;
       std::set<unsigned int> atomTypes;
       std::vector<std::vector<double> > atomLocations,atomLocationsFractional,d_reciprocalLatticeVectors, d_domainBoundingVectors;
+      std::vector<std::vector<double> > d_atomLocationsAutoMesh;
+      std::vector<std::vector<double> > d_imagePositionsAutoMesh;
 
       /// vector of lendth number of periodic image charges with corresponding master chargeIds
       std::vector<int> d_imageIds;
+      std::vector<int> d_imageIdsAutoMesh;
+
 
       /// vector of length number of periodic image charges with corresponding charge values
       std::vector<double> d_imageCharges;
@@ -578,11 +588,19 @@ namespace dftfe {
        */
       triangulationManager d_mesh;
 
+      double d_autoMeshMaxJacobianRatio;
+      double d_autoMesh;
+
+
       /// affine transformation object
       meshMovementAffineTransform d_affineTransformMesh;
 
       /// meshMovementGaussianClass object
       meshMovementGaussianClass d_gaussianMovePar;
+
+      std::vector<Tensor<1,3,double>> d_gaussianMovementAtomsNetDisplacements;
+      std::vector<Point<C_DIM> > d_controlPointLocationsCurrentMove;
+      double d_gaussianConstantAutoMove;
 
       /// volume of the domain
       double d_domainVolume;
@@ -834,7 +852,7 @@ namespace dftfe {
       void recomputeKPointCoordinates();
 
       /// fermi energy
-      double fermiEnergy, fermiEnergyUp, fermiEnergyDown;
+      double fermiEnergy, fermiEnergyUp, fermiEnergyDown, d_groundStateEnergy;
 
       //chebyshev filter variables and functions
       //int numPass ; // number of filter passes

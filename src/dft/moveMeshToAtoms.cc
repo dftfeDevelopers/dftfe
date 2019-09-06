@@ -88,6 +88,29 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
 
   d_closestTriaVertexToAtomsLocation = closestTriaVertexToAtomsLocation;
   d_dispClosestTriaVerticesToAtoms = dispClosestTriaVerticesToAtoms;
+  d_imageIdsAutoMesh = d_imageIds;
+  d_gaussianMovementAtomsNetDisplacements.resize(numberGlobalAtoms);
+  for(unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
+     d_gaussianMovementAtomsNetDisplacements[iAtom]=0.0;
+
+  d_controlPointLocationsCurrentMove.clear();
+  for (unsigned int iAtom=0;iAtom <numberGlobalAtoms+numberImageAtoms; iAtom++)
+  {
+      Point<3> atomCoor;
+      if(iAtom < numberGlobalAtoms)
+	{
+	  atomCoor[0] = atomLocations[iAtom][2];
+	  atomCoor[1] = atomLocations[iAtom][3];
+	  atomCoor[2] = atomLocations[iAtom][4];
+	}
+      else
+	{
+	  atomCoor[0] = d_imagePositions[iAtom-numberGlobalAtoms][0];
+	  atomCoor[1] = d_imagePositions[iAtom-numberGlobalAtoms][1];
+	  atomCoor[2] = d_imagePositions[iAtom-numberGlobalAtoms][2];
+	}
+      d_controlPointLocationsCurrentMove.push_back(atomCoor);
+  }
 
 
   double minDist=1e+6;
@@ -106,9 +129,14 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
 									dispClosestTriaVerticesToAtoms,
 									gaussianConstant,
 									moveSubdivided);
+
+  d_gaussianConstantAutoMove = gaussianConstant;
+
   timer_movemesh.exit_section("move mesh to atoms: move mesh");
 
   AssertThrow(!meshQualityMetrics.first,ExcMessage("Negative jacobian created after moving closest nodes to atoms. Suggestion: increase refinement near atoms"));
+
+  d_autoMeshMaxJacobianRatio = meshQualityMetrics.second;
 
   if (dftParameters::verbosity>=2)
       pcout<< "Mesh quality check after mesh movement, maximum jacobian ratio: "<< meshQualityMetrics.second<<std::endl;
