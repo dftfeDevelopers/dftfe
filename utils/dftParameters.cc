@@ -73,7 +73,6 @@ namespace dftParameters
   unsigned int natomTypes=0;
   double lowerBoundUnwantedFracUpper=0;
   unsigned int numCoreWfcRR=0;
-  unsigned int numCoreWfcMixedPrec=0;
   bool triMatPGSOpt=true;
   bool reuseWfcGeoOpt=false;
   bool reuseDensityGeoOpt=false;
@@ -465,10 +464,6 @@ namespace dftParameters
 			      Patterns::Integer(0),
 			      "[Advanced] Number of lowest Kohn-Sham eigenstates which should not be included in the Rayleigh-Ritz diagonalization.  In other words, only the eigenvalues and eigenvectors corresponding to the higher eigenstates (Number of Kohn-Sham wavefunctions minus the specified core eigenstates) are computed in the diagonalization of the projected Hamiltonian. This value is usually chosen to be the sum of the number of core eigenstates for each atom type multiplied by number of atoms of that type. This setting is recommended for large systems (greater than 5000 electrons). Default value is 0 i.e., no core eigenstates are excluded from the Rayleigh-Ritz projection step. Currently this optimization is not implemented for the complex executable and ScaLAPACK linking is also needed.");
 
-	    prm.declare_entry("CORE EIGENSTATES FOR MIXED PRECISION", "0",
-			      Patterns::Integer(0),
-			      "[Advanced] Number of lowest Kohn-Sham eigenstates to be used for mixed precision computation of projected Kohn-Sham Hamiltonian in the Chebyshev filtered space. This value is usually chosen to be the sum of the number of core eigenstates for each atom type multiplied by number of atoms of that type. This setting is recommended for large systems (greater than 5000 electrons).");
-
 	    prm.declare_entry("SPECTRUM SPLIT STARTING SCF ITER", "0",
 			      Patterns::Integer(0),
 			      "[Advanced] SCF iteration no beyond which spectrum splitting based can be used.");
@@ -725,7 +720,6 @@ namespace dftParameters
 	{
 	   dftParameters::numberEigenValues             = prm.get_integer("NUMBER OF KOHN-SHAM WAVEFUNCTIONS");
 	   dftParameters::numCoreWfcRR                  = prm.get_integer("SPECTRUM SPLIT CORE EIGENSTATES");
-	   dftParameters::numCoreWfcMixedPrec           = prm.get_integer("CORE EIGENSTATES FOR MIXED PRECISION");
 	   dftParameters::spectrumSplitStartingScfIter  = prm.get_integer("SPECTRUM SPLIT STARTING SCF ITER");
 	   dftParameters::rrGEP= prm.get_bool("RR GEP");
 	   dftParameters::rrGEPFullMassMatrix = prm.get_bool("RR GEP FULL MASS MATRIX");
@@ -778,8 +772,6 @@ namespace dftParameters
        dftParameters::useMixedPrecPGS_SR=true;
        dftParameters::useMixedPrecXTHXSpectrumSplit=true;
        dftParameters::numCoreWfcRR=0.85*dftParameters::numberEigenValues;
-       //dftParameters::useMixedPrecSubspaceRot=true;
-       //dftParameters::numCoreWfcMixedPrec=0.85*dftParameters::numberEigenValues;
     }
 #ifdef USE_COMPLEX
     dftParameters::rrGEP=false;

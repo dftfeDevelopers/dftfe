@@ -251,7 +251,8 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 						  std::vector<double>                            & residualNormWaveFunctions,
 						  const bool isSpectrumSplit,
 						  const bool useMixedPrec,
-                                                  const bool isFirstScf)
+                                                  const bool isFirstScf,
+						  const bool useFullMassMatrixGEP)
 {
   computing_timer.enter_section("Chebyshev solve");
 
@@ -287,12 +288,13 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 				residualNormWaveFunctions,
 				interBandGroupComm,
 				useMixedPrec,
-                                isFirstScf);
+                                isFirstScf,
+				useFullMassMatrixGEP);
 
   //
   //scale the eigenVectors with M^{-1/2} to represent the wavefunctions in the usual FE basis
   //
-  if (!(isSpectrumSplit && d_numEigenValuesRR!=d_numEigenValues && dftParameters::rrGEPFullMassMatrix && dftParameters::rrGEP))
+  if (!useFullMassMatrixGEP)
       internal::pointWiseScaleWithDiagonal(kohnShamDFTEigenOperator.d_invSqrtMassVector,
 					   matrix_free_data.get_vector_partitioner(),
 					   d_numEigenValues,

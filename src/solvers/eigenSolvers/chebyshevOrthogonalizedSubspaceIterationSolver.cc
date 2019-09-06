@@ -124,7 +124,8 @@ namespace dftfe{
 							std::vector<double>        & residualNorms,
 							const MPI_Comm &interBandGroupComm,
 							const bool useMixedPrec,
-                                                        const bool isFirstScf)
+                                                        const bool isFirstScf,
+							const bool useFullMassMatrixGEP)
   {
 
 
@@ -316,32 +317,7 @@ namespace dftfe{
 		   eigenVectorsBandGroup[iNode*numVectorsBandParal+iWave]
 		     = eigenVectorsFlattened[iNode*totalNumberWaveFunctions+startIndexBandParal+iWave];
 
-	    /*
-	    const char ordering = 'C';
-	    const char trans = 'T';
-#ifdef USE_COMPLEX
-	    mkl_zomatcopy_(ordering,
-			   trans,
-			   localVectorSize,
-			   numVectorsBandParal,
-			   std::complex<double>(1.0),
-			   &eigenVectorsBandGroup[0],
-			   numVectorsBandParal,
-			   &eigenVectorsBandGroupTransposed[0],
-			   localVectorSize);
-#else
 
-	    mkl_domatcopy_(ordering,
-			   trans,
-			   numVectorsBandParal,
-			   localVectorSize,
-			   1.0,
-			   &eigenVectorsBandGroup[0],
-			   numVectorsBandParal,
-			   &eigenVectorsBandGroupTransposed[0],
-			   localVectorSize);
-#endif
-	    */
 	    for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
 	       for(unsigned int iWave = 0; iWave < numVectorsBandParal; ++iWave)
 		   eigenVectorsBandGroupTransposed[iWave*localVectorSize+iNode]
@@ -377,30 +353,7 @@ namespace dftfe{
 			   dataTypes::mpi_type_id(&eigenVectorsTransposed[0]),
 			   interBandGroupComm);
 
-	    /*
-#ifdef USE_COMPLEX
-	    mkl_zomatcopy_(ordering,
-			   trans,
-			   totalNumberWaveFunctions,
-			   localVectorSize,
-			   std::complex<double>(1.0),
-			   &eigenVectorsTransposed[0],
-			   localVectorSize,
-			   &eigenVectorsFlattened[0],
-			   totalNumberWaveFunctions);
-#else
 
-	    mkl_domatcopy_(ordering,
-			   trans,
-			   totalNumberWaveFunctions,
-			   localVectorSize,
-			   1.0,
-			   &eigenVectorsTransposed[0],
-			   localVectorSize,
-			   &eigenVectorsFlattened[0],
-			   totalNumberWaveFunctions);
-#endif
-	    */
 	    for(unsigned int iNode = 0; iNode < localVectorSize; ++iNode)
 	       for(unsigned int iWave = 0; iWave < totalNumberWaveFunctions; ++iWave)
 		   eigenVectorsFlattened[iNode*totalNumberWaveFunctions+iWave]
@@ -419,18 +372,7 @@ namespace dftfe{
 	 computing_timer.enter_section("Rayleigh-Ritz GEP");
 	 if (eigenValues.size()!=totalNumberWaveFunctions)
 	   {
-	     if(dftParameters::rrGEPFullMassMatrix)
-	         linearAlgebraOperations::rayleighRitzGEPFullMassMatrixSpectrumSplitDirect(operatorMatrix,
-		   							                   eigenVectorsFlattened,
-									                   eigenVectorsRotFracDensityFlattened,
-									                   totalNumberWaveFunctions,
-									                   totalNumberWaveFunctions-eigenValues.size(),
-									                   interBandGroupComm,
-									                   operatorMatrix.getMPICommunicator(),
-									                   useMixedPrec,
-									                   eigenValues);
-	     else
-	         linearAlgebraOperations::rayleighRitzGEPSpectrumSplitDirect(operatorMatrix,
+	      linearAlgebraOperations::rayleighRitzGEPSpectrumSplitDirect(operatorMatrix,
 		   							     eigenVectorsFlattened,
 									     eigenVectorsRotFracDensityFlattened,
 									     totalNumberWaveFunctions,
@@ -443,7 +385,7 @@ namespace dftfe{
 	 else
 	   {
 
-	     if(dftParameters::rrGEPFullMassMatrix)
+	     if(useFullMassMatrixGEP)
 	       {
 		 linearAlgebraOperations::rayleighRitzGEPFullMassMatrix(operatorMatrix,
 									eigenVectorsFlattened,
@@ -469,33 +411,6 @@ namespace dftfe{
         computing_timer.enter_section("eigen vectors residuals opt");
 	if (eigenValues.size()!=totalNumberWaveFunctions)
 	{
-	    if(dftParameters::rrGEPFullMassMatrix)
-	    {
-	      //
-	      //scale with M^{1/2}
-	      //
-	      const unsigned int numberVectors=eigenValues.size();
-	      const unsigned int numberDofs = eigenVectorsRotFracDensityFlattened.size()/numberVectors;
-	      const unsigned int inc = 1;
-
-	      for(unsigned int i = 0; i < numberDofs; ++i)
-		{
-		  double scalingCoeff = 1.0/operatorMatrix.getInvSqrtMassVector().local_element(i);
-#ifdef USE_COMPLEX
-		  zdscal_(&numberVectors,
-			 &scalingCoeff,
-			 &eigenVectorsRotFracDensityFlattened[i*eigenValues.size()],
-			 &inc);
-#else
-		  dscal_(&numberVectors,
-			 &scalingCoeff,
-			 &eigenVectorsRotFracDensityFlattened[i*eigenValues.size()],
-			 &inc);
-#endif
-		}
-	    }
-
-
 	    linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
 							      eigenVectorsRotFracDensityFlattened,
 							      eigenValues,
@@ -504,40 +419,15 @@ namespace dftfe{
 							      residualNorms);
 	}
 	else
-	  {
-	    if(dftParameters::rrGEPFullMassMatrix)
-	    {
-	      //
-	      //scale with M^{1/2}
-	      //
-	      const unsigned int numberVectors=eigenValues.size();
-	      const unsigned int numberDofs = eigenVectorsFlattened.size()/numberVectors;
-	      const unsigned int inc = 1;
-
-	      for(unsigned int i = 0; i < numberDofs; ++i)
-		{
-		  double scalingCoeff = 1.0/operatorMatrix.getInvSqrtMassVector().local_element(i);
-#ifdef USE_COMPLEX
-		  zdscal_(&numberVectors,
-			 &scalingCoeff,
-			 &eigenVectorsFlattened[i*eigenValues.size()],
-			 &inc);
-#else
-		  dscal_(&numberVectors,
-			 &scalingCoeff,
-			 &eigenVectorsFlattened[i*eigenValues.size()],
-			 &inc);
-#endif
-		}
-	    }
-
-	    linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
-	 						      eigenVectorsFlattened,
-							      eigenValues,
-							      operatorMatrix.getMPICommunicator(),
-							      interBandGroupComm,
-							      residualNorms);
-	  }
+	{
+            if(!useFullMassMatrixGEP)
+		linearAlgebraOperations::computeEigenResidualNorm(operatorMatrix,
+								  eigenVectorsFlattened,
+								  eigenValues,
+								  operatorMatrix.getMPICommunicator(),
+								  interBandGroupComm,
+								  residualNorms);
+	}
 	computing_timer.exit_section("eigen vectors residuals opt");
     }
     else
