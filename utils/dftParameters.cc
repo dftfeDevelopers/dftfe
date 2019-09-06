@@ -778,6 +778,12 @@ namespace dftParameters
     dftParameters::rrGEPFullMassMatrix=false;
 #endif
 
+    if (!dftParameters::isPseudopotential)
+    {
+       dftParameters::rrGEP=false;
+       dftParameters::rrGEPFullMassMatrix=false;
+    }
+
 #ifdef DFTFE_WITH_ELPA
     if (!dftParameters::reproducible_output)
       dftParameters::useELPA=true;
