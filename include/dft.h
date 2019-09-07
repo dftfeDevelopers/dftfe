@@ -539,7 +539,7 @@ namespace dftfe {
        */
       unsigned int numElectrons, numElectronsUp, numElectronsDown, numLevels;
       std::set<unsigned int> atomTypes;
-      std::vector<std::vector<double> > atomLocations,atomLocationsFractional,d_reciprocalLatticeVectors, d_domainBoundingVectors;
+      std::vector<std::vector<double> > atomLocations,atomLocationsFractional,d_reciprocalLatticeVectors, d_domainBoundingVectors,d_atomLocationsInitial;
       std::vector<std::vector<double> > d_atomLocationsAutoMesh;
       std::vector<std::vector<double> > d_imagePositionsAutoMesh;
 
@@ -852,7 +852,7 @@ namespace dftfe {
       void recomputeKPointCoordinates();
 
       /// fermi energy
-      double fermiEnergy, fermiEnergyUp, fermiEnergyDown, d_groundStateEnergy;
+      double fermiEnergy, fermiEnergyUp, fermiEnergyDown, d_groundStateEnergy, d_groundStateEnergyInitial;
 
       //chebyshev filter variables and functions
       //int numPass ; // number of filter passes

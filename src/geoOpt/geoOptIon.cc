@@ -23,6 +23,7 @@
 #include <fileReaders.h>
 #include <dftParameters.h>
 #include <dftUtils.h>
+#include <cg_descent_wrapper.h>
 
 namespace dftfe {
 
@@ -110,6 +111,10 @@ namespace dftfe {
 				  maxLineSearchIter,
 				  lineSearchDampingParameter);
 
+    CGDescent cg_descent(tol,
+			 maxIter);
+   
+
     if (dftParameters::chkType>=1 && dftParameters::restartFromChk)
       pcout<<"Re starting Ion force relaxation using nonlinear CG solver... "<<std::endl;
     else
@@ -125,18 +130,28 @@ namespace dftfe {
 	pcout<<"   ------------------------------  "<<std::endl;
       }
 
-    if  (getNumberUnknowns()>0)
+    if(getNumberUnknowns()>0)
       {
 	nonLinearSolver::ReturnValueType cgReturn=nonLinearSolver::FAILURE;
 
-	if (dftParameters::chkType>=1 && dftParameters::restartFromChk)
+	/*if (dftParameters::chkType>=1 && dftParameters::restartFromChk)
 	  cgReturn=cgSolver.solve(*this,std::string("ionRelaxCG.chk"),true);
 	else if (dftParameters::chkType>=1 && !dftParameters::restartFromChk)
 	  cgReturn=cgSolver.solve(*this,std::string("ionRelaxCG.chk"));
 	else
-	  cgReturn=cgSolver.solve(*this);
+	cgReturn=cgSolver.solve(*this);*/
+        //if(getNumberUnknowns() < 12)
+  	// cg_descent.set_memory(0);
 
-	if (cgReturn == nonLinearSolver::SUCCESS )
+	cg_descent.set_step(0.8);
+
+	if(this_mpi_process == 0)
+	  cg_descent.set_PrintLevel(2);
+
+        cg_descent.set_AWolfe(true);
+	bool cgDescentSucess = cg_descent.run(*this);
+
+	if (cgReturn == nonLinearSolver::SUCCESS || cgDescentSucess)
 	  {
 	    pcout<< " ...Ion force relaxation completed as maximum force magnitude is less than FORCE TOL: "<< dftParameters::forceRelaxTol<<", total number of ion position updates: "<<d_totalUpdateCalls<<std::endl;
 
@@ -170,7 +185,7 @@ namespace dftfe {
 	      }
 	    pcout<<"-----------------------------------------------------------------------------------"<<std::endl;
 	  }
-	else if (cgReturn == nonLinearSolver::FAILURE)
+	else if (cgReturn == nonLinearSolver::FAILURE || !cgDescentSucess)
 	  {
 	    pcout<< " ...Ion force relaxation failed "<<std::endl;
 
@@ -201,7 +216,7 @@ namespace dftfe {
   {
     //AssertThrow(false,dftUtils::ExcNotImplementedYet());
     functionValue.clear();
-    functionValue.push_back(dftPtr->d_groundStateEnergy);
+    functionValue.push_back(dftPtr->d_groundStateEnergy-dftPtr->d_groundStateEnergyInitial);
     
   }
 
@@ -301,7 +316,19 @@ namespace dftfe {
   template<unsigned int FEOrder>
   void geoOptIon<FEOrder>::solution(std::vector<double> & solution)
   {
-    AssertThrow(false,dftUtils::ExcNotImplementedYet());
+    //AssertThrow(false,dftUtils::ExcNotImplementedYet());
+    solution.clear();
+     const unsigned int numberGlobalAtoms=dftPtr->atomLocations.size();
+     for(unsigned int i = 0; i < numberGlobalAtoms; ++i)
+       {
+	 for(unsigned int j = 0; j < 3; ++j)
+	   {
+	     if(d_relaxationFlags[3*i + j] == 1)
+	       {
+		 solution.push_back(dftPtr->atomLocations[i][j+2] - dftPtr->d_atomLocationsInitial[i][j+2]);
+	       }
+	   }
+       }
   }
 
   template<unsigned int FEOrder>
