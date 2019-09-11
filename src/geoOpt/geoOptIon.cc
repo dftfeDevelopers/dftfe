@@ -98,8 +98,8 @@ namespace dftfe {
     const double tol=dftParameters::forceRelaxTol;//(units: Hatree/Bohr)
     const unsigned int  maxIter=100;
     const double lineSearchTol=1e-4;
-    const double lineSearchDampingParameter=0.5;
-    const unsigned int maxLineSearchIter=10;
+    const double lineSearchDampingParameter=0.8;
+    const unsigned int maxLineSearchIter=50;
     const unsigned int debugLevel=Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) ==0?dftParameters::verbosity:0;
 
     d_totalUpdateCalls=0;
@@ -145,16 +145,18 @@ namespace dftfe {
 	  {
 	    cg_descent.set_step(0.8);
 	    cg_descent.set_lbfgs(true);
-	    cgSuccess = cg_descent.run(*this);
 	    if(this_mpi_process == 0)
 	      cg_descent.set_PrintLevel(2);
+            cgSuccess = cg_descent.run(*this); 
+
 	  }
 	else
 	  {
 	    cg_descent.set_step(0.8);
-	    cgSuccess = cg_descent.run(*this);
 	    if(this_mpi_process == 0)
 	      cg_descent.set_PrintLevel(2);
+            cg_descent.set_AWolfe(true);
+            cgSuccess = cg_descent.run(*this);
 	  }
 
 
