@@ -373,7 +373,7 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 	  const std::pair<bool,double> meshQualityMetrics=d_gaussianMovePar.moveMeshTwoStep(controlPointLocationsInitialMove,d_controlPointLocationsCurrentMove,controlPointDisplacementsInitialMove,controlPointDisplacementsCurrentMove,d_gaussianConstantAutoMove,forcePtr->getGaussianGeneratorParameter());
           double factor;
           if(maximumForceToBeRelaxed >= 1e-03)
-            factor = 1.35;
+            factor = 2.00;
 	  else if(maximumForceToBeRelaxed < 1e-03 && maximumForceToBeRelaxed >= 1e-04)
             factor = 1.25;
           else if(maximumForceToBeRelaxed < 1e-04)

@@ -133,25 +133,43 @@ namespace dftfe {
     if(getNumberUnknowns()>0)
       {
 	nonLinearSolver::ReturnValueType cgReturn=nonLinearSolver::FAILURE;
+	bool cgSuccess;
 
-	/*if (dftParameters::chkType>=1 && dftParameters::restartFromChk)
+	if (dftParameters::chkType>=1 && dftParameters::restartFromChk && dftParameters::ionOptSolver == "CGPRP")
 	  cgReturn=cgSolver.solve(*this,std::string("ionRelaxCG.chk"),true);
-	else if (dftParameters::chkType>=1 && !dftParameters::restartFromChk)
+	else if (dftParameters::chkType>=1 && !dftParameters::restartFromChk && dftParameters::ionOptSolver == "CGPRP")
 	  cgReturn=cgSolver.solve(*this,std::string("ionRelaxCG.chk"));
+	else if (dftParameters::ionOptSolver == "CGPRP")
+	  cgReturn=cgSolver.solve(*this);
+	else if(dftParameters::ionOptSolver == "LBFGS")
+	  {
+	    cg_descent.set_step(0.8);
+	    cg_descent.set_lbfgs(true);
+	    cgSuccess = cg_descent.run(*this);
+	    if(this_mpi_process == 0)
+	      cg_descent.set_PrintLevel(2);
+	  }
 	else
-	cgReturn=cgSolver.solve(*this);*/
-        //if(getNumberUnknowns() < 12)
-  	// cg_descent.set_memory(0);
+	  {
+	    cg_descent.set_step(0.8);
+	    cgSuccess = cg_descent.run(*this);
+	    if(this_mpi_process == 0)
+	      cg_descent.set_PrintLevel(2);
+	  }
 
-	cg_descent.set_step(0.8);
 
-	if(this_mpi_process == 0)
-	  cg_descent.set_PrintLevel(2);
 
-        cg_descent.set_AWolfe(true);
-	bool cgDescentSucess = cg_descent.run(*this);
+  	//cg_descent.set_memory(57);
+	//  cg_descent.set_lbfgs(true);
+	//cg_descent.set_step(0.8);
 
-	if (cgReturn == nonLinearSolver::SUCCESS || cgDescentSucess)
+	//if(this_mpi_process == 0)
+	//cg_descent.set_PrintLevel(2);
+
+        //cg_descent.set_AWolfe(true);
+	//bool cgDescentSucess = cg_descent.run(*this);
+
+	if (cgReturn == nonLinearSolver::SUCCESS || cgSuccess)
 	  {
 	    pcout<< " ...Ion force relaxation completed as maximum force magnitude is less than FORCE TOL: "<< dftParameters::forceRelaxTol<<", total number of ion position updates: "<<d_totalUpdateCalls<<std::endl;
 
@@ -185,7 +203,7 @@ namespace dftfe {
 	      }
 	    pcout<<"-----------------------------------------------------------------------------------"<<std::endl;
 	  }
-	else if (cgReturn == nonLinearSolver::FAILURE || !cgDescentSucess)
+	else if (cgReturn == nonLinearSolver::FAILURE || !cgSuccess)
 	  {
 	    pcout<< " ...Ion force relaxation failed "<<std::endl;
 
@@ -248,9 +266,6 @@ namespace dftfe {
       }
 
   }
-
- 
-
 
   template<unsigned int FEOrder>
   void geoOptIon<FEOrder>::precondition(std::vector<double>       & s,

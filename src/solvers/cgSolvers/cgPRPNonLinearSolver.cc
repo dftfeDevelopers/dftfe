@@ -498,6 +498,8 @@ namespace dftfe {
       
     }
 
+    d_lineSearchDampingParameter = alpha;
+
     //
     //
     //

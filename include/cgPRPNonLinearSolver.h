@@ -211,7 +211,7 @@ namespace dftfe {
 
     /// damping parameter (0,1] to be multiplied with the steepest descent direction,
     /// which controls the initial guess to the line search iteration.
-    const double              d_lineSearchDampingParameter;
+    double              d_lineSearchDampingParameter;
 
     //parallel objects
     MPI_Comm mpi_communicator;
