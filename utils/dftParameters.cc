@@ -82,6 +82,7 @@ namespace dftParameters
   bool useMixedPrecPGS_O=false;
   bool useMixedPrecXTHXSpectrumSplit=false;
   bool useMixedPrecSubspaceRotSpectrumSplit=false;
+  bool useMixedPrecSubspaceRot=false;
   unsigned int numAdaptiveFilterStates=0;
   unsigned int spectrumSplitStartingScfIter=1;
   bool useELPA=false;
@@ -89,6 +90,7 @@ namespace dftParameters
   bool createConstraintsFromSerialDofhandler=true;
   bool bandParalOpt=true;
   bool rrGEP=false;
+  bool rrGEPFullMassMatrix=false;
   bool autoUserMeshParams=false;
 
   void declare_parameters(ParameterHandler &prm)
@@ -454,7 +456,7 @@ namespace dftParameters
 	prm.enter_subsection ("Eigen-solver parameters");
 	{
 
-	    prm.declare_entry("NUMBER OF KOHN-SHAM WAVEFUNCTIONS", "10",
+	    prm.declare_entry("NUMBER OF KOHN-SHAM WAVEFUNCTIONS", "0",
 			      Patterns::Integer(0),
 			      "[Standard] Number of Kohn-Sham wavefunctions to be computed. For spin-polarized calculations, this parameter denotes the number of Kohn-Sham wavefunctions to be computed for each spin. A recommended value for this parameter is to set it to N/2+Nb where N is the number of electrons. Use Nb to be 5-10 percent of N/2 for insulators and for metals use Nb to be 10-15 percent of N/2. If 5-15 percent of N/2 is less than 10 wavefunctions, set Nb to be atleast 10.");
 
@@ -468,6 +470,9 @@ namespace dftParameters
 
             prm.declare_entry("RR GEP", "true",
 			      Patterns::Bool(),"[Advanced] Solve generalized eigenvalue problem instead of standard eignevalue problem in Rayleigh-Ritz step. This approach is not extended yet to complex executable. Default value is true for real executable and false for complex executable.");
+
+	    prm.declare_entry("RR GEP FULL MASS MATRIX", "true",
+			      Patterns::Bool(),"[Advanced] Solve generalized eigenvalue problem instead of standard eignevalue problem in Rayleigh-Ritz step with finite-element overlap matrix evaluated using full quadrature rule (Gauss quadrature rule) only during the solution of the generalized eigenvalue problem in the RR step.  Default value is true and is only active when RR GEP is true.");
 
 
 	    prm.declare_entry("LOWER BOUND WANTED SPECTRUM", "-10.0",
@@ -543,6 +548,11 @@ namespace dftParameters
 	    prm.declare_entry("USE MIXED PREC RR_SR SPECTRUM SPLIT", "false",
 			      Patterns::Bool(),
 			      "[Advanced] Use mixed precision arithmetic in Rayleigh-Ritz subspace rotation step when SPECTRUM SPLIT CORE EIGENSTATES>0. Currently this optimization is only enabled for the real executable and with ScaLAPACK linking. Default setting is false.");
+
+            prm.declare_entry("USE MIXED PREC RR_SR", "false",
+			       Patterns::Bool(),
+			      "[Advanced] Use mixed precision arithmetic in Rayleigh-Ritz subspace rotation step. Currently this optimization is only enabled for the real executable and with ScaLAPACK linking. Default setting is false.");
+
 
             prm.declare_entry("ALGO", "NORMAL",
 			       Patterns::Selection("NORMAL|FAST"),
@@ -712,6 +722,7 @@ namespace dftParameters
 	   dftParameters::numCoreWfcRR                  = prm.get_integer("SPECTRUM SPLIT CORE EIGENSTATES");
 	   dftParameters::spectrumSplitStartingScfIter  = prm.get_integer("SPECTRUM SPLIT STARTING SCF ITER");
 	   dftParameters::rrGEP= prm.get_bool("RR GEP");
+	   dftParameters::rrGEPFullMassMatrix = prm.get_bool("RR GEP FULL MASS MATRIX");
 	   dftParameters::lowerEndWantedSpectrum        = prm.get_double("LOWER BOUND WANTED SPECTRUM");
 	   dftParameters::lowerBoundUnwantedFracUpper   = prm.get_double("LOWER BOUND UNWANTED FRAC UPPER");
 	   dftParameters::chebyshevOrder                = prm.get_integer("CHEBYSHEV POLYNOMIAL DEGREE");
@@ -730,6 +741,7 @@ namespace dftParameters
 	   dftParameters::useMixedPrecPGS_O= prm.get_bool("USE MIXED PREC PGS O");
 	   dftParameters::useMixedPrecXTHXSpectrumSplit= prm.get_bool("USE MIXED PREC XTHX SPECTRUM SPLIT");
 	   dftParameters::useMixedPrecSubspaceRotSpectrumSplit= prm.get_bool("USE MIXED PREC RR_SR SPECTRUM SPLIT");
+	   dftParameters::useMixedPrecSubspaceRot= prm.get_bool("USE MIXED PREC RR_SR");
 	   dftParameters::algoType= prm.get("ALGO");
 	   dftParameters::numAdaptiveFilterStates= prm.get_integer("ADAPTIVE FILTER STATES");
 	}
@@ -759,10 +771,18 @@ namespace dftParameters
        dftParameters::useMixedPrecPGS_O=true;
        dftParameters::useMixedPrecPGS_SR=true;
        dftParameters::useMixedPrecXTHXSpectrumSplit=true;
+       dftParameters::numCoreWfcRR=0.85*dftParameters::numberEigenValues;
     }
 #ifdef USE_COMPLEX
     dftParameters::rrGEP=false;
+    dftParameters::rrGEPFullMassMatrix=false;
 #endif
+
+    if (!dftParameters::isPseudopotential)
+    {
+       dftParameters::rrGEP=false;
+       dftParameters::rrGEPFullMassMatrix=false;
+    }
 
 #ifdef DFTFE_WITH_ELPA
     if (!dftParameters::reproducible_output)

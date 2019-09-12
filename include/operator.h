@@ -136,6 +136,15 @@ namespace dftfe{
 		    dealii::parallel::distributed::Vector<dataTypes::number> & Y) = 0;
 
 
+    virtual void MX(dealii::parallel::distributed::Vector<dataTypes::number> & X,
+		    const unsigned int numberComponents,
+		    dealii::parallel::distributed::Vector<dataTypes::number> & Y) = 0;
+
+    
+    virtual void HX(dealii::parallel::distributed::Vector<dataTypes::number> & X,
+		    const unsigned int numberComponents,
+		    dealii::parallel::distributed::Vector<dataTypes::number> & Y) = 0;
+
 
     /**
      * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
@@ -161,7 +170,16 @@ namespace dftfe{
     virtual void XtHX(const std::vector<dataTypes::number> & X,
 		      const unsigned int numberComponents,
 		      const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-		      dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar) = 0;
+		      dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar,
+		      bool origHFlag=false) = 0;
+
+    
+    virtual void XtMX(const std::vector<dataTypes::number> & X,
+		      const unsigned int numberComponents,
+		      const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+		      dealii::ScaLAPACKMatrix<dataTypes::number> & projMassPar) = 0;
+
+    
 
 
     /**
@@ -181,7 +199,9 @@ namespace dftfe{
 		      const unsigned int totalNumberComponents,
 		      const unsigned int singlePrecComponents,
 		      const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-		      dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar) = 0;
+		      dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar,
+		      bool origHFlag=false) = 0;
+
 
 #endif
     /**
@@ -194,6 +214,8 @@ namespace dftfe{
 		      std::vector<dataTypes::number> & ProjHam) = 0;
 
 
+    void setInvSqrtMassVector(vectorType & X);
+    vectorType & getInvSqrtMassVector();
 
     /**
      * @brief Get local dof indices real
@@ -312,6 +334,11 @@ namespace dftfe{
     //matrix-free data
     //
     const dealii::MatrixFree<3,double> * d_matrix_free_data;
+
+    //
+    //inv sqrt mass vector
+    //
+    vectorType d_invSqrtMassVector;
 
     //
     //mpi communicator

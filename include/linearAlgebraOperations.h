@@ -226,13 +226,23 @@ namespace dftfe
      *  @param[out] eigenValues of the Projected Hamiltonian
      */
     template<typename T>
-    void rayleighRitzGEP(operatorDFTClass        & operatorMatrix,
-		      std::vector<T> & X,
-		      const unsigned int numberComponents,
-		      const MPI_Comm &interBandGroupComm,
-		      const MPI_Comm &mpiComm,
-		      std::vector<double>     & eigenValues,
-		      const bool useMixedPrec);
+      void rayleighRitzGEP(operatorDFTClass        & operatorMatrix,
+			   std::vector<T> & X,
+			   const unsigned int numberComponents,
+			   const MPI_Comm &interBandGroupComm,
+			   const MPI_Comm &mpiComm,
+			   std::vector<double>     & eigenValues,
+			   const bool useMixedPrec);
+
+
+    template<typename T>
+      void rayleighRitzGEPFullMassMatrix(operatorDFTClass        & operatorMatrix,
+					 std::vector<T> & X,
+					 const unsigned int numberComponents,
+					 const MPI_Comm &interBandGroupComm,
+					 const MPI_Comm &mpiComm,
+					 std::vector<double>     & eigenValues,
+					 const bool useMixedPrec);
 
 
     /** @brief Compute Rayleigh-Ritz projection
@@ -279,6 +289,7 @@ namespace dftfe
 		      const MPI_Comm &mpiComm,
 		      const bool useMixedPrec,
 		      std::vector<double>     & eigenValues);
+
 
     /** @brief Compute Rayleigh-Ritz projection in case of spectrum split using direct diagonalization
      *  (serial version using LAPACK, parallel version using ScaLAPACK)

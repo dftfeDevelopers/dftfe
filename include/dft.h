@@ -886,9 +886,10 @@ namespace dftfe {
 				     kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
 				     chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver,
 				     std::vector<double> & residualNormWaveFunctions,
-				     const bool isSpectrumSplit,
-				     const bool useMixedPrec,
-                                     const bool isFirstScf);
+				     const bool isSpectrumSplit=false,
+				     const bool useMixedPrec=false,
+                                     const bool isFirstScf=false,
+				     const bool useFullMassMatrixGEP=false);
 
      void kohnShamEigenSpaceComputeNSCF(const unsigned int spinType,
 				    const unsigned int kPointIndex,
