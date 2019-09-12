@@ -67,24 +67,25 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
 
   timer_movemesh.enter_section("move mesh to atoms: move mesh");
   //add control point locations and displacements corresponding to images
-  for(unsigned int iImage=0;iImage <numberImageAtoms; iImage++)
-  {
-      Point<3> imageCoor;
-      Point<3> correspondingAtomCoor;
+  if(!reuseClosestTriaVertices)
+      for(unsigned int iImage=0;iImage <numberImageAtoms; iImage++)
+      {
+	  Point<3> imageCoor;
+	  Point<3> correspondingAtomCoor;
 
-      imageCoor[0] = d_imagePositions[iImage][0];
-      imageCoor[1] = d_imagePositions[iImage][1];
-      imageCoor[2] = d_imagePositions[iImage][2];
-      const int atomId=d_imageIds[iImage];
-      correspondingAtomCoor[0] = atomLocations[atomId][2];
-      correspondingAtomCoor[1] = atomLocations[atomId][3];
-      correspondingAtomCoor[2] = atomLocations[atomId][4];
+	  imageCoor[0] = d_imagePositions[iImage][0];
+	  imageCoor[1] = d_imagePositions[iImage][1];
+	  imageCoor[2] = d_imagePositions[iImage][2];
+	  const int atomId=d_imageIds[iImage];
+	  correspondingAtomCoor[0] = atomLocations[atomId][2];
+	  correspondingAtomCoor[1] = atomLocations[atomId][3];
+	  correspondingAtomCoor[2] = atomLocations[atomId][4];
 
 
-      const dealii::Point<3> temp=closestTriaVertexToAtomsLocation[atomId]+(imageCoor-correspondingAtomCoor);
-      closestTriaVertexToAtomsLocation.push_back(temp);
-      dispClosestTriaVerticesToAtoms.push_back(dispClosestTriaVerticesToAtoms[atomId]);
-   }
+	  const dealii::Point<3> temp=closestTriaVertexToAtomsLocation[atomId]+(imageCoor-correspondingAtomCoor);
+	  closestTriaVertexToAtomsLocation.push_back(temp);
+	  dispClosestTriaVerticesToAtoms.push_back(dispClosestTriaVerticesToAtoms[atomId]);
+       }
 
   d_closestTriaVertexToAtomsLocation = closestTriaVertexToAtomsLocation;
   d_dispClosestTriaVerticesToAtoms = dispClosestTriaVerticesToAtoms;
