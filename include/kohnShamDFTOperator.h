@@ -80,6 +80,14 @@ namespace dftfe{
 	      const double scalar,
 	      dealii::parallel::distributed::Vector<dataTypes::number> & dst);
 
+      void HX(dealii::parallel::distributed::Vector<dataTypes::number> & src,
+	      const unsigned int numberComponents,
+	      dealii::parallel::distributed::Vector<dataTypes::number> & dst);
+
+      void MX(dealii::parallel::distributed::Vector<dataTypes::number> & src,
+	      const unsigned int numberComponents,
+	      dealii::parallel::distributed::Vector<dataTypes::number> & dst);
+
 
       /**
        * @brief Compute projection of the operator into orthogonal basis
@@ -108,7 +116,14 @@ namespace dftfe{
       void XtHX(const std::vector<dataTypes::number> & X,
 		const unsigned int numberComponents,
 		const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-		dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar);
+		dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar,
+		bool origHFlag=false);
+
+
+      void XtMX(const std::vector<dataTypes::number> & X,
+		const unsigned int numberComponents,
+		const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+		dealii::ScaLAPACKMatrix<dataTypes::number> & projMassPar);
 
     /**
      * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
@@ -127,7 +142,8 @@ namespace dftfe{
 		      const unsigned int N,
 		      const unsigned int Ncore,
 		      const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-		      dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar);
+		      dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar,
+		      bool origHFlag = false);
 #endif
 
       /**
@@ -258,6 +274,7 @@ namespace dftfe{
       ///compute element Hamiltonian matrix
       void computeHamiltonianMatrix(unsigned int kPointIndex);
       void computeKineticMatrix();
+      void computeMassMatrix();
 
 
 
@@ -292,6 +309,7 @@ namespace dftfe{
        * of complex data type
        */
       std::vector<std::vector<dataTypes::number> > d_cellHamiltonianMatrix;
+      std::vector<std::vector<dataTypes::number> > d_cellMassMatrix;
 
       /**
        * @brief implementation of matrix-vector product using cell-level stiffness matrices.
@@ -305,6 +323,11 @@ namespace dftfe{
       void computeLocalHamiltonianTimesX(const dealii::parallel::distributed::Vector<dataTypes::number> & src,
 					 const unsigned int numberWaveFunctions,
 					 dealii::parallel::distributed::Vector<dataTypes::number> & dst) const;
+
+
+      void computeMassMatrixTimesX(const dealii::parallel::distributed::Vector<dataTypes::number> & src,
+				   const unsigned int numberWaveFunctions,
+				   dealii::parallel::distributed::Vector<dataTypes::number> & dst) const;
 
 #ifdef WITH_MKL
 

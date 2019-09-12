@@ -839,7 +839,7 @@ namespace dftfe {
 
     if(dftParameters::writeLocalizationLengths)
       compute_localizationLength("localizationLengths.out");
-    
+
 
     if (dftParameters::verbosity>=1)
 	pcout << std::endl<< "------------------DFT-FE ground-state solve completed---------------------------"<<std::endl;
@@ -910,6 +910,9 @@ namespace dftfe {
     kohnShamDFTEigenOperator.preComputeShapeFunctionGradientIntegrals();
     computing_timer.exit_section("shapefunction data");
 
+    if(dftParameters::rrGEPFullMassMatrix)
+      kohnShamDFTEigenOperator.computeMassMatrix();
+
     if (dftParameters::verbosity>=4)
       dftUtils::printCurrentMemoryUsage(mpi_communicator,
 	                      "Precompute shapefunction grad integrals, just before starting scf solve");
@@ -926,7 +929,7 @@ namespace dftfe {
     double norm = 1.0;
     //CAUTION: Choosing a looser tolerance might lead to failed tests
     const double adaptiveChebysevFilterPassesTol = dftParameters::chebyshevTolerance;
-    bool spectrumSplitScfConverged=false;
+    bool scfConverged=false;
     pcout<<std::endl;
     if (dftParameters::verbosity==0)
       pcout<<"Starting SCF iterations...."<<std::endl;
@@ -994,8 +997,8 @@ namespace dftfe {
 	  }
         computing_timer.exit_section("density mixing");
 
-	if (!(norm > dftParameters::selfConsistentSolverTolerance) && d_numEigenValues!=d_numEigenValuesRR)
-              spectrumSplitScfConverged=true;
+	if (!(norm > dftParameters::selfConsistentSolverTolerance))
+              scfConverged=true;
 	//
 	//phiTot with rhoIn
 	//
@@ -1036,14 +1039,14 @@ namespace dftfe {
 	    std::vector<std::vector<std::vector<double> > >
 		 eigenValuesSpins(2,
 		 	          std::vector<std::vector<double> >(d_kPointWeights.size(),
-				  std::vector<double>((scfIter<dftParameters::spectrumSplitStartingScfIter || spectrumSplitScfConverged)?
+				  std::vector<double>((scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?
 				                      d_numEigenValues:d_numEigenValuesRR)));
 
 	    std::vector<std::vector<std::vector<double>>>
 		residualNormWaveFunctionsAllkPointsSpins
 		                 (2,
 			      	  std::vector<std::vector<double> >(d_kPointWeights.size(),
-				  std::vector<double>((scfIter<dftParameters::spectrumSplitStartingScfIter|| spectrumSplitScfConverged)?
+				  std::vector<double>((scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?
 							     d_numEigenValues:d_numEigenValuesRR)));
 
 	    for(unsigned int s=0; s<2; ++s)
@@ -1083,9 +1086,10 @@ namespace dftfe {
 						  kohnShamDFTEigenOperator,
 						  subspaceIterationSolver,
 						  residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
-						  (scfIter<dftParameters::spectrumSplitStartingScfIter || spectrumSplitScfConverged)?false:true,
-						  true,
-                                                  scfIter==0);
+						  (scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true,
+						  scfConverged?false:true,
+                                                  scfIter==0,
+						  (scfConverged && dftParameters::rrGEPFullMassMatrix && dftParameters::rrGEP)?true:false);
 		      }
 		  }
 	      }
@@ -1093,7 +1097,7 @@ namespace dftfe {
 	    for(unsigned int s=0; s<2; ++s)
 	      for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
 	      {
-	        if (scfIter<dftParameters::spectrumSplitStartingScfIter || spectrumSplitScfConverged)
+	        if (scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)
 		  for (unsigned int i = 0; i<d_numEigenValues; ++i)
 		    eigenValuesSpins[s][kPoint][i]=eigenValues[kPoint][d_numEigenValues*s+i];
 		else
@@ -1109,102 +1113,108 @@ namespace dftfe {
 	           compute_fermienergy(eigenValues,
 		                    numElectrons);
 
-	    //maximum of the residual norm of the state closest to and below the Fermi level among all k points,
-	    //and also the maximum between the two spins
-	    double maxRes =std::max(computeMaximumHighestOccupiedStateResidualNorm
-				    (residualNormWaveFunctionsAllkPointsSpins[0],
-				     eigenValuesSpins[0],
-				     fermiEnergy),
-				    computeMaximumHighestOccupiedStateResidualNorm
-				    (residualNormWaveFunctionsAllkPointsSpins[1],
-				     eigenValuesSpins[1],
-				     fermiEnergy));
-
-	    if (dftParameters::verbosity>=2)
-	      {
-		pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
-	      }
-
-	    //if the residual norm is greater than adaptiveChebysevFilterPassesTol (a heuristic value)
-	    // do more passes of chebysev filter till the check passes.
-	    // This improves the scf convergence performance.
 	    unsigned int count=1;
-	    const double filterPassTol=(scfIter==0
-		                       && dftParameters::restartFromChk
-				       && dftParameters::chkType==2)? 1.0e-4
-		                       :((scfIter==0 && adaptiveChebysevFilterPassesTol>2e-2)?2e-2:adaptiveChebysevFilterPassesTol);
-	    while (maxRes>filterPassTol && count<100)
-	      {
-		for(unsigned int s=0; s<2; ++s)
-		  {
-		    if(dftParameters::xc_id < 4)
-		      {
-			computing_timer.enter_section("VEff Computation");
-			kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, d_pseudoVLoc);
-			computing_timer.exit_section("VEff Computation");
-		      }
-		    else if (dftParameters::xc_id == 4)
-		      {
-			computing_timer.enter_section("VEff Computation");
-			kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, d_pseudoVLoc);
-			computing_timer.exit_section("VEff Computation");
-		      }
 
-		    for(unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-		      {
-			kohnShamDFTEigenOperator.reinitkPointIndex(kPoint);
-			if (dftParameters::verbosity>=2)
-			  pcout<< "Beginning Chebyshev filter pass "<< 1+count<< " for spin "<< s+1<<std::endl;;
+	    if (!scfConverged)
+	    {
 
-			computing_timer.enter_section("Hamiltonian Matrix Computation");
-			kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint);
-			computing_timer.exit_section("Hamiltonian Matrix Computation");
+		//maximum of the residual norm of the state closest to and below the Fermi level among all k points,
+		//and also the maximum between the two spins
+		double maxRes =std::max(computeMaximumHighestOccupiedStateResidualNorm
+					(residualNormWaveFunctionsAllkPointsSpins[0],
+					 eigenValuesSpins[0],
+					 fermiEnergy),
+					computeMaximumHighestOccupiedStateResidualNorm
+					(residualNormWaveFunctionsAllkPointsSpins[1],
+					 eigenValuesSpins[1],
+					 fermiEnergy));
 
-			if (dftParameters::verbosity>=4)
-			  dftUtils::printCurrentMemoryUsage(mpi_communicator,
-						  "Hamiltonian Matrix computed");
-
-			kohnShamEigenSpaceCompute(s,
-						  kPoint,
-						  kohnShamDFTEigenOperator,
-						  subspaceIterationSolver,
-						  residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
-						  (scfIter<dftParameters::spectrumSplitStartingScfIter||spectrumSplitScfConverged)?false:true,
-						  true,
-                                                  scfIter==0);
-
-		      }
-		  }
-		count++;
-		for(unsigned int s=0; s<2; ++s)
-		  for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-		  {
-		    if (scfIter<dftParameters::spectrumSplitStartingScfIter || spectrumSplitScfConverged)
-			for (unsigned int i = 0; i<d_numEigenValues; ++i)
-			  eigenValuesSpins[s][kPoint][i]=eigenValues[kPoint][d_numEigenValues*s+i];
-		    else
-			for (unsigned int i = 0; i<d_numEigenValuesRR; ++i)
-			  eigenValuesSpins[s][kPoint][i]=eigenValuesRRSplit[kPoint][d_numEigenValuesRR*s+i];
-		  }
-		//
-		if (dftParameters::constraintMagnetization)
-	           compute_fermienergy_constraintMagnetization(eigenValues) ;
-		else
-	            compute_fermienergy(eigenValues,
-		                    numElectrons);
-		//
-		maxRes =std::max(computeMaximumHighestOccupiedStateResidualNorm
-				 (residualNormWaveFunctionsAllkPointsSpins[0],
-				  eigenValuesSpins[0],
-				  fermiEnergy),
-				 computeMaximumHighestOccupiedStateResidualNorm
-				 (residualNormWaveFunctionsAllkPointsSpins[1],
-				  eigenValuesSpins[1],
-				  fermiEnergy));
 		if (dftParameters::verbosity>=2)
-		  pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
+		  {
+		    pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
+		  }
 
-	      }
+		//if the residual norm is greater than adaptiveChebysevFilterPassesTol (a heuristic value)
+		// do more passes of chebysev filter till the check passes.
+		// This improves the scf convergence performance.
+
+		const double filterPassTol=(scfIter==0
+					   && dftParameters::restartFromChk
+					   && dftParameters::chkType==2)? 1.0e-4
+					   :((scfIter==0 && adaptiveChebysevFilterPassesTol>2e-2)?2e-2:adaptiveChebysevFilterPassesTol);
+		while (maxRes>filterPassTol && count<100)
+		  {
+		    for(unsigned int s=0; s<2; ++s)
+		      {
+			if(dftParameters::xc_id < 4)
+			  {
+			    computing_timer.enter_section("VEff Computation");
+			    kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, d_pseudoVLoc);
+			    computing_timer.exit_section("VEff Computation");
+			  }
+			else if (dftParameters::xc_id == 4)
+			  {
+			    computing_timer.enter_section("VEff Computation");
+			    kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, d_pseudoVLoc);
+			    computing_timer.exit_section("VEff Computation");
+			  }
+
+			for(unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
+			  {
+			    kohnShamDFTEigenOperator.reinitkPointIndex(kPoint);
+			    if (dftParameters::verbosity>=2)
+			      pcout<< "Beginning Chebyshev filter pass "<< 1+count<< " for spin "<< s+1<<std::endl;;
+
+			    computing_timer.enter_section("Hamiltonian Matrix Computation");
+			    kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint);
+			    computing_timer.exit_section("Hamiltonian Matrix Computation");
+
+			    if (dftParameters::verbosity>=4)
+			      dftUtils::printCurrentMemoryUsage(mpi_communicator,
+						      "Hamiltonian Matrix computed");
+
+			    kohnShamEigenSpaceCompute(s,
+						      kPoint,
+						      kohnShamDFTEigenOperator,
+						      subspaceIterationSolver,
+						      residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
+						      (scfIter<dftParameters::spectrumSplitStartingScfIter)?false:true,
+						      true,
+						      scfIter==0);
+
+			  }
+		      }
+		    count++;
+		    for(unsigned int s=0; s<2; ++s)
+		      for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
+		      {
+			if (scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)
+			    for (unsigned int i = 0; i<d_numEigenValues; ++i)
+			      eigenValuesSpins[s][kPoint][i]=eigenValues[kPoint][d_numEigenValues*s+i];
+			else
+			    for (unsigned int i = 0; i<d_numEigenValuesRR; ++i)
+			      eigenValuesSpins[s][kPoint][i]=eigenValuesRRSplit[kPoint][d_numEigenValuesRR*s+i];
+		      }
+		    //
+		    if (dftParameters::constraintMagnetization)
+		       compute_fermienergy_constraintMagnetization(eigenValues) ;
+		    else
+			compute_fermienergy(eigenValues,
+					numElectrons);
+		    //
+		    maxRes =std::max(computeMaximumHighestOccupiedStateResidualNorm
+				     (residualNormWaveFunctionsAllkPointsSpins[0],
+				      eigenValuesSpins[0],
+				      fermiEnergy),
+				     computeMaximumHighestOccupiedStateResidualNorm
+				     (residualNormWaveFunctionsAllkPointsSpins[1],
+				      eigenValuesSpins[1],
+				      fermiEnergy));
+		    if (dftParameters::verbosity>=2)
+		      pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
+
+		  }
+	    }
 
 	    if(dftParameters::verbosity>=1)
 	      {
@@ -1219,7 +1229,7 @@ namespace dftfe {
 	    std::vector<std::vector<double>> residualNormWaveFunctionsAllkPoints;
 	    residualNormWaveFunctionsAllkPoints.resize(d_kPointWeights.size());
 	    for(unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-	      residualNormWaveFunctionsAllkPoints[kPoint].resize((scfIter<dftParameters::spectrumSplitStartingScfIter||spectrumSplitScfConverged)?d_numEigenValues:d_numEigenValuesRR);
+	      residualNormWaveFunctionsAllkPoints[kPoint].resize((scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?d_numEigenValues:d_numEigenValuesRR);
 
 	    if(dftParameters::xc_id < 4)
 	      {
@@ -1256,9 +1266,10 @@ namespace dftfe {
 					      kohnShamDFTEigenOperator,
 					      subspaceIterationSolver,
 					      residualNormWaveFunctionsAllkPoints[kPoint],
-					      (scfIter<dftParameters::spectrumSplitStartingScfIter||spectrumSplitScfConverged)?false:true,
-					      true,
-                                              scfIter==0);
+					      (scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true,
+					      scfConverged?false:true,
+                                              scfIter==0,
+					      (scfConverged && dftParameters::rrGEPFullMassMatrix && dftParameters::rrGEP)?true:false);
 
 		  }
 	      }
@@ -1272,65 +1283,69 @@ namespace dftfe {
 	      compute_fermienergy(eigenValues,
 				  numElectrons);
 
-	    //
-	    //maximum of the residual norm of the state closest to and below the Fermi level among all k points
-	    //
-	    double maxRes = computeMaximumHighestOccupiedStateResidualNorm
-	      (residualNormWaveFunctionsAllkPoints,
-	       (scfIter<dftParameters::spectrumSplitStartingScfIter||spectrumSplitScfConverged)?eigenValues:eigenValuesRRSplit,
-	       fermiEnergy);
-	    if (dftParameters::verbosity>=2)
-	      pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
-
-	    //if the residual norm is greater than adaptiveChebysevFilterPassesTol (a heuristic value)
-	    // do more passes of chebysev filter till the check passes.
-	    // This improves the scf convergence performance.
 	    unsigned int count=1;
-	    const double filterPassTol=(scfIter==0
-		                       && dftParameters::restartFromChk
-				       && dftParameters::chkType==2)? 1.0e-4
-		                       :((scfIter==0 && adaptiveChebysevFilterPassesTol>2e-2)?2e-2:adaptiveChebysevFilterPassesTol);
-	    while (maxRes>filterPassTol && count<100)
-	      {
 
-		for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
-		  {
-		    kohnShamDFTEigenOperator.reinitkPointIndex(kPoint);
-		    if (dftParameters::verbosity>=2)
-		      pcout<< "Beginning Chebyshev filter pass "<< 1+count<<std::endl;
-
-		    computing_timer.enter_section("Hamiltonian Matrix Computation");
-		    kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint);
-		    computing_timer.exit_section("Hamiltonian Matrix Computation");
-
-		    if(dftParameters::verbosity>=4)
-		      dftUtils::printCurrentMemoryUsage(mpi_communicator,
-							"Hamiltonian Matrix computed");
-		    kohnShamEigenSpaceCompute(0,
-					      kPoint,
-					      kohnShamDFTEigenOperator,
-					      subspaceIterationSolver,
-					      residualNormWaveFunctionsAllkPoints[kPoint],
-					      (scfIter<dftParameters::spectrumSplitStartingScfIter||spectrumSplitScfConverged)?false:true,
-					      true,
-                                              scfIter==0);
-		  }
-		count++;
+	    if (!scfConverged)
+	    {
 		//
-	        if (dftParameters::constraintMagnetization)
-	           compute_fermienergy_constraintMagnetization(eigenValues) ;
-		else
-	            compute_fermienergy(eigenValues,
-		                    numElectrons);
+		//maximum of the residual norm of the state closest to and below the Fermi level among all k points
 		//
-		maxRes = computeMaximumHighestOccupiedStateResidualNorm
+		double maxRes = computeMaximumHighestOccupiedStateResidualNorm
 		  (residualNormWaveFunctionsAllkPoints,
-		   (scfIter<dftParameters::spectrumSplitStartingScfIter||spectrumSplitScfConverged)?eigenValues:eigenValuesRRSplit,
+		   (scfIter<dftParameters::spectrumSplitStartingScfIter)?eigenValues:eigenValuesRRSplit,
 		   fermiEnergy);
 		if (dftParameters::verbosity>=2)
 		  pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
-	      }
 
+		//if the residual norm is greater than adaptiveChebysevFilterPassesTol (a heuristic value)
+		// do more passes of chebysev filter till the check passes.
+		// This improves the scf convergence performance.
+
+		const double filterPassTol=(scfIter==0
+					   && dftParameters::restartFromChk
+					   && dftParameters::chkType==2)? 1.0e-4
+					   :((scfIter==0 && adaptiveChebysevFilterPassesTol>2e-2)?2e-2:adaptiveChebysevFilterPassesTol);
+		while (maxRes>filterPassTol && count<100)
+		  {
+
+		    for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
+		      {
+			kohnShamDFTEigenOperator.reinitkPointIndex(kPoint);
+			if (dftParameters::verbosity>=2)
+			  pcout<< "Beginning Chebyshev filter pass "<< 1+count<<std::endl;
+
+			computing_timer.enter_section("Hamiltonian Matrix Computation");
+			kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint);
+			computing_timer.exit_section("Hamiltonian Matrix Computation");
+
+			if(dftParameters::verbosity>=4)
+			  dftUtils::printCurrentMemoryUsage(mpi_communicator,
+							    "Hamiltonian Matrix computed");
+			kohnShamEigenSpaceCompute(0,
+						  kPoint,
+						  kohnShamDFTEigenOperator,
+						  subspaceIterationSolver,
+						  residualNormWaveFunctionsAllkPoints[kPoint],
+						  (scfIter<dftParameters::spectrumSplitStartingScfIter)?false:true,
+						  true,
+						  scfIter==0);
+		      }
+		    count++;
+		    //
+		    if (dftParameters::constraintMagnetization)
+		       compute_fermienergy_constraintMagnetization(eigenValues) ;
+		    else
+			compute_fermienergy(eigenValues,
+					numElectrons);
+		    //
+		    maxRes = computeMaximumHighestOccupiedStateResidualNorm
+		      (residualNormWaveFunctionsAllkPoints,
+		       (scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?eigenValues:eigenValuesRRSplit,
+		       fermiEnergy);
+		    if (dftParameters::verbosity>=2)
+		      pcout << "Maximum residual norm of the state closest to and below Fermi level: "<< maxRes << std::endl;
+		  }
+	      }
               numberChebyshevSolvePasses=count;
 
 	      if(dftParameters::verbosity>=1)
@@ -1345,9 +1360,9 @@ namespace dftfe {
 	  symmetryPtr->computeAndSymmetrize_rhoOut();
 	}
 	else
-	  compute_rhoOut((scfIter<dftParameters::spectrumSplitStartingScfIter||spectrumSplitScfConverged)?false:true);
+	  compute_rhoOut((scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true);
 #else
-	compute_rhoOut((scfIter<dftParameters::spectrumSplitStartingScfIter||spectrumSplitScfConverged)?false:true);
+	compute_rhoOut((scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true);
 #endif
 	computing_timer.exit_section("compute rho");
 
