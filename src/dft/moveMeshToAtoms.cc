@@ -137,7 +137,8 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
 
   AssertThrow(!meshQualityMetrics.first,ExcMessage("Negative jacobian created after moving closest nodes to atoms. Suggestion: increase refinement near atoms"));
 
-  d_autoMeshMaxJacobianRatio = meshQualityMetrics.second;
+  if(!reuseClosestTriaVertices)
+    d_autoMeshMaxJacobianRatio = meshQualityMetrics.second;
 
   if (dftParameters::verbosity>=2)
       pcout<< "Mesh quality check after mesh movement, maximum jacobian ratio: "<< meshQualityMetrics.second<<std::endl;

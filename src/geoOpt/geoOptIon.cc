@@ -161,7 +161,7 @@ namespace dftfe {
 
 
 
-  	//cg_descent.set_memory(57);
+  	cg_descent.set_memory(57);
 	//  cg_descent.set_lbfgs(true);
 	//cg_descent.set_step(0.8);
 
