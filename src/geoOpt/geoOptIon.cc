@@ -113,7 +113,7 @@ namespace dftfe {
 
     CGDescent cg_descent(tol,
 			 maxIter);
-   
+
 
     if (dftParameters::chkType>=1 && dftParameters::restartFromChk)
       pcout<<"Re starting Ion force relaxation using nonlinear CG solver... "<<std::endl;
@@ -147,7 +147,9 @@ namespace dftfe {
 	    cg_descent.set_lbfgs(true);
 	    if(this_mpi_process == 0)
 	      cg_descent.set_PrintLevel(2);
-            cgSuccess = cg_descent.run(*this); 
+
+	    cg_descent.set_memory(std::min((unsigned int)20,getNumberUnknowns()));
+            cgSuccess = cg_descent.run(*this);
 
 	  }
 	else
@@ -156,20 +158,10 @@ namespace dftfe {
 	    if(this_mpi_process == 0)
 	      cg_descent.set_PrintLevel(2);
             cg_descent.set_AWolfe(true);
+
+	    cg_descent.set_memory(std::min((unsigned int)20,getNumberUnknowns()));
             cgSuccess = cg_descent.run(*this);
 	  }
-
-
-
-  	cg_descent.set_memory(57);
-	//  cg_descent.set_lbfgs(true);
-	//cg_descent.set_step(0.8);
-
-	//if(this_mpi_process == 0)
-	//cg_descent.set_PrintLevel(2);
-
-        //cg_descent.set_AWolfe(true);
-	//bool cgDescentSucess = cg_descent.run(*this);
 
 	if (cgReturn == nonLinearSolver::SUCCESS || cgSuccess)
 	  {
@@ -237,7 +229,7 @@ namespace dftfe {
     //AssertThrow(false,dftUtils::ExcNotImplementedYet());
     functionValue.clear();
     functionValue.push_back(dftPtr->d_groundStateEnergy-dftPtr->d_groundStateEnergyInitial);
-    
+
   }
 
   template<unsigned int FEOrder>
