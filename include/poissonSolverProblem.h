@@ -98,10 +98,10 @@ namespace dftfe {
 	void distributeX();
 
 	/// function needed by dealii to mimic SparseMatrix for Jacobi preconditioning
-        void subscribe (const char *identifier=0) const{};
+        void subscribe (std::atomic< bool > *const validity, const std::string &identifier="") const{};
 
 	/// function needed by dealii to mimic SparseMatrix for Jacobi preconditioning
-        void unsubscribe (const char *identifier=0) const{};
+        void unsubscribe (std::atomic< bool > *const validity, const std::string &identifier="") const{};
 
 	/// function needed by dealii to mimic SparseMatrix
         bool operator!= (double val) const {return true;};

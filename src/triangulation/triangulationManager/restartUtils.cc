@@ -205,7 +205,7 @@ namespace dftfe {
 	       const MPI_Comm & interpoolComm,
 	       const MPI_Comm &interBandGroupComm)
     {
-
+      /*
       const unsigned int poolId=dealii::Utilities::MPI::this_mpi_process(interpoolComm);
       const unsigned int bandGroupId=dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
       const unsigned int minPoolId=dealii::Utilities::MPI::min(poolId,interpoolComm);
@@ -281,6 +281,7 @@ namespace dftfe {
 
 	 saveSupportTriangulations();
       }//poolId==minPoolId check
+      */
     }
 
     //
@@ -290,6 +291,7 @@ namespace dftfe {
 	       (std::vector<std::map<dealii::CellId, std::vector<double> > > & cellQuadDataContainerOut,
 		const std::vector<unsigned int>  & cellDataSizeContainer)
     {
+      /*
       loadSupportTriangulations();
       const std::string filename="parallelUnmovedTriaSolData.chk";
       dftUtils::verifyCheckpointFileExists(filename);
@@ -368,6 +370,6 @@ namespace dftfe {
 				       {};
      d_parallelTriangulationUnmoved.notify_ready_to_unpack(offset2,
 				                           dummyFunc2);
-
+     */
     }
 }

@@ -77,13 +77,15 @@ ENDIF()
 IF(NOT DEAL_II_WITH_LAPACK OR
    NOT DEAL_II_WITH_P4EST OR
    NOT DEAL_II_WITH_64BIT_INDICES OR
-   NOT DEAL_II_WITH_MPI)
+   NOT DEAL_II_WITH_MPI OR
+   NOT DEAL_II_WITH_SCALAPACK)
   MESSAGE(FATAL_ERROR "
 Error! The deal.II library found at ${DEAL_II_PATH} was not configured with
     DEAL_II_WITH_LAPACK = ON
     DEAL_II_WITH_P4EST = ON
     DEAL_II_WITH_64BIT_INDICES = ON
     DEAL_II_WITH_MPI = ON
+    DEAL_II_WITH_SCALAPACK = ON
 which is required."
     )
 ENDIF()
@@ -266,13 +268,6 @@ ENDIF (DEFINED SPGLIB_DIR)
 #
 IF (WITH_ELPA)
    ADD_DEFINITIONS(-DDFTFE_WITH_ELPA)
-   IF(NOT DEAL_II_WITH_SCALAPACK)
-     MESSAGE(FATAL_ERROR "
-     Error! The deal.II library found at ${DEAL_II_PATH} was not configured with
-     DEAL_II_WITH_SCALAPACK = ON
-     which is required for using ELPA."
-     )
-   ENDIF()
 
    IF (DEFINED ELPA_INCLUDE_DIR)
       FIND_LIBRARY(ELPA_LIBRARY
@@ -318,17 +313,19 @@ ADD_DEFINITIONS(-DDFT_PATH="${CMAKE_CURRENT_SOURCE_DIR}")
 # Make sure numdiff is in path before configuring, otherwise due to roundoff
 # errors many tests may fail.
 # Test will run in Debug or Release mode based on the way library is compiled.
-ENABLE_TESTING()
-INCLUDE(CTest)
-# default 600sec is not enough for some tests, increase:
-SET (TEST_TIME_LIMIT 3600)
-#
-IF (WITH_COMPLEX)
-   ADD_SUBDIRECTORY(tests/dft/pseudopotential/complex)
-   ADD_SUBDIRECTORY(tests/dft/allElectron/complex)
-ELSE()
-   ADD_SUBDIRECTORY(tests/dft/pseudopotential/real)
-   ADD_SUBDIRECTORY(tests/dft/allElectron/real)
+IF (WITH_TESTING)
+  ENABLE_TESTING()
+  INCLUDE(CTest)
+  # default 600sec is not enough for some tests, increase:
+  SET (TEST_TIME_LIMIT 3600)
+  #
+  IF (WITH_COMPLEX)
+     ADD_SUBDIRECTORY(tests/dft/pseudopotential/complex)
+     ADD_SUBDIRECTORY(tests/dft/allElectron/complex)
+  ELSE()
+     ADD_SUBDIRECTORY(tests/dft/pseudopotential/real)
+     ADD_SUBDIRECTORY(tests/dft/allElectron/real)
+  ENDIF()
 ENDIF()
 
 

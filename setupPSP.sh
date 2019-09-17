@@ -8,31 +8,32 @@ set -o pipefail
 # and optimization flag
 
 #Paths for external libraries
-dealiiDir="/home/vikramg/DFT-FE-softwares/softwareCentos/dealiiDev/intel18.0.1_real_constraintsOpt"
-alglibDir="/nfs/mcfs_comp/home/rudraa/software/alglib/cpp/src"
-libxcDir="/home/vikramg/DFT-FE-softwares/softwareCentos/libxcNew/install_intel18"
-spglibDir="/home/vikramg/DFT-FE-softwares/softwareCentos/spglib"
+dealiiDir="/ccs/proj/mat202/softwaresDev/dealii/dealiiNew/installCUDA10.1.105Gcc6.4.0"
+alglibDir="/ccs/proj/mat202/softwaresNew/alglib/cpp/src"
+libxcDir="/ccs/proj/mat202/softwaresNew/libxc/installGcc6.4.0"
+spglibDir="/ccs/proj/mat202/softwaresNew/spglib/installGcc6.4.0"
 xmlIncludeDir="/usr/include/libxml2"
 xmlLibDir="/usr/lib64"
-elpaIncludeDir="/home/vikramg/DFT-FE-softwares/softwareCentos/elpa/install2/include/elpa_openmp-2018.05.001"
-elpaLibDir="/home/vikramg/DFT-FE-softwares/softwareCentos/elpa/install2/lib"
+elpaIncludeDir="/ccs/proj/mat202/softwaresNew/elpa/installGcc6.4.0CUDAVSX/include/elpa_openmp-2018.11.001"
+elpaLibDir="/ccs/proj/mat202/softwaresNew/elpa/installGcc6.4.0CUDAVSX/lib"
 
 #If you have installed dealii by linking with intel mkl library set underlying flag to "ON",
 #otherwise set it to "OFF"
-withIntelMkl=ON
+withIntelMkl=OFF
 
 #Compiler options and flags
 c_compiler=mpicc
 cxx_compiler=mpicxx
-c_flagsRelease="-O3"
-cxx_flagsRelease="-O3"
+c_flagsRelease="-O3 -fPIC -fopenmp -fpermissive"
+cxx_flagsRelease="-O3 -fPIC -fopenmp -fpermissive"
 
 #Option to link to ELPA
-withELPA=ON
+withELPA=OFF
 
 #Optmization flag: 1 for optimized mode and 0 for debug mode compilation
 optimizedMode=1
 
+testing=OFF
 ###########################################################################
 #Usually, no changes are needed below this line
 #
@@ -45,18 +46,18 @@ if [ $optimizedMode == 1 ]; then
     cd build
     cd release
     echo -e "${Blu}Building Real executable in Optimized (Release) mode...${RCol}"
-    mkdir -p real && cd real && cmake -DCMAKE_C_COMPILER=$c_compiler -DCMAKE_CXX_COMPILER=$cxx_compiler -DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" -DCMAKE_C_FLAGS_RELEASE="$c_flagsRelease" -DCMAKE_BUILD_TYPE=Release -DDEAL_II_DIR=$dealiiDir -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir -DXML_INCLUDE_DIR=$xmlIncludeDir -DWITH_INTEL_MKL=$withIntelMkl -DWITH_ELPA=$withELPA -DELPA_LIB_DIR=$elpaLibDir -DELPA_INCLUDE_DIR=$elpaIncludeDir -DWITH_COMPLEX=OFF ../../../. && make -j 4 && cd ..
+    mkdir -p real && cd real && cmake -DCMAKE_C_COMPILER=$c_compiler -DCMAKE_CXX_COMPILER=$cxx_compiler -DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" -DCMAKE_C_FLAGS_RELEASE="$c_flagsRelease" -DCMAKE_BUILD_TYPE=Release -DDEAL_II_DIR=$dealiiDir -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir -DXML_INCLUDE_DIR=$xmlIncludeDir -DWITH_INTEL_MKL=$withIntelMkl -DWITH_ELPA=$withELPA -DELPA_LIB_DIR=$elpaLibDir -DELPA_INCLUDE_DIR=$elpaIncludeDir -DWITH_COMPLEX=OFF -DWITH_TESTING=$testing ../../../. && make -j 4 && cd ..
     echo -e "${Blu}Building Complex executable in Optimized (Release) mode...${RCol}"
-    mkdir -p complex && cd complex && cmake -DCMAKE_C_COMPILER=$c_compiler -DCMAKE_CXX_COMPILER=$cxx_compiler -DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" -DCMAKE_C_FLAGS_RELEASE="$c_flagsRelease" -DCMAKE_BUILD_TYPE=Release -DDEAL_II_DIR=$dealiiDir -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir -DXML_INCLUDE_DIR=$xmlIncludeDir -DWITH_INTEL_MKL=$withIntelMkl -DWITH_COMPLEX=ON ../../../. && make -j 4 && cd ../..
+    mkdir -p complex && cd complex && cmake -DCMAKE_C_COMPILER=$c_compiler -DCMAKE_CXX_COMPILER=$cxx_compiler -DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" -DCMAKE_C_FLAGS_RELEASE="$c_flagsRelease" -DCMAKE_BUILD_TYPE=Release -DDEAL_II_DIR=$dealiiDir -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir -DXML_INCLUDE_DIR=$xmlIncludeDir -DWITH_INTEL_MKL=$withIntelMkl -DWITH_COMPLEX=ON -DWITH_TESTING=$testing ../../../. && make -j 4 && cd ../..
   else
     rm -rf build/release
     echo -e "${Blu}Creating build directory...${RCol}"
     mkdir -p build && cd build
     mkdir -p release && cd release
     echo -e "${Blu}Building Real executable in Optimized (Release) mode...${RCol}"
-    mkdir -p real && cd real && cmake -DCMAKE_C_COMPILER=$c_compiler -DCMAKE_CXX_COMPILER=$cxx_compiler -DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" -DCMAKE_C_FLAGS_RELEASE="$c_flagsRelease" -DCMAKE_BUILD_TYPE=Release -DDEAL_II_DIR=$dealiiDir -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir -DXML_INCLUDE_DIR=$xmlIncludeDir -DWITH_INTEL_MKL=$withIntelMkl -DWITH_ELPA=$withELPA -DELPA_LIB_DIR=$elpaLibDir -DELPA_INCLUDE_DIR=$elpaIncludeDir -DWITH_COMPLEX=OFF ../../../. && make -j 4 && cd ..
+    mkdir -p real && cd real && cmake -DCMAKE_C_COMPILER=$c_compiler -DCMAKE_CXX_COMPILER=$cxx_compiler -DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" -DCMAKE_C_FLAGS_RELEASE="$c_flagsRelease" -DCMAKE_BUILD_TYPE=Release -DDEAL_II_DIR=$dealiiDir -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir -DXML_INCLUDE_DIR=$xmlIncludeDir -DWITH_INTEL_MKL=$withIntelMkl -DWITH_ELPA=$withELPA -DELPA_LIB_DIR=$elpaLibDir -DELPA_INCLUDE_DIR=$elpaIncludeDir -DWITH_COMPLEX=OFF -DWITH_TESTING=$testing ../../../. && make -j 4 && cd ..
     echo -e "${Blu}Building Complex executable in Optimized (Release) mode...${RCol}"
-    mkdir -p complex && cd complex && cmake -DCMAKE_C_COMPILER=$c_compiler -DCMAKE_CXX_COMPILER=$cxx_compiler -DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" -DCMAKE_BUILD_TYPE=Release -DDEAL_II_DIR=$dealiiDir -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir -DXML_INCLUDE_DIR=$xmlIncludeDir -DWITH_INTEL_MKL=$withIntelMkl -DWITH_COMPLEX=ON ../../../. && make -j 4 && cd ../..
+    mkdir -p complex && cd complex && cmake -DCMAKE_C_COMPILER=$c_compiler -DCMAKE_CXX_COMPILER=$cxx_compiler -DCMAKE_CXX_FLAGS_RELEASE="$cxx_flagsRelease" -DCMAKE_BUILD_TYPE=Release -DDEAL_II_DIR=$dealiiDir -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir -DXML_INCLUDE_DIR=$xmlIncludeDir -DWITH_INTEL_MKL=$withIntelMkl -DWITH_COMPLEX=ON -DWITH_TESTING=$testing ../../../. && make -j 4 && cd ../..
   fi
 else
   if [ -d "build/debug" ]; then
@@ -65,18 +66,18 @@ else
     cd build
     cd debug
     echo -e "${Blu}Building Real executable in Debug mode...${RCol}"
-    mkdir -p real && cd real && cmake -DCMAKE_C_COMPILER=$c_compiler -DCMAKE_CXX_COMPILER=$cxx_compiler -DCMAKE_BUILD_TYPE=Debug -DDEAL_II_DIR=$dealiiDir -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir -DXML_INCLUDE_DIR=$xmlIncludeDir -DWITH_INTEL_MKL=$withIntelMkl -DWITH_ELPA=$withELPA -DELPA_LIB_DIR=$elpaLibDir -DELPA_INCLUDE_DIR=$elpaIncludeDir -DWITH_COMPLEX=OFF ../../../. && make -j 4 && cd ..
+    mkdir -p real && cd real && cmake -DCMAKE_C_COMPILER=$c_compiler -DCMAKE_CXX_COMPILER=$cxx_compiler -DCMAKE_BUILD_TYPE=Debug -DDEAL_II_DIR=$dealiiDir -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir -DXML_INCLUDE_DIR=$xmlIncludeDir -DWITH_INTEL_MKL=$withIntelMkl -DWITH_ELPA=$withELPA -DELPA_LIB_DIR=$elpaLibDir -DELPA_INCLUDE_DIR=$elpaIncludeDir -DWITH_COMPLEX=OFF -DWITH_TESTING=$testing ../../../. && make -j 4 && cd ..
     echo -e "${Blu}Building Complex executable in Debug mode...${RCol}"
-    mkdir -p complex && cd complex && cmake -DCMAKE_C_COMPILER=$c_compiler -DCMAKE_CXX_COMPILER=$cxx_compiler -DCMAKE_BUILD_TYPE=Debug -DDEAL_II_DIR=$dealiiDir -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir -DXML_INCLUDE_DIR=$xmlIncludeDir -DWITH_INTEL_MKL=$withIntelMkl -DWITH_COMPLEX=ON ../../../. && make -j 4 && cd ../..
+    mkdir -p complex && cd complex && cmake -DCMAKE_C_COMPILER=$c_compiler -DCMAKE_CXX_COMPILER=$cxx_compiler -DCMAKE_BUILD_TYPE=Debug -DDEAL_II_DIR=$dealiiDir -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir -DXML_INCLUDE_DIR=$xmlIncludeDir -DWITH_INTEL_MKL=$withIntelMkl -DWITH_COMPLEX=ON -DWITH_TESTING=$testing ../../../. && make -j 4 && cd ../..
   else
     rm -rf build/debug
     echo -e "${Blu}Creating build directory...${RCol}"
     mkdir -p build && cd build
     mkdir -p debug && cd debug
     echo -e "${Blu}Building Real executable in Debug mode...${RCol}"
-    mkdir -p real && cd real && cmake -DCMAKE_C_COMPILER=$c_compiler -DCMAKE_CXX_COMPILER=$cxx_compiler -DCMAKE_BUILD_TYPE=Debug -DDEAL_II_DIR=$dealiiDir -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir -DXML_INCLUDE_DIR=$xmlIncludeDir -DWITH_INTEL_MKL=$withIntelMkl -DWITH_ELPA=$withELPA -DELPA_LIB_DIR=$elpaLibDir -DELPA_INCLUDE_DIR=$elpaIncludeDir -DWITH_COMPLEX=OFF ../../../. && make -j 4 && cd ..
+    mkdir -p real && cd real && cmake -DCMAKE_C_COMPILER=$c_compiler -DCMAKE_CXX_COMPILER=$cxx_compiler -DCMAKE_BUILD_TYPE=Debug -DDEAL_II_DIR=$dealiiDir -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir -DXML_INCLUDE_DIR=$xmlIncludeDir -DWITH_INTEL_MKL=$withIntelMkl -DWITH_ELPA=$withELPA -DELPA_LIB_DIR=$elpaLibDir -DELPA_INCLUDE_DIR=$elpaIncludeDir -DWITH_COMPLEX=OFF -DWITH_TESTING=$testing ../../../. && make -j 4 && cd ..
     echo -e "${Blu}Building Complex executable in Debug mode...${RCol}"
-    mkdir -p complex && cd complex && cmake -DCMAKE_C_COMPILER=$c_compiler -DCMAKE_CXX_COMPILER=$cxx_compiler -DCMAKE_BUILD_TYPE=Debug -DDEAL_II_DIR=$dealiiDir -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir -DXML_INCLUDE_DIR=$xmlIncludeDir -DWITH_INTEL_MKL=$withIntelMkl -DWITH_COMPLEX=ON ../../../. && make -j 4 && cd ../..
+    mkdir -p complex && cd complex && cmake -DCMAKE_C_COMPILER=$c_compiler -DCMAKE_CXX_COMPILER=$cxx_compiler -DCMAKE_BUILD_TYPE=Debug -DDEAL_II_DIR=$dealiiDir -DALGLIB_DIR=$alglibDir -DLIBXC_DIR=$libxcDir -DSPGLIB_DIR=$spglibDir -DXML_LIB_DIR=$xmlLibDir -DXML_INCLUDE_DIR=$xmlIncludeDir -DWITH_INTEL_MKL=$withIntelMkl -DWITH_COMPLEX=ON -DWITH_TESTING=$testing ../../../. && make -j 4 && cd ../..
   fi
 fi
 echo -e "${Blu}Build complete.${RCol}"
