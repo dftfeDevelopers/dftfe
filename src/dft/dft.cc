@@ -713,7 +713,7 @@ namespace dftfe {
 	     vectorType tempVec;
 	     matrix_free_data.initialize_dof_vector(tempVec);
 
-	     std::vector<dealii::parallel::distributed::Vector<double> > eigenVectorsArray(numberWaveFunctionsErrorEstimate);
+	     std::vector<dealii::LinearAlgebra::distributed::Vector<double> > eigenVectorsArray(numberWaveFunctionsErrorEstimate);
 
 	     for(unsigned int i = 0; i < numberWaveFunctionsErrorEstimate; ++i)
 	       eigenVectorsArray[i].reinit(tempVec);
@@ -1922,7 +1922,7 @@ namespace dftfe {
     //
     //compute nodal electron-density from quad data
     //
-    dealii::parallel::distributed::Vector<double>  rhoNodalField;
+    dealii::LinearAlgebra::distributed::Vector<double>  rhoNodalField;
     matrix_free_data.initialize_dof_vector(rhoNodalField,densityDofHandlerIndex);
     rhoNodalField=0;
     std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
@@ -1930,7 +1930,7 @@ namespace dftfe {
                           [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
                               const unsigned int q)
                               {return (*rhoOutValues).find(cell->id())->second[q];};
-    dealii::VectorTools::project<3,dealii::parallel::distributed::Vector<double>> (dealii::MappingQ1<3,3>(),
+    dealii::VectorTools::project<3,dealii::LinearAlgebra::distributed::Vector<double>> (dealii::MappingQ1<3,3>(),
 										   dofHandler,
 										   constraintsNone,
 										   QGauss<3>(C_num1DQuad<FEOrder>()),
@@ -1938,8 +1938,8 @@ namespace dftfe {
 										   rhoNodalField);
     rhoNodalField.update_ghost_values();
 
-    dealii::parallel::distributed::Vector<double>  rhoNodalFieldSpin0;
-    dealii::parallel::distributed::Vector<double>  rhoNodalFieldSpin1;
+    dealii::LinearAlgebra::distributed::Vector<double>  rhoNodalFieldSpin0;
+    dealii::LinearAlgebra::distributed::Vector<double>  rhoNodalFieldSpin1;
     if (dftParameters::spinPolarized==1)
     {
 	matrix_free_data.initialize_dof_vector(rhoNodalFieldSpin0,densityDofHandlerIndex);
@@ -1949,7 +1949,7 @@ namespace dftfe {
                              [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
                               const unsigned int q)
                               {return (*rhoOutValuesSpinPolarized).find(cell->id())->second[2*q];};
-	dealii::VectorTools::project<3,dealii::parallel::distributed::Vector<double>> (dealii::MappingQ1<3,3>(),
+	dealii::VectorTools::project<3,dealii::LinearAlgebra::distributed::Vector<double>> (dealii::MappingQ1<3,3>(),
 										       dofHandler,
 										       constraintsNone,
 										       QGauss<3>(C_num1DQuad<FEOrder>()),
@@ -1965,7 +1965,7 @@ namespace dftfe {
                              [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell ,
                               const unsigned int q)
                               {return (*rhoOutValuesSpinPolarized).find(cell->id())->second[2*q+1];};
-	dealii::VectorTools::project<3,dealii::parallel::distributed::Vector<double>> (dealii::MappingQ1<3,3>(),
+	dealii::VectorTools::project<3,dealii::LinearAlgebra::distributed::Vector<double>> (dealii::MappingQ1<3,3>(),
 										       dofHandler,
 										       constraintsNone,
 										       QGauss<3>(C_num1DQuad<FEOrder>()),

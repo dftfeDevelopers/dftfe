@@ -135,7 +135,7 @@ namespace dftfe
      */
     template<typename T>
     void chebyshevFilter(operatorDFTClass & operatorMatrix,
-			 dealii::parallel::distributed::Vector<T> & X,
+			 dealii::LinearAlgebra::distributed::Vector<T> & X,
 			 const unsigned int numberComponents,
 			 const unsigned int m,
 			 const double a,

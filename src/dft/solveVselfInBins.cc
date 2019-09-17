@@ -26,7 +26,7 @@ namespace dftfe
                                     (const dealii::MatrixFree<3,double> & matrix_free_data,
 	                             const unsigned int offset,
 	                             vectorType & phiExt,
-			             const dealii::ConstraintMatrix & phiExtConstraintMatrix,
+			             const dealii::AffineConstraints<double> & phiExtConstraintMatrix,
 				     const std::vector<std::vector<double> > & imagePositions,
 				     const std::vector<int> & imageIds,
 				     const std::vector<double> &imageCharges,

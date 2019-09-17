@@ -111,7 +111,7 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   //
   //merge with constraintsNone so that d_constraintsForTotalPotential will also have periodic
   //constraints as well for periodic problems
-  d_constraintsForTotalPotential.merge(constraintsNone,ConstraintMatrix::MergeConflictBehavior::right_object_wins);
+  d_constraintsForTotalPotential.merge(constraintsNone,dealii::AffineConstraints<double>::MergeConflictBehavior::right_object_wins);
   d_constraintsForTotalPotential.close();
 
   //clear existing constraints matrix vector

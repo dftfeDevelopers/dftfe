@@ -42,7 +42,7 @@ namespace dftfe
  */
     class interpolateFieldsFromPreviousMesh
     {
-     typedef dealii::parallel::distributed::Vector<double> vectorType;
+     //typedef dealii::parallel::distributed::Vector<double> vectorType;
      public:
     /** @brief Constructor.
      *

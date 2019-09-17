@@ -308,9 +308,9 @@ void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesX(const s
 
 #ifdef USE_COMPLEX
 template<unsigned int FEOrder>
-void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::parallel::distributed::Vector<std::complex<double> > & src,
+void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::LinearAlgebra::distributed::Vector<std::complex<double> > & src,
 							   const unsigned int numberWaveFunctions,
-							   dealii::parallel::distributed::Vector<std::complex<double> >       & dst) const
+							   dealii::LinearAlgebra::distributed::Vector<std::complex<double> >       & dst) const
 {
 
   std::map<unsigned int, std::vector<std::complex<double> > > projectorKetTimesVector;
@@ -491,9 +491,9 @@ void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesX(const d
 }
 #else
 template<unsigned int FEOrder>
-void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::parallel::distributed::Vector<double> & src,
+void kohnShamDFTOperatorClass<FEOrder>::computeNonLocalHamiltonianTimesX(const dealii::LinearAlgebra::distributed::Vector<double> & src,
 							   const unsigned int numberWaveFunctions,
-							   dealii::parallel::distributed::Vector<double>       & dst) const
+							   dealii::LinearAlgebra::distributed::Vector<double>       & dst) const
 {
 
 

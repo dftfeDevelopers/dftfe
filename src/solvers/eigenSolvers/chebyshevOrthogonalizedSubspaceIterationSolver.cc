@@ -198,7 +198,7 @@ namespace dftfe{
     //
     //allocate storage for eigenVectorsFlattenedArray for multiple blocks
     //
-    dealii::parallel::distributed::Vector<dataTypes::number> eigenVectorsFlattenedArrayBlock;
+    dealii::LinearAlgebra::distributed::Vector<dataTypes::number> eigenVectorsFlattenedArrayBlock;
     operatorMatrix.reinit(vectorsBlockSize,
 			  eigenVectorsFlattenedArrayBlock,
 			  true);

@@ -494,8 +494,8 @@ namespace dftfe
           const unsigned int numLocalDofs = subspaceVectorsArrayLocalSize/N;
 
 	  //create temporary arrays XBlock,MXBlock
-	  dealii::parallel::distributed::Vector<dataTypes::number> XBlock,MXBlock;
-	  dealii::parallel::distributed::Vector<dataTypes::numberLowPrec> MXBlockLowPrec;
+	  dealii::LinearAlgebra::distributed::Vector<dataTypes::number> XBlock,MXBlock;
+	  dealii::LinearAlgebra::distributed::Vector<dataTypes::numberLowPrec> MXBlockLowPrec;
 
           //band group parallelization data structures
           const unsigned int numberBandGroups=

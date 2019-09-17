@@ -90,7 +90,7 @@ namespace dftfe{
     *
     */
     virtual void reinit(const unsigned int wavefunBlockSize,
-			dealii::parallel::distributed::Vector<dataTypes::number> & X,
+			dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & X,
 			bool flag) = 0;
 
     virtual void reinit(const unsigned int wavefunBlockSize) = 0;
@@ -129,21 +129,21 @@ namespace dftfe{
      * @param numberComponents number of wavefunctions associated with a given node
      * @param Y Vector containing multi-component fields after operator times vectors product
      */
-    virtual void HX(dealii::parallel::distributed::Vector<dataTypes::number> & X,
+    virtual void HX(dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & X,
 		    const unsigned int numberComponents,
 		    const bool scaleFlag,
 		    const double scalar,
-		    dealii::parallel::distributed::Vector<dataTypes::number> & Y) = 0;
+		    dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & Y) = 0;
 
 
-    virtual void MX(dealii::parallel::distributed::Vector<dataTypes::number> & X,
+    virtual void MX(dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & X,
 		    const unsigned int numberComponents,
-		    dealii::parallel::distributed::Vector<dataTypes::number> & Y) = 0;
+		    dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & Y) = 0;
 
     
-    virtual void HX(dealii::parallel::distributed::Vector<dataTypes::number> & X,
+    virtual void HX(dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & X,
 		    const unsigned int numberComponents,
-		    dealii::parallel::distributed::Vector<dataTypes::number> & Y) = 0;
+		    dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & Y) = 0;
 
 
     /**

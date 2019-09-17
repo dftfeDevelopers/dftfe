@@ -239,9 +239,9 @@ void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesXMF (const d
 
 #ifdef USE_COMPLEX
 template<unsigned int FEOrder>
-void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesX(const dealii::parallel::distributed::Vector<std::complex<double> > & src,
+void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesX(const dealii::LinearAlgebra::distributed::Vector<std::complex<double> > & src,
 							const unsigned int numberWaveFunctions,
-							dealii::parallel::distributed::Vector<std::complex<double> > & dst) const
+							dealii::LinearAlgebra::distributed::Vector<std::complex<double> > & dst) const
 {
 
   //
@@ -302,9 +302,9 @@ void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesX(const deal
 
 #ifdef WITH_MKL
 template<unsigned int FEOrder>
-void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesXBatchGEMM (const dealii::parallel::distributed::Vector<std::complex<double> > & src,
+void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesXBatchGEMM (const dealii::LinearAlgebra::distributed::Vector<std::complex<double> > & src,
 										const unsigned int numberWaveFunctions,
-										dealii::parallel::distributed::Vector<std::complex<double> > & dst) const
+										dealii::LinearAlgebra::distributed::Vector<std::complex<double> > & dst) const
 
 {
 
@@ -391,9 +391,9 @@ void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesXBatchGEMM (
 #endif
 #else
 template<unsigned int FEOrder>
-void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesX(const dealii::parallel::distributed::Vector<double> & src,
+void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesX(const dealii::LinearAlgebra::distributed::Vector<double> & src,
 								      const unsigned int numberWaveFunctions,
-								      dealii::parallel::distributed::Vector<double> & dst) const
+								      dealii::LinearAlgebra::distributed::Vector<double> & dst) const
 {
 
 
@@ -454,9 +454,9 @@ void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesX(const deal
 }
 
 template<unsigned int FEOrder>
-void kohnShamDFTOperatorClass<FEOrder>::computeMassMatrixTimesX(const dealii::parallel::distributed::Vector<double> & src,
+void kohnShamDFTOperatorClass<FEOrder>::computeMassMatrixTimesX(const dealii::LinearAlgebra::distributed::Vector<double> & src,
 								const unsigned int numberWaveFunctions,
-								dealii::parallel::distributed::Vector<double> & dst) const
+								dealii::LinearAlgebra::distributed::Vector<double> & dst) const
 {
 
   //
@@ -517,9 +517,9 @@ void kohnShamDFTOperatorClass<FEOrder>::computeMassMatrixTimesX(const dealii::pa
 
 #ifdef WITH_MKL
 template<unsigned int FEOrder>
-void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesXBatchGEMM (const dealii::parallel::distributed::Vector<double> & src,
+void kohnShamDFTOperatorClass<FEOrder>::computeLocalHamiltonianTimesXBatchGEMM (const dealii::LinearAlgebra::distributed::Vector<double> & src,
 								  const unsigned int numberWaveFunctions,
-								  dealii::parallel::distributed::Vector<double> & dst) const
+								  dealii::LinearAlgebra::distributed::Vector<double> & dst) const
 {
 
   //

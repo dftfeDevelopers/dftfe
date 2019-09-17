@@ -53,10 +53,10 @@ namespace dftfe {
 	 * @param[in] imageCharges image atoms charge values data
 	 * @param[in] radiusAtomBall self-potential ball radius
 	 */
-	 void createAtomBins(std::vector<const dealii::ConstraintMatrix * > & constraintsVector,
-			     const dealii::ConstraintMatrix & onlyHangingNodeConstraints,
+	 void createAtomBins(std::vector<const dealii::AffineConstraints<double> * > & constraintsVector,
+			     const dealii::AffineConstraints<double> & onlyHangingNodeConstraints,
 		             const dealii::DoFHandler<3> & dofHandler,
-			     const dealii::ConstraintMatrix & constraintMatrix,
+			     const dealii::AffineConstraints<double> & constraintMatrix,
 			     const std::vector<std::vector<double> > & atomLocations,
 			     const std::vector<std::vector<double> > & imagePositions,
 			     const std::vector<int> & imageIds,

@@ -581,7 +581,7 @@ void dftClass<FEOrder>::computeNodalRhoFromQuadData()
                        const unsigned int q)
                        {return (*rhoOutValues).find(cell->id())->second[q];};
 
-  dealii::VectorTools::project<3,dealii::parallel::distributed::Vector<double>>
+  dealii::VectorTools::project<3,dealii::LinearAlgebra::distributed::Vector<double>>
       (dealii::MappingQ1<3,3>(),
        dofHandler,
        constraintsNone,
@@ -603,7 +603,7 @@ void dftClass<FEOrder>::computeNodalRhoFromQuadData()
 				   const unsigned int q)
 				   {return (*rhoOutValuesSpinPolarized).find(cell->id())->second[2*q];};
 
-      dealii::VectorTools::project<3,dealii::parallel::distributed::Vector<double>>
+      dealii::VectorTools::project<3,dealii::LinearAlgebra::distributed::Vector<double>>
 	  (dealii::MappingQ1<3,3>(),
 	   dofHandler,
 	   constraintsNone,
@@ -622,7 +622,7 @@ void dftClass<FEOrder>::computeNodalRhoFromQuadData()
 				   const unsigned int q)
 				   {return (*rhoOutValuesSpinPolarized).find(cell->id())->second[2*q+1];};
 
-      dealii::VectorTools::project<3,dealii::parallel::distributed::Vector<double>>
+      dealii::VectorTools::project<3,dealii::LinearAlgebra::distributed::Vector<double>>
 	  (dealii::MappingQ1<3,3>(),
 	   dofHandler,
 	   constraintsNone,

@@ -74,19 +74,19 @@ namespace dftfe{
        * @param scalar which multiplies src before evaluating matrix times src vector
        * @param dst Vector containing sum of dst vector and operator times given multi-vectors product
        */
-      void HX(dealii::parallel::distributed::Vector<dataTypes::number> & src,
+      void HX(dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & src,
 	      const unsigned int numberComponents,
 	      const bool scaleFlag,
 	      const double scalar,
-	      dealii::parallel::distributed::Vector<dataTypes::number> & dst);
+	      dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & dst);
 
-      void HX(dealii::parallel::distributed::Vector<dataTypes::number> & src,
+      void HX(dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & src,
 	      const unsigned int numberComponents,
-	      dealii::parallel::distributed::Vector<dataTypes::number> & dst);
+	      dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & dst);
 
-      void MX(dealii::parallel::distributed::Vector<dataTypes::number> & src,
+      void MX(dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & src,
 	      const unsigned int numberComponents,
-	      dealii::parallel::distributed::Vector<dataTypes::number> & dst);
+	      dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & dst);
 
 
       /**
@@ -248,7 +248,7 @@ namespace dftfe{
        *
        */
       void reinit(const unsigned int wavefunBlockSize,
-		  dealii::parallel::distributed::Vector<dataTypes::number> & X,
+		  dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & X,
 		  bool flag);
 
       void reinit(const unsigned int wavefunBlockSize);
@@ -320,14 +320,14 @@ namespace dftfe{
        * @param numberWaveFunctions Number of wavefunctions at a given node.
        * @param dst Vector containing matrix times given multi-vectors product
        */
-      void computeLocalHamiltonianTimesX(const dealii::parallel::distributed::Vector<dataTypes::number> & src,
+      void computeLocalHamiltonianTimesX(const dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & src,
 					 const unsigned int numberWaveFunctions,
-					 dealii::parallel::distributed::Vector<dataTypes::number> & dst) const;
+					 dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & dst) const;
 
 
-      void computeMassMatrixTimesX(const dealii::parallel::distributed::Vector<dataTypes::number> & src,
+      void computeMassMatrixTimesX(const dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & src,
 				   const unsigned int numberWaveFunctions,
-				   dealii::parallel::distributed::Vector<dataTypes::number> & dst) const;
+				   dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & dst) const;
 
 #ifdef WITH_MKL
 
@@ -341,9 +341,9 @@ namespace dftfe{
        * @param dst Vector containing matrix times given multi-vectors product
        */
       void computeLocalHamiltonianTimesXBatchGEMM
-	           (const dealii::parallel::distributed::Vector<dataTypes::number> & src,
+	           (const dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & src,
 		    const unsigned int numberWaveFunctions,
-		    dealii::parallel::distributed::Vector<dataTypes::number> & dst) const;
+		    dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & dst) const;
 
 
 #endif
@@ -357,9 +357,9 @@ namespace dftfe{
        * @param numberWaveFunctions Number of wavefunctions at a given node.
        * @param dst Vector containing matrix times given multi-vectors product
        */
-      void computeNonLocalHamiltonianTimesX(const dealii::parallel::distributed::Vector<dataTypes::number> & src,
+      void computeNonLocalHamiltonianTimesX(const dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & src,
 					    const unsigned int numberWaveFunctions,
-					    dealii::parallel::distributed::Vector<dataTypes::number> & dst) const;
+					    dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & dst) const;
 
 #ifdef WITH_MKL
       /**
@@ -372,9 +372,9 @@ namespace dftfe{
        * @param numberWaveFunctions Number of wavefunctions at a given node.
        * @param dst Vector containing matrix times given multi-vectors product
        */
-      void computeNonLocalHamiltonianTimesXBatchGEMM(const dealii::parallel::distributed::Vector<dataTypes::number> & src,
+      void computeNonLocalHamiltonianTimesXBatchGEMM(const dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & src,
 						     const unsigned int numberWaveFunctions,
-						     dealii::parallel::distributed::Vector<dataTypes::number> & dst) const;
+						     dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & dst) const;
 
 
 #endif

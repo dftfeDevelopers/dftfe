@@ -378,7 +378,7 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
       {
 	  if (iatom==0)
 	    d_gaussianWeightsVecAtoms[iatom]
-	               = dealii::parallel::distributed::Vector<double>(d_locally_owned_dofsForce,
+	               = dealii::LinearAlgebra::distributed::Vector<double>(d_locally_owned_dofsForce,
 									       ghostIndicesForce,
 									       mpi_communicator);
 	  else
@@ -516,7 +516,7 @@ void forceClass<FEOrder>::computeAtomsForcesGaussianGenerator(bool allowGaussian
       {
 	  if (iatom==0)
 	    d_gaussianWeightsVecAtoms[iatom]
-	               = dealii::parallel::distributed::Vector<double>(d_locally_owned_dofsForceElectro,
+	               = dealii::LinearAlgebra::distributed::Vector<double>(d_locally_owned_dofsForceElectro,
 								       ghostIndicesForceElectro,
 								       mpi_communicator);
 	  else

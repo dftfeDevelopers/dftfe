@@ -58,7 +58,7 @@ namespace dftUtils
      * @param constraintMatrixData dealii constraint matrix from which the data is extracted
      */
     void initialize(const std::shared_ptr<const dealii::Utilities::MPI::Partitioner> & partitioner,
-		    const dealii::ConstraintMatrix & constraintMatrixData);
+		    const dealii::AffineConstraints<double> & constraintMatrixData);
 
     /**
      * @brief precompute map between local processor index of unflattened deallii array to the local processor index of
@@ -77,7 +77,7 @@ namespace dftUtils
      *
      * @param fieldVector parallel dealii vector
      */
-    void distribute(dealii::parallel::distributed::Vector<double> &fieldVector) const;
+    void distribute(dealii::LinearAlgebra::distributed::Vector<double> &fieldVector) const;
 
     /**
      * @brief overloaded dealii internal function distribute for flattened dealii array  which sets
@@ -86,7 +86,7 @@ namespace dftUtils
      * @param blockSize number of components for a given node
      */
     template<typename T>
-    void distribute(dealii::parallel::distributed::Vector<T> &fieldVector,
+    void distribute(dealii::LinearAlgebra::distributed::Vector<T> &fieldVector,
 		    const unsigned int blockSize) const;
 
     /**
@@ -99,7 +99,7 @@ namespace dftUtils
      * @param blockSize number of components for a given node
      */
     template<typename T>
-    void distribute_slave_to_master(dealii::parallel::distributed::Vector<T> &fieldVector,
+    void distribute_slave_to_master(dealii::LinearAlgebra::distributed::Vector<T> &fieldVector,
 				    const unsigned int blockSize) const;
 
 
@@ -110,7 +110,7 @@ namespace dftUtils
      * @param blockSize number of field components for a given node
      */
     template<typename T>
-    void set_zero(dealii::parallel::distributed::Vector<T> &fieldVector,
+    void set_zero(dealii::LinearAlgebra::distributed::Vector<T> &fieldVector,
 	          const unsigned int blockSize) const;
 
     /**

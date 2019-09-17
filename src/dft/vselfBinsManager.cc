@@ -405,10 +405,10 @@ namespace dftfe
     }
 
     template<unsigned int FEOrder>
-    void vselfBinsManager<FEOrder>::createAtomBins(std::vector<const dealii::ConstraintMatrix * > & constraintsVector,
-		                           const dealii::ConstraintMatrix & onlyHangingNodeConstraints,
+    void vselfBinsManager<FEOrder>::createAtomBins(std::vector<const dealii::AffineConstraints<double> * > & constraintsVector,
+		                           const dealii::AffineConstraints<double> & onlyHangingNodeConstraints,
 		                           const dealii::DoFHandler<3> &  dofHandler,
-			                   const dealii::ConstraintMatrix & constraintMatrix,
+			                   const dealii::AffineConstraints<double> & constraintMatrix,
 			                   const std::vector<std::vector<double> > & atomLocations,
 			                   const std::vector<std::vector<double> > & imagePositions,
 			                   const std::vector<int> & imageIds,
@@ -609,8 +609,8 @@ namespace dftfe
       dealii::IndexSet  ghost_indices=locally_relevant_dofs;
       ghost_indices.subtract_set(locally_owned_dofs);
 
-      dealii::parallel::distributed::Vector<double> inhomogBoundaryVec
-	  = dealii::parallel::distributed::Vector<double>(locally_owned_dofs,
+      dealii::LinearAlgebra::distributed::Vector<double> inhomogBoundaryVec
+	  = dealii::LinearAlgebra::distributed::Vector<double>(locally_owned_dofs,
                                                           ghost_indices,
                                                           mpi_communicator);
       //
@@ -944,9 +944,9 @@ namespace dftfe
 		}
 	    }
 
-	    d_vselfBinConstraintMatrices[iBin].merge(onlyHangingNodeConstraints,dealii::ConstraintMatrix::MergeConflictBehavior::left_object_wins);
+	    d_vselfBinConstraintMatrices[iBin].merge(onlyHangingNodeConstraints,dealii::AffineConstraints<double>::MergeConflictBehavior::left_object_wins);
 	    d_vselfBinConstraintMatrices[iBin].close();
-	    d_vselfBinConstraintMatrices[iBin].merge(constraintMatrix,dealii::ConstraintMatrix::MergeConflictBehavior::left_object_wins);
+	    d_vselfBinConstraintMatrices[iBin].merge(constraintMatrix,dealii::AffineConstraints<double>::MergeConflictBehavior::left_object_wins);
 	    d_vselfBinConstraintMatrices[iBin].close();
 	    constraintsVector.push_back(&(d_vselfBinConstraintMatrices[iBin]));
 

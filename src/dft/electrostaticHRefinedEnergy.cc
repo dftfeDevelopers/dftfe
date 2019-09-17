@@ -99,7 +99,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
    std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell,const unsigned int q)> funcRho = [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell , const unsigned int q)
      {return (*rhoOutValues).find(cell->id())->second[q];};
 
-   dealii::VectorTools::project<3,dealii::parallel::distributed::Vector<double> >(dealii::MappingQ1<3,3>(),
+   dealii::VectorTools::project<3,dealii::LinearAlgebra::distributed::Vector<double> >(dealii::MappingQ1<3,3>(),
 										  matrix_free_data.get_dof_handler(),
 										  constraintsNone,
 										  quadrature,
@@ -110,7 +110,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
        std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell,const unsigned int q)> funcDelxRho = [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell , const unsigned int q)
 	 {return (*gradRhoOutValues).find(cell->id())->second[3*q];};
 
-       dealii::VectorTools::project<3,dealii::parallel::distributed::Vector<double> >(dealii::MappingQ1<3,3>(),
+       dealii::VectorTools::project<3,dealii::LinearAlgebra::distributed::Vector<double> >(dealii::MappingQ1<3,3>(),
 										      matrix_free_data.get_dof_handler(),
 										      constraintsNone,
 										      quadrature,
@@ -120,7 +120,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
        std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell,const unsigned int q)> funcDelyRho = [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell , const unsigned int q)
 	 {return (*gradRhoOutValues).find(cell->id())->second[3*q+1];};
 
-       dealii::VectorTools::project<3,dealii::parallel::distributed::Vector<double> >(dealii::MappingQ1<3,3>(),
+       dealii::VectorTools::project<3,dealii::LinearAlgebra::distributed::Vector<double> >(dealii::MappingQ1<3,3>(),
 										      matrix_free_data.get_dof_handler(),
 										      constraintsNone,
 										      quadrature,
@@ -130,7 +130,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
        std::function<double(const typename dealii::DoFHandler<3>::active_cell_iterator & cell,const unsigned int q)> funcDelzRho = [&](const typename dealii::DoFHandler<3>::active_cell_iterator & cell , const unsigned int q)
 	 {return (*gradRhoOutValues).find(cell->id())->second[3*q+2];};
 
-       dealii::VectorTools::project<3,dealii::parallel::distributed::Vector<double> >(dealii::MappingQ1<3,3>(),
+       dealii::VectorTools::project<3,dealii::LinearAlgebra::distributed::Vector<double> >(dealii::MappingQ1<3,3>(),
 										      matrix_free_data.get_dof_handler(),
 										      constraintsNone,
 										      quadrature,
@@ -279,7 +279,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
    //
    //create rho nodal field on the refined mesh and conduct solution transfer
    //
-   vectorType rhoNodalFieldRefined = dealii::parallel::distributed::Vector<double>(dofHandlerHRefined.locally_owned_dofs(),
+   vectorType rhoNodalFieldRefined = dealii::LinearAlgebra::distributed::Vector<double>(dofHandlerHRefined.locally_owned_dofs(),
 										   ghost_indices,
 										   mpi_communicator);
    rhoNodalFieldRefined.zero_out_ghosts();

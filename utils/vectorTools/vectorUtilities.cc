@@ -31,8 +31,8 @@ namespace dftfe
 	                                          const dealii::DoFHandler<3> & dofHandlerPar,
 						  const MPI_Comm & mpi_comm,
 						  const std::vector<std::vector<double> > & domainBoundingVectors,
-						  dealii::ConstraintMatrix & periodicHangingConstraints,
-						  dealii::ConstraintMatrix & onlyHangingConstraints)
+						  dealii::AffineConstraints<double> & periodicHangingConstraints,
+						  dealii::AffineConstraints<double> & onlyHangingConstraints)
     {
       dealii::ConditionalOStream pcout (std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0));
       dealii::TimerOutput computing_timer(mpi_comm,
@@ -92,7 +92,7 @@ namespace dftfe
         dftUtils::printCurrentMemoryUsage(mpi_comm,
 			  "Renumbered serial dofHandler");
 
-      dealii::ConstraintMatrix constraintsHangingSer;
+      dealii::AffineConstraints<double> constraintsHangingSer;
 
 
       dealii::DoFTools::make_hanging_node_constraints_from_serial(dofHandlerSer,
@@ -103,9 +103,9 @@ namespace dftfe
         dftUtils::printCurrentMemoryUsage(mpi_comm,
 			  "Created hanging node constraints serial");
 
-      dealii::ConstraintMatrix constraintsPeriodicHangingSer;
+      dealii::AffineConstraints<double> constraintsPeriodicHangingSer;
       constraintsPeriodicHangingSer.merge(constraintsHangingSer,
-	                                  dealii::ConstraintMatrix::MergeConflictBehavior::right_object_wins);
+	                                  dealii::AffineConstraints<double>::MergeConflictBehavior::right_object_wins);
       constraintsHangingSer.close();
 
       //create unitVectorsXYZ
@@ -178,7 +178,7 @@ namespace dftfe
     template<typename T>
     void createDealiiVector(const std::shared_ptr< const dealii::Utilities::MPI::Partitioner > & partitioner,
 			    const unsigned int                                                   blockSize,
-			    dealii::parallel::distributed::Vector<T>                           & flattenedArray)
+			    dealii::LinearAlgebra::distributed::Vector<T>                           & flattenedArray)
     {
 
       const MPI_Comm & mpi_communicator=partitioner->get_communicator();
@@ -356,7 +356,7 @@ namespace dftfe
      const std::pair<unsigned int,unsigned int> componentIndexRange,
      const std::vector<dealii::types::global_dof_index> & localProcDofIndicesReal,
      const std::vector<dealii::types::global_dof_index> & localProcDofIndicesImag,
-     std::vector<dealii::parallel::distributed::Vector<double>>  & componentVectors)
+     std::vector<dealii::LinearAlgebra::distributed::Vector<double>>  & componentVectors)
     {
       Assert(componentVectors.size()==(componentIndexRange.second-componentIndexRange.first),
 	     dealii::ExcMessage("Incorrect dimensions of componentVectors"));
@@ -381,7 +381,7 @@ namespace dftfe
     void copyFlattenedSTLVecToSingleCompVec (const std::vector<std::complex<double> >  & flattenedArray,
 					     const unsigned int                        totalNumberComponents,
 					     const std::pair<unsigned int,unsigned int> componentIndexRange,
-					     std::vector<dealii::parallel::distributed::Vector<double> >  & componentVectors)
+					     std::vector<dealii::LinearAlgebra::distributed::Vector<double> >  & componentVectors)
     {
       Assert(componentVectors.size()==(componentIndexRange.second-componentIndexRange.first),
 	     dealii::ExcMessage("Incorrect dimensions of componentVectors"));
@@ -405,7 +405,7 @@ namespace dftfe
                              (const std::vector<double>  & flattenedArray,
 			      const unsigned int                        totalNumberComponents,
 			      const std::pair<unsigned int,unsigned int>  componentIndexRange,
-			      std::vector<dealii::parallel::distributed::Vector<double>>  & componentVectors)
+			      std::vector<dealii::LinearAlgebra::distributed::Vector<double>>  & componentVectors)
     {
         Assert(componentVectors.size()==(componentIndexRange.second-componentIndexRange.first),
 		  dealii::ExcMessage("Incorrect dimensions of componentVectors"));
@@ -427,12 +427,12 @@ namespace dftfe
 
 #ifdef USE_COMPLEX
     void copyFlattenedDealiiVecToSingleCompVec
-                             (const dealii::parallel::distributed::Vector<std::complex<double>>  & flattenedArray,
+                             (const dealii::LinearAlgebra::distributed::Vector<std::complex<double>>  & flattenedArray,
 			      const unsigned int                        totalNumberComponents,
 			      const std::pair<unsigned int,unsigned int> componentIndexRange,
 			      const std::vector<dealii::types::global_dof_index> & localProcDofIndicesReal,
                               const std::vector<dealii::types::global_dof_index> & localProcDofIndicesImag,
-			      std::vector<dealii::parallel::distributed::Vector<double>>  & componentVectors,
+			      std::vector<dealii::LinearAlgebra::distributed::Vector<double>>  & componentVectors,
 			      const bool isFlattenedDealiiGhostValuesUpdated)
     {
         Assert(componentVectors.size()==(componentIndexRange.second-componentIndexRange.first),
@@ -481,10 +481,10 @@ namespace dftfe
     }
 #else
     void copyFlattenedDealiiVecToSingleCompVec
-                             (const dealii::parallel::distributed::Vector<double>  & flattenedArray,
+                             (const dealii::LinearAlgebra::distributed::Vector<double>  & flattenedArray,
 			      const unsigned int                        totalNumberComponents,
 			      const std::pair<unsigned int,unsigned int>  componentIndexRange,
-			      std::vector<dealii::parallel::distributed::Vector<double>>  & componentVectors,
+			      std::vector<dealii::LinearAlgebra::distributed::Vector<double>>  & componentVectors,
 			      const bool isFlattenedDealiiGhostValuesUpdated)
     {
         Assert(componentVectors.size()==(componentIndexRange.second-componentIndexRange.first),
@@ -530,12 +530,12 @@ namespace dftfe
 
 #ifdef USE_COMPLEX
     void copySingleCompVecToFlattenedDealiiVec
-                             (dealii::parallel::distributed::Vector<std::complex<double>>  & flattenedArray,
+                             (dealii::LinearAlgebra::distributed::Vector<std::complex<double>>  & flattenedArray,
 			      const unsigned int                        totalNumberComponents,
 			      const std::pair<unsigned int,unsigned int> componentIndexRange,
 			      const std::vector<dealii::types::global_dof_index> & localProcDofIndicesReal,
                               const std::vector<dealii::types::global_dof_index> & localProcDofIndicesImag,
-			      const std::vector<dealii::parallel::distributed::Vector<double>>  & componentVectors)
+			      const std::vector<dealii::LinearAlgebra::distributed::Vector<double>>  & componentVectors)
     {
         Assert(componentVectors.size()==(componentIndexRange.second-componentIndexRange.first),
 		  dealii::ExcMessage("Incorrect dimensions of componentVectors"));
@@ -562,10 +562,10 @@ namespace dftfe
     }
 #else
     void copySingleCompVecToFlattenedDealiiVec
-                             (dealii::parallel::distributed::Vector<double>  & flattenedArray,
+                             (dealii::LinearAlgebra::distributed::Vector<double>  & flattenedArray,
 			      const unsigned int                        totalNumberComponents,
 			      const std::pair<unsigned int,unsigned int>  componentIndexRange,
-			      const std::vector<dealii::parallel::distributed::Vector<double>>  & componentVectors)
+			      const std::vector<dealii::LinearAlgebra::distributed::Vector<double>>  & componentVectors)
     {
         Assert(componentVectors.size()==(componentIndexRange.second-componentIndexRange.first),
 		  dealii::ExcMessage("Incorrect dimensions of componentVectors"));
@@ -595,7 +595,7 @@ namespace dftfe
 			      const std::pair<unsigned int,unsigned int> componentIndexRange,
 			      const std::vector<dealii::types::global_dof_index> & localProcDofIndicesReal,
                               const std::vector<dealii::types::global_dof_index> & localProcDofIndicesImag,
-			      const std::vector<dealii::parallel::distributed::Vector<double>>  & componentVectors)
+			      const std::vector<dealii::LinearAlgebra::distributed::Vector<double>>  & componentVectors)
     {
         Assert(componentVectors.size()==(componentIndexRange.second-componentIndexRange.first),
 		  dealii::ExcMessage("Incorrect dimensions of componentVectors"));
@@ -622,7 +622,7 @@ namespace dftfe
                              (std::vector<double>  & flattenedArray,
 			      const unsigned int                        totalNumberComponents,
 			      const std::pair<unsigned int,unsigned int>  componentIndexRange,
-			      const std::vector<dealii::parallel::distributed::Vector<double>>  & componentVectors)
+			      const std::vector<dealii::LinearAlgebra::distributed::Vector<double>>  & componentVectors)
     {
         Assert(componentVectors.size()==(componentIndexRange.second-componentIndexRange.first),
 		  dealii::ExcMessage("Incorrect dimensions of componentVectors"));
@@ -645,11 +645,11 @@ namespace dftfe
 
     template void createDealiiVector(const std::shared_ptr<const dealii::Utilities::MPI::Partitioner> &,
 				     const unsigned int                                                ,
-				     dealii::parallel::distributed::Vector<dataTypes::number>     &);
+				     dealii::LinearAlgebra::distributed::Vector<dataTypes::number>     &);
 
     template void createDealiiVector(const std::shared_ptr<const dealii::Utilities::MPI::Partitioner> &,
 				     const unsigned int                                                ,
-				     dealii::parallel::distributed::Vector<dataTypes::numberLowPrec>     &);
+				     dealii::LinearAlgebra::distributed::Vector<dataTypes::numberLowPrec>     &);
 
   }//end of namespace
 

@@ -298,11 +298,11 @@ void dftClass<FEOrder>::computeRhoFromPSI
    const unsigned int localVectorSize = d_eigenVectorsFlattenedSTL[0].size()/numEigenVectorsTotal;
 
    std::vector<std::vector<vectorType>> eigenVectors((1+dftParameters::spinPolarized)*d_kPointWeights.size());
-   std::vector<dealii::parallel::distributed::Vector<dataTypes::number> > eigenVectorsFlattenedBlock((1+dftParameters::spinPolarized)*d_kPointWeights.size());
+   std::vector<dealii::LinearAlgebra::distributed::Vector<dataTypes::number> > eigenVectorsFlattenedBlock((1+dftParameters::spinPolarized)*d_kPointWeights.size());
 
 
    std::vector<std::vector<vectorType>> eigenVectorsRotFrac((1+dftParameters::spinPolarized)*d_kPointWeights.size());
-   std::vector<dealii::parallel::distributed::Vector<dataTypes::number> > eigenVectorsRotFracFlattenedBlock((1+dftParameters::spinPolarized)*d_kPointWeights.size());
+   std::vector<dealii::LinearAlgebra::distributed::Vector<dataTypes::number> > eigenVectorsRotFracFlattenedBlock((1+dftParameters::spinPolarized)*d_kPointWeights.size());
 
    for(unsigned int ivec = 0; ivec < numEigenVectorsTotal; ivec+=eigenVectorsBlockSize)
    {

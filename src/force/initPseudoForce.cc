@@ -448,16 +448,16 @@ void forceClass<FEOrder>::computeNonLocalProjectorKetTimesPsiTimesV(const std::v
 
   //std::cout<<"Finished Element Loop"<<std::endl;
 #ifdef USE_COMPLEX
-  std::vector<dealii::parallel::distributed::Vector<std::complex<double> > > projectorKetTimesVectorPar(numberWaveFunctions);
+  std::vector<dealii::LinearAlgebra::distributed::Vector<std::complex<double> > > projectorKetTimesVectorPar(numberWaveFunctions);
 #else
-  std::vector<dealii::parallel::distributed::Vector<double> > projectorKetTimesVectorPar(numberWaveFunctions);
+  std::vector<dealii::LinearAlgebra::distributed::Vector<double> > projectorKetTimesVectorPar(numberWaveFunctions);
 #endif
 #ifdef USE_COMPLEX
-  dealii::parallel::distributed::Vector<std::complex<double> > vec(dftPtr->d_locallyOwnedProjectorIdsCurrentProcess,
+  dealii::LinearAlgebra::distributed::Vector<std::complex<double> > vec(dftPtr->d_locallyOwnedProjectorIdsCurrentProcess,
                                                                    dftPtr->d_ghostProjectorIdsCurrentProcess,
                                                                    mpi_communicator);
 #else
-  dealii::parallel::distributed::Vector<double > vec(dftPtr->d_locallyOwnedProjectorIdsCurrentProcess,
+  dealii::LinearAlgebra::distributed::Vector<double > vec(dftPtr->d_locallyOwnedProjectorIdsCurrentProcess,
                                                      dftPtr->d_ghostProjectorIdsCurrentProcess,
                                                      mpi_communicator);
 #endif

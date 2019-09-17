@@ -199,7 +199,7 @@ void symmetryClass<FEOrder>::computeLocalrhoOut()
 
   const unsigned int localVectorSize = dftPtr->d_eigenVectorsFlattenedSTL[0].size()/dftPtr->d_numEigenValues;
 
-  dealii::parallel::distributed::Vector<dataTypes::number> eigenVectorsFlattenedArrayFullBlock;
+  dealii::LinearAlgebra::distributed::Vector<dataTypes::number> eigenVectorsFlattenedArrayFullBlock;
   vectorTools::createDealiiVector<dataTypes::number>(dftPtr->matrix_free_data.get_vector_partitioner(),
 						     dftPtr->d_numEigenValues,
 						     eigenVectorsFlattenedArrayFullBlock);

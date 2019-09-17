@@ -473,7 +473,7 @@ namespace dftfe {
 						     const unsigned int kPointIndex);
 
       void computeNonLocalProjectorKetTimesPsiTimesVFlattened
-                           (const dealii::parallel::distributed::Vector<dataTypes::number> &src,
+                           (const dealii::LinearAlgebra::distributed::Vector<dataTypes::number> &src,
 			    const unsigned int numberWaveFunctions,
 			    std::vector<std::vector<dataTypes::number> > & projectorKetTimesPsiTimesV,
 			    const unsigned int kPointIndex);

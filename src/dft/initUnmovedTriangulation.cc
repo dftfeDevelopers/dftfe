@@ -174,7 +174,7 @@ void dftClass<FEOrder>::initUnmovedTriangulation(parallel::distributed::Triangul
   //create a constraint matrix without only hanging node constraints
   //
   d_noConstraints.clear();
-  ConstraintMatrix noConstraintsEigen;
+  dealii::AffineConstraints<double> noConstraintsEigen;
   d_noConstraints.reinit(locally_relevant_dofs); noConstraintsEigen.reinit(locally_relevant_dofsEigen);
   DoFTools::make_hanging_node_constraints(dofHandler, d_noConstraints);
   DoFTools::make_hanging_node_constraints(dofHandlerEigen,noConstraintsEigen);
@@ -185,8 +185,8 @@ void dftClass<FEOrder>::initUnmovedTriangulation(parallel::distributed::Triangul
       //
       //merge hanging node constraint matrix with constrains None and constraints None eigen
       //
-      constraintsNone.merge(d_noConstraints,ConstraintMatrix::MergeConflictBehavior::right_object_wins);
-      constraintsNoneEigen.merge(noConstraintsEigen,ConstraintMatrix::MergeConflictBehavior::right_object_wins);
+      constraintsNone.merge(d_noConstraints,dealii::AffineConstraints<double>::MergeConflictBehavior::right_object_wins);
+      constraintsNoneEigen.merge(noConstraintsEigen,dealii::AffineConstraints<double>::MergeConflictBehavior::right_object_wins);
       constraintsNone.close();
       constraintsNoneEigen.close();
     }
@@ -216,12 +216,12 @@ void dftClass<FEOrder>::initUnmovedTriangulation(parallel::distributed::Triangul
 							      d_noConstraints);
 	constraintsNoneEigen.clear();
 	constraintsNoneEigen.reinit(locally_relevant_dofs);
-	constraintsNoneEigen.merge(constraintsNone,ConstraintMatrix::MergeConflictBehavior::right_object_wins);
+	constraintsNoneEigen.merge(constraintsNone,dealii::AffineConstraints<double>::MergeConflictBehavior::right_object_wins);
         constraintsNoneEigen.close();
 
 	noConstraintsEigen.clear();
 	noConstraintsEigen.reinit(locally_relevant_dofs);
-	noConstraintsEigen.merge(d_noConstraints,ConstraintMatrix::MergeConflictBehavior::right_object_wins);
+	noConstraintsEigen.merge(d_noConstraints,dealii::AffineConstraints<double>::MergeConflictBehavior::right_object_wins);
 	noConstraintsEigen.close();
 #endif
   }

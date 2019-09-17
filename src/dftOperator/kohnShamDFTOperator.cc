@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Shiva Rudraraju, Phani Motamarri
+// @author Shiva Rudraraju, Phani Motamarri, Sambit Das
 //
 
 #include <kohnShamDFTOperator.h>
@@ -100,7 +100,7 @@ namespace dftfe {
 
   template<unsigned int FEOrder>
   void kohnShamDFTOperatorClass<FEOrder>::reinit(const unsigned int numberWaveFunctions,
-				   dealii::parallel::distributed::Vector<dataTypes::number> & flattenedArray,
+				   dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & flattenedArray,
 				   bool flag)
   {
 
@@ -412,11 +412,11 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
 
 #ifdef USE_COMPLEX
   template<unsigned int FEOrder>
-  void kohnShamDFTOperatorClass<FEOrder>::HX(dealii::parallel::distributed::Vector<std::complex<double> > & src,
+  void kohnShamDFTOperatorClass<FEOrder>::HX(dealii::LinearAlgebra::distributed::Vector<std::complex<double> > & src,
 			       const unsigned int numberWaveFunctions,
 			       const bool scaleFlag,
 			       const double scalar,
-			       dealii::parallel::distributed::Vector<std::complex<double> > & dst)
+			       dealii::LinearAlgebra::distributed::Vector<std::complex<double> > & dst)
 
 
   {
@@ -540,28 +540,28 @@ void kohnShamDFTOperatorClass<FEOrder>::computeVEff(const std::map<dealii::CellI
   }
 
  template<unsigned int FEOrder>
- void kohnShamDFTOperatorClass<FEOrder>::HX(dealii::parallel::distributed::Vector<std::complex<double> > & src,
+ void kohnShamDFTOperatorClass<FEOrder>::HX(dealii::LinearAlgebra::distributed::Vector<std::complex<double> > & src,
 					    const unsigned int numberWaveFunctions,
-					    dealii::parallel::distributed::Vector<std::complex<double> > & dst)
+					    dealii::LinearAlgebra::distributed::Vector<std::complex<double> > & dst)
  {
    AssertThrow(false,dftUtils::ExcNotImplementedYet());
  }
 
 template<unsigned int FEOrder>
-void kohnShamDFTOperatorClass<FEOrder>::MX(dealii::parallel::distributed::Vector<std::complex<double> > & src,
+void kohnShamDFTOperatorClass<FEOrder>::MX(dealii::LinearAlgebra::distributed::Vector<std::complex<double> > & src,
 					   const unsigned int numberWaveFunctions,
-					   dealii::parallel::distributed::Vector<std::complex<double> > & dst)
+					   dealii::LinearAlgebra::distributed::Vector<std::complex<double> > & dst)
   {
     AssertThrow(false,dftUtils::ExcNotImplementedYet());
   }
 
 #else
  template<unsigned int FEOrder>
- void kohnShamDFTOperatorClass<FEOrder>::HX(dealii::parallel::distributed::Vector<double> & src,
+ void kohnShamDFTOperatorClass<FEOrder>::HX(dealii::LinearAlgebra::distributed::Vector<double> & src,
 					    const unsigned int numberWaveFunctions,
 					    const bool scaleFlag,
 					    const double scalar,
-					    dealii::parallel::distributed::Vector<double> & dst)
+					    dealii::LinearAlgebra::distributed::Vector<double> & dst)
 
 
   {
@@ -686,9 +686,9 @@ void kohnShamDFTOperatorClass<FEOrder>::MX(dealii::parallel::distributed::Vector
   }
 
   template<unsigned int FEOrder>
-  void kohnShamDFTOperatorClass<FEOrder>::HX(dealii::parallel::distributed::Vector<double> & src,
+  void kohnShamDFTOperatorClass<FEOrder>::HX(dealii::LinearAlgebra::distributed::Vector<double> & src,
 					     const unsigned int numberWaveFunctions,
-					     dealii::parallel::distributed::Vector<double> & dst)
+					     dealii::LinearAlgebra::distributed::Vector<double> & dst)
 
 
   {
@@ -763,9 +763,9 @@ void kohnShamDFTOperatorClass<FEOrder>::MX(dealii::parallel::distributed::Vector
   }
 
 template<unsigned int FEOrder>
-  void kohnShamDFTOperatorClass<FEOrder>::MX(dealii::parallel::distributed::Vector<double> & src,
+  void kohnShamDFTOperatorClass<FEOrder>::MX(dealii::LinearAlgebra::distributed::Vector<double> & src,
 					     const unsigned int numberWaveFunctions,
-					     dealii::parallel::distributed::Vector<double> & dst)
+					     dealii::LinearAlgebra::distributed::Vector<double> & dst)
 
 
   {
@@ -974,7 +974,7 @@ template<unsigned int FEOrder>
     //
     //create temporary array XTemp
     //
-    dealii::parallel::distributed::Vector<std::complex<double>> XTemp;
+    dealii::LinearAlgebra::distributed::Vector<std::complex<double>> XTemp;
     reinit(numberWaveFunctions,
 	   XTemp,
 	   true);
@@ -986,7 +986,7 @@ template<unsigned int FEOrder>
     //
     //create temporary array Y
     //
-    dealii::parallel::distributed::Vector<std::complex<double> > Y;
+    dealii::LinearAlgebra::distributed::Vector<std::complex<double> > Y;
     reinit(numberWaveFunctions,
 	   Y,
 	   true);
@@ -1117,7 +1117,7 @@ template<unsigned int FEOrder>
     //
     //create temporary array XTemp
     //
-    dealii::parallel::distributed::Vector<double> XTemp;
+    dealii::LinearAlgebra::distributed::Vector<double> XTemp;
     reinit(numberWaveFunctions,
 	   XTemp,
 	   true);
@@ -1130,7 +1130,7 @@ template<unsigned int FEOrder>
     //
     //create temporary array Y
     //
-    dealii::parallel::distributed::Vector<double> Y;
+    dealii::LinearAlgebra::distributed::Vector<double> Y;
     reinit(numberWaveFunctions,
 	   Y,
 	   true);
@@ -1188,7 +1188,7 @@ template<unsigned int FEOrder>
     const unsigned int numberDofs = X.size()/numberWaveFunctions;
 
     //create temporary arrays XBlock,Hx
-    dealii::parallel::distributed::Vector<dataTypes::number> XBlock,HXBlock;
+    dealii::LinearAlgebra::distributed::Vector<dataTypes::number> XBlock,HXBlock;
 
     std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
     std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
@@ -1359,7 +1359,7 @@ template<unsigned int FEOrder>
     const unsigned int numberDofs = X.size()/numberWaveFunctions;
 
     //create temporary arrays XBlock,Hx
-    dealii::parallel::distributed::Vector<dataTypes::number> XBlock,MXBlock;
+    dealii::LinearAlgebra::distributed::Vector<dataTypes::number> XBlock,MXBlock;
 
     std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
     std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
@@ -1521,7 +1521,7 @@ template<unsigned int FEOrder>
     const unsigned int numberDofs = X.size()/N;
 
     //create temporary arrays XBlock,Hx
-    dealii::parallel::distributed::Vector<dataTypes::number> XBlock,HXBlock;
+    dealii::LinearAlgebra::distributed::Vector<dataTypes::number> XBlock,HXBlock;
 
     std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
     std::map<unsigned int, unsigned int> globalToLocalRowIdMap;

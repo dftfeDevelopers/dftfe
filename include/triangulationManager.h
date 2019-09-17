@@ -221,7 +221,7 @@ namespace dftfe  {
     void saveTriangulationsSolutionVectors
       (const unsigned int feOrder,
        const unsigned int nComponents,
-       const std::vector< const dealii::parallel::distributed::Vector<double> * > & solutionVectors,
+       const std::vector< const vectorType * > & solutionVectors,
        const MPI_Comm & interpoolComm,
        const MPI_Comm &interBandGroupComm);
 
@@ -238,7 +238,7 @@ namespace dftfe  {
     void loadTriangulationsSolutionVectors
       (const unsigned int feOrder,
        const unsigned int nComponents,
-       std::vector< dealii::parallel::distributed::Vector<double> * > & solutionVectors);
+       std::vector< vectorType * > & solutionVectors);
     /**
      * @brief serialize the triangulations and the associated cell quadrature data container
      *

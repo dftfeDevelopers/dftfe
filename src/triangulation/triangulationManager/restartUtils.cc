@@ -114,7 +114,7 @@ namespace dftfe {
     triangulationManager::saveTriangulationsSolutionVectors
 				 (const unsigned int feOrder,
 				  const unsigned int nComponents,
-				  const std::vector< const dealii::parallel::distributed::Vector<double> * > & solutionVectors,
+				  const std::vector< const vectorType * > & solutionVectors,
 	                          const MPI_Comm & interpoolComm,
 				  const MPI_Comm &interBandGroupComm)
     {
@@ -130,7 +130,7 @@ namespace dftfe {
          DoFHandler<3> dofHandler (d_parallelTriangulationUnmoved);
          dofHandler.distribute_dofs(FE);
 
-         dealii::parallel::distributed::SolutionTransfer<3,typename dealii::parallel::distributed::Vector<double> > solTrans(dofHandler);
+         dealii::parallel::distributed::SolutionTransfer<3,vectorType > solTrans(dofHandler);
          //assumes solution vectors are ghosted
          solTrans.prepare_serialization(solutionVectors);
 
@@ -154,7 +154,7 @@ namespace dftfe {
     triangulationManager::loadTriangulationsSolutionVectors
 				 (const unsigned int feOrder,
 				  const unsigned int nComponents,
-				  std::vector< dealii::parallel::distributed::Vector<double> * > & solutionVectors)
+				  std::vector< vectorType * > & solutionVectors)
     {
       loadSupportTriangulations();
       const std::string filename="parallelUnmovedTriaSolData.chk";
@@ -172,7 +172,7 @@ namespace dftfe {
       dealii::FESystem<3> FE(dealii::FE_Q<3>(dealii::QGaussLobatto<1>(feOrder+1)), nComponents); //linear shape function
       DoFHandler<3> dofHandler (d_parallelTriangulationMoved);
       dofHandler.distribute_dofs(FE);
-      dealii::parallel::distributed::SolutionTransfer<3,typename dealii::parallel::distributed::Vector<double> > solTrans(dofHandler);
+      dealii::parallel::distributed::SolutionTransfer<3,typename dealii::LinearAlgebra::distributed::Vector<double>> solTrans(dofHandler);
 
       for (unsigned int i=0; i< solutionVectors.size();++i)
             solutionVectors[i]->zero_out_ghosts();
@@ -183,10 +183,9 @@ namespace dftfe {
       //dummy de-serialization for d_parallelTriangulationUnmoved to avoid assert fail in call to save
       dofHandler.initialize(d_parallelTriangulationUnmoved,FE);
       dofHandler.distribute_dofs(FE);
-      dealii::parallel::distributed::SolutionTransfer<3,typename dealii::parallel::distributed::Vector<double> > solTransDummy(dofHandler);
+      dealii::parallel::distributed::SolutionTransfer<3,typename dealii::LinearAlgebra::distributed::Vector<double>> solTransDummy(dofHandler);
 
-      std::vector< dealii::parallel::distributed::Vector<double> * >
-	                                    dummySolutionVectors(solutionVectors.size());
+      std::vector< vectorType * > dummySolutionVectors(solutionVectors.size());
       for (unsigned int i=0; i<dummySolutionVectors.size();++i)
       {
           dummySolutionVectors[i]->reinit(*solutionVectors[0]);

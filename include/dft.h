@@ -195,7 +195,7 @@ namespace dftfe {
        *@brief Get dealii constraint matrix involving periodic constraints and hanging node constraints in periodic
        *case else only hanging node constraints in non-periodic case
        */
-      const ConstraintMatrix & getConstraintMatrixEigen() const;
+      const dealii::AffineConstraints<double> & getConstraintMatrixEigen() const;
 
       /**
        *@brief Get overloaded constraint matrix information involving periodic constraints and hanging node constraints in periodic
@@ -333,8 +333,8 @@ namespace dftfe {
       * Dirichlet boundary condition entries added
       */
       void locatePeriodicPinnedNodes(const dealii::DoFHandler<3> & _dofHandler,
-	                             const dealii::ConstraintMatrix & constraintMatrixBase,
-	                             dealii::ConstraintMatrix & constraintMatrix);
+	                             const dealii::AffineConstraints<double> & constraintMatrixBase,
+	                             dealii::AffineConstraints<double> & constraintMatrix);
       void initRho();
       void computeRhoInitialGuessFromPSI(std::vector<std::vector<vectorType>> eigenVectors);
       void clearRhoData();
@@ -401,7 +401,7 @@ namespace dftfe {
        * Dirichlet boundary condition entries added
        */
       void applyHomogeneousDirichletBC(const dealii::DoFHandler<3> & _dofHandler,
-	                               dealii::ConstraintMatrix & constraintMatrix);
+	                               dealii::AffineConstraints<double> & constraintMatrix);
 
       void computeElementalOVProjectorKets();
 
@@ -617,7 +617,7 @@ namespace dftfe {
       unsigned int       densityDofHandlerIndex;
       MatrixFree<3,double> matrix_free_data;
       std::map<types::global_dof_index, Point<3> > d_supportPoints, d_supportPointsEigen;
-      std::vector<const ConstraintMatrix * > d_constraintsVector;
+      std::vector<const dealii::AffineConstraints<double> * > d_constraintsVector;
 
       /**
        * parallel objects
@@ -675,7 +675,7 @@ namespace dftfe {
       dftUtils::constraintMatrixInfo constraintsNoneDataInfo2;
 
 
-      ConstraintMatrix constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_noConstraints;
+      dealii::AffineConstraints<double> constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_noConstraints;
 
 
       /**
@@ -685,7 +685,7 @@ namespace dftfe {
 
       /// Spectrum split higher eigenvalues computed in Rayleigh-Ritz step
       std::vector<std::vector<double> > eigenValuesRRSplit;
-      std::vector<dealii::parallel::distributed::Vector<dataTypes::number> > d_eigenVectorsFlattened;
+      std::vector<dealii::LinearAlgebra::distributed::Vector<dataTypes::number> > d_eigenVectorsFlattened;
       std::vector<std::vector<dataTypes::number> > d_eigenVectorsFlattenedSTL;
       std::vector<std::vector<dataTypes::number> > d_eigenVectorsRotFracDensityFlattenedSTL;
 
@@ -783,22 +783,22 @@ namespace dftfe {
       std::vector<std::vector<std::vector<std::vector<std::complex<double> > > > > d_nonLocalProjectorElementMatrices,d_nonLocalProjectorElementMatricesConjugate,d_nonLocalProjectorElementMatricesTranspose;
 
 
-      std::vector<dealii::parallel::distributed::Vector<std::complex<double> > > d_projectorKetTimesVectorPar;
+      std::vector<dealii::LinearAlgebra::distributed::Vector<std::complex<double> > > d_projectorKetTimesVectorPar;
 
       /// parallel vector used in nonLocalHamiltionian times wavefunction vector computation
       /// pre-initialization of the parallel layout is more efficient than creating the parallel
       /// layout for every nonLocalHamiltionan times wavefunction computation
-      dealii::parallel::distributed::Vector<std::complex<double> >  d_projectorKetTimesVectorParFlattened;
+      dealii::LinearAlgebra::distributed::Vector<std::complex<double> >  d_projectorKetTimesVectorParFlattened;
 #else
       std::vector<std::vector<std::vector<double> > > d_nonLocalProjectorElementMatrices,d_nonLocalProjectorElementMatricesConjugate,d_nonLocalProjectorElementMatricesTranspose;
 
 
-      std::vector<dealii::parallel::distributed::Vector<double> > d_projectorKetTimesVectorPar;
+      std::vector<dealii::LinearAlgebra::distributed::Vector<double> > d_projectorKetTimesVectorPar;
 
       /// parallel vector used in nonLocalHamiltionian times wavefunction vector computation
       /// pre-initialization of the parallel layout is more efficient than creating the parallel
       /// layout for every nonLocalHamiltionan times wavefunction computation
-      dealii::parallel::distributed::Vector<double> d_projectorKetTimesVectorParFlattened;
+      dealii::LinearAlgebra::distributed::Vector<double> d_projectorKetTimesVectorParFlattened;
 #endif
 
       //

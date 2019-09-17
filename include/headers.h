@@ -29,7 +29,7 @@
 #include <deal.II/base/table.h>
 #include <deal.II/lac/vector.h>
 #include <deal.II/lac/full_matrix.h>
-#include <deal.II/lac/constraint_matrix.h>
+#include <deal.II/lac/affine_constraints.h>
 #include <deal.II/lac/exceptions.h>
 #include <deal.II/fe/fe_system.h>
 #include <deal.II/fe/fe_q.h>
@@ -65,7 +65,7 @@
 #include <deal.II/distributed/tria.h>
 #include <deal.II/distributed/solution_transfer.h>
 #include <deal.II/distributed/grid_refinement.h>
-#include <deal.II/lac/parallel_vector.h>
+#include <deal.II/lac/la_parallel_vector.h>
 #include <deal.II/matrix_free/matrix_free.h>
 #include <deal.II/matrix_free/fe_evaluation.h>
 #ifdef USE_PETSC
@@ -83,8 +83,7 @@
 //commonly used  typedefs used in dftfe go here
 namespace dftfe
 {
-  typedef dealii::parallel::distributed::Vector<double> vectorType;
-
+  typedef dealii::LinearAlgebra::distributed::Vector<double> vectorType;
   namespace dataTypes
   {
 #ifdef USE_COMPLEX

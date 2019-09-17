@@ -1118,11 +1118,11 @@ void dftClass<FEOrder>::computeSparseStructureNonLocalProjectors_OV()
   }
 
 #ifdef USE_COMPLEX
-  dealii::parallel::distributed::Vector<std::complex<double> > vec(d_locallyOwnedProjectorIdsCurrentProcess,
+  dealii::LinearAlgebra::distributed::Vector<std::complex<double> > vec(d_locallyOwnedProjectorIdsCurrentProcess,
                                                                    d_ghostProjectorIdsCurrentProcess,
                                                                    mpi_communicator);
 #else
-  dealii::parallel::distributed::Vector<double > vec(d_locallyOwnedProjectorIdsCurrentProcess,
+  dealii::LinearAlgebra::distributed::Vector<double > vec(d_locallyOwnedProjectorIdsCurrentProcess,
                                                      d_ghostProjectorIdsCurrentProcess,
                                                      mpi_communicator);
 #endif
