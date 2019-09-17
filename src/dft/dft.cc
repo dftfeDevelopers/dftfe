@@ -132,8 +132,8 @@ namespace dftfe {
 #ifdef DFTFE_WITH_ELPA
     int error;
 
-    if (elpa_init(20180525) != ELPA_OK) {
-	 fprintf(stderr, "Error: ELPA API version not supported. Use API version 20180525.");
+    if (elpa_init(20181113) != ELPA_OK) {
+	 fprintf(stderr, "Error: ELPA API version not supported. Use API version 20181113.");
 	 exit(1);
     }
 #endif
@@ -151,7 +151,10 @@ namespace dftfe {
 #endif
 
 #ifdef DFTFE_WITH_ELPA
-    elpa_uninit();
+    int error;
+    elpa_uninit(& error);
+    AssertThrow(error == ELPA_OK,
+        dealii::ExcMessage("DFT-FE Error: elpa error."));
 #endif
   }
 

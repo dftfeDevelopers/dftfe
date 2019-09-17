@@ -223,14 +223,22 @@ namespace dftfe {
   void operatorDFTClass::elpaDeallocateHandles(const unsigned int na,
 		                    const unsigned int nev)
   {
-       //elpa_autotune_deallocate(d_elpaAutoTuneHandle);
-       elpa_deallocate(d_elpaHandle);
+       int error;
+       elpa_deallocate(d_elpaHandle,&error);
+       AssertThrow(error == ELPA_OK,
+                dealii::ExcMessage("DFT-FE Error: elpa error."));
+
        if (na!=nev)
        {
-	  elpa_deallocate(d_elpaHandlePartialEigenVec);
-	  elpa_deallocate(d_elpaHandleValence);
-       }
 
+          elpa_deallocate(d_elpaHandlePartialEigenVec,&error);
+          AssertThrow(error == ELPA_OK,
+                dealii::ExcMessage("DFT-FE Error: elpa error."));
+
+          elpa_deallocate(d_elpaHandleValence,&error);
+          AssertThrow(error == ELPA_OK,
+                dealii::ExcMessage("DFT-FE Error: elpa error."));
+       }
   }
 #endif
 #endif

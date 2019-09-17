@@ -28,7 +28,7 @@ c_flagsRelease="-O3 -fPIC -fopenmp -fpermissive"
 cxx_flagsRelease="-O3 -fPIC -fopenmp -fpermissive"
 
 #Option to link to ELPA
-withELPA=OFF
+withELPA=ON
 
 #Optmization flag: 1 for optimized mode and 0 for debug mode compilation
 optimizedMode=1
