@@ -880,11 +880,8 @@ namespace dftfe {
     kohnShamDFTOperatorClass<FEOrder> kohnShamDFTEigenOperator(this,mpi_communicator);
     kohnShamDFTEigenOperator.init();
 
-#ifdef DEAL_II_WITH_SCALAPACK
     kohnShamDFTEigenOperator.processGridOptionalELPASetup(d_numEigenValues,
 			                                  d_numEigenValuesRR);
-
-#endif
 
     if (dftParameters::verbosity>=4)
       dftUtils::printCurrentMemoryUsage(mpi_communicator,

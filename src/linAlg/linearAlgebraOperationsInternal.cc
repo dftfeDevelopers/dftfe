@@ -33,8 +33,6 @@ namespace dftfe
 
     namespace internal
     {
-#ifdef DEAL_II_WITH_SCALAPACK
-
 #ifdef DFTFE_WITH_ELPA
       void setupELPAHandle(const MPI_Comm & mpi_communicator,
                            MPI_Comm & processGridCommunicatorActive,
@@ -2191,7 +2189,6 @@ namespace dftfe
        dealii::ScaLAPACKMatrix<dataTypes::number> & mat,
        const MPI_Comm &interComm,
        const unsigned int broadcastRoot);
-#endif
     }
   }
 }

@@ -1171,7 +1171,6 @@ template<unsigned int FEOrder>
   }
 #endif
 
-#ifdef DEAL_II_WITH_SCALAPACK
   template<unsigned int FEOrder>
   void kohnShamDFTOperatorClass<FEOrder>::XtHX(const std::vector<dataTypes::number> & X,
 					       const unsigned int numberWaveFunctions,
@@ -1738,7 +1737,6 @@ template<unsigned int FEOrder>
     }
 #endif
   }
-#endif
 
 template<unsigned int FEOrder>
 void kohnShamDFTOperatorClass<FEOrder>::computeVEffSpinPolarized(const std::map<dealii::CellId,std::vector<double> >* rhoValues,

@@ -253,11 +253,8 @@ void dftClass<FEOrder>::solveNoSCF()
   kohnShamDFTOperatorClass<FEOrder> kohnShamDFTEigenOperator(this,mpi_communicator);
   kohnShamDFTEigenOperator.init();
 
-#ifdef DEAL_II_WITH_SCALAPACK
   kohnShamDFTEigenOperator.processGridOptionalELPASetup(d_numEigenValues,
 			                                  d_numEigenValuesRR);
-
-#endif
 
   for(unsigned int spinType=0; spinType<(1+dftParameters::spinPolarized); ++spinType)
   {

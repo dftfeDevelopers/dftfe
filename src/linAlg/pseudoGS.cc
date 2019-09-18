@@ -26,7 +26,7 @@ namespace dftfe
 
   namespace linearAlgebraOperations
   {
-#if(defined DEAL_II_WITH_SCALAPACK && !USE_COMPLEX)
+#if(!USE_COMPLEX)
     template<typename T>
     unsigned int pseudoGramSchmidtOrthogonalization(operatorDFTClass & operatorMatrix,
 		                                    std::vector<T> & X,

@@ -151,7 +151,6 @@ namespace dftfe {
     return d_mpi_communicator;
   }
 
-#ifdef DEAL_II_WITH_SCALAPACK
 
   void operatorDFTClass::processGridOptionalELPASetup(const unsigned int na,
     		                                      const unsigned int nev)
@@ -240,7 +239,6 @@ namespace dftfe {
                 dealii::ExcMessage("DFT-FE Error: elpa error."));
        }
   }
-#endif
 #endif
 
 }

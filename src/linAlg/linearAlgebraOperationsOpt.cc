@@ -467,7 +467,7 @@ namespace dftfe{
     }
 
 
-#if(defined DEAL_II_WITH_SCALAPACK && !USE_COMPLEX)
+#if(!USE_COMPLEX)
     template<typename T>
     void rayleighRitzGEP(operatorDFTClass & operatorMatrix,
 		      std::vector<T> & X,
@@ -1160,7 +1160,7 @@ namespace dftfe{
 
 #endif
 
-#if(defined DEAL_II_WITH_SCALAPACK && !USE_COMPLEX)
+#if(!USE_COMPLEX)
     template<typename T>
     void rayleighRitz(operatorDFTClass & operatorMatrix,
 		      std::vector<T> & X,
@@ -1403,7 +1403,7 @@ namespace dftfe{
     }
 #endif
 
-#if(defined DEAL_II_WITH_SCALAPACK && !USE_COMPLEX)
+#if(!USE_COMPLEX)
     template<typename T>
     void rayleighRitzGEPSpectrumSplitDirect(operatorDFTClass & operatorMatrix,
 					    std::vector<T> & X,
@@ -1845,7 +1845,7 @@ namespace dftfe{
 #endif
 
 
-#if(defined DEAL_II_WITH_SCALAPACK && !USE_COMPLEX)
+#if(!USE_COMPLEX)
     template<typename T>
     void rayleighRitzSpectrumSplitDirect
                     (operatorDFTClass & operatorMatrix,
