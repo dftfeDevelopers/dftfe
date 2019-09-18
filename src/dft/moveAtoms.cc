@@ -352,7 +352,8 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
       
       if(useGaussian!=1)
 	{
-	  pcout << "Auto remeshing and reinitialization of dft problem for new atom coordinates as max net displacement magnitude: "<<maxDispAtom<< " is greater than: "<< break1 << " Bohr..." << std::endl;
+          if (!dftParameters::reproducible_output)		
+	   pcout << "Auto remeshing and reinitialization of dft problem for new atom coordinates as max net displacement magnitude: "<<maxDispAtom<< " is greater than: "<< break1 << " Bohr..." << std::endl;
 	  init(0);
 
 	  d_autoMesh=1;
@@ -362,18 +363,20 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 		    0,
 		    MPI_COMM_WORLD);
 
-          //for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
-	    //d_dispClosestTriaVerticesToAtoms[iAtom]=0;
-	  pcout << "...Reinitialization end" << std::endl;
+	  if (!dftParameters::reproducible_output)
+	    pcout << "...Reinitialization end" << std::endl;
 	}
       else
 	{
-	  pcout << "Trying to Move using Gaussian with same Gaussian constant for computing the forces: "<<forcePtr->getGaussianGeneratorParameter()<<" as net max displacement magnitude: "<< maxDispAtom<< " is below " << break1 <<" Bohr"<<std::endl;
-	  pcout << "Max current disp magnitude: "<<maxCurrentDispAtom<<" Bohr"<<std::endl;
+          if (!dftParameters::reproducible_output)		
+	     pcout << "Trying to Move using Gaussian with same Gaussian constant for computing the forces: "<<forcePtr->getGaussianGeneratorParameter()<<" as net max displacement magnitude: "<< maxDispAtom<< " is below " << break1 <<" Bohr"<<std::endl;
+	  if (!dftParameters::reproducible_output)
+	     pcout << "Max current disp magnitude: "<<maxCurrentDispAtom<<" Bohr"<<std::endl;
+
 	  const std::pair<bool,double> meshQualityMetrics=d_gaussianMovePar.moveMeshTwoStep(controlPointLocationsInitialMove,d_controlPointLocationsCurrentMove,controlPointDisplacementsInitialMove,controlPointDisplacementsCurrentMove,d_gaussianConstantAutoMove,forcePtr->getGaussianGeneratorParameter());
           double factor;
           if(maximumForceToBeRelaxed >= 1e-03)
-            factor = 1.35;
+            factor = 2.00;
 	  else if(maximumForceToBeRelaxed < 1e-03 && maximumForceToBeRelaxed >= 1e-04)
             factor = 1.25;
           else if(maximumForceToBeRelaxed < 1e-04)
@@ -388,10 +391,13 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 		    MPI_COMM_WORLD);
 	  if (d_autoMesh==1)
 	    {
-	      if (meshQualityMetrics.first)
-		pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to negative jacobian after Gaussian mesh movement using Gaussian constant: "<< forcePtr->getGaussianGeneratorParameter()<<std::endl;
-	      else
-		pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to maximum jacobian ratio: "<< meshQualityMetrics.second<< " exceeding set bound of: "<< factor*d_autoMeshMaxJacobianRatio<<" after Gaussian mesh movement using Gaussian constant: "<< forcePtr->getGaussianGeneratorParameter()<<std::endl;
+              if (!dftParameters::reproducible_output)
+	      {
+	        if (meshQualityMetrics.first)
+		  pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to negative jacobian after Gaussian mesh movement using Gaussian constant: "<< forcePtr->getGaussianGeneratorParameter()<<std::endl;
+	        else
+		  pcout<< " Auto remeshing and reinitialization of dft problem for new atom coordinates due to maximum jacobian ratio: "<< meshQualityMetrics.second<< " exceeding set bound of: "<< factor*d_autoMeshMaxJacobianRatio<<" after Gaussian mesh movement using Gaussian constant: "<< forcePtr->getGaussianGeneratorParameter()<<std::endl;
+              }
 
 	      if(dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ)
 		{
@@ -426,16 +432,19 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 		}
 	      init(0);
 
-              //for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
-	        //d_dispClosestTriaVerticesToAtoms[iAtom]=0;
-	      pcout << "...Reinitialization end" << std::endl;
+	      if (!dftParameters::reproducible_output)
+	         pcout << "...Reinitialization end" << std::endl;
 	    }
 	  else
 	    {
-	      pcout<< " Mesh quality check: maximum jacobian ratio after movement: "<< meshQualityMetrics.second<<std::endl;
-	      pcout << "Now Reinitializing all moved triangulation dependent objects..." << std::endl;
+	      if (!dftParameters::reproducible_output)	    
+	         pcout<< " Mesh quality check: maximum jacobian ratio after movement: "<< meshQualityMetrics.second<<std::endl;
+	      if (!dftParameters::reproducible_output)
+	         pcout << "Now Reinitializing all moved triangulation dependent objects..." << std::endl;
+
 	      initNoRemesh(false);
-	      pcout << "...Reinitialization end" << std::endl;
+	      if (!dftParameters::reproducible_output)
+	         pcout << "...Reinitialization end" << std::endl;
 	    }
 	}
     }

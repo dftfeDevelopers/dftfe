@@ -793,11 +793,17 @@ namespace dftfe {
 
     if (dftParameters::isIonOpt && !dftParameters::isCellOpt)
       {
+	d_atomLocationsInitial = atomLocations;
+	d_groundStateEnergyInitial = d_groundStateEnergy;
+
 	geoOptIonPtr->init();
 	geoOptIonPtr->run();
       }
     else if (!dftParameters::isIonOpt && dftParameters::isCellOpt)
       {
+	d_atomLocationsInitial = atomLocations;
+	d_groundStateEnergyInitial = d_groundStateEnergy;
+
 #ifdef USE_COMPLEX
 	geoOptCellPtr->init();
 	geoOptCellPtr->run();
@@ -807,6 +813,9 @@ namespace dftfe {
       }
     else if (dftParameters::isIonOpt && dftParameters::isCellOpt)
       {
+	d_atomLocationsInitial = atomLocations;
+	d_groundStateEnergyInitial = d_groundStateEnergy;
+
 #ifdef USE_COMPLEX
 	//first relax ion positions in the starting cell configuration
 	geoOptIonPtr->init();

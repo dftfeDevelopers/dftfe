@@ -23,6 +23,7 @@
 #include <fileReaders.h>
 #include <dftParameters.h>
 #include <dftUtils.h>
+#include <cg_descent_wrapper.h>
 
 namespace dftfe {
 
@@ -97,8 +98,8 @@ namespace dftfe {
     const double tol=dftParameters::forceRelaxTol;//(units: Hatree/Bohr)
     const unsigned int  maxIter=100;
     const double lineSearchTol=1e-4;
-    const double lineSearchDampingParameter=0.5;
-    const unsigned int maxLineSearchIter=10;
+    const double lineSearchDampingParameter=0.8;
+    const unsigned int maxLineSearchIter=50;
     const unsigned int debugLevel=Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) ==0?dftParameters::verbosity:0;
 
     d_totalUpdateCalls=0;
@@ -109,6 +110,10 @@ namespace dftfe {
 				  lineSearchTol,
 				  maxLineSearchIter,
 				  lineSearchDampingParameter);
+
+    CGDescent cg_descent(tol,
+			 maxIter);
+
 
     if (dftParameters::chkType>=1 && dftParameters::restartFromChk)
       pcout<<"Re starting Ion force relaxation using nonlinear CG solver... "<<std::endl;
@@ -125,18 +130,40 @@ namespace dftfe {
 	pcout<<"   ------------------------------  "<<std::endl;
       }
 
-    if  (getNumberUnknowns()>0)
+    if(getNumberUnknowns()>0)
       {
 	nonLinearSolver::ReturnValueType cgReturn=nonLinearSolver::FAILURE;
+	bool cgSuccess;
 
-	if (dftParameters::chkType>=1 && dftParameters::restartFromChk)
+	if (dftParameters::chkType>=1 && dftParameters::restartFromChk && dftParameters::ionOptSolver == "CGPRP")
 	  cgReturn=cgSolver.solve(*this,std::string("ionRelaxCG.chk"),true);
-	else if (dftParameters::chkType>=1 && !dftParameters::restartFromChk)
+	else if (dftParameters::chkType>=1 && !dftParameters::restartFromChk && dftParameters::ionOptSolver == "CGPRP")
 	  cgReturn=cgSolver.solve(*this,std::string("ionRelaxCG.chk"));
-	else
+	else if (dftParameters::ionOptSolver == "CGPRP")
 	  cgReturn=cgSolver.solve(*this);
+	else if(dftParameters::ionOptSolver == "LBFGS")
+	  {
+	    cg_descent.set_step(0.8);
+	    cg_descent.set_lbfgs(true);
+	    if(this_mpi_process == 0)
+	      cg_descent.set_PrintLevel(2);
 
-	if (cgReturn == nonLinearSolver::SUCCESS )
+	    cg_descent.set_memory(std::min((unsigned int)20,getNumberUnknowns()));
+            cgSuccess = cg_descent.run(*this);
+
+	  }
+	else
+	  {
+	    cg_descent.set_step(0.8);
+	    if(this_mpi_process == 0)
+	      cg_descent.set_PrintLevel(2);
+            cg_descent.set_AWolfe(true);
+
+	    cg_descent.set_memory(std::min((unsigned int)20,getNumberUnknowns()));
+            cgSuccess = cg_descent.run(*this);
+	  }
+
+	if (cgReturn == nonLinearSolver::SUCCESS || cgSuccess)
 	  {
 	    pcout<< " ...Ion force relaxation completed as maximum force magnitude is less than FORCE TOL: "<< dftParameters::forceRelaxTol<<", total number of ion position updates: "<<d_totalUpdateCalls<<std::endl;
 
@@ -170,7 +197,7 @@ namespace dftfe {
 	      }
 	    pcout<<"-----------------------------------------------------------------------------------"<<std::endl;
 	  }
-	else if (cgReturn == nonLinearSolver::FAILURE)
+	else if (cgReturn == nonLinearSolver::FAILURE || !cgSuccess)
 	  {
 	    pcout<< " ...Ion force relaxation failed "<<std::endl;
 
@@ -201,8 +228,8 @@ namespace dftfe {
   {
     //AssertThrow(false,dftUtils::ExcNotImplementedYet());
     functionValue.clear();
-    functionValue.push_back(dftPtr->d_groundStateEnergy);
-    
+    functionValue.push_back(dftPtr->d_groundStateEnergy-dftPtr->d_groundStateEnergyInitial);
+
   }
 
   template<unsigned int FEOrder>
@@ -233,9 +260,6 @@ namespace dftfe {
       }
 
   }
-
- 
-
 
   template<unsigned int FEOrder>
   void geoOptIon<FEOrder>::precondition(std::vector<double>       & s,
@@ -301,7 +325,19 @@ namespace dftfe {
   template<unsigned int FEOrder>
   void geoOptIon<FEOrder>::solution(std::vector<double> & solution)
   {
-    AssertThrow(false,dftUtils::ExcNotImplementedYet());
+    //AssertThrow(false,dftUtils::ExcNotImplementedYet());
+    solution.clear();
+     const unsigned int numberGlobalAtoms=dftPtr->atomLocations.size();
+     for(unsigned int i = 0; i < numberGlobalAtoms; ++i)
+       {
+	 for(unsigned int j = 0; j < 3; ++j)
+	   {
+	     if(d_relaxationFlags[3*i + j] == 1)
+	       {
+		 solution.push_back(dftPtr->atomLocations[i][j+2] - dftPtr->d_atomLocationsInitial[i][j+2]);
+	       }
+	   }
+       }
   }
 
   template<unsigned int FEOrder>
