@@ -55,7 +55,7 @@ namespace dftfe{
     /**
      * @brief Solve a generalized eigen problem.
      */
-    eigenSolverClass::ReturnValueType solve(operatorDFTClass & operatorMatrix,
+    void solve(operatorDFTClass & operatorMatrix,
 	                                    std::vector<dataTypes::number> & eigenVectorsFlattened,
 					    std::vector<dataTypes::number> & eigenVectorsRotFracDensityFlattened,
 					    vectorType & tempEigenVec,
@@ -70,7 +70,7 @@ namespace dftfe{
     /**
      * @brief Solve a generalized eigen problem.
      */
-    eigenSolverClass::ReturnValueType solve(operatorDFTClass & operatorMatrix,
+    void solve(operatorDFTClass & operatorMatrix,
 	                                    std::vector<vectorType> & eigenVectors,
 					    std::vector<double> & eigenValues,
 					    std::vector<double> & residuals);

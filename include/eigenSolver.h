@@ -49,7 +49,7 @@ namespace dftfe{
      *
      * @return Return value indicating success or failure.
      */
-    virtual ReturnValueType solve(operatorDFTClass & operatorMatrix,
+    virtual void solve(operatorDFTClass & operatorMatrix,
 				  std::vector<vectorType> & eigenVectors,
 				  std::vector<double> & eigenValues,
 				  std::vector<double> & residuals) = 0;

@@ -114,7 +114,7 @@ namespace dftfe{
   //
   // solve
   //
-  eigenSolverClass::ReturnValueType
+  void
   chebyshevOrthogonalizedSubspaceIterationSolver::solve(operatorDFTClass  & operatorMatrix,
 							std::vector<dataTypes::number> & eigenVectorsFlattened,
 							std::vector<dataTypes::number> & eigenVectorsRotFracDensityFlattened,
@@ -558,15 +558,13 @@ namespace dftfe{
       dftUtils::printCurrentMemoryUsage(operatorMatrix.getMPICommunicator(),
 					"After all steps of subspace iteration");
 
-    return;
-
   }
 
 
   //
   // solve
   //
-  eigenSolverClass::ReturnValueType
+  void
   chebyshevOrthogonalizedSubspaceIterationSolver::solve(operatorDFTClass           & operatorMatrix,
 							std::vector<vectorType>    & eigenVectors,
 							std::vector<double>        & eigenValues,

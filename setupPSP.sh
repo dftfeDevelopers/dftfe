@@ -8,7 +8,7 @@ set -o pipefail
 # and optimization flag
 
 #Paths for external libraries
-dealiiDir="/ccs/proj/mat202/softwaresDev/dealii/dealiiNew/installCUDA10.1.105Gcc6.4.0"
+dealiiDir="/ccs/proj/mat202/softwaresDev/dealii/dealiiReleaseCustomized/installCUDA10.1.105Gcc6.4.0"
 alglibDir="/ccs/proj/mat202/softwaresNew/alglib/cpp/src"
 libxcDir="/ccs/proj/mat202/softwaresNew/libxc/installGcc6.4.0"
 spglibDir="/ccs/proj/mat202/softwaresNew/spglib/installGcc6.4.0"
@@ -24,8 +24,8 @@ withIntelMkl=OFF
 #Compiler options and flags
 c_compiler=mpicc
 cxx_compiler=mpicxx
-c_flagsRelease="-O3 -fPIC -fopenmp -fpermissive"
-cxx_flagsRelease="-O3 -fPIC -fopenmp -fpermissive"
+c_flagsRelease="-O3 -fPIC -fopenmp"
+cxx_flagsRelease="-O3 -fPIC -fopenmp"
 
 #Option to link to ELPA
 withELPA=ON
