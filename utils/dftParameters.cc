@@ -34,6 +34,7 @@ namespace dftParameters
   double lowerEndWantedSpectrum=0.0,relLinearSolverTolerance=1e-10,selfConsistentSolverTolerance=1e-10,TVal=500, start_magnetization=0.0;
   double chebyshevTolerance = 1e-02;
   std::string mixingMethod = "";
+  std::string ionOptSolver = "";
 
   bool isPseudopotential=false,periodicX=false,periodicY=false,periodicZ=false, useSymm=false, timeReversal=false,pseudoTestsFlag=false, constraintMagnetization=false, writeDosFile=false, writeLdosFile=false, writeLocalizationLengths=false;
   std::string meshFileName="",coordinatesFile="",domainBoundingVectorsFile="",kPointDataFile="", ionRelaxFlagsFile="",orthogType="", algoType="", pseudoPotentialFile="";
@@ -201,6 +202,11 @@ namespace dftParameters
 	    prm.declare_entry("ION OPT", "false",
 			      Patterns::Bool(),
 			      "[Standard] Boolean parameter specifying if atomic forces are to be relaxed.");
+
+	    prm.declare_entry("ION OPT SOLVER", "CGPRP",
+			      Patterns::Selection("CGDESCENT|LBFGS|CGPRP"),
+			     "[Standard] Method for Ion relaxation solver. CGPRP (Nonlinear conjugate gradient with Secant and Polak-Ribiere approach) is the default");
+
 
 	    prm.declare_entry("FORCE TOL", "1e-4",
 			      Patterns::Double(0,1.0),
@@ -623,6 +629,7 @@ namespace dftParameters
 	prm.enter_subsection ("Optimization");
 	{
 	    dftParameters::isIonOpt                      = prm.get_bool("ION OPT");
+            dftParameters::ionOptSolver                  = prm.get("ION OPT SOLVER");
 	    dftParameters::nonSelfConsistentForce        = prm.get_bool("NON SELF CONSISTENT FORCE");
 	    dftParameters::isIonForce                    = dftParameters::isIonOpt || prm.get_bool("ION FORCE");
 	    dftParameters::forceRelaxTol                 = prm.get_double("FORCE TOL");
