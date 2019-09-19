@@ -202,6 +202,11 @@ namespace dftParameters
 			      Patterns::Bool(),
 			      "[Standard] Boolean parameter specifying if atomic forces are to be relaxed.");
 
+	    prm.declare_entry("ION OPT SOLVER", "CGPRP",
+			      Patterns::Selection("CGDESCENT|LBFGS|CGPRP"),
+			     "[Standard] Method for Ion relaxation solver. CGPRP (Nonlinear conjugate gradient with Secant and Polak-Ribiere approach) is the default");
+
+
 	    prm.declare_entry("FORCE TOL", "1e-4",
 			      Patterns::Double(0,1.0),
 			      "[Standard] Sets the tolerance on the maximum force (in a.u.) on an atom during atomic relaxation, when the atoms are considered to be relaxed.");
@@ -623,6 +628,7 @@ namespace dftParameters
 	prm.enter_subsection ("Optimization");
 	{
 	    dftParameters::isIonOpt                      = prm.get_bool("ION OPT");
+            dftParameters::ionOptSolver                  = prm.get("ION OPT SOLVER");
 	    dftParameters::nonSelfConsistentForce        = prm.get_bool("NON SELF CONSISTENT FORCE");
 	    dftParameters::isIonForce                    = dftParameters::isIonOpt || prm.get_bool("ION FORCE");
 	    dftParameters::forceRelaxTol                 = prm.get_double("FORCE TOL");
