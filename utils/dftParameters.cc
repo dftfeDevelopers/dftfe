@@ -34,6 +34,7 @@ namespace dftParameters
   double lowerEndWantedSpectrum=0.0,relLinearSolverTolerance=1e-10,selfConsistentSolverTolerance=1e-10,TVal=500, start_magnetization=0.0;
   double chebyshevTolerance = 1e-02;
   std::string mixingMethod = "";
+  std::string ionOptSolver = "";
 
   bool isPseudopotential=false,periodicX=false,periodicY=false,periodicZ=false, useSymm=false, timeReversal=false,pseudoTestsFlag=false, constraintMagnetization=false, writeDosFile=false, writeLdosFile=false, writeLocalizationLengths=false;
   std::string meshFileName="",coordinatesFile="",domainBoundingVectorsFile="",kPointDataFile="", ionRelaxFlagsFile="",orthogType="", algoType="", pseudoPotentialFile="";
