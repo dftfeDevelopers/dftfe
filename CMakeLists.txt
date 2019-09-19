@@ -181,6 +181,12 @@ IF (WITH_GPU)
   ENDIF()
 
   SET(CUDA_SRC
+   ./src/dftOperator/operatorCUDA.cu
+   ./src/linAlg/linearAlgebraOperationsInternalCUDA.cu
+   ./src/linAlg/linearAlgebraOperationsCUDA.cu
+   ./src/linAlg/pseudoGSCUDA.cu
+   ./src/linAlg/rayleighRitzCUDA.cu
+   ./utils/constraintMatrixInfoCUDA.cu
    ./utils/vectorTools/vectorUtilitiesCUDA.cu
    )
 

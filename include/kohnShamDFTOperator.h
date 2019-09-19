@@ -99,7 +99,6 @@ namespace dftfe{
 		const unsigned int numberComponents,
 		std::vector<dataTypes::number> & ProjHam);
 
-#ifdef DEAL_II_WITH_SCALAPACK
     /**
      * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
      *
@@ -144,7 +143,6 @@ namespace dftfe{
 		      const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 		      dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar,
 		      bool origHFlag = false);
-#endif
 
       /**
        * @brief Compute projection of the operator into orthogonal basis

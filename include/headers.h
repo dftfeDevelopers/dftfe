@@ -13,7 +13,7 @@
 //
 // ---------------------------------------------------------------------
 //
-// @author Shiva Rudraraju (2016), Phani Motamarri (2016)
+// @author Shiva Rudraraju (2016), Phani Motamarri (2016), Sambit Das (2018)
 //
 
 #ifndef headers_H_
@@ -84,6 +84,11 @@
 namespace dftfe
 {
   typedef dealii::LinearAlgebra::distributed::Vector<double> vectorType;
+#ifdef DFTFE_WITH_GPU
+  typedef dealii::LinearAlgebra::distributed::Vector<double,dealii::MemorySpace::CUDA> cudaVectorType;
+  typedef dealii::LinearAlgebra::distributed::Vector<float,dealii::MemorySpace::CUDA> cudaVectorTypeFloat;
+#endif
+
   namespace dataTypes
   {
 #ifdef USE_COMPLEX

@@ -169,8 +169,8 @@ namespace dftfe
 		   dftParameters::scalapackParalProcs);
 
 #ifdef DFTFE_WITH_ELPA
-	rowProcs=((dftParameters::scalapackParalProcs==0 || useOnlyThumbRule) && dftParameters::useELPA)?
-		   std::min((unsigned int)std::floor(std::sqrt(numberProcs)),rowProcs*2):rowProcs;
+        rowProcs=((dftParameters::scalapackParalProcs==0 || useOnlyThumbRule) && dftParameters::useELPA)?
+                   std::min((unsigned int)std::floor(std::sqrt(numberProcs)),(unsigned int)std::floor(rowProcs*3.0)):rowProcs;
 #endif
 
 	if(dftParameters::verbosity>=4)

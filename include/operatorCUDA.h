@@ -14,30 +14,27 @@
 //
 // --------------------------------------------------------------------------------------
 //
-// @author Phani Motamarri
+// @author Phani Motamarri, Sambit Das
 //
-#ifndef operatorDFTClass_h
-#define operatorDFTClass_h
+#ifndef operatorDFTCUDAClass_h
+#define operatorDFTCUDAClass_h
 
 #include <vector>
 
 #include <headers.h>
-#include <constraintMatrixInfo.h>
-#ifdef DFTFE_WITH_ELPA
-extern "C"
-{
-#include <elpa/elpa.h>
-}
-#endif
+#include <constraintMatrixInfoCUDA.h>
+#include <thrust/device_vector.h>
+#include <thrust/host_vector.h>
+#include <cublas_v2.h>
 
 namespace dftfe{
 
   /**
    * @brief Base class for building the DFT operator and the action of operator on a vector
    *
-   * @author Phani Motamarri
+   * @author Phani Motamarri, Sambit Das
    */
-  class operatorDFTClass {
+  class operatorDFTCUDAClass {
 
     //
     // methods
@@ -47,27 +44,15 @@ namespace dftfe{
     /**
      * @brief Destructor.
      */
-    virtual ~operatorDFTClass() = 0;
+    virtual ~operatorDFTCUDAClass() = 0;
 
     unsigned int getScalapackBlockSize() const;
 
     unsigned int getScalapackBlockSizeValence() const;
 
-    void processGridOptionalELPASetup(const unsigned int na,
-    		                      const unsigned int nev);
+    void processGridSetup(const unsigned int na,
+                          const unsigned int nev);
 
-#ifdef DFTFE_WITH_ELPA
-    void elpaDeallocateHandles(const unsigned int na,
-		    const unsigned int nev);
-
-    elpa_t & getElpaHandle();
-
-    elpa_t & getElpaHandlePartialEigenVec();
-
-    elpa_t & getElpaHandleValence();
-
-    elpa_autotune_t & getElpaAutoTuneHandle();
-#endif
 
 
     /**
@@ -75,6 +60,51 @@ namespace dftfe{
      *
      */
     virtual void init() = 0;
+
+
+    virtual void createCublasHandles() = 0;
+
+    virtual void destroyCublasHandles() = 0;
+
+    virtual cublasHandle_t & getCublasHandle() = 0;
+
+    virtual const double * getSqrtMassVec() = 0;
+
+    virtual const double * getInvSqrtMassVec() = 0;
+
+    virtual dealii::LinearAlgebra::distributed::Vector<dataTypes::number,dealii::MemorySpace::Host> &  getProjectorKetTimesVectorSingle()=0;
+
+    //virtual cudaVectorType & getBlockCUDADealiiVector() = 0;
+
+    //virtual cudaVectorType & getBlockCUDADealiiVector2() = 0;
+
+    //virtual cudaVectorType & getBlockCUDADealiiVector3() = 0;
+ 
+    //virtual thrust::device_vector<dataTypes::number> & getBlockCUDADealiiVector() = 0;
+
+    //virtual thrust::device_vector<dataTypes::number> & getBlockCUDADealiiVector2() = 0;
+
+    virtual thrust::device_vector<double> & getShapeFunctionGradientIntegral() = 0;
+
+    virtual thrust::device_vector<double> & getShapeFunctionValues() = 0;
+
+    virtual thrust::device_vector<double> & getShapeFunctionValuesInverted() = 0;
+
+    virtual thrust::device_vector<double> & getShapeFunctionGradientValuesX() = 0;
+
+    virtual thrust::device_vector<double> & getShapeFunctionGradientValuesY() = 0;
+
+    virtual thrust::device_vector<double> & getShapeFunctionGradientValuesZ() = 0;
+
+    virtual thrust::device_vector<double> & getShapeFunctionGradientValuesXInverted() = 0;
+
+    virtual thrust::device_vector<double> & getShapeFunctionGradientValuesYInverted() = 0;
+
+    virtual thrust::device_vector<double> & getShapeFunctionGradientValuesZInverted() = 0;
+
+    virtual thrust::device_vector<dealii::types::global_dof_index> & getFlattenedArrayCellLocalProcIndexIdMap()=0;
+
+    virtual thrust::device_vector<dataTypes::number> & getCellWaveFunctionMatrix() = 0;
 
    /**
     * @brief initializes parallel layouts and index maps for HX, XtHX and creates a flattened array format for X
@@ -87,11 +117,10 @@ namespace dftfe{
     * contiguously
     *
     */
-    virtual void reinit(const unsigned int wavefunBlockSize,
-			dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & X,
-			bool flag) = 0;
-
     virtual void reinit(const unsigned int wavefunBlockSize) = 0;
+
+    virtual void reinit(const unsigned int wavefunBlockSize,
+                        bool flag) = 0;
 
     /**
      * @brief compute diagonal mass matrix
@@ -102,20 +131,18 @@ namespace dftfe{
      * @param invSqrtMassVec output the value of inverse square root of diagonal mass matrix
      */
     virtual void computeMassVector(const dealii::DoFHandler<3>    & dofHandler,
-				   const dealii::ConstraintMatrix & constraintMatrix,
+				   const dealii::AffineConstraints<double> & constraintMatrix,
 				   vectorType                     & sqrtMassVec,
 				   vectorType                     & invSqrtMassVec) = 0;
 
 
     /**
      * @brief Compute operator times vector or operator times bunch of vectors
-     *
      * @param X Vector of Vectors containing current values of X
      * @param Y Vector of Vectors containing operator times vectors product
      */
     virtual void HX(std::vector<vectorType> & X,
-		    std::vector<vectorType> & Y) = 0;
-
+                    std::vector<vectorType> & Y) = 0;
 
 
     /**
@@ -127,33 +154,39 @@ namespace dftfe{
      * @param numberComponents number of wavefunctions associated with a given node
      * @param Y Vector containing multi-component fields after operator times vectors product
      */
-    virtual void HX(dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & X,
+    virtual void HX(cudaVectorType & X,
+                    cudaVectorType & projectorKetTimesVector,
+                    const unsigned int localVectorSize,
 		    const unsigned int numberComponents,
 		    const bool scaleFlag,
 		    const double scalar,
-		    dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & Y) = 0;
+		    cudaVectorType & Y) = 0;
 
 
-    virtual void MX(dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & X,
-		    const unsigned int numberComponents,
-		    dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & Y) = 0;
+    virtual void HXCheby(cudaVectorType & X,
+                         cudaVectorTypeFloat &XTemp,
+                         cudaVectorType & projectorKetTimesVector,
+                         const unsigned int localVectorSize,
+                         const unsigned int numberComponents,
+                         cudaVectorType & Y,
+                         bool mixPrecFlag=false) = 0;
 
-    
-    virtual void HX(dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & X,
-		    const unsigned int numberComponents,
-		    dealii::LinearAlgebra::distributed::Vector<dataTypes::number> & Y) = 0;
 
-
-    /**
-     * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
-     *
-     * @param X Vector of Vectors containing multi-wavefunction fields
-     * @param numberComponents number of wavefunctions associated with a given node
-     * @param ProjMatrix projected small matrix
-     */
-    virtual void XtHX(const std::vector<dataTypes::number> & X,
-		      const unsigned int numberComponents,
-		      std::vector<dataTypes::number> & ProjHam) = 0;
+      /**
+       * @brief Compute projection of the operator into orthogonal basis
+       *
+       * @param X given orthogonal basis vectors
+       * @return ProjMatrix projected small matrix
+       */
+     virtual void XtHX(const double *  X,
+                      cudaVectorType & Xb,
+                      cudaVectorType & HXb,
+                      cudaVectorType & projectorKetTimesVector,
+                const unsigned int M,
+		const unsigned int N,
+                cublasHandle_t &handle,
+		double* projHam,
+                const bool isProjHamOnDevice=true)=0;
 
     /**
      * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
@@ -164,53 +197,45 @@ namespace dftfe{
      * @param projHamPar parallel ScaLAPACKMatrix which stores the computed projection
      * of the operation into the given subspace
      */
-    virtual void XtHX(const std::vector<dataTypes::number> & X,
-		      const unsigned int numberComponents,
-		      const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-		      dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar,
-		      bool origHFlag=false) = 0;
-
-    
-    virtual void XtMX(const std::vector<dataTypes::number> & X,
-		      const unsigned int numberComponents,
-		      const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-		      dealii::ScaLAPACKMatrix<dataTypes::number> & projMassPar) = 0;
-
-    
-
+     virtual void XtHX(const double *  X,
+                cudaVectorType & Xb,
+                cudaVectorType & HXb,
+                cudaVectorType & projectorKetTimesVector,
+                const unsigned int M,
+		const unsigned int N,
+                cublasHandle_t &handle,
+	        const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+	        dealii::ScaLAPACKMatrix<double> & projHamPar)=0;
 
     /**
      * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
      *
      * @param X Vector of Vectors containing multi-wavefunction fields
-     * @param totalNumberComponents number of wavefunctions associated with a given node
-     * @param singlePrecComponents number of wavecfuntions starting from the first for
-     * which the project Hamiltionian block will be computed in single procession. However
-     * the cross blocks will still be computed in double precision.
+     * @param numberComponents number of wavefunctions associated with a given node
      * @param processGrid two-dimensional processor grid corresponding to the parallel projHamPar
      * @param projHamPar parallel ScaLAPACKMatrix which stores the computed projection
      * of the operation into the given subspace
      */
-    virtual void XtHXMixedPrec
-	             (const std::vector<dataTypes::number> & X,
-		      const unsigned int totalNumberComponents,
-		      const unsigned int singlePrecComponents,
-		      const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
-		      dealii::ScaLAPACKMatrix<dataTypes::number> & projHamPar,
-		      bool origHFlag=false) = 0;
-
+     virtual void XtHXMixedPrec(const double *  X,
+                cudaVectorType & Xb,
+                cudaVectorType & HXb,
+                cudaVectorType & projectorKetTimesVector,
+                const unsigned int M,
+		const unsigned int N,
+                const unsigned int Noc,
+                cublasHandle_t &handle,
+	        const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+	        dealii::ScaLAPACKMatrix<double> & projHamPar)=0;
     /**
      * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
      *
      * @param  X Vector of Vectors containing the basis vectors spanning the subspace
      * @return ProjMatrix projected small matrix
      */
-    virtual void XtHX(std::vector<vectorType> & X,
-		      std::vector<dataTypes::number> & ProjHam) = 0;
+    /*virtual void XtHX(std::vector<vectorType> & X,
+      std::vector<dataTypes::number> & ProjHam) = 0;*/
 
 
-    void setInvSqrtMassVector(vectorType & X);
-    vectorType & getInvSqrtMassVector();
 
     /**
      * @brief Get local dof indices real
@@ -246,7 +271,7 @@ namespace dftfe{
      *
      * @return pointer to constraint matrix eigen
      */
-    const dealii::ConstraintMatrix * getConstraintMatrixEigen() const;
+    const dealii::AffineConstraints<double> * getConstraintMatrixEigen() const;
 
 
     /**
@@ -254,7 +279,7 @@ namespace dftfe{
      *
      * @return pointer to constraint matrix eigen
      */
-    dftUtils::constraintMatrixInfo * getOverloadedConstraintMatrix() const;
+    dftUtils::constraintMatrixInfoCUDA * getOverloadedConstraintMatrix() const;
 
 
     /**
@@ -278,20 +303,20 @@ namespace dftfe{
     /**
      * @brief default Constructor.
      */
-    operatorDFTClass();
+    operatorDFTCUDAClass();
 
 
     /**
      * @brief Constructor.
      */
-    operatorDFTClass(const MPI_Comm & mpi_comm_replica,
-		     const dealii::MatrixFree<3,double> & matrix_free_data,
-		     const std::vector<dealii::types::global_dof_index> & localDofIndicesReal,
-		     const std::vector<dealii::types::global_dof_index> & localDofIndicesImag,
-		     const std::vector<dealii::types::global_dof_index> & localProcDofIndicesReal,
-		     const std::vector<dealii::types::global_dof_index> & localProcDofIndicesImag,
-		     const dealii::ConstraintMatrix  & constraintMatrixEigen,
-		     dftUtils::constraintMatrixInfo & constraintMatrixNone);
+    operatorDFTCUDAClass(const MPI_Comm & mpi_comm_replica,
+			 const dealii::MatrixFree<3,double> & matrix_free_data,
+			 const std::vector<dealii::types::global_dof_index> & localDofIndicesReal,
+			 const std::vector<dealii::types::global_dof_index> & localDofIndicesImag,
+			 const std::vector<dealii::types::global_dof_index> & localProcDofIndicesReal,
+			 const std::vector<dealii::types::global_dof_index> & localProcDofIndicesImag,
+			 const dealii::AffineConstraints<double>  & constraintMatrixEigen,
+			 dftUtils::constraintMatrixInfoCUDA & constraintMatrixNone);
 
   protected:
 
@@ -319,95 +344,64 @@ namespace dftfe{
     //
     //constraint matrix used for the eigen problem (2-component FE Object for Periodic, 1-component FE object for non-periodic)
     //
-    const dealii::ConstraintMatrix  * d_constraintMatrixEigen;
+    const dealii::AffineConstraints<double>  * d_constraintMatrixEigen;
 
     //
     //Get overloaded constraint matrix object constructed using 1-component FE object
     //
-    dftUtils::constraintMatrixInfo * d_constraintMatrixData;
+    dftUtils::constraintMatrixInfoCUDA * d_constraintMatrixData;
     //
     //matrix-free data
     //
     const dealii::MatrixFree<3,double> * d_matrix_free_data;
 
-    //
-    //inv sqrt mass vector
-    //
-    vectorType d_invSqrtMassVector;
+    thrust::device_vector<double> d_cellShapeFunctionGradientIntegralFlattenedDevice;
 
+
+    thrust::device_vector<double> d_shapeFunctionValueDevice;
+      
+    thrust::device_vector<double> d_shapeFunctionValueInvertedDevice;
+
+    thrust::device_vector<double> d_shapeFunctionGradientValueXDevice;
+      
+    thrust::device_vector<double> d_shapeFunctionGradientValueXInvertedDevice;
+
+    thrust::device_vector<double> d_shapeFunctionGradientValueYDevice;
+      
+    thrust::device_vector<double> d_shapeFunctionGradientValueYInvertedDevice;
+
+    thrust::device_vector<double> d_shapeFunctionGradientValueZDevice;
+      
+    thrust::device_vector<double> d_shapeFunctionGradientValueZInvertedDevice;
+
+    thrust::device_vector<dealii::types::global_dof_index> d_flattenedArrayCellLocalProcIndexIdMapDevice;
+
+    thrust::device_vector<dataTypes::number> d_cellWaveFunctionMatrix;  
     //
     //mpi communicator
     //
     MPI_Comm                          d_mpi_communicator;
 
-#ifdef DFTFE_WITH_ELPA
-    /// ELPA handle
-    elpa_t d_elpaHandle;
-
-    /// ELPA handle for valence proj Ham
-    elpa_t d_elpaHandleValence;
-
-    /// ELPA handle for partial eigenvectors of full proj ham
-    elpa_t d_elpaHandlePartialEigenVec;
-
-    /// ELPA autotune handle
-    elpa_autotune_t d_elpaAutoTuneHandle;
-
-    /// processGrid mpi communicator
-    MPI_Comm d_processGridCommunicatorActive;
-
-    MPI_Comm d_processGridCommunicatorActivePartial;
-     
-    MPI_Comm d_processGridCommunicatorActiveValence;
-#endif
-
     /// ScaLAPACK distributed format block size
     unsigned int d_scalapackBlockSize;
-
+    
     /// ScaLAPACK distributed format block size for valence proj Ham
     unsigned int d_scalapackBlockSizeValence;
   };
 
 /*--------------------- Inline functions --------------------------------*/
-
 #  ifndef DOXYGEN
    inline unsigned int
-   operatorDFTClass::getScalapackBlockSize() const
+   operatorDFTCUDAClass::getScalapackBlockSize() const
    {
      return d_scalapackBlockSize;
    }
 
    inline unsigned int
-   operatorDFTClass::getScalapackBlockSizeValence() const
+   operatorDFTCUDAClass::getScalapackBlockSizeValence() const
    {
      return d_scalapackBlockSizeValence;
    }
-#ifdef DFTFE_WITH_ELPA
-  inline
-  elpa_t & operatorDFTClass::getElpaHandle()
-  {
-       return d_elpaHandle;
-  }
-
-  inline
-  elpa_t & operatorDFTClass::getElpaHandleValence()
-  {
-       return d_elpaHandleValence;
-  }
-
-  inline
-  elpa_t & operatorDFTClass::getElpaHandlePartialEigenVec()
-  {
-       return d_elpaHandlePartialEigenVec;
-  }
-
-
-  inline
-  elpa_autotune_t & operatorDFTClass::getElpaAutoTuneHandle()
-  {
-       return d_elpaAutoTuneHandle;
-  }
-#endif
 #  endif // ifndef DOXYGEN
 
 }

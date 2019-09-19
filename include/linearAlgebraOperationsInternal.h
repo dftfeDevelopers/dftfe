@@ -38,8 +38,6 @@ namespace dftfe
      */
     namespace internal
     {
-#ifdef DEAL_II_WITH_SCALAPACK
-
 #ifdef DFTFE_WITH_ELPA
 	/** @brief setup ELPA handle.
 	 *
@@ -284,8 +282,6 @@ namespace dftfe
 				const dealii::ScaLAPACKMatrix<dataTypes::number> & rotationMatPar,
 				const bool rotationMatTranspose=false,
 				const bool doCommAfterBandParal=true);
-
-#endif
     }
   }
 }

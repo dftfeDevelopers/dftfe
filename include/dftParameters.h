@@ -89,7 +89,7 @@ namespace dftfe {
       extern bool useMixedPrecPGS_O;
       extern bool useMixedPrecXTHXSpectrumSplit;
       extern bool useMixedPrecSubspaceRotSpectrumSplit;
-      extern bool useMixedPrecSubspaceRot;
+      extern bool useMixedPrecSubspaceRotRR;
       extern unsigned int numAdaptiveFilterStates;
       extern unsigned int spectrumSplitStartingScfIter;
       extern bool useELPA;
@@ -98,6 +98,13 @@ namespace dftfe {
       extern bool bandParalOpt;
       extern bool rrGEP;
       extern bool rrGEPFullMassMatrix;
+      extern bool useGPU;
+      extern bool gpuFineGrainedTimings;
+      extern bool allowFullCPUMemSubspaceRot;
+      extern bool useMixedPrecCheby;
+      extern unsigned int mixedPrecXtHXFracStates;
+
+
 
       /**
        * Declare parameters.

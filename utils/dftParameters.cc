@@ -83,7 +83,7 @@ namespace dftParameters
   bool useMixedPrecPGS_O=false;
   bool useMixedPrecXTHXSpectrumSplit=false;
   bool useMixedPrecSubspaceRotSpectrumSplit=false;
-  bool useMixedPrecSubspaceRot=false;
+  bool useMixedPrecSubspaceRotRR=false;
   unsigned int numAdaptiveFilterStates=0;
   unsigned int spectrumSplitStartingScfIter=1;
   bool useELPA=false;
@@ -93,6 +93,12 @@ namespace dftParameters
   bool rrGEP=false;
   bool rrGEPFullMassMatrix=false;
   bool autoUserMeshParams=false;
+  bool useGPU=false;
+  bool gpuFineGrainedTimings=false;
+  bool allowFullCPUMemSubspaceRot=true;
+  bool useMixedPrecCheby=false;
+  unsigned int mixedPrecXtHXFracStates=0;
+
 
   void declare_parameters(ParameterHandler &prm)
   {
@@ -112,6 +118,21 @@ namespace dftParameters
     prm.declare_entry("VERBOSITY", "1",
                       Patterns::Integer(0,4),
                       "[Standard] Parameter to control verbosity of terminal output. Ranges from 1 for low, 2 for medium (prints some more additional information), 3 for high (prints eigenvalues and fractional occupancies at the end of each self-consistent field iteration), and 4 for very high, which is only meant for code development purposes. VERBOSITY=0 is only used for unit testing and shouldn't be used by standard users.");
+
+    prm.enter_subsection ("GPU");
+    {
+	    prm.declare_entry("USE GPU", "false",
+			      Patterns::Bool(),
+			      "[Standard] Use GPU for compute.");
+
+	    prm.declare_entry("FINE GRAINED GPU TIMINGS", "false",
+			      Patterns::Bool(),
+			      "[Developer] Print more fine grained GPU timing results. Default: false.");
+
+	    prm.declare_entry("SUBSPACE ROT FULL CPU MEM", "false",
+			      Patterns::Bool(),
+			      "[Developer] Option to use full NxN memory on CPU in subspace rotation. This reduces the number of MPI_Allreduce communication calls. Default: false.");
+    }
 
     prm.enter_subsection ("Postprocessing");
     {
@@ -559,6 +580,13 @@ namespace dftParameters
 			       Patterns::Bool(),
 			      "[Advanced] Use mixed precision arithmetic in Rayleigh-Ritz subspace rotation step. Currently this optimization is only enabled for the real executable. Default setting is false.");
 
+            prm.declare_entry("USE MIXED PREC CHEBY", "false",
+			      Patterns::Bool(),
+			      "[Advanced] Use mixed precision arithmetic in Chebyshev filtering. Currently this option is only available for real executable and USE ELPA=true for which DFT-FE also has to be linked to ELPA library. Default setting is false.");
+
+	    prm.declare_entry("MIXED PREC XTHX FRAC STATES", "0",
+			      Patterns::Integer(0),
+			      "[Advanced] XTHX Mixed Precision. Temporary paramater- remove once spectrum splitting with RR GEP and mixed precision is implemented. Default value is 0.");
 
             prm.declare_entry("ALGO", "NORMAL",
 			       Patterns::Selection("NORMAL|FAST"),
@@ -593,6 +621,14 @@ namespace dftParameters
     dftParameters::reproducible_output           = prm.get_bool("REPRODUCIBLE OUTPUT");
     dftParameters::electrostaticsHRefinement = prm.get_bool("H REFINED ELECTROSTATICS");
     dftParameters::electrostaticsPRefinement = prm.get_bool("P REFINED ELECTROSTATICS");
+
+    prm.enter_subsection ("GPU");
+    { 
+      dftParameters::useGPU= prm.get_bool("USE GPU");
+      dftParameters::gpuFineGrainedTimings=prm.get_bool("FINE GRAINED GPU TIMINGS");
+      dftParameters::allowFullCPUMemSubspaceRot=prm.get_bool("SUBSPACE ROT FULL CPU MEM");
+    }
+    prm.leave_subsection ();
 
     prm.enter_subsection ("Postprocessing");
     {
@@ -748,7 +784,9 @@ namespace dftParameters
 	   dftParameters::useMixedPrecPGS_O= prm.get_bool("USE MIXED PREC PGS O");
 	   dftParameters::useMixedPrecXTHXSpectrumSplit= prm.get_bool("USE MIXED PREC XTHX SPECTRUM SPLIT");
 	   dftParameters::useMixedPrecSubspaceRotSpectrumSplit= prm.get_bool("USE MIXED PREC RR_SR SPECTRUM SPLIT");
-	   dftParameters::useMixedPrecSubspaceRot= prm.get_bool("USE MIXED PREC RR_SR");
+	   dftParameters::useMixedPrecSubspaceRotRR= prm.get_bool("USE MIXED PREC RR_SR");
+           dftParameters::useMixedPrecCheby= prm.get_bool("USE MIXED PREC CHEBY");
+           dftParameters::mixedPrecXtHXFracStates  = prm.get_integer("MIXED PREC XTHX FRAC STATES");
 	   dftParameters::algoType= prm.get("ALGO");
 	   dftParameters::numAdaptiveFilterStates= prm.get_integer("ADAPTIVE FILTER STATES");
 	}
@@ -909,6 +947,19 @@ namespace dftParameters
 #ifndef USE_PETSC;
    AssertThrow(dftParameters::isPseudopotential,ExcMessage("DFT-FE Error: Please link to dealii installed with petsc and slepc for all-electron calculations."));
 #endif
+
+#ifdef DFTFE_WITH_GPU
+    if (dftParameters::useGPU)
+    {
+      if (dftParameters::nbandGrps>1)
+        AssertThrow(dftParameters::rrGEP
+                ,ExcMessage("DFT-FE Error: if band parallelization is used, RR GEP must be set to true."));
+   }
+#endif
+    if (dftParameters::useMixedPrecCheby)
+       AssertThrow(dftParameters::useELPA
+	        ,ExcMessage("DFT-FE Error: USE ELPA must be set to true for USE MIXED PREC CHEBY."));
+
   }
 
 

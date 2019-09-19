@@ -766,7 +766,7 @@ namespace dftfe{
       //rotate the basis in the subspace X = X*L_{inv}^{T}*Q,
       //stored in the column major format
       //
-      if (!(dftParameters::useMixedPrecSubspaceRot && useMixedPrec))
+      if (!(dftParameters::useMixedPrecSubspaceRotRR && useMixedPrec))
          computing_timer.enter_section("X = X*L_{inv}^{T}*Q, RR step");
       else
 	 computing_timer.enter_section("X = X*L_{inv}^{T}*Q mixed prec, RR step");
@@ -777,7 +777,7 @@ namespace dftfe{
       else
 	LMatPar.mmult(projHamPar,projHamParCopy);
 
-      if (!(dftParameters::useMixedPrecSubspaceRot && useMixedPrec))
+      if (!(dftParameters::useMixedPrecSubspaceRotRR && useMixedPrec))
           internal::subspaceRotation(&X[0],
 	                         X.size(),
 		                 numberWaveFunctions,
@@ -799,7 +799,7 @@ namespace dftfe{
 				 true,
 				 false);
 
-      if (!(dftParameters::useMixedPrecSubspaceRot && useMixedPrec))
+      if (!(dftParameters::useMixedPrecSubspaceRotRR && useMixedPrec))
          computing_timer.exit_section("X = X*L_{inv}^{T}*Q, RR step");
       else
 	 computing_timer.exit_section("X = X*L_{inv}^{T}*Q mixed prec, RR step");
@@ -1103,7 +1103,7 @@ namespace dftfe{
       //rotate the basis in the subspace X = X*L_{inv}^{T}*Q,
       //stored in the column major format
       //
-      if (!(dftParameters::useMixedPrecSubspaceRot && useMixedPrec))
+      if (!(dftParameters::useMixedPrecSubspaceRotRR && useMixedPrec))
          computing_timer.enter_section("X = X*L_{inv}^{T}*Q, RR step");
       else
 	 computing_timer.enter_section("X = X*L_{inv}^{T}*Q mixed prec, RR step");
@@ -1125,7 +1125,7 @@ namespace dftfe{
 			     false,
 			     false);
 
-      if (!(dftParameters::useMixedPrecSubspaceRot && useMixedPrec))
+      if (!(dftParameters::useMixedPrecSubspaceRotRR && useMixedPrec))
          computing_timer.exit_section("X = X*L_{inv}^{T}*Q, RR step");
       else
 	 computing_timer.exit_section("X = X*L_{inv}^{T}*Q mixed prec, RR step");
