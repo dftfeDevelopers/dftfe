@@ -833,6 +833,8 @@ namespace dftParameters
 #ifdef DFTFE_WITH_ELPA
     if (!dftParameters::reproducible_output)
       dftParameters::useELPA=true;
+#else
+     dftParameters::useELPA=false;
 #endif
 
     if (dftParameters::isCellStress)
