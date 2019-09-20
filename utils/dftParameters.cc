@@ -133,6 +133,7 @@ namespace dftParameters
 			      Patterns::Bool(),
 			      "[Developer] Option to use full NxN memory on CPU in subspace rotation. This reduces the number of MPI_Allreduce communication calls. Default: false.");
     }
+    prm.leave_subsection ();
 
     prm.enter_subsection ("Postprocessing");
     {
@@ -832,6 +833,8 @@ namespace dftParameters
 #ifdef DFTFE_WITH_ELPA
     if (!dftParameters::reproducible_output)
       dftParameters::useELPA=true;
+#else
+     dftParameters::useELPA=false;
 #endif
 
     if (dftParameters::isCellStress)
