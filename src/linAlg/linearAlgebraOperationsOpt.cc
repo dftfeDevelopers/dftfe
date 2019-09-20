@@ -2090,6 +2090,352 @@ namespace dftfe{
     }
 #endif
 
+#ifdef DFTFE_WITH_ELPA
+    void elpaDiagonalization(elpaScalaManager        & elpaScala,
+		      const unsigned int numberWaveFunctions,
+		      const MPI_Comm &mpiComm,
+		      std::vector<double>     & eigenValues,
+                      dealii::ScaLAPACKMatrix<double> & projHamPar,
+                      const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid)
+    {
+
+          const unsigned int rowsBlockSize=elpaScala.getScalapackBlockSize();
+
+          dealii::ScaLAPACKMatrix<double> eigenVectors(numberWaveFunctions,
+                                            processGrid,
+                                            rowsBlockSize);
+
+	  if (processGrid->is_process_active())
+	      std::fill(&eigenVectors.local_el(0,0),
+		    &eigenVectors.local_el(0,0)+eigenVectors.local_m()*eigenVectors.local_n(),
+		    0.0);
+
+	  //For ELPA eigendecomposition the full matrix is required unlike
+	  //ScaLAPACK which can work with only the lower triangular part
+	  dealii::ScaLAPACKMatrix<double> projHamParTrans(numberWaveFunctions,
+						processGrid,
+						rowsBlockSize);
+
+          if (processGrid->is_process_active())
+	      std::fill(&projHamParTrans.local_el(0,0),
+		        &projHamParTrans.local_el(0,0)+projHamParTrans.local_m()*projHamParTrans.local_n(),
+		        0.0);
+
+
+	  projHamParTrans.copy_transposed(projHamPar);
+	  projHamPar.add(projHamParTrans,1.0,1.0);
+
+	  if (processGrid->is_process_active())
+	     for (unsigned int i = 0; i < projHamPar.local_n(); ++i)
+	       {
+		 const unsigned int glob_i = projHamPar.global_column(i);
+		 for (unsigned int j = 0; j < projHamPar.local_m(); ++j)
+		   {
+		     const unsigned int glob_j = projHamPar.global_row(j);
+		     if (glob_i==glob_j)
+			projHamPar.local_el(j, i)*=0.5;
+		   }
+	       }
+
+	  if (processGrid->is_process_active())
+          {
+	      int error;
+	      elpa_eigenvectors_d(elpaScala.getElpaHandle(),
+				&projHamPar.local_el(0,0),
+				&eigenValues[0],
+				&eigenVectors.local_el(0,0),
+				&error);
+	      AssertThrow(error==ELPA_OK,
+		    dealii::ExcMessage("DFT-FE Error: elpa_eigenvectors error."));
+	  }
+
+
+	  MPI_Bcast(&eigenValues[0],
+		    eigenValues.size(),
+		    MPI_DOUBLE,
+		    0,
+		    mpiComm);
+
+
+	 eigenVectors.copy_to(projHamPar);
+
+    }
+
+
+    void elpaDiagonalizationGEP(elpaScalaManager        & elpaScala,
+		      const unsigned int numberWaveFunctions,
+		      const MPI_Comm &mpiComm,
+		      std::vector<double>     & eigenValues,
+                      dealii::ScaLAPACKMatrix<double> & projHamPar,
+                      dealii::ScaLAPACKMatrix<double> & overlapMatPar, 
+                      const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid)
+    {
+
+          const unsigned int rowsBlockSize=elpaScala.getScalapackBlockSize();
+
+          dealii::LAPACKSupport::Property overlapMatPropertyPostCholesky;
+
+	  //For ELPA cholesky only the upper triangular part is enough
+	  dealii::ScaLAPACKMatrix<double> overlapMatParTrans(numberWaveFunctions,
+						processGrid,
+						rowsBlockSize);
+
+          if (processGrid->is_process_active())
+	      std::fill(&overlapMatParTrans.local_el(0,0),
+		        &overlapMatParTrans.local_el(0,0)
+			+overlapMatParTrans.local_m()*overlapMatParTrans.local_n(),
+		        0.0);
+
+	  overlapMatParTrans.copy_transposed(overlapMatPar);
+
+	  if (processGrid->is_process_active())
+	  {
+	      int error;
+	      elpa_cholesky_d(elpaScala.getElpaHandle(), &overlapMatParTrans.local_el(0,0), &error);
+	      AssertThrow(error==ELPA_OK,
+			dealii::ExcMessage("DFT-FE Error: elpa_cholesky_d error."));
+	  }
+	  overlapMatParTrans.copy_to(overlapMatPar);
+	  overlapMatPropertyPostCholesky=dealii::LAPACKSupport::Property::upper_triangular;
+
+	  AssertThrow(overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::lower_triangular
+			  ||overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::upper_triangular
+			   ,dealii::ExcMessage("DFT-FE Error: overlap matrix property after cholesky factorization incorrect"));
+
+	  dealii::ScaLAPACKMatrix<double> LMatPar(numberWaveFunctions,
+						 processGrid,
+						 rowsBlockSize,
+						 overlapMatPropertyPostCholesky);
+
+	  //copy triangular part of projHamPar into LMatPar
+	  if (processGrid->is_process_active())
+		 for (unsigned int i = 0; i < overlapMatPar.local_n(); ++i)
+		   {
+		     const unsigned int glob_i = overlapMatPar.global_column(i);
+		     for (unsigned int j = 0; j < overlapMatPar.local_m(); ++j)
+		       {
+			 const unsigned int glob_j = overlapMatPar.global_row(j);
+			 if (overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::lower_triangular)
+			 {
+			     if (glob_i <= glob_j)
+				LMatPar.local_el(j, i)=overlapMatPar.local_el(j, i);
+			     else
+				LMatPar.local_el(j, i)=0;
+			 }
+			 else
+			 {
+			     if (glob_j <= glob_i)
+				LMatPar.local_el(j, i)=overlapMatPar.local_el(j, i);
+			     else
+				LMatPar.local_el(j, i)=0;
+			 }
+		       }
+		   }
+
+
+          //invert triangular matrix
+	  if (processGrid->is_process_active())
+	  {
+	      int error;
+	      elpa_invert_trm_d(elpaScala.getElpaHandle(), &LMatPar.local_el(0,0), &error);
+	      AssertThrow(error==ELPA_OK,
+			dealii::ExcMessage("DFT-FE Error: elpa_invert_trm_d error."));
+	  }
+
+	  //For ELPA eigendecomposition the full matrix is required unlike
+	  //ScaLAPACK which can work with only the lower triangular part
+	  dealii::ScaLAPACKMatrix<double> projHamParTrans(numberWaveFunctions,
+						    processGrid,
+						    rowsBlockSize);
+
+	  if (processGrid->is_process_active())
+		  std::fill(&projHamParTrans.local_el(0,0),
+			    &projHamParTrans.local_el(0,0)+projHamParTrans.local_m()*projHamParTrans.local_n(),
+			    0.0);
+
+
+	  projHamParTrans.copy_transposed(projHamPar);
+	  projHamPar.add(projHamParTrans,1.0,1.0);
+
+	  if (processGrid->is_process_active())
+	     for (unsigned int i = 0; i < projHamPar.local_n(); ++i)
+		   {
+		     const unsigned int glob_i = projHamPar.global_column(i);
+		     for (unsigned int j = 0; j < projHamPar.local_m(); ++j)
+		       {
+			 const unsigned int glob_j = projHamPar.global_row(j);
+			 if (glob_i==glob_j)
+			    projHamPar.local_el(j, i)*=0.5;
+		       }
+		   }
+
+	  dealii::ScaLAPACKMatrix<double> projHamParCopy(numberWaveFunctions,
+	  				            processGrid,
+						    rowsBlockSize);
+
+	  if (overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::lower_triangular)
+	  {
+	       LMatPar.mmult(projHamParCopy,projHamPar);
+	       projHamParCopy.mTmult(projHamPar,LMatPar);
+	  }
+	  else
+	  {
+	       LMatPar.Tmmult(projHamParCopy,projHamPar);
+	       projHamParCopy.mmult(projHamPar,LMatPar);
+	  }
+
+          //
+          //compute eigendecomposition of ProjHam
+          //
+          const unsigned int numberEigenValues = numberWaveFunctions;
+          eigenValues.resize(numberEigenValues);
+
+          dealii::ScaLAPACKMatrix<double> eigenVectors(numberWaveFunctions,
+                                            processGrid,
+                                            rowsBlockSize);
+
+	  if (processGrid->is_process_active())
+	      std::fill(&eigenVectors.local_el(0,0),
+		    &eigenVectors.local_el(0,0)+eigenVectors.local_m()*eigenVectors.local_n(),
+		    0.0);
+
+	  if (processGrid->is_process_active())
+          {
+	      int error;
+	      elpa_eigenvectors_d(elpaScala.getElpaHandle(),
+				&projHamPar.local_el(0,0),
+				&eigenValues[0],
+				&eigenVectors.local_el(0,0),
+				&error);
+	      AssertThrow(error==ELPA_OK,
+		    dealii::ExcMessage("DFT-FE Error: elpa_eigenvectors error."));
+	  }
+
+
+	  MPI_Bcast(&eigenValues[0],
+		    eigenValues.size(),
+		    MPI_DOUBLE,
+		    0,
+		    mpiComm);
+
+
+	  eigenVectors.copy_to(projHamPar);
+
+	  projHamPar.copy_to(projHamParCopy);
+	  if (overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::lower_triangular)
+		LMatPar.Tmmult(projHamPar,projHamParCopy);
+	  else
+	        LMatPar.mmult(projHamPar,projHamParCopy);
+    }
+
+
+    void elpaPartialDiagonalization(elpaScalaManager        & elpaScala,
+		      const unsigned int N,
+                      const unsigned int Noc,
+		      const MPI_Comm &mpiComm,
+		      std::vector<double>     & eigenValues,
+                      dealii::ScaLAPACKMatrix<double> & projHamPar,
+                      const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid)
+   {
+      //
+      //compute projected Hamiltonian
+      //
+      const unsigned int rowsBlockSize=elpaScala.getScalapackBlockSize();
+
+      const unsigned int numValenceStates=N-Noc;
+      eigenValues.resize(numValenceStates);
+      std::vector<double> allEigenValues(N,0.0);
+      dealii::ScaLAPACKMatrix<double> eigenVectors(N,
+                                            processGrid,
+                                            rowsBlockSize);
+
+      if (processGrid->is_process_active())
+         std::fill(&eigenVectors.local_el(0,0),
+         &eigenVectors.local_el(0,0)+eigenVectors.local_m()*eigenVectors.local_n(),
+         0.0);
+
+      //For ELPA eigendecomposition the full matrix is required unlike
+      //ScaLAPACK which can work with only the lower triangular part
+      dealii::ScaLAPACKMatrix<double> projHamParTrans(N,
+					processGrid,
+					rowsBlockSize);
+      if (processGrid->is_process_active())
+         std::fill(&projHamParTrans.local_el(0,0),
+		        &projHamParTrans.local_el(0,0)+projHamParTrans.local_m()*projHamParTrans.local_n(),
+		        0.0);
+
+      projHamParTrans.copy_transposed(projHamPar);
+      projHamPar.add(projHamParTrans,-1.0,-1.0);
+
+      if (processGrid->is_process_active())
+	     for (unsigned int i = 0; i < projHamPar.local_n(); ++i)
+	       {
+		 const unsigned int glob_i = projHamPar.global_column(i);
+		 for (unsigned int j = 0; j < projHamPar.local_m(); ++j)
+		   {
+		     const unsigned int glob_j = projHamPar.global_row(j);
+		     if (glob_i==glob_j)
+			projHamPar.local_el(j, i)*=0.5;
+		   }
+	       }
+
+      if (processGrid->is_process_active())
+      {
+	      int error;
+	      elpa_eigenvectors_d(elpaScala.getElpaHandlePartialEigenVec(),
+				&projHamPar.local_el(0,0),
+				&allEigenValues[0],
+				&eigenVectors.local_el(0,0),
+				&error);
+	      AssertThrow(error==ELPA_OK,
+		    dealii::ExcMessage("DFT-FE Error: elpa_eigenvectors error in case spectrum splitting."));
+      }
+
+      for (unsigned int i=0;i<numValenceStates;++i)
+      {
+         eigenValues[numValenceStates-i-1]=-allEigenValues[i];
+      }
+
+      MPI_Bcast(&eigenValues[0],
+    	        eigenValues.size(),
+		MPI_DOUBLE,
+		0,
+		elpaScala.getMPICommunicator());
+
+
+      dealii::ScaLAPACKMatrix<double> permutedIdentityMat(N,
+						    processGrid,
+						    rowsBlockSize);
+      if (processGrid->is_process_active())
+	      std::fill(&permutedIdentityMat.local_el(0,0),
+		        &permutedIdentityMat.local_el(0,0)
+			+permutedIdentityMat.local_m()*permutedIdentityMat.local_n(),
+		        0.0);
+  
+      if (processGrid->is_process_active())
+	     for (unsigned int i = 0; i < permutedIdentityMat.local_m(); ++i)
+	       {
+		 const unsigned int glob_i = permutedIdentityMat.global_row(i);
+		 if (glob_i<numValenceStates)
+		 {
+		     for (unsigned int j = 0; j < permutedIdentityMat.local_n(); ++j)
+		       {
+			 const unsigned int glob_j = permutedIdentityMat.global_column(j);
+			 if (glob_j<numValenceStates)
+			 {
+			     const unsigned int rowIndexToSetOne = (numValenceStates-1)-glob_j;
+			     if(glob_i == rowIndexToSetOne)
+				permutedIdentityMat.local_el(i, j) = 1.0;
+			 }
+		       }
+		 }
+	       }
+
+      eigenVectors.mmult(projHamPar,permutedIdentityMat);
+    } 
+#endif
+
+
     template<typename T>
     void computeEigenResidualNorm(operatorDFTClass & operatorMatrix,
 				  std::vector<T> & X,

@@ -19,6 +19,7 @@
 
 #include <headers.h>
 #include <operator.h>
+#include <elpaScalaManager.h>
 
 namespace dftfe
 {
@@ -315,6 +316,33 @@ namespace dftfe
 		      const bool useMixedPrec,
 		      std::vector<double>     & eigenValues);
 
+
+#ifdef DFTFE_WITH_ELPA
+    void elpaDiagonalization(elpaScalaManager        & elpaScala,
+		      const unsigned int numberWavefunctions,
+		      const MPI_Comm &mpiComm,
+		      std::vector<double>     & eigenValues,
+                      dealii::ScaLAPACKMatrix<double> & projHamPar,
+                      const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid);
+
+
+    void elpaDiagonalizationGEP(elpaScalaManager        & elpaScala,
+		      const unsigned int numberWavefunctions,
+		      const MPI_Comm &mpiComm,
+		      std::vector<double>     & eigenValues,
+                      dealii::ScaLAPACKMatrix<double> & projHamPar,
+                      dealii::ScaLAPACKMatrix<double> & overlapMatPar,
+                      const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid);
+
+
+    void elpaPartialDiagonalization(elpaScalaManager        & elpaScala,
+		      const unsigned int N,
+                      const unsigned int Noc,
+		      const MPI_Comm &mpiComm,
+		      std::vector<double>     & eigenValues,
+                      dealii::ScaLAPACKMatrix<double> & projHamPar,
+                      const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid);
+#endif
 
     /** @brief Compute Compute residual norm associated with eigenValue problem of the given operator
      *
