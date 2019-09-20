@@ -41,6 +41,7 @@ SET(TARGET_SRC
   ./src/linAlg/linearAlgebraOperations.cc
   ./src/linAlg/linearAlgebraOperationsOpt.cc
   ./src/linAlg/linearAlgebraOperationsInternal.cc
+  ./src/linAlg/elpaScalaManager.cc
   ./src/solvers/dealiiLinearSolver.cc
   ./src/solvers/dealiiLinearSolverProblem.cc
   ./utils/fileReaders.cc
@@ -181,6 +182,8 @@ IF (WITH_GPU)
   ENDIF()
 
   SET(CUDA_SRC
+   ./src/setupGPU.cu
+   ./src/dft/densityCalculatorCUDA.cu
    ./src/dftOperator/operatorCUDA.cu
    ./src/linAlg/linearAlgebraOperationsInternalCUDA.cu
    ./src/linAlg/linearAlgebraOperationsCUDA.cu

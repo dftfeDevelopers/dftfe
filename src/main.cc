@@ -28,6 +28,7 @@
 #include "dft.h"
 #include <dftUtils.h>
 #include <dftParameters.h>
+#include <setupGPU.h>
 
 
 //
@@ -83,6 +84,12 @@ int main (int argc, char *argv[])
       pcout <<"============================================================================================" << std::endl ;
   }
 
+#ifdef DFTFE_WITH_GPU
+  if (dftfe::dftParameters::useGPU)
+  {
+     dftfe::setupGPU();
+  }
+#endif
 
   // set stdout precision
   std::cout << std::scientific << std::setprecision(18);

@@ -64,6 +64,21 @@ namespace dftfe{
 
 
 
+#ifdef DFTFE_WITH_GPU   
+    /** @brief Creates a custom partitioned flattened dealii vector on GPU device.
+     *  stores multiple components asociated with a node sequentially.
+     *
+     *  @param partitioner associated with single component vector
+     *  @param blockSize number of components associated with each node
+     *
+     *  @return flattenedArray custom partitioned dealii vector
+     */
+    template<typename T>
+    void createDealiiVector(const std::shared_ptr< const dealii::Utilities::MPI::Partitioner > & partitioner,
+			    const unsigned int                                           blockSize,
+			    dealii::LinearAlgebra::distributed::Vector<T,dealii::MemorySpace::CUDA> & flattenedArray);
+#endif
+
     /** @brief Creates a cell local index set map for flattened array
      *
      *  @param partitioner associated with the flattened array
@@ -78,6 +93,24 @@ namespace dftfe{
 				     const unsigned int                                                   blockSize,
 				     std::vector<std::vector<dealii::types::global_dof_index> >         & flattenedArrayMacroCellLocalProcIndexId,
 				     std::vector<std::vector<dealii::types::global_dof_index> >         & flattenedArrayCellLocalProcIndexId);
+
+
+    /** @brief Creates a cell local index set map for flattened array
+     *
+     *  @param partitioner associated with the flattened array
+     *  @param matrix_free_data object pointer associated with the matrix free data structure
+     *  @param blockSize number of components associated with each node
+     *
+     *  @return flattenedArrayMacroCellLocalProcIndexId macrocell's subcell local proc index map
+     *  @return flattenedArrayCellLocalProcIndexId cell local proc index map
+     */
+    void computeCellLocalIndexSetMap(const std::shared_ptr< const dealii::Utilities::MPI::Partitioner > & partitioner,
+				     const dealii::MatrixFree<3,double>                                 & matrix_free_data,
+				     const unsigned int                                                   blockSize,
+				     std::vector<dealii::types::global_dof_index>                       & flattenedArrayMacroCellLocalProcIndexId,
+                                     std::vector<unsigned int>                       & normalCellIdToMacroCellIdMap,
+                                     std::vector<unsigned int>                       & macroCellIdToNormalCellIdMap,
+				     std::vector<dealii::types::global_dof_index>         & flattenedArrayCellLocalProcIndexId);
 
 
 #ifdef USE_COMPLEX

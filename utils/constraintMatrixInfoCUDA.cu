@@ -26,23 +26,23 @@ namespace dftfe {
 
 
 #if __CUDA_ARCH__ < 600
-__device__ double atomicAdd(double* address, double val)
-{
-    unsigned long long int* address_as_ull =
-                              (unsigned long long int*)address;
-    unsigned long long int old = *address_as_ull, assumed;
+		__device__ double atomicAdd(double* address, double val)
+		{
+		    unsigned long long int* address_as_ull =
+					      (unsigned long long int*)address;
+		    unsigned long long int old = *address_as_ull, assumed;
 
-    do {
-        assumed = old;
-        old = atomicCAS(address_as_ull, assumed,
-                        __double_as_longlong(val +
-                               __longlong_as_double(assumed)));
+		    do {
+			assumed = old;
+			old = atomicCAS(address_as_ull, assumed,
+					__double_as_longlong(val +
+					       __longlong_as_double(assumed)));
 
-    // Note: uses integer comparison to avoid hang in case of NaN (since NaN != NaN)
-    } while (assumed != old);
+		    // Note: uses integer comparison to avoid hang in case of NaN (since NaN != NaN)
+		    } while (assumed != old);
 
-    return __longlong_as_double(old);
-}
+		    return __longlong_as_double(old);
+		}
 #endif
 
 		__global__
@@ -80,32 +80,6 @@ __device__ double atomicAdd(double* address, double val)
 		   }
 
 		}
-
-				__global__
-		void distributeSlaveToMasterKernel(const dealii::types::global_dof_index contiguousBlockSize,
-				   double *xVec,
-				   const dealii::types::global_dof_index xVecStartingIdRow,
-				   const unsigned int numberColumns,
-				   const unsigned int startingColumnNumber,
-				   const unsigned int *constraintLocalColumnIdsAllRowsUnflattened,
-				   const double *constraintColumnValuesAllRowsUnflattened,
-				   const dealii::types::global_dof_index *localIndexMapUnflattenedToFlattened)
-		{
-		  const dealii::types::global_dof_index globalThreadId = blockIdx.x*blockDim.x + threadIdx.x;
-		  const dealii::types::global_dof_index numberEntries = contiguousBlockSize*numberColumns;
-
-		  for(unsigned int index = globalThreadId; index < numberEntries; index+= blockDim.x*gridDim.x)
-		   {
-		      const unsigned int blockIndex = index/contiguousBlockSize;
-		      const unsigned int intraBlockIndex=index%contiguousBlockSize;
-	              const unsigned int constrainedColumnId=constraintLocalColumnIdsAllRowsUnflattened[startingColumnNumber+blockIndex];
-	              const dealii::types::global_dof_index xVecStartingIdColumn=localIndexMapUnflattenedToFlattened[constrainedColumnId];
-		      xVec[xVecStartingIdColumn+intraBlockIndex]+=xVec[xVecStartingIdRow+intraBlockIndex]*constraintColumnValuesAllRowsUnflattened[startingColumnNumber+blockIndex];
-
-		   }
-
-		}
-
 
             
                 __global__
@@ -145,37 +119,6 @@ __device__ double atomicAdd(double* address, double val)
                 }
 
 
-
-	/*	template<typename T>
-		__global__
-		void distributeSlaveToMasterNonInteractingBinKernel(const unsigned int contiguousBlockSize,
-					T *xVec,
-					const unsigned int numColumnConstraintsBin,
-					const unsigned int *constraintLocalColumnIdsAllRowsUnflattenedBin,
-                                        const unsigned int *columnIdToRowIdMapBinsBin,
-					const double *constraintColumnValuesAllRowsUnflattenedBin,
-					const dealii::types::global_dof_index *localIndexMapUnflattenedToFlattened)
-		{
-		  const dealii::types::global_dof_index globalThreadId = blockIdx.x*blockDim.x + threadIdx.x;
-		  const dealii::types::global_dof_index numberEntries = numColumnConstraintsBin*contiguousBlockSize;
-
-		  for(dealii::types::global_dof_index index = globalThreadId; index < numberEntries; index+= blockDim.x*gridDim.x)
-		   {
-		      const unsigned int blockIndex = index/contiguousBlockSize;
-		      const unsigned int intraBlockIndex=index%contiguousBlockSize;
-		      const unsigned int constrainedRowId=columnIdToRowIdMapBinsBin[blockIndex];
-		      const dealii::types::global_dof_index xVecStartingIdRow=localIndexMapUnflattenedToFlattened[constrainedRowId];
-                    
-	              const unsigned int constrainedColumnId=constraintLocalColumnIdsAllRowsUnflattenedBin[blockIndex];
-		      const dealii::types::global_dof_index xVecStartingIdColumn=localIndexMapUnflattenedToFlattened[constrainedColumnId];
-			  
-                      xVec[xVecStartingIdColumn+intraBlockIndex]
-                               +=xVec[xVecStartingIdRow+intraBlockIndex]*constraintColumnValuesAllRowsUnflattenedBin[blockIndex];
-
-		   }
-
-		}*/
-
 		template<typename T>
 		__global__
 		void setzeroKernel(const unsigned int contiguousBlockSize,
@@ -196,143 +139,6 @@ __device__ double atomicAdd(double* address, double val)
 		   }
 
 		}
-
-               
-                void createConstraintBins(const std::vector<std::set<unsigned int> > & slaveToMasterSet,
-                                          const std::vector<unsigned int> & rowIdsLocal,
-                                          const std::vector<unsigned int> & rowSizes,
-                                          const std::vector<unsigned int> & rowSizesAccumulated,
-                                          const std::vector<unsigned int> & columnIdsLocal,
-                                          const std::vector<double> & columnValues,
-                                          std::vector<unsigned int> & rowIdsLocalBins,
-                                          std::vector<unsigned int> & columnIdsLocalBins,
-                                          std::vector<unsigned int> & columnIdToRowIdMapBins,
-                                          std::vector<double> & columnValuesBins,
-                                          std::vector<unsigned int> & binColumnSizes,
-                                          std::vector<unsigned int> & binColumnSizesAccumulated)
-                {
-                    const unsigned int numRows=rowIdsLocal.size();
-                    
-                    if (numRows==0)
-                       return;
-
-                    std::map<unsigned int,std::set<unsigned int> > interactionMap;
-
-	            for(int irow = 0; irow < numRows; ++irow)
-		    {
-		      for(int jrow = irow - 1; jrow > -1; jrow--)
-		      {
-			  std::vector<unsigned int> columnIdsIntersection;
-
-			  std::set_intersection(slaveToMasterSet[irow].begin(),
-						slaveToMasterSet[irow].end(),
-						slaveToMasterSet[jrow].begin(),
-						slaveToMasterSet[jrow].end(),
-						std::back_inserter(columnIdsIntersection));
-
-			  if(columnIdsIntersection.size() > 0)
-			  {
-		             interactionMap[irow].insert(jrow);
-			     interactionMap[jrow].insert(irow);
-                          }
-		       }
-                    }//create interaction map
-
-                    std::map<unsigned int,std::set<unsigned int> > bins; 
-                    std::map<unsigned int,std::set<unsigned int> >::iterator iter;
-		    //start by adding row 0 to bin 0
-		    (bins[0]).insert(0);
-		    unsigned int binCount = 0;
-		    // iterate from row 1 onwards
-		    for(int i = 1; i < numRows; ++i)
-                    {
-
-			const std::set<unsigned int> & interactingIds = interactionMap[i];
-			
-                        if(interactingIds.size() == 0)
-                        {
-			  (bins[binCount]).insert(i);
-			  continue;
-			}
-
-			bool isBinFound;
-			// iterate over each existing bin and see if row i fits into the bin
-			for(iter = bins.begin();iter!= bins.end();++iter)
-                        {
-
-			  // pick out ids in this bin
-			  std::set<unsigned int>& idsInThisBin = iter->second;
-			  const unsigned int index = std::distance(bins.begin(),iter);
-
-			  isBinFound = true;
-
-			  // to belong to this bin, this id must not overlap with any other
-			  // id already present in this bin
-			  for(std::set<unsigned int>::iterator iter2 = interactingIds.begin(); iter2!= interactingIds.end();++iter2)
-                          {
-			    const unsigned int id = *iter2;
-
-			    if(idsInThisBin.find(id) != idsInThisBin.end())
-                            {
-			      isBinFound = false;
-			      break;
-			    }
-			  }
-
-			  if(isBinFound == true)
-                          {
-			    (bins[index]).insert(i);
-			    break;
-			  }
-			}
-			// if all current bins have been iterated over w/o a match then
-			// create a new bin for this id
-			if(isBinFound == false)
-                        {
-			  binCount++;
-			  (bins[binCount]).insert(i);
-			}
-		    }
-                    const unsigned numBins=bins.size();
-                    std::cout<<"number constraint bins: "<< bins.size()<<std::endl;
-
-                    rowIdsLocalBins.resize(numRows);
-                    columnIdsLocalBins.resize(columnIdsLocal.size());
-                    columnValuesBins.resize(columnValues.size());
-                    columnIdToRowIdMapBins.resize(columnValues.size());
-                    binColumnSizes.resize(numBins);
-                    binColumnSizesAccumulated.resize(numBins);
-
-                    unsigned int rowCount=0;
-                    unsigned int columnCount=0;
-		    for(unsigned int ibin = 0; ibin < numBins; ++ibin)
-                    {
-                          binColumnSizesAccumulated[ibin]=columnCount;
-                          std::set<unsigned int>& idsInThisBin = bins[ibin];
-			  for(std::set<unsigned int>::iterator iter2 =idsInThisBin.begin(); iter2!= idsInThisBin.end();++iter2)
-                          {
-			    const unsigned int id = *iter2;
-                            const unsigned int rowIdLocal=rowIdsLocal[id];
-                            rowIdsLocalBins[rowCount]=rowIdLocal;
-                            const unsigned int rowSize=rowSizes[id];
-                            binColumnSizes[ibin]+=rowSize;
-                            rowCount++;
-                            //std::cout<<"rowCount: "<<rowCount<<std::endl; 
-                            const unsigned int startColumnCount= rowSizesAccumulated[id];
-                            for (unsigned int j=0; j< rowSize;++j)
-                            {
-                               //std::cout<<"columnCount: "<<columnCount<<std::endl;
-                               //std::cout<<"startColumnCount: "<<startColumnCount<<std::endl;
-                               //std::cout<<"rowSize: "<<rowSize<<std::endl;
-                               columnIdsLocalBins[columnCount]=columnIdsLocal[startColumnCount+j];
-                               columnValuesBins[columnCount]=columnValues[startColumnCount+j];
-                               columnIdToRowIdMapBins[columnCount]=rowIdLocal;
-                               columnCount++;
-                            } 
-
-			  }
-                    }
-	        }
 
           }
 
@@ -426,27 +232,6 @@ __device__ double atomicAdd(double* address, double val)
 	     d_rowSizesDevice=d_rowSizes;
              d_rowSizesAccumulatedDevice=d_rowSizesAccumulated;
              d_numConstrainedDofs=d_rowIdsLocal.size();
-
-             /*
-             createConstraintBins(slaveToMasterSet,
-                                  d_rowIdsLocal,
-                                  d_rowSizes,
-                                  d_rowSizesAccumulated,
-                                  d_columnIdsLocal,
-                                  d_columnValues,
-                                  d_rowIdsLocalBins,
-                                  d_columnIdsLocalBins,
-                                  d_columnIdToRowIdMapBins,
-                                  d_columnValuesBins,
-                                  d_binColumnSizes,
-                                  d_binColumnSizesAccumulated);
-
-
-	     d_rowIdsLocalBinsDevice=d_rowIdsLocalBins;
-	     d_columnIdsLocalBinsDevice=d_columnIdsLocalBins;
-             d_columnIdToRowIdMapBinsDevice=d_columnIdToRowIdMapBins;
-	     d_columnValuesBinsDevice=d_columnValuesBins;
-             */
 	  }
 
 
@@ -524,24 +309,6 @@ __device__ double atomicAdd(double* address, double val)
                                            thrust::raw_pointer_cast(&d_columnIdsLocalDevice[0]),
                                            thrust::raw_pointer_cast(&d_columnValuesDevice[0]),
                                            thrust::raw_pointer_cast(&d_localIndexMapUnflattenedToFlattenedDevice[0]));
-            /*
-            for (unsigned int i=0; i<d_binColumnSizesAccumulated.size();i++)
-            {
-                    const unsigned int binColumnStartId=d_binColumnSizesAccumulated[i];
-                    const unsigned int binColumnsSize=d_binColumnSizes[i];
-
-		    distributeSlaveToMasterNonInteractingBinKernel<T><<<min((blockSize+256)/256*binColumnsSize,30000), 256>>>(blockSize,
-						   thrust::raw_pointer_cast(&fieldVector[0]),
-						   binColumnsSize,
-						   thrust::raw_pointer_cast(&d_columnIdsLocalBinsDevice[binColumnStartId]),
-                                                   thrust::raw_pointer_cast(&d_columnIdToRowIdMapBinsDevice[binColumnStartId]),
-						   thrust::raw_pointer_cast(&d_columnValuesBinsDevice[binColumnStartId]),
-						   thrust::raw_pointer_cast(&d_localIndexMapUnflattenedToFlattenedDevice[0]));          
-            }
-            
-            set_zero(fieldVector,
-                     blockSize);
-            */
 	  }
 
 	  template<typename T>
