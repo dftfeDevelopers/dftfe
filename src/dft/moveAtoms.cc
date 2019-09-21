@@ -152,7 +152,7 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 
   unsigned int useGaussian = 0;
   const double tol=1e-6;
-  const double break1 = 0.5;
+  const double break1 = 1.0;
 
   if(maxDispAtom <= break1+tol)
     useGaussian = 1;
@@ -438,7 +438,7 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 	  else
 	    {
 	      if (!dftParameters::reproducible_output)	    
-	         pcout<< " Mesh quality check: maximum jacobian ratio after movement: "<< meshQualityMetrics.second<<std::endl;
+	         pcout<< " Mesh quality check for Gaussian movement of mesh along with atoms: maximum jacobian ratio after movement: "<< meshQualityMetrics.second<<std::endl;
 	      if (!dftParameters::reproducible_output)
 	         pcout << "Now Reinitializing all moved triangulation dependent objects..." << std::endl;
 
