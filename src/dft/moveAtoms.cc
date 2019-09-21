@@ -152,7 +152,7 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 
   unsigned int useGaussian = 0;
   const double tol=1e-6;
-  const double break1 = 2.0;
+  const double break1 = 1.0;
 
   if(maxDispAtom <= break1+tol)
     useGaussian = 1;
