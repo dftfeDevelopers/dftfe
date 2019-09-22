@@ -140,8 +140,8 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
   if(!reuseClosestTriaVertices)
     d_autoMeshMaxJacobianRatio = meshQualityMetrics.second;
 
-  if (dftParameters::verbosity>=2)
-      pcout<< "Mesh quality check after mesh movement, maximum jacobian ratio: "<< meshQualityMetrics.second<<std::endl;
+  if (dftParameters::verbosity>=1 && !moveSubdivided)
+      pcout<< "Mesh quality check for Auto mesh after mesh movement, maximum jacobian ratio: "<< meshQualityMetrics.second<<std::endl;
 }
 
 
