@@ -14,26 +14,28 @@
 // ---------------------------------------------------------------------
 //
 
+#if defined(DFTFE_WITH_GPU)
+#ifndef chebyshevOrthogonalizedSubspaceIterationSolverCUDA_h
+#define chebyshevOrthogonalizedSubspaceIterationSolverCUDA_h
 
-#ifndef chebyshevOrthogonalizedSubspaceIterationSolver_h
-#define chebyshevOrthogonalizedSubspaceIterationSolver_h
 
-#include "eigenSolver.h"
+#include "headers.h"
+#include "operatorCUDA.h"
 #include "dftParameters.h"
-#include "operator.h"
 
 
-namespace dftfe{
+namespace dftfe
+{
 
   /**
    * @brief Concrete class implementing Chebyshev filtered orthogonalized subspace
    * iteration solver.
    * @author Phani Motamarri
    */
+  class chebyshevOrthogonalizedSubspaceIterationSolverCUDA
+  {
 
-  class chebyshevOrthogonalizedSubspaceIterationSolver : public eigenSolverClass {
-
-  public:
+    public:
     /**
      * @brief Constructor.
      *
@@ -41,39 +43,38 @@ namespace dftfe{
      * @param lowerBoundWantedSpectrum Lower Bound of the Wanted Spectrum.
      * @param lowerBoundUnWantedSpectrum Lower Bound of the UnWanted Spectrum.
      */
-    chebyshevOrthogonalizedSubspaceIterationSolver(const MPI_Comm &mpi_comm,
-	                                           double lowerBoundWantedSpectrum,
-						   double lowerBoundUnWantedSpectrum);
+    chebyshevOrthogonalizedSubspaceIterationSolverCUDA
+                                          (const MPI_Comm &mpi_comm,
+	                                   double lowerBoundWantedSpectrum,
+				           double lowerBoundUnWantedSpectrum);
 
 
     /**
      * @brief Destructor.
      */
-    ~chebyshevOrthogonalizedSubspaceIterationSolver();
+    ~chebyshevOrthogonalizedSubspaceIterationSolverCUDA();
 
 
     /**
      * @brief Solve a generalized eigen problem.
      */
-    void solve(operatorDFTClass & operatorMatrix,
-	                                    std::vector<dataTypes::number> & eigenVectorsFlattened,
-					    std::vector<dataTypes::number> & eigenVectorsRotFracDensityFlattened,
-					    vectorType & tempEigenVec,
-					    const unsigned int totalNumberWaveFunctions,
-					    std::vector<double> & eigenValues,
-					    std::vector<double> & residuals,
-					    const MPI_Comm &interBandGroupComm,
-					    const bool useMixedPrec=false,
-                                            const bool isFirstScf=false,
-					    const bool useFullMassMatrixGEP=false);
-
-    /**
-     * @brief Solve a generalized eigen problem.
-     */
-    void solve(operatorDFTClass & operatorMatrix,
-	                                    std::vector<vectorType> & eigenVectors,
-					    std::vector<double> & eigenValues,
-					    std::vector<double> & residuals);
+    void solve(operatorDFTCUDAClass & operatorMatrix,
+	       double* eigenVectorsFlattenedCUDA,
+               double* eigenVectorsRotFracDensityFlattenedCUDA,
+               const unsigned int flattenedSize,
+	       vectorType & tempEigenVec,
+	       const unsigned int totalNumberWaveFunctions,
+	       std::vector<double> & eigenValues,
+	       std::vector<double> & residuals,
+               const MPI_Comm &interBandGroupComm,
+               dealii::ScaLAPACKMatrix<double> & projHamPar,
+               dealii::ScaLAPACKMatrix<double> & overlapMatPar,
+               const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
+               const bool useMixedPrecOverall=false,
+               const bool isFirstScf=false,
+               const bool useFullMassMatrixGEP=false,
+               const bool isElpaStep1=false,
+               const bool isElpaStep2=false);
 
     /**
      * @brief reinit spectrum bounds
@@ -99,4 +100,5 @@ namespace dftfe{
     dealii::TimerOutput computing_timer;
   };
 }
+#endif
 #endif

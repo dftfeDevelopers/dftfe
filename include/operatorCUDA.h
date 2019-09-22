@@ -62,9 +62,9 @@ namespace dftfe{
     virtual void init() = 0;
 
 
-    virtual void createCublasHandles() = 0;
+    virtual void createCublasHandle() = 0;
 
-    virtual void destroyCublasHandles() = 0;
+    virtual void destroyCublasHandle() = 0;
 
     virtual cublasHandle_t & getCublasHandle() = 0;
 

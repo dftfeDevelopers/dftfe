@@ -26,6 +26,14 @@
 #include <headers.h>
 #include <constants.h>
 #include <constraintMatrixInfo.h>
+#include <elpaScalaManager.h>
+
+#ifdef DFTFE_WITH_GPU
+#include <constraintMatrixInfoCUDA.h>
+#include <vectorUtilitiesCUDA.h>
+#include <kohnShamDFTOperatorCUDA.h>
+#include <chebyshevOrthogonalizedSubspaceIterationSolverCUDA.h>
+#endif
 
 #include <kohnShamDFTOperator.h>
 #include <meshMovementAffineTransform.h>
@@ -88,6 +96,9 @@ namespace dftfe {
     {
       template <unsigned int T>
 	friend class kohnShamDFTOperatorClass;
+
+      template <unsigned int T>
+       friend class kohnShamDFTOperatorCUDAClass;
 
       template <unsigned int T>
 	friend class forceClass;
@@ -665,6 +676,11 @@ namespace dftfe {
        *
        */
       dftUtils::constraintMatrixInfo constraintsNoneDataInfo;
+
+
+#ifdef DFTFE_WITH_GPU
+      dftUtils::constraintMatrixInfoCUDA d_constraintsNoneDataInfoCUDA;
+#endif
 
       /**
        *object which is used to store dealii constraint matrix information

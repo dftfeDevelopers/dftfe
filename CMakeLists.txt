@@ -185,6 +185,9 @@ IF (WITH_GPU)
    ./src/setupGPU.cu
    ./src/dft/densityCalculatorCUDA.cu
    ./src/dftOperator/operatorCUDA.cu
+   ./src/dftOperator/kohnShamDFTOperatorCUDA.cu
+   ./src/dftOperator/kohnShamDFTOperatorCUDAKernels.cu
+   ./src/solvers/eigenSolvers/chebyshevOrthogonalizedSubspaceIterationSolverCUDA.cu
    ./src/linAlg/linearAlgebraOperationsInternalCUDA.cu
    ./src/linAlg/linearAlgebraOperationsCUDA.cu
    ./src/linAlg/pseudoGSCUDA.cu
