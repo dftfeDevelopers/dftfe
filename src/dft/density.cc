@@ -18,35 +18,9 @@
 
 //source file for electron density related computations
 
-//calculate electron density
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::compute_rhoOut(const bool isConsiderSpectrumSplitting)
+void dftClass<FEOrder>::popOutRhoInRhoOutVals()
 {
-  resizeAndAllocateRhoTableStorage
-		    (rhoOutVals,
-		     gradRhoOutVals,
-		     rhoOutValsSpinPolarized,
-		     gradRhoOutValsSpinPolarized);
-
-  rhoOutValues = &(rhoOutVals.back());
-  if (dftParameters::spinPolarized==1)
-    rhoOutValuesSpinPolarized = &(rhoOutValsSpinPolarized.back());
-
-  if(dftParameters::xc_id == 4)
-    {
-      gradRhoOutValues = &(gradRhoOutVals.back());
-      if (dftParameters::spinPolarized==1)
-         gradRhoOutValuesSpinPolarized = &(gradRhoOutValsSpinPolarized.back());
-    }
-
-  computeRhoFromPSI(rhoOutValues,
-		    gradRhoOutValues,
-		    rhoOutValuesSpinPolarized,
-		    gradRhoOutValuesSpinPolarized,
-		    dftParameters::xc_id == 4,
-		    isConsiderSpectrumSplitting);
-
-
   //pop out rhoInVals and rhoOutVals if their size exceeds mixing history size
   if(rhoInVals.size() == dftParameters::mixingHistory)
     {
@@ -83,6 +57,107 @@ void dftClass<FEOrder>::compute_rhoOut(const bool isConsiderSpectrumSplitting)
        }
 
     }
+}
+
+
+#ifdef DFTFE_WITH_GPU
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::compute_rhoOut(kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+                                       const bool isConsiderSpectrumSplitting)
+{
+  resizeAndAllocateRhoTableStorage
+                    (rhoOutVals,
+                     gradRhoOutVals,
+                     rhoOutValsSpinPolarized,
+                     gradRhoOutValsSpinPolarized);
+
+  rhoOutValues = &(rhoOutVals.back());
+  if (dftParameters::spinPolarized==1)
+    rhoOutValuesSpinPolarized = &(rhoOutValsSpinPolarized.back());
+
+  if(dftParameters::xc_id == 4)
+    {
+      gradRhoOutValues = &(gradRhoOutVals.back());
+      if (dftParameters::spinPolarized==1)
+         gradRhoOutValuesSpinPolarized = &(gradRhoOutValsSpinPolarized.back());
+    }
+
+    if (dftParameters::useGPU)
+          CUDA::computeRhoFromPSI(
+                            d_eigenVectorsFlattenedCUDA.begin(),
+                            d_eigenVectorsRotFracFlattenedCUDA.begin(),
+                            d_numEigenValues,
+                            d_numEigenValuesRR,
+                            d_eigenVectorsFlattenedSTL[0].size()/d_numEigenValues,
+                            eigenValues,
+                            fermiEnergy,
+                            fermiEnergyUp,
+                            fermiEnergyDown,
+                            kohnShamDFTEigenOperator,
+                            dofHandler,
+                            matrix_free_data.n_physical_cells(),
+                            matrix_free_data.get_dofs_per_cell(),
+                            QGauss<3>(C_num1DQuad<FEOrder>()).size(),
+                            d_kPointWeights,
+                            rhoOutValues,
+                            gradRhoOutValues,
+                            rhoOutValuesSpinPolarized,
+                            gradRhoOutValuesSpinPolarized,
+                            dftParameters::xc_id == 4,
+                            interpoolcomm,
+                            interBandGroupComm,
+                            isConsiderSpectrumSplitting && d_numEigenValues!=d_numEigenValuesRR);
+
+    else
+    {
+          double cpu_time=MPI_Wtime();
+          computeRhoFromPSI(rhoOutValues,
+                            gradRhoOutValues,
+                            rhoOutValuesSpinPolarized,
+                            gradRhoOutValuesSpinPolarized,
+                            dftParameters::xc_id == 4,
+                            isConsiderSpectrumSplitting);
+          MPI_Barrier(MPI_COMM_WORLD);
+	  cpu_time = MPI_Wtime() - cpu_time;
+	  pcout<<"Time for compute rho on CPU: "<<cpu_time<<std::endl;
+    }
+
+  //pop out rhoInVals and rhoOutVals if their size exceeds mixing history size
+  popOutRhoInRhoOutVals();
+}
+#endif
+
+//calculate electron density
+template<unsigned int FEOrder>
+void dftClass<FEOrder>::compute_rhoOut(const bool isConsiderSpectrumSplitting)
+{
+  resizeAndAllocateRhoTableStorage
+		    (rhoOutVals,
+		     gradRhoOutVals,
+		     rhoOutValsSpinPolarized,
+		     gradRhoOutValsSpinPolarized);
+
+  rhoOutValues = &(rhoOutVals.back());
+  if (dftParameters::spinPolarized==1)
+    rhoOutValuesSpinPolarized = &(rhoOutValsSpinPolarized.back());
+
+  if(dftParameters::xc_id == 4)
+    {
+      gradRhoOutValues = &(gradRhoOutVals.back());
+      if (dftParameters::spinPolarized==1)
+         gradRhoOutValuesSpinPolarized = &(gradRhoOutValsSpinPolarized.back());
+    }
+
+  computeRhoFromPSI(rhoOutValues,
+		    gradRhoOutValues,
+		    rhoOutValuesSpinPolarized,
+		    gradRhoOutValuesSpinPolarized,
+		    dftParameters::xc_id == 4,
+		    isConsiderSpectrumSplitting);
+
+
+  //pop out rhoInVals and rhoOutVals if their size exceeds mixing history size
+  popOutRhoInRhoOutVals();
 
 }
 

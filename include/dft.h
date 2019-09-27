@@ -448,6 +448,16 @@ namespace dftfe {
        */
       void compute_rhoOut(const bool isConsiderSpectrumSplitting);
 
+#ifdef DFTFE_WITH_GPU
+      /**
+       *@brief Computes output electron-density from wavefunctions
+       */
+      void compute_rhoOut(kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+                          const bool isConsiderSpectrumSplitting);
+#endif
+      
+      void popOutRhoInRhoOutVals(); 
+
       /**
        *@brief Mixing schemes for mixing electron-density
        */
@@ -704,6 +714,12 @@ namespace dftfe {
       std::vector<dealii::LinearAlgebra::distributed::Vector<dataTypes::number> > d_eigenVectorsFlattened;
       std::vector<std::vector<dataTypes::number> > d_eigenVectorsFlattenedSTL;
       std::vector<std::vector<dataTypes::number> > d_eigenVectorsRotFracDensityFlattenedSTL;
+
+      /// cuda eigenvectors
+#ifdef DFTFE_WITH_GPU      
+      vectorToolsCUDA::cudaThrustVector d_eigenVectorsFlattenedCUDA; 
+      vectorToolsCUDA::cudaThrustVector d_eigenVectorsRotFracFlattenedCUDA;
+#endif
 
       /// parallel message stream
       ConditionalOStream  pcout;

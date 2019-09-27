@@ -50,6 +50,13 @@
 #include <iomanip>
 #include <limits>
 #include <sys/stat.h>
+
+#ifdef DFTFE_WITH_GPU
+#include <kohnShamDFTOperatorCUDA.h>
+#include <densityCalculatorCUDA.h>
+#include <linearAlgebraOperationsCUDA.h>
+#endif
+
 #ifdef DFTFE_WITH_ELPA
 extern "C"
 {

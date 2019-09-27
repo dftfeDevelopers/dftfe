@@ -1267,6 +1267,7 @@ namespace dftfe
                       interpoolcomm);
 
 	   cudaDeviceSynchronize();
+           MPI_Barrier(MPI_COMM_WORLD);
 	   gpu_time = MPI_Wtime() - gpu_time;
  
            if (this_process==0)
