@@ -124,7 +124,7 @@ namespace
 
 
 template<unsigned int FEOrder>
-void kohnShamDFTOperatorCUDAClass<FEOrder>::computeHamiltonianMatrixFlattened(unsigned int kPointIndex)
+void kohnShamDFTOperatorCUDAClass<FEOrder>::computeHamiltonianMatrix(unsigned int kPointIndex)
 {
   d_cellHamiltonianMatrixFlattenedDevice.resize(d_numLocallyOwnedCells*d_numberNodesPerElement*d_numberNodesPerElement,0.0);
   double gpu_time=MPI_Wtime();

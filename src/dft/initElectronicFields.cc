@@ -102,6 +102,12 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
   constraintsNoneDataInfo2.initialize(matrix_free_data.get_vector_partitioner(),
 				     constraintsNone);
 
+#ifdef DFTFE_WITH_GPU
+  if (dftParameters::useGPU)
+     d_constraintsNoneDataInfoCUDA.initialize(matrix_free_data.get_vector_partitioner(),
+                                              constraintsNone);
+#endif
+
  if (dftParameters::verbosity>=4)
    dftUtils::printCurrentMemoryUsage(mpi_communicator,
 			  "Overloaded constraint matrices initialized");
@@ -230,6 +236,26 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
 #endif
       }
   }
+
+#ifdef DFTFE_WITH_GPU
+     if (dftParameters::useGPU)
+     {
+       d_eigenVectorsFlattenedCUDA.resize(d_eigenVectorsFlattenedSTL[0].size()*(1+dftParameters::spinPolarized)*d_kPointWeights.size());
+
+       if (d_numEigenValuesRR!=d_numEigenValues)
+          d_eigenVectorsRotFracFlattenedCUDA.resize(d_eigenVectorsRotFracDensityFlattenedSTL[0].size()*(1+dftParameters::spinPolarized)*d_kPointWeights.size());
+       else
+          d_eigenVectorsRotFracFlattenedCUDA.resize(1);
+
+       for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+       {
+               vectorToolsCUDA::copyHostVecToCUDAVec(&d_eigenVectorsFlattenedSTL[kPoint][0],
+                                                     d_eigenVectorsFlattenedCUDA.begin()+kPoint*d_eigenVectorsFlattenedSTL[0].size(),
+                                                     d_eigenVectorsFlattenedSTL[0].size());
+ 
+       }
+     }
+#endif
 
   if  (dftParameters::isIonOpt)
     updatePrevMeshDataStructures();

@@ -315,7 +315,7 @@ namespace dftfe{
       void preComputeShapeFunctionGradientIntegrals();
 
      
-      void computeHamiltonianMatrixFlattened(unsigned int kPointIndex);
+      void computeHamiltonianMatrix(unsigned int kPointIndex);
 
 
 
