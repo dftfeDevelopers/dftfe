@@ -237,7 +237,7 @@ namespace dftfe
     //
     const unsigned int localVectorSize = flattenedSize/totalNumberWaveFunctions;
     
-    
+    cudaDeviceSynchronize(); 
     MPI_Barrier(MPI_COMM_WORLD);
     start_time = MPI_Wtime();
    
@@ -721,6 +721,7 @@ namespace dftfe
 	pcout<<std::endl;
     }
 
+    cudaDeviceSynchronize();
     MPI_Barrier(MPI_COMM_WORLD);
     gpu_time = MPI_Wtime();
       linearAlgebraOperationsCUDA::computeEigenResidualNorm(operatorMatrix,

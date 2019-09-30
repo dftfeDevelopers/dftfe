@@ -471,8 +471,6 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
   subspaceIterationSolverCUDA.reinitSpectrumBounds(a0[(1+dftParameters::spinPolarized)*kPointIndex+spinType],
 					       bLow[(1+dftParameters::spinPolarized)*kPointIndex+spinType]);
 
-  bool useMixedPrecTensorCores = false;
-
   const unsigned int rowsBlockSize=elpaScala.getScalapackBlockSize();
   std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  processGrid;
 
@@ -506,12 +504,12 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 					projHamPar,
                                         overlapMatPar,
 					processGrid,
-                                        isFirstScf,
-                                        useMixedPrec,
-                                        useMixedPrecTensorCores,
+					useMixedPrec,
+					isFirstScf,
+					useFullMassMatrixGEP,
                                         true,
                                         false);
-
+          MPI_Barrier(MPI_COMM_WORLD);
           double time = MPI_Wtime();
 
           if (isSpectrumSplit && d_numEigenValuesRR!=d_numEigenValues && dftParameters::rrGEP==false)
@@ -561,9 +559,9 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 					projHamPar,
                                         overlapMatPar,
 					processGrid,
-                                        isFirstScf,
-                                        useMixedPrec,
-                                        useMixedPrecTensorCores,
+					useMixedPrec,
+					isFirstScf,
+					useFullMassMatrixGEP,
                                         false,
                                         true);
   }
@@ -583,9 +581,9 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 					projHamPar,
                                         overlapMatPar,
 					processGrid,
-                                        isFirstScf,
-                                        useMixedPrec,
-                                        useMixedPrecTensorCores);
+					useMixedPrec,
+					isFirstScf,
+					useFullMassMatrixGEP);
   }
 #else
   subspaceIterationSolverCUDA.solve(kohnShamDFTEigenOperator,
@@ -602,9 +600,9 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
                                 projHamPar,
                                 overlapMatPar,
                                 processGrid,
-                                isFirstScf,
                                 useMixedPrec,
-                                useMixedPrecTensorCores);
+                                isFirstScf,
+                                useFullMassMatrixGEP);
 #endif
 
 

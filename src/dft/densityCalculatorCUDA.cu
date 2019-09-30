@@ -180,7 +180,8 @@ namespace dftfe
 #else
            int this_process;
            MPI_Comm_rank(MPI_COMM_WORLD, &this_process);
-
+           cudaDeviceSynchronize();
+           MPI_Barrier(MPI_COMM_WORLD);
            double gpu_time=MPI_Wtime();
            const unsigned int numKPoints=kPointWeights.size();
 

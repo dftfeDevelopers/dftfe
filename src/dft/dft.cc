@@ -409,10 +409,7 @@ namespace dftfe {
     bLow.resize((dftParameters::spinPolarized+1)*d_kPointWeights.size(),0.0);
 
     d_eigenVectorsFlattenedSTL.resize((1+dftParameters::spinPolarized)*d_kPointWeights.size());
-    if (d_numEigenValuesRR!=d_numEigenValues)
-    {
-      d_eigenVectorsRotFracDensityFlattenedSTL.resize((1+dftParameters::spinPolarized)*d_kPointWeights.size());
-    }
+    d_eigenVectorsRotFracDensityFlattenedSTL.resize((1+dftParameters::spinPolarized)*d_kPointWeights.size());
 
     for(unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
       {
