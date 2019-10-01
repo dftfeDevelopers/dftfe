@@ -1271,7 +1271,7 @@ namespace dftfe
            MPI_Barrier(MPI_COMM_WORLD);
 	   gpu_time = MPI_Wtime() - gpu_time;
  
-           if (this_process==0)
+           if (this_process==0 && dftParameters::verbosity>=2)
 	      std::cout<<"Time for compute rho on GPU: "<<gpu_time<<std::endl;
 #endif
       }

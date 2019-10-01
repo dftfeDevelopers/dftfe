@@ -384,7 +384,8 @@ namespace dftfe
     size_t free_t,total_t;
 
     cudaMemGetInfo(&free_t,&total_t);
-    pcout<<"starting free mem: "<<free_t <<", total mem: "<<total_t <<std::endl;
+    if (dftParameters::verbosity>=2)
+      pcout<<"starting free mem: "<<free_t <<", total mem: "<<total_t <<std::endl;
 
     const unsigned int n_ghosts   = dftPtr->matrix_free_data.get_vector_partitioner()->n_ghost_indices();
     const unsigned int localSize  = dftPtr->matrix_free_data.get_vector_partitioner()->local_size();
@@ -573,7 +574,8 @@ namespace dftfe
       }
 
     cudaMemGetInfo(&free_t,&total_t);
-    pcout<<"free mem after reinit allocations: "<<free_t <<", total mem: "<<total_t <<std::endl;
+    if (dftParameters::verbosity>=2)
+      pcout<<"free mem after reinit allocations: "<<free_t <<", total mem: "<<total_t <<std::endl;
 
   }
 

@@ -158,7 +158,8 @@ void kohnShamDFTOperatorCUDAClass<FEOrder>::computeHamiltonianMatrix(unsigned in
 
   cudaDeviceSynchronize();
   gpu_time = MPI_Wtime() - gpu_time;
-  pcout<<"Time for elemental Hamiltonian matrix computation on GPU: "<<gpu_time<<std::endl;
+  if (dftParameters::verbosity>=2)
+    pcout<<"Time for elemental Hamiltonian matrix computation on GPU: "<<gpu_time<<std::endl;
 }
 
 

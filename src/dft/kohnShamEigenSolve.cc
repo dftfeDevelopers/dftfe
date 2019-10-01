@@ -538,7 +538,7 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 
           MPI_Barrier(MPI_COMM_WORLD);
 	  time = MPI_Wtime() - time;
-	  if (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) ==0)
+	  if (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) ==0 && dftParameters::verbosity>=2)
               if (isSpectrumSplit && d_numEigenValuesRR!=d_numEigenValues)
                 std::cout<<"Time for ELPA partial eigen decomp, RR step (option0): "<<time<<std::endl;
               else
