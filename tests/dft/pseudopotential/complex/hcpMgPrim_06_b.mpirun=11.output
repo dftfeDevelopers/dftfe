@@ -1,9 +1,9 @@
 number of atoms: 2
 number of atoms types: 1
-Z:12
+Z:13
 =============================================================================================================================
-number of electrons: 20
-number of eigen values: 20
+number of electrons: 22
+number of eigen values: 16
 =============================================================================================================================
 Total number of k-points 2
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
@@ -30,21 +30,21 @@ Reading initial guess for electron-density.....
 Pseudopotential initalization....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 13 iterations.
+SCF iterations converged to the specified tolerance after: 11 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:        -109.02395315
+             Total energy:        -138.73861085
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.000004,0.000002,0.000050
-AtomId    1:  0.000101,0.000058,0.000060
+AtomId    0:  0.000000,0.000000,0.000138
+AtomId    1:  0.000117,0.000067,0.000152
 --------------------------------------------------------------------------------------------
 
 Absolute value of cell stress (Hartree/Bohr^3)
 ------------------------------------------------------------------------
-0.001352  0.000110  0.000000
-0.000110  0.001226  0.000000
-0.000000  0.000000  0.000504
+0.003358  0.000081  0.000000
+0.000081  0.003264  0.000000
+0.000000  0.000000  0.002881
 ------------------------------------------------------------------------

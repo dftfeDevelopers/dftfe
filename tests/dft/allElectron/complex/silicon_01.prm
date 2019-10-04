@@ -1,11 +1,15 @@
 set VERBOSITY= 0
 set REPRODUCIBLE OUTPUT=true
 
+subsection Parallelization
+  set NPKPT=2
+end
+
 subsection Geometry
-  set NATOMS=2
+  set NATOMS=8
   set NATOM TYPES=1
-  set ATOMIC COORDINATES FILE = @SOURCE_DIR@/hcpAlPrim_coordinates.inp
-  set DOMAIN VECTORS FILE = @SOURCE_DIR@/hcpAlPrim_domainBoundingVectors.inp
+  set ATOMIC COORDINATES FILE = /home/dsambit/dftfenew/tests/dft/allElectron/complex/silicon_coordinates.inp
+  set DOMAIN VECTORS FILE = /home/dsambit/dftfenew/tests/dft/allElectron/complex/silicon_domainBoundingVectors.inp
   
   subsection Optimization
     set ION FORCE=true
@@ -20,6 +24,7 @@ subsection Boundary conditions
   set PERIODIC1 = true
   set PERIODIC2 = true
   set PERIODIC3 = true
+  set CONSTRAINTS PARALLEL CHECK=true
 end
 
 
@@ -27,7 +32,7 @@ subsection Finite element mesh parameters
   set POLYNOMIAL ORDER = 2
   
   subsection Auto mesh generation parameters
-    set BASE MESH SIZE = 1.0 
+    set BASE MESH SIZE = 4.0 
     set ATOM BALL RADIUS = 2.0
     set MESH SIZE AROUND ATOM = 0.5
     set MESH SIZE AT ATOM = 0.5 
@@ -48,41 +53,38 @@ subsection Brillouin zone k point sampling options
   end
 
   set USE GROUP SYMMETRY =false
-  set USE TIME REVERSAL SYMMETRY = true
+  set USE TIME REVERSAL SYMMETRY =false
 end
 
 
 
 subsection DFT functional parameters
-  set PSEUDOPOTENTIAL CALCULATION =true
-  set PSEUDOPOTENTIAL FILE NAMES LIST = @SOURCE_DIR@/pseudoAlONCV.inp 
-  set PSEUDO TESTS FLAG = true
-  set EXCHANGE CORRELATION TYPE = 4
+  set PSEUDOPOTENTIAL CALCULATION =false
+  set EXCHANGE CORRELATION TYPE = 1
   set SPIN POLARIZATION=0
   set START MAGNETIZATION=0.0
 end
 
 
 subsection SCF parameters
-  set MAXIMUM ITERATIONS = 40 
-  set TOLERANCE          = 1e-5
+  set MAXIMUM ITERATIONS = 100 
+  set TOLERANCE          = 1e-4
   set MIXING PARAMETER   = 0.5
   set MIXING HISTORY     = 70
   set TEMPERATURE                        = 500
   set STARTING WFC=ATOMIC
-  set HIGHER QUAD NLP  = true
   subsection Eigen-solver parameters
-      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 16
-      set LOWER BOUND WANTED SPECTRUM = -10.0
-      set CHEBYSHEV POLYNOMIAL DEGREE = 8
+      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 72
+      set LOWER BOUND WANTED SPECTRUM = -70.0
+      set CHEBYSHEV POLYNOMIAL DEGREE = 6
       set CHEBYSHEV FILTER TOLERANCE=1e-3
-      set ORTHOGONALIZATION TYPE=GS
+      set ORTHOGONALIZATION TYPE=LW
   end
 end
 
 
 subsection Poisson problem parameters
-  set MAXIMUM ITERATIONS = 4000
+  set MAXIMUM ITERATIONS = 10000
   set TOLERANCE          = 1e-12
 end
 set H REFINED ELECTROSTATICS=false

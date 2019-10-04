@@ -19,8 +19,8 @@ number of degrees of freedom: 32917
 
 Setting initial guess for wavefunctions....
 =============================================================================================================================
-number of electrons: 20
-number of eigen values: 40
+number of electrons: 22
+number of eigen values: 16
 =============================================================================================================================
 
 Reading initial guess for electron-density.....
@@ -32,10 +32,10 @@ SCF iterations converged to the specified tolerance after: 12 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:        -108.89374054
+             Total energy:        -138.81298173
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.000005,0.000003,0.000023
-AtomId    1:  0.000102,0.000059,0.000031
+AtomId    0:  0.000000,0.000001,0.000139
+AtomId    1:  0.000117,0.000067,0.000154
 --------------------------------------------------------------------------------------------

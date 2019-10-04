@@ -40,6 +40,12 @@ subsection DFT functional parameters
   set PSEUDOPOTENTIAL FILE NAMES LIST = @SOURCE_DIR@/pseudoNGGA.inp
 end
 
+subsection Poisson problem parameters
+  set MAXIMUM ITERATIONS = 4000
+  set TOLERANCE          = 1e-10
+end
+
+
 subsection SCF parameters
   set MIXING HISTORY   = 70
   set MIXING PARAMETER = 0.5
@@ -47,11 +53,12 @@ subsection SCF parameters
   set TEMPERATURE                      = 500
   set TOLERANCE                        = 1e-5
   set HIGHER QUAD NLP  = false
+  set STARTING WFC=ATOMIC
   subsection Eigen-solver parameters
-      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 12
+      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 10
       set ORTHOGONALIZATION TYPE=PGS
-      set CHEBYSHEV POLYNOMIAL DEGREE = 40
-      set CHEBYSHEV FILTER TOLERANCE=1e-2
+      set CHEBYSHEV POLYNOMIAL DEGREE = 30
+      set CHEBYSHEV FILTER TOLERANCE=1e-3
   end
 end
 set H REFINED ELECTROSTATICS=false
