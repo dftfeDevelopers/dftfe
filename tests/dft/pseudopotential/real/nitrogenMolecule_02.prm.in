@@ -53,11 +53,12 @@ subsection SCF parameters
   set TEMPERATURE                      = 500
   set TOLERANCE                        = 1e-5
   set HIGHER QUAD NLP  = false
+  set STARTING WFC=ATOMIC
   subsection Eigen-solver parameters
-      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 12
+      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 10
       set ORTHOGONALIZATION TYPE=PGS
-      set CHEBYSHEV POLYNOMIAL DEGREE = 40
-      set CHEBYSHEV FILTER TOLERANCE=1e-2
+      set CHEBYSHEV POLYNOMIAL DEGREE = 30
+      set CHEBYSHEV FILTER TOLERANCE=1e-3
       set RR GEP=false
   end
 end

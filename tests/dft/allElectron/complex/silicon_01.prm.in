@@ -8,8 +8,8 @@ end
 subsection Geometry
   set NATOMS=8
   set NATOM TYPES=1
-  set ATOMIC COORDINATES FILE = @SOURCE_DIR@/silicon_coordinates.inp
-  set DOMAIN VECTORS FILE = @SOURCE_DIR@/silicon_domainBoundingVectors.inp
+  set ATOMIC COORDINATES FILE = /home/dsambit/dftfenew/tests/dft/allElectron/complex/silicon_coordinates.inp
+  set DOMAIN VECTORS FILE = /home/dsambit/dftfenew/tests/dft/allElectron/complex/silicon_domainBoundingVectors.inp
   
   subsection Optimization
     set ION FORCE=true
@@ -76,8 +76,8 @@ subsection SCF parameters
   subsection Eigen-solver parameters
       set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 72
       set LOWER BOUND WANTED SPECTRUM = -70.0
-      set CHEBYSHEV POLYNOMIAL DEGREE = 30
-      set CHEBYSHEV FILTER TOLERANCE=1e-3
+      set CHEBYSHEV POLYNOMIAL DEGREE = 10
+      set CHEBYSHEV FILTER TOLERANCE=1e-4
       set ORTHOGONALIZATION TYPE=LW
   end
 end
