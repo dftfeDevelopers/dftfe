@@ -57,6 +57,7 @@ namespace dftfe
           {
 		      if (dftParameters::gpuFineGrainedTimings)
                       {
+                        cudaDeviceSynchronize();
                         MPI_Barrier(MPI_COMM_WORLD);
 			gpu_time = MPI_Wtime();
                       }
@@ -90,6 +91,7 @@ namespace dftfe
 
 		      if (dftParameters::gpuFineGrainedTimings)
 		      {
+                        cudaDeviceSynchronize();
                         MPI_Barrier(MPI_COMM_WORLD);
 			gpu_time = MPI_Wtime() - gpu_time;
 			if (this_process==0)
@@ -113,13 +115,19 @@ namespace dftfe
 		      std::vector<double> eigenValuesStdVec(Nfr,0.0);
 		      
 		      if (dftParameters::gpuFineGrainedTimings)
+                      {
+                         cudaDeviceSynchronize();
+                         MPI_Barrier(MPI_COMM_WORLD);
 			 gpu_time = MPI_Wtime();
+                      }
 
 		      eigenValuesStdVec=projHamPar.eigenpairs_symmetric_by_index_MRRR(std::make_pair(Noc,N-1),true);
 		      std::copy(eigenValuesStdVec.begin(),eigenValuesStdVec.end(),eigenValues);
 
 		      if (dftParameters::gpuFineGrainedTimings)
 		      {
+                        cudaDeviceSynchronize();
+                        MPI_Barrier(MPI_COMM_WORLD);
 			gpu_time = MPI_Wtime() - gpu_time;
 			if (this_process==0)
 			  std::cout<<"Time for ScaLAPACK eigen decomp, RR step (option0): "<<gpu_time<<std::endl;
@@ -132,6 +140,7 @@ namespace dftfe
 	  //
           if (dftParameters::gpuFineGrainedTimings)
           {
+              cudaDeviceSynchronize();
               MPI_Barrier(MPI_COMM_WORLD);
 	      gpu_time = MPI_Wtime();
           }
@@ -186,7 +195,11 @@ namespace dftfe
               if (!isElpaStep2)
               {
 		      if (dftParameters::gpuFineGrainedTimings)
+                      {
+                        cudaDeviceSynchronize();
+                        MPI_Barrier(MPI_COMM_WORLD);
 			gpu_time = MPI_Wtime();
+                      }
 
 		      if (processGrid->is_process_active())
 			  std::fill(&projHamPar.local_el(0,0),
@@ -217,6 +230,8 @@ namespace dftfe
 
 		      if (dftParameters::gpuFineGrainedTimings)
 		      {
+                        cudaDeviceSynchronize();
+                        MPI_Barrier(MPI_COMM_WORLD);
 			gpu_time = MPI_Wtime() - gpu_time;
 			if (this_process==0)
                         {
@@ -240,13 +255,19 @@ namespace dftfe
 		      std::vector<double> eigenValuesStdVec(numberEigenValues,0.0);
 		      
 		      if (dftParameters::gpuFineGrainedTimings)
+                      {
+                         cudaDeviceSynchronize();
+                         MPI_Barrier(MPI_COMM_WORLD);
 			 gpu_time = MPI_Wtime();
+                      }
 
 		      eigenValuesStdVec=projHamPar.eigenpairs_symmetric_by_index_MRRR(std::make_pair(0,numberEigenValues-1),true);
 		      std::copy(eigenValuesStdVec.begin(),eigenValuesStdVec.end(),eigenValues);
 
 		      if (dftParameters::gpuFineGrainedTimings)
 		      {
+                        cudaDeviceSynchronize();
+                        MPI_Barrier(MPI_COMM_WORLD);
 			gpu_time = MPI_Wtime() - gpu_time;
 			if (this_process==0)
 			  std::cout<<"Time for ScaLAPACK eigen decomp, RR step (option0): "<<gpu_time<<std::endl;
@@ -258,7 +279,11 @@ namespace dftfe
 	      //stored in the column major format
 	      //
               if (dftParameters::gpuFineGrainedTimings)
+              {
+                 cudaDeviceSynchronize();
+                 MPI_Barrier(MPI_COMM_WORLD);
 	         gpu_time = MPI_Wtime();
+              }
 
               if (useMixedPrecOverall && dftParameters::useMixedPrecSubspaceRotRR)
                  subspaceRotationRRMixedPrecScalapack(X,
@@ -284,6 +309,7 @@ namespace dftfe
               if (dftParameters::gpuFineGrainedTimings)
               {
                  cudaDeviceSynchronize();
+                 MPI_Barrier(MPI_COMM_WORLD);                 
                  gpu_time = MPI_Wtime() - gpu_time;
 
                  if (this_process==0)
@@ -325,7 +351,11 @@ namespace dftfe
               if (!isElpaStep2)
               {
 		      if (dftParameters::gpuFineGrainedTimings)
-				gpu_time = MPI_Wtime();
+                      {
+                         cudaDeviceSynchronize();
+                         MPI_Barrier(MPI_COMM_WORLD);
+		         gpu_time = MPI_Wtime();
+                      }
 
 		      //S=X*X^{T}. Implemented as S=X^{T}*X with X^{T} stored in the column major format
 		      if (dftParameters::useMixedPrecPGS_O && useMixedPrecOverall)
@@ -354,6 +384,8 @@ namespace dftfe
 			    
 		      if (dftParameters::gpuFineGrainedTimings)
 		      { 
+                            cudaDeviceSynchronize();
+                            MPI_Barrier(MPI_COMM_WORLD);
 			    gpu_time = MPI_Wtime() - gpu_time;
 			    if (this_process==0)
 			    {
@@ -365,7 +397,11 @@ namespace dftfe
 		      }
 
 		      if (dftParameters::gpuFineGrainedTimings)
+                      {
+                        cudaDeviceSynchronize();
+                        MPI_Barrier(MPI_COMM_WORLD);
 			gpu_time = MPI_Wtime();
+                      }
 
 		      if (processGrid->is_process_active())
 			  std::fill(&projHamPar.local_el(0,0),
@@ -396,6 +432,8 @@ namespace dftfe
 
 		      if (dftParameters::gpuFineGrainedTimings)
 		      {
+                        cudaDeviceSynchronize();
+                        MPI_Barrier(MPI_COMM_WORLD);
 			gpu_time = MPI_Wtime() - gpu_time;
 			if (this_process==0)
                         {
@@ -418,7 +456,11 @@ namespace dftfe
 		      //compute eigendecomposition
 		      //
 		      if (dftParameters::gpuFineGrainedTimings)
+                      {
+                         cudaDeviceSynchronize();
+                         MPI_Barrier(MPI_COMM_WORLD);
 			 gpu_time = MPI_Wtime();
+                      }
 
                       overlapMatPar.compute_cholesky_factorization();
                       dealii::LAPACKSupport::Property overlapMatPropertyPostCholesky=overlapMatPar.get_property();
@@ -511,6 +553,8 @@ namespace dftfe
 
 		      if (dftParameters::gpuFineGrainedTimings)
 		      {
+                        cudaDeviceSynchronize();
+                        MPI_Barrier(MPI_COMM_WORLD);
 			gpu_time = MPI_Wtime() - gpu_time;
 			if (this_process==0)
 			  std::cout<<"Time for ScaLAPACK GEP eigen decomp, RR step (option0): "<<gpu_time<<std::endl;
@@ -522,7 +566,11 @@ namespace dftfe
 	      //stored in the column major format
 	      //
               if (dftParameters::gpuFineGrainedTimings)
+              {
+                 cudaDeviceSynchronize();
+                 MPI_Barrier(MPI_COMM_WORLD);
 	         gpu_time = MPI_Wtime();
+              }
 
               if (useMixedPrecOverall && dftParameters::useMixedPrecSubspaceRotRR)
                  subspaceRotationRRMixedPrecScalapack(X,

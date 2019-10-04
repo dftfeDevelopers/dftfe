@@ -237,7 +237,7 @@ namespace dftfe
     //
     const unsigned int localVectorSize = flattenedSize/totalNumberWaveFunctions;
     
-    
+    cudaDeviceSynchronize(); 
     MPI_Barrier(MPI_COMM_WORLD);
     start_time = MPI_Wtime();
    
@@ -414,7 +414,7 @@ namespace dftfe
 	    cudaDeviceSynchronize();
             MPI_Barrier(MPI_COMM_WORLD);
 	    gpu_time = MPI_Wtime() - start_time;
-	    if (this_process==0)
+	    if (this_process==0 && dftParameters::verbosity>=2)
 	        std::cout<<"Time for chebyshev filtering on GPU: "<<gpu_time<<std::endl;
 
 
@@ -521,7 +521,7 @@ namespace dftfe
                     MPI_Barrier(MPI_COMM_WORLD);
 		    band_paral_time = MPI_Wtime() - band_paral_time;
 
-		    if (this_process==0)
+		    if (this_process==0 && dftParameters::verbosity>=2)
 			std::cout<<"Time for band parallelization communication: "<<band_paral_time<<std::endl;
 
             }
@@ -611,8 +611,8 @@ namespace dftfe
 		cudaDeviceSynchronize();
                 MPI_Barrier(MPI_COMM_WORLD);
 		gpu_time = MPI_Wtime() - start_time;
-		if (this_process==0)
-			    std::cout<<"Time for all steps of subspace iteration on GPU till ELPA step 1: "<<gpu_time<<std::endl; 
+		if (this_process==0 && dftParameters::verbosity>=2)
+	            std::cout<<"Time for all steps of subspace iteration on GPU till ELPA step 1: "<<gpu_time<<std::endl; 
 		return;
 	     }
 
@@ -655,7 +655,7 @@ namespace dftfe
              cudaDeviceSynchronize();
              MPI_Barrier(MPI_COMM_WORLD);
 	     gpu_time = MPI_Wtime() - gpu_time;
-	     if (this_process==0)
+	     if (this_process==0 && dftParameters::verbosity>=2)
 		    std::cout<<"Time for RR on valence projected Ham: "<<gpu_time<<std::endl;
 
     }
@@ -703,8 +703,8 @@ namespace dftfe
 		cudaDeviceSynchronize();
                 MPI_Barrier(MPI_COMM_WORLD);
 		gpu_time = MPI_Wtime() - start_time;
-		if (this_process==0)
-			    std::cout<<"Time for all steps of subspace iteration on GPU till ELPA step 1: "<<gpu_time<<std::endl; 
+		if (this_process==0 && dftParameters::verbosity>=2)
+	            std::cout<<"Time for all steps of subspace iteration on GPU till ELPA step 1: "<<gpu_time<<std::endl; 
 		return;
 	     }
 
@@ -721,6 +721,7 @@ namespace dftfe
 	pcout<<std::endl;
     }
 
+    cudaDeviceSynchronize();
     MPI_Barrier(MPI_COMM_WORLD);
     gpu_time = MPI_Wtime();
       linearAlgebraOperationsCUDA::computeEigenResidualNorm(operatorMatrix,
@@ -739,7 +740,7 @@ namespace dftfe
     cudaDeviceSynchronize();
     MPI_Barrier(MPI_COMM_WORLD);
     gpu_time = MPI_Wtime() - gpu_time;
-    if (this_process==0)
+    if (this_process==0 && dftParameters::verbosity>=2)
        std::cout<<"Time to compute residual norm: "<<gpu_time<<std::endl;
 
     //
@@ -763,10 +764,10 @@ namespace dftfe
     gpu_time = MPI_Wtime() - start_time;
 
     if (isElpaStep2)
-       if (this_process==0)
+       if (this_process==0 && dftParameters::verbosity>=2)
            std::cout<<"Time for ELPA step 2 on GPU: "<<gpu_time<<std::endl;
     else
-       if (this_process==0)
+       if (this_process==0 && dftParameters::verbosity>=2)
            std::cout<<"Time for all steps of subspace iteration on GPU: "<<gpu_time<<std::endl;
     return;
 #endif

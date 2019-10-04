@@ -38,6 +38,7 @@
 #include <linalg.h>
 #include <interpolateFieldsFromPreviousMesh.h>
 #include <linearAlgebraOperations.h>
+#include <linearAlgebraOperationsInternal.h>
 #include <vectorUtilities.h>
 #include <pseudoConverter.h>
 #include <stdafx.h>
@@ -117,6 +118,7 @@ namespace dftfe {
     d_gaussianMovePar(mpi_comm_replica),
     d_vselfBinsManager(mpi_comm_replica),
     pcout (std::cout, (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)),
+    d_elpaScala(mpi_comm_replica),
     computing_timer (mpi_comm_replica,
 	             pcout,
 		     dftParameters::reproducible_output
@@ -158,6 +160,10 @@ namespace dftfe {
 #endif
 
 #ifdef DFTFE_WITH_ELPA
+    if (dftParameters::useELPA)
+         d_elpaScala.elpaDeallocateHandles(d_numEigenValues,
+                                         d_numEigenValuesRR);
+
     int error;
     elpa_uninit(& error);
     AssertThrow(error == ELPA_OK,
@@ -403,10 +409,7 @@ namespace dftfe {
     bLow.resize((dftParameters::spinPolarized+1)*d_kPointWeights.size(),0.0);
 
     d_eigenVectorsFlattenedSTL.resize((1+dftParameters::spinPolarized)*d_kPointWeights.size());
-    if (d_numEigenValuesRR!=d_numEigenValues)
-    {
-      d_eigenVectorsRotFracDensityFlattenedSTL.resize((1+dftParameters::spinPolarized)*d_kPointWeights.size());
-    }
+    d_eigenVectorsRotFracDensityFlattenedSTL.resize((1+dftParameters::spinPolarized)*d_kPointWeights.size());
 
     for(unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
       {
@@ -422,6 +425,9 @@ namespace dftfe {
 
     if(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0 && dftParameters::isPseudopotential == true)
       pseudoUtils::convert(dftParameters::pseudoPotentialFile);
+
+    d_elpaScala.processGridOptionalELPASetup(d_numEigenValues,
+                                             d_numEigenValuesRR);
 
     MPI_Barrier(MPI_COMM_WORLD);
     computingTimerStandard.exit_section("Atomic system initialization");
@@ -894,10 +900,66 @@ namespace dftfe {
     //create kohnShamDFTOperatorClass object
     //
     kohnShamDFTOperatorClass<FEOrder> kohnShamDFTEigenOperator(this,mpi_communicator);
-    kohnShamDFTEigenOperator.init();
+    if (!dftParameters::useGPU)
+    {
+       kohnShamDFTEigenOperator.init();
 
-    kohnShamDFTEigenOperator.processGridOptionalELPASetup(d_numEigenValues,
+       kohnShamDFTEigenOperator.processGridOptionalELPASetup(d_numEigenValues,
 			                                  d_numEigenValuesRR);
+    }
+
+#ifdef DFTFE_WITH_GPU
+    kohnShamDFTOperatorCUDAClass<FEOrder> kohnShamDFTEigenOperatorCUDA(this,mpi_communicator);
+    if (dftParameters::useGPU)
+    {
+	    kohnShamDFTEigenOperatorCUDA.init();
+	    kohnShamDFTEigenOperatorCUDA.createCublasHandle();
+
+	    kohnShamDFTEigenOperatorCUDA.processGridSetup(d_numEigenValues,
+							  d_numEigenValuesRR);
+
+	    AssertThrow((d_numEigenValues%dftParameters::chebyWfcBlockSize==0 || d_numEigenValues/dftParameters::chebyWfcBlockSize==0)
+			,ExcMessage("DFT-FE Error: total number wavefunctions must be exactly divisible by cheby wfc block size for GPU run."));
+
+
+	    AssertThrow((d_numEigenValues%dftParameters::wfcBlockSize==0 || d_numEigenValues/dftParameters::wfcBlockSize==0)
+			,ExcMessage("DFT-FE Error: total number wavefunctions must be exactly divisible by wfc block size for GPU run."));
+
+	    AssertThrow((dftParameters::wfcBlockSize%dftParameters::chebyWfcBlockSize==0 && dftParameters::wfcBlockSize/dftParameters::chebyWfcBlockSize>=0)
+			,ExcMessage("DFT-FE Error: wfc block size must be exactly divisible by cheby wfc block size and also larger for GPU run."));
+
+	    if (d_numEigenValuesRR!=d_numEigenValues)
+	       AssertThrow((d_numEigenValuesRR%dftParameters::wfcBlockSize==0 || d_numEigenValuesRR/dftParameters::wfcBlockSize==0)
+			    ,ExcMessage("DFT-FE Error: total number RR wavefunctions must be exactly divisible by wfc block size for GPU run."));
+
+	    AssertThrow((dftParameters::mixedPrecXtHXFracStates%dftParameters::wfcBlockSize==0
+			|| dftParameters::mixedPrecXtHXFracStates/dftParameters::wfcBlockSize==0)
+			 ,ExcMessage("DFT-FE Error: MIXED PREC XTHX FRAC STATES must be exactly divisible by WFC BLOCK SIZE for GPU run."));
+
+	    //band group parallelization data structures
+	    const unsigned int numberBandGroups=
+	      dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
+
+	    AssertThrow((d_numEigenValues%numberBandGroups==0 || d_numEigenValues/numberBandGroups==0)
+			,ExcMessage("DFT-FE Error: TOTAL NUMBER OF KOHN-SHAM WAVEFUNCTIONS must be exactly divisible by NPBAND for GPU run."));
+
+	    const unsigned int bandGroupTaskId = dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
+	    std::vector<unsigned int> bandGroupLowHighPlusOneIndices;
+	    dftUtils::createBandParallelizationIndices(interBandGroupComm,
+						       d_numEigenValuesRR,
+						       bandGroupLowHighPlusOneIndices);
+
+	    AssertThrow((bandGroupLowHighPlusOneIndices[1]%dftParameters::chebyWfcBlockSize==0)
+			,ExcMessage("DFT-FE Error: band parallelization group size must be exactly divisible by CHEBY WFC BLOCK SIZE for GPU run."));
+
+	    AssertThrow((bandGroupLowHighPlusOneIndices[1]%dftParameters::wfcBlockSize==0)
+			,ExcMessage("DFT-FE Error: band parallelization group size must be exactly divisible by WFC BLOCK SIZE for GPU run."));
+
+	    kohnShamDFTEigenOperatorCUDA.reinit(std::min(dftParameters::chebyWfcBlockSize,
+					       d_numEigenValues),
+					       true);
+    }
+#endif
 
     if (dftParameters::verbosity>=4)
       dftUtils::printCurrentMemoryUsage(mpi_communicator,
@@ -908,16 +970,27 @@ namespace dftfe {
     chebyshevOrthogonalizedSubspaceIterationSolver subspaceIterationSolver(mpi_communicator,
 	                                                                   dftParameters::lowerEndWantedSpectrum,
 									   0.0);
+#ifdef DFTFE_WITH_GPU
+    chebyshevOrthogonalizedSubspaceIterationSolverCUDA subspaceIterationSolverCUDA(mpi_communicator,
+	                                                                       dftParameters::lowerEndWantedSpectrum,
+									       0.0);
+#endif
+
 
 
     //
     //precompute shapeFunctions and shapeFunctionGradients and shapeFunctionGradientIntegrals
     //
     computing_timer.enter_section("shapefunction data");
-    kohnShamDFTEigenOperator.preComputeShapeFunctionGradientIntegrals();
+    if (!dftParameters::useGPU)
+       kohnShamDFTEigenOperator.preComputeShapeFunctionGradientIntegrals();
+#ifdef DFTFE_WITH_GPU
+    if (dftParameters::useGPU)
+       kohnShamDFTEigenOperatorCUDA.preComputeShapeFunctionGradientIntegrals();
+#endif
     computing_timer.exit_section("shapefunction data");
 
-    if(dftParameters::rrGEPFullMassMatrix)
+    if(dftParameters::rrGEPFullMassMatrix && !dftParameters::useGPU)
       kohnShamDFTEigenOperator.computeMassMatrix();
 
     if (dftParameters::verbosity>=4)
@@ -1061,22 +1134,41 @@ namespace dftfe {
 		if(dftParameters::xc_id < 4)
 		  {
 		    computing_timer.enter_section("VEff Computation");
-		    kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, d_pseudoVLoc);
+#ifdef DFTFE_WITH_GPU
+                    if (dftParameters::useGPU)
+		       kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, d_pseudoVLoc);
+#endif
+                    if (!dftParameters::useGPU)
+		       kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, d_pseudoVLoc);
 		    computing_timer.exit_section("VEff Computation");
 		  }
 		else if (dftParameters::xc_id == 4)
 		  {
 		    computing_timer.enter_section("VEff Computation");
-		    kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, d_pseudoVLoc);
+#ifdef DFTFE_WITH_GPU
+                    if (dftParameters::useGPU)
+		       kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, d_pseudoVLoc);
+#endif
+                    if (!dftParameters::useGPU)
+		       kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, d_pseudoVLoc);
 		    computing_timer.exit_section("VEff Computation");
 		  }
 		for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
 		  {
-		    kohnShamDFTEigenOperator.reinitkPointIndex(kPoint);
-
+#ifdef DFTFE_WITH_GPU
+                    if (dftParameters::useGPU)
+		       kohnShamDFTEigenOperatorCUDA.reinitkPointIndex(kPoint);
+#endif
+                    if (!dftParameters::useGPU)
+		       kohnShamDFTEigenOperator.reinitkPointIndex(kPoint);
 
 		    computing_timer.enter_section("Hamiltonian Matrix Computation");
-		    kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint);
+#ifdef DFTFE_WITH_GPU
+                    if (dftParameters::useGPU)
+		       kohnShamDFTEigenOperatorCUDA.computeHamiltonianMatrix(kPoint);
+#endif
+                    if (!dftParameters::useGPU)
+		       kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint);
 		    computing_timer.exit_section("Hamiltonian Matrix Computation");
 
 		    if (dftParameters::verbosity>=4)
@@ -1088,9 +1180,24 @@ namespace dftfe {
 			if (dftParameters::verbosity>=2)
 			  pcout<<"Beginning Chebyshev filter pass "<< j+1<< " for spin "<< s+1<<std::endl;
 
-			kohnShamEigenSpaceCompute(s,
+#ifdef DFTFE_WITH_GPU
+		       if (dftParameters::useGPU)
+		  	  kohnShamEigenSpaceCompute(s,
 						  kPoint,
+						  kohnShamDFTEigenOperatorCUDA,
+						  d_elpaScala,
+						  subspaceIterationSolverCUDA,
+						  residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
+						  (scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true,
+						  scfConverged?false:true,
+                                                  scfIter==0,
+						  (scfConverged && dftParameters::rrGEPFullMassMatrix && dftParameters::rrGEP)?true:false);
+#endif
+		       if (!dftParameters::useGPU)
+		   	  kohnShamEigenSpaceCompute(s,
+		 				  kPoint,
 						  kohnShamDFTEigenOperator,
+						  d_elpaScala,
 						  subspaceIterationSolver,
 						  residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
 						  (scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true,
@@ -1156,38 +1263,74 @@ namespace dftfe {
 			if(dftParameters::xc_id < 4)
 			  {
 			    computing_timer.enter_section("VEff Computation");
-			    kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, d_pseudoVLoc);
+#ifdef DFTFE_WITH_GPU
+			    if (dftParameters::useGPU)
+			       kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, d_pseudoVLoc);
+#endif
+			    if (!dftParameters::useGPU)
+			       kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, d_pseudoVLoc);
 			    computing_timer.exit_section("VEff Computation");
 			  }
 			else if (dftParameters::xc_id == 4)
 			  {
 			    computing_timer.enter_section("VEff Computation");
-			    kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, d_pseudoVLoc);
+#ifdef DFTFE_WITH_GPU
+			    if (dftParameters::useGPU)
+			       kohnShamDFTEigenOperatorCUDA.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, d_pseudoVLoc);
+#endif
+			    if (!dftParameters::useGPU)
+			       kohnShamDFTEigenOperator.computeVEffSpinPolarized(rhoInValuesSpinPolarized, gradRhoInValuesSpinPolarized, d_phiTotRhoIn, d_phiExt, s, d_pseudoVLoc);
 			    computing_timer.exit_section("VEff Computation");
 			  }
 
 			for(unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
 			  {
-			    kohnShamDFTEigenOperator.reinitkPointIndex(kPoint);
 			    if (dftParameters::verbosity>=2)
 			      pcout<< "Beginning Chebyshev filter pass "<< 1+count<< " for spin "<< s+1<<std::endl;;
 
+#ifdef DFTFE_WITH_GPU
+			    if (dftParameters::useGPU)
+			       kohnShamDFTEigenOperatorCUDA.reinitkPointIndex(kPoint);
+#endif
+			    if (!dftParameters::useGPU)
+			       kohnShamDFTEigenOperator.reinitkPointIndex(kPoint);
+
 			    computing_timer.enter_section("Hamiltonian Matrix Computation");
-			    kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint);
+#ifdef DFTFE_WITH_GPU
+			    if (dftParameters::useGPU)
+			       kohnShamDFTEigenOperatorCUDA.computeHamiltonianMatrix(kPoint);
+#endif
+			    if (!dftParameters::useGPU)
+			       kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint);
 			    computing_timer.exit_section("Hamiltonian Matrix Computation");
 
 			    if (dftParameters::verbosity>=4)
 			      dftUtils::printCurrentMemoryUsage(mpi_communicator,
 						      "Hamiltonian Matrix computed");
 
-			    kohnShamEigenSpaceCompute(s,
-						      kPoint,
-						      kohnShamDFTEigenOperator,
-						      subspaceIterationSolver,
-						      residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
-						      (scfIter<dftParameters::spectrumSplitStartingScfIter)?false:true,
-						      true,
-						      scfIter==0);
+
+#ifdef DFTFE_WITH_GPU
+			    if (dftParameters::useGPU)
+				kohnShamEigenSpaceCompute(s,
+							  kPoint,
+							  kohnShamDFTEigenOperatorCUDA,
+							  d_elpaScala,
+							  subspaceIterationSolverCUDA,
+							  residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
+							  (scfIter<dftParameters::spectrumSplitStartingScfIter)?false:true,
+							  true,
+							  scfIter==0);
+#endif
+			    if (!dftParameters::useGPU)
+				kohnShamEigenSpaceCompute(s,
+							  kPoint,
+							  kohnShamDFTEigenOperator,
+							  d_elpaScala,
+							  subspaceIterationSolver,
+							  residualNormWaveFunctionsAllkPointsSpins[s][kPoint],
+							  (scfIter<dftParameters::spectrumSplitStartingScfIter)?false:true,
+							  true,
+							  scfIter==0);
 
 			  }
 		      }
@@ -1241,23 +1384,43 @@ namespace dftfe {
 	    if(dftParameters::xc_id < 4)
 	      {
 		computing_timer.enter_section("VEff Computation");
-		kohnShamDFTEigenOperator.computeVEff(rhoInValues, d_phiTotRhoIn, d_phiExt, d_pseudoVLoc);
+#ifdef DFTFE_WITH_GPU
+                if (dftParameters::useGPU)
+		    kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, d_phiTotRhoIn, d_phiExt, d_pseudoVLoc);
+#endif
+                if (!dftParameters::useGPU)
+		    kohnShamDFTEigenOperator.computeVEff(rhoInValues, d_phiTotRhoIn, d_phiExt, d_pseudoVLoc);
 		computing_timer.exit_section("VEff Computation");
 	      }
 	    else if (dftParameters::xc_id == 4)
 	      {
 		computing_timer.enter_section("VEff Computation");
-		kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, d_phiTotRhoIn, d_phiExt, d_pseudoVLoc);
+#ifdef DFTFE_WITH_GPU
+                if (dftParameters::useGPU)
+		    kohnShamDFTEigenOperatorCUDA.computeVEff(rhoInValues, gradRhoInValues, d_phiTotRhoIn, d_phiExt, d_pseudoVLoc);
+#endif
+                if (!dftParameters::useGPU)
+		    kohnShamDFTEigenOperator.computeVEff(rhoInValues, gradRhoInValues, d_phiTotRhoIn, d_phiExt, d_pseudoVLoc);
 		computing_timer.exit_section("VEff Computation");
 	      }
 
 	    for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
 	      {
-		kohnShamDFTEigenOperator.reinitkPointIndex(kPoint);
+#ifdef DFTFE_WITH_GPU
+		if (dftParameters::useGPU)
+		       kohnShamDFTEigenOperatorCUDA.reinitkPointIndex(kPoint);
+#endif
+		if (!dftParameters::useGPU)
+		       kohnShamDFTEigenOperator.reinitkPointIndex(kPoint);
 
-		computing_timer.enter_section("Hamiltonian Matrix Computation");
-		kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint);
-		computing_timer.exit_section("Hamiltonian Matrix Computation");
+		    computing_timer.enter_section("Hamiltonian Matrix Computation");
+#ifdef DFTFE_WITH_GPU
+		if (dftParameters::useGPU)
+		       kohnShamDFTEigenOperatorCUDA.computeHamiltonianMatrix(kPoint);
+#endif
+		if (!dftParameters::useGPU)
+		       kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint);
+		    computing_timer.exit_section("Hamiltonian Matrix Computation");
 
 		if (dftParameters::verbosity>=4)
 		      dftUtils::printCurrentMemoryUsage(mpi_communicator,
@@ -1268,16 +1431,30 @@ namespace dftfe {
 		      pcout<< "Beginning Chebyshev filter pass "<< j+1<<std::endl;
 
 
-		    kohnShamEigenSpaceCompute(0,
-					      kPoint,
-					      kohnShamDFTEigenOperator,
-					      subspaceIterationSolver,
-					      residualNormWaveFunctionsAllkPoints[kPoint],
-					      (scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true,
-					      scfConverged?false:true,
-                                              scfIter==0,
-					      (scfConverged && dftParameters::rrGEPFullMassMatrix && dftParameters::rrGEP)?true:false);
-
+#ifdef DFTFE_WITH_GPU
+                    if (dftParameters::useGPU)
+			kohnShamEigenSpaceCompute(0,
+						  kPoint,
+						  kohnShamDFTEigenOperatorCUDA,
+						  d_elpaScala,
+						  subspaceIterationSolverCUDA,
+						  residualNormWaveFunctionsAllkPoints[kPoint],
+						  (scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true,
+						  scfConverged?false:true,
+						  scfIter==0,
+						  (scfConverged && dftParameters::rrGEPFullMassMatrix && dftParameters::rrGEP)?true:false);
+#endif
+                    if (!dftParameters::useGPU)
+			kohnShamEigenSpaceCompute(0,
+						  kPoint,
+						  kohnShamDFTEigenOperator,
+						  d_elpaScala,
+						  subspaceIterationSolver,
+						  residualNormWaveFunctionsAllkPoints[kPoint],
+						  (scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true,
+						  scfConverged?false:true,
+						  scfIter==0,
+						  (scfConverged && dftParameters::rrGEPFullMassMatrix && dftParameters::rrGEP)?true:false);
 		  }
 	      }
 
@@ -1317,25 +1494,52 @@ namespace dftfe {
 
 		    for (unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
 		      {
-			kohnShamDFTEigenOperator.reinitkPointIndex(kPoint);
 			if (dftParameters::verbosity>=2)
 			  pcout<< "Beginning Chebyshev filter pass "<< 1+count<<std::endl;
 
-			computing_timer.enter_section("Hamiltonian Matrix Computation");
-			kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint);
-			computing_timer.exit_section("Hamiltonian Matrix Computation");
+#ifdef DFTFE_WITH_GPU
+			if (dftParameters::useGPU)
+			       kohnShamDFTEigenOperatorCUDA.reinitkPointIndex(kPoint);
+#endif
+			if (!dftParameters::useGPU)
+			       kohnShamDFTEigenOperator.reinitkPointIndex(kPoint);
+
+			    computing_timer.enter_section("Hamiltonian Matrix Computation");
+#ifdef DFTFE_WITH_GPU
+			if (dftParameters::useGPU)
+			       kohnShamDFTEigenOperatorCUDA.computeHamiltonianMatrix(kPoint);
+#endif
+			if (!dftParameters::useGPU)
+			       kohnShamDFTEigenOperator.computeHamiltonianMatrix(kPoint);
+			    computing_timer.exit_section("Hamiltonian Matrix Computation");
 
 			if(dftParameters::verbosity>=4)
 			  dftUtils::printCurrentMemoryUsage(mpi_communicator,
 							    "Hamiltonian Matrix computed");
-			kohnShamEigenSpaceCompute(0,
-						  kPoint,
-						  kohnShamDFTEigenOperator,
-						  subspaceIterationSolver,
-						  residualNormWaveFunctionsAllkPoints[kPoint],
-						  (scfIter<dftParameters::spectrumSplitStartingScfIter)?false:true,
-						  true,
-						  scfIter==0);
+#ifdef DFTFE_WITH_GPU
+                        if (dftParameters::useGPU)
+				kohnShamEigenSpaceCompute(0,
+							  kPoint,
+							  kohnShamDFTEigenOperatorCUDA,
+							  d_elpaScala,
+							  subspaceIterationSolverCUDA,
+							  residualNormWaveFunctionsAllkPoints[kPoint],
+							  (scfIter<dftParameters::spectrumSplitStartingScfIter)?false:true,
+							  true,
+							  scfIter==0);
+
+#endif
+                        if (!dftParameters::useGPU)
+				kohnShamEigenSpaceCompute(0,
+							  kPoint,
+							  kohnShamDFTEigenOperator,
+							  d_elpaScala,
+							  subspaceIterationSolver,
+							  residualNormWaveFunctionsAllkPoints[kPoint],
+							  (scfIter<dftParameters::spectrumSplitStartingScfIter)?false:true,
+							  true,
+							  scfIter==0);
+
 		      }
 		    count++;
 		    //
@@ -1369,8 +1573,16 @@ namespace dftfe {
 	else
 	  compute_rhoOut((scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true);
 #else
-	compute_rhoOut((scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true);
+
+#ifdef DFTFE_WITH_GPU
+        if (dftParameters::useGPU)
+           compute_rhoOut(kohnShamDFTEigenOperatorCUDA,
+	      (scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true);
 #endif
+        if (!dftParameters::useGPU) 
+	   compute_rhoOut((scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true);
+#endif
+
 	computing_timer.exit_section("compute rho");
 
 	//
@@ -1602,6 +1814,16 @@ namespace dftfe {
     computing_timer.exit_section("scf solve");
     computingTimerStandard.exit_section("Total scf solve");
 
+#ifdef DFTFE_WITH_GPU
+     if (dftParameters::useGPU)
+       for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
+       {
+               vectorToolsCUDA::copyCUDAVecToHostVec(d_eigenVectorsFlattenedCUDA.begin()+kPoint*d_eigenVectorsFlattenedSTL[0].size(),
+                                                    &d_eigenVectorsFlattenedSTL[kPoint][0],
+                                                     d_eigenVectorsFlattenedSTL[kPoint].size());
+       }
+#endif
+
     const unsigned int numberBandGroups=
 	  dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
 
@@ -1808,8 +2030,13 @@ namespace dftfe {
      }
 #endif
 
+#ifdef DFTFE_WITH_GPU
+    if (dftParameters::useGPU)
+	 kohnShamDFTEigenOperatorCUDA.destroyCublasHandle();
+#endif
+
 #ifdef DFTFE_WITH_ELPA
-    if (dftParameters::useELPA)
+    if (dftParameters::useELPA && !dftParameters::useGPU)
 	 kohnShamDFTEigenOperator.elpaDeallocateHandles(d_numEigenValues,
 				             d_numEigenValuesRR);
 #endif

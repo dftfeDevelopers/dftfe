@@ -659,6 +659,8 @@ namespace dftfe {
       geoOptIon<FEOrder> * geoOptIonPtr;
       geoOptCell<FEOrder> * geoOptCellPtr;
 
+      elpaScalaManager d_elpaScala;
+
       /**
        * constraint Matrices
        */
@@ -916,12 +918,27 @@ namespace dftfe {
       void kohnShamEigenSpaceCompute(const unsigned int s,
 				     const unsigned int kPointIndex,
 				     kohnShamDFTOperatorClass<FEOrder> & kohnShamDFTEigenOperator,
+                                     elpaScalaManager & elpaScala,
 				     chebyshevOrthogonalizedSubspaceIterationSolver & subspaceIterationSolver,
 				     std::vector<double> & residualNormWaveFunctions,
 				     const bool isSpectrumSplit=false,
 				     const bool useMixedPrec=false,
                                      const bool isFirstScf=false,
 				     const bool useFullMassMatrixGEP=false);
+
+
+#ifdef DFTFE_WITH_GPU
+      void kohnShamEigenSpaceCompute(const unsigned int s,
+                                     const unsigned int kPointIndex,
+                                     kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+                                     elpaScalaManager & elpaScala,
+                                     chebyshevOrthogonalizedSubspaceIterationSolverCUDA & subspaceIterationSolverCUDA,
+                                     std::vector<double> & residualNormWaveFunctions,
+				     const bool isSpectrumSplit=false,
+				     const bool useMixedPrec=false,
+                                     const bool isFirstScf=false,
+				     const bool useFullMassMatrixGEP=false);
+#endif
 
      void kohnShamEigenSpaceComputeNSCF(const unsigned int spinType,
 				    const unsigned int kPointIndex,

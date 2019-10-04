@@ -43,6 +43,7 @@ namespace dftfe
 
              if (dftParameters::gpuFineGrainedTimings)
              {
+                cudaDeviceSynchronize();
                 MPI_Barrier(MPI_COMM_WORLD);
                 gpu_time = MPI_Wtime();
              }
@@ -59,7 +60,8 @@ namespace dftfe
 
              if (dftParameters::gpuFineGrainedTimings)
              {
-                    MPI_Barrier(MPI_COMM_WORLD); 
+                    cudaDeviceSynchronize();
+                    MPI_Barrier(MPI_COMM_WORLD);
 		    gpu_time = MPI_Wtime() - gpu_time;
 		    if (this_process==0)
 			  std::cout<<"Time for creating processGrid and ScaLAPACK matrix: "<<gpu_time<<std::endl;
@@ -67,6 +69,7 @@ namespace dftfe
 
              if (dftParameters::gpuFineGrainedTimings)
              {
+                cudaDeviceSynchronize();
                 MPI_Barrier(MPI_COMM_WORLD);
                 gpu_time = MPI_Wtime();
              }
@@ -98,7 +101,8 @@ namespace dftfe
             
             if (dftParameters::gpuFineGrainedTimings)
             {
-                    MPI_Barrier(MPI_COMM_WORLD); 
+                    cudaDeviceSynchronize();
+                    MPI_Barrier(MPI_COMM_WORLD);
 		    gpu_time = MPI_Wtime() - gpu_time;
 		    if (this_process==0)
                     {
@@ -111,6 +115,7 @@ namespace dftfe
 
             if (dftParameters::gpuFineGrainedTimings)  
             {
+                cudaDeviceSynchronize();
                 MPI_Barrier(MPI_COMM_WORLD);
                 gpu_time = MPI_Wtime(); 
             }
@@ -158,6 +163,7 @@ namespace dftfe
 
                if (dftParameters::gpuFineGrainedTimings)
                {  
+                  cudaDeviceSynchronize();
                   MPI_Barrier(MPI_COMM_WORLD);
                   gpu_time = MPI_Wtime() - gpu_time;
                   if (this_process==0)
@@ -167,6 +173,7 @@ namespace dftfe
                //X=X*L^{-1}^{T} implemented as X^{T}=L^{-1}*X^{T} with X^{T} stored in the column major format
                if (dftParameters::gpuFineGrainedTimings)
                {
+                  cudaDeviceSynchronize();
                   MPI_Barrier(MPI_COMM_WORLD);
                   gpu_time = MPI_Wtime();
                }

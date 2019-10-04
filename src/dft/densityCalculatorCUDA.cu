@@ -180,7 +180,8 @@ namespace dftfe
 #else
            int this_process;
            MPI_Comm_rank(MPI_COMM_WORLD, &this_process);
-
+           cudaDeviceSynchronize();
+           MPI_Barrier(MPI_COMM_WORLD);
            double gpu_time=MPI_Wtime();
            const unsigned int numKPoints=kPointWeights.size();
 
@@ -1270,7 +1271,7 @@ namespace dftfe
            MPI_Barrier(MPI_COMM_WORLD);
 	   gpu_time = MPI_Wtime() - gpu_time;
  
-           if (this_process==0)
+           if (this_process==0 && dftParameters::verbosity>=2)
 	      std::cout<<"Time for compute rho on GPU: "<<gpu_time<<std::endl;
 #endif
       }
