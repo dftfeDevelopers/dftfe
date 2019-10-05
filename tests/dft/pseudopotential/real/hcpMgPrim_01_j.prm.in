@@ -71,7 +71,7 @@ subsection SCF parameters
   set STARTING WFC= ATOMIC
   set HIGHER QUAD NLP  = false
   subsection Eigen-solver parameters
-     set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 27
+     set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 16
      set SPECTRUM SPLIT CORE EIGENSTATES=7
      set SPECTRUM SPLIT STARTING SCF ITER=1
      set ADAPTIVE FILTER STATES=7
