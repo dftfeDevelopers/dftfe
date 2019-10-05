@@ -228,7 +228,8 @@ namespace dftfe
 				  const MPI_Comm &mpiComm,
                                   const MPI_Comm &interBandGroupComm,
                                   cublasHandle_t & handle,
-				  std::vector<double> & residualNorm);
+				  std::vector<double> & residualNorm,
+                                  const bool useBandParal=false);
   }
 }
 #endif

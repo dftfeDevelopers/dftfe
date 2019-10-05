@@ -616,48 +616,6 @@ namespace dftfe
 		return;
 	     }
 
-             MPI_Barrier(MPI_COMM_WORLD);
-             gpu_time = MPI_Wtime();
-             thrust::device_vector<double> eigenVectorsFlattenedRR(eigenValues.size()*localVectorSize,0.0);
-             stridedCopyToBlockKernel<<<(eigenValues.size()+255)/256*localVectorSize, 256>>>(eigenValues.size(),
-	  								       localVectorSize,
-									       eigenVectorsFlattenedCUDA,
-									       totalNumberWaveFunctions,
-									       thrust::raw_pointer_cast(&eigenVectorsFlattenedRR[0]),
-									       totalNumberWaveFunctions-eigenValues.size());
-
-
-	     std::vector<double> eigenValuesTemp(eigenValues.size());
-	     linearAlgebraOperationsCUDA::rayleighRitz(operatorMatrix,
-						      thrust::raw_pointer_cast(&eigenVectorsFlattenedRR[0]),
-						      cudaFlattenedArrayBlock,
-						      YArray,
-						      projectorKetTimesVector,
-						      localVectorSize,
-						      eigenValues.size(),
-						      isElpaStep1,
-						      isElpaStep2,
-						      operatorMatrix.getMPICommunicator(),
-                                                      interBandGroupComm,
-						      &eigenValuesTemp[0],
-						      cublasHandle,
-						      projHamPar,
-						      processGrid,
-                                                      2);
-
-
-	     stridedCopyFromBlockKernel<<<(eigenValues.size()+255)/256*localVectorSize, 256>>>(eigenValues.size(),
-										 localVectorSize,
-										 thrust::raw_pointer_cast(&eigenVectorsFlattenedRR[0]),
-										 totalNumberWaveFunctions,
-										 eigenVectorsFlattenedCUDA,
-										 totalNumberWaveFunctions-eigenValues.size());
-             cudaDeviceSynchronize();
-             MPI_Barrier(MPI_COMM_WORLD);
-	     gpu_time = MPI_Wtime() - gpu_time;
-	     if (this_process==0 && dftParameters::verbosity>=2)
-		    std::cout<<"Time for RR on valence projected Ham: "<<gpu_time<<std::endl;
-
     }
     else
     {
@@ -724,6 +682,20 @@ namespace dftfe
     cudaDeviceSynchronize();
     MPI_Barrier(MPI_COMM_WORLD);
     gpu_time = MPI_Wtime();
+    if (eigenValues.size()!=totalNumberWaveFunctions)
+      linearAlgebraOperationsCUDA::computeEigenResidualNorm(operatorMatrix,
+      						        eigenVectorsRotFracDensityFlattenedCUDA,
+						        cudaFlattenedArrayBlock,
+						        YArray,
+						        projectorKetTimesVector,
+						        localVectorSize,
+						        eigenValues.size(),
+      						        eigenValues,
+							operatorMatrix.getMPICommunicator(),
+                                                        interBandGroupComm,
+                                                        cublasHandle,
+      						        residualNorms);
+    else
       linearAlgebraOperationsCUDA::computeEigenResidualNorm(operatorMatrix,
       						        eigenVectorsFlattenedCUDA,
 						        cudaFlattenedArrayBlock,
@@ -735,7 +707,8 @@ namespace dftfe
 							operatorMatrix.getMPICommunicator(),
                                                         interBandGroupComm,
                                                         cublasHandle,
-      						        residualNorms);
+      						        residualNorms,
+                                                        true);
 
     cudaDeviceSynchronize();
     MPI_Barrier(MPI_COMM_WORLD);

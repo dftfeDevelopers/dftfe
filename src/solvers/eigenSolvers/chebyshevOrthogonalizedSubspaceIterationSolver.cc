@@ -367,7 +367,7 @@ namespace dftfe{
     if(dftParameters::verbosity >= 4)
       pcout<<"ChebyShev Filtering Done: "<<std::endl;
 
-    if (dftParameters::rrGEP && dftParameters::isPseudopotential)
+    if (dftParameters::rrGEP)
     {
 	 computing_timer.enter_section("Rayleigh-Ritz GEP");
 	 if (eigenValues.size()!=totalNumberWaveFunctions)

@@ -1793,7 +1793,8 @@ namespace dftfe
 				  const MPI_Comm &mpiComm,
                                   const MPI_Comm &interBandGroupComm,
                                   cublasHandle_t & handle,
-				  std::vector<double> & residualNorm)
+				  std::vector<double> & residualNorm,
+                                  const bool useBandParal)
   {
 #ifdef USE_COMPLEX
         AssertThrow(false,dftUtils::ExcNotImplementedYet());
@@ -1831,8 +1832,8 @@ namespace dftfe
            const unsigned int B = std::min(vectorsBlockSize, N-jvec);
 
 
-	   if ((jvec+B)<=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1] &&
-	   (jvec+B)>bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
+	   if (((jvec+B)<=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1] &&
+	   (jvec+B)>bandGroupLowHighPlusOneIndices[2*bandGroupTaskId]) || !useBandParal)
            {
 
 		   const unsigned int chebyBlockSize=std::min(dftParameters::chebyWfcBlockSize,N);
@@ -1903,7 +1904,7 @@ namespace dftfe
 		    MPI_SUM,
 		    mpiComm);
 
-      if (numberBandGroups>1)
+      if (numberBandGroups>1 || !useBandParal)
         MPI_Allreduce(MPI_IN_PLACE,
 		      &residualNorm[0],
 		      N,
