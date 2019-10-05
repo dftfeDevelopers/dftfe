@@ -67,7 +67,7 @@ subsection SCF parameters
   set MIXING PARAMETER   = 0.5
   set MIXING HISTORY     = 70
   set TEMPERATURE                        = 500
-  set STARTING WFC=RANDOM
+  set STARTING WFC=ATOMIC
   set HIGHER QUAD NLP  = true
   subsection Eigen-solver parameters
       set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 16
