@@ -301,12 +301,6 @@ void dftClass<FEOrder>::solveNoSCF()
 	}
   }
 
-#ifdef DFTFE_WITH_ELPA
-  if (dftParameters::useELPA)
-	 kohnShamDFTEigenOperator.elpaDeallocateHandles(d_numEigenValues,
-				             d_numEigenValuesRR);
-#endif
-
   computeRhoFromPSI(rhoOutValues,
 		    gradRhoOutValues,
 		    rhoOutValuesSpinPolarized,
