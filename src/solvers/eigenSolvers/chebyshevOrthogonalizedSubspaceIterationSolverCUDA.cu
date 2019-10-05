@@ -285,6 +285,7 @@ namespace dftfe
 	    const double upperBoundUnwantedSpectrum =linearAlgebraOperationsCUDA::lanczosUpperBoundEigenSpectrum(operatorMatrix,
 													      tempEigenVec);
 	    computing_timer.exit_section("Lanczos k-step Upper Bound");
+            cudaDeviceSynchronize();
             MPI_Barrier(MPI_COMM_WORLD);
 	    gpu_time = MPI_Wtime();
 	    unsigned int chebyshevOrder = dftParameters::chebyshevOrder;
