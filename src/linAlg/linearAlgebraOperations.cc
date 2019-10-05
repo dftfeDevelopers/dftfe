@@ -184,6 +184,7 @@ namespace linearAlgebraOperations
       for (unsigned int i = 0; i < local_size; i++)
           vVector.local_element(i) = ((double)std::rand())/((double)RAND_MAX);
 
+      operatorMatrix.getConstraintMatrixEigen()->set_zero(vVector);
       vVector.update_ghost_values();
 
       //
@@ -199,6 +200,7 @@ namespace linearAlgebraOperations
       v[0] = vVector;
       f[0] = fVector;
       operatorMatrix.HX(v,f);
+      operatorMatrix.getConstraintMatrixEigen()->set_zero(v[0]);
       fVector = f[0];
 
 #ifdef USE_COMPLEX
@@ -223,6 +225,7 @@ namespace linearAlgebraOperations
 	  v0Vector = vVector; vVector.equ(1.0/beta,fVector);
 	  v[0] = vVector,f[0] = fVector;
 	  operatorMatrix.HX(v,f);
+          operatorMatrix.getConstraintMatrixEigen()->set_zero(v[0]);
 	  fVector = f[0];
 	  fVector.add(-1.0*beta,v0Vector);//beta is real
 #ifdef USE_COMPLEX

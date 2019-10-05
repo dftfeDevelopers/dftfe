@@ -78,29 +78,8 @@ Energy computations (Hartree)
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.081306,0.000000,0.000000
+AtomId    0:  0.081305,0.000000,0.000000
 AtomId    1:  0.081305,0.000000,0.000000
---------------------------------------------------------------------------------------------
-
-Finite element mesh information
--------------------------------------------------
-number of elements: 2792
-number of degrees of freedom: 88305
--------------------------------------------------
-
-Pseudopotential initalization....
-
-Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 10 iterations.
-
-Energy computations (Hartree) 
--------------------
-             Total energy:         -19.89839851
-
-Absolute values of ion forces (Hartree/Bohr)
---------------------------------------------------------------------------------------------
-AtomId    0:  0.089557,0.000000,0.000000
-AtomId    1:  0.089557,0.000000,0.000000
 --------------------------------------------------------------------------------------------
 
 Finite element mesh information
@@ -116,12 +95,33 @@ SCF iterations converged to the specified tolerance after: 11 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.90299153
+             Total energy:         -19.89839856
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.009671,0.000000,0.000000
-AtomId    1:  0.009671,0.000000,0.000000
+AtomId    0:  0.089558,0.000000,0.000000
+AtomId    1:  0.089559,0.000000,0.000000
+--------------------------------------------------------------------------------------------
+
+Finite element mesh information
+-------------------------------------------------
+number of elements: 2792
+number of degrees of freedom: 88305
+-------------------------------------------------
+
+Pseudopotential initalization....
+
+Starting SCF iterations....
+SCF iterations converged to the specified tolerance after: 11 iterations.
+
+Energy computations (Hartree) 
+-------------------
+             Total energy:         -19.90299156
+
+Absolute values of ion forces (Hartree/Bohr)
+--------------------------------------------------------------------------------------------
+AtomId    0:  0.009672,0.000000,0.000000
+AtomId    1:  0.009672,0.000000,0.000000
 --------------------------------------------------------------------------------------------
 
 Finite element mesh information
@@ -137,12 +137,12 @@ SCF iterations converged to the specified tolerance after: 9 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.90322569
+             Total energy:         -19.90322572
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.001373,0.000000,0.000000
-AtomId    1:  0.001373,0.000000,0.000000
+AtomId    0:  0.001372,0.000000,0.000000
+AtomId    1:  0.001372,0.000000,0.000000
 --------------------------------------------------------------------------------------------
 
 Finite element mesh information
@@ -158,10 +158,10 @@ SCF iterations converged to the specified tolerance after: 7 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.90320078
+             Total energy:         -19.90320084
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.000024,0.000000,0.000000
-AtomId    1:  0.000027,0.000000,0.000000
+AtomId    0:  0.000026,0.000000,0.000000
+AtomId    1:  0.000029,0.000000,0.000000
 --------------------------------------------------------------------------------------------
