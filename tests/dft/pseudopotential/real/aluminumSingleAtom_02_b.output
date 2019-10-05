@@ -2,8 +2,8 @@ number of atoms: 1
 number of atoms types: 1
 Z:13
 =============================================================================================================================
-number of electrons: 11
-number of eigen values: 12
+number of electrons: 3
+number of eigen values: 8
 =============================================================================================================================
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
 v1 : 4.000000000000000000e+01 0.000000000000000000e+00 0.000000000000000000e+00
@@ -27,13 +27,13 @@ Reading initial guess for electron-density.....
 Pseudopotential initalization....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 33 iterations.
+SCF iterations converged to the specified tolerance after: 9 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -69.05108041
+             Total energy:          -1.95113347
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.000003,0.000002,0.000001
+AtomId    0:  0.000000,0.000000,0.000000
 --------------------------------------------------------------------------------------------
