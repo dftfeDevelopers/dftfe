@@ -8,8 +8,8 @@ end
 subsection Geometry
   set NATOMS=8
   set NATOM TYPES=1
-  set ATOMIC COORDINATES FILE = /home/dsambit/dftfenew/tests/dft/allElectron/complex/silicon_coordinates.inp
-  set DOMAIN VECTORS FILE = /home/dsambit/dftfenew/tests/dft/allElectron/complex/silicon_domainBoundingVectors.inp
+  set ATOMIC COORDINATES FILE = @SOURCE_DIR@/silicon_coordinates.inp
+  set DOMAIN VECTORS FILE = @SOURCE_DIR@/silicon_domainBoundingVectors.inp
   
   subsection Optimization
     set ION FORCE=true
