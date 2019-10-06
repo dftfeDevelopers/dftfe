@@ -58,8 +58,9 @@ subsection SCF parameters
       set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 10
       set ORTHOGONALIZATION TYPE=PGS
       set CHEBYSHEV POLYNOMIAL DEGREE = 30
-      set CHEBYSHEV FILTER TOLERANCE=1e-3
+      set CHEBYSHEV FILTER TOLERANCE=1e-4
       set RR GEP=false
+      set USE ELPA=false
   end
 end
 set H REFINED ELECTROSTATICS=false
