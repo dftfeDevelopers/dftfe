@@ -45,17 +45,19 @@ subsection SCF parameters
   set TEMPERATURE                      = 500
   set TOLERANCE                        = 5e-6
   set HIGHER QUAD NLP  = true
+  set STARTING WFC= ATOMIC
   subsection Eigen-solver parameters
-      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 12
+      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 8
       set ORTHOGONALIZATION TYPE=PGS
-      set CHEBYSHEV POLYNOMIAL DEGREE = 30
-      set CHEBYSHEV FILTER TOLERANCE=2e-3
+      set CHEBYSHEV POLYNOMIAL DEGREE = 20
+      set CHEBYSHEV FILTER TOLERANCE=1e-4
       set USE MIXED PREC PGS SR=true
       set USE MIXED PREC PGS O=true
       set WFC BLOCK SIZE=3
       set CHEBY WFC BLOCK SIZE=3
       set SUBSPACE ROT DOFS BLOCK SIZE=500
       set RR GEP=true
+      set RR GEP FULL MASS MATRIX=true
   end
 end
 set H REFINED ELECTROSTATICS=false

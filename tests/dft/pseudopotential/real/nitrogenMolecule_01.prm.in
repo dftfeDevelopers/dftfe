@@ -41,7 +41,7 @@ end
 
 subsection Poisson problem parameters
   set MAXIMUM ITERATIONS = 10000
-  set TOLERANCE          = 1e-9
+  set TOLERANCE          = 1e-10
 end
 
 subsection SCF parameters
@@ -51,11 +51,12 @@ subsection SCF parameters
   set TEMPERATURE                      = 500
   set TOLERANCE                        = 5e-6
   set HIGHER QUAD NLP  = false
+  set STARTING WFC=ATOMIC
   subsection Eigen-solver parameters
-      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 12
+      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 10
       set ORTHOGONALIZATION TYPE=LW
-      set CHEBYSHEV POLYNOMIAL DEGREE = 30
-      set CHEBYSHEV FILTER TOLERANCE=1e-3
+      set CHEBYSHEV POLYNOMIAL DEGREE = 20
+      set CHEBYSHEV FILTER TOLERANCE=1e-4
       set RR GEP=false
   end
 end
