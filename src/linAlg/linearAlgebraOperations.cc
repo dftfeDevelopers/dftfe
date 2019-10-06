@@ -271,8 +271,7 @@ namespace linearAlgebraOperations
 	  //pcout << buffer;
 	}
       double upperBound=eigenValuesT[lanczosIterations-1]+fVector.l2_norm();
-      double upperBoundRoundUp=std::floor(100 * upperBound) / 100.0;
-      return (upperBoundRoundUp);
+      return (std::ceil(upperBound));
     }
 
 

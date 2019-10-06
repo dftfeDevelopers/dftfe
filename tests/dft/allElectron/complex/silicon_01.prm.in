@@ -68,7 +68,7 @@ end
 
 subsection SCF parameters
   set MAXIMUM ITERATIONS = 100 
-  set TOLERANCE          = 1e-6
+  set TOLERANCE          = 1e-4
   set MIXING PARAMETER   = 0.5
   set MIXING HISTORY     = 70
   set TEMPERATURE                        = 500
@@ -76,8 +76,8 @@ subsection SCF parameters
   subsection Eigen-solver parameters
       set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 72
       set LOWER BOUND WANTED SPECTRUM = -70.0
-      set CHEBYSHEV POLYNOMIAL DEGREE = 10
-      set CHEBYSHEV FILTER TOLERANCE=1e-4
+      set CHEBYSHEV POLYNOMIAL DEGREE = 6
+      set CHEBYSHEV FILTER TOLERANCE=1e-3
       set ORTHOGONALIZATION TYPE=LW
   end
 end
