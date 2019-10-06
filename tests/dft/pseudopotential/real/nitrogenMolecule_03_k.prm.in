@@ -47,9 +47,9 @@ subsection SCF parameters
   set HIGHER QUAD NLP  = true
   set STARTING WFC= ATOMIC
   subsection Eigen-solver parameters
-      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 10
+      set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 8
       set ORTHOGONALIZATION TYPE=PGS
-      set CHEBYSHEV POLYNOMIAL DEGREE = 15
+      set CHEBYSHEV POLYNOMIAL DEGREE = 20
       set CHEBYSHEV FILTER TOLERANCE=1e-4
       set USE MIXED PREC PGS SR=true
       set USE MIXED PREC PGS O=true
