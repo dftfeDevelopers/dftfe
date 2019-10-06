@@ -25,8 +25,8 @@ Number Image Charges  3280
 
 Finite element mesh information
 -------------------------------------------------
-number of elements: 4724
-number of degrees of freedom: 48479
+number of elements: 1532
+number of degrees of freedom: 17021
 -------------------------------------------------
 
 Setting initial guess for wavefunctions....
@@ -34,27 +34,27 @@ Setting initial guess for wavefunctions....
 Reading initial guess for electron-density.....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 19 iterations.
+SCF iterations converged to the specified tolerance after: 17 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:       -1923.77258826
+             Total energy:       -1913.25131241
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.003252,0.000248,0.001272
-AtomId    1:  0.031811,0.000302,0.001252
-AtomId    2:  0.007123,0.000439,0.005577
-AtomId    3:  0.010099,0.000173,0.011600
-AtomId    4:  0.043304,0.053133,0.002806
-AtomId    5:  0.042909,0.030166,0.012862
-AtomId    6:  0.029575,0.040279,0.000750
-AtomId    7:  0.032782,0.019095,0.005819
+AtomId    0:  0.005928,0.001659,0.006415
+AtomId    1:  0.039287,0.000887,0.006356
+AtomId    2:  0.006255,0.000128,0.004682
+AtomId    3:  0.009725,0.000095,0.009038
+AtomId    4:  0.045633,0.056960,0.011154
+AtomId    5:  0.045751,0.031142,0.022364
+AtomId    6:  0.031040,0.043132,0.009446
+AtomId    7:  0.035073,0.019569,0.014829
 --------------------------------------------------------------------------------------------
 
 Absolute value of cell stress (Hartree/Bohr^3)
 ------------------------------------------------------------------------
-0.124733  0.007808  0.005814
-0.007808  0.124948  0.007815
-0.005814  0.007815  0.125223
+0.116552  0.008188  0.006131
+0.008188  0.116807  0.008197
+0.006131  0.008197  0.117123
 ------------------------------------------------------------------------

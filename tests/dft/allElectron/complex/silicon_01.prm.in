@@ -34,7 +34,7 @@ subsection Finite element mesh parameters
   subsection Auto mesh generation parameters
     set BASE MESH SIZE = 4.0 
     set ATOM BALL RADIUS = 2.0
-    set MESH SIZE AROUND ATOM = 0.5
+    set MESH SIZE AROUND ATOM = 1.0
     set MESH SIZE AT ATOM = 0.5 
   end
 
@@ -68,7 +68,7 @@ end
 
 subsection SCF parameters
   set MAXIMUM ITERATIONS = 100 
-  set TOLERANCE          = 1e-5
+  set TOLERANCE          = 5e-6
   set MIXING PARAMETER   = 0.5
   set MIXING HISTORY     = 70
   set TEMPERATURE                        = 500
@@ -76,8 +76,8 @@ subsection SCF parameters
   subsection Eigen-solver parameters
       set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 72
       set LOWER BOUND WANTED SPECTRUM = -70.0
-      set CHEBYSHEV POLYNOMIAL DEGREE = 6
-      set CHEBYSHEV FILTER TOLERANCE=1e-3
+      set CHEBYSHEV POLYNOMIAL DEGREE = 10
+      set CHEBYSHEV FILTER TOLERANCE=1e-4
       set ORTHOGONALIZATION TYPE=LW
   end
 end
