@@ -28,7 +28,7 @@ Reading initial guess for electron-density.....
 Pseudopotential initalization....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 15 iterations.
+SCF iterations converged to the specified tolerance after: 12 iterations.
 
 Energy computations (Hartree) 
 -------------------
@@ -37,7 +37,7 @@ Energy computations (Hartree)
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
 AtomId    0:  0.243120,0.000000,0.000000
-AtomId    1:  0.243120,0.000000,0.000000
+AtomId    1:  0.243121,0.000000,0.000000
 --------------------------------------------------------------------------------------------
 
 Finite element mesh information
@@ -49,16 +49,16 @@ number of degrees of freedom: 31257
 Pseudopotential initalization....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 14 iterations.
+SCF iterations converged to the specified tolerance after: 10 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.88413655
+             Total energy:         -19.88413648
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.259097,0.000000,0.000000
-AtomId    1:  0.259097,0.000000,0.000000
+AtomId    0:  0.259101,0.000000,0.000000
+AtomId    1:  0.259103,0.000000,0.000000
 --------------------------------------------------------------------------------------------
 
 Finite element mesh information
@@ -70,16 +70,16 @@ number of degrees of freedom: 31257
 Pseudopotential initalization....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 12 iterations.
+SCF iterations converged to the specified tolerance after: 9 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.87575967
+             Total energy:         -19.87575946
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.074570,0.000000,0.000000
-AtomId    1:  0.074570,0.000000,0.000000
+AtomId    0:  0.074581,0.000000,0.000000
+AtomId    1:  0.074577,0.000000,0.000000
 --------------------------------------------------------------------------------------------
 
 Finite element mesh information
@@ -91,16 +91,16 @@ number of degrees of freedom: 31257
 Pseudopotential initalization....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 11 iterations.
+SCF iterations converged to the specified tolerance after: 9 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.88557607
+             Total energy:         -19.88557690
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.039776,0.000000,0.000000
-AtomId    1:  0.039777,0.000000,0.000000
+AtomId    0:  0.039816,0.000000,0.000000
+AtomId    1:  0.039817,0.000000,0.000000
 --------------------------------------------------------------------------------------------
 
 Finite element mesh information
@@ -112,14 +112,14 @@ number of degrees of freedom: 31257
 Pseudopotential initalization....
 
 Starting SCF iterations....
-SCF iterations converged to the specified tolerance after: 12 iterations.
+SCF iterations converged to the specified tolerance after: 9 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:         -19.88307148
+             Total energy:         -19.88307052
 
 Absolute values of ion forces (Hartree/Bohr)
 --------------------------------------------------------------------------------------------
-AtomId    0:  0.003328,0.000000,0.000000
-AtomId    1:  0.003328,0.000000,0.000000
+AtomId    0:  0.003337,0.000000,0.000000
+AtomId    1:  0.003338,0.000000,0.000000
 --------------------------------------------------------------------------------------------
