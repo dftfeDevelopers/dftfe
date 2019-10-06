@@ -41,7 +41,7 @@ end
 
 subsection Poisson problem parameters
   set MAXIMUM ITERATIONS = 10000
-  set TOLERANCE          = 1e-9
+  set TOLERANCE          = 1e-10
 end
 
 subsection SCF parameters
@@ -49,7 +49,7 @@ subsection SCF parameters
   set MIXING PARAMETER = 0.5
   set MAXIMUM ITERATIONS               = 40
   set TEMPERATURE                      = 500
-  set TOLERANCE                        = 1e-5
+  set TOLERANCE                        = 5e-6
   set HIGHER QUAD NLP  = false
   set STARTING WFC=ATOMIC
   subsection Eigen-solver parameters
