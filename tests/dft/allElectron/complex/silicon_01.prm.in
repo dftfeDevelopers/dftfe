@@ -68,7 +68,7 @@ end
 
 subsection SCF parameters
   set MAXIMUM ITERATIONS = 100 
-  set TOLERANCE          = 1e-4
+  set TOLERANCE          = 1e-5
   set MIXING PARAMETER   = 0.5
   set MIXING HISTORY     = 70
   set TEMPERATURE                        = 500
@@ -85,6 +85,6 @@ end
 
 subsection Poisson problem parameters
   set MAXIMUM ITERATIONS = 10000
-  set TOLERANCE          = 1e-12
+  set TOLERANCE          = 1e-10
 end
 set H REFINED ELECTROSTATICS=false
