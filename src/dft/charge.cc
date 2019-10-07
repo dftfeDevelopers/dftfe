@@ -114,6 +114,40 @@ double dftClass<FEOrder>::totalCharge(const dealii::DoFHandler<3> & dofHandlerOf
   return Utilities::MPI::sum(normValue, mpi_communicator);
 }
 
+//
+//compute total charge using nodal point values by using FEEvaluation object
+//
+template <unsigned int FEOrder>
+double dftClass<FEOrder>::totalCharge(const dealii::MatrixFree<3,double> & matrixFreeDataObject,
+				      const vectorType & nodalField)
+{
+  FEEvaluation<C_DIM,2*FEOrder,2*FEOrder+1,1,double> fe_evalField(matrixFreeDataObject);
+  VectorizedArray<double> normValueVectorized = make_vectorized_array(0.0);
+  const unsigned int numQuadPoints = fe_evalField.n_q_points;
+  for(unsigned int cell = 0; cell < matrixFreeDataObject.n_macro_cells(); ++cell)
+    {
+      fe_evalField.reinit(cell);
+      fe_evalField.read_dof_values(nodalField);
+      fe_evalField.evaluate(true,false);
+      for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
+	{
+	  VectorizedArray<double> temp = fe_evalField.get_value(q_point);
+	  fe_evalField.submit_value(temp,q_point);
+	}
+
+      normValueVectorized += fe_evalField.integrate_value();
+    }
+  
+  double normValue = 0.0;
+  for(unsigned int iSubCell = 0; iSubCell < matrixFreeDataObject.n_components_filled(0); ++iSubCell)
+    {
+      normValue += normValueVectorized[iSubCell];
+    }
+  
+  return Utilities::MPI::sum(normValue, mpi_communicator);
+
+}
+
 
 //compute total charge
 template <unsigned int FEOrder>
@@ -136,4 +170,36 @@ double dftClass<FEOrder>::totalMagnetization(const std::map<dealii::CellId, std:
     }
   }
   return Utilities::MPI::sum(normValue, mpi_communicator);
+}
+
+template <unsigned int FEOrder>
+double dftClass<FEOrder>::fieldl2Norm(const dealii::MatrixFree<3,double> & matrixFreeDataObject,
+				      const vectorType & nodalField)
+
+{
+  FEEvaluation<C_DIM,2*FEOrder,2*FEOrder+1,1,double> fe_evalField(matrixFreeDataObject);
+  VectorizedArray<double> normValueVectorized = make_vectorized_array(0.0);
+  const unsigned int numQuadPoints = fe_evalField.n_q_points;
+  for(unsigned int cell = 0; cell < matrixFreeDataObject.n_macro_cells(); ++cell)
+    {
+      fe_evalField.reinit(cell);
+      fe_evalField.read_dof_values(nodalField);
+      fe_evalField.evaluate(true,false);
+      for(unsigned int q_point = 0; q_point < numQuadPoints; ++q_point)
+	{
+	  VectorizedArray<double> temp = fe_evalField.get_value(q_point)*fe_evalField.get_value(q_point);
+	  fe_evalField.submit_value(temp,q_point);
+	}
+
+      normValueVectorized += fe_evalField.integrate_value();
+    }
+  
+  double normValue = 0.0;
+  for(unsigned int iSubCell = 0; iSubCell < matrixFreeDataObject.n_components_filled(0); ++iSubCell)
+    {
+      normValue += normValueVectorized[iSubCell];
+    }
+  
+  return Utilities::MPI::sum(normValue, mpi_communicator);
+
 }

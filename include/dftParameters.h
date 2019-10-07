@@ -35,10 +35,10 @@ namespace dftfe {
     {
 
       extern unsigned int finiteElementPolynomialOrder,n_refinement_steps,numberEigenValues,xc_id, spinPolarized, nkx,nky,nkz , offsetFlagX,offsetFlagY,offsetFlagZ;
-      extern unsigned int chebyshevOrder,numPass,numSCFIterations,maxLinearSolverIterations, mixingHistory, npool, numberWaveFunctionsForEstimate, numLevels;
+      extern unsigned int chebyshevOrder,numPass,numSCFIterations,maxLinearSolverIterations, mixingHistory, npool, numberWaveFunctionsForEstimate, numLevels, maxLinearSolverIterationsHelmholtz;
 
       extern double radiusAtomBall, mixingParameter;
-      extern double lowerEndWantedSpectrum,relLinearSolverTolerance,selfConsistentSolverTolerance,TVal, start_magnetization;
+      extern double lowerEndWantedSpectrum,absLinearSolverTolerance,selfConsistentSolverTolerance,TVal, start_magnetization,absLinearSolverToleranceHelmholtz;
 
       extern bool isPseudopotential, periodicX, periodicY, periodicZ, useSymm, timeReversal,pseudoTestsFlag, constraintMagnetization, writeDosFile, writeLdosFile,writeLocalizationLengths;
       extern std::string meshFileName,coordinatesFile,domainBoundingVectorsFile,kPointDataFile, ionRelaxFlagsFile, orthogType, algoType, pseudoPotentialFile;
@@ -46,7 +46,7 @@ namespace dftfe {
       extern double outerAtomBallRadius, innerAtomBallRadius, meshSizeOuterDomain;
       extern bool autoUserMeshParams;
       extern double meshSizeInnerBall, meshSizeOuterBall;
-      extern double chebyshevTolerance, topfrac;
+      extern double chebyshevTolerance, topfrac, kerkerParameter;
       extern std::string mixingMethod,ionOptSolver;
 
 

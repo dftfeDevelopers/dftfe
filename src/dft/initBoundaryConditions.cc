@@ -193,6 +193,7 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   quadratureVector.push_back(QGauss<1>(C_num1DQuad<FEOrder>()));
   quadratureVector.push_back(QGaussLobatto<1>(FEOrder+1));
   quadratureVector.push_back(QGauss<1>(C_num1DQuadPSP<FEOrder>()));
+  quadratureVector.push_back(QGaussLobatto<1>(2*FEOrder+1));
 
   //
   //

@@ -35,9 +35,10 @@ namespace dftfe {
 
     //solve
     void dealiiLinearSolver::solve(dealiiLinearSolverProblem & problem,
-		                     const double absTolerance,
-		                     const unsigned int maxNumberIterations,
-		                     const unsigned int  debugLevel)
+				   const double absTolerance,
+				   const unsigned int maxNumberIterations,
+				   const unsigned int  debugLevel,
+				   bool distributeFlag)
     {
       //compute RHS
       vectorType rhs;
@@ -66,7 +67,9 @@ namespace dftfe {
 	  solver.solve(problem,x, rhs, preconditioner);
 	}
 
-	problem.distributeX();
+	if(distributeFlag)
+	  problem.distributeX();
+
 	x.update_ghost_values();
       }
       catch (...)
