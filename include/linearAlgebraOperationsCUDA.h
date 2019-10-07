@@ -182,6 +182,25 @@ namespace dftfe
                       const unsigned int gpuLinalgOption=0,
                       const bool useMixedPrecOverall=false);
 
+    void rayleighRitzGEPSpectrumSplitDirect(operatorDFTCUDAClass & operatorMatrix,
+		      double* X,
+                      cudaVectorType & Xb,
+                      cudaVectorType & HXb,
+                      cudaVectorType & projectorKetTimesVector,
+		      const unsigned int M,
+		      const unsigned int N,
+                      const bool isElpaStep1,
+                      const bool isElpaStep2,
+		      const MPI_Comm &mpiComm,
+                      const MPI_Comm &interBandGroupComm,
+		      double* eigenValues,
+		      cublasHandle_t & handle,
+                      dealii::ScaLAPACKMatrix<double> & projHamPar,
+                      dealii::ScaLAPACKMatrix<double> & overlapMatPar,
+                      const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
+                      const unsigned int gpuLinalgOption=0,
+                      const bool useMixedPrecOverall=false);
+
 
     /** @brief Calculates an estimate of upper bound of a matrix using
      *  k-step Lanczos method.

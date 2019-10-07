@@ -261,7 +261,6 @@ namespace dftfe
     void rayleighRitz(operatorDFTClass        & operatorMatrix,
 		      std::vector<T> & X,
 		      const unsigned int numberComponents,
-		      const bool isValenceProjHam,
 		      const MPI_Comm &interBandGroupComm,
 		      const MPI_Comm &mpiComm,
 		      std::vector<double>     & eigenValues,

@@ -607,5 +607,292 @@ namespace dftfe
 
     }
 
+    void rayleighRitzGEPSpectrumSplitDirect(operatorDFTCUDAClass & operatorMatrix,
+		      double* X,
+                      cudaVectorType & Xb,
+                      cudaVectorType & HXb,
+                      cudaVectorType & projectorKetTimesVector,
+		      const unsigned int M,
+                      const unsigned int N,
+                      const bool isElpaStep1,
+                      const bool isElpaStep2,
+		      const MPI_Comm &mpiComm,
+                      const MPI_Comm &interBandGroupComm,
+		      double* eigenValues,
+                      cublasHandle_t & handle,
+                      dealii::ScaLAPACKMatrix<double> & projHamPar,
+                      dealii::ScaLAPACKMatrix<double> & overlapMatPar,
+                      const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
+                      const unsigned int gpuLinalgOption,
+                      const bool useMixedPrecOverall)
+    {
+
+              int this_process;
+              MPI_Comm_rank(MPI_COMM_WORLD, &this_process);
+
+              double gpu_time;
+
+	      const unsigned int rowsBlockSize=operatorMatrix.getScalapackBlockSize();
+
+              if (!isElpaStep2)
+              {
+		      if (dftParameters::gpuFineGrainedTimings)
+                      {
+                         cudaDeviceSynchronize();
+                         MPI_Barrier(MPI_COMM_WORLD);
+		         gpu_time = MPI_Wtime();
+                      }
+
+		      //S=X*X^{T}. Implemented as S=X^{T}*X with X^{T} stored in the column major format
+		      if (dftParameters::useMixedPrecPGS_O && useMixedPrecOverall)
+				     linearAlgebraOperationsCUDA::
+					     fillParallelOverlapMatMixedPrecScalapack
+							      (X,
+							       M,
+							       N,
+							       handle,
+							       mpiComm,
+                                                               interBandGroupComm,
+							       processGrid,
+							       overlapMatPar);
+
+		      else
+				     linearAlgebraOperationsCUDA::
+					     fillParallelOverlapMatScalapack
+							      (X,
+							       M,
+							       N,
+							       handle,
+							       mpiComm,
+                                                               interBandGroupComm,
+							       processGrid,
+							       overlapMatPar); 
+			    
+		      if (dftParameters::gpuFineGrainedTimings)
+		      { 
+                            cudaDeviceSynchronize();
+                            MPI_Barrier(MPI_COMM_WORLD);
+			    gpu_time = MPI_Wtime() - gpu_time;
+			    if (this_process==0)
+			    {
+			      if (dftParameters::useMixedPrecPGS_O && useMixedPrecOverall)
+				  std::cout<<"Time for PGS Fill overlap matrix GPU mixed prec (option 0): "<<gpu_time<<std::endl;
+			      else
+				  std::cout<<"Time for PGS Fill overlap matrix (option 0): "<<gpu_time<<std::endl;
+			    }
+		      }
+
+		      if (dftParameters::gpuFineGrainedTimings)
+                      {
+                        cudaDeviceSynchronize();
+                        MPI_Barrier(MPI_COMM_WORLD);
+			gpu_time = MPI_Wtime();
+                      }
+
+		      if (processGrid->is_process_active())
+			  std::fill(&projHamPar.local_el(0,0),
+				    &projHamPar.local_el(0,0)+projHamPar.local_m()*projHamPar.local_n(),
+				    0.0);
+
+                      if (useMixedPrecOverall && dftParameters::useMixedPrecXTHXSpectrumSplit)
+			      operatorMatrix.XtHXMixedPrec(X,
+						 Xb,
+						 HXb,
+						 projectorKetTimesVector,
+						 M,
+						 N,
+                                                 N-dftParameters::mixedPrecXtHXFracStates,
+						 handle,
+						 processGrid,
+						 projHamPar);
+                      else
+			      operatorMatrix.XtHX(X,
+						 Xb,
+						 HXb,
+						 projectorKetTimesVector,
+						 M,
+						 N,
+						 handle,
+						 processGrid,
+						 projHamPar);
+
+		      if (dftParameters::gpuFineGrainedTimings)
+		      {
+                        cudaDeviceSynchronize();
+                        MPI_Barrier(MPI_COMM_WORLD);
+			gpu_time = MPI_Wtime() - gpu_time;
+			if (this_process==0)
+                        {
+                          if (useMixedPrecOverall && dftParameters::useMixedPrecXTHXSpectrumSplit)
+                            std::cout<<"Time for Blocked XtHX Mixed Prec, RR step (option0): "<<gpu_time<<std::endl;
+                          else
+  			     std::cout<<"Time for Blocked XtHX, RR step (option0): "<<gpu_time<<std::endl;
+                        }
+		      }
+              }
+               
+              if (isElpaStep1)
+                 return;
+
+              if (!isElpaStep2)
+              {
+
+                      
+		      //
+		      //compute eigendecomposition
+		      //
+		      if (dftParameters::gpuFineGrainedTimings)
+                      {
+                         cudaDeviceSynchronize();
+                         MPI_Barrier(MPI_COMM_WORLD);
+			 gpu_time = MPI_Wtime();
+                      }
+
+                      overlapMatPar.compute_cholesky_factorization();
+                      dealii::LAPACKSupport::Property overlapMatPropertyPostCholesky=overlapMatPar.get_property();
+
+		      AssertThrow(overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::lower_triangular
+				  ||overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::upper_triangular
+				   ,dealii::ExcMessage("DFT-FE Error: overlap matrix property after cholesky factorization incorrect"));
+		      dealii::ScaLAPACKMatrix<double> LMatPar(N,
+							 processGrid,
+							 rowsBlockSize,
+							 overlapMatPropertyPostCholesky); 
+
+		      //copy triangular part of projHamPar into LMatPar
+		      if (processGrid->is_process_active())
+			 for (unsigned int i = 0; i < overlapMatPar.local_n(); ++i)
+			   {
+			     const unsigned int glob_i = overlapMatPar.global_column(i);
+			     for (unsigned int j = 0; j < overlapMatPar.local_m(); ++j)
+			       {
+				 const unsigned int glob_j = overlapMatPar.global_row(j);
+				 if (overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::lower_triangular)
+				 {
+				     if (glob_i <= glob_j)
+					LMatPar.local_el(j, i)=overlapMatPar.local_el(j, i);
+				     else
+					LMatPar.local_el(j, i)=0;
+				 }
+				 else
+				 {
+				     if (glob_j <= glob_i)
+					LMatPar.local_el(j, i)=overlapMatPar.local_el(j, i);
+				     else
+					LMatPar.local_el(j, i)=0;
+				 }
+			       }
+			   }
+                      LMatPar.invert();
+
+		      dealii::ScaLAPACKMatrix<double> projHamParTrans(N,
+							    processGrid,
+							    rowsBlockSize);
+
+		      if (processGrid->is_process_active())
+			  std::fill(&projHamParTrans.local_el(0,0),
+				    &projHamParTrans.local_el(0,0)+projHamParTrans.local_m()*projHamParTrans.local_n(),
+				    0.0);
+
+
+		      projHamParTrans.copy_transposed(projHamPar);
+		      projHamPar.add(projHamParTrans,1.0,1.0);
+
+		      if (processGrid->is_process_active())
+			 for (unsigned int i = 0; i < projHamPar.local_n(); ++i)
+			   {
+			     const unsigned int glob_i = projHamPar.global_column(i);
+			     for (unsigned int j = 0; j < projHamPar.local_m(); ++j)
+			       {
+				 const unsigned int glob_j = projHamPar.global_row(j);
+				 if (glob_i==glob_j)
+				    projHamPar.local_el(j, i)*=0.5;
+			       }
+			   }
+
+		      dealii::ScaLAPACKMatrix<double> projHamParCopy(N,
+							    processGrid,
+							    rowsBlockSize);
+
+		      if (overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::lower_triangular)
+		      {
+			  LMatPar.mmult(projHamParCopy,projHamPar);
+			  projHamParCopy.mTmult(projHamPar,LMatPar);
+		      }
+		      else
+		      {
+			  LMatPar.Tmmult(projHamParCopy,projHamPar);
+			  projHamParCopy.mmult(projHamPar,LMatPar);
+		      }
+
+		      const unsigned int numberEigenValues = N;
+		      std::vector<double> eigenValuesStdVec(numberEigenValues,0.0);
+		      
+		      eigenValuesStdVec=projHamPar.eigenpairs_symmetric_by_index_MRRR(std::make_pair(0,numberEigenValues-1),true);
+		      std::copy(eigenValuesStdVec.begin(),eigenValuesStdVec.end(),eigenValues);
+
+		      projHamPar.copy_to(projHamParCopy);
+		      if (overlapMatPropertyPostCholesky==dealii::LAPACKSupport::Property::lower_triangular)
+			LMatPar.Tmmult(projHamPar,projHamParCopy);
+		      else
+			LMatPar.mmult(projHamPar,projHamParCopy);
+
+		      if (dftParameters::gpuFineGrainedTimings)
+		      {
+                        cudaDeviceSynchronize();
+                        MPI_Barrier(MPI_COMM_WORLD);
+			gpu_time = MPI_Wtime() - gpu_time;
+			if (this_process==0)
+			  std::cout<<"Time for ScaLAPACK GEP eigen decomp, RR step (option0): "<<gpu_time<<std::endl;
+		      }
+              }
+             
+	      //
+	      //rotate the basis in the subspace X = X*Q, implemented as X^{T}=Q^{T}*X^{T} with X^{T}
+	      //stored in the column major format
+	      //
+              if (dftParameters::gpuFineGrainedTimings)
+              {
+                 cudaDeviceSynchronize();
+                 MPI_Barrier(MPI_COMM_WORLD);
+	         gpu_time = MPI_Wtime();
+              }
+
+              if (useMixedPrecOverall && dftParameters::useMixedPrecSubspaceRotRR)
+                 subspaceRotationRRMixedPrecScalapack(X,
+                            M,
+                            N,
+                            handle,
+                            processGrid,
+                            mpiComm,
+                            interBandGroupComm,
+                            projHamPar,
+                            true);
+              else
+                 subspaceRotationScalapack(X,
+                            M,
+                            N,
+                            handle,
+                            processGrid,
+                            mpiComm,
+                            interBandGroupComm,
+                            projHamPar,
+                            true);
+
+              if (dftParameters::gpuFineGrainedTimings)
+              {
+                 cudaDeviceSynchronize();
+                 gpu_time = MPI_Wtime() - gpu_time;
+
+                 if (this_process==0)
+                  if (useMixedPrecOverall && dftParameters::useMixedPrecSubspaceRotRR)
+                     std::cout<<"Time for Blocked subspace rotation Mixed Prec, RR step (option0): "<<gpu_time<<std::endl;
+                  else
+                     std::cout<<"Time for Blocked subspace rotation, RR step (option0): "<<gpu_time<<std::endl;
+              }
+
+    }
+
+
   }
 }

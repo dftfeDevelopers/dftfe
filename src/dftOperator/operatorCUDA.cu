@@ -141,19 +141,6 @@ namespace dftfe {
                              (na+processGrid->get_process_grid_rows()-1)
                              /processGrid->get_process_grid_rows());
 
-       if (nev!=na)
-       {
-           std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  processGridValence;
-           linearAlgebraOperationsCUDA::internal::createProcessGridSquareMatrix(getMPICommunicator(),
-                                                   nev,
-                                                   processGridValence);
-
-
-           d_scalapackBlockSizeValence=std::min(dftParameters::scalapackBlockSize,
-                                 (nev+processGridValence->get_process_grid_rows()-1)
-                                 /processGridValence->get_process_grid_rows());
-
-       }
   }
 
 }

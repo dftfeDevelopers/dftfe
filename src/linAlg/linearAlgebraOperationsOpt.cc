@@ -1165,7 +1165,6 @@ namespace dftfe{
     void rayleighRitz(operatorDFTClass & operatorMatrix,
 		      std::vector<T> & X,
 		      const unsigned int numberWaveFunctions,
-		      const bool isValenceProjHam,
 		      const MPI_Comm &interBandGroupComm,
 		      const MPI_Comm &mpi_communicator,
 		      std::vector<double> & eigenValues,
@@ -1182,13 +1181,11 @@ namespace dftfe{
       //
       //compute projected Hamiltonian
       //
-      const unsigned int rowsBlockSize=isValenceProjHam?operatorMatrix.getScalapackBlockSizeValence()
-	                                                :operatorMatrix.getScalapackBlockSize();
+      const unsigned int rowsBlockSize=operatorMatrix.getScalapackBlockSize();
       std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  processGrid;
       internal::createProcessGridSquareMatrix(mpi_communicator,
                                               numberWaveFunctions,
-                                              processGrid,
-					      isValenceProjHam);
+                                              processGrid);
 
       dealii::ScaLAPACKMatrix<T> projHamPar(numberWaveFunctions,
                                             processGrid,
@@ -1253,8 +1250,7 @@ namespace dftfe{
 	  if (processGrid->is_process_active())
           {
 	      int error;
-	      elpa_eigenvectors_d(isValenceProjHam?operatorMatrix.getElpaHandleValence():
-		                                   operatorMatrix.getElpaHandle(),
+	      elpa_eigenvectors_d(operatorMatrix.getElpaHandle(),
 				&projHamPar.local_el(0,0),
 				&eigenValues[0],
 				&eigenVectors.local_el(0,0),
@@ -1327,7 +1323,6 @@ namespace dftfe{
     void rayleighRitz(operatorDFTClass & operatorMatrix,
 		      std::vector<T> & X,
 		      const unsigned int numberWaveFunctions,
-		      const bool isValenceProjHam,
 		      const MPI_Comm &interBandGroupComm,
 		      const MPI_Comm &mpi_communicator,
 		      std::vector<double> & eigenValues,
@@ -2931,7 +2926,6 @@ namespace dftfe{
     template void rayleighRitz(operatorDFTClass  & operatorMatrix,
 			       std::vector<dataTypes::number> &,
 			       const unsigned int numberWaveFunctions,
-			       const bool isValenceProjHam,
 			       const MPI_Comm &,
 			       const MPI_Comm &,
 			       std::vector<double>     & eigenValues,

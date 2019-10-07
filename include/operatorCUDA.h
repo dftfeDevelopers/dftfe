@@ -48,8 +48,6 @@ namespace dftfe{
 
     unsigned int getScalapackBlockSize() const;
 
-    unsigned int getScalapackBlockSizeValence() const;
-
     void processGridSetup(const unsigned int na,
                           const unsigned int nev);
 
@@ -385,8 +383,6 @@ namespace dftfe{
     /// ScaLAPACK distributed format block size
     unsigned int d_scalapackBlockSize;
     
-    /// ScaLAPACK distributed format block size for valence proj Ham
-    unsigned int d_scalapackBlockSizeValence;
   };
 
 /*--------------------- Inline functions --------------------------------*/
@@ -395,12 +391,6 @@ namespace dftfe{
    operatorDFTCUDAClass::getScalapackBlockSize() const
    {
      return d_scalapackBlockSize;
-   }
-
-   inline unsigned int
-   operatorDFTCUDAClass::getScalapackBlockSizeValence() const
-   {
-     return d_scalapackBlockSizeValence;
    }
 #  endif // ifndef DOXYGEN
 

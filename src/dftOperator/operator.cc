@@ -38,7 +38,6 @@ namespace dftfe {
 #ifdef DFTFE_WITH_ELPA	
     d_processGridCommunicatorActive(MPI_COMM_NULL),
     d_processGridCommunicatorActivePartial(MPI_COMM_NULL),
-    d_processGridCommunicatorActiveValence(MPI_COMM_NULL),
 #endif	
     d_matrix_free_data(&matrix_free_data),
     d_localDofIndicesReal(&localDofIndicesReal),
@@ -63,9 +62,6 @@ namespace dftfe {
 
       if (d_processGridCommunicatorActivePartial != MPI_COMM_NULL)
 	  MPI_Comm_free(&d_processGridCommunicatorActivePartial);
-
-      if (d_processGridCommunicatorActiveValence != MPI_COMM_NULL)
-	 MPI_Comm_free(&d_processGridCommunicatorActiveValence);
 #endif      
     //
     //
@@ -189,28 +185,6 @@ namespace dftfe {
 								  d_scalapackBlockSize,
 								  d_elpaHandlePartialEigenVec);
 #endif
-
-	   std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  processGridValence;
-	   linearAlgebraOperations::internal::createProcessGridSquareMatrix(getMPICommunicator(),
-						   nev,
-						   processGridValence,
-						   true);
-
-
-	   d_scalapackBlockSizeValence=std::min(dftParameters::scalapackBlockSize,
-				 (nev+processGridValence->get_process_grid_rows()-1)
-				 /processGridValence->get_process_grid_rows());
-
-#ifdef DFTFE_WITH_ELPA
-	   if (dftParameters::useELPA)
-	       linearAlgebraOperations::internal::setupELPAHandle(getMPICommunicator(),
-			                                          d_processGridCommunicatorActiveValence,
-								  processGridValence,
-								  nev,
-								  nev,
-								  d_scalapackBlockSizeValence,
-								  d_elpaHandleValence);
-#endif
 	   //std::cout<<"nblkvalence: "<<d_scalapackBlockSizeValence<<std::endl;
        }
 
@@ -231,10 +205,6 @@ namespace dftfe {
        {
 
           elpa_deallocate(d_elpaHandlePartialEigenVec,&error);
-          AssertThrow(error == ELPA_OK,
-                dealii::ExcMessage("DFT-FE Error: elpa error."));
-
-          elpa_deallocate(d_elpaHandleValence,&error);
           AssertThrow(error == ELPA_OK,
                 dealii::ExcMessage("DFT-FE Error: elpa error."));
        }

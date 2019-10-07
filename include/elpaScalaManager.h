@@ -45,8 +45,6 @@ namespace dftfe{
 
     unsigned int getScalapackBlockSize() const;
 
-    unsigned int getScalapackBlockSizeValence() const;
-
     void processGridOptionalELPASetup(const unsigned int na,
     		                      const unsigned int nev);
 
@@ -57,8 +55,6 @@ namespace dftfe{
     elpa_t & getElpaHandle();
 
     elpa_t & getElpaHandlePartialEigenVec();
-
-    elpa_t & getElpaHandleValence();
 
     elpa_autotune_t & getElpaAutoTuneHandle();
 #endif
@@ -91,9 +87,6 @@ namespace dftfe{
     /// ELPA handle
     elpa_t d_elpaHandle;
 
-    /// ELPA handle for valence proj Ham
-    elpa_t d_elpaHandleValence;
-
     /// ELPA handle for partial eigenvectors of full proj ham
     elpa_t d_elpaHandlePartialEigenVec;
 
@@ -105,14 +98,11 @@ namespace dftfe{
 
     MPI_Comm d_processGridCommunicatorActivePartial;
      
-    MPI_Comm d_processGridCommunicatorActiveValence;
 #endif
 
     /// ScaLAPACK distributed format block size
     unsigned int d_scalapackBlockSize;
 
-    /// ScaLAPACK distributed format block size for valence proj Ham
-    unsigned int d_scalapackBlockSizeValence;
   };
 
 /*--------------------- Inline functions --------------------------------*/
@@ -123,23 +113,11 @@ namespace dftfe{
    {
      return d_scalapackBlockSize;
    }
-
-   inline unsigned int
-   elpaScalaManager::getScalapackBlockSizeValence() const
-   {
-     return d_scalapackBlockSizeValence;
-   }
 #ifdef DFTFE_WITH_ELPA
   inline
   elpa_t & elpaScalaManager::getElpaHandle()
   {
        return d_elpaHandle;
-  }
-
-  inline
-  elpa_t & elpaScalaManager::getElpaHandleValence()
-  {
-       return d_elpaHandleValence;
   }
 
   inline
