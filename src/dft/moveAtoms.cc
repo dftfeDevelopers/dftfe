@@ -442,7 +442,7 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 	      if (!dftParameters::reproducible_output)
 	         pcout << "Now Reinitializing all moved triangulation dependent objects..." << std::endl;
 
-	      initNoRemesh(false,maxCurrentDispAtom>0.06?true:false);
+	      initNoRemesh(false,(dftParameters::reproducible_output && maxCurrentDispAtom>0.06)?true:false);
 	      if (!dftParameters::reproducible_output)
 	         pcout << "...Reinitialization end" << std::endl;
 	    }

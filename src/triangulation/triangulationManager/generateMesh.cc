@@ -242,7 +242,8 @@ namespace dftfe {
 						  const bool                                  generateElectrostaticsTria,
 						  std::vector<unsigned int>                 & locallyOwnedCellsRefineFlags,
 						  std::map<dealii::CellId,unsigned int>     & cellIdToCellRefineFlagMapLocal,
-						  const bool smoothenCellsOnPeriodicBoundary)
+						  const bool smoothenCellsOnPeriodicBoundary,
+						  const double smootheningFactor)
   {
     //
     //compute magnitudes of domainBounding Vectors
@@ -435,7 +436,7 @@ namespace dftfe {
 	    if (cell->is_locally_owned())
 	    {
 		if(cell->at_boundary()
-		   && cell->minimum_vertex_distance()>2.0*dftParameters::meshSizeOuterBall
+		   && cell->minimum_vertex_distance()>smootheningFactor*dftParameters::meshSizeOuterBall
 		   && !cell->refine_flag_set() )
 			for(unsigned int iFace = 0; iFace < faces_per_cell; ++iFace)
 			    if (cell->has_periodic_neighbor(iFace))
@@ -569,6 +570,79 @@ namespace dftfe {
 		    }
     notConsistent=Utilities::MPI::max(notConsistent, mpi_communicator);
     return notConsistent==1?false:true;
+  }
+
+
+  //
+  // check that FEOrder=1 dofHandler using the triangulation has parallel consistent
+  // combined hanging node and periodic constraints
+  //
+  bool triangulationManager::checkConstraintsConsistency(parallel::distributed::Triangulation<3>& parallelTriangulation)
+  {
+    FESystem<3> FE(FE_Q<3>(QGaussLobatto<1>(2)), 1);
+    DoFHandler<3> dofHandler;
+    dofHandler.initialize(parallelTriangulation,FE);
+    dofHandler.distribute_dofs(FE);
+    IndexSet   locally_relevant_dofs;
+    DoFTools::extract_locally_relevant_dofs(dofHandler, locally_relevant_dofs);
+
+    ConstraintMatrix constraints;
+    constraints.clear();
+    constraints.reinit(locally_relevant_dofs);
+    DoFTools::make_hanging_node_constraints(dofHandler, constraints);
+    std::vector<GridTools::PeriodicFacePair<typename DoFHandler<3>::cell_iterator> > periodicity_vector;
+
+    //create unitVectorsXYZ
+    std::vector<std::vector<double> > unitVectorsXYZ;
+    unitVectorsXYZ.resize(3);
+
+    for(int i = 0; i < 3; ++i)
+      {
+	unitVectorsXYZ[i].resize(3,0.0);
+	unitVectorsXYZ[i][i] = 0.0;
+      }
+
+    std::vector<Tensor<1,3> > offsetVectors;
+    //resize offset vectors
+    offsetVectors.resize(3);
+
+    for(int i = 0; i < 3; ++i)
+      {
+	for(int j = 0; j < 3; ++j)
+	  {
+	    offsetVectors[i][j] = unitVectorsXYZ[i][j] - d_domainBoundingVectors[i][j];
+	  }
+      }
+
+    const std::array<int,3> periodic = {dftParameters::periodicX,
+	                                dftParameters::periodicY,
+					dftParameters::periodicZ};
+
+    std::vector<int> periodicDirectionVector;
+    for (unsigned int  d= 0; d < 3; ++d)
+      {
+	if (periodic[d]==1)
+	  {
+	    periodicDirectionVector.push_back(d);
+	  }
+      }
+
+    for (int i = 0; i < std::accumulate(periodic.begin(),periodic.end(),0); ++i)
+      {
+	GridTools::collect_periodic_faces(dofHandler, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ periodicDirectionVector[i], periodicity_vector,offsetVectors[periodicDirectionVector[i]]);
+      }
+
+    DoFTools::make_periodicity_constraints<DoFHandler<C_DIM> >(periodicity_vector, constraints);
+    constraints.close();
+
+    IndexSet locally_active_dofs_debug;
+    DoFTools::extract_locally_active_dofs(dofHandler, locally_active_dofs_debug);
+
+    const std::vector<IndexSet>& locally_owned_dofs_debug= dofHandler.locally_owned_dofs_per_processor();
+
+    return constraints.is_consistent_in_parallel(locally_owned_dofs_debug,
+                                               locally_active_dofs_debug,
+                                               mpi_communicator);
   }
 
   //
@@ -907,7 +981,7 @@ namespace dftfe {
 
 	if (!dftParameters::reproducible_output)
 	{
-	   if (!checkPeriodicSurfaceRefinementConsistency(parallelTriangulation))
+	   if (!checkConstraintsConsistency(parallelTriangulation))
 	   {
 	      refineFlag=true;
 	      while (refineFlag)
@@ -924,7 +998,8 @@ namespace dftfe {
 					 generateElectrostaticsTria,
 					 locallyOwnedCellsRefineFlags,
 					 cellIdToCellRefineFlagMapLocal,
-					 true);
+					 true,
+					 2.0);
 
 		    //This sets the global refinement sweep flag
 		    refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
@@ -965,7 +1040,8 @@ namespace dftfe {
 					     generateElectrostaticsTria,
 					     locallyOwnedCellsRefineFlags,
 					     cellIdToCellRefineFlagMapLocal,
-					     true);
+					     true,
+					     2.0);
 
 			//This sets the global refinement sweep flag
 			refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
@@ -1023,17 +1099,135 @@ namespace dftfe {
 	      }
 	   }
 
-	   if (checkPeriodicSurfaceRefinementConsistency(parallelTriangulation))
+           if (!checkConstraintsConsistency(parallelTriangulation))
+           {
+	      refineFlag=true;
+	      while (refineFlag)
+              {
+		refineFlag = false;
+		std::vector<unsigned int> locallyOwnedCellsRefineFlags;
+		std::map<dealii::CellId,unsigned int> cellIdToCellRefineFlagMapLocal;
+		if (numLevels%2==0)
+		{
+		    refineFlag=refinementAlgorithmA(parallelTriangulation,
+					 electrostaticsTriangulationRho,
+					 electrostaticsTriangulationDisp,
+					 electrostaticsTriangulationForce,
+					 generateElectrostaticsTria,
+					 locallyOwnedCellsRefineFlags,
+					 cellIdToCellRefineFlagMapLocal,
+					 true,
+					 1.0);
+
+		    //This sets the global refinement sweep flag
+		    refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
+
+		    if (!refineFlag)
+		    {
+			refineFlag=consistentPeriodicBoundaryRefinement(parallelTriangulation,
+					     electrostaticsTriangulationRho,
+					     electrostaticsTriangulationDisp,
+					     electrostaticsTriangulationForce,
+					     generateElectrostaticsTria,
+					     locallyOwnedCellsRefineFlags,
+					     cellIdToCellRefineFlagMapLocal);
+
+			//This sets the global refinement sweep flag
+			refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
+		    }
+		}
+		else
+		{
+		    refineFlag=consistentPeriodicBoundaryRefinement(parallelTriangulation,
+					 electrostaticsTriangulationRho,
+					 electrostaticsTriangulationDisp,
+					 electrostaticsTriangulationForce,
+					 generateElectrostaticsTria,
+					 locallyOwnedCellsRefineFlags,
+					 cellIdToCellRefineFlagMapLocal);
+
+		    //This sets the global refinement sweep flag
+		    refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
+
+		    if (!refineFlag)
+		    {
+			refineFlag=refinementAlgorithmA(parallelTriangulation,
+					     electrostaticsTriangulationRho,
+					     electrostaticsTriangulationDisp,
+					     electrostaticsTriangulationForce,
+					     generateElectrostaticsTria,
+					     locallyOwnedCellsRefineFlags,
+					     cellIdToCellRefineFlagMapLocal,
+					     true,
+					     1.0);
+
+			//This sets the global refinement sweep flag
+			refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
+		    }
+		}
+
+		//Refine
+		if (refineFlag)
+		  {
+
+		    if(numLevels<d_max_refinement_steps)
+		      {
+			if (dftParameters::verbosity>=4)
+			  pcout<< "refinement in progress, level: "<< numLevels<<std::endl;
+
+			if (generateSerialTria)
+			{
+			    d_serialTriaCurrentRefinement.push_back(std::vector<bool>());
+
+			    //First refine serial mesh
+			    refineSerialMesh(cellIdToCellRefineFlagMapLocal,
+					     mpi_communicator,
+					     serialTriangulation,
+					     parallelTriangulation,
+					     d_serialTriaCurrentRefinement[numLevels]) ;
+
+
+			    if(generateElectrostaticsTria)
+				refineSerialMesh(cellIdToCellRefineFlagMapLocal,
+						 mpi_communicator,
+						 serialTriangulationElectrostatics,
+						 parallelTriangulation,
+						 d_serialTriaCurrentRefinement[numLevels]);
+			}
+
+			d_parallelTriaCurrentRefinement.push_back(std::vector<bool>());
+			parallelTriangulation.save_refine_flags(d_parallelTriaCurrentRefinement[numLevels]);
+
+			parallelTriangulation.execute_coarsening_and_refinement();
+			if(generateElectrostaticsTria)
+			  {
+			    electrostaticsTriangulationRho.execute_coarsening_and_refinement();
+			    electrostaticsTriangulationDisp.execute_coarsening_and_refinement();
+			    electrostaticsTriangulationForce.execute_coarsening_and_refinement();
+			  }
+
+			numLevels++;
+		      }
+		    else
+		      {
+			refineFlag=false;
+		      }
+		  }
+
+	      }
+	   }
+
+	   if (checkConstraintsConsistency(parallelTriangulation))
 	   {
 	       if (dftParameters::verbosity>=4)
-	           pcout<< "Periodic surface refinement consistency achieved."<<std::endl;
+	           pcout<< "Hanging node and periodic constraints parallel consistency achieved."<<std::endl;
 
-	       dftParameters::createConstraintsFromSerialDofhandler=false;
+	        dftParameters::createConstraintsFromSerialDofhandler=false;
 	   }
 	   else
 	   {
 	       if (dftParameters::verbosity>=4)
-	           pcout<< "Periodic surface refinement consistency could not be achieved."<<std::endl;
+	           pcout<< "Hanging node and periodic constraints parallel consistency not achieved."<<std::endl;
 	   }
 	}
 

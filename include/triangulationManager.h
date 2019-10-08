@@ -299,7 +299,8 @@ namespace dftfe  {
 			      const bool generateElectrostaticsTria,
 			      std::vector<unsigned int> & locallyOwnedCellsRefineFlags,
 			      std::map<dealii::CellId,unsigned int> & cellIdToCellRefineFlagMapLocal,
-			      const bool smoothenCellsOnPeriodicBoundary=false);
+			      const bool smoothenCellsOnPeriodicBoundary=false,
+			      const double smootheningFactor=2.0);
 
     /**
      * @brief internal function which sets refinement flags to have consistent refinement across periodic
@@ -321,6 +322,14 @@ namespace dftfe  {
      *
      */
     bool checkPeriodicSurfaceRefinementConsistency(parallel::distributed::Triangulation<3>& parallelTriangulation);
+
+
+    /**
+     * @brief check that FEOrder=1 dofHandler using the triangulation has parallel consistent
+     * combined hanging node and periodic constraints
+     *
+     */
+    bool checkConstraintsConsistency(parallel::distributed::Triangulation<3>& parallelTriangulation);
 
 
     /**
