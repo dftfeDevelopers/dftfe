@@ -100,7 +100,7 @@ namespace internal{
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<1,3,double> > & globalAtomsDisplacements,
 	                                               double maximumForceToBeRelaxed)
-		
+
 {
   const int numberGlobalAtoms = atomLocations.size();
   int numberImageCharges = d_imageIds.size();
@@ -164,7 +164,7 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 	    0,
 	    MPI_COMM_WORLD);
 
-  
+
 
 
 
@@ -220,7 +220,7 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 	  atomLocationsFractional[iAtom][2]=newFracCoord[0];
 	  atomLocationsFractional[iAtom][3]=newFracCoord[1];
 	  atomLocationsFractional[iAtom][4]=newFracCoord[2];
-	 
+
 	}
 
       initImageChargesUpdateKPoints(false);
@@ -262,12 +262,12 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
       controlPointLocationsInitialMove.push_back(d_closestTriaVertexToAtomsLocation[iAtom]);
       controlPointDisplacementsInitialMove.push_back(d_dispClosestTriaVerticesToAtoms[iAtom]);
       controlPointDisplacementsCurrentMove.push_back(d_gaussianMovementAtomsNetDisplacements[iAtom]);
-      
+
     }
- 
+
   MPI_Barrier(mpi_communicator);
   d_autoMesh=0;
-  
+
   const bool useHybridMeshUpdateScheme = true;// dftParameters::electrostaticsHRefinement?false:true;
 
   if(!useHybridMeshUpdateScheme)//always remesh
@@ -302,7 +302,7 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
       /*d_mesh.resetMesh(d_mesh.getParallelMeshUnmoved(),
 	d_mesh.getParallelMeshMoved());*/
 
-      
+
 
       d_mesh.generateResetMeshes(d_domainBoundingVectors,
 				 dftParameters::useSymm
@@ -349,10 +349,10 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
       //	MPI_INT,
       //	0,
       //	MPI_COMM_WORLD);
-      
+
       if(useGaussian!=1)
 	{
-          if (!dftParameters::reproducible_output)		
+          if (!dftParameters::reproducible_output)
 	   pcout << "Auto remeshing and reinitialization of dft problem for new atom coordinates as max net displacement magnitude: "<<maxDispAtom<< " is greater than: "<< break1 << " Bohr..." << std::endl;
 	  init(0);
 
@@ -368,7 +368,7 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 	}
       else
 	{
-          if (!dftParameters::reproducible_output)		
+          if (!dftParameters::reproducible_output)
 	     pcout << "Trying to Move using Gaussian with same Gaussian constant for computing the forces: "<<forcePtr->getGaussianGeneratorParameter()<<" as net max displacement magnitude: "<< maxDispAtom<< " is below " << break1 <<" Bohr"<<std::endl;
 	  if (!dftParameters::reproducible_output)
 	     pcout << "Max current disp magnitude: "<<maxCurrentDispAtom<<" Bohr"<<std::endl;
@@ -381,7 +381,7 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
             factor = 1.25;
           else if(maximumForceToBeRelaxed < 1e-04)
             factor = 1.15;
-	  
+
 	  if (meshQualityMetrics.first || meshQualityMetrics.second > factor*d_autoMeshMaxJacobianRatio)
 	    d_autoMesh=1;
 	  MPI_Bcast(&(d_autoMesh),
@@ -437,12 +437,12 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 	    }
 	  else
 	    {
-	      if (!dftParameters::reproducible_output)	    
+	      if (!dftParameters::reproducible_output)
 	         pcout<< " Mesh quality check for Gaussian movement of mesh along with atoms: maximum jacobian ratio after movement: "<< meshQualityMetrics.second<<std::endl;
 	      if (!dftParameters::reproducible_output)
 	         pcout << "Now Reinitializing all moved triangulation dependent objects..." << std::endl;
 
-	      initNoRemesh(false);
+	      initNoRemesh(false,maxCurrentDispAtom>0.06?true:false);
 	      if (!dftParameters::reproducible_output)
 	         pcout << "...Reinitialization end" << std::endl;
 	    }

@@ -137,7 +137,8 @@ namespace dftfe {
       /**
        * @brief Does KSDFT problem pre-processing steps but without remeshing.
        */
-      void initNoRemesh(bool flag = true);
+      void initNoRemesh(const bool updateImageKPoints = true,
+		        const bool useSingleAtomSolution = false );
 
       /**
        * @brief Selects between only electronic field relaxation or combined electronic and geometry relxation
