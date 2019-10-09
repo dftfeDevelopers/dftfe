@@ -341,6 +341,15 @@ namespace dftfe
 		      std::vector<double>     & eigenValues,
                       dealii::ScaLAPACKMatrix<double> & projHamPar,
                       const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid);
+
+    void elpaPartialDiagonalizationGEP(elpaScalaManager        & elpaScala,
+                      const unsigned int N,
+                      const unsigned int Noc,
+                      const MPI_Comm &mpiComm,
+                      std::vector<double>     & eigenValues,
+                      dealii::ScaLAPACKMatrix<double> & projHamPar,
+                      dealii::ScaLAPACKMatrix<double> & overlapMatPar,
+                      const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid);
 #endif
 
     /** @brief Compute Compute residual norm associated with eigenValue problem of the given operator

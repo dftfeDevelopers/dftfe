@@ -507,28 +507,43 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
           double time = MPI_Wtime();
 
           if (isSpectrumSplit && d_numEigenValuesRR!=d_numEigenValues)
-             linearAlgebraOperations::elpaPartialDiagonalization(elpaScala,
+          {
+             if (dftParameters::rrGEP==false)
+                 linearAlgebraOperations::elpaPartialDiagonalization(elpaScala,
                                                        d_numEigenValues,
                                                        d_numEigenValues-d_numEigenValuesRR,
                                                        elpaScala.getMPICommunicator(),
                                                        eigenValuesTemp,
                                                        projHamPar,
                                                        processGrid);
-          else if (dftParameters::rrGEP==false)
-             linearAlgebraOperations::elpaDiagonalization(elpaScala,
+             else
+                 linearAlgebraOperations::elpaPartialDiagonalizationGEP(elpaScala,
+                                                       d_numEigenValues,
+                                                       d_numEigenValues-d_numEigenValuesRR,
+                                                       elpaScala.getMPICommunicator(),
+                                                       eigenValuesTemp,
+                                                       projHamPar,
+                                                       overlapMatPar,
+                                                       processGrid); 
+          }
+          else
+          {
+             if (dftParameters::rrGEP==false)
+                 linearAlgebraOperations::elpaDiagonalization(elpaScala,
                                                        d_numEigenValues,
                                                        elpaScala.getMPICommunicator(),
                                                        eigenValuesTemp,
                                                        projHamPar,
                                                        processGrid);
-          else
-             linearAlgebraOperations::elpaDiagonalizationGEP(elpaScala,
+             else
+                 linearAlgebraOperations::elpaDiagonalizationGEP(elpaScala,
                                                        d_numEigenValues,
                                                        elpaScala.getMPICommunicator(),
                                                        eigenValuesTemp,
                                                        projHamPar,
                                                        overlapMatPar,
                                                        processGrid);
+          }
 
           MPI_Barrier(MPI_COMM_WORLD);
 	  time = MPI_Wtime() - time;

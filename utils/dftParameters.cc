@@ -556,9 +556,9 @@ namespace dftParameters
 			       Patterns::Integer(1,300),
 			       "[Advanced] ScaLAPACK process grid block size.");
 
-            prm.declare_entry("USE ELPA", "false",
+            prm.declare_entry("USE ELPA", "true",
 			       Patterns::Bool(),
-			      "[Standard] Use ELPA instead of ScaLAPACK for diagonalization of subspace projected Hamiltonian and Pseudo-Gram-Schmidt orthogonalization. Currently this setting is only available for real executable. Default setting is false.");
+			      "[Standard] Use ELPA instead of ScaLAPACK for diagonalization of subspace projected Hamiltonian and Pseudo-Gram-Schmidt orthogonalization. Currently this setting is only available for real executable. Default setting is true.");
 
 	    prm.declare_entry("USE MIXED PREC PGS SR", "false",
 			      Patterns::Bool(),
@@ -830,10 +830,7 @@ namespace dftParameters
        dftParameters::rrGEPFullMassMatrix=false;
     }
 
-#ifdef DFTFE_WITH_ELPA
-    if (!dftParameters::reproducible_output)
-      dftParameters::useELPA=false;
-#else
+#ifndef DFTFE_WITH_ELPA
      dftParameters::useELPA=false;
 #endif
 

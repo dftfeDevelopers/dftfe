@@ -741,10 +741,12 @@ namespace dftfe
               if (isElpaStep1)
                  return;
 
-              dealii::LAPACKSupport::Property overlapMatPropertyPostCholesky;
+              
 	      dealii::ScaLAPACKMatrix<double> LMatPar(N,
 						 processGrid,
-						 rowsBlockSize); 
+						 rowsBlockSize);
+              overlapMatPar.copy_to(LMatPar);
+              dealii::LAPACKSupport::Property overlapMatPropertyPostCholesky=overlapMatPar.get_property(); 
               if (!isElpaStep2)
               {
 
