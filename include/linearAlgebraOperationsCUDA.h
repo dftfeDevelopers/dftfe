@@ -159,7 +159,6 @@ namespace dftfe
 		      cublasHandle_t & handle,
                       dealii::ScaLAPACKMatrix<double> & projHamPar,
                       const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
-                      const unsigned int gpuLinalgOption=0,
                       const bool useMixedPrecOverall=false);
 
 
@@ -179,16 +178,17 @@ namespace dftfe
                       dealii::ScaLAPACKMatrix<double> & projHamPar,
                       dealii::ScaLAPACKMatrix<double> & overlapMatPar,
                       const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
-                      const unsigned int gpuLinalgOption=0,
                       const bool useMixedPrecOverall=false);
 
     void rayleighRitzGEPSpectrumSplitDirect(operatorDFTCUDAClass & operatorMatrix,
 		      double* X,
+                      double* XFrac,
                       cudaVectorType & Xb,
                       cudaVectorType & HXb,
                       cudaVectorType & projectorKetTimesVector,
 		      const unsigned int M,
 		      const unsigned int N,
+                      const unsigned int Noc,
                       const bool isElpaStep1,
                       const bool isElpaStep2,
 		      const MPI_Comm &mpiComm,
@@ -198,7 +198,6 @@ namespace dftfe
                       dealii::ScaLAPACKMatrix<double> & projHamPar,
                       dealii::ScaLAPACKMatrix<double> & overlapMatPar,
                       const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid> & processGrid,
-                      const unsigned int gpuLinalgOption=0,
                       const bool useMixedPrecOverall=false);
 
 

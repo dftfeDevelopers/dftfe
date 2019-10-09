@@ -506,7 +506,7 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
           MPI_Barrier(MPI_COMM_WORLD);
           double time = MPI_Wtime();
 
-          if (isSpectrumSplit && d_numEigenValuesRR!=d_numEigenValues && dftParameters::rrGEP==false)
+          if (isSpectrumSplit && d_numEigenValuesRR!=d_numEigenValues)
              linearAlgebraOperations::elpaPartialDiagonalization(elpaScala,
                                                        d_numEigenValues,
                                                        d_numEigenValues-d_numEigenValuesRR,
@@ -534,9 +534,9 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 	  time = MPI_Wtime() - time;
 	  if (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) ==0 && dftParameters::verbosity>=2)
               if (isSpectrumSplit && d_numEigenValuesRR!=d_numEigenValues)
-                std::cout<<"Time for ELPA partial eigen decomp, RR step (option0): "<<time<<std::endl;
+                std::cout<<"Time for ELPA partial eigen decomp, RR step: "<<time<<std::endl;
               else
-	        std::cout<<"Time for ELPA eigen decomp, RR step (option0): "<<time<<std::endl;
+	        std::cout<<"Time for ELPA eigen decomp, RR step: "<<time<<std::endl;
                                   
 
 	  subspaceIterationSolverCUDA.solve(kohnShamDFTEigenOperator,
@@ -580,23 +580,23 @@ void dftClass<FEOrder>::kohnShamEigenSpaceCompute(const unsigned int spinType,
 					useFullMassMatrixGEP);
   }
 #else
-  subspaceIterationSolverCUDA.solve(kohnShamDFTEigenOperator,
-  				d_eigenVectorsFlattenedCUDA.begin()
-                                +((1+dftParameters::spinPolarized)*kPointIndex+spinType)*d_eigenVectorsFlattenedSTL[0].size(),
-                                d_eigenVectorsRotFracFlattenedCUDA.begin()
-                                +((1+dftParameters::spinPolarized)*kPointIndex+spinType)*d_eigenVectorsRotFracDensityFlattenedSTL[0].size(),
-                                d_eigenVectorsFlattenedSTL[0].size(),
-				d_tempEigenVec,
-				d_numEigenValues,
-  				eigenValuesTemp,
-				residualNormWaveFunctions,
-                                interBandGroupComm,
-                                projHamPar,
-                                overlapMatPar,
-                                processGrid,
-                                useMixedPrec,
-                                isFirstScf,
-                                useFullMassMatrixGEP);
+	  subspaceIterationSolverCUDA.solve(kohnShamDFTEigenOperator,
+					d_eigenVectorsFlattenedCUDA.begin()
+					+((1+dftParameters::spinPolarized)*kPointIndex+spinType)*d_eigenVectorsFlattenedSTL[0].size(),
+					d_eigenVectorsRotFracFlattenedCUDA.begin()
+					+((1+dftParameters::spinPolarized)*kPointIndex+spinType)*d_eigenVectorsRotFracDensityFlattenedSTL[0].size(),
+					d_eigenVectorsFlattenedSTL[0].size(),
+					d_tempEigenVec,
+					d_numEigenValues,
+					eigenValuesTemp,
+					residualNormWaveFunctions,
+					interBandGroupComm,
+					projHamPar,
+					overlapMatPar,
+					processGrid,
+					useMixedPrec,
+					isFirstScf,
+					useFullMassMatrixGEP);
 #endif
 
 

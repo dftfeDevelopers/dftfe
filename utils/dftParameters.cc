@@ -832,7 +832,7 @@ namespace dftParameters
 
 #ifdef DFTFE_WITH_ELPA
     if (!dftParameters::reproducible_output)
-      dftParameters::useELPA=true;
+      dftParameters::useELPA=false;
 #else
      dftParameters::useELPA=false;
 #endif

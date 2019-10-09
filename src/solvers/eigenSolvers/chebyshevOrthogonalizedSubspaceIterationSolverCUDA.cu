@@ -587,25 +587,46 @@ namespace dftfe
 
     }
 
-    if (eigenValues.size()!=totalNumberWaveFunctions &&  dftParameters::rrGEP==false)
+    if (eigenValues.size()!=totalNumberWaveFunctions)
     {
-	    linearAlgebraOperationsCUDA::rayleighRitzSpectrumSplitDirect(operatorMatrix,
-						      eigenVectorsFlattenedCUDA,
-                                                      eigenVectorsRotFracDensityFlattenedCUDA,
-						      cudaFlattenedArrayBlock,
-						      YArray,
-						      projectorKetTimesVector,
-						      localVectorSize,
-						      totalNumberWaveFunctions,
-                                                      totalNumberWaveFunctions-eigenValues.size(),
-						      isElpaStep1,
-						      isElpaStep2,
-						      operatorMatrix.getMPICommunicator(),
-						      &eigenValues[0],
-						      cublasHandle,
-						      projHamPar,
-						      processGrid,
-                                                      useMixedPrecOverall);
+            if (dftParameters::rrGEP==false)             
+		    linearAlgebraOperationsCUDA::rayleighRitzSpectrumSplitDirect(operatorMatrix,
+							      eigenVectorsFlattenedCUDA,
+							      eigenVectorsRotFracDensityFlattenedCUDA,
+							      cudaFlattenedArrayBlock,
+							      YArray,
+							      projectorKetTimesVector,
+							      localVectorSize,
+							      totalNumberWaveFunctions,
+							      totalNumberWaveFunctions-eigenValues.size(),
+							      isElpaStep1,
+							      isElpaStep2,
+							      operatorMatrix.getMPICommunicator(),
+							      &eigenValues[0],
+							      cublasHandle,
+							      projHamPar,
+							      processGrid,
+							      useMixedPrecOverall);
+            else           
+		    linearAlgebraOperationsCUDA::rayleighRitzGEPSpectrumSplitDirect(operatorMatrix,
+							      eigenVectorsFlattenedCUDA,
+							      eigenVectorsRotFracDensityFlattenedCUDA,
+							      cudaFlattenedArrayBlock,
+							      YArray,
+							      projectorKetTimesVector,
+							      localVectorSize,
+							      totalNumberWaveFunctions,
+							      totalNumberWaveFunctions-eigenValues.size(),
+							      isElpaStep1,
+							      isElpaStep2,
+							      operatorMatrix.getMPICommunicator(),
+                                                              interBandGroupComm,
+							      &eigenValues[0],
+							      cublasHandle,
+							      projHamPar,
+                                                              overlapMatPar,
+							      processGrid,
+							      useMixedPrecOverall);
 
 	     if (isElpaStep1)
 	     {
@@ -637,7 +658,7 @@ namespace dftfe
 							      projHamPar,
 							      processGrid,
 							      useMixedPrecOverall);
-            else if (dftParameters::rrGEP)
+            else
 		    linearAlgebraOperationsCUDA::rayleighRitzGEP(operatorMatrix,
 							      eigenVectorsFlattenedCUDA,
 							      cudaFlattenedArrayBlock,
