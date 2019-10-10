@@ -121,7 +121,7 @@ template <unsigned int FEOrder>
 double dftClass<FEOrder>::totalCharge(const dealii::MatrixFree<3,double> & matrixFreeDataObject,
 				      const vectorType & nodalField)
 {
-  FEEvaluation<C_DIM,2*FEOrder,2*FEOrder+1,1,double> fe_evalField(matrixFreeDataObject);
+  FEEvaluation<C_DIM,2*FEOrder,C_num1DQuad<2*FEOrder>(),1,double> fe_evalField(matrixFreeDataObject);
   VectorizedArray<double> normValueVectorized = make_vectorized_array(0.0);
   const unsigned int numQuadPoints = fe_evalField.n_q_points;
   for(unsigned int cell = 0; cell < matrixFreeDataObject.n_macro_cells(); ++cell)
@@ -177,7 +177,7 @@ double dftClass<FEOrder>::fieldl2Norm(const dealii::MatrixFree<3,double> & matri
 				      const vectorType & nodalField)
 
 {
-  FEEvaluation<C_DIM,2*FEOrder,2*FEOrder+1,1,double> fe_evalField(matrixFreeDataObject);
+  FEEvaluation<C_DIM,2*FEOrder,C_num1DQuad<2*FEOrder>(),1,double> fe_evalField(matrixFreeDataObject);
   VectorizedArray<double> normValueVectorized = make_vectorized_array(0.0);
   const unsigned int numQuadPoints = fe_evalField.n_q_points;
   for(unsigned int cell = 0; cell < matrixFreeDataObject.n_macro_cells(); ++cell)
