@@ -294,7 +294,7 @@ void dftClass<FEOrder>::computeRhoNodalFromPSI(bool isConsiderSpectrumSplitting)
   const unsigned int dofs_per_cell = d_dofHandlerPRefined.get_fe().dofs_per_cell;
   typename DoFHandler<3>::active_cell_iterator cell = d_dofHandlerPRefined.begin_active(), endc = d_dofHandlerPRefined.end();
   dealii::IndexSet locallyOwnedDofs = d_dofHandlerPRefined.locally_owned_dofs();
-  QGaussLobatto<3>  quadrature_formula(C_num1DQuad<2*FEOrder>());
+  QGaussLobatto<3>  quadrature_formula(2*FEOrder+1);
   const unsigned int numQuadPoints = quadrature_formula.size();
 
   AssertThrow(numQuadPoints == matrix_free_data.get_n_q_points(3),ExcMessage("Number of quadrature points from Quadrature object does not match with number of quadrature points obtained from matrix_free object"));
@@ -386,10 +386,10 @@ void dftClass<FEOrder>::computeRhoFromPSI(std::map<dealii::CellId, std::vector<d
 
 #ifdef USE_COMPLEX
   FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>(),2> psiEval(matrix_free_data,eigenDofHandlerIndex,0);
-  FEEvaluation<3,FEOrder,C_num1DQuad<2*FEOrder>(),2> psiEvalRefined(matrix_free_data,eigenDofHandlerIndex,3);
+  FEEvaluation<3,FEOrder,2*FEOrder+1,2> psiEvalRefined(matrix_free_data,eigenDofHandlerIndex,3);
 #else
   FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>(),1> psiEval(matrix_free_data,eigenDofHandlerIndex,0);
-  FEEvaluation<3,FEOrder,C_num1DQuad<2*FEOrder>(),1> psiEvalRefined(matrix_free_data,eigenDofHandlerIndex,3);
+  FEEvaluation<3,FEOrder,2*FEOrder+1,1> psiEvalRefined(matrix_free_data,eigenDofHandlerIndex,3);
 #endif
 
   const unsigned int numQuadPoints= lobattoNodesFlag?psiEvalRefined.n_q_points:psiEval.n_q_points;
