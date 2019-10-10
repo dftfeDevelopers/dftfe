@@ -116,7 +116,7 @@ namespace dftParameters
 		      "[Advanced] Compute electrostatic energy on a p refined mesh after each ground-state solve. Default: false.");
 
     prm.declare_entry("VERBOSITY", "1",
-                      Patterns::Integer(0,4),
+                      Patterns::Integer(0,5),
                       "[Standard] Parameter to control verbosity of terminal output. Ranges from 1 for low, 2 for medium (prints some more additional information), 3 for high (prints eigenvalues and fractional occupancies at the end of each self-consistent field iteration), and 4 for very high, which is only meant for code development purposes. VERBOSITY=0 is only used for unit testing and shouldn't be used by standard users.");
 
     prm.enter_subsection ("GPU");
