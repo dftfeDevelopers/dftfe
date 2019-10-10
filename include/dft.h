@@ -141,7 +141,7 @@ namespace dftfe {
 		        const bool useSingleAtomSolution = false );
 
       /**
-       * @brief Selects between only electronic field relaxation or combined electronic and geometry relxation
+       * @brief Selects between only electronic field relaxation or combined electronic and geometry relaxation
        */
       void run();
 

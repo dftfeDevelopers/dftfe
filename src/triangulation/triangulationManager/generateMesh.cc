@@ -413,8 +413,8 @@ namespace dftfe {
 
 
     //
-    // refine cells on periodic boundary if their length is greater than two times the
-    // mesh size around atom
+    // refine cells on periodic boundary if their length is greater than
+    // mesh size around atom by a factor (set by smootheningFactor)
     //
     if (smoothenCellsOnPeriodicBoundary)
     {
@@ -484,6 +484,9 @@ namespace dftfe {
     cell = parallelTriangulation.begin_active();
     endc = parallelTriangulation.end();
 
+    //
+    // populate maps refinement flag maps to zero values
+    //
     std::map<dealii::CellId,unsigned int> cellIdToLocallyOwnedId;
     unsigned int locallyOwnedCount=0;
     for(;cell != endc; ++cell)
@@ -506,8 +509,13 @@ namespace dftfe {
 	cellElectroForce = electrostaticsTriangulationForce.begin_active();
       }
 
-    const unsigned int faces_per_cell=dealii::GeometryInfo<3>::faces_per_cell;
 
+    //
+    // go to each locally owned or ghost cell which has a face on the periodic boundary->
+    // query if cell has a periodic neighbour which is coarser -> if yes and the coarse
+    // cell is locally owned set refinement flag on that cell
+    //
+    const unsigned int faces_per_cell=dealii::GeometryInfo<3>::faces_per_cell;
     bool isAnyCellRefined=false;
     for(;cell != endc; ++cell)
     {
@@ -545,7 +553,7 @@ namespace dftfe {
   }
 
   //
-  // check that triangulation has consistent refinement across periodic boundary including
+  // check that triangulation has consistent refinement across periodic boundary
   //
   bool triangulationManager::checkPeriodicSurfaceRefinementConsistency(parallel::distributed::Triangulation<3>& parallelTriangulation)
   {
@@ -849,7 +857,16 @@ namespace dftfe {
            d_serialTriaCurrentRefinement.clear();
 
 	//
-	//Multilayer refinement
+	//Multilayer refinement. Refinement algorithm is progressively modified
+	//if check of parallel consistency of combined periodic
+	//and hanging node constraitns fails (Related to https://github.com/dealii/dealii/issues/7053).
+	//
+
+	//
+	//STAGE1: Call refinementAlgorithmA and consistentPeriodicBoundaryRefinement alternatively.
+	//In the call to refinementAlgorithmA there is no additional reduction of adaptivity performed
+	//on the periodic boundary. Multilevel refinement is performed until both refinementAlgorithmA
+	//and consistentPeriodicBoundaryRefinement do not set refinement flags on any cell.
 	//
 	unsigned int numLevels=0;
 	bool refineFlag = true;
@@ -873,6 +890,7 @@ namespace dftfe {
 		    //This sets the global refinement sweep flag
 		    refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
 
+		    //try the other type of refinement to prevent while loop from ending prematurely
 		    if (!refineFlag)
 		    {
 			refineFlag=consistentPeriodicBoundaryRefinement(parallelTriangulation,
@@ -900,6 +918,7 @@ namespace dftfe {
 		    //This sets the global refinement sweep flag
 		    refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
 
+		    //try the other type of refinement to prevent while loop from ending prematurely
 		    if (!refineFlag)
 		    {
 			refineFlag=refinementAlgorithmA(parallelTriangulation,
@@ -981,6 +1000,16 @@ namespace dftfe {
 
 	if (!dftParameters::reproducible_output)
 	{
+	   //
+	   //STAGE2: This stage is only activated combined periodic and hanging node constraints are
+	   //not consistent in parallel.
+	   //Call refinementAlgorithmA and consistentPeriodicBoundaryRefinement alternatively.
+	   //In the call to refinementAlgorithmA there an additional reduction of adaptivity performed
+	   //on the periodic boundary such that the maximum cell length on the periodic boundary is less
+	   //than two times the MESH SIZE AROUND ATOM. Multilevel refinement is performed until both
+	   //refinementAlgorithmAand consistentPeriodicBoundaryRefinement do not set refinement flags
+	   //on any cell.
+	   //
 	   if (!checkConstraintsConsistency(parallelTriangulation))
 	   {
 	      refineFlag=true;
@@ -1004,6 +1033,7 @@ namespace dftfe {
 		    //This sets the global refinement sweep flag
 		    refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
 
+		    //try the other type of refinement to prevent while loop from ending prematurely
 		    if (!refineFlag)
 		    {
 			refineFlag=consistentPeriodicBoundaryRefinement(parallelTriangulation,
@@ -1031,6 +1061,7 @@ namespace dftfe {
 		    //This sets the global refinement sweep flag
 		    refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
 
+		    //try the other type of refinement to prevent while loop from ending prematurely
 		    if (!refineFlag)
 		    {
 			refineFlag=refinementAlgorithmA(parallelTriangulation,
@@ -1099,6 +1130,17 @@ namespace dftfe {
 	      }
 	   }
 
+	   //
+	   //STAGE3: This stage is only activated combined periodic and hanging node constraints are
+	   //still not consistent in parallel.
+	   //Call refinementAlgorithmA and consistentPeriodicBoundaryRefinement alternatively.
+	   //In the call to refinementAlgorithmA there an additional reduction of adaptivity performed
+	   //on the periodic boundary such that the maximum cell length on the periodic boundary is less
+	   //than MESH SIZE AROUND ATOM essentially ensuring uniform refinement on the periodic boundary
+	   //in the case of MESH SIZE AROUND ATOM being same as MESH SIZE AT ATOM.
+	   //Multilevel refinement is performed until both refinementAlgorithmA and
+	   //consistentPeriodicBoundaryRefinement do not set refinement flags on any cell.
+	   //
            if (!checkConstraintsConsistency(parallelTriangulation))
            {
 	      refineFlag=true;
@@ -1122,6 +1164,7 @@ namespace dftfe {
 		    //This sets the global refinement sweep flag
 		    refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
 
+		    //try the other type of refinement to prevent while loop from ending prematurely
 		    if (!refineFlag)
 		    {
 			refineFlag=consistentPeriodicBoundaryRefinement(parallelTriangulation,
@@ -1149,6 +1192,7 @@ namespace dftfe {
 		    //This sets the global refinement sweep flag
 		    refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
 
+		    //try the other type of refinement to prevent while loop from ending prematurely
 		    if (!refineFlag)
 		    {
 			refineFlag=refinementAlgorithmA(parallelTriangulation,

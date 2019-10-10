@@ -335,7 +335,7 @@ namespace dftfe {
 	  {
 	    pcout <<" Warning: User has requested the number of Kohn-Sham wavefunctions to be less than or"
 		    "equal to half the number of electrons in the system. Setting the Kohn-Sham wavefunctions"
-		    "to half the number of electrons with a 15 percent buffer to avoid convergence issues in"
+		    "to half the number of electrons with a 20 percent buffer to avoid convergence issues in"
 		    "SCF iterations"<<std::endl;
 	  }
 	d_numEigenValues = (numElectrons/2.0) + std::max(0.2*(numElectrons/2.0),20.0);
