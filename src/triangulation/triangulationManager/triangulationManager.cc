@@ -99,25 +99,22 @@ namespace dftfe {
     //
     //generate mesh data members
     //
-    if (generateSerialTria)
-      generateMesh(d_parallelTriangulationUnmoved,
-		   d_serialTriangulationUnmoved,
-		   d_serialTriangulationElectrostatics,
-		   d_triangulationElectrostaticsRho,
-		   d_triangulationElectrostaticsDisp,
-		   d_triangulationElectrostaticsForce,
-		   generateElectrostaticsTria);
-    else
-      generateMesh(d_parallelTriangulationUnmoved,
-		   d_triangulationElectrostaticsRho,
-		   d_triangulationElectrostaticsDisp,
-		   d_triangulationElectrostaticsForce,
-		   generateElectrostaticsTria);
-
-    generateMesh(d_parallelTriangulationMoved,
+    generateMesh(d_parallelTriangulationUnmoved,
+		 d_serialTriangulationUnmoved,
+		 d_serialTriangulationElectrostatics,
 		 d_triangulationElectrostaticsRho,
 		 d_triangulationElectrostaticsDisp,
 		 d_triangulationElectrostaticsForce,
+		 generateElectrostaticsTria,
+		 generateSerialTria);
+
+    generateMesh(d_parallelTriangulationMoved,
+                 d_serialTriangulationUnmoved,
+		 d_serialTriangulationElectrostatics,
+		 d_triangulationElectrostaticsRho,
+		 d_triangulationElectrostaticsDisp,
+		 d_triangulationElectrostaticsForce,
+		 false,
 		 false);
   }
 

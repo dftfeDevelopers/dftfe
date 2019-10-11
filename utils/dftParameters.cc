@@ -477,8 +477,8 @@ namespace dftfe
 		prm.declare_entry("RR GEP", "true",
 				  Patterns::Bool(),"[Advanced] Solve generalized eigenvalue problem instead of standard eignevalue problem in Rayleigh-Ritz step. This approach is not extended yet to complex executable. Default value is true for real executable and false for complex executable.");
 
-		prm.declare_entry("RR GEP FULL MASS MATRIX", "true",
-				  Patterns::Bool(),"[Advanced] Solve generalized eigenvalue problem instead of standard eignevalue problem in Rayleigh-Ritz step with finite-element overlap matrix evaluated using full quadrature rule (Gauss quadrature rule) only during the solution of the generalized eigenvalue problem in the RR step.  Default value is true and is only active when RR GEP is true.");
+		prm.declare_entry("RR GEP FULL MASS MATRIX", "false",
+				  Patterns::Bool(),"[Advanced] Solve generalized eigenvalue problem instead of standard eignevalue problem in Rayleigh-Ritz step with finite-element overlap matrix evaluated using full quadrature rule (Gauss quadrature rule) only during the solution of the generalized eigenvalue problem in the RR step.  Default value is false.");
 
 
 		prm.declare_entry("LOWER BOUND WANTED SPECTRUM", "-10.0",
