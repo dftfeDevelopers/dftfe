@@ -863,7 +863,7 @@ namespace dftfe {
 	//
 
 	//
-	//STAGE0: Call only refinementAlgorithmA/ Multilevel refinement is performed until
+	//STAGE0: Call only refinementAlgorithmA. Multilevel refinement is performed until
 	//refinementAlgorithmA does not set refinement flags on any cell.
 	//
 	unsigned int numLevels=0;
