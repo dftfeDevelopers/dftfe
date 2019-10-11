@@ -164,7 +164,7 @@ namespace linearAlgebraOperations
 
 
 
-      const unsigned int lanczosIterations=20;
+      const unsigned int lanczosIterations=dftParameters::reproducible_output?40:20;
       double beta;
 
 
@@ -180,19 +180,12 @@ namespace linearAlgebraOperations
       vVector = 0.0,fVector = 0.0;
       //std::srand(this_mpi_process);
       const unsigned int local_size = vVector.local_size();
-      std::vector<dealii::IndexSet::size_type> local_dof_indices(local_size);
-      vVector.locally_owned_elements().fill_index_vector(local_dof_indices);
-      std::vector<double> local_values(local_size, 0.0);
 
       for (unsigned int i = 0; i < local_size; i++)
-	{
-	  local_values[i] = ((double)std::rand())/((double)RAND_MAX);
-	}
+          vVector.local_element(i) = ((double)std::rand())/((double)RAND_MAX);
 
-      operatorMatrix.getConstraintMatrixEigen()->distribute_local_to_global(local_values,
-									     local_dof_indices,
-									     vVector);
-      vVector.compress(dealii::VectorOperation::add);
+      operatorMatrix.getConstraintMatrixEigen()->set_zero(vVector);
+      vVector.update_ghost_values();
 
       //
       //evaluate l2 norm
@@ -207,6 +200,7 @@ namespace linearAlgebraOperations
       v[0] = vVector;
       f[0] = fVector;
       operatorMatrix.HX(v,f);
+      operatorMatrix.getConstraintMatrixEigen()->set_zero(v[0]);
       fVector = f[0];
 
 #ifdef USE_COMPLEX
@@ -231,6 +225,7 @@ namespace linearAlgebraOperations
 	  v0Vector = vVector; vVector.equ(1.0/beta,fVector);
 	  v[0] = vVector,f[0] = fVector;
 	  operatorMatrix.HX(v,f);
+          operatorMatrix.getConstraintMatrixEigen()->set_zero(v[0]);
 	  fVector = f[0];
 	  fVector.add(-1.0*beta,v0Vector);//beta is real
 #ifdef USE_COMPLEX
@@ -275,8 +270,8 @@ namespace linearAlgebraOperations
 	  sprintf(buffer, "bUp1: %18.10e,  bUp2: %18.10e\n", eigenValuesT[lanczosIterations-1], fVector.l2_norm());
 	  //pcout << buffer;
 	}
-
-      return (eigenValuesT[lanczosIterations-1]+fVector.l2_norm());
+      double upperBound=eigenValuesT[lanczosIterations-1]+fVector.l2_norm();
+      return (std::ceil(upperBound));
     }
 
 

@@ -338,10 +338,10 @@ namespace dftfe {
 	  {
 	    pcout <<" Warning: User has requested the number of Kohn-Sham wavefunctions to be less than or"
 		    "equal to half the number of electrons in the system. Setting the Kohn-Sham wavefunctions"
-		    "to half the number of electrons with a 15 percent buffer to avoid convergence issues in"
+		    "to half the number of electrons with a 20 percent buffer to avoid convergence issues in"
 		    "SCF iterations"<<std::endl;
 	  }
-	d_numEigenValues = (numElectrons/2.0) + std::max(0.15*(numElectrons/2.0),20.0);
+	d_numEigenValues = (numElectrons/2.0) + std::max(0.2*(numElectrons/2.0),20.0);
 
 	if(dftParameters::verbosity >= 1)
 	  {
@@ -663,10 +663,11 @@ namespace dftfe {
   }
 
   template<unsigned int FEOrder>
-  void dftClass<FEOrder>::initNoRemesh(bool flag)
+  void dftClass<FEOrder>::initNoRemesh(const bool updateImageKPoints,
+	                               const bool useSingleAtomSolution)
   {
     computingTimerStandard.enter_section("KSDFT problem initialization");
-    if(flag)
+    if(updateImageKPoints)
       initImageChargesUpdateKPoints();
 
     if  (dftParameters::isIonOpt)
@@ -676,11 +677,19 @@ namespace dftfe {
     //
     initBoundaryConditions();
 
-    //
-    //rho init (use previous ground state electron density)
-    //
-    solveNoSCF();
-    noRemeshRhoDataInit();
+    if (useSingleAtomSolution)
+    {
+	 readPSI();
+	 initRho();
+    }
+    else
+    {
+       //
+       //rho init (use previous ground state electron density)
+       //
+       solveNoSCF();
+       noRemeshRhoDataInit();
+    }
 
     //
     //reinitialize pseudopotential related data structures
@@ -1636,7 +1645,7 @@ namespace dftfe {
 					    true);
 
       d_groundStateEnergy = totalEnergy;
-      
+
     }
 
     MPI_Barrier(interpoolcomm);

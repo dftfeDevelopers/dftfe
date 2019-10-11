@@ -1,9 +1,9 @@
 number of atoms: 2
 number of atoms types: 1
-Z:12
+Z:13
 =============================================================================================================================
-number of electrons: 20
-number of eigen values: 20
+number of electrons: 22
+number of eigen values: 16
 =============================================================================================================================
 Total number of k-points 2
 -----------Simulation Domain bounding vectors (lattice vectors in fully periodic case)-------------
@@ -34,4 +34,4 @@ SCF iterations converged to the specified tolerance after: 12 iterations.
 
 Energy computations (Hartree) 
 -------------------
-             Total energy:        -108.71470324
+             Total energy:        -138.24209621
