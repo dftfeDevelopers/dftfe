@@ -863,20 +863,96 @@ namespace dftfe {
 	//
 
 	//
-	//STAGE1: Call refinementAlgorithmA and consistentPeriodicBoundaryRefinement alternatively.
+	//STAGE0: Call only refinementAlgorithmA/ Multilevel refinement is performed until
+	//refinementAlgorithmA does not set refinement flags on any cell.
+	//
+	unsigned int numLevels=0;
+ 	bool refineFlag = true;
+        while(refineFlag)
+	{
+	    refineFlag = false;
+	    std::vector<unsigned int> locallyOwnedCellsRefineFlags;
+	    std::map<dealii::CellId,unsigned int> cellIdToCellRefineFlagMapLocal;
+
+	    refineFlag=refinementAlgorithmA(parallelTriangulation,
+				 electrostaticsTriangulationRho,
+				 electrostaticsTriangulationDisp,
+				 electrostaticsTriangulationForce,
+				 generateElectrostaticsTria,
+				 locallyOwnedCellsRefineFlags,
+				 cellIdToCellRefineFlagMapLocal);
+
+	    //This sets the global refinement sweep flag
+	    refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
+
+	    //Refine
+	    if (refineFlag)
+	      {
+
+		if(numLevels<d_max_refinement_steps)
+		  {
+		    if (dftParameters::verbosity>=4)
+		      pcout<< "refinement in progress, level: "<< numLevels<<std::endl;
+
+		    if (generateSerialTria)
+		    {
+			d_serialTriaCurrentRefinement.push_back(std::vector<bool>());
+
+			//First refine serial mesh
+			refineSerialMesh(cellIdToCellRefineFlagMapLocal,
+					 mpi_communicator,
+					 serialTriangulation,
+					 parallelTriangulation,
+					 d_serialTriaCurrentRefinement[numLevels]) ;
+
+
+			if(generateElectrostaticsTria)
+			    refineSerialMesh(cellIdToCellRefineFlagMapLocal,
+					     mpi_communicator,
+					     serialTriangulationElectrostatics,
+					     parallelTriangulation,
+					     d_serialTriaCurrentRefinement[numLevels]);
+		    }
+
+		    d_parallelTriaCurrentRefinement.push_back(std::vector<bool>());
+		    parallelTriangulation.save_refine_flags(d_parallelTriaCurrentRefinement[numLevels]);
+
+		    parallelTriangulation.execute_coarsening_and_refinement();
+		    if(generateElectrostaticsTria)
+		      {
+			electrostaticsTriangulationRho.execute_coarsening_and_refinement();
+			electrostaticsTriangulationDisp.execute_coarsening_and_refinement();
+			electrostaticsTriangulationForce.execute_coarsening_and_refinement();
+		      }
+
+		    numLevels++;
+		  }
+		else
+		  {
+		    refineFlag=false;
+		  }
+	      }
+
+	 }
+
+	//
+	//STAGE1: This stage is only activated if combined periodic and hanging node constraints are
+	//not consistent in parallel.
+	//Call refinementAlgorithmA and consistentPeriodicBoundaryRefinement alternatively.
 	//In the call to refinementAlgorithmA there is no additional reduction of adaptivity performed
 	//on the periodic boundary. Multilevel refinement is performed until both refinementAlgorithmA
 	//and consistentPeriodicBoundaryRefinement do not set refinement flags on any cell.
 	//
-	unsigned int numLevels=0;
-	bool refineFlag = true;
-	while(refineFlag)
-	  {
-	    refineFlag = false;
-	    std::vector<unsigned int> locallyOwnedCellsRefineFlags;
-	    std::map<dealii::CellId,unsigned int> cellIdToCellRefineFlagMapLocal;
-	    if (!dftParameters::reproducible_output)
-	    {
+	if (!dftParameters::reproducible_output)
+	{
+	   if (!checkConstraintsConsistency(parallelTriangulation))
+	   {
+	    refineFlag=true;
+	    while(refineFlag)
+	      {
+		refineFlag = false;
+		std::vector<unsigned int> locallyOwnedCellsRefineFlags;
+		std::map<dealii::CellId,unsigned int> cellIdToCellRefineFlagMapLocal;
 		if (numLevels%2==0)
 		{
 		    refineFlag=refinementAlgorithmA(parallelTriangulation,
@@ -893,6 +969,8 @@ namespace dftfe {
 		    //try the other type of refinement to prevent while loop from ending prematurely
 		    if (!refineFlag)
 		    {
+			//call refinement algorithm  which sets refinement flags such as to
+			//create consistent refinement across periodic boundary
 			refineFlag=consistentPeriodicBoundaryRefinement(parallelTriangulation,
 					     electrostaticsTriangulationRho,
 					     electrostaticsTriangulationDisp,
@@ -907,6 +985,8 @@ namespace dftfe {
 		}
 		else
 		{
+		    //call refinement algorithm  which sets refinement flags such as to
+		    //create consistent refinement across periodic boundary
 		    refineFlag=consistentPeriodicBoundaryRefinement(parallelTriangulation,
 					 electrostaticsTriangulationRho,
 					 electrostaticsTriangulationDisp,
@@ -933,78 +1013,66 @@ namespace dftfe {
 			refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
 		    }
 		}
-	    }
-	    else
-	    {
-		refineFlag=refinementAlgorithmA(parallelTriangulation,
-				     electrostaticsTriangulationRho,
-				     electrostaticsTriangulationDisp,
-				     electrostaticsTriangulationForce,
-				     generateElectrostaticsTria,
-				     locallyOwnedCellsRefineFlags,
-				     cellIdToCellRefineFlagMapLocal);
 
-		//This sets the global refinement sweep flag
-		refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
-	    }
-
-	    //Refine
-	    if (refineFlag)
-	      {
-
-		if(numLevels<d_max_refinement_steps)
+		//Refine
+		if (refineFlag)
 		  {
-		    if (dftParameters::verbosity>=4)
-		      pcout<< "refinement in progress, level: "<< numLevels<<std::endl;
 
-		    if (generateSerialTria)
-                    {
-			d_serialTriaCurrentRefinement.push_back(std::vector<bool>());
+		    if(numLevels<d_max_refinement_steps)
+		      {
+			if (dftParameters::verbosity>=4)
+			  pcout<< "refinement in progress, level: "<< numLevels<<std::endl;
 
-			//First refine serial mesh
-			refineSerialMesh(cellIdToCellRefineFlagMapLocal,
-					 mpi_communicator,
-					 serialTriangulation,
-					 parallelTriangulation,
-					 d_serialTriaCurrentRefinement[numLevels]) ;
+			if (generateSerialTria)
+			{
+			    d_serialTriaCurrentRefinement.push_back(std::vector<bool>());
 
-
-			if(generateElectrostaticsTria)
+			    //First refine serial mesh
 			    refineSerialMesh(cellIdToCellRefineFlagMapLocal,
 					     mpi_communicator,
-					     serialTriangulationElectrostatics,
+					     serialTriangulation,
 					     parallelTriangulation,
-					     d_serialTriaCurrentRefinement[numLevels]);
-		    }
+					     d_serialTriaCurrentRefinement[numLevels]) ;
 
-                    d_parallelTriaCurrentRefinement.push_back(std::vector<bool>());
-		    parallelTriangulation.save_refine_flags(d_parallelTriaCurrentRefinement[numLevels]);
 
-		    parallelTriangulation.execute_coarsening_and_refinement();
-		    if(generateElectrostaticsTria)
-		      {
-			electrostaticsTriangulationRho.execute_coarsening_and_refinement();
-			electrostaticsTriangulationDisp.execute_coarsening_and_refinement();
-			electrostaticsTriangulationForce.execute_coarsening_and_refinement();
+			    if(generateElectrostaticsTria)
+				refineSerialMesh(cellIdToCellRefineFlagMapLocal,
+						 mpi_communicator,
+						 serialTriangulationElectrostatics,
+						 parallelTriangulation,
+						 d_serialTriaCurrentRefinement[numLevels]);
+			}
+
+			d_parallelTriaCurrentRefinement.push_back(std::vector<bool>());
+			parallelTriangulation.save_refine_flags(d_parallelTriaCurrentRefinement[numLevels]);
+
+			parallelTriangulation.execute_coarsening_and_refinement();
+			if(generateElectrostaticsTria)
+			  {
+			    electrostaticsTriangulationRho.execute_coarsening_and_refinement();
+			    electrostaticsTriangulationDisp.execute_coarsening_and_refinement();
+			    electrostaticsTriangulationForce.execute_coarsening_and_refinement();
+			  }
+
+			numLevels++;
 		      }
+		    else
+		      {
+			refineFlag=false;
+		      }
+		  }
 
-		    numLevels++;
-		  }
-		else
-		  {
-		    refineFlag=false;
-		  }
 	      }
-
-	  }
+	   }
+	}
 
 	if (!dftParameters::reproducible_output)
 	{
 	   //
-	   //STAGE2: This stage is only activated combined periodic and hanging node constraints are
-	   //not consistent in parallel.
+	   //STAGE2: This stage is only activated if combined periodic and hanging node constraints are
+	   //still not consistent in parallel.
 	   //Call refinementAlgorithmA and consistentPeriodicBoundaryRefinement alternatively.
-	   //In the call to refinementAlgorithmA there an additional reduction of adaptivity performed
+	   //In the call to refinementAlgorithmA there is an additional reduction of adaptivity performed
 	   //on the periodic boundary such that the maximum cell length on the periodic boundary is less
 	   //than two times the MESH SIZE AROUND ATOM. Multilevel refinement is performed until both
 	   //refinementAlgorithmAand consistentPeriodicBoundaryRefinement do not set refinement flags
@@ -1036,6 +1104,8 @@ namespace dftfe {
 		    //try the other type of refinement to prevent while loop from ending prematurely
 		    if (!refineFlag)
 		    {
+		        //call refinement algorithm  which sets refinement flags such as to
+			//create consistent refinement across periodic boundary
 			refineFlag=consistentPeriodicBoundaryRefinement(parallelTriangulation,
 					     electrostaticsTriangulationRho,
 					     electrostaticsTriangulationDisp,
@@ -1050,6 +1120,8 @@ namespace dftfe {
 		}
 		else
 		{
+		    //call refinement algorithm  which sets refinement flags such as to
+		    //create consistent refinement across periodic boundary
 		    refineFlag=consistentPeriodicBoundaryRefinement(parallelTriangulation,
 					 electrostaticsTriangulationRho,
 					 electrostaticsTriangulationDisp,
@@ -1131,10 +1203,10 @@ namespace dftfe {
 	   }
 
 	   //
-	   //STAGE3: This stage is only activated combined periodic and hanging node constraints are
+	   //STAGE3: This stage is only activated if combined periodic and hanging node constraints are
 	   //still not consistent in parallel.
 	   //Call refinementAlgorithmA and consistentPeriodicBoundaryRefinement alternatively.
-	   //In the call to refinementAlgorithmA there an additional reduction of adaptivity performed
+	   //In the call to refinementAlgorithmA there is an additional reduction of adaptivity performed
 	   //on the periodic boundary such that the maximum cell length on the periodic boundary is less
 	   //than MESH SIZE AROUND ATOM essentially ensuring uniform refinement on the periodic boundary
 	   //in the case of MESH SIZE AROUND ATOM being same as MESH SIZE AT ATOM.
@@ -1167,6 +1239,8 @@ namespace dftfe {
 		    //try the other type of refinement to prevent while loop from ending prematurely
 		    if (!refineFlag)
 		    {
+		        //call refinement algorithm  which sets refinement flags such as to
+			//create consistent refinement across periodic boundary
 			refineFlag=consistentPeriodicBoundaryRefinement(parallelTriangulation,
 					     electrostaticsTriangulationRho,
 					     electrostaticsTriangulationDisp,
@@ -1181,6 +1255,9 @@ namespace dftfe {
 		}
 		else
 		{
+
+		    //call refinement algorithm  which sets refinement flags such as to
+		    //create consistent refinement across periodic boundary
 		    refineFlag=consistentPeriodicBoundaryRefinement(parallelTriangulation,
 					 electrostaticsTriangulationRho,
 					 electrostaticsTriangulationDisp,
