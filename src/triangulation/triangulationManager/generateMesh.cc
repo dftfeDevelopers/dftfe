@@ -235,13 +235,15 @@ namespace dftfe {
       pcout<<std::endl<< "Coarse triangulation number of elements: "<< parallelTriangulation.n_global_active_cells()<<std::endl;
   }
 
-  void triangulationManager::refinementAlgorithmA(parallel::distributed::Triangulation<3>   & parallelTriangulation,
+  bool triangulationManager::refinementAlgorithmA(parallel::distributed::Triangulation<3>   & parallelTriangulation,
 						  parallel::distributed::Triangulation<3>   & electrostaticsTriangulationRho,
 						  parallel::distributed::Triangulation<3>   & electrostaticsTriangulationDisp,
                                                   parallel::distributed::Triangulation<3>   & electrostaticsTriangulationForce,
 						  const bool                                  generateElectrostaticsTria,
 						  std::vector<unsigned int>                 & locallyOwnedCellsRefineFlags,
-						  std::map<dealii::CellId,unsigned int>     & cellIdToCellRefineFlagMapLocal)
+						  std::map<dealii::CellId,unsigned int>     & cellIdToCellRefineFlagMapLocal,
+						  const bool smoothenCellsOnPeriodicBoundary,
+						  const double smootheningFactor)
   {
     //
     //compute magnitudes of domainBounding Vectors
@@ -263,6 +265,10 @@ namespace dftfe {
 	cellElectroForce = electrostaticsTriangulationForce.begin_active();
       }
 
+    std::map<dealii::CellId,unsigned int> cellIdToLocallyOwnedId;
+    unsigned int locallyOwnedCount=0;
+
+    bool isAnyCellRefined=false;
     //
     //
     //
@@ -270,6 +276,9 @@ namespace dftfe {
       {
       if(cell->is_locally_owned())
 	{
+	  cellIdToLocallyOwnedId[cell->id()]=locallyOwnedCount;
+	  locallyOwnedCount++;
+
 	  const dealii::Point<3> center(cell->center());
 	  double currentMeshSize = cell->minimum_vertex_distance();
 
@@ -380,6 +389,7 @@ namespace dftfe {
 	      locallyOwnedCellsRefineFlags.push_back(1);
 	      cellIdToCellRefineFlagMapLocal[cell->id()]=1;
 	      cell->set_refine_flag();
+	      isAnyCellRefined=true;
 	      if(generateElectrostaticsTria)
 		{
 		  cellElectroRho->set_refine_flag();
@@ -402,8 +412,246 @@ namespace dftfe {
       }
 
 
+    //
+    // refine cells on periodic boundary if their length is greater than
+    // mesh size around atom by a factor (set by smootheningFactor)
+    //
+    if (smoothenCellsOnPeriodicBoundary)
+    {
+        locallyOwnedCount=0;
+	cell = parallelTriangulation.begin_active();
+	endc = parallelTriangulation.end();
+
+	if(generateElectrostaticsTria)
+	  {
+	    cellElectroRho = electrostaticsTriangulationRho.begin_active();
+	    cellElectroDisp = electrostaticsTriangulationDisp.begin_active();
+	    cellElectroForce = electrostaticsTriangulationForce.begin_active();
+	  }
+
+	const unsigned int faces_per_cell=dealii::GeometryInfo<3>::faces_per_cell;
+
+	for(;cell != endc; ++cell)
+	{
+	    if (cell->is_locally_owned())
+	    {
+		if(cell->at_boundary()
+		   && cell->minimum_vertex_distance()>smootheningFactor*dftParameters::meshSizeOuterBall
+		   && !cell->refine_flag_set() )
+			for(unsigned int iFace = 0; iFace < faces_per_cell; ++iFace)
+			    if (cell->has_periodic_neighbor(iFace))
+			    {
+				  cell->set_refine_flag();
+				  isAnyCellRefined=true;
+				  locallyOwnedCellsRefineFlags[cellIdToLocallyOwnedId[cell->id()]]=1;
+				  cellIdToCellRefineFlagMapLocal[cell->id()]=1;
+				  if(generateElectrostaticsTria)
+				  {
+				      cellElectroRho->set_refine_flag();
+				      cellElectroDisp->set_refine_flag();
+				      cellElectroForce->set_refine_flag();
+				  }
+				  break;
+			    }
+		locallyOwnedCount++;
+	    }
+	    if(generateElectrostaticsTria)
+	    {
+	      ++cellElectroRho;
+	      ++cellElectroDisp;
+	      ++cellElectroForce;
+	    }
+	}
+    }
+
+    return isAnyCellRefined;
   }
 
+  //
+  // internal function which sets refinement flags to have consistent refinement across periodic boundary
+  //
+  bool triangulationManager::consistentPeriodicBoundaryRefinement(parallel::distributed::Triangulation<3>   & parallelTriangulation,
+						  parallel::distributed::Triangulation<3>   & electrostaticsTriangulationRho,
+						  parallel::distributed::Triangulation<3>   & electrostaticsTriangulationDisp,
+                                                  parallel::distributed::Triangulation<3>   & electrostaticsTriangulationForce,
+						  const bool                                  generateElectrostaticsTria,
+						  std::vector<unsigned int>                 & locallyOwnedCellsRefineFlags,
+						  std::map<dealii::CellId,unsigned int>     & cellIdToCellRefineFlagMapLocal)
+  {
+    locallyOwnedCellsRefineFlags.clear();
+    cellIdToCellRefineFlagMapLocal.clear();
+    typename parallel::distributed::Triangulation<3>::active_cell_iterator cell, endc, cellElectroRho, cellElectroDisp, cellElectroForce;
+    cell = parallelTriangulation.begin_active();
+    endc = parallelTriangulation.end();
+
+    //
+    // populate maps refinement flag maps to zero values
+    //
+    std::map<dealii::CellId,unsigned int> cellIdToLocallyOwnedId;
+    unsigned int locallyOwnedCount=0;
+    for(;cell != endc; ++cell)
+      if(cell->is_locally_owned())
+	{
+	  cellIdToLocallyOwnedId[cell->id()]=locallyOwnedCount;
+	  locallyOwnedCellsRefineFlags.push_back(0);
+	  cellIdToCellRefineFlagMapLocal[cell->id()]=0;
+	  locallyOwnedCount++;
+	}
+
+
+    cell = parallelTriangulation.begin_active();
+    endc = parallelTriangulation.end();
+
+    if(generateElectrostaticsTria)
+      {
+	cellElectroRho = electrostaticsTriangulationRho.begin_active();
+	cellElectroDisp = electrostaticsTriangulationDisp.begin_active();
+	cellElectroForce = electrostaticsTriangulationForce.begin_active();
+      }
+
+
+    //
+    // go to each locally owned or ghost cell which has a face on the periodic boundary->
+    // query if cell has a periodic neighbour which is coarser -> if yes and the coarse
+    // cell is locally owned set refinement flag on that cell
+    //
+    const unsigned int faces_per_cell=dealii::GeometryInfo<3>::faces_per_cell;
+    bool isAnyCellRefined=false;
+    for(;cell != endc; ++cell)
+    {
+	  if((cell->is_locally_owned() || cell->is_ghost()) &&
+	     cell->at_boundary())
+		for(unsigned int iFace = 0; iFace < faces_per_cell; ++iFace)
+		    if (cell->has_periodic_neighbor(iFace))
+		       if (cell->periodic_neighbor_is_coarser(iFace))
+                       {
+			   typename parallel::distributed::Triangulation<3>::active_cell_iterator periodicCell=cell->periodic_neighbor(iFace);
+
+			   if (periodicCell->is_locally_owned())
+			   {
+			       locallyOwnedCellsRefineFlags[cellIdToLocallyOwnedId[periodicCell->id()]]=1;
+			       cellIdToCellRefineFlagMapLocal[periodicCell->id()]=1;
+			       periodicCell->set_refine_flag();
+
+			       isAnyCellRefined=true;
+			       if(generateElectrostaticsTria)
+			       {
+				  cellElectroRho->periodic_neighbor(iFace)->set_refine_flag();
+				  cellElectroDisp->periodic_neighbor(iFace)->set_refine_flag();
+				  cellElectroForce->periodic_neighbor(iFace)->set_refine_flag();
+			       }
+			   }
+                       }
+	  if(generateElectrostaticsTria)
+	    {
+	      ++cellElectroRho;
+	      ++cellElectroDisp;
+	      ++cellElectroForce;
+	    }
+    }
+    return isAnyCellRefined;
+  }
+
+  //
+  // check that triangulation has consistent refinement across periodic boundary
+  //
+  bool triangulationManager::checkPeriodicSurfaceRefinementConsistency(parallel::distributed::Triangulation<3>& parallelTriangulation)
+  {
+    typename parallel::distributed::Triangulation<3>::active_cell_iterator cell, endc;
+    cell = parallelTriangulation.begin_active();
+    endc = parallelTriangulation.end();
+
+    const unsigned int faces_per_cell=dealii::GeometryInfo<3>::faces_per_cell;
+
+    unsigned int notConsistent=0;
+    for(;cell != endc; ++cell)
+	  if((cell->is_locally_owned() || cell->is_ghost()) &&
+	     cell->at_boundary())
+		for(unsigned int iFace = 0; iFace < faces_per_cell; ++iFace)
+		    if (cell->has_periodic_neighbor(iFace))
+		    {
+                       typename parallel::distributed::Triangulation<3>::active_cell_iterator periodicCell=cell->periodic_neighbor(iFace);
+			if (periodicCell->is_locally_owned() || cell->is_locally_owned())
+		           if (cell->periodic_neighbor_is_coarser(iFace) || periodicCell->has_children())
+			      notConsistent=1;
+
+		    }
+    notConsistent=Utilities::MPI::max(notConsistent, mpi_communicator);
+    return notConsistent==1?false:true;
+  }
+
+
+  //
+  // check that FEOrder=1 dofHandler using the triangulation has parallel consistent
+  // combined hanging node and periodic constraints
+  //
+  bool triangulationManager::checkConstraintsConsistency(parallel::distributed::Triangulation<3>& parallelTriangulation)
+  {
+    FESystem<3> FE(FE_Q<3>(QGaussLobatto<1>(2)), 1);
+    DoFHandler<3> dofHandler;
+    dofHandler.initialize(parallelTriangulation,FE);
+    dofHandler.distribute_dofs(FE);
+    IndexSet   locally_relevant_dofs;
+    DoFTools::extract_locally_relevant_dofs(dofHandler, locally_relevant_dofs);
+
+    ConstraintMatrix constraints;
+    constraints.clear();
+    constraints.reinit(locally_relevant_dofs);
+    DoFTools::make_hanging_node_constraints(dofHandler, constraints);
+    std::vector<GridTools::PeriodicFacePair<typename DoFHandler<3>::cell_iterator> > periodicity_vector;
+
+    //create unitVectorsXYZ
+    std::vector<std::vector<double> > unitVectorsXYZ;
+    unitVectorsXYZ.resize(3);
+
+    for(int i = 0; i < 3; ++i)
+      {
+	unitVectorsXYZ[i].resize(3,0.0);
+	unitVectorsXYZ[i][i] = 0.0;
+      }
+
+    std::vector<Tensor<1,3> > offsetVectors;
+    //resize offset vectors
+    offsetVectors.resize(3);
+
+    for(int i = 0; i < 3; ++i)
+      {
+	for(int j = 0; j < 3; ++j)
+	  {
+	    offsetVectors[i][j] = unitVectorsXYZ[i][j] - d_domainBoundingVectors[i][j];
+	  }
+      }
+
+    const std::array<int,3> periodic = {dftParameters::periodicX,
+	                                dftParameters::periodicY,
+					dftParameters::periodicZ};
+
+    std::vector<int> periodicDirectionVector;
+    for (unsigned int  d= 0; d < 3; ++d)
+      {
+	if (periodic[d]==1)
+	  {
+	    periodicDirectionVector.push_back(d);
+	  }
+      }
+
+    for (int i = 0; i < std::accumulate(periodic.begin(),periodic.end(),0); ++i)
+      {
+	GridTools::collect_periodic_faces(dofHandler, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ periodicDirectionVector[i], periodicity_vector,offsetVectors[periodicDirectionVector[i]]);
+      }
+
+    DoFTools::make_periodicity_constraints<DoFHandler<C_DIM> >(periodicity_vector, constraints);
+    constraints.close();
+
+    IndexSet locally_active_dofs_debug;
+    DoFTools::extract_locally_active_dofs(dofHandler, locally_active_dofs_debug);
+
+    const std::vector<IndexSet>& locally_owned_dofs_debug= dofHandler.locally_owned_dofs_per_processor();
+
+    return constraints.is_consistent_in_parallel(locally_owned_dofs_debug,
+                                               locally_active_dofs_debug,
+                                               mpi_communicator);
+  }
 
   //
   //generate mesh based on a-posteriori estimates
@@ -547,209 +795,6 @@ namespace dftfe {
 
   }
 
-  //
-  //generate adaptive mesh
-  //
-
-  void triangulationManager::generateMesh(parallel::distributed::Triangulation<3> & parallelTriangulation,
-					  parallel::distributed::Triangulation<3> & electrostaticsTriangulationRho,
-					  parallel::distributed::Triangulation<3> & electrostaticsTriangulationDisp,
-					  parallel::distributed::Triangulation<3> & electrostaticsTriangulationForce,
-					  const bool generateElectrostaticsTria)
-  {
-    if(!dftParameters::meshFileName.empty())
-      {
-	GridIn<3> gridinParallel;
-	gridinParallel.attach_triangulation(parallelTriangulation);
-
-	//
-	//Read mesh in UCD format generated from Cubit
-	//
-	std::ifstream f1(dftParameters::meshFileName.c_str());
-	gridinParallel.read_ucd(f1);
-
-	meshGenUtils::markPeriodicFacesNonOrthogonal(parallelTriangulation,d_domainBoundingVectors);
-      }
-    else
-      {
-
-	generateCoarseMesh(parallelTriangulation);
-	if(generateElectrostaticsTria)
-	  {
-	    generateCoarseMesh(electrostaticsTriangulationRho);
-	    generateCoarseMesh(electrostaticsTriangulationDisp);
-	    generateCoarseMesh(electrostaticsTriangulationForce);
-	    AssertThrow(parallelTriangulation.n_global_active_cells()==electrostaticsTriangulationRho.n_global_active_cells(),ExcMessage("Number of coarse mesh cells are different in electrostatics triangulations having rho field."));
-	    AssertThrow(parallelTriangulation.n_global_active_cells()==electrostaticsTriangulationDisp.n_global_active_cells(),ExcMessage("Number of coarse mesh cells are different in electrostatics triangulations having disp field."));
-	    AssertThrow(parallelTriangulation.n_global_active_cells()==electrostaticsTriangulationForce.n_global_active_cells(),ExcMessage("Number of coarse mesh cells are different in electrostatics triangulation for force computation."));
-	  }
-
-	d_parallelTriaCurrentRefinement.clear();
-	//
-	//Multilayer refinement
-	//
-	unsigned int numLevels=0;
-	bool refineFlag = true;
-
-	while(refineFlag)
-	  {
-	    refineFlag = false;
-
-	    std::vector<unsigned int> locallyOwnedCellsRefineFlags;
-	    std::map<dealii::CellId,unsigned int> cellIdToCellRefineFlagMapLocal;
-	    refinementAlgorithmA(parallelTriangulation,
-				 electrostaticsTriangulationRho,
-				 electrostaticsTriangulationDisp,
-				 electrostaticsTriangulationForce,
-				 generateElectrostaticsTria,
-				 locallyOwnedCellsRefineFlags,
-				 cellIdToCellRefineFlagMapLocal);
-
-	    //This sets the global refinement sweep flag
-	    refineFlag = std::accumulate(locallyOwnedCellsRefineFlags.begin(),
-					 locallyOwnedCellsRefineFlags.end(), 0)>0?1:0;
-	    refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
-
-	    if (refineFlag)
-	      {
-		if(numLevels<d_max_refinement_steps)
-		  {
-		    if (dftParameters::verbosity>=4)
-		      pcout<< "refinement in progress, level: "<< numLevels<<std::endl;
-
-                    d_parallelTriaCurrentRefinement.push_back(std::vector<bool>());
-		    parallelTriangulation.save_refine_flags(d_parallelTriaCurrentRefinement[numLevels]);
-
-		    parallelTriangulation.execute_coarsening_and_refinement();
-		    if(generateElectrostaticsTria)
-		      {
-			electrostaticsTriangulationRho.execute_coarsening_and_refinement();
-			electrostaticsTriangulationDisp.execute_coarsening_and_refinement();
-			electrostaticsTriangulationForce.execute_coarsening_and_refinement();
-		      }
-		    numLevels++;
-		  }
-		else
-		  {
-		    refineFlag=false;
-		  }
-	      }
-	  }
-	//
-	//compute some adaptive mesh metrics
-	//
-	double minElemLength = dftParameters::meshSizeOuterDomain;
-	double maxElemLength = 0.0;
-	unsigned int numLocallyOwnedCells=0;
-	typename parallel::distributed::Triangulation<3>::active_cell_iterator cell, endc, cellDisp, cellForce;
-	cell = parallelTriangulation.begin_active();
-	endc = parallelTriangulation.end();
-	for( ; cell != endc; ++cell)
-	  {
-	    if(cell->is_locally_owned())
-	      {
-		numLocallyOwnedCells++;
-		if(cell->minimum_vertex_distance() < minElemLength)
-		    minElemLength = cell->minimum_vertex_distance();
-
-		if(cell->minimum_vertex_distance() > maxElemLength)
-		    maxElemLength = cell->minimum_vertex_distance();
-	      }
-	  }
-
-	minElemLength = Utilities::MPI::min(minElemLength, mpi_communicator);
-	maxElemLength = Utilities::MPI::max(maxElemLength, mpi_communicator);
-
-	//
-	//print out adaptive mesh metrics
-	//
-	if (dftParameters::verbosity>=4)
-	  {
-            pcout<< "Triangulation generation summary: "<<std::endl<<" num elements: "<<parallelTriangulation.n_global_active_cells()<<", num refinement levels: "<<numLevels<<", min element length: "<<minElemLength<<", max element length: "<<maxElemLength<<std::endl;
-	  }
-
-	internal::checkTriangulationEqualityAcrossProcessorPools(parallelTriangulation,
-								 numLocallyOwnedCells,
-								 interpoolcomm);
-	internal::checkTriangulationEqualityAcrossProcessorPools(parallelTriangulation,
-								 numLocallyOwnedCells,
-								 interBandGroupComm);
-
-
-	if(generateElectrostaticsTria)
-	  {
-	    numLocallyOwnedCells = 0;
-	    double minElemLengthRho = dftParameters::meshSizeOuterDomain;
-	    double minElemLengthDisp = dftParameters::meshSizeOuterDomain;
-	    double minElemLengthForce = dftParameters::meshSizeOuterDomain;
-
-	    cell = electrostaticsTriangulationRho.begin_active();
-	    endc = electrostaticsTriangulationRho.end();
-	    cellDisp = electrostaticsTriangulationDisp.begin_active();
-	    cellForce = electrostaticsTriangulationForce.begin_active();
-	    for( ; cell != endc; ++cell)
-	      {
-		if(cell->is_locally_owned())
-		  {
-		    numLocallyOwnedCells++;
-		    if(cell->minimum_vertex_distance() < minElemLengthRho)
-			minElemLengthRho = cell->minimum_vertex_distance();
-		    if(cellDisp->minimum_vertex_distance() < minElemLengthDisp)
-			minElemLengthDisp = cellDisp->minimum_vertex_distance();
-		    if(cellForce->minimum_vertex_distance() < minElemLengthForce)
-			minElemLengthForce = cellForce->minimum_vertex_distance();
-		  }
-		++cellDisp;
-		++cellForce;
-	      }
-
-	    minElemLengthRho = Utilities::MPI::min(minElemLengthRho, mpi_communicator);
-	    minElemLengthDisp = Utilities::MPI::min(minElemLengthDisp, mpi_communicator);
-            minElemLengthForce = Utilities::MPI::min(minElemLengthForce, mpi_communicator);
-	    //
-	    //print out adaptive electrostatics mesh metrics
-	    //
-	    if (dftParameters::verbosity>=4)
-	      {
-		pcout<< "Electrostatics Triangulation generation summary: "<<std::endl<<" num elements: "<<electrostaticsTriangulationRho.n_global_active_cells()<<", num refinement levels: "<<numLevels<<", min element length: "<<minElemLengthRho<<std::endl;
-
-		pcout<< "Electrostatics Triangulation generation summary: "<<std::endl<<" num elements: "<<electrostaticsTriangulationDisp.n_global_active_cells()<<", num refinement levels: "<<numLevels<<", min element length: "<<minElemLengthDisp<<std::endl;
-
-		pcout<< "Electrostatics Triangulation generation summary: "<<std::endl<<" num elements: "<<electrostaticsTriangulationForce.n_global_active_cells()<<", num refinement levels: "<<numLevels<<", min element length: "<<minElemLengthForce<<std::endl;
-
-	      }
-
-
-	    internal::checkTriangulationEqualityAcrossProcessorPools(electrostaticsTriangulationRho,
-								     numLocallyOwnedCells,
-								     interpoolcomm);
-
-	    internal::checkTriangulationEqualityAcrossProcessorPools(electrostaticsTriangulationRho,
-								     numLocallyOwnedCells,
-								     interBandGroupComm);
-
-
-	    internal::checkTriangulationEqualityAcrossProcessorPools(electrostaticsTriangulationDisp,
-								     numLocallyOwnedCells,
-								     interpoolcomm);
-
-	    internal::checkTriangulationEqualityAcrossProcessorPools(electrostaticsTriangulationDisp,
-								     numLocallyOwnedCells,
-								     interBandGroupComm);
-
-	    internal::checkTriangulationEqualityAcrossProcessorPools(electrostaticsTriangulationForce,
-								     numLocallyOwnedCells,
-								     interpoolcomm);
-
-	    internal::checkTriangulationEqualityAcrossProcessorPools(electrostaticsTriangulationForce,
-								     numLocallyOwnedCells,
-								     interBandGroupComm);
-
-	  }
-
-      }
-  }
-
 
   void triangulationManager::generateMesh
           (parallel::distributed::Triangulation<3> & parallelTriangulation,
@@ -758,13 +803,15 @@ namespace dftfe {
 	   parallel::distributed::Triangulation<3> & electrostaticsTriangulationRho,
 	   parallel::distributed::Triangulation<3> & electrostaticsTriangulationDisp,
 	   parallel::distributed::Triangulation<3> & electrostaticsTriangulationForce,
-	   const bool generateElectrostaticsTria)
+	   const bool generateElectrostaticsTria,
+	   const bool generateSerialTria)
   {
     if(!dftParameters::meshFileName.empty())
       {
 	GridIn<3> gridinParallel, gridinSerial;
 	gridinParallel.attach_triangulation(parallelTriangulation);
-	gridinSerial.attach_triangulation(serialTriangulation);
+	if (generateSerialTria)
+	   gridinSerial.attach_triangulation(serialTriangulation);
 
 	//
 	//Read mesh in UCD format generated from Cubit
@@ -772,17 +819,22 @@ namespace dftfe {
 	std::ifstream f1(dftParameters::meshFileName.c_str());
 	std::ifstream f2(dftParameters::meshFileName.c_str());
 	gridinParallel.read_ucd(f1);
-	gridinSerial.read_ucd(f2);
+	if (generateSerialTria)
+   	   gridinSerial.read_ucd(f2);
 
 	meshGenUtils::markPeriodicFacesNonOrthogonal(parallelTriangulation,d_domainBoundingVectors);
-	meshGenUtils::markPeriodicFacesNonOrthogonal(serialTriangulation,d_domainBoundingVectors);
+	if (generateSerialTria)
+	   meshGenUtils::markPeriodicFacesNonOrthogonal(serialTriangulation,d_domainBoundingVectors);
       }
     else
       {
 
 	generateCoarseMesh(parallelTriangulation);
-	generateCoarseMesh(serialTriangulation);
-	AssertThrow(parallelTriangulation.n_global_active_cells()==serialTriangulation.n_global_active_cells(),ExcMessage("Number of coarse mesh cells are different in serial and parallel triangulations."));
+	if (generateSerialTria)
+        {
+	    generateCoarseMesh(serialTriangulation);
+	    AssertThrow(parallelTriangulation.n_global_active_cells()==serialTriangulation.n_global_active_cells(),ExcMessage("Number of coarse mesh cells are different in serial and parallel triangulations."));
+	}
 
 	if(generateElectrostaticsTria)
 	  {
@@ -793,24 +845,36 @@ namespace dftfe {
 	    AssertThrow(parallelTriangulation.n_global_active_cells()==electrostaticsTriangulationDisp.n_global_active_cells(),ExcMessage("Number of coarse mesh cells are different in electrostatics triangulations disp field."));
 	    AssertThrow(parallelTriangulation.n_global_active_cells()==electrostaticsTriangulationForce.n_global_active_cells(),ExcMessage("Number of coarse mesh cells are different in electrostatics triangulations for force computation."));
 
-	    generateCoarseMesh(serialTriangulationElectrostatics);
-	    AssertThrow(parallelTriangulation.n_global_active_cells()==serialTriangulationElectrostatics.n_global_active_cells(),ExcMessage("Number of coarse mesh cells are different in electrostatics serial triangulation computation."));
+	    if (generateSerialTria)
+	    {
+		generateCoarseMesh(serialTriangulationElectrostatics);
+		AssertThrow(parallelTriangulation.n_global_active_cells()==serialTriangulationElectrostatics.n_global_active_cells(),ExcMessage("Number of coarse mesh cells are different in electrostatics serial triangulation computation."));
+	    }
 	  }
 
         d_parallelTriaCurrentRefinement.clear();
-        d_serialTriaCurrentRefinement.clear();
+	if (generateSerialTria)
+           d_serialTriaCurrentRefinement.clear();
 
 	//
-	//Multilayer refinement
+	//Multilayer refinement. Refinement algorithm is progressively modified
+	//if check of parallel consistency of combined periodic
+	//and hanging node constraitns fails (Related to https://github.com/dealii/dealii/issues/7053).
+	//
+
+	//
+	//STAGE0: Call only refinementAlgorithmA. Multilevel refinement is performed until
+	//refinementAlgorithmA does not set refinement flags on any cell.
 	//
 	unsigned int numLevels=0;
-	bool refineFlag = true;
-	while(refineFlag)
-	  {
+ 	bool refineFlag = true;
+        while(refineFlag)
+	{
 	    refineFlag = false;
 	    std::vector<unsigned int> locallyOwnedCellsRefineFlags;
 	    std::map<dealii::CellId,unsigned int> cellIdToCellRefineFlagMapLocal;
-	    refinementAlgorithmA(parallelTriangulation,
+
+	    refineFlag=refinementAlgorithmA(parallelTriangulation,
 				 electrostaticsTriangulationRho,
 				 electrostaticsTriangulationDisp,
 				 electrostaticsTriangulationForce,
@@ -818,10 +882,7 @@ namespace dftfe {
 				 locallyOwnedCellsRefineFlags,
 				 cellIdToCellRefineFlagMapLocal);
 
-
 	    //This sets the global refinement sweep flag
-	    refineFlag = std::accumulate(locallyOwnedCellsRefineFlags.begin(),
-					 locallyOwnedCellsRefineFlags.end(), 0)>0?1:0;
 	    refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
 
 	    //Refine
@@ -833,23 +894,27 @@ namespace dftfe {
 		    if (dftParameters::verbosity>=4)
 		      pcout<< "refinement in progress, level: "<< numLevels<<std::endl;
 
-                    d_serialTriaCurrentRefinement.push_back(std::vector<bool>());
+		    if (generateSerialTria)
+		    {
+			d_serialTriaCurrentRefinement.push_back(std::vector<bool>());
 
-		    //First refine serial mesh
-		    refineSerialMesh(cellIdToCellRefineFlagMapLocal,
-				     mpi_communicator,
-				     serialTriangulation,
-				     parallelTriangulation,
-				     d_serialTriaCurrentRefinement[numLevels]) ;
-
-		    if(generateElectrostaticsTria)
+			//First refine serial mesh
 			refineSerialMesh(cellIdToCellRefineFlagMapLocal,
 					 mpi_communicator,
-					 serialTriangulationElectrostatics,
+					 serialTriangulation,
 					 parallelTriangulation,
-					 d_serialTriaCurrentRefinement[numLevels]);
+					 d_serialTriaCurrentRefinement[numLevels]) ;
 
-                    d_parallelTriaCurrentRefinement.push_back(std::vector<bool>());
+
+			if(generateElectrostaticsTria)
+			    refineSerialMesh(cellIdToCellRefineFlagMapLocal,
+					     mpi_communicator,
+					     serialTriangulationElectrostatics,
+					     parallelTriangulation,
+					     d_serialTriaCurrentRefinement[numLevels]);
+		    }
+
+		    d_parallelTriaCurrentRefinement.push_back(std::vector<bool>());
 		    parallelTriangulation.save_refine_flags(d_parallelTriaCurrentRefinement[numLevels]);
 
 		    parallelTriangulation.execute_coarsening_and_refinement();
@@ -868,7 +933,425 @@ namespace dftfe {
 		  }
 	      }
 
-	  }
+	 }
+
+	//
+	//STAGE1: This stage is only activated if combined periodic and hanging node constraints are
+	//not consistent in parallel.
+	//Call refinementAlgorithmA and consistentPeriodicBoundaryRefinement alternatively.
+	//In the call to refinementAlgorithmA there is no additional reduction of adaptivity performed
+	//on the periodic boundary. Multilevel refinement is performed until both refinementAlgorithmA
+	//and consistentPeriodicBoundaryRefinement do not set refinement flags on any cell.
+	//
+	if (!dftParameters::reproducible_output)
+	{
+	   if (!checkConstraintsConsistency(parallelTriangulation))
+	   {
+	    refineFlag=true;
+	    while(refineFlag)
+	      {
+		refineFlag = false;
+		std::vector<unsigned int> locallyOwnedCellsRefineFlags;
+		std::map<dealii::CellId,unsigned int> cellIdToCellRefineFlagMapLocal;
+		if (numLevels%2==0)
+		{
+		    refineFlag=refinementAlgorithmA(parallelTriangulation,
+					 electrostaticsTriangulationRho,
+					 electrostaticsTriangulationDisp,
+					 electrostaticsTriangulationForce,
+					 generateElectrostaticsTria,
+					 locallyOwnedCellsRefineFlags,
+					 cellIdToCellRefineFlagMapLocal);
+
+		    //This sets the global refinement sweep flag
+		    refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
+
+		    //try the other type of refinement to prevent while loop from ending prematurely
+		    if (!refineFlag)
+		    {
+			//call refinement algorithm  which sets refinement flags such as to
+			//create consistent refinement across periodic boundary
+			refineFlag=consistentPeriodicBoundaryRefinement(parallelTriangulation,
+					     electrostaticsTriangulationRho,
+					     electrostaticsTriangulationDisp,
+					     electrostaticsTriangulationForce,
+					     generateElectrostaticsTria,
+					     locallyOwnedCellsRefineFlags,
+					     cellIdToCellRefineFlagMapLocal);
+
+			//This sets the global refinement sweep flag
+			refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
+		    }
+		}
+		else
+		{
+		    //call refinement algorithm  which sets refinement flags such as to
+		    //create consistent refinement across periodic boundary
+		    refineFlag=consistentPeriodicBoundaryRefinement(parallelTriangulation,
+					 electrostaticsTriangulationRho,
+					 electrostaticsTriangulationDisp,
+					 electrostaticsTriangulationForce,
+					 generateElectrostaticsTria,
+					 locallyOwnedCellsRefineFlags,
+					 cellIdToCellRefineFlagMapLocal);
+
+		    //This sets the global refinement sweep flag
+		    refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
+
+		    //try the other type of refinement to prevent while loop from ending prematurely
+		    if (!refineFlag)
+		    {
+			refineFlag=refinementAlgorithmA(parallelTriangulation,
+					     electrostaticsTriangulationRho,
+					     electrostaticsTriangulationDisp,
+					     electrostaticsTriangulationForce,
+					     generateElectrostaticsTria,
+					     locallyOwnedCellsRefineFlags,
+					     cellIdToCellRefineFlagMapLocal);
+
+			//This sets the global refinement sweep flag
+			refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
+		    }
+		}
+
+		//Refine
+		if (refineFlag)
+		  {
+
+		    if(numLevels<d_max_refinement_steps)
+		      {
+			if (dftParameters::verbosity>=4)
+			  pcout<< "refinement in progress, level: "<< numLevels<<std::endl;
+
+			if (generateSerialTria)
+			{
+			    d_serialTriaCurrentRefinement.push_back(std::vector<bool>());
+
+			    //First refine serial mesh
+			    refineSerialMesh(cellIdToCellRefineFlagMapLocal,
+					     mpi_communicator,
+					     serialTriangulation,
+					     parallelTriangulation,
+					     d_serialTriaCurrentRefinement[numLevels]) ;
+
+
+			    if(generateElectrostaticsTria)
+				refineSerialMesh(cellIdToCellRefineFlagMapLocal,
+						 mpi_communicator,
+						 serialTriangulationElectrostatics,
+						 parallelTriangulation,
+						 d_serialTriaCurrentRefinement[numLevels]);
+			}
+
+			d_parallelTriaCurrentRefinement.push_back(std::vector<bool>());
+			parallelTriangulation.save_refine_flags(d_parallelTriaCurrentRefinement[numLevels]);
+
+			parallelTriangulation.execute_coarsening_and_refinement();
+			if(generateElectrostaticsTria)
+			  {
+			    electrostaticsTriangulationRho.execute_coarsening_and_refinement();
+			    electrostaticsTriangulationDisp.execute_coarsening_and_refinement();
+			    electrostaticsTriangulationForce.execute_coarsening_and_refinement();
+			  }
+
+			numLevels++;
+		      }
+		    else
+		      {
+			refineFlag=false;
+		      }
+		  }
+
+	      }
+	   }
+	}
+
+	if (!dftParameters::reproducible_output)
+	{
+	   //
+	   //STAGE2: This stage is only activated if combined periodic and hanging node constraints are
+	   //still not consistent in parallel.
+	   //Call refinementAlgorithmA and consistentPeriodicBoundaryRefinement alternatively.
+	   //In the call to refinementAlgorithmA there is an additional reduction of adaptivity performed
+	   //on the periodic boundary such that the maximum cell length on the periodic boundary is less
+	   //than two times the MESH SIZE AROUND ATOM. Multilevel refinement is performed until both
+	   //refinementAlgorithmAand consistentPeriodicBoundaryRefinement do not set refinement flags
+	   //on any cell.
+	   //
+	   if (!checkConstraintsConsistency(parallelTriangulation))
+	   {
+	      refineFlag=true;
+	      while (refineFlag)
+              {
+		refineFlag = false;
+		std::vector<unsigned int> locallyOwnedCellsRefineFlags;
+		std::map<dealii::CellId,unsigned int> cellIdToCellRefineFlagMapLocal;
+		if (numLevels%2==0)
+		{
+		    refineFlag=refinementAlgorithmA(parallelTriangulation,
+					 electrostaticsTriangulationRho,
+					 electrostaticsTriangulationDisp,
+					 electrostaticsTriangulationForce,
+					 generateElectrostaticsTria,
+					 locallyOwnedCellsRefineFlags,
+					 cellIdToCellRefineFlagMapLocal,
+					 true,
+					 2.0);
+
+		    //This sets the global refinement sweep flag
+		    refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
+
+		    //try the other type of refinement to prevent while loop from ending prematurely
+		    if (!refineFlag)
+		    {
+		        //call refinement algorithm  which sets refinement flags such as to
+			//create consistent refinement across periodic boundary
+			refineFlag=consistentPeriodicBoundaryRefinement(parallelTriangulation,
+					     electrostaticsTriangulationRho,
+					     electrostaticsTriangulationDisp,
+					     electrostaticsTriangulationForce,
+					     generateElectrostaticsTria,
+					     locallyOwnedCellsRefineFlags,
+					     cellIdToCellRefineFlagMapLocal);
+
+			//This sets the global refinement sweep flag
+			refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
+		    }
+		}
+		else
+		{
+		    //call refinement algorithm  which sets refinement flags such as to
+		    //create consistent refinement across periodic boundary
+		    refineFlag=consistentPeriodicBoundaryRefinement(parallelTriangulation,
+					 electrostaticsTriangulationRho,
+					 electrostaticsTriangulationDisp,
+					 electrostaticsTriangulationForce,
+					 generateElectrostaticsTria,
+					 locallyOwnedCellsRefineFlags,
+					 cellIdToCellRefineFlagMapLocal);
+
+		    //This sets the global refinement sweep flag
+		    refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
+
+		    //try the other type of refinement to prevent while loop from ending prematurely
+		    if (!refineFlag)
+		    {
+			refineFlag=refinementAlgorithmA(parallelTriangulation,
+					     electrostaticsTriangulationRho,
+					     electrostaticsTriangulationDisp,
+					     electrostaticsTriangulationForce,
+					     generateElectrostaticsTria,
+					     locallyOwnedCellsRefineFlags,
+					     cellIdToCellRefineFlagMapLocal,
+					     true,
+					     2.0);
+
+			//This sets the global refinement sweep flag
+			refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
+		    }
+		}
+
+		//Refine
+		if (refineFlag)
+		  {
+
+		    if(numLevels<d_max_refinement_steps)
+		      {
+			if (dftParameters::verbosity>=4)
+			  pcout<< "refinement in progress, level: "<< numLevels<<std::endl;
+
+			if (generateSerialTria)
+			{
+			    d_serialTriaCurrentRefinement.push_back(std::vector<bool>());
+
+			    //First refine serial mesh
+			    refineSerialMesh(cellIdToCellRefineFlagMapLocal,
+					     mpi_communicator,
+					     serialTriangulation,
+					     parallelTriangulation,
+					     d_serialTriaCurrentRefinement[numLevels]) ;
+
+
+			    if(generateElectrostaticsTria)
+				refineSerialMesh(cellIdToCellRefineFlagMapLocal,
+						 mpi_communicator,
+						 serialTriangulationElectrostatics,
+						 parallelTriangulation,
+						 d_serialTriaCurrentRefinement[numLevels]);
+			}
+
+			d_parallelTriaCurrentRefinement.push_back(std::vector<bool>());
+			parallelTriangulation.save_refine_flags(d_parallelTriaCurrentRefinement[numLevels]);
+
+			parallelTriangulation.execute_coarsening_and_refinement();
+			if(generateElectrostaticsTria)
+			  {
+			    electrostaticsTriangulationRho.execute_coarsening_and_refinement();
+			    electrostaticsTriangulationDisp.execute_coarsening_and_refinement();
+			    electrostaticsTriangulationForce.execute_coarsening_and_refinement();
+			  }
+
+			numLevels++;
+		      }
+		    else
+		      {
+			refineFlag=false;
+		      }
+		  }
+
+	      }
+	   }
+
+	   //
+	   //STAGE3: This stage is only activated if combined periodic and hanging node constraints are
+	   //still not consistent in parallel.
+	   //Call refinementAlgorithmA and consistentPeriodicBoundaryRefinement alternatively.
+	   //In the call to refinementAlgorithmA there is an additional reduction of adaptivity performed
+	   //on the periodic boundary such that the maximum cell length on the periodic boundary is less
+	   //than MESH SIZE AROUND ATOM essentially ensuring uniform refinement on the periodic boundary
+	   //in the case of MESH SIZE AROUND ATOM being same as MESH SIZE AT ATOM.
+	   //Multilevel refinement is performed until both refinementAlgorithmA and
+	   //consistentPeriodicBoundaryRefinement do not set refinement flags on any cell.
+	   //
+           if (!checkConstraintsConsistency(parallelTriangulation))
+           {
+	      refineFlag=true;
+	      while (refineFlag)
+              {
+		refineFlag = false;
+		std::vector<unsigned int> locallyOwnedCellsRefineFlags;
+		std::map<dealii::CellId,unsigned int> cellIdToCellRefineFlagMapLocal;
+		if (numLevels%2==0)
+		{
+		    refineFlag=refinementAlgorithmA(parallelTriangulation,
+					 electrostaticsTriangulationRho,
+					 electrostaticsTriangulationDisp,
+					 electrostaticsTriangulationForce,
+					 generateElectrostaticsTria,
+					 locallyOwnedCellsRefineFlags,
+					 cellIdToCellRefineFlagMapLocal,
+					 true,
+					 1.0);
+
+		    //This sets the global refinement sweep flag
+		    refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
+
+		    //try the other type of refinement to prevent while loop from ending prematurely
+		    if (!refineFlag)
+		    {
+		        //call refinement algorithm  which sets refinement flags such as to
+			//create consistent refinement across periodic boundary
+			refineFlag=consistentPeriodicBoundaryRefinement(parallelTriangulation,
+					     electrostaticsTriangulationRho,
+					     electrostaticsTriangulationDisp,
+					     electrostaticsTriangulationForce,
+					     generateElectrostaticsTria,
+					     locallyOwnedCellsRefineFlags,
+					     cellIdToCellRefineFlagMapLocal);
+
+			//This sets the global refinement sweep flag
+			refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
+		    }
+		}
+		else
+		{
+
+		    //call refinement algorithm  which sets refinement flags such as to
+		    //create consistent refinement across periodic boundary
+		    refineFlag=consistentPeriodicBoundaryRefinement(parallelTriangulation,
+					 electrostaticsTriangulationRho,
+					 electrostaticsTriangulationDisp,
+					 electrostaticsTriangulationForce,
+					 generateElectrostaticsTria,
+					 locallyOwnedCellsRefineFlags,
+					 cellIdToCellRefineFlagMapLocal);
+
+		    //This sets the global refinement sweep flag
+		    refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
+
+		    //try the other type of refinement to prevent while loop from ending prematurely
+		    if (!refineFlag)
+		    {
+			refineFlag=refinementAlgorithmA(parallelTriangulation,
+					     electrostaticsTriangulationRho,
+					     electrostaticsTriangulationDisp,
+					     electrostaticsTriangulationForce,
+					     generateElectrostaticsTria,
+					     locallyOwnedCellsRefineFlags,
+					     cellIdToCellRefineFlagMapLocal,
+					     true,
+					     1.0);
+
+			//This sets the global refinement sweep flag
+			refineFlag= Utilities::MPI::max((unsigned int) refineFlag, mpi_communicator);
+		    }
+		}
+
+		//Refine
+		if (refineFlag)
+		  {
+
+		    if(numLevels<d_max_refinement_steps)
+		      {
+			if (dftParameters::verbosity>=4)
+			  pcout<< "refinement in progress, level: "<< numLevels<<std::endl;
+
+			if (generateSerialTria)
+			{
+			    d_serialTriaCurrentRefinement.push_back(std::vector<bool>());
+
+			    //First refine serial mesh
+			    refineSerialMesh(cellIdToCellRefineFlagMapLocal,
+					     mpi_communicator,
+					     serialTriangulation,
+					     parallelTriangulation,
+					     d_serialTriaCurrentRefinement[numLevels]) ;
+
+
+			    if(generateElectrostaticsTria)
+				refineSerialMesh(cellIdToCellRefineFlagMapLocal,
+						 mpi_communicator,
+						 serialTriangulationElectrostatics,
+						 parallelTriangulation,
+						 d_serialTriaCurrentRefinement[numLevels]);
+			}
+
+			d_parallelTriaCurrentRefinement.push_back(std::vector<bool>());
+			parallelTriangulation.save_refine_flags(d_parallelTriaCurrentRefinement[numLevels]);
+
+			parallelTriangulation.execute_coarsening_and_refinement();
+			if(generateElectrostaticsTria)
+			  {
+			    electrostaticsTriangulationRho.execute_coarsening_and_refinement();
+			    electrostaticsTriangulationDisp.execute_coarsening_and_refinement();
+			    electrostaticsTriangulationForce.execute_coarsening_and_refinement();
+			  }
+
+			numLevels++;
+		      }
+		    else
+		      {
+			refineFlag=false;
+		      }
+		  }
+
+	      }
+	   }
+
+	   if (checkConstraintsConsistency(parallelTriangulation))
+	   {
+	       if (dftParameters::verbosity>=4)
+	           pcout<< "Hanging node and periodic constraints parallel consistency achieved."<<std::endl;
+
+	        dftParameters::createConstraintsFromSerialDofhandler=false;
+	   }
+	   else
+	   {
+	       if (dftParameters::verbosity>=4)
+	           pcout<< "Hanging node and periodic constraints parallel consistency not achieved."<<std::endl;
+	   }
+	}
+
 	//
 	//compute some adaptive mesh metrics
 	//
@@ -909,13 +1392,23 @@ namespace dftfe {
 								 numLocallyOwnedCells,
 								 interBandGroupComm);
 
-	const unsigned int numberGlobalCellsParallel = parallelTriangulation.n_global_active_cells();
-	const unsigned int numberGlobalCellsSerial = serialTriangulation.n_global_active_cells();
+	if (generateSerialTria)
+        {
+	    const unsigned int numberGlobalCellsParallel = parallelTriangulation.n_global_active_cells();
+	    const unsigned int numberGlobalCellsSerial = serialTriangulation.n_global_active_cells();
 
-	if (dftParameters::verbosity>=4)
-	  pcout<<" numParallelCells: "<< numberGlobalCellsParallel<<", numSerialCells: "<< numberGlobalCellsSerial<<std::endl;
+	    if (dftParameters::verbosity>=4)
+	      pcout<<" numParallelCells: "<< numberGlobalCellsParallel<<", numSerialCells: "<< numberGlobalCellsSerial<<std::endl;
 
-	AssertThrow(numberGlobalCellsParallel==numberGlobalCellsSerial,ExcMessage("Number of cells are different for parallel and serial triangulations"));
+	    AssertThrow(numberGlobalCellsParallel==numberGlobalCellsSerial,ExcMessage("Number of cells are different for parallel and serial triangulations"));
+	}
+	else
+	{
+	    const unsigned int numberGlobalCellsParallel = parallelTriangulation.n_global_active_cells();
+
+	    if (dftParameters::verbosity>=4)
+	      pcout<<" numParallelCells: "<< numberGlobalCellsParallel<<std::endl;
+	}
 
 
 	if(generateElectrostaticsTria)
