@@ -272,9 +272,9 @@ namespace dftfe
 
 
   template<unsigned int FEOrder>
-  thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getShapeFunctionValuesInverted()
+  thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getShapeFunctionValuesInverted(const bool use2pPlusOneGLQuad)
   {
-    return d_shapeFunctionValueInvertedDevice;
+    return use2pPlusOneGLQuad?d_glShapeFunctionValueInvertedDevice:d_shapeFunctionValueInvertedDevice;
   }
 
   template<unsigned int FEOrder>
@@ -296,21 +296,21 @@ namespace dftfe
   }
 
   template<unsigned int FEOrder>
-  thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getShapeFunctionGradientValuesXInverted()
+  thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getShapeFunctionGradientValuesXInverted(const bool use2pPlusOneGLQuad)
   {
-    return d_shapeFunctionGradientValueXInvertedDevice;
+    return use2pPlusOneGLQuad?d_glShapeFunctionGradientValueXInvertedDevice:d_shapeFunctionGradientValueXInvertedDevice;
   }
 
   template<unsigned int FEOrder>
-  thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getShapeFunctionGradientValuesYInverted()
+  thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getShapeFunctionGradientValuesYInverted(const bool use2pPlusOneGLQuad)
   {
-    return d_shapeFunctionGradientValueYInvertedDevice;
+    return use2pPlusOneGLQuad?d_glShapeFunctionGradientValueYInvertedDevice:d_shapeFunctionGradientValueYInvertedDevice;
   }
 
   template<unsigned int FEOrder>
-  thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getShapeFunctionGradientValuesZInverted()
+  thrust::device_vector<double> & kohnShamDFTOperatorCUDAClass<FEOrder>::getShapeFunctionGradientValuesZInverted(const bool use2pPlusOneGLQuad)
   {
-    return d_shapeFunctionGradientValueZInvertedDevice;
+    return use2pPlusOneGLQuad?d_glShapeFunctionGradientValueZInvertedDevice:d_shapeFunctionGradientValueZInvertedDevice;
   }
 
   template<unsigned int FEOrder>

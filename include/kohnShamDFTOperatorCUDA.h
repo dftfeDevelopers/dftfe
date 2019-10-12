@@ -78,7 +78,7 @@ namespace dftfe{
 
       thrust::device_vector<double> & getShapeFunctionValues();
 
-      thrust::device_vector<double> & getShapeFunctionValuesInverted();
+      thrust::device_vector<double> & getShapeFunctionValuesInverted(const bool use2pPlusOneGLQuad=false);
 
       thrust::device_vector<double> & getShapeFunctionGradientValuesX();
 
@@ -86,11 +86,11 @@ namespace dftfe{
 
       thrust::device_vector<double> & getShapeFunctionGradientValuesZ();
 
-      thrust::device_vector<double> & getShapeFunctionGradientValuesXInverted();
+      thrust::device_vector<double> & getShapeFunctionGradientValuesXInverted(const bool use2pPlusOneGLQuad=false);
 
-      thrust::device_vector<double> & getShapeFunctionGradientValuesYInverted();
+      thrust::device_vector<double> & getShapeFunctionGradientValuesYInverted(const bool use2pPlusOneGLQuad=false);
 
-      thrust::device_vector<double> & getShapeFunctionGradientValuesZInverted();
+      thrust::device_vector<double> & getShapeFunctionGradientValuesZInverted(const bool use2pPlusOneGLQuad=false);
 
       thrust::device_vector<dealii::types::global_dof_index> & getFlattenedArrayCellLocalProcIndexIdMap();
 

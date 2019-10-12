@@ -86,7 +86,7 @@ namespace dftfe{
 
     virtual thrust::device_vector<double> & getShapeFunctionValues() = 0;
 
-    virtual thrust::device_vector<double> & getShapeFunctionValuesInverted() = 0;
+    virtual thrust::device_vector<double> & getShapeFunctionValuesInverted(const bool use2pPlusOneGLQuad=false) = 0;
 
     virtual thrust::device_vector<double> & getShapeFunctionGradientValuesX() = 0;
 
@@ -94,11 +94,11 @@ namespace dftfe{
 
     virtual thrust::device_vector<double> & getShapeFunctionGradientValuesZ() = 0;
 
-    virtual thrust::device_vector<double> & getShapeFunctionGradientValuesXInverted() = 0;
+    virtual thrust::device_vector<double> & getShapeFunctionGradientValuesXInverted(const bool use2pPlusOneGLQuad=false) = 0;
 
-    virtual thrust::device_vector<double> & getShapeFunctionGradientValuesYInverted() = 0;
+    virtual thrust::device_vector<double> & getShapeFunctionGradientValuesYInverted(const bool use2pPlusOneGLQuad=false) = 0;
 
-    virtual thrust::device_vector<double> & getShapeFunctionGradientValuesZInverted() = 0;
+    virtual thrust::device_vector<double> & getShapeFunctionGradientValuesZInverted(const bool use2pPlusOneGLQuad=false) = 0;
 
     virtual thrust::device_vector<dealii::types::global_dof_index> & getFlattenedArrayCellLocalProcIndexIdMap()=0;
 
@@ -371,6 +371,17 @@ namespace dftfe{
     thrust::device_vector<double> d_shapeFunctionGradientValueZDevice;
       
     thrust::device_vector<double> d_shapeFunctionGradientValueZInvertedDevice;
+
+    /// 2p+1 Gauss Lobotta quadrature shape function values and shape function gradients 
+    thrust::device_vector<double> d_glShapeFunctionValueInvertedDevice;
+
+    thrust::device_vector<double> d_glShapeFunctionGradientValueXInvertedDevice;
+
+    thrust::device_vector<double> d_glShapeFunctionGradientValueYInvertedDevice;
+
+    thrust::device_vector<double> d_glShapeFunctionGradientValueZInvertedDevice;
+
+
 
     thrust::device_vector<dealii::types::global_dof_index> d_flattenedArrayCellLocalProcIndexIdMapDevice;
 

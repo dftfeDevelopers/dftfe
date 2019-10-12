@@ -49,7 +49,8 @@ namespace dftfe
                        const bool isEvaluateGradRho,
                        const MPI_Comm & interpoolcomm,
                        const MPI_Comm & interBandGroupComm,
-                       const bool spectrumSplit);
+                       const bool spectrumSplit,
+                       const bool use2pPlusOneGLQuad=false);
 
    }
 }
