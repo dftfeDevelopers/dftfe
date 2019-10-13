@@ -670,7 +670,7 @@ namespace dftfe {
     if(updateImageKPoints)
       initImageChargesUpdateKPoints();
 
-    if  (dftParameters::isIonOpt)
+    if(dftParameters::isIonOpt)
        updatePrevMeshDataStructures();
     //
     //reinitialize dirichlet BCs for total potential and vSelf poisson solutions
@@ -1089,6 +1089,27 @@ namespace dftfe {
 			     dftParameters::maxLinearSolverIterations,
 			     dftParameters::verbosity);
 
+	//
+	//impose integral phi equals 0
+	//
+	if(dftParameters::periodicX && dftParameters::periodicY && dftParameters::periodicZ)
+	  {
+	    double integPhi = totalCharge(dofHandler,
+					  d_phiTotRhoIn);
+
+	    double volume = computeVolume(dofHandler);
+	    double shiftingConst = integPhi/volume;
+
+	    vectorType tempDealiiVec;
+	    matrix_free_data.initialize_dof_vector(tempDealiiVec);
+	    tempDealiiVec = shiftingConst;
+	
+	    d_phiTotRhoIn -= tempDealiiVec;
+
+	    if (dftParameters::verbosity>=2)
+	      pcout<<"Value of integPhiIn after scaling: "<<totalCharge(dofHandler,d_phiTotRhoIn)<<std::endl;
+	  }
+
 	computing_timer.exit_section("phiTot solve");
 
         unsigned int numberChebyshevSolvePasses=0;
@@ -1463,6 +1484,28 @@ namespace dftfe {
 				 dftParameters::absLinearSolverTolerance,
 				 dftParameters::maxLinearSolverIterations,
 				 dftParameters::verbosity);
+
+
+	    //
+	    //impose integral phi equals 0
+	    //
+	    if(dftParameters::periodicX && dftParameters::periodicY && dftParameters::periodicZ)
+	      {
+		double integPhi = totalCharge(dofHandler,
+					      d_phiTotRhoOut);
+
+		double volume = computeVolume(dofHandler);
+		double shiftingConst = integPhi/volume;
+
+		vectorType tempDealiiVec;
+		matrix_free_data.initialize_dof_vector(tempDealiiVec);  
+		tempDealiiVec = shiftingConst;
+
+		d_phiTotRhoOut -= tempDealiiVec;
+
+		if(dftParameters::verbosity>=2)
+		  pcout<<"Value of integPhiOut after scaling: "<<totalCharge(dofHandler,d_phiTotRhoOut);
+	      }
 
 	    computing_timer.exit_section("phiTot solve");
 
