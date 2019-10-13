@@ -99,14 +99,7 @@ double dftClass<FEOrder>::nodalDensity_mixing_simple(kerkerSolverProblem<2*FEOrd
   //push the rhoIn to deque storing the history of nodal values
   d_rhoInNodalVals.push_back(d_rhoInNodalValues);
 
-  rhoInVals.push_back(std::map<dealii::CellId,std::vector<double> >());
-  rhoInValues=&(rhoInVals.back());
-  if(dftParameters::xc_id == 4)
-    {
-      gradRhoInVals.push_back(std::map<dealii::CellId,std::vector<double> >());
-      gradRhoInValues=&(gradRhoInVals.back());
-    }
-
+  
   FEEvaluation<C_DIM,2*FEOrder,C_num1DQuad<FEOrder>(),1,double> fe_evalRho(d_matrixFreeDataPRefined,0,1);
   numQuadPoints = fe_evalRho.n_q_points;
   //compute rho and grad rho for computing Veff using the rhoIn computed above
@@ -348,16 +341,7 @@ double dftClass<FEOrder>::nodalDensity_mixing_anderson(kerkerSolverProblem<2*FEO
   //push the rhoIn to deque storing the history of nodal values
   d_rhoInNodalVals.push_back(d_rhoInNodalValues);
 
-
-  //compute rho and grad rho values and store in quad maps for VEff
-  rhoInVals.push_back(std::map<dealii::CellId,std::vector<double> >());
-  rhoInValues=&(rhoInVals.back());
-  if(dftParameters::xc_id == 4)
-    {
-      gradRhoInVals.push_back(std::map<dealii::CellId,std::vector<double> >());
-      gradRhoInValues=&(gradRhoInVals.back());
-    }
-
+  
   FEEvaluation<C_DIM,2*FEOrder,C_num1DQuad<FEOrder>(),1,double> fe_evalRho(d_matrixFreeDataPRefined,0,1);
   numQuadPoints = fe_evalRho.n_q_points;
   for(unsigned int cell = 0; cell < d_matrixFreeDataPRefined.n_macro_cells(); ++cell)

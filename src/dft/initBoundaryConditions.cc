@@ -224,6 +224,11 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   //compute volume of the domain
   d_domainVolume=computeVolume(dofHandler);
 
-  //update gaussianMeshMovementClass object
-  //d_gaussianMovePar.initMoved(d_domainBoundingVectors);
+ 
+  //
+  //init 2p matrix-free objects using appropriate constraint matrix and quadrature rule
+  //
+  if(dftParameters::mixingMethod=="ANDERSON_WITH_KERKER")
+    initpRefinedObjects();
+
 }

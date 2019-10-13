@@ -611,11 +611,7 @@ namespace dftfe {
       symmetryPtr->initSymmetry() ;
 #endif
 
-    //
-    //create 2p DoFHandler if Kerker density mixing is on
-    //
-    if(dftParameters::mixingMethod=="ANDERSON_WITH_KERKER")
-      createpRefinedDofHandler(triangulationPar);
+    
 
 
     //
@@ -633,12 +629,6 @@ namespace dftfe {
     //
     initBoundaryConditions();
 
-
-    //
-    //init 2p matrix-free objects using appropriate constraint matrix and quadrature rule
-    //
-    if(dftParameters::mixingMethod=="ANDERSON_WITH_KERKER")
-      initpRefinedObjects();
 
     if (dftParameters::verbosity>=4)
       dftUtils::printCurrentMemoryUsage(mpi_communicator,

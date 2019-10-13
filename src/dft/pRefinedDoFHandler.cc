@@ -35,6 +35,7 @@ void dftClass<FEOrder>::createpRefinedDofHandler(dealii::parallel::distributed::
   dealii::DoFTools::make_hanging_node_constraints(d_dofHandlerPRefined, onlyHangingNodeConstraints);
   onlyHangingNodeConstraints.close();
 
+  d_constraintsPRefined.clear();
   d_constraintsPRefined.reinit(locallyRelevantDofs);
   dealii::DoFTools::make_hanging_node_constraints(d_dofHandlerPRefined, d_constraintsPRefined);
 
@@ -71,6 +72,9 @@ void dftClass<FEOrder>::createpRefinedDofHandler(dealii::parallel::distributed::
     GridTools::collect_periodic_faces(d_dofHandlerPRefined, /*b_id1*/ 2*i+1, /*b_id2*/ 2*i+2,/*direction*/ periodicDirectionVector[i], periodicity_vector2,offsetVectors[periodicDirectionVector[i]]);
 
   dealii::DoFTools::make_periodicity_constraints<dealii::DoFHandler<3> >(periodicity_vector2, d_constraintsPRefined);
+
+  applyHomogeneousDirichletBC(d_dofHandlerPRefined,d_constraintsPRefined);
+
   d_constraintsPRefined.close();
 
   

@@ -36,6 +36,8 @@ void dftClass<FEOrder>::clearRhoData()
   graddFBroyden.clear() ;
   uBroyden.clear();
   gradUBroyden.clear() ;
+  d_rhoInNodalVals.clear();
+  d_rhoOutNodalVals.clear();
 }
 
 template<unsigned int FEOrder>
@@ -97,7 +99,7 @@ void dftClass<FEOrder>::initRho()
   FEValues<3> fe_values (FE, quadrature_formula, update_quadrature_points);
   const unsigned int n_q_points    = quadrature_formula.size();
 
-  //Initialize electron density table storage
+  //Initialize electron density table storage for rhoIn
 
   rhoInVals.push_back(std::map<dealii::CellId, std::vector<double> >());
   rhoInValues=&(rhoInVals.back());
@@ -118,6 +120,23 @@ void dftClass<FEOrder>::initRho()
           gradRhoInValuesSpinPolarized=&(gradRhoInValsSpinPolarized.back());
         }
     }
+
+  //Initialize electron density table storage for rhoOut only for Anderson with Kerker
+  //for other mixing schemes it is done in density.cc as we need to do this initialization
+  //every SCF
+  if(dftParameters::mixingMethod == "ANDERSON_WITH_KERKER")
+    {
+      rhoOutVals.push_back(std::map<dealii::CellId,std::vector<double> > ());
+      rhoOutValues = &(rhoOutVals.back());
+
+        if(dftParameters::xc_id == 4)
+	  {
+	    gradRhoOutVals.push_back(std::map<dealii::CellId, std::vector<double> >());
+	    gradRhoOutValues= &(gradRhoOutVals.back());
+	  }
+    }
+  
+  
 
   //
   //get number of image charges used only for periodic

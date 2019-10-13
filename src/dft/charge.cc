@@ -139,7 +139,7 @@ double dftClass<FEOrder>::totalCharge(const dealii::MatrixFree<3,double> & matri
     }
   
   double normValue = 0.0;
-  for(unsigned int iSubCell = 0; iSubCell < matrixFreeDataObject.n_components_filled(0); ++iSubCell)
+  for(unsigned int iSubCell = 0; iSubCell < VectorizedArray<double>::n_array_elements; ++iSubCell)
     {
       normValue += normValueVectorized[iSubCell];
     }
@@ -195,7 +195,7 @@ double dftClass<FEOrder>::fieldl2Norm(const dealii::MatrixFree<3,double> & matri
     }
   
   double normValue = 0.0;
-  for(unsigned int iSubCell = 0; iSubCell < matrixFreeDataObject.n_components_filled(0); ++iSubCell)
+  for(unsigned int iSubCell = 0; iSubCell < VectorizedArray<double>::n_array_elements; ++iSubCell)
     {
       normValue += normValueVectorized[iSubCell];
     }

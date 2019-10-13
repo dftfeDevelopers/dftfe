@@ -22,29 +22,16 @@
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::compute_rhoOut(const bool isConsiderSpectrumSplitting)
 {
-  resizeAndAllocateRhoTableStorage
-    (rhoOutVals,
-     gradRhoOutVals,
-     rhoOutValsSpinPolarized,
-     gradRhoOutValsSpinPolarized);
-
-  rhoOutValues = &(rhoOutVals.back());
-  if (dftParameters::spinPolarized==1)
-    rhoOutValuesSpinPolarized = &(rhoOutValsSpinPolarized.back());
-
-  if(dftParameters::xc_id == 4)
-    {
-      gradRhoOutValues = &(gradRhoOutVals.back());
-      if (dftParameters::spinPolarized==1)
-	gradRhoOutValuesSpinPolarized = &(gradRhoOutValsSpinPolarized.back());
-    }
-
+  
   if(dftParameters::mixingMethod=="ANDERSON_WITH_KERKER")
     {
       computeRhoNodalFromPSI(isConsiderSpectrumSplitting);
       d_rhoOutNodalValues.update_ghost_values();
       d_rhoOutNodalVals.push_back(d_rhoOutNodalValues);
 
+      //assign pointer-type to rhoOutValues and gradRhoOutValues
+      //	
+     
       //fill in rhoOutValues and gradRhoOutValues
       FEEvaluation<C_DIM,2*FEOrder,C_num1DQuad<FEOrder>(),1,double> rhoEval(d_matrixFreeDataPRefined,0,1);
       const unsigned int numQuadPoints = rhoEval.n_q_points;
@@ -92,6 +79,25 @@ void dftClass<FEOrder>::compute_rhoOut(const bool isConsiderSpectrumSplitting)
     }
   else
     {
+
+      resizeAndAllocateRhoTableStorage
+	(rhoOutVals,
+	 gradRhoOutVals,
+	 rhoOutValsSpinPolarized,
+	 gradRhoOutValsSpinPolarized);
+
+      rhoOutValues = &(rhoOutVals.back());
+      if (dftParameters::spinPolarized==1)
+	rhoOutValuesSpinPolarized = &(rhoOutValsSpinPolarized.back());
+
+      if(dftParameters::xc_id == 4)
+	{
+	  gradRhoOutValues = &(gradRhoOutVals.back());
+	  if (dftParameters::spinPolarized==1)
+	    gradRhoOutValuesSpinPolarized = &(gradRhoOutValsSpinPolarized.back());
+	}
+
+
       computeRhoFromPSI(rhoOutValues,
 			gradRhoOutValues,
 			rhoOutValuesSpinPolarized,
@@ -101,45 +107,51 @@ void dftClass<FEOrder>::compute_rhoOut(const bool isConsiderSpectrumSplitting)
     }
 
 
-  //pop out rhoInVals and rhoOutVals if their size exceeds mixing history size
-  if(rhoInVals.size() == dftParameters::mixingHistory)
+  if(dftParameters::mixingMethod=="ANDERSON_WITH_KERKER")
     {
-      rhoInVals.pop_front();
-      rhoOutVals.pop_front();
-
-      if(dftParameters::spinPolarized==1)
-	{
-	  rhoInValsSpinPolarized.pop_front();
-	  rhoOutValsSpinPolarized.pop_front();
-	}
-
-      if(dftParameters::xc_id == 4)//GGA
-	{
-	  gradRhoInVals.pop_front();
-	  gradRhoOutVals.pop_front();
-	}
-
-      if(dftParameters::spinPolarized==1 && dftParameters::xc_id==4)
-	{
-	  gradRhoInValsSpinPolarized.pop_front();
-	  gradRhoOutValsSpinPolarized.pop_front();
-	}
-
-      if (dftParameters::mixingMethod=="BROYDEN")
-	{
-	  dFBroyden.pop_front();
-	  uBroyden.pop_front();
-	  if(dftParameters::xc_id == 4)//GGA
-	    {
-	      graddFBroyden.pop_front();
-	      gradUBroyden.pop_front();
-	    }
-	}
-
-      if(dftParameters::mixingMethod=="ANDERSON_WITH_KERKER")
+      if(d_rhoInNodalVals.size() == dftParameters::mixingHistory)
 	{
 	  d_rhoInNodalVals.pop_front();
 	  d_rhoOutNodalVals.pop_front();
+	}
+    }
+  else
+    {
+      //pop out rhoInVals and rhoOutVals if their size exceeds mixing history size
+      if(rhoInVals.size() == dftParameters::mixingHistory)
+	{
+	  rhoInVals.pop_front();
+	  rhoOutVals.pop_front();
+
+	  if(dftParameters::spinPolarized==1)
+	    {
+	      rhoInValsSpinPolarized.pop_front();
+	      rhoOutValsSpinPolarized.pop_front();
+	    }
+
+	  if(dftParameters::xc_id == 4)//GGA
+	    {
+	      gradRhoInVals.pop_front();
+	      gradRhoOutVals.pop_front();
+	    }
+
+	  if(dftParameters::spinPolarized==1 && dftParameters::xc_id==4)
+	    {
+	      gradRhoInValsSpinPolarized.pop_front();
+	      gradRhoOutValsSpinPolarized.pop_front();
+	    }
+
+	  if (dftParameters::mixingMethod=="BROYDEN")
+	    {
+	      dFBroyden.pop_front();
+	      uBroyden.pop_front();
+	      if(dftParameters::xc_id == 4)//GGA
+		{
+		  graddFBroyden.pop_front();
+		  gradUBroyden.pop_front();
+		}
+	    }
+     
 	}
 
     }
@@ -396,6 +408,8 @@ void dftClass<FEOrder>::computeRhoFromPSI(std::map<dealii::CellId, std::vector<d
 
   //initialization to zero
   typename DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
+  if(!lobattoNodesFlag)
+  {
   for (; cell!=endc; ++cell)
     if (cell->is_locally_owned())
       {
@@ -412,6 +426,7 @@ void dftClass<FEOrder>::computeRhoFromPSI(std::map<dealii::CellId, std::vector<d
 		= std::vector<double>(6*numQuadPoints,0.0);
 	  }
       }
+   } 
 
   Tensor<1,2,VectorizedArray<double> > zeroTensor1;
   zeroTensor1[0]=make_vectorized_array(0.0);
