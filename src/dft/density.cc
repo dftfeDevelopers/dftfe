@@ -33,7 +33,7 @@ void dftClass<FEOrder>::compute_rhoOut(const bool isConsiderSpectrumSplitting)
       //	
      
       //fill in rhoOutValues and gradRhoOutValues
-      FEEvaluation<C_DIM,2*FEOrder,C_num1DQuad<FEOrder>(),1,double> rhoEval(d_matrixFreeDataPRefined,0,1);
+      FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuad<FEOrder>(),1,double> rhoEval(d_matrixFreeDataPRefined,0,1);
       const unsigned int numQuadPoints = rhoEval.n_q_points;
       DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
       for(unsigned int cell = 0; cell < d_matrixFreeDataPRefined.n_macro_cells(); ++cell)
@@ -244,6 +244,8 @@ template<unsigned int FEOrder>
 void dftClass<FEOrder>::noRemeshRhoDataInit()
 {
 
+  if(dftParameters::mixingMethod == "ANDERSON_WITH_KERKER")
+    d_rhoInNodalValues = d_rhoOutNodalValues;
  
 
   //create temporary copies of rho Out data
@@ -306,7 +308,7 @@ void dftClass<FEOrder>::computeRhoNodalFromPSI(bool isConsiderSpectrumSplitting)
   const unsigned int dofs_per_cell = d_dofHandlerPRefined.get_fe().dofs_per_cell;
   typename DoFHandler<3>::active_cell_iterator cell = d_dofHandlerPRefined.begin_active(), endc = d_dofHandlerPRefined.end();
   dealii::IndexSet locallyOwnedDofs = d_dofHandlerPRefined.locally_owned_dofs();
-  QGaussLobatto<3>  quadrature_formula(2*FEOrder+1);
+  QGaussLobatto<3>  quadrature_formula(C_num1DKerkerPoly<FEOrder>()+1);
   const unsigned int numQuadPoints = quadrature_formula.size();
 
   AssertThrow(numQuadPoints == matrix_free_data.get_n_q_points(3),ExcMessage("Number of quadrature points from Quadrature object does not match with number of quadrature points obtained from matrix_free object"));
@@ -398,10 +400,10 @@ void dftClass<FEOrder>::computeRhoFromPSI(std::map<dealii::CellId, std::vector<d
 
 #ifdef USE_COMPLEX
   FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>(),2> psiEval(matrix_free_data,eigenDofHandlerIndex,0);
-  FEEvaluation<3,FEOrder,2*FEOrder+1,2> psiEvalRefined(matrix_free_data,eigenDofHandlerIndex,3);
+  FEEvaluation<3,FEOrder,C_num1DKerkerPoly<FEOrder>()+1,2> psiEvalRefined(matrix_free_data,eigenDofHandlerIndex,3);
 #else
   FEEvaluation<3,FEOrder,C_num1DQuad<FEOrder>(),1> psiEval(matrix_free_data,eigenDofHandlerIndex,0);
-  FEEvaluation<3,FEOrder,2*FEOrder+1,1> psiEvalRefined(matrix_free_data,eigenDofHandlerIndex,3);
+  FEEvaluation<3,FEOrder,C_num1DKerkerPoly<FEOrder>()+1,1> psiEvalRefined(matrix_free_data,eigenDofHandlerIndex,3);
 #endif
 
   const unsigned int numQuadPoints= lobattoNodesFlag?psiEvalRefined.n_q_points:psiEval.n_q_points;

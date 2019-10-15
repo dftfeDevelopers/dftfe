@@ -217,7 +217,7 @@ void dftClass<FEOrder>::initRho()
 	  gradRhoInValues=&(gradRhoInVals.back());
 	}
 
-      FEEvaluation<C_DIM,2*FEOrder,C_num1DQuad<FEOrder>(),1,double> rhoEval(d_matrixFreeDataPRefined,0,1);
+      FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuad<FEOrder>(),1,double> rhoEval(d_matrixFreeDataPRefined,0,1);
       const unsigned int numQuadPoints = rhoEval.n_q_points; 
       DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
       for(unsigned int cell = 0; cell < d_matrixFreeDataPRefined.n_macro_cells(); ++cell)

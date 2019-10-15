@@ -677,7 +677,9 @@ namespace dftfe {
        //
        //rho init (use previous ground state electron density)
        //
+      if(dftParameters::mixingMethod != "ANDERSON_WITH_KERKER")
        solveNoSCF();
+
        noRemeshRhoDataInit();
     }
 
@@ -902,7 +904,7 @@ namespace dftfe {
     //set up solver functions for Helmholtz to be used only when Kerker mixing is on
     //use 2p dofHandler
     //
-    kerkerSolverProblem<2*FEOrder> kerkerPreconditionedResidualSolverProblem(mpi_communicator);
+    kerkerSolverProblem<C_num1DKerkerPoly<FEOrder>()> kerkerPreconditionedResidualSolverProblem(mpi_communicator);
     if(dftParameters::mixingMethod=="ANDERSON_WITH_KERKER")
       kerkerPreconditionedResidualSolverProblem.init(d_matrixFreeDataPRefined,
 						     d_constraintsPRefined,
@@ -931,7 +933,6 @@ namespace dftfe {
     chebyshevOrthogonalizedSubspaceIterationSolver subspaceIterationSolver(mpi_communicator,
 	                                                                   dftParameters::lowerEndWantedSpectrum,
 									   0.0);
-
 
     //
     //precompute shapeFunctions and shapeFunctionGradients and shapeFunctionGradientIntegrals
@@ -1082,7 +1083,7 @@ namespace dftfe {
 	//
 	//impose integral phi equals 0
 	//
-	if(dftParameters::periodicX && dftParameters::periodicY && dftParameters::periodicZ)
+	if(dftParameters::periodicX && dftParameters::periodicY && dftParameters::periodicZ && !dftParameters::pinnedNodeForPBC)
 	  {
 	    double integPhi = totalCharge(dofHandler,
 					  d_phiTotRhoIn);
@@ -1479,7 +1480,7 @@ namespace dftfe {
 	    //
 	    //impose integral phi equals 0
 	    //
-	    if(dftParameters::periodicX && dftParameters::periodicY && dftParameters::periodicZ)
+	    if(dftParameters::periodicX && dftParameters::periodicY && dftParameters::periodicZ && !dftParameters::pinnedNodeForPBC)
 	      {
 		double integPhi = totalCharge(dofHandler,
 					      d_phiTotRhoOut);

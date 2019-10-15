@@ -18,7 +18,7 @@
 
 
 template<unsigned int FEOrder>
-double dftClass<FEOrder>::nodalDensity_mixing_simple(kerkerSolverProblem<2*FEOrder> & kerkerPreconditionedResidualSolverProblem,
+double dftClass<FEOrder>::nodalDensity_mixing_simple(kerkerSolverProblem<C_num1DKerkerPoly<FEOrder>()> & kerkerPreconditionedResidualSolverProblem,
 						     dealiiLinearSolver & dealiiCGSolver)
 {
   double normValue=0.0;
@@ -42,7 +42,7 @@ double dftClass<FEOrder>::nodalDensity_mixing_simple(kerkerSolverProblem<2*FEOrd
 
 
   //create FEEval object to be used subsequently
-  FEEvaluation<C_DIM,2*FEOrder,C_num1DQuad<2*FEOrder>(),1,double> fe_evalHelm(d_matrixFreeDataPRefined);
+  FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuad<C_num1DKerkerPoly<FEOrder>()>(),1,double> fe_evalHelm(d_matrixFreeDataPRefined);
   unsigned int numQuadPoints =  fe_evalHelm.n_q_points; 
   DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
 
@@ -100,7 +100,7 @@ double dftClass<FEOrder>::nodalDensity_mixing_simple(kerkerSolverProblem<2*FEOrd
   d_rhoInNodalVals.push_back(d_rhoInNodalValues);
 
   
-  FEEvaluation<C_DIM,2*FEOrder,C_num1DQuad<FEOrder>(),1,double> fe_evalRho(d_matrixFreeDataPRefined,0,1);
+  FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuad<FEOrder>(),1,double> fe_evalRho(d_matrixFreeDataPRefined,0,1);
   numQuadPoints = fe_evalRho.n_q_points;
   //compute rho and grad rho for computing Veff using the rhoIn computed above
   for(unsigned int cell = 0; cell < d_matrixFreeDataPRefined.n_macro_cells(); ++cell)
@@ -144,7 +144,7 @@ double dftClass<FEOrder>::nodalDensity_mixing_simple(kerkerSolverProblem<2*FEOrd
 
 //implement nodal anderson mixing scheme with Kerker
 template<unsigned int FEOrder>
-double dftClass<FEOrder>::nodalDensity_mixing_anderson(kerkerSolverProblem<2*FEOrder> & kerkerPreconditionedResidualSolverProblem,
+double dftClass<FEOrder>::nodalDensity_mixing_anderson(kerkerSolverProblem<C_num1DKerkerPoly<FEOrder>()> & kerkerPreconditionedResidualSolverProblem,
 						       dealiiLinearSolver & dealiiCGSolver)
 {
   double normValue=0.0;
@@ -281,7 +281,7 @@ double dftClass<FEOrder>::nodalDensity_mixing_anderson(kerkerSolverProblem<2*FEO
   diffRhoBar.update_ghost_values();
 
   //create FEEval object to be used subsequently
-  FEEvaluation<C_DIM,2*FEOrder,C_num1DQuad<2*FEOrder>(),1,double> fe_evalHelm(d_matrixFreeDataPRefined);
+  FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuad<C_num1DKerkerPoly<FEOrder>()>(),1,double> fe_evalHelm(d_matrixFreeDataPRefined);
   unsigned int numQuadPoints = fe_evalHelm.n_q_points; 
   DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
   
@@ -342,7 +342,7 @@ double dftClass<FEOrder>::nodalDensity_mixing_anderson(kerkerSolverProblem<2*FEO
   d_rhoInNodalVals.push_back(d_rhoInNodalValues);
 
   
-  FEEvaluation<C_DIM,2*FEOrder,C_num1DQuad<FEOrder>(),1,double> fe_evalRho(d_matrixFreeDataPRefined,0,1);
+  FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuad<FEOrder>(),1,double> fe_evalRho(d_matrixFreeDataPRefined,0,1);
   numQuadPoints = fe_evalRho.n_q_points;
   for(unsigned int cell = 0; cell < d_matrixFreeDataPRefined.n_macro_cells(); ++cell)
     {

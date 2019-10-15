@@ -24,7 +24,7 @@
 template <unsigned int FEOrder>
 void dftClass<FEOrder>::createpRefinedDofHandler(dealii::parallel::distributed::Triangulation<3> & triaObject)
 {
-  d_dofHandlerPRefined.initialize(triaObject,dealii::FE_Q<3>(dealii::QGaussLobatto<1>(2*FEOrder+1)));
+  d_dofHandlerPRefined.initialize(triaObject,dealii::FE_Q<3>(dealii::QGaussLobatto<1>(C_num1DKerkerPoly<FEOrder>()+1)));
   d_dofHandlerPRefined.distribute_dofs(d_dofHandlerPRefined.get_fe());
 
   dealii::IndexSet locallyRelevantDofs;
@@ -100,7 +100,7 @@ void dftClass<FEOrder>::initpRefinedObjects()
     matrixFreeDofHandlerVectorInput.push_back(&d_dofHandlerPRefined);
 
   std::vector<Quadrature<1> > quadratureVector;
-  quadratureVector.push_back(QGauss<1>(C_num1DQuad<2*FEOrder>()));
+  quadratureVector.push_back(QGauss<1>(C_num1DQuad<C_num1DKerkerPoly<FEOrder>()>()));
   quadratureVector.push_back(QGauss<1>(C_num1DQuad<FEOrder>()));
 
   d_matrixFreeDataPRefined.reinit(matrixFreeDofHandlerVectorInput,

@@ -220,7 +220,7 @@ namespace dftfe {
   }
 
 
-  
+  template class kerkerSolverProblem<1>;
   template class kerkerSolverProblem<2>;
   template class kerkerSolverProblem<3>;
   template class kerkerSolverProblem<4>;

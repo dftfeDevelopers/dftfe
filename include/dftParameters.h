@@ -40,7 +40,7 @@ namespace dftfe {
       extern double radiusAtomBall, mixingParameter;
       extern double lowerEndWantedSpectrum,absLinearSolverTolerance,selfConsistentSolverTolerance,TVal, start_magnetization,absLinearSolverToleranceHelmholtz;
 
-      extern bool isPseudopotential, periodicX, periodicY, periodicZ, useSymm, timeReversal,pseudoTestsFlag, constraintMagnetization, writeDosFile, writeLdosFile,writeLocalizationLengths;
+      extern bool isPseudopotential, periodicX, periodicY, periodicZ, useSymm, timeReversal,pseudoTestsFlag, constraintMagnetization, writeDosFile, writeLdosFile,writeLocalizationLengths, pinnedNodeForPBC;
       extern std::string meshFileName,coordinatesFile,domainBoundingVectorsFile,kPointDataFile, ionRelaxFlagsFile, orthogType, algoType, pseudoPotentialFile;
 
       extern double outerAtomBallRadius, innerAtomBallRadius, meshSizeOuterDomain;

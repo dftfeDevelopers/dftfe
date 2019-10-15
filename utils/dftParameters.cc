@@ -59,6 +59,7 @@ namespace dftfe
       bool electrostaticsHRefinement = false;
       bool electrostaticsPRefinement = false;
       bool meshAdaption = false;
+      bool pinnedNodeForPBC = true;
 
       std::string startingWFCType="";
       bool useBatchGEMM=false;
@@ -264,6 +265,10 @@ namespace dftfe
 	    prm.declare_entry("PERIODIC3", "false",
 			      Patterns::Bool(),
 			      "[Standard] Periodicity along the third domain bounding vector.");
+
+	    prm.declare_entry("POINT WISE DIRICHLET CONSTRAINT ", "true",
+			      Patterns::Bool(),
+			      "[Developer] Flag to set point wise dirichlet constraints to eliminate null-space associated with the discretized Poisson operator subject to periodic BCs.")
 
 	    prm.declare_entry("CONSTRAINTS PARALLEL CHECK", "true",
 			       Patterns::Bool(),
@@ -672,6 +677,7 @@ namespace dftfe
 	    dftParameters::periodicZ                     = prm.get_bool("PERIODIC3");
 	    dftParameters::constraintsParallelCheck      = prm.get_bool("CONSTRAINTS PARALLEL CHECK");
 	    dftParameters::createConstraintsFromSerialDofhandler= prm.get_bool("CONSTRAINTS FROM SERIAL DOFHANDLER");
+	    dftParameters::pinnedNodeForPBC = prm.get_bool("POINT WISE DIRICHLET CONSTRAINT");
 	}
 	prm.leave_subsection ();
 

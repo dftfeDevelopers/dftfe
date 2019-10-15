@@ -470,9 +470,9 @@ namespace dftfe {
       double mixing_anderson_spinPolarized();
       double mixing_broyden();
       double mixing_broyden_spinPolarized();
-      double nodalDensity_mixing_simple(kerkerSolverProblem<2*FEOrder> & solverProblem,
+      double nodalDensity_mixing_simple(kerkerSolverProblem<C_num1DKerkerPoly<FEOrder>()> & solverProblem,
 					dealiiLinearSolver & dealiiLinearSolver);
-      double nodalDensity_mixing_anderson(kerkerSolverProblem<2*FEOrder> & solverProblem,
+      double nodalDensity_mixing_anderson(kerkerSolverProblem<C_num1DKerkerPoly<FEOrder>()> & solverProblem,
 					  dealiiLinearSolver & dealiiLinearSolver);
 
 
