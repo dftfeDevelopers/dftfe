@@ -29,11 +29,16 @@ void dftClass<FEOrder>::compute_rhoOut(const bool isConsiderSpectrumSplitting)
       d_rhoOutNodalValues.update_ghost_values();
       d_rhoOutNodalVals.push_back(d_rhoOutNodalValues);
 
-      //assign pointer-type to rhoOutValues and gradRhoOutValues
-      //	
-     
+      
+      //interpolate nodal rhoOut data to quadrature data
+      interpolateNodalDataToQuadratureData(d_matrixFreeDataPRefined,
+					   d_rhoOutNodalValues,
+					   *rhoOutValues,
+					   *gradRhoOutValues,
+					   dftParameters::xc_id == 4);
+      
       //fill in rhoOutValues and gradRhoOutValues
-      FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuad<FEOrder>(),1,double> rhoEval(d_matrixFreeDataPRefined,0,1);
+      /*FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuad<FEOrder>(),1,double> rhoEval(d_matrixFreeDataPRefined,0,1);
       const unsigned int numQuadPoints = rhoEval.n_q_points;
       DoFHandler<C_DIM>::active_cell_iterator subCellPtr;
       for(unsigned int cell = 0; cell < d_matrixFreeDataPRefined.n_macro_cells(); ++cell)
@@ -69,7 +74,7 @@ void dftClass<FEOrder>::compute_rhoOut(const bool isConsiderSpectrumSplitting)
 		    }
 		}
 	    }
-	}
+	}*/
 
       if(dftParameters::verbosity>=3)
 	{
@@ -243,11 +248,7 @@ void dftClass<FEOrder>::sumRhoData(std::map<dealii::CellId, std::vector<double> 
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::noRemeshRhoDataInit()
 {
-
-  if(dftParameters::mixingMethod == "ANDERSON_WITH_KERKER")
-    d_rhoInNodalValues = d_rhoOutNodalValues;
- 
-
+  
   //create temporary copies of rho Out data
   std::map<dealii::CellId, std::vector<double> > rhoOutValuesCopy=*(rhoOutValues);
 
@@ -270,6 +271,7 @@ void dftClass<FEOrder>::noRemeshRhoDataInit()
       gradRhoOutValuesSpinPolarizedCopy=*(gradRhoOutValuesSpinPolarized);
 
     }
+
   //cleanup of existing rho Out and rho In data
   clearRhoData();
 
@@ -295,7 +297,34 @@ void dftClass<FEOrder>::noRemeshRhoDataInit()
       gradRhoInValuesSpinPolarized=&(gradRhoInValsSpinPolarized.back());
     }
 
-  normalizeRho();
+  if(dftParameters::mixingMethod == "ANDERSON_WITH_KERKER")
+    {
+
+      d_rhoInNodalValues = d_rhoOutNodalValues;
+
+      //normalize rho
+      const double charge = totalCharge(d_matrixFreeDataPRefined,
+					d_rhoInNodalValues);
+
+      const double scalingFactor = ((double)numElectrons)/charge;
+
+      //scale nodal vector with scalingFactor
+      d_rhoInNodalValues *= scalingFactor;
+      d_rhoInNodalVals.push_back(d_rhoInNodalValues);
+
+      interpolateNodalDataToQuadratureData(d_matrixFreeDataPRefined,
+					   d_rhoInNodalValues,
+					   *rhoInValues,
+					   *gradRhoInValues,
+					   dftParameters::xc_id == 4);
+
+    }
+  else
+    {
+      //scale quadrature values
+      normalizeRho();
+    }
+
 
 }
 

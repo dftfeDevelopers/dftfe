@@ -268,7 +268,7 @@ namespace dftfe
 
 	    prm.declare_entry("POINT WISE DIRICHLET CONSTRAINT ", "true",
 			      Patterns::Bool(),
-			      "[Developer] Flag to set point wise dirichlet constraints to eliminate null-space associated with the discretized Poisson operator subject to periodic BCs.")
+			      "[Developer] Flag to set point wise dirichlet constraints to eliminate null-space associated with the discretized Poisson operator subject to periodic BCs.");
 
 	    prm.declare_entry("CONSTRAINTS PARALLEL CHECK", "true",
 			       Patterns::Bool(),

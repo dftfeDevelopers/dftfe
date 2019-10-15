@@ -68,6 +68,7 @@ namespace dftfe {
 #include "initElectronicFields.cc"
 #include "initPseudo.cc"
 #include "initPseudo-OV.cc"
+#include "femUtilityFunctions.cc"
 #include "initRho.cc"
 #include "dos.cc"
 #include "localizationLength.cc"

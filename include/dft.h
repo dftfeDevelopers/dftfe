@@ -323,6 +323,21 @@ namespace dftfe {
       void createpRefinedDofHandler(parallel::distributed::Triangulation<3> & triangulation);
       void initpRefinedObjects();
 
+      /**
+       *@brief interpolate nodal data to quadrature data using FEEvaluation
+       * 
+       *@param[in] matrixFreeData matrix free data object
+       *@param[in] nodalField nodal data to be interpolated
+       *@param[out] quadratureValueData to be computed at quadrature points
+       *@param[out] quadratureGradValueData to be computed at quadrature points
+       *@param[in] isEvaluateGradData denotes a flag to evaluate gradients or not
+       */
+      void interpolateNodalDataToQuadratureData(dealii::MatrixFree<3,double> & matrixFreeData,
+						vectorType & nodalField,
+						std::map<dealii::CellId, std::vector<double> > & quadratureValueData,
+						std::map<dealii::CellId, std::vector<double> > & quadratureGradValueData,
+						const bool isEvaluateGradData);
+
      /**
       *@brief Finds the global dof ids of the nodes containing atoms.
       *

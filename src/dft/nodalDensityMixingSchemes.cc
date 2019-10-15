@@ -100,7 +100,7 @@ double dftClass<FEOrder>::nodalDensity_mixing_simple(kerkerSolverProblem<C_num1D
   d_rhoInNodalVals.push_back(d_rhoInNodalValues);
 
   
-  FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuad<FEOrder>(),1,double> fe_evalRho(d_matrixFreeDataPRefined,0,1);
+  /*FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuad<FEOrder>(),1,double> fe_evalRho(d_matrixFreeDataPRefined,0,1);
   numQuadPoints = fe_evalRho.n_q_points;
   //compute rho and grad rho for computing Veff using the rhoIn computed above
   for(unsigned int cell = 0; cell < d_matrixFreeDataPRefined.n_macro_cells(); ++cell)
@@ -137,7 +137,14 @@ double dftClass<FEOrder>::nodalDensity_mixing_simple(kerkerSolverProblem<C_num1D
 	    }
 	}
 
-    }
+	}*/
+
+  //interpolate nodal data to quadrature data
+  interpolateNodalDataToQuadratureData(d_matrixFreeDataPRefined,
+				       d_rhoInNodalValues,
+				       *rhoInValues,
+				       *gradRhoInValues,
+				       dftParameters::xc_id == 4);
   
   return normValue;
 }
@@ -341,8 +348,10 @@ double dftClass<FEOrder>::nodalDensity_mixing_anderson(kerkerSolverProblem<C_num
   //push the rhoIn to deque storing the history of nodal values
   d_rhoInNodalVals.push_back(d_rhoInNodalValues);
 
+  //interpolate nodal values to quadrature data
+
   
-  FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuad<FEOrder>(),1,double> fe_evalRho(d_matrixFreeDataPRefined,0,1);
+  /*FEEvaluation<C_DIM,C_num1DKerkerPoly<FEOrder>(),C_num1DQuad<FEOrder>(),1,double> fe_evalRho(d_matrixFreeDataPRefined,0,1);
   numQuadPoints = fe_evalRho.n_q_points;
   for(unsigned int cell = 0; cell < d_matrixFreeDataPRefined.n_macro_cells(); ++cell)
     {
@@ -378,8 +387,15 @@ double dftClass<FEOrder>::nodalDensity_mixing_anderson(kerkerSolverProblem<C_num
 	    }
 	}
 
-    }
+	}*/
   
+  interpolateNodalDataToQuadratureData(d_matrixFreeDataPRefined,
+				       d_rhoInNodalValues,
+				       *rhoInValues,
+				       *gradRhoInValues,
+				       dftParameters::xc_id == 4);
+
+
   return normValue;
 }
 
