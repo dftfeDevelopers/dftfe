@@ -414,7 +414,7 @@ namespace dftfe
 
 	    cudaDeviceSynchronize();
             MPI_Barrier(MPI_COMM_WORLD);
-	    gpu_time = MPI_Wtime() - start_time;
+	    gpu_time = MPI_Wtime() - gpu_time;
 	    if (this_process==0 && dftParameters::verbosity>=2)
 	        std::cout<<"Time for chebyshev filtering on GPU: "<<gpu_time<<std::endl;
 
