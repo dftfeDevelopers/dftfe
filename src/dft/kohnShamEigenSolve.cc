@@ -100,7 +100,7 @@ dataTypes::number dftClass<FEOrder>::computeTraceXtHX(unsigned int numberWaveFun
 
 
   dealiiCGSolver.solve(phiTotalSolverProblem,
-		       dftParameters::relLinearSolverTolerance,
+		       dftParameters::absLinearSolverTolerance,
 		       dftParameters::maxLinearSolverIterations,
 		       dftParameters::verbosity);
 

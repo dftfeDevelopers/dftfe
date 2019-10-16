@@ -558,7 +558,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
    if (dftParameters::verbosity==2)
         pcout<< std::endl<<"Solving for total electrostatic potential (rhoIn+b) on h refined mesh: ";
    dealiiCGSolver.solve(phiTotalSolverProblem,
-			dftParameters::relLinearSolverTolerance,
+			dftParameters::absLinearSolverTolerance,
 			dftParameters::maxLinearSolverIterations,
 			dftParameters::verbosity);
 

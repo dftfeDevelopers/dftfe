@@ -49,7 +49,8 @@ namespace dftfe  {
      */
     triangulationManager(const MPI_Comm &mpi_comm_replica,
 			 const MPI_Comm &interpoolcomm,
-			 const MPI_Comm &interBandGroupComm);
+			 const MPI_Comm &interBandGroupComm,
+			 const unsigned int FEOrder);
 
 
     /**
@@ -374,6 +375,9 @@ namespace dftfe  {
     std::vector<std::vector<double> > d_imageAtomPositions;
     std::vector<std::vector<double> > d_domainBoundingVectors;
     const unsigned int d_max_refinement_steps=40;
+
+    /// FEOrder to be used for checking parallel consistency of periodic+hanging node constraints
+    const unsigned int d_FEOrder;
 
     //
     //parallel objects

@@ -49,7 +49,8 @@ namespace dftfe {
 	   virtual void solve(dealiiLinearSolverProblem & problem,
 		              const double relTolerance,
 		              const unsigned int maxNumberIterations,
-		              const unsigned int  debugLevel = 0)=0;
+		              const unsigned int  debugLevel = 0,
+			      bool distributeFlag = true)=0;
 
        private:
     };
