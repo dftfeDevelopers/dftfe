@@ -50,7 +50,8 @@ namespace dftfe {
      */
     void init(dealii::MatrixFree<3,double> & matrixFreeData,
 	      dealii::ConstraintMatrix & constraintMatrix,
-	      vectorType & x);
+	      vectorType & x,
+	      double kerkerMixingParameter);
 
 
     /**
@@ -62,8 +63,8 @@ namespace dftfe {
      *
      */
     void reinit(vectorType & x,
-		const std::map<dealii::CellId,std::vector<double> > & gradResidualValues,
-		double kerkerMixingParameter);
+		const std::map<dealii::CellId,std::vector<double> > & gradResidualValues);
+
 
     /**
      * @brief get the reference to x field

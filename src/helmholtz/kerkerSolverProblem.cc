@@ -38,10 +38,12 @@ namespace dftfe {
   template<unsigned int FEOrder>
   void kerkerSolverProblem<FEOrder>::init(dealii::MatrixFree<3,double> & matrixFreeDataPRefined,
 					  dealii::ConstraintMatrix & constraintMatrixPRefined,
-					  vectorType & x)
+					  vectorType & x,
+					  double kerkerMixingParameter)
   {
     d_matrixFreeDataPRefinedPtr = &matrixFreeDataPRefined;
     d_constraintMatrixPRefinedPtr = &constraintMatrixPRefined;
+    d_gamma = kerkerMixingParameter;
 
     matrixFreeDataPRefined.initialize_dof_vector(x);
     computeDiagonalA();
@@ -50,12 +52,10 @@ namespace dftfe {
 
   template<unsigned int FEOrder>
   void kerkerSolverProblem<FEOrder>::reinit(vectorType & x,
-					    const std::map<dealii::CellId,std::vector<double> > & quadPointValues,
-					    double kerkerMixingParameter)
+					    const std::map<dealii::CellId,std::vector<double> > & quadPointValues)
   {
     d_xPtr = &x;
     d_quadGradResidualValuesPtr = &quadPointValues;
-    d_gamma = kerkerMixingParameter;
   }
 
   template<unsigned int FEOrder>

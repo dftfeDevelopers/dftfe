@@ -909,7 +909,8 @@ namespace dftfe {
     if(dftParameters::mixingMethod=="ANDERSON_WITH_KERKER")
       kerkerPreconditionedResidualSolverProblem.init(d_matrixFreeDataPRefined,
 						     d_constraintsPRefined,
-						     d_preCondResidualVector);
+						     d_preCondResidualVector,
+						     dftParameters::kerkerParameter);
     
 
 

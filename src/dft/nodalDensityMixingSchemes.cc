@@ -78,8 +78,8 @@ double dftClass<FEOrder>::nodalDensity_mixing_simple(kerkerSolverProblem<C_num1D
   //initialize helmholtz solver function object with the quantity required for computing rhs, solution vector
   //and mixing constant
   kerkerPreconditionedResidualSolverProblem.reinit(d_preCondResidualVector,
-						   gradDensityResidualValuesMap,
-						   dftParameters::kerkerParameter);
+						   gradDensityResidualValuesMap);
+
 
   //solve the Helmholtz system to compute preconditioned residual
   dealiiCGSolver.solve(kerkerPreconditionedResidualSolverProblem,
@@ -324,8 +324,8 @@ double dftClass<FEOrder>::nodalDensity_mixing_anderson(kerkerSolverProblem<C_num
     pcout<<"Solving Helmholtz equation for Kerker Preconditioning of nodal fields: "<< std::endl;
 
   kerkerPreconditionedResidualSolverProblem.reinit(d_preCondResidualVector,
-						   gradDensityResidualValuesMap,
-						   dftParameters::kerkerParameter);
+						   gradDensityResidualValuesMap);
+
 
   //solve the Helmholtz system to compute preconditioned residual
   dealiiCGSolver.solve(kerkerPreconditionedResidualSolverProblem,
