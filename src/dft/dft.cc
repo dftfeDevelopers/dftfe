@@ -68,6 +68,7 @@ namespace dftfe {
 #include "initElectronicFields.cc"
 #include "initPseudo.cc"
 #include "initPseudo-OV.cc"
+#include "femUtilityFunctions.cc"
 #include "initRho.cc"
 #include "dos.cc"
 #include "localizationLength.cc"
@@ -78,17 +79,20 @@ namespace dftfe {
 #include "charge.cc"
 #include "density.cc"
 #include "mixingschemes.cc"
+#include "nodalDensityMixingSchemes.cc"
+#include "pRefinedDoFHandler.cc"
 #include "kohnShamEigenSolve.cc"
 #include "moveAtoms.cc"
 #include "restart.cc"
 #include "nscf.cc"
 #include "electrostaticHRefinedEnergy.cc"
 #include "electrostaticPRefinedEnergy.cc"
+
   //
   //dft constructor
   //
   template<unsigned int FEOrder>
-  dftClass<FEOrder>::dftClass(const MPI_Comm &mpi_comm_replica,
+  dftClass<FEOrder>::dftClass(const MPI_Comm & mpi_comm_replica,
 	                      const MPI_Comm &_interpoolcomm,
 			      const MPI_Comm & _interBandGroupComm):
     FE (FE_Q<3>(QGaussLobatto<1>(FEOrder+1)), 1),
@@ -607,6 +611,10 @@ namespace dftfe {
     if (dftParameters::useSymm)
       symmetryPtr->initSymmetry() ;
 #endif
+
+    
+
+
     //
     //move triangulation to have atoms on triangulation vertices
     //
@@ -621,6 +629,7 @@ namespace dftfe {
     //initialize dirichlet BCs for total potential and vSelf poisson solutions
     //
     initBoundaryConditions();
+
 
     if (dftParameters::verbosity>=4)
       dftUtils::printCurrentMemoryUsage(mpi_communicator,
@@ -652,7 +661,7 @@ namespace dftfe {
     if(updateImageKPoints)
       initImageChargesUpdateKPoints();
 
-    if  (dftParameters::isIonOpt)
+    if(dftParameters::isIonOpt)
        updatePrevMeshDataStructures();
     //
     //reinitialize dirichlet BCs for total potential and vSelf poisson solutions
@@ -669,7 +678,9 @@ namespace dftfe {
        //
        //rho init (use previous ground state electron density)
        //
+      if(dftParameters::mixingMethod != "ANDERSON_WITH_KERKER")
        solveNoSCF();
+
        noRemeshRhoDataInit();
     }
 
@@ -884,9 +895,22 @@ namespace dftfe {
 
 
 
-    //set up poisson solver
+    //set up linear solver
     dealiiLinearSolver dealiiCGSolver(mpi_communicator, dealiiLinearSolver::CG);
+
+    //set up solver functions for Poisson
     poissonSolverProblem<FEOrder> phiTotalSolverProblem(mpi_communicator);
+
+    //
+    //set up solver functions for Helmholtz to be used only when Kerker mixing is on
+    //use 2p dofHandler
+    //
+    kerkerSolverProblem<C_num1DKerkerPoly<FEOrder>()> kerkerPreconditionedResidualSolverProblem(mpi_communicator);
+    if(dftParameters::mixingMethod=="ANDERSON_WITH_KERKER")
+      kerkerPreconditionedResidualSolverProblem.init(d_matrixFreeDataPRefined,
+						     d_constraintsPRefined,
+						     d_preCondResidualVector);
+    
 
 
     //
@@ -910,7 +934,6 @@ namespace dftfe {
     chebyshevOrthogonalizedSubspaceIterationSolver subspaceIterationSolver(mpi_communicator,
 	                                                                   dftParameters::lowerEndWantedSpectrum,
 									   0.0);
-
 
     //
     //precompute shapeFunctions and shapeFunctionGradients and shapeFunctionGradientIntegrals
@@ -961,7 +984,13 @@ namespace dftfe {
 		    norm = sqrt(mixing_simple_spinPolarized());
 		  }
 		else
-		  norm = sqrt(mixing_simple());
+		  {
+		    if(dftParameters::mixingMethod=="ANDERSON_WITH_KERKER")
+		      norm = sqrt(nodalDensity_mixing_simple(kerkerPreconditionedResidualSolverProblem,
+							     dealiiCGSolver));
+		    else		  
+		      norm = sqrt(mixing_simple());
+		  }
 
 		if (dftParameters::verbosity>=1)
 		  pcout<<"Simple mixing, L2 norm of electron-density difference: "<< norm<< std::endl;
@@ -972,19 +1001,24 @@ namespace dftfe {
 		  {
 		     if (dftParameters::mixingMethod=="ANDERSON" )
 		        norm = sqrt(mixing_anderson_spinPolarized());
-		     if (dftParameters::mixingMethod=="BROYDEN" )
+		     else if (dftParameters::mixingMethod=="BROYDEN" )
 		        norm = sqrt(mixing_broyden_spinPolarized());
+		     else if (dftParameters::mixingMethod=="ANDERSON_WITH_KERKER")
+		       AssertThrow(false,ExcMessage("Kerker is not implemented for spin-polarized problems yet"));
 		  }
 		else
 		  {
-		    if (dftParameters::mixingMethod=="ANDERSON")
-		        norm = sqrt(mixing_anderson());
-		    if (dftParameters::mixingMethod=="BROYDEN")
-		        norm = sqrt(mixing_broyden());
+		    if(dftParameters::mixingMethod=="ANDERSON")
+		      norm = sqrt(mixing_anderson());
+		    else if(dftParameters::mixingMethod=="BROYDEN")
+		      norm = sqrt(mixing_broyden());
+		    else if(dftParameters::mixingMethod=="ANDERSON_WITH_KERKER")
+		      norm = sqrt(nodalDensity_mixing_anderson(kerkerPreconditionedResidualSolverProblem,
+							       dealiiCGSolver));
 		  }
 
 		if (dftParameters::verbosity>=1)
-		  pcout<<"L2 norm of electron-density difference: "<< norm<< std::endl;
+		  pcout<<"Anderson mixing, L2 norm of electron-density difference: "<< norm<< std::endl;
 	      }
 
 	    if (dftParameters::computeEnergyEverySCF && d_numEigenValuesRR==d_numEigenValues)
@@ -994,10 +1028,21 @@ namespace dftfe {
 	  {
 	    if (dftParameters::spinPolarized==1)
 	      {
-		norm = sqrt(mixing_anderson_spinPolarized());
+		if (dftParameters::mixingMethod=="ANDERSON")
+		  norm = sqrt(mixing_anderson_spinPolarized());
+		else if (dftParameters::mixingMethod=="BROYDEN")
+		  norm = sqrt(mixing_broyden_spinPolarized());
+		else if (dftParameters::mixingMethod=="ANDERSON_WITH_KERKER")
+		  AssertThrow(false,ExcMessage("Kerker is not implemented for spin-polarized problems"));
 	      }
 	    else
-	      norm = sqrt(mixing_anderson());
+	      if(dftParameters::mixingMethod.compare("ANDERSON_WITH_KERKER"))
+		norm = sqrt(nodalDensity_mixing_anderson(kerkerPreconditionedResidualSolverProblem,
+							 dealiiCGSolver));
+	      else if (dftParameters::mixingMethod=="ANDERSON")
+		norm = sqrt(mixing_anderson());
+	      else if (dftParameters::mixingMethod=="BROYDEN")
+		norm = sqrt(mixing_broyden());
 
 	    if (dftParameters::verbosity>=1)
 	      pcout<<"Anderson Mixing, L2 norm of electron-density difference: "<< norm<< std::endl;
@@ -1032,9 +1077,30 @@ namespace dftfe {
 				       *rhoInValues);
 
 	dealiiCGSolver.solve(phiTotalSolverProblem,
-			     dftParameters::relLinearSolverTolerance,
+			     dftParameters::absLinearSolverTolerance,
 			     dftParameters::maxLinearSolverIterations,
 			     dftParameters::verbosity);
+
+	//
+	//impose integral phi equals 0
+	//
+	if(dftParameters::periodicX && dftParameters::periodicY && dftParameters::periodicZ && !dftParameters::pinnedNodeForPBC)
+	  {
+	    double integPhi = totalCharge(dofHandler,
+					  d_phiTotRhoIn);
+
+	    double volume = computeVolume(dofHandler);
+	    double shiftingConst = integPhi/volume;
+
+	    vectorType tempDealiiVec;
+	    matrix_free_data.initialize_dof_vector(tempDealiiVec);
+	    tempDealiiVec = shiftingConst;
+	
+	    d_phiTotRhoIn -= tempDealiiVec;
+
+	    if (dftParameters::verbosity>=2)
+	      pcout<<"Value of integPhiIn after scaling: "<<totalCharge(dofHandler,d_phiTotRhoIn)<<std::endl;
+	  }
 
 	computing_timer.exit_section("phiTot solve");
 
@@ -1407,9 +1473,31 @@ namespace dftfe {
 
 
 	    dealiiCGSolver.solve(phiTotalSolverProblem,
-				 dftParameters::relLinearSolverTolerance,
+				 dftParameters::absLinearSolverTolerance,
 				 dftParameters::maxLinearSolverIterations,
 				 dftParameters::verbosity);
+
+
+	    //
+	    //impose integral phi equals 0
+	    //
+	    if(dftParameters::periodicX && dftParameters::periodicY && dftParameters::periodicZ && !dftParameters::pinnedNodeForPBC)
+	      {
+		double integPhi = totalCharge(dofHandler,
+					      d_phiTotRhoOut);
+
+		double volume = computeVolume(dofHandler);
+		double shiftingConst = integPhi/volume;
+
+		vectorType tempDealiiVec;
+		matrix_free_data.initialize_dof_vector(tempDealiiVec);  
+		tempDealiiVec = shiftingConst;
+
+		d_phiTotRhoOut -= tempDealiiVec;
+
+		if(dftParameters::verbosity>=2)
+		  pcout<<"Value of integPhiOut after scaling: "<<totalCharge(dofHandler,d_phiTotRhoOut);
+	      }
 
 	    computing_timer.exit_section("phiTot solve");
 
@@ -1519,7 +1607,7 @@ namespace dftfe {
 
 
 	dealiiCGSolver.solve(phiTotalSolverProblem,
-			     dftParameters::relLinearSolverTolerance,
+			     dftParameters::absLinearSolverTolerance,
 			     dftParameters::maxLinearSolverIterations,
 			     dftParameters::verbosity);
 

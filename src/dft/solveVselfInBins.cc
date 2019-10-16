@@ -89,7 +89,7 @@ namespace dftfe
 
 
 	  dealiiCGSolver.solve(vselfSolverProblem,
-			       dftParameters::relLinearSolverTolerance,
+			       dftParameters::absLinearSolverTolerance,
 			       dftParameters::maxLinearSolverIterations,
 			       dftParameters::verbosity);
 

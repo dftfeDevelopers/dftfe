@@ -37,6 +37,7 @@
 #include <triangulationManager.h>
 #include <poissonSolverProblem.h>
 #include <dealiiLinearSolver.h>
+#include <kerkerSolverProblem.h>
 
 #include <interpolation.h>
 #include <xc.h>
@@ -314,6 +315,29 @@ namespace dftfe {
       void initElectronicFields(const unsigned int usePreviousGroundStateFields=0);
       void initPseudoPotentialAll();
 
+      /**
+       * create a dofHandler containing finite-element interpolating polynomial twice of the original polynomial
+       * required for Kerker mixing
+       * and initialize various objects related to this refined dofHandler
+       */
+      void createpRefinedDofHandler(parallel::distributed::Triangulation<3> & triangulation);
+      void initpRefinedObjects();
+
+      /**
+       *@brief interpolate nodal data to quadrature data using FEEvaluation
+       * 
+       *@param[in] matrixFreeData matrix free data object
+       *@param[in] nodalField nodal data to be interpolated
+       *@param[out] quadratureValueData to be computed at quadrature points
+       *@param[out] quadratureGradValueData to be computed at quadrature points
+       *@param[in] isEvaluateGradData denotes a flag to evaluate gradients or not
+       */
+      void interpolateNodalDataToQuadratureData(dealii::MatrixFree<3,double> & matrixFreeData,
+						vectorType & nodalField,
+						std::map<dealii::CellId, std::vector<double> > & quadratureValueData,
+						std::map<dealii::CellId, std::vector<double> > & quadratureGradValueData,
+						const bool isEvaluateGradData);
+
      /**
       *@brief Finds the global dof ids of the nodes containing atoms.
       *
@@ -355,7 +379,13 @@ namespace dftfe {
 		     std::map<dealii::CellId, std::vector<double> > * _rhoValuesSpinPolarized,
 		     std::map<dealii::CellId, std::vector<double> > * _gradRhoValuesSpinPolarized,
 		     const bool isEvaluateGradRho,
-		     const bool isConsiderSpectrumSplitting);
+		     const bool isConsiderSpectrumSplitting,
+		     const bool lobattoNodesFlag = false);
+
+      /**
+       *@brief computes density nodal data from wavefunctions
+       */
+      void computeRhoNodalFromPSI(bool isConsiderSpectrumSplitting);
 
 
       /**
@@ -422,6 +452,14 @@ namespace dftfe {
 			 const std::map<dealii::CellId, std::vector<double> > *rhoQuadValues);
 
 
+      double totalCharge(const dealii::MatrixFree<3,double> & matrixFreeDataObject,
+			 const vectorType & rhoNodalField);
+
+
+      double fieldl2Norm(const dealii::MatrixFree<3,double> & matrixFreeDataObject,
+			 const vectorType & rhoNodalField);
+
+
 
       /**
        *@brief Computes net magnetization from the difference of local spin densities
@@ -447,6 +485,10 @@ namespace dftfe {
       double mixing_anderson_spinPolarized();
       double mixing_broyden();
       double mixing_broyden_spinPolarized();
+      double nodalDensity_mixing_simple(kerkerSolverProblem<C_num1DKerkerPoly<FEOrder>()> & solverProblem,
+					dealiiLinearSolver & dealiiLinearSolver);
+      double nodalDensity_mixing_anderson(kerkerSolverProblem<C_num1DKerkerPoly<FEOrder>()> & solverProblem,
+					  dealiiLinearSolver & dealiiLinearSolver);
 
 
       /**
@@ -613,10 +655,10 @@ namespace dftfe {
        * dealii based FE data structres
        */
       FESystem<3>        FE, FEEigen;
-      DoFHandler<3>      dofHandler, dofHandlerEigen;
+      DoFHandler<3>      dofHandler, dofHandlerEigen, d_dofHandlerPRefined;
       unsigned int       eigenDofHandlerIndex,phiExtDofHandlerIndex,phiTotDofHandlerIndex,forceDofHandlerIndex;
       unsigned int       densityDofHandlerIndex;
-      MatrixFree<3,double> matrix_free_data;
+      MatrixFree<3,double> matrix_free_data, d_matrixFreeDataPRefined;
       std::map<types::global_dof_index, Point<3> > d_supportPoints, d_supportPointsEigen;
       std::vector<const ConstraintMatrix * > d_constraintsVector;
 
@@ -676,7 +718,7 @@ namespace dftfe {
       dftUtils::constraintMatrixInfo constraintsNoneDataInfo2;
 
 
-      ConstraintMatrix constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_noConstraints;
+      ConstraintMatrix constraintsNone, constraintsNoneEigen, d_constraintsForTotalPotential, d_noConstraints, d_constraintsPRefined;
 
 
       /**
@@ -703,6 +745,9 @@ namespace dftfe {
       //dft related objects
       std::map<dealii::CellId, std::vector<double> > *rhoInValues, *rhoOutValues, *rhoInValuesSpinPolarized, *rhoOutValuesSpinPolarized;
       std::deque<std::map<dealii::CellId,std::vector<double> >> rhoInVals, rhoOutVals, rhoInValsSpinPolarized, rhoOutValsSpinPolarized;
+
+      vectorType d_rhoInNodalValues, d_rhoOutNodalValues, d_preCondResidualVector;
+      std::deque<vectorType> d_rhoInNodalVals, d_rhoOutNodalVals;
 
 
       std::map<dealii::CellId, std::vector<double> > * gradRhoInValues, *gradRhoInValuesSpinPolarized;

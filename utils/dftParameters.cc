@@ -29,10 +29,10 @@ namespace dftfe
     {
 
       unsigned int finiteElementPolynomialOrder=1,n_refinement_steps=1,numberEigenValues=1,xc_id=1, spinPolarized=0, nkx=1,nky=1,nkz=1, offsetFlagX=0,offsetFlagY=0,offsetFlagZ=0;
-      unsigned int chebyshevOrder=1,numPass=1, numSCFIterations=1,maxLinearSolverIterations=1, mixingHistory=1, npool=1;
+      unsigned int chebyshevOrder=1,numPass=1, numSCFIterations=1,maxLinearSolverIterations=1, mixingHistory=1, npool=1,maxLinearSolverIterationsHelmholtz=1;
 
       double radiusAtomBall=0.0, mixingParameter=0.5;
-      double lowerEndWantedSpectrum=0.0,relLinearSolverTolerance=1e-10,selfConsistentSolverTolerance=1e-10,TVal=500, start_magnetization=0.0;
+      double lowerEndWantedSpectrum=0.0,absLinearSolverTolerance=1e-10,selfConsistentSolverTolerance=1e-10,TVal=500, start_magnetization=0.0,absLinearSolverToleranceHelmholtz=1e-10;
       double chebyshevTolerance = 1e-02;
       std::string mixingMethod = "";
       std::string ionOptSolver = "";
@@ -44,6 +44,7 @@ namespace dftfe
       double meshSizeInnerBall=1.0, meshSizeOuterBall=1.0;
       unsigned int numLevels = 1,numberWaveFunctionsForEstimate = 5;
       double topfrac = 0.1;
+      double kerkerParameter = 0.5;
 
       bool isIonOpt=false, isCellOpt=false, isIonForce=false, isCellStress=false;
       bool nonSelfConsistentForce=false;
@@ -58,6 +59,7 @@ namespace dftfe
       bool electrostaticsHRefinement = false;
       bool electrostaticsPRefinement = false;
       bool meshAdaption = false;
+      bool pinnedNodeForPBC = true;
 
       std::string startingWFCType="";
       bool useBatchGEMM=false;
@@ -264,6 +266,10 @@ namespace dftfe
 			      Patterns::Bool(),
 			      "[Standard] Periodicity along the third domain bounding vector.");
 
+	    prm.declare_entry("POINT WISE DIRICHLET CONSTRAINT", "true",
+			      Patterns::Bool(),
+			      "[Developer] Flag to set point wise dirichlet constraints to eliminate null-space associated with the discretized Poisson operator subject to periodic BCs.");
+
 	    prm.declare_entry("CONSTRAINTS PARALLEL CHECK", "true",
 			       Patterns::Bool(),
 			      "[Developer] Check for consistency of constraints in parallel.");
@@ -439,8 +445,12 @@ namespace dftfe
 			      Patterns::Double(0.0,1.0),
 			      "[Standard] Mixing parameter to be used in density mixing schemes. Default: 0.2.");
 
+	    prm.declare_entry("KERKER MIXING PARAMETER", "0.05",
+			      Patterns::Double(0.0,1000.0),
+			      "[Standard] Mixing parameter to be used in Kerker mixing scheme which usually represents Thomas Fermi wavevector (k_{TF}**2).");
+
 	    prm.declare_entry("MIXING METHOD","ANDERSON",
-				  Patterns::Selection("BROYDEN|ANDERSON"),
+				  Patterns::Selection("BROYDEN|ANDERSON|ANDERSON_WITH_KERKER"),
 				  "[Standard] Method for density mixing. ANDERSON is the default option.");
 
 	    prm.declare_entry("CONSTRAINT MAGNETIZATION", "false",
@@ -585,7 +595,21 @@ namespace dftfe
 	}
 	prm.leave_subsection ();
 
+
+	prm.enter_subsection ("Helmholtz problem parameters");
+	{
+	  prm.declare_entry("MAXIMUM ITERATIONS HELMHOLTZ", "10000",
+			    Patterns::Integer(0,20000),
+			    "[Advanced] Maximum number of iterations to be allowed for Helmholtz problem convergence.");
+
+	  prm.declare_entry("ABSOLUTE TOLERANCE HELMHOLTZ", "1e-10",
+			    Patterns::Double(0,1.0),
+			    "[Advanced] Absolute tolerance on the residual as stopping criterion for Helmholtz problem convergence.");
+	}
+	prm.leave_subsection ();
+
       }
+
 
       void parse_parameters(ParameterHandler &prm)
       {
@@ -653,6 +677,7 @@ namespace dftfe
 	    dftParameters::periodicZ                     = prm.get_bool("PERIODIC3");
 	    dftParameters::constraintsParallelCheck      = prm.get_bool("CONSTRAINTS PARALLEL CHECK");
 	    dftParameters::createConstraintsFromSerialDofhandler= prm.get_bool("CONSTRAINTS FROM SERIAL DOFHANDLER");
+	    dftParameters::pinnedNodeForPBC = prm.get_bool("POINT WISE DIRICHLET CONSTRAINT");
 	}
 	prm.leave_subsection ();
 
@@ -716,6 +741,7 @@ namespace dftfe
 	    dftParameters::selfConsistentSolverTolerance = prm.get_double("TOLERANCE");
 	    dftParameters::mixingHistory                 = prm.get_integer("MIXING HISTORY");
 	    dftParameters::mixingParameter               = prm.get_double("MIXING PARAMETER");
+	    dftParameters::kerkerParameter               = prm.get_double("KERKER MIXING PARAMETER");
 	    dftParameters::mixingMethod                  = prm.get("MIXING METHOD");
 	    dftParameters::constraintMagnetization       = prm.get_bool("CONSTRAINT MAGNETIZATION");
 	    dftParameters::startingWFCType               = prm.get("STARTING WFC");
@@ -759,10 +785,17 @@ namespace dftfe
 	prm.enter_subsection ("Poisson problem parameters");
 	{
 	   dftParameters::maxLinearSolverIterations     = prm.get_integer("MAXIMUM ITERATIONS");
-	   dftParameters::relLinearSolverTolerance      = prm.get_double("TOLERANCE");
+	   dftParameters::absLinearSolverTolerance      = prm.get_double("TOLERANCE");
 	}
 	prm.leave_subsection ();
 
+	prm.enter_subsection("Helmholtz problem parameters");
+	{
+	   dftParameters::maxLinearSolverIterationsHelmholtz = prm.get_integer("MAXIMUM ITERATIONS HELMHOLTZ");
+	   dftParameters::absLinearSolverToleranceHelmholtz  = prm.get_double("ABSOLUTE TOLERANCE HELMHOLTZ");
+	}
+	prm.leave_subsection ();
+	
 	if (restartFromChk==true && chkType==1)
 	{
 	    if (dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ)
