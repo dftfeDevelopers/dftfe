@@ -105,7 +105,7 @@ namespace dftfe {
     numElectrons(0),
     numLevels(0),
     d_autoMesh(1),
-    d_mesh(mpi_comm_replica,_interpoolcomm,_interBandGroupComm),
+    d_mesh(mpi_comm_replica,_interpoolcomm,_interBandGroupComm,FEOrder),
     d_affineTransformMesh(mpi_comm_replica),
     d_gaussianMovePar(mpi_comm_replica),
     d_vselfBinsManager(mpi_comm_replica),
