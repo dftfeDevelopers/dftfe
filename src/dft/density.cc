@@ -318,6 +318,17 @@ void dftClass<FEOrder>::noRemeshRhoDataInit()
 					   *gradRhoInValues,
 					   dftParameters::xc_id == 4);
 
+
+      rhoOutVals.push_back(std::map<dealii::CellId,std::vector<double> > ());
+      rhoOutValues = &(rhoOutVals.back());
+
+      if(dftParameters::xc_id == 4)
+	{
+	  gradRhoOutVals.push_back(std::map<dealii::CellId, std::vector<double> >());
+	  gradRhoOutValues= &(gradRhoOutVals.back());
+	}
+
+
     }
   else
     {

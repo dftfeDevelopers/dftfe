@@ -36,7 +36,7 @@ void dftClass<FEOrder>::interpolateNodalDataToQuadratureData(dealii::MatrixFree<
   for(unsigned int cell = 0; cell < matrixFreeData.n_macro_cells(); ++cell)
     {
       feEvalObj.reinit(cell);
-      feEvalObj.read_dof_values(d_rhoInNodalValues);
+      feEvalObj.read_dof_values(nodalField);
       feEvalObj.evaluate(true,true);
       for(unsigned int iSubCell = 0; iSubCell < matrixFreeData.n_components_filled(cell); ++iSubCell)
 	{

@@ -32,7 +32,7 @@ cxx_flagsRelease="-O3"
 withELPA=ON
 
 #Optmization flag: 1 for optimized mode and 0 for debug mode compilation
-optimizedMode=1
+optimizedMode=0
 
 ###########################################################################
 #Usually, no changes are needed below this line
