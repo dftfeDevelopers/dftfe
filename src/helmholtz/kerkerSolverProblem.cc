@@ -141,6 +141,7 @@ namespace dftfe {
       d_matrixFreeDataPRefinedPtr->get_dof_handler();
   
     d_matrixFreeDataPRefinedPtr->initialize_dof_vector(d_diagonalA);
+    d_diagonalA = 0.0;
 
     dealii::QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
     dealii::FEValues<3> fe_values (dofHandler.get_fe(), quadrature, dealii::update_values | dealii::update_gradients | dealii::update_JxW_values);
