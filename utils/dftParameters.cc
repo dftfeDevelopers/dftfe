@@ -28,7 +28,7 @@ namespace dftfe {
   {
 
     unsigned int finiteElementPolynomialOrder=1,n_refinement_steps=1,numberEigenValues=1,xc_id=1, spinPolarized=0, nkx=1,nky=1,nkz=1, offsetFlagX=0,offsetFlagY=0,offsetFlagZ=0;
-    unsigned int chebyshevOrder=1,numPass=1, numSCFIterations=1,maxLinearSolverIterations=1, mixingHistory=1, npool=1, maxLinearSolverIterations=1;
+    unsigned int chebyshevOrder=1,numPass=1, numSCFIterations=1,maxLinearSolverIterations=1, mixingHistory=1, npool=1,maxLinearSolverIterationsHelmholtz=1;
 
     double radiusAtomBall=0.0, mixingParameter=0.5;
     double lowerEndWantedSpectrum=0.0,absLinearSolverTolerance=1e-10,selfConsistentSolverTolerance=1e-10,TVal=500, start_magnetization=0.0,absLinearSolverToleranceHelmholtz=1e-10;
@@ -629,12 +629,15 @@ namespace dftfe {
       prm.leave_subsection ();
 
     
-
-
-      prm.enter_subsection("Helmholtz problem parameters");
+      prm.enter_subsection ("Helmholtz problem parameters");
       {
-	dftParameters::maxLinearSolverIterationsHelmholtz = prm.get_integer("MAXIMUM ITERATIONS HELMHOLTZ");
-	dftParameters::absLinearSolverToleranceHelmholtz  = prm.get_double("ABSOLUTE TOLERANCE HELMHOLTZ");
+	prm.declare_entry("MAXIMUM ITERATIONS HELMHOLTZ", "10000",
+			  Patterns::Integer(0,20000),
+			  "[Advanced] Maximum number of iterations to be allowed for Helmholtz problem convergence.");
+
+	prm.declare_entry("ABSOLUTE TOLERANCE HELMHOLTZ", "1e-10",
+			  Patterns::Double(0,1.0),
+			  "[Advanced] Absolute tolerance on the residual as stopping criterion for Helmholtz problem convergence.");
       }
       prm.leave_subsection ();
 
