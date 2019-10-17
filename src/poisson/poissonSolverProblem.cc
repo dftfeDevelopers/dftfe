@@ -43,6 +43,11 @@ namespace dftfe {
 		     const std::map<dealii::CellId,std::vector<double> > & rhoValues,
 		     const bool isComputeDiagonalA)
     {
+        int this_process;
+        MPI_Comm_rank(mpi_communicator, &this_process);
+        MPI_Barrier(mpi_communicator);
+        double time=MPI_Wtime();
+
         d_matrixFreeDataPtr=&matrixFreeData;
 	d_xPtr=&x;
 	d_constraintMatrixPtr=&constraintMatrix;

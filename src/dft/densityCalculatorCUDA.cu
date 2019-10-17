@@ -1154,23 +1154,26 @@ namespace dftfe
                               totalLocallyOwnedCells*numQuadPoints*sizeof(double),
                               cudaMemcpyDeviceToHost);
 
-                   gradRhoSpinPolarizedHostX.resize(totalLocallyOwnedCells*numQuadPoints,0.0);
-                   cudaMemcpy(&gradRhoSpinPolarizedHostX[0],
-                              thrust::raw_pointer_cast(&gradRhoSpinPolarizedDeviceX[0]),
-                              totalLocallyOwnedCells*numQuadPoints*sizeof(double),
-                              cudaMemcpyDeviceToHost);
+                   if(isEvaluateGradRho)
+                   {
+			   gradRhoSpinPolarizedHostX.resize(totalLocallyOwnedCells*numQuadPoints,0.0);
+			   cudaMemcpy(&gradRhoSpinPolarizedHostX[0],
+				      thrust::raw_pointer_cast(&gradRhoSpinPolarizedDeviceX[0]),
+				      totalLocallyOwnedCells*numQuadPoints*sizeof(double),
+				      cudaMemcpyDeviceToHost);
 
-                   gradRhoSpinPolarizedHostY.resize(totalLocallyOwnedCells*numQuadPoints,0.0);
-                   cudaMemcpy(&gradRhoSpinPolarizedHostY[0],
-                              thrust::raw_pointer_cast(&gradRhoSpinPolarizedDeviceY[0]),
-                              totalLocallyOwnedCells*numQuadPoints*sizeof(double),
-                              cudaMemcpyDeviceToHost);
+			   gradRhoSpinPolarizedHostY.resize(totalLocallyOwnedCells*numQuadPoints,0.0);
+			   cudaMemcpy(&gradRhoSpinPolarizedHostY[0],
+				      thrust::raw_pointer_cast(&gradRhoSpinPolarizedDeviceY[0]),
+				      totalLocallyOwnedCells*numQuadPoints*sizeof(double),
+				      cudaMemcpyDeviceToHost);
 
-                   gradRhoSpinPolarizedHostZ.resize(totalLocallyOwnedCells*numQuadPoints,0.0);
-                   cudaMemcpy(&gradRhoSpinPolarizedHostZ[0],
-                              thrust::raw_pointer_cast(&gradRhoSpinPolarizedDeviceZ[0]),
-                              totalLocallyOwnedCells*numQuadPoints*sizeof(double),
-                              cudaMemcpyDeviceToHost);
+			   gradRhoSpinPolarizedHostZ.resize(totalLocallyOwnedCells*numQuadPoints,0.0);
+			   cudaMemcpy(&gradRhoSpinPolarizedHostZ[0],
+				      thrust::raw_pointer_cast(&gradRhoSpinPolarizedDeviceZ[0]),
+				      totalLocallyOwnedCells*numQuadPoints*sizeof(double),
+				      cudaMemcpyDeviceToHost);
+                   }
            }
 	   
            rhoHost.resize(totalLocallyOwnedCells*numQuadPoints,0.0);
@@ -1179,23 +1182,26 @@ namespace dftfe
 		      totalLocallyOwnedCells*numQuadPoints*sizeof(double),
 		      cudaMemcpyDeviceToHost);
 
-	   gradRhoHostX.resize(totalLocallyOwnedCells*numQuadPoints,0.0);
-	   cudaMemcpy(&gradRhoHostX[0],
-		      thrust::raw_pointer_cast(&gradRhoDeviceX[0]),
-		      totalLocallyOwnedCells*numQuadPoints*sizeof(double),
-		      cudaMemcpyDeviceToHost);
+           if(isEvaluateGradRho)
+           {
+		   gradRhoHostX.resize(totalLocallyOwnedCells*numQuadPoints,0.0);
+		   cudaMemcpy(&gradRhoHostX[0],
+			      thrust::raw_pointer_cast(&gradRhoDeviceX[0]),
+			      totalLocallyOwnedCells*numQuadPoints*sizeof(double),
+			      cudaMemcpyDeviceToHost);
 
-	   gradRhoHostY.resize(totalLocallyOwnedCells*numQuadPoints,0.0);
-	   cudaMemcpy(&gradRhoHostY[0],
-		      thrust::raw_pointer_cast(&gradRhoDeviceY[0]),
-		      totalLocallyOwnedCells*numQuadPoints*sizeof(double),
-		      cudaMemcpyDeviceToHost);
+		   gradRhoHostY.resize(totalLocallyOwnedCells*numQuadPoints,0.0);
+		   cudaMemcpy(&gradRhoHostY[0],
+			      thrust::raw_pointer_cast(&gradRhoDeviceY[0]),
+			      totalLocallyOwnedCells*numQuadPoints*sizeof(double),
+			      cudaMemcpyDeviceToHost);
 
-	   gradRhoHostZ.resize(totalLocallyOwnedCells*numQuadPoints,0.0);
-	   cudaMemcpy(&gradRhoHostZ[0],
-		      thrust::raw_pointer_cast(&gradRhoDeviceZ[0]),
-		      totalLocallyOwnedCells*numQuadPoints*sizeof(double),
-		      cudaMemcpyDeviceToHost);
+		   gradRhoHostZ.resize(totalLocallyOwnedCells*numQuadPoints,0.0);
+		   cudaMemcpy(&gradRhoHostZ[0],
+			      thrust::raw_pointer_cast(&gradRhoDeviceZ[0]),
+			      totalLocallyOwnedCells*numQuadPoints*sizeof(double),
+			      cudaMemcpyDeviceToHost);
+           }
 
            unsigned int iElem=0;
            typename dealii::DoFHandler<3>::active_cell_iterator cell=dofHandler.begin_active();

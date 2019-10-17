@@ -75,69 +75,22 @@ void dftClass<FEOrder>::popOutRhoInRhoOutVals()
 }
 
 
-
-#ifdef DFTFE_WITH_GPU
-template<unsigned int FEOrder>
-void dftClass<FEOrder>::compute_rhoOut(kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
-                                       const bool isConsiderSpectrumSplitting)
-{
-  resizeAndAllocateRhoTableStorage
-                    (rhoOutVals,
-                     gradRhoOutVals,
-                     rhoOutValsSpinPolarized,
-                     gradRhoOutValsSpinPolarized);
-
-  rhoOutValues = &(rhoOutVals.back());
-  if (dftParameters::spinPolarized==1)
-    rhoOutValuesSpinPolarized = &(rhoOutValsSpinPolarized.back());
-
-  if(dftParameters::xc_id == 4)
-    {
-      gradRhoOutValues = &(gradRhoOutVals.back());
-      if (dftParameters::spinPolarized==1)
-         gradRhoOutValuesSpinPolarized = &(gradRhoOutValsSpinPolarized.back());
-    }
-
-  CUDA::computeRhoFromPSI(
-		    d_eigenVectorsFlattenedCUDA.begin(),
-		    d_eigenVectorsRotFracFlattenedCUDA.begin(),
-		    d_numEigenValues,
-		    d_numEigenValuesRR,
-		    d_eigenVectorsFlattenedSTL[0].size()/d_numEigenValues,
-		    eigenValues,
-		    fermiEnergy,
-		    fermiEnergyUp,
-		    fermiEnergyDown,
-		    kohnShamDFTEigenOperator,
-		    dofHandler,
-		    matrix_free_data.n_physical_cells(),
-		    matrix_free_data.get_dofs_per_cell(),
-		    QGauss<3>(C_num1DQuad<FEOrder>()).size(),
-		    d_kPointWeights,
-		    rhoOutValues,
-		    gradRhoOutValues,
-		    rhoOutValuesSpinPolarized,
-		    gradRhoOutValuesSpinPolarized,
-		    dftParameters::xc_id == 4,
-		    interpoolcomm,
-		    interBandGroupComm,
-		    isConsiderSpectrumSplitting && d_numEigenValues!=d_numEigenValuesRR);
-
-
-
-  //pop out rhoInVals and rhoOutVals if their size exceeds mixing history size
-  popOutRhoInRhoOutVals();
-}
-#endif
-
 //calculate electron density
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::compute_rhoOut(const bool isConsiderSpectrumSplitting)
+void dftClass<FEOrder>::compute_rhoOut(
+#ifdef DFTFE_WITH_GPU
+                          kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+#endif
+                          const bool isConsiderSpectrumSplitting)
 {
 
   if(dftParameters::mixingMethod=="ANDERSON_WITH_KERKER")
     {
+#ifdef DFTFE_WITH_GPU
+      computeRhoNodalFromPSI(kohnShamDFTEigenOperator,isConsiderSpectrumSplitting);
+#else
       computeRhoNodalFromPSI(isConsiderSpectrumSplitting);
+#endif
       d_rhoOutNodalValues.update_ghost_values();
       d_rhoOutNodalVals.push_back(d_rhoOutNodalValues);
 
@@ -177,12 +130,48 @@ void dftClass<FEOrder>::compute_rhoOut(const bool isConsiderSpectrumSplitting)
 	}
 
 
+#ifdef DFTFE_WITH_GPU
+      if (dftParameters::useGPU)
+	      CUDA::computeRhoFromPSI(
+				d_eigenVectorsFlattenedCUDA.begin(),
+				d_eigenVectorsRotFracFlattenedCUDA.begin(),
+				d_numEigenValues,
+				d_numEigenValuesRR,
+				d_eigenVectorsFlattenedSTL[0].size()/d_numEigenValues,
+				eigenValues,
+				fermiEnergy,
+				fermiEnergyUp,
+				fermiEnergyDown,
+				kohnShamDFTEigenOperator,
+				dofHandler,
+				matrix_free_data.n_physical_cells(),
+				matrix_free_data.get_dofs_per_cell(),
+				QGauss<3>(C_num1DQuad<FEOrder>()).size(),
+				d_kPointWeights,
+				rhoOutValues,
+				gradRhoOutValues,
+				rhoOutValuesSpinPolarized,
+				gradRhoOutValuesSpinPolarized,
+				dftParameters::xc_id == 4,
+				interpoolcomm,
+				interBandGroupComm,
+				isConsiderSpectrumSplitting && d_numEigenValues!=d_numEigenValuesRR);
+
+      else
+	      computeRhoFromPSI(rhoOutValues,
+				gradRhoOutValues,
+				rhoOutValuesSpinPolarized,
+				gradRhoOutValuesSpinPolarized,
+				dftParameters::xc_id == 4,
+				isConsiderSpectrumSplitting);
+#else
       computeRhoFromPSI(rhoOutValues,
 			gradRhoOutValues,
 			rhoOutValuesSpinPolarized,
 			gradRhoOutValuesSpinPolarized,
 			dftParameters::xc_id == 4,
 			isConsiderSpectrumSplitting);
+#endif
     }
   
   popOutRhoInRhoOutVals();
@@ -367,7 +356,11 @@ void dftClass<FEOrder>::noRemeshRhoDataInit()
 }
 
 template <unsigned int FEOrder>
-void dftClass<FEOrder>::computeRhoNodalFromPSI(bool isConsiderSpectrumSplitting)
+void dftClass<FEOrder>::computeRhoNodalFromPSI(
+#ifdef DFTFE_WITH_GPU
+                 			       kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+#endif
+                                               bool isConsiderSpectrumSplitting)
 {
   std::map<dealii::CellId, std::vector<double> >  rhoPRefinedNodalData;
 
@@ -412,6 +405,43 @@ void dftClass<FEOrder>::computeRhoNodalFromPSI(bool isConsiderSpectrumSplitting)
     }
 
   //compute rho from wavefunctions at nodal locations of 2p DoFHandler nodes in each cell
+#ifdef DFTFE_WITH_GPU
+  if (dftParameters::useGPU)
+     CUDA::computeRhoFromPSI(
+			d_eigenVectorsFlattenedCUDA.begin(),
+			d_eigenVectorsRotFracFlattenedCUDA.begin(),
+			d_numEigenValues,
+			d_numEigenValuesRR,
+			d_eigenVectorsFlattenedSTL[0].size()/d_numEigenValues,
+			eigenValues,
+			fermiEnergy,
+			fermiEnergyUp,
+			fermiEnergyDown,
+			kohnShamDFTEigenOperator,
+			dofHandler,
+			matrix_free_data.n_physical_cells(),
+			matrix_free_data.get_dofs_per_cell(),
+			quadrature_formula.size(),
+			d_kPointWeights,
+                        &rhoPRefinedNodalData,
+		        gradRhoOutValues,
+		        rhoOutValuesSpinPolarized,
+		        gradRhoOutValuesSpinPolarized,
+			false,
+			interpoolcomm,
+			interBandGroupComm,
+			isConsiderSpectrumSplitting && d_numEigenValues!=d_numEigenValuesRR,
+                        true);
+
+  else
+     computeRhoFromPSI(&rhoPRefinedNodalData,
+		    gradRhoOutValues,
+		    rhoOutValuesSpinPolarized,
+		    gradRhoOutValuesSpinPolarized,
+		    false,
+		    isConsiderSpectrumSplitting,
+		    true);
+#else
   computeRhoFromPSI(&rhoPRefinedNodalData,
 		    gradRhoOutValues,
 		    rhoOutValuesSpinPolarized,
@@ -419,6 +449,7 @@ void dftClass<FEOrder>::computeRhoNodalFromPSI(bool isConsiderSpectrumSplitting)
 		    false,
 		    isConsiderSpectrumSplitting,
 		    true);
+#endif
 
   //copy Lobatto quadrature data to fill in 2p DoFHandler nodal data  
    DoFHandler<3>::active_cell_iterator
@@ -432,7 +463,7 @@ void dftClass<FEOrder>::computeRhoNodalFromPSI(bool isConsiderSpectrumSplitting)
 	   std::vector<dealii::types::global_dof_index> cell_dof_indices(dofs_per_cell);
 	   cellP->get_dof_indices(cell_dof_indices);
 	   const std::vector<double> & nodalValues = rhoPRefinedNodalData.find(cellP->id())->second;
-	   AssertThrow(nodalValues.size() == dofs_per_cell,ExcMessage("Number of nodes in 2p DoFHandler does not match with data stored in rhoNodal Values variable"));
+	   Assert(nodalValues.size() == dofs_per_cell,ExcMessage("Number of nodes in 2p DoFHandler does not match with data stored in rhoNodal Values variable"));
           
 	   for(unsigned int iNode = 0; iNode < dofs_per_cell; ++iNode)
 	     {

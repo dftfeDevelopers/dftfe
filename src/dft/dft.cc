@@ -1651,14 +1651,12 @@ namespace dftfe {
 #else
 
 #ifdef DFTFE_WITH_GPU
-        if (dftParameters::useGPU)
-           compute_rhoOut(kohnShamDFTEigenOperatorCUDA,
+        compute_rhoOut(kohnShamDFTEigenOperatorCUDA,
 	      (scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true);
+#else
+	compute_rhoOut((scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true);
 #endif
-        if (!dftParameters::useGPU) 
-	   compute_rhoOut((scfIter<dftParameters::spectrumSplitStartingScfIter || scfConverged)?false:true);
 #endif
-
 	computing_timer.exit_section("compute rho");
 
 	//

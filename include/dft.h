@@ -396,7 +396,11 @@ namespace dftfe {
       /**
        *@brief computes density nodal data from wavefunctions
        */
-      void computeRhoNodalFromPSI(bool isConsiderSpectrumSplitting);
+      void computeRhoNodalFromPSI(
+#ifdef DFTFE_WITH_GPU
+                          kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+#endif
+                          bool isConsiderSpectrumSplitting);
 
 
       /**
@@ -485,14 +489,18 @@ namespace dftfe {
       /**
        *@brief Computes output electron-density from wavefunctions
        */
-      void compute_rhoOut(const bool isConsiderSpectrumSplitting);
+      void compute_rhoOut(
+#ifdef DFTFE_WITH_GPU
+                          kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+#endif
+                          const bool isConsiderSpectrumSplitting);
 
 #ifdef DFTFE_WITH_GPU
       /**
        *@brief Computes output electron-density from wavefunctions
        */
-      void compute_rhoOut(kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
-                          const bool isConsiderSpectrumSplitting);
+      //void compute_rhoOut(kohnShamDFTOperatorCUDAClass<FEOrder> & kohnShamDFTEigenOperator,
+      //                    const bool isConsiderSpectrumSplitting);
 #endif
       
       void popOutRhoInRhoOutVals(); 

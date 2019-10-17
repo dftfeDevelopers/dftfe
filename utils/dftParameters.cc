@@ -133,7 +133,7 @@ namespace dftfe {
 			  "[Developer] Print more fine grained GPU timing results. Default: false.");
 
 
-	prm.declare_entry("SUBSPACE ROT FULL CPU MEM", "false",
+	prm.declare_entry("SUBSPACE ROT FULL CPU MEM", "true",
 			  Patterns::Bool(),
 			  "[Developer] Option to use full NxN memory on CPU in subspace rotation. This reduces the number of MPI_Allreduce communication calls. Default: false.");
       }
