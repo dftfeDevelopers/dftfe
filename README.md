@@ -49,7 +49,7 @@ More information
 
  - The following people have significantly contributed either in the past or current and advanced DFT-FE's goals: (All the underlying lists are in alphabetical order)
    - Principal developers  
-       - Sambit Das (University of Michigan Ann Arbor, USA)
+       - Dr. Sambit Das (University of Michigan Ann Arbor, USA)
        - Dr. Phani Motamarri (University of Michigan Ann Arbor, USA)
     
    - Principal developers emeriti
