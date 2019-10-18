@@ -127,9 +127,9 @@ void kohnShamDFTOperatorCUDAClass<FEOrder>::preComputeShapeFunctionGradientInteg
     d_cellShapeFunctionGradientIntegralFlattenedDevice=d_cellShapeFunctionGradientIntegralFlattened;
     d_cellJxWValuesDevice=d_cellJxWValues;
 
-    if (false)
+    if (dftParameters::mixingMethod=="ANDERSON_WITH_KERKER")
     {
-	  QGaussLobatto<3>  quadratureGl(C_num1DQuad<2*FEOrder>());
+	  QGaussLobatto<3>  quadratureGl(C_num1DQuad<C_num1DKerkerPoly<FEOrder>()>());
 	  FEValues<3> fe_valuesGl(dftPtr->matrix_free_data.get_dof_handler().get_fe(), quadratureGl, update_values | update_gradients);
 	  const unsigned int numberQuadraturePointsGl = quadratureGl.size();
 

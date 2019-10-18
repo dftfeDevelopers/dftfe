@@ -193,6 +193,7 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   quadratureVector.push_back(QGauss<1>(C_num1DQuad<FEOrder>()));
   quadratureVector.push_back(QGaussLobatto<1>(FEOrder+1));
   quadratureVector.push_back(QGauss<1>(C_num1DQuadPSP<FEOrder>()));
+  quadratureVector.push_back(QGaussLobatto<1>(C_num1DKerkerPoly<FEOrder>()+1));
 
   //
   //
@@ -223,6 +224,11 @@ void dftClass<FEOrder>::initBoundaryConditions(){
   //compute volume of the domain
   d_domainVolume=computeVolume(dofHandler);
 
-  //update gaussianMeshMovementClass object
-  //d_gaussianMovePar.initMoved(d_domainBoundingVectors);
+ 
+  //
+  //init 2p matrix-free objects using appropriate constraint matrix and quadrature rule
+  //
+  if(dftParameters::mixingMethod=="ANDERSON_WITH_KERKER")
+    initpRefinedObjects();
+
 }

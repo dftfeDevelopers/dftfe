@@ -17,6 +17,7 @@
 //
 
 #include <dealiiLinearSolver.h>
+#include <dftParameters.h>
 
 namespace dftfe {
 
@@ -35,13 +36,27 @@ namespace dftfe {
 
     //solve
     void dealiiLinearSolver::solve(dealiiLinearSolverProblem & problem,
-		                     const double absTolerance,
-		                     const unsigned int maxNumberIterations,
-		                     const unsigned int  debugLevel)
+				   const double absTolerance,
+				   const unsigned int maxNumberIterations,
+				   const unsigned int  debugLevel,
+				   bool distributeFlag)
     {
+      int this_process;
+      MPI_Comm_rank(mpi_communicator, &this_process);
+      MPI_Barrier(mpi_communicator);
+      double start_time=MPI_Wtime();
+      double time;
+
       //compute RHS
       vectorType rhs;
       problem.computeRhs(rhs);
+
+      MPI_Barrier(mpi_communicator);
+      time = MPI_Wtime();
+
+      if (dftParameters::verbosity>=4)
+         pcout<<"Time for compute rhs: "<<time-start_time<<std::endl;
+
 
       //create dealii solver control object
       dealii::SolverControl solverControl(maxNumberIterations,absTolerance);
@@ -66,7 +81,9 @@ namespace dftfe {
 	  solver.solve(problem,x, rhs, preconditioner);
 	}
 
-	problem.distributeX();
+	if(distributeFlag)
+	  problem.distributeX();
+
 	x.update_ghost_values();
       }
       catch (...)
@@ -86,5 +103,12 @@ namespace dftfe {
 	      solverControl.last_step(), solverControl.tolerance());
 	pcout<<buffer;
       }
+
+      MPI_Barrier(mpi_communicator);
+      time = MPI_Wtime() - time;
+
+      if (dftParameters::verbosity>=4)
+         pcout<<"Time for Poisson/Helmholtz problem CG/GMRES iterations: "<<time<<std::endl;
+
     }
 }

@@ -99,7 +99,7 @@ void dftClass<FEOrder>::initnscf(kohnShamDFTOperatorClass<FEOrder> & kohnShamDFT
 				         *rhoInValues,
 					 false);
    dealiiCGSolver.solve(phiTotalSolverProblem,
-			     dftParameters::relLinearSolverTolerance,
+			     dftParameters::absLinearSolverTolerance,
 			     dftParameters::maxLinearSolverIterations,
 			     dftParameters::verbosity);
 
