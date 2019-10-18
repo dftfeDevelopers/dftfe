@@ -50,6 +50,8 @@ inline double cgd_value(double* x, INT n)
 
   std::vector<double> funcValue;
   functionToBeMinimized->value(funcValue);
+  
+  functionToBeMinimized->save();
 
   ++glob_nfev;
   return funcValue[0];
@@ -81,6 +83,8 @@ inline void cgd_gradient(double* g, double* x, INT n)
 	    MPI_COMM_WORLD);
 
   functionToBeMinimized->update(solutionInc);
+
+  functionToBeMinimized->save();
 
   std::vector<double> gradient;
   functionToBeMinimized->gradient(gradient);
@@ -116,6 +120,8 @@ inline double cgd_value_gradient(double* g, double* x, INT n)
 	    MPI_COMM_WORLD);
 
   functionToBeMinimized->update(solutionInc);
+
+  functionToBeMinimized->save();  
 
   std::vector<double> funcValue;
   functionToBeMinimized->value(funcValue);
