@@ -980,7 +980,7 @@ namespace dftfe {
 	    const unsigned int bandGroupTaskId = dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
 	    std::vector<unsigned int> bandGroupLowHighPlusOneIndices;
 	    dftUtils::createBandParallelizationIndices(interBandGroupComm,
-						       d_numEigenValuesRR,
+						       d_numEigenValues,
 						       bandGroupLowHighPlusOneIndices);
 
 	    AssertThrow((bandGroupLowHighPlusOneIndices[1]%dftParameters::chebyWfcBlockSize==0)
