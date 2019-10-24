@@ -1314,40 +1314,52 @@ namespace dftfe
 						      const unsigned int localVectorSize,
 						      const unsigned int numberWaveFunctions,
 						      cudaVectorType & dst,
-						      bool chebMixedPrec)
+						      bool chebMixedPrec,
+                                                      bool returnBeforeCompressSkipUpdateSkipNonLocal,
+                                                      bool returnBeforeCompressSkipUpdateSkipLocal)
   {
     const unsigned int n_ghosts   = dftPtr->matrix_free_data.get_vector_partitioner()->n_ghost_indices();
     const unsigned int localSize  = dftPtr->matrix_free_data.get_vector_partitioner()->local_size();
     const unsigned int totalSize  = localSize + n_ghosts;
 
-    if(chebMixedPrec)
-      {
-	convDoubleArrToFloatArr<<<(numberWaveFunctions+255)/256*localSize,256>>>(numberWaveFunctions*localSize,
-								                 src.begin(),
-										 tempFloatArray.begin());
-        //MPI_Barrier(MPI_COMM_WORLD);
-	tempFloatArray.update_ghost_values();
+    if (!(returnBeforeCompressSkipUpdateSkipNonLocal || returnBeforeCompressSkipUpdateSkipLocal))
+    {
+	    if(chebMixedPrec)
+	      {
+		convDoubleArrToFloatArr<<<(numberWaveFunctions+255)/256*localSize,256>>>(numberWaveFunctions*localSize,
+											 src.begin(),
+											 tempFloatArray.begin());
+		//MPI_Barrier(MPI_COMM_WORLD);
+		tempFloatArray.update_ghost_values();
 
-        if(n_ghosts!=0)
-	  convFloatArrToDoubleArr<<<(numberWaveFunctions+255)/256*n_ghosts,256>>>(numberWaveFunctions*n_ghosts,
-										  tempFloatArray.begin()+localSize*numberWaveFunctions,
-										  src.begin()+localSize*numberWaveFunctions);
-
-
-      }
-    else
-      {
-	src.update_ghost_values();
-      }
+		if(n_ghosts!=0)
+		  convFloatArrToDoubleArr<<<(numberWaveFunctions+255)/256*n_ghosts,256>>>(numberWaveFunctions*n_ghosts,
+											  tempFloatArray.begin()+localSize*numberWaveFunctions,
+											  src.begin()+localSize*numberWaveFunctions);
 
 
+	      }
+	    else
+	      {
+		src.update_ghost_values();
+		//src.update_ghost_values_start();
+		//src.update_ghost_values_finish();
+	      }
+    }
 
-    getOverloadedConstraintMatrix()->distribute(src,
+    if (!returnBeforeCompressSkipUpdateSkipLocal)
+        getOverloadedConstraintMatrix()->distribute(src,
 						numberWaveFunctions);
 
-    computeLocalHamiltonianTimesX(src.begin(),
-				  numberWaveFunctions,
-				  dst.begin());
+
+    if (!returnBeforeCompressSkipUpdateSkipLocal)
+	    computeLocalHamiltonianTimesX(src.begin(),
+					  numberWaveFunctions,
+					  dst.begin());
+
+    if (returnBeforeCompressSkipUpdateSkipNonLocal)
+      return;
+
 
     //H^{nloc}*M^{-1/2}*X
     if(dftParameters::isPseudopotential && dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0)
@@ -1363,6 +1375,9 @@ namespace dftfe
 
 
     src.zero_out_ghosts();
+
+    if (returnBeforeCompressSkipUpdateSkipLocal)
+      return;
 
     if(chebMixedPrec)
       {
@@ -1386,6 +1401,8 @@ namespace dftfe
     else
       {
 	dst.compress(VectorOperation::add);
+        //dst.compress_start(VectorOperation::add);
+        //dst.compress_finish(VectorOperation::add);
       }
 
   }

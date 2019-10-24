@@ -278,6 +278,28 @@ namespace dftfe
 				    projectorKetTimesVector);
 
 
+    cudaVectorType cudaFlattenedArrayBlock2;
+    vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
+				    vectorsBlockSize,
+				    cudaFlattenedArrayBlock2);
+
+
+    cudaVectorType YArray2;
+    YArray2.reinit(cudaFlattenedArrayBlock2);
+
+    cudaVectorTypeFloat cudaFlattenedFloatArrayBlock2;
+    if (dftParameters::useMixedPrecCheby)
+       vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
+                                    vectorsBlockSize,
+                                    cudaFlattenedFloatArrayBlock2);
+
+
+    cudaVectorType projectorKetTimesVector2;
+    vectorTools::createDealiiVector(operatorMatrix.getProjectorKetTimesVectorSingle().get_partitioner(),
+				    vectorsBlockSize,
+				    projectorKetTimesVector2);
+
+
 
     if(!isElpaStep2)
     {
@@ -336,7 +358,7 @@ namespace dftfe
 
             int startIndexBandParal=totalNumberWaveFunctions;
             int numVectorsBandParal=0;
-	    for (unsigned int jvec = 0; jvec < totalNumberWaveFunctions; jvec += vectorsBlockSize)
+	    for (unsigned int jvec = 0; jvec < totalNumberWaveFunctions; jvec += 2*vectorsBlockSize)
 	    {
 
 		// Correct block dimensions if block "goes off edge of" the matrix
@@ -357,31 +379,19 @@ namespace dftfe
 											  totalNumberWaveFunctions,
 											  cudaFlattenedArrayBlock.begin(),
 											  jvec);
+
+			stridedCopyToBlockKernel<<<(BVec+255)/256*localVectorSize, 256>>>(BVec,
+											  localVectorSize,
+											  eigenVectorsFlattenedCUDA,
+											  totalNumberWaveFunctions,
+											  cudaFlattenedArrayBlock2.begin(),
+											  jvec+BVec);
 			  
 			 //
 			 //call Chebyshev filtering function only for the current block to be filtered
 			 //and does in-place filtering
-			 if (jvec+BVec<dftParameters::numAdaptiveFilterStates)
-			 {
-				const double chebyshevOrd=(double)chebyshevOrder;
-				const double adaptiveOrder=0.5*chebyshevOrd
-				  +jvec*0.3*chebyshevOrd/dftParameters::numAdaptiveFilterStates;
-				linearAlgebraOperationsCUDA::chebyshevFilter(operatorMatrix,
-									     cudaFlattenedArrayBlock,
-									     YArray,
-									     cudaFlattenedFloatArrayBlock,
-									     projectorKetTimesVector,
-									     localVectorSize,
-									     BVec,
-									     std::ceil(adaptiveOrder),
-									     d_lowerBoundUnWantedSpectrum,
-									     upperBoundUnwantedSpectrum,
-									     d_lowerBoundWantedSpectrum);
-									   
-									   
-			 }
-			 else
-			      linearAlgebraOperationsCUDA::chebyshevFilter(operatorMatrix,
+                         /*
+			 linearAlgebraOperationsCUDA::chebyshevFilter(operatorMatrix,
 									   cudaFlattenedArrayBlock,
 									   YArray,
 									   cudaFlattenedFloatArrayBlock,
@@ -392,7 +402,22 @@ namespace dftfe
 									   d_lowerBoundUnWantedSpectrum,
 									   upperBoundUnwantedSpectrum,
 									   d_lowerBoundWantedSpectrum);
-									  
+                          */
+
+			 linearAlgebraOperationsCUDA::chebyshevFilter(operatorMatrix,
+						                      cudaFlattenedArrayBlock,
+								      YArray,
+								      cudaFlattenedFloatArrayBlock,
+								      projectorKetTimesVector,
+						                      cudaFlattenedArrayBlock2,
+								      YArray2,
+								      projectorKetTimesVector2,
+								      localVectorSize,
+								      BVec,
+								      chebyshevOrder,
+								      d_lowerBoundUnWantedSpectrum,
+								      upperBoundUnwantedSpectrum,
+								      d_lowerBoundWantedSpectrum);									  
 			 
 		       stridedCopyFromBlockKernel<<<(BVec+255)/256*localVectorSize, 256>>>(BVec,
 											   localVectorSize,
@@ -400,6 +425,13 @@ namespace dftfe
 											   totalNumberWaveFunctions,
 											   eigenVectorsFlattenedCUDA,
 											   jvec);
+
+		       stridedCopyFromBlockKernel<<<(BVec+255)/256*localVectorSize, 256>>>(BVec,
+											   localVectorSize,
+											   cudaFlattenedArrayBlock2.begin(),
+											   totalNumberWaveFunctions,
+											   eigenVectorsFlattenedCUDA,
+											   jvec+BVec);
 		}
                 else
                 {

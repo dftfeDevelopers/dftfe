@@ -167,7 +167,9 @@ namespace dftfe{
                          const unsigned int localVectorSize,
                          const unsigned int numberComponents,
                          cudaVectorType & Y,
-                         bool mixPrecFlag=false) = 0;
+                         bool mixPrecFlag=false,
+                         bool returnBeforeCompressSkipUpdateSkipNonLocal=false,
+                         bool returnBeforeCompressSkipUpdateSkipLocal=false) = 0;
 
 
       /**

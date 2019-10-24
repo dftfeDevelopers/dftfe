@@ -132,7 +132,10 @@ namespace dftfe{
 		   const unsigned int localVectorSize,
 		   const unsigned int numberComponents,
 		   cudaVectorType & Y,
-                   bool mixedPrecflag=false);
+                   bool mixedPrecflag=false,
+                   bool returnBeforeCompressSkipUpdateSkipNonLocal=false,
+                   bool returnBeforeCompressSkipUpdateSkipLocal=false);
+
 
       /**
        * @brief Compute projection of the operator into orthogonal basis

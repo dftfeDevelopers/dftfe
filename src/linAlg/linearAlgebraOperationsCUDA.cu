@@ -550,6 +550,347 @@ namespace dftfe
 #endif
   }
     
+  void chebyshevFilter(operatorDFTCUDAClass & operatorMatrix,
+			 cudaVectorType & XArray1,
+                         cudaVectorType & YArray1,
+			 cudaVectorTypeFloat & tempFloatArray,
+                         cudaVectorType & projectorKetTimesVector1,
+			 cudaVectorType & XArray2,
+                         cudaVectorType & YArray2,
+                         cudaVectorType & projectorKetTimesVector2,
+			 const unsigned int localVectorSize,
+			 const unsigned int numberVectors,
+			 const unsigned int m,
+			 const double a,
+			 const double b,
+			 const double a0)
+   {
+#ifdef USE_COMPLEX
+        AssertThrow(false,dftUtils::ExcNotImplementedYet());
+#else
+      double e, c, sigma, sigma1, sigma2, gamma, gpu_time;
+      e = (b-a)/2.0; c = (b+a)/2.0;
+      sigma = e/(a0-c); sigma1 = sigma; gamma = 2.0/sigma1;
+      const unsigned int totalVectorSize = localVectorSize*numberVectors;
+      int inc = 1;
+
+      YArray1=0.0;
+      YArray2=0.0;
+      //
+      //call HX
+      //
+      bool scaleFlag = false;
+      double scalar = 1.0;
+
+      operatorMatrix.HX(XArray1,
+                        projectorKetTimesVector1,
+			localVectorSize,
+			numberVectors,
+			scaleFlag,
+			scalar,
+			YArray1);
+
+      operatorMatrix.HX(XArray2,
+                        projectorKetTimesVector2,
+			localVectorSize,
+			numberVectors,
+			scaleFlag,
+			scalar,
+			YArray2);
+
+      double  alpha1 = sigma1/e, alpha2 = -c;
+      double alpha1Old=alpha1;
+  
+      //
+      //YArray = YArray + alpha2*XArray and YArray = alpha1*YArray
+      //
+      cublasDaxpy(operatorMatrix.getCublasHandle(),
+		  totalVectorSize,
+		  &alpha2,
+		  XArray1.begin(),
+		  inc,
+		  YArray1.begin(),
+		  inc);
+
+      cublasDscal(operatorMatrix.getCublasHandle(),
+		  totalVectorSize,
+		  &alpha1,
+		  YArray1.begin(),
+		  inc);
+
+
+      cublasDaxpy(operatorMatrix.getCublasHandle(),
+		  totalVectorSize,
+		  &alpha2,
+		  XArray2.begin(),
+		  inc,
+		  YArray2.begin(),
+		  inc);
+
+      cublasDscal(operatorMatrix.getCublasHandle(),
+		  totalVectorSize,
+		  &alpha1,
+		  YArray2.begin(),
+		  inc);
+	      
+      bool overlap=false; 
+      //
+      //polynomial loop
+      //
+      for(unsigned int degree = 2; degree < m+1; ++degree)
+	{
+	  sigma2 = 1.0/(gamma - sigma);
+	  alpha1 = 2.0*sigma2/e, alpha2 = -(sigma*sigma2);
+
+
+	  double coeff = -c*alpha1;
+
+	  
+	  if (degree==2)
+	    {
+	      daxpbyCUDAKernel<<<min((totalVectorSize+255)/256,30000),256>>>(totalVectorSize,
+									     YArray1.begin(),
+									     XArray1.begin(),
+          		                                                     coeff,
+		                                                             alpha2);
+
+
+          //scale src vector with M^{-1/2}
+          //
+          scaleCUDAKernel<<<(numberVectors+255)/256*localVectorSize,256>>>(numberVectors,
+                                                                           localVectorSize,
+                                                                           alpha1,
+                                                                           YArray1.begin(),
+                                                                           operatorMatrix.getInvSqrtMassVec());
+
+          scaleCUDAKernel<<<(numberVectors+255)/256*localVectorSize,256>>>(numberVectors,
+									   localVectorSize,
+									   1.0,
+									   XArray1.begin(),
+									   operatorMatrix.getSqrtMassVec());
+
+          //
+          //call HX
+          //
+          operatorMatrix.HXCheby(YArray1,
+				 tempFloatArray,
+                                 projectorKetTimesVector1,
+				 localVectorSize,
+				 numberVectors,
+				 XArray1,
+				 dftParameters::useMixedPrecCheby);
+
+	      daxpbyCUDAKernel<<<min((totalVectorSize+255)/256,30000),256>>>(totalVectorSize,
+									     YArray2.begin(),
+									     XArray2.begin(),
+          		                                                     coeff,
+		                                                             alpha2);
+
+
+          //scale src vector with M^{-1/2}
+          //
+          scaleCUDAKernel<<<(numberVectors+255)/256*localVectorSize,256>>>(numberVectors,
+                                                                           localVectorSize,
+                                                                           alpha1,
+                                                                           YArray2.begin(),
+                                                                           operatorMatrix.getInvSqrtMassVec());
+
+          scaleCUDAKernel<<<(numberVectors+255)/256*localVectorSize,256>>>(numberVectors,
+									   localVectorSize,
+									   1.0,
+									   XArray2.begin(),
+									   operatorMatrix.getSqrtMassVec());
+
+          //
+          //call HX
+          //
+          operatorMatrix.HXCheby(YArray2,
+				 tempFloatArray,
+                                 projectorKetTimesVector2,
+				 localVectorSize,
+				 numberVectors,
+				 XArray2,
+				 dftParameters::useMixedPrecCheby);
+          overlap=false;
+	}
+      else if (degree==m)
+	{
+
+          //unscale src vector with M^{1/2}
+          //
+          scaleCUDAKernel<<<(numberVectors+255)/256*localVectorSize,256>>>(numberVectors,
+                                                                           localVectorSize,
+                                                                           1.0/alpha1Old,
+                                                                           XArray1.begin(),
+                                                                           operatorMatrix.getSqrtMassVec());
+
+          scaleCUDAKernel<<<(numberVectors+255)/256*localVectorSize,256>>>(numberVectors,
+									   localVectorSize,
+									   1.0,
+									   YArray1.begin(),
+									   operatorMatrix.getInvSqrtMassVec());
+
+          daxpbyCUDAKernel<<<min((totalVectorSize+255)/256,30000),256>>>(totalVectorSize,
+									 YArray1.begin(),
+									 XArray1.begin(),
+									 coeff,
+									 alpha2);
+          scaleFlag=true;
+          //
+          //call HX
+          //
+          operatorMatrix.HX(YArray1,
+                            projectorKetTimesVector1,
+			    localVectorSize,
+			    numberVectors,
+			    scaleFlag,
+			    alpha1,
+			    XArray1);
+
+
+          //unscale src vector with M^{1/2}
+          //
+          scaleCUDAKernel<<<(numberVectors+255)/256*localVectorSize,256>>>(numberVectors,
+                                                                           localVectorSize,
+                                                                           1.0/alpha1Old,
+                                                                           XArray2.begin(),
+                                                                           operatorMatrix.getSqrtMassVec());
+
+          scaleCUDAKernel<<<(numberVectors+255)/256*localVectorSize,256>>>(numberVectors,
+									   localVectorSize,
+									   1.0,
+									   YArray2.begin(),
+									   operatorMatrix.getInvSqrtMassVec());
+
+          daxpbyCUDAKernel<<<min((totalVectorSize+255)/256,30000),256>>>(totalVectorSize,
+									 YArray2.begin(),
+									 XArray2.begin(),
+									 coeff,
+									 alpha2);
+          //
+          //call HX
+          //
+          operatorMatrix.HX(YArray2,
+                            projectorKetTimesVector2,
+			    localVectorSize,
+			    numberVectors,
+			    scaleFlag,
+			    alpha1,
+			    XArray2);
+          overlap=false;
+	}
+      else
+	{
+          if (overlap)
+            XArray2.compress_start(dealii::VectorOperation::add);
+
+          combinedCUDAKernel<<<min((totalVectorSize+255)/256,30000),256>>>(numberVectors,
+									   localVectorSize,
+									   YArray1.begin(),
+									   XArray1.begin(),
+									   coeff,
+									   alpha2,
+									   alpha1,
+									   alpha1Old,
+									   operatorMatrix.getInvSqrtMassVec(),
+									   operatorMatrix.getSqrtMassVec());
+          if (overlap)
+          {
+            XArray2.compress_finish(dealii::VectorOperation::add);
+            XArray2.swap(YArray2);
+          }
+
+          YArray1.update_ghost_values_start();
+
+          combinedCUDAKernel<<<min((totalVectorSize+255)/256,30000),256>>>(numberVectors,
+									   localVectorSize,
+									   YArray2.begin(),
+									   XArray2.begin(),
+									   coeff,
+									   alpha2,
+									   alpha1,
+									   alpha1Old,
+									   operatorMatrix.getInvSqrtMassVec(),
+									   operatorMatrix.getSqrtMassVec());
+          YArray1.update_ghost_values_finish();
+
+          YArray2.update_ghost_values_start(); 
+          operatorMatrix.HXCheby(YArray1,
+				 tempFloatArray,
+                                 projectorKetTimesVector1,
+				 localVectorSize,
+				 numberVectors,
+				 XArray1,
+				 dftParameters::useMixedPrecCheby,
+                                 true,
+                                 false);
+          YArray2.update_ghost_values_finish();
+
+          operatorMatrix.HXCheby(YArray1,
+				 tempFloatArray,
+                                 projectorKetTimesVector1,
+				 localVectorSize,
+				 numberVectors,
+				 XArray1,
+				 dftParameters::useMixedPrecCheby,
+                                 false,
+                                 true);
+
+          XArray1.compress_start(dealii::VectorOperation::add);
+
+          operatorMatrix.HXCheby(YArray2,
+				 tempFloatArray,
+                                 projectorKetTimesVector2,
+				 localVectorSize,
+				 numberVectors,
+				 XArray2,
+				 dftParameters::useMixedPrecCheby,
+                                 true,
+                                 false);
+
+          XArray1.compress_finish(dealii::VectorOperation::add);
+
+          operatorMatrix.HXCheby(YArray2,
+				 tempFloatArray,
+                                 projectorKetTimesVector2,
+				 localVectorSize,
+				 numberVectors,
+				 XArray2,
+				 dftParameters::useMixedPrecCheby,
+                                 false,
+                                 true);
+
+          if (degree==(m-1))
+          {
+            XArray2.compress(dealii::VectorOperation::add);
+            overlap=false;
+          }
+          else
+            overlap=true;
+	}
+
+      XArray1.swap(YArray1);
+      if (!overlap)
+        XArray2.swap(YArray2);
+
+      
+      sigma = sigma2;
+      alpha1Old=alpha1;
+
+    }
+
+    //copy back YArray to XArray
+    cudaMemcpy(XArray1.begin(),
+               YArray1.begin(),
+               totalVectorSize*sizeof(double),
+               cudaMemcpyDeviceToDevice);
+
+    cudaMemcpy(XArray2.begin(),
+               YArray2.begin(),
+               totalVectorSize*sizeof(double),
+               cudaMemcpyDeviceToDevice);
+#endif
+  }
 
   void subspaceRotationSpectrumSplitScalapack(const double* X,
                                  double * XFrac,
