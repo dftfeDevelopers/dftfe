@@ -21,7 +21,9 @@ template<unsigned int FEOrder>
 void kohnShamDFTOperatorCUDAClass<FEOrder>::computeNonLocalHamiltonianTimesX(const double* src,
 									     cudaVectorType &  projectorKetTimesVector,
 									     const unsigned int numberWaveFunctions,
-									     double* dst)
+									     double* dst,
+const bool skip1,
+const bool skip2)
 
 {
 	 
@@ -34,7 +36,7 @@ void kohnShamDFTOperatorCUDAClass<FEOrder>::computeNonLocalHamiltonianTimesX(con
   unsigned int strideB = d_numberNodesPerElement*d_maxSingleAtomPseudoWfc; 
   unsigned int strideC = numberWaveFunctions*d_maxSingleAtomPseudoWfc;
 
-  if (d_totalNonlocalElems>0)
+  if (d_totalNonlocalElems>0 && !skip1)
   { 
 	  copyCUDAKernel<<<(numberWaveFunctions+255)/256*d_totalNonlocalElems*d_numberNodesPerElement,256>>>
 									     (numberWaveFunctions, 
@@ -81,6 +83,8 @@ void kohnShamDFTOperatorCUDAClass<FEOrder>::computeNonLocalHamiltonianTimesX(con
 
   }
 
+  if (skip2)
+   return;
 
   projectorKetTimesVector=0.0;
 

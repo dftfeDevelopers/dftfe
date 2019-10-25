@@ -1357,9 +1357,6 @@ namespace dftfe
 					  numberWaveFunctions,
 					  dst.begin());
 
-    if (returnBeforeCompressSkipUpdateSkipNonLocal)
-      return;
-
 
     //H^{nloc}*M^{-1/2}*X
     if(dftParameters::isPseudopotential && dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0)
@@ -1367,8 +1364,14 @@ namespace dftfe
 	computeNonLocalHamiltonianTimesX(src.begin(),
 					 projectorKetTimesVector,
 					 numberWaveFunctions,
-					 dst.begin());
+					 dst.begin(),
+                                         returnBeforeCompressSkipUpdateSkipLocal,
+                                         returnBeforeCompressSkipUpdateSkipNonLocal);
       }
+
+    if (returnBeforeCompressSkipUpdateSkipNonLocal)
+      return;
+
 
     getOverloadedConstraintMatrix()->distribute_slave_to_master(dst,
 								numberWaveFunctions);

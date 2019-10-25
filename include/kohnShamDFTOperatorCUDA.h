@@ -442,7 +442,9 @@ namespace dftfe{
       void computeNonLocalHamiltonianTimesX(const double *src,
                                             cudaVectorType & projectorKetTimesVector,
 					    const unsigned int numberWaveFunctions,
-					    double* dst);
+					    double* dst,
+                                            const bool skip1=false,
+                                            const bool skip2=false);
 
 
 
