@@ -21,6 +21,7 @@
 #include<dftParameters.h>
 #include<vectorUtilities.h>
 #include <dftUtils.h>
+#include <nvToolsExt.h>
 
 namespace dftfe
 {
@@ -245,6 +246,19 @@ namespace dftfe
 	  }
                 
       }
+
+	    __global__
+	    void convFloatArrToDoubleArr(const unsigned int size,
+					 const float *floatArr,
+					 double *doubleArr)
+	    {
+
+	      const unsigned int globalThreadId = blockIdx.x*blockDim.x + threadIdx.x;
+
+	      for(unsigned int index = globalThreadId; index < size; index+= blockDim.x*gridDim.x)
+		doubleArr[index]=floatArr[index];
+
+	    }
 
     }
 
@@ -576,6 +590,10 @@ namespace dftfe
 
       YArray1=0.0;
       YArray2=0.0;
+ 
+      const unsigned int n_ghosts   = YArray1.get_partitioner()->n_ghost_indices()/numberVectors;
+      const unsigned int totalSize  = localVectorSize + n_ghosts;
+
       //
       //call HX
       //
@@ -782,7 +800,9 @@ namespace dftfe
       else
 	{
           if (overlap)
-            XArray2.compress_start(dealii::VectorOperation::add);
+          {
+            projectorKetTimesVector2.compress_start(dealii::VectorOperation::add);
+          }
 
           combinedCUDAKernel<<<min((totalVectorSize+255)/256,30000),256>>>(numberVectors,
 									   localVectorSize,
@@ -794,14 +814,55 @@ namespace dftfe
 									   alpha1Old,
 									   operatorMatrix.getInvSqrtMassVec(),
 									   operatorMatrix.getSqrtMassVec());
+
+
+          if (overlap)
+          {
+            projectorKetTimesVector2.compress_finish(dealii::VectorOperation::add);
+            projectorKetTimesVector2.update_ghost_values();
+          }
+
+          //unsigned int id2=nvtxRangeStartA("ghost1");
+          YArray1.update_ghost_values_start();
+
+          if (overlap)
+             operatorMatrix.HXCheby(YArray2,
+				 tempFloatArray,
+                                 projectorKetTimesVector2,
+				 localVectorSize,
+				 numberVectors,
+				 XArray2,
+				 dftParameters::useMixedPrecCheby,
+                                 false,
+                                 true);
+
+          YArray1.update_ghost_values_finish();
+          //nvtxRangeEnd(id2);
+
+          projectorKetTimesVector1=0.0;
+          //unsigned int id1=nvtxRangeStartA("compress2");
+          if (overlap)
+          {
+             XArray2.compress_start(dealii::VectorOperation::add);
+          }
+          operatorMatrix.HXCheby(YArray1,
+				 tempFloatArray,
+                                 projectorKetTimesVector1,
+				 localVectorSize,
+				 numberVectors,
+				 XArray1,
+				 dftParameters::useMixedPrecCheby,
+                                 true,
+                                 false);
+
           if (overlap)
           {
             XArray2.compress_finish(dealii::VectorOperation::add);
             XArray2.swap(YArray2);
           }
+          //nvtxRangeEnd(id1);
 
-          YArray1.update_ghost_values_start();
-
+          projectorKetTimesVector1.compress_start(dealii::VectorOperation::add);
           combinedCUDAKernel<<<min((totalVectorSize+255)/256,30000),256>>>(numberVectors,
 									   localVectorSize,
 									   YArray2.begin(),
@@ -812,20 +873,12 @@ namespace dftfe
 									   alpha1Old,
 									   operatorMatrix.getInvSqrtMassVec(),
 									   operatorMatrix.getSqrtMassVec());
-          YArray1.update_ghost_values_finish();
 
+          projectorKetTimesVector1.compress_finish(dealii::VectorOperation::add);
+          projectorKetTimesVector1.update_ghost_values();
+
+          //unsigned int id3=nvtxRangeStartA("ghost2");
           YArray2.update_ghost_values_start(); 
-          operatorMatrix.HXCheby(YArray1,
-				 tempFloatArray,
-                                 projectorKetTimesVector1,
-				 localVectorSize,
-				 numberVectors,
-				 XArray1,
-				 dftParameters::useMixedPrecCheby,
-                                 true,
-                                 false);
-          YArray2.update_ghost_values_finish();
-
           operatorMatrix.HXCheby(YArray1,
 				 tempFloatArray,
                                  projectorKetTimesVector1,
@@ -836,6 +889,13 @@ namespace dftfe
                                  false,
                                  true);
 
+          YArray2.update_ghost_values_finish();
+          //nvtxRangeEnd(id3);
+
+
+          projectorKetTimesVector2=0.0;
+
+          //unsigned int id4=nvtxRangeStartA("compress1");
           XArray1.compress_start(dealii::VectorOperation::add);
 
           operatorMatrix.HXCheby(YArray2,
@@ -849,19 +909,23 @@ namespace dftfe
                                  false);
 
           XArray1.compress_finish(dealii::VectorOperation::add);
-
-          operatorMatrix.HXCheby(YArray2,
-				 tempFloatArray,
-                                 projectorKetTimesVector2,
-				 localVectorSize,
-				 numberVectors,
-				 XArray2,
-				 dftParameters::useMixedPrecCheby,
-                                 false,
-                                 true);
+          //nvtxRangeEnd(id4);
 
           if (degree==(m-1))
           {
+
+            projectorKetTimesVector2.compress(dealii::VectorOperation::add);
+            projectorKetTimesVector2.update_ghost_values();
+
+            operatorMatrix.HXCheby(YArray2,
+				   tempFloatArray,
+			   	   projectorKetTimesVector2,
+				   localVectorSize,
+				   numberVectors,
+				   XArray2,
+				   dftParameters::useMixedPrecCheby,
+				   false,
+				   true);
             XArray2.compress(dealii::VectorOperation::add);
             overlap=false;
           }
@@ -869,9 +933,11 @@ namespace dftfe
             overlap=true;
 	}
 
-      XArray1.swap(YArray1);
+      XArray1.swap(YArray1); 
       if (!overlap)
+      {
         XArray2.swap(YArray2);
+      }
 
       
       sigma = sigma2;

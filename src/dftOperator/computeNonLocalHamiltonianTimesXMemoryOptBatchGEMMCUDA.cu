@@ -83,14 +83,12 @@ const bool skip2)
 
   }
 
-  if (skip2)
-   return;
-
-  projectorKetTimesVector=0.0;
+  if (!skip1 && !skip2)
+    projectorKetTimesVector=0.0;
 
   //std::cout<<"nonlocal l2 norm: "<<d_projectorKetTimesVectorDealiiParFlattenedDevice.l2_norm()<<std::endl;
   
-  if (d_totalNonlocalElems>0)
+  if (d_totalNonlocalElems>0 && !skip1)
     copyToDealiiParallelNonLocalVec<<<(numberWaveFunctions+255)/256*d_totalPseudoWfcNonLocal,256>>>
 						     (numberWaveFunctions, 
 						      d_totalPseudoWfcNonLocal,
@@ -98,9 +96,14 @@ const bool skip2)
                                                       projectorKetTimesVector.begin(),
 						      thrust::raw_pointer_cast(&d_projectorIdsParallelNumberingMapDevice[0]));
 
+  if (skip2)
+     return;
   
+  if (!skip1)
+  {
     projectorKetTimesVector.compress(VectorOperation::add);
     projectorKetTimesVector.update_ghost_values();
+  }
   
   //std::cout<<"nonlocal l2 norm: "<<projectorKetTimesVector.l2_norm()<<std::endl;
 
