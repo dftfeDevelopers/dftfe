@@ -1376,11 +1376,10 @@ namespace dftfe
     getOverloadedConstraintMatrix()->distribute_slave_to_master(dst,
 								numberWaveFunctions);
 
-
-    src.zero_out_ghosts();
-
     if (returnBeforeCompressSkipUpdateSkipLocal)
       return;
+
+    src.zero_out_ghosts();
 
     if(chebMixedPrec)
       {

@@ -837,6 +837,8 @@ namespace dftfe
                                  true);
 
           YArray1.update_ghost_values_finish();
+          if (overlap)
+             YArray2.zero_out_ghosts();
           //nvtxRangeEnd(id2);
 
           projectorKetTimesVector1=0.0;
@@ -890,6 +892,7 @@ namespace dftfe
                                  true);
 
           YArray2.update_ghost_values_finish();
+          YArray1.zero_out_ghosts();
           //nvtxRangeEnd(id3);
 
 
@@ -926,6 +929,7 @@ namespace dftfe
 				   dftParameters::useMixedPrecCheby,
 				   false,
 				   true);
+            YArray2.zero_out_ghosts();
             XArray2.compress(dealii::VectorOperation::add);
             overlap=false;
           }
