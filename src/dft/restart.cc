@@ -232,7 +232,7 @@ void dftClass<FEOrder>::loadTriaInfoAndRhoData()
 }
 
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::writeDomainAndAtomCoordinates() 
+void dftClass<FEOrder>::writeDomainAndAtomCoordinates()
 {
      dftUtils::writeDataIntoFile(d_domainBoundingVectors,
 			        "domainBoundingVectors.chk");
@@ -260,11 +260,10 @@ void dftClass<FEOrder>::writeDomainAndAtomCoordinates()
 	{
 	  Point<C_DIM> atomCoor;
 	  int atomId=iAtom;
-	  atomCoor[0] = atomLocations[iAtom][2];
-	  atomCoor[1] = atomLocations[iAtom][3];
-	  atomCoor[2] = atomLocations[iAtom][4];
+	  atomCoor[0] = d_atomLocationsAutoMesh[iAtom][0];
+	  atomCoor[1] = d_atomLocationsAutoMesh[iAtom][1];
+	  atomCoor[2] = d_atomLocationsAutoMesh[iAtom][2];
 
-	  
 	  std::vector<double> newFracCoord=internal::wrapAtomsAcrossPeriodicBc(atomCoor,
 									       corner,
 									       latticeVectorsFlattened,
@@ -281,7 +280,14 @@ void dftClass<FEOrder>::writeDomainAndAtomCoordinates()
 	  atomLocationsFractional[iAtom][4]=newFracCoord[2];
 	}
      }
- 
+
+     std::vector<std::vector<double> > atomLocationsAutoMesh=atomLocations;
+      for (unsigned int iAtom = 0; iAtom < d_atomLocationsAutoMesh.size(); iAtom++)
+	{
+	  atomLocationsAutoMesh[iAtom][2]=d_atomLocationsAutoMesh[iAtom][0];
+	  atomLocationsAutoMesh[iAtom][3]=d_atomLocationsAutoMesh[iAtom][1];
+	  atomLocationsAutoMesh[iAtom][4]=d_atomLocationsAutoMesh[iAtom][2];
+	}
 #ifdef USE_COMPLEX
      dftUtils::writeDataIntoFile(atomLocationsFractional,
 			        "atomsFracCoord.chk");
@@ -290,7 +296,19 @@ void dftClass<FEOrder>::writeDomainAndAtomCoordinates()
        dftUtils::writeDataIntoFile(atomLocationsFractional,
 			           "atomsFracCoord.chk");
     else
-       dftUtils::writeDataIntoFile(atomLocations,
+       dftUtils::writeDataIntoFile(atomLocationsAutoMesh,
 			         "atomsCartCoord.chk");
 #endif
+
+    //
+    //write Gaussian atomic displacements
+    //
+    std::vector<std::vector<double> > atomsDisplacementsGaussian(d_atomLocationsAutoMesh.size(),
+	                                                         std::vector<double>(3,0.0));
+    for(int i = 0; i < atomsDisplacementsGaussian.size(); ++i)
+       for(int j = 0; j < 3; ++j)
+           atomsDisplacementsGaussian[i][j]=d_gaussianMovementAtomsNetDisplacements[i][j];
+
+    dftUtils::writeDataIntoFile(atomsDisplacementsGaussian,
+			        "atomsGaussianDispCoord.chk");
 }

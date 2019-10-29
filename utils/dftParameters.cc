@@ -40,6 +40,8 @@ namespace dftfe
       bool isPseudopotential=false,periodicX=false,periodicY=false,periodicZ=false, useSymm=false, timeReversal=false,pseudoTestsFlag=false, constraintMagnetization=false, writeDosFile=false, writeLdosFile=false, writeLocalizationLengths=false;
       std::string meshFileName="",coordinatesFile="",domainBoundingVectorsFile="",kPointDataFile="", ionRelaxFlagsFile="",orthogType="", algoType="", pseudoPotentialFile="";
 
+      std::string coordinatesGaussianDispFile="";
+
       double outerAtomBallRadius=2.0, innerAtomBallRadius=0.0, meshSizeOuterDomain=10.0;
       double meshSizeInnerBall=1.0, meshSizeOuterBall=1.0;
       unsigned int numLevels = 1,numberWaveFunctionsForEstimate = 5;
@@ -178,6 +180,10 @@ namespace dftfe
 	    prm.declare_entry("ATOMIC COORDINATES FILE", "",
 			      Patterns::Anything(),
 			      "[Standard] Atomic-coordinates input file name. For fully non-periodic domain give Cartesian coordinates of the atoms (in a.u) with respect to origin at the center of the domain. For periodic and semi-periodic domain give fractional coordinates of atoms. File format (example for two atoms): Atom1-atomic-charge Atom1-valence-charge x1 y1 z1 (row1), Atom2-atomic-charge Atom2-valence-charge x2 y2 z2 (row2). The number of rows must be equal to NATOMS, and number of unique atoms must be equal to NATOM TYPES.");
+
+	    prm.declare_entry("ATOMIC DISP COORDINATES FILE", "",
+			      Patterns::Anything(),
+			      "[Standard] Atomic displacement coordinates input file name. The FEM mesh is deformed using Gaussian functions attached to the atoms. File format (example for two atoms): delx1 dely1 delz1 (row1), delx2 dely2 delz2 (row2). The number of rows must be equal to NATOMS. Units in a.u.");
 
 	    prm.declare_entry("NATOMS", "0",
 			    Patterns::Integer(0),
@@ -649,6 +655,7 @@ namespace dftfe
 	    dftParameters::natoms                        = prm.get_integer("NATOMS");
 	    dftParameters::natomTypes                    = prm.get_integer("NATOM TYPES");
 	    dftParameters::coordinatesFile               = prm.get("ATOMIC COORDINATES FILE");
+	    dftParameters::coordinatesGaussianDispFile   = prm.get("ATOMIC DISP COORDINATES FILE");
 	    dftParameters::domainBoundingVectorsFile     = prm.get("DOMAIN VECTORS FILE");
 	    prm.enter_subsection ("Optimization");
 	    {
@@ -795,7 +802,7 @@ namespace dftfe
 	   dftParameters::absLinearSolverToleranceHelmholtz  = prm.get_double("ABSOLUTE TOLERANCE HELMHOLTZ");
 	}
 	prm.leave_subsection ();
-	
+
 	if (restartFromChk==true && chkType==1)
 	{
 	    if (dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ)
@@ -804,6 +811,8 @@ namespace dftfe
 		dftParameters::coordinatesFile="atomsCartCoord.chk";
 
 	    dftParameters::domainBoundingVectorsFile="domainBoundingVectors.chk";
+
+	    dftParameters::coordinatesGaussianDispFile="atomsGaussianDispCoord.chk";
 	}
 
 	if (dftParameters::algoType=="FAST")

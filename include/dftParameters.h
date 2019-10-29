@@ -43,6 +43,8 @@ namespace dftfe {
       extern bool isPseudopotential, periodicX, periodicY, periodicZ, useSymm, timeReversal,pseudoTestsFlag, constraintMagnetization, writeDosFile, writeLdosFile,writeLocalizationLengths, pinnedNodeForPBC;
       extern std::string meshFileName,coordinatesFile,domainBoundingVectorsFile,kPointDataFile, ionRelaxFlagsFile, orthogType, algoType, pseudoPotentialFile;
 
+      extern std::string coordinatesGaussianDispFile;
+
       extern double outerAtomBallRadius, innerAtomBallRadius, meshSizeOuterDomain;
       extern bool autoUserMeshParams;
       extern double meshSizeInnerBall, meshSizeOuterBall;
