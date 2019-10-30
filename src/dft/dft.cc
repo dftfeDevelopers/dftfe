@@ -309,6 +309,25 @@ namespace dftfe {
       }
 
     //
+    //read Gaussian atomic displacements
+    //
+    std::vector<std::vector<double> > atomsDisplacementsGaussian;
+    d_atomsDisplacementsGaussianRead.resize(atomLocations.size(),Tensor<1,3,double>());
+    d_gaussianMovementAtomsNetDisplacements.resize(atomLocations.size(),Tensor<1,3,double>());
+    if (dftParameters::coordinatesGaussianDispFile!="")
+    {
+	dftUtils::readFile(3,
+			   atomsDisplacementsGaussian,
+			   dftParameters::coordinatesGaussianDispFile);
+
+	for(int i = 0; i < atomsDisplacementsGaussian.size(); ++i)
+	    for(int j = 0; j < 3; ++j)
+	      d_atomsDisplacementsGaussianRead[i][j] = atomsDisplacementsGaussian[i][j];
+
+	d_isAtomsGaussianDisplacementsReadFromFile=true;
+    }
+
+    //
     //read domain bounding Vectors
     //
     unsigned int numberColumnsLatticeVectorsFile = 3;
@@ -591,7 +610,9 @@ namespace dftfe {
 	d_mesh.generateCoarseMeshesForRestart(atomLocations,
 					      d_imagePositions,
 					      d_domainBoundingVectors,
-					      dftParameters::useSymm || dftParameters::isIonOpt || dftParameters::createConstraintsFromSerialDofhandler);
+					      dftParameters::useSymm 
+					      || (dftParameters::isIonOpt && (dftParameters::reuseWfcGeoOpt || dftParameters::reuseDensityGeoOpt))
+					      || dftParameters::createConstraintsFromSerialDofhandler);
 	loadTriaInfoAndRhoData();
       }
     else
@@ -600,7 +621,7 @@ namespace dftfe {
 								d_imagePositions,
 								d_domainBoundingVectors,
 								dftParameters::useSymm
-								|| dftParameters::isIonOpt
+								|| (dftParameters::isIonOpt && (dftParameters::reuseWfcGeoOpt || dftParameters::reuseDensityGeoOpt))
 								|| dftParameters::createConstraintsFromSerialDofhandler,
 								dftParameters::electrostaticsHRefinement);
 
@@ -628,7 +649,7 @@ namespace dftfe {
       symmetryPtr->initSymmetry() ;
 #endif
 
-    
+
 
 
     //
@@ -666,6 +687,10 @@ namespace dftfe {
     if (dftParameters::verbosity>=4)
       dftUtils::printCurrentMemoryUsage(mpi_communicator,
 	                      "initPseudopotential completed");
+
+    if (d_isAtomsGaussianDisplacementsReadFromFile)
+	updateAtomPositionsAndMoveMesh(d_atomsDisplacementsGaussianRead,1e+4);
+
     computingTimerStandard.exit_section("KSDFT problem initialization");
   }
 
@@ -677,7 +702,7 @@ namespace dftfe {
     if(updateImageKPoints)
       initImageChargesUpdateKPoints();
 
-    if(dftParameters::isIonOpt)
+    if(dftParameters::isIonOpt && (dftParameters::reuseWfcGeoOpt || dftParameters::reuseDensityGeoOpt))
        updatePrevMeshDataStructures();
     //
     //reinitialize dirichlet BCs for total potential and vSelf poisson solutions
@@ -927,7 +952,7 @@ namespace dftfe {
 						     d_constraintsPRefined,
 						     d_preCondResidualVector,
 						     dftParameters::kerkerParameter);
-    
+
 
 
     //
@@ -1069,7 +1094,7 @@ namespace dftfe {
 		    if(dftParameters::mixingMethod=="ANDERSON_WITH_KERKER")
 		      norm = sqrt(nodalDensity_mixing_simple(kerkerPreconditionedResidualSolverProblem,
 							     dealiiCGSolver));
-		    else		  
+		    else
 		      norm = sqrt(mixing_simple());
 		  }
 
@@ -1176,7 +1201,7 @@ namespace dftfe {
 	    vectorType tempDealiiVec;
 	    matrix_free_data.initialize_dof_vector(tempDealiiVec);
 	    tempDealiiVec = shiftingConst;
-	
+
 	    d_phiTotRhoIn -= tempDealiiVec;
 
 	    if (dftParameters::verbosity>=2)
@@ -1708,7 +1733,7 @@ namespace dftfe {
 		double shiftingConst = integPhi/volume;
 
 		vectorType tempDealiiVec;
-		matrix_free_data.initialize_dof_vector(tempDealiiVec);  
+		matrix_free_data.initialize_dof_vector(tempDealiiVec);
 		tempDealiiVec = shiftingConst;
 
 		d_phiTotRhoOut -= tempDealiiVec;

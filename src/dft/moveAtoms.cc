@@ -306,7 +306,7 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 
       d_mesh.generateResetMeshes(d_domainBoundingVectors,
 				 dftParameters::useSymm
-				 || dftParameters::isIonOpt
+				 || (dftParameters::isIonOpt && (dftParameters::reuseWfcGeoOpt || dftParameters::reuseDensityGeoOpt))
 				 || dftParameters::createConstraintsFromSerialDofhandler,
 				 dftParameters::electrostaticsHRefinement);
 
@@ -322,12 +322,14 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
       forcePtr->initUnmoved(d_mesh.getParallelMeshMoved(),
 			    d_mesh.getSerialMeshUnmoved(),
 			    d_domainBoundingVectors,
-			    false);
+			    false,
+			    d_gaussianConstantForce);
 
       forcePtr->initUnmoved(d_mesh.getParallelMeshMoved(),
 			    d_mesh.getSerialMeshUnmoved(),
 			    d_domainBoundingVectors,
-			    true);
+			    true,
+			    d_gaussianConstantForce);
 
       //meshMovementGaussianClass gaussianMove(mpi_communicator);
       d_gaussianMovePar.init(d_mesh.getParallelMeshMoved(),

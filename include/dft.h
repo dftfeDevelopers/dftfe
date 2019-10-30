@@ -336,7 +336,7 @@ namespace dftfe {
 
       /**
        *@brief interpolate nodal data to quadrature data using FEEvaluation
-       * 
+       *
        *@param[in] matrixFreeData matrix free data object
        *@param[in] nodalField nodal data to be interpolated
        *@param[out] quadratureValueData to be computed at quadrature points
@@ -614,6 +614,15 @@ namespace dftfe {
       std::vector<std::vector<double> > atomLocations,atomLocationsFractional,d_reciprocalLatticeVectors, d_domainBoundingVectors,d_atomLocationsInitial;
       std::vector<std::vector<double> > d_atomLocationsAutoMesh;
       std::vector<std::vector<double> > d_imagePositionsAutoMesh;
+
+      /// Gaussian displacements of atoms read from file
+      std::vector<Tensor<1,3,double> > d_atomsDisplacementsGaussianRead;
+
+      bool d_isAtomsGaussianDisplacementsReadFromFile=false;
+
+      /// Gaussian generator parameter for force computation and Gaussian deformation of atoms and FEM mesh
+      /// Gaussian generator: Gamma(r)= exp(-(r/d_gaussianConstant)^2)
+      const double d_gaussianConstantForce=0.75;
 
       /// vector of lendth number of periodic image charges with corresponding master chargeIds
       std::vector<int> d_imageIds;
