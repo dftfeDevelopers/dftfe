@@ -306,7 +306,7 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 
       d_mesh.generateResetMeshes(d_domainBoundingVectors,
 				 dftParameters::useSymm
-				 || dftParameters::isIonOpt
+				 || (dftParameters::isIonOpt && (dftParameters::reuseWfcGeoOpt || dftParameters::reuseDensityGeoOpt))
 				 || dftParameters::createConstraintsFromSerialDofhandler,
 				 dftParameters::electrostaticsHRefinement);
 
