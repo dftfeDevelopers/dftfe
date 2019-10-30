@@ -147,8 +147,11 @@ namespace dftfe {
 	    cg_descent.set_lbfgs(true);
 	    if(this_mpi_process == 0)
 	      cg_descent.set_PrintLevel(2);
-
-	    cg_descent.set_memory(std::min((unsigned int)100,getNumberUnknowns()));
+           
+	    unsigned int memory=std::min((unsigned int)100,getNumberUnknowns());
+	    if (memory<=2)
+		memory=0;
+	    cg_descent.set_memory(memory);
             cgSuccess = cg_descent.run(*this);
 
 	  }
@@ -159,7 +162,10 @@ namespace dftfe {
 	      cg_descent.set_PrintLevel(2);
             cg_descent.set_AWolfe(true);
 
-	    cg_descent.set_memory(std::min((unsigned int)100,getNumberUnknowns()));
+            unsigned int memory=std::min((unsigned int)100,getNumberUnknowns());
+	    if (memory<=2)
+	       memory=0;
+	    cg_descent.set_memory(memory);
             cgSuccess = cg_descent.run(*this);
 	  }
 

@@ -371,7 +371,8 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
    forcePtr->initUnmoved(electrostaticsTriaRho,
 		         d_mesh.getSerialMeshElectrostatics(),
 			 d_domainBoundingVectors,
-			 true);
+			 true,
+			 d_gaussianConstantForce);
 
    d_mesh.resetMesh(electrostaticsTriaDisp,
 		    electrostaticsTriaRho);

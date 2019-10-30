@@ -38,6 +38,7 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
   const unsigned int numberImageAtoms = d_imageIds.size();
 
   std::vector<Point<3>> atomPoints;
+  d_atomLocationsAutoMesh.resize(numberGlobalAtoms,std::vector<double>(3,0.0));
   for (unsigned int iAtom=0;iAtom <numberGlobalAtoms; iAtom++)
   {
       Point<3> atomCoor;
@@ -45,6 +46,8 @@ void dftClass<FEOrder>::moveMeshToAtoms(Triangulation<3,3> & triangulationMove,
       atomCoor[1] = atomLocations[iAtom][3];
       atomCoor[2] = atomLocations[iAtom][4];
       atomPoints.push_back(atomCoor);
+      for (unsigned int j=0;j <3; j++)
+          d_atomLocationsAutoMesh[iAtom][j]=atomCoor[j];
   }
 
   std::vector<Point<3>> closestTriaVertexToAtomsLocation;
