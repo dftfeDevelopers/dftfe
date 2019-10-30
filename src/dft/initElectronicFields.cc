@@ -234,7 +234,7 @@ void dftClass<FEOrder>::initElectronicFields(const unsigned int usePreviousGroun
       }
   }
 
-  if  (dftParameters::isIonOpt)
+  if  (dftParameters::isIonOpt && (dftParameters::reuseWfcGeoOpt || dftParameters::reuseDensityGeoOpt))
     updatePrevMeshDataStructures();
 
   if (dftParameters::verbosity>=2)

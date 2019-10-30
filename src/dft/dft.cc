@@ -594,7 +594,9 @@ namespace dftfe {
 	d_mesh.generateCoarseMeshesForRestart(atomLocations,
 					      d_imagePositions,
 					      d_domainBoundingVectors,
-					      dftParameters::useSymm || dftParameters::isIonOpt || dftParameters::createConstraintsFromSerialDofhandler);
+					      dftParameters::useSymm 
+					      || (dftParameters::isIonOpt && (dftParameters::reuseWfcGeoOpt || dftParameters::reuseDensityGeoOpt))
+					      || dftParameters::createConstraintsFromSerialDofhandler);
 	loadTriaInfoAndRhoData();
       }
     else
@@ -603,7 +605,7 @@ namespace dftfe {
 								d_imagePositions,
 								d_domainBoundingVectors,
 								dftParameters::useSymm
-								|| dftParameters::isIonOpt
+								|| (dftParameters::isIonOpt && (dftParameters::reuseWfcGeoOpt || dftParameters::reuseDensityGeoOpt))
 								|| dftParameters::createConstraintsFromSerialDofhandler,
 								dftParameters::electrostaticsHRefinement);
 
@@ -684,7 +686,7 @@ namespace dftfe {
     if(updateImageKPoints)
       initImageChargesUpdateKPoints();
 
-    if(dftParameters::isIonOpt)
+    if(dftParameters::isIonOpt && (dftParameters::reuseWfcGeoOpt || dftParameters::reuseDensityGeoOpt))
        updatePrevMeshDataStructures();
     //
     //reinitialize dirichlet BCs for total potential and vSelf poisson solutions
