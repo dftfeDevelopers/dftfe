@@ -99,7 +99,8 @@ namespace internal{
 // or move mesh using Gaussian functions.
 template<unsigned int FEOrder>
 void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<1,3,double> > & globalAtomsDisplacements,
-	                                               double maximumForceToBeRelaxed)
+	                                               double maximumForceToBeRelaxed,
+						       const bool useSingleAtomSolutions)
 
 {
   const int numberGlobalAtoms = atomLocations.size();
@@ -303,7 +304,13 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 	d_mesh.getParallelMeshMoved());*/
 
 
-
+      // Re-generate serial and parallel meshes from saved refinement flags
+      // to get back the unmoved meshes as Gaussian movement can only be done starting from
+      // the unmoved meshes.
+      // While parallel meshes are always generated, serial meshes are only generated
+      // for following three cases: symmetrization is on, ionic optimization is on as well
+      // as reuse wfcs and density from previous ionic step is on, or if serial constraints
+      // generation is on.
       d_mesh.generateResetMeshes(d_domainBoundingVectors,
 				 dftParameters::useSymm
 				 || (dftParameters::isIonOpt && (dftParameters::reuseWfcGeoOpt || dftParameters::reuseDensityGeoOpt))
@@ -444,7 +451,7 @@ void dftClass<FEOrder>::updateAtomPositionsAndMoveMesh(const std::vector<Tensor<
 	      if (!dftParameters::reproducible_output)
 	         pcout << "Now Reinitializing all moved triangulation dependent objects..." << std::endl;
 
-	      initNoRemesh(false,(!dftParameters::reproducible_output && maxCurrentDispAtom>0.06)?true:false);
+	      initNoRemesh(false,(!dftParameters::reproducible_output && maxCurrentDispAtom>0.06) || useSingleAtomSolutions?true:false);
 	      if (!dftParameters::reproducible_output)
 	         pcout << "...Reinitialization end" << std::endl;
 	    }

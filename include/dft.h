@@ -234,7 +234,8 @@ namespace dftfe {
        *  @return void.
        */
       void updateAtomPositionsAndMoveMesh(const std::vector<Tensor<1,3,double> > & globalAtomsDisplacements,
-	                                  double maxDisplacement);
+	                                  double maxDisplacement,
+					  const bool useSingleAtomSolutions=false);
 
 
       /**
