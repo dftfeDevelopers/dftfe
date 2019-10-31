@@ -325,6 +325,12 @@ namespace dftfe
     return d_cellWaveFunctionMatrix;
   }
 
+  template<unsigned int FEOrder>
+  thrust::device_vector<unsigned int> & kohnShamDFTOperatorCUDAClass<FEOrder>::getLocallyOwnedProcBoundaryNodesVectorDevice()
+  {
+    return d_locallyOwnedProcBoundaryNodesVectorDevice;
+  }
+
   //
   //initialize kohnShamDFTOperatorCUDAClass object
   //

@@ -96,6 +96,8 @@ namespace dftfe{
 
       thrust::device_vector<dataTypes::number> & getCellWaveFunctionMatrix();
 
+      thrust::device_vector<unsigned int> & getLocallyOwnedProcBoundaryNodesVectorDevice();
+
       /**
        * @brief Compute operator times vector or operator times bunch of vectors
        * @param X Vector of Vectors containing current values of X

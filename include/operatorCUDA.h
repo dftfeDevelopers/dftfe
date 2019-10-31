@@ -104,6 +104,8 @@ namespace dftfe{
 
     virtual thrust::device_vector<dataTypes::number> & getCellWaveFunctionMatrix() = 0;
 
+    virtual thrust::device_vector<unsigned int> & getLocallyOwnedProcBoundaryNodesVectorDevice() = 0;
+
    /**
     * @brief initializes parallel layouts and index maps for HX, XtHX and creates a flattened array format for X
     *

@@ -247,18 +247,38 @@ namespace dftfe
                 
       }
 
-	    __global__
-	    void convFloatArrToDoubleArr(const unsigned int size,
+      __global__
+      void convFloatArrToDoubleArr(const unsigned int size,
 					 const float *floatArr,
 					 double *doubleArr)
-	    {
+      {
 
 	      const unsigned int globalThreadId = blockIdx.x*blockDim.x + threadIdx.x;
 
 	      for(unsigned int index = globalThreadId; index < size; index+= blockDim.x*gridDim.x)
 		doubleArr[index]=floatArr[index];
 
-	    }
+      }
+
+      __global__
+      void copyFloatArrToDoubleArrLocallyOwned(const unsigned int contiguousBlockSize,
+						     const unsigned int numContiguousBlocks,
+						     const float *floatArr,
+						     const unsigned int *locallyOwnedFlagArr,
+						     double *doubleArr)
+      {
+
+	      const unsigned int globalThreadId = blockIdx.x*blockDim.x + threadIdx.x;
+	      const unsigned int numberEntries = numContiguousBlocks*contiguousBlockSize;
+
+	      for(unsigned int index = globalThreadId; index < numberEntries; index+= blockDim.x*gridDim.x)
+		{
+		  unsigned int blockIndex = index/contiguousBlockSize;
+		  if(locallyOwnedFlagArr[blockIndex] == 1)
+		    doubleArr[index]=floatArr[index];
+		}
+
+      }
 
     }
 
@@ -698,11 +718,11 @@ namespace dftfe
 				 XArray1,
 				 dftParameters::useMixedPrecCheby);
 
-	      daxpbyCUDAKernel<<<min((totalVectorSize+255)/256,30000),256>>>(totalVectorSize,
-									     YArray2.begin(),
-									     XArray2.begin(),
-          		                                                     coeff,
-		                                                             alpha2);
+	  daxpbyCUDAKernel<<<min((totalVectorSize+255)/256,30000),256>>>(totalVectorSize,
+	 							         YArray2.begin(),
+									 XArray2.begin(),
+          		                                                 coeff,
+		                                                         alpha2);
 
 
           //scale src vector with M^{-1/2}
@@ -823,7 +843,15 @@ namespace dftfe
           }
 
           //unsigned int id2=nvtxRangeStartA("ghost1");
-          YArray1.update_ghost_values_start();
+          if (dftParameters::useMixedPrecCheby)
+          {
+		convDoubleArrToFloatArr<<<(numberVectors+255)/256*localVectorSize,256>>>(numberVectors*localVectorSize,
+										   YArray1.begin(),
+									           tempFloatArray.begin());
+		tempFloatArray.update_ghost_values_start();
+          }
+          else
+            YArray1.update_ghost_values_start();
 
           if (overlap)
              operatorMatrix.HXCheby(YArray2,
@@ -836,7 +864,17 @@ namespace dftfe
                                  false,
                                  true);
 
-          YArray1.update_ghost_values_finish();
+          if (dftParameters::useMixedPrecCheby)
+          {
+		tempFloatArray.update_ghost_values_finish();
+		if(n_ghosts!=0)
+		  convFloatArrToDoubleArr<<<(numberVectors+255)/256*n_ghosts,256>>>(numberVectors*n_ghosts,
+									            tempFloatArray.begin()+localVectorSize*numberVectors,
+										    YArray1.begin()+localVectorSize*numberVectors);
+          }
+          else
+            YArray1.update_ghost_values_finish();
+
           if (overlap)
              YArray2.zero_out_ghosts();
           //nvtxRangeEnd(id2);
@@ -845,7 +883,15 @@ namespace dftfe
           //unsigned int id1=nvtxRangeStartA("compress2");
           if (overlap)
           {
-             XArray2.compress_start(dealii::VectorOperation::add);
+             if (dftParameters::useMixedPrecCheby)
+             {
+		convDoubleArrToFloatArr<<<(numberVectors+255)/256*totalSize,256>>>(numberVectors*totalSize,
+									           XArray2.begin(),
+										   tempFloatArray.begin());
+                tempFloatArray.compress_start(dealii::VectorOperation::add);
+             }
+             else
+                XArray2.compress_start(dealii::VectorOperation::add);
           }
           operatorMatrix.HXCheby(YArray1,
 				 tempFloatArray,
@@ -859,7 +905,20 @@ namespace dftfe
 
           if (overlap)
           {
-            XArray2.compress_finish(dealii::VectorOperation::add);
+            if (dftParameters::useMixedPrecCheby)
+            {
+		tempFloatArray.compress_finish(dealii::VectorOperation::add);
+
+		copyFloatArrToDoubleArrLocallyOwned<<<(numberVectors+255)/256*localVectorSize,256>>>(numberVectors,
+											       localVectorSize,
+											       tempFloatArray.begin(),
+											       thrust::raw_pointer_cast(&operatorMatrix.getLocallyOwnedProcBoundaryNodesVectorDevice()[0]),
+											       XArray2.begin());
+
+		XArray2.zero_out_ghosts();
+            }
+            else
+               XArray2.compress_finish(dealii::VectorOperation::add);
             XArray2.swap(YArray2);
           }
           //nvtxRangeEnd(id1);
@@ -880,7 +939,15 @@ namespace dftfe
           projectorKetTimesVector1.update_ghost_values();
 
           //unsigned int id3=nvtxRangeStartA("ghost2");
-          YArray2.update_ghost_values_start(); 
+          if (dftParameters::useMixedPrecCheby)
+          {
+	     convDoubleArrToFloatArr<<<(numberVectors+255)/256*localVectorSize,256>>>(numberVectors*localVectorSize,
+										   YArray2.begin(),
+									           tempFloatArray.begin());
+	     tempFloatArray.update_ghost_values_start();
+          }
+          else
+             YArray2.update_ghost_values_start(); 
           operatorMatrix.HXCheby(YArray1,
 				 tempFloatArray,
                                  projectorKetTimesVector1,
@@ -891,7 +958,16 @@ namespace dftfe
                                  false,
                                  true);
 
-          YArray2.update_ghost_values_finish();
+          if (dftParameters::useMixedPrecCheby)
+          {
+	      tempFloatArray.update_ghost_values_finish();
+	      if(n_ghosts!=0)
+		  convFloatArrToDoubleArr<<<(numberVectors+255)/256*n_ghosts,256>>>(numberVectors*n_ghosts,
+									            tempFloatArray.begin()+localVectorSize*numberVectors,
+										    YArray2.begin()+localVectorSize*numberVectors);
+          }
+          else
+             YArray2.update_ghost_values_finish();
           YArray1.zero_out_ghosts();
           //nvtxRangeEnd(id3);
 
@@ -899,7 +975,15 @@ namespace dftfe
           projectorKetTimesVector2=0.0;
 
           //unsigned int id4=nvtxRangeStartA("compress1");
-          XArray1.compress_start(dealii::VectorOperation::add);
+          if (dftParameters::useMixedPrecCheby)
+          {
+	     convDoubleArrToFloatArr<<<(numberVectors+255)/256*totalSize,256>>>(numberVectors*totalSize,
+						              XArray1.begin(),
+							      tempFloatArray.begin());
+             tempFloatArray.compress_start(dealii::VectorOperation::add);
+          }
+          else
+             XArray1.compress_start(dealii::VectorOperation::add);
 
           operatorMatrix.HXCheby(YArray2,
 				 tempFloatArray,
@@ -911,7 +995,20 @@ namespace dftfe
                                  true,
                                  false);
 
-          XArray1.compress_finish(dealii::VectorOperation::add);
+          if (dftParameters::useMixedPrecCheby)
+          {
+	      tempFloatArray.compress_finish(dealii::VectorOperation::add);
+
+	      copyFloatArrToDoubleArrLocallyOwned<<<(numberVectors+255)/256*localVectorSize,256>>>(numberVectors,
+											       localVectorSize,
+											       tempFloatArray.begin(),
+											       thrust::raw_pointer_cast(&operatorMatrix.getLocallyOwnedProcBoundaryNodesVectorDevice()[0]),
+											       XArray1.begin());
+
+	     XArray1.zero_out_ghosts();
+          }
+          else
+             XArray1.compress_finish(dealii::VectorOperation::add);
           //nvtxRangeEnd(id4);
 
           if (degree==(m-1))
@@ -930,7 +1027,23 @@ namespace dftfe
 				   false,
 				   true);
             YArray2.zero_out_ghosts();
-            XArray2.compress(dealii::VectorOperation::add);
+            if (dftParameters::useMixedPrecCheby)
+            {
+	         convDoubleArrToFloatArr<<<(numberVectors+255)/256*totalSize,256>>>(numberVectors*totalSize,
+						              XArray2.begin(),
+							      tempFloatArray.begin());
+	         tempFloatArray.compress(dealii::VectorOperation::add);
+
+	         copyFloatArrToDoubleArrLocallyOwned<<<(numberVectors+255)/256*localVectorSize,256>>>(numberVectors,
+											       localVectorSize,
+											       tempFloatArray.begin(),
+											       thrust::raw_pointer_cast(&operatorMatrix.getLocallyOwnedProcBoundaryNodesVectorDevice()[0]),
+											       XArray2.begin());
+
+	        XArray2.zero_out_ghosts();
+             }
+             else
+                XArray2.compress(dealii::VectorOperation::add);
             overlap=false;
           }
           else
