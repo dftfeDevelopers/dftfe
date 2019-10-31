@@ -650,7 +650,8 @@ namespace dftfe {
 
     return constraints.is_consistent_in_parallel(locally_owned_dofs_debug,
                                                locally_active_dofs_debug,
-                                               mpi_communicator);
+                                               mpi_communicator,
+                                               !dftParameters::reproducible_output);
   }
 
   //
