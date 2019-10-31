@@ -588,13 +588,17 @@ namespace dftfe {
     computing_timer.enter_section("mesh generation");
     //
     //generate mesh (both parallel and serial)
+    //while parallel meshes are always generated, serial meshes are only generated
+    //for following three cases: symmetrization is on, ionic optimization is on as well
+    //as reuse wfcs and density from previous ionic step is on, or if serial constraints
+    //generation is on.
     //
     if (dftParameters::chkType==2 && dftParameters::restartFromChk)
       {
 	d_mesh.generateCoarseMeshesForRestart(atomLocations,
 					      d_imagePositions,
 					      d_domainBoundingVectors,
-					      dftParameters::useSymm 
+					      dftParameters::useSymm
 					      || (dftParameters::isIonOpt && (dftParameters::reuseWfcGeoOpt || dftParameters::reuseDensityGeoOpt))
 					      || dftParameters::createConstraintsFromSerialDofhandler);
 	loadTriaInfoAndRhoData();
@@ -672,8 +676,18 @@ namespace dftfe {
       dftUtils::printCurrentMemoryUsage(mpi_communicator,
 	                      "initPseudopotential completed");
 
+    //
+    //Apply Gaussian displacments to atoms and mesh if input gaussian displacments
+    //are read from file. When restarting a relaxation, this must be done only once
+    //at the begining- this is why the flag is to false after the Gaussian movement.
+    //The last flag to updateAtomPositionsAndMoveMesh is set to true to force use of
+    //single atom solutions.
+    //
     if (d_isAtomsGaussianDisplacementsReadFromFile)
-	updateAtomPositionsAndMoveMesh(d_atomsDisplacementsGaussianRead,1e+4);
+    {
+	updateAtomPositionsAndMoveMesh(d_atomsDisplacementsGaussianRead,1e+4,true);
+	d_isAtomsGaussianDisplacementsReadFromFile=false;
+    }
 
     computingTimerStandard.exit_section("KSDFT problem initialization");
   }
@@ -686,6 +700,9 @@ namespace dftfe {
     if(updateImageKPoints)
       initImageChargesUpdateKPoints();
 
+    // update mesh and other data structures required for interpolating solution fields from previous
+    // atomic configuration mesh to the current atomic configuration during an automesh step. Currently
+    // this is only required if reuseWfcGeoOpt or reuseDensityGeoOpt is on.
     if(dftParameters::isIonOpt && (dftParameters::reuseWfcGeoOpt || dftParameters::reuseDensityGeoOpt))
        updatePrevMeshDataStructures();
     //
