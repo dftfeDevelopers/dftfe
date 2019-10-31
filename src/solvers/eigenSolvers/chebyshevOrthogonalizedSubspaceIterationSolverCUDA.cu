@@ -289,12 +289,6 @@ namespace dftfe
     if (dftParameters::overlapComputeCommunCheby)
            YArray2.reinit(cudaFlattenedArrayBlock2);
 
-    cudaVectorTypeFloat cudaFlattenedFloatArrayBlock2;
-    if (dftParameters::useMixedPrecCheby && dftParameters::overlapComputeCommunCheby)
-       vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
-                                    vectorsBlockSize,
-                                    cudaFlattenedFloatArrayBlock2);
-
 
     cudaVectorType projectorKetTimesVector2;
     if (dftParameters::overlapComputeCommunCheby)

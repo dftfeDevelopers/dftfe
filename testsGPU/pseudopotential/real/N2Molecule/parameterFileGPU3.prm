@@ -9,7 +9,7 @@ subsection Geometry
   set ATOMIC COORDINATES FILE      = coordinates.inp 
   set DOMAIN VECTORS FILE = domainVectors.inp
   subsection Optimization
-    set ION FORCE = true
+    set ION FORCE = false
   end
 end
 
