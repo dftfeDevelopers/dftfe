@@ -105,6 +105,7 @@ namespace dftfe {
       extern bool allowFullCPUMemSubspaceRot;
       extern bool useMixedPrecCheby;
       extern unsigned int mixedPrecXtHXFracStates;
+      extern bool overlapComputeCommunCheby;
 
 
 

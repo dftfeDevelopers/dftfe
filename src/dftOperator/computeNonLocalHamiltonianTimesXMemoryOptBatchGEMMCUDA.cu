@@ -16,12 +16,17 @@
 // @author Sambit Das
 //
 
-
+// skip1 and skip2 are flags used by chebyshevFilter function to perform overlap of computation and communication.
+// When either skip1 or skip2 flags are set to true all communication calls are skipped as they are directly called in chebyshevFilter
+// Only one of the skip flags is set to true in a call. When skip1 is set to true extraction and C^{T}*X computation are skipped
+// and computations directly start from V*C^{T}*X. When skip2 is set to true only extraction and C^{T}*X computations are performed.
 template<unsigned int FEOrder>
 void kohnShamDFTOperatorCUDAClass<FEOrder>::computeNonLocalHamiltonianTimesX(const double* src,
 									     cudaVectorType &  projectorKetTimesVector,
 									     const unsigned int numberWaveFunctions,
-									     double* dst)
+									     double* dst,
+const bool skip1,
+const bool skip2)
 
 {
 	 
@@ -34,7 +39,7 @@ void kohnShamDFTOperatorCUDAClass<FEOrder>::computeNonLocalHamiltonianTimesX(con
   unsigned int strideB = d_numberNodesPerElement*d_maxSingleAtomPseudoWfc; 
   unsigned int strideC = numberWaveFunctions*d_maxSingleAtomPseudoWfc;
 
-  if (d_totalNonlocalElems>0)
+  if (d_totalNonlocalElems>0 && !skip1)
   { 
 	  copyCUDAKernel<<<(numberWaveFunctions+255)/256*d_totalNonlocalElems*d_numberNodesPerElement,256>>>
 									     (numberWaveFunctions, 
@@ -81,12 +86,13 @@ void kohnShamDFTOperatorCUDAClass<FEOrder>::computeNonLocalHamiltonianTimesX(con
 
   }
 
+  // this routine was interfering with overlapping communication and compute. So called separately inside chebyshevFilter.
+  // So skip this if either skip1 or skip2 are set to true
+  if (!skip1 && !skip2)
+    projectorKetTimesVector=0.0;
 
-  projectorKetTimesVector=0.0;
-
-  //std::cout<<"nonlocal l2 norm: "<<d_projectorKetTimesVectorDealiiParFlattenedDevice.l2_norm()<<std::endl;
   
-  if (d_totalNonlocalElems>0)
+  if (d_totalNonlocalElems>0 && !skip1)
     copyToDealiiParallelNonLocalVec<<<(numberWaveFunctions+255)/256*d_totalPseudoWfcNonLocal,256>>>
 						     (numberWaveFunctions, 
 						      d_totalPseudoWfcNonLocal,
@@ -94,12 +100,19 @@ void kohnShamDFTOperatorCUDAClass<FEOrder>::computeNonLocalHamiltonianTimesX(con
                                                       projectorKetTimesVector.begin(),
 						      thrust::raw_pointer_cast(&d_projectorIdsParallelNumberingMapDevice[0]));
 
+  // Operations related to skip2 (extraction and C^{T}*X) are over. So return control back to chebyshevFilter
+  if (skip2)
+     return;
   
+  if (!skip1)
+  {
     projectorKetTimesVector.compress(VectorOperation::add);
     projectorKetTimesVector.update_ghost_values();
-  
-  //std::cout<<"nonlocal l2 norm: "<<projectorKetTimesVector.l2_norm()<<std::endl;
-
+  }
+ 
+  //
+  // Start operations related to skip1 (V*C^{T}*X, C*V*C^{T}*X and assembly)
+  // 
   if (d_totalNonlocalElems>0) 
   {
 	  //
@@ -168,7 +181,4 @@ void kohnShamDFTOperatorCUDAClass<FEOrder>::computeNonLocalHamiltonianTimesX(con
                                                                       thrust::raw_pointer_cast(&d_cellHamMatrixTimesWaveMatrix[0]),
                                                                       dst,
                                                                       thrust::raw_pointer_cast(&d_flattenedArrayCellLocalProcIndexIdMapDevice[0]));
-
-   
-   //std::cout<<"dst norm: "<<dst.l2_norm()<<std::endl;
 }

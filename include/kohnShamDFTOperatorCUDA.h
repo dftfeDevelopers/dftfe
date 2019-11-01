@@ -96,6 +96,8 @@ namespace dftfe{
 
       thrust::device_vector<dataTypes::number> & getCellWaveFunctionMatrix();
 
+      thrust::device_vector<unsigned int> & getLocallyOwnedProcBoundaryNodesVectorDevice();
+
       /**
        * @brief Compute operator times vector or operator times bunch of vectors
        * @param X Vector of Vectors containing current values of X
@@ -132,7 +134,10 @@ namespace dftfe{
 		   const unsigned int localVectorSize,
 		   const unsigned int numberComponents,
 		   cudaVectorType & Y,
-                   bool mixedPrecflag=false);
+                   bool mixedPrecflag=false,
+                   bool computePart1=false,
+                   bool computePart2=false);
+
 
       /**
        * @brief Compute projection of the operator into orthogonal basis
@@ -439,7 +444,9 @@ namespace dftfe{
       void computeNonLocalHamiltonianTimesX(const double *src,
                                             cudaVectorType & projectorKetTimesVector,
 					    const unsigned int numberWaveFunctions,
-					    double* dst);
+					    double* dst,
+                                            const bool skip1=false,
+                                            const bool skip2=false);
 
 
 

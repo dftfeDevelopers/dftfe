@@ -278,6 +278,25 @@ namespace dftfe
 				    projectorKetTimesVector);
 
 
+    cudaVectorType cudaFlattenedArrayBlock2;
+    if (dftParameters::overlapComputeCommunCheby)
+	   vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
+					    vectorsBlockSize,
+					    cudaFlattenedArrayBlock2);
+
+
+    cudaVectorType YArray2;
+    if (dftParameters::overlapComputeCommunCheby)
+           YArray2.reinit(cudaFlattenedArrayBlock2);
+
+
+    cudaVectorType projectorKetTimesVector2;
+    if (dftParameters::overlapComputeCommunCheby)
+	    vectorTools::createDealiiVector(operatorMatrix.getProjectorKetTimesVectorSingle().get_partitioner(),
+					    vectorsBlockSize,
+					    projectorKetTimesVector2);
+
+
 
     if(!isElpaStep2)
     {
@@ -334,22 +353,23 @@ namespace dftfe
 	    //operatorMatrix.getOverloadedConstraintMatrix()->set_zero(eigenVectorsFlattened,
 	    //	                                                    totalNumberWaveFunctions);
 
+            const unsigned int numSimultaneousBlocks=dftParameters::overlapComputeCommunCheby?2:1;
             int startIndexBandParal=totalNumberWaveFunctions;
             int numVectorsBandParal=0;
-	    for (unsigned int jvec = 0; jvec < totalNumberWaveFunctions; jvec += vectorsBlockSize)
+	    for (unsigned int jvec = 0; jvec < totalNumberWaveFunctions; jvec += numSimultaneousBlocks*vectorsBlockSize)
 	    {
 
 		// Correct block dimensions if block "goes off edge of" the matrix
-		const unsigned int BVec = std::min(vectorsBlockSize, totalNumberWaveFunctions-jvec);
+		const unsigned int BVec = vectorsBlockSize;//std::min(vectorsBlockSize, totalNumberWaveFunctions-jvec);
 
 
-        	if ((jvec+BVec)<=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1] &&
-	         (jvec+BVec)>bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
+        	if ((jvec+numSimultaneousBlocks*BVec)<=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1] &&
+	         (jvec+numSimultaneousBlocks*BVec)>bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
 		{
 
 	                if (jvec<startIndexBandParal)
 		           startIndexBandParal=jvec;
-	                numVectorsBandParal= jvec+BVec-startIndexBandParal;
+	                numVectorsBandParal= jvec+numSimultaneousBlocks*BVec-startIndexBandParal;
 			 
 			stridedCopyToBlockKernel<<<(BVec+255)/256*localVectorSize, 256>>>(BVec,
 											  localVectorSize,
@@ -357,42 +377,44 @@ namespace dftfe
 											  totalNumberWaveFunctions,
 											  cudaFlattenedArrayBlock.begin(),
 											  jvec);
+                        if (dftParameters::overlapComputeCommunCheby)
+				stridedCopyToBlockKernel<<<(BVec+255)/256*localVectorSize, 256>>>(BVec,
+												  localVectorSize,
+												  eigenVectorsFlattenedCUDA,
+												  totalNumberWaveFunctions,
+												  cudaFlattenedArrayBlock2.begin(),
+												  jvec+BVec);
 			  
 			 //
 			 //call Chebyshev filtering function only for the current block to be filtered
 			 //and does in-place filtering
-			 if (jvec+BVec<dftParameters::numAdaptiveFilterStates)
-			 {
-				const double chebyshevOrd=(double)chebyshevOrder;
-				const double adaptiveOrder=0.5*chebyshevOrd
-				  +jvec*0.3*chebyshevOrd/dftParameters::numAdaptiveFilterStates;
-				linearAlgebraOperationsCUDA::chebyshevFilter(operatorMatrix,
-									     cudaFlattenedArrayBlock,
-									     YArray,
-									     cudaFlattenedFloatArrayBlock,
-									     projectorKetTimesVector,
-									     localVectorSize,
-									     BVec,
-									     std::ceil(adaptiveOrder),
-									     d_lowerBoundUnWantedSpectrum,
-									     upperBoundUnwantedSpectrum,
-									     d_lowerBoundWantedSpectrum);
-									   
-									   
-			 }
-			 else
-			      linearAlgebraOperationsCUDA::chebyshevFilter(operatorMatrix,
-									   cudaFlattenedArrayBlock,
-									   YArray,
-									   cudaFlattenedFloatArrayBlock,
-									   projectorKetTimesVector,
-									   localVectorSize,
-									   BVec,
-									   chebyshevOrder,
-									   d_lowerBoundUnWantedSpectrum,
-									   upperBoundUnwantedSpectrum,
-									   d_lowerBoundWantedSpectrum);
-									  
+                         if (!dftParameters::overlapComputeCommunCheby)
+				 linearAlgebraOperationsCUDA::chebyshevFilter(operatorMatrix,
+										   cudaFlattenedArrayBlock,
+										   YArray,
+										   cudaFlattenedFloatArrayBlock,
+										   projectorKetTimesVector,
+										   localVectorSize,
+										   BVec,
+										   chebyshevOrder,
+										   d_lowerBoundUnWantedSpectrum,
+										   upperBoundUnwantedSpectrum,
+										   d_lowerBoundWantedSpectrum);
+                         else 
+				 linearAlgebraOperationsCUDA::chebyshevFilter(operatorMatrix,
+									      cudaFlattenedArrayBlock,
+									      YArray,
+									      cudaFlattenedFloatArrayBlock,
+									      projectorKetTimesVector,
+									      cudaFlattenedArrayBlock2,
+									      YArray2,
+									      projectorKetTimesVector2,
+									      localVectorSize,
+									      BVec,
+									      chebyshevOrder,
+									      d_lowerBoundUnWantedSpectrum,
+									      upperBoundUnwantedSpectrum,
+									      d_lowerBoundWantedSpectrum);									  
 			 
 		       stridedCopyFromBlockKernel<<<(BVec+255)/256*localVectorSize, 256>>>(BVec,
 											   localVectorSize,
@@ -400,15 +422,23 @@ namespace dftfe
 											   totalNumberWaveFunctions,
 											   eigenVectorsFlattenedCUDA,
 											   jvec);
+
+                       if (dftParameters::overlapComputeCommunCheby)
+			       stridedCopyFromBlockKernel<<<(BVec+255)/256*localVectorSize, 256>>>(BVec,
+												   localVectorSize,
+												   cudaFlattenedArrayBlock2.begin(),
+												   totalNumberWaveFunctions,
+												   eigenVectorsFlattenedCUDA,
+												   jvec+BVec);
 		}
                 else
                 {
                       //set to zero wavefunctions which wont go through chebyshev filtering inside a given band group
-		      setZeroKernel<<<(BVec+255)/256*localVectorSize, 256>>>(BVec,
-		      					                     localVectorSize,
-		      							     totalNumberWaveFunctions,
-		      							     eigenVectorsFlattenedCUDA,
-		      							     jvec);
+	              setZeroKernel<<<(BVec+255)/256*localVectorSize, 256>>>(numSimultaneousBlocks*BVec,
+								             localVectorSize,
+									     totalNumberWaveFunctions,
+									     eigenVectorsFlattenedCUDA,
+									     jvec);
                 }
 
 	    }//block loop
