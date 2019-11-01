@@ -135,8 +135,8 @@ namespace dftfe{
 		   const unsigned int numberComponents,
 		   cudaVectorType & Y,
                    bool mixedPrecflag=false,
-                   bool returnBeforeCompressSkipUpdateSkipNonLocal=false,
-                   bool returnBeforeCompressSkipUpdateSkipLocal=false);
+                   bool computePart1=false,
+                   bool computePart2=false);
 
 
       /**

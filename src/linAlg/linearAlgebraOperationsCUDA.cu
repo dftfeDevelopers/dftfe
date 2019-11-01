@@ -583,7 +583,10 @@ namespace dftfe
                cudaMemcpyDeviceToDevice);
 #endif
   }
-    
+   
+  //
+  // Compute and comunication of two blocks (1) and (2) are overlapped during chebyshev filtering.
+  //
   void chebyshevFilter(operatorDFTCUDAClass & operatorMatrix,
 			 cudaVectorType & XArray1,
                          cudaVectorType & YArray1,
@@ -819,6 +822,43 @@ namespace dftfe
 	}
       else
 	{
+          /////////////PSEUDO CODE for the implementation below for Overlapping compute and communication/////////////////
+          //
+          // In the algorithm below the communication and computation of two blocks of wavefunctions: block 1 and
+          // block 2 are overlapped. CM-NB and CM-B denotes non-blocking and blocking communications respectively.
+          // CP denotes compute. The HX computation is divided into compute part 1 and compute part 2 which are separately
+          // overlapped. Note that the first and the last iterations of the algorithm are edge cases and are handled 
+          // a bit differently (Look for step skipped remarks below).
+          //
+          // 1) [CM-NB] Initiate compress of nonlocal projectorKetTimesVector of block 2 (skipped in first overlap iteration)  
+          // 2) [CP] Call combinedCUDAKernel of block 1
+          // 3) [CM-B] Finish compress of nonlocal projectorKetTimesVector of block 2. (skipped in first overlap iteration) 
+          // 4) [CM-NB] Call update_ghost_values on nonlocal projectorKetTimesVector of block 2. (skipped in first overlap iteration)
+          // 5) [CM-NB] Initiate update_ghost_values on wavefunctions of block 1.
+          // 6) [CP] Call HX compute part 2 on block 2. (skipped in first overlap iteration)
+          // 7) [CM-B] Finish update_ghost_values on wavefunctions of block 1.
+          // 8) [CM-NB] Initiate compress on wavefunctions of block 2.
+          // 9) [CP] Call HX compute part 1 on block 1.
+          // 10)[CM-B] Finish compress on wavefunctions of block 2.
+          // 11)[CM-NB] Initiate compress of nonlocal projectorKetTimesVector of block 1.
+          // 12)[CP] Call combinedCUDAKernel of block 2
+          // 13)[CM-B] Finish compress of nonlocal projectorKetTimesVector of block 1.
+          // 14)[CM-NB] Initiate update_ghost_values on wavefunctions of block 2.
+          // 15)[CP] Call HX compute part 2 on block 1. 
+          // 16)[CM-B] Finish update_ghost_values on wavefunctions of block 2.
+          // 17)[CM-NB] Initiate compress on wavefunctions of block 1.
+          // 18)[CP] Call HX compute part 1 on block 2.
+          // 19)[CM-B] Finish compress on wavefunctions of block 1. 
+          // 20) Perform chebyshev recursion related swap and scalar operations and go back to step 1)
+          //
+          // Extra steps for second to last chebyshev filter iteration or the last overlapped iteration:
+          // 21) Call compress and update_ghost_values on projectorKetTimesVector of block 2
+          // 22) Call HX compute part 2 on block 2.
+          // 23) Call compress on wavefunctions of block 2.
+          /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+          //overlap flag is used to handle the edge case for the very first overlap is performed,
+          //where the previous chebyshev filtering iteration did not use the overlap algorithm
           if (overlap)
           {
             projectorKetTimesVector2.compress_start(dealii::VectorOperation::add);
@@ -853,6 +893,7 @@ namespace dftfe
           else
             YArray1.update_ghost_values_start();
 
+          // call compute part 2 of block 2
           if (overlap)
              operatorMatrix.HXCheby(YArray2,
 				 tempFloatArray,
@@ -893,6 +934,8 @@ namespace dftfe
              else
                 XArray2.compress_start(dealii::VectorOperation::add);
           }
+
+          // call compute part 1 of block 1
           operatorMatrix.HXCheby(YArray1,
 				 tempFloatArray,
                                  projectorKetTimesVector1,
@@ -948,6 +991,8 @@ namespace dftfe
           }
           else
              YArray2.update_ghost_values_start(); 
+
+          // call compute part 2 of block 1
           operatorMatrix.HXCheby(YArray1,
 				 tempFloatArray,
                                  projectorKetTimesVector1,
@@ -985,6 +1030,7 @@ namespace dftfe
           else
              XArray1.compress_start(dealii::VectorOperation::add);
 
+          // call compute part 1 of block 2
           operatorMatrix.HXCheby(YArray2,
 				 tempFloatArray,
                                  projectorKetTimesVector2,
@@ -1011,6 +1057,8 @@ namespace dftfe
              XArray1.compress_finish(dealii::VectorOperation::add);
           //nvtxRangeEnd(id4);
 
+          //Handle edge case for the second to last Chebyshev filter iteration as there is no overlap
+          //algorithm for the next filter iteration.
           if (degree==(m-1))
           {
 
@@ -1050,7 +1098,8 @@ namespace dftfe
             overlap=true;
 	}
 
-      XArray1.swap(YArray1); 
+      XArray1.swap(YArray1);
+      //Handle edge cases for the first and last iteration involving overlap of communication and computation 
       if (!overlap)
       {
         XArray2.swap(YArray2);

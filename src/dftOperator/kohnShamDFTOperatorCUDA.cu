@@ -1313,6 +1313,15 @@ namespace dftfe
 
   }
 
+
+// computePart1 and computePart2 are flags used by chebyshevFilter function to perform overlap of 
+// computation and communication. When either computePart1 or computePart1 flags are set to true
+// all communication calls are skipped as they are directly called in chebyshevFilter.
+// Only either of computePart1 or computePart2 can be set to true at one time. When computePart1
+// is set to true distrubute, computeLocalHamiltonianTimesX, and first compute part of nonlocalHX are performed
+// before the control returns back to chebyshevFilter. When computePart2 is set to true, the computations
+// in computePart1 are skipped and only computations performed are: second compute part of nonlocalHX,
+// assembly (only local processor), and distribute_slave_to_master.
   template<unsigned int FEOrder>
   void kohnShamDFTOperatorCUDAClass<FEOrder>::HXCheby(cudaVectorType & src,
 						      cudaVectorTypeFloat & tempFloatArray,
@@ -1321,21 +1330,20 @@ namespace dftfe
 						      const unsigned int numberWaveFunctions,
 						      cudaVectorType & dst,
 						      bool chebMixedPrec,
-                                                      bool returnBeforeCompressSkipUpdateSkipNonLocal,
-                                                      bool returnBeforeCompressSkipUpdateSkipLocal)
+                                                      bool computePart1,
+                                                      bool computePart2)
   {
     const unsigned int n_ghosts   = dftPtr->matrix_free_data.get_vector_partitioner()->n_ghost_indices();
     const unsigned int localSize  = dftPtr->matrix_free_data.get_vector_partitioner()->local_size();
     const unsigned int totalSize  = localSize + n_ghosts;
 
-    if (!(returnBeforeCompressSkipUpdateSkipNonLocal || returnBeforeCompressSkipUpdateSkipLocal))
+    if (!(computePart1 || computePart2))
     {
 	    if(chebMixedPrec)
 	      {
 		convDoubleArrToFloatArr<<<(numberWaveFunctions+255)/256*localSize,256>>>(numberWaveFunctions*localSize,
 											 src.begin(),
 											 tempFloatArray.begin());
-		//MPI_Barrier(MPI_COMM_WORLD);
 		tempFloatArray.update_ghost_values();
 
 		if(n_ghosts!=0)
@@ -1348,17 +1356,15 @@ namespace dftfe
 	    else
 	      {
 		src.update_ghost_values();
-		//src.update_ghost_values_start();
-		//src.update_ghost_values_finish();
 	      }
     }
 
-    if (!returnBeforeCompressSkipUpdateSkipLocal)
+    if (!computePart2)
         getOverloadedConstraintMatrix()->distribute(src,
 						numberWaveFunctions);
 
 
-    if (!returnBeforeCompressSkipUpdateSkipLocal)
+    if (!computePart2)
 	    computeLocalHamiltonianTimesX(src.begin(),
 					  numberWaveFunctions,
 					  dst.begin());
@@ -1371,18 +1377,18 @@ namespace dftfe
 					 projectorKetTimesVector,
 					 numberWaveFunctions,
 					 dst.begin(),
-                                         returnBeforeCompressSkipUpdateSkipLocal,
-                                         returnBeforeCompressSkipUpdateSkipNonLocal);
+                                         computePart2,
+                                         computePart1);
       }
 
-    if (returnBeforeCompressSkipUpdateSkipNonLocal)
+    if (computePart1)
       return;
 
 
     getOverloadedConstraintMatrix()->distribute_slave_to_master(dst,
 								numberWaveFunctions);
 
-    if (returnBeforeCompressSkipUpdateSkipLocal)
+    if (computePart2)
       return;
 
     src.zero_out_ghosts();
@@ -1392,7 +1398,6 @@ namespace dftfe
 	convDoubleArrToFloatArr<<<(numberWaveFunctions+255)/256*totalSize,256>>>(numberWaveFunctions*totalSize,
 										 dst.begin(),
 										 tempFloatArray.begin());
-        //MPI_Barrier(MPI_COMM_WORLD);
 	tempFloatArray.compress(VectorOperation::add);
 
 	//copy locally owned processor boundary nodes only to dst vector
@@ -1409,8 +1414,6 @@ namespace dftfe
     else
       {
 	dst.compress(VectorOperation::add);
-        //dst.compress_start(VectorOperation::add);
-        //dst.compress_finish(VectorOperation::add);
       }
 
   }
