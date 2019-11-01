@@ -1602,6 +1602,15 @@ namespace dftfe
 									     globalToLocalRowIdMap,
 									     globalToLocalColumnIdMap);
 
+    //band group parallelization data structures
+    const unsigned int numberBandGroups=
+    dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
+    const unsigned int bandGroupTaskId = dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
+    std::vector<unsigned int> bandGroupLowHighPlusOneIndices;
+    dftUtils::createBandParallelizationIndices(interBandGroupComm,
+					   N,
+					   bandGroupLowHighPlusOneIndices);
+
     const unsigned int MPadded=std::ceil(M*1.0/8.0)*8.0+0.5;
     thrust::device_vector<float> XSP(MPadded*N,0.0);
 
@@ -1696,118 +1705,122 @@ namespace dftfe
 
 	std::memset(rotationMatBlockHostSP,0,BVec*N*sizeof(float));
 
-	//Extract QBVec from parallel ScaLAPACK matrix Q
-	if (rotationMatTranspose)
-	      {
-		if (processGrid->is_process_active())
-		  for (unsigned int i = 0; i <D; ++i)
-		    if (globalToLocalRowIdMap.find(i)
-			!=globalToLocalRowIdMap.end())
-		      {
-			const unsigned int localRowId=globalToLocalRowIdMap[i];
-			for (unsigned int j = 0; j <BVec; ++j)
-			{
-			    std::map<unsigned int, unsigned int>::iterator it=
-			      globalToLocalColumnIdMap.find(j+jvec);
-			    if(it!=globalToLocalColumnIdMap.end())
-			    {
-			      rotationMatBlockHostSP[i*BVec+j]=
-				rotationMatPar.local_el(localRowId,
-							it->second);
-
-			    }
-			}
-
-			if (i>=jvec && i<(jvec+BVec))
-			{
-			  std::map<unsigned int, unsigned int>::iterator it=
-			      globalToLocalColumnIdMap.find(i);
-			  if (it!=globalToLocalColumnIdMap.end())
-			  {
-			    rotationMatBlockHostSP[i*BVec+i-jvec]=0.0;
-			  }
-			}
-		      }
-	      }
-	else
-	      {
-		if (processGrid->is_process_active())
-		  for (unsigned int i = 0; i <D; ++i)
-		    if(globalToLocalColumnIdMap.find(i)
-		       !=globalToLocalColumnIdMap.end())
-		      {
-			const unsigned int localColumnId=globalToLocalColumnIdMap[i];
-			for (unsigned int j = 0; j <BVec; ++j)
-			  {
-			    std::map<unsigned int, unsigned int>::iterator it=
-			      globalToLocalRowIdMap.find(j+jvec);
-			    if (it!=globalToLocalRowIdMap.end())
-			    {
-			      rotationMatBlockHostSP[i*BVec+j]=
-				rotationMatPar.local_el(it->second,
-							localColumnId);
-			    }
-			  }
-
-			  if (i>=jvec && i<(jvec+BVec))
-			  {
-			    std::map<unsigned int, unsigned int>::iterator it=
-			      globalToLocalRowIdMap.find(i);
-			    if (globalToLocalRowIdMap.find(i)!=globalToLocalRowIdMap.end())
-			    {
-			      rotationMatBlockHostSP[i*BVec+i-jvec]=0.0;
-			    }
-			  }
-		      }
-	      }
-
-
-	MPI_Allreduce(MPI_IN_PLACE,
-			  rotationMatBlockHostSP,
-			  BVec*D,
-			  MPI_FLOAT,
-			  MPI_SUM,
-			  mpiComm);
-
-	cudaMemcpy(thrust::raw_pointer_cast(&rotationMatBlockSP[0]),
-		       rotationMatBlockHostSP,
-		       BVec*D*sizeof(float),
-		       cudaMemcpyHostToDevice);
- 
-        for (unsigned int idof = 0; idof < maxNumLocalDofs; idof += dofsBlockSize)
+        if ((jvec+BVec)<=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1] &&
+        (jvec+BVec)>bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
         {
+		//Extract QBVec from parallel ScaLAPACK matrix Q
+		if (rotationMatTranspose)
+		      {
+			if (processGrid->is_process_active())
+			  for (unsigned int i = 0; i <D; ++i)
+			    if (globalToLocalRowIdMap.find(i)
+				!=globalToLocalRowIdMap.end())
+			      {
+				const unsigned int localRowId=globalToLocalRowIdMap[i];
+				for (unsigned int j = 0; j <BVec; ++j)
+				{
+				    std::map<unsigned int, unsigned int>::iterator it=
+				      globalToLocalColumnIdMap.find(j+jvec);
+				    if(it!=globalToLocalColumnIdMap.end())
+				    {
+				      rotationMatBlockHostSP[i*BVec+j]=
+					rotationMatPar.local_el(localRowId,
+								it->second);
 
-            // Correct block dimensions if block "goes off edge of" the matrix
-	    unsigned int BDof=0;
-	    if (M>=idof)
-	       BDof = std::min(dofsBlockSize, M-idof);
+				    }
+				}
 
-	    if (BDof!=0)
-	    {
-		cublasSgemm(handle,
-			    CUBLAS_OP_N,
-			    CUBLAS_OP_N,
-			    BVec,
-			    BDof,
-			    D,
-			    &scalarCoeffAlphaSP,
-			    thrust::raw_pointer_cast(&rotationMatBlockSP[0]),
-			    BVec,
-			    thrust::raw_pointer_cast(&XSP[0])+idof*N,
-			    N,
-			    &scalarCoeffBetaSP,
-			    thrust::raw_pointer_cast(&rotatedVectorsMatBlockSP[0]),
-			    BVec);
-			
-                addSubspaceRotatedBlockToXKernel<<<(BVec*BDof+255)/256,256>>>(BDof,
-                                                                           BVec,
-									   thrust::raw_pointer_cast(&rotatedVectorsMatBlockSP[0]),
-								           X,
-									   idof,
-                                                                           jvec,
-									   N);
-	     }
-	  }//block loop over dofs
+				if (i>=jvec && i<(jvec+BVec))
+				{
+				  std::map<unsigned int, unsigned int>::iterator it=
+				      globalToLocalColumnIdMap.find(i);
+				  if (it!=globalToLocalColumnIdMap.end())
+				  {
+				    rotationMatBlockHostSP[i*BVec+i-jvec]=0.0;
+				  }
+				}
+			      }
+		      }
+		else
+		      {
+			if (processGrid->is_process_active())
+			  for (unsigned int i = 0; i <D; ++i)
+			    if(globalToLocalColumnIdMap.find(i)
+			       !=globalToLocalColumnIdMap.end())
+			      {
+				const unsigned int localColumnId=globalToLocalColumnIdMap[i];
+				for (unsigned int j = 0; j <BVec; ++j)
+				  {
+				    std::map<unsigned int, unsigned int>::iterator it=
+				      globalToLocalRowIdMap.find(j+jvec);
+				    if (it!=globalToLocalRowIdMap.end())
+				    {
+				      rotationMatBlockHostSP[i*BVec+j]=
+					rotationMatPar.local_el(it->second,
+								localColumnId);
+				    }
+				  }
+
+				  if (i>=jvec && i<(jvec+BVec))
+				  {
+				    std::map<unsigned int, unsigned int>::iterator it=
+				      globalToLocalRowIdMap.find(i);
+				    if (globalToLocalRowIdMap.find(i)!=globalToLocalRowIdMap.end())
+				    {
+				      rotationMatBlockHostSP[i*BVec+i-jvec]=0.0;
+				    }
+				  }
+			      }
+		      }
+
+
+		MPI_Allreduce(MPI_IN_PLACE,
+				  rotationMatBlockHostSP,
+				  BVec*D,
+				  MPI_FLOAT,
+				  MPI_SUM,
+				  mpiComm);
+
+		cudaMemcpy(thrust::raw_pointer_cast(&rotationMatBlockSP[0]),
+			       rotationMatBlockHostSP,
+			       BVec*D*sizeof(float),
+			       cudaMemcpyHostToDevice);
+	 
+		for (unsigned int idof = 0; idof < maxNumLocalDofs; idof += dofsBlockSize)
+		{
+
+		    // Correct block dimensions if block "goes off edge of" the matrix
+		    unsigned int BDof=0;
+		    if (M>=idof)
+		       BDof = std::min(dofsBlockSize, M-idof);
+
+		    if (BDof!=0)
+		    {
+			cublasSgemm(handle,
+				    CUBLAS_OP_N,
+				    CUBLAS_OP_N,
+				    BVec,
+				    BDof,
+				    D,
+				    &scalarCoeffAlphaSP,
+				    thrust::raw_pointer_cast(&rotationMatBlockSP[0]),
+				    BVec,
+				    thrust::raw_pointer_cast(&XSP[0])+idof*N,
+				    N,
+				    &scalarCoeffBetaSP,
+				    thrust::raw_pointer_cast(&rotatedVectorsMatBlockSP[0]),
+				    BVec);
+				
+			addSubspaceRotatedBlockToXKernel<<<(BVec*BDof+255)/256,256>>>(BDof,
+										   BVec,
+										   thrust::raw_pointer_cast(&rotatedVectorsMatBlockSP[0]),
+										   X,
+										   idof,
+										   jvec,
+										   N);
+		     }
+		  }//block loop over dofs
+            }//band parallalelization loop
       }//block loop over vectors
 
       cudaFreeHost(rotationMatBlockHostSP);
