@@ -898,7 +898,7 @@ namespace dftfe
 	         gpu_time = MPI_Wtime();
               }
 
-              if (useMixedPrecOverall && dftParameters::useMixedPrecSubspaceRotRR)
+              if (useMixedPrecOverall && dftParameters::useMixedPrecPGS_SR)
 	         subspaceRotationPGSMixedPrecScalapack(X,
 			    M,
 			    N,
