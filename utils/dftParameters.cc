@@ -856,11 +856,10 @@ namespace dftfe {
 	
       if (restartFromChk==true && chkType==1)
 	{
-	  if (dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ)
-	    dftParameters::coordinatesFile="atomsFracCoord.chk";
-	  else
-	    dftParameters::coordinatesFile="atomsCartCoord.chk";
-
+          if (dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ)
+		dftParameters::coordinatesFile="atomsFracCoordAutomesh.chk";
+          else
+   	        dftParameters::coordinatesFile="atomsCartCoordAutomesh.chk";
 
 	  dftParameters::domainBoundingVectorsFile="domainBoundingVectors.chk";
 
