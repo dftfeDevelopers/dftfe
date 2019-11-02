@@ -806,9 +806,9 @@ namespace dftfe
 	if (restartFromChk==true && chkType==1)
 	{
 	    if (dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ)
-		dftParameters::coordinatesFile="atomsFracCoord.chk";
+		dftParameters::coordinatesFile="atomsFracCoordAutomesh.chk";
 	    else
-		dftParameters::coordinatesFile="atomsCartCoord.chk";
+		dftParameters::coordinatesFile="atomsCartCoordAutomesh.chk";
 
 	    dftParameters::domainBoundingVectorsFile="domainBoundingVectors.chk";
 
