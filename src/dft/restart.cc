@@ -237,8 +237,10 @@ void dftClass<FEOrder>::writeDomainAndAtomCoordinates()
      dftUtils::writeDataIntoFile(d_domainBoundingVectors,
 			        "domainBoundingVectors.chk");
 
-      if (dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ)
+     std::vector<std::vector<double> > atomLocationsFractionalCurrent;
+     if (dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ)
      {
+      atomLocationsFractionalCurrent=atomLocationsFractional;
       const int numberGlobalAtoms = atomLocations.size();
       std::vector<double> latticeVectorsFlattened(9,0.0);
       std::vector<std::vector<double> > atomFractionalCoordinates;
@@ -278,6 +280,25 @@ void dftClass<FEOrder>::writeDomainAndAtomCoordinates()
 	  atomLocationsFractional[iAtom][2]=newFracCoord[0];
 	  atomLocationsFractional[iAtom][3]=newFracCoord[1];
 	  atomLocationsFractional[iAtom][4]=newFracCoord[2];
+
+	  atomCoor[0] = atomLocations[iAtom][2];
+	  atomCoor[1] = atomLocations[iAtom][3];
+	  atomCoor[2] = atomLocations[iAtom][4];
+
+	  newFracCoord=internal::wrapAtomsAcrossPeriodicBc(atomCoor,
+						           corner,
+							   latticeVectorsFlattened,
+							   periodicBc);
+	  //for synchrozination
+	  MPI_Bcast(&(newFracCoord[0]),
+		    3,
+		    MPI_DOUBLE,
+		    0,
+		    MPI_COMM_WORLD);
+
+	  atomLocationsFractionalCurrent[iAtom][2]=newFracCoord[0];
+	  atomLocationsFractionalCurrent[iAtom][3]=newFracCoord[1];
+	  atomLocationsFractionalCurrent[iAtom][4]=newFracCoord[2];
 	}
      }
 
@@ -290,14 +311,28 @@ void dftClass<FEOrder>::writeDomainAndAtomCoordinates()
 	}
 #ifdef USE_COMPLEX
      dftUtils::writeDataIntoFile(atomLocationsFractional,
-			        "atomsFracCoord.chk");
+			        "atomsFracCoordAutomesh.chk");
+
+     dftUtils::writeDataIntoFile(atomLocationsFractionalCurrent,
+			        "atomsFracCoordCurrent.chk");
 #else
     if (dftParameters::periodicX || dftParameters::periodicY || dftParameters::periodicZ)
+    {
        dftUtils::writeDataIntoFile(atomLocationsFractional,
-			           "atomsFracCoord.chk");
+			           "atomsFracCoordAutomesh.chk");
+
+       dftUtils::writeDataIntoFile(atomLocationsFractionalCurrent,
+			           "atomsFracCoordCurrent.chk");
+    }
     else
+    {
        dftUtils::writeDataIntoFile(atomLocationsAutoMesh,
-			         "atomsCartCoord.chk");
+			         "atomsCartCoordAutomesh.chk");
+
+       dftUtils::writeDataIntoFile(atomLocations,
+                                  "atomsCartCoordCurrent.chk");
+
+    }
 #endif
 
     //
