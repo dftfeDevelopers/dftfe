@@ -118,9 +118,8 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodic(std::map
 								        FEEvaluation<C_DIM,1,C_num1DQuadPSP<FEOrder>(),C_DIM>  & forceEvalNLP,
 							                const unsigned int cell,
 							                const std::vector<std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > > pspnlGammaAtomQuads,
-                                                                        const std::vector<std::vector<double> >  & projectorKetTimesPsiTimesV,
-							                const std::vector< VectorizedArray<double> > & psiQuads,
-									const std::vector< std::vector<double> > & eigenValues)
+                                                                        const std::vector<std::vector<VectorizedArray<double>> >  & projectorKetTimesPsiTimesVTimesPartOcc,
+							                const std::vector< VectorizedArray<double> > & psiQuads)
 {
 
   const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
@@ -140,8 +139,8 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodic(std::map
       //
       const int nonLocalAtomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];
       const int globalChargeIdNonLocalAtom =  dftPtr->d_nonLocalAtomGlobalChargeIds[nonLocalAtomId];
-      std::vector<std::vector<double> >  temp2(1);
-      temp2[0]=projectorKetTimesPsiTimesV[iAtom];
+      std::vector<std::vector<VectorizedArray<double>> >  temp2(1);
+      temp2[0]=projectorKetTimesPsiTimesVTimesPartOcc[iAtom];
 
 
       if (dftParameters::useHigherQuadNLP)
@@ -155,9 +154,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodic(std::map
 			      -eshelbyTensor::getFnlNonPeriodic(temp1,
 								temp2,
 								psiQuads.begin()+q*numEigenVectors,
-								eigenValues[0],
-								dftPtr->fermiEnergy,
-								dftParameters::TVal);
+								numEigenVectors);
 
 
 	       forceEvalNLP.submit_value(F,q);
@@ -174,9 +171,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodic(std::map
 			      -eshelbyTensor::getFnlNonPeriodic(temp1,
 								temp2,
 								psiQuads.begin()+q*numEigenVectors,
-								eigenValues[0],
-								dftPtr->fermiEnergy,
-								dftParameters::TVal);
+								numEigenVectors);
 
 
 	       forceEval.submit_value(F,q);

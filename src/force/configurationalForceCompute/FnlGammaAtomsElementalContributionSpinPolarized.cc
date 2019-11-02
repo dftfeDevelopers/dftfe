@@ -125,11 +125,10 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodicSpinPolar
 				   FEEvaluation<C_DIM,1,C_num1DQuadPSP<FEOrder>(),C_DIM>  & forceEvalNLP,
 				   const unsigned int cell,
 				   const std::vector<std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > > pspnlGammaAtomQuads,
-                                   const std::vector<std::vector<double> >  & projectorKetTimesPsiSpin0TimesV,
-                                   const std::vector<std::vector<double> >  & projectorKetTimesPsiSpin1TimesV,
+                                   const std::vector<std::vector<double> >  & projectorKetTimesPsiSpin0TimesVTimesPartOcc,
+                                   const std::vector<std::vector<double> >  & projectorKetTimesPsiSpin1TimesVTimesPartOcc,
 				   const std::vector< VectorizedArray<double> > & psiSpin0Quads,
-				   const std::vector< VectorizedArray<double> > & psiSpin1Quads,
-				   const std::vector< std::vector<double> > & eigenValues)
+				   const std::vector< VectorizedArray<double> > & psiSpin1Quads)
 {
 
   const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
@@ -150,9 +149,9 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodicSpinPolar
       const int nonLocalAtomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];
       const int globalChargeIdNonLocalAtom =  dftPtr->d_nonLocalAtomGlobalChargeIds[nonLocalAtomId];
       std::vector<std::vector<double> >  temp2Spin0(1);
-      temp2Spin0[0]=projectorKetTimesPsiSpin0TimesV[iAtom];
+      temp2Spin0[0]=projectorKetTimesPsiSpin0TimesVTimesPartOcc[iAtom];
       std::vector<std::vector<double> >  temp2Spin1(1);
-      temp2Spin1[0]=projectorKetTimesPsiSpin1TimesV[iAtom];
+      temp2Spin1[0]=projectorKetTimesPsiSpin1TimesVTimesPartOcc[iAtom];
 
       if (dftParameters::useHigherQuadNLP)
 	  for (unsigned int q=0; q<numQuadPoints; ++q)
@@ -166,11 +165,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodicSpinPolar
 								temp2Spin1,
 								psiSpin0Quads.begin()+q*numEigenVectors,
 								psiSpin1Quads.begin()+q*numEigenVectors,
-								eigenValues[0],
-					                        dftPtr->fermiEnergy,
-				                                dftPtr->fermiEnergyUp,
-					                        dftPtr->fermiEnergyDown,
-								dftParameters::TVal);
+								numEigenVectors);
 	       forceEvalNLP.submit_value(F,q);
 	  }
       else
@@ -185,11 +180,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodicSpinPolar
 								temp2Spin1,
 								psiSpin0Quads.begin()+q*numEigenVectors,
 								psiSpin1Quads.begin()+q*numEigenVectors,
-								eigenValues[0],
-					                        dftPtr->fermiEnergy,
-				                                dftPtr->fermiEnergyUp,
-					                        dftPtr->fermiEnergyDown,
-								dftParameters::TVal);
+								numEigenVectors);
 	       forceEval.submit_value(F,q);
 	  }
 
