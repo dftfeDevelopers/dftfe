@@ -1682,6 +1682,241 @@ namespace dftfe
 
   }
 
+  //XTHX with overlap of computation and communication
+  template<unsigned int FEOrder>
+  void kohnShamDFTOperatorCUDAClass<FEOrder>::XtHXOverlapComputeCommun(const double *  X,
+						   cudaVectorType & XBlock,
+						   cudaVectorType & HXBlock,
+						   cudaVectorType & projectorKetTimesVector,
+						   const unsigned int M,
+						   const unsigned int N,
+						   cublasHandle_t &handle,
+						   const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+						   dealii::ScaLAPACKMatrix<double> & projHamPar)
+  {
+
+    std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
+    std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
+    linearAlgebraOperationsCUDA::internal::createGlobalToLocalIdMapsScaLAPACKMat(processGrid,
+										 projHamPar,
+										 globalToLocalRowIdMap,
+										 globalToLocalColumnIdMap);
+
+    //band group parallelization data structures
+    const unsigned int numberBandGroups=
+      dealii::Utilities::MPI::n_mpi_processes(dftPtr->interBandGroupComm);
+    const unsigned int bandGroupTaskId = dealii::Utilities::MPI::this_mpi_process(dftPtr->interBandGroupComm);
+    std::vector<unsigned int> bandGroupLowHighPlusOneIndices;
+    dftUtils::createBandParallelizationIndices(dftPtr->interBandGroupComm,
+					       N,
+					       bandGroupLowHighPlusOneIndices);
+
+
+
+    const unsigned int vectorsBlockSize=std::min(dftParameters::wfcBlockSize,
+						 N);
+    const unsigned int numberBlocks=N/vectorsBlockSize;
+
+    cudaStream_t streamCompute, streamCopy;
+    cudaStreamCreate(&streamCompute);
+    cudaStreamCreate(&streamCopy);
+
+    cublasSetStream(d_cublasHandle,streamCompute);  
+
+    cudaEvent_t computeEvents[numberBlocks];
+    cudaEvent_t copyEvents[numberBlocks];
+
+    for(int i = 0; i < numberBlocks; ++i)
+    {
+      cudaEventCreate(&computeEvents[i]);
+      cudaEventCreate(&copyEvents[i]);
+    }
+
+    double *  projHamBlockHost;
+    cudaMallocHost((void **)&projHamBlockHost,vectorsBlockSize*N*sizeof(double));
+    std::memset(projHamBlockHost,0,vectorsBlockSize*N*sizeof(double));
+
+    thrust::device_vector<double> HXBlockFull(vectorsBlockSize*M,0.0);
+    thrust::device_vector<double> projHamBlock(vectorsBlockSize*N,0.0);
+    thrust::device_vector<double> projHamBlockCurrent(vectorsBlockSize*N,0.0);
+
+    unsigned int blockCount=0; 
+    for (unsigned int jvec = 0; jvec < N; jvec += vectorsBlockSize)
+      {
+
+	// Correct block dimensions if block "goes off edge of" the matrix
+	const unsigned int B = std::min(vectorsBlockSize, N-jvec);
+
+	if ((jvec+B)<=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1] &&
+	    (jvec+B)>bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
+	  {
+
+            const unsigned int chebyBlockSize=std::min(dftParameters::chebyWfcBlockSize,N);
+
+            const double alpha = 1.0, beta = 0.0;
+	    const unsigned int D=N-jvec;
+            if (jvec==bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
+            {
+		    for (unsigned int k = jvec; k < jvec+B; k +=chebyBlockSize)
+		    {
+			stridedCopyToBlockKernel<<<(chebyBlockSize+255)/256*M, 256>>>(chebyBlockSize,
+										      M,
+										      X,
+										      N,
+										      XBlock.begin(),
+										      k);
+
+			//evaluate H times XBlock^{T} and store in HXBlock^{T}
+			HXBlock=0.0;
+			//thrust::fill(HXBlock.begin(),HXBlock.end(),0.0);
+			const bool scaleFlag = false;
+			const double scalar = 1.0;
+			HX(XBlock,
+			   projectorKetTimesVector,
+			   M,
+			   chebyBlockSize,
+			   scaleFlag,
+			   scalar,
+			   HXBlock);
+
+			stridedCopyFromBlockKernel<<<(chebyBlockSize+255)/256*M, 256>>>(chebyBlockSize,
+											M,
+											HXBlock.begin(),
+											B,
+											thrust::raw_pointer_cast(&HXBlockFull[0]),
+											k-jvec);
+		    }
+
+            
+		    cublasDgemm(handle,
+				CUBLAS_OP_N,
+				CUBLAS_OP_T,
+				D,
+				B,
+				M,
+				&alpha,
+				X+jvec,
+				N,
+				thrust::raw_pointer_cast(&HXBlockFull[0]),
+				B,
+				&beta,
+				thrust::raw_pointer_cast(&projHamBlock[0]),
+				D);
+                    cudaEventRecord(computeEvents[blockCount],streamCompute);
+            }
+
+            cudaStreamWaitEvent(streamCopy,computeEvents[blockCount],0);
+
+            if(jvec > bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
+               projHamBlock.swap(projHamBlockCurrent);
+
+	    cudaMemcpyAsync(projHamBlockHost,
+		   thrust::raw_pointer_cast(&projHamBlock[0]),
+		   D*B*sizeof(double),
+		   cudaMemcpyDeviceToHost,
+                   streamCopy);
+
+            cudaEventRecord(copyEvents[blockCount],streamCopy);
+
+            const unsigned int jvecNew = jvec + vectorsBlockSize; 
+            const unsigned int DNew = N - jvecNew;
+
+            if(jvecNew < bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1])
+            {
+		    for (unsigned int k = jvecNew; k < jvecNew+B; k +=chebyBlockSize)
+		    {
+			stridedCopyToBlockKernel<<<(chebyBlockSize+255)/256*M, 256>>>(chebyBlockSize,
+										      M,
+										      X,
+										      N,
+										      XBlock.begin(),
+										      k);
+
+			//evaluate H times XBlock^{T} and store in HXBlock^{T}
+			HXBlock=0.0;
+			//thrust::fill(HXBlock.begin(),HXBlock.end(),0.0);
+			const bool scaleFlag = false;
+			const double scalar = 1.0;
+			HX(XBlock,
+			   projectorKetTimesVector,
+			   M,
+			   chebyBlockSize,
+			   scaleFlag,
+			   scalar,
+			   HXBlock);
+
+			stridedCopyFromBlockKernel<<<(chebyBlockSize+255)/256*M, 256>>>(chebyBlockSize,
+											M,
+											HXBlock.begin(),
+											B,
+											thrust::raw_pointer_cast(&HXBlockFull[0]),
+											k-jvecNew);
+		    }
+
+            
+		    cublasDgemm(handle,
+				CUBLAS_OP_N,
+				CUBLAS_OP_T,
+				DNew,
+				B,
+				M,
+				&alpha,
+				X+jvecNew,
+				N,
+				thrust::raw_pointer_cast(&HXBlockFull[0]),
+				B,
+				&beta,
+				thrust::raw_pointer_cast(&projHamBlockCurrent[0]),
+				DNew);
+                    cudaEventRecord(computeEvents[blockCount+1],streamCompute);
+            }
+
+            if(cudaEventSynchronize(copyEvents[blockCount])==cudaSuccess)
+            {
+		    // Sum local projHamBlock across domain decomposition processors 
+		    MPI_Allreduce(MPI_IN_PLACE,
+			      projHamBlockHost,
+			      D*B,
+			      MPI_DOUBLE,
+			      MPI_SUM,
+			      mpi_communicator);
+
+		    //Copying only the lower triangular part to the ScaLAPACK projected Hamiltonian matrix
+		    if (processGrid->is_process_active())
+		      for (unsigned int j = 0; j <B; ++j)
+			if(globalToLocalColumnIdMap.find(j+jvec)!=globalToLocalColumnIdMap.end())
+			  {
+			    const unsigned int localColumnId=globalToLocalColumnIdMap[j+jvec];
+			    for (unsigned int i = j+jvec; i <N; ++i)
+			      {
+				std::map<unsigned int, unsigned int>::iterator it=
+				  globalToLocalRowIdMap.find(i);
+				if (it!=globalToLocalRowIdMap.end())
+				  projHamPar.local_el(it->second,
+						      localColumnId)
+				    =projHamBlockHost[j*D+i-jvec];
+			      }
+			  }
+             }
+
+	  }//band parallelization
+          blockCount+=1;
+      }
+
+    cudaFreeHost(projHamBlockHost);
+    cublasSetStream(d_cublasHandle,NULL);
+    if (numberBandGroups>1)
+      {
+	MPI_Barrier(dftPtr->interBandGroupComm);
+	linearAlgebraOperationsCUDA::internal::sumAcrossInterCommScaLAPACKMat(processGrid,
+									      projHamPar,
+									      dftPtr->interBandGroupComm);
+      }
+
+
+  }
+
+
   //XTHX
   template<unsigned int FEOrder>
   void kohnShamDFTOperatorCUDAClass<FEOrder>::XtHXMixedPrec(const double *  X,
@@ -1734,6 +1969,248 @@ namespace dftfe
     thrust::device_vector<float> HXBlockFullSP(vectorsBlockSize*M,0.0);
     thrust::device_vector<double> projHamBlock(vectorsBlockSize*N,0.0);
     thrust::device_vector<float> projHamBlockSP(vectorsBlockSize*N,0.0);
+ 
+    for (unsigned int jvec = 0; jvec < N; jvec += vectorsBlockSize)
+      {
+
+	// Correct block dimensions if block "goes off edge of" the matrix
+	const unsigned int B = std::min(vectorsBlockSize, N-jvec);
+
+	if ((jvec+B)<=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1] &&
+	    (jvec+B)>bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
+	  {
+
+            const unsigned int chebyBlockSize=std::min(dftParameters::chebyWfcBlockSize,N);
+
+            for (unsigned int k = jvec; k < jvec+B; k +=chebyBlockSize)
+	      {
+		stridedCopyToBlockKernel<<<(chebyBlockSize+255)/256*M, 256>>>(chebyBlockSize,
+									      M,
+									      X,
+									      N,
+									      XBlock.begin(),
+									      k);
+
+		//evaluate H times XBlock^{T} and store in HXBlock^{T}
+		HXBlock=0.0;
+		//thrust::fill(HXBlock.begin(),HXBlock.end(),0.0);
+		const bool scaleFlag = false;
+		const double scalar = 1.0;
+		HX(XBlock,
+		   projectorKetTimesVector,
+		   M,
+		   chebyBlockSize,
+		   scaleFlag,
+		   scalar,
+		   HXBlock);
+
+		if (jvec+B>Noc)
+		  stridedCopyFromBlockKernel<<<(chebyBlockSize+255)/256*M, 256>>>(chebyBlockSize,
+										  M,
+										  HXBlock.begin(),
+										  B,
+										  thrust::raw_pointer_cast(&HXBlockFull[0]),
+										  k-jvec);
+		else
+		  stridedCopyFromBlockKernelSP<<<(chebyBlockSize+255)/256*M, 256>>>(chebyBlockSize,
+										    M,
+										    HXBlock.begin(),
+										    B,
+										    thrust::raw_pointer_cast(&HXBlockFullSP[0]),
+										    k-jvec);
+	      }
+
+            
+	    const double alpha = 1.0, beta = 0.0;
+
+            if (jvec+B>Noc)
+	      {
+		const unsigned int D=N-jvec;
+		cublasDgemm(handle,
+			    CUBLAS_OP_N,
+			    CUBLAS_OP_T,
+			    D,
+			    B,
+			    M,
+			    &alpha,
+			    X+jvec,
+			    N,
+			    thrust::raw_pointer_cast(&HXBlockFull[0]),
+			    B,
+			    &beta,
+			    thrust::raw_pointer_cast(&projHamBlock[0]),
+			    D);
+
+	       cudaMemcpy(projHamBlockHost,
+		       thrust::raw_pointer_cast(&projHamBlock[0]),
+		       D*B*sizeof(double),
+		       cudaMemcpyDeviceToHost);
+
+
+	       // Sum local projHamBlock across domain decomposition processors 
+	       MPI_Allreduce(MPI_IN_PLACE,
+			  projHamBlockHost,
+			  D*B,
+			  MPI_DOUBLE,
+			  MPI_SUM,
+			  mpi_communicator);
+
+		//Copying only the lower triangular part to the ScaLAPACK projected Hamiltonian matrix
+		if (processGrid->is_process_active())
+		  for (unsigned int j = 0; j <B; ++j)
+		    if(globalToLocalColumnIdMap.find(j+jvec)!=globalToLocalColumnIdMap.end())
+		      {
+			const unsigned int localColumnId=globalToLocalColumnIdMap[j+jvec];
+			for (unsigned int i = j+jvec; i <N; ++i)
+			  {
+			    std::map<unsigned int, unsigned int>::iterator it=
+			      globalToLocalRowIdMap.find(i);
+			    if (it!=globalToLocalRowIdMap.end())
+			      projHamPar.local_el(it->second,
+						  localColumnId)
+				=projHamBlockHost[j*D+i-jvec];
+			  }
+		      }
+	      }
+	    else
+              {
+		const unsigned int D=N-jvec;
+
+		const float alphaSP = 1.0,betaSP = 0.0;
+
+		cublasSgemm(handle,
+			    CUBLAS_OP_N,
+			    CUBLAS_OP_T,
+			    D,
+			    B,
+			    M,
+			    &alphaSP,
+			    thrust::raw_pointer_cast(&XSP[0])+jvec,
+			    N,
+			    thrust::raw_pointer_cast(&HXBlockFullSP[0]),
+			    B,
+			    &betaSP,
+			    thrust::raw_pointer_cast(&projHamBlockSP[0]),
+			    D);
+
+
+	        cudaMemcpy(projHamBlockHostSP,
+		       thrust::raw_pointer_cast(&projHamBlockSP[0]),
+		       D*B*sizeof(float),
+		       cudaMemcpyDeviceToHost);
+
+
+	        // Sum local projHamBlock across domain decomposition processors
+	        MPI_Allreduce(MPI_IN_PLACE,
+			  projHamBlockHostSP,
+			  D*B,
+			  MPI_FLOAT,
+			  MPI_SUM,
+			  mpi_communicator);
+
+		//Copying only the lower triangular part to the ScaLAPACK projected Hamiltonian matrix
+		if (processGrid->is_process_active())
+		  for (unsigned int j = 0; j <B; ++j)
+		    if(globalToLocalColumnIdMap.find(j+jvec)!=globalToLocalColumnIdMap.end())
+		      {
+			const unsigned int localColumnId=globalToLocalColumnIdMap[j+jvec];
+			for (unsigned int i = j+jvec; i <N; ++i)
+			  {
+			    std::map<unsigned int, unsigned int>::iterator it=
+			      globalToLocalRowIdMap.find(i);
+			    if (it!=globalToLocalRowIdMap.end())
+			      projHamPar.local_el(it->second,
+						  localColumnId)
+				=projHamBlockHostSP[j*D+i-jvec];
+			  }
+		      }
+              }
+	  }
+      }
+    cudaFreeHost(projHamBlockHost);
+    cudaFreeHost(projHamBlockHostSP);
+
+    if (numberBandGroups>1)
+      {
+	MPI_Barrier(dftPtr->interBandGroupComm);
+	linearAlgebraOperationsCUDA::internal::sumAcrossInterCommScaLAPACKMat(processGrid,
+									      projHamPar,
+									      dftPtr->interBandGroupComm);
+      }
+
+
+  }
+
+  //XTHX
+  template<unsigned int FEOrder>
+  void kohnShamDFTOperatorCUDAClass<FEOrder>::XtHXMixedPrecOverlapComputeCommun(const double *  X,
+							    cudaVectorType & XBlock,
+							    cudaVectorType & HXBlock,
+							    cudaVectorType & projectorKetTimesVector,
+							    const unsigned int M,
+							    const unsigned int N,
+							    const unsigned int Noc,
+							    cublasHandle_t &handle,
+							    const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+							    dealii::ScaLAPACKMatrix<double> & projHamPar)
+  {
+
+    std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
+    std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
+    linearAlgebraOperationsCUDA::internal::createGlobalToLocalIdMapsScaLAPACKMat(processGrid,
+										 projHamPar,
+										 globalToLocalRowIdMap,
+										 globalToLocalColumnIdMap);
+
+    //band group parallelization data structures
+    const unsigned int numberBandGroups=
+      dealii::Utilities::MPI::n_mpi_processes(dftPtr->interBandGroupComm);
+    const unsigned int bandGroupTaskId = dealii::Utilities::MPI::this_mpi_process(dftPtr->interBandGroupComm);
+    std::vector<unsigned int> bandGroupLowHighPlusOneIndices;
+    dftUtils::createBandParallelizationIndices(dftPtr->interBandGroupComm,
+					       N,
+					       bandGroupLowHighPlusOneIndices);
+
+
+
+    const unsigned int vectorsBlockSize=std::min(dftParameters::wfcBlockSize,
+						 N);
+
+    const unsigned int numberBlocks=N/vectorsBlockSize;
+    cudaStream_t streamCompute, streamCopy;
+    cudaStreamCreate(&streamCompute);
+    cudaStreamCreate(&streamCopy);
+
+    cublasSetStream(d_cublasHandle,streamCompute);  
+
+    cudaEvent_t computeEvents[numberBlocks];
+    cudaEvent_t copyEvents[numberBlocks];
+
+    for(int i = 0; i < numberBlocks; ++i)
+    {
+      cudaEventCreate(&computeEvents[i]);
+      cudaEventCreate(&copyEvents[i]);
+    }
+
+    thrust::device_vector<float> XSP(M*N,0.0);
+    convDoubleArrToFloatArr<<<(N+255)/256*M,256>>>(N*M,
+						   X,
+						   thrust::raw_pointer_cast(&XSP[0]));
+
+    double *  projHamBlockHost;
+    cudaMallocHost((void **)&projHamBlockHost,vectorsBlockSize*N*sizeof(double));
+    std::memset(projHamBlockHost,0,vectorsBlockSize*N*sizeof(double));
+
+    float *  projHamBlockHostSP;
+    cudaMallocHost((void **)&projHamBlockHostSP,vectorsBlockSize*N*sizeof(float));
+    std::memset(projHamBlockHostSP,0,vectorsBlockSize*N*sizeof(float));
+
+    thrust::device_vector<double> HXBlockFull(vectorsBlockSize*M,0.0);
+    thrust::device_vector<float> HXBlockFullSP(vectorsBlockSize*M,0.0);
+    thrust::device_vector<double> projHamBlock(vectorsBlockSize*N,0.0);
+    thrust::device_vector<float> projHamBlockSP(vectorsBlockSize*N,0.0);
+    thrust::device_vector<double> projHamBlockCurrent(vectorsBlockSize*N,0.0);
+    thrust::device_vector<float> projHamBlockSPCurrent(vectorsBlockSize*N,0.0);
  
     for (unsigned int jvec = 0; jvec < N; jvec += vectorsBlockSize)
       {

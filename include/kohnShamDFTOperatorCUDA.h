@@ -180,6 +180,17 @@ namespace dftfe{
 	        dealii::ScaLAPACKMatrix<double> & projHamPar);
 
 
+     void XtHXOverlapComputeCommun(const double *  X,
+                cudaVectorType & Xb,
+                cudaVectorType & HXb,
+                cudaVectorType & projectorKetTimesVector,
+                const unsigned int M,
+		const unsigned int N,
+                cublasHandle_t &handle,
+	        const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+	        dealii::ScaLAPACKMatrix<double> & projHamPar);
+
+
     /**
      * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
      *
@@ -194,6 +205,18 @@ namespace dftfe{
      * of another full X memory.
      */
      void XtHXMixedPrec(const double *  X,
+                cudaVectorType & Xb,
+                cudaVectorType & HXb,
+                cudaVectorType & projectorKetTimesVector,
+                const unsigned int M,
+		const unsigned int N,
+                const unsigned int Noc,
+                cublasHandle_t &handle,
+	        const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+	        dealii::ScaLAPACKMatrix<double> & projHamPar);
+
+
+     void XtHXMixedPrecOverlapComputeCommun(const double *  X,
                 cudaVectorType & Xb,
                 cudaVectorType & HXb,
                 cudaVectorType & projectorKetTimesVector,

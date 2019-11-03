@@ -106,6 +106,7 @@ namespace dftfe {
       extern bool useMixedPrecCheby;
       extern unsigned int mixedPrecXtHXFracStates;
       extern bool overlapComputeCommunCheby;
+      extern bool overlapComputeCommunXtHX;
 
 
 

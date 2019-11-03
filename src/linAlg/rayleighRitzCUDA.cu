@@ -79,15 +79,28 @@ namespace dftfe
 						 processGrid,
 						 projHamPar);
                       else
-			      operatorMatrix.XtHX(X,
-						 Xb,
-						 HXb,
-						 projectorKetTimesVector,
-						 M,
-						 N,
-						 handle,
-						 processGrid,
-						 projHamPar);
+                      {
+                              if (dftParameters::overlapComputeCommunXtHX)
+				      operatorMatrix.XtHXOverlapComputeCommun(X,
+							 Xb,
+							 HXb,
+							 projectorKetTimesVector,
+							 M,
+							 N,
+							 handle,
+							 processGrid,
+							 projHamPar);
+                              else
+				      operatorMatrix.XtHX(X,
+							 Xb,
+							 HXb,
+							 projectorKetTimesVector,
+							 M,
+							 N,
+							 handle,
+							 processGrid,
+							 projHamPar);
+                      }
 
 		      if (dftParameters::gpuFineGrainedTimings)
 		      {
@@ -217,15 +230,28 @@ namespace dftfe
 						 processGrid,
 						 projHamPar);
                       else
-			      operatorMatrix.XtHX(X,
-						 Xb,
-						 HXb,
-						 projectorKetTimesVector,
-						 M,
-						 N,
-						 handle,
-						 processGrid,
-						 projHamPar);
+                      {
+                              if (dftParameters::overlapComputeCommunXtHX)
+				      operatorMatrix.XtHXOverlapComputeCommun(X,
+							 Xb,
+							 HXb,
+							 projectorKetTimesVector,
+							 M,
+							 N,
+							 handle,
+							 processGrid,
+							 projHamPar);
+                              else
+				      operatorMatrix.XtHX(X,
+							 Xb,
+							 HXb,
+							 projectorKetTimesVector,
+							 M,
+							 N,
+							 handle,
+							 processGrid,
+							 projHamPar);
+                      }
 
 		      if (dftParameters::gpuFineGrainedTimings)
 		      {
@@ -418,15 +444,28 @@ namespace dftfe
 						 processGrid,
 						 projHamPar);
                       else
-			      operatorMatrix.XtHX(X,
-						 Xb,
-						 HXb,
-						 projectorKetTimesVector,
-						 M,
-						 N,
-						 handle,
-						 processGrid,
-						 projHamPar);
+                      {
+                              if (dftParameters::overlapComputeCommunXtHX)
+				      operatorMatrix.XtHXOverlapComputeCommun(X,
+							 Xb,
+							 HXb,
+							 projectorKetTimesVector,
+							 M,
+							 N,
+							 handle,
+							 processGrid,
+							 projHamPar);
+                              else
+				      operatorMatrix.XtHX(X,
+							 Xb,
+							 HXb,
+							 projectorKetTimesVector,
+							 M,
+							 N,
+							 handle,
+							 processGrid,
+							 projHamPar);
+                      }
 
 		      if (dftParameters::gpuFineGrainedTimings)
 		      {
@@ -713,15 +752,28 @@ namespace dftfe
 						 processGrid,
 						 projHamPar);
                       else
-			      operatorMatrix.XtHX(X,
-						 Xb,
-						 HXb,
-						 projectorKetTimesVector,
-						 M,
-						 N,
-						 handle,
-						 processGrid,
-						 projHamPar);
+                      {
+                              if (dftParameters::overlapComputeCommunXtHX)
+				      operatorMatrix.XtHXOverlapComputeCommun(X,
+							 Xb,
+							 HXb,
+							 projectorKetTimesVector,
+							 M,
+							 N,
+							 handle,
+							 processGrid,
+							 projHamPar);
+                              else
+				      operatorMatrix.XtHX(X,
+							 Xb,
+							 HXb,
+							 projectorKetTimesVector,
+							 M,
+							 N,
+							 handle,
+							 processGrid,
+							 projHamPar);
+                      }
 
 		      if (dftParameters::gpuFineGrainedTimings)
 		      {
