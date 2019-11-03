@@ -2211,7 +2211,8 @@ namespace dftfe
     thrust::device_vector<float> projHamBlockSP(vectorsBlockSize*N,0.0);
     thrust::device_vector<double> projHamBlockCurrent(vectorsBlockSize*N,0.0);
     thrust::device_vector<float> projHamBlockSPCurrent(vectorsBlockSize*N,0.0);
- 
+
+    unsigned int blockCount=0; 
     for (unsigned int jvec = 0; jvec < N; jvec += vectorsBlockSize)
       {
 
@@ -2224,154 +2225,250 @@ namespace dftfe
 
             const unsigned int chebyBlockSize=std::min(dftParameters::chebyWfcBlockSize,N);
 
-            for (unsigned int k = jvec; k < jvec+B; k +=chebyBlockSize)
-	      {
-		stridedCopyToBlockKernel<<<(chebyBlockSize+255)/256*M, 256>>>(chebyBlockSize,
-									      M,
-									      X,
-									      N,
-									      XBlock.begin(),
-									      k);
+            const double alpha = 1.0, beta = 0.0;
+            const float alphaSP = 1.0,betaSP = 0.0;
+            const unsigned int D=N-jvec;
 
-		//evaluate H times XBlock^{T} and store in HXBlock^{T}
-		HXBlock=0.0;
-		//thrust::fill(HXBlock.begin(),HXBlock.end(),0.0);
-		const bool scaleFlag = false;
-		const double scalar = 1.0;
-		HX(XBlock,
-		   projectorKetTimesVector,
-		   M,
-		   chebyBlockSize,
-		   scaleFlag,
-		   scalar,
-		   HXBlock);
+            if (jvec==bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
+	    {
+		    for (unsigned int k = jvec; k < jvec+B; k +=chebyBlockSize)
+		    {
+			stridedCopyToBlockKernel<<<(chebyBlockSize+255)/256*M, 256>>>(chebyBlockSize,
+										      M,
+										      X,
+										      N,
+										      XBlock.begin(),
+										      k);
 
-		if (jvec+B>Noc)
-		  stridedCopyFromBlockKernel<<<(chebyBlockSize+255)/256*M, 256>>>(chebyBlockSize,
-										  M,
-										  HXBlock.begin(),
-										  B,
-										  thrust::raw_pointer_cast(&HXBlockFull[0]),
-										  k-jvec);
-		else
-		  stridedCopyFromBlockKernelSP<<<(chebyBlockSize+255)/256*M, 256>>>(chebyBlockSize,
-										    M,
-										    HXBlock.begin(),
-										    B,
-										    thrust::raw_pointer_cast(&HXBlockFullSP[0]),
-										    k-jvec);
-	      }
+			//evaluate H times XBlock^{T} and store in HXBlock^{T}
+			HXBlock=0.0;
+			//thrust::fill(HXBlock.begin(),HXBlock.end(),0.0);
+			const bool scaleFlag = false;
+			const double scalar = 1.0;
+			HX(XBlock,
+			   projectorKetTimesVector,
+			   M,
+			   chebyBlockSize,
+			   scaleFlag,
+			   scalar,
+			   HXBlock);
 
-            
-	    const double alpha = 1.0, beta = 0.0;
+			if (jvec+B>Noc)
+			  stridedCopyFromBlockKernel<<<(chebyBlockSize+255)/256*M, 256>>>(chebyBlockSize,
+											  M,
+											  HXBlock.begin(),
+											  B,
+											  thrust::raw_pointer_cast(&HXBlockFull[0]),
+											  k-jvec);
+			else
+			  stridedCopyFromBlockKernelSP<<<(chebyBlockSize+255)/256*M, 256>>>(chebyBlockSize,
+											    M,
+											    HXBlock.begin(),
+											    B,
+											    thrust::raw_pointer_cast(&HXBlockFullSP[0]),
+											    k-jvec);
+		    }
+
+		    
+		    if (jvec+B>Noc)
+			cublasDgemm(handle,
+				    CUBLAS_OP_N,
+				    CUBLAS_OP_T,
+				    D,
+				    B,
+				    M,
+				    &alpha,
+				    X+jvec,
+				    N,
+				    thrust::raw_pointer_cast(&HXBlockFull[0]),
+				    B,
+				    &beta,
+				    thrust::raw_pointer_cast(&projHamBlock[0]),
+				    D);
+		    else
+			cublasSgemm(handle,
+				    CUBLAS_OP_N,
+				    CUBLAS_OP_T,
+				    D,
+				    B,
+				    M,
+				    &alphaSP,
+				    thrust::raw_pointer_cast(&XSP[0])+jvec,
+				    N,
+				    thrust::raw_pointer_cast(&HXBlockFullSP[0]),
+				    B,
+				    &betaSP,
+				    thrust::raw_pointer_cast(&projHamBlockSP[0]),
+				    D);
+                    cudaEventRecord(computeEvents[blockCount],streamCompute);
+
+            }
+
+            cudaStreamWaitEvent(streamCopy,computeEvents[blockCount],0);
+
+            if(jvec > bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
+            {
+                if (jvec+B>Noc)
+                  projHamBlock.swap(projHamBlockCurrent);
+                else
+                  projHamBlockSP.swap(projHamBlockSPCurrent);
+            }
 
             if (jvec+B>Noc)
-	      {
-		const unsigned int D=N-jvec;
-		cublasDgemm(handle,
-			    CUBLAS_OP_N,
-			    CUBLAS_OP_T,
-			    D,
-			    B,
-			    M,
-			    &alpha,
-			    X+jvec,
-			    N,
-			    thrust::raw_pointer_cast(&HXBlockFull[0]),
-			    B,
-			    &beta,
-			    thrust::raw_pointer_cast(&projHamBlock[0]),
-			    D);
-
-	       cudaMemcpy(projHamBlockHost,
-		       thrust::raw_pointer_cast(&projHamBlock[0]),
-		       D*B*sizeof(double),
-		       cudaMemcpyDeviceToHost);
-
-
-	       // Sum local projHamBlock across domain decomposition processors 
-	       MPI_Allreduce(MPI_IN_PLACE,
-			  projHamBlockHost,
-			  D*B,
-			  MPI_DOUBLE,
-			  MPI_SUM,
-			  mpi_communicator);
-
-		//Copying only the lower triangular part to the ScaLAPACK projected Hamiltonian matrix
-		if (processGrid->is_process_active())
-		  for (unsigned int j = 0; j <B; ++j)
-		    if(globalToLocalColumnIdMap.find(j+jvec)!=globalToLocalColumnIdMap.end())
-		      {
-			const unsigned int localColumnId=globalToLocalColumnIdMap[j+jvec];
-			for (unsigned int i = j+jvec; i <N; ++i)
-			  {
-			    std::map<unsigned int, unsigned int>::iterator it=
-			      globalToLocalRowIdMap.find(i);
-			    if (it!=globalToLocalRowIdMap.end())
-			      projHamPar.local_el(it->second,
-						  localColumnId)
-				=projHamBlockHost[j*D+i-jvec];
-			  }
-		      }
-	      }
-	    else
-              {
-		const unsigned int D=N-jvec;
-
-		const float alphaSP = 1.0,betaSP = 0.0;
-
-		cublasSgemm(handle,
-			    CUBLAS_OP_N,
-			    CUBLAS_OP_T,
-			    D,
-			    B,
-			    M,
-			    &alphaSP,
-			    thrust::raw_pointer_cast(&XSP[0])+jvec,
-			    N,
-			    thrust::raw_pointer_cast(&HXBlockFullSP[0]),
-			    B,
-			    &betaSP,
-			    thrust::raw_pointer_cast(&projHamBlockSP[0]),
-			    D);
-
-
-	        cudaMemcpy(projHamBlockHostSP,
+	        cudaMemcpyAsync(projHamBlockHost,
+		           thrust::raw_pointer_cast(&projHamBlock[0]),
+		           D*B*sizeof(double),
+		           cudaMemcpyDeviceToHost,
+                           streamCopy);
+            else
+	        cudaMemcpyAsync(projHamBlockHostSP,
 		       thrust::raw_pointer_cast(&projHamBlockSP[0]),
 		       D*B*sizeof(float),
-		       cudaMemcpyDeviceToHost);
+		       cudaMemcpyDeviceToHost,
+                       streamCopy);
 
+            cudaEventRecord(copyEvents[blockCount],streamCopy);
 
-	        // Sum local projHamBlock across domain decomposition processors
-	        MPI_Allreduce(MPI_IN_PLACE,
-			  projHamBlockHostSP,
-			  D*B,
-			  MPI_FLOAT,
-			  MPI_SUM,
-			  mpi_communicator);
+            const unsigned int jvecNew = jvec + vectorsBlockSize; 
+            const unsigned int DNew = N - jvecNew;
 
-		//Copying only the lower triangular part to the ScaLAPACK projected Hamiltonian matrix
-		if (processGrid->is_process_active())
-		  for (unsigned int j = 0; j <B; ++j)
-		    if(globalToLocalColumnIdMap.find(j+jvec)!=globalToLocalColumnIdMap.end())
+            if(jvecNew < bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1])
+            {
+		    for (unsigned int k = jvecNew; k < jvecNew+B; k +=chebyBlockSize)
+		    {
+			stridedCopyToBlockKernel<<<(chebyBlockSize+255)/256*M, 256>>>(chebyBlockSize,
+										      M,
+										      X,
+										      N,
+										      XBlock.begin(),
+										      k);
+
+			//evaluate H times XBlock^{T} and store in HXBlock^{T}
+			HXBlock=0.0;
+			//thrust::fill(HXBlock.begin(),HXBlock.end(),0.0);
+			const bool scaleFlag = false;
+			const double scalar = 1.0;
+			HX(XBlock,
+			   projectorKetTimesVector,
+			   M,
+			   chebyBlockSize,
+			   scaleFlag,
+			   scalar,
+			   HXBlock);
+
+			if (jvecNew+B>Noc)
+			  stridedCopyFromBlockKernel<<<(chebyBlockSize+255)/256*M, 256>>>(chebyBlockSize,
+											  M,
+											  HXBlock.begin(),
+											  B,
+											  thrust::raw_pointer_cast(&HXBlockFull[0]),
+											  k-jvecNew);
+			else
+			  stridedCopyFromBlockKernelSP<<<(chebyBlockSize+255)/256*M, 256>>>(chebyBlockSize,
+											    M,
+											    HXBlock.begin(),
+											    B,
+											    thrust::raw_pointer_cast(&HXBlockFullSP[0]),
+											    k-jvecNew);
+		    }
+
+		    
+		    if (jvecNew+B>Noc)
+			cublasDgemm(handle,
+				    CUBLAS_OP_N,
+				    CUBLAS_OP_T,
+				    DNew,
+				    B,
+				    M,
+				    &alpha,
+				    X+jvecNew,
+				    N,
+				    thrust::raw_pointer_cast(&HXBlockFull[0]),
+				    B,
+				    &beta,
+				    thrust::raw_pointer_cast(&projHamBlockCurrent[0]),
+				    DNew);
+		    else
+			cublasSgemm(handle,
+				    CUBLAS_OP_N,
+				    CUBLAS_OP_T,
+				    DNew,
+				    B,
+				    M,
+				    &alphaSP,
+				    thrust::raw_pointer_cast(&XSP[0])+jvecNew,
+				    N,
+				    thrust::raw_pointer_cast(&HXBlockFullSP[0]),
+				    B,
+				    &betaSP,
+				    thrust::raw_pointer_cast(&projHamBlockSPCurrent[0]),
+				    DNew);
+                    cudaEventRecord(computeEvents[blockCount+1],streamCompute);
+            }
+            
+            if(cudaEventSynchronize(copyEvents[blockCount])==cudaSuccess)
+            {
+                      if (jvec+B>Noc)
 		      {
-			const unsigned int localColumnId=globalToLocalColumnIdMap[j+jvec];
-			for (unsigned int i = j+jvec; i <N; ++i)
-			  {
-			    std::map<unsigned int, unsigned int>::iterator it=
-			      globalToLocalRowIdMap.find(i);
-			    if (it!=globalToLocalRowIdMap.end())
-			      projHamPar.local_el(it->second,
-						  localColumnId)
-				=projHamBlockHostSP[j*D+i-jvec];
-			  }
+		       // Sum local projHamBlock across domain decomposition processors 
+		       MPI_Allreduce(MPI_IN_PLACE,
+				  projHamBlockHost,
+				  D*B,
+				  MPI_DOUBLE,
+				  MPI_SUM,
+				  mpi_communicator);
+
+			//Copying only the lower triangular part to the ScaLAPACK projected Hamiltonian matrix
+			if (processGrid->is_process_active())
+			  for (unsigned int j = 0; j <B; ++j)
+			    if(globalToLocalColumnIdMap.find(j+jvec)!=globalToLocalColumnIdMap.end())
+			      {
+				const unsigned int localColumnId=globalToLocalColumnIdMap[j+jvec];
+				for (unsigned int i = j+jvec; i <N; ++i)
+				  {
+				    std::map<unsigned int, unsigned int>::iterator it=
+				      globalToLocalRowIdMap.find(i);
+				    if (it!=globalToLocalRowIdMap.end())
+				      projHamPar.local_el(it->second,
+							  localColumnId)
+					=projHamBlockHost[j*D+i-jvec];
+				  }
+			      }
 		      }
-              }
-	  }
+                      else
+		      {
+			// Sum local projHamBlock across domain decomposition processors
+			MPI_Allreduce(MPI_IN_PLACE,
+				  projHamBlockHostSP,
+				  D*B,
+				  MPI_FLOAT,
+				  MPI_SUM,
+				  mpi_communicator);
+
+			//Copying only the lower triangular part to the ScaLAPACK projected Hamiltonian matrix
+			if (processGrid->is_process_active())
+			  for (unsigned int j = 0; j <B; ++j)
+			    if(globalToLocalColumnIdMap.find(j+jvec)!=globalToLocalColumnIdMap.end())
+			      {
+				const unsigned int localColumnId=globalToLocalColumnIdMap[j+jvec];
+				for (unsigned int i = j+jvec; i <N; ++i)
+				  {
+				    std::map<unsigned int, unsigned int>::iterator it=
+				      globalToLocalRowIdMap.find(i);
+				    if (it!=globalToLocalRowIdMap.end())
+				      projHamPar.local_el(it->second,
+							  localColumnId)
+					=projHamBlockHostSP[j*D+i-jvec];
+				  }
+			      }
+		     }
+            }
+	  }//band parallelization
+          blockCount+=1;
       }
     cudaFreeHost(projHamBlockHost);
     cudaFreeHost(projHamBlockHostSP);
-
+    cublasSetStream(d_cublasHandle,NULL);
     if (numberBandGroups>1)
       {
 	MPI_Barrier(dftPtr->interBandGroupComm);
