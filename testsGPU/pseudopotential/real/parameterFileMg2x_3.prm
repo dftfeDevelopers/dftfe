@@ -39,7 +39,7 @@ subsection Geometry
   set ATOMIC COORDINATES FILE      = coordinatesMg2x.inp
   set DOMAIN VECTORS FILE = domainVectorsMg2x.inp
   subsection Optimization
-    set ION FORCE                 = true
+    set ION FORCE                 = false
   end
 end
 
