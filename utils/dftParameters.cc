@@ -507,10 +507,9 @@ namespace dftfe {
 
 	prm.enter_subsection ("Eigen-solver parameters");
 	{
-
-	  prm.declare_entry("NUMBER OF KOHN-SHAM WAVEFUNCTIONS", "0",
-			    Patterns::Integer(0),
-			    "[Standard] Number of Kohn-Sham wavefunctions to be computed. For spin-polarized calculations, this parameter denotes the number of Kohn-Sham wavefunctions to be computed for each spin. A recommended value for this parameter is to set it to N/2+Nb where N is the number of electrons. Use Nb to be 5-10 percent of N/2 for insulators and for metals use Nb to be 10-15 percent of N/2. If 5-15 percent of N/2 is less than 10 wavefunctions, set Nb to be atleast 10.");
+		prm.declare_entry("NUMBER OF KOHN-SHAM WAVEFUNCTIONS", "1",
+				  Patterns::Integer(0),
+				  "[Standard] Number of Kohn-Sham wavefunctions to be computed. For spin-polarized calculations, this parameter denotes the number of Kohn-Sham wavefunctions to be computed for each spin. A recommended value for this parameter is to set it to N/2+Nb where N is the number of electrons. Use Nb to be 5-10 percent of N/2 for insulators and for metals use Nb to be 10-15 percent of N/2. If 5-15 percent of N/2 is less than 10 wavefunctions, set Nb to be atleast 10.");
 
 	  prm.declare_entry("SPECTRUM SPLIT CORE EIGENSTATES", "0",
 			    Patterns::Integer(0),
