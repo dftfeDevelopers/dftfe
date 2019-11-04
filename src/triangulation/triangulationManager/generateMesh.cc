@@ -371,7 +371,7 @@ namespace dftfe {
 	      Point<3> p_cell = mapping.transform_real_to_unit_cell(cell,closestAtom);
 	      double dist = GeometryInfo<3>::distance_to_unit_cell(p_cell);
 
-	      if(dist < 1e-08 && currentMeshSize > dftParameters::meshSizeInnerBall)
+	      if(dist < 1e-08 && currentMeshSize > (dftParameters::autoUserMeshParams?1.5:1)*dftParameters::meshSizeInnerBall)
 		cellRefineFlag = true;
 
 	    }
@@ -436,7 +436,7 @@ namespace dftfe {
 	    if (cell->is_locally_owned())
 	    {
 		if(cell->at_boundary()
-		   && cell->minimum_vertex_distance()>smootheningFactor*dftParameters::meshSizeOuterBall
+		   && cell->minimum_vertex_distance()>(dftParameters::autoUserMeshParams?1.5:1)*smootheningFactor*dftParameters::meshSizeOuterBall
 		   && !cell->refine_flag_set() )
 			for(unsigned int iFace = 0; iFace < faces_per_cell; ++iFace)
 			    if (cell->has_periodic_neighbor(iFace))
