@@ -1695,6 +1695,31 @@ namespace dftfe
 						   dealii::ScaLAPACKMatrix<double> & projHamPar)
   {
 
+    /////////////PSEUDO CODE for the implementation below for Overlapping compute and communication/////////////////
+    //
+    // In the algorithm below the communication and computation of two consecutive blocks of wavefunctions: block i and
+    // block i+1 are overlapped.
+    // ----------------------------------------------------------  
+    // CMP denotes computuation of X^{T} times HXBlock
+    // COP denotes GPU->CPU copy of X^{T} times HXBlock
+    // COM denotes blocking MPI_Allreduce on X^{T}HXBlock and copy to scalapack matrix
+    // ----------------------------------------------------------
+    // Two CUDA streams are created: compute and copy
+    // CMP is performed in compute CUDA stream and COP is performed in copy CUDA stream.
+    // COP for a block can only start after the CMP for that block in the compute stream
+    // is completed. COM is performed for a block only after COP even for that block is completed.
+    //
+    // In a blocked loop do:
+    // 1) [CMP] Call compute on first block (edge case only for first iteration)
+    // 2) Swap current and next block memory (all iterations except edge case)
+    // 3) Wait for CMP event for current block to be completed. 
+    // 4) [COP] Call copy on current block
+    // 5) [CMP] Call compute on next block
+    // 6) Wait for COP event for current block to be completed
+    // 7) [COM] Perform blocking MPI_Allreduce on curent block and copy to scalapack matrix
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
     std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
     std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
     linearAlgebraOperationsCUDA::internal::createGlobalToLocalIdMapsScaLAPACKMat(processGrid,
@@ -1793,7 +1818,7 @@ namespace dftfe
 											k-jvec);
 		    }
 
-                    //evalute X^{T}HXBlock 
+                    //evalute X^{T} times HXBlock 
 		    cublasDgemm(handle,
 				CUBLAS_OP_N,
 				CUBLAS_OP_T,
@@ -2168,6 +2193,29 @@ namespace dftfe
 							    const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 							    dealii::ScaLAPACKMatrix<double> & projHamPar)
   {
+    /////////////PSEUDO CODE for the implementation below for Overlapping compute and communication/////////////////
+    //
+    // In the algorithm below the communication and computation of two consecutive blocks of wavefunctions: block i and
+    // block i+1 are overlapped.
+    // ----------------------------------------------------------  
+    // CMP denotes computuation of X^{T} times HXBlock
+    // COP denotes GPU->CPU copy of X^{T} times HXBlock
+    // COM denotes blocking MPI_Allreduce on X^{T}HXBlock and copy to scalapack matrix
+    // ----------------------------------------------------------
+    // Two CUDA streams are created: compute and copy
+    // CMP is performed in compute CUDA stream and COP is performed in copy CUDA stream.
+    // COP for a block can only start after the CMP for that block in the compute stream
+    // is completed. COM is performed for a block only after COP even for that block is completed.
+    //
+    // In a blocked loop do:
+    // 1) [CMP] Call compute on first block (edge case only for first iteration)
+    // 2) Swap current and next block memory (all iterations except edge case)
+    // 3) Wait for CMP event for current block to be completed. 
+    // 4) [COP] Call copy on current block
+    // 5) [CMP] Call compute on next block
+    // 6) Wait for COP event for current block to be completed
+    // 7) [COM] Perform blocking MPI_Allreduce on curent block and copy to scalapack matrix
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     std::map<unsigned int, unsigned int> globalToLocalColumnIdMap;
     std::map<unsigned int, unsigned int> globalToLocalRowIdMap;
@@ -2250,6 +2298,7 @@ namespace dftfe
             //in case of band parallelization
             if (jvec==bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
 	    {
+                    //compute HXBlockFull or HXBlockFullSP in an inner loop over blocks of B wavefunction vectors
 		    for (unsigned int k = jvec; k < jvec+B; k +=chebyBlockSize)
 		    {
 			stridedCopyToBlockKernel<<<(chebyBlockSize+255)/256*M, 256>>>(chebyBlockSize,
@@ -2287,7 +2336,7 @@ namespace dftfe
 											    k-jvec);
 		    }
 
-		    // evaluate X^{T}HXBlockFull or XSP^{T}HXBlockFullSP		    
+		    // evaluate X^{T} times HXBlockFull or XSP^{T} times HXBlockFullSP		    
 		    if (jvec+B>Noc)
 			cublasDgemm(handle,
 				    CUBLAS_OP_N,
