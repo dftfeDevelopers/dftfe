@@ -39,7 +39,7 @@ subsection Geometry
   set ATOMIC COORDINATES FILE      = coordinatesMg2x.inp
   set DOMAIN VECTORS FILE = domainVectorsMg2x.inp
   subsection Optimization
-    set ION FORCE                 = false
+    set ION FORCE                 = true
   end
 end
 
@@ -52,16 +52,15 @@ subsection SCF parameters
   set HIGHER QUAD NLP          = false
   set MAXIMUM ITERATIONS               = 100
   set TEMPERATURE                      = 500
-  set TOLERANCE                        = 5e-6
+  set TOLERANCE                        = 1e-5
   set STARTING WFC=ATOMIC
   subsection Eigen-solver parameters
        set CHEBYSHEV POLYNOMIAL DEGREE       = 20
        set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 180
-       set SPECTRUM SPLIT CORE EIGENSTATES=90
        set CHEBY WFC BLOCK SIZE=45
        set WFC BLOCK SIZE=45
        set CHEBYSHEV FILTER TOLERANCE=1e-3
        set RR GEP=true
-       set USE MIXED PREC PGS SR=true
+       set OVERLAP COMPUTE COMMUN XTHX=true
   end
 end
