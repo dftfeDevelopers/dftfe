@@ -1711,8 +1711,8 @@ namespace dftfe
     //
     // In a blocked loop do:
     // 1) [CMP] Call compute on first block (edge case only for first iteration)
-    // 2) Swap current and next block memory (all iterations except edge case)
-    // 3) Wait for CMP event for current block to be completed. 
+    // 2) Wait for CMP event for current block to be completed. 
+    // 3) Swap current and next block memory (all iterations except edge case)
     // 4) [COP] Call copy on current block
     // 5) [CMP] Call compute on next block
     // 6) Wait for COP event for current block to be completed
@@ -1750,7 +1750,10 @@ namespace dftfe
     // attach cublas handle to compute stream
     cublasSetStream(d_cublasHandle,streamCompute);  
 
-    // declare variables for compute and copy events on GPUs
+    // create array of compute and copy events on GPUs
+    // for all the blocks. These are required for synchronization
+    // between compute, copy and communication as discussed above in the 
+    // pseudo code
     cudaEvent_t computeEvents[numberBlocks];
     cudaEvent_t copyEvents[numberBlocks];
 
@@ -1838,6 +1841,8 @@ namespace dftfe
                     cudaEventRecord(computeEvents[blockCount],streamCompute);
             }
 
+            // check for completion of compute on current block before proceeding
+            // to swapping memories and GPU->CPU copy on current block
             cudaStreamWaitEvent(streamCopy,computeEvents[blockCount],0);
 
             if(jvec > bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
@@ -2209,8 +2214,8 @@ namespace dftfe
     //
     // In a blocked loop do:
     // 1) [CMP] Call compute on first block (edge case only for first iteration)
-    // 2) Swap current and next block memory (all iterations except edge case)
-    // 3) Wait for CMP event for current block to be completed. 
+    // 2) Wait for CMP event for current block to be completed. 
+    // 3) Swap current and next block memory (all iterations except edge case)
     // 4) [COP] Call copy on current block
     // 5) [CMP] Call compute on next block
     // 6) Wait for COP event for current block to be completed
@@ -2248,6 +2253,10 @@ namespace dftfe
     // attach cublas handle to compute stream
     cublasSetStream(d_cublasHandle,streamCompute);  
 
+    // create array of compute and copy events on GPUs
+    // for all the blocks. These are required for synchronization
+    // between compute, copy and communication as discussed above in the 
+    // pseudo code
     cudaEvent_t computeEvents[numberBlocks];
     cudaEvent_t copyEvents[numberBlocks];
 
@@ -2372,7 +2381,9 @@ namespace dftfe
                     cudaEventRecord(computeEvents[blockCount],streamCompute);
 
             }
-
+            
+            // check for completion of compute on current block before proceeding
+            // to swapping memories and GPU->CPU copy on current block
             cudaStreamWaitEvent(streamCopy,computeEvents[blockCount],0);
 
             if(jvec > bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
