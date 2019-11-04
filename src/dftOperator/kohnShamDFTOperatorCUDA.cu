@@ -1747,7 +1747,7 @@ namespace dftfe
     cudaStreamCreate(&streamCompute);
     cudaStreamCreate(&streamCopy);
 
-    // attach cublas handle to comptue stream
+    // attach cublas handle to compute stream
     cublasSetStream(d_cublasHandle,streamCompute);  
 
     // declare variables for compute and copy events on GPUs
@@ -1887,7 +1887,7 @@ namespace dftfe
 											k-jvecNew);
 		    }
 
-                    //evalute X^{T}HXBlock  
+                    //evalute X^{T} times HXBlock  
 		    cublasDgemm(handle,
 				CUBLAS_OP_N,
 				CUBLAS_OP_T,
@@ -2245,7 +2245,7 @@ namespace dftfe
     cudaStreamCreate(&streamCompute);
     cudaStreamCreate(&streamCopy);
 
-    // attach cublas handle to comptue stream
+    // attach cublas handle to compute stream
     cublasSetStream(d_cublasHandle,streamCompute);  
 
     cudaEvent_t computeEvents[numberBlocks];
@@ -2442,7 +2442,7 @@ namespace dftfe
 											    k-jvecNew);
 		    }
 
-		    // evaluate X^{T}HXBlockFull or XSP^{T}HXBlockFullSP	
+		    // evaluate X^{T} times HXBlockFull or XSP^{T} times HXBlockFullSP	
 		    if (jvecNew+B>Noc)
 			cublasDgemm(handle,
 				    CUBLAS_OP_N,
