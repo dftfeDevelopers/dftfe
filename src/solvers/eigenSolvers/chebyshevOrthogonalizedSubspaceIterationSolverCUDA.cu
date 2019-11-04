@@ -350,10 +350,11 @@ namespace dftfe
             //two blocks of wavefunctions are filtered simultaneously when overlap compute communication in chebyshev
             //filtering is toggled on
             const unsigned int numSimultaneousBlocks=dftParameters::overlapComputeCommunCheby?2:1;
+            unsigned int numSimultaneousBlocksCurrent=numSimultaneousBlocks;
 
             int startIndexBandParal=totalNumberWaveFunctions;
             int numVectorsBandParal=0;
-	    for (unsigned int jvec = 0; jvec < totalNumberWaveFunctions; jvec += numSimultaneousBlocks*vectorsBlockSize)
+	    for (unsigned int jvec = 0; jvec < totalNumberWaveFunctions; jvec += numSimultaneousBlocksCurrent*vectorsBlockSize)
 	    {
 
 		// Correct block dimensions if block "goes off edge of" the matrix
@@ -361,7 +362,7 @@ namespace dftfe
               
                 //handle edge case when total number of blocks in a given band group is not even in case of 
                 //overlapping computation and communciation in chebyshev filtering 
-                const unsigned int numSimultaneousBlocksCurrent
+                numSimultaneousBlocksCurrent
                      =((jvec+numSimultaneousBlocks*BVec)<=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1] && numSimultaneousBlocks==2)?2:1;
 
         	if ((jvec+numSimultaneousBlocksCurrent*BVec)<=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1] &&
