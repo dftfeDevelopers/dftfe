@@ -1717,12 +1717,15 @@ namespace dftfe
 						 N);
     const unsigned int numberBlocks=N/vectorsBlockSize;
 
+    // create separate CUDA streams for GPU->CPU copy and computation
     cudaStream_t streamCompute, streamCopy;
     cudaStreamCreate(&streamCompute);
     cudaStreamCreate(&streamCopy);
 
+    // attach cublas handle to comptue stream
     cublasSetStream(d_cublasHandle,streamCompute);  
 
+    // declare variables for compute and copy events on GPUs
     cudaEvent_t computeEvents[numberBlocks];
     cudaEvent_t copyEvents[numberBlocks];
 
@@ -1738,7 +1741,7 @@ namespace dftfe
 
     thrust::device_vector<double> HXBlockFull(vectorsBlockSize*M,0.0);
     thrust::device_vector<double> projHamBlock(vectorsBlockSize*N,0.0);
-    thrust::device_vector<double> projHamBlockCurrent(vectorsBlockSize*N,0.0);
+    thrust::device_vector<double> projHamBlockNext(vectorsBlockSize*N,0.0);
 
     unsigned int blockCount=0; 
     for (unsigned int jvec = 0; jvec < N; jvec += vectorsBlockSize)
@@ -1755,8 +1758,12 @@ namespace dftfe
 
             const double alpha = 1.0, beta = 0.0;
 	    const unsigned int D=N-jvec;
+
+            //handle edge case for the first block or the first block in the band group
+            //in case of band parallelization
             if (jvec==bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
             {
+                    //compute HXBlockFull in an inner loop over blocks of B wavefunction vectors
 		    for (unsigned int k = jvec; k < jvec+B; k +=chebyBlockSize)
 		    {
 			stridedCopyToBlockKernel<<<(chebyBlockSize+255)/256*M, 256>>>(chebyBlockSize,
@@ -1768,7 +1775,6 @@ namespace dftfe
 
 			//evaluate H times XBlock^{T} and store in HXBlock^{T}
 			HXBlock=0.0;
-			//thrust::fill(HXBlock.begin(),HXBlock.end(),0.0);
 			const bool scaleFlag = false;
 			const double scalar = 1.0;
 			HX(XBlock,
@@ -1787,7 +1793,7 @@ namespace dftfe
 											k-jvec);
 		    }
 
-            
+                    //evalute X^{T}HXBlock 
 		    cublasDgemm(handle,
 				CUBLAS_OP_N,
 				CUBLAS_OP_T,
@@ -1802,13 +1808,15 @@ namespace dftfe
 				&beta,
 				thrust::raw_pointer_cast(&projHamBlock[0]),
 				D);
+
+                    // record completion of compute for first block
                     cudaEventRecord(computeEvents[blockCount],streamCompute);
             }
 
             cudaStreamWaitEvent(streamCopy,computeEvents[blockCount],0);
 
             if(jvec > bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
-               projHamBlock.swap(projHamBlockCurrent);
+               projHamBlock.swap(projHamBlockNext);
 
 	    cudaMemcpyAsync(projHamBlockHost,
 		   thrust::raw_pointer_cast(&projHamBlock[0]),
@@ -1816,11 +1824,13 @@ namespace dftfe
 		   cudaMemcpyDeviceToHost,
                    streamCopy);
 
+            // record completion of GPU->CPU copy for current block
             cudaEventRecord(copyEvents[blockCount],streamCopy);
 
             const unsigned int jvecNew = jvec + vectorsBlockSize; 
             const unsigned int DNew = N - jvecNew;
 
+            //start computations on the next block
             if(jvecNew < bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1])
             {
 		    for (unsigned int k = jvecNew; k < jvecNew+B; k +=chebyBlockSize)
@@ -1834,7 +1844,6 @@ namespace dftfe
 
 			//evaluate H times XBlock^{T} and store in HXBlock^{T}
 			HXBlock=0.0;
-			//thrust::fill(HXBlock.begin(),HXBlock.end(),0.0);
 			const bool scaleFlag = false;
 			const double scalar = 1.0;
 			HX(XBlock,
@@ -1853,7 +1862,7 @@ namespace dftfe
 											k-jvecNew);
 		    }
 
-            
+                    //evalute X^{T}HXBlock  
 		    cublasDgemm(handle,
 				CUBLAS_OP_N,
 				CUBLAS_OP_T,
@@ -1866,11 +1875,15 @@ namespace dftfe
 				thrust::raw_pointer_cast(&HXBlockFull[0]),
 				B,
 				&beta,
-				thrust::raw_pointer_cast(&projHamBlockCurrent[0]),
+				thrust::raw_pointer_cast(&projHamBlockNext[0]),
 				DNew);
+ 
+                    // record completion of compute for next block
                     cudaEventRecord(computeEvents[blockCount+1],streamCompute);
             }
 
+            // Check that GPU->CPU on the current block has been completed. If completed,
+            // perform blocking MPI commmunication on the current block and copy to ScaLAPACK matrix
             if(cudaEventSynchronize(copyEvents[blockCount])==cudaSuccess)
             {
 		    // Sum local projHamBlock across domain decomposition processors 
@@ -1904,6 +1917,7 @@ namespace dftfe
       }
 
     cudaFreeHost(projHamBlockHost);
+    // return cublas handle to default stream
     cublasSetStream(d_cublasHandle,NULL);
     if (numberBandGroups>1)
       {
@@ -2177,10 +2191,13 @@ namespace dftfe
 						 N);
 
     const unsigned int numberBlocks=N/vectorsBlockSize;
+
+    // create cuda compute and copy streams
     cudaStream_t streamCompute, streamCopy;
     cudaStreamCreate(&streamCompute);
     cudaStreamCreate(&streamCopy);
 
+    // attach cublas handle to comptue stream
     cublasSetStream(d_cublasHandle,streamCompute);  
 
     cudaEvent_t computeEvents[numberBlocks];
@@ -2209,8 +2226,8 @@ namespace dftfe
     thrust::device_vector<float> HXBlockFullSP(vectorsBlockSize*M,0.0);
     thrust::device_vector<double> projHamBlock(vectorsBlockSize*N,0.0);
     thrust::device_vector<float> projHamBlockSP(vectorsBlockSize*N,0.0);
-    thrust::device_vector<double> projHamBlockCurrent(vectorsBlockSize*N,0.0);
-    thrust::device_vector<float> projHamBlockSPCurrent(vectorsBlockSize*N,0.0);
+    thrust::device_vector<double> projHamBlockNext(vectorsBlockSize*N,0.0);
+    thrust::device_vector<float> projHamBlockSPNext(vectorsBlockSize*N,0.0);
 
     unsigned int blockCount=0; 
     for (unsigned int jvec = 0; jvec < N; jvec += vectorsBlockSize)
@@ -2229,6 +2246,8 @@ namespace dftfe
             const float alphaSP = 1.0,betaSP = 0.0;
             const unsigned int D=N-jvec;
 
+            //handle edge case for the first block or the first block in the band group
+            //in case of band parallelization
             if (jvec==bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
 	    {
 		    for (unsigned int k = jvec; k < jvec+B; k +=chebyBlockSize)
@@ -2242,7 +2261,6 @@ namespace dftfe
 
 			//evaluate H times XBlock^{T} and store in HXBlock^{T}
 			HXBlock=0.0;
-			//thrust::fill(HXBlock.begin(),HXBlock.end(),0.0);
 			const bool scaleFlag = false;
 			const double scalar = 1.0;
 			HX(XBlock,
@@ -2269,7 +2287,7 @@ namespace dftfe
 											    k-jvec);
 		    }
 
-		    
+		    // evaluate X^{T}HXBlockFull or XSP^{T}HXBlockFullSP		    
 		    if (jvec+B>Noc)
 			cublasDgemm(handle,
 				    CUBLAS_OP_N,
@@ -2300,6 +2318,8 @@ namespace dftfe
 				    &betaSP,
 				    thrust::raw_pointer_cast(&projHamBlockSP[0]),
 				    D);
+
+                    // record completion of compute for next block
                     cudaEventRecord(computeEvents[blockCount],streamCompute);
 
             }
@@ -2309,9 +2329,9 @@ namespace dftfe
             if(jvec > bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
             {
                 if (jvec+B>Noc)
-                  projHamBlock.swap(projHamBlockCurrent);
+                  projHamBlock.swap(projHamBlockNext);
                 else
-                  projHamBlockSP.swap(projHamBlockSPCurrent);
+                  projHamBlockSP.swap(projHamBlockSPNext);
             }
 
             if (jvec+B>Noc)
@@ -2327,6 +2347,7 @@ namespace dftfe
 		       cudaMemcpyDeviceToHost,
                        streamCopy);
 
+            // record completion of GPU->CPU copy for current block
             cudaEventRecord(copyEvents[blockCount],streamCopy);
 
             const unsigned int jvecNew = jvec + vectorsBlockSize; 
@@ -2334,6 +2355,7 @@ namespace dftfe
 
             if(jvecNew < bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1])
             {
+                    //compute HXBlockFull or HXBlockFullSP in an inner loop over blocks of B wavefunction vectors
 		    for (unsigned int k = jvecNew; k < jvecNew+B; k +=chebyBlockSize)
 		    {
 			stridedCopyToBlockKernel<<<(chebyBlockSize+255)/256*M, 256>>>(chebyBlockSize,
@@ -2345,7 +2367,6 @@ namespace dftfe
 
 			//evaluate H times XBlock^{T} and store in HXBlock^{T}
 			HXBlock=0.0;
-			//thrust::fill(HXBlock.begin(),HXBlock.end(),0.0);
 			const bool scaleFlag = false;
 			const double scalar = 1.0;
 			HX(XBlock,
@@ -2372,7 +2393,7 @@ namespace dftfe
 											    k-jvecNew);
 		    }
 
-		    
+		    // evaluate X^{T}HXBlockFull or XSP^{T}HXBlockFullSP	
 		    if (jvecNew+B>Noc)
 			cublasDgemm(handle,
 				    CUBLAS_OP_N,
@@ -2386,7 +2407,7 @@ namespace dftfe
 				    thrust::raw_pointer_cast(&HXBlockFull[0]),
 				    B,
 				    &beta,
-				    thrust::raw_pointer_cast(&projHamBlockCurrent[0]),
+				    thrust::raw_pointer_cast(&projHamBlockNext[0]),
 				    DNew);
 		    else
 			cublasSgemm(handle,
@@ -2401,11 +2422,15 @@ namespace dftfe
 				    thrust::raw_pointer_cast(&HXBlockFullSP[0]),
 				    B,
 				    &betaSP,
-				    thrust::raw_pointer_cast(&projHamBlockSPCurrent[0]),
+				    thrust::raw_pointer_cast(&projHamBlockSPNext[0]),
 				    DNew);
+
+                    // record completion of compute for next block
                     cudaEventRecord(computeEvents[blockCount+1],streamCompute);
             }
-            
+           
+            // Check that GPU->CPU on the current block has been completed. If completed,
+            // perform blocking MPI commmunication on the current block and copy to ScaLAPACK matrix 
             if(cudaEventSynchronize(copyEvents[blockCount])==cudaSuccess)
             {
                       if (jvec+B>Noc)
@@ -2468,7 +2493,10 @@ namespace dftfe
       }
     cudaFreeHost(projHamBlockHost);
     cudaFreeHost(projHamBlockHostSP);
+   
+    // return cublas handle to default stream     
     cublasSetStream(d_cublasHandle,NULL);
+
     if (numberBandGroups>1)
       {
 	MPI_Barrier(dftPtr->interBandGroupComm);
