@@ -157,17 +157,20 @@ namespace dftfe{
 
 #ifdef DEAL_II_WITH_SCALAPACK
     /**
-     * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
+     * @brief Compute projection of the operator into a subspace spanned by a given basis
      *
-     * @param X Vector of Vectors containing multi-wavefunction fields
-     * @param numberComponents number of wavefunctions associated with a given node
+     * @param X Vector of Vectors containing all wavefunction vectors
+     * @param Xb parallel distributed vector datastructure for handling block of wavefunction vectors
+     * @param HXb parallel distributed vector datastructure for handling H multiplied by block of 
+     * wavefunction vectors
+     * @param projectorKetTimesVector parallel distributed vector datastructure for handling nonlocal 
+     * projector kets times block wavefunction vectors
+     * @param M number of local dofs
+     * @param N total number of wavefunction vectors
+     * @param handle cublasHandle
      * @param processGrid two-dimensional processor grid corresponding to the parallel projHamPar
      * @param projHamPar parallel ScaLAPACKMatrix which stores the computed projection
      * of the operation into the given subspace
-     *
-     * The XtHX and filling into projHamPar is done in a blocked approach
-     * which avoids creation of full projected Hamiltonian matrix memory, and also avoids creation
-     * of another full X memory.
      */
      void XtHX(const double *  X,
                 cudaVectorType & Xb,
@@ -179,21 +182,83 @@ namespace dftfe{
 	        const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
 	        dealii::ScaLAPACKMatrix<double> & projHamPar);
 
-
     /**
-     * @brief Compute projection of the operator into a subspace spanned by a given orthogonal basis
+     * @brief Compute projection of the operator into a subspace spanned by a given basis.
+     * This routine also overlaps communication and computation.
      *
-     * @param X Vector of Vectors containing multi-wavefunction fields
-     * @param numberComponents number of wavefunctions associated with a given node
+     * @param X Vector of Vectors containing all wavefunction vectors
+     * @param Xb parallel distributed vector datastructure for handling block of wavefunction vectors
+     * @param HXb parallel distributed vector datastructure for handling H multiplied by block of 
+     * wavefunction vectors
+     * @param projectorKetTimesVector parallel distributed vector datastructure for handling nonlocal 
+     * projector kets times block wavefunction vectors
+     * @param M number of local dofs
+     * @param N total number of wavefunction vectors
+     * @param handle cublasHandle
      * @param processGrid two-dimensional processor grid corresponding to the parallel projHamPar
      * @param projHamPar parallel ScaLAPACKMatrix which stores the computed projection
      * of the operation into the given subspace
+     */
+     void XtHXOverlapComputeCommun(const double *  X,
+                cudaVectorType & Xb,
+                cudaVectorType & HXb,
+                cudaVectorType & projectorKetTimesVector,
+                const unsigned int M,
+		const unsigned int N,
+                cublasHandle_t &handle,
+	        const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+	        dealii::ScaLAPACKMatrix<double> & projHamPar);
+
+
+    /**
+     * @brief Compute projection of the operator into a subspace spanned by a given basis.
+     * This routine uses a mixed precision algorithm (https://doi.org/10.1016/j.cpc.2019.07.016).
      *
-     * The XtHX and filling into projHamPar is done in a blocked approach
-     * which avoids creation of full projected Hamiltonian matrix memory, and also avoids creation
-     * of another full X memory.
+     * @param X Vector of Vectors containing all wavefunction vectors
+     * @param Xb parallel distributed vector datastructure for handling block of wavefunction vectors
+     * @param HXb parallel distributed vector datastructure for handling H multiplied by block of 
+     * wavefunction vectors
+     * @param projectorKetTimesVector parallel distributed vector datastructure for handling nonlocal 
+     * projector kets times block wavefunction vectors
+     * @param M number of local dofs
+     * @param N total number of wavefunction vectors
+     * @param Noc number of fully occupied wavefunction vectors considered in the mixed precision algorithm
+     * @param handle cublasHandle
+     * @param processGrid two-dimensional processor grid corresponding to the parallel projHamPar
+     * @param projHamPar parallel ScaLAPACKMatrix which stores the computed projection
+     * of the operation into the given subspace
      */
      void XtHXMixedPrec(const double *  X,
+                cudaVectorType & Xb,
+                cudaVectorType & HXb,
+                cudaVectorType & projectorKetTimesVector,
+                const unsigned int M,
+		const unsigned int N,
+                const unsigned int Noc,
+                cublasHandle_t &handle,
+	        const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+	        dealii::ScaLAPACKMatrix<double> & projHamPar);
+
+    /**
+     * @brief Compute projection of the operator into a subspace spanned by a given basis.
+     * This routine uses a mixed precision algorithm (https://doi.org/10.1016/j.cpc.2019.07.016)
+     * and further overlaps communication and computation.
+     *
+     * @param X Vector of Vectors containing all wavefunction vectors
+     * @param Xb parallel distributed vector datastructure for handling block of wavefunction vectors
+     * @param HXb parallel distributed vector datastructure for handling H multiplied by block of 
+     * wavefunction vectors
+     * @param projectorKetTimesVector parallel distributed vector datastructure for handling nonlocal 
+     * projector kets times block wavefunction vectors
+     * @param M number of local dofs
+     * @param N total number of wavefunction vectors
+     * @param Noc number of fully occupied wavefunction vectors considered in the mixed precision algorithm
+     * @param handle cublasHandle
+     * @param processGrid two-dimensional processor grid corresponding to the parallel projHamPar
+     * @param projHamPar parallel ScaLAPACKMatrix which stores the computed projection
+     * of the operation into the given subspace
+     */
+     void XtHXMixedPrecOverlapComputeCommun(const double *  X,
                 cudaVectorType & Xb,
                 cudaVectorType & HXb,
                 cudaVectorType & projectorKetTimesVector,

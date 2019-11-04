@@ -103,6 +103,7 @@ namespace dftfe {
     bool useMixedPrecCheby=false;
     unsigned int mixedPrecXtHXFracStates=0;
     bool overlapComputeCommunCheby=false;
+    bool overlapComputeCommunXtHX=false;
 
 
     void declare_parameters(ParameterHandler &prm)
@@ -610,6 +611,10 @@ namespace dftfe {
 			    Patterns::Bool(),
 			    "[Advanced] Overlap communication and computation in Chebyshev filtering. This option can only be activated for USE GPU=true. Default setting is false.");
 
+	  prm.declare_entry("OVERLAP COMPUTE COMMUN XTHX", "false",
+			    Patterns::Bool(),
+			    "[Advanced] Overlap communication and computation in XTHX. This option can only be activated for USE GPU=true. Default setting is false.");
+
 	  prm.declare_entry("MIXED PREC XTHX FRAC STATES", "0",
 			    Patterns::Integer(0),
 			    "[Advanced] XTHX Mixed Precision. Temporary paramater- remove once spectrum splitting with RR GEP and mixed precision is implemented. Default value is 0.");
@@ -830,6 +835,7 @@ namespace dftfe {
 	  dftParameters::useMixedPrecSubspaceRotRR= prm.get_bool("USE MIXED PREC RR_SR");
 	  dftParameters::useMixedPrecCheby= prm.get_bool("USE MIXED PREC CHEBY");
           dftParameters::overlapComputeCommunCheby= prm.get_bool("OVERLAP COMPUTE COMMUN CHEBY");
+          dftParameters::overlapComputeCommunXtHX= prm.get_bool("OVERLAP COMPUTE COMMUN XTHX");
 	  dftParameters::mixedPrecXtHXFracStates  = prm.get_integer("MIXED PREC XTHX FRAC STATES");
 	  dftParameters::algoType= prm.get("ALGO");
 	  dftParameters::numAdaptiveFilterStates= prm.get_integer("ADAPTIVE FILTER STATES");
