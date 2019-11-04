@@ -1031,12 +1031,6 @@ namespace dftfe {
 	    AssertThrow((bandGroupLowHighPlusOneIndices[1]%dftParameters::wfcBlockSize==0)
 			,ExcMessage("DFT-FE Error: band parallelization group size must be exactly divisible by WFC BLOCK SIZE for GPU run."));
 
-            if (dftParameters::overlapComputeCommunCheby)
-            {
-		    AssertThrow((bandGroupLowHighPlusOneIndices[1]%(2*dftParameters::chebyWfcBlockSize)==0)
-				,ExcMessage("DFT-FE Error: band parallelization group size must be exactly divisible by twice CHEBY WFC BLOCK SIZE for GPU run when overlapping of compute and communication options are used."));
-            }
-
 	    kohnShamDFTEigenOperatorCUDA.reinit(std::min(dftParameters::chebyWfcBlockSize,
 					       d_numEigenValues),
 					       true);
