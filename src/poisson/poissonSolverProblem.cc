@@ -30,7 +30,7 @@ namespace dftfe {
       this_mpi_process (dealii::Utilities::MPI::this_mpi_process(mpi_comm)),
       pcout (std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
     {
-
+      d_isShapeGradIntegralPrecomputed=false;
     }
 
     template<unsigned int FEOrder>
@@ -67,7 +67,8 @@ namespace dftfe {
 		           const dealii::ConstraintMatrix & constraintMatrix,
 		           const unsigned int matrixFreeVectorComponent,
 	                   const std::map<dealii::types::global_dof_index, double> & atoms,
-			   const bool isComputeDiagonalA)
+			   const bool isComputeDiagonalA,
+                           const bool isPrecomputeShapeGradIntegral)
     {
         d_matrixFreeDataPtr=&matrixFreeData;
 	d_xPtr=&x;
@@ -78,6 +79,10 @@ namespace dftfe {
 
 	if (isComputeDiagonalA)
 	  computeDiagonalA();
+
+        if (isPrecomputeShapeGradIntegral)
+          precomputeShapeFunctionGradientIntegral();
+        
     }
 
 
@@ -94,6 +99,47 @@ namespace dftfe {
     }
 
     template<unsigned int FEOrder>
+    void poissonSolverProblem<FEOrder>::precomputeShapeFunctionGradientIntegral()
+    {
+
+	const dealii::DoFHandler<3> & dofHandler=
+	    d_matrixFreeDataPtr->get_dof_handler(d_matrixFreeVectorComponent);
+  
+	dealii::QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
+        dealii::FEValues<3> fe_values (dofHandler.get_fe(), quadrature, dealii::update_gradients | dealii::update_JxW_values);
+        const unsigned int   dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
+        const unsigned int   num_quad_points = quadrature.size();
+
+        d_cellShapeFunctionGradientIntegralFlattened.clear();
+        d_cellShapeFunctionGradientIntegralFlattened.resize(d_matrixFreeDataPtr->n_physical_cells()*dofs_per_cell*dofs_per_cell);
+
+	typename dealii::DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
+        unsigned int iElem=0;
+	for(; cell!=endc; ++cell)
+	      if(cell->is_locally_owned())
+		{
+		  fe_values.reinit(cell);
+
+		  for(unsigned int j = 0; j < dofs_per_cell; ++j)
+		  {
+			for (unsigned int i = 0; i < dofs_per_cell; ++i)
+			{
+			      double shapeFunctionGradientIntegralValue = 0.0;
+			      for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
+				  shapeFunctionGradientIntegralValue +=(fe_values.shape_grad(i,q_point)*fe_values.shape_grad(j,q_point))*fe_values.JxW(q_point);
+                                                
+                              d_cellShapeFunctionGradientIntegralFlattened[iElem*dofs_per_cell*dofs_per_cell
+                                                               +j*dofs_per_cell+i]=shapeFunctionGradientIntegralValue;
+			}
+
+		  }
+               
+                  iElem++;
+		}
+        d_isShapeGradIntegralPrecomputed=true;
+    }
+
+    template<unsigned int FEOrder>
     void poissonSolverProblem<FEOrder>::computeRhs(vectorType  & rhs)
     {
 
@@ -103,7 +149,9 @@ namespace dftfe {
 	    d_matrixFreeDataPtr->get_dof_handler(d_matrixFreeVectorComponent);
 
 	dealii::QGauss<3>  quadrature(C_num1DQuad<FEOrder>());
-        dealii::FEValues<3> fe_values (dofHandler.get_fe(), quadrature, dealii::update_values | dealii::update_gradients | dealii::update_JxW_values);
+        dealii::FEValues<3> fe_values (dofHandler.get_fe(), quadrature,
+                                       d_isShapeGradIntegralPrecomputed?dealii::update_values | dealii::update_JxW_values
+                                                                       :dealii::update_values | dealii::update_gradients | dealii::update_JxW_values);
         const unsigned int   dofs_per_cell = dofHandler.get_fe().dofs_per_cell;
         const unsigned int   num_quad_points = quadrature.size();
         dealii::Vector<double>  elementalRhs(dofs_per_cell);
@@ -111,6 +159,7 @@ namespace dftfe {
 
         //rhs contribution from static condensation of dirichlet boundary conditions
 	typename dealii::DoFHandler<3>::active_cell_iterator cell = dofHandler.begin_active(), endc = dofHandler.end();
+        unsigned int iElem=0;
 	for(; cell!=endc; ++cell)
 	      if(cell->is_locally_owned())
 		{
@@ -130,8 +179,12 @@ namespace dftfe {
 			    {
 			      //compute contribution to rhs
 			      double localStiffnessMatIJ = 0.0;
-			      for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
-				  localStiffnessMatIJ += (1.0/(4.0*M_PI))*(fe_values.shape_grad(i,q_point)*fe_values.shape_grad(j,q_point))*fe_values.JxW(q_point);
+                              if (!d_isShapeGradIntegralPrecomputed)
+			         for (unsigned int q_point=0; q_point<num_quad_points; ++q_point)
+				     localStiffnessMatIJ += (1.0/(4.0*M_PI))*(fe_values.shape_grad(i,q_point)*fe_values.shape_grad(j,q_point))*fe_values.JxW(q_point);
+                              else
+                                 localStiffnessMatIJ=(1.0/(4.0*M_PI))*d_cellShapeFunctionGradientIntegralFlattened[iElem*dofs_per_cell*dofs_per_cell
+                                                               +j*dofs_per_cell+i];
 
 			      elementalRhs(i)-=d_constraintMatrixPtr->
 				  get_inhomogeneity(columnID)*localStiffnessMatIJ;
@@ -142,6 +195,8 @@ namespace dftfe {
 		    }
 		  if(assembleFlag)
 		      d_constraintMatrixPtr->distribute_local_to_global(elementalRhs,local_dof_indices,rhs);
+            
+                  iElem++;
 		}
 
         //rhs contribution from electronic charge
