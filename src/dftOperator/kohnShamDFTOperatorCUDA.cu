@@ -1241,7 +1241,8 @@ namespace dftfe
 						 const unsigned int numberWaveFunctions,
 						 const bool scaleFlag,
 						 const double scalar,
-						 cudaVectorType & dst)
+						 cudaVectorType & dst,
+                                                 const bool doUnscalingSrc)
   {
     const unsigned int n_ghosts   = dftPtr->matrix_free_data.get_vector_partitioner()->n_ghost_indices();
     const unsigned int localSize  = dftPtr->matrix_free_data.get_vector_partitioner()->local_size();
@@ -1301,15 +1302,13 @@ namespace dftfe
 
     //
     //unscale src M^{1/2}*X
-    //
-    scaleCUDAKernel<<<(numberWaveFunctions+255)/256*localVectorSize,256>>>(numberWaveFunctions,
-							                   localVectorSize,
-							                   1.0/scalar,
-							                   src.begin(),
-							                   thrust::raw_pointer_cast(&d_sqrtMassVectorDevice[0]));
-
-    
-    
+    // 
+    if (doUnscalingSrc)
+	    scaleCUDAKernel<<<(numberWaveFunctions+255)/256*localVectorSize,256>>>(numberWaveFunctions,
+										   localVectorSize,
+										   1.0/scalar,
+										   src.begin(),
+										   thrust::raw_pointer_cast(&d_sqrtMassVectorDevice[0]));
 
   }
 
@@ -1488,7 +1487,8 @@ namespace dftfe
 		   chebyBlockSize,
 		   scaleFlag,
 		   scalar,
-		   HXBlock);
+		   HXBlock,
+                   false);
 
 		stridedCopyFromBlockKernel<<<(chebyBlockSize+255)/256*M, 256>>>(chebyBlockSize,
 										M,
@@ -1607,7 +1607,8 @@ namespace dftfe
 		   chebyBlockSize,
 		   scaleFlag,
 		   scalar,
-		   HXBlock);
+		   HXBlock,
+                   false);
 
 		stridedCopyFromBlockKernel<<<(chebyBlockSize+255)/256*M, 256>>>(chebyBlockSize,
 										M,
@@ -1811,7 +1812,8 @@ namespace dftfe
 			   chebyBlockSize,
 			   scaleFlag,
 			   scalar,
-			   HXBlock);
+			   HXBlock,
+                           false);
 
 			stridedCopyFromBlockKernel<<<(chebyBlockSize+255)/256*M, 256>>>(chebyBlockSize,
 											M,
@@ -1882,7 +1884,8 @@ namespace dftfe
 			   chebyBlockSize,
 			   scaleFlag,
 			   scalar,
-			   HXBlock);
+			   HXBlock,
+                           false);
 
 			stridedCopyFromBlockKernel<<<(chebyBlockSize+255)/256*M, 256>>>(chebyBlockSize,
 											M,
@@ -2046,7 +2049,8 @@ namespace dftfe
 		   chebyBlockSize,
 		   scaleFlag,
 		   scalar,
-		   HXBlock);
+		   HXBlock,
+                   false);
 
 		if (jvec+B>Noc)
 		  stridedCopyFromBlockKernel<<<(chebyBlockSize+255)/256*M, 256>>>(chebyBlockSize,
@@ -2327,7 +2331,8 @@ namespace dftfe
 			   chebyBlockSize,
 			   scaleFlag,
 			   scalar,
-			   HXBlock);
+			   HXBlock,
+                           false);
 
 			if (jvec+B>Noc)
 			  stridedCopyFromBlockKernel<<<(chebyBlockSize+255)/256*M, 256>>>(chebyBlockSize,
@@ -2435,7 +2440,8 @@ namespace dftfe
 			   chebyBlockSize,
 			   scaleFlag,
 			   scalar,
-			   HXBlock);
+			   HXBlock,
+                           false);
 
 			if (jvecNew+B>Noc)
 			  stridedCopyFromBlockKernel<<<(chebyBlockSize+255)/256*M, 256>>>(chebyBlockSize,

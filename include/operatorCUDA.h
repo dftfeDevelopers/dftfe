@@ -160,7 +160,8 @@ namespace dftfe{
 		    const unsigned int numberComponents,
 		    const bool scaleFlag,
 		    const double scalar,
-		    cudaVectorType & Y) = 0;
+		    cudaVectorType & Y,
+                    const bool doUnscalingX=true) = 0;
 
 
     virtual void HXCheby(cudaVectorType & X,
