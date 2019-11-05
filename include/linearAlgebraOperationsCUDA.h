@@ -53,6 +53,38 @@ namespace dftfe
 					 dealii::ScaLAPACKMatrix<double> & overlapMatPar);
 
 
+    
+    /** @brief Computes Sc=X^{T}*Xc.
+     *
+     *
+     */
+    void fillParallelOverlapMatScalapackAsyncComputeCommun(const double* X,
+					 const unsigned int M,
+					 const unsigned int N,
+					 cublasHandle_t &handle,
+					 const MPI_Comm &mpiComm,
+                                         const MPI_Comm &interBandGroupComm,
+					 const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+					 dealii::ScaLAPACKMatrix<double> & overlapMatPar);
+
+
+
+   
+    /** @brief Computes Sc=X^{T}*Xc.
+     *
+     *
+     */
+    void fillParallelOverlapMatMixedPrecScalapackAsyncComputeCommun(const double* X,
+					 const unsigned int M,
+					 const unsigned int N,
+					 cublasHandle_t &handle,
+					 const MPI_Comm &mpiComm,
+                                         const MPI_Comm &interBandGroupComm,
+					 const std::shared_ptr< const dealii::Utilities::MPI::ProcessGrid>  & processGrid,
+					 dealii::ScaLAPACKMatrix<double> & overlapMatPar);
+
+
+
     /** @brief Computes Sc=X^{T}*Xc.
      *
      *

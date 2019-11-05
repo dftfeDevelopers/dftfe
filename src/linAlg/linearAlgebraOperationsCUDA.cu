@@ -2741,6 +2741,7 @@ namespace dftfe
 		  overlapMatrixBlockSP.swap(overlapMatrixBlockSPNext);
 		}
 
+              const unsigned int DRem=D-B;
 
 	      cudaMemcpyAsync(overlapMatrixBlockHostDP,
 			      thrust::raw_pointer_cast(&overlapMatrixBlockDP[0]),
@@ -2779,11 +2780,11 @@ namespace dftfe
 			      N,
 			      &scalarCoeffBeta,
 			      thrust::raw_pointer_cast(&overlapMatrixBlockDPNext[0]),
-			      B);
+			      BNew);
 
-		  const unsigned int DRem=DNew-BNew;
+		  const unsigned int DRemNew=DNew-BNew;
 
-		  if (DRem!=0)
+		  if (DRemNew!=0)
 		    {
 			
 		      thrust::fill(overlapMatrixBlockSPNext.begin(),overlapMatrixBlockSPNext.end(),0.0);
@@ -2791,7 +2792,7 @@ namespace dftfe
 		      cublasSgemm(handle,
 				  CUBLAS_OP_N,
 				  CUBLAS_OP_T,
-				  DRem,
+				  DRemNew,
 				  BNew,
 				  M,
 				  &scalarCoeffAlphaSP,
@@ -2801,7 +2802,7 @@ namespace dftfe
 				  N,
 				  &scalarCoeffBetaSP,
 				  thrust::raw_pointer_cast(&overlapMatrixBlockSPNext[0]),
-				  DRem);
+				  DRemNew);
 		    }
 
 		  //record completion of compute for next block
@@ -2813,6 +2814,7 @@ namespace dftfe
 	      if(cudaEventSynchronize(copyEvents[blockCount]) == cudaSuccess)
 		{
 		
+                  const unsigned int DRem=D-B;
 
 		  // Sum local XTrunc^{T}*XcBlock for double precision across domain decomposition processors
 		  MPI_Allreduce(MPI_IN_PLACE,
