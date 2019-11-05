@@ -113,9 +113,9 @@ namespace dftfe {
 			"[Developer] Limit output to what is reproducible, i.e. don't print timing or absolute paths. This parameter is only used for testing purposes.");
 
 
-      prm.declare_entry("H REFINED ELECTROSTATICS", "true",
+      prm.declare_entry("H REFINED ELECTROSTATICS", "false",
 			Patterns::Bool(),
-			"[Advanced] Compute electrostatic energy and forces on a h refined mesh after each ground-state solve. Default: true if cell stress computation is set to false otherwise it is set to false.");
+			"[Advanced] Compute electrostatic energy and forces on a h refined mesh after each ground-state solve. Default: false.");
 
       prm.declare_entry("P REFINED ELECTROSTATICS", "false",
 			Patterns::Bool(),
