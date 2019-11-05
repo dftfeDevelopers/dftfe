@@ -1232,6 +1232,124 @@ namespace dftfe
 
   }
 
+  template<unsigned int FEOrder>
+  void kohnShamDFTOperatorCUDAClass<FEOrder>::HX(cudaVectorType & src,
+                                                 cudaVectorTypeFloat & tempFloatArray,
+						 cudaVectorType & projectorKetTimesVector,
+						 const unsigned int localVectorSize,
+						 const unsigned int numberWaveFunctions,
+						 const bool scaleFlag,
+						 const double scalar,
+						 cudaVectorType & dst,
+                                                 const bool doUnscalingSrc,
+                                                 const bool singlePrecCommun)
+  {
+    const unsigned int n_ghosts   = dftPtr->matrix_free_data.get_vector_partitioner()->n_ghost_indices();
+    const unsigned int localSize  = dftPtr->matrix_free_data.get_vector_partitioner()->local_size();
+    const unsigned int totalSize  = localSize + n_ghosts;  
+    //
+    //scale src vector with M^{-1/2}
+    //
+    scaleCUDAKernel<<<(numberWaveFunctions+255)/256*localVectorSize,256>>>(numberWaveFunctions,
+							                   localVectorSize,
+							                   scalar,
+							                   src.begin(),
+							                   thrust::raw_pointer_cast(&d_invSqrtMassVectorDevice[0]));
+
+    if(scaleFlag)
+      {
+	scaleCUDAKernel<<<(numberWaveFunctions+255)/256*localVectorSize,256>>>(numberWaveFunctions,
+									       localVectorSize,
+									       1.0,
+									       dst.begin(),
+									       thrust::raw_pointer_cast(&d_sqrtMassVectorDevice[0]));
+      }
+
+
+    if(singlePrecCommun)
+      {
+	convDoubleArrToFloatArr<<<(numberWaveFunctions+255)/256*localSize,256>>>(numberWaveFunctions*localSize,
+										 src.begin(),
+										 tempFloatArray.begin());
+	tempFloatArray.update_ghost_values();
+
+	if(n_ghosts!=0)
+	  convFloatArrToDoubleArr<<<(numberWaveFunctions+255)/256*n_ghosts,256>>>(numberWaveFunctions*n_ghosts,
+										  tempFloatArray.begin()+localSize*numberWaveFunctions,
+										  src.begin()+localSize*numberWaveFunctions);
+
+
+      }
+    else
+      {
+	src.update_ghost_values();
+      }
+    getOverloadedConstraintMatrix()->distribute(src,
+						numberWaveFunctions);
+
+    computeLocalHamiltonianTimesX(src.begin(),
+				  numberWaveFunctions,
+				  dst.begin());
+
+    //H^{nloc}*M^{-1/2}*X
+    if(dftParameters::isPseudopotential && dftPtr->d_nonLocalAtomGlobalChargeIds.size() > 0)
+      {
+	computeNonLocalHamiltonianTimesX(src.begin(),
+					 projectorKetTimesVector,
+					 numberWaveFunctions,
+					 dst.begin());
+      }
+
+    getOverloadedConstraintMatrix()->distribute_slave_to_master(dst,
+								numberWaveFunctions);
+
+
+    src.zero_out_ghosts();
+    if(singlePrecCommun)
+      {
+	convDoubleArrToFloatArr<<<(numberWaveFunctions+255)/256*totalSize,256>>>(numberWaveFunctions*totalSize,
+										 dst.begin(),
+										 tempFloatArray.begin());
+	tempFloatArray.compress(VectorOperation::add);
+
+	//copy locally owned processor boundary nodes only to dst vector
+	copyFloatArrToDoubleArrLocallyOwned<<<(numberWaveFunctions+255)/256*localSize,256>>>(numberWaveFunctions,
+											     localSize,
+											     tempFloatArray.begin(),
+											     thrust::raw_pointer_cast(&d_locallyOwnedProcBoundaryNodesVectorDevice[0]),
+											     dst.begin());
+
+	dst.zero_out_ghosts();
+
+
+      }
+    else
+      {
+	dst.compress(VectorOperation::add);
+      }
+
+    //
+    //M^{-1/2}*H*M^{-1/2}*X
+    //
+    scaleCUDAKernel<<<(numberWaveFunctions+255)/256*localVectorSize,256>>>(numberWaveFunctions,
+							                   localVectorSize,
+							                   1.0,
+							                   dst.begin(),
+							                   thrust::raw_pointer_cast(&d_invSqrtMassVectorDevice[0]));
+
+
+    //
+    //unscale src M^{1/2}*X
+    // 
+    if (doUnscalingSrc)
+	    scaleCUDAKernel<<<(numberWaveFunctions+255)/256*localVectorSize,256>>>(numberWaveFunctions,
+										   localVectorSize,
+										   1.0/scalar,
+										   src.begin(),
+										   thrust::raw_pointer_cast(&d_sqrtMassVectorDevice[0]));
+
+  }
+
 
 
   template<unsigned int FEOrder>
@@ -1994,6 +2112,10 @@ namespace dftfe
 					       N,
 					       bandGroupLowHighPlusOneIndices);
 
+    cudaVectorTypeFloat tempFloatBlock;
+    vectorTools::createDealiiVector(getMatrixFreeData()->get_vector_partitioner(),
+                                    dftParameters::chebyWfcBlockSize,
+                                    tempFloatBlock);
 
 
     const unsigned int vectorsBlockSize=std::min(dftParameters::wfcBlockSize,
@@ -2043,14 +2165,27 @@ namespace dftfe
 		//thrust::fill(HXBlock.begin(),HXBlock.end(),0.0);
 		const bool scaleFlag = false;
 		const double scalar = 1.0;
-		HX(XBlock,
-		   projectorKetTimesVector,
-		   M,
-		   chebyBlockSize,
-		   scaleFlag,
-		   scalar,
-		   HXBlock,
-                   false);
+     
+                if (jvec+B>Noc)
+			HX(XBlock,
+			   projectorKetTimesVector,
+			   M,
+			   chebyBlockSize,
+			   scaleFlag,
+			   scalar,
+			   HXBlock,
+			   false);
+                else
+			HX(XBlock,
+                           tempFloatBlock,
+			   projectorKetTimesVector,
+			   M,
+			   chebyBlockSize,
+			   scaleFlag,
+			   scalar,
+			   HXBlock,
+			   false,
+                           true);
 
 		if (jvec+B>Noc)
 		  stridedCopyFromBlockKernel<<<(chebyBlockSize+255)/256*M, 256>>>(chebyBlockSize,
@@ -2242,7 +2377,11 @@ namespace dftfe
 					       N,
 					       bandGroupLowHighPlusOneIndices);
 
-
+ 
+    cudaVectorTypeFloat tempFloatBlock;
+    vectorTools::createDealiiVector(getMatrixFreeData()->get_vector_partitioner(),
+                                    dftParameters::chebyWfcBlockSize,
+                                    tempFloatBlock);
 
     const unsigned int vectorsBlockSize=std::min(dftParameters::wfcBlockSize,
 						 N);
@@ -2325,14 +2464,26 @@ namespace dftfe
 			HXBlock=0.0;
 			const bool scaleFlag = false;
 			const double scalar = 1.0;
-			HX(XBlock,
-			   projectorKetTimesVector,
-			   M,
-			   chebyBlockSize,
-			   scaleFlag,
-			   scalar,
-			   HXBlock,
-                           false);
+			if (jvec+B>Noc)
+				HX(XBlock,
+				   projectorKetTimesVector,
+				   M,
+				   chebyBlockSize,
+				   scaleFlag,
+				   scalar,
+				   HXBlock,
+				   false);
+			else
+				HX(XBlock,
+				   tempFloatBlock,
+				   projectorKetTimesVector,
+				   M,
+				   chebyBlockSize,
+				   scaleFlag,
+				   scalar,
+				   HXBlock,
+				   false,
+				   true);
 
 			if (jvec+B>Noc)
 			  stridedCopyFromBlockKernel<<<(chebyBlockSize+255)/256*M, 256>>>(chebyBlockSize,
@@ -2434,14 +2585,26 @@ namespace dftfe
 			HXBlock=0.0;
 			const bool scaleFlag = false;
 			const double scalar = 1.0;
-			HX(XBlock,
-			   projectorKetTimesVector,
-			   M,
-			   chebyBlockSize,
-			   scaleFlag,
-			   scalar,
-			   HXBlock,
-                           false);
+			if (jvecNew+B>Noc)
+				HX(XBlock,
+				   projectorKetTimesVector,
+				   M,
+				   chebyBlockSize,
+				   scaleFlag,
+				   scalar,
+				   HXBlock,
+				   false);
+			else
+				HX(XBlock,
+				   tempFloatBlock,
+				   projectorKetTimesVector,
+				   M,
+				   chebyBlockSize,
+				   scaleFlag,
+				   scalar,
+				   HXBlock,
+				   false,
+				   true);
 
 			if (jvecNew+B>Noc)
 			  stridedCopyFromBlockKernel<<<(chebyBlockSize+255)/256*M, 256>>>(chebyBlockSize,
