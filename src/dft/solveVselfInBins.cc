@@ -85,7 +85,9 @@ namespace dftfe
 				    vselfBinScratch,
 				    d_vselfBinConstraintMatrices[iBin],
 				    constraintMatrixId,
-				    d_atomsInBin[iBin]);
+				    d_atomsInBin[iBin],
+                                    true,
+                                    iBin==0?true:false);
 
 
 	  dealiiCGSolver.solve(vselfSolverProblem,
