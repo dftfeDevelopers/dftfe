@@ -60,7 +60,8 @@ namespace dftfe {
 		     const dealii::ConstraintMatrix & constraintMatrix,
 		     const unsigned int matrixFreeVectorComponent,
 	             const std::map<dealii::types::global_dof_index, double> & atoms,
-		     const bool isComputeDiagonalA=true);
+		     const bool isComputeDiagonalA=true,
+                     const bool isPrecomputeShapeGradIntegral=false);
 
 	/**
 	 * @brief get the reference to x field
@@ -124,6 +125,12 @@ namespace dftfe {
 	 */
 	void computeDiagonalA();
 
+	/**
+	 * @brief precompute shape function gradient integral.
+	 *
+	 */
+	void precomputeShapeFunctionGradientIntegral();
+
 
 	/// storage for diagonal of the A matrix
 	vectorType d_diagonalA;
@@ -146,6 +153,11 @@ namespace dftfe {
 
 	/// pointer to map between global dof index in current processor and the atomic charge on that dof
 	const std::map<dealii::types::global_dof_index, double> * d_atomsPtr;
+
+        /// shape function gradient integral storage
+        std::vector<double> d_cellShapeFunctionGradientIntegralFlattened;
+
+        bool d_isShapeGradIntegralPrecomputed;
 
         const MPI_Comm mpi_communicator;
         const unsigned int n_mpi_processes;
