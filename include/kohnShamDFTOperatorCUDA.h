@@ -126,7 +126,19 @@ namespace dftfe{
 	      const unsigned int numberComponents,
 	      const bool scaleFlag,
 	      const double scalar,
-	      cudaVectorType & dst);
+	      cudaVectorType & dst,
+              const bool doUnscalingX=true);
+
+      void HX(cudaVectorType & src,
+              cudaVectorTypeFloat & srcFloat,
+              cudaVectorType & projectorKetTimesVector,
+	      const unsigned int localVectorSize,
+	      const unsigned int numberComponents,
+	      const bool scaleFlag,
+	      const double scalar,
+	      cudaVectorType & dst,
+              const bool doUnscalingX=true,
+              const bool singlePrecCommun=false);
 
       void HXCheby(cudaVectorType & X,
                    cudaVectorTypeFloat & XFloat,  
