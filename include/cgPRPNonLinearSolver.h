@@ -52,7 +52,8 @@ namespace dftfe {
 		         const MPI_Comm &mpi_comm_replica,
                          const double lineSearchTolerance = 1.0e-6,
 		         const unsigned int    lineSearchMaxIterations = 10,
-		         const double lineSeachDampingParameter=1.0);
+		         const double lineSeachDampingParameter=1.0,
+			 const double maxIncrementSolLinf=1e+6);
 
     /**
      * @brief Destructor.
@@ -147,8 +148,11 @@ namespace dftfe {
      * @param alpha Scalar value.
      * @param direction Direction vector.
      * @param problem nonlinearSolverProblem object.
+     *
+     * @return flag to break out of line search and restart CG
+     * if increment in solution exceeds the max increment criteria
      */
-    void updateSolution(const double                alpha,
+     bool updateSolution(const double                alpha,
 			const std::vector<double> & direction,
 			nonlinearSolverProblem    & problem);
 
@@ -212,6 +216,12 @@ namespace dftfe {
     /// damping parameter (0,1] to be multiplied with the steepest descent direction,
     /// which controls the initial guess to the line search iteration.
     double              d_lineSearchDampingParameter;
+
+    /// flag which restarts the CG if large increment to the solution vector happens during line search
+    bool  d_isCGRestartDueToLargeIncrement;
+
+    /// maximum allowed increment (measured as L_{inf}(delta x)) in solution vector beyond which CG is restarted
+    double d_maxSolutionIncrementLinf;
 
     //parallel objects
     MPI_Comm mpi_communicator;

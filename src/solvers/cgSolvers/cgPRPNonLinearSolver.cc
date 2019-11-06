@@ -30,16 +30,19 @@ namespace dftfe {
 					     const MPI_Comm &mpi_comm_replica,
                                              const double lineSearchTolerance,
 				             const unsigned int    lineSearchMaxIterations,
-					     const double lineSearchDampingParameter) :
+					     const double lineSearchDampingParameter,
+					     const double maxIncrementSolLinf) :
     d_lineSearchTolerance(lineSearchTolerance),
     d_lineSearchMaxIterations(lineSearchMaxIterations),
     d_lineSearchDampingParameter(lineSearchDampingParameter),
+    d_maxSolutionIncrementLinf(maxIncrementSolLinf),
     nonLinearSolver(debugLevel,maxNumberIterations,tolerance),
     mpi_communicator (mpi_comm_replica),
     n_mpi_processes (dealii::Utilities::MPI::n_mpi_processes(mpi_comm_replica)),
     this_mpi_process (dealii::Utilities::MPI::this_mpi_process(mpi_comm_replica)),
     pcout(std::cout, (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0))
   {
+    d_isCGRestartDueToLargeIncrement=false;
   }
 
   //
@@ -79,7 +82,7 @@ namespace dftfe {
       d_steepestDirectionOld[i]  =r;
       d_conjugateDirection[i]   = r;
       d_deltaNew      += factor*r*d_conjugateDirection[i];
- 
+
       if (std::abs(d_gradient[i])>d_gradMax)
 	d_gradMax=std::abs(d_gradient[i]);
     }
@@ -318,7 +321,7 @@ namespace dftfe {
   //
   // Update solution x -> x + \alpha direction.
   //
-  void
+  bool
   cgPRPNonLinearSolver::updateSolution(const double                      alpha,
 				       const std::vector<double> & direction,
 				       nonlinearSolverProblem            & problem)
@@ -337,6 +340,29 @@ namespace dftfe {
     for (std::vector<double>::size_type i = 0; i < solutionSize; ++i)
       incrementVector[i] = alpha*direction[i];
 
+    unsigned int isMaxIncrementExceeded=0;
+
+    for (std::vector<double>::size_type i = 0; i < solutionSize; ++i)
+    {
+      if( std::abs(incrementVector[i])> d_maxSolutionIncrementLinf)
+      {
+	  isMaxIncrementExceeded=1;
+	  break;
+      }
+    }
+
+    MPI_Bcast(&(isMaxIncrementExceeded),
+ 	      1,
+	      MPI_INT,
+	      0,
+	      MPI_COMM_WORLD);
+
+    if (isMaxIncrementExceeded==1)
+    {
+	d_isCGRestartDueToLargeIncrement=true;
+	return true;
+    }
+
     //
     // call solver problem update
     //
@@ -345,7 +371,7 @@ namespace dftfe {
     //
     //
     //
-    return;
+    return false;
 
   }
 
@@ -395,13 +421,20 @@ namespace dftfe {
     if (debugLevel >= 2)
        pcout << "Initial guess for secant line search iteration, alpha: " << alpha << std::endl;
 
+    bool isRestartCG;
     //
     // update unknowns removing earlier update
     //
-    updateSolution(d_lineSearchDampingParameter,
+    isRestartCG=updateSolution(d_lineSearchDampingParameter,
 		   d_conjugateDirection,
 		   problem);
 
+    if (isRestartCG)
+    {
+	if (debugLevel >= 2)
+	   pcout << "Stopping line search and restarting CG as max increment criteria exceeded"<< std::endl;
+	return SUCCESS;
+    }
 
     //
     // begin iteration (using secant method)
@@ -452,7 +485,7 @@ namespace dftfe {
 	    {
 	      if (debugLevel >= 2)
 		pcout << "Satisfied Wolfe condition: " << std::endl;
-	      
+
 	      return SUCCESS;
 
 	    }
@@ -469,33 +502,39 @@ namespace dftfe {
       if (debugLevel >= 2)
 	pcout << "Line search iteration: " << iter << " alphaNew: " << alphaNew << " alpha: "<<alpha <<"  eta: "<< eta << " etaP: "<<etaP << std::endl;
       else if(debugLevel>= 1)
-	pcout << "Line search iteration: " << iter <<std::endl;      
+	pcout << "Line search iteration: " << iter <<std::endl;
 
       //
       // update unknowns
       //
       if(iter == 0)
 	{
-	  updateSolution(alphaNew-d_lineSearchDampingParameter,
+	  isRestartCG=updateSolution(alphaNew-d_lineSearchDampingParameter,
 			 d_conjugateDirection,
 			 problem);
 	}
       else
 	{
-	  updateSolution(alphaNew,
+	  isRestartCG=updateSolution(alphaNew,
 			 d_conjugateDirection,
 			 problem);
 	}
 
 
-      
-    
+
+      if (isRestartCG)
+      {
+	if (debugLevel >= 2)
+	   pcout << "Stopping line search and restarting CG as max increment criteria exceeded"<< std::endl;
+	return SUCCESS;
+      }
+
       //
       // update etaP, alphaP and alpha
       //
       etaP = eta;
       alpha=alphaNew;
-      
+
     }
 
     d_lineSearchDampingParameter = alpha;
@@ -601,7 +640,7 @@ namespace dftfe {
         pcout << "CG Iter. no. | delta new | residual norm "
 	"| residual norm avg" << std::endl;
       else if (d_debugLevel >= 1)
-	pcout << "CG Iter. no. "<<d_iter+1<<std::endl;      
+	pcout << "CG Iter. no. "<<d_iter+1<<std::endl;
       //
       // output at the begining of the iteration
       //
@@ -642,11 +681,12 @@ namespace dftfe {
          pcout<<" CG- d_beta: "<<d_beta<<std::endl;
 
       unsigned int isBetaZero=0;
-      if(d_beta <= 0)
+      if(d_beta <= 0 || d_isCGRestartDueToLargeIncrement)
       {
-	  if (d_debugLevel >= 2)
+	  if (d_debugLevel >= 2 && d_beta <= 0)
 	     pcout<<" Negative d_beta- setting it to zero "<<std::endl;
 	  isBetaZero=1;
+	  d_isCGRestartDueToLargeIncrement=false;
       }
       MPI_Bcast(&(isBetaZero),
 		   1,
