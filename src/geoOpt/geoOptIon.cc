@@ -100,6 +100,7 @@ namespace dftfe {
     const double lineSearchTol=1e-4;
     const double lineSearchDampingParameter=0.8;
     const unsigned int maxLineSearchIter=50;
+    const double maxDisplacmentInAnyComponent=0.5;//Bohr
     const unsigned int debugLevel=Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) ==0?dftParameters::verbosity:0;
 
     d_totalUpdateCalls=0;
@@ -109,7 +110,8 @@ namespace dftfe {
 				  mpi_communicator,
 				  lineSearchTol,
 				  maxLineSearchIter,
-				  lineSearchDampingParameter);
+				  lineSearchDampingParameter,
+				  maxDisplacmentInAnyComponent);
 
     CGDescent cg_descent(tol,
 			 maxIter);
@@ -147,7 +149,7 @@ namespace dftfe {
 	    cg_descent.set_lbfgs(true);
 	    if(this_mpi_process == 0)
 	      cg_descent.set_PrintLevel(2);
-           
+
 	    unsigned int memory=std::min((unsigned int)100,getNumberUnknowns());
 	    if (memory<=2)
 		memory=0;
