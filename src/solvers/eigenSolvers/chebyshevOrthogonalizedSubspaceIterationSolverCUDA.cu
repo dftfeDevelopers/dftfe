@@ -266,8 +266,7 @@ namespace dftfe
     YArray.reinit(cudaFlattenedArrayBlock);
 
     cudaVectorTypeFloat cudaFlattenedFloatArrayBlock;
-    if (dftParameters::useMixedPrecCheby)
-       vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
+    vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
                                     vectorsBlockSize,
                                     cudaFlattenedFloatArrayBlock);
 
