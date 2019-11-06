@@ -2086,6 +2086,7 @@ namespace dftfe
   template<unsigned int FEOrder>
   void kohnShamDFTOperatorCUDAClass<FEOrder>::XtHXMixedPrec(const double *  X,
 							    cudaVectorType & XBlock,
+                                                            cudaVectorTypeFloat & tempFloatBlock,
 							    cudaVectorType & HXBlock,
 							    cudaVectorType & projectorKetTimesVector,
 							    const unsigned int M,
@@ -2111,11 +2112,6 @@ namespace dftfe
     dftUtils::createBandParallelizationIndices(dftPtr->interBandGroupComm,
 					       N,
 					       bandGroupLowHighPlusOneIndices);
-
-    cudaVectorTypeFloat tempFloatBlock;
-    vectorTools::createDealiiVector(getMatrixFreeData()->get_vector_partitioner(),
-                                    dftParameters::chebyWfcBlockSize,
-                                    tempFloatBlock);
 
 
     const unsigned int vectorsBlockSize=std::min(dftParameters::wfcBlockSize,
@@ -2328,6 +2324,7 @@ namespace dftfe
   template<unsigned int FEOrder>
   void kohnShamDFTOperatorCUDAClass<FEOrder>::XtHXMixedPrecOverlapComputeCommun(const double *  X,
 							    cudaVectorType & XBlock,
+                                                            cudaVectorTypeFloat & tempFloatBlock,
 							    cudaVectorType & HXBlock,
 							    cudaVectorType & projectorKetTimesVector,
 							    const unsigned int M,
@@ -2377,11 +2374,6 @@ namespace dftfe
 					       N,
 					       bandGroupLowHighPlusOneIndices);
 
- 
-    cudaVectorTypeFloat tempFloatBlock;
-    vectorTools::createDealiiVector(getMatrixFreeData()->get_vector_partitioner(),
-                                    dftParameters::chebyWfcBlockSize,
-                                    tempFloatBlock);
 
     const unsigned int vectorsBlockSize=std::min(dftParameters::wfcBlockSize,
 						 N);
