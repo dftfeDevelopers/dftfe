@@ -31,6 +31,7 @@ namespace dftfe
 					 const double* X,
 					 double* XFrac,
 					 cudaVectorType & Xb,
+                                         cudaVectorTypeFloat & floatXb,
 					 cudaVectorType & HXb,
 					 cudaVectorType & projectorKetTimesVector,
 					 const unsigned int M,
@@ -72,6 +73,7 @@ namespace dftfe
 	      if (dftParameters::overlapComputeCommunXtHX)
 		operatorMatrix.XtHXMixedPrecOverlapComputeCommun(X,
 								 Xb,
+                                                                 floatXb,
 								 HXb,
 								 projectorKetTimesVector,
 								 M,
@@ -83,6 +85,7 @@ namespace dftfe
 	      else
 		operatorMatrix.XtHXMixedPrec(X,
 					     Xb,
+                                             floatXb,
 					     HXb,
 					     projectorKetTimesVector,
 					     M,
@@ -198,6 +201,7 @@ namespace dftfe
     void rayleighRitz(operatorDFTCUDAClass & operatorMatrix,
 		      double* X,
                       cudaVectorType & Xb,
+                      cudaVectorTypeFloat & floatXb,
                       cudaVectorType & HXb,
                       cudaVectorType & projectorKetTimesVector,
 		      const unsigned int M,
@@ -237,6 +241,7 @@ namespace dftfe
 	      if (dftParameters::overlapComputeCommunXtHX)
 		operatorMatrix.XtHXMixedPrecOverlapComputeCommun(X,
 								 Xb,
+                                                                 floatXb,
 								 HXb,
 								 projectorKetTimesVector,
 								 M,
@@ -248,6 +253,7 @@ namespace dftfe
 	      else
 		operatorMatrix.XtHXMixedPrec(X,
 					     Xb,
+                                             floatXb,
 					     HXb,
 					     projectorKetTimesVector,
 					     M,
@@ -377,6 +383,7 @@ namespace dftfe
     void rayleighRitzGEP(operatorDFTCUDAClass & operatorMatrix,
 			 double* X,
 			 cudaVectorType & Xb,
+                         cudaVectorTypeFloat & floatXb,
 			 cudaVectorType & HXb,
 			 cudaVectorType & projectorKetTimesVector,
 			 const unsigned int M,
@@ -492,6 +499,7 @@ namespace dftfe
 	      if (dftParameters::overlapComputeCommunXtHX)
 		operatorMatrix.XtHXMixedPrecOverlapComputeCommun(X,
 								 Xb,
+                                                                 floatXb,
 								 HXb,
 								 projectorKetTimesVector,
 								 M,
@@ -503,6 +511,7 @@ namespace dftfe
 	      else
 		operatorMatrix.XtHXMixedPrec(X,
 					     Xb,
+                                             floatXb,
 					     HXb,
 					     projectorKetTimesVector,
 					     M,
@@ -723,6 +732,7 @@ namespace dftfe
 					    double* X,
 					    double* XFrac,
 					    cudaVectorType & Xb,
+                                            cudaVectorTypeFloat & floatXb,
 					    cudaVectorType & HXb,
 					    cudaVectorType & projectorKetTimesVector,
 					    const unsigned int M,
@@ -841,6 +851,7 @@ namespace dftfe
 	      if (dftParameters::overlapComputeCommunXtHX)
 		operatorMatrix.XtHXMixedPrecOverlapComputeCommun(X,
 								 Xb,
+                                                                 floatXb,
 								 HXb,
 								 projectorKetTimesVector,
 								 M,
@@ -852,6 +863,7 @@ namespace dftfe
 	      else
 		operatorMatrix.XtHXMixedPrec(X,
 					     Xb,
+                                             floatXb,
 					     HXb,
 					     projectorKetTimesVector,
 					     M,

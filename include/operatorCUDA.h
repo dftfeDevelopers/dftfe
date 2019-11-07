@@ -160,7 +160,8 @@ namespace dftfe{
 		    const unsigned int numberComponents,
 		    const bool scaleFlag,
 		    const double scalar,
-		    cudaVectorType & Y) = 0;
+		    cudaVectorType & Y,
+                    const bool doUnscalingX=true) = 0;
 
 
     virtual void HXCheby(cudaVectorType & X,
@@ -249,6 +250,8 @@ namespace dftfe{
      *
      * @param X Vector of Vectors containing all wavefunction vectors
      * @param Xb parallel distributed vector datastructure for handling block of wavefunction vectors
+     * @param floatXb parallel distributed vector datastructure for handling block of wavefunction
+     * vectors in single precision
      * @param HXb parallel distributed vector datastructure for handling H multiplied by block of 
      * wavefunction vectors
      * @param projectorKetTimesVector parallel distributed vector datastructure for handling nonlocal 
@@ -263,6 +266,7 @@ namespace dftfe{
      */
      virtual void XtHXMixedPrec(const double *  X,
                 cudaVectorType & Xb,
+                cudaVectorTypeFloat & floatXb,
                 cudaVectorType & HXb,
                 cudaVectorType & projectorKetTimesVector,
                 const unsigned int M,
@@ -280,6 +284,8 @@ namespace dftfe{
      *
      * @param X Vector of Vectors containing all wavefunction vectors
      * @param Xb parallel distributed vector datastructure for handling block of wavefunction vectors
+     * @param floatXb parallel distributed vector datastructure for handling block of wavefunction
+     * vectors in single precision
      * @param HXb parallel distributed vector datastructure for handling H multiplied by block of 
      * wavefunction vectors
      * @param projectorKetTimesVector parallel distributed vector datastructure for handling nonlocal 
@@ -294,6 +300,7 @@ namespace dftfe{
      */
      virtual void XtHXMixedPrecOverlapComputeCommun(const double *  X,
                 cudaVectorType & Xb,
+                cudaVectorTypeFloat & floatXb,
                 cudaVectorType & HXb,
                 cudaVectorType & projectorKetTimesVector,
                 const unsigned int M,

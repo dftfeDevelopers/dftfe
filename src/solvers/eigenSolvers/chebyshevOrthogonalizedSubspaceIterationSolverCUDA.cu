@@ -266,8 +266,7 @@ namespace dftfe
     YArray.reinit(cudaFlattenedArrayBlock);
 
     cudaVectorTypeFloat cudaFlattenedFloatArrayBlock;
-    if (dftParameters::useMixedPrecCheby)
-       vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
+    vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
                                     vectorsBlockSize,
                                     cudaFlattenedFloatArrayBlock);
 
@@ -629,6 +628,7 @@ namespace dftfe
 							      eigenVectorsFlattenedCUDA,
 							      eigenVectorsRotFracDensityFlattenedCUDA,
 							      cudaFlattenedArrayBlock,
+                                                              cudaFlattenedFloatArrayBlock,
 							      YArray,
 							      projectorKetTimesVector,
 							      localVectorSize,
@@ -647,6 +647,7 @@ namespace dftfe
 							      eigenVectorsFlattenedCUDA,
 							      eigenVectorsRotFracDensityFlattenedCUDA,
 							      cudaFlattenedArrayBlock,
+                                                              cudaFlattenedFloatArrayBlock,
 							      YArray,
 							      projectorKetTimesVector,
 							      localVectorSize,
@@ -680,6 +681,7 @@ namespace dftfe
 		    linearAlgebraOperationsCUDA::rayleighRitz(operatorMatrix,
 							      eigenVectorsFlattenedCUDA,
 							      cudaFlattenedArrayBlock,
+                                                              cudaFlattenedFloatArrayBlock,
 							      YArray,
 							      projectorKetTimesVector,
 							      localVectorSize,
@@ -697,6 +699,7 @@ namespace dftfe
 		    linearAlgebraOperationsCUDA::rayleighRitzGEP(operatorMatrix,
 							      eigenVectorsFlattenedCUDA,
 							      cudaFlattenedArrayBlock,
+                                                              cudaFlattenedFloatArrayBlock,
 							      YArray,
 							      projectorKetTimesVector,
 							      localVectorSize,
