@@ -2278,7 +2278,7 @@ namespace dftfe
 	      if(ivec == bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
 		{
 
-		  thrust::fill(overlapMatrixBlock.begin(),overlapMatrixBlock.end(),0.0);
+		  //thrust::fill(overlapMatrixBlock.begin(),overlapMatrixBlock.end(),0.0);
 
 		  cublasDgemm(handle,
 			      CUBLAS_OP_N,
@@ -2323,7 +2323,7 @@ namespace dftfe
 	      //start computations on the next block
 	      if(ivecNew < bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1])
 		{
-		  thrust::fill(overlapMatrixBlockNext.begin(),overlapMatrixBlockNext.end(),0.);
+		  //thrust::fill(overlapMatrixBlockNext.begin(),overlapMatrixBlockNext.end(),0.);
 		     
 		  //evaluate X^{T} times XBlock
 		  cublasDgemm(handle,
@@ -2687,7 +2687,7 @@ namespace dftfe
 	       // Compute local XTrunc^{T}*XcBlock
 	      if(ivec == bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
 		{
-		  thrust::fill(overlapMatrixBlockDP.begin(),overlapMatrixBlockDP.end(),0.0);
+		  //thrust::fill(overlapMatrixBlockDP.begin(),overlapMatrixBlockDP.end(),0.0);
 
 		  cublasDgemm(handle,
 			      CUBLAS_OP_N,
@@ -2709,7 +2709,7 @@ namespace dftfe
 		  if (DRem!=0)
 		    {
 			
-		      thrust::fill(overlapMatrixBlockSP.begin(),overlapMatrixBlockSP.end(),0.0);
+		      //thrust::fill(overlapMatrixBlockSP.begin(),overlapMatrixBlockSP.end(),0.0);
 
 		      cublasSgemm(handle,
 				  CUBLAS_OP_N,
@@ -2764,7 +2764,7 @@ namespace dftfe
 
 	      if(ivecNew < bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1])
 		{
-		  thrust::fill(overlapMatrixBlockDPNext.begin(),overlapMatrixBlockDPNext.end(),0.0);
+		  //thrust::fill(overlapMatrixBlockDPNext.begin(),overlapMatrixBlockDPNext.end(),0.0);
 
 		  //evaluate X^{T} times XBlock
 		  cublasDgemm(handle,
@@ -2787,7 +2787,7 @@ namespace dftfe
 		  if (DRemNew!=0)
 		    {
 			
-		      thrust::fill(overlapMatrixBlockSPNext.begin(),overlapMatrixBlockSPNext.end(),0.0);
+		      //thrust::fill(overlapMatrixBlockSPNext.begin(),overlapMatrixBlockSPNext.end(),0.0);
 
 		      cublasSgemm(handle,
 				  CUBLAS_OP_N,
