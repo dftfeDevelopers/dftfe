@@ -61,6 +61,6 @@ subsection SCF parameters
        set WFC BLOCK SIZE=45
        set CHEBYSHEV FILTER TOLERANCE=1e-3
        set RR GEP=true
-       set OVERLAP COMPUTE COMMUN XTHX=true
+       set OVERLAP COMPUTE COMMUN ORTHO RR=true
   end
 end

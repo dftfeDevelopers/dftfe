@@ -437,7 +437,7 @@ namespace dftfe
                 else
                 {
                       //set to zero wavefunctions which wont go through chebyshev filtering inside a given band group
-	              setZeroKernel<<<(BVec+255)/256*localVectorSize, 256>>>(numSimultaneousBlocksCurrent*BVec,
+	              setZeroKernel<<<(numSimultaneousBlocksCurrent*BVec+255)/256*localVectorSize, 256>>>(numSimultaneousBlocksCurrent*BVec,
 								             localVectorSize,
 									     totalNumberWaveFunctions,
 									     eigenVectorsFlattenedCUDA,

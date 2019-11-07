@@ -77,7 +77,7 @@ namespace dftfe
              //S=X*X^{T}. Implemented as S=X^{T}*X with X^{T} stored in the column major format
              if (dftParameters::useMixedPrecPGS_O && useMixedPrecOverall)
 	       {
-		 if(dftParameters::overlapComputeCommunXtHX)
+		 if(dftParameters::overlapComputeCommunOrthoRR)
 		   linearAlgebraOperationsCUDA::
 		     fillParallelOverlapMatMixedPrecScalapackAsyncComputeCommun
 		     (X,
@@ -102,7 +102,7 @@ namespace dftfe
 	       }
              else
 	       {
-		 if(dftParameters::overlapComputeCommunXtHX)
+		 if(dftParameters::overlapComputeCommunOrthoRR)
 		   linearAlgebraOperationsCUDA::
 		     fillParallelOverlapMatScalapackAsyncComputeCommun
 		     (X,

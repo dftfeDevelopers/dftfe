@@ -70,7 +70,7 @@ namespace dftfe
 
 	  if (useMixedPrecOverall && dftParameters::useMixedPrecXTHXSpectrumSplit)
 	    {
-	      if (dftParameters::overlapComputeCommunXtHX)
+	      if (dftParameters::overlapComputeCommunOrthoRR)
 		operatorMatrix.XtHXMixedPrecOverlapComputeCommun(X,
 								 Xb,
                                                                  floatXb,
@@ -97,7 +97,7 @@ namespace dftfe
 	    }
 	  else
 	    {
-	      if (dftParameters::overlapComputeCommunXtHX)
+	      if (dftParameters::overlapComputeCommunOrthoRR)
 		operatorMatrix.XtHXOverlapComputeCommun(X,
 							Xb,
 							HXb,
@@ -238,7 +238,7 @@ namespace dftfe
 
 	  if (useMixedPrecOverall && dftParameters::useMixedPrecXTHXSpectrumSplit)
 	    {
-	      if (dftParameters::overlapComputeCommunXtHX)
+	      if (dftParameters::overlapComputeCommunOrthoRR)
 		operatorMatrix.XtHXMixedPrecOverlapComputeCommun(X,
 								 Xb,
                                                                  floatXb,
@@ -265,7 +265,7 @@ namespace dftfe
 	    }
 	  else
 	    {
-	      if (dftParameters::overlapComputeCommunXtHX)
+	      if (dftParameters::overlapComputeCommunOrthoRR)
 		operatorMatrix.XtHXOverlapComputeCommun(X,
 							Xb,
 							HXb,
@@ -419,7 +419,7 @@ namespace dftfe
 	  //S=X*X^{T}. Implemented as S=X^{T}*X with X^{T} stored in the column major format
 	  if (dftParameters::useMixedPrecPGS_O && useMixedPrecOverall)
 	    {
-	      if(dftParameters::overlapComputeCommunXtHX)
+	      if(dftParameters::overlapComputeCommunOrthoRR)
 		linearAlgebraOperationsCUDA::
 		  fillParallelOverlapMatMixedPrecScalapackAsyncComputeCommun
 		  (X,
@@ -444,7 +444,7 @@ namespace dftfe
 	    }
 	  else
 	    {
-	      if(dftParameters::overlapComputeCommunXtHX)
+	      if(dftParameters::overlapComputeCommunOrthoRR)
 		linearAlgebraOperationsCUDA::
 		  fillParallelOverlapMatScalapackAsyncComputeCommun
 		  (X,
@@ -496,7 +496,7 @@ namespace dftfe
 
 	  if (useMixedPrecOverall && dftParameters::useMixedPrecXTHXSpectrumSplit)
 	    {
-	      if (dftParameters::overlapComputeCommunXtHX)
+	      if (dftParameters::overlapComputeCommunOrthoRR)
 		operatorMatrix.XtHXMixedPrecOverlapComputeCommun(X,
 								 Xb,
                                                                  floatXb,
@@ -523,7 +523,7 @@ namespace dftfe
 	    }
 	  else
 	    {
-	      if (dftParameters::overlapComputeCommunXtHX)
+	      if (dftParameters::overlapComputeCommunOrthoRR)
 		operatorMatrix.XtHXOverlapComputeCommun(X,
 							Xb,
 							HXb,
@@ -771,7 +771,7 @@ namespace dftfe
 	  //S=X*X^{T}. Implemented as S=X^{T}*X with X^{T} stored in the column major format
 	  if (dftParameters::useMixedPrecPGS_O && useMixedPrecOverall)
 	    {
-	      if(dftParameters::overlapComputeCommunXtHX)
+	      if(dftParameters::overlapComputeCommunOrthoRR)
 		linearAlgebraOperationsCUDA::
 		  fillParallelOverlapMatMixedPrecScalapackAsyncComputeCommun
 		  (X,
@@ -796,7 +796,7 @@ namespace dftfe
 	    }
 	  else
 	    {
-	      if(dftParameters::overlapComputeCommunXtHX)
+	      if(dftParameters::overlapComputeCommunOrthoRR)
 		linearAlgebraOperationsCUDA::
 		  fillParallelOverlapMatScalapackAsyncComputeCommun
 		  (X,
@@ -848,7 +848,7 @@ namespace dftfe
 
 	  if (useMixedPrecOverall && dftParameters::useMixedPrecXTHXSpectrumSplit)
 	    {
-	      if (dftParameters::overlapComputeCommunXtHX)
+	      if (dftParameters::overlapComputeCommunOrthoRR)
 		operatorMatrix.XtHXMixedPrecOverlapComputeCommun(X,
 								 Xb,
                                                                  floatXb,
@@ -875,7 +875,7 @@ namespace dftfe
 	    }
 	  else
 	    {
-	      if (dftParameters::overlapComputeCommunXtHX)
+	      if (dftParameters::overlapComputeCommunOrthoRR)
 		operatorMatrix.XtHXOverlapComputeCommun(X,
 							Xb,
 							HXb,
