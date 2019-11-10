@@ -107,6 +107,7 @@ namespace dftfe {
       extern unsigned int mixedPrecXtHXFracStates;
       extern bool overlapComputeCommunCheby;
       extern bool overlapComputeCommunOrthoRR;
+      extern bool autoGPUBlockSizes;
 
 
 
