@@ -134,7 +134,7 @@ namespace dftfe {
 
 	prm.declare_entry("AUTO GPU BLOCK SIZES", "true",
 			  Patterns::Bool(),
-			  "[Advanced] Automatically sets total number of kohn-sham wave functions and optimal block sizes in the eigensolver for running on GPUs. If manual tuning is desired set this parameter to false and set the block sizes using the input parameters for the block sizes. Default: true.");
+			  "[Advanced] Automatically sets total number of kohn-sham wave functions and eigensolver optimal block sizes for running on GPUs. If manual tuning is desired set this parameter to false and set the block sizes using the input parameters for the block sizes. Default: true.");
 
 	prm.declare_entry("FINE GRAINED GPU TIMINGS", "false",
 			  Patterns::Bool(),
