@@ -4,6 +4,7 @@ set H REFINED ELECTROSTATICS = false
 
 subsection GPU
   set USE GPU=true
+  set AUTO GPU BLOCK SIZES=false
 end
 
 subsection Boundary conditions
@@ -65,5 +66,6 @@ subsection SCF parameters
        set OVERLAP COMPUTE COMMUN ORTHO RR=true
        set USE MIXED PREC XTHX SPECTRUM SPLIT=true
        set USE MIXED PREC PGS SR=true
+       set OVERLAP COMPUTE COMMUN CHEBY=false
   end
 end
