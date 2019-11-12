@@ -224,10 +224,15 @@ void dftClass<FEOrder>::compute_ldos(const std::vector<std::vector<double>> & ei
       }
 
 
-      std::vector<std::vector<double>> blockedEigenValues(d_kPointWeights.size(),std::vector<double>(currentBlockSize,0.0));
+      std::vector<std::vector<double>> blockedEigenValues(d_kPointWeights.size(),std::vector<double>((1+dftParameters::spinPolarized)*currentBlockSize,0.0));
       for(unsigned int kPoint = 0; kPoint < d_kPointWeights.size(); ++kPoint)
 	 for (unsigned int iWave=0; iWave<currentBlockSize;++iWave)
+	 {
 	     blockedEigenValues[kPoint][iWave]=eigenValues[kPoint][ivec+iWave];
+	     if (dftParameters::spinPolarized==1)
+		 blockedEigenValues[kPoint][currentBlockSize+iWave]
+		     =eigenValues[kPoint][currentBlockSize+ivec+iWave];
+	 }
 
       for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
       {
@@ -299,7 +304,7 @@ void dftClass<FEOrder>::compute_ldos(const std::vector<std::vector<double>> & ei
 			   for(unsigned int epsInt = 0; epsInt < numberIntervals; ++epsInt)
 			     {
 			       double epsValue = lowerBoundEpsilon+epsInt*intervalSize;
-			       double term1 = (epsValue - blockedEigenValues[spinType][iEigenVec]);
+			       double term1 = (epsValue - blockedEigenValues[0][iEigenVec*currentBlockSize+spinType]);
 			       double smearedEnergyLevel = (sigma/M_PI)*(1.0/(term1*term1+sigma*sigma));
 
 			       if(spinType == 0)
