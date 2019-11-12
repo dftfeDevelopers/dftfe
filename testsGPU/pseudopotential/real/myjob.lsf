@@ -23,3 +23,4 @@ jsrun --smpiargs "-gpu" -n 6 -a 3 -c 7 -g 1 -r 6 -d cyclic -b packed:2 ./dftfe p
 jsrun --smpiargs "-gpu" -n 6 -a 3 -c 7 -g 1 -r 6 -d cyclic -b packed:2 ./dftfe parameterFileMg2x_4.prm > outputMg2x_4
 jsrun --smpiargs "-gpu" -n 6 -a 3 -c 7 -g 1 -r 6 -d cyclic -b packed:2 ./dftfe parameterFileMg2x_5.prm > outputMg2x_5
 jsrun --smpiargs "-gpu" -n 6 -a 3 -c 7 -g 1 -r 6 -d cyclic -b packed:2 ./dftfe parameterFileMg2x_6.prm > outputMg2x_6
+jsrun --smpiargs "-gpu" -n 6 -a 3 -c 7 -g 1 -r 6 -d cyclic -b packed:2 ./dftfe parameterFileMg2x_7.prm > outputMg2x_7
