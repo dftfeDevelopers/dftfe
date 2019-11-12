@@ -304,7 +304,7 @@ void dftClass<FEOrder>::compute_ldos(const std::vector<std::vector<double>> & ei
 			   for(unsigned int epsInt = 0; epsInt < numberIntervals; ++epsInt)
 			     {
 			       double epsValue = lowerBoundEpsilon+epsInt*intervalSize;
-			       double term1 = (epsValue - blockedEigenValues[0][iEigenVec*currentBlockSize+spinType]);
+			       double term1 = (epsValue - blockedEigenValues[0][spinType*currentBlockSize+iEigenVec]);
 			       double smearedEnergyLevel = (sigma/M_PI)*(1.0/(term1*term1+sigma*sigma));
 
 			       if(spinType == 0)
