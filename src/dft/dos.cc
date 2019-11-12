@@ -231,7 +231,7 @@ void dftClass<FEOrder>::compute_ldos(const std::vector<std::vector<double>> & ei
 	     blockedEigenValues[kPoint][iWave]=eigenValues[kPoint][ivec+iWave];
 	     if (dftParameters::spinPolarized==1)
 		 blockedEigenValues[kPoint][currentBlockSize+iWave]
-		     =eigenValues[kPoint][currentBlockSize+ivec+iWave];
+		     =eigenValues[kPoint][d_numEigenValues+ivec+iWave];
 	 }
 
       for(unsigned int kPoint = 0; kPoint < (1+dftParameters::spinPolarized)*d_kPointWeights.size(); ++kPoint)
