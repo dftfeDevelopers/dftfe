@@ -1350,6 +1350,8 @@ namespace dftfe {
 	   {
 	       if (dftParameters::verbosity>=4)
 	           pcout<< "Hanging node and periodic constraints parallel consistency not achieved."<<std::endl;
+
+	       dftParameters::createConstraintsFromSerialDofhandler=true;
 	   }
 	}
 

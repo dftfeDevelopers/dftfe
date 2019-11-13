@@ -309,7 +309,7 @@ namespace dftfe {
 			  Patterns::Bool(),
 			  "[Developer] Check for consistency of constraints in parallel.");
 
-        prm.declare_entry("CONSTRAINTS FROM SERIAL DOFHANDLER", "true",
+        prm.declare_entry("CONSTRAINTS FROM SERIAL DOFHANDLER", "false",
 			  Patterns::Bool(),
 			  "[Developer] Check constraints from serial dofHandler.");
 
@@ -1067,6 +1067,9 @@ namespace dftfe {
 	  dftParameters::constraintsParallelCheck=false;
 	  dftParameters::createConstraintsFromSerialDofhandler=false;
 	}
+      else if (dftParameters::reproducible_output)
+          dftParameters::createConstraintsFromSerialDofhandler=true;
+
 
     }
 
