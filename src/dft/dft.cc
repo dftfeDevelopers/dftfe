@@ -379,14 +379,80 @@ namespace dftfe {
 	  }
 	d_numEigenValues = (numElectrons/2.0) + std::max(0.2*(numElectrons/2.0),20.0);
 
+        // start with 17% buffer to leave room for additional modifications due to block size restrictions
+#ifdef DFTFE_WITH_GPU
+        if (dftParameters::useGPU && dftParameters::autoGPUBlockSizes)
+           d_numEigenValues = (numElectrons/2.0) + std::max(0.17*(numElectrons/2.0),20.0);
+#endif
+
 	if(dftParameters::verbosity >= 1)
 	  {
-	    pcout <<" Setting the number of Kohn-Sham wave functions to be set to "<<d_numEigenValues<<std::endl;
+	    pcout <<" Setting the number of Kohn-Sham wave functions to be "<<d_numEigenValues<<std::endl;
 	  }
       }
 
     if (dftParameters::algoType=="FAST")
       dftParameters::numCoreWfcRR=0.93*numElectrons/2.0;
+
+
+#ifdef DFTFE_WITH_GPU
+      if (dftParameters::useGPU && dftParameters::autoGPUBlockSizes)
+      {
+
+	   const unsigned int numberBandGroups=
+	      dealii::Utilities::MPI::n_mpi_processes(interBandGroupComm);
+
+
+           d_numEigenValues=std::ceil(d_numEigenValues/(numberBandGroups*1.0))*numberBandGroups;
+
+	   AssertThrow((d_numEigenValues%numberBandGroups==0 || d_numEigenValues/numberBandGroups==0)
+			,ExcMessage("DFT-FE Error: TOTAL NUMBER OF KOHN-SHAM WAVEFUNCTIONS must be exactly divisible by NPBAND for GPU run."));
+
+	   const unsigned int bandGroupTaskId = dealii::Utilities::MPI::this_mpi_process(interBandGroupComm);
+	   std::vector<unsigned int> bandGroupLowHighPlusOneIndices;
+	   dftUtils::createBandParallelizationIndices(interBandGroupComm,
+						       d_numEigenValues,
+						       bandGroupLowHighPlusOneIndices);
+
+           const unsigned int eigenvaluesInBandGroup=bandGroupLowHighPlusOneIndices[1];
+
+          if (eigenvaluesInBandGroup<=200)
+          {
+	     dftParameters::chebyWfcBlockSize=eigenvaluesInBandGroup;
+	     dftParameters::wfcBlockSize=eigenvaluesInBandGroup;
+          }
+          else if (eigenvaluesInBandGroup<=600)
+          {
+             d_numEigenValues=std::ceil(eigenvaluesInBandGroup/150.0)*150.0*numberBandGroups; 
+	     dftParameters::chebyWfcBlockSize=150;
+	     dftParameters::wfcBlockSize=150;
+          }
+          else if (eigenvaluesInBandGroup<=1000)
+          {
+             d_numEigenValues=std::ceil(eigenvaluesInBandGroup/200.0)*200.0*numberBandGroups; 
+	     dftParameters::chebyWfcBlockSize=200;
+	     dftParameters::wfcBlockSize=200;
+          }
+          else
+          {
+             d_numEigenValues=std::ceil(eigenvaluesInBandGroup/400.0)*400.0*numberBandGroups; 
+	     dftParameters::chebyWfcBlockSize=numberBandGroups>1?400:200;
+	     dftParameters::wfcBlockSize=400;
+          }
+
+	 if (dftParameters::algoType=="FAST")
+	    dftParameters::numCoreWfcRR=std::floor(dftParameters::numCoreWfcRR/dftParameters::wfcBlockSize)*dftParameters::wfcBlockSize;
+
+	if(dftParameters::verbosity >= 1)
+	  {
+	    pcout <<" Setting the number of Kohn-Sham wave functions for GPU run to be: "<<d_numEigenValues<<std::endl;
+            pcout <<" Setting CHEBY WFC BLOCK SIZE for GPU run to be "<<dftParameters::chebyWfcBlockSize<<std::endl;
+            pcout <<" Setting WFC BLOCK SIZE for GPU run to be "<<dftParameters::wfcBlockSize<<std::endl;
+            if (dftParameters::algoType=="FAST")
+                pcout <<" Setting SPECTRUM SPLIT CORE EIGENSTATES for GPU run to be "<<dftParameters::numCoreWfcRR<<std::endl;
+	  }
+      }
+#endif
 
     if (dftParameters::constraintMagnetization)
      {

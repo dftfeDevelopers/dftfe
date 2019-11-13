@@ -4,6 +4,7 @@ set H REFINED ELECTROSTATICS = false
 
 subsection GPU
   set USE GPU=true
+  set AUTO GPU BLOCK SIZES=false
 end
 
 subsection Boundary conditions
@@ -63,5 +64,7 @@ subsection SCF parameters
        set CHEBYSHEV FILTER TOLERANCE=1e-3
        set RR GEP=true
        set USE MIXED PREC PGS SR=true
+       set OVERLAP COMPUTE COMMUN ORTHO RR=false
+       set OVERLAP COMPUTE COMMUN CHEBY=false
   end
 end

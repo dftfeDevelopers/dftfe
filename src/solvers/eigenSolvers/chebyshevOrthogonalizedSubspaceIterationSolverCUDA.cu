@@ -266,8 +266,7 @@ namespace dftfe
     YArray.reinit(cudaFlattenedArrayBlock);
 
     cudaVectorTypeFloat cudaFlattenedFloatArrayBlock;
-    if (dftParameters::useMixedPrecCheby)
-       vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
+    vectorTools::createDealiiVector(operatorMatrix.getMatrixFreeData()->get_vector_partitioner(),
                                     vectorsBlockSize,
                                     cudaFlattenedFloatArrayBlock);
 
@@ -351,7 +350,7 @@ namespace dftfe
             //filtering is toggled on
             const unsigned int numSimultaneousBlocks=dftParameters::overlapComputeCommunCheby?2:1;
             unsigned int numSimultaneousBlocksCurrent=numSimultaneousBlocks;
-
+            const unsigned int numWfcsInBandGroup=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1]-bandGroupLowHighPlusOneIndices[2*bandGroupTaskId];
             int startIndexBandParal=totalNumberWaveFunctions;
             int numVectorsBandParal=0;
 	    for (unsigned int jvec = 0; jvec < totalNumberWaveFunctions; jvec += numSimultaneousBlocksCurrent*vectorsBlockSize)
@@ -362,8 +361,9 @@ namespace dftfe
               
                 //handle edge case when total number of blocks in a given band group is not even in case of 
                 //overlapping computation and communciation in chebyshev filtering 
+                const unsigned int leftIndexBandGroupMargin=(jvec/numWfcsInBandGroup)*numWfcsInBandGroup;
                 numSimultaneousBlocksCurrent
-                     =((jvec+numSimultaneousBlocks*BVec)<=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1] && numSimultaneousBlocks==2)?2:1;
+                     =((jvec+numSimultaneousBlocks*BVec-leftIndexBandGroupMargin)<=numWfcsInBandGroup && numSimultaneousBlocks==2)?2:1;
 
         	if ((jvec+numSimultaneousBlocksCurrent*BVec)<=bandGroupLowHighPlusOneIndices[2*bandGroupTaskId+1] &&
 	         (jvec+numSimultaneousBlocksCurrent*BVec)>bandGroupLowHighPlusOneIndices[2*bandGroupTaskId])
@@ -438,7 +438,7 @@ namespace dftfe
                 else
                 {
                       //set to zero wavefunctions which wont go through chebyshev filtering inside a given band group
-	              setZeroKernel<<<(BVec+255)/256*localVectorSize, 256>>>(numSimultaneousBlocksCurrent*BVec,
+	              setZeroKernel<<<(numSimultaneousBlocksCurrent*BVec+255)/256*localVectorSize, 256>>>(numSimultaneousBlocksCurrent*BVec,
 								             localVectorSize,
 									     totalNumberWaveFunctions,
 									     eigenVectorsFlattenedCUDA,
@@ -629,6 +629,7 @@ namespace dftfe
 							      eigenVectorsFlattenedCUDA,
 							      eigenVectorsRotFracDensityFlattenedCUDA,
 							      cudaFlattenedArrayBlock,
+                                                              cudaFlattenedFloatArrayBlock,
 							      YArray,
 							      projectorKetTimesVector,
 							      localVectorSize,
@@ -647,6 +648,7 @@ namespace dftfe
 							      eigenVectorsFlattenedCUDA,
 							      eigenVectorsRotFracDensityFlattenedCUDA,
 							      cudaFlattenedArrayBlock,
+                                                              cudaFlattenedFloatArrayBlock,
 							      YArray,
 							      projectorKetTimesVector,
 							      localVectorSize,
@@ -680,6 +682,7 @@ namespace dftfe
 		    linearAlgebraOperationsCUDA::rayleighRitz(operatorMatrix,
 							      eigenVectorsFlattenedCUDA,
 							      cudaFlattenedArrayBlock,
+                                                              cudaFlattenedFloatArrayBlock,
 							      YArray,
 							      projectorKetTimesVector,
 							      localVectorSize,
@@ -697,6 +700,7 @@ namespace dftfe
 		    linearAlgebraOperationsCUDA::rayleighRitzGEP(operatorMatrix,
 							      eigenVectorsFlattenedCUDA,
 							      cudaFlattenedArrayBlock,
+                                                              cudaFlattenedFloatArrayBlock,
 							      YArray,
 							      projectorKetTimesVector,
 							      localVectorSize,

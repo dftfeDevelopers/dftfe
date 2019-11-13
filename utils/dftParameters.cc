@@ -103,7 +103,8 @@ namespace dftfe {
     bool useMixedPrecCheby=false;
     unsigned int mixedPrecXtHXFracStates=0;
     bool overlapComputeCommunCheby=false;
-    bool overlapComputeCommunXtHX=false;
+    bool overlapComputeCommunOrthoRR=false;
+    bool autoGPUBlockSizes=true;
 
 
     void declare_parameters(ParameterHandler &prm)
@@ -131,6 +132,9 @@ namespace dftfe {
 			  Patterns::Bool(),
 			  "[Standard] Use GPU for compute.");
 
+	prm.declare_entry("AUTO GPU BLOCK SIZES", "true",
+			  Patterns::Bool(),
+			  "[Advanced] Automatically sets total number of kohn-sham wave functions and eigensolver optimal block sizes for running on GPUs. If manual tuning is desired set this parameter to false and set the block sizes using the input parameters for the block sizes. Default: true.");
 
 	prm.declare_entry("FINE GRAINED GPU TIMINGS", "false",
 			  Patterns::Bool(),
@@ -139,7 +143,7 @@ namespace dftfe {
 
 	prm.declare_entry("SUBSPACE ROT FULL CPU MEM", "true",
 			  Patterns::Bool(),
-			  "[Developer] Option to use full NxN memory on CPU in subspace rotation. This reduces the number of MPI_Allreduce communication calls. Default: false.");
+			  "[Developer] Option to use full NxN memory on CPU in subspace rotation and when mixed precision optimization is not being used. This reduces the number of MPI_Allreduce communication calls. Default: true.");
       }
       prm.leave_subsection ();
 
@@ -607,13 +611,13 @@ namespace dftfe {
 			    Patterns::Bool(),
 			    "[Advanced] Use mixed precision arithmetic in Chebyshev filtering. Currently this option is only available for real executable and USE ELPA=true for which DFT-FE also has to be linked to ELPA library. Default setting is false.");
 
-	  prm.declare_entry("OVERLAP COMPUTE COMMUN CHEBY", "false",
+	  prm.declare_entry("OVERLAP COMPUTE COMMUN CHEBY", "true",
 			    Patterns::Bool(),
-			    "[Advanced] Overlap communication and computation in Chebyshev filtering. This option can only be activated for USE GPU=true. Default setting is false.");
+			    "[Advanced] Overlap communication and computation in Chebyshev filtering. This option can only be activated for USE GPU=true. Default setting is true.");
 
-	  prm.declare_entry("OVERLAP COMPUTE COMMUN XTHX", "false",
+	  prm.declare_entry("OVERLAP COMPUTE COMMUN ORTHO RR", "true",
 			    Patterns::Bool(),
-			    "[Advanced] Overlap communication and computation in XTHX. This option can only be activated for USE GPU=true. Default setting is false.");
+			    "[Advanced] Overlap communication and computation in orthogonalization and Rayleigh-Ritz. This option can only be activated for USE GPU=true. Default setting is true.");
 
 	  prm.declare_entry("MIXED PREC XTHX FRAC STATES", "0",
 			    Patterns::Integer(0),
@@ -672,6 +676,7 @@ namespace dftfe {
 	dftParameters::useGPU= prm.get_bool("USE GPU");
 	dftParameters::gpuFineGrainedTimings=prm.get_bool("FINE GRAINED GPU TIMINGS");
 	dftParameters::allowFullCPUMemSubspaceRot=prm.get_bool("SUBSPACE ROT FULL CPU MEM");
+        dftParameters::autoGPUBlockSizes=prm.get_bool("AUTO GPU BLOCK SIZES");
       }
       prm.leave_subsection ();
 
@@ -835,7 +840,7 @@ namespace dftfe {
 	  dftParameters::useMixedPrecSubspaceRotRR= prm.get_bool("USE MIXED PREC RR_SR");
 	  dftParameters::useMixedPrecCheby= prm.get_bool("USE MIXED PREC CHEBY");
           dftParameters::overlapComputeCommunCheby= prm.get_bool("OVERLAP COMPUTE COMMUN CHEBY");
-          dftParameters::overlapComputeCommunXtHX= prm.get_bool("OVERLAP COMPUTE COMMUN XTHX");
+          dftParameters::overlapComputeCommunOrthoRR= prm.get_bool("OVERLAP COMPUTE COMMUN ORTHO RR");
 	  dftParameters::mixedPrecXtHXFracStates  = prm.get_integer("MIXED PREC XTHX FRAC STATES");
 	  dftParameters::algoType= prm.get("ALGO");
 	  dftParameters::numAdaptiveFilterStates= prm.get_integer("ADAPTIVE FILTER STATES");
@@ -876,7 +881,8 @@ namespace dftfe {
 	  dftParameters::useMixedPrecPGS_O=true;
 	  dftParameters::useMixedPrecPGS_SR=true;
 	  dftParameters::useMixedPrecXTHXSpectrumSplit=true;
-	  dftParameters::numCoreWfcRR=0.85*dftParameters::numberEigenValues;
+          dftParameters::useMixedPrecCheby=true;
+          dftParameters::computeEnergyEverySCF=true;
 	}
 #ifdef USE_COMPLEX
       dftParameters::rrGEP=false;

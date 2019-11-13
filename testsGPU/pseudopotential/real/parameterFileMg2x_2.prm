@@ -4,6 +4,7 @@ set H REFINED ELECTROSTATICS = false
 
 subsection GPU
   set USE GPU=true
+  set AUTO GPU BLOCK SIZES=false
 end
 
 subsection Boundary conditions
