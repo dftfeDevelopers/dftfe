@@ -197,7 +197,7 @@ void dftClass<FEOrder>::compute_ldos(const std::vector<std::vector<double>> & ei
 
   const unsigned int localVectorSize = d_eigenVectorsFlattenedSTL[0].size()/d_numEigenValues;
   std::vector<std::vector<vectorType>> eigenVectors((1+dftParameters::spinPolarized)*d_kPointWeights.size());
-  std::vector<dealii::parallel::distributed::Vector<dataTypes::number> > eigenVectorsFlattenedBlock((1+dftParameters::spinPolarized)*d_kPointWeights.size());
+  std::vector<dealii::LinearAlgebra::distributed::Vector<dataTypes::number> > eigenVectorsFlattenedBlock((1+dftParameters::spinPolarized)*d_kPointWeights.size());
 
    for(unsigned int ivec = 0; ivec < d_numEigenValues; ivec+=blockSize)
    {
