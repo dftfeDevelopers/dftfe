@@ -236,7 +236,7 @@ namespace dftfe
 		      &projHamPar.local_el(0,0)+projHamPar.local_m()*projHamPar.local_n(),
 		      0.0);
 
-	  if (useMixedPrecOverall && dftParameters::useMixedPrecXTHXSpectrumSplit)
+	  if (useMixedPrecOverall && dftParameters::useMixedPrecXTHXSpectrumSplit && dftParameters::mixedPrecXtHXFracStates!=0)
 	    {
 	      if (dftParameters::overlapComputeCommunOrthoRR)
 		operatorMatrix.XtHXMixedPrecOverlapComputeCommun(X,
@@ -494,7 +494,7 @@ namespace dftfe
 		      &projHamPar.local_el(0,0)+projHamPar.local_m()*projHamPar.local_n(),
 		      0.0);
 
-	  if (useMixedPrecOverall && dftParameters::useMixedPrecXTHXSpectrumSplit)
+	  if (useMixedPrecOverall && dftParameters::useMixedPrecXTHXSpectrumSplit && dftParameters::mixedPrecXtHXFracStates!=0)
 	    {
 	      if (dftParameters::overlapComputeCommunOrthoRR)
 		operatorMatrix.XtHXMixedPrecOverlapComputeCommun(X,
