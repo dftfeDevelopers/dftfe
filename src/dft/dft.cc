@@ -913,7 +913,7 @@ namespace dftfe {
   //dft solve
   //
   template<unsigned int FEOrder>
-  void dftClass<FEOrder>::solve()
+  void dftClass<FEOrder>::solve(const bool computeForces)
   {
 
     //
@@ -1852,31 +1852,34 @@ namespace dftfe {
 
  	computing_timer.enter_section("Ion force computation");
 	computingTimerStandard.enter_section("Ion force computation");
-	forcePtr->computeAtomsForces(matrix_free_data,
-		                     eigenDofHandlerIndex,
-				     phiExtDofHandlerIndex,
-				     phiTotDofHandlerIndex,
-                                     d_phiTotRhoIn,
-				     d_phiTotRhoOut,
-				     d_phiExt,
-				     d_pseudoVLoc,
-				     d_gradPseudoVLoc,
-				     d_gradPseudoVLocAtoms,
-				     d_noConstraints,
-				     d_vselfBinsManager,
-				     matrix_free_data,
-				     phiTotDofHandlerIndex,
-				     phiExtDofHandlerIndex,
-				     d_phiTotRhoOut,
-				     d_phiExt,
-				     *rhoOutValues,
-				     *gradRhoOutValues,
-				     d_pseudoVLoc,
-				     d_gradPseudoVLoc,
-				     d_gradPseudoVLocAtoms,
-				     d_noConstraints,
-				     d_vselfBinsManager);
-	forcePtr->printAtomsForces();
+	if (computeForces)
+	{
+	    forcePtr->computeAtomsForces(matrix_free_data,
+					 eigenDofHandlerIndex,
+					 phiExtDofHandlerIndex,
+					 phiTotDofHandlerIndex,
+					 d_phiTotRhoIn,
+					 d_phiTotRhoOut,
+					 d_phiExt,
+					 d_pseudoVLoc,
+					 d_gradPseudoVLoc,
+					 d_gradPseudoVLocAtoms,
+					 d_noConstraints,
+					 d_vselfBinsManager,
+					 matrix_free_data,
+					 phiTotDofHandlerIndex,
+					 phiExtDofHandlerIndex,
+					 d_phiTotRhoOut,
+					 d_phiExt,
+					 *rhoOutValues,
+					 *gradRhoOutValues,
+					 d_pseudoVLoc,
+					 d_gradPseudoVLoc,
+					 d_gradPseudoVLocAtoms,
+					 d_noConstraints,
+					 d_vselfBinsManager);
+	    forcePtr->printAtomsForces();
+	}
 	computingTimerStandard.exit_section("Ion force computation");
 	computing_timer.exit_section("Ion force computation");
       }
@@ -1888,38 +1891,41 @@ namespace dftfe {
 
 	computing_timer.enter_section("Cell stress computation");
 	computingTimerStandard.enter_section("Cell stress computation");
-	forcePtr->computeStress(matrix_free_data,
-		                eigenDofHandlerIndex,
-				phiExtDofHandlerIndex,
-				phiTotDofHandlerIndex,
-                                d_phiTotRhoIn,
-				d_phiTotRhoOut,
-				d_phiExt,
-				d_pseudoVLoc,
-				d_gradPseudoVLoc,
-				d_gradPseudoVLocAtoms,
-				d_noConstraints,
-				d_vselfBinsManager,
-				matrix_free_data,
-				phiTotDofHandlerIndex,
-				phiExtDofHandlerIndex,
-				d_phiTotRhoOut,
-				d_phiExt,
-				*rhoOutValues,
-				*gradRhoOutValues,
-				d_pseudoVLoc,
-				d_gradPseudoVLoc,
-				d_gradPseudoVLocAtoms,
-				d_noConstraints,
-				d_vselfBinsManager);
-	forcePtr->printStress();
+	if (computeForces)
+	{
+	    forcePtr->computeStress(matrix_free_data,
+				    eigenDofHandlerIndex,
+				    phiExtDofHandlerIndex,
+				    phiTotDofHandlerIndex,
+				    d_phiTotRhoIn,
+				    d_phiTotRhoOut,
+				    d_phiExt,
+				    d_pseudoVLoc,
+				    d_gradPseudoVLoc,
+				    d_gradPseudoVLocAtoms,
+				    d_noConstraints,
+				    d_vselfBinsManager,
+				    matrix_free_data,
+				    phiTotDofHandlerIndex,
+				    phiExtDofHandlerIndex,
+				    d_phiTotRhoOut,
+				    d_phiExt,
+				    *rhoOutValues,
+				    *gradRhoOutValues,
+				    d_pseudoVLoc,
+				    d_gradPseudoVLoc,
+				    d_gradPseudoVLocAtoms,
+				    d_noConstraints,
+				    d_vselfBinsManager);
+	    forcePtr->printStress();
+	}
 	computingTimerStandard.exit_section("Cell stress computation");
 	computing_timer.exit_section("Cell stress computation");
       }
 #endif
 
   if(dftParameters::electrostaticsHRefinement)
-    computeElectrostaticEnergyHRefined();
+    computeElectrostaticEnergyHRefined(computeForces);
 
   if(dftParameters::electrostaticsPRefinement)
     computeElectrostaticEnergyPRefined();
