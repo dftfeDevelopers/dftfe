@@ -882,7 +882,7 @@ namespace dftfe {
 	  dftParameters::useMixedPrecPGS_SR=true;
 	  dftParameters::useMixedPrecXTHXSpectrumSplit=true;
           dftParameters::useMixedPrecCheby=true;
-          dftParameters::computeEnergyEverySCF=true;
+          dftParameters::computeEnergyEverySCF=false;
 	}
 #ifdef USE_COMPLEX
       dftParameters::rrGEP=false;
