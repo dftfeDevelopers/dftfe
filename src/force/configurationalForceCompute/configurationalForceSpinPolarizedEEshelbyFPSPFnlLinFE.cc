@@ -197,10 +197,10 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 	          {
 		     blockedPartialOccupanciesSpin0[kPoint][iWave] = 1.0;
 		     blockedPartialOccupanciesSpin1[kPoint][iWave] = 1.0 ;
-		     if (blockedEigenValues[kPoint][iWave]> dftPtr->fermiEnergyDown)
-			    blockedPartialOccupanciesSpin1[kPoint][iWave] = 0.0 ;
-		     if (blockedEigenValues[kPoint][iWave+currentBlockSize] > dftPtr->fermiEnergyUp)
+		     if (blockedEigenValues[kPoint][iWave]> dftPtr->fermiEnergyUp)
 			    blockedPartialOccupanciesSpin0[kPoint][iWave] = 0.0 ;
+		     if (blockedEigenValues[kPoint][iWave+currentBlockSize] > dftPtr->fermiEnergyDown)
+			    blockedPartialOccupanciesSpin1[kPoint][iWave] = 0.0 ;
 	          }
 	     }
 
@@ -536,11 +536,7 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 							psiSpin0Quads.begin()+q*currentBlockSize*numKPoints,
 							psiSpin1Quads.begin()+q*currentBlockSize*numKPoints,
 							dftPtr->d_kPointWeights,
-							blockedEigenValues,
-							dftPtr->fermiEnergy,
-							dftPtr->fermiEnergyUp,
-							dftPtr->fermiEnergyDown,
-							dftParameters::TVal);
+                                                        currentBlockSize);
 
 
 		       EKPoints+=eshelbyTensorSP::getEnlEshelbyTensorPeriodic
@@ -550,11 +546,7 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 								     psiSpin0Quads.begin()+q*currentBlockSize*numKPoints,
 								     psiSpin1Quads.begin()+q*currentBlockSize*numKPoints,
 								     dftPtr->d_kPointWeights,
-								     blockedEigenValues,
-								     dftPtr->fermiEnergy,
-								     dftPtr->fermiEnergyUp,
-								     dftPtr->fermiEnergyDown,
-								     dftParameters::TVal);
+                                                                     currentBlockSize);
 		       forceEvalKPoints.submit_value(FKPoints,q);
 #else
 		       F+=eshelbyTensorSP::getFnlNonPeriodic
@@ -596,11 +588,7 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 							psiSpin0QuadsNLP.begin()+q*currentBlockSize*numKPoints,
 							psiSpin1QuadsNLP.begin()+q*currentBlockSize*numKPoints,
 							dftPtr->d_kPointWeights,
-							blockedEigenValues,
-							dftPtr->fermiEnergy,
-							dftPtr->fermiEnergyUp,
-							dftPtr->fermiEnergyDown,
-							dftParameters::TVal);
+                                                        currentBlockSize);
 
 		       Tensor<2,C_DIM,VectorizedArray<double> > EKPoints
 			   =eshelbyTensorSP::getEnlEshelbyTensorPeriodic
@@ -610,11 +598,7 @@ void forceClass<FEOrder>::computeConfigurationalForceSpinPolarizedEEshelbyTensor
 								     psiSpin0QuadsNLP.begin()+q*currentBlockSize*numKPoints,
 								     psiSpin1QuadsNLP.begin()+q*currentBlockSize*numKPoints,
 								     dftPtr->d_kPointWeights,
-								     blockedEigenValues,
-								     dftPtr->fermiEnergy,
-								     dftPtr->fermiEnergyUp,
-								     dftPtr->fermiEnergyDown,
-								     dftParameters::TVal);
+                                                                     currentBlockSize);
 		       forceEvalKPointsNLP.submit_value(FKPoints,q);
 		       forceEvalKPointsNLP.submit_gradient(EKPoints,q);
 #else

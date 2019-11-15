@@ -23,7 +23,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionPeriodic(std::map<un
 								      FEEvaluation<C_DIM,1,C_num1DQuadPSP<FEOrder>(),C_DIM>  & forceEvalNLP,
 							              const unsigned int cell,
 							              const std::vector<std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > > & pspnlGammaAtomsQuads,
-                                                                      const std::vector<std::vector<std::vector<std::complex<double> > > > & projectorKetTimesPsiTimesV,
+                                                                      const std::vector<std::vector<std::vector<std::complex<double> > > > & projectorKetTimesPsiTimesVTimesPartOcc,
 							              const std::vector<Tensor<1,2,VectorizedArray<double> > > & psiQuads,
 								      const std::vector< std::vector<double> > & eigenValues)
 {
@@ -50,7 +50,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionPeriodic(std::map<un
       for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
       {
 	  temp2[ikPoint].resize(1);
-	  temp2[ikPoint][0]=projectorKetTimesPsiTimesV[ikPoint][iAtom];
+	  temp2[ikPoint][0]=projectorKetTimesPsiTimesVTimesPartOcc[ikPoint][iAtom];
 
       }
 
@@ -66,9 +66,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionPeriodic(std::map<un
 						    temp2,
 						    psiQuads.begin()+q*numEigenVectors*numKPoints,
 						    dftPtr->d_kPointWeights,
-						    eigenValues,
-						    dftPtr->fermiEnergy,
-						    dftParameters::TVal);
+						    numEigenVectors);
 
 
 	       forceEvalNLP.submit_value(F,q);
@@ -86,9 +84,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionPeriodic(std::map<un
 						    temp2,
 						    psiQuads.begin()+q*numEigenVectors*numKPoints,
 						    dftPtr->d_kPointWeights,
-						    eigenValues,
-						    dftPtr->fermiEnergy,
-						    dftParameters::TVal);
+						    numEigenVectors);
 
 
 	       forceEval.submit_value(F,q);
@@ -118,7 +114,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodic(std::map
 								        FEEvaluation<C_DIM,1,C_num1DQuadPSP<FEOrder>(),C_DIM>  & forceEvalNLP,
 							                const unsigned int cell,
 							                const std::vector<std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > > pspnlGammaAtomQuads,
-                                                                        const std::vector<std::vector<VectorizedArray<double>> >  & projectorKetTimesPsiTimesVTimesPartOcc,
+                                                                        const std::vector<std::vector<double> >  & projectorKetTimesPsiTimesVTimesPartOcc,
 							                const std::vector< VectorizedArray<double> > & psiQuads)
 {
 
@@ -139,7 +135,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodic(std::map
       //
       const int nonLocalAtomId=dftPtr->d_nonLocalAtomIdsInCurrentProcess[iAtom];
       const int globalChargeIdNonLocalAtom =  dftPtr->d_nonLocalAtomGlobalChargeIds[nonLocalAtomId];
-      std::vector<std::vector<VectorizedArray<double>> >  temp2(1);
+      std::vector<std::vector<double> >  temp2(1);
       temp2[0]=projectorKetTimesPsiTimesVTimesPartOcc[iAtom];
 
 
