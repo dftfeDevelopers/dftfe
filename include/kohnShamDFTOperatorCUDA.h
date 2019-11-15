@@ -228,6 +228,8 @@ namespace dftfe{
      *
      * @param X Vector of Vectors containing all wavefunction vectors
      * @param Xb parallel distributed vector datastructure for handling block of wavefunction vectors
+     * @param floatXb parallel distributed vector datastructure for handling block of wavefunction
+     * vectors in single precision
      * @param HXb parallel distributed vector datastructure for handling H multiplied by block of 
      * wavefunction vectors
      * @param projectorKetTimesVector parallel distributed vector datastructure for handling nonlocal 
@@ -242,6 +244,7 @@ namespace dftfe{
      */
      void XtHXMixedPrec(const double *  X,
                 cudaVectorType & Xb,
+                cudaVectorTypeFloat & floatXb,
                 cudaVectorType & HXb,
                 cudaVectorType & projectorKetTimesVector,
                 const unsigned int M,
@@ -258,6 +261,8 @@ namespace dftfe{
      *
      * @param X Vector of Vectors containing all wavefunction vectors
      * @param Xb parallel distributed vector datastructure for handling block of wavefunction vectors
+     * @param floatXb parallel distributed vector datastructure for handling block of wavefunction
+     * vectors in single precision
      * @param HXb parallel distributed vector datastructure for handling H multiplied by block of 
      * wavefunction vectors
      * @param projectorKetTimesVector parallel distributed vector datastructure for handling nonlocal 
@@ -272,6 +277,7 @@ namespace dftfe{
      */
      void XtHXMixedPrecOverlapComputeCommun(const double *  X,
                 cudaVectorType & Xb,
+                cudaVectorTypeFloat & floatXb,
                 cudaVectorType & HXb,
                 cudaVectorType & projectorKetTimesVector,
                 const unsigned int M,

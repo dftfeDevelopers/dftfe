@@ -180,9 +180,9 @@ namespace dftfe {
        }
        else
        {
-          baseMeshSize1=std::pow(2,round(log2(std::min(domainBoundingVectorMag1/8.0,12.0)/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;
-          baseMeshSize2=std::pow(2,round(log2(std::min(domainBoundingVectorMag2/8.0,12.0)/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;
-	  baseMeshSize3=std::pow(2,round(log2(std::min(domainBoundingVectorMag3/8.0,12.0)/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;
+          baseMeshSize1=std::pow(2,round(log2(std::min(domainBoundingVectorMag1/8.0,8.0)/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;
+          baseMeshSize2=std::pow(2,round(log2(std::min(domainBoundingVectorMag2/8.0,8.0)/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;
+	  baseMeshSize3=std::pow(2,round(log2(std::min(domainBoundingVectorMag3/8.0,8.0)/dftParameters::meshSizeOuterBall)))*dftParameters::meshSizeOuterBall;
        }
 
 	numberIntervalsEachDirection.push_back(domainBoundingVectorMag1/baseMeshSize1);
@@ -1350,6 +1350,8 @@ namespace dftfe {
 	   {
 	       if (dftParameters::verbosity>=4)
 	           pcout<< "Hanging node and periodic constraints parallel consistency not achieved."<<std::endl;
+
+	       dftParameters::createConstraintsFromSerialDofhandler=true;
 	   }
 	}
 

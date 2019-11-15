@@ -1,7 +1,10 @@
 set VERBOSITY=0
 set REPRODUCIBLE OUTPUT=true
+set H REFINED ELECTROSTATICS = true
+
 subsection GPU
   set USE GPU = true
+  set AUTO GPU BLOCK SIZES=false
 end
 subsection Geometry
   set NATOMS=2
@@ -59,5 +62,6 @@ subsection SCF parameters
       set RR GEP FULL MASS MATRIX=false
       set OVERLAP COMPUTE COMMUN CHEBY=true
       set USE MIXED PREC CHEBY=true
+      set OVERLAP COMPUTE COMMUN ORTHO RR=false
   end
 end

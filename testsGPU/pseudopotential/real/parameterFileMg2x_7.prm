@@ -59,13 +59,13 @@ subsection SCF parameters
        set CHEBYSHEV POLYNOMIAL DEGREE       = 20
        set NUMBER OF KOHN-SHAM WAVEFUNCTIONS = 180
        set SPECTRUM SPLIT CORE EIGENSTATES=90
-       set CHEBY WFC BLOCK SIZE=45
-       set WFC BLOCK SIZE=45
+       set CHEBY WFC BLOCK SIZE=90
+       set WFC BLOCK SIZE=90
        set CHEBYSHEV FILTER TOLERANCE=1e-3
        set RR GEP=true
        set OVERLAP COMPUTE COMMUN ORTHO RR=true
        set USE MIXED PREC XTHX SPECTRUM SPLIT=true
        set USE MIXED PREC PGS SR=true
-       set OVERLAP COMPUTE COMMUN CHEBY=false
+       set USE MIXED PREC PGS O=true
   end
 end
