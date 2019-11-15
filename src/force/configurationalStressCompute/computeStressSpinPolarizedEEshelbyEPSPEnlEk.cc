@@ -131,9 +131,38 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk
   zeroTensor5[0]=zeroTensor4;
   zeroTensor5[1]=zeroTensor4;
 
+  std::vector<std::vector<double>> partialOccupanciesSpin0(dftPtr->d_kPointWeights.size(),
+								  std::vector<double>(numEigenVectors,0.0));
+  std::vector<std::vector<double>> partialOccupanciesSpin1(dftPtr->d_kPointWeights.size(),
+								  std::vector<double>(numEigenVectors,0.0));
+  for(unsigned int kPoint = 0; kPoint < dftPtr->d_kPointWeights.size(); ++kPoint)
+     for (unsigned int iWave=0; iWave<numEigenVectors;++iWave)
+     {
+
+	   partialOccupanciesSpin0[kPoint][iWave]
+		 =dftUtils::getPartialOccupancy(dftPtr->eigenValues[kPoint][iWave],
+						dftPtr->fermiEnergy,
+						C_kb,
+						dftParameters::TVal);
+	   partialOccupanciesSpin1[kPoint][iWave]
+		 =dftUtils::getPartialOccupancy(dftPtr->eigenValues[kPoint][numEigenVectors+iWave],
+						dftPtr->fermiEnergy,
+						C_kb,
+						dftParameters::TVal);
+	  if(dftParameters::constraintMagnetization)
+	  {
+	     partialOccupanciesSpin0[kPoint][iWave] = 1.0;
+	     partialOccupanciesSpin1[kPoint][iWave] = 1.0 ;
+	     if (dftPtr->eigenValues[kPoint][iWave]> dftPtr->fermiEnergyUp)
+		    partialOccupanciesSpin0[kPoint][iWave] = 0.0 ;
+	     if (dftPtr->eigenValues[kPoint][numEigenVectors+iWave] > dftPtr->fermiEnergyDown)
+		    partialOccupanciesSpin1[kPoint][iWave] = 0.0 ;
+	  }
+     }
+
   VectorizedArray<double> phiExtFactor=make_vectorized_array(0.0);
-  std::vector<std::vector<std::vector<dataTypes::number > > > projectorKetTimesPsiSpin0TimesV(numKPoints);
-  std::vector<std::vector<std::vector<dataTypes::number > > > projectorKetTimesPsiSpin1TimesV(numKPoints);
+  std::vector<std::vector<std::vector<dataTypes::number > > > projectorKetTimesPsiSpin0TimesVTimesPartOcc(numKPoints);
+  std::vector<std::vector<std::vector<dataTypes::number > > > projectorKetTimesPsiSpin1TimesVTimesPartOcc(numKPoints);
   if (isPseudopotential)
   {
     phiExtFactor=make_vectorized_array(1.0);
@@ -141,15 +170,17 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk
     {
          computeNonLocalProjectorKetTimesPsiTimesVFlattened(dftPtr->d_eigenVectorsFlattened[2*ikPoint],
 		                                   numEigenVectors,
-                                                   projectorKetTimesPsiSpin0TimesV[ikPoint],
-						   ikPoint);
+                                                   projectorKetTimesPsiSpin0TimesVTimesPartOcc[ikPoint],
+						   ikPoint,
+						   partialOccupanciesSpin0[ikPoint]);
     }
     for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
     {
          computeNonLocalProjectorKetTimesPsiTimesVFlattened(dftPtr->d_eigenVectorsFlattened[2*ikPoint+1],
 		                                   numEigenVectors,
-                                                   projectorKetTimesPsiSpin1TimesV[ikPoint],
-						   ikPoint);
+                                                   projectorKetTimesPsiSpin1TimesVTimesPartOcc[ikPoint],
+						   ikPoint,
+						   partialOccupanciesSpin1[ikPoint]);
     }
   }
 
@@ -547,28 +578,20 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk
        {
            EKPoints+=eshelbyTensorSP::getEnlEshelbyTensorPeriodic
 	                                                (ZetaDeltaVQuads[q],
-		                                         projectorKetTimesPsiSpin0TimesV,
-		                                         projectorKetTimesPsiSpin1TimesV,
+		                                         projectorKetTimesPsiSpin0TimesVTimesPartOcc,
+		                                         projectorKetTimesPsiSpin1TimesVTimesPartOcc,
 						         psiSpin0Quads.begin()+q*numEigenVectors*numKPoints,
 						         psiSpin1Quads.begin()+q*numEigenVectors*numKPoints,
 							 dftPtr->d_kPointWeights,
-						         dftPtr->eigenValues,
-					                 dftPtr->fermiEnergy,
-				                         dftPtr->fermiEnergyUp,
-					                 dftPtr->fermiEnergyDown,
-						         dftParameters::TVal);
+							 numEigenVectors);
 
            EKPoints+=eshelbyTensorSP::getEnlStress(gradZetalmDeltaVlDyadicDistImageAtomsQuads[q],
-		                                 projectorKetTimesPsiSpin0TimesV,
-						 projectorKetTimesPsiSpin1TimesV,
+		                                 projectorKetTimesPsiSpin0TimesVTimesPartOcc,
+						 projectorKetTimesPsiSpin1TimesVTimesPartOcc,
 					         psiSpin0Quads.begin()+q*numEigenVectors*numKPoints,
 					         psiSpin1Quads.begin()+q*numEigenVectors*numKPoints,
 					         dftPtr->d_kPointWeights,
-						 dftPtr->eigenValues,
-					         dftPtr->fermiEnergy,
-				                 dftPtr->fermiEnergyUp,
-					         dftPtr->fermiEnergyDown,
-						 dftParameters::TVal);
+                                                 numEigenVectors);
 
        }//is pseudopotential check
 
@@ -583,28 +606,20 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk
 	   Tensor<2,C_DIM,VectorizedArray<double> > EKPoints
                  =eshelbyTensorSP::getEnlEshelbyTensorPeriodic
 	                                                (ZetaDeltaVQuads[q],
-		                                         projectorKetTimesPsiSpin0TimesV,
-		                                         projectorKetTimesPsiSpin1TimesV,
+		                                         projectorKetTimesPsiSpin0TimesVTimesPartOcc,
+		                                         projectorKetTimesPsiSpin1TimesVTimesPartOcc,
 						         psiSpin0QuadsNLP.begin()+q*numEigenVectors*numKPoints,
 						         psiSpin1QuadsNLP.begin()+q*numEigenVectors*numKPoints,
 							 dftPtr->d_kPointWeights,
-						         dftPtr->eigenValues,
-					                 dftPtr->fermiEnergy,
-				                         dftPtr->fermiEnergyUp,
-					                 dftPtr->fermiEnergyDown,
-						         dftParameters::TVal);
+                                                         numEigenVectors);
 
            EKPoints+=eshelbyTensorSP::getEnlStress(gradZetalmDeltaVlDyadicDistImageAtomsQuads[q],
-		                                 projectorKetTimesPsiSpin0TimesV,
-						 projectorKetTimesPsiSpin1TimesV,
+		                                 projectorKetTimesPsiSpin0TimesVTimesPartOcc,
+						 projectorKetTimesPsiSpin1TimesVTimesPartOcc,
 					         psiSpin0QuadsNLP.begin()+q*numEigenVectors*numKPoints,
 					         psiSpin1QuadsNLP.begin()+q*numEigenVectors*numKPoints,
 					         dftPtr->d_kPointWeights,
-						 dftPtr->eigenValues,
-					         dftPtr->fermiEnergy,
-				                 dftPtr->fermiEnergyUp,
-					         dftPtr->fermiEnergyDown,
-						 dftParameters::TVal);
+                                                 numEigenVectors);
 
 
 	   EKPointsQuadSum+=EKPoints*forceEvalNLP.JxW(q);

@@ -111,37 +111,29 @@ namespace dftfe {
 
       /// Nonlocal pseudotential Eshelby tensor (for non-periodic case)
       Tensor<2,C_DIM,VectorizedArray<double> >  getEnlEshelbyTensorNonPeriodic(const std::vector<std::vector<VectorizedArray<double> > > & ZetaDeltaV,
-									     const std::vector<std::vector<double> >& projectorKetTimesPsiTimesV,
+									     const std::vector<std::vector<double > >& projectorKetTimesPsiTimesVTimesPartOcc,
 									     std::vector<VectorizedArray<double> >::const_iterator psiBegin,
-									     const std::vector<double> & eigenValues_,
-									     const double fermiEnergy_,
-									     const double tVal);
+									     const unsigned int numBlockedEigenvectors);
 
       /// Nonlocal pseudotential Eshelby tensor (for periodic case)
       Tensor<2,C_DIM,VectorizedArray<double> >  getEnlEshelbyTensorPeriodic(const std::vector<std::vector<std::vector<Tensor<1,2,VectorizedArray<double> > > > > & ZetaDeltaV,
-									  const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiTimesV,
+									  const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiTimesVTimesPartOcc,
 									  std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiBegin,
 									  const std::vector<double> & kPointWeights,
-									  const std::vector<std::vector<double> > & eigenValues_,
-									  const double fermiEnergy_,
-									  const double tVal);
+									  const unsigned int numBlockedEigenvectors);
 
       /// Nonlocal pseudotential force contribution (for non periodic case)
       Tensor<1,C_DIM,VectorizedArray<double> >  getFnlNonPeriodic(const std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > & gradZetaDeltaV,
-								const std::vector<std::vector<double> > & projectorKetTimesPsiTimesV,
+								const std::vector<std::vector<double > > & projectorKetTimesPsiTimesVTimesPartOcc,
 								std::vector<VectorizedArray<double> >::const_iterator psiBegin,
-								const std::vector<double> & eigenValues_,
-								const double fermiEnergy_,
-								const double tVal);
+								const unsigned int numBlockedEigenvectors);
 
       /// Nonlocal pseudotential force contribution (for periodic case)
       Tensor<1,C_DIM,VectorizedArray<double> >  getFnlPeriodic(const std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > & gradZetaDeltaV,
-							     const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiTimesV,
+							     const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiTimesVTimesPartOcc,
 							     std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiBegin,
 							     const std::vector<double> & kPointWeights,
-							     const std::vector<std::vector<double> > & eigenValues_,
-							     const double fermiEnergy_,
-							     const double tVal);
+							     const unsigned int numBlockedEigenvectors);
 
       /** Force contribution due to the numerical difference between the input and output electron density (rhoIn and rhoOut)
 	* of the final scf iteration. vEff denotes the Kohn-Sham effective potential.
@@ -165,12 +157,10 @@ namespace dftfe {
 
       /// Nonlocal pseudotential Eshelby tensor (used only for stress computation)
       Tensor<2,C_DIM,VectorizedArray<double> >  getEnlStress(const std::vector<std::vector<std::vector<Tensor<1,2, Tensor<2,C_DIM,VectorizedArray<double> > > > > > & gradZetalmDeltaVlDyadicDistImageAtoms,
-							     const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiTimesV,
+							     const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiTimesVTimesPartOcc,
 							     std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiBegin,
 							     const std::vector<double> & kPointWeights,
-							     const std::vector<std::vector<double> > & eigenValues_,
-							     const double fermiEnergy_,
-							     const double tVal);
+							     const unsigned int numBlockedEigenvectors);
 
     };
 

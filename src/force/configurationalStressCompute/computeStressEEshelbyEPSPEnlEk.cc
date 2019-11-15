@@ -125,16 +125,29 @@ void forceClass<FEOrder>::computeStressEEshelbyEPSPEnlEk(const MatrixFree<3,doub
   zeroTensor5[0]=zeroTensor4;
   zeroTensor5[1]=zeroTensor4;
 
+  std::vector<std::vector<double>> partialOccupancies(dftPtr->d_kPointWeights.size(),std::vector<double>(numEigenVectors,0.0));
+  for(unsigned int kPoint = 0; kPoint < dftPtr->d_kPointWeights.size(); ++kPoint)
+     for (unsigned int iWave=0; iWave<numEigenVectors;++iWave)
+     {
+	 partialOccupancies[kPoint][iWave]
+	     =dftUtils::getPartialOccupancy(dftPtr->eigenValues[kPoint][iWave],
+					    dftPtr->fermiEnergy,
+					    C_kb,
+					    dftParameters::TVal);
+
+     }
+
   VectorizedArray<double> phiExtFactor=make_vectorized_array(0.0);
-  std::vector<std::vector<std::vector<dataTypes::number > > > projectorKetTimesPsiTimesV(numKPoints);
+  std::vector<std::vector<std::vector<dataTypes::number > > > projectorKetTimesPsiTimesVTimesPartOcc(numKPoints);
   if (isPseudopotential){
     phiExtFactor=make_vectorized_array(1.0);
     for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
          computeNonLocalProjectorKetTimesPsiTimesVFlattened
 	                (dftPtr->d_eigenVectorsFlattened[ikPoint],
 			 numEigenVectors,
-                         projectorKetTimesPsiTimesV[ikPoint],
-			 ikPoint);
+                         projectorKetTimesPsiTimesVTimesPartOcc[ikPoint],
+			 ikPoint,
+			 partialOccupancies[ikPoint]);
   }
 
   std::vector<VectorizedArray<double> > rhoQuads(numQuadPoints,make_vectorized_array(0.0));
@@ -450,20 +463,16 @@ void forceClass<FEOrder>::computeStressEEshelbyEPSPEnlEk(const MatrixFree<3,doub
        if(isPseudopotential && !dftParameters::useHigherQuadNLP)
        {
           EKPoints+=eshelbyTensor::getEnlEshelbyTensorPeriodic(ZetaDeltaVQuads[q],
-		                                         projectorKetTimesPsiTimesV,
+		                                         projectorKetTimesPsiTimesVTimesPartOcc,
 						         psiQuads.begin()+q*numEigenVectors*numKPoints,
 							 dftPtr->d_kPointWeights,
-						         dftPtr->eigenValues,
-						         dftPtr->fermiEnergy,
-						         dftParameters::TVal);
+                                                         numEigenVectors);
 
           EKPoints+=eshelbyTensor::getEnlStress(gradZetalmDeltaVlDyadicDistImageAtomsQuads[q],
-		                                 projectorKetTimesPsiTimesV,
+		                                 projectorKetTimesPsiTimesVTimesPartOcc,
 						 psiQuads.begin()+q*numEigenVectors*numKPoints,
 					         dftPtr->d_kPointWeights,
-						 dftPtr->eigenValues,
-						 dftPtr->fermiEnergy,
-						 dftParameters::TVal);
+                                                 numEigenVectors);
 
        }//is pseudopotential check
 
@@ -476,20 +485,16 @@ void forceClass<FEOrder>::computeStressEEshelbyEPSPEnlEk(const MatrixFree<3,doub
 	{
 	  Tensor<2,C_DIM,VectorizedArray<double> > EKPoints
               =eshelbyTensor::getEnlEshelbyTensorPeriodic(ZetaDeltaVQuads[q],
-		                                         projectorKetTimesPsiTimesV,
+		                                         projectorKetTimesPsiTimesVTimesPartOcc,
 						         psiQuadsNLP.begin()+q*numEigenVectors*numKPoints,
 							 dftPtr->d_kPointWeights,
-						         dftPtr->eigenValues,
-						         dftPtr->fermiEnergy,
-						         dftParameters::TVal);
+                                                         numEigenVectors);
 
           EKPoints+=eshelbyTensor::getEnlStress(gradZetalmDeltaVlDyadicDistImageAtomsQuads[q],
-		                                 projectorKetTimesPsiTimesV,
+		                                 projectorKetTimesPsiTimesVTimesPartOcc,
 						 psiQuadsNLP.begin()+q*numEigenVectors*numKPoints,
 					         dftPtr->d_kPointWeights,
-						 dftPtr->eigenValues,
-						 dftPtr->fermiEnergy,
-						 dftParameters::TVal);
+                                                 numEigenVectors);
 
 
 	   EKPointsQuadSum+=EKPoints*forceEvalNLP.JxW(q);

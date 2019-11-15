@@ -346,7 +346,7 @@ namespace dftfe {
 	   FEEvaluation<C_DIM,1,C_num1DQuadPSP<FEOrder>(),C_DIM>  & forceEvalNLP,
 	   const unsigned int cell,
 	   const std::vector<std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > > & pspnlGammaAtomsQuads,
-	   const std::vector<std::vector<std::vector<std::complex<double> > > > & projectorKetTimesPsiTimesV,
+	   const std::vector<std::vector<std::vector<std::complex<double> > > > & projectorKetTimesPsiTimesVTimesPartOcc,
 	   const std::vector<Tensor<1,2,VectorizedArray<double> > > & psiQuads,
 	   const std::vector< std::vector<double> > & eigenValues);
 
@@ -356,8 +356,8 @@ namespace dftfe {
 	   FEEvaluation<C_DIM,1,C_num1DQuadPSP<FEOrder>(),C_DIM>  & forceEvalNLP,
 	   const unsigned int cell,
 	   const std::vector<std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > > & pspnlGammaAtomsQuads,
-	   const std::vector<std::vector<std::vector<std::complex<double> > > > & projectorKetTimesPsiSpin0TimesV,
-	   const std::vector<std::vector<std::vector<std::complex<double> > > > & projectorKetTimesPsiSpin1TimesV,
+	   const std::vector<std::vector<std::vector<std::complex<double> > > > & projectorKetTimesPsiSpin0TimesVTimesPartOcc,
+	   const std::vector<std::vector<std::vector<std::complex<double> > > > & projectorKetTimesPsiSpin1TimesVTimesPartOcc,
 	   const std::vector<Tensor<1,2,VectorizedArray<double> > > & psiSpin0Quads,
 	   const std::vector<Tensor<1,2,VectorizedArray<double> > > & psiSpin1Quads,
 	   const std::vector< std::vector<double> > & eigenValues);
@@ -369,11 +369,10 @@ namespace dftfe {
 	   FEEvaluation<C_DIM,1,C_num1DQuadPSP<FEOrder>(),C_DIM>  & forceEvalNLP,
 	   const unsigned int cell,
 	   const std::vector<std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > > pspnlGammaAtomQuads,
-	   const std::vector<std::vector<double> >  & projectorKetTimesPsiSpin0TimesV,
-	   const std::vector<std::vector<double> >  & projectorKetTimesPsiSpin1TimesV,
+	   const std::vector<std::vector<double> >  & projectorKetTimesPsiSpin0TimesVTimesPartOcc,
+	   const std::vector<std::vector<double> >  & projectorKetTimesPsiSpin1TimesVTimesPartOcc,
 	   const std::vector< VectorizedArray<double> > & psiSpin0Quads,
-	   const std::vector< VectorizedArray<double> > & psiSpin1Quads,
-	   const std::vector< std::vector<double> > & eigenValues);
+	   const std::vector< VectorizedArray<double> > & psiSpin1Quads);
 
       void FnlGammaAtomsElementalContributionNonPeriodic
 	  (std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
@@ -381,9 +380,8 @@ namespace dftfe {
 	   FEEvaluation<C_DIM,1,C_num1DQuadPSP<FEOrder>(),C_DIM>  & forceEvalNLP,
 	   const unsigned int cell,
 	   const std::vector<std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > > pspnlGammaAtomQuads,
-	   const std::vector<std::vector<double> >  & projectorKetTimesPsiTimesV,
-	   const std::vector< VectorizedArray<double> > & psiQuads,
-	   const std::vector< std::vector<double> > & eigenValues);
+	   const std::vector<std::vector<double> >  & projectorKetTimesPsiTimesVTimesPartOcc,
+	   const std::vector< VectorizedArray<double> > & psiQuads);
 
 #endif
 
@@ -477,7 +475,10 @@ namespace dftfe {
                            (const dealii::parallel::distributed::Vector<dataTypes::number> &src,
 			    const unsigned int numberWaveFunctions,
 			    std::vector<std::vector<dataTypes::number> > & projectorKetTimesPsiTimesV,
-			    const unsigned int kPointIndex);
+			    const unsigned int kPointIndex,
+                            const std::vector<double> & partialOccupancies);
+
+
 
       /// Parallel distributed vector field which stores the configurational force for each fem node corresponding
       /// to linear shape function generator (see equations 52-53 in (https://link.aps.org/doi/10.1103/PhysRevB.97.165132)).
