@@ -18,7 +18,7 @@
 
 
 template<unsigned int FEOrder>
-void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
+void dftClass<FEOrder>::computeElectrostaticEnergyHRefined(const bool computeForces)
 {
    computing_timer.enter_section("h refinement electrostatics");
    computingTimerStandard.enter_section("h refinement electrostatics");
@@ -333,7 +333,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
        delzRhoNodalFieldRefined.update_ghost_values();
    }
 
-  
+
    //
    //move the refined mesh so that it forms exact subdivison of coarse moved mesh
    //
@@ -363,7 +363,7 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
      }
 
 
-   
+
 
    //
    //call init for the force computation subsequently
@@ -694,31 +694,34 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
 
  	computing_timer.enter_section("Ion force computation");
 	computingTimerStandard.enter_section("Ion force computation");
-	forcePtr->computeAtomsForces(matrix_free_data,
-		                     eigenDofHandlerIndex,
-				     phiExtDofHandlerIndex,
-				     phiTotDofHandlerIndex,
-                                     d_phiTotRhoIn,
-				     d_phiTotRhoOut,
-				     d_phiExt,
-				     d_pseudoVLoc,
-				     d_gradPseudoVLoc,
-				     d_gradPseudoVLocAtoms,
-				     d_noConstraints,
-				     d_vselfBinsManager,
-				     matrixFreeDataHRefined,
-				     phiTotDofHandlerIndexHRefined,
-				     phiExtDofHandlerIndexHRefined,
-				     phiTotRhoOutHRefined,
-				     phiExtHRefined,
-				     rhoOutHRefinedQuadValues,
-				     gradRhoOutHRefinedQuadValues,
-				     pseudoVLocHRefined,
-				     gradPseudoVLocHRefined,
-				     gradPseudoVLocAtomsHRefined,
-				     onlyHangingNodeConstraints,
-				     vselfBinsManagerHRefined);
-	forcePtr->printAtomsForces();
+	if (computeForces)
+	{
+	    forcePtr->computeAtomsForces(matrix_free_data,
+					 eigenDofHandlerIndex,
+					 phiExtDofHandlerIndex,
+					 phiTotDofHandlerIndex,
+					 d_phiTotRhoIn,
+					 d_phiTotRhoOut,
+					 d_phiExt,
+					 d_pseudoVLoc,
+					 d_gradPseudoVLoc,
+					 d_gradPseudoVLocAtoms,
+					 d_noConstraints,
+					 d_vselfBinsManager,
+					 matrixFreeDataHRefined,
+					 phiTotDofHandlerIndexHRefined,
+					 phiExtDofHandlerIndexHRefined,
+					 phiTotRhoOutHRefined,
+					 phiExtHRefined,
+					 rhoOutHRefinedQuadValues,
+					 gradRhoOutHRefinedQuadValues,
+					 pseudoVLocHRefined,
+					 gradPseudoVLocHRefined,
+					 gradPseudoVLocAtomsHRefined,
+					 onlyHangingNodeConstraints,
+					 vselfBinsManagerHRefined);
+	    forcePtr->printAtomsForces();
+	}
 	computingTimerStandard.exit_section("Ion force computation");
 	computing_timer.exit_section("Ion force computation");
       }
@@ -728,31 +731,34 @@ void dftClass<FEOrder>::computeElectrostaticEnergyHRefined()
 
 	computing_timer.enter_section("Cell stress computation");
 	computingTimerStandard.enter_section("Cell stress computation");
-	forcePtr->computeStress(matrix_free_data,
-		                eigenDofHandlerIndex,
-				phiExtDofHandlerIndex,
-				phiTotDofHandlerIndex,
-                                d_phiTotRhoIn,
-				d_phiTotRhoOut,
-				d_phiExt,
-				d_pseudoVLoc,
-				d_gradPseudoVLoc,
-				d_gradPseudoVLocAtoms,
-				d_noConstraints,
-				d_vselfBinsManager,
-				matrixFreeDataHRefined,
-				phiTotDofHandlerIndexHRefined,
-				phiExtDofHandlerIndexHRefined,
-				phiTotRhoOutHRefined,
-				phiExtHRefined,
-				rhoOutHRefinedQuadValues,
-				gradRhoOutHRefinedQuadValues,
-				pseudoVLocHRefined,
-				gradPseudoVLocHRefined,
-				gradPseudoVLocAtomsHRefined,
-				onlyHangingNodeConstraints,
-			        vselfBinsManagerHRefined);
-	forcePtr->printStress();
+	if (computeForces)
+	{
+	    forcePtr->computeStress(matrix_free_data,
+				    eigenDofHandlerIndex,
+				    phiExtDofHandlerIndex,
+				    phiTotDofHandlerIndex,
+				    d_phiTotRhoIn,
+				    d_phiTotRhoOut,
+				    d_phiExt,
+				    d_pseudoVLoc,
+				    d_gradPseudoVLoc,
+				    d_gradPseudoVLocAtoms,
+				    d_noConstraints,
+				    d_vselfBinsManager,
+				    matrixFreeDataHRefined,
+				    phiTotDofHandlerIndexHRefined,
+				    phiExtDofHandlerIndexHRefined,
+				    phiTotRhoOutHRefined,
+				    phiExtHRefined,
+				    rhoOutHRefinedQuadValues,
+				    gradRhoOutHRefinedQuadValues,
+				    pseudoVLocHRefined,
+				    gradPseudoVLocHRefined,
+				    gradPseudoVLocAtomsHRefined,
+				    onlyHangingNodeConstraints,
+				    vselfBinsManagerHRefined);
+	    forcePtr->printStress();
+	}
 	computingTimerStandard.exit_section("Cell stress computation");
 	computing_timer.exit_section("Cell stress computation");
       }

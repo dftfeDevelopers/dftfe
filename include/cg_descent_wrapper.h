@@ -46,7 +46,12 @@ inline double cgd_value(double* x, INT n)
 	    0,
 	    MPI_COMM_WORLD);
 
-  functionToBeMinimized->update(solutionInc);
+  double sumAbsDisp=0.0;
+  for(unsigned int i = 0; i < solutionInc.size(); ++i)
+     sumAbsDisp+=std::fabs(solutionInc[i]);
+
+  if (sumAbsDisp>1e-12)
+     functionToBeMinimized->update(solutionInc,false);
 
   std::vector<double> funcValue;
   functionToBeMinimized->value(funcValue);
@@ -82,7 +87,12 @@ inline void cgd_gradient(double* g, double* x, INT n)
 	    0,
 	    MPI_COMM_WORLD);
 
-  functionToBeMinimized->update(solutionInc);
+  double sumAbsDisp=0.0;
+  for(unsigned int i = 0; i < solutionInc.size(); ++i)
+    sumAbsDisp+=std::fabs(solutionInc[i]);
+
+  if (sumAbsDisp>1e-12)
+     functionToBeMinimized->update(solutionInc);
 
   functionToBeMinimized->save();
 
@@ -119,7 +129,12 @@ inline double cgd_value_gradient(double* g, double* x, INT n)
 	    0,
 	    MPI_COMM_WORLD);
 
-  functionToBeMinimized->update(solutionInc);
+  double sumAbsDisp=0.0;
+  for(unsigned int i = 0; i < solutionInc.size(); ++i)
+     sumAbsDisp+=std::fabs(solutionInc[i]);
+
+  if (sumAbsDisp>1e-12)
+     functionToBeMinimized->update(solutionInc);
 
   functionToBeMinimized->save();  
 

@@ -74,7 +74,8 @@ namespace dftfe {
      * @param solution displacement of the atoms with respect to their current position.
      * The size of the solution vector is equal to the number of unknowns.
      */
-      void update(const std::vector<double> & solution);
+      void update(const std::vector<double> & solution,
+		  const bool computeForces=true);
 
     /**
      * @brief create checkpoint file for current domain bounding vectors and atomic coordinates.

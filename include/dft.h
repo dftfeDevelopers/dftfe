@@ -153,7 +153,7 @@ namespace dftfe {
       /**
        * @brief Kohn-Sham ground-state solve using SCF iteration
        */
-      void solve();
+      void solve(const bool computeForces=true);
 
       /**
        * @brief Number of Kohn-Sham eigen values to be computed
@@ -501,7 +501,7 @@ namespace dftfe {
        * However, it works for time reversal symmetry.
        *
        */
-      void computeElectrostaticEnergyHRefined();
+      void computeElectrostaticEnergyHRefined(const bool computeForces=true);
       void computeElectrostaticEnergyPRefined();
       /**
        *@brief Computes Fermi-energy obtained by imposing constraint on the number of electrons

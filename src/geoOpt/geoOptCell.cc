@@ -309,7 +309,7 @@ void geoOptCell<FEOrder>::precondition(std::vector<double>       & s,
 }
 
 template<unsigned int FEOrder>
-void geoOptCell<FEOrder>::update(const std::vector<double> & solution)
+void geoOptCell<FEOrder>::update(const std::vector<double> & solution, const bool computeForces)
 {
 
 
@@ -379,7 +379,7 @@ void geoOptCell<FEOrder>::update(const std::vector<double> & solution)
    d_totalUpdateCalls+=1;
    dftPtr->deformDomain(deformationGradient);
 
-   dftPtr->solve();
+   dftPtr->solve(computeForces);
    // if ion optimization is on, then for every cell relaxation also relax the atomic forces
    if (dftParameters::isIonOpt)
    {
