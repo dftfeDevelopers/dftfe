@@ -277,7 +277,7 @@ namespace dftfe {
   }
 
   template<unsigned int FEOrder>
-  void geoOptIon<FEOrder>::update(const std::vector<double> & solution)
+  void geoOptIon<FEOrder>::update(const std::vector<double> & solution, const bool computeForces)
   {
     const unsigned int numberGlobalAtoms=dftPtr->atomLocations.size();
     std::vector<Tensor<1,3,double> > globalAtomsDisplacements(numberGlobalAtoms);
@@ -320,7 +320,7 @@ namespace dftfe {
       dftParameters::selfConsistentSolverTolerance = 5e-06;*/
 
 
-    dftPtr->solve();
+    dftPtr->solve(computeForces);
 
   }
 

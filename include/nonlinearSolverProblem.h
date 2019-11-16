@@ -75,7 +75,8 @@ namespace dftfe {
 	 *
 	 * @param solution Updated solution.
 	 */
-	virtual void update(const std::vector<double> & solution) = 0;
+	virtual void update(const std::vector<double> & solution,
+			    const bool computeForces=true) = 0;
 
 	/**
 	 * @brief Obtain current solution.

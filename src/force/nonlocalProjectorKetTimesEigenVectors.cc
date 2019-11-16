@@ -22,7 +22,8 @@ void forceClass<FEOrder>::computeNonLocalProjectorKetTimesPsiTimesVFlattened
                            (const dealii::LinearAlgebra::distributed::Vector<dataTypes::number> &src,
 			    const unsigned int numberWaveFunctions,
 			    std::vector<std::vector<dataTypes::number> > & projectorKetTimesPsiTimesV,
-			    const unsigned int kPointIndex)
+			    const unsigned int kPointIndex,
+			    const std::vector<double> & partialOccupancies)
 {
 
   vectorTools::createDealiiVector<dataTypes::number>(dftPtr->d_projectorKetTimesVectorPar[0].get_partitioner(),
@@ -189,6 +190,6 @@ void forceClass<FEOrder>::computeNonLocalProjectorKetTimesPsiTimesVFlattened
       for(unsigned int iWave = 0; iWave < numberWaveFunctions; ++iWave)
 	{
 	  for(unsigned int iPseudoAtomicWave = 0; iPseudoAtomicWave < numberPseudoWaveFunctions; ++iPseudoAtomicWave)
-	    projectorKetTimesVector[iAtom][numberPseudoWaveFunctions*iWave + iPseudoAtomicWave] *= dftPtr->d_nonLocalPseudoPotentialConstants[atomId][iPseudoAtomicWave];
+	    projectorKetTimesVector[iAtom][numberPseudoWaveFunctions*iWave + iPseudoAtomicWave] *= dftPtr->d_nonLocalPseudoPotentialConstants[atomId][iPseudoAtomicWave]*partialOccupancies[iWave];
 	}
     }}
