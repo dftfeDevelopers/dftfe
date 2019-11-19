@@ -116,6 +116,11 @@ void forceClass<FEOrder>::computeElementalNonLocalPseudoOVDataForce()
 
 	  DoFHandler<3>::active_cell_iterator cell = dftPtr->d_elementOneFieldIteratorsInAtomCompactSupport[iAtom][iElemComp];
 
+	  //
+	  //
+	  //
+	  d_cellIdToNonlocalAtomIdsLocalCompactSupportMap[cell->id()].insert(count);
+
 	  //compute values for the current elements
 	  fe_values.reinit(cell);
 

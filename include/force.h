@@ -381,7 +381,8 @@ namespace dftfe {
 	   const unsigned int cell,
 	   const std::vector<std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > > pspnlGammaAtomQuads,
 	   const std::vector<std::vector<double> >  & projectorKetTimesPsiTimesVTimesPartOcc,
-	   const std::vector< VectorizedArray<double> > & psiQuads);
+	   const std::vector< VectorizedArray<double> > & psiQuads,
+	   const std::vector<unsigned int> & nonlocalAtomsCompactSupportList);
 
 #endif
 
@@ -684,6 +685,9 @@ namespace dftfe {
       std::vector<vectorType> d_gaussianWeightsVecAtoms;
 
       bool d_isElectrostaticsMeshSubdivided=false;
+
+      /// map from cell id to set of non local atom ids (local numbering)
+      std::map<dealii::CellId,std::set<unsigned int>> d_cellIdToNonlocalAtomIdsLocalCompactSupportMap;
 
       /// mpi_communicator in the current pool
       const MPI_Comm mpi_communicator;
