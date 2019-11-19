@@ -290,6 +290,66 @@ namespace eshelbyTensor
 
     }
 
+    void  getFnlEnlMergedNonPeriodic(const std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > & gradZetaDeltaV,
+	                             const std::vector<std::vector<VectorizedArray<double> > > & ZetaDeltaV,
+								const std::vector<std::vector<double> > & projectorKetTimesPsiTimesVTimesPartOcc,
+								std::vector<VectorizedArray<double> >::const_iterator psiBegin,
+								const unsigned int numBlockedEigenvectors,
+								const std::vector<unsigned int> & nonlocalAtomsCompactSupportList,
+				                                Tensor<1,C_DIM,VectorizedArray<double> > & Fnl,
+				                                Tensor<2,C_DIM,VectorizedArray<double> > & Enl)
+    {
+       Tensor<1,C_DIM,VectorizedArray<double> > zeroTensor;
+       for (unsigned int idim=0; idim<C_DIM; idim++)
+         zeroTensor[idim]=make_vectorized_array(0.0);
+
+       Fnl=zeroTensor;
+       VectorizedArray<double> identityTensorFactor=make_vectorized_array(0.0);
+       VectorizedArray<double> four=make_vectorized_array(4.0);
+       std::vector<VectorizedArray<double> >::const_iterator it1=psiBegin;
+       //for (unsigned int eigenIndex=0; eigenIndex < numBlockedEigenvectors; ++it1, ++ eigenIndex)
+       // {
+       //  const VectorizedArray<double> & psi= *it1;
+       //	  Tensor<1,C_DIM,VectorizedArray<double> > tempF=zeroTensor;
+	  for (unsigned int iAtomNonLocal=0; iAtomNonLocal < gradZetaDeltaV.size(); ++iAtomNonLocal)
+	  {
+	      bool isCellInCompactSupport=false;
+	      for (unsigned int i=0;i<nonlocalAtomsCompactSupportList.size();i++)
+		  if (nonlocalAtomsCompactSupportList[i]==iAtomNonLocal)
+		  {
+		      isCellInCompactSupport=true;
+		      break;
+		  }
+
+	      if (!isCellInCompactSupport)
+		  continue;
+
+	     const int numberPseudoWaveFunctions = gradZetaDeltaV[iAtomNonLocal].size();
+	     const std::vector<double> & projectorKetTimesPsiTimesVTimesPartOccAtom
+		 =projectorKetTimesPsiTimesVTimesPartOcc[iAtomNonLocal];
+	     const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >  & gradZetaDeltaVAtom=gradZetaDeltaV[iAtomNonLocal];
+	     const std::vector<VectorizedArray<double> >  & ZetaDeltaVAtom=ZetaDeltaV[iAtomNonLocal];
+	     Tensor<1,C_DIM,VectorizedArray<double> > tempF=zeroTensor;
+	     VectorizedArray<double> temp=make_vectorized_array(0.0);
+	     VectorizedArray<double> temp2;
+       for (unsigned int eigenIndex=0; eigenIndex < numBlockedEigenvectors; ++it1, ++ eigenIndex)
+       {
+	  const VectorizedArray<double> & psi= *it1;
+	     for (unsigned int iPseudoWave=0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
+	     {
+		 temp2=make_vectorized_array(projectorKetTimesPsiTimesVTimesPartOccAtom[numberPseudoWaveFunctions*eigenIndex + iPseudoWave])*psi;
+		 tempF+=temp2*gradZetaDeltaVAtom[iPseudoWave];
+		 temp+=temp2*ZetaDeltaVAtom[iPseudoWave];
+	     }
+	  }
+	  Fnl+=four*tempF;
+	  identityTensorFactor+=four*temp;
+       }
+       Enl[0][0]=identityTensorFactor;
+       Enl[1][1]=identityTensorFactor;
+       Enl[2][2]=identityTensorFactor;
+    }
+
     Tensor<1,C_DIM,VectorizedArray<double> >  getFnlNonPeriodic(const std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > & gradZetaDeltaV,
 								const std::vector<std::vector<double> > & projectorKetTimesPsiTimesVTimesPartOcc,
 								std::vector<VectorizedArray<double> >::const_iterator psiBegin,

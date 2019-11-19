@@ -556,19 +556,32 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 		       forceEvalKPointsNLP.submit_value(FKPoints,q);
 		       forceEvalKPointsNLP.submit_gradient(EKPoints,q);
 #else
-		       Tensor<1,C_DIM,VectorizedArray<double> > F
+		       Tensor<1,C_DIM,VectorizedArray<double> > F;
+		       /*
 			 =eshelbyTensor::getFnlNonPeriodic(gradZetaDeltaVQuads[q],
 							   projectorKetTimesPsiTimesVTimesPartOcc[0],
 							   psiQuadsNLP.begin()+q*currentBlockSize,
 							   currentBlockSize,
 							   macroIdToNonlocalAtomsSetMap[cell]);
+							   */
 
-		       Tensor<2,C_DIM,VectorizedArray<double> >	E
+		       Tensor<2,C_DIM,VectorizedArray<double> >	E;
+		       /*
 			 =eshelbyTensor::getEnlEshelbyTensorNonPeriodic(ZetaDeltaVQuads[q],
 									projectorKetTimesPsiTimesVTimesPartOcc[0],
 									psiQuadsNLP.begin()+q*currentBlockSize,
 									currentBlockSize,
 									macroIdToNonlocalAtomsSetMap[cell]);
+									*/
+
+		       eshelbyTensor::getFnlEnlMergedNonPeriodic(gradZetaDeltaVQuads[q],
+			                                                ZetaDeltaVQuads[q],
+									projectorKetTimesPsiTimesVTimesPartOcc[0],
+									psiQuadsNLP.begin()+q*currentBlockSize,
+									currentBlockSize,
+									macroIdToNonlocalAtomsSetMap[cell],
+									F,
+									E);
 
 		       forceEvalNLP.submit_value(F,q);
 		       forceEvalNLP.submit_gradient(E,q);

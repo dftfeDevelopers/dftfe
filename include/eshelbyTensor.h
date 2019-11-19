@@ -124,6 +124,16 @@ namespace dftfe {
 									  const unsigned int numBlockedEigenvectors);
 
       /// Nonlocal pseudotential force contribution (for non periodic case)
+      void  getFnlEnlMergedNonPeriodic(const std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > & gradZetaDeltaV,
+	                               const std::vector<std::vector<VectorizedArray<double> > > & ZetaDeltaV,
+				       const std::vector<std::vector<double > > & projectorKetTimesPsiTimesVTimesPartOcc,
+				       std::vector<VectorizedArray<double> >::const_iterator psiBegin,
+				       const unsigned int numBlockedEigenvectors,
+				       const std::vector<unsigned int> & nonlocalAtomsCompactSupportList,
+				       Tensor<1,C_DIM,VectorizedArray<double> > & Fnl,
+				       Tensor<2,C_DIM,VectorizedArray<double> > & Enl);
+
+      /// Nonlocal pseudotential force contribution (for non periodic case)
       Tensor<1,C_DIM,VectorizedArray<double> >  getFnlNonPeriodic(const std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > & gradZetaDeltaV,
 								const std::vector<std::vector<double > > & projectorKetTimesPsiTimesVTimesPartOcc,
 								std::vector<VectorizedArray<double> >::const_iterator psiBegin,
