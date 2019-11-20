@@ -387,6 +387,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 #else
 		psiQuadsNLP.resize(numQuadPointsNLP*currentBlockSize,make_vectorized_array(0.0));
 #endif
+
 		for (unsigned int ikPoint=0; ikPoint<numKPoints; ++ikPoint)
 		    for (unsigned int iEigenVec=0; iEigenVec<currentBlockSize; ++iEigenVec)
 		    {
@@ -399,6 +400,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 			 psiQuadsNLP[id]=psiEvalNLP.get_value(q);
 		      }//quad point loop
 		    } //eigenvector loop
+
 	    }
 
 	    if(isPseudopotential)
@@ -513,17 +515,19 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 								     currentBlockSize);
 		       forceEvalKPoints.submit_value(FKPoints,q);
 #else
-		       F+=eshelbyTensor::getFnlNonPeriodic(gradZetaDeltaVQuads[q],
-							   projectorKetTimesPsiTimesVTimesPartOcc[0],
-							   psiQuads.begin()+q*currentBlockSize,
-							   currentBlockSize,
-							   macroIdToNonlocalAtomsSetMap[cell]);
+		       Tensor<1,C_DIM,VectorizedArray<double> > Fnl;
+		       Tensor<2,C_DIM,VectorizedArray<double> >	Enl;
 
-		       E+=eshelbyTensor::getEnlEshelbyTensorNonPeriodic(ZetaDeltaVQuads[q],
-									projectorKetTimesPsiTimesVTimesPartOcc[0],
-									psiQuads.begin()+q*currentBlockSize,
-									currentBlockSize,
-									macroIdToNonlocalAtomsSetMap[cell]);
+		       eshelbyTensor::getFnlEnlMergedNonPeriodic(gradZetaDeltaVQuads[q],
+			                                         ZetaDeltaVQuads[q],
+								 projectorKetTimesPsiTimesVTimesPartOcc[0],
+								 psiQuads.begin()+q*currentBlockSize,
+							         currentBlockSize,
+								 macroIdToNonlocalAtomsSetMap[cell],
+								 Fnl,
+								 Enl);
+		       F+=Fnl;
+		       E+=Enl;
 #endif
 		   }
 
@@ -557,22 +561,7 @@ void forceClass<FEOrder>::computeConfigurationalForceEEshelbyTensorFPSPFnlLinFE
 		       forceEvalKPointsNLP.submit_gradient(EKPoints,q);
 #else
 		       Tensor<1,C_DIM,VectorizedArray<double> > F;
-		       /*
-			 =eshelbyTensor::getFnlNonPeriodic(gradZetaDeltaVQuads[q],
-							   projectorKetTimesPsiTimesVTimesPartOcc[0],
-							   psiQuadsNLP.begin()+q*currentBlockSize,
-							   currentBlockSize,
-							   macroIdToNonlocalAtomsSetMap[cell]);
-							   */
-
 		       Tensor<2,C_DIM,VectorizedArray<double> >	E;
-		       /*
-			 =eshelbyTensor::getEnlEshelbyTensorNonPeriodic(ZetaDeltaVQuads[q],
-									projectorKetTimesPsiTimesVTimesPartOcc[0],
-									psiQuadsNLP.begin()+q*currentBlockSize,
-									currentBlockSize,
-									macroIdToNonlocalAtomsSetMap[cell]);
-									*/
 
 		       eshelbyTensor::getFnlEnlMergedNonPeriodic(gradZetaDeltaVQuads[q],
 			                                                ZetaDeltaVQuads[q],

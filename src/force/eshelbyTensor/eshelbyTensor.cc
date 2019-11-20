@@ -202,55 +202,6 @@ namespace eshelbyTensor
        return eshelbyTensor;
     }
 
-    Tensor<2,C_DIM,VectorizedArray<double> >  getEnlEshelbyTensorNonPeriodic(const std::vector<std::vector<VectorizedArray<double> > > & ZetaDeltaV,
-									     const std::vector<std::vector<double > > & projectorKetTimesPsiTimesVTimesPartOcc,
-									     std::vector<VectorizedArray<double> >::const_iterator psiBegin,
-									     const unsigned int numBlockedEigenvectors,
-									     const std::vector<unsigned int> & nonlocalAtomsCompactSupportList)
-    {
-
-       Tensor<2,C_DIM,VectorizedArray<double> > eshelbyTensor;
-       VectorizedArray<double> identityTensorFactor=make_vectorized_array(0.0);
-       const VectorizedArray<double> four=make_vectorized_array(4.0);
-       std::vector<VectorizedArray<double> >::const_iterator it1=psiBegin;
-      // for (unsigned int eigenIndex=0; eigenIndex < numBlockedEigenvectors; ++it1, ++ eigenIndex)
-      // {
-      //  const VectorizedArray<double> & psi= *it1;
-      //  VectorizedArray<double> temp=make_vectorized_array(0.0);
-	  for (unsigned int iAtomNonLocal=0; iAtomNonLocal < ZetaDeltaV.size(); ++iAtomNonLocal)
-	  {
-	      bool isCellInCompactSupport=false;
-	      for (unsigned int i=0;i<nonlocalAtomsCompactSupportList.size();i++)
-		  if (nonlocalAtomsCompactSupportList[i]==iAtomNonLocal)
-		  {
-		      isCellInCompactSupport=true;
-		      break;
-		  }
-
-	      if (!isCellInCompactSupport)
-		  continue;
-
-	     const int numberPseudoWaveFunctions = ZetaDeltaV[iAtomNonLocal].size();
-	     const std::vector<double> & projectorKetTimesPsiTimesVTimesPartOccAtom
-		 =projectorKetTimesPsiTimesVTimesPartOcc[iAtomNonLocal];
-	     const std::vector<VectorizedArray<double> > & ZetaDeltaVAtom=ZetaDeltaV[iAtomNonLocal];
-	     VectorizedArray<double> temp=make_vectorized_array(0.0);
-       for (unsigned int eigenIndex=0; eigenIndex < numBlockedEigenvectors; ++it1, ++ eigenIndex)
-       {
-	  const VectorizedArray<double> & psi= *it1;
-	     for (unsigned int iPseudoWave=0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
-	     {
-		 temp+=make_vectorized_array(projectorKetTimesPsiTimesVTimesPartOccAtom[numberPseudoWaveFunctions*eigenIndex + iPseudoWave])*ZetaDeltaVAtom[iPseudoWave]*psi;
-	     }
-	  }
-	  identityTensorFactor+=four*temp;
-       }
-       eshelbyTensor[0][0]=identityTensorFactor;
-       eshelbyTensor[1][1]=identityTensorFactor;
-       eshelbyTensor[2][2]=identityTensorFactor;
-
-       return eshelbyTensor;
-    }
 
     Tensor<2,C_DIM,VectorizedArray<double> >  getEnlEshelbyTensorPeriodic(const std::vector<std::vector<std::vector<Tensor<1,2,VectorizedArray<double> > > > > & ZetaDeltaV,
 									  const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiTimesVTimesPartOcc,
@@ -307,34 +258,32 @@ namespace eshelbyTensor
        VectorizedArray<double> identityTensorFactor=make_vectorized_array(0.0);
        VectorizedArray<double> four=make_vectorized_array(4.0);
        std::vector<VectorizedArray<double> >::const_iterator it1=psiBegin;
-       //for (unsigned int eigenIndex=0; eigenIndex < numBlockedEigenvectors; ++it1, ++ eigenIndex)
-       // {
-       //  const VectorizedArray<double> & psi= *it1;
-       //	  Tensor<1,C_DIM,VectorizedArray<double> > tempF=zeroTensor;
-	  for (unsigned int iAtomNonLocal=0; iAtomNonLocal < gradZetaDeltaV.size(); ++iAtomNonLocal)
-	  {
-	      bool isCellInCompactSupport=false;
-	      for (unsigned int i=0;i<nonlocalAtomsCompactSupportList.size();i++)
-		  if (nonlocalAtomsCompactSupportList[i]==iAtomNonLocal)
-		  {
-		      isCellInCompactSupport=true;
-		      break;
-		  }
 
-	      if (!isCellInCompactSupport)
-		  continue;
-
-	     const int numberPseudoWaveFunctions = gradZetaDeltaV[iAtomNonLocal].size();
-	     const std::vector<double> & projectorKetTimesPsiTimesVTimesPartOccAtom
-		 =projectorKetTimesPsiTimesVTimesPartOcc[iAtomNonLocal];
-	     const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >  & gradZetaDeltaVAtom=gradZetaDeltaV[iAtomNonLocal];
-	     const std::vector<VectorizedArray<double> >  & ZetaDeltaVAtom=ZetaDeltaV[iAtomNonLocal];
-	     Tensor<1,C_DIM,VectorizedArray<double> > tempF=zeroTensor;
-	     VectorizedArray<double> temp=make_vectorized_array(0.0);
-	     VectorizedArray<double> temp2;
-       for (unsigned int eigenIndex=0; eigenIndex < numBlockedEigenvectors; ++it1, ++ eigenIndex)
+       for (unsigned int iAtomNonLocal=0; iAtomNonLocal < gradZetaDeltaV.size(); ++iAtomNonLocal)
        {
-	  const VectorizedArray<double> & psi= *it1;
+	 bool isCellInCompactSupport=false;
+	 for (unsigned int i=0;i<nonlocalAtomsCompactSupportList.size();i++)
+	      if (nonlocalAtomsCompactSupportList[i]==iAtomNonLocal)
+	      {
+		  isCellInCompactSupport=true;
+		  break;
+	      }
+
+	 if (!isCellInCompactSupport)
+	      continue;
+
+	 const int numberPseudoWaveFunctions = gradZetaDeltaV[iAtomNonLocal].size();
+	 const std::vector<double> & projectorKetTimesPsiTimesVTimesPartOccAtom
+	     =projectorKetTimesPsiTimesVTimesPartOcc[iAtomNonLocal];
+	 const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >  & gradZetaDeltaVAtom=gradZetaDeltaV[iAtomNonLocal];
+	 const std::vector<VectorizedArray<double> >  & ZetaDeltaVAtom=ZetaDeltaV[iAtomNonLocal];
+	 Tensor<1,C_DIM,VectorizedArray<double> > tempF=zeroTensor;
+	 VectorizedArray<double> temp=make_vectorized_array(0.0);
+	 VectorizedArray<double> temp2;
+
+	 for (unsigned int eigenIndex=0; eigenIndex < numBlockedEigenvectors; ++it1, ++ eigenIndex)
+	 {
+	     const VectorizedArray<double> & psi= *it1;
 	     for (unsigned int iPseudoWave=0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
 	     {
 		 temp2=make_vectorized_array(projectorKetTimesPsiTimesVTimesPartOccAtom[numberPseudoWaveFunctions*eigenIndex + iPseudoWave])*psi;
@@ -348,55 +297,6 @@ namespace eshelbyTensor
        Enl[0][0]=identityTensorFactor;
        Enl[1][1]=identityTensorFactor;
        Enl[2][2]=identityTensorFactor;
-    }
-
-    Tensor<1,C_DIM,VectorizedArray<double> >  getFnlNonPeriodic(const std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > & gradZetaDeltaV,
-								const std::vector<std::vector<double> > & projectorKetTimesPsiTimesVTimesPartOcc,
-								std::vector<VectorizedArray<double> >::const_iterator psiBegin,
-								const unsigned int numBlockedEigenvectors,
-								const std::vector<unsigned int> & nonlocalAtomsCompactSupportList)
-    {
-       Tensor<1,C_DIM,VectorizedArray<double> > zeroTensor;
-       for (unsigned int idim=0; idim<C_DIM; idim++)
-         zeroTensor[idim]=make_vectorized_array(0.0);
-
-       Tensor<1,C_DIM,VectorizedArray<double> > F=zeroTensor;
-       VectorizedArray<double> four=make_vectorized_array(4.0);
-       std::vector<VectorizedArray<double> >::const_iterator it1=psiBegin;
-       //for (unsigned int eigenIndex=0; eigenIndex < numBlockedEigenvectors; ++it1, ++ eigenIndex)
-       // {
-       //  const VectorizedArray<double> & psi= *it1;
-       //	  Tensor<1,C_DIM,VectorizedArray<double> > tempF=zeroTensor;
-	  for (unsigned int iAtomNonLocal=0; iAtomNonLocal < gradZetaDeltaV.size(); ++iAtomNonLocal)
-	  {
-	      bool isCellInCompactSupport=false;
-	      for (unsigned int i=0;i<nonlocalAtomsCompactSupportList.size();i++)
-		  if (nonlocalAtomsCompactSupportList[i]==iAtomNonLocal)
-		  {
-		      isCellInCompactSupport=true;
-		      break;
-		  }
-
-	      if (!isCellInCompactSupport)
-		  continue;
-
-	     const int numberPseudoWaveFunctions = gradZetaDeltaV[iAtomNonLocal].size();
-	     const std::vector<double> & projectorKetTimesPsiTimesVTimesPartOccAtom
-		 =projectorKetTimesPsiTimesVTimesPartOcc[iAtomNonLocal];
-	     const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >  & gradZetaDeltaVAtom=gradZetaDeltaV[iAtomNonLocal];
-	     Tensor<1,C_DIM,VectorizedArray<double> > tempF=zeroTensor;
-       for (unsigned int eigenIndex=0; eigenIndex < numBlockedEigenvectors; ++it1, ++ eigenIndex)
-       {
-	  const VectorizedArray<double> & psi= *it1;
-	     for (unsigned int iPseudoWave=0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
-	     {
-		 tempF+=make_vectorized_array(projectorKetTimesPsiTimesVTimesPartOccAtom[numberPseudoWaveFunctions*eigenIndex + iPseudoWave])*gradZetaDeltaVAtom[iPseudoWave]*psi;
-	     }
-	  }
-	  F+=four*tempF;
-       }
-
-       return F;
     }
 
     Tensor<1,C_DIM,VectorizedArray<double> >  getFnlNonPeriodic(const std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > & gradZetaDeltaV,
