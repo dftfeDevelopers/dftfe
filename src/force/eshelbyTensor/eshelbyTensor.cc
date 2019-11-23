@@ -274,13 +274,13 @@ namespace eshelbyTensor
 
 	 const int numberPseudoWaveFunctions = gradZetaDeltaV[iAtomNonLocal].size();
 	 const int numKPoints=kPointWeights.size();
-	 Tensor<1,C_DIM,VectorizedArray<double> > tempF=zeroTensor;
-	 VectorizedArray<double> tempE=make_vectorized_array(0.0);
 
+	 std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator it1=psiBegin;
 	 for (unsigned int ik=0; ik<numKPoints; ++ik)
 	 {
+             Tensor<1,C_DIM,VectorizedArray<double> > tempF=zeroTensor;
+	     VectorizedArray<double> tempE=make_vectorized_array(0.0);
 	     VectorizedArray<double> fnk=make_vectorized_array(kPointWeights[ik]);
-	     std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator it1=psiBegin;
 	     for (unsigned int eigenIndex=0; eigenIndex < numBlockedEigenvectors; ++it1, ++ eigenIndex)
 	     {
 		 const Tensor<1,2,VectorizedArray<double> > & psi= *it1;
