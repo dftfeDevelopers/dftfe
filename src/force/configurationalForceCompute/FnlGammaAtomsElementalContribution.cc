@@ -25,7 +25,8 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionPeriodic(std::map<un
 							              const std::vector<std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > > & pspnlGammaAtomsQuads,
                                                                       const std::vector<std::vector<std::vector<std::complex<double> > > > & projectorKetTimesPsiTimesVTimesPartOcc,
 							              const std::vector<Tensor<1,2,VectorizedArray<double> > > & psiQuads,
-								      const std::vector< std::vector<double> > & eigenValues)
+								      const std::vector< std::vector<double> > & eigenValues,
+							              const std::vector<unsigned int> & nonlocalAtomsCompactSupportList)
 {
 
   const unsigned int numberGlobalAtoms = dftPtr->atomLocations.size();
@@ -53,55 +54,66 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionPeriodic(std::map<un
 
       }
 
-      if (dftParameters::useHigherQuadNLP)
-      {
-	  for (unsigned int q=0; q<numQuadPoints; ++q)
-	  {
-	       std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > temp1(1);
-	       temp1[0]=pspnlGammaAtomsQuads[q][iAtom];
-
-	       const Tensor<1,C_DIM,VectorizedArray<double> >
-		   F=-eshelbyTensor::getFnlPeriodic(temp1,
-						    temp2,
-						    psiQuads.begin()+q*numEigenVectors*numKPoints,
-						    dftPtr->d_kPointWeights,
-						    numEigenVectors);
-
-
-	       forceEvalNLP.submit_value(F,q);
-	  }
-      }
-      else
-      {
-	  for (unsigned int q=0; q<numQuadPoints; ++q)
-	  {
-	       std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > temp1(1);
-	       temp1[0]=pspnlGammaAtomsQuads[q][iAtom];
-
-	       const Tensor<1,C_DIM,VectorizedArray<double> >
-		   F=-eshelbyTensor::getFnlPeriodic(temp1,
-						    temp2,
-						    psiQuads.begin()+q*numEigenVectors*numKPoints,
-						    dftPtr->d_kPointWeights,
-						    numEigenVectors);
-
-
-	       forceEval.submit_value(F,q);
-	  }
-      }
-
-      const Tensor<1,C_DIM,VectorizedArray<double> > forceContributionFnlGammaiAtomCells
-						     =dftParameters::useHigherQuadNLP?
-						      forceEvalNLP.integrate_value()
-						      :forceEval.integrate_value();
-
       if (forceContributionFnlGammaAtoms.find(globalChargeIdNonLocalAtom)==forceContributionFnlGammaAtoms.end())
 	   forceContributionFnlGammaAtoms[globalChargeIdNonLocalAtom]=std::vector<double>(C_DIM,0.0);
 
-      for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
-	   for (unsigned int idim=0; idim<C_DIM; idim++)
-	     forceContributionFnlGammaAtoms[globalChargeIdNonLocalAtom][idim]+=
-		   forceContributionFnlGammaiAtomCells[idim][iSubCell];
+      bool isCellInCompactSupport=false;
+      for (unsigned int i=0;i<nonlocalAtomsCompactSupportList.size();i++)
+	  if (nonlocalAtomsCompactSupportList[i]==iAtom)
+	  {
+	      isCellInCompactSupport=true;
+	      break;
+	  }
+
+      if (isCellInCompactSupport)
+      {
+	  if (dftParameters::useHigherQuadNLP)
+	  {
+	      for (unsigned int q=0; q<numQuadPoints; ++q)
+	      {
+		   std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > temp1(1);
+		   temp1[0]=pspnlGammaAtomsQuads[q][iAtom];
+
+		   const Tensor<1,C_DIM,VectorizedArray<double> >
+		       F=-eshelbyTensor::getFnlPeriodic(temp1,
+							temp2,
+							psiQuads.begin()+q*numEigenVectors*numKPoints,
+							dftPtr->d_kPointWeights,
+							numEigenVectors);
+
+
+		   forceEvalNLP.submit_value(F,q);
+	      }
+	  }
+	  else
+	  {
+	      for (unsigned int q=0; q<numQuadPoints; ++q)
+	      {
+		   std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > temp1(1);
+		   temp1[0]=pspnlGammaAtomsQuads[q][iAtom];
+
+		   const Tensor<1,C_DIM,VectorizedArray<double> >
+		       F=-eshelbyTensor::getFnlPeriodic(temp1,
+							temp2,
+							psiQuads.begin()+q*numEigenVectors*numKPoints,
+							dftPtr->d_kPointWeights,
+							numEigenVectors);
+
+
+		   forceEval.submit_value(F,q);
+	      }
+	  }
+
+	  const Tensor<1,C_DIM,VectorizedArray<double> > forceContributionFnlGammaiAtomCells
+							 =dftParameters::useHigherQuadNLP?
+							  forceEvalNLP.integrate_value()
+							  :forceEval.integrate_value();
+
+	  for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
+	       for (unsigned int idim=0; idim<C_DIM; idim++)
+		 forceContributionFnlGammaAtoms[globalChargeIdNonLocalAtom][idim]+=
+		       forceContributionFnlGammaiAtomCells[idim][iSubCell];
+       }
   }//iAtom loop
 }
 

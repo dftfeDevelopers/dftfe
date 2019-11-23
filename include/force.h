@@ -348,7 +348,8 @@ namespace dftfe {
 	   const std::vector<std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > > & pspnlGammaAtomsQuads,
 	   const std::vector<std::vector<std::vector<std::complex<double> > > > & projectorKetTimesPsiTimesVTimesPartOcc,
 	   const std::vector<Tensor<1,2,VectorizedArray<double> > > & psiQuads,
-	   const std::vector< std::vector<double> > & eigenValues);
+	   const std::vector< std::vector<double> > & eigenValues,
+	   const std::vector<unsigned int> & nonlocalAtomsCompactSupportList);
 
       void FnlGammaAtomsElementalContributionPeriodicSpinPolarized
 	  (std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
