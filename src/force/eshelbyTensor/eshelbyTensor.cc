@@ -207,33 +207,49 @@ namespace eshelbyTensor
 									  const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiTimesVTimesPartOcc,
 									  std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator psiBegin,
 									  const std::vector<double> & kPointWeights,
+									  const std::vector<unsigned int> & nonlocalAtomsCompactSupportList,
 									  const unsigned int numBlockedEigenvectors)
     {
        Tensor<2,C_DIM,VectorizedArray<double> > eshelbyTensor;
        VectorizedArray<double> identityTensorFactor=make_vectorized_array(0.0);
-       std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator it1=psiBegin;
        VectorizedArray<double> four=make_vectorized_array(4.0);
-       const int numKPoints=kPointWeights.size();
-       for (unsigned int ik=0; ik<numKPoints; ++ik){
-	 for (unsigned int eigenIndex=0; eigenIndex<numBlockedEigenvectors; ++it1, ++ eigenIndex){
-	    const Tensor<1,2,VectorizedArray<double> > & psi= *it1;
-	    VectorizedArray<double> fnk=make_vectorized_array(kPointWeights[ik]);
-	    for (unsigned int iAtomNonLocal=0; iAtomNonLocal < ZetaDeltaV.size(); ++iAtomNonLocal)
-	    {
-		 const int numberPseudoWaveFunctions = ZetaDeltaV[iAtomNonLocal].size();
+
+       for (unsigned int iAtomNonLocal=0; iAtomNonLocal < ZetaDeltaV.size(); ++iAtomNonLocal)
+       {
+	 bool isCellInCompactSupport=false;
+	 for (unsigned int i=0;i<nonlocalAtomsCompactSupportList.size();i++)
+	      if (nonlocalAtomsCompactSupportList[i]==iAtomNonLocal)
+	      {
+		  isCellInCompactSupport=true;
+		  break;
+	      }
+
+	 if (!isCellInCompactSupport)
+	      continue;
+
+	 const int numberPseudoWaveFunctions = ZetaDeltaV[iAtomNonLocal].size();
+	 const int numKPoints=kPointWeights.size();
+
+	 std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator it1=psiBegin;
+	 for (unsigned int ik=0; ik<numKPoints; ++ik)
+	 {
+	     VectorizedArray<double> tempE=make_vectorized_array(0.0);
+	     VectorizedArray<double> fnk=make_vectorized_array(kPointWeights[ik]);
+	     for (unsigned int eigenIndex=0; eigenIndex < numBlockedEigenvectors; ++it1, ++ eigenIndex)
+	     {
+		 const Tensor<1,2,VectorizedArray<double> > & psi= *it1;
 		 for (unsigned int iPseudoWave=0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
 		 {
 		     VectorizedArray<double> CReal=make_vectorized_array(projectorKetTimesPsiTimesVTimesPartOcc[ik][iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave].real());
 		     VectorizedArray<double> CImag=make_vectorized_array(projectorKetTimesPsiTimesVTimesPartOcc[ik][iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave].imag());
 		     VectorizedArray<double> zdvR=ZetaDeltaV[iAtomNonLocal][iPseudoWave][ik][0];
 		     VectorizedArray<double> zdvI=ZetaDeltaV[iAtomNonLocal][iPseudoWave][ik][1];
-		     identityTensorFactor+=four*fnk*((psi[0]*zdvR+psi[1]*zdvI)*CReal-(psi[0]*zdvI-psi[1]*zdvR)*CImag);
+		     tempE+=((psi[0]*zdvR+psi[1]*zdvI)*CReal-(psi[0]*zdvI-psi[1]*zdvR)*CImag);
 		 }
-	    }
-
+	      }
+	      identityTensorFactor+=four*fnk*tempE;
 	 }
        }
-
        eshelbyTensor[0][0]+=identityTensorFactor;
        eshelbyTensor[1][1]+=identityTensorFactor;
        eshelbyTensor[2][2]+=identityTensorFactor;
@@ -494,19 +510,35 @@ namespace eshelbyTensor
 						         const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiTimesVTimesPartOcc,
 						         std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiBegin,
                                                          const std::vector<double> & kPointWeights,
+							 const std::vector<unsigned int> & nonlocalAtomsCompactSupportList,
                                                          const unsigned int numBlockedEigenvectors)
   {
        Tensor<2,C_DIM,VectorizedArray<double> > E;
-       std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator it1=psiBegin;
        VectorizedArray<double> four=make_vectorized_array(4.0);
-       const int numKPoints=kPointWeights.size();
-       for (unsigned int ik=0; ik<numKPoints; ++ik){
-	 for (unsigned int eigenIndex=0; eigenIndex<numBlockedEigenvectors; ++it1, ++ eigenIndex){
-	    const Tensor<1,2,VectorizedArray<double> > & psi= *it1;
-	    VectorizedArray<double> fnk=make_vectorized_array(kPointWeights[ik]);
-	    for (unsigned int iAtomNonLocal=0; iAtomNonLocal < gradZetalmDeltaVlDyadicDistImageAtoms.size(); ++iAtomNonLocal)
-	    {
-		 const int numberPseudoWaveFunctions = gradZetalmDeltaVlDyadicDistImageAtoms[iAtomNonLocal].size();
+
+       for (unsigned int iAtomNonLocal=0; iAtomNonLocal < gradZetalmDeltaVlDyadicDistImageAtoms.size(); ++iAtomNonLocal)
+       {
+	 bool isCellInCompactSupport=false;
+	 for (unsigned int i=0;i<nonlocalAtomsCompactSupportList.size();i++)
+	      if (nonlocalAtomsCompactSupportList[i]==iAtomNonLocal)
+	      {
+		  isCellInCompactSupport=true;
+		  break;
+	      }
+
+	 if (!isCellInCompactSupport)
+	      continue;
+
+	 const int numberPseudoWaveFunctions = gradZetalmDeltaVlDyadicDistImageAtoms[iAtomNonLocal].size();
+	 const int numKPoints=kPointWeights.size();
+
+	 std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator it1=psiBegin;
+	 for (unsigned int ik=0; ik<numKPoints; ++ik)
+	 {
+	     VectorizedArray<double> fnk=make_vectorized_array(kPointWeights[ik]);
+	     for (unsigned int eigenIndex=0; eigenIndex < numBlockedEigenvectors; ++it1, ++ eigenIndex)
+	     {
+		 const Tensor<1,2,VectorizedArray<double> > & psi= *it1;
 		 for (unsigned int iPseudoWave=0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
 		 {
 		     VectorizedArray<double> CReal=make_vectorized_array(projectorKetTimesPsiTimesVTimesPartOcc[ik][iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave].real());
@@ -515,11 +547,9 @@ namespace eshelbyTensor
 		     Tensor<2,C_DIM,VectorizedArray<double> >  zdvI=gradZetalmDeltaVlDyadicDistImageAtoms[iAtomNonLocal][iPseudoWave][ik][1];
 		     E+=four*fnk*((psi[0]*zdvR+psi[1]*zdvI)*CReal-(psi[0]*zdvI-psi[1]*zdvR)*CImag);
 		 }
-	    }
-
+	      }
 	 }
        }
-
        return E;
   }
 }

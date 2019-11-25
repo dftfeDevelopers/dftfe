@@ -115,6 +115,7 @@ namespace dftfe {
 									  const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiTimesVTimesPartOcc,
 									  std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiBegin,
 									  const std::vector<double> & kPointWeights,
+									  const std::vector<unsigned int> & nonlocalAtomsCompactSupportList,
 									  const unsigned int numBlockedEigenvectors);
 
       /// Nonlocal pseudotential force contribution (for periodic case)
@@ -175,6 +176,7 @@ namespace dftfe {
 							     const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiTimesVTimesPartOcc,
 							     std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiBegin,
 							     const std::vector<double> & kPointWeights,
+							     const std::vector<unsigned int> & nonlocalAtomsCompactSupportList,
 							     const unsigned int numBlockedEigenvectors);
 
     };
