@@ -361,7 +361,8 @@ namespace dftfe {
 	   const std::vector<std::vector<std::vector<std::complex<double> > > > & projectorKetTimesPsiSpin1TimesVTimesPartOcc,
 	   const std::vector<Tensor<1,2,VectorizedArray<double> > > & psiSpin0Quads,
 	   const std::vector<Tensor<1,2,VectorizedArray<double> > > & psiSpin1Quads,
-	   const std::vector< std::vector<double> > & eigenValues);
+	   const std::vector< std::vector<double> > & eigenValues,
+           const std::vector<unsigned int> & nonlocalAtomsCompactSupportList);
 #else
 
       void FnlGammaAtomsElementalContributionNonPeriodicSpinPolarized
@@ -373,7 +374,8 @@ namespace dftfe {
 	   const std::vector<std::vector<double> >  & projectorKetTimesPsiSpin0TimesVTimesPartOcc,
 	   const std::vector<std::vector<double> >  & projectorKetTimesPsiSpin1TimesVTimesPartOcc,
 	   const std::vector< VectorizedArray<double> > & psiSpin0Quads,
-	   const std::vector< VectorizedArray<double> > & psiSpin1Quads);
+	   const std::vector< VectorizedArray<double> > & psiSpin1Quads,
+           const std::vector<unsigned int> & nonlocalAtomsCompactSupportList);
 
       void FnlGammaAtomsElementalContributionNonPeriodic
 	  (std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,

@@ -104,6 +104,7 @@ namespace dftfe {
 								      std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator psiSpin0Begin,
 								      std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator psiSpin1Begin,
 								      const std::vector<double> & kPointWeights,
+                                                                      const std::vector<unsigned int> & nonlocalAtomsCompactSupportList,
 								      const unsigned int numBlockedEigenvectors);
 
       ///Nonlocal pseudotential force contribution (for non periodic case)
@@ -121,6 +122,32 @@ namespace dftfe {
 							     std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiSpin1Begin,
 							     const std::vector<double> & kPointWeights,
 							     const unsigned int numBlockedEigenvectors);
+
+
+      /// Nonlocal pseudotential force contribution (for periodic case)
+      void  getFnlEnlMergedPeriodic(const std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > & gradZetaDeltaV,
+	                            const std::vector<std::vector<std::vector<Tensor<1,2,VectorizedArray<double> > > > > & ZetaDeltaV,
+				    const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiSpin0TimesVTimesPartOcc,
+				    const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiSpin1TimesVTimesPartOcc,
+				    std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiSpin0Begin,
+				    std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiSpin1Begin,
+				    const std::vector<double> & kPointWeights,
+				    const unsigned int numBlockedEigenvectors,
+				    const std::vector<unsigned int> & nonlocalAtomsCompactSupportList,
+				    Tensor<1,C_DIM,VectorizedArray<double> > & Fnl,
+				    Tensor<2,C_DIM,VectorizedArray<double> > & Enl);
+
+      /// Nonlocal pseudotential force contribution (for non periodic case)
+      void  getFnlEnlMergedNonPeriodic(const std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > & gradZetaDeltaV,
+	                               const std::vector<std::vector<VectorizedArray<double> > > & ZetaDeltaV,
+				       const std::vector<std::vector<double> > & projectorKetTimesPsiSpin0TimesVTimesPartOcc,
+				       const std::vector<std::vector<double> > & projectorKetTimesPsiSpin1TimesVTimesPartOcc,
+				       std::vector<VectorizedArray<double> >::const_iterator psiSpin0Begin,
+				       std::vector<VectorizedArray<double> >::const_iterator psiSpin1Begin,
+				       const unsigned int numBlockedEigenvectors,
+				       const std::vector<unsigned int> & nonlocalAtomsCompactSupportList,
+				       Tensor<1,C_DIM,VectorizedArray<double> > & Fnl,
+				       Tensor<2,C_DIM,VectorizedArray<double> > & Enl);
 
       ///Force contribution due to the numerical difference between the input and output electron density (rhoIn and rhoOut)
       ///of the final scf iteration. vEff denotes the Kohn-Sham effective potential.
@@ -157,6 +184,7 @@ namespace dftfe {
 							     std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiSpin0Begin,
 							     std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiSpin1Begin,
 							     const std::vector<double> & kPointWeights,
+                                                             const std::vector<unsigned int> & nonlocalAtomsCompactSupportList,
                                                              const unsigned int numBlockedEigenvectors);
     };
 
