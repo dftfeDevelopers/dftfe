@@ -226,23 +226,40 @@ namespace eshelbyTensorSP
 									  std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator psiSpin0Begin,
 									  std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator psiSpin1Begin,
 									  const std::vector<double> & kPointWeights,
+                                                                          const std::vector<unsigned int> & nonlocalAtomsCompactSupportList,
 									  const unsigned int numBlockedEigenvectors)
     {
        Tensor<2,C_DIM,VectorizedArray<double> > eshelbyTensor;
        VectorizedArray<double> identityTensorFactor=make_vectorized_array(0.0);
-       std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator it1Spin0=psiSpin0Begin;
-       std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator it1Spin1=psiSpin1Begin;
        VectorizedArray<double> two=make_vectorized_array(2.0);
-       const unsigned int numKPoints=kPointWeights.size();
-       for (unsigned int ik=0; ik<numKPoints; ++ik){
-	 for (unsigned int eigenIndex=0; eigenIndex<numBlockedEigenvectors; ++it1Spin0,++it1Spin1, ++ eigenIndex){
-	    const Tensor<1,2,VectorizedArray<double> > & psiSpin0= *it1Spin0;
-	    const Tensor<1,2,VectorizedArray<double> > & psiSpin1= *it1Spin1;
-	    const VectorizedArray<double> fnkSpin0=make_vectorized_array(kPointWeights[ik]);
-	    const VectorizedArray<double> fnkSpin1=make_vectorized_array(kPointWeights[ik]);
-	    for (unsigned int iAtomNonLocal=0; iAtomNonLocal < ZetaDeltaV.size(); ++iAtomNonLocal)
-	    {
-		 const unsigned int numberPseudoWaveFunctions = ZetaDeltaV[iAtomNonLocal].size();
+
+       for (unsigned int iAtomNonLocal=0; iAtomNonLocal < ZetaDeltaV.size(); ++iAtomNonLocal)
+       {
+	 bool isCellInCompactSupport=false;
+	 for (unsigned int i=0;i<nonlocalAtomsCompactSupportList.size();i++)
+	      if (nonlocalAtomsCompactSupportList[i]==iAtomNonLocal)
+	      {
+		  isCellInCompactSupport=true;
+		  break;
+	      }
+
+	 if (!isCellInCompactSupport)
+	      continue;
+
+	 const int numberPseudoWaveFunctions = ZetaDeltaV[iAtomNonLocal].size();
+	 const int numKPoints=kPointWeights.size();
+
+         std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator it1Spin0=psiSpin0Begin;
+         std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator it1Spin1=psiSpin1Begin;
+	 for (unsigned int ik=0; ik<numKPoints; ++ik)
+	 {
+	     VectorizedArray<double> tempE=make_vectorized_array(0.0);
+	     const VectorizedArray<double> fnkSpin0=make_vectorized_array(kPointWeights[ik]);
+	     const VectorizedArray<double> fnkSpin1=make_vectorized_array(kPointWeights[ik]);
+	     for (unsigned int eigenIndex=0; eigenIndex<numBlockedEigenvectors; ++it1Spin0,++it1Spin1, ++ eigenIndex)
+	     {
+	         const Tensor<1,2,VectorizedArray<double> > & psiSpin0= *it1Spin0;
+	         const Tensor<1,2,VectorizedArray<double> > & psiSpin1= *it1Spin1;
 		 for (unsigned int iPseudoWave=0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
 		 {
 		     const VectorizedArray<double> CRealSpin0=make_vectorized_array(projectorKetTimesPsiSpin0TimesVTimesPartOcc[ik][iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave].real());
@@ -254,16 +271,13 @@ namespace eshelbyTensorSP
 		     identityTensorFactor+=two*fnkSpin0*((psiSpin0[0]*zdvR+psiSpin0[1]*zdvI)*CRealSpin0-(psiSpin0[0]*zdvI-psiSpin0[1]*zdvR)*CImagSpin0);
 		     identityTensorFactor+=two*fnkSpin1*((psiSpin1[0]*zdvR+psiSpin1[1]*zdvI)*CRealSpin1-(psiSpin1[0]*zdvI-psiSpin1[1]*zdvR)*CImagSpin1);
 		 }
-	    }
-
+	      }
 	 }
        }
-
        eshelbyTensor[0][0]+=identityTensorFactor;
        eshelbyTensor[1][1]+=identityTensorFactor;
        eshelbyTensor[2][2]+=identityTensorFactor;
        return eshelbyTensor;
-
     }
 
     Tensor<1,C_DIM,VectorizedArray<double> >  getFnlNonPeriodic(const std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > & gradZetaDeltaV,
@@ -431,22 +445,39 @@ namespace eshelbyTensorSP
 							 std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiSpin0Begin,
 							 std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiSpin1Begin,
 							 const std::vector<double> & kPointWeights,
+                                                         const std::vector<unsigned int> & nonlocalAtomsCompactSupportList,
                                                          const unsigned int numBlockedEigenvectors)
- {
+  {
        Tensor<2,C_DIM,VectorizedArray<double> > E;
-       std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator it1Spin0=psiSpin0Begin;
-       std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator it1Spin1=psiSpin1Begin;
        VectorizedArray<double> two=make_vectorized_array(2.0);
-       const unsigned int numKPoints=kPointWeights.size();
-       for (unsigned int ik=0; ik<numKPoints; ++ik){
-	 for (unsigned int eigenIndex=0; eigenIndex<numBlockedEigenvectors; ++it1Spin0,++it1Spin1, ++ eigenIndex){
-	    const Tensor<1,2,VectorizedArray<double> > & psiSpin0= *it1Spin0;
-	    const Tensor<1,2,VectorizedArray<double> > & psiSpin1= *it1Spin1;
-	    const VectorizedArray<double> fnkSpin0=make_vectorized_array(kPointWeights[ik]);
-	    const VectorizedArray<double> fnkSpin1=make_vectorized_array(kPointWeights[ik]);
-	    for (unsigned int iAtomNonLocal=0; iAtomNonLocal < gradZetalmDeltaVlDyadicDistImageAtoms.size(); ++iAtomNonLocal)
-	    {
-		 const unsigned int numberPseudoWaveFunctions =gradZetalmDeltaVlDyadicDistImageAtoms[iAtomNonLocal].size();
+
+       for (unsigned int iAtomNonLocal=0; iAtomNonLocal < gradZetalmDeltaVlDyadicDistImageAtoms.size(); ++iAtomNonLocal)
+       {
+	 bool isCellInCompactSupport=false;
+	 for (unsigned int i=0;i<nonlocalAtomsCompactSupportList.size();i++)
+	      if (nonlocalAtomsCompactSupportList[i]==iAtomNonLocal)
+	      {
+		  isCellInCompactSupport=true;
+		  break;
+	      }
+
+	 if (!isCellInCompactSupport)
+	      continue;
+
+	 const int numberPseudoWaveFunctions = gradZetalmDeltaVlDyadicDistImageAtoms[iAtomNonLocal].size();
+	 const int numKPoints=kPointWeights.size();
+
+         std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator it1Spin0=psiSpin0Begin;
+         std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator it1Spin1=psiSpin1Begin;
+
+	 for (unsigned int ik=0; ik<numKPoints; ++ik)
+	 {
+	     const VectorizedArray<double> fnkSpin0=make_vectorized_array(kPointWeights[ik]);
+	     const VectorizedArray<double> fnkSpin1=make_vectorized_array(kPointWeights[ik]);
+	     for (unsigned int eigenIndex=0; eigenIndex<numBlockedEigenvectors; ++it1Spin0,++it1Spin1, ++ eigenIndex)
+	     {
+                 const Tensor<1,2,VectorizedArray<double> > & psiSpin0= *it1Spin0;
+                 const Tensor<1,2,VectorizedArray<double> > & psiSpin1= *it1Spin1;
 		 for (unsigned int iPseudoWave=0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
 		 {
 		     const VectorizedArray<double> CRealSpin0=make_vectorized_array(projectorKetTimesPsiSpin0TimesVTimesPartOcc[ik][iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave].real());
@@ -458,12 +489,150 @@ namespace eshelbyTensorSP
 		     E+=two*fnkSpin0*((psiSpin0[0]*zdvR+psiSpin0[1]*zdvI)*CRealSpin0-(psiSpin0[0]*zdvI-psiSpin0[1]*zdvR)*CImagSpin0);
 		     E+=two*fnkSpin1*((psiSpin1[0]*zdvR+psiSpin1[1]*zdvI)*CRealSpin1-(psiSpin1[0]*zdvI-psiSpin1[1]*zdvR)*CImagSpin1);
 		 }
-	    }
-
+	      }
 	 }
        }
-
        return E;
+    }
+
+    void  getFnlEnlMergedPeriodic(const std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > & gradZetaDeltaV,
+	                          const std::vector<std::vector<std::vector<Tensor<1,2,VectorizedArray<double> > > > > & ZetaDeltaV,
+				  const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiSpin0TimesVTimesPartOcc,
+				  const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiSpin1TimesVTimesPartOcc,
+				  std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiSpin0Begin,
+				  std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiSpin1Begin,
+				  const std::vector<double> & kPointWeights,
+				  const unsigned int numBlockedEigenvectors,
+				  const std::vector<unsigned int> & nonlocalAtomsCompactSupportList,
+				  Tensor<1,C_DIM,VectorizedArray<double> > & Fnl,
+				  Tensor<2,C_DIM,VectorizedArray<double> > & Enl)
+    {
+       Tensor<1,C_DIM,VectorizedArray<double> > zeroTensor;
+       for (unsigned int idim=0; idim<C_DIM; idim++)
+         zeroTensor[idim]=make_vectorized_array(0.0);
+
+       Fnl=zeroTensor;
+       VectorizedArray<double> identityTensorFactor=make_vectorized_array(0.0);
+       VectorizedArray<double> two=make_vectorized_array(2.0);
+
+       for (unsigned int iAtomNonLocal=0; iAtomNonLocal < gradZetaDeltaV.size(); ++iAtomNonLocal)
+       {
+	 bool isCellInCompactSupport=false;
+	 for (unsigned int i=0;i<nonlocalAtomsCompactSupportList.size();i++)
+	      if (nonlocalAtomsCompactSupportList[i]==iAtomNonLocal)
+	      {
+		  isCellInCompactSupport=true;
+		  break;
+	      }
+
+	 if (!isCellInCompactSupport)
+	      continue;
+
+	 const int numberPseudoWaveFunctions = gradZetaDeltaV[iAtomNonLocal].size();
+	 const int numKPoints=kPointWeights.size();
+
+         std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator it1Spin0=psiSpin0Begin;
+         std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator it1Spin1=psiSpin1Begin;
+	 for (unsigned int ik=0; ik<numKPoints; ++ik)
+	 {
+             Tensor<1,C_DIM,VectorizedArray<double> > tempF=zeroTensor;
+	     VectorizedArray<double> tempE=make_vectorized_array(0.0);
+	     const VectorizedArray<double> fnkSpin0=make_vectorized_array(kPointWeights[ik]);
+	     const VectorizedArray<double> fnkSpin1=make_vectorized_array(kPointWeights[ik]);
+	     for (unsigned int eigenIndex=0; eigenIndex<numBlockedEigenvectors; ++it1Spin0,++it1Spin1, ++ eigenIndex)
+	     {
+	         const Tensor<1,2,VectorizedArray<double> > & psiSpin0= *it1Spin0;
+	         const Tensor<1,2,VectorizedArray<double> > & psiSpin1= *it1Spin1;
+		 for (unsigned int iPseudoWave=0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
+		 {
+		     const VectorizedArray<double> CRealSpin0=make_vectorized_array(projectorKetTimesPsiSpin0TimesVTimesPartOcc[ik][iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave].real());
+		     const VectorizedArray<double> CImagSpin0=make_vectorized_array(projectorKetTimesPsiSpin0TimesVTimesPartOcc[ik][iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave].imag());
+		     const VectorizedArray<double> CRealSpin1=make_vectorized_array(projectorKetTimesPsiSpin1TimesVTimesPartOcc[ik][iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave].real());
+		     const VectorizedArray<double> CImagSpin1=make_vectorized_array(projectorKetTimesPsiSpin1TimesVTimesPartOcc[ik][iAtomNonLocal][numberPseudoWaveFunctions*eigenIndex + iPseudoWave].imag());
+		     const Tensor<1,C_DIM,VectorizedArray<double> >  gzdvR=gradZetaDeltaV[iAtomNonLocal][iPseudoWave][ik][0];
+		     const Tensor<1,C_DIM,VectorizedArray<double> >  gzdvI=gradZetaDeltaV[iAtomNonLocal][iPseudoWave][ik][1];
+		     tempF+=fnkSpin0*((psiSpin0[0]*gzdvR+psiSpin0[1]*gzdvI)*CRealSpin0-(psiSpin0[0]*gzdvI-psiSpin0[1]*gzdvR)*CImagSpin0);
+		     tempF+=fnkSpin1*((psiSpin1[0]*gzdvR+psiSpin1[1]*gzdvI)*CRealSpin1-(psiSpin1[0]*gzdvI-psiSpin1[1]*gzdvR)*CImagSpin1);
+
+		     const VectorizedArray<double> zdvR=ZetaDeltaV[iAtomNonLocal][iPseudoWave][ik][0];
+		     const VectorizedArray<double> zdvI=ZetaDeltaV[iAtomNonLocal][iPseudoWave][ik][1];
+		     tempE+=fnkSpin0*((psiSpin0[0]*zdvR+psiSpin0[1]*zdvI)*CRealSpin0-(psiSpin0[0]*zdvI-psiSpin0[1]*zdvR)*CImagSpin0);
+		     tempE+=fnkSpin1*((psiSpin1[0]*zdvR+psiSpin1[1]*zdvI)*CRealSpin1-(psiSpin1[0]*zdvI-psiSpin1[1]*zdvR)*CImagSpin1);
+
+		 }
+	      }
+	      Fnl+=two*tempF;
+	      identityTensorFactor+=two*tempE;
+	 }
+       }
+       Enl[0][0]=identityTensorFactor;
+       Enl[1][1]=identityTensorFactor;
+       Enl[2][2]=identityTensorFactor;
+    }
+
+    void  getFnlEnlMergedNonPeriodic(const std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > & gradZetaDeltaV,
+	                             const std::vector<std::vector<VectorizedArray<double> > > & ZetaDeltaV,
+				     const std::vector<std::vector<double> > & projectorKetTimesPsiSpin0TimesVTimesPartOcc,
+				     const std::vector<std::vector<double> > & projectorKetTimesPsiSpin1TimesVTimesPartOcc,
+				     std::vector<VectorizedArray<double> >::const_iterator psiSpin0Begin,
+				     std::vector<VectorizedArray<double> >::const_iterator psiSpin1Begin,
+				     const unsigned int numBlockedEigenvectors,
+				     const std::vector<unsigned int> & nonlocalAtomsCompactSupportList,
+				     Tensor<1,C_DIM,VectorizedArray<double> > & Fnl,
+				     Tensor<2,C_DIM,VectorizedArray<double> > & Enl)
+    {
+       Tensor<1,C_DIM,VectorizedArray<double> > zeroTensor;
+       for (unsigned int idim=0; idim<C_DIM; idim++)
+         zeroTensor[idim]=make_vectorized_array(0.0);
+
+       Fnl=zeroTensor;
+       VectorizedArray<double> identityTensorFactor=make_vectorized_array(0.0);
+       VectorizedArray<double> two=make_vectorized_array(2.0);
+
+       for (unsigned int iAtomNonLocal=0; iAtomNonLocal < gradZetaDeltaV.size(); ++iAtomNonLocal)
+       {
+	 bool isCellInCompactSupport=false;
+	 for (unsigned int i=0;i<nonlocalAtomsCompactSupportList.size();i++)
+	      if (nonlocalAtomsCompactSupportList[i]==iAtomNonLocal)
+	      {
+		  isCellInCompactSupport=true;
+		  break;
+	      }
+
+	 if (!isCellInCompactSupport)
+	      continue;
+
+	 const int numberPseudoWaveFunctions = gradZetaDeltaV[iAtomNonLocal].size();
+	 const std::vector<double> & projectorKetTimesPsiSpin0TimesVTimesPartOccAtom
+	     =projectorKetTimesPsiSpin0TimesVTimesPartOcc[iAtomNonLocal];
+	 const std::vector<double> & projectorKetTimesPsiSpin1TimesVTimesPartOccAtom
+	     =projectorKetTimesPsiSpin1TimesVTimesPartOcc[iAtomNonLocal];
+	 const std::vector<Tensor<1,C_DIM,VectorizedArray<double> > >  & gradZetaDeltaVAtom=gradZetaDeltaV[iAtomNonLocal];
+	 const std::vector<VectorizedArray<double> >  & ZetaDeltaVAtom=ZetaDeltaV[iAtomNonLocal];
+	 Tensor<1,C_DIM,VectorizedArray<double> > tempF=zeroTensor;
+	 VectorizedArray<double> temp=make_vectorized_array(0.0);
+	 VectorizedArray<double> temp2;
+
+         std::vector<VectorizedArray<double> >::const_iterator it1Spin0=psiSpin0Begin;
+         std::vector<VectorizedArray<double> >::const_iterator it1Spin1=psiSpin1Begin;
+	 for (unsigned int eigenIndex=0; eigenIndex < numBlockedEigenvectors; ++it1Spin0,++it1Spin1, ++ eigenIndex)
+	 {
+	     const VectorizedArray<double> & psiSpin0= *it1Spin0;
+	     const VectorizedArray<double> & psiSpin1= *it1Spin1;
+	     for (unsigned int iPseudoWave=0; iPseudoWave < numberPseudoWaveFunctions; ++iPseudoWave)
+	     {
+		 temp2=make_vectorized_array(projectorKetTimesPsiSpin0TimesVTimesPartOccAtom[numberPseudoWaveFunctions*eigenIndex + iPseudoWave])*psiSpin0
+                   +make_vectorized_array(projectorKetTimesPsiSpin1TimesVTimesPartOccAtom[numberPseudoWaveFunctions*eigenIndex + iPseudoWave])*psiSpin1;
+		 tempF+=temp2*gradZetaDeltaVAtom[iPseudoWave];
+		 temp+=temp2*ZetaDeltaVAtom[iPseudoWave];
+	     }
+	  }
+	  Fnl+=two*tempF;
+	  identityTensorFactor+=two*temp;
+       }
+       Enl[0][0]=identityTensorFactor;
+       Enl[1][1]=identityTensorFactor;
+       Enl[2][2]=identityTensorFactor;
     }
 
 }

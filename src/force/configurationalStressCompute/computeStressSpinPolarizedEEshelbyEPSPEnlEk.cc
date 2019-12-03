@@ -131,6 +131,25 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk
   zeroTensor5[0]=zeroTensor4;
   zeroTensor5[1]=zeroTensor4;
 
+  std::map<unsigned int,std::vector<unsigned int>> macroIdToNonlocalAtomsSetMap;
+  for (unsigned int cell=0; cell<matrixFreeData.n_macro_cells(); ++cell)
+  {
+       const unsigned int numSubCells=matrixFreeData.n_components_filled(cell);
+       std::set<unsigned int> mergedSet;
+       for (unsigned int iSubCell=0; iSubCell<numSubCells; ++iSubCell)
+       {
+	  subCellPtr= matrixFreeData.get_cell_iterator(cell,iSubCell);
+	  dealii::CellId subCellId=subCellPtr->id();
+
+	  std::set<unsigned int> s;
+	  std::set_union(mergedSet.begin(), mergedSet.end(),
+			 d_cellIdToNonlocalAtomIdsLocalCompactSupportMap[subCellId].begin(), d_cellIdToNonlocalAtomIdsLocalCompactSupportMap[subCellId].end(),
+			 std::inserter(s, s.begin()));
+	  mergedSet=s;
+       }
+       macroIdToNonlocalAtomsSetMap[cell]=std::vector<unsigned int>(mergedSet.begin(),mergedSet.end());
+  }
+
   std::vector<std::vector<double>> partialOccupanciesSpin0(dftPtr->d_kPointWeights.size(),
 								  std::vector<double>(numEigenVectors,0.0));
   std::vector<std::vector<double>> partialOccupanciesSpin1(dftPtr->d_kPointWeights.size(),
@@ -583,6 +602,7 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk
 						         psiSpin0Quads.begin()+q*numEigenVectors*numKPoints,
 						         psiSpin1Quads.begin()+q*numEigenVectors*numKPoints,
 							 dftPtr->d_kPointWeights,
+                                                         macroIdToNonlocalAtomsSetMap[cell],
 							 numEigenVectors);
 
            EKPoints+=eshelbyTensorSP::getEnlStress(gradZetalmDeltaVlDyadicDistImageAtomsQuads[q],
@@ -591,6 +611,7 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk
 					         psiSpin0Quads.begin()+q*numEigenVectors*numKPoints,
 					         psiSpin1Quads.begin()+q*numEigenVectors*numKPoints,
 					         dftPtr->d_kPointWeights,
+                                                 macroIdToNonlocalAtomsSetMap[cell],
                                                  numEigenVectors);
 
        }//is pseudopotential check
@@ -611,6 +632,7 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk
 						         psiSpin0QuadsNLP.begin()+q*numEigenVectors*numKPoints,
 						         psiSpin1QuadsNLP.begin()+q*numEigenVectors*numKPoints,
 							 dftPtr->d_kPointWeights,
+                                                         macroIdToNonlocalAtomsSetMap[cell],
                                                          numEigenVectors);
 
            EKPoints+=eshelbyTensorSP::getEnlStress(gradZetalmDeltaVlDyadicDistImageAtomsQuads[q],
@@ -619,6 +641,7 @@ void forceClass<FEOrder>::computeStressSpinPolarizedEEshelbyEPSPEnlEk
 					         psiSpin0QuadsNLP.begin()+q*numEigenVectors*numKPoints,
 					         psiSpin1QuadsNLP.begin()+q*numEigenVectors*numKPoints,
 					         dftPtr->d_kPointWeights,
+                                                 macroIdToNonlocalAtomsSetMap[cell],
                                                  numEigenVectors);
 
 

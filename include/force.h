@@ -348,7 +348,8 @@ namespace dftfe {
 	   const std::vector<std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > > & pspnlGammaAtomsQuads,
 	   const std::vector<std::vector<std::vector<std::complex<double> > > > & projectorKetTimesPsiTimesVTimesPartOcc,
 	   const std::vector<Tensor<1,2,VectorizedArray<double> > > & psiQuads,
-	   const std::vector< std::vector<double> > & eigenValues);
+	   const std::vector< std::vector<double> > & eigenValues,
+	   const std::vector<unsigned int> & nonlocalAtomsCompactSupportList);
 
       void FnlGammaAtomsElementalContributionPeriodicSpinPolarized
 	  (std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
@@ -360,7 +361,8 @@ namespace dftfe {
 	   const std::vector<std::vector<std::vector<std::complex<double> > > > & projectorKetTimesPsiSpin1TimesVTimesPartOcc,
 	   const std::vector<Tensor<1,2,VectorizedArray<double> > > & psiSpin0Quads,
 	   const std::vector<Tensor<1,2,VectorizedArray<double> > > & psiSpin1Quads,
-	   const std::vector< std::vector<double> > & eigenValues);
+	   const std::vector< std::vector<double> > & eigenValues,
+           const std::vector<unsigned int> & nonlocalAtomsCompactSupportList);
 #else
 
       void FnlGammaAtomsElementalContributionNonPeriodicSpinPolarized
@@ -372,7 +374,8 @@ namespace dftfe {
 	   const std::vector<std::vector<double> >  & projectorKetTimesPsiSpin0TimesVTimesPartOcc,
 	   const std::vector<std::vector<double> >  & projectorKetTimesPsiSpin1TimesVTimesPartOcc,
 	   const std::vector< VectorizedArray<double> > & psiSpin0Quads,
-	   const std::vector< VectorizedArray<double> > & psiSpin1Quads);
+	   const std::vector< VectorizedArray<double> > & psiSpin1Quads,
+           const std::vector<unsigned int> & nonlocalAtomsCompactSupportList);
 
       void FnlGammaAtomsElementalContributionNonPeriodic
 	  (std::map<unsigned int, std::vector<double> > & forceContributionFnlGammaAtoms,
@@ -381,7 +384,8 @@ namespace dftfe {
 	   const unsigned int cell,
 	   const std::vector<std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > > pspnlGammaAtomQuads,
 	   const std::vector<std::vector<double> >  & projectorKetTimesPsiTimesVTimesPartOcc,
-	   const std::vector< VectorizedArray<double> > & psiQuads);
+	   const std::vector< VectorizedArray<double> > & psiQuads,
+	   const std::vector<unsigned int> & nonlocalAtomsCompactSupportList);
 
 #endif
 
@@ -684,6 +688,9 @@ namespace dftfe {
       std::vector<vectorType> d_gaussianWeightsVecAtoms;
 
       bool d_isElectrostaticsMeshSubdivided=false;
+
+      /// map from cell id to set of non local atom ids (local numbering)
+      std::map<dealii::CellId,std::set<unsigned int>> d_cellIdToNonlocalAtomIdsLocalCompactSupportMap;
 
       /// mpi_communicator in the current pool
       const MPI_Comm mpi_communicator;
