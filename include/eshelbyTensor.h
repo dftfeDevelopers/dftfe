@@ -45,7 +45,7 @@ namespace dftfe {
   * h) gradPsiBegin- gradient of eigenvectors
   * i) eigenValues- Kohn sham grounstate eigenvalues stored in a vector. For periodic problems with multiple k points the outer vector should be over k points
   * j) tVal- smearing temperature in K
-  * k) pseudoVLoc- local part of the pseuodopotential
+  * k) pseudoVLoc- local part of the pseudopotential
   * l) gradPseudoVLoc- gradient of local part of pseudopotential
   * m) ZetaDeltaV- nonlocal pseudowavefunctions times deltaV (see Eq. 11 in https://link.aps.org/doi/10.1103/PhysRevB.97.165132)
   * n) gradZetaDeltaV- gradient of ZetaDeltaV
@@ -103,14 +103,14 @@ namespace dftfe {
 			      const VectorizedArray<double> & pseudoVLoc,
 			      const VectorizedArray<double> & phiExt);
 
-      /// Local pseudotential force contribution
+      /// Local pseudopotential force contribution
       Tensor<1,C_DIM,VectorizedArray<double> >  getFPSPLocal(const VectorizedArray<double> rho,
 							     const Tensor<1,C_DIM,VectorizedArray<double> > & gradPseudoVLoc,
 							     const Tensor<1,C_DIM,VectorizedArray<double> > & gradPhiExt);
 
 
 
-      /// Nonlocal pseudotential Eshelby tensor (for periodic case)
+      /// Nonlocal pseudopotential Eshelby tensor (for periodic case)
       Tensor<2,C_DIM,VectorizedArray<double> >  getEnlEshelbyTensorPeriodic(const std::vector<std::vector<std::vector<Tensor<1,2,VectorizedArray<double> > > > > & ZetaDeltaV,
 									  const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiTimesVTimesPartOcc,
 									  std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiBegin,
@@ -118,7 +118,7 @@ namespace dftfe {
 									  const std::vector<unsigned int> & nonlocalAtomsCompactSupportList,
 									  const unsigned int numBlockedEigenvectors);
 
-      /// Nonlocal pseudotential force contribution (for periodic case)
+      /// Nonlocal pseudopotential force contribution (for periodic case)
       void  getFnlEnlMergedPeriodic(const std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > & gradZetaDeltaV,
 	                            const std::vector<std::vector<std::vector<Tensor<1,2,VectorizedArray<double> > > > > & ZetaDeltaV,
 				    const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiTimesVTimesPartOcc,
@@ -129,7 +129,7 @@ namespace dftfe {
 				    Tensor<1,C_DIM,VectorizedArray<double> > & Fnl,
 				    Tensor<2,C_DIM,VectorizedArray<double> > & Enl);
 
-      /// Nonlocal pseudotential force contribution (for non periodic case)
+      /// Nonlocal pseudopotential force contribution (for non periodic case)
       void  getFnlEnlMergedNonPeriodic(const std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > & gradZetaDeltaV,
 	                               const std::vector<std::vector<VectorizedArray<double> > > & ZetaDeltaV,
 				       const std::vector<std::vector<double > > & projectorKetTimesPsiTimesVTimesPartOcc,
@@ -144,7 +144,7 @@ namespace dftfe {
 								std::vector<VectorizedArray<double> >::const_iterator psiBegin,
 								const unsigned int numBlockedEigenvectors);
 
-      /// Nonlocal pseudotential force contribution (for periodic case)
+      /// Nonlocal pseudopotential force contribution (for periodic case)
       Tensor<1,C_DIM,VectorizedArray<double> >  getFnlPeriodic(const std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > & gradZetaDeltaV,
 							     const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiTimesVTimesPartOcc,
 							     std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiBegin,
@@ -171,7 +171,7 @@ namespace dftfe {
 						   const double fermiEnergy_,
 						   const double tVal);
 
-      /// Nonlocal pseudotential Eshelby tensor (used only for stress computation)
+      /// Nonlocal pseudopotential Eshelby tensor (used only for stress computation)
       Tensor<2,C_DIM,VectorizedArray<double> >  getEnlStress(const std::vector<std::vector<std::vector<Tensor<1,2, Tensor<2,C_DIM,VectorizedArray<double> > > > > > & gradZetalmDeltaVlDyadicDistImageAtoms,
 							     const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiTimesVTimesPartOcc,
 							     std::vector<Tensor<1,2,VectorizedArray<double> > >::const_iterator  psiBegin,

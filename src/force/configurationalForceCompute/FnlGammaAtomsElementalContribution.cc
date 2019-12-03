@@ -54,6 +54,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionPeriodic(std::map<un
 
       }
 
+      //if map entry corresponding to current nonlocal atom id is empty, initialize it to zero
       if (forceContributionFnlGammaAtoms.find(globalChargeIdNonLocalAtom)==forceContributionFnlGammaAtoms.end())
 	   forceContributionFnlGammaAtoms[globalChargeIdNonLocalAtom]=std::vector<double>(C_DIM,0.0);
 
@@ -149,6 +150,7 @@ void forceClass<FEOrder>::FnlGammaAtomsElementalContributionNonPeriodic(std::map
       std::vector<std::vector<double> >  temp2(1);
       temp2[0]=projectorKetTimesPsiTimesVTimesPartOcc[iAtom];
 
+      //if map entry corresponding to current nonlocal atom id is empty, initialize it to zero
       if (forceContributionFnlGammaAtoms.find(globalChargeIdNonLocalAtom)==forceContributionFnlGammaAtoms.end())
 	   forceContributionFnlGammaAtoms[globalChargeIdNonLocalAtom]=std::vector<double>(C_DIM,0.0);
 

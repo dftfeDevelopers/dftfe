@@ -88,7 +88,7 @@ namespace dftfe {
 			      const Tensor<1,C_DIM,VectorizedArray<double> > & derExcGradRhoSpin1);
 
 
-      ///Nonlocal pseudotential Eshelby tensor (for non-periodic case)
+      ///Nonlocal pseudopotential Eshelby tensor (for non-periodic case)
       Tensor<2,C_DIM,VectorizedArray<double> >  getEnlEshelbyTensorNonPeriodic(const std::vector<std::vector<VectorizedArray<double> > > & ZetaDeltaV,
 									     const std::vector<std::vector<double> > & projectorKetTimesPsiSpin0TimesVTimesPartOcc,
 									     const std::vector<std::vector<double> > & projectorKetTimesPsiSpin1TimesVTimesPartOcc,
@@ -96,7 +96,7 @@ namespace dftfe {
 									     std::vector<VectorizedArray<double> >::const_iterator psiSpin1Begin,
 									     const unsigned int numBlockedEigenvectors);
 
-      ///Nonlocal pseudotential Eshelby tensor (for periodic case)
+      ///Nonlocal pseudopotential Eshelby tensor (for periodic case)
       Tensor<2,C_DIM,VectorizedArray<double> >  getEnlEshelbyTensorPeriodic
 								     (const std::vector<std::vector<std::vector<Tensor<1,2,VectorizedArray<double> > > > > & ZetaDeltaV,
 								      const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiSpin0TimesVTimesPartOcc,
@@ -107,14 +107,14 @@ namespace dftfe {
                                                                       const std::vector<unsigned int> & nonlocalAtomsCompactSupportList,
 								      const unsigned int numBlockedEigenvectors);
 
-      ///Nonlocal pseudotential force contribution (for non periodic case)
+      ///Nonlocal pseudopotential force contribution (for non periodic case)
       Tensor<1,C_DIM,VectorizedArray<double> >  getFnlNonPeriodic(const std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > & gradZetaDeltaV,
 								const std::vector<std::vector<double> > & projectorKetTimesPsiSpin0TimesVTimesPartOcc,
 								const std::vector<std::vector<double> > & projectorKetTimesPsiSpin1TimesVTimesPartOcc,
 								std::vector<VectorizedArray<double> >::const_iterator psiSpin0Begin,
 								std::vector<VectorizedArray<double> >::const_iterator psiSpin1Begin,
 								const unsigned int numBlockedEigenvectors);
-      ///Nonlocal pseudotential force contribution (for periodic case)
+      ///Nonlocal pseudopotential force contribution (for periodic case)
       Tensor<1,C_DIM,VectorizedArray<double> >  getFnlPeriodic(const std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > & gradZetaDeltaV,
 							     const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiSpin0TimesVTimesPartOcc,
 							     const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiSpin1TimesVTimesPartOcc,
@@ -124,7 +124,7 @@ namespace dftfe {
 							     const unsigned int numBlockedEigenvectors);
 
 
-      /// Nonlocal pseudotential force contribution (for periodic case)
+      /// Nonlocal pseudopotential force contribution (for periodic case)
       void  getFnlEnlMergedPeriodic(const std::vector<std::vector<std::vector<Tensor<1,2, Tensor<1,C_DIM,VectorizedArray<double> > > > > > & gradZetaDeltaV,
 	                            const std::vector<std::vector<std::vector<Tensor<1,2,VectorizedArray<double> > > > > & ZetaDeltaV,
 				    const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiSpin0TimesVTimesPartOcc,
@@ -137,7 +137,7 @@ namespace dftfe {
 				    Tensor<1,C_DIM,VectorizedArray<double> > & Fnl,
 				    Tensor<2,C_DIM,VectorizedArray<double> > & Enl);
 
-      /// Nonlocal pseudotential force contribution (for non periodic case)
+      /// Nonlocal pseudopotential force contribution (for non periodic case)
       void  getFnlEnlMergedNonPeriodic(const std::vector<std::vector<Tensor<1,C_DIM,VectorizedArray<double> > > > & gradZetaDeltaV,
 	                               const std::vector<std::vector<VectorizedArray<double> > > & ZetaDeltaV,
 				       const std::vector<std::vector<double> > & projectorKetTimesPsiSpin0TimesVTimesPartOcc,
@@ -177,7 +177,7 @@ namespace dftfe {
 						   const double fermiEnergyDown_,
 						   const double tVal);
 
-      /// Nonlocal pseudotential Eshelby tensor (used only for stress computation)
+      /// Nonlocal pseudopotential Eshelby tensor (used only for stress computation)
       Tensor<2,C_DIM,VectorizedArray<double> >  getEnlStress(const std::vector<std::vector<std::vector<Tensor<1,2, Tensor<2,C_DIM,VectorizedArray<double> > > > > > & gradZetalmDeltaVlDyadicDistImageAtoms,
 							     const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiSpin0TimesVTimesPartOcc,
 							     const std::vector<std::vector<std::vector<std::complex<double> > > >& projectorKetTimesPsiSpin1TimesVTimesPartOcc,
